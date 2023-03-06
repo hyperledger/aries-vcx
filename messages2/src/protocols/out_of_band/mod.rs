@@ -12,16 +12,18 @@ use crate::{
 };
 
 use self::{
-    invitation::{Invitation, InvitationDecorators},
-    reuse::{HandshakeReuse, HandshakeReuseDecorators},
-    reuse_accepted::{HandshakeReuseAccepted, HandshakeReuseAcceptedDecorators},
+    invitation::{InvitationContent, InvitationDecorators},
+    reuse::{HandshakeReuseContent, HandshakeReuseDecorators},
+    reuse_accepted::{HandshakeReuseAcceptedContent, HandshakeReuseAcceptedDecorators},
 };
+
+pub use self::{invitation::Invitation, reuse::HandshakeReuse, reuse_accepted::HandshakeReuseAccepted};
 
 #[derive(Clone, Debug, From)]
 pub enum OutOfBand {
-    Invitation(Message<Invitation, InvitationDecorators>),
-    HandshakeReuse(Message<HandshakeReuse, HandshakeReuseDecorators>),
-    HandshakeReuseAccepted(Message<HandshakeReuseAccepted, HandshakeReuseAcceptedDecorators>),
+    Invitation(Invitation),
+    HandshakeReuse(HandshakeReuse),
+    HandshakeReuseAccepted(HandshakeReuseAccepted),
 }
 
 impl DelayedSerde for OutOfBand {
@@ -35,19 +37,10 @@ impl DelayedSerde for OutOfBand {
         let OutOfBandV1::V1_1(minor) = major;
 
         match minor {
-            OutOfBandV1_1::Invitation => {
-                Message::<Invitation, InvitationDecorators>::delayed_deserialize(minor, deserializer).map(From::from)
-            }
-            OutOfBandV1_1::HandshakeReuse => {
-                Message::<HandshakeReuse, HandshakeReuseDecorators>::delayed_deserialize(minor, deserializer)
-                    .map(From::from)
-            }
+            OutOfBandV1_1::Invitation => Invitation::delayed_deserialize(minor, deserializer).map(From::from),
+            OutOfBandV1_1::HandshakeReuse => HandshakeReuse::delayed_deserialize(minor, deserializer).map(From::from),
             OutOfBandV1_1::HandshakeReuseAccepted => {
-                Message::<HandshakeReuseAccepted, HandshakeReuseAcceptedDecorators>::delayed_deserialize(
-                    minor,
-                    deserializer,
-                )
-                .map(From::from)
+                HandshakeReuseAccepted::delayed_deserialize(minor, deserializer).map(From::from)
             }
         }
     }
@@ -82,6 +75,9 @@ pub enum HandshakeProtocol {
     DidExchangeV1,
 }
 
-transit_to_aries_msg!(Invitation: InvitationDecorators, OutOfBand);
-transit_to_aries_msg!(HandshakeReuse: HandshakeReuseDecorators, OutOfBand);
-transit_to_aries_msg!(HandshakeReuseAccepted: HandshakeReuseAcceptedDecorators, OutOfBand);
+transit_to_aries_msg!(InvitationContent: InvitationDecorators, OutOfBand);
+transit_to_aries_msg!(HandshakeReuseContent: HandshakeReuseDecorators, OutOfBand);
+transit_to_aries_msg!(
+    HandshakeReuseAcceptedContent: HandshakeReuseAcceptedDecorators,
+    OutOfBand
+);

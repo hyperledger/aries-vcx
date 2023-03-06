@@ -5,14 +5,16 @@ use crate::{
     decorators::{Attachment, Timing},
     message_type::message_family::out_of_band::OutOfBandV1_1,
     mime_type::MimeType,
-    protocols::{common::service::Service, traits::MessageKind},
+    protocols::{common::service::Service, traits::MessageKind}, composite_message::Message,
 };
 
 use super::OobGoalCode;
 
+pub type Invitation = Message<InvitationContent, InvitationDecorators>;
+
 #[derive(Clone, Debug, Deserialize, Serialize, MessageContent)]
 #[message(kind = "OutOfBandV1_1::Invitation")]
-pub struct Invitation {
+pub struct InvitationContent {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub label: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
