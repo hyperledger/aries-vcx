@@ -2,9 +2,10 @@ use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 
 use crate::{
+    composite_message::Message,
     decorators::{Thread, Timing},
     message_type::message_family::trust_ping::TrustPingV1_0,
-    protocols::traits::MessageKind, composite_message::Message,
+    protocols::traits::MessageKind,
 };
 
 pub type PingResponse = Message<PingResponseContent, PingResponseDecorators>;

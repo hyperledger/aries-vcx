@@ -2,9 +2,10 @@ use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 
 use crate::{
+    composite_message::Message,
     decorators::{Attachment, PleaseAck, Thread, Timing},
     message_type::message_family::present_proof::PresentProofV1_0,
-    protocols::traits::MessageKind, composite_message::Message,
+    protocols::traits::MessageKind,
 };
 
 pub type Presentation = Message<PresentationContent, PresentationDecorators>;

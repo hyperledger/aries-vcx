@@ -2,8 +2,8 @@ use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    decorators::Timing, message_type::message_family::discover_features::DiscoverFeaturesV1_0,
-    protocols::traits::MessageKind, composite_message::Message,
+    composite_message::Message, decorators::Timing,
+    message_type::message_family::discover_features::DiscoverFeaturesV1_0, protocols::traits::MessageKind,
 };
 
 pub type Query = Message<QueryContent, QueryDecorators>;

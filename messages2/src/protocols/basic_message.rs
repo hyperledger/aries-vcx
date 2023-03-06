@@ -2,8 +2,9 @@ use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 
 use crate::{
+    composite_message::Message,
     decorators::{MsgLocalization, Thread, Timing},
-    message_type::message_family::basic_message::{BasicMessage as BasicMessageKind, BasicMessageV1, BasicMessageV1_0}, composite_message::Message,
+    message_type::message_family::basic_message::{BasicMessage as BasicMessageKind, BasicMessageV1, BasicMessageV1_0},
 };
 
 use super::traits::MessageKind;

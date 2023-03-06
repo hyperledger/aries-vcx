@@ -3,13 +3,14 @@ use serde::{Deserialize, Serialize};
 use transitive::{TransitiveFrom, TransitiveTryFrom};
 
 use crate::{
+    composite_message::Message,
     decorators::{Thread, Timing},
     message_type::{
         message_family::present_proof::{PresentProof, PresentProofV1, PresentProofV1_0},
         MessageFamily, MessageType,
     },
     mime_type::MimeType,
-    protocols::traits::MessageKind, composite_message::Message,
+    protocols::traits::MessageKind,
 };
 
 pub type ProposePresentation = Message<ProposePresentationContent, ProposePresentationDecorators>;

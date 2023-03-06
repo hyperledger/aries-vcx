@@ -2,7 +2,7 @@ use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    composite_message::{Nothing, Message},
+    composite_message::{Message, Nothing},
     decorators::{Thread, Timing},
     message_type::message_family::out_of_band::OutOfBandV1_1,
     protocols::traits::MessageKind,

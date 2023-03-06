@@ -3,11 +3,12 @@ use serde::{Deserialize, Serialize};
 use transitive::{TransitiveFrom, TransitiveTryFrom};
 
 use crate::{
+    composite_message::Message,
     decorators::{PleaseAck, Thread, Timing},
     message_type::{
         message_family::connection::{Connection as ConnectionKind, ConnectionV1, ConnectionV1_0},
         MessageFamily, MessageType,
-    }, composite_message::Message,
+    },
 };
 
 use crate::protocols::traits::MessageKind;

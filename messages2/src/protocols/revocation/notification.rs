@@ -2,9 +2,10 @@ use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 
 use crate::{
+    composite_message::Message,
     decorators::{PleaseAck, Thread, Timing},
     message_type::message_family::revocation::RevocationV2_0,
-    protocols::traits::MessageKind, composite_message::Message,
+    protocols::traits::MessageKind,
 };
 
 pub type Revoke = Message<RevokeContent, RevokeDecorators>;

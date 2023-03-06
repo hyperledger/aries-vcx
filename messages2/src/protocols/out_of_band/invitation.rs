@@ -2,10 +2,11 @@ use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 
 use crate::{
+    composite_message::Message,
     decorators::{Attachment, Timing},
     message_type::message_family::out_of_band::OutOfBandV1_1,
     mime_type::MimeType,
-    protocols::{common::service::Service, traits::MessageKind}, composite_message::Message,
+    protocols::{common::service::Service, traits::MessageKind},
 };
 
 use super::OobGoalCode;
