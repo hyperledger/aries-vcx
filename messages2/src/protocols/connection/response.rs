@@ -7,14 +7,16 @@ use crate::{
     message_type::{
         message_family::connection::{Connection as ConnectionKind, ConnectionV1, ConnectionV1_0},
         MessageFamily, MessageType,
-    },
+    }, composite_message::Message,
 };
 
 use crate::protocols::traits::MessageKind;
 
+pub type Response = Message<ResponseContent, ResponseDecorators>;
+
 #[derive(Clone, Debug, Deserialize, Serialize, MessageContent)]
 #[message(kind = "ConnectionV1_0::Response")]
-pub struct Response {
+pub struct ResponseContent {
     #[serde(rename = "@id")]
     pub id: String,
     #[serde(rename = "connection~sig")]

@@ -15,19 +15,21 @@ use crate::{
 
 use self::{
     invitation::Invitation,
-    problem_report::{ProblemReport, ProblemReportDecorators},
-    request::{Request, RequestDecorators},
-    response::{Response, ResponseDecorators},
+    problem_report::{ProblemReportContent, ProblemReportDecorators},
+    request::{RequestContent, RequestDecorators},
+    response::{ResponseContent, ResponseDecorators},
 };
+
+pub use self::{problem_report::ProblemReport, request::Request, response::Response};
 
 pub use invitation::CompleteInvitation;
 
 #[derive(Clone, Debug, From)]
 pub enum Connection {
     Invitation(Invitation),
-    Request(Message<Request, RequestDecorators>),
-    Response(Message<Response, ResponseDecorators>),
-    ProblemReport(Message<ProblemReport, ProblemReportDecorators>),
+    Request(Request),
+    Response(Response),
+    ProblemReport(ProblemReport),
 }
 
 impl DelayedSerde for Connection {
@@ -42,16 +44,9 @@ impl DelayedSerde for Connection {
 
         match minor {
             ConnectionV1_0::Invitation => Invitation::delayed_deserialize(minor, deserializer).map(From::from),
-            ConnectionV1_0::Request => {
-                Message::<Request, RequestDecorators>::delayed_deserialize(minor, deserializer).map(From::from)
-            }
-            ConnectionV1_0::Response => {
-                Message::<Response, ResponseDecorators>::delayed_deserialize(minor, deserializer).map(From::from)
-            }
-            ConnectionV1_0::ProblemReport => {
-                Message::<ProblemReport, ProblemReportDecorators>::delayed_deserialize(minor, deserializer)
-                    .map(From::from)
-            }
+            ConnectionV1_0::Request => Request::delayed_deserialize(minor, deserializer).map(From::from),
+            ConnectionV1_0::Response => Response::delayed_deserialize(minor, deserializer).map(From::from),
+            ConnectionV1_0::ProblemReport => ProblemReport::delayed_deserialize(minor, deserializer).map(From::from),
             ConnectionV1_0::Ed25519Sha512Single => Err(utils::not_standalone_msg::<D>(minor.as_ref())),
         }
     }
@@ -69,6 +64,6 @@ impl DelayedSerde for Connection {
     }
 }
 
-transit_to_aries_msg!(Request: RequestDecorators, Connection);
-transit_to_aries_msg!(Response: ResponseDecorators, Connection);
-transit_to_aries_msg!(ProblemReport: ProblemReportDecorators, Connection);
+transit_to_aries_msg!(RequestContent: RequestDecorators, Connection);
+transit_to_aries_msg!(ResponseContent: ResponseDecorators, Connection);
+transit_to_aries_msg!(ProblemReportContent: ProblemReportDecorators, Connection);

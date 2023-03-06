@@ -3,15 +3,18 @@ use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 
 use crate::{
+    composite_message::Message,
     decorators::{Thread, Timing},
     message_type::message_family::connection::ConnectionV1_0,
 };
 
 use crate::protocols::traits::MessageKind;
 
+pub type Request = Message<RequestContent, RequestDecorators>;
+
 #[derive(Clone, Debug, Deserialize, Serialize, MessageContent)]
 #[message(kind = "ConnectionV1_0::Request")]
-pub struct Request {
+pub struct RequestContent {
     pub label: String,
     pub connection: ConnectionData,
 }

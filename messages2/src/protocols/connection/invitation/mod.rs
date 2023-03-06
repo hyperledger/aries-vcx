@@ -13,8 +13,12 @@ use crate::delayed_serde::DelayedSerde;
 use crate::message_type::message_family::connection::ConnectionV1_0;
 use crate::protocols::traits::MessageKind;
 
-use self::pairwise::{PairwiseInvitation, PwInvitationDecorators};
-use self::public::PublicInvitation;
+use self::pairwise::{PairwiseInvitationContent, PwInvitationDecorators};
+use self::public::PublicInvitationContent;
+pub use self::{
+    pairwise::{PairwiseDidInvitation, PairwiseInvitation},
+    public::PublicInvitation,
+};
 
 /// Type used to encapsulate a fully resolved invitation, which
 /// contains all the information necessary for generating a [`crate::protocols::connection::request::Request`].
@@ -33,9 +37,9 @@ pub type CompleteInvitation = InvitationImpl<Url>;
 #[message(kind = "ConnectionV1_0::Invitation")]
 #[serde(untagged)]
 pub enum Invitation {
-    Public(Message<PublicInvitation>),
-    Pairwise(Message<PairwiseInvitation<Url>, PwInvitationDecorators>),
-    PairwiseDID(Message<PairwiseInvitation<String>, PwInvitationDecorators>),
+    Public(PublicInvitation),
+    Pairwise(PairwiseInvitation),
+    PairwiseDID(PairwiseDidInvitation),
 }
 
 /// We need a custom [`DelayedSerde`] impl to take advantage of
@@ -77,6 +81,6 @@ pub struct InvitationImpl<T> {
     pub service_endpoint: T,
 }
 
-transit_to_aries_msg!(PublicInvitation, Invitation, Connection);
-transit_to_aries_msg!(PairwiseInvitation<Url>:PwInvitationDecorators, Invitation, Connection);
-transit_to_aries_msg!(PairwiseInvitation<String>:PwInvitationDecorators, Invitation, Connection);
+transit_to_aries_msg!(PublicInvitationContent, Invitation, Connection);
+transit_to_aries_msg!(PairwiseInvitationContent<Url>:PwInvitationDecorators, Invitation, Connection);
+transit_to_aries_msg!(PairwiseInvitationContent<String>:PwInvitationDecorators, Invitation, Connection);
