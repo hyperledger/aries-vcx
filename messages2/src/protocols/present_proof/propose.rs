@@ -9,12 +9,14 @@ use crate::{
         MessageFamily, MessageType,
     },
     mime_type::MimeType,
-    protocols::traits::MessageKind,
+    protocols::traits::MessageKind, composite_message::Message,
 };
+
+pub type ProposePresentation = Message<ProposePresentationContent, ProposePresentationDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, MessageContent)]
 #[message(kind = "PresentProofV1_0::ProposePresentation")]
-pub struct ProposePresentation {
+pub struct ProposePresentationContent {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,
     pub presentation_proposal: PresentationPreview,

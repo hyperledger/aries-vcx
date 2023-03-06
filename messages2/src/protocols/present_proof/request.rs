@@ -4,12 +4,14 @@ use serde::{Deserialize, Serialize};
 use crate::{
     decorators::{Attachment, Thread, Timing},
     message_type::message_family::present_proof::PresentProofV1_0,
-    protocols::traits::MessageKind,
+    protocols::traits::MessageKind, composite_message::Message,
 };
+
+pub type RequestPresentation = Message<RequestPresentationContent, RequestPresentationDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, MessageContent)]
 #[message(kind = "PresentProofV1_0::RequestPresentation")]
-pub struct RequestPresentation {
+pub struct RequestPresentationContent {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,
     #[serde(rename = "request_presentations~attach")]
