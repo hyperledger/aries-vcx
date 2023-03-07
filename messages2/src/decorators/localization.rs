@@ -4,8 +4,6 @@ use isolang::Language;
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 use url::Url;
 
-use super::EmptyDecorator;
-
 /// We need to wrap this as the default serde
 /// behavior is to use ISO 639-3 codes and we need ISO 639-2;
 #[derive(Copy, Clone, Debug, PartialEq, Hash, Eq)]
@@ -40,29 +38,17 @@ impl<'de> Deserialize<'de> for Locale {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct MsgLocalization {
-    catalogs: Option<Vec<Url>>,
+    pub catalogs: Option<Vec<Url>>,
     #[serde(alias = "details")]
     // Might just be obsolete, but appears in https://github.com/hyperledger/aries-rfcs/blob/main/features/0043-l10n/README.md
-    locales: Option<HashMap<Locale, Vec<String>>>,
-}
-
-impl EmptyDecorator for MsgLocalization {
-    fn is_empty(&self) -> bool {
-        self.catalogs.is_none() && self.locales.as_ref().map(|h| h.is_empty()).unwrap_or(true)
-    }
+    pub locales: Option<HashMap<Locale, Vec<String>>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FieldLocalization {
-    code: Option<String>,
-    locale: Option<Locale>,
-    catalogs: Option<Vec<Url>>,
+    pub code: Option<String>,
+    pub locale: Option<Locale>,
+    pub catalogs: Option<Vec<Url>>,
     #[serde(flatten)]
-    translations: HashMap<Locale, String>,
-}
-
-impl EmptyDecorator for FieldLocalization {
-    fn is_empty(&self) -> bool {
-        self.code.is_none() && self.locale.is_none() && self.catalogs.is_none() && self.translations.is_empty()
-    }
+    pub translations: HashMap<Locale, String>,
 }
