@@ -14,7 +14,7 @@ pub type PingResponse = Message<PingResponseContent, PingResponseDecorators>;
 #[message(kind = "TrustPingV1_0::PingResponse")]
 pub struct PingResponseContent {
     #[serde(skip_serializing_if = "Option::is_none")]
-    comment: Option<String>,
+    pub comment: Option<String>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

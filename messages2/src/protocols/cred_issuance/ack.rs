@@ -5,7 +5,7 @@ use crate::{
     composite_message::Message,
     message_type::message_family::cred_issuance::CredentialIssuanceV1_0,
     protocols::{
-        notification::{AckContent, AckDecorators},
+        notification::{AckContent, AckDecorators, AckStatus},
         traits::MessageKind,
     },
 };
@@ -16,3 +16,9 @@ pub type AckCredential = Message<AckCredentialContent, AckDecorators>;
 #[message(kind = "CredentialIssuanceV1_0::Ack")]
 #[serde(transparent)]
 pub struct AckCredentialContent(pub AckContent);
+
+impl AckCredentialContent {
+    pub fn new(status: AckStatus) -> Self {
+        Self(AckContent::new(status))
+    }
+}

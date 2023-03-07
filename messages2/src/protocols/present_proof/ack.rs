@@ -5,7 +5,7 @@ use crate::{
     composite_message::Message,
     message_type::message_family::present_proof::PresentProofV1_0,
     protocols::{
-        notification::{AckContent, AckDecorators},
+        notification::{AckContent, AckDecorators, AckStatus},
         traits::MessageKind,
     },
 };
@@ -16,3 +16,9 @@ pub type AckPresentation = Message<AckPresentationContent, AckDecorators>;
 #[message(kind = "PresentProofV1_0::Ack")]
 #[serde(transparent)]
 pub struct AckPresentationContent(pub AckContent);
+
+impl AckPresentationContent {
+    pub fn new(status: AckStatus) -> Self {
+        Self(AckContent::new(status))
+    }
+}

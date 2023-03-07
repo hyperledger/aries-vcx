@@ -94,6 +94,15 @@ pub struct CredentialPreview {
     pub attributes: Vec<CredentialAttr>,
 }
 
+impl CredentialPreview {
+    pub fn new(attributes: Vec<CredentialAttr>) -> Self {
+        Self {
+            msg_type: CredentialPreviewMsgType,
+            attributes,
+        }
+    }
+}
+
 #[derive(Copy, Clone, Debug, Serialize, Deserialize, TransitiveFrom, TransitiveTryFrom)]
 #[serde(into = "MessageType", try_from = "MessageType")]
 #[transitive(try_from(MessageFamily, CredentialIssuanceKind, CredentialIssuanceV1, CredentialIssuanceV1_0))]

@@ -10,29 +10,29 @@ use crate::mime_type::MimeType;
 pub struct Attachment {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "@id")]
-    id: Option<String>,
+    pub id: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    description: Option<String>,
+    pub description: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    filename: Option<String>,
+    pub filename: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "mime-type")]
-    mime_type: Option<MimeType>,
+    pub mime_type: Option<MimeType>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    lastmod_time: Option<DateTime<Utc>>,
+    pub lastmod_time: Option<DateTime<Utc>>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    byte_count: Option<u64>,
-    data: AttachmentData,
+    pub byte_count: Option<u64>,
+    pub data: AttachmentData,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct AttachmentData {
     // There probably is a better type for this???
-    jws: Option<String>,
+    pub jws: Option<String>,
     // Better type for this as well?
-    sha256: Option<String>,
+    pub sha256: Option<String>,
     #[serde(flatten)]
-    content: AttachmentType,
+    pub content: AttachmentType,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

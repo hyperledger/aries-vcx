@@ -33,6 +33,17 @@ pub struct ConnectionSignature {
     pub signer: String,
 }
 
+impl ConnectionSignature {
+    pub fn new(signature: String, sig_data: String, signer: String) -> Self {
+        Self {
+            msg_type: SigEd25519Sha512Single,
+            signature,
+            sig_data,
+            signer,
+        }
+    }
+}
+
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct ResponseDecorators {
     #[serde(rename = "~thread")]
@@ -45,7 +56,7 @@ pub struct ResponseDecorators {
     pub timing: Option<Timing>,
 }
 
-#[derive(Copy, Clone, Debug, Serialize, Deserialize, TransitiveFrom, TransitiveTryFrom)]
+#[derive(Copy, Clone, Debug, Default, Serialize, Deserialize, TransitiveFrom, TransitiveTryFrom)]
 #[serde(into = "MessageType", try_from = "MessageType")]
 #[transitive(into(all(ConnectionV1_0, MessageType)))]
 #[transitive(try_from(MessageFamily, ConnectionKind, ConnectionV1, ConnectionV1_0))]

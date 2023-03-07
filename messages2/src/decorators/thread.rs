@@ -9,8 +9,8 @@ pub struct Thread {
     pub pthid: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub sender_order: Option<u32>,
-    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
-    pub received_orders: HashMap<String, u32>, // should get replaced with DID.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub received_orders: Option<HashMap<String, u32>>, // should get replaced with DID.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub goal_code: Option<ThreadGoalCode>,
 }

@@ -17,6 +17,12 @@ pub struct AckContent {
     pub status: AckStatus,
 }
 
+impl AckContent {
+    pub fn new(status: AckStatus) -> Self {
+        Self { status }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "UPPERCASE")]
 pub enum AckStatus {

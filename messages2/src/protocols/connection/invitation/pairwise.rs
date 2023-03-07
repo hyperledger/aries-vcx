@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize};
 use url::Url;
 
-use super::InvitationImpl;
 use crate::{composite_message::Message, decorators::Timing};
 
 pub type PairwiseInvitation = Message<PairwiseInvitationContent<Url>, PwInvitationDecorators>;
@@ -11,8 +10,14 @@ pub type PairwiseDidInvitation = Message<PairwiseInvitationContent<String>, PwIn
 // The wrapping is used so that we expose certain types as an abstraction
 // over our internal types.
 #[derive(Debug, Clone, Deserialize, Serialize)]
-#[serde(transparent)]
-pub struct PairwiseInvitationContent<T>(pub InvitationImpl<T>);
+#[serde(rename_all = "camelCase")]
+pub struct PairwiseInvitationContent<T> {
+    pub label: String,
+    pub recipient_keys: Vec<String>,
+    #[serde(default)]
+    pub routing_keys: Vec<String>,
+    pub service_endpoint: T,
+}
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct PwInvitationDecorators {

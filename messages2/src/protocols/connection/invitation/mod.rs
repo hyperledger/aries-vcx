@@ -24,7 +24,10 @@ pub use self::{
 /// contains all the information necessary for generating a [`crate::protocols::connection::request::Request`].
 ///
 /// Other invitation types would get resolved to this.
-pub type CompleteInvitation = InvitationImpl<Url>;
+// We rely on the URL version of the pairwise invitation because, coincidentally,
+// that's what a fully resolved invitation looks like.
+// If other fields are needed in the future, this type could be adapted.
+pub struct CompleteInvitationContent(PairwiseInvitationContent<Url>);
 
 // We implement the message kind on this type as we have to rely on
 // untagged deserialization, since we cannot know the invitation format
@@ -67,18 +70,6 @@ impl DelayedSerde for Invitation {
     {
         MsgWithType::from(self).serialize(serializer)
     }
-}
-
-/// Represents an invitation with T as the service endpoint.
-/// Essentially, T can only be a DID or a URL.
-#[derive(Debug, Clone, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct InvitationImpl<T> {
-    pub label: String,
-    pub recipient_keys: Vec<String>,
-    #[serde(default)]
-    pub routing_keys: Vec<String>,
-    pub service_endpoint: T,
 }
 
 transit_to_aries_msg!(PublicInvitationContent, Invitation, Connection);

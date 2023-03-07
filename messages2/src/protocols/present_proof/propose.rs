@@ -41,6 +41,16 @@ pub struct PresentationPreview {
     pub predicates: Vec<Predicate>,
 }
 
+impl PresentationPreview {
+    pub fn new(attributes: Vec<Attribute>, predicates: Vec<Predicate>) -> Self {
+        Self {
+            msg_type: PresentationPreviewMsgType,
+            attributes,
+            predicates,
+        }
+    }
+}
+
 #[derive(Copy, Clone, Debug, Serialize, Deserialize, TransitiveFrom, TransitiveTryFrom)]
 #[serde(into = "MessageType", try_from = "MessageType")]
 #[transitive(try_from(MessageFamily, PresentProof, PresentProofV1, PresentProofV1_0))]

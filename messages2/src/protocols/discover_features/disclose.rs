@@ -30,5 +30,5 @@ pub struct DiscloseDecorators {
 pub struct ProtocolDescriptor {
     pub pid: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub roles: Option<Vec<()>>,
+    pub roles: Option<Vec<String>>, // TODO: Protocol Registry
 }

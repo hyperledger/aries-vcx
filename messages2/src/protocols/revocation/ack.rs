@@ -5,7 +5,7 @@ use crate::{
     composite_message::Message,
     message_type::message_family::revocation::RevocationV2_0,
     protocols::{
-        notification::{AckContent, AckDecorators},
+        notification::{AckContent, AckDecorators, AckStatus},
         traits::MessageKind,
     },
 };
@@ -16,3 +16,9 @@ pub type AckRevoke = Message<AckRevokeContent, AckDecorators>;
 #[message(kind = "RevocationV2_0::Ack")]
 #[serde(transparent)]
 pub struct AckRevokeContent(pub AckContent);
+
+impl AckRevokeContent {
+    pub fn new(status: AckStatus) -> Self {
+        Self(AckContent::new(status))
+    }
+}

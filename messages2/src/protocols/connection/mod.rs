@@ -22,7 +22,7 @@ use self::{
 
 pub use self::{problem_report::ProblemReport, request::Request, response::Response};
 
-pub use invitation::CompleteInvitation;
+pub use invitation::CompleteInvitationContent;
 
 #[derive(Clone, Debug, From)]
 pub enum Connection {
