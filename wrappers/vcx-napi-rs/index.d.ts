@@ -94,6 +94,8 @@ export function setActiveTxnAuthorAgreementMeta(text: string | undefined | null,
 export function createService(targetDid: string, recipientKeys: Array<string>, routingKeys: Array<string>, endpoint: string): Promise<string>
 export function createServiceV2(targetDid: string, routingKeys: Array<string>, endpoint: string): Promise<string>
 export function getServiceFromLedger(targetDid: string): Promise<string>
+export function getAttrFromLedger(targetDid: string, attr: string): Promise<string>
+export function clearAttrFromLedger(did: string, attrib: string): Promise<string>
 export function getVerkeyFromLedger(did: string): Promise<string>
 export function getLedgerTxn(seqNo: number, submitterDid?: string | undefined | null): Promise<string>
 export function initDefaultLogger(pattern?: string | undefined | null): void

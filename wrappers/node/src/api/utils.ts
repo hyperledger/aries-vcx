@@ -183,9 +183,25 @@ export async function createServiceV2(
   }
 }
 
-export async function getServiceFromLedger(did: string): Promise<IAriesService> {
+export async function getServiceFromLedger(did: string): Promise<IAriesService | IAriesServiceV2> {
   try {
     return JSON.parse(await ffi.getServiceFromLedger(did));
+  } catch (err: any) {
+    throw new VCXInternalError(err);
+  }
+}
+
+export async function getAttrFromLedger(did: string, attr: string): Promise<string> {
+  try {
+    return await ffi.getAttrFromLedger(did, attr);
+  } catch (err: any) {
+    throw new VCXInternalError(err);
+  }
+}
+
+export async function clearAttrFromLedger(did: string, attr: string): Promise<void> {
+  try {
+    await ffi.clearAttrFromLedger(did, attr);
   } catch (err: any) {
     throw new VCXInternalError(err);
   }

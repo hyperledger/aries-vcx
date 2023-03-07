@@ -1,5 +1,7 @@
 use aries_vcx::common::ledger::service_didsov::{DidSovServiceType, EndpointDidSov};
-use aries_vcx::common::ledger::transactions::{get_service, write_endpoint, write_endpoint_legacy};
+use aries_vcx::common::ledger::transactions::{
+    clear_attr, get_attr, get_service, write_endpoint, write_endpoint_legacy,
+};
 use aries_vcx::global::settings::CONFIG_INSTITUTION_DID;
 use aries_vcx::messages::diddoc::aries::service::AriesService;
 use aries_vcx::messages::protocols::connection::did::Did;
@@ -69,6 +71,16 @@ pub async fn ledger_get_service(target_did: &str) -> LibvcxResult<AriesService> 
     let target_did = Did::new(target_did)?;
     let profile = get_main_profile()?;
     map_ariesvcx_result(get_service(&profile, &target_did).await)
+}
+
+pub async fn ledger_get_attr(target_did: &str, attr: &str) -> LibvcxResult<String> {
+    let profile = get_main_profile()?;
+    map_ariesvcx_result(get_attr(&profile, &target_did, attr).await)
+}
+
+pub async fn ledger_clear_attr(target_did: &str, attr: &str) -> LibvcxResult<String> {
+    let profile = get_main_profile()?;
+    map_ariesvcx_result(clear_attr(&profile, &target_did, attr).await)
 }
 
 pub async fn ledger_get_txn_author_agreement() -> LibvcxResult<String> {
