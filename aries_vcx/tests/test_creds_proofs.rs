@@ -333,11 +333,10 @@ mod integration_tests {
             .to_string();
             let pres_req_data: PresentationRequestData = serde_json::from_str(&indy_proof_req).unwrap();
             let mut verifier = Verifier::create_from_request("foo".into(), &pres_req_data).unwrap();
-            let msg_request = verifier.get_presentation_request_msg().unwrap();
+            let presentation_request = verifier.get_presentation_request_msg().unwrap();
             verifier.mark_presentation_request_msg_sent().unwrap();
 
             // prover receives request and generates presentation
-            let presentation_request: PresentationRequest = serde_json::from_str(&msg_request).unwrap();
             let mut proof: Prover = Prover::create_from_request("1", presentation_request).unwrap();
 
             let selected_credentials: serde_json::Value = json!({});
