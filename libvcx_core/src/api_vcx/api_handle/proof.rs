@@ -8,6 +8,7 @@ use aries_vcx::messages::a2a::A2AMessage;
 use crate::api_vcx::api_global::profile::get_main_profile;
 use crate::api_vcx::api_handle::connection::HttpClient;
 use crate::api_vcx::api_handle::object_cache::ObjectCache;
+use crate::api_vcx::api_handle::out_of_band::to_a2a_message;
 use crate::api_vcx::api_handle::{connection, mediated_connection};
 
 use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
@@ -203,12 +204,16 @@ pub fn get_presentation_request_attachment(handle: u32) -> LibvcxResult<String> 
 
 pub fn get_presentation_request_msg(handle: u32) -> LibvcxResult<String> {
     PROOF_MAP.get(handle, |proof| {
-        proof.get_presentation_request_msg().map_err(|err| err.into())
+        let msg = proof.get_presentation_request_msg()?.to_a2a_message();
+        Ok(json!(msg).to_string())
     })
 }
 // --- Presentation ---
 pub fn get_presentation_msg(handle: u32) -> LibvcxResult<String> {
-    PROOF_MAP.get(handle, |proof| proof.get_presentation_msg().map_err(|err| err.into()))
+    PROOF_MAP.get(handle, |proof| {
+        let msg = proof.get_presentation_msg()?.to_a2a_message();
+        Ok(json!(msg).to_string())
+    })
 }
 
 pub fn get_presentation_attachment(handle: u32) -> LibvcxResult<String> {

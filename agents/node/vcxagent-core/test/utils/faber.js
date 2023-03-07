@@ -393,10 +393,10 @@ module.exports.createFaber = async function createFaber (serviceEndpoint = 'http
   async function getPresentationInfo () {
     logger.info('Faber is gather info about received presentation')
     await vcxAgent.agentInitVcx()
-    const presentationMsg = JSON.parse(await vcxAgent.serviceVerifier.getPresentationMsg(proofId))
-    const presentationVerificationState = JSON.parse(await vcxAgent.serviceVerifier.getPresentationVerificationStatus(proofId))
-    const presentationAttachment = JSON.parse(await vcxAgent.serviceVerifier.getPresentationAttachment(proofId))
-    const presentationRequestAttachment = JSON.parse(await vcxAgent.serviceVerifier.getPresentationRequestAttachment(proofId))
+    const presentationMsg = await vcxAgent.serviceVerifier.getPresentationMsg(proofId)
+    const presentationVerificationState = await vcxAgent.serviceVerifier.getPresentationVerificationStatus(proofId)
+    const presentationAttachment = await vcxAgent.serviceVerifier.getPresentationAttachment(proofId)
+    const presentationRequestAttachment = await vcxAgent.serviceVerifier.getPresentationRequestAttachment(proofId)
 
     await vcxAgent.agentShutdownVcx()
     return {

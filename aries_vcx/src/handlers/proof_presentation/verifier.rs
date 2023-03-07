@@ -124,9 +124,8 @@ impl Verifier {
         Ok(())
     }
 
-    pub fn get_presentation_request_msg(&self) -> VcxResult<String> {
-        let msg = self.verifier_sm.presentation_request_msg()?.to_a2a_message();
-        Ok(json!(msg).to_string())
+    pub fn get_presentation_request_msg(&self) -> VcxResult<PresentationRequest> {
+        self.verifier_sm.presentation_request_msg()
     }
 
     pub fn get_presentation_request_attachment(&self) -> VcxResult<String> {
@@ -141,14 +140,11 @@ impl Verifier {
         self.verifier_sm.presentation_request_msg()
     }
 
-    pub fn get_presentation_msg(&self) -> VcxResult<String> {
-        trace!("Verifier::get_presentation >>>");
-        let msg = self.verifier_sm.get_presentation_msg()?.to_a2a_message();
-        Ok(json!(msg).to_string())
+    pub fn get_presentation_msg(&self) -> VcxResult<Presentation> {
+        self.verifier_sm.get_presentation_msg()
     }
 
     pub fn get_presentation_status(&self) -> Status {
-        trace!("Verifier::presentation_state >>>");
         self.verifier_sm.presentation_status()
     }
 
@@ -161,7 +157,6 @@ impl Verifier {
     }
 
     pub fn get_presentation_proposal(&self) -> VcxResult<PresentationProposal> {
-        trace!("Verifier::get_presentation_proposal >>>");
         self.verifier_sm.presentation_proposal()
     }
 
@@ -280,7 +275,7 @@ mod unit_tests {
         let mut verifier = _verifier().await;
         verifier.to_finished_state().await;
         let presentation = verifier.get_presentation_msg().unwrap();
-        assert_eq!(presentation, json!(_presentation().to_a2a_message()).to_string());
+        assert_eq!(presentation, _presentation());
         assert_eq!(verifier.get_state(), VerifierState::Finished);
     }
 }

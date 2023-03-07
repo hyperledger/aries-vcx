@@ -54,22 +54,22 @@ module.exports.createServiceVerifier = function createServiceVerifier ({ logger,
 
   async function getPresentationMsg (proofId) {
     const proof = await loadProof(proofId)
-    return proof.getPresentationMsg()
+    return JSON.parse(proof.getPresentationMsg())
   }
 
   async function getPresentationAttachment (proofId) {
     const proof = await loadProof(proofId)
-    return proof.getPresentationAttachment()
+    return JSON.parse(proof.getPresentationAttachment())
   }
 
   async function getPresentationRequestAttachment (proofId) {
     const proof = await loadProof(proofId)
-    return proof.getPresentationRequestAttachment()
+    return JSON.parse(proof.getPresentationRequestAttachment())
   }
 
   async function getPresentationVerificationStatus (proofId) {
     const proof = await loadProof(proofId)
-    return proof.getPresentationVerificationStatus()
+    return JSON.parse(proof.getPresentationVerificationStatus())
   }
 
   async function listIds () {

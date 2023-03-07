@@ -502,7 +502,7 @@ impl ProverSM {
         }
     }
 
-    pub fn get_presentation(&self) -> VcxResult<&Presentation> {
+    pub fn get_presentation_msg(&self) -> VcxResult<&Presentation> {
         match self.state {
             ProverFullState::Initial(_) => Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::NotReady,

@@ -45,7 +45,6 @@ impl Prover {
     }
 
     pub fn presentation_status(&self) -> u32 {
-        trace!("Prover::presentation_state >>>");
         self.prover_sm.get_presentation_status()
     }
 
@@ -78,8 +77,7 @@ impl Prover {
     }
 
     pub fn get_presentation_msg(&self) -> VcxResult<Presentation> {
-        trace!("Prover::get_presentation_msg >>>");
-        Ok(self.prover_sm.get_presentation()?.to_owned())
+        Ok(self.prover_sm.get_presentation_msg()?.to_owned())
     }
 
     pub fn set_presentation(&mut self, presentation: Presentation) -> VcxResult<()> {
