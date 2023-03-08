@@ -22,7 +22,7 @@ pub enum PresentProof {
 
 #[derive(Copy, Clone, Debug, From, TryInto, PartialEq, TransitiveFrom, MessageType)]
 #[transitive(into(all(PresentProof, MessageFamily, MessageType)))]
-#[semver(major = 1)]
+#[semver(major = 1, parent = "PresentProof")]
 pub enum PresentProofV1 {
     V1_0(PresentProofV1_0),
 }
@@ -30,7 +30,7 @@ pub enum PresentProofV1 {
 #[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq, TransitiveFrom, MessageType)]
 #[transitive(into(all(PresentProofV1, PresentProof, MessageFamily, MessageType)))]
 #[strum(serialize_all = "kebab-case")]
-#[semver(minor = 0)]
+#[semver(minor = 0, parent = "PresentProofV1")]
 pub enum PresentProofV1_0 {
     ProposePresentation,
     RequestPresentation,

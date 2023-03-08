@@ -1,46 +1,107 @@
 #![allow(clippy::expect_fun_call)]
 
-use proc_macro2::{Ident, TokenStream};
+use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
-use syn::{spanned::Spanned, Data, DeriveInput, Error, Fields, Lit, Meta, MetaNameValue, Result as SynResult};
+use syn::{
+    punctuated::Punctuated, spanned::Spanned, Data, DeriveInput, Error, Field, Fields, Lit, Meta, MetaNameValue, Path,
+    Result as SynResult, Token, Variant,
+};
+
+use crate::common::{end_or_err, next_or_err, next_or_panic};
 
 const SEMVER: &str = "semver";
 const MINOR: &str = "minor";
 const MAJOR: &str = "major";
 const FAMILY: &str = "family";
+const PARENT: &str = "parent";
 
 pub fn message_type_impl(input: DeriveInput) -> SynResult<TokenStream> {
     let name = input.ident;
 
     let mut attr_iter = input.attrs.into_iter().filter(|a| a.path.is_ident(SEMVER));
+
     // Look for our attribute
-    let attr = attr_iter.next().expect(&format!("must use \"{SEMVER}\" attribute"));
+    let attr = next_or_panic(&mut attr_iter, &format!("must use \"{SEMVER}\" attribute"));
 
-    // Should be the only occurrence, otherwise panic
-    if let Some(attr) = attr_iter.next() {
-        return Err(Error::new(attr.span(), format!("duplicate \"{SEMVER}\" attribute")));
-    }
+    // Should be the only occurrence
+    end_or_err(&mut attr_iter, format!("duplicate \"{SEMVER}\" attribute"))?;
 
-    // Should be a name value pair
-    let Meta::NameValue(nv) = attr.parse_args()? else {
-            return Err(Error::new(attr.span(), format!("expecting a single \"{FAMILY}\", \"{MAJOR}\" or \"{MINOR}\" arguments")));
-        };
+    // Should be a list of name value pairs
+    let list: Punctuated<_, Token![,]> = attr.parse_args_with(Punctuated::parse_terminated)?;
 
-    if nv.path.is_ident(MINOR) {
-        process_minor(&name, nv)
+    let mut iter = list.into_iter();
+    let nv = try_get_nv_pair(&mut iter, attr.span())?;
+
+    // Process arguments
+    let ts = if nv.path.is_ident(MINOR) {
+        let parent = try_get_parent(&mut iter, attr.span())?;
+        process_minor(&name, parent, nv)
     } else if nv.path.is_ident(MAJOR) {
-        process_major(&name, nv, input.data)
+        let parent = try_get_parent(&mut iter, attr.span())?;
+        process_major(&name, parent, nv, input.data)
     } else if nv.path.is_ident(FAMILY) {
+        // Error on other arguments provided.
+        // This is mainly here to error if the parent is provided.
+        end_or_err(&mut iter, "too many arguments")?;
         process_family(&name, nv, input.data)
     } else {
-        return Err(Error::new(
+        Err(Error::new(
             nv.path.span(),
-            format!("expecting a single \"{FAMILY}\", \"{MAJOR}\" or \"{MINOR}\" arguments"),
-        ));
+            format!("expecting (\"{FAMILY}\"), (\"{MAJOR}\", \"{PARENT}\") or (\"{MINOR}\", \"{PARENT}\")"),
+        ))
+    }?;
+
+    // Error on other arguments provided
+    end_or_err(&mut iter, "too many arguments")?;
+
+    Ok(ts)
+}
+
+/// Matches the next value from the iter to get a name value pair.
+fn try_get_nv_pair<I>(iter: &mut I, span: Span) -> SynResult<MetaNameValue>
+where
+    I: Iterator<Item = Meta>,
+{
+    match next_or_err(iter, span, "expecting arguments")? {
+        Meta::NameValue(nv) => Ok(nv),
+        v => Err(Error::new(v.span(), "expecting name value pair")),
     }
 }
 
-fn process_minor(name: &Ident, minor: MetaNameValue) -> SynResult<TokenStream> {
+/// Matches the next name value pair from the iter to get a path to a parent type.
+fn try_get_parent<I>(iter: &mut I, span: Span) -> SynResult<Path>
+where
+    I: Iterator<Item = Meta>,
+{
+    let parent = try_get_nv_pair(iter, span)?;
+
+    if parent.path.is_ident(PARENT) {
+        match parent.lit {
+            Lit::Str(s) => Ok(s.parse()?),
+            l => Err(Error::new(l.span(), "expecting literal string")),
+        }
+    } else {
+        Err(Error::new(parent.span(), "missing \"parent\" argument"))
+    }
+}
+
+/// Iterates the variant and returns it's name and field if it only has one.
+fn try_get_var_parts(var: Variant) -> SynResult<(Ident, Field)> {
+    let var_name = var.ident;
+
+    let var_content = match var.fields {
+        Fields::Unnamed(v) => v,
+        e => return Err(Error::new(e.span(), "only tuple variants allowed")),
+    };
+
+    let mut iter = var_content.unnamed.into_iter();
+    let field = next_or_err(&mut iter, var_name.span(), "variants must have exactly one field")?;
+    end_or_err(&mut iter, "variants must have exactly one field")?;
+
+    Ok((var_name, field))
+}
+
+fn process_minor(name: &Ident, parent: Path, minor: MetaNameValue) -> SynResult<TokenStream> {
     // Ensure the value provided is an integer
     let Lit::Int(i) = minor.lit else {
         return Err(Error::new(minor.lit.span(), "expecting u8"));
@@ -48,6 +109,7 @@ fn process_minor(name: &Ident, minor: MetaNameValue) -> SynResult<TokenStream> {
 
     let expanded = quote! {
         impl ResolveMsgKind for #name {
+            type PARENT = #parent;
             const MINOR: u8 = #i;
         }
     };
@@ -55,7 +117,7 @@ fn process_minor(name: &Ident, minor: MetaNameValue) -> SynResult<TokenStream> {
     Ok(expanded)
 }
 
-fn process_major(name: &Ident, major: MetaNameValue, data: Data) -> SynResult<TokenStream> {
+fn process_major(name: &Ident, parent: Path, major: MetaNameValue, data: Data) -> SynResult<TokenStream> {
     // Ensure the value provided is an integer
     let Lit::Int(i) = major.lit else {
         return Err(Error::new(major.lit.span(), "expecting u8"));
@@ -69,20 +131,7 @@ fn process_major(name: &Ident, major: MetaNameValue, data: Data) -> SynResult<To
     let mut as_parts_fn_match = TokenStream::new();
 
     for var in d.variants {
-        let var_name = var.ident;
-        let Fields::Unnamed(var_content) = var.fields else {
-            return Err(Error::new(var_name.span(), "only tuple variants allowed"));
-        };
-
-        let mut fields_iter = var_content.unnamed.into_iter();
-
-        let Some(field) = fields_iter.next() else {
-            return Err(Error::new(var_name.span(), "variants must have exactly one field"));
-        };
-
-        if let Some(f) = fields_iter.next() {
-            return Err(Error::new(f.span(), "variants must have exactly one field"));
-        }
+        let (var_name, field) = try_get_var_parts(var)?;
 
         resolve_fn_match.extend(quote! {#field::MINOR => Ok(Self::#var_name(#field::resolve_kind(kind)?)),});
         as_parts_fn_match.extend(quote! {Self::#var_name(v) => v.as_minor_ver_parts(),});
@@ -90,6 +139,7 @@ fn process_major(name: &Ident, major: MetaNameValue, data: Data) -> SynResult<To
 
     let expanded = quote! {
         impl ResolveMinorVersion for #name {
+            type PARENT = #parent;
             const MAJOR: u8 = #i;
 
             fn resolve_minor_ver(minor: u8, kind: &str) -> MsgTypeResult<Self> {
@@ -126,20 +176,7 @@ fn process_family(name: &Ident, family: MetaNameValue, data: Data) -> SynResult<
     let mut as_parts_fn_match = TokenStream::new();
 
     for var in d.variants {
-        let var_name = var.ident;
-        let Fields::Unnamed(var_content) = var.fields else {
-            return Err(Error::new(var_name.span(), "only tuple variants allowed"));
-        };
-
-        let mut fields_iter = var_content.unnamed.into_iter();
-
-        let Some(field) = fields_iter.next() else {
-            return Err(Error::new(var_name.span(), "variants must have exactly one field"));
-        };
-
-        if let Some(f) = fields_iter.next() {
-            return Err(Error::new(f.span(), "variants must have exactly one field"));
-        }
+        let (var_name, field) = try_get_var_parts(var)?;
 
         resolve_fn_match
             .extend(quote! {#field::MAJOR => Ok(Self::#var_name(#field::resolve_minor_ver(minor, kind)?)),});

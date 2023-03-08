@@ -22,7 +22,7 @@ pub enum ReportProblem {
 
 #[derive(Copy, Clone, Debug, From, PartialEq, TransitiveFrom, MessageType)]
 #[transitive(into(all(ReportProblem, MessageFamily, MessageType)))]
-#[semver(major = 1)]
+#[semver(major = 1, parent = "ReportProblem")]
 pub enum ReportProblemV1 {
     V1_0(ReportProblemV1_0),
 }
@@ -30,7 +30,7 @@ pub enum ReportProblemV1 {
 #[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq, TransitiveFrom, MessageType)]
 #[transitive(into(all(ReportProblemV1, ReportProblem, MessageFamily, MessageType)))]
 #[strum(serialize_all = "kebab-case")]
-#[semver(minor = 0)]
+#[semver(minor = 0, parent = "ReportProblemV1")]
 pub enum ReportProblemV1_0 {
     ProblemReport,
 }

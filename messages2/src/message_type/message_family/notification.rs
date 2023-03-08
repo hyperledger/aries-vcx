@@ -22,14 +22,14 @@ pub enum Notification {
 
 #[derive(Copy, Clone, Debug, From, PartialEq, TransitiveFrom, MessageType)]
 #[transitive(into(all(Notification, MessageFamily, MessageType)))]
-#[semver(major = 1)]
+#[semver(major = 1, parent = "Notification")]
 pub enum NotificationV1 {
     V1_0(NotificationV1_0),
 }
 
 #[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq, TransitiveFrom, MessageType)]
 #[transitive(into(all(NotificationV1, Notification, MessageFamily, MessageType)))]
-#[semver(minor = 0)]
+#[semver(minor = 0, parent = "NotificationV1")]
 #[strum(serialize_all = "kebab-case")]
 pub enum NotificationV1_0 {
     Ack,

@@ -22,7 +22,7 @@ pub enum OutOfBand {
 
 #[derive(Copy, Clone, Debug, From, PartialEq, TransitiveFrom, MessageType)]
 #[transitive(into(all(OutOfBand, MessageFamily, MessageType)))]
-#[semver(major = 1)]
+#[semver(major = 1, parent = "OutOfBand")]
 pub enum OutOfBandV1 {
     V1_1(OutOfBandV1_1),
 }
@@ -30,7 +30,7 @@ pub enum OutOfBandV1 {
 #[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq, TransitiveFrom, MessageType)]
 #[transitive(into(all(OutOfBandV1, OutOfBand, MessageFamily, MessageType)))]
 #[strum(serialize_all = "kebab-case")]
-#[semver(minor = 1)]
+#[semver(minor = 1, parent = "OutOfBandV1")]
 pub enum OutOfBandV1_1 {
     Invitation,
     HandshakeReuse,

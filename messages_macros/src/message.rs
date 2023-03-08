@@ -6,6 +6,8 @@ use proc_macro2::{Ident, TokenStream};
 use quote::quote;
 use syn::{spanned::Spanned, DeriveInput, Error, Lit, Meta, Result as SynResult};
 
+use crate::common::{end_or_err, next_or_panic};
+
 const MESSAGE: &str = "message";
 const KIND: &str = "kind";
 
@@ -17,12 +19,10 @@ pub fn message_impl(input: DeriveInput) -> SynResult<TokenStream> {
 
     let mut attr_iter = input.attrs.into_iter().filter(|a| a.path.is_ident(MESSAGE));
     // Look for our attribute
-    let attr = attr_iter.next().expect(&format!("must use \"{MESSAGE}\" attribute"));
+    let attr = next_or_panic(&mut attr_iter, &format!("must use \"{MESSAGE}\" attribute"));
 
-    // Should be the only occurrence, otherwise panic
-    if let Some(attr) = attr_iter.next() {
-        return Err(Error::new(attr.span(), format!("duplicate \"{MESSAGE}\" attribute")));
-    }
+    // Should be the only occurrence
+    end_or_err(&mut attr_iter, format!("duplicate \"{MESSAGE}\" attribute"))?;
 
     // Should be a name value pair
     let Meta::NameValue(nv) = attr.parse_args()? else {
@@ -44,6 +44,10 @@ pub fn message_impl(input: DeriveInput) -> SynResult<TokenStream> {
     let expr = TokenStream::from_str(&value)?;
 
     // Get the type of the message kind
+    // We don't expect paths here, but rather
+    // nested enums that end in a unit variant.
+    //
+    // E.g: A::B(B::C(C::D))
     let kind = value
         .split(':')
         .next()

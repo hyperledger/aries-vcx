@@ -22,7 +22,7 @@ pub enum TrustPing {
 
 #[derive(Copy, Clone, Debug, From, PartialEq, TransitiveFrom, MessageType)]
 #[transitive(into(all(TrustPing, MessageFamily, MessageType)))]
-#[semver(major = 1)]
+#[semver(major = 1, parent = "TrustPing")]
 pub enum TrustPingV1 {
     V1_0(TrustPingV1_0),
 }
@@ -30,7 +30,7 @@ pub enum TrustPingV1 {
 #[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq, TransitiveFrom, MessageType)]
 #[transitive(into(all(TrustPingV1, TrustPing, MessageFamily, MessageType)))]
 #[strum(serialize_all = "kebab-case")]
-#[semver(minor = 0)]
+#[semver(minor = 0, parent = "TrustPingV1")]
 pub enum TrustPingV1_0 {
     Ping,
     #[strum(serialize = "ping_response")]

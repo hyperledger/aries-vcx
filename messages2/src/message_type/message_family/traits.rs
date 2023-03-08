@@ -3,6 +3,8 @@ use std::str::FromStr;
 use crate::error::{MsgTypeError, MsgTypeResult};
 
 pub trait ResolveMsgKind: Sized + FromStr + AsRef<str> {
+    type PARENT: ResolveMinorVersion;
+
     const MINOR: u8;
 
     fn resolve_kind(kind: &str) -> MsgTypeResult<Self> {
@@ -15,6 +17,8 @@ pub trait ResolveMsgKind: Sized + FromStr + AsRef<str> {
 }
 
 pub trait ResolveMinorVersion: Sized {
+    type PARENT: ResolveMajorVersion;
+
     const MAJOR: u8;
 
     fn resolve_minor_ver(minor: u8, kind: &str) -> MsgTypeResult<Self>;
