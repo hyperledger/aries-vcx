@@ -1,7 +1,7 @@
+pub mod actor;
 pub mod message_family;
 mod prefix;
 pub mod registry;
-pub mod actor;
 
 use std::{fmt::Display, str::FromStr};
 

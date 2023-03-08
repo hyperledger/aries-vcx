@@ -26,9 +26,6 @@ pub struct HandshakeReuseAcceptedDecorators {
 
 impl HandshakeReuseAcceptedDecorators {
     pub fn new(thread: Thread) -> Self {
-        Self {
-            thread,
-            timing: None,
-        }
+        Self { thread, timing: None }
     }
 }
