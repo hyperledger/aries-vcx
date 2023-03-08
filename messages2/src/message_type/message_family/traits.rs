@@ -3,7 +3,7 @@ use std::str::FromStr;
 use crate::error::{MsgTypeError, MsgTypeResult};
 
 pub trait ResolveMsgKind: Sized + FromStr + AsRef<str> {
-    type PARENT: ResolveMinorVersion;
+    type Parent: ResolveMinorVersion;
 
     const MINOR: u8;
 
@@ -17,7 +17,7 @@ pub trait ResolveMsgKind: Sized + FromStr + AsRef<str> {
 }
 
 pub trait ResolveMinorVersion: Sized {
-    type PARENT: ResolveMajorVersion;
+    type Parent: ResolveMajorVersion;
 
     const MAJOR: u8;
 

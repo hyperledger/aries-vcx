@@ -109,7 +109,7 @@ fn process_minor(name: &Ident, parent: Path, minor: MetaNameValue) -> SynResult<
 
     let expanded = quote! {
         impl ResolveMsgKind for #name {
-            type PARENT = #parent;
+            type Parent = #parent;
             const MINOR: u8 = #i;
         }
     };
@@ -139,7 +139,7 @@ fn process_major(name: &Ident, parent: Path, major: MetaNameValue, data: Data) -
 
     let expanded = quote! {
         impl ResolveMinorVersion for #name {
-            type PARENT = #parent;
+            type Parent = #parent;
             const MAJOR: u8 = #i;
 
             fn resolve_minor_ver(minor: u8, kind: &str) -> MsgTypeResult<Self> {
