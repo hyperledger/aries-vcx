@@ -5,6 +5,7 @@ use transitive::TransitiveFrom;
 
 use crate::{
     error::{MsgTypeError, MsgTypeResult},
+    message_type::actor::Actor,
     message_type::MessageType,
 };
 
@@ -22,7 +23,7 @@ pub enum Routing {
 
 #[derive(Copy, Clone, Debug, From, PartialEq, TransitiveFrom, MessageType)]
 #[transitive(into(all(Routing, MessageFamily, MessageType)))]
-#[semver(major = 1, parent = "Routing", actors())]
+#[semver(major = 1, parent = "Routing", actors("Actor::Mediator"))]
 pub enum RoutingV1 {
     V1_0(RoutingV1_0),
 }

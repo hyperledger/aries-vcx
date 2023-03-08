@@ -3,7 +3,7 @@
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
 use syn::{
-    punctuated::Punctuated, spanned::Spanned, Data, DeriveInput, Error, Field, Fields, Lit, LitStr, Meta, MetaList,
+    punctuated::Punctuated, spanned::Spanned, Data, DeriveInput, Error, Expr, Field, Fields, Lit, Meta, MetaList,
     MetaNameValue, NestedMeta, Path, Result as SynResult, Token, Variant,
 };
 
@@ -78,9 +78,10 @@ where
     }
 }
 
-fn try_get_lit_str(nested: NestedMeta) -> SynResult<LitStr> {
+/// Matches the next value to a string literal and parses it to an expression
+fn try_get_expr_from_str(nested: NestedMeta) -> SynResult<Expr> {
     match nested {
-        NestedMeta::Lit(Lit::Str(l)) => Ok(l),
+        NestedMeta::Lit(Lit::Str(l)) => Ok(l.parse()?),
         v => Err(Error::new(v.span(), "values must be literal strings")),
     }
 }
@@ -103,14 +104,14 @@ where
 }
 
 /// Matches the next name value pair from the iter to get a list of actors.
-fn try_get_actors<I>(iter: &mut I, span: Span) -> SynResult<Punctuated<NestedMeta, Token![,]>>
+fn try_get_actors<I>(iter: &mut I, span: Span) -> SynResult<Vec<Expr>>
 where
     I: Iterator<Item = Meta>,
 {
     let actors = try_get_list(iter, span)?;
 
     if actors.path.is_ident(ACTORS) {
-        Ok(actors.nested)
+        actors.nested.into_iter().map(try_get_expr_from_str).collect()
     } else {
         Err(Error::new(actors.span(), format!("missing \"{ACTORS}\" argument")))
     }
@@ -151,7 +152,7 @@ fn process_minor(name: &Ident, parent: Path, minor: MetaNameValue) -> SynResult<
 fn process_major(
     name: &Ident,
     parent: Path,
-    actors: Punctuated<NestedMeta, Token![,]>,
+    actors: Vec<Expr>,
     major: MetaNameValue,
     data: Data,
 ) -> SynResult<TokenStream> {
@@ -175,11 +176,10 @@ fn process_major(
     }
 
     let num_actors = actors.len();
-    let actors: Vec<_> = actors.into_iter().map(try_get_lit_str).collect::<SynResult<_>>()?;
 
     let expanded = quote! {
         impl ResolveMinorVersion for #name {
-            type Actors = [&'static str; #num_actors];
+            type Actors = [Actor; #num_actors];
             type Parent = #parent;
             const MAJOR: u8 = #i;
 

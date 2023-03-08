@@ -4,7 +4,10 @@ use serde::{Deserialize, Serialize};
 use crate::{
     composite_message::Message,
     decorators::{Thread, Timing},
-    message_type::message_family::discover_features::DiscoverFeaturesV1_0,
+    message_type::{
+        message_family::discover_features::DiscoverFeaturesV1_0,
+        registry::{ProtocolDescriptor, PROTOCOL_REGISTRY},
+    },
     protocols::traits::MessageKind,
 };
 
@@ -16,6 +19,22 @@ pub struct DiscloseContent {
     pub protocols: Vec<ProtocolDescriptor>,
 }
 
+impl DiscloseContent {
+    pub fn new() -> Self {
+        let mut protocols = Vec::new();
+
+        for versions in PROTOCOL_REGISTRY.clone().into_values() {
+            for minor in versions.into_values() {
+                for pd in minor.into_values() {
+                    protocols.push(pd);
+                }
+            }
+        }
+
+        Self { protocols }
+    }
+}
+
 #[derive(Clone, Debug, Deserialize, Serialize, Default)]
 pub struct DiscloseDecorators {
     #[serde(rename = "~thread")]
@@ -24,11 +43,4 @@ pub struct DiscloseDecorators {
     #[serde(rename = "~timing")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<Timing>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
-pub struct ProtocolDescriptor {
-    pub pid: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub roles: Option<Vec<String>>, // TODO: Protocol Registry
 }

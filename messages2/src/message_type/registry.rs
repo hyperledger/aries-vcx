@@ -1,6 +1,7 @@
 use std::collections::{BTreeMap, HashMap};
 
 use lazy_static::lazy_static;
+use serde::{Deserialize, Serialize};
 
 use crate::message_type::message_family::{
     basic_message::BasicMessageV1_0,
@@ -16,7 +17,22 @@ use crate::message_type::message_family::{
     trust_ping::TrustPingV1_0,
 };
 
-type RegistryMap = HashMap<&'static str, HashMap<u8, BTreeMap<u8, Vec<&'static str>>>>;
+use super::{actor::Actor, prefix::Prefix};
+
+type RegistryMap = HashMap<&'static str, HashMap<u8, BTreeMap<u8, ProtocolDescriptor>>>;
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ProtocolDescriptor {
+    pub pid: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub roles: Option<Vec<Actor>>,
+}
+
+impl ProtocolDescriptor {
+    pub fn new(pid: String) -> Self {
+        Self { pid, roles: None }
+    }
+}
 
 macro_rules! extract_parts {
     ($name:ty) => {
@@ -29,18 +45,22 @@ macro_rules! extract_parts {
     };
 }
 
-fn map_insert(map: &mut RegistryMap, parts: (&'static str, u8, u8, Vec<&'static str>)) {
+fn map_insert(map: &mut RegistryMap, parts: (&'static str, u8, u8, Vec<Actor>)) {
     let (family, major, minor, actors) = parts;
+
+    let pid = format!("{}/{}/{}.{}", Prefix::DID_COM_ORG_PREFIX, family, major, minor);
+    let mut pd = ProtocolDescriptor::new(pid);
+    pd.roles = Some(actors);
 
     map.entry(family)
         .or_insert(HashMap::new())
         .entry(major)
         .or_insert(BTreeMap::new())
-        .insert(minor, actors);
+        .insert(minor, pd);
 }
 
 lazy_static! {
-    static ref PROTOCOL_REGISTRY: RegistryMap = {
+    pub static ref PROTOCOL_REGISTRY: RegistryMap = {
         let mut m = HashMap::new();
         map_insert(&mut m, extract_parts!(BasicMessageV1_0));
         map_insert(&mut m, extract_parts!(ConnectionV1_0));

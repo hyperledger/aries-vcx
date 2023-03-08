@@ -5,6 +5,7 @@ use transitive::TransitiveFrom;
 
 use crate::{
     error::{MsgTypeError, MsgTypeResult},
+    message_type::actor::Actor,
     message_type::MessageType,
 };
 
@@ -22,7 +23,7 @@ pub enum PresentProof {
 
 #[derive(Copy, Clone, Debug, From, TryInto, PartialEq, TransitiveFrom, MessageType)]
 #[transitive(into(all(PresentProof, MessageFamily, MessageType)))]
-#[semver(major = 1, parent = "PresentProof", actors("prover", "verifier"))]
+#[semver(major = 1, parent = "PresentProof", actors("Actor::Prover", "Actor::Verifier"))]
 pub enum PresentProofV1 {
     V1_0(PresentProofV1_0),
 }

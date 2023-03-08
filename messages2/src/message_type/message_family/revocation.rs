@@ -5,6 +5,7 @@ use transitive::TransitiveFrom;
 
 use crate::{
     error::{MsgTypeError, MsgTypeResult},
+    message_type::actor::Actor,
     message_type::MessageType,
 };
 
@@ -22,7 +23,7 @@ pub enum Revocation {
 
 #[derive(Copy, Clone, Debug, From, PartialEq, TransitiveFrom, MessageType)]
 #[transitive(into(all(Revocation, MessageFamily, MessageType)))]
-#[semver(major = 1, parent = "Revocation", actors("holder", "issuer"))]
+#[semver(major = 1, parent = "Revocation", actors("Actor::Holder", "Actor::Issuer"))]
 pub enum RevocationV2 {
     V2_0(RevocationV2_0),
 }

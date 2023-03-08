@@ -1,6 +1,9 @@
 use std::str::FromStr;
 
-use crate::error::{MsgTypeError, MsgTypeResult};
+use crate::{
+    error::{MsgTypeError, MsgTypeResult},
+    message_type::actor::Actor,
+};
 
 pub trait ResolveMsgKind: Sized + FromStr + AsRef<str> {
     type Parent: ResolveMinorVersion;
@@ -17,7 +20,7 @@ pub trait ResolveMsgKind: Sized + FromStr + AsRef<str> {
 }
 
 pub trait ResolveMinorVersion: Sized {
-    type Actors: IntoIterator<Item = &'static str>;
+    type Actors: IntoIterator<Item = Actor>;
     type Parent: ResolveMajorVersion;
 
     const MAJOR: u8;

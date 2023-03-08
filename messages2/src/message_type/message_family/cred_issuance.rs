@@ -5,6 +5,7 @@ use transitive::TransitiveFrom;
 
 use crate::{
     error::{MsgTypeError, MsgTypeResult},
+    message_type::actor::Actor,
     message_type::MessageType,
 };
 
@@ -22,7 +23,7 @@ pub enum CredentialIssuance {
 
 #[derive(Copy, Clone, Debug, From, TryInto, PartialEq, TransitiveFrom, MessageType)]
 #[transitive(into(all(CredentialIssuance, MessageFamily, MessageType)))]
-#[semver(major = 1, parent = "CredentialIssuance", actors("holder", "issuer"))]
+#[semver(major = 1, parent = "CredentialIssuance", actors("Actor::Holder", "Actor::Issuer"))]
 pub enum CredentialIssuanceV1 {
     V1_0(CredentialIssuanceV1_0),
 }

@@ -5,6 +5,7 @@ use transitive::TransitiveFrom;
 
 use crate::{
     error::{MsgTypeError, MsgTypeResult},
+    message_type::actor::Actor,
     message_type::MessageType,
 };
 
@@ -22,7 +23,7 @@ pub enum DiscoverFeatures {
 
 #[derive(Copy, Clone, Debug, From, PartialEq, TransitiveFrom, MessageType)]
 #[transitive(into(all(DiscoverFeatures, MessageFamily, MessageType)))]
-#[semver(major = 1, parent = "DiscoverFeatures", actors("requester", "responder"))]
+#[semver(major = 1, parent = "DiscoverFeatures", actors("Actor::Requester", "Actor::Responder"))]
 pub enum DiscoverFeaturesV1 {
     V1_0(DiscoverFeaturesV1_0),
 }

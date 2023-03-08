@@ -2,8 +2,13 @@ use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    composite_message::Message, decorators::Timing,
-    message_type::message_family::discover_features::DiscoverFeaturesV1_0, protocols::traits::MessageKind,
+    composite_message::Message,
+    decorators::Timing,
+    message_type::{
+        message_family::discover_features::DiscoverFeaturesV1_0,
+        registry::{ProtocolDescriptor, PROTOCOL_REGISTRY},
+    },
+    protocols::traits::MessageKind,
 };
 
 pub type Query = Message<QueryContent, QueryDecorators>;
@@ -18,10 +23,23 @@ pub struct QueryContent {
 
 impl QueryContent {
     pub fn new(query: String) -> Self {
-        Self {
-            query,
-            comment: None,
+        Self { query, comment: None }
+    }
+
+    pub fn lookup(&self) -> Vec<&ProtocolDescriptor> {
+        let mut protocols = Vec::new();
+
+        for versions in PROTOCOL_REGISTRY.values() {
+            for minor in versions.values() {
+                for pd in minor.values() {
+                    if pd.pid.starts_with(&self.query) {
+                        protocols.push(pd);
+                    }
+                }
+            }
         }
+
+        protocols
     }
 }
 
