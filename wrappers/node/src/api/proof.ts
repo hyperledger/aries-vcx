@@ -31,11 +31,6 @@ export interface IProofData {
   proof: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
-export interface IProofResponses {
-  proof?: string;
-  proofState: ProofState;
-}
-
 export enum ProofFieldType {
   Revealed = 'revealed',
   Unrevealed = 'unrevealed',
@@ -190,14 +185,33 @@ export class Proof extends VcxBaseWithState<IProofData, VerifierStateType> {
     }
   }
 
-  public getProof(): IProofResponses {
+  public getPresentationMsg(): string {
     try {
-      const proof = ffi.proofGetProofMsg(this.handle);
-      const proofState = ffi.proofGetProofState(this.handle);
-      return {
-        proof,
-        proofState,
-      };
+      return ffi.proofGetPresentationMsg(this.handle);
+    } catch (err: any) {
+      throw new VCXInternalError(err);
+    }
+  }
+
+  public getPresentationVerificationStatus(): ProofState {
+    try {
+      return ffi.proofGetPresentationVerificationStatus(this.handle);
+    } catch (err: any) {
+      throw new VCXInternalError(err);
+    }
+  }
+
+  public getPresentationAttachment(): string {
+    try {
+      return ffi.proofGetPresentationAttachment(this.handle);
+    } catch (err: any) {
+      throw new VCXInternalError(err);
+    }
+  }
+
+  public getPresentationRequestAttachment(): string {
+    try {
+      return ffi.proofGetPresentationRequestAttachment(this.handle);
     } catch (err: any) {
       throw new VCXInternalError(err);
     }

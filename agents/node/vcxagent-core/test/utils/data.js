@@ -2,13 +2,13 @@ function getFaberCredDefName () {
   return 'DemoCredential123'
 }
 
-function getFaberProofDataWithNonRevocation (issuerDid, proofName) {
-  const proofData = getFaberProofData(issuerDid, proofName)
+function getFaberProofDataWithNonRevocation (issuerDid) {
+  const proofData = proofRequestDataStandard(issuerDid)
   proofData.revocationInterval = { to: Date.now() }
   return proofData
 }
 
-function getFaberProofData (issuerDid, proofName) {
+function proofRequestDataStandard (issuerDid) {
   const proofAttributes = [
     {
       names: ['name', 'last_name', 'sex'],
@@ -36,7 +36,23 @@ function getFaberProofData (issuerDid, proofName) {
     sourceId: '213',
     attrs: proofAttributes,
     preds: proofPredicates,
-    name: proofName,
+    name: 'proof-test-standard',
+    revocationInterval: { to: null, from: null }
+  }
+}
+
+function proofRequestDataSelfAttest () {
+  const proofAttributes = [
+    {
+      name: 'nickname',
+      self_attest_allowed: true
+    }
+  ]
+
+  return {
+    sourceId: '213',
+    attrs: proofAttributes,
+    name: 'proof-test-self-attesting',
     revocationInterval: { to: null, from: null }
   }
 }
@@ -51,7 +67,11 @@ function getAliceSchemaAttrs () {
     age: '25'
   }
 }
-module.exports.getAliceSchemaAttrs = getAliceSchemaAttrs
-module.exports.getFaberCredDefName = getFaberCredDefName
-module.exports.getFaberProofData = getFaberProofData
-module.exports.getFaberProofDataWithNonRevocation = getFaberProofDataWithNonRevocation
+
+module.exports = {
+  getAliceSchemaAttrs,
+  getFaberCredDefName,
+  proofRequestDataStandard,
+  getFaberProofDataWithNonRevocation,
+  proofRequestDataSelfAttest
+}

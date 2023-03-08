@@ -14,11 +14,16 @@ mod integration_tests {
         create_and_store_credential, create_and_store_nonrevocable_credential,
         create_and_store_nonrevocable_credential_def, create_indy_proof,
     };
+    use aries_vcx::errors::error::VcxResult;
     use aries_vcx::handlers::proof_presentation::prover::Prover;
+    use aries_vcx::handlers::proof_presentation::verifier::Verifier;
     use aries_vcx::messages::protocols::proof_presentation::presentation_request::PresentationRequest;
     use aries_vcx::utils::constants::{DEFAULT_SCHEMA_ATTRS, TAILS_DIR};
     use aries_vcx::utils::devsetup::{init_holder_setup_in_indy_context, SetupProfile};
     use aries_vcx::utils::get_temp_dir_path;
+    use messages::a2a::A2AMessage;
+    use messages::protocols::proof_presentation::presentation_request;
+    use messages::status::Status;
 
     #[tokio::test]
     async fn test_retrieve_credentials() {
@@ -235,49 +240,6 @@ mod integration_tests {
     }
 
     #[tokio::test]
-    async fn test_generate_self_attested_proof() {
-        // todo - use SetupProfile::run after modular impls
-        SetupProfile::run_indy(|setup| async move {
-            let indy_proof_req = json!({
-               "nonce":"123432421212",
-               "name":"proof_req_1",
-               "version":"0.1",
-               "requested_attributes": json!({
-                   "address1_1": json!({
-                       "name":"address1",
-                   }),
-                   "zip_2": json!({
-                       "name":"zip",
-                   }),
-               }),
-               "requested_predicates": json!({}),
-            })
-            .to_string();
-
-            let pres_req_data: PresentationRequestData = serde_json::from_str(&indy_proof_req).unwrap();
-            let proof_req = PresentationRequest::create()
-                .set_request_presentations_attach(&json!(pres_req_data).to_string())
-                .unwrap();
-            let mut proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
-
-            let selected_credentials: serde_json::Value = json!({});
-            let self_attested: serde_json::Value = json!({
-                  "address1_1":"attested_address",
-                  "zip_2": "attested_zip"
-            });
-            let generated_proof = proof
-                .generate_presentation(
-                    &setup.profile,
-                    selected_credentials.to_string(),
-                    self_attested.to_string(),
-                )
-                .await;
-            assert!(generated_proof.is_ok());
-        })
-        .await;
-    }
-
-    #[tokio::test]
     async fn test_generate_proof_with_predicates() {
         // todo - use SetupProfile::run after modular impls
         SetupProfile::run_indy(|setup| async move {
@@ -349,14 +311,72 @@ mod integration_tests {
         })
         .await;
     }
+
+    #[tokio::test]
+    async fn test_generate_self_attested_proof() {
+        // todo - use SetupProfile::run after modular impls
+        SetupProfile::run_indy(|setup| async move {
+            let indy_proof_req = json!({
+               "nonce":"123432421212",
+               "name":"proof_req_1",
+               "version":"0.1",
+               "requested_attributes": json!({
+                   "address1_1": json!({
+                       "name":"address1",
+                   }),
+                   "zip_2": json!({
+                       "name":"zip",
+                   }),
+               }),
+               "requested_predicates": json!({}),
+            })
+            .to_string();
+            let pres_req_data: PresentationRequestData = serde_json::from_str(&indy_proof_req).unwrap();
+            let mut verifier = Verifier::create_from_request("foo".into(), &pres_req_data).unwrap();
+            let presentation_request = verifier.get_presentation_request_msg().unwrap();
+            verifier.mark_presentation_request_msg_sent().unwrap();
+
+            // prover receives request and generates presentation
+            let mut proof: Prover = Prover::create_from_request("1", presentation_request).unwrap();
+
+            let selected_credentials: serde_json::Value = json!({});
+            let self_attested: serde_json::Value = json!({
+                  "address1_1":"attested_address",
+                  "zip_2": "attested_zip"
+            });
+            proof
+                .generate_presentation(
+                    &setup.profile,
+                    selected_credentials.to_string(),
+                    self_attested.to_string(),
+                )
+                .await
+                .unwrap();
+            let presentation = proof.get_presentation_msg().unwrap();
+
+            // verifier receives the presentation
+            verifier
+                .verify_presentation(
+                    &setup.profile,
+                    presentation,
+                    Box::new(|_: A2AMessage| Box::pin(async { Ok(()) })),
+                )
+                .await
+                .unwrap();
+
+            let status = verifier.get_presentation_status();
+            assert_eq!(status, Status::Success);
+        })
+        .await;
+    }
 }
 
 #[cfg(test)]
 #[cfg(feature = "agency_pool_tests")]
 mod tests {
-    use aries_vcx::common::test_utils::create_and_store_nonrevocable_credential_def;
     use serde_json::Value;
 
+    use aries_vcx::common::test_utils::create_and_store_nonrevocable_credential_def;
     use aries_vcx::handlers::issuance::holder::Holder;
     use aries_vcx::handlers::proof_presentation::prover::Prover;
     use aries_vcx::handlers::proof_presentation::verifier::Verifier;
@@ -548,85 +568,85 @@ mod tests {
     #[tokio::test]
     async fn test_double_issuance_separate_issuer_and_consumers() {
         SetupPool::run(|setup| async move {
-        let mut issuer = Faber::setup(setup.pool_handle).await;
-        let mut verifier = Faber::setup(setup.pool_handle).await;
-        let mut consumer1 = create_test_alice_instance(&setup).await;
-        let mut consumer2 = create_test_alice_instance(&setup).await;
+            let mut issuer = Faber::setup(setup.pool_handle).await;
+            let mut verifier = Faber::setup(setup.pool_handle).await;
+            let mut consumer1 = create_test_alice_instance(&setup).await;
+            let mut consumer2 = create_test_alice_instance(&setup).await;
 
-        let (consumer1_to_verifier, verifier_to_consumer1) =
-            create_connected_connections(&mut consumer1, &mut verifier).await;
-        let (consumer1_to_issuer, issuer_to_consumer1) =
-            create_connected_connections(&mut consumer1, &mut issuer).await;
-        let (consumer2_to_verifier, verifier_to_consumer2) =
-            create_connected_connections(&mut consumer2, &mut verifier).await;
-        let (consumer2_to_issuer, issuer_to_consumer2) =
-            create_connected_connections(&mut consumer2, &mut issuer).await;
+            let (consumer1_to_verifier, verifier_to_consumer1) =
+                create_connected_connections(&mut consumer1, &mut verifier).await;
+            let (consumer1_to_issuer, issuer_to_consumer1) =
+                create_connected_connections(&mut consumer1, &mut issuer).await;
+            let (consumer2_to_verifier, verifier_to_consumer2) =
+                create_connected_connections(&mut consumer2, &mut verifier).await;
+            let (consumer2_to_issuer, issuer_to_consumer2) =
+                create_connected_connections(&mut consumer2, &mut issuer).await;
 
-        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _rev_reg_id) =
-            _create_address_schema(&issuer.profile, &issuer.config_issuer.institution_did).await;
-        let (address1, address2, city, state, zip) = attr_names();
-        let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
-        let _credential_handle1 = _exchange_credential(
-            &mut consumer1,
-            &mut issuer,
-            credential_data1,
-            &cred_def,
-            &rev_reg,
-            &consumer1_to_issuer,
-            &issuer_to_consumer1,
-            None,
-        )
-        .await;
-        let credential_data2 = json!({address1.clone(): "101 Tela Lane", address2.clone(): "Suite 1", city.clone(): "SLC", state.clone(): "WA", zip.clone(): "8721"}).to_string();
-        let _credential_handle2 = _exchange_credential(
-            &mut consumer2,
-            &mut issuer,
-            credential_data2,
-            &cred_def,
-            &rev_reg,
-            &consumer2_to_issuer,
-            &issuer_to_consumer2,
-            None,
-        )
-        .await;
+            let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _rev_reg_id) =
+                _create_address_schema(&issuer.profile, &issuer.config_issuer.institution_did).await;
+            let (address1, address2, city, state, zip) = attr_names();
+            let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
+            let _credential_handle1 = _exchange_credential(
+                &mut consumer1,
+                &mut issuer,
+                credential_data1,
+                &cred_def,
+                &rev_reg,
+                &consumer1_to_issuer,
+                &issuer_to_consumer1,
+                None,
+            )
+                .await;
+            let credential_data2 = json!({address1.clone(): "101 Tela Lane", address2.clone(): "Suite 1", city.clone(): "SLC", state.clone(): "WA", zip.clone(): "8721"}).to_string();
+            let _credential_handle2 = _exchange_credential(
+                &mut consumer2,
+                &mut issuer,
+                credential_data2,
+                &cred_def,
+                &rev_reg,
+                &consumer2_to_issuer,
+                &issuer_to_consumer2,
+                None,
+            )
+                .await;
 
-        let request_name1 = Some("request1");
-        let mut proof_verifier = verifier_create_proof_and_send_request(
-            &mut verifier,
-            &verifier_to_consumer1,
-            &schema_id,
-            &cred_def_id,
-            request_name1,
-        )
-        .await;
-        prover_select_credentials_and_send_proof(&mut consumer1, &consumer1_to_verifier, None, None).await;
-        proof_verifier
-            .update_state(&verifier.profile, &verifier.agency_client, &verifier_to_consumer1)
-            .await
-            .unwrap();
-        assert_eq!(
-            ProofStateType::from(proof_verifier.get_presentation_status()),
-            ProofStateType::ProofValidated
-        );
+            let request_name1 = Some("request1");
+            let mut proof_verifier = verifier_create_proof_and_send_request(
+                &mut verifier,
+                &verifier_to_consumer1,
+                &schema_id,
+                &cred_def_id,
+                request_name1,
+            )
+                .await;
+            prover_select_credentials_and_send_proof(&mut consumer1, &consumer1_to_verifier, None, None).await;
+            proof_verifier
+                .update_state(&verifier.profile, &verifier.agency_client, &verifier_to_consumer1)
+                .await
+                .unwrap();
+            assert_eq!(
+                ProofStateType::from(proof_verifier.get_presentation_status()),
+                ProofStateType::ProofValidated
+            );
 
-        let request_name2 = Some("request2");
-        let mut proof_verifier = verifier_create_proof_and_send_request(
-            &mut verifier,
-            &verifier_to_consumer2,
-            &schema_id,
-            &cred_def_id,
-            request_name2,
-        )
-        .await;
-        prover_select_credentials_and_send_proof(&mut consumer2, &consumer2_to_verifier, None, None).await;
-        proof_verifier
-            .update_state(&verifier.profile, &verifier.agency_client, &verifier_to_consumer2)
-            .await
-            .unwrap();
-        assert_eq!(
-            ProofStateType::from(proof_verifier.get_presentation_status()),
-            ProofStateType::ProofValidated
-        );
+            let request_name2 = Some("request2");
+            let mut proof_verifier = verifier_create_proof_and_send_request(
+                &mut verifier,
+                &verifier_to_consumer2,
+                &schema_id,
+                &cred_def_id,
+                request_name2,
+            )
+                .await;
+            prover_select_credentials_and_send_proof(&mut consumer2, &consumer2_to_verifier, None, None).await;
+            proof_verifier
+                .update_state(&verifier.profile, &verifier.agency_client, &verifier_to_consumer2)
+                .await
+                .unwrap();
+            assert_eq!(
+                ProofStateType::from(proof_verifier.get_presentation_status()),
+                ProofStateType::ProofValidated
+            );
         }).await;
     }
 
@@ -688,73 +708,73 @@ mod tests {
     #[tokio::test]
     async fn test_double_issuance_issuer_is_verifier() {
         SetupPool::run(|setup| async move {
-        let mut institution = Faber::setup(setup.pool_handle).await;
-        let mut consumer = create_test_alice_instance(&setup).await;
+            let mut institution = Faber::setup(setup.pool_handle).await;
+            let mut consumer = create_test_alice_instance(&setup).await;
 
-        let (consumer_to_institution, institution_to_consumer) =
-            create_connected_connections(&mut consumer, &mut institution).await;
+            let (consumer_to_institution, institution_to_consumer) =
+                create_connected_connections(&mut consumer, &mut institution).await;
 
-        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _rev_reg_id) =
-            _create_address_schema(&institution.profile, &institution.config_issuer.institution_did).await;
-        let (address1, address, city, state, zip) = attr_names();
-        let credential_data = json!({address1.clone(): "5th Avenue", address.clone(): "Suite 1234", city.clone(): "NYC", state.clone(): "NYS", zip.clone(): "84712"}).to_string();
-        let _credential_handle = _exchange_credential(
-            &mut consumer,
-            &mut institution,
-            credential_data,
-            &cred_def,
-            &rev_reg,
-            &consumer_to_institution,
-            &institution_to_consumer,
-            None,
-        )
-        .await;
-
-        let request_name1 = Some("request1");
-        let mut verifier = verifier_create_proof_and_send_request(
-            &mut institution,
-            &institution_to_consumer,
-            &schema_id,
-            &cred_def_id,
-            request_name1,
-        )
-        .await;
-        prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_institution, request_name1, None).await;
-        verifier
-            .update_state(
-                &institution.profile,
-                &institution.agency_client,
+            let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _rev_reg_id) =
+                _create_address_schema(&institution.profile, &institution.config_issuer.institution_did).await;
+            let (address1, address, city, state, zip) = attr_names();
+            let credential_data = json!({address1.clone(): "5th Avenue", address.clone(): "Suite 1234", city.clone(): "NYC", state.clone(): "NYS", zip.clone(): "84712"}).to_string();
+            let _credential_handle = _exchange_credential(
+                &mut consumer,
+                &mut institution,
+                credential_data,
+                &cred_def,
+                &rev_reg,
+                &consumer_to_institution,
                 &institution_to_consumer,
+                None,
             )
-            .await
-            .unwrap();
-        assert_eq!(
-            ProofStateType::from(verifier.get_presentation_status()),
-            ProofStateType::ProofValidated
-        );
+                .await;
 
-        let request_name2 = Some("request2");
-        let mut verifier = verifier_create_proof_and_send_request(
-            &mut institution,
-            &institution_to_consumer,
-            &schema_id,
-            &cred_def_id,
-            request_name2,
-        )
-        .await;
-        prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_institution, request_name2, None).await;
-        verifier
-            .update_state(
-                &institution.profile,
-                &institution.agency_client,
+            let request_name1 = Some("request1");
+            let mut verifier = verifier_create_proof_and_send_request(
+                &mut institution,
                 &institution_to_consumer,
+                &schema_id,
+                &cred_def_id,
+                request_name1,
             )
-            .await
-            .unwrap();
-        assert_eq!(
-            ProofStateType::from(verifier.get_presentation_status()),
-            ProofStateType::ProofValidated
-        );
+                .await;
+            prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_institution, request_name1, None).await;
+            verifier
+                .update_state(
+                    &institution.profile,
+                    &institution.agency_client,
+                    &institution_to_consumer,
+                )
+                .await
+                .unwrap();
+            assert_eq!(
+                ProofStateType::from(verifier.get_presentation_status()),
+                ProofStateType::ProofValidated
+            );
+
+            let request_name2 = Some("request2");
+            let mut verifier = verifier_create_proof_and_send_request(
+                &mut institution,
+                &institution_to_consumer,
+                &schema_id,
+                &cred_def_id,
+                request_name2,
+            )
+                .await;
+            prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_institution, request_name2, None).await;
+            verifier
+                .update_state(
+                    &institution.profile,
+                    &institution.agency_client,
+                    &institution_to_consumer,
+                )
+                .await
+                .unwrap();
+            assert_eq!(
+                ProofStateType::from(verifier.get_presentation_status()),
+                ProofStateType::ProofValidated
+            );
         }).await;
     }
 
@@ -881,80 +901,80 @@ mod tests {
     #[tokio::test]
     async fn test_two_creds_one_rev_reg() {
         SetupPool::run(|setup| async move {
-        let mut issuer = Faber::setup(setup.pool_handle).await;
-        let mut verifier = Faber::setup(setup.pool_handle).await;
-        let mut consumer = create_test_alice_instance(&setup).await;
+            let mut issuer = Faber::setup(setup.pool_handle).await;
+            let mut verifier = Faber::setup(setup.pool_handle).await;
+            let mut consumer = create_test_alice_instance(&setup).await;
 
-        let (consumer_to_verifier, verifier_to_consumer) =
-            create_connected_connections(&mut consumer, &mut verifier).await;
-        let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut issuer).await;
+            let (consumer_to_verifier, verifier_to_consumer) =
+                create_connected_connections(&mut consumer, &mut verifier).await;
+            let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut issuer).await;
 
-        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _rev_reg_id) =
-            _create_address_schema(&issuer.profile, &issuer.config_issuer.institution_did).await;
-        let (address1, address2, city, state, zip) = attr_names();
-        let (req1, req2) = (Some("request1"), Some("request2"));
-        let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
-        let _credential_handle1 = _exchange_credential(
-            &mut consumer,
-            &mut issuer,
-            credential_data1.clone(),
-            &cred_def,
-            &rev_reg,
-            &consumer_to_issuer,
-            &issuer_to_consumer,
-            req1,
-        )
-        .await;
-        let credential_data2 = json!({address1.clone(): "101 Tela Lane", address2.clone(): "Suite 1", city.clone(): "SLC", state.clone(): "WA", zip.clone(): "8721"}).to_string();
-        let _credential_handle2 = _exchange_credential(
-            &mut consumer,
-            &mut issuer,
-            credential_data2.clone(),
-            &cred_def,
-            &rev_reg,
-            &consumer_to_issuer,
-            &issuer_to_consumer,
-            req2,
-        )
-        .await;
+            let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _rev_reg_id) =
+                _create_address_schema(&issuer.profile, &issuer.config_issuer.institution_did).await;
+            let (address1, address2, city, state, zip) = attr_names();
+            let (req1, req2) = (Some("request1"), Some("request2"));
+            let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
+            let _credential_handle1 = _exchange_credential(
+                &mut consumer,
+                &mut issuer,
+                credential_data1.clone(),
+                &cred_def,
+                &rev_reg,
+                &consumer_to_issuer,
+                &issuer_to_consumer,
+                req1,
+            )
+                .await;
+            let credential_data2 = json!({address1.clone(): "101 Tela Lane", address2.clone(): "Suite 1", city.clone(): "SLC", state.clone(): "WA", zip.clone(): "8721"}).to_string();
+            let _credential_handle2 = _exchange_credential(
+                &mut consumer,
+                &mut issuer,
+                credential_data2.clone(),
+                &cred_def,
+                &rev_reg,
+                &consumer_to_issuer,
+                &issuer_to_consumer,
+                req2,
+            )
+                .await;
 
-        let mut proof_verifier = verifier_create_proof_and_send_request(
-            &mut verifier,
-            &verifier_to_consumer,
-            &schema_id,
-            &cred_def_id,
-            req1,
-        )
-        .await;
-        prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1))
-            .await;
-        proof_verifier
-            .update_state(&verifier.profile, &verifier.agency_client, &verifier_to_consumer)
-            .await
-            .unwrap();
-        assert_eq!(
-            ProofStateType::from(proof_verifier.get_presentation_status()),
-            ProofStateType::ProofValidated
-        );
+            let mut proof_verifier = verifier_create_proof_and_send_request(
+                &mut verifier,
+                &verifier_to_consumer,
+                &schema_id,
+                &cred_def_id,
+                req1,
+            )
+                .await;
+            prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1))
+                .await;
+            proof_verifier
+                .update_state(&verifier.profile, &verifier.agency_client, &verifier_to_consumer)
+                .await
+                .unwrap();
+            assert_eq!(
+                ProofStateType::from(proof_verifier.get_presentation_status()),
+                ProofStateType::ProofValidated
+            );
 
-        let mut proof_verifier = verifier_create_proof_and_send_request(
-            &mut verifier,
-            &verifier_to_consumer,
-            &schema_id,
-            &cred_def_id,
-            req2,
-        )
-        .await;
-        prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2))
-            .await;
-        proof_verifier
-            .update_state(&verifier.profile, &verifier.agency_client, &verifier_to_consumer)
-            .await
-            .unwrap();
-        assert_eq!(
-            ProofStateType::from(proof_verifier.get_presentation_status()),
-            ProofStateType::ProofValidated
-        );
+            let mut proof_verifier = verifier_create_proof_and_send_request(
+                &mut verifier,
+                &verifier_to_consumer,
+                &schema_id,
+                &cred_def_id,
+                req2,
+            )
+                .await;
+            prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2))
+                .await;
+            proof_verifier
+                .update_state(&verifier.profile, &verifier.agency_client, &verifier_to_consumer)
+                .await
+                .unwrap();
+            assert_eq!(
+                ProofStateType::from(proof_verifier.get_presentation_status()),
+                ProofStateType::ProofValidated
+            );
         }).await;
     }
 

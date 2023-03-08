@@ -438,7 +438,7 @@ impl VerifierSM {
         }
     }
 
-    pub fn presentation_request(&self) -> VcxResult<PresentationRequest> {
+    pub fn presentation_request_msg(&self) -> VcxResult<PresentationRequest> {
         match self.state {
             VerifierFullState::Initial(_) => Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::InvalidState,
@@ -460,7 +460,7 @@ impl VerifierSM {
         }
     }
 
-    pub fn presentation(&self) -> VcxResult<Presentation> {
+    pub fn get_presentation_msg(&self) -> VcxResult<Presentation> {
         match self.state {
             VerifierFullState::Finished(ref state) => state.presentation.clone().ok_or(AriesVcxError::from_msg(
                 AriesVcxErrorKind::InvalidState,
@@ -668,7 +668,7 @@ pub mod unit_tests {
 
             assert_match!(VerifierFullState::PresentationRequestSet(_), verifier_sm.state);
 
-            let msg_presentation_request = verifier_sm.presentation_request().unwrap();
+            let msg_presentation_request = verifier_sm.presentation_request_msg().unwrap();
             let out_time = msg_presentation_request.timing.unwrap().out_time.unwrap();
             assert!(was_in_past(&out_time, chrono::Duration::milliseconds(100)).unwrap());
         }
