@@ -22,7 +22,7 @@ pub enum Revocation {
 
 #[derive(Copy, Clone, Debug, From, PartialEq, TransitiveFrom, MessageType)]
 #[transitive(into(all(Revocation, MessageFamily, MessageType)))]
-#[semver(major = 1, parent = "Revocation")]
+#[semver(major = 1, parent = "Revocation", actors("holder", "issuer"))]
 pub enum RevocationV2 {
     V2_0(RevocationV2_0),
 }

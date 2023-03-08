@@ -22,7 +22,7 @@ pub enum Connection {
 
 #[derive(Copy, Clone, Debug, From, TryInto, PartialEq, TransitiveFrom, MessageType)]
 #[transitive(into(all(Connection, MessageFamily, MessageType)))]
-#[semver(major = 1, parent = "Connection")]
+#[semver(major = 1, parent = "Connection", actors("inviter", "invitee"))]
 pub enum ConnectionV1 {
     V1_0(ConnectionV1_0),
 }

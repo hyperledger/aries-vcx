@@ -3,8 +3,8 @@
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
 use syn::{
-    punctuated::Punctuated, spanned::Spanned, Data, DeriveInput, Error, Field, Fields, Lit, Meta, MetaNameValue, Path,
-    Result as SynResult, Token, Variant,
+    punctuated::Punctuated, spanned::Spanned, Data, DeriveInput, Error, Field, Fields, Lit, LitStr, Meta, MetaList,
+    MetaNameValue, NestedMeta, Path, Result as SynResult, Token, Variant,
 };
 
 use crate::common::{end_or_err, next_or_err, next_or_panic};
@@ -14,6 +14,7 @@ const MINOR: &str = "minor";
 const MAJOR: &str = "major";
 const FAMILY: &str = "family";
 const PARENT: &str = "parent";
+const ACTORS: &str = "actors";
 
 pub fn message_type_impl(input: DeriveInput) -> SynResult<TokenStream> {
     let name = input.ident;
@@ -38,11 +39,9 @@ pub fn message_type_impl(input: DeriveInput) -> SynResult<TokenStream> {
         process_minor(&name, parent, nv)
     } else if nv.path.is_ident(MAJOR) {
         let parent = try_get_parent(&mut iter, attr.span())?;
-        process_major(&name, parent, nv, input.data)
+        let actors = try_get_actors(&mut iter, attr.span())?;
+        process_major(&name, parent, actors, nv, input.data)
     } else if nv.path.is_ident(FAMILY) {
-        // Error on other arguments provided.
-        // This is mainly here to error if the parent is provided.
-        end_or_err(&mut iter, "too many arguments")?;
         process_family(&name, nv, input.data)
     } else {
         Err(Error::new(
@@ -68,6 +67,24 @@ where
     }
 }
 
+/// Matches the next value from the iter to get a list
+fn try_get_list<I>(iter: &mut I, span: Span) -> SynResult<MetaList>
+where
+    I: Iterator<Item = Meta>,
+{
+    match next_or_err(iter, span, "expecting arguments")? {
+        Meta::List(list) => Ok(list),
+        v => Err(Error::new(v.span(), "expecting a list")),
+    }
+}
+
+fn try_get_lit_str(nested: NestedMeta) -> SynResult<LitStr> {
+    match nested {
+        NestedMeta::Lit(Lit::Str(l)) => Ok(l),
+        v => Err(Error::new(v.span(), "values must be literal strings")),
+    }
+}
+
 /// Matches the next name value pair from the iter to get a path to a parent type.
 fn try_get_parent<I>(iter: &mut I, span: Span) -> SynResult<Path>
 where
@@ -81,7 +98,21 @@ where
             l => Err(Error::new(l.span(), "expecting literal string")),
         }
     } else {
-        Err(Error::new(parent.span(), "missing \"parent\" argument"))
+        Err(Error::new(parent.span(), format!("missing \"{PARENT}\" argument")))
+    }
+}
+
+/// Matches the next name value pair from the iter to get a list of actors.
+fn try_get_actors<I>(iter: &mut I, span: Span) -> SynResult<Punctuated<NestedMeta, Token![,]>>
+where
+    I: Iterator<Item = Meta>,
+{
+    let actors = try_get_list(iter, span)?;
+
+    if actors.path.is_ident(ACTORS) {
+        Ok(actors.nested)
+    } else {
+        Err(Error::new(actors.span(), format!("missing \"{ACTORS}\" argument")))
     }
 }
 
@@ -117,7 +148,13 @@ fn process_minor(name: &Ident, parent: Path, minor: MetaNameValue) -> SynResult<
     Ok(expanded)
 }
 
-fn process_major(name: &Ident, parent: Path, major: MetaNameValue, data: Data) -> SynResult<TokenStream> {
+fn process_major(
+    name: &Ident,
+    parent: Path,
+    actors: Punctuated<NestedMeta, Token![,]>,
+    major: MetaNameValue,
+    data: Data,
+) -> SynResult<TokenStream> {
     // Ensure the value provided is an integer
     let Lit::Int(i) = major.lit else {
         return Err(Error::new(major.lit.span(), "expecting u8"));
@@ -137,8 +174,12 @@ fn process_major(name: &Ident, parent: Path, major: MetaNameValue, data: Data) -
         as_parts_fn_match.extend(quote! {Self::#var_name(v) => v.as_minor_ver_parts(),});
     }
 
+    let num_actors = actors.len();
+    let actors: Vec<_> = actors.into_iter().map(try_get_lit_str).collect::<SynResult<_>>()?;
+
     let expanded = quote! {
         impl ResolveMinorVersion for #name {
+            type Actors = [&'static str; #num_actors];
             type Parent = #parent;
             const MAJOR: u8 = #i;
 
@@ -155,6 +196,10 @@ fn process_major(name: &Ident, parent: Path, major: MetaNameValue, data: Data) -
                 };
 
                 (Self::MAJOR, minor, kind)
+            }
+
+            fn actors() -> Self::Actors {
+                [#(#actors),*]
             }
         }
     };

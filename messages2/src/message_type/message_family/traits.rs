@@ -17,6 +17,7 @@ pub trait ResolveMsgKind: Sized + FromStr + AsRef<str> {
 }
 
 pub trait ResolveMinorVersion: Sized {
+    type Actors: IntoIterator<Item = &'static str>;
     type Parent: ResolveMajorVersion;
 
     const MAJOR: u8;
@@ -24,6 +25,8 @@ pub trait ResolveMinorVersion: Sized {
     fn resolve_minor_ver(minor: u8, kind: &str) -> MsgTypeResult<Self>;
 
     fn as_full_ver_parts(&self) -> (u8, u8, &str);
+
+    fn actors() -> Self::Actors;
 }
 
 pub trait ResolveMajorVersion: Sized {

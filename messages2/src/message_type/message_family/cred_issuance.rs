@@ -22,7 +22,7 @@ pub enum CredentialIssuance {
 
 #[derive(Copy, Clone, Debug, From, TryInto, PartialEq, TransitiveFrom, MessageType)]
 #[transitive(into(all(CredentialIssuance, MessageFamily, MessageType)))]
-#[semver(major = 1, parent = "CredentialIssuance")]
+#[semver(major = 1, parent = "CredentialIssuance", actors("holder", "issuer"))]
 pub enum CredentialIssuanceV1 {
     V1_0(CredentialIssuanceV1_0),
 }

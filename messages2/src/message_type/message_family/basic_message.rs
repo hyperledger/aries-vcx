@@ -22,7 +22,7 @@ pub enum BasicMessage {
 
 #[derive(Copy, Clone, Debug, From, PartialEq, TransitiveFrom, MessageType)]
 #[transitive(into(all(BasicMessage, MessageFamily, MessageType)))]
-#[semver(major = 1, parent = "BasicMessage")]
+#[semver(major = 1, parent = "BasicMessage", actors("receiver", "sender"))]
 pub enum BasicMessageV1 {
     V1_0(BasicMessageV1_0),
 }

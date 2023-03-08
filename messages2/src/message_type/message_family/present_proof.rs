@@ -22,7 +22,7 @@ pub enum PresentProof {
 
 #[derive(Copy, Clone, Debug, From, TryInto, PartialEq, TransitiveFrom, MessageType)]
 #[transitive(into(all(PresentProof, MessageFamily, MessageType)))]
-#[semver(major = 1, parent = "PresentProof")]
+#[semver(major = 1, parent = "PresentProof", actors("prover", "verifier"))]
 pub enum PresentProofV1 {
     V1_0(PresentProofV1_0),
 }
