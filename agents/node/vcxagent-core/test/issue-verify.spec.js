@@ -1,7 +1,14 @@
 /* eslint-env jest */
 require('jest')
 const { createPairedAliceAndFaber } = require('./utils/utils')
-const { IssuerStateType, HolderStateType, ProverStateType, VerifierStateType, ProofState } = require('@hyperledger/node-vcx-wrapper')
+const {
+  IssuerStateType,
+  HolderStateType,
+  ProverStateType,
+  VerifierStateType,
+  ProofVerificationStatus,
+  ProofRevocationStatus
+} = require('@hyperledger/node-vcx-wrapper')
 const sleep = require('sleep-promise')
 const { initRustLogger } = require('../src')
 const { proofRequestDataStandard, proofRequestDataSelfAttest } = require('./utils/data')
@@ -35,8 +42,14 @@ describe('test update state', () => {
     await alice.sendHolderProof(JSON.parse(request), revRegId => tailsDir, { attribute_3: 'Smith' })
     await faber.updateStateVerifierProof(VerifierStateType.Finished)
     await alice.updateStateHolderProof(ProverStateType.Finished)
-    const { presentationVerificationState, presentationAttachment, presentationRequestAttachment } = await faber.getPresentationInfo()
-    expect(presentationVerificationState).toBe(ProofState.Verified)
+    const {
+      presentationVerificationState,
+      presentationAttachment,
+      presentationRequestAttachment,
+      revocationStatus
+    } = await faber.getPresentationInfo()
+    expect(revocationStatus).toBe(ProofRevocationStatus.NonRevoked)
+    expect(presentationVerificationState).toBe(ProofVerificationStatus.Verified)
     expect(presentationRequestAttachment.requested_attributes).toStrictEqual({
       attribute_0: {
         names: [
@@ -111,34 +124,59 @@ describe('test update state', () => {
     })
   })
 
+  it('Faber should issue credential, revoke credential, verify proof', async () => {
+    const { alice, faber } = await createPairedAliceAndFaber()
+    const issuerDid = faber.getFaberDid()
+    const tailsDir = path.join(__dirname, '/tmp/faber/tails')
+    await faber.buildLedgerPrimitives({ tailsDir, maxCreds: 5 })
+    await faber.sendCredentialOffer()
+    await alice.acceptCredentialOffer()
+
+    await faber.updateStateCredential(IssuerStateType.RequestReceived)
+    await faber.sendCredential()
+    await alice.updateStateCredential(HolderStateType.Finished)
+    await faber.receiveCredentialAck()
+    await faber.revokeCredential()
+
+    const request = await faber.requestProofFromAlice(proofRequestDataStandard(issuerDid))
+    await alice.sendHolderProof(JSON.parse(request), revRegId => tailsDir, { attribute_3: 'Smith' })
+    await faber.updateStateVerifierProof(VerifierStateType.Finished)
+    await alice.updateStateHolderProof(ProverStateType.Finished)
+    const {
+      presentationVerificationState,
+      revocationStatus
+    } = await faber.getPresentationInfo()
+    expect(revocationStatus).toBe(ProofRevocationStatus.Revoked)
+    expect(presentationVerificationState).toBe(ProofVerificationStatus.Invalid)
+  })
+
   it('Faber should verify proof with self attestation', async () => {
-    try {
-      const { alice, faber } = await createPairedAliceAndFaber()
-      const request = await faber.requestProofFromAlice(proofRequestDataSelfAttest())
-      await alice.sendHolderProofSelfAttested(JSON.parse(request), { attribute_0: 'Smith' })
-      await faber.updateStateVerifierProof(VerifierStateType.Finished)
-      await alice.updateStateHolderProof(ProverStateType.Finished)
-      const { presentationVerificationState, presentationAttachment, presentationRequestAttachment } = await faber.getPresentationInfo()
-      expect(presentationVerificationState).toBe(ProofState.Verified)
-      expect(presentationAttachment.requested_proof).toStrictEqual({
-        revealed_attrs: {},
-        self_attested_attrs: {
-          attribute_0: 'Smith'
-        },
-        unrevealed_attrs: {},
-        predicates: {}
-      })
-      expect(presentationRequestAttachment.requested_attributes).toStrictEqual({
-        attribute_0: {
-          name: 'nickname',
-          self_attest_allowed: true
-        }
-      })
-      await sleep(500)
-    } catch (err) {
-      await sleep(500)
-      console.error(`err = ${err.message} stack = ${err.stack}`)
-      throw Error(err)
-    }
+    const { alice, faber } = await createPairedAliceAndFaber()
+    const request = await faber.requestProofFromAlice(proofRequestDataSelfAttest())
+    await alice.sendHolderProofSelfAttested(JSON.parse(request), { attribute_0: 'Smith' })
+    await faber.updateStateVerifierProof(VerifierStateType.Finished)
+    await alice.updateStateHolderProof(ProverStateType.Finished)
+    const {
+      presentationVerificationState,
+      presentationAttachment,
+      presentationRequestAttachment,
+      revocationStatus
+    } = await faber.getPresentationInfo()
+    expect(revocationStatus).toBe(ProofRevocationStatus.NonRevoked)
+    expect(presentationVerificationState).toBe(ProofVerificationStatus.Verified)
+    expect(presentationAttachment.requested_proof).toStrictEqual({
+      revealed_attrs: {},
+      self_attested_attrs: {
+        attribute_0: 'Smith'
+      },
+      unrevealed_attrs: {},
+      predicates: {}
+    })
+    expect(presentationRequestAttachment.requested_attributes).toStrictEqual({
+      attribute_0: {
+        name: 'nickname',
+        self_attest_allowed: true
+      }
+    })
   })
 })

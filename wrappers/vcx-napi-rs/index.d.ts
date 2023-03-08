@@ -161,6 +161,7 @@ export function v2ProofUpdateStateWithMessage(handleProof: number, message: stri
 export function proofUpdateStateWithMessageNonmediated(handleProof: number, connectionHandle: number, message: string): Promise<number>
 export function proofGetState(handle: number): number
 export function proofGetPresentationVerificationStatus(handle: number): number
+export function proofGetRevocationStatus(handle: number): number
 export function proofGetThreadId(handle: number): string
 export function markPresentationRequestMsgSent(handle: number): void
 export function revocationRegistryCreate(config: string): Promise<number>

@@ -226,6 +226,13 @@ module.exports.createFaber = async function createFaber (serviceEndpoint = 'http
     await vcxAgent.agentShutdownVcx()
   }
 
+  async function revokeCredential () {
+    await vcxAgent.agentInitVcx()
+    await vcxAgent.serviceCredIssuer.revokeCredentialLocal(issuerCredId)
+    await vcxAgent.serviceLedgerRevReg.publishRevocations(revRegId)
+    await vcxAgent.agentShutdownVcx()
+  }
+
   async function receiveCredentialAck () {
     await vcxAgent.agentInitVcx()
 
@@ -397,13 +404,15 @@ module.exports.createFaber = async function createFaber (serviceEndpoint = 'http
     const presentationVerificationState = await vcxAgent.serviceVerifier.getPresentationVerificationStatus(proofId)
     const presentationAttachment = await vcxAgent.serviceVerifier.getPresentationAttachment(proofId)
     const presentationRequestAttachment = await vcxAgent.serviceVerifier.getPresentationRequestAttachment(proofId)
+    const revocationStatus = await vcxAgent.serviceVerifier.getRevocationStatus(proofId)
 
     await vcxAgent.agentShutdownVcx()
     return {
       presentationMsg,
       presentationVerificationState,
       presentationAttachment,
-      presentationRequestAttachment
+      presentationRequestAttachment,
+      revocationStatus
     }
   }
 
@@ -441,6 +450,7 @@ module.exports.createFaber = async function createFaber (serviceEndpoint = 'http
     updateMessageStatus,
     updateAllReceivedMessages,
     publishService,
+    revokeCredential,
     readServiceFromLedger,
     unpackMsg,
     getFaberDid
