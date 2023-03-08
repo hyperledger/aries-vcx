@@ -6,11 +6,11 @@ use crate::protocols::traits::MessageKind;
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Message<C, D = Nothing> {
     #[serde(rename = "@id")]
-    id: String,
+    pub id: String,
     #[serde(flatten)]
-    content: C,
+    pub content: C,
     #[serde(flatten)]
-    decorators: D,
+    pub decorators: D,
 }
 
 impl<C> Message<C> {
@@ -68,7 +68,7 @@ macro_rules! generate_from_stmt {
 pub(crate) use generate_from_stmt;
 pub(crate) use transit_to_aries_msg;
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Default)]
 pub struct Nothing;
 
 /// Custom impl that, through [`Option`], handles the field not being

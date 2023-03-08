@@ -15,6 +15,18 @@ pub struct Thread {
     pub goal_code: Option<ThreadGoalCode>,
 }
 
+impl Thread {
+    pub fn new(thid: String) -> Self {
+        Self {
+            thid,
+            pthid: None,
+            sender_order: None,
+            received_orders: None,
+            goal_code: None,
+        }
+    }
+}
+
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum ThreadGoalCode {
     #[serde(rename = "aries.vc")]

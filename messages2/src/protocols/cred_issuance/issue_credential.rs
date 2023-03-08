@@ -19,6 +19,15 @@ pub struct IssueCredentialContent {
     pub credentials_attach: Vec<Attachment>,
 }
 
+impl IssueCredentialContent {
+    pub fn new(credentials_attach: Vec<Attachment>) -> Self {
+        Self {
+            comment: None,
+            credentials_attach,
+        }
+    }
+}
+
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct IssueCredentialDecorators {
     #[serde(rename = "~thread")]
@@ -29,4 +38,14 @@ pub struct IssueCredentialDecorators {
     #[serde(rename = "~timing")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<Timing>,
+}
+
+impl IssueCredentialDecorators {
+    pub fn new(thread: Thread) -> Self {
+        Self {
+            thread,
+            please_ack: None,
+            timing: None,
+        }
+    }
 }

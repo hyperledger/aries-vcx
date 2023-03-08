@@ -11,13 +11,21 @@ pub type Query = Message<QueryContent, QueryDecorators>;
 #[derive(Clone, Debug, Deserialize, Serialize, MessageContent)]
 #[message(kind = "DiscoverFeaturesV1_0::Query")]
 pub struct QueryContent {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub query: Option<String>,
+    pub query: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+impl QueryContent {
+    pub fn new(query: String) -> Self {
+        Self {
+            query,
+            comment: None,
+        }
+    }
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize, Default)]
 pub struct QueryDecorators {
     #[serde(rename = "~timing")]
     #[serde(skip_serializing_if = "Option::is_none")]

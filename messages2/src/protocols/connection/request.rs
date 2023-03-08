@@ -19,6 +19,12 @@ pub struct RequestContent {
     pub connection: ConnectionData,
 }
 
+impl RequestContent {
+    pub fn new(label: String, connection: ConnectionData) -> Self {
+        Self { label, connection }
+    }
+}
+
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct ConnectionData {
     #[serde(rename = "DID")]
@@ -27,7 +33,13 @@ pub struct ConnectionData {
     pub did_doc: AriesDidDoc,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+impl ConnectionData {
+    pub fn new(did: String, did_doc: AriesDidDoc) -> Self {
+        Self { did, did_doc }
+    }
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize, Default)]
 pub struct RequestDecorators {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "~thread")]

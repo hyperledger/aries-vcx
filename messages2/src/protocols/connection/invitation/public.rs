@@ -10,3 +10,9 @@ pub struct PublicInvitationContent {
     pub label: String,
     pub did: String,
 }
+
+impl PublicInvitationContent {
+    pub fn new(label: String, did: String) -> Self {
+        Self { label, did }
+    }
+}

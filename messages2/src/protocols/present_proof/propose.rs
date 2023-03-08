@@ -23,7 +23,16 @@ pub struct ProposePresentationContent {
     pub presentation_proposal: PresentationPreview,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+impl ProposePresentationContent {
+    pub fn new(presentation_proposal: PresentationPreview) -> Self {
+        Self {
+            comment: None,
+            presentation_proposal,
+        }
+    }
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize, Default)]
 pub struct ProposePresentationDecorators {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "~thread")]

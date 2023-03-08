@@ -16,7 +16,7 @@ pub struct DiscloseContent {
     pub protocols: Vec<ProtocolDescriptor>,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, Default)]
 pub struct DiscloseDecorators {
     #[serde(rename = "~thread")]
     #[serde(skip_serializing_if = "Option::is_none")]

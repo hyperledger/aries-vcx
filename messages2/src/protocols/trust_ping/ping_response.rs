@@ -10,7 +10,7 @@ use crate::{
 
 pub type PingResponse = Message<PingResponseContent, PingResponseDecorators>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, MessageContent)]
+#[derive(Clone, Debug, Deserialize, Serialize, MessageContent, Default)]
 #[message(kind = "TrustPingV1_0::PingResponse")]
 pub struct PingResponseContent {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -24,4 +24,10 @@ pub struct PingResponseDecorators {
     #[serde(rename = "~timing")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<Timing>,
+}
+
+impl PingResponseDecorators {
+    pub fn new(thread: Thread) -> Self {
+        Self { thread, timing: None }
+    }
 }

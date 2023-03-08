@@ -19,6 +19,16 @@ pub struct RevokeContent {
     pub comment: Option<String>,
 }
 
+impl RevokeContent {
+    pub fn new(credential_id: String, revocation_format: RevocationFormat) -> Self {
+        Self {
+            credential_id,
+            revocation_format,
+            comment: None,
+        }
+    }
+}
+
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct RevokeDecorators {
     #[serde(rename = "~please_ack")]

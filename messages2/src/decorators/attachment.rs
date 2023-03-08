@@ -25,6 +25,20 @@ pub struct Attachment {
     pub data: AttachmentData,
 }
 
+impl Attachment {
+    pub fn new(data: AttachmentData) -> Self {
+        Self {
+            id: None,
+            description: None,
+            filename: None,
+            mime_type: None,
+            lastmod_time: None,
+            byte_count: None,
+            data,
+        }
+    }
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct AttachmentData {
     // There probably is a better type for this???
@@ -33,6 +47,16 @@ pub struct AttachmentData {
     pub sha256: Option<String>,
     #[serde(flatten)]
     pub content: AttachmentType,
+}
+
+impl AttachmentData {
+    pub fn new(content: AttachmentType) -> Self {
+        Self {
+            jws: None,
+            sha256: None,
+            content,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

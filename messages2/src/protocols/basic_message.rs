@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 
@@ -14,8 +15,17 @@ pub type BasicMessage = Message<BasicMessageContent, BasicMessageDecorators>;
 #[derive(Clone, Debug, Deserialize, Serialize, MessageContent)]
 #[message(kind = "BasicMessageKind::V1(BasicMessageV1::V1_0(BasicMessageV1_0::Message))")]
 pub struct BasicMessageContent {
-    pub sent_time: String,
     pub content: String,
+    pub sent_time: DateTime<Utc>,
+}
+
+impl BasicMessageContent {
+    pub fn new(content: String) -> Self {
+        Self {
+            content,
+            sent_time: DateTime::default(),
+        }
+    }
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

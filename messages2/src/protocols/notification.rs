@@ -38,3 +38,9 @@ pub struct AckDecorators {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<Timing>,
 }
+
+impl AckDecorators {
+    pub fn new(thread: Thread) -> Self {
+        Self { thread, timing: None }
+    }
+}

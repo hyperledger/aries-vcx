@@ -18,10 +18,14 @@ pub type Response = Message<ResponseContent, ResponseDecorators>;
 #[derive(Clone, Debug, Deserialize, Serialize, MessageContent)]
 #[message(kind = "ConnectionV1_0::Response")]
 pub struct ResponseContent {
-    #[serde(rename = "@id")]
-    pub id: String,
     #[serde(rename = "connection~sig")]
     pub connection_sig: ConnectionSignature,
+}
+
+impl ResponseContent {
+    pub fn new(connection_sig: ConnectionSignature) -> Self {
+        Self { connection_sig }
+    }
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -54,6 +58,16 @@ pub struct ResponseDecorators {
     #[serde(rename = "~timing")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<Timing>,
+}
+
+impl ResponseDecorators {
+    pub fn new(thread: Thread) -> Self {
+        Self {
+            thread,
+            please_ack: None,
+            timing: None,
+        }
+    }
 }
 
 #[derive(Copy, Clone, Debug, Default, Serialize, Deserialize, TransitiveFrom, TransitiveTryFrom)]

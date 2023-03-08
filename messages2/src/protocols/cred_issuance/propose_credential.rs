@@ -22,7 +22,18 @@ pub struct ProposeCredentialContent {
     pub cred_def_id: String,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+impl ProposeCredentialContent {
+    pub fn new(credential_proposal: CredentialPreview, schema_id: String, cred_def_id: String) -> Self {
+        Self {
+            comment: None,
+            credential_proposal,
+            schema_id,
+            cred_def_id,
+        }
+    }
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize, Default)]
 pub struct ProposeCredentialDecorators {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "~thread")]

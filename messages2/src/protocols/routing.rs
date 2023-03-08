@@ -13,3 +13,9 @@ pub struct Forward {
     #[serde(rename = "msg")]
     pub msg: Box<RawValue>,
 }
+
+impl Forward {
+    pub fn new(to: String, msg: Box<RawValue>) -> Self {
+        Self { to, msg }
+    }
+}

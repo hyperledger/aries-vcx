@@ -11,7 +11,7 @@ use crate::protocols::traits::MessageKind;
 
 pub type ProblemReport = Message<ProblemReportContent, ProblemReportDecorators>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, MessageContent)]
+#[derive(Clone, Debug, Deserialize, Serialize, MessageContent, Default)]
 #[message(kind = "ConnectionV1_0::ProblemReport")]
 pub struct ProblemReportContent {
     #[serde(rename = "problem-code")]
@@ -40,4 +40,14 @@ pub struct ProblemReportDecorators {
     #[serde(rename = "~timing")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<Timing>,
+}
+
+impl ProblemReportDecorators {
+    pub fn new(thread: Thread) -> Self {
+        Self {
+            thread,
+            localization: None,
+            timing: None,
+        }
+    }
 }

@@ -22,7 +22,17 @@ pub struct OfferCredentialContent {
     pub offers_attach: Vec<Attachment>,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+impl OfferCredentialContent {
+    pub fn new(credential_preview: CredentialPreview, offers_attach: Vec<Attachment>) -> Self {
+        Self {
+            comment: None,
+            credential_preview,
+            offers_attach,
+        }
+    }
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize, Default)]
 pub struct OfferCredentialDecorators {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "~thread")]

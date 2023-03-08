@@ -19,6 +19,15 @@ pub struct PresentationContent {
     pub presentations_attach: Vec<Attachment>,
 }
 
+impl PresentationContent {
+    pub fn new(presentations_attach: Vec<Attachment>) -> Self {
+        Self {
+            comment: None,
+            presentations_attach,
+        }
+    }
+}
+
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct PresentationDecorators {
     #[serde(rename = "~thread")]
@@ -29,4 +38,14 @@ pub struct PresentationDecorators {
     #[serde(rename = "~timing")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<Timing>,
+}
+
+impl PresentationDecorators {
+    pub fn new(thread: Thread) -> Self {
+        Self {
+            thread,
+            please_ack: None,
+            timing: None,
+        }
+    }
 }

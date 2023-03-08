@@ -19,7 +19,18 @@ pub struct PairwiseInvitationContent<T> {
     pub service_endpoint: T,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+impl<T> PairwiseInvitationContent<T> {
+    pub fn new(label: String, recipient_keys: Vec<String>, routing_keys: Vec<String>, service_endpoint: T) -> Self {
+        Self {
+            label,
+            recipient_keys,
+            routing_keys,
+            service_endpoint,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, Default)]
 pub struct PwInvitationDecorators {
     #[serde(rename = "~timing")]
     #[serde(skip_serializing_if = "Option::is_none")]

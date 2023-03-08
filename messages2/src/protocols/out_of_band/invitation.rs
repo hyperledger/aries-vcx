@@ -31,7 +31,21 @@ pub struct InvitationContent {
     pub requests_attach: Vec<Attachment>,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+impl InvitationContent {
+    pub fn new(services: Vec<Service>, requests_attach: Vec<Attachment>) -> Self {
+        Self {
+            label: None,
+            goal_code: None,
+            goal: None,
+            accept: None,
+            handshake_protocols: None,
+            services,
+            requests_attach,
+        }
+    }
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize, Default)]
 pub struct InvitationDecorators {
     #[serde(rename = "~timing")]
     #[serde(skip_serializing_if = "Option::is_none")]

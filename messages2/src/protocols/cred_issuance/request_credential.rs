@@ -19,7 +19,16 @@ pub struct RequestCredentialContent {
     pub requests_attach: Vec<Attachment>,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+impl RequestCredentialContent {
+    pub fn new(requests_attach: Vec<Attachment>) -> Self {
+        Self {
+            comment: None,
+            requests_attach,
+        }
+    }
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize, Default)]
 pub struct RequestCredentialDecorators {
     #[serde(rename = "~thread")]
     pub thread: Option<Thread>,

@@ -4,7 +4,7 @@ use isolang::Language;
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 use url::Url;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct MsgLocalization {
     pub catalogs: Option<Vec<Url>>,
     // Might just be obsolete, but appears in https://github.com/hyperledger/aries-rfcs/blob/main/features/0043-l10n/README.md
@@ -12,7 +12,7 @@ pub struct MsgLocalization {
     pub locales: Option<HashMap<Locale, Vec<String>>>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct FieldLocalization {
     pub code: Option<String>,
     pub locale: Option<Locale>,
