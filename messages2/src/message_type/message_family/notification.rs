@@ -23,7 +23,7 @@ pub enum Notification {
 
 #[derive(Copy, Clone, Debug, From, PartialEq, TransitiveFrom, MessageType)]
 #[transitive(into(all(Notification, MessageFamily, MessageType)))]
-#[semver(major = 1, parent = "Notification", actors("Actor::Notified", "Actor::Notifier"))]
+#[semver(major = 1, parent = "Notification", actors(Actor::Notified, Actor::Notifier))]
 pub enum NotificationV1 {
     V1_0(NotificationV1_0),
 }

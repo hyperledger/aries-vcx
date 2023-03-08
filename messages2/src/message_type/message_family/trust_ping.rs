@@ -23,7 +23,7 @@ pub enum TrustPing {
 
 #[derive(Copy, Clone, Debug, From, PartialEq, TransitiveFrom, MessageType)]
 #[transitive(into(all(TrustPing, MessageFamily, MessageType)))]
-#[semver(major = 1, parent = "TrustPing", actors("Actor::Sender", "Actor::Receiver"))]
+#[semver(major = 1, parent = "TrustPing", actors(Actor::Sender, Actor::Receiver))]
 pub enum TrustPingV1 {
     V1_0(TrustPingV1_0),
 }

@@ -3,7 +3,7 @@
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
 use syn::{
-    punctuated::Punctuated, spanned::Spanned, Data, DeriveInput, Error, Expr, Field, Fields, Lit, Meta, MetaList,
+    punctuated::Punctuated, spanned::Spanned, Data, DeriveInput, Error, Field, Fields, Lit, Meta, MetaList,
     MetaNameValue, NestedMeta, Path, Result as SynResult, Token, Variant,
 };
 
@@ -78,11 +78,11 @@ where
     }
 }
 
-/// Matches the next value to a string literal and parses it to an expression
-fn try_get_expr_from_str(nested: NestedMeta) -> SynResult<Expr> {
+/// Matches the next value to a path, to be used as enum declaration
+fn try_get_path(nested: NestedMeta) -> SynResult<Path> {
     match nested {
-        NestedMeta::Lit(Lit::Str(l)) => Ok(l.parse()?),
-        v => Err(Error::new(v.span(), "values must be literal strings")),
+        NestedMeta::Meta(Meta::Path(l)) => Ok(l),
+        v => Err(Error::new(v.span(), "values must be enum variants")),
     }
 }
 
@@ -104,14 +104,14 @@ where
 }
 
 /// Matches the next name value pair from the iter to get a list of actors.
-fn try_get_actors<I>(iter: &mut I, span: Span) -> SynResult<Vec<Expr>>
+fn try_get_actors<I>(iter: &mut I, span: Span) -> SynResult<Vec<Path>>
 where
     I: Iterator<Item = Meta>,
 {
     let actors = try_get_list(iter, span)?;
 
     if actors.path.is_ident(ACTORS) {
-        actors.nested.into_iter().map(try_get_expr_from_str).collect()
+        actors.nested.into_iter().map(try_get_path).collect()
     } else {
         Err(Error::new(actors.span(), format!("missing \"{ACTORS}\" argument")))
     }
@@ -152,7 +152,7 @@ fn process_minor(name: &Ident, parent: Path, minor: MetaNameValue) -> SynResult<
 fn process_major(
     name: &Ident,
     parent: Path,
-    actors: Vec<Expr>,
+    actors: Vec<Path>,
     major: MetaNameValue,
     data: Data,
 ) -> SynResult<TokenStream> {

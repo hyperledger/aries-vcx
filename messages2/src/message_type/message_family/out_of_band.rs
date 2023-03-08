@@ -23,7 +23,7 @@ pub enum OutOfBand {
 
 #[derive(Copy, Clone, Debug, From, PartialEq, TransitiveFrom, MessageType)]
 #[transitive(into(all(OutOfBand, MessageFamily, MessageType)))]
-#[semver(major = 1, parent = "OutOfBand", actors("Actor::Receiver", "Actor::Sender"))]
+#[semver(major = 1, parent = "OutOfBand", actors(Actor::Receiver, Actor::Sender))]
 pub enum OutOfBandV1 {
     V1_1(OutOfBandV1_1),
 }

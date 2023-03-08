@@ -23,7 +23,7 @@ pub enum Routing {
 
 #[derive(Copy, Clone, Debug, From, PartialEq, TransitiveFrom, MessageType)]
 #[transitive(into(all(Routing, MessageFamily, MessageType)))]
-#[semver(major = 1, parent = "Routing", actors("Actor::Mediator"))]
+#[semver(major = 1, parent = "Routing", actors(Actor::Mediator))]
 pub enum RoutingV1 {
     V1_0(RoutingV1_0),
 }
