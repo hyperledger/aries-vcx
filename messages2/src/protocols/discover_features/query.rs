@@ -26,14 +26,15 @@ impl QueryContent {
         Self { query, comment: None }
     }
 
-    pub fn lookup(&self) -> Vec<&ProtocolDescriptor> {
+    pub fn lookup(&self) -> Vec<ProtocolDescriptor> {
         let mut protocols = Vec::new();
+        let query = self.query.split('*').next().expect("at least one value");
 
         for versions in PROTOCOL_REGISTRY.values() {
             for minor in versions.values() {
                 for pd in minor.values() {
-                    if pd.pid.starts_with(&self.query) {
-                        protocols.push(pd);
+                    if pd.pid.starts_with(query) {
+                        protocols.push(pd.clone());
                     }
                 }
             }
