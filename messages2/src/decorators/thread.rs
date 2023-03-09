@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, Serializer};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Thread {
@@ -27,21 +27,60 @@ impl Thread {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize)]
+#[serde(from = "&str")]
 pub enum ThreadGoalCode {
-    #[serde(rename = "aries.vc")]
     AriesVc,
-    #[serde(rename = "aries.vc.issue")]
     AriesVcIssue,
-    #[serde(rename = "aries.vc.verify")]
     AriesVcVerify,
-    #[serde(rename = "aries.vc.revoke")]
     AriesVcRevoke,
-    #[serde(rename = "aries.rel")]
     AriesRel,
-    #[serde(rename = "aries.rel.build")]
     AriesRelBuild,
-    #[serde(deserialize_with = "String::deserialize")]
-    #[serde(serialize_with = "String::serialize")]
     Other(String),
+}
+
+impl ThreadGoalCode {
+    const ARIES_VC: &str = "aries.vc";
+    const ARIES_VC_ISSUE: &str = "aries.vc.issue";
+    const ARIES_VC_VERIFY: &str = "aries.vc.verify";
+    const ARIES_VC_REVOKE: &str = "aries.vc.revoke";
+    const ARIES_REL: &str = "aries.rel";
+    const ARIES_REL_BUILD: &str = "aries.rel.build";
+}
+
+impl AsRef<str> for ThreadGoalCode {
+    fn as_ref(&self) -> &str {
+        match self {
+            Self::AriesVc => Self::ARIES_VC,
+            Self::AriesVcIssue => Self::ARIES_VC_ISSUE,
+            Self::AriesVcVerify => Self::ARIES_VC_VERIFY,
+            Self::AriesVcRevoke => Self::ARIES_VC_REVOKE,
+            Self::AriesRel => Self::ARIES_REL,
+            Self::AriesRelBuild => Self::ARIES_REL_BUILD,
+            Self::Other(s) => s.as_ref(),
+        }
+    }
+}
+
+impl From<&str> for ThreadGoalCode {
+    fn from(s: &str) -> Self {
+        match s {
+            _ if s == Self::ARIES_VC => Self::AriesVc,
+            _ if s == Self::ARIES_VC_ISSUE => Self::AriesVcIssue,
+            _ if s == Self::ARIES_VC_VERIFY => Self::AriesVcVerify,
+            _ if s == Self::ARIES_VC_REVOKE => Self::AriesVcRevoke,
+            _ if s == Self::ARIES_REL => Self::AriesRel,
+            _ if s == Self::ARIES_REL_BUILD => Self::AriesRelBuild,
+            _ => Self::Other(s.to_owned()),
+        }
+    }
+}
+
+impl Serialize for ThreadGoalCode {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        self.as_ref().serialize(serializer)
+    }
 }
