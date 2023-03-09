@@ -75,3 +75,11 @@ lazy_static! {
         m
     };
 }
+
+pub fn get_supported_version(family: &'static str, major: u8, minor: u8) -> Option<u8> {
+    PROTOCOL_REGISTRY
+        .get(family)
+        .and_then(|m| m.get(&major))
+        .and_then(|m| m.keys().rev().find(|v| **v <= minor))
+        .copied()
+}

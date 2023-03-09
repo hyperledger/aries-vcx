@@ -186,7 +186,14 @@ fn process_major(
             fn resolve_minor_ver(minor: u8, kind: &str) -> MsgTypeResult<Self> {
                 match minor {
                     #resolve_fn_match
-                    _ => Err(MsgTypeError::minor_ver_err(minor)),
+                    _ => {
+                        let family = Self::Parent::FAMILY;
+                        let major = Self::MAJOR;
+                        match get_supported_version(family, major, minor) {
+                            Some(minor) => Self::resolve_minor_ver(minor, kind),
+                            None => Err(MsgTypeError::minor_ver_err(minor))
+                        }
+                    },
                 }
             }
 

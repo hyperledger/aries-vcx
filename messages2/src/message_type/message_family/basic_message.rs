@@ -6,7 +6,7 @@ use transitive::TransitiveFrom;
 use crate::{
     error::{MsgTypeError, MsgTypeResult},
     message_type::actor::Actor,
-    message_type::MessageType,
+    message_type::{MessageType, registry::get_supported_version},
 };
 
 use super::{
