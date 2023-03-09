@@ -32,6 +32,33 @@ impl ProtocolDescriptor {
     pub fn new(pid: String) -> Self {
         Self { pid, roles: None }
     }
+
+    pub fn as_pid_parts(&self) -> (&str, Option<u8>, Option<u8>) {
+        let skip_slash = match self.pid {
+            _ if self.pid.starts_with(Prefix::DID_COM_ORG_PREFIX) => Some(3),
+            _ if self.pid.starts_with(Prefix::DID_SOV_PREFIX) => Some(1),
+            _ => None,
+        };
+
+        let Some(skip_slash) = skip_slash else {
+            return (&self.pid, None, None);
+        };
+
+        let mut iter = self.pid.split('/').skip(skip_slash);
+        let (Some(family), Some(version)) = (iter.next(), iter.next()) else {
+            return (&self.pid, None, None);
+        };
+
+        let mut version_iter = version.split('.');
+        let major = version_iter.next().and_then(|v| v.parse::<u8>().ok());
+        let minor = version_iter.next().and_then(|v| v.parse::<u8>().ok());
+
+        let (Some(major), Some(minor)) = (major, minor) else {
+            return (&self.pid, None, None);
+        };
+
+        (family, Some(major), Some(minor))
+    }
 }
 
 macro_rules! extract_parts {
