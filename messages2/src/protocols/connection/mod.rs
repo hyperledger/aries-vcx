@@ -3,13 +3,17 @@ pub mod problem_report;
 pub mod request;
 pub mod response;
 
+use std::str::FromStr;
+
 use derive_more::From;
-use serde::{Deserializer, Serializer};
+use serde::{de::Error, Deserializer, Serializer};
 
 use crate::{
     composite_message::{transit_to_aries_msg, Message},
     delayed_serde::DelayedSerde,
-    message_type::message_family::connection::{Connection as ConnectionKind, ConnectionV1, ConnectionV1_0},
+    message_type::message_protocol::connection::{
+        Connection as ConnectionKind, ConnectionV1, ConnectionV1_0Kind,
+    },
     utils,
 };
 
@@ -33,21 +37,23 @@ pub enum Connection {
 }
 
 impl DelayedSerde for Connection {
-    type MsgType = ConnectionKind;
+    type MsgType<'a> = (ConnectionKind, &'a str);
 
-    fn delayed_deserialize<'de, D>(msg_type: Self::MsgType, deserializer: D) -> Result<Self, D::Error>
+    fn delayed_deserialize<'de, D>(msg_type: Self::MsgType<'de>, deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
-        let ConnectionKind::V1(major) = msg_type;
+        let (major, kind) = msg_type;
+        let ConnectionKind::V1(major) = major;
         let ConnectionV1::V1_0(minor) = major;
+        let kind = ConnectionV1_0Kind::from_str(kind).map_err(D::Error::custom)?;
 
-        match minor {
-            ConnectionV1_0::Invitation => Invitation::delayed_deserialize(minor, deserializer).map(From::from),
-            ConnectionV1_0::Request => Request::delayed_deserialize(minor, deserializer).map(From::from),
-            ConnectionV1_0::Response => Response::delayed_deserialize(minor, deserializer).map(From::from),
-            ConnectionV1_0::ProblemReport => ProblemReport::delayed_deserialize(minor, deserializer).map(From::from),
-            ConnectionV1_0::Ed25519Sha512Single => Err(utils::not_standalone_msg::<D>(minor.as_ref())),
+        match kind {
+            ConnectionV1_0Kind::Invitation => Invitation::delayed_deserialize(kind, deserializer).map(From::from),
+            ConnectionV1_0Kind::Request => Request::delayed_deserialize(kind, deserializer).map(From::from),
+            ConnectionV1_0Kind::Response => Response::delayed_deserialize(kind, deserializer).map(From::from),
+            ConnectionV1_0Kind::ProblemReport => ProblemReport::delayed_deserialize(kind, deserializer).map(From::from),
+            ConnectionV1_0Kind::Ed25519Sha512Single => Err(utils::not_standalone_msg::<D>(kind.as_ref())),
         }
     }
 

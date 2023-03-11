@@ -4,15 +4,15 @@ use serde::{Deserialize, Serialize};
 use crate::{
     composite_message::Message,
     decorators::{Thread, Timing},
-    message_type::message_family::notification::{Notification, NotificationV1, NotificationV1_0},
+    message_type::message_protocol::notification::NotificationV1_0Kind,
 };
 
-use super::traits::MessageKind;
+use super::traits::ConcreteMessage;
 
 pub type Ack = Message<AckContent, AckDecorators>;
 
 #[derive(Debug, Clone, Serialize, Deserialize, MessageContent)]
-#[message(kind = "Notification::V1(NotificationV1::V1_0(NotificationV1_0::Ack))")]
+#[message(kind = "NotificationV1_0Kind::Ack")]
 pub struct AckContent {
     pub status: AckStatus,
 }

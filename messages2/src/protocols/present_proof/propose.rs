@@ -1,22 +1,18 @@
 use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
-use transitive::{TransitiveFrom, TransitiveTryFrom};
 
 use crate::{
     composite_message::Message,
     decorators::{Thread, Timing},
-    message_type::{
-        message_family::present_proof::{PresentProof, PresentProofV1, PresentProofV1_0},
-        MessageFamily, MessageType,
-    },
+    message_type::{message_protocol::present_proof::PresentProofV1_0Kind, MessageFamily},
     mime_type::MimeType,
-    protocols::traits::MessageKind,
+    protocols::traits::ConcreteMessage,
 };
 
 pub type ProposePresentation = Message<ProposePresentationContent, ProposePresentationDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, MessageContent)]
-#[message(kind = "PresentProofV1_0::ProposePresentation")]
+#[message(kind = "PresentProofV1_0Kind::ProposePresentation")]
 pub struct ProposePresentationContent {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,
@@ -60,37 +56,35 @@ impl PresentationPreview {
     }
 }
 
-#[derive(Copy, Clone, Debug, Serialize, Deserialize, TransitiveFrom, TransitiveTryFrom)]
-#[serde(into = "MessageType", try_from = "MessageType")]
-#[transitive(try_from(MessageFamily, PresentProof, PresentProofV1, PresentProofV1_0))]
-#[transitive(into(PresentProofV1_0, MessageType))]
+#[derive(Copy, Clone, Debug, Serialize, Deserialize)]
+// #[serde(into = "MessageType", try_from = "MessageType")]
 struct PresentationPreviewMsgType;
 
-impl From<PresentationPreviewMsgType> for PresentProofV1_0 {
+impl From<PresentationPreviewMsgType> for PresentProofV1_0Kind {
     fn from(_value: PresentationPreviewMsgType) -> Self {
-        PresentProofV1_0::PresentationPreview
+        PresentProofV1_0Kind::PresentationPreview
     }
 }
 
-impl TryFrom<PresentProofV1_0> for PresentationPreviewMsgType {
+impl TryFrom<PresentProofV1_0Kind> for PresentationPreviewMsgType {
     type Error = &'static str;
 
-    fn try_from(value: PresentProofV1_0) -> Result<Self, Self::Error> {
+    fn try_from(value: PresentProofV1_0Kind) -> Result<Self, Self::Error> {
         match value {
-            PresentProofV1_0::PresentationPreview => Ok(Self),
+            PresentProofV1_0Kind::PresentationPreview => Ok(Self),
             _ => Err("message kind is not \"presentation-preview\""),
         }
     }
 }
 
-impl TryFrom<MessageType> for PresentationPreviewMsgType {
-    type Error = &'static str;
+// impl TryFrom<MessageType> for PresentationPreviewMsgType {
+//     type Error = &'static str;
 
-    fn try_from(value: MessageType) -> Result<Self, Self::Error> {
-        let interm = MessageFamily::from(value);
-        PresentationPreviewMsgType::try_from(interm)
-    }
-}
+//     fn try_from(value: MessageType) -> Result<Self, Self::Error> {
+//         let interm = MessageFamily::from(value);
+//         PresentationPreviewMsgType::try_from(interm)
+//     }
+// }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Attribute {

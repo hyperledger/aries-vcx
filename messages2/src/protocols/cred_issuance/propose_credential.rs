@@ -4,8 +4,8 @@ use serde::{Deserialize, Serialize};
 use crate::{
     composite_message::Message,
     decorators::{Thread, Timing},
-    message_type::message_family::cred_issuance::CredentialIssuanceV1_0,
-    protocols::traits::MessageKind,
+    message_type::message_protocol::cred_issuance::CredentialIssuanceV1_0Kind,
+    protocols::traits::ConcreteMessage,
 };
 
 use super::CredentialPreview;
@@ -13,7 +13,7 @@ use super::CredentialPreview;
 pub type ProposeCredential = Message<ProposeCredentialContent, ProposeCredentialDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, MessageContent)]
-#[message(kind = "CredentialIssuanceV1_0::ProposeCredential")]
+#[message(kind = "CredentialIssuanceV1_0Kind::ProposeCredential")]
 pub struct ProposeCredentialContent {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,

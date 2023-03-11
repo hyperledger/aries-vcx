@@ -1,14 +1,16 @@
 mod disclose;
 mod query;
 
+use std::str::FromStr;
+
 use derive_more::From;
-use serde::{Deserializer, Serializer};
+use serde::{de::Error, Deserializer, Serializer};
 
 use crate::{
     composite_message::{transit_to_aries_msg, Message},
     delayed_serde::DelayedSerde,
-    message_type::message_family::discover_features::{
-        DiscoverFeatures as DiscoverFeaturesKind, DiscoverFeaturesV1, DiscoverFeaturesV1_0,
+    message_type::message_protocol::discover_features::{
+        DiscoverFeatures as DiscoverFeaturesKind, DiscoverFeaturesV1, DiscoverFeaturesV1_0, DiscoverFeaturesV1_0Kind,
     },
 };
 
@@ -26,18 +28,20 @@ pub enum DiscoverFeatures {
 }
 
 impl DelayedSerde for DiscoverFeatures {
-    type MsgType = DiscoverFeaturesKind;
+    type MsgType<'a> = (DiscoverFeaturesKind, &'a str);
 
-    fn delayed_deserialize<'de, D>(msg_type: Self::MsgType, deserializer: D) -> Result<Self, D::Error>
+    fn delayed_deserialize<'de, D>(msg_type: Self::MsgType<'de>, deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
-        let DiscoverFeaturesKind::V1(major) = msg_type;
+        let (major, kind) = msg_type;
+        let DiscoverFeaturesKind::V1(major) = major;
         let DiscoverFeaturesV1::V1_0(minor) = major;
+        let kind = DiscoverFeaturesV1_0Kind::from_str(kind).map_err(D::Error::custom)?;
 
-        match minor {
-            DiscoverFeaturesV1_0::Query => Query::delayed_deserialize(minor, deserializer).map(From::from),
-            DiscoverFeaturesV1_0::Disclose => Disclose::delayed_deserialize(minor, deserializer).map(From::from),
+        match kind {
+            DiscoverFeaturesV1_0Kind::Query => Query::delayed_deserialize(kind, deserializer).map(From::from),
+            DiscoverFeaturesV1_0Kind::Disclose => Disclose::delayed_deserialize(kind, deserializer).map(From::from),
         }
     }
 

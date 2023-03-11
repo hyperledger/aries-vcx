@@ -4,14 +4,14 @@ use serde::{Deserialize, Serialize};
 use crate::{
     composite_message::Message,
     decorators::{Attachment, PleaseAck, Thread, Timing},
-    message_type::message_family::cred_issuance::CredentialIssuanceV1_0,
-    protocols::traits::MessageKind,
+    message_type::message_protocol::cred_issuance::CredentialIssuanceV1_0Kind,
+    protocols::traits::ConcreteMessage,
 };
 
 pub type IssueCredential = Message<IssueCredentialContent, IssueCredentialDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, MessageContent)]
-#[message(kind = "CredentialIssuanceV1_0::IssueCredential")]
+#[message(kind = "CredentialIssuanceV1_0Kind::IssueCredential")]
 pub struct IssueCredentialContent {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,

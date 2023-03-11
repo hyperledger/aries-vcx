@@ -3,7 +3,7 @@ use std::collections::{BTreeMap, HashMap};
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 
-use crate::message_type::message_family::{
+use crate::message_type::message_protocol::{
     basic_message::BasicMessageV1_0,
     connection::ConnectionV1_0,
     cred_issuance::CredentialIssuanceV1_0,
@@ -13,7 +13,7 @@ use crate::message_type::message_family::{
     present_proof::PresentProofV1_0,
     report_problem::ReportProblemV1_0,
     revocation::RevocationV2_0,
-    traits::{ResolveMajorVersion, ResolveMinorVersion, ResolveMsgKind},
+    traits::{MajorVersion, MinorVersion, ProtocolName},
     trust_ping::TrustPingV1_0,
 };
 
@@ -64,10 +64,10 @@ impl ProtocolDescriptor {
 macro_rules! extract_parts {
     ($name:ty) => {
         (
-            <<$name as ResolveMsgKind>::Parent as ResolveMinorVersion>::Parent::FAMILY,
-            <$name as ResolveMsgKind>::Parent::MAJOR,
-            <$name as ResolveMsgKind>::MINOR,
-            <$name as ResolveMsgKind>::Parent::actors().to_vec(),
+            <<$name as MinorVersion>::Parent as MajorVersion>::Parent::FAMILY,
+            <$name as MinorVersion>::Parent::MAJOR,
+            <$name as MinorVersion>::MINOR,
+            <$name as MinorVersion>::Parent::actors().to_vec(),
         )
     };
 }

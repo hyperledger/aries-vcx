@@ -1,7 +1,7 @@
 use serde::{de::IgnoredAny, Deserialize, Deserializer, Serialize, Serializer};
 use uuid::Uuid;
 
-use crate::protocols::traits::MessageKind;
+use crate::protocols::traits::ConcreteMessage;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Message<C, D = Nothing> {
@@ -35,7 +35,7 @@ impl<C, D> Message<C, D> {
 
 impl<C, D> Message<C, D>
 where
-    C: MessageKind,
+    C: ConcreteMessage,
 {
     pub fn kind() -> C::Kind {
         C::kind()

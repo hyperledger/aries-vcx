@@ -5,15 +5,15 @@ use serde::{Deserialize, Serialize};
 use crate::{
     composite_message::Message,
     decorators::{Thread, Timing},
-    message_type::message_family::connection::ConnectionV1_0,
+    message_type::message_protocol::connection::ConnectionV1_0Kind,
 };
 
-use crate::protocols::traits::MessageKind;
+use crate::protocols::traits::ConcreteMessage;
 
 pub type Request = Message<RequestContent, RequestDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, MessageContent)]
-#[message(kind = "ConnectionV1_0::Request")]
+#[message(kind = "ConnectionV1_0Kind::Request")]
 pub struct RequestContent {
     pub label: String,
     pub connection: ConnectionData,

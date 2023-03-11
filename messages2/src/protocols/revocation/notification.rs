@@ -4,14 +4,14 @@ use serde::{Deserialize, Serialize};
 use crate::{
     composite_message::Message,
     decorators::{PleaseAck, Thread, Timing},
-    message_type::message_family::revocation::RevocationV2_0,
-    protocols::traits::MessageKind,
+    message_type::message_protocol::revocation::RevocationV2_0Kind,
+    protocols::traits::ConcreteMessage,
 };
 
 pub type Revoke = Message<RevokeContent, RevokeDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, MessageContent)]
-#[message(kind = "RevocationV2_0::Revoke")]
+#[message(kind = "RevocationV2_0Kind::Revoke")]
 pub struct RevokeContent {
     pub credential_id: String,
     pub revocation_format: RevocationFormat,

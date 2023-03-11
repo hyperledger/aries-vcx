@@ -1,10 +1,20 @@
+use std::str::FromStr;
+
 use derive_more::From;
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::{
     composite_message::Message,
     delayed_serde::DelayedSerde,
-    message_type::{MessageFamily, MessageType},
+    message_type::{
+        message_protocol::{
+            basic_message::{BasicMessage as BasicMessageKind, BasicMessageV1, BasicMessageV1_0Kind},
+            notification::{Notification, NotificationV1, NotificationV1_0Kind},
+            report_problem::{ReportProblem, ReportProblemV1, ReportProblemV1_0Kind},
+            routing::{Routing, RoutingV1, RoutingV1_0Kind},
+        },
+        MessageFamily,
+    },
     protocols::{
         basic_message::BasicMessage,
         connection::{invitation::Invitation, Connection},
@@ -16,7 +26,7 @@ use crate::{
         report_problem::ProblemReport,
         revocation::Revocation,
         routing::Forward,
-        traits::MessageKind,
+        traits::ConcreteMessage,
         trust_ping::TrustPing,
     },
 };
@@ -39,44 +49,60 @@ pub enum AriesMessage {
 }
 
 impl DelayedSerde for AriesMessage {
-    type MsgType = MessageFamily;
+    type MsgType<'a> = (MessageFamily, &'a str);
 
-    fn delayed_deserialize<'de, D>(msg_type: Self::MsgType, deserializer: D) -> Result<Self, D::Error>
+    fn delayed_deserialize<'de, D>(msg_type: Self::MsgType<'de>, deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
+        let (msg_type, kind) = msg_type;
+
         match msg_type {
-            Self::MsgType::Routing(msg_type) => {
+            MessageFamily::Routing(msg_type) => {
+                let Routing::V1(RoutingV1::V1_0(msg_type)) = msg_type;
+                let msg_type = RoutingV1_0Kind::Forward;
+
                 Message::<Forward>::delayed_deserialize(msg_type, deserializer).map(From::from)
             }
-            Self::MsgType::Connection(msg_type) => {
-                Connection::delayed_deserialize(msg_type, deserializer).map(From::from)
+            MessageFamily::Connection(msg_type) => {
+                Connection::delayed_deserialize((msg_type, kind), deserializer).map(From::from)
             }
-            Self::MsgType::Revocation(msg_type) => {
-                Revocation::delayed_deserialize(msg_type, deserializer).map(From::from)
+            MessageFamily::Revocation(msg_type) => {
+                Revocation::delayed_deserialize((msg_type, kind), deserializer).map(From::from)
             }
-            Self::MsgType::CredentialIssuance(msg_type) => {
-                CredentialIssuance::delayed_deserialize(msg_type, deserializer).map(From::from)
+            MessageFamily::CredentialIssuance(msg_type) => {
+                CredentialIssuance::delayed_deserialize((msg_type, kind), deserializer).map(From::from)
             }
-            Self::MsgType::ReportProblem(msg_type) => {
+            MessageFamily::ReportProblem(msg_type) => {
+                let ReportProblem::V1(ReportProblemV1::V1_0(msg_type)) = msg_type;
+                let msg_type = ReportProblemV1_0Kind::ProblemReport;
+
                 ProblemReport::delayed_deserialize(msg_type, deserializer).map(From::from)
             }
-            Self::MsgType::PresentProof(msg_type) => {
-                PresentProof::delayed_deserialize(msg_type, deserializer).map(From::from)
+            MessageFamily::PresentProof(msg_type) => {
+                PresentProof::delayed_deserialize((msg_type, kind), deserializer).map(From::from)
             }
-            Self::MsgType::TrustPing(msg_type) => {
-                TrustPing::delayed_deserialize(msg_type, deserializer).map(From::from)
+            MessageFamily::TrustPing(msg_type) => {
+                TrustPing::delayed_deserialize((msg_type, kind), deserializer).map(From::from)
             }
-            Self::MsgType::DiscoverFeatures(msg_type) => {
-                DiscoverFeatures::delayed_deserialize(msg_type, deserializer).map(From::from)
+            MessageFamily::DiscoverFeatures(msg_type) => {
+                DiscoverFeatures::delayed_deserialize((msg_type, kind), deserializer).map(From::from)
             }
-            Self::MsgType::BasicMessage(msg_type) => {
+            MessageFamily::BasicMessage(msg_type) => {
+                let BasicMessageKind::V1(BasicMessageV1::V1_0(msg_type)) = msg_type;
+                let msg_type = BasicMessageV1_0Kind::Message;
+
                 BasicMessage::delayed_deserialize(msg_type, deserializer).map(From::from)
             }
-            Self::MsgType::OutOfBand(msg_type) => {
-                OutOfBand::delayed_deserialize(msg_type, deserializer).map(From::from)
+            MessageFamily::OutOfBand(msg_type) => {
+                OutOfBand::delayed_deserialize((msg_type, kind), deserializer).map(From::from)
             }
-            Self::MsgType::Notification(msg_type) => Ack::delayed_deserialize(msg_type, deserializer).map(From::from),
+            MessageFamily::Notification(msg_type) => {
+                let Notification::V1(NotificationV1::V1_0(msg_type)) = msg_type;
+                let msg_type = NotificationV1_0Kind::Ack;
+
+                Ack::delayed_deserialize(msg_type, deserializer).map(From::from)
+            }
         }
     }
 
@@ -143,6 +169,27 @@ impl<'de> Deserialize<'de> for AriesMessage {
     {
         use serde::__private::de::{ContentDeserializer, TaggedContentVisitor};
 
+        struct MessageType<'a> {
+            protocol: MessageFamily,
+            kind: &'a str,
+        }
+
+        impl<'de> Deserialize<'de> for MessageType<'de> {
+            fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+            where
+                D: Deserializer<'de>,
+            {
+                let msg_type_str = <&str>::deserialize(deserializer)?;
+                let Some((protocol_str, kind)) = msg_type_str.rsplit_once('/') else {
+                    return Err(D::Error::custom(format!("Invalid message type: {msg_type_str}")));
+                };
+
+                let protocol = MessageFamily::from_str(protocol_str).map_err(D::Error::custom)?;
+                let msg_type = Self { protocol, kind };
+                Ok(msg_type)
+            }
+        }
+
         // TaggedContentVisitor is a visitor used in serde_derive for internally tagged enums.
         // As it visits data, it looks for a certain field (MSG_TYPE here), deserializes it and stores it separately.
         // The rest of the data is stored as [`Content`], a thin deserialization format that practically acts as a buffer
@@ -154,12 +201,13 @@ impl<'de> Deserialize<'de> for AriesMessage {
         // and the content is [`Content`], the cached remaining fields of the serialized data.
         // Serde uses this [`ContentDeserializer`] to deserialize from that format.
         let content_deser = ContentDeserializer::<D::Error>::new(tagged.content);
+        let MessageType { protocol, kind } = tagged.tag;
 
         // Instead of matching to oblivion and beyond on the [`MessageType`] family,
         // we make use of [`DelayedSerde`] so the matching happens incrementally.
         // This makes use of the provided deserializer and matches on the [`MessageType`]
         // to determine the type the content must be deserialized to.
-        Self::delayed_deserialize(tagged.tag.family, content_deser)
+        Self::delayed_deserialize((protocol, kind), content_deser)
     }
 }
 
@@ -173,40 +221,6 @@ impl Serialize for AriesMessage {
         S: Serializer,
     {
         self.delayed_serialize(serializer)
-    }
-}
-
-/// Struct used for serializing an [`AriesMessage`]
-/// by also attaching the [`MessageType`] to the output.
-#[derive(Serialize)]
-pub(crate) struct MsgWithType<'a, T> {
-    #[serde(rename = "@type")]
-    msg_type: MessageType,
-    #[serde(flatten)]
-    message: &'a T,
-}
-
-impl<'a, C, D> From<&'a Message<C, D>> for MsgWithType<'a, Message<C, D>>
-where
-    C: MessageKind,
-    MessageType: From<<C as MessageKind>::Kind>,
-{
-    fn from(content: &'a Message<C, D>) -> Self {
-        let msg_type = C::kind().into();
-        Self {
-            msg_type,
-            message: content,
-        }
-    }
-}
-
-impl<'a> From<&'a Invitation> for MsgWithType<'a, Invitation> {
-    fn from(content: &'a Invitation) -> Self {
-        let msg_type = Invitation::kind().into();
-        Self {
-            msg_type,
-            message: content,
-        }
     }
 }
 

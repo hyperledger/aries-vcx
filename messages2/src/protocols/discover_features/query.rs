@@ -5,16 +5,16 @@ use crate::{
     composite_message::Message,
     decorators::Timing,
     message_type::{
-        message_family::discover_features::DiscoverFeaturesV1_0,
+        message_protocol::discover_features::DiscoverFeaturesV1_0Kind,
         registry::{ProtocolDescriptor, PROTOCOL_REGISTRY},
     },
-    protocols::traits::MessageKind,
+    protocols::traits::ConcreteMessage,
 };
 
 pub type Query = Message<QueryContent, QueryDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, MessageContent)]
-#[message(kind = "DiscoverFeaturesV1_0::Query")]
+#[message(kind = "DiscoverFeaturesV1_0Kind::Query")]
 pub struct QueryContent {
     pub query: String,
     #[serde(skip_serializing_if = "Option::is_none")]

@@ -1,17 +1,19 @@
 pub mod pairwise;
 pub mod public;
 
+use std::fmt::Arguments;
+
 use derive_more::From;
 use messages_macros::MessageContent;
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 use url::Url;
 
 use super::Connection;
-use crate::aries_message::MsgWithType;
 use crate::composite_message::{transit_to_aries_msg, Message};
 use crate::delayed_serde::DelayedSerde;
-use crate::message_type::message_family::connection::ConnectionV1_0;
-use crate::protocols::traits::MessageKind;
+use crate::message_type::message_protocol::{connection::ConnectionV1_0Kind, traits::MessageKind};
+use crate::message_type::MessageFamily;
+use crate::protocols::traits::ConcreteMessage;
 
 use self::pairwise::{PairwiseInvitationContent, PwInvitationDecorators};
 use self::public::PublicInvitationContent;
@@ -37,7 +39,7 @@ pub struct CompleteInvitationContent(PairwiseInvitationContent<Url>);
 // based on the invitation format, we don't wrap the [`Invitation`]
 // in a [`Message`], but rather its variants.
 #[derive(Debug, Clone, From, Deserialize, Serialize, MessageContent)]
-#[message(kind = "ConnectionV1_0::Invitation")]
+#[message(kind = "ConnectionV1_0Kind::Invitation")]
 #[serde(untagged)]
 pub enum Invitation {
     Public(PublicInvitation),
@@ -48,9 +50,9 @@ pub enum Invitation {
 /// We need a custom [`DelayedSerde`] impl to take advantage of
 /// serde's untagged deserialization.
 impl DelayedSerde for Invitation {
-    type MsgType = ConnectionV1_0;
+    type MsgType<'a> = ConnectionV1_0Kind;
 
-    fn delayed_deserialize<'de, D>(msg_type: Self::MsgType, deserializer: D) -> Result<Self, D::Error>
+    fn delayed_deserialize<'de, D>(msg_type: Self::MsgType<'de>, deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
@@ -68,7 +70,24 @@ impl DelayedSerde for Invitation {
     where
         S: Serializer,
     {
-        MsgWithType::from(self).serialize(serializer)
+        #[derive(Serialize)]
+        struct MsgWithType<'a, T> {
+            #[serde(rename = "@type")]
+            msg_type: Arguments<'a>,
+            #[serde(flatten)]
+            message: &'a T,
+        }
+
+        impl<'a, T> MsgWithType<'a, T> {
+            fn new(msg_type: Arguments<'a>, message: &'a T) -> Self {
+                Self { msg_type, message }
+            }
+        }
+
+        let kind = Self::kind();
+        let protocol = MessageFamily::from(Self::MsgType::parent());
+
+        MsgWithType::new(format_args!("{protocol}/{}", kind.as_ref()), self).serialize(serializer)
     }
 }
 

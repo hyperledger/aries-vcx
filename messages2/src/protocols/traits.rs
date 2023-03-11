@@ -1,9 +1,5 @@
-use std::fmt::Debug;
-
-use crate::message_type::MessageType;
-
-pub trait MessageKind {
-    type Kind: Into<MessageType> + PartialEq + Debug;
+pub trait ConcreteMessage {
+    type Kind;
 
     fn kind() -> Self::Kind;
 }

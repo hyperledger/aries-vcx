@@ -23,6 +23,7 @@ pub fn message_type_impl(input: DeriveInput) -> SynResult<TokenStream> {
 
     // Look for our attribute
     let attr = next_or_panic(&mut attr_iter, &format!("must use \"{SEMVER}\" attribute"));
+    let span = attr.span();
 
     // Should be the only occurrence
     end_or_err(&mut attr_iter, format!("duplicate \"{SEMVER}\" attribute"))?;
@@ -31,15 +32,20 @@ pub fn message_type_impl(input: DeriveInput) -> SynResult<TokenStream> {
     let list: Punctuated<_, Token![,]> = attr.parse_args_with(Punctuated::parse_terminated)?;
 
     let mut iter = list.into_iter();
-    let nv = try_get_nv_pair(&mut iter, attr.span())?;
+    let nv = try_get_nv_pair(&mut iter, span)?;
 
     // Process arguments
-    let ts = if nv.path.is_ident(MINOR) {
-        let parent = try_get_parent(&mut iter, attr.span())?;
+    let ts = if nv.path.is_ident(PARENT) {
+        let parent = try_parse_parent(nv)?;
+        Ok(process_kind(&name, parent))
+    } else if nv.path.is_ident(MINOR) {
+        let parent = try_get_nv_pair(&mut iter, span)?;
+        let parent = try_parse_parent(parent)?;
         process_minor(&name, parent, nv)
     } else if nv.path.is_ident(MAJOR) {
-        let parent = try_get_parent(&mut iter, attr.span())?;
-        let actors = try_get_actors(&mut iter, attr.span())?;
+        let parent = try_get_nv_pair(&mut iter, span)?;
+        let parent = try_parse_parent(parent)?;
+        let actors = try_get_actors(&mut iter, span)?;
         process_major(&name, parent, actors, nv, input.data)
     } else if nv.path.is_ident(FAMILY) {
         process_family(&name, nv, input.data)
@@ -86,13 +92,8 @@ fn try_get_path(nested: NestedMeta) -> SynResult<Path> {
     }
 }
 
-/// Matches the next name value pair from the iter to get a path to a parent type.
-fn try_get_parent<I>(iter: &mut I, span: Span) -> SynResult<Path>
-where
-    I: Iterator<Item = Meta>,
-{
-    let parent = try_get_nv_pair(iter, span)?;
-
+/// Attempts to parse a type path from a name value pair.
+fn try_parse_parent(parent: MetaNameValue) -> SynResult<Path> {
     if parent.path.is_ident(PARENT) {
         match parent.lit {
             Lit::Str(s) => Ok(s.parse()?),
@@ -133,6 +134,18 @@ fn try_get_var_parts(var: Variant) -> SynResult<(Ident, Field)> {
     Ok((var_name, field))
 }
 
+fn process_kind(name: &Ident, parent: Path) -> TokenStream {
+    quote! {
+        impl MessageKind for #name {
+            type Parent = #parent;
+
+            fn parent() -> Self::Parent {
+                #parent
+            }
+        }
+    }
+}
+
 fn process_minor(name: &Ident, parent: Path, minor: MetaNameValue) -> SynResult<TokenStream> {
     // Ensure the value provided is an integer
     let Lit::Int(i) = minor.lit else {
@@ -140,8 +153,9 @@ fn process_minor(name: &Ident, parent: Path, minor: MetaNameValue) -> SynResult<
     };
 
     let expanded = quote! {
-        impl ResolveMsgKind for #name {
+        impl MinorVersion for #name {
             type Parent = #parent;
+
             const MINOR: u8 = #i;
         }
     };
@@ -171,38 +185,40 @@ fn process_major(
     for var in d.variants {
         let (var_name, field) = try_get_var_parts(var)?;
 
-        resolve_fn_match.extend(quote! {#field::MINOR => Ok(Self::#var_name(#field::resolve_kind(kind)?)),});
-        as_parts_fn_match.extend(quote! {Self::#var_name(v) => v.as_minor_ver_parts(),});
+        resolve_fn_match.extend(quote! {#field::MINOR => Ok(Self::#var_name(#field)),});
+        as_parts_fn_match.extend(quote! {Self::#var_name(v) => v.as_minor_version(),});
     }
 
     let num_actors = actors.len();
 
     let expanded = quote! {
-        impl ResolveMinorVersion for #name {
+        impl MajorVersion for #name {
             type Actors = [Actor; #num_actors];
+
             type Parent = #parent;
+
             const MAJOR: u8 = #i;
 
-            fn resolve_minor_ver(minor: u8, kind: &str) -> MsgTypeResult<Self> {
+            fn resolve_minor_ver(minor: u8) -> MsgTypeResult<Self> {
                 match minor {
                     #resolve_fn_match
                     _ => {
                         let family = Self::Parent::FAMILY;
                         let major = Self::MAJOR;
                         match get_supported_version(family, major, minor) {
-                            Some(minor) => Self::resolve_minor_ver(minor, kind),
+                            Some(minor) => Self::resolve_minor_ver(minor),
                             None => Err(MsgTypeError::minor_ver_err(minor))
                         }
                     },
                 }
             }
 
-            fn as_full_ver_parts(&self) -> (u8, u8, &str) {
-                let (minor, kind) = match self {
+            fn as_version_parts(&self) -> (u8, u8) {
+                let minor = match self {
                     #as_parts_fn_match
                 };
 
-                (Self::MAJOR, minor, kind)
+                (Self::MAJOR, minor)
             }
 
             fn actors() -> Self::Actors {
@@ -231,27 +247,27 @@ fn process_family(name: &Ident, family: MetaNameValue, data: Data) -> SynResult<
         let (var_name, field) = try_get_var_parts(var)?;
 
         resolve_fn_match
-            .extend(quote! {#field::MAJOR => Ok(Self::#var_name(#field::resolve_minor_ver(minor, kind)?)),});
-        as_parts_fn_match.extend(quote! {Self::#var_name(v) => v.as_full_ver_parts(),});
+            .extend(quote! {#field::MAJOR => Ok(Self::#var_name(#field::resolve_minor_ver(minor)?)),});
+        as_parts_fn_match.extend(quote! {Self::#var_name(v) => v.as_version_parts(),});
     }
 
     let expanded = quote! {
-        impl ResolveMajorVersion for #name {
+        impl ProtocolName for #name {
             const FAMILY: &'static str = #s;
 
-            fn resolve_major_ver(major: u8, minor: u8, kind: &str) -> MsgTypeResult<Self> {
+            fn resolve_version(major: u8, minor: u8) -> MsgTypeResult<Self> {
                 match major {
                     #resolve_fn_match
                     _ => Err(MsgTypeError::major_ver_err(major)),
                 }
             }
 
-            fn as_msg_type_parts(&self) -> (&str, u8, u8, &str) {
-                let (major, minor, kind) = match self {
+            fn as_protocol_parts(&self) -> (&str, u8, u8) {
+                let (major, minor) = match self {
                     #as_parts_fn_match
                 };
 
-                (Self::FAMILY, major, minor, kind)
+                (Self::FAMILY, major, minor)
             }
         }
     };

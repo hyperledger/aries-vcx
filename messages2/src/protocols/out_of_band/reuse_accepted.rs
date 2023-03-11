@@ -4,14 +4,14 @@ use serde::{Deserialize, Serialize};
 use crate::{
     composite_message::{Message, Nothing},
     decorators::{Thread, Timing},
-    message_type::message_family::out_of_band::OutOfBandV1_1,
-    protocols::traits::MessageKind,
+    message_type::message_protocol::out_of_band::OutOfBandV1_1Kind,
+    protocols::traits::ConcreteMessage,
 };
 
 pub type HandshakeReuseAccepted = Message<HandshakeReuseAcceptedContent, HandshakeReuseAcceptedDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, MessageContent, Default)]
-#[message(kind = "OutOfBandV1_1::HandshakeReuseAccepted")]
+#[message(kind = "OutOfBandV1_1Kind::HandshakeReuseAccepted")]
 #[serde(transparent)]
 pub struct HandshakeReuseAcceptedContent(Nothing);
 

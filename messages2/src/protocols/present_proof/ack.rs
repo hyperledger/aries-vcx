@@ -3,17 +3,17 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     composite_message::Message,
-    message_type::message_family::present_proof::PresentProofV1_0,
+    message_type::message_protocol::present_proof::PresentProofV1_0Kind,
     protocols::{
         notification::{AckContent, AckDecorators, AckStatus},
-        traits::MessageKind,
+        traits::ConcreteMessage,
     },
 };
 
 pub type AckPresentation = Message<AckPresentationContent, AckDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, MessageContent)]
-#[message(kind = "PresentProofV1_0::Ack")]
+#[message(kind = "PresentProofV1_0Kind::Ack")]
 #[serde(transparent)]
 pub struct AckPresentationContent(pub AckContent);
 

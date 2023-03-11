@@ -2,13 +2,17 @@ mod invitation;
 mod reuse;
 mod reuse_accepted;
 
+use std::str::FromStr;
+
 use derive_more::From;
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::{
     composite_message::{transit_to_aries_msg, Message},
     delayed_serde::DelayedSerde,
-    message_type::message_family::out_of_band::{OutOfBand as OutOfBandKind, OutOfBandV1, OutOfBandV1_1},
+    message_type::message_protocol::out_of_band::{
+        OutOfBand as OutOfBandKind, OutOfBandV1, OutOfBandV1_1, OutOfBandV1_1Kind,
+    },
 };
 
 use self::{
@@ -27,20 +31,24 @@ pub enum OutOfBand {
 }
 
 impl DelayedSerde for OutOfBand {
-    type MsgType = OutOfBandKind;
+    type MsgType<'a> = (OutOfBandKind, &'a str);
 
-    fn delayed_deserialize<'de, D>(msg_type: Self::MsgType, deserializer: D) -> Result<Self, D::Error>
+    fn delayed_deserialize<'de, D>(msg_type: Self::MsgType<'de>, deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
-        let OutOfBandKind::V1(major) = msg_type;
+        let (major, kind) = msg_type;
+        let OutOfBandKind::V1(major) = major;
         let OutOfBandV1::V1_1(minor) = major;
+        let kind = OutOfBandV1_1Kind::from_str(kind).map_err(D::Error::custom)?;
 
-        match minor {
-            OutOfBandV1_1::Invitation => Invitation::delayed_deserialize(minor, deserializer).map(From::from),
-            OutOfBandV1_1::HandshakeReuse => HandshakeReuse::delayed_deserialize(minor, deserializer).map(From::from),
-            OutOfBandV1_1::HandshakeReuseAccepted => {
-                HandshakeReuseAccepted::delayed_deserialize(minor, deserializer).map(From::from)
+        match kind {
+            OutOfBandV1_1Kind::Invitation => Invitation::delayed_deserialize(kind, deserializer).map(From::from),
+            OutOfBandV1_1Kind::HandshakeReuse => {
+                HandshakeReuse::delayed_deserialize(kind, deserializer).map(From::from)
+            }
+            OutOfBandV1_1Kind::HandshakeReuseAccepted => {
+                HandshakeReuseAccepted::delayed_deserialize(kind, deserializer).map(From::from)
             }
         }
     }

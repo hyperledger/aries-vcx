@@ -1,13 +1,17 @@
 mod ping;
 mod ping_response;
 
+use std::str::FromStr;
+
 use derive_more::From;
-use serde::{Deserializer, Serializer};
+use serde::{de::Error, Deserializer, Serializer};
 
 use crate::{
     composite_message::{transit_to_aries_msg, Message},
     delayed_serde::DelayedSerde,
-    message_type::message_family::trust_ping::{TrustPing as TrustPingKind, TrustPingV1, TrustPingV1_0},
+    message_type::message_protocol::trust_ping::{
+        TrustPing as TrustPingKind, TrustPingV1, TrustPingV1_0, TrustPingV1_0Kind,
+    },
 };
 
 use self::{
@@ -24,18 +28,20 @@ pub enum TrustPing {
 }
 
 impl DelayedSerde for TrustPing {
-    type MsgType = TrustPingKind;
+    type MsgType<'a> = (TrustPingKind, &'a str);
 
-    fn delayed_deserialize<'de, D>(msg_type: Self::MsgType, deserializer: D) -> Result<Self, D::Error>
+    fn delayed_deserialize<'de, D>(msg_type: Self::MsgType<'de>, deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
-        let TrustPingKind::V1(major) = msg_type;
+        let (major, kind) = msg_type;
+        let TrustPingKind::V1(major) = major;
         let TrustPingV1::V1_0(minor) = major;
+        let kind = TrustPingV1_0Kind::from_str(kind).map_err(D::Error::custom)?;
 
-        match minor {
-            TrustPingV1_0::Ping => Ping::delayed_deserialize(minor, deserializer).map(From::from),
-            TrustPingV1_0::PingResponse => PingResponse::delayed_deserialize(minor, deserializer).map(From::from),
+        match kind {
+            TrustPingV1_0Kind::Ping => Ping::delayed_deserialize(kind, deserializer).map(From::from),
+            TrustPingV1_0Kind::PingResponse => PingResponse::delayed_deserialize(kind, deserializer).map(From::from),
         }
     }
 

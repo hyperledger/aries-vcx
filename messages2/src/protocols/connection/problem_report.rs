@@ -4,15 +4,15 @@ use serde::{Deserialize, Serialize};
 use crate::{
     composite_message::Message,
     decorators::{MsgLocalization, Thread, Timing},
-    message_type::message_family::connection::ConnectionV1_0,
+    message_type::message_protocol::connection::ConnectionV1_0Kind,
 };
 
-use crate::protocols::traits::MessageKind;
+use crate::protocols::traits::ConcreteMessage;
 
 pub type ProblemReport = Message<ProblemReportContent, ProblemReportDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, MessageContent, Default)]
-#[message(kind = "ConnectionV1_0::ProblemReport")]
+#[message(kind = "ConnectionV1_0Kind::ProblemReport")]
 pub struct ProblemReportContent {
     #[serde(rename = "problem-code")]
     #[serde(skip_serializing_if = "Option::is_none")]

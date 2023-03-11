@@ -6,32 +6,35 @@ use transitive::TransitiveFrom;
 use crate::{
     error::{MsgTypeError, MsgTypeResult},
     message_type::actor::Actor,
-    message_type::{registry::get_supported_version, MessageType},
+    message_type::registry::get_supported_version,
 };
 
 use super::{
-    traits::{ResolveMajorVersion, ResolveMinorVersion, ResolveMsgKind},
+    traits::{MajorVersion, MessageKind, MinorVersion, ProtocolName},
     MessageFamily,
 };
 
-#[derive(Copy, Clone, Debug, From, PartialEq, TransitiveFrom, MessageType)]
-#[transitive(into(MessageFamily, MessageType))]
+#[derive(Copy, Clone, Debug, From, PartialEq, MessageType)]
 #[semver(family = "report-problem")]
 pub enum ReportProblem {
     V1(ReportProblemV1),
 }
 
 #[derive(Copy, Clone, Debug, From, PartialEq, TransitiveFrom, MessageType)]
-#[transitive(into(all(ReportProblem, MessageFamily, MessageType)))]
+#[transitive(into(all(ReportProblem, MessageFamily)))]
 #[semver(major = 1, parent = "ReportProblem", actors(Actor::Notified, Actor::Notifier))]
 pub enum ReportProblemV1 {
     V1_0(ReportProblemV1_0),
 }
 
-#[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq, TransitiveFrom, MessageType)]
-#[transitive(into(all(ReportProblemV1, ReportProblem, MessageFamily, MessageType)))]
-#[strum(serialize_all = "kebab-case")]
+#[derive(Copy, Clone, Debug, PartialEq, TransitiveFrom, MessageType)]
+#[transitive(into(all(ReportProblemV1, ReportProblem, MessageFamily)))]
 #[semver(minor = 0, parent = "ReportProblemV1")]
-pub enum ReportProblemV1_0 {
+pub struct ReportProblemV1_0;
+
+#[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq, MessageType)]
+#[strum(serialize_all = "kebab-case")]
+#[semver(parent = "ReportProblemV1_0")]
+pub enum ReportProblemV1_0Kind {
     ProblemReport,
 }

@@ -4,18 +4,19 @@ mod offer_credential;
 mod propose_credential;
 mod request_credential;
 
+use std::str::FromStr;
+
 use derive_more::From;
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use transitive::{TransitiveFrom, TransitiveTryFrom};
+use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::{
     composite_message::{transit_to_aries_msg, Message},
     delayed_serde::DelayedSerde,
     message_type::{
-        message_family::cred_issuance::{
-            CredentialIssuance as CredentialIssuanceKind, CredentialIssuanceV1, CredentialIssuanceV1_0,
+        message_protocol::cred_issuance::{
+            CredentialIssuance as CredentialIssuanceKind, CredentialIssuanceV1, CredentialIssuanceV1_0Kind,
         },
-        MessageFamily, MessageType,
+        MessageFamily,
     },
     mime_type::MimeType,
     utils,
@@ -46,30 +47,32 @@ pub enum CredentialIssuance {
 }
 
 impl DelayedSerde for CredentialIssuance {
-    type MsgType = CredentialIssuanceKind;
+    type MsgType<'a> = (CredentialIssuanceKind, &'a str);
 
-    fn delayed_deserialize<'de, D>(msg_type: Self::MsgType, deserializer: D) -> Result<Self, D::Error>
+    fn delayed_deserialize<'de, D>(msg_type: Self::MsgType<'de>, deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
-        let CredentialIssuanceKind::V1(major) = msg_type;
+        let (major, kind) = msg_type;
+        let CredentialIssuanceKind::V1(major) = major;
         let CredentialIssuanceV1::V1_0(minor) = major;
+        let kind = CredentialIssuanceV1_0Kind::from_str(kind).map_err(D::Error::custom)?;
 
-        match minor {
-            CredentialIssuanceV1_0::OfferCredential => {
-                OfferCredential::delayed_deserialize(minor, deserializer).map(From::from)
+        match kind {
+            CredentialIssuanceV1_0Kind::OfferCredential => {
+                OfferCredential::delayed_deserialize(kind, deserializer).map(From::from)
             }
-            CredentialIssuanceV1_0::ProposeCredential => {
-                ProposeCredential::delayed_deserialize(minor, deserializer).map(From::from)
+            CredentialIssuanceV1_0Kind::ProposeCredential => {
+                ProposeCredential::delayed_deserialize(kind, deserializer).map(From::from)
             }
-            CredentialIssuanceV1_0::RequestCredential => {
-                RequestCredential::delayed_deserialize(minor, deserializer).map(From::from)
+            CredentialIssuanceV1_0Kind::RequestCredential => {
+                RequestCredential::delayed_deserialize(kind, deserializer).map(From::from)
             }
-            CredentialIssuanceV1_0::IssueCredential => {
-                IssueCredential::delayed_deserialize(minor, deserializer).map(From::from)
+            CredentialIssuanceV1_0Kind::IssueCredential => {
+                IssueCredential::delayed_deserialize(kind, deserializer).map(From::from)
             }
-            CredentialIssuanceV1_0::Ack => AckCredential::delayed_deserialize(minor, deserializer).map(From::from),
-            CredentialIssuanceV1_0::CredentialPreview => Err(utils::not_standalone_msg::<D>(minor.as_ref())),
+            CredentialIssuanceV1_0Kind::Ack => AckCredential::delayed_deserialize(kind, deserializer).map(From::from),
+            CredentialIssuanceV1_0Kind::CredentialPreview => Err(utils::not_standalone_msg::<D>(kind.as_ref())),
         }
     }
 
@@ -103,37 +106,35 @@ impl CredentialPreview {
     }
 }
 
-#[derive(Copy, Clone, Debug, Serialize, Deserialize, TransitiveFrom, TransitiveTryFrom)]
-#[serde(into = "MessageType", try_from = "MessageType")]
-#[transitive(try_from(MessageFamily, CredentialIssuanceKind, CredentialIssuanceV1, CredentialIssuanceV1_0))]
-#[transitive(into(CredentialIssuanceV1_0, MessageType))]
+#[derive(Copy, Clone, Debug, Serialize, Deserialize)]
+// #[serde(into = "MessageType", try_from = "MessageType")]
 struct CredentialPreviewMsgType;
 
-impl From<CredentialPreviewMsgType> for CredentialIssuanceV1_0 {
+impl From<CredentialPreviewMsgType> for CredentialIssuanceV1_0Kind {
     fn from(_value: CredentialPreviewMsgType) -> Self {
-        CredentialIssuanceV1_0::CredentialPreview
+        CredentialIssuanceV1_0Kind::CredentialPreview
     }
 }
 
-impl TryFrom<CredentialIssuanceV1_0> for CredentialPreviewMsgType {
+impl TryFrom<CredentialIssuanceV1_0Kind> for CredentialPreviewMsgType {
     type Error = &'static str;
 
-    fn try_from(value: CredentialIssuanceV1_0) -> Result<Self, Self::Error> {
+    fn try_from(value: CredentialIssuanceV1_0Kind) -> Result<Self, Self::Error> {
         match value {
-            CredentialIssuanceV1_0::CredentialPreview => Ok(Self),
+            CredentialIssuanceV1_0Kind::CredentialPreview => Ok(Self),
             _ => Err("message kind is not \"credential_preview\""),
         }
     }
 }
 
-impl TryFrom<MessageType> for CredentialPreviewMsgType {
-    type Error = &'static str;
+// impl TryFrom<MessageType> for CredentialPreviewMsgType {
+//     type Error = &'static str;
 
-    fn try_from(value: MessageType) -> Result<Self, Self::Error> {
-        let interm = MessageFamily::from(value);
-        CredentialPreviewMsgType::try_from(interm)
-    }
-}
+//     fn try_from(value: MessageType) -> Result<Self, Self::Error> {
+//         let interm = MessageFamily::from(value);
+//         CredentialPreviewMsgType::try_from(interm)
+//     }
+// }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "kebab-case")]
