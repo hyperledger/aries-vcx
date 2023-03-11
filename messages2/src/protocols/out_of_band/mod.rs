@@ -10,9 +10,7 @@ use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 use crate::{
     composite_message::{transit_to_aries_msg, Message},
     delayed_serde::DelayedSerde,
-    message_type::message_protocol::out_of_band::{
-        OutOfBand as OutOfBandKind, OutOfBandV1, OutOfBandV1_1, OutOfBandV1_1Kind,
-    },
+    message_type::message_protocol::out_of_band::{OutOfBand as OutOfBandKind, OutOfBandV1, OutOfBandV1_1Kind},
 };
 
 use self::{
@@ -39,7 +37,7 @@ impl DelayedSerde for OutOfBand {
     {
         let (major, kind) = msg_type;
         let OutOfBandKind::V1(major) = major;
-        let OutOfBandV1::V1_1(minor) = major;
+        let OutOfBandV1::V1_1(_minor) = major;
         let kind = OutOfBandV1_1Kind::from_str(kind).map_err(D::Error::custom)?;
 
         match kind {

@@ -9,9 +9,7 @@ use serde::{de::Error, Deserializer, Serializer};
 use crate::{
     composite_message::{transit_to_aries_msg, Message},
     delayed_serde::DelayedSerde,
-    message_type::message_protocol::revocation::{
-        Revocation as RevocationKind, RevocationV2, RevocationV2_0, RevocationV2_0Kind,
-    },
+    message_type::message_protocol::revocation::{Revocation as RevocationKind, RevocationV2, RevocationV2_0Kind},
 };
 
 use self::{
@@ -38,7 +36,7 @@ impl DelayedSerde for Revocation {
     {
         let (major, kind) = msg_type;
         let RevocationKind::V2(major) = major;
-        let RevocationV2::V2_0(minor) = major;
+        let RevocationV2::V2_0(_minor) = major;
         let kind = RevocationV2_0Kind::from_str(kind).map_err(D::Error::custom)?;
 
         match kind {

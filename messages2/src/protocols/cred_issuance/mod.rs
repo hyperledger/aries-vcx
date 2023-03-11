@@ -55,7 +55,7 @@ impl DelayedSerde for CredentialIssuance {
     {
         let (major, kind) = msg_type;
         let CredentialIssuanceKind::V1(major) = major;
-        let CredentialIssuanceV1::V1_0(minor) = major;
+        let CredentialIssuanceV1::V1_0(_minor) = major;
         let kind = CredentialIssuanceV1_0Kind::from_str(kind).map_err(D::Error::custom)?;
 
         match kind {

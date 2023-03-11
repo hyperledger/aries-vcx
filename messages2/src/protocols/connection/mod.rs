@@ -45,7 +45,7 @@ impl DelayedSerde for Connection {
     {
         let (major, kind) = msg_type;
         let ConnectionKind::V1(major) = major;
-        let ConnectionV1::V1_0(minor) = major;
+        let ConnectionV1::V1_0(_minor) = major;
         let kind = ConnectionV1_0Kind::from_str(kind).map_err(D::Error::custom)?;
 
         match kind {

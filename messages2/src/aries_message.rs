@@ -16,18 +16,9 @@ use crate::{
         MessageFamily,
     },
     protocols::{
-        basic_message::BasicMessage,
-        connection::{invitation::Invitation, Connection},
-        cred_issuance::CredentialIssuance,
-        discover_features::DiscoverFeatures,
-        notification::Ack,
-        out_of_band::OutOfBand,
-        present_proof::PresentProof,
-        report_problem::ProblemReport,
-        revocation::Revocation,
-        routing::Forward,
-        traits::ConcreteMessage,
-        trust_ping::TrustPing,
+        basic_message::BasicMessage, connection::Connection, cred_issuance::CredentialIssuance,
+        discover_features::DiscoverFeatures, notification::Ack, out_of_band::OutOfBand, present_proof::PresentProof,
+        report_problem::ProblemReport, revocation::Revocation, routing::Forward, trust_ping::TrustPing,
     },
 };
 
@@ -59,7 +50,7 @@ impl DelayedSerde for AriesMessage {
 
         match msg_type {
             MessageFamily::Routing(msg_type) => {
-                let Routing::V1(RoutingV1::V1_0(msg_type)) = msg_type;
+                let Routing::V1(RoutingV1::V1_0(_msg_type)) = msg_type;
                 let msg_type = RoutingV1_0Kind::Forward;
 
                 Message::<Forward>::delayed_deserialize(msg_type, deserializer).map(From::from)
@@ -74,7 +65,7 @@ impl DelayedSerde for AriesMessage {
                 CredentialIssuance::delayed_deserialize((msg_type, kind), deserializer).map(From::from)
             }
             MessageFamily::ReportProblem(msg_type) => {
-                let ReportProblem::V1(ReportProblemV1::V1_0(msg_type)) = msg_type;
+                let ReportProblem::V1(ReportProblemV1::V1_0(_msg_type)) = msg_type;
                 let msg_type = ReportProblemV1_0Kind::ProblemReport;
 
                 ProblemReport::delayed_deserialize(msg_type, deserializer).map(From::from)
@@ -89,7 +80,7 @@ impl DelayedSerde for AriesMessage {
                 DiscoverFeatures::delayed_deserialize((msg_type, kind), deserializer).map(From::from)
             }
             MessageFamily::BasicMessage(msg_type) => {
-                let BasicMessageKind::V1(BasicMessageV1::V1_0(msg_type)) = msg_type;
+                let BasicMessageKind::V1(BasicMessageV1::V1_0(_msg_type)) = msg_type;
                 let msg_type = BasicMessageV1_0Kind::Message;
 
                 BasicMessage::delayed_deserialize(msg_type, deserializer).map(From::from)
@@ -98,7 +89,7 @@ impl DelayedSerde for AriesMessage {
                 OutOfBand::delayed_deserialize((msg_type, kind), deserializer).map(From::from)
             }
             MessageFamily::Notification(msg_type) => {
-                let Notification::V1(NotificationV1::V1_0(msg_type)) = msg_type;
+                let Notification::V1(NotificationV1::V1_0(_msg_type)) = msg_type;
                 let msg_type = NotificationV1_0Kind::Ack;
 
                 Ack::delayed_deserialize(msg_type, deserializer).map(From::from)

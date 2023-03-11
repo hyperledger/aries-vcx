@@ -10,7 +10,7 @@ use crate::{
     composite_message::{transit_to_aries_msg, Message},
     delayed_serde::DelayedSerde,
     message_type::message_protocol::discover_features::{
-        DiscoverFeatures as DiscoverFeaturesKind, DiscoverFeaturesV1, DiscoverFeaturesV1_0, DiscoverFeaturesV1_0Kind,
+        DiscoverFeatures as DiscoverFeaturesKind, DiscoverFeaturesV1, DiscoverFeaturesV1_0Kind,
     },
 };
 
@@ -36,7 +36,7 @@ impl DelayedSerde for DiscoverFeatures {
     {
         let (major, kind) = msg_type;
         let DiscoverFeaturesKind::V1(major) = major;
-        let DiscoverFeaturesV1::V1_0(minor) = major;
+        let DiscoverFeaturesV1::V1_0(_minor) = major;
         let kind = DiscoverFeaturesV1_0Kind::from_str(kind).map_err(D::Error::custom)?;
 
         match kind {

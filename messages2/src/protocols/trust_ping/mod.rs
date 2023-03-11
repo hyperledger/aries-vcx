@@ -9,9 +9,7 @@ use serde::{de::Error, Deserializer, Serializer};
 use crate::{
     composite_message::{transit_to_aries_msg, Message},
     delayed_serde::DelayedSerde,
-    message_type::message_protocol::trust_ping::{
-        TrustPing as TrustPingKind, TrustPingV1, TrustPingV1_0, TrustPingV1_0Kind,
-    },
+    message_type::message_protocol::trust_ping::{TrustPing as TrustPingKind, TrustPingV1, TrustPingV1_0Kind},
 };
 
 use self::{
@@ -36,7 +34,7 @@ impl DelayedSerde for TrustPing {
     {
         let (major, kind) = msg_type;
         let TrustPingKind::V1(major) = major;
-        let TrustPingV1::V1_0(minor) = major;
+        let TrustPingV1::V1_0(_minor) = major;
         let kind = TrustPingV1_0Kind::from_str(kind).map_err(D::Error::custom)?;
 
         match kind {
