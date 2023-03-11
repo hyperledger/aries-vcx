@@ -1,10 +1,19 @@
+use std::str::FromStr;
+
 use messages_macros::MessageContent;
-use serde::{Deserialize, Serialize};
+use serde::{de::Error, Deserialize, Serialize};
 
 use crate::{
     composite_message::Message,
     decorators::{PleaseAck, Thread, Timing},
-    message_type::{message_protocol::connection::ConnectionV1_0Kind, MessageFamily},
+    message_type::{
+        message_protocol::{
+            connection::{Connection, ConnectionV1, ConnectionV1_0Kind},
+            traits::MessageKind,
+        },
+        serde::MessageType,
+        MessageFamily,
+    },
 };
 
 use crate::protocols::traits::ConcreteMessage;
@@ -66,32 +75,33 @@ impl ResponseDecorators {
     }
 }
 
-#[derive(Copy, Clone, Debug, Default, Serialize, Deserialize)]
-// #[serde(into = "MessageType", try_from = "MessageType")]
+#[derive(Copy, Clone, Debug, Default)]
 struct SigEd25519Sha512Single;
 
-impl From<SigEd25519Sha512Single> for ConnectionV1_0Kind {
-    fn from(_value: SigEd25519Sha512Single) -> Self {
-        ConnectionV1_0Kind::Ed25519Sha512Single
+impl Serialize for SigEd25519Sha512Single {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let protocol = MessageFamily::from(ConnectionV1_0Kind::parent());
+        format_args!("{protocol}/{}", ConnectionV1_0Kind::Ed25519Sha512Single.as_ref()).serialize(serializer)
     }
 }
 
-impl TryFrom<ConnectionV1_0Kind> for SigEd25519Sha512Single {
-    type Error = &'static str;
+impl<'de> Deserialize<'de> for SigEd25519Sha512Single {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let msg_type = MessageType::deserialize(deserializer)?;
 
-    fn try_from(value: ConnectionV1_0Kind) -> Result<Self, Self::Error> {
-        match value {
-            ConnectionV1_0Kind::Ed25519Sha512Single => Ok(Self),
-            _ => Err("message kind is not \"ed25519Sha512_single\""),
+        if let MessageFamily::Connection(Connection::V1(ConnectionV1::V1_0(_))) = msg_type.protocol {
+            if let Ok(ConnectionV1_0Kind::Ed25519Sha512Single) = ConnectionV1_0Kind::from_str(msg_type.kind) {
+                return Ok(SigEd25519Sha512Single);
+            }
         }
+
+        let kind = ConnectionV1_0Kind::Ed25519Sha512Single;
+        Err(D::Error::custom(format!("message kind is not {}", kind.as_ref())))
     }
 }
-
-// impl TryFrom<MessageType> for SigEd25519Sha512Single {
-//     type Error = &'static str;
-
-//     fn try_from(value: MessageType) -> Result<Self, Self::Error> {
-//         let interm = MessageFamily::from(value);
-//         SigEd25519Sha512Single::try_from(interm)
-//     }
-// }

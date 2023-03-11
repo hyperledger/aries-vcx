@@ -1,13 +1,10 @@
-use std::{
-    any::type_name,
-    fmt::{Arguments, Debug},
-};
+use std::{any::type_name, fmt::Debug};
 
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::{
     composite_message::Message,
-    message_type::{message_protocol::traits::MessageKind, MessageFamily},
+    message_type::{message_protocol::traits::MessageKind, serde::MsgWithType, MessageFamily},
     protocols::traits::ConcreteMessage,
 };
 
@@ -56,20 +53,6 @@ where
     where
         S: Serializer,
     {
-        #[derive(Serialize)]
-        struct MsgWithType<'a, T> {
-            #[serde(rename = "@type")]
-            msg_type: Arguments<'a>,
-            #[serde(flatten)]
-            message: &'a T,
-        }
-
-        impl<'a, T> MsgWithType<'a, T> {
-            fn new(msg_type: Arguments<'a>, message: &'a T) -> Self {
-                Self { msg_type, message }
-            }
-        }
-
         let kind = Self::kind();
         let protocol = MessageFamily::from(Self::MsgType::parent());
 

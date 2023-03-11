@@ -1,8 +1,6 @@
 pub mod pairwise;
 pub mod public;
 
-use std::fmt::Arguments;
-
 use derive_more::From;
 use messages_macros::MessageContent;
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
@@ -12,6 +10,7 @@ use super::Connection;
 use crate::composite_message::{transit_to_aries_msg, Message};
 use crate::delayed_serde::DelayedSerde;
 use crate::message_type::message_protocol::{connection::ConnectionV1_0Kind, traits::MessageKind};
+use crate::message_type::serde::MsgWithType;
 use crate::message_type::MessageFamily;
 use crate::protocols::traits::ConcreteMessage;
 
@@ -70,20 +69,6 @@ impl DelayedSerde for Invitation {
     where
         S: Serializer,
     {
-        #[derive(Serialize)]
-        struct MsgWithType<'a, T> {
-            #[serde(rename = "@type")]
-            msg_type: Arguments<'a>,
-            #[serde(flatten)]
-            message: &'a T,
-        }
-
-        impl<'a, T> MsgWithType<'a, T> {
-            fn new(msg_type: Arguments<'a>, message: &'a T) -> Self {
-                Self { msg_type, message }
-            }
-        }
-
         let kind = Self::kind();
         let protocol = MessageFamily::from(Self::MsgType::parent());
 

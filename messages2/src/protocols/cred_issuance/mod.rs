@@ -13,9 +13,13 @@ use crate::{
     composite_message::{transit_to_aries_msg, Message},
     delayed_serde::DelayedSerde,
     message_type::{
-        message_protocol::cred_issuance::{
-            CredentialIssuance as CredentialIssuanceKind, CredentialIssuanceV1, CredentialIssuanceV1_0Kind,
+        message_protocol::{
+            cred_issuance::{
+                CredentialIssuance as CredentialIssuanceKind, CredentialIssuanceV1, CredentialIssuanceV1_0Kind,
+            },
+            traits::MessageKind,
         },
+        serde::MessageType,
         MessageFamily,
     },
     mime_type::MimeType,
@@ -106,8 +110,7 @@ impl CredentialPreview {
     }
 }
 
-#[derive(Copy, Clone, Debug, Serialize, Deserialize)]
-// #[serde(into = "MessageType", try_from = "MessageType")]
+#[derive(Copy, Clone, Debug)]
 struct CredentialPreviewMsgType;
 
 impl From<CredentialPreviewMsgType> for CredentialIssuanceV1_0Kind {
@@ -116,25 +119,37 @@ impl From<CredentialPreviewMsgType> for CredentialIssuanceV1_0Kind {
     }
 }
 
-impl TryFrom<CredentialIssuanceV1_0Kind> for CredentialPreviewMsgType {
-    type Error = &'static str;
-
-    fn try_from(value: CredentialIssuanceV1_0Kind) -> Result<Self, Self::Error> {
-        match value {
-            CredentialIssuanceV1_0Kind::CredentialPreview => Ok(Self),
-            _ => Err("message kind is not \"credential_preview\""),
-        }
+impl Serialize for CredentialPreviewMsgType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let protocol = MessageFamily::from(CredentialIssuanceV1_0Kind::parent());
+        format_args!("{protocol}/{}", CredentialIssuanceV1_0Kind::CredentialPreview.as_ref()).serialize(serializer)
     }
 }
 
-// impl TryFrom<MessageType> for CredentialPreviewMsgType {
-//     type Error = &'static str;
+impl<'de> Deserialize<'de> for CredentialPreviewMsgType {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let msg_type = MessageType::deserialize(deserializer)?;
 
-//     fn try_from(value: MessageType) -> Result<Self, Self::Error> {
-//         let interm = MessageFamily::from(value);
-//         CredentialPreviewMsgType::try_from(interm)
-//     }
-// }
+        if let MessageFamily::CredentialIssuance(CredentialIssuanceKind::V1(CredentialIssuanceV1::V1_0(_))) =
+            msg_type.protocol
+        {
+            if let Ok(CredentialIssuanceV1_0Kind::CredentialPreview) =
+                CredentialIssuanceV1_0Kind::from_str(msg_type.kind)
+            {
+                return Ok(CredentialPreviewMsgType);
+            }
+        }
+
+        let kind = CredentialIssuanceV1_0Kind::CredentialPreview;
+        Err(D::Error::custom(format!("message kind is not {}", kind.as_ref())))
+    }
+}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "kebab-case")]

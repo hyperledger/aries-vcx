@@ -1,7 +1,5 @@
-use std::str::FromStr;
-
 use derive_more::From;
-use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::{
     composite_message::Message,
@@ -13,6 +11,7 @@ use crate::{
             report_problem::{ReportProblem, ReportProblemV1, ReportProblemV1_0Kind},
             routing::{Routing, RoutingV1, RoutingV1_0Kind},
         },
+        serde::MessageType,
         MessageFamily,
     },
     protocols::{
@@ -159,27 +158,6 @@ impl<'de> Deserialize<'de> for AriesMessage {
         D: Deserializer<'de>,
     {
         use serde::__private::de::{ContentDeserializer, TaggedContentVisitor};
-
-        struct MessageType<'a> {
-            protocol: MessageFamily,
-            kind: &'a str,
-        }
-
-        impl<'de> Deserialize<'de> for MessageType<'de> {
-            fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-            where
-                D: Deserializer<'de>,
-            {
-                let msg_type_str = <&str>::deserialize(deserializer)?;
-                let Some((protocol_str, kind)) = msg_type_str.rsplit_once('/') else {
-                    return Err(D::Error::custom(format!("Invalid message type: {msg_type_str}")));
-                };
-
-                let protocol = MessageFamily::from_str(protocol_str).map_err(D::Error::custom)?;
-                let msg_type = Self { protocol, kind };
-                Ok(msg_type)
-            }
-        }
 
         // TaggedContentVisitor is a visitor used in serde_derive for internally tagged enums.
         // As it visits data, it looks for a certain field (MSG_TYPE here), deserializes it and stores it separately.

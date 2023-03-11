@@ -246,8 +246,7 @@ fn process_family(name: &Ident, family: MetaNameValue, data: Data) -> SynResult<
     for var in d.variants {
         let (var_name, field) = try_get_var_parts(var)?;
 
-        resolve_fn_match
-            .extend(quote! {#field::MAJOR => Ok(Self::#var_name(#field::resolve_minor_ver(minor)?)),});
+        resolve_fn_match.extend(quote! {#field::MAJOR => Ok(Self::#var_name(#field::resolve_minor_ver(minor)?)),});
         as_parts_fn_match.extend(quote! {Self::#var_name(v) => v.as_version_parts(),});
     }
 

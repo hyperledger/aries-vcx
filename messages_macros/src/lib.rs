@@ -1,8 +1,8 @@
 #![allow(clippy::expect_fun_call)]
 
+mod common;
 mod message;
 mod message_type;
-mod common;
 
 use message::message_impl;
 use message_type::message_type_impl;
