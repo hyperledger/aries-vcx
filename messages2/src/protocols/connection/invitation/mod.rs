@@ -52,36 +52,6 @@ impl HasKind for Invitation {
     }
 }
 
-// /// We need a custom [`DelayedSerde`] impl to take advantage of
-// /// serde's untagged deserialization.
-// impl DelayedSerde for Invitation {
-//     type MsgType<'a> = ConnectionV1_0Kind;
-
-//     fn delayed_deserialize<'de, D>(msg_type: Self::MsgType<'de>, deserializer: D) -> Result<Self, D::Error>
-//     where
-//         D: Deserializer<'de>,
-//     {
-//         let expected = Self::kind_type();
-//         if msg_type == expected {
-//             Self::deserialize(deserializer)
-//         } else {
-//             let const_msg = concat!("Failed deserializing ", stringify!(Invitation));
-//             let msg = format!("{const_msg}; Expected kind: {expected:?}, found: {msg_type:?}");
-//             Err(D::Error::custom(msg))
-//         }
-//     }
-
-//     fn delayed_serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-//     where
-//         S: Serializer,
-//     {
-//         let kind = Self::kind_type();
-//         let protocol = Protocol::from(Self::MsgType::parent());
-
-//         MsgWithType::new(format_args!("{protocol}/{}", kind.as_ref()), self).serialize(serializer)
-//     }
-// }
-
 transit_to_aries_msg!(PublicInvitationContent, Invitation, Connection);
 transit_to_aries_msg!(PairwiseInvitationContent<Url>:PwInvitationDecorators, Invitation, Connection);
 transit_to_aries_msg!(PairwiseInvitationContent<String>:PwInvitationDecorators, Invitation, Connection);
