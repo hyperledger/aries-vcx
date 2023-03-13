@@ -17,7 +17,7 @@ use crate::message_type::message_protocol::{
     trust_ping::TrustPingV1_0,
 };
 
-use super::{actor::Actor, prefix::Prefix};
+use super::{actor::Actor, MessageFamily};
 
 type RegistryMap = HashMap<&'static str, HashMap<u8, BTreeMap<u8, ProtocolDescriptor>>>;
 
@@ -35,8 +35,8 @@ impl ProtocolDescriptor {
 
     pub fn as_pid_parts(&self) -> (&str, Option<u8>, Option<u8>) {
         let skip_slash = match self.pid {
-            _ if self.pid.starts_with(Prefix::DID_COM_ORG_PREFIX) => Some(3),
-            _ if self.pid.starts_with(Prefix::DID_SOV_PREFIX) => Some(1),
+            _ if self.pid.starts_with(MessageFamily::DID_COM_ORG_PREFIX) => Some(3),
+            _ if self.pid.starts_with(MessageFamily::DID_SOV_PREFIX) => Some(1),
             _ => None,
         };
 
@@ -75,7 +75,7 @@ macro_rules! extract_parts {
 fn map_insert(map: &mut RegistryMap, parts: (&'static str, u8, u8, Vec<Actor>)) {
     let (family, major, minor, actors) = parts;
 
-    let pid = format!("{}/{}/{}.{}", Prefix::DID_COM_ORG_PREFIX, family, major, minor);
+    let pid = format!("{}/{}/{}.{}", MessageFamily::DID_COM_ORG_PREFIX, family, major, minor);
     let mut pd = ProtocolDescriptor::new(pid);
     pd.roles = Some(actors);
 
