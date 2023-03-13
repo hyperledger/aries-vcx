@@ -35,7 +35,7 @@ macro_rules! extract_parts {
             <$name as MinorVersion>::Parent::MAJOR,
             <$name as MinorVersion>::MINOR,
             <$name as MinorVersion>::Parent::actors().to_vec(),
-            MessageFamily::from($name),
+            Protocol::from($name),
         )
     };
 }
