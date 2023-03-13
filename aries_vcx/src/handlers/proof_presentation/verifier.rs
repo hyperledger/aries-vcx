@@ -11,7 +11,9 @@ use crate::core::profile::profile::Profile;
 use crate::errors::error::prelude::*;
 use crate::handlers::connection::mediated_connection::MediatedConnection;
 use crate::protocols::proof_presentation::verifier::messages::VerifierMessages;
-use crate::protocols::proof_presentation::verifier::state_machine::{RevocationStatus, VerifierSM, VerifierState};
+use crate::protocols::proof_presentation::verifier::state_machine::{
+    PresentationVerificationStatus, VerifierSM, VerifierState,
+};
 use crate::protocols::SendClosure;
 use messages::a2a::A2AMessage;
 use messages::protocols::proof_presentation::presentation_proposal::PresentationProposal;
@@ -144,8 +146,8 @@ impl Verifier {
         self.verifier_sm.get_presentation_msg()
     }
 
-    pub fn get_revocation_status(&self) -> Option<RevocationStatus> {
-        self.verifier_sm.get_revocation_status()
+    pub fn get_presentation_verification_status(&self) -> PresentationVerificationStatus {
+        self.verifier_sm.get_presentation_verification_status()
     }
 
     pub fn get_presentation_attachment(&self) -> VcxResult<String> {

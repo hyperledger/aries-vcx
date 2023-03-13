@@ -1,4 +1,4 @@
-use crate::protocols::proof_presentation::verifier::state_machine::RevocationStatus;
+use crate::protocols::proof_presentation::verifier::state_machine::PresentationVerificationStatus;
 use messages::concepts::problem_report::ProblemReport;
 use messages::protocols::proof_presentation::presentation::Presentation;
 use messages::protocols::proof_presentation::presentation_request::PresentationRequest;
@@ -9,7 +9,7 @@ pub struct FinishedState {
     pub presentation_request: Option<PresentationRequest>,
     pub presentation: Option<Presentation>,
     pub status: Status,
-    pub revocation_status: Option<RevocationStatus>,
+    pub revocation_status: Option<PresentationVerificationStatus>,
 }
 
 impl FinishedState {

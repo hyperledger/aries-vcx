@@ -4,7 +4,7 @@ use crate::common::proofs::verifier::verifier::validate_indy_proof;
 use crate::core::profile::profile::Profile;
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use crate::global::settings;
-use crate::protocols::proof_presentation::verifier::state_machine::RevocationStatus;
+use crate::protocols::proof_presentation::verifier::state_machine::PresentationVerificationStatus;
 use crate::protocols::proof_presentation::verifier::states::finished::FinishedState;
 use messages::concepts::problem_report::ProblemReport;
 use messages::protocols::proof_presentation::presentation::Presentation;
@@ -51,9 +51,19 @@ impl PresentationRequestSentState {
     }
 }
 
-impl From<(PresentationRequestSentState, Presentation, RevocationStatus)> for FinishedState {
+impl
+    From<(
+        PresentationRequestSentState,
+        Presentation,
+        PresentationVerificationStatus,
+    )> for FinishedState
+{
     fn from(
-        (state, presentation, was_revoked): (PresentationRequestSentState, Presentation, RevocationStatus),
+        (state, presentation, was_revoked): (
+            PresentationRequestSentState,
+            Presentation,
+            PresentationVerificationStatus,
+        ),
     ) -> Self {
         trace!("transit state from PresentationRequestSentState to FinishedState");
         FinishedState {

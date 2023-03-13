@@ -18,7 +18,7 @@ mod integration_tests {
     use aries_vcx::handlers::proof_presentation::prover::Prover;
     use aries_vcx::handlers::proof_presentation::verifier::Verifier;
     use aries_vcx::messages::protocols::proof_presentation::presentation_request::PresentationRequest;
-    use aries_vcx::protocols::proof_presentation::verifier::state_machine::RevocationStatus;
+    use aries_vcx::protocols::proof_presentation::verifier::state_machine::PresentationVerificationStatus;
     use aries_vcx::utils::constants::{DEFAULT_SCHEMA_ATTRS, TAILS_DIR};
     use aries_vcx::utils::devsetup::{init_holder_setup_in_indy_context, SetupProfile};
     use aries_vcx::utils::get_temp_dir_path;
@@ -365,7 +365,10 @@ mod integration_tests {
                 .await
                 .unwrap();
 
-            assert_eq!(verifier.get_revocation_status(), Some(RevocationStatus::NonRevoked));
+            assert_eq!(
+                verifier.get_presentation_verification_status(),
+                PresentationVerificationStatus::Valid
+            );
         })
         .await;
     }
@@ -385,7 +388,7 @@ mod tests {
     use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
     use aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
     use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
-    use aries_vcx::protocols::proof_presentation::verifier::state_machine::RevocationStatus;
+    use aries_vcx::protocols::proof_presentation::verifier::state_machine::PresentationVerificationStatus;
     use aries_vcx::utils::devsetup::*;
 
     use crate::utils::devsetup_agent::test_utils::{create_test_alice_instance, Faber, PayloadKinds};
@@ -455,7 +458,10 @@ mod tests {
                 )
                 .await
                 .unwrap();
-            assert_eq!(verifier.get_revocation_status(), Some(RevocationStatus::NonRevoked));
+            assert_eq!(
+                verifier.get_presentation_verification_status(),
+                PresentationVerificationStatus::Valid
+            );
         })
         .await;
     }
@@ -508,7 +514,10 @@ mod tests {
                 )
                 .await
                 .unwrap();
-            assert_eq!(verifier.get_revocation_status(), Some(RevocationStatus::NonRevoked));
+            assert_eq!(
+                verifier.get_presentation_verification_status(),
+                PresentationVerificationStatus::Valid
+            );
             info!(
                 "test_proof_with_predicates_should_be_validated :: verifier received presentation!: {}",
                 verifier.get_presentation_attachment().unwrap()
@@ -620,8 +629,8 @@ mod tests {
                 .await
                 .unwrap();
             assert_eq!(
-                proof_verifier.get_revocation_status(),
-                Some(RevocationStatus::NonRevoked)
+                proof_verifier.get_presentation_verification_status(),
+                PresentationVerificationStatus::Valid
             );
 
             let request_name2 = Some("request2");
@@ -639,8 +648,8 @@ mod tests {
                 .await
                 .unwrap();
             assert_eq!(
-                proof_verifier.get_revocation_status(),
-                Some(RevocationStatus::NonRevoked)
+                proof_verifier.get_presentation_verification_status(),
+                PresentationVerificationStatus::Valid
             );
         }).await;
     }
@@ -674,8 +683,8 @@ mod tests {
                 .await
                 .unwrap();
             assert_eq!(
-                proof_verifier.get_revocation_status(),
-                Some(RevocationStatus::NonRevoked)
+                proof_verifier.get_presentation_verification_status(),
+                PresentationVerificationStatus::Valid
             );
 
             let request_name2 = Some("request2");
@@ -693,8 +702,8 @@ mod tests {
                 .await
                 .unwrap();
             assert_eq!(
-                proof_verifier.get_revocation_status(),
-                Some(RevocationStatus::NonRevoked)
+                proof_verifier.get_presentation_verification_status(),
+                PresentationVerificationStatus::Valid
             );
         })
         .await;
@@ -744,8 +753,8 @@ mod tests {
                 .await
                 .unwrap();
             assert_eq!(
-                verifier.get_revocation_status(),
-                Some(RevocationStatus::NonRevoked)
+                verifier.get_presentation_verification_status(),
+                PresentationVerificationStatus::Valid
             );
 
             let request_name2 = Some("request2");
@@ -767,8 +776,8 @@ mod tests {
                 .await
                 .unwrap();
             assert_eq!(
-                verifier.get_revocation_status(),
-                Some(RevocationStatus::NonRevoked)
+                verifier.get_presentation_verification_status(),
+                PresentationVerificationStatus::Valid
             );
         }).await;
     }
@@ -884,7 +893,10 @@ mod tests {
                 .update_state(&institution.profile, &institution.agency_client, &issuer_to_consumer)
                 .await
                 .unwrap();
-            assert_eq!(verifier.get_revocation_status(), Some(RevocationStatus::NonRevoked));
+            assert_eq!(
+                verifier.get_presentation_verification_status(),
+                PresentationVerificationStatus::Valid
+            );
             assert_eq!(presentation_thread_id, verifier.get_thread_id().unwrap());
         })
         .await;
@@ -945,8 +957,8 @@ mod tests {
                 .await
                 .unwrap();
             assert_eq!(
-                proof_verifier.get_revocation_status(),
-                Some(RevocationStatus::NonRevoked)
+                proof_verifier.get_presentation_verification_status(),
+                PresentationVerificationStatus::Valid
             );
 
             let mut proof_verifier = verifier_create_proof_and_send_request(
@@ -964,8 +976,8 @@ mod tests {
                 .await
                 .unwrap();
             assert_eq!(
-                proof_verifier.get_revocation_status(),
-                Some(RevocationStatus::NonRevoked)
+                proof_verifier.get_presentation_verification_status(),
+                PresentationVerificationStatus::Valid
             );
         }).await;
     }

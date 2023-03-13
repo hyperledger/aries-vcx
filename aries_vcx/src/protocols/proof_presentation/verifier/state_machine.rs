@@ -67,9 +67,10 @@ impl Default for VerifierFullState {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub enum RevocationStatus {
-    NonRevoked,
-    Revoked,
+pub enum PresentationVerificationStatus {
+    Valid,
+    Invalid,
+    Unavailable,
 }
 
 fn build_verification_ack(thread_id: &str) -> PresentationAck {
@@ -220,11 +221,13 @@ impl VerifierSM {
                 let ack = build_verification_ack(&self.thread_id);
                 send_message(A2AMessage::PresentationAck(ack)).await?;
                 match verification_result {
-                    Ok(()) => VerifierFullState::Finished((state, presentation, RevocationStatus::NonRevoked).into()),
+                    Ok(()) => {
+                        VerifierFullState::Finished((state, presentation, PresentationVerificationStatus::Valid).into())
+                    }
                     Err(err) => match err.kind() {
-                        AriesVcxErrorKind::InvalidProof => {
-                            VerifierFullState::Finished((state, presentation, RevocationStatus::Revoked).into())
-                        }
+                        AriesVcxErrorKind::InvalidProof => VerifierFullState::Finished(
+                            (state, presentation, PresentationVerificationStatus::Invalid).into(),
+                        ),
                         _ => {
                             let problem_report = build_problem_report_msg(Some(err.to_string()), &self.thread_id);
                             VerifierFullState::Finished((state, problem_report).into())
@@ -417,10 +420,13 @@ impl VerifierSM {
         }
     }
 
-    pub fn get_revocation_status(&self) -> Option<RevocationStatus> {
+    pub fn get_presentation_verification_status(&self) -> PresentationVerificationStatus {
         match self.state {
-            VerifierFullState::Finished(ref state) => state.revocation_status.clone(),
-            _ => None,
+            VerifierFullState::Finished(ref state) => match &state.revocation_status {
+                None => PresentationVerificationStatus::Unavailable,
+                Some(status) => status.clone(),
+            },
+            _ => PresentationVerificationStatus::Unavailable,
         }
     }
 
@@ -768,7 +774,10 @@ pub mod unit_tests {
                 .unwrap();
 
             assert_match!(VerifierState::Failed, verifier_sm.get_state());
-            assert_match!(None, verifier_sm.get_revocation_status());
+            assert_match!(
+                PresentationVerificationStatus::Unavailable,
+                verifier_sm.get_presentation_verification_status()
+            );
         }
 
         #[tokio::test]
@@ -818,7 +827,10 @@ pub mod unit_tests {
                 .unwrap();
 
             assert_match!(VerifierFullState::Finished(_), verifier_sm.state);
-            assert_eq!(Some(RevocationStatus::NonRevoked), verifier_sm.get_revocation_status());
+            assert_eq!(
+                PresentationVerificationStatus::Valid,
+                verifier_sm.get_presentation_verification_status()
+            );
         }
 
         #[tokio::test]
@@ -839,7 +851,10 @@ pub mod unit_tests {
                 .unwrap();
 
             assert_match!(VerifierState::Finished, verifier_sm.get_state());
-            assert_match!(Some(RevocationStatus::Revoked), verifier_sm.get_revocation_status());
+            assert_match!(
+                PresentationVerificationStatus::Invalid,
+                verifier_sm.get_presentation_verification_status()
+            );
         }
 
         #[tokio::test]
