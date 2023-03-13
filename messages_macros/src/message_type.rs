@@ -200,16 +200,15 @@ fn process_major(
             const MAJOR: u8 = #i;
 
             fn resolve_minor_ver(minor: u8) -> MsgTypeResult<Self> {
+                let family = Self::Parent::FAMILY;
+                let major = Self::MAJOR;
+                let Some(minor) = get_supported_version(family, major, minor) else {
+                    return Err(MsgTypeError::minor_ver_err(minor));
+                };
+
                 match minor {
                     #resolve_fn_match
-                    _ => {
-                        let family = Self::Parent::FAMILY;
-                        let major = Self::MAJOR;
-                        match get_supported_version(family, major, minor) {
-                            Some(minor) => Self::resolve_minor_ver(minor),
-                            None => Err(MsgTypeError::minor_ver_err(minor))
-                        }
-                    },
+                    _ => Err(MsgTypeError::minor_ver_err(minor)),
                 }
             }
 
