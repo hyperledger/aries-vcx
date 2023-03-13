@@ -20,6 +20,10 @@ use super::{actor::Actor, Protocol};
 
 type RegistryMap = HashMap<(&'static str, u8), Vec<RegistryEntry>>;
 
+/// An entry in the protocol registry.
+/// 
+/// It contains the [`Protocol`] instance, the minor version of the protocol (for easier semver resolution),
+/// a [`String`] repr of the *pid* and a [`Vec<Actor>`] representing the roles available in the protocol.
 #[derive(Debug, Clone)]
 pub struct RegistryEntry {
     pub protocol: Protocol,
@@ -28,6 +32,7 @@ pub struct RegistryEntry {
     pub actors: Vec<Actor>,
 }
 
+/// Extracts the necessary parts for constructing a [`RegistryEntry`] from a protocol minor version.
 macro_rules! extract_parts {
     ($name:ident) => {
         (
@@ -71,6 +76,9 @@ lazy_static! {
     };
 }
 
+/// Looks into the protocol registry for (in order):
+/// * the exact protocol version requested
+/// * the maximum minor version of a protocol less than the minor version requested (e.g: requesting 1.7 should yield 1.6).
 pub fn get_supported_version(family: &'static str, major: u8, minor: u8) -> Option<u8> {
     PROTOCOL_REGISTRY
         .get(&(family, major))
