@@ -1,7 +1,6 @@
-use std::collections::{BTreeMap, HashMap};
+use std::collections::HashMap;
 
 use lazy_static::lazy_static;
-use serde::{Deserialize, Serialize};
 
 use crate::message_type::message_protocol::{
     basic_message::BasicMessageV1_0,
@@ -19,71 +18,40 @@ use crate::message_type::message_protocol::{
 
 use super::{actor::Actor, MessageFamily};
 
-type RegistryMap = HashMap<&'static str, HashMap<u8, BTreeMap<u8, ProtocolDescriptor>>>;
+type RegistryMap = HashMap<(&'static str, u8), Vec<RegistryEntry>>;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ProtocolDescriptor {
-    pub pid: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub roles: Option<Vec<Actor>>,
-}
-
-impl ProtocolDescriptor {
-    pub fn new(pid: String) -> Self {
-        Self { pid, roles: None }
-    }
-
-    pub fn as_pid_parts(&self) -> (&str, Option<u8>, Option<u8>) {
-        let skip_slash = match self.pid {
-            _ if self.pid.starts_with(MessageFamily::DID_COM_ORG_PREFIX) => Some(3),
-            _ if self.pid.starts_with(MessageFamily::DID_SOV_PREFIX) => Some(1),
-            _ => None,
-        };
-
-        let Some(skip_slash) = skip_slash else {
-            return (&self.pid, None, None);
-        };
-
-        let mut iter = self.pid.split('/').skip(skip_slash);
-        let (Some(family), Some(version)) = (iter.next(), iter.next()) else {
-            return (&self.pid, None, None);
-        };
-
-        let mut version_iter = version.split('.');
-        let major = version_iter.next().and_then(|v| v.parse::<u8>().ok());
-        let minor = version_iter.next().and_then(|v| v.parse::<u8>().ok());
-
-        let (Some(major), Some(minor)) = (major, minor) else {
-            return (&self.pid, None, None);
-        };
-
-        (family, Some(major), Some(minor))
-    }
+#[derive(Debug, Clone)]
+pub struct RegistryEntry {
+    pub protocol: MessageFamily,
+    pub minor: u8,
+    pub str_pid: String,
+    pub actors: Vec<Actor>,
 }
 
 macro_rules! extract_parts {
-    ($name:ty) => {
+    ($name:ident) => {
         (
             <<$name as MinorVersion>::Parent as MajorVersion>::Parent::FAMILY,
             <$name as MinorVersion>::Parent::MAJOR,
             <$name as MinorVersion>::MINOR,
             <$name as MinorVersion>::Parent::actors().to_vec(),
+            MessageFamily::from($name),
         )
     };
 }
 
-fn map_insert(map: &mut RegistryMap, parts: (&'static str, u8, u8, Vec<Actor>)) {
-    let (family, major, minor, actors) = parts;
+fn map_insert(map: &mut RegistryMap, parts: (&'static str, u8, u8, Vec<Actor>, MessageFamily)) {
+    let (family, major, minor, actors, protocol) = parts;
 
-    let pid = format!("{}/{}/{}.{}", MessageFamily::DID_COM_ORG_PREFIX, family, major, minor);
-    let mut pd = ProtocolDescriptor::new(pid);
-    pd.roles = Some(actors);
+    let str_pid = format!("{}/{}/{}.{}", MessageFamily::DID_COM_ORG_PREFIX, family, major, minor);
+    let entry = RegistryEntry {
+        protocol,
+        minor,
+        str_pid,
+        actors,
+    };
 
-    map.entry(family)
-        .or_insert(HashMap::new())
-        .entry(major)
-        .or_insert(BTreeMap::new())
-        .insert(minor, pd);
+    map.entry((family, major)).or_insert(Vec::new()).push(entry);
 }
 
 lazy_static! {
@@ -105,8 +73,6 @@ lazy_static! {
 
 pub fn get_supported_version(family: &'static str, major: u8, minor: u8) -> Option<u8> {
     PROTOCOL_REGISTRY
-        .get(family)
-        .and_then(|m| m.get(&major))
-        .and_then(|m| m.keys().rev().find(|v| **v <= minor))
-        .copied()
+        .get(&(family, major))
+        .and_then(|v| v.iter().rev().map(|r| r.minor).find(|v| *v <= minor))
 }

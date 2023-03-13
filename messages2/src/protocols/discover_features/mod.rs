@@ -4,13 +4,17 @@ mod query;
 use std::str::FromStr;
 
 use derive_more::From;
-use serde::{de::Error, Deserializer, Serializer};
+use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::{
     composite_message::{transit_to_aries_msg, Message},
     delayed_serde::DelayedSerde,
-    message_type::message_protocol::discover_features::{
-        DiscoverFeatures as DiscoverFeaturesKind, DiscoverFeaturesV1, DiscoverFeaturesV1_0Kind,
+    message_type::{
+        actor::Actor,
+        message_protocol::discover_features::{
+            DiscoverFeatures as DiscoverFeaturesKind, DiscoverFeaturesV1, DiscoverFeaturesV1_0Kind,
+        },
+        MessageFamily,
     },
 };
 
@@ -54,6 +58,26 @@ impl DelayedSerde for DiscoverFeatures {
             Self::Disclose(v) => v.delayed_serialize(serializer),
         }
     }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct ProtocolDescriptor {
+    pub pid: MaybeKnownPid,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub roles: Option<Vec<Actor>>,
+}
+
+impl ProtocolDescriptor {
+    pub fn new(pid: MaybeKnownPid) -> Self {
+        Self { pid, roles: None }
+    }
+}
+
+#[derive(Debug, Clone, From, Deserialize, Serialize)]
+#[serde(untagged)]
+pub enum MaybeKnownPid {
+    Known(MessageFamily),
+    Unknown(String),
 }
 
 transit_to_aries_msg!(QueryContent: QueryDecorators, DiscoverFeatures);

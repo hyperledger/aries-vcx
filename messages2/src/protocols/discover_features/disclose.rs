@@ -4,12 +4,11 @@ use serde::{Deserialize, Serialize};
 use crate::{
     composite_message::Message,
     decorators::{Thread, Timing},
-    message_type::{
-        message_protocol::discover_features::DiscoverFeaturesV1_0Kind,
-        registry::{ProtocolDescriptor, PROTOCOL_REGISTRY},
-    },
+    message_type::{message_protocol::discover_features::DiscoverFeaturesV1_0Kind, registry::PROTOCOL_REGISTRY},
     protocols::traits::ConcreteMessage,
 };
+
+use super::ProtocolDescriptor;
 
 pub type Disclose = Message<DiscloseContent, DiscloseDecorators>;
 
@@ -23,11 +22,11 @@ impl DiscloseContent {
     pub fn new() -> Self {
         let mut protocols = Vec::new();
 
-        for versions in PROTOCOL_REGISTRY.clone().into_values() {
-            for minor in versions.into_values() {
-                for pd in minor.into_values() {
-                    protocols.push(pd);
-                }
+        for entries in PROTOCOL_REGISTRY.clone().into_values() {
+            for entry in entries {
+                let mut pd = ProtocolDescriptor::new(entry.protocol.into());
+                pd.roles = Some(entry.actors);
+                protocols.push(pd);
             }
         }
 

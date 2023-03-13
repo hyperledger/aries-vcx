@@ -4,12 +4,11 @@ use serde::{Deserialize, Serialize};
 use crate::{
     composite_message::Message,
     decorators::Timing,
-    message_type::{
-        message_protocol::discover_features::DiscoverFeaturesV1_0Kind,
-        registry::{ProtocolDescriptor, PROTOCOL_REGISTRY},
-    },
+    message_type::{message_protocol::discover_features::DiscoverFeaturesV1_0Kind, registry::PROTOCOL_REGISTRY},
     protocols::traits::ConcreteMessage,
 };
+
+use super::ProtocolDescriptor;
 
 pub type Query = Message<QueryContent, QueryDecorators>;
 
@@ -28,14 +27,18 @@ impl QueryContent {
 
     pub fn lookup(&self) -> Vec<ProtocolDescriptor> {
         let mut protocols = Vec::new();
-        let query = self.query.split('*').next().expect("at least one value");
+        let query = self
+            .query
+            .split('*')
+            .next()
+            .expect("query must have at least an empty string before *");
 
-        for versions in PROTOCOL_REGISTRY.values() {
-            for minor in versions.values() {
-                for pd in minor.values() {
-                    if pd.pid.starts_with(query) {
-                        protocols.push(pd.clone());
-                    }
+        for entries in PROTOCOL_REGISTRY.values() {
+            for entry in entries {
+                if entry.str_pid.starts_with(query) {
+                    let mut pd = ProtocolDescriptor::new(entry.protocol.into());
+                    pd.roles = Some(entry.actors.clone());
+                    protocols.push(pd);
                 }
             }
         }

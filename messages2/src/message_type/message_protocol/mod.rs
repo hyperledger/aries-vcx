@@ -1,6 +1,7 @@
 use std::{fmt::Display, str::FromStr};
 
 use derive_more::{From, TryInto};
+use serde::{Deserialize, Serialize};
 
 use crate::error::{MsgTypeError, MsgTypeResult};
 
@@ -24,7 +25,8 @@ pub mod routing;
 pub mod traits;
 pub mod trust_ping;
 
-#[derive(Clone, Debug, From, TryInto, PartialEq)]
+#[derive(Clone, Copy, Debug, From, TryInto, PartialEq, Deserialize)]
+#[serde(try_from = "&str")]
 pub enum MessageFamily {
     Routing(Routing),
     Connection(Connection),
@@ -132,5 +134,22 @@ impl FromStr for MessageFamily {
         let minor = MessageFamily::next_part(&mut version_iter, "protocol minor version")?.parse()?;
 
         MessageFamily::from_parts(family, major, minor)
+    }
+}
+
+impl<'a> TryFrom<&'a str> for MessageFamily {
+    type Error = MsgTypeError;
+
+    fn try_from(value: &'a str) -> Result<Self, Self::Error> {
+        Self::from_str(value)
+    }
+}
+
+impl Serialize for MessageFamily {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        self.to_string().serialize(serializer)
     }
 }
