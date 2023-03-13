@@ -100,9 +100,9 @@ impl MessageFamily {
 
 impl Display for MessageFamily {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let prefix_str = Self::DID_COM_ORG_PREFIX;
-        let (family, major, minor) = self.as_parts();
-        write!(f, "{prefix_str}/{family}/{major}.{minor}")
+        let prefix = Self::DID_COM_ORG_PREFIX;
+        let (protocol, major, minor) = self.as_parts();
+        write!(f, "{prefix}/{protocol}/{major}.{minor}")
     }
 }
 
@@ -150,6 +150,8 @@ impl Serialize for MessageFamily {
     where
         S: serde::Serializer,
     {
-        self.to_string().serialize(serializer)
+        let prefix = Self::DID_COM_ORG_PREFIX;
+        let (protocol, major, minor) = self.as_parts();
+        format_args!("{prefix}/{protocol}/{major}.{minor}").serialize(serializer)
     }
 }

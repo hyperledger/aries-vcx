@@ -19,7 +19,14 @@ impl<'de> Deserialize<'de> for MessageType<'de> {
             return Err(D::Error::custom(format!("Invalid message type: {msg_type_str}")));
         };
 
-        let protocol = MessageFamily::from_str(protocol_str).map_err(D::Error::custom)?;
+        let protocol = match MessageFamily::from_str(protocol_str) {
+            Ok(v) => Ok(v),
+            Err(e) => {
+                let msg = format!("Cannot parse message type: {msg_type_str}; Error: {e}");
+                Err(D::Error::custom(msg))
+            }
+        }?;
+        
         let msg_type = Self { protocol, kind };
         Ok(msg_type)
     }
