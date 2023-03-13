@@ -1,5 +1,13 @@
 use serde::{Deserialize, Serialize, Serializer};
 
+/// The roles an agent can have in a protocol.
+/// These are mainly for use in the [discover features](https://github.com/hyperledger/aries-rfcs/blob/main/features/0031-discover-features/README.md) protocol.
+//
+// Unfortunately, we can't really derive a lot of things here.
+// Since it is plausible to expect other agent implementations to use other protocols too, we need the
+// catch-all [`Other`] variant, and that doesn't play well with `serde` or `strum` crates yet.
+//
+// I opened [this](https://github.com/Peternator7/strum/issues/258) issue since it shouldn't be hard to implement it in `strum` and that would make this easier to write & maintain.
 #[derive(Clone, Deserialize, Debug)]
 #[serde(from = "&str")]
 pub enum Actor {
