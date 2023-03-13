@@ -144,10 +144,6 @@ impl Verifier {
         self.verifier_sm.get_presentation_msg()
     }
 
-    pub fn get_presentation_status(&self) -> Status {
-        self.verifier_sm.presentation_status()
-    }
-
     pub fn get_revocation_status(&self) -> Option<RevocationStatus> {
         self.verifier_sm.get_revocation_status()
     }

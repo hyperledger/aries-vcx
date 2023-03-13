@@ -394,6 +394,7 @@ impl VerifierSM {
     }
 
     pub fn get_state(&self) -> VerifierState {
+        warn!("get_state >>> {:?}", self.state);
         match self.state {
             VerifierFullState::Initial(_) => VerifierState::Initial,
             VerifierFullState::PresentationRequestSet(_) => VerifierState::PresentationRequestSet,
@@ -413,28 +414,6 @@ impl VerifierSM {
             VerifierFullState::PresentationProposalReceived(_) => false,
             VerifierFullState::PresentationRequestSent(_) => true,
             VerifierFullState::Finished(_) => false,
-        }
-    }
-
-    pub fn presentation_status(&self) -> Status {
-        match self.state {
-            VerifierFullState::Finished(ref state) => {
-                match &state.status {
-                    Status::Success => {
-                        match state.revocation_status {
-                            Some(RevocationStatus::NonRevoked) => Status::Success,
-                            None => Status::Success, // for backward compatibility
-                            Some(RevocationStatus::Revoked) => {
-                                let problem_report = ProblemReport::create()
-                                    .set_comment(Some(String::from("Revoked credential was used.")));
-                                Status::Failed(problem_report)
-                            }
-                        }
-                    }
-                    _ => state.status.clone(),
-                }
-            }
-            _ => Status::Undefined,
         }
     }
 
@@ -788,8 +767,8 @@ pub mod unit_tests {
                 .await
                 .unwrap();
 
-            assert_match!(VerifierFullState::Finished(_), verifier_sm.state);
-            assert_match!(Status::Declined(_), verifier_sm.presentation_status());
+            assert_match!(VerifierState::Failed, verifier_sm.get_state());
+            assert_match!(None, verifier_sm.get_revocation_status());
         }
 
         #[tokio::test]
@@ -839,7 +818,7 @@ pub mod unit_tests {
                 .unwrap();
 
             assert_match!(VerifierFullState::Finished(_), verifier_sm.state);
-            assert_eq!(Status::Success, verifier_sm.presentation_status());
+            assert_eq!(Some(RevocationStatus::NonRevoked), verifier_sm.get_revocation_status());
         }
 
         #[tokio::test]
@@ -859,9 +838,8 @@ pub mod unit_tests {
                 .await
                 .unwrap();
 
-            assert_match!(VerifierFullState::Finished(_), verifier_sm.state);
-            assert_eq!(VerifierState::Finished, verifier_sm.get_state());
-            assert_match!(Status::Failed(_), verifier_sm.presentation_status());
+            assert_match!(VerifierState::Finished, verifier_sm.get_state());
+            assert_match!(Some(RevocationStatus::Revoked), verifier_sm.get_revocation_status());
         }
 
         #[tokio::test]
@@ -918,8 +896,7 @@ pub mod unit_tests {
                 .await
                 .unwrap();
 
-            assert_match!(VerifierFullState::Finished(_), verifier_sm.state);
-            assert_eq!(Status::Failed(_problem_report()), verifier_sm.presentation_status());
+            assert_match!(VerifierState::Failed, verifier_sm.get_state());
         }
 
         #[tokio::test]
@@ -946,7 +923,7 @@ pub mod unit_tests {
                 )
                 .await
                 .unwrap();
-            assert_match!(VerifierFullState::Finished(_), verifier_sm.state);
+            assert_match!(VerifierState::Finished, verifier_sm.get_state());
 
             verifier_sm = verifier_sm
                 .step(
@@ -956,7 +933,7 @@ pub mod unit_tests {
                 )
                 .await
                 .unwrap();
-            assert_match!(VerifierFullState::Finished(_), verifier_sm.state);
+            assert_match!(VerifierState::Finished, verifier_sm.get_state());
         }
     }
 
