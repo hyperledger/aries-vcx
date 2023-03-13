@@ -11,7 +11,7 @@ use crate::{
 
 use super::{
     traits::{MajorVersion, MessageKind, MinorVersion, ProtocolName},
-    MessageFamily,
+    Protocol,
 };
 
 #[derive(Copy, Clone, Debug, From, TryInto, PartialEq, MessageType)]
@@ -21,14 +21,14 @@ pub enum PresentProof {
 }
 
 #[derive(Copy, Clone, Debug, From, TryInto, PartialEq, TransitiveFrom, MessageType)]
-#[transitive(into(all(PresentProof, MessageFamily)))]
+#[transitive(into(all(PresentProof, Protocol)))]
 #[semver(major = 1, parent = "PresentProof", actors(Actor::Prover, Actor::Verifier))]
 pub enum PresentProofV1 {
     V1_0(PresentProofV1_0),
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, TransitiveFrom, MessageType)]
-#[transitive(into(all(PresentProofV1, PresentProof, MessageFamily)))]
+#[transitive(into(all(PresentProofV1, PresentProof, Protocol)))]
 #[semver(minor = 0, parent = "PresentProofV1")]
 pub struct PresentProofV1_0;
 

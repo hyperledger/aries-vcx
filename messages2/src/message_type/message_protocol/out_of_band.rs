@@ -11,7 +11,7 @@ use crate::{
 
 use super::{
     traits::{MajorVersion, MessageKind, MinorVersion, ProtocolName},
-    MessageFamily,
+    Protocol,
 };
 
 #[derive(Copy, Clone, Debug, From, PartialEq, MessageType)]
@@ -21,14 +21,14 @@ pub enum OutOfBand {
 }
 
 #[derive(Copy, Clone, Debug, From, PartialEq, TransitiveFrom, MessageType)]
-#[transitive(into(all(OutOfBand, MessageFamily)))]
+#[transitive(into(all(OutOfBand, Protocol)))]
 #[semver(major = 1, parent = "OutOfBand", actors(Actor::Receiver, Actor::Sender))]
 pub enum OutOfBandV1 {
     V1_1(OutOfBandV1_1),
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, TransitiveFrom, MessageType)]
-#[transitive(into(all(OutOfBandV1, OutOfBand, MessageFamily)))]
+#[transitive(into(all(OutOfBandV1, OutOfBand, Protocol)))]
 #[semver(minor = 1, parent = "OutOfBandV1")]
 pub struct OutOfBandV1_1;
 

@@ -4,7 +4,7 @@ use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::{
     composite_message::Message,
-    message_type::{message_protocol::traits::MessageKind, serde::MsgWithType, MessageFamily},
+    message_type::{message_protocol::traits::MessageKind, serde::MsgWithType, Protocol},
     protocols::traits::ConcreteMessage,
 };
 
@@ -24,7 +24,7 @@ impl<C, D> DelayedSerde for Message<C, D>
 where
     C: ConcreteMessage,
     C::Kind: MessageKind + AsRef<str> + PartialEq + Debug,
-    MessageFamily: From<<C::Kind as MessageKind>::Parent>,
+    Protocol: From<<C::Kind as MessageKind>::Parent>,
     for<'d> Message<C, D>: Deserialize<'d>,
     Message<C, D>: Serialize,
 {
@@ -54,7 +54,7 @@ where
         S: Serializer,
     {
         let kind = Self::kind();
-        let protocol = MessageFamily::from(Self::MsgType::parent());
+        let protocol = Protocol::from(Self::MsgType::parent());
 
         MsgWithType::new(format_args!("{protocol}/{}", kind.as_ref()), self).serialize(serializer)
     }

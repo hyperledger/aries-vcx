@@ -16,13 +16,13 @@ use crate::message_type::message_protocol::{
     trust_ping::TrustPingV1_0,
 };
 
-use super::{actor::Actor, MessageFamily};
+use super::{actor::Actor, Protocol};
 
 type RegistryMap = HashMap<(&'static str, u8), Vec<RegistryEntry>>;
 
 #[derive(Debug, Clone)]
 pub struct RegistryEntry {
-    pub protocol: MessageFamily,
+    pub protocol: Protocol,
     pub minor: u8,
     pub str_pid: String,
     pub actors: Vec<Actor>,
@@ -40,10 +40,10 @@ macro_rules! extract_parts {
     };
 }
 
-fn map_insert(map: &mut RegistryMap, parts: (&'static str, u8, u8, Vec<Actor>, MessageFamily)) {
+fn map_insert(map: &mut RegistryMap, parts: (&'static str, u8, u8, Vec<Actor>, Protocol)) {
     let (family, major, minor, actors, protocol) = parts;
 
-    let str_pid = format!("{}/{}/{}.{}", MessageFamily::DID_COM_ORG_PREFIX, family, major, minor);
+    let str_pid = format!("{}/{}/{}.{}", Protocol::DID_COM_ORG_PREFIX, family, major, minor);
     let entry = RegistryEntry {
         protocol,
         minor,

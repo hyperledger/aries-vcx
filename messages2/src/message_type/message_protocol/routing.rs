@@ -11,7 +11,7 @@ use crate::{
 
 use super::{
     traits::{MajorVersion, MessageKind, MinorVersion, ProtocolName},
-    MessageFamily,
+    Protocol,
 };
 
 #[derive(Copy, Clone, Debug, From, PartialEq, MessageType)]
@@ -21,14 +21,14 @@ pub enum Routing {
 }
 
 #[derive(Copy, Clone, Debug, From, PartialEq, TransitiveFrom, MessageType)]
-#[transitive(into(all(Routing, MessageFamily)))]
+#[transitive(into(all(Routing, Protocol)))]
 #[semver(major = 1, parent = "Routing", actors(Actor::Mediator))]
 pub enum RoutingV1 {
     V1_0(RoutingV1_0),
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, TransitiveFrom, MessageType)]
-#[transitive(into(all(RoutingV1, Routing, MessageFamily)))]
+#[transitive(into(all(RoutingV1, Routing, Protocol)))]
 #[semver(minor = 0, parent = "RoutingV1")]
 pub struct RoutingV1_0;
 

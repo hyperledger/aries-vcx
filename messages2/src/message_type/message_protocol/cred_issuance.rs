@@ -11,7 +11,7 @@ use crate::{
 
 use super::{
     traits::{MajorVersion, MessageKind, MinorVersion, ProtocolName},
-    MessageFamily,
+    Protocol,
 };
 
 #[derive(Copy, Clone, Debug, From, TryInto, PartialEq, MessageType)]
@@ -21,14 +21,14 @@ pub enum CredentialIssuance {
 }
 
 #[derive(Copy, Clone, Debug, From, TryInto, PartialEq, TransitiveFrom, MessageType)]
-#[transitive(into(all(CredentialIssuance, MessageFamily)))]
+#[transitive(into(all(CredentialIssuance, Protocol)))]
 #[semver(major = 1, parent = "CredentialIssuance", actors(Actor::Holder, Actor::Issuer))]
 pub enum CredentialIssuanceV1 {
     V1_0(CredentialIssuanceV1_0),
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, TransitiveFrom, MessageType)]
-#[transitive(into(all(CredentialIssuanceV1, CredentialIssuance, MessageFamily)))]
+#[transitive(into(all(CredentialIssuanceV1, CredentialIssuance, Protocol)))]
 #[semver(minor = 0, parent = "CredentialIssuanceV1")]
 pub struct CredentialIssuanceV1_0;
 

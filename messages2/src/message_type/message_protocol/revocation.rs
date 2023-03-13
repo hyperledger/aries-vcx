@@ -11,7 +11,7 @@ use crate::{
 
 use super::{
     traits::{MajorVersion, MessageKind, MinorVersion, ProtocolName},
-    MessageFamily,
+    Protocol,
 };
 
 #[derive(Copy, Clone, Debug, From, PartialEq, MessageType)]
@@ -21,14 +21,14 @@ pub enum Revocation {
 }
 
 #[derive(Copy, Clone, Debug, From, PartialEq, TransitiveFrom, MessageType)]
-#[transitive(into(all(Revocation, MessageFamily)))]
+#[transitive(into(all(Revocation, Protocol)))]
 #[semver(major = 2, parent = "Revocation", actors(Actor::Holder, Actor::Issuer))]
 pub enum RevocationV2 {
     V2_0(RevocationV2_0),
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, TransitiveFrom, MessageType)]
-#[transitive(into(all(RevocationV2, Revocation, MessageFamily)))]
+#[transitive(into(all(RevocationV2, Revocation, Protocol)))]
 #[semver(minor = 0, parent = "RevocationV2")]
 pub struct RevocationV2_0;
 

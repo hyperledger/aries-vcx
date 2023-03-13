@@ -27,7 +27,7 @@ pub mod trust_ping;
 
 #[derive(Clone, Copy, Debug, From, TryInto, PartialEq, Deserialize)]
 #[serde(try_from = "&str")]
-pub enum MessageFamily {
+pub enum Protocol {
     Routing(Routing),
     Connection(Connection),
     Revocation(Revocation),
@@ -49,7 +49,7 @@ macro_rules! resolve_major_ver {
     };
 }
 
-impl MessageFamily {
+impl Protocol {
     pub const DID_COM_ORG_PREFIX: &'static str = "https://didcomm.org";
     pub const DID_SOV_PREFIX: &'static str = "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec";
 
@@ -98,7 +98,7 @@ impl MessageFamily {
     }
 }
 
-impl Display for MessageFamily {
+impl Display for Protocol {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let prefix = Self::DID_COM_ORG_PREFIX;
         let (protocol, major, minor) = self.as_parts();
@@ -106,7 +106,7 @@ impl Display for MessageFamily {
     }
 }
 
-impl FromStr for MessageFamily {
+impl FromStr for Protocol {
     type Err = MsgTypeError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -124,20 +124,20 @@ impl FromStr for MessageFamily {
         // We'll get the next components in order
         let mut iter = s.split('/').skip(skip_slash);
 
-        let family = MessageFamily::next_part(&mut iter, "family")?;
-        let version = MessageFamily::next_part(&mut iter, "protocol version")?;
+        let family = Protocol::next_part(&mut iter, "family")?;
+        let version = Protocol::next_part(&mut iter, "protocol version")?;
 
         // We'll parse the version to its major and minor parts
         let mut version_iter = version.split('.');
 
-        let major = MessageFamily::next_part(&mut version_iter, "protocol major version")?.parse()?;
-        let minor = MessageFamily::next_part(&mut version_iter, "protocol minor version")?.parse()?;
+        let major = Protocol::next_part(&mut version_iter, "protocol major version")?.parse()?;
+        let minor = Protocol::next_part(&mut version_iter, "protocol minor version")?.parse()?;
 
-        MessageFamily::from_parts(family, major, minor)
+        Protocol::from_parts(family, major, minor)
     }
 }
 
-impl<'a> TryFrom<&'a str> for MessageFamily {
+impl<'a> TryFrom<&'a str> for Protocol {
     type Error = MsgTypeError;
 
     fn try_from(value: &'a str) -> Result<Self, Self::Error> {
@@ -145,7 +145,7 @@ impl<'a> TryFrom<&'a str> for MessageFamily {
     }
 }
 
-impl Serialize for MessageFamily {
+impl Serialize for Protocol {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,

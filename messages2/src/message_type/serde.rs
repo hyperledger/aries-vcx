@@ -2,10 +2,10 @@ use std::{fmt::Arguments, str::FromStr};
 
 use serde::{de::Error, Deserialize, Serialize};
 
-use super::MessageFamily;
+use super::Protocol;
 
 pub(crate) struct MessageType<'a> {
-    pub protocol: MessageFamily,
+    pub protocol: Protocol,
     pub kind: &'a str,
 }
 
@@ -19,14 +19,14 @@ impl<'de> Deserialize<'de> for MessageType<'de> {
             return Err(D::Error::custom(format!("Invalid message type: {msg_type_str}")));
         };
 
-        let protocol = match MessageFamily::from_str(protocol_str) {
+        let protocol = match Protocol::from_str(protocol_str) {
             Ok(v) => Ok(v),
             Err(e) => {
                 let msg = format!("Cannot parse message type: {msg_type_str}; Error: {e}");
                 Err(D::Error::custom(msg))
             }
         }?;
-        
+
         let msg_type = Self { protocol, kind };
         Ok(msg_type)
     }

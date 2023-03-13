@@ -20,7 +20,7 @@ use crate::{
             traits::MessageKind,
         },
         serde::MessageType,
-        MessageFamily,
+        Protocol,
     },
     mime_type::MimeType,
     utils,
@@ -124,7 +124,7 @@ impl Serialize for CredentialPreviewMsgType {
     where
         S: serde::Serializer,
     {
-        let protocol = MessageFamily::from(CredentialIssuanceV1_0Kind::parent());
+        let protocol = Protocol::from(CredentialIssuanceV1_0Kind::parent());
         format_args!("{protocol}/{}", CredentialIssuanceV1_0Kind::CredentialPreview.as_ref()).serialize(serializer)
     }
 }
@@ -136,7 +136,7 @@ impl<'de> Deserialize<'de> for CredentialPreviewMsgType {
     {
         let msg_type = MessageType::deserialize(deserializer)?;
 
-        if let MessageFamily::CredentialIssuance(CredentialIssuanceKind::V1(CredentialIssuanceV1::V1_0(_))) =
+        if let Protocol::CredentialIssuance(CredentialIssuanceKind::V1(CredentialIssuanceV1::V1_0(_))) =
             msg_type.protocol
         {
             if let Ok(CredentialIssuanceV1_0Kind::CredentialPreview) =

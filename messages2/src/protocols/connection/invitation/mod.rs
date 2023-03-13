@@ -11,7 +11,7 @@ use crate::composite_message::{transit_to_aries_msg, Message};
 use crate::delayed_serde::DelayedSerde;
 use crate::message_type::message_protocol::{connection::ConnectionV1_0Kind, traits::MessageKind};
 use crate::message_type::serde::MsgWithType;
-use crate::message_type::MessageFamily;
+use crate::message_type::Protocol;
 use crate::protocols::traits::ConcreteMessage;
 
 use self::pairwise::{PairwiseInvitationContent, PwInvitationDecorators};
@@ -70,7 +70,7 @@ impl DelayedSerde for Invitation {
         S: Serializer,
     {
         let kind = Self::kind();
-        let protocol = MessageFamily::from(Self::MsgType::parent());
+        let protocol = Protocol::from(Self::MsgType::parent());
 
         MsgWithType::new(format_args!("{protocol}/{}", kind.as_ref()), self).serialize(serializer)
     }

@@ -12,7 +12,7 @@ use crate::{
             traits::MessageKind,
         },
         serde::MessageType,
-        MessageFamily,
+        Protocol,
     },
     mime_type::MimeType,
     protocols::traits::ConcreteMessage,
@@ -73,7 +73,7 @@ impl Serialize for PresentationPreviewMsgType {
     where
         S: serde::Serializer,
     {
-        let protocol = MessageFamily::from(PresentProofV1_0Kind::parent());
+        let protocol = Protocol::from(PresentProofV1_0Kind::parent());
         format_args!("{protocol}/{}", PresentProofV1_0Kind::PresentationPreview.as_ref()).serialize(serializer)
     }
 }
@@ -85,7 +85,7 @@ impl<'de> Deserialize<'de> for PresentationPreviewMsgType {
     {
         let msg_type = MessageType::deserialize(deserializer)?;
 
-        if let MessageFamily::PresentProof(PresentProof::V1(PresentProofV1::V1_0(_))) = msg_type.protocol {
+        if let Protocol::PresentProof(PresentProof::V1(PresentProofV1::V1_0(_))) = msg_type.protocol {
             if let Ok(PresentProofV1_0Kind::PresentationPreview) = PresentProofV1_0Kind::from_str(msg_type.kind) {
                 return Ok(PresentationPreviewMsgType);
             }

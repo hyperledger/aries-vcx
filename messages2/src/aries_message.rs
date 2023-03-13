@@ -12,7 +12,7 @@ use crate::{
             routing::{Routing, RoutingV1, RoutingV1_0Kind},
         },
         serde::MessageType,
-        MessageFamily,
+        Protocol,
     },
     protocols::{
         basic_message::BasicMessage, connection::Connection, cred_issuance::CredentialIssuance,
@@ -39,7 +39,7 @@ pub enum AriesMessage {
 }
 
 impl DelayedSerde for AriesMessage {
-    type MsgType<'a> = (MessageFamily, &'a str);
+    type MsgType<'a> = (Protocol, &'a str);
 
     fn delayed_deserialize<'de, D>(msg_type: Self::MsgType<'de>, deserializer: D) -> Result<Self, D::Error>
     where
@@ -48,46 +48,46 @@ impl DelayedSerde for AriesMessage {
         let (msg_type, kind) = msg_type;
 
         match msg_type {
-            MessageFamily::Routing(msg_type) => {
+            Protocol::Routing(msg_type) => {
                 let Routing::V1(RoutingV1::V1_0(_msg_type)) = msg_type;
                 let msg_type = RoutingV1_0Kind::Forward;
 
                 Message::<Forward>::delayed_deserialize(msg_type, deserializer).map(From::from)
             }
-            MessageFamily::Connection(msg_type) => {
+            Protocol::Connection(msg_type) => {
                 Connection::delayed_deserialize((msg_type, kind), deserializer).map(From::from)
             }
-            MessageFamily::Revocation(msg_type) => {
+            Protocol::Revocation(msg_type) => {
                 Revocation::delayed_deserialize((msg_type, kind), deserializer).map(From::from)
             }
-            MessageFamily::CredentialIssuance(msg_type) => {
+            Protocol::CredentialIssuance(msg_type) => {
                 CredentialIssuance::delayed_deserialize((msg_type, kind), deserializer).map(From::from)
             }
-            MessageFamily::ReportProblem(msg_type) => {
+            Protocol::ReportProblem(msg_type) => {
                 let ReportProblem::V1(ReportProblemV1::V1_0(_msg_type)) = msg_type;
                 let msg_type = ReportProblemV1_0Kind::ProblemReport;
 
                 ProblemReport::delayed_deserialize(msg_type, deserializer).map(From::from)
             }
-            MessageFamily::PresentProof(msg_type) => {
+            Protocol::PresentProof(msg_type) => {
                 PresentProof::delayed_deserialize((msg_type, kind), deserializer).map(From::from)
             }
-            MessageFamily::TrustPing(msg_type) => {
+            Protocol::TrustPing(msg_type) => {
                 TrustPing::delayed_deserialize((msg_type, kind), deserializer).map(From::from)
             }
-            MessageFamily::DiscoverFeatures(msg_type) => {
+            Protocol::DiscoverFeatures(msg_type) => {
                 DiscoverFeatures::delayed_deserialize((msg_type, kind), deserializer).map(From::from)
             }
-            MessageFamily::BasicMessage(msg_type) => {
+            Protocol::BasicMessage(msg_type) => {
                 let BasicMessageKind::V1(BasicMessageV1::V1_0(_msg_type)) = msg_type;
                 let msg_type = BasicMessageV1_0Kind::Message;
 
                 BasicMessage::delayed_deserialize(msg_type, deserializer).map(From::from)
             }
-            MessageFamily::OutOfBand(msg_type) => {
+            Protocol::OutOfBand(msg_type) => {
                 OutOfBand::delayed_deserialize((msg_type, kind), deserializer).map(From::from)
             }
-            MessageFamily::Notification(msg_type) => {
+            Protocol::Notification(msg_type) => {
                 let Notification::V1(NotificationV1::V1_0(_msg_type)) = msg_type;
                 let msg_type = NotificationV1_0Kind::Ack;
 

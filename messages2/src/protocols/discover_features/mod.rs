@@ -14,7 +14,7 @@ use crate::{
         message_protocol::discover_features::{
             DiscoverFeatures as DiscoverFeaturesKind, DiscoverFeaturesV1, DiscoverFeaturesV1_0Kind,
         },
-        MessageFamily,
+        Protocol,
     },
 };
 
@@ -76,7 +76,7 @@ impl ProtocolDescriptor {
 #[derive(Debug, Clone, From, Deserialize, Serialize)]
 #[serde(untagged)]
 pub enum MaybeKnownPid {
-    Known(MessageFamily),
+    Known(Protocol),
     Unknown(String),
 }
 

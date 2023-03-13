@@ -12,7 +12,7 @@ use crate::{
             traits::MessageKind,
         },
         serde::MessageType,
-        MessageFamily,
+        Protocol,
     },
 };
 
@@ -83,7 +83,7 @@ impl Serialize for SigEd25519Sha512Single {
     where
         S: serde::Serializer,
     {
-        let protocol = MessageFamily::from(ConnectionV1_0Kind::parent());
+        let protocol = Protocol::from(ConnectionV1_0Kind::parent());
         format_args!("{protocol}/{}", ConnectionV1_0Kind::Ed25519Sha512Single.as_ref()).serialize(serializer)
     }
 }
@@ -95,7 +95,7 @@ impl<'de> Deserialize<'de> for SigEd25519Sha512Single {
     {
         let msg_type = MessageType::deserialize(deserializer)?;
 
-        if let MessageFamily::Connection(Connection::V1(ConnectionV1::V1_0(_))) = msg_type.protocol {
+        if let Protocol::Connection(Connection::V1(ConnectionV1::V1_0(_))) = msg_type.protocol {
             if let Ok(ConnectionV1_0Kind::Ed25519Sha512Single) = ConnectionV1_0Kind::from_str(msg_type.kind) {
                 return Ok(SigEd25519Sha512Single);
             }

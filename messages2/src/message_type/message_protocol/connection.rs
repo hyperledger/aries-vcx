@@ -11,7 +11,7 @@ use crate::{
 
 use super::{
     traits::{MajorVersion, MessageKind, MinorVersion, ProtocolName},
-    MessageFamily,
+    Protocol,
 };
 
 #[derive(Copy, Clone, Debug, From, TryInto, PartialEq, MessageType)]
@@ -21,14 +21,14 @@ pub enum Connection {
 }
 
 #[derive(Copy, Clone, Debug, From, TryInto, PartialEq, TransitiveFrom, MessageType)]
-#[transitive(into(all(Connection, MessageFamily)))]
+#[transitive(into(all(Connection, Protocol)))]
 #[semver(major = 1, parent = "Connection", actors(Actor::Inviter, Actor::Invitee))]
 pub enum ConnectionV1 {
     V1_0(ConnectionV1_0),
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, TransitiveFrom, MessageType)]
-#[transitive(into(all(ConnectionV1, Connection, MessageFamily)))]
+#[transitive(into(all(ConnectionV1, Connection, Protocol)))]
 #[semver(minor = 0, parent = "ConnectionV1")]
 pub struct ConnectionV1_0;
 
