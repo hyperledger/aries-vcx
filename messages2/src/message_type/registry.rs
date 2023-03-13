@@ -21,14 +21,15 @@ use super::{actor::Actor, Protocol};
 type RegistryMap = HashMap<(&'static str, u8), Vec<RegistryEntry>>;
 
 /// An entry in the protocol registry.
-/// 
-/// It contains the [`Protocol`] instance, the minor version of the protocol (for easier semver resolution),
-/// a [`String`] repr of the *pid* and a [`Vec<Actor>`] representing the roles available in the protocol.
 #[derive(Debug, Clone)]
 pub struct RegistryEntry {
+    /// The [`Protocol`] instance corresponding to this entry
     pub protocol: Protocol,
+    /// The minor version of in numeric (for easier semver resolution),
     pub minor: u8,
+    /// A [`String`] representation of the *pid*
     pub str_pid: String,
+    /// A [`Vec<Actor>`] representing the roles available in the protocol.
     pub actors: Vec<Actor>,
 }
 
@@ -60,6 +61,11 @@ fn map_insert(map: &mut RegistryMap, parts: (&'static str, u8, u8, Vec<Actor>, P
 }
 
 lazy_static! {
+    /// The protocol registry, used as a baseline for the protocols and versions
+    /// that an agent supports along with semver resolution.
+    /// 
+    /// Keys are comprised of the protocol name and major version while 
+    /// the values are [`RegistryEntry`] instances.
     pub static ref PROTOCOL_REGISTRY: RegistryMap = {
         let mut m = HashMap::new();
         map_insert(&mut m, extract_parts!(BasicMessageV1_0));
