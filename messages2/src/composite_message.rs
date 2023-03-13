@@ -1,8 +1,6 @@
 use serde::{de::IgnoredAny, Deserialize, Deserializer, Serialize, Serializer};
 use uuid::Uuid;
 
-use crate::protocols::traits::ConcreteMessage;
-
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Message<C, D = Nothing> {
     #[serde(rename = "@id")]
@@ -33,11 +31,13 @@ impl<C, D> Message<C, D> {
     }
 }
 
-impl<C, D> Message<C, D>
+impl<C, D> HasKind for Message<C, D>
 where
     C: ConcreteMessage,
 {
-    pub fn kind() -> C::Kind {
+    type KindType = C::Kind;
+
+    fn kind_type() -> Self::KindType {
         C::kind()
     }
 }
@@ -67,6 +67,8 @@ macro_rules! generate_from_stmt {
 
 pub(crate) use generate_from_stmt;
 pub(crate) use transit_to_aries_msg;
+
+use crate::{delayed_serde::HasKind, protocols::traits::ConcreteMessage};
 
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Nothing;

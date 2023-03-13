@@ -2,11 +2,13 @@ use std::{any::type_name, fmt::Debug};
 
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 
-use crate::{
-    composite_message::Message,
-    message_type::{message_protocol::traits::MessageKind, serde::MsgWithType, Protocol},
-    protocols::traits::ConcreteMessage,
-};
+use crate::message_type::{message_protocol::traits::MessageKind, serde::MsgWithType, Protocol};
+
+pub trait HasKind {
+    type KindType;
+
+    fn kind_type() -> Self::KindType;
+}
 
 pub trait DelayedSerde: Sized {
     type MsgType<'a>;
@@ -20,21 +22,20 @@ pub trait DelayedSerde: Sized {
         S: Serializer;
 }
 
-impl<C, D> DelayedSerde for Message<C, D>
+impl<T> DelayedSerde for T
 where
-    C: ConcreteMessage,
-    C::Kind: MessageKind + AsRef<str> + PartialEq + Debug,
-    Protocol: From<<C::Kind as MessageKind>::Parent>,
-    for<'d> Message<C, D>: Deserialize<'d>,
-    Message<C, D>: Serialize,
+    T: HasKind + Serialize,
+    for<'a> T: Deserialize<'a>,
+    T::KindType: MessageKind + AsRef<str> + PartialEq + Debug,
+    Protocol: From<<T::KindType as MessageKind>::Parent>,
 {
-    type MsgType<'a> = <C as ConcreteMessage>::Kind;
+    type MsgType<'a> = T::KindType;
 
     fn delayed_deserialize<'de, DE>(msg_type: Self::MsgType<'de>, deserializer: DE) -> Result<Self, DE::Error>
     where
         DE: Deserializer<'de>,
     {
-        let expected = C::kind();
+        let expected = T::kind_type();
 
         if msg_type == expected {
             Self::deserialize(deserializer)
@@ -53,9 +54,49 @@ where
     where
         S: Serializer,
     {
-        let kind = Self::kind();
+        let kind = T::kind_type();
         let protocol = Protocol::from(Self::MsgType::parent());
 
         MsgWithType::new(format_args!("{protocol}/{}", kind.as_ref()), self).serialize(serializer)
     }
 }
+
+// impl<C, D> DelayedSerde for Message<C, D>
+// where
+//     C: ConcreteMessage,
+//     C::Kind: MessageKind + AsRef<str> + PartialEq + Debug,
+//     Protocol: From<<C::Kind as MessageKind>::Parent>,
+//     for<'d> Message<C, D>: Deserialize<'d>,
+//     Message<C, D>: Serialize,
+// {
+//     type MsgType<'a> = <C as ConcreteMessage>::Kind;
+
+//     fn delayed_deserialize<'de, DE>(msg_type: Self::MsgType<'de>, deserializer: DE) -> Result<Self, DE::Error>
+//     where
+//         DE: Deserializer<'de>,
+//     {
+//         let expected = C::kind();
+
+//         if msg_type == expected {
+//             Self::deserialize(deserializer)
+//         } else {
+//             let msg = format!(
+//                 "Failed deserializing {}; Expected kind: {:?}, found: {:?}",
+//                 type_name::<Self>(),
+//                 expected,
+//                 msg_type
+//             );
+//             Err(DE::Error::custom(msg))
+//         }
+//     }
+
+//     fn delayed_serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+//     where
+//         S: Serializer,
+//     {
+//         let kind = C::kind();
+//         let protocol = Protocol::from(Self::MsgType::parent());
+
+//         MsgWithType::new(format_args!("{protocol}/{}", kind.as_ref()), self).serialize(serializer)
+//     }
+// }
