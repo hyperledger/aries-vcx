@@ -385,6 +385,7 @@ mod tests {
     use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
     use aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
     use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
+    use aries_vcx::protocols::proof_presentation::verifier::state_machine::RevocationStatus;
     use aries_vcx::utils::devsetup::*;
 
     use crate::utils::devsetup_agent::test_utils::{create_test_alice_instance, Faber, PayloadKinds};
@@ -458,6 +459,7 @@ mod tests {
                 ProofStateType::from(verifier.get_presentation_status()),
                 ProofStateType::ProofValidated
             );
+            assert_eq!(verifier.get_revocation_status(), Some(RevocationStatus::NonRevoked));
         })
         .await;
     }

@@ -12,6 +12,7 @@ mod integration_tests {
     use std::time::Duration;
 
     use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
+    use aries_vcx::protocols::proof_presentation::verifier::state_machine::RevocationStatus;
     use aries_vcx::utils::devsetup::*;
 
     use crate::utils::devsetup_agent::test_utils::{create_test_alice_instance, Faber};
@@ -92,6 +93,7 @@ mod integration_tests {
                 ProofStateType::from(verifier.get_presentation_status()),
                 ProofStateType::ProofInvalid
             );
+            assert_eq!(verifier.get_revocation_status(), Some(RevocationStatus::Revoked));
         })
         .await;
     }

@@ -27,7 +27,7 @@ export interface IProofData {
   prover_did: string;
   state: number;
   name: string;
-  proof_state: ProofState;
+  proof_state: ProofVerificationStatus;
   proof: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
@@ -62,10 +62,16 @@ export interface IFilter {
   cred_def_id?: string;
 }
 
-export enum ProofState {
+export enum ProofVerificationStatus {
   Undefined = 0,
   Verified = 1,
   Invalid = 2,
+}
+
+export enum ProofRevocationStatus {
+  Undefined = 0,
+  NonRevoked = 1,
+  Revoked = 2,
 }
 
 export interface IProofPredicate {
@@ -193,7 +199,7 @@ export class Proof extends VcxBaseWithState<IProofData, VerifierStateType> {
     }
   }
 
-  public getPresentationVerificationStatus(): ProofState {
+  public getPresentationVerificationStatus(): ProofVerificationStatus {
     try {
       return ffi.proofGetPresentationVerificationStatus(this.handle);
     } catch (err: any) {
@@ -212,6 +218,14 @@ export class Proof extends VcxBaseWithState<IProofData, VerifierStateType> {
   public getPresentationRequestAttachment(): string {
     try {
       return ffi.proofGetPresentationRequestAttachment(this.handle);
+    } catch (err: any) {
+      throw new VCXInternalError(err);
+    }
+  }
+
+  public getRevocationStatus(): ProofRevocationStatus {
+    try {
+      return ffi.proofGetRevocationStatus(this.handle);
     } catch (err: any) {
       throw new VCXInternalError(err);
     }

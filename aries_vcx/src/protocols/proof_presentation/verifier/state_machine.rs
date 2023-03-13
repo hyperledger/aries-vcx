@@ -68,8 +68,8 @@ impl Default for VerifierFullState {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum RevocationStatus {
-    Revoked,
     NonRevoked,
+    Revoked,
 }
 
 fn build_verification_ack(thread_id: &str) -> PresentationAck {
@@ -435,6 +435,13 @@ impl VerifierSM {
                 }
             }
             _ => Status::Undefined,
+        }
+    }
+
+    pub fn get_revocation_status(&self) -> Option<RevocationStatus> {
+        match self.state {
+            VerifierFullState::Finished(ref state) => state.revocation_status.clone(),
+            _ => None,
         }
     }
 

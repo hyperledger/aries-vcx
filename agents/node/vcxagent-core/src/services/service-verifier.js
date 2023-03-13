@@ -69,7 +69,12 @@ module.exports.createServiceVerifier = function createServiceVerifier ({ logger,
 
   async function getPresentationVerificationStatus (proofId) {
     const proof = await loadProof(proofId)
-    return JSON.parse(proof.getPresentationVerificationStatus())
+    return proof.getPresentationVerificationStatus()
+  }
+
+  async function getRevocationStatus (proofId) {
+    const proof = await loadProof(proofId)
+    return proof.getPresentationVerificationStatus()
   }
 
   async function listIds () {
@@ -102,6 +107,7 @@ module.exports.createServiceVerifier = function createServiceVerifier ({ logger,
     getPresentationMsg,
     getPresentationAttachment,
     getPresentationRequestAttachment,
-    getPresentationVerificationStatus
+    getPresentationVerificationStatus,
+    getRevocationStatus
   }
 }
