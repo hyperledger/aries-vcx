@@ -19,9 +19,8 @@ use crate::{
         discover_features::DiscoverFeatures, notification::Ack, out_of_band::OutOfBand, present_proof::PresentProof,
         report_problem::ProblemReport, revocation::Revocation, routing::Forward, trust_ping::TrustPing,
     },
+    utils::MSG_TYPE,
 };
-
-pub const MSG_TYPE: &str = "@type";
 
 #[derive(Clone, Debug, From)]
 pub enum AriesMessage {
@@ -180,10 +179,6 @@ impl<'de> Deserialize<'de> for AriesMessage {
     }
 }
 
-/// Custom [`Serialize`] impl for [`A2AMessage`] to use the
-/// correspondent [`MessageType`] as internal tag `@type`.
-// We rely on [`MsgWithType`] to attach the [`MessageType`]
-// to the final output.
 impl Serialize for AriesMessage {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
