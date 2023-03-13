@@ -25,6 +25,16 @@ pub mod routing;
 pub mod traits;
 pub mod trust_ping;
 
+/// Type representing all protocols that are currently supported.
+/// 
+/// They are composed from protocol names, protocol major versions and protocol minor versions.
+/// The protocol message kind types, while linked to their respective protocol minor versions,
+/// are treated adjacently to this enum.
+/// 
+/// This way, this type can be used for all of the following:
+/// - protocol registry
+/// - message type deserialization
+/// - discover features protocol
 #[derive(Clone, Copy, Debug, From, TryInto, PartialEq, Deserialize)]
 #[serde(try_from = "&str")]
 pub enum Protocol {
@@ -41,6 +51,8 @@ pub enum Protocol {
     Notification(Notification),
 }
 
+/// Utility macro to avoid harder to read and error prone calling
+/// of the version resolution method on the correct type.
 macro_rules! resolve_major_ver {
     ($type:ident, $family:expr, $major:expr, $minor:expr) => {
         if $family == $type::FAMILY {
@@ -53,6 +65,12 @@ impl Protocol {
     pub const DID_COM_ORG_PREFIX: &'static str = "https://didcomm.org";
     pub const DID_SOV_PREFIX: &'static str = "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec";
 
+    /// Tried to construct a [`Protocol`] from parts.
+    /// 
+    /// # Errors:
+    /// 
+    /// An error is returned if a [`Protocol`] could not be constructed
+    /// from the provided parts.
     pub fn from_parts(family: &str, major: u8, minor: u8) -> MsgTypeResult<Self> {
         resolve_major_ver!(Routing, family, major, minor);
         resolve_major_ver!(Connection, family, major, minor);
@@ -69,6 +87,7 @@ impl Protocol {
         Err(MsgTypeError::unknown_family(family.to_owned()))
     }
 
+    /// Returns the parts that this [`Protocol`] is comprised of.
     pub fn as_parts(&self) -> (&str, u8, u8) {
         match &self {
             Self::Routing(v) => v.as_protocol_parts(),
