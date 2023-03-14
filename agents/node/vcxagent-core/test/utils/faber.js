@@ -401,7 +401,7 @@ module.exports.createFaber = async function createFaber (serviceEndpoint = 'http
     logger.info('Faber is gather info about received presentation')
     await vcxAgent.agentInitVcx()
     const presentationMsg = await vcxAgent.serviceVerifier.getPresentationMsg(proofId)
-    const presentationVerificationStatus = await vcxAgent.serviceVerifier.getPresentationVerificationStatus(proofId)
+    const presentationVerificationStatus = await vcxAgent.serviceVerifier.getVerificationStatus(proofId)
     const presentationAttachment = await vcxAgent.serviceVerifier.getPresentationAttachment(proofId)
     const presentationRequestAttachment = await vcxAgent.serviceVerifier.getPresentationRequestAttachment(proofId)
 
