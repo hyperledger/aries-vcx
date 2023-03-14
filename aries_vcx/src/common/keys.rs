@@ -2,8 +2,7 @@ use std::sync::Arc;
 
 use serde_json::Value;
 
-use crate::core::profile::profile::Profile;
-use crate::errors::error::prelude::*;
+use crate::{core::profile::profile::Profile, errors::error::prelude::*};
 
 pub async fn rotate_verkey_apply(profile: &Arc<dyn Profile>, did: &str, temp_vk: &str) -> VcxResult<()> {
     let ledger = Arc::clone(profile).inject_ledger();
@@ -75,11 +74,11 @@ pub async fn get_verkey_from_ledger(profile: &Arc<dyn Profile>, did: &str) -> Vc
 #[cfg(test)]
 #[cfg(feature = "pool_tests")]
 mod test {
-    use crate::indy::utils::mocks::pool_mocks::{enable_pool_mocks, PoolMocks};
-    use crate::utils::devsetup::*;
-    use crate::utils::mockdata::mockdata_pool;
-
     use super::*;
+    use crate::{
+        indy::utils::mocks::pool_mocks::{enable_pool_mocks, PoolMocks},
+        utils::{devsetup::*, mockdata::mockdata_pool},
+    };
 
     #[tokio::test]
     async fn test_rotate_verkey_fails() {

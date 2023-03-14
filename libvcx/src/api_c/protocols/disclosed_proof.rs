@@ -471,7 +471,8 @@ pub extern "C" fn vcx_disclosed_proof_get_requests(
 /// #Params
 /// command_handle: command handle to map callback to user context.
 ///
-/// proof_handle: Proof handle that was provided during creation. Used to access disclosed proof object
+/// proof_handle: Proof handle that was provided during creation. Used to access disclosed proof
+/// object
 ///
 /// cb: Callback that provides most current state of the disclosed proof and error status of request
 ///     States:
@@ -625,9 +626,11 @@ pub extern "C" fn vcx_v2_disclosed_proof_update_state(
 /// #Params
 /// command_handle: command handle to map callback to user context.
 ///
-/// proof_handle: Credential handle that was provided during creation. Used to identify disclosed proof object
+/// proof_handle: Credential handle that was provided during creation. Used to identify disclosed
+/// proof object
 ///
-/// connection_handle: Connection handle of connection associated with this proof exchange interaction.
+/// connection_handle: Connection handle of connection associated with this proof exchange
+/// interaction.
 ///
 /// message: message to process for state changes
 ///
@@ -663,7 +666,11 @@ pub extern "C" fn vcx_v2_disclosed_proof_update_state_with_message(
                 cb(command_handle, SUCCESS_ERR_CODE, state)
             }
             Err(err) => {
-                error!("vcx_v2_disclosed_proof_update_state_with_message_cb(command_handle: {}, rc: {}, state: {}) source_id: {}", command_handle, err, 0, source_id);
+                error!(
+                    "vcx_v2_disclosed_proof_update_state_with_message_cb(command_handle: {}, rc: {}, state: {}) \
+                     source_id: {}",
+                    command_handle, err, 0, source_id
+                );
                 cb(command_handle, err.into(), 0)
             }
         };
@@ -679,9 +686,11 @@ pub extern "C" fn vcx_v2_disclosed_proof_update_state_with_message(
 /// #Params
 /// command_handle: command handle to map callback to user context.
 ///
-/// handle: Proof handle that was provided during creation. Used to identify the disclosed proof object
+/// handle: Proof handle that was provided during creation. Used to identify the disclosed proof
+/// object
 ///
-/// cb: Callback that provides json string of the disclosed proof's attributes and provides error status
+/// cb: Callback that provides json string of the disclosed proof's attributes and provides error
+/// status
 ///
 /// #Returns
 /// Error code as a u32
@@ -732,7 +741,8 @@ pub extern "C" fn vcx_disclosed_proof_serialize(
     SUCCESS_ERR_CODE
 }
 
-/// Takes a json string representing an disclosed proof object and recreates an object matching the json
+/// Takes a json string representing an disclosed proof object and recreates an object matching the
+/// json
 ///
 /// #Params
 /// command_handle: command handle to map callback to user context.
@@ -795,12 +805,15 @@ pub extern "C" fn vcx_disclosed_proof_deserialize(
 /// #Params
 /// command_handle: command handle to map callback to user context.
 ///
-/// handle: Proof handle that was provided during creation. Used to identify the disclosed proof object
+/// handle: Proof handle that was provided during creation. Used to identify the disclosed proof
+/// object
 ///
-/// cb: Callback that provides json string of the credentials in wallet associated with proof request
+/// cb: Callback that provides json string of the credentials in wallet associated with proof
+/// request
 ///
 /// # Example
-/// credentials -> "{'attrs': {'attribute_0': [{'cred_info': {'schema_id': 'id', 'cred_def_id': 'id', 'attrs': {'attr_name': 'attr_value', ...}, 'referent': '914c7e11'}}]}}"
+/// credentials -> "{'attrs': {'attribute_0': [{'cred_info': {'schema_id': 'id', 'cred_def_id':
+/// 'id', 'attrs': {'attr_name': 'attr_value', ...}, 'referent': '914c7e11'}}]}}"
 ///
 /// #Returns
 /// Error code as a u32
@@ -851,21 +864,23 @@ pub extern "C" fn vcx_disclosed_proof_retrieve_credentials(
     SUCCESS_ERR_CODE
 }
 
-/// Accept proof request associated with proof object and generates a proof from the selected credentials and self attested attributes
+/// Accept proof request associated with proof object and generates a proof from the selected
+/// credentials and self attested attributes
 ///
 /// #Params
 /// command_handle: command handle to map callback to user context.
 ///
 ///
-/// handle: Proof handle that was provided during creation. Used to identify the disclosed proof object
+/// handle: Proof handle that was provided during creation. Used to identify the disclosed proof
+/// object
 ///
 /// selected_credentials: a json string with a credential for each proof request attribute.
-///     List of possible credentials for each attribute is returned from vcx_disclosed_proof_retrieve_credentials,
-///         (user needs to select specific credential to use from list of credentials)
-///         {
+///     List of possible credentials for each attribute is returned from
+/// vcx_disclosed_proof_retrieve_credentials,         (user needs to select specific credential to
+/// use from list of credentials)         {
 ///             "attrs":{
-///                 String:{// Attribute key: This may not be the same as the attr name ex. "age_1" where attribute name is "age"
-///                     "credential": {
+///                 String:{// Attribute key: This may not be the same as the attr name ex. "age_1"
+/// where attribute name is "age"                     "credential": {
 ///                         "cred_info":{
 ///                             "referent":String,
 ///                             "attrs":{ String: String }, // ex. {"age": "111", "name": "Bob"}
@@ -887,8 +902,9 @@ pub extern "C" fn vcx_disclosed_proof_retrieve_credentials(
 /// self_attested_attrs: a json string with attributes self attested by user
 /// # Examples
 /// self_attested_attrs -> "{"self_attested_attr_0":"attested_val"}" | "{}"
-/// selected_credentials -> "{'attrs': {'attribute_0': {'credential': {'cred_info': {'cred_def_id': 'od', 'schema_id': 'id', 'referent': '0c212108-9433-4199-a21f-336a44164f38', 'attrs': {'attr_name': 'attr_value', ...}}}}}}"
-/// cb: Callback that returns error status
+/// selected_credentials -> "{'attrs': {'attribute_0': {'credential': {'cred_info': {'cred_def_id':
+/// 'od', 'schema_id': 'id', 'referent': '0c212108-9433-4199-a21f-336a44164f38', 'attrs':
+/// {'attr_name': 'attr_value', ...}}}}}}" cb: Callback that returns error status
 ///
 /// #Returns
 /// Error code as a u32
@@ -907,7 +923,15 @@ pub extern "C" fn vcx_disclosed_proof_generate_proof(
     check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     let source_id = disclosed_proof::get_source_id(proof_handle).unwrap_or_default();
-    trace!("vcx_disclosed_proof_generate_proof(command_handle: {}, proof_handle: {}, selected_credentials: {}, self_attested_attrs: {}) source_id: {}", command_handle, proof_handle, selected_credentials, self_attested_attrs, source_id);
+    trace!(
+        "vcx_disclosed_proof_generate_proof(command_handle: {}, proof_handle: {}, selected_credentials: {}, \
+         self_attested_attrs: {}) source_id: {}",
+        command_handle,
+        proof_handle,
+        selected_credentials,
+        self_attested_attrs,
+        source_id
+    );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         match disclosed_proof::generate_proof(proof_handle, &selected_credentials, &self_attested_attrs).await {
@@ -947,7 +971,8 @@ pub extern "C" fn vcx_disclosed_proof_generate_proof(
 /// #Params
 /// command_handle: command handle to map callback to user context.
 ///
-/// proof_handle: Proof handle that was provided during creation. Used to identify the disclosed proof object
+/// proof_handle: Proof handle that was provided during creation. Used to identify the disclosed
+/// proof object
 ///
 /// connection_handle: Connection handle that identifies pairwise connection
 ///
@@ -1013,7 +1038,16 @@ pub extern "C" fn vcx_disclosed_proof_decline_presentation_request(
     check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     let source_id = disclosed_proof::get_source_id(proof_handle).unwrap_or_default();
-    trace!("vcx_disclosed_proof_decline_presentation_request(command_handle: {}, proof_handle: {}, connection_handle: {}, reason: {:?}, proposal: {:?}) source_id: {}", command_handle, proof_handle, connection_handle, reason, proposal, source_id);
+    trace!(
+        "vcx_disclosed_proof_decline_presentation_request(command_handle: {}, proof_handle: {}, connection_handle: \
+         {}, reason: {:?}, proposal: {:?}) source_id: {}",
+        command_handle,
+        proof_handle,
+        connection_handle,
+        reason,
+        proposal,
+        source_id
+    );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         match disclosed_proof::decline_presentation_request(
@@ -1133,6 +1167,17 @@ pub extern "C" fn vcx_disclosed_proof_release(handle: u32) -> u32 {
 mod tests {
     use std::ffi::CString;
 
+    use aries_vcx::{
+        agency_client::testing::mocking::AgencyMockDecrypted,
+        utils::{
+            constants::{CREDS_FROM_PROOF_REQ, GET_MESSAGES_DECRYPTED_RESPONSE, V3_OBJECT_SERIALIZE_VERSION},
+            devsetup::*,
+            mockdata::{
+                mock_settings::MockBuilder, mockdata_credex::ARIES_CREDENTIAL_REQUEST,
+                mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION,
+            },
+        },
+    };
     use serde_json::Value;
 
     use aries_vcx::agency_client::testing::mocking::AgencyMockDecrypted;
@@ -1152,6 +1197,12 @@ mod tests {
     use crate::aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
 
     use super::*;
+    use crate::{
+        api_c::cutils::{return_types_u32, timeout::TimeoutUtils},
+        api_vcx::api_handle::mediated_connection,
+        aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState,
+        errors::error,
+    };
 
     pub const BAD_PROOF_REQUEST: &str = r#"{"version": "0.1","to_did": "LtMgSjtFcyPwenK9SHCyb8","from_did": "LtMgSjtFcyPwenK9SHCyb8","claim": {"account_num": ["8BEaoLf8TBmK4BUyX8WWnA"],"name_on_account": ["Alice"]},"schema_seq_no": 48,"issuer_did": "Pd4fnFtRBcMKRVC2go5w3j","claim_name": "Account Certificate","claim_id": "3675417066","msg_ref_id": "ymy5nth"}"#;
 

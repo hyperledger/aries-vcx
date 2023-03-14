@@ -1,5 +1,6 @@
-use crate::protocols::issuance::issuer::state_machine::RevocationInfoV1;
 use messages::status::Status;
+
+use crate::protocols::issuance::issuer::state_machine::RevocationInfoV1;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct FinishedState {

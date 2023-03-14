@@ -3,45 +3,71 @@
 pub mod test_utils {
     use std::sync::Arc;
 
-    use aries_vcx::core::profile::indy_profile::IndySdkProfile;
-    use aries_vcx::core::profile::modular_wallet_profile::{LedgerPoolConfig, ModularWalletProfile};
-    use aries_vcx::core::profile::profile::Profile;
-    use aries_vcx::handlers::revocation_notification::receiver::RevocationNotificationReceiver;
-    use aries_vcx::handlers::revocation_notification::sender::RevocationNotificationSender;
-    use aries_vcx::plugins::wallet::base_wallet::BaseWallet;
-    use aries_vcx::plugins::wallet::indy_wallet::IndySdkWallet;
-    use aries_vcx::protocols::mediated_connection::pairwise_info::PairwiseInfo;
-    use aries_vcx::protocols::revocation_notification::sender::state_machine::SenderConfigBuilder;
+    use agency_client::{
+        agency_client::AgencyClient,
+        api::downloaded_message::DownloadedMessage,
+        configuration::{AgencyClientConfig, AgentProvisionConfig},
+        MessageStatusCode,
+    };
+    use aries_vcx::{
+        common::{
+            ledger::transactions::{into_did_doc, write_endpoint_legacy},
+            primitives::{
+                credential_definition::{CredentialDef, CredentialDefConfigBuilder},
+                credential_schema::Schema,
+            },
+            proofs::proof_request::PresentationRequestData,
+        },
+        core::profile::{
+            indy_profile::IndySdkProfile,
+            modular_wallet_profile::{LedgerPoolConfig, ModularWalletProfile},
+            profile::Profile,
+        },
+        errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
+        global::{settings, settings::init_issuer_config},
+        handlers::{
+            connection::mediated_connection::{ConnectionState, MediatedConnection},
+            issuance::{
+                holder::{test_utils::get_credential_offer_messages, Holder},
+                issuer::Issuer,
+            },
+            proof_presentation::{
+                prover::{test_utils::get_proof_request_messages, Prover},
+                verifier::Verifier,
+            },
+            revocation_notification::{receiver::RevocationNotificationReceiver, sender::RevocationNotificationSender},
+        },
+        indy::wallet::{
+            close_wallet, create_wallet_with_master_secret, delete_wallet, open_wallet, wallet_configure_issuer,
+            IssuerConfig, WalletConfig,
+        },
+        messages::{
+            a2a::A2AMessage,
+            protocols::{
+                connection::invite::{Invitation, PublicInvitation},
+                issuance::credential_offer::{CredentialOffer, OfferInfo},
+                proof_presentation::presentation_request::PresentationRequest,
+            },
+        },
+        plugins::wallet::{base_wallet::BaseWallet, indy_wallet::IndySdkWallet},
+        protocols::{
+            issuance::{holder::state_machine::HolderState, issuer::state_machine::IssuerState},
+            mediated_connection::{
+                invitee::state_machine::InviteeState, inviter::state_machine::InviterState, pairwise_info::PairwiseInfo,
+            },
+            proof_presentation::{prover::state_machine::ProverState, verifier::state_machine::VerifierState},
+            revocation_notification::sender::state_machine::SenderConfigBuilder,
+        },
+        utils::{devsetup::*, provision::provision_cloud_agent},
+    };
     use futures::future::BoxFuture;
-    use messages::concepts::ack::please_ack::AckOn;
-    use messages::diddoc::aries::service::AriesService;
-    use messages::protocols::revocation_notification::revocation_ack::RevocationAck;
-    use messages::protocols::revocation_notification::revocation_notification::RevocationNotification;
-    use messages::status::Status;
-
-    use agency_client::agency_client::AgencyClient;
-    use agency_client::api::downloaded_message::DownloadedMessage;
-    use agency_client::configuration::{AgencyClientConfig, AgentProvisionConfig};
-    use agency_client::MessageStatusCode;
-    use aries_vcx::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
-
-    use aries_vcx::common::ledger::transactions::{into_did_doc, write_endpoint_legacy};
-    use aries_vcx::common::primitives::credential_definition::CredentialDef;
-    use aries_vcx::common::primitives::credential_definition::CredentialDefConfigBuilder;
-    use aries_vcx::common::primitives::credential_schema::Schema;
-    use aries_vcx::common::proofs::proof_request::PresentationRequestData;
-    use aries_vcx::global::settings;
-    use aries_vcx::global::settings::init_issuer_config;
-    use aries_vcx::handlers::connection::mediated_connection::{ConnectionState, MediatedConnection};
-    use aries_vcx::handlers::issuance::holder::test_utils::get_credential_offer_messages;
-    use aries_vcx::handlers::issuance::holder::Holder;
-    use aries_vcx::handlers::issuance::issuer::Issuer;
-    use aries_vcx::handlers::proof_presentation::prover::test_utils::get_proof_request_messages;
-    use aries_vcx::handlers::proof_presentation::prover::Prover;
-    use aries_vcx::handlers::proof_presentation::verifier::Verifier;
-    use aries_vcx::indy::wallet::{close_wallet, open_wallet};
-    use aries_vcx::indy::wallet::{
-        create_wallet_with_master_secret, delete_wallet, wallet_configure_issuer, IssuerConfig, WalletConfig,
+    use messages::{
+        concepts::ack::please_ack::AckOn,
+        diddoc::aries::service::AriesService,
+        protocols::revocation_notification::{
+            revocation_ack::RevocationAck, revocation_notification::RevocationNotification,
+        },
+        status::Status,
     };
     use aries_vcx::messages::a2a::A2AMessage;
     use aries_vcx::messages::protocols::connection::invite::{Invitation, PublicInvitation};

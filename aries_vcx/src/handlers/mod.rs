@@ -1,10 +1,11 @@
-use crate::handlers::connection::mediated_connection::ConnectionState as MediatedConnectionState;
-use crate::protocols::issuance::holder::state_machine::HolderState;
-use crate::protocols::issuance::issuer::state_machine::IssuerState;
-use crate::protocols::mediated_connection::invitee::state_machine::InviteeState;
-use crate::protocols::mediated_connection::inviter::state_machine::InviterState;
-use crate::protocols::proof_presentation::prover::state_machine::ProverState;
-use crate::protocols::proof_presentation::verifier::state_machine::VerifierState;
+use crate::{
+    handlers::connection::mediated_connection::ConnectionState as MediatedConnectionState,
+    protocols::{
+        issuance::{holder::state_machine::HolderState, issuer::state_machine::IssuerState},
+        mediated_connection::{invitee::state_machine::InviteeState, inviter::state_machine::InviterState},
+        proof_presentation::{prover::state_machine::ProverState, verifier::state_machine::VerifierState},
+    },
+};
 
 pub mod connection;
 pub mod discovery;

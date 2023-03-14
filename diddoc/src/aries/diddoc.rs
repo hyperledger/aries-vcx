@@ -1,10 +1,11 @@
-use crate::aries::service::AriesService;
-use crate::errors::error::{DiddocError, DiddocErrorKind, DiddocResult};
-use crate::w3c::model::{
-    Authentication, DdoKeyReference, Ed25519PublicKey, CONTEXT, KEY_AUTHENTICATION_TYPE, KEY_TYPE,
-};
 use shared_vcx::validation::verkey::validate_verkey;
 use url::Url;
+
+use crate::{
+    aries::service::AriesService,
+    errors::error::{DiddocError, DiddocErrorKind, DiddocResult},
+    w3c::model::{Authentication, DdoKeyReference, Ed25519PublicKey, CONTEXT, KEY_AUTHENTICATION_TYPE, KEY_TYPE},
+};
 
 #[derive(Debug, Deserialize, Serialize, PartialEq, Clone)]
 pub struct AriesDidDoc {
@@ -73,8 +74,8 @@ impl AriesDidDoc {
 
     pub fn set_routing_keys(&mut self, routing_keys: Vec<String>) {
         routing_keys.iter().for_each(|key| {
-            // Note: comment lines 123 - 134 and append key instead key_reference to be compatible with Streetcred
-            //                id += 1;
+            // Note: comment lines 123 - 134 and append key instead key_reference to be compatible with
+            // Streetcred                id += 1;
             //
             //                let key_id = id.to_string();
             //                let key_reference = DidDoc::_build_key_reference(&self.id, &key_id);
@@ -304,10 +305,9 @@ impl AriesDidDoc {
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
-    use crate::aries::diddoc::AriesDidDoc;
-    use crate::aries::service::AriesService;
-    use crate::w3c::model::{
-        Authentication, DdoKeyReference, Ed25519PublicKey, CONTEXT, KEY_AUTHENTICATION_TYPE, KEY_TYPE,
+    use crate::{
+        aries::{diddoc::AriesDidDoc, service::AriesService},
+        w3c::model::{Authentication, DdoKeyReference, Ed25519PublicKey, CONTEXT, KEY_AUTHENTICATION_TYPE, KEY_TYPE},
     };
 
     pub fn _key_1() -> String {
@@ -483,9 +483,9 @@ pub mod test_utils {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 mod unit_tests {
-    use crate::aries::diddoc::test_utils::*;
-    use crate::aries::diddoc::AriesDidDoc;
     use serde_json::json;
+
+    use crate::aries::diddoc::{test_utils::*, AriesDidDoc};
 
     #[test]
     fn test_did_doc_build_works() {

@@ -1,6 +1,8 @@
-use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
-use crate::global::settings;
-use crate::protocols::proof_presentation::prover::messages::ProverMessages;
+use crate::{
+    errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
+    global::settings,
+    protocols::proof_presentation::prover::messages::ProverMessages,
+};
 
 pub mod messages;
 pub mod state_machine;

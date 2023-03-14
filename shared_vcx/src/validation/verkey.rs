@@ -1,5 +1,6 @@
-use crate::errors::error::{SharedVcxError, SharedVcxErrorKind, SharedVcxResult};
 use bs58;
+
+use crate::errors::error::{SharedVcxError, SharedVcxErrorKind, SharedVcxResult};
 
 pub fn validate_verkey(verkey: &str) -> SharedVcxResult<String> {
     let check_verkey = String::from(verkey);

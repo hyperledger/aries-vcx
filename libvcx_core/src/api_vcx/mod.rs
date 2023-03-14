@@ -115,9 +115,8 @@ pub struct VcxStatus {
 mod tests {
     use serde_json;
 
-    use super::*;
-
     use self::VcxStateType::*;
+    use super::*;
 
     #[test]
     #[cfg(feature = "general_test")]

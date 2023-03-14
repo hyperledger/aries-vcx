@@ -1,29 +1,35 @@
-use std::collections::HashMap;
-use std::fmt;
-use std::sync::Arc;
+use std::{collections::HashMap, fmt, sync::Arc};
 
-use crate::core::profile::profile::Profile;
-use crate::errors::error::prelude::*;
-use crate::protocols::common::build_problem_report_msg;
-use crate::protocols::proof_presentation::prover::messages::ProverMessages;
-use crate::protocols::proof_presentation::prover::states::finished::FinishedState;
-use crate::protocols::proof_presentation::prover::states::initial::InitialProverState;
-use crate::protocols::proof_presentation::prover::states::presentation_preparation_failed::PresentationPreparationFailedState;
-use crate::protocols::proof_presentation::prover::states::presentation_prepared::PresentationPreparedState;
-use crate::protocols::proof_presentation::prover::states::presentation_proposal_sent::PresentationProposalSent;
-use crate::protocols::proof_presentation::prover::states::presentation_request_received::PresentationRequestReceived;
-use crate::protocols::proof_presentation::prover::states::presentation_sent::PresentationSentState;
-use crate::protocols::proof_presentation::prover::verify_thread_id;
-use crate::protocols::SendClosure;
-use messages::a2a::{A2AMessage, MessageId};
-use messages::concepts::problem_report::ProblemReport;
-use messages::protocols::proof_presentation::presentation::Presentation;
-use messages::protocols::proof_presentation::presentation_ack::PresentationAck;
-use messages::protocols::proof_presentation::presentation_proposal::{
-    PresentationPreview, PresentationProposal, PresentationProposalData,
+use messages::{
+    a2a::{A2AMessage, MessageId},
+    concepts::problem_report::ProblemReport,
+    protocols::proof_presentation::{
+        presentation::Presentation,
+        presentation_ack::PresentationAck,
+        presentation_proposal::{PresentationPreview, PresentationProposal, PresentationProposalData},
+        presentation_request::PresentationRequest,
+    },
+    status::Status,
 };
-use messages::protocols::proof_presentation::presentation_request::PresentationRequest;
-use messages::status::Status;
+
+use crate::{
+    core::profile::profile::Profile,
+    errors::error::prelude::*,
+    protocols::{
+        common::build_problem_report_msg,
+        proof_presentation::prover::{
+            messages::ProverMessages,
+            states::{
+                finished::FinishedState, initial::InitialProverState,
+                presentation_preparation_failed::PresentationPreparationFailedState,
+                presentation_prepared::PresentationPreparedState, presentation_proposal_sent::PresentationProposalSent,
+                presentation_request_received::PresentationRequestReceived, presentation_sent::PresentationSentState,
+            },
+            verify_thread_id,
+        },
+        SendClosure,
+    },
+};
 
 /// A state machine that tracks the evolution of states for a Prover during
 /// the Present Proof protocol.
@@ -533,17 +539,17 @@ impl ProverSM {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use crate::common::test_utils::mock_profile;
-    use crate::test::source_id;
-    use crate::utils::devsetup::SetupMocks;
-    use messages::protocols::proof_presentation::presentation::test_utils::_presentation;
-    use messages::protocols::proof_presentation::presentation_proposal::test_utils::{
-        _presentation_preview, _presentation_proposal, _presentation_proposal_data,
+    use messages::protocols::proof_presentation::{
+        presentation::test_utils::_presentation,
+        presentation_proposal::test_utils::{
+            _presentation_preview, _presentation_proposal, _presentation_proposal_data,
+        },
+        presentation_request::test_utils::_presentation_request,
+        test_utils::{_ack, _problem_report},
     };
-    use messages::protocols::proof_presentation::presentation_request::test_utils::_presentation_request;
-    use messages::protocols::proof_presentation::test_utils::{_ack, _problem_report};
 
     use super::*;
+    use crate::{common::test_utils::mock_profile, test::source_id, utils::devsetup::SetupMocks};
 
     pub fn _prover_sm_from_request() -> ProverSM {
         ProverSM::from_request(_presentation_request(), source_id())
@@ -646,11 +652,14 @@ pub mod unit_tests {
     }
 
     mod build_messages {
-        use crate::protocols::common::build_problem_report_msg;
         use messages::a2a::MessageId;
 
-        use crate::protocols::proof_presentation::prover::state_machine::build_presentation_msg;
-        use crate::utils::devsetup::{was_in_past, SetupMocks};
+        use crate::{
+            protocols::{
+                common::build_problem_report_msg, proof_presentation::prover::state_machine::build_presentation_msg,
+            },
+            utils::devsetup::{was_in_past, SetupMocks},
+        };
 
         #[test]
         #[cfg(feature = "general_test")]
@@ -713,10 +722,8 @@ pub mod unit_tests {
     }
 
     mod step {
-        use crate::utils::constants::CREDS_FROM_PROOF_REQ;
-        use crate::utils::mockdata::mock_settings::MockBuilder;
-
         use super::*;
+        use crate::utils::{constants::CREDS_FROM_PROOF_REQ, mockdata::mock_settings::MockBuilder};
 
         #[tokio::test]
         #[cfg(feature = "general_test")]

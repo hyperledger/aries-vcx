@@ -15,7 +15,8 @@ use crate::error::SUCCESS_ERR_CODE;
 /// #Params
 /// pattern: (optional) pattern that corresponds with the log messages to show.
 ///
-/// NOTE: You should specify either `pattern` parameter or `RUST_LOG` environment variable to init logger.
+/// NOTE: You should specify either `pattern` parameter or `RUST_LOG` environment variable to init
+/// logger.
 ///
 /// #Returns
 /// u32 error code
@@ -46,9 +47,10 @@ pub extern "C" fn vcx_set_default_logger(pattern: *const c_char) -> u32 {
 ///
 /// #Params
 /// context: pointer to some logger context that will be available in logger handlers.
-/// enabled: (optional) "enabled" operation handler - calls to determines if a log record would be logged. (false positive if not specified)
-/// log: "log" operation handler - calls to logs a record.
-/// flush: (optional) "flush" operation handler - calls to flushes buffered records (in case of crash or signal).
+/// enabled: (optional) "enabled" operation handler - calls to determines if a log record would be
+/// logged. (false positive if not specified) log: "log" operation handler - calls to logs a record.
+/// flush: (optional) "flush" operation handler - calls to flushes buffered records (in case of
+/// crash or signal).
 ///
 /// #Returns
 /// u32 Error Code

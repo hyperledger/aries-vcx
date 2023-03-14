@@ -1,10 +1,9 @@
 use regex::Regex;
 use strum::IntoEnumIterator;
 
-use crate::a2a::message_family::MessageFamilies;
-use crate::actors;
-use crate::actors::Actors;
-use crate::protocols::discovery::disclose::ProtocolDescriptor;
+use crate::{
+    a2a::message_family::MessageFamilies, actors, actors::Actors, protocols::discovery::disclose::ProtocolDescriptor,
+};
 
 pub struct ProtocolRegistry {
     protocols: Vec<ProtocolDescriptor>,

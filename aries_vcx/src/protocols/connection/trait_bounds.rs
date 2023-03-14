@@ -30,6 +30,7 @@ pub trait CompletedState {
     fn handle_disclose(&mut self, disclose: Disclose);
 }
 
-/// Marker trait used for implementing [`messages::protocols::connection::problem_report::ProblemReport`]
-/// handling on certain [`super::Connection`] types.
+/// Marker trait used for implementing
+/// [`messages::protocols::connection::problem_report::ProblemReport`] handling on certain
+/// [`super::Connection`] types.
 pub trait HandleProblem {}

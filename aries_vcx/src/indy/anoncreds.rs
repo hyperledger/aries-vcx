@@ -39,9 +39,13 @@ pub async fn generate_nonce() -> VcxResult<String> {
 mod unit_tests {
     use vdrtools::WalletHandle;
 
-    use crate::indy::ledger::transactions::get_schema_json;
-    use crate::utils::constants::{SCHEMA_ID, SCHEMA_JSON};
-    use crate::utils::devsetup::SetupMocks;
+    use crate::{
+        indy::ledger::transactions::get_schema_json,
+        utils::{
+            constants::{SCHEMA_ID, SCHEMA_JSON},
+            devsetup::SetupMocks,
+        },
+    };
 
     #[tokio::test]
     async fn from_ledger_schema_id() {
@@ -56,11 +60,11 @@ mod unit_tests {
 #[cfg(test)]
 pub mod integration_tests {
 
-    use crate::common::test_utils::{create_and_store_credential, indy_handles_to_profile};
-    use crate::indy::primitives::revocation_registry::libindy_issuer_revoke_credential;
-    use crate::utils::constants::TAILS_DIR;
-    use crate::utils::devsetup::SetupWalletPool;
-    use crate::utils::get_temp_dir_path;
+    use crate::{
+        common::test_utils::{create_and_store_credential, indy_handles_to_profile},
+        indy::primitives::revocation_registry::libindy_issuer_revoke_credential,
+        utils::{constants::TAILS_DIR, devsetup::SetupWalletPool, get_temp_dir_path},
+    };
 
     #[tokio::test]
     async fn test_issuer_revoke_credential() {

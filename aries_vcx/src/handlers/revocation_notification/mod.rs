@@ -4,12 +4,12 @@ pub mod sender;
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
     use agency_client::agency_client::AgencyClient;
-    use messages::concepts::ack::Ack;
-    use messages::protocols::revocation_notification::revocation_notification::RevocationNotification;
+    use messages::{
+        a2a::A2AMessage, concepts::ack::Ack,
+        protocols::revocation_notification::revocation_notification::RevocationNotification,
+    };
 
-    use crate::errors::error::prelude::*;
-    use crate::handlers::connection::mediated_connection::MediatedConnection;
-    use messages::a2a::A2AMessage;
+    use crate::{errors::error::prelude::*, handlers::connection::mediated_connection::MediatedConnection};
 
     pub async fn get_revocation_notification_messages(
         agency_client: &AgencyClient,

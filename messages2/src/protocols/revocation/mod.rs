@@ -6,20 +6,17 @@ use std::str::FromStr;
 use derive_more::From;
 use serde::{de::Error, Deserializer, Serializer};
 
+pub use self::{ack::AckRevoke, notification::Revoke};
+use self::{
+    ack::AckRevokeContent,
+    notification::{RevokeContent, RevokeDecorators},
+};
+use super::notification::AckDecorators;
 use crate::{
     misc::utils::transit_to_aries_msg,
     msg_types::types::revocation::{Revocation as RevocationKind, RevocationV2, RevocationV2_0Kind},
     protocols::traits::DelayedSerde,
 };
-
-use self::{
-    ack::AckRevokeContent,
-    notification::{RevokeContent, RevokeDecorators},
-};
-
-pub use self::{ack::AckRevoke, notification::Revoke};
-
-use super::notification::AckDecorators;
 
 #[derive(Clone, Debug, From)]
 pub enum Revocation {

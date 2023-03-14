@@ -1,12 +1,12 @@
 pub mod actor;
-pub mod types;
 pub mod registry;
-
-pub use self::types::Protocol;
+pub mod types;
 
 use std::{fmt::Arguments, str::FromStr};
 
 use serde::{de::Error, Deserialize, Serialize};
+
+pub use self::types::Protocol;
 
 /// Type used for deserialization of a fully qualified message type. After deserialization,
 /// it is matched on to determine the actual message struct to deserialize to.

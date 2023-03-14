@@ -1,13 +1,16 @@
 use serde_json::{Map, Value};
-use vdrtools::WalletHandle;
-use vdrtools::{Locator, SearchHandle};
+use vdrtools::{Locator, SearchHandle, WalletHandle};
 
-use crate::errors::error::prelude::*;
-use crate::global::settings;
-use crate::indy::anoncreds::close_search_handle;
-use crate::utils;
-use crate::utils::constants::{ATTRS, PROOF_REQUESTED_PREDICATES, REQUESTED_ATTRIBUTES};
-use crate::utils::parse_and_validate;
+use crate::{
+    errors::error::prelude::*,
+    global::settings,
+    indy::anoncreds::close_search_handle,
+    utils,
+    utils::{
+        constants::{ATTRS, PROOF_REQUESTED_PREDICATES, REQUESTED_ATTRIBUTES},
+        parse_and_validate,
+    },
+};
 
 pub async fn libindy_prover_create_proof(
     wallet_handle: WalletHandle,
@@ -98,7 +101,8 @@ pub async fn libindy_prover_get_credentials_for_proof_req(
         }
     }
 
-    // this may be too redundant since Prover::search_credentials will validate the proof reqeuest already.
+    // this may be too redundant since Prover::search_credentials will validate the proof reqeuest
+    // already.
     let proof_request_json: Map<String, Value> = serde_json::from_str(proof_req).map_err(|err| {
         AriesVcxError::from_msg(
             AriesVcxErrorKind::InvalidProofRequest,
@@ -106,23 +110,30 @@ pub async fn libindy_prover_get_credentials_for_proof_req(
         )
     })?;
 
-    // since the search_credentials_for_proof request validates that the proof_req is properly structured, this get()
-    // fn should never fail, unless libindy changes their formats.
+    // since the search_credentials_for_proof request validates that the proof_req is properly
+    // structured, this get() fn should never fail, unless libindy changes their formats.
     let requested_attributes: Option<Map<String, Value>> = proof_request_json.get(REQUESTED_ATTRIBUTES).and_then(|v| {
         serde_json::from_value(v.clone())
             .map_err(|_| {
-                error!("Invalid Json Parsing of Requested Attributes Retrieved From Libindy. Did Libindy change its structure?");
+                error!(
+                    "Invalid Json Parsing of Requested Attributes Retrieved From Libindy. Did Libindy change its \
+                     structure?"
+                );
             })
             .ok()
     });
 
-    let requested_predicates: Option<Map<String, Value>> = proof_request_json.get(PROOF_REQUESTED_PREDICATES).and_then(|v| {
-        serde_json::from_value(v.clone())
-            .map_err(|_| {
-                error!("Invalid Json Parsing of Requested Predicates Retrieved From Libindy. Did Libindy change its structure?");
-            })
-            .ok()
-    });
+    let requested_predicates: Option<Map<String, Value>> =
+        proof_request_json.get(PROOF_REQUESTED_PREDICATES).and_then(|v| {
+            serde_json::from_value(v.clone())
+                .map_err(|_| {
+                    error!(
+                        "Invalid Json Parsing of Requested Predicates Retrieved From Libindy. Did Libindy change its \
+                         structure?"
+                    );
+                })
+                .ok()
+        });
 
     // handle special case of "empty because json is bad" vs "empty because no attributes sepected"
     if requested_attributes.is_none() && requested_predicates.is_none() {

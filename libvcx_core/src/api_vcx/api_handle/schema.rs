@@ -1,17 +1,20 @@
-use std::string::ToString;
-use std::sync::Arc;
+use std::{string::ToString, sync::Arc};
 
+use aries_vcx::{common::primitives::credential_schema::Schema, global::settings::CONFIG_INSTITUTION_DID};
 use serde_json;
 
-use aries_vcx::common::primitives::credential_schema::Schema;
-use aries_vcx::global::settings::CONFIG_INSTITUTION_DID;
-
-use crate::api_vcx::api_global::pool::get_main_pool_handle;
-use crate::api_vcx::api_global::profile::{get_main_profile, indy_handles_to_profile};
-use crate::api_vcx::api_global::settings::get_config_value;
-use crate::api_vcx::api_global::wallet::get_main_wallet_handle;
-use crate::api_vcx::api_handle::object_cache::ObjectCache;
-use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
+use crate::{
+    api_vcx::{
+        api_global::{
+            pool::get_main_pool_handle,
+            profile::{get_main_profile, indy_handles_to_profile},
+            settings::get_config_value,
+            wallet::get_main_wallet_handle,
+        },
+        api_handle::object_cache::ObjectCache,
+    },
+    errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult},
+};
 
 lazy_static! {
     static ref SCHEMA_MAP: ObjectCache<Schema> = ObjectCache::<Schema>::new("schemas-cache");

@@ -1,9 +1,9 @@
-use crate::protocols::mediated_connection::invitee::states::initial::InitialState;
-use crate::protocols::mediated_connection::invitee::states::responded::RespondedState;
-use messages::diddoc::aries::diddoc::AriesDidDoc;
-use messages::protocols::connection::problem_report::ProblemReport;
-use messages::protocols::connection::request::Request;
-use messages::protocols::connection::response::Response;
+use messages::{
+    diddoc::aries::diddoc::AriesDidDoc,
+    protocols::connection::{problem_report::ProblemReport, request::Request, response::Response},
+};
+
+use crate::protocols::mediated_connection::invitee::states::{initial::InitialState, responded::RespondedState};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct RequestedState {

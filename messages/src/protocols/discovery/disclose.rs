@@ -1,8 +1,9 @@
-use crate::a2a::{A2AMessage, MessageId};
-use crate::actors::Actors;
-use crate::concepts::thread::Thread;
-use crate::concepts::timing::Timing;
-use crate::timing_optional;
+use crate::{
+    a2a::{A2AMessage, MessageId},
+    actors::Actors,
+    concepts::{thread::Thread, timing::Timing},
+    timing_optional,
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct Disclose {
@@ -47,9 +48,8 @@ impl Disclose {
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
-    use crate::protocols::connection::response::test_utils::*;
-
     use super::*;
+    use crate::protocols::connection::response::test_utils::*;
 
     pub fn _protocol_descriptor() -> ProtocolDescriptor {
         ProtocolDescriptor {
@@ -71,10 +71,11 @@ pub mod test_utils {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use crate::protocols::connection::response::test_utils::*;
-    use crate::protocols::discovery::disclose::test_utils::{_disclose, _protocol_descriptor};
-
     use super::*;
+    use crate::protocols::{
+        connection::response::test_utils::*,
+        discovery::disclose::test_utils::{_disclose, _protocol_descriptor},
+    };
 
     #[test]
     fn test_disclose_build_works() {

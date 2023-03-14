@@ -1,10 +1,14 @@
-use crate::a2a::{A2AMessage, MessageId};
-use crate::concepts::ack::please_ack::PleaseAck;
-use crate::concepts::attachment::{AttachmentId, Attachments};
-use crate::concepts::thread::Thread;
-use crate::concepts::timing::Timing;
-use crate::errors::error::prelude::*;
-use crate::timing_optional;
+use crate::{
+    a2a::{A2AMessage, MessageId},
+    concepts::{
+        ack::please_ack::PleaseAck,
+        attachment::{AttachmentId, Attachments},
+        thread::Thread,
+        timing::Timing,
+    },
+    errors::error::prelude::*,
+    timing_optional,
+};
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
 pub struct Presentation {
@@ -48,10 +52,10 @@ impl Presentation {
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
-    use crate::protocols::connection::response::test_utils::_thread_1;
-    use crate::protocols::proof_presentation::presentation_request::test_utils::thread;
-
     use super::*;
+    use crate::protocols::{
+        connection::response::test_utils::_thread_1, proof_presentation::presentation_request::test_utils::thread,
+    };
 
     pub fn _attachment() -> serde_json::Value {
         json!({"presentation": {}})
@@ -97,10 +101,10 @@ pub mod test_utils {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use crate::protocols::proof_presentation::presentation::test_utils::*;
-    use crate::protocols::proof_presentation::presentation_request::test_utils::thread_id;
-
     use super::*;
+    use crate::protocols::proof_presentation::{
+        presentation::test_utils::*, presentation_request::test_utils::thread_id,
+    };
 
     #[test]
     fn test_presentation_build_works() {

@@ -1,10 +1,14 @@
-use messages::a2a::A2AMessage;
-use messages::concepts::problem_report::ProblemReport;
-use messages::protocols::issuance::credential::Credential;
-use messages::protocols::issuance::credential_ack::CredentialAck;
-use messages::protocols::issuance::credential_offer::CredentialOffer;
-use messages::protocols::issuance::credential_proposal::{CredentialProposal, CredentialProposalData};
-use messages::protocols::issuance::credential_request::CredentialRequest;
+use messages::{
+    a2a::A2AMessage,
+    concepts::problem_report::ProblemReport,
+    protocols::issuance::{
+        credential::Credential,
+        credential_ack::CredentialAck,
+        credential_offer::CredentialOffer,
+        credential_proposal::{CredentialProposal, CredentialProposalData},
+        credential_request::CredentialRequest,
+    },
+};
 
 type OptionalComment = Option<String>;
 

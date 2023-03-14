@@ -1,12 +1,13 @@
-use aries_vcx::agency_client::testing::mocking::enable_agency_mocks;
-use aries_vcx::global::settings;
-use aries_vcx::global::settings::enable_indy_mocks;
-use aries_vcx::global::settings::init_issuer_config;
-use aries_vcx::indy::wallet::IssuerConfig;
+use aries_vcx::{
+    agency_client::testing::mocking::enable_agency_mocks,
+    global::{
+        settings,
+        settings::{enable_indy_mocks, init_issuer_config},
+    },
+    indy::wallet::IssuerConfig,
+};
 
-use crate::errors::error::LibvcxResult;
-
-use crate::errors::mapping_from_ariesvcx::map_ariesvcx_result;
+use crate::errors::{error::LibvcxResult, mapping_from_ariesvcx::map_ariesvcx_result};
 
 pub fn enable_mocks() -> LibvcxResult<()> {
     enable_agency_mocks();

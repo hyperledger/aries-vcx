@@ -1,12 +1,15 @@
-use aries_vcx::common::primitives::credential_definition::CredentialDef;
-use aries_vcx::common::primitives::credential_definition::CredentialDefConfigBuilder;
-use aries_vcx::common::primitives::credential_definition::PublicEntityStateType;
-use aries_vcx::global::settings::CONFIG_INSTITUTION_DID;
+use aries_vcx::{
+    common::primitives::credential_definition::{CredentialDef, CredentialDefConfigBuilder, PublicEntityStateType},
+    global::settings::CONFIG_INSTITUTION_DID,
+};
 
-use crate::api_vcx::api_global::profile::get_main_profile;
-use crate::api_vcx::api_global::settings::get_config_value;
-use crate::api_vcx::api_handle::object_cache::ObjectCache;
-use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
+use crate::{
+    api_vcx::{
+        api_global::{profile::get_main_profile, settings::get_config_value},
+        api_handle::object_cache::ObjectCache,
+    },
+    errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult},
+};
 
 lazy_static! {
     pub static ref CREDENTIALDEF_MAP: ObjectCache<CredentialDef> =
@@ -99,24 +102,23 @@ pub mod tests {
     use aries_vcx::common::primitives::credential_definition::RevocationDetailsBuilder;
     #[cfg(feature = "pool_tests")]
     use aries_vcx::common::test_utils::create_and_write_test_schema;
-    use aries_vcx::global::settings::CONFIG_INSTITUTION_DID;
     #[cfg(feature = "pool_tests")]
     use aries_vcx::utils;
-    use aries_vcx::utils::constants::SCHEMA_ID;
-    use aries_vcx::utils::devsetup::SetupMocks;
     #[cfg(feature = "pool_tests")]
     use aries_vcx::utils::get_temp_dir_path;
+    use aries_vcx::{
+        global::settings::CONFIG_INSTITUTION_DID,
+        utils::{constants::SCHEMA_ID, devsetup::SetupMocks},
+    };
 
-    use crate::api_vcx::api_global::settings::get_config_value;
+    use super::*;
     #[cfg(feature = "pool_tests")]
     use crate::api_vcx::api_handle::revocation_registry;
     #[cfg(feature = "pool_tests")]
     use crate::api_vcx::api_handle::revocation_registry::RevocationRegistryConfig;
-    use crate::api_vcx::api_handle::schema;
     #[cfg(feature = "pool_tests")]
     use crate::api_vcx::utils::devsetup::SetupGlobalsWalletPoolAgency;
-
-    use super::*;
+    use crate::api_vcx::{api_global::settings::get_config_value, api_handle::schema};
 
     #[tokio::test]
     #[cfg(feature = "general_test")]

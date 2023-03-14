@@ -1,16 +1,18 @@
-use vdrtools::{DidValue, Locator};
+use vdrtools::{DidValue, Locator, PoolHandle, WalletHandle};
 
-use vdrtools::{PoolHandle, WalletHandle};
-
-use crate::common::primitives::revocation_registry::RevocationRegistryDefinition;
-use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
-use crate::global::settings;
-use crate::indy::anoncreds;
-use crate::indy::ledger::transactions::{
-    build_rev_reg_delta_request, build_rev_reg_request, check_response, sign_and_submit_to_ledger,
+use crate::{
+    common::primitives::revocation_registry::RevocationRegistryDefinition,
+    errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
+    global::settings,
+    indy::{
+        anoncreds,
+        ledger::transactions::{
+            build_rev_reg_delta_request, build_rev_reg_request, check_response, sign_and_submit_to_ledger,
+        },
+        wallet_non_secrets::{clear_rev_reg_delta, get_rev_reg_delta, set_rev_reg_delta},
+    },
+    utils::parse_and_validate,
 };
-use crate::indy::wallet_non_secrets::{clear_rev_reg_delta, get_rev_reg_delta, set_rev_reg_delta};
-use crate::utils::parse_and_validate;
 
 pub const BLOB_STORAGE_TYPE: &str = "default";
 
@@ -189,7 +191,13 @@ pub async fn publish_local_revocations(
             )),
         }
     } else {
-        Err(AriesVcxError::from_msg(AriesVcxErrorKind::RevDeltaNotFound,
-                                    format!("Failed to publish revocation delta for revocation registry {}, no delta found. Possibly already published?", rev_reg_id)))
+        Err(AriesVcxError::from_msg(
+            AriesVcxErrorKind::RevDeltaNotFound,
+            format!(
+                "Failed to publish revocation delta for revocation registry {}, no delta found. Possibly already \
+                 published?",
+                rev_reg_id
+            ),
+        ))
     }
 }

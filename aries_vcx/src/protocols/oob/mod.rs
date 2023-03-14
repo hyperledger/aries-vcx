@@ -1,7 +1,9 @@
+use messages::protocols::out_of_band::{
+    handshake_reuse::OutOfBandHandshakeReuse, handshake_reuse_accepted::OutOfBandHandshakeReuseAccepted,
+    invitation::OutOfBandInvitation,
+};
+
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
-use messages::protocols::out_of_band::handshake_reuse::OutOfBandHandshakeReuse;
-use messages::protocols::out_of_band::handshake_reuse_accepted::OutOfBandHandshakeReuseAccepted;
-use messages::protocols::out_of_band::invitation::OutOfBandInvitation;
 
 pub fn build_handshake_reuse_msg(oob_invitation: &OutOfBandInvitation) -> OutOfBandHandshakeReuse {
     OutOfBandHandshakeReuse::default()
@@ -27,10 +29,12 @@ pub fn build_handshake_reuse_accepted_msg(
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 mod unit_tests {
-    use crate::protocols::oob::{build_handshake_reuse_accepted_msg, build_handshake_reuse_msg};
-    use crate::utils::devsetup::{was_in_past, SetupMocks};
-    use messages::a2a::MessageId;
-    use messages::protocols::out_of_band::invitation::OutOfBandInvitation;
+    use messages::{a2a::MessageId, protocols::out_of_band::invitation::OutOfBandInvitation};
+
+    use crate::{
+        protocols::oob::{build_handshake_reuse_accepted_msg, build_handshake_reuse_msg},
+        utils::devsetup::{was_in_past, SetupMocks},
+    };
 
     #[test]
     #[cfg(feature = "general_test")]

@@ -3,10 +3,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     decorators::{MsgLocalization, Thread, Timing},
-    msg_types::types::connection::ConnectionV1_0Kind, Message,
+    msg_types::types::connection::ConnectionV1_0Kind,
+    Message,
 };
-
-
 
 pub type ProblemReport = Message<ProblemReportContent, ProblemReportDecorators>;
 

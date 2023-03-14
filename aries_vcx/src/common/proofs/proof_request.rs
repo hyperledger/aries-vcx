@@ -1,13 +1,9 @@
-use std::collections::HashMap;
-use std::sync::Arc;
-use std::vec::Vec;
+use std::{collections::HashMap, sync::Arc, vec::Vec};
 
 use serde_json;
 
-use crate::core::profile::profile::Profile;
-use crate::errors::error::prelude::*;
-
 use super::proof_request_internal::{AttrInfo, NonRevokedInterval, PredicateInfo};
+use crate::{core::profile::profile::Profile, errors::error::prelude::*};
 
 #[derive(Serialize, Deserialize, Builder, Debug, PartialEq, Eq, Clone)]
 #[builder(setter(into), default)]
@@ -137,13 +133,16 @@ pub mod test_utils {
 mod unit_tests {
     use serde_json::Value;
 
-    use crate::common::test_utils::mock_profile;
-    use crate::utils;
-    use crate::utils::constants::{REQUESTED_ATTRS, REQUESTED_PREDICATES};
-    use crate::utils::devsetup::SetupDefaults;
-    use crate::utils::mockdata::mockdata_proof;
-
     use super::*;
+    use crate::{
+        common::test_utils::mock_profile,
+        utils,
+        utils::{
+            constants::{REQUESTED_ATTRS, REQUESTED_PREDICATES},
+            devsetup::SetupDefaults,
+            mockdata::mockdata_proof,
+        },
+    };
 
     fn _expected_req_attrs() -> HashMap<String, AttrInfo> {
         let mut check_req_attrs: HashMap<String, AttrInfo> = HashMap::new();

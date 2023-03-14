@@ -1,14 +1,12 @@
-use vdrtools::{CredentialOffer, CredentialRequest, CredentialValues, Locator, RevocationRegistryId};
+use vdrtools::{CredentialOffer, CredentialRequest, CredentialValues, Locator, RevocationRegistryId, WalletHandle};
 
-use vdrtools::WalletHandle;
-
-use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
-use crate::global::settings;
-use crate::indy::anoncreds;
-use crate::indy::utils::LibindyMock;
-use crate::utils;
-use crate::utils::constants::LIBINDY_CRED_OFFER;
-use crate::utils::parse_and_validate;
+use crate::{
+    errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
+    global::settings,
+    indy::{anoncreds, utils::LibindyMock},
+    utils,
+    utils::{constants::LIBINDY_CRED_OFFER, parse_and_validate},
+};
 
 pub async fn libindy_issuer_create_credential_offer(
     wallet_handle: WalletHandle,

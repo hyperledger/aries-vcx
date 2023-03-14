@@ -1,9 +1,13 @@
-use crate::a2a::{A2AMessage, MessageId};
-use crate::concepts::attachment::{AttachmentId, Attachments};
-use crate::concepts::thread::Thread;
-use crate::concepts::timing::Timing;
-use crate::errors::error::MessagesResult;
-use crate::timing_optional;
+use crate::{
+    a2a::{A2AMessage, MessageId},
+    concepts::{
+        attachment::{AttachmentId, Attachments},
+        thread::Thread,
+        timing::Timing,
+    },
+    errors::error::MessagesResult,
+    timing_optional,
+};
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone, Default)]
 pub struct CredentialRequest {
@@ -45,9 +49,8 @@ impl CredentialRequest {
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
-    use crate::protocols::issuance::credential_offer::test_utils::{thread, thread_1};
-
     use super::*;
+    use crate::protocols::issuance::credential_offer::test_utils::{thread, thread_1};
 
     pub fn _attachment() -> serde_json::Value {
         json!({
@@ -98,10 +101,8 @@ pub mod test_utils {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use crate::protocols::issuance::credential_offer::test_utils::thread_id;
-    use crate::protocols::issuance::credential_request::test_utils::*;
-
     use super::*;
+    use crate::protocols::issuance::{credential_offer::test_utils::thread_id, credential_request::test_utils::*};
 
     #[test]
     fn test_credential_request_build_works() {

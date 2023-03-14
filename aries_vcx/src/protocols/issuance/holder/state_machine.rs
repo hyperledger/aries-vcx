@@ -1,30 +1,36 @@
-use std::collections::HashMap;
-use std::fmt;
-use std::sync::Arc;
+use std::{collections::HashMap, fmt, sync::Arc};
 
-use messages::a2a::{A2AMessage, MessageId};
-use messages::concepts::ack::Ack;
-use messages::concepts::problem_report::ProblemReport;
-use messages::protocols::issuance::credential::Credential;
-use messages::protocols::issuance::credential_ack::CredentialAck;
-use messages::protocols::issuance::credential_offer::CredentialOffer;
-use messages::protocols::issuance::credential_proposal::{CredentialProposal, CredentialProposalData};
-use messages::protocols::issuance::credential_request::CredentialRequest;
-use messages::status::Status;
+use messages::{
+    a2a::{A2AMessage, MessageId},
+    concepts::{ack::Ack, problem_report::ProblemReport},
+    protocols::issuance::{
+        credential::Credential,
+        credential_ack::CredentialAck,
+        credential_offer::CredentialOffer,
+        credential_proposal::{CredentialProposal, CredentialProposalData},
+        credential_request::CredentialRequest,
+    },
+    status::Status,
+};
 
-use crate::common::credentials::{get_cred_rev_id, is_cred_revoked};
-use crate::core::profile::profile::Profile;
-use crate::errors::error::prelude::*;
-use crate::global::settings;
-use crate::protocols::common::build_problem_report_msg;
-use crate::protocols::issuance::actions::CredentialIssuanceAction;
-use crate::protocols::issuance::holder::states::finished::FinishedHolderState;
-use crate::protocols::issuance::holder::states::initial::InitialHolderState;
-use crate::protocols::issuance::holder::states::offer_received::OfferReceivedState;
-use crate::protocols::issuance::holder::states::proposal_sent::ProposalSentState;
-use crate::protocols::issuance::holder::states::request_sent::RequestSentState;
-use crate::protocols::issuance::verify_thread_id;
-use crate::protocols::SendClosure;
+use crate::{
+    common::credentials::{get_cred_rev_id, is_cred_revoked},
+    core::profile::profile::Profile,
+    errors::error::prelude::*,
+    global::settings,
+    protocols::{
+        common::build_problem_report_msg,
+        issuance::{
+            actions::CredentialIssuanceAction,
+            holder::states::{
+                finished::FinishedHolderState, initial::InitialHolderState, offer_received::OfferReceivedState,
+                proposal_sent::ProposalSentState, request_sent::RequestSentState,
+            },
+            verify_thread_id,
+        },
+        SendClosure,
+    },
+};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum HolderFullState {
@@ -620,18 +626,20 @@ async fn _make_credential_request(
 #[cfg(feature = "general_test")]
 #[cfg(test)]
 mod test {
-    use messages::protocols::issuance::credential::test_utils::_credential;
-    use messages::protocols::issuance::credential_offer::test_utils::_credential_offer;
-    use messages::protocols::issuance::credential_proposal::test_utils::_credential_proposal;
-    use messages::protocols::issuance::credential_request::test_utils::{_credential_request, _my_pw_did};
-    use messages::protocols::issuance::test_utils::{_credential_ack, _problem_report};
-
-    use crate::common::test_utils::mock_profile;
-    use crate::test::source_id;
-    use crate::utils::constants;
-    use crate::utils::devsetup::SetupMocks;
+    use messages::protocols::issuance::{
+        credential::test_utils::_credential,
+        credential_offer::test_utils::_credential_offer,
+        credential_proposal::test_utils::_credential_proposal,
+        credential_request::test_utils::{_credential_request, _my_pw_did},
+        test_utils::{_credential_ack, _problem_report},
+    };
 
     use super::*;
+    use crate::{
+        common::test_utils::mock_profile,
+        test::source_id,
+        utils::{constants, devsetup::SetupMocks},
+    };
 
     fn _holder_sm() -> HolderSM {
         HolderSM::from_offer(_credential_offer(), source_id())
@@ -693,8 +701,10 @@ mod test {
     mod build_messages {
         use messages::a2a::MessageId;
 
-        use crate::protocols::issuance::holder::state_machine::{build_credential_ack, build_credential_request_msg};
-        use crate::utils::devsetup::{was_in_past, SetupMocks};
+        use crate::{
+            protocols::issuance::holder::state_machine::{build_credential_ack, build_credential_request_msg},
+            utils::devsetup::{was_in_past, SetupMocks},
+        };
 
         #[test]
         #[cfg(feature = "general_test")]

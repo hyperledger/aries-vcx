@@ -1,13 +1,13 @@
 use std::sync::Arc;
 
+use shared_vcx::validation::{did::validate_did, verkey::validate_verkey};
 use url::Url;
 
-use shared_vcx::validation::did::validate_did;
-use shared_vcx::validation::verkey::validate_verkey;
-
-use crate::configuration::AgencyClientConfig;
-use crate::errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
-use crate::wallet::base_agency_client_wallet::{BaseAgencyClientWallet, StubAgencyClientWallet};
+use crate::{
+    configuration::AgencyClientConfig,
+    errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult},
+    wallet::base_agency_client_wallet::{BaseAgencyClientWallet, StubAgencyClientWallet},
+};
 
 #[derive(Clone, Debug)]
 pub struct AgencyClient {
@@ -141,8 +141,8 @@ impl AgencyClient {
     }
 
     // todo: use this in favor of `fn new()`
-    // pub fn new(config: &str, wallet_handle: WalletHandle, validate: bool) -> AgencyClientResult<Self> {
-    //     let mut agency_client = Self::default();
+    // pub fn new(config: &str, wallet_handle: WalletHandle, validate: bool) -> AgencyClientResult<Self>
+    // {     let mut agency_client = Self::default();
     //     agency_client.process_config_string(config, wallet_handle, validate)?;
     //     Ok(agency_client)
     // }

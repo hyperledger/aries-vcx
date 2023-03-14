@@ -1,13 +1,21 @@
-use messages::concepts::ack::please_ack::AckOn;
-use messages::protocols::revocation_notification::revocation_ack::RevocationAck;
-use messages::protocols::revocation_notification::revocation_notification::{RevocationFormat, RevocationNotification};
+use messages::{
+    concepts::ack::please_ack::AckOn,
+    protocols::revocation_notification::{
+        revocation_ack::RevocationAck,
+        revocation_notification::{RevocationFormat, RevocationNotification},
+    },
+};
 
-use crate::errors::error::prelude::*;
-use crate::handlers::util::verify_thread_id;
-use crate::protocols::revocation_notification::sender::states::finished::FinishedState;
-use crate::protocols::revocation_notification::sender::states::initial::InitialState;
-use crate::protocols::revocation_notification::sender::states::sent::NotificationSentState;
-use crate::protocols::SendClosure;
+use crate::{
+    errors::error::prelude::*,
+    handlers::util::verify_thread_id,
+    protocols::{
+        revocation_notification::sender::states::{
+            finished::FinishedState, initial::InitialState, sent::NotificationSentState,
+        },
+        SendClosure,
+    },
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct RevocationNotificationSenderSM {
@@ -108,9 +116,8 @@ impl RevocationNotificationSenderSM {
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
-    use crate::protocols::revocation_notification::test_utils::{_comment, _cred_rev_id, _rev_reg_id};
-
     use super::*;
+    use crate::protocols::revocation_notification::test_utils::{_comment, _cred_rev_id, _rev_reg_id};
 
     pub fn _sender_config(ack_on: Vec<AckOn>) -> SenderConfig {
         SenderConfigBuilder::default()
@@ -132,12 +139,11 @@ pub mod test_utils {
 pub mod unit_tests {
     use messages::concepts::ack::test_utils::{_ack, _ack_1};
 
+    use super::*;
     use crate::protocols::revocation_notification::{
         sender::state_machine::test_utils::*,
         test_utils::{_revocation_notification, _send_message},
     };
-
-    use super::*;
 
     async fn _to_revocation_notification_sent_state() -> RevocationNotificationSenderSM {
         let sm = _sender()

@@ -1,13 +1,16 @@
-use crate::core::profile::profile::Profile;
-use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
-use crate::indy::utils::LibindyMock;
-use crate::plugins::ledger::base_ledger::BaseLedger;
-use crate::utils::constants::{CRED_DEF_ID, CRED_DEF_JSON, DEFAULT_SERIALIZE_VERSION};
-use crate::utils::serialization::ObjectWithVersion;
+use std::{fmt, sync::Arc};
 
-use crate::global::settings::{self, indy_mocks_enabled};
-use std::fmt;
-use std::sync::Arc;
+use crate::{
+    core::profile::profile::Profile,
+    errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
+    global::settings::{self, indy_mocks_enabled},
+    indy::utils::LibindyMock,
+    plugins::ledger::base_ledger::BaseLedger,
+    utils::{
+        constants::{CRED_DEF_ID, CRED_DEF_JSON, DEFAULT_SERIALIZE_VERSION},
+        serialization::ObjectWithVersion,
+    },
+};
 
 macro_rules! enum_number {
     ($name:ident { $($variant:ident = $value:expr, )* }) => {
@@ -107,8 +110,9 @@ async fn _try_get_cred_def_from_ledger(
     issuer_did: &str,
     cred_def_id: &str,
 ) -> VcxResult<Option<String>> {
-    // TODO - future - may require more customized logic. We set the rc to 309, as the mock for ledger.get_cred_def will return a valid
-    // mock cred def unless it reads an rc of 309. Returning a valid mock cred def will result in this method returning an error.
+    // TODO - future - may require more customized logic. We set the rc to 309, as the mock for
+    // ledger.get_cred_def will return a valid mock cred def unless it reads an rc of 309. Returning
+    // a valid mock cred def will result in this method returning an error.
     if indy_mocks_enabled() {
         LibindyMock::set_next_result(309)
     }
@@ -276,11 +280,13 @@ pub async fn generate_cred_def(
 pub mod integration_tests {
     use std::sync::Arc;
 
-    use crate::common::primitives::credential_definition::generate_cred_def;
-    use crate::common::primitives::revocation_registry::generate_rev_reg;
-    use crate::common::test_utils::create_and_write_test_schema;
-    use crate::utils::constants::DEFAULT_SCHEMA_ATTRS;
-    use crate::utils::devsetup::SetupProfile;
+    use crate::{
+        common::{
+            primitives::{credential_definition::generate_cred_def, revocation_registry::generate_rev_reg},
+            test_utils::create_and_write_test_schema,
+        },
+        utils::{constants::DEFAULT_SCHEMA_ATTRS, devsetup::SetupProfile},
+    };
 
     #[tokio::test]
     async fn test_create_cred_def_real() {

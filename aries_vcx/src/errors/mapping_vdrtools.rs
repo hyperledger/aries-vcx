@@ -1,5 +1,4 @@
-use vdrtools::types;
-use vdrtools::types::errors::IndyErrorKind;
+use vdrtools::{types, types::errors::IndyErrorKind};
 
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind};
 

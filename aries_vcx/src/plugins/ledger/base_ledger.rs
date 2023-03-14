@@ -1,7 +1,6 @@
 use async_trait::async_trait;
 
-use crate::common::primitives::revocation_registry::RevocationRegistryDefinition;
-use crate::errors::error::VcxResult;
+use crate::{common::primitives::revocation_registry::RevocationRegistryDefinition, errors::error::VcxResult};
 
 /// Trait defining standard 'ledger' related functionality.
 #[async_trait]
@@ -15,7 +14,8 @@ pub trait BaseLedger: Send + Sync {
     // endorsers/multi signs a request, submits to ledger, and verifies successful result
     async fn endorse_transaction(&self, endorser_did: &str, request_json: &str) -> VcxResult<()>;
 
-    // adds endorser to request and signs with submitter_did, returns the transaction ready for endorser to take
+    // adds endorser to request and signs with submitter_did, returns the transaction ready for endorser
+    // to take
     async fn set_endorser(&self, submitter_did: &str, request: &str, endorser: &str) -> VcxResult<String>;
 
     async fn get_txn_author_agreement(&self) -> VcxResult<String>;

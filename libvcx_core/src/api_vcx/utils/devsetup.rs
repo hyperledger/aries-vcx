@@ -2,9 +2,11 @@ use std::future::Future;
 
 use aries_vcx::utils::devsetup::SetupWalletPoolAgency;
 
-use crate::api_vcx::api_global::agency_client::{reset_main_agency_client, set_main_agency_client};
-use crate::api_vcx::api_global::pool::{reset_main_pool_handle, set_main_pool_handle};
-use crate::api_vcx::api_global::wallet::{reset_main_wallet_handle, set_main_wallet_handle};
+use crate::api_vcx::api_global::{
+    agency_client::{reset_main_agency_client, set_main_agency_client},
+    pool::{reset_main_pool_handle, set_main_pool_handle},
+    wallet::{reset_main_wallet_handle, set_main_wallet_handle},
+};
 
 pub struct SetupGlobalsWalletPoolAgency {
     pub setup: SetupWalletPoolAgency,

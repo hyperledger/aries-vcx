@@ -1,10 +1,11 @@
 #[macro_use]
 pub mod please_ack;
 
-use crate::a2a::{A2AMessage, MessageId};
-use crate::concepts::thread::Thread;
-use crate::concepts::timing::Timing;
-use crate::timing_optional;
+use crate::{
+    a2a::{A2AMessage, MessageId},
+    concepts::{thread::Thread, timing::Timing},
+    timing_optional,
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct Ack {
@@ -51,9 +52,8 @@ impl Ack {
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
-    use crate::protocols::connection::response::test_utils::{_thread, _thread_1, _thread_random};
-
     use super::*;
+    use crate::protocols::connection::response::test_utils::{_thread, _thread_1, _thread_random};
 
     pub fn _ack() -> Ack {
         Ack {
@@ -86,10 +86,8 @@ pub mod test_utils {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use crate::concepts::ack::test_utils::_ack;
-    use crate::protocols::connection::response::test_utils::_thread_id;
-
     use super::*;
+    use crate::{concepts::ack::test_utils::_ack, protocols::connection::response::test_utils::_thread_id};
 
     #[test]
     fn test_ack_build_works() {

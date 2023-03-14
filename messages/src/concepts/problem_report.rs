@@ -1,9 +1,10 @@
 use std::collections::HashMap;
 
-use crate::a2a::{A2AMessage, MessageId};
-use crate::concepts::thread::Thread;
-use crate::concepts::timing::Timing;
-use crate::timing_optional;
+use crate::{
+    a2a::{A2AMessage, MessageId},
+    concepts::{thread::Thread, timing::Timing},
+    timing_optional,
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct ProblemReport {
@@ -105,9 +106,8 @@ pub enum Impact {
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
-    use crate::protocols::connection::response::test_utils::*;
-
     use super::*;
+    use crate::protocols::connection::response::test_utils::*;
 
     pub fn _code() -> u32 {
         0
@@ -142,10 +142,11 @@ pub mod test_utils {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use crate::concepts::problem_report::test_utils::{_code, _comment, _problem_report};
-    use crate::protocols::connection::response::test_utils::_thread_id;
-
     use super::*;
+    use crate::{
+        concepts::problem_report::test_utils::{_code, _comment, _problem_report},
+        protocols::connection::response::test_utils::_thread_id,
+    };
 
     #[test]
     fn test_problem_report_build_works() {

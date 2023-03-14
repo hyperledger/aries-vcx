@@ -1,19 +1,23 @@
-use std::sync::Arc;
-use std::thread;
-use std::time::Duration;
+use std::{sync::Arc, thread, time::Duration};
 
 use vdrtools::{PoolHandle, WalletHandle};
 
-use crate::common::credentials::encoding::encode_attributes;
-use crate::common::primitives::credential_definition::CredentialDef;
-use crate::common::primitives::credential_definition::CredentialDefConfigBuilder;
-use crate::common::primitives::revocation_registry::RevocationRegistry;
-use crate::core::profile::indy_profile::IndySdkProfile;
-use crate::core::profile::profile::Profile;
-use crate::global::settings;
-use crate::utils::constants::{DEFAULT_SCHEMA_ATTRS, TAILS_DIR, TEST_TAILS_URL, TRUSTEE_SEED};
-use crate::utils::get_temp_dir_path;
-use crate::utils::mockdata::profile::mock_profile::MockProfile;
+use crate::{
+    common::{
+        credentials::encoding::encode_attributes,
+        primitives::{
+            credential_definition::{CredentialDef, CredentialDefConfigBuilder},
+            revocation_registry::RevocationRegistry,
+        },
+    },
+    core::profile::{indy_profile::IndySdkProfile, profile::Profile},
+    global::settings,
+    utils::{
+        constants::{DEFAULT_SCHEMA_ATTRS, TAILS_DIR, TEST_TAILS_URL, TRUSTEE_SEED},
+        get_temp_dir_path,
+        mockdata::profile::mock_profile::MockProfile,
+    },
+};
 
 pub async fn create_schema(profile: &Arc<dyn Profile>, attr_list: &str, submitter_did: &str) -> (String, String) {
     let data = attr_list.to_string();
@@ -125,7 +129,8 @@ pub async fn create_and_store_credential_def(
 }
 
 pub async fn create_credential_req(
-    issuer: &Arc<dyn Profile>, // FUTURE - issuer and holder seperation only needed whilst modular deps not fully implemented
+    issuer: &Arc<dyn Profile>, /* FUTURE - issuer and holder seperation only needed whilst modular deps not fully
+                                * implemented */
     holder: &Arc<dyn Profile>,
     did: &str,
     cred_def_id: &str,
@@ -147,7 +152,8 @@ pub async fn create_credential_req(
 
 // todo: extract create_and_store_credential_def into caller functions
 pub async fn create_and_store_credential(
-    issuer: &Arc<dyn Profile>, // FUTURE - issuer and holder seperation only needed whilst modular deps not fully implemented
+    issuer: &Arc<dyn Profile>, /* FUTURE - issuer and holder seperation only needed whilst modular deps not fully
+                                * implemented */
     holder: &Arc<dyn Profile>,
     institution_did: &str,
     attr_list: &str,
@@ -211,7 +217,8 @@ pub async fn create_and_store_credential(
 
 // todo: extract create_and_store_nonrevocable_credential_def into caller functions
 pub async fn create_and_store_nonrevocable_credential(
-    issuer: &Arc<dyn Profile>, // FUTURE - issuer and holder seperation only needed whilst modular deps not fully implemented
+    issuer: &Arc<dyn Profile>, /* FUTURE - issuer and holder seperation only needed whilst modular deps not fully
+                                * implemented */
     holder: &Arc<dyn Profile>,
     issuer_did: &str,
     attr_list: &str,
@@ -322,7 +329,8 @@ pub async fn create_indy_proof(
 }
 
 pub async fn create_proof_with_predicate(
-    issuer: &Arc<dyn Profile>, // FUTURE - issuer and holder seperation only needed whilst modular deps not fully implemented
+    issuer: &Arc<dyn Profile>, /* FUTURE - issuer and holder seperation only needed whilst modular deps not fully
+                                * implemented */
     prover: &Arc<dyn Profile>,
     did: &str,
     include_predicate_cred: bool,
@@ -435,7 +443,8 @@ pub fn mock_profile() -> Arc<dyn Profile> {
     Arc::new(MockProfile {})
 }
 
-// TODO - FUTURE - should only be used for quick mock setups, should be removable after full detachment from vdrtools dep
+// TODO - FUTURE - should only be used for quick mock setups, should be removable after full
+// detachment from vdrtools dep
 pub fn indy_handles_to_profile(wallet_handle: WalletHandle, pool_handle: PoolHandle) -> Arc<dyn Profile> {
     Arc::new(IndySdkProfile::new(wallet_handle, pool_handle))
 }

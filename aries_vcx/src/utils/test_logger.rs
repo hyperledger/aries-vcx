@@ -6,17 +6,18 @@ use self::android_logger::Filter;
 extern crate env_logger;
 extern crate log;
 
-use std::env;
-use std::io::Write;
+use std::{env, io::Write};
 
-use chrono::format::{DelayedFormat, StrftimeItems};
-use chrono::Local;
+use chrono::{
+    format::{DelayedFormat, StrftimeItems},
+    Local,
+};
 
+use self::{
+    env_logger::{fmt::Formatter, Builder as EnvLoggerBuilder},
+    log::{LevelFilter, Record},
+};
 use crate::errors::error::prelude::*;
-
-use self::env_logger::fmt::Formatter;
-use self::env_logger::Builder as EnvLoggerBuilder;
-use self::log::{LevelFilter, Record};
 
 pub struct LibvcxDefaultLogger;
 

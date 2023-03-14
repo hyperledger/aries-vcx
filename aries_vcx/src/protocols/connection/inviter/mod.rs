@@ -2,24 +2,23 @@ pub mod states;
 
 use std::sync::Arc;
 
-use crate::handlers::util::verify_thread_id;
-use crate::protocols::connection::trait_bounds::ThreadId;
-use crate::transport::Transport;
-use crate::utils::uuid;
-use crate::{
-    common::signing::sign_connection_response, errors::error::VcxResult, plugins::wallet::base_wallet::BaseWallet,
+use messages::{
+    a2a::A2AMessage,
+    protocols::connection::{
+        invite::{Invitation, PairwiseInvitation},
+        request::Request,
+        response::{Response, SignedResponse},
+    },
 };
 
 use self::states::{
     completed::Completed, initial::Initial, invited::Invited, requested::Requested, responded::Responded,
 };
 use super::{initiation_type::Inviter, pairwise_info::PairwiseInfo, Connection};
-use messages::a2a::A2AMessage;
-use messages::protocols::connection::invite::PairwiseInvitation;
-use messages::protocols::connection::{
-    invite::Invitation,
-    request::Request,
-    response::{Response, SignedResponse},
+use crate::{
+    common::signing::sign_connection_response, errors::error::VcxResult, handlers::util::verify_thread_id,
+    plugins::wallet::base_wallet::BaseWallet, protocols::connection::trait_bounds::ThreadId, transport::Transport,
+    utils::uuid,
 };
 
 pub type InviterConnection<S> = Connection<Inviter, S>;
@@ -113,7 +112,8 @@ impl InviterConnection<Invited> {
     /// # Errors
     ///
     /// Will return an error if either:
-    ///     * the [`Request`]'s thread ID does not match with the expected thread ID from an invitation
+    ///     * the [`Request`]'s thread ID does not match with the expected thread ID from an
+    ///       invitation
     ///     * the [`Request`]'s DidDoc is not valid
     ///     * generating new [`PairwiseInfo`] fails
     pub async fn handle_request<T>(

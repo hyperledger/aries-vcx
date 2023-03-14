@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     decorators::{Thread, Timing},
     msg_types::types::trust_ping::TrustPingV1_0Kind,
-     Message,
+    Message,
 };
 
 pub type PingResponse = Message<PingResponseContent, PingResponseDecorators>;

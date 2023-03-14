@@ -7,18 +7,17 @@ use std::str::FromStr;
 use derive_more::From;
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 
-use crate::{
-    msg_types::types::out_of_band::{OutOfBand as OutOfBandKind, OutOfBandV1, OutOfBandV1_1Kind},
-    protocols::traits::DelayedSerde, misc::utils::transit_to_aries_msg,
-};
-
+pub use self::{invitation::Invitation, reuse::HandshakeReuse, reuse_accepted::HandshakeReuseAccepted};
 use self::{
     invitation::{InvitationContent, InvitationDecorators},
     reuse::{HandshakeReuseContent, HandshakeReuseDecorators},
     reuse_accepted::{HandshakeReuseAcceptedContent, HandshakeReuseAcceptedDecorators},
 };
-
-pub use self::{invitation::Invitation, reuse::HandshakeReuse, reuse_accepted::HandshakeReuseAccepted};
+use crate::{
+    misc::utils::transit_to_aries_msg,
+    msg_types::types::out_of_band::{OutOfBand as OutOfBandKind, OutOfBandV1, OutOfBandV1_1Kind},
+    protocols::traits::DelayedSerde,
+};
 
 #[derive(Clone, Debug, From)]
 pub enum OutOfBand {

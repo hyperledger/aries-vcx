@@ -1,10 +1,10 @@
 use chrono::prelude::*;
 
-use crate::a2a::{A2AMessage, MessageId};
-use crate::concepts::localization::Localization;
-use crate::concepts::thread::Thread;
-use crate::concepts::timing::Timing;
-use crate::timing_optional;
+use crate::{
+    a2a::{A2AMessage, MessageId},
+    concepts::{localization::Localization, thread::Thread, timing::Timing},
+    timing_optional,
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct BasicMessage {

@@ -1,12 +1,9 @@
 use vdrtools::{
     Credential, CredentialDefinition, CredentialOffer, CredentialRequestMetadata, DidValue, Locator,
-    RevocationRegistryDefinition,
+    RevocationRegistryDefinition, WalletHandle,
 };
 
-use crate::errors::error::VcxResult;
-use crate::global::settings;
-use crate::utils;
-use vdrtools::WalletHandle;
+use crate::{errors::error::VcxResult, global::settings, utils};
 
 pub async fn libindy_prover_store_credential(
     wallet_handle: WalletHandle,
@@ -17,12 +14,8 @@ pub async fn libindy_prover_store_credential(
     rev_reg_def_json: Option<&str>,
 ) -> VcxResult<String> {
     trace!(
-        "libindy_prover_store_credential >>> \
-            cred_id: {:?}, \
-            cred_req_meta: {}, \
-            cred_json: {}, \
-            cred_def_json: {}, \
-            rev_reg_def_json: {:?}",
+        "libindy_prover_store_credential >>> cred_id: {:?}, cred_req_meta: {}, cred_json: {}, cred_def_json: {}, \
+         rev_reg_def_json: {:?}",
         cred_id,
         cred_req_meta,
         cred_json,
@@ -61,11 +54,7 @@ pub async fn libindy_prover_store_credential(
 }
 
 pub async fn libindy_prover_get_credential(wallet_handle: WalletHandle, cred_id: &str) -> VcxResult<String> {
-    trace!(
-        "libindy_prover_get_credential >>> \
-            cred_id: {:?}",
-        cred_id,
-    );
+    trace!("libindy_prover_get_credential >>> cred_id: {:?}", cred_id,);
 
     let res = Locator::instance()
         .prover_controller

@@ -5,13 +5,12 @@ use futures::executor::block_on;
 use serde_json::Value;
 use vdrtools::{SearchHandle, WalletHandle};
 
-use crate::errors::error::{AriesVcxError, VcxResult};
+use super::base_wallet::BaseWallet;
 use crate::{
+    errors::error::{AriesVcxError, VcxResult},
     indy::{self},
     utils::{async_fn_iterator::AsyncFnIterator, json::TryGetIndex},
 };
-
-use super::base_wallet::BaseWallet;
 
 #[derive(Debug)]
 pub struct IndySdkWallet {
@@ -133,8 +132,8 @@ impl IndyWalletRecordIterator {
     }
 }
 
-/// Implementation of a generic [AsyncFnIterator] iterator for indy/vdrtools wallet record iteration.
-/// Wraps over the vdrtools record [SearchHandle] functionality
+/// Implementation of a generic [AsyncFnIterator] iterator for indy/vdrtools wallet record
+/// iteration. Wraps over the vdrtools record [SearchHandle] functionality
 #[async_trait]
 impl AsyncFnIterator for IndyWalletRecordIterator {
     type Item = VcxResult<String>;

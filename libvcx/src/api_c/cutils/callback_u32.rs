@@ -1,11 +1,9 @@
-use std::collections::HashMap;
-use std::ops::Deref;
-use std::sync::Mutex;
+use std::{collections::HashMap, ops::Deref, sync::Mutex};
 
+use aries_vcx::vdrtools::CommandHandle;
 use libc::c_char;
 
 use crate::api_c::cutils::callback::{build_buf, build_string, get_cb};
-use aries_vcx::vdrtools::CommandHandle;
 
 lazy_static! {
     pub static ref CALLBACKS_U32: Mutex<HashMap<CommandHandle, Box<dyn FnMut(u32) + Send>>> = Default::default();

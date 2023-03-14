@@ -1,11 +1,15 @@
 use std::sync::Arc;
 
-use crate::core::profile::profile::Profile;
-use crate::errors::error::prelude::*;
-use crate::protocols::issuance::holder::state_machine::parse_cred_def_id_from_cred_offer;
-use crate::protocols::issuance::holder::states::request_sent::RequestSentState;
-use crate::protocols::issuance::is_cred_def_revokable;
 use messages::protocols::issuance::credential_offer::CredentialOffer;
+
+use crate::{
+    core::profile::profile::Profile,
+    errors::error::prelude::*,
+    protocols::issuance::{
+        holder::{state_machine::parse_cred_def_id_from_cred_offer, states::request_sent::RequestSentState},
+        is_cred_def_revokable,
+    },
+};
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct OfferReceivedState {

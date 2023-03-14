@@ -1,10 +1,11 @@
 use std::sync::{Arc, Mutex};
 
-use crate::error::*;
-use crate::storage::object_cache::ObjectCache;
-use crate::storage::Storage;
-use aries_vcx::common::primitives::credential_schema::Schema;
-use aries_vcx::core::profile::profile::Profile;
+use aries_vcx::{common::primitives::credential_schema::Schema, core::profile::profile::Profile};
+
+use crate::{
+    error::*,
+    storage::{object_cache::ObjectCache, Storage},
+};
 
 pub struct ServiceSchemas {
     profile: Arc<dyn Profile>,

@@ -86,7 +86,8 @@ macro_rules! try_from_vague_to_concrete {
     };
 }
 
-// ---------------------------- From Concrete State to Vague State implementations ----------------------------
+// ---------------------------- From Concrete State to Vague State implementations
+// ----------------------------
 impl<I, S> From<Connection<I, S>> for GenericConnection
 where
     GenericState: From<(I, S)>,
@@ -116,7 +117,8 @@ from_concrete_to_vague!(InviteeRequested, Requested, InviteeState);
 from_concrete_to_vague!(InviteeResponded, Responded, InviteeState);
 from_concrete_to_vague!(InviteeCompleted, Completed, InviteeState);
 
-// ---------------------------- Try From Vague State to Concrete State implementations ----------------------------
+// ---------------------------- Try From Vague State to Concrete State implementations
+// ----------------------------
 impl<I, S> TryFrom<GenericConnection> for Connection<I, S>
 where
     (I, S): TryFrom<GenericState, Error = AriesVcxError>,

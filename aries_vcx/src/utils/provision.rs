@@ -1,11 +1,14 @@
 use std::sync::Arc;
 
-use agency_client::agency_client::AgencyClient;
-use agency_client::configuration::{AgencyClientConfig, AgentProvisionConfig};
+use agency_client::{
+    agency_client::AgencyClient,
+    configuration::{AgencyClientConfig, AgentProvisionConfig},
+};
 
-use crate::errors::error::prelude::*;
-use crate::plugins::wallet::agency_client_wallet::ToBaseAgencyClientWallet;
-use crate::plugins::wallet::base_wallet::BaseWallet;
+use crate::{
+    errors::error::prelude::*,
+    plugins::wallet::{agency_client_wallet::ToBaseAgencyClientWallet, base_wallet::BaseWallet},
+};
 
 pub async fn provision_cloud_agent(
     client: &mut AgencyClient,

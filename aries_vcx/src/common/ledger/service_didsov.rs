@@ -63,8 +63,10 @@ impl Default for EndpointDidSov {
 mod unit_tests {
     use messages::diddoc::aries::diddoc::test_utils::{_routing_keys, _service_endpoint};
 
-    use crate::common::ledger::service_didsov::{DidSovServiceType, EndpointDidSov};
-    use crate::utils::devsetup::SetupEmpty;
+    use crate::{
+        common::ledger::service_didsov::{DidSovServiceType, EndpointDidSov},
+        utils::devsetup::SetupEmpty,
+    };
 
     #[test]
     fn test_service_comparison() {

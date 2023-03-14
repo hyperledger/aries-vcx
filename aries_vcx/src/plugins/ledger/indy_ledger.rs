@@ -2,13 +2,11 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 
-use crate::core::profile::indy_profile::IndySdkProfile;
-
-use crate::common::primitives::revocation_registry::RevocationRegistryDefinition;
-use crate::errors::error::VcxResult;
-use crate::indy;
-
 use super::base_ledger::BaseLedger;
+use crate::{
+    common::primitives::revocation_registry::RevocationRegistryDefinition, core::profile::indy_profile::IndySdkProfile,
+    errors::error::VcxResult, indy,
+};
 
 pub struct IndySdkLedger {
     profile: Arc<IndySdkProfile>,

@@ -100,10 +100,12 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         attrs: &str,
     ) -> VcxResult<(String, String)>;
 
-    // TODO - FUTURE - think about moving this to somewhere else, as it aggregates other calls (not PURE Anoncreds)
+    // TODO - FUTURE - think about moving this to somewhere else, as it aggregates other calls (not PURE
+    // Anoncreds)
     async fn revoke_credential_local(&self, tails_dir: &str, rev_reg_id: &str, cred_rev_id: &str) -> VcxResult<()>;
 
-    // TODO - FUTURE - think about moving this to somewhere else, as it aggregates other calls (not PURE Anoncreds)
+    // TODO - FUTURE - think about moving this to somewhere else, as it aggregates other calls (not PURE
+    // Anoncreds)
     async fn publish_local_revocations(&self, submitter_did: &str, rev_reg_id: &str) -> VcxResult<()>;
 
     async fn generate_nonce(&self) -> VcxResult<String>;

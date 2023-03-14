@@ -1,12 +1,8 @@
 use std::sync::Arc;
 
-use serde_json;
-use serde_json::Value;
+use serde_json::{self, Value};
 
-use crate::core::profile::profile::Profile;
-use crate::errors::error::prelude::*;
-use crate::global::settings;
-use crate::utils::openssl::encode;
+use crate::{core::profile::profile::Profile, errors::error::prelude::*, global::settings, utils::openssl::encode};
 
 #[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct CredInfoVerifier {
@@ -213,11 +209,11 @@ pub async fn build_rev_reg_json(profile: &Arc<dyn Profile>, credential_data: &[C
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use crate::common::test_utils::mock_profile;
-    use crate::utils::constants::*;
-    use crate::utils::devsetup::*;
-
     use super::*;
+    use crate::{
+        common::test_utils::mock_profile,
+        utils::{constants::*, devsetup::*},
+    };
 
     #[tokio::test]
     async fn test_build_cred_defs_json_verifier_with_multiple_credentials() {

@@ -1,10 +1,11 @@
 use std::clone::Clone;
 
-use crate::protocols::mediated_connection::invitee::states::requested::RequestedState;
-use crate::protocols::mediated_connection::invitee::states::responded::RespondedState;
-use messages::diddoc::aries::diddoc::AriesDidDoc;
-use messages::protocols::connection::response::Response;
-use messages::protocols::discovery::disclose::ProtocolDescriptor;
+use messages::{
+    diddoc::aries::diddoc::AriesDidDoc,
+    protocols::{connection::response::Response, discovery::disclose::ProtocolDescriptor},
+};
+
+use crate::protocols::mediated_connection::invitee::states::{requested::RequestedState, responded::RespondedState};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct CompletedState {

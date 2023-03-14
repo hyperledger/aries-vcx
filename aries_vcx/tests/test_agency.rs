@@ -9,26 +9,26 @@ pub mod utils;
 #[cfg(test)]
 #[cfg(feature = "agency_pool_tests")]
 mod integration_tests {
-    use std::sync::Arc;
-    use std::thread;
-    use std::time::Duration;
+    use std::{sync::Arc, thread, time::Duration};
 
-    use aries_vcx::indy::wallet::{close_wallet, WalletConfig};
-
-    use agency_client::agency_client::AgencyClient;
-    use agency_client::api::downloaded_message::DownloadedMessage;
-    use agency_client::messages::update_message::UIDsByConn;
-    use agency_client::MessageStatusCode;
-    use aries_vcx::global::settings;
-    use aries_vcx::messages::a2a::A2AMessage;
-    use aries_vcx::messages::concepts::ack::test_utils::_ack;
-    use aries_vcx::plugins::wallet::{
-        agency_client_wallet::ToBaseAgencyClientWallet, base_wallet::BaseWallet, indy_wallet::IndySdkWallet,
+    use agency_client::{
+        agency_client::AgencyClient, api::downloaded_message::DownloadedMessage, messages::update_message::UIDsByConn,
+        MessageStatusCode,
     };
-    use aries_vcx::utils::devsetup::SetupPool;
+    use aries_vcx::{
+        global::settings,
+        indy::wallet::{close_wallet, WalletConfig},
+        messages::{a2a::A2AMessage, concepts::ack::test_utils::_ack},
+        plugins::wallet::{
+            agency_client_wallet::ToBaseAgencyClientWallet, base_wallet::BaseWallet, indy_wallet::IndySdkWallet,
+        },
+        utils::devsetup::SetupPool,
+    };
 
-    use crate::utils::devsetup_agent::test_utils::{create_test_alice_instance, Faber};
-    use crate::utils::scenarios::test_utils::create_connected_connections;
+    use crate::utils::{
+        devsetup_agent::test_utils::{create_test_alice_instance, Faber},
+        scenarios::test_utils::create_connected_connections,
+    };
 
     #[tokio::test]
     #[cfg(feature = "agency_pool_tests")]

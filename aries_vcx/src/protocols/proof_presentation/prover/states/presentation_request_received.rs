@@ -1,15 +1,20 @@
 use std::sync::Arc;
 
-use crate::common::proofs::prover::prover::generate_indy_proof;
-use crate::core::profile::profile::Profile;
-use crate::errors::error::prelude::*;
-use crate::protocols::proof_presentation::prover::states::finished::FinishedState;
-use crate::protocols::proof_presentation::prover::states::presentation_preparation_failed::PresentationPreparationFailedState;
-use crate::protocols::proof_presentation::prover::states::presentation_prepared::PresentationPreparedState;
-use messages::concepts::problem_report::ProblemReport;
-use messages::protocols::proof_presentation::presentation::Presentation;
-use messages::protocols::proof_presentation::presentation_request::PresentationRequest;
-use messages::status::Status;
+use messages::{
+    concepts::problem_report::ProblemReport,
+    protocols::proof_presentation::{presentation::Presentation, presentation_request::PresentationRequest},
+    status::Status,
+};
+
+use crate::{
+    common::proofs::prover::prover::generate_indy_proof,
+    core::profile::profile::Profile,
+    errors::error::prelude::*,
+    protocols::proof_presentation::prover::states::{
+        finished::FinishedState, presentation_preparation_failed::PresentationPreparationFailedState,
+        presentation_prepared::PresentationPreparedState,
+    },
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct PresentationRequestReceived {

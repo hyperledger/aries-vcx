@@ -1,7 +1,10 @@
+use messages::{
+    concepts::problem_report::ProblemReport,
+    protocols::issuance::credential::{Credential, CredentialData},
+    status::Status,
+};
+
 use crate::errors::error::prelude::*;
-use messages::concepts::problem_report::ProblemReport;
-use messages::protocols::issuance::credential::{Credential, CredentialData};
-use messages::status::Status;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct FinishedHolderState {

@@ -1,6 +1,8 @@
-use std::fs::{DirBuilder, OpenOptions};
-use std::io::Write;
-use std::path::{Path, PathBuf};
+use std::{
+    fs::{DirBuilder, OpenOptions},
+    io::Write,
+    path::{Path, PathBuf},
+};
 
 use crate::errors::error::prelude::*;
 

@@ -1,7 +1,6 @@
 use std::sync::Arc;
 
-use crate::core::profile::profile::Profile;
-use crate::errors::error::prelude::*;
+use crate::{core::profile::profile::Profile, errors::error::prelude::*};
 
 #[derive(Clone, Deserialize, Debug, Serialize, Default)]
 pub struct RevocationRegistryDelta {

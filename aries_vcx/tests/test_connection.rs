@@ -9,27 +9,31 @@ pub mod utils;
 #[cfg(test)]
 #[cfg(feature = "agency_pool_tests")]
 mod integration_tests {
-    use aries_vcx::agency_client::MessageStatusCode;
-    use aries_vcx::common::ledger::transactions::into_did_doc;
-    use aries_vcx::handlers::connection::mediated_connection::ConnectionState;
-    use aries_vcx::handlers::out_of_band::receiver::OutOfBandReceiver;
-    use aries_vcx::handlers::out_of_band::sender::OutOfBandSender;
-    use aries_vcx::messages::a2a::A2AMessage;
-    use aries_vcx::messages::protocols::out_of_band::{GoalCode, HandshakeProtocol};
-    use aries_vcx::protocols::mediated_connection::invitee::state_machine::InviteeState;
-    use aries_vcx::utils::devsetup::*;
-    use aries_vcx::utils::mockdata::mockdata_proof::REQUESTED_ATTRIBUTES;
-    use async_channel::bounded;
-    use messages::protocols::connection::did::Did;
-    use messages::protocols::out_of_band::service_oob::ServiceOob;
-
-    use crate::utils::devsetup_agent::test_utils::{create_test_alice_instance, Faber};
-    use crate::utils::scenarios::test_utils::{
-        _send_message, connect_using_request_sent_to_public_agent, create_connected_connections,
-        create_connected_connections_via_public_invite, create_proof_request,
+    use aries_vcx::{
+        agency_client::MessageStatusCode,
+        common::ledger::transactions::into_did_doc,
+        handlers::{
+            connection::mediated_connection::ConnectionState,
+            out_of_band::{receiver::OutOfBandReceiver, sender::OutOfBandSender},
+        },
+        messages::{
+            a2a::A2AMessage,
+            protocols::out_of_band::{GoalCode, HandshakeProtocol},
+        },
+        protocols::mediated_connection::invitee::state_machine::InviteeState,
+        utils::{devsetup::*, mockdata::mockdata_proof::REQUESTED_ATTRIBUTES},
     };
+    use async_channel::bounded;
+    use messages::protocols::{connection::did::Did, out_of_band::service_oob::ServiceOob};
 
     use super::*;
+    use crate::utils::{
+        devsetup_agent::test_utils::{create_test_alice_instance, Faber},
+        scenarios::test_utils::{
+            _send_message, connect_using_request_sent_to_public_agent, create_connected_connections,
+            create_connected_connections_via_public_invite, create_proof_request,
+        },
+    };
 
     #[tokio::test]
     async fn test_establish_connection_via_public_invite() {

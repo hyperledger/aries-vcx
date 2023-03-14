@@ -1,11 +1,13 @@
 use std::sync::{Arc, Mutex};
 
-use crate::error::*;
-use crate::storage::object_cache::ObjectCache;
-use crate::storage::Storage;
 use aries_vcx::{
     common::primitives::credential_definition::{CredentialDef, CredentialDefConfig},
     core::profile::profile::Profile,
+};
+
+use crate::{
+    error::*,
+    storage::{object_cache::ObjectCache, Storage},
 };
 
 pub struct ServiceCredentialDefinitions {

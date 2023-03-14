@@ -1,5 +1,12 @@
 use std::ptr;
 
+use aries_vcx::{
+    agency_client::{
+        configuration::AgentProvisionConfig, messages::update_message::UIDsByConn, testing::mocking::AgencyMock,
+        MessageStatusCode,
+    },
+    utils::constants::*,
+};
 use futures::future::{BoxFuture, FutureExt};
 use libc::c_char;
 use serde_json;

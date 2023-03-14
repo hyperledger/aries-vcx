@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use lazy_static::lazy_static;
 
+use super::{actor::Actor, Protocol};
 use crate::msg_types::types::{
     basic_message::BasicMessageV1_0,
     connection::ConnectionV1_0,
@@ -15,8 +16,6 @@ use crate::msg_types::types::{
     traits::{MajorVersion, MinorVersion, ProtocolName},
     trust_ping::TrustPingV1_0,
 };
-
-use super::{actor::Actor, Protocol};
 
 type RegistryMap = HashMap<(&'static str, u8), Vec<RegistryEntry>>;
 
@@ -84,7 +83,8 @@ lazy_static! {
 
 /// Looks into the protocol registry for (in order):
 /// * the exact protocol version requested
-/// * the maximum minor version of a protocol less than the minor version requested (e.g: requesting 1.7 should yield 1.6).
+/// * the maximum minor version of a protocol less than the minor version requested (e.g: requesting
+///   1.7 should yield 1.6).
 pub fn get_supported_version(name: &'static str, major: u8, minor: u8) -> Option<u8> {
     PROTOCOL_REGISTRY
         .get(&(name, major))

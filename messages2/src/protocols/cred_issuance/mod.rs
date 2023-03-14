@@ -9,9 +9,23 @@ use std::str::FromStr;
 use derive_more::From;
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 
+pub use self::{
+    ack::AckCredential, issue_credential::IssueCredential, offer_credential::OfferCredential,
+    propose_credential::ProposeCredential, request_credential::RequestCredential,
+};
+use self::{
+    ack::AckCredentialContent,
+    issue_credential::{IssueCredentialContent, IssueCredentialDecorators},
+    offer_credential::{OfferCredentialContent, OfferCredentialDecorators},
+    propose_credential::{ProposeCredentialContent, ProposeCredentialDecorators},
+    request_credential::{RequestCredentialContent, RequestCredentialDecorators},
+};
+use super::notification::AckDecorators;
 use crate::{
-    misc::mime_type::MimeType,
-    misc::utils::{self, transit_to_aries_msg},
+    misc::{
+        mime_type::MimeType,
+        utils::{self, transit_to_aries_msg},
+    },
     msg_types::{
         types::{
             cred_issuance::{
@@ -23,21 +37,6 @@ use crate::{
     },
     protocols::traits::DelayedSerde,
 };
-
-use self::{
-    ack::AckCredentialContent,
-    issue_credential::{IssueCredentialContent, IssueCredentialDecorators},
-    offer_credential::{OfferCredentialContent, OfferCredentialDecorators},
-    propose_credential::{ProposeCredentialContent, ProposeCredentialDecorators},
-    request_credential::{RequestCredentialContent, RequestCredentialDecorators},
-};
-
-pub use self::{
-    ack::AckCredential, issue_credential::IssueCredential, offer_credential::OfferCredential,
-    propose_credential::ProposeCredential, request_credential::RequestCredential,
-};
-
-use super::notification::AckDecorators;
 
 #[derive(Clone, Debug, From)]
 pub enum CredentialIssuance {

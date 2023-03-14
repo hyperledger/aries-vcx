@@ -1,9 +1,6 @@
+use std::{collections::HashMap, ffi::CStr, hash::Hash, slice, sync::Mutex};
+
 use libc::c_char;
-use std::collections::HashMap;
-use std::ffi::CStr;
-use std::hash::Hash;
-use std::slice;
-use std::sync::Mutex;
 
 pub const POISON_MSG: &str = "FAILED TO LOCK CALLBACK MAP!";
 
@@ -45,10 +42,9 @@ pub fn get_cb<H: Eq + Hash, T>(command_handle: H, map: &Mutex<HashMap<H, T>>) ->
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 mod tests {
+    use std::{collections::HashMap, ffi::CString, sync::Mutex};
+
     use crate::api_c::cutils::callback::{build_string, get_cb};
-    use std::collections::HashMap;
-    use std::ffi::CString;
-    use std::sync::Mutex;
 
     fn cstring(str_val: &String) -> CString {
         CString::new(str_val.clone()).unwrap()

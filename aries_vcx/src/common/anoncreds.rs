@@ -3,11 +3,15 @@
 pub mod integration_tests {
     use std::sync::Arc;
 
-    use crate::common::test_utils::create_and_store_credential;
-    use crate::errors::error::AriesVcxErrorKind;
-    use crate::utils::constants::TAILS_DIR;
-    use crate::utils::devsetup::{init_holder_setup_in_indy_context, SetupProfile};
-    use crate::utils::get_temp_dir_path;
+    use crate::{
+        common::test_utils::create_and_store_credential,
+        errors::error::AriesVcxErrorKind,
+        utils::{
+            constants::TAILS_DIR,
+            devsetup::{init_holder_setup_in_indy_context, SetupProfile},
+            get_temp_dir_path,
+        },
+    };
 
     #[tokio::test]
     async fn tests_returns_error_if_proof_request_is_malformed() {

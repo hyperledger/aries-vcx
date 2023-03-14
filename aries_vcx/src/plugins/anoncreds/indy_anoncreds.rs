@@ -2,10 +2,8 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 
-use crate::errors::error::VcxResult;
-use crate::{core::profile::indy_profile::IndySdkProfile, indy};
-
 use super::base_anoncreds::BaseAnonCreds;
+use crate::{core::profile::indy_profile::IndySdkProfile, errors::error::VcxResult, indy};
 
 #[derive(Debug)]
 pub struct IndySdkAnonCreds {

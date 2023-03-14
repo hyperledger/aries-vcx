@@ -1,27 +1,35 @@
-use std::clone::Clone;
-use std::collections::HashMap;
-use std::sync::Arc;
+use std::{clone::Clone, collections::HashMap, sync::Arc};
 
-use messages::a2a::protocol_registry::ProtocolRegistry;
-use messages::a2a::{A2AMessage, MessageId};
-use messages::diddoc::aries::diddoc::AriesDidDoc;
-use messages::protocols::connection::invite::{Invitation, PairwiseInvitation};
-use messages::protocols::connection::problem_report::{ProblemCode, ProblemReport};
-use messages::protocols::connection::request::Request;
-use messages::protocols::connection::response::{Response, SignedResponse};
-use messages::protocols::discovery::disclose::{Disclose, ProtocolDescriptor};
+use messages::{
+    a2a::{protocol_registry::ProtocolRegistry, A2AMessage, MessageId},
+    diddoc::aries::diddoc::AriesDidDoc,
+    protocols::{
+        connection::{
+            invite::{Invitation, PairwiseInvitation},
+            problem_report::{ProblemCode, ProblemReport},
+            request::Request,
+            response::{Response, SignedResponse},
+        },
+        discovery::disclose::{Disclose, ProtocolDescriptor},
+    },
+};
 
-use crate::common::signing::sign_connection_response;
-use crate::errors::error::prelude::*;
-use crate::handlers::util::verify_thread_id;
-use crate::plugins::wallet::base_wallet::BaseWallet;
-use crate::protocols::mediated_connection::inviter::states::completed::CompletedState;
-use crate::protocols::mediated_connection::inviter::states::initial::InitialState;
-use crate::protocols::mediated_connection::inviter::states::invited::InvitedState;
-use crate::protocols::mediated_connection::inviter::states::requested::RequestedState;
-use crate::protocols::mediated_connection::inviter::states::responded::RespondedState;
-use crate::protocols::mediated_connection::pairwise_info::PairwiseInfo;
-use crate::protocols::SendClosureConnection;
+use crate::{
+    common::signing::sign_connection_response,
+    errors::error::prelude::*,
+    handlers::util::verify_thread_id,
+    plugins::wallet::base_wallet::BaseWallet,
+    protocols::{
+        mediated_connection::{
+            inviter::states::{
+                completed::CompletedState, initial::InitialState, invited::InvitedState, requested::RequestedState,
+                responded::RespondedState,
+            },
+            pairwise_info::PairwiseInfo,
+        },
+        SendClosureConnection,
+    },
+};
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct SmConnectionInviter {
@@ -337,23 +345,24 @@ impl SmConnectionInviter {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use messages::concepts::ack::test_utils::_ack;
-    use messages::protocols::connection::problem_report::unit_tests::_problem_report;
-    use messages::protocols::connection::request::unit_tests::_request;
-    use messages::protocols::connection::response::test_utils::_signed_response;
-    use messages::protocols::discovery::disclose::test_utils::_disclose;
-    use messages::protocols::discovery::query::test_utils::_query;
-    use messages::protocols::trust_ping::ping::unit_tests::_ping;
-
-    use crate::test::source_id;
-    use crate::utils::devsetup::SetupMocks;
+    use messages::{
+        concepts::ack::test_utils::_ack,
+        protocols::{
+            connection::{
+                problem_report::unit_tests::_problem_report, request::unit_tests::_request,
+                response::test_utils::_signed_response,
+            },
+            discovery::{disclose::test_utils::_disclose, query::test_utils::_query},
+            trust_ping::ping::unit_tests::_ping,
+        },
+    };
 
     use super::*;
+    use crate::{test::source_id, utils::devsetup::SetupMocks};
 
     pub mod inviter {
-        use crate::common::test_utils::mock_profile;
-
         use super::*;
+        use crate::common::test_utils::mock_profile;
 
         fn _send_message() -> SendClosureConnection {
             Box::new(|_: A2AMessage, _: String, _: AriesDidDoc| Box::pin(async { VcxResult::Ok(()) }))
@@ -412,9 +421,8 @@ pub mod unit_tests {
         mod build_messages {
             use messages::a2a::MessageId;
 
-            use crate::utils::devsetup::was_in_past;
-
             use super::*;
+            use crate::utils::devsetup::was_in_past;
 
             #[tokio::test]
             #[cfg(feature = "general_test")]
@@ -484,9 +492,8 @@ pub mod unit_tests {
         }
 
         mod step {
-            use crate::utils::devsetup::SetupIndyMocks;
-
             use super::*;
+            use crate::utils::devsetup::SetupIndyMocks;
 
             #[tokio::test]
             #[cfg(feature = "general_test")]
@@ -716,9 +723,8 @@ pub mod unit_tests {
         }
 
         mod find_message_to_handle {
-            use crate::utils::devsetup::SetupIndyMocks;
-
             use super::*;
+            use crate::utils::devsetup::SetupIndyMocks;
 
             #[tokio::test]
             #[cfg(feature = "general_test")]

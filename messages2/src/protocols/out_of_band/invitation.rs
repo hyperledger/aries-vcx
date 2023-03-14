@@ -1,14 +1,14 @@
 use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 
+use super::OobGoalCode;
 use crate::{
     decorators::{Attachment, Timing},
     misc::mime_type::MimeType,
     msg_types::types::out_of_band::OutOfBandV1_1Kind,
-    protocols::{common::service::Service}, Message,
+    protocols::common::service::Service,
+    Message,
 };
-
-use super::OobGoalCode;
 
 pub type Invitation = Message<InvitationContent, InvitationDecorators>;
 

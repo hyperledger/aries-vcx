@@ -2,13 +2,12 @@ use std::sync::Arc;
 
 use vdrtools::{PoolHandle, WalletHandle};
 
+use super::profile::Profile;
 use crate::plugins::{
     anoncreds::{base_anoncreds::BaseAnonCreds, indy_anoncreds::IndySdkAnonCreds},
     ledger::{base_ledger::BaseLedger, indy_ledger::IndySdkLedger},
     wallet::{base_wallet::BaseWallet, indy_wallet::IndySdkWallet},
 };
-
-use super::profile::Profile;
 
 #[derive(Copy, Clone, Debug)]
 pub struct IndySdkProfile {

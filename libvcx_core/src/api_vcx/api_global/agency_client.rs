@@ -1,15 +1,23 @@
-use std::ops::Deref;
-use std::sync::{RwLock, RwLockWriteGuard};
+use std::{
+    ops::Deref,
+    sync::{RwLock, RwLockWriteGuard},
+};
 
-use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
-use crate::errors::mapping_from_ariesvcx::map_ariesvcx_result;
-use aries_vcx::agency_client::agency_client::AgencyClient;
-use aries_vcx::agency_client::configuration::{AgencyClientConfig, AgentProvisionConfig};
-use aries_vcx::agency_client::messages::update_message::UIDsByConn;
-use aries_vcx::agency_client::MessageStatusCode;
-use aries_vcx::plugins::wallet::agency_client_wallet::ToBaseAgencyClientWallet;
+use aries_vcx::{
+    agency_client::{
+        agency_client::AgencyClient,
+        configuration::{AgencyClientConfig, AgentProvisionConfig},
+        messages::update_message::UIDsByConn,
+        MessageStatusCode,
+    },
+    plugins::wallet::agency_client_wallet::ToBaseAgencyClientWallet,
+};
 
 use super::profile::get_main_wallet;
+use crate::errors::{
+    error::{LibvcxError, LibvcxErrorKind, LibvcxResult},
+    mapping_from_ariesvcx::map_ariesvcx_result,
+};
 
 lazy_static! {
     pub static ref AGENCY_CLIENT: RwLock<AgencyClient> = RwLock::new(AgencyClient::new());
@@ -71,15 +79,17 @@ pub async fn provision_cloud_agent(agency_config: &AgentProvisionConfig) -> Libv
 
 #[cfg(test)]
 pub mod tests {
+    use aries_vcx::{
+        agency_client::{
+            configuration::AgentProvisionConfig, messages::update_message::UIDsByConn,
+            testing::mocking::AgencyMockDecrypted, MessageStatusCode,
+        },
+        utils::{constants, devsetup::SetupMocks},
+    };
+
     use crate::api_vcx::api_global::agency_client::{
         agency_update_messages, provision_cloud_agent, update_webhook_url,
     };
-    use aries_vcx::agency_client::configuration::AgentProvisionConfig;
-    use aries_vcx::agency_client::messages::update_message::UIDsByConn;
-    use aries_vcx::agency_client::testing::mocking::AgencyMockDecrypted;
-    use aries_vcx::agency_client::MessageStatusCode;
-    use aries_vcx::utils::constants;
-    use aries_vcx::utils::devsetup::SetupMocks;
 
     #[tokio::test]
     #[cfg(feature = "general_test")]

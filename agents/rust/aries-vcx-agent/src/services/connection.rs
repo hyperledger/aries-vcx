@@ -1,17 +1,20 @@
 use std::sync::{Arc, Mutex};
 
-use crate::error::*;
-use crate::http_client::HttpClient;
-use crate::storage::object_cache::ObjectCache;
-use crate::storage::Storage;
-use aries_vcx::core::profile::profile::Profile;
-use aries_vcx::messages::a2a::A2AMessage;
-use aries_vcx::messages::concepts::ack::Ack;
-use aries_vcx::messages::protocols::connection::invite::Invitation;
-use aries_vcx::messages::protocols::connection::request::Request;
-use aries_vcx::messages::protocols::connection::response::SignedResponse;
-use aries_vcx::protocols::connection::pairwise_info::PairwiseInfo;
-use aries_vcx::protocols::connection::{Connection, GenericConnection, State, ThinState};
+use aries_vcx::{
+    core::profile::profile::Profile,
+    messages::{
+        a2a::A2AMessage,
+        concepts::ack::Ack,
+        protocols::connection::{invite::Invitation, request::Request, response::SignedResponse},
+    },
+    protocols::connection::{pairwise_info::PairwiseInfo, Connection, GenericConnection, State, ThinState},
+};
+
+use crate::{
+    error::*,
+    http_client::HttpClient,
+    storage::{object_cache::ObjectCache, Storage},
+};
 
 pub type ServiceEndpoint = String;
 

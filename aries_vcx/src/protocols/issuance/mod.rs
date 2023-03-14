@@ -1,9 +1,9 @@
 use std::sync::Arc;
 
-use crate::core::profile::profile::Profile;
-use crate::errors::error::prelude::*;
-use crate::global::settings;
-use crate::protocols::issuance::actions::CredentialIssuanceAction;
+use crate::{
+    core::profile::profile::Profile, errors::error::prelude::*, global::settings,
+    protocols::issuance::actions::CredentialIssuanceAction,
+};
 
 pub mod actions;
 pub mod holder;

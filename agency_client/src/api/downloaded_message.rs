@@ -1,9 +1,11 @@
 use std::sync::Arc;
 
-use crate::errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
-use crate::utils::encryption_envelope::EncryptionEnvelope;
-use crate::wallet::base_agency_client_wallet::BaseAgencyClientWallet;
-use crate::MessageStatusCode;
+use crate::{
+    errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult},
+    utils::encryption_envelope::EncryptionEnvelope,
+    wallet::base_agency_client_wallet::BaseAgencyClientWallet,
+    MessageStatusCode,
+};
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 #[serde(untagged)]

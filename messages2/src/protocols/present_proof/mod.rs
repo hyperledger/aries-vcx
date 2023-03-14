@@ -8,24 +8,21 @@ use std::str::FromStr;
 use derive_more::From;
 use serde::{de::Error, Deserializer, Serializer};
 
-use crate::{
-    misc::utils::{self, transit_to_aries_msg},
-    msg_types::types::present_proof::{PresentProof as PresentProofKind, PresentProofV1, PresentProofV1_0Kind},
-    protocols::traits::DelayedSerde,
+pub use self::{
+    ack::AckPresentation, present::Presentation, propose::ProposePresentation, request::RequestPresentation,
 };
-
 use self::{
     ack::AckPresentationContent,
     present::{PresentationContent, PresentationDecorators},
     propose::{ProposePresentationContent, ProposePresentationDecorators},
     request::{RequestPresentationContent, RequestPresentationDecorators},
 };
-
-pub use self::{
-    ack::AckPresentation, present::Presentation, propose::ProposePresentation, request::RequestPresentation,
-};
-
 use super::notification::AckDecorators;
+use crate::{
+    misc::utils::{self, transit_to_aries_msg},
+    msg_types::types::present_proof::{PresentProof as PresentProofKind, PresentProofV1, PresentProofV1_0Kind},
+    protocols::traits::DelayedSerde,
+};
 
 #[derive(Clone, Debug, From)]
 pub enum PresentProof {

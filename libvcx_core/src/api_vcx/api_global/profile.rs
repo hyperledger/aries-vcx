@@ -1,14 +1,15 @@
 use std::sync::Arc;
 
-use crate::errors::error::LibvcxResult;
 use aries_vcx::{
     core::profile::{indy_profile::IndySdkProfile, profile::Profile},
+    global::settings::indy_mocks_enabled,
     plugins::wallet::{base_wallet::BaseWallet, indy_wallet::IndySdkWallet},
+    utils::mockdata::profile::mock_profile::MockProfile,
     vdrtools::{PoolHandle, WalletHandle},
 };
-use aries_vcx::{global::settings::indy_mocks_enabled, utils::mockdata::profile::mock_profile::MockProfile};
 
 use super::{pool::get_main_pool_handle, wallet::get_main_wallet_handle};
+use crate::errors::error::LibvcxResult;
 
 pub fn indy_wallet_handle_to_wallet(wallet_handle: WalletHandle) -> Arc<dyn BaseWallet> {
     Arc::new(IndySdkWallet::new(wallet_handle))

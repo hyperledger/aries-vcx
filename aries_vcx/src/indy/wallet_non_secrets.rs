@@ -1,8 +1,10 @@
 use serde_json;
 use vdrtools::WalletHandle;
 
-use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
-use crate::indy::wallet::{add_wallet_record, delete_wallet_record, get_wallet_record, update_wallet_record_value};
+use crate::{
+    errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
+    indy::wallet::{add_wallet_record, delete_wallet_record, get_wallet_record, update_wallet_record_value},
+};
 
 static WALLET_RECORD_TYPE: &str = "cache";
 static RECORD_ID_PREFIX: &str = "rev_reg_delta:";
@@ -42,7 +44,8 @@ pub async fn get_rev_reg_delta(wallet_handle: WalletHandle, rev_reg_id: &str) ->
             Ok(cache) => cache,
             Err(err) => {
                 warn!(
-                    "get_rev_reg_delta >> Unable to convert rev_reg_delta cache for rev_reg_id: {}, json: {}, error: {}",
+                    "get_rev_reg_delta >> Unable to convert rev_reg_delta cache for rev_reg_id: {}, json: {}, error: \
+                     {}",
                     rev_reg_id, json, err
                 );
                 None
@@ -63,7 +66,6 @@ pub async fn get_rev_reg_delta(wallet_handle: WalletHandle, rev_reg_id: &str) ->
 /// # Arguments
 /// `rev_reg_id`: revocation registry id.
 /// `cache`: Cache object.
-///
 pub async fn set_rev_reg_delta(wallet_handle: WalletHandle, rev_reg_id: &str, cache: &str) -> VcxResult<()> {
     debug!(
         "set_rev_reg_delta >> Setting store revocation registry delta for revocation registry {} to new value: {}",
@@ -92,7 +94,6 @@ pub async fn set_rev_reg_delta(wallet_handle: WalletHandle, rev_reg_id: &str, ca
 /// # Arguments
 /// `rev_reg_id`: revocation registry id.
 /// `cache`: Cache object.
-///
 pub async fn clear_rev_reg_delta(wallet_handle: WalletHandle, rev_reg_id: &str) -> VcxResult<String> {
     debug!(
         "clear_rev_reg_delta >> Clear revocation registry delta for rev_reg_id {}",

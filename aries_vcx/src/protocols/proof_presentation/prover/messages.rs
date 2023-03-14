@@ -1,10 +1,13 @@
-use messages::a2a::A2AMessage;
-use messages::concepts::problem_report::ProblemReport;
-use messages::protocols::proof_presentation::presentation::Presentation;
-use messages::protocols::proof_presentation::presentation_ack::PresentationAck;
-use messages::protocols::proof_presentation::presentation_proposal::PresentationPreview;
-use messages::protocols::proof_presentation::presentation_proposal::PresentationProposalData;
-use messages::protocols::proof_presentation::presentation_request::PresentationRequest;
+use messages::{
+    a2a::A2AMessage,
+    concepts::problem_report::ProblemReport,
+    protocols::proof_presentation::{
+        presentation::Presentation,
+        presentation_ack::PresentationAck,
+        presentation_proposal::{PresentationPreview, PresentationProposalData},
+        presentation_request::PresentationRequest,
+    },
+};
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 pub enum ProverMessages {

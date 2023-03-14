@@ -1,5 +1,4 @@
-use std::error::Error;
-use std::fmt;
+use std::{error::Error, fmt};
 
 pub mod prelude {
     pub use crate::errors::error::{err_msg, DiddocError, DiddocErrorKind, DiddocResult};

@@ -1,17 +1,19 @@
+use aries_vcx::{
+    agency_client::testing::mocking::AgencyMockDecrypted,
+    global::settings::indy_mocks_enabled,
+    handlers::issuance::holder::Holder,
+    messages::{a2a::A2AMessage, protocols::issuance::credential_offer::CredentialOffer},
+    utils::{constants::GET_MESSAGES_DECRYPTED_RESPONSE, mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER},
+};
 use serde_json;
 
-use aries_vcx::agency_client::testing::mocking::AgencyMockDecrypted;
-use aries_vcx::handlers::issuance::holder::Holder;
-use aries_vcx::messages::a2a::A2AMessage;
-use aries_vcx::messages::protocols::issuance::credential_offer::CredentialOffer;
-use aries_vcx::utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
-use aries_vcx::{global::settings::indy_mocks_enabled, utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER};
-
-use crate::api_vcx::api_global::profile::{get_main_profile, get_main_profile_optional_pool};
-use crate::api_vcx::api_handle::mediated_connection;
-use crate::api_vcx::api_handle::object_cache::ObjectCache;
-
-use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
+use crate::{
+    api_vcx::{
+        api_global::profile::{get_main_profile, get_main_profile_optional_pool},
+        api_handle::{mediated_connection, object_cache::ObjectCache},
+    },
+    errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult},
+};
 
 lazy_static! {
     static ref HANDLE_MAP: ObjectCache<Holder> = ObjectCache::<Holder>::new("credentials-cache");
@@ -345,11 +347,18 @@ pub mod tests_utils {
 
 #[cfg(test)]
 pub mod tests {
-    use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
-    use aries_vcx::utils::devsetup::{SetupDefaults, SetupMocks};
-    use aries_vcx::utils::mockdata::mockdata_credex;
-    use aries_vcx::utils::mockdata::mockdata_credex::{
-        ARIES_CREDENTIAL_OFFER, ARIES_CREDENTIAL_OFFER_JSON_FORMAT, ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED,
+    use aries_vcx::{
+        protocols::issuance::holder::state_machine::HolderState,
+        utils::{
+            devsetup::{SetupDefaults, SetupMocks},
+            mockdata::{
+                mockdata_credex,
+                mockdata_credex::{
+                    ARIES_CREDENTIAL_OFFER, ARIES_CREDENTIAL_OFFER_JSON_FORMAT, ARIES_CREDENTIAL_RESPONSE,
+                    CREDENTIAL_SM_FINISHED,
+                },
+            },
+        },
     };
 
     use crate::api_vcx::api_handle::credential::tests_utils::BAD_CREDENTIAL_OFFER;
@@ -363,6 +372,13 @@ pub mod tests {
     use crate::aries_vcx::messages::protocols::issuance::credential::Credential;
 
     use super::*;
+    use crate::{
+        api_vcx::api_handle::{
+            credential::{credential_create_with_offer, get_attributes, get_credential, send_credential_request},
+            mediated_connection,
+        },
+        aries_vcx::messages::protocols::issuance::credential::Credential,
+    };
 
     async fn _get_offer(handle: u32) -> String {
         let offers = get_credential_offer_messages_with_conn_handle(handle).await.unwrap();

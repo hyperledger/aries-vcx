@@ -1,11 +1,12 @@
 use std::sync::Arc;
 
-use crate::core::profile::profile::Profile;
-use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
-use crate::global::settings;
-use crate::utils::constants::REV_REG_ID;
-
 use super::credential_definition::PublicEntityStateType;
+use crate::{
+    core::profile::profile::Profile,
+    errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
+    global::settings,
+    utils::constants::REV_REG_ID,
+};
 
 #[derive(Clone, Deserialize, Debug, Serialize, PartialEq, Eq)]
 pub struct RevocationRegistry {

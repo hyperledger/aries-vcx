@@ -1,25 +1,31 @@
-use std::collections::HashMap;
-
-use messages::concepts::ack::please_ack::AckOn;
-use messages::protocols::issuance::credential_ack::CredentialAck;
-use messages::protocols::issuance::credential_request::CredentialRequest;
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
 use agency_client::agency_client::AgencyClient;
+use messages::{
+    a2a::A2AMessage,
+    concepts::{ack::please_ack::AckOn, mime_type::MimeType},
+    protocols::issuance::{
+        credential_ack::CredentialAck, credential_offer::OfferInfo, credential_proposal::CredentialProposal,
+        credential_request::CredentialRequest, CredentialPreviewData,
+    },
+};
 
-use crate::core::profile::profile::Profile;
-use crate::errors::error::prelude::*;
-use crate::handlers::connection::mediated_connection::MediatedConnection;
-use crate::handlers::revocation_notification::sender::RevocationNotificationSender;
-use crate::protocols::issuance::actions::CredentialIssuanceAction;
-use crate::protocols::issuance::issuer::state_machine::{IssuerSM, IssuerState, RevocationInfoV1};
-use crate::protocols::revocation_notification::sender::state_machine::SenderConfigBuilder;
-use crate::protocols::SendClosure;
-use messages::a2a::A2AMessage;
-use messages::concepts::mime_type::MimeType;
-use messages::protocols::issuance::credential_offer::OfferInfo;
-use messages::protocols::issuance::credential_proposal::CredentialProposal;
-use messages::protocols::issuance::CredentialPreviewData;
+use crate::{
+    core::profile::profile::Profile,
+    errors::error::prelude::*,
+    handlers::{
+        connection::mediated_connection::MediatedConnection,
+        revocation_notification::sender::RevocationNotificationSender,
+    },
+    protocols::{
+        issuance::{
+            actions::CredentialIssuanceAction,
+            issuer::state_machine::{IssuerSM, IssuerState, RevocationInfoV1},
+        },
+        revocation_notification::sender::state_machine::SenderConfigBuilder,
+        SendClosure,
+    },
+};
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Issuer {
@@ -49,7 +55,8 @@ fn _build_credential_preview(credential_json: &str) -> VcxResult<CredentialPrevi
         )
     })?;
 
-    // todo: should throw err if cred_values is not serde_json::Value::Array or serde_json::Value::Object
+    // todo: should throw err if cred_values is not serde_json::Value::Array or
+    // serde_json::Value::Object
     let mut credential_preview = CredentialPreviewData::new();
     match cred_values {
         serde_json::Value::Array(cred_values) => {
@@ -112,7 +119,8 @@ impl Issuer {
         Ok(Issuer { issuer_sm })
     }
 
-    // todo: "build_credential_offer_msg" should take optional revReg as parameter, build OfferInfo from that
+    // todo: "build_credential_offer_msg" should take optional revReg as parameter, build OfferInfo from
+    // that
     pub async fn build_credential_offer_msg(
         &mut self,
         profile: &Arc<dyn Profile>,
@@ -297,11 +305,9 @@ impl Issuer {
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
     use agency_client::agency_client::AgencyClient;
+    use messages::{a2a::A2AMessage, protocols::issuance::credential_proposal::CredentialProposal};
 
-    use crate::errors::error::prelude::*;
-    use crate::handlers::connection::mediated_connection::MediatedConnection;
-    use messages::a2a::A2AMessage;
-    use messages::protocols::issuance::credential_proposal::CredentialProposal;
+    use crate::{errors::error::prelude::*, handlers::connection::mediated_connection::MediatedConnection};
 
     pub async fn get_credential_proposal_messages(
         agency_client: &AgencyClient,
@@ -324,15 +330,20 @@ pub mod test_utils {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use crate::common::test_utils::mock_profile;
-    use crate::protocols::issuance::issuer::state_machine::unit_tests::_send_message;
-    use crate::utils::devsetup::SetupMocks;
-    use messages::concepts::ack::test_utils::_ack;
-    use messages::protocols::issuance::credential_offer::test_utils::{_offer_info, _offer_info_unrevokable};
-    use messages::protocols::issuance::credential_proposal::test_utils::_credential_proposal;
-    use messages::protocols::issuance::credential_request::test_utils::_credential_request;
+    use messages::{
+        concepts::ack::test_utils::_ack,
+        protocols::issuance::{
+            credential_offer::test_utils::{_offer_info, _offer_info_unrevokable},
+            credential_proposal::test_utils::_credential_proposal,
+            credential_request::test_utils::_credential_request,
+        },
+    };
 
     use super::*;
+    use crate::{
+        common::test_utils::mock_profile, protocols::issuance::issuer::state_machine::unit_tests::_send_message,
+        utils::devsetup::SetupMocks,
+    };
 
     fn _cred_data() -> String {
         json!({"name": "alice"}).to_string()

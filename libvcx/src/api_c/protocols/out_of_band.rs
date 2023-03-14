@@ -442,7 +442,11 @@ pub extern "C" fn vcx_out_of_band_receiver_connection_exists(
             }
             Err(err) => {
                 set_current_error_vcx(&err);
-                error!("vcx_out_of_band_receiver_connection_exists_cb(command_handle: {}, rc: {}, conn_handle: {}, found_one: {})", command_handle, err, 0, false);
+                error!(
+                    "vcx_out_of_band_receiver_connection_exists_cb(command_handle: {}, rc: {}, conn_handle: {}, \
+                     found_one: {})",
+                    command_handle, err, 0, false
+                );
                 cb(command_handle, err.into(), 0, false);
             }
         }

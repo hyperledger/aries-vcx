@@ -1,12 +1,10 @@
-use crate::errors::error::prelude::*;
-use messages::a2a::message_family::MessageFamilies;
-use messages::a2a::message_type::MessageType;
-use messages::a2a::A2AMessage;
-use messages::concepts::attachment::AttachmentId;
-use messages::protocols::out_of_band::invitation::OutOfBandInvitation;
-use messages::protocols::out_of_band::{GoalCode, HandshakeProtocol};
+use messages::{
+    a2a::{message_family::MessageFamilies, message_type::MessageType, A2AMessage},
+    concepts::attachment::AttachmentId,
+    protocols::out_of_band::{invitation::OutOfBandInvitation, service_oob::ServiceOob, GoalCode, HandshakeProtocol},
+};
 
-use messages::protocols::out_of_band::service_oob::ServiceOob;
+use crate::errors::error::prelude::*;
 
 #[derive(Default, Debug, PartialEq, Clone)]
 pub struct OutOfBandSender {
@@ -105,12 +103,13 @@ impl OutOfBandSender {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 mod unit_tests {
-    use crate::utils::devsetup::SetupMocks;
-    use messages::diddoc::aries::service::AriesService;
-    use messages::protocols::connection::did::Did;
-    use messages::protocols::issuance::credential_offer::CredentialOffer;
+    use messages::{
+        diddoc::aries::service::AriesService,
+        protocols::{connection::did::Did, issuance::credential_offer::CredentialOffer},
+    };
 
     use super::*;
+    use crate::utils::devsetup::SetupMocks;
 
     fn _create_oob() -> OutOfBandSender {
         OutOfBandSender::create()

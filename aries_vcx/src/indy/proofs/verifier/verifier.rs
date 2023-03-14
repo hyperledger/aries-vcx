@@ -1,7 +1,6 @@
 use vdrtools::Locator;
 
-use crate::errors::error::VcxResult;
-use crate::utils::parse_and_validate;
+use crate::{errors::error::VcxResult, utils::parse_and_validate};
 
 pub async fn libindy_verifier_verify_proof(
     proof_req_json: &str,

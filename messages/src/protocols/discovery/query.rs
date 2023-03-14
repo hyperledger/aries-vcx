@@ -1,6 +1,8 @@
-use crate::a2a::{A2AMessage, MessageId};
-use crate::concepts::timing::Timing;
-use crate::timing_optional;
+use crate::{
+    a2a::{A2AMessage, MessageId},
+    concepts::timing::Timing,
+    timing_optional,
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct Query {
@@ -62,9 +64,8 @@ pub mod test_utils {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use crate::protocols::discovery::query::test_utils::{_comment, _query, _query_string};
-
     use super::*;
+    use crate::protocols::discovery::query::test_utils::{_comment, _query, _query_string};
 
     #[test]
     fn test_query_build_works() {

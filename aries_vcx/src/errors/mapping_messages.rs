@@ -1,6 +1,6 @@
+use messages::errors::error::{MessagesError, MessagesErrorKind};
+
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind};
-use messages::errors::error::MessagesError;
-use messages::errors::error::MessagesErrorKind;
 
 impl From<MessagesError> for AriesVcxError {
     fn from(msg_err: MessagesError) -> AriesVcxError {

@@ -1,14 +1,18 @@
 use std::sync::Arc;
 
-use crate::common::proofs::proof_request::ProofRequestData;
-use crate::common::proofs::prover::prover_internal::{
-    build_cred_defs_json_prover, build_requested_credentials_json, build_rev_states_json, build_schemas_json_prover,
-    credential_def_identifiers,
+use crate::{
+    common::proofs::{
+        proof_request::ProofRequestData,
+        prover::prover_internal::{
+            build_cred_defs_json_prover, build_requested_credentials_json, build_rev_states_json,
+            build_schemas_json_prover, credential_def_identifiers,
+        },
+    },
+    core::profile::profile::Profile,
+    errors::error::prelude::*,
+    global::settings,
+    utils::mockdata::mock_settings::get_mock_generate_indy_proof,
 };
-use crate::core::profile::profile::Profile;
-use crate::errors::error::prelude::*;
-use crate::global::settings;
-use crate::utils::mockdata::mock_settings::get_mock_generate_indy_proof;
 
 pub async fn generate_indy_proof(
     profile: &Arc<dyn Profile>,

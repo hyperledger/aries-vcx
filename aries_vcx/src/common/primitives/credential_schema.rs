@@ -1,12 +1,15 @@
 use std::sync::Arc;
 
-use crate::core::profile::profile::Profile;
-use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
-use crate::global::settings;
-use crate::utils::constants::{DEFAULT_SERIALIZE_VERSION, SCHEMA_ID, SCHEMA_JSON};
-use crate::utils::serialization::ObjectWithVersion;
-
 use super::credential_definition::PublicEntityStateType;
+use crate::{
+    core::profile::profile::Profile,
+    errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
+    global::settings,
+    utils::{
+        constants::{DEFAULT_SERIALIZE_VERSION, SCHEMA_ID, SCHEMA_JSON},
+        serialization::ObjectWithVersion,
+    },
+};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct SchemaData {

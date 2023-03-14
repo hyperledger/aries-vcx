@@ -8,14 +8,17 @@ pub mod revocation_registry_delta;
 pub mod integration_tests {
     use std::sync::Arc;
 
-    use crate::common::primitives::revocation_registry::generate_rev_reg;
-    use crate::common::test_utils::{
-        create_and_store_credential_def, create_and_store_nonrevocable_credential_def, create_and_write_test_schema,
+    use crate::{
+        common::{
+            primitives::revocation_registry::generate_rev_reg,
+            test_utils::{
+                create_and_store_credential_def, create_and_store_nonrevocable_credential_def,
+                create_and_write_test_schema,
+            },
+        },
+        errors::error::AriesVcxErrorKind,
+        utils::{constants::DEFAULT_SCHEMA_ATTRS, devsetup::SetupProfile, get_temp_dir_path},
     };
-    use crate::errors::error::AriesVcxErrorKind;
-    use crate::utils::constants::DEFAULT_SCHEMA_ATTRS;
-    use crate::utils::devsetup::SetupProfile;
-    use crate::utils::get_temp_dir_path;
 
     #[tokio::test]
     async fn test_rev_reg_def_fails_for_cred_def_created_without_revocation() {

@@ -1,22 +1,32 @@
-use std::collections::HashMap;
-
-use messages::protocols::issuance::credential::Credential;
-use messages::protocols::revocation_notification::revocation_notification::RevocationNotification;
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
 use agency_client::agency_client::AgencyClient;
+use messages::{
+    a2a::A2AMessage,
+    protocols::{
+        issuance::{
+            credential::Credential, credential_offer::CredentialOffer, credential_proposal::CredentialProposalData,
+        },
+        revocation_notification::revocation_notification::RevocationNotification,
+    },
+};
 
-use crate::common::credentials::get_cred_rev_id;
-use crate::core::profile::profile::Profile;
-use crate::errors::error::prelude::*;
-use crate::handlers::connection::mediated_connection::MediatedConnection;
-use crate::handlers::revocation_notification::receiver::RevocationNotificationReceiver;
-use crate::protocols::issuance::actions::CredentialIssuanceAction;
-use crate::protocols::issuance::holder::state_machine::{HolderSM, HolderState};
-use crate::protocols::SendClosure;
-use messages::a2a::A2AMessage;
-use messages::protocols::issuance::credential_offer::CredentialOffer;
-use messages::protocols::issuance::credential_proposal::CredentialProposalData;
+use crate::{
+    common::credentials::get_cred_rev_id,
+    core::profile::profile::Profile,
+    errors::error::prelude::*,
+    handlers::{
+        connection::mediated_connection::MediatedConnection,
+        revocation_notification::receiver::RevocationNotificationReceiver,
+    },
+    protocols::{
+        issuance::{
+            actions::CredentialIssuanceAction,
+            holder::state_machine::{HolderSM, HolderState},
+        },
+        SendClosure,
+    },
+};
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Holder {
@@ -221,10 +231,9 @@ impl Holder {
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
     use agency_client::agency_client::AgencyClient;
-
-    use crate::errors::error::prelude::*;
-    use crate::handlers::connection::mediated_connection::MediatedConnection;
     use messages::a2a::A2AMessage;
+
+    use crate::{errors::error::prelude::*, handlers::connection::mediated_connection::MediatedConnection};
 
     pub async fn get_credential_offer_messages(
         agency_client: &AgencyClient,
@@ -248,14 +257,13 @@ pub mod test_utils {
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
 
-    use crate::common::test_utils::mock_profile;
-    use crate::utils::devsetup::SetupMocks;
-    use messages::protocols::issuance::credential::test_utils::_credential;
-    use messages::protocols::issuance::credential_offer::test_utils::_credential_offer;
-    use messages::protocols::issuance::credential_proposal::test_utils::_credential_proposal_data;
-    use messages::protocols::issuance::credential_request::test_utils::_my_pw_did;
+    use messages::protocols::issuance::{
+        credential::test_utils::_credential, credential_offer::test_utils::_credential_offer,
+        credential_proposal::test_utils::_credential_proposal_data, credential_request::test_utils::_my_pw_did,
+    };
 
     use super::*;
+    use crate::{common::test_utils::mock_profile, utils::devsetup::SetupMocks};
 
     pub fn _send_message() -> Option<SendClosure> {
         Some(Box::new(|_: A2AMessage| Box::pin(async { VcxResult::Ok(()) })))

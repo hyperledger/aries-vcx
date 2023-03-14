@@ -1,11 +1,13 @@
-use std::collections::HashMap;
-use std::ops::Deref;
-use std::ops::DerefMut;
-use std::sync::{Mutex, RwLock, RwLockReadGuard, RwLockWriteGuard};
+use std::{
+    collections::HashMap,
+    ops::{Deref, DerefMut},
+    sync::{Mutex, RwLock, RwLockReadGuard, RwLockWriteGuard},
+};
 
-use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 use futures::future::BoxFuture;
 use rand::Rng;
+
+use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 
 pub struct ObjectCache<T>
 where
@@ -205,7 +207,8 @@ where
                 Err(LibvcxError::from_msg(
                     LibvcxErrorKind::InvalidHandle,
                     format!(
-                        "[ObjectCache: {}] add >> generated handle {} conflicts with existing handle, failed to store object",
+                        "[ObjectCache: {}] add >> generated handle {} conflicts with existing handle, failed to store \
+                         object",
                         self.cache_name, new_handle
                     ),
                 ))

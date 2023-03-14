@@ -1,7 +1,7 @@
+use bs58;
 use regex::Regex;
 
 use crate::errors::error::{SharedVcxError, SharedVcxErrorKind, SharedVcxResult};
-use bs58;
 
 lazy_static! {
     pub static ref REGEX: Regex =

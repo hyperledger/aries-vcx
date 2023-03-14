@@ -1,7 +1,9 @@
+use messages::{
+    diddoc::aries::diddoc::AriesDidDoc,
+    protocols::connection::{invite::Invitation, problem_report::ProblemReport},
+};
+
 use crate::protocols::mediated_connection::invitee::states::invited::InvitedState;
-use messages::diddoc::aries::diddoc::AriesDidDoc;
-use messages::protocols::connection::invite::Invitation;
-use messages::protocols::connection::problem_report::ProblemReport;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct InitialState {

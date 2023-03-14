@@ -10,9 +10,12 @@ pub fn build_problem_report_msg(comment: Option<String>, thread_id: &str) -> Pro
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 mod test {
-    use crate::protocols::common::build_problem_report_msg;
-    use crate::utils::devsetup::{was_in_past, SetupMocks};
     use messages::a2a::MessageId;
+
+    use crate::{
+        protocols::common::build_problem_report_msg,
+        utils::devsetup::{was_in_past, SetupMocks},
+    };
 
     #[test]
     #[cfg(feature = "general_test")]

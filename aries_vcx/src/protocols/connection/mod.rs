@@ -6,6 +6,8 @@ pub mod pairwise_info;
 mod serializable;
 mod trait_bounds;
 
+use std::{error::Error, sync::Arc};
+
 use messages::{
     a2a::{protocol_registry::ProtocolRegistry, A2AMessage},
     diddoc::aries::diddoc::AriesDidDoc,
@@ -14,22 +16,19 @@ use messages::{
         discovery::disclose::{Disclose, ProtocolDescriptor},
     },
 };
-use std::{error::Error, sync::Arc};
 
+pub use self::generic::{GenericConnection, State, ThinState};
+use self::{
+    generic::GenericState,
+    pairwise_info::PairwiseInfo,
+    trait_bounds::{CompletedState, HandleProblem, TheirDidDoc, ThreadId},
+};
 use crate::{
     errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
     plugins::wallet::base_wallet::BaseWallet,
     transport::Transport,
     utils::encryption_envelope::EncryptionEnvelope,
 };
-
-use self::{
-    generic::GenericState,
-    pairwise_info::PairwiseInfo,
-    trait_bounds::{CompletedState, HandleProblem, TheirDidDoc, ThreadId},
-};
-
-pub use self::generic::{GenericConnection, State, ThinState};
 
 /// A state machine for progressing through the [connection protocol](https://github.com/hyperledger/aries-rfcs/blob/main/features/0160-connection-protocol/README.md).
 #[derive(Clone, Deserialize)]

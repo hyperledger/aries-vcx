@@ -1,5 +1,6 @@
-use crate::errors::error::{AriesVcxError, AriesVcxErrorKind};
 use indy_credx::Error as CredxError;
+
+use crate::errors::error::{AriesVcxError, AriesVcxErrorKind};
 
 impl From<CredxError> for AriesVcxError {
     fn from(err: CredxError) -> Self {

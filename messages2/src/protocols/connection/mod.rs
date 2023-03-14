@@ -6,13 +6,8 @@ pub mod response;
 use std::str::FromStr;
 
 use derive_more::From;
+pub use invitation::CompleteInvitationContent;
 use serde::{de::Error, Deserializer, Serializer};
-
-use crate::{
-    misc::utils::{self, transit_to_aries_msg},
-    msg_types::types::connection::{Connection as ConnectionKind, ConnectionV1, ConnectionV1_0Kind},
-    protocols::traits::DelayedSerde,
-};
 
 use self::{
     invitation::Invitation,
@@ -20,10 +15,12 @@ use self::{
     request::{RequestContent, RequestDecorators},
     response::{ResponseContent, ResponseDecorators},
 };
-
 pub use self::{problem_report::ProblemReport, request::Request, response::Response};
-
-pub use invitation::CompleteInvitationContent;
+use crate::{
+    misc::utils::{self, transit_to_aries_msg},
+    msg_types::types::connection::{Connection as ConnectionKind, ConnectionV1, ConnectionV1_0Kind},
+    protocols::traits::DelayedSerde,
+};
 
 #[derive(Clone, Debug, From)]
 pub enum Connection {

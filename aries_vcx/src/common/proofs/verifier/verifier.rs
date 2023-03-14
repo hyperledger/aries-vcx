@@ -1,12 +1,14 @@
 use std::sync::Arc;
 
-use crate::common::proofs::verifier::verifier_internal::{
-    build_cred_defs_json_verifier, build_rev_reg_defs_json, build_rev_reg_json, build_schemas_json_verifier,
-    get_credential_info, validate_proof_revealed_attributes,
+use crate::{
+    common::proofs::verifier::verifier_internal::{
+        build_cred_defs_json_verifier, build_rev_reg_defs_json, build_rev_reg_json, build_schemas_json_verifier,
+        get_credential_info, validate_proof_revealed_attributes,
+    },
+    core::profile::profile::Profile,
+    errors::error::prelude::*,
+    utils::mockdata::mock_settings::get_mock_result_for_validate_indy_proof,
 };
-use crate::core::profile::profile::Profile;
-use crate::errors::error::prelude::*;
-use crate::utils::mockdata::mock_settings::get_mock_result_for_validate_indy_proof;
 
 pub async fn validate_indy_proof(
     profile: &Arc<dyn Profile>,
@@ -56,12 +58,12 @@ pub async fn validate_indy_proof(
 #[cfg(test)]
 #[cfg(feature = "pool_tests")]
 pub mod unit_tests {
-    use crate::common::proofs::proof_request::ProofRequestData;
-    use crate::common::test_utils::create_and_store_nonrevocable_credential;
-    use crate::utils;
-    use crate::utils::devsetup::{init_holder_setup_in_indy_context, SetupProfile};
-
     use super::*;
+    use crate::{
+        common::{proofs::proof_request::ProofRequestData, test_utils::create_and_store_nonrevocable_credential},
+        utils,
+        utils::devsetup::{init_holder_setup_in_indy_context, SetupProfile},
+    };
 
     #[tokio::test]
     async fn test_proof_self_attested_proof_validation() {
@@ -324,8 +326,10 @@ pub mod unit_tests {
 pub mod integration_tests {
     use std::sync::Arc;
 
-    use crate::common::test_utils::{create_indy_proof, create_proof_with_predicate};
-    use crate::utils::devsetup::{init_holder_setup_in_indy_context, SetupProfile};
+    use crate::{
+        common::test_utils::{create_indy_proof, create_proof_with_predicate},
+        utils::devsetup::{init_holder_setup_in_indy_context, SetupProfile},
+    };
 
     #[tokio::test]
     async fn test_prover_verify_proof() {

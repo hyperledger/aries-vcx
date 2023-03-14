@@ -1,7 +1,9 @@
 use std::sync::Mutex;
 
-use crate::errors::error::AgencyClientResult;
-use crate::testing::test_settings::{disable_agency_test_mode, enable_agency_test_mode, get_config_agency_test_mode};
+use crate::{
+    errors::error::AgencyClientResult,
+    testing::test_settings::{disable_agency_test_mode, enable_agency_test_mode, get_config_agency_test_mode},
+};
 
 lazy_static! {
     static ref AGENCY_MOCK: Mutex<AgencyMock> = Mutex::new(AgencyMock::default());
@@ -103,7 +105,10 @@ impl AgencyMockDecrypted {
                 .pop()
                 .expect("No message on AGENCY_MOCK_DECRYPTED_MESSAGES stack to pop")
         } else {
-            debug!("Attempting to obtain decrypted response when none were set, but decrypted messages available - returning empty response...");
+            debug!(
+                "Attempting to obtain decrypted response when none were set, but decrypted messages available - \
+                 returning empty response..."
+            );
             String::new()
         }
     }

@@ -2,11 +2,12 @@ pub mod prover;
 
 use vdrtools::Locator;
 
-use crate::errors::error::VcxResult;
-use crate::global::settings;
-use crate::indy;
-use crate::utils::constants::REV_STATE_JSON;
-use crate::utils::parse_and_validate;
+use crate::{
+    errors::error::VcxResult,
+    global::settings,
+    indy,
+    utils::{constants::REV_STATE_JSON, parse_and_validate},
+};
 
 pub async fn libindy_prover_create_revocation_state(
     tails_file_path: &str,

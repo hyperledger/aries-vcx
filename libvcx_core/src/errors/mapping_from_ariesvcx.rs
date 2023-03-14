@@ -1,5 +1,6 @@
-use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 use aries_vcx::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
+
+use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 
 pub fn map_ariesvcx_result<T>(result: VcxResult<T>) -> LibvcxResult<T> {
     match result {

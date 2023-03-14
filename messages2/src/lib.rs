@@ -8,17 +8,18 @@
 
 pub mod decorators;
 mod error;
+pub mod misc;
 pub mod msg_types;
 pub mod protocols;
-pub mod misc;
 
 use derive_more::From;
 use misc::nothing::Nothing;
-use protocols::traits::{HasKind, ConcreteMessage};
+use protocols::traits::{ConcreteMessage, HasKind};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use uuid::Uuid;
 
 use crate::{
+    misc::utils::MSG_TYPE,
     msg_types::{
         types::{
             basic_message::{BasicMessage as BasicMessageKind, BasicMessageV1, BasicMessageV1_0Kind},
@@ -28,7 +29,6 @@ use crate::{
         },
         MessageType, Protocol,
     },
-    misc::utils::MSG_TYPE,
     protocols::{
         basic_message::BasicMessage, connection::Connection, cred_issuance::CredentialIssuance,
         discover_features::DiscoverFeatures, notification::Ack, out_of_band::OutOfBand, present_proof::PresentProof,
@@ -133,25 +133,28 @@ impl DelayedSerde for AriesMessage {
 /// Custom [`Deserialize`] impl for [`A2AMessage`] to use the `@type` as internal tag,
 /// but deserialize it to a [`MessageType`].
 ///
-/// For readability, the [`MessageType`] matching is done in the [`DelayedSerde::delayed_deserialize`] method.
+/// For readability, the [`MessageType`] matching is done in the
+/// [`DelayedSerde::delayed_deserialize`] method.
 //
 // Yes, we're using some private serde constructs. Here's why I think this is okay:
-//  1) This emulates the derived implementation with the #[serde(tag = "@type")] attribute,
-//     but uses [`MessageType`] instead of some [`Field`] struct that serde generates.
+//  1) This emulates the derived implementation with the #[serde(tag = "@type")] attribute, 
+// but uses [`MessageType`] instead of some [`Field`] struct that serde generates.
 //
-//  2) Without this, the implementation would either rely on something inefficient such as [`Value`] as an intermediary,
-//     use some custom map which fails on duplicate entries as intermediary or basically use [`serde_value`]
-//     which seems to be an old replica of [`Content`] and [`ContentDeserializer`] and require a pretty much
-//     copy paste of [`TaggedContentVisitor`]. Also, [`serde_value::Value`] seems to always alocate.
-//     Using something like `HashMap::<&str, &RawValue>` wouldn't work either, as there are issues flattening
-//     `serde_json::RawValue`. It would also require some custom deserialization afterwards.
+//  2) Without this, the implementation would either rely on something inefficient such as [`Value`]
+// as an intermediary,     use some custom map which fails on duplicate entries as intermediary or
+// basically use [`serde_value`]     which seems to be an old replica of [`Content`] and
+// [`ContentDeserializer`] and require a pretty much     copy paste of [`TaggedContentVisitor`].
+// Also, [`serde_value::Value`] seems to always alocate.     Using something like `HashMap::<&str,
+// &RawValue>` wouldn't work either, as there are issues flattening     `serde_json::RawValue`. It
+// would also require some custom deserialization afterwards.
 //
-//  3) Exposing these parts as public is in progress from serde. When that will happen is still unknown.
-//     See: https://github.com/serde-rs/serde/issues/741
-//     With [`serde_value`] lacking activity and not seeming to get integrated into [`serde`], this will most likely resurface.
+//  3) Exposing these parts as public is in progress from serde. When that will happen is still
+// unknown. See: https://github.com/serde-rs/serde/issues/741. With [`serde_value`] lacking 
+// activity and not seeming to get integrated into [`serde`], this will most likely resurface.
 //
-//  4) Reimplementing this on breaking semver changes is as easy as expanding the derived [`Deserialize`] impl and altering it a bit.
-//     And if that fails, the 2nd argument will still be viable.
+//  4) Reimplementing this on breaking semver changes is as easy as expanding the derived
+// [`Deserialize`] impl and altering it a bit.     And if that fails, the 2nd argument will still be
+// viable.
 //
 //
 // In the event of a `serde` version bump and this breaking, the fix is a matter of
@@ -161,7 +164,7 @@ impl DelayedSerde for AriesMessage {
 // #[serde(tag = "@type")]
 // enum MyStruct {
 //     Var(u8),
-//     Var2(u8)
+//     Var2(u8),
 // }
 // ```
 //
@@ -174,15 +177,15 @@ impl<'de> Deserialize<'de> for AriesMessage {
         use serde::__private::de::{ContentDeserializer, TaggedContentVisitor};
 
         // TaggedContentVisitor is a visitor used in serde_derive for internally tagged enums.
-        // As it visits data, it looks for a certain field (MSG_TYPE here), deserializes it and stores it separately.
-        // The rest of the data is stored as [`Content`], a thin deserialization format that practically acts as a buffer
-        // so the other fields besides the tag are cached.
+        // As it visits data, it looks for a certain field (MSG_TYPE here), deserializes it and stores it
+        // separately. The rest of the data is stored as [`Content`], a thin deserialization format
+        // that practically acts as a buffer so the other fields besides the tag are cached.
         let tag_visitor = TaggedContentVisitor::<MessageType>::new(MSG_TYPE, "internally tagged enum A2AMessage");
         let tagged = deserializer.deserialize_any(tag_visitor)?;
 
-        // The TaggedContent struct has two fields, tag and content, where in our case the tag is `MessageType`
-        // and the content is [`Content`], the cached remaining fields of the serialized data.
-        // Serde uses this [`ContentDeserializer`] to deserialize from that format.
+        // The TaggedContent struct has two fields, tag and content, where in our case the tag is
+        // `MessageType` and the content is [`Content`], the cached remaining fields of the
+        // serialized data. Serde uses this [`ContentDeserializer`] to deserialize from that format.
         let content_deser = ContentDeserializer::<D::Error>::new(tagged.content);
         let MessageType { protocol, kind } = tagged.tag;
 
@@ -243,7 +246,6 @@ where
         C::kind()
     }
 }
-
 
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]

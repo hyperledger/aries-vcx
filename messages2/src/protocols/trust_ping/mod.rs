@@ -6,18 +6,16 @@ use std::str::FromStr;
 use derive_more::From;
 use serde::{de::Error, Deserializer, Serializer};
 
+pub use self::{ping::Ping, ping_response::PingResponse};
+use self::{
+    ping::{PingContent, PingDecorators},
+    ping_response::{PingResponseContent, PingResponseDecorators},
+};
 use crate::{
     misc::utils::transit_to_aries_msg,
     msg_types::types::trust_ping::{TrustPing as TrustPingKind, TrustPingV1, TrustPingV1_0Kind},
     protocols::traits::DelayedSerde,
 };
-
-use self::{
-    ping::{PingContent, PingDecorators},
-    ping_response::{PingResponseContent, PingResponseDecorators},
-};
-
-pub use self::{ping::Ping, ping_response::PingResponse};
 
 #[derive(Clone, Debug, From)]
 pub enum TrustPing {

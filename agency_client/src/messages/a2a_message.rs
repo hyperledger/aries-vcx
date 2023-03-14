@@ -1,16 +1,18 @@
 use serde::{de, Deserialize, Deserializer};
 use serde_json::Value;
 
-use crate::messages::connect::{Connect, ConnectResponse};
-use crate::messages::create_agent::{CreateAgent, CreateAgentResponse};
-use crate::messages::create_key::{CreateKey, CreateKeyResponse};
-use crate::messages::forward::ForwardV2;
-use crate::messages::get_messages::{GetMessages, GetMessagesResponse};
-use crate::messages::message_type::{MessageFamilies, MessageType};
-use crate::messages::sign_up::{SignUp, SignUpResponse};
-use crate::messages::update_com_method::{ComMethodUpdated, UpdateComMethod};
-use crate::messages::update_connection::{UpdateConnection, UpdateConnectionResponse};
-use crate::messages::update_message::{UpdateMessageStatusByConnections, UpdateMessageStatusByConnectionsResponse};
+use crate::messages::{
+    connect::{Connect, ConnectResponse},
+    create_agent::{CreateAgent, CreateAgentResponse},
+    create_key::{CreateKey, CreateKeyResponse},
+    forward::ForwardV2,
+    get_messages::{GetMessages, GetMessagesResponse},
+    message_type::{MessageFamilies, MessageType},
+    sign_up::{SignUp, SignUpResponse},
+    update_com_method::{ComMethodUpdated, UpdateComMethod},
+    update_connection::{UpdateConnection, UpdateConnectionResponse},
+    update_message::{UpdateMessageStatusByConnections, UpdateMessageStatusByConnectionsResponse},
+};
 
 #[derive(Debug, Serialize, PartialEq)]
 #[serde(untagged)]
@@ -187,10 +189,15 @@ impl A2AMessageKinds {
 #[cfg(feature = "general_test")]
 #[cfg(test)]
 mod test {
-    use crate::messages::a2a_message::{A2AMessageKinds, Client2AgencyMessage};
-    use crate::messages::get_messages::GetMessages;
-    use crate::testing::test_utils::SetupMocks;
     use serde_json::json;
+
+    use crate::{
+        messages::{
+            a2a_message::{A2AMessageKinds, Client2AgencyMessage},
+            get_messages::GetMessages,
+        },
+        testing::test_utils::SetupMocks,
+    };
 
     #[test]
     fn test_serialize_deserialize_agency_message() {

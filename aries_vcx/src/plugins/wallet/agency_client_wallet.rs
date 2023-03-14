@@ -1,12 +1,16 @@
 use std::sync::Arc;
 
-use crate::utils::async_fn_iterator::AsyncFnIterator;
+use agency_client::{
+    errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult},
+    wallet::base_agency_client_wallet::BaseAgencyClientWallet,
+};
+use async_trait::async_trait;
 
 use super::base_wallet::BaseWallet;
-use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
-use agency_client::errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
-use agency_client::wallet::base_agency_client_wallet::BaseAgencyClientWallet;
-use async_trait::async_trait;
+use crate::{
+    errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
+    utils::async_fn_iterator::AsyncFnIterator,
+};
 
 #[derive(Debug)]
 pub(crate) struct AgencyClientWallet {

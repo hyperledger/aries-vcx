@@ -6,20 +6,24 @@ use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 use url::Url;
 
-use super::Connection;
-use crate::msg_types::types::connection::ConnectionV1_0Kind;
-use crate::protocols::traits::{ConcreteMessage, HasKind};
-use crate::misc::utils::transit_to_aries_msg;
-
-use self::pairwise::{PairwiseInvitationContent, PwInvitationDecorators};
-use self::public::PublicInvitationContent;
 pub use self::{
     pairwise::{PairwiseDidInvitation, PairwiseInvitation},
     public::PublicInvitation,
 };
+use self::{
+    pairwise::{PairwiseInvitationContent, PwInvitationDecorators},
+    public::PublicInvitationContent,
+};
+use super::Connection;
+use crate::{
+    misc::utils::transit_to_aries_msg,
+    msg_types::types::connection::ConnectionV1_0Kind,
+    protocols::traits::{ConcreteMessage, HasKind},
+};
 
 /// Type used to encapsulate a fully resolved invitation, which
-/// contains all the information necessary for generating a [`crate::protocols::connection::request::Request`].
+/// contains all the information necessary for generating a
+/// [`crate::protocols::connection::request::Request`].
 ///
 /// Other invitation types would get resolved to this.
 // We rely on the URL version of the pairwise invitation because, coincidentally,

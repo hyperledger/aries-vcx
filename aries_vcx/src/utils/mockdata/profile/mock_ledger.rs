@@ -1,8 +1,8 @@
 use async_trait::async_trait;
 
-use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use crate::{
     common::primitives::revocation_registry::RevocationRegistryDefinition,
+    errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
     indy::utils::LibindyMock,
     plugins::ledger::base_ledger::BaseLedger,
     utils::{
@@ -69,8 +69,8 @@ impl BaseLedger for MockLedger {
     }
 
     async fn get_cred_def(&self, cred_def_id: &str, submitter_did: Option<&str>) -> VcxResult<String> {
-        // TODO - FUTURE - below error is required for tests to pass which require a cred def to not exist (libvcx)
-        // ideally we can migrate away from it
+        // TODO - FUTURE - below error is required for tests to pass which require a cred def to not exist
+        // (libvcx) ideally we can migrate away from it
         let rc = LibindyMock::get_result();
         if rc == 309 {
             return Err(AriesVcxError::from_msg(
@@ -149,14 +149,16 @@ impl BaseLedger for MockLedger {
 #[cfg(feature = "general_test")]
 mod unit_tests {
 
-    use crate::errors::error::{AriesVcxErrorKind, VcxResult};
-    use crate::plugins::ledger::base_ledger::BaseLedger;
-
     use super::MockLedger;
+    use crate::{
+        errors::error::{AriesVcxErrorKind, VcxResult},
+        plugins::ledger::base_ledger::BaseLedger,
+    };
 
     #[tokio::test]
     async fn test_unimplemented_methods() {
-        // test used to assert which methods are unimplemented currently, can be removed after all methods implemented
+        // test used to assert which methods are unimplemented currently, can be removed after all methods
+        // implemented
 
         fn assert_unimplemented<T: std::fmt::Debug>(result: VcxResult<T>) {
             assert_eq!(result.unwrap_err().kind(), AriesVcxErrorKind::UnimplementedFeature)

@@ -1,19 +1,24 @@
 use std::sync::Arc;
 
-use crate::error::*;
-use crate::http_client::HttpClient;
-use crate::services::connection::ServiceConnections;
-use crate::storage::object_cache::ObjectCache;
-use crate::storage::Storage;
-use aries_vcx::core::profile::profile::Profile;
-use aries_vcx::handlers::issuance::issuer::Issuer;
-use aries_vcx::messages::a2a::A2AMessage;
-use aries_vcx::messages::protocols::issuance::credential_ack::CredentialAck;
-use aries_vcx::messages::protocols::issuance::credential_offer::OfferInfo;
-use aries_vcx::messages::protocols::issuance::credential_proposal::CredentialProposal;
-use aries_vcx::messages::protocols::issuance::credential_request::CredentialRequest;
-use aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
-use aries_vcx::protocols::SendClosure;
+use aries_vcx::{
+    core::profile::profile::Profile,
+    handlers::issuance::issuer::Issuer,
+    messages::{
+        a2a::A2AMessage,
+        protocols::issuance::{
+            credential_ack::CredentialAck, credential_offer::OfferInfo, credential_proposal::CredentialProposal,
+            credential_request::CredentialRequest,
+        },
+    },
+    protocols::{issuance::issuer::state_machine::IssuerState, SendClosure},
+};
+
+use crate::{
+    error::*,
+    http_client::HttpClient,
+    services::connection::ServiceConnections,
+    storage::{object_cache::ObjectCache, Storage},
+};
 
 #[derive(Clone)]
 struct IssuerWrapper {

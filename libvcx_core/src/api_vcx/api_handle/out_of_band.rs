@@ -1,20 +1,24 @@
 use std::collections::HashMap;
 
-use aries_vcx::common::ledger::transactions::into_did_doc;
-use aries_vcx::handlers::out_of_band::receiver::OutOfBandReceiver;
-use aries_vcx::handlers::out_of_band::sender::OutOfBandSender;
-use aries_vcx::messages::a2a::A2AMessage;
-use aries_vcx::messages::protocols::connection::did::Did;
-use aries_vcx::messages::protocols::connection::invite::Invitation;
-use aries_vcx::messages::protocols::out_of_band::service_oob::ServiceOob;
-use aries_vcx::messages::protocols::out_of_band::{GoalCode, HandshakeProtocol};
+use aries_vcx::{
+    common::ledger::transactions::into_did_doc,
+    handlers::out_of_band::{receiver::OutOfBandReceiver, sender::OutOfBandSender},
+    messages::{
+        a2a::A2AMessage,
+        protocols::{
+            connection::{did::Did, invite::Invitation},
+            out_of_band::{service_oob::ServiceOob, GoalCode, HandshakeProtocol},
+        },
+    },
+};
 
-use crate::api_vcx::api_global::agency_client::get_main_agency_client;
-use crate::api_vcx::api_global::profile::get_main_profile;
-use crate::api_vcx::api_handle::connection;
-use crate::api_vcx::api_handle::mediated_connection::CONNECTION_MAP as MEDIATED_CONS_MAP;
-use crate::api_vcx::api_handle::object_cache::ObjectCache;
-use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
+use crate::{
+    api_vcx::{
+        api_global::{agency_client::get_main_agency_client, profile::get_main_profile},
+        api_handle::{connection, mediated_connection::CONNECTION_MAP as MEDIATED_CONS_MAP, object_cache::ObjectCache},
+    },
+    errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult},
+};
 
 lazy_static! {
     pub static ref OUT_OF_BAND_SENDER_MAP: ObjectCache<OutOfBandSender> =

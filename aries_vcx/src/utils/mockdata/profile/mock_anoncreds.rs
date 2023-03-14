@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 
-use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use crate::{
+    errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
     global::settings,
     indy::utils::LibindyMock,
     plugins::anoncreds::base_anoncreds::BaseAnonCreds,
@@ -202,14 +202,16 @@ impl BaseAnonCreds for MockAnoncreds {
 #[cfg(feature = "general_test")]
 mod unit_tests {
 
-    use crate::errors::error::{AriesVcxErrorKind, VcxResult};
     use crate::{
-        plugins::anoncreds::base_anoncreds::BaseAnonCreds, utils::mockdata::profile::mock_anoncreds::MockAnoncreds,
+        errors::error::{AriesVcxErrorKind, VcxResult},
+        plugins::anoncreds::base_anoncreds::BaseAnonCreds,
+        utils::mockdata::profile::mock_anoncreds::MockAnoncreds,
     };
 
     #[tokio::test]
     async fn test_unimplemented_methods() {
-        // test used to assert which methods are unimplemented currently, can be removed after all methods implemented
+        // test used to assert which methods are unimplemented currently, can be removed after all methods
+        // implemented
 
         fn assert_unimplemented<T: std::fmt::Debug>(result: VcxResult<T>) {
             assert_eq!(result.unwrap_err().kind(), AriesVcxErrorKind::UnimplementedFeature)

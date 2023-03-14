@@ -5,8 +5,10 @@ pub mod presentation_request;
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
-    use crate::concepts::{ack, problem_report};
-    use crate::protocols::proof_presentation::presentation_request::test_utils::_presentation_request;
+    use crate::{
+        concepts::{ack, problem_report},
+        protocols::proof_presentation::presentation_request::test_utils::_presentation_request,
+    };
 
     pub fn _ack() -> ack::Ack {
         ack::test_utils::_ack().set_thread_id(&_presentation_request().id.0)

@@ -1,9 +1,10 @@
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 
-use crate::api::agent::ComMethod;
-use crate::messages::a2a_message::A2AMessageKinds;
-use crate::messages::message_type::MessageType;
+use crate::{
+    api::agent::ComMethod,
+    messages::{a2a_message::A2AMessageKinds, message_type::MessageType},
+};
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct ComMethodUpdated {

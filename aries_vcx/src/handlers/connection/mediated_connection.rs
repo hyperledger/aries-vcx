@@ -1,43 +1,43 @@
 use core::fmt;
-use std::clone::Clone;
-use std::collections::HashMap;
-use std::sync::Arc;
+use std::{clone::Clone, collections::HashMap, sync::Arc};
 
-use futures::future::BoxFuture;
-use futures::stream::StreamExt;
-use serde::de::{Error, MapAccess, Visitor};
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use agency_client::{agency_client::AgencyClient, api::downloaded_message::DownloadedMessage, MessageStatusCode};
+use futures::{future::BoxFuture, stream::StreamExt};
+use messages::{
+    a2a::{protocol_registry::ProtocolRegistry, A2AMessage},
+    diddoc::aries::diddoc::AriesDidDoc,
+    protocols::{
+        basic_message::message::BasicMessage,
+        connection::{invite::Invitation, request::Request},
+        discovery::disclose::{Disclose, ProtocolDescriptor},
+    },
+};
+use serde::{
+    de::{Error, MapAccess, Visitor},
+    Deserialize, Deserializer, Serialize, Serializer,
+};
 use serde_json::Value;
 
-use agency_client::agency_client::AgencyClient;
-use agency_client::api::downloaded_message::DownloadedMessage;
-use agency_client::MessageStatusCode;
-
-use crate::core::profile::profile::Profile;
-use crate::errors::error::prelude::*;
-use crate::handlers::connection::cloud_agent::CloudAgentInfo;
-use crate::handlers::connection::legacy_agent_info::LegacyAgentInfo;
-use crate::handlers::discovery::{respond_discovery_query, send_discovery_query};
-use crate::handlers::trust_ping::TrustPingSender;
-use crate::protocols::mediated_connection::invitee::state_machine::{
-    InviteeFullState, InviteeState, SmConnectionInvitee,
+use crate::{
+    core::profile::profile::Profile,
+    errors::error::prelude::*,
+    handlers::{
+        connection::{cloud_agent::CloudAgentInfo, legacy_agent_info::LegacyAgentInfo},
+        discovery::{respond_discovery_query, send_discovery_query},
+        trust_ping::TrustPingSender,
+    },
+    protocols::{
+        mediated_connection::{
+            invitee::state_machine::{InviteeFullState, InviteeState, SmConnectionInvitee},
+            inviter::state_machine::{InviterFullState, InviterState, SmConnectionInviter},
+            pairwise_info::PairwiseInfo,
+        },
+        oob::{build_handshake_reuse_accepted_msg, build_handshake_reuse_msg},
+        trustping::build_ping_response,
+        SendClosure, SendClosureConnection,
+    },
+    utils::{send_message, serialization::SerializableObjectWithState},
 };
-use crate::protocols::mediated_connection::inviter::state_machine::{
-    InviterFullState, InviterState, SmConnectionInviter,
-};
-use crate::protocols::mediated_connection::pairwise_info::PairwiseInfo;
-use crate::protocols::oob::{build_handshake_reuse_accepted_msg, build_handshake_reuse_msg};
-use crate::protocols::trustping::build_ping_response;
-use crate::protocols::{SendClosure, SendClosureConnection};
-use crate::utils::send_message;
-use crate::utils::serialization::SerializableObjectWithState;
-use messages::a2a::protocol_registry::ProtocolRegistry;
-use messages::a2a::A2AMessage;
-use messages::diddoc::aries::diddoc::AriesDidDoc;
-use messages::protocols::basic_message::message::BasicMessage;
-use messages::protocols::connection::invite::Invitation;
-use messages::protocols::connection::request::Request;
-use messages::protocols::discovery::disclose::{Disclose, ProtocolDescriptor};
 
 #[derive(Clone, PartialEq)]
 pub struct MediatedConnection {
@@ -265,7 +265,8 @@ impl MediatedConnection {
 
     pub fn bootstrap_did_doc(&self) -> Option<AriesDidDoc> {
         match &self.connection_sm {
-            SmConnection::Inviter(_sm_inviter) => None, // TODO: Inviter can remember bootstrap agent too, but we don't need it
+            SmConnection::Inviter(_sm_inviter) => None, /* TODO: Inviter can remember bootstrap agent too, but we */
+            // don't need it
             SmConnection::Invitee(sm_invitee) => sm_invitee.bootstrap_did_doc(),
         }
     }
@@ -585,8 +586,7 @@ impl MediatedConnection {
             }
             SmConnection::Invitee(_) => Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::NotReady,
-                "Invalid operation, called \
-                _step_inviter on Invitee connection.",
+                "Invalid operation, called _step_inviter on Invitee connection.",
             )),
         }
     }
@@ -630,8 +630,7 @@ impl MediatedConnection {
             }
             SmConnection::Inviter(_) => Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::NotReady,
-                "Invalid operation, called \
-                _step_invitee on Inviter connection.",
+                "Invalid operation, called _step_invitee on Inviter connection.",
             )),
         }
     }
@@ -744,8 +743,8 @@ impl MediatedConnection {
         self.remote_vk().map_err(|_err| {
             AriesVcxError::from_msg(
                 AriesVcxErrorKind::NotReady,
-                "Verkey of Connection counterparty \
-                is not known, hence it would be impossible to authenticate message downloaded by id.",
+                "Verkey of Connection counterparty is not known, hence it would be impossible to authenticate message \
+                 downloaded by id.",
             )
         })
     }
@@ -1092,22 +1091,28 @@ impl From<(SmConnectionState, PairwiseInfo, Option<CloudAgentInfo>, String, Stri
 mod tests {
 
     use agency_client::testing::mocking::enable_agency_mocks;
-
-    use crate::common::test_utils::mock_profile;
-    use crate::utils::devsetup::{SetupIndyMocks, SetupMocks};
-    use crate::utils::mockdata::mockdata_mediated_connection::{
-        CONNECTION_SM_INVITEE_COMPLETED, CONNECTION_SM_INVITEE_INVITED, CONNECTION_SM_INVITEE_REQUESTED,
-        CONNECTION_SM_INVITER_COMPLETED,
+    use messages::protocols::{
+        connection::{
+            invite::test_utils::{
+                _pairwise_invitation, _pairwise_invitation_random_id, _public_invitation, _public_invitation_random_id,
+            },
+            request::unit_tests::_request,
+            response::test_utils::_signed_response,
+        },
+        discovery::{disclose::test_utils::_disclose, query::test_utils::_query},
     };
-    use messages::protocols::connection::invite::test_utils::{
-        _pairwise_invitation, _pairwise_invitation_random_id, _public_invitation, _public_invitation_random_id,
-    };
-    use messages::protocols::connection::request::unit_tests::_request;
-    use messages::protocols::connection::response::test_utils::_signed_response;
-    use messages::protocols::discovery::disclose::test_utils::_disclose;
-    use messages::protocols::discovery::query::test_utils::_query;
 
     use super::*;
+    use crate::{
+        common::test_utils::mock_profile,
+        utils::{
+            devsetup::{SetupIndyMocks, SetupMocks},
+            mockdata::mockdata_mediated_connection::{
+                CONNECTION_SM_INVITEE_COMPLETED, CONNECTION_SM_INVITEE_INVITED, CONNECTION_SM_INVITEE_REQUESTED,
+                CONNECTION_SM_INVITER_COMPLETED,
+            },
+        },
+    };
 
     pub fn _pw_info() -> PairwiseInfo {
         PairwiseInfo {

@@ -1,8 +1,9 @@
-use crate::errors::error::AgencyClientResult;
-use crate::messages::a2a_message::A2AMessageKinds;
-use crate::messages::message_type::MessageType;
-use shared_vcx::validation::did::validate_did;
-use shared_vcx::validation::verkey::validate_verkey;
+use shared_vcx::validation::{did::validate_did, verkey::validate_verkey};
+
+use crate::{
+    errors::error::AgencyClientResult,
+    messages::{a2a_message::A2AMessageKinds, message_type::MessageType},
+};
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -67,11 +68,8 @@ impl CreateKeyBuilder {
 #[cfg(feature = "general_test")]
 #[cfg(test)]
 mod tests {
-    use crate::agency_client::AgencyClient;
-    use crate::errors::error::AgencyClientErrorKind;
-    use crate::testing::test_utils::SetupMocks;
-
     use super::*;
+    use crate::{agency_client::AgencyClient, errors::error::AgencyClientErrorKind, testing::test_utils::SetupMocks};
 
     #[test]
     #[cfg(feature = "general_test")]

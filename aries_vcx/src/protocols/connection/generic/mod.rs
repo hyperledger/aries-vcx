@@ -6,7 +6,7 @@ use std::sync::Arc;
 use messages::{a2a::A2AMessage, diddoc::aries::diddoc::AriesDidDoc, protocols::connection::invite::Invitation};
 
 pub use self::thin_state::{State, ThinState};
-
+use super::{trait_bounds::BootstrapDidDoc, wrap_and_send_msg};
 use crate::{
     errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
     plugins::wallet::base_wallet::BaseWallet,
@@ -27,8 +27,6 @@ use crate::{
     transport::Transport,
 };
 
-use super::{trait_bounds::BootstrapDidDoc, wrap_and_send_msg};
-
 /// A type that can encapsulate a [`super::Connection`] of any state.
 /// While mainly used for deserialization, it exposes some methods for retrieving
 /// connection information.
@@ -38,13 +36,13 @@ use super::{trait_bounds::BootstrapDidDoc, wrap_and_send_msg};
 /// and not an [`Option<AriesDidDoc>`] (which is what [`GenericConnection`] provides).
 ///
 /// [`GenericConnection`] implements [`From`] for all [`super::Connection`] states and
-/// [`super::Connection`] implements [`TryFrom`] from [`GenericConnection`], with the conversion failing
-/// if the [`GenericConnection`] is in a different state than the requested one.
+/// [`super::Connection`] implements [`TryFrom`] from [`GenericConnection`], with the conversion
+/// failing if the [`GenericConnection`] is in a different state than the requested one.
 /// This is also the mechanism used for direct deserialization of a [`super::Connection`].
 ///
-/// Because a [`TryFrom`] conversion is fallible and consumes the [`GenericConnection`], a [`ThinState`]
-/// can be retrieved through [`GenericConnection::state`] method at runtime. In that case, a more dynamic conversion
-/// could be done this way:
+/// Because a [`TryFrom`] conversion is fallible and consumes the [`GenericConnection`], a
+/// [`ThinState`] can be retrieved through [`GenericConnection::state`] method at runtime. In that
+/// case, a more dynamic conversion could be done this way:
 ///
 /// ```
 /// # use aries_vcx::protocols::connection::invitee::states::{complete::Complete, initial::Initial};
@@ -205,18 +203,18 @@ impl GenericConnection {
 mod connection_serde_tests {
     #![allow(clippy::unwrap_used)]
 
+    use std::sync::Arc;
+
     use async_trait::async_trait;
-    use messages::protocols::connection::invite::PairwiseInvitation;
-    use messages::protocols::connection::request::Request;
-    use messages::protocols::connection::response::Response;
+    use messages::protocols::connection::{invite::PairwiseInvitation, request::Request, response::Response};
 
     use super::*;
-    use crate::common::signing::sign_connection_response;
-    use crate::core::profile::profile::Profile;
-    use crate::protocols::connection::serializable::*;
-    use crate::protocols::connection::{invitee::InviteeConnection, inviter::InviterConnection, Connection};
-    use crate::utils::mockdata::profile::mock_profile::MockProfile;
-    use std::sync::Arc;
+    use crate::{
+        common::signing::sign_connection_response,
+        core::profile::profile::Profile,
+        protocols::connection::{invitee::InviteeConnection, inviter::InviterConnection, serializable::*, Connection},
+        utils::mockdata::profile::mock_profile::MockProfile,
+    };
 
     impl<'a> From<RefInviteeState<'a>> for InviteeState {
         fn from(value: RefInviteeState<'a>) -> Self {

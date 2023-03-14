@@ -2,29 +2,25 @@ pub mod states;
 
 use std::sync::Arc;
 
-use messages::{diddoc::aries::diddoc::AriesDidDoc, protocols::connection::invite::Invitation};
-
-use crate::{
-    common::ledger::transactions::into_did_doc, core::profile::profile::Profile, errors::error::VcxResult,
-    protocols::connection::trait_bounds::ThreadId, transport::Transport,
+use messages::{
+    a2a::A2AMessage,
+    concepts::ack::Ack,
+    diddoc::aries::diddoc::AriesDidDoc,
+    protocols::connection::{invite::Invitation, request::Request, response::SignedResponse},
 };
 
 use self::states::{
     completed::Completed, initial::Initial, invited::Invited, requested::Requested, responded::Responded,
 };
-
-use messages::{
-    a2a::A2AMessage,
-    concepts::ack::Ack,
-    protocols::connection::{request::Request, response::SignedResponse},
-};
-
 use super::{initiation_type::Invitee, pairwise_info::PairwiseInfo, trait_bounds::BootstrapDidDoc, Connection};
 use crate::{
-    common::signing::decode_signed_connection_response,
-    errors::error::{AriesVcxError, AriesVcxErrorKind},
+    common::{ledger::transactions::into_did_doc, signing::decode_signed_connection_response},
+    core::profile::profile::Profile,
+    errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
     handlers::util::verify_thread_id,
     plugins::wallet::base_wallet::BaseWallet,
+    protocols::connection::trait_bounds::ThreadId,
+    transport::Transport,
 };
 
 /// Convenience alias
@@ -130,7 +126,8 @@ impl InviteeConnection<Invited> {
 }
 
 impl InviteeConnection<Requested> {
-    /// Processes a [`SignedResponse`] from the inviter and transitions to [`InviteeConnection<Responded>`].
+    /// Processes a [`SignedResponse`] from the inviter and transitions to
+    /// [`InviteeConnection<Responded>`].
     ///
     /// # Errors
     ///
@@ -182,7 +179,8 @@ impl InviteeConnection<Requested> {
 }
 
 impl InviteeConnection<Responded> {
-    /// Sends an acknowledgement message to the inviter and transitions to [`InviteeConnection<Completed>`].
+    /// Sends an acknowledgement message to the inviter and transitions to
+    /// [`InviteeConnection<Completed>`].
     ///
     /// # Errors
     ///

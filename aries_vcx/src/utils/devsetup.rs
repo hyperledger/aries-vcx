@@ -1,41 +1,46 @@
-use std::fs;
-use std::future::Future;
-use std::sync::{Arc, Once};
+use std::{
+    fs,
+    future::Future,
+    sync::{Arc, Once},
+};
 
+use agency_client::{
+    agency_client::AgencyClient,
+    configuration::AgentProvisionConfig,
+    testing::mocking::{disable_agency_mocks, enable_agency_mocks, AgencyMockDecrypted},
+};
 use chrono::{DateTime, Duration, Utc};
-
 use futures::future::BoxFuture;
 use vdrtools::{PoolHandle, WalletHandle};
 
-use agency_client::agency_client::AgencyClient;
-use agency_client::configuration::AgentProvisionConfig;
-use agency_client::testing::mocking::{disable_agency_mocks, enable_agency_mocks, AgencyMockDecrypted};
-
-use crate::core::profile::indy_profile::IndySdkProfile;
-use crate::core::profile::modular_wallet_profile::{LedgerPoolConfig, ModularWalletProfile};
-use crate::core::profile::profile::Profile;
-use crate::global::settings;
-use crate::global::settings::init_issuer_config;
-use crate::global::settings::{disable_indy_mocks, enable_indy_mocks, set_test_configs};
-use crate::indy::ledger::pool::test_utils::{
-    create_test_ledger_config, create_tmp_genesis_txn_file, delete_test_pool, open_test_pool,
+use crate::{
+    core::profile::{
+        indy_profile::IndySdkProfile,
+        modular_wallet_profile::{LedgerPoolConfig, ModularWalletProfile},
+        profile::Profile,
+    },
+    global::{
+        settings,
+        settings::{disable_indy_mocks, enable_indy_mocks, init_issuer_config, set_test_configs},
+    },
+    indy::{
+        ledger::pool::{
+            test_utils::{create_test_ledger_config, create_tmp_genesis_txn_file, delete_test_pool, open_test_pool},
+            PoolConfig,
+        },
+        utils::mocks::{did_mocks::DidMocks, pool_mocks::PoolMocks},
+        wallet::{
+            close_wallet, create_and_open_wallet, create_indy_wallet, create_wallet_with_master_secret, delete_wallet,
+            open_wallet, wallet_configure_issuer, WalletConfig,
+        },
+    },
+    plugins::wallet::{base_wallet::BaseWallet, indy_wallet::IndySdkWallet},
+    utils,
+    utils::{
+        constants::GENESIS_PATH, file::write_file, get_temp_dir_path, provision::provision_cloud_agent,
+        test_logger::LibvcxDefaultLogger,
+    },
 };
-use crate::indy::ledger::pool::PoolConfig;
-use crate::indy::utils::mocks::did_mocks::DidMocks;
-use crate::indy::utils::mocks::pool_mocks::PoolMocks;
-use crate::indy::wallet::open_wallet;
-use crate::indy::wallet::{
-    close_wallet, create_and_open_wallet, create_indy_wallet, create_wallet_with_master_secret, delete_wallet,
-    wallet_configure_issuer, WalletConfig,
-};
-use crate::plugins::wallet::base_wallet::BaseWallet;
-use crate::plugins::wallet::indy_wallet::IndySdkWallet;
-use crate::utils;
-use crate::utils::constants::GENESIS_PATH;
-use crate::utils::file::write_file;
-use crate::utils::get_temp_dir_path;
-use crate::utils::provision::provision_cloud_agent;
-use crate::utils::test_logger::LibvcxDefaultLogger;
 
 pub struct SetupEmpty;
 
@@ -372,7 +377,8 @@ impl SetupProfile {
     }
 
     // FUTURE - ideally no tests should be using this method, they should be using the generic init
-    // after modular profile Anoncreds/Ledger methods have all been implemented, all tests should use init()
+    // after modular profile Anoncreds/Ledger methods have all been implemented, all tests should use
+    // init()
     async fn init_indy() -> SetupProfile {
         let (institution_did, wallet_handle) = setup_issuer_wallet().await;
 
@@ -441,7 +447,8 @@ impl SetupProfile {
     }
 
     // FUTURE - ideally no tests should be using this method, they should be using the generic run
-    // after modular profile Anoncreds/Ledger methods have all been implemented, all tests should use run()
+    // after modular profile Anoncreds/Ledger methods have all been implemented, all tests should use
+    // run()
     pub async fn run_indy<F>(f: impl FnOnce(Self) -> F)
     where
         F: Future<Output = ()>,
@@ -458,8 +465,9 @@ impl SetupProfile {
     }
 }
 
-// TODO - FUTURE - delete this method after `SetupProfile::run_indy` is removed. The purpose of this helper method
-// is to return a test profile for a prover/holder given an existing indy-based profile setup (i.e. returned by SetupProfile::run_indy)
+// TODO - FUTURE - delete this method after `SetupProfile::run_indy` is removed. The purpose of this
+// helper method is to return a test profile for a prover/holder given an existing indy-based
+// profile setup (i.e. returned by SetupProfile::run_indy)
 pub async fn init_holder_setup_in_indy_context(indy_issuer_setup: &SetupProfile) -> SetupProfile {
     if SetupProfile::should_run_modular() {
         return SetupProfile::init().await; // create a new modular profile
@@ -643,9 +651,11 @@ pub fn was_in_past(datetime_rfc3339: &str, threshold: Duration) -> chrono::Parse
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use super::*;
-    use chrono::SecondsFormat;
     use std::ops::Sub;
+
+    use chrono::SecondsFormat;
+
+    use super::*;
 
     #[test]
     #[cfg(feature = "general_test")]

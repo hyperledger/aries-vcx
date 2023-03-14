@@ -3,10 +3,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     msg_types::types::revocation::RevocationV2_0Kind,
-    protocols::{
-        notification::{AckContent, AckDecorators, AckStatus},
-        
-    }, Message,
+    protocols::notification::{AckContent, AckDecorators, AckStatus},
+    Message,
 };
 
 pub type AckRevoke = Message<AckRevokeContent, AckDecorators>;

@@ -29,7 +29,15 @@ pub extern "C" fn vcx_credentialdef_create_v2(
     check_useful_c_str!(schema_id, LibvcxErrorKind::InvalidOption);
     check_useful_c_str!(tag, LibvcxErrorKind::InvalidOption);
 
-    trace!("vcx_credentialdef_create_v2(command_handle: {}, source_id: {}, schema_id: {}, tag: {}, support_revocation: {:?})", command_handle, source_id, schema_id, tag, support_revocation);
+    trace!(
+        "vcx_credentialdef_create_v2(command_handle: {}, source_id: {}, schema_id: {}, tag: {}, support_revocation: \
+         {:?})",
+        command_handle,
+        source_id,
+        schema_id,
+        tag,
+        support_revocation
+    );
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         let (rc, handle) = match credential_def::create(source_id, schema_id, tag, support_revocation).await {
             Ok(handle) => {
@@ -38,7 +46,11 @@ pub extern "C" fn vcx_credentialdef_create_v2(
             }
             Err(err) => {
                 set_current_error_vcx(&err);
-                error!("vcx_credentialdef_create_v2_cb(command_handle: {}, rc: {}, credentialdef_handle: {}), source_id: {:?}", command_handle, err, 0, "");
+                error!(
+                    "vcx_credentialdef_create_v2_cb(command_handle: {}, rc: {}, credentialdef_handle: {}), source_id: \
+                     {:?}",
+                    command_handle, err, 0, ""
+                );
                 (err.into(), 0)
             }
         };
@@ -85,7 +97,11 @@ pub extern "C" fn vcx_credentialdef_publish(
             }
             Err(err) => {
                 set_current_error_vcx(&err);
-                error!("vcx_credentialdef_publish_cb(command_handle: {}, rc: {}, credentialdef_handle: {}), source_id: {:?}", command_handle, err, credentialdef_handle, source_id);
+                error!(
+                    "vcx_credentialdef_publish_cb(command_handle: {}, rc: {}, credentialdef_handle: {}), source_id: \
+                     {:?}",
+                    command_handle, err, credentialdef_handle, source_id
+                );
                 cb(command_handle, err.into());
             }
         };
@@ -100,10 +116,11 @@ pub extern "C" fn vcx_credentialdef_publish(
 /// #Params
 /// command_handle: command handle to map callback to user context.
 ///
-/// credentialdef_handle: Credentialdef handle that was provided during creation. Used to access credentialdef object
+/// credentialdef_handle: Credentialdef handle that was provided during creation. Used to access
+/// credentialdef object
 ///
-/// cb: Callback that provides json string of the credentialdef's attributes and provides error status
-///
+/// cb: Callback that provides json string of the credentialdef's attributes and provides error
+/// status
 // #Returns
 /// Error code as a u32
 #[no_mangle]
@@ -141,7 +158,11 @@ pub extern "C" fn vcx_credentialdef_serialize(
             }
             Err(err) => {
                 set_current_error_vcx(&err);
-                error!("vcx_credentialdef_serialize_cb(command_handle: {}, credentialdef_handle: {}, rc: {}, state: {}), source_id: {:?}", command_handle, credentialdef_handle, err, "null", source_id);
+                error!(
+                    "vcx_credentialdef_serialize_cb(command_handle: {}, credentialdef_handle: {}, rc: {}, state: {}), \
+                     source_id: {:?}",
+                    command_handle, credentialdef_handle, err, "null", source_id
+                );
                 cb(command_handle, err.into(), ptr::null_mut());
             }
         };
@@ -152,7 +173,8 @@ pub extern "C" fn vcx_credentialdef_serialize(
     SUCCESS_ERR_CODE
 }
 
-/// Takes a json string representing a credentialdef object and recreates an object matching the json
+/// Takes a json string representing a credentialdef object and recreates an object matching the
+/// json
 ///
 /// #Params
 /// command_handle: command handle to map callback to user context.
@@ -252,7 +274,11 @@ pub extern "C" fn vcx_credentialdef_get_cred_def_id(
             }
             Err(err) => {
                 set_current_error_vcx(&err);
-                error!("vcx_credentialdef_get_cred_def_id(command_handle: {}, cred_def_handle: {}, rc: {}, cred_def_id: {}) source_id: {}", command_handle, cred_def_handle, err, "", source_id);
+                error!(
+                    "vcx_credentialdef_get_cred_def_id(command_handle: {}, cred_def_handle: {}, rc: {}, cred_def_id: \
+                     {}) source_id: {}",
+                    command_handle, cred_def_handle, err, "", source_id
+                );
                 cb(command_handle, err.into(), ptr::null_mut());
             }
         };
@@ -302,10 +328,11 @@ pub extern "C" fn vcx_credentialdef_release(credentialdef_handle: u32) -> u32 {
 /// #Params
 /// command_handle: command handle to map callback to user context.
 ///
-/// credentialdef_handle: Credentialdef handle that was provided during creation. Used to access credentialdef object
+/// credentialdef_handle: Credentialdef handle that was provided during creation. Used to access
+/// credentialdef object
 ///
-/// cb: Callback that provides most current state of the credential definition and error status of request
-///     States:
+/// cb: Callback that provides most current state of the credential definition and error status of
+/// request     States:
 ///         0 = Built
 ///         1 = Published
 ///
@@ -369,10 +396,11 @@ pub extern "C" fn vcx_credentialdef_update_state(
 /// #Params
 /// command_handle: command handle to map callback to user context.
 ///
-/// credentialdef_handle: Credentialdef handle that was provided during creation. Used to access credentialdef object
+/// credentialdef_handle: Credentialdef handle that was provided during creation. Used to access
+/// credentialdef object
 ///
-/// cb: Callback that provides most current state of the credential definition and error status of request
-///     States:
+/// cb: Callback that provides most current state of the credential definition and error status of
+/// request     States:
 ///         0 = Built
 ///         1 = Published
 ///
@@ -444,6 +472,10 @@ mod tests {
     use crate::api_c::cutils::timeout::TimeoutUtils;
 
     use super::*;
+    use crate::{
+        api_c::cutils::{return_types_u32, timeout::TimeoutUtils},
+        errors::error,
+    };
 
     #[test]
     #[cfg(feature = "general_test")]

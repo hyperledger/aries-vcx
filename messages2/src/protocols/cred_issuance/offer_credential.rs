@@ -1,14 +1,12 @@
 use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 
-
-use crate::Message;
+use super::CredentialPreview;
 use crate::{
     decorators::{Attachment, Thread, Timing},
     msg_types::types::cred_issuance::CredentialIssuanceV1_0Kind,
+    Message,
 };
-
-use super::CredentialPreview;
 
 pub type OfferCredential = Message<OfferCredentialContent, OfferCredentialDecorators>;
 

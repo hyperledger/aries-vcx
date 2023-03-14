@@ -1,8 +1,11 @@
-use messages::a2a::A2AMessage;
-use messages::concepts::problem_report::ProblemReport;
-use messages::protocols::proof_presentation::presentation::Presentation;
-use messages::protocols::proof_presentation::presentation_proposal::PresentationProposal;
-use messages::protocols::proof_presentation::presentation_request::PresentationRequest;
+use messages::{
+    a2a::A2AMessage,
+    concepts::problem_report::ProblemReport,
+    protocols::proof_presentation::{
+        presentation::Presentation, presentation_proposal::PresentationProposal,
+        presentation_request::PresentationRequest,
+    },
+};
 
 type Reason = String;
 

@@ -2,7 +2,8 @@ use async_trait::async_trait;
 
 use crate::errors::error::VcxResult;
 
-/// Trait used for implementing a mechanism to send a message, used by [`crate::protocols::connection::Connection`].
+/// Trait used for implementing a mechanism to send a message, used by
+/// [`crate::protocols::connection::Connection`].
 #[async_trait]
 pub trait Transport: Send + Sync {
     async fn send_message(&self, msg: Vec<u8>, service_endpoint: &str) -> VcxResult<()>;

@@ -1,15 +1,13 @@
-use std::env;
-use std::path::PathBuf;
-use std::sync::Arc;
+use std::{env, path::PathBuf, sync::Arc};
 
+use messages::{a2a::A2AMessage, diddoc::aries::diddoc::AriesDidDoc};
 use vdrtools::types::validation::Validatable;
 
-use messages::a2a::A2AMessage;
-use messages::diddoc::aries::diddoc::AriesDidDoc;
-
-use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
-use crate::plugins::wallet::base_wallet::BaseWallet;
-use crate::utils::encryption_envelope::EncryptionEnvelope;
+use crate::{
+    errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
+    plugins::wallet::base_wallet::BaseWallet,
+    utils::encryption_envelope::EncryptionEnvelope,
+};
 
 #[macro_use]
 #[cfg(feature = "test_utils")]

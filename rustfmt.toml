@@ -1,4 +1,12 @@
 edition = "2021"
-use_small_heuristics="Default"
-max_width=120
-
+use_small_heuristics = "Default"
+unstable_features = true
+group_imports = "StdExternalCrate"
+imports_granularity = "Crate"
+format_code_in_doc_comments = true
+format_macro_bodies = true
+format_macro_matchers = true
+format_strings = true
+comment_width = 100
+wrap_comments = true
+max_width = 120

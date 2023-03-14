@@ -2,10 +2,10 @@ use std::{collections::HashMap, sync::Arc};
 
 use serde_json::Value;
 
-use crate::errors::error::prelude::*;
 use crate::{
     common::proofs::{proof_request::ProofRequestData, proof_request_internal::NonRevokedInterval},
     core::profile::profile::Profile,
+    errors::error::prelude::*,
 };
 
 #[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
@@ -205,8 +205,8 @@ pub async fn build_rev_states_json(
                     )
                 })?;
 
-                // TODO: proover should be able to create multiple states of same revocation policy for different timestamps
-                // see ticket IS-1108
+                // TODO: proover should be able to create multiple states of same revocation policy for different
+                // timestamps see ticket IS-1108
                 rtn[rev_reg_id.to_string()] = json!({ timestamp.to_string(): rev_state_json });
                 cred_info.timestamp = Some(timestamp);
 
@@ -276,10 +276,14 @@ pub fn build_requested_credentials_json(
 #[cfg(test)]
 pub mod pool_tests {
 
-    use crate::common::proofs::prover::prover_internal::{build_rev_states_json, CredInfoProver};
-    use crate::utils::constants::{CRED_DEF_ID, CRED_REV_ID, LICENCE_CRED_ID, SCHEMA_ID, TAILS_DIR};
-    use crate::utils::devsetup::SetupProfile;
-    use crate::utils::get_temp_dir_path;
+    use crate::{
+        common::proofs::prover::prover_internal::{build_rev_states_json, CredInfoProver},
+        utils::{
+            constants::{CRED_DEF_ID, CRED_REV_ID, LICENCE_CRED_ID, SCHEMA_ID, TAILS_DIR},
+            devsetup::SetupProfile,
+            get_temp_dir_path,
+        },
+    };
 
     #[tokio::test]
     async fn test_build_rev_states_json_empty() {
@@ -319,17 +323,18 @@ pub mod pool_tests {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use crate::common::test_utils::{indy_handles_to_profile, mock_profile};
-    use crate::utils::devsetup::*;
-    use crate::utils::{
-        constants::{
-            ADDRESS_CRED_DEF_ID, ADDRESS_CRED_ID, ADDRESS_CRED_REV_ID, ADDRESS_REV_REG_ID, ADDRESS_SCHEMA_ID,
-            CRED_DEF_ID, CRED_REV_ID, LICENCE_CRED_ID, REV_REG_ID, REV_STATE_JSON, SCHEMA_ID, TAILS_DIR,
-        },
-        get_temp_dir_path,
-    };
-
     use super::*;
+    use crate::{
+        common::test_utils::{indy_handles_to_profile, mock_profile},
+        utils::{
+            constants::{
+                ADDRESS_CRED_DEF_ID, ADDRESS_CRED_ID, ADDRESS_CRED_REV_ID, ADDRESS_REV_REG_ID, ADDRESS_SCHEMA_ID,
+                CRED_DEF_ID, CRED_REV_ID, LICENCE_CRED_ID, REV_REG_ID, REV_STATE_JSON, SCHEMA_ID, TAILS_DIR,
+            },
+            devsetup::*,
+            get_temp_dir_path,
+        },
+    };
 
     fn proof_req_no_interval() -> ProofRequestData {
         let proof_req = json!({

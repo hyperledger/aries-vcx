@@ -1,12 +1,20 @@
-use messages::concepts::ack::please_ack::AckOn;
-use messages::protocols::revocation_notification::revocation_ack::RevocationAck;
-use messages::protocols::revocation_notification::revocation_notification::{RevocationFormat, RevocationNotification};
+use messages::{
+    concepts::ack::please_ack::AckOn,
+    protocols::revocation_notification::{
+        revocation_ack::RevocationAck,
+        revocation_notification::{RevocationFormat, RevocationNotification},
+    },
+};
 
-use crate::errors::error::prelude::*;
-use crate::protocols::revocation_notification::receiver::states::finished::FinishedState;
-use crate::protocols::revocation_notification::receiver::states::initial::InitialState;
-use crate::protocols::revocation_notification::receiver::states::received::NotificationReceivedState;
-use crate::protocols::SendClosure;
+use crate::{
+    errors::error::prelude::*,
+    protocols::{
+        revocation_notification::receiver::states::{
+            finished::FinishedState, initial::InitialState, received::NotificationReceivedState,
+        },
+        SendClosure,
+    },
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct RevocationNotificationReceiverSM {
@@ -122,7 +130,11 @@ impl RevocationNotificationReceiverSM {
         let check_rev_reg_id = |()| -> VcxResult<()> {
             if let Some(rev_reg_id) = parts.first() {
                 if *rev_reg_id != self.rev_reg_id {
-                    Err(AriesVcxError::from_msg(AriesVcxErrorKind::InvalidRevocationDetails, "Revocation registry ID in received notification does not match revocation registry ID of this credential"))
+                    Err(AriesVcxError::from_msg(
+                        AriesVcxErrorKind::InvalidRevocationDetails,
+                        "Revocation registry ID in received notification does not match revocation registry ID of \
+                         this credential",
+                    ))
                 } else {
                     Ok(())
                 }
@@ -136,7 +148,11 @@ impl RevocationNotificationReceiverSM {
         let check_cred_rev_id = |()| -> VcxResult<()> {
             if let Some(cred_rev_id) = parts.get(1) {
                 if *cred_rev_id != self.cred_rev_id {
-                    Err(AriesVcxError::from_msg(AriesVcxErrorKind::InvalidRevocationDetails, "Credential revocation ID in received notification does not match revocation ID of this credential"))
+                    Err(AriesVcxError::from_msg(
+                        AriesVcxErrorKind::InvalidRevocationDetails,
+                        "Credential revocation ID in received notification does not match revocation ID of this \
+                         credential",
+                    ))
                 } else {
                     Ok(())
                 }
@@ -158,9 +174,8 @@ impl RevocationNotificationReceiverSM {
 pub mod test_utils {
     use messages::a2a::A2AMessage;
 
-    use crate::protocols::revocation_notification::test_utils::{_cred_rev_id, _rev_reg_id};
-
     use super::*;
+    use crate::protocols::revocation_notification::test_utils::{_cred_rev_id, _rev_reg_id};
 
     pub fn _receiver() -> RevocationNotificationReceiverSM {
         RevocationNotificationReceiverSM::create(_rev_reg_id(), _cred_rev_id())
@@ -180,13 +195,11 @@ pub mod unit_tests {
 
     use messages::a2a::A2AMessage;
 
+    use super::*;
     use crate::protocols::revocation_notification::{
-        receiver::state_machine::test_utils::_receiver,
-        receiver::state_machine::test_utils::*,
+        receiver::state_machine::test_utils::{_receiver, *},
         test_utils::{_cred_rev_id, _rev_reg_id, _revocation_notification, _send_message},
     };
-
-    use super::*;
 
     async fn _to_revocation_notification_received_state() -> RevocationNotificationReceiverSM {
         let sm = _receiver()

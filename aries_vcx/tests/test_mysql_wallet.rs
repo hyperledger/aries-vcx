@@ -37,18 +37,20 @@ mod test_utils {
 mod dbtests {
     use std::sync::Arc;
 
-    use agency_client::agency_client::AgencyClient;
-    use agency_client::configuration::AgentProvisionConfig;
-    use aries_vcx::global::settings;
-    use aries_vcx::global::settings::init_issuer_config;
-    use aries_vcx::indy::wallet::{
-        close_wallet, create_wallet_with_master_secret, open_wallet, wallet_configure_issuer, WalletConfig,
-        WalletConfigBuilder,
+    use agency_client::{agency_client::AgencyClient, configuration::AgentProvisionConfig};
+    use aries_vcx::{
+        global::{settings, settings::init_issuer_config},
+        indy::wallet::{
+            close_wallet, create_wallet_with_master_secret, open_wallet, wallet_configure_issuer, WalletConfig,
+            WalletConfigBuilder,
+        },
+        plugins::wallet::indy_wallet::IndySdkWallet,
+        utils::{
+            devsetup::{AGENCY_DID, AGENCY_ENDPOINT, AGENCY_VERKEY},
+            provision::provision_cloud_agent,
+            test_logger::LibvcxDefaultLogger,
+        },
     };
-    use aries_vcx::plugins::wallet::indy_wallet::IndySdkWallet;
-    use aries_vcx::utils::devsetup::{AGENCY_DID, AGENCY_ENDPOINT, AGENCY_VERKEY};
-    use aries_vcx::utils::provision::provision_cloud_agent;
-    use aries_vcx::utils::test_logger::LibvcxDefaultLogger;
 
     use crate::test_utils::setup_mysql_walletdb;
 

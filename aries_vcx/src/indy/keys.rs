@@ -1,11 +1,11 @@
-use vdrtools::WalletHandle;
+use vdrtools::{DidMethod, DidValue, KeyInfo, Locator, MyDidInfo, WalletHandle};
 
-use vdrtools::{DidMethod, DidValue, KeyInfo, Locator, MyDidInfo};
-
-use crate::errors::error::prelude::*;
-use crate::global::settings;
-use crate::indy::utils::mocks::did_mocks::{did_mocks_enabled, DidMocks};
-use crate::utils;
+use crate::{
+    errors::error::prelude::*,
+    global::settings,
+    indy::utils::mocks::did_mocks::{did_mocks_enabled, DidMocks},
+    utils,
+};
 
 pub async fn create_and_store_my_did(
     wallet_handle: WalletHandle,

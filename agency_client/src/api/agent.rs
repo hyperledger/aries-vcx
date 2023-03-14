@@ -1,11 +1,18 @@
-use crate::agency_client::AgencyClient;
-use crate::errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
-use crate::messages::a2a_message::Client2AgencyMessage;
-use crate::messages::create_key::CreateKeyBuilder;
-use crate::messages::update_com_method::{ComMethodType, UpdateComMethod};
-use crate::messages::update_connection::DeleteConnectionBuilder;
-use crate::testing::mocking::{agency_mocks_enabled, AgencyMock};
-use crate::testing::{mocking, test_constants};
+use crate::{
+    agency_client::AgencyClient,
+    errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult},
+    messages::{
+        a2a_message::Client2AgencyMessage,
+        create_key::CreateKeyBuilder,
+        update_com_method::{ComMethodType, UpdateComMethod},
+        update_connection::DeleteConnectionBuilder,
+    },
+    testing::{
+        mocking,
+        mocking::{agency_mocks_enabled, AgencyMock},
+        test_constants,
+    },
+};
 
 impl AgencyClient {
     pub async fn delete_connection_agent(

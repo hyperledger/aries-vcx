@@ -1,17 +1,15 @@
-use std::collections::HashMap;
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
-use agency_client::agency_client::AgencyClient;
-use agency_client::api::downloaded_message::DownloadedMessageEncrypted;
-use agency_client::messages::update_message::UIDsByConn;
-use agency_client::wallet::base_agency_client_wallet::BaseAgencyClientWallet;
-
-use crate::agency_client::MessageStatusCode;
-use crate::errors::error::prelude::*;
-use crate::plugins::wallet::agency_client_wallet::ToBaseWallet;
-use crate::protocols::mediated_connection::pairwise_info::PairwiseInfo;
-use crate::utils::encryption_envelope::EncryptionEnvelope;
+use agency_client::{
+    agency_client::AgencyClient, api::downloaded_message::DownloadedMessageEncrypted,
+    messages::update_message::UIDsByConn, wallet::base_agency_client_wallet::BaseAgencyClientWallet,
+};
 use messages::a2a::A2AMessage;
+
+use crate::{
+    agency_client::MessageStatusCode, errors::error::prelude::*, plugins::wallet::agency_client_wallet::ToBaseWallet,
+    protocols::mediated_connection::pairwise_info::PairwiseInfo, utils::encryption_envelope::EncryptionEnvelope,
+};
 
 #[derive(Default, Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct CloudAgentInfo {

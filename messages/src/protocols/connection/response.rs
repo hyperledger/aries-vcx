@@ -1,11 +1,10 @@
-use crate::a2a::message_family::MessageFamilies;
-use crate::a2a::message_type::MessageType;
-use crate::a2a::{A2AMessage, MessageId};
-use crate::concepts::ack::please_ack::PleaseAck;
-use crate::concepts::thread::Thread;
-use crate::concepts::timing::Timing;
-use crate::timing_optional;
 use diddoc::aries::diddoc::AriesDidDoc;
+
+use crate::{
+    a2a::{message_family::MessageFamilies, message_type::MessageType, A2AMessage, MessageId},
+    concepts::{ack::please_ack::PleaseAck, thread::Thread, timing::Timing},
+    timing_optional,
+};
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
 pub struct Response {
@@ -166,10 +165,10 @@ pub mod test_utils {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use crate::protocols::connection::response::test_utils::{_did, _response, _thread_id};
     use diddoc::aries::diddoc::test_utils::*;
 
     use super::*;
+    use crate::protocols::connection::response::test_utils::{_did, _response, _thread_id};
 
     #[test]
     fn test_response_build_works() {

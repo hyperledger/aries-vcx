@@ -1,8 +1,9 @@
+use messages::protocols::{
+    issuance::credential_offer::CredentialOffer, proof_presentation::presentation_request::PresentationRequest,
+};
 use serde_json;
 
 use crate::errors::error::prelude::*;
-use messages::protocols::issuance::credential_offer::CredentialOffer;
-use messages::protocols::proof_presentation::presentation_request::PresentationRequest;
 
 fn _filter_proof_requests_by_name(requests: &str, match_name: &str) -> VcxResult<Vec<PresentationRequest>> {
     let presentation_requests: Vec<PresentationRequest> = serde_json::from_str(requests).map_err(|err| {
@@ -57,7 +58,8 @@ fn _filter_offers_by_comment(offers: &str, match_comment: &str) -> VcxResult<Vec
     Ok(filtered)
 }
 
-// todo: need not to return Result, can be modified to return String, never error - likely for other functions in this file as well
+// todo: need not to return Result, can be modified to return String, never error - likely for other
+// functions in this file as well
 pub fn filter_proof_requests_by_name(requests: &str, name: &str) -> VcxResult<String> {
     let presentation_requests: Vec<PresentationRequest> = _filter_proof_requests_by_name(requests, name)?;
     let filtered: String = serde_json::to_string(&presentation_requests).map_err(|err| {
@@ -89,9 +91,8 @@ pub fn filter_credential_offers_by_comment(offers: &str, comment: &str) -> VcxRe
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use crate::utils::mockdata::mockdata_proof;
-
     use super::*;
+    use crate::utils::mockdata::mockdata_proof;
 
     #[test]
     fn test_filter_proof_requests_by_name() {

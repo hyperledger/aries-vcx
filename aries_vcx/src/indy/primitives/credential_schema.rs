@@ -1,11 +1,12 @@
-use vdrtools::{PoolHandle, WalletHandle};
+use vdrtools::{AttributeNames, DidValue, Locator, PoolHandle, WalletHandle};
 
-use crate::errors::error::VcxResult;
-use crate::global::settings;
-use crate::indy::ledger::transactions::{
-    _check_schema_response, build_schema_request, set_endorser, sign_and_submit_to_ledger,
+use crate::{
+    errors::error::VcxResult,
+    global::settings,
+    indy::ledger::transactions::{
+        _check_schema_response, build_schema_request, set_endorser, sign_and_submit_to_ledger,
+    },
 };
-use vdrtools::{AttributeNames, DidValue, Locator};
 
 // consider relocating out of primitive
 pub async fn publish_schema(

@@ -1,7 +1,6 @@
 use std::sync::Arc;
 
-use crate::errors::error::VcxResult;
-use crate::plugins::wallet::base_wallet::BaseWallet;
+use crate::{errors::error::VcxResult, plugins::wallet::base_wallet::BaseWallet};
 
 #[derive(Default, Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct PairwiseInfo {

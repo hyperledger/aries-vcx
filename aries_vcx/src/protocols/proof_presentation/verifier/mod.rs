@@ -1,6 +1,6 @@
-use crate::errors::error::prelude::*;
-use crate::global::settings;
-use crate::protocols::proof_presentation::verifier::messages::VerifierMessages;
+use crate::{
+    errors::error::prelude::*, global::settings, protocols::proof_presentation::verifier::messages::VerifierMessages,
+};
 
 pub mod messages;
 pub mod state_machine;

@@ -1,5 +1,9 @@
 use std::ptr::null;
 
+use aries_vcx::{
+    indy::wallet::{RestoreWalletConfigs, WalletConfig},
+    vdrtools::{CommandHandle, SearchHandle, WalletHandle},
+};
 use futures::future::BoxFuture;
 use libc::c_char;
 
@@ -40,8 +44,9 @@ use libvcx_core::api_vcx::api_global::wallet::{
 ///   "wallet_key_derivation": "ARGON2I_MOD",
 ///   "wallet_type": "postgres_storage",
 ///   "storage_config": "{\"url\":\"localhost:5432\"}",
-///   "storage_credentials": "{\"account\":\"postgres\",\"password\":\"password_123\",\"admin_account\":\"postgres\",\"admin_password\":\"password_foo\"}"
-/// }
+///   "storage_credentials":
+/// "{\"account\":\"postgres\",\"password\":\"password_123\",\"admin_account\":\"postgres\",\"
+/// admin_password\":\"password_foo\"}" }
 ///
 /// #Returns
 /// Error code as a u32
@@ -159,7 +164,8 @@ pub extern "C" fn vcx_configure_issuer_wallet(
 ///
 /// wallet_config: wallet configuration
 ///
-/// cb: Callback that provides wallet handle as u32 (wrappers require unsigned integer) or error status
+/// cb: Callback that provides wallet handle as u32 (wrappers require unsigned integer) or error
+/// status
 ///
 /// #Returns
 /// Error code as a u32
@@ -279,7 +285,6 @@ pub extern "C" fn vcx_close_main_wallet(
 ///
 /// #Returns
 /// Error code as a u32
-///
 #[no_mangle]
 pub extern "C" fn vcx_wallet_add_record(
     command_handle: CommandHandle,
@@ -347,7 +352,6 @@ pub extern "C" fn vcx_wallet_add_record(
 ///
 /// #Returns
 /// Error code as a u32
-///
 #[no_mangle]
 pub extern "C" fn vcx_wallet_update_record_value(
     command_handle: CommandHandle,
@@ -416,7 +420,6 @@ pub extern "C" fn vcx_wallet_update_record_value(
 ///
 /// #Returns
 /// Error code as a u32
-///
 #[no_mangle]
 pub extern "C" fn vcx_wallet_update_record_tags(
     command_handle: CommandHandle,
@@ -485,7 +488,6 @@ pub extern "C" fn vcx_wallet_update_record_tags(
 ///
 /// #Returns
 /// Error code as a u32
-///
 #[no_mangle]
 pub extern "C" fn vcx_wallet_add_record_tags(
     command_handle: CommandHandle,
@@ -554,7 +556,6 @@ pub extern "C" fn vcx_wallet_add_record_tags(
 ///
 /// #Returns
 /// Error code as a u32
-///
 #[no_mangle]
 pub extern "C" fn vcx_wallet_delete_record_tags(
     command_handle: CommandHandle,
@@ -622,7 +623,6 @@ pub extern "C" fn vcx_wallet_delete_record_tags(
 /// #Returns
 /// Error code as a u32
 /// Error will be a libindy error code
-///
 #[no_mangle]
 pub extern "C" fn vcx_wallet_get_record(
     command_handle: CommandHandle,
@@ -695,7 +695,6 @@ pub extern "C" fn vcx_wallet_get_record(
 /// #Returns
 /// Error code as a u32
 /// Error will be a libindy error code
-///
 #[no_mangle]
 pub extern "C" fn vcx_wallet_delete_record(
     command_handle: CommandHandle,
@@ -1027,11 +1026,11 @@ pub extern "C" fn vcx_wallet_export(
 /// Note this endpoint is EXPERIMENTAL. Function signature and behaviour may change
 /// in the future releases.
 ///
-/// config: "{"wallet_name":"","wallet_key":"","exported_wallet_path":"","backup_key":"","key_derivation":""}"
-/// exported_wallet_path: Path of the file that contains exported wallet content
-/// backup_key: Key used when creating the backup of the wallet (For encryption/decrption)
-/// Optional<key_derivation>: method of key derivation used by libindy. By default, libvcx uses ARGON2I_INT
-/// cb: Callback that provides the success/failure of the api call.
+/// config: "{"wallet_name":"","wallet_key":"","exported_wallet_path":"","backup_key":"","
+/// key_derivation":""}" exported_wallet_path: Path of the file that contains exported wallet
+/// content backup_key: Key used when creating the backup of the wallet (For encryption/decrption)
+/// Optional<key_derivation>: method of key derivation used by libindy. By default, libvcx uses
+/// ARGON2I_INT cb: Callback that provides the success/failure of the api call.
 /// #Returns
 /// Error code - success indicates that the api call was successfully created and execution
 /// is scheduled to begin in a separate thread.

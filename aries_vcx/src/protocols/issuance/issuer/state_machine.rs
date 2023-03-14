@@ -1,32 +1,36 @@
-use std::collections::HashMap;
-use std::fmt::Display;
-use std::sync::Arc;
+use std::{collections::HashMap, fmt::Display, sync::Arc};
 
-use crate::core::profile::profile::Profile;
-use messages::concepts::ack::Ack;
-use messages::concepts::problem_report::ProblemReport;
+use messages::{
+    a2a::{A2AMessage, MessageId},
+    concepts::{ack::Ack, problem_report::ProblemReport},
+    protocols::issuance::{
+        credential::Credential,
+        credential_offer::{CredentialOffer, OfferInfo},
+        credential_proposal::CredentialProposal,
+        credential_request::CredentialRequest,
+        CredentialPreviewData,
+    },
+    status::Status,
+};
 
-use crate::common::credentials::encoding::encode_attributes;
-use crate::common::credentials::is_cred_revoked;
-use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
-use crate::protocols::common::build_problem_report_msg;
-use crate::protocols::issuance::actions::CredentialIssuanceAction;
-use crate::protocols::issuance::issuer::states::credential_sent::CredentialSentState;
-use crate::protocols::issuance::issuer::states::finished::FinishedState;
-use crate::protocols::issuance::issuer::states::initial::InitialIssuerState;
-use crate::protocols::issuance::issuer::states::offer_sent::OfferSentState;
-use crate::protocols::issuance::issuer::states::offer_set::OfferSetState;
-use crate::protocols::issuance::issuer::states::proposal_received::ProposalReceivedState;
-use crate::protocols::issuance::issuer::states::requested_received::RequestReceivedState;
-use crate::protocols::issuance::verify_thread_id;
-use crate::protocols::SendClosure;
-use messages::a2a::{A2AMessage, MessageId};
-use messages::protocols::issuance::credential::Credential;
-use messages::protocols::issuance::credential_offer::{CredentialOffer, OfferInfo};
-use messages::protocols::issuance::credential_proposal::CredentialProposal;
-use messages::protocols::issuance::credential_request::CredentialRequest;
-use messages::protocols::issuance::CredentialPreviewData;
-use messages::status::Status;
+use crate::{
+    common::credentials::{encoding::encode_attributes, is_cred_revoked},
+    core::profile::profile::Profile,
+    errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
+    protocols::{
+        common::build_problem_report_msg,
+        issuance::{
+            actions::CredentialIssuanceAction,
+            issuer::states::{
+                credential_sent::CredentialSentState, finished::FinishedState, initial::InitialIssuerState,
+                offer_sent::OfferSentState, offer_set::OfferSetState, proposal_received::ProposalReceivedState,
+                requested_received::RequestReceivedState,
+            },
+            verify_thread_id,
+        },
+        SendClosure,
+    },
+};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum IssuerFullState {
@@ -546,7 +550,16 @@ async fn _create_credential(
 ) -> VcxResult<(Credential, Option<String>)> {
     let anoncreds = Arc::clone(profile).inject_anoncreds();
     let offer = offer.offers_attach.content()?;
-    trace!("Issuer::_create_credential >>> request: {:?}, rev_reg_id: {:?}, tails_file: {:?}, offer: {}, cred_data: {}, thread_id: {}", request, rev_reg_id, tails_file, offer, cred_data, thread_id);
+    trace!(
+        "Issuer::_create_credential >>> request: {:?}, rev_reg_id: {:?}, tails_file: {:?}, offer: {}, cred_data: {}, \
+         thread_id: {}",
+        request,
+        rev_reg_id,
+        tails_file,
+        offer,
+        cred_data,
+        thread_id
+    );
     if !request.from_thread(thread_id) {
         return Err(AriesVcxError::from_msg(
             AriesVcxErrorKind::InvalidJson,
@@ -568,19 +581,24 @@ async fn _create_credential(
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use crate::common::test_utils::mock_profile;
-    use crate::test::source_id;
-    use crate::utils::constants::LIBINDY_CRED_OFFER;
-    use crate::utils::devsetup::SetupMocks;
-    use messages::a2a::A2AMessage;
-    use messages::concepts::problem_report::ProblemReport;
-    use messages::protocols::issuance::credential::test_utils::_credential;
-    use messages::protocols::issuance::credential_offer::test_utils::{_credential_offer, _offer_info};
-    use messages::protocols::issuance::credential_proposal::test_utils::_credential_proposal;
-    use messages::protocols::issuance::credential_request::test_utils::{_credential_request, _credential_request_1};
-    use messages::protocols::issuance::test_utils::{_credential_ack, _problem_report};
+    use messages::{
+        a2a::A2AMessage,
+        concepts::problem_report::ProblemReport,
+        protocols::issuance::{
+            credential::test_utils::_credential,
+            credential_offer::test_utils::{_credential_offer, _offer_info},
+            credential_proposal::test_utils::_credential_proposal,
+            credential_request::test_utils::{_credential_request, _credential_request_1},
+            test_utils::{_credential_ack, _problem_report},
+        },
+    };
 
     use super::*;
+    use crate::{
+        common::test_utils::mock_profile,
+        test::source_id,
+        utils::{constants::LIBINDY_CRED_OFFER, devsetup::SetupMocks},
+    };
 
     pub fn _rev_reg_id() -> String {
         String::from("TEST_REV_REG_ID")
@@ -657,11 +675,15 @@ pub mod unit_tests {
     }
 
     mod build_messages {
-        use crate::protocols::issuance::issuer::state_machine::{build_credential_message, build_credential_offer};
-        use crate::utils::constants::LIBINDY_CRED_OFFER;
-        use crate::utils::devsetup::{was_in_past, SetupMocks};
-        use messages::a2a::MessageId;
-        use messages::protocols::issuance::CredentialPreviewData;
+        use messages::{a2a::MessageId, protocols::issuance::CredentialPreviewData};
+
+        use crate::{
+            protocols::issuance::issuer::state_machine::{build_credential_message, build_credential_offer},
+            utils::{
+                constants::LIBINDY_CRED_OFFER,
+                devsetup::{was_in_past, SetupMocks},
+            },
+        };
 
         #[test]
         #[cfg(feature = "general_test")]

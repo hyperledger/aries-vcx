@@ -2,10 +2,11 @@ use std::{collections::HashMap, sync::Arc};
 
 use time::get_time;
 
-use crate::core::profile::profile::Profile;
-use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
-
 use super::primitives::revocation_registry_delta::RevocationRegistryDelta;
+use crate::{
+    core::profile::profile::Profile,
+    errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
+};
 
 pub mod encoding;
 
@@ -45,10 +46,13 @@ pub async fn is_cred_revoked(profile: &Arc<dyn Profile>, rev_reg_id: &str, rev_i
 #[cfg(feature = "pool_tests")]
 mod integration_tests {
     use super::*;
-
-    use crate::common::test_utils::create_and_store_credential;
-    use crate::utils::constants::DEFAULT_SCHEMA_ATTRS;
-    use crate::utils::devsetup::{init_holder_setup_in_indy_context, SetupProfile};
+    use crate::{
+        common::test_utils::create_and_store_credential,
+        utils::{
+            constants::DEFAULT_SCHEMA_ATTRS,
+            devsetup::{init_holder_setup_in_indy_context, SetupProfile},
+        },
+    };
 
     #[tokio::test]
     async fn test_prover_get_credential() {

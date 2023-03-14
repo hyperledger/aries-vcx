@@ -1,21 +1,25 @@
-use std::collections::HashMap;
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
-use crate::error::*;
-use crate::http_client::HttpClient;
-use crate::storage::object_cache::ObjectCache;
-use crate::storage::Storage;
-use aries_vcx::core::profile::profile::Profile;
-use aries_vcx::handlers::proof_presentation::prover::Prover;
-use aries_vcx::messages::a2a::A2AMessage;
-use aries_vcx::messages::protocols::proof_presentation::presentation_ack::PresentationAck;
-use aries_vcx::messages::protocols::proof_presentation::presentation_proposal::PresentationProposalData;
-use aries_vcx::messages::protocols::proof_presentation::presentation_request::PresentationRequest;
-use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
-use aries_vcx::protocols::SendClosure;
+use aries_vcx::{
+    core::profile::profile::Profile,
+    handlers::proof_presentation::prover::Prover,
+    messages::{
+        a2a::A2AMessage,
+        protocols::proof_presentation::{
+            presentation_ack::PresentationAck, presentation_proposal::PresentationProposalData,
+            presentation_request::PresentationRequest,
+        },
+    },
+    protocols::{proof_presentation::prover::state_machine::ProverState, SendClosure},
+};
 use serde_json::Value;
 
 use super::connection::ServiceConnections;
+use crate::{
+    error::*,
+    http_client::HttpClient,
+    storage::{object_cache::ObjectCache, Storage},
+};
 
 #[derive(Clone)]
 struct ProverWrapper {

@@ -6,7 +6,13 @@ use std::str::FromStr;
 use derive_more::From;
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 
+pub use self::{disclose::Disclose, query::Query};
+use self::{
+    disclose::{DiscloseContent, DiscloseDecorators},
+    query::{QueryContent, QueryDecorators},
+};
 use crate::{
+    misc::utils::transit_to_aries_msg,
     msg_types::{
         actor::Actor,
         types::discover_features::{
@@ -14,15 +20,8 @@ use crate::{
         },
         Protocol,
     },
-    protocols::traits::DelayedSerde, misc::utils::transit_to_aries_msg,
+    protocols::traits::DelayedSerde,
 };
-
-use self::{
-    disclose::{DiscloseContent, DiscloseDecorators},
-    query::{QueryContent, QueryDecorators},
-};
-
-pub use self::{disclose::Disclose, query::Query};
 
 #[derive(Clone, Debug, From)]
 pub enum DiscoverFeatures {

@@ -1,32 +1,38 @@
-use indy_vdr as vdr;
-use std::collections::hash_map::RandomState;
-use std::collections::HashMap;
-use std::sync::Arc;
-use vdr::ledger::requests::schema::{AttributeNames, Schema, SchemaV1};
+use std::{
+    collections::{hash_map::RandomState, HashMap},
+    sync::Arc,
+};
 
 use async_trait::async_trait;
+use indy_vdr as vdr;
 use serde_json::Value;
 use tokio::sync::oneshot;
-use vdr::common::error::VdrError;
-use vdr::config::PoolConfig as IndyVdrPoolConfig;
-use vdr::ledger::identifiers::{CredentialDefinitionId, RevocationRegistryId, SchemaId};
-use vdr::ledger::requests::author_agreement::TxnAuthrAgrmtAcceptanceData;
-use vdr::ledger::RequestBuilder;
-use vdr::pool::{PoolBuilder, PoolTransactions};
-use vdr::pool::{PoolRunner, PreparedRequest, ProtocolVersion, RequestResult};
-use vdr::utils::did::DidValue;
-use vdr::utils::Qualifiable;
-
-use crate::common::primitives::revocation_registry::RevocationRegistryDefinition;
-use crate::core::profile::modular_wallet_profile::LedgerPoolConfig;
-use crate::core::profile::profile::Profile;
-use crate::errors::error::VcxResult;
-use crate::errors::error::{AriesVcxError, AriesVcxErrorKind};
-use crate::global::settings;
-use crate::utils::author_agreement::get_txn_author_agreement;
-use crate::utils::json::{AsTypeOrDeserializationError, TryGetIndex};
+use vdr::{
+    common::error::VdrError,
+    config::PoolConfig as IndyVdrPoolConfig,
+    ledger::{
+        identifiers::{CredentialDefinitionId, RevocationRegistryId, SchemaId},
+        requests::{
+            author_agreement::TxnAuthrAgrmtAcceptanceData,
+            schema::{AttributeNames, Schema, SchemaV1},
+        },
+        RequestBuilder,
+    },
+    pool::{PoolBuilder, PoolRunner, PoolTransactions, PreparedRequest, ProtocolVersion, RequestResult},
+    utils::{did::DidValue, Qualifiable},
+};
 
 use super::base_ledger::BaseLedger;
+use crate::{
+    common::primitives::revocation_registry::RevocationRegistryDefinition,
+    core::profile::{modular_wallet_profile::LedgerPoolConfig, profile::Profile},
+    errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
+    global::settings,
+    utils::{
+        author_agreement::get_txn_author_agreement,
+        json::{AsTypeOrDeserializationError, TryGetIndex},
+    },
+};
 
 pub struct IndyVdrLedgerPool {
     // visibility strictly for internal unit testing
@@ -516,17 +522,17 @@ fn _get_response_json_data_field(response_json: &str) -> VcxResult<Value> {
 mod unit_tests {
     use std::sync::Arc;
 
-    use crate::errors::error::{AriesVcxErrorKind, VcxResult};
+    use super::IndyVdrLedger;
     use crate::{
         common::{primitives::revocation_registry::RevocationRegistryDefinition, test_utils::mock_profile},
+        errors::error::{AriesVcxErrorKind, VcxResult},
         plugins::ledger::{base_ledger::BaseLedger, indy_vdr_ledger::IndyVdrLedgerPool},
     };
 
-    use super::IndyVdrLedger;
-
     #[tokio::test]
     async fn test_unimplemented_methods() {
-        // test used to assert which methods are unimplemented currently, can be removed after all methods implemented
+        // test used to assert which methods are unimplemented currently, can be removed after all methods
+        // implemented
 
         fn assert_unimplemented<T: std::fmt::Debug>(result: VcxResult<T>) {
             assert_eq!(result.unwrap_err().kind(), AriesVcxErrorKind::UnimplementedFeature)

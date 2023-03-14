@@ -1,26 +1,22 @@
-use std::clone::Clone;
-use std::sync::Arc;
+use std::{clone::Clone, sync::Arc};
 
 use agency_client::agency_client::AgencyClient;
+use messages::{
+    a2a::A2AMessage,
+    concepts::attachment::AttachmentId,
+    diddoc::aries::diddoc::AriesDidDoc,
+    protocols::{
+        connection::invite::Invitation,
+        issuance::{credential::Credential, credential_offer::CredentialOffer, credential_request::CredentialRequest},
+        out_of_band::{invitation::OutOfBandInvitation, service_oob::ServiceOob},
+        proof_presentation::{presentation::Presentation, presentation_request::PresentationRequest},
+    },
+};
 
-use crate::common::ledger::transactions::resolve_service;
-use crate::core::profile::profile::Profile;
-use crate::errors::error::prelude::*;
-use crate::handlers::connection::mediated_connection::MediatedConnection;
-use crate::protocols::connection::GenericConnection;
-use messages::a2a::A2AMessage;
-use messages::concepts::attachment::AttachmentId;
-use messages::diddoc::aries::diddoc::AriesDidDoc;
-use messages::protocols::connection::invite::Invitation;
-use messages::protocols::issuance::credential::Credential;
-use messages::protocols::issuance::credential_offer::CredentialOffer;
-use messages::protocols::issuance::credential_request::CredentialRequest;
-use messages::protocols::out_of_band::invitation::OutOfBandInvitation;
-
-use messages::protocols::proof_presentation::presentation::Presentation;
-use messages::protocols::proof_presentation::presentation_request::PresentationRequest;
-
-use messages::protocols::out_of_band::service_oob::ServiceOob;
+use crate::{
+    common::ledger::transactions::resolve_service, core::profile::profile::Profile, errors::error::prelude::*,
+    handlers::connection::mediated_connection::MediatedConnection, protocols::connection::GenericConnection,
+};
 
 #[derive(Default, Debug, PartialEq, Clone)]
 pub struct OutOfBandReceiver {
@@ -32,8 +28,14 @@ impl OutOfBandReceiver {
         trace!("OutOfBandReceiver::create_from_a2a_msg >>> msg: {:?}", msg);
         match msg {
             A2AMessage::OutOfBandInvitation(oob) => Ok(OutOfBandReceiver { oob: oob.clone() }),
-            m => Err(AriesVcxError::from_msg(AriesVcxErrorKind::InvalidMessageFormat,
-                                                 format!("Expected OutOfBandInvitation message to create OutOfBandReceiver, but received message of unknown type: {:?}", m))),
+            m => Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidMessageFormat,
+                format!(
+                    "Expected OutOfBandInvitation message to create OutOfBandReceiver, but received message of \
+                     unknown type: {:?}",
+                    m
+                ),
+            )),
         }
     }
 

@@ -4,9 +4,23 @@ use std::{
     sync::Arc,
 };
 
-use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
+use async_trait::async_trait;
+use credx::{
+    types::{
+        Credential as CredxCredential, CredentialDefinition, CredentialDefinitionId, CredentialOffer,
+        CredentialRequestMetadata, CredentialRevocationState, DidValue, MasterSecret, PresentCredentials, Presentation,
+        PresentationRequest, RevocationRegistry, RevocationRegistryDefinition, RevocationRegistryDelta,
+        RevocationRegistryId, Schema, SchemaId,
+    },
+    ursa::{bn::BigNumber, cl::MasterSecret as UrsaMasterSecret},
+};
+use indy_credx as credx;
+use serde_json::Value;
+
+use super::base_anoncreds::BaseAnonCreds;
 use crate::{
     core::profile::profile::Profile,
+    errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
     plugins::wallet::base_wallet::AsyncFnIteratorCollect,
     utils::{
         constants::ATTRS,
@@ -14,23 +28,6 @@ use crate::{
         uuid::uuid,
     },
 };
-use async_trait::async_trait;
-use credx::{
-    types::{
-        Credential as CredxCredential, CredentialDefinitionId, CredentialRequestMetadata, CredentialRevocationState,
-        DidValue, MasterSecret, PresentCredentials, Presentation, PresentationRequest, RevocationRegistry,
-        RevocationRegistryDefinition, RevocationRegistryDelta, RevocationRegistryId, Schema, SchemaId,
-    },
-    ursa::bn::BigNumber,
-};
-use credx::{
-    types::{CredentialDefinition, CredentialOffer},
-    ursa::cl::MasterSecret as UrsaMasterSecret,
-};
-use indy_credx as credx;
-use serde_json::Value;
-
-use super::base_anoncreds::BaseAnonCreds;
 
 const CATEGORY_CREDENTIAL: &str = "VCX_CREDENTIAL";
 const CATEGORY_LINK_SECRET: &str = "VCX_LINK_SECRET";
@@ -232,19 +229,13 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         Err(unimplemented_method_err("credx issuer_create_credential"))
     }
 
-    /// * `requested_credentials_json`: either a credential or self-attested attribute for each requested attribute
-    ///     {
-    ///         "self_attested_attributes": {
-    ///             "self_attested_attribute_referent": string
-    ///         },
-    ///         "requested_attributes": {
-    ///             "requested_attribute_referent_1": {"cred_id": string, "timestamp": Optional<number>, revealed: <bool> }},
-    ///             "requested_attribute_referent_2": {"cred_id": string, "timestamp": Optional<number>, revealed: <bool> }}
-    ///         },
-    ///         "requested_predicates": {
-    ///             "requested_predicates_referent_1": {"cred_id": string, "timestamp": Optional<number> }},
-    ///         }
-    ///     }
+    /// * `requested_credentials_json`: either a credential or self-attested attribute for each
+    ///   requested attribute { "self_attested_attributes": { "self_attested_attribute_referent":
+    ///   string }, "requested_attributes": { "requested_attribute_referent_1": {"cred_id": string,
+    ///   "timestamp": Optional<number>, revealed: <bool> }}, "requested_attribute_referent_2":
+    ///   {"cred_id": string, "timestamp": Optional<number>, revealed: <bool> }} },
+    ///   "requested_predicates": { "requested_predicates_referent_1": {"cred_id": string,
+    ///   "timestamp": Optional<number> }}, } }
     async fn prover_create_proof(
         &self,
         proof_req_json: &str,
@@ -333,7 +324,8 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             }
         }
 
-        // add all accumulated requested attributes and requested predicates to credx [PresentCredential] object
+        // add all accumulated requested attributes and requested predicates to credx [PresentCredential]
+        // object
         for (_cred_id, (credential, timestamp, rev_state, req_attr_refts_revealed, req_preds_refts)) in
             proof_details_by_cred_id.iter()
         {
@@ -809,14 +801,17 @@ where
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 mod unit_tests {
-    use crate::errors::error::{AriesVcxErrorKind, VcxResult};
-    use crate::{common::test_utils::mock_profile, plugins::anoncreds::base_anoncreds::BaseAnonCreds};
-
     use super::IndyCredxAnonCreds;
+    use crate::{
+        common::test_utils::mock_profile,
+        errors::error::{AriesVcxErrorKind, VcxResult},
+        plugins::anoncreds::base_anoncreds::BaseAnonCreds,
+    };
 
     #[tokio::test]
     async fn test_unimplemented_methods() {
-        // test used to assert which methods are unimplemented currently, can be removed after all methods implemented
+        // test used to assert which methods are unimplemented currently, can be removed after all methods
+        // implemented
 
         fn assert_unimplemented<T: std::fmt::Debug>(result: VcxResult<T>) {
             assert_eq!(result.unwrap_err().kind(), AriesVcxErrorKind::UnimplementedFeature)

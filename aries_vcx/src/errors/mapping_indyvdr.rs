@@ -1,6 +1,9 @@
+use indy_vdr::{
+    common::error::{VdrError, VdrErrorKind},
+    utils::ValidationError,
+};
+
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind};
-use indy_vdr::common::error::{VdrError, VdrErrorKind};
-use indy_vdr::utils::ValidationError;
 
 impl From<VdrError> for AriesVcxError {
     fn from(err: VdrError) -> Self {

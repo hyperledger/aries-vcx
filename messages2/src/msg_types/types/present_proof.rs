@@ -3,12 +3,11 @@ use messages_macros::MessageType;
 use strum_macros::{AsRefStr, EnumString};
 use transitive::TransitiveFrom;
 
-use crate::{msg_types::actor::Actor, msg_types::registry::get_supported_version};
-
 use super::{
     traits::{MajorVersion, MinorVersion, ProtocolName},
     Protocol,
 };
+use crate::msg_types::{actor::Actor, registry::get_supported_version};
 
 #[derive(Copy, Clone, Debug, From, TryInto, PartialEq, MessageType)]
 #[semver(protocol = "present-proof")]

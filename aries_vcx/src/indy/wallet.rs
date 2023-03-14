@@ -1,12 +1,16 @@
 use vdrtools::{
-    types::domain::wallet::{default_key_derivation_method, KeyDerivationMethod},
-    types::errors::IndyErrorKind,
+    types::{
+        domain::wallet::{default_key_derivation_method, KeyDerivationMethod},
+        errors::IndyErrorKind,
+    },
     Locator, SearchHandle, WalletHandle,
 };
 
-use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
-use crate::global::settings;
-use crate::indy::{credentials::holder, keys};
+use crate::{
+    errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
+    global::settings,
+    indy::{credentials::holder, keys},
+};
 
 #[derive(Clone, Debug, Default, Builder, Serialize, Deserialize)]
 #[builder(setter(into, strip_option), default)]
@@ -579,9 +583,9 @@ pub async fn close_wallet(wallet_handle: WalletHandle) -> VcxResult<()> {
 #[cfg(feature = "general_test")]
 #[cfg(test)]
 mod test {
-    use crate::errors::error::AriesVcxErrorKind;
-    use crate::indy::wallet::add_wallet_record;
-    use crate::utils::devsetup::SetupLibraryWallet;
+    use crate::{
+        errors::error::AriesVcxErrorKind, indy::wallet::add_wallet_record, utils::devsetup::SetupLibraryWallet,
+    };
 
     #[tokio::test]
     async fn test_add_record() {

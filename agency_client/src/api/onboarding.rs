@@ -1,15 +1,18 @@
 use std::sync::Arc;
 
-use crate::agency_client::AgencyClient;
-use crate::configuration::AgencyClientConfig;
-use crate::errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
-use crate::messages::a2a_message::Client2AgencyMessage;
-use crate::messages::connect::{Connect, ConnectResponse};
-use crate::messages::create_agent::{CreateAgent, CreateAgentResponse};
-use crate::messages::sign_up::{SignUp, SignUpResponse};
-use crate::testing::mocking::AgencyMockDecrypted;
-use crate::testing::test_constants;
-use crate::wallet::base_agency_client_wallet::BaseAgencyClientWallet;
+use crate::{
+    agency_client::AgencyClient,
+    configuration::AgencyClientConfig,
+    errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult},
+    messages::{
+        a2a_message::Client2AgencyMessage,
+        connect::{Connect, ConnectResponse},
+        create_agent::{CreateAgent, CreateAgentResponse},
+        sign_up::{SignUp, SignUpResponse},
+    },
+    testing::{mocking::AgencyMockDecrypted, test_constants},
+    wallet::base_agency_client_wallet::BaseAgencyClientWallet,
+};
 
 impl AgencyClient {
     async fn _connect(

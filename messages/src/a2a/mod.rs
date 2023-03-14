@@ -1,33 +1,35 @@
 use serde::{de, ser, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 
-use crate::concepts::ack::Ack;
-use crate::concepts::problem_report::ProblemReport as CommonProblemReport;
-use crate::protocols::basic_message::message::BasicMessage;
-use crate::protocols::connection::invite::{PairwiseInvitation, PublicInvitation};
-use crate::protocols::connection::problem_report::ProblemReport as ConnectionProblemReport;
-use crate::protocols::connection::request::Request;
-use crate::protocols::connection::response::SignedResponse;
-use crate::protocols::discovery::disclose::Disclose;
-use crate::protocols::discovery::query::Query;
-use crate::protocols::issuance::credential::Credential;
-use crate::protocols::issuance::credential_offer::CredentialOffer;
-use crate::protocols::issuance::credential_proposal::CredentialProposal;
-use crate::protocols::issuance::credential_request::CredentialRequest;
-use crate::protocols::out_of_band::handshake_reuse::OutOfBandHandshakeReuse;
-use crate::protocols::out_of_band::handshake_reuse_accepted::OutOfBandHandshakeReuseAccepted;
-use crate::protocols::out_of_band::invitation::OutOfBandInvitation;
-use crate::protocols::proof_presentation::presentation::Presentation;
-use crate::protocols::proof_presentation::presentation_proposal::PresentationProposal;
-use crate::protocols::proof_presentation::presentation_request::PresentationRequest;
-use crate::protocols::revocation_notification::revocation_ack::RevocationAck;
-use crate::protocols::revocation_notification::revocation_notification::RevocationNotification;
-use crate::protocols::routing::forward::Forward;
-use crate::protocols::trust_ping::ping::Ping;
-use crate::protocols::trust_ping::ping_response::PingResponse;
-
-use self::message_family::MessageFamilies;
-use self::message_type::MessageType;
+use self::{message_family::MessageFamilies, message_type::MessageType};
+use crate::{
+    concepts::{ack::Ack, problem_report::ProblemReport as CommonProblemReport},
+    protocols::{
+        basic_message::message::BasicMessage,
+        connection::{
+            invite::{PairwiseInvitation, PublicInvitation},
+            problem_report::ProblemReport as ConnectionProblemReport,
+            request::Request,
+            response::SignedResponse,
+        },
+        discovery::{disclose::Disclose, query::Query},
+        issuance::{
+            credential::Credential, credential_offer::CredentialOffer, credential_proposal::CredentialProposal,
+            credential_request::CredentialRequest,
+        },
+        out_of_band::{
+            handshake_reuse::OutOfBandHandshakeReuse, handshake_reuse_accepted::OutOfBandHandshakeReuseAccepted,
+            invitation::OutOfBandInvitation,
+        },
+        proof_presentation::{
+            presentation::Presentation, presentation_proposal::PresentationProposal,
+            presentation_request::PresentationRequest,
+        },
+        revocation_notification::{revocation_ack::RevocationAck, revocation_notification::RevocationNotification},
+        routing::forward::Forward,
+        trust_ping::{ping::Ping, ping_response::PingResponse},
+    },
+};
 
 pub mod message_family;
 pub mod message_type;
@@ -416,10 +418,11 @@ impl A2AMessage {
 pub mod test_a2a_serialization {
     use serde_json::Value;
 
-    use crate::a2a::{A2AMessage, MessageId};
-    use crate::concepts::ack::{Ack, AckStatus};
-    use crate::protocols::connection::request::Request;
-    use crate::protocols::routing::forward::Forward;
+    use crate::{
+        a2a::{A2AMessage, MessageId},
+        concepts::ack::{Ack, AckStatus},
+        protocols::{connection::request::Request, routing::forward::Forward},
+    };
 
     #[test]
     fn test_serialization_deserialization_connection_request() {
@@ -486,7 +489,8 @@ pub mod test_a2a_serialization {
 
     #[test]
     #[cfg(feature = "general_test")]
-    // todo: Add support for aries @type-ed messages on vcxagency-node, then we can stop giving fwd messages special treatment, delete this test
+    // todo: Add support for aries @type-ed messages on vcxagency-node, then we can stop giving fwd
+    // messages special treatment, delete this test
     fn test_serialize_forward_message_to_legacy_format() {
         let a2a_msg =
             A2AMessage::Forward(Forward::new("BzCbsNYhMrjHiqZDTUASHg".into(), "{}".as_bytes().to_vec()).unwrap());

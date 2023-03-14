@@ -1,17 +1,19 @@
 use std::sync::Arc;
 
-use aries_vcx::agency_client::agency_client::AgencyClient;
-use aries_vcx::core::profile::profile::Profile;
-use aries_vcx::plugins::wallet::agency_client_wallet::ToBaseAgencyClientWallet;
+use aries_vcx::{
+    agency_client::agency_client::AgencyClient, core::profile::profile::Profile,
+    plugins::wallet::agency_client_wallet::ToBaseAgencyClientWallet,
+};
 
-use crate::agent::agent_config::AgentConfig;
-
-use crate::error::*;
-use crate::services::connection::ServiceConnections;
-use crate::services::{
-    credential_definition::ServiceCredentialDefinitions, holder::ServiceCredentialsHolder,
-    issuer::ServiceCredentialsIssuer, mediated_connection::ServiceMediatedConnections, prover::ServiceProver,
-    revocation_registry::ServiceRevocationRegistries, schema::ServiceSchemas, verifier::ServiceVerifier,
+use crate::{
+    agent::agent_config::AgentConfig,
+    error::*,
+    services::{
+        connection::ServiceConnections, credential_definition::ServiceCredentialDefinitions,
+        holder::ServiceCredentialsHolder, issuer::ServiceCredentialsIssuer,
+        mediated_connection::ServiceMediatedConnections, prover::ServiceProver,
+        revocation_registry::ServiceRevocationRegistries, schema::ServiceSchemas, verifier::ServiceVerifier,
+    },
 };
 
 #[derive(Clone)]

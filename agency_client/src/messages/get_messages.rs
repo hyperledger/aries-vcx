@@ -1,8 +1,9 @@
-use crate::api::downloaded_message::DownloadedMessageEncrypted;
-use crate::errors::error::AgencyClientResult;
-use crate::messages::a2a_message::A2AMessageKinds;
-use crate::messages::message_type::MessageType;
-use crate::MessageStatusCode;
+use crate::{
+    api::downloaded_message::DownloadedMessageEncrypted,
+    errors::error::AgencyClientResult,
+    messages::{a2a_message::A2AMessageKinds, message_type::MessageType},
+    MessageStatusCode,
+};
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]

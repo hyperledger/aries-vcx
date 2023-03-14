@@ -1,8 +1,10 @@
 use std::sync::Arc;
 
-use crate::errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
-use crate::testing::mocking::AgencyMockDecrypted;
-use crate::wallet::base_agency_client_wallet::BaseAgencyClientWallet;
+use crate::{
+    errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult},
+    testing::mocking::AgencyMockDecrypted,
+    wallet::base_agency_client_wallet::BaseAgencyClientWallet,
+};
 
 #[derive(Debug)]
 pub struct EncryptionEnvelope(pub Vec<u8>);
@@ -90,7 +92,14 @@ impl EncryptionEnvelope {
                             "auth_unpack :: sender_vk != expected_vk.... sender_vk={}, expected_vk={}",
                             sender_vk, expected_vk
                         );
-                        return Err(AgencyClientError::from_msg(AgencyClientErrorKind::InvalidJson, format!("Message did not pass authentication check. Expected sender verkey was {}, but actually was {}", expected_vk, sender_vk)));
+                        return Err(AgencyClientError::from_msg(
+                            AgencyClientErrorKind::InvalidJson,
+                            format!(
+                                "Message did not pass authentication check. Expected sender verkey was {}, but \
+                                 actually was {}",
+                                expected_vk, sender_vk
+                            ),
+                        ));
                     }
                 }
                 None => {

@@ -1,18 +1,20 @@
-use vdrtools::{DidValue, Locator};
+use vdrtools::{DidValue, Locator, PoolHandle, WalletHandle};
 
-use vdrtools::{PoolHandle, WalletHandle};
-
-use crate::common::ledger::transactions::{Request, Response};
-use crate::errors::error::prelude::*;
-use crate::global::settings;
-use crate::indy::utils::mocks::pool_mocks::PoolMocks;
-use crate::utils;
-use crate::utils::constants::{
-    rev_def_json, CRED_DEF_ID, CRED_DEF_JSON, CRED_DEF_REQ, REVOC_REG_TYPE, REV_REG_DELTA_JSON, REV_REG_ID,
-    REV_REG_JSON, SCHEMA_ID, SCHEMA_JSON, SCHEMA_TXN, SUBMIT_SCHEMA_RESPONSE,
+use crate::{
+    common::ledger::transactions::{Request, Response},
+    errors::error::prelude::*,
+    global::settings,
+    indy::utils::mocks::pool_mocks::PoolMocks,
+    utils,
+    utils::{
+        constants::{
+            rev_def_json, CRED_DEF_ID, CRED_DEF_JSON, CRED_DEF_REQ, REVOC_REG_TYPE, REV_REG_DELTA_JSON, REV_REG_ID,
+            REV_REG_JSON, SCHEMA_ID, SCHEMA_JSON, SCHEMA_TXN, SUBMIT_SCHEMA_RESPONSE,
+        },
+        parse_and_validate,
+        random::generate_random_did,
+    },
 };
-use crate::utils::parse_and_validate;
-use crate::utils::random::generate_random_did;
 
 pub async fn multisign_request(wallet_handle: WalletHandle, did: &str, request: &str) -> VcxResult<String> {
     let res = Locator::instance()
@@ -743,9 +745,8 @@ pub async fn get_cred_def_json(
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 mod test {
-    use crate::utils::devsetup::*;
-
     use super::*;
+    use crate::utils::devsetup::*;
 
     #[test]
     fn test_verify_transaction_can_be_endorsed() {
@@ -770,8 +771,7 @@ mod test {
 #[cfg(test)]
 #[cfg(feature = "pool_tests")]
 pub mod integration_tests {
-    use crate::indy::ledger::transactions::get_ledger_txn;
-    use crate::utils::devsetup::SetupWalletPool;
+    use crate::{indy::ledger::transactions::get_ledger_txn, utils::devsetup::SetupWalletPool};
 
     #[tokio::test]
     async fn test_get_txn() {

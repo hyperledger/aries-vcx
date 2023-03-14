@@ -3,10 +3,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     msg_types::types::present_proof::PresentProofV1_0Kind,
-    protocols::{
-        notification::{AckContent, AckDecorators, AckStatus},
-        
-    }, Message,
+    protocols::notification::{AckContent, AckDecorators, AckStatus},
+    Message,
 };
 
 pub type AckPresentation = Message<AckPresentationContent, AckDecorators>;
