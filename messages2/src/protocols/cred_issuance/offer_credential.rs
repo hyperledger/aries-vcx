@@ -1,7 +1,7 @@
 use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 
-use crate::protocols::traits::ConcreteMessage;
+
 use crate::Message;
 use crate::{
     decorators::{Attachment, Thread, Timing},

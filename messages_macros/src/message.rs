@@ -57,7 +57,7 @@ pub fn message_impl(input: DeriveInput) -> SynResult<TokenStream> {
     let kind = Ident::new(kind, s.span());
 
     let expanded = quote! {
-        impl<#params> ConcreteMessage for #name<#params>
+        impl<#params> crate::protocols::traits::ConcreteMessage for #name<#params>
         #where_clause
         {
             type Kind = #kind;

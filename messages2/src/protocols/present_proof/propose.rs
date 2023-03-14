@@ -13,7 +13,7 @@ use crate::{
         },
         MessageType, Protocol,
     },
-    protocols::traits::ConcreteMessage, Message,
+    Message,
 };
 
 pub type ProposePresentation = Message<ProposePresentationContent, ProposePresentationDecorators>;

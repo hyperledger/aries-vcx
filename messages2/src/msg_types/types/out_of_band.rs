@@ -3,14 +3,10 @@ use messages_macros::MessageType;
 use strum_macros::{AsRefStr, EnumString};
 use transitive::TransitiveFrom;
 
-use crate::{
-    error::{MsgTypeError, MsgTypeResult},
-    msg_types::actor::Actor,
-    msg_types::registry::get_supported_version,
-};
+use crate::{msg_types::actor::Actor, msg_types::registry::get_supported_version};
 
 use super::{
-    traits::{MajorVersion, MessageKind, MinorVersion, ProtocolName},
+    traits::{MajorVersion, MinorVersion, ProtocolName},
     Protocol,
 };
 

@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     decorators::{Attachment, PleaseAck, Thread, Timing},
     msg_types::types::cred_issuance::CredentialIssuanceV1_0Kind,
-    protocols::traits::ConcreteMessage, Message,
+    Message,
 };
 
 pub type IssueCredential = Message<IssueCredentialContent, IssueCredentialDecorators>;

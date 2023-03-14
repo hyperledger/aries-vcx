@@ -11,10 +11,9 @@ use crate::{
             traits::MessageKind,
         },
         MessageType, Protocol,
-    }, Message,
+    },
+    Message,
 };
-
-use crate::protocols::traits::ConcreteMessage;
 
 pub type Response = Message<ResponseContent, ResponseDecorators>;
 

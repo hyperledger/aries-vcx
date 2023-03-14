@@ -3,10 +3,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     msg_types::types::cred_issuance::CredentialIssuanceV1_0Kind,
-    protocols::{
-        notification::{AckContent, AckDecorators, AckStatus},
-        traits::ConcreteMessage,
-    }, Message,
+    protocols::notification::{AckContent, AckDecorators, AckStatus},
+    Message,
 };
 
 pub type AckCredential = Message<AckCredentialContent, AckDecorators>;

@@ -5,7 +5,7 @@ use crate::{
     decorators::{Thread, Timing},
     misc::nothing::Nothing,
     msg_types::types::out_of_band::OutOfBandV1_1Kind,
-    protocols::traits::ConcreteMessage, Message,
+    Message,
 };
 
 pub type HandshakeReuse = Message<HandshakeReuseContent, HandshakeReuseDecorators>;

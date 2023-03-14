@@ -1,14 +1,14 @@
-pub trait ConcreteMessage {
-    type Kind;
-
-    fn kind() -> Self::Kind;
-}
-
 use std::{any::type_name, fmt::Debug};
 
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::msg_types::{types::traits::MessageKind, MsgWithType, Protocol};
+
+pub trait ConcreteMessage {
+    type Kind;
+
+    fn kind() -> Self::Kind;
+}
 
 pub trait HasKind {
     type KindType;

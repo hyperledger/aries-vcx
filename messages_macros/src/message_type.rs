@@ -136,7 +136,7 @@ fn try_get_var_parts(var: Variant) -> SynResult<(Ident, Field)> {
 
 fn process_kind(name: &Ident, parent: Path) -> TokenStream {
     quote! {
-        impl MessageKind for #name {
+        impl crate::msg_types::types::traits::MessageKind for #name {
             type Parent = #parent;
 
             fn parent() -> Self::Parent {
@@ -153,7 +153,7 @@ fn process_minor(name: &Ident, parent: Path, minor: MetaNameValue) -> SynResult<
     };
 
     let expanded = quote! {
-        impl MinorVersion for #name {
+        impl crate::msg_types::types::traits::MinorVersion for #name {
             type Parent = #parent;
 
             const MINOR: u8 = #i;
@@ -192,23 +192,23 @@ fn process_major(
     let num_actors = actors.len();
 
     let expanded = quote! {
-        impl MajorVersion for #name {
-            type Actors = [Actor; #num_actors];
+        impl crate::msg_types::types::traits::MajorVersion for #name {
+            type Actors = [crate::msg_types::actor::Actor; #num_actors];
 
             type Parent = #parent;
 
             const MAJOR: u8 = #i;
 
-            fn resolve_minor_ver(minor: u8) -> MsgTypeResult<Self> {
+            fn resolve_minor_ver(minor: u8) -> crate::error::MsgTypeResult<Self> {
                 let family = Self::Parent::FAMILY;
                 let major = Self::MAJOR;
                 let Some(minor) = get_supported_version(family, major, minor) else {
-                    return Err(MsgTypeError::minor_ver_err(minor));
+                    return Err(crate::error::MsgTypeError::minor_ver_err(minor));
                 };
 
                 match minor {
                     #resolve_fn_match
-                    _ => Err(MsgTypeError::minor_ver_err(minor)),
+                    _ => Err(crate::error::MsgTypeError::minor_ver_err(minor)),
                 }
             }
 
@@ -250,13 +250,13 @@ fn process_family(name: &Ident, family: MetaNameValue, data: Data) -> SynResult<
     }
 
     let expanded = quote! {
-        impl ProtocolName for #name {
+        impl crate::msg_types::types::traits::ProtocolName for #name {
             const FAMILY: &'static str = #s;
 
-            fn resolve_version(major: u8, minor: u8) -> MsgTypeResult<Self> {
+            fn resolve_version(major: u8, minor: u8) -> crate::error::MsgTypeResult<Self> {
                 match major {
                     #resolve_fn_match
-                    _ => Err(MsgTypeError::major_ver_err(major)),
+                    _ => Err(crate::error::MsgTypeError::major_ver_err(major)),
                 }
             }
 

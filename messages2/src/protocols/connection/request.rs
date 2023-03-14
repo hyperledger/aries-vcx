@@ -4,10 +4,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     decorators::{Thread, Timing},
-    msg_types::types::connection::ConnectionV1_0Kind, Message,
+    msg_types::types::connection::ConnectionV1_0Kind,
+    Message,
 };
-
-use crate::protocols::traits::ConcreteMessage;
 
 pub type Request = Message<RequestContent, RequestDecorators>;
 

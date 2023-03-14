@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     decorators::Timing,
     msg_types::{registry::PROTOCOL_REGISTRY, types::discover_features::DiscoverFeaturesV1_0Kind},
-    protocols::traits::ConcreteMessage, Message,
+    Message,
 };
 
 use super::ProtocolDescriptor;

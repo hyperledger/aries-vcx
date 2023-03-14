@@ -7,10 +7,9 @@ use url::Url;
 
 use crate::{
     decorators::{FieldLocalization, Thread, Timing},
-    msg_types::types::report_problem::ReportProblemV1_0Kind, Message,
+    msg_types::types::report_problem::ReportProblemV1_0Kind,
+    Message,
 };
-
-use super::traits::ConcreteMessage;
 
 pub type ProblemReport = Message<ProblemReportContent, ProblemReportDecorators>;
 

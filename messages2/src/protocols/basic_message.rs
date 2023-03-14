@@ -4,10 +4,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     decorators::{MsgLocalization, Thread, Timing},
-    msg_types::types::basic_message::BasicMessageV1_0Kind, Message,
+    msg_types::types::basic_message::BasicMessageV1_0Kind,
+    Message,
 };
-
-use super::traits::ConcreteMessage;
 
 pub type BasicMessage = Message<BasicMessageContent, BasicMessageDecorators>;
 

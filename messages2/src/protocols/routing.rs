@@ -4,8 +4,6 @@ use serde_json::value::RawValue;
 
 use crate::msg_types::types::routing::RoutingV1_0Kind;
 
-use super::traits::ConcreteMessage;
-
 #[derive(Clone, Debug, Deserialize, Serialize, MessageContent)]
 #[message(kind = "RoutingV1_0Kind::Forward")]
 pub struct Forward {

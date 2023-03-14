@@ -5,7 +5,7 @@ use crate::{
     decorators::{Attachment, Timing},
     misc::mime_type::MimeType,
     msg_types::types::out_of_band::OutOfBandV1_1Kind,
-    protocols::{common::service::Service, traits::ConcreteMessage}, Message,
+    protocols::{common::service::Service}, Message,
 };
 
 use super::OobGoalCode;

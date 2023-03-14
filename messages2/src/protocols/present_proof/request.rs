@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     decorators::{Attachment, Thread, Timing},
     msg_types::types::present_proof::PresentProofV1_0Kind,
-    protocols::traits::ConcreteMessage, Message,
+    Message,
 };
 
 pub type RequestPresentation = Message<RequestPresentationContent, RequestPresentationDecorators>;

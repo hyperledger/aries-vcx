@@ -6,7 +6,7 @@ use crate::{
     msg_types::types::connection::ConnectionV1_0Kind, Message,
 };
 
-use crate::protocols::traits::ConcreteMessage;
+
 
 pub type ProblemReport = Message<ProblemReportContent, ProblemReportDecorators>;
 

@@ -5,7 +5,7 @@ use crate::{
     msg_types::types::revocation::RevocationV2_0Kind,
     protocols::{
         notification::{AckContent, AckDecorators, AckStatus},
-        traits::ConcreteMessage,
+        
     }, Message,
 };
 
