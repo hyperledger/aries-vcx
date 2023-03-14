@@ -227,6 +227,7 @@ pub fn get_presentation_verification_status(handle: u32) -> LibvcxResult<VcxPres
     PROOF_MAP.get(handle, |proof| Ok(proof.get_presentation_verification_status().into()))
 }
 
+#[derive(Debug, PartialEq, Eq)]
 pub enum VcxPresentationVerificationStatus {
     Valid,
     Invalid,
@@ -636,7 +637,10 @@ pub mod tests {
             send_proof_request(bad_handle, handle_conn).await.unwrap_err().kind(),
             LibvcxErrorKind::InvalidHandle
         );
-        assert_eq!(get_presentation_verification_status(handle_proof).unwrap(), 0);
+        assert_eq!(
+            get_presentation_verification_status(handle_proof).unwrap(),
+            VcxPresentationVerificationStatus::Unavailable
+        );
         assert_eq!(
             create_proof(
                 "my source id".to_string(),
