@@ -7,15 +7,15 @@ use derive_more::From;
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::{
-    composite_message::{transit_to_aries_msg, Message},
-    delayed_serde::DelayedSerde,
-    message_type::{
+    composite_message::{ Message},
+    msg_types::{
         actor::Actor,
-        message_protocol::discover_features::{
+        types::discover_features::{
             DiscoverFeatures as DiscoverFeaturesKind, DiscoverFeaturesV1, DiscoverFeaturesV1_0Kind,
         },
         Protocol,
     },
+    protocols::traits::DelayedSerde, misc::utils::transit_to_aries_msg,
 };
 
 use self::{

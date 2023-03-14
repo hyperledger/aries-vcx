@@ -3,23 +3,22 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::{
     composite_message::Message,
-    delayed_serde::DelayedSerde,
-    message_type::{
-        message_protocol::{
+    msg_types::{
+        types::{
             basic_message::{BasicMessage as BasicMessageKind, BasicMessageV1, BasicMessageV1_0Kind},
             notification::{Notification, NotificationV1, NotificationV1_0Kind},
             report_problem::{ReportProblem, ReportProblemV1, ReportProblemV1_0Kind},
             routing::{Routing, RoutingV1, RoutingV1_0Kind},
         },
-        serde::MessageType,
-        Protocol,
+        MessageType, Protocol,
     },
+    misc::utils::MSG_TYPE,
     protocols::{
         basic_message::BasicMessage, connection::Connection, cred_issuance::CredentialIssuance,
         discover_features::DiscoverFeatures, notification::Ack, out_of_band::OutOfBand, present_proof::PresentProof,
-        report_problem::ProblemReport, revocation::Revocation, routing::Forward, trust_ping::TrustPing,
+        report_problem::ProblemReport, revocation::Revocation, routing::Forward, traits::DelayedSerde,
+        trust_ping::TrustPing,
     },
-    utils::MSG_TYPE,
 };
 
 #[derive(Clone, Debug, From)]

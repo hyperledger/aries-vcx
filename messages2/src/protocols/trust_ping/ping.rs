@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     composite_message::Message,
     decorators::{Thread, Timing},
-    message_type::message_protocol::trust_ping::TrustPingV1_0Kind,
+    msg_types::types::trust_ping::TrustPingV1_0Kind,
     protocols::traits::ConcreteMessage,
 };
 

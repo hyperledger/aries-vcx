@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::value::RawValue;
 use url::Url;
 
-use crate::mime_type::MimeType;
+use crate::misc::mime_type::MimeType;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]

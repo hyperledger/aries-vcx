@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     composite_message::Message,
     decorators::{Thread, Timing},
-    message_type::message_protocol::notification::NotificationV1_0Kind,
+    msg_types::types::notification::NotificationV1_0Kind,
 };
 
 use super::traits::ConcreteMessage;

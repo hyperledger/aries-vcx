@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use lazy_static::lazy_static;
 
-use crate::message_type::message_protocol::{
+use crate::msg_types::types::{
     basic_message::BasicMessageV1_0,
     connection::ConnectionV1_0,
     cred_issuance::CredentialIssuanceV1_0,

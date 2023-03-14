@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     composite_message::Message,
     decorators::{MsgLocalization, Thread, Timing},
-    message_type::message_protocol::basic_message::BasicMessageV1_0Kind,
+    msg_types::types::basic_message::BasicMessageV1_0Kind,
 };
 
 use super::traits::ConcreteMessage;

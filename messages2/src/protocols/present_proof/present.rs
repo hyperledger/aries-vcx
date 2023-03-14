@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     composite_message::Message,
     decorators::{Attachment, PleaseAck, Thread, Timing},
-    message_type::message_protocol::present_proof::PresentProofV1_0Kind,
+    msg_types::types::present_proof::PresentProofV1_0Kind,
     protocols::traits::ConcreteMessage,
 };
 

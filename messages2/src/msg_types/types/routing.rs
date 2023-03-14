@@ -5,8 +5,8 @@ use transitive::TransitiveFrom;
 
 use crate::{
     error::{MsgTypeError, MsgTypeResult},
-    message_type::actor::Actor,
-    message_type::registry::get_supported_version,
+    msg_types::actor::Actor,
+    msg_types::registry::get_supported_version,
 };
 
 use super::{
@@ -15,27 +15,26 @@ use super::{
 };
 
 #[derive(Copy, Clone, Debug, From, PartialEq, MessageType)]
-#[semver(protocol = "revocation_notification")]
-pub enum Revocation {
-    V2(RevocationV2),
+#[semver(protocol = "routing")]
+pub enum Routing {
+    V1(RoutingV1),
 }
 
 #[derive(Copy, Clone, Debug, From, PartialEq, TransitiveFrom, MessageType)]
-#[transitive(into(all(Revocation, Protocol)))]
-#[semver(major = 2, parent = "Revocation", actors(Actor::Holder, Actor::Issuer))]
-pub enum RevocationV2 {
-    V2_0(RevocationV2_0),
+#[transitive(into(all(Routing, Protocol)))]
+#[semver(major = 1, parent = "Routing", actors(Actor::Mediator))]
+pub enum RoutingV1 {
+    V1_0(RoutingV1_0),
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, TransitiveFrom, MessageType)]
-#[transitive(into(all(RevocationV2, Revocation, Protocol)))]
-#[semver(minor = 0, parent = "RevocationV2")]
-pub struct RevocationV2_0;
+#[transitive(into(all(RoutingV1, Routing, Protocol)))]
+#[semver(minor = 0, parent = "RoutingV1")]
+pub struct RoutingV1_0;
 
 #[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq, MessageType)]
 #[strum(serialize_all = "kebab-case")]
-#[semver(parent = "RevocationV2_0")]
-pub enum RevocationV2_0Kind {
-    Revoke,
-    Ack,
+#[semver(parent = "RoutingV1_0")]
+pub enum RoutingV1_0Kind {
+    Forward,
 }

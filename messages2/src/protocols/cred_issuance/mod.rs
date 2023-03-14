@@ -10,20 +10,19 @@ use derive_more::From;
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::{
-    composite_message::{transit_to_aries_msg, Message},
-    delayed_serde::DelayedSerde,
-    message_type::{
-        message_protocol::{
+    composite_message::Message,
+    msg_types::{
+        types::{
             cred_issuance::{
                 CredentialIssuance as CredentialIssuanceKind, CredentialIssuanceV1, CredentialIssuanceV1_0Kind,
             },
             traits::MessageKind,
         },
-        serde::MessageType,
-        Protocol,
+        MessageType, Protocol,
     },
-    mime_type::MimeType,
-    utils,
+    misc::mime_type::MimeType,
+    misc::utils::{self, transit_to_aries_msg},
+    protocols::traits::DelayedSerde,
 };
 
 use self::{

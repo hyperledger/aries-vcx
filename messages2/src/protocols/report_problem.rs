@@ -8,7 +8,7 @@ use url::Url;
 use crate::{
     composite_message::Message,
     decorators::{FieldLocalization, Thread, Timing},
-    message_type::message_protocol::report_problem::ReportProblemV1_0Kind,
+    msg_types::types::report_problem::ReportProblemV1_0Kind,
 };
 
 use super::traits::ConcreteMessage;

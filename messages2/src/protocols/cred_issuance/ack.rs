@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     composite_message::Message,
-    message_type::message_protocol::cred_issuance::CredentialIssuanceV1_0Kind,
+    msg_types::types::cred_issuance::CredentialIssuanceV1_0Kind,
     protocols::{
         notification::{AckContent, AckDecorators, AckStatus},
         traits::ConcreteMessage,

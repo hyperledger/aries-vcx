@@ -2,7 +2,7 @@ use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 use serde_json::value::RawValue;
 
-use crate::message_type::message_protocol::routing::RoutingV1_0Kind;
+use crate::msg_types::types::routing::RoutingV1_0Kind;
 
 use super::traits::ConcreteMessage;
 

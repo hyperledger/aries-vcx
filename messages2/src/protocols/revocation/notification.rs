@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     composite_message::Message,
     decorators::{PleaseAck, Thread, Timing},
-    message_type::message_protocol::revocation::RevocationV2_0Kind,
+    msg_types::types::revocation::RevocationV2_0Kind,
     protocols::traits::ConcreteMessage,
 };
 

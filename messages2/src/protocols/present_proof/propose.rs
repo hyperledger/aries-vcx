@@ -6,15 +6,14 @@ use serde::{de::Error, Deserialize, Serialize};
 use crate::{
     composite_message::Message,
     decorators::{Thread, Timing},
-    message_type::{
-        message_protocol::{
+    msg_types::{
+        types::{
             present_proof::{PresentProof, PresentProofV1, PresentProofV1_0Kind},
             traits::MessageKind,
         },
-        serde::MessageType,
-        Protocol,
+        MessageType, Protocol,
     },
-    mime_type::MimeType,
+    misc::mime_type::MimeType,
     protocols::traits::ConcreteMessage,
 };
 

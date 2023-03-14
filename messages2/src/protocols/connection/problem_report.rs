@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     composite_message::Message,
     decorators::{MsgLocalization, Thread, Timing},
-    message_type::message_protocol::connection::ConnectionV1_0Kind,
+    msg_types::types::connection::ConnectionV1_0Kind,
 };
 
 use crate::protocols::traits::ConcreteMessage;

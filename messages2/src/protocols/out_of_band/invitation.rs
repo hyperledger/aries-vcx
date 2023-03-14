@@ -4,8 +4,8 @@ use serde::{Deserialize, Serialize};
 use crate::{
     composite_message::Message,
     decorators::{Attachment, Timing},
-    message_type::message_protocol::out_of_band::OutOfBandV1_1Kind,
-    mime_type::MimeType,
+    msg_types::types::out_of_band::OutOfBandV1_1Kind,
+    misc::mime_type::MimeType,
     protocols::{common::service::Service, traits::ConcreteMessage},
 };
 

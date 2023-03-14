@@ -6,13 +6,12 @@ use serde::{de::Error, Deserialize, Serialize};
 use crate::{
     composite_message::Message,
     decorators::{PleaseAck, Thread, Timing},
-    message_type::{
-        message_protocol::{
+    msg_types::{
+        types::{
             connection::{Connection, ConnectionV1, ConnectionV1_0Kind},
             traits::MessageKind,
         },
-        serde::MessageType,
-        Protocol,
+        MessageType, Protocol,
     },
 };
 

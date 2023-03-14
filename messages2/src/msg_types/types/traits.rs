@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use crate::{error::MsgTypeResult, message_type::actor::Actor};
+use crate::{error::MsgTypeResult, msg_types::actor::Actor};
 
 pub trait MessageKind: FromStr + AsRef<str> {
     type Parent: MinorVersion;

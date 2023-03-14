@@ -7,10 +7,10 @@ use serde::{Deserialize, Serialize};
 use url::Url;
 
 use super::Connection;
-use crate::composite_message::{transit_to_aries_msg, Message};
-use crate::delayed_serde::HasKind;
-use crate::message_type::message_protocol::connection::ConnectionV1_0Kind;
-use crate::protocols::traits::ConcreteMessage;
+use crate::composite_message::Message;
+use crate::msg_types::types::connection::ConnectionV1_0Kind;
+use crate::protocols::traits::{ConcreteMessage, HasKind};
+use crate::misc::utils::transit_to_aries_msg;
 
 use self::pairwise::{PairwiseInvitationContent, PwInvitationDecorators};
 use self::public::PublicInvitationContent;

@@ -5,7 +5,7 @@ use crate::composite_message::Message;
 use crate::protocols::traits::ConcreteMessage;
 use crate::{
     decorators::{Attachment, Thread, Timing},
-    message_type::message_protocol::cred_issuance::CredentialIssuanceV1_0Kind,
+    msg_types::types::cred_issuance::CredentialIssuanceV1_0Kind,
 };
 
 use super::CredentialPreview;
