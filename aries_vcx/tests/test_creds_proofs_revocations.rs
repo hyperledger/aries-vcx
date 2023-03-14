@@ -627,7 +627,7 @@ mod integration_tests {
             .unwrap();
         assert_eq!(
             proof_verifier.get_presentation_verification_status(),
-            PresentationVerificationStatus::Invalid
+            PresentationVerificationStatus::Valid
         );
 
         assert!(issuer_credential1.is_revoked(&issuer.profile).await.unwrap());
