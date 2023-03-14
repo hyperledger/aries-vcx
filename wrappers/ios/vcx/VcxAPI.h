@@ -541,7 +541,7 @@
                       completion:(void (^)(NSError *error))completion;
 
 - (void)verifierGetProofMessage:(NSNumber *)proofHandle
-                     completion:(void (^)(NSError *error, NSNumber * state, NSString *responseData))completion;
+                     completion:(void (^)(NSError *error, NSString *responseData))completion;
 
 - (void)verifierProofGetRequestMessage:(NSNumber *)proofHandle
                             completion:(void (^)(NSError *error, NSString *message))completion;
