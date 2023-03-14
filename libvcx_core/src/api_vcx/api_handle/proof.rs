@@ -3,14 +3,14 @@ use serde_json;
 use aries_vcx::common::proofs::proof_request::PresentationRequestData;
 use aries_vcx::handlers::proof_presentation::verifier::Verifier;
 use aries_vcx::messages::a2a::A2AMessage;
-use aries_vcx::protocols::proof_presentation::verifier::state_machine::PresentationVerificationStatus;
+use aries_vcx::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
 use aries_vcx::protocols::SendClosure;
 
 use crate::api_vcx::api_global::profile::get_main_profile;
-use crate::api_vcx::api_handle::{connection, mediated_connection};
 use crate::api_vcx::api_handle::connection::HttpClient;
 use crate::api_vcx::api_handle::object_cache::ObjectCache;
 use crate::api_vcx::api_handle::out_of_band::to_a2a_message;
+use crate::api_vcx::api_handle::{connection, mediated_connection};
 use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 
 lazy_static! {
@@ -223,7 +223,6 @@ pub fn get_presentation_attachment(handle: u32) -> LibvcxResult<String> {
     })
 }
 
-
 pub fn get_presentation_verification_status(handle: u32) -> LibvcxResult<VcxPresentationVerificationStatus> {
     PROOF_MAP.get(handle, |proof| Ok(proof.get_presentation_verification_status().into()))
 }
@@ -249,7 +248,7 @@ impl From<PresentationVerificationStatus> for VcxPresentationVerificationStatus 
         match verification_status {
             PresentationVerificationStatus::Valid => VcxPresentationVerificationStatus::Valid,
             PresentationVerificationStatus::Invalid => VcxPresentationVerificationStatus::Invalid,
-            PresentationVerificationStatus::Unavailable => VcxPresentationVerificationStatus::Unavailable
+            PresentationVerificationStatus::Unavailable() => VcxPresentationVerificationStatus::Unavailable,
         }
     }
 }
@@ -286,8 +285,8 @@ pub mod tests {
             r#"{"support_revocation":false}"#.to_string(),
             "Optional".to_owned(),
         )
-            .await
-            .unwrap()
+        .await
+        .unwrap()
     }
 
     #[tokio::test]
@@ -325,8 +324,8 @@ pub mod tests {
             revocation_details.to_string(),
             "Optional".to_owned(),
         )
-            .await
-            .unwrap();
+        .await
+        .unwrap();
     }
 
     #[tokio::test]
@@ -412,8 +411,8 @@ pub mod tests {
             Some(mockdata_proof::ARIES_PROOF_PRESENTATION),
             handle_conn,
         )
-            .await
-            .unwrap();
+        .await
+        .unwrap();
 
         assert_eq!(get_state(handle_proof).unwrap(), VerifierState::Finished as u32);
     }
@@ -438,8 +437,8 @@ pub mod tests {
             Some(mockdata_proof::ARIES_PROOF_PRESENTATION),
             handle_conn,
         )
-            .await
-            .unwrap();
+        .await
+        .unwrap();
         assert_eq!(get_state(handle_proof).unwrap(), VerifierState::Finished as u32);
     }
 
@@ -463,8 +462,8 @@ pub mod tests {
             Some(mockdata_proof::ARIES_PROOF_PRESENTATION),
             handle_conn,
         )
-            .await
-            .unwrap();
+        .await
+        .unwrap();
         assert_eq!(get_state(handle_proof).unwrap(), VerifierState::Finished as u32);
     }
 
@@ -519,8 +518,8 @@ pub mod tests {
             Some(mockdata_proof::ARIES_PROOF_PRESENTATION),
             handle_conn,
         )
-            .await
-            .unwrap();
+        .await
+        .unwrap();
         assert_eq!(get_state(handle_proof).unwrap(), VerifierState::Finished as u32);
 
         let proof_str = get_presentation_msg(handle_proof).unwrap();
@@ -544,8 +543,8 @@ pub mod tests {
             r#"{"support_revocation":false}"#.to_string(),
             "Optional".to_owned(),
         )
-            .await
-            .unwrap();
+        .await
+        .unwrap();
         let h2 = create_proof(
             "1".to_string(),
             REQUESTED_ATTRS.to_owned(),
@@ -553,8 +552,8 @@ pub mod tests {
             r#"{"support_revocation":false}"#.to_string(),
             "Optional".to_owned(),
         )
-            .await
-            .unwrap();
+        .await
+        .unwrap();
         let h3 = create_proof(
             "1".to_string(),
             REQUESTED_ATTRS.to_owned(),
@@ -562,8 +561,8 @@ pub mod tests {
             r#"{"support_revocation":false}"#.to_string(),
             "Optional".to_owned(),
         )
-            .await
-            .unwrap();
+        .await
+        .unwrap();
         release_all();
         assert_eq!(is_valid_handle(h1), false);
         assert_eq!(is_valid_handle(h2), false);
@@ -617,8 +616,8 @@ pub mod tests {
             Some(mockdata_proof::ARIES_PROOF_PRESENTATION),
             handle_conn,
         )
-            .await
-            .unwrap();
+        .await
+        .unwrap();
         assert_eq!(proof::get_state(handle_proof).unwrap(), VerifierState::Finished as u32);
     }
 
@@ -646,9 +645,9 @@ pub mod tests {
                 r#"{"support_revocation":false}"#.to_string(),
                 "my name".to_string(),
             )
-                .await
-                .unwrap_err()
-                .kind(),
+            .await
+            .unwrap_err()
+            .kind(),
             LibvcxErrorKind::InvalidJson
         );
         assert_eq!(

@@ -40,9 +40,8 @@ pub mod test_utils {
     use aries_vcx::protocols::mediated_connection::invitee::state_machine::InviteeState;
     use aries_vcx::protocols::mediated_connection::inviter::state_machine::InviterState;
     use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
-    use aries_vcx::protocols::proof_presentation::verifier::state_machine::{
-        PresentationVerificationStatus, VerifierState,
-    };
+    use aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;
+    use aries_vcx::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
     use aries_vcx::utils::constants::{DEFAULT_PROOF_NAME, TAILS_DIR, TEST_TAILS_URL};
     use aries_vcx::utils::filters::{filter_credential_offers_by_comment, filter_proof_requests_by_name};
     use aries_vcx::utils::get_temp_dir_path;

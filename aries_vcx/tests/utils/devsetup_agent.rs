@@ -53,9 +53,8 @@ pub mod test_utils {
     use aries_vcx::protocols::mediated_connection::invitee::state_machine::InviteeState;
     use aries_vcx::protocols::mediated_connection::inviter::state_machine::InviterState;
     use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
-    use aries_vcx::protocols::proof_presentation::verifier::state_machine::{
-        PresentationVerificationStatus, VerifierState,
-    };
+    use aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;
+    use aries_vcx::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
     use aries_vcx::utils::devsetup::*;
     use aries_vcx::utils::provision::provision_cloud_agent;
     use vdrtools::{PoolHandle, WalletHandle};

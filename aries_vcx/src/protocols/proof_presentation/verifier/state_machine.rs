@@ -12,6 +12,7 @@ use crate::protocols::proof_presentation::verifier::states::initial::InitialVeri
 use crate::protocols::proof_presentation::verifier::states::presentation_proposal_received::PresentationProposalReceivedState;
 use crate::protocols::proof_presentation::verifier::states::presentation_request_sent::PresentationRequestSentState;
 use crate::protocols::proof_presentation::verifier::states::presentation_request_set::PresentationRequestSetState;
+use crate::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
 use crate::protocols::proof_presentation::verifier::verify_thread_id;
 use crate::protocols::SendClosure;
 use messages::a2a::{A2AMessage, MessageId};
@@ -21,6 +22,7 @@ use messages::protocols::proof_presentation::presentation_ack::PresentationAck;
 use messages::protocols::proof_presentation::presentation_proposal::PresentationProposal;
 use messages::protocols::proof_presentation::presentation_request::PresentationRequest;
 use messages::status::Status;
+use strum_macros::{AsRefStr, EnumString};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct VerifierSM {
@@ -64,13 +66,6 @@ impl Default for VerifierFullState {
     fn default() -> Self {
         Self::Initial(InitialVerifierState::default())
     }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub enum PresentationVerificationStatus {
-    Valid,
-    Invalid,
-    Unavailable,
 }
 
 fn build_verification_ack(thread_id: &str) -> PresentationAck {
@@ -422,11 +417,8 @@ impl VerifierSM {
 
     pub fn get_presentation_verification_status(&self) -> PresentationVerificationStatus {
         match self.state {
-            VerifierFullState::Finished(ref state) => match &state.revocation_status {
-                None => PresentationVerificationStatus::Unavailable,
-                Some(status) => status.clone(),
-            },
-            _ => PresentationVerificationStatus::Unavailable,
+            VerifierFullState::Finished(ref state) => state.revocation_status.clone(),
+            _ => PresentationVerificationStatus::Unavailable(),
         }
     }
 
@@ -479,6 +471,8 @@ impl VerifierSM {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
+    use std::str::FromStr;
+
     use crate::common::proofs::proof_request::test_utils::_presentation_request_data;
     use crate::common::test_utils::mock_profile;
     use crate::test::source_id;
@@ -775,7 +769,7 @@ pub mod unit_tests {
 
             assert_match!(VerifierState::Failed, verifier_sm.get_state());
             assert_match!(
-                PresentationVerificationStatus::Unavailable,
+                PresentationVerificationStatus::Unavailable(),
                 verifier_sm.get_presentation_verification_status()
             );
         }
