@@ -109,7 +109,9 @@ fn proof_get_state(handle: u32) -> napi::Result<u32> {
 
 #[napi]
 fn proof_get_presentation_verification_status(handle: u32) -> napi::Result<u32> {
-    proof::get_presentation_verification_status(handle).map_err(to_napi_err).map(|status| status.code())
+    proof::get_presentation_verification_status(handle)
+        .map_err(to_napi_err)
+        .map(|status| status.code())
 }
 
 #[napi]
