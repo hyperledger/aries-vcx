@@ -15,7 +15,7 @@ use super::{
 };
 
 #[derive(Copy, Clone, Debug, From, PartialEq, MessageType)]
-#[semver(family = "out-of-band")]
+#[semver(protocol = "out-of-band")]
 pub enum OutOfBand {
     V1(OutOfBandV1),
 }

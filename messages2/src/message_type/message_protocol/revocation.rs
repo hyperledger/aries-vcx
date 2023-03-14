@@ -15,7 +15,7 @@ use super::{
 };
 
 #[derive(Copy, Clone, Debug, From, PartialEq, MessageType)]
-#[semver(family = "revocation_notification")]
+#[semver(protocol = "revocation_notification")]
 pub enum Revocation {
     V2(RevocationV2),
 }

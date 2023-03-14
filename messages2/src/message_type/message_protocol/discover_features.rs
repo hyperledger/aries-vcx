@@ -15,7 +15,7 @@ use super::{
 };
 
 #[derive(Copy, Clone, Debug, From, PartialEq, MessageType)]
-#[semver(family = "discover-features")]
+#[semver(protocol = "discover-features")]
 pub enum DiscoverFeatures {
     V1(DiscoverFeaturesV1),
 }

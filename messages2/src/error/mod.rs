@@ -14,8 +14,8 @@ pub enum MsgTypeError {
     UnsupportedMinorVer(u8),
     #[error("Unsupported protocol major version: {0}")]
     UnsupportedMajorVer(u8),
-    #[error("Unknown message family: {0}")]
-    UnknownFamily(String),
+    #[error("Unknown protocol name: {0}")]
+    UnknownProtocol(String),
     #[error("Error parsing version: {0}")]
     InvalidVersion(#[from] ParseIntError),
     #[error("No {0} found in the message type")]
@@ -39,8 +39,8 @@ impl MsgTypeError {
         Self::UnsupportedMajorVer(major)
     }
 
-    pub fn unknown_family(family: String) -> Self {
-        Self::UnknownFamily(family)
+    pub fn unknown_protocol(name: String) -> Self {
+        Self::UnknownProtocol(name)
     }
 
     pub fn not_found(part: &'static str) -> Self {

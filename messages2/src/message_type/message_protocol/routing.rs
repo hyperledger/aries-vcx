@@ -15,7 +15,7 @@ use super::{
 };
 
 #[derive(Copy, Clone, Debug, From, PartialEq, MessageType)]
-#[semver(family = "routing")]
+#[semver(protocol = "routing")]
 pub enum Routing {
     V1(RoutingV1),
 }

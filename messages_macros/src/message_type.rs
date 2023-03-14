@@ -12,7 +12,7 @@ use crate::common::{end_or_err, next_or_err, next_or_panic};
 const SEMVER: &str = "semver";
 const MINOR: &str = "minor";
 const MAJOR: &str = "major";
-const FAMILY: &str = "family";
+const PROTOCOL: &str = "protocol";
 const PARENT: &str = "parent";
 const ACTORS: &str = "actors";
 
@@ -47,12 +47,12 @@ pub fn message_type_impl(input: DeriveInput) -> SynResult<TokenStream> {
         let parent = try_parse_parent(parent)?;
         let actors = try_get_actors(&mut iter, span)?;
         process_major(&name, parent, actors, nv, input.data)
-    } else if nv.path.is_ident(FAMILY) {
+    } else if nv.path.is_ident(PROTOCOL) {
         process_family(&name, nv, input.data)
     } else {
         Err(Error::new(
             nv.path.span(),
-            format!("expecting (\"{FAMILY}\"), (\"{MAJOR}\", \"{PARENT}\") or (\"{MINOR}\", \"{PARENT}\")"),
+            format!("expecting (\"{PROTOCOL}\"), (\"{MAJOR}\", \"{PARENT}\") or (\"{MINOR}\", \"{PARENT}\")"),
         ))
     }?;
 

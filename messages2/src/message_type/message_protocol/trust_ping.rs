@@ -15,7 +15,7 @@ use super::{
 };
 
 #[derive(Copy, Clone, Debug, From, PartialEq, MessageType)]
-#[semver(family = "trust_ping")]
+#[semver(protocol = "trust_ping")]
 pub enum TrustPing {
     V1(TrustPingV1),
 }

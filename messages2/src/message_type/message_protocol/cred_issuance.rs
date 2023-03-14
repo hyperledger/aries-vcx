@@ -15,7 +15,7 @@ use super::{
 };
 
 #[derive(Copy, Clone, Debug, From, TryInto, PartialEq, MessageType)]
-#[semver(family = "issue-credential")]
+#[semver(protocol = "issue-credential")]
 pub enum CredentialIssuance {
     V1(CredentialIssuanceV1),
 }

@@ -171,7 +171,7 @@ impl<'de> Deserialize<'de> for AriesMessage {
         let content_deser = ContentDeserializer::<D::Error>::new(tagged.content);
         let MessageType { protocol, kind } = tagged.tag;
 
-        // Instead of matching to oblivion and beyond on the [`MessageType`] family,
+        // Instead of matching to oblivion and beyond on the [`MessageType`] protocol,
         // we make use of [`DelayedSerde`] so the matching happens incrementally.
         // This makes use of the provided deserializer and matches on the [`MessageType`]
         // to determine the type the content must be deserialized to.

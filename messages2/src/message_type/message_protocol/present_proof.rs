@@ -15,7 +15,7 @@ use super::{
 };
 
 #[derive(Copy, Clone, Debug, From, TryInto, PartialEq, MessageType)]
-#[semver(family = "present-proof")]
+#[semver(protocol = "present-proof")]
 pub enum PresentProof {
     V1(PresentProofV1),
 }

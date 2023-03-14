@@ -47,9 +47,9 @@ macro_rules! extract_parts {
 }
 
 fn map_insert(map: &mut RegistryMap, parts: (&'static str, u8, u8, Vec<Actor>, Protocol)) {
-    let (family, major, minor, actors, protocol) = parts;
+    let (protocol_name, major, minor, actors, protocol) = parts;
 
-    let str_pid = format!("{}/{}/{}.{}", Protocol::DID_COM_ORG_PREFIX, family, major, minor);
+    let str_pid = format!("{}/{}/{}.{}", Protocol::DID_COM_ORG_PREFIX, protocol_name, major, minor);
     let entry = RegistryEntry {
         protocol,
         minor,
@@ -57,14 +57,14 @@ fn map_insert(map: &mut RegistryMap, parts: (&'static str, u8, u8, Vec<Actor>, P
         actors,
     };
 
-    map.entry((family, major)).or_insert(Vec::new()).push(entry);
+    map.entry((protocol_name, major)).or_insert(Vec::new()).push(entry);
 }
 
 lazy_static! {
     /// The protocol registry, used as a baseline for the protocols and versions
     /// that an agent supports along with semver resolution.
-    /// 
-    /// Keys are comprised of the protocol name and major version while 
+    ///
+    /// Keys are comprised of the protocol name and major version while
     /// the values are [`RegistryEntry`] instances.
     pub static ref PROTOCOL_REGISTRY: RegistryMap = {
         let mut m = HashMap::new();
@@ -85,8 +85,8 @@ lazy_static! {
 /// Looks into the protocol registry for (in order):
 /// * the exact protocol version requested
 /// * the maximum minor version of a protocol less than the minor version requested (e.g: requesting 1.7 should yield 1.6).
-pub fn get_supported_version(family: &'static str, major: u8, minor: u8) -> Option<u8> {
+pub fn get_supported_version(name: &'static str, major: u8, minor: u8) -> Option<u8> {
     PROTOCOL_REGISTRY
-        .get(&(family, major))
+        .get(&(name, major))
         .and_then(|v| v.iter().rev().map(|r| r.minor).find(|v| *v <= minor))
 }

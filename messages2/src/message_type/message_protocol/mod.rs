@@ -26,11 +26,11 @@ pub mod traits;
 pub mod trust_ping;
 
 /// Type representing all protocols that are currently supported.
-/// 
+///
 /// They are composed from protocol names, protocol major versions and protocol minor versions.
 /// The protocol message kind types, while linked to their respective protocol minor versions,
 /// are treated adjacently to this enum.
-/// 
+///
 /// This way, this type can be used for all of the following:
 /// - protocol registry
 /// - message type deserialization
@@ -54,8 +54,8 @@ pub enum Protocol {
 /// Utility macro to avoid harder to read and error prone calling
 /// of the version resolution method on the correct type.
 macro_rules! resolve_major_ver {
-    ($type:ident, $family:expr, $major:expr, $minor:expr) => {
-        if $family == $type::FAMILY {
+    ($type:ident, $protocol:expr, $major:expr, $minor:expr) => {
+        if $protocol == $type::FAMILY {
             return Ok(Self::$type($type::resolve_version($major, $minor)?));
         }
     };
@@ -66,25 +66,25 @@ impl Protocol {
     pub const DID_SOV_PREFIX: &'static str = "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec";
 
     /// Tried to construct a [`Protocol`] from parts.
-    /// 
+    ///
     /// # Errors:
-    /// 
+    ///
     /// An error is returned if a [`Protocol`] could not be constructed
     /// from the provided parts.
-    pub fn from_parts(family: &str, major: u8, minor: u8) -> MsgTypeResult<Self> {
-        resolve_major_ver!(Routing, family, major, minor);
-        resolve_major_ver!(Connection, family, major, minor);
-        resolve_major_ver!(Revocation, family, major, minor);
-        resolve_major_ver!(CredentialIssuance, family, major, minor);
-        resolve_major_ver!(ReportProblem, family, major, minor);
-        resolve_major_ver!(PresentProof, family, major, minor);
-        resolve_major_ver!(TrustPing, family, major, minor);
-        resolve_major_ver!(DiscoverFeatures, family, major, minor);
-        resolve_major_ver!(BasicMessage, family, major, minor);
-        resolve_major_ver!(OutOfBand, family, major, minor);
-        resolve_major_ver!(Notification, family, major, minor);
+    pub fn from_parts(protocol: &str, major: u8, minor: u8) -> MsgTypeResult<Self> {
+        resolve_major_ver!(Routing, protocol, major, minor);
+        resolve_major_ver!(Connection, protocol, major, minor);
+        resolve_major_ver!(Revocation, protocol, major, minor);
+        resolve_major_ver!(CredentialIssuance, protocol, major, minor);
+        resolve_major_ver!(ReportProblem, protocol, major, minor);
+        resolve_major_ver!(PresentProof, protocol, major, minor);
+        resolve_major_ver!(TrustPing, protocol, major, minor);
+        resolve_major_ver!(DiscoverFeatures, protocol, major, minor);
+        resolve_major_ver!(BasicMessage, protocol, major, minor);
+        resolve_major_ver!(OutOfBand, protocol, major, minor);
+        resolve_major_ver!(Notification, protocol, major, minor);
 
-        Err(MsgTypeError::unknown_family(family.to_owned()))
+        Err(MsgTypeError::unknown_protocol(protocol.to_owned()))
     }
 
     /// Returns the parts that this [`Protocol`] is comprised of.
@@ -143,7 +143,7 @@ impl FromStr for Protocol {
         // We'll get the next components in order
         let mut iter = s.split('/').skip(skip_slash);
 
-        let family = Protocol::next_part(&mut iter, "family")?;
+        let protocol_name = Protocol::next_part(&mut iter, "protocol name")?;
         let version = Protocol::next_part(&mut iter, "protocol version")?;
 
         // We'll parse the version to its major and minor parts
@@ -152,7 +152,7 @@ impl FromStr for Protocol {
         let major = Protocol::next_part(&mut version_iter, "protocol major version")?.parse()?;
         let minor = Protocol::next_part(&mut version_iter, "protocol minor version")?.parse()?;
 
-        Protocol::from_parts(family, major, minor)
+        Protocol::from_parts(protocol_name, major, minor)
     }
 }
 
