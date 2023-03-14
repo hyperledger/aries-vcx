@@ -12,7 +12,7 @@ mod integration_tests {
     use std::time::Duration;
 
     use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
-    use aries_vcx::protocols::proof_presentation::verifier::state_machine::{VerifierState};
+    use aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;
     use aries_vcx::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
     use aries_vcx::utils::devsetup::*;
 
