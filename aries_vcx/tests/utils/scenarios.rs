@@ -685,7 +685,7 @@ pub mod test_utils {
             .unwrap();
         assert_eq!(verifier.get_state(), VerifierState::Finished);
         assert_eq!(
-            verifier.get_presentation_verification_status(),
+            verifier.get_verification_status(),
             PresentationVerificationStatus::Valid
         );
     }

@@ -6,8 +6,7 @@ const {
   HolderStateType,
   ProverStateType,
   VerifierStateType,
-  ProofVerificationStatus,
-  ProofRevocationStatus
+  ProofVerificationStatus
 } = require('@hyperledger/node-vcx-wrapper')
 const sleep = require('sleep-promise')
 const { initRustLogger } = require('../src')
@@ -43,13 +42,11 @@ describe('test update state', () => {
     await faber.updateStateVerifierProof(VerifierStateType.Finished)
     await alice.updateStateHolderProof(ProverStateType.Finished)
     const {
-      presentationVerificationState,
+      presentationVerificationStatus,
       presentationAttachment,
-      presentationRequestAttachment,
-      revocationStatus
+      presentationRequestAttachment
     } = await faber.getPresentationInfo()
-    expect(revocationStatus).toBe(ProofRevocationStatus.NonRevoked)
-    expect(presentationVerificationState).toBe(ProofVerificationStatus.Verified)
+    expect(presentationVerificationStatus).toBe(ProofVerificationStatus.Valid)
     expect(presentationRequestAttachment.requested_attributes).toStrictEqual({
       attribute_0: {
         names: [
@@ -143,11 +140,9 @@ describe('test update state', () => {
     await faber.updateStateVerifierProof(VerifierStateType.Finished)
     await alice.updateStateHolderProof(ProverStateType.Finished)
     const {
-      presentationVerificationState,
-      revocationStatus
+      presentationVerificationStatus
     } = await faber.getPresentationInfo()
-    expect(revocationStatus).toBe(ProofRevocationStatus.Revoked)
-    expect(presentationVerificationState).toBe(ProofVerificationStatus.Invalid)
+    expect(presentationVerificationStatus).toBe(ProofVerificationStatus.Invalid)
   })
 
   it('Faber should verify proof with self attestation', async () => {
@@ -157,13 +152,11 @@ describe('test update state', () => {
     await faber.updateStateVerifierProof(VerifierStateType.Finished)
     await alice.updateStateHolderProof(ProverStateType.Finished)
     const {
-      presentationVerificationState,
+      presentationVerificationStatus,
       presentationAttachment,
-      presentationRequestAttachment,
-      revocationStatus
+      presentationRequestAttachment
     } = await faber.getPresentationInfo()
-    expect(revocationStatus).toBe(ProofRevocationStatus.NonRevoked)
-    expect(presentationVerificationState).toBe(ProofVerificationStatus.Verified)
+    expect(presentationVerificationStatus).toBe(ProofVerificationStatus.Valid)
     expect(presentationAttachment.requested_proof).toStrictEqual({
       revealed_attrs: {},
       self_attested_attrs: {

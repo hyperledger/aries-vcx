@@ -16,10 +16,11 @@ pub struct FinishedState {
         default = "PresentationVerificationStatus::Unavailable",
         deserialize_with = "null_to_unavailable"
     )]
-    pub revocation_status: PresentationVerificationStatus,
+    #[serde(alias = "revocation_status")]
+    pub verification_status: PresentationVerificationStatus,
 }
 
-// For backwards compatibility, if "revocation_status": null, we deserialize as Unavailable
+// For backwards compatibility, if "revocation_status / verification_status" is null, we deserialize as Unavailable
 fn null_to_unavailable<'de, D>(deserializer: D) -> Result<PresentationVerificationStatus, D::Error>
 where
     D: Deserializer<'de>,
@@ -35,7 +36,7 @@ impl FinishedState {
             presentation_request: None,
             presentation: None,
             status: Status::Declined(problem_report),
-            revocation_status: PresentationVerificationStatus::Unavailable(),
+            verification_status: PresentationVerificationStatus::Unavailable(),
         }
     }
 }
@@ -63,7 +64,7 @@ pub mod unit_tests {
             presentation_request: None,
             presentation: None,
             status: Status::Success,
-            revocation_status: PresentationVerificationStatus::Valid,
+            verification_status: PresentationVerificationStatus::Valid,
         };
         let serialized = serde_json::to_string(&state).unwrap();
         let expected =
@@ -77,13 +78,13 @@ pub mod unit_tests {
             let serialized =
                 r#"{"presentation":null,"presentation_request":null,"status":"Success","revocation_status":"Invalid"}"#;
             let deserialized: FinishedState = serde_json::from_str(serialized).unwrap();
-            assert_eq!(deserialized.revocation_status, PresentationVerificationStatus::Invalid)
+            assert_eq!(deserialized.verification_status, PresentationVerificationStatus::Invalid)
         }
         {
             let serialized =
                 r#"{"presentation":null,"presentation_request":null,"status":"Success","revocation_status":"Valid"}"#;
             let deserialized: FinishedState = serde_json::from_str(serialized).unwrap();
-            assert_eq!(deserialized.revocation_status, PresentationVerificationStatus::Valid)
+            assert_eq!(deserialized.verification_status, PresentationVerificationStatus::Valid)
         }
     }
 
@@ -93,16 +94,40 @@ pub mod unit_tests {
             let serialized = r#"{"presentation":null,"presentation_request":null,"status":"Success"}"#;
             let deserialized: FinishedState = serde_json::from_str(serialized).unwrap();
             assert_eq!(
-                deserialized.revocation_status,
+                deserialized.verification_status,
                 PresentationVerificationStatus::Unavailable()
             )
         }
         {
             let serialized =
+                r#"{"presentation":null,"presentation_request":null,"status":"Success","verification_status":null}"#;
+            let deserialized: FinishedState = serde_json::from_str(serialized).unwrap();
+            assert_eq!(
+                deserialized.verification_status,
+                PresentationVerificationStatus::Unavailable()
+            )
+        }
+        {
+            let serialized =
+                r#"{"presentation":null,"presentation_request":null,"status":"Success","verification_status":"Revoked"}"#;
+            let deserialized: FinishedState = serde_json::from_str(serialized).unwrap();
+            assert_eq!(deserialized.verification_status, PresentationVerificationStatus::Invalid)
+        }
+        {
+            let serialized = r#"{"presentation":null,"presentation_request":null,"status":"Success","verification_status":"NonRevoked"}"#;
+            let deserialized: FinishedState = serde_json::from_str(serialized).unwrap();
+            assert_eq!(deserialized.verification_status, PresentationVerificationStatus::Valid)
+        }
+    }
+
+    #[test]
+    fn test_verifier_state_finished_deser_legacy_2() {
+        {
+            let serialized =
                 r#"{"presentation":null,"presentation_request":null,"status":"Success","revocation_status":null}"#;
             let deserialized: FinishedState = serde_json::from_str(serialized).unwrap();
             assert_eq!(
-                deserialized.revocation_status,
+                deserialized.verification_status,
                 PresentationVerificationStatus::Unavailable()
             )
         }
@@ -110,12 +135,12 @@ pub mod unit_tests {
             let serialized =
                 r#"{"presentation":null,"presentation_request":null,"status":"Success","revocation_status":"Revoked"}"#;
             let deserialized: FinishedState = serde_json::from_str(serialized).unwrap();
-            assert_eq!(deserialized.revocation_status, PresentationVerificationStatus::Invalid)
+            assert_eq!(deserialized.verification_status, PresentationVerificationStatus::Invalid)
         }
         {
             let serialized = r#"{"presentation":null,"presentation_request":null,"status":"Success","revocation_status":"NonRevoked"}"#;
             let deserialized: FinishedState = serde_json::from_str(serialized).unwrap();
-            assert_eq!(deserialized.revocation_status, PresentationVerificationStatus::Valid)
+            assert_eq!(deserialized.verification_status, PresentationVerificationStatus::Valid)
         }
     }
 }

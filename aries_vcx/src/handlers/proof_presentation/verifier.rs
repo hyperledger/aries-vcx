@@ -145,8 +145,8 @@ impl Verifier {
         self.verifier_sm.get_presentation_msg()
     }
 
-    pub fn get_presentation_verification_status(&self) -> PresentationVerificationStatus {
-        self.verifier_sm.get_presentation_verification_status()
+    pub fn get_verification_status(&self) -> PresentationVerificationStatus {
+        self.verifier_sm.get_verification_status()
     }
 
     pub fn get_presentation_attachment(&self) -> VcxResult<String> {

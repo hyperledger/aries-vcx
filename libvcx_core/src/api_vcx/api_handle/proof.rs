@@ -223,8 +223,8 @@ pub fn get_presentation_attachment(handle: u32) -> LibvcxResult<String> {
     })
 }
 
-pub fn get_presentation_verification_status(handle: u32) -> LibvcxResult<VcxPresentationVerificationStatus> {
-    PROOF_MAP.get(handle, |proof| Ok(proof.get_presentation_verification_status().into()))
+pub fn get_verification_status(handle: u32) -> LibvcxResult<VcxPresentationVerificationStatus> {
+    PROOF_MAP.get(handle, |proof| Ok(proof.get_verification_status().into()))
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -638,7 +638,7 @@ pub mod tests {
             LibvcxErrorKind::InvalidHandle
         );
         assert_eq!(
-            get_presentation_verification_status(handle_proof).unwrap(),
+            get_verification_status(handle_proof).unwrap(),
             VcxPresentationVerificationStatus::Unavailable
         );
         assert_eq!(

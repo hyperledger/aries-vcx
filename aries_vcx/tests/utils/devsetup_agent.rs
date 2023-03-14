@@ -394,7 +394,7 @@ pub mod test_utils {
         pub async fn update_proof_state(
             &mut self,
             expected_state: VerifierState,
-            expected_revocation_status: PresentationVerificationStatus,
+            expected_verification_status: PresentationVerificationStatus,
         ) {
             self.verifier
                 .update_state(&self.profile, &self.agency_client, &self.connection)
@@ -402,8 +402,8 @@ pub mod test_utils {
                 .unwrap();
             assert_eq!(expected_state, self.verifier.get_state());
             assert_eq!(
-                expected_revocation_status,
-                self.verifier.get_presentation_verification_status()
+                expected_verification_status,
+                self.verifier.get_verification_status()
             );
         }
 

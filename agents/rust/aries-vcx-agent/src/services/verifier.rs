@@ -75,7 +75,7 @@ impl ServiceVerifier {
 
     pub fn get_presentation_status(&self, thread_id: &str) -> AgentResult<PresentationVerificationStatus> {
         let VerifierWrapper { verifier, .. } = self.verifiers.get(thread_id)?;
-        Ok(verifier.get_presentation_verification_status())
+        Ok(verifier.get_verification_status())
     }
 
     pub async fn verify_presentation(&self, thread_id: &str, presentation: Presentation) -> AgentResult<()> {

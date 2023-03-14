@@ -160,8 +160,7 @@ export function v2ProofUpdateState(handleProof: number, connectionHandle: number
 export function v2ProofUpdateStateWithMessage(handleProof: number, message: string, connectionHandle: number): Promise<number>
 export function proofUpdateStateWithMessageNonmediated(handleProof: number, connectionHandle: number, message: string): Promise<number>
 export function proofGetState(handle: number): number
-export function proofGetPresentationVerificationStatus(handle: number): number
-export function proofGetRevocationStatus(handle: number): number
+export function proofGetVerificationStatus(handle: number): number
 export function proofGetThreadId(handle: number): string
 export function markPresentationRequestMsgSent(handle: number): void
 export function revocationRegistryCreate(config: string): Promise<number>

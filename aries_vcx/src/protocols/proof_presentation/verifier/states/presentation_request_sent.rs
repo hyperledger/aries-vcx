@@ -70,7 +70,7 @@ impl
             presentation_request: Some(state.presentation_request),
             presentation: Some(presentation),
             status: Status::Success,
-            revocation_status: verification_status,
+            verification_status: verification_status,
         }
     }
 }
@@ -82,7 +82,7 @@ impl From<(PresentationRequestSentState, ProblemReport)> for FinishedState {
             presentation_request: Some(state.presentation_request),
             presentation: None,
             status: Status::Failed(problem_report),
-            revocation_status: PresentationVerificationStatus::Unavailable(),
+            verification_status: PresentationVerificationStatus::Unavailable(),
         }
     }
 }

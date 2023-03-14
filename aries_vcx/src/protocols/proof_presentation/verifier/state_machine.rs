@@ -415,9 +415,9 @@ impl VerifierSM {
         }
     }
 
-    pub fn get_presentation_verification_status(&self) -> PresentationVerificationStatus {
+    pub fn get_verification_status(&self) -> PresentationVerificationStatus {
         match self.state {
-            VerifierFullState::Finished(ref state) => state.revocation_status.clone(),
+            VerifierFullState::Finished(ref state) => state.verification_status.clone(),
             _ => PresentationVerificationStatus::Unavailable(),
         }
     }
@@ -770,7 +770,7 @@ pub mod unit_tests {
             assert_match!(VerifierState::Failed, verifier_sm.get_state());
             assert_match!(
                 PresentationVerificationStatus::Unavailable(),
-                verifier_sm.get_presentation_verification_status()
+                verifier_sm.get_verification_status()
             );
         }
 
@@ -823,7 +823,7 @@ pub mod unit_tests {
             assert_match!(VerifierFullState::Finished(_), verifier_sm.state);
             assert_eq!(
                 PresentationVerificationStatus::Valid,
-                verifier_sm.get_presentation_verification_status()
+                verifier_sm.get_verification_status()
             );
         }
 
@@ -847,7 +847,7 @@ pub mod unit_tests {
             assert_match!(VerifierState::Finished, verifier_sm.get_state());
             assert_match!(
                 PresentationVerificationStatus::Invalid,
-                verifier_sm.get_presentation_verification_status()
+                verifier_sm.get_verification_status()
             );
         }
 

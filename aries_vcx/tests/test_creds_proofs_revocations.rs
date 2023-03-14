@@ -92,7 +92,7 @@ mod integration_tests {
                 .unwrap();
             assert_eq!(verifier.get_state(), VerifierState::Finished);
             assert_eq!(
-                verifier.get_presentation_verification_status(),
+                verifier.get_verification_status(),
                 PresentationVerificationStatus::Invalid
             );
         })
@@ -198,7 +198,7 @@ mod integration_tests {
                 .unwrap();
             assert_eq!(verifier.get_state(), VerifierState::Finished);
             assert_eq!(
-                verifier.get_presentation_verification_status(),
+                verifier.get_verification_status(),
                 PresentationVerificationStatus::Valid
             );
 
@@ -227,7 +227,7 @@ mod integration_tests {
                 .unwrap();
             assert_eq!(verifier.get_state(), VerifierState::Finished);
             assert_eq!(
-                verifier.get_presentation_verification_status(),
+                verifier.get_verification_status(),
                 PresentationVerificationStatus::Invalid
             );
 
@@ -354,15 +354,15 @@ mod integration_tests {
             .await
             .unwrap();
             assert_eq!(
-                verifier1.get_presentation_verification_status(),
+                verifier1.get_verification_status(),
                 PresentationVerificationStatus::Valid
             );
             assert_eq!(
-                verifier2.get_presentation_verification_status(),
+                verifier2.get_verification_status(),
                 PresentationVerificationStatus::Valid
             );
             assert_eq!(
-                verifier3.get_presentation_verification_status(),
+                verifier3.get_verification_status(),
                 PresentationVerificationStatus::Valid
             );
 
@@ -431,17 +431,17 @@ mod integration_tests {
             .await
             .unwrap();
         assert_eq!(
-            verifier1.get_presentation_verification_status(),
+            verifier1.get_verification_status(),
             PresentationVerificationStatus::Invalid
         );
 
         assert_eq!(
-            verifier2.get_presentation_verification_status(),
+            verifier2.get_verification_status(),
             PresentationVerificationStatus::Invalid
         );
 
         assert_eq!(
-            verifier3.get_presentation_verification_status(),
+            verifier3.get_verification_status(),
             PresentationVerificationStatus::Valid
         );
         }).await;
@@ -535,7 +535,7 @@ mod integration_tests {
                 .unwrap();
             assert_eq!(verifier.get_state(), VerifierState::Finished);
             assert_eq!(
-                verifier.get_presentation_verification_status(),
+                verifier.get_verification_status(),
                 PresentationVerificationStatus::Valid
             );
         })
@@ -607,7 +607,7 @@ mod integration_tests {
                 VerifierState::Finished
             );
             assert_eq!(
-                proof_verifier.get_presentation_verification_status(),
+                proof_verifier.get_verification_status(),
                 PresentationVerificationStatus::Invalid
             );
 
@@ -626,7 +626,7 @@ mod integration_tests {
             .await
             .unwrap();
         assert_eq!(
-            proof_verifier.get_presentation_verification_status(),
+            proof_verifier.get_verification_status(),
             PresentationVerificationStatus::Valid
         );
 
@@ -696,7 +696,7 @@ mod integration_tests {
             .await
             .unwrap();
         assert_eq!(
-            proof_verifier.get_presentation_verification_status(),
+            proof_verifier.get_verification_status(),
             PresentationVerificationStatus::Valid
         );
 
@@ -715,7 +715,7 @@ mod integration_tests {
             .await
             .unwrap();
         assert_eq!(
-            proof_verifier.get_presentation_verification_status(),
+            proof_verifier.get_verification_status(),
             PresentationVerificationStatus::Invalid
         );
 
@@ -781,7 +781,7 @@ mod integration_tests {
             .await
             .unwrap();
         assert_eq!(
-            proof_verifier.get_presentation_verification_status(),
+            proof_verifier.get_verification_status(),
             PresentationVerificationStatus::Valid
         );
 
@@ -801,7 +801,7 @@ mod integration_tests {
             .await
             .unwrap();
         assert_eq!(
-            proof_verifier.get_presentation_verification_status(),
+            proof_verifier.get_verification_status(),
             PresentationVerificationStatus::Valid
         );
 
@@ -872,7 +872,7 @@ mod integration_tests {
             .await
             .unwrap();
         assert_eq!(
-            proof_verifier.get_presentation_verification_status(),
+            proof_verifier.get_verification_status(),
             PresentationVerificationStatus::Invalid
         );
 
@@ -891,7 +891,7 @@ mod integration_tests {
             .await
             .unwrap();
         assert_eq!(
-            proof_verifier.get_presentation_verification_status(),
+            proof_verifier.get_verification_status(),
             PresentationVerificationStatus::Valid
         );
 
@@ -962,7 +962,7 @@ mod integration_tests {
             .await
             .unwrap();
         assert_eq!(
-            proof_verifier.get_presentation_verification_status(),
+            proof_verifier.get_verification_status(),
             PresentationVerificationStatus::Valid
         );
 
@@ -981,7 +981,7 @@ mod integration_tests {
             .await
             .unwrap();
         assert_eq!(
-            proof_verifier.get_presentation_verification_status(),
+            proof_verifier.get_verification_status(),
             PresentationVerificationStatus::Invalid
         );
 
