@@ -912,6 +912,7 @@ pub mod unit_tests {
         #[cfg(feature = "general_test")]
         async fn test_prover_handle_messages_from_presentation_finished_state() {
             let _setup = SetupMocks::init();
+            let _mock_builder = MockBuilder::init().set_mock_result_for_validate_indy_proof(Ok(true));
 
             let mut verifier_sm = _verifier_sm_from_request();
             verifier_sm = verifier_sm.mark_presentation_request_msg_sent().unwrap();
