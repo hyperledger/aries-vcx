@@ -9,12 +9,9 @@ use derive_more::From;
 use serde::{de::Error, Deserializer, Serializer};
 
 use crate::{
-    composite_message::{ Message},
-    msg_types::types::present_proof::{
-        PresentProof as PresentProofKind, PresentProofV1, PresentProofV1_0Kind,
-    },
-    protocols::traits::DelayedSerde,
     misc::utils::{self, transit_to_aries_msg},
+    msg_types::types::present_proof::{PresentProof as PresentProofKind, PresentProofV1, PresentProofV1_0Kind},
+    protocols::traits::DelayedSerde,
 };
 
 use self::{

@@ -1,8 +1,8 @@
 use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 
-use crate::composite_message::Message;
 use crate::protocols::traits::ConcreteMessage;
+use crate::Message;
 use crate::{
     decorators::{Attachment, Thread, Timing},
     msg_types::types::cred_issuance::CredentialIssuanceV1_0Kind,

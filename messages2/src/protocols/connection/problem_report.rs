@@ -2,9 +2,8 @@ use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    composite_message::Message,
     decorators::{MsgLocalization, Thread, Timing},
-    msg_types::types::connection::ConnectionV1_0Kind,
+    msg_types::types::connection::ConnectionV1_0Kind, Message,
 };
 
 use crate::protocols::traits::ConcreteMessage;

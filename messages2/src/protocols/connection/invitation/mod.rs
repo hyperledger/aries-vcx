@@ -7,7 +7,6 @@ use serde::{Deserialize, Serialize};
 use url::Url;
 
 use super::Connection;
-use crate::composite_message::Message;
 use crate::msg_types::types::connection::ConnectionV1_0Kind;
 use crate::protocols::traits::{ConcreteMessage, HasKind};
 use crate::misc::utils::transit_to_aries_msg;

@@ -10,7 +10,8 @@ use derive_more::From;
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::{
-    composite_message::Message,
+    misc::mime_type::MimeType,
+    misc::utils::{self, transit_to_aries_msg},
     msg_types::{
         types::{
             cred_issuance::{
@@ -20,8 +21,6 @@ use crate::{
         },
         MessageType, Protocol,
     },
-    misc::mime_type::MimeType,
-    misc::utils::{self, transit_to_aries_msg},
     protocols::traits::DelayedSerde,
 };
 

@@ -8,7 +8,6 @@ use derive_more::From;
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::{
-    composite_message::{ Message},
     msg_types::types::out_of_band::{OutOfBand as OutOfBandKind, OutOfBandV1, OutOfBandV1_1Kind},
     protocols::traits::DelayedSerde, misc::utils::transit_to_aries_msg,
 };

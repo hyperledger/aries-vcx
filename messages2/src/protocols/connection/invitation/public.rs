@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::composite_message::Message;
+use crate::Message;
 
 pub type PublicInvitation = Message<PublicInvitationContent>;
 

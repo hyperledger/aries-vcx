@@ -2,10 +2,10 @@ use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    composite_message::{Message},
     decorators::{Thread, Timing},
+    misc::nothing::Nothing,
     msg_types::types::out_of_band::OutOfBandV1_1Kind,
-    protocols::traits::ConcreteMessage, misc::nothing::Nothing,
+    protocols::traits::ConcreteMessage, Message,
 };
 
 pub type HandshakeReuseAccepted = Message<HandshakeReuseAcceptedContent, HandshakeReuseAcceptedDecorators>;

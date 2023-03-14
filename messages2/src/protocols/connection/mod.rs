@@ -9,10 +9,9 @@ use derive_more::From;
 use serde::{de::Error, Deserializer, Serializer};
 
 use crate::{
-    composite_message::{ Message},
+    misc::utils::{self, transit_to_aries_msg},
     msg_types::types::connection::{Connection as ConnectionKind, ConnectionV1, ConnectionV1_0Kind},
     protocols::traits::DelayedSerde,
-    misc::utils::{self, transit_to_aries_msg},
 };
 
 use self::{

@@ -7,9 +7,9 @@ use derive_more::From;
 use serde::{de::Error, Deserializer, Serializer};
 
 use crate::{
-    composite_message::{ Message},
+    misc::utils::transit_to_aries_msg,
     msg_types::types::revocation::{Revocation as RevocationKind, RevocationV2, RevocationV2_0Kind},
-    protocols::traits::DelayedSerde, misc::utils::transit_to_aries_msg,
+    protocols::traits::DelayedSerde,
 };
 
 use self::{

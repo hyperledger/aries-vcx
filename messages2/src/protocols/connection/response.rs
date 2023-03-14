@@ -4,7 +4,6 @@ use messages_macros::MessageContent;
 use serde::{de::Error, Deserialize, Serialize};
 
 use crate::{
-    composite_message::Message,
     decorators::{PleaseAck, Thread, Timing},
     msg_types::{
         types::{
@@ -12,7 +11,7 @@ use crate::{
             traits::MessageKind,
         },
         MessageType, Protocol,
-    },
+    }, Message,
 };
 
 use crate::protocols::traits::ConcreteMessage;

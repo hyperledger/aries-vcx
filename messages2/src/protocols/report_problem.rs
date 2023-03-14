@@ -6,9 +6,8 @@ use strum_macros::{AsRefStr, EnumString};
 use url::Url;
 
 use crate::{
-    composite_message::Message,
     decorators::{FieldLocalization, Thread, Timing},
-    msg_types::types::report_problem::ReportProblemV1_0Kind,
+    msg_types::types::report_problem::ReportProblemV1_0Kind, Message,
 };
 
 use super::traits::ConcreteMessage;

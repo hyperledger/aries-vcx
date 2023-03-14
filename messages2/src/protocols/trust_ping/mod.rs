@@ -7,9 +7,8 @@ use derive_more::From;
 use serde::{de::Error, Deserializer, Serializer};
 
 use crate::{
-    composite_message::Message,
-    msg_types::types::trust_ping::{TrustPing as TrustPingKind, TrustPingV1, TrustPingV1_0Kind},
     misc::utils::transit_to_aries_msg,
+    msg_types::types::trust_ping::{TrustPing as TrustPingKind, TrustPingV1, TrustPingV1_0Kind},
     protocols::traits::DelayedSerde,
 };
 

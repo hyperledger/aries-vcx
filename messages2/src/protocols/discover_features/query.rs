@@ -2,10 +2,9 @@ use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    composite_message::Message,
     decorators::Timing,
-    msg_types::{types::discover_features::DiscoverFeaturesV1_0Kind, registry::PROTOCOL_REGISTRY},
-    protocols::traits::ConcreteMessage,
+    msg_types::{registry::PROTOCOL_REGISTRY, types::discover_features::DiscoverFeaturesV1_0Kind},
+    protocols::traits::ConcreteMessage, Message,
 };
 
 use super::ProtocolDescriptor;

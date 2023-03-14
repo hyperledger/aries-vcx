@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use url::Url;
 
-use crate::{composite_message::Message, decorators::Timing};
+use crate::{decorators::Timing, Message};
 
 pub type PairwiseInvitation = Message<PairwiseInvitationContent<Url>, PwInvitationDecorators>;
 pub type PairwiseDidInvitation = Message<PairwiseInvitationContent<String>, PwInvitationDecorators>;

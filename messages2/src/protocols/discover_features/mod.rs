@@ -7,7 +7,6 @@ use derive_more::From;
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::{
-    composite_message::{ Message},
     msg_types::{
         actor::Actor,
         types::discover_features::{
