@@ -102,7 +102,7 @@ public class ProofApi extends VcxJava.API {
             logger.debug("callback() called with: commandHandle = [" + commandHandle + "], err = [" + err + "], responseData = [****]");
             CompletableFuture<GetProofResult> future = (CompletableFuture<GetProofResult>) removeFuture(commandHandle);
             if(!checkCallback(future,err)) return;
-            GetProofResult result = new GetProofResult(proofState, presentationMsg);
+            GetProofResult result = new GetProofResult(presentationMsg);
             future.complete(result);
         }
     };
