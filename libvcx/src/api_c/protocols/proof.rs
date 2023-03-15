@@ -672,7 +672,7 @@ pub extern "C" fn vcx_get_proof_msg(
                 cb(
                     command_handle,
                     SUCCESS_ERR_CODE,
-                    proof::get_proof_state(proof_handle).unwrap_or(0),
+                    proof::get_presentation_verification_status(proof_handle).unwrap_or(0),
                     msg.as_ptr(),
                 );
             }
@@ -685,7 +685,7 @@ pub extern "C" fn vcx_get_proof_msg(
                 cb(
                     command_handle,
                     err.into(),
-                    proof::get_proof_state(proof_handle).unwrap_or(0),
+                    proof::get_presentation_verification_status(proof_handle).unwrap_or(0),
                     ptr::null_mut(),
                 );
             }

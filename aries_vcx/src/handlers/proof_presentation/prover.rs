@@ -45,8 +45,7 @@ impl Prover {
     }
 
     pub fn presentation_status(&self) -> u32 {
-        trace!("Prover::presentation_state >>>");
-        self.prover_sm.presentation_status()
+        self.prover_sm.get_presentation_status()
     }
 
     pub async fn retrieve_credentials(&self, profile: &Arc<dyn Profile>) -> VcxResult<String> {
@@ -77,10 +76,8 @@ impl Prover {
         Ok(())
     }
 
-    pub fn generate_presentation_msg(&self) -> VcxResult<String> {
-        trace!("Prover::generate_presentation_msg >>>");
-        let proof = self.prover_sm.presentation()?.to_owned();
-        Ok(json!(proof).to_string())
+    pub fn get_presentation_msg(&self) -> VcxResult<Presentation> {
+        Ok(self.prover_sm.get_presentation_msg()?.to_owned())
     }
 
     pub fn set_presentation(&mut self, presentation: Presentation) -> VcxResult<()> {
@@ -135,7 +132,7 @@ impl Prover {
 
     pub fn presentation_request_data(&self) -> VcxResult<String> {
         self.prover_sm
-            .presentation_request()?
+            .get_presentation_request()?
             .request_presentations_attach
             .content()
             .map_err(|err| err.into())
@@ -144,7 +141,7 @@ impl Prover {
     pub fn get_proof_request_attachment(&self) -> VcxResult<String> {
         let data = self
             .prover_sm
-            .presentation_request()?
+            .get_presentation_request()?
             .request_presentations_attach
             .content()?;
         let proof_request_data: serde_json::Value = serde_json::from_str(&data).map_err(|err| {

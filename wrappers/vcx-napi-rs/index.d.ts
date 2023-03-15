@@ -94,6 +94,8 @@ export function setActiveTxnAuthorAgreementMeta(text: string | undefined | null,
 export function createService(targetDid: string, recipientKeys: Array<string>, routingKeys: Array<string>, endpoint: string): Promise<string>
 export function createServiceV2(targetDid: string, routingKeys: Array<string>, endpoint: string): Promise<string>
 export function getServiceFromLedger(targetDid: string): Promise<string>
+export function getAttrFromLedger(targetDid: string, attr: string): Promise<string>
+export function clearAttrFromLedger(did: string, attrib: string): Promise<string>
 export function getVerkeyFromLedger(did: string): Promise<string>
 export function getLedgerTxn(seqNo: number, submitterDid?: string | undefined | null): Promise<string>
 export function initDefaultLogger(pattern?: string | undefined | null): void
@@ -145,7 +147,9 @@ export function outOfBandSenderRelease(handle: number): void
 export function openMainPool(poolConfig: string): Promise<void>
 export function closeMainPool(): Promise<void>
 export function proofCreate(sourceId: string, requestedAttrs: string, requestedPredicates: string, revocationDetails: string, name: string): Promise<number>
-export function proofGetProofMsg(handle: number): string
+export function proofGetPresentationMsg(handle: number): string
+export function proofGetPresentationRequestAttachment(handle: number): string
+export function proofGetPresentationAttachment(handle: number): string
 export function proofRelease(handle: number): void
 export function proofSendRequest(handleProof: number, handleConnection: number): Promise<void>
 export function proofSendRequestNonmediated(handleProof: number, handleConnection: number): Promise<void>
@@ -156,7 +160,8 @@ export function v2ProofUpdateState(handleProof: number, connectionHandle: number
 export function v2ProofUpdateStateWithMessage(handleProof: number, message: string, connectionHandle: number): Promise<number>
 export function proofUpdateStateWithMessageNonmediated(handleProof: number, connectionHandle: number, message: string): Promise<number>
 export function proofGetState(handle: number): number
-export function proofGetProofState(handle: number): number
+export function proofGetPresentationVerificationStatus(handle: number): number
+export function proofGetRevocationStatus(handle: number): number
 export function proofGetThreadId(handle: number): string
 export function markPresentationRequestMsgSent(handle: number): void
 export function revocationRegistryCreate(config: string): Promise<number>

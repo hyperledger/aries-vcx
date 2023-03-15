@@ -11,7 +11,7 @@ use crate::core::profile::profile::Profile;
 use crate::errors::error::prelude::*;
 use crate::handlers::connection::mediated_connection::MediatedConnection;
 use crate::protocols::proof_presentation::verifier::messages::VerifierMessages;
-use crate::protocols::proof_presentation::verifier::state_machine::{VerifierSM, VerifierState};
+use crate::protocols::proof_presentation::verifier::state_machine::{RevocationStatus, VerifierSM, VerifierState};
 use crate::protocols::SendClosure;
 use messages::a2a::A2AMessage;
 use messages::protocols::proof_presentation::presentation_proposal::PresentationProposal;
@@ -72,7 +72,7 @@ impl Verifier {
 
     pub async fn send_presentation_request(&mut self, send_message: SendClosure) -> VcxResult<()> {
         if self.verifier_sm.get_state() == VerifierState::PresentationRequestSet {
-            let offer = self.verifier_sm.presentation_request()?.to_a2a_message();
+            let offer = self.verifier_sm.presentation_request_msg()?.to_a2a_message();
             send_message(offer).await?;
             self.verifier_sm = self.verifier_sm.clone().mark_presentation_request_msg_sent()?;
         }
@@ -85,6 +85,7 @@ impl Verifier {
         Ok(())
     }
 
+    // todo: verification and sending ack should be separate apis
     pub async fn verify_presentation(
         &mut self,
         profile: &Arc<dyn Profile>,
@@ -123,36 +124,43 @@ impl Verifier {
         Ok(())
     }
 
-    pub fn get_presentation_request_msg(&self) -> VcxResult<String> {
-        let msg = self.verifier_sm.presentation_request()?.to_a2a_message();
-        Ok(json!(msg).to_string())
+    pub fn get_presentation_request_msg(&self) -> VcxResult<PresentationRequest> {
+        self.verifier_sm.presentation_request_msg()
+    }
+
+    pub fn get_presentation_request_attachment(&self) -> VcxResult<String> {
+        self.verifier_sm
+            .presentation_request_msg()?
+            .request_presentations_attach
+            .content()
+            .map_err(|err| err.into())
     }
 
     pub fn get_presentation_request(&self) -> VcxResult<PresentationRequest> {
-        self.verifier_sm.presentation_request()
+        self.verifier_sm.presentation_request_msg()
     }
 
-    pub fn get_presentation_msg(&self) -> VcxResult<String> {
-        trace!("Verifier::get_presentation >>>");
-        let msg = self.verifier_sm.presentation()?.to_a2a_message();
-        Ok(json!(msg).to_string())
+    pub fn get_presentation_msg(&self) -> VcxResult<Presentation> {
+        self.verifier_sm.get_presentation_msg()
     }
 
     pub fn get_presentation_status(&self) -> Status {
-        trace!("Verifier::presentation_state >>>");
         self.verifier_sm.presentation_status()
+    }
+
+    pub fn get_revocation_status(&self) -> Option<RevocationStatus> {
+        self.verifier_sm.get_revocation_status()
     }
 
     pub fn get_presentation_attachment(&self) -> VcxResult<String> {
         self.verifier_sm
-            .presentation()?
+            .get_presentation_msg()?
             .presentations_attach
             .content()
             .map_err(|err| err.into())
     }
 
     pub fn get_presentation_proposal(&self) -> VcxResult<PresentationProposal> {
-        trace!("Verifier::get_presentation_proposal >>>");
         self.verifier_sm.presentation_proposal()
     }
 
@@ -271,7 +279,7 @@ mod unit_tests {
         let mut verifier = _verifier().await;
         verifier.to_finished_state().await;
         let presentation = verifier.get_presentation_msg().unwrap();
-        assert_eq!(presentation, json!(_presentation().to_a2a_message()).to_string());
+        assert_eq!(presentation, _presentation());
         assert_eq!(verifier.get_state(), VerifierState::Finished);
     }
 }

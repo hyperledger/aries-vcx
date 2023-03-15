@@ -230,6 +230,23 @@ pub async fn write_endpoint(profile: &Arc<dyn Profile>, did: &str, service: &End
     Ok(res)
 }
 
+pub async fn add_attr(profile: &Arc<dyn Profile>, did: &str, attr: &str) -> VcxResult<()> {
+    let ledger = Arc::clone(profile).inject_ledger();
+    let res = ledger.add_attr(did, &attr).await?;
+    check_response(&res)
+}
+
+pub async fn get_attr(profile: &Arc<dyn Profile>, did: &str, attr_name: &str) -> VcxResult<String> {
+    let ledger = Arc::clone(profile).inject_ledger();
+    let attr_resp = ledger.get_attr(did, attr_name).await?;
+    let data = get_data_from_response(&attr_resp)?;
+    match data.get(attr_name) {
+        None => Ok("".into()),
+        Some(attr) if attr.is_null() => Ok("".into()),
+        Some(attr) => Ok(attr.to_string()),
+    }
+}
+
 pub async fn clear_attr(profile: &Arc<dyn Profile>, did: &str, attr_name: &str) -> VcxResult<String> {
     let ledger = Arc::clone(profile).inject_ledger();
 

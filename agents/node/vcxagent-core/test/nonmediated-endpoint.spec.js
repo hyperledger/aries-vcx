@@ -60,7 +60,6 @@ describe('test connecting via unmediated endpoint', () => {
       expect(payloadAlice['@id']).toBeDefined()
       expect(payloadAlice['@type']).toBeDefined()
       expect(payloadAlice.content).toBe('Hello Alice')
-
     } catch (err) {
       console.error(`err = ${err.message} stack = ${err.stack}`)
       await sleep(2000)

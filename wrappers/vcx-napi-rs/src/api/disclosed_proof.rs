@@ -30,7 +30,7 @@ async fn disclosed_proof_reject_proof(handle: u32, handle_connection: u32) -> na
 
 #[napi]
 fn disclosed_proof_get_proof_msg(handle: u32) -> napi::Result<String> {
-    disclosed_proof::generate_proof_msg(handle).map_err(to_napi_err)
+    disclosed_proof::get_presentation_msg(handle).map_err(to_napi_err)
 }
 
 #[napi]

@@ -4,10 +4,12 @@ use serde_json;
 use aries_vcx::common::proofs::proof_request::PresentationRequestData;
 use aries_vcx::handlers::proof_presentation::verifier::Verifier;
 use aries_vcx::messages::a2a::A2AMessage;
+use aries_vcx::protocols::proof_presentation::verifier::state_machine::RevocationStatus;
 
 use crate::api_vcx::api_global::profile::get_main_profile;
 use crate::api_vcx::api_handle::connection::HttpClient;
 use crate::api_vcx::api_handle::object_cache::ObjectCache;
+use crate::api_vcx::api_handle::out_of_band::to_a2a_message;
 use crate::api_vcx::api_handle::{connection, mediated_connection};
 
 use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
@@ -128,10 +130,6 @@ pub fn get_state(handle: u32) -> LibvcxResult<u32> {
     PROOF_MAP.get(handle, |proof| Ok(proof.get_state().into()))
 }
 
-pub fn get_proof_state(handle: u32) -> LibvcxResult<u32> {
-    PROOF_MAP.get(handle, |proof| Ok(proof.get_presentation_status().code()))
-}
-
 pub fn release(handle: u32) -> LibvcxResult<()> {
     PROOF_MAP
         .release(handle)
@@ -192,22 +190,76 @@ pub async fn send_proof_request_nonmediated(handle: u32, connection_handle: u32)
     PROOF_MAP.insert(handle, proof)
 }
 
+// --- Presentation request ---
 pub fn mark_presentation_request_msg_sent(handle: u32) -> LibvcxResult<()> {
     let mut proof = PROOF_MAP.get_cloned(handle)?;
     proof.mark_presentation_request_msg_sent()?;
     PROOF_MAP.insert(handle, proof)
 }
 
-pub fn get_presentation_request_msg(handle: u32) -> LibvcxResult<String> {
+pub fn get_presentation_request_attachment(handle: u32) -> LibvcxResult<String> {
     PROOF_MAP.get(handle, |proof| {
-        proof.get_presentation_request_msg().map_err(|err| err.into())
+        proof.get_presentation_request_attachment().map_err(|err| err.into())
     })
 }
 
+pub fn get_presentation_request_msg(handle: u32) -> LibvcxResult<String> {
+    PROOF_MAP.get(handle, |proof| {
+        let msg = proof.get_presentation_request_msg()?.to_a2a_message();
+        Ok(json!(msg).to_string())
+    })
+}
+// --- Presentation ---
 pub fn get_presentation_msg(handle: u32) -> LibvcxResult<String> {
-    PROOF_MAP.get(handle, |proof| proof.get_presentation_msg().map_err(|err| err.into()))
+    PROOF_MAP.get(handle, |proof| {
+        let msg = proof.get_presentation_msg()?.to_a2a_message();
+        Ok(json!(msg).to_string())
+    })
 }
 
+pub fn get_presentation_attachment(handle: u32) -> LibvcxResult<String> {
+    PROOF_MAP.get(handle, |proof| {
+        proof.get_presentation_attachment().map_err(|err| err.into())
+    })
+}
+
+pub fn get_presentation_verification_status(handle: u32) -> LibvcxResult<u32> {
+    PROOF_MAP.get(handle, |proof| Ok(proof.get_presentation_status().code()))
+}
+
+pub enum VcxRevocationStatus {
+    NonRevoked,
+    Revoked,
+    Undefined,
+}
+
+impl VcxRevocationStatus {
+    pub fn code(&self) -> u32 {
+        match self {
+            VcxRevocationStatus::Undefined => 0,
+            VcxRevocationStatus::NonRevoked => 1,
+            VcxRevocationStatus::Revoked => 2,
+        }
+    }
+}
+
+impl From<Option<RevocationStatus>> for VcxRevocationStatus {
+    fn from(status: Option<RevocationStatus>) -> Self {
+        match status {
+            None => VcxRevocationStatus::Undefined,
+            Some(revocation_status) => match revocation_status {
+                RevocationStatus::NonRevoked => VcxRevocationStatus::NonRevoked,
+                RevocationStatus::Revoked => VcxRevocationStatus::Revoked,
+            },
+        }
+    }
+}
+
+pub fn get_revocation_status(handle: u32) -> LibvcxResult<VcxRevocationStatus> {
+    PROOF_MAP.get(handle, |proof| Ok(proof.get_revocation_status().into()))
+}
+
+// --- General ---
 pub fn get_thread_id(handle: u32) -> LibvcxResult<String> {
     PROOF_MAP.get(handle, |proof| proof.get_thread_id().map_err(|err| err.into()))
 }
@@ -590,7 +642,7 @@ pub mod tests {
             send_proof_request(bad_handle, handle_conn).await.unwrap_err().kind(),
             LibvcxErrorKind::InvalidHandle
         );
-        assert_eq!(get_proof_state(handle_proof).unwrap(), 0);
+        assert_eq!(get_presentation_verification_status(handle_proof).unwrap(), 0);
         assert_eq!(
             create_proof(
                 "my source id".to_string(),

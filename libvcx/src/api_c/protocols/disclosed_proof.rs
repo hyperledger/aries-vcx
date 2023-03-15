@@ -326,7 +326,7 @@ pub extern "C" fn vcx_disclosed_proof_get_proof_msg(
     );
 
     execute(move || {
-        match disclosed_proof::generate_proof_msg(proof_handle) {
+        match disclosed_proof::get_presentation_msg(proof_handle) {
             Ok(msg) => {
                 let msg = CStringUtils::string_to_cstring(msg);
                 trace!(

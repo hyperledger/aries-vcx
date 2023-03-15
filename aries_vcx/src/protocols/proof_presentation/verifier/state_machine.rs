@@ -68,8 +68,8 @@ impl Default for VerifierFullState {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum RevocationStatus {
-    Revoked,
     NonRevoked,
+    Revoked,
 }
 
 fn build_verification_ack(thread_id: &str) -> PresentationAck {
@@ -438,7 +438,14 @@ impl VerifierSM {
         }
     }
 
-    pub fn presentation_request(&self) -> VcxResult<PresentationRequest> {
+    pub fn get_revocation_status(&self) -> Option<RevocationStatus> {
+        match self.state {
+            VerifierFullState::Finished(ref state) => state.revocation_status.clone(),
+            _ => None,
+        }
+    }
+
+    pub fn presentation_request_msg(&self) -> VcxResult<PresentationRequest> {
         match self.state {
             VerifierFullState::Initial(_) => Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::InvalidState,
@@ -460,7 +467,7 @@ impl VerifierSM {
         }
     }
 
-    pub fn presentation(&self) -> VcxResult<Presentation> {
+    pub fn get_presentation_msg(&self) -> VcxResult<Presentation> {
         match self.state {
             VerifierFullState::Finished(ref state) => state.presentation.clone().ok_or(AriesVcxError::from_msg(
                 AriesVcxErrorKind::InvalidState,
@@ -668,7 +675,7 @@ pub mod unit_tests {
 
             assert_match!(VerifierFullState::PresentationRequestSet(_), verifier_sm.state);
 
-            let msg_presentation_request = verifier_sm.presentation_request().unwrap();
+            let msg_presentation_request = verifier_sm.presentation_request_msg().unwrap();
             let out_time = msg_presentation_request.timing.unwrap().out_time.unwrap();
             assert!(was_in_past(&out_time, chrono::Duration::milliseconds(100)).unwrap());
         }

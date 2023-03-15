@@ -27,13 +27,8 @@ export interface IProofData {
   prover_did: string;
   state: number;
   name: string;
-  proof_state: ProofState;
+  proof_state: ProofVerificationStatus;
   proof: any; // eslint-disable-line @typescript-eslint/no-explicit-any
-}
-
-export interface IProofResponses {
-  proof?: string;
-  proofState: ProofState;
 }
 
 export enum ProofFieldType {
@@ -67,10 +62,16 @@ export interface IFilter {
   cred_def_id?: string;
 }
 
-export enum ProofState {
+export enum ProofVerificationStatus {
   Undefined = 0,
   Verified = 1,
   Invalid = 2,
+}
+
+export enum ProofRevocationStatus {
+  Undefined = 0,
+  NonRevoked = 1,
+  Revoked = 2,
 }
 
 export interface IProofPredicate {
@@ -190,14 +191,41 @@ export class Proof extends VcxBaseWithState<IProofData, VerifierStateType> {
     }
   }
 
-  public getProof(): IProofResponses {
+  public getPresentationMsg(): string {
     try {
-      const proof = ffi.proofGetProofMsg(this.handle);
-      const proofState = ffi.proofGetProofState(this.handle);
-      return {
-        proof,
-        proofState,
-      };
+      return ffi.proofGetPresentationMsg(this.handle);
+    } catch (err: any) {
+      throw new VCXInternalError(err);
+    }
+  }
+
+  public getPresentationVerificationStatus(): ProofVerificationStatus {
+    try {
+      return ffi.proofGetPresentationVerificationStatus(this.handle);
+    } catch (err: any) {
+      throw new VCXInternalError(err);
+    }
+  }
+
+  public getPresentationAttachment(): string {
+    try {
+      return ffi.proofGetPresentationAttachment(this.handle);
+    } catch (err: any) {
+      throw new VCXInternalError(err);
+    }
+  }
+
+  public getPresentationRequestAttachment(): string {
+    try {
+      return ffi.proofGetPresentationRequestAttachment(this.handle);
+    } catch (err: any) {
+      throw new VCXInternalError(err);
+    }
+  }
+
+  public getRevocationStatus(): ProofRevocationStatus {
+    try {
+      return ffi.proofGetRevocationStatus(this.handle);
     } catch (err: any) {
       throw new VCXInternalError(err);
     }
