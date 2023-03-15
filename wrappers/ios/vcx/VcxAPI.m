@@ -2240,7 +2240,7 @@ void checkErrorAndComplete(vcx_error_t ret, vcx_command_handle_t cmdHandle, void
     );
 
     checkErrorAndComplete(ret, handle, ^{
-        completion([NSError errorFromVcxError:ret], ERROR_RESPONSE_NUMBER, ERROR_RESPONSE_STRING);
+        completion([NSError errorFromVcxError:ret], ERROR_RESPONSE_STRING);
     });
 }
 

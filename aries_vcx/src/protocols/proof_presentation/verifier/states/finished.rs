@@ -68,7 +68,7 @@ pub mod unit_tests {
         };
         let serialized = serde_json::to_string(&state).unwrap();
         let expected =
-            r#"{"presentation_request":null,"presentation":null,"status":"Success","revocation_status":"Valid"}"#;
+            r#"{"presentation_request":null,"presentation":null,"status":"Success","verification_status":"Valid"}"#;
         assert_eq!(serialized, expected);
     }
 
