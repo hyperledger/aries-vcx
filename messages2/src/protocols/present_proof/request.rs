@@ -9,7 +9,7 @@ use crate::{
 
 pub type RequestPresentation = Message<RequestPresentationContent, RequestPresentationDecorators>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, MessageContent)]
+#[derive(Clone, Debug, Deserialize, Serialize, MessageContent, PartialEq)]
 #[message(kind = "PresentProofV1_0Kind::RequestPresentation")]
 pub struct RequestPresentationContent {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -27,7 +27,7 @@ impl RequestPresentationContent {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, Default)]
+#[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq)]
 pub struct RequestPresentationDecorators {
     #[serde(rename = "~thread")]
     #[serde(skip_serializing_if = "Option::is_none")]

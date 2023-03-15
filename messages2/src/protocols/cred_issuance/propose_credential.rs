@@ -10,7 +10,7 @@ use crate::{
 
 pub type ProposeCredential = Message<ProposeCredentialContent, ProposeCredentialDecorators>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, MessageContent)]
+#[derive(Clone, Debug, Deserialize, Serialize, MessageContent, PartialEq)]
 #[message(kind = "CredentialIssuanceV1_0Kind::ProposeCredential")]
 pub struct ProposeCredentialContent {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -31,7 +31,7 @@ impl ProposeCredentialContent {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, Default)]
+#[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq)]
 pub struct ProposeCredentialDecorators {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "~thread")]

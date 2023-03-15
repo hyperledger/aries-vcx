@@ -9,7 +9,7 @@ use crate::{
 
 pub type Ping = Message<PingContent, PingDecorators>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, MessageContent, Default)]
+#[derive(Clone, Debug, Deserialize, Serialize, MessageContent, Default, PartialEq)]
 #[message(kind = "TrustPingV1_0Kind::PingResponse")]
 pub struct PingContent {
     #[serde(default)]
@@ -18,7 +18,7 @@ pub struct PingContent {
     pub comment: Option<String>,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, Default)]
+#[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq)]
 pub struct PingDecorators {
     #[serde(rename = "~thread")]
     #[serde(skip_serializing_if = "Option::is_none")]

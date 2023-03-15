@@ -9,14 +9,14 @@ use crate::{
 
 pub type PingResponse = Message<PingResponseContent, PingResponseDecorators>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, MessageContent, Default)]
+#[derive(Clone, Debug, Deserialize, Serialize, MessageContent, Default, PartialEq)]
 #[message(kind = "TrustPingV1_0Kind::PingResponse")]
 pub struct PingResponseContent {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub struct PingResponseDecorators {
     #[serde(rename = "~thread")]
     pub thread: Thread,

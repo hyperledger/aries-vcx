@@ -12,6 +12,12 @@ pub struct Forward {
     pub msg: Box<RawValue>,
 }
 
+impl PartialEq for Forward {
+    fn eq(&self, other: &Self) -> bool {
+        self.to == other.to && self.msg.get() == other.msg.get()
+    }
+}
+
 impl Forward {
     pub fn new(to: String, msg: Box<RawValue>) -> Self {
         Self { to, msg }

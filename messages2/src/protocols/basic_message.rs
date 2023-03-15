@@ -4,16 +4,18 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     decorators::{MsgLocalization, Thread, Timing},
+    misc::utils,
     msg_types::types::basic_message::BasicMessageV1_0Kind,
     Message,
 };
 
 pub type BasicMessage = Message<BasicMessageContent, BasicMessageDecorators>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, MessageContent)]
+#[derive(Clone, Debug, Deserialize, Serialize, MessageContent, PartialEq)]
 #[message(kind = "BasicMessageV1_0Kind::Message")]
 pub struct BasicMessageContent {
     pub content: String,
+    #[serde(serialize_with = "utils::serialize_datetime")]
     pub sent_time: DateTime<Utc>,
 }
 
@@ -26,7 +28,7 @@ impl BasicMessageContent {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq)]
 pub struct BasicMessageDecorators {
     #[serde(rename = "~l10n")]
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -37,4 +39,98 @@ pub struct BasicMessageDecorators {
     #[serde(rename = "~timing")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<Timing>,
+}
+
+#[cfg(test)]
+#[allow(clippy::unwrap_used)]
+mod tests {
+    use serde_json::Value;
+
+    use super::*;
+    use crate::{misc::utils::DATETIME_FORMAT, AriesMessage, Message};
+
+    #[test]
+    fn test_minimal_message() {
+        let datetime = DateTime::default();
+        let msg_str = "test".to_owned();
+
+        let mut content = BasicMessageContent::new(msg_str.clone());
+        content.sent_time = datetime;
+
+        let decorators = BasicMessageDecorators::default();
+        let msg = Message::with_decorators(content, decorators);
+        let msg_id = msg.id.clone();
+        let msg = AriesMessage::from(msg);
+
+        let json = format!(
+            r#"{{
+                "@type": "https://didcomm.org/basicmessage/1.0/message",
+                "@id": "{msg_id}",
+                "sent_time": "{}",
+                "content":"{msg_str}"
+            }}"#,
+            datetime.format(DATETIME_FORMAT)
+        );
+
+        let deserialized: AriesMessage = serde_json::from_str(&json).unwrap();
+        let value: Value = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(serde_json::to_value(&msg).unwrap(), value);
+        assert_eq!(deserialized, msg);
+    }
+
+    #[test]
+    fn test_extensive_message() {
+        let datetime = DateTime::default();
+        let msg_str = "test".to_owned();
+        let thid = "test".to_owned();
+
+        let mut content = BasicMessageContent::new(msg_str.clone());
+        content.sent_time = datetime;
+
+        let mut decorators = BasicMessageDecorators::default();
+        let thread = Thread::new(thid.clone());
+        decorators.thread = Some(thread);
+
+        let msg = Message::with_decorators(content, decorators);
+        let msg_id = msg.id.clone();
+        let msg = AriesMessage::from(msg);
+
+        let json = format!(
+            r#"{{
+                "@type": "https://didcomm.org/basicmessage/1.0/message",
+                "@id": "{msg_id}",
+                "sent_time": "{}",
+                "content":"{msg_str}",
+                "~thread": {{
+                    "thid": "{}"
+                }}
+            }}"#,
+            datetime.format(DATETIME_FORMAT),
+            thid,
+        );
+
+        let deserialized: AriesMessage = serde_json::from_str(&json).unwrap();
+        let value: Value = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(serde_json::to_value(&msg).unwrap(), value);
+        assert_eq!(deserialized, msg);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_incomplete_message() {
+        let datetime = DateTime::<Utc>::default();
+
+        let json = format!(
+            r#"{{
+                "@type": "https://didcomm.org/basicmessage/1.0/message",
+                "@id": "test",
+                "sent_time": "{}"
+            }}"#,
+            datetime.format(DATETIME_FORMAT)
+        );
+
+        let _: AriesMessage = serde_json::from_str(&json).unwrap();
+    }
 }

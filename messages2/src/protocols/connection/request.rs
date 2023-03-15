@@ -10,7 +10,7 @@ use crate::{
 
 pub type Request = Message<RequestContent, RequestDecorators>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, MessageContent)]
+#[derive(Clone, Debug, Deserialize, Serialize, MessageContent, PartialEq)]
 #[message(kind = "ConnectionV1_0Kind::Request")]
 pub struct RequestContent {
     pub label: String,
@@ -23,7 +23,7 @@ impl RequestContent {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 pub struct ConnectionData {
     #[serde(rename = "DID")]
     pub did: String,
@@ -37,7 +37,7 @@ impl ConnectionData {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, Default)]
+#[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq)]
 pub struct RequestDecorators {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "~thread")]

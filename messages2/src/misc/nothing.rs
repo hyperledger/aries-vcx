@@ -1,6 +1,6 @@
 use serde::{de::IgnoredAny, Deserialize, Serialize};
 
-#[derive(Clone, Copy, Debug, Default)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct Nothing;
 
 /// Custom impl that, through [`Option`], handles the field not being

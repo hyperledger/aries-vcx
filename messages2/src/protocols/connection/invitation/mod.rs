@@ -38,7 +38,7 @@ pub struct CompleteInvitationContent(PairwiseInvitationContent<Url>);
 // However, to have the capability of setting different decorators
 // based on the invitation format, we don't wrap the [`Invitation`]
 // in a [`Message`], but rather its variants.
-#[derive(Debug, Clone, From, Deserialize, Serialize, MessageContent)]
+#[derive(Debug, Clone, From, Deserialize, Serialize, MessageContent, PartialEq)]
 #[message(kind = "ConnectionV1_0Kind::Invitation")]
 #[serde(untagged)]
 pub enum Invitation {

@@ -9,7 +9,7 @@ pub type PairwiseDidInvitation = Message<PairwiseInvitationContent<String>, PwIn
 /// Wrapper that represents a pairwise invitation.
 // The wrapping is used so that we expose certain types as an abstraction
 // over our internal types.
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct PairwiseInvitationContent<T> {
     pub label: String,
@@ -30,7 +30,7 @@ impl<T> PairwiseInvitationContent<T> {
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, Default)]
+#[derive(Debug, Clone, Deserialize, Serialize, Default, PartialEq)]
 pub struct PwInvitationDecorators {
     #[serde(rename = "~timing")]
     #[serde(skip_serializing_if = "Option::is_none")]

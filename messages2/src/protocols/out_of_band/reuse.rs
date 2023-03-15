@@ -10,12 +10,12 @@ use crate::{
 
 pub type HandshakeReuse = Message<HandshakeReuseContent, HandshakeReuseDecorators>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, MessageContent, Default)]
+#[derive(Clone, Debug, Deserialize, Serialize, MessageContent, Default, PartialEq)]
 #[message(kind = "OutOfBandV1_1Kind::HandshakeReuse")]
 #[serde(transparent)]
 pub struct HandshakeReuseContent(Nothing);
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub struct HandshakeReuseDecorators {
     #[serde(rename = "~thread")]
     pub thread: Thread,

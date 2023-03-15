@@ -9,7 +9,7 @@ use crate::{
 
 pub type RequestCredential = Message<RequestCredentialContent, RequestCredentialDecorators>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, MessageContent)]
+#[derive(Clone, Debug, Deserialize, Serialize, MessageContent, PartialEq)]
 #[message(kind = "CredentialIssuanceV1_0Kind::RequestCredential")]
 pub struct RequestCredentialContent {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -27,7 +27,7 @@ impl RequestCredentialContent {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, Default)]
+#[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq)]
 pub struct RequestCredentialDecorators {
     #[serde(rename = "~thread")]
     pub thread: Option<Thread>,

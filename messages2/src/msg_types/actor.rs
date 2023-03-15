@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize, Serializer};
 // catch-all [`Other`] variant, and that doesn't play well with `serde` or `strum` crates yet.
 //
 // I opened [this](https://github.com/Peternator7/strum/issues/258) issue since it shouldn't be hard to implement it in `strum` and that would make this easier to write & maintain.
-#[derive(Clone, Deserialize, Debug)]
+#[derive(Clone, Deserialize, Debug, PartialEq)]
 #[serde(from = "&str")]
 pub enum Actor {
     Inviter,

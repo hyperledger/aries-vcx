@@ -9,7 +9,7 @@ use crate::{
 
 pub type ProblemReport = Message<ProblemReportContent, ProblemReportDecorators>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, MessageContent, Default)]
+#[derive(Clone, Debug, Deserialize, Serialize, MessageContent, Default, PartialEq)]
 #[message(kind = "ConnectionV1_0Kind::ProblemReport")]
 pub struct ProblemReportContent {
     #[serde(rename = "problem-code")]
@@ -28,7 +28,7 @@ pub enum ProblemCode {
     ResponseProcessingError,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub struct ProblemReportDecorators {
     #[serde(rename = "~thread")]
     pub thread: Thread,

@@ -10,7 +10,7 @@ use crate::{
 
 pub type Disclose = Message<DiscloseContent, DiscloseDecorators>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, MessageContent)]
+#[derive(Clone, Debug, Deserialize, Serialize, MessageContent, PartialEq)]
 #[message(kind = "DiscoverFeaturesV1_0Kind::Disclose")]
 pub struct DiscloseContent {
     pub protocols: Vec<ProtocolDescriptor>,
@@ -32,7 +32,7 @@ impl DiscloseContent {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, Default)]
+#[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq)]
 pub struct DiscloseDecorators {
     #[serde(rename = "~thread")]
     #[serde(skip_serializing_if = "Option::is_none")]

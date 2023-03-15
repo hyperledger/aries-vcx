@@ -5,7 +5,7 @@ use url::Url;
 
 use crate::misc::mime_type::MimeType;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "snake_case")]
 pub struct Attachment {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -39,7 +39,7 @@ impl Attachment {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct AttachmentData {
     // There probably is a better type for this???
     pub jws: Option<String>,
@@ -65,4 +65,15 @@ pub enum AttachmentType {
     Base64(String),
     Json(Box<RawValue>),
     Links(Vec<Url>),
+}
+
+impl PartialEq for AttachmentType {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::Base64(l0), Self::Base64(r0)) => l0 == r0,
+            (Self::Json(l0), Self::Json(r0)) => l0.get() == r0.get(),
+            (Self::Links(l0), Self::Links(r0)) => l0 == r0,
+            _ => false,
+        }
+    }
 }

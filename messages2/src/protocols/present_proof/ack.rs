@@ -9,7 +9,7 @@ use crate::{
 
 pub type AckPresentation = Message<AckPresentationContent, AckDecorators>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, MessageContent)]
+#[derive(Clone, Debug, Deserialize, Serialize, MessageContent, PartialEq)]
 #[message(kind = "PresentProofV1_0Kind::Ack")]
 #[serde(transparent)]
 pub struct AckPresentationContent(pub AckContent);

@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize, Serializer};
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub struct Thread {
     pub thid: String,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -27,7 +27,7 @@ impl Thread {
     }
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq)]
 #[serde(from = "&str")]
 pub enum ThreadGoalCode {
     AriesVc,

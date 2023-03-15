@@ -9,7 +9,7 @@ use crate::{
 
 pub type AckCredential = Message<AckCredentialContent, AckDecorators>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, MessageContent)]
+#[derive(Clone, Debug, Deserialize, Serialize, MessageContent, PartialEq)]
 #[message(kind = "CredentialIssuanceV1_0Kind::Ack")]
 #[serde(transparent)]
 pub struct AckCredentialContent(pub AckContent);

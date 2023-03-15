@@ -18,7 +18,7 @@ use crate::{
 
 pub type ProposePresentation = Message<ProposePresentationContent, ProposePresentationDecorators>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, MessageContent)]
+#[derive(Clone, Debug, Deserialize, Serialize, MessageContent, PartialEq)]
 #[message(kind = "PresentProofV1_0Kind::ProposePresentation")]
 pub struct ProposePresentationContent {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -35,7 +35,7 @@ impl ProposePresentationContent {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, Default)]
+#[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq)]
 pub struct ProposePresentationDecorators {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "~thread")]
@@ -45,7 +45,7 @@ pub struct ProposePresentationDecorators {
     pub timing: Option<Timing>,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 pub struct PresentationPreview {
     #[serde(rename = "@type")]
     msg_type: PresentationPreviewMsgType,
@@ -63,7 +63,7 @@ impl PresentationPreview {
     }
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 struct PresentationPreviewMsgType;
 
 impl Serialize for PresentationPreviewMsgType {
@@ -94,7 +94,7 @@ impl<'de> Deserialize<'de> for PresentationPreviewMsgType {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 pub struct Attribute {
     pub name: String,
     pub cred_def_id: Option<String>,
@@ -104,7 +104,7 @@ pub struct Attribute {
     pub referent: Option<String>,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 pub struct Predicate {
     pub name: String,
     pub predicate: PredicateOperator,
@@ -113,13 +113,13 @@ pub struct Predicate {
     pub referent: Option<Referent>,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 pub struct Referent {
     pub cred_def_id: String,
     pub referent: String,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 pub enum PredicateOperator {
     #[serde(rename = ">=")]
     GreaterOrEqual,

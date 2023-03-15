@@ -9,7 +9,7 @@ use crate::{
 
 pub type Revoke = Message<RevokeContent, RevokeDecorators>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, MessageContent)]
+#[derive(Clone, Debug, Deserialize, Serialize, MessageContent, PartialEq)]
 #[message(kind = "RevocationV2_0Kind::Revoke")]
 pub struct RevokeContent {
     pub credential_id: String,
@@ -28,7 +28,7 @@ impl RevokeContent {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub struct RevokeDecorators {
     #[serde(rename = "~please_ack")]
     #[serde(skip_serializing_if = "Option::is_none")]

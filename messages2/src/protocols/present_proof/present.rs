@@ -9,7 +9,7 @@ use crate::{
 
 pub type Presentation = Message<PresentationContent, PresentationDecorators>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, MessageContent)]
+#[derive(Clone, Debug, Deserialize, Serialize, MessageContent, PartialEq)]
 #[message(kind = "PresentProofV1_0Kind::Presentation")]
 pub struct PresentationContent {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -27,7 +27,7 @@ impl PresentationContent {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub struct PresentationDecorators {
     #[serde(rename = "~thread")]
     pub thread: Thread,

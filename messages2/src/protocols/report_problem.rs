@@ -13,7 +13,7 @@ use crate::{
 
 pub type ProblemReport = Message<ProblemReportContent, ProblemReportDecorators>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, MessageContent, Default)]
+#[derive(Clone, Debug, Deserialize, Serialize, MessageContent, Default, PartialEq)]
 #[message(kind = "ReportProblemV1_0Kind::ProblemReport")]
 pub struct ProblemReportContent {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -40,7 +40,7 @@ pub struct ProblemReportContent {
     pub escalation_uri: Option<Url>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq)]
 pub struct ProblemReportDecorators {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "~thread")]
@@ -56,7 +56,7 @@ pub struct ProblemReportDecorators {
     pub fix_hint_locale: Option<FieldLocalization>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum WhoRetries {
     Me,
@@ -65,7 +65,7 @@ pub enum WhoRetries {
     None,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum Impact {
     MessageContent,
@@ -73,7 +73,7 @@ pub enum Impact {
     Connection,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Where {
     pub party: WhereParty,
     pub location: String,
@@ -116,7 +116,7 @@ impl<'de> Deserialize<'de> for Where {
     }
 }
 
-#[derive(AsRefStr, Debug, Clone, Serialize, Deserialize, EnumString)]
+#[derive(AsRefStr, Debug, Clone, Serialize, Deserialize, EnumString, PartialEq)]
 #[serde(rename_all = "lowercase")]
 #[strum(serialize_all = "lowercase")]
 pub enum WhereParty {

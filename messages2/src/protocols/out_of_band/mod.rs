@@ -19,7 +19,7 @@ use crate::{
     protocols::traits::DelayedSerde,
 };
 
-#[derive(Clone, Debug, From)]
+#[derive(Clone, Debug, From, PartialEq)]
 pub enum OutOfBand {
     Invitation(Invitation),
     HandshakeReuse(HandshakeReuse),
@@ -61,7 +61,7 @@ impl DelayedSerde for OutOfBand {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub enum OobGoalCode {
     #[serde(rename = "issue-vc")]
     IssueVC,

@@ -38,7 +38,7 @@ use crate::{
     protocols::traits::DelayedSerde,
 };
 
-#[derive(Clone, Debug, From)]
+#[derive(Clone, Debug, From, PartialEq)]
 pub enum CredentialIssuance {
     OfferCredential(OfferCredential),
     ProposeCredential(ProposeCredential),
@@ -91,7 +91,7 @@ impl DelayedSerde for CredentialIssuance {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct CredentialPreview {
     #[serde(rename = "@type")]
     msg_type: CredentialPreviewMsgType,
@@ -107,7 +107,7 @@ impl CredentialPreview {
     }
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 struct CredentialPreviewMsgType;
 
 impl From<CredentialPreviewMsgType> for CredentialIssuanceV1_0Kind {
@@ -148,7 +148,7 @@ impl<'de> Deserialize<'de> for CredentialPreviewMsgType {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub struct CredentialAttr {
     pub name: String,

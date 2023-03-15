@@ -23,7 +23,7 @@ use crate::{
     protocols::traits::DelayedSerde,
 };
 
-#[derive(Clone, Debug, From)]
+#[derive(Clone, Debug, From, PartialEq)]
 pub enum DiscoverFeatures {
     Query(Query),
     Disclose(Disclose),
@@ -58,7 +58,7 @@ impl DelayedSerde for DiscoverFeatures {
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub struct ProtocolDescriptor {
     pub pid: MaybeKnownPid,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -71,7 +71,7 @@ impl ProtocolDescriptor {
     }
 }
 
-#[derive(Debug, Clone, From, Deserialize, Serialize)]
+#[derive(Debug, Clone, From, Deserialize, Serialize, PartialEq)]
 #[serde(untagged)]
 pub enum MaybeKnownPid {
     Known(Protocol),

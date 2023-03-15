@@ -37,7 +37,7 @@ use crate::{
     },
 };
 
-#[derive(Clone, Debug, From)]
+#[derive(Clone, Debug, From, PartialEq)]
 pub enum AriesMessage {
     Routing(Message<Forward>),
     Connection(Connection),
@@ -137,7 +137,7 @@ impl DelayedSerde for AriesMessage {
 /// [`DelayedSerde::delayed_deserialize`] method.
 //
 // Yes, we're using some private serde constructs. Here's why I think this is okay:
-//  1) This emulates the derived implementation with the #[serde(tag = "@type")] attribute, 
+//  1) This emulates the derived implementation with the #[serde(tag = "@type")] attribute,
 // but uses [`MessageType`] instead of some [`Field`] struct that serde generates.
 //
 //  2) Without this, the implementation would either rely on something inefficient such as [`Value`]
@@ -149,7 +149,7 @@ impl DelayedSerde for AriesMessage {
 // would also require some custom deserialization afterwards.
 //
 //  3) Exposing these parts as public is in progress from serde. When that will happen is still
-// unknown. See: https://github.com/serde-rs/serde/issues/741. With [`serde_value`] lacking 
+// unknown. See: https://github.com/serde-rs/serde/issues/741. With [`serde_value`] lacking
 // activity and not seeming to get integrated into [`serde`], this will most likely resurface.
 //
 //  4) Reimplementing this on breaking semver changes is as easy as expanding the derived
@@ -206,7 +206,7 @@ impl Serialize for AriesMessage {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub struct Message<C, D = Nothing> {
     #[serde(rename = "@id")]
     pub id: String,
@@ -244,48 +244,5 @@ where
 
     fn kind_type() -> Self::KindType {
         C::kind()
-    }
-}
-
-#[cfg(test)]
-#[allow(clippy::unwrap_used)]
-mod tests {
-    use super::*;
-
-    // #[test]
-    // fn test_ser() {
-    //     let msg = AriesMessage::BasicMessage(BasicMessage {
-    //         id: "test".to_owned(),
-    //         sent_time: "test".to_owned(),
-    //         content: "test".to_owned(),
-    //         l10n: None,
-    //         thread: None,
-    //         timing: None,
-    //     });
-
-    //     println!("{}", serde_json::to_string(&msg).unwrap());
-    // }
-
-    #[test]
-    fn test_de() {
-        let json_str = r#"{
-            "@type": "https://didcomm.org/basicmessage/1.0/message",
-            "@id": "test",
-            "sent_time": "2019-01-15 18:42:01Z",
-            "content":"test"
-        }"#;
-
-        let msg: AriesMessage = serde_json::from_str(json_str).unwrap();
-        println!("{msg:?}");
-
-        let json_str = r#"{
-            "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/basicmessage/1.0/message",
-            "@id": "test",
-            "sent_time": "2019-01-15 18:42:01Z",
-            "content": "test"
-        }"#;
-
-        let msg: AriesMessage = serde_json::from_str(json_str).unwrap();
-        println!("{msg:?}");
     }
 }

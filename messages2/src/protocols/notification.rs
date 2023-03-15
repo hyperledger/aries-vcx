@@ -9,7 +9,7 @@ use crate::{
 
 pub type Ack = Message<AckContent, AckDecorators>;
 
-#[derive(Debug, Clone, Serialize, Deserialize, MessageContent)]
+#[derive(Debug, Clone, Serialize, Deserialize, MessageContent, PartialEq)]
 #[message(kind = "NotificationV1_0Kind::Ack")]
 pub struct AckContent {
     pub status: AckStatus,
@@ -21,14 +21,14 @@ impl AckContent {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "UPPERCASE")]
 pub enum AckStatus {
     Ok,
     Pending,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct AckDecorators {
     #[serde(rename = "~thread")]
     pub thread: Thread,

@@ -17,7 +17,7 @@ use crate::{
 
 pub type Response = Message<ResponseContent, ResponseDecorators>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, MessageContent)]
+#[derive(Clone, Debug, Deserialize, Serialize, MessageContent, PartialEq)]
 #[message(kind = "ConnectionV1_0Kind::Response")]
 pub struct ResponseContent {
     #[serde(rename = "connection~sig")]
@@ -30,7 +30,7 @@ impl ResponseContent {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 pub struct ConnectionSignature {
     #[serde(rename = "@type")]
     msg_type: SigEd25519Sha512Single,
@@ -50,7 +50,7 @@ impl ConnectionSignature {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 pub struct ResponseDecorators {
     #[serde(rename = "~thread")]
     pub thread: Thread,
@@ -72,7 +72,7 @@ impl ResponseDecorators {
     }
 }
 
-#[derive(Copy, Clone, Debug, Default)]
+#[derive(Copy, Clone, Debug, Default, PartialEq)]
 struct SigEd25519Sha512Single;
 
 impl Serialize for SigEd25519Sha512Single {

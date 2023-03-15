@@ -9,7 +9,7 @@ use crate::{
 
 pub type AckRevoke = Message<AckRevokeContent, AckDecorators>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, MessageContent)]
+#[derive(Clone, Debug, Deserialize, Serialize, MessageContent, PartialEq)]
 #[message(kind = "RevocationV2_0Kind::Ack")]
 #[serde(transparent)]
 pub struct AckRevokeContent(pub AckContent);

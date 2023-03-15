@@ -12,7 +12,7 @@ use crate::{
 
 pub type Invitation = Message<InvitationContent, InvitationDecorators>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, MessageContent)]
+#[derive(Clone, Debug, Deserialize, Serialize, MessageContent, PartialEq)]
 #[message(kind = "OutOfBandV1_1Kind::Invitation")]
 pub struct InvitationContent {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -44,7 +44,7 @@ impl InvitationContent {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, Default)]
+#[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq)]
 pub struct InvitationDecorators {
     #[serde(rename = "~timing")]
     #[serde(skip_serializing_if = "Option::is_none")]

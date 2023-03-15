@@ -17,7 +17,7 @@ use crate::{
     protocols::traits::DelayedSerde,
 };
 
-#[derive(Clone, Debug, From)]
+#[derive(Clone, Debug, From, PartialEq)]
 pub enum TrustPing {
     Ping(Ping),
     PingResponse(PingResponse),

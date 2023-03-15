@@ -10,7 +10,7 @@ use crate::{
 
 pub type Query = Message<QueryContent, QueryDecorators>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, MessageContent)]
+#[derive(Clone, Debug, Deserialize, Serialize, MessageContent, PartialEq)]
 #[message(kind = "DiscoverFeaturesV1_0Kind::Query")]
 pub struct QueryContent {
     pub query: String,
@@ -45,7 +45,7 @@ impl QueryContent {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, Default)]
+#[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq)]
 pub struct QueryDecorators {
     #[serde(rename = "~timing")]
     #[serde(skip_serializing_if = "Option::is_none")]
