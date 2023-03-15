@@ -268,11 +268,23 @@ mod tests {
 
     #[test]
     fn test_de() {
-        let json_str = r#"{"@type":"https://didcomm.org/basicmessage/1.0/message","@id":"test","sent_time":"test","content":"test"}"#;
+        let json_str = r#"{
+            "@type": "https://didcomm.org/basicmessage/1.0/message",
+            "@id": "test",
+            "sent_time": "2019-01-15 18:42:01Z",
+            "content":"test"
+        }"#;
+
         let msg: AriesMessage = serde_json::from_str(json_str).unwrap();
         println!("{msg:?}");
 
-        let json_str = r#"{"@type":"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/basicmessage/1.0/message","@id":"test","sent_time":"test","content":"test"}"#;
+        let json_str = r#"{
+            "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/basicmessage/1.0/message",
+            "@id": "test",
+            "sent_time": "2019-01-15 18:42:01Z",
+            "content": "test"
+        }"#;
+
         let msg: AriesMessage = serde_json::from_str(json_str).unwrap();
         println!("{msg:?}");
     }

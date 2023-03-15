@@ -33,3 +33,37 @@ pub struct NotificationV1_0;
 pub enum NotificationV1_0Kind {
     Ack,
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::misc::test_utils;
+
+    use super::NotificationV1_0;
+
+    const PROTOCOL: &str = "https://didcomm.org/notification/1.0";
+    const VERSION_RESOLUTION_PROTOCOL: &str = "https://didcomm.org/notification/1.255";
+    const UNSUPPORTED_VERSION_PROTOCOL: &str = "https://didcomm.org/notification/2.0";
+
+    const KIND_ACK: &str = "ack";
+
+    #[test]
+    fn test_protocol_notification() {
+        test_utils::test_protocol(PROTOCOL, NotificationV1_0)
+    }
+
+    #[test]
+    fn test_version_resolution_discover_features() {
+        test_utils::test_protocol(VERSION_RESOLUTION_PROTOCOL, NotificationV1_0)
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_unsupported_version_discover_features() {
+        test_utils::test_protocol(UNSUPPORTED_VERSION_PROTOCOL, NotificationV1_0)
+    }
+
+    #[test]
+    fn test_msg_type_ack() {
+        test_utils::test_msg_type(PROTOCOL, KIND_ACK, NotificationV1_0)
+    }
+}

@@ -33,3 +33,37 @@ pub struct RoutingV1_0;
 pub enum RoutingV1_0Kind {
     Forward,
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::misc::test_utils;
+
+    use super::RoutingV1_0;
+
+    const PROTOCOL: &str = "https://didcomm.org/routing/1.0";
+    const VERSION_RESOLUTION_PROTOCOL: &str = "https://didcomm.org/routing/1.255";
+    const UNSUPPORTED_VERSION_PROTOCOL: &str = "https://didcomm.org/routing/2.0";
+
+    const KIND_FORWARD: &str = "forward";
+
+    #[test]
+    fn test_protocol_routing() {
+        test_utils::test_protocol(PROTOCOL, RoutingV1_0)
+    }
+
+    #[test]
+    fn test_version_resolution_routing() {
+        test_utils::test_protocol(VERSION_RESOLUTION_PROTOCOL, RoutingV1_0)
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_unsupported_version_routing() {
+        test_utils::test_protocol(UNSUPPORTED_VERSION_PROTOCOL, RoutingV1_0)
+    }
+
+    #[test]
+    fn test_msg_type_forward() {
+        test_utils::test_msg_type(PROTOCOL, KIND_FORWARD, RoutingV1_0)
+    }
+}

@@ -34,3 +34,43 @@ pub enum RevocationV2_0Kind {
     Revoke,
     Ack,
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::misc::test_utils;
+
+    use super::RevocationV2_0;
+
+    const PROTOCOL: &str = "https://didcomm.org/revocation_notification/2.0";
+    const VERSION_RESOLUTION_PROTOCOL: &str = "https://didcomm.org/revocation_notification/2.255";
+    const UNSUPPORTED_VERSION_PROTOCOL: &str = "https://didcomm.org/revocation_notification/3.0";
+
+    const KIND_REVOKE: &str = "revoke";
+    const KIND_ACK: &str = "ack";
+
+    #[test]
+    fn test_protocol_revocation_notification() {
+        test_utils::test_protocol(PROTOCOL, RevocationV2_0)
+    }
+
+    #[test]
+    fn test_version_resolution_revocation_notification() {
+        test_utils::test_protocol(VERSION_RESOLUTION_PROTOCOL, RevocationV2_0)
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_unsupported_version_revocation_notification() {
+        test_utils::test_protocol(UNSUPPORTED_VERSION_PROTOCOL, RevocationV2_0)
+    }
+
+    #[test]
+    fn test_msg_type_revoke() {
+        test_utils::test_msg_type(PROTOCOL, KIND_REVOKE, RevocationV2_0)
+    }
+
+    #[test]
+    fn test_msg_type_ack() {
+        test_utils::test_msg_type(PROTOCOL, KIND_ACK, RevocationV2_0)
+    }
+}

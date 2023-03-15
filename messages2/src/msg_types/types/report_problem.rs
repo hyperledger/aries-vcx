@@ -33,3 +33,37 @@ pub struct ReportProblemV1_0;
 pub enum ReportProblemV1_0Kind {
     ProblemReport,
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::misc::test_utils;
+
+    use super::ReportProblemV1_0;
+
+    const PROTOCOL: &str = "https://didcomm.org/report-problem/1.0";
+    const VERSION_RESOLUTION_PROTOCOL: &str = "https://didcomm.org/report-problem/1.255";
+    const UNSUPPORTED_VERSION_PROTOCOL: &str = "https://didcomm.org/report-problem/2.0";
+
+    const KIND_PROBLEM_REPORT: &str = "problem-report";
+
+    #[test]
+    fn test_protocol_report_problem() {
+        test_utils::test_protocol(PROTOCOL, ReportProblemV1_0)
+    }
+
+    #[test]
+    fn test_version_resolution_report_problem() {
+        test_utils::test_protocol(VERSION_RESOLUTION_PROTOCOL, ReportProblemV1_0)
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_unsupported_version_report_problem() {
+        test_utils::test_protocol(UNSUPPORTED_VERSION_PROTOCOL, ReportProblemV1_0)
+    }
+
+    #[test]
+    fn test_msg_type_problem_report() {
+        test_utils::test_msg_type(PROTOCOL, KIND_PROBLEM_REPORT, ReportProblemV1_0)
+    }
+}

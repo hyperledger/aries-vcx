@@ -38,3 +38,61 @@ pub enum ConnectionV1_0Kind {
     #[strum(serialize = "ed25519Sha512_single")]
     Ed25519Sha512Single,
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::misc::test_utils;
+
+    use super::ConnectionV1_0;
+
+    const PROTOCOL: &str = "https://didcomm.org/connections/1.0";
+    const VERSION_RESOLUTION_PROTOCOL: &str = "https://didcomm.org/connections/1.255";
+    const UNSUPPORTED_VERSION_PROTOCOL: &str = "https://didcomm.org/connections/2.0";
+
+    const KIND_INVITATION: &str = "invitation";
+    const KIND_REQUEST: &str = "request";
+    const KIND_RESPONSE: &str = "response";
+    const KIND_PROBLEM: &str = "problem_report";
+    const KIND_SIGN: &str = "ed25519Sha512_single";
+
+    #[test]
+    fn test_protocol_connections() {
+        test_utils::test_protocol(PROTOCOL, ConnectionV1_0)
+    }
+
+    #[test]
+    fn test_version_resolution_connections() {
+        test_utils::test_protocol(VERSION_RESOLUTION_PROTOCOL, ConnectionV1_0)
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_unsupported_version_connections() {
+        test_utils::test_protocol(UNSUPPORTED_VERSION_PROTOCOL, ConnectionV1_0)
+    }
+
+    #[test]
+    fn test_msg_type_invitation() {
+        test_utils::test_msg_type(PROTOCOL, KIND_INVITATION, ConnectionV1_0)
+    }
+
+    #[test]
+    fn test_msg_type_request() {
+        test_utils::test_msg_type(PROTOCOL, KIND_REQUEST, ConnectionV1_0)
+    }
+
+    #[test]
+    fn test_msg_type_response() {
+        test_utils::test_msg_type(PROTOCOL, KIND_RESPONSE, ConnectionV1_0)
+    }
+
+    #[test]
+    fn test_msg_type_problem() {
+        test_utils::test_msg_type(PROTOCOL, KIND_PROBLEM, ConnectionV1_0)
+    }
+
+    #[test]
+    fn test_msg_type_sign() {
+        test_utils::test_msg_type(PROTOCOL, KIND_SIGN, ConnectionV1_0)
+    }
+}

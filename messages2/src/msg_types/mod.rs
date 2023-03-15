@@ -10,6 +10,7 @@ pub use self::types::Protocol;
 
 /// Type used for deserialization of a fully qualified message type. After deserialization,
 /// it is matched on to determine the actual message struct to deserialize to.
+#[derive(Debug, PartialEq)]
 pub(crate) struct MessageType<'a> {
     /// The [`Protocol`] part of the message type (e.g: https://didcomm.org/connections/1.0)
     pub protocol: Protocol,

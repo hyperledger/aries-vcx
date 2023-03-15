@@ -13,6 +13,7 @@ use crate::msg_types::types::{
     present_proof::PresentProofV1_0,
     report_problem::ReportProblemV1_0,
     revocation::RevocationV2_0,
+    routing::RoutingV1_0,
     traits::{MajorVersion, MinorVersion, ProtocolName},
     trust_ping::TrustPingV1_0,
 };
@@ -67,6 +68,7 @@ lazy_static! {
     /// the values are [`RegistryEntry`] instances.
     pub static ref PROTOCOL_REGISTRY: RegistryMap = {
         let mut m = HashMap::new();
+        map_insert(&mut m, extract_parts!(RoutingV1_0));
         map_insert(&mut m, extract_parts!(BasicMessageV1_0));
         map_insert(&mut m, extract_parts!(ConnectionV1_0));
         map_insert(&mut m, extract_parts!(CredentialIssuanceV1_0));
