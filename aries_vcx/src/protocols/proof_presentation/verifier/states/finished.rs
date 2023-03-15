@@ -78,7 +78,10 @@ pub mod unit_tests {
             let serialized =
                 r#"{"presentation":null,"presentation_request":null,"status":"Success","revocation_status":"Invalid"}"#;
             let deserialized: FinishedState = serde_json::from_str(serialized).unwrap();
-            assert_eq!(deserialized.verification_status, PresentationVerificationStatus::Invalid)
+            assert_eq!(
+                deserialized.verification_status,
+                PresentationVerificationStatus::Invalid
+            )
         }
         {
             let serialized =
@@ -108,10 +111,12 @@ pub mod unit_tests {
             )
         }
         {
-            let serialized =
-                r#"{"presentation":null,"presentation_request":null,"status":"Success","verification_status":"Revoked"}"#;
+            let serialized = r#"{"presentation":null,"presentation_request":null,"status":"Success","verification_status":"Revoked"}"#;
             let deserialized: FinishedState = serde_json::from_str(serialized).unwrap();
-            assert_eq!(deserialized.verification_status, PresentationVerificationStatus::Invalid)
+            assert_eq!(
+                deserialized.verification_status,
+                PresentationVerificationStatus::Invalid
+            )
         }
         {
             let serialized = r#"{"presentation":null,"presentation_request":null,"status":"Success","verification_status":"NonRevoked"}"#;
@@ -135,7 +140,10 @@ pub mod unit_tests {
             let serialized =
                 r#"{"presentation":null,"presentation_request":null,"status":"Success","revocation_status":"Revoked"}"#;
             let deserialized: FinishedState = serde_json::from_str(serialized).unwrap();
-            assert_eq!(deserialized.verification_status, PresentationVerificationStatus::Invalid)
+            assert_eq!(
+                deserialized.verification_status,
+                PresentationVerificationStatus::Invalid
+            )
         }
         {
             let serialized = r#"{"presentation":null,"presentation_request":null,"status":"Success","revocation_status":"NonRevoked"}"#;

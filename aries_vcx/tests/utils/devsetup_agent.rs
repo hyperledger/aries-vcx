@@ -401,10 +401,7 @@ pub mod test_utils {
                 .await
                 .unwrap();
             assert_eq!(expected_state, self.verifier.get_state());
-            assert_eq!(
-                expected_verification_status,
-                self.verifier.get_verification_status()
-            );
+            assert_eq!(expected_verification_status, self.verifier.get_verification_status());
         }
 
         pub async fn send_revocation_notification(&mut self, ack_on: Vec<AckOn>) {
