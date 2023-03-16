@@ -21,7 +21,7 @@ impl ForwardContent {
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod tests {
-    use serde_json::Value;
+    use serde_json::json;
 
     use super::*;
     use crate::{AriesMessage, Message};
@@ -38,21 +38,16 @@ mod tests {
         let msg_id = msg.id.clone();
         let msg = AriesMessage::from(msg);
 
-        let json = format!(
-            r#"{{
-                "@type": "{FORWARD}",
-                "@id": "{msg_id}",
-                "to": "{to}",
-                "msg": "{msg_value}"
-            }}"#,
-        );
-        println!("{json}");
-        println!("{msg:?}");
+        let json = json! ({
+            "@type": FORWARD,
+            "@id": msg_id,
+            "to": to,
+            "msg": msg_value
+        });
 
-        let deserialized: AriesMessage = serde_json::from_str(&json).unwrap();
-        let value: Value = serde_json::from_str(&json).unwrap();
+        let deserialized = AriesMessage::deserialize(&json).unwrap();
 
-        assert_eq!(serde_json::to_value(&msg).unwrap(), value);
+        assert_eq!(serde_json::to_value(&msg).unwrap(), json);
         assert_eq!(deserialized, msg);
     }
 
@@ -61,14 +56,12 @@ mod tests {
     fn test_incomplete_message() {
         let to = "test".to_owned();
 
-        let json = format!(
-            r#"{{
-                "@type": "{FORWARD}",
-                "@id": "test",
-                "to": "{to}"
-            }}"#,
-        );
+        let json = json!({
+            "@type": FORWARD,
+            "@id": "test",
+            "to": to
+        });
 
-        let _: AriesMessage = serde_json::from_str(&json).unwrap();
+        AriesMessage::deserialize(&json).unwrap();
     }
 }

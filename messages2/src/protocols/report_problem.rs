@@ -56,7 +56,7 @@ pub struct ProblemReportDecorators {
     pub fix_hint_locale: Option<FieldLocalization>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum WhoRetries {
     Me,
@@ -65,7 +65,7 @@ pub enum WhoRetries {
     None,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum Impact {
     MessageContent,
@@ -116,11 +116,78 @@ impl<'de> Deserialize<'de> for Where {
     }
 }
 
-#[derive(AsRefStr, Debug, Clone, Serialize, Deserialize, EnumString, PartialEq)]
+#[derive(AsRefStr, Debug, Copy, Clone, Serialize, Deserialize, EnumString, PartialEq)]
 #[serde(rename_all = "lowercase")]
 #[strum(serialize_all = "lowercase")]
 pub enum WhereParty {
     Me,
     You,
     Other,
+}
+
+#[cfg(test)]
+#[allow(clippy::unwrap_used)]
+#[allow(clippy::field_reassign_with_default)]
+mod tests {
+    use serde_json::json;
+
+    use super::*;
+    use crate::{AriesMessage, Message};
+
+    const PROBLEM_REPORT: &str = "https://didcomm.org/report-problem/1.0/problem-report";
+
+    #[test]
+    fn test_minimal_message() {
+        let content = ProblemReportContent::default();
+
+        let decorators = ProblemReportDecorators::default();
+        let msg = Message::with_decorators(content, decorators);
+        let msg_id = msg.id.clone();
+        let msg = AriesMessage::from(msg);
+
+        let json = json!({
+            "@type": PROBLEM_REPORT,
+            "@id": msg_id,
+        });
+
+        let deserialized = AriesMessage::deserialize(&json).unwrap();
+
+        assert_eq!(serde_json::to_value(&msg).unwrap(), json);
+        assert_eq!(deserialized, msg);
+    }
+
+    #[test]
+    fn test_extensive_message() {
+        let description = "test".to_owned();
+        let who_retries = WhoRetries::Me;
+        let thid = "test".to_owned();
+
+        let thread = Thread::new(thid.clone());
+
+        let mut content = ProblemReportContent::default();
+        content.description = Some(description.clone());
+        content.who_retries = Some(who_retries);
+
+        let mut decorators = ProblemReportDecorators::default();
+        decorators.thread = Some(thread);
+
+        let msg = Message::with_decorators(content, decorators);
+        let msg_id = msg.id.clone();
+        let msg = AriesMessage::from(msg);
+
+        let json = json!({
+            "@type": PROBLEM_REPORT,
+            "@id": msg_id,
+            "description": description,
+            "who_retries": who_retries,
+            "~thread": {
+                "thid": thid
+            }
+        });
+
+        let deserialized = AriesMessage::deserialize(&json).unwrap();
+
+        assert_eq!(serde_json::to_value(&msg).unwrap(), json);
+        assert_eq!(deserialized, msg);
+    }
 }

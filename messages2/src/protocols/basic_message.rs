@@ -44,7 +44,7 @@ pub struct BasicMessageDecorators {
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod tests {
-    use serde_json::Value;
+    use serde_json::json;
 
     use super::*;
     use crate::{misc::utils::DATETIME_FORMAT, AriesMessage, Message};
@@ -64,20 +64,16 @@ mod tests {
         let msg_id = msg.id.clone();
         let msg = AriesMessage::from(msg);
 
-        let json = format!(
-            r#"{{
-                "@type": "{MESSAGE}",
-                "@id": "{msg_id}",
-                "sent_time": "{}",
-                "content":"{msg_str}"
-            }}"#,
-            datetime.format(DATETIME_FORMAT)
-        );
+        let json = json!({
+            "@type": MESSAGE,
+            "@id": msg_id,
+            "sent_time": datetime.format(DATETIME_FORMAT).to_string(),
+            "content": msg_str
+        });
 
-        let deserialized: AriesMessage = serde_json::from_str(&json).unwrap();
-        let value: Value = serde_json::from_str(&json).unwrap();
+        let deserialized = AriesMessage::deserialize(&json).unwrap();
 
-        assert_eq!(serde_json::to_value(&msg).unwrap(), value);
+        assert_eq!(serde_json::to_value(&msg).unwrap(), json);
         assert_eq!(deserialized, msg);
     }
 
@@ -98,24 +94,19 @@ mod tests {
         let msg_id = msg.id.clone();
         let msg = AriesMessage::from(msg);
 
-        let json = format!(
-            r#"{{
-                "@type": "{MESSAGE}",
-                "@id": "{msg_id}",
-                "sent_time": "{}",
-                "content":"{msg_str}",
-                "~thread": {{
-                    "thid": "{}"
-                }}
-            }}"#,
-            datetime.format(DATETIME_FORMAT),
-            thid,
-        );
+        let json = json!({
+            "@type": MESSAGE,
+            "@id": msg_id,
+            "sent_time": datetime.format(DATETIME_FORMAT).to_string(),
+            "content": msg_str,
+            "~thread": {
+                "thid": thid
+            }
+        });
 
-        let deserialized: AriesMessage = serde_json::from_str(&json).unwrap();
-        let value: Value = serde_json::from_str(&json).unwrap();
+        let deserialized = AriesMessage::deserialize(&json).unwrap();
 
-        assert_eq!(serde_json::to_value(&msg).unwrap(), value);
+        assert_eq!(serde_json::to_value(&msg).unwrap(), json);
         assert_eq!(deserialized, msg);
     }
 
@@ -124,15 +115,12 @@ mod tests {
     fn test_incomplete_message() {
         let datetime = DateTime::<Utc>::default();
 
-        let json = format!(
-            r#"{{
-                "@type": "{MESSAGE}",
-                "@id": "test",
-                "sent_time": "{}"
-            }}"#,
-            datetime.format(DATETIME_FORMAT)
-        );
+        let json = json!({
+            "@type": MESSAGE,
+            "@id": "test",
+            "sent_time": datetime.format(DATETIME_FORMAT).to_string()
+        });
 
-        let _: AriesMessage = serde_json::from_str(&json).unwrap();
+        AriesMessage::deserialize(&json).unwrap();
     }
 }
