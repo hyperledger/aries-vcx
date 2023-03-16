@@ -49,6 +49,8 @@ mod tests {
     use super::*;
     use crate::{misc::utils::DATETIME_FORMAT, AriesMessage, Message};
 
+    const MESSAGE: &str = "https://didcomm.org/basicmessage/1.0/message";
+
     #[test]
     fn test_minimal_message() {
         let datetime = DateTime::default();
@@ -64,7 +66,7 @@ mod tests {
 
         let json = format!(
             r#"{{
-                "@type": "https://didcomm.org/basicmessage/1.0/message",
+                "@type": "{MESSAGE}",
                 "@id": "{msg_id}",
                 "sent_time": "{}",
                 "content":"{msg_str}"
@@ -98,7 +100,7 @@ mod tests {
 
         let json = format!(
             r#"{{
-                "@type": "https://didcomm.org/basicmessage/1.0/message",
+                "@type": "{MESSAGE}",
                 "@id": "{msg_id}",
                 "sent_time": "{}",
                 "content":"{msg_str}",
@@ -124,7 +126,7 @@ mod tests {
 
         let json = format!(
             r#"{{
-                "@type": "https://didcomm.org/basicmessage/1.0/message",
+                "@type": "{MESSAGE}",
                 "@id": "test",
                 "sent_time": "{}"
             }}"#,

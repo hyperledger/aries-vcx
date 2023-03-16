@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use serde_json::value::RawValue;
+use serde_json::Value;
 use url::Url;
 
 use crate::misc::mime_type::MimeType;
@@ -59,21 +59,10 @@ impl AttachmentData {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub enum AttachmentType {
     Base64(String),
-    Json(Box<RawValue>),
+    Json(Value),
     Links(Vec<Url>),
-}
-
-impl PartialEq for AttachmentType {
-    fn eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (Self::Base64(l0), Self::Base64(r0)) => l0 == r0,
-            (Self::Json(l0), Self::Json(r0)) => l0.get() == r0.get(),
-            (Self::Links(l0), Self::Links(r0)) => l0 == r0,
-            _ => false,
-        }
-    }
 }

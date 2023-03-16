@@ -14,7 +14,10 @@ pub mod protocols;
 
 use derive_more::From;
 use misc::nothing::Nothing;
-use protocols::traits::{ConcreteMessage, HasKind};
+use protocols::{
+    routing::Forward,
+    traits::{ConcreteMessage, HasKind},
+};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use uuid::Uuid;
 
@@ -32,14 +35,13 @@ use crate::{
     protocols::{
         basic_message::BasicMessage, connection::Connection, cred_issuance::CredentialIssuance,
         discover_features::DiscoverFeatures, notification::Ack, out_of_band::OutOfBand, present_proof::PresentProof,
-        report_problem::ProblemReport, revocation::Revocation, routing::Forward, traits::DelayedSerde,
-        trust_ping::TrustPing,
+        report_problem::ProblemReport, revocation::Revocation, traits::DelayedSerde, trust_ping::TrustPing,
     },
 };
 
 #[derive(Clone, Debug, From, PartialEq)]
 pub enum AriesMessage {
-    Routing(Message<Forward>),
+    Routing(Forward),
     Connection(Connection),
     Revocation(Revocation),
     CredentialIssuance(CredentialIssuance),
@@ -66,7 +68,7 @@ impl DelayedSerde for AriesMessage {
                 let Routing::V1(RoutingV1::V1_0(_msg_type)) = msg_type;
                 let msg_type = RoutingV1_0Kind::Forward;
 
-                Message::<Forward>::delayed_deserialize(msg_type, deserializer).map(From::from)
+                Forward::delayed_deserialize(msg_type, deserializer).map(From::from)
             }
             Protocol::Connection(msg_type) => {
                 Connection::delayed_deserialize((msg_type, kind), deserializer).map(From::from)
