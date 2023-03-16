@@ -1,28 +1,11 @@
-use serde::{Deserialize, Deserializer};
-
-#[derive(Serialize, Debug, Clone, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub enum PresentationVerificationStatus {
+    #[serde(alias = "NonRevoked")]
+    // todo: to be removed in 0.54.0, supports legacy serialization when the enum had values "Revoked" and "NotRevoked"
     Valid,
+    #[serde(alias = "Revoked")]
     Invalid,
     Unavailable,
-}
-
-// todo: to be removed in 0.54.0, this supports legacy serialization when the enum had values "Revoked" and "NotRevoked"
-impl<'de> Deserialize<'de> for PresentationVerificationStatus {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        match <&str>::deserialize(deserializer)? {
-            "Valid" | "NonRevoked" => Ok(PresentationVerificationStatus::Valid),
-            "Invalid" | "Revoked" => Ok(PresentationVerificationStatus::Invalid),
-            "Unavailable" => Ok(PresentationVerificationStatus::Unavailable),
-            s @ _ => Err(serde::de::Error::custom(format!(
-                "Unexpected value of PresentationVerificationStatus: {}",
-                s
-            ))),
-        }
-    }
 }
 
 #[cfg(test)]
