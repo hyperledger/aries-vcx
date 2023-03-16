@@ -38,9 +38,8 @@ pub enum TrustPingV1_0Kind {
 
 #[cfg(test)]
 mod tests {
-    use crate::misc::test_utils;
-
     use super::TrustPingV1_0;
+    use crate::misc::test_utils;
 
     const PROTOCOL: &str = "https://didcomm.org/trust_ping/1.0";
     const VERSION_RESOLUTION_PROTOCOL: &str = "https://didcomm.org/trust_ping/1.255";

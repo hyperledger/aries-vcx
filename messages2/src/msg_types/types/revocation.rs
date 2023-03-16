@@ -37,9 +37,8 @@ pub enum RevocationV2_0Kind {
 
 #[cfg(test)]
 mod tests {
-    use crate::misc::test_utils;
-
     use super::RevocationV2_0;
+    use crate::misc::test_utils;
 
     const PROTOCOL: &str = "https://didcomm.org/revocation_notification/2.0";
     const VERSION_RESOLUTION_PROTOCOL: &str = "https://didcomm.org/revocation_notification/2.255";

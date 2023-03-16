@@ -40,9 +40,8 @@ pub enum PresentProofV1_0Kind {
 
 #[cfg(test)]
 mod tests {
-    use crate::misc::test_utils;
-
     use super::PresentProofV1_0;
+    use crate::misc::test_utils;
 
     const PROTOCOL: &str = "https://didcomm.org/present-proof/1.0";
     const VERSION_RESOLUTION_PROTOCOL: &str = "https://didcomm.org/present-proof/1.255";

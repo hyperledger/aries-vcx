@@ -36,14 +36,13 @@ pub enum BasicMessageV1_0Kind {
 
 #[cfg(test)]
 mod tests {
-    use crate::misc::test_utils;
-
     use super::BasicMessageV1_0;
+    use crate::misc::test_utils;
 
     const PROTOCOL: &str = "https://didcomm.org/basicmessage/1.0";
     const VERSION_RESOLUTION_PROTOCOL: &str = "https://didcomm.org/basicmessage/1.255";
     const UNSUPPORTED_VERSION_PROTOCOL: &str = "https://didcomm.org/basicmessage/2.0";
-    
+
     const KIND_MESSAGE: &str = "message";
 
     #[test]

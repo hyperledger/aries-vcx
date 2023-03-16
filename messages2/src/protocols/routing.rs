@@ -24,7 +24,7 @@ mod tests {
     use serde_json::json;
 
     use super::*;
-    use crate::{misc::{test_utils, nothing::Nothing}};
+    use crate::misc::{nothing::Nothing, test_utils};
 
     #[test]
     fn test_minimal_message() {

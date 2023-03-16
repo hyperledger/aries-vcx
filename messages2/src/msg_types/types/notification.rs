@@ -36,9 +36,8 @@ pub enum NotificationV1_0Kind {
 
 #[cfg(test)]
 mod tests {
-    use crate::misc::test_utils;
-
     use super::NotificationV1_0;
+    use crate::misc::test_utils;
 
     const PROTOCOL: &str = "https://didcomm.org/notification/1.0";
     const VERSION_RESOLUTION_PROTOCOL: &str = "https://didcomm.org/notification/1.255";

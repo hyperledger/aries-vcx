@@ -36,9 +36,8 @@ pub enum RoutingV1_0Kind {
 
 #[cfg(test)]
 mod tests {
-    use crate::misc::test_utils;
-
     use super::RoutingV1_0;
+    use crate::misc::test_utils;
 
     const PROTOCOL: &str = "https://didcomm.org/routing/1.0";
     const VERSION_RESOLUTION_PROTOCOL: &str = "https://didcomm.org/routing/1.255";

@@ -38,9 +38,8 @@ pub enum OutOfBandV1_1Kind {
 
 #[cfg(test)]
 mod tests {
-    use crate::misc::test_utils;
-
     use super::OutOfBandV1_1;
+    use crate::misc::test_utils;
 
     const PROTOCOL: &str = "https://didcomm.org/out-of-band/1.1";
     const VERSION_RESOLUTION_PROTOCOL: &str = "https://didcomm.org/out-of-band/1.255";

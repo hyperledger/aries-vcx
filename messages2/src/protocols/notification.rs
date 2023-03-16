@@ -49,9 +49,8 @@ impl AckDecorators {
 mod tests {
     use serde_json::json;
 
-    use crate::misc::test_utils;
-
     use super::*;
+    use crate::misc::test_utils;
 
     #[test]
     fn test_minimal_message() {

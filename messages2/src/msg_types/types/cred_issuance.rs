@@ -41,9 +41,8 @@ pub enum CredentialIssuanceV1_0Kind {
 
 #[cfg(test)]
 mod tests {
-    use crate::misc::test_utils;
-
     use super::CredentialIssuanceV1_0;
+    use crate::misc::test_utils;
 
     const PROTOCOL: &str = "https://didcomm.org/issue-credential/1.0";
     const VERSION_RESOLUTION_PROTOCOL: &str = "https://didcomm.org/issue-credential/1.255";

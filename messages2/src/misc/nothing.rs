@@ -10,7 +10,8 @@ impl<'de> Deserialize<'de> for Nothing {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,
-    {   println!("before deserialize");
+    {
+        println!("before deserialize");
         Option::<IgnoredAny>::deserialize(deserializer)?;
         println!("after deserialize");
         Ok(Self)
