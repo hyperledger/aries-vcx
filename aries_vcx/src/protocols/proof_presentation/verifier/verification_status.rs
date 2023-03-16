@@ -13,12 +13,11 @@ impl<'de> Deserialize<'de> for PresentationVerificationStatus {
     where
         D: Deserializer<'de>,
     {
-        let s: String = Deserialize::deserialize(deserializer)?;
-        match s.as_str() {
+        match <&str>::deserialize(deserializer)? {
             "Valid" | "NonRevoked" => Ok(PresentationVerificationStatus::Valid),
             "Invalid" | "Revoked" => Ok(PresentationVerificationStatus::Invalid),
             "Unavailable" => Ok(PresentationVerificationStatus::Unavailable),
-            _ => Err(serde::de::Error::custom(format!(
+            s @ _ => Err(serde::de::Error::custom(format!(
                 "Unexpected value of PresentationVerificationStatus: {}",
                 s
             ))),

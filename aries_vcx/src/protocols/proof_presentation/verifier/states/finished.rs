@@ -102,7 +102,8 @@ pub mod unit_tests {
             verification_status: PresentationVerificationStatus::Invalid,
         };
         let serialized = serde_json::to_string(&state).unwrap();
-        let expected = r#"{"presentation_request":null,"presentation":null,"status":"Success","verification_status":"Invalid"}"#;
+        let expected =
+            r#"{"presentation_request":null,"presentation":null,"status":"Success","verification_status":"Invalid"}"#;
         assert_eq!(serialized, expected);
         let deserialized: FinishedState = serde_json::from_str(&serialized).unwrap();
         assert_eq!(state, deserialized)
