@@ -375,6 +375,7 @@ impl HolderSM {
         }
     }
 
+    // todo: return data typing
     pub fn get_attributes(&self) -> VcxResult<String> {
         match self.state {
             HolderFullState::Finished(ref state) => state.get_attributes(),
@@ -386,6 +387,7 @@ impl HolderSM {
         }
     }
 
+    // todo: return data typing
     pub fn get_attachment(&self) -> VcxResult<String> {
         match self.state {
             HolderFullState::Finished(ref state) => state.get_attachment(),
@@ -397,6 +399,7 @@ impl HolderSM {
         }
     }
 
+    // todo: this method should probably not exist? Otherwise the state machine is couple with filesystem and assumes location of tails file cannot change
     pub fn get_tails_location(&self) -> VcxResult<String> {
         match self.state {
             HolderFullState::Finished(ref state) => state.get_tails_location(),
@@ -445,7 +448,7 @@ impl HolderSM {
                 "Credential offer can only be obtained from OfferReceived state",
             )),
         }
-    }
+    } // todo: confusing, either rename to `cred_offer_msg` or only keep the actual Credential Offer attachment here
 
     pub fn get_thread_id(&self) -> VcxResult<String> {
         Ok(self.thread_id.clone())
@@ -459,8 +462,9 @@ impl HolderSM {
             HolderFullState::RequestSent(ref state) => state.is_revokable(),
             HolderFullState::Finished(ref state) => state.is_revokable(),
         }
-    }
+    } // both holder and issuer have this method, but the semantics differ
 
+    // todo: the implemntation is hardcoding interval against which it's chekcing, could be injectable
     pub async fn is_revoked(&self, profile: &Arc<dyn Profile>) -> VcxResult<bool> {
         if self.is_revokable(profile).await? {
             let rev_reg_id = self.get_rev_reg_id()?;

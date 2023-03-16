@@ -1,6 +1,7 @@
 use crate::protocols::issuance::issuer::state_machine::RevocationInfoV1;
 use messages::status::Status;
 
+// cred_id is always set to None
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct FinishedState {
     pub cred_id: Option<String>,

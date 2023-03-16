@@ -2,6 +2,8 @@ use crate::protocols::issuance::issuer::state_machine::RevocationInfoV1;
 use crate::protocols::issuance::issuer::states::finished::FinishedState;
 use messages::status::Status;
 
+// todo: should Sent state be merged into Finished state - it only differs by whether "ack" was received or not - could be just flag
+// todo:
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CredentialSentState {
     pub revocation_info_v1: Option<RevocationInfoV1>,

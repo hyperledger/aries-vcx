@@ -427,6 +427,7 @@ impl IssuerSM {
         Ok(Self { state, ..self })
     }
 
+    // todo: building & sending credential should be separated, we can introduce intermediate state "CredentialBuilt"
     pub async fn send_credential(self, profile: &Arc<dyn Profile>, send_message: SendClosure) -> VcxResult<Self> {
         let state = match self.state {
             IssuerFullState::RequestReceived(state_data) => {

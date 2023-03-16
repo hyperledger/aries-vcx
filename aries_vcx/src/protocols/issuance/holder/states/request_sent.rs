@@ -5,8 +5,8 @@ use messages::status::Status;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RequestSentState {
-    pub req_meta: String,
-    pub cred_def_json: String,
+    pub req_meta: String, // todo: should be typed
+    pub cred_def_json: String, // todo: should be typed
 }
 
 impl From<(RequestSentState, String, Credential, Option<String>)> for FinishedHolderState {
