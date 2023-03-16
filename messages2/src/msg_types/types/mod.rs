@@ -173,3 +173,22 @@ impl Serialize for Protocol {
         format_args!("{prefix}/{protocol}/{major}.{minor}").serialize(serializer)
     }
 }
+
+#[cfg(test)]
+#[allow(clippy::unwrap_used)]
+mod tests {
+    use serde_json::json;
+
+    use super::*;
+
+    #[test]
+    fn test_old_prefix() {
+        let value_old = json!("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/connections/1.0");
+        let value_new = json!("https://didcomm.org/connections/1.0");
+
+        let protocol_old = Protocol::deserialize(&value_old).unwrap();
+        let protocol_new = Protocol::deserialize(&value_new).unwrap();
+
+        assert_eq!(protocol_old, protocol_new);
+    }
+}
