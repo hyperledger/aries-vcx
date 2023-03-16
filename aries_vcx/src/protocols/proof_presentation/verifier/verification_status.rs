@@ -4,9 +4,10 @@ use serde::{Deserialize, Deserializer};
 pub enum PresentationVerificationStatus {
     Valid,
     Invalid,
-    Unavailable(),
+    Unavailable,
 }
 
+// todo: to be removed in 0.54.0, this supports legacy serialization when the enum had values "Revoked" and "NotRevoked"
 impl<'de> Deserialize<'de> for PresentationVerificationStatus {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
@@ -16,8 +17,11 @@ impl<'de> Deserialize<'de> for PresentationVerificationStatus {
         match s.as_str() {
             "Valid" | "NonRevoked" => Ok(PresentationVerificationStatus::Valid),
             "Invalid" | "Revoked" => Ok(PresentationVerificationStatus::Invalid),
-            "Unavailable" => Ok(PresentationVerificationStatus::Unavailable()),
-            _ => Err(serde::de::Error::custom(format!("unexpected value for Color: {}", s))),
+            "Unavailable" => Ok(PresentationVerificationStatus::Unavailable),
+            _ => Err(serde::de::Error::custom(format!(
+                "Unexpected value of PresentationVerificationStatus: {}",
+                s
+            ))),
         }
     }
 }
@@ -57,7 +61,7 @@ pub mod unit_tests {
             serde_json::from_str("\"Revoked\"").unwrap()
         );
         assert_eq!(
-            PresentationVerificationStatus::Unavailable(),
+            PresentationVerificationStatus::Unavailable,
             serde_json::from_str("\"Unavailable\"").unwrap()
         );
     }

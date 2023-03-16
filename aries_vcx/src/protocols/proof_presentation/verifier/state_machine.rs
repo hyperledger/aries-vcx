@@ -418,7 +418,7 @@ impl VerifierSM {
     pub fn get_verification_status(&self) -> PresentationVerificationStatus {
         match self.state {
             VerifierFullState::Finished(ref state) => state.verification_status.clone(),
-            _ => PresentationVerificationStatus::Unavailable(),
+            _ => PresentationVerificationStatus::Unavailable,
         }
     }
 
@@ -769,7 +769,7 @@ pub mod unit_tests {
 
             assert_match!(VerifierState::Failed, verifier_sm.get_state());
             assert_match!(
-                PresentationVerificationStatus::Unavailable(),
+                PresentationVerificationStatus::Unavailable,
                 verifier_sm.get_verification_status()
             );
         }

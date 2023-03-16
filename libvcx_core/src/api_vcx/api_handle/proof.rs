@@ -249,7 +249,7 @@ impl From<PresentationVerificationStatus> for VcxPresentationVerificationStatus 
         match verification_status {
             PresentationVerificationStatus::Valid => VcxPresentationVerificationStatus::Valid,
             PresentationVerificationStatus::Invalid => VcxPresentationVerificationStatus::Invalid,
-            PresentationVerificationStatus::Unavailable() => VcxPresentationVerificationStatus::Unavailable,
+            PresentationVerificationStatus::Unavailable => VcxPresentationVerificationStatus::Unavailable,
         }
     }
 }

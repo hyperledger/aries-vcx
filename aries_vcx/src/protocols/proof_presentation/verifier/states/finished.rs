@@ -13,11 +13,16 @@ pub struct FinishedState {
     pub presentation: Option<Presentation>,
     pub status: Status,
     #[serde(
-        default = "PresentationVerificationStatus::Unavailable",
-        deserialize_with = "null_to_unavailable"
+        default = "verification_status_unavailable", // todo: to be removed in 0.54.0, this supports legacy serialization when the field was 'null'
+        deserialize_with = "null_to_unavailable" // todo: to be removed in 0.54.0, this supports legacy serialization when the field was 'undefined'
     )]
     #[serde(alias = "revocation_status")]
+    // todo: to be removed in 0.54.0, this supports legacy serialization when the field was named 'revocation_status'
     pub verification_status: PresentationVerificationStatus,
+}
+
+fn verification_status_unavailable() -> PresentationVerificationStatus {
+    PresentationVerificationStatus::Unavailable
 }
 
 // For backwards compatibility, if "revocation_status / verification_status" is null, we deserialize as Unavailable
@@ -26,7 +31,7 @@ where
     D: Deserializer<'de>,
 {
     let opt = Option::deserialize(deserializer)?;
-    Ok(opt.unwrap_or_else(PresentationVerificationStatus::Unavailable))
+    Ok(opt.unwrap_or(PresentationVerificationStatus::Unavailable))
 }
 
 impl FinishedState {
@@ -36,7 +41,7 @@ impl FinishedState {
             presentation_request: None,
             presentation: None,
             status: Status::Declined(problem_report),
-            verification_status: PresentationVerificationStatus::Unavailable(),
+            verification_status: PresentationVerificationStatus::Unavailable,
         }
     }
 }
@@ -51,7 +56,6 @@ pub mod unit_tests {
     use messages::protocols::proof_presentation::presentation_request::test_utils::_presentation_request;
     use messages::protocols::proof_presentation::test_utils::{_ack, _problem_report};
 
-    use crate::common::proofs::proof_request::test_utils::_presentation_request_data;
     use crate::common::test_utils::mock_profile;
     use crate::test::source_id;
     use crate::utils::devsetup::{SetupEmpty, SetupMocks};
@@ -59,7 +63,7 @@ pub mod unit_tests {
     use super::*;
 
     #[test]
-    fn test_verifier_state_finished_ser() {
+    fn test_verifier_state_finished_ser_deser_valid() {
         let state = FinishedState {
             presentation_request: None,
             presentation: None,
@@ -70,6 +74,38 @@ pub mod unit_tests {
         let expected =
             r#"{"presentation_request":null,"presentation":null,"status":"Success","verification_status":"Valid"}"#;
         assert_eq!(serialized, expected);
+        let deserialized: FinishedState = serde_json::from_str(&serialized).unwrap();
+        assert_eq!(state, deserialized)
+    }
+
+    #[test]
+    fn test_verifier_state_finished_ser_deser_unavailable() {
+        let state = FinishedState {
+            presentation_request: None,
+            presentation: None,
+            status: Status::Success,
+            verification_status: PresentationVerificationStatus::Unavailable,
+        };
+        let serialized = serde_json::to_string(&state).unwrap();
+        let expected = r#"{"presentation_request":null,"presentation":null,"status":"Success","verification_status":"Unavailable"}"#;
+        assert_eq!(serialized, expected);
+        let deserialized: FinishedState = serde_json::from_str(&serialized).unwrap();
+        assert_eq!(state, deserialized)
+    }
+
+    #[test]
+    fn test_verifier_state_finished_ser_deser_invalid() {
+        let state = FinishedState {
+            presentation_request: None,
+            presentation: None,
+            status: Status::Success,
+            verification_status: PresentationVerificationStatus::Invalid,
+        };
+        let serialized = serde_json::to_string(&state).unwrap();
+        let expected = r#"{"presentation_request":null,"presentation":null,"status":"Success","verification_status":"Invalid"}"#;
+        assert_eq!(serialized, expected);
+        let deserialized: FinishedState = serde_json::from_str(&serialized).unwrap();
+        assert_eq!(state, deserialized)
     }
 
     #[test]
@@ -92,13 +128,13 @@ pub mod unit_tests {
     }
 
     #[test]
-    fn test_verifier_state_finished_deser_legacy() {
+    fn test_verifier_state_finished_deser_legacy_values_verification_status() {
         {
             let serialized = r#"{"presentation":null,"presentation_request":null,"status":"Success"}"#;
             let deserialized: FinishedState = serde_json::from_str(serialized).unwrap();
             assert_eq!(
                 deserialized.verification_status,
-                PresentationVerificationStatus::Unavailable()
+                PresentationVerificationStatus::Unavailable
             )
         }
         {
@@ -107,7 +143,7 @@ pub mod unit_tests {
             let deserialized: FinishedState = serde_json::from_str(serialized).unwrap();
             assert_eq!(
                 deserialized.verification_status,
-                PresentationVerificationStatus::Unavailable()
+                PresentationVerificationStatus::Unavailable
             )
         }
         {
@@ -126,14 +162,14 @@ pub mod unit_tests {
     }
 
     #[test]
-    fn test_verifier_state_finished_deser_legacy_2() {
+    fn test_verifier_state_finished_deser_legacy_values_revocation_status() {
         {
             let serialized =
                 r#"{"presentation":null,"presentation_request":null,"status":"Success","revocation_status":null}"#;
             let deserialized: FinishedState = serde_json::from_str(serialized).unwrap();
             assert_eq!(
                 deserialized.verification_status,
-                PresentationVerificationStatus::Unavailable()
+                PresentationVerificationStatus::Unavailable
             )
         }
         {

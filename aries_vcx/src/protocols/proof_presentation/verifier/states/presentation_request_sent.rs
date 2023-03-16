@@ -82,7 +82,7 @@ impl From<(PresentationRequestSentState, ProblemReport)> for FinishedState {
             presentation_request: Some(state.presentation_request),
             presentation: None,
             status: Status::Failed(problem_report),
-            verification_status: PresentationVerificationStatus::Unavailable(),
+            verification_status: PresentationVerificationStatus::Unavailable,
         }
     }
 }
