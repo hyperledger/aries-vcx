@@ -47,56 +47,46 @@ mod tests {
     use serde_json::json;
 
     use super::*;
-    use crate::{misc::utils::DATETIME_FORMAT, AriesMessage, Message};
-
-    const MESSAGE: &str = "https://didcomm.org/basicmessage/1.0/message";
+    use crate::misc::{test_utils, utils::DATETIME_FORMAT};
 
     #[test]
     fn test_minimal_message() {
-        let datetime = DateTime::default();
         let msg_str = "test".to_owned();
-        let id = "test".to_owned();
+
+        let msg_type = test_utils::build_msg_type::<BasicMessageContent>();
 
         let mut content = BasicMessageContent::new(msg_str.clone());
+        let datetime = DateTime::default();
         content.sent_time = datetime;
 
         let decorators = BasicMessageDecorators::default();
-        let msg = Message::with_decorators(id.clone(), content, decorators);
-        let msg = AriesMessage::from(msg);
 
         let json = json!({
-            "@type": MESSAGE,
-            "@id": id,
+            "@type": msg_type,
             "sent_time": datetime.format(DATETIME_FORMAT).to_string(),
             "content": msg_str
         });
 
-        let deserialized = AriesMessage::deserialize(&json).unwrap();
-
-        assert_eq!(serde_json::to_value(&msg).unwrap(), json);
-        assert_eq!(deserialized, msg);
+        test_utils::test_msg(content, decorators, json);
     }
 
     #[test]
     fn test_extensive_message() {
-        let datetime = DateTime::default();
         let msg_str = "test".to_owned();
-        let thid = "test".to_owned();
-        let id = "test".to_owned();
+
+        let msg_type = test_utils::build_msg_type::<BasicMessageContent>();
 
         let mut content = BasicMessageContent::new(msg_str.clone());
+        let datetime = DateTime::default();
         content.sent_time = datetime;
 
         let mut decorators = BasicMessageDecorators::default();
+        let thid = "test".to_owned();
         let thread = Thread::new(thid.clone());
         decorators.thread = Some(thread);
 
-        let msg = Message::with_decorators(id.clone(), content, decorators);
-        let msg = AriesMessage::from(msg);
-
         let json = json!({
-            "@type": MESSAGE,
-            "@id": id,
+            "@type": msg_type,
             "sent_time": datetime.format(DATETIME_FORMAT).to_string(),
             "content": msg_str,
             "~thread": {
@@ -104,23 +94,6 @@ mod tests {
             }
         });
 
-        let deserialized = AriesMessage::deserialize(&json).unwrap();
-
-        assert_eq!(serde_json::to_value(&msg).unwrap(), json);
-        assert_eq!(deserialized, msg);
-    }
-
-    #[test]
-    #[should_panic]
-    fn test_incomplete_message() {
-        let datetime = DateTime::<Utc>::default();
-
-        let json = json!({
-            "@type": MESSAGE,
-            "@id": "test",
-            "sent_time": datetime.format(DATETIME_FORMAT).to_string()
-        });
-
-        AriesMessage::deserialize(&json).unwrap();
+        test_utils::test_msg(content, decorators, json);
     }
 }

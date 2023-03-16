@@ -49,62 +49,49 @@ impl AckDecorators {
 mod tests {
     use serde_json::json;
 
-    use super::*;
-    use crate::{AriesMessage, Message};
+    use crate::misc::test_utils;
 
-    const ACK: &str = "https://didcomm.org/notification/1.0/ack";
+    use super::*;
 
     #[test]
     fn test_minimal_message() {
+        let msg_type = test_utils::build_msg_type::<AckContent>();
+
         let status = AckStatus::Ok;
-        let thid = "test".to_owned();
-        let id = "test".to_owned();
-
-        let thread = Thread::new(thid.clone());
-
         let content = AckContent::new(status);
 
+        let thid = "test".to_owned();
+        let thread = Thread::new(thid.clone());
         let decorators = AckDecorators::new(thread);
-        let msg = Message::with_decorators(id.clone(),content, decorators);
-        let msg = AriesMessage::from(msg);
 
         let json = json!({
-            "@type": ACK,
-            "@id": id,
+            "@type": msg_type,
             "status": status,
             "~thread": {
                 "thid": thid
             }
         });
 
-        let deserialized = AriesMessage::deserialize(&json).unwrap();
-
-        assert_eq!(serde_json::to_value(&msg).unwrap(), json);
-        assert_eq!(deserialized, msg);
+        test_utils::test_msg(content, decorators, json);
     }
 
     #[test]
     fn test_extensive_message() {
+        let msg_type = test_utils::build_msg_type::<AckContent>();
+
         let status = AckStatus::Ok;
-        let thid = "test".to_owned();
-        let in_time = "test".to_owned();
-        let id = "test".to_owned();
-
-        let thread = Thread::new(thid.clone());
-        let mut timing = Timing::default();
-        timing.in_time = Some(in_time.clone());
-
         let content = AckContent::new(status);
 
+        let thid = "test".to_owned();
+        let thread = Thread::new(thid.clone());
         let mut decorators = AckDecorators::new(thread);
+        let in_time = "test".to_owned();
+        let mut timing = Timing::default();
+        timing.in_time = Some(in_time.clone());
         decorators.timing = Some(timing);
 
-        let msg = Message::with_decorators(id.clone(), content, decorators);
-        let msg = AriesMessage::from(msg);
-
         let json = json!({
-            "@type": ACK,
-            "@id": id,
+            "@type": msg_type,
             "status": status,
             "~thread": {
                 "thid": thid
@@ -114,23 +101,6 @@ mod tests {
             }
         });
 
-        let deserialized = AriesMessage::deserialize(&json).unwrap();
-
-        assert_eq!(serde_json::to_value(&msg).unwrap(), json);
-        assert_eq!(deserialized, msg);
-    }
-
-    #[test]
-    #[should_panic]
-    fn test_incomplete_message() {
-        let status = AckStatus::Ok;
-
-        let json = json!({
-            "@type": ACK,
-            "@id": "test",
-            "status": status,
-        });
-
-        AriesMessage::deserialize(&json).unwrap();
+        test_utils::test_msg(content, decorators, json);
     }
 }

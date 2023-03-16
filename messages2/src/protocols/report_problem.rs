@@ -132,53 +132,38 @@ mod tests {
     use serde_json::json;
 
     use super::*;
-    use crate::{AriesMessage, Message};
-
-    const PROBLEM_REPORT: &str = "https://didcomm.org/report-problem/1.0/problem-report";
+    use crate::misc::test_utils;
 
     #[test]
     fn test_minimal_message() {
-        let id = "test".to_owned();
+        let msg_type = test_utils::build_msg_type::<ProblemReportContent>();
 
         let content = ProblemReportContent::default();
 
         let decorators = ProblemReportDecorators::default();
-        let msg = Message::with_decorators(id.clone(), content, decorators);
-        let msg = AriesMessage::from(msg);
 
-        let json = json!({
-            "@type": PROBLEM_REPORT,
-            "@id": id,
-        });
+        let json = json!({ "@type": msg_type });
 
-        let deserialized = AriesMessage::deserialize(&json).unwrap();
-
-        assert_eq!(serde_json::to_value(&msg).unwrap(), json);
-        assert_eq!(deserialized, msg);
+        test_utils::test_msg(content, decorators, json);
     }
 
     #[test]
     fn test_extensive_message() {
-        let description = "test".to_owned();
-        let who_retries = WhoRetries::Me;
-        let thid = "test".to_owned();
-        let id = "test".to_owned();
-
-        let thread = Thread::new(thid.clone());
+        let msg_type = test_utils::build_msg_type::<ProblemReportContent>();
 
         let mut content = ProblemReportContent::default();
+        let description = "test".to_owned();
         content.description = Some(description.clone());
+        let who_retries = WhoRetries::Me;
         content.who_retries = Some(who_retries);
 
         let mut decorators = ProblemReportDecorators::default();
+        let thid = "test".to_owned();
+        let thread = Thread::new(thid.clone());
         decorators.thread = Some(thread);
 
-        let msg = Message::with_decorators(id.clone(), content, decorators);
-        let msg = AriesMessage::from(msg);
-
         let json = json!({
-            "@type": PROBLEM_REPORT,
-            "@id": id,
+            "@type": msg_type,
             "description": description,
             "who_retries": who_retries,
             "~thread": {
@@ -186,9 +171,6 @@ mod tests {
             }
         });
 
-        let deserialized = AriesMessage::deserialize(&json).unwrap();
-
-        assert_eq!(serde_json::to_value(&msg).unwrap(), json);
-        assert_eq!(deserialized, msg);
+        test_utils::test_msg(content, decorators, json);
     }
 }

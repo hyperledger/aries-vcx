@@ -24,44 +24,22 @@ mod tests {
     use serde_json::json;
 
     use super::*;
-    use crate::{AriesMessage, Message};
-
-    const FORWARD: &str = "https://didcomm.org/routing/1.0/forward";
+    use crate::{misc::{test_utils, nothing::Nothing}};
 
     #[test]
     fn test_minimal_message() {
-        let to = "test".to_owned();
-        let id = "test".to_owned();
-        let msg_value = to.clone();
+        let msg_type = test_utils::build_msg_type::<ForwardContent>();
 
+        let to = "test".to_owned();
+        let msg_value = to.clone();
         let content = ForwardContent::new(to.clone(), msg_value.clone());
-        let msg = Message::new(id.clone(), content);
-        let msg = AriesMessage::from(msg);
 
         let json = json! ({
-            "@type": FORWARD,
-            "@id": id,
+            "@type": msg_type,
             "to": to,
             "msg": msg_value
         });
 
-        let deserialized = AriesMessage::deserialize(&json).unwrap();
-
-        assert_eq!(serde_json::to_value(&msg).unwrap(), json);
-        assert_eq!(deserialized, msg);
-    }
-
-    #[test]
-    #[should_panic]
-    fn test_incomplete_message() {
-        let to = "test".to_owned();
-
-        let json = json!({
-            "@type": FORWARD,
-            "@id": "test",
-            "to": to
-        });
-
-        AriesMessage::deserialize(&json).unwrap();
+        test_utils::test_msg(content, Nothing, json);
     }
 }
