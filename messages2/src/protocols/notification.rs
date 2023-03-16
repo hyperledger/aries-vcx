@@ -58,19 +58,19 @@ mod tests {
     fn test_minimal_message() {
         let status = AckStatus::Ok;
         let thid = "test".to_owned();
+        let id = "test".to_owned();
 
         let thread = Thread::new(thid.clone());
 
         let content = AckContent::new(status);
 
         let decorators = AckDecorators::new(thread);
-        let msg = Message::with_decorators(content, decorators);
-        let msg_id = msg.id.clone();
+        let msg = Message::with_decorators(id.clone(),content, decorators);
         let msg = AriesMessage::from(msg);
 
         let json = json!({
             "@type": ACK,
-            "@id": msg_id,
+            "@id": id,
             "status": status,
             "~thread": {
                 "thid": thid
@@ -88,6 +88,7 @@ mod tests {
         let status = AckStatus::Ok;
         let thid = "test".to_owned();
         let in_time = "test".to_owned();
+        let id = "test".to_owned();
 
         let thread = Thread::new(thid.clone());
         let mut timing = Timing::default();
@@ -98,13 +99,12 @@ mod tests {
         let mut decorators = AckDecorators::new(thread);
         decorators.timing = Some(timing);
 
-        let msg = Message::with_decorators(content, decorators);
-        let msg_id = msg.id.clone();
+        let msg = Message::with_decorators(id.clone(), content, decorators);
         let msg = AriesMessage::from(msg);
 
         let json = json!({
             "@type": ACK,
-            "@id": msg_id,
+            "@id": id,
             "status": status,
             "~thread": {
                 "thid": thid

@@ -212,7 +212,7 @@ dependencies = [
  "strum 0.16.0",
  "strum_macros 0.16.0",
  "thiserror",
- "time 0.1.45",
+ "time",
  "tokio",
  "uuid 0.8.2",
  "zmq",
@@ -474,12 +474,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9e1b586273c5702936fe7b7d6896644d8be71e6314cfe09d3167c95f712589e8"
 
 [[package]]
-name = "base64"
-version = "0.21.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a4a4ddaa51a5bc52a6948f74c06d20aaaddb71924eab79b8c97a8c556e942d6a"
-
-[[package]]
 name = "base64ct"
 version = "1.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -731,7 +725,7 @@ dependencies = [
  "num-integer",
  "num-traits",
  "serde",
- "time 0.1.45",
+ "time",
  "wasm-bindgen",
  "winapi",
 ]
@@ -2472,7 +2466,7 @@ dependencies = [
  "serde_derive",
  "serde_json",
  "thiserror",
- "time 0.1.45",
+ "time",
  "tokio",
  "uuid 0.7.4",
 ]
@@ -2513,7 +2507,7 @@ dependencies = [
  "serde_json",
  "sha2 0.9.9",
  "sha3 0.9.1",
- "time 0.1.45",
+ "time",
  "ursa",
  "uuid 0.8.2",
  "variant_count",
@@ -2611,7 +2605,7 @@ dependencies = [
  "strum 0.16.0",
  "strum_macros 0.16.0",
  "thiserror",
- "time 0.1.45",
+ "time",
  "url",
  "uuid 0.8.2",
 ]
@@ -2620,24 +2614,19 @@ dependencies = [
 name = "messages2"
 version = "0.51.1"
 dependencies = [
- "base64 0.21.0",
  "chrono",
  "derive_more",
  "diddoc",
  "isolang",
  "lazy_static",
  "messages_macros",
- "regex",
  "serde",
- "serde_derive",
  "serde_json",
  "strum 0.24.1",
  "strum_macros 0.24.3",
  "thiserror",
- "time 0.3.17",
  "transitive",
  "url",
- "uuid 1.3.0",
 ]
 
 [[package]]
@@ -4340,22 +4329,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "time"
-version = "0.3.17"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a561bf4617eebd33bca6434b988f39ed798e527f51a1e797d0ee4f61c0a38376"
-dependencies = [
- "serde",
- "time-core",
-]
-
-[[package]]
-name = "time-core"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2e153e1f1acaef8acc537e68b44906d2db6436e2b35ac2c6b42640fff91f00fd"
-
-[[package]]
 name = "tinytemplate"
 version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4769,7 +4742,7 @@ dependencies = [
  "sha2 0.9.9",
  "sha3 0.9.1",
  "subtle",
- "time 0.1.45",
+ "time",
  "x25519-dalek",
  "zeroize",
 ]
@@ -4797,9 +4770,6 @@ name = "uuid"
 version = "1.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1674845326ee10d37ca60470760d4288a6f80f304007d92e5c53bab78c9cfd79"
-dependencies = [
- "getrandom 0.2.5",
-]
 
 [[package]]
 name = "value-bag"

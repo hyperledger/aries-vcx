@@ -55,18 +55,18 @@ mod tests {
     fn test_minimal_message() {
         let datetime = DateTime::default();
         let msg_str = "test".to_owned();
+        let id = "test".to_owned();
 
         let mut content = BasicMessageContent::new(msg_str.clone());
         content.sent_time = datetime;
 
         let decorators = BasicMessageDecorators::default();
-        let msg = Message::with_decorators(content, decorators);
-        let msg_id = msg.id.clone();
+        let msg = Message::with_decorators(id.clone(), content, decorators);
         let msg = AriesMessage::from(msg);
 
         let json = json!({
             "@type": MESSAGE,
-            "@id": msg_id,
+            "@id": id,
             "sent_time": datetime.format(DATETIME_FORMAT).to_string(),
             "content": msg_str
         });
@@ -82,6 +82,7 @@ mod tests {
         let datetime = DateTime::default();
         let msg_str = "test".to_owned();
         let thid = "test".to_owned();
+        let id = "test".to_owned();
 
         let mut content = BasicMessageContent::new(msg_str.clone());
         content.sent_time = datetime;
@@ -90,13 +91,12 @@ mod tests {
         let thread = Thread::new(thid.clone());
         decorators.thread = Some(thread);
 
-        let msg = Message::with_decorators(content, decorators);
-        let msg_id = msg.id.clone();
+        let msg = Message::with_decorators(id.clone(), content, decorators);
         let msg = AriesMessage::from(msg);
 
         let json = json!({
             "@type": MESSAGE,
-            "@id": msg_id,
+            "@id": id,
             "sent_time": datetime.format(DATETIME_FORMAT).to_string(),
             "content": msg_str,
             "~thread": {

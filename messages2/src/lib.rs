@@ -19,7 +19,6 @@ use protocols::{
     traits::{ConcreteMessage, HasKind},
 };
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use uuid::Uuid;
 
 use crate::{
     misc::utils::MSG_TYPE,
@@ -219,9 +218,9 @@ pub struct Message<C, D = Nothing> {
 }
 
 impl<C> Message<C> {
-    pub fn new(content: C) -> Self {
+    pub fn new(id: String, content: C) -> Self {
         Self {
-            id: Uuid::new_v4().to_string(),
+            id,
             content,
             decorators: Nothing,
         }
@@ -229,9 +228,9 @@ impl<C> Message<C> {
 }
 
 impl<C, D> Message<C, D> {
-    pub fn with_decorators(content: C, decorators: D) -> Self {
+    pub fn with_decorators(id: String, content: C, decorators: D) -> Self {
         Self {
-            id: Uuid::new_v4().to_string(),
+            id,
             content,
             decorators,
         }

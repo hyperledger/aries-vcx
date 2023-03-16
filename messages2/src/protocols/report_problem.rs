@@ -138,16 +138,17 @@ mod tests {
 
     #[test]
     fn test_minimal_message() {
+        let id = "test".to_owned();
+
         let content = ProblemReportContent::default();
 
         let decorators = ProblemReportDecorators::default();
-        let msg = Message::with_decorators(content, decorators);
-        let msg_id = msg.id.clone();
+        let msg = Message::with_decorators(id.clone(), content, decorators);
         let msg = AriesMessage::from(msg);
 
         let json = json!({
             "@type": PROBLEM_REPORT,
-            "@id": msg_id,
+            "@id": id,
         });
 
         let deserialized = AriesMessage::deserialize(&json).unwrap();
@@ -161,6 +162,7 @@ mod tests {
         let description = "test".to_owned();
         let who_retries = WhoRetries::Me;
         let thid = "test".to_owned();
+        let id = "test".to_owned();
 
         let thread = Thread::new(thid.clone());
 
@@ -171,13 +173,12 @@ mod tests {
         let mut decorators = ProblemReportDecorators::default();
         decorators.thread = Some(thread);
 
-        let msg = Message::with_decorators(content, decorators);
-        let msg_id = msg.id.clone();
+        let msg = Message::with_decorators(id.clone(), content, decorators);
         let msg = AriesMessage::from(msg);
 
         let json = json!({
             "@type": PROBLEM_REPORT,
-            "@id": msg_id,
+            "@id": id,
             "description": description,
             "who_retries": who_retries,
             "~thread": {

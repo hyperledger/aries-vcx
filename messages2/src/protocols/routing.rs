@@ -31,16 +31,16 @@ mod tests {
     #[test]
     fn test_minimal_message() {
         let to = "test".to_owned();
+        let id = "test".to_owned();
         let msg_value = to.clone();
 
         let content = ForwardContent::new(to.clone(), msg_value.clone());
-        let msg = Message::new(content);
-        let msg_id = msg.id.clone();
+        let msg = Message::new(id.clone(), content);
         let msg = AriesMessage::from(msg);
 
         let json = json! ({
             "@type": FORWARD,
-            "@id": msg_id,
+            "@id": id,
             "to": to,
             "msg": msg_value
         });
