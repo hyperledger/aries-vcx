@@ -12,17 +12,10 @@ pub struct FinishedState {
     pub presentation_request: Option<PresentationRequest>,
     pub presentation: Option<Presentation>,
     pub status: Status,
-    #[serde(
-        default = "verification_status_unavailable", // todo: to be removed in 0.54.0, this supports legacy serialization when the field was 'null'
-        deserialize_with = "null_to_unavailable" // todo: to be removed in 0.54.0, this supports legacy serialization when the field was 'undefined'
-    )]
+    #[serde(deserialize_with = "null_to_unavailable")] // todo: to be removed in 0.54.0, this supports legacy serialization when the field was 'null' or undefined
     #[serde(alias = "revocation_status")]
     // todo: to be removed in 0.54.0, this supports legacy serialization when the field was named 'revocation_status'
     pub verification_status: PresentationVerificationStatus,
-}
-
-fn verification_status_unavailable() -> PresentationVerificationStatus {
-    PresentationVerificationStatus::Unavailable
 }
 
 // For backwards compatibility, if "revocation_status / verification_status" is null, we deserialize as Unavailable
