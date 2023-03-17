@@ -61,8 +61,9 @@ where
         S: Serializer,
     {
         let kind = T::kind_type();
+        let kind = kind.as_ref();
         let protocol = Protocol::from(Self::MsgType::parent());
 
-        MsgWithType::new(format_args!("{protocol}/{}", kind.as_ref()), self).serialize(serializer)
+        MsgWithType::new(format_args!("{protocol}/{kind}"), self).serialize(serializer)
     }
 }
