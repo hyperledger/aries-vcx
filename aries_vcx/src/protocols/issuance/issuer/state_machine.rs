@@ -6,7 +6,7 @@ use crate::core::profile::profile::Profile;
 use messages::concepts::ack::Ack;
 use messages::concepts::problem_report::ProblemReport;
 
-use crate::common::credentials::encoding::encode_attributes;
+use crate::common::credentials::encoding::{CredentialAttributeData, EncodedCredentialAttributes};
 use crate::common::credentials::is_cred_revoked;
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use crate::protocols::common::build_problem_report_msg;
@@ -557,7 +557,7 @@ async fn _create_credential(
         ));
     };
     let request = &request.requests_attach.content()?;
-    let cred_data = encode_attributes(cred_data)?;
+    let EncodedCredentialAttributes { data: cred_data } = CredentialAttributeData::new(cred_data).encode()?;
     let (libindy_credential, cred_rev_id, _) = anoncreds
         .issuer_create_credential(&offer, request, &cred_data, rev_reg_id.clone(), tails_file.clone())
         .await?;
