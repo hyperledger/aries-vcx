@@ -1,8 +1,9 @@
+use indy_api_types::errors::prelude::*;
+
 use crate::{
     services::CryptoService,
     utils::crypto::base58::{FromBase58, ToBase58},
 };
-use indy_api_types::errors::prelude::*;
 
 pub fn build_full_verkey(dest: &str, verkey: Option<&str>) -> Result<String, IndyError> {
     if let Some(verkey) = verkey {
@@ -76,18 +77,12 @@ mod tests {
 
     #[test]
     fn split_verkey_single_colon() {
-        assert_eq!(
-            split_verkey(":"),
-            ("", CryptoService::defualt_crypto_type())
-        )
+        assert_eq!(split_verkey(":"), ("", CryptoService::defualt_crypto_type()))
     }
 
     #[test]
     fn split_verkey_ends_with_colon() {
-        assert_eq!(
-            split_verkey("foo:"),
-            ("foo", CryptoService::defualt_crypto_type())
-        )
+        assert_eq!(split_verkey("foo:"), ("foo", CryptoService::defualt_crypto_type()))
     }
 
     #[test]
@@ -102,26 +97,17 @@ mod tests {
 
     #[test]
     fn verkey_get_cryptoname_empty() {
-        assert_eq!(
-            verkey_get_cryptoname(""),
-            CryptoService::defualt_crypto_type()
-        )
+        assert_eq!(verkey_get_cryptoname(""), CryptoService::defualt_crypto_type())
     }
 
     #[test]
     fn verkey_get_cryptoname_single_colon() {
-        assert_eq!(
-            verkey_get_cryptoname(":"),
-            CryptoService::defualt_crypto_type()
-        )
+        assert_eq!(verkey_get_cryptoname(":"), CryptoService::defualt_crypto_type())
     }
 
     #[test]
     fn verkey_get_cryptoname_ends_with_colon() {
-        assert_eq!(
-            verkey_get_cryptoname("foo:"),
-            CryptoService::defualt_crypto_type()
-        )
+        assert_eq!(verkey_get_cryptoname("foo:"), CryptoService::defualt_crypto_type())
     }
 
     #[test]

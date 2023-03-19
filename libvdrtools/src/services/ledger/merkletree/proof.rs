@@ -1,6 +1,7 @@
-use crate::services::ledger::merkletree::tree::{Tree, TreeLeafData};
 use indy_api_types::errors::prelude::*;
 use indy_utils::crypto::hash::Hash;
+
+use crate::services::ledger::merkletree::tree::{Tree, TreeLeafData};
 
 /// An inclusion proof represent the fact that a `value` is a member
 /// of a `MerkleTree` with root hash `root_hash`.
@@ -70,7 +71,8 @@ pub struct Lemma {
 }
 
 impl Lemma {
-    /// Attempts to generate a proof that the a value with hash `needle` is a member of the given `tree`.
+    /// Attempts to generate a proof that the a value with hash `needle` is a member of the given
+    /// `tree`.
     pub fn new(tree: &Tree, needle: &[u8]) -> Option<Lemma> {
         match *tree {
             Tree::Empty { .. } => None,

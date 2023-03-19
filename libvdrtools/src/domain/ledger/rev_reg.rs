@@ -1,17 +1,15 @@
-use super::constants::{GET_REVOC_REG, GET_REVOC_REG_DELTA, REVOC_REG_ENTRY};
+use std::collections::HashSet;
 
 use ursa::cl::{RevocationRegistry, RevocationRegistryDelta};
 
 use super::{
     super::anoncreds::{
-        revocation_registry::RevocationRegistryV1,
-        revocation_registry_definition::RevocationRegistryId,
+        revocation_registry::RevocationRegistryV1, revocation_registry_definition::RevocationRegistryId,
         revocation_registry_delta::RevocationRegistryDeltaV1,
     },
+    constants::{GET_REVOC_REG, GET_REVOC_REG_DELTA, REVOC_REG_ENTRY},
     response::{GetReplyResultV1, ReplyType},
 };
-
-use std::collections::HashSet;
 
 #[derive(Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -69,11 +67,7 @@ pub struct GetRevRegDeltaOperation {
 }
 
 impl GetRevRegDeltaOperation {
-    pub fn new(
-        revoc_reg_def_id: &RevocationRegistryId,
-        from: Option<i64>,
-        to: i64,
-    ) -> GetRevRegDeltaOperation {
+    pub fn new(revoc_reg_def_id: &RevocationRegistryId, from: Option<i64>, to: i64) -> GetRevRegDeltaOperation {
         GetRevRegDeltaOperation {
             _type: GET_REVOC_REG_DELTA.to_string(),
             revoc_reg_def_id: revoc_reg_def_id.clone(),

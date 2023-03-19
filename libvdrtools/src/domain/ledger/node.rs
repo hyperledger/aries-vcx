@@ -1,7 +1,6 @@
-use super::constants::NODE;
-
-use super::super::crypto::did::ShortDidValue;
 use indy_api_types::validation::Validatable;
+
+use super::{super::crypto::did::ShortDidValue, constants::NODE};
 
 #[derive(Serialize, PartialEq, Debug)]
 pub struct NodeOperation {
@@ -68,7 +67,9 @@ impl Validatable for NodeOperationData {
                 || self.client_ip.is_none()
                 || self.client_port.is_none())
         {
-            return Err(String::from("Invalid data json: Fields node_ip, node_port, client_ip, client_port must be specified together"));
+            return Err(String::from(
+                "Invalid data json: Fields node_ip, node_port, client_ip, client_port must be specified together",
+            ));
         }
 
         Ok(())

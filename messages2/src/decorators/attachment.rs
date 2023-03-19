@@ -42,8 +42,10 @@ impl Attachment {
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct AttachmentData {
     // There probably is a better type for this???
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub jws: Option<String>,
     // Better type for this as well?
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub sha256: Option<String>,
     #[serde(flatten)]
     pub content: AttachmentType,
@@ -65,4 +67,83 @@ pub enum AttachmentType {
     Base64(String),
     Json(Value),
     Links(Vec<Url>),
+}
+
+#[cfg(test)]
+#[allow(clippy::unwrap_used)]
+#[allow(clippy::field_reassign_with_default)]
+mod tests {
+    use serde_json::json;
+
+    use super::*;
+    use crate::misc::test_utils;
+
+    #[test]
+    fn test_base64_attach_type() {
+        let data = "test_base64_str".to_owned();
+
+        let json = json!({ "base64": data });
+        let attach_type = AttachmentType::Base64(data);
+
+        test_utils::test_serde(attach_type, json);
+    }
+
+    #[test]
+    fn test_json_attach_type() {
+        let data = json!({
+            "field": "test_json_data"
+        });
+
+        let json = json!({ "json": data });
+        let attach_type = AttachmentType::Json(data);
+
+        test_utils::test_serde(attach_type, json);
+    }
+
+    #[test]
+    fn test_links_attach_type() {
+        let data = vec!["https://dummy.dummy/dummy".parse().unwrap()];
+
+        let json = json!({ "links": data });
+        let attach_type = AttachmentType::Links(data);
+
+        test_utils::test_serde(attach_type, json);
+    }
+
+    #[test]
+    fn test_minimal_attach_data() {
+        let data = json!({
+            "field": "test_json_data"
+        });
+
+        let json = json!({ "json": data });
+
+        let content = AttachmentType::Json(data);
+        let attach_data = AttachmentData::new(content);
+
+        test_utils::test_serde(attach_data, json);
+    }
+
+    #[test]
+    fn test_extensive_attach_data() {
+        let jws = "test_jws".to_owned();
+        let sha256 = "test_sha256".to_owned();
+
+        let data = json!({
+            "field": "test_json_data"
+        });
+
+        let json = json!({
+            "json": data,
+            "jws": jws,
+            "sha256": sha256
+        });
+
+        let content = AttachmentType::Json(data);
+        let mut attach_data = AttachmentData::new(content);
+        attach_data.jws = Some(jws);
+        attach_data.sha256 = Some(sha256);
+
+        test_utils::test_serde(attach_data, json);
+    }
 }

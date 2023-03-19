@@ -22,21 +22,9 @@ pub fn wql_to_sql(
 
     let query_string = format!(
         "SELECT {}, name, {}, {} FROM items WHERE {} type = ? AND wallet_id = ?",
-        if options.retrieve_type {
-            "type"
-        } else {
-            "NULL"
-        },
-        if options.retrieve_value {
-            "value"
-        } else {
-            "NULL"
-        },
-        if options.retrieve_tags {
-            "tags"
-        } else {
-            "NULL"
-        },
+        if options.retrieve_type { "type" } else { "NULL" },
+        if options.retrieve_value { "value" } else { "NULL" },
+        if options.retrieve_tags { "tags" } else { "NULL" },
         if !query_condition.is_empty() {
             query_condition + " AND"
         } else {
@@ -50,11 +38,7 @@ pub fn wql_to_sql(
     Ok((query_string, arguments))
 }
 
-pub fn wql_to_sql_count(
-    wallet_id: i64,
-    type_: &[u8],
-    wql: &Operator,
-) -> IndyResult<(String, Vec<Value>)> {
+pub fn wql_to_sql_count(wallet_id: i64, type_: &[u8], wql: &Operator) -> IndyResult<(String, Vec<Value>)> {
     let mut arguments: Vec<Value> = Vec::new();
 
     let query_condition = match operator_to_sql(wql, &mut arguments) {
@@ -79,30 +63,14 @@ pub fn wql_to_sql_count(
 
 fn operator_to_sql(op: &Operator, arguments: &mut Vec<Value>) -> IndyResult<String> {
     match *op {
-        Operator::Eq(ref tag_name, ref target_value) => {
-            Ok(eq_to_sql(tag_name, target_value, arguments))
-        }
-        Operator::Neq(ref tag_name, ref target_value) => {
-            Ok(neq_to_sql(tag_name, target_value, arguments))
-        }
-        Operator::Gt(ref tag_name, ref target_value) => {
-            gt_to_sql(tag_name, target_value, arguments)
-        }
-        Operator::Gte(ref tag_name, ref target_value) => {
-            gte_to_sql(tag_name, target_value, arguments)
-        }
-        Operator::Lt(ref tag_name, ref target_value) => {
-            lt_to_sql(tag_name, target_value, arguments)
-        }
-        Operator::Lte(ref tag_name, ref target_value) => {
-            lte_to_sql(tag_name, target_value, arguments)
-        }
-        Operator::Like(ref tag_name, ref target_value) => {
-            like_to_sql(tag_name, target_value, arguments)
-        }
-        Operator::In(ref tag_name, ref target_values) => {
-            Ok(in_to_sql(tag_name, target_values, arguments))
-        }
+        Operator::Eq(ref tag_name, ref target_value) => Ok(eq_to_sql(tag_name, target_value, arguments)),
+        Operator::Neq(ref tag_name, ref target_value) => Ok(neq_to_sql(tag_name, target_value, arguments)),
+        Operator::Gt(ref tag_name, ref target_value) => gt_to_sql(tag_name, target_value, arguments),
+        Operator::Gte(ref tag_name, ref target_value) => gte_to_sql(tag_name, target_value, arguments),
+        Operator::Lt(ref tag_name, ref target_value) => lt_to_sql(tag_name, target_value, arguments),
+        Operator::Lte(ref tag_name, ref target_value) => lte_to_sql(tag_name, target_value, arguments),
+        Operator::Like(ref tag_name, ref target_value) => like_to_sql(tag_name, target_value, arguments),
+        Operator::In(ref tag_name, ref target_values) => Ok(in_to_sql(tag_name, target_values, arguments)),
         Operator::And(ref suboperators) => and_to_sql(suboperators, arguments),
         Operator::Or(ref suboperators) => or_to_sql(suboperators, arguments),
         Operator::Not(ref suboperator) => not_to_sql(suboperator, arguments),
@@ -123,20 +91,13 @@ fn neq_to_sql(tag_name: &TagName, tag_value: &TargetValue, arguments: &mut Vec<V
     format!("(JSON_UNQUOTE(JSON_EXTRACT(tags, {})) != ?)", tag_path)
 }
 
-fn gt_to_sql(
-    tag_name: &TagName,
-    tag_value: &TargetValue,
-    arguments: &mut Vec<Value>,
-) -> IndyResult<String> {
+fn gt_to_sql(tag_name: &TagName, tag_value: &TargetValue, arguments: &mut Vec<Value>) -> IndyResult<String> {
     match (tag_name, tag_value) {
         (&TagName::PlainTagName(_), &TargetValue::Unencrypted(_)) => {
             let tag_path = format!(r#"'$."{}"'"#, tag_name.to_plain());
             arguments.push(tag_value.to_plain().into());
 
-            Ok(format!(
-                "(JSON_UNQUOTE(JSON_EXTRACT(tags, {})) > ?)",
-                tag_path
-            ))
+            Ok(format!("(JSON_UNQUOTE(JSON_EXTRACT(tags, {})) > ?)", tag_path))
         }
         _ => Err(err_msg(
             IndyErrorKind::WalletQueryError,
@@ -145,20 +106,13 @@ fn gt_to_sql(
     }
 }
 
-fn gte_to_sql(
-    tag_name: &TagName,
-    tag_value: &TargetValue,
-    arguments: &mut Vec<Value>,
-) -> IndyResult<String> {
+fn gte_to_sql(tag_name: &TagName, tag_value: &TargetValue, arguments: &mut Vec<Value>) -> IndyResult<String> {
     match (tag_name, tag_value) {
         (&TagName::PlainTagName(_), &TargetValue::Unencrypted(_)) => {
             let tag_path = format!(r#"'$."{}"'"#, tag_name.to_plain());
             arguments.push(tag_value.to_plain().into());
 
-            Ok(format!(
-                "(JSON_UNQUOTE(JSON_EXTRACT(tags, {})) >= ?)",
-                tag_path
-            ))
+            Ok(format!("(JSON_UNQUOTE(JSON_EXTRACT(tags, {})) >= ?)", tag_path))
         }
         _ => Err(err_msg(
             IndyErrorKind::WalletQueryError,
@@ -167,20 +121,13 @@ fn gte_to_sql(
     }
 }
 
-fn lt_to_sql(
-    tag_name: &TagName,
-    tag_value: &TargetValue,
-    arguments: &mut Vec<Value>,
-) -> IndyResult<String> {
+fn lt_to_sql(tag_name: &TagName, tag_value: &TargetValue, arguments: &mut Vec<Value>) -> IndyResult<String> {
     match (tag_name, tag_value) {
         (&TagName::PlainTagName(_), &TargetValue::Unencrypted(_)) => {
             let tag_path = format!(r#"'$."{}"'"#, tag_name.to_plain());
             arguments.push(tag_value.to_plain().into());
 
-            Ok(format!(
-                "(JSON_UNQUOTE(JSON_EXTRACT(tags, {})) < ?)",
-                tag_path
-            ))
+            Ok(format!("(JSON_UNQUOTE(JSON_EXTRACT(tags, {})) < ?)", tag_path))
         }
         _ => Err(err_msg(
             IndyErrorKind::WalletQueryError,
@@ -189,20 +136,13 @@ fn lt_to_sql(
     }
 }
 
-fn lte_to_sql(
-    tag_name: &TagName,
-    tag_value: &TargetValue,
-    arguments: &mut Vec<Value>,
-) -> IndyResult<String> {
+fn lte_to_sql(tag_name: &TagName, tag_value: &TargetValue, arguments: &mut Vec<Value>) -> IndyResult<String> {
     match (tag_name, tag_value) {
         (&TagName::PlainTagName(_), &TargetValue::Unencrypted(_)) => {
             let tag_path = format!(r#"'$."{}"'"#, tag_name.to_plain());
             arguments.push(tag_value.to_plain().into());
 
-            Ok(format!(
-                "(JSON_UNQUOTE(JSON_EXTRACT(tags, {})) <= ?)",
-                tag_path
-            ))
+            Ok(format!("(JSON_UNQUOTE(JSON_EXTRACT(tags, {})) <= ?)", tag_path))
         }
         _ => Err(err_msg(
             IndyErrorKind::WalletQueryError,
@@ -211,20 +151,13 @@ fn lte_to_sql(
     }
 }
 
-fn like_to_sql(
-    tag_name: &TagName,
-    tag_value: &TargetValue,
-    arguments: &mut Vec<Value>,
-) -> IndyResult<String> {
+fn like_to_sql(tag_name: &TagName, tag_value: &TargetValue, arguments: &mut Vec<Value>) -> IndyResult<String> {
     match (tag_name, tag_value) {
         (&TagName::PlainTagName(_), &TargetValue::Unencrypted(_)) => {
             let tag_path = format!(r#"'$."{}"'"#, tag_name.to_plain());
             arguments.push(tag_value.to_plain().into());
 
-            Ok(format!(
-                "(JSON_UNQUOTE(JSON_EXTRACT(tags, {})) LIKE ?)",
-                tag_path
-            ))
+            Ok(format!("(JSON_UNQUOTE(JSON_EXTRACT(tags, {})) LIKE ?)", tag_path))
         }
         _ => Err(err_msg(
             IndyErrorKind::WalletQueryError,
@@ -233,11 +166,7 @@ fn like_to_sql(
     }
 }
 
-fn in_to_sql(
-    tag_name: &TagName,
-    tag_values: &Vec<TargetValue>,
-    arguments: &mut Vec<Value>,
-) -> String {
+fn in_to_sql(tag_name: &TagName, tag_values: &Vec<TargetValue>, arguments: &mut Vec<Value>) -> String {
     let tag_path = format!(r#"'$."{}"'"#, tag_name.to_plain());
     let mut in_string = format!("JSON_UNQUOTE(JSON_EXTRACT(tags, {})) IN (", tag_path);
 
@@ -268,11 +197,7 @@ fn not_to_sql(suboperator: &Operator, arguments: &mut Vec<Value>) -> IndyResult<
     Ok("NOT (".to_string() + &suboperator_string + ")")
 }
 
-fn join_operators(
-    operators: &[Operator],
-    join_str: &str,
-    arguments: &mut Vec<Value>,
-) -> IndyResult<String> {
+fn join_operators(operators: &[Operator], join_str: &str, arguments: &mut Vec<Value>) -> IndyResult<String> {
     let mut s = String::new();
 
     if !operators.is_empty() {

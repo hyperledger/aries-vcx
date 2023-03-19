@@ -6,12 +6,12 @@ use std::{
     fs,
     io::BufReader,
     path::PathBuf,
-    sync::Arc,
+    sync::{Arc, Mutex},
     unimplemented,
 };
 
 use indy_api_types::{
-    domain::wallet::{Config, Credentials, ExportConfig, Tags},
+    domain::wallet::{CacheConfig, Config, Credentials, ExportConfig, Tags},
     errors::prelude::*,
     wallet::*,
     WalletHandle,
@@ -23,18 +23,14 @@ use indy_utils::{
 use log::trace;
 use serde::{Deserialize, Serialize};
 use serde_json::Value as SValue;
-use std::sync::Mutex;
 
 pub use crate::encryption::KeyDerivationData;
 use crate::{
     cache::wallet_cache::{WalletCache, WalletCacheHitData, WalletCacheHitMetrics},
     export_import::{export_continue, finish_import, preparse_file_to_import},
-    storage::{
-        default::SQLiteStorageType, mysql::MySqlStorageType, WalletStorage, WalletStorageType,
-    },
+    storage::{default::SQLiteStorageType, mysql::MySqlStorageType, WalletStorage, WalletStorageType},
     wallet::{Keys, Wallet},
 };
-use indy_api_types::domain::wallet::CacheConfig;
 
 //use crate::storage::plugged::PluggedStorageType; FXIME:
 
@@ -86,10 +82,7 @@ impl WalletService {
             let s1: Arc<dyn WalletStorageType> = Arc::new(SQLiteStorageType::new());
             let s2: Arc<dyn WalletStorageType> = Arc::new(MySqlStorageType::new());
 
-            Mutex::new(HashMap::from([
-                ("default".to_string(), s1),
-                ("mysql".to_string(), s2),
-            ]))
+            Mutex::new(HashMap::from([("default".to_string(), s1), ("mysql".to_string(), s2)]))
         };
 
         WalletService {
@@ -136,20 +129,21 @@ impl WalletService {
         //         let mut storage_types = self.storage_types.lock().await;
 
         //         if storage_types.contains_key(type_) {
-        //             return Err(err_msg(IndyErrorKind::WalletStorageTypeAlreadyRegistered, format!("Wallet storage is already registered for type: {}", type_)));
-        //         }
+        //             return Err(err_msg(IndyErrorKind::WalletStorageTypeAlreadyRegistered,
+        // format!("Wallet storage is already registered for type: {}", type_)));         }
 
         //         storage_types.insert(type_.to_string(),
         //                              Box::new(
         //                                  PluggedStorageType::new(create, open, close, delete,
         //                                                          add_record, update_record_value,
-        //                                                          update_record_tags, add_record_tags, delete_record_tags,
-        //                                                          delete_record, get_record, get_record_id,
-        //                                                          get_record_type, get_record_value, get_record_tags, free_record,
-        //                                                          get_storage_metadata, set_storage_metadata, free_storage_metadata,
-        //                                                          search_records, search_all_records,
-        //                                                          get_search_total_count,
-        //                                                          fetch_search_next_record, free_search)));
+        //                                                          update_record_tags,
+        // add_record_tags, delete_record_tags,                                             
+        // delete_record, get_record, get_record_id,                                        
+        // get_record_type, get_record_value, get_record_tags, free_record,                 
+        // get_storage_metadata, set_storage_metadata, free_storage_metadata,               
+        // search_records, search_all_records,                                              
+        // get_search_total_count,                                                          
+        // fetch_search_next_record, free_search)));
 
         //         trace!("register_wallet_storage <<<");
         //         Ok(())
@@ -223,9 +217,7 @@ impl WalletService {
 
         // check credentials and close connection before deleting wallet
 
-        let (_, metadata, key_derivation_data) = self
-            ._open_storage_and_fetch_metadata(config, credentials)
-            .await?;
+        let (_, metadata, key_derivation_data) = self._open_storage_and_fetch_metadata(config, credentials).await?;
 
         Ok((metadata, key_derivation_data))
     }
@@ -251,11 +243,7 @@ impl WalletService {
             self._get_config_and_cred_for_storage(config, credentials)?;
 
         storage_type
-            .delete_storage(
-                &config.id,
-                storage_config.as_deref(),
-                storage_credentials.as_deref(),
-            )
+            .delete_storage(&config.id, storage_config.as_deref(), storage_credentials.as_deref())
             .await?;
 
         trace!("delete_wallet <<<");
@@ -275,18 +263,15 @@ impl WalletService {
 
         self._is_id_from_config_not_used(config)?;
 
-        let (storage, metadata, key_derivation_data) = self
-            ._open_storage_and_fetch_metadata(config, credentials)
-            .await?;
+        let (storage, metadata, key_derivation_data) =
+            self._open_storage_and_fetch_metadata(config, credentials).await?;
 
         let wallet_handle = indy_utils::next_wallet_handle();
 
-        let rekey_data: Option<KeyDerivationData> = credentials.rekey.as_ref().map(|rekey| {
-            KeyDerivationData::from_passphrase_with_new_salt(
-                rekey,
-                &credentials.rekey_derivation_method,
-            )
-        });
+        let rekey_data: Option<KeyDerivationData> = credentials
+            .rekey
+            .as_ref()
+            .map(|rekey| KeyDerivationData::from_passphrase_with_new_salt(rekey, &credentials.rekey_derivation_method));
 
         self.pending_for_open.lock().unwrap().insert(
             wallet_handle,
@@ -323,17 +308,9 @@ impl WalletService {
             storage.set_storage_metadata(&metadata).await?;
         }
 
-        let wallet = Wallet::new(
-            id.clone(),
-            storage,
-            Arc::new(keys),
-            WalletCache::new(cache_config),
-        );
+        let wallet = Wallet::new(id.clone(), storage, Arc::new(keys), WalletCache::new(cache_config));
 
-        self.wallets
-            .lock()
-            .unwrap()
-            .insert(wallet_handle, Arc::new(wallet));
+        self.wallets.lock().unwrap().insert(wallet_handle, Arc::new(wallet));
 
         self.wallet_ids.lock().unwrap().insert(id.to_string());
 
@@ -352,8 +329,7 @@ impl WalletService {
         let metadata: Metadata = {
             let metadata = storage.get_storage_metadata().await?;
 
-            serde_json::from_slice(&metadata)
-                .to_indy(IndyErrorKind::InvalidState, "Cannot deserialize metadata")?
+            serde_json::from_slice(&metadata).to_indy(IndyErrorKind::InvalidState, "Cannot deserialize metadata")?
         };
 
         let key_derivation_data = KeyDerivationData::from_passphrase_and_metadata(
@@ -373,10 +349,7 @@ impl WalletService {
         let wallet = if let Some(wallet) = wallet {
             wallet
         } else {
-            return Err(err_msg(
-                IndyErrorKind::InvalidWalletHandle,
-                "Unknown wallet handle",
-            ));
+            return Err(err_msg(IndyErrorKind::InvalidWalletHandle, "Unknown wallet handle"));
         };
 
         self.wallet_ids.lock().unwrap().remove(wallet.get_id());
@@ -390,10 +363,7 @@ impl WalletService {
         match err.kind() {
             IndyErrorKind::WalletItemAlreadyExists => err_msg(
                 IndyErrorKind::WalletItemAlreadyExists,
-                format!(
-                    "Wallet item already exists with type: {}, id: {}",
-                    type_, name
-                ),
+                format!("Wallet item already exists with type: {}, id: {}", type_, name),
             ),
             IndyErrorKind::WalletItemNotFound => err_msg(
                 IndyErrorKind::WalletItemNotFound,
@@ -475,12 +445,7 @@ impl WalletService {
             .map_err(|err| WalletService::_map_wallet_storage_error(err, type_, name))
     }
 
-    pub async fn update_indy_object<T>(
-        &self,
-        wallet_handle: WalletHandle,
-        name: &str,
-        object: &T,
-    ) -> IndyResult<String>
+    pub async fn update_indy_object<T>(&self, wallet_handle: WalletHandle, name: &str, object: &T) -> IndyResult<String>
     where
         T: ::serde::Serialize + Sized,
     {
@@ -488,14 +453,10 @@ impl WalletService {
 
         let wallet = self.get_wallet(wallet_handle).await?;
 
-        let object_json = serde_json::to_string(object).to_indy(
-            IndyErrorKind::InvalidState,
-            format!("Cannot serialize {:?}", type_),
-        )?;
+        let object_json = serde_json::to_string(object)
+            .to_indy(IndyErrorKind::InvalidState, format!("Cannot serialize {:?}", type_))?;
 
-        wallet
-            .update(&self.add_prefix(type_), name, &object_json)
-            .await?;
+        wallet.update(&self.add_prefix(type_), name, &object_json).await?;
 
         Ok(object_json)
     }
@@ -542,12 +503,7 @@ impl WalletService {
             .map_err(|err| WalletService::_map_wallet_storage_error(err, type_, name))
     }
 
-    pub async fn delete_record(
-        &self,
-        wallet_handle: WalletHandle,
-        type_: &str,
-        name: &str,
-    ) -> IndyResult<()> {
+    pub async fn delete_record(&self, wallet_handle: WalletHandle, type_: &str, name: &str) -> IndyResult<()> {
         let wallet = self.get_wallet(wallet_handle).await?;
         wallet
             .delete(type_, name)
@@ -555,20 +511,12 @@ impl WalletService {
             .map_err(|err| WalletService::_map_wallet_storage_error(err, type_, name))
     }
 
-    pub async fn delete_indy_record<T>(
-        &self,
-        wallet_handle: WalletHandle,
-        name: &str,
-    ) -> IndyResult<()>
+    pub async fn delete_indy_record<T>(&self, wallet_handle: WalletHandle, name: &str) -> IndyResult<()>
     where
         T: Sized,
     {
-        self.delete_record(
-            wallet_handle,
-            &self.add_prefix(short_type_name::<T>()),
-            name,
-        )
-        .await?;
+        self.delete_record(wallet_handle, &self.add_prefix(short_type_name::<T>()), name)
+            .await?;
 
         Ok(())
     }
@@ -634,12 +582,7 @@ impl WalletService {
     }
 
     // Dirty hack. json must live longer then result T
-    pub async fn get_indy_object<T>(
-        &self,
-        wallet_handle: WalletHandle,
-        name: &str,
-        options_json: &str,
-    ) -> IndyResult<T>
+    pub async fn get_indy_object<T>(&self, wallet_handle: WalletHandle, name: &str, options_json: &str) -> IndyResult<T>
     where
         T: ::serde::de::DeserializeOwned + Sized,
     {
@@ -663,10 +606,7 @@ impl WalletService {
     where
         T: ::serde::de::DeserializeOwned + Sized,
     {
-        match self
-            .get_indy_object::<T>(wallet_handle, name, options_json)
-            .await
-        {
+        match self.get_indy_object::<T>(wallet_handle, name, options_json).await {
             Ok(res) => Ok(Some(res)),
             Err(ref err) if err.kind() == IndyErrorKind::WalletItemNotFound => Ok(None),
             Err(err) => Err(err),
@@ -714,29 +654,19 @@ impl WalletService {
         unimplemented!()
     }
 
-    pub async fn upsert_indy_object<T>(
-        &self,
-        wallet_handle: WalletHandle,
-        name: &str,
-        object: &T,
-    ) -> IndyResult<String>
+    pub async fn upsert_indy_object<T>(&self, wallet_handle: WalletHandle, name: &str, object: &T) -> IndyResult<String>
     where
         T: ::serde::Serialize + Sized,
     {
         if self.record_exists::<T>(wallet_handle, name).await? {
-            self.update_indy_object::<T>(wallet_handle, name, object)
-                .await
+            self.update_indy_object::<T>(wallet_handle, name, object).await
         } else {
             self.add_indy_object::<T>(wallet_handle, name, object, &HashMap::new())
                 .await
         }
     }
 
-    pub async fn record_exists<T>(
-        &self,
-        wallet_handle: WalletHandle,
-        name: &str,
-    ) -> IndyResult<bool>
+    pub async fn record_exists<T>(&self, wallet_handle: WalletHandle, name: &str) -> IndyResult<bool>
     where
         T: Sized,
     {
@@ -812,16 +742,12 @@ impl WalletService {
             secret!(export_config)
         );
 
-        let exported_file_to_import = fs::OpenOptions::new()
-            .read(true)
-            .open(&export_config.path)?;
+        let exported_file_to_import = fs::OpenOptions::new().read(true).open(&export_config.path)?;
 
         let (reader, import_key_derivation_data, nonce, chunk_size, header_bytes) =
             preparse_file_to_import(exported_file_to_import, &export_config.key)?;
-        let key_data = KeyDerivationData::from_passphrase_with_new_salt(
-            &credentials.key,
-            &credentials.key_derivation_method,
-        );
+        let key_data =
+            KeyDerivationData::from_passphrase_with_new_salt(&credentials.key, &credentials.key_derivation_method);
 
         let wallet_handle = indy_utils::next_wallet_handle();
 
@@ -842,12 +768,8 @@ impl WalletService {
         credentials: &Credentials,
         key: (MasterKey, MasterKey),
     ) -> IndyResult<()> {
-        let (reader, nonce, chunk_size, header_bytes, key_data) = self
-            .pending_for_import
-            .lock()
-            .unwrap()
-            .remove(&wallet_handle)
-            .unwrap();
+        let (reader, nonce, chunk_size, header_bytes, key_data) =
+            self.pending_for_import.lock().unwrap().remove(&wallet_handle).unwrap();
 
         let (import_key, master_key) = key;
 
@@ -917,21 +839,13 @@ impl WalletService {
                 .lock()
                 .unwrap()
                 .get(storage_type)
-                .ok_or_else(|| {
-                    err_msg(
-                        IndyErrorKind::UnknownWalletStorageType,
-                        "Unknown wallet storage type",
-                    )
-                })?
+                .ok_or_else(|| err_msg(IndyErrorKind::UnknownWalletStorageType, "Unknown wallet storage type"))?
                 .clone()
         };
 
         let storage_config = config.storage_config.as_ref().map(SValue::to_string);
 
-        let storage_credentials = credentials
-            .storage_credentials
-            .as_ref()
-            .map(SValue::to_string);
+        let storage_credentials = credentials.storage_credentials.as_ref().map(SValue::to_string);
 
         Ok((storage_type, storage_config, storage_credentials))
     }
@@ -941,10 +855,7 @@ impl WalletService {
         if self.wallet_ids.lock().unwrap().contains(&id) {
             return Err(err_msg(
                 IndyErrorKind::WalletAlreadyOpened,
-                format!(
-                    "Wallet {} already opened",
-                    WalletService::_get_wallet_id(config)
-                ),
+                format!("Wallet {} already opened", WalletService::_get_wallet_id(config)),
             ));
         }
 
@@ -961,20 +872,12 @@ impl WalletService {
         format!("{}{}", config.id, wallet_path)
     }
 
-    async fn _open_storage(
-        &self,
-        config: &Config,
-        credentials: &Credentials,
-    ) -> IndyResult<Box<dyn WalletStorage>> {
+    async fn _open_storage(&self, config: &Config, credentials: &Credentials) -> IndyResult<Box<dyn WalletStorage>> {
         let (storage_type, storage_config, storage_credentials) =
             self._get_config_and_cred_for_storage(config, credentials)?;
 
         let storage = storage_type
-            .open_storage(
-                &config.id,
-                storage_config.as_deref(),
-                storage_credentials.as_deref(),
-            )
+            .open_storage(&config.id, storage_config.as_deref(), storage_credentials.as_deref())
             .await?;
 
         Ok(storage)
@@ -989,9 +892,7 @@ impl WalletService {
         let encrypted_keys = keys.serialize_encrypted(master_key)?;
 
         let metadata = match key_data {
-            KeyDerivationData::Raw(_) => Metadata::MetadataRaw(MetadataRaw {
-                keys: encrypted_keys,
-            }),
+            KeyDerivationData::Raw(_) => Metadata::MetadataRaw(MetadataRaw { keys: encrypted_keys }),
             KeyDerivationData::Argon2iInt(_, salt) | KeyDerivationData::Argon2iMod(_, salt) => {
                 Metadata::MetadataArgon(MetadataArgon {
                     keys: encrypted_keys,
@@ -1000,10 +901,8 @@ impl WalletService {
             }
         };
 
-        let res = serde_json::to_vec(&metadata).to_indy(
-            IndyErrorKind::InvalidState,
-            "Cannot serialize wallet metadata",
-        )?;
+        let res =
+            serde_json::to_vec(&metadata).to_indy(IndyErrorKind::InvalidState, "Cannot serialize wallet metadata")?;
 
         Ok(res)
     }
@@ -1011,12 +910,8 @@ impl WalletService {
     fn _restore_keys(&self, metadata: &Metadata, master_key: &MasterKey) -> IndyResult<Keys> {
         let metadata_keys = metadata.get_keys();
 
-        let res = Keys::deserialize_encrypted(metadata_keys, master_key).map_err(|err| {
-            err.map(
-                IndyErrorKind::WalletAccessFailed,
-                "Invalid master key provided",
-            )
-        })?;
+        let res = Keys::deserialize_encrypted(metadata_keys, master_key)
+            .map_err(|err| err.map(IndyErrorKind::WalletAccessFailed, "Invalid master key provided"))?;
 
         Ok(res)
     }
@@ -1033,10 +928,7 @@ impl WalletService {
         if let Some(w) = w {
             Ok(w.clone())
         } else {
-            Err(err_msg(
-                IndyErrorKind::InvalidWalletHandle,
-                "Unknown wallet handle",
-            ))
+            Err(err_msg(IndyErrorKind::InvalidWalletHandle, "Unknown wallet handle"))
         }
     }
 }
@@ -1090,12 +982,7 @@ impl PartialOrd for WalletRecord {
 }
 
 impl WalletRecord {
-    pub fn new(
-        name: String,
-        type_: Option<String>,
-        value: Option<String>,
-        tags: Option<Tags>,
-    ) -> WalletRecord {
+    pub fn new(name: String, type_: Option<String>, value: Option<String>, tags: Option<Tags>) -> WalletRecord {
         WalletRecord {
             id: name,
             type_,

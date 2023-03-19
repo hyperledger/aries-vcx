@@ -2,17 +2,15 @@ use std::sync::Arc;
 
 use indy_api_types::errors::prelude::*;
 use log::trace;
-
 use ursa::{
     cl::{RevocationTailsAccessor, RevocationTailsGenerator, Tail},
     errors::prelude::{UrsaCryptoError, UrsaCryptoErrorKind},
 };
 
-use crate::utils::crypto::base58::{FromBase58, ToBase58};
-
 use crate::{
     domain::anoncreds::revocation_registry_definition::RevocationRegistryDefinitionV1,
     services::BlobStorageService,
+    utils::crypto::base58::{FromBase58, ToBase58},
 };
 
 const TAILS_BLOB_TAG_SZ: u8 = 2;
@@ -29,10 +27,11 @@ impl SDKTailsAccessor {
         tails_reader_handle: i32,
         rev_reg_def: &RevocationRegistryDefinitionV1,
     ) -> IndyResult<SDKTailsAccessor> {
-        let tails_hash =
-            rev_reg_def.value.tails_hash.from_base58().map_err(|_| {
-                err_msg(IndyErrorKind::InvalidState, "Invalid base58 for Tails hash")
-            })?;
+        let tails_hash = rev_reg_def
+            .value
+            .tails_hash
+            .from_base58()
+            .map_err(|_| err_msg(IndyErrorKind::InvalidState, "Invalid base58 for Tails hash"))?;
 
         let tails_reader_handle = tails_service
             .open_blob(
@@ -61,11 +60,7 @@ impl Drop for SDKTailsAccessor {
 }
 
 impl RevocationTailsAccessor for SDKTailsAccessor {
-    fn access_tail(
-        &self,
-        tail_id: u32,
-        accessor: &mut dyn FnMut(&Tail),
-    ) -> Result<(), UrsaCryptoError> {
+    fn access_tail(&self, tail_id: u32, accessor: &mut dyn FnMut(&Tail)) -> Result<(), UrsaCryptoError> {
         trace!("access_tail > tail_id {:?}", tail_id);
 
         // FIXME: Potentially it is significant lock
@@ -97,10 +92,7 @@ pub(crate) async fn store_tails_from_generator(
     writer_handle: i32,
     rtg: &mut RevocationTailsGenerator,
 ) -> IndyResult<(String, String)> {
-    trace!(
-        "store_tails_from_generator > writer_handle {:?}",
-        writer_handle
-    );
+    trace!("store_tails_from_generator > writer_handle {:?}", writer_handle);
 
     let blob_handle = service.create_blob(writer_handle).await?;
 

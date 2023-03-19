@@ -26,7 +26,7 @@ pub struct CacheController {
 }
 
 macro_rules! check_cache {
-    ($cache: ident, $options: ident) => {
+    ($cache:ident, $options:ident) => {
         if let Some(cache) = $cache {
             let min_fresh = $options.min_fresh.unwrap_or(-1);
             if min_fresh >= 0 {
@@ -88,8 +88,8 @@ impl CacheController {
     ///    noCache: (bool, optional, false by default) Skip usage of cache,
     ///    noUpdate: (bool, optional, false by default) Use only cached data, do not try to update.
     ///    noStore: (bool, optional, false by default) Skip storing fresh data if updated,
-    ///    minFresh: (int, optional, -1 by default) Return cached data if not older than this many seconds. -1 means do not check age.
-    ///  }
+    ///    minFresh: (int, optional, -1 by default) Return cached data if not older than this many
+    /// seconds. -1 means do not check age.  }
     pub async fn get_schema(
         &self,
         pool_handle: PoolHandle,
@@ -99,8 +99,7 @@ impl CacheController {
         options: GetCacheOptions,
     ) -> IndyResult<String> {
         trace!(
-            "get_schema > pool_handle {:?} wallet_handle {:?} \
-                submitter_did {:?} id {:?} options {:?}",
+            "get_schema > pool_handle {:?} wallet_handle {:?} submitter_did {:?} id {:?} options {:?}",
             pool_handle,
             wallet_handle,
             submitter_did,
@@ -108,14 +107,7 @@ impl CacheController {
             options
         );
 
-        let cache = get_record_from_cache(
-            &self.wallet_service,
-            wallet_handle,
-            &id.0,
-            &options,
-            SCHEMA_CACHE,
-        )
-        .await?;
+        let cache = get_record_from_cache(&self.wallet_service, wallet_handle, &id.0, &options, SCHEMA_CACHE).await?;
 
         check_cache!(cache, options);
 
@@ -127,10 +119,7 @@ impl CacheController {
                     .build_get_schema_request(Some(&submitter_did), &id)?
             };
 
-            let pool_response = self
-                .pool_service
-                .send_tx(pool_handle, &request_json)
-                .await?;
+            let pool_response = self.pool_service.send_tx(pool_handle, &request_json).await?;
 
             self.ledger_service
                 .parse_get_schema_response(&pool_response, id.get_method().as_deref())
@@ -168,8 +157,8 @@ impl CacheController {
     /// id: identifier of credential definition.
     /// options_json:
     ///  {
-    ///    forceUpdate: (optional, false by default) Force update of record in cache from the ledger,
-    ///  }
+    ///    forceUpdate: (optional, false by default) Force update of record in cache from the
+    /// ledger,  }
     pub async fn get_cred_def(
         &self,
         pool_handle: PoolHandle,
@@ -179,8 +168,7 @@ impl CacheController {
         options: GetCacheOptions,
     ) -> IndyResult<String> {
         trace!(
-            "get_cred_def > pool_handle {:?} wallet_handle {:?} \
-                submitter_did {:?} id {:?} options {:?}",
+            "get_cred_def > pool_handle {:?} wallet_handle {:?} submitter_did {:?} id {:?} options {:?}",
             pool_handle,
             wallet_handle,
             submitter_did,
@@ -188,14 +176,7 @@ impl CacheController {
             options
         );
 
-        let cache = get_record_from_cache(
-            &self.wallet_service,
-            wallet_handle,
-            &id.0,
-            &options,
-            CRED_DEF_CACHE,
-        )
-        .await?;
+        let cache = get_record_from_cache(&self.wallet_service, wallet_handle, &id.0, &options, CRED_DEF_CACHE).await?;
 
         check_cache!(cache, options);
 
@@ -228,13 +209,9 @@ impl CacheController {
     /// wallet_handle: wallet handle (created by open_wallet).
     /// options_json:
     ///  {
-    ///    minFresh: (int, optional, -1 by default) Purge cached data if older than this many seconds. -1 means purge all.
-    ///  }
-    pub async fn purge_schema_cache(
-        &self,
-        wallet_handle: WalletHandle,
-        options: PurgeOptions,
-    ) -> IndyResult<()> {
+    ///    minFresh: (int, optional, -1 by default) Purge cached data if older than this many
+    /// seconds. -1 means purge all.  }
+    pub async fn purge_schema_cache(&self, wallet_handle: WalletHandle, options: PurgeOptions) -> IndyResult<()> {
         trace!(
             "purge_schema_cache > wallet_handle {:?} options {:?}",
             wallet_handle,
@@ -278,13 +255,9 @@ impl CacheController {
     /// wallet_handle: wallet handle (created by open_wallet).
     /// options_json:
     ///  {
-    ///    minFresh: (int, optional, -1 by default) Purge cached data if older than this many seconds. -1 means purge all.
-    ///  }
-    pub async fn purge_cred_def_cache(
-        &self,
-        wallet_handle: WalletHandle,
-        options: PurgeOptions,
-    ) -> IndyResult<()> {
+    ///    minFresh: (int, optional, -1 by default) Purge cached data if older than this many
+    /// seconds. -1 means purge all.  }
+    pub async fn purge_cred_def_cache(&self, wallet_handle: WalletHandle, options: PurgeOptions) -> IndyResult<()> {
         trace!(
             "purge_cred_def_cache > wallet_handle {:?} options {:?}",
             wallet_handle,
@@ -327,19 +300,13 @@ impl CacheController {
     ) -> IndyResult<(String, String)> {
         self.crypto_service.validate_opt_did(submitter_did)?;
 
-        let request_json = self
+        let request_json = self.ledger_service.build_get_cred_def_request(submitter_did, id)?;
+
+        let pool_response = self.pool_service.send_tx(pool_handle, &request_json).await?;
+
+        let res = self
             .ledger_service
-            .build_get_cred_def_request(submitter_did, id)?;
-
-        let pool_response = self
-            .pool_service
-            .send_tx(pool_handle, &request_json)
-            .await?;
-
-        let res = self.ledger_service.parse_get_cred_def_response(
-            &pool_response,
-            id.get_method().as_ref().map(String::as_str),
-        )?;
+            .parse_get_cred_def_response(&pool_response, id.get_method().as_ref().map(String::as_str))?;
 
         Ok(res)
     }

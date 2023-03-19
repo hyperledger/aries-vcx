@@ -1,24 +1,23 @@
-use indy_api_types::{
-    errors::{IndyErrorKind, IndyResult},
-    IndyError,
-};
 use std::collections::HashMap;
 
-use indy_api_types::validation::Validatable;
-
-use super::indy_identifiers;
+use indy_api_types::{
+    errors::{IndyErrorKind, IndyResult},
+    validation::Validatable,
+    IndyError,
+};
 use ursa::cl::{
-    CredentialKeyCorrectnessProof, CredentialPrimaryPublicKey, CredentialPrivateKey,
-    CredentialRevocationPublicKey,
+    CredentialKeyCorrectnessProof, CredentialPrimaryPublicKey, CredentialPrivateKey, CredentialRevocationPublicKey,
 };
 
+use super::{
+    super::{
+        anoncreds::{schema::SchemaId, DELIMITER},
+        crypto::did::DidValue,
+        ledger::request::ProtocolVersion,
+    },
+    indy_identifiers,
+};
 use crate::utils::qualifier;
-
-use super::super::{
-    anoncreds::{schema::SchemaId, DELIMITER},
-    crypto::did::DidValue,
-    ledger::request::ProtocolVersion,
-};
 
 pub const CL_SIGNATURE_TYPE: &str = "CL";
 
@@ -199,16 +198,9 @@ impl CredentialDefinitionId {
 
     pub fn parts(&self) -> Option<(DidValue, String, SchemaId, String)> {
         trace!("CredentialDefinitionId::parts >> self.0 {}", self.0);
-        if let Some((did, seq_no, tag)) =
-            indy_identifiers::try_parse_indy_creddef_id(self.0.as_str())
-        {
+        if let Some((did, seq_no, tag)) = indy_identifiers::try_parse_indy_creddef_id(self.0.as_str()) {
             trace!("{:?} {:?} {:?}", did, seq_no, tag);
-            return Some((
-                DidValue(did),
-                CL_SIGNATURE_TYPE.to_owned(),
-                SchemaId(seq_no),
-                tag,
-            ));
+            return Some((DidValue(did), CL_SIGNATURE_TYPE.to_owned(), SchemaId(seq_no), tag));
         }
 
         let parts = self.0.split_terminator(DELIMITER).collect::<Vec<&str>>();
@@ -260,7 +252,8 @@ impl CredentialDefinitionId {
         }
 
         if parts.len() == 16 {
-            // creddef:sov:did:sov:NcYxiDXkpYi6ov5FcYDi1e:3:CL:schema:sov:did:sov:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag
+            // creddef:sov:did:sov:NcYxiDXkpYi6ov5FcYDi1e:3:CL:schema:sov:did:sov:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:
+            // 1.0:tag
             warn!("Deprecated format of FQ CredDef ID is used (creddef: suffix)");
             let did = parts[2..5].join(DELIMITER);
             let signature_type = parts[6].to_string();
@@ -278,12 +271,9 @@ impl CredentialDefinitionId {
 
     pub fn qualify(&self, method: &str) -> IndyResult<CredentialDefinitionId> {
         match self.parts() {
-            Some((did, signature_type, schema_id, tag)) => CredentialDefinitionId::new(
-                &did.qualify(method),
-                &schema_id.qualify(method)?,
-                &signature_type,
-                &tag,
-            ),
+            Some((did, signature_type, schema_id, tag)) => {
+                CredentialDefinitionId::new(&did.qualify(method), &schema_id.qualify(method)?, &signature_type, &tag)
+            }
             None => Ok(self.clone()),
         }
     }
@@ -343,15 +333,11 @@ mod tests {
     }
 
     fn _schema_id_qualified() -> SchemaId {
-        SchemaId(
-            "did:indy:sovrin:builder:NcYxiDXkpYi6ov5FcYDi1e/anoncreds/SCHEMA/gvt/1.0".to_string(),
-        )
+        SchemaId("did:indy:sovrin:builder:NcYxiDXkpYi6ov5FcYDi1e/anoncreds/SCHEMA/gvt/1.0".to_string())
     }
 
     fn _cred_def_id_unqualified() -> CredentialDefinitionId {
-        CredentialDefinitionId(
-            "NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag".to_string(),
-        )
+        CredentialDefinitionId("NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag".to_string())
     }
 
     fn _cred_def_id_unqualified_with_schema_as_seq_no() -> CredentialDefinitionId {
@@ -363,15 +349,12 @@ mod tests {
     }
 
     fn _cred_def_id_unqualified_without_tag() -> CredentialDefinitionId {
-        CredentialDefinitionId(
-            "NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0".to_string(),
-        )
+        CredentialDefinitionId("NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0".to_string())
     }
 
     fn _cred_def_id_qualified_with_schema_as_seq_no() -> CredentialDefinitionId {
         CredentialDefinitionId(
-            "did:indy:sovrin:builder:NcYxiDXkpYi6ov5FcYDi1e/anoncreds/v0/CLAIM_DEF/1/tag"
-                .to_string(),
+            "did:indy:sovrin:builder:NcYxiDXkpYi6ov5FcYDi1e/anoncreds/v0/CLAIM_DEF/1/tag".to_string(),
         )
     }
 
@@ -380,10 +363,7 @@ mod tests {
 
         #[test]
         fn test_cred_def_id_parts_for_id_as_unqualified() {
-            assert_eq!(
-                _cred_def_id_unqualified(),
-                _cred_def_id_unqualified().to_unqualified()
-            );
+            assert_eq!(_cred_def_id_unqualified(), _cred_def_id_unqualified().to_unqualified());
         }
 
         #[test]
@@ -403,8 +383,7 @@ mod tests {
         }
 
         #[test]
-        fn test_cred_def_id_parts_for_id_as_unqualified_without_tag_with_schema_as_seq_no_without_tag(
-        ) {
+        fn test_cred_def_id_parts_for_id_as_unqualified_without_tag_with_schema_as_seq_no_without_tag() {
             assert_eq!(
                 _cred_def_id_unqualified_with_schema_as_seq_no_without_tag(),
                 _cred_def_id_unqualified_with_schema_as_seq_no_without_tag().to_unqualified()
@@ -434,8 +413,7 @@ mod tests {
 
         #[test]
         fn test_cred_def_id_parts_for_id_as_unqualified_without_tag() {
-            let (did, signature_type, schema_id, tag) =
-                _cred_def_id_unqualified_without_tag().parts().unwrap();
+            let (did, signature_type, schema_id, tag) = _cred_def_id_unqualified_without_tag().parts().unwrap();
             assert_eq!(_did(), did);
             assert_eq!(_signature_type(), signature_type);
             assert_eq!(_schema_id_unqualified(), schema_id);
@@ -445,9 +423,7 @@ mod tests {
         #[test]
         fn test_cred_def_id_parts_for_id_as_unqualified_with_schema_as_seq() {
             let (did, signature_type, schema_id, tag) =
-                _cred_def_id_unqualified_with_schema_as_seq_no()
-                    .parts()
-                    .unwrap();
+                _cred_def_id_unqualified_with_schema_as_seq_no().parts().unwrap();
             assert_eq!(_did(), did);
             assert_eq!(_signature_type(), signature_type);
             assert_eq!(_schema_id_seq_no(), schema_id);
@@ -456,10 +432,9 @@ mod tests {
 
         #[test]
         fn test_cred_def_id_parts_for_id_as_unqualified_with_schema_as_seq_without_tag() {
-            let (did, signature_type, schema_id, tag) =
-                _cred_def_id_unqualified_with_schema_as_seq_no_without_tag()
-                    .parts()
-                    .unwrap();
+            let (did, signature_type, schema_id, tag) = _cred_def_id_unqualified_with_schema_as_seq_no_without_tag()
+                .parts()
+                .unwrap();
             assert_eq!(_did(), did);
             assert_eq!(_signature_type(), signature_type);
             assert_eq!(_schema_id_seq_no(), schema_id);
@@ -468,10 +443,7 @@ mod tests {
 
         #[test]
         fn test_cred_def_id_parts_for_id_as_qualified_with_schema_as_seq() {
-            let (did, signature_type, schema_id, tag) =
-                _cred_def_id_qualified_with_schema_as_seq_no()
-                    .parts()
-                    .unwrap();
+            let (did, signature_type, schema_id, tag) = _cred_def_id_qualified_with_schema_as_seq_no().parts().unwrap();
             assert_eq!(_did_qualified(), did);
             assert_eq!(_signature_type(), signature_type);
             assert_eq!(_schema_id_seq_no(), schema_id);
@@ -494,9 +466,7 @@ mod tests {
 
         #[test]
         fn test_validate_cred_def_id_as_unqualified_with_schema_as_seq_no() {
-            _cred_def_id_unqualified_with_schema_as_seq_no()
-                .validate()
-                .unwrap();
+            _cred_def_id_unqualified_with_schema_as_seq_no().validate().unwrap();
         }
 
         #[test]
@@ -508,9 +478,7 @@ mod tests {
 
         #[test]
         fn test_validate_cred_def_id_as_fully_qualified_with_schema_as_seq_no() {
-            _cred_def_id_qualified_with_schema_as_seq_no()
-                .validate()
-                .unwrap();
+            _cred_def_id_qualified_with_schema_as_seq_no().validate().unwrap();
         }
     }
 }

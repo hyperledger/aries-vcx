@@ -1,10 +1,10 @@
+use indy_api_types::{errors::prelude::*, CommandHandle};
 use serde_json::{self, Value as SJsonValue};
 
 use crate::{
     domain::ledger::constants,
     services::{ledger::merkletree::merkletree::MerkleTree, pool::types::*},
 };
-use indy_api_types::{errors::prelude::*, CommandHandle};
 
 pub const REQUESTS_FOR_STATE_PROOFS: [&str; 11] = [
     constants::GET_NYM,
@@ -190,13 +190,9 @@ impl Into<Option<RequestEvent>> for PoolEvent {
             PoolEvent::NodeReply(msg, node_alias) => {
                 _parse_msg(&msg).map(|parsed| match parsed {
                     //TODO change mapping for CatchupReq. May be return None
-                    Message::CatchupReq(_) => {
-                        RequestEvent::CatchupReq(MerkleTree::default(), 0, vec![])
-                    }
+                    Message::CatchupReq(_) => RequestEvent::CatchupReq(MerkleTree::default(), 0, vec![]),
                     Message::CatchupRep(rep) => RequestEvent::CatchupRep(rep, node_alias),
-                    Message::LedgerStatus(ls) => {
-                        RequestEvent::LedgerStatus(ls, Some(node_alias), None)
-                    }
+                    Message::LedgerStatus(ls) => RequestEvent::LedgerStatus(ls, Some(node_alias), None),
                     Message::ConsistencyProof(cp) => RequestEvent::ConsistencyProof(cp, node_alias),
                     Message::Reply(rep) => {
                         let req_id = rep.req_id();
@@ -223,28 +219,21 @@ impl Into<Option<RequestEvent>> for PoolEvent {
                 let parsed_req = _parse_req_id_and_op(&msg);
                 if let Ok((ref req, ref req_id, ref op)) = parsed_req {
                     if REQUEST_FOR_FULL.contains(&op.as_str()) {
-                        Some(RequestEvent::CustomFullRequest(
-                            msg,
-                            req_id.clone(),
-                            timeout,
-                            nodes,
-                        ))
+                        Some(RequestEvent::CustomFullRequest(msg, req_id.clone(), timeout, nodes))
                     } else if timeout.is_some() || nodes.is_some() {
-                        error!("Timeout {:?} or nodes {:?} is specified for non-supported request operation type {}",
-                               timeout, nodes, op);
+                        error!(
+                            "Timeout {:?} or nodes {:?} is specified for non-supported request operation type {}",
+                            timeout, nodes, op
+                        );
                         None
                     } else if REQUESTS_FOR_STATE_PROOFS.contains(&op.as_str()) {
                         let key = super::state_proof::parse_key_from_request_for_builtin_sp(&req);
                         let timestamps = _parse_timestamp_from_req_for_builtin_sp(req, &op);
-                        Some(RequestEvent::CustomSingleRequest(
-                            msg,
-                            req_id.clone(),
-                            key,
-                            timestamps,
-                        ))
+                        Some(RequestEvent::CustomSingleRequest(msg, req_id.clone(), key, timestamps))
                     // FIXME: Do we need custom parsers???
                     // } else if PoolService::get_sp_parser(&op.as_str()).is_some() {
-                    //     Some(RequestEvent::CustomSingleRequest(msg, req_id.clone(), None, (None, None)))
+                    //     Some(RequestEvent::CustomSingleRequest(msg, req_id.clone(), None, (None,
+                    // None)))
                     } else {
                         Some(RequestEvent::CustomConsensusRequest(msg, req_id.clone()))
                     }
@@ -253,18 +242,13 @@ impl Into<Option<RequestEvent>> for PoolEvent {
                     None
                 }
             }
-            PoolEvent::Timeout(req_id, node_alias) => {
-                Some(RequestEvent::Timeout(req_id, node_alias))
-            }
+            PoolEvent::Timeout(req_id, node_alias) => Some(RequestEvent::Timeout(req_id, node_alias)),
             _ => None,
         }
     }
 }
 
-fn _parse_timestamp_from_req_for_builtin_sp(
-    req: &SJsonValue,
-    op: &str,
-) -> (Option<u64>, Option<u64>) {
+fn _parse_timestamp_from_req_for_builtin_sp(req: &SJsonValue, op: &str) -> (Option<u64>, Option<u64>) {
     if !REQUESTS_FOR_STATE_PROOFS_IN_THE_PAST.contains(&op) {
         return (None, None);
     }
@@ -274,13 +258,10 @@ fn _parse_timestamp_from_req_for_builtin_sp(
     }
 
     match op {
-        constants::GET_REVOC_REG
-        | constants::GET_TXN_AUTHR_AGRMT
-        | constants::GET_TXN_AUTHR_AGRMT_AML => (None, req["operation"]["timestamp"].as_u64()),
-        constants::GET_REVOC_REG_DELTA => (
-            req["operation"]["from"].as_u64(),
-            req["operation"]["to"].as_u64(),
-        ),
+        constants::GET_REVOC_REG | constants::GET_TXN_AUTHR_AGRMT | constants::GET_TXN_AUTHR_AGRMT_AML => {
+            (None, req["operation"]["timestamp"].as_u64())
+        }
+        constants::GET_REVOC_REG_DELTA => (req["operation"]["from"].as_u64(), req["operation"]["to"].as_u64()),
         _ => (None, None),
     }
 }
@@ -299,12 +280,7 @@ fn _parse_req_id_and_op(msg: &str) -> IndyResult<(SJsonValue, String, String)> {
 
     let op = req_json["operation"]["type"]
         .as_str()
-        .ok_or_else(|| {
-            err_msg(
-                IndyErrorKind::InvalidStructure,
-                "No operation type in request",
-            )
-        })?
+        .ok_or_else(|| err_msg(IndyErrorKind::InvalidStructure, "No operation type in request"))?
         .to_string();
 
     Ok((req_json, req_id, op))

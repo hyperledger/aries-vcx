@@ -1,13 +1,12 @@
-use serde;
-use serde_json;
-use time;
-
 use std::{
     collections::HashMap,
     sync::atomic::{AtomicUsize, Ordering},
 };
 
 use lazy_static::lazy_static;
+use serde;
+use serde_json;
+use time;
 
 use super::super::crypto::did::{DidValue, ShortDidValue};
 
@@ -64,12 +63,7 @@ pub struct Request<T: serde::Serialize> {
 }
 
 impl<T: serde::Serialize> Request<T> {
-    pub fn new(
-        req_id: u64,
-        identifier: ShortDidValue,
-        operation: T,
-        protocol_version: usize,
-    ) -> Request<T> {
+    pub fn new(req_id: u64, identifier: ShortDidValue, operation: T, protocol_version: usize) -> Request<T> {
         Request {
             req_id,
             identifier: Some(identifier),
@@ -90,12 +84,7 @@ impl<T: serde::Serialize> Request<T> {
             None => ShortDidValue(DEFAULT_LIBIDY_DID.to_string()),
         };
 
-        serde_json::to_string(&Request::new(
-            req_id,
-            identifier,
-            operation,
-            ProtocolVersion::get(),
-        ))
-        .map_err(|err| format!("Cannot serialize Request: {:?}", err))
+        serde_json::to_string(&Request::new(req_id, identifier, operation, ProtocolVersion::get()))
+            .map_err(|err| format!("Cannot serialize Request: {:?}", err))
     }
 }

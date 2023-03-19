@@ -1,6 +1,6 @@
-use super::environment;
-
 use std::{fs, fs::File, path::PathBuf};
+
+use super::environment;
 
 pub fn cleanup_files(dir: &PathBuf, name: &str) {
     let mut path = dir.clone();

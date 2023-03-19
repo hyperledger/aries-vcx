@@ -46,8 +46,7 @@ impl NonSecretsController {
         tags: Option<Tags>,
     ) -> IndyResult<()> {
         trace!(
-            "add_record > wallet_handle {:?} type_ {:?} \
-                id {:?} value {:?} tags {:?}",
+            "add_record > wallet_handle {:?} type_ {:?} id {:?} value {:?} tags {:?}",
             wallet_handle,
             type_,
             id,
@@ -58,13 +57,7 @@ impl NonSecretsController {
         self._check_type(&type_)?;
 
         self.wallet_service
-            .add_record(
-                wallet_handle,
-                &type_,
-                &id,
-                &value,
-                &tags.unwrap_or_else(|| Tags::new()),
-            )
+            .add_record(wallet_handle, &type_, &id, &value, &tags.unwrap_or_else(|| Tags::new()))
             .await?;
 
         let res = Ok(());
@@ -88,8 +81,7 @@ impl NonSecretsController {
         value: String,
     ) -> IndyResult<()> {
         trace!(
-            "update_record_value > wallet_handle {:?} type_ {:?} \
-                id {:?} value {:?}",
+            "update_record_value > wallet_handle {:?} type_ {:?} id {:?} value {:?}",
             wallet_handle,
             type_,
             id,
@@ -132,8 +124,7 @@ impl NonSecretsController {
         tags: Tags,
     ) -> IndyResult<()> {
         trace!(
-            "update_record_tags > wallet_handle {:?} type_ {:?} \
-                id {:?} tags {:?}",
+            "update_record_tags > wallet_handle {:?} type_ {:?} id {:?} tags {:?}",
             wallet_handle,
             type_,
             id,
@@ -178,8 +169,7 @@ impl NonSecretsController {
         tags: Tags,
     ) -> IndyResult<()> {
         trace!(
-            "add_record_tags > wallet_handle {:?} type_ {:?} \
-                id {:?} tags {:?}",
+            "add_record_tags > wallet_handle {:?} type_ {:?} id {:?} tags {:?}",
             wallet_handle,
             type_,
             id,
@@ -214,8 +204,7 @@ impl NonSecretsController {
         tag_names_json: String,
     ) -> IndyResult<()> {
         trace!(
-            "delete_record_tags > wallet_handle {:?} type_ {:?} \
-                id {:?} tag_names_json {:?}",
+            "delete_record_tags > wallet_handle {:?} type_ {:?} id {:?} tag_names_json {:?}",
             wallet_handle,
             type_,
             id,
@@ -224,10 +213,8 @@ impl NonSecretsController {
 
         self._check_type(&type_)?;
 
-        let tag_names: Vec<&str> = serde_json::from_str(&tag_names_json).to_indy(
-            IndyErrorKind::InvalidStructure,
-            "Cannot deserialize tag names",
-        )?;
+        let tag_names: Vec<&str> = serde_json::from_str(&tag_names_json)
+            .to_indy(IndyErrorKind::InvalidStructure, "Cannot deserialize tag names")?;
 
         self.wallet_service
             .delete_record_tags(wallet_handle, &type_, &id, &tag_names)
@@ -245,12 +232,7 @@ impl NonSecretsController {
     /// wallet_handle: wallet handle (created by open_wallet)
     /// type_: record type
     /// id: the id of record
-    pub async fn delete_record(
-        &self,
-        wallet_handle: WalletHandle,
-        type_: String,
-        id: String,
-    ) -> IndyResult<()> {
+    pub async fn delete_record(&self, wallet_handle: WalletHandle, type_: String, id: String) -> IndyResult<()> {
         trace!(
             "delete_record > wallet_handle {:?} type_ {:?} id {:?}",
             wallet_handle,
@@ -260,9 +242,7 @@ impl NonSecretsController {
 
         self._check_type(&type_)?;
 
-        self.wallet_service
-            .delete_record(wallet_handle, &type_, &id)
-            .await?;
+        self.wallet_service.delete_record(wallet_handle, &type_, &id).await?;
 
         let res = Ok(());
         trace!("delete_record < {:?}", res);
@@ -298,8 +278,7 @@ impl NonSecretsController {
         options_json: String,
     ) -> IndyResult<String> {
         trace!(
-            "get_record > wallet_handle {:?} type_ {:?} \
-                id {:?} options_json {:?}",
+            "get_record > wallet_handle {:?} type_ {:?} id {:?} options_json {:?}",
             wallet_handle,
             type_,
             id,
@@ -308,20 +287,16 @@ impl NonSecretsController {
 
         self._check_type(&type_)?;
 
-        serde_json::from_str::<RecordOptions>(&options_json).to_indy(
-            IndyErrorKind::InvalidStructure,
-            "Cannot deserialize options",
-        )?;
+        serde_json::from_str::<RecordOptions>(&options_json)
+            .to_indy(IndyErrorKind::InvalidStructure, "Cannot deserialize options")?;
 
         let record = self
             .wallet_service
             .get_record(wallet_handle, &type_, &id, &options_json)
             .await?;
 
-        let record = serde_json::to_string(&record).to_indy(
-            IndyErrorKind::InvalidStructure,
-            "Cannot serialize WalletRecord",
-        )?;
+        let record =
+            serde_json::to_string(&record).to_indy(IndyErrorKind::InvalidStructure, "Cannot serialize WalletRecord")?;
 
         let res = Ok(record);
         trace!("get_record < {:?}", res);
@@ -364,8 +339,7 @@ impl NonSecretsController {
         options_json: String,
     ) -> IndyResult<SearchHandle> {
         trace!(
-            "open_search > wallet_handle {:?} type_ {:?} \
-                query_json {:?} options_json {:?}",
+            "open_search > wallet_handle {:?} type_ {:?} query_json {:?} options_json {:?}",
             wallet_handle,
             type_,
             query_json,
@@ -374,10 +348,8 @@ impl NonSecretsController {
 
         self._check_type(&type_)?;
 
-        serde_json::from_str::<SearchOptions>(&options_json).to_indy(
-            IndyErrorKind::InvalidStructure,
-            "Cannot deserialize options",
-        )?;
+        serde_json::from_str::<SearchOptions>(&options_json)
+            .to_indy(IndyErrorKind::InvalidStructure, "Cannot deserialize options")?;
 
         let search = self
             .wallet_service
@@ -434,9 +406,7 @@ impl NonSecretsController {
                 .lock()
                 .await
                 .get(&wallet_search_handle)
-                .ok_or_else(|| {
-                    err_msg(IndyErrorKind::InvalidWalletHandle, "Unknown search handle")
-                })?
+                .ok_or_else(|| err_msg(IndyErrorKind::InvalidWalletHandle, "Unknown search handle"))?
                 .clone()
         };
 
@@ -453,17 +423,11 @@ impl NonSecretsController {
 
         let search_result = SearchRecords {
             total_count: search.get_total_count()?,
-            records: if records.is_empty() {
-                None
-            } else {
-                Some(records)
-            },
+            records: if records.is_empty() { None } else { Some(records) },
         };
 
-        let search_result = serde_json::to_string(&search_result).to_indy(
-            IndyErrorKind::InvalidState,
-            "Cannot serialize SearchRecords",
-        )?;
+        let search_result = serde_json::to_string(&search_result)
+            .to_indy(IndyErrorKind::InvalidState, "Cannot serialize SearchRecords")?;
 
         let res = Ok(search_result);
         trace!("fetch_search_next_records < {:?}", res);
@@ -475,10 +439,7 @@ impl NonSecretsController {
     /// #Params
     /// wallet_search_handle: wallet search handle
     pub async fn close_search(&self, wallet_search_handle: SearchHandle) -> IndyResult<()> {
-        trace!(
-            "close_search > wallet_search_handle {:?}",
-            wallet_search_handle
-        );
+        trace!("close_search > wallet_search_handle {:?}", wallet_search_handle);
 
         self.searches
             .lock()

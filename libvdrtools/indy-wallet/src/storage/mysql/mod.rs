@@ -34,10 +34,7 @@ impl MySQLStorageIterator {
         records: Option<VecDeque<IndyResult<StorageRecord>>>,
         total_count: Option<usize>,
     ) -> IndyResult<MySQLStorageIterator> {
-        Ok(MySQLStorageIterator {
-            records,
-            total_count,
-        })
+        Ok(MySQLStorageIterator { records, total_count })
     }
 }
 
@@ -109,22 +106,13 @@ impl MySqlStorageType {
             .map(serde_json::from_str::<Config>)
             .transpose()
             .to_indy(IndyErrorKind::InvalidStructure, "Malformed config json")?
-            .ok_or(err_msg(
-                IndyErrorKind::InvalidStructure,
-                "Absent config json",
-            ))?;
+            .ok_or(err_msg(IndyErrorKind::InvalidStructure, "Absent config json"))?;
 
         let credentials = credentials
             .map(serde_json::from_str::<Credentials>)
             .transpose()
-            .to_indy(
-                IndyErrorKind::InvalidStructure,
-                "Malformed credentials json",
-            )?
-            .ok_or(err_msg(
-                IndyErrorKind::InvalidStructure,
-                "Absent credentials json",
-            ))?;
+            .to_indy(IndyErrorKind::InvalidStructure, "Malformed credentials json")?
+            .ok_or(err_msg(IndyErrorKind::InvalidStructure, "Absent credentials json"))?;
 
         let host_addr = if read_only {
             &config.read_host
@@ -190,12 +178,9 @@ impl WalletStorage for MySqlStorage {
     ///  * `IndyError::Closed` - Storage is closed
     ///  * `IndyError::ItemNotFound` - Item is not found in database
     ///  * `IOError("IO error during storage operation:...")` - Failed connection or SQL query
-    ///
     async fn get(&self, type_: &[u8], id: &[u8], options: &str) -> IndyResult<StorageRecord> {
-        let options: RecordOptions = serde_json::from_str(options).to_indy(
-            IndyErrorKind::InvalidStructure,
-            "RecordOptions is malformed json",
-        )?;
+        let options: RecordOptions = serde_json::from_str(options)
+            .to_indy(IndyErrorKind::InvalidStructure, "RecordOptions is malformed json")?;
 
         let mut conn = self.read_pool.acquire().await?;
 
@@ -208,16 +193,8 @@ impl WalletStorage for MySqlStorage {
                     AND type = ?
                     AND name = ?
             "#,
-            if options.retrieve_value {
-                "value"
-            } else {
-                "NULL"
-            },
-            if options.retrieve_tags {
-                "tags"
-            } else {
-                "NULL"
-            },
+            if options.retrieve_value { "value" } else { "NULL" },
+            if options.retrieve_tags { "tags" } else { "NULL" },
         ))
         .bind(self.wallet_id)
         .bind(&base64::encode(type_))
@@ -274,14 +251,7 @@ impl WalletStorage for MySqlStorage {
     ///  * `IndyError::Closed` - Storage is closed
     ///  * `IndyError::ItemAlreadyExists` - Item is already present in database
     ///  * `IOError("IO error during storage operation:...")` - Failed connection or SQL query
-    ///
-    async fn add(
-        &self,
-        type_: &[u8],
-        id: &[u8],
-        value: &EncryptedValue,
-        tags: &[Tag],
-    ) -> IndyResult<()> {
+    async fn add(&self, type_: &[u8], id: &[u8], value: &EncryptedValue, tags: &[Tag]) -> IndyResult<()> {
         let mut tx = self.write_pool.begin().await?;
 
         sqlx::query(
@@ -327,10 +297,7 @@ impl WalletStorage for MySqlStorage {
                 tx.commit().await?;
                 Ok(())
             }
-            0 => Err(err_msg(
-                IndyErrorKind::WalletItemNotFound,
-                "Item to update not found",
-            )),
+            0 => Err(err_msg(IndyErrorKind::WalletItemNotFound, "Item to update not found")),
             _ => Err(err_msg(
                 IndyErrorKind::InvalidState,
                 "More than one row update. Seems wallet structure is inconsistent",
@@ -374,10 +341,7 @@ impl WalletStorage for MySqlStorage {
                 tx.commit().await?;
                 Ok(())
             }
-            0 => Err(err_msg(
-                IndyErrorKind::WalletItemNotFound,
-                "Item to update not found",
-            )),
+            0 => Err(err_msg(IndyErrorKind::WalletItemNotFound, "Item to update not found")),
             _ => Err(err_msg(
                 IndyErrorKind::InvalidState,
                 "More than one row update. Seems wallet structure is inconsistent",
@@ -410,10 +374,7 @@ impl WalletStorage for MySqlStorage {
                 tx.commit().await?;
                 Ok(())
             }
-            0 => Err(err_msg(
-                IndyErrorKind::WalletItemNotFound,
-                "Item to update not found",
-            )),
+            0 => Err(err_msg(IndyErrorKind::WalletItemNotFound, "Item to update not found")),
             _ => Err(err_msg(
                 IndyErrorKind::InvalidState,
                 "More than one row update. Seems wallet structure is inconsistent",
@@ -457,10 +418,7 @@ impl WalletStorage for MySqlStorage {
                 tx.commit().await?;
                 Ok(())
             }
-            0 => Err(err_msg(
-                IndyErrorKind::WalletItemNotFound,
-                "Item to update not found",
-            )),
+            0 => Err(err_msg(IndyErrorKind::WalletItemNotFound, "Item to update not found")),
             _ => Err(err_msg(
                 IndyErrorKind::InvalidState,
                 "More than one row update. Seems wallet structure is inconsistent",
@@ -493,7 +451,6 @@ impl WalletStorage for MySqlStorage {
     ///  * `IndyError::Closed` - Storage is closed
     ///  * `IndyError::ItemNotFound` - Item is not found in database
     ///  * `IOError("IO error during storage operation:...")` - Failed connection or SQL query
-    ///
     async fn delete(&self, type_: &[u8], id: &[u8]) -> IndyResult<()> {
         let mut tx = self.write_pool.begin().await?;
 
@@ -516,10 +473,7 @@ impl WalletStorage for MySqlStorage {
                 tx.commit().await?;
                 Ok(())
             }
-            0 => Err(err_msg(
-                IndyErrorKind::WalletItemNotFound,
-                "Item to delete not found",
-            )),
+            0 => Err(err_msg(IndyErrorKind::WalletItemNotFound, "Item to delete not found")),
             _ => Err(err_msg(
                 IndyErrorKind::InvalidState,
                 "More than one row deleted. Seems wallet structure is inconsistent",
@@ -596,10 +550,7 @@ impl WalletStorage for MySqlStorage {
         let total_len = records.len();
 
         // FIXME: Fetch total count
-        Ok(Box::new(MySQLStorageIterator::new(
-            Some(records),
-            Some(total_len),
-        )?))
+        Ok(Box::new(MySQLStorageIterator::new(Some(records), Some(total_len))?))
     }
 
     async fn search(
@@ -609,10 +560,8 @@ impl WalletStorage for MySqlStorage {
         options: Option<&str>,
     ) -> IndyResult<Box<dyn StorageIterator>> {
         let options = if let Some(options) = options {
-            serde_json::from_str(options).to_indy(
-                IndyErrorKind::InvalidStructure,
-                "Search options is malformed json",
-            )?
+            serde_json::from_str(options)
+                .to_indy(IndyErrorKind::InvalidStructure, "Search options is malformed json")?
         } else {
             SearchOptions::default()
         };
@@ -629,10 +578,7 @@ impl WalletStorage for MySqlStorage {
                 } else if arg.is_string() {
                     query.bind(arg.as_str().unwrap())
                 } else {
-                    return Err(err_msg(
-                        IndyErrorKind::InvalidState,
-                        "Unexpected sql parameter type.",
-                    ));
+                    return Err(err_msg(IndyErrorKind::InvalidState, "Unexpected sql parameter type."));
                 }
             }
 
@@ -653,10 +599,7 @@ impl WalletStorage for MySqlStorage {
                 } else if arg.is_string() {
                     query.bind(arg.as_str().unwrap())
                 } else {
-                    return Err(err_msg(
-                        IndyErrorKind::InvalidState,
-                        "Unexpected sql parameter type.",
-                    ));
+                    return Err(err_msg(IndyErrorKind::InvalidState, "Unexpected sql parameter type."));
                 }
             }
 
@@ -735,18 +678,8 @@ impl WalletStorageType for MySqlStorageType {
     ///
     ///  * `IndyError::NotFound` - File with the provided id not found
     ///  * `IOError(..)` - Deletion of the file form the file-system failed
-    ///
-    async fn delete_storage(
-        &self,
-        id: &str,
-        config: Option<&str>,
-        credentials: Option<&str>,
-    ) -> IndyResult<()> {
-        let mut tx = self
-            ._connect(false, config, credentials)
-            .await?
-            .begin()
-            .await?;
+    async fn delete_storage(&self, id: &str, config: Option<&str>, credentials: Option<&str>) -> IndyResult<()> {
+        let mut tx = self._connect(false, config, credentials).await?.begin().await?;
 
         let res = sqlx::query(
             r#"
@@ -765,10 +698,7 @@ impl WalletStorageType for MySqlStorageType {
                 tx.commit().await?;
                 Ok(())
             }
-            0 => Err(err_msg(
-                IndyErrorKind::WalletNotFound,
-                "Item to delete not found",
-            )),
+            0 => Err(err_msg(IndyErrorKind::WalletNotFound, "Item to delete not found")),
             _ => Err(err_msg(
                 IndyErrorKind::InvalidState,
                 "More than one row deleted. Seems wallet structure is inconsistent",
@@ -803,7 +733,6 @@ impl WalletStorageType for MySqlStorageType {
     ///  * `IOError("Error occurred while creating wallet file:..)"` - Creation of schema failed
     ///  * `IOError("Error occurred while inserting the keys...")` - Insertion of keys failed
     ///  * `IOError(..)` - Deletion of the file form the file-system failed
-    ///
     async fn create_storage(
         &self,
         id: &str,
@@ -811,11 +740,7 @@ impl WalletStorageType for MySqlStorageType {
         credentials: Option<&str>,
         metadata: &[u8],
     ) -> IndyResult<()> {
-        let mut tx = self
-            ._connect(false, config, credentials)
-            .await?
-            .begin()
-            .await?;
+        let mut tx = self._connect(false, config, credentials).await?.begin().await?;
 
         let res = sqlx::query(
             r#"
@@ -830,10 +755,7 @@ impl WalletStorageType for MySqlStorageType {
 
         match res {
             Err(sqlx::Error::Database(e)) if e.code().is_some() && e.code().unwrap() == "23000" => {
-                return Err(err_msg(
-                    IndyErrorKind::WalletAlreadyExists,
-                    "Wallet already exists",
-                ))
+                return Err(err_msg(IndyErrorKind::WalletAlreadyExists, "Wallet already exists"))
             }
             e => e?,
         };
@@ -870,7 +792,6 @@ impl WalletStorageType for MySqlStorageType {
     ///
     ///  * `IndyError::NotFound` - File with the provided id not found
     ///  * `IOError("IO error during storage operation:...")` - Failed connection or SQL query
-    ///
     async fn open_storage(
         &self,
         id: &str,
@@ -916,8 +837,9 @@ mod tests {
     #[async_std::test]
     #[cfg(feature = "benchmark")]
     async fn mysql_storage_sync_send() {
-        use futures::{channel::oneshot, executor::ThreadPool, future::join_all};
         use std::{sync::Arc, time::SystemTime};
+
+        use futures::{channel::oneshot, executor::ThreadPool, future::join_all};
 
         let count = 1000;
         let executor = ThreadPool::new().expect("Failed to new ThreadPool");
@@ -931,11 +853,7 @@ mod tests {
 
                 let future = async move {
                     let res = st
-                        .delete_storage(
-                            &format!("mysql_storage_sync_send_{}", id),
-                            _config(),
-                            _credentials(),
-                        )
+                        .delete_storage(&format!("mysql_storage_sync_send_{}", id), _config(), _credentials())
                         .await;
 
                     tx.send(res).unwrap();
@@ -985,11 +903,7 @@ mod tests {
 
                 let future = async move {
                     let res = st
-                        .delete_storage(
-                            &format!("mysql_storage_sync_send_{}", id),
-                            _config(),
-                            _credentials(),
-                        )
+                        .delete_storage(&format!("mysql_storage_sync_send_{}", id), _config(), _credentials())
                         .await;
 
                     tx.send(res).unwrap();
@@ -1053,11 +967,7 @@ mod tests {
         assert_kind!(IndyErrorKind::WalletAlreadyExists, res);
 
         storage_type
-            .delete_storage(
-                "mysql_storage_type_create_works_for_twice",
-                _config(),
-                _credentials(),
-            )
+            .delete_storage("mysql_storage_type_create_works_for_twice", _config(), _credentials())
             .await
             .unwrap();
     }
@@ -1116,9 +1026,7 @@ mod tests {
             .await
             .unwrap();
 
-        let res = storage_type
-            .delete_storage("unknown", _config(), _credentials())
-            .await;
+        let res = storage_type.delete_storage("unknown", _config(), _credentials()).await;
         assert_kind!(IndyErrorKind::WalletNotFound, res);
 
         storage_type
@@ -1146,9 +1054,7 @@ mod tests {
 
         let storage_type = MySqlStorageType::new();
 
-        let res = storage_type
-            .open_storage("unknown", _config(), _credentials())
-            .await;
+        let res = storage_type.open_storage("unknown", _config(), _credentials()).await;
 
         assert_kind!(IndyErrorKind::WalletNotFound, res);
     }
@@ -1161,10 +1067,7 @@ mod tests {
         {
             let storage = _storage("mysql_storage_add_works_for_is_802").await;
 
-            storage
-                .add(&_type1(), &_id1(), &_value1(), &_tags())
-                .await
-                .unwrap();
+            storage.add(&_type1(), &_id1(), &_value1(), &_tags()).await.unwrap();
 
             let res = storage.add(&_type1(), &_id1(), &_value1(), &_tags()).await;
             assert_kind!(IndyErrorKind::WalletItemAlreadyExists, res);
@@ -1184,10 +1087,7 @@ mod tests {
         {
             let storage = _storage("mysql_storage_set_get_works").await;
 
-            storage
-                .add(&_type1(), &_id1(), &_value1(), &_tags())
-                .await
-                .unwrap();
+            storage.add(&_type1(), &_id1(), &_value1(), &_tags()).await.unwrap();
 
             let record = storage
                 .get(
@@ -1213,10 +1113,7 @@ mod tests {
         {
             let storage = _storage("mysql_storage_set_get_works_for_twice").await;
 
-            storage
-                .add(&_type1(), &_id1(), &_value1(), &_tags())
-                .await
-                .unwrap();
+            storage.add(&_type1(), &_id1(), &_value1(), &_tags()).await.unwrap();
 
             let res = storage.add(&_type1(), &_id1(), &_value2(), &_tags()).await;
             assert_kind!(IndyErrorKind::WalletItemAlreadyExists, res);
@@ -1237,11 +1134,7 @@ mod tests {
             .unwrap();
 
         let record = MySqlStorageType::new()
-            .open_storage(
-                "mysql_storage_set_get_works_for_reopen",
-                _config(),
-                _credentials(),
-            )
+            .open_storage("mysql_storage_set_get_works_for_reopen", _config(), _credentials())
             .await
             .unwrap()
             .get(
@@ -1266,10 +1159,7 @@ mod tests {
         {
             let storage = _storage("mysql_storage_get_works_for_wrong_key").await;
 
-            storage
-                .add(&_type1(), &_id1(), &_value1(), &_tags())
-                .await
-                .unwrap();
+            storage.add(&_type1(), &_id1(), &_value1(), &_tags()).await.unwrap();
 
             let res = storage
                 .get(
@@ -1293,10 +1183,7 @@ mod tests {
         {
             let storage = _storage("mysql_storage_delete_works").await;
 
-            storage
-                .add(&_type1(), &_id1(), &_value1(), &_tags())
-                .await
-                .unwrap();
+            storage.add(&_type1(), &_id1(), &_value1(), &_tags()).await.unwrap();
 
             let record = storage
                 .get(
@@ -1334,10 +1221,7 @@ mod tests {
         {
             let storage = _storage("mysql_storage_delete_works_for_non_existing").await;
 
-            storage
-                .add(&_type1(), &_id1(), &_value1(), &_tags())
-                .await
-                .unwrap();
+            storage.add(&_type1(), &_id1(), &_value1(), &_tags()).await.unwrap();
 
             let res = storage.delete(&_type1(), &_id2()).await;
             assert_kind!(IndyErrorKind::WalletItemNotFound, res);
@@ -1352,13 +1236,9 @@ mod tests {
         _cleanup("mysql_storage_delete_returns_error_item_not_found_if_no_such_type").await;
 
         {
-            let storage =
-                _storage("mysql_storage_delete_returns_error_item_not_found_if_no_such_type").await;
+            let storage = _storage("mysql_storage_delete_returns_error_item_not_found_if_no_such_type").await;
 
-            storage
-                .add(&_type1(), &_id1(), &_value1(), &_tags())
-                .await
-                .unwrap();
+            storage.add(&_type1(), &_id1(), &_value1(), &_tags()).await.unwrap();
 
             let res = storage.delete(&_type2(), &_id2()).await;
             assert_kind!(IndyErrorKind::WalletItemNotFound, res);
@@ -1375,15 +1255,9 @@ mod tests {
         {
             let storage = _storage("mysql_storage_get_all_works").await;
 
-            storage
-                .add(&_type1(), &_id1(), &_value1(), &_tags())
-                .await
-                .unwrap();
+            storage.add(&_type1(), &_id1(), &_value1(), &_tags()).await.unwrap();
 
-            storage
-                .add(&_type2(), &_id2(), &_value2(), &_tags())
-                .await
-                .unwrap();
+            storage.add(&_type2(), &_id2(), &_value2(), &_tags()).await.unwrap();
 
             let mut storage_iterator = storage.get_all().await.unwrap();
 
@@ -1428,10 +1302,7 @@ mod tests {
         {
             let storage = _storage("mysql_storage_update_works").await;
 
-            storage
-                .add(&_type1(), &_id1(), &_value1(), &_tags())
-                .await
-                .unwrap();
+            storage.add(&_type1(), &_id1(), &_value1(), &_tags()).await.unwrap();
 
             let record = storage
                 .get(
@@ -1444,10 +1315,7 @@ mod tests {
 
             assert_eq!(record.value.unwrap(), _value1());
 
-            storage
-                .update(&_type1(), &_id1(), &_value2())
-                .await
-                .unwrap();
+            storage.update(&_type1(), &_id1(), &_value2()).await.unwrap();
 
             let record = storage
                 .get(
@@ -1472,10 +1340,7 @@ mod tests {
         {
             let storage = _storage("mysql_storage_update_works_for_non_existing_id").await;
 
-            storage
-                .add(&_type1(), &_id1(), &_value1(), &_tags())
-                .await
-                .unwrap();
+            storage.add(&_type1(), &_id1(), &_value1(), &_tags()).await.unwrap();
 
             let record = storage
                 .get(
@@ -1503,10 +1368,7 @@ mod tests {
         {
             let storage = _storage("mysql_storage_update_works_for_non_existing_type").await;
 
-            storage
-                .add(&_type1(), &_id1(), &_value1(), &_tags())
-                .await
-                .unwrap();
+            storage.add(&_type1(), &_id1(), &_value1(), &_tags()).await.unwrap();
 
             let record = storage
                 .get(
@@ -1534,15 +1396,9 @@ mod tests {
         {
             let storage = _storage("mysql_storage_add_tags_works").await;
 
-            storage
-                .add(&_type1(), &_id1(), &_value1(), &_tags())
-                .await
-                .unwrap();
+            storage.add(&_type1(), &_id1(), &_value1(), &_tags()).await.unwrap();
 
-            storage
-                .add_tags(&_type1(), &_id1(), &_new_tags())
-                .await
-                .unwrap();
+            storage.add_tags(&_type1(), &_id1(), &_new_tags()).await.unwrap();
 
             let record = storage
                 .get(
@@ -1575,10 +1431,7 @@ mod tests {
         {
             let storage = _storage("mysql_storage_add_tags_works_for_non_existing_id").await;
 
-            storage
-                .add(&_type1(), &_id1(), &_value1(), &_tags())
-                .await
-                .unwrap();
+            storage.add(&_type1(), &_id1(), &_value1(), &_tags()).await.unwrap();
 
             let res = storage.add_tags(&_type1(), &_id2(), &_new_tags()).await;
             assert_kind!(IndyErrorKind::WalletItemNotFound, res);
@@ -1595,10 +1448,7 @@ mod tests {
         {
             let storage = _storage("mysql_storage_add_tags_works_for_non_existing_type").await;
 
-            storage
-                .add(&_type1(), &_id1(), &_value1(), &_tags())
-                .await
-                .unwrap();
+            storage.add(&_type1(), &_id1(), &_value1(), &_tags()).await.unwrap();
 
             let res = storage.add_tags(&_type2(), &_id1(), &_new_tags()).await;
             assert_kind!(IndyErrorKind::WalletItemNotFound, res);
@@ -1615,10 +1465,7 @@ mod tests {
         {
             let storage = _storage("mysql_storage_add_tags_works_for_already_existing").await;
 
-            storage
-                .add(&_type1(), &_id1(), &_value1(), &_tags())
-                .await
-                .unwrap();
+            storage.add(&_type1(), &_id1(), &_value1(), &_tags()).await.unwrap();
 
             let tags_with_existing = {
                 let mut tags = _tags();
@@ -1626,10 +1473,7 @@ mod tests {
                 tags
             };
 
-            storage
-                .add_tags(&_type1(), &_id1(), &tags_with_existing)
-                .await
-                .unwrap();
+            storage.add_tags(&_type1(), &_id1(), &tags_with_existing).await.unwrap();
 
             let record = storage
                 .get(
@@ -1662,15 +1506,9 @@ mod tests {
         {
             let storage = _storage("mysql_storage_update_tags_works").await;
 
-            storage
-                .add(&_type1(), &_id1(), &_value1(), &_tags())
-                .await
-                .unwrap();
+            storage.add(&_type1(), &_id1(), &_value1(), &_tags()).await.unwrap();
 
-            storage
-                .update_tags(&_type1(), &_id1(), &_new_tags())
-                .await
-                .unwrap();
+            storage.update_tags(&_type1(), &_id1(), &_new_tags()).await.unwrap();
 
             let record = storage
                 .get(
@@ -1696,10 +1534,7 @@ mod tests {
         {
             let storage = _storage("mysql_storage_update_tags_works_for_non_existing_id").await;
 
-            storage
-                .add(&_type1(), &_id1(), &_value1(), &_tags())
-                .await
-                .unwrap();
+            storage.add(&_type1(), &_id1(), &_value1(), &_tags()).await.unwrap();
 
             let res = storage.update_tags(&_type1(), &_id2(), &_new_tags()).await;
             assert_kind!(IndyErrorKind::WalletItemNotFound, res);
@@ -1716,10 +1551,7 @@ mod tests {
         {
             let storage = _storage("mysql_storage_update_tags_works_for_non_existing_type").await;
 
-            storage
-                .add(&_type1(), &_id1(), &_value1(), &_tags())
-                .await
-                .unwrap();
+            storage.add(&_type1(), &_id1(), &_value1(), &_tags()).await.unwrap();
 
             let res = storage.update_tags(&_type1(), &_id2(), &_new_tags()).await;
             assert_kind!(IndyErrorKind::WalletItemNotFound, res);
@@ -1735,10 +1567,7 @@ mod tests {
         {
             let storage = _storage("mysql_storage_update_tags_works_for_already_existing").await;
 
-            storage
-                .add(&_type1(), &_id1(), &_value1(), &_tags())
-                .await
-                .unwrap();
+            storage.add(&_type1(), &_id1(), &_value1(), &_tags()).await.unwrap();
 
             let tags_with_existing = {
                 let mut tags = _tags();
@@ -1789,20 +1618,14 @@ mod tests {
             let tag3 = Tag::Encrypted(tag_name3.clone(), vec![2, 2, 2]);
             let tags = vec![tag1.clone(), tag2.clone(), tag3.clone()];
 
-            storage
-                .add(&_type1(), &_id1(), &_value1(), &tags)
-                .await
-                .unwrap();
+            storage.add(&_type1(), &_id1(), &_value1(), &tags).await.unwrap();
 
             let tag_names = vec![
                 TagName::OfEncrypted(tag_name1.clone()),
                 TagName::OfPlain(tag_name2.clone()),
             ];
 
-            storage
-                .delete_tags(&_type1(), &_id1(), &tag_names)
-                .await
-                .unwrap();
+            storage.delete_tags(&_type1(), &_id1(), &tag_names).await.unwrap();
 
             let record = storage
                 .get(
@@ -1835,10 +1658,7 @@ mod tests {
             let tag3 = Tag::Encrypted(tag_name3.clone(), vec![2, 2, 2]);
             let tags = vec![tag1.clone(), tag2.clone(), tag3.clone()];
 
-            storage
-                .add(&_type1(), &_id1(), &_value1(), &tags)
-                .await
-                .unwrap();
+            storage.add(&_type1(), &_id1(), &_value1(), &tags).await.unwrap();
 
             let tag_names = vec![
                 TagName::OfEncrypted(tag_name1.clone()),
@@ -1868,10 +1688,7 @@ mod tests {
             let tag3 = Tag::Encrypted(tag_name3.clone(), vec![2, 2, 2]);
             let tags = vec![tag1.clone(), tag2.clone(), tag3.clone()];
 
-            storage
-                .add(&_type1(), &_id1(), &_value1(), &tags)
-                .await
-                .unwrap();
+            storage.add(&_type1(), &_id1(), &_value1(), &tags).await.unwrap();
 
             let tag_names = vec![
                 TagName::OfEncrypted(tag_name1.clone()),
@@ -1932,9 +1749,8 @@ mod tests {
 
     fn _metadata() -> Vec<u8> {
         return vec![
-            1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5,
-            6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2,
-            3, 4, 5, 6, 7, 8,
+            1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4,
+            5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8,
         ];
     }
 
@@ -2070,12 +1886,8 @@ fn _tags_to_plain(tags: &[Tag]) -> HashMap<String, String> {
 
     for tag in tags {
         match *tag {
-            Tag::Encrypted(ref name, ref value) => {
-                map.insert(base64::encode(name), base64::encode(value))
-            }
-            Tag::PlainText(ref name, ref value) => {
-                map.insert(format!("~{}", &base64::encode(name)), value.to_string())
-            }
+            Tag::Encrypted(ref name, ref value) => map.insert(base64::encode(name), base64::encode(value)),
+            Tag::PlainText(ref name, ref value) => map.insert(format!("~{}", &base64::encode(name)), value.to_string()),
         };
     }
 
@@ -2084,18 +1896,14 @@ fn _tags_to_plain(tags: &[Tag]) -> HashMap<String, String> {
 
 // FIXME: copy/paste
 fn _tags_to_json(tags: &[Tag]) -> IndyResult<String> {
-    serde_json::to_string(&_tags_to_plain(tags)).to_indy(
-        IndyErrorKind::InvalidState,
-        "Unable to serialize tags as json",
-    )
+    serde_json::to_string(&_tags_to_plain(tags))
+        .to_indy(IndyErrorKind::InvalidState, "Unable to serialize tags as json")
 }
 
 // FIXME: copy/paste
 fn _tags_from_json(json: serde_json::Value) -> IndyResult<Vec<Tag>> {
-    let string_tags: HashMap<String, String> = serde_json::from_value(json).to_indy(
-        IndyErrorKind::InvalidState,
-        "Unable to deserialize tags from json",
-    )?;
+    let string_tags: HashMap<String, String> =
+        serde_json::from_value(json).to_indy(IndyErrorKind::InvalidState, "Unable to deserialize tags from json")?;
 
     let mut tags = Vec::with_capacity(string_tags.len());
 
@@ -2104,22 +1912,13 @@ fn _tags_from_json(json: serde_json::Value) -> IndyResult<Vec<Tag>> {
             let mut key = k;
             key.remove(0);
             tags.push(Tag::PlainText(
-                base64::decode(&key).to_indy(
-                    IndyErrorKind::InvalidState,
-                    "Unable to decode tag key from base64",
-                )?,
+                base64::decode(&key).to_indy(IndyErrorKind::InvalidState, "Unable to decode tag key from base64")?,
                 v,
             ));
         } else {
             tags.push(Tag::Encrypted(
-                base64::decode(&k).to_indy(
-                    IndyErrorKind::InvalidState,
-                    "Unable to decode tag key from base64",
-                )?,
-                base64::decode(&v).to_indy(
-                    IndyErrorKind::InvalidState,
-                    "Unable to decode tag value from base64",
-                )?,
+                base64::decode(&k).to_indy(IndyErrorKind::InvalidState, "Unable to decode tag key from base64")?,
+                base64::decode(&v).to_indy(IndyErrorKind::InvalidState, "Unable to decode tag value from base64")?,
             ));
         }
     }
@@ -2139,8 +1938,6 @@ fn _tag_names_to_plain(tag_names: &[TagName]) -> Vec<String> {
 
 // FIXME: copy/paste
 fn _tag_names_to_json(tag_names: &[TagName]) -> IndyResult<String> {
-    serde_json::to_string(&_tag_names_to_plain(tag_names)).to_indy(
-        IndyErrorKind::InvalidState,
-        "Unable to serialize tag names as json",
-    )
+    serde_json::to_string(&_tag_names_to_plain(tag_names))
+        .to_indy(IndyErrorKind::InvalidState, "Unable to serialize tag names as json")
 }

@@ -17,3 +17,26 @@ pub enum AckOn {
     Receipt,
     Outcome,
 }
+
+#[cfg(test)]
+#[allow(clippy::unwrap_used)]
+#[allow(clippy::field_reassign_with_default)]
+mod tests {
+    use serde_json::json;
+
+    use super::*;
+    use crate::misc::test_utils;
+
+    pub fn make_minimal_please_ack() -> PleaseAck {
+        let on = vec![AckOn::Receipt, AckOn::Outcome];
+        PleaseAck::new(on)
+    }
+
+    #[test]
+    fn test_minimal_decorator() {
+        let please_ack = make_minimal_please_ack();
+        let json = json!({ "on": please_ack.on });
+
+        test_utils::test_serde(please_ack, json);
+    }
+}

@@ -27,18 +27,8 @@ pub struct StorageRecord {
 }
 
 impl StorageRecord {
-    fn new(
-        id: Vec<u8>,
-        value: Option<EncryptedValue>,
-        type_: Option<Vec<u8>>,
-        tags: Option<Vec<Tag>>,
-    ) -> Self {
-        Self {
-            id,
-            value,
-            type_,
-            tags,
-        }
+    fn new(id: Vec<u8>, value: Option<EncryptedValue>, type_: Option<Vec<u8>>, tags: Option<Vec<Tag>>) -> Self {
+        Self { id, value, type_, tags }
     }
 }
 
@@ -50,29 +40,12 @@ pub trait StorageIterator: Send + Sync {
 
 #[async_trait]
 pub trait WalletStorage: Send + Sync {
-    async fn get(&self, type_: &[u8], id: &[u8], options: &str)
-        -> Result<StorageRecord, IndyError>;
-    async fn add(
-        &self,
-        type_: &[u8],
-        id: &[u8],
-        value: &EncryptedValue,
-        tags: &[Tag],
-    ) -> Result<(), IndyError>;
-    async fn update(
-        &self,
-        type_: &[u8],
-        id: &[u8],
-        value: &EncryptedValue,
-    ) -> Result<(), IndyError>;
+    async fn get(&self, type_: &[u8], id: &[u8], options: &str) -> Result<StorageRecord, IndyError>;
+    async fn add(&self, type_: &[u8], id: &[u8], value: &EncryptedValue, tags: &[Tag]) -> Result<(), IndyError>;
+    async fn update(&self, type_: &[u8], id: &[u8], value: &EncryptedValue) -> Result<(), IndyError>;
     async fn add_tags(&self, type_: &[u8], id: &[u8], tags: &[Tag]) -> Result<(), IndyError>;
     async fn update_tags(&self, type_: &[u8], id: &[u8], tags: &[Tag]) -> Result<(), IndyError>;
-    async fn delete_tags(
-        &self,
-        type_: &[u8],
-        id: &[u8],
-        tag_names: &[TagName],
-    ) -> Result<(), IndyError>;
+    async fn delete_tags(&self, type_: &[u8], id: &[u8], tag_names: &[TagName]) -> Result<(), IndyError>;
     async fn delete(&self, type_: &[u8], id: &[u8]) -> Result<(), IndyError>;
     async fn get_storage_metadata(&self) -> Result<Vec<u8>, IndyError>;
     async fn set_storage_metadata(&self, metadata: &[u8]) -> Result<(), IndyError>;
@@ -103,10 +76,5 @@ pub trait WalletStorageType: Send + Sync {
         config: Option<&str>,
         credentials: Option<&str>,
     ) -> Result<Box<dyn WalletStorage>, IndyError>;
-    async fn delete_storage(
-        &self,
-        id: &str,
-        config: Option<&str>,
-        credentials: Option<&str>,
-    ) -> Result<(), IndyError>;
+    async fn delete_storage(&self, id: &str, config: Option<&str>, credentials: Option<&str>) -> Result<(), IndyError>;
 }

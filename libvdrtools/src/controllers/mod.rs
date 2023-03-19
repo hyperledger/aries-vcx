@@ -11,10 +11,7 @@ mod pairwise;
 mod pool;
 mod wallet;
 
-pub use anoncreds::{
-    CredentialDefinitionId, IssuerController, ProverController, VerifierController,
-};
-
+pub use anoncreds::{CredentialDefinitionId, IssuerController, ProverController, VerifierController};
 pub(crate) use blob_storage::BlobStorageController;
 pub(crate) use cache::CacheController;
 pub(crate) use config::ConfigController;

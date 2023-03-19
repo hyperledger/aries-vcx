@@ -1,8 +1,7 @@
-use ursa::cl::RevocationRegistry as CryptoRevocationRegistry;
-
 use std::collections::HashMap;
 
 use indy_api_types::validation::Validatable;
+use ursa::cl::RevocationRegistry as CryptoRevocationRegistry;
 
 use super::revocation_registry_definition::RevocationRegistryId;
 

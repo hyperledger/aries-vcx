@@ -1,11 +1,8 @@
-use crate::services::pool::events::PoolEvent;
-use indy_api_types::errors::prelude::*;
-
+use byteorder::{ByteOrder, LittleEndian};
+use indy_api_types::{errors::prelude::*, INVALID_COMMAND_HANDLE};
 use zmq;
 
-use crate::services::pool::{COMMAND_CONNECT, COMMAND_EXIT, COMMAND_REFRESH};
-use byteorder::{ByteOrder, LittleEndian};
-use indy_api_types::INVALID_COMMAND_HANDLE;
+use crate::services::pool::{events::PoolEvent, COMMAND_CONNECT, COMMAND_EXIT, COMMAND_REFRESH};
 
 pub struct Commander {
     cmd_socket: zmq::Socket,
@@ -20,20 +17,14 @@ impl Commander {
         let cmd_parts = self
             .cmd_socket
             .recv_multipart(zmq::DONTWAIT)
-            .to_indy(
-                IndyErrorKind::IOError,
-                "ZMQ socket error on fetching pool events",
-            )
+            .to_indy(IndyErrorKind::IOError, "ZMQ socket error on fetching pool events")
             .map_err(map_err_trace!())
             .ok()?;
 
         trace!("cmd_parts {:?}", cmd_parts);
 
         let cmd_s = String::from_utf8(cmd_parts[0].clone())
-            .to_indy(
-                IndyErrorKind::InvalidState,
-                "Invalid utf8 sequence in command",
-            ) // FIXME: review kind
+            .to_indy(IndyErrorKind::InvalidState, "Invalid utf8 sequence in command") // FIXME: review kind
             .map_err(map_err_trace!())
             .ok()?;
 
@@ -55,10 +46,7 @@ impl Commander {
             let nodes = if let Some(nodes) = cmd_parts.get(3) {
                 Some(
                     String::from_utf8(nodes.clone())
-                        .to_indy(
-                            IndyErrorKind::InvalidState,
-                            "Invalid utf8 sequence in command",
-                        ) // FIXME: review kind
+                        .to_indy(IndyErrorKind::InvalidState, "Invalid utf8 sequence in command") // FIXME: review kind
                         .map_err(map_err_trace!())
                         .ok()?,
                 )
@@ -77,10 +65,11 @@ impl Commander {
 
 #[cfg(test)]
 mod commander_tests {
-    use super::*;
-    use crate::services::pool::{pool_create_pair_of_sockets, COMMAND_EXIT, COMMAND_REFRESH};
     use indy_api_types::CommandHandle;
     use indy_utils::next_command_handle;
+
+    use super::*;
+    use crate::services::pool::{pool_create_pair_of_sockets, COMMAND_EXIT, COMMAND_REFRESH};
 
     fn new_commander() -> Commander {
         let zmq_ctx = zmq::Context::new();
@@ -110,9 +99,7 @@ mod commander_tests {
         let cmd = Commander::new(recv_cmd_sock);
 
         let buf: &[u8] = &vec![225][0..];
-        send_cmd_sock
-            .send_multipart(&[buf], zmq::DONTWAIT)
-            .expect("FIXME");
+        send_cmd_sock.send_multipart(&[buf], zmq::DONTWAIT).expect("FIXME");
         assert_match!(None, cmd.fetch_events());
     }
 
@@ -128,12 +115,7 @@ mod commander_tests {
         send_cmd_sock
             .send_multipart(&[COMMAND_EXIT.as_bytes(), &buf], zmq::DONTWAIT)
             .expect("FIXME");
-        assert_match!(
-            Some(PoolEvent::Close(cmd_id_)),
-            cmd.fetch_events(),
-            cmd_id_,
-            cmd_id
-        );
+        assert_match!(Some(PoolEvent::Close(cmd_id_)), cmd.fetch_events(), cmd_id_, cmd_id);
     }
 
     #[test]
@@ -148,12 +130,7 @@ mod commander_tests {
         send_cmd_sock
             .send_multipart(&[COMMAND_REFRESH.as_bytes(), &buf], zmq::DONTWAIT)
             .expect("FIXME");
-        assert_match!(
-            Some(PoolEvent::Refresh(cmd_id_)),
-            cmd.fetch_events(),
-            cmd_id_,
-            cmd_id
-        );
+        assert_match!(Some(PoolEvent::Refresh(cmd_id_)), cmd.fetch_events(), cmd_id_, cmd_id);
     }
 
     #[test]

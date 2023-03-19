@@ -84,3 +84,58 @@ impl Serialize for ThreadGoalCode {
         self.as_ref().serialize(serializer)
     }
 }
+
+#[cfg(test)]
+#[allow(clippy::unwrap_used)]
+#[allow(clippy::field_reassign_with_default)]
+mod tests {
+    use serde_json::json;
+
+    use super::*;
+    use crate::misc::test_utils;
+
+    pub fn make_minimal_thread() -> Thread {
+        let thid = "test".to_owned();
+        Thread::new(thid)
+    }
+
+    pub fn make_extended_thread() -> Thread {
+        let thid = "test".to_owned();
+        let mut thread = Thread::new(thid);
+
+        let pthid = "test_pthid".to_owned();
+        let sender_order = 5;
+        let received_orders = HashMap::from([("a".to_owned(), 1), ("b".to_owned(), 2), ("c".to_owned(), 3)]);
+        let goal_code = ThreadGoalCode::AriesVcVerify;
+
+        thread.pthid = Some(pthid);
+        thread.sender_order = Some(sender_order);
+        thread.received_orders = Some(received_orders);
+        thread.goal_code = Some(goal_code);
+
+        thread
+    }
+
+    #[test]
+    fn test_minimal_decorator() {
+        let thread = make_minimal_thread();
+        let json = json!({ "thid": thread.thid });
+
+        test_utils::test_serde(thread, json);
+    }
+
+    #[test]
+    fn test_extensive_decorator() {
+        let thread = make_extended_thread();
+
+        let json = json!({
+            "thid": thread.thid,
+            "pthid": thread.pthid,
+            "sender_order": thread.sender_order,
+            "received_orders": thread.received_orders,
+            "goal_code": thread.goal_code
+        });
+
+        test_utils::test_serde(thread, json);
+    }
+}

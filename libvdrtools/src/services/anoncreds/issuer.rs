@@ -1,19 +1,15 @@
 use indy_api_types::errors::prelude::*;
-
 use ursa::cl::{
-    issuer::Issuer as UrsaIssuer, CredentialKeyCorrectnessProof, CredentialPrivateKey,
-    CredentialPublicKey, CredentialSignature, Nonce, RevocationKeyPrivate, RevocationRegistry,
-    RevocationRegistryDelta, RevocationTailsAccessor, RevocationTailsGenerator,
-    SignatureCorrectnessProof,
+    issuer::Issuer as UrsaIssuer, CredentialKeyCorrectnessProof, CredentialPrivateKey, CredentialPublicKey,
+    CredentialSignature, Nonce, RevocationKeyPrivate, RevocationRegistry, RevocationRegistryDelta,
+    RevocationTailsAccessor, RevocationTailsGenerator, SignatureCorrectnessProof,
 };
 
 use crate::{
     domain::{
         anoncreds::{
             credential::CredentialValues,
-            credential_definition::{
-                CredentialDefinitionData, CredentialDefinitionV1 as CredentialDefinition,
-            },
+            credential_definition::{CredentialDefinitionData, CredentialDefinitionV1 as CredentialDefinition},
             credential_request::CredentialRequest,
             revocation_registry_definition::{
                 RevocationRegistryDefinitionV1, RevocationRegistryDefinitionValuePublicKeys,
@@ -50,11 +46,7 @@ impl IssuerService {
         let non_credential_schema = AnoncredsHelpers::build_non_credential_schema()?;
 
         let (credential_public_key, credential_private_key, credential_key_correctness_proof) =
-            UrsaIssuer::new_credential_def(
-                &credential_schema,
-                &non_credential_schema,
-                support_revocation,
-            )?;
+            UrsaIssuer::new_credential_def(&credential_schema, &non_credential_schema, support_revocation)?;
 
         let credential_definition_value = CredentialDefinitionData {
             primary: credential_public_key.get_primary_key()?.try_clone()?,
@@ -84,36 +76,22 @@ impl IssuerService {
         RevocationTailsGenerator,
     )> {
         trace!(
-            "new_revocation_registry > pub_key {:?} \
-                max_cred_num {:?} issuance_by_default {:?} issuer_did {:?}",
+            "new_revocation_registry > pub_key {:?} max_cred_num {:?} issuance_by_default {:?} issuer_did {:?}",
             cred_def,
             max_cred_num,
             issuance_by_default,
             issuer_did
         );
 
-        let credential_pub_key = CredentialPublicKey::build_from_parts(
-            &cred_def.value.primary,
-            cred_def.value.revocation.as_ref(),
-        )?;
+        let credential_pub_key =
+            CredentialPublicKey::build_from_parts(&cred_def.value.primary, cred_def.value.revocation.as_ref())?;
 
         let (rev_key_pub, rev_key_priv, rev_reg_entry, rev_tails_generator) =
-            UrsaIssuer::new_revocation_registry_def(
-                &credential_pub_key,
-                max_cred_num,
-                issuance_by_default,
-            )?;
+            UrsaIssuer::new_revocation_registry_def(&credential_pub_key, max_cred_num, issuance_by_default)?;
 
-        let rev_keys_pub = RevocationRegistryDefinitionValuePublicKeys {
-            accum_key: rev_key_pub,
-        };
+        let rev_keys_pub = RevocationRegistryDefinitionValuePublicKeys { accum_key: rev_key_pub };
 
-        let res = Ok((
-            rev_keys_pub,
-            rev_key_priv,
-            rev_reg_entry,
-            rev_tails_generator,
-        ));
+        let res = Ok((rev_keys_pub, rev_key_priv, rev_reg_entry, rev_tails_generator));
 
         trace!("new_revocation_registry < {:?}", secret!(&res));
         res
@@ -140,10 +118,8 @@ impl IssuerService {
         RTA: RevocationTailsAccessor,
     {
         trace!(
-            "new_credential > cred_def {:?} cred_priv_key {:?} \
-                cred_issuance_blinding_nonce {:?} cred_request {:?} \
-                cred_values {:?} rev_idx {:?} rev_reg_def {:?} \
-                rev_reg {:?} rev_key_priv {:?}",
+            "new_credential > cred_def {:?} cred_priv_key {:?} cred_issuance_blinding_nonce {:?} cred_request {:?} \
+             cred_values {:?} rev_idx {:?} rev_reg_def {:?} rev_reg {:?} rev_key_priv {:?}",
             cred_def,
             secret!(&cred_priv_key),
             secret!(&cred_issuance_blinding_nonce),
@@ -157,23 +133,16 @@ impl IssuerService {
 
         let credential_values = AnoncredsHelpers::build_credential_values(&cred_values.0, None)?;
 
-        let credential_pub_key = CredentialPublicKey::build_from_parts(
-            &cred_def.value.primary,
-            cred_def.value.revocation.as_ref(),
-        )?;
+        let credential_pub_key =
+            CredentialPublicKey::build_from_parts(&cred_def.value.primary, cred_def.value.revocation.as_ref())?;
 
         let (credential_signature, signature_correctness_proof, rev_reg_delta) = match rev_idx {
             Some(rev_idx) => {
-                let rev_reg = rev_reg.ok_or_else(|| {
-                    err_msg(IndyErrorKind::InvalidState, "RevocationRegistry not found")
-                })?;
+                let rev_reg =
+                    rev_reg.ok_or_else(|| err_msg(IndyErrorKind::InvalidState, "RevocationRegistry not found"))?;
 
-                let rev_key_priv = rev_key_priv.ok_or_else(|| {
-                    err_msg(
-                        IndyErrorKind::InvalidState,
-                        "RevocationKeyPrivate not found",
-                    )
-                })?;
+                let rev_key_priv = rev_key_priv
+                    .ok_or_else(|| err_msg(IndyErrorKind::InvalidState, "RevocationKeyPrivate not found"))?;
 
                 let rev_reg_def = rev_reg_def.ok_or_else(|| {
                     err_msg(
@@ -182,12 +151,8 @@ impl IssuerService {
                     )
                 })?;
 
-                let rev_tails_accessor = rev_tails_accessor.ok_or_else(|| {
-                    err_msg(
-                        IndyErrorKind::InvalidState,
-                        "RevocationTailsAccessor not found",
-                    )
-                })?;
+                let rev_tails_accessor = rev_tails_accessor
+                    .ok_or_else(|| err_msg(IndyErrorKind::InvalidState, "RevocationTailsAccessor not found"))?;
 
                 UrsaIssuer::sign_credential_with_revoc(
                     &cred_request.prover_did.0,
@@ -221,11 +186,7 @@ impl IssuerService {
             }
         };
 
-        let res = Ok((
-            credential_signature,
-            signature_correctness_proof,
-            rev_reg_delta,
-        ));
+        let res = Ok((credential_signature, signature_correctness_proof, rev_reg_delta));
 
         trace!("new_credential < {:?}", secret!(&res));
         res
@@ -248,8 +209,7 @@ impl IssuerService {
             secret!(&rev_idx)
         );
 
-        let rev_reg_delta =
-            UrsaIssuer::revoke_credential(rev_reg, max_cred_num, rev_idx, rev_tails_accessor)?;
+        let rev_reg_delta = UrsaIssuer::revoke_credential(rev_reg, max_cred_num, rev_idx, rev_tails_accessor)?;
 
         let res = Ok(rev_reg_delta);
         trace!("recovery < {:?}", res);
@@ -274,8 +234,7 @@ impl IssuerService {
             secret!(&rev_idx)
         );
 
-        let rev_reg_delta =
-            UrsaIssuer::recovery_credential(rev_reg, max_cred_num, rev_idx, rev_tails_accessor)?;
+        let rev_reg_delta = UrsaIssuer::recovery_credential(rev_reg, max_cred_num, rev_idx, rev_tails_accessor)?;
 
         let res = Ok(rev_reg_delta);
         trace!("recovery < {:?}", res);

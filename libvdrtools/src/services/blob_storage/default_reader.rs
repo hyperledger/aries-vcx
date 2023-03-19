@@ -4,13 +4,13 @@ use std::{
     path::PathBuf,
 };
 
-use crate::utils::crypto::base58::ToBase58;
 use async_trait::async_trait;
 use indy_api_types::errors::prelude::*;
 use indy_utils::crypto::hash::Hash;
 use serde_json;
 
 use super::{ReadableBlob, Reader, ReaderType};
+use crate::utils::crypto::base58::ToBase58;
 
 pub(crate) struct DefaultReader {
     file: SyncFile,
@@ -25,10 +25,8 @@ struct DefaultReaderConfig {
 #[async_trait]
 impl ReaderType for DefaultReaderType {
     async fn open(&self, config: &str) -> IndyResult<Box<dyn Reader>> {
-        let config: DefaultReaderConfig = serde_json::from_str(config).to_indy(
-            IndyErrorKind::InvalidStructure,
-            "Can't deserialize DefaultReaderConfig",
-        )?;
+        let config: DefaultReaderConfig = serde_json::from_str(config)
+            .to_indy(IndyErrorKind::InvalidStructure, "Can't deserialize DefaultReaderConfig")?;
 
         Ok(Box::new(config))
     }

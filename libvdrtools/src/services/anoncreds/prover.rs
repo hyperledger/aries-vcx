@@ -1,7 +1,6 @@
 use std::collections::{hash_map::Entry, HashMap};
 
 use indy_api_types::errors::prelude::*;
-
 use ursa::cl::{
     issuer::Issuer as UrsaIssuer, prover::Prover as UrsaProver, verifier::Verifier as UrsaVerifier,
     BlindedCredentialSecrets, BlindedCredentialSecretsCorrectnessProof, CredentialPublicKey,
@@ -12,19 +11,16 @@ use crate::{
     domain::anoncreds::{
         credential::{AttributeValues, Credential},
         credential_attr_tag_policy::CredentialAttrTagPolicy,
-        credential_definition::{
-            CredentialDefinitionId, CredentialDefinitionV1 as CredentialDefinition,
-        },
+        credential_definition::{CredentialDefinitionId, CredentialDefinitionV1 as CredentialDefinition},
         credential_offer::CredentialOffer,
         credential_request::CredentialRequestMetadata,
         proof::{
-            AttributeValue, Identifier, Proof, RequestedProof, RevealedAttributeGroupInfo,
-            RevealedAttributeInfo, SubProofReferent,
+            AttributeValue, Identifier, Proof, RequestedProof, RevealedAttributeGroupInfo, RevealedAttributeInfo,
+            SubProofReferent,
         },
         proof_request::{
-            PredicateInfo, PredicateTypes, ProofRequest, ProofRequestExtraQuery,
-            ProofRequestPayload, ProofRequestsVersion, RequestedAttributeInfo,
-            RequestedPredicateInfo,
+            PredicateInfo, PredicateTypes, ProofRequest, ProofRequestExtraQuery, ProofRequestPayload,
+            ProofRequestsVersion, RequestedAttributeInfo, RequestedPredicateInfo,
         },
         requested_credential::{ProvingCredentialKey, RequestedCredentials},
         revocation_registry_definition::RevocationRegistryDefinitionV1,
@@ -71,10 +67,8 @@ impl ProverService {
             credential_offer
         );
 
-        let credential_pub_key = CredentialPublicKey::build_from_parts(
-            &cred_def.value.primary,
-            cred_def.value.revocation.as_ref(),
-        )?;
+        let credential_pub_key =
+            CredentialPublicKey::build_from_parts(&cred_def.value.primary, cred_def.value.revocation.as_ref())?;
 
         let cred_values = {
             let mut builder = UrsaIssuer::new_credential_values_builder()?;
@@ -103,8 +97,8 @@ impl ProverService {
         rev_reg_def: Option<&RevocationRegistryDefinitionV1>,
     ) -> IndyResult<()> {
         trace!(
-            "process_credential > credential {:?} cred_request_metadata {:?} \
-                    master_secret {:?} cred_def {:?} rev_reg_def {:?}",
+            "process_credential > credential {:?} cred_request_metadata {:?} master_secret {:?} cred_def {:?} \
+             rev_reg_def {:?}",
             credential,
             cred_request_metadata,
             secret!(&master_secret),
@@ -112,13 +106,10 @@ impl ProverService {
             rev_reg_def
         );
 
-        let credential_pub_key = CredentialPublicKey::build_from_parts(
-            &cred_def.value.primary,
-            cred_def.value.revocation.as_ref(),
-        )?;
+        let credential_pub_key =
+            CredentialPublicKey::build_from_parts(&cred_def.value.primary, cred_def.value.revocation.as_ref())?;
 
-        let credential_values =
-            AnoncredsHelpers::build_credential_values(&credential.values.0, Some(master_secret))?;
+        let credential_values = AnoncredsHelpers::build_credential_values(&credential.values.0, Some(master_secret))?;
 
         UrsaProver::process_credential_signature(
             &mut credential.signature,
@@ -150,9 +141,8 @@ impl ProverService {
         rev_states: &HashMap<String, HashMap<u64, RevocationState>>,
     ) -> IndyResult<Proof> {
         trace!(
-            "create_proof > credentials {:?} proof_req {:?} \
-                    requested_credentials {:?} master_secret {:?} \
-                    schemas {:?} cred_defs {:?} rev_states {:?}",
+            "create_proof > credentials {:?} proof_req {:?} requested_credentials {:?} master_secret {:?} schemas \
+             {:?} cred_defs {:?} rev_states {:?}",
             credentials,
             proof_req,
             requested_credentials,
@@ -176,8 +166,7 @@ impl ProverService {
             rp
         };
 
-        let credentials_for_proving =
-            Self::_prepare_credentials_for_proving(requested_credentials, proof_req_val)?;
+        let credentials_for_proving = Self::_prepare_credentials_for_proving(requested_credentials, proof_req_val)?;
 
         let non_credential_schema = AnoncredsHelpers::build_non_credential_schema()?;
         let mut identifiers: Vec<Identifier> = Vec::with_capacity(credentials_for_proving.len());
@@ -201,20 +190,15 @@ impl ProverService {
             let cred_def = cred_defs.get(&credential.cred_def_id).ok_or_else(|| {
                 err_msg(
                     IndyErrorKind::InvalidStructure,
-                    format!(
-                        "CredentialDefinition not found by id {:?}",
-                        credential.cred_def_id
-                    ),
+                    format!("CredentialDefinition not found by id {:?}", credential.cred_def_id),
                 )
             })?;
 
             let rev_state = if let Some(timestamp) = cred_key.timestamp {
-                let rev_reg_id = credential.rev_reg_id.clone().ok_or_else(|| {
-                    err_msg(
-                        IndyErrorKind::InvalidStructure,
-                        "Revocation Registry Id not found",
-                    )
-                })?;
+                let rev_reg_id = credential
+                    .rev_reg_id
+                    .clone()
+                    .ok_or_else(|| err_msg(IndyErrorKind::InvalidStructure, "Revocation Registry Id not found"))?;
 
                 let rev_states_for_timestamp = rev_states
                     .get(&rev_reg_id.0)
@@ -236,21 +220,15 @@ impl ProverService {
                 None
             };
 
-            let credential_pub_key = CredentialPublicKey::build_from_parts(
-                &cred_def.value.primary,
-                cred_def.value.revocation.as_ref(),
-            )?;
+            let credential_pub_key =
+                CredentialPublicKey::build_from_parts(&cred_def.value.primary, cred_def.value.revocation.as_ref())?;
 
-            let credential_schema =
-                AnoncredsHelpers::build_credential_schema(&schema.attr_names.0)?;
+            let credential_schema = AnoncredsHelpers::build_credential_schema(&schema.attr_names.0)?;
 
-            let credential_values = AnoncredsHelpers::build_credential_values(
-                &credential.values.0,
-                Some(master_secret),
-            )?;
+            let credential_values =
+                AnoncredsHelpers::build_credential_values(&credential.values.0, Some(master_secret))?;
 
-            let sub_proof_request =
-                Self::_build_sub_proof_request(&req_attrs_for_cred, &req_predicates_for_cred)?;
+            let sub_proof_request = Self::_build_sub_proof_request(&req_attrs_for_cred, &req_predicates_for_cred)?;
 
             proof_builder.add_sub_proof_request(
                 &sub_proof_request,
@@ -308,9 +286,7 @@ impl ProverService {
     pub fn _prepare_credentials_for_proving(
         requested_credentials: &RequestedCredentials,
         proof_req: &ProofRequestPayload,
-    ) -> IndyResult<
-        HashMap<ProvingCredentialKey, (Vec<RequestedAttributeInfo>, Vec<RequestedPredicateInfo>)>,
-    > {
+    ) -> IndyResult<HashMap<ProvingCredentialKey, (Vec<RequestedAttributeInfo>, Vec<RequestedPredicateInfo>)>> {
         trace!(
             "_prepare_credentials_for_proving > requested_credentials {:?} proof_req {:?}",
             requested_credentials,
@@ -356,9 +332,7 @@ impl ProverService {
             };
         }
 
-        for (predicate_referent, proving_cred_key) in
-            requested_credentials.requested_predicates.iter()
-        {
+        for (predicate_referent, proving_cred_key) in requested_credentials.requested_predicates.iter() {
             let predicate_info = proof_req
                 .requested_predicates
                 .get(predicate_referent.as_str())
@@ -417,8 +391,7 @@ impl ProverService {
         credential_attrs
             .iter()
             .find(|&(ref key, _)| {
-                AnoncredsHelpers::attr_common_view(key)
-                    == AnoncredsHelpers::attr_common_view(&requested_attr)
+                AnoncredsHelpers::attr_common_view(key) == AnoncredsHelpers::attr_common_view(&requested_attr)
             })
             .map(|(_, values)| values.clone())
     }
@@ -439,38 +412,26 @@ impl ProverService {
         let (schema_issuer_did, schema_name, schema_version) =
             credential.schema_id.parts().ok_or(IndyError::from_msg(
                 IndyErrorKind::InvalidState,
-                format!(
-                    "Invalid Schema ID `{}`: wrong number of parts",
-                    credential.schema_id.0
-                ),
+                format!("Invalid Schema ID `{}`: wrong number of parts", credential.schema_id.0),
             ))?;
 
-        let issuer_did = credential
-            .cred_def_id
-            .issuer_did()
-            .ok_or(IndyError::from_msg(
-                IndyErrorKind::InvalidState,
-                format!(
-                    "Invalid Credential Definition ID `{}`: wrong number of parts",
-                    credential.cred_def_id.0
-                ),
-            ))?;
+        let issuer_did = credential.cred_def_id.issuer_did().ok_or(IndyError::from_msg(
+            IndyErrorKind::InvalidState,
+            format!(
+                "Invalid Credential Definition ID `{}`: wrong number of parts",
+                credential.cred_def_id.0
+            ),
+        ))?;
 
         res.insert("schema_id".to_string(), credential.schema_id.0.to_string());
 
-        res.insert(
-            "schema_issuer_did".to_string(),
-            schema_issuer_did.0.to_string(),
-        );
+        res.insert("schema_issuer_did".to_string(), schema_issuer_did.0.to_string());
 
         res.insert("schema_name".to_string(), schema_name);
         res.insert("schema_version".to_string(), schema_version);
         res.insert("issuer_did".to_string(), issuer_did.0.to_string());
 
-        res.insert(
-            "cred_def_id".to_string(),
-            credential.cred_def_id.0.to_string(),
-        );
+        res.insert("cred_def_id".to_string(), credential.cred_def_id.0.to_string());
 
         res.insert(
             "rev_reg_id".to_string(),
@@ -513,10 +474,7 @@ impl ProverService {
         }
 
         credential.values.0.iter().for_each(|(attr, values)| {
-            if catpol
-                .map(|cp| cp.is_taggable(attr.as_str()))
-                .unwrap_or(true)
-            {
+            if catpol.map(|cp| cp.is_taggable(attr.as_str())).unwrap_or(true) {
                 // abstain for attrs policy marks untaggable
                 res.insert(
                     Self::_build_attr_marker_tag(attr),
@@ -533,21 +491,14 @@ impl ProverService {
     }
 
     fn _build_attr_marker_tag(attr: &str) -> String {
-        format!(
-            "attr::{}::marker",
-            AnoncredsHelpers::attr_common_view(&attr)
-        )
+        format!("attr::{}::marker", AnoncredsHelpers::attr_common_view(&attr))
     }
 
     fn _build_attr_value_tag(attr: &str) -> String {
         format!("attr::{}::value", AnoncredsHelpers::attr_common_view(&attr))
     }
 
-    pub fn attribute_satisfy_predicate(
-        &self,
-        predicate: &PredicateInfo,
-        attribute_value: &str,
-    ) -> IndyResult<bool> {
+    pub fn attribute_satisfy_predicate(&self, predicate: &PredicateInfo, attribute_value: &str) -> IndyResult<bool> {
         trace!(
             "attribute_satisfy_predicate > predicate {:?} attribute_value {:?}",
             predicate,
@@ -558,40 +509,28 @@ impl ProverService {
             PredicateTypes::GE => {
                 let attribute_value = attribute_value.parse::<i32>().to_indy(
                     IndyErrorKind::InvalidStructure,
-                    format!(
-                        "Credential attribute value \"{:?}\" is invalid",
-                        attribute_value
-                    ),
+                    format!("Credential attribute value \"{:?}\" is invalid", attribute_value),
                 )?;
                 Ok(attribute_value >= predicate.p_value)
             }
             PredicateTypes::GT => {
                 let attribute_value = attribute_value.parse::<i32>().to_indy(
                     IndyErrorKind::InvalidStructure,
-                    format!(
-                        "Credential attribute value \"{:?}\" is invalid",
-                        attribute_value
-                    ),
+                    format!("Credential attribute value \"{:?}\" is invalid", attribute_value),
                 )?;
                 Ok(attribute_value > predicate.p_value)
             }
             PredicateTypes::LE => {
                 let attribute_value = attribute_value.parse::<i32>().to_indy(
                     IndyErrorKind::InvalidStructure,
-                    format!(
-                        "Credential attribute value \"{:?}\" is invalid",
-                        attribute_value
-                    ),
+                    format!("Credential attribute value \"{:?}\" is invalid", attribute_value),
                 )?;
                 Ok(attribute_value <= predicate.p_value)
             }
             PredicateTypes::LT => {
                 let attribute_value = attribute_value.parse::<i32>().to_indy(
                     IndyErrorKind::InvalidStructure,
-                    format!(
-                        "Credential attribute value \"{:?}\" is invalid",
-                        attribute_value
-                    ),
+                    format!("Credential attribute value \"{:?}\" is invalid", attribute_value),
                 )?;
                 Ok(attribute_value < predicate.p_value)
             }
@@ -610,9 +549,8 @@ impl ProverService {
         requested_proof: &mut RequestedProof,
     ) -> IndyResult<()> {
         trace!(
-            "_update_requested_proof > req_attrs_for_credential {:?} \
-                    req_predicates_for_credential {:?} proof_req {:?} credential {:?} \
-                sub_proof_index {:?} requested_proof {:?}",
+            "_update_requested_proof > req_attrs_for_credential {:?} req_predicates_for_credential {:?} proof_req \
+             {:?} credential {:?} sub_proof_index {:?} requested_proof {:?}",
             req_attrs_for_credential,
             req_predicates_for_credential,
             proof_req,
@@ -626,14 +564,13 @@ impl ProverService {
                 let attribute = &proof_req.requested_attributes[&attr_info.attr_referent];
 
                 if let Some(name) = &attribute.name {
-                    let attribute_values =
-                        Self::_get_credential_values_for_attribute(&credential.values.0, &name)
-                            .ok_or_else(|| {
-                                err_msg(
-                                    IndyErrorKind::InvalidStructure,
-                                    format!("Credential value not found for attribute {:?}", name),
-                                )
-                            })?;
+                    let attribute_values = Self::_get_credential_values_for_attribute(&credential.values.0, &name)
+                        .ok_or_else(|| {
+                            err_msg(
+                                IndyErrorKind::InvalidStructure,
+                                format!("Credential value not found for attribute {:?}", name),
+                            )
+                        })?;
 
                     requested_proof.revealed_attrs.insert(
                         attr_info.attr_referent.clone(),
@@ -647,17 +584,13 @@ impl ProverService {
                     let mut value_map: HashMap<String, AttributeValue> = HashMap::new();
 
                     for name in names {
-                        let attr_value =
-                            Self::_get_credential_values_for_attribute(&credential.values.0, &name)
-                                .ok_or_else(|| {
-                                    err_msg(
-                                        IndyErrorKind::InvalidStructure,
-                                        format!(
-                                            "Credential value not found for attribute {:?}",
-                                            name
-                                        ),
-                                    )
-                                })?;
+                        let attr_value = Self::_get_credential_values_for_attribute(&credential.values.0, &name)
+                            .ok_or_else(|| {
+                                err_msg(
+                                    IndyErrorKind::InvalidStructure,
+                                    format!("Credential value not found for attribute {:?}", name),
+                                )
+                            })?;
 
                         value_map.insert(
                             name.clone(),
@@ -677,18 +610,16 @@ impl ProverService {
                     );
                 }
             } else {
-                requested_proof.unrevealed_attrs.insert(
-                    attr_info.attr_referent,
-                    SubProofReferent { sub_proof_index },
-                );
+                requested_proof
+                    .unrevealed_attrs
+                    .insert(attr_info.attr_referent, SubProofReferent { sub_proof_index });
             }
         }
 
         for predicate_info in req_predicates_for_credential {
-            requested_proof.predicates.insert(
-                predicate_info.predicate_referent,
-                SubProofReferent { sub_proof_index },
-            );
+            requested_proof
+                .predicates
+                .insert(predicate_info.predicate_referent, SubProofReferent { sub_proof_index });
         }
 
         let res = Ok(());
@@ -701,8 +632,7 @@ impl ProverService {
         req_predicates_for_credential: &[RequestedPredicateInfo],
     ) -> IndyResult<SubProofRequest> {
         trace!(
-            "_build_sub_proof_request > req_attrs_for_credential {:?} \
-                    req_predicates_for_credential {:?}",
+            "_build_sub_proof_request > req_attrs_for_credential {:?} req_predicates_for_credential {:?}",
             req_attrs_for_credential,
             req_predicates_for_credential
         );
@@ -752,9 +682,8 @@ impl ProverService {
         extra_query: &Option<&ProofRequestExtraQuery>,
     ) -> IndyResult<Query> {
         trace!(
-            "process_proof_request_restrictions > version {:?} \
-                    name {:?} names {:?} referent {:?} \
-                    restrictions {:?} extra_query {:?}",
+            "process_proof_request_restrictions > version {:?} name {:?} names {:?} referent {:?} restrictions {:?} \
+             extra_query {:?}",
             version,
             name,
             names,
@@ -910,9 +839,7 @@ impl ProverService {
                     .map(|op| self._double_restrictions(op))
                     .collect::<IndyResult<Vec<Query>>>()?,
             ),
-            Query::Not(operator) => Query::Not(::std::boxed::Box::new(
-                self._double_restrictions(*operator)?,
-            )),
+            Query::Not(operator) => Query::Not(::std::boxed::Box::new(self._double_restrictions(*operator)?)),
             _ => {
                 return Err(IndyError::from_msg(
                     IndyErrorKind::InvalidStructure,
@@ -935,7 +862,8 @@ mod tests {
     const SCHEMA_VERSION: &str = "1.0";
     const ISSUER_DID: &str = "NcYxiDXkpYi6ov5FcYDi1e";
     const CRED_DEF_ID: &str = "NcYxiDXkpYi6ov5FcYDi1e:3:CL:1:tag";
-    const REV_REG_ID: &str = "NcYxiDXkpYi6ov5FcYDi1e:4:NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag:CL_ACCUM:TAG_1";
+    const REV_REG_ID: &str =
+        "NcYxiDXkpYi6ov5FcYDi1e:4:NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag:CL_ACCUM:TAG_1";
     const NO_REV_REG_ID: &str = "None";
 
     macro_rules! hashmap {
@@ -955,8 +883,8 @@ mod tests {
         use crate::domain::anoncreds::revocation_registry_definition::RevocationRegistryId;
 
         fn _credential() -> Credential {
-            // note that encoding is not standardized by Indy except that 32-bit integers are encoded as themselves. IS-786
-            // so Alex -> 12345 is an application choice while 25 -> 25 is not
+            // note that encoding is not standardized by Indy except that 32-bit integers are encoded as
+            // themselves. IS-786 so Alex -> 12345 is an application choice while 25 -> 25 is not
             let mut attr_values: HashMap<String, AttributeValues> = HashMap::new();
             attr_values.insert(
                 "name".to_string(),
@@ -1014,9 +942,7 @@ mod tests {
         fn build_credential_tags_works_for_catpol() {
             let ps = ProverService::new();
             let catpol = CredentialAttrTagPolicy::from(vec![String::from("name")]);
-            let tags = ps
-                .build_credential_tags(&_credential(), Some(catpol).as_ref())
-                .unwrap();
+            let tags = ps.build_credential_tags(&_credential(), Some(catpol).as_ref()).unwrap();
 
             let expected_tags: HashMap<String, String> = hashmap!(
                "schema_id".to_string() => SCHEMA_ID.to_string(),
@@ -1064,7 +990,8 @@ mod tests {
             let schema_id = "did:indy:NcYxiDXkpYi6ov5FcYDi1e/anoncreds/v0/SCHEMA/gvt/1.0";
             let issuer_did = "did:indy:NcYxiDXkpYi6ov5FcYDi1e";
             let cred_def_id = "did:indy:NcYxiDXkpYi6ov5FcYDi1e/anoncreds/v0/CLAIM_DEF/1/tag";
-            let rev_reg_id = "did:indy:NcYxiDXkpYi6ov5FcYDi1e/anoncreds/v0/REV_REG_DEF/did:indy:NcYxiDXkpYi6ov5FcYDi1e/anoncreds/v0/SCHEMA/gvt/1.0/tag/TAG_1";
+            let rev_reg_id = "did:indy:NcYxiDXkpYi6ov5FcYDi1e/anoncreds/v0/REV_REG_DEF/did:indy:\
+                              NcYxiDXkpYi6ov5FcYDi1e/anoncreds/v0/SCHEMA/gvt/1.0/tag/TAG_1";
 
             let mut credential = _credential();
             credential.schema_id = SchemaId(schema_id.to_string());
@@ -1112,18 +1039,14 @@ mod tests {
         #[test]
         fn attribute_satisfy_predicate_works() {
             let ps = ProverService::new();
-            let res = ps
-                .attribute_satisfy_predicate(&predicate_info(), "10")
-                .unwrap();
+            let res = ps.attribute_satisfy_predicate(&predicate_info(), "10").unwrap();
             assert!(res);
         }
 
         #[test]
         fn attribute_satisfy_predicate_works_for_false() {
             let ps = ProverService::new();
-            let res = ps
-                .attribute_satisfy_predicate(&predicate_info(), "5")
-                .unwrap();
+            let res = ps.attribute_satisfy_predicate(&predicate_info(), "5").unwrap();
             assert!(!res);
         }
 
@@ -1136,12 +1059,11 @@ mod tests {
     }
 
     mod prepare_credentials_for_proving {
+        use super::*;
         use crate::domain::anoncreds::{
             proof_request::{AttributeInfo, PredicateInfo},
             requested_credential::RequestedAttribute,
         };
-
-        use super::*;
 
         const CRED_ID: &str = "8591bcac-ee7d-4bef-ba7e-984696440b30";
         const ATTRIBUTE_REFERENT: &str = "attribute_referent";
@@ -1202,8 +1124,7 @@ mod tests {
             let req_cred = _req_cred();
             let proof_req = _proof_req();
 
-            let res =
-                ProverService::_prepare_credentials_for_proving(&req_cred, &proof_req).unwrap();
+            let res = ProverService::_prepare_credentials_for_proving(&req_cred, &proof_req).unwrap();
 
             assert_eq!(1, res.len());
             assert!(res.contains_key(&ProvingCredentialKey {
@@ -1245,8 +1166,7 @@ mod tests {
                 },
             );
 
-            let res =
-                ProverService::_prepare_credentials_for_proving(&req_cred, &proof_req).unwrap();
+            let res = ProverService::_prepare_credentials_for_proving(&req_cred, &proof_req).unwrap();
 
             assert_eq!(1, res.len());
             assert!(res.contains_key(&ProvingCredentialKey {
@@ -1305,9 +1225,7 @@ mod tests {
         fn get_credential_values_for_attribute_works() {
             let ps = ProverService::new();
 
-            let res = ps
-                .get_credential_values_for_attribute(&_cred_values(), "name")
-                .unwrap();
+            let res = ps.get_credential_values_for_attribute(&_cred_values(), "name").unwrap();
             assert_eq!(_attr_values(), res);
         }
 
@@ -1315,9 +1233,7 @@ mod tests {
         fn get_credential_values_for_attribute_works_for_requested_attr_different_case() {
             let ps = ProverService::new();
 
-            let res = ps
-                .get_credential_values_for_attribute(&_cred_values(), "NAme")
-                .unwrap();
+            let res = ps.get_credential_values_for_attribute(&_cred_values(), "NAme").unwrap();
             assert_eq!(_attr_values(), res);
         }
 
@@ -1337,9 +1253,7 @@ mod tests {
 
             let cred_values = hashmap!("NAME".to_string() => _attr_values());
 
-            let res = ps
-                .get_credential_values_for_attribute(&cred_values, "name")
-                .unwrap();
+            let res = ps.get_credential_values_for_attribute(&cred_values, "name").unwrap();
             assert_eq!(_attr_values(), res);
         }
 
@@ -1349,15 +1263,12 @@ mod tests {
 
             let cred_values = hashmap!("    name    ".to_string() => _attr_values());
 
-            let res = ps
-                .get_credential_values_for_attribute(&cred_values, "name")
-                .unwrap();
+            let res = ps.get_credential_values_for_attribute(&cred_values, "name").unwrap();
             assert_eq!(_attr_values(), res);
         }
 
         #[test]
-        fn get_credential_values_for_attribute_works_for_cred_values_and_requested_attr_contains_spaces(
-        ) {
+        fn get_credential_values_for_attribute_works_for_cred_values_and_requested_attr_contains_spaces() {
             let ps = ProverService::new();
 
             let cred_values = hashmap!("    name    ".to_string() => _attr_values());
@@ -1385,10 +1296,7 @@ mod tests {
 
             let expected_query = Query::Or(vec![
                 Query::Eq(QUALIFIABLE_TAG.to_string(), VALUE.to_string()),
-                Query::Eq(
-                    Credential::add_extra_tag_suffix(QUALIFIABLE_TAG),
-                    VALUE.to_string(),
-                ),
+                Query::Eq(Credential::add_extra_tag_suffix(QUALIFIABLE_TAG), VALUE.to_string()),
             ]);
 
             assert_eq!(expected_query, query);
@@ -1419,10 +1327,7 @@ mod tests {
             let expected_query = Query::And(vec![
                 Query::Or(vec![
                     Query::Eq(QUALIFIABLE_TAG.to_string(), VALUE.to_string()),
-                    Query::Eq(
-                        Credential::add_extra_tag_suffix(QUALIFIABLE_TAG),
-                        VALUE.to_string(),
-                    ),
+                    Query::Eq(Credential::add_extra_tag_suffix(QUALIFIABLE_TAG), VALUE.to_string()),
                 ]),
                 Query::Eq(NOT_QUALIFIABLE_TAG.to_string(), VALUE.to_string()),
             ]);
@@ -1481,10 +1386,7 @@ mod tests {
                 .unwrap();
 
             let expected_query = Query::And(vec![
-                Query::Eq(
-                    "attr::name::marker".to_string(),
-                    ATTRIBUTE_EXISTENCE_MARKER.to_string(),
-                ),
+                Query::Eq("attr::name::marker".to_string(), ATTRIBUTE_EXISTENCE_MARKER.to_string()),
                 Query::Eq(
                     "attr::name_2::marker".to_string(),
                     ATTRIBUTE_EXISTENCE_MARKER.to_string(),
@@ -1519,10 +1421,7 @@ mod tests {
                     Query::Eq("schema_id".to_string(), SCHEMA_ID.to_string()),
                     Query::Eq("cred_def_id".to_string(), CRED_DEF_ID.to_string()),
                 ]),
-                Query::Eq(
-                    "attr::name::marker".to_string(),
-                    ATTRIBUTE_EXISTENCE_MARKER.to_string(),
-                ),
+                Query::Eq("attr::name::marker".to_string(), ATTRIBUTE_EXISTENCE_MARKER.to_string()),
             ]);
 
             assert_eq!(expected_query, query);
@@ -1549,10 +1448,7 @@ mod tests {
 
             let expected_query = Query::And(vec![
                 Query::Eq("name".to_string(), "Alex".to_string()),
-                Query::Eq(
-                    "attr::name::marker".to_string(),
-                    ATTRIBUTE_EXISTENCE_MARKER.to_string(),
-                ),
+                Query::Eq("attr::name::marker".to_string(), ATTRIBUTE_EXISTENCE_MARKER.to_string()),
             ]);
 
             assert_eq!(expected_query, query);
@@ -1588,10 +1484,7 @@ mod tests {
                     Query::Eq("cred_def_id".to_string(), CRED_DEF_ID.to_string()),
                 ]),
                 Query::Eq("name".to_string(), "Alex".to_string()),
-                Query::Eq(
-                    "attr::name::marker".to_string(),
-                    ATTRIBUTE_EXISTENCE_MARKER.to_string(),
-                ),
+                Query::Eq("attr::name::marker".to_string(), ATTRIBUTE_EXISTENCE_MARKER.to_string()),
             ]);
 
             assert_eq!(expected_query, query);
@@ -1661,10 +1554,7 @@ mod tests {
                     Query::Eq("name".to_string(), "Alex".to_string()),
                     Query::Eq("name".to_string(), "Alexander".to_string()),
                 ]),
-                Query::Eq(
-                    "attr::name::marker".to_string(),
-                    ATTRIBUTE_EXISTENCE_MARKER.to_string(),
-                ),
+                Query::Eq("attr::name::marker".to_string(), ATTRIBUTE_EXISTENCE_MARKER.to_string()),
             ]);
 
             assert_eq!(expected_query, query);
@@ -1676,14 +1566,8 @@ mod tests {
 
             let restriction = Query::And(vec![
                 Query::Eq("schema_id".to_string(), SCHEMA_ID.to_string()),
-                Query::Eq(
-                    "attr::firstname::value".to_string(),
-                    "firstname_value".to_string(),
-                ),
-                Query::Eq(
-                    "attr::Last Name::value".to_string(),
-                    "lastname_value".to_string(),
-                ),
+                Query::Eq("attr::firstname::value".to_string(), "firstname_value".to_string()),
+                Query::Eq("attr::Last Name::value".to_string(), "lastname_value".to_string()),
                 Query::Eq("attr::File Name::marker".to_string(), "1".to_string()),
                 Query::Eq("attr::textresult::marker".to_string(), "1".to_string()),
             ]);
@@ -1702,21 +1586,12 @@ mod tests {
             let expected_query = Query::And(vec![
                 Query::And(vec![
                     Query::Eq("schema_id".to_string(), SCHEMA_ID.to_string()),
-                    Query::Eq(
-                        "attr::firstname::value".to_string(),
-                        "firstname_value".to_string(),
-                    ),
-                    Query::Eq(
-                        "attr::lastname::value".to_string(),
-                        "lastname_value".to_string(),
-                    ),
+                    Query::Eq("attr::firstname::value".to_string(), "firstname_value".to_string()),
+                    Query::Eq("attr::lastname::value".to_string(), "lastname_value".to_string()),
                     Query::Eq("attr::filename::marker".to_string(), "1".to_string()),
                     Query::Eq("attr::textresult::marker".to_string(), "1".to_string()),
                 ]),
-                Query::Eq(
-                    "attr::name::marker".to_string(),
-                    ATTRIBUTE_EXISTENCE_MARKER.to_string(),
-                ),
+                Query::Eq("attr::name::marker".to_string(), ATTRIBUTE_EXISTENCE_MARKER.to_string()),
             ]);
 
             assert_eq!(expected_query, query);

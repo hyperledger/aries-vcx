@@ -5,7 +5,7 @@ pub(crate) mod utils;
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 pub mod test_utils {
-    use serde::Deserialize;
+    use serde::{Deserialize, Serialize};
     use serde_json::{json, Value};
 
     use crate::{
@@ -50,10 +50,17 @@ pub mod test_utils {
             .expect("JSON object")
             .insert("@id".to_owned(), json!(id));
 
-        let deserialized = AriesMessage::deserialize(&json).unwrap();
+        test_serde(msg, json);
+    }
 
-        assert_eq!(serde_json::to_value(&msg).unwrap(), json);
-        assert_eq!(deserialized, msg);
+    pub fn test_serde<T>(value: T, json: Value)
+    where
+        T: for<'de> Deserialize<'de> + Serialize + std::fmt::Debug + PartialEq,
+    {
+        let deserialized = T::deserialize(&json).unwrap();
+
+        assert_eq!(serde_json::to_value(&value).unwrap(), json);
+        assert_eq!(deserialized, value);
     }
 
     pub fn build_msg_type<T>() -> String

@@ -18,12 +18,7 @@ pub struct AttribOperation {
 }
 
 impl AttribOperation {
-    pub fn new(
-        dest: ShortDidValue,
-        hash: Option<String>,
-        raw: Option<String>,
-        enc: Option<String>,
-    ) -> AttribOperation {
+    pub fn new(dest: ShortDidValue, hash: Option<String>, raw: Option<String>, enc: Option<String>) -> AttribOperation {
         AttribOperation {
             _type: ATTRIB.to_string(),
             dest,
@@ -48,12 +43,7 @@ pub struct GetAttribOperation {
 }
 
 impl GetAttribOperation {
-    pub fn new(
-        dest: ShortDidValue,
-        raw: Option<&str>,
-        hash: Option<&str>,
-        enc: Option<&str>,
-    ) -> GetAttribOperation {
+    pub fn new(dest: ShortDidValue, raw: Option<&str>, hash: Option<&str>, enc: Option<&str>) -> GetAttribOperation {
         GetAttribOperation {
             _type: GET_ATTR.to_string(),
             dest,

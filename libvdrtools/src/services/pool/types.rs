@@ -4,8 +4,9 @@ use std::{
     hash::{Hash, Hasher},
 };
 
-use crate::utils::crypto::verkey_builder::build_full_verkey;
 use indy_api_types::{errors::prelude::*, CommandHandle};
+
+use crate::utils::crypto::verkey_builder::build_full_verkey;
 
 #[derive(Serialize, Deserialize, Debug, Eq, PartialEq)]
 pub struct NodeData {
@@ -32,21 +33,14 @@ where
     match deser_res {
         Ok(serde_json::Value::String(s)) => match s.parse::<u64>() {
             Ok(num) => Ok(Some(num)),
-            Err(err) => Err(serde::de::Error::custom(format!(
-                "Invalid Node transaction: {:?}",
-                err
-            ))),
+            Err(err) => Err(serde::de::Error::custom(format!("Invalid Node transaction: {:?}", err))),
         },
         Ok(serde_json::Value::Number(n)) => match n.as_u64() {
             Some(num) => Ok(Some(num)),
-            None => Err(serde::de::Error::custom(
-                "Invalid Node transaction".to_string(),
-            )),
+            None => Err(serde::de::Error::custom("Invalid Node transaction".to_string())),
         },
         Ok(serde_json::Value::Null) => Ok(None),
-        _ => Err(serde::de::Error::custom(
-            "Invalid Node transaction".to_string(),
-        )),
+        _ => Err(serde::de::Error::custom("Invalid Node transaction".to_string())),
     }
 }
 
@@ -255,10 +249,9 @@ impl CatchupRep {
         let mut min = None;
 
         for (k, _) in self.txns.iter() {
-            let val = k.parse::<usize>().to_indy(
-                IndyErrorKind::InvalidStructure,
-                "Invalid key in catchup reply",
-            )?;
+            let val = k
+                .parse::<usize>()
+                .to_indy(IndyErrorKind::InvalidStructure, "Invalid key in catchup reply")?;
 
             match min {
                 None => min = Some(val),
@@ -401,8 +394,9 @@ impl Message {
         match str {
             "po" => Ok(Message::Pong),
             "pi" => Ok(Message::Ping),
-            _ => serde_json::from_str::<Message>(str)
-                .to_indy(IndyErrorKind::InvalidStructure, "Malformed message json"),
+            _ => {
+                serde_json::from_str::<Message>(str).to_indy(IndyErrorKind::InvalidStructure, "Malformed message json")
+            }
         }
     }
 }
@@ -417,7 +411,8 @@ impl Message {
 pub struct ParsedSP {
     /// encoded SP Trie transferred from Node to Client
     pub proof_nodes: String,
-    /// RootHash of the Trie, start point for verification. Should be same with appropriate filed in BLS MS data
+    /// RootHash of the Trie, start point for verification. Should be same with appropriate filed in
+    /// BLS MS data
     pub root_hash: String,
     /// entities to verification against current SP Trie
     pub kvs_to_verify: KeyValuesInSP,
@@ -488,12 +483,10 @@ pub struct NumericalSuffixAscendingNoGapsData {
 */
 #[derive(Serialize, Deserialize, Debug, Eq, PartialEq)]
 pub struct KeyValuesSubTrieData {
-    /// base64-encoded common prefix of each pair in `kvs`. Should be used to correct merging initial trie and subtrie
+    /// base64-encoded common prefix of each pair in `kvs`. Should be used to correct merging
+    /// initial trie and subtrie
     pub sub_trie_prefix: Option<String>,
-    pub kvs: Vec<(
-        String, /* b64-encoded key_suffix */
-        Option<String /* val */>,
-    )>,
+    pub kvs: Vec<(String /* b64-encoded key_suffix */, Option<String /* val */>)>,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
