@@ -5,7 +5,7 @@ use super::OobGoalCode;
 use crate::{
     decorators::{Attachment, Timing},
     misc::mime_type::MimeType,
-    msg_types::types::out_of_band::OutOfBandV1_1Kind,
+    msg_types::{types::out_of_band::OutOfBandV1_1Kind, Protocol},
     protocols::common::service::Service,
     Message,
 };
@@ -24,7 +24,7 @@ pub struct InvitationContent {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub accept: Option<Vec<MimeType>>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub handshake_protocols: Option<Vec<String>>, // TODO: Protocol Registry
+    pub handshake_protocols: Option<Vec<Protocol>>,
     pub services: Vec<Service>,
     #[serde(rename = "requests~attach")]
     pub requests_attach: Vec<Attachment>,
