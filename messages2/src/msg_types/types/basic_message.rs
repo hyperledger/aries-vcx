@@ -32,9 +32,8 @@ pub enum BasicMessageV1_0Kind {
 mod tests {
     use std::marker::PhantomData;
 
-    use crate::misc::test_utils;
-
     use super::BasicMessageV1;
+    use crate::misc::test_utils;
 
     const PROTOCOL: &str = "https://didcomm.org/basicmessage/1.0";
     const VERSION_RESOLUTION_PROTOCOL: &str = "https://didcomm.org/basicmessage/1.255";

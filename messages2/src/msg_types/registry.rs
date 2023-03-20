@@ -2,14 +2,13 @@ use std::{collections::HashMap, marker::PhantomData};
 
 use lazy_static::lazy_static;
 
+use super::{actor::Actor, Protocol};
 use crate::msg_types::types::{
     basic_message::BasicMessageV1, connection::ConnectionV1, cred_issuance::CredentialIssuanceV1,
     discover_features::DiscoverFeaturesV1, notification::NotificationV1, out_of_band::OutOfBandV1,
     present_proof::PresentProofV1, report_problem::ReportProblemV1, revocation::RevocationV2, routing::RoutingV1,
     trust_ping::TrustPingV1,
 };
-
-use super::{actor::Actor, Protocol};
 type RegistryMap = HashMap<(&'static str, u8), Vec<RegistryEntry>>;
 
 /// An entry in the protocol registry.
