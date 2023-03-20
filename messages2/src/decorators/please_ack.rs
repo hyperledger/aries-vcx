@@ -33,7 +33,7 @@ mod tests {
     }
 
     #[test]
-    fn test_minimal_decorator() {
+    fn test_minimal_please_ack() {
         let please_ack = make_minimal_please_ack();
         let json = json!({ "on": please_ack.on });
 

@@ -1,15 +1,15 @@
 mod ack;
-mod notification;
+mod revoke;
 
 use std::str::FromStr;
 
 use derive_more::From;
 use serde::{de::Error, Deserializer, Serializer};
 
-pub use self::{ack::AckRevoke, notification::Revoke};
+pub use self::{ack::AckRevoke, revoke::Revoke};
 use self::{
     ack::AckRevokeContent,
-    notification::{RevokeContent, RevokeDecorators},
+    revoke::{RevokeContent, RevokeDecorators},
 };
 use super::notification::AckDecorators;
 use crate::{

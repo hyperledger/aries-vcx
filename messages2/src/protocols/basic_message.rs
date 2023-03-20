@@ -50,7 +50,7 @@ mod tests {
     use crate::misc::{test_utils, utils::DATETIME_FORMAT};
 
     #[test]
-    fn test_minimal_message() {
+    fn test_minimal_basic_message() {
         let msg_str = "test".to_owned();
 
         let msg_type = test_utils::build_msg_type::<BasicMessageContent>();
@@ -71,7 +71,7 @@ mod tests {
     }
 
     #[test]
-    fn test_extensive_message() {
+    fn test_extensive_basic_message() {
         let msg_str = "test".to_owned();
 
         let msg_type = test_utils::build_msg_type::<BasicMessageContent>();

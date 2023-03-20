@@ -27,7 +27,7 @@ mod tests {
     use crate::misc::{nothing::Nothing, test_utils};
 
     #[test]
-    fn test_minimal_message() {
+    fn test_minimal_forward() {
         let msg_type = test_utils::build_msg_type::<ForwardContent>();
 
         let to = "test".to_owned();

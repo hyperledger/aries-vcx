@@ -57,7 +57,7 @@ mod tests {
     use crate::misc::test_utils;
 
     #[test]
-    fn test_minimal_message() {
+    fn test_minimal_revoke() {
         let msg_type = test_utils::build_msg_type::<RevokeContent>();
 
         let credential_id = "test".to_owned();
@@ -76,7 +76,7 @@ mod tests {
     }
 
     #[test]
-    fn test_extensive_message() {
+    fn test_extensive_revoke() {
         let msg_type = test_utils::build_msg_type::<RevokeContent>();
 
         let credential_id = "test".to_owned();

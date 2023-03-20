@@ -142,7 +142,7 @@ mod tests {
     }
 
     #[test]
-    fn test_minimal_decorator_field() {
+    fn test_minimal_field_localization() {
         let localization = make_minimal_field_localization();
         let json = json!({});
 
@@ -150,7 +150,7 @@ mod tests {
     }
 
     #[test]
-    fn test_extensive_decorator_field() {
+    fn test_extensive_field_localization() {
         let localization = make_extended_field_localization();
 
         let mut json = json!({
@@ -170,7 +170,7 @@ mod tests {
     }
 
     #[test]
-    fn test_minimal_decorator_msg() {
+    fn test_minimal_msg_localization() {
         let localization = make_minimal_msg_localization();
         let json = json!({});
 
@@ -178,7 +178,7 @@ mod tests {
     }
 
     #[test]
-    fn test_extensive_decorator_msg() {
+    fn test_extensive_msg_localization() {
         let localization = make_extended_msg_localization();
 
         let json = json!({

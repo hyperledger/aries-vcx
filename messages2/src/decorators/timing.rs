@@ -49,7 +49,7 @@ mod tests {
     }
 
     #[test]
-    fn test_minimal_decorator() {
+    fn test_minimal_timing() {
         let timing = make_minimal_timing();
         let json = json!({});
 
@@ -57,7 +57,7 @@ mod tests {
     }
 
     #[test]
-    fn test_extensive_decorator() {
+    fn test_extensive_timing() {
         let timing = make_extended_timing();
 
         let json = json!({

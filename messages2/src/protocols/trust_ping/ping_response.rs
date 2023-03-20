@@ -41,7 +41,7 @@ mod tests {
     use crate::misc::test_utils;
 
     #[test]
-    fn test_minimal_message() {
+    fn test_minimal_ping_response() {
         let msg_type = test_utils::build_msg_type::<PingResponseContent>();
 
         let content = PingResponseContent::default();
@@ -61,7 +61,7 @@ mod tests {
     }
 
     #[test]
-    fn test_extensive_message() {
+    fn test_extensive_ping_response() {
         let msg_type = test_utils::build_msg_type::<PingResponseContent>();
 
         let mut content = PingResponseContent::default();

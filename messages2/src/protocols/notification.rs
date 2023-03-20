@@ -53,7 +53,7 @@ mod tests {
     use crate::misc::test_utils;
 
     #[test]
-    fn test_minimal_message() {
+    fn test_minimal_ack() {
         let msg_type = test_utils::build_msg_type::<AckContent>();
 
         let status = AckStatus::Ok;
@@ -75,7 +75,7 @@ mod tests {
     }
 
     #[test]
-    fn test_extensive_message() {
+    fn test_extensive_ack() {
         let msg_type = test_utils::build_msg_type::<AckContent>();
 
         let status = AckStatus::Ok;

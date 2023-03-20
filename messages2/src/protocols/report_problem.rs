@@ -135,7 +135,7 @@ mod tests {
     use crate::misc::test_utils;
 
     #[test]
-    fn test_minimal_message() {
+    fn test_minimal_problem_report() {
         let msg_type = test_utils::build_msg_type::<ProblemReportContent>();
 
         let content = ProblemReportContent::default();
@@ -148,7 +148,7 @@ mod tests {
     }
 
     #[test]
-    fn test_extensive_message() {
+    fn test_extensive_problem_report() {
         let msg_type = test_utils::build_msg_type::<ProblemReportContent>();
 
         let mut content = ProblemReportContent::default();

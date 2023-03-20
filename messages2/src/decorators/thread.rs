@@ -117,7 +117,7 @@ mod tests {
     }
 
     #[test]
-    fn test_minimal_decorator() {
+    fn test_minimal_thread() {
         let thread = make_minimal_thread();
         let json = json!({ "thid": thread.thid });
 
@@ -125,7 +125,7 @@ mod tests {
     }
 
     #[test]
-    fn test_extensive_decorator() {
+    fn test_extensive_thread() {
         let thread = make_extended_thread();
 
         let json = json!({
