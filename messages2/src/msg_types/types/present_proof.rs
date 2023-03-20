@@ -32,59 +32,61 @@ pub enum PresentProofV1_0Kind {
     Ack,
 }
 
-// #[cfg(test)]
-// mod tests {
-//     use super::PresentProofV1_0;
-//     use crate::misc::test_utils;
+#[cfg(test)]
+mod tests {
+    use std::marker::PhantomData;
 
-//     const PROTOCOL: &str = "https://didcomm.org/present-proof/1.0";
-//     const VERSION_RESOLUTION_PROTOCOL: &str = "https://didcomm.org/present-proof/1.255";
-//     const UNSUPPORTED_VERSION_PROTOCOL: &str = "https://didcomm.org/present-proof/2.0";
+    use super::PresentProofV1;
+    use crate::misc::test_utils;
 
-//     const KIND_PROPOSE: &str = "propose-presentation";
-//     const KIND_REQUEST: &str = "request-presentation";
-//     const KIND_PRESENTATION: &str = "presentation";
-//     const KIND_PREVIEW: &str = "presentation-preview";
-//     const KIND_ACK: &str = "ack";
+    const PROTOCOL: &str = "https://didcomm.org/present-proof/1.0";
+    const VERSION_RESOLUTION_PROTOCOL: &str = "https://didcomm.org/present-proof/1.255";
+    const UNSUPPORTED_VERSION_PROTOCOL: &str = "https://didcomm.org/present-proof/2.0";
 
-//     #[test]
-//     fn test_protocol_present_proof() {
-//         test_utils::test_protocol(PROTOCOL, PresentProofV1_0)
-//     }
+    const KIND_PROPOSE: &str = "propose-presentation";
+    const KIND_REQUEST: &str = "request-presentation";
+    const KIND_PRESENTATION: &str = "presentation";
+    const KIND_PREVIEW: &str = "presentation-preview";
+    const KIND_ACK: &str = "ack";
 
-//     #[test]
-//     fn test_version_resolution_present_proof() {
-//         test_utils::test_protocol(VERSION_RESOLUTION_PROTOCOL, PresentProofV1_0)
-//     }
+    #[test]
+    fn test_protocol_present_proof() {
+        test_utils::test_protocol(PROTOCOL, PresentProofV1::V1_0(PhantomData))
+    }
 
-//     #[test]
-//     #[should_panic]
-//     fn test_unsupported_version_present_proof() {
-//         test_utils::test_protocol(UNSUPPORTED_VERSION_PROTOCOL, PresentProofV1_0)
-//     }
+    #[test]
+    fn test_version_resolution_present_proof() {
+        test_utils::test_protocol(VERSION_RESOLUTION_PROTOCOL, PresentProofV1::V1_0(PhantomData))
+    }
 
-//     #[test]
-//     fn test_msg_type_propose() {
-//         test_utils::test_msg_type(PROTOCOL, KIND_PROPOSE, PresentProofV1_0)
-//     }
+    #[test]
+    #[should_panic]
+    fn test_unsupported_version_present_proof() {
+        test_utils::test_protocol(UNSUPPORTED_VERSION_PROTOCOL, PresentProofV1::V1_0(PhantomData))
+    }
 
-//     #[test]
-//     fn test_msg_type_request() {
-//         test_utils::test_msg_type(PROTOCOL, KIND_REQUEST, PresentProofV1_0)
-//     }
+    #[test]
+    fn test_msg_type_propose() {
+        test_utils::test_msg_type(PROTOCOL, KIND_PROPOSE, PresentProofV1::V1_0(PhantomData))
+    }
 
-//     #[test]
-//     fn test_msg_type_presentation() {
-//         test_utils::test_msg_type(PROTOCOL, KIND_PRESENTATION, PresentProofV1_0)
-//     }
+    #[test]
+    fn test_msg_type_request() {
+        test_utils::test_msg_type(PROTOCOL, KIND_REQUEST, PresentProofV1::V1_0(PhantomData))
+    }
 
-//     #[test]
-//     fn test_msg_type_preview() {
-//         test_utils::test_msg_type(PROTOCOL, KIND_PREVIEW, PresentProofV1_0)
-//     }
+    #[test]
+    fn test_msg_type_presentation() {
+        test_utils::test_msg_type(PROTOCOL, KIND_PRESENTATION, PresentProofV1::V1_0(PhantomData))
+    }
 
-//     #[test]
-//     fn test_msg_type_ack() {
-//         test_utils::test_msg_type(PROTOCOL, KIND_ACK, PresentProofV1_0)
-//     }
-// }
+    #[test]
+    fn test_msg_type_preview() {
+        test_utils::test_msg_type(PROTOCOL, KIND_PREVIEW, PresentProofV1::V1_0(PhantomData))
+    }
+
+    #[test]
+    fn test_msg_type_ack() {
+        test_utils::test_msg_type(PROTOCOL, KIND_ACK, PresentProofV1::V1_0(PhantomData))
+    }
+}

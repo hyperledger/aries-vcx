@@ -33,65 +33,67 @@ pub enum CredentialIssuanceV1_0Kind {
     Ack,
 }
 
-// #[cfg(test)]
-// mod tests {
-//     use super::CredentialIssuanceV1_0;
-//     use crate::misc::test_utils;
+#[cfg(test)]
+mod tests {
+    use std::marker::PhantomData;
 
-//     const PROTOCOL: &str = "https://didcomm.org/issue-credential/1.0";
-//     const VERSION_RESOLUTION_PROTOCOL: &str = "https://didcomm.org/issue-credential/1.255";
-//     const UNSUPPORTED_VERSION_PROTOCOL: &str = "https://didcomm.org/issue-credential/2.0";
+    use super::CredentialIssuanceV1;
+    use crate::misc::test_utils;
 
-//     const KIND_OFFER: &str = "offer-credential";
-//     const KIND_PROPOSE: &str = "propose-credential";
-//     const KIND_REQUEST: &str = "request-credential";
-//     const KIND_ISSUE: &str = "issue-credential";
-//     const KIND_PREVIEW: &str = "credential-preview";
-//     const KIND_ACK: &str = "ack";
+    const PROTOCOL: &str = "https://didcomm.org/issue-credential/1.0";
+    const VERSION_RESOLUTION_PROTOCOL: &str = "https://didcomm.org/issue-credential/1.255";
+    const UNSUPPORTED_VERSION_PROTOCOL: &str = "https://didcomm.org/issue-credential/2.0";
 
-//     #[test]
-//     fn test_protocol_issue_credential() {
-//         test_utils::test_protocol(PROTOCOL, CredentialIssuanceV1_0)
-//     }
+    const KIND_OFFER: &str = "offer-credential";
+    const KIND_PROPOSE: &str = "propose-credential";
+    const KIND_REQUEST: &str = "request-credential";
+    const KIND_ISSUE: &str = "issue-credential";
+    const KIND_PREVIEW: &str = "credential-preview";
+    const KIND_ACK: &str = "ack";
 
-//     #[test]
-//     fn test_version_resolution_issue_credential() {
-//         test_utils::test_protocol(VERSION_RESOLUTION_PROTOCOL, CredentialIssuanceV1_0)
-//     }
+    #[test]
+    fn test_protocol_issue_credential() {
+        test_utils::test_protocol(PROTOCOL, CredentialIssuanceV1::V1_0(PhantomData))
+    }
 
-//     #[test]
-//     #[should_panic]
-//     fn test_unsupported_version_issue_credential() {
-//         test_utils::test_protocol(UNSUPPORTED_VERSION_PROTOCOL, CredentialIssuanceV1_0)
-//     }
+    #[test]
+    fn test_version_resolution_issue_credential() {
+        test_utils::test_protocol(VERSION_RESOLUTION_PROTOCOL, CredentialIssuanceV1::V1_0(PhantomData))
+    }
 
-//     #[test]
-//     fn test_msg_type_offer() {
-//         test_utils::test_msg_type(PROTOCOL, KIND_OFFER, CredentialIssuanceV1_0)
-//     }
+    #[test]
+    #[should_panic]
+    fn test_unsupported_version_issue_credential() {
+        test_utils::test_protocol(UNSUPPORTED_VERSION_PROTOCOL, CredentialIssuanceV1::V1_0(PhantomData))
+    }
 
-//     #[test]
-//     fn test_msg_type_propose() {
-//         test_utils::test_msg_type(PROTOCOL, KIND_PROPOSE, CredentialIssuanceV1_0)
-//     }
+    #[test]
+    fn test_msg_type_offer() {
+        test_utils::test_msg_type(PROTOCOL, KIND_OFFER, CredentialIssuanceV1::V1_0(PhantomData))
+    }
 
-//     #[test]
-//     fn test_msg_type_request() {
-//         test_utils::test_msg_type(PROTOCOL, KIND_REQUEST, CredentialIssuanceV1_0)
-//     }
+    #[test]
+    fn test_msg_type_propose() {
+        test_utils::test_msg_type(PROTOCOL, KIND_PROPOSE, CredentialIssuanceV1::V1_0(PhantomData))
+    }
 
-//     #[test]
-//     fn test_msg_type_issue() {
-//         test_utils::test_msg_type(PROTOCOL, KIND_ISSUE, CredentialIssuanceV1_0)
-//     }
+    #[test]
+    fn test_msg_type_request() {
+        test_utils::test_msg_type(PROTOCOL, KIND_REQUEST, CredentialIssuanceV1::V1_0(PhantomData))
+    }
 
-//     #[test]
-//     fn test_msg_type_preview() {
-//         test_utils::test_msg_type(PROTOCOL, KIND_PREVIEW, CredentialIssuanceV1_0)
-//     }
+    #[test]
+    fn test_msg_type_issue() {
+        test_utils::test_msg_type(PROTOCOL, KIND_ISSUE, CredentialIssuanceV1::V1_0(PhantomData))
+    }
 
-//     #[test]
-//     fn test_msg_type_ack() {
-//         test_utils::test_msg_type(PROTOCOL, KIND_ACK, CredentialIssuanceV1_0)
-//     }
-// }
+    #[test]
+    fn test_msg_type_preview() {
+        test_utils::test_msg_type(PROTOCOL, KIND_PREVIEW, CredentialIssuanceV1::V1_0(PhantomData))
+    }
+
+    #[test]
+    fn test_msg_type_ack() {
+        test_utils::test_msg_type(PROTOCOL, KIND_ACK, CredentialIssuanceV1::V1_0(PhantomData))
+    }
+}

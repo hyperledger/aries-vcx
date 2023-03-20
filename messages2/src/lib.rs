@@ -14,20 +14,21 @@ pub mod protocols;
 
 use derive_more::From;
 use misc::nothing::Nothing;
+use msg_types::types::traits::MajorVersion;
 use protocols::{
     routing::Forward,
     traits::{ConcreteMessage, HasKind},
 };
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::{
     misc::utils::MSG_TYPE,
     msg_types::{
         types::{
-            basic_message::{BasicMessage as BasicMessageKind, BasicMessageV1, BasicMessageV1_0Kind},
-            notification::{Notification, NotificationV1, NotificationV1_0Kind},
-            report_problem::{ReportProblem, ReportProblemV1, ReportProblemV1_0Kind},
-            routing::{Routing, RoutingV1, RoutingV1_0Kind},
+            basic_message::{BasicMessage as BasicMessageKind, BasicMessageV1},
+            notification::{Notification, NotificationV1},
+            report_problem::{ReportProblem, ReportProblemV1},
+            routing::{Routing, RoutingV1},
         },
         MessageType, Protocol,
     },
@@ -64,9 +65,8 @@ impl DelayedSerde for AriesMessage {
 
         match msg_type {
             Protocol::Routing(msg_type) => {
-                let Routing::V1(RoutingV1::V1_0(_msg_type)) = msg_type;
-                let msg_type = RoutingV1_0Kind::Forward;
-
+                let Routing::V1(RoutingV1::V1_0(phantom_data)) = msg_type;
+                let msg_type = RoutingV1::kind(phantom_data, kind).map_err(D::Error::custom)?;
                 Forward::delayed_deserialize(msg_type, deserializer).map(From::from)
             }
             Protocol::Connection(msg_type) => {
@@ -79,9 +79,8 @@ impl DelayedSerde for AriesMessage {
                 CredentialIssuance::delayed_deserialize((msg_type, kind), deserializer).map(From::from)
             }
             Protocol::ReportProblem(msg_type) => {
-                let ReportProblem::V1(ReportProblemV1::V1_0(_msg_type)) = msg_type;
-                let msg_type = ReportProblemV1_0Kind::ProblemReport;
-
+                let ReportProblem::V1(ReportProblemV1::V1_0(phantom_data)) = msg_type;
+                let msg_type = ReportProblemV1::kind(phantom_data, kind).map_err(D::Error::custom)?;
                 ProblemReport::delayed_deserialize(msg_type, deserializer).map(From::from)
             }
             Protocol::PresentProof(msg_type) => {
@@ -94,18 +93,16 @@ impl DelayedSerde for AriesMessage {
                 DiscoverFeatures::delayed_deserialize((msg_type, kind), deserializer).map(From::from)
             }
             Protocol::BasicMessage(msg_type) => {
-                let BasicMessageKind::V1(BasicMessageV1::V1_0(_msg_type)) = msg_type;
-                let msg_type = BasicMessageV1_0Kind::Message;
-
+                let BasicMessageKind::V1(BasicMessageV1::V1_0(phantom_data)) = msg_type;
+                let msg_type = BasicMessageV1::kind(phantom_data, kind).map_err(D::Error::custom)?;
                 BasicMessage::delayed_deserialize(msg_type, deserializer).map(From::from)
             }
             Protocol::OutOfBand(msg_type) => {
                 OutOfBand::delayed_deserialize((msg_type, kind), deserializer).map(From::from)
             }
             Protocol::Notification(msg_type) => {
-                let Notification::V1(NotificationV1::V1_0(_msg_type)) = msg_type;
-                let msg_type = NotificationV1_0Kind::Ack;
-
+                let Notification::V1(NotificationV1::V1_0(phantom_data)) = msg_type;
+                let msg_type = NotificationV1::kind(phantom_data, kind).map_err(D::Error::custom)?;
                 Ack::delayed_deserialize(msg_type, deserializer).map(From::from)
             }
         }
