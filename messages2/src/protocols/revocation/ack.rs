@@ -28,8 +28,7 @@ mod tests {
 
     use super::*;
     use crate::{
-        decorators::{Thread, Timing},
-        misc::test_utils,
+        misc::test_utils, decorators::{thread::tests::make_extended_thread, timing::tests::make_extended_timing},
     };
 
     #[test]
@@ -39,16 +38,13 @@ mod tests {
         let status = AckStatus::Ok;
         let content = AckRevokeContent::new(status);
 
-        let thid = "test".to_owned();
-        let thread = Thread::new(thid.clone());
+        let thread = make_extended_thread();
         let decorators = AckDecorators::new(thread);
 
         let json = json!({
             "@type": msg_type,
             "status": status,
-            "~thread": {
-                "thid": thid
-            }
+            "~thread": decorators.thread
         });
 
         test_utils::test_msg(content, decorators, json);
@@ -61,23 +57,16 @@ mod tests {
         let status = AckStatus::Ok;
         let content = AckRevokeContent::new(status);
 
-        let thid = "test".to_owned();
-        let thread = Thread::new(thid.clone());
+        let thread = make_extended_thread();
         let mut decorators = AckDecorators::new(thread);
-        let in_time = "test".to_owned();
-        let mut timing = Timing::default();
-        timing.in_time = Some(in_time.clone());
+        let timing = make_extended_timing();
         decorators.timing = Some(timing);
 
         let json = json!({
             "@type": msg_type,
             "status": status,
-            "~thread": {
-                "thid": thid
-            },
-            "~timing": {
-                "in_time": in_time
-            }
+            "~thread": decorators.thread,
+            "~timing": decorators.timing
         });
 
         test_utils::test_msg(content, decorators, json);

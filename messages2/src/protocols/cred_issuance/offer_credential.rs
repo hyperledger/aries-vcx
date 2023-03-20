@@ -3,9 +3,8 @@ use serde::{Deserialize, Serialize};
 
 use super::CredentialPreview;
 use crate::{
-    decorators::{Attachment, Thread, Timing},
     msg_types::types::cred_issuance::CredentialIssuanceV1_0Kind,
-    Message,
+    Message, decorators::{attachment::Attachment, thread::Thread, timing::Timing},
 };
 
 pub type OfferCredential = Message<OfferCredentialContent, OfferCredentialDecorators>;

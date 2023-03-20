@@ -6,7 +6,7 @@ use strum_macros::{AsRefStr, EnumString};
 use url::Url;
 
 use crate::{
-    decorators::{FieldLocalization, Thread, Timing},
+    decorators::{localization::FieldLocalization, thread::Thread, timing::Timing},
     msg_types::types::report_problem::ReportProblemV1_0Kind,
     Message,
 };
@@ -132,7 +132,7 @@ mod tests {
     use serde_json::json;
 
     use super::*;
-    use crate::misc::test_utils;
+    use crate::{decorators::thread::tests::make_extended_thread, misc::test_utils};
 
     #[test]
     fn test_minimal_problem_report() {
@@ -158,17 +158,13 @@ mod tests {
         content.who_retries = Some(who_retries);
 
         let mut decorators = ProblemReportDecorators::default();
-        let thid = "test".to_owned();
-        let thread = Thread::new(thid.clone());
-        decorators.thread = Some(thread);
+        decorators.thread = Some(make_extended_thread());
 
         let json = json!({
             "@type": msg_type,
             "description": description,
             "who_retries": who_retries,
-            "~thread": {
-                "thid": thid
-            }
+            "~thread": decorators.thread
         });
 
         test_utils::test_msg(content, decorators, json);

@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use super::CredentialPreview;
 use crate::{
-    decorators::{Thread, Timing},
+    decorators::{thread::Thread, timing::Timing},
     msg_types::types::cred_issuance::CredentialIssuanceV1_0Kind,
     Message,
 };

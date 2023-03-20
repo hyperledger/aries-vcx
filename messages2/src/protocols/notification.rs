@@ -2,7 +2,7 @@ use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    decorators::{Thread, Timing},
+    decorators::{thread::Thread, timing::Timing},
     msg_types::types::notification::NotificationV1_0Kind,
     Message,
 };

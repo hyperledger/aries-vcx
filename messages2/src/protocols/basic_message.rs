@@ -3,7 +3,7 @@ use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    decorators::{MsgLocalization, Thread, Timing},
+    decorators::{localization::MsgLocalization, thread::Thread, timing::Timing},
     misc::utils,
     msg_types::types::basic_message::BasicMessageV1_0Kind,
     Message,

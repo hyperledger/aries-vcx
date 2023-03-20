@@ -4,7 +4,6 @@ use messages_macros::MessageContent;
 use serde::{de::Error, Deserialize, Serialize};
 
 use crate::{
-    decorators::{Thread, Timing},
     misc::mime_type::MimeType,
     msg_types::{
         types::{
@@ -13,7 +12,7 @@ use crate::{
         },
         MessageType, Protocol,
     },
-    Message,
+    Message, decorators::{thread::Thread, timing::Timing},
 };
 
 pub type ProposePresentation = Message<ProposePresentationContent, ProposePresentationDecorators>;

@@ -72,7 +72,7 @@ pub enum AttachmentType {
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 #[allow(clippy::field_reassign_with_default)]
-mod tests {
+pub mod tests {
     use serde_json::json;
 
     use super::*;
@@ -88,7 +88,7 @@ mod tests {
         Attachment::new(attach_data)
     }
 
-    pub fn make_extensive_attachment() -> Attachment {
+    pub fn make_extended_attachment() -> Attachment {
         let data = json!({
             "field": "test_json_data"
         });
@@ -160,7 +160,7 @@ mod tests {
     }
 
     #[test]
-    fn test_extensive_attach_data() {
+    fn test_extended_attach_data() {
         let jws = "test_jws".to_owned();
         let sha256 = "test_sha256".to_owned();
 
@@ -193,8 +193,8 @@ mod tests {
     }
 
     #[test]
-    fn test_extensive_attachment() {
-        let attachment = make_extensive_attachment();
+    fn test_extended_attachment() {
+        let attachment = make_extended_attachment();
 
         let json = json!({
             "@id": attachment.id,

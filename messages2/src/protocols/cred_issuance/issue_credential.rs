@@ -2,7 +2,7 @@ use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    decorators::{Attachment, PleaseAck, Thread, Timing},
+    decorators::{attachment::Attachment, please_ack::PleaseAck, thread::Thread, timing::Timing},
     msg_types::types::cred_issuance::CredentialIssuanceV1_0Kind,
     Message,
 };

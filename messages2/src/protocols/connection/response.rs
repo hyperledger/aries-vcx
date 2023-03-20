@@ -4,7 +4,6 @@ use messages_macros::MessageContent;
 use serde::{de::Error, Deserialize, Serialize};
 
 use crate::{
-    decorators::{PleaseAck, Thread, Timing},
     msg_types::{
         types::{
             connection::{Connection, ConnectionV1, ConnectionV1_0Kind},
@@ -12,7 +11,7 @@ use crate::{
         },
         MessageType, Protocol,
     },
-    Message,
+    Message, decorators::{thread::Thread, please_ack::PleaseAck, timing::Timing},
 };
 
 pub type Response = Message<ResponseContent, ResponseDecorators>;

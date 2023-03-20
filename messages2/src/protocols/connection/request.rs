@@ -3,9 +3,8 @@ use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    decorators::{Thread, Timing},
     msg_types::types::connection::ConnectionV1_0Kind,
-    Message,
+    Message, decorators::{thread::Thread, timing::Timing},
 };
 
 pub type Request = Message<RequestContent, RequestDecorators>;
