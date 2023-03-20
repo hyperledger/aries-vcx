@@ -78,6 +78,41 @@ mod tests {
     use super::*;
     use crate::misc::test_utils;
 
+    pub fn make_minimal_attachment() -> Attachment {
+        let data = json!({
+            "field": "test_json_data"
+        });
+
+        let content = AttachmentType::Json(data);
+        let attach_data = AttachmentData::new(content);
+        Attachment::new(attach_data)
+    }
+
+    pub fn make_extensive_attachment() -> Attachment {
+        let data = json!({
+            "field": "test_json_data"
+        });
+
+        let content = AttachmentType::Json(data);
+        let attach_data = AttachmentData::new(content);
+        let mut attachment = Attachment::new(attach_data);
+        let id = "test_id".to_owned();
+        let description = "test_description".to_owned();
+        let filename = "test_filename".to_owned();
+        let mime_type = MimeType::Json;
+        let lastmod_time = DateTime::<Utc>::default();
+        let byte_count = 64;
+
+        attachment.id = Some(id);
+        attachment.description = Some(description);
+        attachment.filename = Some(filename);
+        attachment.mime_type = Some(mime_type);
+        attachment.lastmod_time = Some(lastmod_time);
+        attachment.byte_count = Some(byte_count);
+
+        attachment
+    }
+
     #[test]
     fn test_base64_attach_type() {
         let data = "test_base64_str".to_owned();
@@ -145,5 +180,32 @@ mod tests {
         attach_data.sha256 = Some(sha256);
 
         test_utils::test_serde(attach_data, json);
+    }
+
+    #[test]
+    fn test_minimal_attachment() {
+        let attachment = make_minimal_attachment();
+        let json = json!({
+            "data": attachment.data
+        });
+
+        test_utils::test_serde(attachment, json);
+    }
+
+    #[test]
+    fn test_extensive_attachment() {
+        let attachment = make_extensive_attachment();
+
+        let json = json!({
+            "@id": attachment.id,
+            "description": attachment.description,
+            "filename": attachment.filename,
+            "mime-type": attachment.mime_type,
+            "lastmod_time": attachment.lastmod_time,
+            "byte_count": attachment.byte_count,
+            "data": attachment.data
+        });
+
+        test_utils::test_serde(attachment, json);
     }
 }
