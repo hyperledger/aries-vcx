@@ -35,7 +35,7 @@ mod tests {
     use serde_json::json;
 
     use super::*;
-    use crate::misc::test_utils;
+    use crate::{decorators::thread::tests::make_extended_thread, misc::test_utils};
 
     #[test]
     fn test_minimal_ping() {
@@ -58,21 +58,16 @@ mod tests {
         let msg_type = test_utils::build_msg_type::<PingContent>();
 
         let mut content = PingContent::default();
-        let comment_str = "test".to_owned();
-        content.comment = Some(comment_str.clone());
+        content.comment = Some("test_comment".to_owned());
 
         let mut decorators = PingDecorators::default();
-        let thid = "test".to_owned();
-        let thread = Thread::new(thid.clone());
-        decorators.thread = Some(thread);
+        decorators.thread = Some(make_extended_thread());
 
         let json = json!({
             "@type": msg_type,
             "response_requested": false,
-            "comment": comment_str,
-            "~thread": {
-                "thid": thid
-            }
+            "comment": content.comment,
+            "~thread": decorators.thread
         });
 
         test_utils::test_msg(content, decorators, json);

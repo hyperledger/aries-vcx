@@ -38,7 +38,10 @@ mod tests {
     use serde_json::json;
 
     use super::*;
-    use crate::misc::test_utils;
+    use crate::{
+        decorators::{thread::tests::make_extended_thread, timing::tests::make_extended_timing},
+        misc::test_utils,
+    };
 
     #[test]
     fn test_minimal_ping_response() {
@@ -46,15 +49,11 @@ mod tests {
 
         let content = PingResponseContent::default();
 
-        let thid = "test".to_owned();
-        let thread = Thread::new(thid.clone());
-        let decorators = PingResponseDecorators::new(thread);
+        let decorators = PingResponseDecorators::new(make_extended_thread());
 
         let json = json!({
             "@type": msg_type,
-            "~thread": {
-                "thid": thid
-            }
+            "~thread": decorators.thread
         });
 
         test_utils::test_msg(content, decorators, json);
@@ -65,26 +64,16 @@ mod tests {
         let msg_type = test_utils::build_msg_type::<PingResponseContent>();
 
         let mut content = PingResponseContent::default();
-        let comment_str = "test".to_owned();
-        content.comment = Some(comment_str.clone());
+        content.comment = Some("test_comment".to_owned());
 
-        let thid = "test".to_owned();
-        let thread = Thread::new(thid.clone());
-        let mut decorators = PingResponseDecorators::new(thread);
-        let in_time = "test".to_owned();
-        let mut timing = Timing::default();
-        timing.in_time = Some(in_time.clone());
-        decorators.timing = Some(timing);
+        let mut decorators = PingResponseDecorators::new(make_extended_thread());
+        decorators.timing = Some(make_extended_timing());
 
         let json = json!({
             "@type": msg_type,
-            "comment": comment_str,
-            "~thread": {
-                "thid": thid
-            },
-            "~timing": {
-                "in_time": in_time
-            }
+            "comment": content.comment,
+            "~thread": decorators.thread,
+            "~timing": decorators.timing
         });
 
         test_utils::test_msg(content, decorators, json);

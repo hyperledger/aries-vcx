@@ -43,28 +43,29 @@ pub struct BasicMessageDecorators {
 
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
+#[allow(clippy::field_reassign_with_default)]
 mod tests {
     use serde_json::json;
 
     use super::*;
-    use crate::misc::{test_utils, utils::DATETIME_FORMAT};
+    use crate::{
+        decorators::thread::tests::make_extended_thread,
+        misc::{test_utils, utils::DATETIME_FORMAT},
+    };
 
     #[test]
     fn test_minimal_basic_message() {
-        let msg_str = "test".to_owned();
-
         let msg_type = test_utils::build_msg_type::<BasicMessageContent>();
 
-        let mut content = BasicMessageContent::new(msg_str.clone());
-        let datetime = DateTime::default();
-        content.sent_time = datetime;
+        let mut content = BasicMessageContent::new("test_content".to_owned());
+        content.sent_time = DateTime::default();
 
         let decorators = BasicMessageDecorators::default();
 
         let json = json!({
             "@type": msg_type,
-            "sent_time": datetime.format(DATETIME_FORMAT).to_string(),
-            "content": msg_str
+            "sent_time": content.sent_time.format(DATETIME_FORMAT).to_string(),
+            "content": content.content
         });
 
         test_utils::test_msg(content, decorators, json);
@@ -72,26 +73,19 @@ mod tests {
 
     #[test]
     fn test_extensive_basic_message() {
-        let msg_str = "test".to_owned();
-
         let msg_type = test_utils::build_msg_type::<BasicMessageContent>();
 
-        let mut content = BasicMessageContent::new(msg_str.clone());
-        let datetime = DateTime::default();
-        content.sent_time = datetime;
+        let mut content = BasicMessageContent::new("test_content".to_owned());
+        content.sent_time = DateTime::default();
 
         let mut decorators = BasicMessageDecorators::default();
-        let thid = "test".to_owned();
-        let thread = Thread::new(thid.clone());
-        decorators.thread = Some(thread);
+        decorators.thread = Some(make_extended_thread());
 
         let json = json!({
             "@type": msg_type,
-            "sent_time": datetime.format(DATETIME_FORMAT).to_string(),
-            "content": msg_str,
-            "~thread": {
-                "thid": thid
-            }
+            "sent_time": content.sent_time.format(DATETIME_FORMAT).to_string(),
+            "content": content.content,
+            "~thread": decorators.thread
         });
 
         test_utils::test_msg(content, decorators, json);

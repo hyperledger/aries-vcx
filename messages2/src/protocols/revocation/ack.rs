@@ -35,15 +35,13 @@ mod tests {
     fn test_minimal_ack_revoke() {
         let msg_type = test_utils::build_msg_type::<AckRevokeContent>();
 
-        let status = AckStatus::Ok;
-        let content = AckRevokeContent::new(status);
+        let content = AckRevokeContent::new(AckStatus::Ok);
 
-        let thread = make_extended_thread();
-        let decorators = AckDecorators::new(thread);
+        let decorators = AckDecorators::new(make_extended_thread());
 
         let json = json!({
             "@type": msg_type,
-            "status": status,
+            "status": content.0.status,
             "~thread": decorators.thread
         });
 
@@ -54,17 +52,14 @@ mod tests {
     fn test_extensive_ack_revoke() {
         let msg_type = test_utils::build_msg_type::<AckRevokeContent>();
 
-        let status = AckStatus::Ok;
-        let content = AckRevokeContent::new(status);
+        let content = AckRevokeContent::new(AckStatus::Ok);
 
-        let thread = make_extended_thread();
-        let mut decorators = AckDecorators::new(thread);
-        let timing = make_extended_timing();
-        decorators.timing = Some(timing);
+        let mut decorators = AckDecorators::new(make_extended_thread());
+        decorators.timing = Some(make_extended_timing());
 
         let json = json!({
             "@type": msg_type,
-            "status": status,
+            "status": content.0.status,
             "~thread": decorators.thread,
             "~timing": decorators.timing
         });

@@ -50,25 +50,22 @@ mod tests {
     use serde_json::json;
 
     use super::*;
-    use crate::misc::test_utils;
+    use crate::{
+        decorators::{thread::tests::make_extended_thread, timing::tests::make_extended_timing},
+        misc::test_utils,
+    };
 
     #[test]
     fn test_minimal_ack() {
         let msg_type = test_utils::build_msg_type::<AckContent>();
+        let content = AckContent::new(AckStatus::Ok);
 
-        let status = AckStatus::Ok;
-        let content = AckContent::new(status);
-
-        let thid = "test".to_owned();
-        let thread = Thread::new(thid.clone());
-        let decorators = AckDecorators::new(thread);
+        let decorators = AckDecorators::new(make_extended_thread());
 
         let json = json!({
             "@type": msg_type,
-            "status": status,
-            "~thread": {
-                "thid": thid
-            }
+            "status": content.status,
+            "~thread": decorators.thread
         });
 
         test_utils::test_msg(content, decorators, json);
@@ -78,26 +75,16 @@ mod tests {
     fn test_extensive_ack() {
         let msg_type = test_utils::build_msg_type::<AckContent>();
 
-        let status = AckStatus::Ok;
-        let content = AckContent::new(status);
+        let content = AckContent::new(AckStatus::Ok);
 
-        let thid = "test".to_owned();
-        let thread = Thread::new(thid.clone());
-        let mut decorators = AckDecorators::new(thread);
-        let in_time = "test".to_owned();
-        let mut timing = Timing::default();
-        timing.in_time = Some(in_time.clone());
-        decorators.timing = Some(timing);
+        let mut decorators = AckDecorators::new(make_extended_thread());
+        decorators.timing = Some(make_extended_timing());
 
         let json = json!({
             "@type": msg_type,
-            "status": status,
-            "~thread": {
-                "thid": thid
-            },
-            "~timing": {
-                "in_time": in_time
-            }
+            "status": content.status,
+            "~thread": decorators.thread,
+            "~timing": decorators.timing
         });
 
         test_utils::test_msg(content, decorators, json);

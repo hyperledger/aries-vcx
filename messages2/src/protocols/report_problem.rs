@@ -137,9 +137,8 @@ mod tests {
     #[test]
     fn test_minimal_problem_report() {
         let msg_type = test_utils::build_msg_type::<ProblemReportContent>();
-
+        
         let content = ProblemReportContent::default();
-
         let decorators = ProblemReportDecorators::default();
 
         let json = json!({ "@type": msg_type });
@@ -152,18 +151,16 @@ mod tests {
         let msg_type = test_utils::build_msg_type::<ProblemReportContent>();
 
         let mut content = ProblemReportContent::default();
-        let description = "test".to_owned();
-        content.description = Some(description.clone());
-        let who_retries = WhoRetries::Me;
-        content.who_retries = Some(who_retries);
+        content.description = Some("test_description".to_owned());
+        content.who_retries = Some(WhoRetries::Me);
 
         let mut decorators = ProblemReportDecorators::default();
         decorators.thread = Some(make_extended_thread());
 
         let json = json!({
             "@type": msg_type,
-            "description": description,
-            "who_retries": who_retries,
+            "description": content.description,
+            "who_retries": content.who_retries,
             "~thread": decorators.thread
         });
 

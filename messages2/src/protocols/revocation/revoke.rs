@@ -2,8 +2,9 @@ use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 
 use crate::{
+    decorators::{please_ack::PleaseAck, thread::Thread, timing::Timing},
     msg_types::types::revocation::RevocationV2_0Kind,
-    Message, decorators::{please_ack::PleaseAck, thread::Thread, timing::Timing},
+    Message,
 };
 
 pub type Revoke = Message<RevokeContent, RevokeDecorators>;
@@ -53,22 +54,20 @@ mod tests {
     use serde_json::json;
 
     use super::*;
-    use crate::misc::test_utils;
+    use crate::{decorators::thread::tests::make_extended_thread, misc::test_utils};
 
     #[test]
     fn test_minimal_revoke() {
         let msg_type = test_utils::build_msg_type::<RevokeContent>();
 
-        let credential_id = "test".to_owned();
-        let format = RevocationFormat::IndyAnoncreds;
-        let content = RevokeContent::new(credential_id.clone(), format);
+        let content = RevokeContent::new("test_credential_id".to_owned(), RevocationFormat::IndyAnoncreds);
 
         let decorators = RevokeDecorators::default();
 
         let json = json!({
             "@type": msg_type,
-            "credential_id": credential_id,
-            "revocation_format": format
+            "credential_id": content.credential_id,
+            "revocation_format": content.revocation_format
         });
 
         test_utils::test_msg(content, decorators, json);
@@ -78,25 +77,18 @@ mod tests {
     fn test_extensive_revoke() {
         let msg_type = test_utils::build_msg_type::<RevokeContent>();
 
-        let credential_id = "test".to_owned();
-        let format = RevocationFormat::IndyAnoncreds;
-        let mut content = RevokeContent::new(credential_id.clone(), format);
-        let comment = "test".to_owned();
-        content.comment = Some(comment.clone());
+        let mut content = RevokeContent::new("test_credential_id".to_owned(), RevocationFormat::IndyAnoncreds);
+        content.comment = Some("test_comment".to_owned());
 
         let mut decorators = RevokeDecorators::default();
-        let thid = "test".to_owned();
-        let thread = Thread::new(thid.clone());
-        decorators.thread = Some(thread);
+        decorators.thread = Some(make_extended_thread());
 
         let json = json!({
             "@type": msg_type,
-            "credential_id": credential_id,
-            "revocation_format": format,
-            "comment": comment,
-            "~thread": {
-                "thid": thid
-            }
+            "credential_id": content.credential_id,
+            "revocation_format": content.revocation_format,
+            "comment": content.comment,
+            "~thread": decorators.thread
         });
 
         test_utils::test_msg(content, decorators, json);
