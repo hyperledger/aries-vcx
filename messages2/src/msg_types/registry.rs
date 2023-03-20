@@ -1,23 +1,15 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, marker::PhantomData};
 
 use lazy_static::lazy_static;
 
-use super::{actor::Actor, Protocol};
 use crate::msg_types::types::{
-    basic_message::BasicMessageV1_0,
-    connection::ConnectionV1_0,
-    cred_issuance::CredentialIssuanceV1_0,
-    discover_features::DiscoverFeaturesV1_0,
-    notification::NotificationV1_0,
-    out_of_band::OutOfBandV1_1,
-    present_proof::PresentProofV1_0,
-    report_problem::ReportProblemV1_0,
-    revocation::RevocationV2_0,
-    routing::RoutingV1_0,
-    traits::{MajorVersion, MinorVersion, ProtocolName},
-    trust_ping::TrustPingV1_0,
+    basic_message::BasicMessageV1, connection::ConnectionV1, cred_issuance::CredentialIssuanceV1,
+    discover_features::DiscoverFeaturesV1, notification::NotificationV1, out_of_band::OutOfBandV1,
+    present_proof::PresentProofV1, report_problem::ReportProblemV1, revocation::RevocationV2, routing::RoutingV1,
+    trust_ping::TrustPingV1,
 };
 
+use super::{actor::Actor, Protocol};
 type RegistryMap = HashMap<(&'static str, u8), Vec<RegistryEntry>>;
 
 /// An entry in the protocol registry.
@@ -35,15 +27,12 @@ pub struct RegistryEntry {
 
 /// Extracts the necessary parts for constructing a [`RegistryEntry`] from a protocol minor version.
 macro_rules! extract_parts {
-    ($name:ident) => {
-        (
-            <<$name as MinorVersion>::Parent as MajorVersion>::Parent::FAMILY,
-            <$name as MinorVersion>::Parent::MAJOR,
-            <$name as MinorVersion>::MINOR,
-            <$name as MinorVersion>::Parent::actors().to_vec(),
-            Protocol::from($name),
-        )
-    };
+    ($name:expr) => {{
+        let actors = $crate::msg_types::types::traits::MajorVersion::actors(&$name);
+        let protocol = Protocol::from($name);
+        let (name, major, minor) = protocol.as_parts();
+        (name, major, minor, actors, Protocol::from($name))
+    }};
 }
 
 fn map_insert(map: &mut RegistryMap, parts: (&'static str, u8, u8, Vec<Actor>, Protocol)) {
@@ -68,17 +57,17 @@ lazy_static! {
     /// the values are [`RegistryEntry`] instances.
     pub static ref PROTOCOL_REGISTRY: RegistryMap = {
         let mut m = HashMap::new();
-        map_insert(&mut m, extract_parts!(RoutingV1_0));
-        map_insert(&mut m, extract_parts!(BasicMessageV1_0));
-        map_insert(&mut m, extract_parts!(ConnectionV1_0));
-        map_insert(&mut m, extract_parts!(CredentialIssuanceV1_0));
-        map_insert(&mut m, extract_parts!(DiscoverFeaturesV1_0));
-        map_insert(&mut m, extract_parts!(NotificationV1_0));
-        map_insert(&mut m, extract_parts!(OutOfBandV1_1));
-        map_insert(&mut m, extract_parts!(PresentProofV1_0));
-        map_insert(&mut m, extract_parts!(ReportProblemV1_0));
-        map_insert(&mut m, extract_parts!(RevocationV2_0));
-        map_insert(&mut m, extract_parts!(TrustPingV1_0));
+        map_insert(&mut m, extract_parts!(RoutingV1::V1_0(PhantomData)));
+        map_insert(&mut m, extract_parts!(BasicMessageV1::V1_0(PhantomData)));
+        map_insert(&mut m, extract_parts!(ConnectionV1::V1_0(PhantomData)));
+        map_insert(&mut m, extract_parts!(CredentialIssuanceV1::V1_0(PhantomData)));
+        map_insert(&mut m, extract_parts!(DiscoverFeaturesV1::V1_0(PhantomData)));
+        map_insert(&mut m, extract_parts!(NotificationV1::V1_0(PhantomData)));
+        map_insert(&mut m, extract_parts!(OutOfBandV1::V1_1(PhantomData)));
+        map_insert(&mut m, extract_parts!(PresentProofV1::V1_0(PhantomData)));
+        map_insert(&mut m, extract_parts!(ReportProblemV1::V1_0(PhantomData)));
+        map_insert(&mut m, extract_parts!(RevocationV2::V2_0(PhantomData)));
+        map_insert(&mut m, extract_parts!(TrustPingV1::V1_0(PhantomData)));
         m
     };
 }

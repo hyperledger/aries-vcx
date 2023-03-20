@@ -28,7 +28,8 @@ mod tests {
 
     use super::*;
     use crate::{
-        misc::test_utils, decorators::{thread::tests::make_extended_thread, timing::tests::make_extended_timing},
+        decorators::{thread::tests::make_extended_thread, timing::tests::make_extended_timing},
+        misc::test_utils,
     };
 
     #[test]

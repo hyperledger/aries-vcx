@@ -3,10 +3,11 @@ use serde::{Deserialize, Serialize};
 
 use super::OobGoalCode;
 use crate::{
+    decorators::{attachment::Attachment, timing::Timing},
     misc::mime_type::MimeType,
     msg_types::{types::out_of_band::OutOfBandV1_1Kind, Protocol},
     protocols::common::service::Service,
-    Message, decorators::{attachment::Attachment, timing::Timing},
+    Message,
 };
 
 pub type Invitation = Message<InvitationContent, InvitationDecorators>;

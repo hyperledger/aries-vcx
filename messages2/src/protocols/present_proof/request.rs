@@ -2,8 +2,9 @@ use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 
 use crate::{
+    decorators::{attachment::Attachment, thread::Thread, timing::Timing},
     msg_types::types::present_proof::PresentProofV1_0Kind,
-    Message, decorators::{thread::Thread, timing::Timing, attachment::Attachment},
+    Message,
 };
 
 pub type RequestPresentation = Message<RequestPresentationContent, RequestPresentationDecorators>;

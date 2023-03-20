@@ -137,7 +137,7 @@ mod tests {
     #[test]
     fn test_minimal_problem_report() {
         let msg_type = test_utils::build_msg_type::<ProblemReportContent>();
-        
+
         let content = ProblemReportContent::default();
         let decorators = ProblemReportDecorators::default();
 

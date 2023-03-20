@@ -1,40 +1,36 @@
-use std::str::FromStr;
+use std::{marker::PhantomData, str::FromStr};
 
 use crate::{error::MsgTypeResult, msg_types::actor::Actor};
 
 pub trait MessageKind: FromStr + AsRef<str> {
-    type Parent: MinorVersion;
+    type Parent: MajorVersion;
 
     fn parent() -> Self::Parent;
 }
 
-pub trait MinorVersion: Sized {
-    type Parent: MajorVersion;
-
-    const MINOR: u8;
-
-    fn as_minor_version(&self) -> u8 {
-        Self::MINOR
-    }
-}
-
 pub trait MajorVersion: Sized {
     type Actors: IntoIterator<Item = Actor>;
-    type Parent: ProtocolName;
 
     const MAJOR: u8;
 
-    fn resolve_minor_ver(minor: u8) -> MsgTypeResult<Self>;
+    fn try_resolve_version(minor: u8) -> MsgTypeResult<Self>;
 
     fn as_version_parts(&self) -> (u8, u8);
 
-    fn actors() -> Self::Actors;
+    fn actors(&self) -> Self::Actors;
+
+    fn kind<T>(_: PhantomData<T>, kind: &str) -> crate::error::MsgTypeResult<T>
+    where
+        T: FromStr + MessageKind,
+    {
+        T::from_str(kind).map_err(|_| crate::error::MsgTypeError::unknown_kind(kind.to_owned()))
+    }
 }
 
 pub trait ProtocolName: Sized {
-    const FAMILY: &'static str;
+    const PROTOCOL: &'static str;
 
-    fn resolve_version(major: u8, minor: u8) -> MsgTypeResult<Self>;
+    fn try_from_version_parts(major: u8, minor: u8) -> MsgTypeResult<Self>;
 
-    fn as_protocol_parts(&self) -> (&str, u8, u8);
+    fn as_protocol_parts(&self) -> (&'static str, u8, u8);
 }

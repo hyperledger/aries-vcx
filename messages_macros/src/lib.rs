@@ -1,10 +1,9 @@
 #![allow(clippy::expect_fun_call)]
 
-mod common;
-mod message;
+mod message_content;
 mod message_type;
 
-use message::message_impl;
+use message_content::message_content_impl;
 use message_type::message_type_impl;
 use proc_macro::TokenStream;
 use syn::{parse_macro_input, DeriveInput, Error};
@@ -12,8 +11,8 @@ use syn::{parse_macro_input, DeriveInput, Error};
 /// Derive macro to be used on actual message that can be received.
 /// The macro simplifies mapping the message to its respective message type.
 ///
-/// It accepts a single instance of the `message` attribute, followed by
-/// a string literal that maps to a *value* of the message type.
+/// The message type is provided in the `type` argument to the macro's attribute.
+/// The value expected is a literal string containing an expression of an enum with unit variants.
 ///
 /// ``` ignore
 /// use messages_macros::Message;
@@ -25,13 +24,15 @@ use syn::{parse_macro_input, DeriveInput, Error};
 /// }
 ///
 /// #[derive(Message)]
-/// #[message("A::Variant2")]
+/// #[message(type = "A::Variant2")]
 /// struct B;
 /// ```
 #[proc_macro_derive(MessageContent, attributes(message))]
 pub fn message_content(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
-    message_impl(input).unwrap_or_else(Error::into_compile_error).into()
+    message_content_impl(input)
+        .unwrap_or_else(Error::into_compile_error)
+        .into()
 }
 
 /// Derive macro to be used for easier implementation of message type components.
@@ -65,7 +66,7 @@ pub fn message_content(input: TokenStream) -> TokenStream {
 /// #[semver(minor = 1)]
 /// struct C;
 /// ```
-#[proc_macro_derive(MessageType, attributes(semver))]
+#[proc_macro_derive(MessageType, attributes(msg_type))]
 pub fn message_type(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
     message_type_impl(input)

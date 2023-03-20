@@ -3,8 +3,9 @@ use serde::{Deserialize, Serialize};
 
 use super::ProtocolDescriptor;
 use crate::{
+    decorators::timing::Timing,
     msg_types::{registry::PROTOCOL_REGISTRY, types::discover_features::DiscoverFeaturesV1_0Kind},
-    Message, decorators::timing::Timing,
+    Message,
 };
 
 pub type Query = Message<QueryContent, QueryDecorators>;

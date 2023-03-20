@@ -1,274 +1,200 @@
-#![allow(clippy::expect_fun_call)]
-
+use darling::{
+    ast::{Data, Fields},
+    FromDeriveInput, FromVariant,
+};
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
 use syn::{
-    punctuated::Punctuated, spanned::Spanned, Data, DeriveInput, Error, Field, Fields, Lit, Meta, MetaList,
-    MetaNameValue, NestedMeta, Path, Result as SynResult, Token, Variant,
+    punctuated::Punctuated, spanned::Spanned, DeriveInput, Error, GenericArgument, Path, PathArguments, PathSegment,
+    Result as SynResult, Token, Type, TypePath,
 };
 
-use crate::common::{end_or_err, next_or_err, next_or_panic};
+#[derive(FromDeriveInput)]
+#[darling(attributes(msg_type), supports(enum_newtype))]
+struct Protocol {
+    ident: Ident,
+    data: Data<MajorVerVariant, ()>,
+    protocol: String,
+}
 
-const SEMVER: &str = "semver";
-const MINOR: &str = "minor";
-const MAJOR: &str = "major";
-const PROTOCOL: &str = "protocol";
-const PARENT: &str = "parent";
-const ACTORS: &str = "actors";
+#[derive(FromVariant)]
+#[darling(attributes(msg_type))]
+struct MajorVerVariant {
+    ident: Ident,
+    fields: Fields<Type>,
+}
+
+#[derive(FromDeriveInput)]
+#[darling(attributes(msg_type), supports(enum_newtype))]
+struct Version {
+    ident: Ident,
+    data: Data<MinorVerVariant, ()>,
+    major: u8,
+}
+
+#[derive(FromVariant)]
+#[darling(attributes(msg_type))]
+struct MinorVerVariant {
+    ident: Ident,
+    fields: Fields<Type>,
+    minor: u8,
+    actors: Punctuated<Path, Token![,]>,
+}
 
 pub fn message_type_impl(input: DeriveInput) -> SynResult<TokenStream> {
-    let name = input.ident;
-
-    let mut attr_iter = input.attrs.into_iter().filter(|a| a.path.is_ident(SEMVER));
-
-    // Look for our attribute
-    let attr = next_or_panic(&mut attr_iter, &format!("must use \"{SEMVER}\" attribute"));
-    let span = attr.span();
-
-    // Should be the only occurrence
-    end_or_err(&mut attr_iter, format!("duplicate \"{SEMVER}\" attribute"))?;
-
-    // Should be a list of name value pairs
-    let list: Punctuated<_, Token![,]> = attr.parse_args_with(Punctuated::parse_terminated)?;
-
-    let mut iter = list.into_iter();
-    let nv = try_get_nv_pair(&mut iter, span)?;
-
-    // Process arguments
-    let ts = if nv.path.is_ident(PARENT) {
-        let parent = try_parse_parent(nv)?;
-        Ok(process_kind(&name, parent))
-    } else if nv.path.is_ident(MINOR) {
-        let parent = try_get_nv_pair(&mut iter, span)?;
-        let parent = try_parse_parent(parent)?;
-        process_minor(&name, parent, nv)
-    } else if nv.path.is_ident(MAJOR) {
-        let parent = try_get_nv_pair(&mut iter, span)?;
-        let parent = try_parse_parent(parent)?;
-        let actors = try_get_actors(&mut iter, span)?;
-        process_major(&name, parent, actors, nv, input.data)
-    } else if nv.path.is_ident(PROTOCOL) {
-        process_family(&name, nv, input.data)
+    if let Ok(protocol) = Protocol::from_derive_input(&input) {
+        Ok(process_protocol(protocol))
+    } else if let Ok(version) = Version::from_derive_input(&input) {
+        process_version(version)
     } else {
-        Err(Error::new(
-            nv.path.span(),
-            format!("expecting (\"{PROTOCOL}\"), (\"{MAJOR}\", \"{PARENT}\") or (\"{MINOR}\", \"{PARENT}\")"),
-        ))
-    }?;
-
-    // Error on other arguments provided
-    end_or_err(&mut iter, "too many arguments")?;
-
-    Ok(ts)
-}
-
-/// Matches the next value from the iter to get a name value pair.
-fn try_get_nv_pair<I>(iter: &mut I, span: Span) -> SynResult<MetaNameValue>
-where
-    I: Iterator<Item = Meta>,
-{
-    match next_or_err(iter, span, "expecting arguments")? {
-        Meta::NameValue(nv) => Ok(nv),
-        v => Err(Error::new(v.span(), "expecting name value pair")),
+        Err(Error::new(input.span(), "invalid arguments"))
     }
 }
 
-/// Matches the next value from the iter to get a list
-fn try_get_list<I>(iter: &mut I, span: Span) -> SynResult<MetaList>
-where
-    I: Iterator<Item = Meta>,
-{
-    match next_or_err(iter, span, "expecting arguments")? {
-        Meta::List(list) => Ok(list),
-        v => Err(Error::new(v.span(), "expecting a list")),
+fn process_protocol(Protocol { ident, data, protocol }: Protocol) -> TokenStream {
+    // The macro only accepts enums
+    let Data::Enum(variants) = data else {unreachable!()};
+
+    let mut try_from_match_arms = Vec::new();
+    let mut as_parts_match_arms = Vec::new();
+    let mut field_impls = Vec::new();
+
+    for MajorVerVariant { ident, mut fields } in variants {
+        // Newtype enums would always have one field
+        let field = fields.fields.pop().expect("only implemented on newtype enums");
+
+        try_from_match_arms.push(quote! {#field::MAJOR => #field::try_resolve_version(minor).map(Self::#ident)});
+        as_parts_match_arms.push(quote! {Self::#ident(v) => v.as_version_parts()});
+        field_impls.push(quote! {impl #field { const PROTOCOL: &str = #protocol; }});
     }
-}
 
-/// Matches the next value to a path, to be used as enum declaration
-fn try_get_path(nested: NestedMeta) -> SynResult<Path> {
-    match nested {
-        NestedMeta::Meta(Meta::Path(l)) => Ok(l),
-        v => Err(Error::new(v.span(), "values must be enum variants")),
-    }
-}
-
-/// Attempts to parse a type path from a name value pair.
-fn try_parse_parent(parent: MetaNameValue) -> SynResult<Path> {
-    if parent.path.is_ident(PARENT) {
-        match parent.lit {
-            Lit::Str(s) => Ok(s.parse()?),
-            l => Err(Error::new(l.span(), "expecting literal string")),
-        }
-    } else {
-        Err(Error::new(parent.span(), format!("missing \"{PARENT}\" argument")))
-    }
-}
-
-/// Matches the next name value pair from the iter to get a list of actors.
-fn try_get_actors<I>(iter: &mut I, span: Span) -> SynResult<Vec<Path>>
-where
-    I: Iterator<Item = Meta>,
-{
-    let actors = try_get_list(iter, span)?;
-
-    if actors.path.is_ident(ACTORS) {
-        actors.nested.into_iter().map(try_get_path).collect()
-    } else {
-        Err(Error::new(actors.span(), format!("missing \"{ACTORS}\" argument")))
-    }
-}
-
-/// Iterates the variant and returns it's name and field if it only has one.
-fn try_get_var_parts(var: Variant) -> SynResult<(Ident, Field)> {
-    let var_name = var.ident;
-
-    let var_content = match var.fields {
-        Fields::Unnamed(v) => v,
-        e => return Err(Error::new(e.span(), "only tuple variants allowed")),
-    };
-
-    let mut iter = var_content.unnamed.into_iter();
-    let field = next_or_err(&mut iter, var_name.span(), "variants must have exactly one field")?;
-    end_or_err(&mut iter, "variants must have exactly one field")?;
-
-    Ok((var_name, field))
-}
-
-fn process_kind(name: &Ident, parent: Path) -> TokenStream {
     quote! {
-        impl crate::msg_types::types::traits::MessageKind for #name {
-            type Parent = #parent;
+        impl crate::msg_types::types::traits::ProtocolName for #ident {
+            const PROTOCOL: &'static str = #protocol;
 
-            fn parent() -> Self::Parent {
-                #parent
+            fn try_from_version_parts(major: u8, minor: u8) -> crate::error::MsgTypeResult<Self> {
+                use crate::msg_types::types::traits::MajorVersion;
+
+                match major {
+                    #(#try_from_match_arms),*,
+                    _ => Err(crate::error::MsgTypeError::major_ver_err(major)),
+                }
+            }
+
+            fn as_protocol_parts(&self) -> (&'static str, u8, u8) {
+                use crate::msg_types::types::traits::MajorVersion;
+
+                let (major, minor) = match self {
+                    #(#as_parts_match_arms),*,
+                };
+
+                (Self::PROTOCOL, major, minor)
             }
         }
+
+        #(#field_impls)*
     }
 }
 
-fn process_minor(name: &Ident, parent: Path, minor: MetaNameValue) -> SynResult<TokenStream> {
-    // Ensure the value provided is an integer
-    let Lit::Int(i) = minor.lit else {
-        return Err(Error::new(minor.lit.span(), "expecting u8"));
-    };
+fn process_version(Version { ident, data, major }: Version) -> SynResult<TokenStream> {
+    // The macro only accepts enums
+    let Data::Enum(variants) = data else {unreachable!()};
 
-    let expanded = quote! {
-        impl crate::msg_types::types::traits::MinorVersion for #name {
-            type Parent = #parent;
+    let mut try_resolve_match_arms = Vec::new();
+    let mut as_parts_match_arms = Vec::new();
+    let mut actors_match_arms = Vec::new();
+    let mut msg_kind_impls = Vec::new();
 
-            const MINOR: u8 = #i;
-        }
-    };
+    for MinorVerVariant {
+        ident: var_ident,
+        minor,
+        actors,
+        mut fields,
+    } in variants
+    {
+        // Newtype enums would always have one field
+        let field = fields.fields.pop().expect("only implemented on newtype enums");
+        let span = field.span();
 
-    Ok(expanded)
-}
+        let path = match field {
+            Type::Path(p) => Ok(p),
+            _ => Err(Error::new(span, "expecting type path")),
+        }?;
 
-fn process_major(
-    name: &Ident,
-    parent: Path,
-    actors: Vec<Path>,
-    major: MetaNameValue,
-    data: Data,
-) -> SynResult<TokenStream> {
-    // Ensure the value provided is an integer
-    let Lit::Int(i) = major.lit else {
-        return Err(Error::new(major.lit.span(), "expecting u8"));
-    };
+        let segment = first_path_segment(path)?;
 
-    let Data::Enum(d) = data else {
-        return Err(Error::new(name.span(), "can only derive on enums"));
-    };
+        let PathArguments::AngleBracketed(args) = segment.arguments else { return Err(make_type_param_err(span)) };
+        let arg = args.args.into_iter().next().ok_or_else(|| make_type_param_err(span))?;
+        let GenericArgument::Type(Type::Path(path)) = arg else { return Err(make_type_param_err(span)) };
 
-    let mut resolve_fn_match = TokenStream::new();
-    let mut as_parts_fn_match = TokenStream::new();
+        let segment = first_path_segment(path)?;
+        let ty = segment.ident;
 
-    for var in d.variants {
-        let (var_name, field) = try_get_var_parts(var)?;
+        try_resolve_match_arms.push(quote! {#minor => Ok(Self::#var_ident(std::marker::PhantomData))});
+        as_parts_match_arms.push(quote! {Self::#var_ident(_) => #minor});
+        actors_match_arms.push(quote! {Self::#var_ident(_) => vec![#actors]});
+        msg_kind_impls.push(quote! {
+            impl crate::msg_types::types::traits::MessageKind for #ty {
+                type Parent = #ident;
 
-        resolve_fn_match.extend(quote! {#field::MINOR => Ok(Self::#var_name(#field)),});
-        as_parts_fn_match.extend(quote! {Self::#var_name(v) => v.as_minor_version(),});
+                fn parent() -> Self::Parent {
+                    #ident::#var_ident(std::marker::PhantomData)
+                }
+            }
+        });
     }
 
-    let num_actors = actors.len();
-
     let expanded = quote! {
-        impl crate::msg_types::types::traits::MajorVersion for #name {
-            type Actors = [crate::msg_types::actor::Actor; #num_actors];
+        impl crate::msg_types::types::traits::MajorVersion for #ident {
+            type Actors = Vec<crate::msg_types::actor::Actor>;
 
-            type Parent = #parent;
+            const MAJOR: u8 = #major;
 
-            const MAJOR: u8 = #i;
-
-            fn resolve_minor_ver(minor: u8) -> crate::error::MsgTypeResult<Self> {
-                let family = Self::Parent::FAMILY;
+            fn try_resolve_version(minor: u8) -> crate::error::MsgTypeResult<Self> {
+                let protocol = Self::PROTOCOL;
                 let major = Self::MAJOR;
-                let Some(minor) = get_supported_version(family, major, minor) else {
+
+                let Some(minor) = crate::msg_types::registry::get_supported_version(protocol, major, minor) else {
                     return Err(crate::error::MsgTypeError::minor_ver_err(minor));
                 };
 
                 match minor {
-                    #resolve_fn_match
+                    #(#try_resolve_match_arms),*,
                     _ => Err(crate::error::MsgTypeError::minor_ver_err(minor)),
                 }
             }
 
             fn as_version_parts(&self) -> (u8, u8) {
                 let minor = match self {
-                    #as_parts_fn_match
+                    #(#as_parts_match_arms),*,
                 };
 
                 (Self::MAJOR, minor)
             }
 
-            fn actors() -> Self::Actors {
-                [#(#actors),*]
+            fn actors(&self) -> Self::Actors {
+                match self {
+                    #(#actors_match_arms),*,
+                }
             }
         }
+
+        #(#msg_kind_impls)*
     };
 
     Ok(expanded)
 }
 
-fn process_family(name: &Ident, family: MetaNameValue, data: Data) -> SynResult<TokenStream> {
-    // Ensure the value provided is an integer
-    let Lit::Str(s) = family.lit else {
-        return Err(Error::new(family.lit.span(), "expecting literal"));
-    };
+fn make_type_param_err(span: Span) -> Error {
+    Error::new(span, "expecting a type parameter like PhantomData<T>")
+}
 
-    let Data::Enum(d) = data else {
-        return Err(Error::new(name.span(), "can only derive on enums"));
-    };
+fn first_path_segment(path: TypePath) -> SynResult<PathSegment> {
+    let span = path.span();
 
-    let mut resolve_fn_match = TokenStream::new();
-    let mut as_parts_fn_match = TokenStream::new();
-
-    for var in d.variants {
-        let (var_name, field) = try_get_var_parts(var)?;
-
-        resolve_fn_match.extend(quote! {#field::MAJOR => Ok(Self::#var_name(#field::resolve_minor_ver(minor)?)),});
-        as_parts_fn_match.extend(quote! {Self::#var_name(v) => v.as_version_parts(),});
-    }
-
-    let expanded = quote! {
-        impl crate::msg_types::types::traits::ProtocolName for #name {
-            const FAMILY: &'static str = #s;
-
-            fn resolve_version(major: u8, minor: u8) -> crate::error::MsgTypeResult<Self> {
-                match major {
-                    #resolve_fn_match
-                    _ => Err(crate::error::MsgTypeError::major_ver_err(major)),
-                }
-            }
-
-            fn as_protocol_parts(&self) -> (&str, u8, u8) {
-                let (major, minor) = match self {
-                    #as_parts_fn_match
-                };
-
-                (Self::FAMILY, major, minor)
-            }
-        }
-    };
-
-    Ok(expanded)
+    path.path
+        .segments
+        .into_iter()
+        .next()
+        .ok_or_else(|| make_type_param_err(span))
 }

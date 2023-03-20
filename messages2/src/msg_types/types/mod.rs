@@ -52,10 +52,10 @@ pub enum Protocol {
 
 /// Utility macro to avoid harder to read and error prone calling
 /// of the version resolution method on the correct type.
-macro_rules! resolve_major_ver {
+macro_rules! match_protocol {
     ($type:ident, $protocol:expr, $major:expr, $minor:expr) => {
-        if $protocol == $type::FAMILY {
-            return Ok(Self::$type($type::resolve_version($major, $minor)?));
+        if $protocol == $type::PROTOCOL {
+            return Ok(Self::$type($type::try_from_version_parts($major, $minor)?));
         }
     };
 }
@@ -71,23 +71,23 @@ impl Protocol {
     /// An error is returned if a [`Protocol`] could not be constructed
     /// from the provided parts.
     pub fn from_parts(protocol: &str, major: u8, minor: u8) -> MsgTypeResult<Self> {
-        resolve_major_ver!(Routing, protocol, major, minor);
-        resolve_major_ver!(Connection, protocol, major, minor);
-        resolve_major_ver!(Revocation, protocol, major, minor);
-        resolve_major_ver!(CredentialIssuance, protocol, major, minor);
-        resolve_major_ver!(ReportProblem, protocol, major, minor);
-        resolve_major_ver!(PresentProof, protocol, major, minor);
-        resolve_major_ver!(TrustPing, protocol, major, minor);
-        resolve_major_ver!(DiscoverFeatures, protocol, major, minor);
-        resolve_major_ver!(BasicMessage, protocol, major, minor);
-        resolve_major_ver!(OutOfBand, protocol, major, minor);
-        resolve_major_ver!(Notification, protocol, major, minor);
+        match_protocol!(Routing, protocol, major, minor);
+        match_protocol!(Connection, protocol, major, minor);
+        match_protocol!(Revocation, protocol, major, minor);
+        match_protocol!(CredentialIssuance, protocol, major, minor);
+        match_protocol!(ReportProblem, protocol, major, minor);
+        match_protocol!(PresentProof, protocol, major, minor);
+        match_protocol!(TrustPing, protocol, major, minor);
+        match_protocol!(DiscoverFeatures, protocol, major, minor);
+        match_protocol!(BasicMessage, protocol, major, minor);
+        match_protocol!(OutOfBand, protocol, major, minor);
+        match_protocol!(Notification, protocol, major, minor);
 
         Err(MsgTypeError::unknown_protocol(protocol.to_owned()))
     }
 
     /// Returns the parts that this [`Protocol`] is comprised of.
-    pub fn as_parts(&self) -> (&str, u8, u8) {
+    pub fn as_parts(&self) -> (&'static str, u8, u8) {
         match &self {
             Self::Routing(v) => v.as_protocol_parts(),
             Self::Connection(v) => v.as_protocol_parts(),
@@ -108,7 +108,7 @@ impl Protocol {
     /// # Errors:
     ///
     /// Will return an error if the iterator returns [`None`].
-    pub fn next_part<'a, I>(iter: &mut I, name: &'static str) -> MsgTypeResult<&'a str>
+    pub(crate) fn next_part<'a, I>(iter: &mut I, name: &'static str) -> MsgTypeResult<&'a str>
     where
         I: Iterator<Item = &'a str>,
     {

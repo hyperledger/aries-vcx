@@ -3,8 +3,9 @@ use serde::{Deserialize, Serialize};
 
 use super::ProtocolDescriptor;
 use crate::{
+    decorators::{thread::Thread, timing::Timing},
     msg_types::{registry::PROTOCOL_REGISTRY, types::discover_features::DiscoverFeaturesV1_0Kind},
-    Message, decorators::{thread::Thread, timing::Timing},
+    Message,
 };
 
 pub type Disclose = Message<DiscloseContent, DiscloseDecorators>;
