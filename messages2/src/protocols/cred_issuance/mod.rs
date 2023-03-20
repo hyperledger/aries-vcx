@@ -107,12 +107,29 @@ impl CredentialPreview {
     }
 }
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, Deserialize, PartialEq)]
+#[serde(try_from = "MessageType")]
 struct CredentialPreviewMsgType;
 
-impl From<CredentialPreviewMsgType> for CredentialIssuanceV1_0Kind {
-    fn from(_value: CredentialPreviewMsgType) -> Self {
+impl<'a> From<&'a CredentialPreviewMsgType> for CredentialIssuanceV1_0Kind {
+    fn from(_value: &'a CredentialPreviewMsgType) -> Self {
         CredentialIssuanceV1_0Kind::CredentialPreview
+    }
+}
+
+impl<'a> TryFrom<MessageType<'a>> for CredentialPreviewMsgType {
+    type Error = String;
+
+    fn try_from(value: MessageType) -> Result<Self, Self::Error> {
+        if let Protocol::CredentialIssuance(CredentialIssuanceKind::V1(CredentialIssuanceV1::V1_0(_))) = value.protocol
+        {
+            if let Ok(CredentialIssuanceV1_0Kind::CredentialPreview) = CredentialIssuanceV1_0Kind::from_str(value.kind)
+            {
+                return Ok(CredentialPreviewMsgType);
+            }
+        }
+
+        Err(format!("message kind is not {}", value.kind))
     }
 }
 
@@ -122,29 +139,8 @@ impl Serialize for CredentialPreviewMsgType {
         S: serde::Serializer,
     {
         let protocol = Protocol::from(CredentialIssuanceV1_0Kind::parent());
-        format_args!("{protocol}/{}", CredentialIssuanceV1_0Kind::CredentialPreview.as_ref()).serialize(serializer)
-    }
-}
-
-impl<'de> Deserialize<'de> for CredentialPreviewMsgType {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let msg_type = MessageType::deserialize(deserializer)?;
-
-        if let Protocol::CredentialIssuance(CredentialIssuanceKind::V1(CredentialIssuanceV1::V1_0(_))) =
-            msg_type.protocol
-        {
-            if let Ok(CredentialIssuanceV1_0Kind::CredentialPreview) =
-                CredentialIssuanceV1_0Kind::from_str(msg_type.kind)
-            {
-                return Ok(CredentialPreviewMsgType);
-            }
-        }
-
-        let kind = CredentialIssuanceV1_0Kind::CredentialPreview;
-        Err(D::Error::custom(format!("message kind is not {}", kind.as_ref())))
+        let kind = CredentialIssuanceV1_0Kind::from(self);
+        format_args!("{protocol}/{}", kind.as_ref()).serialize(serializer)
     }
 }
 

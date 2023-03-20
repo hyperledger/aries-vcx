@@ -1,9 +1,10 @@
 use std::str::FromStr;
 
 use messages_macros::MessageContent;
-use serde::{de::Error, Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 
 use crate::{
+    decorators::{thread::Thread, timing::Timing},
     misc::mime_type::MimeType,
     msg_types::{
         types::{
@@ -12,7 +13,7 @@ use crate::{
         },
         MessageType, Protocol,
     },
-    Message, decorators::{thread::Thread, timing::Timing},
+    Message,
 };
 
 pub type ProposePresentation = Message<ProposePresentationContent, ProposePresentationDecorators>;
@@ -62,8 +63,28 @@ impl PresentationPreview {
     }
 }
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, Deserialize, PartialEq)]
+#[serde(try_from = "MessageType")]
 struct PresentationPreviewMsgType;
+
+impl<'a> From<&'a PresentationPreviewMsgType> for PresentProofV1_0Kind {
+    fn from(_value: &'a PresentationPreviewMsgType) -> Self {
+        PresentProofV1_0Kind::PresentationPreview
+    }
+}
+
+impl<'a> TryFrom<MessageType<'a>> for PresentationPreviewMsgType {
+    type Error = String;
+
+    fn try_from(value: MessageType<'a>) -> Result<Self, Self::Error> {
+        if let Protocol::PresentProof(PresentProof::V1(PresentProofV1::V1_0(_))) = value.protocol {
+            if let Ok(PresentProofV1_0Kind::PresentationPreview) = PresentProofV1_0Kind::from_str(value.kind) {
+                return Ok(PresentationPreviewMsgType);
+            }
+        }
+        Err(format!("message kind is not {}", value.kind))
+    }
+}
 
 impl Serialize for PresentationPreviewMsgType {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
@@ -71,25 +92,8 @@ impl Serialize for PresentationPreviewMsgType {
         S: serde::Serializer,
     {
         let protocol = Protocol::from(PresentProofV1_0Kind::parent());
-        format_args!("{protocol}/{}", PresentProofV1_0Kind::PresentationPreview.as_ref()).serialize(serializer)
-    }
-}
-
-impl<'de> Deserialize<'de> for PresentationPreviewMsgType {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let msg_type = MessageType::deserialize(deserializer)?;
-
-        if let Protocol::PresentProof(PresentProof::V1(PresentProofV1::V1_0(_))) = msg_type.protocol {
-            if let Ok(PresentProofV1_0Kind::PresentationPreview) = PresentProofV1_0Kind::from_str(msg_type.kind) {
-                return Ok(PresentationPreviewMsgType);
-            }
-        }
-
-        let kind = PresentProofV1_0Kind::PresentationPreview;
-        Err(D::Error::custom(format!("message kind is not {}", kind.as_ref())))
+        let kind = PresentProofV1_0Kind::from(self);
+        format_args!("{protocol}/{}", kind.as_ref()).serialize(serializer)
     }
 }
 

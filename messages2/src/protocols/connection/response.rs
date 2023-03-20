@@ -1,9 +1,10 @@
 use std::str::FromStr;
 
 use messages_macros::MessageContent;
-use serde::{de::Error, Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 
 use crate::{
+    decorators::{please_ack::PleaseAck, thread::Thread, timing::Timing},
     msg_types::{
         types::{
             connection::{Connection, ConnectionV1, ConnectionV1_0Kind},
@@ -11,7 +12,7 @@ use crate::{
         },
         MessageType, Protocol,
     },
-    Message, decorators::{thread::Thread, please_ack::PleaseAck, timing::Timing},
+    Message,
 };
 
 pub type Response = Message<ResponseContent, ResponseDecorators>;
@@ -71,8 +72,29 @@ impl ResponseDecorators {
     }
 }
 
-#[derive(Copy, Clone, Debug, Default, PartialEq)]
+#[derive(Copy, Clone, Debug, Deserialize, Default, PartialEq)]
+#[serde(try_from = "MessageType")]
 struct SigEd25519Sha512Single;
+
+impl<'a> From<&'a SigEd25519Sha512Single> for ConnectionV1_0Kind {
+    fn from(_value: &'a SigEd25519Sha512Single) -> Self {
+        ConnectionV1_0Kind::Ed25519Sha512Single
+    }
+}
+
+impl<'a> TryFrom<MessageType<'a>> for SigEd25519Sha512Single {
+    type Error = String;
+
+    fn try_from(value: MessageType<'a>) -> Result<Self, Self::Error> {
+        if let Protocol::Connection(Connection::V1(ConnectionV1::V1_0(_))) = value.protocol {
+            if let Ok(ConnectionV1_0Kind::Ed25519Sha512Single) = ConnectionV1_0Kind::from_str(value.kind) {
+                return Ok(SigEd25519Sha512Single);
+            }
+        }
+
+        Err(format!("message kind is not {}", value.kind))
+    }
+}
 
 impl Serialize for SigEd25519Sha512Single {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
@@ -80,24 +102,7 @@ impl Serialize for SigEd25519Sha512Single {
         S: serde::Serializer,
     {
         let protocol = Protocol::from(ConnectionV1_0Kind::parent());
-        format_args!("{protocol}/{}", ConnectionV1_0Kind::Ed25519Sha512Single.as_ref()).serialize(serializer)
-    }
-}
-
-impl<'de> Deserialize<'de> for SigEd25519Sha512Single {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let msg_type = MessageType::deserialize(deserializer)?;
-
-        if let Protocol::Connection(Connection::V1(ConnectionV1::V1_0(_))) = msg_type.protocol {
-            if let Ok(ConnectionV1_0Kind::Ed25519Sha512Single) = ConnectionV1_0Kind::from_str(msg_type.kind) {
-                return Ok(SigEd25519Sha512Single);
-            }
-        }
-
-        let kind = ConnectionV1_0Kind::Ed25519Sha512Single;
-        Err(D::Error::custom(format!("message kind is not {}", kind.as_ref())))
+        let kind = ConnectionV1_0Kind::from(self);
+        format_args!("{protocol}/{}", kind.as_ref()).serialize(serializer)
     }
 }
