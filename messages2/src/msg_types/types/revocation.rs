@@ -15,7 +15,7 @@ pub enum Revocation {
 }
 
 #[derive(Copy, Clone, Debug, From, PartialEq, TransitiveFrom, MessageType)]
-#[transitive(into(all(Revocation, Protocol)))]
+#[transitive(into(Revocation, Protocol))]
 #[msg_type(major = 2)]
 pub enum RevocationV2 {
     #[msg_type(minor = 0, actors = "Actor::Holder, Actor::Issuer")]

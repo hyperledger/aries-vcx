@@ -15,7 +15,7 @@ pub enum Routing {
 }
 
 #[derive(Copy, Clone, Debug, From, PartialEq, TransitiveFrom, MessageType)]
-#[transitive(into(all(Routing, Protocol)))]
+#[transitive(into(Routing, Protocol))]
 #[msg_type(major = 1)]
 pub enum RoutingV1 {
     #[msg_type(minor = 0, actors = "Actor::Mediator")]

@@ -5,10 +5,8 @@ use messages_macros::MessageType;
 use strum_macros::{AsRefStr, EnumString};
 use transitive::TransitiveFrom;
 
-use super::{
-    Protocol,
-};
-use crate::msg_types::{actor::Actor};
+use super::Protocol;
+use crate::msg_types::actor::Actor;
 
 #[derive(Copy, Clone, Debug, From, PartialEq, MessageType)]
 #[msg_type(protocol = "report-problem")]
@@ -17,7 +15,7 @@ pub enum ReportProblem {
 }
 
 #[derive(Copy, Clone, Debug, From, PartialEq, TransitiveFrom, MessageType)]
-#[transitive(into(all(ReportProblem, Protocol)))]
+#[transitive(into(ReportProblem, Protocol))]
 #[msg_type(major = 1)]
 pub enum ReportProblemV1 {
     #[msg_type(minor = 0, actors = "Actor::Notified, Actor::Notifier")]

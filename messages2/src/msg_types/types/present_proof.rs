@@ -15,7 +15,7 @@ pub enum PresentProof {
 }
 
 #[derive(Copy, Clone, Debug, From, TryInto, PartialEq, TransitiveFrom, MessageType)]
-#[transitive(into(all(PresentProof, Protocol)))]
+#[transitive(into(PresentProof, Protocol))]
 #[msg_type(major = 1)]
 pub enum PresentProofV1 {
     #[msg_type(minor = 0, actors = "Actor::Prover, Actor::Verifier")]

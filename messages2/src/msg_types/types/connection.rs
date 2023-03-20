@@ -15,7 +15,7 @@ pub enum Connection {
 }
 
 #[derive(Copy, Clone, Debug, From, TryInto, PartialEq, TransitiveFrom, MessageType)]
-#[transitive(into(all(Connection, Protocol)))]
+#[transitive(into(Connection, Protocol))]
 #[msg_type(major = 1)]
 pub enum ConnectionV1 {
     #[msg_type(minor = 0, actors = "Actor::Inviter, Actor::Invitee")]

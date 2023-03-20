@@ -15,7 +15,7 @@ pub enum TrustPing {
 }
 
 #[derive(Copy, Clone, Debug, From, PartialEq, TransitiveFrom, MessageType)]
-#[transitive(into(all(TrustPing, Protocol)))]
+#[transitive(into(TrustPing, Protocol))]
 #[msg_type(major = 1)]
 pub enum TrustPingV1 {
     #[msg_type(minor = 0, actors = "Actor::Sender, Actor::Receiver")]

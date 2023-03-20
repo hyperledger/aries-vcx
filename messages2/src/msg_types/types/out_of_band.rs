@@ -15,7 +15,7 @@ pub enum OutOfBand {
 }
 
 #[derive(Copy, Clone, Debug, From, PartialEq, TransitiveFrom, MessageType)]
-#[transitive(into(all(OutOfBand, Protocol)))]
+#[transitive(into(OutOfBand, Protocol))]
 #[msg_type(major = 1)]
 pub enum OutOfBandV1 {
     #[msg_type(minor = 0, actors = "Actor::Receiver, Actor::Sender")]

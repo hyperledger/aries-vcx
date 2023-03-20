@@ -15,7 +15,7 @@ pub enum Notification {
 }
 
 #[derive(Copy, Clone, Debug, From, PartialEq, TransitiveFrom, MessageType)]
-#[transitive(into(all(Notification, Protocol)))]
+#[transitive(into(Notification, Protocol))]
 #[msg_type(major = 1)]
 pub enum NotificationV1 {
     #[msg_type(minor = 0, actors = "Actor::Notified, Actor::Notifier")]

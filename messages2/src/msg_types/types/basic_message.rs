@@ -15,7 +15,7 @@ pub enum BasicMessage {
 }
 
 #[derive(Copy, Clone, Debug, From, PartialEq, TransitiveFrom, MessageType)]
-#[transitive(into(all(BasicMessage, Protocol)))]
+#[transitive(into(BasicMessage, Protocol))]
 #[msg_type(major = 1)]
 pub enum BasicMessageV1 {
     #[msg_type(minor = 0, actors = "Actor::Receiver, Actor::Sender")]

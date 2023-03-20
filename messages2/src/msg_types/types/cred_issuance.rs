@@ -15,7 +15,7 @@ pub enum CredentialIssuance {
 }
 
 #[derive(Copy, Clone, Debug, From, TryInto, PartialEq, TransitiveFrom, MessageType)]
-#[transitive(into(all(CredentialIssuance, Protocol)))]
+#[transitive(into(CredentialIssuance, Protocol))]
 #[msg_type(major = 1)]
 pub enum CredentialIssuanceV1 {
     #[msg_type(minor = 0, actors = "Actor::Holder, Actor::Issuer")]

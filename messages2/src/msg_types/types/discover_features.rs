@@ -15,7 +15,7 @@ pub enum DiscoverFeatures {
 }
 
 #[derive(Copy, Clone, Debug, From, PartialEq, TransitiveFrom, MessageType)]
-#[transitive(into(all(DiscoverFeatures, Protocol)))]
+#[transitive(into(DiscoverFeatures, Protocol))]
 #[msg_type(major = 1)]
 pub enum DiscoverFeaturesV1 {
     #[msg_type(minor = 0, actors = "Actor::Requester, Actor::Responder")]
