@@ -50,3 +50,70 @@ pub struct InvitationDecorators {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<Timing>,
 }
+
+#[cfg(test)]
+#[allow(clippy::unwrap_used)]
+#[allow(clippy::field_reassign_with_default)]
+mod tests {
+    use serde_json::json;
+
+    use super::*;
+    use crate::{
+        decorators::{attachment::tests::make_extended_attachment, timing::tests::make_extended_timing},
+        misc::test_utils,
+        msg_types::types::connection::ConnectionV1,
+    };
+
+    #[test]
+    fn test_minimal_oob_invitation() {
+        let msg_type = test_utils::build_msg_type::<InvitationContent>();
+
+        let content = InvitationContent::new(
+            vec![Service::Did("test_service_did".to_owned())],
+            vec![make_extended_attachment()],
+        );
+
+        let decorators = InvitationDecorators::default();
+
+        let json = json!({
+            "@type": msg_type,
+            "services": content.services,
+            "requests~attach": content.requests_attach,
+        });
+
+        test_utils::test_msg(content, decorators, json);
+    }
+
+    #[test]
+    fn test_extensive_oob_invitation() {
+        let msg_type = test_utils::build_msg_type::<InvitationContent>();
+
+        let mut content = InvitationContent::new(
+            vec![Service::Did("test_service_did".to_owned())],
+            vec![make_extended_attachment()],
+        );
+
+        content.label = Some("test_label".to_owned());
+        content.goal_code = Some(OobGoalCode::P2PMessaging);
+        content.goal = Some("test_oob_goal".to_owned());
+        content.accept = Some(vec![MimeType::Json, MimeType::Plain]);
+        content.handshake_protocols = Some(vec![ConnectionV1::new_v1_0().into()]);
+
+        let mut decorators = InvitationDecorators::default();
+        decorators.timing = Some(make_extended_timing());
+
+        let json = json!({
+            "@type": msg_type,
+            "label": content.label,
+            "goal_code": content.goal_code,
+            "goal": content.goal,
+            "accept": content.accept,
+            "handshake_protocols": content.handshake_protocols,
+            "services": content.services,
+            "requests~attach": content.requests_attach,
+            "~timing": decorators.timing
+        });
+
+        test_utils::test_msg(content, decorators, json);
+    }
+}

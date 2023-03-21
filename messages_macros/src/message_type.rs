@@ -103,6 +103,7 @@ fn process_version(Version { ident, data, major }: Version) -> SynResult<TokenSt
     let mut try_resolve_match_arms = Vec::new();
     let mut as_parts_match_arms = Vec::new();
     let mut actors_match_arms = Vec::new();
+    let mut constructor_impls = Vec::new();
     let mut msg_kind_impls = Vec::new();
 
     for MinorVerVariant {
@@ -130,9 +131,13 @@ fn process_version(Version { ident, data, major }: Version) -> SynResult<TokenSt
         let segment = first_path_segment(path)?;
         let ty = segment.ident;
 
+        let constructor_fn_str = format!("new_{var_ident}").to_lowercase();
+        let constructor_fn = Ident::new(&constructor_fn_str, var_ident.span());
+
         try_resolve_match_arms.push(quote! {#minor => Ok(Self::#var_ident(std::marker::PhantomData))});
         as_parts_match_arms.push(quote! {Self::#var_ident(_) => #minor});
         actors_match_arms.push(quote! {Self::#var_ident(_) => vec![#actors]});
+        constructor_impls.push(quote! {pub fn #constructor_fn() -> Self {Self::#var_ident(std::marker::PhantomData)}});
         msg_kind_impls.push(quote! {
             impl crate::msg_types::types::traits::MessageKind for #ty {
                 type Parent = #ident;
@@ -177,6 +182,10 @@ fn process_version(Version { ident, data, major }: Version) -> SynResult<TokenSt
                     #(#actors_match_arms),*,
                 }
             }
+        }
+
+        impl #ident {
+            #(#constructor_impls)*
         }
 
         #(#msg_kind_impls)*

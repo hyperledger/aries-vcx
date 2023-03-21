@@ -33,7 +33,7 @@ mod tests {
     };
 
     #[test]
-    fn test_minimal_ack_revoke() {
+    fn test_minimal_ack_presentation() {
         let msg_type = test_utils::build_msg_type::<AckPresentationContent>();
 
         let content = AckPresentationContent::new(AckStatus::Ok);
@@ -50,7 +50,7 @@ mod tests {
     }
 
     #[test]
-    fn test_extensive_ack_revoke() {
+    fn test_extensive_ack_presentation() {
         let msg_type = test_utils::build_msg_type::<AckPresentationContent>();
 
         let content = AckPresentationContent::new(AckStatus::Ok);
