@@ -48,3 +48,59 @@ impl PresentationDecorators {
         }
     }
 }
+
+#[cfg(test)]
+#[allow(clippy::unwrap_used)]
+#[allow(clippy::field_reassign_with_default)]
+mod tests {
+    use serde_json::json;
+
+    use super::*;
+    use crate::{
+        decorators::{
+            attachment::tests::make_extended_attachment, please_ack::tests::make_minimal_please_ack,
+            thread::tests::make_extended_thread, timing::tests::make_extended_timing,
+        },
+        misc::test_utils,
+    };
+
+    #[test]
+    fn test_minimal_request() {
+        let msg_type = test_utils::build_msg_type::<PresentationContent>();
+
+        let content = PresentationContent::new(vec![make_extended_attachment()]);
+
+        let decorators = PresentationDecorators::new(make_extended_thread());
+
+        let json = json!({
+            "@type": msg_type,
+            "presentations~attach": content.presentations_attach,
+            "~thread": decorators.thread
+        });
+
+        test_utils::test_msg(content, decorators, json);
+    }
+
+    #[test]
+    fn test_extensive_request() {
+        let msg_type = test_utils::build_msg_type::<PresentationContent>();
+
+        let mut content = PresentationContent::new(vec![make_extended_attachment()]);
+        content.comment = Some("test_comment".to_owned());
+
+        let mut decorators = PresentationDecorators::new(make_extended_thread());
+        decorators.timing = Some(make_extended_timing());
+        decorators.please_ack = Some(make_minimal_please_ack());
+
+        let json = json!({
+            "@type": msg_type,
+            "comment": content.comment,
+            "presentations~attach": content.presentations_attach,
+            "~thread": decorators.thread,
+            "~timing": decorators.timing,
+            "~please_ack": decorators.please_ack
+        });
+
+        test_utils::test_msg(content, decorators, json);
+    }
+}

@@ -36,3 +36,52 @@ pub struct RequestPresentationDecorators {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<Timing>,
 }
+
+#[cfg(test)]
+#[allow(clippy::unwrap_used)]
+#[allow(clippy::field_reassign_with_default)]
+mod tests {
+    use serde_json::json;
+
+    use super::*;
+    use crate::{
+        decorators::{attachment::tests::make_extended_attachment, thread::tests::make_extended_thread},
+        misc::test_utils,
+    };
+
+    #[test]
+    fn test_minimal_request() {
+        let msg_type = test_utils::build_msg_type::<RequestPresentationContent>();
+
+        let content = RequestPresentationContent::new(vec![make_extended_attachment()]);
+
+        let decorators = RequestPresentationDecorators::default();
+
+        let json = json!({
+            "@type": msg_type,
+            "request_presentations~attach": content.request_presentations_attach,
+        });
+
+        test_utils::test_msg(content, decorators, json);
+    }
+
+    #[test]
+    fn test_extensive_request() {
+        let msg_type = test_utils::build_msg_type::<RequestPresentationContent>();
+
+        let mut content = RequestPresentationContent::new(vec![make_extended_attachment()]);
+        content.comment = Some("test_comment".to_owned());
+
+        let mut decorators = RequestPresentationDecorators::default();
+        decorators.thread = Some(make_extended_thread());
+
+        let json = json!({
+            "@type": msg_type,
+            "request_presentations~attach": content.request_presentations_attach,
+            "comment": content.comment,
+            "~thread": decorators.thread
+        });
+
+        test_utils::test_msg(content, decorators, json);
+    }
+}

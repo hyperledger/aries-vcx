@@ -37,8 +37,8 @@ impl ProposePresentationContent {
 
 #[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq)]
 pub struct ProposePresentationDecorators {
-    #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "~thread")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub thread: Option<Thread>,
     #[serde(rename = "~timing")]
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -107,6 +107,18 @@ pub struct Attribute {
     pub referent: Option<String>,
 }
 
+impl Attribute {
+    pub fn new(name: String) -> Self {
+        Self {
+            name,
+            cred_def_id: None,
+            mime_type: None,
+            value: None,
+            referent: None,
+        }
+    }
+}
+
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 pub struct Predicate {
     pub name: String,
@@ -116,10 +128,27 @@ pub struct Predicate {
     pub referent: Option<Referent>,
 }
 
+impl Predicate {
+    pub fn new(name: String, predicate: PredicateOperator, threshold: i64) -> Self {
+        Self {
+            name,
+            predicate,
+            threshold,
+            referent: None,
+        }
+    }
+}
+
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 pub struct Referent {
     pub cred_def_id: String,
     pub referent: String,
+}
+
+impl Referent {
+    pub fn new(cred_def_id: String, referent: String) -> Self {
+        Self { cred_def_id, referent }
+    }
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
@@ -132,4 +161,64 @@ pub enum PredicateOperator {
     GreterThan,
     #[serde(rename = "<")]
     LessThan,
+}
+
+#[cfg(test)]
+#[allow(clippy::unwrap_used)]
+#[allow(clippy::field_reassign_with_default)]
+mod tests {
+    use serde_json::json;
+
+    use super::*;
+    use crate::{decorators::thread::tests::make_extended_thread, misc::test_utils};
+
+    #[test]
+    fn test_minimal_propose() {
+        let msg_type = test_utils::build_msg_type::<ProposePresentationContent>();
+
+        let attribute = Attribute::new("test_attribute_name".to_owned());
+        let predicate = Predicate::new(
+            "test_predicate_name".to_owned(),
+            PredicateOperator::GreaterOrEqual,
+            1000,
+        );
+        let preview = PresentationPreview::new(vec![attribute], vec![predicate]);
+        let content = ProposePresentationContent::new(preview);
+
+        let decorators = ProposePresentationDecorators::default();
+
+        let json = json!({
+            "@type": msg_type,
+            "presentation_proposal": content.presentation_proposal
+        });
+
+        test_utils::test_msg(content, decorators, json);
+    }
+
+    #[test]
+    fn test_extensive_propose() {
+        let msg_type = test_utils::build_msg_type::<ProposePresentationContent>();
+
+        let attribute = Attribute::new("test_attribute_name".to_owned());
+        let predicate = Predicate::new(
+            "test_predicate_name".to_owned(),
+            PredicateOperator::GreaterOrEqual,
+            1000,
+        );
+        let preview = PresentationPreview::new(vec![attribute], vec![predicate]);
+        let mut content = ProposePresentationContent::new(preview);
+        content.comment = Some("test_comment".to_owned());
+
+        let mut decorators = ProposePresentationDecorators::default();
+        decorators.thread = Some(make_extended_thread());
+
+        let json = json!({
+            "@type": msg_type,
+            "comment": content.comment,
+            "presentation_proposal": content.presentation_proposal,
+            "~thread": decorators.thread
+        });
+
+        test_utils::test_msg(content, decorators, json);
+    }
 }
