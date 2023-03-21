@@ -40,3 +40,66 @@ pub struct ProposeCredentialDecorators {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<Timing>,
 }
+
+#[cfg(test)]
+#[allow(clippy::unwrap_used)]
+#[allow(clippy::field_reassign_with_default)]
+mod tests {
+    use serde_json::json;
+
+    use super::*;
+    use crate::{
+        decorators::{thread::tests::make_extended_thread, timing::tests::make_extended_timing},
+        misc::test_utils,
+        protocols::cred_issuance::CredentialAttr,
+    };
+
+    #[test]
+    fn test_minimal_propose_cred() {
+        let msg_type = test_utils::build_msg_type::<ProposeCredentialContent>();
+
+        let attribute = CredentialAttr::new("test_attribute_name".to_owned(), "test_attribute_value".to_owned());
+        let preview = CredentialPreview::new(vec![attribute]);
+        let content =
+            ProposeCredentialContent::new(preview, "test_schema_id".to_owned(), "test_cred_def_id".to_owned());
+
+        let decorators = ProposeCredentialDecorators::default();
+
+        let json = json!({
+            "@type": msg_type,
+            "credential_proposal": content.credential_proposal,
+            "schema_id": content.schema_id,
+            "cred_def_id": content.cred_def_id,
+        });
+
+        test_utils::test_msg(content, decorators, json);
+    }
+
+    #[test]
+    fn test_extensive_propose_cred() {
+        let msg_type = test_utils::build_msg_type::<ProposeCredentialContent>();
+
+        let attribute = CredentialAttr::new("test_attribute_name".to_owned(), "test_attribute_value".to_owned());
+        let preview = CredentialPreview::new(vec![attribute]);
+        let mut content =
+            ProposeCredentialContent::new(preview, "test_schema_id".to_owned(), "test_cred_def_id".to_owned());
+
+        content.comment = Some("test_comment".to_owned());
+
+        let mut decorators = ProposeCredentialDecorators::default();
+        decorators.thread = Some(make_extended_thread());
+        decorators.timing = Some(make_extended_timing());
+
+        let json = json!({
+            "@type": msg_type,
+            "credential_proposal": content.credential_proposal,
+            "schema_id": content.schema_id,
+            "cred_def_id": content.cred_def_id,
+            "comment": content.comment,
+            "~thread": decorators.thread,
+            "~timing": decorators.timing
+        });
+
+        test_utils::test_msg(content, decorators, json);
+    }
+}

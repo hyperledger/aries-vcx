@@ -45,12 +45,15 @@ mod tests {
 
     use super::*;
     use crate::{
-        decorators::{attachment::tests::make_extended_attachment, thread::tests::make_extended_thread},
+        decorators::{
+            attachment::tests::make_extended_attachment, thread::tests::make_extended_thread,
+            timing::tests::make_extended_timing,
+        },
         misc::test_utils,
     };
 
     #[test]
-    fn test_minimal_request() {
+    fn test_minimal_request_proof() {
         let msg_type = test_utils::build_msg_type::<RequestPresentationContent>();
 
         let content = RequestPresentationContent::new(vec![make_extended_attachment()]);
@@ -66,7 +69,7 @@ mod tests {
     }
 
     #[test]
-    fn test_extensive_request() {
+    fn test_extensive_request_proof() {
         let msg_type = test_utils::build_msg_type::<RequestPresentationContent>();
 
         let mut content = RequestPresentationContent::new(vec![make_extended_attachment()]);
@@ -74,12 +77,14 @@ mod tests {
 
         let mut decorators = RequestPresentationDecorators::default();
         decorators.thread = Some(make_extended_thread());
+        decorators.timing = Some(make_extended_timing());
 
         let json = json!({
             "@type": msg_type,
             "request_presentations~attach": content.request_presentations_attach,
             "comment": content.comment,
-            "~thread": decorators.thread
+            "~thread": decorators.thread,
+            "~timing": decorators.timing
         });
 
         test_utils::test_msg(content, decorators, json);

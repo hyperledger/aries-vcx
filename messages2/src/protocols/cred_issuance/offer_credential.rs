@@ -39,3 +39,64 @@ pub struct OfferCredentialDecorators {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<Timing>,
 }
+
+#[cfg(test)]
+#[allow(clippy::unwrap_used)]
+#[allow(clippy::field_reassign_with_default)]
+mod tests {
+    use serde_json::json;
+
+    use super::*;
+    use crate::{
+        decorators::{
+            attachment::tests::make_extended_attachment, thread::tests::make_extended_thread,
+            timing::tests::make_extended_timing,
+        },
+        misc::test_utils,
+        protocols::cred_issuance::CredentialAttr,
+    };
+
+    #[test]
+    fn test_minimal_offer_cred() {
+        let msg_type = test_utils::build_msg_type::<OfferCredentialContent>();
+
+        let attribute = CredentialAttr::new("test_attribute_name".to_owned(), "test_attribute_value".to_owned());
+        let preview = CredentialPreview::new(vec![attribute]);
+        let content = OfferCredentialContent::new(preview, vec![make_extended_attachment()]);
+
+        let decorators = OfferCredentialDecorators::default();
+
+        let json = json!({
+            "@type": msg_type,
+            "offers~attach": content.offers_attach,
+            "credential_preview": content.credential_preview,
+        });
+
+        test_utils::test_msg(content, decorators, json);
+    }
+
+    #[test]
+    fn test_extensive_offer_cred() {
+        let msg_type = test_utils::build_msg_type::<OfferCredentialContent>();
+
+        let attribute = CredentialAttr::new("test_attribute_name".to_owned(), "test_attribute_value".to_owned());
+        let preview = CredentialPreview::new(vec![attribute]);
+        let mut content = OfferCredentialContent::new(preview, vec![make_extended_attachment()]);
+        content.comment = Some("test_comment".to_owned());
+
+        let mut decorators = OfferCredentialDecorators::default();
+        decorators.thread = Some(make_extended_thread());
+        decorators.timing = Some(make_extended_timing());
+
+        let json = json!({
+            "@type": msg_type,
+            "offers~attach": content.offers_attach,
+            "credential_preview": content.credential_preview,
+            "comment": content.comment,
+            "~thread": decorators.thread,
+            "~timing": decorators.timing
+        });
+
+        test_utils::test_msg(content, decorators, json);
+    }
+}

@@ -153,6 +153,16 @@ pub struct CredentialAttr {
     pub mime_type: Option<MimeType>,
 }
 
+impl CredentialAttr {
+    pub fn new(name: String, value: String) -> Self {
+        Self {
+            name,
+            value,
+            mime_type: None,
+        }
+    }
+}
+
 transit_to_aries_msg!(OfferCredentialContent: OfferCredentialDecorators, CredentialIssuance);
 transit_to_aries_msg!(
     ProposeCredentialContent: ProposeCredentialDecorators,

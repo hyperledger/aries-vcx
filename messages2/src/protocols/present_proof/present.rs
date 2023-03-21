@@ -65,7 +65,7 @@ mod tests {
     };
 
     #[test]
-    fn test_minimal_present() {
+    fn test_minimal_present_proof() {
         let msg_type = test_utils::build_msg_type::<PresentationContent>();
 
         let content = PresentationContent::new(vec![make_extended_attachment()]);
@@ -82,7 +82,7 @@ mod tests {
     }
 
     #[test]
-    fn test_extensive_present() {
+    fn test_extensive_present_proof() {
         let msg_type = test_utils::build_msg_type::<PresentationContent>();
 
         let mut content = PresentationContent::new(vec![make_extended_attachment()]);
