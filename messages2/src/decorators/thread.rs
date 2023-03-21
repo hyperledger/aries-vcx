@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 
-use serde::{Deserialize, Serialize, Serializer};
+use serde::{Deserialize, Serialize};
+
+use crate::maybe_known::MaybeKnown;
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub struct Thread {
@@ -12,7 +14,7 @@ pub struct Thread {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub received_orders: Option<HashMap<String, u32>>, // should get replaced with DID.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub goal_code: Option<ThreadGoalCode>,
+    pub goal_code: Option<MaybeKnown<ThreadGoalCode>>,
 }
 
 impl Thread {
@@ -27,8 +29,7 @@ impl Thread {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq)]
-#[serde(from = "&str")]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub enum ThreadGoalCode {
     AriesVc,
     AriesVcIssue,
@@ -36,53 +37,6 @@ pub enum ThreadGoalCode {
     AriesVcRevoke,
     AriesRel,
     AriesRelBuild,
-    Other(String),
-}
-
-impl ThreadGoalCode {
-    const ARIES_VC: &str = "aries.vc";
-    const ARIES_VC_ISSUE: &str = "aries.vc.issue";
-    const ARIES_VC_VERIFY: &str = "aries.vc.verify";
-    const ARIES_VC_REVOKE: &str = "aries.vc.revoke";
-    const ARIES_REL: &str = "aries.rel";
-    const ARIES_REL_BUILD: &str = "aries.rel.build";
-}
-
-impl AsRef<str> for ThreadGoalCode {
-    fn as_ref(&self) -> &str {
-        match self {
-            Self::AriesVc => Self::ARIES_VC,
-            Self::AriesVcIssue => Self::ARIES_VC_ISSUE,
-            Self::AriesVcVerify => Self::ARIES_VC_VERIFY,
-            Self::AriesVcRevoke => Self::ARIES_VC_REVOKE,
-            Self::AriesRel => Self::ARIES_REL,
-            Self::AriesRelBuild => Self::ARIES_REL_BUILD,
-            Self::Other(s) => s.as_ref(),
-        }
-    }
-}
-
-impl From<&str> for ThreadGoalCode {
-    fn from(s: &str) -> Self {
-        match s {
-            _ if s == Self::ARIES_VC => Self::AriesVc,
-            _ if s == Self::ARIES_VC_ISSUE => Self::AriesVcIssue,
-            _ if s == Self::ARIES_VC_VERIFY => Self::AriesVcVerify,
-            _ if s == Self::ARIES_VC_REVOKE => Self::AriesVcRevoke,
-            _ if s == Self::ARIES_REL => Self::AriesRel,
-            _ if s == Self::ARIES_REL_BUILD => Self::AriesRelBuild,
-            _ => Self::Other(s.to_owned()),
-        }
-    }
-}
-
-impl Serialize for ThreadGoalCode {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        self.as_ref().serialize(serializer)
-    }
 }
 
 #[cfg(test)]
@@ -106,7 +60,7 @@ pub mod tests {
         let pthid = "test_pthid".to_owned();
         let sender_order = 5;
         let received_orders = HashMap::from([("a".to_owned(), 1), ("b".to_owned(), 2), ("c".to_owned(), 3)]);
-        let goal_code = ThreadGoalCode::AriesVcVerify;
+        let goal_code = MaybeKnown::Known(ThreadGoalCode::AriesVcVerify);
 
         thread.pthid = Some(pthid);
         thread.sender_order = Some(sender_order);
