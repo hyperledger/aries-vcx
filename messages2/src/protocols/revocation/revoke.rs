@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     decorators::{please_ack::PleaseAck, thread::Thread, timing::Timing},
+    maybe_known::MaybeKnown,
     message::Message,
     msg_types::types::revocation::RevocationV2_0Kind,
 };
@@ -13,13 +14,13 @@ pub type Revoke = Message<RevokeContent, RevokeDecorators>;
 #[message(kind = "RevocationV2_0Kind::Revoke")]
 pub struct RevokeContent {
     pub credential_id: String,
-    pub revocation_format: RevocationFormat,
+    pub revocation_format: MaybeKnown<RevocationFormat>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,
 }
 
 impl RevokeContent {
-    pub fn new(credential_id: String, revocation_format: RevocationFormat) -> Self {
+    pub fn new(credential_id: String, revocation_format: MaybeKnown<RevocationFormat>) -> Self {
         Self {
             credential_id,
             revocation_format,
@@ -58,7 +59,10 @@ mod tests {
 
     #[test]
     fn test_minimal_revoke() {
-        let content = RevokeContent::new("test_credential_id".to_owned(), RevocationFormat::IndyAnoncreds);
+        let content = RevokeContent::new(
+            "test_credential_id".to_owned(),
+            MaybeKnown::Known(RevocationFormat::IndyAnoncreds),
+        );
 
         let decorators = RevokeDecorators::default();
 
@@ -72,7 +76,10 @@ mod tests {
 
     #[test]
     fn test_extensive_revoke() {
-        let mut content = RevokeContent::new("test_credential_id".to_owned(), RevocationFormat::IndyAnoncreds);
+        let mut content = RevokeContent::new(
+            "test_credential_id".to_owned(),
+            MaybeKnown::Known(RevocationFormat::IndyAnoncreds),
+        );
         content.comment = Some("test_comment".to_owned());
 
         let mut decorators = RevokeDecorators::default();
