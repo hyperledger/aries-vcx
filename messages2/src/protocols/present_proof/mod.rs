@@ -20,7 +20,7 @@ use self::{
 use super::notification::AckDecorators;
 use crate::{
     misc::utils::{self, transit_to_aries_msg},
-    msg_types::types::present_proof::{PresentProof as PresentProofKind, PresentProofV1, PresentProofV1_0Kind},
+    msg_types::types::present_proof::{PresentProof as PresentProofKind, PresentProofV1, PresentProofV1_0},
     protocols::traits::DelayedSerde,
 };
 
@@ -42,18 +42,18 @@ impl DelayedSerde for PresentProof {
         let (major, kind) = msg_type;
         let PresentProofKind::V1(major) = major;
         let PresentProofV1::V1_0(_minor) = major;
-        let kind = PresentProofV1_0Kind::from_str(kind).map_err(D::Error::custom)?;
+        let kind = PresentProofV1_0::from_str(kind).map_err(D::Error::custom)?;
 
         match kind {
-            PresentProofV1_0Kind::ProposePresentation => {
+            PresentProofV1_0::ProposePresentation => {
                 ProposePresentation::delayed_deserialize(kind, deserializer).map(From::from)
             }
-            PresentProofV1_0Kind::RequestPresentation => {
+            PresentProofV1_0::RequestPresentation => {
                 RequestPresentation::delayed_deserialize(kind, deserializer).map(From::from)
             }
-            PresentProofV1_0Kind::Presentation => Presentation::delayed_deserialize(kind, deserializer).map(From::from),
-            PresentProofV1_0Kind::Ack => AckPresentation::delayed_deserialize(kind, deserializer).map(From::from),
-            PresentProofV1_0Kind::PresentationPreview => Err(utils::not_standalone_msg::<D>(kind.as_ref())),
+            PresentProofV1_0::Presentation => Presentation::delayed_deserialize(kind, deserializer).map(From::from),
+            PresentProofV1_0::Ack => AckPresentation::delayed_deserialize(kind, deserializer).map(From::from),
+            PresentProofV1_0::PresentationPreview => Err(utils::not_standalone_msg::<D>(kind.as_ref())),
         }
     }
 

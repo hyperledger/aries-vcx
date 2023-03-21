@@ -5,13 +5,13 @@ use super::CredentialPreview;
 use crate::{
     decorators::{thread::Thread, timing::Timing},
     message::Message,
-    msg_types::types::cred_issuance::CredentialIssuanceV1_0Kind,
+    msg_types::types::cred_issuance::CredentialIssuanceV1_0,
 };
 
 pub type ProposeCredential = Message<ProposeCredentialContent, ProposeCredentialDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, MessageContent, PartialEq)]
-#[message(kind = "CredentialIssuanceV1_0Kind::ProposeCredential")]
+#[message(kind = "CredentialIssuanceV1_0::ProposeCredential")]
 pub struct ProposeCredentialContent {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,

@@ -13,7 +13,7 @@ use self::{
 };
 use crate::{
     misc::utils::transit_to_aries_msg,
-    msg_types::types::trust_ping::{TrustPing as TrustPingKind, TrustPingV1, TrustPingV1_0Kind},
+    msg_types::types::trust_ping::{TrustPing as TrustPingKind, TrustPingV1, TrustPingV1_0},
     protocols::traits::DelayedSerde,
 };
 
@@ -33,11 +33,11 @@ impl DelayedSerde for TrustPing {
         let (major, kind) = msg_type;
         let TrustPingKind::V1(major) = major;
         let TrustPingV1::V1_0(_minor) = major;
-        let kind = TrustPingV1_0Kind::from_str(kind).map_err(D::Error::custom)?;
+        let kind = TrustPingV1_0::from_str(kind).map_err(D::Error::custom)?;
 
         match kind {
-            TrustPingV1_0Kind::Ping => Ping::delayed_deserialize(kind, deserializer).map(From::from),
-            TrustPingV1_0Kind::PingResponse => PingResponse::delayed_deserialize(kind, deserializer).map(From::from),
+            TrustPingV1_0::Ping => Ping::delayed_deserialize(kind, deserializer).map(From::from),
+            TrustPingV1_0::PingResponse => PingResponse::delayed_deserialize(kind, deserializer).map(From::from),
         }
     }
 

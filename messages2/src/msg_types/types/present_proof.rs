@@ -19,12 +19,12 @@ pub enum PresentProof {
 #[msg_type(major = 1)]
 pub enum PresentProofV1 {
     #[msg_type(minor = 0, actors = "Role::Prover, Role::Verifier")]
-    V1_0(PhantomData<PresentProofV1_0Kind>),
+    V1_0(PhantomData<PresentProofV1_0>),
 }
 
 #[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq)]
 #[strum(serialize_all = "kebab-case")]
-pub enum PresentProofV1_0Kind {
+pub enum PresentProofV1_0 {
     ProposePresentation,
     RequestPresentation,
     Presentation,

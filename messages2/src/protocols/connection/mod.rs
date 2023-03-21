@@ -18,7 +18,7 @@ use self::{
 pub use self::{problem_report::ProblemReport, request::Request, response::Response};
 use crate::{
     misc::utils::{self, transit_to_aries_msg},
-    msg_types::types::connection::{Connection as ConnectionKind, ConnectionV1, ConnectionV1_0Kind},
+    msg_types::types::connection::{Connection as ConnectionKind, ConnectionV1, ConnectionV1_0},
     protocols::traits::DelayedSerde,
 };
 
@@ -40,14 +40,14 @@ impl DelayedSerde for Connection {
         let (major, kind) = msg_type;
         let ConnectionKind::V1(major) = major;
         let ConnectionV1::V1_0(_minor) = major;
-        let kind = ConnectionV1_0Kind::from_str(kind).map_err(D::Error::custom)?;
+        let kind = ConnectionV1_0::from_str(kind).map_err(D::Error::custom)?;
 
         match kind {
-            ConnectionV1_0Kind::Invitation => Invitation::delayed_deserialize(kind, deserializer).map(From::from),
-            ConnectionV1_0Kind::Request => Request::delayed_deserialize(kind, deserializer).map(From::from),
-            ConnectionV1_0Kind::Response => Response::delayed_deserialize(kind, deserializer).map(From::from),
-            ConnectionV1_0Kind::ProblemReport => ProblemReport::delayed_deserialize(kind, deserializer).map(From::from),
-            ConnectionV1_0Kind::Ed25519Sha512Single => Err(utils::not_standalone_msg::<D>(kind.as_ref())),
+            ConnectionV1_0::Invitation => Invitation::delayed_deserialize(kind, deserializer).map(From::from),
+            ConnectionV1_0::Request => Request::delayed_deserialize(kind, deserializer).map(From::from),
+            ConnectionV1_0::Response => Response::delayed_deserialize(kind, deserializer).map(From::from),
+            ConnectionV1_0::ProblemReport => ProblemReport::delayed_deserialize(kind, deserializer).map(From::from),
+            ConnectionV1_0::Ed25519Sha512Single => Err(utils::not_standalone_msg::<D>(kind.as_ref())),
         }
     }
 

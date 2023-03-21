@@ -4,13 +4,13 @@ use serde::{Deserialize, Serialize};
 use crate::{
     decorators::{attachment::Attachment, please_ack::PleaseAck, thread::Thread, timing::Timing},
     message::Message,
-    msg_types::types::present_proof::PresentProofV1_0Kind,
+    msg_types::types::present_proof::PresentProofV1_0,
 };
 
 pub type Presentation = Message<PresentationContent, PresentationDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, MessageContent, PartialEq)]
-#[message(kind = "PresentProofV1_0Kind::Presentation")]
+#[message(kind = "PresentProofV1_0::Presentation")]
 pub struct PresentationContent {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,

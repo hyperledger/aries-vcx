@@ -17,7 +17,7 @@ use crate::{
     msg_types::{
         role::Role,
         types::discover_features::{
-            DiscoverFeatures as DiscoverFeaturesKind, DiscoverFeaturesV1, DiscoverFeaturesV1_0Kind,
+            DiscoverFeatures as DiscoverFeaturesKind, DiscoverFeaturesV1, DiscoverFeaturesV1_0,
         },
         Protocol,
     },
@@ -40,11 +40,11 @@ impl DelayedSerde for DiscoverFeatures {
         let (major, kind) = msg_type;
         let DiscoverFeaturesKind::V1(major) = major;
         let DiscoverFeaturesV1::V1_0(_minor) = major;
-        let kind = DiscoverFeaturesV1_0Kind::from_str(kind).map_err(D::Error::custom)?;
+        let kind = DiscoverFeaturesV1_0::from_str(kind).map_err(D::Error::custom)?;
 
         match kind {
-            DiscoverFeaturesV1_0Kind::Query => Query::delayed_deserialize(kind, deserializer).map(From::from),
-            DiscoverFeaturesV1_0Kind::Disclose => Disclose::delayed_deserialize(kind, deserializer).map(From::from),
+            DiscoverFeaturesV1_0::Query => Query::delayed_deserialize(kind, deserializer).map(From::from),
+            DiscoverFeaturesV1_0::Disclose => Disclose::delayed_deserialize(kind, deserializer).map(From::from),
         }
     }
 

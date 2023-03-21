@@ -3,14 +3,14 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     message::Message,
-    msg_types::types::present_proof::PresentProofV1_0Kind,
+    msg_types::types::present_proof::PresentProofV1_0,
     protocols::notification::{AckContent, AckDecorators, AckStatus},
 };
 
 pub type AckPresentation = Message<AckPresentationContent, AckDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, MessageContent, PartialEq)]
-#[message(kind = "PresentProofV1_0Kind::Ack")]
+#[message(kind = "PresentProofV1_0::Ack")]
 #[serde(transparent)]
 pub struct AckPresentationContent(pub AckContent);
 

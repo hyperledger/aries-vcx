@@ -19,12 +19,12 @@ pub enum Routing {
 #[msg_type(major = 1)]
 pub enum RoutingV1 {
     #[msg_type(minor = 0, actors = "Role::Mediator")]
-    V1_0(PhantomData<RoutingV1_0Kind>),
+    V1_0(PhantomData<RoutingV1_0>),
 }
 
 #[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq)]
 #[strum(serialize_all = "kebab-case")]
-pub enum RoutingV1_0Kind {
+pub enum RoutingV1_0 {
     Forward,
 }
 

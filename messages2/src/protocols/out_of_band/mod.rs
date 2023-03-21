@@ -15,7 +15,7 @@ use self::{
 };
 use crate::{
     misc::utils::transit_to_aries_msg,
-    msg_types::types::out_of_band::{OutOfBand as OutOfBandKind, OutOfBandV1, OutOfBandV1_1Kind},
+    msg_types::types::out_of_band::{OutOfBand as OutOfBandKind, OutOfBandV1, OutOfBandV1_1},
     protocols::traits::DelayedSerde,
 };
 
@@ -36,14 +36,12 @@ impl DelayedSerde for OutOfBand {
         let (major, kind) = msg_type;
         let OutOfBandKind::V1(major) = major;
         let OutOfBandV1::V1_1(_minor) = major;
-        let kind = OutOfBandV1_1Kind::from_str(kind).map_err(D::Error::custom)?;
+        let kind = OutOfBandV1_1::from_str(kind).map_err(D::Error::custom)?;
 
         match kind {
-            OutOfBandV1_1Kind::Invitation => Invitation::delayed_deserialize(kind, deserializer).map(From::from),
-            OutOfBandV1_1Kind::HandshakeReuse => {
-                HandshakeReuse::delayed_deserialize(kind, deserializer).map(From::from)
-            }
-            OutOfBandV1_1Kind::HandshakeReuseAccepted => {
+            OutOfBandV1_1::Invitation => Invitation::delayed_deserialize(kind, deserializer).map(From::from),
+            OutOfBandV1_1::HandshakeReuse => HandshakeReuse::delayed_deserialize(kind, deserializer).map(From::from),
+            OutOfBandV1_1::HandshakeReuseAccepted => {
                 HandshakeReuseAccepted::delayed_deserialize(kind, deserializer).map(From::from)
             }
         }

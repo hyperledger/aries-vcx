@@ -19,12 +19,12 @@ pub enum OutOfBand {
 #[msg_type(major = 1)]
 pub enum OutOfBandV1 {
     #[msg_type(minor = 0, actors = "Role::Receiver, Role::Sender")]
-    V1_1(PhantomData<OutOfBandV1_1Kind>),
+    V1_1(PhantomData<OutOfBandV1_1>),
 }
 
 #[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq)]
 #[strum(serialize_all = "kebab-case")]
-pub enum OutOfBandV1_1Kind {
+pub enum OutOfBandV1_1 {
     Invitation,
     HandshakeReuse,
     HandshakeReuseAccepted,

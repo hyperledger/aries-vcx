@@ -8,13 +8,13 @@ use url::Url;
 use crate::{
     decorators::{localization::FieldLocalization, thread::Thread, timing::Timing},
     message::Message,
-    msg_types::types::report_problem::ReportProblemV1_0Kind,
+    msg_types::types::report_problem::ReportProblemV1_0,
 };
 
 pub type ProblemReport = Message<ProblemReportContent, ProblemReportDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, MessageContent, Default, PartialEq)]
-#[message(kind = "ReportProblemV1_0Kind::ProblemReport")]
+#[message(kind = "ReportProblemV1_0::ProblemReport")]
 pub struct ProblemReportContent {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,

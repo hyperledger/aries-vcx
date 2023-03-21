@@ -6,13 +6,13 @@ use crate::{
     decorators::{localization::MsgLocalization, thread::Thread, timing::Timing},
     message::Message,
     misc::utils,
-    msg_types::types::basic_message::BasicMessageV1_0Kind,
+    msg_types::types::basic_message::BasicMessageV1_0,
 };
 
 pub type BasicMessage = Message<BasicMessageContent, BasicMessageDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, MessageContent, PartialEq)]
-#[message(kind = "BasicMessageV1_0Kind::Message")]
+#[message(kind = "BasicMessageV1_0::Message")]
 pub struct BasicMessageContent {
     pub content: String,
     #[serde(serialize_with = "utils::serialize_datetime")]

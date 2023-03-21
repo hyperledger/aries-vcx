@@ -19,12 +19,12 @@ pub enum BasicMessage {
 #[msg_type(major = 1)]
 pub enum BasicMessageV1 {
     #[msg_type(minor = 0, actors = "Role::Receiver, Role::Sender")]
-    V1_0(PhantomData<BasicMessageV1_0Kind>),
+    V1_0(PhantomData<BasicMessageV1_0>),
 }
 
 #[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq)]
 #[strum(serialize_all = "kebab-case")]
-pub enum BasicMessageV1_0Kind {
+pub enum BasicMessageV1_0 {
     Message,
 }
 

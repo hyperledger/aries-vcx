@@ -4,13 +4,13 @@ use serde::{Deserialize, Serialize};
 use crate::{
     decorators::{attachment::Attachment, thread::Thread, timing::Timing},
     message::Message,
-    msg_types::types::cred_issuance::CredentialIssuanceV1_0Kind,
+    msg_types::types::cred_issuance::CredentialIssuanceV1_0,
 };
 
 pub type RequestCredential = Message<RequestCredentialContent, RequestCredentialDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, MessageContent, PartialEq)]
-#[message(kind = "CredentialIssuanceV1_0Kind::RequestCredential")]
+#[message(kind = "CredentialIssuanceV1_0::RequestCredential")]
 pub struct RequestCredentialContent {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,

@@ -7,14 +7,14 @@ use crate::{
     maybe_known::MaybeKnown,
     message::Message,
     misc::mime_type::MimeType,
-    msg_types::{types::out_of_band::OutOfBandV1_1Kind, Protocol},
+    msg_types::{types::out_of_band::OutOfBandV1_1, Protocol},
     protocols::common::service::Service,
 };
 
 pub type Invitation = Message<InvitationContent, InvitationDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, MessageContent, PartialEq)]
-#[message(kind = "OutOfBandV1_1Kind::Invitation")]
+#[message(kind = "OutOfBandV1_1::Invitation")]
 pub struct InvitationContent {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub label: Option<String>,

@@ -5,13 +5,13 @@ use crate::{
     decorators::{thread::Thread, timing::Timing},
     message::Message,
     misc::nothing::Nothing,
-    msg_types::types::out_of_band::OutOfBandV1_1Kind,
+    msg_types::types::out_of_band::OutOfBandV1_1,
 };
 
 pub type HandshakeReuse = Message<HandshakeReuseContent, HandshakeReuseDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, MessageContent, Default, PartialEq)]
-#[message(kind = "OutOfBandV1_1Kind::HandshakeReuse")]
+#[message(kind = "OutOfBandV1_1::HandshakeReuse")]
 #[serde(transparent)]
 pub struct HandshakeReuseContent(Nothing);
 

@@ -19,12 +19,12 @@ pub enum DiscoverFeatures {
 #[msg_type(major = 1)]
 pub enum DiscoverFeaturesV1 {
     #[msg_type(minor = 0, actors = "Role::Requester, Role::Responder")]
-    V1_0(PhantomData<DiscoverFeaturesV1_0Kind>),
+    V1_0(PhantomData<DiscoverFeaturesV1_0>),
 }
 
 #[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq)]
 #[strum(serialize_all = "kebab-case")]
-pub enum DiscoverFeaturesV1_0Kind {
+pub enum DiscoverFeaturesV1_0 {
     Query,
     Disclose,
 }

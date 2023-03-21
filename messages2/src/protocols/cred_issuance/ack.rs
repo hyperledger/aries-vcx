@@ -3,14 +3,14 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     message::Message,
-    msg_types::types::cred_issuance::CredentialIssuanceV1_0Kind,
+    msg_types::types::cred_issuance::CredentialIssuanceV1_0,
     protocols::notification::{AckContent, AckDecorators, AckStatus},
 };
 
 pub type AckCredential = Message<AckCredentialContent, AckDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, MessageContent, PartialEq)]
-#[message(kind = "CredentialIssuanceV1_0Kind::Ack")]
+#[message(kind = "CredentialIssuanceV1_0::Ack")]
 #[serde(transparent)]
 pub struct AckCredentialContent(pub AckContent);
 

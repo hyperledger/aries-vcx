@@ -19,12 +19,12 @@ pub enum Revocation {
 #[msg_type(major = 2)]
 pub enum RevocationV2 {
     #[msg_type(minor = 0, actors = "Role::Holder, Role::Issuer")]
-    V2_0(PhantomData<RevocationV2_0Kind>),
+    V2_0(PhantomData<RevocationV2_0>),
 }
 
 #[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq)]
 #[strum(serialize_all = "kebab-case")]
-pub enum RevocationV2_0Kind {
+pub enum RevocationV2_0 {
     Revoke,
     Ack,
 }

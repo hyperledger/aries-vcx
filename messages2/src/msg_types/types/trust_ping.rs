@@ -19,12 +19,12 @@ pub enum TrustPing {
 #[msg_type(major = 1)]
 pub enum TrustPingV1 {
     #[msg_type(minor = 0, actors = "Role::Sender, Role::Receiver")]
-    V1_0(PhantomData<TrustPingV1_0Kind>),
+    V1_0(PhantomData<TrustPingV1_0>),
 }
 
 #[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq)]
 #[strum(serialize_all = "kebab-case")]
-pub enum TrustPingV1_0Kind {
+pub enum TrustPingV1_0 {
     Ping,
     #[strum(serialize = "ping_response")]
     PingResponse,

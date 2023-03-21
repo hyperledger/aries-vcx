@@ -9,7 +9,7 @@ use crate::{
     misc::mime_type::MimeType,
     msg_types::{
         types::{
-            present_proof::{PresentProof, PresentProofV1, PresentProofV1_0Kind},
+            present_proof::{PresentProof, PresentProofV1, PresentProofV1_0},
             traits::MessageKind,
         },
         MessageType, Protocol,
@@ -19,7 +19,7 @@ use crate::{
 pub type ProposePresentation = Message<ProposePresentationContent, ProposePresentationDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, MessageContent, PartialEq)]
-#[message(kind = "PresentProofV1_0Kind::ProposePresentation")]
+#[message(kind = "PresentProofV1_0::ProposePresentation")]
 pub struct ProposePresentationContent {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,
@@ -67,9 +67,9 @@ impl PresentationPreview {
 #[serde(try_from = "MessageType")]
 struct PresentationPreviewMsgType;
 
-impl<'a> From<&'a PresentationPreviewMsgType> for PresentProofV1_0Kind {
+impl<'a> From<&'a PresentationPreviewMsgType> for PresentProofV1_0 {
     fn from(_value: &'a PresentationPreviewMsgType) -> Self {
-        PresentProofV1_0Kind::PresentationPreview
+        PresentProofV1_0::PresentationPreview
     }
 }
 
@@ -78,7 +78,7 @@ impl<'a> TryFrom<MessageType<'a>> for PresentationPreviewMsgType {
 
     fn try_from(value: MessageType<'a>) -> Result<Self, Self::Error> {
         if let Protocol::PresentProof(PresentProof::V1(PresentProofV1::V1_0(_))) = value.protocol {
-            if let Ok(PresentProofV1_0Kind::PresentationPreview) = PresentProofV1_0Kind::from_str(value.kind) {
+            if let Ok(PresentProofV1_0::PresentationPreview) = PresentProofV1_0::from_str(value.kind) {
                 return Ok(PresentationPreviewMsgType);
             }
         }
@@ -91,8 +91,8 @@ impl Serialize for PresentationPreviewMsgType {
     where
         S: serde::Serializer,
     {
-        let protocol = Protocol::from(PresentProofV1_0Kind::parent());
-        let kind = PresentProofV1_0Kind::from(self);
+        let protocol = Protocol::from(PresentProofV1_0::parent());
+        let kind = PresentProofV1_0::from(self);
         format_args!("{protocol}/{}", kind.as_ref()).serialize(serializer)
     }
 }

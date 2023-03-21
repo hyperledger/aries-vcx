@@ -6,13 +6,13 @@ use crate::{
     decorators::timing::Timing,
     maybe_known::MaybeKnown,
     message::Message,
-    msg_types::{registry::PROTOCOL_REGISTRY, types::discover_features::DiscoverFeaturesV1_0Kind},
+    msg_types::{registry::PROTOCOL_REGISTRY, types::discover_features::DiscoverFeaturesV1_0},
 };
 
 pub type Query = Message<QueryContent, QueryDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, MessageContent, PartialEq)]
-#[message(kind = "DiscoverFeaturesV1_0Kind::Query")]
+#[message(kind = "DiscoverFeaturesV1_0::Query")]
 pub struct QueryContent {
     pub query: String,
     #[serde(skip_serializing_if = "Option::is_none")]

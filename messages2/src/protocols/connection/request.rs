@@ -5,13 +5,13 @@ use serde::{Deserialize, Serialize};
 use crate::{
     decorators::{thread::Thread, timing::Timing},
     message::Message,
-    msg_types::types::connection::ConnectionV1_0Kind,
+    msg_types::types::connection::ConnectionV1_0,
 };
 
 pub type Request = Message<RequestContent, RequestDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, MessageContent, PartialEq)]
-#[message(kind = "ConnectionV1_0Kind::Request")]
+#[message(kind = "ConnectionV1_0::Request")]
 pub struct RequestContent {
     pub label: String,
     pub connection: ConnectionData,

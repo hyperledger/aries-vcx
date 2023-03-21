@@ -4,13 +4,13 @@ use serde::{Deserialize, Serialize};
 use crate::{
     decorators::{thread::Thread, timing::Timing},
     message::Message,
-    msg_types::types::notification::NotificationV1_0Kind,
+    msg_types::types::notification::NotificationV1_0,
 };
 
 pub type Ack = Message<AckContent, AckDecorators>;
 
 #[derive(Debug, Clone, Serialize, Deserialize, MessageContent, PartialEq)]
-#[message(kind = "NotificationV1_0Kind::Ack")]
+#[message(kind = "NotificationV1_0::Ack")]
 pub struct AckContent {
     pub status: AckStatus,
 }

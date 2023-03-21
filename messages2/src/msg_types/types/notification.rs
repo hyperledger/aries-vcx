@@ -19,12 +19,12 @@ pub enum Notification {
 #[msg_type(major = 1)]
 pub enum NotificationV1 {
     #[msg_type(minor = 0, actors = "Role::Notified, Role::Notifier")]
-    V1_0(PhantomData<NotificationV1_0Kind>),
+    V1_0(PhantomData<NotificationV1_0>),
 }
 
 #[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq)]
 #[strum(serialize_all = "kebab-case")]
-pub enum NotificationV1_0Kind {
+pub enum NotificationV1_0 {
     Ack,
 }
 

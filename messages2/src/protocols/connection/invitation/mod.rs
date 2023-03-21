@@ -17,7 +17,7 @@ use self::{
 use super::Connection;
 use crate::{
     misc::utils::transit_to_aries_msg,
-    msg_types::types::connection::ConnectionV1_0Kind,
+    msg_types::types::connection::ConnectionV1_0,
     protocols::traits::{ConcreteMessage, HasKind},
 };
 
@@ -39,7 +39,7 @@ pub struct CompleteInvitationContent(PairwiseInvitationContent<Url>);
 // based on the invitation format, we don't wrap the [`Invitation`]
 // in a [`Message`], but rather its variants.
 #[derive(Debug, Clone, From, Deserialize, Serialize, MessageContent, PartialEq)]
-#[message(kind = "ConnectionV1_0Kind::Invitation")]
+#[message(kind = "ConnectionV1_0::Invitation")]
 #[serde(untagged)]
 pub enum Invitation {
     Public(PublicInvitation),

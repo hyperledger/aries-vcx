@@ -14,7 +14,7 @@ use self::{
 use super::notification::AckDecorators;
 use crate::{
     misc::utils::transit_to_aries_msg,
-    msg_types::types::revocation::{Revocation as RevocationKind, RevocationV2, RevocationV2_0Kind},
+    msg_types::types::revocation::{Revocation as RevocationKind, RevocationV2, RevocationV2_0},
     protocols::traits::DelayedSerde,
 };
 
@@ -34,11 +34,11 @@ impl DelayedSerde for Revocation {
         let (major, kind) = msg_type;
         let RevocationKind::V2(major) = major;
         let RevocationV2::V2_0(_minor) = major;
-        let kind = RevocationV2_0Kind::from_str(kind).map_err(D::Error::custom)?;
+        let kind = RevocationV2_0::from_str(kind).map_err(D::Error::custom)?;
 
         match kind {
-            RevocationV2_0Kind::Revoke => Revoke::delayed_deserialize(kind, deserializer).map(From::from),
-            RevocationV2_0Kind::Ack => AckRevoke::delayed_deserialize(kind, deserializer).map(From::from),
+            RevocationV2_0::Revoke => Revoke::delayed_deserialize(kind, deserializer).map(From::from),
+            RevocationV2_0::Ack => AckRevoke::delayed_deserialize(kind, deserializer).map(From::from),
         }
     }
 

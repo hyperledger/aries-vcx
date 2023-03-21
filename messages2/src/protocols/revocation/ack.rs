@@ -3,14 +3,14 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     message::Message,
-    msg_types::types::revocation::RevocationV2_0Kind,
+    msg_types::types::revocation::RevocationV2_0,
     protocols::notification::{AckContent, AckDecorators, AckStatus},
 };
 
 pub type AckRevoke = Message<AckRevokeContent, AckDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, MessageContent, PartialEq)]
-#[message(kind = "RevocationV2_0Kind::Ack")]
+#[message(kind = "RevocationV2_0::Ack")]
 #[serde(transparent)]
 pub struct AckRevokeContent(pub AckContent);
 

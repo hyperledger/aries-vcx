@@ -5,13 +5,13 @@ use crate::{
     decorators::{please_ack::PleaseAck, thread::Thread, timing::Timing},
     maybe_known::MaybeKnown,
     message::Message,
-    msg_types::types::revocation::RevocationV2_0Kind,
+    msg_types::types::revocation::RevocationV2_0,
 };
 
 pub type Revoke = Message<RevokeContent, RevokeDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, MessageContent, PartialEq)]
-#[message(kind = "RevocationV2_0Kind::Revoke")]
+#[message(kind = "RevocationV2_0::Revoke")]
 pub struct RevokeContent {
     pub credential_id: String,
     pub revocation_format: MaybeKnown<RevocationFormat>,

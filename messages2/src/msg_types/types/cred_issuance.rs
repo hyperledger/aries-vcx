@@ -19,12 +19,12 @@ pub enum CredentialIssuance {
 #[msg_type(major = 1)]
 pub enum CredentialIssuanceV1 {
     #[msg_type(minor = 0, actors = "Role::Holder, Role::Issuer")]
-    V1_0(PhantomData<CredentialIssuanceV1_0Kind>),
+    V1_0(PhantomData<CredentialIssuanceV1_0>),
 }
 
 #[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq)]
 #[strum(serialize_all = "kebab-case")]
-pub enum CredentialIssuanceV1_0Kind {
+pub enum CredentialIssuanceV1_0 {
     OfferCredential,
     ProposeCredential,
     RequestCredential,

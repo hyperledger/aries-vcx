@@ -1,12 +1,12 @@
 use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 
-use crate::{message::Message, msg_types::types::routing::RoutingV1_0Kind};
+use crate::{message::Message, msg_types::types::routing::RoutingV1_0};
 
 pub type Forward = Message<ForwardContent>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, MessageContent, PartialEq)]
-#[message(kind = "RoutingV1_0Kind::Forward")]
+#[message(kind = "RoutingV1_0::Forward")]
 pub struct ForwardContent {
     pub to: String,
     pub msg: String,

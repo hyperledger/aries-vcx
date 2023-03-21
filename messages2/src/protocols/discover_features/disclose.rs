@@ -6,13 +6,13 @@ use crate::{
     decorators::{thread::Thread, timing::Timing},
     maybe_known::MaybeKnown,
     message::Message,
-    msg_types::{registry::PROTOCOL_REGISTRY, types::discover_features::DiscoverFeaturesV1_0Kind},
+    msg_types::{registry::PROTOCOL_REGISTRY, types::discover_features::DiscoverFeaturesV1_0},
 };
 
 pub type Disclose = Message<DiscloseContent, DiscloseDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, MessageContent, PartialEq)]
-#[message(kind = "DiscoverFeaturesV1_0Kind::Disclose")]
+#[message(kind = "DiscoverFeaturesV1_0::Disclose")]
 pub struct DiscloseContent {
     pub protocols: Vec<ProtocolDescriptor>,
 }

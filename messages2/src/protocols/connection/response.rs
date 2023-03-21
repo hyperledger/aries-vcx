@@ -8,7 +8,7 @@ use crate::{
     message::Message,
     msg_types::{
         types::{
-            connection::{Connection, ConnectionV1, ConnectionV1_0Kind},
+            connection::{Connection, ConnectionV1, ConnectionV1_0},
             traits::MessageKind,
         },
         MessageType, Protocol,
@@ -18,7 +18,7 @@ use crate::{
 pub type Response = Message<ResponseContent, ResponseDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, MessageContent, PartialEq)]
-#[message(kind = "ConnectionV1_0Kind::Response")]
+#[message(kind = "ConnectionV1_0::Response")]
 pub struct ResponseContent {
     #[serde(rename = "connection~sig")]
     pub connection_sig: ConnectionSignature,
@@ -76,9 +76,9 @@ impl ResponseDecorators {
 #[serde(try_from = "MessageType")]
 struct SigEd25519Sha512Single;
 
-impl<'a> From<&'a SigEd25519Sha512Single> for ConnectionV1_0Kind {
+impl<'a> From<&'a SigEd25519Sha512Single> for ConnectionV1_0 {
     fn from(_value: &'a SigEd25519Sha512Single) -> Self {
-        ConnectionV1_0Kind::Ed25519Sha512Single
+        ConnectionV1_0::Ed25519Sha512Single
     }
 }
 
@@ -87,7 +87,7 @@ impl<'a> TryFrom<MessageType<'a>> for SigEd25519Sha512Single {
 
     fn try_from(value: MessageType<'a>) -> Result<Self, Self::Error> {
         if let Protocol::Connection(Connection::V1(ConnectionV1::V1_0(_))) = value.protocol {
-            if let Ok(ConnectionV1_0Kind::Ed25519Sha512Single) = ConnectionV1_0Kind::from_str(value.kind) {
+            if let Ok(ConnectionV1_0::Ed25519Sha512Single) = ConnectionV1_0::from_str(value.kind) {
                 return Ok(SigEd25519Sha512Single);
             }
         }
@@ -101,8 +101,8 @@ impl Serialize for SigEd25519Sha512Single {
     where
         S: serde::Serializer,
     {
-        let protocol = Protocol::from(ConnectionV1_0Kind::parent());
-        let kind = ConnectionV1_0Kind::from(self);
+        let protocol = Protocol::from(ConnectionV1_0::parent());
+        let kind = ConnectionV1_0::from(self);
         format_args!("{protocol}/{}", kind.as_ref()).serialize(serializer)
     }
 }
