@@ -37,18 +37,22 @@ pub mod test_utils {
         assert_eq!(expected, deserialized)
     }
 
-    pub fn test_msg<T, U>(content: T, decorators: U, mut json: Value)
+    pub fn test_msg<V, T, U>(content: T, decorators: U, mut json: Value)
     where
         AriesMessage: From<Message<T, U>>,
+        V: ConcreteMessage,
+        V::Kind: MessageKind,
+        Protocol: From<<V::Kind as MessageKind>::Parent>,
     {
         let id = "test".to_owned();
+        let msg_type = build_msg_type::<V>();
 
-        let msg = Message::with_decorators(id.clone(), content, decorators);
+        let obj = json.as_object_mut().expect("JSON object");
+        obj.insert("@id".to_owned(), json!(id));
+        obj.insert("@type".to_owned(), json!(msg_type));
+
+        let msg = Message::with_decorators(id, content, decorators);
         let msg = AriesMessage::from(msg);
-
-        json.as_object_mut()
-            .expect("JSON object")
-            .insert("@id".to_owned(), json!(id));
 
         test_serde(msg, json);
     }

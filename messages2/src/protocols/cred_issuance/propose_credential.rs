@@ -56,8 +56,6 @@ mod tests {
 
     #[test]
     fn test_minimal_propose_cred() {
-        let msg_type = test_utils::build_msg_type::<ProposeCredentialContent>();
-
         let attribute = CredentialAttr::new("test_attribute_name".to_owned(), "test_attribute_value".to_owned());
         let preview = CredentialPreview::new(vec![attribute]);
         let content =
@@ -66,19 +64,16 @@ mod tests {
         let decorators = ProposeCredentialDecorators::default();
 
         let json = json!({
-            "@type": msg_type,
             "credential_proposal": content.credential_proposal,
             "schema_id": content.schema_id,
             "cred_def_id": content.cred_def_id,
         });
 
-        test_utils::test_msg(content, decorators, json);
+        test_utils::test_msg::<ProposeCredentialContent, _, _>(content, decorators, json);
     }
 
     #[test]
     fn test_extensive_propose_cred() {
-        let msg_type = test_utils::build_msg_type::<ProposeCredentialContent>();
-
         let attribute = CredentialAttr::new("test_attribute_name".to_owned(), "test_attribute_value".to_owned());
         let preview = CredentialPreview::new(vec![attribute]);
         let mut content =
@@ -91,7 +86,6 @@ mod tests {
         decorators.timing = Some(make_extended_timing());
 
         let json = json!({
-            "@type": msg_type,
             "credential_proposal": content.credential_proposal,
             "schema_id": content.schema_id,
             "cred_def_id": content.cred_def_id,
@@ -100,6 +94,6 @@ mod tests {
             "~timing": decorators.timing
         });
 
-        test_utils::test_msg(content, decorators, json);
+        test_utils::test_msg::<ProposeCredentialContent, _, _>(content, decorators, json);
     }
 }

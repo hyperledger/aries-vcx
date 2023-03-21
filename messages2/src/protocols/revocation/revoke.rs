@@ -58,25 +58,20 @@ mod tests {
 
     #[test]
     fn test_minimal_revoke() {
-        let msg_type = test_utils::build_msg_type::<RevokeContent>();
-
         let content = RevokeContent::new("test_credential_id".to_owned(), RevocationFormat::IndyAnoncreds);
 
         let decorators = RevokeDecorators::default();
 
         let json = json!({
-            "@type": msg_type,
             "credential_id": content.credential_id,
             "revocation_format": content.revocation_format
         });
 
-        test_utils::test_msg(content, decorators, json);
+        test_utils::test_msg::<RevokeContent, _, _>(content, decorators, json);
     }
 
     #[test]
     fn test_extensive_revoke() {
-        let msg_type = test_utils::build_msg_type::<RevokeContent>();
-
         let mut content = RevokeContent::new("test_credential_id".to_owned(), RevocationFormat::IndyAnoncreds);
         content.comment = Some("test_comment".to_owned());
 
@@ -84,13 +79,12 @@ mod tests {
         decorators.thread = Some(make_extended_thread());
 
         let json = json!({
-            "@type": msg_type,
             "credential_id": content.credential_id,
             "revocation_format": content.revocation_format,
             "comment": content.comment,
             "~thread": decorators.thread
         });
 
-        test_utils::test_msg(content, decorators, json);
+        test_utils::test_msg::<RevokeContent, _, _>(content, decorators, json);
     }
 }

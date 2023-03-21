@@ -16,3 +16,28 @@ impl PublicInvitationContent {
         Self { label, did }
     }
 }
+
+#[cfg(test)]
+#[allow(clippy::unwrap_used)]
+#[allow(clippy::field_reassign_with_default)]
+mod tests {
+    use serde_json::json;
+
+    use super::*;
+    use crate::{
+        misc::{nothing::Nothing, test_utils},
+        protocols::connection::invitation::Invitation,
+    };
+
+    #[test]
+    fn test_minimal_conn_invite_public() {
+        let content = PublicInvitationContent::new("test_label".to_owned(), "test_did".to_owned());
+
+        let json = json!({
+            "label": content.label,
+            "did": content.did
+        });
+
+        test_utils::test_msg::<Invitation, _, _>(content, Nothing, json);
+    }
+}

@@ -45,24 +45,19 @@ mod tests {
 
     #[test]
     fn test_minimal_ping_response() {
-        let msg_type = test_utils::build_msg_type::<PingResponseContent>();
-
         let content = PingResponseContent::default();
 
         let decorators = PingResponseDecorators::new(make_extended_thread());
 
         let json = json!({
-            "@type": msg_type,
             "~thread": decorators.thread
         });
 
-        test_utils::test_msg(content, decorators, json);
+        test_utils::test_msg::<PingResponseContent, _, _>(content, decorators, json);
     }
 
     #[test]
     fn test_extensive_ping_response() {
-        let msg_type = test_utils::build_msg_type::<PingResponseContent>();
-
         let mut content = PingResponseContent::default();
         content.comment = Some("test_comment".to_owned());
 
@@ -70,12 +65,11 @@ mod tests {
         decorators.timing = Some(make_extended_timing());
 
         let json = json!({
-            "@type": msg_type,
             "comment": content.comment,
             "~thread": decorators.thread,
             "~timing": decorators.timing
         });
 
-        test_utils::test_msg(content, decorators, json);
+        test_utils::test_msg::<PingResponseContent, _, _>(content, decorators, json);
     }
 }

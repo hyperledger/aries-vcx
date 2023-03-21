@@ -55,26 +55,21 @@ mod tests {
 
     #[test]
     fn test_minimal_basic_message() {
-        let msg_type = test_utils::build_msg_type::<BasicMessageContent>();
-
         let mut content = BasicMessageContent::new("test_content".to_owned());
         content.sent_time = DateTime::default();
 
         let decorators = BasicMessageDecorators::default();
 
         let json = json!({
-            "@type": msg_type,
             "sent_time": content.sent_time.format(DATETIME_FORMAT).to_string(),
             "content": content.content
         });
 
-        test_utils::test_msg(content, decorators, json);
+        test_utils::test_msg::<BasicMessageContent, _, _>(content, decorators, json);
     }
 
     #[test]
     fn test_extensive_basic_message() {
-        let msg_type = test_utils::build_msg_type::<BasicMessageContent>();
-
         let mut content = BasicMessageContent::new("test_content".to_owned());
         content.sent_time = DateTime::default();
 
@@ -82,12 +77,11 @@ mod tests {
         decorators.thread = Some(make_extended_thread());
 
         let json = json!({
-            "@type": msg_type,
             "sent_time": content.sent_time.format(DATETIME_FORMAT).to_string(),
             "content": content.content,
             "~thread": decorators.thread
         });
 
-        test_utils::test_msg(content, decorators, json);
+        test_utils::test_msg::<BasicMessageContent, _, _>(content, decorators, json);
     }
 }

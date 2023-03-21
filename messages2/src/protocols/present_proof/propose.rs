@@ -170,12 +170,13 @@ mod tests {
     use serde_json::json;
 
     use super::*;
-    use crate::{decorators::{thread::tests::make_extended_thread, timing::tests::make_extended_timing}, misc::test_utils};
+    use crate::{
+        decorators::{thread::tests::make_extended_thread, timing::tests::make_extended_timing},
+        misc::test_utils,
+    };
 
     #[test]
     fn test_minimal_propose_proof() {
-        let msg_type = test_utils::build_msg_type::<ProposePresentationContent>();
-
         let attribute = Attribute::new("test_attribute_name".to_owned());
         let predicate = Predicate::new(
             "test_predicate_name".to_owned(),
@@ -188,17 +189,14 @@ mod tests {
         let decorators = ProposePresentationDecorators::default();
 
         let json = json!({
-            "@type": msg_type,
             "presentation_proposal": content.presentation_proposal
         });
 
-        test_utils::test_msg(content, decorators, json);
+        test_utils::test_msg::<ProposePresentationContent, _, _>(content, decorators, json);
     }
 
     #[test]
     fn test_extensive_propose_proof() {
-        let msg_type = test_utils::build_msg_type::<ProposePresentationContent>();
-
         let attribute = Attribute::new("test_attribute_name".to_owned());
         let predicate = Predicate::new(
             "test_predicate_name".to_owned(),
@@ -214,13 +212,12 @@ mod tests {
         decorators.timing = Some(make_extended_timing());
 
         let json = json!({
-            "@type": msg_type,
             "comment": content.comment,
             "presentation_proposal": content.presentation_proposal,
             "~thread": decorators.thread,
             "~timing": decorators.timing
         });
 
-        test_utils::test_msg(content, decorators, json);
+        test_utils::test_msg::<ProposePresentationContent, _, _>(content, decorators, json);
     }
 }

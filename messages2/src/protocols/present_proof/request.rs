@@ -54,24 +54,19 @@ mod tests {
 
     #[test]
     fn test_minimal_request_proof() {
-        let msg_type = test_utils::build_msg_type::<RequestPresentationContent>();
-
         let content = RequestPresentationContent::new(vec![make_extended_attachment()]);
 
         let decorators = RequestPresentationDecorators::default();
 
         let json = json!({
-            "@type": msg_type,
             "request_presentations~attach": content.request_presentations_attach,
         });
 
-        test_utils::test_msg(content, decorators, json);
+        test_utils::test_msg::<RequestPresentationContent, _, _>(content, decorators, json);
     }
 
     #[test]
     fn test_extensive_request_proof() {
-        let msg_type = test_utils::build_msg_type::<RequestPresentationContent>();
-
         let mut content = RequestPresentationContent::new(vec![make_extended_attachment()]);
         content.comment = Some("test_comment".to_owned());
 
@@ -80,13 +75,12 @@ mod tests {
         decorators.timing = Some(make_extended_timing());
 
         let json = json!({
-            "@type": msg_type,
             "request_presentations~attach": content.request_presentations_attach,
             "comment": content.comment,
             "~thread": decorators.thread,
             "~timing": decorators.timing
         });
 
-        test_utils::test_msg(content, decorators, json);
+        test_utils::test_msg::<RequestPresentationContent, _, _>(content, decorators, json);
     }
 }

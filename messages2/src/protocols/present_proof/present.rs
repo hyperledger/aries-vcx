@@ -66,25 +66,20 @@ mod tests {
 
     #[test]
     fn test_minimal_present_proof() {
-        let msg_type = test_utils::build_msg_type::<PresentationContent>();
-
         let content = PresentationContent::new(vec![make_extended_attachment()]);
 
         let decorators = PresentationDecorators::new(make_extended_thread());
 
         let json = json!({
-            "@type": msg_type,
             "presentations~attach": content.presentations_attach,
             "~thread": decorators.thread
         });
 
-        test_utils::test_msg(content, decorators, json);
+        test_utils::test_msg::<PresentationContent, _, _,>(content, decorators, json);
     }
 
     #[test]
     fn test_extensive_present_proof() {
-        let msg_type = test_utils::build_msg_type::<PresentationContent>();
-
         let mut content = PresentationContent::new(vec![make_extended_attachment()]);
         content.comment = Some("test_comment".to_owned());
 
@@ -93,7 +88,6 @@ mod tests {
         decorators.please_ack = Some(make_minimal_please_ack());
 
         let json = json!({
-            "@type": msg_type,
             "comment": content.comment,
             "presentations~attach": content.presentations_attach,
             "~thread": decorators.thread,
@@ -101,6 +95,6 @@ mod tests {
             "~please_ack": decorators.please_ack
         });
 
-        test_utils::test_msg(content, decorators, json);
+        test_utils::test_msg::<PresentationContent, _, _,>(content, decorators, json);
     }
 }

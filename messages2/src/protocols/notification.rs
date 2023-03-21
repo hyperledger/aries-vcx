@@ -57,36 +57,31 @@ mod tests {
 
     #[test]
     fn test_minimal_ack() {
-        let msg_type = test_utils::build_msg_type::<AckContent>();
         let content = AckContent::new(AckStatus::Ok);
 
         let decorators = AckDecorators::new(make_extended_thread());
 
         let json = json!({
-            "@type": msg_type,
             "status": content.status,
             "~thread": decorators.thread
         });
 
-        test_utils::test_msg(content, decorators, json);
+        test_utils::test_msg::<AckContent, _, _>(content, decorators, json);
     }
 
     #[test]
     fn test_extensive_ack() {
-        let msg_type = test_utils::build_msg_type::<AckContent>();
-
         let content = AckContent::new(AckStatus::Ok);
 
         let mut decorators = AckDecorators::new(make_extended_thread());
         decorators.timing = Some(make_extended_timing());
 
         let json = json!({
-            "@type": msg_type,
             "status": content.status,
             "~thread": decorators.thread,
             "~timing": decorators.timing
         });
 
-        test_utils::test_msg(content, decorators, json);
+        test_utils::test_msg::<AckContent, _, _>(content, decorators, json);
     }
 }

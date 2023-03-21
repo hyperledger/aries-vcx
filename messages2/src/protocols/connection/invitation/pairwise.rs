@@ -36,3 +36,104 @@ pub struct PwInvitationDecorators {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<Timing>,
 }
+
+#[cfg(test)]
+#[allow(clippy::unwrap_used)]
+#[allow(clippy::field_reassign_with_default)]
+mod tests {
+    use serde_json::json;
+
+    use super::*;
+    use crate::{
+        decorators::timing::tests::make_extended_timing, misc::test_utils,
+        protocols::connection::invitation::Invitation,
+    };
+
+    #[test]
+    fn test_minimal_conn_invite_pw() {
+        let content = PairwiseInvitationContent::new(
+            "test_pw_invite_label".to_owned(),
+            vec!["test_recipient_key".to_owned()],
+            vec![],
+            Url::parse("https://dummy.dummy/dummy").unwrap(),
+        );
+
+        let decorators = PwInvitationDecorators::default();
+
+        let json = json!({
+            "label": content.label,
+            "recipientKeys": content.recipient_keys,
+            "routingKeys": content.routing_keys,
+            "serviceEndpoint": content.service_endpoint,
+        });
+
+        test_utils::test_msg::<Invitation, _, _>(content, decorators, json);
+    }
+
+    #[test]
+    fn test_extensive_conn_invite_pw() {
+        let content = PairwiseInvitationContent::new(
+            "test_pw_invite_label".to_owned(),
+            vec!["test_recipient_key".to_owned()],
+            vec!["test_routing_key".to_owned()],
+            Url::parse("https://dummy.dummy/dummy").unwrap(),
+        );
+
+        let mut decorators = PwInvitationDecorators::default();
+        decorators.timing = Some(make_extended_timing());
+
+        let json = json!({
+            "label": content.label,
+            "recipientKeys": content.recipient_keys,
+            "routingKeys": content.routing_keys,
+            "serviceEndpoint": content.service_endpoint,
+            "~timing": decorators.timing
+        });
+
+        test_utils::test_msg::<Invitation, _, _>(content, decorators, json);
+    }
+
+    #[test]
+    fn test_minimal_conn_invite_pw_did() {
+        let content = PairwiseInvitationContent::new(
+            "test_pw_invite_label".to_owned(),
+            vec!["test_recipient_key".to_owned()],
+            vec![],
+            "test_conn_invite_pw_did".to_owned(),
+        );
+
+        let decorators = PwInvitationDecorators::default();
+
+        let json = json!({
+            "label": content.label,
+            "recipientKeys": content.recipient_keys,
+            "routingKeys": content.routing_keys,
+            "serviceEndpoint": content.service_endpoint,
+        });
+
+        test_utils::test_msg::<Invitation, _, _>(content, decorators, json);
+    }
+
+    #[test]
+    fn test_extensive_conn_invite_pw_did() {
+        let content = PairwiseInvitationContent::new(
+            "test_pw_invite_label".to_owned(),
+            vec!["test_recipient_key".to_owned()],
+            vec!["test_routing_key".to_owned()],
+            "test_conn_invite_pw_did".to_owned(),
+        );
+
+        let mut decorators = PwInvitationDecorators::default();
+        decorators.timing = Some(make_extended_timing());
+
+        let json = json!({
+            "label": content.label,
+            "recipientKeys": content.recipient_keys,
+            "routingKeys": content.routing_keys,
+            "serviceEndpoint": content.service_endpoint,
+            "~timing": decorators.timing
+        });
+
+        test_utils::test_msg::<Invitation, _, _>(content, decorators, json);
+    }
+}

@@ -66,25 +66,20 @@ mod tests {
 
     #[test]
     fn test_minimal_issue_cred() {
-        let msg_type = test_utils::build_msg_type::<IssueCredentialContent>();
-
         let content = IssueCredentialContent::new(vec![make_extended_attachment()]);
 
         let decorators = IssueCredentialDecorators::new(make_extended_thread());
 
         let json = json!({
-            "@type": msg_type,
             "credentials~attach": content.credentials_attach,
             "~thread": decorators.thread
         });
 
-        test_utils::test_msg(content, decorators, json);
+        test_utils::test_msg::<IssueCredentialContent, _, _>(content, decorators, json);
     }
 
     #[test]
     fn test_extensive_issue_cred() {
-        let msg_type = test_utils::build_msg_type::<IssueCredentialContent>();
-
         let mut content = IssueCredentialContent::new(vec![make_extended_attachment()]);
         content.comment = Some("test_comment".to_owned());
 
@@ -93,7 +88,6 @@ mod tests {
         decorators.please_ack = Some(make_minimal_please_ack());
 
         let json = json!({
-            "@type": msg_type,
             "credentials~attach": content.credentials_attach,
             "comment": content.comment,
             "~thread": decorators.thread,
@@ -101,6 +95,6 @@ mod tests {
             "~please_ack": decorators.please_ack
         });
 
-        test_utils::test_msg(content, decorators, json);
+        test_utils::test_msg::<IssueCredentialContent, _, _>(content, decorators, json);
     }
 }

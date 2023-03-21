@@ -56,25 +56,20 @@ mod tests {
     };
 
     #[test]
-    fn test_minimal_query() {
-        let msg_type = test_utils::build_msg_type::<DiscloseContent>();
-
+    fn test_minimal_disclose() {
         let content = DiscloseContent::new();
 
         let decorators = DiscloseDecorators::default();
 
         let json = json!({
-            "@type": msg_type,
             "protocols": content.protocols
         });
 
-        test_utils::test_msg(content, decorators, json);
+        test_utils::test_msg::<DiscloseContent, _, _>(content, decorators, json);
     }
 
     #[test]
-    fn test_extensive_query() {
-        let msg_type = test_utils::build_msg_type::<DiscloseContent>();
-
+    fn test_extensive_disclose() {
         let mut content = DiscloseContent::new();
         content.protocols.pop();
         content.protocols.pop();
@@ -88,12 +83,11 @@ mod tests {
         decorators.timing = Some(make_extended_timing());
 
         let json = json!({
-            "@type": msg_type,
             "protocols": content.protocols,
             "~thread": decorators.thread,
             "~timing": decorators.timing
         });
 
-        test_utils::test_msg(content, decorators, json);
+        test_utils::test_msg::<DiscloseContent, _, _>(content, decorators, json);
     }
 }

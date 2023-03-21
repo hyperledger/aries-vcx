@@ -136,20 +136,16 @@ mod tests {
 
     #[test]
     fn test_minimal_problem_report() {
-        let msg_type = test_utils::build_msg_type::<ProblemReportContent>();
-
         let content = ProblemReportContent::default();
         let decorators = ProblemReportDecorators::default();
 
-        let json = json!({ "@type": msg_type });
+        let json = json!({});
 
-        test_utils::test_msg(content, decorators, json);
+        test_utils::test_msg::<ProblemReportContent, _, _>(content, decorators, json);
     }
 
     #[test]
     fn test_extensive_problem_report() {
-        let msg_type = test_utils::build_msg_type::<ProblemReportContent>();
-
         let mut content = ProblemReportContent::default();
         content.description = Some("test_description".to_owned());
         content.who_retries = Some(WhoRetries::Me);
@@ -158,12 +154,11 @@ mod tests {
         decorators.thread = Some(make_extended_thread());
 
         let json = json!({
-            "@type": msg_type,
             "description": content.description,
             "who_retries": content.who_retries,
             "~thread": decorators.thread
         });
 
-        test_utils::test_msg(content, decorators, json);
+        test_utils::test_msg::<ProblemReportContent, _, _>(content, decorators, json);
     }
 }

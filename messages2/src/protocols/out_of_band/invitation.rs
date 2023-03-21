@@ -66,8 +66,6 @@ mod tests {
 
     #[test]
     fn test_minimal_oob_invitation() {
-        let msg_type = test_utils::build_msg_type::<InvitationContent>();
-
         let content = InvitationContent::new(
             vec![Service::Did("test_service_did".to_owned())],
             vec![make_extended_attachment()],
@@ -76,18 +74,15 @@ mod tests {
         let decorators = InvitationDecorators::default();
 
         let json = json!({
-            "@type": msg_type,
             "services": content.services,
             "requests~attach": content.requests_attach,
         });
 
-        test_utils::test_msg(content, decorators, json);
+        test_utils::test_msg::<InvitationContent, _, _>(content, decorators, json);
     }
 
     #[test]
     fn test_extensive_oob_invitation() {
-        let msg_type = test_utils::build_msg_type::<InvitationContent>();
-
         let mut content = InvitationContent::new(
             vec![Service::Did("test_service_did".to_owned())],
             vec![make_extended_attachment()],
@@ -103,7 +98,6 @@ mod tests {
         decorators.timing = Some(make_extended_timing());
 
         let json = json!({
-            "@type": msg_type,
             "label": content.label,
             "goal_code": content.goal_code,
             "goal": content.goal,
@@ -114,6 +108,6 @@ mod tests {
             "~timing": decorators.timing
         });
 
-        test_utils::test_msg(content, decorators, json);
+        test_utils::test_msg::<InvitationContent, _, _>(content, decorators, json);
     }
 }

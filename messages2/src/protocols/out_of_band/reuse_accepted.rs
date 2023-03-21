@@ -44,35 +44,29 @@ mod tests {
 
     #[test]
     fn test_minimal_reuse_accepted() {
-        let msg_type = test_utils::build_msg_type::<HandshakeReuseAcceptedContent>();
-
         let content = HandshakeReuseAcceptedContent::default();
 
         let decorators = HandshakeReuseAcceptedDecorators::new(make_extended_thread());
 
         let json = json!({
-            "@type": msg_type,
             "~thread": decorators.thread
         });
 
-        test_utils::test_msg(content, decorators, json);
+        test_utils::test_msg::<HandshakeReuseAcceptedContent, _, _>(content, decorators, json);
     }
 
     #[test]
     fn test_extensive_reuse_accepted() {
-        let msg_type = test_utils::build_msg_type::<HandshakeReuseAcceptedContent>();
-
         let content = HandshakeReuseAcceptedContent::default();
 
         let mut decorators = HandshakeReuseAcceptedDecorators::new(make_extended_thread());
         decorators.timing = Some(make_extended_timing());
 
         let json = json!({
-            "@type": msg_type,
             "~thread": decorators.thread,
             "~timing": decorators.timing
         });
 
-        test_utils::test_msg(content, decorators, json);
+        test_utils::test_msg::<HandshakeReuseAcceptedContent, _, _>(content, decorators, json);
     }
 }

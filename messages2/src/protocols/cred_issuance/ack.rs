@@ -34,37 +34,31 @@ mod tests {
 
     #[test]
     fn test_minimal_ack_cred() {
-        let msg_type = test_utils::build_msg_type::<AckCredentialContent>();
-
         let content = AckCredentialContent::new(AckStatus::Ok);
 
         let decorators = AckDecorators::new(make_extended_thread());
 
         let json = json!({
-            "@type": msg_type,
             "status": content.0.status,
             "~thread": decorators.thread
         });
 
-        test_utils::test_msg(content, decorators, json);
+        test_utils::test_msg::<AckCredentialContent, _, _>(content, decorators, json);
     }
 
     #[test]
     fn test_extensive_ack_cred() {
-        let msg_type = test_utils::build_msg_type::<AckCredentialContent>();
-
         let content = AckCredentialContent::new(AckStatus::Ok);
 
         let mut decorators = AckDecorators::new(make_extended_thread());
         decorators.timing = Some(make_extended_timing());
 
         let json = json!({
-            "@type": msg_type,
             "status": content.0.status,
             "~thread": decorators.thread,
             "~timing": decorators.timing
         });
 
-        test_utils::test_msg(content, decorators, json);
+        test_utils::test_msg::<AckCredentialContent, _, _>(content, decorators, json);
     }
 }

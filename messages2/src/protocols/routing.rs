@@ -28,15 +28,13 @@ mod tests {
 
     #[test]
     fn test_minimal_forward() {
-        let msg_type = test_utils::build_msg_type::<ForwardContent>();
         let content = ForwardContent::new("test_to".to_owned(), "test_msg".to_owned());
 
         let json = json! ({
-            "@type": msg_type,
             "to": content.to,
             "msg": content.msg
         });
 
-        test_utils::test_msg(content, Nothing, json);
+        test_utils::test_msg::<ForwardContent, _, _>(content, Nothing, json);
     }
 }

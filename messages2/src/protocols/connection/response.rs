@@ -106,3 +106,63 @@ impl Serialize for SigEd25519Sha512Single {
         format_args!("{protocol}/{}", kind.as_ref()).serialize(serializer)
     }
 }
+
+#[cfg(test)]
+#[allow(clippy::unwrap_used)]
+#[allow(clippy::field_reassign_with_default)]
+mod tests {
+    use serde_json::json;
+
+    use super::*;
+    use crate::{
+        decorators::{
+            please_ack::tests::make_minimal_please_ack, thread::tests::make_extended_thread,
+            timing::tests::make_extended_timing,
+        },
+        misc::test_utils,
+    };
+
+    #[test]
+    fn test_minimal_conn_response() {
+        let conn_sig = ConnectionSignature::new(
+            "test_signature".to_owned(),
+            "test_sig_data".to_owned(),
+            "test_signer".to_owned(),
+        );
+
+        let content = ResponseContent::new(conn_sig);
+
+        let decorators = ResponseDecorators::new(make_extended_thread());
+
+        let json = json!({
+            "connection~sig": content.connection_sig,
+            "~thread": decorators.thread
+        });
+
+        test_utils::test_msg::<ResponseContent, _, _>(content, decorators, json);
+    }
+
+    #[test]
+    fn test_extensive_conn_response() {
+        let conn_sig = ConnectionSignature::new(
+            "test_signature".to_owned(),
+            "test_sig_data".to_owned(),
+            "test_signer".to_owned(),
+        );
+
+        let content = ResponseContent::new(conn_sig);
+
+        let mut decorators = ResponseDecorators::new(make_extended_thread());
+        decorators.timing = Some(make_extended_timing());
+        decorators.please_ack = Some(make_minimal_please_ack());
+
+        let json = json!({
+            "connection~sig": content.connection_sig,
+            "~thread": decorators.thread,
+            "~timing": decorators.timing,
+            "~please_ack": decorators.please_ack
+        });
+
+        test_utils::test_msg::<ResponseContent, _, _>(content, decorators, json);
+    }
+}
