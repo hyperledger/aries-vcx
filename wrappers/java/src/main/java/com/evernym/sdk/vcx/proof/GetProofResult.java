@@ -5,22 +5,9 @@ package com.evernym.sdk.vcx.proof;
  */
 
 public class GetProofResult {
-    public GetProofResult(
-            int proof_state,
-            String response_data) {
-        this.proof_state = proof_state;
+    public GetProofResult(String response_data) {
         this.response_data = response_data;
     }
-
-    public int getProof_state() {
-        return proof_state;
-    }
-
-    public void setProof_state(int proof_state) {
-        this.proof_state = proof_state;
-    }
-
-    private int proof_state;
 
     private String response_data;
 

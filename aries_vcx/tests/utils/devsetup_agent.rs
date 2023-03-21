@@ -54,6 +54,7 @@ pub mod test_utils {
     use aries_vcx::protocols::mediated_connection::inviter::state_machine::InviterState;
     use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
     use aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;
+    use aries_vcx::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
     use aries_vcx::utils::devsetup::*;
     use aries_vcx::utils::provision::provision_cloud_agent;
     use vdrtools::{PoolHandle, WalletHandle};
@@ -386,16 +387,21 @@ pub mod test_utils {
         }
 
         pub async fn verify_presentation(&mut self) {
-            self.update_proof_state(VerifierState::Finished, Status::Success).await
+            self.update_proof_state(VerifierState::Finished, PresentationVerificationStatus::Valid)
+                .await
         }
 
-        pub async fn update_proof_state(&mut self, expected_state: VerifierState, expected_status: Status) {
+        pub async fn update_proof_state(
+            &mut self,
+            expected_state: VerifierState,
+            expected_verification_status: PresentationVerificationStatus,
+        ) {
             self.verifier
                 .update_state(&self.profile, &self.agency_client, &self.connection)
                 .await
                 .unwrap();
             assert_eq!(expected_state, self.verifier.get_state());
-            assert_eq!(expected_status, self.verifier.get_presentation_status());
+            assert_eq!(expected_verification_status, self.verifier.get_verification_status());
         }
 
         pub async fn send_revocation_notification(&mut self, ack_on: Vec<AckOn>) {

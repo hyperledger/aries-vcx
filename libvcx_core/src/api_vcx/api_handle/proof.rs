@@ -1,17 +1,16 @@
-use aries_vcx::protocols::SendClosure;
 use serde_json;
 
 use aries_vcx::common::proofs::proof_request::PresentationRequestData;
 use aries_vcx::handlers::proof_presentation::verifier::Verifier;
 use aries_vcx::messages::a2a::A2AMessage;
-use aries_vcx::protocols::proof_presentation::verifier::state_machine::RevocationStatus;
+use aries_vcx::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
+use aries_vcx::protocols::SendClosure;
 
 use crate::api_vcx::api_global::profile::get_main_profile;
 use crate::api_vcx::api_handle::connection::HttpClient;
 use crate::api_vcx::api_handle::object_cache::ObjectCache;
 use crate::api_vcx::api_handle::out_of_band::to_a2a_message;
 use crate::api_vcx::api_handle::{connection, mediated_connection};
-
 use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 
 lazy_static! {
@@ -209,6 +208,7 @@ pub fn get_presentation_request_msg(handle: u32) -> LibvcxResult<String> {
         Ok(json!(msg).to_string())
     })
 }
+
 // --- Presentation ---
 pub fn get_presentation_msg(handle: u32) -> LibvcxResult<String> {
     PROOF_MAP.get(handle, |proof| {
@@ -223,40 +223,35 @@ pub fn get_presentation_attachment(handle: u32) -> LibvcxResult<String> {
     })
 }
 
-pub fn get_presentation_verification_status(handle: u32) -> LibvcxResult<u32> {
-    PROOF_MAP.get(handle, |proof| Ok(proof.get_presentation_status().code()))
+pub fn get_verification_status(handle: u32) -> LibvcxResult<VcxPresentationVerificationStatus> {
+    PROOF_MAP.get(handle, |proof| Ok(proof.get_verification_status().into()))
 }
 
-pub enum VcxRevocationStatus {
-    NonRevoked,
-    Revoked,
-    Undefined,
+#[derive(Debug, PartialEq, Eq)]
+pub enum VcxPresentationVerificationStatus {
+    Valid,
+    Invalid,
+    Unavailable,
 }
 
-impl VcxRevocationStatus {
+impl VcxPresentationVerificationStatus {
     pub fn code(&self) -> u32 {
         match self {
-            VcxRevocationStatus::Undefined => 0,
-            VcxRevocationStatus::NonRevoked => 1,
-            VcxRevocationStatus::Revoked => 2,
+            VcxPresentationVerificationStatus::Unavailable => 0,
+            VcxPresentationVerificationStatus::Valid => 1,
+            VcxPresentationVerificationStatus::Invalid => 2,
         }
     }
 }
 
-impl From<Option<RevocationStatus>> for VcxRevocationStatus {
-    fn from(status: Option<RevocationStatus>) -> Self {
-        match status {
-            None => VcxRevocationStatus::Undefined,
-            Some(revocation_status) => match revocation_status {
-                RevocationStatus::NonRevoked => VcxRevocationStatus::NonRevoked,
-                RevocationStatus::Revoked => VcxRevocationStatus::Revoked,
-            },
+impl From<PresentationVerificationStatus> for VcxPresentationVerificationStatus {
+    fn from(verification_status: PresentationVerificationStatus) -> Self {
+        match verification_status {
+            PresentationVerificationStatus::Valid => VcxPresentationVerificationStatus::Valid,
+            PresentationVerificationStatus::Invalid => VcxPresentationVerificationStatus::Invalid,
+            PresentationVerificationStatus::Unavailable => VcxPresentationVerificationStatus::Unavailable,
         }
     }
-}
-
-pub fn get_revocation_status(handle: u32) -> LibvcxResult<VcxRevocationStatus> {
-    PROOF_MAP.get(handle, |proof| Ok(proof.get_revocation_status().into()))
 }
 
 // --- General ---
@@ -642,7 +637,10 @@ pub mod tests {
             send_proof_request(bad_handle, handle_conn).await.unwrap_err().kind(),
             LibvcxErrorKind::InvalidHandle
         );
-        assert_eq!(get_presentation_verification_status(handle_proof).unwrap(), 0);
+        assert_eq!(
+            get_verification_status(handle_proof).unwrap(),
+            VcxPresentationVerificationStatus::Unavailable
+        );
         assert_eq!(
             create_proof(
                 "my source id".to_string(),

@@ -307,7 +307,7 @@ pub static SERIALIZIED_PROOF_REVOKED: &str = r#"
             "~please_ack": {}
           },
           "status": "Success",
-          "revocation_status": "Revoked"
+          "verification_status": "Revoked"
         }
       }
     }
