@@ -153,7 +153,7 @@ fn process_version(Version { ident, data, major }: Version) -> SynResult<TokenSt
 
     let expanded = quote! {
         impl crate::msg_types::types::traits::MajorVersion for #ident {
-            type Actors = Vec<crate::maybe_known::MaybeKnown<crate::msg_types::actor::Actor>>;
+            type Actors = Vec<crate::maybe_known::MaybeKnown<crate::msg_types::role::Role>>;
 
             const MAJOR: u8 = #major;
 

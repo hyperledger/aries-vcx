@@ -1,5 +1,5 @@
-pub mod actor;
 pub mod registry;
+pub mod role;
 pub mod types;
 
 use std::{fmt::Arguments, str::FromStr};

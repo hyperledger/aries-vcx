@@ -2,7 +2,7 @@ use std::{collections::HashMap, marker::PhantomData};
 
 use lazy_static::lazy_static;
 
-use super::{actor::Actor, Protocol};
+use super::{role::Role, Protocol};
 use crate::{
     maybe_known::MaybeKnown,
     msg_types::types::{
@@ -24,7 +24,7 @@ pub struct RegistryEntry {
     /// A [`String`] representation of the *pid*
     pub str_pid: String,
     /// A [`Vec<Actor>`] representing the roles available in the protocol.
-    pub actors: Vec<MaybeKnown<Actor>>,
+    pub actors: Vec<MaybeKnown<Role>>,
 }
 
 /// Extracts the necessary parts for constructing a [`RegistryEntry`] from a protocol minor version.
@@ -37,7 +37,7 @@ macro_rules! extract_parts {
     }};
 }
 
-fn map_insert(map: &mut RegistryMap, parts: (&'static str, u8, u8, Vec<MaybeKnown<Actor>>, Protocol)) {
+fn map_insert(map: &mut RegistryMap, parts: (&'static str, u8, u8, Vec<MaybeKnown<Role>>, Protocol)) {
     let (protocol_name, major, minor, actors, protocol) = parts;
 
     let str_pid = format!("{}/{}/{}.{}", Protocol::DID_COM_ORG_PREFIX, protocol_name, major, minor);

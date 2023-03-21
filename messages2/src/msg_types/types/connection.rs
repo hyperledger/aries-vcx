@@ -6,7 +6,7 @@ use strum_macros::{AsRefStr, EnumString};
 use transitive::TransitiveFrom;
 
 use super::Protocol;
-use crate::msg_types::actor::Actor;
+use crate::msg_types::role::Role;
 
 #[derive(Copy, Clone, Debug, From, TryInto, PartialEq, MessageType)]
 #[msg_type(protocol = "connections")]
@@ -18,7 +18,7 @@ pub enum Connection {
 #[transitive(into(Connection, Protocol))]
 #[msg_type(major = 1)]
 pub enum ConnectionV1 {
-    #[msg_type(minor = 0, actors = "Actor::Inviter, Actor::Invitee")]
+    #[msg_type(minor = 0, actors = "Role::Inviter, Role::Invitee")]
     V1_0(PhantomData<ConnectionV1_0Kind>),
 }
 

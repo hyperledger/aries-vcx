@@ -15,7 +15,7 @@ use crate::{
     maybe_known::MaybeKnown,
     misc::utils::transit_to_aries_msg,
     msg_types::{
-        actor::Actor,
+        role::Role,
         types::discover_features::{
             DiscoverFeatures as DiscoverFeaturesKind, DiscoverFeaturesV1, DiscoverFeaturesV1_0Kind,
         },
@@ -63,7 +63,7 @@ impl DelayedSerde for DiscoverFeatures {
 pub struct ProtocolDescriptor {
     pub pid: MaybeKnown<Protocol>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub roles: Option<Vec<MaybeKnown<Actor>>>,
+    pub roles: Option<Vec<MaybeKnown<Role>>>,
 }
 
 impl ProtocolDescriptor {

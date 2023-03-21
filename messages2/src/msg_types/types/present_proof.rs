@@ -6,7 +6,7 @@ use strum_macros::{AsRefStr, EnumString};
 use transitive::TransitiveFrom;
 
 use super::Protocol;
-use crate::msg_types::actor::Actor;
+use crate::msg_types::role::Role;
 
 #[derive(Copy, Clone, Debug, From, TryInto, PartialEq, MessageType)]
 #[msg_type(protocol = "present-proof")]
@@ -18,7 +18,7 @@ pub enum PresentProof {
 #[transitive(into(PresentProof, Protocol))]
 #[msg_type(major = 1)]
 pub enum PresentProofV1 {
-    #[msg_type(minor = 0, actors = "Actor::Prover, Actor::Verifier")]
+    #[msg_type(minor = 0, actors = "Role::Prover, Role::Verifier")]
     V1_0(PhantomData<PresentProofV1_0Kind>),
 }
 

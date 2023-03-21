@@ -6,7 +6,7 @@ use strum_macros::{AsRefStr, EnumString};
 use transitive::TransitiveFrom;
 
 use super::Protocol;
-use crate::msg_types::actor::Actor;
+use crate::msg_types::role::Role;
 
 #[derive(Copy, Clone, Debug, From, PartialEq, MessageType)]
 #[msg_type(protocol = "out-of-band")]
@@ -18,7 +18,7 @@ pub enum OutOfBand {
 #[transitive(into(OutOfBand, Protocol))]
 #[msg_type(major = 1)]
 pub enum OutOfBandV1 {
-    #[msg_type(minor = 0, actors = "Actor::Receiver, Actor::Sender")]
+    #[msg_type(minor = 0, actors = "Role::Receiver, Role::Sender")]
     V1_1(PhantomData<OutOfBandV1_1Kind>),
 }
 

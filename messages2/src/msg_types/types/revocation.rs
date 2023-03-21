@@ -6,7 +6,7 @@ use strum_macros::{AsRefStr, EnumString};
 use transitive::TransitiveFrom;
 
 use super::Protocol;
-use crate::msg_types::actor::Actor;
+use crate::msg_types::role::Role;
 
 #[derive(Copy, Clone, Debug, From, PartialEq, MessageType)]
 #[msg_type(protocol = "revocation_notification")]
@@ -18,7 +18,7 @@ pub enum Revocation {
 #[transitive(into(Revocation, Protocol))]
 #[msg_type(major = 2)]
 pub enum RevocationV2 {
-    #[msg_type(minor = 0, actors = "Actor::Holder, Actor::Issuer")]
+    #[msg_type(minor = 0, actors = "Role::Holder, Role::Issuer")]
     V2_0(PhantomData<RevocationV2_0Kind>),
 }
 
