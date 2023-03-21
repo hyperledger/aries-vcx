@@ -4,8 +4,8 @@ use serde::{Deserialize, Serialize};
 use super::CredentialPreview;
 use crate::{
     decorators::{thread::Thread, timing::Timing},
+    message::Message,
     msg_types::types::cred_issuance::CredentialIssuanceV1_0Kind,
-    Message,
 };
 
 pub type ProposeCredential = Message<ProposeCredentialContent, ProposeCredentialDecorators>;

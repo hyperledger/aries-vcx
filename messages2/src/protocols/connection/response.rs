@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     decorators::{please_ack::PleaseAck, thread::Thread, timing::Timing},
+    message::Message,
     msg_types::{
         types::{
             connection::{Connection, ConnectionV1, ConnectionV1_0Kind},
@@ -12,7 +13,6 @@ use crate::{
         },
         MessageType, Protocol,
     },
-    Message,
 };
 
 pub type Response = Message<ResponseContent, ResponseDecorators>;

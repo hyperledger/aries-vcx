@@ -7,8 +7,8 @@ use url::Url;
 
 use crate::{
     decorators::{localization::FieldLocalization, thread::Thread, timing::Timing},
+    message::Message,
     msg_types::types::report_problem::ReportProblemV1_0Kind,
-    Message,
 };
 
 pub type ProblemReport = Message<ProblemReportContent, ProblemReportDecorators>;

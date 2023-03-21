@@ -2,9 +2,9 @@ use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 
 use crate::{
+    message::Message,
     msg_types::types::present_proof::PresentProofV1_0Kind,
     protocols::notification::{AckContent, AckDecorators, AckStatus},
-    Message,
 };
 
 pub type AckPresentation = Message<AckPresentationContent, AckDecorators>;

@@ -3,8 +3,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     decorators::{attachment::Attachment, please_ack::PleaseAck, thread::Thread, timing::Timing},
+    message::Message,
     msg_types::types::cred_issuance::CredentialIssuanceV1_0Kind,
-    Message,
 };
 
 pub type IssueCredential = Message<IssueCredentialContent, IssueCredentialDecorators>;

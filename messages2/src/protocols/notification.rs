@@ -3,8 +3,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     decorators::{thread::Thread, timing::Timing},
+    message::Message,
     msg_types::types::notification::NotificationV1_0Kind,
-    Message,
 };
 
 pub type Ack = Message<AckContent, AckDecorators>;

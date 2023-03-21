@@ -8,17 +8,15 @@
 
 pub mod decorators;
 mod error;
+pub mod maybe_known;
+pub mod message;
 pub mod misc;
 pub mod msg_types;
 pub mod protocols;
 
 use derive_more::From;
-use misc::nothing::Nothing;
 use msg_types::types::traits::MajorVersion;
-use protocols::{
-    routing::Forward,
-    traits::{ConcreteMessage, HasKind},
-};
+use protocols::routing::Forward;
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::{
@@ -201,46 +199,5 @@ impl Serialize for AriesMessage {
         S: Serializer,
     {
         self.delayed_serialize(serializer)
-    }
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
-pub struct Message<C, D = Nothing> {
-    #[serde(rename = "@id")]
-    pub id: String,
-    #[serde(flatten)]
-    pub content: C,
-    #[serde(flatten)]
-    pub decorators: D,
-}
-
-impl<C> Message<C> {
-    pub fn new(id: String, content: C) -> Self {
-        Self {
-            id,
-            content,
-            decorators: Nothing,
-        }
-    }
-}
-
-impl<C, D> Message<C, D> {
-    pub fn with_decorators(id: String, content: C, decorators: D) -> Self {
-        Self {
-            id,
-            content,
-            decorators,
-        }
-    }
-}
-
-impl<C, D> HasKind for Message<C, D>
-where
-    C: ConcreteMessage,
-{
-    type KindType = C::Kind;
-
-    fn kind_type() -> Self::KindType {
-        C::kind()
     }
 }

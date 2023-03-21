@@ -3,8 +3,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     decorators::{please_ack::PleaseAck, thread::Thread, timing::Timing},
+    message::Message,
     msg_types::types::revocation::RevocationV2_0Kind,
-    Message,
 };
 
 pub type Revoke = Message<RevokeContent, RevokeDecorators>;

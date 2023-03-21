@@ -1,7 +1,7 @@
 use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 
-use crate::{msg_types::types::routing::RoutingV1_0Kind, Message};
+use crate::{message::Message, msg_types::types::routing::RoutingV1_0Kind};
 
 pub type Forward = Message<ForwardContent>;
 

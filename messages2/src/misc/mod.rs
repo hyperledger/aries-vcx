@@ -9,9 +9,10 @@ pub mod test_utils {
     use serde_json::{json, Value};
 
     use crate::{
+        message::Message,
         msg_types::{types::traits::MessageKind, MessageType, Protocol},
         protocols::traits::ConcreteMessage,
-        AriesMessage, Message,
+        AriesMessage,
     };
 
     pub fn test_protocol<T>(protocol_str: &str, protocol_type: T)

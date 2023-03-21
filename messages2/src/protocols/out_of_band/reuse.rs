@@ -3,9 +3,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     decorators::{thread::Thread, timing::Timing},
+    message::Message,
     misc::nothing::Nothing,
     msg_types::types::out_of_band::OutOfBandV1_1Kind,
-    Message,
 };
 
 pub type HandshakeReuse = Message<HandshakeReuseContent, HandshakeReuseDecorators>;

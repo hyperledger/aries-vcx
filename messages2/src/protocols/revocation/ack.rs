@@ -2,9 +2,9 @@ use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 
 use crate::{
+    message::Message,
     msg_types::types::revocation::RevocationV2_0Kind,
     protocols::notification::{AckContent, AckDecorators, AckStatus},
-    Message,
 };
 
 pub type AckRevoke = Message<AckRevokeContent, AckDecorators>;

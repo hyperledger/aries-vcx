@@ -4,9 +4,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     decorators::{localization::MsgLocalization, thread::Thread, timing::Timing},
+    message::Message,
     misc::utils,
     msg_types::types::basic_message::BasicMessageV1_0Kind,
-    Message,
 };
 
 pub type BasicMessage = Message<BasicMessageContent, BasicMessageDecorators>;

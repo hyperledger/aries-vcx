@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     decorators::{thread::Thread, timing::Timing},
+    message::Message,
     misc::mime_type::MimeType,
     msg_types::{
         types::{
@@ -13,7 +14,6 @@ use crate::{
         },
         MessageType, Protocol,
     },
-    Message,
 };
 
 pub type ProposePresentation = Message<ProposePresentationContent, ProposePresentationDecorators>;
