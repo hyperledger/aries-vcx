@@ -75,7 +75,7 @@ mod tests {
             "~thread": decorators.thread
         });
 
-        test_utils::test_msg::<PresentationContent, _, _,>(content, decorators, json);
+        test_utils::test_msg::<PresentationContent, _, _>(content, decorators, json);
     }
 
     #[test]
@@ -95,6 +95,6 @@ mod tests {
             "~please_ack": decorators.please_ack
         });
 
-        test_utils::test_msg::<PresentationContent, _, _,>(content, decorators, json);
+        test_utils::test_msg::<PresentationContent, _, _>(content, decorators, json);
     }
 }
