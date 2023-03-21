@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use super::OobGoalCode;
 use crate::{
     decorators::{attachment::Attachment, timing::Timing},
+    maybe_known::MaybeKnown,
     message::Message,
     misc::mime_type::MimeType,
     msg_types::{types::out_of_band::OutOfBandV1_1Kind, Protocol},
@@ -18,7 +19,7 @@ pub struct InvitationContent {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub label: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub goal_code: Option<OobGoalCode>,
+    pub goal_code: Option<MaybeKnown<OobGoalCode>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub goal: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -89,7 +90,7 @@ mod tests {
         );
 
         content.label = Some("test_label".to_owned());
-        content.goal_code = Some(OobGoalCode::P2PMessaging);
+        content.goal_code = Some(MaybeKnown::Known(OobGoalCode::P2PMessaging));
         content.goal = Some("test_oob_goal".to_owned());
         content.accept = Some(vec![MimeType::Json, MimeType::Plain]);
         content.handshake_protocols = Some(vec![ConnectionV1::new_v1_0().into()]);
