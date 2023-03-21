@@ -18,26 +18,9 @@ use super::Connection;
 use crate::{
     misc::utils::transit_to_aries_msg,
     msg_types::types::connection::ConnectionV1_0,
-    protocols::traits::{ConcreteMessage, HasKind},
+    protocols::traits::{MessageContent, MessageWithKind},
 };
 
-/// Type used to encapsulate a fully resolved invitation, which
-/// contains all the information necessary for generating a
-/// [`crate::protocols::connection::request::Request`].
-///
-/// Other invitation types would get resolved to this.
-// We rely on the URL version of the pairwise invitation because, coincidentally,
-// that's what a fully resolved invitation looks like.
-// If other fields are needed in the future, this type could be adapted.
-pub struct CompleteInvitationContent(PairwiseInvitationContent<Url>);
-
-// We implement the message kind on this type as we have to rely on
-// untagged deserialization, since we cannot know the invitation format
-// ahead of time.
-//
-// However, to have the capability of setting different decorators
-// based on the invitation format, we don't wrap the [`Invitation`]
-// in a [`Message`], but rather its variants.
 #[derive(Debug, Clone, From, Deserialize, Serialize, MessageContent, PartialEq)]
 #[message(kind = "ConnectionV1_0::Invitation")]
 #[serde(untagged)]
@@ -47,10 +30,23 @@ pub enum Invitation {
     PairwiseDID(PairwiseDidInvitation),
 }
 
-impl HasKind for Invitation {
-    type KindType = <Self as ConcreteMessage>::Kind;
+// We implement the message kind on this type as we have to rely on
+// untagged deserialization, since we cannot know the invitation format
+// ahead of time.
+//
+// However, to have the capability of setting different decorators
+// based on the invitation format, we don't wrap the [`Invitation`]
+// in a [`Message`], but rather its variants.
+//
+// This means that we cannot resolve the message kind through the
+// generic `Message<C: MessageContent, D>` because, in this case,
+// the variants don't implement `MessageContent`.
+//
+// Hence, the manual impl below.
+impl MessageWithKind for Invitation {
+    type MsgKind = <Self as MessageContent>::Kind;
 
-    fn kind_type() -> Self::KindType {
+    fn msg_kind() -> Self::MsgKind {
         Self::kind()
     }
 }

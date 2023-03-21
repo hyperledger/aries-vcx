@@ -37,7 +37,7 @@ pub fn message_content_impl(input: DeriveInput) -> SynResult<TokenStream> {
         .into_token_stream();
 
     let expanded = quote! {
-        impl<#params> crate::protocols::traits::ConcreteMessage for #ident<#params>
+        impl<#params> crate::protocols::traits::MessageContent for #ident<#params>
         #where_clause
         {
             type Kind = #ty;

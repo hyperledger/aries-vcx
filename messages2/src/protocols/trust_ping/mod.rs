@@ -6,10 +6,9 @@ use std::str::FromStr;
 use derive_more::From;
 use serde::{de::Error, Deserializer, Serializer};
 
-pub use self::{ping::Ping, ping_response::PingResponse};
-use self::{
-    ping::{PingContent, PingDecorators},
-    ping_response::{PingResponseContent, PingResponseDecorators},
+pub use self::{
+    ping::{Ping, PingContent, PingDecorators},
+    ping_response::{PingResponse, PingResponseContent, PingResponseDecorators},
 };
 use crate::{
     misc::utils::transit_to_aries_msg,

@@ -11,7 +11,7 @@ pub mod test_utils {
     use crate::{
         message::Message,
         msg_types::{types::traits::MessageKind, MessageType, Protocol},
-        protocols::traits::ConcreteMessage,
+        protocols::traits::MessageContent,
         AriesMessage,
     };
 
@@ -41,7 +41,7 @@ pub mod test_utils {
     pub fn test_msg<V, T, U>(content: T, decorators: U, mut json: Value)
     where
         AriesMessage: From<Message<T, U>>,
-        V: ConcreteMessage,
+        V: MessageContent,
         V::Kind: MessageKind,
         Protocol: From<<V::Kind as MessageKind>::Parent>,
     {
@@ -70,7 +70,7 @@ pub mod test_utils {
 
     pub fn build_msg_type<T>() -> String
     where
-        T: ConcreteMessage,
+        T: MessageContent,
         T::Kind: MessageKind,
         Protocol: From<<T::Kind as MessageKind>::Parent>,
     {

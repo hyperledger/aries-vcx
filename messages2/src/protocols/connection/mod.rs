@@ -6,7 +6,6 @@ pub mod response;
 use std::str::FromStr;
 
 use derive_more::From;
-pub use invitation::CompleteInvitationContent;
 use serde::{de::Error, Deserializer, Serializer};
 
 use self::{

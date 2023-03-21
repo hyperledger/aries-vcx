@@ -10,6 +10,8 @@ pub use self::types::Protocol;
 
 /// Type used for deserialization of a fully qualified message type. After deserialization,
 /// it is matched on to determine the actual message struct to deserialize to.
+///
+/// The [`Protocol`] and kind represent a complete `@type` field.
 #[derive(Debug, PartialEq)]
 pub(crate) struct MessageType<'a> {
     /// The [`Protocol`] part of the message type (e.g: https://didcomm.org/connections/1.0)
@@ -48,7 +50,7 @@ impl<'de> Deserialize<'de> for MessageType<'de> {
     }
 }
 
-/// Type used for serialization of a message along with appending it's type field.
+/// Type used for serialization of a message along with appending it's `@type` field.
 #[derive(Serialize)]
 pub(crate) struct MsgWithType<'a, T> {
     #[serde(rename = "@type")]
