@@ -12,6 +12,7 @@ use self::{
     query::{QueryContent, QueryDecorators},
 };
 use crate::{
+    maybe_known::MaybeKnown,
     misc::utils::transit_to_aries_msg,
     msg_types::{
         actor::Actor,
@@ -60,22 +61,15 @@ impl DelayedSerde for DiscoverFeatures {
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub struct ProtocolDescriptor {
-    pub pid: MaybeKnownPid,
+    pub pid: MaybeKnown<Protocol>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub roles: Option<Vec<Actor>>,
+    pub roles: Option<Vec<MaybeKnown<Actor>>>,
 }
 
 impl ProtocolDescriptor {
-    pub fn new(pid: MaybeKnownPid) -> Self {
+    pub fn new(pid: MaybeKnown<Protocol>) -> Self {
         Self { pid, roles: None }
     }
-}
-
-#[derive(Debug, Clone, From, Deserialize, Serialize, PartialEq)]
-#[serde(untagged)]
-pub enum MaybeKnownPid {
-    Known(Protocol),
-    Unknown(String),
 }
 
 transit_to_aries_msg!(QueryContent: QueryDecorators, DiscoverFeatures);

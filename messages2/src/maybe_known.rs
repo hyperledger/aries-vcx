@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 ///
 /// E.g: a [`crate::msg_types::types::Protocol`] which might represent
 /// a new protocol or simply a new major version.
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(untagged)]
 pub enum MaybeKnown<T> {
     Known(T),

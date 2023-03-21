@@ -116,6 +116,7 @@ fn process_version(Version { ident, data, major }: Version) -> SynResult<TokenSt
         // Newtype enums would always have one field
         let field = fields.fields.pop().expect("only implemented on newtype enums");
         let span = field.span();
+        let actors = actors.into_iter();
 
         let path = match field {
             Type::Path(p) => Ok(p),
@@ -136,7 +137,8 @@ fn process_version(Version { ident, data, major }: Version) -> SynResult<TokenSt
 
         try_resolve_match_arms.push(quote! {#minor => Ok(Self::#var_ident(std::marker::PhantomData))});
         as_parts_match_arms.push(quote! {Self::#var_ident(_) => #minor});
-        actors_match_arms.push(quote! {Self::#var_ident(_) => vec![#actors]});
+        actors_match_arms
+            .push(quote! {Self::#var_ident(_) => vec![#(crate::maybe_known::MaybeKnown::Known(#actors)),*]});
         constructor_impls.push(quote! {pub fn #constructor_fn() -> Self {Self::#var_ident(std::marker::PhantomData)}});
         msg_kind_impls.push(quote! {
             impl crate::msg_types::types::traits::MessageKind for #ty {
@@ -151,7 +153,7 @@ fn process_version(Version { ident, data, major }: Version) -> SynResult<TokenSt
 
     let expanded = quote! {
         impl crate::msg_types::types::traits::MajorVersion for #ident {
-            type Actors = Vec<crate::msg_types::actor::Actor>;
+            type Actors = Vec<crate::maybe_known::MaybeKnown<crate::msg_types::actor::Actor>>;
 
             const MAJOR: u8 = #major;
 

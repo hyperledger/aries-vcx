@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use super::ProtocolDescriptor;
 use crate::{
     decorators::{thread::Thread, timing::Timing},
+    maybe_known::MaybeKnown,
     message::Message,
     msg_types::{registry::PROTOCOL_REGISTRY, types::discover_features::DiscoverFeaturesV1_0Kind},
 };
@@ -22,7 +23,8 @@ impl DiscloseContent {
 
         for entries in PROTOCOL_REGISTRY.clone().into_values() {
             for entry in entries {
-                let mut pd = ProtocolDescriptor::new(entry.protocol.into());
+                let pid = MaybeKnown::Known(entry.protocol);
+                let mut pd = ProtocolDescriptor::new(pid);
                 pd.roles = Some(entry.actors);
                 protocols.push(pd);
             }
@@ -51,8 +53,8 @@ mod tests {
     use super::*;
     use crate::{
         decorators::{thread::tests::make_extended_thread, timing::tests::make_extended_timing},
+        maybe_known::MaybeKnown,
         misc::test_utils,
-        protocols::discover_features::MaybeKnownPid,
     };
 
     #[test]
@@ -75,7 +77,7 @@ mod tests {
         content.protocols.pop();
         content.protocols.pop();
 
-        let dummy_protocol_descriptor = ProtocolDescriptor::new(MaybeKnownPid::Unknown("test_dummy_pid".to_owned()));
+        let dummy_protocol_descriptor = ProtocolDescriptor::new(MaybeKnown::Unknown("test_dummy_pid".to_owned()));
         content.protocols.push(dummy_protocol_descriptor);
 
         let mut decorators = DiscloseDecorators::default();

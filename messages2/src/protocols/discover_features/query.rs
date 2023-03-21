@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use super::ProtocolDescriptor;
 use crate::{
     decorators::timing::Timing,
+    maybe_known::MaybeKnown,
     message::Message,
     msg_types::{registry::PROTOCOL_REGISTRY, types::discover_features::DiscoverFeaturesV1_0Kind},
 };
@@ -34,7 +35,8 @@ impl QueryContent {
         for entries in PROTOCOL_REGISTRY.values() {
             for entry in entries {
                 if entry.str_pid.starts_with(query) {
-                    let mut pd = ProtocolDescriptor::new(entry.protocol.into());
+                    let pid = MaybeKnown::Known(entry.protocol);
+                    let mut pd = ProtocolDescriptor::new(pid);
                     pd.roles = Some(entry.actors.clone());
                     protocols.push(pd);
                 }

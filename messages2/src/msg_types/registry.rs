@@ -3,11 +3,14 @@ use std::{collections::HashMap, marker::PhantomData};
 use lazy_static::lazy_static;
 
 use super::{actor::Actor, Protocol};
-use crate::msg_types::types::{
-    basic_message::BasicMessageV1, connection::ConnectionV1, cred_issuance::CredentialIssuanceV1,
-    discover_features::DiscoverFeaturesV1, notification::NotificationV1, out_of_band::OutOfBandV1,
-    present_proof::PresentProofV1, report_problem::ReportProblemV1, revocation::RevocationV2, routing::RoutingV1,
-    trust_ping::TrustPingV1,
+use crate::{
+    maybe_known::MaybeKnown,
+    msg_types::types::{
+        basic_message::BasicMessageV1, connection::ConnectionV1, cred_issuance::CredentialIssuanceV1,
+        discover_features::DiscoverFeaturesV1, notification::NotificationV1, out_of_band::OutOfBandV1,
+        present_proof::PresentProofV1, report_problem::ReportProblemV1, revocation::RevocationV2, routing::RoutingV1,
+        trust_ping::TrustPingV1,
+    },
 };
 type RegistryMap = HashMap<(&'static str, u8), Vec<RegistryEntry>>;
 
@@ -21,7 +24,7 @@ pub struct RegistryEntry {
     /// A [`String`] representation of the *pid*
     pub str_pid: String,
     /// A [`Vec<Actor>`] representing the roles available in the protocol.
-    pub actors: Vec<Actor>,
+    pub actors: Vec<MaybeKnown<Actor>>,
 }
 
 /// Extracts the necessary parts for constructing a [`RegistryEntry`] from a protocol minor version.
@@ -34,7 +37,7 @@ macro_rules! extract_parts {
     }};
 }
 
-fn map_insert(map: &mut RegistryMap, parts: (&'static str, u8, u8, Vec<Actor>, Protocol)) {
+fn map_insert(map: &mut RegistryMap, parts: (&'static str, u8, u8, Vec<MaybeKnown<Actor>>, Protocol)) {
     let (protocol_name, major, minor, actors, protocol) = parts;
 
     let str_pid = format!("{}/{}/{}.{}", Protocol::DID_COM_ORG_PREFIX, protocol_name, major, minor);

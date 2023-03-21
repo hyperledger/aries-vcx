@@ -1,6 +1,6 @@
 use std::{marker::PhantomData, str::FromStr};
 
-use crate::{error::MsgTypeResult, msg_types::actor::Actor};
+use crate::{error::MsgTypeResult, maybe_known::MaybeKnown, msg_types::actor::Actor};
 
 pub trait MessageKind: FromStr + AsRef<str> {
     type Parent: MajorVersion;
@@ -9,7 +9,7 @@ pub trait MessageKind: FromStr + AsRef<str> {
 }
 
 pub trait MajorVersion: Sized {
-    type Actors: IntoIterator<Item = Actor>;
+    type Actors: IntoIterator<Item = MaybeKnown<Actor>>;
 
     const MAJOR: u8;
 
