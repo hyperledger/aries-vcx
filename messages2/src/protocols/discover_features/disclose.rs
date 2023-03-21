@@ -41,3 +41,59 @@ pub struct DiscloseDecorators {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<Timing>,
 }
+
+#[cfg(test)]
+#[allow(clippy::unwrap_used)]
+#[allow(clippy::field_reassign_with_default)]
+mod tests {
+    use serde_json::json;
+
+    use super::*;
+    use crate::{
+        decorators::{thread::tests::make_extended_thread, timing::tests::make_extended_timing},
+        misc::test_utils,
+        protocols::discover_features::MaybeKnownPid,
+    };
+
+    #[test]
+    fn test_minimal_query() {
+        let msg_type = test_utils::build_msg_type::<DiscloseContent>();
+
+        let content = DiscloseContent::new();
+
+        let decorators = DiscloseDecorators::default();
+
+        let json = json!({
+            "@type": msg_type,
+            "protocols": content.protocols
+        });
+
+        test_utils::test_msg(content, decorators, json);
+    }
+
+    #[test]
+    fn test_extensive_query() {
+        let msg_type = test_utils::build_msg_type::<DiscloseContent>();
+
+        let mut content = DiscloseContent::new();
+        content.protocols.pop();
+        content.protocols.pop();
+        content.protocols.pop();
+
+        let dummy_protocol_descriptor = ProtocolDescriptor::new(MaybeKnownPid::Unknown("test_dummy_pid".to_owned()));
+        content.protocols.push(dummy_protocol_descriptor);
+
+        let mut decorators = DiscloseDecorators::default();
+        decorators.thread = Some(make_extended_thread());
+        decorators.timing = Some(make_extended_timing());
+
+        let json = json!({
+            "@type": msg_type,
+            "protocols": content.protocols,
+            "~thread": decorators.thread,
+            "~timing": decorators.timing
+        });
+
+        test_utils::test_msg(content, decorators, json);
+    }
+}
