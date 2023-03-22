@@ -24,6 +24,7 @@ impl QueryContent {
         Self { query, comment: None }
     }
 
+    /// Looks up into the [`PROTOCOL_REGISTRY`] and returns a [`Vec<ProtocolDescriptor`] matching the inner query.
     pub fn lookup(&self) -> Vec<ProtocolDescriptor> {
         let mut protocols = Vec::new();
         let query = self
@@ -61,7 +62,11 @@ mod tests {
     use serde_json::json;
 
     use super::*;
-    use crate::{decorators::timing::tests::make_extended_timing, misc::test_utils};
+    use crate::{
+        decorators::timing::tests::make_extended_timing,
+        misc::test_utils,
+        msg_types::types::{connection::ConnectionV1, traits::MajorVersion},
+    };
 
     #[test]
     fn test_minimal_query() {
@@ -91,5 +96,59 @@ mod tests {
         });
 
         test_utils::test_msg::<QueryContent, _, _>(content, decorators, json);
+    }
+
+    #[test]
+    fn test_lookup_match_all() {
+        let matched_all = QueryContent::new("*".to_owned()).lookup();
+
+        let mut protocols = Vec::new();
+
+        for entries in PROTOCOL_REGISTRY.values() {
+            for entry in entries {
+                let pid = MaybeKnown::Known(entry.protocol);
+                let mut pd = ProtocolDescriptor::new(pid);
+                pd.roles = Some(entry.roles.clone());
+                protocols.push(pd);
+            }
+        }
+
+        assert_eq!(protocols, matched_all);
+    }
+
+    #[test]
+    fn test_lookup_match_protocol() {
+        let matched_protocol = QueryContent::new("https://didcomm.org/connections/*".to_owned()).lookup();
+
+        let pid = ConnectionV1::new_v1_0();
+        let roles = pid.roles();
+        let mut pd = ProtocolDescriptor::new(MaybeKnown::Known(pid.into()));
+        pd.roles = Some(roles);
+
+        let protocols = vec![pd];
+
+        assert_eq!(protocols, matched_protocol);
+    }
+
+    #[test]
+    fn test_lookup_match_version() {
+        let matched_protocol = QueryContent::new("https://didcomm.org/connections/1.*".to_owned()).lookup();
+
+        let pid = ConnectionV1::new_v1_0();
+        let roles = pid.roles();
+        let mut pd = ProtocolDescriptor::new(MaybeKnown::Known(pid.into()));
+        pd.roles = Some(roles);
+
+        let protocols = vec![pd];
+
+        assert_eq!(protocols, matched_protocol);
+    }
+
+    #[test]
+    fn test_lookup_match_none() {
+        let matched_protocol = QueryContent::new("https://didcomm.org/non-existent/*".to_owned()).lookup();
+        let protocols = Vec::<ProtocolDescriptor>::new();
+
+        assert_eq!(protocols, matched_protocol);
     }
 }
