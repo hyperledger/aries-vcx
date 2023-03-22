@@ -1,3 +1,4 @@
+use diddoc::aries::service::AriesService;
 use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 
@@ -8,7 +9,6 @@ use crate::{
     message::Message,
     misc::mime_type::MimeType,
     msg_types::{types::out_of_band::OutOfBandV1_1, Protocol},
-    protocols::common::service::Service,
 };
 
 pub type Invitation = Message<InvitationContent, InvitationDecorators>;
@@ -26,13 +26,13 @@ pub struct InvitationContent {
     pub accept: Option<Vec<MimeType>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub handshake_protocols: Option<Vec<Protocol>>,
-    pub services: Vec<Service>,
+    pub services: Vec<OobService>,
     #[serde(rename = "requests~attach")]
     pub requests_attach: Vec<Attachment>,
 }
 
 impl InvitationContent {
-    pub fn new(services: Vec<Service>, requests_attach: Vec<Attachment>) -> Self {
+    pub fn new(services: Vec<OobService>, requests_attach: Vec<Attachment>) -> Self {
         Self {
             label: None,
             goal_code: None,
@@ -52,6 +52,14 @@ pub struct InvitationDecorators {
     pub timing: Option<Timing>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(untagged)]
+pub enum OobService {
+    AriesService(AriesService),
+    Did(String),
+}
+
+
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 #[allow(clippy::field_reassign_with_default)]
@@ -68,7 +76,7 @@ mod tests {
     #[test]
     fn test_minimal_oob_invitation() {
         let content = InvitationContent::new(
-            vec![Service::Did("test_service_did".to_owned())],
+            vec![OobService::Did("test_service_did".to_owned())],
             vec![make_extended_attachment()],
         );
 
@@ -85,7 +93,7 @@ mod tests {
     #[test]
     fn test_extensive_oob_invitation() {
         let mut content = InvitationContent::new(
-            vec![Service::Did("test_service_did".to_owned())],
+            vec![OobService::Did("test_service_did".to_owned())],
             vec![make_extended_attachment()],
         );
 
