@@ -7,10 +7,8 @@ use crate::{
     decorators::{please_ack::PleaseAck, thread::Thread, timing::Timing},
     message::Message,
     msg_types::{
-        types::{
-            connection::{Connection, ConnectionV1, ConnectionV1_0},
-            traits::MessageKind,
-        },
+        traits::MessageKind,
+        types::connection::{Connection, ConnectionV1, ConnectionV1_0},
         MessageType, Protocol,
     },
 };

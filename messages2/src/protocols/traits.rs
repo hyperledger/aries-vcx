@@ -2,7 +2,7 @@ use std::{any::type_name, fmt::Debug};
 
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 
-use crate::msg_types::{types::traits::MessageKind, MsgWithType, Protocol};
+use crate::msg_types::{traits::MessageKind, MsgWithType, Protocol};
 
 /// Trait implemented for types that represent the protocol specific content of a
 /// [`crate::message::Message`]. The trait links the type it's implemented on with the message kind

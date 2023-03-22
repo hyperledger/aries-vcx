@@ -1,6 +1,7 @@
 pub mod registry;
 pub mod role;
 pub mod types;
+pub mod traits;
 
 use std::{fmt::Arguments, str::FromStr};
 

@@ -7,9 +7,12 @@ use self::{
     basic_message::BasicMessage, connection::Connection, cred_issuance::CredentialIssuance,
     discover_features::DiscoverFeatures, notification::Notification, out_of_band::OutOfBand,
     present_proof::PresentProof, report_problem::ReportProblem, revocation::Revocation, routing::Routing,
-    traits::ProtocolName, trust_ping::TrustPing,
+    trust_ping::TrustPing,
 };
-use crate::error::{MsgTypeError, MsgTypeResult};
+use crate::{
+    error::{MsgTypeError, MsgTypeResult},
+    msg_types::traits::ProtocolName,
+};
 
 pub mod basic_message;
 pub mod connection;
@@ -21,7 +24,6 @@ pub mod present_proof;
 pub mod report_problem;
 pub mod revocation;
 pub mod routing;
-pub mod traits;
 pub mod trust_ping;
 
 /// Type representing all protocols that are currently supported.

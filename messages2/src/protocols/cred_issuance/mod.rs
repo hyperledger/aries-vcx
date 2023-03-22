@@ -27,11 +27,9 @@ use crate::{
         utils::{self, transit_to_aries_msg},
     },
     msg_types::{
-        types::{
-            cred_issuance::{
-                CredentialIssuance as CredentialIssuanceKind, CredentialIssuanceV1, CredentialIssuanceV1_0,
-            },
-            traits::MessageKind,
+        traits::MessageKind,
+        types::cred_issuance::{
+            CredentialIssuance as CredentialIssuanceKind, CredentialIssuanceV1, CredentialIssuanceV1_0,
         },
         MessageType, Protocol,
     },

@@ -8,10 +8,8 @@ use crate::{
     message::Message,
     misc::mime_type::MimeType,
     msg_types::{
-        types::{
-            present_proof::{PresentProof, PresentProofV1, PresentProofV1_0},
-            traits::MessageKind,
-        },
+        traits::MessageKind,
+        types::present_proof::{PresentProof, PresentProofV1, PresentProofV1_0},
         MessageType, Protocol,
     },
 };

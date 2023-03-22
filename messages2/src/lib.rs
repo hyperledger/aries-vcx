@@ -15,7 +15,7 @@ pub mod msg_types;
 pub mod protocols;
 
 use derive_more::From;
-use msg_types::types::traits::MajorVersion;
+use msg_types::traits::MajorVersion;
 use protocols::routing::Forward;
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 

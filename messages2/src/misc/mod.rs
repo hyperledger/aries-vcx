@@ -10,7 +10,7 @@ pub mod test_utils {
 
     use crate::{
         message::Message,
-        msg_types::{types::traits::MessageKind, MessageType, Protocol},
+        msg_types::{traits::MessageKind, MessageType, Protocol},
         protocols::traits::MessageContent,
         AriesMessage,
     };
