@@ -24,28 +24,28 @@ pub struct RegistryEntry {
     /// A [`String`] representation of the *pid*
     pub str_pid: String,
     /// A [`Vec<Actor>`] representing the roles available in the protocol.
-    pub actors: Vec<MaybeKnown<Role>>,
+    pub roles: Vec<MaybeKnown<Role>>,
 }
 
 /// Extracts the necessary parts for constructing a [`RegistryEntry`] from a protocol minor version.
 macro_rules! extract_parts {
     ($name:expr) => {{
-        let actors = $crate::msg_types::types::traits::MajorVersion::actors(&$name);
+        let roles = $crate::msg_types::types::traits::MajorVersion::roles(&$name);
         let protocol = Protocol::from($name);
         let (name, major, minor) = protocol.as_parts();
-        (name, major, minor, actors, Protocol::from($name))
+        (name, major, minor, roles, Protocol::from($name))
     }};
 }
 
 fn map_insert(map: &mut RegistryMap, parts: (&'static str, u8, u8, Vec<MaybeKnown<Role>>, Protocol)) {
-    let (protocol_name, major, minor, actors, protocol) = parts;
+    let (protocol_name, major, minor, roles, protocol) = parts;
 
     let str_pid = format!("{}/{}/{}.{}", Protocol::DID_COM_ORG_PREFIX, protocol_name, major, minor);
     let entry = RegistryEntry {
         protocol,
         minor,
         str_pid,
-        actors,
+        roles,
     };
 
     map.entry((protocol_name, major)).or_insert(Vec::new()).push(entry);

@@ -18,7 +18,7 @@ pub enum PresentProof {
 #[transitive(into(PresentProof, Protocol))]
 #[msg_type(major = 1)]
 pub enum PresentProofV1 {
-    #[msg_type(minor = 0, actors = "Role::Prover, Role::Verifier")]
+    #[msg_type(minor = 0, roles = "Role::Prover, Role::Verifier")]
     V1_0(PhantomData<fn() -> PresentProofV1_0>),
 }
 

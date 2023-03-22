@@ -18,7 +18,7 @@ pub enum Notification {
 #[transitive(into(Notification, Protocol))]
 #[msg_type(major = 1)]
 pub enum NotificationV1 {
-    #[msg_type(minor = 0, actors = "Role::Notified, Role::Notifier")]
+    #[msg_type(minor = 0, roles = "Role::Notified, Role::Notifier")]
     V1_0(PhantomData<fn() -> NotificationV1_0>),
 }
 

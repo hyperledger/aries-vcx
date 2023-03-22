@@ -18,7 +18,7 @@ pub enum Routing {
 #[transitive(into(Routing, Protocol))]
 #[msg_type(major = 1)]
 pub enum RoutingV1 {
-    #[msg_type(minor = 0, actors = "Role::Mediator")]
+    #[msg_type(minor = 0, roles = "Role::Mediator")]
     V1_0(PhantomData<fn() -> RoutingV1_0>),
 }
 

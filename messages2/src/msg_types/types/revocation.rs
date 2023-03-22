@@ -18,7 +18,7 @@ pub enum Revocation {
 #[transitive(into(Revocation, Protocol))]
 #[msg_type(major = 2)]
 pub enum RevocationV2 {
-    #[msg_type(minor = 0, actors = "Role::Holder, Role::Issuer")]
+    #[msg_type(minor = 0, roles = "Role::Holder, Role::Issuer")]
     V2_0(PhantomData<fn() -> RevocationV2_0>),
 }
 

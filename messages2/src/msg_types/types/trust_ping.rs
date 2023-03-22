@@ -18,7 +18,7 @@ pub enum TrustPing {
 #[transitive(into(TrustPing, Protocol))]
 #[msg_type(major = 1)]
 pub enum TrustPingV1 {
-    #[msg_type(minor = 0, actors = "Role::Sender, Role::Receiver")]
+    #[msg_type(minor = 0, roles = "Role::Sender, Role::Receiver")]
     V1_0(PhantomData<fn() -> TrustPingV1_0>),
 }
 

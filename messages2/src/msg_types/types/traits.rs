@@ -9,7 +9,7 @@ pub trait MessageKind: FromStr + AsRef<str> {
 }
 
 pub trait MajorVersion: Sized {
-    type Actors: IntoIterator<Item = MaybeKnown<Role>>;
+    type Roles: IntoIterator<Item = MaybeKnown<Role>>;
 
     const MAJOR: u8;
 
@@ -17,7 +17,7 @@ pub trait MajorVersion: Sized {
 
     fn as_version_parts(&self) -> (u8, u8);
 
-    fn actors(&self) -> Self::Actors;
+    fn roles(&self) -> Self::Roles;
 
     fn kind<T>(_: PhantomData<fn() -> T>, kind: &str) -> crate::error::MsgTypeResult<T>
     where

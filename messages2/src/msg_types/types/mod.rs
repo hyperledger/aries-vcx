@@ -34,9 +34,10 @@ pub mod trust_ping;
 /// - protocol registry
 /// - message type deserialization
 /// - discover features protocol
-/// 
+///
 /// The way a message kind (e.g: `request`) is bound to a [`Protocol`] (e.g: `https://didcomm.org/connections/1.0`)
-/// is through our internal [`messages_macros::MessageType`] proc_macro. See the docs for that for more info.
+/// is through our internal [`messages_macros::MessageType`] proc_macro. See the docs for that for
+/// more info.
 #[derive(Clone, Copy, Debug, From, TryInto, PartialEq, Deserialize)]
 #[serde(try_from = "&str")]
 pub enum Protocol {

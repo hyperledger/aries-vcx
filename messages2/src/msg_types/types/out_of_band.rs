@@ -18,7 +18,7 @@ pub enum OutOfBand {
 #[transitive(into(OutOfBand, Protocol))]
 #[msg_type(major = 1)]
 pub enum OutOfBandV1 {
-    #[msg_type(minor = 0, actors = "Role::Receiver, Role::Sender")]
+    #[msg_type(minor = 0, roles = "Role::Receiver, Role::Sender")]
     V1_1(PhantomData<fn() -> OutOfBandV1_1>),
 }
 

@@ -25,7 +25,7 @@ impl DiscloseContent {
             for entry in entries {
                 let pid = MaybeKnown::Known(entry.protocol);
                 let mut pd = ProtocolDescriptor::new(pid);
-                pd.roles = Some(entry.actors);
+                pd.roles = Some(entry.roles);
                 protocols.push(pd);
             }
         }

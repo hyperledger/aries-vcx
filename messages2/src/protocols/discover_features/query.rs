@@ -37,7 +37,7 @@ impl QueryContent {
                 if entry.str_pid.starts_with(query) {
                     let pid = MaybeKnown::Known(entry.protocol);
                     let mut pd = ProtocolDescriptor::new(pid);
-                    pd.roles = Some(entry.actors.clone());
+                    pd.roles = Some(entry.roles.clone());
                     protocols.push(pd);
                 }
             }

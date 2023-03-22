@@ -18,7 +18,7 @@ pub enum CredentialIssuance {
 #[transitive(into(CredentialIssuance, Protocol))]
 #[msg_type(major = 1)]
 pub enum CredentialIssuanceV1 {
-    #[msg_type(minor = 0, actors = "Role::Holder, Role::Issuer")]
+    #[msg_type(minor = 0, roles = "Role::Holder, Role::Issuer")]
     V1_0(PhantomData<fn() -> CredentialIssuanceV1_0>),
 }
 

@@ -1,8 +1,9 @@
 use darling::FromDeriveInput;
 use proc_macro2::{Ident, TokenStream};
-use quote::{quote, ToTokens};
-use syn::{DeriveInput, ExprPath, Generics, Result as SynResult};
+use quote::quote;
+use syn::{spanned::Spanned, DeriveInput, Error, ExprPath, Generics, PathSegment, Result as SynResult};
 
+/// Matches the input from deriving the macro on a type.
 #[derive(FromDeriveInput)]
 #[darling(attributes(message))]
 struct MessageContent {
@@ -23,24 +24,13 @@ pub fn message_content_impl(input: DeriveInput) -> SynResult<TokenStream> {
         params, where_clause, ..
     } = generics;
 
-    // Get the type of the message kind
-    // We don't expect paths here, but rather
-    // an instance of an enum with unit variants.
-    //
-    // E.g: A::B
-    let ty = type_expr
-        .path
-        .segments
-        .iter()
-        .next()
-        .expect("at least one iteration")
-        .into_token_stream();
+    let kind_type = extract_msg_kind_type(&type_expr)?;
 
     let expanded = quote! {
         impl<#params> crate::protocols::traits::MessageContent for #ident<#params>
         #where_clause
         {
-            type Kind = #ty;
+            type Kind = #kind_type;
 
             fn kind() -> Self::Kind {
                 #type_expr
@@ -49,4 +39,17 @@ pub fn message_content_impl(input: DeriveInput) -> SynResult<TokenStream> {
     };
 
     Ok(expanded)
+}
+
+/// Extracts the type of the message kind.
+/// We expect an enum variant expression here, like `A::B` or `crate::module::A::B`.
+///
+/// We need the `A` part, so the second last path segment.
+fn extract_msg_kind_type(type_expr: &ExprPath) -> SynResult<&PathSegment> {
+    type_expr
+        .path
+        .segments
+        .iter()
+        .nth_back(1)
+        .ok_or_else(|| Error::new(type_expr.span(), "could not determine message kind's type"))
 }

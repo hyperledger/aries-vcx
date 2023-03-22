@@ -18,7 +18,7 @@ pub enum BasicMessage {
 #[transitive(into(BasicMessage, Protocol))]
 #[msg_type(major = 1)]
 pub enum BasicMessageV1 {
-    #[msg_type(minor = 0, actors = "Role::Receiver, Role::Sender")]
+    #[msg_type(minor = 0, roles = "Role::Receiver, Role::Sender")]
     V1_0(PhantomData<fn() -> BasicMessageV1_0>),
 }
 

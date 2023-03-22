@@ -6,9 +6,13 @@ use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
 use syn::{
     punctuated::Punctuated, spanned::Spanned, DeriveInput, Error, GenericArgument, Path, PathArguments, PathSegment,
-    Result as SynResult, Token, Type, TypePath, ReturnType,
+    Result as SynResult, ReturnType, Token, Type, TypePath,
 };
 
+/// Matches the input from deriving the macro
+/// on a protocol enum.
+///
+/// E.g: `Routing`
 #[derive(FromDeriveInput)]
 #[darling(attributes(msg_type), supports(enum_newtype))]
 struct Protocol {
@@ -17,6 +21,10 @@ struct Protocol {
     protocol: String,
 }
 
+/// Matches the input of a major version variant of a protocol enum
+/// that derives the macro.
+///
+/// E.g: the `RoutingV1` in `Routing::RoutingV1`
 #[derive(FromVariant)]
 #[darling(attributes(msg_type))]
 struct MajorVerVariant {
@@ -24,6 +32,10 @@ struct MajorVerVariant {
     fields: Fields<Type>,
 }
 
+/// Matches the input from deriving the macro on a
+/// major version enum.
+///
+/// E.g: `RoutingV1`
 #[derive(FromDeriveInput)]
 #[darling(attributes(msg_type), supports(enum_newtype))]
 struct Version {
@@ -32,13 +44,17 @@ struct Version {
     major: u8,
 }
 
+/// Matches the input of a minor version variant of a major version enum
+/// that derives the macro.
+///
+/// E.g: the `V1_0` in `RoutingV1::V1_0`
 #[derive(FromVariant)]
 #[darling(attributes(msg_type))]
 struct MinorVerVariant {
     ident: Ident,
     fields: Fields<Type>,
     minor: u8,
-    actors: Punctuated<Path, Token![,]>,
+    roles: Punctuated<Path, Token![,]>,
 }
 
 pub fn message_type_impl(input: DeriveInput) -> SynResult<TokenStream> {
@@ -55,16 +71,26 @@ fn process_protocol(Protocol { ident, data, protocol }: Protocol) -> TokenStream
     // The macro only accepts enums
     let Data::Enum(variants) = data else {unreachable!()};
 
+    // Storage for the try_from_version_parts() function match arms
     let mut try_from_match_arms = Vec::new();
+
+    // Storage for the as_protocol_parts() function match arms
     let mut as_parts_match_arms = Vec::new();
+
+    // Storage for the const PROTOCOL impls for the types encapsulated by the enum variants
     let mut field_impls = Vec::new();
 
-    for MajorVerVariant { ident, mut fields } in variants {
-        // Newtype enums would always have one field
-        let field = fields.fields.pop().expect("only implemented on newtype enums");
+    for MajorVerVariant { ident, fields } in variants {
+        let field = extract_field_type(fields);
 
+        // If the input u8 matches MAJOR, call the try_resolve_version() method of the encapsulated type.
+        // Then wrap it in the enum this is derived on.
         try_from_match_arms.push(quote! {#field::MAJOR => #field::try_resolve_version(minor).map(Self::#ident)});
+
+        // Match on the enum variant and call the as_version_parts() method.
         as_parts_match_arms.push(quote! {Self::#ident(v) => v.as_version_parts()});
+
+        // Generate an impl with const PROTOCOL set the to the string literal passed in the macro attribute
         field_impls.push(quote! {impl #field { const PROTOCOL: &str = #protocol; }});
     }
 
@@ -100,47 +126,54 @@ fn process_version(Version { ident, data, major }: Version) -> SynResult<TokenSt
     // The macro only accepts enums
     let Data::Enum(variants) = data else {unreachable!()};
 
+    // Storage for the try_resolve_version() function match arms
     let mut try_resolve_match_arms = Vec::new();
+
+    // Storage for the as_version_parts() function match arms
     let mut as_parts_match_arms = Vec::new();
-    let mut actors_match_arms = Vec::new();
+
+    // Storage for the roles() function match arms
+    let mut roles_match_arms = Vec::new();
+
+    // Storage for the enum constructors that are based on variants' version
     let mut constructor_impls = Vec::new();
+
+    // Storage for the MessageKind trait impls on the
+    // types bound to the variant through PhantomData.
     let mut msg_kind_impls = Vec::new();
 
     for MinorVerVariant {
         ident: var_ident,
         minor,
-        actors,
-        mut fields,
+        roles,
+        fields,
     } in variants
     {
-        // Newtype enums would always have one field
-        let field = fields.fields.pop().expect("only implemented on newtype enums");
-        let span = field.span();
-        let actors = actors.into_iter();
+        // We need an iterator so we can wrap each role in MaybeKnown when destructuring.
+        let roles = roles.into_iter();
 
-        let path = match field {
-            Type::Path(p) => Ok(p),
-            _ => Err(Error::new(span, "expecting type path")),
-        }?;
+        let field = extract_field_type(fields);
+        let target_type = extract_field_target_type(field)?;
+        let constructor_fn = make_constructor_fn(&var_ident);
 
-        let segment = first_path_segment(path)?;
-
-        let PathArguments::AngleBracketed(args) = segment.arguments else { return Err(make_type_param_err(span)) };
-        let arg = args.args.into_iter().next().ok_or_else(|| make_type_param_err(span))?;
-        let GenericArgument::Type(Type::BareFn(fn_def)) = arg else { return Err(make_type_param_err(span)); };
-
-        let ReturnType::Type(_, ty) = fn_def.output else { return Err(make_type_param_err(span)); };
-
-        let constructor_fn_str = format!("new_{var_ident}").to_lowercase();
-        let constructor_fn = Ident::new(&constructor_fn_str, var_ident.span());
-
+        // If in the input u8 matches the minor version provided in the macro attribute
+        // generate an instance of the enum with the variant in this iteration.
         try_resolve_match_arms.push(quote! {#minor => Ok(Self::#var_ident(std::marker::PhantomData))});
+
+        // If the variant matches the one in this iteration, return the minor version provided
+        // in the macro attribute.
         as_parts_match_arms.push(quote! {Self::#var_ident(_) => #minor});
-        actors_match_arms
-            .push(quote! {Self::#var_ident(_) => vec![#(crate::maybe_known::MaybeKnown::Known(#actors)),*]});
+
+        // If the variant matches the one in this iteration, return a Vec
+        // containing each provided `Role` wrapped in `MaybeKnown::Known`.
+        roles_match_arms.push(quote! {Self::#var_ident(_) => vec![#(crate::maybe_known::MaybeKnown::Known(#roles)),*]});
+
+        // Implement a function such as `new_v1_0` which returns the enum variant in this iteration.
         constructor_impls.push(quote! {pub fn #constructor_fn() -> Self {Self::#var_ident(std::marker::PhantomData)}});
+
+        // Implement MessageKind for the target type bound to the enum variant in this iteration.
         msg_kind_impls.push(quote! {
-            impl crate::msg_types::types::traits::MessageKind for #ty {
+            impl crate::msg_types::types::traits::MessageKind for #target_type {
                 type Parent = #ident;
 
                 fn parent() -> Self::Parent {
@@ -152,7 +185,7 @@ fn process_version(Version { ident, data, major }: Version) -> SynResult<TokenSt
 
     let expanded = quote! {
         impl crate::msg_types::types::traits::MajorVersion for #ident {
-            type Actors = Vec<crate::maybe_known::MaybeKnown<crate::msg_types::role::Role>>;
+            type Roles = Vec<crate::maybe_known::MaybeKnown<crate::msg_types::role::Role>>;
 
             const MAJOR: u8 = #major;
 
@@ -178,9 +211,9 @@ fn process_version(Version { ident, data, major }: Version) -> SynResult<TokenSt
                 (Self::MAJOR, minor)
             }
 
-            fn actors(&self) -> Self::Actors {
+            fn roles(&self) -> Self::Roles {
                 match self {
-                    #(#actors_match_arms),*,
+                    #(#roles_match_arms),*,
                 }
             }
         }
@@ -195,16 +228,73 @@ fn process_version(Version { ident, data, major }: Version) -> SynResult<TokenSt
     Ok(expanded)
 }
 
+/// Helper to generate an error in case the encapsulated type
+/// in the enum variant is not as expected.
 fn make_type_param_err(span: Span) -> Error {
-    Error::new(span, "expecting a type parameter like PhantomData<T>")
+    Error::new(span, "expecting a type parameter form: PhantomData<fn() -> T>")
 }
 
-fn first_path_segment(path: TypePath) -> SynResult<PathSegment> {
+/// Extracts the last (and only) field of the variant.
+/// Newtype enums would always have one field, and the
+/// macro is restricted to support just `enum_newtype`.
+fn extract_field_type(mut fields: Fields<Type>) -> Type {
+    fields.fields.pop().expect("only implemented on newtype enums")
+}
+
+/// The variant field type is of the form [`std::marker::PhantomData<fn() -> T>`].
+/// We need to get the `T`.
+fn extract_field_target_type(field: Type) -> SynResult<Type> {
+    let mut span = field.span();
+
+    // `PhantomData<_>` is a TypePath
+    let Type::Path(path) = field else { return Err(make_type_param_err(span)) };
+
+    // Getting the last, and most likely only, segment of the type path.
+    let segment = last_path_segment(path)?;
+    span = segment.span();
+
+    // Extract the generics from their angle bracketed container.
+    // E.g: <T, U, V> -> an iter returning T, U and V
+    let PathArguments::AngleBracketed(args) = segment.arguments else { return Err(make_type_param_err(span)) };
+    span = args.span();
+
+    // This iterates over the generics provided.
+    // We, again, expect just one, `fn() -> T`.
+    let arg = args.args.into_iter().next().ok_or_else(|| make_type_param_err(span))?;
+    span = arg.span();
+
+    // We expect the generic to be a type, particularly a BareFn.
+    let GenericArgument::Type(Type::BareFn(fn_def)) = arg else { return Err(make_type_param_err(span)); };
+    span = fn_def.span();
+
+    // We now have `fn() -> T`, so we need it's return type (output).
+    let ReturnType::Type(_, ty) = fn_def.output else { return Err(make_type_param_err(span)); };
+
+    // Return `T`
+    Ok(*ty)
+}
+
+/// Helper used to generate a `new_*` lowercase function name
+/// based on the provided enum variant.
+///
+/// E.g: enum `A::V1_0` => variant `V1_0` => `new_v1_0`
+fn make_constructor_fn(var_ident: &Ident) -> Ident {
+    let constructor_fn_str = format!("new_{var_ident}").to_lowercase();
+    Ident::new(&constructor_fn_str, var_ident.span())
+}
+
+/// Extracts the last segment of the type path.
+/// This accommodates both situations like
+/// - `PhantomData<_>`
+/// - `std::marker::PhantomData<_>`
+///
+/// Making them both yield `PhantomData<_>`.
+fn last_path_segment(path: TypePath) -> SynResult<PathSegment> {
     let span = path.span();
 
     path.path
         .segments
         .into_iter()
-        .next()
+        .last()
         .ok_or_else(|| make_type_param_err(span))
 }

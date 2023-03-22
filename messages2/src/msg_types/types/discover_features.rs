@@ -18,7 +18,7 @@ pub enum DiscoverFeatures {
 #[transitive(into(DiscoverFeatures, Protocol))]
 #[msg_type(major = 1)]
 pub enum DiscoverFeaturesV1 {
-    #[msg_type(minor = 0, actors = "Role::Requester, Role::Responder")]
+    #[msg_type(minor = 0, roles = "Role::Requester, Role::Responder")]
     V1_0(PhantomData<fn() -> DiscoverFeaturesV1_0>),
 }
 

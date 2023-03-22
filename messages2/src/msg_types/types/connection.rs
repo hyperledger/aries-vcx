@@ -18,7 +18,7 @@ pub enum Connection {
 #[transitive(into(Connection, Protocol))]
 #[msg_type(major = 1)]
 pub enum ConnectionV1 {
-    #[msg_type(minor = 0, actors = "Role::Inviter, Role::Invitee")]
+    #[msg_type(minor = 0, roles = "Role::Inviter, Role::Invitee")]
     V1_0(PhantomData<fn() -> ConnectionV1_0>),
 }
 
