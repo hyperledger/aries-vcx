@@ -1,5 +1,4 @@
 use napi_derive::napi;
-use vcx::{api_vcx::api_global::ledger, serde_json::json};
 
 use libvcx_core::api_vcx::api_global::ledger;
 use libvcx_core::serde_json::json;

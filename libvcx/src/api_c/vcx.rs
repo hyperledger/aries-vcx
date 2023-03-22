@@ -7,9 +7,6 @@ use aries_vcx::{
 use futures::future::{BoxFuture, FutureExt};
 use libc::c_char;
 
-use aries_vcx::agency_client::configuration::AgencyClientConfig;
-use aries_vcx::indy::ledger::pool::PoolConfig;
-use aries_vcx::indy::wallet::IssuerConfig;
 use libvcx_core::api_vcx::api_global::agency_client::create_agency_client_for_main_wallet;
 use libvcx_core::api_vcx::api_global::agency_client::update_webhook_url;
 use libvcx_core::api_vcx::api_global::ledger::{ledger_get_txn_author_agreement, ledger_set_txn_author_agreement};

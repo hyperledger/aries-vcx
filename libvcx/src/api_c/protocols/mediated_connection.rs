@@ -4,7 +4,6 @@ use aries_vcx::protocols::mediated_connection::pairwise_info::PairwiseInfo;
 use futures::future::BoxFuture;
 use libc::c_char;
 
-use aries_vcx::protocols::mediated_connection::pairwise_info::PairwiseInfo;
 use libvcx_core::api_vcx::api_handle::mediated_connection;
 use libvcx_core::api_vcx::api_handle::mediated_connection::*;
 use libvcx_core::errors;

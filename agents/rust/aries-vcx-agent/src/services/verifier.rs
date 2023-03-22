@@ -16,11 +16,6 @@ use aries_vcx::protocols::proof_presentation::verifier::verification_status::Pre
 use aries_vcx::protocols::SendClosure;
 
 use super::connection::ServiceConnections;
-use crate::{
-    error::*,
-    http_client::HttpClient,
-    storage::{object_cache::ObjectCache, Storage},
-};
 
 #[derive(Clone)]
 struct VerifierWrapper {

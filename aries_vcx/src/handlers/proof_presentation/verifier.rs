@@ -18,9 +18,6 @@ use crate::protocols::proof_presentation::verifier::messages::VerifierMessages;
 use crate::protocols::proof_presentation::verifier::state_machine::{VerifierSM, VerifierState};
 use crate::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
 use crate::protocols::SendClosure;
-use messages::a2a::A2AMessage;
-use messages::protocols::proof_presentation::presentation_proposal::PresentationProposal;
-use messages::protocols::proof_presentation::presentation_request::PresentationRequest;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Default)]
 pub struct Verifier {

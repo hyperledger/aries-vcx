@@ -12,8 +12,6 @@ use std::{
 use aries_vcx::{indy::utils::next_command_handle, vdrtools::CommandHandle};
 use libc::c_char;
 
-use aries_vcx::indy::utils::next_command_handle;
-use aries_vcx::vdrtools::CommandHandle;
 use libvcx_core::errors;
 use libvcx_core::errors::error::TIMEOUT_LIBINDY_ERROR;
 use libvcx_core::errors::mapping_ffi_tests::map_indy_error;

@@ -7,9 +7,6 @@ use aries_vcx::{
 use futures::future::BoxFuture;
 use libc::c_char;
 
-use aries_vcx::indy::wallet::{RestoreWalletConfigs, WalletConfig};
-use aries_vcx::vdrtools::{CommandHandle, SearchHandle, WalletHandle};
-
 use libvcx_core;
 use libvcx_core::errors;
 use libvcx_core::errors::error::{LibvcxError, LibvcxErrorKind};
