@@ -19,7 +19,7 @@ pub enum OutOfBand {
 #[msg_type(major = 1)]
 pub enum OutOfBandV1 {
     #[msg_type(minor = 0, actors = "Role::Receiver, Role::Sender")]
-    V1_1(PhantomData<OutOfBandV1_1>),
+    V1_1(PhantomData<fn() -> OutOfBandV1_1>),
 }
 
 #[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq)]

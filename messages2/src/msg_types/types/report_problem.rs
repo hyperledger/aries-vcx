@@ -19,7 +19,7 @@ pub enum ReportProblem {
 #[msg_type(major = 1)]
 pub enum ReportProblemV1 {
     #[msg_type(minor = 0, actors = "Role::Notified, Role::Notifier")]
-    V1_0(PhantomData<ReportProblemV1_0>),
+    V1_0(PhantomData<fn() -> ReportProblemV1_0>),
 }
 
 #[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq)]

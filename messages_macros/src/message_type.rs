@@ -6,7 +6,7 @@ use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
 use syn::{
     punctuated::Punctuated, spanned::Spanned, DeriveInput, Error, GenericArgument, Path, PathArguments, PathSegment,
-    Result as SynResult, Token, Type, TypePath,
+    Result as SynResult, Token, Type, TypePath, ReturnType,
 };
 
 #[derive(FromDeriveInput)]
@@ -127,10 +127,9 @@ fn process_version(Version { ident, data, major }: Version) -> SynResult<TokenSt
 
         let PathArguments::AngleBracketed(args) = segment.arguments else { return Err(make_type_param_err(span)) };
         let arg = args.args.into_iter().next().ok_or_else(|| make_type_param_err(span))?;
-        let GenericArgument::Type(Type::Path(path)) = arg else { return Err(make_type_param_err(span)) };
+        let GenericArgument::Type(Type::BareFn(fn_def)) = arg else { return Err(make_type_param_err(span)); };
 
-        let segment = first_path_segment(path)?;
-        let ty = segment.ident;
+        let ReturnType::Type(_, ty) = fn_def.output else { return Err(make_type_param_err(span)); };
 
         let constructor_fn_str = format!("new_{var_ident}").to_lowercase();
         let constructor_fn = Ident::new(&constructor_fn_str, var_ident.span());

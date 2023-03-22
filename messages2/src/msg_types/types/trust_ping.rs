@@ -19,7 +19,7 @@ pub enum TrustPing {
 #[msg_type(major = 1)]
 pub enum TrustPingV1 {
     #[msg_type(minor = 0, actors = "Role::Sender, Role::Receiver")]
-    V1_0(PhantomData<TrustPingV1_0>),
+    V1_0(PhantomData<fn() -> TrustPingV1_0>),
 }
 
 #[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq)]

@@ -19,7 +19,7 @@ pub enum PresentProof {
 #[msg_type(major = 1)]
 pub enum PresentProofV1 {
     #[msg_type(minor = 0, actors = "Role::Prover, Role::Verifier")]
-    V1_0(PhantomData<PresentProofV1_0>),
+    V1_0(PhantomData<fn() -> PresentProofV1_0>),
 }
 
 #[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq)]

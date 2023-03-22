@@ -19,7 +19,7 @@ pub enum BasicMessage {
 #[msg_type(major = 1)]
 pub enum BasicMessageV1 {
     #[msg_type(minor = 0, actors = "Role::Receiver, Role::Sender")]
-    V1_0(PhantomData<BasicMessageV1_0>),
+    V1_0(PhantomData<fn() -> BasicMessageV1_0>),
 }
 
 #[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq)]

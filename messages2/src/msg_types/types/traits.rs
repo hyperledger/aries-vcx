@@ -19,7 +19,7 @@ pub trait MajorVersion: Sized {
 
     fn actors(&self) -> Self::Actors;
 
-    fn kind<T>(_: PhantomData<T>, kind: &str) -> crate::error::MsgTypeResult<T>
+    fn kind<T>(_: PhantomData<fn() -> T>, kind: &str) -> crate::error::MsgTypeResult<T>
     where
         T: FromStr + MessageKind,
     {

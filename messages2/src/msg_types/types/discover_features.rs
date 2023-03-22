@@ -19,7 +19,7 @@ pub enum DiscoverFeatures {
 #[msg_type(major = 1)]
 pub enum DiscoverFeaturesV1 {
     #[msg_type(minor = 0, actors = "Role::Requester, Role::Responder")]
-    V1_0(PhantomData<DiscoverFeaturesV1_0>),
+    V1_0(PhantomData<fn() -> DiscoverFeaturesV1_0>),
 }
 
 #[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq)]

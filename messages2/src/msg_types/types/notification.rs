@@ -19,7 +19,7 @@ pub enum Notification {
 #[msg_type(major = 1)]
 pub enum NotificationV1 {
     #[msg_type(minor = 0, actors = "Role::Notified, Role::Notifier")]
-    V1_0(PhantomData<NotificationV1_0>),
+    V1_0(PhantomData<fn() -> NotificationV1_0>),
 }
 
 #[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq)]

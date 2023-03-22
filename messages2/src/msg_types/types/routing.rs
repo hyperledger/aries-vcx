@@ -19,7 +19,7 @@ pub enum Routing {
 #[msg_type(major = 1)]
 pub enum RoutingV1 {
     #[msg_type(minor = 0, actors = "Role::Mediator")]
-    V1_0(PhantomData<RoutingV1_0>),
+    V1_0(PhantomData<fn() -> RoutingV1_0>),
 }
 
 #[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq)]
