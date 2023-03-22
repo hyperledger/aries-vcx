@@ -53,7 +53,7 @@ mod tests {
             timing::tests::make_extended_timing,
         },
         misc::test_utils,
-        protocols::cred_issuance::CredentialAttr,
+        protocols::nameless::cred_issuance::CredentialAttr,
     };
 
     #[test]

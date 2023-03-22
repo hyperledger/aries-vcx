@@ -16,7 +16,6 @@ pub mod protocols;
 
 use derive_more::From;
 use msg_types::traits::MajorVersion;
-use protocols::routing::Forward;
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::{
@@ -31,9 +30,13 @@ use crate::{
         MessageType, Protocol,
     },
     protocols::{
-        basic_message::BasicMessage, connection::Connection, cred_issuance::CredentialIssuance,
-        discover_features::DiscoverFeatures, notification::Ack, out_of_band::OutOfBand, present_proof::PresentProof,
-        report_problem::ProblemReport, revocation::Revocation, traits::DelayedSerde, trust_ping::TrustPing,
+        nameless::{
+            basic_message::BasicMessage, connection::Connection, cred_issuance::CredentialIssuance,
+            discover_features::DiscoverFeatures, notification::Ack, out_of_band::OutOfBand,
+            present_proof::PresentProof, report_problem::ProblemReport, revocation::Revocation, routing::Forward,
+            trust_ping::TrustPing,
+        },
+        traits::DelayedSerde,
     },
 };
 

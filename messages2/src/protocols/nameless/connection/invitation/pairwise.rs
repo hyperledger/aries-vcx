@@ -46,7 +46,7 @@ mod tests {
     use super::*;
     use crate::{
         decorators::timing::tests::make_extended_timing, misc::test_utils,
-        protocols::connection::invitation::Invitation,
+        protocols::nameless::connection::invitation::Invitation,
     };
 
     #[test]

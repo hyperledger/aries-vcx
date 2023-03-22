@@ -3,18 +3,18 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     message::Message,
-    msg_types::types::revocation::RevocationV2_0,
-    protocols::notification::{AckContent, AckDecorators, AckStatus},
+    msg_types::types::cred_issuance::CredentialIssuanceV1_0,
+    protocols::nameless::notification::{AckContent, AckDecorators, AckStatus},
 };
 
-pub type AckRevoke = Message<AckRevokeContent, AckDecorators>;
+pub type AckCredential = Message<AckCredentialContent, AckDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, MessageContent, PartialEq)]
-#[message(kind = "RevocationV2_0::Ack")]
+#[message(kind = "CredentialIssuanceV1_0::Ack")]
 #[serde(transparent)]
-pub struct AckRevokeContent(pub AckContent);
+pub struct AckCredentialContent(pub AckContent);
 
-impl AckRevokeContent {
+impl AckCredentialContent {
     pub fn new(status: AckStatus) -> Self {
         Self(AckContent::new(status))
     }
@@ -33,8 +33,8 @@ mod tests {
     };
 
     #[test]
-    fn test_minimal_ack_revoke() {
-        let content = AckRevokeContent::new(AckStatus::Ok);
+    fn test_minimal_ack_cred() {
+        let content = AckCredentialContent::new(AckStatus::Ok);
 
         let decorators = AckDecorators::new(make_extended_thread());
 
@@ -43,12 +43,12 @@ mod tests {
             "~thread": decorators.thread
         });
 
-        test_utils::test_msg::<AckRevokeContent, _, _>(content, decorators, json);
+        test_utils::test_msg::<AckCredentialContent, _, _>(content, decorators, json);
     }
 
     #[test]
-    fn test_extensive_ack_revoke() {
-        let content = AckRevokeContent::new(AckStatus::Ok);
+    fn test_extensive_ack_cred() {
+        let content = AckCredentialContent::new(AckStatus::Ok);
 
         let mut decorators = AckDecorators::new(make_extended_thread());
         decorators.timing = Some(make_extended_timing());
@@ -59,6 +59,6 @@ mod tests {
             "~timing": decorators.timing
         });
 
-        test_utils::test_msg::<AckRevokeContent, _, _>(content, decorators, json);
+        test_utils::test_msg::<AckCredentialContent, _, _>(content, decorators, json);
     }
 }

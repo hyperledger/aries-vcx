@@ -26,7 +26,7 @@ mod tests {
     use super::*;
     use crate::{
         misc::{nothing::Nothing, test_utils},
-        protocols::connection::invitation::Invitation,
+        protocols::nameless::connection::invitation::Invitation,
     };
 
     #[test]
