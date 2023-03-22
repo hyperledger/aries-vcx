@@ -3,7 +3,7 @@
   "name": "@hyperledger/node-vcx-wrapper",
   "description": "NodeJS wrapper Aries Framework",
   "license": "Apache-2.0",
-  "version": "0.52.0",
+  "version": "0.53.0",
   "directories": {
     "test": "test",
     "build": "dist",
@@ -58,7 +58,7 @@
     "@hyperledger/vcx-napi-rs": "../vcx-napi-rs"
   },
   "peerDependencies": {
-    "@hyperledger/vcx-napi-rs": "^0.50.0-featurenapi-rs-separate-crate-4228"
+    "@hyperledger/vcx-napi-rs": "^0.52.0"
   },
   "scripts": {
     "tscversion": "tsc --version",
