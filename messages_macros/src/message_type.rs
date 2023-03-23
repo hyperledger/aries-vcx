@@ -185,7 +185,7 @@ fn process_version(Version { ident, data, major }: Version) -> SynResult<TokenSt
 
     let expanded = quote! {
         impl crate::msg_types::traits::ProtocolVersion for #ident {
-            type Roles = Vec<crate::maybe_known::MaybeKnown<crate::msg_types::role::Role>>;
+            type Roles = Vec<crate::maybe_known::MaybeKnown<crate::msg_types::Role>>;
 
             const MAJOR: u8 = #major;
 

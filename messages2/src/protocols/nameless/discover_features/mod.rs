@@ -17,11 +17,10 @@ use crate::{
     maybe_known::MaybeKnown,
     misc::utils::transit_to_aries_msg,
     msg_types::{
-        role::Role,
         types::discover_features::{
             DiscoverFeatures as DiscoverFeaturesKind, DiscoverFeaturesV1, DiscoverFeaturesV1_0,
         },
-        Protocol,
+        Protocol, Role,
     },
     protocols::traits::DelayedSerde,
 };

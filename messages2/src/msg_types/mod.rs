@@ -5,7 +5,7 @@
 //! and along the protocol they make up the `@type` field of a message.
 
 pub mod registry;
-pub mod role;
+mod role;
 pub mod types;
 pub mod traits;
 
@@ -13,7 +13,8 @@ use std::{fmt::Arguments, str::FromStr};
 
 use serde::{de::Error, Deserialize, Serialize};
 
-pub use self::types::Protocol;
+pub use types::*;
+pub use role::Role;
 
 /// Type used for deserialization of a fully qualified message type. After deserialization,
 /// it is matched on to determine the actual message struct to deserialize to.
