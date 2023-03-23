@@ -1,20 +1,20 @@
 //! Module that handles operations related solely to the protocol of a message, instead of it's content.
 //! The main type, [`Protocol`], represents a protocol name along with its (both major and minor) version.
-//! 
+//!
 //! The module contains other types that work adjacently to the [`Protocol`] to represent a message kind,
 //! and along the protocol they make up the `@type` field of a message.
 
-pub mod registry;
+pub(crate) mod registry;
 mod role;
-pub mod types;
 pub mod traits;
+pub mod types;
 
 use std::{fmt::Arguments, str::FromStr};
 
 use serde::{de::Error, Deserialize, Serialize};
 
-pub use types::*;
 pub use role::Role;
+pub use types::*;
 
 /// Type used for deserialization of a fully qualified message type. After deserialization,
 /// it is matched on to determine the actual message struct to deserialize to.
