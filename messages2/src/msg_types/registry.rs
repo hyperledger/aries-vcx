@@ -1,4 +1,4 @@
-use std::{collections::HashMap, marker::PhantomData};
+use std::collections::HashMap;
 
 use lazy_static::lazy_static;
 
@@ -59,17 +59,17 @@ lazy_static! {
     /// the values are [`RegistryEntry`] instances.
     pub static ref PROTOCOL_REGISTRY: RegistryMap = {
         let mut m = HashMap::new();
-        map_insert(&mut m, extract_parts!(RoutingV1::V1_0(PhantomData)));
-        map_insert(&mut m, extract_parts!(BasicMessageV1::V1_0(PhantomData)));
-        map_insert(&mut m, extract_parts!(ConnectionV1::V1_0(PhantomData)));
-        map_insert(&mut m, extract_parts!(CredentialIssuanceV1::V1_0(PhantomData)));
-        map_insert(&mut m, extract_parts!(DiscoverFeaturesV1::V1_0(PhantomData)));
-        map_insert(&mut m, extract_parts!(NotificationV1::V1_0(PhantomData)));
-        map_insert(&mut m, extract_parts!(OutOfBandV1::V1_1(PhantomData)));
-        map_insert(&mut m, extract_parts!(PresentProofV1::V1_0(PhantomData)));
-        map_insert(&mut m, extract_parts!(ReportProblemV1::V1_0(PhantomData)));
-        map_insert(&mut m, extract_parts!(RevocationV2::V2_0(PhantomData)));
-        map_insert(&mut m, extract_parts!(TrustPingV1::V1_0(PhantomData)));
+        map_insert(&mut m, extract_parts!(RoutingV1::new_v1_0()));
+        map_insert(&mut m, extract_parts!(BasicMessageV1::new_v1_0()));
+        map_insert(&mut m, extract_parts!(ConnectionV1::new_v1_0()));
+        map_insert(&mut m, extract_parts!(CredentialIssuanceV1::new_v1_0()));
+        map_insert(&mut m, extract_parts!(DiscoverFeaturesV1::new_v1_0()));
+        map_insert(&mut m, extract_parts!(NotificationV1::new_v1_0()));
+        map_insert(&mut m, extract_parts!(OutOfBandV1::new_v1_1()));
+        map_insert(&mut m, extract_parts!(PresentProofV1::new_v1_0()));
+        map_insert(&mut m, extract_parts!(ReportProblemV1::new_v1_0()));
+        map_insert(&mut m, extract_parts!(RevocationV2::new_v2_0()));
+        map_insert(&mut m, extract_parts!(TrustPingV1::new_v1_0()));
         m
     };
 }

@@ -32,9 +32,7 @@ pub enum TrustPingV1_0 {
 
 #[cfg(test)]
 mod tests {
-    use std::marker::PhantomData;
-
-    use super::TrustPingV1;
+    use super::*;
     use crate::misc::test_utils;
 
     const PROTOCOL: &str = "https://didcomm.org/trust_ping/1.0";
@@ -46,27 +44,27 @@ mod tests {
 
     #[test]
     fn test_protocol_trust_ping() {
-        test_utils::test_protocol(PROTOCOL, TrustPingV1::V1_0(PhantomData))
+        test_utils::test_protocol(PROTOCOL, TrustPingV1::new_v1_0())
     }
 
     #[test]
     fn test_version_resolution_trust_ping() {
-        test_utils::test_protocol(VERSION_RESOLUTION_PROTOCOL, TrustPingV1::V1_0(PhantomData))
+        test_utils::test_protocol(VERSION_RESOLUTION_PROTOCOL, TrustPingV1::new_v1_0())
     }
 
     #[test]
     #[should_panic]
     fn test_unsupported_version_trust_ping() {
-        test_utils::test_protocol(UNSUPPORTED_VERSION_PROTOCOL, TrustPingV1::V1_0(PhantomData))
+        test_utils::test_protocol(UNSUPPORTED_VERSION_PROTOCOL, TrustPingV1::new_v1_0())
     }
 
     #[test]
     fn test_msg_type_ping() {
-        test_utils::test_msg_type(PROTOCOL, KIND_PING, TrustPingV1::V1_0(PhantomData))
+        test_utils::test_msg_type(PROTOCOL, KIND_PING, TrustPingV1::new_v1_0())
     }
 
     #[test]
     fn test_msg_type_ping_response() {
-        test_utils::test_msg_type(PROTOCOL, KIND_PING_RESPONSE, TrustPingV1::V1_0(PhantomData))
+        test_utils::test_msg_type(PROTOCOL, KIND_PING_RESPONSE, TrustPingV1::new_v1_0())
     }
 }

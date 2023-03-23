@@ -35,9 +35,7 @@ pub enum CredentialIssuanceV1_0 {
 
 #[cfg(test)]
 mod tests {
-    use std::marker::PhantomData;
-
-    use super::CredentialIssuanceV1;
+    use super::*;
     use crate::misc::test_utils;
 
     const PROTOCOL: &str = "https://didcomm.org/issue-credential/1.0";
@@ -53,47 +51,47 @@ mod tests {
 
     #[test]
     fn test_protocol_issue_credential() {
-        test_utils::test_protocol(PROTOCOL, CredentialIssuanceV1::V1_0(PhantomData))
+        test_utils::test_protocol(PROTOCOL, CredentialIssuanceV1::new_v1_0())
     }
 
     #[test]
     fn test_version_resolution_issue_credential() {
-        test_utils::test_protocol(VERSION_RESOLUTION_PROTOCOL, CredentialIssuanceV1::V1_0(PhantomData))
+        test_utils::test_protocol(VERSION_RESOLUTION_PROTOCOL, CredentialIssuanceV1::new_v1_0())
     }
 
     #[test]
     #[should_panic]
     fn test_unsupported_version_issue_credential() {
-        test_utils::test_protocol(UNSUPPORTED_VERSION_PROTOCOL, CredentialIssuanceV1::V1_0(PhantomData))
+        test_utils::test_protocol(UNSUPPORTED_VERSION_PROTOCOL, CredentialIssuanceV1::new_v1_0())
     }
 
     #[test]
     fn test_msg_type_offer() {
-        test_utils::test_msg_type(PROTOCOL, KIND_OFFER, CredentialIssuanceV1::V1_0(PhantomData))
+        test_utils::test_msg_type(PROTOCOL, KIND_OFFER, CredentialIssuanceV1::new_v1_0())
     }
 
     #[test]
     fn test_msg_type_propose() {
-        test_utils::test_msg_type(PROTOCOL, KIND_PROPOSE, CredentialIssuanceV1::V1_0(PhantomData))
+        test_utils::test_msg_type(PROTOCOL, KIND_PROPOSE, CredentialIssuanceV1::new_v1_0())
     }
 
     #[test]
     fn test_msg_type_request() {
-        test_utils::test_msg_type(PROTOCOL, KIND_REQUEST, CredentialIssuanceV1::V1_0(PhantomData))
+        test_utils::test_msg_type(PROTOCOL, KIND_REQUEST, CredentialIssuanceV1::new_v1_0())
     }
 
     #[test]
     fn test_msg_type_issue() {
-        test_utils::test_msg_type(PROTOCOL, KIND_ISSUE, CredentialIssuanceV1::V1_0(PhantomData))
+        test_utils::test_msg_type(PROTOCOL, KIND_ISSUE, CredentialIssuanceV1::new_v1_0())
     }
 
     #[test]
     fn test_msg_type_preview() {
-        test_utils::test_msg_type(PROTOCOL, KIND_PREVIEW, CredentialIssuanceV1::V1_0(PhantomData))
+        test_utils::test_msg_type(PROTOCOL, KIND_PREVIEW, CredentialIssuanceV1::new_v1_0())
     }
 
     #[test]
     fn test_msg_type_ack() {
-        test_utils::test_msg_type(PROTOCOL, KIND_ACK, CredentialIssuanceV1::V1_0(PhantomData))
+        test_utils::test_msg_type(PROTOCOL, KIND_ACK, CredentialIssuanceV1::new_v1_0())
     }
 }

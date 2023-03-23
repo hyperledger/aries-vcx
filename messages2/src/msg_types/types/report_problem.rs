@@ -30,9 +30,7 @@ pub enum ReportProblemV1_0 {
 
 #[cfg(test)]
 mod tests {
-    use std::marker::PhantomData;
-
-    use super::ReportProblemV1;
+    use super::*;
     use crate::misc::test_utils;
 
     const PROTOCOL: &str = "https://didcomm.org/report-problem/1.0";
@@ -43,22 +41,22 @@ mod tests {
 
     #[test]
     fn test_protocol_report_problem() {
-        test_utils::test_protocol(PROTOCOL, ReportProblemV1::V1_0(PhantomData))
+        test_utils::test_protocol(PROTOCOL, ReportProblemV1::new_v1_0())
     }
 
     #[test]
     fn test_version_resolution_report_problem() {
-        test_utils::test_protocol(VERSION_RESOLUTION_PROTOCOL, ReportProblemV1::V1_0(PhantomData))
+        test_utils::test_protocol(VERSION_RESOLUTION_PROTOCOL, ReportProblemV1::new_v1_0())
     }
 
     #[test]
     #[should_panic]
     fn test_unsupported_version_report_problem() {
-        test_utils::test_protocol(UNSUPPORTED_VERSION_PROTOCOL, ReportProblemV1::V1_0(PhantomData))
+        test_utils::test_protocol(UNSUPPORTED_VERSION_PROTOCOL, ReportProblemV1::new_v1_0())
     }
 
     #[test]
     fn test_msg_type_problem_report() {
-        test_utils::test_msg_type(PROTOCOL, KIND_PROBLEM_REPORT, ReportProblemV1::V1_0(PhantomData))
+        test_utils::test_msg_type(PROTOCOL, KIND_PROBLEM_REPORT, ReportProblemV1::new_v1_0())
     }
 }

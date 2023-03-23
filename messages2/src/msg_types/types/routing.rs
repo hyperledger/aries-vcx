@@ -30,9 +30,7 @@ pub enum RoutingV1_0 {
 
 #[cfg(test)]
 mod tests {
-    use std::marker::PhantomData;
-
-    use super::RoutingV1;
+    use super::*;
     use crate::misc::test_utils;
 
     const PROTOCOL: &str = "https://didcomm.org/routing/1.0";
@@ -43,22 +41,22 @@ mod tests {
 
     #[test]
     fn test_protocol_routing() {
-        test_utils::test_protocol(PROTOCOL, RoutingV1::V1_0(PhantomData))
+        test_utils::test_protocol(PROTOCOL, RoutingV1::new_v1_0())
     }
 
     #[test]
     fn test_version_resolution_routing() {
-        test_utils::test_protocol(VERSION_RESOLUTION_PROTOCOL, RoutingV1::V1_0(PhantomData))
+        test_utils::test_protocol(VERSION_RESOLUTION_PROTOCOL, RoutingV1::new_v1_0())
     }
 
     #[test]
     #[should_panic]
     fn test_unsupported_version_routing() {
-        test_utils::test_protocol(UNSUPPORTED_VERSION_PROTOCOL, RoutingV1::V1_0(PhantomData))
+        test_utils::test_protocol(UNSUPPORTED_VERSION_PROTOCOL, RoutingV1::new_v1_0())
     }
 
     #[test]
     fn test_msg_type_forward() {
-        test_utils::test_msg_type(PROTOCOL, KIND_FORWARD, RoutingV1::V1_0(PhantomData))
+        test_utils::test_msg_type(PROTOCOL, KIND_FORWARD, RoutingV1::new_v1_0())
     }
 }

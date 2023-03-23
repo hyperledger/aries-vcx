@@ -31,9 +31,7 @@ pub enum DiscoverFeaturesV1_0 {
 
 #[cfg(test)]
 mod tests {
-    use std::marker::PhantomData;
-
-    use super::DiscoverFeaturesV1;
+    use super::*;
     use crate::misc::test_utils;
 
     const PROTOCOL: &str = "https://didcomm.org/discover-features/1.0";
@@ -45,27 +43,27 @@ mod tests {
 
     #[test]
     fn test_protocol_discover_features() {
-        test_utils::test_protocol(PROTOCOL, DiscoverFeaturesV1::V1_0(PhantomData))
+        test_utils::test_protocol(PROTOCOL, DiscoverFeaturesV1::new_v1_0())
     }
 
     #[test]
     fn test_version_resolution_discover_features() {
-        test_utils::test_protocol(VERSION_RESOLUTION_PROTOCOL, DiscoverFeaturesV1::V1_0(PhantomData))
+        test_utils::test_protocol(VERSION_RESOLUTION_PROTOCOL, DiscoverFeaturesV1::new_v1_0())
     }
 
     #[test]
     #[should_panic]
     fn test_unsupported_version_discover_features() {
-        test_utils::test_protocol(UNSUPPORTED_VERSION_PROTOCOL, DiscoverFeaturesV1::V1_0(PhantomData))
+        test_utils::test_protocol(UNSUPPORTED_VERSION_PROTOCOL, DiscoverFeaturesV1::new_v1_0())
     }
 
     #[test]
     fn test_msg_type_query() {
-        test_utils::test_msg_type(PROTOCOL, KIND_QUERY, DiscoverFeaturesV1::V1_0(PhantomData))
+        test_utils::test_msg_type(PROTOCOL, KIND_QUERY, DiscoverFeaturesV1::new_v1_0())
     }
 
     #[test]
     fn test_msg_type_disclose() {
-        test_utils::test_msg_type(PROTOCOL, KIND_DISCLOSE, DiscoverFeaturesV1::V1_0(PhantomData))
+        test_utils::test_msg_type(PROTOCOL, KIND_DISCLOSE, DiscoverFeaturesV1::new_v1_0())
     }
 }

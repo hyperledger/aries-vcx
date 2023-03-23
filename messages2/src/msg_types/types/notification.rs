@@ -30,9 +30,7 @@ pub enum NotificationV1_0 {
 
 #[cfg(test)]
 mod tests {
-    use std::marker::PhantomData;
-
-    use super::NotificationV1;
+    use super::*;
     use crate::misc::test_utils;
 
     const PROTOCOL: &str = "https://didcomm.org/notification/1.0";
@@ -43,22 +41,22 @@ mod tests {
 
     #[test]
     fn test_protocol_notification() {
-        test_utils::test_protocol(PROTOCOL, NotificationV1::V1_0(PhantomData))
+        test_utils::test_protocol(PROTOCOL, NotificationV1::new_v1_0())
     }
 
     #[test]
     fn test_version_resolution_discover_features() {
-        test_utils::test_protocol(VERSION_RESOLUTION_PROTOCOL, NotificationV1::V1_0(PhantomData))
+        test_utils::test_protocol(VERSION_RESOLUTION_PROTOCOL, NotificationV1::new_v1_0())
     }
 
     #[test]
     #[should_panic]
     fn test_unsupported_version_discover_features() {
-        test_utils::test_protocol(UNSUPPORTED_VERSION_PROTOCOL, NotificationV1::V1_0(PhantomData))
+        test_utils::test_protocol(UNSUPPORTED_VERSION_PROTOCOL, NotificationV1::new_v1_0())
     }
 
     #[test]
     fn test_msg_type_ack() {
-        test_utils::test_msg_type(PROTOCOL, KIND_ACK, NotificationV1::V1_0(PhantomData))
+        test_utils::test_msg_type(PROTOCOL, KIND_ACK, NotificationV1::new_v1_0())
     }
 }

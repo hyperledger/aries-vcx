@@ -35,9 +35,7 @@ pub enum ConnectionV1_0 {
 
 #[cfg(test)]
 mod tests {
-    use std::marker::PhantomData;
-
-    use super::ConnectionV1;
+    use super::*;
     use crate::misc::test_utils;
 
     const PROTOCOL: &str = "https://didcomm.org/connections/1.0";
@@ -52,42 +50,42 @@ mod tests {
 
     #[test]
     fn test_protocol_connections() {
-        test_utils::test_protocol(PROTOCOL, ConnectionV1::V1_0(PhantomData))
+        test_utils::test_protocol(PROTOCOL, ConnectionV1::new_v1_0())
     }
 
     #[test]
     fn test_version_resolution_connections() {
-        test_utils::test_protocol(VERSION_RESOLUTION_PROTOCOL, ConnectionV1::V1_0(PhantomData))
+        test_utils::test_protocol(VERSION_RESOLUTION_PROTOCOL, ConnectionV1::new_v1_0())
     }
 
     #[test]
     #[should_panic]
     fn test_unsupported_version_connections() {
-        test_utils::test_protocol(UNSUPPORTED_VERSION_PROTOCOL, ConnectionV1::V1_0(PhantomData))
+        test_utils::test_protocol(UNSUPPORTED_VERSION_PROTOCOL, ConnectionV1::new_v1_0())
     }
 
     #[test]
     fn test_msg_type_invitation() {
-        test_utils::test_msg_type(PROTOCOL, KIND_INVITATION, ConnectionV1::V1_0(PhantomData))
+        test_utils::test_msg_type(PROTOCOL, KIND_INVITATION, ConnectionV1::new_v1_0())
     }
 
     #[test]
     fn test_msg_type_request() {
-        test_utils::test_msg_type(PROTOCOL, KIND_REQUEST, ConnectionV1::V1_0(PhantomData))
+        test_utils::test_msg_type(PROTOCOL, KIND_REQUEST, ConnectionV1::new_v1_0())
     }
 
     #[test]
     fn test_msg_type_response() {
-        test_utils::test_msg_type(PROTOCOL, KIND_RESPONSE, ConnectionV1::V1_0(PhantomData))
+        test_utils::test_msg_type(PROTOCOL, KIND_RESPONSE, ConnectionV1::new_v1_0())
     }
 
     #[test]
     fn test_msg_type_problem() {
-        test_utils::test_msg_type(PROTOCOL, KIND_PROBLEM, ConnectionV1::V1_0(PhantomData))
+        test_utils::test_msg_type(PROTOCOL, KIND_PROBLEM, ConnectionV1::new_v1_0())
     }
 
     #[test]
     fn test_msg_type_sign() {
-        test_utils::test_msg_type(PROTOCOL, KIND_SIGN, ConnectionV1::V1_0(PhantomData))
+        test_utils::test_msg_type(PROTOCOL, KIND_SIGN, ConnectionV1::new_v1_0())
     }
 }
