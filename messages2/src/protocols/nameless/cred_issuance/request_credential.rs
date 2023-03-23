@@ -3,11 +3,11 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     decorators::{attachment::Attachment, thread::Thread, timing::Timing},
-    message::Message,
+    msg_parts::MsgParts,
     msg_types::types::cred_issuance::CredentialIssuanceV1_0,
 };
 
-pub type RequestCredential = Message<RequestCredentialContent, RequestCredentialDecorators>;
+pub type RequestCredential = MsgParts<RequestCredentialContent, RequestCredentialDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, MessageContent, PartialEq)]
 #[message(kind = "CredentialIssuanceV1_0::RequestCredential")]

@@ -3,11 +3,11 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     decorators::{localization::MsgLocalization, thread::Thread, timing::Timing},
-    message::Message,
+    msg_parts::MsgParts,
     msg_types::types::connection::ConnectionV1_0,
 };
 
-pub type ProblemReport = Message<ProblemReportContent, ProblemReportDecorators>;
+pub type ProblemReport = MsgParts<ProblemReportContent, ProblemReportDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, MessageContent, Default, PartialEq)]
 #[message(kind = "ConnectionV1_0::ProblemReport")]

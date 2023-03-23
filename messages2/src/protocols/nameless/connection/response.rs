@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     decorators::{please_ack::PleaseAck, thread::Thread, timing::Timing},
-    message::Message,
+    msg_parts::MsgParts,
     msg_types::{
         traits::MessageKind,
         types::connection::{Connection, ConnectionV1, ConnectionV1_0},
@@ -13,7 +13,7 @@ use crate::{
     },
 };
 
-pub type Response = Message<ResponseContent, ResponseDecorators>;
+pub type Response = MsgParts<ResponseContent, ResponseDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, MessageContent, PartialEq)]
 #[message(kind = "ConnectionV1_0::Response")]

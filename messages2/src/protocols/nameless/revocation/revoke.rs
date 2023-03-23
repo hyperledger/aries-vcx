@@ -4,11 +4,11 @@ use serde::{Deserialize, Serialize};
 use crate::{
     decorators::{please_ack::PleaseAck, thread::Thread, timing::Timing},
     maybe_known::MaybeKnown,
-    message::Message,
+    msg_parts::MsgParts,
     msg_types::types::revocation::RevocationV2_0,
 };
 
-pub type Revoke = Message<RevokeContent, RevokeDecorators>;
+pub type Revoke = MsgParts<RevokeContent, RevokeDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, MessageContent, PartialEq)]
 #[message(kind = "RevocationV2_0::Revoke")]

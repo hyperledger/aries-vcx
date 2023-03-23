@@ -1,8 +1,8 @@
 use serde::{Deserialize, Serialize};
 
-use crate::message::Message;
+use crate::msg_parts::MsgParts;
 
-pub type PublicInvitation = Message<PublicInvitationContent>;
+pub type PublicInvitation = MsgParts<PublicInvitationContent>;
 
 /// Represents a public invitation.
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
@@ -25,7 +25,7 @@ mod tests {
 
     use super::*;
     use crate::{
-        misc::{NoDecorators, test_utils},
+        misc::{test_utils, NoDecorators},
         protocols::nameless::connection::invitation::Invitation,
     };
 

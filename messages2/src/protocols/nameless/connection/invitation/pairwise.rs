@@ -1,10 +1,10 @@
 use serde::{Deserialize, Serialize};
 use url::Url;
 
-use crate::{decorators::timing::Timing, message::Message};
+use crate::{decorators::timing::Timing, msg_parts::MsgParts};
 
-pub type PairwiseInvitation = Message<PairwiseInvitationContent<Url>, PwInvitationDecorators>;
-pub type PairwiseDidInvitation = Message<PairwiseInvitationContent<String>, PwInvitationDecorators>;
+pub type PairwiseInvitation = MsgParts<PairwiseInvitationContent<Url>, PwInvitationDecorators>;
+pub type PairwiseDidInvitation = MsgParts<PairwiseInvitationContent<String>, PwInvitationDecorators>;
 
 /// Wrapper that represents a pairwise invitation.
 // The wrapping is used so that we expose certain types as an abstraction

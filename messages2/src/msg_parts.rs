@@ -17,7 +17,7 @@ use crate::{
 /// instrumental to the message processing, not an appendix to the message (such as `~thread` or
 /// `~timing`).
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
-pub struct Message<C, D = NoDecorators> {
+pub struct MsgParts<C, D = NoDecorators> {
     /// All standalone messages have an `id` field.
     #[serde(rename = "@id")]
     pub id: String,
@@ -29,7 +29,7 @@ pub struct Message<C, D = NoDecorators> {
     pub decorators: D,
 }
 
-impl<C> Message<C> {
+impl<C> MsgParts<C> {
     pub fn new(id: String, content: C) -> Self {
         Self {
             id,
@@ -39,7 +39,7 @@ impl<C> Message<C> {
     }
 }
 
-impl<C, D> Message<C, D> {
+impl<C, D> MsgParts<C, D> {
     pub fn with_decorators(id: String, content: C, decorators: D) -> Self {
         Self {
             id,
@@ -49,9 +49,9 @@ impl<C, D> Message<C, D> {
     }
 }
 
-/// Blanket impl, allowing all [`Message`] types where the content implements
+/// Blanket impl, allowing all [`MsgParts`] types where the content implements
 /// [`MessageContent`] to access the [`MessageContent::Kind`].
-impl<C, D> MessageWithKind for Message<C, D>
+impl<C, D> MessageWithKind for MsgParts<C, D>
 where
     C: MessageContent,
 {

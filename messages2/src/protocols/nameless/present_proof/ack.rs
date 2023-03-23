@@ -2,12 +2,12 @@ use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    message::Message,
+    msg_parts::MsgParts,
     msg_types::types::present_proof::PresentProofV1_0,
     protocols::nameless::notification::{AckContent, AckDecorators, AckStatus},
 };
 
-pub type AckPresentation = Message<AckPresentationContent, AckDecorators>;
+pub type AckPresentation = MsgParts<AckPresentationContent, AckDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, MessageContent, PartialEq)]
 #[message(kind = "PresentProofV1_0::Ack")]

@@ -5,8 +5,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     decorators::{thread::Thread, timing::Timing},
-    message::Message,
     misc::MimeType,
+    msg_parts::MsgParts,
     msg_types::{
         traits::MessageKind,
         types::present_proof::{PresentProof, PresentProofV1, PresentProofV1_0},
@@ -14,7 +14,7 @@ use crate::{
     },
 };
 
-pub type ProposePresentation = Message<ProposePresentationContent, ProposePresentationDecorators>;
+pub type ProposePresentation = MsgParts<ProposePresentationContent, ProposePresentationDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, MessageContent, PartialEq)]
 #[message(kind = "PresentProofV1_0::ProposePresentation")]

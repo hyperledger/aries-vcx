@@ -3,11 +3,11 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     decorators::{thread::Thread, timing::Timing},
-    message::Message,
+    msg_parts::MsgParts,
     msg_types::types::trust_ping::TrustPingV1_0,
 };
 
-pub type Ping = Message<PingContent, PingDecorators>;
+pub type Ping = MsgParts<PingContent, PingDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, MessageContent, Default, PartialEq)]
 #[message(kind = "TrustPingV1_0::Ping")]

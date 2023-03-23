@@ -3,12 +3,12 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     decorators::{thread::Thread, timing::Timing},
-    message::Message,
     misc::NoDecorators,
+    msg_parts::MsgParts,
     msg_types::types::out_of_band::OutOfBandV1_1,
 };
 
-pub type HandshakeReuseAccepted = Message<HandshakeReuseAcceptedContent, HandshakeReuseAcceptedDecorators>;
+pub type HandshakeReuseAccepted = MsgParts<HandshakeReuseAcceptedContent, HandshakeReuseAcceptedDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, MessageContent, Default, PartialEq)]
 #[message(kind = "OutOfBandV1_1::HandshakeReuseAccepted")]

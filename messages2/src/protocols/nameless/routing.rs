@@ -3,9 +3,9 @@
 use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 
-use crate::{message::Message, msg_types::types::routing::RoutingV1_0};
+use crate::{msg_parts::MsgParts, msg_types::types::routing::RoutingV1_0};
 
-pub type Forward = Message<ForwardContent>;
+pub type Forward = MsgParts<ForwardContent>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, MessageContent, PartialEq)]
 #[message(kind = "RoutingV1_0::Forward")]
@@ -26,7 +26,7 @@ mod tests {
     use serde_json::json;
 
     use super::*;
-    use crate::misc::{NoDecorators, test_utils};
+    use crate::misc::{test_utils, NoDecorators};
 
     #[test]
     fn test_minimal_forward() {

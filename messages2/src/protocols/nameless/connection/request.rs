@@ -4,11 +4,11 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     decorators::{thread::Thread, timing::Timing},
-    message::Message,
+    msg_parts::MsgParts,
     msg_types::types::connection::ConnectionV1_0,
 };
 
-pub type Request = Message<RequestContent, RequestDecorators>;
+pub type Request = MsgParts<RequestContent, RequestDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, MessageContent, PartialEq)]
 #[message(kind = "ConnectionV1_0::Request")]

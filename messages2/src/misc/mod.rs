@@ -13,7 +13,7 @@ pub mod test_utils {
     use serde_json::{json, Value};
 
     use crate::{
-        message::Message,
+        msg_parts::MsgParts,
         msg_types::{traits::MessageKind, MessageType, Protocol},
         protocols::traits::MessageContent,
         AriesMessage,
@@ -73,7 +73,7 @@ pub mod test_utils {
 
     pub fn test_msg<V, T, U>(content: T, decorators: U, mut json: Value)
     where
-        AriesMessage: From<Message<T, U>>,
+        AriesMessage: From<MsgParts<T, U>>,
         V: MessageContent,
         V::Kind: MessageKind,
         Protocol: From<<V::Kind as MessageKind>::Parent>,
@@ -85,7 +85,7 @@ pub mod test_utils {
         obj.insert("@id".to_owned(), json!(id));
         obj.insert("@type".to_owned(), json!(msg_type));
 
-        let msg = Message::with_decorators(id, content, decorators);
+        let msg = MsgParts::with_decorators(id, content, decorators);
         let msg = AriesMessage::from(msg);
 
         test_serde(msg, json);

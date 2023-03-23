@@ -2,12 +2,12 @@ use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    message::Message,
+    msg_parts::MsgParts,
     msg_types::types::cred_issuance::CredentialIssuanceV1_0,
     protocols::nameless::notification::{AckContent, AckDecorators, AckStatus},
 };
 
-pub type AckCredential = Message<AckCredentialContent, AckDecorators>;
+pub type AckCredential = MsgParts<AckCredentialContent, AckDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, MessageContent, PartialEq)]
 #[message(kind = "CredentialIssuanceV1_0::Ack")]

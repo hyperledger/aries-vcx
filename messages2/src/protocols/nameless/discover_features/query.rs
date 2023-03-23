@@ -5,11 +5,11 @@ use super::ProtocolDescriptor;
 use crate::{
     decorators::timing::Timing,
     maybe_known::MaybeKnown,
-    message::Message,
+    msg_parts::MsgParts,
     msg_types::{registry::PROTOCOL_REGISTRY, types::discover_features::DiscoverFeaturesV1_0},
 };
 
-pub type Query = Message<QueryContent, QueryDecorators>;
+pub type Query = MsgParts<QueryContent, QueryDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, MessageContent, PartialEq)]
 #[message(kind = "DiscoverFeaturesV1_0::Query")]

@@ -5,11 +5,11 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     decorators::{thread::Thread, timing::Timing},
-    message::Message,
+    msg_parts::MsgParts,
     msg_types::types::notification::NotificationV1_0,
 };
 
-pub type Ack = Message<AckContent, AckDecorators>;
+pub type Ack = MsgParts<AckContent, AckDecorators>;
 
 #[derive(Debug, Clone, Serialize, Deserialize, MessageContent, PartialEq)]
 #[message(kind = "NotificationV1_0::Ack")]

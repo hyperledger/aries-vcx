@@ -2,12 +2,12 @@ use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    message::Message,
+    msg_parts::MsgParts,
     msg_types::types::revocation::RevocationV2_0,
     protocols::nameless::notification::{AckContent, AckDecorators, AckStatus},
 };
 
-pub type AckRevoke = Message<AckRevokeContent, AckDecorators>;
+pub type AckRevoke = MsgParts<AckRevokeContent, AckDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, MessageContent, PartialEq)]
 #[message(kind = "RevocationV2_0::Ack")]

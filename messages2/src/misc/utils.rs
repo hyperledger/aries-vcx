@@ -21,8 +21,8 @@ macro_rules! transit_to_aries_msg {
     };
 
     ($content:ty: $decorators:ty, $($interm:ty),+) => {
-        impl From<$crate::message::Message<$content, $decorators>> for $crate::AriesMessage {
-            fn from(value: $crate::message::Message<$content, $decorators>) -> Self {
+        impl From<$crate::msg_parts::MsgParts<$content, $decorators>> for $crate::AriesMessage {
+            fn from(value: $crate::msg_parts::MsgParts<$content, $decorators>) -> Self {
                 Self::from($crate::misc::utils::generate_from_stmt!(value, $($interm),+))
             }
         }

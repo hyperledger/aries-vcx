@@ -33,10 +33,10 @@ pub enum Invitation {
 //
 // However, to have the capability of setting different decorators
 // based on the invitation format, we don't wrap the [`Invitation`]
-// in a [`Message`], but rather its variants.
+// in a [`MsgParts`], but rather its variants.
 //
 // This means that we cannot resolve the message kind through the
-// generic `Message<C: MessageContent, D>` because, in this case,
+// generic `MsgParts<C: MessageContent, D>` because, in this case,
 // the variants don't implement `MessageContent`.
 //
 // Hence, the manual impl below.

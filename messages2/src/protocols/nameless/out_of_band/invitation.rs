@@ -6,12 +6,12 @@ use super::OobGoalCode;
 use crate::{
     decorators::{attachment::Attachment, timing::Timing},
     maybe_known::MaybeKnown,
-    message::Message,
     misc::MimeType,
+    msg_parts::MsgParts,
     msg_types::{types::out_of_band::OutOfBandV1_1, Protocol},
 };
 
-pub type Invitation = Message<InvitationContent, InvitationDecorators>;
+pub type Invitation = MsgParts<InvitationContent, InvitationDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, MessageContent, PartialEq)]
 #[message(kind = "OutOfBandV1_1::Invitation")]

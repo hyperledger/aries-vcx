@@ -4,11 +4,11 @@ use serde::{Deserialize, Serialize};
 use super::CredentialPreview;
 use crate::{
     decorators::{thread::Thread, timing::Timing},
-    message::Message,
+    msg_parts::MsgParts,
     msg_types::types::cred_issuance::CredentialIssuanceV1_0,
 };
 
-pub type ProposeCredential = Message<ProposeCredentialContent, ProposeCredentialDecorators>;
+pub type ProposeCredential = MsgParts<ProposeCredentialContent, ProposeCredentialDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, MessageContent, PartialEq)]
 #[message(kind = "CredentialIssuanceV1_0::ProposeCredential")]

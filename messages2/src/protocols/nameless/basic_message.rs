@@ -6,12 +6,12 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     decorators::{localization::MsgLocalization, thread::Thread, timing::Timing},
-    message::Message,
     misc::utils,
+    msg_parts::MsgParts,
     msg_types::types::basic_message::BasicMessageV1_0,
 };
 
-pub type BasicMessage = Message<BasicMessageContent, BasicMessageDecorators>;
+pub type BasicMessage = MsgParts<BasicMessageContent, BasicMessageDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, MessageContent, PartialEq)]
 #[message(kind = "BasicMessageV1_0::Message")]

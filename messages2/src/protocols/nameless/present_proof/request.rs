@@ -3,11 +3,11 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     decorators::{attachment::Attachment, thread::Thread, timing::Timing},
-    message::Message,
+    msg_parts::MsgParts,
     msg_types::types::present_proof::PresentProofV1_0,
 };
 
-pub type RequestPresentation = Message<RequestPresentationContent, RequestPresentationDecorators>;
+pub type RequestPresentation = MsgParts<RequestPresentationContent, RequestPresentationDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, MessageContent, PartialEq)]
 #[message(kind = "PresentProofV1_0::RequestPresentation")]

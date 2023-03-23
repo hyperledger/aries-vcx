@@ -9,11 +9,11 @@ use url::Url;
 
 use crate::{
     decorators::{localization::FieldLocalization, thread::Thread, timing::Timing},
-    message::Message,
+    msg_parts::MsgParts,
     msg_types::types::report_problem::ReportProblemV1_0,
 };
 
-pub type ProblemReport = Message<ProblemReportContent, ProblemReportDecorators>;
+pub type ProblemReport = MsgParts<ProblemReportContent, ProblemReportDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, MessageContent, Default, PartialEq)]
 #[message(kind = "ReportProblemV1_0::ProblemReport")]

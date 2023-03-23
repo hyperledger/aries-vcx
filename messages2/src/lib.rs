@@ -9,7 +9,7 @@
 pub mod decorators;
 mod error;
 pub mod maybe_known;
-pub mod message;
+pub mod msg_parts;
 pub mod misc;
 pub mod msg_types;
 pub mod protocols;
@@ -185,14 +185,14 @@ impl<'de> Deserialize<'de> for AriesMessage {
         // The TaggedContent struct has two fields, tag and content, where in our case the tag is
         // `MessageType` and the content is [`Content`], the cached remaining fields of the
         // serialized data. Serde uses this [`ContentDeserializer`] to deserialize from that format.
-        let content_deser = ContentDeserializer::<D::Error>::new(tagged.content);
+        let deserializer = ContentDeserializer::<D::Error>::new(tagged.content);
         let MessageType { protocol, kind } = tagged.tag;
 
         // Instead of matching to oblivion and beyond on the [`MessageType`] protocol,
         // we make use of [`DelayedSerde`] so the matching happens incrementally.
         // This makes use of the provided deserializer and matches on the [`MessageType`]
         // to determine the type the content must be deserialized to.
-        Self::delayed_deserialize((protocol, kind), content_deser)
+        Self::delayed_deserialize((protocol, kind), deserializer)
     }
 }
 
