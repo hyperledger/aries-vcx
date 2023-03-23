@@ -50,7 +50,7 @@ mod tests {
     use super::*;
     use crate::{
         decorators::thread::tests::make_extended_thread,
-        misc::{test_utils, utils::DATETIME_FORMAT},
+        misc::test_utils::{self, DateTimeRfc3339},
     };
 
     #[test]
@@ -61,7 +61,7 @@ mod tests {
         let decorators = BasicMessageDecorators::default();
 
         let json = json!({
-            "sent_time": content.sent_time.format(DATETIME_FORMAT).to_string(),
+            "sent_time": DateTimeRfc3339(content.sent_time),
             "content": content.content
         });
 
@@ -77,7 +77,7 @@ mod tests {
         decorators.thread = Some(make_extended_thread());
 
         let json = json!({
-            "sent_time": content.sent_time.format(DATETIME_FORMAT).to_string(),
+            "sent_time": DateTimeRfc3339(content.sent_time),
             "content": content.content,
             "~thread": decorators.thread
         });

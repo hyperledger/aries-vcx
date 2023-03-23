@@ -5,6 +5,7 @@ pub(crate) mod utils;
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 pub mod test_utils {
+    use chrono::{DateTime, Utc};
     use serde::{Deserialize, Serialize};
     use serde_json::{json, Value};
 
@@ -14,6 +15,19 @@ pub mod test_utils {
         protocols::traits::MessageContent,
         AriesMessage,
     };
+
+    use super::utils::serialize_datetime;
+
+    pub struct DateTimeRfc3339(pub DateTime<Utc>);
+
+    impl Serialize for DateTimeRfc3339 {
+        fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: serde::Serializer,
+        {
+            serialize_datetime(&self.0, serializer)
+        }
+    }
 
     pub fn test_protocol<T>(protocol_str: &str, protocol_type: T)
     where

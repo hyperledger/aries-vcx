@@ -2,7 +2,6 @@ use chrono::{DateTime, Utc};
 use serde::{de::Error, Deserializer, Serialize};
 
 pub const MSG_TYPE: &str = "@type";
-pub const DATETIME_FORMAT: &str = "%Y-%m-%d %H:%M:%SZ";
 
 /// Used for creating a deserialization error.
 /// Some messages, or rather, message types, are not meant
@@ -34,7 +33,28 @@ pub fn serialize_datetime<S>(dt: &DateTime<Utc>, serializer: S) -> Result<S::Ok,
 where
     S: serde::Serializer,
 {
-    format_args!("{}", dt.format(DATETIME_FORMAT)).serialize(serializer)
+    use chrono::format::Fixed;
+    use chrono::format::Item;
+    use chrono::format::Numeric::*;
+    use chrono::format::Pad::Zero;
+
+    const FMT_ITEMS: &[Item<'static>] = &[
+        Item::Numeric(Year, Zero),
+        Item::Literal("-"),
+        Item::Numeric(Month, Zero),
+        Item::Literal("-"),
+        Item::Numeric(Day, Zero),
+        Item::Literal("T"),
+        Item::Numeric(Hour, Zero),
+        Item::Literal(":"),
+        Item::Numeric(Minute, Zero),
+        Item::Literal(":"),
+        Item::Numeric(Second, Zero),
+        Item::Fixed(Fixed::Nanosecond3),
+        Item::Fixed(Fixed::TimezoneOffsetColonZ),
+    ];
+
+    format_args!("{}", dt.format_with_items(FMT_ITEMS.iter())).serialize(serializer)
 }
 
 macro_rules! generate_from_stmt {
