@@ -1,5 +1,5 @@
 pub mod mime_type;
-pub mod nothing;
+pub mod no_decorators;
 pub(crate) mod utils;
 
 #[cfg(test)]

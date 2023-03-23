@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     decorators::{thread::Thread, timing::Timing},
     message::Message,
-    misc::nothing::Nothing,
+    misc::no_decorators::NoDecorators,
     msg_types::types::out_of_band::OutOfBandV1_1,
 };
 
@@ -13,7 +13,7 @@ pub type HandshakeReuse = Message<HandshakeReuseContent, HandshakeReuseDecorator
 #[derive(Clone, Debug, Deserialize, Serialize, MessageContent, Default, PartialEq)]
 #[message(kind = "OutOfBandV1_1::HandshakeReuse")]
 #[serde(transparent)]
-pub struct HandshakeReuseContent(Nothing);
+pub struct HandshakeReuseContent(NoDecorators);
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub struct HandshakeReuseDecorators {

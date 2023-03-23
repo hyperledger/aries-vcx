@@ -17,7 +17,7 @@ where
 
 macro_rules! transit_to_aries_msg {
     ($content:ty, $($interm:ty),+) => {
-        transit_to_aries_msg!($content:$crate::misc::nothing::Nothing, $($interm),+);
+        transit_to_aries_msg!($content:$crate::misc::no_decorators::NoDecorators, $($interm),+);
     };
 
     ($content:ty: $decorators:ty, $($interm:ty),+) => {
@@ -63,7 +63,7 @@ where
 {
     match dt {
         Some(dt) => serialize_datetime(dt, serializer),
-        None => serializer.serialize_none()
+        None => serializer.serialize_none(),
     }
 }
 

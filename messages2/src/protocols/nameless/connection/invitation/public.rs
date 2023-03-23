@@ -25,7 +25,7 @@ mod tests {
 
     use super::*;
     use crate::{
-        misc::{nothing::Nothing, test_utils},
+        misc::{no_decorators::NoDecorators, test_utils},
         protocols::nameless::connection::invitation::Invitation,
     };
 
@@ -38,6 +38,6 @@ mod tests {
             "did": content.did
         });
 
-        test_utils::test_msg::<Invitation, _, _>(content, Nothing, expected);
+        test_utils::test_msg::<Invitation, _, _>(content, NoDecorators, expected);
     }
 }

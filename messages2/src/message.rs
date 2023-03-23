@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    misc::nothing::Nothing,
+    misc::no_decorators::NoDecorators,
     protocols::traits::{MessageContent, MessageWithKind},
 };
 
@@ -17,7 +17,7 @@ use crate::{
 /// instrumental to the message processing, not an appendix to the message (such as `~thread` or
 /// `~timing`).
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
-pub struct Message<C, D = Nothing> {
+pub struct Message<C, D = NoDecorators> {
     /// All standalone messages have an `id` field.
     #[serde(rename = "@id")]
     pub id: String,
@@ -34,7 +34,7 @@ impl<C> Message<C> {
         Self {
             id,
             content,
-            decorators: Nothing,
+            decorators: NoDecorators,
         }
     }
 }
