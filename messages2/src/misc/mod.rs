@@ -16,16 +16,27 @@ pub mod test_utils {
         AriesMessage,
     };
 
-    use super::utils::serialize_datetime;
+    use super::utils;
 
-    pub struct DateTimeRfc3339(pub DateTime<Utc>);
+    pub struct DateTimeRfc3339<'a>(pub &'a DateTime<Utc>);
 
-    impl Serialize for DateTimeRfc3339 {
+    impl<'a> Serialize for DateTimeRfc3339<'a> {
         fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
         where
             S: serde::Serializer,
         {
-            serialize_datetime(&self.0, serializer)
+            utils::serialize_datetime(self.0, serializer)
+        }
+    }
+
+    pub struct OptDateTimeRfc3339<'a>(pub &'a Option<DateTime<Utc>>);
+
+    impl<'a> Serialize for OptDateTimeRfc3339<'a> {
+        fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: serde::Serializer,
+        {
+            utils::serialize_opt_datetime(self.0, serializer)
         }
     }
 

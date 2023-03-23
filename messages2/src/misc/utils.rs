@@ -57,6 +57,16 @@ where
     format_args!("{}", dt.format_with_items(FMT_ITEMS.iter())).serialize(serializer)
 }
 
+pub fn serialize_opt_datetime<S>(dt: &Option<DateTime<Utc>>, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: serde::Serializer,
+{
+    match dt {
+        Some(dt) => serialize_datetime(dt, serializer),
+        None => serializer.serialize_none()
+    }
+}
+
 macro_rules! generate_from_stmt {
     ($val:expr, $interm:ty) => {
         <$interm>::from($val)

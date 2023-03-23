@@ -61,7 +61,7 @@ mod tests {
         let decorators = BasicMessageDecorators::default();
 
         let json = json!({
-            "sent_time": DateTimeRfc3339(content.sent_time),
+            "sent_time": DateTimeRfc3339(&content.sent_time),
             "content": content.content
         });
 
@@ -77,7 +77,7 @@ mod tests {
         decorators.thread = Some(make_extended_thread());
 
         let json = json!({
-            "sent_time": DateTimeRfc3339(content.sent_time),
+            "sent_time": DateTimeRfc3339(&content.sent_time),
             "content": content.content,
             "~thread": decorators.thread
         });
