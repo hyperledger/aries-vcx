@@ -7,7 +7,7 @@ use crate::{
     decorators::{attachment::Attachment, timing::Timing},
     maybe_known::MaybeKnown,
     message::Message,
-    misc::mime_type::MimeType,
+    misc::MimeType,
     msg_types::{types::out_of_band::OutOfBandV1_1, Protocol},
 };
 

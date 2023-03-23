@@ -17,7 +17,7 @@ where
 
 macro_rules! transit_to_aries_msg {
     ($content:ty, $($interm:ty),+) => {
-        transit_to_aries_msg!($content:$crate::misc::no_decorators::NoDecorators, $($interm),+);
+        transit_to_aries_msg!($content:$crate::misc::NoDecorators, $($interm),+);
     };
 
     ($content:ty: $decorators:ty, $($interm:ty),+) => {

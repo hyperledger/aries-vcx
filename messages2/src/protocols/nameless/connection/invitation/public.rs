@@ -25,7 +25,7 @@ mod tests {
 
     use super::*;
     use crate::{
-        misc::{no_decorators::NoDecorators, test_utils},
+        misc::{NoDecorators, test_utils},
         protocols::nameless::connection::invitation::Invitation,
     };
 

@@ -25,7 +25,7 @@ use self::{
 use super::notification::AckDecorators;
 use crate::{
     misc::{
-        mime_type::MimeType,
+        MimeType,
         utils::{self, transit_to_aries_msg},
     },
     msg_types::{

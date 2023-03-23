@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     decorators::{thread::Thread, timing::Timing},
     message::Message,
-    misc::no_decorators::NoDecorators,
+    misc::NoDecorators,
     msg_types::types::out_of_band::OutOfBandV1_1,
 };
 

@@ -26,7 +26,7 @@ mod tests {
     use serde_json::json;
 
     use super::*;
-    use crate::misc::{no_decorators::NoDecorators, test_utils};
+    use crate::misc::{NoDecorators, test_utils};
 
     #[test]
     fn test_minimal_forward() {

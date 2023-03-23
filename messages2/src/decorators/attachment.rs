@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use url::Url;
 
-use crate::misc::mime_type::MimeType;
+use crate::misc::MimeType;
 
 /// Struct representing the `~attach` decorator from its [RFC](https://github.com/hyperledger/aries-rfcs/blob/main/concepts/0017-attachments/README.md).
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

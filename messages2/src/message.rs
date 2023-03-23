@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    misc::no_decorators::NoDecorators,
+    misc::NoDecorators,
     protocols::traits::{MessageContent, MessageWithKind},
 };
 

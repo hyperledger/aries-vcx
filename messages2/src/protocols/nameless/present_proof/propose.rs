@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     decorators::{thread::Thread, timing::Timing},
     message::Message,
-    misc::mime_type::MimeType,
+    misc::MimeType,
     msg_types::{
         traits::MessageKind,
         types::present_proof::{PresentProof, PresentProofV1, PresentProofV1_0},

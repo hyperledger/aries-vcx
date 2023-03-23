@@ -1,6 +1,9 @@
-pub mod mime_type;
-pub mod no_decorators;
+mod mime_type;
+mod no_decorators;
 pub(crate) mod utils;
+
+pub use mime_type::MimeType;
+pub use no_decorators::NoDecorators;
 
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
@@ -60,12 +63,13 @@ pub mod test_utils {
     }
 
     pub fn test_msg_type_resolution<T>(protocol_str: &str, protocol_type: T)
-    where Protocol: From<T>,
-     {
+    where
+        Protocol: From<T>,
+    {
         let quoted = format!("\"{protocol_str}\"");
         let deserialized = serde_json::from_str(&quoted).unwrap();
         assert_eq!(Protocol::from(protocol_type), deserialized)
-     }
+    }
 
     pub fn test_msg<V, T, U>(content: T, decorators: U, mut json: Value)
     where
