@@ -1,3 +1,9 @@
+//! Module that handles operations related solely to the protocol of a message, instead of it's content.
+//! The main type, [`Protocol`], represents a protocol name along with its (both major and minor) version.
+//! 
+//! The module contains other types that work adjacently to the [`Protocol`] to represent a message kind,
+//! and along the protocol they make up the `@type` field of a message.
+
 pub mod registry;
 pub mod role;
 pub mod types;
