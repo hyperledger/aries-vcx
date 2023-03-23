@@ -64,8 +64,11 @@ impl AttachmentData {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub enum AttachmentType {
+    // Base64 encoded bytes
     Base64(Vec<u8>),
+    // A valid JSON value
     Json(Value),
+    // An URL list
     Links(Vec<Url>),
 }
 
