@@ -7,6 +7,7 @@ use serde::{
 };
 use url::Url;
 
+/// Struct representing the `~l10n` decorator, when it decorates the entire message, from its [RFC](https://github.com/hyperledger/aries-rfcs/blob/main/features/0043-l10n/README.md).
 #[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq)]
 pub struct MsgLocalization {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -18,6 +19,7 @@ pub struct MsgLocalization {
     pub locales: Option<HashMap<Locale, Vec<String>>>,
 }
 
+/// Struct representing the `~l10n` decorator, when it decorates a single field, from its [RFC](https://github.com/hyperledger/aries-rfcs/blob/main/features/0043-l10n/README.md).
 #[derive(Debug, Clone, Deserialize, Default, PartialEq)]
 pub struct FieldLocalization {
     pub code: Option<String>,
@@ -55,6 +57,8 @@ impl Serialize for FieldLocalization {
     }
 }
 
+/// Represents an ISO 639-1, two letter, language code.
+/// 
 /// We need to wrap this as the default serde
 /// behavior is to use ISO 639-3 codes and we need ISO 639-1;
 #[derive(Copy, Clone, Debug, Deserialize, PartialEq, Hash, Eq)]

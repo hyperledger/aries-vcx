@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 
+/// Struct representing the `~please_ack` decorators from its [RFC](https://github.com/hyperledger/aries-rfcs/blob/main/features/0317-please-ack/README.md).
 #[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq)]
 pub struct PleaseAck {
     pub on: Vec<AckOn>,

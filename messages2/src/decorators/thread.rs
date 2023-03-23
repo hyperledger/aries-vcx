@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::maybe_known::MaybeKnown;
 
+/// Struct representing the `~thread` decorator from its [RFC](https://github.com/hyperledger/aries-rfcs/blob/main/concepts/0008-message-id-and-threading/README.md).
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub struct Thread {
     pub thid: String,

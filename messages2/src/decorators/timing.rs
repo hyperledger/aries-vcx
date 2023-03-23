@@ -2,6 +2,7 @@ use crate::misc::utils;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
+/// Struct representing the `~timing` decorator from its [RFC](https://github.com/hyperledger/aries-rfcs/blob/main/features/0032-message-timing/README.md).
 #[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq)]
 pub struct Timing {
     #[serde(skip_serializing_if = "Option::is_none")]
