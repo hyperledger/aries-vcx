@@ -9,7 +9,8 @@ use proc_macro::TokenStream;
 use syn::{parse_macro_input, DeriveInput, Error};
 
 /// Derive macro to be used on actual message that can be received.
-/// The macro simplifies mapping the message to its respective message kind from the `@type` field.
+/// The macro simplifies mapping the message to its respective message kind from the `@type` field
+/// by implementing the `MessageContent` trait.
 ///
 /// The message type is provided in the `kind` argument to the macro's attribute.
 /// The value expected is a literal string containing an expression of an enum with unit variants.
@@ -45,6 +46,16 @@ pub fn message_content(input: TokenStream) -> TokenStream {
 /// The minor versions are represented by the major version enum's variants
 /// and the field encapsulated in the variants are expected to be [`std::marker::PhantomData<fn() ->
 /// T>`]. The `T` binds the message kinds of the protocol to the minor version variant of the enum.
+/// 
+/// As a summary, this macro will generate the following:
+/// - on protocol representing enums:
+///     - [`ProtocolName`] impl on the enum.
+///     - regular impl on the enum containing `const PROTOCOL: &str`.
+/// 
+/// - on major version representing enums:
+///     - [`MajorVersion`] impl on the enum.
+///     - [`MessageKind`] impls on each type bound in the variants.
+///     - `new_vX_Y()` shorthand methods on the enum, for easier creation of instances of a certain variant (version).
 ///
 /// As per why the generic type is `fn() -> T` and not just `T`, the short story is *ownership*.
 ///
