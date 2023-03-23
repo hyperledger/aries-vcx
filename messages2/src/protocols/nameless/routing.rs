@@ -1,3 +1,5 @@
+//! Module containing the `mediator and relays` messages, as defined in the [RFC](https://github.com/hyperledger/aries-rfcs/blob/main/concepts/0046-mediators-and-relays/README.md).
+
 use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 

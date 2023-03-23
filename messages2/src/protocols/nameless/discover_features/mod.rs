@@ -1,3 +1,5 @@
+//! Module containing the `discover features` protocol messages, as defined in the [RFC](https://github.com/hyperledger/aries-rfcs/blob/main/features/0031-discover-features/README.md).
+
 mod disclose;
 mod query;
 

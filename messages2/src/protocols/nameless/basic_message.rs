@@ -1,3 +1,5 @@
+//! Module containing the `basic message` protocol messages, as defined in the [RFC](https://github.com/hyperledger/aries-rfcs/blob/main/features/0095-basic-message/README.md).
+
 use chrono::{DateTime, Utc};
 use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};

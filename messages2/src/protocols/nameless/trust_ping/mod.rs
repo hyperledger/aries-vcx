@@ -1,3 +1,5 @@
+//! Module containing the `trust ping` protocol messages, as defined in the [RFC](https://github.com/hyperledger/aries-rfcs/blob/main/features/0048-trust-ping/README.md).
+
 mod ping;
 mod ping_response;
 
