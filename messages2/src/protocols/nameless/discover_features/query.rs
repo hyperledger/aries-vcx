@@ -65,7 +65,7 @@ mod tests {
     use crate::{
         decorators::timing::tests::make_extended_timing,
         misc::test_utils,
-        msg_types::{traits::MajorVersion, types::connection::ConnectionV1},
+        msg_types::{traits::ProtocolVersion, types::connection::ConnectionV1},
     };
 
     #[test]

@@ -99,7 +99,7 @@ fn process_protocol(Protocol { ident, data, protocol }: Protocol) -> TokenStream
             const PROTOCOL: &'static str = #protocol;
 
             fn try_from_version_parts(major: u8, minor: u8) -> crate::error::MsgTypeResult<Self> {
-                use crate::msg_types::traits::MajorVersion;
+                use crate::msg_types::traits::ProtocolVersion;
 
                 match major {
                     #(#try_from_match_arms),*,
@@ -108,7 +108,7 @@ fn process_protocol(Protocol { ident, data, protocol }: Protocol) -> TokenStream
             }
 
             fn as_protocol_parts(&self) -> (&'static str, u8, u8) {
-                use crate::msg_types::traits::MajorVersion;
+                use crate::msg_types::traits::ProtocolVersion;
 
                 let (major, minor) = match self {
                     #(#as_parts_match_arms),*,
@@ -184,7 +184,7 @@ fn process_version(Version { ident, data, major }: Version) -> SynResult<TokenSt
     }
 
     let expanded = quote! {
-        impl crate::msg_types::traits::MajorVersion for #ident {
+        impl crate::msg_types::traits::ProtocolVersion for #ident {
             type Roles = Vec<crate::maybe_known::MaybeKnown<crate::msg_types::role::Role>>;
 
             const MAJOR: u8 = #major;

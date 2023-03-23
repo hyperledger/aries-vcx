@@ -30,7 +30,7 @@ pub struct RegistryEntry {
 /// Extracts the necessary parts for constructing a [`RegistryEntry`] from a protocol minor version.
 macro_rules! extract_parts {
     ($name:expr) => {{
-        let roles = $crate::msg_types::traits::MajorVersion::roles(&$name);
+        let roles = $crate::msg_types::traits::ProtocolVersion::roles(&$name);
         let protocol = Protocol::from($name);
         let (name, major, minor) = protocol.as_parts();
         (name, major, minor, roles, Protocol::from($name))

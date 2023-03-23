@@ -53,7 +53,7 @@ pub fn message_content(input: TokenStream) -> TokenStream {
 ///     - regular impl on the enum containing `const PROTOCOL: &str`.
 /// 
 /// - on major version representing enums:
-///     - [`MajorVersion`] impl on the enum.
+///     - [`ProtocolVersion`] impl on the enum.
 ///     - [`MessageKind`] impls on each type bound in the variants.
 ///     - `new_vX_Y()` shorthand methods on the enum, for easier creation of instances of a certain variant (version).
 ///
