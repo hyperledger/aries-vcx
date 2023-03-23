@@ -1,13 +1,16 @@
-use std::collections::{HashMap, HashSet};
+use super::DELIMITER;
+
+use super::super::crypto::did::DidValue;
 
 use indy_api_types::{
     errors::{IndyErrorKind, IndyResult},
-    validation::Validatable,
     IndyError,
 };
+use std::collections::{HashMap, HashSet};
 
-use super::{super::crypto::did::DidValue, indy_identifiers, DELIMITER};
+use super::indy_identifiers;
 use crate::utils::qualifier;
+use indy_api_types::validation::Validatable;
 
 pub const MAX_ATTRIBUTES_COUNT: usize = 125;
 
@@ -111,7 +114,9 @@ impl Validatable for Schema {
 impl Validatable for AttributeNames {
     fn validate(&self) -> Result<(), String> {
         if self.0.is_empty() {
-            return Err(String::from("Empty list of Schema attributes has been passed"));
+            return Err(String::from(
+                "Empty list of Schema attributes has been passed",
+            ));
         }
 
         if self.0.len() > MAX_ATTRIBUTES_COUNT {
@@ -138,14 +143,21 @@ impl SchemaId {
     pub fn new(did: &DidValue, name: &str, version: &str) -> IndyResult<SchemaId> {
         const MARKER: &str = "2";
         match did.get_method() {
-            Some(method) if method.starts_with("indy") => {
-                Ok(SchemaId(format!("{}{}{}/{}", did.0, Self::PREFIX, name, version)))
-            }
+            Some(method) if method.starts_with("indy") => Ok(SchemaId(format!(
+                "{}{}{}/{}",
+                did.0,
+                Self::PREFIX,
+                name,
+                version
+            ))),
             Some(_method) => Err(IndyError::from_msg(
                 IndyErrorKind::InvalidStructure,
                 "Unsupported DID method",
             )),
-            None => Ok(SchemaId(format!("{}:{}:{}:{}", did.0, MARKER, name, version))),
+            None => Ok(SchemaId(format!(
+                "{}:{}:{}:{}",
+                did.0, MARKER, name, version
+            ))),
         }
     }
 
@@ -192,8 +204,12 @@ impl SchemaId {
         trace!("SchemaId::to_unqualified >> {}", &self.0);
         match self.parts() {
             Some((did, name, version)) => {
-                trace!("SchemaId::to_unqualified: parts {:?}", (&did, &name, &version));
-                SchemaId::new(&did.to_unqualified(), &name, &version).expect("Can't create unqualified SchemaId")
+                trace!(
+                    "SchemaId::to_unqualified: parts {:?}",
+                    (&did, &name, &version)
+                );
+                SchemaId::new(&did.to_unqualified(), &name, &version)
+                    .expect("Can't create unqualified SchemaId")
             }
             None => self.clone(),
         }
@@ -236,7 +252,10 @@ mod tests {
     }
 
     fn _schema_id_qualified() -> SchemaId {
-        SchemaId("did:indy:sovrin:builder:NcYxiDXkpYi6ov5FcYDi1e/anoncreds/v0/SCHEMA/gvt/1.0".to_string())
+        SchemaId(
+            "did:indy:sovrin:builder:NcYxiDXkpYi6ov5FcYDi1e/anoncreds/v0/SCHEMA/gvt/1.0"
+                .to_string(),
+        )
     }
 
     fn _schema_id_invalid() -> SchemaId {
@@ -253,12 +272,18 @@ mod tests {
 
         #[test]
         fn test_schema_id_parts_for_id_as_unqualified() {
-            assert_eq!(_schema_id_unqualified(), _schema_id_unqualified().to_unqualified());
+            assert_eq!(
+                _schema_id_unqualified(),
+                _schema_id_unqualified().to_unqualified()
+            );
         }
 
         #[test]
         fn test_schema_id_parts_for_id_as_qualified() {
-            assert_eq!(_schema_id_unqualified(), _schema_id_qualified().to_unqualified());
+            assert_eq!(
+                _schema_id_unqualified(),
+                _schema_id_qualified().to_unqualified()
+            );
         }
 
         #[test]

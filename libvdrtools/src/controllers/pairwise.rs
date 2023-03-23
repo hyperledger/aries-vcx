@@ -31,7 +31,11 @@ impl PairwiseController {
     /// #Errors
     /// Common*
     /// Wallet*
-    pub async fn pairwise_exists(&self, wallet_handle: WalletHandle, their_did: DidValue) -> IndyResult<bool> {
+    pub async fn pairwise_exists(
+        &self,
+        wallet_handle: WalletHandle,
+        their_did: DidValue,
+    ) -> IndyResult<bool> {
         trace!(
             "pairwise_exists > wallet_handle {:?} their_did {:?}",
             wallet_handle,
@@ -71,7 +75,8 @@ impl PairwiseController {
         metadata: Option<String>,
     ) -> IndyResult<()> {
         trace!(
-            "create_pairwise > wallet_handle {:?} their_did {:?} my_did {:?} metadata {:?}",
+            "create_pairwise > wallet_handle {:?} \
+                their_did {:?} my_did {:?} metadata {:?}",
             wallet_handle,
             their_did,
             my_did,
@@ -93,7 +98,12 @@ impl PairwiseController {
         };
 
         self.wallet_service
-            .add_indy_object(wallet_handle, &pairwise.their_did.0, &pairwise, &HashMap::new())
+            .add_indy_object(
+                wallet_handle,
+                &pairwise.their_did.0,
+                &pairwise,
+                &HashMap::new(),
+            )
             .await?;
 
         let res = Ok(());
@@ -137,8 +147,8 @@ impl PairwiseController {
             pairwises.push(pairwise);
         }
 
-        let pairwises =
-            serde_json::to_string(&pairwises).to_indy(IndyErrorKind::InvalidState, "Can't serialize pairwise list")?;
+        let pairwises = serde_json::to_string(&pairwises)
+            .to_indy(IndyErrorKind::InvalidState, "Can't serialize pairwise list")?;
 
         let res = Ok(pairwises);
         trace!("list_pairwise < {:?}", res);
@@ -158,7 +168,11 @@ impl PairwiseController {
     /// #Errors
     /// Common*
     /// Wallet*
-    pub async fn get_pairwise(&self, wallet_handle: WalletHandle, their_did: DidValue) -> IndyResult<String> {
+    pub async fn get_pairwise(
+        &self,
+        wallet_handle: WalletHandle,
+        their_did: DidValue,
+    ) -> IndyResult<String> {
         trace!(
             "get_pairwise > wallet_handle {:?} their_did {:?}",
             wallet_handle,
@@ -167,7 +181,11 @@ impl PairwiseController {
 
         let pairwise_info = PairwiseInfo::from(
             self.wallet_service
-                .get_indy_object::<Pairwise>(wallet_handle, &their_did.0, &RecordOptions::id_value())
+                .get_indy_object::<Pairwise>(
+                    wallet_handle,
+                    &their_did.0,
+                    &RecordOptions::id_value(),
+                )
                 .await?,
         );
 

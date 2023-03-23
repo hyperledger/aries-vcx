@@ -1,4 +1,5 @@
-use std::{error::Error, fmt};
+use std::error::Error;
+use std::fmt;
 
 pub static TIMEOUT_LIBINDY_ERROR: u32 = 5555;
 

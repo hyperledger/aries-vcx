@@ -47,7 +47,8 @@ pub(crate) fn wql_to_sql<'a>(
 
     let clause_string = operator_to_sql(op, &mut arguments)?;
 
-    const BASE: &str = "SELECT i.id, i.name, i.value, i.key, i.type FROM items as i WHERE i.type = ?";
+    const BASE: &str =
+        "SELECT i.id, i.name, i.value, i.key, i.type FROM items as i WHERE i.type = ?";
     if !clause_string.is_empty() {
         let mut query_string = String::with_capacity(BASE.len() + 5 + clause_string.len());
         query_string.push_str(BASE);
@@ -59,7 +60,10 @@ pub(crate) fn wql_to_sql<'a>(
     }
 }
 
-pub(crate) fn wql_to_sql_count<'a>(class: &'a [u8], op: &'a Operator) -> Result<(String, Vec<ToSQL<'a>>), IndyError> {
+pub(crate) fn wql_to_sql_count<'a>(
+    class: &'a [u8],
+    op: &'a Operator,
+) -> Result<(String, Vec<ToSQL<'a>>), IndyError> {
     let mut arguments: Vec<ToSQL<'a>> = Vec::new();
     arguments.push(class.into());
 
@@ -76,31 +80,63 @@ pub(crate) fn wql_to_sql_count<'a>(class: &'a [u8], op: &'a Operator) -> Result<
 
 fn operator_to_sql<'a>(op: &'a Operator, arguments: &mut Vec<ToSQL<'a>>) -> IndyResult<String> {
     match *op {
-        Operator::Eq(ref tag_name, ref target_value) => eq_to_sql(tag_name, target_value, arguments),
-        Operator::Neq(ref tag_name, ref target_value) => neq_to_sql(tag_name, target_value, arguments),
-        Operator::Gt(ref tag_name, ref target_value) => gt_to_sql(tag_name, target_value, arguments),
-        Operator::Gte(ref tag_name, ref target_value) => gte_to_sql(tag_name, target_value, arguments),
-        Operator::Lt(ref tag_name, ref target_value) => lt_to_sql(tag_name, target_value, arguments),
-        Operator::Lte(ref tag_name, ref target_value) => lte_to_sql(tag_name, target_value, arguments),
-        Operator::Like(ref tag_name, ref target_value) => like_to_sql(tag_name, target_value, arguments),
-        Operator::In(ref tag_name, ref target_values) => in_to_sql(tag_name, target_values, arguments),
+        Operator::Eq(ref tag_name, ref target_value) => {
+            eq_to_sql(tag_name, target_value, arguments)
+        }
+        Operator::Neq(ref tag_name, ref target_value) => {
+            neq_to_sql(tag_name, target_value, arguments)
+        }
+        Operator::Gt(ref tag_name, ref target_value) => {
+            gt_to_sql(tag_name, target_value, arguments)
+        }
+        Operator::Gte(ref tag_name, ref target_value) => {
+            gte_to_sql(tag_name, target_value, arguments)
+        }
+        Operator::Lt(ref tag_name, ref target_value) => {
+            lt_to_sql(tag_name, target_value, arguments)
+        }
+        Operator::Lte(ref tag_name, ref target_value) => {
+            lte_to_sql(tag_name, target_value, arguments)
+        }
+        Operator::Like(ref tag_name, ref target_value) => {
+            like_to_sql(tag_name, target_value, arguments)
+        }
+        Operator::In(ref tag_name, ref target_values) => {
+            in_to_sql(tag_name, target_values, arguments)
+        }
         Operator::And(ref suboperators) => and_to_sql(suboperators, arguments),
         Operator::Or(ref suboperators) => or_to_sql(suboperators, arguments),
         Operator::Not(ref suboperator) => not_to_sql(suboperator, arguments),
     }
 }
 
-fn eq_to_sql<'a>(name: &'a TagName, value: &'a TargetValue, arguments: &mut Vec<ToSQL<'a>>) -> IndyResult<String> {
+fn eq_to_sql<'a>(
+    name: &'a TagName,
+    value: &'a TargetValue,
+    arguments: &mut Vec<ToSQL<'a>>,
+) -> IndyResult<String> {
     match (name, value) {
-        (&TagName::PlainTagName(ref queried_name), &TargetValue::Unencrypted(ref queried_value)) => {
+        (
+            &TagName::PlainTagName(ref queried_name),
+            &TargetValue::Unencrypted(ref queried_value),
+        ) => {
             arguments.push(queried_name.into());
             arguments.push(queried_value.into());
-            Ok("(i.id in (SELECT item_id FROM tags_plaintext WHERE name = ? AND value = ?))".to_string())
+            Ok(
+                "(i.id in (SELECT item_id FROM tags_plaintext WHERE name = ? AND value = ?))"
+                    .to_string(),
+            )
         }
-        (&TagName::EncryptedTagName(ref queried_name), &TargetValue::Encrypted(ref queried_value)) => {
+        (
+            &TagName::EncryptedTagName(ref queried_name),
+            &TargetValue::Encrypted(ref queried_value),
+        ) => {
             arguments.push(queried_name.into());
             arguments.push(queried_value.into());
-            Ok("(i.id in (SELECT item_id FROM tags_encrypted WHERE name = ? AND value = ?))".to_string())
+            Ok(
+                "(i.id in (SELECT item_id FROM tags_encrypted WHERE name = ? AND value = ?))"
+                    .to_string(),
+            )
         }
         _ => Err(err_msg(
             IndyErrorKind::WalletQueryError,
@@ -109,17 +145,33 @@ fn eq_to_sql<'a>(name: &'a TagName, value: &'a TargetValue, arguments: &mut Vec<
     }
 }
 
-fn neq_to_sql<'a>(name: &'a TagName, value: &'a TargetValue, arguments: &mut Vec<ToSQL<'a>>) -> IndyResult<String> {
+fn neq_to_sql<'a>(
+    name: &'a TagName,
+    value: &'a TargetValue,
+    arguments: &mut Vec<ToSQL<'a>>,
+) -> IndyResult<String> {
     match (name, value) {
-        (&TagName::PlainTagName(ref queried_name), &TargetValue::Unencrypted(ref queried_value)) => {
+        (
+            &TagName::PlainTagName(ref queried_name),
+            &TargetValue::Unencrypted(ref queried_value),
+        ) => {
             arguments.push(queried_name.into());
             arguments.push(queried_value.into());
-            Ok("(i.id in (SELECT item_id FROM tags_plaintext WHERE name = ? AND value != ?))".to_string())
+            Ok(
+                "(i.id in (SELECT item_id FROM tags_plaintext WHERE name = ? AND value != ?))"
+                    .to_string(),
+            )
         }
-        (&TagName::EncryptedTagName(ref queried_name), &TargetValue::Encrypted(ref queried_value)) => {
+        (
+            &TagName::EncryptedTagName(ref queried_name),
+            &TargetValue::Encrypted(ref queried_value),
+        ) => {
             arguments.push(queried_name.into());
             arguments.push(queried_value.into());
-            Ok("(i.id in (SELECT item_id FROM tags_encrypted WHERE name = ? AND value != ?))".to_string())
+            Ok(
+                "(i.id in (SELECT item_id FROM tags_encrypted WHERE name = ? AND value != ?))"
+                    .to_string(),
+            )
         }
         _ => Err(err_msg(
             IndyErrorKind::WalletQueryError,
@@ -128,12 +180,22 @@ fn neq_to_sql<'a>(name: &'a TagName, value: &'a TargetValue, arguments: &mut Vec
     }
 }
 
-fn gt_to_sql<'a>(name: &'a TagName, value: &'a TargetValue, arguments: &mut Vec<ToSQL<'a>>) -> IndyResult<String> {
+fn gt_to_sql<'a>(
+    name: &'a TagName,
+    value: &'a TargetValue,
+    arguments: &mut Vec<ToSQL<'a>>,
+) -> IndyResult<String> {
     match (name, value) {
-        (&TagName::PlainTagName(ref queried_name), &TargetValue::Unencrypted(ref queried_value)) => {
+        (
+            &TagName::PlainTagName(ref queried_name),
+            &TargetValue::Unencrypted(ref queried_value),
+        ) => {
             arguments.push(queried_name.into());
             arguments.push(queried_value.into());
-            Ok("(i.id in (SELECT item_id FROM tags_plaintext WHERE name = ? AND value > ?))".to_string())
+            Ok(
+                "(i.id in (SELECT item_id FROM tags_plaintext WHERE name = ? AND value > ?))"
+                    .to_string(),
+            )
         }
         _ => Err(err_msg(
             IndyErrorKind::WalletQueryError,
@@ -142,12 +204,22 @@ fn gt_to_sql<'a>(name: &'a TagName, value: &'a TargetValue, arguments: &mut Vec<
     }
 }
 
-fn gte_to_sql<'a>(name: &'a TagName, value: &'a TargetValue, arguments: &mut Vec<ToSQL<'a>>) -> IndyResult<String> {
+fn gte_to_sql<'a>(
+    name: &'a TagName,
+    value: &'a TargetValue,
+    arguments: &mut Vec<ToSQL<'a>>,
+) -> IndyResult<String> {
     match (name, value) {
-        (&TagName::PlainTagName(ref queried_name), &TargetValue::Unencrypted(ref queried_value)) => {
+        (
+            &TagName::PlainTagName(ref queried_name),
+            &TargetValue::Unencrypted(ref queried_value),
+        ) => {
             arguments.push(queried_name.into());
             arguments.push(queried_value.into());
-            Ok("(i.id in (SELECT item_id FROM tags_plaintext WHERE name = ? AND value >= ?))".to_string())
+            Ok(
+                "(i.id in (SELECT item_id FROM tags_plaintext WHERE name = ? AND value >= ?))"
+                    .to_string(),
+            )
         }
         _ => Err(err_msg(
             IndyErrorKind::WalletQueryError,
@@ -156,12 +228,22 @@ fn gte_to_sql<'a>(name: &'a TagName, value: &'a TargetValue, arguments: &mut Vec
     }
 }
 
-fn lt_to_sql<'a>(name: &'a TagName, value: &'a TargetValue, arguments: &mut Vec<ToSQL<'a>>) -> IndyResult<String> {
+fn lt_to_sql<'a>(
+    name: &'a TagName,
+    value: &'a TargetValue,
+    arguments: &mut Vec<ToSQL<'a>>,
+) -> IndyResult<String> {
     match (name, value) {
-        (&TagName::PlainTagName(ref queried_name), &TargetValue::Unencrypted(ref queried_value)) => {
+        (
+            &TagName::PlainTagName(ref queried_name),
+            &TargetValue::Unencrypted(ref queried_value),
+        ) => {
             arguments.push(queried_name.into());
             arguments.push(queried_value.into());
-            Ok("(i.id in (SELECT item_id FROM tags_plaintext WHERE name = ? AND value < ?))".to_string())
+            Ok(
+                "(i.id in (SELECT item_id FROM tags_plaintext WHERE name = ? AND value < ?))"
+                    .to_string(),
+            )
         }
         _ => Err(err_msg(
             IndyErrorKind::WalletQueryError,
@@ -170,12 +252,22 @@ fn lt_to_sql<'a>(name: &'a TagName, value: &'a TargetValue, arguments: &mut Vec<
     }
 }
 
-fn lte_to_sql<'a>(name: &'a TagName, value: &'a TargetValue, arguments: &mut Vec<ToSQL<'a>>) -> IndyResult<String> {
+fn lte_to_sql<'a>(
+    name: &'a TagName,
+    value: &'a TargetValue,
+    arguments: &mut Vec<ToSQL<'a>>,
+) -> IndyResult<String> {
     match (name, value) {
-        (&TagName::PlainTagName(ref queried_name), &TargetValue::Unencrypted(ref queried_value)) => {
+        (
+            &TagName::PlainTagName(ref queried_name),
+            &TargetValue::Unencrypted(ref queried_value),
+        ) => {
             arguments.push(queried_name.into());
             arguments.push(queried_value.into());
-            Ok("(i.id in (SELECT item_id FROM tags_plaintext WHERE name = ? AND value <= ?))".to_string())
+            Ok(
+                "(i.id in (SELECT item_id FROM tags_plaintext WHERE name = ? AND value <= ?))"
+                    .to_string(),
+            )
         }
         _ => Err(err_msg(
             IndyErrorKind::WalletQueryError,
@@ -184,12 +276,22 @@ fn lte_to_sql<'a>(name: &'a TagName, value: &'a TargetValue, arguments: &mut Vec
     }
 }
 
-fn like_to_sql<'a>(name: &'a TagName, value: &'a TargetValue, arguments: &mut Vec<ToSQL<'a>>) -> IndyResult<String> {
+fn like_to_sql<'a>(
+    name: &'a TagName,
+    value: &'a TargetValue,
+    arguments: &mut Vec<ToSQL<'a>>,
+) -> IndyResult<String> {
     match (name, value) {
-        (&TagName::PlainTagName(ref queried_name), &TargetValue::Unencrypted(ref queried_value)) => {
+        (
+            &TagName::PlainTagName(ref queried_name),
+            &TargetValue::Unencrypted(ref queried_value),
+        ) => {
             arguments.push(queried_name.into());
             arguments.push(queried_value.into());
-            Ok("(i.id in (SELECT item_id FROM tags_plaintext WHERE name = ? AND value LIKE ?))".to_string())
+            Ok(
+                "(i.id in (SELECT item_id FROM tags_plaintext WHERE name = ? AND value LIKE ?))"
+                    .to_string(),
+            )
         }
         _ => Err(err_msg(
             IndyErrorKind::WalletQueryError,
@@ -206,7 +308,9 @@ fn in_to_sql<'a>(
     let mut in_string = String::new();
     match *name {
         TagName::PlainTagName(ref queried_name) => {
-            in_string.push_str("(i.id in (SELECT item_id FROM tags_plaintext WHERE name = ? AND value IN (");
+            in_string.push_str(
+                "(i.id in (SELECT item_id FROM tags_plaintext WHERE name = ? AND value IN (",
+            );
             arguments.push(queried_name.into());
 
             for (index, value) in values.iter().enumerate() {
@@ -227,7 +331,9 @@ fn in_to_sql<'a>(
             Ok(in_string + ")))")
         }
         TagName::EncryptedTagName(ref queried_name) => {
-            in_string.push_str("(i.id in (SELECT item_id FROM tags_encrypted WHERE name = ? AND value IN (");
+            in_string.push_str(
+                "(i.id in (SELECT item_id FROM tags_encrypted WHERE name = ? AND value IN (",
+            );
             arguments.push(queried_name.into());
             let index_before_last = values.len() - 2;
 
@@ -251,11 +357,17 @@ fn in_to_sql<'a>(
     }
 }
 
-fn and_to_sql<'a>(suboperators: &'a [Operator], arguments: &mut Vec<ToSQL<'a>>) -> IndyResult<String> {
+fn and_to_sql<'a>(
+    suboperators: &'a [Operator],
+    arguments: &mut Vec<ToSQL<'a>>,
+) -> IndyResult<String> {
     join_operators(suboperators, " AND ", arguments)
 }
 
-fn or_to_sql<'a>(suboperators: &'a [Operator], arguments: &mut Vec<ToSQL<'a>>) -> IndyResult<String> {
+fn or_to_sql<'a>(
+    suboperators: &'a [Operator],
+    arguments: &mut Vec<ToSQL<'a>>,
+) -> IndyResult<String> {
     join_operators(suboperators, " OR ", arguments)
 }
 
@@ -264,7 +376,11 @@ fn not_to_sql<'a>(suboperator: &'a Operator, arguments: &mut Vec<ToSQL<'a>>) -> 
     Ok("NOT (".to_string() + &suboperator_string + ")")
 }
 
-fn join_operators<'a>(operators: &'a [Operator], join_str: &str, arguments: &mut Vec<ToSQL<'a>>) -> IndyResult<String> {
+fn join_operators<'a>(
+    operators: &'a [Operator],
+    join_str: &str,
+    arguments: &mut Vec<ToSQL<'a>>,
+) -> IndyResult<String> {
     let mut s = String::new();
     if !operators.is_empty() {
         s.push('(');

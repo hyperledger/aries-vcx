@@ -1,14 +1,3 @@
-use std::{
-    collections::{HashMap, HashSet},
-    iter::FromIterator,
-    sync::{
-        atomic::{AtomicUsize, Ordering},
-        Mutex, RwLock,
-    },
-};
-
-use indy_api_types::domain::wallet::{CacheConfig, CachingAlgorithm};
-
 use crate::{
     cache::{cache::Cache, lru::LruCache},
     storage::{
@@ -19,6 +8,15 @@ use crate::{
     },
     wallet::EncryptedValue,
     RecordOptions,
+};
+use indy_api_types::domain::wallet::{CacheConfig, CachingAlgorithm};
+use std::{
+    collections::{HashMap, HashSet},
+    iter::FromIterator,
+    sync::{
+        atomic::{AtomicUsize, Ordering},
+        Mutex, RwLock,
+    },
 };
 
 #[derive(PartialEq, Eq, Hash)]
@@ -63,7 +61,14 @@ impl WalletCache {
         self.cache.is_some() && self.cache_entities.contains(&type_.to_owned())
     }
 
-    pub fn add(&self, type_: &str, etype: &[u8], eid: &[u8], evalue: &EncryptedValue, etags: &[Tag]) {
+    pub fn add(
+        &self,
+        type_: &str,
+        etype: &[u8],
+        eid: &[u8],
+        evalue: &EncryptedValue,
+        etags: &[Tag],
+    ) {
         if let Some(protected_cache) = &self.cache {
             if self.cache_entities.contains(&type_.to_owned()) {
                 let key = WalletCacheKey {
@@ -156,7 +161,13 @@ impl WalletCache {
         }
     }
 
-    pub async fn get(&self, type_: &str, etype: &[u8], eid: &[u8], options: &RecordOptions) -> Option<StorageRecord> {
+    pub async fn get(
+        &self,
+        type_: &str,
+        etype: &[u8],
+        eid: &[u8],
+        options: &RecordOptions,
+    ) -> Option<StorageRecord> {
         if let Some(protected_cache) = &self.cache {
             if self.cache_entities.contains(&type_.to_owned()) {
                 let key = WalletCacheKey {

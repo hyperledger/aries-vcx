@@ -1,8 +1,9 @@
-use bs58;
+use crate::errors::error::prelude::*;
+use crate::utils::qualifier;
 use messages::actors::Actors;
-use openssl::bn::BigNum;
 
-use crate::{errors::error::prelude::*, utils::qualifier};
+use bs58;
+use openssl::bn::BigNum;
 
 pub fn validate_did(did: &str) -> VcxResult<String> {
     if qualifier::is_fully_qualified(did) {
@@ -49,8 +50,9 @@ pub fn validate_actors(actors: &str) -> VcxResult<Vec<Actors>> {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 mod unit_tests {
-    use super::*;
     use crate::utils::devsetup::SetupDefaults;
+
+    use super::*;
 
     #[test]
     fn test_did_is_b58_and_valid_length() {

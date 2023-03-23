@@ -1,9 +1,8 @@
 use std::cmp;
 
+pub use crate::services::ledger::merkletree::proof::{Lemma, Positioned, Proof};
 use indy_api_types::errors::prelude::*;
 use indy_utils::crypto::hash::Hash;
-
-pub use crate::services::ledger::merkletree::proof::{Lemma, Positioned, Proof};
 
 pub type TreeLeafData = Vec<u8>;
 
@@ -29,7 +28,9 @@ pub enum Tree {
 impl Tree {
     /// Create an empty tree
     pub fn empty(hash: Vec<u8>) -> Self {
-        Tree::Empty { hash: hash.to_vec() }
+        Tree::Empty {
+            hash: hash.to_vec(),
+        }
     }
 
     /// Create a new tree
@@ -64,7 +65,9 @@ impl Tree {
         match *self {
             Tree::Empty { .. } => 0,
             Tree::Node {
-                ref left, ref right, ..
+                ref left,
+                ref right,
+                ..
             } => 1 + cmp::max(left.get_height(), right.get_height()),
             Tree::Leaf { .. } => 0,
         }
@@ -74,7 +77,9 @@ impl Tree {
         match *self {
             Tree::Empty { .. } => 0,
             Tree::Node {
-                ref left, ref right, ..
+                ref left,
+                ref right,
+                ..
             } => left.get_count() + right.get_count(),
             Tree::Leaf { .. } => 1,
         }
@@ -110,7 +115,9 @@ impl<'a> LeavesIterator<'a> {
                 }
 
                 Tree::Node {
-                    ref left, ref right, ..
+                    ref left,
+                    ref right,
+                    ..
                 } => {
                     self.right_nodes.push(right);
                     tree = left;

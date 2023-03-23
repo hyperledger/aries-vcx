@@ -1,36 +1,27 @@
-use std::{clone::Clone, collections::HashMap, sync::Arc};
+use std::clone::Clone;
+use std::collections::HashMap;
+use std::sync::Arc;
 
-use messages::{
-    a2a::{protocol_registry::ProtocolRegistry, A2AMessage},
-    concepts::ack::Ack,
-    diddoc::aries::diddoc::AriesDidDoc,
-    protocols::{
-        connection::{
-            invite::Invitation,
-            problem_report::{ProblemCode, ProblemReport},
-            request::Request,
-            response::SignedResponse,
-        },
-        discovery::disclose::{Disclose, ProtocolDescriptor},
-    },
-};
-
-use crate::{
-    common::signing::decode_signed_connection_response,
-    errors::error::prelude::*,
-    handlers::util::verify_thread_id,
-    plugins::wallet::base_wallet::BaseWallet,
-    protocols::{
-        mediated_connection::{
-            invitee::states::{
-                completed::CompletedState, initial::InitialState, invited::InvitedState, requested::RequestedState,
-                responded::RespondedState,
-            },
-            pairwise_info::PairwiseInfo,
-        },
-        SendClosureConnection,
-    },
-};
+use crate::common::signing::decode_signed_connection_response;
+use crate::errors::error::prelude::*;
+use crate::handlers::util::verify_thread_id;
+use crate::plugins::wallet::base_wallet::BaseWallet;
+use crate::protocols::mediated_connection::invitee::states::completed::CompletedState;
+use crate::protocols::mediated_connection::invitee::states::initial::InitialState;
+use crate::protocols::mediated_connection::invitee::states::invited::InvitedState;
+use crate::protocols::mediated_connection::invitee::states::requested::RequestedState;
+use crate::protocols::mediated_connection::invitee::states::responded::RespondedState;
+use crate::protocols::mediated_connection::pairwise_info::PairwiseInfo;
+use crate::protocols::SendClosureConnection;
+use messages::a2a::protocol_registry::ProtocolRegistry;
+use messages::a2a::A2AMessage;
+use messages::concepts::ack::Ack;
+use messages::diddoc::aries::diddoc::AriesDidDoc;
+use messages::protocols::connection::invite::Invitation;
+use messages::protocols::connection::problem_report::{ProblemCode, ProblemReport};
+use messages::protocols::connection::request::Request;
+use messages::protocols::connection::response::SignedResponse;
+use messages::protocols::discovery::disclose::{Disclose, ProtocolDescriptor};
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct SmConnectionInvitee {
@@ -397,30 +388,29 @@ impl SmConnectionInvitee {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use messages::{
-        concepts::ack::test_utils::_ack,
-        protocols::{
-            connection::{
-                invite::test_utils::_pairwise_invitation, problem_report::unit_tests::_problem_report,
-                request::unit_tests::_request, response::test_utils::_signed_response,
-            },
-            discovery::disclose::test_utils::_disclose,
-            trust_ping::ping::unit_tests::_ping,
-        },
-    };
+    use messages::concepts::ack::test_utils::_ack;
+    use messages::protocols::connection::invite::test_utils::_pairwise_invitation;
+    use messages::protocols::connection::problem_report::unit_tests::_problem_report;
+    use messages::protocols::connection::request::unit_tests::_request;
+    use messages::protocols::connection::response::test_utils::_signed_response;
+    use messages::protocols::discovery::disclose::test_utils::_disclose;
+
+    use messages::protocols::trust_ping::ping::unit_tests::_ping;
+
+    use crate::test::source_id;
+    use crate::utils::devsetup::SetupMocks;
 
     use super::*;
-    use crate::{test::source_id, utils::devsetup::SetupMocks};
 
     pub mod invitee {
 
-        use messages::{
-            diddoc::aries::diddoc::test_utils::{_did_doc_inlined_recipient_keys, _service_endpoint},
-            protocols::connection::response::{Response, SignedResponse},
-        };
+        use messages::diddoc::aries::diddoc::test_utils::{_did_doc_inlined_recipient_keys, _service_endpoint};
+        use messages::protocols::connection::response::{Response, SignedResponse};
+
+        use crate::common::signing::sign_connection_response;
+        use crate::common::test_utils::mock_profile;
 
         use super::*;
-        use crate::common::{signing::sign_connection_response, test_utils::mock_profile};
 
         fn _send_message() -> SendClosureConnection {
             Box::new(|_: A2AMessage, _: String, _: AriesDidDoc| Box::pin(async { Ok(()) }))
@@ -508,10 +498,10 @@ pub mod unit_tests {
         }
 
         mod build_messages {
-            use messages::{a2a::MessageId, concepts::ack::AckStatus};
-
             use super::*;
             use crate::utils::devsetup::was_in_past;
+            use messages::a2a::MessageId;
+            use messages::concepts::ack::AckStatus;
 
             #[tokio::test]
             #[cfg(feature = "general_test")]
@@ -608,8 +598,9 @@ pub mod unit_tests {
         }
 
         mod step {
-            use super::*;
             use crate::utils::devsetup::SetupIndyMocks;
+
+            use super::*;
 
             #[tokio::test]
             #[cfg(feature = "general_test")]
@@ -796,8 +787,9 @@ pub mod unit_tests {
         }
 
         mod find_message_to_handle {
-            use super::*;
             use crate::utils::devsetup::SetupIndyMocks;
+
+            use super::*;
 
             #[tokio::test]
             #[cfg(feature = "general_test")]

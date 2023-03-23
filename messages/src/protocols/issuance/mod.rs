@@ -1,8 +1,7 @@
-use crate::{
-    a2a::{message_family::MessageFamilies, message_type::MessageType},
-    concepts::mime_type::MimeType,
-    errors::error::{MessagesError, MessagesErrorKind, MessagesResult},
-};
+use crate::a2a::message_family::MessageFamilies;
+use crate::a2a::message_type::MessageType;
+use crate::concepts::mime_type::MimeType;
+use crate::errors::error::{MessagesError, MessagesErrorKind, MessagesResult};
 
 pub mod credential;
 pub mod credential_ack;
@@ -62,10 +61,8 @@ impl Default for CredentialPreviewData {
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
-    use crate::{
-        concepts::{ack, problem_report},
-        protocols::issuance::credential_offer::test_utils::_credential_offer,
-    };
+    use crate::concepts::{ack, problem_report};
+    use crate::protocols::issuance::credential_offer::test_utils::_credential_offer;
 
     pub fn _credential_ack() -> ack::Ack {
         ack::test_utils::_ack().set_thread_id(&_credential_offer().id.0)

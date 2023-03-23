@@ -1,6 +1,6 @@
-use std::collections::HashMap;
-
 use super::constants::{POOL_CONFIG, POOL_RESTART, POOL_UPGRADE};
+
+use std::collections::HashMap;
 
 #[derive(Serialize, PartialEq, Debug)]
 pub struct PoolConfigOperation {

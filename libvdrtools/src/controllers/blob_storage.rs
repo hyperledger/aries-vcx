@@ -10,13 +10,18 @@ pub struct BlobStorageController {
 
 impl BlobStorageController {
     pub(crate) fn new(blob_storage_service: Arc<BlobStorageService>) -> BlobStorageController {
-        BlobStorageController { blob_storage_service }
+        BlobStorageController {
+            blob_storage_service,
+        }
     }
 
     pub async fn open_reader(&self, type_: String, config: String) -> IndyResult<i32> {
         trace!("open_reader > type_ {:?} config {:?}", type_, config);
 
-        let handle = self.blob_storage_service.open_reader(&type_, &config).await?;
+        let handle = self
+            .blob_storage_service
+            .open_reader(&type_, &config)
+            .await?;
 
         let res = Ok(handle);
         trace!("open_reader < {:?}", res);
@@ -26,7 +31,10 @@ impl BlobStorageController {
     pub async fn open_writer(&self, type_: String, config: String) -> IndyResult<i32> {
         trace!("open_writer > type_ {:?} config {:?}", type_, config);
 
-        let handle = self.blob_storage_service.open_writer(&type_, &config).await?;
+        let handle = self
+            .blob_storage_service
+            .open_writer(&type_, &config)
+            .await?;
 
         let res = Ok(handle);
         trace!("open_writer < {:?}", res);

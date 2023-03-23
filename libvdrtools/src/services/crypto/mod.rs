@@ -3,23 +3,25 @@ mod ed25519;
 use std::{collections::HashMap, str};
 
 use async_std::sync::RwLock;
-use ed25519::ED25519CryptoType;
 use hex::FromHex;
 use indy_api_types::errors::prelude::*;
+
 use indy_utils::crypto::{
-    base64, chacha20poly1305_ietf, chacha20poly1305_ietf::gen_nonce_and_encrypt_detached, ed25519_box, ed25519_sign,
+    base64, chacha20poly1305_ietf, chacha20poly1305_ietf::gen_nonce_and_encrypt_detached,
+    ed25519_box, ed25519_sign,
 };
+
+use crate::utils::crypto::base58::{FromBase58, ToBase58};
 
 use crate::{
     domain::crypto::{
         did::{Did, DidValue, MyDidInfo, TheirDid, TheirDidInfo},
         key::{Key, KeyInfo},
     },
-    utils::crypto::{
-        base58::{FromBase58, ToBase58},
-        verkey_builder::{build_full_verkey, split_verkey, verkey_get_cryptoname},
-    },
+    utils::crypto::verkey_builder::{build_full_verkey, split_verkey, verkey_get_cryptoname},
 };
+
+use ed25519::ED25519CryptoType;
 
 const DEFAULT_CRYPTO_TYPE: &str = "ed25519";
 
@@ -51,10 +53,15 @@ trait CryptoType: Send + Sync {
 
     fn validate_key(&self, _vk: &ed25519_sign::PublicKey) -> IndyResult<()>;
 
-    fn sign(&self, sk: &ed25519_sign::SecretKey, doc: &[u8]) -> IndyResult<ed25519_sign::Signature>;
+    fn sign(&self, sk: &ed25519_sign::SecretKey, doc: &[u8])
+        -> IndyResult<ed25519_sign::Signature>;
 
-    fn verify(&self, vk: &ed25519_sign::PublicKey, doc: &[u8], signature: &ed25519_sign::Signature)
-        -> IndyResult<bool>;
+    fn verify(
+        &self,
+        vk: &ed25519_sign::PublicKey,
+        doc: &[u8],
+        signature: &ed25519_sign::Signature,
+    ) -> IndyResult<bool>;
 
     fn crypto_box_seal(&self, vk: &ed25519_sign::PublicKey, doc: &[u8]) -> IndyResult<Vec<u8>>;
 
@@ -145,12 +152,18 @@ impl CryptoService {
             _ if my_did_info.cid == Some(true) => DidValue::new(
                 &vk[..].to_vec().to_base58(),
                 my_did_info.ledger_type.as_deref(),
-                my_did_info.method_name.as_ref().map(|method| method.0.as_str()),
+                my_did_info
+                    .method_name
+                    .as_ref()
+                    .map(|method| method.0.as_str()),
             )?,
             _ => DidValue::new(
                 &vk[0..16].to_vec().to_base58(),
                 my_did_info.ledger_type.as_deref(),
-                my_did_info.method_name.as_ref().map(|method| method.0.as_str()),
+                my_did_info
+                    .method_name
+                    .as_ref()
+                    .map(|method| method.0.as_str()),
             )?,
         };
 
@@ -169,7 +182,10 @@ impl CryptoService {
         res
     }
 
-    pub(crate) async fn create_their_did(&self, their_did_info: &TheirDidInfo) -> IndyResult<TheirDid> {
+    pub(crate) async fn create_their_did(
+        &self,
+        their_did_info: &TheirDidInfo,
+    ) -> IndyResult<TheirDid> {
         trace!("create_their_did > their_did_info {:?}", their_did_info);
 
         // Check did is correct Base58
@@ -201,11 +217,16 @@ impl CryptoService {
         let crypto_type = crypto_types.get(crypto_type_name).ok_or_else(|| {
             err_msg(
                 IndyErrorKind::UnknownCrypto,
-                format!("Trying to sign message with unknown crypto: {}", crypto_type_name),
+                format!(
+                    "Trying to sign message with unknown crypto: {}",
+                    crypto_type_name
+                ),
             )
         })?;
 
-        let my_sk = ed25519_sign::SecretKey::from_slice(&my_key.signkey.as_str().from_base58()?.as_slice())?;
+        let my_sk = ed25519_sign::SecretKey::from_slice(
+            &my_key.signkey.as_str().from_base58()?.as_slice(),
+        )?;
 
         let signature = crypto_type.sign(&my_sk, doc)?[..].to_vec();
 
@@ -214,7 +235,12 @@ impl CryptoService {
         res
     }
 
-    pub(crate) async fn verify(&self, their_vk: &str, msg: &[u8], signature: &[u8]) -> IndyResult<bool> {
+    pub(crate) async fn verify(
+        &self,
+        their_vk: &str,
+        msg: &[u8],
+        signature: &[u8],
+    ) -> IndyResult<bool> {
         trace!(
             "verify > their_vk {:?} msg {:?} signature {:?}",
             their_vk,
@@ -229,7 +255,10 @@ impl CryptoService {
         let crypto_type = crypto_types.get(crypto_type_name).ok_or_else(|| {
             err_msg(
                 IndyErrorKind::UnknownCrypto,
-                format!("Trying to verify message with unknown crypto: {}", crypto_type_name),
+                format!(
+                    "Trying to verify message with unknown crypto: {}",
+                    crypto_type_name
+                ),
             )
         })?;
 
@@ -243,8 +272,18 @@ impl CryptoService {
         res
     }
 
-    pub(crate) async fn crypto_box(&self, my_key: &Key, their_vk: &str, doc: &[u8]) -> IndyResult<(Vec<u8>, Vec<u8>)> {
-        trace!("crypto_box > my_key {:?} their_vk {:?} doc {:?}", my_key, their_vk, doc);
+    pub(crate) async fn crypto_box(
+        &self,
+        my_key: &Key,
+        their_vk: &str,
+        doc: &[u8],
+    ) -> IndyResult<(Vec<u8>, Vec<u8>)> {
+        trace!(
+            "crypto_box > my_key {:?} their_vk {:?} doc {:?}",
+            my_key,
+            their_vk,
+            doc
+        );
 
         let crypto_type_name = verkey_get_cryptoname(&my_key.verkey);
 
@@ -266,11 +305,15 @@ impl CryptoService {
         let crypto_type = crypto_types.get(crypto_type_name).ok_or_else(|| {
             err_msg(
                 IndyErrorKind::UnknownCrypto,
-                format!("Trying to crypto_box message with unknown crypto: {}", crypto_type_name),
+                format!(
+                    "Trying to crypto_box message with unknown crypto: {}",
+                    crypto_type_name
+                ),
             )
         })?;
 
-        let my_sk = ed25519_sign::SecretKey::from_slice(my_key.signkey.as_str().from_base58()?.as_slice())?;
+        let my_sk =
+            ed25519_sign::SecretKey::from_slice(my_key.signkey.as_str().from_base58()?.as_slice())?;
 
         let their_vk = ed25519_sign::PublicKey::from_slice(their_vk.from_base58()?.as_slice())?;
         let nonce = crypto_type.gen_nonce();
@@ -359,7 +402,11 @@ impl CryptoService {
         res
     }
 
-    pub(crate) async fn crypto_box_seal_open(&self, my_key: &Key, doc: &[u8]) -> IndyResult<Vec<u8>> {
+    pub(crate) async fn crypto_box_seal_open(
+        &self,
+        my_key: &Key,
+        doc: &[u8],
+    ) -> IndyResult<Vec<u8>> {
         trace!("crypto_box_seal_open > my_key {:?} doc {:?}", my_key, doc);
 
         let (my_vk, crypto_type_name) = split_verkey(&my_key.verkey);
@@ -378,7 +425,8 @@ impl CryptoService {
 
         let my_vk = ed25519_sign::PublicKey::from_slice(my_vk.from_base58()?.as_slice())?;
 
-        let my_sk = ed25519_sign::SecretKey::from_slice(my_key.signkey.as_str().from_base58()?.as_slice())?;
+        let my_sk =
+            ed25519_sign::SecretKey::from_slice(my_key.signkey.as_str().from_base58()?.as_slice())?;
 
         let decrypted_doc = crypto_type.crypto_box_seal_open(&my_vk, &my_sk, doc)?;
 
@@ -387,7 +435,10 @@ impl CryptoService {
         res
     }
 
-    pub(crate) fn convert_seed(&self, seed: Option<&str>) -> IndyResult<Option<ed25519_sign::Seed>> {
+    pub(crate) fn convert_seed(
+        &self,
+        seed: Option<&str>,
+    ) -> IndyResult<Option<ed25519_sign::Seed>> {
         trace!("convert_seed > seed {:?}", secret!(seed));
 
         if seed.is_none() {
@@ -412,7 +463,8 @@ impl CryptoService {
                 return Err(err_msg(
                     IndyErrorKind::InvalidStructure,
                     format!(
-                        "Trying to use invalid base64 encoded `seed`. The number of bytes must be {} ",
+                        "Trying to use invalid base64 encoded `seed`. \
+                                   The number of bytes must be {} ",
                         ed25519_sign::SEEDBYTES
                     ),
                 ));
@@ -424,8 +476,8 @@ impl CryptoService {
             return Err(err_msg(
                 IndyErrorKind::InvalidStructure,
                 format!(
-                    "Trying to use invalid `seed`. It can be either {} bytes string or base64 string or {} bytes HEX \
-                     string",
+                    "Trying to use invalid `seed`. It can be either \
+                               {} bytes string or base64 string or {} bytes HEX string",
                     ed25519_sign::SEEDBYTES,
                     ed25519_sign::SEEDBYTES * 2
                 ),
@@ -449,7 +501,10 @@ impl CryptoService {
         let crypto_type = crypto_types.get(crypto_type_name).ok_or_else(|| {
             err_msg(
                 IndyErrorKind::UnknownCrypto,
-                format!("Trying to use key with unknown crypto: {}", crypto_type_name),
+                format!(
+                    "Trying to use key with unknown crypto: {}",
+                    crypto_type_name
+                ),
             )
         })?;
 
@@ -489,7 +544,8 @@ impl CryptoService {
         cek: &chacha20poly1305_ietf::Key,
     ) -> (String, String, String) {
         //encrypt message with aad
-        let (ciphertext, iv, tag) = gen_nonce_and_encrypt_detached(plaintext.as_slice(), aad.as_bytes(), &cek);
+        let (ciphertext, iv, tag) =
+            gen_nonce_and_encrypt_detached(plaintext.as_slice(), aad.as_bytes(), &cek);
 
         //base64 url encode data
         let iv_encoded = base64::encode_urlsafe(&iv[..]);
@@ -499,7 +555,7 @@ impl CryptoService {
         (ciphertext_encoded, iv_encoded, tag_encoded)
     }
 
-    /* ciphertext helper functions */
+    /* ciphertext helper functions*/
     pub(crate) fn decrypt_ciphertext(
         &self,
         ciphertext: &str,
@@ -519,8 +575,12 @@ impl CryptoService {
         let ciphertext_as_bytes = ciphertext_as_vec.as_ref();
 
         //convert IV from &str to &Nonce
-        let nonce_as_vec = base64::decode_urlsafe(iv)
-            .map_err(|err| err_msg(IndyErrorKind::InvalidStructure, format!("Failed to decode IV {}", err)))?;
+        let nonce_as_vec = base64::decode_urlsafe(iv).map_err(|err| {
+            err_msg(
+                IndyErrorKind::InvalidStructure,
+                format!("Failed to decode IV {}", err),
+            )
+        })?;
 
         let nonce_as_slice = nonce_as_vec.as_slice();
 
@@ -532,8 +592,12 @@ impl CryptoService {
         })?;
 
         //convert tag from &str to &Tag
-        let tag_as_vec = base64::decode_urlsafe(tag)
-            .map_err(|err| err_msg(IndyErrorKind::InvalidStructure, format!("Failed to decode tag {}", err)))?;
+        let tag_as_vec = base64::decode_urlsafe(tag).map_err(|err| {
+            err_msg(
+                IndyErrorKind::InvalidStructure,
+                format!("Failed to decode tag {}", err),
+            )
+        })?;
         let tag_as_slice = tag_as_vec.as_slice();
         let tag = chacha20poly1305_ietf::Tag::from_slice(tag_as_slice).map_err(|err| {
             err_msg(
@@ -543,14 +607,19 @@ impl CryptoService {
         })?;
 
         //decrypt message
-        let plaintext_bytes =
-            chacha20poly1305_ietf::decrypt_detached(ciphertext_as_bytes, cek, &nonce, &tag, Some(aad.as_bytes()))
-                .map_err(|err| {
-                    err_msg(
-                        IndyErrorKind::UnknownCrypto,
-                        format!("Failed to decrypt ciphertext {}", err),
-                    )
-                })?;
+        let plaintext_bytes = chacha20poly1305_ietf::decrypt_detached(
+            ciphertext_as_bytes,
+            cek,
+            &nonce,
+            &tag,
+            Some(aad.as_bytes()),
+        )
+        .map_err(|err| {
+            err_msg(
+                IndyErrorKind::UnknownCrypto,
+                format!("Failed to decrypt ciphertext {}", err),
+            )
+        })?;
 
         //convert message to readable (UTF-8) string
         String::from_utf8(plaintext_bytes).map_err(|err| {
@@ -564,10 +633,10 @@ impl CryptoService {
 
 #[cfg(test)]
 mod tests {
+    use crate::domain::crypto::did::MyDidInfo;
     use indy_utils::crypto::chacha20poly1305_ietf::gen_key;
 
     use super::*;
-    use crate::domain::crypto::did::MyDidInfo;
 
     #[async_std::test]
     async fn create_my_did_with_works_for_empty_info() {
@@ -681,13 +750,17 @@ mod tests {
         let service = CryptoService::new();
         let did = DidValue("8wZcEriaNLNKtteJvx7f8i".to_string());
 
-        let their_did_info = TheirDidInfo::new(did.clone(), Some("~NcYxiDXkpYi6ov5FcYDi1e".to_string()));
+        let their_did_info =
+            TheirDidInfo::new(did.clone(), Some("~NcYxiDXkpYi6ov5FcYDi1e".to_string()));
 
         let their_did = service.create_their_did(&their_did_info).await.unwrap();
 
         assert_eq!(did, their_did.did);
 
-        assert_eq!("5L2HBnzbu6Auh2pkDRbFt5f4prvgE2LzknkuYLsKkacp", their_did.verkey);
+        assert_eq!(
+            "5L2HBnzbu6Auh2pkDRbFt5f4prvgE2LzknkuYLsKkacp",
+            their_did.verkey
+        );
     }
 
     #[async_std::test]
@@ -758,7 +831,10 @@ mod tests {
         let (my_did, my_key) = service.create_my_did(&did_info).await.unwrap();
         let signature = service.sign(&my_key, message.as_bytes()).await.unwrap();
         let verkey = my_did.verkey + ":ed25519";
-        let valid = service.verify(&verkey, message.as_bytes(), &signature).await.unwrap();
+        let valid = service
+            .verify(&verkey, message.as_bytes(), &signature)
+            .await
+            .unwrap();
         assert!(valid);
     }
 
@@ -780,7 +856,10 @@ mod tests {
         let signature = service.sign(&my_key, message.as_bytes()).await.unwrap();
         let verkey = format!("crypto_type:{}", my_did.verkey);
 
-        assert!(service.verify(&verkey, message.as_bytes(), &signature).await.is_err());
+        assert!(service
+            .verify(&verkey, message.as_bytes(), &signature)
+            .await
+            .is_err());
     }
 
     #[async_std::test]
@@ -800,7 +879,10 @@ mod tests {
         let signature = service.sign(&my_key, message.as_bytes()).await.unwrap();
         let verkey = "AnnxV4t3LUHKZaxVQDWoVaG44NrGmeDYMA4Gz6C2tCZd";
 
-        let valid = service.verify(verkey, message.as_bytes(), &signature).await.unwrap();
+        let valid = service
+            .verify(verkey, message.as_bytes(), &signature)
+            .await
+            .unwrap();
 
         assert_eq!(false, valid);
     }
@@ -823,7 +905,9 @@ mod tests {
         let (their_did, _) = service.create_my_did(&did_info.clone()).await.unwrap();
         let their_did = Did::new(their_did.did, their_did.verkey);
 
-        let encrypted_message = service.crypto_box(&my_key, &their_did.verkey, msg.as_bytes()).await;
+        let encrypted_message = service
+            .crypto_box(&my_key, &their_did.verkey, msg.as_bytes())
+            .await;
 
         assert!(encrypted_message.is_ok());
     }
@@ -856,7 +940,11 @@ mod tests {
         let their_did_for_encrypt = Did::new(their_did.did, their_did.verkey);
 
         let (encrypted_message, noce) = service
-            .crypto_box(&my_key_for_encrypt, &their_did_for_encrypt.verkey, msg.as_bytes())
+            .crypto_box(
+                &my_key_for_encrypt,
+                &their_did_for_encrypt.verkey,
+                msg.as_bytes(),
+            )
             .await
             .unwrap();
 
@@ -900,7 +988,11 @@ mod tests {
         let their_did_for_encrypt = Did::new(their_did.did, their_did.verkey);
 
         let (encrypted_message, noce) = service
-            .crypto_box(&my_key_for_encrypt, &their_did_for_encrypt.verkey, msg.as_bytes())
+            .crypto_box(
+                &my_key_for_encrypt,
+                &their_did_for_encrypt.verkey,
+                msg.as_bytes(),
+            )
             .await
             .unwrap();
 
@@ -949,9 +1041,15 @@ mod tests {
         let (did, key) = service.create_my_did(&did_info.clone()).await.unwrap();
         let encrypt_did = Did::new(did.did.clone(), did.verkey.clone());
 
-        let encrypted_message = service.crypto_box_seal(&encrypt_did.verkey, msg).await.unwrap();
+        let encrypted_message = service
+            .crypto_box_seal(&encrypt_did.verkey, msg)
+            .await
+            .unwrap();
 
-        let decrypted_message = service.crypto_box_seal_open(&key, &encrypted_message).await.unwrap();
+        let decrypted_message = service
+            .crypto_box_seal_open(&key, &encrypted_message)
+            .await
+            .unwrap();
 
         assert_eq!(msg, decrypted_message.as_slice());
     }
@@ -965,7 +1063,8 @@ mod tests {
         let aad = "some protocol data input to the encryption";
         let cek = gen_key();
 
-        let (expected_ciphertext, iv_encoded, tag) = service.encrypt_plaintext(plaintext.clone(), aad, &cek);
+        let (expected_ciphertext, iv_encoded, tag) =
+            service.encrypt_plaintext(plaintext.clone(), aad, &cek);
 
         let expected_plaintext = service
             .decrypt_ciphertext(&expected_ciphertext, aad, &iv_encoded, &tag, &cek)
@@ -983,7 +1082,8 @@ mod tests {
         let aad = "some protocol data input to the encryption";
         let cek = gen_key();
 
-        let (expected_ciphertext, iv_encoded, tag) = service.encrypt_plaintext(plaintext.clone(), aad, &cek);
+        let (expected_ciphertext, iv_encoded, tag) =
+            service.encrypt_plaintext(plaintext.clone(), aad, &cek);
 
         let expected_plaintext = service
             .decrypt_ciphertext(&expected_ciphertext, aad, &iv_encoded, &tag, &cek)
@@ -1006,7 +1106,8 @@ mod tests {
         //convert values to base64 encoded strings
         let bad_iv_input = "invalid_iv";
 
-        let expected_error = service.decrypt_ciphertext(&expected_ciphertext, bad_iv_input, &tag, aad, &cek);
+        let expected_error =
+            service.decrypt_ciphertext(&expected_ciphertext, bad_iv_input, &tag, aad, &cek);
 
         assert!(expected_error.is_err());
     }
@@ -1024,7 +1125,8 @@ mod tests {
 
         let bad_ciphertext = base64::encode_urlsafe("bad_ciphertext".as_bytes());
 
-        let expected_error = service.decrypt_ciphertext(&bad_ciphertext, &iv_encoded, &tag, aad, &cek);
+        let expected_error =
+            service.decrypt_ciphertext(&bad_ciphertext, &iv_encoded, &tag, aad, &cek);
 
         assert!(expected_error.is_err());
     }
@@ -1038,11 +1140,13 @@ mod tests {
         let aad = "some protocol data input to the encryption";
         let cek = chacha20poly1305_ietf::gen_key();
 
-        let (expected_ciphertext, iv_encoded, tag) = service.encrypt_plaintext(plaintext, aad, &cek);
+        let (expected_ciphertext, iv_encoded, tag) =
+            service.encrypt_plaintext(plaintext, aad, &cek);
 
         let bad_cek = gen_key();
 
-        let expected_error = service.decrypt_ciphertext(&expected_ciphertext, &iv_encoded, &tag, aad, &bad_cek);
+        let expected_error =
+            service.decrypt_ciphertext(&expected_ciphertext, &iv_encoded, &tag, aad, &bad_cek);
 
         assert!(expected_error.is_err());
     }
@@ -1060,7 +1164,8 @@ mod tests {
 
         let bad_tag = "bad_tag".to_string();
 
-        let expected_error = service.decrypt_ciphertext(&expected_ciphertext, &iv_encoded, &bad_tag, aad, &cek);
+        let expected_error =
+            service.decrypt_ciphertext(&expected_ciphertext, &iv_encoded, &bad_tag, aad, &cek);
         assert!(expected_error.is_err());
     }
 
@@ -1073,11 +1178,13 @@ mod tests {
         let aad = "some protocol data input to the encryption";
         let cek = gen_key();
 
-        let (expected_ciphertext, iv_encoded, tag) = service.encrypt_plaintext(plaintext, aad, &cek);
+        let (expected_ciphertext, iv_encoded, tag) =
+            service.encrypt_plaintext(plaintext, aad, &cek);
 
         let bad_aad = "bad aad";
 
-        let expected_error = service.decrypt_ciphertext(&expected_ciphertext, &iv_encoded, &tag, bad_aad, &cek);
+        let expected_error =
+            service.decrypt_ciphertext(&expected_ciphertext, &iv_encoded, &tag, bad_aad, &cek);
         assert!(expected_error.is_err());
     }
 }

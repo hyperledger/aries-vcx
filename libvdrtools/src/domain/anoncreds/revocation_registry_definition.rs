@@ -1,24 +1,23 @@
+use indy_api_types::errors::{err_msg, IndyErrorKind, IndyResult};
 use std::collections::{HashMap, HashSet};
 
-use indy_api_types::{
-    errors::{err_msg, IndyErrorKind, IndyResult},
-    validation::Validatable,
-};
+use indy_api_types::validation::Validatable;
 use lazy_static::lazy_static;
 use regex::Regex;
 use ursa::cl::{RevocationKeyPrivate, RevocationKeyPublic};
 
-use super::{super::crypto::did::DidValue, credential_definition::CredentialDefinitionId, indy_identifiers, DELIMITER};
+use super::{
+    super::crypto::did::DidValue, credential_definition::CredentialDefinitionId, indy_identifiers,
+    DELIMITER,
+};
+
 use crate::utils::qualifier;
 
 pub const CL_ACCUM: &str = "CL_ACCUM";
 pub const REV_REG_DEG_MARKER: &str = "4";
 
 lazy_static! {
-    static ref QUALIFIED_REV_REG_ID: Regex = Regex::new(
-        "(^revreg:(?P<method>[a-z0-9]+):)?(?P<did>.+):4:(?P<cred_def_id>.+):(?P<rev_reg_type>.+):(?P<tag>.+)$"
-    )
-    .unwrap();
+    static ref QUALIFIED_REV_REG_ID: Regex = Regex::new("(^revreg:(?P<method>[a-z0-9]+):)?(?P<did>.+):4:(?P<cred_def_id>.+):(?P<rev_reg_type>.+):(?P<tag>.+)$").unwrap();
 }
 
 #[derive(Deserialize, Debug, Serialize)]
@@ -91,13 +90,15 @@ impl RevocationRegistryDefinition {
     pub fn to_unqualified(self) -> RevocationRegistryDefinition {
         match self {
             RevocationRegistryDefinition::RevocationRegistryDefinitionV1(rev_ref_def) => {
-                RevocationRegistryDefinition::RevocationRegistryDefinitionV1(RevocationRegistryDefinitionV1 {
-                    id: rev_ref_def.id.to_unqualified(),
-                    revoc_def_type: rev_ref_def.revoc_def_type,
-                    tag: rev_ref_def.tag,
-                    cred_def_id: rev_ref_def.cred_def_id.to_unqualified(),
-                    value: rev_ref_def.value,
-                })
+                RevocationRegistryDefinition::RevocationRegistryDefinitionV1(
+                    RevocationRegistryDefinitionV1 {
+                        id: rev_ref_def.id.to_unqualified(),
+                        revoc_def_type: rev_ref_def.revoc_def_type,
+                        tag: rev_ref_def.tag,
+                        cred_def_id: rev_ref_def.cred_def_id.to_unqualified(),
+                        value: rev_ref_def.value,
+                    },
+                )
             }
         }
     }
@@ -106,19 +107,27 @@ impl RevocationRegistryDefinition {
 impl From<RevocationRegistryDefinition> for RevocationRegistryDefinitionV1 {
     fn from(rev_reg_def: RevocationRegistryDefinition) -> Self {
         match rev_reg_def {
-            RevocationRegistryDefinition::RevocationRegistryDefinitionV1(rev_reg_def) => rev_reg_def,
+            RevocationRegistryDefinition::RevocationRegistryDefinitionV1(rev_reg_def) => {
+                rev_reg_def
+            }
         }
     }
 }
 
-pub type RevocationRegistryDefinitions = HashMap<RevocationRegistryId, RevocationRegistryDefinition>;
+pub type RevocationRegistryDefinitions =
+    HashMap<RevocationRegistryId, RevocationRegistryDefinition>;
 
 pub fn rev_reg_defs_map_to_rev_reg_defs_v1_map(
     rev_reg_defs: RevocationRegistryDefinitions,
 ) -> HashMap<RevocationRegistryId, RevocationRegistryDefinitionV1> {
     rev_reg_defs
         .into_iter()
-        .map(|(rev_reg_id, rev_reg_def)| (rev_reg_id, RevocationRegistryDefinitionV1::from(rev_reg_def)))
+        .map(|(rev_reg_id, rev_reg_def)| {
+            (
+                rev_reg_id,
+                RevocationRegistryDefinitionV1::from(rev_reg_def),
+            )
+        })
         .collect()
 }
 
@@ -149,7 +158,13 @@ impl RevocationRegistryId {
             Some(method) if method.starts_with("indy") => {
                 if let Some((_issuer_did, _cl_type, schema_id, creddef_tag)) = cred_def_id.parts() {
                     Ok(RevocationRegistryId(
-                        did.0.to_owned() + "/anoncreds/v0/REV_REG_DEF/" + &schema_id.0 + "/" + &creddef_tag + "/" + tag,
+                        did.0.to_owned()
+                            + "/anoncreds/v0/REV_REG_DEF/"
+                            + &schema_id.0
+                            + "/"
+                            + &creddef_tag
+                            + "/"
+                            + tag,
                     ))
                 } else {
                     Err(err_msg(
@@ -160,7 +175,15 @@ impl RevocationRegistryId {
             }
             None => Ok(RevocationRegistryId(format!(
                 "{}{}{}{}{}{}{}{}{}",
-                did.0, DELIMITER, REV_REG_DEG_MARKER, DELIMITER, cred_def_id.0, DELIMITER, rev_reg_type, DELIMITER, tag
+                did.0,
+                DELIMITER,
+                REV_REG_DEG_MARKER,
+                DELIMITER,
+                cred_def_id.0,
+                DELIMITER,
+                rev_reg_type,
+                DELIMITER,
+                tag
             ))),
             Some(method) => Err(err_msg(
                 IndyErrorKind::InvalidStructure,
@@ -172,7 +195,10 @@ impl RevocationRegistryId {
     pub fn parts(&self) -> Option<(DidValue, CredentialDefinitionId, String, String)> {
         trace!("RevocationRegistryId::parts >> self.0 {}", self.0);
         if let Some(parts) = indy_identifiers::try_parse_indy_rev_reg(self.0.as_str()) {
-            trace!("RevocationRegistryId::parts: parsed Indy RevReg {:?}", parts);
+            trace!(
+                "RevocationRegistryId::parts: parsed Indy RevReg {:?}",
+                parts
+            );
             return Some(parts);
         }
 
@@ -205,9 +231,7 @@ impl Validatable for RevocationRegistryConfig {
     fn validate(&self) -> Result<(), String> {
         if let Some(num_) = self.max_cred_num {
             if num_ == 0 {
-                return Err(String::from(
-                    "RevocationRegistryConfig validation failed: `max_cred_num` must be greater than 0",
-                ));
+                return Err(String::from("RevocationRegistryConfig validation failed: `max_cred_num` must be greater than 0"));
             }
         }
         Ok(())
@@ -256,29 +280,21 @@ mod tests {
     }
 
     fn _cred_def_id_unqualified() -> CredentialDefinitionId {
-        CredentialDefinitionId("NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag".to_string())
+        CredentialDefinitionId(
+            "NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag".to_string(),
+        )
     }
 
     fn _cred_def_id_qualified() -> CredentialDefinitionId {
-        CredentialDefinitionId(
-            "creddef:sov:did:sov:NcYxiDXkpYi6ov5FcYDi1e:3:CL:schema:sov:did:sov:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag"
-                .to_string(),
-        )
+        CredentialDefinitionId("creddef:sov:did:sov:NcYxiDXkpYi6ov5FcYDi1e:3:CL:schema:sov:did:sov:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag".to_string())
     }
 
     fn _rev_reg_id_unqualified() -> RevocationRegistryId {
-        RevocationRegistryId(
-            "NcYxiDXkpYi6ov5FcYDi1e:4:NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag:CL_ACCUM:TAG_1"
-                .to_string(),
-        )
+        RevocationRegistryId("NcYxiDXkpYi6ov5FcYDi1e:4:NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag:CL_ACCUM:TAG_1".to_string())
     }
 
     fn _rev_reg_id_qualified() -> RevocationRegistryId {
-        RevocationRegistryId(
-            "revreg:sov:did:sov:NcYxiDXkpYi6ov5FcYDi1e:4:creddef:sov:did:sov:NcYxiDXkpYi6ov5FcYDi1e:3:CL:schema:sov:\
-             did:sov:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag:CL_ACCUM:TAG_1"
-                .to_string(),
-        )
+        RevocationRegistryId("revreg:sov:did:sov:NcYxiDXkpYi6ov5FcYDi1e:4:creddef:sov:did:sov:NcYxiDXkpYi6ov5FcYDi1e:3:CL:schema:sov:did:sov:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag:CL_ACCUM:TAG_1".to_string())
     }
 
     mod to_unqualified {
@@ -286,12 +302,18 @@ mod tests {
 
         #[test]
         fn test_rev_reg_id_parts_for_id_as_unqualified() {
-            assert_eq!(_rev_reg_id_unqualified(), _rev_reg_id_unqualified().to_unqualified());
+            assert_eq!(
+                _rev_reg_id_unqualified(),
+                _rev_reg_id_unqualified().to_unqualified()
+            );
         }
 
         #[test]
         fn test_rev_reg_id_parts_for_id_as_qualified() {
-            assert_eq!(_rev_reg_id_unqualified(), _rev_reg_id_qualified().to_unqualified());
+            assert_eq!(
+                _rev_reg_id_unqualified(),
+                _rev_reg_id_qualified().to_unqualified()
+            );
         }
     }
 

@@ -1,6 +1,5 @@
-use messages::protocols::proof_presentation::presentation_request::PresentationRequest;
-
 use crate::protocols::proof_presentation::verifier::states::presentation_request_sent::PresentationRequestSentState;
+use messages::protocols::proof_presentation::presentation_request::PresentationRequest;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct PresentationRequestSetState {

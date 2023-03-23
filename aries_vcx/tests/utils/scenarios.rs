@@ -1,60 +1,38 @@
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
-    use std::{sync::Arc, thread, time::Duration};
+    use std::sync::Arc;
+    use std::thread;
+    use std::time::Duration;
 
-    use aries_vcx::{
-        common::{
-            ledger::transactions::into_did_doc,
-            primitives::{credential_definition::CredentialDef, revocation_registry::RevocationRegistry},
-            proofs::{proof_request::PresentationRequestData, proof_request_internal::AttrInfo},
-            test_utils::create_and_store_credential_def,
-        },
-        core::profile::profile::Profile,
-        errors::error::{AriesVcxError, AriesVcxErrorKind},
-        handlers::{
-            connection::mediated_connection::{ConnectionState, MediatedConnection},
-            issuance::{
-                holder::{test_utils::get_credential_offer_messages, Holder},
-                issuer::{test_utils::get_credential_proposal_messages, Issuer},
-            },
-            proof_presentation::{
-                prover::{test_utils::get_proof_request_messages, Prover},
-                verifier::Verifier,
-            },
-        },
-        messages::{
-            concepts::mime_type::MimeType,
-            protocols::{
-                connection::invite::Invitation,
-                issuance::{
-                    credential_offer::{CredentialOffer, OfferInfo},
-                    credential_proposal::{CredentialProposal, CredentialProposalData},
-                },
-                proof_presentation::{
-                    presentation_proposal::{Attribute, PresentationProposalData},
-                    presentation_request::PresentationRequest,
-                },
-            },
-        },
-        protocols::{
-            issuance::{holder::state_machine::HolderState, issuer::state_machine::IssuerState},
-            mediated_connection::{invitee::state_machine::InviteeState, inviter::state_machine::InviterState},
-            proof_presentation::{prover::state_machine::ProverState, verifier::state_machine::VerifierState},
-            SendClosureConnection,
-        },
-        utils::{
-            constants::{DEFAULT_PROOF_NAME, TAILS_DIR, TEST_TAILS_URL},
-            filters::{filter_credential_offers_by_comment, filter_proof_requests_by_name},
-            get_temp_dir_path,
-        },
-    };
+    use aries_vcx::common::test_utils::create_and_store_credential_def;
+    use aries_vcx::core::profile::profile::Profile;
+    use aries_vcx::errors::error::{AriesVcxError, AriesVcxErrorKind};
+    use aries_vcx::protocols::SendClosureConnection;
     use async_channel::{bounded, Sender};
-    use messages::{a2a::A2AMessage, diddoc::aries::diddoc::AriesDidDoc, protocols::connection::request::Request};
+    use messages::a2a::A2AMessage;
+    use messages::diddoc::aries::diddoc::AriesDidDoc;
+    use messages::protocols::connection::request::Request;
     use serde_json::{json, Value};
 
-    use crate::utils::{
-        devsetup_agent::test_utils::{Alice, Faber},
-        test_macros::ProofStateType,
+    use aries_vcx::common::ledger::transactions::into_did_doc;
+    use aries_vcx::common::primitives::credential_definition::CredentialDef;
+    use aries_vcx::common::primitives::revocation_registry::RevocationRegistry;
+    use aries_vcx::common::proofs::proof_request::PresentationRequestData;
+    use aries_vcx::common::proofs::proof_request_internal::AttrInfo;
+    use aries_vcx::handlers::connection::mediated_connection::{ConnectionState, MediatedConnection};
+    use aries_vcx::handlers::issuance::holder::test_utils::get_credential_offer_messages;
+    use aries_vcx::handlers::issuance::holder::Holder;
+    use aries_vcx::handlers::issuance::issuer::test_utils::get_credential_proposal_messages;
+    use aries_vcx::handlers::issuance::issuer::Issuer;
+    use aries_vcx::handlers::proof_presentation::prover::test_utils::get_proof_request_messages;
+    use aries_vcx::handlers::proof_presentation::prover::Prover;
+    use aries_vcx::handlers::proof_presentation::verifier::Verifier;
+    use aries_vcx::messages::concepts::mime_type::MimeType;
+    use aries_vcx::messages::protocols::connection::invite::Invitation;
+    use aries_vcx::messages::protocols::issuance::credential_offer::{CredentialOffer, OfferInfo};
+    use aries_vcx::messages::protocols::issuance::credential_proposal::{CredentialProposal, CredentialProposalData};
+    use aries_vcx::messages::protocols::proof_presentation::presentation_proposal::{
+        Attribute, PresentationProposalData,
     };
     use aries_vcx::messages::protocols::proof_presentation::presentation_request::PresentationRequest;
     use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
@@ -734,8 +712,7 @@ pub mod test_utils {
             .get_rev_reg_delta_json(rev_reg_id, Some(timestamp + 1), None)
             .await
             .unwrap();
-        assert_ne!(delta, delta_after_revoke); // They will not equal as we have saved the delta in
-                                               // cache
+        assert_ne!(delta, delta_after_revoke); // They will not equal as we have saved the delta in cache
     }
 
     pub async fn rotate_rev_reg(

@@ -1,6 +1,5 @@
-use std::ops::Not;
-
 use serde_json::Value;
+use std::ops::Not;
 
 use super::constants::{AUTH_RULE, AUTH_RULES, GET_AUTH_RULE};
 

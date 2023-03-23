@@ -1,8 +1,7 @@
-use crate::{
-    a2a::{A2AMessage, MessageId},
-    concepts::{thread::Thread, timing::Timing},
-    timing_optional,
-};
+use crate::a2a::{A2AMessage, MessageId};
+use crate::concepts::thread::Thread;
+use crate::concepts::timing::Timing;
+use crate::timing_optional;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct Ping {
@@ -45,8 +44,9 @@ a2a_message!(Ping);
 
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use super::*;
     use crate::protocols::connection::response::test_utils::*;
+
+    use super::*;
 
     fn _comment() -> String {
         String::from("comment")

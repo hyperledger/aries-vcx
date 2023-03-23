@@ -1,4 +1,5 @@
-use std::{collections::HashSet, sync::RwLock};
+use std::collections::HashSet;
+use std::sync::RwLock;
 
 lazy_static! {
     pub static ref ENABLED_MOCKS: RwLock<HashSet<String>> = RwLock::new(HashSet::new());

@@ -3,7 +3,8 @@ use std::collections::HashMap;
 use indy_api_types::validation::Validatable;
 
 use super::constants::{
-    DISABLE_ALL_TXN_AUTHR_AGRMTS, GET_TXN_AUTHR_AGRMT, GET_TXN_AUTHR_AGRMT_AML, TXN_AUTHR_AGRMT, TXN_AUTHR_AGRMT_AML,
+    DISABLE_ALL_TXN_AUTHR_AGRMTS, GET_TXN_AUTHR_AGRMT, GET_TXN_AUTHR_AGRMT_AML, TXN_AUTHR_AGRMT,
+    TXN_AUTHR_AGRMT_AML,
 };
 
 #[derive(Serialize, PartialEq, Debug)]
@@ -59,7 +60,11 @@ pub struct GetTxnAuthorAgreementData {
 
 impl Validatable for GetTxnAuthorAgreementData {
     fn validate(&self) -> Result<(), String> {
-        match (self.digest.as_ref(), self.version.as_ref(), self.timestamp.as_ref()) {
+        match (
+            self.digest.as_ref(),
+            self.version.as_ref(),
+            self.timestamp.as_ref(),
+        ) {
             (Some(_), None, None) => Ok(()),
             (None, Some(_), None) => Ok(()),
             (None, None, Some(_)) => Ok(()),
@@ -108,7 +113,9 @@ impl AcceptanceMechanisms {
 impl Validatable for AcceptanceMechanisms {
     fn validate(&self) -> Result<(), String> {
         if self.0.is_empty() {
-            return Err(String::from("Empty list of Acceptance Mechanisms has been passed"));
+            return Err(String::from(
+                "Empty list of Acceptance Mechanisms has been passed",
+            ));
         }
         Ok(())
     }

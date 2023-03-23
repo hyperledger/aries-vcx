@@ -59,8 +59,7 @@ pub extern "C" fn vcx_schema_create(
     trace!(target: "vcx", "vcx_schema_create(command_handle: {}, source_id: {}, schema_name: {},  schema_data: {})",
            command_handle, source_id, schema_name, schema_data);
 
-    // todo: schema::create_and_publish_schema must have method in api_vcx layer, should include
-    // issuer_did loading
+    // todo: schema::create_and_publish_schema must have method in api_vcx layer, should include issuer_did loading
     // - similar also for functions below
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         match schema::create_and_publish_schema(&source_id, schema_name, version, schema_data).await {
@@ -98,15 +97,13 @@ pub extern "C" fn vcx_schema_create(
 ///
 /// version: version of schema
 ///
-/// schema_data: list of attributes that will make up the schema (the number of attributes should be
-/// less or equal than 125)
+/// schema_data: list of attributes that will make up the schema (the number of attributes should be less or equal than 125)
 ///
 /// endorser: DID of the Endorser that will submit the transaction.
 ///
 /// # Example schema_data -> "["attr1", "attr2", "attr3"]"
 ///
-/// cb: Callback that provides Schema handle and Schema transaction that should be passed to
-/// Endorser for publishing.
+/// cb: Callback that provides Schema handle and Schema transaction that should be passed to Endorser for publishing.
 ///
 /// #Returns
 /// Error code as a u32
@@ -144,11 +141,7 @@ pub extern "C" fn vcx_schema_prepare_for_endorser(
             }
             Err(err) => {
                 set_current_error_vcx(&err);
-                error!(
-                    "vcx_schema_prepare_for_endorser(command_handle: {}, rc: {}, handle: {}, transaction: {}) \
-                     source_id: {}",
-                    command_handle, err, 0, "", source_id
-                );
+                error!("vcx_schema_prepare_for_endorser(command_handle: {}, rc: {}, handle: {}, transaction: {}) source_id: {}", command_handle, err, 0, "", source_id);
                 cb(command_handle, err.into(), 0, ptr::null_mut());
             }
         };
@@ -387,9 +380,7 @@ pub extern "C" fn vcx_schema_get_schema_id(
 /// schema already on the ledger.
 ///
 /// # Example
-/// schema -> {"data":["height","name","sex","age"],"name":"test-licence","payment_txn":null,"
-/// schema_id":"2hoqvcwupRTUNkXn6ArYzs:2:test-licence:4.4.4","source_id":"Test Source
-/// ID","state":1,"version":"4.4.4"}
+/// schema -> {"data":["height","name","sex","age"],"name":"test-licence","payment_txn":null,"schema_id":"2hoqvcwupRTUNkXn6ArYzs:2:test-licence:4.4.4","source_id":"Test Source ID","state":1,"version":"4.4.4"}
 ///
 /// #Returns
 /// Error code as a u32
@@ -582,14 +573,6 @@ mod tests {
     use crate::api_c::cutils::timeout::TimeoutUtils;
 
     use super::*;
-    use crate::{
-        api_c::cutils::{return_types_u32, timeout::TimeoutUtils},
-        api_vcx::{
-            api_global::{settings, settings::get_config_value},
-            api_handle::schema::{prepare_schema_for_endorser, tests::prepare_schema_data},
-        },
-        errors::error,
-    };
 
     fn vcx_schema_create_c_closure(name: &str, version: &str, data: &str) -> Result<u32, u32> {
         let cb = return_types_u32::Return_U32_U32::new().unwrap();

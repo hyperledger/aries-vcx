@@ -6,10 +6,10 @@ use aries_vcx::global::settings::CONFIG_INSTITUTION_DID;
 use aries_vcx::messages::diddoc::aries::service::AriesService;
 use aries_vcx::messages::protocols::connection::did::Did;
 
-use crate::{
-    api_vcx::api_global::{profile::get_main_profile, settings::get_config_value},
-    errors::{error::LibvcxResult, mapping_from_ariesvcx::map_ariesvcx_result},
-};
+use crate::api_vcx::api_global::profile::get_main_profile;
+use crate::api_vcx::api_global::settings::get_config_value;
+use crate::errors::error::LibvcxResult;
+use crate::errors::mapping_from_ariesvcx::map_ariesvcx_result;
 
 pub async fn endorse_transaction(transaction: &str) -> LibvcxResult<()> {
     let endorser_did = get_config_value(CONFIG_INSTITUTION_DID)?;

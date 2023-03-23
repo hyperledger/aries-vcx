@@ -2,7 +2,8 @@ use lazy_static::lazy_static;
 use regex::Regex;
 
 lazy_static! {
-    pub static ref REGEX: Regex = Regex::new("^[a-z0-9]+(:(indy|cheqd))?(:[a-z0-9:]+)?:(.*)$").unwrap();
+    pub static ref REGEX: Regex =
+        Regex::new("^[a-z0-9]+(:(indy|cheqd))?(:[a-z0-9:]+)?:(.*)$").unwrap();
 }
 
 pub fn qualify(entity: &str, prefix: &str, method: &str) -> String {
@@ -36,8 +37,9 @@ pub fn method(entity: &str) -> Option<String> {
                 (Some(type_), None) => Some(type_.as_str().to_owned()),
                 _ => {
                     warn!(
-                        "Unrecognized FQ method for {}, parsed items are (where 2nd is method type, and 3rd is \
-                         sub-method (namespace, ledger, type, etc){:?}",
+                        "Unrecognized FQ method for {}, parsed items are \
+                    (where 2nd is method type, and 3rd is sub-method (namespace, ledger, type, etc)\
+                     {:?}",
                         entity, caps
                     );
                     None

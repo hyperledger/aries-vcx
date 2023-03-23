@@ -1,10 +1,9 @@
 extern crate serde;
 extern crate sodiumoxide;
 
+use self::sodiumoxide::crypto::pwhash;
 use indy_api_types::{domain::wallet::KeyDerivationMethod, errors::prelude::*};
 use libc::{c_int, c_ulonglong, size_t};
-
-use self::sodiumoxide::crypto::pwhash;
 
 pub const SALTBYTES: usize = pwhash::SALTBYTES;
 
@@ -57,7 +56,10 @@ pub fn pwhash<'a>(
     if res == 0 {
         Ok(key)
     } else {
-        Err(IndyError::from_msg(IndyErrorKind::InvalidState, "Sodium pwhash failed"))
+        Err(IndyError::from_msg(
+            IndyErrorKind::InvalidState,
+            "Sodium pwhash failed",
+        ))
     }
 }
 
@@ -82,9 +84,8 @@ extern "C" {
 
 #[cfg(test)]
 mod tests {
-    use rmp_serde;
-
     use super::*;
+    use rmp_serde;
 
     #[test]
     fn get_salt_works() {
@@ -118,10 +119,12 @@ mod tests {
         let salt = gen_salt();
 
         let mut key = [0u8; 64];
-        let key_moderate = pwhash(&mut key, passwd, &salt, &KeyDerivationMethod::ARGON2I_MOD).unwrap();
+        let key_moderate =
+            pwhash(&mut key, passwd, &salt, &KeyDerivationMethod::ARGON2I_MOD).unwrap();
 
         let mut key = [0u8; 64];
-        let key_interactive = pwhash(&mut key, passwd, &salt, &KeyDerivationMethod::ARGON2I_INT).unwrap();
+        let key_interactive =
+            pwhash(&mut key, passwd, &salt, &KeyDerivationMethod::ARGON2I_INT).unwrap();
 
         assert_ne!(key_moderate, key_interactive);
     }

@@ -1,5 +1,6 @@
 use std::{collections::HashMap, sync::Arc};
 
+use crate::utils::crypto::base58::{FromBase58, ToBase58};
 use indy_api_types::{errors::prelude::*, PoolHandle, WalletHandle};
 use indy_wallet::{RecordOptions, SearchOptions, WalletService};
 
@@ -7,7 +8,8 @@ use crate::{
     domain::{
         crypto::{
             did::{
-                Did, DidMetadata, DidMethod, DidValue, DidWithMeta, MyDidInfo, TemporaryDid, TheirDid, TheirDidInfo,
+                Did, DidMetadata, DidMethod, DidValue, DidWithMeta, MyDidInfo, TemporaryDid,
+                TheirDid, TheirDidInfo,
             },
             key::KeyInfo,
         },
@@ -19,7 +21,6 @@ use crate::{
         pairwise::Pairwise,
     },
     services::{CryptoService, LedgerService, PoolService},
-    utils::crypto::base58::{FromBase58, ToBase58},
 };
 
 pub struct DidController {
@@ -57,14 +58,14 @@ impl DidController {
     /// Example:
     /// {
     ///     "did": string, (optional;
-    ///             if not provided and cid param is false then the first 16 bit of the verkey will
-    /// be used as a new DID;             if not provided and cid is true then the full verkey
-    /// will be used as a new DID;             if provided, then keys will be replaced - key
-    /// rotation use case)     "seed": string, (optional) Seed that allows deterministic did
-    /// creation (if not set random one will be created).                                Can be
-    /// UTF-8, base64 or hex string.     "crypto_type": string, (optional; if not set then
-    /// ed25519 curve is used;               currently only 'ed25519' value is supported for
-    /// this field)     "cid": bool, (optional; if not set then false is used;)
+    ///             if not provided and cid param is false then the first 16 bit of the verkey will be used as a new DID;
+    ///             if not provided and cid is true then the full verkey will be used as a new DID;
+    ///             if provided, then keys will be replaced - key rotation use case)
+    ///     "seed": string, (optional) Seed that allows deterministic did creation (if not set random one will be created).
+    ///                                Can be UTF-8, base64 or hex string.
+    ///     "crypto_type": string, (optional; if not set then ed25519 curve is used;
+    ///               currently only 'ed25519' value is supported for this field)
+    ///     "cid": bool, (optional; if not set then false is used;)
     ///     "ledger_type": string, (optional) type of the ledger to create fully qualified did.
     ///     "method_name": string, (optional) method name to create fully qualified did.
     /// }
@@ -99,8 +100,8 @@ impl DidController {
                 Err(err_msg(
                     IndyErrorKind::DIDAlreadyExists,
                     format!(
-                        "DID \"{}\" already exists but with different Verkey. You should specify Seed used for \
-                         initial generation",
+                        "DID \"{}\" already exists but with different Verkey. \
+                                            You should specify Seed used for initial generation",
                         did.did.0
                     ),
                 ))?;
@@ -131,9 +132,9 @@ impl DidController {
     /// did: target did to rotate keys.
     /// key_info: key information as json. Example:
     /// {
-    ///     "seed": string, (optional) Seed that allows deterministic key creation (if not set
-    /// random one will be created).                                Can be UTF-8, base64 or hex
-    /// string.     "crypto_type": string, (optional; if not set then ed25519 curve is used;
+    ///     "seed": string, (optional) Seed that allows deterministic key creation (if not set random one will be created).
+    ///                                Can be UTF-8, base64 or hex string.
+    ///     "crypto_type": string, (optional; if not set then ed25519 curve is used;
     ///               currently only 'ed25519' value is supported for this field)
     /// }
     ///
@@ -170,7 +171,12 @@ impl DidController {
         };
 
         self.wallet_service
-            .add_indy_object(wallet_handle, &temporary_key.verkey, &temporary_key, &HashMap::new())
+            .add_indy_object(
+                wallet_handle,
+                &temporary_key.verkey,
+                &temporary_key,
+                &HashMap::new(),
+            )
             .await?;
 
         self.wallet_service
@@ -200,7 +206,11 @@ impl DidController {
     /// Common*
     /// Wallet*
     /// Crypto*
-    pub async fn replace_keys_apply(&self, wallet_handle: WalletHandle, my_did: DidValue) -> IndyResult<()> {
+    pub async fn replace_keys_apply(
+        &self,
+        wallet_handle: WalletHandle,
+        my_did: DidValue,
+    ) -> IndyResult<()> {
         trace!(
             "replace_keys_apply > wallet_handle {:?} my_did {:?}",
             wallet_handle,
@@ -252,14 +262,21 @@ impl DidController {
     /// Common*
     /// Wallet*
     /// Crypto*
-    pub async fn store_their_did(&self, wallet_handle: WalletHandle, their_did_info: TheirDidInfo) -> IndyResult<()> {
+    pub async fn store_their_did(
+        &self,
+        wallet_handle: WalletHandle,
+        their_did_info: TheirDidInfo,
+    ) -> IndyResult<()> {
         trace!(
             "store_their_did > wallet_handle {:?} their_did_info {:?}",
             wallet_handle,
             their_did_info
         );
 
-        let their_did = self.crypto_service.create_their_did(&their_did_info).await?;
+        let their_did = self
+            .crypto_service
+            .create_their_did(&their_did_info)
+            .await?;
 
         self.wallet_service
             .upsert_indy_object(wallet_handle, &their_did.did.0, &their_did)
@@ -281,16 +298,20 @@ impl DidController {
     /// did_with_meta: {
     ///   "did": string - DID stored in the wallet,
     ///   "verkey": string - The DIDs transport key (ver key, key id),
-    ///   "tempVerkey": string - Temporary DIDs transport key (ver key, key id), exist only during
-    /// the rotation of the keys.                          After rotation is done, it becomes a
-    /// new verkey.   "metadata": string - The meta information stored with the DID
+    ///   "tempVerkey": string - Temporary DIDs transport key (ver key, key id), exist only during the rotation of the keys.
+    ///                          After rotation is done, it becomes a new verkey.
+    ///   "metadata": string - The meta information stored with the DID
     /// }
     ///
     /// #Errors
     /// Common*
     /// Wallet*
     /// Crypto*
-    pub async fn get_my_did_with_meta(&self, wallet_handle: WalletHandle, my_did: DidValue) -> IndyResult<String> {
+    pub async fn get_my_did_with_meta(
+        &self,
+        wallet_handle: WalletHandle,
+        my_did: DidValue,
+    ) -> IndyResult<String> {
         trace!(
             "get_my_did_with_meta > wallet_handle {:?} my_did {:?}",
             wallet_handle,
@@ -304,12 +325,20 @@ impl DidController {
 
         let metadata = self
             .wallet_service
-            .get_indy_opt_object::<DidMetadata>(wallet_handle, &did.did.0, &RecordOptions::id_value())
+            .get_indy_opt_object::<DidMetadata>(
+                wallet_handle,
+                &did.did.0,
+                &RecordOptions::id_value(),
+            )
             .await?;
 
         let temp_verkey = self
             .wallet_service
-            .get_indy_opt_object::<TemporaryDid>(wallet_handle, &did.did.0, &RecordOptions::id_value())
+            .get_indy_opt_object::<TemporaryDid>(
+                wallet_handle,
+                &did.did.0,
+                &RecordOptions::id_value(),
+            )
             .await?;
 
         let did_with_meta = DidWithMeta {
@@ -319,8 +348,8 @@ impl DidController {
             metadata: metadata.map(|m| m.value),
         };
 
-        let did_with_meta =
-            serde_json::to_string(&did_with_meta).to_indy(IndyErrorKind::InvalidState, "Can't serialize DID")?;
+        let did_with_meta = serde_json::to_string(&did_with_meta)
+            .to_indy(IndyErrorKind::InvalidState, "Can't serialize DID")?;
 
         let res = Ok(did_with_meta);
         trace!("get_my_did_with_meta < {:?}", res);
@@ -372,7 +401,10 @@ impl DidController {
 
             let tup: DidMetadata = record
                 .get_value()
-                .ok_or(err_msg(IndyErrorKind::InvalidState, "No value for DID record"))
+                .ok_or(err_msg(
+                    IndyErrorKind::InvalidState,
+                    "No value for DID record",
+                ))
                 .and_then(|tags_json| {
                     serde_json::from_str(&tags_json).to_indy(
                         IndyErrorKind::InvalidState,
@@ -388,7 +420,10 @@ impl DidController {
 
             let did: TemporaryDid = record
                 .get_value()
-                .ok_or(err_msg(IndyErrorKind::InvalidState, "No value for DID record"))
+                .ok_or(err_msg(
+                    IndyErrorKind::InvalidState,
+                    "No value for DID record",
+                ))
                 .and_then(|tags_json| {
                     serde_json::from_str(&tags_json).to_indy(
                         IndyErrorKind::InvalidState,
@@ -425,7 +460,8 @@ impl DidController {
             dids.push(did_with_meta);
         }
 
-        let dids = serde_json::to_string(&dids).to_indy(IndyErrorKind::InvalidState, "Can't serialize DIDs list")?;
+        let dids = serde_json::to_string(&dids)
+            .to_indy(IndyErrorKind::InvalidState, "Can't serialize DIDs list")?;
 
         let res = Ok(dids);
         trace!("list_my_dids_with_meta < {:?}", res);
@@ -435,8 +471,8 @@ impl DidController {
     /// Returns ver key (key id) for the given DID.
     ///
     /// "indy_key_for_did" call follow the idea that we resolve information about their DID from
-    /// the ledger with cache in the local wallet. The "indy_open_wallet" call has freshness
-    /// parameter that is used for checking the freshness of cached pool value.
+    /// the ledger with cache in the local wallet. The "indy_open_wallet" call has freshness parameter
+    /// that is used for checking the freshness of cached pool value.
     ///
     /// Note if you don't want to resolve their DID info from the ledger you can use
     /// "indy_key_for_local_did" call instead that will look only to the local wallet and skip
@@ -525,8 +561,16 @@ impl DidController {
     /// Common*
     /// Wallet*
     /// Crypto*
-    pub async fn key_for_local_did(&self, wallet_handle: WalletHandle, did: DidValue) -> IndyResult<String> {
-        trace!("key_for_local_did > wallet_handle {:?} did {:?}", wallet_handle, did);
+    pub async fn key_for_local_did(
+        &self,
+        wallet_handle: WalletHandle,
+        did: DidValue,
+    ) -> IndyResult<String> {
+        trace!(
+            "key_for_local_did > wallet_handle {:?} did {:?}",
+            wallet_handle,
+            did
+        );
 
         self.crypto_service.validate_did(&did)?;
 
@@ -557,8 +601,8 @@ impl DidController {
 
     /// wallet_handle: Wallet handle (created by open_wallet).
     /// did - The DID to resolve endpoint.
-    /// address -  The DIDs endpoint address. indy-node and indy-plenum restrict this to
-    /// ip_address:port transport_key - The DIDs transport key (ver key, key id).
+    /// address -  The DIDs endpoint address. indy-node and indy-plenum restrict this to ip_address:port
+    /// transport_key - The DIDs transport key (ver key, key id).
     ///
     /// #Returns
     ///
@@ -616,7 +660,8 @@ impl DidController {
         did: DidValue,
     ) -> IndyResult<(String, Option<String>)> {
         trace!(
-            "get_endpoint_for_did > wallet_handle {:?} pool_handle {:?} did {:?}",
+            "get_endpoint_for_did > wallet_handle {:?} \
+                pool_handle {:?} did {:?}",
             wallet_handle,
             pool_handle,
             did
@@ -631,7 +676,8 @@ impl DidController {
         {
             Ok(endpoint) => endpoint,
             Err(err) if err.kind() == IndyErrorKind::WalletItemNotFound => {
-                self._fetch_attrib_from_ledger(wallet_handle, pool_handle, &did).await?
+                self._fetch_attrib_from_ledger(wallet_handle, pool_handle, &did)
+                    .await?
             }
             Err(err) => Err(err)?,
         };
@@ -689,15 +735,22 @@ impl DidController {
     /// did - The DID to retrieve metadata.
     ///
     /// #Returns
-    /// metadata - The meta information stored with the DID; Can be null if no metadata was saved
-    /// for this DID.
+    /// metadata - The meta information stored with the DID; Can be null if no metadata was saved for this DID.
     ///
     /// #Errors
     /// Common*
     /// Wallet*
     /// Crypto*
-    pub async fn get_did_metadata(&self, wallet_handle: WalletHandle, did: DidValue) -> IndyResult<String> {
-        trace!("get_did_metadata > wallet_handle {:?} did {:?}", wallet_handle, did);
+    pub async fn get_did_metadata(
+        &self,
+        wallet_handle: WalletHandle,
+        did: DidValue,
+    ) -> IndyResult<String> {
+        trace!(
+            "get_did_metadata > wallet_handle {:?} did {:?}",
+            wallet_handle,
+            did
+        );
 
         self.crypto_service.validate_did(&did)?;
 
@@ -820,8 +873,12 @@ impl DidController {
         }
 
         // move metadata
-        self._update_dependent_entity_reference::<DidMetadata>(wallet_handle, &did.0, &curr_did.did.0)
-            .await?;
+        self._update_dependent_entity_reference::<DidMetadata>(
+            wallet_handle,
+            &did.0,
+            &curr_did.did.0,
+        )
+        .await?;
 
         // move endpoint
         self._update_dependent_entity_reference::<Endpoint>(wallet_handle, &did.0, &curr_did.did.0)
@@ -867,7 +924,8 @@ impl DidController {
         get_nym_reply_result: IndyResult<String>,
     ) -> IndyResult<TheirDid> {
         trace!(
-            "get_nym_ack_process_and_store_their_did > wallet_handle {:?} get_nym_reply_result {:?}",
+            "get_nym_ack_process_and_store_their_did > \
+                wallet_handle {:?} get_nym_reply_result {:?}",
             wallet_handle,
             get_nym_reply_result
         );
@@ -875,7 +933,10 @@ impl DidController {
         let get_nym_reply = get_nym_reply_result?;
 
         let get_nym_response: Reply<GetNymReplyResult> = serde_json::from_str(&get_nym_reply)
-            .to_indy(IndyErrorKind::InvalidState, "Invalid GetNymReplyResult json")?;
+            .to_indy(
+                IndyErrorKind::InvalidState,
+                "Invalid GetNymReplyResult json",
+            )?;
 
         let their_did_info = match get_nym_response.result() {
             GetNymReplyResult::GetNymReplyResultV0(res) => {
@@ -894,12 +955,16 @@ impl DidController {
                     )); //TODO FIXME use separate error
                 }
             }
-            GetNymReplyResult::GetNymReplyResultV1(res) => {
-                TheirDidInfo::new(res.txn.data.did.qualify(did.get_method()), res.txn.data.verkey)
-            }
+            GetNymReplyResult::GetNymReplyResultV1(res) => TheirDidInfo::new(
+                res.txn.data.did.qualify(did.get_method()),
+                res.txn.data.verkey,
+            ),
         };
 
-        let their_did = self.crypto_service.create_their_did(&their_did_info).await?;
+        let their_did = self
+            .crypto_service
+            .create_their_did(&their_did_info)
+            .await?;
 
         self.wallet_service
             .add_indy_object(wallet_handle, &their_did.did.0, &their_did, &HashMap::new())
@@ -924,7 +989,9 @@ impl DidController {
             .get_indy_record_value::<T>(wallet_handle, id, "{}")
             .await
         {
-            self.wallet_service.delete_indy_record::<T>(wallet_handle, id).await?;
+            self.wallet_service
+                .delete_indy_record::<T>(wallet_handle, id)
+                .await?;
             self.wallet_service
                 .add_indy_record::<T>(wallet_handle, new_id, &record, &HashMap::new())
                 .await?;
@@ -939,7 +1006,8 @@ impl DidController {
         get_attrib_reply_result: IndyResult<String>,
     ) -> IndyResult<Endpoint> {
         trace!(
-            "_get_attrib_ack_process_store_endpoint_to_wallet > wallet_handle {:?} get_attrib_reply_result {:?}",
+            "_get_attrib_ack_process_store_endpoint_to_wallet > \
+                wallet_handle {:?} get_attrib_reply_result {:?}",
             wallet_handle,
             get_attrib_reply_result
         );
@@ -947,15 +1015,18 @@ impl DidController {
         let get_attrib_reply = get_attrib_reply_result?;
 
         let get_attrib_reply: Reply<GetAttrReplyResult> = serde_json::from_str(&get_attrib_reply)
-            .to_indy(IndyErrorKind::InvalidState, "Invalid GetAttrReplyResult json")?;
+            .to_indy(
+            IndyErrorKind::InvalidState,
+            "Invalid GetAttrReplyResult json",
+        )?;
 
         let (raw, did) = match get_attrib_reply.result() {
             GetAttrReplyResult::GetAttrReplyResultV0(res) => (res.data, res.dest),
             GetAttrReplyResult::GetAttrReplyResultV1(res) => (res.txn.data.raw, res.txn.data.did),
         };
 
-        let attrib_data: AttribData =
-            serde_json::from_str(&raw).to_indy(IndyErrorKind::InvalidState, "Invalid GetAttReply json")?;
+        let attrib_data: AttribData = serde_json::from_str(&raw)
+            .to_indy(IndyErrorKind::InvalidState, "Invalid GetAttReply json")?;
 
         let endpoint = Endpoint::new(attrib_data.endpoint.ha, attrib_data.endpoint.verkey);
 
@@ -965,7 +1036,10 @@ impl DidController {
 
         let res = Ok(endpoint);
 
-        trace!("_get_attrib_ack_process_store_endpoint_to_wallet < {:?}", res);
+        trace!(
+            "_get_attrib_ack_process_store_endpoint_to_wallet < {:?}",
+            res
+        );
 
         res
     }
@@ -978,11 +1052,17 @@ impl DidController {
     ) -> IndyResult<TheirDid> {
         // TODO we need passing of my_did as identifier
         // TODO: FIXME: Remove this unwrap by sending GetNymAck with the error.
-        let get_nym_request = self.ledger_service.build_get_nym_request(None, did).unwrap();
+        let get_nym_request = self
+            .ledger_service
+            .build_get_nym_request(None, did)
+            .unwrap();
 
         let did = did.clone();
 
-        let get_nym_reply_result = self.pool_service.send_tx(pool_handle, &get_nym_request).await;
+        let get_nym_reply_result = self
+            .pool_service
+            .send_tx(pool_handle, &get_nym_request)
+            .await;
 
         self.get_nym_ack_process_and_store_their_did(wallet_handle, did, get_nym_reply_result)
             .await
@@ -1001,19 +1081,33 @@ impl DidController {
             .build_get_attrib_request(None, did, Some("endpoint"), None, None)
             .unwrap();
 
-        let get_attrib_reply_result = self.pool_service.send_tx(pool_handle, &get_attrib_request).await;
+        let get_attrib_reply_result = self
+            .pool_service
+            .send_tx(pool_handle, &get_attrib_request)
+            .await;
 
-        self._get_attrib_ack_process_store_endpoint_to_wallet(wallet_handle, get_attrib_reply_result)
-            .await
+        self._get_attrib_ack_process_store_endpoint_to_wallet(
+            wallet_handle,
+            get_attrib_reply_result,
+        )
+        .await
     }
 
-    async fn _wallet_get_my_did(&self, wallet_handle: WalletHandle, my_did: &DidValue) -> IndyResult<Did> {
+    async fn _wallet_get_my_did(
+        &self,
+        wallet_handle: WalletHandle,
+        my_did: &DidValue,
+    ) -> IndyResult<Did> {
         self.wallet_service
             .get_indy_object(wallet_handle, &my_did.0, &RecordOptions::id_value())
             .await
     }
 
-    async fn _wallet_get_their_did(&self, wallet_handle: WalletHandle, their_did: &DidValue) -> IndyResult<TheirDid> {
+    async fn _wallet_get_their_did(
+        &self,
+        wallet_handle: WalletHandle,
+        their_did: &DidValue,
+    ) -> IndyResult<TheirDid> {
         self.wallet_service
             .get_indy_object(wallet_handle, &their_did.0, &RecordOptions::id_value())
             .await

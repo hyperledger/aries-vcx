@@ -1,9 +1,8 @@
 extern crate sodiumoxide;
 
+use self::sodiumoxide::crypto::{secretbox, secretbox::xsalsa20poly1305};
 use failure::{err_msg, ResultExt};
 use indy_api_types::errors::prelude::*;
-
-use self::sodiumoxide::crypto::{secretbox, secretbox::xsalsa20poly1305};
 
 pub const KEYBYTES: usize = xsalsa20poly1305::KEYBYTES;
 pub const NONCEBYTES: usize = xsalsa20poly1305::NONCEBYTES;
@@ -39,7 +38,12 @@ pub fn encrypt_detached(key: &Key, nonce: &Nonce, doc: &[u8]) -> (Vec<u8>, Tag) 
     (cipher, Tag(tag))
 }
 
-pub fn decrypt_detached(key: &Key, nonce: &Nonce, tag: &Tag, doc: &[u8]) -> Result<Vec<u8>, IndyError> {
+pub fn decrypt_detached(
+    key: &Key,
+    nonce: &Nonce,
+    tag: &Tag,
+    doc: &[u8],
+) -> Result<Vec<u8>, IndyError> {
     let mut plain = doc.to_vec();
     secretbox::open_detached(plain.as_mut_slice(), &tag.0, &nonce.0, &key.0)
         .map_err(|_| err_msg("Unable to decrypt data"))

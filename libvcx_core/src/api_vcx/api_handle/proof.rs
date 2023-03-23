@@ -261,16 +261,6 @@ pub fn get_thread_id(handle: u32) -> LibvcxResult<String> {
 
 #[cfg(test)]
 pub mod tests {
-    use aries_vcx::{
-        agency_client::testing::mocking::HttpClientMockResponse,
-        utils::{
-            constants::{
-                PROOF_REJECT_RESPONSE_STR_V2, REQUESTED_ATTRS, REQUESTED_PREDICATES, V3_OBJECT_SERIALIZE_VERSION,
-            },
-            devsetup::SetupMocks,
-            mockdata::{mock_settings::MockBuilder, mockdata_proof},
-        },
-    };
     use serde_json::Value;
 
     use aries_vcx::agency_client::testing::mocking::HttpClientMockResponse;
@@ -287,11 +277,6 @@ pub mod tests {
     use crate::errors::error;
 
     use super::*;
-    use crate::{
-        api_vcx::api_handle::{mediated_connection::tests::build_test_connection_inviter_requested, proof},
-        aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState,
-        errors::error,
-    };
 
     async fn create_default_proof() -> u32 {
         create_proof(

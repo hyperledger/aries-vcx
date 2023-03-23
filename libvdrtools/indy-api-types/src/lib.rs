@@ -281,9 +281,8 @@ pub enum ErrorCode {
 }
 
 pub mod wallet {
-    use libc::c_char;
-
     use super::*;
+    use libc::c_char;
 
     /// Create the wallet storage (For example, database creation)
     ///
@@ -325,8 +324,11 @@ pub mod wallet {
     /// name: wallet storage name (the same as wallet name)
     /// config: wallet storage config (For example, database config)
     /// credentials_json: wallet storage credentials (For example, database credentials)
-    pub type WalletDelete =
-        extern "C" fn(name: *const c_char, config: *const c_char, credentials_json: *const c_char) -> ErrorCode;
+    pub type WalletDelete = extern "C" fn(
+        name: *const c_char,
+        config: *const c_char,
+        credentials_json: *const c_char,
+    ) -> ErrorCode;
 
     /// Create a new record in the wallet storage
     ///
@@ -430,8 +432,11 @@ pub mod wallet {
     /// storage_handle: opened storage handle (See open handler)
     /// type_: record type
     /// id: the id of record
-    pub type WalletDeleteRecord =
-        extern "C" fn(storage_handle: StorageHandle, type_: *const c_char, id: *const c_char) -> ErrorCode;
+    pub type WalletDeleteRecord = extern "C" fn(
+        storage_handle: StorageHandle,
+        type_: *const c_char,
+        id: *const c_char,
+    ) -> ErrorCode;
 
     /// Get an wallet storage record by id
     ///
@@ -522,7 +527,8 @@ pub mod wallet {
     /// #Params
     /// storage_handle: opened storage handle (See open_wallet_storage)
     /// record_handle: retrieved record handle (See wallet_storage_get_wallet_record)
-    pub type WalletFreeRecord = extern "C" fn(storage_handle: StorageHandle, record_handle: IndyHandle) -> ErrorCode;
+    pub type WalletFreeRecord =
+        extern "C" fn(storage_handle: StorageHandle, record_handle: IndyHandle) -> ErrorCode;
 
     /// Get storage metadata
     ///
@@ -601,8 +607,11 @@ pub mod wallet {
     ///
     /// returns: total count of records that corresponds to wallet storage search query
     ///          Note -1 will be returned if retrieveTotalCount set to false for search_records
-    pub type WalletGetSearchTotalCount =
-        extern "C" fn(storage_handle: StorageHandle, search_handle: i32, total_count_p: *mut usize) -> ErrorCode;
+    pub type WalletGetSearchTotalCount = extern "C" fn(
+        storage_handle: StorageHandle,
+        search_handle: i32,
+        total_count_p: *mut usize,
+    ) -> ErrorCode;
 
     /// Get the next wallet storage record handle retrieved by this wallet search.
     ///
@@ -612,13 +621,17 @@ pub mod wallet {
     ///
     /// returns: record handle (the same as for get_record handler)
     ///          Note if no more records WalletNoRecords error will be returned
-    pub type WalletFetchSearchNextRecord =
-        extern "C" fn(storage_handle: StorageHandle, search_handle: i32, record_handle_p: *mut IndyHandle) -> ErrorCode;
+    pub type WalletFetchSearchNextRecord = extern "C" fn(
+        storage_handle: StorageHandle,
+        search_handle: i32,
+        record_handle_p: *mut IndyHandle,
+    ) -> ErrorCode;
 
     /// Free wallet search (make search handle invalid)
     ///
     /// #Params
     /// storage_handle: opened storage handle (See open handler)
     /// search_handle: wallet search handle (See search_records handler)
-    pub type WalletFreeSearch = extern "C" fn(storage_handle: StorageHandle, search_handle: i32) -> ErrorCode;
+    pub type WalletFreeSearch =
+        extern "C" fn(storage_handle: StorageHandle, search_handle: i32) -> ErrorCode;
 }

@@ -1,16 +1,14 @@
 extern crate openssl;
 
-use indy_api_types::errors::prelude::*;
-
 use self::openssl::hash::{Hasher, MessageDigest};
+use indy_api_types::errors::prelude::*;
 
 pub const HASHBYTES: usize = 32;
 
-// these bytes are the same as openssl_hash(MessageDigest::sha256(), &[]) so we do not have to
-// actually call the hash function
+// these bytes are the same as openssl_hash(MessageDigest::sha256(), &[]) so we do not have to actually call the hash function
 pub const EMPTY_HASH_BYTES: [u8; HASHBYTES] = [
-    227, 176, 196, 66, 152, 252, 28, 20, 154, 251, 244, 200, 153, 111, 185, 36, 39, 174, 65, 228, 100, 155, 147, 76,
-    164, 149, 153, 27, 120, 82, 184, 85,
+    227, 176, 196, 66, 152, 252, 28, 20, 154, 251, 244, 200, 153, 111, 185, 36, 39, 174, 65, 228,
+    100, 155, 147, 76, 164, 149, 153, 27, 120, 82, 184, 85,
 ];
 
 pub fn hash(input: &[u8]) -> Result<Vec<u8>, IndyError> {

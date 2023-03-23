@@ -1,6 +1,10 @@
-use vdrtools::{types::errors::IndyErrorKind, Locator, PoolHandle};
+use vdrtools::Locator;
 
-use crate::{errors::error::prelude::*, global::settings};
+use vdrtools::types::errors::IndyErrorKind;
+use vdrtools::PoolHandle;
+
+use crate::errors::error::prelude::*;
+use crate::global::settings;
 
 pub fn set_protocol_version() -> VcxResult<()> {
     Locator::instance()
@@ -74,13 +78,15 @@ pub async fn delete(pool_name: &str) -> VcxResult<()> {
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
-    use std::{fs, io::Write};
+    use std::fs;
+    use std::io::Write;
 
-    use super::*;
     use crate::utils::{
         constants::{GENESIS_PATH, POOL},
         get_temp_dir_path,
     };
+
+    use super::*;
 
     pub async fn create_test_ledger_config() {
         create_tmp_genesis_txn_file();

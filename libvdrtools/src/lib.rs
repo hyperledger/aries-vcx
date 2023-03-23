@@ -32,7 +32,22 @@ mod services;
 
 use std::sync::Arc;
 
+use lazy_static::lazy_static;
+
+use crate::{
+    controllers::{
+        BlobStorageController, CacheController, ConfigController, CryptoController, DidController,
+        IssuerController, LedgerController, NonSecretsController, PairwiseController,
+        PoolController, ProverController, VerifierController, WalletController,
+    },
+    services::{
+        BlobStorageService, CryptoService, IssuerService, LedgerService, PoolService,
+        ProverService, VerifierService, WalletService,
+    },
+};
+
 pub use controllers::CredentialDefinitionId;
+
 pub use domain::{
     anoncreds::{
         credential::{Credential, CredentialValues},
@@ -40,7 +55,8 @@ pub use domain::{
         credential_offer::CredentialOffer,
         credential_request::{CredentialRequest, CredentialRequestMetadata},
         revocation_registry_definition::{
-            IssuanceType, RevocationRegistryConfig, RevocationRegistryDefinition, RevocationRegistryId,
+            IssuanceType, RevocationRegistryConfig, RevocationRegistryDefinition,
+            RevocationRegistryId,
         },
         revocation_state::RevocationStates,
         schema::{AttributeNames, Schema, SchemaId},
@@ -52,24 +68,13 @@ pub use domain::{
     },
     pool::PoolConfig,
 };
-pub use indy_api_types::{
-    CommandHandle, PoolHandle, SearchHandle, WalletHandle, INVALID_COMMAND_HANDLE, INVALID_POOL_HANDLE,
-    INVALID_SEARCH_HANDLE, INVALID_WALLET_HANDLE,
-};
-use lazy_static::lazy_static;
-pub use services::AnoncredsHelpers;
 
-use crate::{
-    controllers::{
-        BlobStorageController, CacheController, ConfigController, CryptoController, DidController, IssuerController,
-        LedgerController, NonSecretsController, PairwiseController, PoolController, ProverController,
-        VerifierController, WalletController,
-    },
-    services::{
-        BlobStorageService, CryptoService, IssuerService, LedgerService, PoolService, ProverService, VerifierService,
-        WalletService,
-    },
+pub use indy_api_types::{
+    CommandHandle, PoolHandle, SearchHandle, WalletHandle, INVALID_COMMAND_HANDLE,
+    INVALID_POOL_HANDLE, INVALID_SEARCH_HANDLE, INVALID_WALLET_HANDLE,
 };
+
+pub use services::AnoncredsHelpers;
 
 // Global (lazy inited) instance of Locator
 lazy_static! {
@@ -125,7 +130,8 @@ impl Locator {
 
         let verifier_controller = VerifierController::new(verifier_service);
 
-        let crypto_controller = CryptoController::new(wallet_service.clone(), crypto_service.clone());
+        let crypto_controller =
+            CryptoController::new(wallet_service.clone(), crypto_service.clone());
 
         let config_controller = ConfigController::new();
 
@@ -145,7 +151,8 @@ impl Locator {
             pool_service.clone(),
         );
 
-        let wallet_controller = WalletController::new(wallet_service.clone(), crypto_service.clone());
+        let wallet_controller =
+            WalletController::new(wallet_service.clone(), crypto_service.clone());
 
         let pairwise_controller = PairwiseController::new(wallet_service.clone());
         let blob_storage_controller = BlobStorageController::new(blob_storage_service.clone());

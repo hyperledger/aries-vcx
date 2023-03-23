@@ -1,9 +1,7 @@
 use std::clone::Clone;
 
-use messages::{
-    diddoc::aries::diddoc::AriesDidDoc,
-    protocols::discovery::disclose::{Disclose, ProtocolDescriptor},
-};
+use messages::diddoc::aries::diddoc::AriesDidDoc;
+use messages::protocols::discovery::disclose::{Disclose, ProtocolDescriptor};
 
 use crate::protocols::connection::trait_bounds::{BootstrapDidDoc, CompletedState, TheirDidDoc, ThreadId};
 

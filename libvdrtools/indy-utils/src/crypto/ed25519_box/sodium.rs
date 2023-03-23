@@ -1,8 +1,7 @@
 extern crate sodiumoxide;
 
-use indy_api_types::errors::prelude::*;
-
 use self::sodiumoxide::crypto::box_;
+use indy_api_types::errors::prelude::*;
 
 pub const NONCEBYTES: usize = box_::curve25519xsalsa20poly1305::NONCEBYTES;
 pub const PUBLICKEYBYTES: usize = box_::curve25519xsalsa20poly1305::PUBLICKEYBYTES;
@@ -27,8 +26,12 @@ pub fn decrypt(
     doc: &[u8],
     nonce: &Nonce,
 ) -> Result<Vec<u8>, IndyError> {
-    box_::open(doc, &nonce.0, &public_key.0, &secret_key.0)
-        .map_err(|_| IndyError::from_msg(IndyErrorKind::InvalidStructure, "Unable to open sodium _box"))
+    box_::open(doc, &nonce.0, &public_key.0, &secret_key.0).map_err(|_| {
+        IndyError::from_msg(
+            IndyErrorKind::InvalidStructure,
+            "Unable to open sodium _box",
+        )
+    })
 }
 
 pub fn gen_nonce() -> Nonce {
@@ -46,11 +49,13 @@ mod tests {
         let nonce = gen_nonce();
         let seed = ed25519_sign::Seed::from_slice(&randombytes(32)).unwrap();
 
-        let (alice_ver_key, alice_sign_key) = ed25519_sign::create_key_pair_for_signature(Some(&seed)).unwrap();
+        let (alice_ver_key, alice_sign_key) =
+            ed25519_sign::create_key_pair_for_signature(Some(&seed)).unwrap();
         let alice_pk = ed25519_sign::vk_to_curve25519(&alice_ver_key).unwrap();
         let alice_sk = ed25519_sign::sk_to_curve25519(&alice_sign_key).unwrap();
 
-        let (bob_ver_key, bob_sign_key) = ed25519_sign::create_key_pair_for_signature(Some(&seed)).unwrap();
+        let (bob_ver_key, bob_sign_key) =
+            ed25519_sign::create_key_pair_for_signature(Some(&seed)).unwrap();
         let bob_pk = ed25519_sign::vk_to_curve25519(&bob_ver_key).unwrap();
         let bob_sk = ed25519_sign::sk_to_curve25519(&bob_sign_key).unwrap();
 

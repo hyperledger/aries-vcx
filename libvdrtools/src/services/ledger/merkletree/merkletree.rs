@@ -1,14 +1,12 @@
-use indy_api_types::errors::prelude::*;
-use indy_utils::crypto::hash::{Hash, EMPTY_HASH_BYTES};
-
 use crate::services::ledger::merkletree::{
     proof::{Lemma, Proof},
     tree::{LeavesIntoIterator, LeavesIterator, Tree, TreeLeafData},
 };
+use indy_api_types::errors::prelude::*;
+use indy_utils::crypto::hash::{Hash, EMPTY_HASH_BYTES};
 
 /// A Merkle tree is a binary tree, with values of type `T` at the leafs,
-/// and where every internal node holds the hash of the concatenation of the hashes of its children
-/// nodes.
+/// and where every internal node holds the hash of the concatenation of the hashes of its children nodes.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MerkleTree {
     /// The root of the inner binary tree
@@ -125,7 +123,8 @@ impl MerkleTree {
         let root_hash = self.root_hash().clone();
         let leaf_hash = Hash::hash_leaf(&value)?;
 
-        Ok(Lemma::new(&self.root, leaf_hash.to_vec().as_slice()).map(|lemma| Proof::new(root_hash, lemma, value)))
+        Ok(Lemma::new(&self.root, leaf_hash.to_vec().as_slice())
+            .map(|lemma| Proof::new(root_hash, lemma, value)))
     }
 
     /// Creates an `Iterator` over the values contained in this Merkle tree.

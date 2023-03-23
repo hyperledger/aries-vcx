@@ -1,11 +1,10 @@
+use crate::utils::qualifier;
 use indy_api_types::{
     errors::{IndyError, IndyErrorKind, IndyResult},
     validation::Validatable,
 };
 use lazy_static::lazy_static;
 use regex::Regex;
-
-use crate::utils::qualifier;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct DidMethod(pub String);
@@ -123,14 +122,13 @@ impl Validatable for DidValue {
         if self.is_fully_qualified() {
             // pass
         } else {
-            let did = bs58::decode(&self.0).into_vec().map_err(|err| err.to_string())?;
+            let did = bs58::decode(&self.0)
+                .into_vec()
+                .map_err(|err| err.to_string())?;
 
             if did.len() != 16 && did.len() != 32 {
-                return Err(format!(
-                    "Trying to use DID with unexpected length: {}. The 16- or 32-byte number upon which a DID is \
-                     based should be 22/23 or 44/45 bytes when encoded as base58.",
-                    did.len()
-                ));
+                return Err(format!("Trying to use DID with unexpected length: {}. \
+                               The 16- or 32-byte number upon which a DID is based should be 22/23 or 44/45 bytes when encoded as base58.", did.len()));
             }
         }
         Ok(())
@@ -152,14 +150,13 @@ impl ShortDidValue {
 
 impl Validatable for ShortDidValue {
     fn validate(&self) -> Result<(), String> {
-        let did = bs58::decode(&self.0).into_vec().map_err(|err| err.to_string())?;
+        let did = bs58::decode(&self.0)
+            .into_vec()
+            .map_err(|err| err.to_string())?;
 
         if did.len() != 16 && did.len() != 32 {
-            return Err(format!(
-                "Trying to use DID with unexpected length: {}. The 16- or 32-byte number upon which a DID is based \
-                 should be 22/23 or 44/45 bytes when encoded as base58.",
-                did.len()
-            ));
+            return Err(format!("Trying to use DID with unexpected length: {}. \
+                               The 16- or 32-byte number upon which a DID is based should be 22/23 or 44/45 bytes when encoded as base58.", did.len()));
         }
         Ok(())
     }

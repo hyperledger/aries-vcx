@@ -1,8 +1,7 @@
-use crate::{
-    a2a::{A2AMessage, MessageId},
-    concepts::{thread::Thread, timing::Timing},
-    timing_optional,
-};
+use crate::a2a::{A2AMessage, MessageId};
+use crate::concepts::thread::Thread;
+use crate::concepts::timing::Timing;
+use crate::timing_optional;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
 pub struct OutOfBandHandshakeReuse {

@@ -1,6 +1,9 @@
-use vdrtools::{Locator, WalletHandle};
+use vdrtools::Locator;
 
-use crate::{errors::error::prelude::*, global::settings};
+use vdrtools::WalletHandle;
+
+use crate::errors::error::prelude::*;
+use crate::global::settings;
 
 pub async fn sign(wallet_handle: WalletHandle, my_vk: &str, msg: &[u8]) -> VcxResult<Vec<u8>> {
     if settings::indy_mocks_enabled() {

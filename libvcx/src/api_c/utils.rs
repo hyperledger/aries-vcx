@@ -1,16 +1,13 @@
 use std::ptr;
 
-use aries_vcx::{
-    agency_client::{
-        configuration::AgentProvisionConfig, messages::update_message::UIDsByConn, testing::mocking::AgencyMock,
-        MessageStatusCode,
-    },
-    utils::constants::*,
-};
 use futures::future::{BoxFuture, FutureExt};
 use libc::c_char;
 use serde_json;
 
+use aries_vcx::agency_client::configuration::AgentProvisionConfig;
+use aries_vcx::agency_client::messages::update_message::UIDsByConn;
+use aries_vcx::agency_client::testing::mocking::AgencyMock;
+use aries_vcx::agency_client::MessageStatusCode;
 use aries_vcx::utils::constants::*;
 use libvcx_core::api_vcx::api_global::agency_client::agency_update_messages;
 use libvcx_core::api_vcx::api_global::agency_client::provision_cloud_agent;

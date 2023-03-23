@@ -1,23 +1,18 @@
 use std::sync::Arc;
 
-use aries_vcx::{
-    core::profile::profile::Profile,
-    handlers::issuance::holder::Holder,
-    messages::{
-        a2a::A2AMessage,
-        protocols::issuance::{
-            credential::Credential, credential_offer::CredentialOffer, credential_proposal::CredentialProposalData,
-        },
-    },
-    protocols::{issuance::holder::state_machine::HolderState, SendClosure},
-};
-
-use crate::{
-    error::*,
-    http_client::HttpClient,
-    services::connection::ServiceConnections,
-    storage::{object_cache::ObjectCache, Storage},
-};
+use crate::error::*;
+use crate::http_client::HttpClient;
+use crate::services::connection::ServiceConnections;
+use crate::storage::object_cache::ObjectCache;
+use crate::storage::Storage;
+use aries_vcx::core::profile::profile::Profile;
+use aries_vcx::handlers::issuance::holder::Holder;
+use aries_vcx::messages::a2a::A2AMessage;
+use aries_vcx::messages::protocols::issuance::credential::Credential;
+use aries_vcx::messages::protocols::issuance::credential_offer::CredentialOffer;
+use aries_vcx::messages::protocols::issuance::credential_proposal::CredentialProposalData;
+use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
+use aries_vcx::protocols::SendClosure;
 
 #[derive(Clone)]
 struct HolderWrapper {

@@ -62,7 +62,9 @@ impl<'de> Deserialize<'de> for Query {
 
                 parse_query(map).map_err(de::Error::custom)
             }
-            _ => Err(de::Error::missing_field("Restriction must be either object or array")),
+            _ => Err(de::Error::missing_field(
+                "Restriction must be either object or array",
+            )),
         }
     }
 }
@@ -78,7 +80,9 @@ impl Query {
                 }
             }
             Query::And(suboperators) if suboperators.is_empty() => None,
-            Query::And(mut suboperators) if suboperators.len() == 1 => suboperators.remove(0).optimise(),
+            Query::And(mut suboperators) if suboperators.len() == 1 => {
+                suboperators.remove(0).optimise()
+            }
             Query::And(suboperators) => {
                 let mut suboperators: Vec<Query> = suboperators
                     .into_iter()
@@ -92,7 +96,9 @@ impl Query {
                 }
             }
             Query::Or(suboperators) if suboperators.is_empty() => None,
-            Query::Or(mut suboperators) if suboperators.len() == 1 => suboperators.remove(0).optimise(),
+            Query::Or(mut suboperators) if suboperators.len() == 1 => {
+                suboperators.remove(0).optimise()
+            }
             Query::Or(suboperators) => {
                 let mut suboperators: Vec<Query> = suboperators
                     .into_iter()
@@ -105,7 +111,9 @@ impl Query {
                     _ => Some(Query::Or(suboperators)),
                 }
             }
-            Query::In(key, mut targets) if targets.len() == 1 => Some(Query::Eq(key, targets.remove(0))),
+            Query::In(key, mut targets) if targets.len() == 1 => {
+                Some(Query::Eq(key, targets.remove(0)))
+            }
             Query::In(key, targets) => Some(Query::In(key, targets)),
             _ => Some(self),
         }
@@ -221,7 +229,11 @@ fn parse_list_operators(operators: Vec<serde_json::Value>) -> Result<Vec<Query>,
     Ok(out_operators)
 }
 
-fn parse_single_operator(operator_name: String, key: String, value: serde_json::Value) -> Result<Query, &'static str> {
+fn parse_single_operator(
+    operator_name: String,
+    key: String,
+    value: serde_json::Value,
+) -> Result<Query, &'static str> {
     match (&*operator_name, value) {
         ("$neq", serde_json::Value::String(value_)) => Ok(Query::Neq(key, value_)),
         ("$neq", _) => Err("$neq must be used with string"),
@@ -255,9 +267,8 @@ fn parse_single_operator(operator_name: String, key: String, value: serde_json::
 
 #[cfg(test)]
 mod tests {
-    use rand::{distributions::Alphanumeric, thread_rng, Rng};
-
     use super::*;
+    use rand::{distributions::Alphanumeric, thread_rng, Rng};
 
     fn _random_string(len: usize) -> String {
         thread_rng()
@@ -431,7 +442,10 @@ mod tests {
         let value2 = _random_string(10);
         let value3 = _random_string(10);
 
-        let json = format!(r#"{{"{}":{{"$in":["{}","{}","{}"]}}}}"#, name1, value1, value2, value3);
+        let json = format!(
+            r#"{{"{}":{{"$in":["{}","{}","{}"]}}}}"#,
+            name1, value1, value2, value3
+        );
 
         let query: Query = ::serde_json::from_str(&json).unwrap();
 
@@ -1618,11 +1632,17 @@ mod tests {
         let value2 = _random_string(10);
         let value3 = _random_string(10);
 
-        let query = Query::In(name1.clone(), vec![value1.clone(), value2.clone(), value3.clone()]);
+        let query = Query::In(
+            name1.clone(),
+            vec![value1.clone(), value2.clone(), value3.clone()],
+        );
 
         let json = ::serde_json::to_string(&query).unwrap();
 
-        let expected = format!(r#"{{"{}":{{"$in":["{}","{}","{}"]}}}}"#, name1, value1, value2, value3);
+        let expected = format!(
+            r#"{{"{}":{{"$in":["{}","{}","{}"]}}}}"#,
+            name1, value1, value2, value3
+        );
 
         assert_eq!(json, expected);
     }
@@ -1744,7 +1764,10 @@ mod tests {
         let name1 = _random_string(10);
         let value1 = _random_string(10);
 
-        let query = Query::And(vec![Query::Not(Box::new(Query::Eq(name1.clone(), value1.clone())))]);
+        let query = Query::And(vec![Query::Not(Box::new(Query::Eq(
+            name1.clone(),
+            value1.clone(),
+        )))]);
 
         let json = ::serde_json::to_string(&query).unwrap();
 
@@ -2156,7 +2179,10 @@ mod tests {
         let name1 = _random_string(10);
         let value1 = _random_string(10);
 
-        let query = Query::Or(vec![Query::Not(Box::new(Query::Eq(name1.clone(), value1.clone())))]);
+        let query = Query::Or(vec![Query::Not(Box::new(Query::Eq(
+            name1.clone(),
+            value1.clone(),
+        )))]);
 
         let json = ::serde_json::to_string(&query).unwrap();
 
@@ -2632,7 +2658,10 @@ mod tests {
         let value1 = _random_string(10);
         let value2 = _random_string(10);
 
-        let json = format!(r#"[{{"{}":"{}"}}, {{"{}":"{}"}}]"#, name1, value1, name2, value2);
+        let json = format!(
+            r#"[{{"{}":"{}"}}, {{"{}":"{}"}}]"#,
+            name1, value1, name2, value2
+        );
 
         let query: Query = ::serde_json::from_str(&json).unwrap();
 

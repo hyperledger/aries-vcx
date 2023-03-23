@@ -1,12 +1,14 @@
 use std::path::PathBuf;
 
+use crate::utils::crypto::base58::ToBase58;
 use async_std::{fs, fs::File, prelude::*};
 use async_trait::async_trait;
 use indy_api_types::errors::prelude::*;
 use serde_json;
 
+use crate::utils::environment;
+
 use super::{WritableBlob, Writer, WriterType};
-use crate::utils::{crypto::base58::ToBase58, environment};
 
 #[allow(dead_code)]
 pub(crate) struct DefaultWriter {
@@ -25,8 +27,10 @@ struct DefaultWriterConfig {
 #[async_trait]
 impl WriterType for DefaultWriterType {
     async fn open(&self, config: &str) -> IndyResult<Box<dyn Writer>> {
-        let config: DefaultWriterConfig = serde_json::from_str(config)
-            .to_indy(IndyErrorKind::InvalidStructure, "Can't deserialize DefaultWriterConfig")?;
+        let config: DefaultWriterConfig = serde_json::from_str(config).to_indy(
+            IndyErrorKind::InvalidStructure,
+            "Can't deserialize DefaultWriterConfig",
+        )?;
 
         Ok(Box::new(config))
     }
@@ -42,7 +46,9 @@ impl Writer for DefaultWriterConfig {
             .create(tmp_storage_file(id).parent().unwrap())
             .await?;
 
-        let file = File::create(tmp_storage_file(id)).await.map_err(map_err_trace!())?;
+        let file = File::create(tmp_storage_file(id))
+            .await
+            .map_err(map_err_trace!())?;
 
         Ok(Box::new(DefaultWriter {
             base_dir: path,

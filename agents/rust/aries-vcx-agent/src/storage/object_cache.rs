@@ -1,11 +1,10 @@
-use std::{
-    collections::HashMap,
-    ops::Deref,
-    sync::{Mutex, RwLock, RwLockReadGuard, RwLockWriteGuard},
-};
+use std::collections::HashMap;
+use std::ops::Deref;
+use std::sync::{Mutex, RwLock, RwLockReadGuard, RwLockWriteGuard};
+
+use crate::error::*;
 
 use super::Storage;
-use crate::error::*;
 
 pub struct ObjectCache<T>
 where

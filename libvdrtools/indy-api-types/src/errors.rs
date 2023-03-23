@@ -7,19 +7,22 @@ use std::{
 };
 
 use failure::{Backtrace, Context, Fail};
-use libc::c_char;
 use log;
+
 #[cfg(feature = "casting_errors")]
 use sqlx;
+
 #[cfg(feature = "casting_errors")]
 use ursa::errors::{UrsaCryptoError, UrsaCryptoErrorKind};
+
+use libc::c_char;
 
 use crate::ErrorCode;
 
 pub mod prelude {
     pub use super::{
-        err_msg, get_current_error_c_json, set_current_error, IndyError, IndyErrorExt, IndyErrorKind, IndyResult,
-        IndyResultExt,
+        err_msg, get_current_error_c_json, set_current_error, IndyError, IndyErrorExt,
+        IndyErrorKind, IndyResult, IndyResultExt,
     };
 }
 
@@ -212,7 +215,9 @@ impl From<IndyErrorKind> for IndyError {
 
 impl From<Context<IndyErrorKind>> for IndyError {
     fn from(inner: Context<IndyErrorKind>) -> IndyError {
-        IndyError { inner: Arc::new(inner) }
+        IndyError {
+            inner: Arc::new(inner),
+        }
     }
 }
 
@@ -258,12 +263,18 @@ impl From<UrsaCryptoError> for IndyError {
     fn from(err: UrsaCryptoError) -> Self {
         let message = format!(
             "UrsaCryptoError: {}",
-            <dyn Fail>::iter_causes(&err).map(|e| e.to_string()).collect::<String>()
+            <dyn Fail>::iter_causes(&err)
+                .map(|e| e.to_string())
+                .collect::<String>()
         );
 
         match err.kind() {
-            UrsaCryptoErrorKind::InvalidState => IndyError::from_msg(IndyErrorKind::InvalidState, message),
-            UrsaCryptoErrorKind::InvalidStructure => IndyError::from_msg(IndyErrorKind::InvalidStructure, message),
+            UrsaCryptoErrorKind::InvalidState => {
+                IndyError::from_msg(IndyErrorKind::InvalidState, message)
+            }
+            UrsaCryptoErrorKind::InvalidStructure => {
+                IndyError::from_msg(IndyErrorKind::InvalidStructure, message)
+            }
             UrsaCryptoErrorKind::IOError => IndyError::from_msg(IndyErrorKind::IOError, message),
             UrsaCryptoErrorKind::InvalidRevocationAccumulatorIndex => {
                 IndyError::from_msg(IndyErrorKind::InvalidUserRevocId, message)
@@ -271,9 +282,15 @@ impl From<UrsaCryptoError> for IndyError {
             UrsaCryptoErrorKind::RevocationAccumulatorIsFull => {
                 IndyError::from_msg(IndyErrorKind::RevocationRegistryFull, message)
             }
-            UrsaCryptoErrorKind::ProofRejected => IndyError::from_msg(IndyErrorKind::ProofRejected, message),
-            UrsaCryptoErrorKind::CredentialRevoked => IndyError::from_msg(IndyErrorKind::CredentialRevoked, message),
-            UrsaCryptoErrorKind::InvalidParam(_) => IndyError::from_msg(IndyErrorKind::InvalidStructure, message),
+            UrsaCryptoErrorKind::ProofRejected => {
+                IndyError::from_msg(IndyErrorKind::ProofRejected, message)
+            }
+            UrsaCryptoErrorKind::CredentialRevoked => {
+                IndyError::from_msg(IndyErrorKind::CredentialRevoked, message)
+            }
+            UrsaCryptoErrorKind::InvalidParam(_) => {
+                IndyError::from_msg(IndyErrorKind::InvalidStructure, message)
+            }
         }
     }
 }
@@ -300,19 +317,33 @@ impl From<openssl::error::ErrorStack> for IndyError {
 impl From<sqlx::Error> for IndyError {
     fn from(err: sqlx::Error) -> IndyError {
         match &err {
-            sqlx::Error::RowNotFound => err.to_indy(IndyErrorKind::WalletItemNotFound, "Item not found"),
+            sqlx::Error::RowNotFound => {
+                err.to_indy(IndyErrorKind::WalletItemNotFound, "Item not found")
+            }
             sqlx::Error::Database(e) => match e.code() {
                 Some(code) => match code.as_ref() {
                     // Constraint unuque - sqlite (2067)
-                    "2067" => err.to_indy(IndyErrorKind::WalletItemAlreadyExists, "Wallet item already exists"),
+                    "2067" => err.to_indy(
+                        IndyErrorKind::WalletItemAlreadyExists,
+                        "Wallet item already exists",
+                    ),
                     // Integrity constraint violation (23000)
-                    "23000" => err.to_indy(IndyErrorKind::WalletItemAlreadyExists, "Wallet item already exists"),
+                    "23000" => err.to_indy(
+                        IndyErrorKind::WalletItemAlreadyExists,
+                        "Wallet item already exists",
+                    ),
                     _ => err.to_indy(IndyErrorKind::InvalidState, "Unexpected database error"),
                 },
                 None => err.to_indy(IndyErrorKind::InvalidState, "Unexpected database error"),
             },
-            sqlx::Error::Io(_) => err.to_indy(IndyErrorKind::IOError, "IO error during access sqlite database"),
-            sqlx::Error::Tls(_) => err.to_indy(IndyErrorKind::IOError, "IO error during access sqlite database"),
+            sqlx::Error::Io(_) => err.to_indy(
+                IndyErrorKind::IOError,
+                "IO error during access sqlite database",
+            ),
+            sqlx::Error::Tls(_) => err.to_indy(
+                IndyErrorKind::IOError,
+                "IO error during access sqlite database",
+            ),
             _ => err.to_indy(IndyErrorKind::InvalidState, "Unexpected database error"),
         }
     }
@@ -320,8 +351,10 @@ impl From<sqlx::Error> for IndyError {
 
 impl From<NulError> for IndyError {
     fn from(err: NulError) -> IndyError {
-        err.to_indy(IndyErrorKind::InvalidState, "Null symbols in payments strings") // TODO: Review
-                                                                                     // kind
+        err.to_indy(
+            IndyErrorKind::InvalidState,
+            "Null symbols in payments strings",
+        ) // TODO: Review kind
     }
 }
 
@@ -377,9 +410,13 @@ impl From<IndyErrorKind> for ErrorCode {
                 _ => ErrorCode::CommonInvalidState,
             },
             IndyErrorKind::IOError => ErrorCode::CommonIOError,
-            IndyErrorKind::MasterSecretDuplicateName => ErrorCode::AnoncredsMasterSecretDuplicateNameError,
+            IndyErrorKind::MasterSecretDuplicateName => {
+                ErrorCode::AnoncredsMasterSecretDuplicateNameError
+            }
             IndyErrorKind::ProofRejected => ErrorCode::AnoncredsProofRejected,
-            IndyErrorKind::RevocationRegistryFull => ErrorCode::AnoncredsRevocationRegistryFullError,
+            IndyErrorKind::RevocationRegistryFull => {
+                ErrorCode::AnoncredsRevocationRegistryFullError
+            }
             IndyErrorKind::InvalidUserRevocId => ErrorCode::AnoncredsInvalidUserRevocId,
             IndyErrorKind::CredentialRevoked => ErrorCode::AnoncredsCredentialRevoked,
             IndyErrorKind::CredDefAlreadyExists => ErrorCode::AnoncredsCredDefAlreadyExistsError,
@@ -391,11 +428,15 @@ impl From<IndyErrorKind> for ErrorCode {
             IndyErrorKind::PoolTerminated => ErrorCode::PoolLedgerTerminated,
             IndyErrorKind::PoolTimeout => ErrorCode::PoolLedgerTimeout,
             IndyErrorKind::PoolConfigAlreadyExists => ErrorCode::PoolLedgerConfigAlreadyExistsError,
-            IndyErrorKind::PoolIncompatibleProtocolVersion => ErrorCode::PoolIncompatibleProtocolVersion,
+            IndyErrorKind::PoolIncompatibleProtocolVersion => {
+                ErrorCode::PoolIncompatibleProtocolVersion
+            }
             IndyErrorKind::UnknownCrypto => ErrorCode::UnknownCryptoTypeError,
             IndyErrorKind::InvalidWalletHandle => ErrorCode::WalletInvalidHandle,
             IndyErrorKind::UnknownWalletStorageType => ErrorCode::WalletUnknownTypeError,
-            IndyErrorKind::WalletStorageTypeAlreadyRegistered => ErrorCode::WalletTypeAlreadyRegisteredError,
+            IndyErrorKind::WalletStorageTypeAlreadyRegistered => {
+                ErrorCode::WalletTypeAlreadyRegisteredError
+            }
             IndyErrorKind::WalletAlreadyExists => ErrorCode::WalletAlreadyExistsError,
             IndyErrorKind::WalletNotFound => ErrorCode::WalletNotFoundError,
             IndyErrorKind::WalletAlreadyOpened => ErrorCode::WalletAlreadyOpenedError,
@@ -411,7 +452,9 @@ impl From<IndyErrorKind> for ErrorCode {
             IndyErrorKind::IncompatiblePaymentMethods => ErrorCode::PaymentIncompatibleMethodsError,
             IndyErrorKind::PaymentInsufficientFunds => ErrorCode::PaymentInsufficientFundsError,
             IndyErrorKind::PaymentSourceDoesNotExist => ErrorCode::PaymentSourceDoesNotExistError,
-            IndyErrorKind::PaymentOperationNotSupported => ErrorCode::PaymentOperationNotSupportedError,
+            IndyErrorKind::PaymentOperationNotSupported => {
+                ErrorCode::PaymentOperationNotSupportedError
+            }
             IndyErrorKind::PaymentExtraFunds => ErrorCode::PaymentExtraFundsError,
             IndyErrorKind::TransactionNotAllowed => ErrorCode::TransactionNotAllowedError,
             IndyErrorKind::QueryAccountDoesNotExist => ErrorCode::QueryAccountDoesNotexistError,
@@ -471,9 +514,13 @@ impl From<ErrorCode> for IndyErrorKind {
             ErrorCode::CommonInvalidParam26 => IndyErrorKind::InvalidParam(26),
             ErrorCode::CommonInvalidParam27 => IndyErrorKind::InvalidParam(27),
             ErrorCode::CommonIOError => IndyErrorKind::IOError,
-            ErrorCode::AnoncredsMasterSecretDuplicateNameError => IndyErrorKind::MasterSecretDuplicateName,
+            ErrorCode::AnoncredsMasterSecretDuplicateNameError => {
+                IndyErrorKind::MasterSecretDuplicateName
+            }
             ErrorCode::AnoncredsProofRejected => IndyErrorKind::ProofRejected,
-            ErrorCode::AnoncredsRevocationRegistryFullError => IndyErrorKind::RevocationRegistryFull,
+            ErrorCode::AnoncredsRevocationRegistryFullError => {
+                IndyErrorKind::RevocationRegistryFull
+            }
             ErrorCode::AnoncredsInvalidUserRevocId => IndyErrorKind::InvalidUserRevocId,
             ErrorCode::AnoncredsCredentialRevoked => IndyErrorKind::CredentialRevoked,
             ErrorCode::AnoncredsCredDefAlreadyExistsError => IndyErrorKind::CredDefAlreadyExists,
@@ -485,11 +532,15 @@ impl From<ErrorCode> for IndyErrorKind {
             ErrorCode::PoolLedgerTerminated => IndyErrorKind::PoolTerminated,
             ErrorCode::PoolLedgerTimeout => IndyErrorKind::PoolTimeout,
             ErrorCode::PoolLedgerConfigAlreadyExistsError => IndyErrorKind::PoolConfigAlreadyExists,
-            ErrorCode::PoolIncompatibleProtocolVersion => IndyErrorKind::PoolIncompatibleProtocolVersion,
+            ErrorCode::PoolIncompatibleProtocolVersion => {
+                IndyErrorKind::PoolIncompatibleProtocolVersion
+            }
             ErrorCode::UnknownCryptoTypeError => IndyErrorKind::UnknownCrypto,
             ErrorCode::WalletInvalidHandle => IndyErrorKind::InvalidWalletHandle,
             ErrorCode::WalletUnknownTypeError => IndyErrorKind::UnknownWalletStorageType,
-            ErrorCode::WalletTypeAlreadyRegisteredError => IndyErrorKind::WalletStorageTypeAlreadyRegistered,
+            ErrorCode::WalletTypeAlreadyRegisteredError => {
+                IndyErrorKind::WalletStorageTypeAlreadyRegistered
+            }
             ErrorCode::WalletAlreadyExistsError => IndyErrorKind::WalletAlreadyExists,
             ErrorCode::WalletNotFoundError => IndyErrorKind::WalletNotFound,
             ErrorCode::WalletAlreadyOpenedError => IndyErrorKind::WalletAlreadyOpened,
@@ -505,7 +556,9 @@ impl From<ErrorCode> for IndyErrorKind {
             ErrorCode::PaymentIncompatibleMethodsError => IndyErrorKind::IncompatiblePaymentMethods,
             ErrorCode::PaymentInsufficientFundsError => IndyErrorKind::PaymentInsufficientFunds,
             ErrorCode::PaymentSourceDoesNotExistError => IndyErrorKind::PaymentSourceDoesNotExist,
-            ErrorCode::PaymentOperationNotSupportedError => IndyErrorKind::PaymentOperationNotSupported,
+            ErrorCode::PaymentOperationNotSupportedError => {
+                IndyErrorKind::PaymentOperationNotSupported
+            }
             ErrorCode::PaymentExtraFundsError => IndyErrorKind::PaymentExtraFunds,
             ErrorCode::TransactionNotAllowedError => IndyErrorKind::TransactionNotAllowed,
             ErrorCode::InvalidVDRHandle => IndyErrorKind::InvalidVDRHandle,
@@ -580,8 +633,8 @@ pub fn set_current_error(err: &IndyError) {
 ///     1) synchronous  - in the same application thread
 ///     2) asynchronous - inside of function callback
 ///
-/// NOTE: Error is stored until the next one occurs in the same execution thread or until
-/// asynchronous callback finished.       Returning pointer has the same lifetime.
+/// NOTE: Error is stored until the next one occurs in the same execution thread or until asynchronous callback finished.
+///       Returning pointer has the same lifetime.
 ///
 /// #Params
 /// * `error_json_p` - Reference that will contain error details (if any error has occurred before)
@@ -593,6 +646,7 @@ pub fn set_current_error(err: &IndyError) {
 ///             2) calling `indy_set_runtime_config` API function with `collect_backtrace: true`
 ///     "message": str - human-readable error description
 /// }
+///
 pub fn get_current_error_c_json() -> *const c_char {
     let mut value = ptr::null();
 

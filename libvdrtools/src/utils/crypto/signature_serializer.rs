@@ -1,17 +1,24 @@
+use crate::domain::ledger::constants::{ATTRIB, GET_ATTR};
 use indy_api_types::errors::prelude::*;
 use indy_utils::crypto::hash::Hash;
 use serde_json::Value;
-
-use crate::domain::ledger::constants::{ATTRIB, GET_ATTR};
 
 pub fn serialize_signature(v: Value) -> Result<String, IndyError> {
     let _type = v["operation"]["type"].clone();
     _serialize_signature(v, true, _type.as_str())
 }
 
-fn _serialize_signature(v: Value, is_top_level: bool, _type: Option<&str>) -> Result<String, IndyError> {
+fn _serialize_signature(
+    v: Value,
+    is_top_level: bool,
+    _type: Option<&str>,
+) -> Result<String, IndyError> {
     match v {
-        Value::Bool(value) => Ok(if value { "True".to_string() } else { "False".to_string() }),
+        Value::Bool(value) => Ok(if value {
+            "True".to_string()
+        } else {
+            "False".to_string()
+        }),
         Value::Number(value) => Ok(value.to_string()),
         Value::String(value) => Ok(value),
         Value::Array(array) => array
@@ -33,7 +40,8 @@ fn _serialize_signature(v: Value, is_top_level: bool, _type: Option<&str>) -> Re
                 }
 
                 let mut value = map[key].clone();
-                if (_type == Some(ATTRIB) || _type == Some(GET_ATTR)) && (key == "raw" || key == "hash" || key == "enc")
+                if (_type == Some(ATTRIB) || _type == Some(GET_ATTR))
+                    && (key == "raw" || key == "hash" || key == "enc")
                 {
                     // do it only for attribute related request
                     let mut ctx = Hash::new_context()?;
@@ -42,7 +50,10 @@ fn _serialize_signature(v: Value, is_top_level: bool, _type: Option<&str>) -> Re
                         &value
                             .as_str()
                             .ok_or_else(|| {
-                                IndyError::from_msg(IndyErrorKind::InvalidState, "Cannot update hash context")
+                                IndyError::from_msg(
+                                    IndyErrorKind::InvalidState,
+                                    "Cannot update hash context",
+                                )
                             })?
                             .as_bytes(),
                     )?;
@@ -106,10 +117,7 @@ mod tests {
                     }"#;
         let msg: Value = serde_json::from_str(data).unwrap();
 
-        let result = "age:43|name:John \
-                      Doe|operation:dest:54|hash:\
-                      46aa0c92129b33ee72ee1478d2ae62fa6e756869dedc6c858af3214a6fcf1904|type:100|phones:1234567,\
-                      2345678,age:1|rust:5,3";
+        let result = "age:43|name:John Doe|operation:dest:54|hash:46aa0c92129b33ee72ee1478d2ae62fa6e756869dedc6c858af3214a6fcf1904|type:100|phones:1234567,2345678,age:1|rust:5,3";
 
         assert_eq!(serialize_signature(msg).unwrap(), result)
     }
@@ -134,10 +142,7 @@ mod tests {
                     }"#;
         let msg: Value = serde_json::from_str(data).unwrap();
 
-        let result = "age:43|name:John \
-                      Doe|operation:dest:54|hash:46aa0c92129b33ee72ee1478d2ae62fa6e756869dedc6c858af3214a6fcf1904|raw:\
-                      1dcd0759ce38f57049344a6b3c5fc18144fca1724713090c2ceeffa788c02711|type:100|phones:1234567,\
-                      2345678,age:1|rust:5,3";
+        let result = "age:43|name:John Doe|operation:dest:54|hash:46aa0c92129b33ee72ee1478d2ae62fa6e756869dedc6c858af3214a6fcf1904|raw:1dcd0759ce38f57049344a6b3c5fc18144fca1724713090c2ceeffa788c02711|type:100|phones:1234567,2345678,age:1|rust:5,3";
 
         assert_eq!(serialize_signature(msg).unwrap(), result)
     }
@@ -162,8 +167,7 @@ mod tests {
                     }"#;
         let msg: Value = serde_json::from_str(data).unwrap();
 
-        let result = "age:43|name:John Doe|operation:dest:54|hash:cool hash|raw:string for \
-                      hash|type:101|phones:1234567,2345678,age:1|rust:5,3";
+        let result = "age:43|name:John Doe|operation:dest:54|hash:cool hash|raw:string for hash|type:101|phones:1234567,2345678,age:1|rust:5,3";
 
         assert_eq!(serialize_signature(msg).unwrap(), result)
     }

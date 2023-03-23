@@ -86,7 +86,8 @@ macro_rules! timing_optional (($type:ident) => (
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
 
-    use std::{thread, time::Duration};
+    use std::thread;
+    use std::time::Duration;
 
     use super::*;
 

@@ -1,7 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
 use failure::Context;
-use indy_api_types::errors::prelude::*;
 use serde_json;
 
 use crate::{
@@ -15,6 +14,7 @@ use crate::{
     },
     utils::crypto::base58::{FromBase58, ToBase58},
 };
+use indy_api_types::errors::prelude::*;
 
 pub enum CatchupProgress {
     ShouldBeStarted(
@@ -27,7 +27,10 @@ pub enum CatchupProgress {
     InProgress,
 }
 
-pub fn build_catchup_req(merkle: &MerkleTree, target_mt_size: usize) -> IndyResult<Option<(String, String)>> {
+pub fn build_catchup_req(
+    merkle: &MerkleTree,
+    target_mt_size: usize,
+) -> IndyResult<Option<(String, String)>> {
     if merkle.count() >= target_mt_size {
         warn!("No transactions to catch up!");
         return Ok(None);
@@ -44,8 +47,10 @@ pub fn build_catchup_req(merkle: &MerkleTree, target_mt_size: usize) -> IndyResu
 
     let req_id = format!("{}{}", seq_no_start, seq_no_end);
 
-    let req_json = serde_json::to_string(&Message::CatchupReq(cr))
-        .to_indy(IndyErrorKind::InvalidState, "Cannot serialize CatchupRequest")?;
+    let req_json = serde_json::to_string(&Message::CatchupReq(cr)).to_indy(
+        IndyErrorKind::InvalidState,
+        "Cannot serialize CatchupRequest",
+    )?;
 
     trace!("catchup_req msg: {:?}", req_json);
     Ok(Some((req_id, req_json)))
@@ -73,19 +78,28 @@ pub fn check_nodes_responses_on_status(
 
     if let Some((most_popular_not_timeout_vote, votes_cnt)) = most_popular_not_timeout {
         if *votes_cnt == f + 1 {
-            return _try_to_catch_up(most_popular_not_timeout_vote, merkle_tree).or_else(|err| match pool_mode {
-                PoolMode::InMemory => Err(err),
-                PoolMode::Persistent => {
-                    if merkle_tree_factory::drop_cache(pool_name).is_ok() {
-                        let merkle_tree = merkle_tree_factory::create(pool_name)?;
-                        _try_to_catch_up(most_popular_not_timeout_vote, &merkle_tree)
-                    } else {
-                        Err(err)
+            return _try_to_catch_up(most_popular_not_timeout_vote, merkle_tree).or_else(|err| {
+                match pool_mode {
+                    PoolMode::InMemory => Err(err),
+                    PoolMode::Persistent => {
+                        if merkle_tree_factory::drop_cache(pool_name).is_ok() {
+                            let merkle_tree = merkle_tree_factory::create(pool_name)?;
+                            _try_to_catch_up(most_popular_not_timeout_vote, &merkle_tree)
+                        } else {
+                            Err(err)
+                        }
                     }
                 }
             });
         } else {
-            return _if_consensus_reachable(nodes_votes, node_cnt, *votes_cnt, f, pool_name, pool_mode);
+            return _if_consensus_reachable(
+                nodes_votes,
+                node_cnt,
+                *votes_cnt,
+                f,
+                pool_name,
+                pool_mode,
+            );
         }
     } else if let Some((_, votes_cnt)) = timeout_votes {
         if *votes_cnt == node_cnt - f {
@@ -95,7 +109,14 @@ pub fn check_nodes_responses_on_status(
                 err_msg(IndyErrorKind::PoolTimeout, "Pool timeout"),
             );
         } else {
-            return _if_consensus_reachable(nodes_votes, node_cnt, *votes_cnt, f, pool_name, pool_mode);
+            return _if_consensus_reachable(
+                nodes_votes,
+                node_cnt,
+                *votes_cnt,
+                f,
+                pool_name,
+                pool_mode,
+            );
         }
     }
     Ok(CatchupProgress::InProgress)
@@ -113,8 +134,7 @@ fn _if_consensus_reachable(
     let positive_votes_cnt = votes_cnt + (node_cnt - reps_cnt);
     let is_consensus_not_reachable = positive_votes_cnt < node_cnt - f;
     if is_consensus_not_reachable {
-        //TODO: maybe we should change the error, but it was made to escape changing of ErrorCode returned
-        // to client
+        //TODO: maybe we should change the error, but it was made to escape changing of ErrorCode returned to client
         _reset_cache_and_restart_catch_up(
             pool_name,
             pool_mode,
@@ -163,7 +183,9 @@ fn _try_to_catch_up(
 
         match *hashes {
             None => (),
-            Some(ref hashes) => check_cons_proofs(merkle_tree, hashes, &target_mt_root, target_mt_size)?,
+            Some(ref hashes) => {
+                check_cons_proofs(merkle_tree, hashes, &target_mt_root, target_mt_size)?
+            }
         };
 
         Ok(CatchupProgress::ShouldBeStarted(
@@ -191,11 +213,10 @@ pub fn check_cons_proofs(
         let cons_proof: &String = cons_proof;
 
         bytes_proofs.push(
-            cons_proof
-                .from_base58()
-                .map_err(Context::new)
-                .to_indy(IndyErrorKind::InvalidStructure, "Can't decode node consistency proof")?, /* FIXME: review
-                                                                                                    * kind */
+            cons_proof.from_base58().map_err(Context::new).to_indy(
+                IndyErrorKind::InvalidStructure,
+                "Can't decode node consistency proof",
+            )?, // FIXME: review kind
         );
     }
 

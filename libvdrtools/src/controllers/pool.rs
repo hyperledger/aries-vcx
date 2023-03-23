@@ -23,11 +23,11 @@ impl PoolController {
     ///
     /// #Params
     /// config_name: Name of the pool ledger configuration.
-    /// config (optional): Pool configuration json. if NULL, then default config will be used.
-    /// Example: {
-    ///     "genesis_txn": string (optional), A path to genesis transaction file. If NULL, then a
-    /// default one will be used.                    If file doesn't exists default one will be
-    /// created. }
+    /// config (optional): Pool configuration json. if NULL, then default config will be used. Example:
+    /// {
+    ///     "genesis_txn": string (optional), A path to genesis transaction file. If NULL, then a default one will be used.
+    ///                    If file doesn't exists default one will be created.
+    /// }
     ///
     /// #Returns
     /// Error code
@@ -78,21 +78,19 @@ impl PoolController {
     /// {
     ///     "timeout": int (optional), timeout for network request (in sec).
     ///     "extended_timeout": int (optional), extended timeout for network request (in sec).
-    ///     "preordered_nodes": array<string> -  (optional), names of nodes which will have a
-    /// priority during request sending:         ["name_of_1st_prior_node",
-    /// "name_of_2nd_prior_node", .... ]         This can be useful if a user prefers querying
-    /// specific nodes.         Assume that `Node1` and `Node2` nodes reply faster.
-    ///         If you pass them Libindy always sends a read request to these nodes first and only
-    /// then (if not enough) to others.         Note: Nodes not specified will be placed
-    /// randomly.     "number_read_nodes": int (optional) - the number of nodes to send read
-    /// requests (2 by default)         By default Libindy sends a read requests to 2 nodes in
-    /// the pool.         If response isn't received or `state proof` is invalid Libindy sends
-    /// the request again but to 2 (`number_read_nodes`) * 2 = 4 nodes and so far until completion.
+    ///     "preordered_nodes": array<string> -  (optional), names of nodes which will have a priority during request sending:
+    ///         ["name_of_1st_prior_node",  "name_of_2nd_prior_node", .... ]
+    ///         This can be useful if a user prefers querying specific nodes.
+    ///         Assume that `Node1` and `Node2` nodes reply faster.
+    ///         If you pass them Libindy always sends a read request to these nodes first and only then (if not enough) to others.
+    ///         Note: Nodes not specified will be placed randomly.
+    ///     "number_read_nodes": int (optional) - the number of nodes to send read requests (2 by default)
+    ///         By default Libindy sends a read requests to 2 nodes in the pool.
+    ///         If response isn't received or `state proof` is invalid Libindy sends the request again but to 2 (`number_read_nodes`) * 2 = 4 nodes and so far until completion.
     ///     "pool_mode": mode of pool to be used:
     ///         InMemory - pool will be stored in-memory
     ///         Persistent - pool will be persisted in file (default mode)
-    ///     "transactions": string (optional) - string with genesis transactions. Must be present if
-    /// 'InMemory' pool mode is selected.
+    ///     "transactions": string (optional) - string with genesis transactions. Must be present if 'InMemory' pool mode is selected.
     ///
     /// }
     ///
@@ -102,7 +100,11 @@ impl PoolController {
     /// #Errors
     /// Common*
     /// Ledger*
-    pub async fn open(&self, name: String, config: Option<PoolOpenConfig>) -> IndyResult<PoolHandle> {
+    pub async fn open(
+        &self,
+        name: String,
+        config: Option<PoolOpenConfig>,
+    ) -> IndyResult<PoolHandle> {
         trace!("open > name {:?} config {:?}", name, config);
 
         let (handle, _) = self.pool_service.open(name, config, None).await?;
@@ -125,7 +127,8 @@ impl PoolController {
 
         let pools = self.pool_service.list()?;
 
-        let pools = serde_json::to_string(&pools).to_indy(IndyErrorKind::InvalidState, "Can't serialize pools list")?;
+        let pools = serde_json::to_string(&pools)
+            .to_indy(IndyErrorKind::InvalidState, "Can't serialize pools list")?;
 
         let res = Ok(pools);
         trace!("list < {:?}", res);

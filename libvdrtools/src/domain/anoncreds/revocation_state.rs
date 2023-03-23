@@ -1,7 +1,7 @@
 use std::collections::HashMap;
+use ursa::cl::{RevocationRegistry, Witness};
 
 use indy_api_types::validation::Validatable;
-use ursa::cl::{RevocationRegistry, Witness};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct RevocationState {

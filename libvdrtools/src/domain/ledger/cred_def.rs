@@ -2,7 +2,8 @@ use super::{
     super::{
         anoncreds::{
             credential_definition::{
-                CredentialDefinitionData, CredentialDefinitionId, CredentialDefinitionV1, SignatureType,
+                CredentialDefinitionData, CredentialDefinitionId, CredentialDefinitionV1,
+                SignatureType,
             },
             schema::SchemaId,
         },
@@ -54,7 +55,12 @@ pub struct GetCredDefOperation {
 }
 
 impl GetCredDefOperation {
-    pub fn new(_ref: i32, signature_type: String, origin: ShortDidValue, tag: Option<String>) -> GetCredDefOperation {
+    pub fn new(
+        _ref: i32,
+        signature_type: String,
+        origin: ShortDidValue,
+        tag: Option<String>,
+    ) -> GetCredDefOperation {
         GetCredDefOperation {
             _type: GET_CRED_DEF.to_string(),
             _ref,

@@ -1,18 +1,13 @@
-use std::{env, time::Duration};
+use std::env;
+use std::time::Duration;
 
-use reqwest::{
-    self,
-    header::{CONTENT_TYPE, USER_AGENT},
-    Client,
-};
+use reqwest;
+use reqwest::header::{CONTENT_TYPE, USER_AGENT};
+use reqwest::Client;
 
-use crate::{
-    errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult},
-    testing::{
-        mocking,
-        mocking::{AgencyMock, AgencyMockDecrypted, HttpClientMockResponse},
-    },
-};
+use crate::errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
+use crate::testing::mocking;
+use crate::testing::mocking::{AgencyMock, AgencyMockDecrypted, HttpClientMockResponse};
 
 lazy_static! {
     static ref HTTP_CLIENT: Client = {
@@ -88,8 +83,8 @@ pub async fn post_message(body_content: Vec<u8>, url: &str) -> AgencyClientResul
         Err(error) => Err(AgencyClientError::from_msg(
             AgencyClientErrorKind::PostMessageFailed,
             format!(
-                "POST {} failed because response could not be decoded as utf-8, HTTP status: {}, content-length \
-                 header: {:?}, error: {:?}",
+                "POST {} failed because response could not be decoded as utf-8, HTTP status: {}, \
+                     content-length header: {:?}, error: {:?}",
                 url, response_status, content_length, error
             ),
         )),

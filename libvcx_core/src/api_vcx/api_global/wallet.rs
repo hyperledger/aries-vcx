@@ -1,19 +1,16 @@
-use aries_vcx::{
-    common::signing::unpack_message_to_string,
-    global::settings::DEFAULT_LINK_SECRET_ALIAS,
-    indy,
-    indy::wallet::{
-        close_search_wallet, fetch_next_records_wallet, import, open_search_wallet, IssuerConfig, RestoreWalletConfigs,
-        WalletConfig,
-    },
-    protocols::mediated_connection::pairwise_info::PairwiseInfo,
-    vdrtools::{SearchHandle, WalletHandle, INVALID_WALLET_HANDLE},
+use aries_vcx::common::signing::unpack_message_to_string;
+use aries_vcx::global::settings::DEFAULT_LINK_SECRET_ALIAS;
+use aries_vcx::indy;
+use aries_vcx::indy::wallet::{
+    close_search_wallet, fetch_next_records_wallet, import, open_search_wallet, IssuerConfig, RestoreWalletConfigs,
+    WalletConfig,
 };
+use aries_vcx::protocols::mediated_connection::pairwise_info::PairwiseInfo;
+use aries_vcx::vdrtools::{SearchHandle, WalletHandle, INVALID_WALLET_HANDLE};
 
-use crate::{
-    api_vcx::api_global::profile::{get_main_profile, get_main_wallet, indy_handles_to_profile},
-    errors::{error::LibvcxResult, mapping_from_ariesvcx::map_ariesvcx_result},
-};
+use crate::api_vcx::api_global::profile::{get_main_profile, get_main_wallet, indy_handles_to_profile};
+use crate::errors::error::LibvcxResult;
+use crate::errors::mapping_from_ariesvcx::map_ariesvcx_result;
 
 pub static mut WALLET_HANDLE: WalletHandle = INVALID_WALLET_HANDLE;
 
@@ -177,23 +174,16 @@ pub async fn wallet_import(config: &RestoreWalletConfigs) -> LibvcxResult<()> {
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
-    use aries_vcx::{
-        global::settings::{CONFIG_WALLET_BACKUP_KEY, DEFAULT_WALLET_KEY, WALLET_KDF_RAW},
-        indy::wallet::WalletConfig,
-        utils::devsetup::TempFile,
-    };
+    use aries_vcx::global::settings::{CONFIG_WALLET_BACKUP_KEY, DEFAULT_WALLET_KEY, WALLET_KDF_RAW};
+    use aries_vcx::indy::wallet::WalletConfig;
+    use aries_vcx::utils::devsetup::TempFile;
 
-    use crate::{
-        api_vcx::api_global::{
-            profile::indy_wallet_handle_to_wallet,
-            settings::get_config_value,
-            wallet::{
-                close_main_wallet, create_and_open_as_main_wallet, create_main_wallet, export_main_wallet,
-                open_as_main_wallet,
-            },
-        },
-        errors::error::LibvcxResult,
+    use crate::api_vcx::api_global::profile::indy_wallet_handle_to_wallet;
+    use crate::api_vcx::api_global::settings::get_config_value;
+    use crate::api_vcx::api_global::wallet::{
+        close_main_wallet, create_and_open_as_main_wallet, create_main_wallet, export_main_wallet, open_as_main_wallet,
     };
+    use crate::errors::error::LibvcxResult;
 
     fn _record() -> (&'static str, &'static str, &'static str) {
         ("type1", "id1", "value1")
@@ -248,11 +238,11 @@ pub mod test_utils {
 
 #[cfg(test)]
 pub mod tests {
-    use aries_vcx::{
-        global::settings::{CONFIG_WALLET_BACKUP_KEY, DEFAULT_WALLET_BACKUP_KEY, DEFAULT_WALLET_KEY, WALLET_KDF_RAW},
-        indy::wallet::{delete_wallet, RestoreWalletConfigs, WalletConfig, WalletRecord},
-        utils::devsetup::{SetupDefaults, SetupEmpty, TempFile},
+    use aries_vcx::global::settings::{
+        CONFIG_WALLET_BACKUP_KEY, DEFAULT_WALLET_BACKUP_KEY, DEFAULT_WALLET_KEY, WALLET_KDF_RAW,
     };
+    use aries_vcx::indy::wallet::{delete_wallet, RestoreWalletConfigs, WalletConfig, WalletRecord};
+    use aries_vcx::utils::devsetup::{SetupDefaults, SetupEmpty, TempFile};
 
     use crate::api_vcx::api_global::settings::get_config_value;
     use crate::api_vcx::api_global::wallet::test_utils::{_create_and_open_wallet, _create_main_wallet_and_its_backup};
@@ -261,6 +251,7 @@ pub mod tests {
         wallet_add_wallet_record, wallet_delete_wallet_record, wallet_get_wallet_record, wallet_import,
         wallet_update_wallet_record_value,
     };
+    use crate::errors::error::{LibvcxErrorKind, LibvcxResult};
 
     #[tokio::test]
     #[cfg(feature = "general_test")]

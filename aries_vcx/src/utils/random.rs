@@ -1,4 +1,5 @@
-use rand::{distributions::Alphanumeric, Rng};
+use rand::distributions::Alphanumeric;
+use rand::Rng;
 
 pub fn generate_random_schema_name() -> String {
     rand::thread_rng()

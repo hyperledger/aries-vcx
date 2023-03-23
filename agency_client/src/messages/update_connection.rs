@@ -1,7 +1,8 @@
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 
-use crate::messages::{a2a_message::A2AMessageKinds, message_type::MessageType};
+use crate::messages::a2a_message::A2AMessageKinds;
+use crate::messages::message_type::MessageType;
 
 #[derive(Clone, Deserialize, Serialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]

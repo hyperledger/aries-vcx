@@ -1,9 +1,7 @@
 use async_trait::async_trait;
 
-use crate::{
-    errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult},
-    testing::mocking::agency_mocks_enabled,
-};
+use crate::errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
+use crate::testing::mocking::agency_mocks_enabled;
 
 #[async_trait]
 pub trait BaseAgencyClientWallet: std::fmt::Debug + Send + Sync {
@@ -18,8 +16,7 @@ pub trait BaseAgencyClientWallet: std::fmt::Debug + Send + Sync {
 }
 
 // Stub of [BaseAgencyClientWallet] used by [AgencyClient::new] when creating a stub [AgencyClient]
-// Should never be used, and should be overwritten with a proper [BaseAgencyClientWallet]
-// implementation.
+// Should never be used, and should be overwritten with a proper [BaseAgencyClientWallet] implementation.
 #[derive(Debug)]
 pub(crate) struct StubAgencyClientWallet;
 

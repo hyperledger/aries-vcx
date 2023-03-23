@@ -1,10 +1,16 @@
 use std::sync::Arc;
 
-use agency_client::testing::mocking::AgencyMockDecrypted;
 use futures::TryFutureExt;
-use messages::{a2a::A2AMessage, diddoc::aries::diddoc::AriesDidDoc, protocols::routing::forward::Forward};
 
-use crate::{errors::error::prelude::*, global::settings, plugins::wallet::base_wallet::BaseWallet, utils::constants};
+use agency_client::testing::mocking::AgencyMockDecrypted;
+
+use crate::errors::error::prelude::*;
+use crate::global::settings;
+use crate::plugins::wallet::base_wallet::BaseWallet;
+use crate::utils::constants;
+use messages::a2a::A2AMessage;
+use messages::diddoc::aries::diddoc::AriesDidDoc;
+use messages::protocols::routing::forward::Forward;
 
 #[derive(Debug)]
 pub struct EncryptionEnvelope(pub Vec<u8>);
@@ -174,14 +180,7 @@ impl EncryptionEnvelope {
                             "auth_unpack  sender_vk != expected_vk.... sender_vk: {}, expected_vk: {}",
                             sender_vk, expected_vk
                         );
-                        return Err(AriesVcxError::from_msg(
-                            AriesVcxErrorKind::InvalidJson,
-                            format!(
-                                "Message did not pass authentication check. Expected sender verkey was {}, but \
-                                 actually was {}",
-                                expected_vk, sender_vk
-                            ),
-                        ));
+                        return Err(AriesVcxError::from_msg(AriesVcxErrorKind::InvalidJson, format!("Message did not pass authentication check. Expected sender verkey was {}, but actually was {}", expected_vk, sender_vk)));
                     }
                 }
                 None => {
@@ -207,14 +206,13 @@ impl EncryptionEnvelope {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use messages::{concepts::ack::test_utils::_ack, diddoc::aries::diddoc::test_utils::*};
+    use crate::common::test_utils::{create_key, create_trustee_key, indy_handles_to_profile};
+    use crate::indy::utils::test_setup;
+    use crate::utils::devsetup::SetupEmpty;
+    use messages::concepts::ack::test_utils::_ack;
+    use messages::diddoc::aries::diddoc::test_utils::*;
 
     use super::*;
-    use crate::{
-        common::test_utils::{create_key, create_trustee_key, indy_handles_to_profile},
-        indy::utils::test_setup,
-        utils::devsetup::SetupEmpty,
-    };
 
     #[tokio::test]
     async fn test_encryption_envelope_works_for_no_keys() {

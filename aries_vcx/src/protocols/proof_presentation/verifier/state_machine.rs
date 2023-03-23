@@ -1,4 +1,6 @@
-use std::{collections::HashMap, fmt::Display, sync::Arc};
+use std::collections::HashMap;
+use std::fmt::Display;
+use std::sync::Arc;
 
 use crate::common::proofs::proof_request::PresentationRequestData;
 use crate::core::profile::profile::Profile;
@@ -91,8 +93,7 @@ impl VerifierSM {
         }
     }
 
-    // todo: eliminate VcxResult (follow set_request err chain and eliminate possibility of err at the
-    // bottom)
+    // todo: eliminate VcxResult (follow set_request err chain and eliminate possibility of err at the bottom)
     pub fn from_request(source_id: &str, presentation_request_data: &PresentationRequestData) -> VcxResult<Self> {
         let sm = Self {
             source_id: source_id.to_string(),
@@ -482,11 +483,6 @@ pub mod unit_tests {
     use messages::protocols::proof_presentation::test_utils::{_ack, _problem_report};
 
     use super::*;
-    use crate::{
-        common::{proofs::proof_request::test_utils::_presentation_request_data, test_utils::mock_profile},
-        test::source_id,
-        utils::devsetup::{SetupEmpty, SetupMocks},
-    };
 
     pub fn _verifier_sm() -> VerifierSM {
         VerifierSM::new(&source_id())
@@ -552,15 +548,13 @@ pub mod unit_tests {
     }
 
     mod build_messages {
-        use messages::a2a::MessageId;
-
         use super::*;
-        use crate::{
-            protocols::proof_presentation::verifier::state_machine::{
-                build_starting_presentation_request, build_verification_ack,
-            },
-            utils::devsetup::{was_in_past, SetupMocks},
+
+        use crate::protocols::proof_presentation::verifier::state_machine::{
+            build_starting_presentation_request, build_verification_ack,
         };
+        use crate::utils::devsetup::{was_in_past, SetupMocks};
+        use messages::a2a::MessageId;
 
         #[test]
         #[cfg(feature = "general_test")]
@@ -625,8 +619,10 @@ pub mod unit_tests {
     }
 
     mod step {
+        use crate::utils::devsetup::was_in_past;
+        use crate::utils::mockdata::mock_settings::MockBuilder;
+
         use super::*;
-        use crate::utils::{devsetup::was_in_past, mockdata::mock_settings::MockBuilder};
 
         #[test]
         #[cfg(feature = "general_test")]
@@ -1068,8 +1064,9 @@ pub mod unit_tests {
     }
 
     mod get_state {
-        use super::*;
         use crate::utils::mockdata::mock_settings::MockBuilder;
+
+        use super::*;
 
         #[tokio::test]
         #[cfg(feature = "general_test")]

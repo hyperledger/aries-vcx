@@ -1,9 +1,12 @@
-use indy_api_types::validation::Validatable;
+use super::super::crypto::did::DidValue;
 use ursa::cl::{
-    BlindedCredentialSecrets, BlindedCredentialSecretsCorrectnessProof, CredentialSecretsBlindingFactors, Nonce,
+    BlindedCredentialSecrets, BlindedCredentialSecretsCorrectnessProof,
+    CredentialSecretsBlindingFactors, Nonce,
 };
 
-use super::{super::crypto::did::DidValue, credential_definition::CredentialDefinitionId};
+use super::credential_definition::CredentialDefinitionId;
+
+use indy_api_types::validation::Validatable;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CredentialRequest {

@@ -8,7 +8,8 @@ pub mod utils;
 #[cfg(test)]
 #[cfg(feature = "agency_pool_tests")]
 mod integration_tests {
-    use std::{thread, time::Duration};
+    use std::thread;
+    use std::time::Duration;
 
     use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
     use aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;
@@ -26,17 +27,6 @@ mod integration_tests {
     use crate::utils::test_macros::ProofStateType;
 
     use super::*;
-    use crate::utils::{
-        devsetup_agent::test_utils::{create_test_alice_instance, Faber},
-        scenarios::test_utils::{
-            _create_address_schema, _exchange_credential, attr_names, create_connected_connections, create_proof,
-            generate_and_send_proof, issue_address_credential, prover_select_credentials_and_send_proof,
-            publish_revocation, requested_attrs, retrieved_to_selected_credentials_simple,
-            revoke_credential_and_publish_accumulator, revoke_credential_local, rotate_rev_reg, send_proof_request,
-            verifier_create_proof_and_send_request,
-        },
-        test_macros::ProofStateType,
-    };
 
     #[cfg(feature = "agency_pool_tests")]
     #[tokio::test]

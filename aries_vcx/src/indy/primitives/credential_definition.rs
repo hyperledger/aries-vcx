@@ -1,11 +1,10 @@
-use vdrtools::{DidValue, Locator, PoolHandle, WalletHandle};
+use vdrtools::{DidValue, Locator};
 
-use crate::{
-    errors::error::VcxResult,
-    global::settings,
-    indy::ledger::transactions::{build_cred_def_request, check_response, sign_and_submit_to_ledger},
-    utils::parse_and_validate,
-};
+use crate::errors::error::VcxResult;
+use crate::global::settings;
+use crate::indy::ledger::transactions::{build_cred_def_request, check_response, sign_and_submit_to_ledger};
+use crate::utils::parse_and_validate;
+use vdrtools::{PoolHandle, WalletHandle};
 
 // consider relocating out of primitive
 pub async fn publish_cred_def(

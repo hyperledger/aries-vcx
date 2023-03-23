@@ -30,7 +30,10 @@ pub enum KeyDerivationData {
 }
 
 impl KeyDerivationData {
-    pub fn from_passphrase_with_new_salt(passphrase: &str, derivation_method: &KeyDerivationMethod) -> Self {
+    pub fn from_passphrase_with_new_salt(
+        passphrase: &str,
+        derivation_method: &KeyDerivationMethod,
+    ) -> Self {
         let salt = pwhash_argon2i13::gen_salt();
         let passphrase = passphrase.to_owned();
         match *derivation_method {
@@ -48,7 +51,9 @@ impl KeyDerivationData {
         let passphrase = passphrase.to_owned();
 
         let data = match (derivation_method, metadata) {
-            (KeyDerivationMethod::RAW, &Metadata::MetadataRaw(_)) => KeyDerivationData::Raw(passphrase),
+            (KeyDerivationMethod::RAW, &Metadata::MetadataRaw(_)) => {
+                KeyDerivationData::Raw(passphrase)
+            }
             (KeyDerivationMethod::ARGON2I_INT, &Metadata::MetadataArgon(ref metadata)) => {
                 let master_key_salt = master_key_salt_from_slice(&metadata.master_key_salt)?;
                 KeyDerivationData::Argon2iInt(passphrase, master_key_salt)
@@ -111,7 +116,11 @@ pub(super) fn encrypt_tag_names(
                     tags_hmac_key,
                 ))
             } else {
-                TagName::OfEncrypted(encrypt_as_searchable(tag_name.as_bytes(), tag_name_key, tags_hmac_key))
+                TagName::OfEncrypted(encrypt_as_searchable(
+                    tag_name.as_bytes(),
+                    tag_name_key,
+                    tags_hmac_key,
+                ))
             }
         })
         .collect::<Vec<TagName>>()
@@ -147,7 +156,8 @@ pub(super) fn encrypt_as_searchable(
     hmac_key: &hmacsha256::Key,
 ) -> Vec<u8> {
     let tag = hmacsha256::authenticate(data, hmac_key);
-    let nonce = chacha20poly1305_ietf::Nonce::from_slice(&tag[..chacha20poly1305_ietf::NONCEBYTES]).unwrap(); // We can safely unwrap here
+    let nonce = chacha20poly1305_ietf::Nonce::from_slice(&tag[..chacha20poly1305_ietf::NONCEBYTES])
+        .unwrap(); // We can safely unwrap here
     let ct = chacha20poly1305_ietf::encrypt(data, key, &nonce);
 
     let mut result: Vec<u8> = Default::default();
@@ -174,8 +184,13 @@ pub(super) fn decrypt(
     Ok(res)
 }
 
-pub(super) fn decrypt_merged(joined_data: &[u8], key: &chacha20poly1305_ietf::Key) -> IndyResult<Vec<u8>> {
-    let nonce = chacha20poly1305_ietf::Nonce::from_slice(&joined_data[..chacha20poly1305_ietf::NONCEBYTES]).unwrap(); // We can safety unwrap here
+pub(super) fn decrypt_merged(
+    joined_data: &[u8],
+    key: &chacha20poly1305_ietf::Key,
+) -> IndyResult<Vec<u8>> {
+    let nonce =
+        chacha20poly1305_ietf::Nonce::from_slice(&joined_data[..chacha20poly1305_ietf::NONCEBYTES])
+            .unwrap(); // We can safety unwrap here
     let data = &joined_data[chacha20poly1305_ietf::NONCEBYTES..];
     let res = decrypt(data, key, &nonce)?;
     Ok(res)
@@ -196,9 +211,10 @@ pub(super) fn decrypt_tags(
                     Tag::PlainText(ref ename, ref value) => {
                         let name = match decrypt_merged(ename, tag_name_key) {
                             Err(err) => {
-                                return Err(
-                                    err.to_indy(IndyErrorKind::WalletEncryptionError, "Unable to decrypt tag name")
-                                )
+                                return Err(err.to_indy(
+                                    IndyErrorKind::WalletEncryptionError,
+                                    "Unable to decrypt tag name",
+                                ))
                             }
                             Ok(tag_name_bytes) => format!(
                                 "~{}",
@@ -212,9 +228,15 @@ pub(super) fn decrypt_tags(
                     }
                     Tag::Encrypted(ref ename, ref evalue) => {
                         let name = String::from_utf8(decrypt_merged(ename, tag_name_key)?)
-                            .to_indy(IndyErrorKind::WalletEncryptionError, "Tag name is invalid utf8")?;
+                            .to_indy(
+                                IndyErrorKind::WalletEncryptionError,
+                                "Tag name is invalid utf8",
+                            )?;
                         let value = String::from_utf8(decrypt_merged(evalue, tag_value_key)?)
-                            .to_indy(IndyErrorKind::WalletEncryptionError, "Tag value is invalid utf8")?;
+                            .to_indy(
+                                IndyErrorKind::WalletEncryptionError,
+                                "Tag value is invalid utf8",
+                            )?;
                         (name, value)
                     }
                 };
@@ -226,11 +248,16 @@ pub(super) fn decrypt_tags(
     }
 }
 
-pub(super) fn decrypt_storage_record(record: &StorageRecord, keys: &Keys) -> IndyResult<WalletRecord> {
+pub(super) fn decrypt_storage_record(
+    record: &StorageRecord,
+    keys: &Keys,
+) -> IndyResult<WalletRecord> {
     let decrypted_name = decrypt_merged(&record.id, &keys.name_key)?;
 
-    let decrypted_name =
-        String::from_utf8(decrypted_name).to_indy(IndyErrorKind::WalletEncryptionError, "Record is invalid utf8")?;
+    let decrypted_name = String::from_utf8(decrypted_name).to_indy(
+        IndyErrorKind::WalletEncryptionError,
+        "Record is invalid utf8",
+    )?;
 
     let decrypted_value = match record.value {
         Some(ref value) => Some(value.decrypt(&keys.value_key)?),
@@ -240,10 +267,10 @@ pub(super) fn decrypt_storage_record(record: &StorageRecord, keys: &Keys) -> Ind
     let decrypted_type = match record.type_ {
         Some(ref type_) => {
             let decrypted_type = decrypt_merged(type_, &keys.type_key)?;
-            Some(
-                String::from_utf8(decrypted_type)
-                    .to_indy(IndyErrorKind::WalletEncryptionError, "Record type is invalid utf8")?,
-            )
+            Some(String::from_utf8(decrypted_type).to_indy(
+                IndyErrorKind::WalletEncryptionError,
+                "Record type is invalid utf8",
+            )?)
         }
         None => None,
     };
@@ -404,8 +431,7 @@ pub(super) fn decrypt_storage_record(record: &StorageRecord, keys: &Keys) -> Ind
 
 //     #[test]
 //     fn test_encrypt_decrypt_tags() {
-//         let tags = serde_json::from_str(r#"{"tag1":"value1", "tag2":"value2",
-// "~tag3":"value3"}"#).unwrap();
+//         let tags = serde_json::from_str(r#"{"tag1":"value1", "tag2":"value2", "~tag3":"value3"}"#).unwrap();
 
 //         let tag_name_key = chacha20poly1305_ietf::gen_key();
 //         let tag_value_key = chacha20poly1305_ietf::gen_key();
@@ -432,13 +458,12 @@ pub(super) fn decrypt_storage_record(record: &StorageRecord, keys: &Keys) -> Ind
 //         let value = "test_value";
 //         let encrypted_value = EncryptedValue::encrypt(value, &keys.value_key);
 //         let type_ = "test_type";
-//         let encrypted_name = encrypt_as_searchable(name.as_bytes(), &keys.name_key,
-// &keys.item_hmac_key);         let encrypted_type = encrypt_as_searchable(type_.as_bytes(),
-// &keys.type_key, &keys.item_hmac_key);         let mut tags = HashMap::new();
+//         let encrypted_name = encrypt_as_searchable(name.as_bytes(), &keys.name_key, &keys.item_hmac_key);
+//         let encrypted_type = encrypt_as_searchable(type_.as_bytes(), &keys.type_key, &keys.item_hmac_key);
+//         let mut tags = HashMap::new();
 //         tags.insert("tag_name_1".to_string(), "tag_value_1".to_string());
 //         tags.insert("~tag_name_2".to_string(), "tag_value_2".to_string());
-//         let encrypted_tags = encrypt_tags(&tags, &keys.tag_name_key, &keys.tag_value_key,
-// &keys.tags_hmac_key);
+//         let encrypted_tags = encrypt_tags(&tags, &keys.tag_name_key, &keys.tag_value_key, &keys.tags_hmac_key);
 
 //         let storage_record = StorageRecord {
 //             id: encrypted_name,
@@ -462,13 +487,12 @@ pub(super) fn decrypt_storage_record(record: &StorageRecord, keys: &Keys) -> Ind
 //         let value = "test_value";
 //         let encrypted_value = EncryptedValue::encrypt(value, &keys.value_key);
 //         let type_ = "test_type";
-//         let encrypted_name = encrypt_as_searchable(name.as_bytes(), &keys.name_key,
-// &keys.item_hmac_key);         let encrypted_type = encrypt_as_searchable(type_.as_bytes(),
-// &keys.type_key, &keys.item_hmac_key);         let mut tags = HashMap::new();
+//         let encrypted_name = encrypt_as_searchable(name.as_bytes(), &keys.name_key, &keys.item_hmac_key);
+//         let encrypted_type = encrypt_as_searchable(type_.as_bytes(), &keys.type_key, &keys.item_hmac_key);
+//         let mut tags = HashMap::new();
 //         tags.insert("tag_name_1".to_string(), "tag_value_1".to_string());
 //         tags.insert("~tag_name_2".to_string(), "tag_value_2".to_string());
-//         let encrypted_tags = encrypt_tags(&tags, &keys.tag_name_key, &keys.tag_value_key,
-// &keys.tags_hmac_key);
+//         let encrypted_tags = encrypt_tags(&tags, &keys.tag_name_key, &keys.tag_value_key, &keys.tags_hmac_key);
 
 //         let storage_record = StorageRecord {
 //             id: encrypted_name,

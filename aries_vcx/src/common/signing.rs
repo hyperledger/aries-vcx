@@ -1,10 +1,11 @@
 use std::sync::Arc;
 
 use base64;
-use messages::protocols::connection::response::{ConnectionData, ConnectionSignature, Response, SignedResponse};
 use time;
 
-use crate::{errors::error::prelude::*, global::settings, plugins::wallet::base_wallet::BaseWallet};
+use crate::errors::error::prelude::*;
+use crate::{global::settings, plugins::wallet::base_wallet::BaseWallet};
+use messages::protocols::connection::response::{ConnectionData, ConnectionSignature, Response, SignedResponse};
 
 async fn get_signature_data(wallet: &Arc<dyn BaseWallet>, data: String, key: &str) -> VcxResult<(Vec<u8>, Vec<u8>)> {
     let now: u64 = time::get_time().sec as u64;
@@ -116,17 +117,13 @@ pub async fn unpack_message_to_string(wallet: &Arc<dyn BaseWallet>, msg: &[u8]) 
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use messages::{
-        diddoc::aries::diddoc::test_utils::*,
-        protocols::connection::response::test_utils::{_did, _response, _thread_id},
-    };
+    use crate::common::test_utils::{create_trustee_key, indy_handles_to_profile};
+    use crate::indy::utils::test_setup::with_wallet;
+    use crate::utils::devsetup::SetupEmpty;
+    use messages::diddoc::aries::diddoc::test_utils::*;
+    use messages::protocols::connection::response::test_utils::{_did, _response, _thread_id};
 
     use super::*;
-    use crate::{
-        common::test_utils::{create_trustee_key, indy_handles_to_profile},
-        indy::utils::test_setup::with_wallet,
-        utils::devsetup::SetupEmpty,
-    };
 
     #[test]
     fn test_response_build_works() {

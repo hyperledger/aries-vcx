@@ -1,7 +1,6 @@
+use super::CryptoType;
 use indy_api_types::errors::IndyError;
 use indy_utils::crypto::{ed25519_box, ed25519_sign, sealedbox};
-
-use super::CryptoType;
 
 pub struct ED25519CryptoType {}
 
@@ -53,7 +52,11 @@ impl CryptoType for ED25519CryptoType {
         ed25519_sign::create_key_pair_for_signature(seed)
     }
 
-    fn sign(&self, sk: &ed25519_sign::SecretKey, doc: &[u8]) -> Result<ed25519_sign::Signature, IndyError> {
+    fn sign(
+        &self,
+        sk: &ed25519_sign::SecretKey,
+        doc: &[u8],
+    ) -> Result<ed25519_sign::Signature, IndyError> {
         ed25519_sign::sign(sk, doc)
     }
 
@@ -66,7 +69,11 @@ impl CryptoType for ED25519CryptoType {
         ed25519_sign::verify(vk, doc, signature)
     }
 
-    fn crypto_box_seal(&self, vk: &ed25519_sign::PublicKey, doc: &[u8]) -> Result<Vec<u8>, IndyError> {
+    fn crypto_box_seal(
+        &self,
+        vk: &ed25519_sign::PublicKey,
+        doc: &[u8],
+    ) -> Result<Vec<u8>, IndyError> {
         sealedbox::encrypt(&ed25519_sign::vk_to_curve25519(vk)?, doc)
     }
 

@@ -1,8 +1,8 @@
-use crate::{
-    a2a::{A2AMessage, MessageId},
-    concepts::{localization::Localization, thread::Thread, timing::Timing},
-    timing_optional,
-};
+use crate::a2a::{A2AMessage, MessageId};
+use crate::concepts::localization::Localization;
+use crate::concepts::thread::Thread;
+use crate::concepts::timing::Timing;
+use crate::timing_optional;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct ProblemReport {
@@ -64,8 +64,9 @@ impl Default for ProblemCode {
 
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use super::*;
     use crate::protocols::connection::response::test_utils::*;
+
+    use super::*;
 
     fn _problem_code() -> ProblemCode {
         ProblemCode::ResponseProcessingError

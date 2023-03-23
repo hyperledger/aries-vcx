@@ -1,7 +1,8 @@
 use std::collections::HashMap;
 
-use indy_api_types::errors::prelude::*;
 use rlp::{DecoderError as RlpDecoderError, Prototype as RlpPrototype, RlpStream, UntrustedRlp};
+
+use indy_api_types::errors::prelude::*;
 
 #[derive(Debug, Serialize, Deserialize, Eq, PartialEq)]
 pub enum Node {
@@ -98,12 +99,15 @@ impl rlp::Decodable for Node {
                         "RLP for path in Patricia Merkle Trie contains incorrect flags byte {}",
                         path[0]
                     );
-                    Err(RlpDecoderError::Custom("Path contains incorrect flags byte"))
+                    Err(RlpDecoderError::Custom(
+                        "Path contains incorrect flags byte",
+                    ))
                 }
             }
             RlpPrototype::List(Node::FULL_SIZE) => {
                 let mut nodes: [Option<Box<Node>>; Node::RADIX] = [
-                    None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None,
+                    None, None, None, None, None, None, None, None, None, None, None, None, None,
+                    None, None, None,
                 ];
                 for i in 0..Node::RADIX {
                     let cur = rlp.at(i)?;
@@ -135,8 +139,10 @@ impl rlp::Decodable for Node {
     }
 }
 
-type NodeHash =
-    sha3::digest::generic_array::GenericArray<u8, <sha3::Sha3_256 as sha3::digest::FixedOutput>::OutputSize>;
+type NodeHash = sha3::digest::generic_array::GenericArray<
+    u8,
+    <sha3::Sha3_256 as sha3::digest::FixedOutput>::OutputSize,
+>;
 pub type TrieDB<'a> = HashMap<NodeHash, &'a Node>;
 
 impl Node {
@@ -148,7 +154,11 @@ impl Node {
         hasher.update(encoded.to_vec().as_slice());
         hasher.finalize_fixed()
     }
-    pub fn get_str_value<'a, 'b>(&'a self, db: &'a TrieDB, path: &'b [u8]) -> IndyResult<Option<String>> {
+    pub fn get_str_value<'a, 'b>(
+        &'a self,
+        db: &'a TrieDB,
+        path: &'b [u8],
+    ) -> IndyResult<Option<String>> {
         let value = self.get_value(db, path)?;
         if let Some(vec) = value {
             let str = String::from_utf8(vec).to_indy(
@@ -163,7 +173,11 @@ impl Node {
         }
     }
 
-    pub fn get_all_values<'a>(&'a self, db: &'a TrieDB, prefix: Option<&[u8]>) -> IndyResult<Vec<(String, String)>> {
+    pub fn get_all_values<'a>(
+        &'a self,
+        db: &'a TrieDB,
+        prefix: Option<&[u8]>,
+    ) -> IndyResult<Vec<(String, String)>> {
         let node_and_prefix = prefix
             .map(|prf| self.get_node(db, &prf))
             .unwrap_or_else(|| Ok(Some((self, vec![]))))?;
@@ -179,10 +193,17 @@ impl Node {
         }
     }
 
-    pub fn get_node<'a, 'b>(&'a self, db: &'a TrieDB, path: &'b [u8]) -> IndyResult<Option<(&Node, Vec<u8>)>> {
+    pub fn get_node<'a, 'b>(
+        &'a self,
+        db: &'a TrieDB,
+        path: &'b [u8],
+    ) -> IndyResult<Option<(&Node, Vec<u8>)>> {
         trace!("Node::get_node >> path: {:?}", path);
         let nibble_path = Node::path_to_nibbles(path);
-        trace!("Node::get_node >> made some nibbles >> nibbles: {:?}", nibble_path);
+        trace!(
+            "Node::get_node >> made some nibbles >> nibbles: {:?}",
+            nibble_path
+        );
         self._get_node(db, nibble_path.as_slice(), vec![].as_slice())
     }
 
@@ -192,7 +213,11 @@ impl Node {
         path: &'b [u8],
         seen_path: &'b [u8],
     ) -> IndyResult<Option<(&Node, Vec<u8>)>> {
-        trace!("Getting node for prefix, cur node: {:?}, prefix: {:?}", self, path);
+        trace!(
+            "Getting node for prefix, cur node: {:?}, prefix: {:?}",
+            self,
+            path
+        );
         match *self {
             Node::Full(ref node) => {
                 if path.is_empty() {
@@ -221,10 +246,7 @@ impl Node {
                 let (is_leaf, pair_path) = Node::parse_path(pair.path.as_slice());
 
                 if !is_leaf {
-                    return Err(err_msg(
-                        IndyErrorKind::InvalidState,
-                        "Incorrect Patricia Merkle Trie: node marked as leaf but path contains extension flag",
-                    ));
+                    return Err(err_msg(IndyErrorKind::InvalidState, "Incorrect Patricia Merkle Trie: node marked as leaf but path contains extension flag"));
                 }
 
                 trace!(
@@ -243,10 +265,7 @@ impl Node {
                 let (is_leaf, pair_path) = Node::parse_path(pair.path.as_slice());
 
                 if is_leaf {
-                    return Err(err_msg(
-                        IndyErrorKind::InvalidState,
-                        "Incorrect Patricia Merkle Trie: node marked as extension but path contains leaf flag",
-                    ));
+                    return Err(err_msg(IndyErrorKind::InvalidState, "Incorrect Patricia Merkle Trie: node marked as extension but path contains leaf flag"));
                 }
 
                 trace!("current extension node path: {:?}", pair_path);
@@ -267,7 +286,11 @@ impl Node {
         }
     }
 
-    fn _get_all_values<'a>(&'a self, db: &'a TrieDB, prefix: Vec<u8>) -> IndyResult<Vec<(Vec<u8>, String)>> {
+    fn _get_all_values<'a>(
+        &'a self,
+        db: &'a TrieDB,
+        prefix: Vec<u8>,
+    ) -> IndyResult<Vec<(Vec<u8>, String)>> {
         trace!("Getting all values, cur node: {:?}", self);
         match *self {
             Node::Full(ref node) => {
@@ -278,14 +301,16 @@ impl Node {
                         trace!("Checking nibble {}", nibble);
                         let mut prefix_nibble = prefix.clone();
                         prefix_nibble.push(nibble as u8);
-                        let mut sub_res: Vec<(Vec<u8>, String)> = next._get_all_values(db, prefix_nibble)?;
+                        let mut sub_res: Vec<(Vec<u8>, String)> =
+                            next._get_all_values(db, prefix_nibble)?;
                         trace!("Got some values: {:?}", sub_res);
                         res.append(&mut sub_res);
                         trace!("Intermediate result: {:?}", res);
                     }
                 }
                 if let Some(ref value) = node.value.as_ref() {
-                    let mut vec: Vec<Vec<u8>> = UntrustedRlp::new(value).as_list().unwrap_or_default(); //default will cause error below
+                    let mut vec: Vec<Vec<u8>> =
+                        UntrustedRlp::new(value).as_list().unwrap_or_default(); //default will cause error below
 
                     if let Some(val) = vec.pop() {
                         if vec.is_empty() {
@@ -308,20 +333,14 @@ impl Node {
                     trace!("found value in db");
                     next._get_all_values(db, prefix)
                 } else {
-                    Err(err_msg(
-                        IndyErrorKind::InvalidState,
-                        "Incorrect Patricia Merkle Trie: empty hash node when it should not be empty",
-                    ))
+                    Err(err_msg(IndyErrorKind::InvalidState, "Incorrect Patricia Merkle Trie: empty hash node when it should not be empty"))
                 }
             }
             Node::Leaf(ref pair) => {
                 let (is_leaf, pair_path) = Node::parse_path(pair.path.as_slice());
 
                 if !is_leaf {
-                    return Err(err_msg(
-                        IndyErrorKind::InvalidState,
-                        "Incorrect Patricia Merkle Trie: node marked as leaf but path contains extension flag",
-                    ));
+                    return Err(err_msg(IndyErrorKind::InvalidState, "Incorrect Patricia Merkle Trie: node marked as leaf but path contains extension flag"));
                 }
 
                 trace!(
@@ -329,7 +348,9 @@ impl Node {
                     String::from_utf8(pair_path.clone())
                 );
 
-                let mut vec: Vec<Vec<u8>> = UntrustedRlp::new(pair.value.as_slice()).as_list().unwrap_or_default(); //default will cause error below
+                let mut vec: Vec<Vec<u8>> = UntrustedRlp::new(pair.value.as_slice())
+                    .as_list()
+                    .unwrap_or_default(); //default will cause error below
 
                 let mut full_path = prefix.clone();
                 let mut path_left = pair_path.clone();
@@ -355,10 +376,7 @@ impl Node {
                 let (is_leaf, pair_path) = Node::parse_path(pair.path.as_slice());
 
                 if is_leaf {
-                    return Err(err_msg(
-                        IndyErrorKind::InvalidState,
-                        "Incorrect Patricia Merkle Trie: node marked as extension but path contains leaf flag",
-                    ));
+                    return Err(err_msg(IndyErrorKind::InvalidState, "Incorrect Patricia Merkle Trie: node marked as extension but path contains leaf flag"));
                 }
 
                 let mut full_path = prefix.clone();
@@ -378,7 +396,9 @@ impl Node {
         match self._get_value(db, nibble_path.as_slice())? {
             Some(v) => {
                 trace!("Raw value from Patricia Merkle Trie {:?}", v);
-                let mut vec: Vec<Vec<u8>> = UntrustedRlp::new(v.as_slice()).as_list().unwrap_or_default(); //default will cause error below
+                let mut vec: Vec<Vec<u8>> = UntrustedRlp::new(v.as_slice())
+                    .as_list()
+                    .unwrap_or_default(); //default will cause error below
 
                 if let Some(val) = vec.pop() {
                     if vec.is_empty() {
@@ -394,7 +414,11 @@ impl Node {
             None => Ok(None),
         }
     }
-    fn _get_value<'a, 'b>(&'a self, db: &'a TrieDB, path: &'b [u8]) -> IndyResult<Option<&'a Vec<u8>>> {
+    fn _get_value<'a, 'b>(
+        &'a self,
+        db: &'a TrieDB,
+        path: &'b [u8],
+    ) -> IndyResult<Option<&'a Vec<u8>>> {
         trace!("Check proof, cur node: {:?}", self);
         match self._get_node(db, path, vec![].as_slice())? {
             Some((Node::Full(ref node), _)) => Ok(node.value.as_ref()),
@@ -403,10 +427,7 @@ impl Node {
                 let (is_leaf, _) = Node::parse_path(pair.path.as_slice());
 
                 if !is_leaf {
-                    return Err(err_msg(
-                        IndyErrorKind::InvalidState,
-                        "Incorrect Patricia Merkle Trie: node marked as leaf but path contains extension flag",
-                    ));
+                    return Err(err_msg(IndyErrorKind::InvalidState, "Incorrect Patricia Merkle Trie: node marked as leaf but path contains extension flag"));
                 }
 
                 Ok(Some(&pair.value))
@@ -454,9 +475,8 @@ impl Node {
 
 #[cfg(test)]
 mod tests {
-    use indy_utils::crypto::base64;
-
     use super::*;
+    use indy_utils::crypto::base64;
 
     #[test]
     fn node_deserialize_works_for_emtpy() {
@@ -470,6 +490,9 @@ mod tests {
 
     #[test]
     fn node_serialize_works_for_emtpy() {
-        assert_eq!(base64::encode(&rlp::encode_list(&vec![Node::Blank])), "wYA=");
+        assert_eq!(
+            base64::encode(&rlp::encode_list(&vec![Node::Blank])),
+            "wYA="
+        );
     }
 }

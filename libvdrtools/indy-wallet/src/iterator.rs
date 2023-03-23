@@ -2,7 +2,9 @@ use std::sync::Arc;
 
 use indy_api_types::errors::IndyError;
 
-use super::{encryption::decrypt_storage_record, storage::StorageIterator, wallet::Keys, WalletRecord};
+use super::{
+    encryption::decrypt_storage_record, storage::StorageIterator, wallet::Keys, WalletRecord,
+};
 
 pub(super) struct WalletIterator {
     storage_iterator: Box<dyn StorageIterator>,
@@ -21,7 +23,10 @@ impl WalletIterator {
         let next_storage_entity = self.storage_iterator.next().await?;
 
         if let Some(next_storage_entity) = next_storage_entity {
-            Ok(Some(decrypt_storage_record(&next_storage_entity, &self.keys)?))
+            Ok(Some(decrypt_storage_record(
+                &next_storage_entity,
+                &self.keys,
+            )?))
         } else {
             Ok(None)
         }

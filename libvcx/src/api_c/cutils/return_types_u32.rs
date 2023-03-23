@@ -1,17 +1,16 @@
-use std::{
-    collections::HashMap,
-    fmt::Display,
-    ops::Deref,
-    sync::{
-        mpsc::{channel, Receiver, RecvTimeoutError},
-        Mutex,
-    },
-    time::Duration,
-};
+use std::collections::HashMap;
+use std::fmt::Display;
+use std::ops::Deref;
+use std::sync::mpsc::channel;
+use std::sync::mpsc::Receiver;
+use std::sync::mpsc::RecvTimeoutError;
+use std::sync::Mutex;
+use std::time::Duration;
 
-use aries_vcx::{indy::utils::next_command_handle, vdrtools::CommandHandle};
 use libc::c_char;
 
+use aries_vcx::indy::utils::next_command_handle;
+use aries_vcx::vdrtools::CommandHandle;
 use libvcx_core::errors;
 use libvcx_core::errors::error::TIMEOUT_LIBINDY_ERROR;
 use libvcx_core::errors::mapping_ffi_tests::map_indy_error;
@@ -396,7 +395,8 @@ impl Return_U32_U32_STR_STR_STR {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 mod tests {
-    use std::{ffi::CString, ptr};
+    use std::ffi::CString;
+    use std::ptr;
 
     use super::*;
 

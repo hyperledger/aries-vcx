@@ -12,7 +12,6 @@ use log::trace;
 use serde_json::Value;
 use ursa::cl::{new_nonce, RevocationRegistry, Witness};
 
-use super::tails::SDKTailsAccessor;
 use crate::{
     domain::{
         anoncreds::{
@@ -26,9 +25,13 @@ use crate::{
             credential_offer::CredentialOffer,
             credential_request::{CredentialRequest, CredentialRequestMetadata},
             master_secret::MasterSecret,
-            proof_request::{NonRevocedInterval, PredicateInfo, ProofRequest, ProofRequestExtraQuery},
+            proof_request::{
+                NonRevocedInterval, PredicateInfo, ProofRequest, ProofRequestExtraQuery,
+            },
             requested_credential::RequestedCredentials,
-            revocation_registry_definition::{RevocationRegistryDefinition, RevocationRegistryDefinitionV1},
+            revocation_registry_definition::{
+                RevocationRegistryDefinition, RevocationRegistryDefinitionV1,
+            },
             revocation_registry_delta::{RevocationRegistryDelta, RevocationRegistryDeltaV1},
             revocation_state::{RevocationState, RevocationStates},
             schema::{schemas_map_to_schemas_v1_map, Schemas},
@@ -39,6 +42,8 @@ use crate::{
     utils::wql::Query,
 };
 
+use super::tails::SDKTailsAccessor;
+
 struct SearchForProofRequest {
     search: WalletSearch,
     interval: Option<NonRevocedInterval>,
@@ -46,7 +51,11 @@ struct SearchForProofRequest {
 }
 
 impl SearchForProofRequest {
-    fn new(search: WalletSearch, interval: Option<NonRevocedInterval>, predicate_info: Option<PredicateInfo>) -> Self {
+    fn new(
+        search: WalletSearch,
+        interval: Option<NonRevocedInterval>,
+        predicate_info: Option<PredicateInfo>,
+    ) -> Self {
         Self {
             search,
             interval,
@@ -61,7 +70,8 @@ pub struct ProverController {
     crypto_service: Arc<CryptoService>,
     blob_storage_service: Arc<BlobStorageService>,
     searches: Mutex<HashMap<SearchHandle, Box<WalletSearch>>>,
-    searches_for_proof_requests: Mutex<HashMap<SearchHandle, HashMap<String, Arc<Mutex<SearchForProofRequest>>>>>,
+    searches_for_proof_requests:
+        Mutex<HashMap<SearchHandle, HashMap<String, Arc<Mutex<SearchForProofRequest>>>>>,
 }
 
 impl ProverController {
@@ -122,10 +132,17 @@ impl ProverController {
 
         let master_secret = self.prover_service.new_master_secret()?;
 
-        let master_secret = MasterSecret { value: master_secret };
+        let master_secret = MasterSecret {
+            value: master_secret,
+        };
 
         self.wallet_service
-            .add_indy_object(wallet_handle, &master_secret_id, &master_secret, &HashMap::new())
+            .add_indy_object(
+                wallet_handle,
+                &master_secret_id,
+                &master_secret,
+                &HashMap::new(),
+            )
             .await?;
 
         let res = Ok(master_secret_id);
@@ -135,17 +152,16 @@ impl ProverController {
 
     /// Creates a credential request for the given credential offer.
     ///
-    /// The method creates a blinded master secret for a master secret identified by a provided
-    /// name. The master secret identified by the name must be already stored in the secure
-    /// wallet (see prover_create_master_secret) The blinded master secret is a part of the
-    /// credential request.
+    /// The method creates a blinded master secret for a master secret identified by a provided name.
+    /// The master secret identified by the name must be already stored in the secure wallet (see prover_create_master_secret)
+    /// The blinded master secret is a part of the credential request.
     ///
     /// #Params
 
     /// wallet_handle: wallet handle (created by open_wallet)
     /// prover_did: a DID of the prover
-    /// cred_offer_json: credential offer as a json containing information about the issuer and a
-    /// credential     {
+    /// cred_offer_json: credential offer as a json containing information about the issuer and a credential
+    ///     {
     ///         "schema_id": string, - identifier of schema
     ///         "cred_def_id": string, - identifier of credential definition
     ///          ...
@@ -169,9 +185,9 @@ impl ProverController {
     ///                      It should not be parsed and are likely to change in future versions).
     ///      "nonce": string
     ///    }
-    /// cred_req_metadata_json: Credential request metadata json for further processing of received
-    /// form Issuer credential.     Credential request metadata contains data structures
-    /// internal to Ursa.     Credential request metadata mustn't be shared with Issuer.
+    /// cred_req_metadata_json: Credential request metadata json for further processing of received form Issuer credential.
+    ///     Credential request metadata contains data structures internal to Ursa.
+    ///     Credential request metadata mustn't be shared with Issuer.
     ///
     /// #Errors
     /// Anoncreds*
@@ -186,8 +202,9 @@ impl ProverController {
         master_secret_id: String,
     ) -> IndyResult<(String, String)> {
         trace!(
-            "create_credential_request > wallet_handle {:?} prover_did {:?} cred_offer {:?} cred_def {:?} \
-             master_secret_id: {:?}",
+            "create_credential_request > wallet_handle {:?} \
+                prover_did {:?} cred_offer {:?} cred_def {:?} \
+                master_secret_id: {:?}",
             wallet_handle,
             prover_did,
             cred_offer,
@@ -199,11 +216,13 @@ impl ProverController {
 
         self.crypto_service.validate_did(&prover_did)?;
 
-        let master_secret: MasterSecret = self._wallet_get_master_secret(wallet_handle, &master_secret_id).await?;
+        let master_secret: MasterSecret = self
+            ._wallet_get_master_secret(wallet_handle, &master_secret_id)
+            .await?;
 
-        let (blinded_ms, ms_blinding_data, blinded_ms_correctness_proof) =
-            self.prover_service
-                .new_credential_request(&cred_def, &master_secret.value, &cred_offer)?;
+        let (blinded_ms, ms_blinding_data, blinded_ms_correctness_proof) = self
+            .prover_service
+            .new_credential_request(&cred_def, &master_secret.value, &cred_offer)?;
 
         let nonce = new_nonce()?;
 
@@ -221,8 +240,10 @@ impl ProverController {
             master_secret_name: master_secret_id.to_string(),
         };
 
-        let cred_req_json = serde_json::to_string(&credential_request)
-            .to_indy(IndyErrorKind::InvalidState, "Cannot serialize CredentialRequest")?;
+        let cred_req_json = serde_json::to_string(&credential_request).to_indy(
+            IndyErrorKind::InvalidState,
+            "Cannot serialize CredentialRequest",
+        )?;
 
         let cred_req_metadata_json = serde_json::to_string(&credential_request_metadata).to_indy(
             IndyErrorKind::InvalidState,
@@ -248,12 +269,12 @@ impl ProverController {
     ///         "schema_version": <credential schema version>,
     ///         "issuer_did": <credential issuer did>,
     ///         "cred_def_id": <credential definition id>,
-    ///         "rev_reg_id": <credential revocation registry id>, // "None" as string if not
-    /// present     }
+    ///         "rev_reg_id": <credential revocation registry id>, // "None" as string if not present
+    ///     }
     ///
-    /// The policy sets the following tags for each attribute it marks taggable, written to
-    /// subsequent credentials and (optionally) all existing credentials on the credential
-    /// definition:     {
+    /// The policy sets the following tags for each attribute it marks taggable, written to subsequent
+    /// credentials and (optionally) all existing credentials on the credential definition:
+    ///     {
     ///         "attr::<attribute name>::marker": "1",
     ///         "attr::<attribute name>::value": <attribute raw value>,
     ///     }
@@ -263,8 +284,7 @@ impl ProverController {
     /// wallet_handle: wallet handle (created by open_wallet).
     /// cred_def_id: credential definition id
     /// tag_attrs_json: JSON array with names of attributes to tag by policy, or null for all
-    /// retroactive: boolean, whether to apply policy to existing credentials on credential
-    /// definition identifier
+    /// retroactive: boolean, whether to apply policy to existing credentials on credential definition identifier
     ///
     /// #Errors
     /// Anoncreds*
@@ -278,7 +298,8 @@ impl ProverController {
         retroactive: bool,
     ) -> IndyResult<()> {
         trace!(
-            "set_credential_attr_tag_policy > wallet_handle {:?} cred_def_id {:?} catpol {:?} retroactive {:?}",
+            "set_credential_attr_tag_policy > wallet_handle {:?} \
+                cred_def_id {:?} catpol {:?} retroactive {:?}",
             wallet_handle,
             cred_def_id,
             catpol,
@@ -298,20 +319,26 @@ impl ProverController {
                     .await?
                 {
                     self.wallet_service
-                        .delete_indy_record::<CredentialAttrTagPolicy>(wallet_handle, &cred_def_id.0)
+                        .delete_indy_record::<CredentialAttrTagPolicy>(
+                            wallet_handle,
+                            &cred_def_id.0,
+                        )
                         .await?;
                 }
             }
         };
 
-        // Cascade whether we updated policy or not: could be a retroactive cred attr tags reset to existing
-        // policy
+        // Cascade whether we updated policy or not: could be a retroactive cred attr tags reset to existing policy
         if retroactive {
             let query_json = format!(r#"{{"cred_def_id": "{}"}}"#, cred_def_id.0);
 
             let mut credentials_search = self
                 .wallet_service
-                .search_indy_records::<Credential>(wallet_handle, query_json.as_str(), &SearchOptions::id_value())
+                .search_indy_records::<Credential>(
+                    wallet_handle,
+                    query_json.as_str(),
+                    &SearchOptions::id_value(),
+                )
                 .await?;
 
             while let Some(credential_record) = credentials_search.fetch_next_record().await? {
@@ -360,7 +387,8 @@ impl ProverController {
         cred_def_id: CredentialDefinitionId,
     ) -> IndyResult<String> {
         trace!(
-            "get_credential_attr_tag_policy > wallet_handle {:?} cred_def_id {:?}",
+            "get_credential_attr_tag_policy > wallet_handle {:?} \
+                cred_def_id {:?}",
             wallet_handle,
             cred_def_id
         );
@@ -377,26 +405,26 @@ impl ProverController {
     /// Check credential provided by Issuer for the given credential request,
     /// updates the credential by a master secret and stores in a secure wallet.
     ///
-    /// To support efficient and flexible search the following tags will be created for stored
-    /// credential:     {
+    /// To support efficient and flexible search the following tags will be created for stored credential:
+    ///     {
     ///         "schema_id": <credential schema id>,
     ///         "schema_issuer_did": <credential schema issuer did>,
     ///         "schema_name": <credential schema name>,
     ///         "schema_version": <credential schema version>,
     ///         "issuer_did": <credential issuer did>,
     ///         "cred_def_id": <credential definition id>,
-    ///         "rev_reg_id": <credential revocation registry id>, // "None" as string if not
-    /// present         // for every attribute in <credential values> that credential attribute
-    /// tagging policy marks taggable         "attr::<attribute name>::marker": "1",
+    ///         "rev_reg_id": <credential revocation registry id>, // "None" as string if not present
+    ///         // for every attribute in <credential values> that credential attribute tagging policy marks taggable
+    ///         "attr::<attribute name>::marker": "1",
     ///         "attr::<attribute name>::value": <attribute raw value>,
     ///     }
     ///
     /// #Params
 
     /// wallet_handle: wallet handle (created by open_wallet).
-    /// cred_id: (optional, default is a random one) identifier by which credential will be stored
-    /// in the wallet cred_req_metadata_json: a credential request metadata created by
-    /// indy_prover_create_credential_req cred_json: credential json received from issuer
+    /// cred_id: (optional, default is a random one) identifier by which credential will be stored in the wallet
+    /// cred_req_metadata_json: a credential request metadata created by indy_prover_create_credential_req
+    /// cred_json: credential json received from issuer
     ///     {
     ///         "schema_id": string, - identifier of schema
     ///         "cred_def_id": string, - identifier of credential definition
@@ -411,8 +439,7 @@ impl ProverController {
     ///         These fields should not be parsed and are likely to change in future versions.
     ///     }
     /// cred_def_json: credential definition json related to <cred_def_id> in <cred_json>
-    /// rev_reg_def_json: revocation registry definition json related to <rev_reg_def_id> in
-    /// <cred_json>
+    /// rev_reg_def_json: revocation registry definition json related to <rev_reg_def_id> in <cred_json>
     ///
     /// #Returns
     /// out_cred_id: identifier by which credential is stored in the wallet
@@ -431,8 +458,10 @@ impl ProverController {
         rev_reg_def: Option<RevocationRegistryDefinition>,
     ) -> IndyResult<String> {
         trace!(
-            "store_credential > wallet_handle {:?} cred_id {:?} cred_req_metadata {:?} credential {:?} cred_def {:?} \
-             rev_reg_def {:?}",
+            "store_credential > wallet_handle {:?} \
+                cred_id {:?} cred_req_metadata {:?} \
+                credential {:?} cred_def {:?} \
+                rev_reg_def {:?}",
             wallet_handle,
             cred_id,
             cred_req_metadata,
@@ -514,15 +543,18 @@ impl ProverController {
     ///         "schema_id": string, - identifier of schema
     ///         "cred_def_id": string, - identifier of credential definition
     ///         "rev_reg_id": Optional<string>, - identifier of revocation registry definition
-    ///         "cred_rev_id": Optional<string> - identifier of credential in the revocation
-    /// registry definition     }]
+    ///         "cred_rev_id": Optional<string> - identifier of credential in the revocation registry definition
+    ///     }]
     ///
     /// #Errors
     /// Anoncreds*
     /// Common*
     /// Wallet*
     #[no_mangle]
-    #[deprecated(since = "1.6.1", note = "Please use indy_prover_search_credentials instead!")]
+    #[deprecated(
+        since = "1.6.1",
+        note = "Please use indy_prover_search_credentials instead!"
+    )]
     pub async fn get_credentials(
         &self,
         wallet_handle: WalletHandle,
@@ -539,7 +571,11 @@ impl ProverController {
 
         let mut credentials_search = self
             .wallet_service
-            .search_indy_records::<Credential>(wallet_handle, filter_json, &SearchOptions::id_value())
+            .search_indy_records::<Credential>(
+                wallet_handle,
+                filter_json,
+                &SearchOptions::id_value(),
+            )
             .await?;
 
         while let Some(credential_record) = credentials_search.fetch_next_record().await? {
@@ -547,8 +583,10 @@ impl ProverController {
             credentials_info.push(self._get_credential_info(&referent, credential))
         }
 
-        let credentials_info_json = serde_json::to_string(&credentials_info)
-            .to_indy(IndyErrorKind::InvalidState, "Cannot serialize list of CredentialInfo")?;
+        let credentials_info_json = serde_json::to_string(&credentials_info).to_indy(
+            IndyErrorKind::InvalidState,
+            "Cannot serialize list of CredentialInfo",
+        )?;
 
         let res = Ok(credentials_info_json);
         trace!("get_credentials < {:?}", res);
@@ -569,14 +607,18 @@ impl ProverController {
     ///         "schema_id": string, - identifier of schema
     ///         "cred_def_id": string, - identifier of credential definition
     ///         "rev_reg_id": Optional<string>, - identifier of revocation registry definition
-    ///         "cred_rev_id": Optional<string> - identifier of credential in the revocation
-    /// registry definition     }
+    ///         "cred_rev_id": Optional<string> - identifier of credential in the revocation registry definition
+    ///     }
     ///
     /// #Errors
     /// Anoncreds*
     /// Common*
     /// Wallet*
-    pub async fn get_credential(&self, wallet_handle: WalletHandle, cred_id: String) -> IndyResult<String> {
+    pub async fn get_credential(
+        &self,
+        wallet_handle: WalletHandle,
+        cred_id: String,
+    ) -> IndyResult<String> {
         trace!(
             "get_credentials > wallet_handle {:?} cred_id {:?}",
             wallet_handle,
@@ -590,8 +632,10 @@ impl ProverController {
 
         let credential_info = self._get_credential_info(&cred_id, credential);
 
-        let credential_info_json = serde_json::to_string(&credential_info)
-            .to_indy(IndyErrorKind::InvalidState, "Cannot serialize CredentialInfo")?;
+        let credential_info_json = serde_json::to_string(&credential_info).to_indy(
+            IndyErrorKind::InvalidState,
+            "Cannot serialize CredentialInfo",
+        )?;
 
         let res = Ok(credential_info_json);
         trace!("get_credential < {:?}", res);
@@ -611,8 +655,8 @@ impl ProverController {
     ///     where query: indy-sdk/docs/design/011-wallet-query-language/README.md
     ///
     /// #Returns
-    /// search_handle: Search handle that can be used later to fetch records by small batches (with
-    /// indy_prover_fetch_credentials) total_count: Total count of records
+    /// search_handle: Search handle that can be used later to fetch records by small batches (with indy_prover_fetch_credentials)
+    /// total_count: Total count of records
     ///
     /// #Errors
     /// Anoncreds*
@@ -642,7 +686,10 @@ impl ProverController {
 
         let handle: SearchHandle = next_search_handle();
 
-        self.searches.lock().await.insert(handle, Box::new(credentials_search));
+        self.searches
+            .lock()
+            .await
+            .insert(handle, Box::new(credentials_search));
 
         let res = (handle, total_count);
         trace!("search_credentials < {:?}", res);
@@ -663,16 +710,19 @@ impl ProverController {
     ///         "schema_id": string, - identifier of schema
     ///         "cred_def_id": string, - identifier of credential definition
     ///         "rev_reg_id": Optional<string>, - identifier of revocation registry definition
-    ///         "cred_rev_id": Optional<string> - identifier of credential in the revocation
-    /// registry definition     }]
-    /// NOTE: The list of length less than the requested count means credentials search iterator is
-    /// completed.
+    ///         "cred_rev_id": Optional<string> - identifier of credential in the revocation registry definition
+    ///     }]
+    /// NOTE: The list of length less than the requested count means credentials search iterator is completed.
     ///
     /// #Errors
     /// Anoncreds*
     /// Common*
     /// Wallet*
-    pub async fn fetch_credentials(&self, search_handle: SearchHandle, count: usize) -> IndyResult<String> {
+    pub async fn fetch_credentials(
+        &self,
+        search_handle: SearchHandle,
+        count: usize,
+    ) -> IndyResult<String> {
         trace!(
             "fetch_credentials > search_handle {:?} count {:?}",
             search_handle,
@@ -681,9 +731,12 @@ impl ProverController {
 
         let mut searches = self.searches.lock().await;
 
-        let search = searches
-            .get_mut(&search_handle)
-            .ok_or_else(|| err_msg(IndyErrorKind::InvalidWalletHandle, "Unknown CredentialsSearch handle"))?;
+        let search = searches.get_mut(&search_handle).ok_or_else(|| {
+            err_msg(
+                IndyErrorKind::InvalidWalletHandle,
+                "Unknown CredentialsSearch handle",
+            )
+        })?;
 
         let mut credentials_info: Vec<CredentialInfo> = Vec::new();
 
@@ -697,8 +750,10 @@ impl ProverController {
             }
         }
 
-        let credentials_info_json = serde_json::to_string(&credentials_info)
-            .to_indy(IndyErrorKind::InvalidState, "Cannot serialize list of CredentialInfo")?;
+        let credentials_info_json = serde_json::to_string(&credentials_info).to_indy(
+            IndyErrorKind::InvalidState,
+            "Cannot serialize list of CredentialInfo",
+        )?;
 
         let res = Ok(credentials_info_json);
         trace!("fetch_credentials < {:?}", res);
@@ -715,13 +770,21 @@ impl ProverController {
     /// Common*
     /// Wallet*
     pub async fn close_credentials_search(&self, search_handle: SearchHandle) -> IndyResult<()> {
-        trace!("close_credentials_search > search_handle {:?}", search_handle);
+        trace!(
+            "close_credentials_search > search_handle {:?}",
+            search_handle
+        );
 
         self.searches
             .lock()
             .await
             .remove(&search_handle)
-            .ok_or_else(|| err_msg(IndyErrorKind::InvalidWalletHandle, "Unknown CredentialsSearch handle"))?;
+            .ok_or_else(|| {
+                err_msg(
+                    IndyErrorKind::InvalidWalletHandle,
+                    "Unknown CredentialsSearch handle",
+                )
+            })?;
 
         let res = Ok(());
         trace!("close_credentials_search < {:?}", res);
@@ -739,10 +802,10 @@ impl ProverController {
     ///     {
     ///         "name": string,
     ///         "version": string,
-    ///         "nonce": string, - a decimal number represented as a string (use
-    /// `indy_generate_nonce` function to generate 80-bit number)         "requested_attributes"
-    /// : { // set of requested attributes              "<attr_referent>": <attr_info>, // see
-    /// below              ...,
+    ///         "nonce": string, - a decimal number represented as a string (use `indy_generate_nonce` function to generate 80-bit number)
+    ///         "requested_attributes": { // set of requested attributes
+    ///              "<attr_referent>": <attr_info>, // see below
+    ///              ...,
     ///         },
     ///         "requested_predicates": { // set of requested predicates
     ///              "<predicate_referent>": <predicate_info>, // see below
@@ -751,8 +814,8 @@ impl ProverController {
     ///         "non_revoked": Optional<<non_revoc_interval>>, // see below,
     ///                        // If specified prover must proof non-revocation
     ///                        // for date in this interval for each attribute
-    ///                        // (applies to every attribute and predicate but can be overridden on
-    /// attribute level),         "ver": Optional<str>  - proof request version:
+    ///                        // (applies to every attribute and predicate but can be overridden on attribute level),
+    ///         "ver": Optional<str>  - proof request version:
     ///             - omit or "1.0" to use unqualified identifiers for restrictions
     ///             - "2.0" to use fully qualified identifiers for restrictions
     ///     }
@@ -762,10 +825,9 @@ impl ProverController {
     /// attr_info: Describes requested attribute
     ///     {
     ///         "name": Optional<string>, // attribute name, (case insensitive and ignore spaces)
-    ///         "names": Optional<[string, string]>, // attribute names, (case insensitive and
-    /// ignore spaces)                                              // NOTE: should either be
-    /// "name" or "names", not both and not none of them.                                       
-    /// // Use "names" to specify several attributes that have to match a single credential.
+    ///         "names": Optional<[string, string]>, // attribute names, (case insensitive and ignore spaces)
+    ///                                              // NOTE: should either be "name" or "names", not both and not none of them.
+    ///                                              // Use "names" to specify several attributes that have to match a single credential.
     ///         "restrictions": Optional<filter_json>, // see below
     ///         "non_revoked": Optional<<non_revoc_interval>>, // see below,
     ///                        // If specified prover must proof non-revocation
@@ -803,14 +865,13 @@ impl ProverController {
     /// credentials_json: json with credentials for the given proof request.
     ///     {
     ///         "attrs": {
-    ///             "<attr_referent>": [{ cred_info: <credential_info>, interval:
-    /// Optional<non_revoc_interval> }],             ...,
+    ///             "<attr_referent>": [{ cred_info: <credential_info>, interval: Optional<non_revoc_interval> }],
+    ///             ...,
     ///         },
     ///         "predicates": {
-    ///             "requested_predicates": [{ cred_info: <credential_info>, timestamp:
-    /// Optional<integer> }, { cred_info: <credential_2_info>, timestamp: Optional<integer> }],
-    ///             "requested_predicate_2_referent": [{ cred_info: <credential_2_info>, timestamp:
-    /// Optional<integer> }]         }
+    ///             "requested_predicates": [{ cred_info: <credential_info>, timestamp: Optional<integer> }, { cred_info: <credential_2_info>, timestamp: Optional<integer> }],
+    ///             "requested_predicate_2_referent": [{ cred_info: <credential_2_info>, timestamp: Optional<integer> }]
+    ///         }
     ///     }, where <credential_info> is
     ///     {
     ///         "referent": string, - id of credential in the wallet
@@ -818,8 +879,8 @@ impl ProverController {
     ///         "schema_id": string, - identifier of schema
     ///         "cred_def_id": string, - identifier of credential definition
     ///         "rev_reg_id": Optional<string>, - identifier of revocation registry definition
-    ///         "cred_rev_id": Optional<string> - identifier of credential in the revocation
-    /// registry definition     }
+    ///         "cred_rev_id": Optional<string> - identifier of credential in the revocation registry definition
+    ///     }
     ///
     /// #Errors
     /// Anoncreds*
@@ -844,7 +905,8 @@ impl ProverController {
         let proof_req = proof_request.value();
         let proof_req_version = proof_request.version();
 
-        let mut credentials_for_proof_request: CredentialsForProofRequest = CredentialsForProofRequest::default();
+        let mut credentials_for_proof_request: CredentialsForProofRequest =
+            CredentialsForProofRequest::default();
 
         for (attr_id, requested_attr) in proof_req.requested_attributes.iter() {
             let query = self.prover_service.process_proof_request_restrictions(
@@ -856,8 +918,10 @@ impl ProverController {
                 &None,
             )?;
 
-            let interval =
-                AnoncredsHelpers::get_non_revoc_interval(&proof_req.non_revoked, &requested_attr.non_revoked);
+            let interval = AnoncredsHelpers::get_non_revoc_interval(
+                &proof_req.non_revoked,
+                &requested_attr.non_revoked,
+            );
 
             let credentials_for_attribute = self
                 ._query_requested_credentials(wallet_handle, &query, None, &interval)
@@ -878,11 +942,18 @@ impl ProverController {
                 &None,
             )?;
 
-            let interval =
-                AnoncredsHelpers::get_non_revoc_interval(&proof_req.non_revoked, &requested_predicate.non_revoked);
+            let interval = AnoncredsHelpers::get_non_revoc_interval(
+                &proof_req.non_revoked,
+                &requested_predicate.non_revoked,
+            );
 
             let credentials_for_predicate = self
-                ._query_requested_credentials(wallet_handle, &query, Some(&requested_predicate), &interval)
+                ._query_requested_credentials(
+                    wallet_handle,
+                    &query,
+                    Some(&requested_predicate),
+                    &interval,
+                )
                 .await?;
 
             credentials_for_proof_request
@@ -890,10 +961,11 @@ impl ProverController {
                 .insert(predicate_id.to_string(), credentials_for_predicate);
         }
 
-        let credentials_for_proof_request_json = serde_json::to_string(&credentials_for_proof_request).to_indy(
-            IndyErrorKind::InvalidState,
-            "Cannot serialize CredentialsForProofRequest",
-        )?;
+        let credentials_for_proof_request_json =
+            serde_json::to_string(&credentials_for_proof_request).to_indy(
+                IndyErrorKind::InvalidState,
+                "Cannot serialize CredentialsForProofRequest",
+            )?;
 
         let res = Ok(credentials_for_proof_request_json);
         trace!("get_credentials_for_proof_req < {:?}", res);
@@ -912,10 +984,10 @@ impl ProverController {
     ///     {
     ///         "name": string,
     ///         "version": string,
-    ///         "nonce": string, - a decimal number represented as a string (use
-    /// `indy_generate_nonce` function to generate 80-bit number)         "requested_attributes"
-    /// : { // set of requested attributes              "<attr_referent>": <attr_info>, // see
-    /// below              ...,
+    ///         "nonce": string, - a decimal number represented as a string (use `indy_generate_nonce` function to generate 80-bit number)
+    ///         "requested_attributes": { // set of requested attributes
+    ///              "<attr_referent>": <attr_info>, // see below
+    ///              ...,
     ///         },
     ///         "requested_predicates": { // set of requested predicates
     ///              "<predicate_referent>": <predicate_info>, // see below
@@ -924,8 +996,8 @@ impl ProverController {
     ///         "non_revoked": Optional<<non_revoc_interval>>, // see below,
     ///                        // If specified prover must proof non-revocation
     ///                        // for date in this interval for each attribute
-    ///                        // (applies to every attribute and predicate but can be overridden on
-    /// attribute level)                        // (can be overridden on attribute level)
+    ///                        // (applies to every attribute and predicate but can be overridden on attribute level)
+    ///                        // (can be overridden on attribute level)
     ///         "ver": Optional<str>  - proof request version:
     ///             - omit or "1.0" to use unqualified identifiers for restrictions
     ///             - "2.0" to use fully qualified identifiers for restrictions
@@ -935,10 +1007,9 @@ impl ProverController {
     /// attr_info: Describes requested attribute
     ///     {
     ///         "name": Optional<string>, // attribute name, (case insensitive and ignore spaces)
-    ///         "names": Optional<[string, string]>, // attribute names, (case insensitive and
-    /// ignore spaces)                                              // NOTE: should either be
-    /// "name" or "names", not both and not none of them.                                       
-    /// // Use "names" to specify several attributes that have to match a single credential.
+    ///         "names": Optional<[string, string]>, // attribute names, (case insensitive and ignore spaces)
+    ///                                              // NOTE: should either be "name" or "names", not both and not none of them.
+    ///                                              // Use "names" to specify several attributes that have to match a single credential.
     ///         "restrictions": Optional<wql query>, // see below
     ///         "non_revoked": Optional<<non_revoc_interval>>, // see below,
     ///                        // If specified prover must proof non-revocation
@@ -962,8 +1033,8 @@ impl ProverController {
     ///         "from": Optional<int>, // timestamp of interval beginning
     ///         "to": Optional<int>, // timestamp of interval ending
     ///     }
-    /// extra_query_json:(Optional) List of extra queries that will be applied to correspondent
-    /// attribute/predicate:     {
+    /// extra_query_json:(Optional) List of extra queries that will be applied to correspondent attribute/predicate:
+    ///     {
     ///         "<attr_referent>": <wql query>,
     ///         "<predicate_referent>": <wql query>,
     ///     }
@@ -975,16 +1046,14 @@ impl ProverController {
     ///         "schema_version": <credential schema version>,
     ///         "issuer_did": <credential issuer did>,
     ///         "cred_def_id": <credential definition id>,
-    ///         "rev_reg_id": <credential revocation registry id>, // "None" as string if not
-    /// present         // the following keys can be used for every `attribute name` in
-    /// credential.         "attr::<attribute name>::marker": "1", - to filter based on
-    /// existence of a specific attribute         "attr::<attribute name>::value": <attribute
-    /// raw value>, - to filter based on value of a specific attribute
+    ///         "rev_reg_id": <credential revocation registry id>, // "None" as string if not present
+    ///         // the following keys can be used for every `attribute name` in credential.
+    ///         "attr::<attribute name>::marker": "1", - to filter based on existence of a specific attribute
+    ///         "attr::<attribute name>::value": <attribute raw value>, - to filter based on value of a specific attribute
     ///
     ///
     /// #Returns
-    /// search_handle: Search handle that can be used later to fetch records by small batches (with
-    /// indy_prover_fetch_credentials_for_proof_req)
+    /// search_handle: Search handle that can be used later to fetch records by small batches (with indy_prover_fetch_credentials_for_proof_req)
     ///
     /// #Errors
     /// Anoncreds*
@@ -997,7 +1066,8 @@ impl ProverController {
         extra_query: Option<ProofRequestExtraQuery>,
     ) -> IndyResult<SearchHandle> {
         trace!(
-            "search_credentials_for_proof_req > wallet_handle {:?} proof_request {:?} extra_query {:?}",
+            "search_credentials_for_proof_req > wallet_handle {:?} \
+                proof_request {:?} extra_query {:?}",
             wallet_handle,
             proof_request,
             extra_query
@@ -1006,7 +1076,8 @@ impl ProverController {
         let proof_req = proof_request.value();
         let version = proof_request.version();
 
-        let mut credentials_for_proof_request_search = HashMap::<String, Arc<Mutex<SearchForProofRequest>>>::new();
+        let mut credentials_for_proof_request_search =
+            HashMap::<String, Arc<Mutex<SearchForProofRequest>>>::new();
 
         for (attr_id, requested_attr) in proof_req.requested_attributes.iter() {
             let query = self.prover_service.process_proof_request_restrictions(
@@ -1020,11 +1091,17 @@ impl ProverController {
 
             let credentials_search = self
                 .wallet_service
-                .search_indy_records::<Credential>(wallet_handle, &query.to_string(), &SearchOptions::id_value())
+                .search_indy_records::<Credential>(
+                    wallet_handle,
+                    &query.to_string(),
+                    &SearchOptions::id_value(),
+                )
                 .await?;
 
-            let interval =
-                AnoncredsHelpers::get_non_revoc_interval(&proof_req.non_revoked, &requested_attr.non_revoked);
+            let interval = AnoncredsHelpers::get_non_revoc_interval(
+                &proof_req.non_revoked,
+                &requested_attr.non_revoked,
+            );
 
             credentials_for_proof_request_search.insert(
                 attr_id.to_string(),
@@ -1048,11 +1125,17 @@ impl ProverController {
 
             let credentials_search = self
                 .wallet_service
-                .search_indy_records::<Credential>(wallet_handle, &query.to_string(), &SearchOptions::id_value())
+                .search_indy_records::<Credential>(
+                    wallet_handle,
+                    &query.to_string(),
+                    &SearchOptions::id_value(),
+                )
                 .await?;
 
-            let interval =
-                AnoncredsHelpers::get_non_revoc_interval(&proof_req.non_revoked, &requested_predicate.non_revoked);
+            let interval = AnoncredsHelpers::get_non_revoc_interval(
+                &proof_req.non_revoked,
+                &requested_predicate.non_revoked,
+            );
 
             credentials_for_proof_request_search.insert(
                 predicate_id.to_string(),
@@ -1098,8 +1181,8 @@ impl ProverController {
     ///         "schema_id": string, - identifier of schema
     ///         "cred_def_id": string, - identifier of credential definition
     ///         "rev_reg_id": Optional<string>, - identifier of revocation registry definition
-    ///         "cred_rev_id": Optional<string> - identifier of credential in the revocation
-    /// registry definition     }
+    ///         "cred_rev_id": Optional<string> - identifier of credential in the revocation registry definition
+    ///     }
     /// non_revoc_interval:
     ///     {
     ///         "from": Optional<int>, // timestamp of interval beginning
@@ -1119,7 +1202,8 @@ impl ProverController {
         count: usize,
     ) -> IndyResult<String> {
         trace!(
-            "fetch_credential_for_proof_request > search_handle {:?} item_referent {:?} count {:?}",
+            "fetch_credential_for_proof_request > search_handle {:?} \
+                item_referent {:?} count {:?}",
             search_handle,
             item_referent,
             count
@@ -1130,7 +1214,12 @@ impl ProverController {
 
             searches
                 .get_mut(&search_handle)
-                .ok_or_else(|| err_msg(IndyErrorKind::InvalidWalletHandle, "Unknown CredentialsSearch"))?
+                .ok_or_else(|| {
+                    err_msg(
+                        IndyErrorKind::InvalidWalletHandle,
+                        "Unknown CredentialsSearch",
+                    )
+                })?
                 .get(&item_referent)
                 .ok_or_else(|| {
                     err_msg(
@@ -1172,7 +1261,10 @@ impl ProverController {
     /// Anoncreds*
     /// Common*
     /// Wallet*
-    pub async fn close_credentials_search_for_proof_req(&self, search_handle: SearchHandle) -> IndyResult<()> {
+    pub async fn close_credentials_search_for_proof_req(
+        &self,
+        search_handle: SearchHandle,
+    ) -> IndyResult<()> {
         trace!(
             "close_credentials_search_for_proof_req > search_handle {:?}",
             search_handle
@@ -1182,7 +1274,12 @@ impl ProverController {
             .lock()
             .await
             .remove(&search_handle)
-            .ok_or_else(|| err_msg(IndyErrorKind::InvalidWalletHandle, "Unknown CredentialsSearch handle"))?;
+            .ok_or_else(|| {
+                err_msg(
+                    IndyErrorKind::InvalidWalletHandle,
+                    "Unknown CredentialsSearch handle",
+                )
+            })?;
 
         let res = Ok(());
         trace!("close_credentials_search_for_proof_req < {:?}", res);
@@ -1199,7 +1296,11 @@ impl ProverController {
     /// Anoncreds*
     /// Common*
     /// Wallet*
-    pub async fn delete_credential(&self, wallet_handle: WalletHandle, cred_id: String) -> IndyResult<()> {
+    pub async fn delete_credential(
+        &self,
+        wallet_handle: WalletHandle,
+        cred_id: String,
+    ) -> IndyResult<()> {
         trace!(
             "delete_credential > wallet_handle {:?} cred_id {:?}",
             wallet_handle,
@@ -1211,7 +1312,10 @@ impl ProverController {
             .record_exists::<Credential>(wallet_handle, &cred_id)
             .await?
         {
-            return Err(err_msg(IndyErrorKind::WalletItemNotFound, "Credential not found"));
+            return Err(err_msg(
+                IndyErrorKind::WalletItemNotFound,
+                "Credential not found",
+            ));
         }
 
         self.wallet_service
@@ -1224,13 +1328,12 @@ impl ProverController {
     }
 
     /// Creates a proof according to the given proof request
-    /// Either a corresponding credential with optionally revealed attributes or self-attested
-    /// attribute must be provided for each requested attribute (see
-    /// indy_prover_get_credentials_for_pool_req). A proof request may request multiple
-    /// credentials from different schemas and different issuers. All required schemas, public
-    /// keys and revocation registries must be provided. The proof request also contains nonce.
-    /// The proof contains either proof or self-attested attribute value for each requested
-    /// attribute.
+    /// Either a corresponding credential with optionally revealed attributes or self-attested attribute must be provided
+    /// for each requested attribute (see indy_prover_get_credentials_for_pool_req).
+    /// A proof request may request multiple credentials from different schemas and different issuers.
+    /// All required schemas, public keys and revocation registries must be provided.
+    /// The proof request also contains nonce.
+    /// The proof contains either proof or self-attested attribute value for each requested attribute.
     ///
     /// #Params
     /// wallet_handle: wallet handle (created by open_wallet).
@@ -1239,10 +1342,10 @@ impl ProverController {
     ///     {
     ///         "name": string,
     ///         "version": string,
-    ///         "nonce": string, - a decimal number represented as a string (use
-    /// `indy_generate_nonce` function to generate 80-bit number)         "requested_attributes"
-    /// : { // set of requested attributes              "<attr_referent>": <attr_info>, // see
-    /// below              ...,
+    ///         "nonce": string, - a decimal number represented as a string (use `indy_generate_nonce` function to generate 80-bit number)
+    ///         "requested_attributes": { // set of requested attributes
+    ///              "<attr_referent>": <attr_info>, // see below
+    ///              ...,
     ///         },
     ///         "requested_predicates": { // set of requested predicates
     ///              "<predicate_referent>": <predicate_info>, // see below
@@ -1251,24 +1354,24 @@ impl ProverController {
     ///         "non_revoked": Optional<<non_revoc_interval>>, // see below,
     ///                        // If specified prover must proof non-revocation
     ///                        // for date in this interval for each attribute
-    ///                        // (applies to every attribute and predicate but can be overridden on
-    /// attribute level)                        // (can be overridden on attribute level)
+    ///                        // (applies to every attribute and predicate but can be overridden on attribute level)
+    ///                        // (can be overridden on attribute level)
     ///         "ver": Optional<str>  - proof request version:
     ///             - omit or "1.0" to use unqualified identifiers for restrictions
     ///             - "2.0" to use fully qualified identifiers for restrictions
     ///     }
-    /// requested_credentials_json: either a credential or self-attested attribute for each
-    /// requested attribute     {
+    /// requested_credentials_json: either a credential or self-attested attribute for each requested attribute
+    ///     {
     ///         "self_attested_attributes": {
     ///             "self_attested_attribute_referent": string
     ///         },
     ///         "requested_attributes": {
-    ///             "requested_attribute_referent_1": {"cred_id": string, "timestamp":
-    /// Optional<number>, revealed: <bool> }},             "requested_attribute_referent_2":
-    /// {"cred_id": string, "timestamp": Optional<number>, revealed: <bool> }}         },
+    ///             "requested_attribute_referent_1": {"cred_id": string, "timestamp": Optional<number>, revealed: <bool> }},
+    ///             "requested_attribute_referent_2": {"cred_id": string, "timestamp": Optional<number>, revealed: <bool> }}
+    ///         },
     ///         "requested_predicates": {
-    ///             "requested_predicates_referent_1": {"cred_id": string, "timestamp":
-    /// Optional<number> }},         }
+    ///             "requested_predicates_referent_1": {"cred_id": string, "timestamp": Optional<number> }},
+    ///         }
     ///     }
     /// master_secret_id: the id of the master secret stored in the wallet
     /// schemas_json: all schemas participating in the proof request
@@ -1296,18 +1399,16 @@ impl ProverController {
     ///             "timestamp4": <rev_state4>
     ///         },
     ///     }
-    /// Note: use credential_id instead rev_reg_id in case proving several credentials from the same
-    /// revocation registry.
+    /// Note: use credential_id instead rev_reg_id in case proving several credentials from the same revocation registry.
     ///
     /// where
     /// attr_referent: Proof-request local identifier of requested attribute
     /// attr_info: Describes requested attribute
     ///     {
     ///         "name": Optional<string>, // attribute name, (case insensitive and ignore spaces)
-    ///         "names": Optional<[string, string]>, // attribute names, (case insensitive and
-    /// ignore spaces)                                              // NOTE: should either be
-    /// "name" or "names", not both and not none of them.                                       
-    /// // Use "names" to specify several attributes that have to match a single credential.
+    ///         "names": Optional<[string, string]>, // attribute names, (case insensitive and ignore spaces)
+    ///                                              // NOTE: should either be "name" or "names", not both and not none of them.
+    ///                                              // Use "names" to specify several attributes that have to match a single credential.
     ///         "restrictions": Optional<wql query>, // see below
     ///         "non_revoked": Optional<<non_revoc_interval>>, // see below,
     ///                        // If specified prover must proof non-revocation
@@ -1339,24 +1440,23 @@ impl ProverController {
     ///         "schema_version": <credential schema version>,
     ///         "issuer_did": <credential issuer did>,
     ///         "cred_def_id": <credential definition id>,
-    ///         "rev_reg_id": <credential revocation registry id>, // "None" as string if not
-    /// present         // the following keys can be used for every `attribute name` in
-    /// credential.         "attr::<attribute name>::marker": "1", - to filter based on
-    /// existence of a specific attribute         "attr::<attribute name>::value": <attribute
-    /// raw value>, - to filter based on value of a specific attribute
+    ///         "rev_reg_id": <credential revocation registry id>, // "None" as string if not present
+    ///         // the following keys can be used for every `attribute name` in credential.
+    ///         "attr::<attribute name>::marker": "1", - to filter based on existence of a specific attribute
+    ///         "attr::<attribute name>::value": <attribute raw value>, - to filter based on value of a specific attribute
     ///
     /// #Returns
     /// Proof json
     /// For each requested attribute either a proof (with optionally revealed attribute value) or
     /// self-attested attribute value is provided.
-    /// Each proof is associated with a credential and corresponding schema_id, cred_def_id,
-    /// rev_reg_id and timestamp. There is also aggregated proof part common for all credential
-    /// proofs.     {
+    /// Each proof is associated with a credential and corresponding schema_id, cred_def_id, rev_reg_id and timestamp.
+    /// There is also aggregated proof part common for all credential proofs.
+    ///     {
     ///         "requested_proof": {
     ///             "revealed_attrs": {
-    ///                 "requested_attr1_id": {sub_proof_index: number, raw: string, encoded:
-    /// string},                 "requested_attr4_id": {sub_proof_index: number: string,
-    /// encoded: string},             },
+    ///                 "requested_attr1_id": {sub_proof_index: number, raw: string, encoded: string},
+    ///                 "requested_attr4_id": {sub_proof_index: number: string, encoded: string},
+    ///             },
     ///             "revealed_attr_groups": {
     ///                 "requested_attr5_id": {
     ///                     "sub_proof_index": number,
@@ -1402,8 +1502,10 @@ impl ProverController {
         rev_states: RevocationStates,
     ) -> IndyResult<String> {
         trace!(
-            "create_proof > wallet_handle {:?} proof_req {:?} requested_credentials {:?} master_secret_id {:?} \
-             schemas {:?} cred_defs {:?} rev_states {:?}",
+            "create_proof > wallet_handle {:?} \
+                proof_req {:?} requested_credentials {:?} \
+                master_secret_id {:?} schemas {:?} \
+                cred_defs {:?} rev_states {:?}",
             wallet_handle,
             proof_req,
             requested_credentials,
@@ -1416,7 +1518,9 @@ impl ProverController {
         let schemas = schemas_map_to_schemas_v1_map(schemas);
         let cred_defs = cred_defs_map_to_cred_defs_v1_map(cred_defs);
 
-        let master_secret = self._wallet_get_master_secret(wallet_handle, &master_secret_id).await?;
+        let master_secret = self
+            ._wallet_get_master_secret(wallet_handle, &master_secret_id)
+            .await?;
 
         let cred_refs_for_attrs = requested_credentials
             .requested_attributes
@@ -1435,7 +1539,8 @@ impl ProverController {
             .cloned()
             .collect::<Vec<String>>();
 
-        let mut credentials: HashMap<String, Credential> = HashMap::with_capacity(cred_referents.len());
+        let mut credentials: HashMap<String, Credential> =
+            HashMap::with_capacity(cred_referents.len());
 
         for cred_referent in cred_referents.into_iter() {
             let credential: Credential = self
@@ -1455,8 +1560,8 @@ impl ProverController {
             &rev_states,
         )?;
 
-        let proof_json =
-            serde_json::to_string(&proof).to_indy(IndyErrorKind::InvalidState, "Cannot serialize FullProof")?;
+        let proof_json = serde_json::to_string(&proof)
+            .to_indy(IndyErrorKind::InvalidState, "Cannot serialize FullProof")?;
 
         let res = Ok(proof_json);
         trace!("create_proof <{:?}", res);
@@ -1466,31 +1571,27 @@ impl ProverController {
     /// Create revocation state for a credential that corresponds to a particular time.
     ///
     /// Note that revocation delta must cover the whole registry existence time.
-    /// You can use `from`: `0` and `to`: `needed_time` as parameters for building request to get
-    /// correct revocation delta.
+    /// You can use `from`: `0` and `to`: `needed_time` as parameters for building request to get correct revocation delta.
     ///
-    /// The resulting revocation state and provided timestamp can be saved and reused later with
-    /// applying a new revocation delta with `indy_update_revocation_state` function.
-    /// This new delta should be received with parameters: `from`: `timestamp` and `to`:
-    /// `needed_time`.
+    /// The resulting revocation state and provided timestamp can be saved and reused later with applying a new
+    /// revocation delta with `indy_update_revocation_state` function.
+    /// This new delta should be received with parameters: `from`: `timestamp` and `to`: `needed_time`.
     ///
     /// #Params
 
-    /// blob_storage_reader_handle: configuration of blob storage reader handle that will allow to
-    /// read revocation tails (returned by `indy_open_blob_storage_reader`) rev_reg_def_json:
-    /// revocation registry definition json related to `rev_reg_id` in a credential
+    /// blob_storage_reader_handle: configuration of blob storage reader handle that will allow to read revocation tails (returned by `indy_open_blob_storage_reader`)
+    /// rev_reg_def_json: revocation registry definition json related to `rev_reg_id` in a credential
     /// rev_reg_delta_json: revocation registry delta which covers the whole registry existence time
     /// timestamp: time represented as a total number of seconds from Unix Epoch.
-    /// cred_rev_id: user credential revocation id in revocation registry (match to `cred_rev_id` in
-    /// a credential)
+    /// cred_rev_id: user credential revocation id in revocation registry (match to `cred_rev_id` in a credential)
     ///
     /// #Returns
     /// revocation state json:
     ///     {
     ///         "rev_reg": <revocation registry>,
     ///         "witness": <witness>,  (opaque type that contains data structures internal to Ursa.
-    ///                                 It should not be parsed and are likely to change in future
-    /// versions).         "timestamp" : integer
+    ///                                 It should not be parsed and are likely to change in future versions).
+    ///         "timestamp" : integer
     ///     }
     ///
     /// #Errors
@@ -1506,8 +1607,9 @@ impl ProverController {
         cred_rev_id: String,
     ) -> IndyResult<String> {
         trace!(
-            "create_revocation_state > blob_storage_reader_handle {:?} revoc_reg_def {:?} rev_reg_delta {:?} \
-             timestamp {:?} cred_rev_id {:?}",
+            "create_revocation_state > blob_storage_reader_handle {:?} \
+                revoc_reg_def {:?} rev_reg_delta {:?} timestamp {:?} \
+                cred_rev_id {:?}",
             blob_storage_reader_handle,
             revoc_reg_def,
             rev_reg_delta,
@@ -1541,8 +1643,10 @@ impl ProverController {
             timestamp,
         };
 
-        let revocation_state_json = serde_json::to_string(&revocation_state)
-            .to_indy(IndyErrorKind::InvalidState, "Cannot serialize RevocationState")?;
+        let revocation_state_json = serde_json::to_string(&revocation_state).to_indy(
+            IndyErrorKind::InvalidState,
+            "Cannot serialize RevocationState",
+        )?;
 
         let res = Ok(revocation_state_json);
         trace!("create_revocation_state < {:?}", res);
@@ -1550,33 +1654,29 @@ impl ProverController {
     }
 
     /// Create a new revocation state for a credential based on a revocation state created before.
-    /// Note that provided revocation delta must cover the registry gap from based state creation
-    /// until the specified time (this new delta should be received with parameters: `from`:
-    /// `state_timestamp` and `to`: `needed_time`).
+    /// Note that provided revocation delta must cover the registry gap from based state creation until the specified time
+    /// (this new delta should be received with parameters: `from`: `state_timestamp` and `to`: `needed_time`).
     ///
     /// This function reduces the calculation time.
     ///
-    /// The resulting revocation state and provided timestamp can be saved and reused later by
-    /// applying a new revocation delta again.
+    /// The resulting revocation state and provided timestamp can be saved and reused later by applying a new revocation delta again.
     ///
     /// #Params
 
-    /// blob_storage_reader_handle: configuration of blob storage reader handle that will allow to
-    /// read revocation tails (returned by `indy_open_blob_storage_reader`) rev_state_json:
-    /// revocation registry state json rev_reg_def_json: revocation registry definition json
-    /// related to `rev_reg_id` in a credential rev_reg_delta_json: revocation registry
-    /// definition delta which covers the gap form original `rev_state_json` creation till the
-    /// requested timestamp timestamp: time represented as a total number of seconds from Unix
-    /// Epoch cred_rev_id: user credential revocation id in revocation registry (match to
-    /// `cred_rev_id` in a credential)
+    /// blob_storage_reader_handle: configuration of blob storage reader handle that will allow to read revocation tails (returned by `indy_open_blob_storage_reader`)
+    /// rev_state_json: revocation registry state json
+    /// rev_reg_def_json: revocation registry definition json related to `rev_reg_id` in a credential
+    /// rev_reg_delta_json: revocation registry definition delta which covers the gap form original `rev_state_json` creation till the requested timestamp
+    /// timestamp: time represented as a total number of seconds from Unix Epoch
+    /// cred_rev_id: user credential revocation id in revocation registry (match to `cred_rev_id` in a credential)
     ///
     /// #Returns
     /// revocation state json:
     ///     {
     ///         "rev_reg": <revocation registry>,
     ///         "witness": <witness>,  (opaque type that contains data structures internal to Ursa.
-    ///                                 It should not be parsed and are likely to change in future
-    /// versions).         "timestamp" : integer
+    ///                                 It should not be parsed and are likely to change in future versions).
+    ///         "timestamp" : integer
     ///     }
     ///
     /// #Errors
@@ -1593,8 +1693,9 @@ impl ProverController {
         cred_rev_id: String,
     ) -> IndyResult<String> {
         trace!(
-            "update_revocation_state > blob_storage_reader_handle {:?} rev_state {:?} rev_reg_def {:?} rev_reg_delta \
-             {:?} timestamp {:?} cred_rev_id {:?}",
+            "update_revocation_state > blob_storage_reader_handle {:?} \
+                rev_state {:?} rev_reg_def {:?} rev_reg_delta {:?} \
+                timestamp {:?} cred_rev_id {:?}",
             blob_storage_reader_handle,
             rev_state,
             rev_reg_def,
@@ -1624,8 +1725,10 @@ impl ProverController {
         rev_state.rev_reg = RevocationRegistry::from(rev_reg_delta.value);
         rev_state.timestamp = timestamp;
 
-        let rev_state_json = serde_json::to_string(&rev_state)
-            .to_indy(IndyErrorKind::InvalidState, "Cannot serialize RevocationState")?;
+        let rev_state_json = serde_json::to_string(&rev_state).to_indy(
+            IndyErrorKind::InvalidState,
+            "Cannot serialize RevocationState",
+        )?;
 
         let res = Ok(rev_state_json);
         trace!("update_revocation_state < {:?}", res);
@@ -1646,19 +1749,25 @@ impl ProverController {
             schema_id: credential.schema_id,
             cred_def_id: credential.cred_def_id,
             rev_reg_id: credential.rev_reg_id,
-            cred_rev_id: credential.signature.extract_index().map(|idx| idx.to_string()),
+            cred_rev_id: credential
+                .signature
+                .extract_index()
+                .map(|idx| idx.to_string()),
         }
     }
 
     fn _get_credential(&self, record: &WalletRecord) -> IndyResult<(String, Credential)> {
         let referent = record.get_id();
 
-        let value = record
-            .get_value()
-            .ok_or_else(|| err_msg(IndyErrorKind::InvalidState, "Credential not found for id: {}"))?;
+        let value = record.get_value().ok_or_else(|| {
+            err_msg(
+                IndyErrorKind::InvalidState,
+                "Credential not found for id: {}",
+            )
+        })?;
 
-        let credential: Credential =
-            serde_json::from_str(value).to_indy(IndyErrorKind::InvalidState, "Cannot deserialize Credential")?;
+        let credential: Credential = serde_json::from_str(value)
+            .to_indy(IndyErrorKind::InvalidState, "Cannot deserialize Credential")?;
 
         Ok((referent.to_string(), credential))
     }
@@ -1671,7 +1780,8 @@ impl ProverController {
         interval: &Option<NonRevocedInterval>,
     ) -> IndyResult<Vec<RequestedCredential>> {
         trace!(
-            "_query_requested_credentials > wallet_handle {:?} query_json {:?} predicate_info {:?}",
+            "_query_requested_credentials > wallet_handle {:?} \
+                query_json {:?} predicate_info {:?}",
             wallet_handle,
             query_json,
             predicate_info
@@ -1679,7 +1789,11 @@ impl ProverController {
 
         let mut credentials_search = self
             .wallet_service
-            .search_indy_records::<Credential>(wallet_handle, &query_json.to_string(), &SearchOptions::id_value())
+            .search_indy_records::<Credential>(
+                wallet_handle,
+                &query_json.to_string(),
+                &SearchOptions::id_value(),
+            )
             .await?;
 
         let credentials = self
@@ -1711,7 +1825,9 @@ impl ProverController {
                 let values = self
                     .prover_service
                     .get_credential_values_for_attribute(&credential.values.0, &predicate.name)
-                    .ok_or_else(|| err_msg(IndyErrorKind::InvalidState, "Credential values not found"))?;
+                    .ok_or_else(|| {
+                        err_msg(IndyErrorKind::InvalidState, "Credential values not found")
+                    })?;
 
                 let satisfy = self
                     .prover_service
@@ -1737,7 +1853,11 @@ impl ProverController {
         Ok(credentials)
     }
 
-    async fn _wallet_get_master_secret(&self, wallet_handle: WalletHandle, key: &str) -> IndyResult<MasterSecret> {
+    async fn _wallet_get_master_secret(
+        &self,
+        wallet_handle: WalletHandle,
+        key: &str,
+    ) -> IndyResult<MasterSecret> {
         self.wallet_service
             .get_indy_object(wallet_handle, &key, &RecordOptions::id_value())
             .await
@@ -1750,12 +1870,19 @@ impl ProverController {
     ) -> IndyResult<String> {
         let catpol = self
             .wallet_service
-            .get_indy_opt_object::<CredentialAttrTagPolicy>(wallet_handle, &cred_def_id.0, &RecordOptions::id_value())
+            .get_indy_opt_object::<CredentialAttrTagPolicy>(
+                wallet_handle,
+                &cred_def_id.0,
+                &RecordOptions::id_value(),
+            )
             .await?
             .as_ref()
             .map(serde_json::to_string)
             .transpose()
-            .to_indy(IndyErrorKind::InvalidState, "Cannot serialize CredentialAttrTagPolicy")?
+            .to_indy(
+                IndyErrorKind::InvalidState,
+                "Cannot serialize CredentialAttrTagPolicy",
+            )?
             .unwrap_or_else(|| Value::Null.to_string());
 
         Ok(catpol)

@@ -1,7 +1,5 @@
-use std::sync::{
-    atomic::{AtomicUsize, Ordering},
-    Mutex,
-};
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::Mutex;
 
 use vdrtools::CommandHandle;
 

@@ -1,9 +1,10 @@
 use std::collections::{HashMap, HashSet};
 
 use indy_api_types::errors::prelude::*;
+
 use ursa::cl::{
-    issuer::Issuer as UrsaIssuer, verifier::Verifier as UrsaVerifier, CredentialSchema, CredentialValues, MasterSecret,
-    NonCredentialSchema, SubProofRequest,
+    issuer::Issuer as UrsaIssuer, verifier::Verifier as UrsaVerifier, CredentialSchema,
+    CredentialValues, MasterSecret, NonCredentialSchema, SubProofRequest,
 };
 
 use crate::domain::{
@@ -108,7 +109,8 @@ impl AnoncredsHelpers {
         predicates_for_credential: &[PredicateInfo],
     ) -> IndyResult<SubProofRequest> {
         trace!(
-            "build_sub_proof_request > attrs_for_credential {:?} predicates_for_credential {:?}",
+            "build_sub_proof_request > attrs_for_credential {:?} \
+            predicates_for_credential {:?}",
             attrs_for_credential,
             predicates_for_credential
         );
@@ -150,9 +152,10 @@ impl AnoncredsHelpers {
     pub(crate) fn parse_cred_rev_id(cred_rev_id: &str) -> IndyResult<u32> {
         trace!("parse_cred_rev_id > cred_rev_id {:?}", cred_rev_id);
 
-        let cred_rev_id = cred_rev_id
-            .parse::<u32>()
-            .to_indy(IndyErrorKind::InvalidStructure, "Cannot parse CredentialRevocationId")?;
+        let cred_rev_id = cred_rev_id.parse::<u32>().to_indy(
+            IndyErrorKind::InvalidStructure,
+            "Cannot parse CredentialRevocationId",
+        )?;
 
         let res = Ok(cred_rev_id);
         trace!("parse_cred_rev_id < {:?}", res);
@@ -230,7 +233,13 @@ mod tests {
 
     #[test]
     fn get_non_revoc_interval_for_empty_interval() {
-        let res = AnoncredsHelpers::get_non_revoc_interval(&Some(NonRevocedInterval { from: None, to: None }), &None);
+        let res = AnoncredsHelpers::get_non_revoc_interval(
+            &Some(NonRevocedInterval {
+                from: None,
+                to: None,
+            }),
+            &None,
+        );
         assert_eq!(None, res);
     }
 
@@ -239,17 +248,18 @@ mod tests {
 
         const DID_QUALIFIED: &str = "did:indy:NcYxiDXkpYi6ov5FcYDi1e";
         const DID_UNQUALIFIED: &str = "NcYxiDXkpYi6ov5FcYDi1e";
-        const SCHEMA_ID_QUALIFIED: &str = "did:indy:NcYxiDXkpYi6ov5FcYDi1e/anoncreds/v0/SCHEMA/gvt/1.0";
+        const SCHEMA_ID_QUALIFIED: &str =
+            "did:indy:NcYxiDXkpYi6ov5FcYDi1e/anoncreds/v0/SCHEMA/gvt/1.0";
         const SCHEMA_ID_UNQUALIFIED: &str = "NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0";
-        const CRED_DEF_ID_QUALIFIED: &str = "did:indy:NcYxiDXkpYi6ov5FcYDi1e/anoncreds/v0/CLAIM_DEF/1/tag";
+        const CRED_DEF_ID_QUALIFIED: &str =
+            "did:indy:NcYxiDXkpYi6ov5FcYDi1e/anoncreds/v0/CLAIM_DEF/1/tag";
         const CRED_DEF_ID_UNQUALIFIED: &str = "NcYxiDXkpYi6ov5FcYDi1e:3:CL:1:tag";
-        const REV_REG_ID_QUALIFIED: &str = "did:indy:NcYxiDXkpYi6ov5FcYDi1e/anoncreds/v0/REV_REG_DEF/did:indy:\
-                                            NcYxiDXkpYi6ov5FcYDi1e/anoncreds/v0/SCHEMA/gvt/1.0/tag/TAG_1";
-        const REV_REG_ID_UNQUALIFIED: &str =
-            "NcYxiDXkpYi6ov5FcYDi1e:4:NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag:CL_ACCUM:TAG_1";
+        const REV_REG_ID_QUALIFIED: &str = "did:indy:NcYxiDXkpYi6ov5FcYDi1e/anoncreds/v0/REV_REG_DEF/did:indy:NcYxiDXkpYi6ov5FcYDi1e/anoncreds/v0/SCHEMA/gvt/1.0/tag/TAG_1";
+        const REV_REG_ID_UNQUALIFIED: &str = "NcYxiDXkpYi6ov5FcYDi1e:4:NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag:CL_ACCUM:TAG_1";
         const SCHEMA_ID_WITH_SPACES_QUALIFIED: &str =
             "did:indy:NcYxiDXkpYi6ov5FcYDi1e/anoncreds/v0/SCHEMA/Passport Schema/1.0";
-        const SCHEMA_ID_WITH_SPACES_UNQUALIFIED: &str = "NcYxiDXkpYi6ov5FcYDi1e:2:Passport Schema:1.0";
+        const SCHEMA_ID_WITH_SPACES_UNQUALIFIED: &str =
+            "NcYxiDXkpYi6ov5FcYDi1e:2:Passport Schema:1.0";
 
         #[test]
         fn test_to_unqualified() {

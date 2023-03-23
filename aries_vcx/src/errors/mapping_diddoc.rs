@@ -1,6 +1,5 @@
-use messages::diddoc::errors::error::{DiddocError, DiddocErrorKind};
-
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind};
+use messages::diddoc::errors::error::{DiddocError, DiddocErrorKind};
 
 impl From<DiddocError> for AriesVcxError {
     fn from(msg_err: DiddocError) -> AriesVcxError {

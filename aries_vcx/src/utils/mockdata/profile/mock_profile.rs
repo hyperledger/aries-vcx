@@ -1,6 +1,5 @@
 use std::sync::Arc;
 
-use super::{mock_anoncreds::MockAnoncreds, mock_ledger::MockLedger, mock_wallet::MockWallet};
 use crate::{
     core::profile::profile::Profile,
     plugins::{
@@ -8,8 +7,10 @@ use crate::{
     },
 };
 
-/// Implementation of a [Profile] which uses [MockLedger], [MockAnoncreds] and [MockWallet] to
-/// return mock data for all Profile methods. Only for unit testing purposes
+use super::{mock_anoncreds::MockAnoncreds, mock_ledger::MockLedger, mock_wallet::MockWallet};
+
+/// Implementation of a [Profile] which uses [MockLedger], [MockAnoncreds] and [MockWallet] to return
+/// mock data for all Profile methods. Only for unit testing purposes
 #[derive(Debug)]
 pub struct MockProfile;
 

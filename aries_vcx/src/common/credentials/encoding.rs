@@ -1,9 +1,6 @@
+use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
+use crate::utils::openssl::encode;
 use std::collections::HashMap;
-
-use crate::{
-    errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
-    utils::openssl::encode,
-};
 
 pub fn encode_attributes(attributes: &str) -> VcxResult<String> {
     let mut dictionary = HashMap::new();
@@ -26,10 +23,7 @@ pub fn encode_attributes(attributes: &str) -> VcxResult<String> {
                             }
                         };
 
-                        warn!(
-                            "Old attribute format detected. See vcx_issuer_create_credential api for additional \
-                             information."
-                        );
+                        warn!("Old attribute format detected. See vcx_issuer_create_credential api for additional information.");
                         attrib_value
                     }
                     _ => {

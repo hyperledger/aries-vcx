@@ -1,31 +1,24 @@
 use std::collections::HashMap;
 
-use aries_vcx::{
-    agency_client::{api::downloaded_message::DownloadedMessage, MessageStatusCode},
-    common::ledger::transactions::into_did_doc,
-    handlers::connection::mediated_connection::MediatedConnection,
-    messages::{
-        a2a::A2AMessage,
-        protocols::connection::{
-            invite::{Invitation as InvitationV3, PublicInvitation},
-            request::Request,
-        },
-    },
-    protocols::{mediated_connection::pairwise_info::PairwiseInfo, SendClosure},
-};
 use serde_json;
 
-use crate::{
-    api_vcx::{
-        api_global::{
-            agency_client::get_main_agency_client,
-            profile::{get_main_profile, get_main_profile_optional_pool},
-            wallet::{wallet_sign, wallet_verify},
-        },
-        api_handle::object_cache::ObjectCache,
-    },
-    errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult},
-};
+use aries_vcx::agency_client::api::downloaded_message::DownloadedMessage;
+use aries_vcx::agency_client::MessageStatusCode;
+use aries_vcx::common::ledger::transactions::into_did_doc;
+use aries_vcx::handlers::connection::mediated_connection::MediatedConnection;
+use aries_vcx::messages::a2a::A2AMessage;
+use aries_vcx::messages::protocols::connection::invite::Invitation as InvitationV3;
+use aries_vcx::messages::protocols::connection::invite::PublicInvitation;
+use aries_vcx::messages::protocols::connection::request::Request;
+use aries_vcx::protocols::mediated_connection::pairwise_info::PairwiseInfo;
+use aries_vcx::protocols::SendClosure;
+
+use crate::api_vcx::api_global::agency_client::get_main_agency_client;
+use crate::api_vcx::api_global::profile::{get_main_profile, get_main_profile_optional_pool};
+use crate::api_vcx::api_global::wallet::{wallet_sign, wallet_verify};
+use crate::api_vcx::api_handle::object_cache::ObjectCache;
+
+use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 
 lazy_static! {
     pub static ref CONNECTION_MAP: ObjectCache<MediatedConnection> =
@@ -480,19 +473,6 @@ pub mod test_utils {
 
 #[cfg(test)]
 pub mod tests {
-    use aries_vcx::{
-        self,
-        agency_client::testing::mocking::AgencyMockDecrypted,
-        messages::protocols::connection::invite::test_utils::{_pairwise_invitation_json, _public_invitation_json},
-        utils::{
-            constants,
-            devsetup::{SetupEmpty, SetupMocks},
-            mockdata::mockdata_mediated_connection::{
-                ARIES_CONNECTION_ACK, ARIES_CONNECTION_INVITATION, ARIES_CONNECTION_REQUEST,
-                CONNECTION_SM_INVITEE_COMPLETED,
-            },
-        },
-    };
     use serde_json::Value;
 
     use aries_vcx;
@@ -511,7 +491,6 @@ pub mod tests {
     use crate::api_vcx::VcxStateType;
 
     use super::*;
-    use crate::api_vcx::{api_handle::mediated_connection, VcxStateType};
 
     fn _setup() {
         let _setup = SetupEmpty::init();
@@ -727,8 +706,7 @@ pub mod tests {
     //     #[cfg(feature = "general_test")]
     //     async fn test_connection_handle_is_found() {
     //         let _setup = SetupMocks::init();
-    //         let handle = create_connection_with_invite("alice",
-    // ARIES_CONNECTION_INVITATION).await.unwrap();
+    //         let handle = create_connection_with_invite("alice", ARIES_CONNECTION_INVITATION).await.unwrap();
     //
     //         CONNECTION_MAP.get_mut(handle, |_connection| {
     //             { Ok(()) }.boxed()

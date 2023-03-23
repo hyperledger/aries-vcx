@@ -1,28 +1,20 @@
-use std::{collections::HashMap, sync::Arc};
+use std::collections::HashMap;
+
+use std::sync::Arc;
 
 use agency_client::agency_client::AgencyClient;
-use messages::{
-    a2a::A2AMessage,
-    protocols::proof_presentation::{
-        presentation::Presentation,
-        presentation_ack::PresentationAck,
-        presentation_proposal::{PresentationPreview, PresentationProposalData},
-        presentation_request::PresentationRequest,
-    },
-};
 
-use crate::{
-    core::profile::profile::Profile,
-    errors::error::prelude::*,
-    handlers::connection::mediated_connection::MediatedConnection,
-    protocols::{
-        proof_presentation::prover::{
-            messages::ProverMessages,
-            state_machine::{ProverSM, ProverState},
-        },
-        SendClosure,
-    },
-};
+use crate::core::profile::profile::Profile;
+use crate::errors::error::prelude::*;
+use crate::handlers::connection::mediated_connection::MediatedConnection;
+use crate::protocols::proof_presentation::prover::messages::ProverMessages;
+use crate::protocols::proof_presentation::prover::state_machine::{ProverSM, ProverState};
+use crate::protocols::SendClosure;
+use messages::a2a::A2AMessage;
+use messages::protocols::proof_presentation::presentation::Presentation;
+use messages::protocols::proof_presentation::presentation_ack::PresentationAck;
+use messages::protocols::proof_presentation::presentation_proposal::{PresentationPreview, PresentationProposalData};
+use messages::protocols::proof_presentation::presentation_request::PresentationRequest;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Prover {
@@ -249,9 +241,10 @@ impl Prover {
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
     use agency_client::agency_client::AgencyClient;
-    use messages::a2a::A2AMessage;
 
-    use crate::{errors::error::prelude::*, handlers::connection::mediated_connection::MediatedConnection};
+    use crate::errors::error::prelude::*;
+    use crate::handlers::connection::mediated_connection::MediatedConnection;
+    use messages::a2a::A2AMessage;
 
     pub async fn get_proof_request_messages(
         agency_client: &AgencyClient,
@@ -274,10 +267,10 @@ pub mod test_utils {
 #[cfg(feature = "general_test")]
 #[cfg(test)]
 mod tests {
+    use crate::{common::test_utils::indy_handles_to_profile, utils::devsetup::*};
     use messages::protocols::proof_presentation::presentation_request::PresentationRequest;
 
     use super::*;
-    use crate::{common::test_utils::indy_handles_to_profile, utils::devsetup::*};
 
     #[tokio::test]
     async fn test_retrieve_credentials_fails_with_no_proof_req() {

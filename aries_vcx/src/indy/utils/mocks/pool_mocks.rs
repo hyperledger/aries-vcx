@@ -37,10 +37,7 @@ impl PoolMocks {
                 .pop()
                 .expect("No data on POOL_MOCK_RESPONSES stack to pop")
         } else {
-            debug!(
-                "Attempting to obtain pool response when none were set, but pool messages available - returning empty \
-                 response..."
-            );
+            debug!("Attempting to obtain pool response when none were set, but pool messages available - returning empty response...");
             String::new()
         }
     }

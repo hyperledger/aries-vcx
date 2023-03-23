@@ -1,21 +1,16 @@
+use bs58;
 use std::{collections::HashMap, sync::Arc};
 
-use bs58;
-use messages::{
-    diddoc::aries::{diddoc::AriesDidDoc, service::AriesService},
-    protocols::{
-        connection::{did::Did, invite::Invitation},
-        out_of_band::service_oob::ServiceOob,
-    },
-};
+use crate::common::ledger::service_didsov::EndpointDidSov;
+use messages::diddoc::aries::diddoc::AriesDidDoc;
+use messages::diddoc::aries::service::AriesService;
+use messages::protocols::connection::did::Did;
+use messages::protocols::connection::invite::Invitation;
+use messages::protocols::out_of_band::service_oob::ServiceOob;
 use serde_json::Value;
 
-use crate::{
-    common::{keys::get_verkey_from_ledger, ledger::service_didsov::EndpointDidSov},
-    core::profile::profile::Profile,
-    errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
-    global::settings,
-};
+use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
+use crate::{common::keys::get_verkey_from_ledger, core::profile::profile::Profile, global::settings};
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -207,11 +202,7 @@ pub async fn parse_legacy_endpoint_attrib(profile: &Arc<dyn Profile>, did_raw: &
     let ser_service = match data["service"].as_str() {
         Some(ser_service) => ser_service.to_string(),
         None => {
-            warn!(
-                "Failed converting service read from ledger {:?} to string, falling back to new single-serialized \
-                 format",
-                data["service"]
-            );
+            warn!("Failed converting service read from ledger {:?} to string, falling back to new single-serialized format", data["service"]);
             data["service"].to_string()
         }
     };
@@ -296,18 +287,15 @@ fn get_data_from_response(resp: &str) -> VcxResult<serde_json::Value> {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 mod test {
-    use messages::{
-        a2a::MessageId,
-        diddoc::aries::diddoc::test_utils::{
-            _key_1, _key_1_did_key, _key_2, _key_2_did_key, _recipient_keys, _routing_keys, _service_endpoint,
-        },
-        protocols::{
-            connection::invite::test_utils::_pairwise_invitation, out_of_band::invitation::OutOfBandInvitation,
-        },
+    use crate::common::test_utils::mock_profile;
+    use messages::a2a::MessageId;
+    use messages::diddoc::aries::diddoc::test_utils::{
+        _key_1, _key_1_did_key, _key_2, _key_2_did_key, _recipient_keys, _routing_keys, _service_endpoint,
     };
+    use messages::protocols::connection::invite::test_utils::_pairwise_invitation;
+    use messages::protocols::out_of_band::invitation::OutOfBandInvitation;
 
     use super::*;
-    use crate::common::test_utils::mock_profile;
 
     #[tokio::test]
     async fn test_did_doc_from_invitation_works() {

@@ -1,6 +1,8 @@
-use std::{collections::HashMap, sync::RwLock};
+use std::collections::HashMap;
+use std::sync::RwLock;
 
-use crate::{errors::error::prelude::*, indy::wallet::IssuerConfig};
+use crate::errors::error::prelude::*;
+use crate::indy::wallet::IssuerConfig;
 
 pub static CONFIG_POOL_NAME: &str = "pool_name";
 pub static CONFIG_SDK_TO_REMOTE_ROLE: &str = "sdk_to_remote_role";
@@ -151,8 +153,9 @@ pub fn get_protocol_version() -> usize {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use super::*;
     use crate::utils::devsetup::SetupDefaults;
+
+    use super::*;
 
     fn _pool_config() -> String {
         r#"{"timeout":40}"#.to_string()

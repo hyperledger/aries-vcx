@@ -1,6 +1,5 @@
-use std::collections::HashMap;
-
 use serde_json::value::Value;
+use std::collections::HashMap;
 
 use crate::validation::Validatable;
 

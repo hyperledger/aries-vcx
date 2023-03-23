@@ -1,4 +1,5 @@
-use std::{error::Error, fmt};
+use std::error::Error;
+use std::fmt;
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug, thiserror::Error)]
 pub enum SharedVcxErrorKind {

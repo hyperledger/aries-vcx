@@ -1,11 +1,12 @@
 use std::{collections::HashMap, sync::Arc};
 
-use futures::future::join;
 use indy_api_types::errors::prelude::*;
+
 use indy_utils::{
     crypto::{chacha20poly1305_ietf, hmacsha256},
     wql::Query,
 };
+
 use serde::{Deserialize, Serialize};
 use zeroize::Zeroize;
 
@@ -18,6 +19,7 @@ use crate::{
     storage::StorageRecord,
     RecordOptions, WalletRecord,
 };
+use futures::future::join;
 
 #[derive(Serialize, Deserialize)]
 pub(super) struct Keys {
@@ -43,9 +45,12 @@ impl Keys {
         }
     }
 
-    pub fn serialize_encrypted(&self, master_key: &chacha20poly1305_ietf::Key) -> IndyResult<Vec<u8>> {
-        let mut serialized =
-            rmp_serde::to_vec(self).to_indy(IndyErrorKind::InvalidState, "Unable to serialize keys")?;
+    pub fn serialize_encrypted(
+        &self,
+        master_key: &chacha20poly1305_ietf::Key,
+    ) -> IndyResult<Vec<u8>> {
+        let mut serialized = rmp_serde::to_vec(self)
+            .to_indy(IndyErrorKind::InvalidState, "Unable to serialize keys")?;
 
         let encrypted = encrypt_as_not_searchable(&serialized, master_key);
 
@@ -53,11 +58,14 @@ impl Keys {
         Ok(encrypted)
     }
 
-    pub fn deserialize_encrypted(bytes: &[u8], master_key: &chacha20poly1305_ietf::Key) -> IndyResult<Keys> {
+    pub fn deserialize_encrypted(
+        bytes: &[u8],
+        master_key: &chacha20poly1305_ietf::Key,
+    ) -> IndyResult<Keys> {
         let mut decrypted = decrypt_merged(bytes, master_key)?;
 
-        let keys: Keys =
-            rmp_serde::from_slice(&decrypted).to_indy(IndyErrorKind::InvalidState, "Invalid bytes for Key")?;
+        let keys: Keys = rmp_serde::from_slice(&decrypted)
+            .to_indy(IndyErrorKind::InvalidState, "Invalid bytes for Key")?;
 
         decrypted.zeroize();
         Ok(keys)
@@ -71,8 +79,9 @@ pub struct EncryptedValue {
 }
 
 #[allow(dead_code)]
-const ENCRYPTED_KEY_LEN: usize =
-    chacha20poly1305_ietf::TAGBYTES + chacha20poly1305_ietf::NONCEBYTES + chacha20poly1305_ietf::KEYBYTES;
+const ENCRYPTED_KEY_LEN: usize = chacha20poly1305_ietf::TAGBYTES
+    + chacha20poly1305_ietf::NONCEBYTES
+    + chacha20poly1305_ietf::KEYBYTES;
 
 impl EncryptedValue {
     pub fn new(data: Vec<u8>, key: Vec<u8>) -> Self {
@@ -90,13 +99,15 @@ impl EncryptedValue {
     pub fn decrypt(&self, key: &chacha20poly1305_ietf::Key) -> IndyResult<String> {
         let mut value_key_bytes = decrypt_merged(&self.key, key)?;
 
-        let value_key =
-            chacha20poly1305_ietf::Key::from_slice(&value_key_bytes).map_err(|err| err.extend("Invalid value key"))?; // FIXME: review kind
+        let value_key = chacha20poly1305_ietf::Key::from_slice(&value_key_bytes)
+            .map_err(|err| err.extend("Invalid value key"))?; // FIXME: review kind
 
         value_key_bytes.zeroize();
 
-        let res = String::from_utf8(decrypt_merged(&self.data, &value_key)?)
-            .to_indy(IndyErrorKind::InvalidState, "Invalid UTF8 string inside of value")?;
+        let res = String::from_utf8(decrypt_merged(&self.data, &value_key)?).to_indy(
+            IndyErrorKind::InvalidState,
+            "Invalid UTF8 string inside of value",
+        )?;
 
         Ok(res)
     }
@@ -110,8 +121,7 @@ impl EncryptedValue {
 
     #[allow(dead_code)]
     pub fn from_bytes(joined_data: &[u8]) -> IndyResult<Self> {
-        // value_key is stored as NONCE || CYPHERTEXT. Lenth of CYPHERTHEXT is length of DATA + length of
-        // TAG.
+        // value_key is stored as NONCE || CYPHERTEXT. Lenth of CYPHERTHEXT is length of DATA + length of TAG.
         if joined_data.len() < ENCRYPTED_KEY_LEN {
             return Err(err_msg(
                 IndyErrorKind::InvalidStructure,
@@ -136,7 +146,12 @@ pub(super) struct Wallet {
 }
 
 impl Wallet {
-    pub fn new(id: String, storage: Box<dyn storage::WalletStorage>, keys: Arc<Keys>, cache: WalletCache) -> Wallet {
+    pub fn new(
+        id: String,
+        storage: Box<dyn storage::WalletStorage>,
+        keys: Arc<Keys>,
+        cache: WalletCache,
+    ) -> Wallet {
         Wallet {
             id,
             storage,
@@ -145,10 +160,24 @@ impl Wallet {
         }
     }
 
-    pub async fn add(&self, type_: &str, name: &str, value: &str, tags: &HashMap<String, String>) -> IndyResult<()> {
-        let etype = encrypt_as_searchable(type_.as_bytes(), &self.keys.type_key, &self.keys.item_hmac_key);
+    pub async fn add(
+        &self,
+        type_: &str,
+        name: &str,
+        value: &str,
+        tags: &HashMap<String, String>,
+    ) -> IndyResult<()> {
+        let etype = encrypt_as_searchable(
+            type_.as_bytes(),
+            &self.keys.type_key,
+            &self.keys.item_hmac_key,
+        );
 
-        let ename = encrypt_as_searchable(name.as_bytes(), &self.keys.name_key, &self.keys.item_hmac_key);
+        let ename = encrypt_as_searchable(
+            name.as_bytes(),
+            &self.keys.name_key,
+            &self.keys.item_hmac_key,
+        );
 
         let evalue = EncryptedValue::encrypt(value, &self.keys.value_key);
 
@@ -165,10 +194,23 @@ impl Wallet {
         Ok(())
     }
 
-    pub async fn add_tags(&self, type_: &str, name: &str, tags: &HashMap<String, String>) -> IndyResult<()> {
-        let encrypted_type = encrypt_as_searchable(type_.as_bytes(), &self.keys.type_key, &self.keys.item_hmac_key);
+    pub async fn add_tags(
+        &self,
+        type_: &str,
+        name: &str,
+        tags: &HashMap<String, String>,
+    ) -> IndyResult<()> {
+        let encrypted_type = encrypt_as_searchable(
+            type_.as_bytes(),
+            &self.keys.type_key,
+            &self.keys.item_hmac_key,
+        );
 
-        let encrypted_name = encrypt_as_searchable(name.as_bytes(), &self.keys.name_key, &self.keys.item_hmac_key);
+        let encrypted_name = encrypt_as_searchable(
+            name.as_bytes(),
+            &self.keys.name_key,
+            &self.keys.item_hmac_key,
+        );
 
         let encrypted_tags = encrypt_tags(
             tags,
@@ -187,10 +229,23 @@ impl Wallet {
         Ok(())
     }
 
-    pub async fn update_tags(&self, type_: &str, name: &str, tags: &HashMap<String, String>) -> IndyResult<()> {
-        let encrypted_type = encrypt_as_searchable(type_.as_bytes(), &self.keys.type_key, &self.keys.item_hmac_key);
+    pub async fn update_tags(
+        &self,
+        type_: &str,
+        name: &str,
+        tags: &HashMap<String, String>,
+    ) -> IndyResult<()> {
+        let encrypted_type = encrypt_as_searchable(
+            type_.as_bytes(),
+            &self.keys.type_key,
+            &self.keys.item_hmac_key,
+        );
 
-        let encrypted_name = encrypt_as_searchable(name.as_bytes(), &self.keys.name_key, &self.keys.item_hmac_key);
+        let encrypted_name = encrypt_as_searchable(
+            name.as_bytes(),
+            &self.keys.name_key,
+            &self.keys.item_hmac_key,
+        );
 
         let encrypted_tags = encrypt_tags(
             tags,
@@ -210,26 +265,48 @@ impl Wallet {
     }
 
     pub async fn delete_tags(&self, type_: &str, name: &str, tag_names: &[&str]) -> IndyResult<()> {
-        let encrypted_type = encrypt_as_searchable(type_.as_bytes(), &self.keys.type_key, &self.keys.item_hmac_key);
+        let encrypted_type = encrypt_as_searchable(
+            type_.as_bytes(),
+            &self.keys.type_key,
+            &self.keys.item_hmac_key,
+        );
 
-        let encrypted_name = encrypt_as_searchable(name.as_bytes(), &self.keys.name_key, &self.keys.item_hmac_key);
+        let encrypted_name = encrypt_as_searchable(
+            name.as_bytes(),
+            &self.keys.name_key,
+            &self.keys.item_hmac_key,
+        );
 
-        let encrypted_tag_names = encrypt_tag_names(tag_names, &self.keys.tag_name_key, &self.keys.tags_hmac_key);
+        let encrypted_tag_names =
+            encrypt_tag_names(tag_names, &self.keys.tag_name_key, &self.keys.tags_hmac_key);
 
         self.storage
             .delete_tags(&encrypted_type, &encrypted_name, &encrypted_tag_names[..])
             .await?;
         self.cache
-            .delete_tags(type_, &encrypted_type, &encrypted_name, &encrypted_tag_names[..])
+            .delete_tags(
+                type_,
+                &encrypted_type,
+                &encrypted_name,
+                &encrypted_tag_names[..],
+            )
             .await;
 
         Ok(())
     }
 
     pub async fn update(&self, type_: &str, name: &str, new_value: &str) -> IndyResult<()> {
-        let encrypted_type = encrypt_as_searchable(type_.as_bytes(), &self.keys.type_key, &self.keys.item_hmac_key);
+        let encrypted_type = encrypt_as_searchable(
+            type_.as_bytes(),
+            &self.keys.type_key,
+            &self.keys.item_hmac_key,
+        );
 
-        let encrypted_name = encrypt_as_searchable(name.as_bytes(), &self.keys.name_key, &self.keys.item_hmac_key);
+        let encrypted_name = encrypt_as_searchable(
+            name.as_bytes(),
+            &self.keys.name_key,
+            &self.keys.item_hmac_key,
+        );
 
         let encrypted_value = EncryptedValue::encrypt(new_value, &self.keys.value_key);
 
@@ -250,13 +327,23 @@ impl Wallet {
         options: &str,
         cache_hit_metrics: &WalletCacheHitMetrics,
     ) -> IndyResult<WalletRecord> {
-        let etype = encrypt_as_searchable(type_.as_bytes(), &self.keys.type_key, &self.keys.item_hmac_key);
+        let etype = encrypt_as_searchable(
+            type_.as_bytes(),
+            &self.keys.type_key,
+            &self.keys.item_hmac_key,
+        );
 
-        let ename = encrypt_as_searchable(name.as_bytes(), &self.keys.name_key, &self.keys.item_hmac_key);
+        let ename = encrypt_as_searchable(
+            name.as_bytes(),
+            &self.keys.name_key,
+            &self.keys.item_hmac_key,
+        );
 
         let result = if self.cache.is_type_cacheable(type_) {
-            let record_options: RecordOptions = serde_json::from_str(options)
-                .to_indy(IndyErrorKind::InvalidStructure, "RecordOptions is malformed json")?;
+            let record_options: RecordOptions = serde_json::from_str(options).to_indy(
+                IndyErrorKind::InvalidStructure,
+                "RecordOptions is malformed json",
+            )?;
             match self.cache.get(type_, &etype, &ename, &record_options).await {
                 Some(result) => {
                     cache_hit_metrics.inc_cache_hit(type_).await;
@@ -306,7 +393,11 @@ impl Wallet {
             Some(encrypted_value) => Some(encrypted_value.decrypt(&self.keys.value_key)?),
         };
 
-        let tags = decrypt_tags(&result.tags, &self.keys.tag_name_key, &self.keys.tag_value_key)?;
+        let tags = decrypt_tags(
+            &result.tags,
+            &self.keys.tag_name_key,
+            &self.keys.tag_value_key,
+        )?;
 
         Ok(WalletRecord::new(
             String::from(name),
@@ -317,9 +408,17 @@ impl Wallet {
     }
 
     pub async fn delete(&self, type_: &str, name: &str) -> IndyResult<()> {
-        let etype = encrypt_as_searchable(type_.as_bytes(), &self.keys.type_key, &self.keys.item_hmac_key);
+        let etype = encrypt_as_searchable(
+            type_.as_bytes(),
+            &self.keys.type_key,
+            &self.keys.item_hmac_key,
+        );
 
-        let ename = encrypt_as_searchable(name.as_bytes(), &self.keys.name_key, &self.keys.item_hmac_key);
+        let ename = encrypt_as_searchable(
+            name.as_bytes(),
+            &self.keys.name_key,
+            &self.keys.item_hmac_key,
+        );
 
         self.storage.delete(&etype, &ename).await?;
         self.cache.delete(type_, &etype, &ename).await;
@@ -327,7 +426,12 @@ impl Wallet {
         Ok(())
     }
 
-    pub async fn search(&self, type_: &str, query: &str, options: Option<&str>) -> IndyResult<WalletIterator> {
+    pub async fn search(
+        &self,
+        type_: &str,
+        query: &str,
+        options: Option<&str>,
+    ) -> IndyResult<WalletIterator> {
         let parsed_query: Query = ::serde_json::from_str::<Query>(query)
             .map_err(|err| IndyError::from_msg(IndyErrorKind::WalletQueryError, err))?
             .optimise()
@@ -335,9 +439,16 @@ impl Wallet {
 
         let encrypted_query = encrypt_query(parsed_query, &self.keys)?;
 
-        let encrypted_type_ = encrypt_as_searchable(type_.as_bytes(), &self.keys.type_key, &self.keys.item_hmac_key);
+        let encrypted_type_ = encrypt_as_searchable(
+            type_.as_bytes(),
+            &self.keys.type_key,
+            &self.keys.item_hmac_key,
+        );
 
-        let storage_iterator = self.storage.search(&encrypted_type_, &encrypted_query, options).await?;
+        let storage_iterator = self
+            .storage
+            .search(&encrypted_type_, &encrypted_query, options)
+            .await?;
 
         let wallet_iterator = WalletIterator::new(storage_iterator, Arc::clone(&self.keys));
 

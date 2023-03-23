@@ -1,9 +1,7 @@
 use serde_json;
 
-use crate::{
-    errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
-    global::settings,
-};
+use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
+use crate::global::settings;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
@@ -56,8 +54,9 @@ pub fn get_txn_author_agreement() -> VcxResult<Option<TxnAuthorAgreementAcceptan
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 mod unit_tests {
-    use super::*;
     use crate::utils::devsetup::SetupDefaults;
+
+    use super::*;
 
     const TEXT: &str = "indy agreement";
     const VERSION: &str = "1.0.0";

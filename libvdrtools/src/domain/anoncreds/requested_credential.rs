@@ -28,10 +28,7 @@ impl Validatable for RequestedCredentials {
             && self.requested_attributes.is_empty()
             && self.requested_predicates.is_empty()
         {
-            return Err(String::from(
-                "Requested Credentials validation failed: `self_attested_attributes` and `requested_attributes` and \
-                 `requested_predicates` are empty",
-            ));
+            return Err(String::from("Requested Credentials validation failed: `self_attested_attributes` and `requested_attributes` and `requested_predicates` are empty"));
         }
         Ok(())
     }

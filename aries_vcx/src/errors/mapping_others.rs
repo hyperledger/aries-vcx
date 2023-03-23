@@ -1,9 +1,7 @@
 use std::sync::PoisonError;
 
-use crate::{
-    errors::error::{AriesVcxError, AriesVcxErrorKind},
-    protocols::revocation_notification::sender::state_machine::SenderConfigBuilderError,
-};
+use crate::errors::error::{AriesVcxError, AriesVcxErrorKind};
+use crate::protocols::revocation_notification::sender::state_machine::SenderConfigBuilderError;
 
 impl From<SenderConfigBuilderError> for AriesVcxError {
     fn from(err: SenderConfigBuilderError) -> AriesVcxError {

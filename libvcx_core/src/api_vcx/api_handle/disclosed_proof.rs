@@ -1,19 +1,19 @@
-use aries_vcx::{
-    agency_client::testing::mocking::AgencyMockDecrypted,
-    global::settings::indy_mocks_enabled,
-    handlers::proof_presentation::prover::Prover,
-    messages::{a2a::A2AMessage, protocols::proof_presentation::presentation_request::PresentationRequest},
-    utils::{constants::GET_MESSAGES_DECRYPTED_RESPONSE, mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION},
-};
 use serde_json;
 
-use crate::{
-    api_vcx::{
-        api_global::profile::{get_main_profile, get_main_profile_optional_pool},
-        api_handle::{mediated_connection, object_cache::ObjectCache},
-    },
-    errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult},
+use aries_vcx::agency_client::testing::mocking::AgencyMockDecrypted;
+use aries_vcx::handlers::proof_presentation::prover::Prover;
+use aries_vcx::messages::a2a::A2AMessage;
+use aries_vcx::messages::protocols::proof_presentation::presentation_request::PresentationRequest;
+use aries_vcx::utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
+use aries_vcx::{
+    global::settings::indy_mocks_enabled, utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION,
 };
+
+use crate::api_vcx::api_global::profile::{get_main_profile, get_main_profile_optional_pool};
+use crate::api_vcx::api_handle::mediated_connection;
+use crate::api_vcx::api_handle::object_cache::ObjectCache;
+
+use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 
 lazy_static! {
     static ref HANDLE_MAP: ObjectCache<Prover> = ObjectCache::<Prover>::new("disclosed-proofs-cache");
@@ -33,16 +33,7 @@ pub fn create_with_proof_request(source_id: &str, proof_req: &str) -> LibvcxResu
         proof_req
     );
 
-    let presentation_request: PresentationRequest = serde_json::from_str(proof_req).map_err(|err| {
-        LibvcxError::from_msg(
-            LibvcxErrorKind::InvalidJson,
-            format!(
-                "Strict `aries` protocol is enabled. Can not parse `aries` formatted Presentation Request: {}\nError: \
-                 {}",
-                proof_req, err
-            ),
-        )
-    })?;
+    let presentation_request: PresentationRequest = serde_json::from_str(proof_req).map_err(|err| LibvcxError::from_msg(LibvcxErrorKind::InvalidJson, format!("Strict `aries` protocol is enabled. Can not parse `aries` formatted Presentation Request: {}\nError: {}", proof_req, err)))?;
 
     let proof = Prover::create_from_request(source_id, presentation_request)?;
     HANDLE_MAP.add(proof)
@@ -51,16 +42,7 @@ pub fn create_with_proof_request(source_id: &str, proof_req: &str) -> LibvcxResu
 pub async fn create_with_msgid(source_id: &str, connection_handle: u32, msg_id: &str) -> LibvcxResult<(u32, String)> {
     let proof_request = get_proof_request(connection_handle, msg_id).await?;
 
-    let presentation_request: PresentationRequest = serde_json::from_str(&proof_request).map_err(|err| {
-        LibvcxError::from_msg(
-            LibvcxErrorKind::InvalidJson,
-            format!(
-                "Strict `aries` protocol is enabled. Can not parse `aries` formatted Presentation Request: {}\nError: \
-                 {}",
-                proof_request, err
-            ),
-        )
-    })?;
+    let presentation_request: PresentationRequest = serde_json::from_str(&proof_request).map_err(|err| LibvcxError::from_msg(LibvcxErrorKind::InvalidJson, format!("Strict `aries` protocol is enabled. Can not parse `aries` formatted Presentation Request: {}\nError: {}", proof_request, err)))?;
 
     let proof = Prover::create_from_request(source_id, presentation_request)?;
 
@@ -309,18 +291,6 @@ pub fn get_presentation_status(handle: u32) -> LibvcxResult<u32> {
 mod tests {
     extern crate serde_json;
 
-    use aries_vcx::{
-        utils,
-        utils::{
-            constants::{ARIES_PROVER_CREDENTIALS, ARIES_PROVER_SELF_ATTESTED_ATTRS, GET_MESSAGES_DECRYPTED_RESPONSE},
-            devsetup::{SetupDefaults, SetupMocks},
-            mockdata::{
-                mock_settings::MockBuilder,
-                mockdata_proof,
-                mockdata_proof::{ARIES_PROOF_PRESENTATION_ACK, ARIES_PROOF_REQUEST_PRESENTATION},
-            },
-        },
-    };
     use serde_json::Value;
 
     use crate::api_vcx::api_handle::mediated_connection::test_utils::{
@@ -339,10 +309,6 @@ mod tests {
     use crate::aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
 
     use super::*;
-    use crate::aries_vcx::{
-        common::proofs::proof_request::PresentationRequestData,
-        protocols::proof_presentation::prover::state_machine::ProverState,
-    };
 
     async fn _get_proof_request_messages(connection_h: u32) -> String {
         let requests = get_proof_request_messages(connection_h).await.unwrap();

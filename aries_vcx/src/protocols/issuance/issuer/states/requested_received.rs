@@ -1,13 +1,10 @@
-use messages::{
-    concepts::problem_report::ProblemReport,
-    protocols::issuance::{credential_offer::CredentialOffer, credential_request::CredentialRequest},
-    status::Status,
-};
-
-use crate::protocols::issuance::issuer::{
-    state_machine::RevocationInfoV1,
-    states::{credential_sent::CredentialSentState, finished::FinishedState},
-};
+use crate::protocols::issuance::issuer::state_machine::RevocationInfoV1;
+use crate::protocols::issuance::issuer::states::credential_sent::CredentialSentState;
+use crate::protocols::issuance::issuer::states::finished::FinishedState;
+use messages::concepts::problem_report::ProblemReport;
+use messages::protocols::issuance::credential_offer::CredentialOffer;
+use messages::protocols::issuance::credential_request::CredentialRequest;
+use messages::status::Status;
 
 // TODO: Use OfferInfo instead of ind. fields
 #[derive(Serialize, Deserialize, Debug, Clone)]

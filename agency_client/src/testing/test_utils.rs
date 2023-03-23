@@ -1,6 +1,7 @@
 use std::sync::Once;
 
-use crate::testing::{mocking, mocking::AgencyMockDecrypted};
+use crate::testing::mocking;
+use crate::testing::mocking::AgencyMockDecrypted;
 
 pub struct SetupMocks;
 

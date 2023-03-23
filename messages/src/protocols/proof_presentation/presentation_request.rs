@@ -1,13 +1,9 @@
-use crate::{
-    a2a::{A2AMessage, MessageId},
-    concepts::{
-        attachment::{AttachmentId, Attachments},
-        thread::Thread,
-        timing::Timing,
-    },
-    errors::error::prelude::*,
-    timing_optional,
-};
+use crate::a2a::{A2AMessage, MessageId};
+use crate::concepts::attachment::{AttachmentId, Attachments};
+use crate::concepts::thread::Thread;
+use crate::concepts::timing::Timing;
+use crate::errors::error::prelude::*;
+use crate::timing_optional;
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
 pub struct PresentationRequest {
@@ -68,8 +64,9 @@ impl PresentationRequest {
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
-    use super::*;
     use crate::concepts::thread::Thread;
+
+    use super::*;
 
     pub fn _presentation_request_data() -> String {
         json!({
@@ -123,8 +120,10 @@ pub mod test_utils {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
+    use crate::protocols::proof_presentation::presentation_request::test_utils::*;
+    use crate::utils::devsetup::was_in_past;
+
     use super::*;
-    use crate::{protocols::proof_presentation::presentation_request::test_utils::*, utils::devsetup::was_in_past};
 
     #[test]
     fn test_presentation_request_build_works() {

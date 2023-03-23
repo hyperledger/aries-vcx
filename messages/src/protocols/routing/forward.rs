@@ -1,4 +1,5 @@
-use crate::{a2a::MessageId, errors::error::prelude::*};
+use crate::a2a::MessageId;
+use crate::errors::error::prelude::*;
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq, Default)]
 pub struct Forward {
@@ -25,8 +26,9 @@ impl Forward {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use super::*;
     use crate::concepts::ack::test_utils::*;
+
+    use super::*;
 
     fn _to() -> String {
         String::from("GJ1SzoWzavQYfNL9XkaJdrQejfztN4XqdsiV4ct3LXKL")

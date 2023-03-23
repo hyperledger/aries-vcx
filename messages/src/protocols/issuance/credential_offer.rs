@@ -1,15 +1,11 @@
-use crate::{
-    a2a::{A2AMessage, MessageId},
-    concepts::{
-        attachment::{AttachmentId, Attachments},
-        mime_type::MimeType,
-        thread::Thread,
-        timing::Timing,
-    },
-    errors::error::MessagesResult,
-    protocols::issuance::CredentialPreviewData,
-    timing_optional,
-};
+use crate::a2a::{A2AMessage, MessageId};
+use crate::concepts::attachment::{AttachmentId, Attachments};
+use crate::concepts::mime_type::MimeType;
+use crate::concepts::thread::Thread;
+use crate::concepts::timing::Timing;
+use crate::errors::error::MessagesResult;
+use crate::protocols::issuance::CredentialPreviewData;
+use crate::timing_optional;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone, Default)]
 pub struct CredentialOffer {
@@ -92,8 +88,9 @@ impl OfferInfo {
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
-    use super::*;
     use crate::protocols::connection::response::test_utils::_thread;
+
+    use super::*;
 
     pub fn _attachment() -> ::serde_json::Value {
         json!({
@@ -177,8 +174,10 @@ pub mod test_utils {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
+    use crate::protocols::connection::response::test_utils::_thread_id;
+    use crate::protocols::issuance::credential_offer::test_utils::*;
+
     use super::*;
-    use crate::protocols::{connection::response::test_utils::_thread_id, issuance::credential_offer::test_utils::*};
 
     #[test]
     fn test_credential_offer_build_works() {

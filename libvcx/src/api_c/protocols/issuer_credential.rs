@@ -64,8 +64,7 @@ use crate::error::SUCCESS_ERR_CODE;
 ///
 /// cred_def_id: id of credential definition given during creation of the credential definition
 ///
-/// issuer_did: did corresponding to entity issuing a credential. Needs to have Trust Anchor
-/// permissions on ledger
+/// issuer_did: did corresponding to entity issuing a credential. Needs to have Trust Anchor permissions on ledger
 ///
 /// credential_data: data attributes offered to person in the credential
 ///
@@ -141,14 +140,7 @@ pub extern "C" fn vcx_issuer_send_credential_offer_v2(
     check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     let source_id = issuer_credential::get_source_id(credential_handle).unwrap_or_default();
-    trace!(
-        "vcx_issuer_send_credential_offer_v2(command_handle: {}, credential_handle: {}, connection_handle: {}) \
-         source_id: {}",
-        command_handle,
-        credential_handle,
-        connection_handle,
-        source_id
-    );
+    trace!("vcx_issuer_send_credential_offer_v2(command_handle: {}, credential_handle: {}, connection_handle: {}) source_id: {}", command_handle, credential_handle, connection_handle, source_id);
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         match issuer_credential::send_credential_offer_v2(credential_handle, connection_handle).await {
@@ -158,11 +150,7 @@ pub extern "C" fn vcx_issuer_send_credential_offer_v2(
             }
             Err(err) => {
                 set_current_error_vcx(&err);
-                error!(
-                    "vcx_issuer_send_credential_offer_v2(command_handle: {}, credential_handle: {}, rc: {}) \
-                     source_id: {})",
-                    command_handle, credential_handle, err, source_id
-                );
+                error!("vcx_issuer_send_credential_offer_v2(command_handle: {}, credential_handle: {}, rc: {}) source_id: {})", command_handle, credential_handle, err, source_id);
                 cb(command_handle, err.into());
             }
         };
@@ -177,8 +165,7 @@ pub extern "C" fn vcx_issuer_send_credential_offer_v2(
 /// #Params
 /// command_handle: command handle to map callback to user context.
 ///
-/// credential_handle: Credential handle that was provided during creation. Used to identify
-/// credential object
+/// credential_handle: Credential handle that was provided during creation. Used to identify credential object
 ///
 /// cb: Callback that provides error status of credential offer
 ///
@@ -212,11 +199,7 @@ pub extern "C" fn vcx_issuer_get_credential_offer_msg(
             }
             Err(err) => {
                 set_current_error_vcx(&err);
-                error!(
-                    "vcx_issuer_get_credential_offer_msg_cb(command_handle: {}, credential_handle: {}, rc: {}) \
-                     source_id: {})",
-                    command_handle, credential_handle, err, source_id
-                );
+                error!("vcx_issuer_get_credential_offer_msg_cb(command_handle: {}, credential_handle: {}, rc: {}) source_id: {})", command_handle, credential_handle, err, source_id);
                 cb(command_handle, err.into(), ptr::null_mut());
             }
         };
@@ -249,14 +232,7 @@ pub extern "C" fn vcx_issuer_build_credential_offer_msg_v2(
     };
 
     let source_id = issuer_credential::get_source_id(credential_handle).unwrap_or_default();
-    trace!(
-        "vcx_issuer_build_credential_offer_msg_v2(command_handle: {}, credential_handle: {}, rev_reg_handle: {}) \
-         source_id: {}",
-        command_handle,
-        credential_handle,
-        rev_reg_handle,
-        source_id
-    );
+    trace!("vcx_issuer_build_credential_offer_msg_v2(command_handle: {}, credential_handle: {}, rev_reg_handle: {}) source_id: {}", command_handle, credential_handle, rev_reg_handle, source_id);
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         match issuer_credential::build_credential_offer_msg_v2(
@@ -276,11 +252,7 @@ pub extern "C" fn vcx_issuer_build_credential_offer_msg_v2(
             }
             Err(err) => {
                 set_current_error_vcx(&err);
-                error!(
-                    "vcx_issuer_build_credential_offer_msg_v2_cb(command_handle: {}, credential_handle: {}, \
-                     rev_reg_handle: {}, rc: {}) source_id: {})",
-                    command_handle, credential_handle, rev_reg_handle, err, source_id
-                );
+                error!("vcx_issuer_build_credential_offer_msg_v2_cb(command_handle: {}, credential_handle: {}, rev_reg_handle: {}, rc: {}) source_id: {})", command_handle, credential_handle, rev_reg_handle, err, source_id);
                 cb(command_handle, err.into(), ptr::null_mut());
             }
         };
@@ -319,11 +291,7 @@ pub extern "C" fn vcx_mark_credential_offer_msg_sent(
             }
             Err(err) => {
                 set_current_error_vcx(&err);
-                error!(
-                    "vcx_mark_credential_offer_msg_sent_cb(command_handle: {}, credential_handle: {}, rc: {}) \
-                     source_id: {})",
-                    command_handle, credential_handle, err, source_id
-                );
+                error!("vcx_mark_credential_offer_msg_sent_cb(command_handle: {}, credential_handle: {}, rc: {}) source_id: {})", command_handle, credential_handle, err, source_id);
                 cb(command_handle, err.into(), ptr::null_mut());
             }
         };
@@ -340,8 +308,7 @@ pub extern "C" fn vcx_mark_credential_offer_msg_sent(
 /// #Params
 /// command_handle: command handle to map callback to user context.
 ///
-/// credential_handle: Credential handle that was provided during creation. Used to identify
-/// credential object
+/// credential_handle: Credential handle that was provided during creation. Used to identify credential object
 ///
 /// connection_handle: Connection handle of the credential interaction is associated with.
 ///
@@ -366,14 +333,7 @@ pub extern "C" fn vcx_v2_issuer_credential_update_state(
     check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     let source_id = issuer_credential::get_source_id(credential_handle).unwrap_or_default();
-    trace!(
-        "vcx_v2_issuer_credential_update_state(command_handle: {}, credential_handle: {}, connection_handle: {}) \
-         source_id: {}",
-        command_handle,
-        credential_handle,
-        connection_handle,
-        source_id
-    );
+    trace!("vcx_v2_issuer_credential_update_state(command_handle: {}, credential_handle: {}, connection_handle: {}) source_id: {}", command_handle, credential_handle, connection_handle, source_id);
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         match issuer_credential::update_state(credential_handle, None, connection_handle).await {
@@ -383,11 +343,7 @@ pub extern "C" fn vcx_v2_issuer_credential_update_state(
             }
             Err(err) => {
                 set_current_error_vcx(&err);
-                error!(
-                    "vcx_v2_issuer_credential_update_state_cb(command_handle: {}, credential_handle: {}, \
-                     connection_handle: {}, rc: {}, state: {}) source_id: {}",
-                    command_handle, credential_handle, connection_handle, err, 0, source_id
-                );
+                error!("vcx_v2_issuer_credential_update_state_cb(command_handle: {}, credential_handle: {}, connection_handle: {}, rc: {}, state: {}) source_id: {}", command_handle, credential_handle, connection_handle, err, 0, source_id);
                 cb(command_handle, err.into(), 0);
             }
         };
@@ -403,8 +359,7 @@ pub extern "C" fn vcx_v2_issuer_credential_update_state(
 /// #Params
 /// command_handle: command handle to map callback to user context.
 ///
-/// credential_handle: Credential handle that was provided during creation. Used to identify
-/// credential object
+/// credential_handle: Credential handle that was provided during creation. Used to identify credential object
 ///
 /// connection_handle: Connection handle of the credential interaction is associated with.
 ///
@@ -433,14 +388,7 @@ pub extern "C" fn vcx_v2_issuer_credential_update_state_with_message(
     check_useful_c_str!(message, LibvcxErrorKind::InvalidOption);
 
     let source_id = issuer_credential::get_source_id(credential_handle).unwrap_or_default();
-    trace!(
-        "vcx_v2_issuer_credential_update_state_with_message(command_handle: {}, credential_handle: {}, message: {}) \
-         source_id: {}",
-        command_handle,
-        credential_handle,
-        message,
-        source_id
-    );
+    trace!("vcx_v2_issuer_credential_update_state_with_message(command_handle: {}, credential_handle: {}, message: {}) source_id: {}", command_handle, credential_handle, message, source_id);
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         match issuer_credential::update_state(credential_handle, Some(&message), connection_handle).await {
@@ -450,11 +398,7 @@ pub extern "C" fn vcx_v2_issuer_credential_update_state_with_message(
             }
             Err(err) => {
                 set_current_error_vcx(&err);
-                error!(
-                    "vcx_v2_issuer_credential_update_state_with_message_cb(command_handle: {}, credential_handle: {}, \
-                     rc: {}, state: {}) source_id: {}",
-                    command_handle, credential_handle, err, 0, source_id
-                );
+                error!("vcx_v2_issuer_credential_update_state_with_message_cb(command_handle: {}, credential_handle: {}, rc: {}, state: {}) source_id: {}", command_handle, credential_handle, err, 0, source_id);
                 cb(command_handle, err.into(), 0);
             }
         };
@@ -472,8 +416,8 @@ pub extern "C" fn vcx_v2_issuer_credential_update_state_with_message(
 ///
 /// proof_handle: Issuer Credential handle that was provided during creation.
 ///
-/// cb: Callback that provides most current state of the issuer credential and error status of
-/// request     States:
+/// cb: Callback that provides most current state of the issuer credential and error status of request
+///     States:
 ///         1 - Initialized
 ///         2 - Offer Sent
 ///         3 - Request Received
@@ -507,11 +451,7 @@ pub extern "C" fn vcx_issuer_credential_get_state(
             }
             Err(err) => {
                 set_current_error_vcx(&err);
-                error!(
-                    "vcx_issuer_credential_get_state_cb(command_handle: {}, credential_handle: {}, rc: {}, state: {}) \
-                     source_id: {}",
-                    command_handle, credential_handle, err, 0, source_id
-                );
+                error!("vcx_issuer_credential_get_state_cb(command_handle: {}, credential_handle: {}, rc: {}, state: {}) source_id: {}", command_handle, credential_handle, err, 0, source_id);
                 cb(command_handle, err.into(), 0);
             }
         };
@@ -539,8 +479,7 @@ pub extern "C" fn vcx_issuer_accept_credential(credential_handle: u32) -> u32 {
 /// #Params
 /// command_handle: command handle to map callback to user context.
 ///
-/// credential_handle: Credential handle that was provided during creation. Used to identify
-/// credential object
+/// credential_handle: Credential handle that was provided during creation. Used to identify credential object
 ///
 /// connection_handle: Connection handle that identifies pairwise connection
 ///
@@ -599,11 +538,9 @@ pub extern "C" fn vcx_issuer_send_credential(
 /// #Params
 /// command_handle: command handle to map callback to user context.
 ///
-/// credential_handle: Credential handle that was provided during creation. Used to identify
-/// credential object
+/// credential_handle: Credential handle that was provided during creation. Used to identify credential object
 ///
-/// my_pw_did: Use Connection api (vcx_connection_get_pw_did) with specified connection_handle to
-/// retrieve your pw_did
+/// my_pw_did: Use Connection api (vcx_connection_get_pw_did) with specified connection_handle to retrieve your pw_did
 ///
 /// cb:  Callback that provides any error status of the credential
 ///
@@ -646,11 +583,7 @@ pub extern "C" fn vcx_issuer_credential_get_rev_reg_id(
             }
             Err(err) => {
                 set_current_error_vcx(&err);
-                error!(
-                    "vcx_issuer_credential_get_rev_reg_id_cb(command_handle: {}, credential_handle: {}, rc: {}) \
-                     source_id: {}",
-                    command_handle, credential_handle, err, source_id
-                );
+                error!("vcx_issuer_credential_get_rev_reg_id_cb(command_handle: {}, credential_handle: {}, rc: {}) source_id: {}", command_handle, credential_handle, err, source_id);
                 cb(command_handle, err.into(), ptr::null_mut());
             }
         };
@@ -686,11 +619,7 @@ pub extern "C" fn vcx_issuer_credential_is_revokable(
             }
             Err(err) => {
                 set_current_error_vcx(&err);
-                error!(
-                    "vcx_issuer_credential_is_revokable_cb(command_handle: {}, credential_handle: {}, rc: {}) \
-                     source_id: {}",
-                    command_handle, credential_handle, err, source_id
-                );
+                error!("vcx_issuer_credential_is_revokable_cb(command_handle: {}, credential_handle: {}, rc: {}) source_id: {}", command_handle, credential_handle, err, source_id);
                 cb(command_handle, err.into(), false);
             }
         };
@@ -716,8 +645,7 @@ pub extern "C" fn vcx_issuer_terminate_credential(
 /// #Params
 /// command_handle: command handle to map callback to user context.
 ///
-/// credential_handle: Credential handle that was provided during creation. Used to identify
-/// credential object
+/// credential_handle: Credential handle that was provided during creation. Used to identify credential object
 ///
 /// cb: Callback that provides json string of the credential's attributes and provides error status
 ///
@@ -734,13 +662,7 @@ pub extern "C" fn vcx_issuer_credential_serialize(
     check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     let source_id = issuer_credential::get_source_id(credential_handle).unwrap_or_default();
-    trace!(
-        "vcx_issuer_credential_serialize(credential_serialize(command_handle: {}, credential_handle: {}), source_id: \
-         {}",
-        command_handle,
-        credential_handle,
-        source_id
-    );
+    trace!("vcx_issuer_credential_serialize(credential_serialize(command_handle: {}, credential_handle: {}), source_id: {}", command_handle, credential_handle, source_id);
     execute(move || {
         match issuer_credential::to_string(credential_handle) {
             Ok(err) => {
@@ -750,15 +672,7 @@ pub extern "C" fn vcx_issuer_credential_serialize(
             }
             Err(err) => {
                 set_current_error_vcx(&err);
-                trace!(
-                    "vcx_issuer_credential_serialize_cb(command_handle: {}, credential_handle: {}, rc: {}, state: {}) \
-                     source_id: {})",
-                    command_handle,
-                    credential_handle,
-                    err,
-                    "null",
-                    source_id
-                );
+                trace!("vcx_issuer_credential_serialize_cb(command_handle: {}, credential_handle: {}, rc: {}, state: {}) source_id: {})", command_handle, credential_handle, err, "null", source_id);
                 cb(command_handle, err.into(), ptr::null_mut());
             }
         };
@@ -769,8 +683,7 @@ pub extern "C" fn vcx_issuer_credential_serialize(
     SUCCESS_ERR_CODE
 }
 
-/// Takes a json string representing an issuer credential object and recreates an object matching
-/// the json
+/// Takes a json string representing an issuer credential object and recreates an object matching the json
 ///
 /// #Params
 /// command_handle: command handle to map callback to user context.
@@ -831,8 +744,7 @@ pub extern "C" fn vcx_issuer_credential_deserialize(
 /// Releases the issuer credential object by deallocating memory
 ///
 /// #Params
-/// credential_handle: Credential handle that was provided during creation. Used to identify
-/// credential object
+/// credential_handle: Credential handle that was provided during creation. Used to identify credential object
 ///
 /// #Returns
 /// Success
@@ -878,8 +790,7 @@ pub extern "C" fn vcx_issuer_revoke_credential_local(
         let err = match issuer_credential::revoke_credential_local(credential_handle).await {
             Ok(()) => {
                 info!(
-                    "vcx_issuer_revoke_credential_local_Cb(command_handle: {}, credential_handle: {}, rc: {}) \
-                     source_id: {}",
+                    "vcx_issuer_revoke_credential_local_Cb(command_handle: {}, credential_handle: {}, rc: {}) source_id: {}",
                     command_handle,
                     credential_handle,
                     SUCCESS_ERR_CODE,
@@ -890,8 +801,7 @@ pub extern "C" fn vcx_issuer_revoke_credential_local(
             Err(err) => {
                 set_current_error_vcx(&err);
                 error!(
-                    "vcx_issuer_revoke_credential_local_cb(command_handle: {}, credential_handle: {}, rc: {}) \
-                     source_id: {}",
+                    "vcx_issuer_revoke_credential_local_cb(command_handle: {}, credential_handle: {}, rc: {}) source_id: {}",
                     command_handle, credential_handle, err, source_id
                 );
                 err.into()
@@ -962,7 +872,8 @@ pub extern "C" fn vcx_issuer_credential_get_thread_id(
 pub mod tests {
     extern crate serde_json;
 
-    use std::{ffi::CString, ptr};
+    use std::ffi::CString;
+    use std::ptr;
 
     use aries_vcx::utils::devsetup::*;
     use aries_vcx::utils::get_temp_dir_path;
@@ -974,11 +885,6 @@ pub mod tests {
     use crate::aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
 
     use super::*;
-    use crate::{
-        api_c::cutils::{return_types_u32, timeout::TimeoutUtils},
-        aries_vcx::protocols::issuance::issuer::state_machine::IssuerState,
-        errors::error,
-    };
 
     static DEFAULT_CREDENTIAL_NAME: &str = "Credential Name Default";
 

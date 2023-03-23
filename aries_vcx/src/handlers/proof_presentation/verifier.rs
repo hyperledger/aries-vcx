@@ -1,14 +1,10 @@
-use std::{collections::HashMap, sync::Arc};
+use std::collections::HashMap;
+
+use messages::protocols::proof_presentation::presentation::Presentation;
+use messages::status::Status;
+use std::sync::Arc;
 
 use agency_client::agency_client::AgencyClient;
-use messages::{
-    a2a::A2AMessage,
-    protocols::proof_presentation::{
-        presentation::Presentation, presentation_proposal::PresentationProposal,
-        presentation_request::PresentationRequest,
-    },
-    status::Status,
-};
 
 use crate::common::proofs::proof_request::PresentationRequestData;
 use crate::core::profile::profile::Profile;
@@ -18,6 +14,9 @@ use crate::protocols::proof_presentation::verifier::messages::VerifierMessages;
 use crate::protocols::proof_presentation::verifier::state_machine::{VerifierSM, VerifierState};
 use crate::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
 use crate::protocols::SendClosure;
+use messages::a2a::A2AMessage;
+use messages::protocols::proof_presentation::presentation_proposal::PresentationProposal;
+use messages::protocols::proof_presentation::presentation_request::PresentationRequest;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Default)]
 pub struct Verifier {
@@ -222,18 +221,15 @@ impl Verifier {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 mod unit_tests {
-    use messages::{a2a::A2AMessage, protocols::proof_presentation::presentation::test_utils::_presentation};
+    use crate::core::profile::indy_profile::IndySdkProfile;
+    use crate::utils::constants::{REQUESTED_ATTRS, REQUESTED_PREDICATES};
+    use crate::utils::devsetup::*;
+    use crate::utils::mockdata::mock_settings::MockBuilder;
+    use messages::a2a::A2AMessage;
+    use messages::protocols::proof_presentation::presentation::test_utils::_presentation;
     use vdrtools::WalletHandle;
 
     use super::*;
-    use crate::{
-        core::profile::indy_profile::IndySdkProfile,
-        utils::{
-            constants::{REQUESTED_ATTRS, REQUESTED_PREDICATES},
-            devsetup::*,
-            mockdata::mock_settings::MockBuilder,
-        },
-    };
 
     fn _dummy_profile() -> Arc<dyn Profile> {
         Arc::new(IndySdkProfile::new(WalletHandle(0), 0))

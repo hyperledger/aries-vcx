@@ -1,17 +1,24 @@
 extern crate sodiumoxide;
 
-use indy_api_types::errors::prelude::*;
-
 use self::sodiumoxide::crypto::sealedbox;
 use super::ed25519_box;
+use indy_api_types::errors::prelude::*;
 
 pub fn encrypt(pk: &ed25519_box::PublicKey, doc: &[u8]) -> Result<Vec<u8>, IndyError> {
     Ok(sealedbox::seal(doc, &pk.0))
 }
 
-pub fn decrypt(pk: &ed25519_box::PublicKey, sk: &ed25519_box::SecretKey, doc: &[u8]) -> Result<Vec<u8>, IndyError> {
-    sealedbox::open(doc, &pk.0, &sk.0)
-        .map_err(|_| IndyError::from_msg(IndyErrorKind::InvalidStructure, "Unable to open sodium sealedbox"))
+pub fn decrypt(
+    pk: &ed25519_box::PublicKey,
+    sk: &ed25519_box::SecretKey,
+    doc: &[u8],
+) -> Result<Vec<u8>, IndyError> {
+    sealedbox::open(doc, &pk.0, &sk.0).map_err(|_| {
+        IndyError::from_msg(
+            IndyErrorKind::InvalidStructure,
+            "Unable to open sodium sealedbox",
+        )
+    })
 }
 
 #[cfg(test)]

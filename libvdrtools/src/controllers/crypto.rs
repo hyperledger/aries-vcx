@@ -23,7 +23,10 @@ pub struct CryptoController {
 }
 
 impl CryptoController {
-    pub(crate) fn new(wallet_service: Arc<WalletService>, crypto_service: Arc<CryptoService>) -> CryptoController {
+    pub(crate) fn new(
+        wallet_service: Arc<WalletService>,
+        crypto_service: Arc<CryptoService>,
+    ) -> CryptoController {
         CryptoController {
             wallet_service,
             crypto_service,
@@ -37,10 +40,10 @@ impl CryptoController {
     /// wallet_handle: Wallet handle (created by open_wallet).
     /// key_json: Key information as json. Example:
     /// {
-    ///     "seed": string, (optional) Seed that allows deterministic key creation (if not set
-    /// random one will be created).                                Can be UTF-8, base64 or hex
-    /// string.     "crypto_type": string, // Optional (if not set then ed25519 curve is used);
-    /// Currently only 'ed25519' value is supported for this field. }
+    ///     "seed": string, (optional) Seed that allows deterministic key creation (if not set random one will be created).
+    ///                                Can be UTF-8, base64 or hex string.
+    ///     "crypto_type": string, // Optional (if not set then ed25519 curve is used); Currently only 'ed25519' value is supported for this field.
+    /// }
     ///
     /// #Returns
     /// verkey: Ver key of generated key pair, also used as key identifier
@@ -49,7 +52,11 @@ impl CryptoController {
     /// Common*
     /// Wallet*
     /// Crypto*
-    pub async fn create_key(&self, wallet_handle: WalletHandle, key_info: &KeyInfo) -> IndyResult<String> {
+    pub async fn create_key(
+        &self,
+        wallet_handle: WalletHandle,
+        key_info: &KeyInfo,
+    ) -> IndyResult<String> {
         debug!(
             "create_key >>> wallet_handle: {:?}, key_info: {:?}",
             wallet_handle,
@@ -75,9 +82,9 @@ impl CryptoController {
     /// #Params
 
     /// wallet_handle: wallet handler (created by open_wallet).
-    /// signer_vk: id (verkey) of message signer. The key must be created by calling indy_create_key
-    /// or indy_create_and_store_my_did message_raw: a pointer to first byte of message to be
-    /// signed message_len: a message length
+    /// signer_vk: id (verkey) of message signer. The key must be created by calling indy_create_key or indy_create_and_store_my_did
+    /// message_raw: a pointer to first byte of message to be signed
+    /// message_len: a message length
     ///
     /// #Returns
     /// a signature string
@@ -86,7 +93,12 @@ impl CryptoController {
     /// Common*
     /// Wallet*
     /// Crypto*
-    pub async fn crypto_sign(&self, wallet_handle: WalletHandle, my_vk: &str, msg: &[u8]) -> IndyResult<Vec<u8>> {
+    pub async fn crypto_sign(
+        &self,
+        wallet_handle: WalletHandle,
+        my_vk: &str,
+        msg: &[u8],
+    ) -> IndyResult<Vec<u8>> {
         trace!(
             "crypto_sign >>> wallet_handle: {:?}, sender_vk: {:?}, msg: {:?}",
             wallet_handle,
@@ -129,7 +141,12 @@ impl CryptoController {
     /// Wallet*
     /// Ledger*
     /// Crypto*
-    pub async fn crypto_verify(&self, their_vk: &str, msg: &[u8], signature: &[u8]) -> IndyResult<bool> {
+    pub async fn crypto_verify(
+        &self,
+        their_vk: &str,
+        msg: &[u8],
+        signature: &[u8],
+    ) -> IndyResult<bool> {
         trace!(
             "crypto_verify >>> their_vk: {:?}, msg: {:?}, signature: {:?}",
             their_vk,
@@ -146,8 +163,7 @@ impl CryptoController {
         Ok(res)
     }
 
-    /// Packs a message by encrypting the message and serializes it in a JWE-like format
-    /// (Experimental)
+    /// Packs a message by encrypting the message and serializes it in a JWE-like format (Experimental)
     ///
     /// Note to use DID keys with this function you can call indy_key_for_did to get key id (verkey)
     /// for specific DID.
@@ -157,12 +173,11 @@ impl CryptoController {
     /// wallet_handle: wallet handle (created by open_wallet).
     /// message: a pointer to the first byte of the message to be packed
     /// message_len: the length of the message
-    /// receivers: a string in the format of a json list which will contain the list of receiver's
-    /// keys                the message is being encrypted for.
+    /// receivers: a string in the format of a json list which will contain the list of receiver's keys
+    ///                the message is being encrypted for.
     ///                Example:
     ///                "[<receiver edge_agent_1 verkey>, <receiver edge_agent_2 verkey>]"
-    /// sender: the sender's verkey as a string When null pointer is used in this parameter,
-    /// anoncrypt is used
+    /// sender: the sender's verkey as a string When null pointer is used in this parameter, anoncrypt is used
     ///
     /// #Returns
     /// a JWE using authcrypt alg is defined below:
@@ -173,18 +188,18 @@ impl CryptoController {
     ///        "alg": "Authcrypt",
     ///        "recipients": [
     ///            {
-    ///                "encrypted_key": base64URLencode(libsodium.crypto_box(my_key, their_vk, cek,
-    /// cek_iv))                "header": {
+    ///                "encrypted_key": base64URLencode(libsodium.crypto_box(my_key, their_vk, cek, cek_iv))
+    ///                "header": {
     ///                     "kid": "base58encode(recipient_verkey)",
-    ///                     "sender" : base64URLencode(libsodium.crypto_box_seal(their_vk,
-    /// base58encode(sender_vk)),                     "iv" : base64URLencode(cek_iv)
+    ///                     "sender" : base64URLencode(libsodium.crypto_box_seal(their_vk, base58encode(sender_vk)),
+    ///                     "iv" : base64URLencode(cek_iv)
     ///                }
     ///            },
     ///        ],
     ///     })",
     ///     "iv": <b64URLencode(iv)>,
-    ///     "ciphertext": b64URLencode(encrypt_detached({'@type'...}, protected_value_encoded, iv,
-    /// cek),     "tag": <b64URLencode(tag)>
+    ///     "ciphertext": b64URLencode(encrypt_detached({'@type'...}, protected_value_encoded, iv, cek),
+    ///     "tag": <b64URLencode(tag)>
     /// }
     ///
     /// Alternative example in using anoncrypt alg is defined below:
@@ -203,8 +218,8 @@ impl CryptoController {
     ///        ],
     ///     })",
     ///     "iv": b64URLencode(iv),
-    ///     "ciphertext": b64URLencode(encrypt_detached({'@type'...}, protected_value_encoded, iv,
-    /// cek),     "tag": b64URLencode(tag)
+    ///     "ciphertext": b64URLencode(encrypt_detached({'@type'...}, protected_value_encoded, iv, cek),
+    ///     "tag": b64URLencode(tag)
     /// }
     ///
     ///
@@ -241,11 +256,14 @@ impl CryptoController {
                 .await?
         } else {
             //returns anoncrypted pack_message format. See Wire message format HIPE for details
-            self._prepare_protected_anoncrypt(&cek, receiver_list).await?
+            self._prepare_protected_anoncrypt(&cek, receiver_list)
+                .await?
         };
 
         // Use AEAD to encrypt `message` with "protected" data as "associated data"
-        let (ciphertext, iv, tag) = self.crypto_service.encrypt_plaintext(message, &base64_protected, &cek);
+        let (ciphertext, iv, tag) =
+            self.crypto_service
+                .encrypt_plaintext(message, &base64_protected, &cek);
 
         self._format_pack_message(&base64_protected, &ciphertext, &iv, &tag)
     }
@@ -255,11 +273,15 @@ impl CryptoController {
         cek: &chacha20poly1305_ietf::Key,
         receiver_list: Vec<String>,
     ) -> IndyResult<String> {
-        let mut encrypted_recipients_struct: Vec<Recipient> = Vec::with_capacity(receiver_list.len());
+        let mut encrypted_recipients_struct: Vec<Recipient> =
+            Vec::with_capacity(receiver_list.len());
 
         for their_vk in receiver_list {
             //encrypt sender verkey
-            let enc_cek = self.crypto_service.crypto_box_seal(&their_vk, &cek[..]).await?;
+            let enc_cek = self
+                .crypto_service
+                .crypto_box_seal(&their_vk, &cek[..])
+                .await?;
 
             //create recipient struct and push to encrypted list
             encrypted_recipients_struct.push(Recipient {
@@ -292,7 +314,10 @@ impl CryptoController {
 
         //encrypt cek for recipient
         for their_vk in receiver_list {
-            let (enc_cek, iv) = self.crypto_service.crypto_box(&my_key, &their_vk, &cek[..]).await?;
+            let (enc_cek, iv) = self
+                .crypto_service
+                .crypto_box(&my_key, &their_vk, &cek[..])
+                .await?;
 
             let enc_sender = self
                 .crypto_service
@@ -394,7 +419,11 @@ impl CryptoController {
     /// Wallet*
     /// Ledger*
     /// Crypto*
-    pub async fn unpack_msg(&self, jwe_struct: JWE, wallet_handle: WalletHandle) -> IndyResult<Vec<u8>> {
+    pub async fn unpack_msg(
+        &self,
+        jwe_struct: JWE,
+        wallet_handle: WalletHandle,
+    ) -> IndyResult<Vec<u8>> {
         //decode protected data
         let protected_decoded_vec = base64::decode_urlsafe(&jwe_struct.protected)?;
         let protected_decoded_str = String::from_utf8(protected_decoded_vec).map_err(|err| {
@@ -404,21 +433,26 @@ impl CryptoController {
             )
         })?;
         //convert protected_data_str to struct
-        let protected_struct: Protected = serde_json::from_str(&protected_decoded_str).map_err(|err| {
-            err_msg(
-                IndyErrorKind::InvalidStructure,
-                format!("Failed to deserialize protected data {}", err),
-            )
-        })?;
+        let protected_struct: Protected =
+            serde_json::from_str(&protected_decoded_str).map_err(|err| {
+                err_msg(
+                    IndyErrorKind::InvalidStructure,
+                    format!("Failed to deserialize protected data {}", err),
+                )
+            })?;
 
         //extract recipient that matches a key in the wallet
-        let (recipient, is_auth_recipient) = self._find_correct_recipient(protected_struct, wallet_handle).await?;
+        let (recipient, is_auth_recipient) = self
+            ._find_correct_recipient(protected_struct, wallet_handle)
+            .await?;
 
         //get cek and sender data
         let (sender_verkey_option, cek) = if is_auth_recipient {
-            self._unpack_cek_authcrypt(recipient.clone(), wallet_handle).await
+            self._unpack_cek_authcrypt(recipient.clone(), wallet_handle)
+                .await
         } else {
-            self._unpack_cek_anoncrypt(recipient.clone(), wallet_handle).await
+            self._unpack_cek_anoncrypt(recipient.clone(), wallet_handle)
+                .await
         }?; //close cek and sender_data match statement
 
         //decrypt message
@@ -453,7 +487,11 @@ impl CryptoController {
         for recipient in protected_struct.recipients {
             let my_key_res = self
                 .wallet_service
-                .get_indy_object::<Key>(wallet_handle, &recipient.header.kid, &RecordOptions::id_value())
+                .get_indy_object::<Key>(
+                    wallet_handle,
+                    &recipient.header.kid,
+                    &RecordOptions::id_value(),
+                )
                 .await;
 
             if my_key_res.is_ok() {
@@ -475,7 +513,11 @@ impl CryptoController {
         //get my private key
         let my_key = self
             .wallet_service
-            .get_indy_object(wallet_handle, &recipient.header.kid, &RecordOptions::id_value())
+            .get_indy_object(
+                wallet_handle,
+                &recipient.header.kid,
+                &RecordOptions::id_value(),
+            )
             .await?;
 
         //decrypt sender_vk
@@ -493,7 +535,12 @@ impl CryptoController {
         //decrypt cek
         let cek_as_vec = self
             .crypto_service
-            .crypto_box_open(&my_key, &sender_vk, encrypted_key_vec.as_slice(), iv.as_slice())
+            .crypto_box_open(
+                &my_key,
+                &sender_vk,
+                encrypted_key_vec.as_slice(),
+                iv.as_slice(),
+            )
             .await?;
 
         //convert cek to chacha Key struct
@@ -518,7 +565,11 @@ impl CryptoController {
         //get my private key
         let my_key: Key = self
             .wallet_service
-            .get_indy_object(wallet_handle, &recipient.header.kid, &RecordOptions::id_value())
+            .get_indy_object(
+                wallet_handle,
+                &recipient.header.kid,
+                &RecordOptions::id_value(),
+            )
             .await?;
 
         //decrypt cek

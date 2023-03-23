@@ -1,4 +1,5 @@
-use openssl::{bn::BigNum, sha::sha256};
+use openssl::bn::BigNum;
+use openssl::sha::sha256;
 
 use crate::errors::error::prelude::*;
 

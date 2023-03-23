@@ -15,10 +15,6 @@ use serde_json;
 use ursa::bls::VerKey;
 use zmq::Socket;
 
-pub(crate) use self::{
-    events::{COMMAND_CONNECT, COMMAND_EXIT, COMMAND_REFRESH},
-    pool::{Pool, ZMQPool},
-};
 //use crate::api::ledger::{CustomFree, CustomTransactionParser}; FIXME: !!!
 use crate::{
     domain::{
@@ -26,6 +22,11 @@ use crate::{
         pool::{PoolConfig, PoolOpenConfig},
     },
     utils::environment,
+};
+
+pub(crate) use self::{
+    events::{COMMAND_CONNECT, COMMAND_EXIT, COMMAND_REFRESH},
+    pool::{Pool, ZMQPool},
 };
 
 mod catchup;
@@ -70,7 +71,10 @@ impl PoolService {
         if path.as_path().exists() {
             return Err(err_msg(
                 IndyErrorKind::PoolConfigAlreadyExists,
-                format!("Pool ledger config file with name \"{}\" already exists", name),
+                format!(
+                    "Pool ledger config file with name \"{}\" already exists",
+                    name
+                ),
             ));
         }
 
@@ -85,7 +89,8 @@ impl PoolService {
             ));
         }
 
-        fs::create_dir_all(path.as_path()).to_indy(IndyErrorKind::IOError, "Can't create pool config directory")?;
+        fs::create_dir_all(path.as_path())
+            .to_indy(IndyErrorKind::IOError, "Can't create pool config directory")?;
 
         path.push(name);
         path.set_extension("txn");
@@ -118,8 +123,8 @@ impl PoolService {
         path.push("config");
         path.set_extension("json");
 
-        let mut f: fs::File =
-            fs::File::create(path.as_path()).to_indy(IndyErrorKind::IOError, "Can't create pool config file")?;
+        let mut f: fs::File = fs::File::create(path.as_path())
+            .to_indy(IndyErrorKind::IOError, "Can't create pool config file")?;
 
         f.write_all({
             serde_json::to_string(&pool_config)
@@ -153,7 +158,8 @@ impl PoolService {
 
         let path = environment::pool_path(name);
 
-        fs::remove_dir_all(path).to_indy(IndyErrorKind::IOError, "Can't delete pool config directory")
+        fs::remove_dir_all(path)
+            .to_indy(IndyErrorKind::IOError, "Can't delete pool config directory")
     }
 
     pub(crate) async fn open(
@@ -207,10 +213,10 @@ impl PoolService {
         self.pending_pools.lock().await.remove(&name);
 
         if res.is_ok() {
-            self.open_pools
-                .lock()
-                .await
-                .insert(new_pool.get_id(), Arc::new(ZMQPool::new(new_pool, send_cmd_sock)));
+            self.open_pools.lock().await.insert(
+                new_pool.get_id(),
+                Arc::new(ZMQPool::new(new_pool, send_cmd_sock)),
+            );
         }
 
         res
@@ -219,7 +225,11 @@ impl PoolService {
     //#[logfn(trace)] FIXME:
     pub(crate) async fn open_ack(pool_hanlde: PoolHandle, result: IndyResult<String>) {
         let sender: futures::channel::oneshot::Sender<IndyResult<(PoolHandle, String)>> =
-            POOL_HANDLE_SENDERS.lock().await.remove(&pool_hanlde).unwrap();
+            POOL_HANDLE_SENDERS
+                .lock()
+                .await
+                .remove(&pool_hanlde)
+                .unwrap();
         sender
             .send(result.map(|transactions| (pool_hanlde, transactions)))
             .unwrap(); //FIXME
@@ -261,7 +271,13 @@ impl PoolService {
             let (sender, receiver) = oneshot::channel::<IndyResult<String>>();
             SUBMIT_SENDERS.lock().await.insert(cmd_id, sender);
 
-            self._send_msg(cmd_id, msg, &pool.cmd_socket.lock().unwrap(), nodes, timeout)?;
+            self._send_msg(
+                cmd_id,
+                msg,
+                &pool.cmd_socket.lock().unwrap(),
+                nodes,
+                timeout,
+            )?;
 
             receiver
         };
@@ -286,8 +302,8 @@ impl PoolService {
     //                           parser: CustomTransactionParser, free: CustomFree) -> IndyResult<()> {
     //     if events::REQUESTS_FOR_STATE_PROOFS.contains(&txn_type) {
     //         return Err(err_msg(IndyErrorKind::InvalidStructure,
-    //                            format!("Try to override StateProof parser for default TXN_TYPE {}",
-    // txn_type)));     }
+    //                            format!("Try to override StateProof parser for default TXN_TYPE {}", txn_type)));
+    //     }
 
     //     REGISTERED_SP_PARSERS.lock()
     //         .map(|mut map| {
@@ -312,7 +328,13 @@ impl PoolService {
         CLOSE_SENDERS.lock().await.insert(handle, sender);
 
         match pool {
-            Some(pool) => self._send_msg(handle, COMMAND_EXIT, &pool.cmd_socket.lock().unwrap(), None, None)?,
+            Some(pool) => self._send_msg(
+                handle,
+                COMMAND_EXIT,
+                &pool.cmd_socket.lock().unwrap(),
+                None,
+                None,
+            )?,
             None => {
                 return Err(err_msg(
                     IndyErrorKind::InvalidPoolHandle,
@@ -349,7 +371,10 @@ impl PoolService {
         let timeout = timeout.unwrap_or(-1);
         LittleEndian::write_i32(&mut buf_to, timeout);
         if let Some(nodes) = nodes {
-            Ok(socket.send_multipart(&[msg.as_bytes(), &buf, &buf_to, nodes.as_bytes()], zmq::DONTWAIT)?)
+            Ok(socket.send_multipart(
+                &[msg.as_bytes(), &buf, &buf_to, nodes.as_bytes()],
+                zmq::DONTWAIT,
+            )?)
         } else {
             Ok(socket.send_multipart(&[msg.as_bytes(), &buf, &buf_to], zmq::DONTWAIT)?)
         }
@@ -366,7 +391,11 @@ impl PoolService {
                 } else {
                     continue;
                 };
-                if let Some(pool_name) = dir_entry.path().file_name().and_then(|os_str| os_str.to_str()) {
+                if let Some(pool_name) = dir_entry
+                    .path()
+                    .file_name()
+                    .and_then(|os_str| os_str.to_str())
+                {
                     let json = json!({"pool":pool_name.to_owned()});
                     pool.push(json);
                 }
@@ -450,7 +479,8 @@ fn _parse_transaction_metadata_v1(message: &serde_json::Value) -> ResponseMetada
     ResponseMetadata {
         seq_no: message["txnMetadata"]["seqNo"].as_u64(),
         txn_time: message["txnMetadata"]["txnTime"].as_u64(),
-        last_txn_time: message["multiSignature"]["signedState"]["stateMetadata"]["timestamp"].as_u64(),
+        last_txn_time: message["multiSignature"]["signedState"]["stateMetadata"]["timestamp"]
+            .as_u64(),
         last_seq_no: None,
     }
 }
@@ -476,22 +506,33 @@ pub mod test_utils {
     ) {
         let pool_handle = indy_utils::next_pool_handle();
         let (sender, receiver) = oneshot::channel();
-        super::POOL_HANDLE_SENDERS.lock().await.insert(pool_handle, sender);
+        super::POOL_HANDLE_SENDERS
+            .lock()
+            .await
+            .insert(pool_handle, sender);
         (pool_handle, receiver)
     }
 
-    pub(crate) async fn fake_cmd_id() -> (indy_api_types::CommandHandle, oneshot::Receiver<IndyResult<String>>) {
+    pub(crate) async fn fake_cmd_id() -> (
+        indy_api_types::CommandHandle,
+        oneshot::Receiver<IndyResult<String>>,
+    ) {
         let cmd_id = indy_utils::next_command_handle();
         let (sender, receiver) = oneshot::channel();
         super::SUBMIT_SENDERS.lock().await.insert(cmd_id, sender);
         (cmd_id, receiver)
     }
 
-    pub(crate) async fn fake_pool_handle_for_close_cmd(
-    ) -> (indy_api_types::CommandHandle, oneshot::Receiver<IndyResult<()>>) {
+    pub(crate) async fn fake_pool_handle_for_close_cmd() -> (
+        indy_api_types::CommandHandle,
+        oneshot::Receiver<IndyResult<()>>,
+    ) {
         let pool_handle = indy_utils::next_command_handle();
         let (sender, receiver) = oneshot::channel();
-        super::CLOSE_SENDERS.lock().await.insert(pool_handle, sender);
+        super::CLOSE_SENDERS
+            .lock()
+            .await
+            .insert(pool_handle, sender);
         (pool_handle, receiver)
     }
 }
@@ -502,8 +543,9 @@ pub mod tests {
 
     use futures::executor::block_on;
 
-    use super::*;
     use crate::{domain::ledger::request::ProtocolVersion, services::pool::types::*, utils::test};
+
+    use super::*;
 
     const TEST_PROTOCOL_VERSION: usize = 2;
 
@@ -516,9 +558,8 @@ pub mod tests {
 
         #[async_std::test]
         async fn pool_service_sync_send() {
-            use std::sync::Arc;
-
             use futures::{channel::oneshot, executor::ThreadPool};
+            use std::sync::Arc;
 
             let executor = ThreadPool::new().expect("Failed to new ThreadPool");
             let service = Arc::new(Box::new(PoolService::new()));
@@ -537,11 +578,11 @@ pub mod tests {
     }
 
     mod pool_service {
+        use super::*;
+
         use std::path;
 
         use indy_api_types::INVALID_POOL_HANDLE;
-
-        use super::*;
 
         #[test]
         fn pool_service_new_works() {
@@ -565,7 +606,8 @@ pub mod tests {
 
             let ps = PoolService::new();
             let pool_id = next_pool_handle();
-            let (send_cmd_sock, recv_cmd_sock) = pool_create_pair_of_sockets("pool_service_close_works");
+            let (send_cmd_sock, recv_cmd_sock) =
+                pool_create_pair_of_sockets("pool_service_close_works");
 
             ps.open_pools.lock().await.insert(
                 pool_id,
@@ -593,7 +635,8 @@ pub mod tests {
 
             let ps = PoolService::new();
             let pool_id = next_pool_handle();
-            let (send_cmd_sock, recv_cmd_sock) = pool_create_pair_of_sockets("pool_service_refresh_works");
+            let (send_cmd_sock, recv_cmd_sock) =
+                pool_create_pair_of_sockets("pool_service_refresh_works");
 
             ps.open_pools.lock().await.insert(
                 pool_id,
@@ -638,7 +681,8 @@ pub mod tests {
         async fn pool_service_delete_works_for_opened() {
             test::cleanup_storage("pool_service_delete_works_for_opened");
 
-            let (send_cmd_sock, _recv_cmd_sock) = pool_create_pair_of_sockets("pool_service_delete_works_for_opened");
+            let (send_cmd_sock, _recv_cmd_sock) =
+                pool_create_pair_of_sockets("pool_service_delete_works_for_opened");
             let ps = PoolService::new();
             let pool_name = "pool_service_delete_works_for_opened";
             let path: path::PathBuf = environment::pool_path(pool_name);
@@ -682,9 +726,14 @@ pub mod tests {
                     zmq::poll(&mut [recv_cmd_sock.as_poll_item(zmq::POLLIN)], 10_000).unwrap()
                 );
 
-                assert_eq!(recv_cmd_sock.recv_string(zmq::DONTWAIT).unwrap().unwrap(), test_data);
+                assert_eq!(
+                    recv_cmd_sock.recv_string(zmq::DONTWAIT).unwrap().unwrap(),
+                    test_data
+                );
 
-                let cmd_id = LittleEndian::read_i32(recv_cmd_sock.recv_bytes(zmq::DONTWAIT).unwrap().as_slice());
+                let cmd_id = LittleEndian::read_i32(
+                    recv_cmd_sock.recv_bytes(zmq::DONTWAIT).unwrap().as_slice(),
+                );
                 block_on(PoolService::submit_ack(cmd_id, Ok("".to_owned())));
             });
 
@@ -725,7 +774,8 @@ pub mod tests {
         async fn pool_send_action_works() {
             test::cleanup_storage("pool_send_action_works");
 
-            let (send_cmd_sock, recv_cmd_sock) = pool_create_pair_of_sockets("pool_send_action_works");
+            let (send_cmd_sock, recv_cmd_sock) =
+                pool_create_pair_of_sockets("pool_send_action_works");
 
             let pool_id = next_pool_handle();
             let pool = Pool::new("pool_send_action_works", pool_id, PoolOpenConfig::default());
@@ -744,14 +794,21 @@ pub mod tests {
                     zmq::poll(&mut [recv_cmd_sock.as_poll_item(zmq::POLLIN)], 10_000).unwrap()
                 );
 
-                assert_eq!(recv_cmd_sock.recv_string(zmq::DONTWAIT).unwrap().unwrap(), test_data);
+                assert_eq!(
+                    recv_cmd_sock.recv_string(zmq::DONTWAIT).unwrap().unwrap(),
+                    test_data
+                );
 
-                let cmd_id = LittleEndian::read_i32(recv_cmd_sock.recv_bytes(zmq::DONTWAIT).unwrap().as_slice());
+                let cmd_id = LittleEndian::read_i32(
+                    recv_cmd_sock.recv_bytes(zmq::DONTWAIT).unwrap().as_slice(),
+                );
 
                 block_on(PoolService::submit_ack(cmd_id, Ok("".to_owned())));
             });
 
-            ps.send_action(pool_id, test_data, None, None).await.unwrap();
+            ps.send_action(pool_id, test_data, None, None)
+                .await
+                .unwrap();
             pool_mock.join().unwrap();
         }
 
@@ -817,9 +874,8 @@ pub mod tests {
 
     #[async_std::test]
     async fn pool_drop_works_for_after_close() {
-        use std::time;
-
         use crate::utils::test;
+        use std::time;
 
         test::cleanup_storage("pool_drop_works_for_after_close");
 
@@ -859,14 +915,13 @@ pub mod tests {
     }
 
     pub(crate) mod nodes_emulator {
+        use crate::utils::crypto::base58::{FromBase58, ToBase58};
         use indy_utils::crypto::ed25519_sign;
-        use ursa::bls::{Generator, SignKey, VerKey};
 
         use super::*;
-        use crate::{
-            services::pool::request_handler::DEFAULT_GENERATOR,
-            utils::crypto::base58::{FromBase58, ToBase58},
-        };
+
+        use crate::services::pool::request_handler::DEFAULT_GENERATOR;
+        use ursa::bls::{Generator, SignKey, VerKey};
 
         pub(crate) static POLL_TIMEOUT: i64 = 1_000; /* in ms */
 

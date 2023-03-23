@@ -1,8 +1,7 @@
 // extern crate num_traits;
 
-use num_traits::PrimInt;
-
 use crate::errors::error::LibvcxErrorKind;
+use num_traits::PrimInt;
 
 pub fn map_indy_error<T, C: PrimInt>(rtn: T, error_code: C) -> Result<T, u32> {
     if error_code == C::zero() {

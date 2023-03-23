@@ -1,14 +1,12 @@
 use std::sync::Arc;
 
-use messages::{
-    diddoc::aries::diddoc::AriesDidDoc,
-    protocols::discovery::{
-        disclose::{Disclose, ProtocolDescriptor},
-        query::Query,
-    },
-};
+use crate::errors::error::VcxResult;
+use messages::diddoc::aries::diddoc::AriesDidDoc;
 
-use crate::{errors::error::VcxResult, plugins::wallet::base_wallet::BaseWallet, utils::send_message};
+use crate::plugins::wallet::base_wallet::BaseWallet;
+use crate::utils::send_message;
+use messages::protocols::discovery::disclose::{Disclose, ProtocolDescriptor};
+use messages::protocols::discovery::query::Query;
 
 pub async fn send_discovery_query(
     wallet: &Arc<dyn BaseWallet>,

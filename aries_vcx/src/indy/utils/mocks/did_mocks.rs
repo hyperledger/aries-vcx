@@ -37,10 +37,7 @@ impl DidMocks {
                 .pop()
                 .expect("No data on DID_MOCK_RESPONSES stack to pop")
         } else {
-            debug!(
-                "Attempting to obtain did response when none were set, but did messages available - returning empty \
-                 response..."
-            );
+            debug!("Attempting to obtain did response when none were set, but did messages available - returning empty response...");
             String::new()
         }
     }

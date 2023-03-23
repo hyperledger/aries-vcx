@@ -1,8 +1,9 @@
-use messages::protocols::connection::{
-    invite::Invitation, problem_report::ProblemReport, request::Request, response::SignedResponse,
-};
-
-use crate::protocols::mediated_connection::inviter::states::{initial::InitialState, requested::RequestedState};
+use crate::protocols::mediated_connection::inviter::states::initial::InitialState;
+use crate::protocols::mediated_connection::inviter::states::requested::RequestedState;
+use messages::protocols::connection::invite::Invitation;
+use messages::protocols::connection::problem_report::ProblemReport;
+use messages::protocols::connection::request::Request;
+use messages::protocols::connection::response::SignedResponse;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct InvitedState {

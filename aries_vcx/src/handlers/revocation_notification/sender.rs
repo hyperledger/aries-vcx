@@ -1,12 +1,8 @@
 use messages::protocols::revocation_notification::revocation_ack::RevocationAck;
 
-use crate::{
-    errors::error::prelude::*,
-    protocols::{
-        revocation_notification::sender::state_machine::{RevocationNotificationSenderSM, SenderConfig},
-        SendClosure,
-    },
-};
+use crate::errors::error::prelude::*;
+use crate::protocols::revocation_notification::sender::state_machine::{RevocationNotificationSenderSM, SenderConfig};
+use crate::protocols::SendClosure;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RevocationNotificationSender {
