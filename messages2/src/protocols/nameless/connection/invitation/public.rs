@@ -33,11 +33,11 @@ mod tests {
     fn test_minimal_conn_invite_public() {
         let content = PublicInvitationContent::new("test_label".to_owned(), "test_did".to_owned());
 
-        let json = json!({
+        let expected = json!({
             "label": content.label,
             "did": content.did
         });
 
-        test_utils::test_msg::<Invitation, _, _>(content, Nothing, json);
+        test_utils::test_msg::<Invitation, _, _>(content, Nothing, expected);
     }
 }

@@ -43,11 +43,11 @@ mod tests {
 
         let decorators = PingDecorators::default();
 
-        let json = json!({
+        let expected = json!({
             "response_requested": false,
         });
 
-        test_utils::test_msg::<PingContent, _, _>(content, decorators, json);
+        test_utils::test_msg::<PingContent, _, _>(content, decorators, expected);
     }
 
     #[test]
@@ -58,12 +58,12 @@ mod tests {
         let mut decorators = PingDecorators::default();
         decorators.thread = Some(make_extended_thread());
 
-        let json = json!({
+        let expected = json!({
             "response_requested": false,
             "comment": content.comment,
             "~thread": decorators.thread
         });
 
-        test_utils::test_msg::<PingContent, _, _>(content, decorators, json);
+        test_utils::test_msg::<PingContent, _, _>(content, decorators, expected);
     }
 }

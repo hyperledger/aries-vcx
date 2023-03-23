@@ -66,12 +66,12 @@ mod tests {
 
         let decorators = RevokeDecorators::default();
 
-        let json = json!({
+        let expected = json!({
             "credential_id": content.credential_id,
             "revocation_format": content.revocation_format
         });
 
-        test_utils::test_msg::<RevokeContent, _, _>(content, decorators, json);
+        test_utils::test_msg::<RevokeContent, _, _>(content, decorators, expected);
     }
 
     #[test]
@@ -85,13 +85,13 @@ mod tests {
         let mut decorators = RevokeDecorators::default();
         decorators.thread = Some(make_extended_thread());
 
-        let json = json!({
+        let expected = json!({
             "credential_id": content.credential_id,
             "revocation_format": content.revocation_format,
             "comment": content.comment,
             "~thread": decorators.thread
         });
 
-        test_utils::test_msg::<RevokeContent, _, _>(content, decorators, json);
+        test_utils::test_msg::<RevokeContent, _, _>(content, decorators, expected);
     }
 }

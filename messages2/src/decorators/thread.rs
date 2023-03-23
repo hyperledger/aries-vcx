@@ -73,16 +73,16 @@ pub mod tests {
     #[test]
     fn test_minimal_thread() {
         let thread = make_minimal_thread();
-        let json = json!({ "thid": thread.thid });
+        let expected = json!({ "thid": thread.thid });
 
-        test_utils::test_serde(thread, json);
+        test_utils::test_serde(thread, expected);
     }
 
     #[test]
     fn test_extended_thread() {
         let thread = make_extended_thread();
 
-        let json = json!({
+        let expected = json!({
             "thid": thread.thid,
             "pthid": thread.pthid,
             "sender_order": thread.sender_order,
@@ -90,6 +90,6 @@ pub mod tests {
             "goal_code": thread.goal_code
         });
 
-        test_utils::test_serde(thread, json);
+        test_utils::test_serde(thread, expected);
     }
 }

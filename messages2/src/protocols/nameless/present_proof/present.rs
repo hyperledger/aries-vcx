@@ -70,12 +70,12 @@ mod tests {
 
         let decorators = PresentationDecorators::new(make_extended_thread());
 
-        let json = json!({
+        let expected = json!({
             "presentations~attach": content.presentations_attach,
             "~thread": decorators.thread
         });
 
-        test_utils::test_msg::<PresentationContent, _, _>(content, decorators, json);
+        test_utils::test_msg::<PresentationContent, _, _>(content, decorators, expected);
     }
 
     #[test]
@@ -87,7 +87,7 @@ mod tests {
         decorators.timing = Some(make_extended_timing());
         decorators.please_ack = Some(make_minimal_please_ack());
 
-        let json = json!({
+        let expected = json!({
             "comment": content.comment,
             "presentations~attach": content.presentations_attach,
             "~thread": decorators.thread,
@@ -95,6 +95,6 @@ mod tests {
             "~please_ack": decorators.please_ack
         });
 
-        test_utils::test_msg::<PresentationContent, _, _>(content, decorators, json);
+        test_utils::test_msg::<PresentationContent, _, _>(content, decorators, expected);
     }
 }

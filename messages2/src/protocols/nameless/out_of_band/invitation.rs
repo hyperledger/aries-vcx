@@ -81,12 +81,12 @@ mod tests {
 
         let decorators = InvitationDecorators::default();
 
-        let json = json!({
+        let expected = json!({
             "services": content.services,
             "requests~attach": content.requests_attach,
         });
 
-        test_utils::test_msg::<InvitationContent, _, _>(content, decorators, json);
+        test_utils::test_msg::<InvitationContent, _, _>(content, decorators, expected);
     }
 
     #[test]
@@ -105,7 +105,7 @@ mod tests {
         let mut decorators = InvitationDecorators::default();
         decorators.timing = Some(make_extended_timing());
 
-        let json = json!({
+        let expected = json!({
             "label": content.label,
             "goal_code": content.goal_code,
             "goal": content.goal,
@@ -116,6 +116,6 @@ mod tests {
             "~timing": decorators.timing
         });
 
-        test_utils::test_msg::<InvitationContent, _, _>(content, decorators, json);
+        test_utils::test_msg::<InvitationContent, _, _>(content, decorators, expected);
     }
 }

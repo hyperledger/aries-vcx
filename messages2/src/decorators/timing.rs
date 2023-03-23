@@ -54,16 +54,16 @@ pub mod tests {
     #[test]
     fn test_minimal_timing() {
         let timing = make_minimal_timing();
-        let json = json!({});
+        let expected = json!({});
 
-        test_utils::test_serde(timing, json);
+        test_utils::test_serde(timing, expected);
     }
 
     #[test]
     fn test_extended_timing() {
         let timing = make_extended_timing();
 
-        let json = json!({
+        let expected = json!({
             "in_time": OptDateTimeRfc3339(&timing.in_time),
             "out_time": OptDateTimeRfc3339(&timing.out_time),
             "stale_time": OptDateTimeRfc3339(&timing.stale_time),
@@ -72,6 +72,6 @@ pub mod tests {
             "wait_until_time": OptDateTimeRfc3339(&timing.wait_until_time)
         });
 
-        test_utils::test_serde(timing, json);
+        test_utils::test_serde(timing, expected);
     }
 }

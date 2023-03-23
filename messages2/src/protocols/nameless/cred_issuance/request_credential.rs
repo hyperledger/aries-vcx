@@ -55,11 +55,11 @@ mod tests {
 
         let decorators = RequestCredentialDecorators::default();
 
-        let json = json!({
+        let expected = json!({
             "requests~attach": content.requests_attach,
         });
 
-        test_utils::test_msg::<RequestCredentialContent, _, _>(content, decorators, json);
+        test_utils::test_msg::<RequestCredentialContent, _, _>(content, decorators, expected);
     }
 
     #[test]
@@ -70,12 +70,12 @@ mod tests {
         let mut decorators = RequestCredentialDecorators::default();
         decorators.thread = Some(make_extended_thread());
 
-        let json = json!({
+        let expected = json!({
             "requests~attach": content.requests_attach,
             "comment": content.comment,
             "~thread": decorators.thread
         });
 
-        test_utils::test_msg::<RequestCredentialContent, _, _>(content, decorators, json);
+        test_utils::test_msg::<RequestCredentialContent, _, _>(content, decorators, expected);
     }
 }

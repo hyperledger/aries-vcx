@@ -35,8 +35,8 @@ pub mod tests {
     #[test]
     fn test_minimal_please_ack() {
         let please_ack = make_minimal_please_ack();
-        let json = json!({ "on": please_ack.on });
+        let expected = json!({ "on": please_ack.on });
 
-        test_utils::test_serde(please_ack, json);
+        test_utils::test_serde(please_ack, expected);
     }
 }

@@ -74,11 +74,11 @@ mod tests {
 
         let decorators = QueryDecorators::default();
 
-        let json = json!({
+        let expected = json!({
             "query": content.query
         });
 
-        test_utils::test_msg::<QueryContent, _, _>(content, decorators, json);
+        test_utils::test_msg::<QueryContent, _, _>(content, decorators, expected);
     }
 
     #[test]
@@ -89,13 +89,13 @@ mod tests {
         let mut decorators = QueryDecorators::default();
         decorators.timing = Some(make_extended_timing());
 
-        let json = json!({
+        let expected = json!({
             "query": content.query,
             "comment": content.comment,
             "~timing": decorators.timing
         });
 
-        test_utils::test_msg::<QueryContent, _, _>(content, decorators, json);
+        test_utils::test_msg::<QueryContent, _, _>(content, decorators, expected);
     }
 
     #[test]

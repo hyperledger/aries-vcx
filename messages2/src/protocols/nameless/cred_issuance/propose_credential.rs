@@ -63,13 +63,13 @@ mod tests {
 
         let decorators = ProposeCredentialDecorators::default();
 
-        let json = json!({
+        let expected = json!({
             "credential_proposal": content.credential_proposal,
             "schema_id": content.schema_id,
             "cred_def_id": content.cred_def_id,
         });
 
-        test_utils::test_msg::<ProposeCredentialContent, _, _>(content, decorators, json);
+        test_utils::test_msg::<ProposeCredentialContent, _, _>(content, decorators, expected);
     }
 
     #[test]
@@ -85,7 +85,7 @@ mod tests {
         decorators.thread = Some(make_extended_thread());
         decorators.timing = Some(make_extended_timing());
 
-        let json = json!({
+        let expected = json!({
             "credential_proposal": content.credential_proposal,
             "schema_id": content.schema_id,
             "cred_def_id": content.cred_def_id,
@@ -94,6 +94,6 @@ mod tests {
             "~timing": decorators.timing
         });
 
-        test_utils::test_msg::<ProposeCredentialContent, _, _>(content, decorators, json);
+        test_utils::test_msg::<ProposeCredentialContent, _, _>(content, decorators, expected);
     }
 }

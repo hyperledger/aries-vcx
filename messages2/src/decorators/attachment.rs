@@ -117,10 +117,10 @@ pub mod tests {
     fn test_base64_attach_type() {
         let data = "test_base64_str".to_owned();
 
-        let json = json!({ "base64": data });
+        let expected = json!({ "base64": data });
         let attach_type = AttachmentType::Base64(data);
 
-        test_utils::test_serde(attach_type, json);
+        test_utils::test_serde(attach_type, expected);
     }
 
     #[test]
@@ -129,20 +129,20 @@ pub mod tests {
             "field": "test_json_data"
         });
 
-        let json = json!({ "json": data });
+        let expected = json!({ "json": data });
         let attach_type = AttachmentType::Json(data);
 
-        test_utils::test_serde(attach_type, json);
+        test_utils::test_serde(attach_type, expected);
     }
 
     #[test]
     fn test_links_attach_type() {
         let data = vec!["https://dummy.dummy/dummy".parse().unwrap()];
 
-        let json = json!({ "links": data });
+        let expected = json!({ "links": data });
         let attach_type = AttachmentType::Links(data);
 
-        test_utils::test_serde(attach_type, json);
+        test_utils::test_serde(attach_type, expected);
     }
 
     #[test]
@@ -151,12 +151,12 @@ pub mod tests {
             "field": "test_json_data"
         });
 
-        let json = json!({ "json": data });
+        let expected = json!({ "json": data });
 
         let content = AttachmentType::Json(data);
         let attach_data = AttachmentData::new(content);
 
-        test_utils::test_serde(attach_data, json);
+        test_utils::test_serde(attach_data, expected);
     }
 
     #[test]
@@ -168,7 +168,7 @@ pub mod tests {
             "field": "test_json_data"
         });
 
-        let json = json!({
+        let expected = json!({
             "json": data,
             "jws": jws,
             "sha256": sha256
@@ -179,24 +179,24 @@ pub mod tests {
         attach_data.jws = Some(jws);
         attach_data.sha256 = Some(sha256);
 
-        test_utils::test_serde(attach_data, json);
+        test_utils::test_serde(attach_data, expected);
     }
 
     #[test]
     fn test_minimal_attachment() {
         let attachment = make_minimal_attachment();
-        let json = json!({
+        let expected = json!({
             "data": attachment.data
         });
 
-        test_utils::test_serde(attachment, json);
+        test_utils::test_serde(attachment, expected);
     }
 
     #[test]
     fn test_extended_attachment() {
         let attachment = make_extended_attachment();
 
-        let json = json!({
+        let expected = json!({
             "@id": attachment.id,
             "description": attachment.description,
             "filename": attachment.filename,
@@ -206,6 +206,6 @@ pub mod tests {
             "data": attachment.data
         });
 
-        test_utils::test_serde(attachment, json);
+        test_utils::test_serde(attachment, expected);
     }
 }

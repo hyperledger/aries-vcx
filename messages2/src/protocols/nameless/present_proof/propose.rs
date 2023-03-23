@@ -186,11 +186,11 @@ mod tests {
 
         let decorators = ProposePresentationDecorators::default();
 
-        let json = json!({
+        let expected = json!({
             "presentation_proposal": content.presentation_proposal
         });
 
-        test_utils::test_msg::<ProposePresentationContent, _, _>(content, decorators, json);
+        test_utils::test_msg::<ProposePresentationContent, _, _>(content, decorators, expected);
     }
 
     #[test]
@@ -209,13 +209,13 @@ mod tests {
         decorators.thread = Some(make_extended_thread());
         decorators.timing = Some(make_extended_timing());
 
-        let json = json!({
+        let expected = json!({
             "comment": content.comment,
             "presentation_proposal": content.presentation_proposal,
             "~thread": decorators.thread,
             "~timing": decorators.timing
         });
 
-        test_utils::test_msg::<ProposePresentationContent, _, _>(content, decorators, json);
+        test_utils::test_msg::<ProposePresentationContent, _, _>(content, decorators, expected);
     }
 }

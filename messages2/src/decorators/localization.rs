@@ -144,48 +144,48 @@ pub mod tests {
     #[test]
     fn test_minimal_field_localization() {
         let localization = make_minimal_field_localization();
-        let json = json!({});
+        let expected = json!({});
 
-        test_utils::test_serde(localization, json);
+        test_utils::test_serde(localization, expected);
     }
 
     #[test]
     fn test_extended_field_localization() {
         let localization = make_extended_field_localization();
 
-        let mut json = json!({
+        let mut expected = json!({
             "code": localization.code,
             "locale": localization.locale,
             "catalogs": localization.catalogs,
         });
 
-        let map = json.as_object_mut().unwrap();
+        let map = expected.as_object_mut().unwrap();
         for (key, value) in &localization.translations {
             let key = <&str>::try_from(key).unwrap().to_owned();
             let value = Value::String(value.to_owned());
             map.insert(key, value);
         }
 
-        test_utils::test_serde(localization, json);
+        test_utils::test_serde(localization, expected);
     }
 
     #[test]
     fn test_minimal_msg_localization() {
         let localization = make_minimal_msg_localization();
-        let json = json!({});
+        let expected = json!({});
 
-        test_utils::test_serde(localization, json);
+        test_utils::test_serde(localization, expected);
     }
 
     #[test]
     fn test_extended_msg_localization() {
         let localization = make_extended_msg_localization();
 
-        let json = json!({
+        let expected = json!({
             "catalogs": localization.catalogs,
             "locales": localization.locales
         });
 
-        test_utils::test_serde(localization, json);
+        test_utils::test_serde(localization, expected);
     }
 }

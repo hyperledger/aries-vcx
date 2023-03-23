@@ -48,11 +48,11 @@ mod tests {
 
         let decorators = HandshakeReuseAcceptedDecorators::new(make_extended_thread());
 
-        let json = json!({
+        let expected = json!({
             "~thread": decorators.thread
         });
 
-        test_utils::test_msg::<HandshakeReuseAcceptedContent, _, _>(content, decorators, json);
+        test_utils::test_msg::<HandshakeReuseAcceptedContent, _, _>(content, decorators, expected);
     }
 
     #[test]
@@ -62,11 +62,11 @@ mod tests {
         let mut decorators = HandshakeReuseAcceptedDecorators::new(make_extended_thread());
         decorators.timing = Some(make_extended_timing());
 
-        let json = json!({
+        let expected = json!({
             "~thread": decorators.thread,
             "~timing": decorators.timing
         });
 
-        test_utils::test_msg::<HandshakeReuseAcceptedContent, _, _>(content, decorators, json);
+        test_utils::test_msg::<HandshakeReuseAcceptedContent, _, _>(content, decorators, expected);
     }
 }

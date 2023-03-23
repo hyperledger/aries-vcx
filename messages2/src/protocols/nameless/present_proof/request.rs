@@ -58,11 +58,11 @@ mod tests {
 
         let decorators = RequestPresentationDecorators::default();
 
-        let json = json!({
+        let expected = json!({
             "request_presentations~attach": content.request_presentations_attach,
         });
 
-        test_utils::test_msg::<RequestPresentationContent, _, _>(content, decorators, json);
+        test_utils::test_msg::<RequestPresentationContent, _, _>(content, decorators, expected);
     }
 
     #[test]
@@ -74,13 +74,13 @@ mod tests {
         decorators.thread = Some(make_extended_thread());
         decorators.timing = Some(make_extended_timing());
 
-        let json = json!({
+        let expected = json!({
             "request_presentations~attach": content.request_presentations_attach,
             "comment": content.comment,
             "~thread": decorators.thread,
             "~timing": decorators.timing
         });
 
-        test_utils::test_msg::<RequestPresentationContent, _, _>(content, decorators, json);
+        test_utils::test_msg::<RequestPresentationContent, _, _>(content, decorators, expected);
     }
 }

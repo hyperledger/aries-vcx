@@ -71,11 +71,11 @@ mod tests {
 
         let decorators = ProblemReportDecorators::new(make_extended_thread());
 
-        let json = json!({
+        let expected = json!({
             "~thread": decorators.thread
         });
 
-        test_utils::test_msg::<ProblemReportContent, _, _>(content, decorators, json);
+        test_utils::test_msg::<ProblemReportContent, _, _>(content, decorators, expected);
     }
 
     #[test]
@@ -88,7 +88,7 @@ mod tests {
         decorators.timing = Some(make_extended_timing());
         decorators.localization = Some(make_extended_msg_localization());
 
-        let json = json!({
+        let expected = json!({
             "problem-code": content.problem_code,
             "explain": content.explain,
             "~thread": decorators.thread,
@@ -96,6 +96,6 @@ mod tests {
             "~l10n": decorators.localization
         });
 
-        test_utils::test_msg::<ProblemReportContent, _, _>(content, decorators, json);
+        test_utils::test_msg::<ProblemReportContent, _, _>(content, decorators, expected);
     }
 }

@@ -64,12 +64,12 @@ mod tests {
 
         let decorators = OfferCredentialDecorators::default();
 
-        let json = json!({
+        let expected = json!({
             "offers~attach": content.offers_attach,
             "credential_preview": content.credential_preview,
         });
 
-        test_utils::test_msg::<OfferCredentialContent, _, _>(content, decorators, json);
+        test_utils::test_msg::<OfferCredentialContent, _, _>(content, decorators, expected);
     }
 
     #[test]
@@ -83,7 +83,7 @@ mod tests {
         decorators.thread = Some(make_extended_thread());
         decorators.timing = Some(make_extended_timing());
 
-        let json = json!({
+        let expected = json!({
             "offers~attach": content.offers_attach,
             "credential_preview": content.credential_preview,
             "comment": content.comment,
@@ -91,6 +91,6 @@ mod tests {
             "~timing": decorators.timing
         });
 
-        test_utils::test_msg::<OfferCredentialContent, _, _>(content, decorators, json);
+        test_utils::test_msg::<OfferCredentialContent, _, _>(content, decorators, expected);
     }
 }

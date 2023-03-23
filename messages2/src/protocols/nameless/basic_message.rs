@@ -60,12 +60,12 @@ mod tests {
 
         let decorators = BasicMessageDecorators::default();
 
-        let json = json!({
+        let expected = json!({
             "sent_time": DateTimeRfc3339(&content.sent_time),
             "content": content.content
         });
 
-        test_utils::test_msg::<BasicMessageContent, _, _>(content, decorators, json);
+        test_utils::test_msg::<BasicMessageContent, _, _>(content, decorators, expected);
     }
 
     #[test]
@@ -76,12 +76,12 @@ mod tests {
         let mut decorators = BasicMessageDecorators::default();
         decorators.thread = Some(make_extended_thread());
 
-        let json = json!({
+        let expected = json!({
             "sent_time": DateTimeRfc3339(&content.sent_time),
             "content": content.content,
             "~thread": decorators.thread
         });
 
-        test_utils::test_msg::<BasicMessageContent, _, _>(content, decorators, json);
+        test_utils::test_msg::<BasicMessageContent, _, _>(content, decorators, expected);
     }
 }

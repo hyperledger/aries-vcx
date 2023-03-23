@@ -150,9 +150,9 @@ mod tests {
         let content = ProblemReportContent::default();
         let decorators = ProblemReportDecorators::default();
 
-        let json = json!({});
+        let expected = json!({});
 
-        test_utils::test_msg::<ProblemReportContent, _, _>(content, decorators, json);
+        test_utils::test_msg::<ProblemReportContent, _, _>(content, decorators, expected);
     }
 
     #[test]
@@ -177,7 +177,7 @@ mod tests {
         decorators.description_locale = Some(make_extended_field_localization());
         decorators.fix_hint_locale = Some(make_extended_field_localization());
 
-        let json = json!({
+        let expected = json!({
             "description": content.description,
             "who_retries": content.who_retries,
             "fix-hint": content.fix_hint,
@@ -193,6 +193,6 @@ mod tests {
             "fix-hint~l10n": decorators.fix_hint_locale
         });
 
-        test_utils::test_msg::<ProblemReportContent, _, _>(content, decorators, json);
+        test_utils::test_msg::<ProblemReportContent, _, _>(content, decorators, expected);
     }
 }
