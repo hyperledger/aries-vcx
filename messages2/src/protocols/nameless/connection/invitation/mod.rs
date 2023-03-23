@@ -7,13 +7,10 @@ use serde::{Deserialize, Serialize};
 use url::Url;
 
 pub use self::{
-    pairwise::{PairwiseDidInvitation, PairwiseInvitation},
-    public::PublicInvitation,
+    pairwise::{PairwiseDidInvitation, PairwiseInvitation, PairwiseInvitationContent, PwInvitationDecorators},
+    public::{PublicInvitation, PublicInvitationContent},
 };
-use self::{
-    pairwise::{PairwiseInvitationContent, PwInvitationDecorators},
-    public::PublicInvitationContent,
-};
+
 use super::Connection;
 use crate::{
     misc::utils::transit_to_aries_msg,

@@ -1,14 +1,14 @@
 //! Module containing the `trust ping` protocol messages, as defined in the [RFC](https://github.com/hyperledger/aries-rfcs/blob/main/features/0048-trust-ping/README.md).
 
-mod ping;
-mod ping_response;
+pub mod ping;
+pub mod ping_response;
 
 use std::str::FromStr;
 
 use derive_more::From;
 use serde::{de::Error, Deserializer, Serializer};
 
-pub use self::{
+use self::{
     ping::{Ping, PingContent, PingDecorators},
     ping_response::{PingResponse, PingResponseContent, PingResponseDecorators},
 };

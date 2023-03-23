@@ -1,17 +1,16 @@
 //! Module containing the `discover features` protocol messages, as defined in the [RFC](https://github.com/hyperledger/aries-rfcs/blob/main/features/0031-discover-features/README.md).
 
-mod disclose;
-mod query;
+pub mod disclose;
+pub mod query;
 
 use std::str::FromStr;
 
 use derive_more::From;
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 
-pub use self::{disclose::Disclose, query::Query};
 use self::{
-    disclose::{DiscloseContent, DiscloseDecorators},
-    query::{QueryContent, QueryDecorators},
+    disclose::{Disclose, DiscloseContent, DiscloseDecorators},
+    query::{Query, QueryContent, QueryDecorators},
 };
 use crate::{
     maybe_known::MaybeKnown,

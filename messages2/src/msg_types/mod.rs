@@ -14,7 +14,10 @@ use std::{fmt::Arguments, str::FromStr};
 use serde::{de::Error, Deserialize, Serialize};
 
 pub use role::Role;
-pub use types::*;
+pub use types::{
+    basic_message, connection, cred_issuance, discover_features, notification, out_of_band, present_proof,
+    report_problem, revocation, routing, trust_ping, Protocol,
+};
 
 /// Type used for deserialization of a fully qualified message type. After deserialization,
 /// it is matched on to determine the actual message struct to deserialize to.

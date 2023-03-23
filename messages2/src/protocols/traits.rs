@@ -40,7 +40,7 @@ pub trait MessageWithKind {
 /// and message kind to deduce which type we must deserialize to
 /// or which [`Protocol`] + `message kind` we must construct for the `@type` field
 /// of a particular message.
-pub trait DelayedSerde: Sized {
+pub(crate) trait DelayedSerde: Sized {
     type MsgType<'a>;
 
     fn delayed_deserialize<'de, D>(msg_type: Self::MsgType<'de>, deserializer: D) -> Result<Self, D::Error>

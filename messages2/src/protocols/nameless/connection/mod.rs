@@ -12,11 +12,10 @@ use serde::{de::Error, Deserializer, Serializer};
 
 use self::{
     invitation::Invitation,
-    problem_report::{ProblemReportContent, ProblemReportDecorators},
-    request::{RequestContent, RequestDecorators},
-    response::{ResponseContent, ResponseDecorators},
+    problem_report::{ProblemReport, ProblemReportContent, ProblemReportDecorators},
+    request::{Request, RequestContent, RequestDecorators},
+    response::{Response, ResponseContent, ResponseDecorators},
 };
-pub use self::{problem_report::ProblemReport, request::Request, response::Response};
 use crate::{
     misc::utils::{self, transit_to_aries_msg},
     msg_types::types::connection::{Connection as ConnectionKind, ConnectionV1, ConnectionV1_0},

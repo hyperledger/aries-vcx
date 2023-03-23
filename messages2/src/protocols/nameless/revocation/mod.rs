@@ -1,17 +1,16 @@
 //! Module containing the `revocation notification` protocol messages, as defined in the [RFC](https://github.com/hyperledger/aries-rfcs/blob/main/features/0721-revocation-notification-v2/README.md).
 
-mod ack;
-mod revoke;
+pub mod ack;
+pub mod revoke;
 
 use std::str::FromStr;
 
 use derive_more::From;
 use serde::{de::Error, Deserializer, Serializer};
 
-pub use self::{ack::AckRevoke, revoke::Revoke};
 use self::{
-    ack::AckRevokeContent,
-    revoke::{RevokeContent, RevokeDecorators},
+    ack::{AckRevokeContent, AckRevoke},
+    revoke::{Revoke, RevokeContent, RevokeDecorators},
 };
 use super::notification::AckDecorators;
 use crate::{

@@ -1,32 +1,28 @@
 //! Module containing the `issue credential` protocol messages, as defined in the [RFC](https://github.com/hyperledger/aries-rfcs/blob/main/features/0036-issue-credential/README.md).
 
-mod ack;
-mod issue_credential;
-mod offer_credential;
-mod propose_credential;
-mod request_credential;
+pub mod ack;
+pub mod issue_credential;
+pub mod offer_credential;
+pub mod propose_credential;
+pub mod request_credential;
 
 use std::str::FromStr;
 
 use derive_more::From;
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 
-pub use self::{
-    ack::AckCredential, issue_credential::IssueCredential, offer_credential::OfferCredential,
-    propose_credential::ProposeCredential, request_credential::RequestCredential,
-};
 use self::{
-    ack::AckCredentialContent,
-    issue_credential::{IssueCredentialContent, IssueCredentialDecorators},
-    offer_credential::{OfferCredentialContent, OfferCredentialDecorators},
-    propose_credential::{ProposeCredentialContent, ProposeCredentialDecorators},
-    request_credential::{RequestCredentialContent, RequestCredentialDecorators},
+    ack::{AckCredential, AckCredentialContent},
+    issue_credential::{IssueCredential, IssueCredentialContent, IssueCredentialDecorators},
+    offer_credential::{OfferCredential, OfferCredentialContent, OfferCredentialDecorators},
+    propose_credential::{ProposeCredential, ProposeCredentialContent, ProposeCredentialDecorators},
+    request_credential::{RequestCredential, RequestCredentialContent, RequestCredentialDecorators},
 };
 use super::notification::AckDecorators;
 use crate::{
     misc::{
-        MimeType,
         utils::{self, transit_to_aries_msg},
+        MimeType,
     },
     msg_types::{
         traits::MessageKind,

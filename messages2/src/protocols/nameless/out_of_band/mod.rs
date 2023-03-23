@@ -1,19 +1,18 @@
 //! Module containing the `out of band` protocol messages, as defined in the [RFC](https://github.com/hyperledger/aries-rfcs/blob/main/features/0434-outofband/README.md).
 
-mod invitation;
-mod reuse;
-mod reuse_accepted;
+pub mod invitation;
+pub mod reuse;
+pub mod reuse_accepted;
 
 use std::str::FromStr;
 
 use derive_more::From;
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 
-pub use self::{invitation::Invitation, reuse::HandshakeReuse, reuse_accepted::HandshakeReuseAccepted};
 use self::{
-    invitation::{InvitationContent, InvitationDecorators},
-    reuse::{HandshakeReuseContent, HandshakeReuseDecorators},
-    reuse_accepted::{HandshakeReuseAcceptedContent, HandshakeReuseAcceptedDecorators},
+    invitation::{Invitation, InvitationContent, InvitationDecorators},
+    reuse::{HandshakeReuse, HandshakeReuseContent, HandshakeReuseDecorators},
+    reuse_accepted::{HandshakeReuseAccepted, HandshakeReuseAcceptedContent, HandshakeReuseAcceptedDecorators},
 };
 use crate::{
     misc::utils::transit_to_aries_msg,

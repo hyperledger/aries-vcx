@@ -1,23 +1,20 @@
 //! Module containing the `present proof` protocol messages, as defined in the [RFC](https://github.com/hyperledger/aries-rfcs/blob/main/features/0037-present-proof/README.md).
 
-mod ack;
-mod present;
-mod propose;
-mod request;
+pub mod ack;
+pub mod present;
+pub mod propose;
+pub mod request;
 
 use std::str::FromStr;
 
 use derive_more::From;
 use serde::{de::Error, Deserializer, Serializer};
 
-pub use self::{
-    ack::AckPresentation, present::Presentation, propose::ProposePresentation, request::RequestPresentation,
-};
 use self::{
-    ack::AckPresentationContent,
-    present::{PresentationContent, PresentationDecorators},
-    propose::{ProposePresentationContent, ProposePresentationDecorators},
-    request::{RequestPresentationContent, RequestPresentationDecorators},
+    ack::{AckPresentationContent, AckPresentation},
+    present::{Presentation, PresentationContent, PresentationDecorators},
+    propose::{ProposePresentation, ProposePresentationContent, ProposePresentationDecorators},
+    request::{RequestPresentation, RequestPresentationContent, RequestPresentationDecorators},
 };
 use super::notification::AckDecorators;
 use crate::{
