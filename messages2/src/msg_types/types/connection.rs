@@ -35,57 +35,75 @@ pub enum ConnectionV1_0 {
 
 #[cfg(test)]
 mod tests {
+    use serde_json::json;
+
     use super::*;
     use crate::misc::test_utils;
 
-    const PROTOCOL: &str = "https://didcomm.org/connections/1.0";
-    const VERSION_RESOLUTION_PROTOCOL: &str = "https://didcomm.org/connections/1.255";
-    const UNSUPPORTED_VERSION_PROTOCOL: &str = "https://didcomm.org/connections/2.0";
-
-    const KIND_INVITATION: &str = "invitation";
-    const KIND_REQUEST: &str = "request";
-    const KIND_RESPONSE: &str = "response";
-    const KIND_PROBLEM: &str = "problem_report";
-    const KIND_SIGN: &str = "ed25519Sha512_single";
-
     #[test]
     fn test_protocol_connections() {
-        test_utils::test_protocol(PROTOCOL, ConnectionV1::new_v1_0())
+        test_utils::test_serde(
+            Protocol::from(ConnectionV1::new_v1_0()),
+            json!("https://didcomm.org/connections/1.0"),
+        )
     }
 
     #[test]
     fn test_version_resolution_connections() {
-        test_utils::test_protocol(VERSION_RESOLUTION_PROTOCOL, ConnectionV1::new_v1_0())
+        test_utils::test_msg_type_resolution("https://didcomm.org/connections/1.255", ConnectionV1::new_v1_0())
     }
 
     #[test]
     #[should_panic]
     fn test_unsupported_version_connections() {
-        test_utils::test_protocol(UNSUPPORTED_VERSION_PROTOCOL, ConnectionV1::new_v1_0())
+        test_utils::test_serde(
+            Protocol::from(ConnectionV1::new_v1_0()),
+            json!("https://didcomm.org/connections/2.0"),
+        )
     }
 
     #[test]
     fn test_msg_type_invitation() {
-        test_utils::test_msg_type(PROTOCOL, KIND_INVITATION, ConnectionV1::new_v1_0())
+        test_utils::test_msg_type(
+            "https://didcomm.org/connections/1.0",
+            "invitation",
+            ConnectionV1::new_v1_0(),
+        )
     }
 
     #[test]
     fn test_msg_type_request() {
-        test_utils::test_msg_type(PROTOCOL, KIND_REQUEST, ConnectionV1::new_v1_0())
+        test_utils::test_msg_type(
+            "https://didcomm.org/connections/1.0",
+            "request",
+            ConnectionV1::new_v1_0(),
+        )
     }
 
     #[test]
     fn test_msg_type_response() {
-        test_utils::test_msg_type(PROTOCOL, KIND_RESPONSE, ConnectionV1::new_v1_0())
+        test_utils::test_msg_type(
+            "https://didcomm.org/connections/1.0",
+            "response",
+            ConnectionV1::new_v1_0(),
+        )
     }
 
     #[test]
     fn test_msg_type_problem() {
-        test_utils::test_msg_type(PROTOCOL, KIND_PROBLEM, ConnectionV1::new_v1_0())
+        test_utils::test_msg_type(
+            "https://didcomm.org/connections/1.0",
+            "problem_report",
+            ConnectionV1::new_v1_0(),
+        )
     }
 
     #[test]
     fn test_msg_type_sign() {
-        test_utils::test_msg_type(PROTOCOL, KIND_SIGN, ConnectionV1::new_v1_0())
+        test_utils::test_msg_type(
+            "https://didcomm.org/connections/1.0",
+            "ed25519Sha512_single",
+            ConnectionV1::new_v1_0(),
+        )
     }
 }

@@ -18,7 +18,7 @@ pub enum OutOfBand {
 #[transitive(into(OutOfBand, Protocol))]
 #[msg_type(major = 1)]
 pub enum OutOfBandV1 {
-    #[msg_type(minor = 0, roles = "Role::Receiver, Role::Sender")]
+    #[msg_type(minor = 1, roles = "Role::Receiver, Role::Sender")]
     V1_1(PhantomData<fn() -> OutOfBandV1_1>),
 }
 
@@ -32,45 +32,57 @@ pub enum OutOfBandV1_1 {
 
 #[cfg(test)]
 mod tests {
+    use serde_json::json;
+
     use super::*;
     use crate::misc::test_utils;
 
-    const PROTOCOL: &str = "https://didcomm.org/out-of-band/1.1";
-    const VERSION_RESOLUTION_PROTOCOL: &str = "https://didcomm.org/out-of-band/1.255";
-    const UNSUPPORTED_VERSION_PROTOCOL: &str = "https://didcomm.org/out-of-band/2.0";
-
-    const KIND_INVITATION: &str = "invitation";
-    const KIND_REUSE: &str = "handshake-reuse";
-    const KIND_REUSE_ACC: &str = "handshake-reuse-accepted";
-
     #[test]
     fn test_protocol_out_of_band() {
-        test_utils::test_protocol(PROTOCOL, OutOfBandV1::new_v1_1())
+        test_utils::test_serde(
+            Protocol::from(OutOfBandV1::new_v1_1()),
+            json!("https://didcomm.org/out-of-band/1.1"),
+        )
     }
 
     #[test]
     fn test_version_resolution_out_of_band() {
-        test_utils::test_protocol(VERSION_RESOLUTION_PROTOCOL, OutOfBandV1::new_v1_1())
+        test_utils::test_msg_type_resolution("https://didcomm.org/out-of-band/1.255", OutOfBandV1::new_v1_1())
     }
 
     #[test]
     #[should_panic]
     fn test_unsupported_version_out_of_band() {
-        test_utils::test_protocol(UNSUPPORTED_VERSION_PROTOCOL, OutOfBandV1::new_v1_1())
+        test_utils::test_serde(
+            Protocol::from(OutOfBandV1::new_v1_1()),
+            json!("https://didcomm.org/out-of-band/2.0"),
+        )
     }
 
     #[test]
     fn test_msg_type_invitation() {
-        test_utils::test_msg_type(PROTOCOL, KIND_INVITATION, OutOfBandV1::new_v1_1())
+        test_utils::test_msg_type(
+            "https://didcomm.org/out-of-band/1.1",
+            "invitation",
+            OutOfBandV1::new_v1_1(),
+        )
     }
 
     #[test]
     fn test_msg_type_reuse() {
-        test_utils::test_msg_type(PROTOCOL, KIND_REUSE, OutOfBandV1::new_v1_1())
+        test_utils::test_msg_type(
+            "https://didcomm.org/out-of-band/1.1",
+            "handshake-reuse",
+            OutOfBandV1::new_v1_1(),
+        )
     }
 
     #[test]
     fn test_msg_type_reuse_acc() {
-        test_utils::test_msg_type(PROTOCOL, KIND_REUSE_ACC, OutOfBandV1::new_v1_1())
+        test_utils::test_msg_type(
+            "https://didcomm.org/out-of-band/1.1",
+            "handshake-reuse-accepted",
+            OutOfBandV1::new_v1_1(),
+        )
     }
 }
