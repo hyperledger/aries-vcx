@@ -47,7 +47,7 @@ mod tests {
     }
 
     #[test]
-    fn test_extensive_ack_proof() {
+    fn test_extended_ack_proof() {
         let content = AckPresentationContent::new(AckStatus::Ok);
 
         let mut decorators = AckDecorators::new(make_extended_thread());

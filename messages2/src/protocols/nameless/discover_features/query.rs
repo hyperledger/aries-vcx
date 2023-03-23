@@ -82,7 +82,7 @@ mod tests {
     }
 
     #[test]
-    fn test_extensive_query() {
+    fn test_extended_query() {
         let mut content = QueryContent::new("*".to_owned());
         content.comment = Some("test_comment".to_owned());
 

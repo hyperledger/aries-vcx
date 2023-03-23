@@ -194,7 +194,7 @@ mod tests {
     }
 
     #[test]
-    fn test_extensive_propose_proof() {
+    fn test_extended_propose_proof() {
         let attribute = Attribute::new("test_attribute_name".to_owned());
         let predicate = Predicate::new(
             "test_predicate_name".to_owned(),

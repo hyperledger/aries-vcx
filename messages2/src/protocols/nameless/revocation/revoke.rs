@@ -75,7 +75,7 @@ mod tests {
     }
 
     #[test]
-    fn test_extensive_revoke() {
+    fn test_extended_revoke() {
         let mut content = RevokeContent::new(
             "test_credential_id".to_owned(),
             MaybeKnown::Known(RevocationFormat::IndyAnoncreds),

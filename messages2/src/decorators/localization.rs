@@ -150,7 +150,7 @@ pub mod tests {
     }
 
     #[test]
-    fn test_extensive_field_localization() {
+    fn test_extended_field_localization() {
         let localization = make_extended_field_localization();
 
         let mut json = json!({
@@ -178,7 +178,7 @@ pub mod tests {
     }
 
     #[test]
-    fn test_extensive_msg_localization() {
+    fn test_extended_msg_localization() {
         let localization = make_extended_msg_localization();
 
         let json = json!({

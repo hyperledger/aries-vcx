@@ -66,7 +66,7 @@ mod tests {
     }
 
     #[test]
-    fn test_extensive_request_proof() {
+    fn test_extended_request_proof() {
         let mut content = RequestPresentationContent::new(vec![make_extended_attachment()]);
         content.comment = Some("test_comment".to_owned());
 

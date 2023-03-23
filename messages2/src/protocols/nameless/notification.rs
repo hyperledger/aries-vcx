@@ -70,7 +70,7 @@ mod tests {
     }
 
     #[test]
-    fn test_extensive_ack() {
+    fn test_extended_ack() {
         let content = AckContent::new(AckStatus::Ok);
 
         let mut decorators = AckDecorators::new(make_extended_thread());

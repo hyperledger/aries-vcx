@@ -69,7 +69,7 @@ mod tests {
     }
 
     #[test]
-    fn test_extensive_basic_message() {
+    fn test_extended_basic_message() {
         let mut content = BasicMessageContent::new("test_content".to_owned());
         content.sent_time = DateTime::default();
 

@@ -57,7 +57,7 @@ pub mod tests {
     }
 
     #[test]
-    fn test_extensive_timing() {
+    fn test_extended_timing() {
         let timing = make_extended_timing();
 
         let json = json!({

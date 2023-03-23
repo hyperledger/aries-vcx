@@ -59,7 +59,6 @@ pub enum OobService {
     Did(String),
 }
 
-
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 #[allow(clippy::field_reassign_with_default)]
@@ -91,7 +90,7 @@ mod tests {
     }
 
     #[test]
-    fn test_extensive_oob_invitation() {
+    fn test_extended_oob_invitation() {
         let mut content = InvitationContent::new(
             vec![OobService::Did("test_service_did".to_owned())],
             vec![make_extended_attachment()],

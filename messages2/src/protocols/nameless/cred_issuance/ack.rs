@@ -47,7 +47,7 @@ mod tests {
     }
 
     #[test]
-    fn test_extensive_ack_cred() {
+    fn test_extended_ack_cred() {
         let content = AckCredentialContent::new(AckStatus::Ok);
 
         let mut decorators = AckDecorators::new(make_extended_thread());

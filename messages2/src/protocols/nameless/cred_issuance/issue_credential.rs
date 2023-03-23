@@ -79,7 +79,7 @@ mod tests {
     }
 
     #[test]
-    fn test_extensive_issue_cred() {
+    fn test_extended_issue_cred() {
         let mut content = IssueCredentialContent::new(vec![make_extended_attachment()]);
         content.comment = Some("test_comment".to_owned());
 

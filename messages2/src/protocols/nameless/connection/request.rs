@@ -76,7 +76,7 @@ mod tests {
     }
 
     #[test]
-    fn test_extensive_conn_request() {
+    fn test_extended_conn_request() {
         let did_doc = AriesDidDoc::default(); // We really need to improve this creation.
         let conn_data = ConnectionData::new("test_did".to_owned(), did_doc);
         let content = RequestContent::new("test_request_label".to_owned(), conn_data);

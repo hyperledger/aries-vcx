@@ -71,7 +71,7 @@ mod tests {
     }
 
     #[test]
-    fn test_extensive_conn_invite_pw() {
+    fn test_extended_conn_invite_pw() {
         let content = PairwiseInvitationContent::new(
             "test_pw_invite_label".to_owned(),
             vec!["test_recipient_key".to_owned()],
@@ -115,7 +115,7 @@ mod tests {
     }
 
     #[test]
-    fn test_extensive_conn_invite_pw_did() {
+    fn test_extended_conn_invite_pw_did() {
         let content = PairwiseInvitationContent::new(
             "test_pw_invite_label".to_owned(),
             vec!["test_recipient_key".to_owned()],

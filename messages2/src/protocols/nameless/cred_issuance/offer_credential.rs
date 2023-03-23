@@ -73,7 +73,7 @@ mod tests {
     }
 
     #[test]
-    fn test_extensive_offer_cred() {
+    fn test_extended_offer_cred() {
         let attribute = CredentialAttr::new("test_attribute_name".to_owned(), "test_attribute_value".to_owned());
         let preview = CredentialPreview::new(vec![attribute]);
         let mut content = OfferCredentialContent::new(preview, vec![make_extended_attachment()]);

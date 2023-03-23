@@ -141,7 +141,7 @@ mod tests {
     }
 
     #[test]
-    fn test_extensive_conn_response() {
+    fn test_extended_conn_response() {
         let conn_sig = ConnectionSignature::new(
             "test_signature".to_owned(),
             "test_sig_data".to_owned(),

@@ -73,7 +73,7 @@ mod tests {
     }
 
     #[test]
-    fn test_extensive_propose_cred() {
+    fn test_extended_propose_cred() {
         let attribute = CredentialAttr::new("test_attribute_name".to_owned(), "test_attribute_value".to_owned());
         let preview = CredentialPreview::new(vec![attribute]);
         let mut content =

@@ -79,7 +79,7 @@ mod tests {
     }
 
     #[test]
-    fn test_extensive_present_proof() {
+    fn test_extended_present_proof() {
         let mut content = PresentationContent::new(vec![make_extended_attachment()]);
         content.comment = Some("test_comment".to_owned());
 

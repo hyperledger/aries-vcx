@@ -79,7 +79,7 @@ mod tests {
     }
 
     #[test]
-    fn test_extensive_conn_problem_report() {
+    fn test_extended_conn_problem_report() {
         let mut content = ProblemReportContent::default();
         content.problem_code = Some(ProblemCode::RequestNotAccepted);
         content.explain = Some("test_conn_problem_report_explain".to_owned());

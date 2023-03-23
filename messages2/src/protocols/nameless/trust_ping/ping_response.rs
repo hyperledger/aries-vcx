@@ -57,7 +57,7 @@ mod tests {
     }
 
     #[test]
-    fn test_extensive_ping_response() {
+    fn test_extended_ping_response() {
         let mut content = PingResponseContent::default();
         content.comment = Some("test_comment".to_owned());
 

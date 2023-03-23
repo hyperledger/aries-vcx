@@ -56,7 +56,7 @@ mod tests {
     }
 
     #[test]
-    fn test_extensive_reuse_accepted() {
+    fn test_extended_reuse_accepted() {
         let content = HandshakeReuseAcceptedContent::default();
 
         let mut decorators = HandshakeReuseAcceptedDecorators::new(make_extended_thread());

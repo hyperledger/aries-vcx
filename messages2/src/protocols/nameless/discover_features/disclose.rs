@@ -71,7 +71,7 @@ mod tests {
     }
 
     #[test]
-    fn test_extensive_disclose() {
+    fn test_extended_disclose() {
         let mut content = DiscloseContent::new();
         content.protocols.pop();
         content.protocols.pop();

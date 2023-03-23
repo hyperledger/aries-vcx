@@ -47,7 +47,7 @@ mod tests {
     }
 
     #[test]
-    fn test_extensive_ack_revoke() {
+    fn test_extended_ack_revoke() {
         let content = AckRevokeContent::new(AckStatus::Ok);
 
         let mut decorators = AckDecorators::new(make_extended_thread());

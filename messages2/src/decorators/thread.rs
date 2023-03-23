@@ -79,7 +79,7 @@ pub mod tests {
     }
 
     #[test]
-    fn test_extensive_thread() {
+    fn test_extended_thread() {
         let thread = make_extended_thread();
 
         let json = json!({
