@@ -22,7 +22,7 @@ pub trait MessageKind: FromStr + AsRef<str> {
 /// Trait implemented on enums that represent a major version of a protocol and where
 /// the variants represent the minor version.
 ///
-/// E.g: `RoutingProtocolV1` would implement this, and its variants would look like `RoutingProtocolV1::V1_0`.
+/// E.g: `RoutingTypeV1` would implement this, and its variants would look like `RoutingTypeV1::V1_0`.
 /// From a protocol string such as `https:://didcomm.org/routing/1.0/forward`, these would correspond to
 /// the `1` and `0`, respectively.
 ///
@@ -59,7 +59,7 @@ pub trait ProtocolVersion: Sized {
 
 /// Trait implemented on enums that represent the name of a protocol.
 ///
-/// E.g: `RoutingProtocol` would implement this, and its variants would look like `RoutingProtocol::V1`.
+/// E.g: `RoutingType` would implement this, and its variants would look like `RoutingType::V1`.
 /// From a protocol string such as `https:://didcomm.org/routing/1.0/forward`, the enum would correspond to `routing`.
 ///
 /// This trait is typically implemented through deriving [`messages_macros::MessageType`] on the protocol specific enum.

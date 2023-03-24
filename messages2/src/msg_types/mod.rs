@@ -4,20 +4,20 @@
 //! The module contains other types that work adjacently to the [`Protocol`] to represent a message kind,
 //! and along the protocol they make up the `@type` field of a message.
 
+pub mod protocols;
 pub(crate) mod registry;
 mod role;
 pub mod traits;
-pub mod types;
 
 use std::{marker::PhantomData, str::FromStr};
 
 use serde::{de::Error, Deserialize, Serialize};
 
-pub use role::Role;
-pub use types::{
+pub use protocols::{
     basic_message, connection, cred_issuance, discover_features, notification, out_of_band, present_proof,
     report_problem, revocation, routing, trust_ping, Protocol,
 };
+pub use role::Role;
 
 use self::traits::MessageKind;
 

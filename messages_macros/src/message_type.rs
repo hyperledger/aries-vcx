@@ -12,7 +12,7 @@ use syn::{
 /// Matches the input from deriving the macro
 /// on a protocol enum.
 ///
-/// E.g: `RoutingProtocol`
+/// E.g: `RoutingType`
 #[derive(FromDeriveInput)]
 #[darling(attributes(msg_type), supports(enum_newtype))]
 struct Protocol {
@@ -24,7 +24,7 @@ struct Protocol {
 /// Matches the input of a major version variant of a protocol enum
 /// that derives the macro.
 ///
-/// E.g: the `V1` in `RoutingProtocol::V1`
+/// E.g: the `V1` in `RoutingType::V1`
 #[derive(FromVariant)]
 #[darling(attributes(msg_type))]
 struct MajorVerVariant {
@@ -35,7 +35,7 @@ struct MajorVerVariant {
 /// Matches the input from deriving the macro on a
 /// major version enum.
 ///
-/// E.g: `RoutingProtocolV1`
+/// E.g: `RoutingTypeV1`
 #[derive(FromDeriveInput)]
 #[darling(attributes(msg_type), supports(enum_newtype))]
 struct Version {
@@ -47,7 +47,7 @@ struct Version {
 /// Matches the input of a minor version variant of a major version enum
 /// that derives the macro.
 ///
-/// E.g: the `V1_0` in `RoutingProtocolV1::V1_0`
+/// E.g: the `V1_0` in `RoutingTypeV1::V1_0`
 #[derive(FromVariant)]
 #[darling(attributes(msg_type))]
 struct MinorVerVariant {

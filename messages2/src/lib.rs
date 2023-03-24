@@ -10,37 +10,36 @@ pub mod decorators;
 mod error;
 pub mod maybe_known;
 pub mod misc;
+pub mod msg_fields;
 pub mod msg_parts;
 pub mod msg_types;
-pub mod protocols;
 
 use derive_more::From;
 use msg_types::{
-    notification::NotificationProtocolV1_0, report_problem::ReportProblemProtocolV1_0, routing::RoutingProtocolV1_0,
-    MsgWithType,
+    notification::NotificationTypeV1_0, report_problem::ReportProblemTypeV1_0, routing::RoutingTypeV1_0, MsgWithType,
 };
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::{
     misc::utils::MSG_TYPE,
-    msg_types::{
-        basic_message::BasicMessageProtocolV1_0,
-        types::{
-            basic_message::{BasicMessageProtocol, BasicMessageProtocolV1},
-            notification::{NotificationProtocol, NotificationProtocolV1},
-            report_problem::{ReportProblemProtocol, ReportProblemProtocolV1},
-            routing::{RoutingProtocol, RoutingProtocolV1},
-        },
-        MessageType, Protocol,
-    },
-    protocols::{
-        nameless::{
+    msg_fields::{
+        protocols::{
             basic_message::BasicMessage, connection::Connection, cred_issuance::CredentialIssuance,
             discover_features::DiscoverFeatures, notification::Ack, out_of_band::OutOfBand,
             present_proof::PresentProof, report_problem::ProblemReport, revocation::Revocation, routing::Forward,
             trust_ping::TrustPing,
         },
         traits::DelayedSerde,
+    },
+    msg_types::{
+        basic_message::BasicMessageTypeV1_0,
+        protocols::{
+            basic_message::{BasicMessageType, BasicMessageTypeV1},
+            notification::{NotificationType, NotificationTypeV1},
+            report_problem::{ReportProblemType, ReportProblemTypeV1},
+            routing::{RoutingType, RoutingTypeV1},
+        },
+        MessageType, Protocol,
     },
 };
 
@@ -69,6 +68,13 @@ pub enum AriesMessage {
 impl DelayedSerde for AriesMessage {
     type MsgType<'a> = (Protocol, &'a str);
 
+    /// Match on every protocol variant and either:
+    /// - call the equivalent type's [`DelayedSerde::delayed_deserialize`]
+    /// - handle the message kind and directly deserialize to the proper type
+    ///
+    /// The second option is employed simply because some protocols only have one message
+    /// and one version (at least right now) and there's no point in crowding the codebase
+    /// with one variant enums or the like.
     fn delayed_deserialize<'de, D>(msg_type: Self::MsgType<'de>, deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
@@ -76,63 +82,61 @@ impl DelayedSerde for AriesMessage {
         let (protocol, kind_str) = msg_type;
 
         match protocol {
-            Protocol::RoutingProtocol(msg_type) => {
+            Protocol::RoutingType(msg_type) => {
                 let kind = match msg_type {
-                    RoutingProtocol::V1(RoutingProtocolV1::V1_0(kind)) => kind.kind_from_str(kind_str),
+                    RoutingType::V1(RoutingTypeV1::V1_0(kind)) => kind.kind_from_str(kind_str),
                 };
 
                 match kind.map_err(D::Error::custom)? {
-                    RoutingProtocolV1_0::Forward => Forward::deserialize(deserializer).map(From::from),
+                    RoutingTypeV1_0::Forward => Forward::deserialize(deserializer).map(From::from),
                 }
             }
-            Protocol::ConnectionProtocol(msg_type) => {
+            Protocol::ConnectionType(msg_type) => {
                 Connection::delayed_deserialize((msg_type, kind_str), deserializer).map(From::from)
             }
-            Protocol::RevocationProtocol(msg_type) => {
+            Protocol::RevocationType(msg_type) => {
                 Revocation::delayed_deserialize((msg_type, kind_str), deserializer).map(From::from)
             }
-            Protocol::CredentialIssuanceProtocol(msg_type) => {
+            Protocol::CredentialIssuanceType(msg_type) => {
                 CredentialIssuance::delayed_deserialize((msg_type, kind_str), deserializer).map(From::from)
             }
-            Protocol::ReportProblemProtocol(msg_type) => {
+            Protocol::ReportProblemType(msg_type) => {
                 let kind = match msg_type {
-                    ReportProblemProtocol::V1(ReportProblemProtocolV1::V1_0(kind)) => kind.kind_from_str(kind_str),
+                    ReportProblemType::V1(ReportProblemTypeV1::V1_0(kind)) => kind.kind_from_str(kind_str),
                 };
 
                 match kind.map_err(D::Error::custom)? {
-                    ReportProblemProtocolV1_0::ProblemReport => {
-                        ProblemReport::deserialize(deserializer).map(From::from)
-                    }
+                    ReportProblemTypeV1_0::ProblemReport => ProblemReport::deserialize(deserializer).map(From::from),
                 }
             }
-            Protocol::PresentProofProtocol(msg_type) => {
+            Protocol::PresentProofType(msg_type) => {
                 PresentProof::delayed_deserialize((msg_type, kind_str), deserializer).map(From::from)
             }
-            Protocol::TrustPingProtocol(msg_type) => {
+            Protocol::TrustPingType(msg_type) => {
                 TrustPing::delayed_deserialize((msg_type, kind_str), deserializer).map(From::from)
             }
-            Protocol::DiscoverFeaturesProtocol(msg_type) => {
+            Protocol::DiscoverFeaturesType(msg_type) => {
                 DiscoverFeatures::delayed_deserialize((msg_type, kind_str), deserializer).map(From::from)
             }
-            Protocol::BasicMessageProtocol(msg_type) => {
+            Protocol::BasicMessageType(msg_type) => {
                 let kind = match msg_type {
-                    BasicMessageProtocol::V1(BasicMessageProtocolV1::V1_0(kind)) => kind.kind_from_str(kind_str),
+                    BasicMessageType::V1(BasicMessageTypeV1::V1_0(kind)) => kind.kind_from_str(kind_str),
                 };
 
                 match kind.map_err(D::Error::custom)? {
-                    BasicMessageProtocolV1_0::Message => BasicMessage::deserialize(deserializer).map(From::from),
+                    BasicMessageTypeV1_0::Message => BasicMessage::deserialize(deserializer).map(From::from),
                 }
             }
-            Protocol::OutOfBandProtocol(msg_type) => {
+            Protocol::OutOfBandType(msg_type) => {
                 OutOfBand::delayed_deserialize((msg_type, kind_str), deserializer).map(From::from)
             }
-            Protocol::NotificationProtocol(msg_type) => {
+            Protocol::NotificationType(msg_type) => {
                 let kind = match msg_type {
-                    NotificationProtocol::V1(NotificationProtocolV1::V1_0(kind)) => kind.kind_from_str(kind_str),
+                    NotificationType::V1(NotificationTypeV1::V1_0(kind)) => kind.kind_from_str(kind_str),
                 };
 
                 match kind.map_err(D::Error::custom)? {
-                    NotificationProtocolV1_0::Ack => Ack::deserialize(deserializer).map(From::from),
+                    NotificationTypeV1_0::Ack => Ack::deserialize(deserializer).map(From::from),
                 }
             }
         }
