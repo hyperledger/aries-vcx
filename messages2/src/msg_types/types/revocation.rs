@@ -1,12 +1,10 @@
-use std::marker::PhantomData;
-
 use derive_more::From;
 use messages_macros::MessageType;
 use strum_macros::{AsRefStr, EnumString};
 use transitive::TransitiveFrom;
 
 use super::Protocol;
-use crate::msg_types::role::Role;
+use crate::msg_types::{role::Role, MsgKindType};
 
 #[derive(Copy, Clone, Debug, From, PartialEq, MessageType)]
 #[msg_type(protocol = "revocation_notification")]
@@ -19,7 +17,7 @@ pub enum RevocationProtocol {
 #[msg_type(major = 2)]
 pub enum RevocationProtocolV2 {
     #[msg_type(minor = 0, roles = "Role::Holder, Role::Issuer")]
-    V2_0(PhantomData<fn() -> RevocationProtocolV2_0>),
+    V2_0(MsgKindType<RevocationProtocolV2_0>),
 }
 
 #[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq)]

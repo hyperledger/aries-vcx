@@ -6,7 +6,7 @@ use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
 use syn::{
     punctuated::Punctuated, spanned::Spanned, DeriveInput, Error, GenericArgument, Path, PathArguments, PathSegment,
-    Result as SynResult, ReturnType, Token, Type, TypePath,
+    Result as SynResult, Token, Type, TypePath,
 };
 
 /// Matches the input from deriving the macro
@@ -158,7 +158,7 @@ fn process_version(Version { ident, data, major }: Version) -> SynResult<TokenSt
 
         // If in the input u8 matches the minor version provided in the macro attribute
         // generate an instance of the enum with the variant in this iteration.
-        try_resolve_match_arms.push(quote! {#minor => Ok(Self::#var_ident(std::marker::PhantomData))});
+        try_resolve_match_arms.push(quote! {#minor => Ok(Self::#constructor_fn())});
 
         // If the variant matches the one in this iteration, return the minor version provided
         // in the macro attribute.
@@ -169,7 +169,8 @@ fn process_version(Version { ident, data, major }: Version) -> SynResult<TokenSt
         roles_match_arms.push(quote! {Self::#var_ident(_) => vec![#(crate::maybe_known::MaybeKnown::Known(#roles)),*]});
 
         // Implement a function such as `new_v1_0` which returns the enum variant in this iteration.
-        constructor_impls.push(quote! {pub fn #constructor_fn() -> Self {Self::#var_ident(std::marker::PhantomData)}});
+        constructor_impls
+            .push(quote! {pub fn #constructor_fn() -> Self {Self::#var_ident(crate::msg_types::MsgKindType::new())}});
 
         // Implement MessageKind for the target type bound to the enum variant in this iteration.
         msg_kind_impls.push(quote! {
@@ -177,7 +178,7 @@ fn process_version(Version { ident, data, major }: Version) -> SynResult<TokenSt
                 type Parent = #ident;
 
                 fn parent() -> Self::Parent {
-                    #ident::#var_ident(std::marker::PhantomData)
+                    #ident::#constructor_fn()
                 }
             }
         });
@@ -243,7 +244,7 @@ fn extract_field_type(mut fields: Fields<Type>) -> Type {
 
 /// The variant field type is of the form [`std::marker::PhantomData<fn() -> T>`].
 /// We need to get the `T`.
-fn extract_field_target_type(field: Type) -> SynResult<Type> {
+fn extract_field_target_type(field: Type) -> SynResult<TypePath> {
     let mut span = field.span();
 
     // `PhantomData<_>` is a TypePath
@@ -264,14 +265,10 @@ fn extract_field_target_type(field: Type) -> SynResult<Type> {
     span = arg.span();
 
     // We expect the generic to be a type, particularly a BareFn.
-    let GenericArgument::Type(Type::BareFn(fn_def)) = arg else { return Err(make_type_param_err(span)); };
-    span = fn_def.span();
-
-    // We now have `fn() -> T`, so we need it's return type (output).
-    let ReturnType::Type(_, ty) = fn_def.output else { return Err(make_type_param_err(span)); };
+    let GenericArgument::Type(Type::Path(ty)) = arg else { return Err(make_type_param_err(span)); };
 
     // Return `T`
-    Ok(*ty)
+    Ok(ty)
 }
 
 /// Helper used to generate a `new_*` lowercase function name

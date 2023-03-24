@@ -4,7 +4,7 @@ use crate::{
     decorators::{please_ack::PleaseAck, thread::Thread, timing::Timing},
     msg_parts::MsgParts,
     msg_types::{
-        traits::{MessageKind, ProtocolVersion},
+        traits::{MessageKind},
         types::connection::{ConnectionProtocol, ConnectionProtocolV1, ConnectionProtocolV1_0},
         MessageType, Protocol,
     },
@@ -80,8 +80,8 @@ impl<'a> TryFrom<MessageType<'a>> for SigEd25519Sha512Single {
     type Error = String;
 
     fn try_from(value: MessageType<'a>) -> Result<Self, Self::Error> {
-        if let Protocol::ConnectionProtocol(ConnectionProtocol::V1(ConnectionProtocolV1::V1_0(pd))) = value.protocol {
-            if let Ok(ConnectionProtocolV1_0::Ed25519Sha512Single) = ConnectionProtocolV1::kind(pd, value.kind) {
+        if let Protocol::ConnectionProtocol(ConnectionProtocol::V1(ConnectionProtocolV1::V1_0(kind))) = value.protocol {
+            if let Ok(ConnectionProtocolV1_0::Ed25519Sha512Single) = kind.kind_from_str(value.kind) {
                 return Ok(SigEd25519Sha512Single);
             }
         }

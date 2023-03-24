@@ -18,7 +18,6 @@ use super::notification::AckDecorators;
 use crate::{
     misc::utils::{self, into_msg_with_type, transit_to_aries_msg},
     msg_types::{
-        traits::ProtocolVersion,
         types::present_proof::{PresentProofProtocol, PresentProofProtocolV1, PresentProofProtocolV1_0},
         MsgWithType,
     },
@@ -43,7 +42,7 @@ impl DelayedSerde for PresentProof {
         let (major, kind_str) = msg_type;
 
         let kind = match major {
-            PresentProofProtocol::V1(PresentProofProtocolV1::V1_0(pd)) => PresentProofProtocolV1::kind(pd, kind_str),
+            PresentProofProtocol::V1(PresentProofProtocolV1::V1_0(kind)) => kind.kind_from_str(kind_str),
         };
 
         match kind.map_err(D::Error::custom)? {

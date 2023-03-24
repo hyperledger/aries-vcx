@@ -9,7 +9,7 @@ mod role;
 pub mod traits;
 pub mod types;
 
-use std::{str::FromStr};
+use std::{marker::PhantomData, str::FromStr};
 
 use serde::{de::Error, Deserialize, Serialize};
 
@@ -97,4 +97,21 @@ where
     let protocol = Protocol::from(K::parent());
 
     format_args!("{protocol}/{kind}").serialize(serializer)
+}
+
+#[derive(Copy, Clone, Debug, PartialEq)]
+#[repr(transparent)]
+pub struct MsgKindType<T: MessageKind>(PhantomData<fn() -> T>);
+
+impl<T> MsgKindType<T>
+where
+    T: MessageKind,
+{
+    pub fn new() -> Self {
+        Self(PhantomData)
+    }
+
+    pub fn kind_from_str(&self, kind_str: &str) -> Result<T, <T as FromStr>::Err> {
+        T::from_str(kind_str)
+    }
 }

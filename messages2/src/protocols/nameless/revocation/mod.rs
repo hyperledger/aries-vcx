@@ -15,7 +15,7 @@ use crate::{
     misc::utils::{transit_to_aries_msg, into_msg_with_type},
     msg_types::{types::revocation::{
         RevocationProtocol as RevocationKind, RevocationProtocolV2, RevocationProtocolV2_0,
-    }, traits::ProtocolVersion, MsgWithType},
+    }, MsgWithType},
     protocols::traits::DelayedSerde,
 };
 
@@ -35,7 +35,7 @@ impl DelayedSerde for Revocation {
         let (major, kind_str) = msg_type;
 
         let kind = match major {
-            RevocationKind::V2(RevocationProtocolV2::V2_0(pd)) => RevocationProtocolV2::kind(pd, kind_str)
+            RevocationKind::V2(RevocationProtocolV2::V2_0(kind)) => kind.kind_from_str(kind_str),
         };
 
         match kind.map_err(D::Error::custom)? {

@@ -1,12 +1,10 @@
-use std::marker::PhantomData;
-
 use derive_more::From;
 use messages_macros::MessageType;
 use strum_macros::{AsRefStr, EnumString};
 use transitive::TransitiveFrom;
 
 use super::Protocol;
-use crate::msg_types::role::Role;
+use crate::msg_types::{role::Role, MsgKindType};
 
 #[derive(Copy, Clone, Debug, From, PartialEq, MessageType)]
 #[msg_type(protocol = "discover-features")]
@@ -19,7 +17,7 @@ pub enum DiscoverFeaturesProtocol {
 #[msg_type(major = 1)]
 pub enum DiscoverFeaturesProtocolV1 {
     #[msg_type(minor = 0, roles = "Role::Requester, Role::Responder")]
-    V1_0(PhantomData<fn() -> DiscoverFeaturesProtocolV1_0>),
+    V1_0(MsgKindType<DiscoverFeaturesProtocolV1_0>),
 }
 
 #[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq)]

@@ -17,7 +17,7 @@ pub mod protocols;
 use derive_more::From;
 use msg_types::{
     notification::NotificationProtocolV1_0, report_problem::ReportProblemProtocolV1_0, routing::RoutingProtocolV1_0,
-    traits::ProtocolVersion, MsgWithType,
+    MsgWithType,
 };
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 
@@ -71,7 +71,7 @@ impl DelayedSerde for AriesMessage {
         match msg_type {
             Protocol::RoutingProtocol(msg_type) => {
                 let kind = match msg_type {
-                    RoutingProtocol::V1(RoutingProtocolV1::V1_0(pd)) => RoutingProtocolV1::kind(pd, kind_str),
+                    RoutingProtocol::V1(RoutingProtocolV1::V1_0(kind)) => kind.kind_from_str(kind_str),
                 };
 
                 match kind.map_err(D::Error::custom)? {
@@ -89,9 +89,7 @@ impl DelayedSerde for AriesMessage {
             }
             Protocol::ReportProblemProtocol(msg_type) => {
                 let kind = match msg_type {
-                    ReportProblemProtocol::V1(ReportProblemProtocolV1::V1_0(pd)) => {
-                        ReportProblemProtocolV1::kind(pd, kind_str)
-                    }
+                    ReportProblemProtocol::V1(ReportProblemProtocolV1::V1_0(kind)) => kind.kind_from_str(kind_str),
                 };
 
                 match kind.map_err(D::Error::custom)? {
@@ -111,9 +109,7 @@ impl DelayedSerde for AriesMessage {
             }
             Protocol::BasicMessageProtocol(msg_type) => {
                 let kind = match msg_type {
-                    BasicMessageProtocol::V1(BasicMessageProtocolV1::V1_0(pd)) => {
-                        BasicMessageProtocolV1::kind(pd, kind_str)
-                    }
+                    BasicMessageProtocol::V1(BasicMessageProtocolV1::V1_0(kind)) => kind.kind_from_str(kind_str),
                 };
 
                 match kind.map_err(D::Error::custom)? {
@@ -125,9 +121,7 @@ impl DelayedSerde for AriesMessage {
             }
             Protocol::NotificationProtocol(msg_type) => {
                 let kind = match msg_type {
-                    NotificationProtocol::V1(NotificationProtocolV1::V1_0(pd)) => {
-                        NotificationProtocolV1::kind(pd, kind_str)
-                    }
+                    NotificationProtocol::V1(NotificationProtocolV1::V1_0(kind)) => kind.kind_from_str(kind_str),
                 };
 
                 match kind.map_err(D::Error::custom)? {

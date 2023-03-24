@@ -6,7 +6,7 @@ pub mod request;
 pub mod response;
 
 use derive_more::From;
-use serde::{de::Error, Deserialize, Deserializer, Serializer, Serialize};
+use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 
 use self::{
     invitation::Invitation,
@@ -15,10 +15,10 @@ use self::{
     response::{Response, ResponseContent, ResponseDecorators},
 };
 use crate::{
-    misc::utils::{self, transit_to_aries_msg, into_msg_with_type},
+    misc::utils::{self, into_msg_with_type, transit_to_aries_msg},
     msg_types::{
-        traits::ProtocolVersion,
-        types::connection::{ConnectionProtocol as ConnectionKind, ConnectionProtocolV1, ConnectionProtocolV1_0}, MsgWithType,
+        types::connection::{ConnectionProtocol as ConnectionKind, ConnectionProtocolV1, ConnectionProtocolV1_0},
+        MsgWithType,
     },
     protocols::traits::DelayedSerde,
 };
@@ -41,7 +41,7 @@ impl DelayedSerde for Connection {
         let (major, kind_str) = msg_type;
 
         let kind = match major {
-            ConnectionKind::V1(ConnectionProtocolV1::V1_0(pd)) => ConnectionProtocolV1::kind(pd, kind_str),
+            ConnectionKind::V1(ConnectionProtocolV1::V1_0(kind)) => kind.kind_from_str(kind_str),
         };
 
         match kind.map_err(D::Error::custom)? {

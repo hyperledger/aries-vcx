@@ -4,7 +4,7 @@ pub mod ping;
 pub mod ping_response;
 
 use derive_more::From;
-use serde::{de::Error, Deserialize, Deserializer, Serializer, Serialize};
+use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 
 use self::{
     ping::{Ping, PingContent, PingDecorators},
@@ -13,8 +13,8 @@ use self::{
 use crate::{
     misc::utils::{into_msg_with_type, transit_to_aries_msg},
     msg_types::{
-        traits::ProtocolVersion,
-        types::trust_ping::{TrustPingProtocol as TrustPingKind, TrustPingProtocolV1, TrustPingProtocolV1_0}, MsgWithType,
+        types::trust_ping::{TrustPingProtocol as TrustPingKind, TrustPingProtocolV1, TrustPingProtocolV1_0},
+        MsgWithType,
     },
     protocols::traits::DelayedSerde,
 };
@@ -35,7 +35,7 @@ impl DelayedSerde for TrustPing {
         let (major, kind_str) = msg_type;
 
         let kind = match major {
-            TrustPingKind::V1(TrustPingProtocolV1::V1_0(pd)) => TrustPingProtocolV1::kind(pd, kind_str),
+            TrustPingKind::V1(TrustPingProtocolV1::V1_0(kind)) => kind.kind_from_str(kind_str),
         };
 
         match kind.map_err(D::Error::custom)? {

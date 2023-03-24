@@ -17,7 +17,7 @@ use crate::{
         types::discover_features::{
             DiscoverFeaturesProtocol as DiscoverFeaturesKind, DiscoverFeaturesProtocolV1, DiscoverFeaturesProtocolV1_0,
         },
-        Protocol, Role, MsgWithType, traits::ProtocolVersion,
+        Protocol, Role, MsgWithType,
     },
     protocols::traits::DelayedSerde,
 };
@@ -38,7 +38,7 @@ impl DelayedSerde for DiscoverFeatures {
         let (major, kind_str) = msg_type;
 
         let kind = match major {
-            DiscoverFeaturesKind::V1(DiscoverFeaturesProtocolV1::V1_0(pd)) => DiscoverFeaturesProtocolV1::kind(pd, kind_str)
+            DiscoverFeaturesKind::V1(DiscoverFeaturesProtocolV1::V1_0(kind)) => kind.kind_from_str(kind_str),
         };
 
         match kind.map_err(D::Error::custom)? {

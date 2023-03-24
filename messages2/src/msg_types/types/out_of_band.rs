@@ -1,12 +1,10 @@
-use std::marker::PhantomData;
-
 use derive_more::From;
 use messages_macros::MessageType;
 use strum_macros::{AsRefStr, EnumString};
 use transitive::TransitiveFrom;
 
 use super::Protocol;
-use crate::msg_types::role::Role;
+use crate::msg_types::{role::Role, MsgKindType};
 
 #[derive(Copy, Clone, Debug, From, PartialEq, MessageType)]
 #[msg_type(protocol = "out-of-band")]
@@ -19,7 +17,7 @@ pub enum OutOfBandProtocol {
 #[msg_type(major = 1)]
 pub enum OutOfBandProtocolV1 {
     #[msg_type(minor = 1, roles = "Role::Receiver, Role::Sender")]
-    V1_1(PhantomData<fn() -> OutOfBandProtocolV1_1>),
+    V1_1(MsgKindType<OutOfBandProtocolV1_1>),
 }
 
 #[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq)]

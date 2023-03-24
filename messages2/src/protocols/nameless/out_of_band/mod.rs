@@ -15,7 +15,6 @@ use self::{
 use crate::{
     misc::utils::{into_msg_with_type, transit_to_aries_msg},
     msg_types::{
-        traits::ProtocolVersion,
         types::out_of_band::{OutOfBandProtocol as OutOfBandKind, OutOfBandProtocolV1, OutOfBandProtocolV1_1},
         MsgWithType,
     },
@@ -39,7 +38,7 @@ impl DelayedSerde for OutOfBand {
         let (major, kind_str) = msg_type;
 
         let kind = match major {
-            OutOfBandKind::V1(OutOfBandProtocolV1::V1_1(pd)) => OutOfBandProtocolV1::kind(pd, kind_str),
+            OutOfBandKind::V1(OutOfBandProtocolV1::V1_1(kind)) => kind.kind_from_str(kind_str),
         };
 
         match kind.map_err(D::Error::custom)? {

@@ -25,12 +25,12 @@ use crate::{
         MimeType,
     },
     msg_types::{
-        traits::{MessageKind, ProtocolVersion},
+        traits::{MessageKind},
         types::cred_issuance::{
             CredentialIssuanceProtocol as CredentialIssuanceKind, CredentialIssuanceProtocolV1,
             CredentialIssuanceProtocolV1_0,
         },
-        MessageType, Protocol, MsgWithType,
+        MessageType, MsgWithType, Protocol,
     },
     protocols::traits::DelayedSerde,
 };
@@ -53,9 +53,7 @@ impl DelayedSerde for CredentialIssuance {
     {
         let (major, kind_str) = msg_type;
         let kind = match major {
-            CredentialIssuanceKind::V1(CredentialIssuanceProtocolV1::V1_0(pd)) => {
-                CredentialIssuanceProtocolV1::kind(pd, kind_str)
-            }
+            CredentialIssuanceKind::V1(CredentialIssuanceProtocolV1::V1_0(kind)) => kind.kind_from_str(kind_str),
         };
 
         match kind.map_err(D::Error::custom)? {

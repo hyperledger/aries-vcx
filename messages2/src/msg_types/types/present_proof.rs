@@ -1,12 +1,10 @@
-use std::marker::PhantomData;
-
 use derive_more::{From, TryInto};
 use messages_macros::MessageType;
 use strum_macros::{AsRefStr, EnumString};
 use transitive::TransitiveFrom;
 
 use super::Protocol;
-use crate::msg_types::role::Role;
+use crate::msg_types::{role::Role, MsgKindType};
 
 #[derive(Copy, Clone, Debug, From, TryInto, PartialEq, MessageType)]
 #[msg_type(protocol = "present-proof")]
@@ -19,7 +17,7 @@ pub enum PresentProofProtocol {
 #[msg_type(major = 1)]
 pub enum PresentProofProtocolV1 {
     #[msg_type(minor = 0, roles = "Role::Prover, Role::Verifier")]
-    V1_0(PhantomData<fn() -> PresentProofProtocolV1_0>),
+    V1_0(MsgKindType<PresentProofProtocolV1_0>),
 }
 
 #[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq)]

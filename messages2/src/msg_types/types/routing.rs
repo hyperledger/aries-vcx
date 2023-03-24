@@ -1,12 +1,10 @@
-use std::marker::PhantomData;
-
 use derive_more::From;
 use messages_macros::MessageType;
 use strum_macros::{AsRefStr, EnumString};
 use transitive::TransitiveFrom;
 
 use super::Protocol;
-use crate::msg_types::role::Role;
+use crate::msg_types::{role::Role, MsgKindType};
 
 #[derive(Copy, Clone, Debug, From, PartialEq, MessageType)]
 #[msg_type(protocol = "routing")]
@@ -19,7 +17,7 @@ pub enum RoutingProtocol {
 #[msg_type(major = 1)]
 pub enum RoutingProtocolV1 {
     #[msg_type(minor = 0, roles = "Role::Mediator")]
-    V1_0(PhantomData<fn() -> RoutingProtocolV1_0>),
+    V1_0(MsgKindType<RoutingProtocolV1_0>),
 }
 
 #[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq)]

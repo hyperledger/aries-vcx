@@ -1,12 +1,10 @@
-use std::marker::PhantomData;
-
 use derive_more::From;
 use messages_macros::MessageType;
 use strum_macros::{AsRefStr, EnumString};
 use transitive::TransitiveFrom;
 
 use super::Protocol;
-use crate::msg_types::role::Role;
+use crate::msg_types::{role::Role, MsgKindType};
 
 #[derive(Copy, Clone, Debug, From, PartialEq, MessageType)]
 #[msg_type(protocol = "report-problem")]
@@ -19,7 +17,7 @@ pub enum ReportProblemProtocol {
 #[msg_type(major = 1)]
 pub enum ReportProblemProtocolV1 {
     #[msg_type(minor = 0, roles = "Role::Notified, Role::Notifier")]
-    V1_0(PhantomData<fn() -> ReportProblemProtocolV1_0>),
+    V1_0(MsgKindType<ReportProblemProtocolV1_0>),
 }
 
 #[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq)]

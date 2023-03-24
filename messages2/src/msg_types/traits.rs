@@ -1,4 +1,4 @@
-use std::{marker::PhantomData, str::FromStr};
+use std::str::FromStr;
 
 use crate::{error::MsgTypeResult, maybe_known::MaybeKnown, msg_types::role::Role};
 
@@ -55,18 +55,6 @@ pub trait ProtocolVersion: Sized {
 
     /// Returns the roles the protocol provides.
     fn roles(&self) -> Self::Roles;
-
-    /// Tries to convert the [`&str`] kind to the given [`T`] generic and returns it.
-    ///
-    /// # Errors
-    ///
-    /// Will return an error if the string could not be parsed to the provided message kind.
-    fn kind<T>(_: PhantomData<fn() -> T>, kind: &str) -> crate::error::MsgTypeResult<T>
-    where
-        T: FromStr + MessageKind,
-    {
-        T::from_str(kind).map_err(|_| crate::error::MsgTypeError::unknown_kind(kind.to_owned()))
-    }
 }
 
 /// Trait implemented on enums that represent the name of a protocol.
