@@ -14,7 +14,7 @@ use syn::{parse_macro_input, DeriveInput, Error};
 /// a protocol or a major version encapsulating enum.
 ///
 /// The minor versions are represented by the major version enum's variants
-/// and the field encapsulated in the variants are expected to be [`crate::msg_types::MsgKindType<T>`]. 
+/// and the field encapsulated in the variants are expected to be [`crate::msg_types::MsgKindType<T>`].
 /// The `T` binds the message kinds of the protocol to the minor version variant of the enum.
 ///
 /// As a summary, this macro will generate the following:

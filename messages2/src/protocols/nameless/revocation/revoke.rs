@@ -53,7 +53,10 @@ mod tests {
     use serde_json::json;
 
     use super::*;
-    use crate::{decorators::thread::tests::make_extended_thread, misc::test_utils, msg_types::revocation::RevocationProtocolV2_0};
+    use crate::{
+        decorators::thread::tests::make_extended_thread, misc::test_utils,
+        msg_types::revocation::RevocationProtocolV2_0,
+    };
 
     #[test]
     fn test_minimal_revoke() {

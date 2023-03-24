@@ -45,10 +45,10 @@ use crate::{
 };
 
 /// Enum that can represent any message of the implemented protocols.
-/// 
+///
 /// It abstracts away the `@type` field and uses it to determine how
 /// to deserialize the input into the correct message type.
-/// 
+///
 /// It also automatically appends the correct `@type` field when serializing
 /// a message.
 #[derive(Clone, Debug, From, PartialEq)]

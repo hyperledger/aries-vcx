@@ -50,7 +50,8 @@ mod tests {
             timing::tests::make_extended_timing,
         },
         misc::test_utils,
-        protocols::nameless::cred_issuance::CredentialAttr, msg_types::cred_issuance::CredentialIssuanceProtocolV1_0,
+        msg_types::cred_issuance::CredentialIssuanceProtocolV1_0,
+        protocols::nameless::cred_issuance::CredentialAttr,
     };
 
     #[test]
@@ -66,7 +67,12 @@ mod tests {
             "credential_preview": content.credential_preview,
         });
 
-        test_utils::test_msg(content, decorators, CredentialIssuanceProtocolV1_0::OfferCredential, expected);
+        test_utils::test_msg(
+            content,
+            decorators,
+            CredentialIssuanceProtocolV1_0::OfferCredential,
+            expected,
+        );
     }
 
     #[test]
@@ -88,6 +94,11 @@ mod tests {
             "~timing": decorators.timing
         });
 
-        test_utils::test_msg(content, decorators, CredentialIssuanceProtocolV1_0::OfferCredential, expected);
+        test_utils::test_msg(
+            content,
+            decorators,
+            CredentialIssuanceProtocolV1_0::OfferCredential,
+            expected,
+        );
     }
 }

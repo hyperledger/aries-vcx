@@ -4,7 +4,7 @@ use crate::{
     decorators::{please_ack::PleaseAck, thread::Thread, timing::Timing},
     msg_parts::MsgParts,
     msg_types::{
-        traits::{MessageKind},
+        traits::MessageKind,
         types::connection::{ConnectionProtocol, ConnectionProtocolV1, ConnectionProtocolV1_0},
         MessageType, Protocol,
     },

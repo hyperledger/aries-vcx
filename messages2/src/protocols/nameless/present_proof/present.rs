@@ -58,7 +58,8 @@ mod tests {
             attachment::tests::make_extended_attachment, please_ack::tests::make_minimal_please_ack,
             thread::tests::make_extended_thread, timing::tests::make_extended_timing,
         },
-        misc::test_utils, msg_types::present_proof::PresentProofProtocolV1_0,
+        misc::test_utils,
+        msg_types::present_proof::PresentProofProtocolV1_0,
     };
 
     #[test]

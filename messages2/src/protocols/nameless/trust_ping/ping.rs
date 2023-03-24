@@ -32,7 +32,9 @@ mod tests {
     use serde_json::json;
 
     use super::*;
-    use crate::{decorators::thread::tests::make_extended_thread, misc::test_utils, msg_types::trust_ping::TrustPingProtocolV1_0};
+    use crate::{
+        decorators::thread::tests::make_extended_thread, misc::test_utils, msg_types::trust_ping::TrustPingProtocolV1_0,
+    };
 
     #[test]
     fn test_minimal_ping() {

@@ -193,7 +193,12 @@ mod tests {
             "presentation_proposal": content.presentation_proposal
         });
 
-        test_utils::test_msg(content, decorators, PresentProofProtocolV1_0::ProposePresentation, expected);
+        test_utils::test_msg(
+            content,
+            decorators,
+            PresentProofProtocolV1_0::ProposePresentation,
+            expected,
+        );
     }
 
     #[test]
@@ -219,6 +224,11 @@ mod tests {
             "~timing": decorators.timing
         });
 
-        test_utils::test_msg(content, decorators, PresentProofProtocolV1_0::ProposePresentation, expected);
+        test_utils::test_msg(
+            content,
+            decorators,
+            PresentProofProtocolV1_0::ProposePresentation,
+            expected,
+        );
     }
 }

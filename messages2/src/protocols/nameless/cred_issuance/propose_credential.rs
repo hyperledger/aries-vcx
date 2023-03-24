@@ -48,7 +48,8 @@ mod tests {
     use crate::{
         decorators::{thread::tests::make_extended_thread, timing::tests::make_extended_timing},
         misc::test_utils,
-        protocols::nameless::cred_issuance::CredentialAttr, msg_types::cred_issuance::CredentialIssuanceProtocolV1_0,
+        msg_types::cred_issuance::CredentialIssuanceProtocolV1_0,
+        protocols::nameless::cred_issuance::CredentialAttr,
     };
 
     #[test]
@@ -66,7 +67,12 @@ mod tests {
             "cred_def_id": content.cred_def_id,
         });
 
-        test_utils::test_msg(content, decorators, CredentialIssuanceProtocolV1_0::ProposeCredential, expected);
+        test_utils::test_msg(
+            content,
+            decorators,
+            CredentialIssuanceProtocolV1_0::ProposeCredential,
+            expected,
+        );
     }
 
     #[test]
@@ -91,6 +97,11 @@ mod tests {
             "~timing": decorators.timing
         });
 
-        test_utils::test_msg(content, decorators, CredentialIssuanceProtocolV1_0::ProposeCredential, expected);
+        test_utils::test_msg(
+            content,
+            decorators,
+            CredentialIssuanceProtocolV1_0::ProposeCredential,
+            expected,
+        );
     }
 }

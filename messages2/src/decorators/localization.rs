@@ -58,7 +58,7 @@ impl Serialize for FieldLocalization {
 }
 
 /// Represents an ISO 639-1, two letter, language code.
-/// 
+///
 /// We need to wrap this as the default serde
 /// behavior is to use ISO 639-3 codes and we need ISO 639-1;
 #[derive(Copy, Clone, Debug, Deserialize, PartialEq, Hash, Eq)]

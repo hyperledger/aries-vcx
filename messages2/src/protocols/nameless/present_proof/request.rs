@@ -46,7 +46,8 @@ mod tests {
             attachment::tests::make_extended_attachment, thread::tests::make_extended_thread,
             timing::tests::make_extended_timing,
         },
-        misc::test_utils, msg_types::present_proof::PresentProofProtocolV1_0,
+        misc::test_utils,
+        msg_types::present_proof::PresentProofProtocolV1_0,
     };
 
     #[test]
@@ -59,7 +60,12 @@ mod tests {
             "request_presentations~attach": content.request_presentations_attach,
         });
 
-        test_utils::test_msg(content, decorators, PresentProofProtocolV1_0::RequestPresentation, expected);
+        test_utils::test_msg(
+            content,
+            decorators,
+            PresentProofProtocolV1_0::RequestPresentation,
+            expected,
+        );
     }
 
     #[test]
@@ -78,6 +84,11 @@ mod tests {
             "~timing": decorators.timing
         });
 
-        test_utils::test_msg(content, decorators, PresentProofProtocolV1_0::RequestPresentation, expected);
+        test_utils::test_msg(
+            content,
+            decorators,
+            PresentProofProtocolV1_0::RequestPresentation,
+            expected,
+        );
     }
 }

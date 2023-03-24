@@ -37,7 +37,8 @@ mod tests {
     use super::*;
     use crate::{
         decorators::{thread::tests::make_extended_thread, timing::tests::make_extended_timing},
-        misc::test_utils, msg_types::trust_ping::TrustPingProtocolV1_0,
+        misc::test_utils,
+        msg_types::trust_ping::TrustPingProtocolV1_0,
     };
 
     #[test]

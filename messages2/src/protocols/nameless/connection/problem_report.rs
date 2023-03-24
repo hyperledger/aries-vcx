@@ -59,7 +59,8 @@ mod tests {
             localization::tests::make_extended_msg_localization, thread::tests::make_extended_thread,
             timing::tests::make_extended_timing,
         },
-        misc::test_utils, msg_types::connection::ConnectionProtocolV1_0,
+        misc::test_utils,
+        msg_types::connection::ConnectionProtocolV1_0,
     };
 
     #[test]

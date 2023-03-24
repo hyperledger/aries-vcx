@@ -11,14 +11,12 @@ pub use self::{
 };
 
 use super::Connection;
-use crate::{
-    misc::utils::{transit_to_aries_msg},
-};
+use crate::misc::utils::transit_to_aries_msg;
 
 /// We need another level of enum nesting since
 /// an invitation can have multiple forms, and this way we
 /// take advantage of `untagged` deserialization.
-#[derive(Debug, Clone, From, Deserialize, Serialize,  PartialEq)]
+#[derive(Debug, Clone, From, Deserialize, Serialize, PartialEq)]
 #[serde(untagged)]
 pub enum Invitation {
     Public(PublicInvitation),

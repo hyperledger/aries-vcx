@@ -43,7 +43,8 @@ mod tests {
     use super::*;
     use crate::{
         decorators::{attachment::tests::make_extended_attachment, thread::tests::make_extended_thread},
-        misc::test_utils, msg_types::cred_issuance::CredentialIssuanceProtocolV1_0,
+        misc::test_utils,
+        msg_types::cred_issuance::CredentialIssuanceProtocolV1_0,
     };
 
     #[test]
@@ -56,7 +57,12 @@ mod tests {
             "requests~attach": content.requests_attach,
         });
 
-        test_utils::test_msg(content, decorators, CredentialIssuanceProtocolV1_0::RequestCredential, expected);
+        test_utils::test_msg(
+            content,
+            decorators,
+            CredentialIssuanceProtocolV1_0::RequestCredential,
+            expected,
+        );
     }
 
     #[test]
@@ -73,6 +79,11 @@ mod tests {
             "~thread": decorators.thread
         });
 
-        test_utils::test_msg(content, decorators, CredentialIssuanceProtocolV1_0::RequestCredential, expected);
+        test_utils::test_msg(
+            content,
+            decorators,
+            CredentialIssuanceProtocolV1_0::RequestCredential,
+            expected,
+        );
     }
 }

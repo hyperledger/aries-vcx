@@ -68,7 +68,7 @@ mod tests {
     use crate::{
         decorators::{attachment::tests::make_extended_attachment, timing::tests::make_extended_timing},
         misc::test_utils,
-        msg_types::{types::connection::ConnectionProtocolV1, out_of_band::OutOfBandProtocolV1_1},
+        msg_types::{out_of_band::OutOfBandProtocolV1_1, types::connection::ConnectionProtocolV1},
     };
 
     #[test]

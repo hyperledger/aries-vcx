@@ -52,7 +52,8 @@ mod tests {
     use crate::{
         decorators::{thread::tests::make_extended_thread, timing::tests::make_extended_timing},
         maybe_known::MaybeKnown,
-        misc::test_utils, msg_types::discover_features::DiscoverFeaturesProtocolV1_0,
+        misc::test_utils,
+        msg_types::discover_features::DiscoverFeaturesProtocolV1_0,
     };
 
     #[test]

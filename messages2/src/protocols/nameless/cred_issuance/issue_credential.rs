@@ -58,7 +58,8 @@ mod tests {
             attachment::tests::make_extended_attachment, please_ack::tests::make_minimal_please_ack,
             thread::tests::make_extended_thread, timing::tests::make_extended_timing,
         },
-        misc::test_utils, msg_types::cred_issuance::CredentialIssuanceProtocolV1_0,
+        misc::test_utils,
+        msg_types::cred_issuance::CredentialIssuanceProtocolV1_0,
     };
 
     #[test]
@@ -72,7 +73,12 @@ mod tests {
             "~thread": decorators.thread
         });
 
-        test_utils::test_msg(content, decorators, CredentialIssuanceProtocolV1_0::IssueCredential, expected);
+        test_utils::test_msg(
+            content,
+            decorators,
+            CredentialIssuanceProtocolV1_0::IssueCredential,
+            expected,
+        );
     }
 
     #[test]
@@ -92,6 +98,11 @@ mod tests {
             "~please_ack": decorators.please_ack
         });
 
-        test_utils::test_msg(content, decorators, CredentialIssuanceProtocolV1_0::IssueCredential, expected);
+        test_utils::test_msg(
+            content,
+            decorators,
+            CredentialIssuanceProtocolV1_0::IssueCredential,
+            expected,
+        );
     }
 }

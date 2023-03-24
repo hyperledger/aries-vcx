@@ -36,7 +36,8 @@ mod tests {
     use super::*;
     use crate::{
         decorators::{thread::tests::make_extended_thread, timing::tests::make_extended_timing},
-        misc::test_utils, msg_types::out_of_band::OutOfBandProtocolV1_1,
+        misc::test_utils,
+        msg_types::out_of_band::OutOfBandProtocolV1_1,
     };
 
     #[test]
@@ -49,7 +50,12 @@ mod tests {
             "~thread": decorators.thread
         });
 
-        test_utils::test_msg(content, decorators, OutOfBandProtocolV1_1::HandshakeReuseAccepted, expected);
+        test_utils::test_msg(
+            content,
+            decorators,
+            OutOfBandProtocolV1_1::HandshakeReuseAccepted,
+            expected,
+        );
     }
 
     #[test]
@@ -64,6 +70,11 @@ mod tests {
             "~timing": decorators.timing
         });
 
-        test_utils::test_msg(content, decorators, OutOfBandProtocolV1_1::HandshakeReuseAccepted, expected);
+        test_utils::test_msg(
+            content,
+            decorators,
+            OutOfBandProtocolV1_1::HandshakeReuseAccepted,
+            expected,
+        );
     }
 }
