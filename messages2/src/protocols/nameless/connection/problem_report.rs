@@ -1,16 +1,13 @@
-use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 
 use crate::{
     decorators::{localization::MsgLocalization, thread::Thread, timing::Timing},
     msg_parts::MsgParts,
-    msg_types::types::connection::ConnectionV1_0,
 };
 
 pub type ProblemReport = MsgParts<ProblemReportContent, ProblemReportDecorators>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, MessageContent, Default, PartialEq)]
-#[message(kind = "ConnectionV1_0::ProblemReport")]
+#[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq)]
 pub struct ProblemReportContent {
     #[serde(rename = "problem-code")]
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -62,7 +59,7 @@ mod tests {
             localization::tests::make_extended_msg_localization, thread::tests::make_extended_thread,
             timing::tests::make_extended_timing,
         },
-        misc::test_utils,
+        misc::test_utils, msg_types::connection::ConnectionProtocolV1_0,
     };
 
     #[test]
@@ -75,7 +72,7 @@ mod tests {
             "~thread": decorators.thread
         });
 
-        test_utils::test_msg::<ProblemReportContent, _, _>(content, decorators, expected);
+        test_utils::test_msg(content, decorators, ConnectionProtocolV1_0::ProblemReport, expected);
     }
 
     #[test]
@@ -96,6 +93,6 @@ mod tests {
             "~l10n": decorators.localization
         });
 
-        test_utils::test_msg::<ProblemReportContent, _, _>(content, decorators, expected);
+        test_utils::test_msg(content, decorators, ConnectionProtocolV1_0::ProblemReport, expected);
     }
 }

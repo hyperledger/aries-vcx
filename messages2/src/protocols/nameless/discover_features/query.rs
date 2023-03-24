@@ -1,18 +1,13 @@
-use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 
 use super::ProtocolDescriptor;
 use crate::{
-    decorators::timing::Timing,
-    maybe_known::MaybeKnown,
-    msg_parts::MsgParts,
-    msg_types::{registry::PROTOCOL_REGISTRY, types::discover_features::DiscoverFeaturesV1_0},
+    decorators::timing::Timing, maybe_known::MaybeKnown, msg_parts::MsgParts, msg_types::registry::PROTOCOL_REGISTRY,
 };
 
 pub type Query = MsgParts<QueryContent, QueryDecorators>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, MessageContent, PartialEq)]
-#[message(kind = "DiscoverFeaturesV1_0::Query")]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub struct QueryContent {
     pub query: String,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -65,7 +60,10 @@ mod tests {
     use crate::{
         decorators::timing::tests::make_extended_timing,
         misc::test_utils,
-        msg_types::{traits::ProtocolVersion, types::connection::ConnectionV1},
+        msg_types::{
+            discover_features::DiscoverFeaturesProtocolV1_0, traits::ProtocolVersion,
+            types::connection::ConnectionProtocolV1,
+        },
     };
 
     #[test]
@@ -78,7 +76,7 @@ mod tests {
             "query": content.query
         });
 
-        test_utils::test_msg::<QueryContent, _, _>(content, decorators, expected);
+        test_utils::test_msg(content, decorators, DiscoverFeaturesProtocolV1_0::Query, expected);
     }
 
     #[test]
@@ -95,7 +93,7 @@ mod tests {
             "~timing": decorators.timing
         });
 
-        test_utils::test_msg::<QueryContent, _, _>(content, decorators, expected);
+        test_utils::test_msg(content, decorators, DiscoverFeaturesProtocolV1_0::Query, expected);
     }
 
     #[test]
@@ -120,7 +118,7 @@ mod tests {
     fn test_lookup_match_protocol() {
         let matched_protocol = QueryContent::new("https://didcomm.org/connections/*".to_owned()).lookup();
 
-        let pid = ConnectionV1::new_v1_0();
+        let pid = ConnectionProtocolV1::new_v1_0();
         let roles = pid.roles();
         let mut pd = ProtocolDescriptor::new(MaybeKnown::Known(pid.into()));
         pd.roles = Some(roles);
@@ -134,7 +132,7 @@ mod tests {
     fn test_lookup_match_version() {
         let matched_protocol = QueryContent::new("https://didcomm.org/connections/1.*".to_owned()).lookup();
 
-        let pid = ConnectionV1::new_v1_0();
+        let pid = ConnectionProtocolV1::new_v1_0();
         let roles = pid.roles();
         let mut pd = ProtocolDescriptor::new(MaybeKnown::Known(pid.into()));
         pd.roles = Some(roles);

@@ -9,23 +9,27 @@
 pub mod decorators;
 mod error;
 pub mod maybe_known;
-pub mod msg_parts;
 pub mod misc;
+pub mod msg_parts;
 pub mod msg_types;
 pub mod protocols;
 
 use derive_more::From;
-use msg_types::traits::ProtocolVersion;
+use msg_types::{
+    notification::NotificationProtocolV1_0, report_problem::ReportProblemProtocolV1_0, routing::RoutingProtocolV1_0,
+    traits::ProtocolVersion, MsgWithType,
+};
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::{
     misc::utils::MSG_TYPE,
     msg_types::{
+        basic_message::BasicMessageProtocolV1_0,
         types::{
-            basic_message::{BasicMessage as BasicMessageKind, BasicMessageV1},
-            notification::{Notification, NotificationV1},
-            report_problem::{ReportProblem, ReportProblemV1},
-            routing::{Routing, RoutingV1},
+            basic_message::{BasicMessageProtocol, BasicMessageProtocolV1},
+            notification::{NotificationProtocol, NotificationProtocolV1},
+            report_problem::{ReportProblemProtocol, ReportProblemProtocolV1},
+            routing::{RoutingProtocol, RoutingProtocolV1},
         },
         MessageType, Protocol,
     },
@@ -62,49 +66,73 @@ impl DelayedSerde for AriesMessage {
     where
         D: Deserializer<'de>,
     {
-        let (msg_type, kind) = msg_type;
+        let (msg_type, kind_str) = msg_type;
 
         match msg_type {
-            Protocol::Routing(msg_type) => {
-                let Routing::V1(RoutingV1::V1_0(phantom_data)) = msg_type;
-                let msg_type = RoutingV1::kind(phantom_data, kind).map_err(D::Error::custom)?;
-                Forward::delayed_deserialize(msg_type, deserializer).map(From::from)
+            Protocol::RoutingProtocol(msg_type) => {
+                let kind = match msg_type {
+                    RoutingProtocol::V1(RoutingProtocolV1::V1_0(pd)) => RoutingProtocolV1::kind(pd, kind_str),
+                };
+
+                match kind.map_err(D::Error::custom)? {
+                    RoutingProtocolV1_0::Forward => Forward::deserialize(deserializer).map(From::from),
+                }
             }
-            Protocol::Connection(msg_type) => {
-                Connection::delayed_deserialize((msg_type, kind), deserializer).map(From::from)
+            Protocol::ConnectionProtocol(msg_type) => {
+                Connection::delayed_deserialize((msg_type, kind_str), deserializer).map(From::from)
             }
-            Protocol::Revocation(msg_type) => {
-                Revocation::delayed_deserialize((msg_type, kind), deserializer).map(From::from)
+            Protocol::RevocationProtocol(msg_type) => {
+                Revocation::delayed_deserialize((msg_type, kind_str), deserializer).map(From::from)
             }
-            Protocol::CredentialIssuance(msg_type) => {
-                CredentialIssuance::delayed_deserialize((msg_type, kind), deserializer).map(From::from)
+            Protocol::CredentialIssuanceProtocol(msg_type) => {
+                CredentialIssuance::delayed_deserialize((msg_type, kind_str), deserializer).map(From::from)
             }
-            Protocol::ReportProblem(msg_type) => {
-                let ReportProblem::V1(ReportProblemV1::V1_0(phantom_data)) = msg_type;
-                let msg_type = ReportProblemV1::kind(phantom_data, kind).map_err(D::Error::custom)?;
-                ProblemReport::delayed_deserialize(msg_type, deserializer).map(From::from)
+            Protocol::ReportProblemProtocol(msg_type) => {
+                let kind = match msg_type {
+                    ReportProblemProtocol::V1(ReportProblemProtocolV1::V1_0(pd)) => {
+                        ReportProblemProtocolV1::kind(pd, kind_str)
+                    }
+                };
+
+                match kind.map_err(D::Error::custom)? {
+                    ReportProblemProtocolV1_0::ProblemReport => {
+                        ProblemReport::deserialize(deserializer).map(From::from)
+                    }
+                }
             }
-            Protocol::PresentProof(msg_type) => {
-                PresentProof::delayed_deserialize((msg_type, kind), deserializer).map(From::from)
+            Protocol::PresentProofProtocol(msg_type) => {
+                PresentProof::delayed_deserialize((msg_type, kind_str), deserializer).map(From::from)
             }
-            Protocol::TrustPing(msg_type) => {
-                TrustPing::delayed_deserialize((msg_type, kind), deserializer).map(From::from)
+            Protocol::TrustPingProtocol(msg_type) => {
+                TrustPing::delayed_deserialize((msg_type, kind_str), deserializer).map(From::from)
             }
-            Protocol::DiscoverFeatures(msg_type) => {
-                DiscoverFeatures::delayed_deserialize((msg_type, kind), deserializer).map(From::from)
+            Protocol::DiscoverFeaturesProtocol(msg_type) => {
+                DiscoverFeatures::delayed_deserialize((msg_type, kind_str), deserializer).map(From::from)
             }
-            Protocol::BasicMessage(msg_type) => {
-                let BasicMessageKind::V1(BasicMessageV1::V1_0(phantom_data)) = msg_type;
-                let msg_type = BasicMessageV1::kind(phantom_data, kind).map_err(D::Error::custom)?;
-                BasicMessage::delayed_deserialize(msg_type, deserializer).map(From::from)
+            Protocol::BasicMessageProtocol(msg_type) => {
+                let kind = match msg_type {
+                    BasicMessageProtocol::V1(BasicMessageProtocolV1::V1_0(pd)) => {
+                        BasicMessageProtocolV1::kind(pd, kind_str)
+                    }
+                };
+
+                match kind.map_err(D::Error::custom)? {
+                    BasicMessageProtocolV1_0::Message => BasicMessage::deserialize(deserializer).map(From::from),
+                }
             }
-            Protocol::OutOfBand(msg_type) => {
-                OutOfBand::delayed_deserialize((msg_type, kind), deserializer).map(From::from)
+            Protocol::OutOfBandProtocol(msg_type) => {
+                OutOfBand::delayed_deserialize((msg_type, kind_str), deserializer).map(From::from)
             }
-            Protocol::Notification(msg_type) => {
-                let Notification::V1(NotificationV1::V1_0(phantom_data)) = msg_type;
-                let msg_type = NotificationV1::kind(phantom_data, kind).map_err(D::Error::custom)?;
-                Ack::delayed_deserialize(msg_type, deserializer).map(From::from)
+            Protocol::NotificationProtocol(msg_type) => {
+                let kind = match msg_type {
+                    NotificationProtocol::V1(NotificationProtocolV1::V1_0(pd)) => {
+                        NotificationProtocolV1::kind(pd, kind_str)
+                    }
+                };
+
+                match kind.map_err(D::Error::custom)? {
+                    NotificationProtocolV1_0::Ack => Ack::deserialize(deserializer).map(From::from),
+                }
             }
         }
     }
@@ -114,17 +142,17 @@ impl DelayedSerde for AriesMessage {
         S: Serializer,
     {
         match self {
-            Self::Routing(v) => v.delayed_serialize(serializer),
+            Self::Routing(v) => MsgWithType::from(v).serialize(serializer),
             Self::Connection(v) => v.delayed_serialize(serializer),
             Self::Revocation(v) => v.delayed_serialize(serializer),
             Self::CredentialIssuance(v) => v.delayed_serialize(serializer),
-            Self::ReportProblem(v) => v.delayed_serialize(serializer),
+            Self::ReportProblem(v) => MsgWithType::from(v).serialize(serializer),
             Self::PresentProof(v) => v.delayed_serialize(serializer),
             Self::TrustPing(v) => v.delayed_serialize(serializer),
             Self::DiscoverFeatures(v) => v.delayed_serialize(serializer),
-            Self::BasicMessage(v) => v.delayed_serialize(serializer),
+            Self::BasicMessage(v) => MsgWithType::from(v).serialize(serializer),
             Self::OutOfBand(v) => v.delayed_serialize(serializer),
-            Self::Notification(v) => v.delayed_serialize(serializer),
+            Self::Notification(v) => MsgWithType::from(v).serialize(serializer),
         }
     }
 }

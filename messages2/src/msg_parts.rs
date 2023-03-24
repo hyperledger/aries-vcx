@@ -1,9 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    misc::NoDecorators,
-    protocols::traits::{MessageContent, MessageWithKind},
-};
+use crate::misc::NoDecorators;
 
 /// Struct representing a complete message (apart from the `@type` field) as defined in a protocol
 /// RFC. The purpose of this type is to allow decomposition of certain message parts so they can be
@@ -46,18 +43,5 @@ impl<C, D> MsgParts<C, D> {
             content,
             decorators,
         }
-    }
-}
-
-/// Blanket impl, allowing all [`MsgParts`] types where the content implements
-/// [`MessageContent`] to access the [`MessageContent::Kind`].
-impl<C, D> MessageWithKind for MsgParts<C, D>
-where
-    C: MessageContent,
-{
-    type MsgKind = C::Kind;
-
-    fn msg_kind() -> Self::MsgKind {
-        C::kind()
     }
 }

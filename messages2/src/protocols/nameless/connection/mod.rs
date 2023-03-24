@@ -5,10 +5,8 @@ pub mod problem_report;
 pub mod request;
 pub mod response;
 
-use std::str::FromStr;
-
 use derive_more::From;
-use serde::{de::Error, Deserializer, Serializer};
+use serde::{de::Error, Deserialize, Deserializer, Serializer, Serialize};
 
 use self::{
     invitation::Invitation,
@@ -17,8 +15,11 @@ use self::{
     response::{Response, ResponseContent, ResponseDecorators},
 };
 use crate::{
-    misc::utils::{self, transit_to_aries_msg},
-    msg_types::types::connection::{Connection as ConnectionKind, ConnectionV1, ConnectionV1_0},
+    misc::utils::{self, transit_to_aries_msg, into_msg_with_type},
+    msg_types::{
+        traits::ProtocolVersion,
+        types::connection::{ConnectionProtocol as ConnectionKind, ConnectionProtocolV1, ConnectionProtocolV1_0}, MsgWithType,
+    },
     protocols::traits::DelayedSerde,
 };
 
@@ -37,17 +38,18 @@ impl DelayedSerde for Connection {
     where
         D: Deserializer<'de>,
     {
-        let (major, kind) = msg_type;
-        let ConnectionKind::V1(major) = major;
-        let ConnectionV1::V1_0(_minor) = major;
-        let kind = ConnectionV1_0::from_str(kind).map_err(D::Error::custom)?;
+        let (major, kind_str) = msg_type;
 
-        match kind {
-            ConnectionV1_0::Invitation => Invitation::delayed_deserialize(kind, deserializer).map(From::from),
-            ConnectionV1_0::Request => Request::delayed_deserialize(kind, deserializer).map(From::from),
-            ConnectionV1_0::Response => Response::delayed_deserialize(kind, deserializer).map(From::from),
-            ConnectionV1_0::ProblemReport => ProblemReport::delayed_deserialize(kind, deserializer).map(From::from),
-            ConnectionV1_0::Ed25519Sha512Single => Err(utils::not_standalone_msg::<D>(kind.as_ref())),
+        let kind = match major {
+            ConnectionKind::V1(ConnectionProtocolV1::V1_0(pd)) => ConnectionProtocolV1::kind(pd, kind_str),
+        };
+
+        match kind.map_err(D::Error::custom)? {
+            ConnectionProtocolV1_0::Invitation => Invitation::deserialize(deserializer).map(From::from),
+            ConnectionProtocolV1_0::Request => Request::deserialize(deserializer).map(From::from),
+            ConnectionProtocolV1_0::Response => Response::deserialize(deserializer).map(From::from),
+            ConnectionProtocolV1_0::ProblemReport => ProblemReport::deserialize(deserializer).map(From::from),
+            ConnectionProtocolV1_0::Ed25519Sha512Single => Err(utils::not_standalone_msg::<D>(kind_str)),
         }
     }
 
@@ -56,10 +58,10 @@ impl DelayedSerde for Connection {
         S: Serializer,
     {
         match self {
-            Self::Invitation(v) => v.delayed_serialize(serializer),
-            Self::Request(v) => v.delayed_serialize(serializer),
-            Self::Response(v) => v.delayed_serialize(serializer),
-            Self::ProblemReport(v) => v.delayed_serialize(serializer),
+            Self::Invitation(v) => MsgWithType::from(v).serialize(serializer),
+            Self::Request(v) => MsgWithType::from(v).serialize(serializer),
+            Self::Response(v) => MsgWithType::from(v).serialize(serializer),
+            Self::ProblemReport(v) => MsgWithType::from(v).serialize(serializer),
         }
     }
 }
@@ -67,3 +69,8 @@ impl DelayedSerde for Connection {
 transit_to_aries_msg!(RequestContent: RequestDecorators, Connection);
 transit_to_aries_msg!(ResponseContent: ResponseDecorators, Connection);
 transit_to_aries_msg!(ProblemReportContent: ProblemReportDecorators, Connection);
+
+into_msg_with_type!(Invitation, ConnectionProtocolV1_0, Invitation);
+into_msg_with_type!(Request, ConnectionProtocolV1_0, Request);
+into_msg_with_type!(Response, ConnectionProtocolV1_0, Response);
+into_msg_with_type!(ProblemReport, ConnectionProtocolV1_0, ProblemReport);

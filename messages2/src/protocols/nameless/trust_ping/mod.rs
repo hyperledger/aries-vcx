@@ -3,18 +3,19 @@
 pub mod ping;
 pub mod ping_response;
 
-use std::str::FromStr;
-
 use derive_more::From;
-use serde::{de::Error, Deserializer, Serializer};
+use serde::{de::Error, Deserialize, Deserializer, Serializer, Serialize};
 
 use self::{
     ping::{Ping, PingContent, PingDecorators},
     ping_response::{PingResponse, PingResponseContent, PingResponseDecorators},
 };
 use crate::{
-    misc::utils::transit_to_aries_msg,
-    msg_types::types::trust_ping::{TrustPing as TrustPingKind, TrustPingV1, TrustPingV1_0},
+    misc::utils::{into_msg_with_type, transit_to_aries_msg},
+    msg_types::{
+        traits::ProtocolVersion,
+        types::trust_ping::{TrustPingProtocol as TrustPingKind, TrustPingProtocolV1, TrustPingProtocolV1_0}, MsgWithType,
+    },
     protocols::traits::DelayedSerde,
 };
 
@@ -31,14 +32,15 @@ impl DelayedSerde for TrustPing {
     where
         D: Deserializer<'de>,
     {
-        let (major, kind) = msg_type;
-        let TrustPingKind::V1(major) = major;
-        let TrustPingV1::V1_0(_minor) = major;
-        let kind = TrustPingV1_0::from_str(kind).map_err(D::Error::custom)?;
+        let (major, kind_str) = msg_type;
 
-        match kind {
-            TrustPingV1_0::Ping => Ping::delayed_deserialize(kind, deserializer).map(From::from),
-            TrustPingV1_0::PingResponse => PingResponse::delayed_deserialize(kind, deserializer).map(From::from),
+        let kind = match major {
+            TrustPingKind::V1(TrustPingProtocolV1::V1_0(pd)) => TrustPingProtocolV1::kind(pd, kind_str),
+        };
+
+        match kind.map_err(D::Error::custom)? {
+            TrustPingProtocolV1_0::Ping => Ping::deserialize(deserializer).map(From::from),
+            TrustPingProtocolV1_0::PingResponse => PingResponse::deserialize(deserializer).map(From::from),
         }
     }
 
@@ -47,11 +49,14 @@ impl DelayedSerde for TrustPing {
         S: Serializer,
     {
         match self {
-            Self::Ping(v) => v.delayed_serialize(serializer),
-            Self::PingResponse(v) => v.delayed_serialize(serializer),
+            Self::Ping(v) => MsgWithType::from(v).serialize(serializer),
+            Self::PingResponse(v) => MsgWithType::from(v).serialize(serializer),
         }
     }
 }
 
 transit_to_aries_msg!(PingContent: PingDecorators, TrustPing);
 transit_to_aries_msg!(PingResponseContent: PingResponseDecorators, TrustPing);
+
+into_msg_with_type!(Ping, TrustPingProtocolV1_0, Ping);
+into_msg_with_type!(PingResponse, TrustPingProtocolV1_0, PingResponse);

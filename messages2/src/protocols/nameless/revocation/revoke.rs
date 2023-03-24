@@ -1,17 +1,15 @@
-use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 
 use crate::{
     decorators::{please_ack::PleaseAck, thread::Thread, timing::Timing},
     maybe_known::MaybeKnown,
     msg_parts::MsgParts,
-    msg_types::types::revocation::RevocationV2_0,
 };
 
 pub type Revoke = MsgParts<RevokeContent, RevokeDecorators>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, MessageContent, PartialEq)]
-#[message(kind = "RevocationV2_0::Revoke")]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+
 pub struct RevokeContent {
     pub credential_id: String,
     pub revocation_format: MaybeKnown<RevocationFormat>,
@@ -55,7 +53,7 @@ mod tests {
     use serde_json::json;
 
     use super::*;
-    use crate::{decorators::thread::tests::make_extended_thread, misc::test_utils};
+    use crate::{decorators::thread::tests::make_extended_thread, misc::test_utils, msg_types::revocation::RevocationProtocolV2_0};
 
     #[test]
     fn test_minimal_revoke() {
@@ -71,7 +69,7 @@ mod tests {
             "revocation_format": content.revocation_format
         });
 
-        test_utils::test_msg::<RevokeContent, _, _>(content, decorators, expected);
+        test_utils::test_msg(content, decorators, RevocationProtocolV2_0::Revoke, expected);
     }
 
     #[test]
@@ -92,6 +90,6 @@ mod tests {
             "~thread": decorators.thread
         });
 
-        test_utils::test_msg::<RevokeContent, _, _>(content, decorators, expected);
+        test_utils::test_msg(content, decorators, RevocationProtocolV2_0::Revoke, expected);
     }
 }

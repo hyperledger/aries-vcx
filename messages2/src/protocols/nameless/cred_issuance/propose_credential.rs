@@ -1,17 +1,14 @@
-use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 
 use super::CredentialPreview;
 use crate::{
     decorators::{thread::Thread, timing::Timing},
     msg_parts::MsgParts,
-    msg_types::types::cred_issuance::CredentialIssuanceV1_0,
 };
 
 pub type ProposeCredential = MsgParts<ProposeCredentialContent, ProposeCredentialDecorators>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, MessageContent, PartialEq)]
-#[message(kind = "CredentialIssuanceV1_0::ProposeCredential")]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub struct ProposeCredentialContent {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,
@@ -51,7 +48,7 @@ mod tests {
     use crate::{
         decorators::{thread::tests::make_extended_thread, timing::tests::make_extended_timing},
         misc::test_utils,
-        protocols::nameless::cred_issuance::CredentialAttr,
+        protocols::nameless::cred_issuance::CredentialAttr, msg_types::cred_issuance::CredentialIssuanceProtocolV1_0,
     };
 
     #[test]
@@ -69,7 +66,7 @@ mod tests {
             "cred_def_id": content.cred_def_id,
         });
 
-        test_utils::test_msg::<ProposeCredentialContent, _, _>(content, decorators, expected);
+        test_utils::test_msg(content, decorators, CredentialIssuanceProtocolV1_0::ProposeCredential, expected);
     }
 
     #[test]
@@ -94,6 +91,6 @@ mod tests {
             "~timing": decorators.timing
         });
 
-        test_utils::test_msg::<ProposeCredentialContent, _, _>(content, decorators, expected);
+        test_utils::test_msg(content, decorators, CredentialIssuanceProtocolV1_0::ProposeCredential, expected);
     }
 }

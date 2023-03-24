@@ -1,16 +1,13 @@
-use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 
 use crate::{
     decorators::{attachment::Attachment, thread::Thread, timing::Timing},
     msg_parts::MsgParts,
-    msg_types::types::cred_issuance::CredentialIssuanceV1_0,
 };
 
 pub type RequestCredential = MsgParts<RequestCredentialContent, RequestCredentialDecorators>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, MessageContent, PartialEq)]
-#[message(kind = "CredentialIssuanceV1_0::RequestCredential")]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub struct RequestCredentialContent {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,
@@ -46,7 +43,7 @@ mod tests {
     use super::*;
     use crate::{
         decorators::{attachment::tests::make_extended_attachment, thread::tests::make_extended_thread},
-        misc::test_utils,
+        misc::test_utils, msg_types::cred_issuance::CredentialIssuanceProtocolV1_0,
     };
 
     #[test]
@@ -59,7 +56,7 @@ mod tests {
             "requests~attach": content.requests_attach,
         });
 
-        test_utils::test_msg::<RequestCredentialContent, _, _>(content, decorators, expected);
+        test_utils::test_msg(content, decorators, CredentialIssuanceProtocolV1_0::RequestCredential, expected);
     }
 
     #[test]
@@ -76,6 +73,6 @@ mod tests {
             "~thread": decorators.thread
         });
 
-        test_utils::test_msg::<RequestCredentialContent, _, _>(content, decorators, expected);
+        test_utils::test_msg(content, decorators, CredentialIssuanceProtocolV1_0::RequestCredential, expected);
     }
 }

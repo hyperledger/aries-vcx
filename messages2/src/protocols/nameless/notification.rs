@@ -1,18 +1,17 @@
 //! Module containing the `acks` messages, as defined in the [RFC](https://github.com/hyperledger/aries-rfcs/blob/main/features/0015-acks/README.md).
 
-use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 
 use crate::{
     decorators::{thread::Thread, timing::Timing},
+    misc::utils::into_msg_with_type,
     msg_parts::MsgParts,
-    msg_types::types::notification::NotificationV1_0,
+    msg_types::types::notification::NotificationProtocolV1_0,
 };
 
 pub type Ack = MsgParts<AckContent, AckDecorators>;
 
-#[derive(Debug, Clone, Serialize, Deserialize, MessageContent, PartialEq)]
-#[message(kind = "NotificationV1_0::Ack")]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct AckContent {
     pub status: AckStatus,
 }
@@ -45,6 +44,8 @@ impl AckDecorators {
     }
 }
 
+into_msg_with_type!(Ack, NotificationProtocolV1_0, Ack);
+
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 #[allow(clippy::field_reassign_with_default)]
@@ -68,7 +69,7 @@ mod tests {
             "~thread": decorators.thread
         });
 
-        test_utils::test_msg::<AckContent, _, _>(content, decorators, expected);
+        test_utils::test_msg(content, decorators, NotificationProtocolV1_0::Ack, expected);
     }
 
     #[test]
@@ -84,6 +85,6 @@ mod tests {
             "~timing": decorators.timing
         });
 
-        test_utils::test_msg::<AckContent, _, _>(content, decorators, expected);
+        test_utils::test_msg(content, decorators, NotificationProtocolV1_0::Ack, expected);
     }
 }

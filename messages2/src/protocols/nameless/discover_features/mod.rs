@@ -3,8 +3,6 @@
 pub mod disclose;
 pub mod query;
 
-use std::str::FromStr;
-
 use derive_more::From;
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 
@@ -14,12 +12,12 @@ use self::{
 };
 use crate::{
     maybe_known::MaybeKnown,
-    misc::utils::transit_to_aries_msg,
+    misc::utils::{transit_to_aries_msg, into_msg_with_type},
     msg_types::{
         types::discover_features::{
-            DiscoverFeatures as DiscoverFeaturesKind, DiscoverFeaturesV1, DiscoverFeaturesV1_0,
+            DiscoverFeaturesProtocol as DiscoverFeaturesKind, DiscoverFeaturesProtocolV1, DiscoverFeaturesProtocolV1_0,
         },
-        Protocol, Role,
+        Protocol, Role, MsgWithType, traits::ProtocolVersion,
     },
     protocols::traits::DelayedSerde,
 };
@@ -37,14 +35,15 @@ impl DelayedSerde for DiscoverFeatures {
     where
         D: Deserializer<'de>,
     {
-        let (major, kind) = msg_type;
-        let DiscoverFeaturesKind::V1(major) = major;
-        let DiscoverFeaturesV1::V1_0(_minor) = major;
-        let kind = DiscoverFeaturesV1_0::from_str(kind).map_err(D::Error::custom)?;
+        let (major, kind_str) = msg_type;
 
-        match kind {
-            DiscoverFeaturesV1_0::Query => Query::delayed_deserialize(kind, deserializer).map(From::from),
-            DiscoverFeaturesV1_0::Disclose => Disclose::delayed_deserialize(kind, deserializer).map(From::from),
+        let kind = match major {
+            DiscoverFeaturesKind::V1(DiscoverFeaturesProtocolV1::V1_0(pd)) => DiscoverFeaturesProtocolV1::kind(pd, kind_str)
+        };
+
+        match kind.map_err(D::Error::custom)? {
+            DiscoverFeaturesProtocolV1_0::Query => Query::deserialize(deserializer).map(From::from),
+            DiscoverFeaturesProtocolV1_0::Disclose => Disclose::deserialize(deserializer).map(From::from),
         }
     }
 
@@ -53,8 +52,8 @@ impl DelayedSerde for DiscoverFeatures {
         S: Serializer,
     {
         match self {
-            Self::Query(v) => v.delayed_serialize(serializer),
-            Self::Disclose(v) => v.delayed_serialize(serializer),
+            Self::Query(v) => MsgWithType::from(v).serialize(serializer),
+            Self::Disclose(v) => MsgWithType::from(v).serialize(serializer),
         }
     }
 }
@@ -74,3 +73,6 @@ impl ProtocolDescriptor {
 
 transit_to_aries_msg!(QueryContent: QueryDecorators, DiscoverFeatures);
 transit_to_aries_msg!(DiscloseContent: DiscloseDecorators, DiscoverFeatures);
+
+into_msg_with_type!(Query, DiscoverFeaturesProtocolV1_0, Query);
+into_msg_with_type!(Disclose, DiscoverFeaturesProtocolV1_0, Disclose);

@@ -1,20 +1,19 @@
 //! Module containing the `basic message` protocol messages, as defined in the [RFC](https://github.com/hyperledger/aries-rfcs/blob/main/features/0095-basic-message/README.md).
 
 use chrono::{DateTime, Utc};
-use messages_macros::MessageContent;
+
 use serde::{Deserialize, Serialize};
 
 use crate::{
     decorators::{localization::MsgLocalization, thread::Thread, timing::Timing},
-    misc::utils,
+    misc::utils::{self, into_msg_with_type},
     msg_parts::MsgParts,
-    msg_types::types::basic_message::BasicMessageV1_0,
+    msg_types::types::basic_message::BasicMessageProtocolV1_0,
 };
 
 pub type BasicMessage = MsgParts<BasicMessageContent, BasicMessageDecorators>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, MessageContent, PartialEq)]
-#[message(kind = "BasicMessageV1_0::Message")]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub struct BasicMessageContent {
     pub content: String,
     #[serde(serialize_with = "utils::serialize_datetime")]
@@ -43,6 +42,8 @@ pub struct BasicMessageDecorators {
     pub timing: Option<Timing>,
 }
 
+into_msg_with_type!(BasicMessage, BasicMessageProtocolV1_0, Message);
+
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 #[allow(clippy::field_reassign_with_default)]
@@ -67,7 +68,7 @@ mod tests {
             "content": content.content
         });
 
-        test_utils::test_msg::<BasicMessageContent, _, _>(content, decorators, expected);
+        test_utils::test_msg(content, decorators, BasicMessageProtocolV1_0::Message, expected);
     }
 
     #[test]
@@ -84,6 +85,6 @@ mod tests {
             "~thread": decorators.thread
         });
 
-        test_utils::test_msg::<BasicMessageContent, _, _>(content, decorators, expected);
+        test_utils::test_msg(content, decorators, BasicMessageProtocolV1_0::Message, expected);
     }
 }

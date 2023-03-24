@@ -1,5 +1,5 @@
 use diddoc::aries::service::AriesService;
-use messages_macros::MessageContent;
+
 use serde::{Deserialize, Serialize};
 
 use super::OobGoalCode;
@@ -8,13 +8,12 @@ use crate::{
     maybe_known::MaybeKnown,
     misc::MimeType,
     msg_parts::MsgParts,
-    msg_types::{types::out_of_band::OutOfBandV1_1, Protocol},
+    msg_types::Protocol,
 };
 
 pub type Invitation = MsgParts<InvitationContent, InvitationDecorators>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, MessageContent, PartialEq)]
-#[message(kind = "OutOfBandV1_1::Invitation")]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub struct InvitationContent {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub label: Option<String>,
@@ -69,7 +68,7 @@ mod tests {
     use crate::{
         decorators::{attachment::tests::make_extended_attachment, timing::tests::make_extended_timing},
         misc::test_utils,
-        msg_types::types::connection::ConnectionV1,
+        msg_types::{types::connection::ConnectionProtocolV1, out_of_band::OutOfBandProtocolV1_1},
     };
 
     #[test]
@@ -86,7 +85,7 @@ mod tests {
             "requests~attach": content.requests_attach,
         });
 
-        test_utils::test_msg::<InvitationContent, _, _>(content, decorators, expected);
+        test_utils::test_msg(content, decorators, OutOfBandProtocolV1_1::Invitation, expected);
     }
 
     #[test]
@@ -100,7 +99,7 @@ mod tests {
         content.goal_code = Some(MaybeKnown::Known(OobGoalCode::P2PMessaging));
         content.goal = Some("test_oob_goal".to_owned());
         content.accept = Some(vec![MimeType::Json, MimeType::Plain]);
-        content.handshake_protocols = Some(vec![ConnectionV1::new_v1_0().into()]);
+        content.handshake_protocols = Some(vec![ConnectionProtocolV1::new_v1_0().into()]);
 
         let mut decorators = InvitationDecorators::default();
         decorators.timing = Some(make_extended_timing());
@@ -116,6 +115,6 @@ mod tests {
             "~timing": decorators.timing
         });
 
-        test_utils::test_msg::<InvitationContent, _, _>(content, decorators, expected);
+        test_utils::test_msg(content, decorators, OutOfBandProtocolV1_1::Invitation, expected);
     }
 }

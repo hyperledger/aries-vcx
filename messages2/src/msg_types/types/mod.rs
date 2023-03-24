@@ -4,10 +4,10 @@ use derive_more::{From, TryInto};
 use serde::{Deserialize, Serialize};
 
 use self::{
-    basic_message::BasicMessage, connection::Connection, cred_issuance::CredentialIssuance,
-    discover_features::DiscoverFeatures, notification::Notification, out_of_band::OutOfBand,
-    present_proof::PresentProof, report_problem::ReportProblem, revocation::Revocation, routing::Routing,
-    trust_ping::TrustPing,
+    basic_message::BasicMessageProtocol, connection::ConnectionProtocol, cred_issuance::CredentialIssuanceProtocol,
+    discover_features::DiscoverFeaturesProtocol, notification::NotificationProtocol, out_of_band::OutOfBandProtocol,
+    present_proof::PresentProofProtocol, report_problem::ReportProblemProtocol, revocation::RevocationProtocol,
+    routing::RoutingProtocol, trust_ping::TrustPingProtocol,
 };
 use crate::{
     error::{MsgTypeError, MsgTypeResult},
@@ -43,17 +43,17 @@ pub mod trust_ping;
 #[derive(Clone, Copy, Debug, From, TryInto, PartialEq, Deserialize)]
 #[serde(try_from = "&str")]
 pub enum Protocol {
-    Routing(Routing),
-    Connection(Connection),
-    Revocation(Revocation),
-    CredentialIssuance(CredentialIssuance),
-    ReportProblem(ReportProblem),
-    PresentProof(PresentProof),
-    TrustPing(TrustPing),
-    DiscoverFeatures(DiscoverFeatures),
-    BasicMessage(BasicMessage),
-    OutOfBand(OutOfBand),
-    Notification(Notification),
+    RoutingProtocol(RoutingProtocol),
+    ConnectionProtocol(ConnectionProtocol),
+    RevocationProtocol(RevocationProtocol),
+    CredentialIssuanceProtocol(CredentialIssuanceProtocol),
+    ReportProblemProtocol(ReportProblemProtocol),
+    PresentProofProtocol(PresentProofProtocol),
+    TrustPingProtocol(TrustPingProtocol),
+    DiscoverFeaturesProtocol(DiscoverFeaturesProtocol),
+    BasicMessageProtocol(BasicMessageProtocol),
+    OutOfBandProtocol(OutOfBandProtocol),
+    NotificationProtocol(NotificationProtocol),
 }
 
 /// Utility macro to avoid harder to read and error prone calling
@@ -77,17 +77,17 @@ impl Protocol {
     /// An error is returned if a [`Protocol`] could not be constructed
     /// from the provided parts.
     pub fn from_parts(protocol: &str, major: u8, minor: u8) -> MsgTypeResult<Self> {
-        match_protocol!(Routing, protocol, major, minor);
-        match_protocol!(Connection, protocol, major, minor);
-        match_protocol!(Revocation, protocol, major, minor);
-        match_protocol!(CredentialIssuance, protocol, major, minor);
-        match_protocol!(ReportProblem, protocol, major, minor);
-        match_protocol!(PresentProof, protocol, major, minor);
-        match_protocol!(TrustPing, protocol, major, minor);
-        match_protocol!(DiscoverFeatures, protocol, major, minor);
-        match_protocol!(BasicMessage, protocol, major, minor);
-        match_protocol!(OutOfBand, protocol, major, minor);
-        match_protocol!(Notification, protocol, major, minor);
+        match_protocol!(RoutingProtocol, protocol, major, minor);
+        match_protocol!(ConnectionProtocol, protocol, major, minor);
+        match_protocol!(RevocationProtocol, protocol, major, minor);
+        match_protocol!(CredentialIssuanceProtocol, protocol, major, minor);
+        match_protocol!(ReportProblemProtocol, protocol, major, minor);
+        match_protocol!(PresentProofProtocol, protocol, major, minor);
+        match_protocol!(TrustPingProtocol, protocol, major, minor);
+        match_protocol!(DiscoverFeaturesProtocol, protocol, major, minor);
+        match_protocol!(BasicMessageProtocol, protocol, major, minor);
+        match_protocol!(OutOfBandProtocol, protocol, major, minor);
+        match_protocol!(NotificationProtocol, protocol, major, minor);
 
         Err(MsgTypeError::unknown_protocol(protocol.to_owned()))
     }
@@ -95,17 +95,17 @@ impl Protocol {
     /// Returns the parts that this [`Protocol`] is comprised of.
     pub fn as_parts(&self) -> (&'static str, u8, u8) {
         match &self {
-            Self::Routing(v) => v.as_protocol_parts(),
-            Self::Connection(v) => v.as_protocol_parts(),
-            Self::Revocation(v) => v.as_protocol_parts(),
-            Self::CredentialIssuance(v) => v.as_protocol_parts(),
-            Self::ReportProblem(v) => v.as_protocol_parts(),
-            Self::PresentProof(v) => v.as_protocol_parts(),
-            Self::TrustPing(v) => v.as_protocol_parts(),
-            Self::DiscoverFeatures(v) => v.as_protocol_parts(),
-            Self::BasicMessage(v) => v.as_protocol_parts(),
-            Self::OutOfBand(v) => v.as_protocol_parts(),
-            Self::Notification(v) => v.as_protocol_parts(),
+            Self::RoutingProtocol(v) => v.as_protocol_parts(),
+            Self::ConnectionProtocol(v) => v.as_protocol_parts(),
+            Self::RevocationProtocol(v) => v.as_protocol_parts(),
+            Self::CredentialIssuanceProtocol(v) => v.as_protocol_parts(),
+            Self::ReportProblemProtocol(v) => v.as_protocol_parts(),
+            Self::PresentProofProtocol(v) => v.as_protocol_parts(),
+            Self::TrustPingProtocol(v) => v.as_protocol_parts(),
+            Self::DiscoverFeaturesProtocol(v) => v.as_protocol_parts(),
+            Self::BasicMessageProtocol(v) => v.as_protocol_parts(),
+            Self::OutOfBandProtocol(v) => v.as_protocol_parts(),
+            Self::NotificationProtocol(v) => v.as_protocol_parts(),
         }
     }
 

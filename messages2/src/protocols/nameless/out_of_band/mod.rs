@@ -4,8 +4,6 @@ pub mod invitation;
 pub mod reuse;
 pub mod reuse_accepted;
 
-use std::str::FromStr;
-
 use derive_more::From;
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 
@@ -15,8 +13,12 @@ use self::{
     reuse_accepted::{HandshakeReuseAccepted, HandshakeReuseAcceptedContent, HandshakeReuseAcceptedDecorators},
 };
 use crate::{
-    misc::utils::transit_to_aries_msg,
-    msg_types::types::out_of_band::{OutOfBand as OutOfBandKind, OutOfBandV1, OutOfBandV1_1},
+    misc::utils::{into_msg_with_type, transit_to_aries_msg},
+    msg_types::{
+        traits::ProtocolVersion,
+        types::out_of_band::{OutOfBandProtocol as OutOfBandKind, OutOfBandProtocolV1, OutOfBandProtocolV1_1},
+        MsgWithType,
+    },
     protocols::traits::DelayedSerde,
 };
 
@@ -34,16 +36,17 @@ impl DelayedSerde for OutOfBand {
     where
         D: Deserializer<'de>,
     {
-        let (major, kind) = msg_type;
-        let OutOfBandKind::V1(major) = major;
-        let OutOfBandV1::V1_1(_minor) = major;
-        let kind = OutOfBandV1_1::from_str(kind).map_err(D::Error::custom)?;
+        let (major, kind_str) = msg_type;
 
-        match kind {
-            OutOfBandV1_1::Invitation => Invitation::delayed_deserialize(kind, deserializer).map(From::from),
-            OutOfBandV1_1::HandshakeReuse => HandshakeReuse::delayed_deserialize(kind, deserializer).map(From::from),
-            OutOfBandV1_1::HandshakeReuseAccepted => {
-                HandshakeReuseAccepted::delayed_deserialize(kind, deserializer).map(From::from)
+        let kind = match major {
+            OutOfBandKind::V1(OutOfBandProtocolV1::V1_1(pd)) => OutOfBandProtocolV1::kind(pd, kind_str),
+        };
+
+        match kind.map_err(D::Error::custom)? {
+            OutOfBandProtocolV1_1::Invitation => Invitation::deserialize(deserializer).map(From::from),
+            OutOfBandProtocolV1_1::HandshakeReuse => HandshakeReuse::deserialize(deserializer).map(From::from),
+            OutOfBandProtocolV1_1::HandshakeReuseAccepted => {
+                HandshakeReuseAccepted::deserialize(deserializer).map(From::from)
             }
         }
     }
@@ -53,9 +56,9 @@ impl DelayedSerde for OutOfBand {
         S: Serializer,
     {
         match self {
-            Self::Invitation(v) => v.delayed_serialize(serializer),
-            Self::HandshakeReuse(v) => v.delayed_serialize(serializer),
-            Self::HandshakeReuseAccepted(v) => v.delayed_serialize(serializer),
+            Self::Invitation(v) => MsgWithType::from(v).serialize(serializer),
+            Self::HandshakeReuse(v) => MsgWithType::from(v).serialize(serializer),
+            Self::HandshakeReuseAccepted(v) => MsgWithType::from(v).serialize(serializer),
         }
     }
 }
@@ -84,3 +87,7 @@ transit_to_aries_msg!(
     HandshakeReuseAcceptedContent: HandshakeReuseAcceptedDecorators,
     OutOfBand
 );
+
+into_msg_with_type!(Invitation, OutOfBandProtocolV1_1, Invitation);
+into_msg_with_type!(HandshakeReuse, OutOfBandProtocolV1_1, HandshakeReuse);
+into_msg_with_type!(HandshakeReuseAccepted, OutOfBandProtocolV1_1, HandshakeReuseAccepted);

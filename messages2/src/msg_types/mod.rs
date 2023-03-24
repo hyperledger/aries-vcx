@@ -9,7 +9,7 @@ mod role;
 pub mod traits;
 pub mod types;
 
-use std::{fmt::Arguments, str::FromStr};
+use std::{str::FromStr};
 
 use serde::{de::Error, Deserialize, Serialize};
 
@@ -18,6 +18,8 @@ pub use types::{
     basic_message, connection, cred_issuance, discover_features, notification, out_of_band, present_proof,
     report_problem, revocation, routing, trust_ping, Protocol,
 };
+
+use self::traits::MessageKind;
 
 /// Type used for deserialization of a fully qualified message type. After deserialization,
 /// it is matched on to determine the actual message struct to deserialize to.
@@ -63,15 +65,36 @@ impl<'de> Deserialize<'de> for MessageType<'de> {
 
 /// Type used for serialization of a message along with appending it's `@type` field.
 #[derive(Serialize)]
-pub(crate) struct MsgWithType<'a, T> {
+pub(crate) struct MsgWithType<'a, T, K>
+where
+    K: MessageKind,
+    Protocol: From<K::Parent>,
+{
     #[serde(rename = "@type")]
-    msg_type: Arguments<'a>,
+    #[serde(serialize_with = "serialize_msg_type")]
+    kind: K,
     #[serde(flatten)]
     message: &'a T,
 }
 
-impl<'a, T> MsgWithType<'a, T> {
-    pub fn new(msg_type: Arguments<'a>, message: &'a T) -> Self {
-        Self { msg_type, message }
+impl<'a, T, K> MsgWithType<'a, T, K>
+where
+    K: MessageKind,
+    Protocol: From<K::Parent>,
+{
+    pub fn new(kind: K, message: &'a T) -> Self {
+        Self { kind, message }
     }
+}
+
+pub fn serialize_msg_type<S, K>(kind: &K, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: serde::Serializer,
+    K: MessageKind,
+    Protocol: From<K::Parent>,
+{
+    let kind = kind.as_ref();
+    let protocol = Protocol::from(K::parent());
+
+    format_args!("{protocol}/{kind}").serialize(serializer)
 }

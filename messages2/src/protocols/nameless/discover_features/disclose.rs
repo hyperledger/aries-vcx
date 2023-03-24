@@ -1,4 +1,3 @@
-use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 
 use super::ProtocolDescriptor;
@@ -6,13 +5,12 @@ use crate::{
     decorators::{thread::Thread, timing::Timing},
     maybe_known::MaybeKnown,
     msg_parts::MsgParts,
-    msg_types::{registry::PROTOCOL_REGISTRY, types::discover_features::DiscoverFeaturesV1_0},
+    msg_types::registry::PROTOCOL_REGISTRY,
 };
 
 pub type Disclose = MsgParts<DiscloseContent, DiscloseDecorators>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, MessageContent, PartialEq)]
-#[message(kind = "DiscoverFeaturesV1_0::Disclose")]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub struct DiscloseContent {
     pub protocols: Vec<ProtocolDescriptor>,
 }
@@ -54,7 +52,7 @@ mod tests {
     use crate::{
         decorators::{thread::tests::make_extended_thread, timing::tests::make_extended_timing},
         maybe_known::MaybeKnown,
-        misc::test_utils,
+        misc::test_utils, msg_types::discover_features::DiscoverFeaturesProtocolV1_0,
     };
 
     #[test]
@@ -67,7 +65,7 @@ mod tests {
             "protocols": content.protocols
         });
 
-        test_utils::test_msg::<DiscloseContent, _, _>(content, decorators, expected);
+        test_utils::test_msg(content, decorators, DiscoverFeaturesProtocolV1_0::Disclose, expected);
     }
 
     #[test]
@@ -90,6 +88,6 @@ mod tests {
             "~timing": decorators.timing
         });
 
-        test_utils::test_msg::<DiscloseContent, _, _>(content, decorators, expected);
+        test_utils::test_msg(content, decorators, DiscoverFeaturesProtocolV1_0::Disclose, expected);
     }
 }

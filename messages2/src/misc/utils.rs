@@ -15,20 +15,6 @@ where
     D::Error::custom(format!("{msg_type} is not a standalone message"))
 }
 
-macro_rules! transit_to_aries_msg {
-    ($content:ty, $($interm:ty),+) => {
-        transit_to_aries_msg!($content:$crate::misc::NoDecorators, $($interm),+);
-    };
-
-    ($content:ty: $decorators:ty, $($interm:ty),+) => {
-        impl From<$crate::msg_parts::MsgParts<$content, $decorators>> for $crate::AriesMessage {
-            fn from(value: $crate::msg_parts::MsgParts<$content, $decorators>) -> Self {
-                Self::from($crate::misc::utils::generate_from_stmt!(value, $($interm),+))
-            }
-        }
-    };
-}
-
 pub fn serialize_datetime<S>(dt: &DateTime<Utc>, serializer: S) -> Result<S::Ok, S::Error>
 where
     S: serde::Serializer,
@@ -67,6 +53,20 @@ where
     }
 }
 
+macro_rules! transit_to_aries_msg {
+    ($content:ty, $($interm:ty),+) => {
+        transit_to_aries_msg!($content:$crate::misc::NoDecorators, $($interm),+);
+    };
+
+    ($content:ty: $decorators:ty, $($interm:ty),+) => {
+        impl From<$crate::msg_parts::MsgParts<$content, $decorators>> for $crate::AriesMessage {
+            fn from(value: $crate::msg_parts::MsgParts<$content, $decorators>) -> Self {
+                Self::from($crate::misc::utils::generate_from_stmt!(value, $($interm),+))
+            }
+        }
+    };
+}
+
 macro_rules! generate_from_stmt {
     ($val:expr, $interm:ty) => {
         <$interm>::from($val)
@@ -76,5 +76,16 @@ macro_rules! generate_from_stmt {
     };
 }
 
+macro_rules! into_msg_with_type {
+    ($msg:ident, $kind:ident, $kind_var:ident) => {
+        impl<'a> From<&'a $msg> for $crate::msg_types::MsgWithType<'a, $msg, $kind> {
+            fn from(value: &'a $msg) -> $crate::msg_types::MsgWithType<'a, $msg, $kind> {
+                $crate::msg_types::MsgWithType::new($kind::$kind_var, value)
+            }
+        }
+    };
+}
+
 pub(crate) use generate_from_stmt;
+pub(crate) use into_msg_with_type;
 pub(crate) use transit_to_aries_msg;

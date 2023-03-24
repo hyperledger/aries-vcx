@@ -1,16 +1,13 @@
-use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 
 use crate::{
     decorators::{attachment::Attachment, thread::Thread, timing::Timing},
     msg_parts::MsgParts,
-    msg_types::types::present_proof::PresentProofV1_0,
 };
 
 pub type RequestPresentation = MsgParts<RequestPresentationContent, RequestPresentationDecorators>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, MessageContent, PartialEq)]
-#[message(kind = "PresentProofV1_0::RequestPresentation")]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub struct RequestPresentationContent {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,
@@ -49,7 +46,7 @@ mod tests {
             attachment::tests::make_extended_attachment, thread::tests::make_extended_thread,
             timing::tests::make_extended_timing,
         },
-        misc::test_utils,
+        misc::test_utils, msg_types::present_proof::PresentProofProtocolV1_0,
     };
 
     #[test]
@@ -62,7 +59,7 @@ mod tests {
             "request_presentations~attach": content.request_presentations_attach,
         });
 
-        test_utils::test_msg::<RequestPresentationContent, _, _>(content, decorators, expected);
+        test_utils::test_msg(content, decorators, PresentProofProtocolV1_0::RequestPresentation, expected);
     }
 
     #[test]
@@ -81,6 +78,6 @@ mod tests {
             "~timing": decorators.timing
         });
 
-        test_utils::test_msg::<RequestPresentationContent, _, _>(content, decorators, expected);
+        test_utils::test_msg(content, decorators, PresentProofProtocolV1_0::RequestPresentation, expected);
     }
 }

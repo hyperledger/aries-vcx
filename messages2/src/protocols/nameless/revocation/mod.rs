@@ -3,19 +3,19 @@
 pub mod ack;
 pub mod revoke;
 
-use std::str::FromStr;
-
 use derive_more::From;
-use serde::{de::Error, Deserializer, Serializer};
+use serde::{de::Error, Deserializer, Serializer, Serialize, Deserialize};
 
 use self::{
-    ack::{AckRevokeContent, AckRevoke},
+    ack::{AckRevoke, AckRevokeContent},
     revoke::{Revoke, RevokeContent, RevokeDecorators},
 };
 use super::notification::AckDecorators;
 use crate::{
-    misc::utils::transit_to_aries_msg,
-    msg_types::types::revocation::{Revocation as RevocationKind, RevocationV2, RevocationV2_0},
+    misc::utils::{transit_to_aries_msg, into_msg_with_type},
+    msg_types::{types::revocation::{
+        RevocationProtocol as RevocationKind, RevocationProtocolV2, RevocationProtocolV2_0,
+    }, traits::ProtocolVersion, MsgWithType},
     protocols::traits::DelayedSerde,
 };
 
@@ -32,14 +32,15 @@ impl DelayedSerde for Revocation {
     where
         D: Deserializer<'de>,
     {
-        let (major, kind) = msg_type;
-        let RevocationKind::V2(major) = major;
-        let RevocationV2::V2_0(_minor) = major;
-        let kind = RevocationV2_0::from_str(kind).map_err(D::Error::custom)?;
+        let (major, kind_str) = msg_type;
 
-        match kind {
-            RevocationV2_0::Revoke => Revoke::delayed_deserialize(kind, deserializer).map(From::from),
-            RevocationV2_0::Ack => AckRevoke::delayed_deserialize(kind, deserializer).map(From::from),
+        let kind = match major {
+            RevocationKind::V2(RevocationProtocolV2::V2_0(pd)) => RevocationProtocolV2::kind(pd, kind_str)
+        };
+
+        match kind.map_err(D::Error::custom)? {
+            RevocationProtocolV2_0::Revoke => Revoke::deserialize(deserializer).map(From::from),
+            RevocationProtocolV2_0::Ack => AckRevoke::deserialize( deserializer).map(From::from),
         }
     }
 
@@ -48,11 +49,14 @@ impl DelayedSerde for Revocation {
         S: Serializer,
     {
         match self {
-            Self::Revoke(v) => v.delayed_serialize(serializer),
-            Self::Ack(v) => v.delayed_serialize(serializer),
+            Self::Revoke(v) => MsgWithType::from(v).serialize(serializer),
+            Self::Ack(v) => MsgWithType::from(v).serialize(serializer),
         }
     }
 }
 
 transit_to_aries_msg!(RevokeContent: RevokeDecorators, Revocation);
 transit_to_aries_msg!(AckRevokeContent: AckDecorators, Revocation);
+
+into_msg_with_type!(Revoke, RevocationProtocolV2_0, Revoke);
+into_msg_with_type!(AckRevoke, RevocationProtocolV2_0, Ack);

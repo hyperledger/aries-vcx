@@ -1,17 +1,14 @@
-use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 
 use crate::{
     decorators::{thread::Thread, timing::Timing},
     misc::NoDecorators,
     msg_parts::MsgParts,
-    msg_types::types::out_of_band::OutOfBandV1_1,
 };
 
 pub type HandshakeReuseAccepted = MsgParts<HandshakeReuseAcceptedContent, HandshakeReuseAcceptedDecorators>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, MessageContent, Default, PartialEq)]
-#[message(kind = "OutOfBandV1_1::HandshakeReuseAccepted")]
+#[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq)]
 #[serde(transparent)]
 pub struct HandshakeReuseAcceptedContent(NoDecorators);
 
@@ -39,7 +36,7 @@ mod tests {
     use super::*;
     use crate::{
         decorators::{thread::tests::make_extended_thread, timing::tests::make_extended_timing},
-        misc::test_utils,
+        misc::test_utils, msg_types::out_of_band::OutOfBandProtocolV1_1,
     };
 
     #[test]
@@ -52,7 +49,7 @@ mod tests {
             "~thread": decorators.thread
         });
 
-        test_utils::test_msg::<HandshakeReuseAcceptedContent, _, _>(content, decorators, expected);
+        test_utils::test_msg(content, decorators, OutOfBandProtocolV1_1::HandshakeReuseAccepted, expected);
     }
 
     #[test]
@@ -67,6 +64,6 @@ mod tests {
             "~timing": decorators.timing
         });
 
-        test_utils::test_msg::<HandshakeReuseAcceptedContent, _, _>(content, decorators, expected);
+        test_utils::test_msg(content, decorators, OutOfBandProtocolV1_1::HandshakeReuseAccepted, expected);
     }
 }

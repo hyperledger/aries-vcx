@@ -46,7 +46,7 @@ mod tests {
     use super::*;
     use crate::{
         decorators::timing::tests::make_extended_timing, misc::test_utils,
-        protocols::nameless::connection::invitation::Invitation,
+        msg_types::connection::ConnectionProtocolV1_0,
     };
 
     #[test]
@@ -67,7 +67,7 @@ mod tests {
             "serviceEndpoint": content.service_endpoint,
         });
 
-        test_utils::test_msg::<Invitation, _, _>(content, decorators, expected);
+        test_utils::test_msg(content, decorators, ConnectionProtocolV1_0::Invitation, expected);
     }
 
     #[test]
@@ -90,7 +90,7 @@ mod tests {
             "~timing": decorators.timing
         });
 
-        test_utils::test_msg::<Invitation, _, _>(content, decorators, expected);
+        test_utils::test_msg(content, decorators, ConnectionProtocolV1_0::Invitation, expected);
     }
 
     #[test]
@@ -111,7 +111,7 @@ mod tests {
             "serviceEndpoint": content.service_endpoint,
         });
 
-        test_utils::test_msg::<Invitation, _, _>(content, decorators, expected);
+        test_utils::test_msg(content, decorators, ConnectionProtocolV1_0::Invitation, expected);
     }
 
     #[test]
@@ -134,6 +134,6 @@ mod tests {
             "~timing": decorators.timing
         });
 
-        test_utils::test_msg::<Invitation, _, _>(content, decorators, expected);
+        test_utils::test_msg(content, decorators, ConnectionProtocolV1_0::Invitation, expected);
     }
 }

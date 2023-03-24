@@ -1,6 +1,5 @@
 use std::str::FromStr;
 
-use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -9,15 +8,14 @@ use crate::{
     msg_parts::MsgParts,
     msg_types::{
         traits::MessageKind,
-        types::present_proof::{PresentProof, PresentProofV1, PresentProofV1_0},
+        types::present_proof::{PresentProofProtocol, PresentProofProtocolV1, PresentProofProtocolV1_0},
         MessageType, Protocol,
     },
 };
 
 pub type ProposePresentation = MsgParts<ProposePresentationContent, ProposePresentationDecorators>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, MessageContent, PartialEq)]
-#[message(kind = "PresentProofV1_0::ProposePresentation")]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub struct ProposePresentationContent {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,
@@ -65,9 +63,9 @@ impl PresentationPreview {
 #[serde(try_from = "MessageType")]
 struct PresentationPreviewMsgType;
 
-impl<'a> From<&'a PresentationPreviewMsgType> for PresentProofV1_0 {
+impl<'a> From<&'a PresentationPreviewMsgType> for PresentProofProtocolV1_0 {
     fn from(_value: &'a PresentationPreviewMsgType) -> Self {
-        PresentProofV1_0::PresentationPreview
+        PresentProofProtocolV1_0::PresentationPreview
     }
 }
 
@@ -75,8 +73,10 @@ impl<'a> TryFrom<MessageType<'a>> for PresentationPreviewMsgType {
     type Error = String;
 
     fn try_from(value: MessageType<'a>) -> Result<Self, Self::Error> {
-        if let Protocol::PresentProof(PresentProof::V1(PresentProofV1::V1_0(_))) = value.protocol {
-            if let Ok(PresentProofV1_0::PresentationPreview) = PresentProofV1_0::from_str(value.kind) {
+        if let Protocol::PresentProofProtocol(PresentProofProtocol::V1(PresentProofProtocolV1::V1_0(_))) =
+            value.protocol
+        {
+            if let Ok(PresentProofProtocolV1_0::PresentationPreview) = PresentProofProtocolV1_0::from_str(value.kind) {
                 return Ok(PresentationPreviewMsgType);
             }
         }
@@ -89,8 +89,8 @@ impl Serialize for PresentationPreviewMsgType {
     where
         S: serde::Serializer,
     {
-        let protocol = Protocol::from(PresentProofV1_0::parent());
-        let kind = PresentProofV1_0::from(self);
+        let protocol = Protocol::from(PresentProofProtocolV1_0::parent());
+        let kind = PresentProofProtocolV1_0::from(self);
         format_args!("{protocol}/{}", kind.as_ref()).serialize(serializer)
     }
 }
@@ -190,7 +190,7 @@ mod tests {
             "presentation_proposal": content.presentation_proposal
         });
 
-        test_utils::test_msg::<ProposePresentationContent, _, _>(content, decorators, expected);
+        test_utils::test_msg(content, decorators, PresentProofProtocolV1_0::ProposePresentation, expected);
     }
 
     #[test]
@@ -216,6 +216,6 @@ mod tests {
             "~timing": decorators.timing
         });
 
-        test_utils::test_msg::<ProposePresentationContent, _, _>(content, decorators, expected);
+        test_utils::test_msg(content, decorators, PresentProofProtocolV1_0::ProposePresentation, expected);
     }
 }

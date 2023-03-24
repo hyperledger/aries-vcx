@@ -1,14 +1,12 @@
 //! Module containing the `mediator and relays` messages, as defined in the [RFC](https://github.com/hyperledger/aries-rfcs/blob/main/concepts/0046-mediators-and-relays/README.md).
 
-use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 
-use crate::{msg_parts::MsgParts, msg_types::types::routing::RoutingV1_0};
+use crate::{misc::utils::into_msg_with_type, msg_parts::MsgParts, msg_types::types::routing::RoutingProtocolV1_0};
 
 pub type Forward = MsgParts<ForwardContent>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, MessageContent, PartialEq)]
-#[message(kind = "RoutingV1_0::Forward")]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub struct ForwardContent {
     pub to: String,
     pub msg: String,
@@ -19,6 +17,8 @@ impl ForwardContent {
         Self { to, msg }
     }
 }
+
+into_msg_with_type!(Forward, RoutingProtocolV1_0, Forward);
 
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
@@ -32,11 +32,11 @@ mod tests {
     fn test_minimal_forward() {
         let content = ForwardContent::new("test_to".to_owned(), "test_msg".to_owned());
 
-        let json = json! ({
+        let expected = json! ({
             "to": content.to,
             "msg": content.msg
         });
 
-        test_utils::test_msg::<ForwardContent, _, _>(content, NoDecorators, json);
+        test_utils::test_msg(content, NoDecorators, RoutingProtocolV1_0::Forward, expected);
     }
 }

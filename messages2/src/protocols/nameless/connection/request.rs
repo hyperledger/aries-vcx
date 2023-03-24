@@ -1,17 +1,15 @@
 use diddoc::aries::diddoc::AriesDidDoc;
-use messages_macros::MessageContent;
+
 use serde::{Deserialize, Serialize};
 
 use crate::{
     decorators::{thread::Thread, timing::Timing},
     msg_parts::MsgParts,
-    msg_types::types::connection::ConnectionV1_0,
 };
 
 pub type Request = MsgParts<RequestContent, RequestDecorators>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, MessageContent, PartialEq)]
-#[message(kind = "ConnectionV1_0::Request")]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub struct RequestContent {
     pub label: String,
     pub connection: ConnectionData,
@@ -56,7 +54,7 @@ mod tests {
     use super::*;
     use crate::{
         decorators::{thread::tests::make_extended_thread, timing::tests::make_extended_timing},
-        misc::test_utils,
+        misc::test_utils, msg_types::connection::ConnectionProtocolV1_0,
     };
 
     #[test]
@@ -72,7 +70,7 @@ mod tests {
             "connection": content.connection
         });
 
-        test_utils::test_msg::<RequestContent, _, _>(content, decorators, expected);
+        test_utils::test_msg(content, decorators, ConnectionProtocolV1_0::Request, expected);
     }
 
     #[test]
@@ -92,6 +90,6 @@ mod tests {
             "~timing": decorators.timing
         });
 
-        test_utils::test_msg::<RequestContent, _, _>(content, decorators, expected);
+        test_utils::test_msg(content, decorators, ConnectionProtocolV1_0::Request, expected);
     }
 }

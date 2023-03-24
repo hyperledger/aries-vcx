@@ -6,10 +6,11 @@ use super::{role::Role, Protocol};
 use crate::{
     maybe_known::MaybeKnown,
     msg_types::types::{
-        basic_message::BasicMessageV1, connection::ConnectionV1, cred_issuance::CredentialIssuanceV1,
-        discover_features::DiscoverFeaturesV1, notification::NotificationV1, out_of_band::OutOfBandV1,
-        present_proof::PresentProofV1, report_problem::ReportProblemV1, revocation::RevocationV2, routing::RoutingV1,
-        trust_ping::TrustPingV1,
+        basic_message::BasicMessageProtocolV1, connection::ConnectionProtocolV1,
+        cred_issuance::CredentialIssuanceProtocolV1, discover_features::DiscoverFeaturesProtocolV1,
+        notification::NotificationProtocolV1, out_of_band::OutOfBandProtocolV1, present_proof::PresentProofProtocolV1,
+        report_problem::ReportProblemProtocolV1, revocation::RevocationProtocolV2, routing::RoutingProtocolV1,
+        trust_ping::TrustPingProtocolV1,
     },
 };
 type RegistryMap = HashMap<(&'static str, u8), Vec<RegistryEntry>>;
@@ -59,17 +60,17 @@ lazy_static! {
     /// the values are [`RegistryEntry`] instances.
     pub static ref PROTOCOL_REGISTRY: RegistryMap = {
         let mut m = HashMap::new();
-        map_insert(&mut m, extract_parts!(RoutingV1::new_v1_0()));
-        map_insert(&mut m, extract_parts!(BasicMessageV1::new_v1_0()));
-        map_insert(&mut m, extract_parts!(ConnectionV1::new_v1_0()));
-        map_insert(&mut m, extract_parts!(CredentialIssuanceV1::new_v1_0()));
-        map_insert(&mut m, extract_parts!(DiscoverFeaturesV1::new_v1_0()));
-        map_insert(&mut m, extract_parts!(NotificationV1::new_v1_0()));
-        map_insert(&mut m, extract_parts!(OutOfBandV1::new_v1_1()));
-        map_insert(&mut m, extract_parts!(PresentProofV1::new_v1_0()));
-        map_insert(&mut m, extract_parts!(ReportProblemV1::new_v1_0()));
-        map_insert(&mut m, extract_parts!(RevocationV2::new_v2_0()));
-        map_insert(&mut m, extract_parts!(TrustPingV1::new_v1_0()));
+        map_insert(&mut m, extract_parts!(RoutingProtocolV1::new_v1_0()));
+        map_insert(&mut m, extract_parts!(BasicMessageProtocolV1::new_v1_0()));
+        map_insert(&mut m, extract_parts!(ConnectionProtocolV1::new_v1_0()));
+        map_insert(&mut m, extract_parts!(CredentialIssuanceProtocolV1::new_v1_0()));
+        map_insert(&mut m, extract_parts!(DiscoverFeaturesProtocolV1::new_v1_0()));
+        map_insert(&mut m, extract_parts!(NotificationProtocolV1::new_v1_0()));
+        map_insert(&mut m, extract_parts!(OutOfBandProtocolV1::new_v1_1()));
+        map_insert(&mut m, extract_parts!(PresentProofProtocolV1::new_v1_0()));
+        map_insert(&mut m, extract_parts!(ReportProblemProtocolV1::new_v1_0()));
+        map_insert(&mut m, extract_parts!(RevocationProtocolV2::new_v2_0()));
+        map_insert(&mut m, extract_parts!(TrustPingProtocolV1::new_v1_0()));
         m
     };
 }

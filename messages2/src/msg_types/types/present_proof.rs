@@ -10,21 +10,21 @@ use crate::msg_types::role::Role;
 
 #[derive(Copy, Clone, Debug, From, TryInto, PartialEq, MessageType)]
 #[msg_type(protocol = "present-proof")]
-pub enum PresentProof {
-    V1(PresentProofV1),
+pub enum PresentProofProtocol {
+    V1(PresentProofProtocolV1),
 }
 
 #[derive(Copy, Clone, Debug, From, TryInto, PartialEq, TransitiveFrom, MessageType)]
-#[transitive(into(PresentProof, Protocol))]
+#[transitive(into(PresentProofProtocol, Protocol))]
 #[msg_type(major = 1)]
-pub enum PresentProofV1 {
+pub enum PresentProofProtocolV1 {
     #[msg_type(minor = 0, roles = "Role::Prover, Role::Verifier")]
-    V1_0(PhantomData<fn() -> PresentProofV1_0>),
+    V1_0(PhantomData<fn() -> PresentProofProtocolV1_0>),
 }
 
 #[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq)]
 #[strum(serialize_all = "kebab-case")]
-pub enum PresentProofV1_0 {
+pub enum PresentProofProtocolV1_0 {
     ProposePresentation,
     RequestPresentation,
     Presentation,
@@ -42,21 +42,24 @@ mod tests {
     #[test]
     fn test_protocol_present_proof() {
         test_utils::test_serde(
-            Protocol::from(PresentProofV1::new_v1_0()),
+            Protocol::from(PresentProofProtocolV1::new_v1_0()),
             json!("https://didcomm.org/present-proof/1.0"),
         )
     }
 
     #[test]
     fn test_version_resolution_present_proof() {
-        test_utils::test_msg_type_resolution("https://didcomm.org/present-proof/1.255", PresentProofV1::new_v1_0())
+        test_utils::test_msg_type_resolution(
+            "https://didcomm.org/present-proof/1.255",
+            PresentProofProtocolV1::new_v1_0(),
+        )
     }
 
     #[test]
     #[should_panic]
     fn test_unsupported_version_present_proof() {
         test_utils::test_serde(
-            Protocol::from(PresentProofV1::new_v1_0()),
+            Protocol::from(PresentProofProtocolV1::new_v1_0()),
             json!("https://didcomm.org/present-proof/2.0"),
         )
     }
@@ -66,7 +69,7 @@ mod tests {
         test_utils::test_msg_type(
             "https://didcomm.org/present-proof/1.0",
             "propose-presentation",
-            PresentProofV1::new_v1_0(),
+            PresentProofProtocolV1::new_v1_0(),
         )
     }
 
@@ -75,7 +78,7 @@ mod tests {
         test_utils::test_msg_type(
             "https://didcomm.org/present-proof/1.0",
             "request-presentation",
-            PresentProofV1::new_v1_0(),
+            PresentProofProtocolV1::new_v1_0(),
         )
     }
 
@@ -84,7 +87,7 @@ mod tests {
         test_utils::test_msg_type(
             "https://didcomm.org/present-proof/1.0",
             "presentation",
-            PresentProofV1::new_v1_0(),
+            PresentProofProtocolV1::new_v1_0(),
         )
     }
 
@@ -93,7 +96,7 @@ mod tests {
         test_utils::test_msg_type(
             "https://didcomm.org/present-proof/1.0",
             "presentation-preview",
-            PresentProofV1::new_v1_0(),
+            PresentProofProtocolV1::new_v1_0(),
         )
     }
 
@@ -102,7 +105,7 @@ mod tests {
         test_utils::test_msg_type(
             "https://didcomm.org/present-proof/1.0",
             "ack",
-            PresentProofV1::new_v1_0(),
+            PresentProofProtocolV1::new_v1_0(),
         )
     }
 }

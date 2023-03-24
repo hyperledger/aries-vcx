@@ -1,22 +1,18 @@
-use std::str::FromStr;
-
-use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 
 use crate::{
     decorators::{please_ack::PleaseAck, thread::Thread, timing::Timing},
     msg_parts::MsgParts,
     msg_types::{
-        traits::MessageKind,
-        types::connection::{Connection, ConnectionV1, ConnectionV1_0},
+        traits::{MessageKind, ProtocolVersion},
+        types::connection::{ConnectionProtocol, ConnectionProtocolV1, ConnectionProtocolV1_0},
         MessageType, Protocol,
     },
 };
 
 pub type Response = MsgParts<ResponseContent, ResponseDecorators>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, MessageContent, PartialEq)]
-#[message(kind = "ConnectionV1_0::Response")]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub struct ResponseContent {
     #[serde(rename = "connection~sig")]
     pub connection_sig: ConnectionSignature,
@@ -74,9 +70,9 @@ impl ResponseDecorators {
 #[serde(try_from = "MessageType")]
 struct SigEd25519Sha512Single;
 
-impl<'a> From<&'a SigEd25519Sha512Single> for ConnectionV1_0 {
+impl<'a> From<&'a SigEd25519Sha512Single> for ConnectionProtocolV1_0 {
     fn from(_value: &'a SigEd25519Sha512Single) -> Self {
-        ConnectionV1_0::Ed25519Sha512Single
+        ConnectionProtocolV1_0::Ed25519Sha512Single
     }
 }
 
@@ -84,8 +80,8 @@ impl<'a> TryFrom<MessageType<'a>> for SigEd25519Sha512Single {
     type Error = String;
 
     fn try_from(value: MessageType<'a>) -> Result<Self, Self::Error> {
-        if let Protocol::Connection(Connection::V1(ConnectionV1::V1_0(_))) = value.protocol {
-            if let Ok(ConnectionV1_0::Ed25519Sha512Single) = ConnectionV1_0::from_str(value.kind) {
+        if let Protocol::ConnectionProtocol(ConnectionProtocol::V1(ConnectionProtocolV1::V1_0(pd))) = value.protocol {
+            if let Ok(ConnectionProtocolV1_0::Ed25519Sha512Single) = ConnectionProtocolV1::kind(pd, value.kind) {
                 return Ok(SigEd25519Sha512Single);
             }
         }
@@ -99,8 +95,8 @@ impl Serialize for SigEd25519Sha512Single {
     where
         S: serde::Serializer,
     {
-        let protocol = Protocol::from(ConnectionV1_0::parent());
-        let kind = ConnectionV1_0::from(self);
+        let protocol = Protocol::from(ConnectionProtocolV1_0::parent());
+        let kind = ConnectionProtocolV1_0::from(self);
         format_args!("{protocol}/{}", kind.as_ref()).serialize(serializer)
     }
 }
@@ -137,7 +133,7 @@ mod tests {
             "~thread": decorators.thread
         });
 
-        test_utils::test_msg::<ResponseContent, _, _>(content, decorators, expected);
+        test_utils::test_msg(content, decorators, ConnectionProtocolV1_0::Response, expected);
     }
 
     #[test]
@@ -161,6 +157,6 @@ mod tests {
             "~please_ack": decorators.please_ack
         });
 
-        test_utils::test_msg::<ResponseContent, _, _>(content, decorators, expected);
+        test_utils::test_msg(content, decorators, ConnectionProtocolV1_0::Response, expected);
     }
 }

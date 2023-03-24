@@ -1,16 +1,13 @@
-use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 
 use crate::{
     msg_parts::MsgParts,
-    msg_types::types::cred_issuance::CredentialIssuanceV1_0,
     protocols::nameless::notification::{AckContent, AckDecorators, AckStatus},
 };
 
 pub type AckCredential = MsgParts<AckCredentialContent, AckDecorators>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, MessageContent, PartialEq)]
-#[message(kind = "CredentialIssuanceV1_0::Ack")]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(transparent)]
 pub struct AckCredentialContent(pub AckContent);
 
@@ -29,7 +26,7 @@ mod tests {
     use super::*;
     use crate::{
         decorators::{thread::tests::make_extended_thread, timing::tests::make_extended_timing},
-        misc::test_utils,
+        misc::test_utils, msg_types::cred_issuance::CredentialIssuanceProtocolV1_0,
     };
 
     #[test]
@@ -43,7 +40,7 @@ mod tests {
             "~thread": decorators.thread
         });
 
-        test_utils::test_msg::<AckCredentialContent, _, _>(content, decorators, expected);
+        test_utils::test_msg(content, decorators, CredentialIssuanceProtocolV1_0::Ack, expected);
     }
 
     #[test]
@@ -59,6 +56,6 @@ mod tests {
             "~timing": decorators.timing
         });
 
-        test_utils::test_msg::<AckCredentialContent, _, _>(content, decorators, expected);
+        test_utils::test_msg(content, decorators, CredentialIssuanceProtocolV1_0::Ack, expected);
     }
 }

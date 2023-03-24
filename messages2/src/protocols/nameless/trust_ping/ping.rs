@@ -1,16 +1,13 @@
-use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 
 use crate::{
     decorators::{thread::Thread, timing::Timing},
     msg_parts::MsgParts,
-    msg_types::types::trust_ping::TrustPingV1_0,
 };
 
 pub type Ping = MsgParts<PingContent, PingDecorators>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, MessageContent, Default, PartialEq)]
-#[message(kind = "TrustPingV1_0::Ping")]
+#[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq)]
 pub struct PingContent {
     #[serde(default)]
     pub response_requested: bool,
@@ -35,7 +32,7 @@ mod tests {
     use serde_json::json;
 
     use super::*;
-    use crate::{decorators::thread::tests::make_extended_thread, misc::test_utils};
+    use crate::{decorators::thread::tests::make_extended_thread, misc::test_utils, msg_types::trust_ping::TrustPingProtocolV1_0};
 
     #[test]
     fn test_minimal_ping() {
@@ -47,7 +44,7 @@ mod tests {
             "response_requested": false,
         });
 
-        test_utils::test_msg::<PingContent, _, _>(content, decorators, expected);
+        test_utils::test_msg(content, decorators, TrustPingProtocolV1_0::Ping, expected);
     }
 
     #[test]
@@ -64,6 +61,6 @@ mod tests {
             "~thread": decorators.thread
         });
 
-        test_utils::test_msg::<PingContent, _, _>(content, decorators, expected);
+        test_utils::test_msg(content, decorators, TrustPingProtocolV1_0::Ping, expected);
     }
 }

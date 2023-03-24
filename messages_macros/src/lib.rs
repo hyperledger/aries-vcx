@@ -1,40 +1,10 @@
 #![allow(clippy::expect_fun_call)]
 
-mod message_content;
 mod message_type;
 
-use message_content::message_content_impl;
 use message_type::message_type_impl;
 use proc_macro::TokenStream;
 use syn::{parse_macro_input, DeriveInput, Error};
-
-/// Derive macro to be used on actual message that can be received.
-/// The macro simplifies mapping the message to its respective message kind from the `@type` field
-/// by implementing the `MessageContent` trait.
-///
-/// The message type is provided in the `kind` argument to the macro's attribute.
-/// The value expected is a literal string containing an expression of an enum with unit variants.
-///
-/// ``` ignore
-/// use messages_macros::Message;
-///
-/// enum A {
-///   Variant1,
-///   Variant2,
-///   Variant3
-/// }
-///
-/// #[derive(Message)]
-/// #[message(kind = "A::Variant2")]
-/// struct B;
-/// ```
-#[proc_macro_derive(MessageContent, attributes(message))]
-pub fn message_content(input: TokenStream) -> TokenStream {
-    let input = parse_macro_input!(input as DeriveInput);
-    message_content_impl(input)
-        .unwrap_or_else(Error::into_compile_error)
-        .into()
-}
 
 /// Derive macro to be used for easier implementation of message type components.
 /// The macro serves as implementation for semver reasoning and parsing of the `@type` field
@@ -46,12 +16,12 @@ pub fn message_content(input: TokenStream) -> TokenStream {
 /// The minor versions are represented by the major version enum's variants
 /// and the field encapsulated in the variants are expected to be [`std::marker::PhantomData<fn() ->
 /// T>`]. The `T` binds the message kinds of the protocol to the minor version variant of the enum.
-/// 
+///
 /// As a summary, this macro will generate the following:
 /// - on protocol representing enums:
 ///     - [`ProtocolName`] impl on the enum.
 ///     - regular impl on the enum containing `const PROTOCOL: &str`.
-/// 
+///
 /// - on major version representing enums:
 ///     - [`ProtocolVersion`] impl on the enum.
 ///     - [`MessageKind`] impls on each type bound in the variants.

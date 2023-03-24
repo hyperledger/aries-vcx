@@ -2,21 +2,20 @@
 
 use std::{collections::HashMap, fmt::Display};
 
-use messages_macros::MessageContent;
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 use strum_macros::{AsRefStr, EnumString};
 use url::Url;
 
 use crate::{
     decorators::{localization::FieldLocalization, thread::Thread, timing::Timing},
+    misc::utils::into_msg_with_type,
     msg_parts::MsgParts,
-    msg_types::types::report_problem::ReportProblemV1_0,
+    msg_types::types::report_problem::ReportProblemProtocolV1_0,
 };
 
 pub type ProblemReport = MsgParts<ProblemReportContent, ProblemReportDecorators>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, MessageContent, Default, PartialEq)]
-#[message(kind = "ReportProblemV1_0::ProblemReport")]
+#[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq)]
 pub struct ProblemReportContent {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
@@ -132,6 +131,8 @@ pub enum WhereParty {
     Other,
 }
 
+into_msg_with_type!(ProblemReport, ReportProblemProtocolV1_0, ProblemReport);
+
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 #[allow(clippy::field_reassign_with_default)]
@@ -154,7 +155,7 @@ mod tests {
 
         let expected = json!({});
 
-        test_utils::test_msg::<ProblemReportContent, _, _>(content, decorators, expected);
+        test_utils::test_msg(content, decorators, ReportProblemProtocolV1_0::ProblemReport, expected);
     }
 
     #[test]
@@ -195,6 +196,6 @@ mod tests {
             "fix-hint~l10n": decorators.fix_hint_locale
         });
 
-        test_utils::test_msg::<ProblemReportContent, _, _>(content, decorators, expected);
+        test_utils::test_msg(content, decorators, ReportProblemProtocolV1_0::ProblemReport, expected);
     }
 }

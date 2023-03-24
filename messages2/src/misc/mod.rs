@@ -15,7 +15,6 @@ pub mod test_utils {
     use crate::{
         msg_parts::MsgParts,
         msg_types::{traits::MessageKind, MessageType, Protocol},
-        protocols::traits::MessageContent,
         AriesMessage,
     };
 
@@ -71,15 +70,14 @@ pub mod test_utils {
         assert_eq!(Protocol::from(protocol_type), deserialized)
     }
 
-    pub fn test_msg<V, T, U>(content: T, decorators: U, mut json: Value)
+    pub fn test_msg<T, U, V>(content: T, decorators: U, msg_kind: V, mut json: Value)
     where
         AriesMessage: From<MsgParts<T, U>>,
-        V: MessageContent,
-        V::Kind: MessageKind,
-        Protocol: From<<V::Kind as MessageKind>::Parent>,
+        V: MessageKind,
+        Protocol: From<V::Parent>,
     {
         let id = "test".to_owned();
-        let msg_type = build_msg_type::<V>();
+        let msg_type = build_msg_type(msg_kind);
 
         let obj = json.as_object_mut().expect("JSON object");
         obj.insert("@id".to_owned(), json!(id));
@@ -101,15 +99,13 @@ pub mod test_utils {
         assert_eq!(deserialized, value);
     }
 
-    fn build_msg_type<T>() -> String
+    fn build_msg_type<T>(msg_kind: T) -> String
     where
-        T: MessageContent,
-        T::Kind: MessageKind,
-        Protocol: From<<T::Kind as MessageKind>::Parent>,
+        T: MessageKind,
+        Protocol: From<T::Parent>,
     {
-        let kind = T::kind();
-        let kind = kind.as_ref();
-        let protocol: Protocol = <T::Kind as MessageKind>::parent().into();
+        let kind = msg_kind.as_ref();
+        let protocol: Protocol = T::parent().into();
         format!("{protocol}/{kind}")
     }
 }

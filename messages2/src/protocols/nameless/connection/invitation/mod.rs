@@ -2,7 +2,6 @@ pub mod pairwise;
 pub mod public;
 
 use derive_more::From;
-use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 use url::Url;
 
@@ -13,39 +12,15 @@ pub use self::{
 
 use super::Connection;
 use crate::{
-    misc::utils::transit_to_aries_msg,
-    msg_types::types::connection::ConnectionV1_0,
-    protocols::traits::{MessageContent, MessageWithKind},
+    misc::utils::{transit_to_aries_msg},
 };
 
-#[derive(Debug, Clone, From, Deserialize, Serialize, MessageContent, PartialEq)]
-#[message(kind = "ConnectionV1_0::Invitation")]
+#[derive(Debug, Clone, From, Deserialize, Serialize,  PartialEq)]
 #[serde(untagged)]
 pub enum Invitation {
     Public(PublicInvitation),
     Pairwise(PairwiseInvitation),
     PairwiseDID(PairwiseDidInvitation),
-}
-
-// We implement the message kind on this type as we have to rely on
-// untagged deserialization, since we cannot know the invitation format
-// ahead of time.
-//
-// However, to have the capability of setting different decorators
-// based on the invitation format, we don't wrap the [`Invitation`]
-// in a [`MsgParts`], but rather its variants.
-//
-// This means that we cannot resolve the message kind through the
-// generic `MsgParts<C: MessageContent, D>` because, in this case,
-// the variants don't implement `MessageContent`.
-//
-// Hence, the manual impl below.
-impl MessageWithKind for Invitation {
-    type MsgKind = <Self as MessageContent>::Kind;
-
-    fn msg_kind() -> Self::MsgKind {
-        Self::kind()
-    }
 }
 
 transit_to_aries_msg!(PublicInvitationContent, Invitation, Connection);
