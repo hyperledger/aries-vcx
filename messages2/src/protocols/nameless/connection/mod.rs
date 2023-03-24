@@ -38,9 +38,9 @@ impl DelayedSerde for Connection {
     where
         D: Deserializer<'de>,
     {
-        let (major, kind_str) = msg_type;
+        let (protocol, kind_str) = msg_type;
 
-        let kind = match major {
+        let kind = match protocol {
             ConnectionKind::V1(ConnectionProtocolV1::V1_0(kind)) => kind.kind_from_str(kind_str),
         };
 

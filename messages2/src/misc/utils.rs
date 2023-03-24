@@ -8,14 +8,15 @@ pub const MSG_TYPE: &str = "@type";
 /// to be used as standalone messages.
 ///
 /// E.g: Connection signature message type or credential preview message type.
-pub fn not_standalone_msg<'de, D>(msg_type: &str) -> D::Error
+pub(crate) fn not_standalone_msg<'de, D>(msg_type: &str) -> D::Error
 where
     D: Deserializer<'de>,
 {
     D::Error::custom(format!("{msg_type} is not a standalone message"))
 }
 
-pub fn serialize_datetime<S>(dt: &DateTime<Utc>, serializer: S) -> Result<S::Ok, S::Error>
+/// Used for serialization of a [`DateTime<Utc>`] to the RFC3339 standard.
+pub(crate) fn serialize_datetime<S>(dt: &DateTime<Utc>, serializer: S) -> Result<S::Ok, S::Error>
 where
     S: serde::Serializer,
 {
@@ -43,7 +44,8 @@ where
     format_args!("{}", dt.format_with_items(FMT_ITEMS.iter())).serialize(serializer)
 }
 
-pub fn serialize_opt_datetime<S>(dt: &Option<DateTime<Utc>>, serializer: S) -> Result<S::Ok, S::Error>
+/// Used for serialization of an [`Option<DateTime<Utc>>`] to the RFC3339 standard.
+pub(crate) fn serialize_opt_datetime<S>(dt: &Option<DateTime<Utc>>, serializer: S) -> Result<S::Ok, S::Error>
 where
     S: serde::Serializer,
 {
@@ -53,11 +55,17 @@ where
     }
 }
 
+/// Macro used for implementing [`From`] for the given [`crate::msg_parts::MsgParts`] comprised
+/// of the content and decorators provided so it can be converted into an [`crate::AriesMessage`].
+///
+/// If no decorators are provided, the macro resorts to using [`crate::misc::NoDecorators`].
 macro_rules! transit_to_aries_msg {
+    // No decorators provided.
     ($content:ty, $($interm:ty),+) => {
         transit_to_aries_msg!($content:$crate::misc::NoDecorators, $($interm),+);
     };
 
+    // Decorators are given through the colon `:`.
     ($content:ty: $decorators:ty, $($interm:ty),+) => {
         impl From<$crate::msg_parts::MsgParts<$content, $decorators>> for $crate::AriesMessage {
             fn from(value: $crate::msg_parts::MsgParts<$content, $decorators>) -> Self {
@@ -67,6 +75,10 @@ macro_rules! transit_to_aries_msg {
     };
 }
 
+/// Push-down accumulating macro used for generating all the intermediary [`From::from`] calls
+/// necessary to transition a type to another.
+///
+/// See: https://veykril.github.io/tlborm/decl-macros/patterns/push-down-acc.html.
 macro_rules! generate_from_stmt {
     ($val:expr, $interm:ty) => {
         <$interm>::from($val)
@@ -76,6 +88,8 @@ macro_rules! generate_from_stmt {
     };
 }
 
+/// Macro used for implementing [`From`] from a full message plus the given message kind and variant into
+/// [`crate::msg_types::MsgWithType`]. This then allows appending the `@type` field when serializing the message.
 macro_rules! into_msg_with_type {
     ($msg:ident, $kind:ident, $kind_var:ident) => {
         impl<'a> From<&'a $msg> for $crate::msg_types::MsgWithType<'a, $msg, $kind> {

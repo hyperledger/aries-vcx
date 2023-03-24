@@ -87,6 +87,8 @@ where
     }
 }
 
+/// Used for retrieving the [`Protocol`] first from the message kind
+/// and serializing them together.
 pub fn serialize_msg_type<S, K>(kind: &K, serializer: S) -> Result<S::Ok, S::Error>
 where
     S: serde::Serializer,
@@ -99,6 +101,28 @@ where
     format_args!("{protocol}/{kind}").serialize(serializer)
 }
 
+/// Type used for binding an impl of [`MessageKind`] to a variant of an enum implementing
+/// [`crate::msg_types::traits::ProtocolVersion`].
+/// 
+/// The main reasons for abstracting over [`PhantomData`] is to make the generic type easier on the eyes
+/// and, more importantly, to be able to define a method to convert from a `&str` to the bound type [`T`].
+/// 
+/// Technically, a trait implemented on [`PhantomData`] would've achieved the same thing, but would require
+/// an import wherever it was used. A simple function accepting the [`PhantomData`] argument along with the `&str`
+/// would've also worked, but it would be less ergonomic.
+/// 
+/// As per why the generic type is `fn() -> T` and not just `T`, the short story is *ownership*.
+///
+/// The long story is that `PhantomData<T>` tells the drop checker that we *own* `T`, which we
+/// don't. While still a covariant, `fn() -> T` does not mean we own the `T`, so that lets the drop
+/// checker be more permissive. Not really important for our current use case, but it is
+/// *idiomatic*.
+///
+/// Good reads and references:
+/// - https://doc.rust-lang.org/std/marker/struct.PhantomData.html
+/// - https://doc.rust-lang.org/nomicon/phantom-data.html
+/// - https://doc.rust-lang.org/nomicon/phantom-data.html
+/// - https://doc.rust-lang.org/nomicon/dropck.html
 #[derive(Copy, Clone, Debug, PartialEq)]
 #[repr(transparent)]
 pub struct MsgKindType<T: MessageKind>(PhantomData<fn() -> T>);
@@ -111,7 +135,14 @@ where
         Self(PhantomData)
     }
 
+    /// Method used for taking a `&str` and trying to convert it
+    /// into the bound type [`T`]. It uses [`FromStr`] under the hood.
+    /// 
+    /// # Errors
+    /// 
+    /// The method will error out if an instance of `T` 
+    /// could not be constructed from the `&str`.
     pub fn kind_from_str(&self, kind_str: &str) -> Result<T, <T as FromStr>::Err> {
-        T::from_str(kind_str)
+        kind_str.parse()
     }
 }

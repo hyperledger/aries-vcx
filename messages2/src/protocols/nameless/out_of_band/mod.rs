@@ -35,9 +35,9 @@ impl DelayedSerde for OutOfBand {
     where
         D: Deserializer<'de>,
     {
-        let (major, kind_str) = msg_type;
+        let (protocol, kind_str) = msg_type;
 
-        let kind = match major {
+        let kind = match protocol {
             OutOfBandKind::V1(OutOfBandProtocolV1::V1_1(kind)) => kind.kind_from_str(kind_str),
         };
 

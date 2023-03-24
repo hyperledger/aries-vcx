@@ -4,7 +4,6 @@ use crate::msg_parts::MsgParts;
 
 pub type PublicInvitation = MsgParts<PublicInvitationContent>;
 
-/// Represents a public invitation.
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub struct PublicInvitationContent {
     pub label: String,

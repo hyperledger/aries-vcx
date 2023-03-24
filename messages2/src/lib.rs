@@ -44,6 +44,13 @@ use crate::{
     },
 };
 
+/// Enum that can represent any message of the implemented protocols.
+/// 
+/// It abstracts away the `@type` field and uses it to determine how
+/// to deserialize the input into the correct message type.
+/// 
+/// It also automatically appends the correct `@type` field when serializing
+/// a message.
 #[derive(Clone, Debug, From, PartialEq)]
 pub enum AriesMessage {
     Routing(Forward),
@@ -66,9 +73,9 @@ impl DelayedSerde for AriesMessage {
     where
         D: Deserializer<'de>,
     {
-        let (msg_type, kind_str) = msg_type;
+        let (protocol, kind_str) = msg_type;
 
-        match msg_type {
+        match protocol {
             Protocol::RoutingProtocol(msg_type) => {
                 let kind = match msg_type {
                     RoutingProtocol::V1(RoutingProtocolV1::V1_0(kind)) => kind.kind_from_str(kind_str),
@@ -151,7 +158,7 @@ impl DelayedSerde for AriesMessage {
     }
 }
 
-/// Custom [`Deserialize`] impl for [`A2AMessage`] to use the `@type` as internal tag,
+/// Custom [`Deserialize`] impl for [`AriesMessage`] to use the `@type` as internal tag,
 /// but deserialize it to a [`MessageType`].
 ///
 /// For readability, the [`MessageType`] matching is done in the
@@ -162,11 +169,11 @@ impl DelayedSerde for AriesMessage {
 // but uses [`MessageType`] instead of some [`Field`] struct that serde generates.
 //
 //  2) Without this, the implementation would either rely on something inefficient such as [`Value`]
-// as an intermediary,     use some custom map which fails on duplicate entries as intermediary or
-// basically use [`serde_value`]     which seems to be an old replica of [`Content`] and
-// [`ContentDeserializer`] and require a pretty much     copy paste of [`TaggedContentVisitor`].
-// Also, [`serde_value::Value`] seems to always alocate.     Using something like `HashMap::<&str,
-// &RawValue>` wouldn't work either, as there are issues flattening     `serde_json::RawValue`. It
+// as an intermediary, use some custom map which fails on duplicate entries as intermediary or
+// basically use [`serde_value`] which seems to be an old replica of [`Content`] and
+// [`ContentDeserializer`] and requires a pretty much copy paste of [`TaggedContentVisitor`].
+// Also, [`serde_value::Value`] seems to always allocate. Using something like `HashMap::<&str,
+// &RawValue>` wouldn't work either, as there are issues flattening `serde_json::RawValue`. It
 // would also require some custom deserialization afterwards.
 //
 //  3) Exposing these parts as public is in progress from serde. When that will happen is still
@@ -174,7 +181,7 @@ impl DelayedSerde for AriesMessage {
 // activity and not seeming to get integrated into [`serde`], this will most likely resurface.
 //
 //  4) Reimplementing this on breaking semver changes is as easy as expanding the derived
-// [`Deserialize`] impl and altering it a bit.     And if that fails, the 2nd argument will still be
+// [`Deserialize`] impl and altering it a bit. And if that fails, the 2nd argument will still be
 // viable.
 //
 //

@@ -25,7 +25,7 @@ use crate::{
         MimeType,
     },
     msg_types::{
-        traits::{MessageKind},
+        traits::MessageKind,
         types::cred_issuance::{
             CredentialIssuanceProtocol as CredentialIssuanceKind, CredentialIssuanceProtocolV1,
             CredentialIssuanceProtocolV1_0,
@@ -51,8 +51,8 @@ impl DelayedSerde for CredentialIssuance {
     where
         D: Deserializer<'de>,
     {
-        let (major, kind_str) = msg_type;
-        let kind = match major {
+        let (protocol, kind_str) = msg_type;
+        let kind = match protocol {
             CredentialIssuanceKind::V1(CredentialIssuanceProtocolV1::V1_0(kind)) => kind.kind_from_str(kind_str),
         };
 
@@ -104,6 +104,9 @@ impl CredentialPreview {
     }
 }
 
+/// Non-standalone message type.
+/// This is only encountered as part of an existent message.
+/// It is not a message on it's own.
 #[derive(Copy, Clone, Debug, Deserialize, PartialEq)]
 #[serde(try_from = "MessageType")]
 struct CredentialPreviewMsgType;

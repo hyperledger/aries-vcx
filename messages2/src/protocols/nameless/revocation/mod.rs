@@ -4,7 +4,7 @@ pub mod ack;
 pub mod revoke;
 
 use derive_more::From;
-use serde::{de::Error, Deserializer, Serializer, Serialize, Deserialize};
+use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 
 use self::{
     ack::{AckRevoke, AckRevokeContent},
@@ -12,10 +12,11 @@ use self::{
 };
 use super::notification::AckDecorators;
 use crate::{
-    misc::utils::{transit_to_aries_msg, into_msg_with_type},
-    msg_types::{types::revocation::{
-        RevocationProtocol as RevocationKind, RevocationProtocolV2, RevocationProtocolV2_0,
-    }, MsgWithType},
+    misc::utils::{into_msg_with_type, transit_to_aries_msg},
+    msg_types::{
+        types::revocation::{RevocationProtocol as RevocationKind, RevocationProtocolV2, RevocationProtocolV2_0},
+        MsgWithType,
+    },
     protocols::traits::DelayedSerde,
 };
 
@@ -32,15 +33,15 @@ impl DelayedSerde for Revocation {
     where
         D: Deserializer<'de>,
     {
-        let (major, kind_str) = msg_type;
+        let (protocol, kind_str) = msg_type;
 
-        let kind = match major {
+        let kind = match protocol {
             RevocationKind::V2(RevocationProtocolV2::V2_0(kind)) => kind.kind_from_str(kind_str),
         };
 
         match kind.map_err(D::Error::custom)? {
             RevocationProtocolV2_0::Revoke => Revoke::deserialize(deserializer).map(From::from),
-            RevocationProtocolV2_0::Ack => AckRevoke::deserialize( deserializer).map(From::from),
+            RevocationProtocolV2_0::Ack => AckRevoke::deserialize(deserializer).map(From::from),
         }
     }
 

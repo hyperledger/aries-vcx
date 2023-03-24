@@ -12,7 +12,7 @@ use syn::{
 /// Matches the input from deriving the macro
 /// on a protocol enum.
 ///
-/// E.g: `Routing`
+/// E.g: `RoutingProtocol`
 #[derive(FromDeriveInput)]
 #[darling(attributes(msg_type), supports(enum_newtype))]
 struct Protocol {
@@ -24,7 +24,7 @@ struct Protocol {
 /// Matches the input of a major version variant of a protocol enum
 /// that derives the macro.
 ///
-/// E.g: the `RoutingV1` in `Routing::RoutingV1`
+/// E.g: the `V1` in `RoutingProtocol::V1`
 #[derive(FromVariant)]
 #[darling(attributes(msg_type))]
 struct MajorVerVariant {
@@ -35,7 +35,7 @@ struct MajorVerVariant {
 /// Matches the input from deriving the macro on a
 /// major version enum.
 ///
-/// E.g: `RoutingV1`
+/// E.g: `RoutingProtocolV1`
 #[derive(FromDeriveInput)]
 #[darling(attributes(msg_type), supports(enum_newtype))]
 struct Version {
@@ -47,7 +47,7 @@ struct Version {
 /// Matches the input of a minor version variant of a major version enum
 /// that derives the macro.
 ///
-/// E.g: the `V1_0` in `RoutingV1::V1_0`
+/// E.g: the `V1_0` in `RoutingProtocolV1::V1_0`
 #[derive(FromVariant)]
 #[darling(attributes(msg_type))]
 struct MinorVerVariant {
@@ -57,6 +57,7 @@ struct MinorVerVariant {
     roles: Punctuated<Path, Token![,]>,
 }
 
+/// Tries to parse the attribute arguments to one of the accepted input sets.
 pub fn message_type_impl(input: DeriveInput) -> SynResult<TokenStream> {
     if let Ok(protocol) = Protocol::from_derive_input(&input) {
         Ok(process_protocol(protocol))
@@ -139,7 +140,7 @@ fn process_version(Version { ident, data, major }: Version) -> SynResult<TokenSt
     let mut constructor_impls = Vec::new();
 
     // Storage for the MessageKind trait impls on the
-    // types bound to the variant through PhantomData.
+    // types bound to the variant through MsgKindType.
     let mut msg_kind_impls = Vec::new();
 
     for MinorVerVariant {
@@ -232,7 +233,7 @@ fn process_version(Version { ident, data, major }: Version) -> SynResult<TokenSt
 /// Helper to generate an error in case the encapsulated type
 /// in the enum variant is not as expected.
 fn make_type_param_err(span: Span) -> Error {
-    Error::new(span, "expecting a type parameter form: PhantomData<fn() -> T>")
+    Error::new(span, "expecting a type parameter form: MsgKindType<T>")
 }
 
 /// Extracts the last (and only) field of the variant.
@@ -242,12 +243,12 @@ fn extract_field_type(mut fields: Fields<Type>) -> Type {
     fields.fields.pop().expect("only implemented on newtype enums")
 }
 
-/// The variant field type is of the form [`std::marker::PhantomData<fn() -> T>`].
+/// The variant field type is of the form [`MsgKindType<T>`].
 /// We need to get the `T`.
 fn extract_field_target_type(field: Type) -> SynResult<TypePath> {
     let mut span = field.span();
 
-    // `PhantomData<_>` is a TypePath
+    // `MsgKindType<_>` is a TypePath
     let Type::Path(path) = field else { return Err(make_type_param_err(span)) };
 
     // Getting the last, and most likely only, segment of the type path.
@@ -260,11 +261,11 @@ fn extract_field_target_type(field: Type) -> SynResult<TypePath> {
     span = args.span();
 
     // This iterates over the generics provided.
-    // We, again, expect just one, `fn() -> T`.
+    // We, again, expect just one, `T`.
     let arg = args.args.into_iter().next().ok_or_else(|| make_type_param_err(span))?;
     span = arg.span();
 
-    // We expect the generic to be a type, particularly a BareFn.
+    // We expect the generic to be a type, particularly a TypePath.
     let GenericArgument::Type(Type::Path(ty)) = arg else { return Err(make_type_param_err(span)); };
 
     // Return `T`
@@ -282,10 +283,10 @@ fn make_constructor_fn(var_ident: &Ident) -> Ident {
 
 /// Extracts the last segment of the type path.
 /// This accommodates both situations like
-/// - `PhantomData<_>`
-/// - `std::marker::PhantomData<_>`
+/// - `MsgKindType<_>`
+/// - `crate::msg_types::MsgKindType<_>`
 ///
-/// Making them both yield `PhantomData<_>`.
+/// Making them both yield `MsgKindType<_>`.
 fn last_path_segment(path: TypePath) -> SynResult<PathSegment> {
     let span = path.span();
 

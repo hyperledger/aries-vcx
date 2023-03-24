@@ -14,8 +14,8 @@ use syn::{parse_macro_input, DeriveInput, Error};
 /// a protocol or a major version encapsulating enum.
 ///
 /// The minor versions are represented by the major version enum's variants
-/// and the field encapsulated in the variants are expected to be [`std::marker::PhantomData<fn() ->
-/// T>`]. The `T` binds the message kinds of the protocol to the minor version variant of the enum.
+/// and the field encapsulated in the variants are expected to be [`crate::msg_types::MsgKindType<T>`]. 
+/// The `T` binds the message kinds of the protocol to the minor version variant of the enum.
 ///
 /// As a summary, this macro will generate the following:
 /// - on protocol representing enums:
@@ -27,25 +27,11 @@ use syn::{parse_macro_input, DeriveInput, Error};
 ///     - [`MessageKind`] impls on each type bound in the variants.
 ///     - `new_vX_Y()` shorthand methods on the enum, for easier creation of instances of a certain variant (version).
 ///
-/// As per why the generic type is `fn() -> T` and not just `T`, the short story is *ownership*.
-///
-/// The long story is that `PhantomData<T>` tells the drop checker that we *own* `T`, which we
-/// don't. While still a covariant, `fn() -> T` does not mean we own the `T`, so that let's the drop
-/// checker be more permissive. Not really important for our current use case, but it is
-/// *idiomatic*.
-///
-/// Good reads and references:
-/// - https://doc.rust-lang.org/std/marker/struct.PhantomData.html
-/// - https://doc.rust-lang.org/nomicon/phantom-data.html
-/// - https://doc.rust-lang.org/nomicon/phantom-data.html
-/// - https://doc.rust-lang.org/nomicon/dropck.html
-///
 /// ``` ignore
 /// use messages_macros::MessageType;
-/// use std::marker::PhantomData;
 ///
 /// // as if used from within the `messages` crate
-/// use crate::msg_types::role::Role
+/// use crate::msg_types::{role::Role, MsgKindType};
 ///
 /// #[derive(MessageType)]
 /// #[msg_type(protocol = "some_protocol")]
@@ -57,7 +43,7 @@ use syn::{parse_macro_input, DeriveInput, Error};
 /// #[msg_type(major = 1)]
 /// enum SomeProtocolV1 {
 ///    #[msg_type(minor = 0, roles = "Role::Receiver, Role::Sender")]
-///    V1_0(PhantomData<fn() -> SomeProtocolV1_0>)
+///    V1_0(MsgKindType<SomeProtocolV1_0>)
 /// };
 ///
 /// /// The message kinds the protocol handles.

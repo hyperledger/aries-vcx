@@ -59,6 +59,9 @@ impl PresentationPreview {
     }
 }
 
+/// Non-standalone message type.
+/// This is only encountered as part of an existent message.
+/// It is not a message on it's own.
 #[derive(Copy, Clone, Debug, Deserialize, PartialEq)]
 #[serde(try_from = "MessageType")]
 struct PresentationPreviewMsgType;

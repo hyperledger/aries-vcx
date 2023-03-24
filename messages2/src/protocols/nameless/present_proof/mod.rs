@@ -39,9 +39,9 @@ impl DelayedSerde for PresentProof {
     where
         D: Deserializer<'de>,
     {
-        let (major, kind_str) = msg_type;
+        let (protocol, kind_str) = msg_type;
 
-        let kind = match major {
+        let kind = match protocol {
             PresentProofProtocol::V1(PresentProofProtocolV1::V1_0(kind)) => kind.kind_from_str(kind_str),
         };
 

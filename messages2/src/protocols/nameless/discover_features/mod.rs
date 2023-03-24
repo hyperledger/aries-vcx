@@ -12,12 +12,12 @@ use self::{
 };
 use crate::{
     maybe_known::MaybeKnown,
-    misc::utils::{transit_to_aries_msg, into_msg_with_type},
+    misc::utils::{into_msg_with_type, transit_to_aries_msg},
     msg_types::{
         types::discover_features::{
             DiscoverFeaturesProtocol as DiscoverFeaturesKind, DiscoverFeaturesProtocolV1, DiscoverFeaturesProtocolV1_0,
         },
-        Protocol, Role, MsgWithType,
+        MsgWithType, Protocol, Role,
     },
     protocols::traits::DelayedSerde,
 };
@@ -35,9 +35,9 @@ impl DelayedSerde for DiscoverFeatures {
     where
         D: Deserializer<'de>,
     {
-        let (major, kind_str) = msg_type;
+        let (protocol, kind_str) = msg_type;
 
-        let kind = match major {
+        let kind = match protocol {
             DiscoverFeaturesKind::V1(DiscoverFeaturesProtocolV1::V1_0(kind)) => kind.kind_from_str(kind_str),
         };
 

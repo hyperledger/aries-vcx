@@ -6,9 +6,6 @@ use crate::{decorators::timing::Timing, msg_parts::MsgParts};
 pub type PairwiseInvitation = MsgParts<PairwiseInvitationContent<Url>, PwInvitationDecorators>;
 pub type PairwiseDidInvitation = MsgParts<PairwiseInvitationContent<String>, PwInvitationDecorators>;
 
-/// Wrapper that represents a pairwise invitation.
-// The wrapping is used so that we expose certain types as an abstraction
-// over our internal types.
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct PairwiseInvitationContent<T> {
