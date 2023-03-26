@@ -1,57 +1,79 @@
 use std::collections::HashMap;
+use std::marker::PhantomData;
 
 use serde_json::Value;
 
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use crate::utils::openssl::encode;
 
-/// `CredentialAttributeData` represents contains all the attributes data
-/// in a credential.
+/// `CredentialAttribute` contains credential attributes data in a given state.
 #[derive(Debug, Clone)]
-pub struct CredentialAttributeData<D> {
-    /// A reference to the attributes data in the credentials.
-    data: D,
+pub struct CredentialAttribute<'r, State> {
+    /// Raw credential attribute data.
+    raw: &'r str,
+
+    /// Encoded credential attribute data.
+    encoded: Option<String>,
+
+    _marker: PhantomData<State>,
 }
 
-/// `EncodedCredentialAttributes` contains the encoded credential attributes data.
-#[derive(Debug, Clone)]
-pub struct EncodedCredentialAttributes {
-    /// Encoded data text.
-    pub data: String,
-}
+/// `RawAttributeValue` is a credential attribute raw state.
+pub struct RawAttributeValue;
 
-impl<D> CredentialAttributeData<D>
-where
-    D: AsRef<str>,
-{
-    /// Create new attributes data.
-    pub fn new(data: D) -> Self {
-        Self { data }
+/// `RawAttributeValue` is a credential attribute in encoded state.
+pub struct EncodedAttributeValue;
+
+impl<'raw> CredentialAttribute<'raw, RawAttributeValue> {
+    /// Create new credential attribute.
+    pub fn new(raw: &'raw str) -> Self {
+        Self {
+            raw,
+            encoded: None,
+            _marker: PhantomData::default(),
+        }
     }
-
     /// Encodes the attributes in a credential.
-    pub fn encode(&self) -> VcxResult<EncodedCredentialAttributes> {
-        let mut dictionary = HashMap::new();
-        match serde_json::from_str::<HashMap<String, serde_json::Value>>(self.data.as_ref()) {
-            Ok(attributes) => Self::encode_table_attribute(attributes, &mut dictionary),
+    pub fn encode(self) -> VcxResult<CredentialAttribute<'raw, EncodedAttributeValue>> {
+        let dictionary: HashMap<String, Value>;
+        match serde_json::from_str::<HashMap<String, serde_json::Value>>(self.raw) {
+            Ok(attributes) => {
+                dictionary = Self::encode_table_attribute(attributes)?;
+            }
             Err(_err) => {
                 // TODO: Check error type
-                match serde_json::from_str::<Vec<serde_json::Value>>(self.data.as_ref()) {
-                    Ok(attributes) => Self::encode_attribute_list(attributes, &mut dictionary),
-                    Err(err) => Err(AriesVcxError::from_msg(
-                        AriesVcxErrorKind::InvalidAttributesStructure,
-                        format!("Attribute value not found: {:?}", err),
-                    )),
+                match serde_json::from_str::<Vec<serde_json::Value>>(self.raw) {
+                    Ok(attributes) => {
+                        dictionary = Self::encode_attribute_list(attributes)?;
+                    }
+                    Err(err) => {
+                        return Err(AriesVcxError::from_msg(
+                            AriesVcxErrorKind::InvalidAttributesStructure,
+                            format!("Attribute value not found: {:?}", err),
+                        ));
+                    }
                 }
             }
         }
+        let encoded = serde_json::to_string_pretty(&dictionary).map_err(|err| {
+            warn!("Invalid Json for Attribute data");
+            AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidJson,
+                format!("Invalid Json for Attribute data: {}", err),
+            )
+        })?;
+
+        let attr = CredentialAttribute {
+            raw: self.raw,
+            encoded: Some(encoded),
+            _marker: PhantomData::<EncodedAttributeValue>::default(),
+        };
+        Ok(attr)
     }
 
     /// Encodes attributes in a hashmap.
-    fn encode_table_attribute(
-        attributes: HashMap<String, Value>,
-        dictionary: &mut HashMap<String, Value>,
-    ) -> VcxResult<EncodedCredentialAttributes> {
+    fn encode_table_attribute(attributes: HashMap<String, Value>) -> VcxResult<HashMap<String, Value>> {
+        let mut dictionary = HashMap::with_capacity(attributes.len());
         for (attr, attr_data) in attributes {
             let first_attr = match &attr_data {
                 // new style input such as {"address2":"101 Wilson Lane"}
@@ -82,21 +104,13 @@ where
 
             dictionary.insert(attr, attrib_values);
         }
-        let data = serde_json::to_string_pretty(&dictionary).map_err(|err| {
-            warn!("Invalid Json for Attribute data");
-            AriesVcxError::from_msg(
-                AriesVcxErrorKind::InvalidJson,
-                format!("Invalid Json for Attribute data: {}", err),
-            )
-        })?;
-        Ok(EncodedCredentialAttributes { data })
+
+        Ok(dictionary)
     }
 
     /// Encodes a list of attributes.
-    fn encode_attribute_list(
-        attributes: Vec<Value>,
-        dictionary: &mut HashMap<String, Value>,
-    ) -> VcxResult<EncodedCredentialAttributes> {
+    fn encode_attribute_list(attributes: Vec<Value>) -> VcxResult<HashMap<String, Value>> {
+        let mut dictionary = HashMap::with_capacity(attributes.len());
         for cred_value in attributes {
             let name = cred_value.get("name").ok_or(AriesVcxError::from_msg(
                 AriesVcxErrorKind::InvalidAttributesStructure,
@@ -127,14 +141,17 @@ where
                 .to_string();
             dictionary.insert(name, attrib_values);
         }
-        let data = serde_json::to_string_pretty(&dictionary).map_err(|err| {
-            warn!("Invalid Json for Attribute data");
-            AriesVcxError::from_msg(
-                AriesVcxErrorKind::InvalidJson,
-                format!("Invalid Json for Attribute data: {}", err),
-            )
-        })?;
-        Ok(EncodedCredentialAttributes { data })
+
+        Ok(dictionary)
+    }
+}
+
+impl CredentialAttribute<'_, EncodedAttributeValue> {
+    /// Return the encoded value of the credential attribute.
+    pub fn encoded(&self) -> VcxResult<&str> {
+        self.encoded
+            .as_deref()
+            .ok_or_else(|| AriesVcxError::from_msg(AriesVcxErrorKind::InvalidState, "raw attribute value"))
     }
 }
 
@@ -172,7 +189,7 @@ pub mod unit_tests {
                 "raw": "UT"
             }
         });
-        let attr_data = CredentialAttributeData::new(
+        let attr_data = CredentialAttribute::new(
             r#"{"address2":["101 Wilson Lane"],
             "zip":["87121"],
             "state":["UT"],
@@ -182,7 +199,7 @@ pub mod unit_tests {
         );
 
         let results = attr_data.encode().unwrap();
-        let results: Value = serde_json::from_str(&results.data).unwrap();
+        let results: Value = serde_json::from_str(&results.encoded().unwrap()).unwrap();
         assert_eq!(expected, results);
     }
 
@@ -197,14 +214,15 @@ pub mod unit_tests {
             }
         });
 
-        let attr_data = CredentialAttributeData::new(r#"{"address2":["101 Wilson Lane"]}"#);
+        let attr_data = CredentialAttribute::new(r#"{"address2":["101 Wilson Lane"]}"#);
 
         let expected_json = serde_json::to_string_pretty(&expected).unwrap();
 
         let results = attr_data.encode().unwrap();
 
         assert_eq!(
-            expected_json, results.data,
+            expected_json,
+            results.encoded().unwrap(),
             "encode_attributes failed to return expected results"
         );
     }
@@ -236,7 +254,7 @@ pub mod unit_tests {
             }
         });
 
-        let attr_data = CredentialAttributeData::new(
+        let attr_data = CredentialAttribute::new(
             r#"[
             {"name": "address2", "value": "101 Wilson Lane"},
             {"name": "zip", "value": "87121"},
@@ -248,7 +266,7 @@ pub mod unit_tests {
 
         let results = attr_data.encode().unwrap();
 
-        let results: Value = serde_json::from_str(&results.data).unwrap();
+        let results: Value = serde_json::from_str(&results.encoded().unwrap()).unwrap();
         assert_eq!(expected, results);
     }
 
@@ -279,7 +297,7 @@ pub mod unit_tests {
             }
         });
 
-        let attr_data = CredentialAttributeData::new(
+        let attr_data = CredentialAttribute::new(
             r#"{"address2":"101 Wilson Lane",
             "zip":"87121",
             "state":"UT",
@@ -290,7 +308,7 @@ pub mod unit_tests {
 
         let results = attr_data.encode().unwrap();
 
-        let results: Value = serde_json::from_str(&results.data).unwrap();
+        let results: Value = serde_json::from_str(&results.encoded().unwrap()).unwrap();
         assert_eq!(expected, results);
     }
 
@@ -305,14 +323,15 @@ pub mod unit_tests {
             }
         });
 
-        let attr_data = CredentialAttributeData::new(r#"{"address2": "101 Wilson Lane"}"#);
+        let attr_data = CredentialAttribute::new(r#"{"address2": "101 Wilson Lane"}"#);
 
         let expected_json = serde_json::to_string_pretty(&expected).unwrap();
 
         let results = attr_data.encode().unwrap();
 
         assert_eq!(
-            expected_json, results.data,
+            expected_json,
+            results.encoded().unwrap(),
             "encode_attributes failed to return expected results"
         );
     }
@@ -346,7 +365,7 @@ pub mod unit_tests {
             }
         });
 
-        let attr_data = CredentialAttributeData::new(
+        let attr_data = CredentialAttribute::new(
             r#"{"address2":["101 Wilson Lane"],
             "zip":"87121",
             "state":"UT",
@@ -357,7 +376,7 @@ pub mod unit_tests {
 
         let results = attr_data.encode().unwrap();
 
-        let results: Value = serde_json::from_str(&results.data).unwrap();
+        let results: Value = serde_json::from_str(&results.encoded().unwrap()).unwrap();
         assert_eq!(expected, results);
     }
 
@@ -365,7 +384,7 @@ pub mod unit_tests {
     fn test_encode_bad_format_returns_error() {
         let _setup = SetupDefaults::init();
 
-        let bad_attr_data = CredentialAttributeData::new(r#"{"format doesnt make sense"}"#);
+        let bad_attr_data = CredentialAttribute::new(r#"{"format doesnt make sense"}"#);
 
         assert!(bad_attr_data.encode().is_err())
     }
@@ -374,7 +393,7 @@ pub mod unit_tests {
     fn test_encode_old_format_empty_array_error() {
         let _setup = SetupDefaults::init();
 
-        let bad_attr_data = CredentialAttributeData::new(r#"{"address2":[]}"#);
+        let bad_attr_data = CredentialAttribute::new(r#"{"address2":[]}"#);
 
         assert!(bad_attr_data.encode().is_err())
     }
@@ -390,11 +409,11 @@ pub mod unit_tests {
             }
         });
 
-        let bad_attr_data = CredentialAttributeData::new(r#"{"empty_field": ""}"#);
+        let bad_attr_data = CredentialAttribute::new(r#"{"empty_field": ""}"#);
 
         let results = bad_attr_data.encode().unwrap();
 
-        let results: Value = serde_json::from_str(&results.data).unwrap();
+        let results: Value = serde_json::from_str(&results.encoded().unwrap()).unwrap();
         assert_eq!(expected, results);
     }
 }
