@@ -4,4 +4,5 @@
 extern crate lazy_static;
 
 pub mod errors;
+pub mod http;
 pub mod validation;

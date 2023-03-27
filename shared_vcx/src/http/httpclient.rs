@@ -4,10 +4,11 @@ use std::time::Duration;
 use reqwest;
 use reqwest::header::{CONTENT_TYPE, USER_AGENT};
 use reqwest::Client;
+use agency_client::agency_client::AgencyClient;
 
-use crate::errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
-use crate::testing::mocking;
-use crate::testing::mocking::{AgencyMock, AgencyMockDecrypted, HttpClientMockResponse};
+use agency_client::errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
+use agency_client::testing::mocking;
+use agency_client::testing::mocking::{AgencyMock, AgencyMockDecrypted, HttpClientMockResponse};
 
 lazy_static! {
     static ref HTTP_CLIENT: Client = {
