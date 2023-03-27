@@ -10,53 +10,65 @@ Instead, only create state `PresentationPrepared` which enables `aries-vcx` cons
 and send it to the counterparty. Subsequently, it should be possible to further drive state machine in  `PresentationPrepared` 
 using `presentation-ack` message received from verifier. 
 
-## Separate final states
-While Aries RFCs commonly refer to single final state to convey nothing more can happen after exchange
-of certain messages - for example in diagram [here](https://github.com/hyperledger/aries-rfcs/blob/main/features/0453-issue-credential-v2/README.md)
-- on implementation level we want to distinguish different internal states signalling different circumstances (which 
-simply happen to share the property of being final).
+Additional rationale: 
+In past we used states such as `<MessageType>Sent`. However, simply saying we sent 
+something doesn't really mean that much since we cannot guarantee it was also received, especially in a transport 
+abstract manner. Therefore, we could model the state machines so that we work on `<MessageType>Generated` states, 
+which we actually can guarantee, and then the consumer code can retrieve the message and send it (as many times as they want).
+Then the state machine would advance when the reply to the sent message is received (if one is expected).
 
-Example: instead of having `Final` state which would maintain `status: Success | Failed | Rejected`, we
-should have 3 separate states `Success`, `Failed`, `Rejected`.
-
-## Receives Aries messages always move state
-Processing a message from counterparty must move state. Even if we are dealing just with acknowledgement type of message.
+## Processing Aries messages moves state
+Processing a message of valid type from counterparty must move state. Even if we are dealing just with acknowledgement type of message.
 
 Example: In `issue-credential` protocol, do not enter `Finished` simply after building verifiable credential.
 You might rather have `CredentialBuilt` and only enter `Finished` state after receiving `ack` message, which
 is part of `issue-credential` protocol - as opposed of simply tracking acknowledgement within the `Finished` state.
 
-## Use intermediate states when needed
+## Create "internal" states as needed, recognize "external" RFC states
 Aries RFCs describe the protocol state from perspective of external viewer. While we need to adhere the protocol
 in terms of what messages does the counterparty accept at a given moment of the protocol lifecycle, as library
 developers, we are also concerned about the APIs we expose and its properties. It proved to be useful to create
-intermediate states that do not exhibit a strict bijection with states described by aries RFCs.
+internal states which are not in bijections with the set of states described by aries RFCs.
 
-Example: In [`present-proof 1.0`](https://github.com/hyperledger/aries-rfcs/blob/main/features/0037-present-proof/README.md)
-protocol, there's following states described:
-```
-request-received
-proposal-sent
-presentation-sent
-reject-sent
-done
-```
-However, in practice it's useful to have not only state `request-received` but also `presentation-prepared`. It's
-also useful to have multiple final states than just `done`, for example `Verified`, `NotVerified`, `Failed`.
+### Internal VS external states 
+We will refer to custom states as "internal" and states recognized by RFCs as "external". Since the "external" states
+generally define what messages can be received when, for given "internal" state, it must be possible to determine the
+current "external state".
 
-On the flip side, as per first point in this list `"No 'Sent' states"` - it's better to avoid creating "sent" states like
-the suggested byt the RFCs
-```
-proposal-sent
-presentation-sent
-reject-sent
-```
+### Internal intermediate states
+There can also be internal states we could refer to as "internal intermediate". This is internal state which does not 
+map to any "external" state and therefore in such state, no aries message can be received. Instead, an action from
+state machine owner is expected. For example, in some presentation protocol, on the side of prover, we might have states
+`PresentationRequestProcessed`, `PresentationGenerated`.
+Here, `PresentationRequestProcessed` is intermediate state where no message from counterparty is expected. The only 
+way to drive the state machine forward is by building the proof presentation (which must be initiated locally).
 
-However, note that in with our custom states, it must be always possible to determine where we are within the protocol
-as described by the RFC - in other words, what messages we accept in given moment. For example, our 
-state `presentation-prepared` would reflect RFC state `presentation-sent` where we are ready 
-to receive `presentation-ack` from verifier. 
-Equally, our custom states `Verified`, `NotVerified`, `Failed` map to RFC state `done`.
+### Creating new states
+You can create new state to distinguish various sub-states of a state defined by RFC. Typical example is around final
+states which is in some protocol RFCs is described as single state which encodes variety of conditions. 
+For example [`present-proof 1.0 procol RFC`](https://github.com/hyperledger/aries-rfcs/blob/main/features/0037-present-proof/README.md)
+describes 1 final state `done`.
+in practice it's cleaner to distinguish number of final states like `Verified`, `NotVerified`, `Failed`. Note that this
+follows our previous rule
+> it must be possible to determine the current "external state"
+
+as each of these states could be mapped to RFC state `done`.
+
+### Removing/renaming states
+As per first point in this list `"No 'Sent' states"` we want to avoid encoding IO information whether a message
+has been sent over wire, so we would not adopt external RFC state `presentation-sent` as one of our internal states.
+Instead, we would create new state `presentation-built` which doesn't promise more it can - however following our
+mapping rule, this internal state `presentation-built` maps to external state `presentation-sent`, assuming it's ready
+to receive `presentation-ack` message from verifier.
+
+## Separate final states
+While Aries RFCs sometimes refer to single final state to convey nothing more can happen after exchange
+of certain messages - for example in diagram [here](https://github.com/hyperledger/aries-rfcs/blob/main/features/0453-issue-credential-v2/README.md)
+- on implementation level we want to distinguish different internal states signalling different circumstances (which
+  simply happen to share the property of being final).
+
+Example: instead of having `Final` state which would maintain `status: Success | Failed | Rejected`, we
+should have 3 separate states `Success`, `Failed`, `Rejected`.
 
 ## Deterministic transitions
 Transition should either fail and leave the current state unmodified, or transition to predetermined new state.
@@ -65,7 +77,11 @@ Example: in our legacy implementations, some transitions lead to multiple states
 new state was determined in runtime. The typical case was that transition either succeeded and moved to
 the "happy-case" next state; or failed and moved to "failed" state. 
 
+## Outsourced message sending 
+State machines should not attempt to send messages over network. State machines process received messages, 
+build responses, but should never perform message sending. 
+
 ## Problem reports
 State machines should not automatically submit problem-reports. If a problem occurs upon execution of a transition,
 it should fail with error (per previous point) and should be left up to state machine user to decide: retry,
-do nothing, move to failed state, move to failed state and send problem report.
+do nothing, move to failed state, send a problem report.
