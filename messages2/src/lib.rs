@@ -181,7 +181,7 @@ impl DelayedSerde for AriesMessage {
 // would also require some custom deserialization afterwards.
 //
 //  3) Exposing these parts as public is in progress from serde. When that will happen is still
-// unknown. See: https://github.com/serde-rs/serde/issues/741. With [`serde_value`] lacking
+// unknown. See: <https://github.com/serde-rs/serde/issues/741>. With [`serde_value`] lacking
 // activity and not seeming to get integrated into [`serde`], this will most likely resurface.
 //
 //  4) Reimplementing this on breaking semver changes is as easy as expanding the derived

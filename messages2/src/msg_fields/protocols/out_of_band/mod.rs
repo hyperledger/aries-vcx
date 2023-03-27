@@ -1,4 +1,4 @@
-//! Module containing the `out of band` protocol messages, as defined in the [RFC](https://github.com/hyperledger/aries-rfcs/blob/main/features/0434-outofband/README.md).
+//! Module containing the `out of band` protocol messages, as defined in the [RFC](<https://github.com/hyperledger/aries-rfcs/blob/main/features/0434-outofband/README.md>).
 
 pub mod invitation;
 pub mod reuse;

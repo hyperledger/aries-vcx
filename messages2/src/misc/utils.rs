@@ -78,7 +78,7 @@ macro_rules! transit_to_aries_msg {
 /// Push-down accumulating macro used for generating all the intermediary [`From::from`] calls
 /// necessary to transition a type to another.
 ///
-/// See: https://veykril.github.io/tlborm/decl-macros/patterns/push-down-acc.html.
+/// See: <https://veykril.github.io/tlborm/decl-macros/patterns/push-down-acc.html>.
 macro_rules! generate_from_stmt {
     ($val:expr, $interm:ty) => {
         <$interm>::from($val)

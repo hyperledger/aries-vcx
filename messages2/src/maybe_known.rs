@@ -25,7 +25,7 @@ mod tests {
         // Note that deserializing from a [`serde_json::Value`] must consume the data, while
         // deserializing from a reference from it allows borrowing.
         //
-        // See: https://github.com/serde-rs/serde/issues/1009
+        // See: <https://github.com/serde-rs/serde/issues/1009>
         let protocol_json = json!("https://didcomm.org/connections/1.0");
         let maybe_known = MaybeKnown::<Protocol>::deserialize(&protocol_json).unwrap();
 

@@ -1,4 +1,4 @@
-//! Module containing the `present proof` protocol messages, as defined in the [RFC](https://github.com/hyperledger/aries-rfcs/blob/main/features/0037-present-proof/README.md).
+//! Module containing the `present proof` protocol messages, as defined in the [RFC](<https://github.com/hyperledger/aries-rfcs/blob/main/features/0037-present-proof/README.md>).
 
 pub mod ack;
 pub mod present;

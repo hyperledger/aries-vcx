@@ -119,10 +119,10 @@ where
 /// *idiomatic*.
 ///
 /// Good reads and references:
-/// - https://doc.rust-lang.org/std/marker/struct.PhantomData.html
-/// - https://doc.rust-lang.org/nomicon/phantom-data.html
-/// - https://doc.rust-lang.org/nomicon/phantom-data.html
-/// - https://doc.rust-lang.org/nomicon/dropck.html
+/// - <https://doc.rust-lang.org/std/marker/struct.PhantomData.html>
+/// - <https://doc.rust-lang.org/nomicon/phantom-data.html>
+/// - <https://doc.rust-lang.org/nomicon/phantom-data.html>
+/// - <https://doc.rust-lang.org/nomicon/dropck.html>
 #[derive(Copy, Clone, Debug, PartialEq)]
 #[repr(transparent)]
 pub struct MsgKindType<T: MessageKind>(PhantomData<fn() -> T>);

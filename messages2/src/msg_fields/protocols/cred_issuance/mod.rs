@@ -1,4 +1,4 @@
-//! Module containing the `issue credential` protocol messages, as defined in the [RFC](https://github.com/hyperledger/aries-rfcs/blob/main/features/0036-issue-credential/README.md).
+//! Module containing the `issue credential` protocol messages, as defined in the [RFC](<https://github.com/hyperledger/aries-rfcs/blob/main/features/0036-issue-credential/README.md>).
 
 pub mod ack;
 pub mod issue_credential;

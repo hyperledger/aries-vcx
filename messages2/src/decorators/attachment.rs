@@ -5,7 +5,7 @@ use url::Url;
 
 use crate::misc::MimeType;
 
-/// Struct representing the `~attach` decorator from its [RFC](https://github.com/hyperledger/aries-rfcs/blob/main/concepts/0017-attachments/README.md).
+/// Struct representing the `~attach` decorator from its [RFC](<https://github.com/hyperledger/aries-rfcs/blob/main/concepts/0017-attachments/README.md>).
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "snake_case")]
 pub struct Attachment {

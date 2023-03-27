@@ -1,4 +1,4 @@
-//! Module containing the `report problem` protocol messages, as defined in the [RFC](https://github.com/hyperledger/aries-rfcs/blob/main/features/0035-report-problem/README.md).
+//! Module containing the `report problem` protocol messages, as defined in the [RFC](<https://github.com/hyperledger/aries-rfcs/blob/main/features/0035-report-problem/README.md>).
 
 use std::{collections::HashMap, fmt::Display};
 

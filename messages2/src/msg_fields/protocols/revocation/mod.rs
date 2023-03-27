@@ -1,4 +1,4 @@
-//! Module containing the `revocation notification` protocol messages, as defined in the [RFC](https://github.com/hyperledger/aries-rfcs/blob/main/features/0721-revocation-notification-v2/README.md).
+//! Module containing the `revocation notification` protocol messages, as defined in the [RFC](<https://github.com/hyperledger/aries-rfcs/blob/main/features/0721-revocation-notification-v2/README.md>).
 
 pub mod ack;
 pub mod revoke;

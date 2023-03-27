@@ -1,4 +1,4 @@
-//! Module containing the `connection` protocol messages, as defined in the [RFC](https://github.com/hyperledger/aries-rfcs/blob/main/features/0160-connection-protocol/README.md).
+//! Module containing the `connection` protocol messages, as defined in the [RFC](<https://github.com/hyperledger/aries-rfcs/blob/main/features/0160-connection-protocol/README.md>).
 
 pub mod invitation;
 pub mod problem_report;

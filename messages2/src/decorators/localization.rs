@@ -7,19 +7,19 @@ use serde::{
 };
 use url::Url;
 
-/// Struct representing the `~l10n` decorator, when it decorates the entire message, from its [RFC](https://github.com/hyperledger/aries-rfcs/blob/main/features/0043-l10n/README.md).
+/// Struct representing the `~l10n` decorator, when it decorates the entire message, from its [RFC](<https://github.com/hyperledger/aries-rfcs/blob/main/features/0043-l10n/README.md>).
 #[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq)]
 pub struct MsgLocalization {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub catalogs: Option<Vec<Url>>,
-    // Might just be obsolete, but appears in https://github.com/hyperledger/aries-rfcs/blob/main/features/0043-l10n/README.md
+    // Might just be obsolete, but appears in <https://github.com/hyperledger/aries-rfcs/blob/main/features/0043-l10n/README.md>
     // Is details and locales the same thing?
     #[serde(alias = "details")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub locales: Option<HashMap<Locale, Vec<String>>>,
 }
 
-/// Struct representing the `~l10n` decorator, when it decorates a single field, from its [RFC](https://github.com/hyperledger/aries-rfcs/blob/main/features/0043-l10n/README.md).
+/// Struct representing the `~l10n` decorator, when it decorates a single field, from its [RFC](<https://github.com/hyperledger/aries-rfcs/blob/main/features/0043-l10n/README.md>).
 #[derive(Debug, Clone, Deserialize, Default, PartialEq)]
 pub struct FieldLocalization {
     pub code: Option<String>,
