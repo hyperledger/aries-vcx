@@ -70,7 +70,7 @@ pub mod test_utils {
         assert_eq!(Protocol::from(protocol_type), deserialized)
     }
 
-    pub fn test_msg<T, U, V>(content: T, decorators: U, msg_kind: V, mut json: Value)
+    pub fn test_msg<T, U, V>(content: T, decorators: U, msg_kind: V, mut expected: Value)
     where
         AriesMessage: From<MsgParts<T, U>>,
         V: MessageKind,
@@ -79,23 +79,23 @@ pub mod test_utils {
         let id = "test".to_owned();
         let msg_type = build_msg_type(msg_kind);
 
-        let obj = json.as_object_mut().expect("JSON object");
+        let obj = expected.as_object_mut().expect("JSON object");
         obj.insert("@id".to_owned(), json!(id));
         obj.insert("@type".to_owned(), json!(msg_type));
 
         let msg = MsgParts::with_decorators(id, content, decorators);
         let msg = AriesMessage::from(msg);
 
-        test_serde(msg, json);
+        test_serde(msg, expected);
     }
 
-    pub fn test_serde<T>(value: T, json: Value)
+    pub fn test_serde<T>(value: T, expected: Value)
     where
         T: for<'de> Deserialize<'de> + Serialize + std::fmt::Debug + PartialEq,
     {
-        let deserialized = T::deserialize(&json).unwrap();
+        let deserialized = T::deserialize(&expected).unwrap();
 
-        assert_eq!(serde_json::to_value(&value).unwrap(), json);
+        assert_eq!(serde_json::to_value(&value).unwrap(), expected);
         assert_eq!(deserialized, value);
     }
 
