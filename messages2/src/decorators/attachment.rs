@@ -63,7 +63,7 @@ impl AttachmentData {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[serde(rename_all = "kebab-case")]
+#[serde(rename_all = "lowercase")]
 pub enum AttachmentType {
     // Base64 encoded bytes
     Base64(Vec<u8>),

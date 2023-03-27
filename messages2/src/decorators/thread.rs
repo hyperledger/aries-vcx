@@ -32,11 +32,17 @@ impl Thread {
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub enum ThreadGoalCode {
+    #[serde(rename = "aries.vc")]
     AriesVc,
+    #[serde(rename = "aries.vc.issue")]
     AriesVcIssue,
+    #[serde(rename = "aries.vc.verify")]
     AriesVcVerify,
+    #[serde(rename = "aries.vc.revoke")]
     AriesVcRevoke,
+    #[serde(rename = "aries.rel")]
     AriesRel,
+    #[serde(rename = "aries.rel.build")]
     AriesRelBuild,
 }
 
