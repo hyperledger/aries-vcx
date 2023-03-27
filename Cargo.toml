@@ -6,6 +6,8 @@ members = [
     "agency_client",
     "libvdrtools",
     "messages",
+    "messages_macros",
+    "messages2",
     "shared_vcx",
     "diddoc",
     "agents/rust/aries-vcx-agent",
@@ -14,7 +16,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.52.0"
+version = "0.53.0"
 authors = ["Absa Group Limited", "Hyperledger Indy Contributors <hyperledger-indy@lists.hyperledger.org>"]
 description = "Absa's fork of HL LibVCX"
 license = "Apache-2.0"

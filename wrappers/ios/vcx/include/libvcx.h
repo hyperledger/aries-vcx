@@ -762,7 +762,7 @@ vcx_error_t vcx_proof_send_request(
 vcx_error_t vcx_get_proof_msg(
         vcx_command_handle_t command_handle,
         vcx_proof_handle_t proof_handle,
-        void (*cb)(vcx_command_handle_t xcommand_handle, vcx_error_t err, vcx_state_t proof_state, const char *response_data)
+        void (*cb)(vcx_command_handle_t xcommand_handle, vcx_error_t err, const char *response_data)
 );
 
 vcx_error_t vcx_proof_get_request_msg(

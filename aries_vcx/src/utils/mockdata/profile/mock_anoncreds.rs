@@ -30,7 +30,7 @@ impl BaseAnonCreds for MockAnoncreds {
     ) -> VcxResult<bool> {
         Err(AriesVcxError::from_msg(
             AriesVcxErrorKind::UnimplementedFeature,
-            "unimplemented mock method",
+            "unimplemented mock method: verifier_verify_proof",
         ))
     }
 
@@ -45,7 +45,7 @@ impl BaseAnonCreds for MockAnoncreds {
         // not needed yet
         Err(AriesVcxError::from_msg(
             AriesVcxErrorKind::UnimplementedFeature,
-            "unimplemented mock method",
+            "unimplemented mock method: issuer_create_and_store_revoc_reg",
         ))
     }
 
@@ -60,7 +60,7 @@ impl BaseAnonCreds for MockAnoncreds {
         // not needed yet
         Err(AriesVcxError::from_msg(
             AriesVcxErrorKind::UnimplementedFeature,
-            "unimplemented mock method",
+            "unimplemented mock method: issuer_create_and_store_credential_def",
         ))
     }
 
@@ -69,7 +69,7 @@ impl BaseAnonCreds for MockAnoncreds {
         if rc != 0 {
             return Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::InvalidState,
-                "Mocked error result of issuer_create_credential_offer",
+                "Mocked error result of issuer_create_credential_offer: issuer_create_credential_offer",
             ));
         };
         Ok(LIBINDY_CRED_OFFER.to_string())
@@ -102,7 +102,7 @@ impl BaseAnonCreds for MockAnoncreds {
         // not needed yet
         Err(AriesVcxError::from_msg(
             AriesVcxErrorKind::UnimplementedFeature,
-            "unimplemented mock method",
+            "unimplemented mock method: prover_get_credential",
         ))
     }
 
@@ -110,7 +110,7 @@ impl BaseAnonCreds for MockAnoncreds {
         // not needed yet
         Err(AriesVcxError::from_msg(
             AriesVcxErrorKind::UnimplementedFeature,
-            "unimplemented mock method",
+            "unimplemented mock method: prover_get_credentials",
         ))
     }
 
@@ -163,7 +163,7 @@ impl BaseAnonCreds for MockAnoncreds {
         // not needed yet
         Err(AriesVcxError::from_msg(
             AriesVcxErrorKind::UnimplementedFeature,
-            "unimplemented mock method",
+            "unimplemented mock method: prover_delete_credential",
         ))
     }
 
@@ -181,7 +181,7 @@ impl BaseAnonCreds for MockAnoncreds {
         // not needed yet
         Err(AriesVcxError::from_msg(
             AriesVcxErrorKind::UnimplementedFeature,
-            "unimplemented mock method",
+            "unimplemented mock method: issuer_create_schema",
         ))
     }
 

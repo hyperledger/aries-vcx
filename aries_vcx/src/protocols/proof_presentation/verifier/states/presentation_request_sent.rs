@@ -4,8 +4,8 @@ use crate::common::proofs::verifier::verifier::validate_indy_proof;
 use crate::core::profile::profile::Profile;
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use crate::global::settings;
-use crate::protocols::proof_presentation::verifier::state_machine::RevocationStatus;
 use crate::protocols::proof_presentation::verifier::states::finished::FinishedState;
+use crate::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
 use messages::concepts::problem_report::ProblemReport;
 use messages::protocols::proof_presentation::presentation::Presentation;
 use messages::protocols::proof_presentation::presentation_request::PresentationRequest;
@@ -51,16 +51,26 @@ impl PresentationRequestSentState {
     }
 }
 
-impl From<(PresentationRequestSentState, Presentation, RevocationStatus)> for FinishedState {
+impl
+    From<(
+        PresentationRequestSentState,
+        Presentation,
+        PresentationVerificationStatus,
+    )> for FinishedState
+{
     fn from(
-        (state, presentation, was_revoked): (PresentationRequestSentState, Presentation, RevocationStatus),
+        (state, presentation, verification_status): (
+            PresentationRequestSentState,
+            Presentation,
+            PresentationVerificationStatus,
+        ),
     ) -> Self {
         trace!("transit state from PresentationRequestSentState to FinishedState");
         FinishedState {
             presentation_request: Some(state.presentation_request),
             presentation: Some(presentation),
             status: Status::Success,
-            revocation_status: Some(was_revoked),
+            verification_status: verification_status,
         }
     }
 }
@@ -72,7 +82,7 @@ impl From<(PresentationRequestSentState, ProblemReport)> for FinishedState {
             presentation_request: Some(state.presentation_request),
             presentation: None,
             status: Status::Failed(problem_report),
-            revocation_status: None,
+            verification_status: PresentationVerificationStatus::Unavailable,
         }
     }
 }

@@ -63,15 +63,9 @@ export interface IFilter {
 }
 
 export enum ProofVerificationStatus {
-  Undefined = 0,
-  Verified = 1,
+  Unavailable = 0,
+  Valid = 1,
   Invalid = 2,
-}
-
-export enum ProofRevocationStatus {
-  Undefined = 0,
-  NonRevoked = 1,
-  Revoked = 2,
 }
 
 export interface IProofPredicate {
@@ -199,9 +193,9 @@ export class Proof extends VcxBaseWithState<IProofData, VerifierStateType> {
     }
   }
 
-  public getPresentationVerificationStatus(): ProofVerificationStatus {
+  public getVerificationStatus(): ProofVerificationStatus {
     try {
-      return ffi.proofGetPresentationVerificationStatus(this.handle);
+      return ffi.proofGetVerificationStatus(this.handle);
     } catch (err: any) {
       throw new VCXInternalError(err);
     }
@@ -218,14 +212,6 @@ export class Proof extends VcxBaseWithState<IProofData, VerifierStateType> {
   public getPresentationRequestAttachment(): string {
     try {
       return ffi.proofGetPresentationRequestAttachment(this.handle);
-    } catch (err: any) {
-      throw new VCXInternalError(err);
-    }
-  }
-
-  public getRevocationStatus(): ProofRevocationStatus {
-    try {
-      return ffi.proofGetRevocationStatus(this.handle);
     } catch (err: any) {
       throw new VCXInternalError(err);
     }
