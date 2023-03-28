@@ -4,7 +4,7 @@ pub mod test_utils {
     use std::sync::Arc;
 
     use aries_vcx::core::profile::indy_profile::IndySdkProfile;
-    use aries_vcx::core::profile::modular_wallet_profile::{LedgerPoolConfig, ModularWalletProfile};
+    use aries_vcx::core::profile::modular_libs_profile::{ModularLibsProfile};
     use aries_vcx::core::profile::profile::Profile;
     use aries_vcx::handlers::revocation_notification::receiver::RevocationNotificationReceiver;
     use aries_vcx::handlers::revocation_notification::sender::RevocationNotificationSender;
@@ -48,6 +48,7 @@ pub mod test_utils {
     use aries_vcx::messages::protocols::issuance::credential_offer::CredentialOffer;
     use aries_vcx::messages::protocols::issuance::credential_offer::OfferInfo;
     use aries_vcx::messages::protocols::proof_presentation::presentation_request::PresentationRequest;
+    use aries_vcx::plugins::ledger::indy_vdr_ledger::LedgerPoolConfig;
     use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
     use aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
     use aries_vcx::protocols::mediated_connection::invitee::state_machine::InviteeState;
@@ -481,7 +482,7 @@ pub mod test_utils {
 
             let wallet: Arc<dyn BaseWallet> = Arc::new(IndySdkWallet::new(wallet_handle));
 
-            let profile = Arc::new(ModularWalletProfile::new(wallet, ledger_pool_config).unwrap());
+            let profile = Arc::new(ModularLibsProfile::new(wallet, ledger_pool_config).unwrap());
 
             // set up anoncreds link/master secret
             Arc::clone(&profile)

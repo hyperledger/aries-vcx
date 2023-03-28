@@ -31,13 +31,13 @@ impl Profile for IndySdkProfile {
         Arc::new(IndySdkLedger::new(self))
     }
 
-    fn inject_wallet(&self) -> Arc<dyn BaseWallet> {
-        // TODO - future -we should lazy eval and avoid creating a new instance each time
-        Arc::new(IndySdkWallet::new(self.indy_wallet_handle))
-    }
-
     fn inject_anoncreds(self: Arc<Self>) -> Arc<dyn BaseAnonCreds> {
         // TODO - future -we should lazy eval and avoid creating a new instance each time
         Arc::new(IndySdkAnonCreds::new(self))
+    }
+
+    fn inject_wallet(&self) -> Arc<dyn BaseWallet> {
+        // TODO - future -we should lazy eval and avoid creating a new instance each time
+        Arc::new(IndySdkWallet::new(self.indy_wallet_handle))
     }
 }

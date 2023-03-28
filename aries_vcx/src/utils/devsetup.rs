@@ -12,7 +12,7 @@ use agency_client::configuration::AgentProvisionConfig;
 use agency_client::testing::mocking::{disable_agency_mocks, enable_agency_mocks, AgencyMockDecrypted};
 
 use crate::core::profile::indy_profile::IndySdkProfile;
-use crate::core::profile::modular_wallet_profile::{LedgerPoolConfig, ModularWalletProfile};
+use crate::core::profile::modular_libs_profile::{ModularLibsProfile};
 use crate::core::profile::profile::Profile;
 use crate::global::settings;
 use crate::global::settings::init_issuer_config;
@@ -28,6 +28,7 @@ use crate::indy::wallet::{
     close_wallet, create_and_open_wallet, create_indy_wallet, create_wallet_with_master_secret, delete_wallet,
     wallet_configure_issuer, WalletConfig,
 };
+use crate::plugins::ledger::indy_vdr_ledger::LedgerPoolConfig;
 use crate::plugins::wallet::base_wallet::BaseWallet;
 use crate::plugins::wallet::indy_wallet::IndySdkWallet;
 use crate::utils;
@@ -406,7 +407,7 @@ impl SetupProfile {
         let wallet = IndySdkWallet::new(wallet_handle);
 
         let profile: Arc<dyn Profile> =
-            Arc::new(ModularWalletProfile::new(Arc::new(wallet), LedgerPoolConfig { genesis_file_path }).unwrap());
+            Arc::new(ModularLibsProfile::new(Arc::new(wallet), LedgerPoolConfig { genesis_file_path }).unwrap());
 
         Arc::clone(&profile)
             .inject_anoncreds()
