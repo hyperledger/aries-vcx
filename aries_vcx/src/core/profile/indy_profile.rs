@@ -10,34 +10,36 @@ use crate::plugins::{
 
 use super::profile::Profile;
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Debug)]
 pub struct IndySdkProfile {
-    pub indy_wallet_handle: WalletHandle,
-    pub indy_pool_handle: PoolHandle,
+    wallet: Arc<dyn BaseWallet>,
+    ledger: Arc<dyn BaseLedger>,
+    anoncreds: Arc<dyn BaseAnonCreds>,
 }
 
 impl IndySdkProfile {
     pub fn new(indy_wallet_handle: WalletHandle, indy_pool_handle: PoolHandle) -> Self {
+        let wallet = Arc::new(IndySdkWallet::new(indy_wallet_handle));
+        let ledger = Arc::new(IndySdkLedger::new(indy_wallet_handle, indy_pool_handle));
+        let anoncreds = Arc::new(IndySdkAnonCreds::new(indy_wallet_handle, indy_pool_handle));
         IndySdkProfile {
-            indy_wallet_handle,
-            indy_pool_handle,
+            wallet,
+            ledger,
+            anoncreds,
         }
     }
 }
 
 impl Profile for IndySdkProfile {
     fn inject_ledger(self: Arc<Self>) -> Arc<dyn BaseLedger> {
-        // TODO - future -we should lazy eval and avoid creating a new instance each time
-        Arc::new(IndySdkLedger::new(self))
+        Arc::clone(&self.ledger)
     }
 
     fn inject_anoncreds(self: Arc<Self>) -> Arc<dyn BaseAnonCreds> {
-        // TODO - future -we should lazy eval and avoid creating a new instance each time
-        Arc::new(IndySdkAnonCreds::new(self))
+        Arc::clone(&self.anoncreds)
     }
 
     fn inject_wallet(&self) -> Arc<dyn BaseWallet> {
-        // TODO - future -we should lazy eval and avoid creating a new instance each time
-        Arc::new(IndySdkWallet::new(self.indy_wallet_handle))
+        Arc::clone(&self.wallet)
     }
 }
