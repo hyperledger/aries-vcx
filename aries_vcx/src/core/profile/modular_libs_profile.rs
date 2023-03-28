@@ -38,7 +38,8 @@ impl Profile for ModularLibsProfile {
 
     fn inject_anoncreds(self: Arc<Self>) -> Arc<dyn BaseAnonCreds> {
         // todo - in the future we should lazy eval and avoid creating a new instance each time
-        Arc::new(IndyCredxAnonCreds::new(self))
+        let wallet = Arc::clone(&self.wallet);
+        Arc::new(IndyCredxAnonCreds::new(wallet))
     }
 
     fn inject_wallet(&self) -> Arc<dyn BaseWallet> {
