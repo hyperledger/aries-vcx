@@ -3,9 +3,9 @@
 pub mod test_utils {
     use std::sync::Arc;
 
-    use aries_vcx::core::profile::indy_profile::IndySdkProfile;
     use aries_vcx::core::profile::modular_libs_profile::ModularLibsProfile;
     use aries_vcx::core::profile::profile::Profile;
+    use aries_vcx::core::profile::vdrtools_profile::VdrtoolsProfile;
     use aries_vcx::handlers::revocation_notification::receiver::RevocationNotificationReceiver;
     use aries_vcx::handlers::revocation_notification::sender::RevocationNotificationSender;
     use aries_vcx::plugins::wallet::base_wallet::BaseWallet;
@@ -159,7 +159,7 @@ pub mod test_utils {
             create_wallet_with_master_secret(&config_wallet).await.unwrap();
             let wallet_handle = open_wallet(&config_wallet).await.unwrap();
 
-            let indy_profile = IndySdkProfile::new(wallet_handle, pool_handle);
+            let indy_profile = VdrtoolsProfile::new(wallet_handle, pool_handle);
             let profile: Arc<dyn Profile> = Arc::new(indy_profile);
 
             let config_issuer = wallet_configure_issuer(wallet_handle, enterprise_seed).await.unwrap();
@@ -502,7 +502,7 @@ pub mod test_utils {
         ) -> (Arc<dyn Profile>, Arc<dyn Fn() -> BoxFuture<'static, ()>>) {
             let (wallet_handle, config_wallet) = Alice::setup_indy_wallet().await;
 
-            let indy_profile = IndySdkProfile::new(wallet_handle, pool_handle);
+            let indy_profile = VdrtoolsProfile::new(wallet_handle, pool_handle);
 
             (
                 Arc::new(indy_profile),

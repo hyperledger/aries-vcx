@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use aries_vcx::{
     agency_client::{agency_client::AgencyClient, configuration::AgentProvisionConfig},
-    core::profile::{indy_profile::IndySdkProfile, profile::Profile},
+    core::profile::{profile::Profile, vdrtools_profile::VdrtoolsProfile},
     global::settings::init_issuer_config,
     indy::{
         ledger::pool::{create_pool_ledger_config, open_pool_ledger, PoolConfigBuilder},
@@ -86,7 +86,7 @@ impl Agent {
             .await
             .unwrap();
 
-        let indy_profile = IndySdkProfile::new(wallet_handle, pool_handle);
+        let indy_profile = VdrtoolsProfile::new(wallet_handle, pool_handle);
         let profile: Arc<dyn Profile> = Arc::new(indy_profile);
         let wallet = profile.inject_wallet();
 

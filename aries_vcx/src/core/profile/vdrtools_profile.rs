@@ -11,18 +11,18 @@ use crate::plugins::{
 use super::profile::Profile;
 
 #[derive(Debug)]
-pub struct IndySdkProfile {
+pub struct VdrtoolsProfile {
     wallet: Arc<dyn BaseWallet>,
     ledger: Arc<dyn BaseLedger>,
     anoncreds: Arc<dyn BaseAnonCreds>,
 }
 
-impl IndySdkProfile {
+impl VdrtoolsProfile {
     pub fn new(indy_wallet_handle: WalletHandle, indy_pool_handle: PoolHandle) -> Self {
         let wallet = Arc::new(IndySdkWallet::new(indy_wallet_handle));
         let ledger = Arc::new(IndySdkLedger::new(indy_wallet_handle, indy_pool_handle));
         let anoncreds = Arc::new(IndySdkAnonCreds::new(indy_wallet_handle, indy_pool_handle));
-        IndySdkProfile {
+        VdrtoolsProfile {
             wallet,
             ledger,
             anoncreds,
@@ -30,7 +30,7 @@ impl IndySdkProfile {
     }
 }
 
-impl Profile for IndySdkProfile {
+impl Profile for VdrtoolsProfile {
     fn inject_ledger(self: Arc<Self>) -> Arc<dyn BaseLedger> {
         Arc::clone(&self.ledger)
     }

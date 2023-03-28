@@ -11,9 +11,9 @@ use agency_client::agency_client::AgencyClient;
 use agency_client::configuration::AgentProvisionConfig;
 use agency_client::testing::mocking::{disable_agency_mocks, enable_agency_mocks, AgencyMockDecrypted};
 
-use crate::core::profile::indy_profile::IndySdkProfile;
 use crate::core::profile::modular_libs_profile::ModularLibsProfile;
 use crate::core::profile::profile::Profile;
+use crate::core::profile::vdrtools_profile::VdrtoolsProfile;
 use crate::global::settings;
 use crate::global::settings::init_issuer_config;
 use crate::global::settings::{disable_indy_mocks, enable_indy_mocks, set_test_configs};
@@ -386,7 +386,7 @@ impl SetupProfile {
         .unwrap();
         let pool_handle = open_test_pool().await;
 
-        let profile: Arc<dyn Profile> = Arc::new(IndySdkProfile::new(wallet_handle, pool_handle.clone()));
+        let profile: Arc<dyn Profile> = Arc::new(VdrtoolsProfile::new(wallet_handle, pool_handle.clone()));
 
         async fn indy_teardown(pool_handle: i32) {
             delete_test_pool(pool_handle.clone()).await;
