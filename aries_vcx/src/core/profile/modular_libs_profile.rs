@@ -17,29 +17,26 @@ use super::profile::Profile;
 #[derive(Debug)]
 pub struct ModularLibsProfile {
     wallet: Arc<dyn BaseWallet>,
-    ledger_pool: Arc<IndyVdrLedgerPool>,
+    ledger: Arc<dyn BaseLedger>,
+    anoncreds: Arc<dyn BaseAnonCreds>,
 }
 
 impl ModularLibsProfile {
     pub fn new(wallet: Arc<dyn BaseWallet>, ledger_pool_config: LedgerPoolConfig) -> VcxResult<Self> {
         let ledger_pool = Arc::new(IndyVdrLedgerPool::new(ledger_pool_config)?);
-        Ok(ModularLibsProfile { wallet, ledger_pool })
+        let ledger = Arc::new(IndyVdrLedger::new(Arc::clone(&wallet), ledger_pool));
+        let anoncreds = Arc::new(IndyCredxAnonCreds::new(Arc::clone(&wallet)));
+        Ok(ModularLibsProfile { wallet, ledger, anoncreds })
     }
 }
 
 impl Profile for ModularLibsProfile {
     fn inject_ledger(self: Arc<Self>) -> Arc<dyn BaseLedger> {
-        // todo - in the future we should lazy eval and avoid creating a new instance each time
-
-        let ledger_pool = Arc::clone(&self.ledger_pool);
-        let wallet = Arc::clone(&self.wallet);
-        Arc::new(IndyVdrLedger::new(wallet, ledger_pool))
+        Arc::clone(&self.ledger)
     }
 
     fn inject_anoncreds(self: Arc<Self>) -> Arc<dyn BaseAnonCreds> {
-        // todo - in the future we should lazy eval and avoid creating a new instance each time
-        let wallet = Arc::clone(&self.wallet);
-        Arc::new(IndyCredxAnonCreds::new(wallet))
+        Arc::clone(&self.anoncreds)
     }
 
     fn inject_wallet(&self) -> Arc<dyn BaseWallet> {

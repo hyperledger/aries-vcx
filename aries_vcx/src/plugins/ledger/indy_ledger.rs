@@ -10,6 +10,7 @@ use crate::indy;
 
 use super::base_ledger::BaseLedger;
 
+#[derive(Debug)]
 pub struct IndySdkLedger {
     profile: Arc<IndySdkProfile>,
 }

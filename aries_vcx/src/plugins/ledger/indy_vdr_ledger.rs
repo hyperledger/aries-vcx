@@ -1,6 +1,7 @@
 use indy_vdr as vdr;
 use std::collections::hash_map::RandomState;
 use std::collections::HashMap;
+use std::fmt::{Debug, Formatter};
 use std::sync::Arc;
 use vdr::ledger::requests::schema::{AttributeNames, Schema, SchemaV1};
 
@@ -51,8 +52,8 @@ impl IndyVdrLedgerPool {
     }
 }
 
-impl std::fmt::Debug for IndyVdrLedgerPool {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Debug for IndyVdrLedgerPool {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("IndyVdrLedgerPool")
             .field("runner", &"PoolRunner")
             .finish()
@@ -183,6 +184,12 @@ impl IndyVdrLedger {
         Ok(self
             .request_builder()?
             .build_attrib_request(&identifier, &dest, None, attrib_json.as_ref(), None)?)
+    }
+}
+
+impl Debug for IndyVdrLedger {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "IndyVdrLedger instance")
     }
 }
 
