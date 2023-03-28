@@ -643,7 +643,7 @@ pub extern "C" fn vcx_proof_get_request_msg(
 pub extern "C" fn vcx_get_proof_msg(
     command_handle: CommandHandle,
     proof_handle: u32,
-    cb: Option<extern "C" fn(xcommand_handle: CommandHandle, err: u32, proof_state: u32, response_data: *const c_char)>,
+    cb: Option<extern "C" fn(xcommand_handle: CommandHandle, err: u32, response_data: *const c_char)>,
 ) -> u32 {
     info!("vcx_get_proof_msg >>>");
 
@@ -669,12 +669,7 @@ pub extern "C" fn vcx_get_proof_msg(
                     source_id
                 );
                 let msg = CStringUtils::string_to_cstring(proof_msg);
-                cb(
-                    command_handle,
-                    SUCCESS_ERR_CODE,
-                    proof::get_presentation_verification_status(proof_handle).unwrap_or(0),
-                    msg.as_ptr(),
-                );
+                cb(command_handle, SUCCESS_ERR_CODE, msg.as_ptr());
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -682,12 +677,7 @@ pub extern "C" fn vcx_get_proof_msg(
                     "vcx_get_proof_cb(command_handle: {}, proof_handle: {}, rc: {}, proof: {}) source_id: {}",
                     command_handle, proof_handle, err, "null", source_id
                 );
-                cb(
-                    command_handle,
-                    err.into(),
-                    proof::get_presentation_verification_status(proof_handle).unwrap_or(0),
-                    ptr::null_mut(),
-                );
+                cb(command_handle, err.into(), ptr::null_mut());
             }
         };
         Ok(())
@@ -984,7 +974,7 @@ mod tests {
 
         let proof_handle = create_proof_util().unwrap();
 
-        let cb = return_types_u32::Return_U32_U32_STR::new().unwrap();
+        let cb = return_types_u32::Return_U32_STR::new().unwrap();
         assert_eq!(
             vcx_get_proof_msg(cb.command_handle, proof_handle, Some(cb.get_callback())),
             SUCCESS_ERR_CODE

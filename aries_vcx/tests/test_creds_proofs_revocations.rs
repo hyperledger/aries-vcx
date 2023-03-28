@@ -12,7 +12,8 @@ mod integration_tests {
     use std::time::Duration;
 
     use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
-    use aries_vcx::protocols::proof_presentation::verifier::state_machine::RevocationStatus;
+    use aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;
+    use aries_vcx::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
     use aries_vcx::utils::devsetup::*;
 
     use crate::utils::devsetup_agent::test_utils::{create_test_alice_instance, Faber};
@@ -89,11 +90,11 @@ mod integration_tests {
                 )
                 .await
                 .unwrap();
+            assert_eq!(verifier.get_state(), VerifierState::Finished);
             assert_eq!(
-                ProofStateType::from(verifier.get_presentation_status()),
-                ProofStateType::ProofInvalid
+                verifier.get_verification_status(),
+                PresentationVerificationStatus::Invalid
             );
-            assert_eq!(verifier.get_revocation_status(), Some(RevocationStatus::Revoked));
         })
         .await;
     }
@@ -195,9 +196,10 @@ mod integration_tests {
                 )
                 .await
                 .unwrap();
+            assert_eq!(verifier.get_state(), VerifierState::Finished);
             assert_eq!(
-                ProofStateType::from(verifier.get_presentation_status()),
-                ProofStateType::ProofValidated
+                verifier.get_verification_status(),
+                PresentationVerificationStatus::Valid
             );
 
             assert!(!issuer_credential.is_revoked(&institution.profile).await.unwrap());
@@ -223,9 +225,10 @@ mod integration_tests {
                 )
                 .await
                 .unwrap();
+            assert_eq!(verifier.get_state(), VerifierState::Finished);
             assert_eq!(
-                ProofStateType::from(verifier.get_presentation_status()),
-                ProofStateType::ProofInvalid
+                verifier.get_verification_status(),
+                PresentationVerificationStatus::Invalid
             );
 
             assert!(issuer_credential.is_revoked(&institution.profile).await.unwrap());
@@ -350,18 +353,18 @@ mod integration_tests {
             )
             .await
             .unwrap();
-        assert_eq!(
-            ProofStateType::from(verifier1.get_presentation_status()),
-            ProofStateType::ProofValidated
-        );
-        assert_eq!(
-            ProofStateType::from(verifier2.get_presentation_status()),
-            ProofStateType::ProofValidated
-        );
-        assert_eq!(
-            ProofStateType::from(verifier3.get_presentation_status()),
-            ProofStateType::ProofValidated
-        );
+            assert_eq!(
+                verifier1.get_verification_status(),
+                PresentationVerificationStatus::Valid
+            );
+            assert_eq!(
+                verifier2.get_verification_status(),
+                PresentationVerificationStatus::Valid
+            );
+            assert_eq!(
+                verifier3.get_verification_status(),
+                PresentationVerificationStatus::Valid
+            );
 
         // Publish revocations and verify the two are invalid, third still valid
         publish_revocation(&mut institution, rev_reg_id.clone().unwrap()).await;
@@ -428,16 +431,18 @@ mod integration_tests {
             .await
             .unwrap();
         assert_eq!(
-            ProofStateType::from(verifier1.get_presentation_status()),
-            ProofStateType::ProofInvalid
+            verifier1.get_verification_status(),
+            PresentationVerificationStatus::Invalid
         );
+
         assert_eq!(
-            ProofStateType::from(verifier2.get_presentation_status()),
-            ProofStateType::ProofInvalid
+            verifier2.get_verification_status(),
+            PresentationVerificationStatus::Invalid
         );
+
         assert_eq!(
-            ProofStateType::from(verifier3.get_presentation_status()),
-            ProofStateType::ProofValidated
+            verifier3.get_verification_status(),
+            PresentationVerificationStatus::Valid
         );
         }).await;
     }
@@ -528,9 +533,10 @@ mod integration_tests {
                 )
                 .await
                 .unwrap();
+            assert_eq!(verifier.get_state(), VerifierState::Finished);
             assert_eq!(
-                ProofStateType::from(verifier.get_presentation_status()),
-                ProofStateType::ProofValidated
+                verifier.get_verification_status(),
+                PresentationVerificationStatus::Valid
             );
         })
         .await;
@@ -596,10 +602,14 @@ mod integration_tests {
             .update_state(&verifier.profile, &verifier.agency_client, &verifier_to_consumer)
             .await
             .unwrap();
-        assert_eq!(
-            ProofStateType::from(proof_verifier.get_presentation_status()),
-            ProofStateType::ProofInvalid
-        );
+            assert_eq!(
+                proof_verifier.get_state(),
+                VerifierState::Finished
+            );
+            assert_eq!(
+                proof_verifier.get_verification_status(),
+                PresentationVerificationStatus::Invalid
+            );
 
         let mut proof_verifier = verifier_create_proof_and_send_request(
             &mut verifier,
@@ -616,8 +626,8 @@ mod integration_tests {
             .await
             .unwrap();
         assert_eq!(
-            ProofStateType::from(proof_verifier.get_presentation_status()),
-            ProofStateType::ProofValidated
+            proof_verifier.get_verification_status(),
+            PresentationVerificationStatus::Valid
         );
 
         assert!(issuer_credential1.is_revoked(&issuer.profile).await.unwrap());
@@ -686,8 +696,8 @@ mod integration_tests {
             .await
             .unwrap();
         assert_eq!(
-            ProofStateType::from(proof_verifier.get_presentation_status()),
-            ProofStateType::ProofValidated
+            proof_verifier.get_verification_status(),
+            PresentationVerificationStatus::Valid
         );
 
         let mut proof_verifier = verifier_create_proof_and_send_request(
@@ -705,8 +715,8 @@ mod integration_tests {
             .await
             .unwrap();
         assert_eq!(
-            ProofStateType::from(proof_verifier.get_presentation_status()),
-            ProofStateType::ProofInvalid
+            proof_verifier.get_verification_status(),
+            PresentationVerificationStatus::Invalid
         );
 
         assert!(!issuer_credential1.is_revoked(&issuer.profile).await.unwrap());
@@ -771,9 +781,10 @@ mod integration_tests {
             .await
             .unwrap();
         assert_eq!(
-            ProofStateType::from(proof_verifier.get_presentation_status()),
-            ProofStateType::ProofValidated
+            proof_verifier.get_verification_status(),
+            PresentationVerificationStatus::Valid
         );
+
 
         let mut proof_verifier = verifier_create_proof_and_send_request(
             &mut verifier,
@@ -790,8 +801,8 @@ mod integration_tests {
             .await
             .unwrap();
         assert_eq!(
-            ProofStateType::from(proof_verifier.get_presentation_status()),
-            ProofStateType::ProofValidated
+            proof_verifier.get_verification_status(),
+            PresentationVerificationStatus::Valid
         );
 
         assert!(!issuer_credential1.is_revoked(&issuer.profile).await.unwrap());
@@ -861,8 +872,8 @@ mod integration_tests {
             .await
             .unwrap();
         assert_eq!(
-            ProofStateType::from(proof_verifier.get_presentation_status()),
-            ProofStateType::ProofInvalid
+            proof_verifier.get_verification_status(),
+            PresentationVerificationStatus::Invalid
         );
 
         let mut proof_verifier = verifier_create_proof_and_send_request(
@@ -880,8 +891,8 @@ mod integration_tests {
             .await
             .unwrap();
         assert_eq!(
-            ProofStateType::from(proof_verifier.get_presentation_status()),
-            ProofStateType::ProofValidated
+            proof_verifier.get_verification_status(),
+            PresentationVerificationStatus::Valid
         );
 
         assert!(issuer_credential1.is_revoked(&issuer.profile).await.unwrap());
@@ -951,8 +962,8 @@ mod integration_tests {
             .await
             .unwrap();
         assert_eq!(
-            ProofStateType::from(proof_verifier.get_presentation_status()),
-            ProofStateType::ProofValidated
+            proof_verifier.get_verification_status(),
+            PresentationVerificationStatus::Valid
         );
 
         let mut proof_verifier = verifier_create_proof_and_send_request(
@@ -970,8 +981,8 @@ mod integration_tests {
             .await
             .unwrap();
         assert_eq!(
-            ProofStateType::from(proof_verifier.get_presentation_status()),
-            ProofStateType::ProofInvalid
+            proof_verifier.get_verification_status(),
+            PresentationVerificationStatus::Invalid
         );
 
         assert!(!issuer_credential1.is_revoked(&issuer.profile).await.unwrap());

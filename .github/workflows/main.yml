@@ -20,7 +20,7 @@ env:
   DOCKER_REPO_LOCAL_ANDROID: android-test
 
   RUST_TOOLCHAIN_VERSON: 1.64.0
-  NODE_VERSION: 18
+  NODE_VERSION: 18.x
 
 jobs:
   verify-code-formatting:
@@ -203,9 +203,9 @@ jobs:
           branch-main: ${{ env.MAIN_BRANCH }}
           docker-repo-local-name: ${{ env.DOCKER_REPO_LOCAL_ANDROID }}
 
-#
-#  #  ##########################################################################################
-#  #  ##############################   DOCKER PUBLISH   ########################################
+
+  ##########################################################################################
+  ##############################   DOCKER PUBLISH   ########################################
 
   publish-docker-libvcx:
     runs-on: ubuntu-20.04
@@ -233,8 +233,8 @@ jobs:
           docker-img: ${{ env.DOCKER_IMG_CACHED }}
           publish-version: ${{ env.PUBLISH_VERSION }}
 
-#  #  ##########################################################################################
-#  #  ###############################    CODECOV    ###########################################
+  ##########################################################################################
+  ###############################    CODECOV    ###########################################
 
   code-coverage-aries-vcx-unit-tests:
     needs: workflow-setup
@@ -326,8 +326,8 @@ jobs:
           name: code-coverage-report-unit-aries-vcx
           path: /tmp/artifacts/coverage
 
-#  #  ##########################################################################################
-#  #  ###############################    TESTING    ###########################################
+  ##########################################################################################
+  ###############################    TESTING    ###########################################
 
   test-unit-workspace:
     needs: workflow-setup
@@ -622,8 +622,8 @@ jobs:
           name: libvcx.dylib
           path: target/release/libvcx.dylib
 
-#  #  ##########################################################################################
-#  #  ############################   NPMJS PUBLISHING   #######################################
+  ##########################################################################################
+  ############################   NPMJS PUBLISHING   #######################################
 
   publish-node-wrapper:
     runs-on: ubuntu-20.04
@@ -635,6 +635,7 @@ jobs:
       - test-integration-aries-vcx-mysql
       - test-node-wrapper
       - test-integration-node-wrapper
+      - publish-napi
     env:
       PUBLISH_VERSION: ${{needs.workflow-setup.outputs.PUBLISH_VERSION}}
     steps:
@@ -643,7 +644,7 @@ jobs:
       - name: Use Node.js 18
         uses: actions/setup-node@v3
         with:
-          node-version: 18.x
+          node-version: ${{ env.NODE_VERSION }}
       - name: "Run tests"
         run: |
           if [[ "$PUBLISH_VERSION" ]]
@@ -663,18 +664,18 @@ jobs:
       - test-integration-aries-vcx-mysql
       - test-node-wrapper
       - test-integration-node-wrapper
+      - publish-napi
+      - publish-node-wrapper
     env:
       NPMJS_TOKEN: ${{ secrets.NPMJS_TOKEN }}
       PUBLISH_VERSION: ${{needs.workflow-setup.outputs.PUBLISH_VERSION}}
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
-      - name: "Docker Login"
-        uses: azure/docker-login@v1
+      - name: Use Node.js 18
+        uses: actions/setup-node@v3
         with:
-          login-server: ${{ env.URL_DOCKER_REGISTRY }}
-          username: $GITHUB_ACTOR
-          password: ${{ secrets.GITHUB_TOKEN }}
+          node-version: ${{ env.NODE_VERSION }}
       - name: "Release agent-core package"
         run: |
           if [[ "$PUBLISH_VERSION" ]]
@@ -763,8 +764,8 @@ jobs:
           npmjs-token: ${{ secrets.NPMJS_TOKEN }}
           node-version: ${{ env.NODE_VERSION }}
 
-  #  ##########################################################################################
-  #  ##############################      RELEASE      #########################################
+  ##########################################################################################
+  ##############################      RELEASE      #########################################
 
   make-release:
     runs-on: ubuntu-20.04

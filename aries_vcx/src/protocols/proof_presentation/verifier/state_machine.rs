@@ -12,6 +12,7 @@ use crate::protocols::proof_presentation::verifier::states::initial::InitialVeri
 use crate::protocols::proof_presentation::verifier::states::presentation_proposal_received::PresentationProposalReceivedState;
 use crate::protocols::proof_presentation::verifier::states::presentation_request_sent::PresentationRequestSentState;
 use crate::protocols::proof_presentation::verifier::states::presentation_request_set::PresentationRequestSetState;
+use crate::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
 use crate::protocols::proof_presentation::verifier::verify_thread_id;
 use crate::protocols::SendClosure;
 use messages::a2a::{A2AMessage, MessageId};
@@ -21,6 +22,7 @@ use messages::protocols::proof_presentation::presentation_ack::PresentationAck;
 use messages::protocols::proof_presentation::presentation_proposal::PresentationProposal;
 use messages::protocols::proof_presentation::presentation_request::PresentationRequest;
 use messages::status::Status;
+use strum_macros::{AsRefStr, EnumString};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct VerifierSM {
@@ -64,12 +66,6 @@ impl Default for VerifierFullState {
     fn default() -> Self {
         Self::Initial(InitialVerifierState::default())
     }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub enum RevocationStatus {
-    NonRevoked,
-    Revoked,
 }
 
 fn build_verification_ack(thread_id: &str) -> PresentationAck {
@@ -220,11 +216,13 @@ impl VerifierSM {
                 let ack = build_verification_ack(&self.thread_id);
                 send_message(A2AMessage::PresentationAck(ack)).await?;
                 match verification_result {
-                    Ok(()) => VerifierFullState::Finished((state, presentation, RevocationStatus::NonRevoked).into()),
+                    Ok(()) => {
+                        VerifierFullState::Finished((state, presentation, PresentationVerificationStatus::Valid).into())
+                    }
                     Err(err) => match err.kind() {
-                        AriesVcxErrorKind::InvalidProof => {
-                            VerifierFullState::Finished((state, presentation, RevocationStatus::Revoked).into())
-                        }
+                        AriesVcxErrorKind::InvalidProof => VerifierFullState::Finished(
+                            (state, presentation, PresentationVerificationStatus::Invalid).into(),
+                        ),
                         _ => {
                             let problem_report = build_problem_report_msg(Some(err.to_string()), &self.thread_id);
                             VerifierFullState::Finished((state, problem_report).into())
@@ -394,6 +392,7 @@ impl VerifierSM {
     }
 
     pub fn get_state(&self) -> VerifierState {
+        warn!("get_state >>> {:?}", self.state);
         match self.state {
             VerifierFullState::Initial(_) => VerifierState::Initial,
             VerifierFullState::PresentationRequestSet(_) => VerifierState::PresentationRequestSet,
@@ -416,32 +415,10 @@ impl VerifierSM {
         }
     }
 
-    pub fn presentation_status(&self) -> Status {
+    pub fn get_verification_status(&self) -> PresentationVerificationStatus {
         match self.state {
-            VerifierFullState::Finished(ref state) => {
-                match &state.status {
-                    Status::Success => {
-                        match state.revocation_status {
-                            Some(RevocationStatus::NonRevoked) => Status::Success,
-                            None => Status::Success, // for backward compatibility
-                            Some(RevocationStatus::Revoked) => {
-                                let problem_report = ProblemReport::create()
-                                    .set_comment(Some(String::from("Revoked credential was used.")));
-                                Status::Failed(problem_report)
-                            }
-                        }
-                    }
-                    _ => state.status.clone(),
-                }
-            }
-            _ => Status::Undefined,
-        }
-    }
-
-    pub fn get_revocation_status(&self) -> Option<RevocationStatus> {
-        match self.state {
-            VerifierFullState::Finished(ref state) => state.revocation_status.clone(),
-            _ => None,
+            VerifierFullState::Finished(ref state) => state.verification_status.clone(),
+            _ => PresentationVerificationStatus::Unavailable,
         }
     }
 
@@ -494,6 +471,8 @@ impl VerifierSM {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
+    use std::str::FromStr;
+
     use crate::common::proofs::proof_request::test_utils::_presentation_request_data;
     use crate::common::test_utils::mock_profile;
     use crate::test::source_id;
@@ -788,8 +767,11 @@ pub mod unit_tests {
                 .await
                 .unwrap();
 
-            assert_match!(VerifierFullState::Finished(_), verifier_sm.state);
-            assert_match!(Status::Declined(_), verifier_sm.presentation_status());
+            assert_match!(VerifierState::Failed, verifier_sm.get_state());
+            assert_match!(
+                PresentationVerificationStatus::Unavailable,
+                verifier_sm.get_verification_status()
+            );
         }
 
         #[tokio::test]
@@ -839,7 +821,10 @@ pub mod unit_tests {
                 .unwrap();
 
             assert_match!(VerifierFullState::Finished(_), verifier_sm.state);
-            assert_eq!(Status::Success, verifier_sm.presentation_status());
+            assert_eq!(
+                PresentationVerificationStatus::Valid,
+                verifier_sm.get_verification_status()
+            );
         }
 
         #[tokio::test]
@@ -859,9 +844,11 @@ pub mod unit_tests {
                 .await
                 .unwrap();
 
-            assert_match!(VerifierFullState::Finished(_), verifier_sm.state);
-            assert_eq!(VerifierState::Finished, verifier_sm.get_state());
-            assert_match!(Status::Failed(_), verifier_sm.presentation_status());
+            assert_match!(VerifierState::Finished, verifier_sm.get_state());
+            assert_match!(
+                PresentationVerificationStatus::Invalid,
+                verifier_sm.get_verification_status()
+            );
         }
 
         #[tokio::test]
@@ -918,14 +905,14 @@ pub mod unit_tests {
                 .await
                 .unwrap();
 
-            assert_match!(VerifierFullState::Finished(_), verifier_sm.state);
-            assert_eq!(Status::Failed(_problem_report()), verifier_sm.presentation_status());
+            assert_match!(VerifierState::Failed, verifier_sm.get_state());
         }
 
         #[tokio::test]
         #[cfg(feature = "general_test")]
         async fn test_prover_handle_messages_from_presentation_finished_state() {
             let _setup = SetupMocks::init();
+            let _mock_builder = MockBuilder::init().set_mock_result_for_validate_indy_proof(Ok(true));
 
             let mut verifier_sm = _verifier_sm_from_request();
             verifier_sm = verifier_sm.mark_presentation_request_msg_sent().unwrap();
@@ -946,7 +933,7 @@ pub mod unit_tests {
                 )
                 .await
                 .unwrap();
-            assert_match!(VerifierFullState::Finished(_), verifier_sm.state);
+            assert_match!(VerifierState::Finished, verifier_sm.get_state());
 
             verifier_sm = verifier_sm
                 .step(
@@ -956,7 +943,7 @@ pub mod unit_tests {
                 )
                 .await
                 .unwrap();
-            assert_match!(VerifierFullState::Finished(_), verifier_sm.state);
+            assert_match!(VerifierState::Finished, verifier_sm.get_state());
         }
     }
 

@@ -29,7 +29,7 @@ impl BaseLedger for MockLedger {
         // not needed yet
         Err(AriesVcxError::from_msg(
             AriesVcxErrorKind::UnimplementedFeature,
-            "unimplemented mock method",
+            "unimplemented mock method: submit_request",
         ))
     }
 
@@ -49,7 +49,7 @@ impl BaseLedger for MockLedger {
         // not needed yet
         Err(AriesVcxError::from_msg(
             AriesVcxErrorKind::UnimplementedFeature,
-            "unimplemented mock method",
+            "unimplemented mock method: get_nym",
         ))
     }
 

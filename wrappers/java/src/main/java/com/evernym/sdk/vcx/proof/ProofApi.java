@@ -98,11 +98,11 @@ public class ProofApi extends VcxJava.API {
     }
 
     private static Callback vcxGetProofCB = new Callback() {
-        public void callback(int commandHandle, int err, int proofState, String responseData){
-            logger.debug("callback() called with: commandHandle = [" + commandHandle + "], err = [" + err + "], proofState = [" + proofState + "], responseData = [****]");
+        public void callback(int commandHandle, int err, String  presentationMsg){
+            logger.debug("callback() called with: commandHandle = [" + commandHandle + "], err = [" + err + "], responseData = [****]");
             CompletableFuture<GetProofResult> future = (CompletableFuture<GetProofResult>) removeFuture(commandHandle);
             if(!checkCallback(future,err)) return;
-            GetProofResult result = new GetProofResult(proofState,responseData);
+            GetProofResult result = new GetProofResult(presentationMsg);
             future.complete(result);
         }
     };

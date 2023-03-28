@@ -2229,18 +2229,18 @@ void checkErrorAndComplete(vcx_error_t ret, vcx_command_handle_t cmdHandle, void
 }
 
 - (void)verifierGetProofMessage:(NSNumber *)proofHandle
-                     completion:(void (^)(NSError *, NSNumber *, NSString *))completion {
+                     completion:(void (^)(NSError *, NSString *))completion {
 
     vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
 
     vcx_error_t ret = vcx_get_proof_msg(
             handle,
             proofHandle.unsignedIntValue,
-            &VcxWrapperCbResponseUnsignedIntAndString
+            &VcxWrapperCbResponseString
     );
 
     checkErrorAndComplete(ret, handle, ^{
-        completion([NSError errorFromVcxError:ret], ERROR_RESPONSE_NUMBER, ERROR_RESPONSE_STRING);
+        completion([NSError errorFromVcxError:ret], ERROR_RESPONSE_STRING);
     });
 }
 
