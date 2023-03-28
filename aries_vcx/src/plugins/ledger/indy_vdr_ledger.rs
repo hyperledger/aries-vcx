@@ -120,10 +120,7 @@ impl IndyVdrLedger {
 
         let signer_verkey = self.wallet.key_for_local_did(submitter_did).await?;
 
-        let signature = self
-            .wallet
-            .sign(&signer_verkey, to_sign.as_bytes())
-            .await?;
+        let signature = self.wallet.sign(&signer_verkey, to_sign.as_bytes()).await?;
 
         request.set_signature(&signature)?;
 

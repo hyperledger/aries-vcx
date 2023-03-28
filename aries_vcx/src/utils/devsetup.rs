@@ -12,7 +12,7 @@ use agency_client::configuration::AgentProvisionConfig;
 use agency_client::testing::mocking::{disable_agency_mocks, enable_agency_mocks, AgencyMockDecrypted};
 
 use crate::core::profile::indy_profile::IndySdkProfile;
-use crate::core::profile::modular_libs_profile::{ModularLibsProfile};
+use crate::core::profile::modular_libs_profile::ModularLibsProfile;
 use crate::core::profile::profile::Profile;
 use crate::global::settings;
 use crate::global::settings::init_issuer_config;

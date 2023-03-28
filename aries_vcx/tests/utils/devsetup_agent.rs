@@ -4,7 +4,7 @@ pub mod test_utils {
     use std::sync::Arc;
 
     use aries_vcx::core::profile::indy_profile::IndySdkProfile;
-    use aries_vcx::core::profile::modular_libs_profile::{ModularLibsProfile};
+    use aries_vcx::core::profile::modular_libs_profile::ModularLibsProfile;
     use aries_vcx::core::profile::profile::Profile;
     use aries_vcx::handlers::revocation_notification::receiver::RevocationNotificationReceiver;
     use aries_vcx::handlers::revocation_notification::sender::RevocationNotificationSender;

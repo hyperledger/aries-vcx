@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use crate::errors::error::VcxResult;
+use crate::plugins::ledger::indy_vdr_ledger::LedgerPoolConfig;
 use crate::plugins::{
     anoncreds::{base_anoncreds::BaseAnonCreds, credx_anoncreds::IndyCredxAnonCreds},
     ledger::{
@@ -9,7 +10,6 @@ use crate::plugins::{
     },
     wallet::base_wallet::BaseWallet,
 };
-use crate::plugins::ledger::indy_vdr_ledger::LedgerPoolConfig;
 
 use super::profile::Profile;
 
@@ -26,7 +26,11 @@ impl ModularLibsProfile {
         let ledger_pool = Arc::new(IndyVdrLedgerPool::new(ledger_pool_config)?);
         let ledger = Arc::new(IndyVdrLedger::new(Arc::clone(&wallet), ledger_pool));
         let anoncreds = Arc::new(IndyCredxAnonCreds::new(Arc::clone(&wallet)));
-        Ok(ModularLibsProfile { wallet, ledger, anoncreds })
+        Ok(ModularLibsProfile {
+            wallet,
+            ledger,
+            anoncreds,
+        })
     }
 }
 
