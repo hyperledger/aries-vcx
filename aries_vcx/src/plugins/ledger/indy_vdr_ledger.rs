@@ -538,7 +538,7 @@ mod unit_tests {
 
         let profile = mock_profile();
         let pool = Arc::new(IndyVdrLedgerPool { runner: None });
-        let ledger: Box<dyn BaseLedger> = Box::new(IndyVdrLedger::new(profile, pool));
+        let ledger: Box<dyn BaseLedger> = Box::new(IndyVdrLedger::new(profile.inject_wallet(), pool));
 
         assert_unimplemented(ledger.endorse_transaction("", "").await);
         assert_unimplemented(ledger.set_endorser("", "", "").await);
