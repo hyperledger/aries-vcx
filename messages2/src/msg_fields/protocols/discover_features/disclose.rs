@@ -15,8 +15,8 @@ pub struct DiscloseContent {
     pub protocols: Vec<ProtocolDescriptor>,
 }
 
-impl DiscloseContent {
-    pub fn new() -> Self {
+impl Default for DiscloseContent {
+    fn default() -> Self {
         let mut protocols = Vec::new();
 
         for entries in PROTOCOL_REGISTRY.clone().into_values() {
@@ -32,14 +32,19 @@ impl DiscloseContent {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub struct DiscloseDecorators {
     #[serde(rename = "~thread")]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub thread: Option<Thread>,
+    pub thread: Thread,
     #[serde(rename = "~timing")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<Timing>,
+}
+
+impl DiscloseDecorators {
+    pub fn new(thread: Thread) -> Self {
+        Self { thread, timing: None }
+    }
 }
 
 #[cfg(test)]
@@ -58,9 +63,9 @@ mod tests {
 
     #[test]
     fn test_minimal_disclose() {
-        let content = DiscloseContent::new();
+        let content = DiscloseContent::default();
 
-        let decorators = DiscloseDecorators::default();
+        let decorators = DiscloseDecorators::new(make_extended_thread());
 
         let expected = json!({
             "protocols": content.protocols
@@ -71,7 +76,7 @@ mod tests {
 
     #[test]
     fn test_extended_disclose() {
-        let mut content = DiscloseContent::new();
+        let mut content = DiscloseContent::default();
         content.protocols.pop();
         content.protocols.pop();
         content.protocols.pop();
@@ -79,8 +84,7 @@ mod tests {
         let dummy_protocol_descriptor = ProtocolDescriptor::new(MaybeKnown::Unknown("test_dummy_pid".to_owned()));
         content.protocols.push(dummy_protocol_descriptor);
 
-        let mut decorators = DiscloseDecorators::default();
-        decorators.thread = Some(make_extended_thread());
+        let mut decorators = DiscloseDecorators::new(make_extended_thread());
         decorators.timing = Some(make_extended_timing());
 
         let expected = json!({

@@ -4,13 +4,15 @@ use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use futures::TryFutureExt;
 
 use agency_client::testing::mocking::AgencyMockDecrypted;
+use messages2::AriesMessage;
+use messages2::msg_fields::protocols::routing::{Forward, ForwardContent};
+use uuid::Uuid;
 
 use crate::errors::error::prelude::*;
 use crate::global::settings;
 use crate::utils::constants;
 use messages::a2a::A2AMessage;
 use messages::diddoc::aries::diddoc::AriesDidDoc;
-use messages::protocols::routing::forward::Forward;
 
 #[derive(Debug)]
 pub struct EncryptionEnvelope(pub Vec<u8>);
@@ -18,7 +20,7 @@ pub struct EncryptionEnvelope(pub Vec<u8>);
 impl EncryptionEnvelope {
     pub async fn create(
         wallet: &Arc<dyn BaseWallet>,
-        message: &A2AMessage,
+        message: &AriesMessage,
         pw_verkey: Option<&str>,
         did_doc: &AriesDidDoc,
     ) -> VcxResult<EncryptionEnvelope> {
@@ -43,14 +45,11 @@ impl EncryptionEnvelope {
 
     async fn encrypt_for_pairwise(
         wallet: &Arc<dyn BaseWallet>,
-        message: &A2AMessage,
+        message: &AriesMessage,
         pw_verkey: Option<&str>,
         did_doc: &AriesDidDoc,
     ) -> VcxResult<Vec<u8>> {
-        let message = match message {
-            A2AMessage::Generic(message_) => message_.to_string(),
-            message => json!(message).to_string(),
-        };
+        let message = json!(message).to_string();
 
         let receiver_keys = json!(did_doc.recipient_keys()?).to_string();
 
@@ -92,7 +91,8 @@ impl EncryptionEnvelope {
         to: &str,
         routing_key: &str,
     ) -> VcxResult<Vec<u8>> {
-        let message = A2AMessage::Forward(Forward::new(to.to_string(), message)?);
+        let content = ForwardContent::new(to.to_string(), message);
+        let message = Forward::new(Uuid::new_v4().to_string(), content);
 
         let message = json!(message).to_string();
         let receiver_keys = json!(vec![routing_key]).to_string();
@@ -138,7 +138,7 @@ impl EncryptionEnvelope {
     pub async fn anon_unpack(
         wallet: &Arc<dyn BaseWallet>,
         payload: Vec<u8>,
-    ) -> VcxResult<(A2AMessage, Option<String>)> {
+    ) -> VcxResult<(AriesMessage, Option<String>)> {
         trace!(
             "EncryptionEnvelope::anon_unpack >>> processing payload of {} bytes",
             payload.len()
@@ -165,7 +165,7 @@ impl EncryptionEnvelope {
         wallet: &Arc<dyn BaseWallet>,
         payload: Vec<u8>,
         expected_vk: &str,
-    ) -> VcxResult<A2AMessage> {
+    ) -> VcxResult<AriesMessage> {
         trace!(
             "EncryptionEnvelope::auth_unpack >>> processing payload of {} bytes, expected_vk: {}",
             payload.len(),

@@ -3,7 +3,6 @@ use serde_json::Value;
 
 use crate::concepts::ack::Ack;
 use crate::concepts::problem_report::ProblemReport as CommonProblemReport;
-use crate::protocols::basic_message::message::BasicMessage;
 use crate::protocols::connection::invite::{PairwiseInvitation, PublicInvitation};
 use crate::protocols::connection::problem_report::ProblemReport as ConnectionProblemReport;
 use crate::protocols::connection::request::Request;
@@ -22,7 +21,6 @@ use crate::protocols::proof_presentation::presentation_proposal::PresentationPro
 use crate::protocols::proof_presentation::presentation_request::PresentationRequest;
 use crate::protocols::revocation_notification::revocation_ack::RevocationAck;
 use crate::protocols::revocation_notification::revocation_notification::RevocationNotification;
-use crate::protocols::routing::forward::Forward;
 use crate::protocols::trust_ping::ping::Ping;
 use crate::protocols::trust_ping::ping_response::PingResponse;
 
@@ -35,9 +33,6 @@ pub mod protocol_registry;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum A2AMessage {
-    /// routing
-    Forward(Forward),
-
     /// DID Exchange
     ConnectionInvitationPairwise(PairwiseInvitation),
     ConnectionInvitationPublic(PublicInvitation),
@@ -71,9 +66,6 @@ pub enum A2AMessage {
     /// discovery features
     Query(Query),
     Disclose(Disclose),
-
-    /// basic message
-    BasicMessage(BasicMessage),
 
     /// out of band
     OutOfBandInvitation(OutOfBandInvitation),
@@ -110,12 +102,10 @@ impl A2AMessage {
             Self::Disclose(m) => m.from_thread(thread_id),
             Self::OutOfBandHandshakeReuse(m) => m.from_thread(thread_id),
             Self::OutOfBandHandshakeReuseAccepted(m) => m.from_thread(thread_id),
-            Self::Forward(_) => false,
             Self::ConnectionInvitationPairwise(_) => false,
             Self::ConnectionInvitationPublic(_) => false,
             Self::Query(_) => false,
             Self::OutOfBandInvitation(_) => false,
-            Self::BasicMessage(m) => m.from_thread(thread_id),
             Self::Generic(m) => {
                 return match m.as_object() {
                     None => false,
@@ -145,9 +135,6 @@ impl<'de> Deserialize<'de> for A2AMessage {
         };
 
         match (message_type.family, message_type.msg_type.as_str()) {
-            (MessageFamilies::Routing, A2AMessage::FORWARD) => Forward::deserialize(value)
-                .map(A2AMessage::Forward)
-                .map_err(de::Error::custom),
             (MessageFamilies::Connections, A2AMessage::CONNECTION_INVITATION) => {
                 PairwiseInvitation::deserialize(value.clone())
                     .map_or(
@@ -220,9 +207,6 @@ impl<'de> Deserialize<'de> for A2AMessage {
             (MessageFamilies::DiscoveryFeatures, A2AMessage::DISCLOSE) => Disclose::deserialize(value)
                 .map(A2AMessage::Disclose)
                 .map_err(de::Error::custom),
-            (MessageFamilies::Basicmessage, A2AMessage::BASIC_MESSAGE) => BasicMessage::deserialize(value)
-                .map(A2AMessage::BasicMessage)
-                .map_err(de::Error::custom),
             (MessageFamilies::OutOfBand, A2AMessage::OUT_OF_BAND_INVITATION) => OutOfBandInvitation::deserialize(value)
                 .map(A2AMessage::OutOfBandInvitation)
                 .map_err(de::Error::custom),
@@ -270,7 +254,6 @@ impl Serialize for A2AMessage {
         S: Serializer,
     {
         let value = match self {
-            A2AMessage::Forward(msg) => set_a2a_message_type(msg, MessageFamilies::Routing, A2AMessage::FORWARD),
             A2AMessage::ConnectionInvitationPairwise(msg) => {
                 set_a2a_message_type(msg, MessageFamilies::Connections, A2AMessage::CONNECTION_INVITATION)
             }
@@ -330,9 +313,6 @@ impl Serialize for A2AMessage {
             A2AMessage::Query(msg) => set_a2a_message_type(msg, MessageFamilies::DiscoveryFeatures, A2AMessage::QUERY),
             A2AMessage::Disclose(msg) => {
                 set_a2a_message_type(msg, MessageFamilies::DiscoveryFeatures, A2AMessage::DISCLOSE)
-            }
-            A2AMessage::BasicMessage(msg) => {
-                set_a2a_message_type(msg, MessageFamilies::Basicmessage, A2AMessage::BASIC_MESSAGE)
             }
             A2AMessage::OutOfBandInvitation(msg) => {
                 set_a2a_message_type(msg, MessageFamilies::OutOfBand, A2AMessage::OUT_OF_BAND_INVITATION)

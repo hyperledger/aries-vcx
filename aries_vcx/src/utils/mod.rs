@@ -3,7 +3,6 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
-use messages::a2a::A2AMessage;
 use messages::diddoc::aries::diddoc::AriesDidDoc;
 
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
@@ -70,7 +69,7 @@ pub async fn send_message(
     wallet: Arc<dyn BaseWallet>,
     sender_verkey: String,
     did_doc: AriesDidDoc,
-    message: A2AMessage,
+    message: AriesMessage,
 ) -> VcxResult<()> {
     trace!("send_message >>> message: {:?}, did_doc: {:?}", message, &did_doc);
     let EncryptionEnvelope(envelope) =
@@ -84,7 +83,7 @@ pub async fn send_message(
 pub async fn send_message_anonymously(
     wallet: Arc<dyn BaseWallet>,
     did_doc: &AriesDidDoc,
-    message: &A2AMessage,
+    message: &AriesMessage,
 ) -> VcxResult<()> {
     trace!(
         "send_message_anonymously >>> message: {:?}, did_doc: {:?}",

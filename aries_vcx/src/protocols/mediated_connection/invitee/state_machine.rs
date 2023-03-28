@@ -13,15 +13,8 @@ use crate::protocols::mediated_connection::invitee::states::responded::Responded
 use crate::protocols::mediated_connection::pairwise_info::PairwiseInfo;
 use crate::protocols::SendClosureConnection;
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
-use messages::a2a::protocol_registry::ProtocolRegistry;
-use messages::a2a::A2AMessage;
-use messages::concepts::ack::Ack;
 use messages::diddoc::aries::diddoc::AriesDidDoc;
-use messages::protocols::connection::invite::Invitation;
-use messages::protocols::connection::problem_report::{ProblemCode, ProblemReport};
-use messages::protocols::connection::request::Request;
-use messages::protocols::connection::response::SignedResponse;
-use messages::protocols::discovery::disclose::{Disclose, ProtocolDescriptor};
+use messages2::msg_fields::protocols::discover_features::disclose::Disclose;
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct SmConnectionInvitee {
@@ -352,7 +345,7 @@ impl SmConnectionInvitee {
 
     pub fn handle_disclose(self, disclose: Disclose) -> VcxResult<Self> {
         let state = match self.state {
-            InviteeFullState::Completed(state) => InviteeFullState::Completed((state, disclose.protocols).into()),
+            InviteeFullState::Completed(state) => InviteeFullState::Completed((state, disclose.content.protocols).into()),
             _ => self.state,
         };
         Ok(Self { state, ..self })

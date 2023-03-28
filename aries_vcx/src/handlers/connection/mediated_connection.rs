@@ -3,8 +3,20 @@ use std::clone::Clone;
 use std::collections::HashMap;
 use std::sync::Arc;
 
+use chrono::Utc;
 use futures::future::BoxFuture;
 use futures::stream::StreamExt;
+use messages::diddoc::aries::diddoc::AriesDidDoc;
+use messages2::decorators::timing::Timing;
+use messages2::msg_fields::protocols::basic_message::{BasicMessage, BasicMessageContent, BasicMessageDecorators};
+use messages2::msg_fields::protocols::connection::invitation::Invitation;
+use messages2::msg_fields::protocols::connection::request::Request;
+use messages2::msg_fields::protocols::connection::Connection;
+use messages2::msg_fields::protocols::discover_features::disclose::Disclose;
+use messages2::msg_fields::protocols::discover_features::{DiscoverFeatures, ProtocolDescriptor};
+use messages2::msg_fields::protocols::out_of_band::OutOfBand;
+use messages2::msg_fields::protocols::trust_ping::TrustPing;
+use messages2::AriesMessage;
 use serde::de::{Error, MapAccess, Visitor};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
@@ -12,6 +24,7 @@ use serde_json::Value;
 use agency_client::agency_client::AgencyClient;
 use agency_client::api::downloaded_message::DownloadedMessage;
 use agency_client::MessageStatusCode;
+use uuid::Uuid;
 
 use crate::core::profile::profile::Profile;
 use crate::errors::error::prelude::*;
@@ -31,13 +44,6 @@ use crate::protocols::trustping::build_ping_response;
 use crate::protocols::{SendClosure, SendClosureConnection};
 use crate::utils::send_message;
 use crate::utils::serialization::SerializableObjectWithState;
-use messages::a2a::protocol_registry::ProtocolRegistry;
-use messages::a2a::A2AMessage;
-use messages::diddoc::aries::diddoc::AriesDidDoc;
-use messages::protocols::basic_message::message::BasicMessage;
-use messages::protocols::connection::invite::Invitation;
-use messages::protocols::connection::request::Request;
-use messages::protocols::discovery::disclose::{Disclose, ProtocolDescriptor};
 
 #[derive(Clone, PartialEq)]
 pub struct MediatedConnection {
@@ -141,7 +147,7 @@ impl MediatedConnection {
         );
         let mut connection = Self {
             cloud_agent_info: None,
-            connection_sm: SmConnection::Inviter(SmConnectionInviter::new(&request.id.0, pairwise_info)),
+            connection_sm: SmConnection::Inviter(SmConnectionInviter::new(&request.id, pairwise_info)),
             autohop_enabled: true,
         };
         connection.process_request(profile, agency_client, request).await?;
@@ -364,7 +370,7 @@ impl MediatedConnection {
         }
     }
 
-    fn find_message_to_update_state(&self, messages: HashMap<String, A2AMessage>) -> Option<(String, A2AMessage)> {
+    fn find_message_to_update_state(&self, messages: HashMap<String, AriesMessage>) -> Option<(String, AriesMessage)> {
         match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => sm_inviter.find_message_to_update_state(messages),
             SmConnection::Invitee(sm_invitee) => sm_invitee.find_message_to_update_state(messages),
@@ -375,7 +381,7 @@ impl MediatedConnection {
         &mut self,
         profile: &Arc<dyn Profile>,
         agency_client: AgencyClient,
-        message: Option<A2AMessage>,
+        message: Option<AriesMessage>,
     ) -> BoxFuture<'_, VcxResult<()>> {
         let profile = Arc::clone(profile);
         Box::pin(async move {
@@ -409,22 +415,22 @@ impl MediatedConnection {
         Ok(())
     }
 
-    fn find_message_to_handle(&self, messages: HashMap<String, A2AMessage>) -> Option<(String, A2AMessage)> {
+    fn find_message_to_handle(&self, messages: HashMap<String, AriesMessage>) -> Option<(String, AriesMessage)> {
         for (uid, message) in messages {
             match message {
-                A2AMessage::Ping(_)
-                | A2AMessage::PingResponse(_)
-                | A2AMessage::OutOfBandHandshakeReuse(_)
-                | A2AMessage::OutOfBandHandshakeReuseAccepted(_)
-                | A2AMessage::Query(_)
-                | A2AMessage::Disclose(_) => return Some((uid, message)),
+                AriesMessage::TrustPing(TrustPing::Ping(_))
+                | AriesMessage::TrustPing(TrustPing::PingResponse(_))
+                | AriesMessage::OutOfBand(OutOfBand::HandshakeReuse(_))
+                | AriesMessage::OutOfBand(OutOfBand::HandshakeReuseAccepted(_))
+                | AriesMessage::DiscoverFeatures(DiscoverFeatures::Query(_))
+                | AriesMessage::DiscoverFeatures(DiscoverFeatures::Disclose(_)) => return Some((uid, message)),
                 _ => {}
             }
         }
         None
     }
 
-    pub async fn handle_message(&mut self, message: A2AMessage, profile: &Arc<dyn Profile>) -> VcxResult<()> {
+    pub async fn handle_message(&mut self, message: AriesMessage, profile: &Arc<dyn Profile>) -> VcxResult<()> {
         let did_doc = self.their_did_doc().ok_or(AriesVcxError::from_msg(
             AriesVcxErrorKind::NotReady,
             format!(
@@ -434,42 +440,48 @@ impl MediatedConnection {
         ))?;
         let pw_vk = &self.pairwise_info().pw_vk;
         match message {
-            A2AMessage::Ping(ping) => {
-                info!("Answering ping, thread: {}", ping.get_thread_id());
-                if ping.response_requested {
+            AriesMessage::TrustPing(TrustPing::Ping(ping)) => {
+                let thread_id = ping
+                    .decorators
+                    .thread
+                    .as_ref()
+                    .map(|t| t.thid.as_str())
+                    .unwrap_or(ping.id.as_str());
+
+                info!("Answering TrustPing::Ping, thread: {}", thread_id);
+
+                if ping.content.response_requested {
                     send_message(
                         profile.inject_wallet(),
                         pw_vk.to_string(),
                         did_doc.clone(),
-                        build_ping_response(&ping).to_a2a_message(),
+                        build_ping_response(&ping).into(),
                     )
                     .await?;
                 }
             }
-            A2AMessage::OutOfBandHandshakeReuse(handshake_reuse) => {
-                info!(
-                    "Answering OutOfBandHandshakeReuse message, thread: {}",
-                    handshake_reuse.get_thread_id()
-                );
+            AriesMessage::OutOfBand(OutOfBand::HandshakeReuse(handshake_reuse)) => {
+                let thread_id = handshake_reuse.decorators.thread.thid.as_str();
+
+                info!("Answering OutOfBand::HandshakeReuse message, thread: {}", thread_id);
+
                 let msg = build_handshake_reuse_accepted_msg(&handshake_reuse)?;
-                send_message(
-                    profile.inject_wallet(),
-                    pw_vk.to_string(),
-                    did_doc.clone(),
-                    msg.to_a2a_message(),
-                )
-                .await?;
+                send_message(profile.inject_wallet(), pw_vk.to_string(), did_doc.clone(), msg.into()).await?;
             }
-            A2AMessage::Query(query) => {
-                let supported_protocols = ProtocolRegistry::init().get_protocols_for_query(query.query.as_deref());
+            AriesMessage::DiscoverFeatures(DiscoverFeatures::Query(query)) => {
+                let supported_protocols = query.content.lookup();
+
                 info!(
                     "Answering discovery protocol query, @id: {}, with supported protocols: {:?}",
-                    query.id.0, &supported_protocols
+                    &query.id, &supported_protocols
                 );
+
                 respond_discovery_query(&profile.inject_wallet(), query, &did_doc, pw_vk, supported_protocols).await?;
             }
-            A2AMessage::Disclose(disclose) => {
-                info!("Handling disclose message, thread: {}", disclose.get_thread_id());
+            AriesMessage::DiscoverFeatures(DiscoverFeatures::Disclose(disclose)) => {
+                let thread_id = disclose.decorators.thread.thid.as_str();
+                info!("Handling disclose message, thread: {}", thread_id);
+
                 self.connection_sm = self.handle_disclose(disclose).await?;
             }
             _ => {
@@ -532,14 +544,14 @@ impl MediatedConnection {
     async fn step_inviter(
         &self,
         profile: &Arc<dyn Profile>,
-        message: Option<A2AMessage>,
+        message: Option<AriesMessage>,
         agency_client: &AgencyClient,
     ) -> VcxResult<(Self, bool)> {
         match self.connection_sm.clone() {
             SmConnection::Inviter(sm_inviter) => {
                 let (sm_inviter, new_cloud_agent_info, can_autohop) = match message {
                     Some(message) => match message {
-                        A2AMessage::ConnectionRequest(request) => {
+                        AriesMessage::Connection(Connection::Request(request)) => {
                             let send_message = self.send_message_closure_connection(profile);
                             let new_pairwise_info = PairwiseInfo::create(&profile.inject_wallet()).await?;
                             let new_cloud_agent = CloudAgentInfo::create(agency_client, &new_pairwise_info).await?;
@@ -557,10 +569,10 @@ impl MediatedConnection {
                                 .await?;
                             (sm_connection, Some(new_cloud_agent), true)
                         }
-                        msg @ A2AMessage::Ack(_) | msg @ A2AMessage::Ping(_) => {
+                        msg @ AriesMessage::Notification(_) | msg @ AriesMessage::TrustPing(TrustPing::Ping(_)) => {
                             (sm_inviter.handle_confirmation_message(&msg).await?, None, false)
                         }
-                        A2AMessage::ConnectionProblemReport(problem_report) => {
+                        AriesMessage::Connection(Connection::ProblemReport(problem_report)) => {
                             (sm_inviter.handle_problem_report(problem_report)?, None, false)
                         }
                         _ => (sm_inviter.clone(), None, false),
@@ -591,18 +603,18 @@ impl MediatedConnection {
         }
     }
 
-    async fn step_invitee(&self, profile: &Arc<dyn Profile>, message: Option<A2AMessage>) -> VcxResult<(Self, bool)> {
+    async fn step_invitee(&self, profile: &Arc<dyn Profile>, message: Option<AriesMessage>) -> VcxResult<(Self, bool)> {
         match self.connection_sm.clone() {
             SmConnection::Invitee(sm_invitee) => {
                 let (sm_invitee, can_autohop) = match message {
                     Some(message) => match message {
-                        A2AMessage::ConnectionInvitationPublic(invitation) => {
+                        AriesMessage::Connection(Connection::Invitation(Invitation::Public(invitation))) => {
                             (sm_invitee.handle_invitation(Invitation::Public(invitation))?, false)
                         }
-                        A2AMessage::ConnectionInvitationPairwise(invitation) => {
+                        AriesMessage::Connection(Connection::Invitation(Invitation::Pairwise(invitation))) => {
                             (sm_invitee.handle_invitation(Invitation::Pairwise(invitation))?, false)
                         }
-                        A2AMessage::ConnectionResponse(response) => {
+                        AriesMessage::Connection(Connection::Response(response)) => {
                             let send_message = self.send_message_closure_connection(profile);
                             (
                                 sm_invitee
@@ -611,7 +623,7 @@ impl MediatedConnection {
                                 true,
                             )
                         }
-                        A2AMessage::ConnectionProblemReport(problem_report) => {
+                        AriesMessage::Connection(Connection::ProblemReport(problem_report)) => {
                             (sm_invitee.handle_problem_report(problem_report)?, false)
                         }
                         _ => (sm_invitee, false),
@@ -691,7 +703,7 @@ impl MediatedConnection {
             .await
     }
 
-    pub async fn get_messages_noauth(&self, agency_client: &AgencyClient) -> VcxResult<HashMap<String, A2AMessage>> {
+    pub async fn get_messages_noauth(&self, agency_client: &AgencyClient) -> VcxResult<HashMap<String, AriesMessage>> {
         match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
                 let messages = self
@@ -718,7 +730,7 @@ impl MediatedConnection {
         }
     }
 
-    pub async fn get_messages(&self, agency_client: &AgencyClient) -> VcxResult<HashMap<String, A2AMessage>> {
+    pub async fn get_messages(&self, agency_client: &AgencyClient) -> VcxResult<HashMap<String, AriesMessage>> {
         let expected_sender_vk = self.get_expected_sender_vk().await?;
         match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => Ok(self
@@ -750,7 +762,7 @@ impl MediatedConnection {
         })
     }
 
-    pub async fn get_message_by_id(&self, msg_id: &str, agency_client: &AgencyClient) -> VcxResult<A2AMessage> {
+    pub async fn get_message_by_id(&self, msg_id: &str, agency_client: &AgencyClient) -> VcxResult<AriesMessage> {
         trace!("MediatedConnection: get_message_by_id >>> msg_id: {}", msg_id);
         let expected_sender_vk = self.get_expected_sender_vk().await?;
         self.cloud_agent_info()
@@ -770,7 +782,7 @@ impl MediatedConnection {
         ))?;
         let sender_vk = self.pairwise_info().pw_vk.clone();
         let wallet = profile.inject_wallet();
-        Ok(Box::new(move |message: A2AMessage| {
+        Ok(Box::new(move |message: AriesMessage| {
             Box::pin(send_message(wallet, sender_vk.clone(), did_doc.clone(), message))
         }))
     }
@@ -778,19 +790,27 @@ impl MediatedConnection {
     fn send_message_closure_connection(&self, profile: &Arc<dyn Profile>) -> SendClosureConnection {
         trace!("send_message_closure_connection >>>");
         let wallet = profile.inject_wallet();
-        Box::new(move |message: A2AMessage, sender_vk: String, did_doc: AriesDidDoc| {
+        Box::new(move |message: AriesMessage, sender_vk: String, did_doc: AriesDidDoc| {
             Box::pin(send_message(wallet, sender_vk, did_doc, message))
         })
     }
 
-    fn build_basic_message(message: &str) -> A2AMessage {
-        match ::serde_json::from_str::<A2AMessage>(message) {
+    fn build_basic_message(message: &str) -> AriesMessage {
+        match ::serde_json::from_str::<AriesMessage>(message) {
             Ok(a2a_message) => a2a_message,
-            Err(_) => BasicMessage::create()
-                .set_content(message.to_string())
-                .set_time()
-                .set_out_time()
-                .to_a2a_message(),
+            Err(_) => {
+                let now = Utc::now();
+
+                let content = BasicMessageContent::new(message.to_owned(), now);
+
+                let mut decorators = BasicMessageDecorators::default();
+                let mut timing = Timing::default();
+                timing.out_time = Some(now);
+
+                decorators.timing = Some(timing);
+
+                BasicMessage::with_decorators(Uuid::new_v4().to_string(), content, decorators).into()
+            }
         }
     }
 
@@ -801,7 +821,7 @@ impl MediatedConnection {
         send_message(message).await.map(|_| String::new())
     }
 
-    pub async fn send_a2a_message(&self, profile: &Arc<dyn Profile>, message: &A2AMessage) -> VcxResult<String> {
+    pub async fn send_a2a_message(&self, profile: &Arc<dyn Profile>, message: &AriesMessage) -> VcxResult<String> {
         trace!("MediatedConnection::send_a2a_message >>> message: {:?}", message);
         let send_message = self.send_message_closure(profile).await?;
         send_message(message.clone()).await.map(|_| String::new())
@@ -820,9 +840,9 @@ impl MediatedConnection {
     pub async fn send_handshake_reuse(&self, profile: &Arc<dyn Profile>, oob_msg: &str) -> VcxResult<()> {
         trace!("MediatedConnection::send_handshake_reuse >>>");
         // todo: oob_msg argument should be typed OutOfBandInvitation, not string
-        let oob = match serde_json::from_str::<A2AMessage>(oob_msg) {
+        let oob = match serde_json::from_str::<AriesMessage>(oob_msg) {
             Ok(a2a_msg) => match a2a_msg {
-                A2AMessage::OutOfBandInvitation(oob) => oob,
+                AriesMessage::OutOfBand(OutOfBand::Invitation(oob)) => oob,
                 a => {
                     return Err(AriesVcxError::from_msg(
                         AriesVcxErrorKind::SerializationError,
@@ -838,7 +858,7 @@ impl MediatedConnection {
             }
         };
         let send_message = self.send_message_closure(profile).await?;
-        send_message(build_handshake_reuse_msg(&oob).to_a2a_message()).await
+        send_message(build_handshake_reuse_msg(&oob).into()).await
     }
 
     pub async fn delete(&self, agency_client: &AgencyClient) -> VcxResult<()> {

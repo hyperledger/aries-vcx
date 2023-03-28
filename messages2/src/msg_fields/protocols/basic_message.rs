@@ -21,11 +21,8 @@ pub struct BasicMessageContent {
 }
 
 impl BasicMessageContent {
-    pub fn new(content: String) -> Self {
-        Self {
-            content,
-            sent_time: DateTime::default(),
-        }
+    pub fn new(content: String, sent_time: DateTime<Utc>) -> Self {
+        Self { content, sent_time }
     }
 }
 
@@ -58,8 +55,7 @@ mod tests {
 
     #[test]
     fn test_minimal_basic_message() {
-        let mut content = BasicMessageContent::new("test_content".to_owned());
-        content.sent_time = DateTime::default();
+        let content = BasicMessageContent::new("test_content".to_owned(), DateTime::default());
 
         let decorators = BasicMessageDecorators::default();
 
@@ -73,8 +69,7 @@ mod tests {
 
     #[test]
     fn test_extended_basic_message() {
-        let mut content = BasicMessageContent::new("test_content".to_owned());
-        content.sent_time = DateTime::default();
+        let content = BasicMessageContent::new("test_content".to_owned(), DateTime::default());
 
         let mut decorators = BasicMessageDecorators::default();
         decorators.thread = Some(make_extended_thread());

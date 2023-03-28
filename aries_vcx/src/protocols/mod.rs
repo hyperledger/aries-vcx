@@ -1,6 +1,6 @@
 use futures::future::BoxFuture;
-use messages::a2a::A2AMessage;
 use messages::diddoc::aries::diddoc::AriesDidDoc;
+use messages2::AriesMessage;
 
 use crate::errors::error::VcxResult;
 
@@ -13,6 +13,6 @@ pub mod proof_presentation;
 pub mod revocation_notification;
 pub mod trustping;
 
-pub type SendClosure = Box<dyn FnOnce(A2AMessage) -> BoxFuture<'static, VcxResult<()>> + Send + Sync>;
+pub type SendClosure = Box<dyn FnOnce(AriesMessage) -> BoxFuture<'static, VcxResult<()>> + Send + Sync>;
 pub type SendClosureConnection =
-    Box<dyn FnOnce(A2AMessage, String, AriesDidDoc) -> BoxFuture<'static, VcxResult<()>> + Send + Sync>;
+    Box<dyn FnOnce(AriesMessage, String, AriesDidDoc) -> BoxFuture<'static, VcxResult<()>> + Send + Sync>;

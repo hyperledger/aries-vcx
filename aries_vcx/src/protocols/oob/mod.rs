@@ -1,27 +1,61 @@
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
+use chrono::Utc;
 use messages::protocols::out_of_band::handshake_reuse::OutOfBandHandshakeReuse;
 use messages::protocols::out_of_band::handshake_reuse_accepted::OutOfBandHandshakeReuseAccepted;
-use messages::protocols::out_of_band::invitation::OutOfBandInvitation;
+use messages2::decorators::thread::Thread;
+use messages2::decorators::timing::Timing;
+use messages2::msg_fields::protocols::out_of_band::invitation::Invitation;
+use messages2::msg_fields::protocols::out_of_band::reuse::{
+    HandshakeReuse, HandshakeReuseContent, HandshakeReuseDecorators,
+};
+use messages2::msg_fields::protocols::out_of_band::reuse_accepted::{
+    HandshakeReuseAccepted, HandshakeReuseAcceptedContent, HandshakeReuseAcceptedDecorators,
+};
+use uuid::Uuid;
 
-pub fn build_handshake_reuse_msg(oob_invitation: &OutOfBandInvitation) -> OutOfBandHandshakeReuse {
-    OutOfBandHandshakeReuse::default()
-        .set_thread_id_matching_id()
-        .set_parent_thread_id(&oob_invitation.id.0)
-        .set_out_time()
+pub fn build_handshake_reuse_msg(oob_invitation: &Invitation) -> HandshakeReuse {
+    let id = Uuid::new_v4().to_string();
+    let content = HandshakeReuseContent::default();
+
+    let mut thread = Thread::new(id.clone());
+    thread.pthid = Some(oob_invitation.id.clone());
+
+    let mut decorators = HandshakeReuseDecorators::new(thread);
+    let mut timing = Timing::default();
+    timing.out_time = Some(Utc::now());
+    decorators.timing = Some(timing);
+
+    HandshakeReuse::with_decorators(id, content, decorators)
 }
 
 pub fn build_handshake_reuse_accepted_msg(
-    handshake_reuse: &OutOfBandHandshakeReuse,
-) -> VcxResult<OutOfBandHandshakeReuseAccepted> {
-    let thread_id = handshake_reuse.get_thread_id();
-    let pthread_id = handshake_reuse.thread.pthid.as_deref().ok_or(AriesVcxError::from_msg(
-        AriesVcxErrorKind::InvalidOption,
-        "Parent thread id missing",
-    ))?;
-    Ok(OutOfBandHandshakeReuseAccepted::default()
-        .set_thread_id(&thread_id)
-        .set_parent_thread_id(pthread_id)
-        .set_out_time())
+    handshake_reuse: &HandshakeReuse,
+) -> VcxResult<HandshakeReuseAccepted> {
+    let thread = handshake_reuse.decorators.thread;
+
+    let thread_id = thread.thid.clone();
+    let pthread_id = thread
+        .pthid
+        .as_deref()
+        .ok_or(AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidOption,
+            "Parent thread id missing",
+        ))?
+        .to_owned();
+
+    let content = HandshakeReuseAcceptedContent::default();
+    let mut thread = Thread::new(thread_id);
+    thread.pthid = Some(pthread_id);
+
+    let mut decorators = HandshakeReuseAcceptedDecorators::new(thread);
+    let mut timing = Timing::default();
+    timing.out_time = Some(Utc::now());
+
+    Ok(HandshakeReuseAccepted::with_decorators(
+        Uuid::new_v4().to_string(),
+        content,
+        decorators,
+    ))
 }
 
 #[cfg(test)]

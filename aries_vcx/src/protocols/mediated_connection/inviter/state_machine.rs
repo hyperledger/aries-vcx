@@ -3,14 +3,9 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
-use messages::a2a::protocol_registry::ProtocolRegistry;
-use messages::a2a::{A2AMessage, MessageId};
 use messages::diddoc::aries::diddoc::AriesDidDoc;
-use messages::protocols::connection::invite::{Invitation, PairwiseInvitation};
-use messages::protocols::connection::problem_report::{ProblemCode, ProblemReport};
-use messages::protocols::connection::request::Request;
-use messages::protocols::connection::response::{Response, SignedResponse};
-use messages::protocols::discovery::disclose::{Disclose, ProtocolDescriptor};
+use messages2::AriesMessage;
+use messages2::msg_fields::protocols::discover_features::disclose::Disclose;
 
 use crate::common::signing::sign_connection_response;
 use crate::errors::error::prelude::*;
@@ -281,13 +276,13 @@ impl SmConnectionInviter {
 
     pub fn handle_disclose(self, disclose: Disclose) -> VcxResult<Self> {
         let state = match self.state {
-            InviterFullState::Completed(state) => InviterFullState::Completed((state, disclose.protocols).into()),
+            InviterFullState::Completed(state) => InviterFullState::Completed((state, disclose.content.protocols).into()),
             _ => self.state,
         };
         Ok(Self { state, ..self })
     }
 
-    pub async fn handle_confirmation_message(self, msg: &A2AMessage) -> VcxResult<Self> {
+    pub async fn handle_confirmation_message(self, msg: &AriesMessage) -> VcxResult<Self> {
         verify_thread_id(&self.get_thread_id(), msg)?;
         match self.state {
             InviterFullState::Responded(state) => Ok(Self {

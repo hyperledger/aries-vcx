@@ -9,11 +9,11 @@ pub type Forward = MsgParts<ForwardContent>;
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub struct ForwardContent {
     pub to: String,
-    pub msg: String,
+    pub msg: Vec<u8>,
 }
 
 impl ForwardContent {
-    pub fn new(to: String, msg: String) -> Self {
+    pub fn new(to: String, msg: Vec<u8>) -> Self {
         Self { to, msg }
     }
 }
@@ -30,7 +30,7 @@ mod tests {
 
     #[test]
     fn test_minimal_forward() {
-        let content = ForwardContent::new("test_to".to_owned(), "test_msg".to_owned());
+        let content = ForwardContent::new("test_to".to_owned(), "test_msg".to_owned().into_bytes());
 
         let expected = json! ({
             "to": content.to,
