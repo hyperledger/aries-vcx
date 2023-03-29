@@ -1,12 +1,13 @@
 use messages2::{
     msg_fields::protocols::{
-        connection::{invitation::Invitation, Connection},
+        connection::{invitation::Invitation, Connection, ConnectionData},
         cred_issuance::CredentialIssuance,
         discover_features::DiscoverFeatures,
         out_of_band::{invitation::Invitation as OobInvitation, OutOfBand},
         present_proof::PresentProof,
+        report_problem::ProblemReport,
         revocation::Revocation,
-        trust_ping::TrustPing, report_problem::ProblemReport,
+        trust_ping::TrustPing,
     },
     AriesMessage,
 };
@@ -122,3 +123,4 @@ impl Status {
         }
     }
 }
+

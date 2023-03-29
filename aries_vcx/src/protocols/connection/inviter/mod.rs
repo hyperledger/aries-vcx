@@ -119,7 +119,7 @@ impl InviterConnection<Invited> {
         self,
         wallet: &Arc<dyn BaseWallet>,
         request: Request,
-        new_service_endpoint: String,
+        new_service_endpoint: Url,
         new_routing_keys: Vec<String>,
         transport: &T,
     ) -> VcxResult<InviterConnection<Requested>>

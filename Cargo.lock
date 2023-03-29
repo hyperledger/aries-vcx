@@ -213,6 +213,7 @@ dependencies = [
  "thiserror",
  "time",
  "tokio",
+ "url",
  "uuid 0.8.2",
  "zmq",
 ]

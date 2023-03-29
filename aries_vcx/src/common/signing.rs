@@ -2,11 +2,12 @@ use std::sync::Arc;
 
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use base64;
+use messages2::msg_fields::protocols::connection::response::{ConnectionSignature, ResponseContent};
+use messages2::msg_fields::protocols::connection::ConnectionData;
 use time;
 
 use crate::errors::error::prelude::*;
 use crate::global::settings;
-use messages::protocols::connection::response::{ConnectionData, ConnectionSignature, Response, SignedResponse};
 
 async fn get_signature_data(wallet: &Arc<dyn BaseWallet>, data: String, key: &str) -> VcxResult<(Vec<u8>, Vec<u8>)> {
     let now: u64 = time::get_time().sec as u64;
@@ -21,37 +22,24 @@ async fn get_signature_data(wallet: &Arc<dyn BaseWallet>, data: String, key: &st
 pub async fn sign_connection_response(
     wallet: &Arc<dyn BaseWallet>,
     key: &str,
-    response: Response,
-) -> VcxResult<SignedResponse> {
-    let connection_data = response.get_connection_data();
-    let (signature, sig_data) = get_signature_data(wallet, connection_data, key).await?;
+    con_data: ConnectionData,
+) -> VcxResult<ConnectionSignature> {
+    let con_data = json!(con_data).to_string();
+    let (signature, sig_data) = get_signature_data(wallet, con_data, key).await?;
 
     let sig_data = base64::encode_config(&sig_data, base64::URL_SAFE);
     let signature = base64::encode_config(&signature, base64::URL_SAFE);
 
-    let connection_sig = ConnectionSignature {
-        signature,
-        sig_data,
-        signer: key.to_string(),
-        ..Default::default()
-    };
+    let connection_sig = ConnectionSignature::new(signature, sig_data, key.to_string());
 
-    let signed_response = SignedResponse {
-        id: response.id.clone(),
-        thread: response.thread.clone(),
-        connection_sig,
-        please_ack: response.please_ack.clone(),
-        timing: response.timing.clone(),
-    };
-
-    Ok(signed_response)
+    Ok(connection_sig)
 }
 
 pub async fn decode_signed_connection_response(
     wallet: &Arc<dyn BaseWallet>,
-    response: SignedResponse,
+    response: ResponseContent,
     their_vk: &str,
-) -> VcxResult<Response> {
+) -> VcxResult<ConnectionData> {
     let signature =
         base64::decode_config(&response.connection_sig.signature.as_bytes(), base64::URL_SAFE).map_err(|err| {
             AriesVcxError::from_msg(
@@ -87,13 +75,7 @@ pub async fn decode_signed_connection_response(
     let connection: ConnectionData = serde_json::from_slice(sig_data)
         .map_err(|err| AriesVcxError::from_msg(AriesVcxErrorKind::InvalidJson, err.to_string()))?;
 
-    Ok(Response {
-        id: response.id,
-        thread: response.thread,
-        connection,
-        please_ack: response.please_ack,
-        timing: response.timing,
-    })
+    Ok(connection)
 }
 
 pub async fn unpack_message_to_string(wallet: &Arc<dyn BaseWallet>, msg: &[u8]) -> VcxResult<String> {

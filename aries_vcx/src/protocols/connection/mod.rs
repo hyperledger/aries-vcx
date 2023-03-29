@@ -15,6 +15,7 @@ use messages::{
         discovery::disclose::{Disclose, ProtocolDescriptor},
     },
 };
+use messages2::AriesMessage;
 use std::{error::Error, sync::Arc};
 
 use crate::{
@@ -110,7 +111,7 @@ where
     pub async fn send_message<T>(
         &self,
         wallet: &Arc<dyn BaseWallet>,
-        message: &A2AMessage,
+        message: &AriesMessage,
         transport: &T,
     ) -> VcxResult<()>
     where
@@ -182,7 +183,7 @@ where
 
 pub(crate) async fn wrap_and_send_msg<T>(
     wallet: &Arc<dyn BaseWallet>,
-    message: &A2AMessage,
+    message: &AriesMessage,
     sender_verkey: &str,
     did_doc: &AriesDidDoc,
     transport: &T,

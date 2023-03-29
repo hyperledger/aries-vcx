@@ -6,6 +6,7 @@ use messages2::msg_fields::protocols::out_of_band::invitation::{Invitation as Oo
 use std::{collections::HashMap, sync::Arc};
 
 use crate::common::ledger::service_didsov::EndpointDidSov;
+use crate::handlers::util::AnyInvitation;
 use serde_json::Value;
 
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
@@ -86,10 +87,10 @@ pub async fn add_new_did(
     Ok((did, verkey))
 }
 
-pub async fn into_did_doc(profile: &Arc<dyn Profile>, invitation: &Invitation) -> VcxResult<AriesDidDoc> {
+pub async fn into_did_doc(profile: &Arc<dyn Profile>, invitation: &AnyInvitation) -> VcxResult<AriesDidDoc> {
     let mut did_doc: AriesDidDoc = AriesDidDoc::default();
     let (service_endpoint, recipient_keys, routing_keys) = match invitation {
-        Invitation::Public(invitation) => {
+        AnyInvitation::Con(Invitation::Public(invitation)) => {
             did_doc.set_id(invitation.content.did.to_string());
             let service = get_service(profile, &invitation.content.did)
                 .await
@@ -99,7 +100,7 @@ pub async fn into_did_doc(profile: &Arc<dyn Profile>, invitation: &Invitation) -
                 });
             (service.service_endpoint, service.recipient_keys, service.routing_keys)
         }
-        Invitation::Pairwise(invitation) => {
+        AnyInvitation::Con(Invitation::Pairwise(invitation)) => {
             did_doc.set_id(invitation.id.clone());
             (
                 invitation.content.service_endpoint.clone(),
@@ -107,36 +108,27 @@ pub async fn into_did_doc(profile: &Arc<dyn Profile>, invitation: &Invitation) -
                 invitation.content.routing_keys.clone(),
             )
         }
-        Invitation::PairwiseDID(_) => {
+        AnyInvitation::Con(Invitation::PairwiseDID(_)) => {
             return Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::InvalidDid,
                 format!("PairwiseDID invitation not supported yet!"),
             ))
         }
-    };
-    did_doc.set_service_endpoint(service_endpoint);
-    did_doc.set_recipient_keys(recipient_keys);
-    did_doc.set_routing_keys(routing_keys);
-    Ok(did_doc)
-}
-
-pub async fn into_did_doc_oob(profile: &Arc<dyn Profile>, invitation: &OobInvitation) -> VcxResult<AriesDidDoc> {
-    let mut did_doc: AriesDidDoc = AriesDidDoc::default();
-    let (service_endpoint, recipient_keys, routing_keys) = {
-        did_doc.set_id(invitation.id.clone());
-        let service = resolve_service(profile, &invitation.content.services[0])
-            .await
-            .unwrap_or_else(|err| {
-                error!("Failed to obtain service definition from the ledger: {}", err);
-                AriesService::default()
+        AnyInvitation::Oob(invitation) => {
+            did_doc.set_id(invitation.id.clone());
+            let service = resolve_service(profile, &invitation.content.services[0])
+                .await
+                .unwrap_or_else(|err| {
+                    error!("Failed to obtain service definition from the ledger: {}", err);
+                    AriesService::default()
+                });
+            let recipient_keys = normalize_keys_as_naked(service.recipient_keys).unwrap_or_else(|err| {
+                error!("Is not did valid: {}", err);
+                Vec::new()
             });
-        let recipient_keys = normalize_keys_as_naked(service.recipient_keys).unwrap_or_else(|err| {
-            error!("Is not did valid: {}", err);
-            Vec::new()
-        });
-        (service.service_endpoint, recipient_keys, service.routing_keys)
+            (service.service_endpoint, recipient_keys, service.routing_keys)
+        }
     };
-
     did_doc.set_service_endpoint(service_endpoint);
     did_doc.set_recipient_keys(recipient_keys);
     did_doc.set_routing_keys(routing_keys);
@@ -203,9 +195,16 @@ pub async fn get_service(profile: &Arc<dyn Profile>, did: &String) -> VcxResult<
     if data["endpoint"].is_object() {
         let endpoint: EndpointDidSov = serde_json::from_value(data["endpoint"].clone())?;
         let recipient_keys = vec![get_verkey_from_ledger(profile, &did_raw).await?];
+        let endpoint_url = endpoint.endpoint.parse().map_err(|err| {
+            AriesVcxError::from_msg(
+                AriesVcxErrorKind::SerializationError,
+                format!("Failed to parse endpoint as URL: {:?}", err),
+            )
+        })?;
+
         return Ok(AriesService::create()
             .set_recipient_keys(recipient_keys)
-            .set_service_endpoint(endpoint.endpoint)
+            .set_service_endpoint(endpoint_url)
             .set_routing_keys(endpoint.routing_keys.unwrap_or_default()));
     }
     parse_legacy_endpoint_attrib(profile, &did_raw).await

@@ -1,15 +1,16 @@
-use messages::{diddoc::aries::diddoc::AriesDidDoc, protocols::connection::invite::Invitation};
+use diddoc::aries::diddoc::AriesDidDoc;
+use messages2::msg_fields::protocols::connection::invitation::Invitation;
 
-use crate::protocols::connection::trait_bounds::{BootstrapDidDoc, TheirDidDoc, ThreadId};
+use crate::{protocols::connection::trait_bounds::{BootstrapDidDoc, TheirDidDoc, ThreadId}, handlers::util::AnyInvitation};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Invited {
     pub(crate) did_doc: AriesDidDoc,
-    pub(crate) invitation: Invitation,
+    pub(crate) invitation: AnyInvitation,
 }
 
 impl Invited {
-    pub fn new(did_doc: AriesDidDoc, invitation: Invitation) -> Self {
+    pub fn new(did_doc: AriesDidDoc, invitation: AnyInvitation) -> Self {
         Self { did_doc, invitation }
     }
 }
@@ -24,6 +25,11 @@ impl BootstrapDidDoc for Invited {}
 
 impl ThreadId for Invited {
     fn thread_id(&self) -> &str {
-        self.invitation.get_id()
+        match self.invitation {
+            AnyInvitation::Con(Invitation::Public(i)) => i.id.as_str(),
+            AnyInvitation::Con(Invitation::Pairwise(i)) => i.id.as_str(),
+            AnyInvitation::Con(Invitation::PairwiseDID(i)) => i.id.as_str(),
+            AnyInvitation::Oob(i) => i.id.as_str(),
+        }
     }
 }

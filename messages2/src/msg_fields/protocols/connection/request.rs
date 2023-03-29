@@ -1,11 +1,11 @@
-use diddoc::aries::diddoc::AriesDidDoc;
-
 use serde::{Deserialize, Serialize};
 
 use crate::{
     decorators::{thread::Thread, timing::Timing},
     msg_parts::MsgParts,
 };
+
+use super::ConnectionData;
 
 pub type Request = MsgParts<RequestContent, RequestDecorators>;
 
@@ -18,20 +18,6 @@ pub struct RequestContent {
 impl RequestContent {
     pub fn new(label: String, connection: ConnectionData) -> Self {
         Self { label, connection }
-    }
-}
-
-#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
-pub struct ConnectionData {
-    #[serde(rename = "DID")]
-    pub did: String,
-    #[serde(rename = "DIDDoc")]
-    pub did_doc: AriesDidDoc,
-}
-
-impl ConnectionData {
-    pub fn new(did: String, did_doc: AriesDidDoc) -> Self {
-        Self { did, did_doc }
     }
 }
 
@@ -49,6 +35,7 @@ pub struct RequestDecorators {
 #[allow(clippy::unwrap_used)]
 #[allow(clippy::field_reassign_with_default)]
 mod tests {
+    use diddoc::aries::diddoc::AriesDidDoc;
     use serde_json::json;
 
     use super::*;
