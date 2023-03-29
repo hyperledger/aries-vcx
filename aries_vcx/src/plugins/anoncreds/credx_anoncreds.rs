@@ -5,8 +5,8 @@ use std::{
 };
 
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
+use crate::plugins::wallet::base_wallet::BaseWallet;
 use crate::{
-    core::profile::profile::Profile,
     plugins::wallet::base_wallet::AsyncFnIteratorCollect,
     utils::{
         constants::ATTRS,
@@ -37,18 +37,17 @@ const CATEGORY_LINK_SECRET: &str = "VCX_LINK_SECRET";
 
 #[derive(Debug)]
 pub struct IndyCredxAnonCreds {
-    profile: Arc<dyn Profile>,
+    wallet: Arc<dyn BaseWallet>,
 }
 
 impl IndyCredxAnonCreds {
-    pub fn new(profile: Arc<dyn Profile>) -> Self {
-        IndyCredxAnonCreds { profile }
+    pub fn new(wallet: Arc<dyn BaseWallet>) -> Self {
+        IndyCredxAnonCreds { wallet }
     }
 
     async fn get_link_secret(&self, link_secret_id: &str) -> VcxResult<MasterSecret> {
-        let wallet = self.profile.inject_wallet();
-
-        let record = wallet
+        let record = self
+            .wallet
             .get_wallet_record(CATEGORY_LINK_SECRET, link_secret_id, "{}")
             .await?;
 
@@ -68,9 +67,8 @@ impl IndyCredxAnonCreds {
     }
 
     async fn _get_credential(&self, credential_id: &str) -> VcxResult<CredxCredential> {
-        let wallet = self.profile.inject_wallet();
-
-        let cred_record = wallet
+        let cred_record = self
+            .wallet
             .get_wallet_record(CATEGORY_CREDENTIAL, credential_id, "{}")
             .await?;
         let cred_record: Value = serde_json::from_str(&cred_record)?;
@@ -84,9 +82,10 @@ impl IndyCredxAnonCreds {
     }
 
     async fn _get_credentials(&self, wql: &str) -> VcxResult<Vec<(String, CredxCredential)>> {
-        let wallet = self.profile.inject_wallet();
-
-        let mut record_iterator = wallet.iterate_wallet_records(CATEGORY_CREDENTIAL, wql, "{}").await?;
+        let mut record_iterator = self
+            .wallet
+            .iterate_wallet_records(CATEGORY_CREDENTIAL, wql, "{}")
+            .await?;
         let records = record_iterator.collect().await?;
 
         let id_cred_tuple_list: VcxResult<Vec<(String, CredxCredential)>> = records
@@ -608,8 +607,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let record_value = serde_json::to_string(&credential)?;
         let tags_json = serde_json::to_string(&tags)?;
 
-        self.profile
-            .inject_wallet()
+        self.wallet
             .add_wallet_record(CATEGORY_CREDENTIAL, &credential_id, &record_value, Some(&tags_json))
             .await?;
 
@@ -617,9 +615,8 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
     }
 
     async fn prover_create_link_secret(&self, link_secret_id: &str) -> VcxResult<String> {
-        let wallet = self.profile.inject_wallet();
-
-        let existing_record = wallet
+        let existing_record = self
+            .wallet
             .get_wallet_record(CATEGORY_LINK_SECRET, link_secret_id, "{}")
             .await
             .ok(); // ignore error, as we only care about whether it exists or not
@@ -655,7 +652,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
                 )
             })?;
 
-        wallet
+        self.wallet
             .add_wallet_record(CATEGORY_LINK_SECRET, link_secret_id, &ms_decimal, None)
             .await?;
 
@@ -663,9 +660,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
     }
 
     async fn prover_delete_credential(&self, cred_id: &str) -> VcxResult<()> {
-        let wallet = self.profile.inject_wallet();
-
-        wallet.delete_wallet_record(CATEGORY_CREDENTIAL, cred_id).await
+        self.wallet.delete_wallet_record(CATEGORY_CREDENTIAL, cred_id).await
     }
 
     async fn issuer_create_schema(
@@ -823,7 +818,7 @@ mod unit_tests {
         }
 
         let profile = mock_profile();
-        let anoncreds: Box<dyn BaseAnonCreds> = Box::new(IndyCredxAnonCreds::new(profile));
+        let anoncreds: Box<dyn BaseAnonCreds> = Box::new(IndyCredxAnonCreds::new(profile.inject_wallet()));
 
         assert_unimplemented(anoncreds.issuer_create_and_store_revoc_reg("", "", "", 0, "").await);
         assert_unimplemented(

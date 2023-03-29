@@ -221,7 +221,7 @@ impl Verifier {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 mod unit_tests {
-    use crate::core::profile::indy_profile::IndySdkProfile;
+    use crate::core::profile::vdrtools_profile::VdrtoolsProfile;
     use crate::utils::constants::{REQUESTED_ATTRS, REQUESTED_PREDICATES};
     use crate::utils::devsetup::*;
     use crate::utils::mockdata::mock_settings::MockBuilder;
@@ -232,7 +232,7 @@ mod unit_tests {
     use super::*;
 
     fn _dummy_profile() -> Arc<dyn Profile> {
-        Arc::new(IndySdkProfile::new(WalletHandle(0), 0))
+        Arc::new(VdrtoolsProfile::new(WalletHandle(0), 0))
     }
 
     async fn _verifier() -> Verifier {

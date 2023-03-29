@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use crate::errors::error::LibvcxResult;
 use aries_vcx::{
-    core::profile::{indy_profile::IndySdkProfile, profile::Profile},
+    core::profile::{profile::Profile, vdrtools_profile::VdrtoolsProfile},
     plugins::wallet::{base_wallet::BaseWallet, indy_wallet::IndySdkWallet},
     vdrtools::{PoolHandle, WalletHandle},
 };
@@ -15,7 +15,7 @@ pub fn indy_wallet_handle_to_wallet(wallet_handle: WalletHandle) -> Arc<dyn Base
 }
 
 pub fn indy_handles_to_profile(wallet_handle: WalletHandle, pool_handle: PoolHandle) -> Arc<dyn Profile> {
-    Arc::new(IndySdkProfile::new(wallet_handle, pool_handle))
+    Arc::new(VdrtoolsProfile::new(wallet_handle, pool_handle))
 }
 
 pub fn get_main_wallet() -> Arc<dyn BaseWallet> {

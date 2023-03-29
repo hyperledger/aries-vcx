@@ -11,9 +11,9 @@ use agency_client::agency_client::AgencyClient;
 use agency_client::configuration::AgentProvisionConfig;
 use agency_client::testing::mocking::{disable_agency_mocks, enable_agency_mocks, AgencyMockDecrypted};
 
-use crate::core::profile::indy_profile::IndySdkProfile;
-use crate::core::profile::modular_wallet_profile::{LedgerPoolConfig, ModularWalletProfile};
+use crate::core::profile::modular_libs_profile::ModularLibsProfile;
 use crate::core::profile::profile::Profile;
+use crate::core::profile::vdrtools_profile::VdrtoolsProfile;
 use crate::global::settings;
 use crate::global::settings::init_issuer_config;
 use crate::global::settings::{disable_indy_mocks, enable_indy_mocks, set_test_configs};
@@ -28,6 +28,7 @@ use crate::indy::wallet::{
     close_wallet, create_and_open_wallet, create_indy_wallet, create_wallet_with_master_secret, delete_wallet,
     wallet_configure_issuer, WalletConfig,
 };
+use crate::plugins::ledger::indy_vdr_ledger::LedgerPoolConfig;
 use crate::plugins::wallet::base_wallet::BaseWallet;
 use crate::plugins::wallet::indy_wallet::IndySdkWallet;
 use crate::utils;
@@ -385,7 +386,7 @@ impl SetupProfile {
         .unwrap();
         let pool_handle = open_test_pool().await;
 
-        let profile: Arc<dyn Profile> = Arc::new(IndySdkProfile::new(wallet_handle, pool_handle.clone()));
+        let profile: Arc<dyn Profile> = Arc::new(VdrtoolsProfile::new(wallet_handle, pool_handle.clone()));
 
         async fn indy_teardown(pool_handle: i32) {
             delete_test_pool(pool_handle.clone()).await;
@@ -406,7 +407,7 @@ impl SetupProfile {
         let wallet = IndySdkWallet::new(wallet_handle);
 
         let profile: Arc<dyn Profile> =
-            Arc::new(ModularWalletProfile::new(Arc::new(wallet), LedgerPoolConfig { genesis_file_path }).unwrap());
+            Arc::new(ModularLibsProfile::new(Arc::new(wallet), LedgerPoolConfig { genesis_file_path }).unwrap());
 
         Arc::clone(&profile)
             .inject_anoncreds()
