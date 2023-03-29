@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use aries_vcx::{
-    core::profile::{indy_profile::IndySdkProfile, profile::Profile},
+    core::profile::{profile::Profile, vdrtools_profile::VdrtoolsProfile},
     indy::wallet::{create_and_open_wallet, WalletConfig},
 };
 
@@ -17,7 +17,7 @@ pub fn new_indy_profile(wallet_config: WalletConfig) -> VcxUniFFIResult<Arc<Prof
     block_on(async {
         let wh = create_and_open_wallet(&wallet_config).await?;
         let ph = 0;
-        let profile = IndySdkProfile::new(wh, ph);
+        let profile = VdrtoolsProfile::new(wh, ph);
 
         Ok(Arc::new(ProfileHolder {
             inner: Arc::new(profile),
