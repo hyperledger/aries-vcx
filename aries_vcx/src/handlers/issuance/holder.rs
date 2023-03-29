@@ -16,7 +16,7 @@ use crate::protocols::issuance::holder::state_machine::{HolderSM, HolderState};
 use crate::protocols::SendClosure;
 use messages::a2a::A2AMessage;
 use messages::protocols::issuance::credential_offer::CredentialOffer;
-use messages::protocols::issuance::credential_proposal::CredentialProposalData;
+use messages::protocols::issuance::credential_proposal::{CredentialProposal, CredentialProposalData};
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Holder {
@@ -40,17 +40,13 @@ impl Holder {
         Ok(Holder { holder_sm })
     }
 
-    pub async fn send_proposal(
-        &mut self,
-        credential_proposal: CredentialProposalData,
-        send_message: SendClosure,
-    ) -> VcxResult<()> {
-        self.holder_sm = self
-            .holder_sm
-            .clone()
-            .send_proposal(credential_proposal, send_message)
-            .await?;
+    pub async fn set_proposal(&mut self, credential_proposal: CredentialProposalData) -> VcxResult<()> {
+        self.holder_sm = self.holder_sm.clone().set_proposal(credential_proposal).await?;
         Ok(())
+    }
+
+    pub fn get_proposal_msg(&mut self) -> VcxResult<CredentialProposal> {
+        self.holder_sm.clone().get_proposal()
     }
 
     pub async fn send_request(
@@ -273,7 +269,7 @@ pub mod unit_tests {
         async fn to_finished_state(mut self) -> Holder {
             self.step(
                 &mock_profile(),
-                CredentialIssuanceAction::CredentialProposalSend(_credential_proposal_data()),
+                CredentialIssuanceAction::CredentialProposalBuild(_credential_proposal_data()),
                 _send_message(),
             )
             .await
@@ -317,10 +313,10 @@ pub mod unit_tests {
         assert_eq!(HolderState::Initial, holder.get_state());
 
         holder
-            .send_proposal(_credential_proposal_data(), _send_message().unwrap())
+            .set_proposal(_credential_proposal_data(), _send_message().unwrap())
             .await
             .unwrap();
-        assert_eq!(HolderState::ProposalSent, holder.get_state());
+        assert_eq!(HolderState::ProposalSet, holder.get_state());
 
         let messages = map!(
             "key_1".to_string() => A2AMessage::CredentialOffer(_credential_offer())
@@ -330,10 +326,10 @@ pub mod unit_tests {
         assert_eq!(HolderState::OfferReceived, holder.get_state());
 
         holder
-            .send_proposal(_credential_proposal_data(), _send_message().unwrap())
+            .set_proposal(_credential_proposal_data(), _send_message().unwrap())
             .await
             .unwrap();
-        assert_eq!(HolderState::ProposalSent, holder.get_state());
+        assert_eq!(HolderState::ProposalSet, holder.get_state());
 
         let messages = map!(
             "key_1".to_string() => A2AMessage::CredentialOffer(_credential_offer())

@@ -6,11 +6,11 @@ use crate::protocols::issuance::is_cred_def_revokable;
 use messages::protocols::issuance::credential_proposal::CredentialProposal;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct ProposalSentState {
+pub struct ProposalSetState {
     pub credential_proposal: CredentialProposal,
 }
 
-impl ProposalSentState {
+impl ProposalSetState {
     pub fn new(credential_proposal: CredentialProposal) -> Self {
         Self { credential_proposal }
     }

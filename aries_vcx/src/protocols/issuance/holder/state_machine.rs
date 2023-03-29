@@ -21,7 +21,7 @@ use crate::protocols::issuance::actions::CredentialIssuanceAction;
 use crate::protocols::issuance::holder::states::finished::FinishedHolderState;
 use crate::protocols::issuance::holder::states::initial::InitialHolderState;
 use crate::protocols::issuance::holder::states::offer_received::OfferReceivedState;
-use crate::protocols::issuance::holder::states::proposal_sent::ProposalSentState;
+use crate::protocols::issuance::holder::states::proposal_set::ProposalSetState;
 use crate::protocols::issuance::holder::states::request_sent::RequestSentState;
 use crate::protocols::issuance::verify_thread_id;
 use crate::protocols::SendClosure;
@@ -29,7 +29,7 @@ use crate::protocols::SendClosure;
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum HolderFullState {
     Initial(InitialHolderState),
-    ProposalSent(ProposalSentState),
+    ProposalSet(ProposalSetState),
     OfferReceived(OfferReceivedState),
     RequestSent(RequestSentState),
     Finished(FinishedHolderState),
@@ -38,7 +38,7 @@ pub enum HolderFullState {
 #[derive(Debug, PartialEq, Eq)]
 pub enum HolderState {
     Initial,
-    ProposalSent,
+    ProposalSet,
     OfferReceived,
     RequestSent,
     Finished,
@@ -62,7 +62,7 @@ impl fmt::Display for HolderFullState {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         match *self {
             HolderFullState::Initial(_) => f.write_str("Initial"),
-            HolderFullState::ProposalSent(_) => f.write_str("ProposalSent"),
+            HolderFullState::ProposalSet(_) => f.write_str("ProposalSent"),
             HolderFullState::OfferReceived(_) => f.write_str("OfferReceived"),
             HolderFullState::RequestSent(_) => f.write_str("RequestSent"),
             HolderFullState::Finished(_) => f.write_str("Finished"),
@@ -106,7 +106,7 @@ impl HolderSM {
     pub fn get_state(&self) -> HolderState {
         match self.state {
             HolderFullState::Initial(_) => HolderState::Initial,
-            HolderFullState::ProposalSent(_) => HolderState::ProposalSent,
+            HolderFullState::ProposalSet(_) => HolderState::ProposalSet,
             HolderFullState::OfferReceived(_) => HolderState::OfferReceived,
             HolderFullState::RequestSent(_) => HolderState::RequestSent,
             HolderFullState::Finished(ref status) => match status.status {
@@ -119,7 +119,7 @@ impl HolderSM {
     #[allow(dead_code)]
     pub fn get_proposal(&self) -> VcxResult<CredentialProposal> {
         match &self.state {
-            HolderFullState::ProposalSent(state) => Ok(state.credential_proposal.clone()),
+            HolderFullState::ProposalSet(state) => Ok(state.credential_proposal.clone()),
             _ => Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::InvalidState,
                 "Proposal not available in this state",
@@ -135,7 +135,7 @@ impl HolderSM {
         );
         for (uid, message) in messages {
             match self.state {
-                HolderFullState::ProposalSent(_) => {
+                HolderFullState::ProposalSet(_) => {
                     if let A2AMessage::CredentialOffer(offer) = message {
                         if offer.from_thread(&self.thread_id) {
                             return Some((uid, A2AMessage::CredentialOffer(offer)));
@@ -171,12 +171,8 @@ impl HolderSM {
         let thread_id = self.get_thread_id()?;
         verify_thread_id(&thread_id, &cim)?;
         let holder_sm = match cim {
-            CredentialIssuanceAction::CredentialProposalSend(proposal_data) => {
-                let send_message = send_message.ok_or(AriesVcxError::from_msg(
-                    AriesVcxErrorKind::InvalidState,
-                    "Attempted to call undefined send_message callback",
-                ))?;
-                self.send_proposal(proposal_data, send_message).await?
+            CredentialIssuanceAction::CredentialProposalBuild(proposal_data) => {
+                self.set_proposal(proposal_data).await?
             }
             CredentialIssuanceAction::CredentialOffer(offer) => self.receive_offer(offer)?,
             CredentialIssuanceAction::CredentialRequestSend(my_pw_did) => {
@@ -206,25 +202,19 @@ impl HolderSM {
         Ok(holder_sm)
     }
 
-    pub async fn send_proposal(
-        self,
-        proposal_data: CredentialProposalData,
-        send_message: SendClosure,
-    ) -> VcxResult<Self> {
+    pub async fn set_proposal(self, proposal_data: CredentialProposalData) -> VcxResult<Self> {
         verify_thread_id(
             &self.thread_id,
-            &CredentialIssuanceAction::CredentialProposalSend(proposal_data.clone()),
+            &CredentialIssuanceAction::CredentialProposalBuild(proposal_data.clone()),
         )?;
         let state = match self.state {
             HolderFullState::Initial(_) => {
                 let proposal = CredentialProposal::from(proposal_data).set_id(&self.thread_id);
-                send_message(proposal.to_a2a_message()).await?;
-                HolderFullState::ProposalSent(ProposalSentState::new(proposal))
+                HolderFullState::ProposalSet(ProposalSetState::new(proposal))
             }
             HolderFullState::OfferReceived(_) => {
                 let proposal = CredentialProposal::from(proposal_data).set_thread_id(&self.thread_id);
-                send_message(proposal.to_a2a_message()).await?;
-                HolderFullState::ProposalSent(ProposalSentState::new(proposal))
+                HolderFullState::ProposalSet(ProposalSetState::new(proposal))
             }
             s => {
                 warn!("Unable to send credential proposal in state {}", s);
@@ -240,7 +230,7 @@ impl HolderSM {
             &CredentialIssuanceAction::CredentialOffer(offer.clone()),
         )?;
         let state = match self.state {
-            HolderFullState::ProposalSent(_) => HolderFullState::OfferReceived(OfferReceivedState::new(offer)),
+            HolderFullState::ProposalSet(_) => HolderFullState::OfferReceived(OfferReceivedState::new(offer)),
             s => {
                 warn!("Unable to receive credential offer in state {}", s);
                 s
@@ -333,7 +323,7 @@ impl HolderSM {
 
     pub fn receive_problem_report(self, problem_report: ProblemReport) -> VcxResult<Self> {
         let state = match self.state {
-            HolderFullState::ProposalSent(_) | HolderFullState::RequestSent(_) => {
+            HolderFullState::ProposalSet(_) | HolderFullState::RequestSent(_) => {
                 HolderFullState::Finished(problem_report.into())
             }
             s => {
@@ -454,7 +444,7 @@ impl HolderSM {
     pub async fn is_revokable(&self, profile: &Arc<dyn Profile>) -> VcxResult<bool> {
         match self.state {
             HolderFullState::Initial(ref state) => state.is_revokable(),
-            HolderFullState::ProposalSent(ref state) => state.is_revokable(profile).await,
+            HolderFullState::ProposalSet(ref state) => state.is_revokable(profile).await,
             HolderFullState::OfferReceived(ref state) => state.is_revokable(profile).await,
             HolderFullState::RequestSent(ref state) => state.is_revokable(),
             HolderFullState::Finished(ref state) => state.is_revokable(),

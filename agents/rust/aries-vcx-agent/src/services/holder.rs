@@ -67,7 +67,9 @@ impl ServiceCredentialsHolder {
         });
 
         let mut holder = Holder::create("")?;
-        holder.send_proposal(proposal_data, send_closure).await?;
+        holder.set_proposal(proposal_data).await?;
+        let proposal_msg = A2AMessage::CredentialProposal(holder.get_proposal_msg()?);
+        send_closure(proposal_msg).await?;
 
         self.creds_holder
             .insert(&holder.get_thread_id()?, HolderWrapper::new(holder, connection_id))

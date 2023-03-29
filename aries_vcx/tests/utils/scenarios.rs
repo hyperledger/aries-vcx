@@ -274,10 +274,10 @@ pub mod test_utils {
         let mut holder = Holder::create("TEST_CREDENTIAL").unwrap();
         assert_eq!(HolderState::Initial, holder.get_state());
         holder
-            .send_proposal(proposal, connection.send_message_closure(&alice.profile).await.unwrap())
+            .set_proposal(proposal, connection.send_message_closure(&alice.profile).await.unwrap())
             .await
             .unwrap();
-        assert_eq!(HolderState::ProposalSent, holder.get_state());
+        assert_eq!(HolderState::ProposalSet, holder.get_state());
         thread::sleep(Duration::from_millis(100));
         holder
     }
@@ -307,10 +307,10 @@ pub mod test_utils {
             .add_credential_preview_data(&state, "TX", MimeType::Plain)
             .add_credential_preview_data(&zip, "42000", MimeType::Plain);
         holder
-            .send_proposal(proposal, connection.send_message_closure(&alice.profile).await.unwrap())
+            .set_proposal(proposal, connection.send_message_closure(&alice.profile).await.unwrap())
             .await
             .unwrap();
-        assert_eq!(HolderState::ProposalSent, holder.get_state());
+        assert_eq!(HolderState::ProposalSet, holder.get_state());
         thread::sleep(Duration::from_millis(100));
     }
 

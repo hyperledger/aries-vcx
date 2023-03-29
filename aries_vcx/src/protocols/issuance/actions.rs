@@ -11,7 +11,7 @@ type OptionalComment = Option<String>;
 #[derive(Debug, Clone)]
 pub enum CredentialIssuanceAction {
     CredentialSend(),
-    CredentialProposalSend(CredentialProposalData),
+    CredentialProposalBuild(CredentialProposalData),
     CredentialProposal(CredentialProposal),
     CredentialOffer(CredentialOffer),
     CredentialOfferReject(OptionalComment),
