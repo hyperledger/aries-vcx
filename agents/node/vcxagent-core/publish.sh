@@ -18,5 +18,5 @@ cd "$(dirname "$0")" || exit
 echo '//registry.npmjs.org/:_authToken=${NPMJS_TOKEN}' > .npmrc
 npm install --save-exact @hyperledger/node-vcx-wrapper@${PUBLISH_VERSION} || exitWithErrMsg "Failed to install @hyperledger/node-vcx-wrapper@${PUBLISH_VERSION}"
 npm install
-npm version $PUBLISH_VERSION
+npm version --no-git-tag-version $PUBLISH_VERSION
 npm publish

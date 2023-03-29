@@ -19,5 +19,5 @@ echo '//registry.npmjs.org/:_authToken=${NPMJS_TOKEN}' > .npmrc
 npm install --save-exact @hyperledger/vcx-napi-rs@${PUBLISH_VERSION} || exitWithErrMsg "Failed to install @hyperledger/vcx-napi-rs@${PUBLISH_VERSION}"
 npm install
 npm run compile
-npm version $PUBLISH_VERSION
+npm version --no-git-tag-version $PUBLISH_VERSION
 npm publish
