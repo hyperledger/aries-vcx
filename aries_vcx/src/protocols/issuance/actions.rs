@@ -1,24 +1,28 @@
-use messages::a2a::A2AMessage;
-use messages::concepts::problem_report::ProblemReport;
-use messages::protocols::issuance::credential::Credential;
-use messages::protocols::issuance::credential_ack::CredentialAck;
-use messages::protocols::issuance::credential_offer::CredentialOffer;
-use messages::protocols::issuance::credential_proposal::{CredentialProposal, CredentialProposalData};
-use messages::protocols::issuance::credential_request::CredentialRequest;
+use messages2::msg_fields::protocols::cred_issuance::ack::{AckCredential, AckCredentialContent};
+use messages2::msg_fields::protocols::cred_issuance::issue_credential::IssueCredential;
+use messages2::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
+use messages2::msg_fields::protocols::cred_issuance::propose_credential::ProposeCredential;
+use messages2::msg_fields::protocols::cred_issuance::request_credential::RequestCredential;
+use messages2::msg_fields::protocols::cred_issuance::CredentialIssuance;
+use messages2::msg_fields::protocols::report_problem::ProblemReport;
+use messages2::msg_parts::MsgParts;
+use messages2::AriesMessage;
+
+use crate::handlers::util::{matches_opt_thread_id, matches_thread_id};
 
 type OptionalComment = Option<String>;
 
 #[derive(Debug, Clone)]
 pub enum CredentialIssuanceAction {
     CredentialSend(),
-    CredentialProposalSend(CredentialProposalData),
-    CredentialProposal(CredentialProposal),
-    CredentialOffer(CredentialOffer),
+    CredentialProposalSend(ProposeCredential),
+    CredentialProposal(ProposeCredential),
+    CredentialOffer(OfferCredential),
     CredentialOfferReject(OptionalComment),
     CredentialRequestSend(String),
-    CredentialRequest(CredentialRequest),
-    Credential(Credential),
-    CredentialAck(CredentialAck),
+    CredentialRequest(RequestCredential),
+    Credential(IssueCredential),
+    CredentialAck(AckCredential),
     ProblemReport(ProblemReport),
     Unknown,
 }
@@ -26,23 +30,42 @@ pub enum CredentialIssuanceAction {
 impl CredentialIssuanceAction {
     pub fn thread_id_matches(&self, thread_id: &str) -> bool {
         match self {
-            Self::CredentialOffer(credential_offer) => credential_offer.from_thread(thread_id),
-            Self::CredentialProposal(credential_proposal) => credential_proposal.from_thread(thread_id),
-            Self::Credential(credential) => credential.from_thread(thread_id),
-            _ => true,
+            Self::CredentialOffer(msg) => matches_opt_thread_id!(msg, thread_id),
+            Self::CredentialProposal(msg) => matches_opt_thread_id!(msg, thread_id),
+            Self::Credential(msg) => matches_thread_id!(msg, thread_id),
+            _ => true, // doesn't seem right...
         }
     }
 }
 
-impl From<A2AMessage> for CredentialIssuanceAction {
-    fn from(msg: A2AMessage) -> Self {
+impl From<AriesMessage> for CredentialIssuanceAction {
+    fn from(msg: AriesMessage) -> Self {
         match msg {
-            A2AMessage::CredentialProposal(proposal) => CredentialIssuanceAction::CredentialProposal(proposal),
-            A2AMessage::CredentialOffer(offer) => CredentialIssuanceAction::CredentialOffer(offer),
-            A2AMessage::CredentialRequest(request) => CredentialIssuanceAction::CredentialRequest(request),
-            A2AMessage::Credential(credential) => CredentialIssuanceAction::Credential(credential),
-            A2AMessage::Ack(ack) | A2AMessage::CredentialAck(ack) => CredentialIssuanceAction::CredentialAck(ack),
-            A2AMessage::CommonProblemReport(report) => CredentialIssuanceAction::ProblemReport(report),
+            AriesMessage::CredentialIssuance(CredentialIssuance::ProposeCredential(proposal)) => {
+                CredentialIssuanceAction::CredentialProposal(proposal)
+            }
+            AriesMessage::CredentialIssuance(CredentialIssuance::OfferCredential(offer)) => {
+                CredentialIssuanceAction::CredentialOffer(offer)
+            }
+            AriesMessage::CredentialIssuance(CredentialIssuance::RequestCredential(request)) => {
+                CredentialIssuanceAction::CredentialRequest(request)
+            }
+            AriesMessage::CredentialIssuance(CredentialIssuance::IssueCredential(credential)) => {
+                CredentialIssuanceAction::Credential(credential)
+            }
+            AriesMessage::CredentialIssuance(CredentialIssuance::Ack(ack)) => {
+                CredentialIssuanceAction::CredentialAck(ack)
+            }
+            AriesMessage::Notification(ack) => {
+                let MsgParts {
+                    id,
+                    content,
+                    decorators,
+                } = ack;
+                let ack = AckCredential::with_decorators(id, AckCredentialContent(content), decorators);
+                CredentialIssuanceAction::CredentialAck(ack)
+            }
+            AriesMessage::ReportProblem(report) => CredentialIssuanceAction::ProblemReport(report),
             _ => CredentialIssuanceAction::Unknown,
         }
     }

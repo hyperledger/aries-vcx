@@ -2,15 +2,9 @@ use std::collections::HashMap;
 use std::fmt;
 use std::sync::Arc;
 
-use messages::a2a::{A2AMessage, MessageId};
-use messages::concepts::ack::Ack;
-use messages::concepts::problem_report::ProblemReport;
-use messages::protocols::issuance::credential::Credential;
-use messages::protocols::issuance::credential_ack::CredentialAck;
-use messages::protocols::issuance::credential_offer::CredentialOffer;
-use messages::protocols::issuance::credential_proposal::{CredentialProposal, CredentialProposalData};
-use messages::protocols::issuance::credential_request::CredentialRequest;
-use messages::status::Status;
+
+use messages2::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
+use messages2::msg_fields::protocols::cred_issuance::request_credential::{RequestCredential, RequestCredentialContent};
 
 use crate::common::credentials::{get_cred_rev_id, is_cred_revoked};
 use crate::core::profile::profile::Profile;
@@ -45,17 +39,11 @@ pub enum HolderState {
     Failed,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct HolderSM {
     state: HolderFullState,
     source_id: String,
     thread_id: String,
-}
-
-impl Default for HolderFullState {
-    fn default() -> Self {
-        Self::OfferReceived(OfferReceivedState::default())
-    }
 }
 
 impl fmt::Display for HolderFullState {
@@ -70,8 +58,9 @@ impl fmt::Display for HolderFullState {
     }
 }
 
-fn build_credential_request_msg(credential_request_attach: String, thread_id: &str) -> VcxResult<CredentialRequest> {
-    CredentialRequest::create()
+fn build_credential_request_msg(credential_request_attach: String, thread_id: &str) -> VcxResult<RequestCredential> {
+    let content = RequestCredentialContent::new()
+    RequestCredential::create()
         .set_thread_id(thread_id)
         .set_out_time()
         .set_requests_attach(credential_request_attach)
@@ -91,7 +80,7 @@ impl HolderSM {
         }
     }
 
-    pub fn from_offer(offer: CredentialOffer, source_id: String) -> Self {
+    pub fn from_offer(offer: OfferCredential, source_id: String) -> Self {
         HolderSM {
             thread_id: offer.id.0.clone(),
             state: HolderFullState::OfferReceived(OfferReceivedState::new(offer)),
@@ -208,7 +197,7 @@ impl HolderSM {
 
     pub async fn send_proposal(
         self,
-        proposal_data: CredentialProposalData,
+        proposal_data: CredentialProposal,
         send_message: SendClosure,
     ) -> VcxResult<Self> {
         verify_thread_id(
@@ -603,8 +592,8 @@ async fn _make_credential_request(
     profile: &Arc<dyn Profile>,
     thread_id: String,
     my_pw_did: String,
-    offer: &CredentialOffer,
-) -> VcxResult<(CredentialRequest, String, String)> {
+    offer: &OfferCredential,
+) -> VcxResult<(RequestCredential, String, String)> {
     trace!(
         "Holder::_make_credential_request >>> my_pw_did: {:?}, offer: {:?}",
         my_pw_did,

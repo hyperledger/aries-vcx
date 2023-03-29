@@ -37,7 +37,7 @@ impl AriesDidDoc {
         self.id = id;
     }
 
-    pub fn set_service_endpoint(&mut self, service_endpoint: String) {
+    pub fn set_service_endpoint(&mut self, service_endpoint: Url) {
         self.service.get_mut(0).map(|service| {
             service.service_endpoint = service_endpoint;
             service
@@ -113,16 +113,6 @@ impl AriesDidDoc {
         }
 
         for service in self.service.iter() {
-            Url::parse(&service.service_endpoint).map_err(|err| {
-                DiddocError::from_msg(
-                    DiddocErrorKind::InvalidUrl,
-                    format!(
-                        "DIDDoc validation failed: Endpoint {} is not valid url, err: {:?}",
-                        service.service_endpoint, err
-                    ),
-                )
-            })?;
-
             service.recipient_keys.iter().try_for_each(|recipient_key_entry| {
                 let public_key = self.get_key(recipient_key_entry)?;
                 self.is_authentication_key(&public_key.id)?;

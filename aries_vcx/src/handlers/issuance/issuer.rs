@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use messages::concepts::ack::please_ack::AckOn;
 use messages::protocols::issuance::credential_ack::CredentialAck;
 use messages::protocols::issuance::credential_request::CredentialRequest;
+use messages2::AriesMessage;
 use std::sync::Arc;
 
 use agency_client::agency_client::AgencyClient;
@@ -205,7 +206,7 @@ impl Issuer {
         self.issuer_sm.is_terminal_state()
     }
 
-    pub fn find_message_to_handle(&self, messages: HashMap<String, A2AMessage>) -> Option<(String, A2AMessage)> {
+    pub fn find_message_to_handle(&self, messages: HashMap<String, AriesMessage>) -> Option<(String, AriesMessage)> {
         self.issuer_sm.find_message_to_handle(messages)
     }
 

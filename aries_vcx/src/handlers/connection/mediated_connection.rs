@@ -14,6 +14,7 @@ use messages2::msg_fields::protocols::connection::request::Request;
 use messages2::msg_fields::protocols::connection::Connection;
 use messages2::msg_fields::protocols::discover_features::disclose::Disclose;
 use messages2::msg_fields::protocols::discover_features::{DiscoverFeatures, ProtocolDescriptor};
+use messages2::msg_fields::protocols::out_of_band::invitation::Invitation as OobInvitation;
 use messages2::msg_fields::protocols::out_of_band::OutOfBand;
 use messages2::msg_fields::protocols::trust_ping::TrustPing;
 use messages2::AriesMessage;
@@ -32,6 +33,7 @@ use crate::handlers::connection::cloud_agent::CloudAgentInfo;
 use crate::handlers::connection::legacy_agent_info::LegacyAgentInfo;
 use crate::handlers::discovery::{respond_discovery_query, send_discovery_query};
 use crate::handlers::trust_ping::TrustPingSender;
+use crate::handlers::util::AnyInvitation;
 use crate::protocols::mediated_connection::invitee::state_machine::{
     InviteeFullState, InviteeState, SmConnectionInvitee,
 };
@@ -114,7 +116,7 @@ impl MediatedConnection {
         source_id: &str,
         profile: &Arc<dyn Profile>,
         agency_client: &AgencyClient,
-        invitation: Invitation,
+        invitation: AnyInvitation,
         did_doc: AriesDidDoc,
         autohop_enabled: bool,
     ) -> VcxResult<Self> {
@@ -290,7 +292,7 @@ impl MediatedConnection {
         }
     }
 
-    pub fn process_invite(&mut self, invitation: Invitation) -> VcxResult<()> {
+    pub fn process_invite(&mut self, invitation: AnyInvitation) -> VcxResult<()> {
         trace!("MediatedConnection::process_invite >>> invitation: {:?}", invitation);
         self.connection_sm = match &self.connection_sm {
             SmConnection::Inviter(_sm_inviter) => {
@@ -608,12 +610,14 @@ impl MediatedConnection {
             SmConnection::Invitee(sm_invitee) => {
                 let (sm_invitee, can_autohop) = match message {
                     Some(message) => match message {
-                        AriesMessage::Connection(Connection::Invitation(Invitation::Public(invitation))) => {
-                            (sm_invitee.handle_invitation(Invitation::Public(invitation))?, false)
-                        }
-                        AriesMessage::Connection(Connection::Invitation(Invitation::Pairwise(invitation))) => {
-                            (sm_invitee.handle_invitation(Invitation::Pairwise(invitation))?, false)
-                        }
+                        AriesMessage::Connection(Connection::Invitation(Invitation::Public(invitation))) => (
+                            sm_invitee.handle_invitation(AnyInvitation::Con(Invitation::Public(invitation)))?,
+                            false,
+                        ),
+                        AriesMessage::Connection(Connection::Invitation(Invitation::Pairwise(invitation))) => (
+                            sm_invitee.handle_invitation(AnyInvitation::Con(Invitation::Pairwise(invitation)))?,
+                            false,
+                        ),
                         AriesMessage::Connection(Connection::Response(response)) => {
                             let send_message = self.send_message_closure_connection(profile);
                             (

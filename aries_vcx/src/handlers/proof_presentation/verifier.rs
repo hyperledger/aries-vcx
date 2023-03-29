@@ -1,9 +1,13 @@
 use std::collections::HashMap;
 
-use messages::protocols::proof_presentation::presentation::Presentation;
 use std::sync::Arc;
 
 use agency_client::agency_client::AgencyClient;
+use messages2::decorators::attachment::AttachmentType;
+use messages2::msg_fields::protocols::present_proof::present::Presentation;
+use messages2::msg_fields::protocols::present_proof::propose::ProposePresentation;
+use messages2::msg_fields::protocols::present_proof::request::RequestPresentation;
+use messages2::AriesMessage;
 
 use crate::common::proofs::proof_request::PresentationRequestData;
 use crate::core::profile::profile::Profile;
@@ -13,9 +17,6 @@ use crate::protocols::proof_presentation::verifier::messages::VerifierMessages;
 use crate::protocols::proof_presentation::verifier::state_machine::{VerifierSM, VerifierState};
 use crate::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
 use crate::protocols::SendClosure;
-use messages::a2a::A2AMessage;
-use messages::protocols::proof_presentation::presentation_proposal::PresentationProposal;
-use messages::protocols::proof_presentation::presentation_request::PresentationRequest;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Default)]
 pub struct Verifier {
@@ -31,7 +32,7 @@ impl Verifier {
         })
     }
 
-    pub fn create_from_request(source_id: String, presentation_request: &PresentationRequestData) -> VcxResult<Self> {
+    pub fn create_from_request(source_id: String, presentation_request: &RequestPresentation) -> VcxResult<Self> {
         trace!(
             "Verifier::create_from_request >>> source_id: {:?}, presentation_request: {:?}",
             source_id,
@@ -41,7 +42,7 @@ impl Verifier {
         Ok(Self { verifier_sm })
     }
 
-    pub fn create_from_proposal(source_id: &str, presentation_proposal: &PresentationProposal) -> VcxResult<Self> {
+    pub fn create_from_proposal(source_id: &str, presentation_proposal: &ProposePresentation) -> VcxResult<Self> {
         trace!(
             "Issuer::create_from_proposal >>> source_id: {:?}, presentation_proposal: {:?}",
             source_id,
@@ -72,7 +73,7 @@ impl Verifier {
 
     pub async fn send_presentation_request(&mut self, send_message: SendClosure) -> VcxResult<()> {
         if self.verifier_sm.get_state() == VerifierState::PresentationRequestSet {
-            let offer = self.verifier_sm.presentation_request_msg()?.to_a2a_message();
+            let offer = self.verifier_sm.presentation_request_msg()?.into();
             send_message(offer).await?;
             self.verifier_sm = self.verifier_sm.clone().mark_presentation_request_msg_sent()?;
         }
@@ -103,7 +104,7 @@ impl Verifier {
 
     pub fn set_request(
         &mut self,
-        presentation_request_data: PresentationRequestData,
+        presentation_request_data: RequestPresentation,
         comment: Option<String>,
     ) -> VcxResult<()> {
         trace!(
@@ -124,19 +125,28 @@ impl Verifier {
         Ok(())
     }
 
-    pub fn get_presentation_request_msg(&self) -> VcxResult<PresentationRequest> {
+    pub fn get_presentation_request_msg(&self) -> VcxResult<RequestPresentation> {
         self.verifier_sm.presentation_request_msg()
     }
 
     pub fn get_presentation_request_attachment(&self) -> VcxResult<String> {
-        self.verifier_sm
+        let attach = self
+            .verifier_sm
             .presentation_request_msg()?
+            .content
             .request_presentations_attach
-            .content()
-            .map_err(|err| err.into())
+            .get(0);
+
+        let Some(AttachmentType::Json(attach_json)) = attach.map(|a| a.data.content) else {
+                return Err(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::SerializationError,
+                    format!("Attachment is not JSON: {:?}", attach),
+                ));
+            };
+        Ok(attach_json.to_string())
     }
 
-    pub fn get_presentation_request(&self) -> VcxResult<PresentationRequest> {
+    pub fn get_presentation_request(&self) -> VcxResult<RequestPresentation> {
         self.verifier_sm.presentation_request_msg()
     }
 
@@ -149,14 +159,24 @@ impl Verifier {
     }
 
     pub fn get_presentation_attachment(&self) -> VcxResult<String> {
-        self.verifier_sm
+        let attach = self
+            .verifier_sm
             .get_presentation_msg()?
+            .content
             .presentations_attach
-            .content()
-            .map_err(|err| err.into())
+            .get(0);
+
+        let Some(AttachmentType::Json(attach_json)) = attach.map(|a| a.data.content) else {
+                return Err(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::SerializationError,
+                    format!("Attachment is not JSON: {:?}", attach),
+                ));
+            };
+
+        Ok(attach_json.to_string())
     }
 
-    pub fn get_presentation_proposal(&self) -> VcxResult<PresentationProposal> {
+    pub fn get_presentation_proposal(&self) -> VcxResult<ProposePresentation> {
         self.verifier_sm.presentation_proposal()
     }
 
@@ -178,7 +198,7 @@ impl Verifier {
         self.verifier_sm.progressable_by_message()
     }
 
-    pub fn find_message_to_handle(&self, messages: HashMap<String, A2AMessage>) -> Option<(String, A2AMessage)> {
+    pub fn find_message_to_handle(&self, messages: HashMap<String, AriesMessage>) -> Option<(String, AriesMessage)> {
         self.verifier_sm.find_message_to_handle(messages)
     }
 

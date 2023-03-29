@@ -4,6 +4,7 @@ use std::sync::Arc;
 
 use crate::core::profile::profile::Profile;
 use crate::errors::error::prelude::*;
+use crate::handlers::util::{matches_opt_thread_id, matches_thread_id};
 use crate::protocols::common::build_problem_report_msg;
 use crate::protocols::proof_presentation::prover::messages::ProverMessages;
 use crate::protocols::proof_presentation::prover::states::finished::FinishedState;
@@ -24,6 +25,8 @@ use messages::protocols::proof_presentation::presentation_proposal::{
 };
 use messages::protocols::proof_presentation::presentation_request::PresentationRequest;
 use messages::status::Status;
+use messages2::msg_fields::protocols::present_proof::PresentProof;
+use messages2::AriesMessage;
 
 /// A state machine that tracks the evolution of states for a Prover during
 /// the Present Proof protocol.
@@ -229,11 +232,11 @@ impl ProverSM {
     pub async fn send_presentation(self, send_message: SendClosure) -> VcxResult<Self> {
         let state = match self.state {
             ProverFullState::PresentationPrepared(state) => {
-                send_message(state.presentation.to_a2a_message()).await?;
+                send_message(state.presentation.into()).await?;
                 ProverFullState::PresentationSent((state).into())
             }
             ProverFullState::PresentationPreparationFailed(state) => {
-                send_message(state.problem_report.to_a2a_message()).await?;
+                send_message(state.problem_report.into()).await?;
                 ProverFullState::Finished((state).into())
             }
             s => {
@@ -244,32 +247,37 @@ impl ProverSM {
         Ok(Self { state, ..self })
     }
 
-    pub fn find_message_to_handle(&self, messages: HashMap<String, A2AMessage>) -> Option<(String, A2AMessage)> {
+    pub fn find_message_to_handle(&self, messages: HashMap<String, AriesMessage>) -> Option<(String, AriesMessage)> {
         trace!("Prover::find_message_to_handle >>> messages: {:?}", messages);
         for (uid, message) in messages {
             match self.state {
-                ProverFullState::PresentationProposalSent(_) => match message {
-                    A2AMessage::CommonProblemReport(problem_report) => {
-                        if problem_report.from_thread(&self.thread_id) {
-                            return Some((uid, A2AMessage::CommonProblemReport(problem_report)));
+                ProverFullState::PresentationProposalSent(_) => match &message {
+                    AriesMessage::PresentProof(PresentProof::RequestPresentation(msg)) => {
+                        if matches_opt_thread_id!(msg, self.thread_id.as_str()) {
+                            return Some((uid, message));
                         }
                     }
-                    A2AMessage::PresentationRequest(request) => {
-                        if request.from_thread(&self.thread_id) {
-                            return Some((uid, A2AMessage::PresentationRequest(request)));
+                    AriesMessage::PresentProof(PresentProof::RequestPresentation(msg)) => {
+                        if matches_opt_thread_id!(msg, self.thread_id.as_str()) {
+                            return Some((uid, message));
                         }
                     }
                     _ => {}
                 },
-                ProverFullState::PresentationSent(_) => match message {
-                    A2AMessage::Ack(ack) | A2AMessage::PresentationAck(ack) => {
-                        if ack.from_thread(&self.thread_id) {
-                            return Some((uid, A2AMessage::PresentationAck(ack)));
+                ProverFullState::PresentationSent(_) => match &message {
+                    AriesMessage::Notification(msg) => {
+                        if matches_thread_id!(msg, self.thread_id.as_str()) {
+                            return Some((uid, message));
                         }
                     }
-                    A2AMessage::CommonProblemReport(problem_report) => {
-                        if problem_report.from_thread(&self.thread_id) {
-                            return Some((uid, A2AMessage::CommonProblemReport(problem_report)));
+                    AriesMessage::PresentProof(PresentProof::Ack(msg)) => {
+                        if matches_thread_id!(msg, self.thread_id.as_str()) {
+                            return Some((uid, message));
+                        }
+                    }
+                    AriesMessage::ReportProblem(msg) => {
+                        if matches_opt_thread_id!(msg, self.thread_id.as_str()) {
+                            return Some((uid, message));
                         }
                     }
                     _ => {}

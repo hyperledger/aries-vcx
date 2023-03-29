@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use agency_client::agency_client::AgencyClient;
+use messages2::AriesMessage;
 
 use crate::core::profile::profile::Profile;
 use crate::errors::error::prelude::*;
@@ -117,7 +118,7 @@ impl Prover {
         self.prover_sm.progressable_by_message()
     }
 
-    pub fn find_message_to_handle(&self, messages: HashMap<String, A2AMessage>) -> Option<(String, A2AMessage)> {
+    pub fn find_message_to_handle(&self, messages: HashMap<String, AriesMessage>) -> Option<(String, AriesMessage)> {
         self.prover_sm.find_message_to_handle(messages)
     }
 

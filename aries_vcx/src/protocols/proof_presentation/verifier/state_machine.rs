@@ -15,13 +15,8 @@ use crate::protocols::proof_presentation::verifier::states::presentation_request
 use crate::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
 use crate::protocols::proof_presentation::verifier::verify_thread_id;
 use crate::protocols::SendClosure;
-use messages::a2a::{A2AMessage, MessageId};
-use messages::concepts::problem_report::ProblemReport;
-use messages::protocols::proof_presentation::presentation::Presentation;
-use messages::protocols::proof_presentation::presentation_ack::PresentationAck;
-use messages::protocols::proof_presentation::presentation_proposal::PresentationProposal;
-use messages::protocols::proof_presentation::presentation_request::PresentationRequest;
-use messages::status::Status;
+use messages2::msg_fields::protocols::present_proof::{propose::ProposePresentation, present::Presentation};
+use messages2::msg_fields::protocols::present_proof::request::RequestPresentation;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct VerifierSM {
@@ -93,7 +88,7 @@ impl VerifierSM {
     }
 
     // todo: eliminate VcxResult (follow set_request err chain and eliminate possibility of err at the bottom)
-    pub fn from_request(source_id: &str, presentation_request_data: &PresentationRequestData) -> VcxResult<Self> {
+    pub fn from_request(source_id: &str, presentation_request_data: &RequestPresentation) -> VcxResult<Self> {
         let sm = Self {
             source_id: source_id.to_string(),
             thread_id: MessageId::new().0,
@@ -102,7 +97,7 @@ impl VerifierSM {
         sm.set_request(presentation_request_data, None)
     }
 
-    pub fn from_proposal(source_id: &str, presentation_proposal: &PresentationProposal) -> Self {
+    pub fn from_proposal(source_id: &str, presentation_proposal: &ProposePresentation) -> Self {
         Self {
             source_id: source_id.to_string(),
             thread_id: presentation_proposal.id.0.clone(),
@@ -289,7 +284,7 @@ impl VerifierSM {
         None
     }
 
-    pub fn set_request(self, request_data: &PresentationRequestData, comment: Option<String>) -> VcxResult<Self> {
+    pub fn set_request(self, request_data: &RequestPresentation, comment: Option<String>) -> VcxResult<Self> {
         let Self {
             source_id,
             thread_id,
@@ -421,7 +416,7 @@ impl VerifierSM {
         }
     }
 
-    pub fn presentation_request_msg(&self) -> VcxResult<PresentationRequest> {
+    pub fn presentation_request_msg(&self) -> VcxResult<RequestPresentation> {
         match self.state {
             VerifierFullState::Initial(_) => Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::InvalidState,
@@ -456,7 +451,7 @@ impl VerifierSM {
         }
     }
 
-    pub fn presentation_proposal(&self) -> VcxResult<PresentationProposal> {
+    pub fn presentation_proposal(&self) -> VcxResult<ProposePresentation> {
         match self.state {
             VerifierFullState::PresentationProposalReceived(ref state) => Ok(state.presentation_proposal.clone()),
             _ => Err(AriesVcxError::from_msg(

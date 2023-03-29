@@ -1,12 +1,11 @@
 use bs58;
+use messages::diddoc::aries::diddoc::AriesDidDoc;
+use messages::diddoc::aries::service::AriesService;
+use messages2::msg_fields::protocols::connection::invitation::Invitation;
+use messages2::msg_fields::protocols::out_of_band::invitation::{Invitation as OobInvitation, OobService};
 use std::{collections::HashMap, sync::Arc};
 
 use crate::common::ledger::service_didsov::EndpointDidSov;
-use messages::diddoc::aries::diddoc::AriesDidDoc;
-use messages::diddoc::aries::service::AriesService;
-use messages::protocols::connection::did::Did;
-use messages::protocols::connection::invite::Invitation;
-use messages::protocols::out_of_band::service_oob::ServiceOob;
 use serde_json::Value;
 
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
@@ -64,10 +63,10 @@ pub struct ReplyDataV1 {
 const DID_KEY_PREFIX: &str = "did:key:";
 const ED25519_MULTIBASE_CODEC: [u8; 2] = [0xed, 0x01];
 
-pub async fn resolve_service(profile: &Arc<dyn Profile>, service: &ServiceOob) -> VcxResult<AriesService> {
+pub async fn resolve_service(profile: &Arc<dyn Profile>, service: &OobService) -> VcxResult<AriesService> {
     match service {
-        ServiceOob::AriesService(service) => Ok(service.clone()),
-        ServiceOob::Did(did) => get_service(profile, did).await,
+        OobService::AriesService(service) => Ok(service.clone()),
+        OobService::Did(did) => get_service(profile, did).await,
     }
 }
 
@@ -91,36 +90,53 @@ pub async fn into_did_doc(profile: &Arc<dyn Profile>, invitation: &Invitation) -
     let mut did_doc: AriesDidDoc = AriesDidDoc::default();
     let (service_endpoint, recipient_keys, routing_keys) = match invitation {
         Invitation::Public(invitation) => {
-            did_doc.set_id(invitation.did.to_string());
-            let service = get_service(profile, &invitation.did).await.unwrap_or_else(|err| {
-                error!("Failed to obtain service definition from the ledger: {}", err);
-                AriesService::default()
-            });
-            (service.service_endpoint, service.recipient_keys, service.routing_keys)
-        }
-        Invitation::Pairwise(invitation) => {
-            did_doc.set_id(invitation.id.0.clone());
-            (
-                invitation.service_endpoint.clone(),
-                invitation.recipient_keys.clone(),
-                invitation.routing_keys.clone(),
-            )
-        }
-        Invitation::OutOfBand(invitation) => {
-            did_doc.set_id(invitation.id.0.clone());
-            let service = resolve_service(profile, &invitation.services[0])
+            did_doc.set_id(invitation.content.did.to_string());
+            let service = get_service(profile, &invitation.content.did)
                 .await
                 .unwrap_or_else(|err| {
                     error!("Failed to obtain service definition from the ledger: {}", err);
                     AriesService::default()
                 });
-            let recipient_keys = normalize_keys_as_naked(service.recipient_keys).unwrap_or_else(|err| {
-                error!("Is not did valid: {}", err);
-                Vec::new()
-            });
-            (service.service_endpoint, recipient_keys, service.routing_keys)
+            (service.service_endpoint, service.recipient_keys, service.routing_keys)
+        }
+        Invitation::Pairwise(invitation) => {
+            did_doc.set_id(invitation.id.clone());
+            (
+                invitation.content.service_endpoint.clone(),
+                invitation.content.recipient_keys.clone(),
+                invitation.content.routing_keys.clone(),
+            )
+        }
+        Invitation::PairwiseDID(_) => {
+            return Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidDid,
+                format!("PairwiseDID invitation not supported yet!"),
+            ))
         }
     };
+    did_doc.set_service_endpoint(service_endpoint);
+    did_doc.set_recipient_keys(recipient_keys);
+    did_doc.set_routing_keys(routing_keys);
+    Ok(did_doc)
+}
+
+pub async fn into_did_doc_oob(profile: &Arc<dyn Profile>, invitation: &OobInvitation) -> VcxResult<AriesDidDoc> {
+    let mut did_doc: AriesDidDoc = AriesDidDoc::default();
+    let (service_endpoint, recipient_keys, routing_keys) = {
+        did_doc.set_id(invitation.id.clone());
+        let service = resolve_service(profile, &invitation.content.services[0])
+            .await
+            .unwrap_or_else(|err| {
+                error!("Failed to obtain service definition from the ledger: {}", err);
+                AriesService::default()
+            });
+        let recipient_keys = normalize_keys_as_naked(service.recipient_keys).unwrap_or_else(|err| {
+            error!("Is not did valid: {}", err);
+            Vec::new()
+        });
+        (service.service_endpoint, recipient_keys, service.routing_keys)
+    };
+
     did_doc.set_service_endpoint(service_endpoint);
     did_doc.set_recipient_keys(recipient_keys);
     did_doc.set_routing_keys(routing_keys);
@@ -175,7 +191,7 @@ fn normalize_keys_as_naked(keys_list: Vec<String>) -> VcxResult<Vec<String>> {
     Ok(result)
 }
 
-pub async fn get_service(profile: &Arc<dyn Profile>, did: &Did) -> VcxResult<AriesService> {
+pub async fn get_service(profile: &Arc<dyn Profile>, did: &String) -> VcxResult<AriesService> {
     let did_raw = did.to_string();
     let did_raw = match did_raw.rsplit_once(':') {
         None => did_raw,

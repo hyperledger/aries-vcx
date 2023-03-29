@@ -1,3 +1,5 @@
+use url::Url;
+
 pub const SERVICE_SUFFIX: &str = "indy";
 
 pub const SERVICE_TYPE: &str = "IndyAgent";
@@ -18,7 +20,7 @@ pub struct AriesService {
     #[serde(rename = "routingKeys")]
     pub routing_keys: Vec<String>,
     #[serde(rename = "serviceEndpoint")]
-    pub service_endpoint: String,
+    pub service_endpoint: Url,
 }
 
 impl AriesService {
@@ -26,7 +28,7 @@ impl AriesService {
         Self::default()
     }
 
-    pub fn set_service_endpoint(mut self, service_endpoint: String) -> Self {
+    pub fn set_service_endpoint(mut self, service_endpoint: Url) -> Self {
         self.service_endpoint = service_endpoint;
         self
     }
@@ -48,7 +50,7 @@ impl Default for AriesService {
             id: format!("did:example:123456789abcdefghi;{}", SERVICE_SUFFIX),
             type_: String::from(SERVICE_TYPE),
             priority: 0,
-            service_endpoint: String::new(),
+            service_endpoint: "https:://dummy.dummy/dummy".parse().expect("dummy url should get parsed"),
             recipient_keys: Vec::new(),
             routing_keys: Vec::new(),
         }

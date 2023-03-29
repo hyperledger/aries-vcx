@@ -3,6 +3,7 @@ use crate::concepts::thread::Thread;
 use crate::concepts::timing::Timing;
 use crate::timing_optional;
 use diddoc::aries::diddoc::AriesDidDoc;
+use url::Url;
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
 pub struct Request {
@@ -46,7 +47,7 @@ impl Request {
         self
     }
 
-    pub fn set_service_endpoint(mut self, service_endpoint: String) -> Request {
+    pub fn set_service_endpoint(mut self, service_endpoint: Url) -> Request {
         self.connection.did_doc.set_service_endpoint(service_endpoint);
         self
     }

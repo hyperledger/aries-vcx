@@ -3,8 +3,11 @@ use std::fmt::Display;
 use std::sync::Arc;
 
 use crate::core::profile::profile::Profile;
+use crate::handlers::util::{matches_opt_thread_id, matches_thread_id};
 use messages::concepts::ack::Ack;
 use messages::concepts::problem_report::ProblemReport;
+use messages2::msg_fields::protocols::cred_issuance::CredentialIssuance;
+use messages2::AriesMessage;
 
 use crate::common::credentials::encoding::encode_attributes;
 use crate::common::credentials::is_cred_revoked;
@@ -226,7 +229,7 @@ impl IssuerSM {
         }
     }
 
-    pub fn find_message_to_handle(&self, messages: HashMap<String, A2AMessage>) -> Option<(String, A2AMessage)> {
+    pub fn find_message_to_handle(&self, messages: HashMap<String, AriesMessage>) -> Option<(String, AriesMessage)> {
         trace!(
             "IssuerSM::find_message_to_handle >>> messages: {:?}, state: {:?}",
             messages,
@@ -236,39 +239,42 @@ impl IssuerSM {
         for (uid, message) in messages {
             match self.state {
                 IssuerFullState::Initial(_) => {
-                    if let A2AMessage::CredentialProposal(credential_proposal) = message {
-                        return Some((uid, A2AMessage::CredentialProposal(credential_proposal)));
+                    if let AriesMessage::CredentialIssuance(CredentialIssuance::ProposeCredential(_)) = &message {
+                        return Some((uid, message));
                     }
                 }
-                IssuerFullState::OfferSent(_) => match message {
-                    A2AMessage::CredentialRequest(credential) => {
-                        if credential.from_thread(&self.thread_id) {
-                            return Some((uid, A2AMessage::CredentialRequest(credential)));
+                IssuerFullState::OfferSent(_) => match &message {
+                    AriesMessage::CredentialIssuance(CredentialIssuance::RequestCredential(msg)) => {
+                        if matches_opt_thread_id!(msg, self.thread_id.as_str()) {
+                            return Some((uid, message));
                         }
                     }
-                    A2AMessage::CredentialProposal(credential_proposal) => {
-                        if let Some(ref thread) = credential_proposal.thread {
-                            if thread.is_reply(&self.thread_id) {
-                                return Some((uid, A2AMessage::CredentialProposal(credential_proposal)));
-                            }
+                    AriesMessage::CredentialIssuance(CredentialIssuance::ProposeCredential(msg)) => {
+                        if matches_opt_thread_id!(msg, self.thread_id.as_str()) {
+                            return Some((uid, message));
                         }
                     }
-                    A2AMessage::CommonProblemReport(problem_report) => {
-                        if problem_report.from_thread(&self.thread_id) {
-                            return Some((uid, A2AMessage::CommonProblemReport(problem_report)));
+                    AriesMessage::ReportProblem(msg) => {
+                        if matches_opt_thread_id!(msg, self.thread_id.as_str()) {
+                            return Some((uid, message));
                         }
                     }
                     _ => {}
                 },
-                IssuerFullState::CredentialSent(_) => match message {
-                    A2AMessage::Ack(ack) | A2AMessage::CredentialAck(ack) => {
-                        if ack.from_thread(&self.thread_id) {
-                            return Some((uid, A2AMessage::CredentialAck(ack)));
+                IssuerFullState::CredentialSent(_) => match &message {
+                    AriesMessage::CredentialIssuance(CredentialIssuance::Ack(msg)) => {
+                        if matches_thread_id!(msg, self.thread_id.as_str()) {
+                            return Some((uid, message));
                         }
                     }
-                    A2AMessage::CommonProblemReport(problem_report) => {
-                        if problem_report.from_thread(&self.thread_id) {
-                            return Some((uid, A2AMessage::CommonProblemReport(problem_report)));
+                    AriesMessage::Notification(msg) => {
+                        if matches_thread_id!(msg, self.thread_id.as_str()) {
+                            return Some((uid, message));
+                        }
+                    }
+                    AriesMessage::ReportProblem(msg) => {
+                        if matches_opt_thread_id!(msg, self.thread_id.as_str()) {
+                            return Some((uid, message));
                         }
                     }
                     _ => {}

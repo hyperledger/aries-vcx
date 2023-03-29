@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use crate::common::signing::decode_signed_connection_response;
 use crate::errors::error::prelude::*;
-use crate::handlers::util::verify_thread_id;
+use crate::handlers::util::{verify_thread_id, AnyInvitation};
 use crate::protocols::mediated_connection::invitee::states::completed::CompletedState;
 use crate::protocols::mediated_connection::invitee::states::initial::InitialState;
 use crate::protocols::mediated_connection::invitee::states::invited::InvitedState;
@@ -231,7 +231,7 @@ impl SmConnectionInvitee {
         }
     }
 
-    pub fn handle_invitation(self, invitation: Invitation) -> VcxResult<Self> {
+    pub fn handle_invitation(self, invitation: AnyInvitation) -> VcxResult<Self> {
         let Self { state, .. } = self;
         let thread_id = invitation.get_id().to_owned();
         let state = match state {

@@ -6,6 +6,7 @@ use crate::concepts::thread::Thread;
 use crate::concepts::timing::Timing;
 use crate::timing_optional;
 use diddoc::aries::diddoc::AriesDidDoc;
+use url::Url;
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
 pub struct Response {
@@ -77,7 +78,7 @@ impl Response {
         self
     }
 
-    pub fn set_service_endpoint(mut self, service_endpoint: String) -> Response {
+    pub fn set_service_endpoint(mut self, service_endpoint: Url) -> Response {
         self.connection.did_doc.set_service_endpoint(service_endpoint);
         self
     }

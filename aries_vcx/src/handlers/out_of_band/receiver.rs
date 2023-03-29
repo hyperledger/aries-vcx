@@ -2,43 +2,45 @@ use std::clone::Clone;
 use std::sync::Arc;
 
 use agency_client::agency_client::AgencyClient;
+use diddoc::aries::diddoc::AriesDidDoc;
+use messages2::decorators::attachment::AttachmentType;
+use messages2::decorators::thread::Thread;
+use messages2::msg_fields::protocols::cred_issuance::issue_credential::IssueCredential;
+use messages2::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
+use messages2::msg_fields::protocols::cred_issuance::request_credential::RequestCredential;
+use messages2::msg_fields::protocols::cred_issuance::CredentialIssuance;
+use messages2::msg_fields::protocols::out_of_band::invitation::{Invitation, OobService};
+use messages2::msg_fields::protocols::out_of_band::OutOfBand;
+use messages2::msg_fields::protocols::present_proof::present::Presentation;
+use messages2::msg_fields::protocols::present_proof::request::RequestPresentation;
+use messages2::msg_fields::protocols::present_proof::PresentProof;
+use messages2::AriesMessage;
+use serde::Deserialize;
 
 use crate::common::ledger::transactions::resolve_service;
 use crate::core::profile::profile::Profile;
 use crate::errors::error::prelude::*;
 use crate::handlers::connection::mediated_connection::MediatedConnection;
+use crate::handlers::util::{AttachmentId, AnyInvitation};
 use crate::protocols::connection::GenericConnection;
-use messages::a2a::A2AMessage;
-use messages::concepts::attachment::AttachmentId;
-use messages::diddoc::aries::diddoc::AriesDidDoc;
-use messages::protocols::connection::invite::Invitation;
-use messages::protocols::issuance::credential::Credential;
-use messages::protocols::issuance::credential_offer::CredentialOffer;
-use messages::protocols::issuance::credential_request::CredentialRequest;
-use messages::protocols::out_of_band::invitation::OutOfBandInvitation;
 
-use messages::protocols::proof_presentation::presentation::Presentation;
-use messages::protocols::proof_presentation::presentation_request::PresentationRequest;
-
-use messages::protocols::out_of_band::service_oob::ServiceOob;
-
-#[derive(Default, Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct OutOfBandReceiver {
-    pub oob: OutOfBandInvitation,
+    pub oob: Invitation,
 }
 
 impl OutOfBandReceiver {
-    pub fn create_from_a2a_msg(msg: &A2AMessage) -> VcxResult<Self> {
+    pub fn create_from_a2a_msg(msg: &AriesMessage) -> VcxResult<Self> {
         trace!("OutOfBandReceiver::create_from_a2a_msg >>> msg: {:?}", msg);
         match msg {
-            A2AMessage::OutOfBandInvitation(oob) => Ok(OutOfBandReceiver { oob: oob.clone() }),
+            AriesMessage::OutOfBand(OutOfBand::Invitation(oob)) => Ok(OutOfBandReceiver { oob: oob.clone() }),
             m => Err(AriesVcxError::from_msg(AriesVcxErrorKind::InvalidMessageFormat,
                                                  format!("Expected OutOfBandInvitation message to create OutOfBandReceiver, but received message of unknown type: {:?}", m))),
         }
     }
 
     pub fn get_id(&self) -> String {
-        self.oob.id.0.clone()
+        self.oob.id.clone()
     }
 
     pub async fn connection_exists<'a>(
@@ -47,11 +49,11 @@ impl OutOfBandReceiver {
         connections: &'a Vec<&'a MediatedConnection>,
     ) -> VcxResult<Option<&'a MediatedConnection>> {
         trace!("OutOfBandReceiver::connection_exists >>>");
-        for service in &self.oob.services {
+        for service in &self.oob.content.services {
             for connection in connections {
                 match connection.bootstrap_did_doc() {
                     Some(did_doc) => {
-                        if let ServiceOob::Did(did) = service {
+                        if let OobService::Did(did) = service {
                             if did.to_string() == did_doc.id {
                                 return Ok(Some(connection));
                             }
@@ -73,7 +75,7 @@ impl OutOfBandReceiver {
     {
         trace!("OutOfBandReceiver::connection_exists >>>");
 
-        for service in &self.oob.services {
+        for service in &self.oob.content.services {
             for (idx, connection) in connections.clone() {
                 if Self::connection_matches_service(profile, connection, service).await {
                     return Some(idx);
@@ -87,7 +89,7 @@ impl OutOfBandReceiver {
     async fn connection_matches_service(
         profile: &Arc<dyn Profile>,
         connection: &GenericConnection,
-        service: &ServiceOob,
+        service: &OobService,
     ) -> bool {
         match connection.bootstrap_did_doc() {
             None => false,
@@ -95,7 +97,7 @@ impl OutOfBandReceiver {
         }
     }
 
-    async fn did_doc_matches_service(profile: &Arc<dyn Profile>, service: &ServiceOob, did_doc: &AriesDidDoc) -> bool {
+    async fn did_doc_matches_service(profile: &Arc<dyn Profile>, service: &OobService, did_doc: &AriesDidDoc) -> bool {
         // Ugly, but it's best to short-circuit.
         Self::did_doc_matches_service_did(service, did_doc)
             || Self::did_doc_matches_resolved_service(profile, service, did_doc)
@@ -103,16 +105,16 @@ impl OutOfBandReceiver {
                 .unwrap_or(false)
     }
 
-    fn did_doc_matches_service_did(service: &ServiceOob, did_doc: &AriesDidDoc) -> bool {
+    fn did_doc_matches_service_did(service: &OobService, did_doc: &AriesDidDoc) -> bool {
         match service {
-            ServiceOob::Did(did) => did.to_string() == did_doc.id,
+            OobService::Did(did) => did.to_string() == did_doc.id,
             _ => false,
         }
     }
 
     async fn did_doc_matches_resolved_service(
         profile: &Arc<dyn Profile>,
-        service: &ServiceOob,
+        service: &OobService,
         did_doc: &AriesDidDoc,
     ) -> VcxResult<bool> {
         let did_doc_service = did_doc.get_service()?;
@@ -122,64 +124,110 @@ impl OutOfBandReceiver {
     }
 
     // TODO: There may be multiple A2AMessages in a single OoB msg
-    pub fn extract_a2a_message(&self) -> VcxResult<Option<A2AMessage>> {
+    pub fn extract_a2a_message(&self) -> VcxResult<Option<AriesMessage>> {
         trace!("OutOfBandReceiver::extract_a2a_message >>>");
-        if let Some(attach) = self.oob.requests_attach.get() {
-            let attach_json = self.oob.requests_attach.content()?;
-            match attach.id() {
+        if let Some(attach) = self.oob.content.requests_attach.get(0) {
+            let AttachmentType::Json(attach_json) = attach.data.content else {
+                return Err(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::SerializationError,
+                    format!("Attachment is not JSON: {:?}", attach),
+                ));
+            };
+
+            let attach_id = if let Some(attach_id) = attach.id {
+                let attach_id: AttachmentId = serde_json::from_str(&attach_id).map_err(|err| {
+                    AriesVcxError::from_msg(
+                        AriesVcxErrorKind::SerializationError,
+                        format!("Failed to deserialize attachment ID: {}", err),
+                    )
+                })?;
+
+                Some(attach_id)
+            } else {
+                None
+            };
+
+            match attach_id {
                 Some(id) => match id {
                     AttachmentId::CredentialOffer => {
-                        let offer: CredentialOffer = serde_json::from_str(&attach_json).map_err(|_| {
+                        let mut offer = OfferCredential::deserialize(attach_json).map_err(|_| {
                             AriesVcxError::from_msg(
                                 AriesVcxErrorKind::SerializationError,
                                 format!("Failed to deserialize attachment: {}", attach_json),
                             )
                         })?;
-                        return Ok(Some(A2AMessage::CredentialOffer(
-                            offer.set_parent_thread_id(&self.oob.id.0),
+
+                        if let Some(mut thread) = offer.decorators.thread {
+                            thread.pthid = Some(self.oob.id.clone());
+                        } else {
+                            let mut thread = Thread::new(offer.id.clone());
+                            thread.pthid = Some(self.oob.id.clone());
+                            offer.decorators.thread = Some(thread);
+                        }
+
+                        return Ok(Some(AriesMessage::CredentialIssuance(
+                            CredentialIssuance::OfferCredential(offer),
                         )));
                     }
                     AttachmentId::CredentialRequest => {
-                        let request: CredentialRequest = serde_json::from_str(&attach_json).map_err(|_| {
+                        let mut request = RequestCredential::deserialize(&attach_json).map_err(|_| {
                             AriesVcxError::from_msg(
                                 AriesVcxErrorKind::SerializationError,
                                 format!("Failed to deserialize attachment: {}", attach_json),
                             )
                         })?;
-                        return Ok(Some(A2AMessage::CredentialRequest(
-                            request.set_parent_thread_id(&self.oob.id.0),
+
+                        if let Some(mut thread) = request.decorators.thread {
+                            thread.pthid = Some(self.oob.id.clone());
+                        } else {
+                            let mut thread = Thread::new(request.id.clone());
+                            thread.pthid = Some(self.oob.id.clone());
+                            request.decorators.thread = Some(thread);
+                        }
+
+                        return Ok(Some(AriesMessage::CredentialIssuance(
+                            CredentialIssuance::RequestCredential(request),
                         )));
                     }
                     AttachmentId::Credential => {
-                        let credential: Credential = serde_json::from_str(&attach_json).map_err(|_| {
+                        let mut credential = IssueCredential::deserialize(&attach_json).map_err(|_| {
                             AriesVcxError::from_msg(
                                 AriesVcxErrorKind::SerializationError,
                                 format!("Failed to deserialize attachment: {}", attach_json),
                             )
                         })?;
-                        return Ok(Some(A2AMessage::Credential(
-                            credential.set_parent_thread_id(&self.oob.id.0),
+
+                        credential.decorators.thread.pthid = Some(self.oob.id.clone());
+
+                        return Ok(Some(AriesMessage::CredentialIssuance(
+                            CredentialIssuance::IssueCredential(credential),
                         )));
                     }
                     AttachmentId::PresentationRequest => {
-                        let request: PresentationRequest = serde_json::from_str(&attach_json).map_err(|_| {
+                        let request = RequestPresentation::deserialize(&attach_json).map_err(|_| {
                             AriesVcxError::from_msg(
                                 AriesVcxErrorKind::SerializationError,
                                 format!("Failed to deserialize attachment: {}", attach_json),
                             )
                         })?;
-                        return Ok(Some(A2AMessage::PresentationRequest(request)));
+
+                        return Ok(Some(AriesMessage::PresentProof(PresentProof::RequestPresentation(
+                            request,
+                        ))));
                     }
                     AttachmentId::Presentation => {
-                        let presentation: Presentation = serde_json::from_str(&attach_json).map_err(|_| {
+                        let mut presentation = Presentation::deserialize(&attach_json).map_err(|_| {
                             AriesVcxError::from_msg(
                                 AriesVcxErrorKind::SerializationError,
                                 format!("Failed to deserialize attachment: {}", attach_json),
                             )
                         })?;
-                        return Ok(Some(A2AMessage::Presentation(
-                            presentation.set_parent_thread_id(&self.oob.id.0),
-                        )));
+
+                        presentation.decorators.thread.pthid = Some(self.oob.id.clone());
+
+                        return Ok(Some(AriesMessage::PresentProof(PresentProof::Presentation(
+                            presentation,
+                        ))));
                     }
                 },
                 None => {
@@ -202,27 +250,27 @@ impl OutOfBandReceiver {
             autohop_enabled
         );
         MediatedConnection::create_with_invite(
-            &self.oob.id.0,
+            &self.oob.id,
             profile,
             agency_client,
-            Invitation::OutOfBand(self.oob.clone()),
+            AnyInvitation::Oob(self.oob.clone()),
             did_doc,
             autohop_enabled,
         )
         .await
     }
 
-    pub fn to_a2a_message(&self) -> A2AMessage {
-        self.oob.to_a2a_message()
+    pub fn to_a2a_message(&self) -> AriesMessage {
+        self.oob.into()
     }
 
     pub fn to_string(&self) -> String {
-        self.oob.to_string()
+        json!(self.oob).to_string()
     }
 
     pub fn from_string(oob_data: &str) -> VcxResult<Self> {
         Ok(Self {
-            oob: OutOfBandInvitation::from_string(oob_data)?,
+            oob: serde_json::from_str(oob_data)?,
         })
     }
 }

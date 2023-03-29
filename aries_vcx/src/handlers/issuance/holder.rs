@@ -2,6 +2,9 @@ use std::collections::HashMap;
 
 use messages::protocols::issuance::credential::Credential;
 use messages::protocols::revocation_notification::revocation_notification::RevocationNotification;
+use messages2::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
+use messages2::msg_fields::protocols::cred_issuance::propose_credential::ProposeCredential;
+use messages2::AriesMessage;
 use std::sync::Arc;
 
 use agency_client::agency_client::AgencyClient;
@@ -14,11 +17,8 @@ use crate::handlers::revocation_notification::receiver::RevocationNotificationRe
 use crate::protocols::issuance::actions::CredentialIssuanceAction;
 use crate::protocols::issuance::holder::state_machine::{HolderSM, HolderState};
 use crate::protocols::SendClosure;
-use messages::a2a::A2AMessage;
-use messages::protocols::issuance::credential_offer::CredentialOffer;
-use messages::protocols::issuance::credential_proposal::CredentialProposalData;
 
-#[derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Holder {
     holder_sm: HolderSM,
 }
@@ -30,7 +30,7 @@ impl Holder {
         Ok(Holder { holder_sm })
     }
 
-    pub fn create_from_offer(source_id: &str, credential_offer: CredentialOffer) -> VcxResult<Holder> {
+    pub fn create_from_offer(source_id: &str, credential_offer: OfferCredential) -> VcxResult<Holder> {
         trace!(
             "Holder::create_from_offer >>> source_id: {:?}, credential_offer: {:?}",
             source_id,
@@ -42,7 +42,7 @@ impl Holder {
 
     pub async fn send_proposal(
         &mut self,
-        credential_proposal: CredentialProposalData,
+        credential_proposal: ProposeCredential,
         send_message: SendClosure,
     ) -> VcxResult<()> {
         self.holder_sm = self
@@ -94,7 +94,7 @@ impl Holder {
         self.holder_sm.is_terminal_state()
     }
 
-    pub fn find_message_to_handle(&self, messages: HashMap<String, A2AMessage>) -> Option<(String, A2AMessage)> {
+    pub fn find_message_to_handle(&self, messages: HashMap<String, AriesMessage>) -> Option<(String, AriesMessage)> {
         self.holder_sm.find_message_to_handle(messages)
     }
 
@@ -106,7 +106,7 @@ impl Holder {
         self.holder_sm.get_source_id()
     }
 
-    pub fn get_credential(&self) -> VcxResult<(String, A2AMessage)> {
+    pub fn get_credential(&self) -> VcxResult<(String, AriesMessage)> {
         self.holder_sm.get_credential()
     }
 
@@ -118,7 +118,7 @@ impl Holder {
         self.holder_sm.get_attachment()
     }
 
-    pub fn get_offer(&self) -> VcxResult<CredentialOffer> {
+    pub fn get_offer(&self) -> VcxResult<OfferCredential> {
         self.holder_sm.get_offer()
     }
 

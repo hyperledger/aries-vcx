@@ -194,11 +194,13 @@ dependencies = [
  "bs58 0.4.0",
  "chrono",
  "derive_builder 0.10.2",
+ "diddoc",
  "env_logger 0.9.3",
  "futures",
  "lazy_static",
  "log",
  "messages",
+ "messages2",
  "openssl",
  "rand 0.7.3",
  "regex",
@@ -212,6 +214,7 @@ dependencies = [
  "time",
  "tokio",
  "uuid 0.8.2",
+ "zmq",
 ]
 
 [[package]]
