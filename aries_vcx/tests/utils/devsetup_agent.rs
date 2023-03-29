@@ -628,7 +628,7 @@ pub mod test_utils {
                 )
                 .await
                 .unwrap();
-            assert_eq!(HolderState::RequestSent, self.credential.get_state());
+            assert_eq!(HolderState::RequestSet, self.credential.get_state());
         }
 
         pub async fn accept_credential(&mut self) {

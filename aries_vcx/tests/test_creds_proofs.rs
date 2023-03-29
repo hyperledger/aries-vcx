@@ -1303,7 +1303,7 @@ mod tests {
                     )
                     .await
                     .unwrap();
-                assert_eq!(HolderState::RequestSent, alice.credential.get_state());
+                assert_eq!(HolderState::RequestSet, alice.credential.get_state());
             }
 
             faber.send_credential().await;
@@ -1392,7 +1392,7 @@ mod tests {
                     )
                     .await
                     .unwrap();
-                assert_eq!(HolderState::RequestSent, alice.credential.get_state());
+                assert_eq!(HolderState::RequestSet, alice.credential.get_state());
             }
 
             faber.send_credential().await;

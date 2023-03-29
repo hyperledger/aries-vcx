@@ -454,7 +454,7 @@ pub mod tests {
 
         info!("full_credential_test:: going to send_credential_request");
         send_credential_request(handle_cred, handle_conn).await.unwrap();
-        assert_eq!(HolderState::RequestSent as u32, get_state(handle_cred).unwrap());
+        assert_eq!(HolderState::RequestSet as u32, get_state(handle_cred).unwrap());
 
         AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
         AgencyMockDecrypted::set_next_decrypted_message(ARIES_CREDENTIAL_RESPONSE);

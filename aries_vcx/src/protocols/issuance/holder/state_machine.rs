@@ -22,7 +22,7 @@ use crate::protocols::issuance::holder::states::finished::FinishedHolderState;
 use crate::protocols::issuance::holder::states::initial::InitialHolderState;
 use crate::protocols::issuance::holder::states::offer_received::OfferReceivedState;
 use crate::protocols::issuance::holder::states::proposal_set::ProposalSetState;
-use crate::protocols::issuance::holder::states::request_sent::RequestSentState;
+use crate::protocols::issuance::holder::states::request_set::RequestSetState;
 use crate::protocols::issuance::verify_thread_id;
 use crate::protocols::SendClosure;
 
@@ -31,7 +31,7 @@ pub enum HolderFullState {
     Initial(InitialHolderState),
     ProposalSet(ProposalSetState),
     OfferReceived(OfferReceivedState),
-    RequestSent(RequestSentState),
+    RequestSet(RequestSetState),
     Finished(FinishedHolderState),
 }
 
@@ -40,7 +40,7 @@ pub enum HolderState {
     Initial,
     ProposalSet,
     OfferReceived,
-    RequestSent,
+    RequestSet,
     Finished,
     Failed,
 }
@@ -64,7 +64,7 @@ impl fmt::Display for HolderFullState {
             HolderFullState::Initial(_) => f.write_str("Initial"),
             HolderFullState::ProposalSet(_) => f.write_str("ProposalSent"),
             HolderFullState::OfferReceived(_) => f.write_str("OfferReceived"),
-            HolderFullState::RequestSent(_) => f.write_str("RequestSent"),
+            HolderFullState::RequestSet(_) => f.write_str("RequestSet"),
             HolderFullState::Finished(_) => f.write_str("Finished"),
         }
     }
@@ -103,12 +103,23 @@ impl HolderSM {
         self.source_id.clone()
     }
 
+    pub fn get_fail_reason(&self) -> Option<ProblemReport> {
+        match &self.state {
+            HolderFullState::Finished(status) => match &status.status {
+                Status::Failed(problem_report) => Some(problem_report.clone()),
+                Status::Declined(problem_report) => Some(problem_report.clone()),
+                _ => None,
+            },
+            _ => None,
+        }
+    }
+
     pub fn get_state(&self) -> HolderState {
         match self.state {
             HolderFullState::Initial(_) => HolderState::Initial,
             HolderFullState::ProposalSet(_) => HolderState::ProposalSet,
             HolderFullState::OfferReceived(_) => HolderState::OfferReceived,
-            HolderFullState::RequestSent(_) => HolderState::RequestSent,
+            HolderFullState::RequestSet(_) => HolderState::RequestSet,
             HolderFullState::Finished(ref status) => match status.status {
                 Status::Success => HolderState::Finished,
                 _ => HolderState::Failed,
@@ -142,7 +153,7 @@ impl HolderSM {
                         }
                     }
                 }
-                HolderFullState::RequestSent(_) => match message {
+                HolderFullState::RequestSet(_) => match message {
                     A2AMessage::Credential(credential) => {
                         if credential.from_thread(&self.thread_id) {
                             return Some((uid, A2AMessage::Credential(credential)));
@@ -175,12 +186,8 @@ impl HolderSM {
                 self.set_proposal(proposal_data).await?
             }
             CredentialIssuanceAction::CredentialOffer(offer) => self.receive_offer(offer)?,
-            CredentialIssuanceAction::CredentialRequestSend(my_pw_did) => {
-                let send_message = send_message.ok_or(AriesVcxError::from_msg(
-                    AriesVcxErrorKind::InvalidState,
-                    "Attempted to call undefined send_message callback",
-                ))?;
-                self.send_request(profile, my_pw_did, send_message).await?
+            CredentialIssuanceAction::CredentialRequestBuild(my_pw_did) => {
+                self.build_credential_request(profile, my_pw_did).await?
             }
             CredentialIssuanceAction::CredentialOfferReject(comment) => {
                 let send_message = send_message.ok_or(AriesVcxError::from_msg(
@@ -239,26 +246,19 @@ impl HolderSM {
         Ok(Self { state, ..self })
     }
 
-    pub async fn send_request(
-        self,
-        profile: &Arc<dyn Profile>,
-        my_pw_did: String,
-        send_message: SendClosure,
-    ) -> VcxResult<Self> {
+    pub async fn build_credential_request(self, profile: &Arc<dyn Profile>, my_pw_did: String) -> VcxResult<Self> {
         let state = match self.state {
             HolderFullState::OfferReceived(state_data) => {
-                match _make_credential_request(profile, self.thread_id.clone(), my_pw_did, &state_data.offer).await {
-                    Ok((cred_request, req_meta, cred_def_json)) => {
-                        send_message(cred_request.to_a2a_message()).await?;
-                        HolderFullState::RequestSent((state_data, req_meta, cred_def_json).into())
-                    }
+                match _build_credential_request(profile, self.thread_id.clone(), my_pw_did, &state_data.offer).await {
+                    Ok((credential_request_msg, req_meta, cred_def_json)) => HolderFullState::RequestSet(
+                        (state_data, credential_request_msg, req_meta, cred_def_json).into(),
+                    ),
                     Err(err) => {
                         let problem_report = build_problem_report_msg(Some(err.to_string()), &self.thread_id);
                         error!(
                             "Failed to create credential request, sending problem report: {:?}",
                             problem_report
                         );
-                        send_message(problem_report.to_a2a_message()).await?;
                         HolderFullState::Finished(problem_report.into())
                     }
                 }
@@ -269,6 +269,16 @@ impl HolderSM {
             }
         };
         Ok(Self { state, ..self })
+    }
+
+    pub fn get_credential_request(&self) -> VcxResult<CredentialRequest> {
+        match &self.state {
+            HolderFullState::RequestSet(state) => Ok(state.credential_request_msg.clone()),
+            _ => Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidState,
+                "Proposal not available in this state",
+            )),
+        }
     }
 
     pub async fn decline_offer(self, comment: Option<String>, send_message: SendClosure) -> VcxResult<Self> {
@@ -293,7 +303,7 @@ impl HolderSM {
         send_message: SendClosure,
     ) -> VcxResult<Self> {
         let state = match self.state {
-            HolderFullState::RequestSent(state_data) => {
+            HolderFullState::RequestSet(state_data) => {
                 match _store_credential(profile, &credential, &state_data.req_meta, &state_data.cred_def_json).await {
                     Ok((cred_id, rev_reg_def_json)) => {
                         if credential.please_ack.is_some() {
@@ -323,7 +333,7 @@ impl HolderSM {
 
     pub fn receive_problem_report(self, problem_report: ProblemReport) -> VcxResult<Self> {
         let state = match self.state {
-            HolderFullState::ProposalSet(_) | HolderFullState::RequestSent(_) => {
+            HolderFullState::ProposalSet(_) | HolderFullState::RequestSet(_) => {
                 HolderFullState::Finished(problem_report.into())
             }
             s => {
@@ -446,7 +456,7 @@ impl HolderSM {
             HolderFullState::Initial(ref state) => state.is_revokable(),
             HolderFullState::ProposalSet(ref state) => state.is_revokable(profile).await,
             HolderFullState::OfferReceived(ref state) => state.is_revokable(profile).await,
-            HolderFullState::RequestSent(ref state) => state.is_revokable(),
+            HolderFullState::RequestSet(ref state) => state.is_revokable(),
             HolderFullState::Finished(ref state) => state.is_revokable(),
         }
     }
@@ -585,7 +595,7 @@ pub async fn create_credential_request(
         .map(|(s1, s2)| (s1, s2, cred_def_id.to_string(), cred_def_json))
 }
 
-async fn _make_credential_request(
+async fn _build_credential_request(
     profile: &Arc<dyn Profile>,
     thread_id: String,
     my_pw_did: String,
@@ -636,7 +646,7 @@ mod test {
             self = self
                 .handle_message(
                     &mock_profile(),
-                    CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()),
+                    CredentialIssuanceAction::CredentialRequestBuild(_my_pw_did()),
                     _send_message(),
                 )
                 .await
@@ -648,7 +658,7 @@ mod test {
             self = self
                 .handle_message(
                     &mock_profile(),
-                    CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()),
+                    CredentialIssuanceAction::CredentialRequestBuild(_my_pw_did()),
                     _send_message(),
                 )
                 .await
@@ -739,13 +749,13 @@ mod test {
             holder_sm = holder_sm
                 .handle_message(
                     &mock_profile(),
-                    CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()),
+                    CredentialIssuanceAction::CredentialRequestBuild(_my_pw_did()),
                     _send_message(),
                 )
                 .await
                 .unwrap();
 
-            assert_match!(HolderFullState::RequestSent(_), holder_sm.state);
+            assert_match!(HolderFullState::RequestSet(_), holder_sm.state);
         }
 
         #[tokio::test]
@@ -761,7 +771,7 @@ mod test {
             holder_sm = holder_sm
                 .handle_message(
                     &mock_profile(),
-                    CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()),
+                    CredentialIssuanceAction::CredentialRequestBuild(_my_pw_did()),
                     _send_message(),
                 )
                 .await
@@ -810,7 +820,7 @@ mod test {
             holder_sm = holder_sm
                 .handle_message(
                     &mock_profile(),
-                    CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()),
+                    CredentialIssuanceAction::CredentialRequestBuild(_my_pw_did()),
                     _send_message(),
                 )
                 .await
@@ -837,7 +847,7 @@ mod test {
             holder_sm = holder_sm
                 .handle_message(
                     &mock_profile(),
-                    CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()),
+                    CredentialIssuanceAction::CredentialRequestBuild(_my_pw_did()),
                     _send_message(),
                 )
                 .await
@@ -867,7 +877,7 @@ mod test {
             holder_sm = holder_sm
                 .handle_message(
                     &mock_profile(),
-                    CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()),
+                    CredentialIssuanceAction::CredentialRequestBuild(_my_pw_did()),
                     _send_message(),
                 )
                 .await
@@ -897,7 +907,7 @@ mod test {
             holder_sm = holder_sm
                 .handle_message(
                     &mock_profile(),
-                    CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()),
+                    CredentialIssuanceAction::CredentialRequestBuild(_my_pw_did()),
                     _send_message(),
                 )
                 .await
@@ -911,7 +921,7 @@ mod test {
                 )
                 .await
                 .unwrap();
-            assert_match!(HolderFullState::RequestSent(_), holder_sm.state);
+            assert_match!(HolderFullState::RequestSet(_), holder_sm.state);
 
             holder_sm = holder_sm
                 .handle_message(
@@ -921,7 +931,7 @@ mod test {
                 )
                 .await
                 .unwrap();
-            assert_match!(HolderFullState::RequestSent(_), holder_sm.state);
+            assert_match!(HolderFullState::RequestSet(_), holder_sm.state);
         }
 
         #[tokio::test]
@@ -933,12 +943,12 @@ mod test {
             holder_sm = holder_sm
                 .handle_message(
                     &mock_profile(),
-                    CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()),
+                    CredentialIssuanceAction::CredentialRequestBuild(_my_pw_did()),
                     _send_message(),
                 )
                 .await
                 .unwrap();
-            assert_match!(HolderFullState::RequestSent(_), holder_sm.state);
+            assert_match!(HolderFullState::RequestSet(_), holder_sm.state);
 
             holder_sm = holder_sm
                 .handle_message(
@@ -1103,7 +1113,7 @@ mod test {
 
             assert_eq!(HolderState::OfferReceived, _holder_sm().get_state());
             assert_eq!(
-                HolderState::RequestSent,
+                HolderState::RequestSet,
                 _holder_sm().to_request_sent_state().await.get_state()
             );
             assert_eq!(

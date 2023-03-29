@@ -1355,7 +1355,7 @@ mod tests {
         cb.receive(TimeoutUtils::some_medium()).unwrap();
         assert_eq!(
             credential::get_state(handle_cred).unwrap(),
-            HolderState::RequestSent as u32
+            HolderState::RequestSet as u32
         );
 
         AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);

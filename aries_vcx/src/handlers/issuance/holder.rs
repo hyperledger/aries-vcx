@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use futures::future::BoxFuture;
 use messages::protocols::issuance::credential::Credential;
 use messages::protocols::revocation_notification::revocation_notification::RevocationNotification;
 use std::sync::Arc;
@@ -11,10 +12,13 @@ use crate::core::profile::profile::Profile;
 use crate::errors::error::prelude::*;
 use crate::handlers::connection::mediated_connection::MediatedConnection;
 use crate::handlers::revocation_notification::receiver::RevocationNotificationReceiver;
+use crate::protocols::common::build_problem_report_msg;
 use crate::protocols::issuance::actions::CredentialIssuanceAction;
 use crate::protocols::issuance::holder::state_machine::{HolderSM, HolderState};
 use crate::protocols::SendClosure;
 use messages::a2a::A2AMessage;
+use messages::concepts::problem_report::ProblemReport;
+use messages::protocols::basic_message::message::BasicMessage;
 use messages::protocols::issuance::credential_offer::CredentialOffer;
 use messages::protocols::issuance::credential_proposal::{CredentialProposal, CredentialProposalData};
 
@@ -49,17 +53,39 @@ impl Holder {
         self.holder_sm.clone().get_proposal()
     }
 
-    pub async fn send_request(
-        &mut self,
-        profile: &Arc<dyn Profile>,
+    pub async fn send_request<'a>(
+        &'a mut self,
+        profile: &'a Arc<dyn Profile>,
         my_pw_did: String,
         send_message: SendClosure,
     ) -> VcxResult<()> {
         self.holder_sm = self
             .holder_sm
             .clone()
-            .send_request(profile, my_pw_did, send_message)
+            .build_credential_request(profile, my_pw_did)
             .await?;
+        match self.holder_sm.get_state() {
+            HolderState::RequestSet => {
+                let cred_request_msg = self.holder_sm.get_credential_request()?;
+                send_message(cred_request_msg.to_a2a_message()).await?;
+            }
+            HolderState::Failed => {
+                let problem_report = self.holder_sm.get_fail_reason();
+                match problem_report {
+                    None => {
+                        warn!("No problem report found on failed state machine, none will be sent.")
+                    }
+                    Some(problem_report) => {
+                        error!(
+                            "Failed to create credential request, sending problem report: {:?}",
+                            problem_report
+                        );
+                        send_message(problem_report.to_a2a_message()).await?;
+                    }
+                }
+            }
+            _ => {}
+        }
         Ok(())
     }
 
@@ -283,7 +309,7 @@ pub mod unit_tests {
             .unwrap();
             self.step(
                 &mock_profile(),
-                CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()),
+                CredentialIssuanceAction::CredentialRequestBuild(_my_pw_did()),
                 _send_message(),
             )
             .await
@@ -342,7 +368,7 @@ pub mod unit_tests {
             .send_request(&mock_profile(), _my_pw_did(), _send_message().unwrap())
             .await
             .unwrap();
-        assert_eq!(HolderState::RequestSent, holder.get_state());
+        assert_eq!(HolderState::RequestSet, holder.get_state());
 
         let messages = map!(
             "key_1".to_string() => A2AMessage::Credential(_credential())

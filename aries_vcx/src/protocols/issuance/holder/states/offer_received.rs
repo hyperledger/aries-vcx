@@ -3,20 +3,28 @@ use std::sync::Arc;
 use crate::core::profile::profile::Profile;
 use crate::errors::error::prelude::*;
 use crate::protocols::issuance::holder::state_machine::parse_cred_def_id_from_cred_offer;
-use crate::protocols::issuance::holder::states::request_sent::RequestSentState;
+use crate::protocols::issuance::holder::states::request_set::RequestSetState;
 use crate::protocols::issuance::is_cred_def_revokable;
 use messages::protocols::issuance::credential_offer::CredentialOffer;
+use messages::protocols::issuance::credential_request::CredentialRequest;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct OfferReceivedState {
     pub offer: CredentialOffer,
 }
 
-impl From<(OfferReceivedState, String, String)> for RequestSentState {
-    fn from((_state, req_meta, cred_def_json): (OfferReceivedState, String, String)) -> Self {
-        trace!("SM is now in RequestSent state");
-        trace!("cred_def_json={:?}", cred_def_json);
-        RequestSentState {
+impl From<(OfferReceivedState, CredentialRequest, String, String)> for RequestSetState {
+    fn from(
+        (_state, credential_request_msg, req_meta, cred_def_json): (
+            OfferReceivedState,
+            CredentialRequest,
+            String,
+            String,
+        ),
+    ) -> Self {
+        trace!("SM is now in RequestSet state");
+        RequestSetState {
+            credential_request_msg,
             req_meta,
             cred_def_json,
         }

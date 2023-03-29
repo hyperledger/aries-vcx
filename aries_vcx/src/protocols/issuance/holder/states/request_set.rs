@@ -1,18 +1,18 @@
 use crate::errors::error::prelude::*;
 use crate::protocols::issuance::holder::states::finished::FinishedHolderState;
 use messages::protocols::issuance::credential::Credential;
+use messages::protocols::issuance::credential_request::CredentialRequest;
 use messages::status::Status;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct RequestSentState {
+pub struct RequestSetState {
+    pub credential_request_msg: CredentialRequest,
     pub req_meta: String,
     pub cred_def_json: String,
 }
 
-impl From<(RequestSentState, String, Credential, Option<String>)> for FinishedHolderState {
-    fn from(
-        (_, cred_id, credential, rev_reg_def_json): (RequestSentState, String, Credential, Option<String>),
-    ) -> Self {
+impl From<(RequestSetState, String, Credential, Option<String>)> for FinishedHolderState {
+    fn from((_, cred_id, credential, rev_reg_def_json): (RequestSetState, String, Credential, Option<String>)) -> Self {
         trace!("SM is now in Finished state");
         FinishedHolderState {
             cred_id: Some(cred_id),
@@ -23,7 +23,7 @@ impl From<(RequestSentState, String, Credential, Option<String>)> for FinishedHo
     }
 }
 
-impl RequestSentState {
+impl RequestSetState {
     pub fn is_revokable(&self) -> VcxResult<bool> {
         let parsed_cred_def: serde_json::Value = serde_json::from_str(&self.cred_def_json).map_err(|err| {
             AriesVcxError::from_msg(

@@ -397,7 +397,7 @@ pub mod test_utils {
             )
             .await
             .unwrap();
-        assert_eq!(HolderState::RequestSent, holder.get_state());
+        assert_eq!(HolderState::RequestSet, holder.get_state());
     }
 
     pub async fn decline_offer(alice: &mut Alice, connection: &MediatedConnection, holder: &mut Holder) {

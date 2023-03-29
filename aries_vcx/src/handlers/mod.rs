@@ -42,7 +42,7 @@ impl From<HolderState> for u32 {
             HolderState::Initial => 0,
             HolderState::ProposalSet => 1,
             HolderState::OfferReceived => 2,
-            HolderState::RequestSent => 3,
+            HolderState::RequestSet => 3,
             HolderState::Finished => 4,
             HolderState::Failed => 5,
         }

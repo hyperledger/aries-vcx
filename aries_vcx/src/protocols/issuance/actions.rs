@@ -15,7 +15,7 @@ pub enum CredentialIssuanceAction {
     CredentialProposal(CredentialProposal),
     CredentialOffer(CredentialOffer),
     CredentialOfferReject(OptionalComment),
-    CredentialRequestSend(String),
+    CredentialRequestBuild(String),
     CredentialRequest(CredentialRequest),
     Credential(Credential),
     CredentialAck(CredentialAck),
