@@ -5,7 +5,7 @@
 //! and along the protocol they make up the `@type` field of a message.
 
 pub mod protocols;
-pub(crate) mod registry;
+pub mod registry;
 mod role;
 pub mod traits;
 

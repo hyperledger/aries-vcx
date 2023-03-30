@@ -22,7 +22,7 @@ async fn get_signature_data(wallet: &Arc<dyn BaseWallet>, data: String, key: &st
 pub async fn sign_connection_response(
     wallet: &Arc<dyn BaseWallet>,
     key: &str,
-    con_data: ConnectionData,
+    con_data: &ConnectionData,
 ) -> VcxResult<ConnectionSignature> {
     let con_data = json!(con_data).to_string();
     let (signature, sig_data) = get_signature_data(wallet, con_data, key).await?;

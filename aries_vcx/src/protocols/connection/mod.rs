@@ -7,16 +7,19 @@ mod serializable;
 mod trait_bounds;
 
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
-use messages::{
-    a2a::{protocol_registry::ProtocolRegistry, A2AMessage},
-    diddoc::aries::diddoc::AriesDidDoc,
-    protocols::{
-        connection::problem_report::{ProblemCode, ProblemReport},
-        discovery::disclose::{Disclose, ProtocolDescriptor},
+use chrono::Utc;
+use diddoc::aries::diddoc::AriesDidDoc;
+use messages2::{
+    decorators::{thread::Thread, timing::Timing},
+    msg_fields::protocols::{
+        connection::problem_report::{ProblemReport, ProblemReportContent, ProblemReportDecorators},
+        discover_features::{disclose::Disclose, query::QueryContent, ProtocolDescriptor},
     },
+    msg_types::registry::PROTOCOL_REGISTRY,
+    AriesMessage,
 };
-use messages2::AriesMessage;
 use std::{error::Error, sync::Arc};
+use uuid::Uuid;
 
 use crate::{
     errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
@@ -72,7 +75,8 @@ impl<I, S> Connection<I, S> {
     }
 
     pub fn protocols(&self) -> Vec<ProtocolDescriptor> {
-        ProtocolRegistry::init().protocols()
+        let query = QueryContent::new("*".to_owned());
+        query.lookup()
     }
 }
 
@@ -131,11 +135,15 @@ where
     where
         E: Error,
     {
-        ProblemReport::create()
-            .set_problem_code(ProblemCode::RequestProcessingError)
-            .set_explain(err.to_string())
-            .set_thread_id(thread_id)
-            .set_out_time()
+        let mut content = ProblemReportContent::default();
+        content.explain = Some(err.to_string());
+
+        let mut decorators = ProblemReportDecorators::new(Thread::new(thread_id.to_owned()));
+        let mut timing = Timing::default();
+        timing.out_time = Some(Utc::now());
+        decorators.timing = Some(timing);
+
+        ProblemReport::with_decorators(Uuid::new_v4().to_string(), content, decorators)
     }
 
     async fn send_problem_report<E, T>(
@@ -151,14 +159,7 @@ where
     {
         let sender_verkey = &self.pairwise_info().pw_vk;
         let problem_report = self.create_problem_report(err, thread_id);
-        let res = wrap_and_send_msg(
-            wallet,
-            &problem_report.to_a2a_message(),
-            sender_verkey,
-            did_doc,
-            transport,
-        )
-        .await;
+        let res = wrap_and_send_msg(wallet, &problem_report.into(), sender_verkey, did_doc, transport).await;
 
         if let Err(e) = res {
             trace!("Error encountered when sending ProblemReport: {}", e);
