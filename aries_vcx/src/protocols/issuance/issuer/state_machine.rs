@@ -3,11 +3,25 @@ use std::fmt::Display;
 use std::sync::Arc;
 
 use crate::core::profile::profile::Profile;
-use crate::handlers::util::{matches_opt_thread_id, matches_thread_id};
-use messages::concepts::ack::Ack;
-use messages::concepts::problem_report::ProblemReport;
-use messages2::msg_fields::protocols::cred_issuance::CredentialIssuance;
+use crate::handlers::util::{matches_opt_thread_id, matches_thread_id, OfferInfo, Status};
+use chrono::Utc;
+use messages2::decorators::attachment::{Attachment, AttachmentData, AttachmentType};
+use messages2::decorators::please_ack::PleaseAck;
+use messages2::decorators::thread::Thread;
+use messages2::decorators::timing::Timing;
+use messages2::msg_fields::protocols::cred_issuance::ack::AckCredential;
+use messages2::msg_fields::protocols::cred_issuance::issue_credential::{
+    IssueCredential, IssueCredentialContent, IssueCredentialDecorators,
+};
+use messages2::msg_fields::protocols::cred_issuance::offer_credential::{
+    OfferCredential, OfferCredentialContent, OfferCredentialDecorators,
+};
+use messages2::msg_fields::protocols::cred_issuance::propose_credential::ProposeCredential;
+use messages2::msg_fields::protocols::cred_issuance::request_credential::RequestCredential;
+use messages2::msg_fields::protocols::cred_issuance::{CredentialIssuance, CredentialPreview};
+use messages2::msg_fields::protocols::report_problem::ProblemReport;
 use messages2::AriesMessage;
+use uuid::Uuid;
 
 use crate::common::credentials::encoding::encode_attributes;
 use crate::common::credentials::is_cred_revoked;
@@ -23,13 +37,6 @@ use crate::protocols::issuance::issuer::states::proposal_received::ProposalRecei
 use crate::protocols::issuance::issuer::states::requested_received::RequestReceivedState;
 use crate::protocols::issuance::verify_thread_id;
 use crate::protocols::SendClosure;
-use messages::a2a::{A2AMessage, MessageId};
-use messages::protocols::issuance::credential::Credential;
-use messages::protocols::issuance::credential_offer::{CredentialOffer, OfferInfo};
-use messages::protocols::issuance::credential_proposal::CredentialProposal;
-use messages::protocols::issuance::credential_request::CredentialRequest;
-use messages::protocols::issuance::CredentialPreviewData;
-use messages::status::Status;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum IssuerFullState {
@@ -89,36 +96,58 @@ pub struct IssuerSM {
     state: IssuerFullState,
 }
 
-fn build_credential_message(libindy_credential: String) -> VcxResult<Credential> {
-    Ok(Credential::create().set_credential(libindy_credential)?.set_out_time())
+fn build_credential_message(libindy_credential: String) -> VcxResult<IssueCredential> {
+    let id = Uuid::new_v4().to_string();
+
+    let attach_type = AttachmentType::Base64(base64::encode(&libindy_credential).into_bytes());
+    let attach_data = AttachmentData::new(attach_type);
+    let attach = Attachment::new(attach_data);
+
+    let content = IssueCredentialContent::new(vec![attach]);
+
+    let mut decorators = IssueCredentialDecorators::new(Thread::new(id.clone())); // this needs a Thread per RFC...
+    let mut timing = Timing::default();
+    timing.out_time = Some(Utc::now());
+    decorators.timing = Some(timing);
+
+    Ok(IssueCredential::with_decorators(id, content, decorators))
 }
 
 fn build_credential_offer(
     thread_id: &str,
     credential_offer: &str,
-    credential_preview: CredentialPreviewData,
+    credential_preview: CredentialPreview,
     comment: Option<String>,
-) -> VcxResult<CredentialOffer> {
-    Ok(CredentialOffer::create()
-        .set_id(thread_id)
-        .set_offers_attach(credential_offer)?
-        .set_credential_preview_data(credential_preview)
-        .set_comment(comment)
-        .set_out_time())
+) -> VcxResult<OfferCredential> {
+    let id = Uuid::new_v4().to_string();
+
+    let attach_type = AttachmentType::Base64(base64::encode(credential_offer).into_bytes());
+    let attach_data = AttachmentData::new(attach_type);
+    let attach = Attachment::new(attach_data);
+
+    let mut content = OfferCredentialContent::new(credential_preview, vec![attach]);
+    content.comment = comment;
+
+    let mut decorators = OfferCredentialDecorators::default();
+    let mut timing = Timing::default();
+    timing.out_time = Some(Utc::now());
+    decorators.timing = Some(timing);
+
+    Ok(OfferCredential::with_decorators(id, content, decorators))
 }
 
 impl IssuerSM {
     pub fn new(source_id: &str) -> Self {
         Self {
             source_id: source_id.to_string(),
-            thread_id: MessageId::new().0,
+            thread_id: Uuid::new_v4().to_string(),
             state: IssuerFullState::Initial(InitialIssuerState {}),
         }
     }
 
-    pub fn from_proposal(source_id: &str, credential_proposal: &CredentialProposal) -> Self {
+    pub fn from_proposal(source_id: &str, credential_proposal: &ProposeCredential) -> Self {
         Self {
-            thread_id: credential_proposal.id.0.clone(),
+            thread_id: credential_proposal.id.clone(),
             source_id: source_id.to_string(),
             state: IssuerFullState::ProposalReceived(ProposalReceivedState::new(credential_proposal.clone(), None)),
         }
@@ -301,7 +330,7 @@ impl IssuerSM {
         }
     }
 
-    pub fn get_proposal(&self) -> VcxResult<CredentialProposal> {
+    pub fn get_proposal(&self) -> VcxResult<ProposeCredential> {
         match &self.state {
             IssuerFullState::ProposalReceived(state) => Ok(state.credential_proposal.clone()),
             _ => Err(AriesVcxError::from_msg(
@@ -314,7 +343,7 @@ impl IssuerSM {
     pub fn build_credential_offer_msg(
         self,
         credential_offer: &str,
-        credential_preview: CredentialPreviewData,
+        credential_preview: CredentialPreview,
         comment: Option<String>,
         offer_info: &OfferInfo,
     ) -> VcxResult<Self> {
@@ -344,7 +373,7 @@ impl IssuerSM {
         Ok(Self::step(source_id, thread_id, state))
     }
 
-    pub fn get_credential_offer_msg(&self) -> VcxResult<CredentialOffer> {
+    pub fn get_credential_offer_msg(&self) -> VcxResult<OfferCredential> {
         match &self.state {
             IssuerFullState::OfferSet(state) => Ok(state.offer.clone()),
             IssuerFullState::OfferSent(state) => Ok(state.offer.clone()),
@@ -374,14 +403,14 @@ impl IssuerSM {
         Ok(Self::step(source_id, thread_id, state))
     }
 
-    pub fn receive_proposal(self, proposal: CredentialProposal) -> VcxResult<Self> {
+    pub fn receive_proposal(self, proposal: ProposeCredential) -> VcxResult<Self> {
         verify_thread_id(
             &self.thread_id,
             &CredentialIssuanceAction::CredentialProposal(proposal.clone()),
         )?;
         let (state, thread_id) = match self.state {
             IssuerFullState::Initial(_) => {
-                let thread_id = proposal.id.0.to_string();
+                let thread_id = proposal.id.to_string();
                 let state = IssuerFullState::ProposalReceived(ProposalReceivedState::new(proposal, None));
                 (state, thread_id)
             }
@@ -408,7 +437,7 @@ impl IssuerSM {
     pub async fn send_credential_offer(self, send_message: SendClosure) -> VcxResult<Self> {
         Ok(match self.state {
             IssuerFullState::OfferSet(ref state_data) => {
-                let cred_offer_msg = state_data.offer.to_a2a_message();
+                let cred_offer_msg = state_data.offer.clone().into();
                 send_message(cred_offer_msg).await?;
                 self.mark_credential_offer_msg_sent()?
             }
@@ -418,7 +447,7 @@ impl IssuerSM {
         })
     }
 
-    pub fn receive_request(self, request: CredentialRequest) -> VcxResult<Self> {
+    pub fn receive_request(self, request: RequestCredential) -> VcxResult<Self> {
         verify_thread_id(
             &self.thread_id,
             &CredentialIssuanceAction::CredentialRequest(request.clone()),
@@ -447,9 +476,11 @@ impl IssuerSM {
                 )
                 .await
                 {
-                    Ok((credential_msg, cred_rev_id)) => {
-                        let credential_msg = credential_msg.set_thread_id(&self.thread_id).ask_for_ack(); // TODO: Make configurable
-                        send_message(credential_msg.to_a2a_message()).await?;
+                    Ok((mut credential_msg, cred_rev_id)) => {
+                        credential_msg.decorators.thread.thid = self.thread_id.clone();
+                        credential_msg.decorators.please_ack = Some(PleaseAck::new(vec![])); // ask_for_ack sets this to an empty vec
+
+                        send_message(credential_msg.into()).await?;
                         IssuerFullState::CredentialSent((state_data, cred_rev_id).into())
                     }
                     Err(err) => {
@@ -458,7 +489,7 @@ impl IssuerSM {
                             "Failed to create credential, sending problem report {:?}",
                             problem_report
                         );
-                        send_message(problem_report.to_a2a_message()).await?;
+                        send_message(problem_report.clone().into()).await?;
                         IssuerFullState::Finished((state_data, problem_report).into())
                     }
                 }
@@ -470,7 +501,7 @@ impl IssuerSM {
         Ok(Self { state, ..self })
     }
 
-    pub fn receive_ack(self, ack: Ack) -> VcxResult<Self> {
+    pub fn receive_ack(self, ack: AckCredential) -> VcxResult<Self> {
         verify_thread_id(&self.thread_id, &CredentialIssuanceAction::CredentialAck(ack))?;
         let state = match self.state {
             IssuerFullState::CredentialSent(state_data) => IssuerFullState::Finished(state_data.into()),
@@ -543,29 +574,46 @@ impl IssuerSM {
 
 async fn _create_credential(
     profile: &Arc<dyn Profile>,
-    request: &CredentialRequest,
+    request: &RequestCredential,
     rev_reg_id: &Option<String>,
     tails_file: &Option<String>,
-    offer: &CredentialOffer,
+    offer: &OfferCredential,
     cred_data: &str,
     thread_id: &str,
-) -> VcxResult<(Credential, Option<String>)> {
+) -> VcxResult<(IssueCredential, Option<String>)> {
     let anoncreds = Arc::clone(profile).inject_anoncreds();
-    let offer = offer.offers_attach.content()?;
-    trace!("Issuer::_create_credential >>> request: {:?}, rev_reg_id: {:?}, tails_file: {:?}, offer: {}, cred_data: {}, thread_id: {}", request, rev_reg_id, tails_file, offer, cred_data, thread_id);
-    if !request.from_thread(thread_id) {
+    let attach = offer.content.offers_attach.get(0);
+
+    let Some(AttachmentType::Json(attach_json)) = attach.map(|a| &a.data.content) else {
         return Err(AriesVcxError::from_msg(
-            AriesVcxErrorKind::InvalidJson,
-            format!(
-                "Cannot handle credential request: thread id does not match: {:?}",
-                request.thread
-            ),
+            AriesVcxErrorKind::SerializationError,
+            format!("Attachment is not JSON: {:?}", attach),
         ));
     };
-    let request = &request.requests_attach.content()?;
+
+    let offer = attach_json.to_string();
+
+    trace!("Issuer::_create_credential >>> request: {:?}, rev_reg_id: {:?}, tails_file: {:?}, offer: {}, cred_data: {}, thread_id: {}", request, rev_reg_id, tails_file, offer, cred_data, thread_id);
+    if !matches_opt_thread_id!(request, thread_id) {
+        return Err(AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidJson,
+            format!("Cannot handle credential request: thread id does not match"),
+        ));
+    };
+    let attach = &request.content.requests_attach.get(0);
+
+    let Some(AttachmentType::Json(attach_json)) = attach.map(|a| &a.data.content) else {
+        return Err(AriesVcxError::from_msg(
+            AriesVcxErrorKind::SerializationError,
+            format!("Attachment is not JSON: {:?}", attach),
+        ));
+    };
+
+    let request = attach_json.to_string();
+
     let cred_data = encode_attributes(cred_data)?;
     let (libindy_credential, cred_rev_id, _) = anoncreds
-        .issuer_create_credential(&offer, request, &cred_data, rev_reg_id.clone(), tails_file.clone())
+        .issuer_create_credential(&offer, &request, &cred_data, rev_reg_id.clone(), tails_file.clone())
         .await?;
     let credential = build_credential_message(libindy_credential)?;
     Ok((credential, cred_rev_id))

@@ -1,14 +1,15 @@
+use messages2::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
+use messages2::msg_fields::protocols::cred_issuance::request_credential::RequestCredential;
+use messages2::msg_fields::protocols::report_problem::ProblemReport;
+
+use crate::handlers::util::Status;
 use crate::protocols::issuance::issuer::state_machine::RevocationInfoV1;
 use crate::protocols::issuance::issuer::states::finished::FinishedState;
 use crate::protocols::issuance::issuer::states::requested_received::RequestReceivedState;
-use messages::concepts::problem_report::ProblemReport;
-use messages::protocols::issuance::credential_offer::CredentialOffer;
-use messages::protocols::issuance::credential_request::CredentialRequest;
-use messages::status::Status;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct OfferSentState {
-    pub offer: CredentialOffer,
+    pub offer: OfferCredential,
     pub cred_data: String,
     pub rev_reg_id: Option<String>,
     pub tails_file: Option<String>,
@@ -29,8 +30,8 @@ impl From<OfferSentState> for FinishedState {
     }
 }
 
-impl From<(OfferSentState, CredentialRequest)> for RequestReceivedState {
-    fn from((state, request): (OfferSentState, CredentialRequest)) -> Self {
+impl From<(OfferSentState, RequestCredential)> for RequestReceivedState {
+    fn from((state, request): (OfferSentState, RequestCredential)) -> Self {
         trace!("SM is now in Request Received state");
         RequestReceivedState {
             offer: state.offer,

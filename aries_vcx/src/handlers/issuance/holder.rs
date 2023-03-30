@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 
-use messages::protocols::issuance::credential::Credential;
-use messages::protocols::revocation_notification::revocation_notification::RevocationNotification;
+use messages2::msg_fields::protocols::cred_issuance::issue_credential::IssueCredential;
 use messages2::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
 use messages2::msg_fields::protocols::cred_issuance::propose_credential::ProposeCredential;
+use messages2::msg_fields::protocols::revocation::Revocation;
 use messages2::AriesMessage;
 use std::sync::Arc;
 
@@ -79,7 +79,7 @@ impl Holder {
     pub async fn process_credential(
         &mut self,
         profile: &Arc<dyn Profile>,
-        credential: Credential,
+        credential: IssueCredential,
         send_message: SendClosure,
     ) -> VcxResult<()> {
         self.holder_sm = self
@@ -166,7 +166,7 @@ impl Holder {
         &self,
         profile: &Arc<dyn Profile>,
         connection: &MediatedConnection,
-        notification: RevocationNotification,
+        notification: Revocation,
     ) -> VcxResult<()> {
         if self.holder_sm.is_revokable(profile).await? {
             let send_message = connection.send_message_closure(profile).await?;

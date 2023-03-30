@@ -2,12 +2,18 @@
 
 use std::{collections::HashMap, fmt::Display};
 
-use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
+use serde::{
+    de::Error as DeError, ser::Error as SerError, ser::SerializeMap, Deserialize, Deserializer, Serialize, Serializer,
+};
 use strum_macros::{AsRefStr, EnumString};
 use url::Url;
 
 use crate::{
-    decorators::{localization::FieldLocalization, thread::Thread, timing::Timing},
+    decorators::{
+        localization::{FieldLocalization, Locale},
+        thread::Thread,
+        timing::Timing,
+    },
     misc::utils::into_msg_with_type,
     msg_parts::MsgParts,
     msg_types::protocols::report_problem::ReportProblemTypeV1_0,
@@ -15,10 +21,9 @@ use crate::{
 
 pub type ProblemReport = MsgParts<ProblemReportContent, ProblemReportDecorators>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub struct ProblemReportContent {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub description: Option<String>,
+    pub description: Description,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub problem_items: Option<Vec<HashMap<String, String>>>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -41,6 +46,22 @@ pub struct ProblemReportContent {
     pub escalation_uri: Option<Url>,
 }
 
+impl ProblemReportContent {
+    pub fn new(code: String) -> Self {
+        Self {
+            description: Description::new(code),
+            problem_items: None,
+            who_retries: None,
+            fix_hint: None,
+            impact: None,
+            location: None,
+            noticed_time: None,
+            tracking_uri: None,
+            escalation_uri: None,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq)]
 pub struct ProblemReportDecorators {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -55,6 +76,43 @@ pub struct ProblemReportDecorators {
     #[serde(rename = "fix-hint~l10n")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub fix_hint_locale: Option<FieldLocalization>,
+}
+
+#[derive(Debug, Clone, Deserialize, PartialEq)]
+pub struct Description {
+    #[serde(flatten)]
+    #[serde(skip_serializing_if = "HashMap::is_empty")]
+    pub translations: HashMap<Locale, String>,
+    pub code: String,
+}
+
+impl Description {
+    pub fn new(code: String) -> Self {
+        Self {
+            translations: HashMap::new(),
+            code,
+        }
+    }
+}
+
+/// Manual implementation because `serde_json` does not support
+/// non-string map keys.
+impl Serialize for Description {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut state = Serializer::serialize_map(serializer, None)?;
+        state.serialize_entry("code", &self.code)?;
+
+        if !HashMap::is_empty(&self.translations) {
+            for (key, value) in &self.translations {
+                let key = <&str>::try_from(key).map_err(S::Error::custom)?;
+                state.serialize_entry(key, value)?;
+            }
+        }
+        SerializeMap::end(state)
+    }
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
@@ -150,7 +208,7 @@ mod tests {
 
     #[test]
     fn test_minimal_problem_report() {
-        let content = ProblemReportContent::default();
+        let content = ProblemReportContent::new("test_problem_report_code".to_owned());
         let decorators = ProblemReportDecorators::default();
 
         let expected = json!({});
@@ -160,8 +218,7 @@ mod tests {
 
     #[test]
     fn test_extended_problem_report() {
-        let mut content = ProblemReportContent::default();
-        content.description = Some("test_description".to_owned());
+        let mut content = ProblemReportContent::new("test_problem_report_code".to_owned());
         content.who_retries = Some(WhoRetries::Me);
         content.fix_hint = Some("test_fix_hint".to_owned());
         content.impact = Some(Impact::Connection);

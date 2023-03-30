@@ -75,8 +75,8 @@ impl fmt::Display for HolderFullState {
 fn build_credential_request_msg(credential_request_attach: String, thread_id: &str) -> VcxResult<RequestCredential> {
     let attach_type = AttachmentType::Base64(base64::encode(&credential_request_attach).into_bytes());
     let attach_data = AttachmentData::new(attach_type);
-
     let attach = Attachment::new(attach_data);
+    
     let content = RequestCredentialContent::new(vec![attach]);
 
     let mut decorators = RequestCredentialDecorators::default();

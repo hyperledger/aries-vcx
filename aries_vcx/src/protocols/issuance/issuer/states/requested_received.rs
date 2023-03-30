@@ -1,19 +1,19 @@
+use crate::handlers::util::Status;
 use crate::protocols::issuance::issuer::state_machine::RevocationInfoV1;
 use crate::protocols::issuance::issuer::states::credential_sent::CredentialSentState;
 use crate::protocols::issuance::issuer::states::finished::FinishedState;
-use messages::concepts::problem_report::ProblemReport;
-use messages::protocols::issuance::credential_offer::CredentialOffer;
-use messages::protocols::issuance::credential_request::CredentialRequest;
-use messages::status::Status;
+use messages2::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
+use messages2::msg_fields::protocols::cred_issuance::request_credential::RequestCredential;
+use messages2::msg_fields::protocols::report_problem::ProblemReport;
 
 // TODO: Use OfferInfo instead of ind. fields
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RequestReceivedState {
-    pub offer: CredentialOffer,
+    pub offer: OfferCredential,
     pub cred_data: String,
     pub rev_reg_id: Option<String>,
     pub tails_file: Option<String>,
-    pub request: CredentialRequest,
+    pub request: RequestCredential,
 }
 
 impl From<(RequestReceivedState, Option<String>)> for CredentialSentState {

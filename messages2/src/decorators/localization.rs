@@ -22,10 +22,14 @@ pub struct MsgLocalization {
 /// Struct representing the `~l10n` decorator, when it decorates a single field, from its [RFC](<https://github.com/hyperledger/aries-rfcs/blob/main/features/0043-l10n/README.md>).
 #[derive(Debug, Clone, Deserialize, Default, PartialEq)]
 pub struct FieldLocalization {
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub code: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub locale: Option<Locale>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub catalogs: Option<Vec<Url>>,
     #[serde(flatten)]
+    #[serde(skip_serializing_if = "HashMap::is_empty")]
     pub translations: HashMap<Locale, String>,
 }
 

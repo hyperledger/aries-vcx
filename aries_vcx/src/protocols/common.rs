@@ -1,14 +1,17 @@
-use messages2::msg_fields::protocols::{report_problem::{ProblemReport, ProblemReportContent}};
+use messages2::{
+    decorators::thread::Thread,
+    msg_fields::protocols::report_problem::{ProblemReport, ProblemReportContent, ProblemReportDecorators},
+};
 use uuid::Uuid;
 
 pub fn build_problem_report_msg(comment: Option<String>, thread_id: &str) -> ProblemReport {
     let id = Uuid::new_v4().to_string();
-    let mut content = ProblemReportContent::default();
-    content.description = 
-    ProblemReport::create()
-        .set_out_time()
-        .set_comment(comment)
-        .set_thread_id(thread_id)
+    let mut content = ProblemReportContent::new(comment.unwrap_or_default());
+
+    let mut decorators = ProblemReportDecorators::default();
+    decorators.thread = Some(Thread::new(thread_id.to_owned()));
+
+    ProblemReport::with_decorators(id, content, decorators)
 }
 
 #[cfg(test)]

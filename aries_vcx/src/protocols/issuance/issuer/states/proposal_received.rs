@@ -1,15 +1,14 @@
-use crate::protocols::issuance::issuer::states::offer_sent::OfferSentState;
-use messages::protocols::issuance::credential_offer::{CredentialOffer, OfferInfo};
-use messages::protocols::issuance::credential_proposal::CredentialProposal;
+use crate::{protocols::issuance::issuer::states::offer_sent::OfferSentState, handlers::util::OfferInfo};
+use messages2::msg_fields::protocols::cred_issuance::{propose_credential::ProposeCredential, offer_credential::OfferCredential};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ProposalReceivedState {
-    pub credential_proposal: CredentialProposal,
+    pub credential_proposal: ProposeCredential,
     pub offer_info: Option<OfferInfo>,
 }
 
 impl ProposalReceivedState {
-    pub fn new(credential_proposal: CredentialProposal, offer_info: Option<OfferInfo>) -> Self {
+    pub fn new(credential_proposal: ProposeCredential, offer_info: Option<OfferInfo>) -> Self {
         Self {
             credential_proposal,
             offer_info,
@@ -17,8 +16,8 @@ impl ProposalReceivedState {
     }
 }
 
-impl From<(CredentialOffer, OfferInfo)> for OfferSentState {
-    fn from((offer, offer_info): (CredentialOffer, OfferInfo)) -> Self {
+impl From<(OfferCredential, OfferInfo)> for OfferSentState {
+    fn from((offer, offer_info): (OfferCredential, OfferInfo)) -> Self {
         trace!("SM is now in OfferSent state");
         OfferSentState {
             offer,
