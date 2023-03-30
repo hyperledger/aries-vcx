@@ -1,12 +1,12 @@
 use std::collections::HashMap;
 
-use messages2::decorators::please_ack::AckOn;
-use messages2::misc::MimeType;
-use messages2::msg_fields::protocols::cred_issuance::ack::AckCredential;
-use messages2::msg_fields::protocols::cred_issuance::propose_credential::ProposeCredential;
-use messages2::msg_fields::protocols::cred_issuance::request_credential::RequestCredential;
-use messages2::msg_fields::protocols::cred_issuance::{CredentialAttr, CredentialPreview};
-use messages2::AriesMessage;
+use messages::decorators::please_ack::AckOn;
+use messages::misc::MimeType;
+use messages::msg_fields::protocols::cred_issuance::ack::AckCredential;
+use messages::msg_fields::protocols::cred_issuance::propose_credential::ProposeCredential;
+use messages::msg_fields::protocols::cred_issuance::request_credential::RequestCredential;
+use messages::msg_fields::protocols::cred_issuance::{CredentialAttr, CredentialPreview};
+use messages::AriesMessage;
 use std::sync::Arc;
 
 use agency_client::agency_client::AgencyClient;

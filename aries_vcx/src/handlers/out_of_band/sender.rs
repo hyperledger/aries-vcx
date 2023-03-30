@@ -1,78 +1,85 @@
-use crate::errors::error::prelude::*;
-use messages::a2a::message_family::MessageFamilies;
-use messages::a2a::message_type::MessageType;
-use messages::a2a::A2AMessage;
-use messages::concepts::attachment::AttachmentId;
-use messages::protocols::out_of_band::invitation::OutOfBandInvitation;
-use messages::protocols::out_of_band::{GoalCode, HandshakeProtocol};
+use messages::{
+    maybe_known::MaybeKnown,
+    msg_fields::protocols::{
+        cred_issuance::CredentialIssuance,
+        out_of_band::{
+            invitation::{Invitation, OobService},
+            OobGoalCode,
+        },
+        present_proof::PresentProof,
+    },
+    msg_types::Protocol,
+    AriesMessage,
+};
 
-use messages::protocols::out_of_band::service_oob::ServiceOob;
+use crate::{errors::error::prelude::*, handlers::util::make_attach_from_str};
 
-#[derive(Default, Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct OutOfBandSender {
-    pub oob: OutOfBandInvitation,
+    pub oob: Invitation,
 }
 
 impl OutOfBandSender {
-    pub fn create() -> Self {
-        Self::default()
+    pub fn new(invitation: Invitation) -> Self {
+        Self { oob: invitation }
     }
 
     pub fn set_label(mut self, label: &str) -> Self {
-        self.oob.label = Some(label.to_string());
+        self.oob.content.label = Some(label.to_string());
         self
     }
 
-    pub fn set_goal_code(mut self, goal_code: &GoalCode) -> Self {
-        self.oob.goal_code = Some(goal_code.clone());
+    pub fn set_goal_code(mut self, goal_code: OobGoalCode) -> Self {
+        self.oob.content.goal_code = Some(MaybeKnown::Known(goal_code));
         self
     }
 
     pub fn set_goal(mut self, goal: &str) -> Self {
-        self.oob.goal = Some(goal.to_string());
+        self.oob.content.goal = Some(goal.to_string());
         self
     }
 
-    pub fn append_service(mut self, service: &ServiceOob) -> Self {
-        self.oob.services.push(service.clone());
+    pub fn append_service(mut self, service: &OobService) -> Self {
+        self.oob.content.services.push(service.clone());
         self
     }
 
-    pub fn get_services(&self) -> Vec<ServiceOob> {
-        self.oob.services.clone()
+    pub fn get_services(&self) -> Vec<OobService> {
+        self.oob.content.services.clone()
     }
 
     pub fn get_id(&self) -> String {
-        self.oob.id.0.clone()
+        self.oob.id.clone()
     }
 
-    pub fn append_handshake_protocol(mut self, protocol: &HandshakeProtocol) -> VcxResult<Self> {
+    pub fn append_handshake_protocol(mut self, protocol: Protocol) -> VcxResult<Self> {
         let new_protocol = match protocol {
-            HandshakeProtocol::ConnectionV1 => MessageType::build(MessageFamilies::Connections, ""),
-            HandshakeProtocol::DidExchangeV1 => {
+            Protocol::ConnectionType(_) => MaybeKnown::Known(protocol),
+            _ => {
                 return Err(AriesVcxError::from_msg(
                     AriesVcxErrorKind::ActionNotSupported,
-                    "DidExchange protocol is not implemented".to_string(),
+                    "Protocol not supported".to_string(),
                 ))
             }
         };
-        match self.oob.handshake_protocols {
+
+        match self.oob.content.handshake_protocols {
             Some(ref mut protocols) => {
                 protocols.push(new_protocol);
             }
             None => {
-                self.oob.handshake_protocols = Some(vec![new_protocol]);
+                self.oob.content.handshake_protocols = Some(vec![new_protocol]);
             }
         };
         Ok(self)
     }
 
-    pub fn append_a2a_message(mut self, msg: A2AMessage) -> VcxResult<Self> {
-        let (attach_id, attach) = match msg {
-            a2a_msg @ A2AMessage::PresentationRequest(_) => {
-                (AttachmentId::PresentationRequest, json!(&a2a_msg).to_string())
+    pub fn append_a2a_message(mut self, msg: AriesMessage) -> VcxResult<Self> {
+        let attach = match msg {
+            a2a_msg @ AriesMessage::PresentProof(PresentProof::RequestPresentation(_)) => json!(&a2a_msg).to_string(),
+            a2a_msg @ AriesMessage::CredentialIssuance(CredentialIssuance::OfferCredential(_)) => {
+                json!(&a2a_msg).to_string()
             }
-            a2a_msg @ A2AMessage::CredentialOffer(_) => (AttachmentId::CredentialOffer, json!(&a2a_msg).to_string()),
             _ => {
                 error!("Appended message type {:?} is not allowed.", msg);
                 return Err(AriesVcxError::from_msg(
@@ -81,23 +88,23 @@ impl OutOfBandSender {
                 ));
             }
         };
-        self.oob
-            .requests_attach
-            .add_base64_encoded_json_attachment(attach_id, ::serde_json::Value::String(attach))?;
+
+        self.oob.content.requests_attach.push(make_attach_from_str!(&attach));
+
         Ok(self)
     }
 
-    pub fn to_a2a_message(&self) -> A2AMessage {
-        self.oob.to_a2a_message()
+    pub fn to_aries_message(&self) -> AriesMessage {
+        self.oob.clone().into()
     }
 
     pub fn to_string(&self) -> String {
-        self.oob.to_string()
+        json!(self.oob).to_string()
     }
 
     pub fn from_string(oob_data: &str) -> VcxResult<Self> {
         Ok(Self {
-            oob: OutOfBandInvitation::from_string(oob_data)?,
+            oob: serde_json::from_str(oob_data)?,
         })
     }
 }

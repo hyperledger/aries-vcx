@@ -1,5 +1,5 @@
-use messages2::msg_fields::protocols::trust_ping::ping::Ping;
-use messages2::msg_fields::protocols::trust_ping::ping_response::PingResponse;
+use messages::msg_fields::protocols::trust_ping::ping::Ping;
+use messages::msg_fields::protocols::trust_ping::ping_response::PingResponse;
 
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 

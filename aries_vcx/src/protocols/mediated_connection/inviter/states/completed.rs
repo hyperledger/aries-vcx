@@ -1,7 +1,7 @@
 use std::clone::Clone;
 
-use messages::diddoc::aries::diddoc::AriesDidDoc;
-use messages2::msg_fields::protocols::discover_features::ProtocolDescriptor;
+use diddoc::aries::diddoc::AriesDidDoc;
+use messages::msg_fields::protocols::discover_features::ProtocolDescriptor;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct CompletedState {

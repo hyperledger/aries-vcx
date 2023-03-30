@@ -20,20 +20,20 @@ use crate::protocols::proof_presentation::prover::verify_thread_id;
 use crate::protocols::SendClosure;
 
 use chrono::Utc;
-use messages2::decorators::attachment::{Attachment, AttachmentData, AttachmentType};
-use messages2::decorators::thread::Thread;
-use messages2::decorators::timing::Timing;
-use messages2::msg_fields::protocols::present_proof::ack::AckPresentation;
-use messages2::msg_fields::protocols::present_proof::present::{
+use messages::decorators::attachment::{Attachment, AttachmentData, AttachmentType};
+use messages::decorators::thread::Thread;
+use messages::decorators::timing::Timing;
+use messages::msg_fields::protocols::present_proof::ack::AckPresentation;
+use messages::msg_fields::protocols::present_proof::present::{
     Presentation, PresentationContent, PresentationDecorators,
 };
-use messages2::msg_fields::protocols::present_proof::propose::{
+use messages::msg_fields::protocols::present_proof::propose::{
     PresentationPreview, ProposePresentation, ProposePresentationContent, ProposePresentationDecorators,
 };
-use messages2::msg_fields::protocols::present_proof::request::RequestPresentation;
-use messages2::msg_fields::protocols::present_proof::PresentProof;
-use messages2::msg_fields::protocols::report_problem::ProblemReport;
-use messages2::AriesMessage;
+use messages::msg_fields::protocols::present_proof::request::RequestPresentation;
+use messages::msg_fields::protocols::present_proof::PresentProof;
+use messages::msg_fields::protocols::report_problem::ProblemReport;
+use messages::AriesMessage;
 use uuid::Uuid;
 
 /// A state machine that tracks the evolution of states for a Prover during

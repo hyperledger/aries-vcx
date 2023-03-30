@@ -1,14 +1,14 @@
 use std::sync::Arc;
 
-use messages2::msg_fields::protocols::present_proof::present::Presentation;
-use messages2::msg_fields::protocols::present_proof::request::RequestPresentation;
-use messages2::msg_fields::protocols::report_problem::ProblemReport;
+use messages::msg_fields::protocols::present_proof::present::Presentation;
+use messages::msg_fields::protocols::present_proof::request::RequestPresentation;
+use messages::msg_fields::protocols::report_problem::ProblemReport;
 
 use crate::common::proofs::verifier::verifier::validate_indy_proof;
 use crate::core::profile::profile::Profile;
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use crate::global::settings;
-use crate::handlers::util::{get_attach_as_string, matches_opt_thread_id, Status, matches_thread_id};
+use crate::handlers::util::{get_attach_as_string, matches_opt_thread_id, matches_thread_id, Status};
 use crate::protocols::proof_presentation::verifier::states::finished::FinishedState;
 use crate::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
 

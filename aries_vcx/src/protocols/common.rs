@@ -1,4 +1,4 @@
-use messages2::{
+use messages::{
     decorators::thread::Thread,
     msg_fields::protocols::report_problem::{ProblemReport, ProblemReportContent, ProblemReportDecorators},
 };

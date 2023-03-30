@@ -1,6 +1,6 @@
-use messages2::msg_fields::protocols::connection::problem_report::ProblemReport;
-use messages2::msg_fields::protocols::connection::request::Request;
-use messages2::msg_fields::protocols::connection::response::Response;
+use messages::msg_fields::protocols::connection::problem_report::ProblemReport;
+use messages::msg_fields::protocols::connection::request::Request;
+use messages::msg_fields::protocols::connection::response::Response;
 
 use crate::handlers::util::AnyInvitation;
 use crate::protocols::mediated_connection::inviter::states::initial::InitialState;

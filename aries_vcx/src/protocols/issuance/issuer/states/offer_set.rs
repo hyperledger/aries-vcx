@@ -1,5 +1,5 @@
 use crate::protocols::issuance::issuer::states::offer_sent::OfferSentState;
-use messages2::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
+use messages::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct OfferSetState {

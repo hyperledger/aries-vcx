@@ -1,6 +1,6 @@
-use messages2::decorators::attachment::AttachmentType;
-use messages2::msg_fields::protocols::cred_issuance::issue_credential::IssueCredential;
-use messages2::msg_fields::protocols::report_problem::ProblemReport;
+use messages::decorators::attachment::AttachmentType;
+use messages::msg_fields::protocols::cred_issuance::issue_credential::IssueCredential;
+use messages::msg_fields::protocols::report_problem::ProblemReport;
 
 use crate::errors::error::prelude::*;
 use crate::handlers::util::{get_attach_as_string, CredentialData, Status};

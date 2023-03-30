@@ -1,4 +1,4 @@
-use messages2::msg_fields::protocols::present_proof::{
+use messages::msg_fields::protocols::present_proof::{
     propose::{PresentationPreview, ProposePresentation, ProposePresentationContent, ProposePresentationDecorators},
     request::RequestPresentation,
 };

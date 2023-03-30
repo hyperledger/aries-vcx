@@ -1,6 +1,6 @@
+use diddoc::aries::diddoc::AriesDidDoc;
 use futures::future::BoxFuture;
-use messages::diddoc::aries::diddoc::AriesDidDoc;
-use messages2::AriesMessage;
+use messages::AriesMessage;
 
 use crate::errors::error::VcxResult;
 

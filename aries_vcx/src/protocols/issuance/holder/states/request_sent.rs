@@ -1,4 +1,4 @@
-use messages2::msg_fields::protocols::cred_issuance::issue_credential::IssueCredential;
+use messages::msg_fields::protocols::cred_issuance::issue_credential::IssueCredential;
 
 use crate::errors::error::prelude::*;
 use crate::handlers::util::Status;

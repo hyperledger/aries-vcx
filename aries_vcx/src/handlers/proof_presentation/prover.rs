@@ -3,11 +3,11 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use agency_client::agency_client::AgencyClient;
-use messages2::msg_fields::protocols::present_proof::ack::AckPresentation;
-use messages2::msg_fields::protocols::present_proof::present::Presentation;
-use messages2::msg_fields::protocols::present_proof::propose::PresentationPreview;
-use messages2::msg_fields::protocols::present_proof::request::RequestPresentation;
-use messages2::AriesMessage;
+use messages::msg_fields::protocols::present_proof::ack::AckPresentation;
+use messages::msg_fields::protocols::present_proof::present::Presentation;
+use messages::msg_fields::protocols::present_proof::propose::PresentationPreview;
+use messages::msg_fields::protocols::present_proof::request::RequestPresentation;
+use messages::AriesMessage;
 
 use crate::core::profile::profile::Profile;
 use crate::errors::error::prelude::*;

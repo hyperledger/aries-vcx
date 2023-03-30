@@ -1,8 +1,8 @@
 use crate::errors::error::prelude::*;
 use crate::utils::qualifier;
-use messages::actors::Actors;
 
 use bs58;
+use messages::msg_types::Role;
 use openssl::bn::BigNum;
 
 pub fn validate_did(did: &str) -> VcxResult<String> {
@@ -42,7 +42,7 @@ pub fn validate_key_delegate(delegate: &str) -> VcxResult<String> {
     Ok(check_delegate)
 }
 
-pub fn validate_actors(actors: &str) -> VcxResult<Vec<Actors>> {
+pub fn validate_actors(actors: &str) -> VcxResult<Vec<Role>> {
     ::serde_json::from_str(actors)
         .map_err(|err| AriesVcxError::from_msg(AriesVcxErrorKind::InvalidOption, format!("Invalid actors: {:?}", err)))
 }

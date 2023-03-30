@@ -4,14 +4,14 @@ use std::sync::Arc;
 
 use ::uuid::Uuid;
 use chrono::Utc;
-use messages2::decorators::thread::Thread;
-use messages2::decorators::timing::Timing;
-use messages2::msg_fields::protocols::connection::invitation::{
+use messages::decorators::thread::Thread;
+use messages::decorators::timing::Timing;
+use messages::msg_fields::protocols::connection::invitation::{
     Invitation, PairwiseInvitation, PairwiseInvitationContent, PwInvitationDecorators,
 };
-use messages2::msg_fields::protocols::connection::request::Request;
-use messages2::msg_fields::protocols::connection::response::{Response, ResponseContent, ResponseDecorators};
-use messages2::AriesMessage;
+use messages::msg_fields::protocols::connection::request::Request;
+use messages::msg_fields::protocols::connection::response::{Response, ResponseContent, ResponseDecorators};
+use messages::AriesMessage;
 use url::Url;
 
 use crate::handlers::util::{verify_thread_id, AnyInvitation};

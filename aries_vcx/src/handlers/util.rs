@@ -1,4 +1,4 @@
-use messages2::{
+use messages::{
     msg_fields::protocols::{
         connection::{invitation::Invitation, Connection},
         cred_issuance::CredentialIssuance,
@@ -32,7 +32,7 @@ macro_rules! matches_opt_thread_id {
 
 macro_rules! get_attach_as_string {
     ($attachments:expr) => {{
-        if let Some(messages2::decorators::attachment::AttachmentType::Json(attach_json)) =
+        if let Some(messages::decorators::attachment::AttachmentType::Json(attach_json)) =
             $attachments.get(0).map(|a| &a.data.content)
         {
             attach_json.to_string()
@@ -48,9 +48,9 @@ macro_rules! get_attach_as_string {
 macro_rules! make_attach_from_str {
     ($str_attach:expr) => {{
         let attach_type =
-            messages2::decorators::attachment::AttachmentType::Base64(base64::encode($str_attach).into_bytes());
-        let attach_data = messages2::decorators::attachment::AttachmentData::new(attach_type);
-        messages2::decorators::attachment::Attachment::new(attach_data)
+            messages::decorators::attachment::AttachmentType::Base64(base64::encode($str_attach).into_bytes());
+        let attach_data = messages::decorators::attachment::AttachmentData::new(attach_type);
+        messages::decorators::attachment::Attachment::new(attach_data)
     }};
 }
 

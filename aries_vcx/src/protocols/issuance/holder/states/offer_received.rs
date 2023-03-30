@@ -5,8 +5,8 @@ use crate::errors::error::prelude::*;
 use crate::protocols::issuance::holder::state_machine::parse_cred_def_id_from_cred_offer;
 use crate::protocols::issuance::holder::states::request_sent::RequestSentState;
 use crate::protocols::issuance::is_cred_def_revokable;
-use messages2::decorators::attachment::AttachmentType;
-use messages2::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
+use messages::decorators::attachment::AttachmentType;
+use messages::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct OfferReceivedState {
@@ -31,12 +31,17 @@ impl OfferReceivedState {
 
     pub fn get_attributes(&self) -> VcxResult<String> {
         let mut new_map = serde_json::map::Map::new();
-        self.offer.content.credential_preview.attributes.iter().for_each(|attribute| {
-            new_map.insert(
-                attribute.name.clone(),
-                serde_json::Value::String(attribute.value.clone()),
-            );
-        });
+        self.offer
+            .content
+            .credential_preview
+            .attributes
+            .iter()
+            .for_each(|attribute| {
+                new_map.insert(
+                    attribute.name.clone(),
+                    serde_json::Value::String(attribute.value.clone()),
+                );
+            });
         Ok(serde_json::Value::Object(new_map).to_string())
     }
 

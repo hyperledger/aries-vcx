@@ -1,11 +1,19 @@
+use messages::{
+    decorators::attachment::Attachment,
+    msg_fields::protocols::{
+        cred_issuance::offer_credential::OfferCredential, present_proof::request::RequestPresentation,
+    },
+};
 use serde_json;
 
-use crate::errors::error::prelude::*;
-use messages::protocols::issuance::credential_offer::CredentialOffer;
-use messages::protocols::proof_presentation::presentation_request::PresentationRequest;
+use crate::{errors::error::prelude::*, handlers::util::get_attach_as_string};
 
-fn _filter_proof_requests_by_name(requests: &str, match_name: &str) -> VcxResult<Vec<PresentationRequest>> {
-    let presentation_requests: Vec<PresentationRequest> = serde_json::from_str(requests).map_err(|err| {
+fn __accommodate_macro(attachments: &Vec<Attachment>) -> VcxResult<String> {
+    Ok(get_attach_as_string!(attachments))
+}
+
+fn _filter_proof_requests_by_name(requests: &str, match_name: &str) -> VcxResult<Vec<RequestPresentation>> {
+    let presentation_requests: Vec<RequestPresentation> = serde_json::from_str(requests).map_err(|err| {
         AriesVcxError::from_msg(
             AriesVcxErrorKind::InvalidJson,
             format!(
@@ -17,7 +25,7 @@ fn _filter_proof_requests_by_name(requests: &str, match_name: &str) -> VcxResult
     let filtered = presentation_requests
         .into_iter()
         .filter_map(|presentation_request| {
-            match presentation_request.request_presentations_attach.content().ok() {
+            match __accommodate_macro(&presentation_request.content.request_presentations_attach).ok() {
                 Some(content) => {
                     match serde_json::from_str::<serde_json::Value>(&content) {
                         Ok(value) => match value.get("name") {
@@ -37,8 +45,8 @@ fn _filter_proof_requests_by_name(requests: &str, match_name: &str) -> VcxResult
     Ok(filtered)
 }
 
-fn _filter_offers_by_comment(offers: &str, match_comment: &str) -> VcxResult<Vec<CredentialOffer>> {
-    let credential_offers: Vec<CredentialOffer> = serde_json::from_str(offers).map_err(|err| {
+fn _filter_offers_by_comment(offers: &str, match_comment: &str) -> VcxResult<Vec<OfferCredential>> {
+    let credential_offers: Vec<OfferCredential> = serde_json::from_str(offers).map_err(|err| {
         AriesVcxError::from_msg(
             AriesVcxErrorKind::InvalidJson,
             format!(
@@ -49,7 +57,7 @@ fn _filter_offers_by_comment(offers: &str, match_comment: &str) -> VcxResult<Vec
     })?;
     let filtered = credential_offers
         .into_iter()
-        .filter_map(|credential_offer| match &credential_offer.comment {
+        .filter_map(|credential_offer| match &credential_offer.content.comment {
             Some(comment) if *comment == *match_comment => Some(credential_offer),
             _ => None,
         })
@@ -59,7 +67,7 @@ fn _filter_offers_by_comment(offers: &str, match_comment: &str) -> VcxResult<Vec
 
 // todo: need not to return Result, can be modified to return String, never error - likely for other functions in this file as well
 pub fn filter_proof_requests_by_name(requests: &str, name: &str) -> VcxResult<String> {
-    let presentation_requests: Vec<PresentationRequest> = _filter_proof_requests_by_name(requests, name)?;
+    let presentation_requests: Vec<RequestPresentation> = _filter_proof_requests_by_name(requests, name)?;
     let filtered: String = serde_json::to_string(&presentation_requests).map_err(|err| {
         AriesVcxError::from_msg(
             AriesVcxErrorKind::InvalidJson,
@@ -73,7 +81,7 @@ pub fn filter_proof_requests_by_name(requests: &str, name: &str) -> VcxResult<St
 }
 
 pub fn filter_credential_offers_by_comment(offers: &str, comment: &str) -> VcxResult<String> {
-    let credential_offers: Vec<CredentialOffer> = _filter_offers_by_comment(offers, comment)?;
+    let credential_offers: Vec<OfferCredential> = _filter_offers_by_comment(offers, comment)?;
     let filtered: String = serde_json::to_string(&credential_offers).map_err(|err| {
         AriesVcxError::from_msg(
             AriesVcxErrorKind::InvalidJson,

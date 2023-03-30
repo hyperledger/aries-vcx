@@ -1,11 +1,11 @@
 use std::sync::Arc;
 
-use messages2::decorators::attachment::AttachmentType;
-use messages2::msg_fields::protocols::present_proof::present::Presentation;
-use messages2::msg_fields::protocols::present_proof::request::{
+use messages::decorators::attachment::AttachmentType;
+use messages::msg_fields::protocols::present_proof::present::Presentation;
+use messages::msg_fields::protocols::present_proof::request::{
     RequestPresentation, RequestPresentationContent, RequestPresentationDecorators,
 };
-use messages2::msg_fields::protocols::report_problem::ProblemReport;
+use messages::msg_fields::protocols::report_problem::ProblemReport;
 use uuid::Uuid;
 
 use crate::common::proofs::prover::prover::generate_indy_proof;

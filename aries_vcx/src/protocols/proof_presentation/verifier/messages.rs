@@ -1,4 +1,4 @@
-use messages2::{
+use messages::{
     msg_fields::protocols::{
         present_proof::{
             present::Presentation, propose::ProposePresentation, request::RequestPresentation, PresentProof,

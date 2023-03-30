@@ -3,24 +3,26 @@ use std::fmt::Display;
 use std::sync::Arc;
 
 use crate::core::profile::profile::Profile;
-use crate::handlers::util::{get_attach_as_string, matches_opt_thread_id, matches_thread_id, OfferInfo, Status, make_attach_from_str};
+use crate::handlers::util::{
+    get_attach_as_string, make_attach_from_str, matches_opt_thread_id, matches_thread_id, OfferInfo, Status,
+};
 use chrono::Utc;
-use messages2::decorators::attachment::{Attachment, AttachmentData, AttachmentType};
-use messages2::decorators::please_ack::PleaseAck;
-use messages2::decorators::thread::Thread;
-use messages2::decorators::timing::Timing;
-use messages2::msg_fields::protocols::cred_issuance::ack::AckCredential;
-use messages2::msg_fields::protocols::cred_issuance::issue_credential::{
+use messages::decorators::attachment::{Attachment, AttachmentData, AttachmentType};
+use messages::decorators::please_ack::PleaseAck;
+use messages::decorators::thread::Thread;
+use messages::decorators::timing::Timing;
+use messages::msg_fields::protocols::cred_issuance::ack::AckCredential;
+use messages::msg_fields::protocols::cred_issuance::issue_credential::{
     IssueCredential, IssueCredentialContent, IssueCredentialDecorators,
 };
-use messages2::msg_fields::protocols::cred_issuance::offer_credential::{
+use messages::msg_fields::protocols::cred_issuance::offer_credential::{
     OfferCredential, OfferCredentialContent, OfferCredentialDecorators,
 };
-use messages2::msg_fields::protocols::cred_issuance::propose_credential::ProposeCredential;
-use messages2::msg_fields::protocols::cred_issuance::request_credential::RequestCredential;
-use messages2::msg_fields::protocols::cred_issuance::{CredentialIssuance, CredentialPreview};
-use messages2::msg_fields::protocols::report_problem::ProblemReport;
-use messages2::AriesMessage;
+use messages::msg_fields::protocols::cred_issuance::propose_credential::ProposeCredential;
+use messages::msg_fields::protocols::cred_issuance::request_credential::RequestCredential;
+use messages::msg_fields::protocols::cred_issuance::{CredentialIssuance, CredentialPreview};
+use messages::msg_fields::protocols::report_problem::ProblemReport;
+use messages::AriesMessage;
 use uuid::Uuid;
 
 use crate::common::credentials::encoding::encode_attributes;

@@ -3,20 +3,20 @@ use std::fmt;
 use std::sync::Arc;
 
 use chrono::Utc;
-use messages2::decorators::attachment::{Attachment, AttachmentData, AttachmentType};
-use messages2::decorators::thread::Thread;
-use messages2::decorators::timing::Timing;
-use messages2::msg_fields::protocols::cred_issuance::ack::{AckCredential, AckCredentialContent};
-use messages2::msg_fields::protocols::cred_issuance::issue_credential::IssueCredential;
-use messages2::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
-use messages2::msg_fields::protocols::cred_issuance::propose_credential::ProposeCredential;
-use messages2::msg_fields::protocols::cred_issuance::request_credential::{
+use messages::decorators::attachment::{Attachment, AttachmentData, AttachmentType};
+use messages::decorators::thread::Thread;
+use messages::decorators::timing::Timing;
+use messages::msg_fields::protocols::cred_issuance::ack::{AckCredential, AckCredentialContent};
+use messages::msg_fields::protocols::cred_issuance::issue_credential::IssueCredential;
+use messages::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
+use messages::msg_fields::protocols::cred_issuance::propose_credential::ProposeCredential;
+use messages::msg_fields::protocols::cred_issuance::request_credential::{
     RequestCredential, RequestCredentialContent, RequestCredentialDecorators,
 };
-use messages2::msg_fields::protocols::cred_issuance::CredentialIssuance;
-use messages2::msg_fields::protocols::notification::{AckDecorators, AckStatus};
-use messages2::msg_fields::protocols::report_problem::ProblemReport;
-use messages2::AriesMessage;
+use messages::msg_fields::protocols::cred_issuance::CredentialIssuance;
+use messages::msg_fields::protocols::notification::{AckDecorators, AckStatus};
+use messages::msg_fields::protocols::report_problem::ProblemReport;
+use messages::AriesMessage;
 use uuid::Uuid;
 
 use crate::common::credentials::{get_cred_rev_id, is_cred_revoked};

@@ -1,16 +1,15 @@
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use chrono::Utc;
-use messages::protocols::out_of_band::handshake_reuse::OutOfBandHandshakeReuse;
-use messages::protocols::out_of_band::handshake_reuse_accepted::OutOfBandHandshakeReuseAccepted;
-use messages2::decorators::thread::Thread;
-use messages2::decorators::timing::Timing;
-use messages2::msg_fields::protocols::out_of_band::invitation::Invitation;
-use messages2::msg_fields::protocols::out_of_band::reuse::{
+use messages::decorators::thread::Thread;
+use messages::decorators::timing::Timing;
+use messages::msg_fields::protocols::out_of_band::invitation::Invitation;
+use messages::msg_fields::protocols::out_of_band::reuse::{
     HandshakeReuse, HandshakeReuseContent, HandshakeReuseDecorators,
 };
-use messages2::msg_fields::protocols::out_of_band::reuse_accepted::{
+use messages::msg_fields::protocols::out_of_band::reuse_accepted::{
     HandshakeReuseAccepted, HandshakeReuseAcceptedContent, HandshakeReuseAcceptedDecorators,
 };
+
 use uuid::Uuid;
 
 pub fn build_handshake_reuse_msg(oob_invitation: &Invitation) -> HandshakeReuse {

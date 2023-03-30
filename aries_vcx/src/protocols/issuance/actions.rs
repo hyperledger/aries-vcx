@@ -1,12 +1,12 @@
-use messages2::msg_fields::protocols::cred_issuance::ack::{AckCredential, AckCredentialContent};
-use messages2::msg_fields::protocols::cred_issuance::issue_credential::IssueCredential;
-use messages2::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
-use messages2::msg_fields::protocols::cred_issuance::propose_credential::ProposeCredential;
-use messages2::msg_fields::protocols::cred_issuance::request_credential::RequestCredential;
-use messages2::msg_fields::protocols::cred_issuance::CredentialIssuance;
-use messages2::msg_fields::protocols::report_problem::ProblemReport;
-use messages2::msg_parts::MsgParts;
-use messages2::AriesMessage;
+use messages::msg_fields::protocols::cred_issuance::ack::{AckCredential, AckCredentialContent};
+use messages::msg_fields::protocols::cred_issuance::issue_credential::IssueCredential;
+use messages::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
+use messages::msg_fields::protocols::cred_issuance::propose_credential::ProposeCredential;
+use messages::msg_fields::protocols::cred_issuance::request_credential::RequestCredential;
+use messages::msg_fields::protocols::cred_issuance::CredentialIssuance;
+use messages::msg_fields::protocols::report_problem::ProblemReport;
+use messages::msg_parts::MsgParts;
+use messages::AriesMessage;
 
 use crate::handlers::util::{matches_opt_thread_id, matches_thread_id};
 

@@ -3,12 +3,12 @@ use std::sync::Arc;
 use crate::errors::error::VcxResult;
 use chrono::Utc;
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
-use messages::diddoc::aries::diddoc::AriesDidDoc;
-use messages2::decorators::thread::Thread;
-use messages2::decorators::timing::Timing;
-use messages2::msg_fields::protocols::discover_features::disclose::{Disclose, DiscloseContent, DiscloseDecorators};
-use messages2::msg_fields::protocols::discover_features::query::{Query, QueryContent, QueryDecorators};
-use messages2::msg_fields::protocols::discover_features::ProtocolDescriptor;
+use messages::decorators::thread::Thread;
+use messages::decorators::timing::Timing;
+use diddoc::aries::diddoc::AriesDidDoc;
+use messages::msg_fields::protocols::discover_features::disclose::{Disclose, DiscloseContent, DiscloseDecorators};
+use messages::msg_fields::protocols::discover_features::query::{Query, QueryContent, QueryDecorators};
+use messages::msg_fields::protocols::discover_features::ProtocolDescriptor;
 use uuid::Uuid;
 
 use crate::utils::send_message;

@@ -5,7 +5,7 @@ use std::sync::Arc;
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use chrono::Utc;
 use diddoc::aries::diddoc::AriesDidDoc;
-use messages2::{
+use messages::{
     decorators::{thread::Thread, timing::Timing},
     msg_fields::protocols::{
         connection::{
@@ -100,7 +100,7 @@ impl InviteeConnection<Invited> {
         let recipient_keys = vec![self.pairwise_info.pw_vk.clone()];
 
         let id = Uuid::new_v4().to_string();
-        
+
         let mut did_doc = AriesDidDoc::default();
         did_doc.set_service_endpoint(service_endpoint);
         did_doc.set_routing_keys(routing_keys);

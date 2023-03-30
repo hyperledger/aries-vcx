@@ -24,7 +24,7 @@ pub struct InvitationContent {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub accept: Option<Vec<MimeType>>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub handshake_protocols: Option<Vec<Protocol>>,
+    pub handshake_protocols: Option<Vec<MaybeKnown<Protocol>>>,
     pub services: Vec<OobService>,
     #[serde(rename = "requests~attach")]
     pub requests_attach: Vec<Attachment>,
@@ -99,7 +99,7 @@ mod tests {
         content.goal_code = Some(MaybeKnown::Known(OobGoalCode::P2PMessaging));
         content.goal = Some("test_oob_goal".to_owned());
         content.accept = Some(vec![MimeType::Json, MimeType::Plain]);
-        content.handshake_protocols = Some(vec![ConnectionTypeV1::new_v1_0().into()]);
+        content.handshake_protocols = Some(vec![MaybeKnown::Known(ConnectionTypeV1::new_v1_0().into())]);
 
         let mut decorators = InvitationDecorators::default();
         decorators.timing = Some(make_extended_timing());

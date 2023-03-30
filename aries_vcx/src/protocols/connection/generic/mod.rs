@@ -5,7 +5,7 @@ use std::sync::Arc;
 
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use diddoc::aries::diddoc::AriesDidDoc;
-use messages2::{msg_fields::protocols::connection::invitation::Invitation, AriesMessage};
+use messages::{msg_fields::protocols::connection::invitation::Invitation, AriesMessage};
 
 pub use self::thin_state::{State, ThinState};
 
@@ -208,7 +208,7 @@ impl GenericConnection {
 //     #![allow(clippy::unwrap_used)]
 
 //     use async_trait::async_trait;
-//     use messages2::msg_fields::protocols::connection::invitation::PairwiseInvitation;
+//     use messages::msg_fields::protocols::connection::invitation::PairwiseInvitation;
 
 //     use super::*;
 //     use crate::common::signing::sign_connection_response;

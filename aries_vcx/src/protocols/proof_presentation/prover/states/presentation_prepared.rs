@@ -1,5 +1,5 @@
-use messages2::msg_fields::protocols::present_proof::present::Presentation;
-use messages2::msg_fields::protocols::present_proof::request::RequestPresentation;
+use messages::msg_fields::protocols::present_proof::present::Presentation;
+use messages::msg_fields::protocols::present_proof::request::RequestPresentation;
 
 use crate::handlers::util::Status;
 use crate::protocols::proof_presentation::prover::states::finished::FinishedState;

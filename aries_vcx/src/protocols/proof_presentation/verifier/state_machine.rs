@@ -17,17 +17,17 @@ use crate::protocols::proof_presentation::verifier::verification_status::Present
 use crate::protocols::proof_presentation::verifier::verify_thread_id;
 use crate::protocols::SendClosure;
 use chrono::Utc;
-use messages2::decorators::thread::Thread;
-use messages2::decorators::timing::Timing;
-use messages2::msg_fields::protocols::notification::{AckDecorators, AckStatus};
-use messages2::msg_fields::protocols::present_proof::ack::{AckPresentation, AckPresentationContent};
-use messages2::msg_fields::protocols::present_proof::request::{
+use messages::decorators::thread::Thread;
+use messages::decorators::timing::Timing;
+use messages::msg_fields::protocols::notification::{AckDecorators, AckStatus};
+use messages::msg_fields::protocols::present_proof::ack::{AckPresentation, AckPresentationContent};
+use messages::msg_fields::protocols::present_proof::request::{
     RequestPresentation, RequestPresentationContent, RequestPresentationDecorators,
 };
-use messages2::msg_fields::protocols::present_proof::PresentProof;
-use messages2::msg_fields::protocols::present_proof::{present::Presentation, propose::ProposePresentation};
-use messages2::msg_fields::protocols::report_problem::ProblemReport;
-use messages2::AriesMessage;
+use messages::msg_fields::protocols::present_proof::PresentProof;
+use messages::msg_fields::protocols::present_proof::{present::Presentation, propose::ProposePresentation};
+use messages::msg_fields::protocols::report_problem::ProblemReport;
+use messages::AriesMessage;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]

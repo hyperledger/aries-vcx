@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use messages2::msg_fields::protocols::cred_issuance::propose_credential::ProposeCredential;
+use messages::msg_fields::protocols::cred_issuance::propose_credential::ProposeCredential;
 
 use crate::core::profile::profile::Profile;
 use crate::errors::error::prelude::*;

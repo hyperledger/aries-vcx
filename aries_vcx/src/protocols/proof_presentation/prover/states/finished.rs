@@ -1,7 +1,9 @@
-use messages2::msg_fields::protocols::{present_proof::{request::RequestPresentation, present::Presentation}, report_problem::ProblemReport};
+use messages::msg_fields::protocols::{
+    present_proof::{present::Presentation, request::RequestPresentation},
+    report_problem::ProblemReport,
+};
 
 use crate::handlers::util::Status;
-
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct FinishedState {

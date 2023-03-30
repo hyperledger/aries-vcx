@@ -1,7 +1,7 @@
 use std::clone::Clone;
 
 use diddoc::aries::diddoc::AriesDidDoc;
-use messages2::msg_fields::protocols::discover_features::{disclose::Disclose, ProtocolDescriptor};
+use messages::msg_fields::protocols::discover_features::{disclose::Disclose, ProtocolDescriptor};
 
 use crate::protocols::connection::trait_bounds::{CompletedState, TheirDidDoc, ThreadId};
 

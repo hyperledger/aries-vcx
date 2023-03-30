@@ -1,6 +1,6 @@
 use ::uuid::Uuid;
 use chrono::Utc;
-use messages2::{
+use messages::{
     decorators::{thread::Thread, timing::Timing},
     msg_fields::protocols::trust_ping::{
         ping::{Ping, PingContent, PingDecorators},

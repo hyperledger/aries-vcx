@@ -3,8 +3,8 @@ use std::clone::Clone;
 use crate::protocols::mediated_connection::invitee::states::requested::RequestedState;
 use crate::protocols::mediated_connection::invitee::states::responded::RespondedState;
 use diddoc::aries::diddoc::AriesDidDoc;
-use messages2::msg_fields::protocols::connection::response::Response;
-use messages2::msg_fields::protocols::discover_features::ProtocolDescriptor;
+use messages::msg_fields::protocols::connection::response::Response;
+use messages::msg_fields::protocols::discover_features::ProtocolDescriptor;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct CompletedState {

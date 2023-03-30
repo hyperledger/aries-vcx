@@ -1,4 +1,4 @@
-use messages2::msg_fields::protocols::present_proof::request::{
+use messages::msg_fields::protocols::present_proof::request::{
     RequestPresentation, RequestPresentationContent, RequestPresentationDecorators,
 };
 use uuid::Uuid;

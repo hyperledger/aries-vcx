@@ -14,21 +14,21 @@ use crate::protocols::mediated_connection::pairwise_info::PairwiseInfo;
 use crate::protocols::SendClosureConnection;
 use chrono::Utc;
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
-use messages::diddoc::aries::diddoc::AriesDidDoc;
-use messages2::decorators::thread::Thread;
-use messages2::decorators::timing::Timing;
-use messages2::msg_fields::protocols::connection::invitation::Invitation;
-use messages2::msg_fields::protocols::connection::problem_report::{
+use diddoc::aries::diddoc::AriesDidDoc;
+use messages::decorators::thread::Thread;
+use messages::decorators::timing::Timing;
+use messages::msg_fields::protocols::connection::invitation::Invitation;
+use messages::msg_fields::protocols::connection::problem_report::{
     ProblemReport, ProblemReportContent, ProblemReportDecorators,
 };
-use messages2::msg_fields::protocols::connection::request::{Request, RequestContent, RequestDecorators};
-use messages2::msg_fields::protocols::connection::response::Response;
-use messages2::msg_fields::protocols::connection::{Connection, ConnectionData};
-use messages2::msg_fields::protocols::discover_features::disclose::Disclose;
-use messages2::msg_fields::protocols::discover_features::query::QueryContent;
-use messages2::msg_fields::protocols::discover_features::ProtocolDescriptor;
-use messages2::msg_fields::protocols::notification::{Ack, AckContent, AckDecorators, AckStatus};
-use messages2::AriesMessage;
+use messages::msg_fields::protocols::connection::request::{Request, RequestContent, RequestDecorators};
+use messages::msg_fields::protocols::connection::response::Response;
+use messages::msg_fields::protocols::connection::{Connection, ConnectionData};
+use messages::msg_fields::protocols::discover_features::disclose::Disclose;
+use messages::msg_fields::protocols::discover_features::query::QueryContent;
+use messages::msg_fields::protocols::discover_features::ProtocolDescriptor;
+use messages::msg_fields::protocols::notification::{Ack, AckContent, AckDecorators, AckStatus};
+use messages::AriesMessage;
 use url::Url;
 use uuid::Uuid;
 

@@ -1,5 +1,5 @@
 use diddoc::aries::diddoc::AriesDidDoc;
-use messages2::msg_fields::protocols::discover_features::{ProtocolDescriptor, disclose::Disclose};
+use messages::msg_fields::protocols::discover_features::{disclose::Disclose, ProtocolDescriptor};
 
 /// Trait implemented for [`super::Connection`] states that store an [`AriesDidDoc`].
 pub trait TheirDidDoc {

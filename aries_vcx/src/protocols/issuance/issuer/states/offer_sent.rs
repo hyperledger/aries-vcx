@@ -1,6 +1,6 @@
-use messages2::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
-use messages2::msg_fields::protocols::cred_issuance::request_credential::RequestCredential;
-use messages2::msg_fields::protocols::report_problem::ProblemReport;
+use messages::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
+use messages::msg_fields::protocols::cred_issuance::request_credential::RequestCredential;
+use messages::msg_fields::protocols::report_problem::ProblemReport;
 
 use crate::handlers::util::Status;
 use crate::protocols::issuance::issuer::state_machine::RevocationInfoV1;

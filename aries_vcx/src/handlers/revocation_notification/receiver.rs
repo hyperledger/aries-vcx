@@ -1,4 +1,4 @@
-use messages2::msg_fields::protocols::revocation::revoke::Revoke;
+use messages::msg_fields::protocols::revocation::revoke::Revoke;
 
 use crate::errors::error::prelude::*;
 use crate::protocols::revocation_notification::receiver::state_machine::RevocationNotificationReceiverSM;

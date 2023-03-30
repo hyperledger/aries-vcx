@@ -1,5 +1,5 @@
 use diddoc::aries::diddoc::AriesDidDoc;
-use messages2::msg_fields::protocols::connection::request::Request;
+use messages::msg_fields::protocols::connection::request::Request;
 
 use crate::handlers::util::AnyInvitation;
 use crate::protocols::mediated_connection::invitee::states::requested::RequestedState;

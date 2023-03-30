@@ -5,22 +5,22 @@ use std::sync::Arc;
 use chrono::Utc;
 use diddoc::aries::diddoc::AriesDidDoc;
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
-use messages2::decorators::thread::Thread;
-use messages2::decorators::timing::Timing;
-use messages2::msg_fields::protocols::connection::invitation::{
+use messages::decorators::thread::Thread;
+use messages::decorators::timing::Timing;
+use messages::msg_fields::protocols::connection::invitation::{
     Invitation, PairwiseInvitation, PairwiseInvitationContent, PwInvitationDecorators,
 };
-use messages2::msg_fields::protocols::connection::problem_report::{
+use messages::msg_fields::protocols::connection::problem_report::{
     ProblemReport, ProblemReportContent, ProblemReportDecorators,
 };
-use messages2::msg_fields::protocols::connection::request::Request;
-use messages2::msg_fields::protocols::connection::response::{Response, ResponseContent, ResponseDecorators};
-use messages2::msg_fields::protocols::connection::Connection;
-use messages2::msg_fields::protocols::discover_features::disclose::Disclose;
-use messages2::msg_fields::protocols::discover_features::query::QueryContent;
-use messages2::msg_fields::protocols::discover_features::ProtocolDescriptor;
-use messages2::msg_fields::protocols::trust_ping::TrustPing;
-use messages2::AriesMessage;
+use messages::msg_fields::protocols::connection::request::Request;
+use messages::msg_fields::protocols::connection::response::{Response, ResponseContent, ResponseDecorators};
+use messages::msg_fields::protocols::connection::Connection;
+use messages::msg_fields::protocols::discover_features::disclose::Disclose;
+use messages::msg_fields::protocols::discover_features::query::QueryContent;
+use messages::msg_fields::protocols::discover_features::ProtocolDescriptor;
+use messages::msg_fields::protocols::trust_ping::TrustPing;
+use messages::AriesMessage;
 use url::Url;
 use uuid::Uuid;
 

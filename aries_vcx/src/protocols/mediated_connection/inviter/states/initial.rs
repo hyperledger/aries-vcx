@@ -1,4 +1,4 @@
-use messages2::msg_fields::protocols::connection::problem_report::ProblemReport;
+use messages::msg_fields::protocols::connection::problem_report::ProblemReport;
 
 use crate::handlers::util::AnyInvitation;
 use crate::protocols::mediated_connection::inviter::states::invited::InvitedState;

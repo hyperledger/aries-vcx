@@ -9,7 +9,7 @@ mod trait_bounds;
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use chrono::Utc;
 use diddoc::aries::diddoc::AriesDidDoc;
-use messages2::{
+use messages::{
     decorators::{thread::Thread, timing::Timing},
     msg_fields::protocols::{
         connection::problem_report::{ProblemReport, ProblemReportContent, ProblemReportDecorators},

@@ -1,6 +1,6 @@
 use diddoc::aries::diddoc::AriesDidDoc;
-use messages2::msg_fields::protocols::connection::problem_report::ProblemReport;
-use messages2::msg_fields::protocols::connection::response::Response;
+use messages::msg_fields::protocols::connection::problem_report::ProblemReport;
+use messages::msg_fields::protocols::connection::response::Response;
 
 use crate::protocols::mediated_connection::inviter::states::completed::CompletedState;
 use crate::protocols::mediated_connection::inviter::states::initial::InitialState;

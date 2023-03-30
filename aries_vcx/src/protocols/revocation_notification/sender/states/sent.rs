@@ -1,4 +1,4 @@
-use messages2::msg_fields::protocols::revocation::revoke::Revoke;
+use messages::msg_fields::protocols::revocation::revoke::Revoke;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct NotificationSentState {
@@ -16,10 +16,10 @@ impl NotificationSentState {
 
     pub fn get_thread_id(&self) -> String {
         self.rev_msg
-        .decorators
-        .thread
-        .as_ref()
-        .map(|t| t.thid.clone())
-        .unwrap_or(self.rev_msg.id.clone())
+            .decorators
+            .thread
+            .as_ref()
+            .map(|t| t.thid.clone())
+            .unwrap_or(self.rev_msg.id.clone())
     }
 }

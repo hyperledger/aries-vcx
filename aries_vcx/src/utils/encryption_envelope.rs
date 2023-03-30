@@ -1,18 +1,17 @@
 use std::sync::Arc;
 
+use diddoc::aries::diddoc::AriesDidDoc;
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use futures::TryFutureExt;
 
 use agency_client::testing::mocking::AgencyMockDecrypted;
-use messages2::AriesMessage;
-use messages2::msg_fields::protocols::routing::{Forward, ForwardContent};
+use messages::msg_fields::protocols::routing::{Forward, ForwardContent};
+use messages::AriesMessage;
 use uuid::Uuid;
 
 use crate::errors::error::prelude::*;
 use crate::global::settings;
 use crate::utils::constants;
-use messages::a2a::A2AMessage;
-use messages::diddoc::aries::diddoc::AriesDidDoc;
 
 #[derive(Debug)]
 pub struct EncryptionEnvelope(pub Vec<u8>);

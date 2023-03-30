@@ -1,5 +1,5 @@
 use diddoc::aries::diddoc::AriesDidDoc;
-use messages2::msg_fields::protocols::connection::{problem_report::ProblemReport, request::Request, ConnectionData};
+use messages::msg_fields::protocols::connection::{problem_report::ProblemReport, request::Request, ConnectionData};
 
 use crate::protocols::mediated_connection::invitee::states::initial::InitialState;
 

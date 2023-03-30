@@ -2,8 +2,8 @@ use std::sync::Arc;
 
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use base64;
-use messages2::msg_fields::protocols::connection::response::{ConnectionSignature, ResponseContent};
-use messages2::msg_fields::protocols::connection::ConnectionData;
+use messages::msg_fields::protocols::connection::response::{ConnectionSignature, ResponseContent};
+use messages::msg_fields::protocols::connection::ConnectionData;
 use time;
 
 use crate::errors::error::prelude::*;

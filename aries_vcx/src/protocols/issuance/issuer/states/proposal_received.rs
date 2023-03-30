@@ -1,5 +1,7 @@
-use crate::{protocols::issuance::issuer::states::offer_sent::OfferSentState, handlers::util::OfferInfo};
-use messages2::msg_fields::protocols::cred_issuance::{propose_credential::ProposeCredential, offer_credential::OfferCredential};
+use crate::{handlers::util::OfferInfo, protocols::issuance::issuer::states::offer_sent::OfferSentState};
+use messages::msg_fields::protocols::cred_issuance::{
+    offer_credential::OfferCredential, propose_credential::ProposeCredential,
+};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ProposalReceivedState {

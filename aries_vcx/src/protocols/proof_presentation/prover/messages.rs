@@ -1,4 +1,4 @@
-use messages2::{
+use messages::{
     msg_fields::protocols::{
         present_proof::{
             ack::{AckPresentation, AckPresentationContent},

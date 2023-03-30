@@ -1,4 +1,4 @@
-use messages2::msg_fields::protocols::revocation::{ack::AckRevoke, revoke::Revoke};
+use messages::msg_fields::protocols::revocation::{ack::AckRevoke, revoke::Revoke};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct FinishedState {

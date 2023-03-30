@@ -1,11 +1,11 @@
 use std::collections::HashMap;
 
-use messages2::msg_fields::protocols::cred_issuance::issue_credential::IssueCredential;
-use messages2::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
-use messages2::msg_fields::protocols::cred_issuance::propose_credential::ProposeCredential;
-use messages2::msg_fields::protocols::revocation::revoke::Revoke;
-use messages2::msg_fields::protocols::revocation::Revocation;
-use messages2::AriesMessage;
+use messages::msg_fields::protocols::cred_issuance::issue_credential::IssueCredential;
+use messages::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
+use messages::msg_fields::protocols::cred_issuance::propose_credential::ProposeCredential;
+use messages::msg_fields::protocols::revocation::revoke::Revoke;
+use messages::msg_fields::protocols::revocation::Revocation;
+use messages::AriesMessage;
 use std::sync::Arc;
 
 use agency_client::agency_client::AgencyClient;

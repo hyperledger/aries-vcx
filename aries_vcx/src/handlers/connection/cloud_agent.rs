@@ -5,14 +5,13 @@ use agency_client::agency_client::AgencyClient;
 use agency_client::api::downloaded_message::DownloadedMessageEncrypted;
 use agency_client::messages::update_message::UIDsByConn;
 use agency_client::wallet::base_agency_client_wallet::BaseAgencyClientWallet;
-use messages2::AriesMessage;
+use messages::AriesMessage;
 
 use crate::agency_client::MessageStatusCode;
 use crate::errors::error::prelude::*;
 use crate::protocols::mediated_connection::pairwise_info::PairwiseInfo;
 use crate::utils::encryption_envelope::EncryptionEnvelope;
 use aries_vcx_core::wallet::agency_client_wallet::ToBaseWallet;
-use messages::a2a::A2AMessage;
 
 #[derive(Default, Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct CloudAgentInfo {
