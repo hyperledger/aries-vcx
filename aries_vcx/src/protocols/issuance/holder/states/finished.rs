@@ -3,8 +3,7 @@ use messages2::msg_fields::protocols::cred_issuance::issue_credential::IssueCred
 use messages2::msg_fields::protocols::report_problem::ProblemReport;
 
 use crate::errors::error::prelude::*;
-use crate::handlers::util::{Status, CredentialData};
-
+use crate::handlers::util::{get_attach_as_string, CredentialData, Status};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct FinishedHolderState {
@@ -51,16 +50,8 @@ impl FinishedHolderState {
             AriesVcxErrorKind::InvalidState,
             "No credential found",
         ))?;
-        let attach = credential.content.credentials_attach.get(0);
 
-        let Some(AttachmentType::Json(attach_json)) = attach.map(|a| a.data.content) else {
-            return Err(AriesVcxError::from_msg(
-                AriesVcxErrorKind::SerializationError,
-                format!("Attachment is not JSON: {:?}", attach),
-            ));
-        };
-
-        Ok(attach_json.to_string())
+        Ok(get_attach_as_string!(&credential.content.credentials_attach))
     }
 
     // TODO: Avoid duplication

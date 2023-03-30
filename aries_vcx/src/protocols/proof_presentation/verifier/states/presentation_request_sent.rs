@@ -1,19 +1,20 @@
 use std::sync::Arc;
 
+use messages2::msg_fields::protocols::present_proof::present::Presentation;
+use messages2::msg_fields::protocols::present_proof::request::RequestPresentation;
+use messages2::msg_fields::protocols::report_problem::ProblemReport;
+
 use crate::common::proofs::verifier::verifier::validate_indy_proof;
 use crate::core::profile::profile::Profile;
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use crate::global::settings;
+use crate::handlers::util::{get_attach_as_string, matches_opt_thread_id, Status};
 use crate::protocols::proof_presentation::verifier::states::finished::FinishedState;
 use crate::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
-use messages::concepts::problem_report::ProblemReport;
-use messages::protocols::proof_presentation::presentation::Presentation;
-use messages::protocols::proof_presentation::presentation_request::PresentationRequest;
-use messages::status::Status;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct PresentationRequestSentState {
-    pub presentation_request: PresentationRequest,
+    pub presentation_request: RequestPresentation,
 }
 
 impl PresentationRequestSentState {
@@ -23,22 +24,20 @@ impl PresentationRequestSentState {
         presentation: &Presentation,
         thread_id: &str,
     ) -> VcxResult<()> {
-        if !settings::indy_mocks_enabled() && !presentation.from_thread(thread_id) {
+        if !settings::indy_mocks_enabled() && !matches_opt_thread_id!(presentation, thread_id) {
             return Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::InvalidJson,
                 format!(
                     "Cannot handle proof presentation: thread id does not match: {:?}",
-                    presentation.thread
+                    presentation.decorators.thread.thid
                 ),
             ));
         };
 
-        let valid = validate_indy_proof(
-            profile,
-            &presentation.presentations_attach.content()?,
-            &self.presentation_request.request_presentations_attach.content()?,
-        )
-        .await?;
+        let proof_json = get_attach_as_string!(&presentation.content.presentations_attach);
+        let proof_req_json = get_attach_as_string!(&self.presentation_request.content.request_presentations_attach);
+
+        let valid = validate_indy_proof(profile, &proof_json, &proof_req_json).await?;
 
         if !valid {
             return Err(AriesVcxError::from_msg(

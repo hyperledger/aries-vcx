@@ -13,11 +13,11 @@ use messages2::{
     AriesMessage,
 };
 
-use crate::handlers::util::{matches_opt_thread_id, matches_thread_id};
+use crate::handlers::util::{matches_opt_thread_id, matches_thread_id, PresentationProposalData};
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 pub enum ProverMessages {
-    PresentationProposalSend(ProposePresentation),
+    PresentationProposalSend(PresentationProposalData),
     PresentationRequestReceived(RequestPresentation),
     RejectPresentationRequest(String),
     SetPresentation(Presentation),

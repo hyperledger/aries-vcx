@@ -5,6 +5,7 @@ use std::sync::Arc;
 use crate::common::proofs::proof_request::PresentationRequestData;
 use crate::core::profile::profile::Profile;
 use crate::errors::error::prelude::*;
+use crate::handlers::util::{make_attach_from_str, matches_opt_thread_id, matches_thread_id, Status};
 use crate::protocols::common::build_problem_report_msg;
 use crate::protocols::proof_presentation::verifier::messages::VerifierMessages;
 use crate::protocols::proof_presentation::verifier::states::finished::FinishedState;
@@ -15,8 +16,19 @@ use crate::protocols::proof_presentation::verifier::states::presentation_request
 use crate::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
 use crate::protocols::proof_presentation::verifier::verify_thread_id;
 use crate::protocols::SendClosure;
-use messages2::msg_fields::protocols::present_proof::{propose::ProposePresentation, present::Presentation};
-use messages2::msg_fields::protocols::present_proof::request::RequestPresentation;
+use chrono::Utc;
+use messages2::decorators::thread::Thread;
+use messages2::decorators::timing::Timing;
+use messages2::msg_fields::protocols::notification::{AckDecorators, AckStatus};
+use messages2::msg_fields::protocols::present_proof::ack::{AckPresentation, AckPresentationContent};
+use messages2::msg_fields::protocols::present_proof::request::{
+    RequestPresentation, RequestPresentationContent, RequestPresentationDecorators,
+};
+use messages2::msg_fields::protocols::present_proof::PresentProof;
+use messages2::msg_fields::protocols::present_proof::{present::Presentation, propose::ProposePresentation};
+use messages2::msg_fields::protocols::report_problem::ProblemReport;
+use messages2::AriesMessage;
+use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct VerifierSM {
@@ -62,20 +74,29 @@ impl Default for VerifierFullState {
     }
 }
 
-fn build_verification_ack(thread_id: &str) -> PresentationAck {
-    PresentationAck::create().set_thread_id(thread_id).set_out_time()
+fn build_verification_ack(thread_id: &str) -> AckPresentation {
+    let content = AckPresentationContent::new(AckStatus::Ok);
+    let mut decorators = AckDecorators::new(Thread::new(thread_id.to_owned()));
+    let mut timing = Timing::default();
+    timing.out_time = Some(Utc::now());
+    decorators.timing = Some(timing);
+
+    AckPresentation::with_decorators(Uuid::new_v4().to_string(), content, decorators)
 }
 
 fn build_starting_presentation_request(
     thread_id: &str,
     request_data: &PresentationRequestData,
     comment: Option<String>,
-) -> VcxResult<PresentationRequest> {
-    Ok(PresentationRequest::create()
-        .set_id(thread_id.into())
-        .set_comment(comment)
-        .set_request_presentations_attach(&json!(request_data).to_string())?
-        .set_out_time())
+) -> VcxResult<RequestPresentation> {
+    let id = Uuid::new_v4().to_string();
+    let content = RequestPresentationContent::new(vec![make_attach_from_str!(&json!(request_data).to_string())]);
+    let mut decorators = RequestPresentationDecorators::default();
+    let mut timing = Timing::default();
+    timing.out_time = Some(Utc::now());
+    decorators.timing = Some(timing);
+
+    Ok(RequestPresentation::with_decorators(id, content, decorators))
 }
 
 impl VerifierSM {
@@ -88,10 +109,10 @@ impl VerifierSM {
     }
 
     // todo: eliminate VcxResult (follow set_request err chain and eliminate possibility of err at the bottom)
-    pub fn from_request(source_id: &str, presentation_request_data: &RequestPresentation) -> VcxResult<Self> {
+    pub fn from_request(source_id: &str, presentation_request_data: &PresentationRequestData) -> VcxResult<Self> {
         let sm = Self {
             source_id: source_id.to_string(),
-            thread_id: MessageId::new().0,
+            thread_id: Uuid::new_v4().to_string(),
             state: VerifierFullState::Initial(InitialVerifierState {}),
         };
         sm.set_request(presentation_request_data, None)
@@ -100,26 +121,23 @@ impl VerifierSM {
     pub fn from_proposal(source_id: &str, presentation_proposal: &ProposePresentation) -> Self {
         Self {
             source_id: source_id.to_string(),
-            thread_id: presentation_proposal.id.0.clone(),
+            thread_id: presentation_proposal.id.clone(),
             state: VerifierFullState::PresentationProposalReceived(PresentationProposalReceivedState::new(
                 presentation_proposal.clone(),
             )),
         }
     }
 
-    pub fn receive_presentation_proposal(self, proposal: PresentationProposal) -> VcxResult<Self> {
+    pub fn receive_presentation_proposal(self, proposal: ProposePresentation) -> VcxResult<Self> {
         verify_thread_id(
             &self.thread_id,
             &VerifierMessages::PresentationProposalReceived(proposal.clone()),
         )?;
         let (state, thread_id) = match self.state {
             VerifierFullState::Initial(_) => {
-                let thread_id = match proposal.thread {
-                    Some(ref thread) => thread.thid.clone().ok_or(AriesVcxError::from_msg(
-                        AriesVcxErrorKind::InvalidState,
-                        "Received proposal with invalid thid",
-                    ))?,
-                    None => proposal.id.0.clone(),
+                let thread_id = match proposal.decorators.thread {
+                    Some(ref thread) => thread.thid.clone(),
+                    None => proposal.id.clone(),
                 };
                 (
                     VerifierFullState::PresentationProposalReceived(PresentationProposalReceivedState::new(proposal)),
@@ -168,15 +186,12 @@ impl VerifierSM {
     pub async fn reject_presentation_proposal(self, reason: String, send_message: SendClosure) -> VcxResult<Self> {
         let (state, thread_id) = match self.state {
             VerifierFullState::PresentationProposalReceived(state) => {
-                let thread_id = match state.presentation_proposal.thread {
-                    Some(thread) => thread.thid.ok_or(AriesVcxError::from_msg(
-                        AriesVcxErrorKind::InvalidState,
-                        "Thread id undefined",
-                    ))?,
-                    None => state.presentation_proposal.id.0,
+                let thread_id = match state.presentation_proposal.decorators.thread {
+                    Some(thread) => thread.thid,
+                    None => state.presentation_proposal.id,
                 };
                 let problem_report = build_problem_report_msg(Some(reason.to_string()), &thread_id);
-                send_message(problem_report.to_a2a_message()).await?;
+                send_message(problem_report.clone().into()).await?;
                 (
                     VerifierFullState::Finished(FinishedState::declined(problem_report)),
                     thread_id,
@@ -208,7 +223,7 @@ impl VerifierSM {
             VerifierFullState::PresentationRequestSent(state) => {
                 let verification_result = state.verify_presentation(profile, &presentation, &self.thread_id).await;
                 let ack = build_verification_ack(&self.thread_id);
-                send_message(A2AMessage::PresentationAck(ack)).await?;
+                send_message(ack.into()).await?;
                 match verification_result {
                     Ok(()) => {
                         VerifierFullState::Finished((state, presentation, PresentationVerificationStatus::Valid).into())
@@ -236,7 +251,7 @@ impl VerifierSM {
         let state = match self.state {
             VerifierFullState::Finished(state) => {
                 let ack = build_verification_ack(&self.thread_id);
-                send_message(A2AMessage::PresentationAck(ack)).await?;
+                send_message(ack.into()).await?;
                 VerifierFullState::Finished(state)
             }
             s => {
@@ -247,33 +262,33 @@ impl VerifierSM {
         Ok(Self { state, ..self })
     }
 
-    pub fn find_message_to_handle(&self, messages: HashMap<String, A2AMessage>) -> Option<(String, A2AMessage)> {
+    pub fn find_message_to_handle(&self, messages: HashMap<String, AriesMessage>) -> Option<(String, AriesMessage)> {
         trace!("VerifierSM::find_message_to_handle >>> messages: {:?}", messages);
         for (uid, message) in messages {
             match &self.state {
-                VerifierFullState::Initial(_) => match message {
-                    A2AMessage::PresentationProposal(proposal) => {
-                        return Some((uid, A2AMessage::PresentationProposal(proposal)));
+                VerifierFullState::Initial(_) => match &message {
+                    AriesMessage::PresentProof(PresentProof::ProposePresentation(proposal)) => {
+                        return Some((uid, message));
                     }
-                    A2AMessage::PresentationRequest(request) => {
-                        return Some((uid, A2AMessage::PresentationRequest(request)));
+                    AriesMessage::PresentProof(PresentProof::ProposePresentation(request)) => {
+                        return Some((uid, message));
                     }
                     _ => {}
                 },
                 VerifierFullState::PresentationRequestSent(_) => match message {
-                    A2AMessage::Presentation(presentation) => {
-                        if presentation.from_thread(&self.thread_id) {
-                            return Some((uid, A2AMessage::Presentation(presentation)));
+                    AriesMessage::PresentProof(PresentProof::Presentation(presentation)) => {
+                        if matches_thread_id!(presentation, self.thread_id.as_str()) {
+                            return Some((uid, message));
                         }
                     }
-                    A2AMessage::PresentationProposal(proposal) => {
-                        if proposal.from_thread(&self.thread_id) {
-                            return Some((uid, A2AMessage::PresentationProposal(proposal)));
+                    AriesMessage::PresentProof(PresentProof::ProposePresentation(proposal)) => {
+                        if matches_opt_thread_id!(proposal, self.thread_id.as_str()) {
+                            return Some((uid, message));
                         }
                     }
-                    A2AMessage::CommonProblemReport(problem_report) => {
-                        if problem_report.from_thread(&self.thread_id) {
-                            return Some((uid, A2AMessage::CommonProblemReport(problem_report)));
+                    AriesMessage::ReportProblem(problem_report) => {
+                        if matches_opt_thread_id!(problem_report, self.thread_id.as_str()) {
+                            return Some((uid, message));
                         }
                     }
                     _ => {}
@@ -284,7 +299,7 @@ impl VerifierSM {
         None
     }
 
-    pub fn set_request(self, request_data: &RequestPresentation, comment: Option<String>) -> VcxResult<Self> {
+    pub fn set_request(self, request_data: &PresentationRequestData, comment: Option<String>) -> VcxResult<Self> {
         let Self {
             source_id,
             thread_id,

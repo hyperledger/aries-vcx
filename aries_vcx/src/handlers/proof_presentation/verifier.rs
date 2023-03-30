@@ -13,6 +13,7 @@ use crate::common::proofs::proof_request::PresentationRequestData;
 use crate::core::profile::profile::Profile;
 use crate::errors::error::prelude::*;
 use crate::handlers::connection::mediated_connection::MediatedConnection;
+use crate::handlers::util::get_attach_as_string;
 use crate::protocols::proof_presentation::verifier::messages::VerifierMessages;
 use crate::protocols::proof_presentation::verifier::state_machine::{VerifierSM, VerifierState};
 use crate::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
@@ -130,20 +131,7 @@ impl Verifier {
     }
 
     pub fn get_presentation_request_attachment(&self) -> VcxResult<String> {
-        let attach = self
-            .verifier_sm
-            .presentation_request_msg()?
-            .content
-            .request_presentations_attach
-            .get(0);
-
-        let Some(AttachmentType::Json(attach_json)) = attach.map(|a| a.data.content) else {
-                return Err(AriesVcxError::from_msg(
-                    AriesVcxErrorKind::SerializationError,
-                    format!("Attachment is not JSON: {:?}", attach),
-                ));
-            };
-        Ok(attach_json.to_string())
+        Ok(get_attach_as_string!(&self.verifier_sm.presentation_request_msg()?.content.request_presentations_attach))
     }
 
     pub fn get_presentation_request(&self) -> VcxResult<RequestPresentation> {
@@ -159,21 +147,7 @@ impl Verifier {
     }
 
     pub fn get_presentation_attachment(&self) -> VcxResult<String> {
-        let attach = self
-            .verifier_sm
-            .get_presentation_msg()?
-            .content
-            .presentations_attach
-            .get(0);
-
-        let Some(AttachmentType::Json(attach_json)) = attach.map(|a| a.data.content) else {
-                return Err(AriesVcxError::from_msg(
-                    AriesVcxErrorKind::SerializationError,
-                    format!("Attachment is not JSON: {:?}", attach),
-                ));
-            };
-
-        Ok(attach_json.to_string())
+        Ok(get_attach_as_string!(&self.verifier_sm.get_presentation_msg()?.content.presentations_attach))
     }
 
     pub fn get_presentation_proposal(&self) -> VcxResult<ProposePresentation> {

@@ -4,7 +4,9 @@ use std::sync::Arc;
 
 use crate::core::profile::profile::Profile;
 use crate::errors::error::prelude::*;
-use crate::handlers::util::{matches_opt_thread_id, matches_thread_id, Status};
+use crate::handlers::util::{
+    make_attach_from_str, matches_opt_thread_id, matches_thread_id, PresentationProposalData, Status,
+};
 use crate::protocols::common::build_problem_report_msg;
 use crate::protocols::proof_presentation::prover::messages::ProverMessages;
 use crate::protocols::proof_presentation::prover::states::finished::FinishedState;
@@ -83,11 +85,7 @@ impl fmt::Display for ProverFullState {
 fn build_presentation_msg(thread_id: &str, presentation_attachment: String) -> VcxResult<Presentation> {
     let id = Uuid::new_v4().to_string();
 
-    let attach_type = AttachmentType::Base64(base64::encode(&presentation_attachment).into_bytes());
-    let attach_data = AttachmentData::new(attach_type);
-    let attach = Attachment::new(attach_data);
-
-    let content = PresentationContent::new(vec![attach]);
+    let content = PresentationContent::new(vec![make_attach_from_str!(&presentation_attachment)]);
     let mut decorators = PresentationDecorators::new(Thread::new(thread_id.to_owned()));
     let mut timing = Timing::default();
     timing.out_time = Some(Utc::now());
@@ -121,20 +119,34 @@ impl ProverSM {
 
     pub async fn send_presentation_proposal(
         self,
-        proposal_data: ProposePresentation,
+        proposal_data: PresentationProposalData,
         send_message: SendClosure,
     ) -> VcxResult<Self> {
         let state = match self.state {
             ProverFullState::Initial(_) => {
-                let mut proposal = proposal_data;
-                proposal.id = self.thread_id.clone();
+                let id = Uuid::new_v4().to_string();
+                let preview = PresentationPreview::new(proposal_data.attributes, proposal_data.predicates);
+                let mut content = ProposePresentationContent::new(preview);
+                content.comment = proposal_data.comment;
+
+                let mut decorators = ProposePresentationDecorators::default();
+                decorators.thread = Some(Thread::new(self.thread_id.clone()));
+
+                let mut proposal = ProposePresentation::with_decorators(id, content, decorators);
 
                 send_message(proposal.clone().into()).await?;
                 ProverFullState::PresentationProposalSent(PresentationProposalSent::new(proposal))
             }
             ProverFullState::PresentationRequestReceived(_) => {
-                let mut proposal = proposal_data;
-                proposal.id = self.thread_id.clone();
+                let id = Uuid::new_v4().to_string();
+                let preview = PresentationPreview::new(proposal_data.attributes, proposal_data.predicates);
+                let mut content = ProposePresentationContent::new(preview);
+                content.comment = proposal_data.comment;
+
+                let mut decorators = ProposePresentationDecorators::default();
+                decorators.thread = Some(Thread::new(self.thread_id.clone()));
+
+                let mut proposal = ProposePresentation::with_decorators(id, content, decorators);
 
                 send_message(proposal.clone().into()).await?;
                 ProverFullState::PresentationProposalSent(PresentationProposalSent::new(proposal))

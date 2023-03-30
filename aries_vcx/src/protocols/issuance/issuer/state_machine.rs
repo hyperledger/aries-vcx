@@ -3,7 +3,7 @@ use std::fmt::Display;
 use std::sync::Arc;
 
 use crate::core::profile::profile::Profile;
-use crate::handlers::util::{matches_opt_thread_id, matches_thread_id, OfferInfo, Status};
+use crate::handlers::util::{get_attach_as_string, matches_opt_thread_id, matches_thread_id, OfferInfo, Status, make_attach_from_str};
 use chrono::Utc;
 use messages2::decorators::attachment::{Attachment, AttachmentData, AttachmentType};
 use messages2::decorators::please_ack::PleaseAck;
@@ -99,11 +99,7 @@ pub struct IssuerSM {
 fn build_credential_message(libindy_credential: String) -> VcxResult<IssueCredential> {
     let id = Uuid::new_v4().to_string();
 
-    let attach_type = AttachmentType::Base64(base64::encode(&libindy_credential).into_bytes());
-    let attach_data = AttachmentData::new(attach_type);
-    let attach = Attachment::new(attach_data);
-
-    let content = IssueCredentialContent::new(vec![attach]);
+    let content = IssueCredentialContent::new(vec![make_attach_from_str!(&libindy_credential)]);
 
     let mut decorators = IssueCredentialDecorators::new(Thread::new(id.clone())); // this needs a Thread per RFC...
     let mut timing = Timing::default();
@@ -121,11 +117,7 @@ fn build_credential_offer(
 ) -> VcxResult<OfferCredential> {
     let id = Uuid::new_v4().to_string();
 
-    let attach_type = AttachmentType::Base64(base64::encode(credential_offer).into_bytes());
-    let attach_data = AttachmentData::new(attach_type);
-    let attach = Attachment::new(attach_data);
-
-    let mut content = OfferCredentialContent::new(credential_preview, vec![attach]);
+    let mut content = OfferCredentialContent::new(credential_preview, vec![make_attach_from_str!(&credential_offer)]);
     content.comment = comment;
 
     let mut decorators = OfferCredentialDecorators::default();
@@ -582,16 +574,8 @@ async fn _create_credential(
     thread_id: &str,
 ) -> VcxResult<(IssueCredential, Option<String>)> {
     let anoncreds = Arc::clone(profile).inject_anoncreds();
-    let attach = offer.content.offers_attach.get(0);
 
-    let Some(AttachmentType::Json(attach_json)) = attach.map(|a| &a.data.content) else {
-        return Err(AriesVcxError::from_msg(
-            AriesVcxErrorKind::SerializationError,
-            format!("Attachment is not JSON: {:?}", attach),
-        ));
-    };
-
-    let offer = attach_json.to_string();
+    let offer = get_attach_as_string!(&offer.content.offers_attach);
 
     trace!("Issuer::_create_credential >>> request: {:?}, rev_reg_id: {:?}, tails_file: {:?}, offer: {}, cred_data: {}, thread_id: {}", request, rev_reg_id, tails_file, offer, cred_data, thread_id);
     if !matches_opt_thread_id!(request, thread_id) {
@@ -600,16 +584,8 @@ async fn _create_credential(
             format!("Cannot handle credential request: thread id does not match"),
         ));
     };
-    let attach = &request.content.requests_attach.get(0);
 
-    let Some(AttachmentType::Json(attach_json)) = attach.map(|a| &a.data.content) else {
-        return Err(AriesVcxError::from_msg(
-            AriesVcxErrorKind::SerializationError,
-            format!("Attachment is not JSON: {:?}", attach),
-        ));
-    };
-
-    let request = attach_json.to_string();
+    let request = get_attach_as_string!(&request.content.requests_attach);
 
     let cred_data = encode_attributes(cred_data)?;
     let (libindy_credential, cred_rev_id, _) = anoncreds

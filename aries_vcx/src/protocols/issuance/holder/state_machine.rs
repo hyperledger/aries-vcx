@@ -23,7 +23,9 @@ use crate::common::credentials::{get_cred_rev_id, is_cred_revoked};
 use crate::core::profile::profile::Profile;
 use crate::errors::error::prelude::*;
 use crate::global::settings;
-use crate::handlers::util::{matches_opt_thread_id, matches_thread_id, Status};
+use crate::handlers::util::{
+    get_attach_as_string, make_attach_from_str, matches_opt_thread_id, matches_thread_id, Status,
+};
 use crate::protocols::common::build_problem_report_msg;
 use crate::protocols::issuance::actions::CredentialIssuanceAction;
 use crate::protocols::issuance::holder::states::finished::FinishedHolderState;
@@ -73,11 +75,7 @@ impl fmt::Display for HolderFullState {
 }
 
 fn build_credential_request_msg(credential_request_attach: String, thread_id: &str) -> VcxResult<RequestCredential> {
-    let attach_type = AttachmentType::Base64(base64::encode(&credential_request_attach).into_bytes());
-    let attach_data = AttachmentData::new(attach_type);
-    let attach = Attachment::new(attach_data);
-    
-    let content = RequestCredentialContent::new(vec![attach]);
+    let content = RequestCredentialContent::new(vec![make_attach_from_str!(&credential_request_attach)]);
 
     let mut decorators = RequestCredentialDecorators::default();
 
@@ -570,16 +568,7 @@ async fn _store_credential(
     let ledger = Arc::clone(profile).inject_ledger();
     let anoncreds = Arc::clone(profile).inject_anoncreds();
 
-    let attach = credential.content.credentials_attach.get(0);
-
-    let Some(AttachmentType::Json(attach_json)) = attach.map(|a| &a.data.content) else {
-        return Err(AriesVcxError::from_msg(
-            AriesVcxErrorKind::SerializationError,
-            format!("Attachment is not JSON: {:?}", attach),
-        ));
-    };
-
-    let credential_json = attach_json.to_string();
+    let credential_json = get_attach_as_string!(&credential.content.credentials_attach);
 
     let rev_reg_id = _parse_rev_reg_id_from_credential(&credential_json)?;
     let rev_reg_def_json = if let Some(rev_reg_id) = rev_reg_id {
@@ -642,16 +631,7 @@ async fn _make_credential_request(
         offer
     );
 
-    let attach = offer.content.offers_attach.get(0);
-
-    let Some(AttachmentType::Json(attach_json)) = attach.map(|a| &a.data.content) else {
-        return Err(AriesVcxError::from_msg(
-            AriesVcxErrorKind::SerializationError,
-            format!("Attachment is not JSON: {:?}", attach),
-        ));
-    };
-
-    let cred_offer = attach_json.to_string();
+    let cred_offer = get_attach_as_string!(&offer.content.offers_attach);
 
     trace!("Parsed cred offer attachment: {}", cred_offer);
     let cred_def_id = parse_cred_def_id_from_cred_offer(&cred_offer)?;

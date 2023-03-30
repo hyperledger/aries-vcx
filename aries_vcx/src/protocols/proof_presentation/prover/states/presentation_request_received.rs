@@ -11,7 +11,7 @@ use uuid::Uuid;
 use crate::common::proofs::prover::prover::generate_indy_proof;
 use crate::core::profile::profile::Profile;
 use crate::errors::error::prelude::*;
-use crate::handlers::util::Status;
+use crate::handlers::util::{get_attach_as_string, Status};
 use crate::protocols::proof_presentation::prover::states::finished::FinishedState;
 use crate::protocols::proof_presentation::prover::states::presentation_preparation_failed::PresentationPreparationFailedState;
 use crate::protocols::proof_presentation::prover::states::presentation_prepared::PresentationPreparedState;
@@ -44,15 +44,8 @@ impl PresentationRequestReceived {
         credentials: &str,
         self_attested_attrs: &str,
     ) -> VcxResult<String> {
-        let attach = self.presentation_request.content.request_presentations_attach.get(0);
-
-        let Some(AttachmentType::Json(attach_json)) = attach.map(|a| &a.data.content) else {
-                return Err(AriesVcxError::from_msg(
-                    AriesVcxErrorKind::SerializationError,
-                    format!("Attachment is not JSON: {:?}", attach),
-                ));
-            };
-        let proof_req_data_json = attach_json.to_string();
+        let proof_req_data_json =
+            get_attach_as_string!(&self.presentation_request.content.request_presentations_attach);
 
         generate_indy_proof(profile, credentials, self_attested_attrs, &proof_req_data_json).await
     }

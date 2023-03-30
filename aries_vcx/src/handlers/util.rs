@@ -27,6 +27,29 @@ macro_rules! matches_opt_thread_id {
     };
 }
 
+macro_rules! get_attach_as_string {
+    ($attachments:expr) => {{
+        let attach = $attachments.get(0);
+
+        let Some(messages2::decorators::attachment::AttachmentType::Json(attach_json)) = attach.map(|a| &a.data.content) else {
+            return Err(AriesVcxError::from_msg(AriesVcxErrorKind::SerializationError, format!("Attachment is not JSON: {:?}", attach)));
+        };
+
+        attach_json.to_string()
+    }};
+}
+
+macro_rules! make_attach_from_str {
+    ($str_attach:expr) => {{
+        let attach_type =
+            messages2::decorators::attachment::AttachmentType::Base64(base64::encode($str_attach).into_bytes());
+        let attach_data = messages2::decorators::attachment::AttachmentData::new(attach_type);
+        messages2::decorators::attachment::Attachment::new(attach_data)
+    }};
+}
+
+pub(crate) use get_attach_as_string;
+pub(crate) use make_attach_from_str;
 pub(crate) use matches_opt_thread_id;
 pub(crate) use matches_thread_id;
 
@@ -139,7 +162,6 @@ pub struct CredentialData {
     pub witness: Option<serde_json::Value>,
 }
 
-
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct OfferInfo {
     pub credential_json: String,
@@ -162,4 +184,11 @@ impl OfferInfo {
             tails_file,
         }
     }
+}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone, Default)]
+pub struct PresentationProposalData {
+    pub attributes: Vec<Attribute>,
+    pub predicates: Vec<Predicate>,
+    pub comment: Option<String>,
 }
