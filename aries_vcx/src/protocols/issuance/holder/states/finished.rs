@@ -1,12 +1,15 @@
+use messages2::decorators::attachment::AttachmentType;
+use messages2::msg_fields::protocols::cred_issuance::issue_credential::IssueCredential;
+use messages2::msg_fields::protocols::report_problem::ProblemReport;
+
 use crate::errors::error::prelude::*;
-use messages::concepts::problem_report::ProblemReport;
-use messages::protocols::issuance::credential::{Credential, CredentialData};
-use messages::status::Status;
+use crate::handlers::util::{Status, CredentialData};
+
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct FinishedHolderState {
     pub cred_id: Option<String>,
-    pub credential: Option<Credential>,
+    pub credential: Option<IssueCredential>,
     pub status: Status,
     pub rev_reg_def_json: Option<String>,
 }
@@ -48,7 +51,16 @@ impl FinishedHolderState {
             AriesVcxErrorKind::InvalidState,
             "No credential found",
         ))?;
-        credential.credentials_attach.content().map_err(|err| err.into())
+        let attach = credential.content.credentials_attach.get(0);
+
+        let Some(AttachmentType::Json(attach_json)) = attach.map(|a| a.data.content) else {
+            return Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::SerializationError,
+                format!("Attachment is not JSON: {:?}", attach),
+            ));
+        };
+
+        Ok(attach_json.to_string())
     }
 
     // TODO: Avoid duplication

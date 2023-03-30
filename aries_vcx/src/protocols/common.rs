@@ -1,6 +1,10 @@
-use messages::concepts::problem_report::ProblemReport;
+use messages2::msg_fields::protocols::{report_problem::{ProblemReport, ProblemReportContent}};
+use uuid::Uuid;
 
 pub fn build_problem_report_msg(comment: Option<String>, thread_id: &str) -> ProblemReport {
+    let id = Uuid::new_v4().to_string();
+    let mut content = ProblemReportContent::default();
+    content.description = 
     ProblemReport::create()
         .set_out_time()
         .set_comment(comment)

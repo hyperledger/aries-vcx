@@ -1,7 +1,8 @@
+use messages2::msg_fields::protocols::cred_issuance::issue_credential::IssueCredential;
+
 use crate::errors::error::prelude::*;
+use crate::handlers::util::Status;
 use crate::protocols::issuance::holder::states::finished::FinishedHolderState;
-use messages::protocols::issuance::credential::Credential;
-use messages::status::Status;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RequestSentState {
@@ -9,9 +10,9 @@ pub struct RequestSentState {
     pub cred_def_json: String,
 }
 
-impl From<(RequestSentState, String, Credential, Option<String>)> for FinishedHolderState {
+impl From<(RequestSentState, String, IssueCredential, Option<String>)> for FinishedHolderState {
     fn from(
-        (_, cred_id, credential, rev_reg_def_json): (RequestSentState, String, Credential, Option<String>),
+        (_, cred_id, credential, rev_reg_def_json): (RequestSentState, String, IssueCredential, Option<String>),
     ) -> Self {
         trace!("SM is now in Finished state");
         FinishedHolderState {
