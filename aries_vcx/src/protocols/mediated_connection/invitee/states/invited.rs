@@ -1,8 +1,8 @@
+use diddoc::aries::diddoc::AriesDidDoc;
+use messages2::msg_fields::protocols::connection::request::Request;
+
 use crate::handlers::util::AnyInvitation;
 use crate::protocols::mediated_connection::invitee::states::requested::RequestedState;
-use messages::diddoc::aries::diddoc::AriesDidDoc;
-use messages::protocols::connection::invite::Invitation;
-use messages::protocols::connection::request::Request;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct InvitedState {

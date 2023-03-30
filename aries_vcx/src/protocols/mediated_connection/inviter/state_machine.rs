@@ -2,14 +2,31 @@ use std::clone::Clone;
 use std::collections::HashMap;
 use std::sync::Arc;
 
+use chrono::Utc;
+use diddoc::aries::diddoc::AriesDidDoc;
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
-use messages::diddoc::aries::diddoc::AriesDidDoc;
-use messages2::AriesMessage;
+use messages2::decorators::thread::Thread;
+use messages2::decorators::timing::Timing;
+use messages2::msg_fields::protocols::connection::invitation::{
+    Invitation, PairwiseInvitation, PairwiseInvitationContent, PwInvitationDecorators,
+};
+use messages2::msg_fields::protocols::connection::problem_report::{
+    ProblemReport, ProblemReportContent, ProblemReportDecorators,
+};
+use messages2::msg_fields::protocols::connection::request::Request;
+use messages2::msg_fields::protocols::connection::response::{Response, ResponseContent, ResponseDecorators};
+use messages2::msg_fields::protocols::connection::Connection;
 use messages2::msg_fields::protocols::discover_features::disclose::Disclose;
+use messages2::msg_fields::protocols::discover_features::query::QueryContent;
+use messages2::msg_fields::protocols::discover_features::ProtocolDescriptor;
+use messages2::msg_fields::protocols::trust_ping::TrustPing;
+use messages2::AriesMessage;
+use url::Url;
+use uuid::Uuid;
 
 use crate::common::signing::sign_connection_response;
 use crate::errors::error::prelude::*;
-use crate::handlers::util::verify_thread_id;
+use crate::handlers::util::{verify_thread_id, AnyInvitation};
 use crate::protocols::mediated_connection::inviter::states::completed::CompletedState;
 use crate::protocols::mediated_connection::inviter::states::initial::InitialState;
 use crate::protocols::mediated_connection::inviter::states::invited::InvitedState;
@@ -66,7 +83,7 @@ impl SmConnectionInviter {
     pub fn new(source_id: &str, pairwise_info: PairwiseInfo) -> Self {
         Self {
             source_id: source_id.to_string(),
-            thread_id: MessageId::new().0,
+            thread_id: Uuid::new_v4().to_string(),
             state: InviterFullState::Initial(InitialState::new(None)),
             pairwise_info,
         }
@@ -107,14 +124,17 @@ impl SmConnectionInviter {
         }
     }
 
-    pub fn get_invitation(&self) -> Option<&Invitation> {
+    pub fn get_invitation(&self) -> Option<&AnyInvitation> {
         match self.state {
             InviterFullState::Invited(ref state) => Some(&state.invitation),
             _ => None,
         }
     }
 
-    pub fn find_message_to_update_state(&self, messages: HashMap<String, A2AMessage>) -> Option<(String, A2AMessage)> {
+    pub fn find_message_to_update_state(
+        &self,
+        messages: HashMap<String, AriesMessage>,
+    ) -> Option<(String, AriesMessage)> {
         for (uid, message) in messages {
             if self.can_progress_state(&message) {
                 return Some((uid, message));
@@ -124,7 +144,8 @@ impl SmConnectionInviter {
     }
 
     pub fn get_protocols(&self) -> Vec<ProtocolDescriptor> {
-        ProtocolRegistry::init().protocols()
+        let query = QueryContent::new("*".to_owned());
+        query.lookup()
     }
 
     pub fn get_remote_protocols(&self) -> Option<Vec<ProtocolDescriptor>> {
@@ -166,31 +187,41 @@ impl SmConnectionInviter {
             .map(|s| s.to_string())
     }
 
-    pub fn can_progress_state(&self, message: &A2AMessage) -> bool {
+    pub fn can_progress_state(&self, message: &AriesMessage) -> bool {
         match self.state {
             InviterFullState::Invited(_) => matches!(
                 message,
-                A2AMessage::ConnectionRequest(_) | A2AMessage::ConnectionProblemReport(_)
+                AriesMessage::Connection(Connection::Request(_))
+                    | AriesMessage::Connection(Connection::ProblemReport(_))
             ),
             InviterFullState::Responded(_) => matches!(
                 message,
-                A2AMessage::Ack(_) | A2AMessage::Ping(_) | A2AMessage::ConnectionProblemReport(_)
+                AriesMessage::Notification(_)
+                    | AriesMessage::TrustPing(TrustPing::Ping(_))
+                    | AriesMessage::Connection(Connection::ProblemReport(_))
             ),
             _ => false,
         }
     }
 
-    pub fn create_invitation(self, routing_keys: Vec<String>, service_endpoint: String) -> VcxResult<Self> {
+    pub fn create_invitation(self, routing_keys: Vec<String>, service_endpoint: Url) -> VcxResult<Self> {
         let state = match self.state {
             InviterFullState::Initial(state) => {
-                let invite: PairwiseInvitation = PairwiseInvitation::create()
-                    .set_id(&self.thread_id)
-                    .set_label(&self.source_id)
-                    .set_recipient_keys(vec![self.pairwise_info.pw_vk.clone()])
-                    .set_routing_keys(routing_keys)
-                    .set_service_endpoint(service_endpoint);
+                let id = Uuid::new_v4().to_string();
+                let content = PairwiseInvitationContent::new(
+                    self.source_id.clone(),
+                    vec![self.pairwise_info.pw_vk.clone()],
+                    routing_keys,
+                    service_endpoint,
+                );
 
-                InviterFullState::Invited((state, Invitation::Pairwise(invite)).into())
+                let decorators = PwInvitationDecorators::default();
+
+                let invite = PairwiseInvitation::with_decorators(id, content, decorators);
+
+                let invitation = AnyInvitation::Con(Invitation::Pairwise(invite));
+
+                InviterFullState::Invited((state, invitation).into())
             }
             _ => self.state.clone(),
         };
@@ -203,24 +234,31 @@ impl SmConnectionInviter {
         request: Request,
         new_pairwise_info: &PairwiseInfo,
         new_routing_keys: Vec<String>,
-        new_service_endpoint: String,
+        new_service_endpoint: Url,
         send_message: SendClosureConnection,
     ) -> VcxResult<Self> {
-        let thread_id = request.get_thread_id();
         if !matches!(self.state, InviterFullState::Initial(_)) {
-            verify_thread_id(&self.get_thread_id(), &A2AMessage::ConnectionRequest(request.clone()))?;
+            verify_thread_id(&self.get_thread_id(), &request.clone().into())?;
         };
+
         let state = match self.state {
             InviterFullState::Invited(_) | InviterFullState::Initial(_) => {
-                if let Err(err) = request.connection.did_doc.validate() {
-                    let problem_report = ProblemReport::create()
-                        .set_problem_code(ProblemCode::RequestProcessingError)
-                        .set_explain(err.to_string())
-                        .set_thread_id(&thread_id)
-                        .set_out_time();
+                if let Err(err) = request.content.connection.did_doc.validate() {
+                    let mut content = ProblemReportContent::default();
+                    content.explain = Some(err.to_string());
+
+                    let mut decorators = ProblemReportDecorators::new(Thread::new(self.thread_id.clone()));
+                    let mut timing = Timing::default();
+                    timing.out_time = Some(Utc::now());
+                    decorators.timing = Some(timing);
+
+                    let problem_report =
+                        ProblemReport::with_decorators(Uuid::new_v4().to_string(), content, decorators);
+
                     let sender_vk = self.pairwise_info().pw_vk.clone();
-                    let did_doc = request.connection.did_doc.clone();
-                    send_message(problem_report.to_a2a_message(), sender_vk, did_doc)
+                    let did_doc = request.content.connection.did_doc.clone();
+
+                    send_message(problem_report.clone().into(), sender_vk, did_doc)
                         .await
                         .ok();
                     return Ok(Self {
@@ -243,7 +281,6 @@ impl SmConnectionInviter {
         };
         Ok(Self {
             pairwise_info: new_pairwise_info.to_owned(),
-            thread_id,
             state,
             ..self
         })
@@ -262,7 +299,7 @@ impl SmConnectionInviter {
         let state = match self.state {
             InviterFullState::Requested(state) => {
                 send_message(
-                    state.signed_response.to_a2a_message(),
+                    state.signed_response.clone().into(),
                     self.pairwise_info.pw_vk.clone(),
                     state.did_doc.clone(),
                 )
@@ -276,7 +313,9 @@ impl SmConnectionInviter {
 
     pub fn handle_disclose(self, disclose: Disclose) -> VcxResult<Self> {
         let state = match self.state {
-            InviterFullState::Completed(state) => InviterFullState::Completed((state, disclose.content.protocols).into()),
+            InviterFullState::Completed(state) => {
+                InviterFullState::Completed((state, disclose.content.protocols).into())
+            }
             _ => self.state,
         };
         Ok(Self { state, ..self })
@@ -303,23 +342,32 @@ impl SmConnectionInviter {
         request: &Request,
         new_pairwise_info: &PairwiseInfo,
         new_routing_keys: Vec<String>,
-        new_service_endpoint: String,
-    ) -> VcxResult<SignedResponse> {
+        new_service_endpoint: Url,
+    ) -> VcxResult<Response> {
         match &self.state {
             InviterFullState::Invited(_) | InviterFullState::Initial(_) => {
                 let new_recipient_keys = vec![new_pairwise_info.pw_vk.clone()];
-                sign_connection_response(
-                    wallet,
-                    &self.pairwise_info.clone().pw_vk,
-                    Response::create()
-                        .set_did(new_pairwise_info.pw_did.to_string())
-                        .set_service_endpoint(new_service_endpoint)
-                        .set_keys(new_recipient_keys, new_routing_keys)
-                        .ask_for_ack()
-                        .set_thread_id(&request.get_thread_id())
-                        .set_out_time(),
-                )
-                .await
+
+                let id = Uuid::new_v4().to_string();
+
+                let con_sig =
+                    sign_connection_response(wallet, &self.pairwise_info.pw_vk, &request.content.connection).await?;
+
+                let content = ResponseContent::new(con_sig);
+
+                let thread_id = request
+                    .decorators
+                    .thread
+                    .as_ref()
+                    .map(|t| t.thid.as_str())
+                    .unwrap_or(request.id.as_str());
+
+                let mut decorators = ResponseDecorators::new(Thread::new(thread_id.to_owned()));
+                let mut timing = Timing::default();
+                timing.out_time = Some(Utc::now());
+                decorators.timing = Some(timing);
+
+                Ok(Response::with_decorators(id, content, decorators))
             }
             _ => Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::NotReady,

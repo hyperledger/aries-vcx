@@ -1,12 +1,13 @@
+use diddoc::aries::diddoc::AriesDidDoc;
+use messages2::msg_fields::protocols::connection::problem_report::ProblemReport;
+use messages2::msg_fields::protocols::connection::response::Response;
+
 use crate::protocols::mediated_connection::inviter::states::initial::InitialState;
 use crate::protocols::mediated_connection::inviter::states::responded::RespondedState;
-use messages::diddoc::aries::diddoc::AriesDidDoc;
-use messages::protocols::connection::problem_report::ProblemReport;
-use messages::protocols::connection::response::SignedResponse;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct RequestedState {
-    pub signed_response: SignedResponse,
+    pub signed_response: Response,
     pub did_doc: AriesDidDoc,
     pub thread_id: String,
 }
