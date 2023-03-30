@@ -1,11 +1,10 @@
-use crate::protocols::proof_presentation::prover::states::finished::FinishedState;
-use messages::concepts::problem_report::ProblemReport;
-use messages::protocols::proof_presentation::presentation_request::PresentationRequest;
-use messages::status::Status;
+use messages2::msg_fields::protocols::{present_proof::request::RequestPresentation, report_problem::ProblemReport};
+
+use crate::{protocols::proof_presentation::prover::states::finished::FinishedState, handlers::util::Status};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct PresentationPreparationFailedState {
-    pub presentation_request: PresentationRequest,
+    pub presentation_request: RequestPresentation,
     pub problem_report: ProblemReport,
 }
 

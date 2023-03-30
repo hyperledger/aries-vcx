@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use crate::core::profile::profile::Profile;
 use crate::errors::error::prelude::*;
-use crate::handlers::util::{matches_opt_thread_id, matches_thread_id};
+use crate::handlers::util::{matches_opt_thread_id, matches_thread_id, Status};
 use crate::protocols::common::build_problem_report_msg;
 use crate::protocols::proof_presentation::prover::messages::ProverMessages;
 use crate::protocols::proof_presentation::prover::states::finished::FinishedState;
@@ -16,17 +16,23 @@ use crate::protocols::proof_presentation::prover::states::presentation_request_r
 use crate::protocols::proof_presentation::prover::states::presentation_sent::PresentationSentState;
 use crate::protocols::proof_presentation::prover::verify_thread_id;
 use crate::protocols::SendClosure;
-use messages::a2a::{A2AMessage, MessageId};
-use messages::concepts::problem_report::ProblemReport;
-use messages::protocols::proof_presentation::presentation::Presentation;
-use messages::protocols::proof_presentation::presentation_ack::PresentationAck;
-use messages::protocols::proof_presentation::presentation_proposal::{
-    PresentationPreview, PresentationProposal, PresentationProposalData,
+
+use chrono::Utc;
+use messages2::decorators::attachment::{Attachment, AttachmentData, AttachmentType};
+use messages2::decorators::thread::Thread;
+use messages2::decorators::timing::Timing;
+use messages2::msg_fields::protocols::present_proof::ack::AckPresentation;
+use messages2::msg_fields::protocols::present_proof::present::{
+    Presentation, PresentationContent, PresentationDecorators,
 };
-use messages::protocols::proof_presentation::presentation_request::PresentationRequest;
-use messages::status::Status;
+use messages2::msg_fields::protocols::present_proof::propose::{
+    PresentationPreview, ProposePresentation, ProposePresentationContent, ProposePresentationDecorators,
+};
+use messages2::msg_fields::protocols::present_proof::request::RequestPresentation;
 use messages2::msg_fields::protocols::present_proof::PresentProof;
+use messages2::msg_fields::protocols::report_problem::ProblemReport;
 use messages2::AriesMessage;
+use uuid::Uuid;
 
 /// A state machine that tracks the evolution of states for a Prover during
 /// the Present Proof protocol.
@@ -75,10 +81,19 @@ impl fmt::Display for ProverFullState {
 }
 
 fn build_presentation_msg(thread_id: &str, presentation_attachment: String) -> VcxResult<Presentation> {
-    Ok(Presentation::create()
-        .set_thread_id(thread_id)
-        .set_presentations_attach(presentation_attachment)?
-        .set_out_time())
+    let id = Uuid::new_v4().to_string();
+
+    let attach_type = AttachmentType::Base64(base64::encode(&presentation_attachment).into_bytes());
+    let attach_data = AttachmentData::new(attach_type);
+    let attach = Attachment::new(attach_data);
+
+    let content = PresentationContent::new(vec![attach]);
+    let mut decorators = PresentationDecorators::new(Thread::new(thread_id.to_owned()));
+    let mut timing = Timing::default();
+    timing.out_time = Some(Utc::now());
+    decorators.timing = Some(timing);
+
+    Ok(Presentation::with_decorators(id, content, decorators))
 }
 
 impl Default for ProverFullState {
@@ -91,33 +106,37 @@ impl ProverSM {
     pub fn new(source_id: String) -> ProverSM {
         ProverSM {
             source_id,
-            thread_id: MessageId::new().0,
+            thread_id: Uuid::new_v4().to_string(),
             state: ProverFullState::Initial(InitialProverState {}),
         }
     }
 
-    pub fn from_request(presentation_request: PresentationRequest, source_id: String) -> ProverSM {
+    pub fn from_request(presentation_request: RequestPresentation, source_id: String) -> ProverSM {
         ProverSM {
             source_id,
-            thread_id: presentation_request.id.0.clone(),
+            thread_id: presentation_request.id.clone(),
             state: ProverFullState::PresentationRequestReceived(PresentationRequestReceived { presentation_request }),
         }
     }
 
     pub async fn send_presentation_proposal(
         self,
-        proposal_data: PresentationProposalData,
+        proposal_data: ProposePresentation,
         send_message: SendClosure,
     ) -> VcxResult<Self> {
         let state = match self.state {
             ProverFullState::Initial(_) => {
-                let proposal = PresentationProposal::from(proposal_data).set_id(&self.thread_id);
-                send_message(proposal.to_a2a_message()).await?;
+                let mut proposal = proposal_data;
+                proposal.id = self.thread_id.clone();
+
+                send_message(proposal.clone().into()).await?;
                 ProverFullState::PresentationProposalSent(PresentationProposalSent::new(proposal))
             }
             ProverFullState::PresentationRequestReceived(_) => {
-                let proposal = PresentationProposal::from(proposal_data).set_thread_id(&self.thread_id);
-                send_message(proposal.to_a2a_message()).await?;
+                let mut proposal = proposal_data;
+                proposal.id = self.thread_id.clone();
+
+                send_message(proposal.clone().into()).await?;
                 ProverFullState::PresentationProposalSent(PresentationProposalSent::new(proposal))
             }
             s => {
@@ -204,10 +223,11 @@ impl ProverSM {
         Ok(Self { state, ..self })
     }
 
-    pub fn set_presentation(self, presentation: Presentation) -> VcxResult<Self> {
+    pub fn set_presentation(self, mut presentation: Presentation) -> VcxResult<Self> {
         let state = match self.state {
             ProverFullState::PresentationRequestReceived(state) => {
-                let presentation = presentation.set_thread_id(&self.thread_id);
+                presentation.decorators.thread.thid = self.thread_id.clone();
+
                 ProverFullState::PresentationPrepared((state, presentation).into())
             }
             s => {
@@ -218,7 +238,7 @@ impl ProverSM {
         Ok(Self { state, ..self })
     }
 
-    pub fn receive_presentation_ack(self, ack: PresentationAck) -> VcxResult<Self> {
+    pub fn receive_presentation_ack(self, ack: AckPresentation) -> VcxResult<Self> {
         let state = match self.state {
             ProverFullState::PresentationSent(state) => ProverFullState::Finished((state, ack).into()),
             s => {
@@ -232,11 +252,11 @@ impl ProverSM {
     pub async fn send_presentation(self, send_message: SendClosure) -> VcxResult<Self> {
         let state = match self.state {
             ProverFullState::PresentationPrepared(state) => {
-                send_message(state.presentation.into()).await?;
+                send_message(state.presentation.clone().into()).await?;
                 ProverFullState::PresentationSent((state).into())
             }
             ProverFullState::PresentationPreparationFailed(state) => {
-                send_message(state.problem_report.into()).await?;
+                send_message(state.problem_report.clone().into()).await?;
                 ProverFullState::Finished((state).into())
             }
             s => {
@@ -431,7 +451,7 @@ impl ProverSM {
         thread_id: &'a str,
     ) -> VcxResult<ProblemReport> {
         let problem_report = build_problem_report_msg(Some(reason.to_string()), thread_id);
-        send_message(problem_report.to_a2a_message()).await?;
+        send_message(problem_report.clone().into()).await?;
         Ok(problem_report)
     }
 
@@ -440,11 +460,17 @@ impl ProverSM {
         preview: PresentationPreview,
         thread_id: &str,
     ) -> VcxResult<()> {
-        let proposal = PresentationProposal::create()
-            .set_presentation_preview(preview)
-            .set_thread_id(thread_id)
-            .set_out_time();
-        send_message(proposal.to_a2a_message()).await
+        let id = Uuid::new_v4().to_string();
+        let content = ProposePresentationContent::new(preview);
+        let mut decorators = ProposePresentationDecorators::default();
+        let thread = Thread::new(thread_id.to_owned());
+        let mut timing = Timing::default();
+        timing.out_time = Some(Utc::now());
+        decorators.thread = Some(thread);
+        decorators.timing = Some(timing);
+
+        let proposal = ProposePresentation::with_decorators(id, content, decorators);
+        send_message(proposal.into()).await
     }
 
     pub fn source_id(&self) -> String {
@@ -490,7 +516,7 @@ impl ProverSM {
         }
     }
 
-    pub fn get_presentation_request(&self) -> VcxResult<&PresentationRequest> {
+    pub fn get_presentation_request(&self) -> VcxResult<&RequestPresentation> {
         match self.state {
             ProverFullState::Initial(_) => Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::NotReady,
