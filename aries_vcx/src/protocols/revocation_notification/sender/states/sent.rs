@@ -18,6 +18,7 @@ impl NotificationSentState {
         self.rev_msg
         .decorators
         .thread
+        .as_ref()
         .map(|t| t.thid.clone())
         .unwrap_or(self.rev_msg.id.clone())
     }

@@ -5,7 +5,8 @@ use messages2::{
     msg_fields::protocols::trust_ping::{
         ping::{Ping, PingContent, PingDecorators},
         ping_response::{PingResponse, PingResponseContent, PingResponseDecorators},
-    }, AriesMessage,
+    },
+    AriesMessage,
 };
 
 pub fn build_ping(request_response: bool, comment: Option<String>) -> Ping {
@@ -25,6 +26,7 @@ pub fn build_ping_response(ping: &Ping) -> PingResponse {
     let thread_id = ping
         .decorators
         .thread
+        .as_ref()
         .map(|t| t.thid.as_str())
         .unwrap_or(ping.id.as_str())
         .to_owned();

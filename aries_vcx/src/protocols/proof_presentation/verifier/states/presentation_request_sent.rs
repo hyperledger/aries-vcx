@@ -8,7 +8,7 @@ use crate::common::proofs::verifier::verifier::validate_indy_proof;
 use crate::core::profile::profile::Profile;
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use crate::global::settings;
-use crate::handlers::util::{get_attach_as_string, matches_opt_thread_id, Status};
+use crate::handlers::util::{get_attach_as_string, matches_opt_thread_id, Status, matches_thread_id};
 use crate::protocols::proof_presentation::verifier::states::finished::FinishedState;
 use crate::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
 
@@ -24,7 +24,7 @@ impl PresentationRequestSentState {
         presentation: &Presentation,
         thread_id: &str,
     ) -> VcxResult<()> {
-        if !settings::indy_mocks_enabled() && !matches_opt_thread_id!(presentation, thread_id) {
+        if !settings::indy_mocks_enabled() && !matches_thread_id!(presentation, thread_id) {
             return Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::InvalidJson,
                 format!(

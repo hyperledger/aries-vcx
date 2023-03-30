@@ -284,7 +284,7 @@ impl ProverSM {
         for (uid, message) in messages {
             match self.state {
                 ProverFullState::PresentationProposalSent(_) => match &message {
-                    AriesMessage::PresentProof(PresentProof::RequestPresentation(msg)) => {
+                    AriesMessage::ReportProblem(msg) => {
                         if matches_opt_thread_id!(msg, self.thread_id.as_str()) {
                             return Some((uid, message));
                         }

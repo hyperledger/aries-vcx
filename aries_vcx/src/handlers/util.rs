@@ -1,10 +1,13 @@
 use messages2::{
     msg_fields::protocols::{
-        connection::{invitation::Invitation, Connection, ConnectionData},
+        connection::{invitation::Invitation, Connection},
         cred_issuance::CredentialIssuance,
         discover_features::DiscoverFeatures,
         out_of_band::{invitation::Invitation as OobInvitation, OutOfBand},
-        present_proof::PresentProof,
+        present_proof::{
+            propose::{Attribute, Predicate},
+            PresentProof,
+        },
         report_problem::ProblemReport,
         revocation::Revocation,
         trust_ping::TrustPing,
@@ -29,13 +32,16 @@ macro_rules! matches_opt_thread_id {
 
 macro_rules! get_attach_as_string {
     ($attachments:expr) => {{
-        let attach = $attachments.get(0);
-
-        let Some(messages2::decorators::attachment::AttachmentType::Json(attach_json)) = attach.map(|a| &a.data.content) else {
-            return Err(AriesVcxError::from_msg(AriesVcxErrorKind::SerializationError, format!("Attachment is not JSON: {:?}", attach)));
-        };
-
-        attach_json.to_string()
+        if let Some(messages2::decorators::attachment::AttachmentType::Json(attach_json)) =
+            $attachments.get(0).map(|a| &a.data.content)
+        {
+            attach_json.to_string()
+        } else {
+            return Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::SerializationError,
+                format!("Attachment is not JSON: {:?}", $attachments.get(0)),
+            ));
+        }
     }};
 }
 

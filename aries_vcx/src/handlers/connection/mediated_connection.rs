@@ -4,9 +4,9 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use chrono::Utc;
+use diddoc::aries::diddoc::AriesDidDoc;
 use futures::future::BoxFuture;
 use futures::stream::StreamExt;
-use messages::diddoc::aries::diddoc::AriesDidDoc;
 use messages2::decorators::timing::Timing;
 use messages2::msg_fields::protocols::basic_message::{BasicMessage, BasicMessageContent, BasicMessageDecorators};
 use messages2::msg_fields::protocols::connection::invitation::Invitation;
@@ -318,7 +318,7 @@ impl MediatedConnection {
                 let new_pairwise_info = PairwiseInfo::create(&profile.inject_wallet()).await?;
                 let new_cloud_agent = CloudAgentInfo::create(agency_client, &new_pairwise_info).await?;
                 let new_routing_keys = new_cloud_agent.routing_keys(agency_client)?;
-                let new_service_endpoint = agency_client.get_agency_url_full();
+                let new_service_endpoint = agency_client.get_agency_url_full().parse().expect("url to be valid");
                 (
                     SmConnection::Inviter(
                         sm_inviter
@@ -364,7 +364,7 @@ impl MediatedConnection {
         Ok(())
     }
 
-    pub fn get_invite_details(&self) -> Option<&Invitation> {
+    pub fn get_invite_details(&self) -> Option<&AnyInvitation> {
         trace!("MediatedConnection::get_invite_details >>>");
         match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => sm_inviter.get_invitation(),
@@ -558,7 +558,10 @@ impl MediatedConnection {
                             let new_pairwise_info = PairwiseInfo::create(&profile.inject_wallet()).await?;
                             let new_cloud_agent = CloudAgentInfo::create(agency_client, &new_pairwise_info).await?;
                             let new_routing_keys = new_cloud_agent.routing_keys(agency_client)?;
-                            let new_service_endpoint = new_cloud_agent.service_endpoint(agency_client)?;
+                            let new_service_endpoint = new_cloud_agent
+                                .service_endpoint(agency_client)?
+                                .parse()
+                                .expect("url to be valid");
                             let sm_connection = sm_inviter
                                 .handle_connection_request(
                                     profile.inject_wallet(),
@@ -675,10 +678,15 @@ impl MediatedConnection {
             "Missing cloud agent info",
         ))?;
         self.connection_sm = match &self.connection_sm {
-            SmConnection::Inviter(sm_inviter) => SmConnection::Inviter(sm_inviter.clone().create_invitation(
-                cloud_agent_info.routing_keys(agency_client)?,
-                cloud_agent_info.service_endpoint(agency_client)?,
-            )?),
+            SmConnection::Inviter(sm_inviter) => SmConnection::Inviter(
+                sm_inviter.clone().create_invitation(
+                    cloud_agent_info.routing_keys(agency_client)?,
+                    cloud_agent_info
+                        .service_endpoint(agency_client)?
+                        .parse()
+                        .expect("url to be valid"),
+                )?,
+            ),
             SmConnection::Invitee(sm_invitee) => {
                 let send_message = send_message.unwrap_or(self.send_message_closure_connection(profile));
                 SmConnection::Invitee(
@@ -686,7 +694,10 @@ impl MediatedConnection {
                         .clone()
                         .send_connection_request(
                             cloud_agent_info.routing_keys(agency_client)?,
-                            cloud_agent_info.service_endpoint(agency_client)?,
+                            cloud_agent_info
+                                .service_endpoint(agency_client)?
+                                .parse()
+                                .expect("url to be valid"),
                             send_message,
                         )
                         .await?,

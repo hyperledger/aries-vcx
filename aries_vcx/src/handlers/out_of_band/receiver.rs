@@ -21,7 +21,7 @@ use crate::common::ledger::transactions::resolve_service;
 use crate::core::profile::profile::Profile;
 use crate::errors::error::prelude::*;
 use crate::handlers::connection::mediated_connection::MediatedConnection;
-use crate::handlers::util::{AttachmentId, AnyInvitation};
+use crate::handlers::util::{AnyInvitation, AttachmentId};
 use crate::protocols::connection::GenericConnection;
 
 #[derive(Debug, PartialEq, Clone)]
@@ -127,15 +127,15 @@ impl OutOfBandReceiver {
     pub fn extract_a2a_message(&self) -> VcxResult<Option<AriesMessage>> {
         trace!("OutOfBandReceiver::extract_a2a_message >>>");
         if let Some(attach) = self.oob.content.requests_attach.get(0) {
-            let AttachmentType::Json(attach_json) = attach.data.content else {
+            let AttachmentType::Json(attach_json) = &attach.data.content else {
                 return Err(AriesVcxError::from_msg(
                     AriesVcxErrorKind::SerializationError,
                     format!("Attachment is not JSON: {:?}", attach),
                 ));
             };
 
-            let attach_id = if let Some(attach_id) = attach.id {
-                let attach_id: AttachmentId = serde_json::from_str(&attach_id).map_err(|err| {
+            let attach_id = if let Some(attach_id) = attach.id.as_deref() {
+                let attach_id: AttachmentId = serde_json::from_str(attach_id).map_err(|err| {
                     AriesVcxError::from_msg(
                         AriesVcxErrorKind::SerializationError,
                         format!("Failed to deserialize attachment ID: {}", err),
@@ -157,7 +157,7 @@ impl OutOfBandReceiver {
                             )
                         })?;
 
-                        if let Some(mut thread) = offer.decorators.thread {
+                        if let Some(thread) = &mut offer.decorators.thread {
                             thread.pthid = Some(self.oob.id.clone());
                         } else {
                             let mut thread = Thread::new(offer.id.clone());
@@ -170,14 +170,14 @@ impl OutOfBandReceiver {
                         )));
                     }
                     AttachmentId::CredentialRequest => {
-                        let mut request = RequestCredential::deserialize(&attach_json).map_err(|_| {
+                        let mut request = RequestCredential::deserialize(attach_json).map_err(|_| {
                             AriesVcxError::from_msg(
                                 AriesVcxErrorKind::SerializationError,
                                 format!("Failed to deserialize attachment: {}", attach_json),
                             )
                         })?;
 
-                        if let Some(mut thread) = request.decorators.thread {
+                        if let Some(thread) = &mut request.decorators.thread {
                             thread.pthid = Some(self.oob.id.clone());
                         } else {
                             let mut thread = Thread::new(request.id.clone());
@@ -190,7 +190,7 @@ impl OutOfBandReceiver {
                         )));
                     }
                     AttachmentId::Credential => {
-                        let mut credential = IssueCredential::deserialize(&attach_json).map_err(|_| {
+                        let mut credential = IssueCredential::deserialize(attach_json).map_err(|_| {
                             AriesVcxError::from_msg(
                                 AriesVcxErrorKind::SerializationError,
                                 format!("Failed to deserialize attachment: {}", attach_json),
@@ -204,7 +204,7 @@ impl OutOfBandReceiver {
                         )));
                     }
                     AttachmentId::PresentationRequest => {
-                        let request = RequestPresentation::deserialize(&attach_json).map_err(|_| {
+                        let request = RequestPresentation::deserialize(attach_json).map_err(|_| {
                             AriesVcxError::from_msg(
                                 AriesVcxErrorKind::SerializationError,
                                 format!("Failed to deserialize attachment: {}", attach_json),
@@ -216,7 +216,7 @@ impl OutOfBandReceiver {
                         ))));
                     }
                     AttachmentId::Presentation => {
-                        let mut presentation = Presentation::deserialize(&attach_json).map_err(|_| {
+                        let mut presentation = Presentation::deserialize(attach_json).map_err(|_| {
                             AriesVcxError::from_msg(
                                 AriesVcxErrorKind::SerializationError,
                                 format!("Failed to deserialize attachment: {}", attach_json),
@@ -260,8 +260,8 @@ impl OutOfBandReceiver {
         .await
     }
 
-    pub fn to_a2a_message(&self) -> AriesMessage {
-        self.oob.into()
+    pub fn to_aries_message(&self) -> AriesMessage {
+        self.oob.clone().into()
     }
 
     pub fn to_string(&self) -> String {

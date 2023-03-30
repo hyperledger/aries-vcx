@@ -3,19 +3,19 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use agency_client::agency_client::AgencyClient;
+use messages2::msg_fields::protocols::present_proof::ack::AckPresentation;
+use messages2::msg_fields::protocols::present_proof::present::Presentation;
+use messages2::msg_fields::protocols::present_proof::propose::PresentationPreview;
+use messages2::msg_fields::protocols::present_proof::request::RequestPresentation;
 use messages2::AriesMessage;
 
 use crate::core::profile::profile::Profile;
 use crate::errors::error::prelude::*;
 use crate::handlers::connection::mediated_connection::MediatedConnection;
+use crate::handlers::util::{get_attach_as_string, PresentationProposalData};
 use crate::protocols::proof_presentation::prover::messages::ProverMessages;
 use crate::protocols::proof_presentation::prover::state_machine::{ProverSM, ProverState};
 use crate::protocols::SendClosure;
-use messages::a2a::A2AMessage;
-use messages::protocols::proof_presentation::presentation::Presentation;
-use messages::protocols::proof_presentation::presentation_ack::PresentationAck;
-use messages::protocols::proof_presentation::presentation_proposal::{PresentationPreview, PresentationProposalData};
-use messages::protocols::proof_presentation::presentation_request::PresentationRequest;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Prover {
@@ -30,7 +30,7 @@ impl Prover {
         })
     }
 
-    pub fn create_from_request(source_id: &str, presentation_request: PresentationRequest) -> VcxResult<Prover> {
+    pub fn create_from_request(source_id: &str, presentation_request: RequestPresentation) -> VcxResult<Prover> {
         trace!(
             "Prover::create_from_request >>> source_id: {}, presentation_request: {:?}",
             source_id,
@@ -108,7 +108,7 @@ impl Prover {
         Ok(())
     }
 
-    pub fn process_presentation_ack(&mut self, ack: PresentationAck) -> VcxResult<()> {
+    pub fn process_presentation_ack(&mut self, ack: AckPresentation) -> VcxResult<()> {
         trace!("Prover::process_presentation_ack >>>");
         self.prover_sm = self.prover_sm.clone().receive_presentation_ack(ack)?;
         Ok(())
@@ -133,19 +133,24 @@ impl Prover {
     }
 
     pub fn presentation_request_data(&self) -> VcxResult<String> {
-        self.prover_sm
-            .get_presentation_request()?
-            .request_presentations_attach
-            .content()
-            .map_err(|err| err.into())
+        Ok(get_attach_as_string!(
+            &self
+                .prover_sm
+                .get_presentation_request()?
+                .content
+                .request_presentations_attach
+        ))
     }
 
     pub fn get_proof_request_attachment(&self) -> VcxResult<String> {
-        let data = self
-            .prover_sm
-            .get_presentation_request()?
-            .request_presentations_attach
-            .content()?;
+        let data = get_attach_as_string!(
+            &self
+                .prover_sm
+                .get_presentation_request()?
+                .content
+                .request_presentations_attach
+        );
+
         let proof_request_data: serde_json::Value = serde_json::from_str(&data).map_err(|err| {
             AriesVcxError::from_msg(
                 AriesVcxErrorKind::InvalidJson,

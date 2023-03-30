@@ -28,10 +28,8 @@ pub fn build_handshake_reuse_msg(oob_invitation: &Invitation) -> HandshakeReuse 
     HandshakeReuse::with_decorators(id, content, decorators)
 }
 
-pub fn build_handshake_reuse_accepted_msg(
-    handshake_reuse: &HandshakeReuse,
-) -> VcxResult<HandshakeReuseAccepted> {
-    let thread = handshake_reuse.decorators.thread;
+pub fn build_handshake_reuse_accepted_msg(handshake_reuse: &HandshakeReuse) -> VcxResult<HandshakeReuseAccepted> {
+    let thread = &handshake_reuse.decorators.thread;
 
     let thread_id = thread.thid.clone();
     let pthread_id = thread

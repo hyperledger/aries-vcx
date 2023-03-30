@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use messages2::msg_fields::protocols::cred_issuance::issue_credential::IssueCredential;
 use messages2::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
 use messages2::msg_fields::protocols::cred_issuance::propose_credential::ProposeCredential;
+use messages2::msg_fields::protocols::revocation::revoke::Revoke;
 use messages2::msg_fields::protocols::revocation::Revocation;
 use messages2::AriesMessage;
 use std::sync::Arc;
@@ -166,7 +167,7 @@ impl Holder {
         &self,
         profile: &Arc<dyn Profile>,
         connection: &MediatedConnection,
-        notification: Revocation,
+        notification: Revoke,
     ) -> VcxResult<()> {
         if self.holder_sm.is_revokable(profile).await? {
             let send_message = connection.send_message_closure(profile).await?;

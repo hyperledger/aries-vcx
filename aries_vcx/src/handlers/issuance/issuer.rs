@@ -1,8 +1,11 @@
 use std::collections::HashMap;
 
-use messages::concepts::ack::please_ack::AckOn;
-use messages::protocols::issuance::credential_ack::CredentialAck;
-use messages::protocols::issuance::credential_request::CredentialRequest;
+use messages2::decorators::please_ack::AckOn;
+use messages2::misc::MimeType;
+use messages2::msg_fields::protocols::cred_issuance::ack::AckCredential;
+use messages2::msg_fields::protocols::cred_issuance::propose_credential::ProposeCredential;
+use messages2::msg_fields::protocols::cred_issuance::request_credential::RequestCredential;
+use messages2::msg_fields::protocols::cred_issuance::{CredentialAttr, CredentialPreview};
 use messages2::AriesMessage;
 use std::sync::Arc;
 
@@ -12,15 +15,11 @@ use crate::core::profile::profile::Profile;
 use crate::errors::error::prelude::*;
 use crate::handlers::connection::mediated_connection::MediatedConnection;
 use crate::handlers::revocation_notification::sender::RevocationNotificationSender;
+use crate::handlers::util::OfferInfo;
 use crate::protocols::issuance::actions::CredentialIssuanceAction;
 use crate::protocols::issuance::issuer::state_machine::{IssuerSM, IssuerState, RevocationInfoV1};
 use crate::protocols::revocation_notification::sender::state_machine::SenderConfigBuilder;
 use crate::protocols::SendClosure;
-use messages::a2a::A2AMessage;
-use messages::concepts::mime_type::MimeType;
-use messages::protocols::issuance::credential_offer::OfferInfo;
-use messages::protocols::issuance::credential_proposal::CredentialProposal;
-use messages::protocols::issuance::CredentialPreviewData;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Issuer {
@@ -34,7 +33,7 @@ pub struct IssuerConfig {
     pub tails_file: Option<String>,
 }
 
-fn _build_credential_preview(credential_json: &str) -> VcxResult<CredentialPreviewData> {
+fn _build_credential_preview(credential_json: &str) -> VcxResult<CredentialPreview> {
     trace!(
         "Issuer::_build_credential_preview >>> credential_json: {:?}",
         secret!(credential_json)
@@ -51,7 +50,7 @@ fn _build_credential_preview(credential_json: &str) -> VcxResult<CredentialPrevi
     })?;
 
     // todo: should throw err if cred_values is not serde_json::Value::Array or serde_json::Value::Object
-    let mut credential_preview = CredentialPreviewData::new();
+    let mut credential_preview = CredentialPreview::new(Vec::new());
     match cred_values {
         serde_json::Value::Array(cred_values) => {
             for cred_value in cred_values.iter() {
@@ -63,32 +62,43 @@ fn _build_credential_preview(credential_json: &str) -> VcxResult<CredentialPrevi
                     AriesVcxErrorKind::InvalidAttributesStructure,
                     format!("No 'value' field in cred_value: {:?}", cred_value),
                 ))?;
-                credential_preview = credential_preview.add_value(
-                    key.as_str().ok_or(AriesVcxError::from_msg(
-                        AriesVcxErrorKind::InvalidOption,
-                        "Credential value names are currently only allowed to be strings",
-                    ))?,
-                    value.as_str().ok_or(AriesVcxError::from_msg(
-                        AriesVcxErrorKind::InvalidOption,
-                        "Credential values are currently only allowed to be strings",
-                    ))?,
-                    MimeType::Plain,
+                let mut attr = CredentialAttr::new(
+                    key.as_str()
+                        .ok_or(AriesVcxError::from_msg(
+                            AriesVcxErrorKind::InvalidOption,
+                            "Credential value names are currently only allowed to be strings",
+                        ))?
+                        .to_owned(),
+                    value
+                        .as_str()
+                        .ok_or(AriesVcxError::from_msg(
+                            AriesVcxErrorKind::InvalidOption,
+                            "Credential values are currently only allowed to be strings",
+                        ))?
+                        .to_owned(),
                 );
+
+                attr.mime_type = Some(MimeType::Plain);
+                credential_preview.attributes.push(attr);
             }
         }
         serde_json::Value::Object(values_map) => {
             for item in values_map.iter() {
                 let (key, value) = item;
-                credential_preview = credential_preview.add_value(
-                    key,
-                    value.as_str().ok_or_else(|| {
-                        AriesVcxError::from_msg(
+
+                let mut attr = CredentialAttr::new(
+                    key.to_owned(),
+                    value
+                        .as_str()
+                        .ok_or(AriesVcxError::from_msg(
                             AriesVcxErrorKind::InvalidOption,
                             "Credential values are currently only allowed to be strings",
-                        )
-                    })?,
-                    MimeType::Plain,
+                        ))?
+                        .to_owned(),
                 );
+
+                attr.mime_type = Some(MimeType::Plain);
+                credential_preview.attributes.push(attr);
             }
         }
         _ => {}
@@ -103,7 +113,7 @@ impl Issuer {
         Ok(Issuer { issuer_sm })
     }
 
-    pub fn create_from_proposal(source_id: &str, credential_proposal: &CredentialProposal) -> VcxResult<Issuer> {
+    pub fn create_from_proposal(source_id: &str, credential_proposal: &ProposeCredential) -> VcxResult<Issuer> {
         trace!(
             "Issuer::create_from_proposal >>> source_id: {:?}, credential_proposal: {:?}",
             source_id,
@@ -134,9 +144,9 @@ impl Issuer {
         Ok(())
     }
 
-    pub fn get_credential_offer_msg(&self) -> VcxResult<A2AMessage> {
+    pub fn get_credential_offer_msg(&self) -> VcxResult<AriesMessage> {
         let offer = self.issuer_sm.get_credential_offer_msg()?;
-        Ok(offer.to_a2a_message())
+        Ok(offer.into())
     }
 
     pub fn mark_credential_offer_msg_sent(&mut self) -> VcxResult<()> {
@@ -149,12 +159,12 @@ impl Issuer {
         Ok(())
     }
 
-    pub fn process_credential_request(&mut self, request: CredentialRequest) -> VcxResult<()> {
+    pub fn process_credential_request(&mut self, request: RequestCredential) -> VcxResult<()> {
         self.issuer_sm = self.issuer_sm.clone().receive_request(request)?;
         Ok(())
     }
 
-    pub fn process_credential_ack(&mut self, ack: CredentialAck) -> VcxResult<()> {
+    pub fn process_credential_ack(&mut self, ack: AckCredential) -> VcxResult<()> {
         self.issuer_sm = self.issuer_sm.clone().receive_ack(ack)?;
         Ok(())
     }
@@ -259,7 +269,7 @@ impl Issuer {
         self.issuer_sm.thread_id()
     }
 
-    pub fn get_proposal(&self) -> VcxResult<CredentialProposal> {
+    pub fn get_proposal(&self) -> VcxResult<ProposeCredential> {
         self.issuer_sm.get_proposal()
     }
 

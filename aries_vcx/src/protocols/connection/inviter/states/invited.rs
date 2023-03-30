@@ -18,7 +18,7 @@ impl Invited {
 
 impl ThreadId for Invited {
     fn thread_id(&self) -> &str {
-        match self.invitation {
+        match &self.invitation {
             AnyInvitation::Con(Invitation::Public(i)) => i.id.as_str(),
             AnyInvitation::Con(Invitation::Pairwise(i)) => i.id.as_str(),
             AnyInvitation::Con(Invitation::PairwiseDID(i)) => i.id.as_str(),

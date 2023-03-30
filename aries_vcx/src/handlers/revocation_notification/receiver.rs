@@ -1,4 +1,4 @@
-use messages2::msg_fields::protocols::revocation::Revocation;
+use messages2::msg_fields::protocols::revocation::revoke::Revoke;
 
 use crate::errors::error::prelude::*;
 use crate::protocols::revocation_notification::receiver::state_machine::RevocationNotificationReceiverSM;
@@ -22,7 +22,7 @@ impl RevocationNotificationReceiver {
 
     pub async fn handle_revocation_notification(
         self,
-        notification: Revocation,
+        notification: Revoke,
         send_message: SendClosure,
     ) -> VcxResult<Self> {
         let receiver_sm = self

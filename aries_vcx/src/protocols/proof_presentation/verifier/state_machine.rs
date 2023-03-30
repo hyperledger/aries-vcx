@@ -275,7 +275,7 @@ impl VerifierSM {
                     }
                     _ => {}
                 },
-                VerifierFullState::PresentationRequestSent(_) => match message {
+                VerifierFullState::PresentationRequestSent(_) => match &message {
                     AriesMessage::PresentProof(PresentProof::Presentation(presentation)) => {
                         if matches_thread_id!(presentation, self.thread_id.as_str()) {
                             return Some((uid, message));

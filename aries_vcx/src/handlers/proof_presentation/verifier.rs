@@ -33,7 +33,7 @@ impl Verifier {
         })
     }
 
-    pub fn create_from_request(source_id: String, presentation_request: &RequestPresentation) -> VcxResult<Self> {
+    pub fn create_from_request(source_id: String, presentation_request: &PresentationRequestData) -> VcxResult<Self> {
         trace!(
             "Verifier::create_from_request >>> source_id: {:?}, presentation_request: {:?}",
             source_id,
@@ -105,7 +105,7 @@ impl Verifier {
 
     pub fn set_request(
         &mut self,
-        presentation_request_data: RequestPresentation,
+        presentation_request_data: PresentationRequestData,
         comment: Option<String>,
     ) -> VcxResult<()> {
         trace!(
@@ -131,7 +131,13 @@ impl Verifier {
     }
 
     pub fn get_presentation_request_attachment(&self) -> VcxResult<String> {
-        Ok(get_attach_as_string!(&self.verifier_sm.presentation_request_msg()?.content.request_presentations_attach))
+        Ok(get_attach_as_string!(
+            &self
+                .verifier_sm
+                .presentation_request_msg()?
+                .content
+                .request_presentations_attach
+        ))
     }
 
     pub fn get_presentation_request(&self) -> VcxResult<RequestPresentation> {
@@ -147,7 +153,9 @@ impl Verifier {
     }
 
     pub fn get_presentation_attachment(&self) -> VcxResult<String> {
-        Ok(get_attach_as_string!(&self.verifier_sm.get_presentation_msg()?.content.presentations_attach))
+        Ok(get_attach_as_string!(
+            &self.verifier_sm.get_presentation_msg()?.content.presentations_attach
+        ))
     }
 
     pub fn get_presentation_proposal(&self) -> VcxResult<ProposePresentation> {

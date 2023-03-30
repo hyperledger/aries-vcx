@@ -27,7 +27,7 @@ impl VerifierMessages {
     pub fn thread_id_matches(&self, thread_id: &str) -> bool {
         match self {
             Self::VerifyPresentation(msg) => matches_thread_id!(msg, thread_id),
-            Self::PresentationProposalReceived(msg) => matches_thread_id!(msg, thread_id),
+            Self::PresentationProposalReceived(msg) => matches_opt_thread_id!(msg, thread_id),
             Self::PresentationRejectReceived(msg) => matches_opt_thread_id!(msg, thread_id),
             _ => true,
         }
