@@ -85,6 +85,25 @@ jobs:
           echo "DOCKER_IMG_CACHED_LIBVCX=$DOCKER_REPO_LOCAL_LIBVCX:$HASH_DOCKER_LIBVCX" >> $GITHUB_OUTPUT
           echo "DOCKER_IMG_CACHED_ANDROID=$DOCKER_REPO_LOCAL_ANDROID:$HASH_DOCKER_ANDROID" >> $GITHUB_OUTPUT
 
+  workflow-setup-check:
+    runs-on: ubuntu-20.04
+    needs: workflow-setup
+    steps:
+      - name: "Print outputs"
+        run: |
+          echo "PUBLISH_VERSION ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}"
+          echo "RELEASE ${{ needs.workflow-setup.outputs.RELEASE }}"
+          echo "PRERELEASE ${{ needs.workflow-setup.outputs.PRERELEASE }}"
+          echo "BRANCH_NAME ${{ needs.workflow-setup.outputs.BRANCH_NAME }}"
+          echo "IS_FORK ${{ needs.workflow-setup.outputs.IS_FORK }}"
+          echo "SKIP_IOS ${{ needs.workflow-setup.outputs.SKIP_IOS }}"
+          echo "SKIP_ANDROID ${{ needs.workflow-setup.outputs.SKIP_ANDROID }}"
+          echo "SKIP_NAPI_M1 ${{ needs.workflow-setup.outputs.SKIP_NAPI_M1 }}"
+          echo "SKIP_CI ${{ needs.workflow-setup.outputs.SKIP_CI }}"
+          echo "DOCKER_IMG_CACHED_ALPINE_CORE ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_ALPINE_CORE }}"
+          echo "DOCKER_IMG_CACHED_LIBVCX ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_LIBVCX }}"
+          echo "DOCKER_IMG_CACHED_ANDROID ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_ANDROID }}"
+
   clippy-aries-vcx:
     runs-on: ubuntu-20.04
     steps:
