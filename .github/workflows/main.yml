@@ -151,6 +151,7 @@ jobs:
 
   build-docker-libvcx:
     needs: [ workflow-setup, build-docker-alpine-core ]
+    if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
     runs-on: ubuntu-20.04
     env:
       DOCKER_IMG_CACHED: ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_LIBVCX }}
@@ -166,12 +167,10 @@ jobs:
           username: $GITHUB_ACTOR
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: "Load alpine core image"
-        if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
         uses: ./.github/actions/load-image
         with:
           docker-img: ${{ env.DOCKER_IMG_CACHED_ALPINE_CORE }}
       - name: "Build and cache image"
-        if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
         uses: ./.github/actions/build-image
         with:
           docker-img: ${{ env.DOCKER_IMG_CACHED }}
@@ -183,6 +182,7 @@ jobs:
 
   build-docker-android:
     needs: workflow-setup
+    if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' && needs.workflow-setup.outputs.SKIP_ANDROID != 'true'}}
     runs-on: ubuntu-20.04
     env:
       DOCKER_IMG_CACHED: ${{needs.workflow-setup.outputs.DOCKER_IMG_CACHED_ANDROID}}
@@ -197,7 +197,6 @@ jobs:
           username: $GITHUB_ACTOR
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: "Build and cache image"
-        if: ${{ needs.workflow-setup.outputs.SKIP_ANDROID != 'true' }}
         uses: ./.github/actions/build-image
         with:
           docker-img: ${{ env.DOCKER_IMG_CACHED }}
@@ -213,6 +212,7 @@ jobs:
   publish-docker-libvcx:
     runs-on: ubuntu-20.04
     needs: [ workflow-setup, build-docker-libvcx ]
+    if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
     env:
       DOCKER_IMG_CACHED: ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_LIBVCX }}
       PUBLISH_VERSION: ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
@@ -223,14 +223,12 @@ jobs:
         if: ${{ env.IS_FORK == 'false' }}
         uses: actions/checkout@v3
       - name: "Docker Login"
-        if: ${{ env.IS_FORK == 'false' && needs.workflow-setup.outputs.SKIP_CI != 'true' }}
         uses: azure/docker-login@v1
         with:
           login-server: ${{ env.URL_DOCKER_REGISTRY }}
           username: $GITHUB_ACTOR
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: "Publish versioned image"
-        if: ${{ env.IS_FORK == 'false' && needs.workflow-setup.outputs.SKIP_CI != 'true' }}
         uses: ./.github/actions/publish-image
         with:
           docker-img: ${{ env.DOCKER_IMG_CACHED }}
@@ -241,6 +239,7 @@ jobs:
 
   code-coverage-aries-vcx-unit-tests:
     needs: workflow-setup
+    if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
     runs-on: ubuntu-20.04
     steps:
       - name: "Git checkout"
@@ -250,7 +249,6 @@ jobs:
         with:
           skip-docker-setup: true
       - name: "Run workspace tests: general_test"
-        if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
         run: |
           RUSTFLAGS='-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests' \
           RUSTDOCFLAGS='-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests' \
@@ -260,7 +258,6 @@ jobs:
           grcov ./target/debug/ -s . -t lcov --llvm --branch --ignore-not-existing -o /tmp/artifacts/coverage/coverage.lcov
       - name: "Upload coverage to Codecov"
         uses: codecov/codecov-action@v2
-        if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
         with:
           directory: /tmp/artifacts/coverage
           flags: unittests-aries-vcx
@@ -274,6 +271,7 @@ jobs:
 
   code-coverage-aries-vcx-integration-tests:
     needs: workflow-setup
+    if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
     runs-on: ubuntu-20.04
     steps:
       - name: "Git checkout"
@@ -281,7 +279,6 @@ jobs:
       - name: "Setup rust codecov environment"
         uses: ./.github/actions/setup-codecov-rust
       - name: "Run workspace tests: pool_tests agency_pool_tests"
-        if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
         run: |
           RUSTFLAGS='-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests' \
           RUSTDOCFLAGS='-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests' \
@@ -290,7 +287,6 @@ jobs:
           mkdir -p /tmp/artifacts/coverage
           grcov ./target/debug/ -s . -t lcov --llvm --branch --ignore-not-existing -o /tmp/artifacts/coverage/coverage.lcov
       - name: "Upload coverage to Codecov"
-        if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
         uses: codecov/codecov-action@v2
         with:
           directory: /tmp/artifacts/coverage
@@ -306,6 +302,7 @@ jobs:
   #TODO - can this be included within code-coverage-aries-vcx-integration-tests?
   code-coverage-aries-vcx-modular-dependencies-integration-tests:
     needs: workflow-setup
+    if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
     runs-on: ubuntu-20.04
     steps:
       - name: "Git checkout"
@@ -313,7 +310,6 @@ jobs:
       - name: "Setup rust codecov environment"
         uses: ./.github/actions/setup-codecov-rust
       - name: "Run workspace tests: modular_dependencies pool_tests agency_pool_tests"
-        if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
         run: |
           RUSTFLAGS='-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests' \
           RUSTDOCFLAGS='-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests' \
@@ -322,7 +318,6 @@ jobs:
           mkdir -p /tmp/artifacts/coverage
           grcov ./target/debug/ -s . -t lcov --llvm --branch --ignore-not-existing -o /tmp/artifacts/coverage/coverage.lcov
       - name: "Upload coverage to Codecov"
-        if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
         uses: codecov/codecov-action@v2
         with:
           directory: /tmp/artifacts/coverage
@@ -375,20 +370,20 @@ jobs:
 
   test-integration-libvcx:
     needs: workflow-setup
+    if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
     runs-on: ubuntu-20.04
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
       - name: "Setup rust testing environment"
-        if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
         uses: ./.github/actions/setup-testing-rust
       - name: "Run libvcx tests: pool_tests"
-        if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
         run: |
           RUST_TEST_THREADS=1 cargo test --manifest-path="libvcx/Cargo.toml" -F "pool_tests"
 
   test-node-wrapper:
     needs: workflow-setup
+    if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
     runs-on: ubuntu-22.04
     strategy:
       matrix:
@@ -397,17 +392,16 @@ jobs:
       - name: "Git checkout"
         uses: actions/checkout@v3
       - name: "Setup NodeJS libvcx testing environment"
-        if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
         uses: ./.github/actions/setup-testing-nodejs
         with:
           skip-docker-setup: true
           node-version: ${{ matrix.node-version }}
       - name: "Run tests"
-        if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
         run: cd wrappers/node && RUST_LOG=vcx=trace npm run test
 
   test-integration-node-wrapper:
     needs: workflow-setup
+    if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
     runs-on: ubuntu-22.04
     strategy:
       matrix:
@@ -416,26 +410,22 @@ jobs:
       - name: "Git checkout"
         uses: actions/checkout@v3
       - name: "Setup NodeJS libvcx testing environment"
-        if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
         uses: ./.github/actions/setup-testing-nodejs
         with:
           node-version: ${{ matrix.node-version }}
       - name: "Install vcxagent-core dependencies"
-        if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
         run: (cd agents/node/vcxagent-core && npm install)
       - name: "Run demo"
-        if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
         run: (cd agents/node/vcxagent-core && AGENCY_URL=http://localhost:8080 npm run demo)
       - name: "Run demo with revocation"
-        if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
         run: (cd agents/node/vcxagent-core && AGENCY_URL=http://localhost:8080 npm run demo:revocation)
       - name: "Run integration tests"
-        if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
         run: (cd agents/node/vcxagent-core && AGENCY_URL=http://localhost:8080 npm run test:integration)
 
   test-android-build:
     runs-on: ubuntu-20.04
     needs: [ workflow-setup, build-docker-android ]
+    if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' && needs.workflow-setup.outputs.SKIP_ANDROID != 'true' }}
     env:
       DOCKER_IMG_CACHED_ANDROID: ${{needs.workflow-setup.outputs.DOCKER_IMG_CACHED_ANDROID}}
     steps:
@@ -448,12 +438,10 @@ jobs:
           username: $GITHUB_ACTOR
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: "Load android image"
-        if: ${{ needs.workflow-setup.outputs.SKIP_ANDROID != 'true' }}
         uses: ./.github/actions/load-image
         with:
           docker-img: ${{ env.DOCKER_IMG_CACHED_ANDROID }}
       - name: "Run android tests"
-        if: ${{ needs.workflow-setup.outputs.SKIP_ANDROID != 'true' }}
         run: |
           rm -rf /tmp/imgcache
           docker run --rm -i  $DOCKER_IMG_CACHED_ANDROID \
@@ -461,6 +449,7 @@ jobs:
 
   build-and-publish-ios-wrapper:
     needs: workflow-setup
+    if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' && needs.workflow-setup.outputs.SKIP_IOS != 'true' }}
     runs-on: macos-11
     env:
       LIBVCX_VERSION: ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
@@ -469,27 +458,24 @@ jobs:
       - name: "Git checkout"
         uses: actions/checkout@v2
       - name: Switch to xcode version 12.4
-        if: ${{ needs.workflow-setup.outputs.SKIP_IOS != 'true' }}
         run: |
           sudo xcode-select --switch /Applications/Xcode_12.4.app/Contents/Developer
           xcodebuild -version
       - name: "Build iOS wrapper"
-        if: ${{ needs.workflow-setup.outputs.SKIP_IOS != 'true' }}
         run: |
           ./wrappers/ios/ci/build.sh
       - uses: actions/upload-artifact@v3
-        if: ${{ needs.workflow-setup.outputs.SKIP_IOS != 'true' }}
         with:
           name: libvcx-ios-${{ env.PUBLISH_VERSION }}-device
           path: /tmp/artifacts/libvcx-ios-${{ env.PUBLISH_VERSION }}-device.zip
       - uses: actions/upload-artifact@v3
-        if: ${{ needs.workflow-setup.outputs.SKIP_IOS != 'true' }}
         with:
           name: libvcx-ios-${{ env.PUBLISH_VERSION }}-universal
           path: /tmp/artifacts/libvcx-ios-${{ env.PUBLISH_VERSION }}-universal.zip
 
   build-and-publish-ios-legacy-wrapper:
     needs: workflow-setup
+    if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' && needs.workflow-setup.outputs.SKIP_IOS != 'true' }}
     runs-on: macos-11
     env:
       LIBVCX_VERSION: ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
@@ -498,29 +484,23 @@ jobs:
       - name: "Git checkout"
         uses: actions/checkout@v2
       - name: Switch to xcode version 12.4
-        if: ${{ needs.workflow-setup.outputs.SKIP_IOS != 'true' }}
         run: |
           sudo xcode-select --switch /Applications/Xcode_12.4.app/Contents/Developer
           xcodebuild -version
       - name: "Build Legacy iOS wrapper"
-        if: ${{ needs.workflow-setup.outputs.SKIP_IOS != 'true' }}
         run: |
           ./wrappers/ios_legacy/ci/build.sh
       - name: "Rename device as legacy"
-        if: ${{ needs.workflow-setup.outputs.SKIP_IOS != 'true' }}
         run: |
           mv /tmp/artifacts/libvcx-ios-${{ env.PUBLISH_VERSION }}-device.zip /tmp/artifacts/libvcx-ios-legacy-${{ env.PUBLISH_VERSION }}-device.zip
       - name: "Rename universal as legacy"
-        if: ${{ needs.workflow-setup.outputs.SKIP_IOS != 'true' }}
         run: |
           mv /tmp/artifacts/libvcx-ios-${{ env.PUBLISH_VERSION }}-universal.zip /tmp/artifacts/libvcx-ios-legacy-${{ env.PUBLISH_VERSION }}-universal.zip
       - uses: actions/upload-artifact@v3
-        if: ${{ needs.workflow-setup.outputs.SKIP_IOS != 'true' }}
         with:
           name: libvcx-ios-legacy-${{ env.PUBLISH_VERSION }}-device
           path: /tmp/artifacts/libvcx-ios-legacy-${{ env.PUBLISH_VERSION }}-device.zip
       - uses: actions/upload-artifact@v3
-        if: ${{ needs.workflow-setup.outputs.SKIP_IOS != 'true' }}
         with:
           name: libvcx-ios-legacy-${{ env.PUBLISH_VERSION }}-universal
           path: /tmp/artifacts/libvcx-ios-legacy-${{ env.PUBLISH_VERSION }}-universal.zip
@@ -528,6 +508,7 @@ jobs:
   build-and-publish-android-device:
     runs-on: ubuntu-20.04
     needs: [ workflow-setup, build-docker-android ]
+    if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' && needs.workflow-setup.outputs.SKIP_ANDROID != 'true' }}
     env:
       FULL_VERSION_NAME: libvcx-android-${{needs.workflow-setup.outputs.PUBLISH_VERSION}}-device
       DOCKER_IMG_CACHED_ANDROID: ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_ANDROID }}
@@ -541,19 +522,16 @@ jobs:
           username: $GITHUB_ACTOR
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: "Load android image"
-        if: ${{ needs.workflow-setup.outputs.SKIP_ANDROID != 'true' }}
         uses: ./.github/actions/load-image
         with:
           docker-img: ${{ env.DOCKER_IMG_CACHED_ANDROID }}
       - name: "Build, run android wrapper tests, and publish artifacts"
-        if: ${{ needs.workflow-setup.outputs.SKIP_ANDROID != 'true' }}
         uses: ./.github/actions/publish-android
         with:
           abis: "arm arm64"
           docker-img-name: ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_ANDROID }}
           full-version-name: ${{ env.FULL_VERSION_NAME }}
       - name: "Publish aar artifact"
-        if: ${{ needs.workflow-setup.outputs.SKIP_ANDROID != 'true' }}
         uses: actions/upload-artifact@v3
         with:
           name: ${{ env.FULL_VERSION_NAME }}
@@ -562,6 +540,7 @@ jobs:
   build-and-publish-android-emulator:
     runs-on: ubuntu-20.04
     needs: [ workflow-setup, build-docker-android ]
+    if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' && needs.workflow-setup.outputs.SKIP_ANDROID != 'true' }}
     env:
       FULL_VERSION_NAME: libvcx-android-${{needs.workflow-setup.outputs.PUBLISH_VERSION}}-emulator
       DOCKER_IMG_CACHED_ANDROID: ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_ANDROID }}
@@ -575,25 +554,23 @@ jobs:
           username: $GITHUB_ACTOR
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: "Load android image"
-        if: ${{ needs.workflow-setup.outputs.SKIP_ANDROID != 'true' }}
         uses: ./.github/actions/load-image
         with:
           docker-img: ${{ env.DOCKER_IMG_CACHED_ANDROID }}
       - name: "Build, run android wrapper tests, and publish artifacts"
-        if: ${{ needs.workflow-setup.outputs.SKIP_ANDROID != 'true' }}
         uses: ./.github/actions/publish-android
         with:
           abis: "x86 x86_64"
           docker-img-name: ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_ANDROID }}
           full-version-name: ${{ env.FULL_VERSION_NAME }}
       - uses: actions/upload-artifact@v3
-        if: ${{ needs.workflow-setup.outputs.SKIP_ANDROID != 'true' }}
         with:
           name: ${{ env.FULL_VERSION_NAME }}
           path: /tmp/artifacts/aar/${{ env.FULL_VERSION_NAME }}.aar
 
   build-and-publish-ubuntu-lib:
     needs: workflow-setup
+    if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
     runs-on: ubuntu-20.04
     steps:
       - name: "Git checkout"
@@ -603,16 +580,13 @@ jobs:
           toolchain: 1.64.0
       - uses: Swatinem/rust-cache@v2
       - name: "Install dependencies"
-        if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
         shell: bash
         run: |
           sudo apt-get update -y
           sudo apt-get install -y libsodium-dev libssl-dev libzmq3-dev
       - name: "Build libvcx.so"
-        if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
         run: cargo build --release
       - name: "Publish artifact libvcx.so"
-        if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
         uses: actions/upload-artifact@v3
         with:
           name: libvcx.so
@@ -620,6 +594,7 @@ jobs:
 
   build-and-publish-darwin-lib:
     needs: workflow-setup
+    if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
     runs-on: macos-11
     steps:
       - name: "Git checkout"
@@ -629,7 +604,6 @@ jobs:
           toolchain: 1.64.0
       - uses: Swatinem/rust-cache@v2
       - name: "Install dependencies"
-        if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
         shell: bash
         run: |
           brew install openssl
@@ -637,10 +611,8 @@ jobs:
           brew install libsodium
           brew install pkg-config
       - name: "Build libvcx.dylib"
-        if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
         run: cargo build --release
       - name: "Publish artifact libvcx.dylib"
-        if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
         uses: actions/upload-artifact@v3
         with:
           name: libvcx.dylib
@@ -660,18 +632,17 @@ jobs:
       - test-node-wrapper
       - test-integration-node-wrapper
       - publish-napi
+    if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
     env:
       PUBLISH_VERSION: ${{needs.workflow-setup.outputs.PUBLISH_VERSION}}
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
       - name: "Use Node.js 18"
-        if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
         uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: "Publish package"
-        if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
         run: |
           if [[ "$PUBLISH_VERSION" ]]
           then
@@ -692,6 +663,7 @@ jobs:
       - test-integration-node-wrapper
       - publish-napi
       - publish-node-wrapper
+    if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
     env:
       NPMJS_TOKEN: ${{ secrets.NPMJS_TOKEN }}
       PUBLISH_VERSION: ${{needs.workflow-setup.outputs.PUBLISH_VERSION}}
@@ -699,12 +671,10 @@ jobs:
       - name: "Git checkout"
         uses: actions/checkout@v3
       - name: "Use Node.js 18"
-        if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
         uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: "Release agent-core package"
-        if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
         run: |
           if [[ "$PUBLISH_VERSION" ]]
           then
@@ -716,6 +686,7 @@ jobs:
   build-napi:
     needs:
       - workflow-setup
+    if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
     strategy:
       fail-fast: false
       matrix:
@@ -767,7 +738,6 @@ jobs:
               npm run build:napi -- --target aarch64-apple-darwin
               strip -x *.node
     name: ${{ matrix.settings.target }}
-    if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
     runs-on: ${{ matrix.settings.host }}
     steps:
       - uses: actions/checkout@v3
@@ -785,10 +755,10 @@ jobs:
     needs:
       - workflow-setup
       - build-napi
+    if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/publish-napi
-        if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
         with:
           publish-version: ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
           npmjs-token: ${{ secrets.NPMJS_TOKEN }}
@@ -862,14 +832,13 @@ jobs:
   release-android-device:
     runs-on: ubuntu-20.04
     needs: [ workflow-setup, make-release ]
+    if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
     steps:
       - name: "Fetch android device build from artifacts"
-        if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
         uses: actions/download-artifact@v2
         with:
           name: libvcx-android-${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}-device
       - name: "Upload release assets"
-        if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -882,14 +851,13 @@ jobs:
   release-android-emulator:
     runs-on: ubuntu-20.04
     needs: [ workflow-setup, make-release ]
+    if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
     steps:
       - name: "Fetch android emulator build from artifacts"
-        if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
         uses: actions/download-artifact@v2
         with:
           name: libvcx-android-${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}-emulator
       - name: "Upload release assets"
-        if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -902,14 +870,13 @@ jobs:
   release-ios-device:
     runs-on: ubuntu-20.04
     needs: [ workflow-setup, make-release ]
+    if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
     steps:
       - name: "Fetch iOS device build from artifacts"
-        if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
         uses: actions/download-artifact@v2
         with:
           name: libvcx-ios-${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}-device
       - name: "Upload release assets"
-        if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -922,14 +889,13 @@ jobs:
   release-ios-legacy-device:
     runs-on: ubuntu-20.04
     needs: [ workflow-setup, make-release ]
+    if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
     steps:
       - name: "Fetch iOS device build from artifacts"
-        if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
         uses: actions/download-artifact@v2
         with:
           name: libvcx-ios-legacy-${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}-device
       - name: "Upload release assets"
-        if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -942,14 +908,13 @@ jobs:
   release-ios-universal:
     runs-on: ubuntu-20.04
     needs: [ workflow-setup, make-release ]
+    if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
     steps:
       - name: "Fetch iOS universal build from artifacts"
-        if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
         uses: actions/download-artifact@v2
         with:
           name: libvcx-ios-${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}-universal
       - name: "Upload release assets"
-        if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -962,14 +927,13 @@ jobs:
   release-ios-legacy-universal:
     runs-on: ubuntu-20.04
     needs: [ workflow-setup, make-release ]
+    if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
     steps:
       - name: "Fetch iOS universal build from artifacts"
-        if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
         uses: actions/download-artifact@v2
         with:
           name: libvcx-ios-legacy-${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}-universal
       - name: "Upload release assets"
-        if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
