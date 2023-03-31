@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 
+use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use crate::{
-    error::{VcxError, VcxErrorKind, VcxResult},
     indy::utils::mocks::did_mocks::DidMocks,
     plugins::wallet::base_wallet::BaseWallet,
     utils::{self, async_fn_iterator::AsyncFnIterator},
@@ -70,9 +70,9 @@ impl BaseWallet for MockWallet {
         options: &str,
     ) -> VcxResult<Box<dyn AsyncFnIterator<Item = VcxResult<String>>>> {
         // not needed yet
-        Err(VcxError::from_msg(
-            VcxErrorKind::UnimplementedFeature,
-            "unimplemented mock method",
+        Err(AriesVcxError::from_msg(
+            AriesVcxErrorKind::UnimplementedFeature,
+            "unimplemented mock method: iterate_wallet_records",
         ))
     }
 
@@ -98,8 +98,8 @@ fn get_next_mock_did_response_or_fail() -> VcxResult<String> {
         warn!("key_for_local_did >> retrieving did mock response");
         Ok(DidMocks::get_next_did_response())
     } else {
-        Err(VcxError::from_msg(
-            VcxErrorKind::UnimplementedFeature,
+        Err(AriesVcxError::from_msg(
+            AriesVcxErrorKind::UnimplementedFeature,
             "DidMocks data for must be set",
         ))
     }

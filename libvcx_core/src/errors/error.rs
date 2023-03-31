@@ -1,0 +1,253 @@
+use std::error::Error;
+use std::fmt;
+
+pub static TIMEOUT_LIBINDY_ERROR: u32 = 5555;
+
+#[derive(Copy, Clone, Eq, PartialEq, Debug, thiserror::Error)]
+pub enum LibvcxErrorKind {
+    // Common
+    #[error("Object is in invalid state for requested operation")]
+    InvalidState,
+    #[error("Invalid Configuration")]
+    InvalidConfiguration,
+    #[error("Obj was not found with handle")]
+    InvalidHandle,
+    #[error("Invalid JSON string")]
+    InvalidJson,
+    #[error("Invalid Option")]
+    InvalidOption,
+    #[error("Invalid MessagePack")]
+    InvalidMessagePack,
+    #[error("Object not ready for specified action")]
+    NotReady,
+    #[error("IO Error, possibly creating a backup wallet")]
+    IOError,
+    #[error("Object (json, config, key, credential and etc...) passed to libindy has invalid structure")]
+    LibindyInvalidStructure,
+    #[error("Parameter passed to libindy was invalid")]
+    InvalidLibindyParam,
+    #[error("Library already initialized")]
+    AlreadyInitialized,
+    #[error("Action is not supported")]
+    ActionNotSupported,
+    #[error("Invalid input parameter")]
+    InvalidInput,
+    #[error("Unimplemented feature")]
+    UnimplementedFeature,
+
+    // Connection
+    #[error("Could not create connection")]
+    CreateConnection,
+    #[error("Invalid Connection Handle")]
+    InvalidConnectionHandle,
+
+    // Credential Definition error
+    #[error("Call to create Credential Definition failed")]
+    CreateCredDef,
+    #[error("Can't create, Credential Def already on ledger")]
+    CredDefAlreadyCreated,
+    #[error("Invalid Credential Definition handle")]
+    InvalidCredDefHandle,
+    #[error(
+        "No revocation delta found in storage for this revocation registry. Were any credentials locally revoked?"
+    )]
+    RevDeltaNotFound,
+    #[error("Failed to clean stored revocation delta")]
+    RevDeltaFailedToClear,
+
+    // Revocation
+    #[error("Failed to create Revocation Registration Definition")]
+    CreateRevRegDef,
+    #[error("Invalid Revocation Details")]
+    InvalidRevocationDetails,
+    #[error("Unable to Update Revocation Delta On Ledger")]
+    InvalidRevocationEntry,
+    #[error("Invalid Credential Revocation timestamp")]
+    InvalidRevocationTimestamp,
+    #[error("No revocation definition found")]
+    RevRegDefNotFound,
+
+    // Credential
+    #[error("Invalid credential handle")]
+    InvalidCredentialHandle,
+
+    // Issuer Credential
+    #[error("Invalid Credential Issuer Handle")]
+    InvalidIssuerCredentialHandle,
+    #[error("Invalid credential json")]
+    InvalidCredential,
+    #[error("Attributes provided to Credential Offer are not correct, possibly malformed")]
+    InvalidAttributesStructure,
+
+    // Proof
+    #[error("Invalid proof handle")]
+    InvalidProofHandle,
+    #[error("Obj was not found with handle")]
+    InvalidDisclosedProofHandle,
+    #[error("Proof had invalid format")]
+    InvalidProof,
+    #[error("Schema was invalid or corrupt")]
+    InvalidSchema,
+    #[error("The Proof received does not have valid credentials listed.")]
+    InvalidProofCredentialData,
+    #[error("Proof Request Passed into Libindy Call Was Invalid")]
+    InvalidProofRequest,
+    #[error("The proof was rejected")]
+    ProofRejected,
+
+    // Schema
+    #[error("Could not create schema")]
+    CreateSchema,
+    #[error("Invalid Schema Handle")]
+    InvalidSchemaHandle,
+    #[error("No Schema for that schema sequence number")]
+    InvalidSchemaSeqNo,
+    #[error("Duplicate Schema: Ledger Already Contains Schema For Given DID, Version, and Name Combination")]
+    DuplicationSchema,
+    #[error("Unknown Rejection of Schema Creation, refer to libindy documentation")]
+    UnknownSchemaRejection,
+
+    // Out of Band
+    #[error("Could not create out of band message.")]
+    CreateOutOfBand,
+
+    // Pool
+    #[error("Invalid genesis transactions path.")]
+    InvalidGenesisTxnPath,
+    #[error("Formatting for Pool Config are incorrect.")]
+    CreatePoolConfig,
+    #[error("Connection to Pool Ledger.")]
+    PoolLedgerConnect,
+    #[error("Ledger rejected submitted request.")]
+    InvalidLedgerResponse,
+    #[error("No Pool open. Can't return handle.")]
+    NoPoolOpen,
+    #[error("Message failed in post")]
+    PostMessageFailed,
+    #[error("Ledger item not found.")]
+    LedgerItemNotFound,
+
+    // Wallet
+    #[error("Error Creating a wallet")]
+    WalletCreate,
+    #[error("Attempt to open wallet with invalid credentials")]
+    WalletAccessFailed,
+    #[error("Invalid Wallet or Search Handle")]
+    InvalidWalletHandle,
+    #[error("Indy wallet already exists")]
+    DuplicationWallet,
+    #[error("Wallet record not found")]
+    WalletRecordNotFound,
+    #[error("Record already exists in the wallet")]
+    DuplicationWalletRecord,
+    #[error("Wallet not found")]
+    WalletNotFound,
+    #[error("Indy wallet already open")]
+    WalletAlreadyOpen,
+    #[error("Configuration is missing wallet key")]
+    MissingWalletKey,
+    #[error("Attempted to add a Master Secret that already existed in wallet")]
+    DuplicationMasterSecret,
+    #[error("Attempted to add a DID to wallet when that DID already exists in wallet")]
+    DuplicationDid,
+
+    // Logger
+    #[error("Logging Error")]
+    LoggingError,
+
+    // Validation
+    #[error("Could not encode string to a big integer.")]
+    EncodeError,
+    #[error("Unknown Error")]
+    UnknownError,
+    #[error("Invalid DID")]
+    InvalidDid,
+    #[error("Invalid VERKEY")]
+    InvalidVerkey,
+    #[error("Invalid NONCE")]
+    InvalidNonce,
+    #[error("Invalid URL")]
+    InvalidUrl,
+    #[error("Unable to serialize")]
+    SerializationError,
+    #[error("Value needs to be base58")]
+    NotBase58,
+    #[error("Could not parse a value")]
+    ParsingError,
+
+    // A2A
+    #[error("Invalid HTTP response.")]
+    InvalidHttpResponse,
+    #[error("Error Retrieving messages from API")]
+    InvalidMessages,
+
+    #[error("Libndy error {}", 0)]
+    LibndyError(u32),
+    #[error("Ursa error")]
+    UrsaError,
+    #[error("Unknown libindy error")]
+    UnknownLibndyError,
+    #[error("No Agent pairwise information")]
+    NoAgentInformation,
+
+    #[error("Invalid message format")]
+    InvalidMessageFormat,
+
+    #[error("Attempted to unlock poisoned lock")]
+    PoisonedLock,
+    #[error("Error accessing an object")]
+    ObjectAccessError,
+}
+
+#[derive(Debug, thiserror::Error)]
+pub struct LibvcxError {
+    pub msg: String,
+    pub kind: LibvcxErrorKind,
+}
+
+impl LibvcxError {
+    pub fn from_msg<D>(kind: LibvcxErrorKind, msg: D) -> Self
+    where
+        D: fmt::Display + fmt::Debug + Send + Sync + 'static,
+    {
+        Self {
+            msg: msg.to_string(),
+            kind,
+        }
+    }
+
+    pub fn find_root_cause(&self) -> String {
+        let mut current = self.source();
+        while let Some(cause) = current {
+            if cause.source().is_none() {
+                return cause.to_string();
+            }
+            current = cause.source();
+        }
+        self.to_string()
+    }
+
+    pub fn kind(&self) -> LibvcxErrorKind {
+        self.kind
+    }
+}
+
+impl fmt::Display for LibvcxError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let code: u32 = self.kind.into();
+        // todo: how can we get the enum variant error annotation?
+        writeln!(
+            f,
+            "Error num: {}, Error kind: {:?}, Error message: {}\n",
+            code, self.kind, self.msg
+        )?;
+        let mut source = self.source();
+        while let Some(cause) = source {
+            writeln!(f, "Caused by:\n\t{}", cause)?;
+            source = cause.source();
+        }
+        Ok(())
+    }
+}
+
+pub type LibvcxResult<T> = Result<T, LibvcxError>;

@@ -1,22 +1,22 @@
 use std::collections::HashMap;
 
-use messages::issuance::credential::Credential;
-use messages::revocation_notification::revocation_notification::RevocationNotification;
+use messages::protocols::issuance::credential::Credential;
+use messages::protocols::revocation_notification::revocation_notification::RevocationNotification;
 use std::sync::Arc;
 
 use agency_client::agency_client::AgencyClient;
 
+use crate::common::credentials::get_cred_rev_id;
 use crate::core::profile::profile::Profile;
-use crate::error::prelude::*;
+use crate::errors::error::prelude::*;
 use crate::handlers::connection::mediated_connection::MediatedConnection;
 use crate::handlers::revocation_notification::receiver::RevocationNotificationReceiver;
-use crate::common::credentials::get_cred_rev_id;
-use messages::a2a::A2AMessage;
-use messages::issuance::credential_offer::CredentialOffer;
-use messages::issuance::credential_proposal::CredentialProposalData;
 use crate::protocols::issuance::actions::CredentialIssuanceAction;
 use crate::protocols::issuance::holder::state_machine::{HolderSM, HolderState};
 use crate::protocols::SendClosure;
+use messages::a2a::A2AMessage;
+use messages::protocols::issuance::credential_offer::CredentialOffer;
+use messages::protocols::issuance::credential_proposal::CredentialProposalData;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Holder {
@@ -45,7 +45,11 @@ impl Holder {
         credential_proposal: CredentialProposalData,
         send_message: SendClosure,
     ) -> VcxResult<()> {
-        self.holder_sm = self.holder_sm.clone().send_proposal(credential_proposal, send_message).await?;
+        self.holder_sm = self
+            .holder_sm
+            .clone()
+            .send_proposal(credential_proposal, send_message)
+            .await?;
         Ok(())
     }
 
@@ -55,23 +59,20 @@ impl Holder {
         my_pw_did: String,
         send_message: SendClosure,
     ) -> VcxResult<()> {
-        self.holder_sm = self.holder_sm.clone().send_request(
-            profile,
-            my_pw_did,
-            send_message,
-        ).await?;
+        self.holder_sm = self
+            .holder_sm
+            .clone()
+            .send_request(profile, my_pw_did, send_message)
+            .await?;
         Ok(())
     }
 
-    pub async fn decline_offer<'a>(
-        &'a mut self,
-        comment: Option<&'a str>,
-        send_message: SendClosure,
-    ) -> VcxResult<()> {
-        self.holder_sm = self.holder_sm.clone().decline_offer(
-            comment.map(String::from),
-            send_message,
-        ).await?;
+    pub async fn decline_offer<'a>(&'a mut self, comment: Option<&'a str>, send_message: SendClosure) -> VcxResult<()> {
+        self.holder_sm = self
+            .holder_sm
+            .clone()
+            .decline_offer(comment.map(String::from), send_message)
+            .await?;
         Ok(())
     }
 
@@ -81,11 +82,11 @@ impl Holder {
         credential: Credential,
         send_message: SendClosure,
     ) -> VcxResult<()> {
-        self.holder_sm = self.holder_sm.clone().receive_credential(
-            profile,
-            credential,
-            send_message,
-        ).await?;
+        self.holder_sm = self
+            .holder_sm
+            .clone()
+            .receive_credential(profile, credential, send_message)
+            .await?;
         Ok(())
     }
 
@@ -161,17 +162,23 @@ impl Holder {
         get_cred_rev_id(profile, &self.get_cred_id()?).await
     }
 
-    pub async fn handle_revocation_notification(&self, profile: &Arc<dyn Profile>, connection: &MediatedConnection, notification: RevocationNotification) -> VcxResult<()> {
+    pub async fn handle_revocation_notification(
+        &self,
+        profile: &Arc<dyn Profile>,
+        connection: &MediatedConnection,
+        notification: RevocationNotification,
+    ) -> VcxResult<()> {
         if self.holder_sm.is_revokable(profile).await? {
             let send_message = connection.send_message_closure(profile).await?;
             // TODO: Store to remember notification was received along with details
             RevocationNotificationReceiver::build(self.get_rev_reg_id()?, self.get_cred_rev_id(profile).await?)
-                .handle_revocation_notification(notification, send_message).await?;
+                .handle_revocation_notification(notification, send_message)
+                .await?;
             Ok(())
         } else {
-            Err(VcxError::from_msg(
-                VcxErrorKind::InvalidState,
-                format!("Unexpected revocation notification, credential is not revokable"),
+            Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidState,
+                "Unexpected revocation notification, credential is not revokable".to_string(),
             ))
         }
     }
@@ -215,7 +222,7 @@ impl Holder {
 pub mod test_utils {
     use agency_client::agency_client::AgencyClient;
 
-    use crate::error::prelude::*;
+    use crate::errors::error::prelude::*;
     use crate::handlers::connection::mediated_connection::MediatedConnection;
     use messages::a2a::A2AMessage;
 
@@ -241,12 +248,12 @@ pub mod test_utils {
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
 
-    use messages::issuance::credential::test_utils::_credential;
-    use messages::issuance::credential_offer::test_utils::_credential_offer;
-    use messages::issuance::credential_proposal::test_utils::_credential_proposal_data;
-    use messages::issuance::credential_request::test_utils::_my_pw_did;
-    use crate::utils::devsetup::SetupMocks;
     use crate::common::test_utils::mock_profile;
+    use crate::utils::devsetup::SetupMocks;
+    use messages::protocols::issuance::credential::test_utils::_credential;
+    use messages::protocols::issuance::credential_offer::test_utils::_credential_offer;
+    use messages::protocols::issuance::credential_proposal::test_utils::_credential_proposal_data;
+    use messages::protocols::issuance::credential_request::test_utils::_my_pw_did;
 
     use super::*;
 
@@ -310,10 +317,7 @@ pub mod unit_tests {
         assert_eq!(HolderState::Initial, holder.get_state());
 
         holder
-            .send_proposal(
-                _credential_proposal_data(),
-                _send_message().unwrap(),
-            )
+            .send_proposal(_credential_proposal_data(), _send_message().unwrap())
             .await
             .unwrap();
         assert_eq!(HolderState::ProposalSent, holder.get_state());
@@ -322,17 +326,11 @@ pub mod unit_tests {
             "key_1".to_string() => A2AMessage::CredentialOffer(_credential_offer())
         );
         let (_, msg) = holder.find_message_to_handle(messages).unwrap();
-        holder
-            .step(&mock_profile(), msg.into(), _send_message())
-            .await
-            .unwrap();
+        holder.step(&mock_profile(), msg.into(), _send_message()).await.unwrap();
         assert_eq!(HolderState::OfferReceived, holder.get_state());
 
         holder
-            .send_proposal(
-                _credential_proposal_data(),
-                _send_message().unwrap(),
-            )
+            .send_proposal(_credential_proposal_data(), _send_message().unwrap())
             .await
             .unwrap();
         assert_eq!(HolderState::ProposalSent, holder.get_state());
@@ -341,10 +339,7 @@ pub mod unit_tests {
             "key_1".to_string() => A2AMessage::CredentialOffer(_credential_offer())
         );
         let (_, msg) = holder.find_message_to_handle(messages).unwrap();
-        holder
-            .step(&mock_profile(), msg.into(), _send_message())
-            .await
-            .unwrap();
+        holder.step(&mock_profile(), msg.into(), _send_message()).await.unwrap();
         assert_eq!(HolderState::OfferReceived, holder.get_state());
 
         holder
@@ -357,10 +352,7 @@ pub mod unit_tests {
             "key_1".to_string() => A2AMessage::Credential(_credential())
         );
         let (_, msg) = holder.find_message_to_handle(messages).unwrap();
-        holder
-            .step(&mock_profile(), msg.into(), _send_message())
-            .await
-            .unwrap();
+        holder.step(&mock_profile(), msg.into(), _send_message()).await.unwrap();
         assert_eq!(HolderState::Finished, holder.get_state());
     }
 }

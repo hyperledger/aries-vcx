@@ -1,4 +1,4 @@
-use crate::error::AgencyClientResult;
+use crate::errors::error::AgencyClientResult;
 use crate::messages::a2a_message::A2AMessageKinds;
 use crate::messages::message_type::MessageType;
 use crate::MessageStatusCode;

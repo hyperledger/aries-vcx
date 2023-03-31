@@ -1,0 +1,54 @@
+{
+  "name": "@hyperledger/vcx-napi-rs",
+  "package": "@hyperledger/vcx-napi-rs",
+  "devDependencies": {
+    "@napi-rs/cli": "^2.9.1",
+    "@types/node": "^18.11.18",
+    "typescript": "^4.8.4"
+  },
+  "main": "index.js",
+  "files": [
+    "index.js",
+    "index.d.ts"
+  ],
+  "scripts": {
+    "artifacts": "napi artifacts",
+    "prepublish": "napi prepublish --skip-gh-release",
+    "build:ts": "tsc -p ./tsconfig.json",
+    "build:napi": "napi build --platform --release",
+    "build:napi:debug": "napi build --platform",
+    "create-npm-dir": "napi create-npm-dir -t ."
+  },
+  "napi": {
+    "name": "vcx-napi-rs",
+    "triples": {
+      "defaults": false,
+      "additional": [
+        "x86_64-apple-darwin",
+        "aarch64-apple-darwin",
+        "x86_64-unknown-linux-gnu",
+        "x86_64-unknown-linux-musl"
+      ]
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "contributors": [
+    {
+      "name": "Hyperledger Indy Contributors",
+      "email": "indy@lists.hyperledger.org"
+    }
+  ],
+  "bugs": {
+    "url": "https://github.com/hyperledger/aries-vcx/issues"
+  },
+  "description": "aries-vcx napi",
+  "license": "Apache-2.0",
+  "optionalDependencies": {
+    "@hyperledger/vcx-napi-rs-darwin-x64": "undefined",
+    "@hyperledger/vcx-napi-rs-darwin-arm64": "undefined",
+    "@hyperledger/vcx-napi-rs-linux-x64-gnu": "undefined",
+    "@hyperledger/vcx-napi-rs-linux-x64-musl": "undefined"
+  }
+}

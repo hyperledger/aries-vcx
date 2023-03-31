@@ -1,8 +1,13 @@
-#[macro_use]
-extern crate lazy_static;
+#![allow(clippy::or_fun_call)]
+#![allow(clippy::module_inception)]
+#![allow(clippy::derive_partial_eq_without_eq)]
+#![allow(clippy::new_without_default)]
+#![allow(clippy::inherent_to_string)]
+#![allow(clippy::large_enum_variant)]
+#![deny(clippy::unwrap_used)]
 
 #[macro_use]
-extern crate log;
+extern crate lazy_static;
 
 #[macro_use]
 extern crate serde_derive;
@@ -14,30 +19,15 @@ extern crate serde_json;
 extern crate strum_macros;
 
 #[macro_use]
-pub mod thread;
-
-#[macro_use]
 pub mod a2a;
 
 #[macro_use]
-pub mod ack;
+pub mod concepts;
 
-pub mod attachment;
-pub mod basic_message;
-pub mod connection;
-pub mod discovery;
-pub mod error;
-pub mod problem_report;
-pub mod forward;
-pub mod issuance;
-pub mod revocation_notification;
-pub mod localization;
-pub mod mime_type;
-pub mod out_of_band;
-pub mod proof_presentation;
-pub mod status;
-pub mod timing;
-pub mod trust_ping;
-pub mod did_doc;
+pub extern crate diddoc;
+
 pub mod actors;
+pub mod errors;
+pub mod protocols;
+pub mod status;
 pub mod utils;

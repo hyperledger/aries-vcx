@@ -1,131 +1,36 @@
-import * as ffi from 'ffi-napi';
 import { VCXInternalError } from '../errors';
-import { createFFICallbackPromise, ICbRef } from '../utils/ffi-helpers';
-import { GCWatcher } from '../utils/memory-management-helpers';
 import { ISerializedData } from './common';
+import { GCWatcher } from '../utils/gc-watcher';
 
-export type IVCXBaseCreateFn = (cb: ICbRef) => number;
-
-export abstract class VCXBase<SerializedData> extends GCWatcher {
-  protected static async _deserialize<T extends VCXBase<unknown>, P = unknown>(
+export abstract class VcxBase<SerializedData> extends GCWatcher {
+  protected static _deserialize<T extends VcxBase<unknown>, P = unknown>(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    VCXClass: new (sourceId: string, args?: any) => T,
-    objData: ISerializedData<{ source_id: string }>,
+    VCXClass: new (args?: any) => T,
+    serializedData: Record<string, unknown>, // this represents "any JSON object"
     constructorParams?: P,
-  ): Promise<T> {
+  ): T {
     try {
-      const obj = new VCXClass(objData.source_id || objData.data.source_id, constructorParams);
-      await obj._initFromData(objData);
-      return obj;
+      const instance = new VCXClass(constructorParams);
+      instance._initFromData(serializedData);
+      return instance;
     } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
 
-  protected abstract _serializeFn: (commandHandle: number, handle: number, cb: ICbRef) => number;
-  protected abstract _deserializeFn: (commandHandle: number, handle: string, cb: ICbRef) => number;
-  protected _sourceId: string;
+  protected abstract _serializeFn: (handle: number) => string;
+  protected abstract _deserializeFn: (data: string) => number;
 
-  constructor(sourceId: string) {
-    super();
-    this._sourceId = sourceId;
-  }
-
-  /**
-   *
-   * Data returned can be used to recreate an entity by passing it to the deserialize function.
-   *
-   * Same json object structure that is passed to the deserialize function.
-   *
-   * Example:
-   *
-   * ```
-   *  data = await object.serialize()
-   * ```
-   */
-  public async serialize(): Promise<ISerializedData<SerializedData>> {
+  public serialize(): ISerializedData<SerializedData> {
     try {
-      const dataStr = await createFFICallbackPromise<string>(
-        (resolve, reject, cb) => {
-          const rc = this._serializeFn(0, this.handle, cb);
-          if (rc) {
-            reject(rc);
-            return;
-          }
-        },
-        (resolve, reject) =>
-          ffi.Callback(
-            'void',
-            ['uint32', 'uint32', 'string'],
-            (handle: string, err: number, serializedData?: string) => {
-              if (err) {
-                reject(err);
-                return;
-              }
-              if (!serializedData) {
-                reject('no data to serialize');
-                return;
-              }
-              resolve(serializedData);
-            },
-          ),
-      );
-      const data: ISerializedData<SerializedData> = JSON.parse(dataStr);
-      return data;
+      return JSON.parse(this._serializeFn(this.handle));
     } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
-  /** The source Id assigned by the user for this object */
-  get sourceId(): string {
-    return this._sourceId;
-  }
 
-  protected async _create(createFn: IVCXBaseCreateFn): Promise<void> {
-    const handleRes = await createFFICallbackPromise<number>(
-      (resolve, reject, cb) => {
-        const rc = createFn(cb);
-        if (rc) {
-          reject(rc);
-        }
-      },
-      (resolve, reject) =>
-        ffi.Callback(
-          'void',
-          ['uint32', 'uint32', 'uint32'],
-          (xHandle: number, err: number, handle: number) => {
-            if (err) {
-              reject(err);
-              return;
-            }
-            resolve(handle);
-          },
-        ),
-    );
-    this._setHandle(handleRes);
-  }
-
-  private async _initFromData(objData: ISerializedData<{ source_id: string }>): Promise<void> {
-    const commandHandle = 0;
-    const objHandle = await createFFICallbackPromise<number>(
-      (resolve, reject, cb) => {
-        const rc = this._deserializeFn(commandHandle, JSON.stringify(objData), cb);
-        if (rc) {
-          reject(rc);
-        }
-      },
-      (resolve, reject) =>
-        ffi.Callback(
-          'void',
-          ['uint32', 'uint32', 'uint32'],
-          (xHandle: number, err: number, handle: number) => {
-            if (err) {
-              reject(err);
-            }
-            resolve(handle);
-          },
-        ),
-    );
+  private _initFromData(serializedData: Record<string, unknown>): void {
+    const objHandle = this._deserializeFn(JSON.stringify(serializedData));
     this._setHandle(objHandle);
   }
 }

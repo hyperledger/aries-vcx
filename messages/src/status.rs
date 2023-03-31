@@ -1,5 +1,6 @@
-use crate::problem_report::ProblemReport;
+use crate::concepts::problem_report::ProblemReport;
 
+// todo: this is shared by multiple protocols to express different things - needs to be split
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum Status {
     Undefined,
@@ -13,23 +14,8 @@ impl Status {
         match self {
             Status::Undefined => 0,
             Status::Success => 1,
-            Status::Failed(err) => {
-                error!("Process Failed: {:?}", err);
-                2
-            }
-            Status::Declined(err) => {
-                error!("Declined: {:?}", err);
-                3
-            }
-        }
-    }
-
-    pub fn from_u32(state: u32) -> Self {
-        match state {
-            1 => Self::Success,
-            2 => Self::Failed(ProblemReport::create()),
-            3 => Self::Declined(ProblemReport::create()),
-            _ => Self::Undefined,
+            Status::Failed(_) => 2,
+            Status::Declined(_) => 3,
         }
     }
 }

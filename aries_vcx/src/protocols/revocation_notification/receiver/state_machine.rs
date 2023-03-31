@@ -1,8 +1,8 @@
-use messages::ack::please_ack::AckOn;
-use messages::revocation_notification::revocation_ack::RevocationAck;
-use messages::revocation_notification::revocation_notification::{RevocationFormat, RevocationNotification};
+use messages::concepts::ack::please_ack::AckOn;
+use messages::protocols::revocation_notification::revocation_ack::RevocationAck;
+use messages::protocols::revocation_notification::revocation_notification::{RevocationFormat, RevocationNotification};
 
-use crate::error::prelude::*;
+use crate::errors::error::prelude::*;
 use crate::protocols::revocation_notification::receiver::states::finished::FinishedState;
 use crate::protocols::revocation_notification::receiver::states::initial::InitialState;
 use crate::protocols::revocation_notification::receiver::states::received::NotificationReceivedState;
@@ -35,12 +35,10 @@ impl RevocationNotificationReceiverSM {
         match &self.state {
             ReceiverFullState::NotificationReceived(state) => Ok(state.get_notification()),
             ReceiverFullState::Finished(state) => Ok(state.get_notification()),
-            _ => {
-                return Err(VcxError::from_msg(
-                    VcxErrorKind::InvalidState,
-                    "Revocation notification not yet known in this state",
-                ));
-            }
+            _ => Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidState,
+                "Revocation notification not yet known in this state",
+            )),
         }
     }
 
@@ -48,12 +46,10 @@ impl RevocationNotificationReceiverSM {
         match &self.state {
             ReceiverFullState::NotificationReceived(state) => Ok(state.get_thread_id()),
             ReceiverFullState::Finished(state) => Ok(state.get_thread_id()),
-            _ => {
-                return Err(VcxError::from_msg(
-                    VcxErrorKind::InvalidState,
-                    "Thread ID not yet known in this state",
-                ));
-            }
+            _ => Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidState,
+                "Thread ID not yet known in this state",
+            )),
         }
     }
 
@@ -78,7 +74,10 @@ impl RevocationNotificationReceiverSM {
                 }
             }
             _ => {
-                return Err(VcxError::from_msg(VcxErrorKind::InvalidState, "Ack already received"));
+                return Err(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidState,
+                    "Ack already received",
+                ));
             }
         };
         Ok(Self { state, ..self })
@@ -97,7 +96,10 @@ impl RevocationNotificationReceiverSM {
                 ReceiverFullState::Finished(FinishedState::new(self.get_notification()?))
             }
             _ => {
-                return Err(VcxError::from_msg(VcxErrorKind::InvalidState, "Ack already sent"));
+                return Err(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidState,
+                    "Ack already sent",
+                ));
             }
         };
         Ok(Self { state, ..self })
@@ -106,8 +108,8 @@ impl RevocationNotificationReceiverSM {
     fn validate_revocation_notification(&self, notification: &RevocationNotification) -> VcxResult<()> {
         let check_rev_format = || -> VcxResult<()> {
             if notification.get_revocation_format() != RevocationFormat::IndyAnoncreds {
-                Err(VcxError::from_msg(
-                    VcxErrorKind::InvalidRevocationDetails,
+                Err(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidRevocationDetails,
                     "Received revocation notification with unsupported revocation format, only IndyAnoncreds supported",
                 ))
             } else {
@@ -118,29 +120,29 @@ impl RevocationNotificationReceiverSM {
         let cred_id = notification.get_credential_id();
         let parts = cred_id.split("::").collect::<Vec<&str>>();
         let check_rev_reg_id = |()| -> VcxResult<()> {
-            if let Some(rev_reg_id) = parts.get(0) {
-                if rev_reg_id.to_string() != self.rev_reg_id {
-                    Err(VcxError::from_msg(VcxErrorKind::InvalidRevocationDetails, "Revocation registry ID in received notification does not match revocation registry ID of this credential"))
+            if let Some(rev_reg_id) = parts.first() {
+                if *rev_reg_id != self.rev_reg_id {
+                    Err(AriesVcxError::from_msg(AriesVcxErrorKind::InvalidRevocationDetails, "Revocation registry ID in received notification does not match revocation registry ID of this credential"))
                 } else {
                     Ok(())
                 }
             } else {
-                Err(VcxError::from_msg(
-                    VcxErrorKind::InvalidRevocationDetails,
+                Err(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidRevocationDetails,
                     "Invalid credential ID, missing revocation registry ID",
                 ))
             }
         };
         let check_cred_rev_id = |()| -> VcxResult<()> {
             if let Some(cred_rev_id) = parts.get(1) {
-                if cred_rev_id.to_string() != self.cred_rev_id {
-                    Err(VcxError::from_msg(VcxErrorKind::InvalidRevocationDetails, "Credential revocation ID in received notification does not match revocation ID of this credential"))
+                if *cred_rev_id != self.cred_rev_id {
+                    Err(AriesVcxError::from_msg(AriesVcxErrorKind::InvalidRevocationDetails, "Credential revocation ID in received notification does not match revocation ID of this credential"))
                 } else {
                     Ok(())
                 }
             } else {
-                Err(VcxError::from_msg(
-                    VcxErrorKind::InvalidRevocationDetails,
+                Err(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidRevocationDetails,
                     "Invalid credential ID, missing revocation registry ID",
                 ))
             }
@@ -165,7 +167,9 @@ pub mod test_utils {
     }
 
     pub fn _send_message_but_fail() -> SendClosure {
-        Box::new(|_: A2AMessage| Box::pin(async { Err(VcxError::from(VcxErrorKind::IOError)) }))
+        Box::new(|_: A2AMessage| {
+            Box::pin(async { Err(AriesVcxError::from_msg(AriesVcxErrorKind::IOError, "Mocked error")) })
+        })
     }
 }
 

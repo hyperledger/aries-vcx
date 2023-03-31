@@ -1,6 +1,6 @@
-use messages::revocation_notification::revocation_ack::RevocationAck;
+use messages::protocols::revocation_notification::revocation_ack::RevocationAck;
 
-use crate::error::prelude::*;
+use crate::errors::error::prelude::*;
 use crate::protocols::revocation_notification::sender::state_machine::{RevocationNotificationSenderSM, SenderConfig};
 use crate::protocols::SendClosure;
 

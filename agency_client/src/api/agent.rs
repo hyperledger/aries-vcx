@@ -1,11 +1,11 @@
 use crate::agency_client::AgencyClient;
+use crate::errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 use crate::messages::a2a_message::Client2AgencyMessage;
 use crate::messages::create_key::CreateKeyBuilder;
 use crate::messages::update_com_method::{ComMethodType, UpdateComMethod};
 use crate::messages::update_connection::DeleteConnectionBuilder;
 use crate::testing::mocking::{agency_mocks_enabled, AgencyMock};
 use crate::testing::{mocking, test_constants};
-use crate::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 
 impl AgencyClient {
     pub async fn delete_connection_agent(
@@ -61,7 +61,13 @@ impl AgencyClient {
 
         match response.remove(0) {
             Client2AgencyMessage::CreateKeyResponse(res) => Ok((res.for_did, res.for_verkey)),
-            _ => Err(AgencyClientError::from(AgencyClientErrorKind::InvalidHttpResponse)),
+            res => Err(AgencyClientError::from_msg(
+                AgencyClientErrorKind::InvalidHttpResponse,
+                format!(
+                    "Expected to response of Client2AgencyMessage::CreateKeyResponse, but received: {:?}",
+                    res
+                ),
+            )),
         }
     }
 

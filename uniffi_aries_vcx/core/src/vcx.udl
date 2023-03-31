@@ -1,0 +1,108 @@
+interface ProfileHolder {
+
+};
+
+dictionary WalletConfig {
+    string wallet_name;
+    string wallet_key;
+    string wallet_key_derivation;
+    string? wallet_type;
+    string? storage_config;
+    string? storage_credentials;
+    string? rekey;
+    string? rekey_derivation_method;
+};
+
+dictionary ConnectionState {
+    ConnectionRole role;
+    ConnectionProtocolState protocol_state;
+};
+
+enum ConnectionRole {
+    "Invitee",
+    "Inviter",
+};
+
+enum ConnectionProtocolState {
+    "Initial",
+    "Invited",
+    "Requested",
+    "Responded",
+    "Completed",
+};
+
+
+dictionary PairwiseInfo {
+    string pw_did;
+    string pw_vk;
+};
+
+dictionary AriesDidDoc {
+    string context;
+    string id;
+    sequence<Ed25519PublicKey> public_key;
+    sequence<Authentication> authentication;
+    sequence<AriesService> service;
+};
+dictionary Ed25519PublicKey {
+    string id;
+    string type_;
+    string controller;
+    string public_key_base_58;
+};
+dictionary Authentication {
+    string type_;
+    string public_key;
+};
+dictionary AriesService {
+    string id;
+    string type_;
+    u32 priority;
+    sequence<string> recipient_keys;
+    sequence<string> routing_keys;
+    string service_endpoint;
+};
+
+interface Connection {
+    [Throws=VcxUniFFIError]
+    ConnectionState get_state();
+
+    [Throws=VcxUniFFIError]
+    PairwiseInfo pairwise_info();
+
+    [Throws=VcxUniFFIError]
+    void accept_invitation(ProfileHolder profile, string invitation);
+
+    [Throws=VcxUniFFIError]
+    void handle_request(ProfileHolder profile, string request, string service_endpoint, sequence<string> routing_keys);
+
+    [Throws=VcxUniFFIError]
+    void handle_response(ProfileHolder profile, string response);
+
+    [Throws=VcxUniFFIError]
+    void send_request(ProfileHolder profile, string service_endpoint, sequence<string> routing_keys);
+
+    [Throws=VcxUniFFIError]
+    void send_response(ProfileHolder profile);
+
+    [Throws=VcxUniFFIError]
+    void send_ack(ProfileHolder profile);
+};
+
+[Error]
+enum VcxUniFFIError {
+    "AriesVcxError",
+    "SerializationError",
+    "InternalError",
+};
+
+namespace vcx {
+    [Throws=VcxUniFFIError]
+    ProfileHolder new_indy_profile(WalletConfig wallet_config);
+
+    [Throws=VcxUniFFIError]
+    Connection create_inviter(ProfileHolder profile);
+
+    [Throws=VcxUniFFIError]
+    Connection create_invitee(ProfileHolder profile, AriesDidDoc did_doc);
+};

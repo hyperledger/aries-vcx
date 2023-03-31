@@ -1,20 +1,15 @@
-import * as ffi from 'ffi-napi';
-import { VCXInternalError } from '../errors';
-import { rustAPI } from '../rustlib';
-import { createFFICallbackPromise } from '../utils/ffi-helpers';
+import * as ffi from '@hyperledger/vcx-napi-rs';
 import { ISerializedData } from './common';
-import { VCXBase } from './vcx-base';
+import { VcxBase } from './vcx-base';
+import { VCXInternalError } from '../errors';
 
 /**
  * @interface Interface that represents the parameters for `Schema.create` function.
  * @description
  */
 export interface ISchemaCreateData {
-  // Enterprise's personal identification for the user.
   sourceId: string;
-  // list of attributes that will make up the schema (the number of attributes should be less or equal than 125)
   data: ISchemaAttrs;
-  // future use (currently uses any address in the wallet)
 }
 
 /**
@@ -22,9 +17,7 @@ export interface ISchemaCreateData {
  * @description
  */
 export interface ISchemaPrepareForEndorserData {
-  // Enterprise's personal identification for the user.
   sourceId: string;
-  // list of attributes that will make up the schema (the number of attributes should be less or equal than 125)
   data: ISchemaAttrs;
   // DID of the Endorser that will submit the transaction.
   endorser: string;
@@ -53,27 +46,10 @@ export interface ISchemaSerializedData {
   schema_id: string;
 }
 
-export interface ISchemaTxn {
-  sequence_num?: number;
-  sponsor?: string;
-  txn_timestamp?: number;
-  txn_type?: string;
-  data?: {
-    name: string;
-    version: string;
-    attr_names: string[];
-  };
-}
-
 export interface ISchemaParams {
   schemaId: string;
   name: string;
   schemaAttrs: ISchemaAttrs;
-}
-
-export interface ISchemaLookupData {
-  sourceId: string;
-  schemaId: string;
 }
 
 export enum SchemaState {
@@ -81,7 +57,7 @@ export enum SchemaState {
   Published = 1,
 }
 
-export class Schema extends VCXBase<ISchemaSerializedData> {
+export class Schema extends VcxBase<ISchemaSerializedData> {
   get schemaAttrs(): ISchemaAttrs {
     return this._schemaAttrs;
   }
@@ -94,351 +70,68 @@ export class Schema extends VCXBase<ISchemaSerializedData> {
     return this._name;
   }
 
-  get schemaTransaction(): string {
-    return this._transaction;
-  }
-  /**
-   * Creates a new Schema object that is written to the ledger
-   *
-   * Example:
-   * ```
-   * data: {
-   *     attrNames: [
-   *       'attr1',
-   *       'attr2'
-   *     ],
-   *     name: 'Schema',
-   *     version: '1.0.0'
-   *   },
-   *   sourceId: 'testSchemaSourceId'
-   * }
-   * schema1 = await Schema.create(data)
-   * ```
-   */
-  public static async create({
-    data,
-    sourceId,
-  }: ISchemaCreateData): Promise<Schema> {
+  public static async create({ data, sourceId }: ISchemaCreateData): Promise<Schema> {
     try {
-      const schema = new Schema(sourceId, { name: data.name, schemaId: '', schemaAttrs: data });
-      const commandHandle = 0;
-      await schema._create((cb) =>
-        rustAPI().vcx_schema_create(
-          commandHandle,
-          schema.sourceId,
-          schema._name,
-          data.version,
-          JSON.stringify(data.attrNames),
-          0,
-          cb,
-        ),
+      const schema = new Schema({ name: data.name, schemaId: '', schemaAttrs: data });
+      const handle = await ffi.schemaCreate(
+        sourceId,
+        schema._name,
+        data.version,
+        JSON.stringify(data.attrNames),
       );
-      await schema.getSchemaId();
+      schema._setHandle(handle);
+      schema._schemaId = ffi.schemaGetSchemaId(handle);
       return schema;
     } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
 
-  /**
-   * Builds a new Schema object that will be published by Endorser later.
-   *
-   * Example:
-   * ```
-   * data: {
-   *     attrNames: [
-   *       'attr1',
-   *       'attr2'
-   *     ],
-   *     name: 'Schema',
-   *     version: '1.0.0'
-   *   },
-   *   endorser: 'V4SGRU86Z58d6TV7PBUe6f',
-   *   sourceId: 'testSchemaSourceId'
-   * }
-   * schema1 = await Schema.prepareForEndorser(data)
-   * ```
-   */
-  public static async prepareForEndorser({
-    endorser,
-    data,
-    sourceId,
-  }: ISchemaPrepareForEndorserData): Promise<Schema> {
-    try {
-      const schema = new Schema(sourceId, { name: data.name, schemaId: '', schemaAttrs: data });
-
-      const schemaForEndorser = await createFFICallbackPromise<{
-        transaction: string;
-        handle: number;
-      }>(
-        (resolve, reject, cb) => {
-          const rc = rustAPI().vcx_schema_prepare_for_endorser(
-            0,
-            sourceId,
-            schema._name,
-            data.version,
-            JSON.stringify(data.attrNames),
-            endorser,
-            cb,
-          );
-          if (rc) {
-            reject(rc);
-          }
-        },
-        (resolve, reject) =>
-          ffi.Callback(
-            'void',
-            ['uint32', 'uint32', 'uint32', 'string'],
-            (handle: number, err: number, _schemaHandle: number, _transaction: string) => {
-              if (err) {
-                reject(err);
-                return;
-              }
-              if (!_transaction) {
-                reject('no schema transaction');
-                return;
-              }
-              resolve({ transaction: _transaction, handle: _schemaHandle });
-            },
-          ),
-      );
-      schema._setHandle(schemaForEndorser.handle);
-      schema._transaction = schemaForEndorser.transaction;
-      await schema.getSchemaId();
-      return schema;
-    } catch (err: any) {
-      throw new VCXInternalError(err);
-    }
-  }
-
-  /**
-   * Builds Schema object with defined attributes.
-   * Attributes are provided by a previous call to the serialize function.
-   *
-   * Example:
-   * ```
-   * sourceId = 'lookupTest'
-   * data: {
-   *     attrNames: [
-   *       'attr1',
-   *       'attr2'
-   *     ],
-   *     name: 'Schema',
-   *     version: '1.0.0'
-   *   },
-   *   sourceId: sourceId
-   * }
-   * schema1 = await Schema.create(data)
-   * data1 = await schema1.serialize()
-   * schema2 = Schema.deserialize(data1)
-   */
-  public static async deserialize(schema: ISerializedData<ISchemaSerializedData>): Promise<Schema> {
+  public static deserialize(schema: ISerializedData<ISchemaSerializedData>): Schema {
     const {
       data: { name, schema_id, version, data },
     } = schema;
-    const schemaParams = {
+    const jsConstructorParams = {
       name,
       schemaAttrs: { name, version, attrNames: data },
       schemaId: schema_id,
     };
-    return super._deserialize<Schema, ISchemaParams>(Schema, schema, schemaParams);
+    return super._deserialize(Schema, schema as any, jsConstructorParams);
   }
 
-  /**
-   * Looks up the attributes of an already created Schema.
-   *
-   * Example:
-   * ```
-   * sourceId = 'lookupTest'
-   * data: {
-   *     attrNames: [
-   *       'attr1',
-   *       'attr2'
-   *     ],
-   *     name: 'Schema',
-   *     version: '1.0.0'
-   *   },
-   *   sourceId: sourceId
-   * }
-   * schema1 = await Schema.create(data)
-   * schemaId1 = await schema1.getSchemaId()
-   * data = await Schema.lookup(sourceId, schemaId1)
-   * ```
-   */
-  public static async lookup({ sourceId, schemaId }: ISchemaLookupData): Promise<Schema> {
-    try {
-      const schemaLookupData = await createFFICallbackPromise<{ data: string; handle: number }>(
-        (resolve, reject, cb) => {
-          const rc = rustAPI().vcx_schema_get_attributes(0, sourceId, schemaId, cb);
-          if (rc) {
-            reject(rc);
-          }
-        },
-        (resolve, reject) =>
-          ffi.Callback(
-            'void',
-            ['uint32', 'uint32', 'uint32', 'string'],
-            (handle: number, err: number, _schemaHandle: number, _schemaData: string) => {
-              if (err) {
-                reject(err);
-                return;
-              }
-              if (!_schemaData) {
-                reject('no schema attrs');
-                return;
-              }
-              resolve({ data: _schemaData, handle: _schemaHandle });
-            },
-          ),
-      );
-      const { name, version, data }: ISchemaSerializedData = JSON.parse(schemaLookupData.data);
-      const schemaParams = {
-        name,
-        schemaAttrs: {
-          attrNames: data,
-          name,
-          version,
-        },
-        schemaId,
-      };
-      const newSchema = new Schema(sourceId, schemaParams);
-      newSchema._setHandle(schemaLookupData.handle);
-      return newSchema;
-    } catch (err: any) {
-      throw new VCXInternalError(err);
-    }
-  }
-
-  protected _releaseFn = rustAPI().vcx_schema_release;
-  protected _serializeFn = rustAPI().vcx_schema_serialize;
-  protected _deserializeFn = rustAPI().vcx_schema_deserialize;
+  protected _serializeFn = ffi.schemaSerialize;
+  protected _deserializeFn = ffi.schemaDeserialize;
+  protected _releaseFn = ffi.schemaRelease;
   protected _name: string;
   protected _schemaId: string;
   protected _schemaAttrs: ISchemaAttrs;
-  private _transaction = '';
 
-  constructor(sourceId: string, { name, schemaId, schemaAttrs }: ISchemaParams) {
-    super(sourceId);
+  constructor({ name, schemaId, schemaAttrs }: ISchemaParams) {
+    super();
     this._name = name;
     this._schemaId = schemaId;
     this._schemaAttrs = schemaAttrs;
   }
 
-  /**
-   *
-   * Checks if schema is published on the Ledger and updates the state
-   *
-   * Example:
-   * ```
-   * await schema.updateState()
-   * ```
-   * @returns {Promise<void>}
-   */
   public async updateState(): Promise<void> {
     try {
-      await createFFICallbackPromise<number>(
-        (resolve, reject, cb) => {
-          const rc = rustAPI().vcx_schema_update_state(0, this.handle, cb);
-          if (rc) {
-            reject(rc);
-          }
-        },
-        (resolve, reject) =>
-          ffi.Callback(
-            'void',
-            ['uint32', 'uint32', 'uint32'],
-            (handle: number, err: number, state: SchemaState) => {
-              if (err) {
-                reject(err);
-              }
-              resolve(state);
-            },
-          ),
-      );
+      await ffi.schemaUpdateState(this.handle);
     } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
 
-  /**
-   * Get the current state of the schema object
-   *
-   * Example:
-   * ```
-   * state = await schema.getState()
-   * ```
-   * @returns {Promise<SchemaState>}
-   */
-  public async getState(): Promise<SchemaState> {
+  public getState(): SchemaState {
     try {
-      const stateRes = await createFFICallbackPromise<SchemaState>(
-        (resolve, reject, cb) => {
-          const rc = rustAPI().vcx_schema_get_state(0, this.handle, cb);
-          if (rc) {
-            reject(rc);
-          }
-        },
-        (resolve, reject) =>
-          ffi.Callback(
-            'void',
-            ['uint32', 'uint32', 'uint32'],
-            (handle: number, err: number, state: SchemaState) => {
-              if (err) {
-                reject(err);
-              }
-              resolve(state);
-            },
-          ),
-      );
-      return stateRes;
+      return ffi.schemaGetState(this.handle);
     } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
 
-  /**
-   * Get the ledger ID of the object
-   *
-   * Example:
-   * ```
-   * data: {
-   *     attrNames: [
-   *       'attr1',
-   *       'attr2'
-   *     ],
-   *     name: 'Schema',
-   *     version: '1.0.0'
-   *   },
-   *   sourceId: 'testSchemaSourceId'
-   * }
-   * schema1 = await Schema.create(data)
-   * id1 = await schema1.getSchemaId()
-   * ```
-   */
-  protected async getSchemaId(): Promise<string> {
+  protected getSchemaId(): string {
     try {
-      const schemaId = await createFFICallbackPromise<string>(
-        (resolve, reject, cb) => {
-          const rc = rustAPI().vcx_schema_get_schema_id(0, this.handle, cb);
-          if (rc) {
-            reject(rc);
-          }
-        },
-        (resolve, reject) =>
-          ffi.Callback(
-            'void',
-            ['uint32', 'uint32', 'string'],
-            (xcommandHandle: number, err: number, schemaIdVal: string) => {
-              if (err) {
-                reject(err);
-                return;
-              }
-              this._schemaId = schemaIdVal;
-              resolve(schemaIdVal);
-            },
-          ),
-      );
-      return schemaId;
+      return ffi.schemaGetSchemaId(this.handle);
     } catch (err: any) {
       throw new VCXInternalError(err);
     }

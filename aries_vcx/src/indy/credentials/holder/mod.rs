@@ -1,17 +1,12 @@
 use vdrtools::{
-    Locator,
-    Credential,
-    CredentialRequestMetadata,
-    CredentialDefinition,
+    Credential, CredentialDefinition, CredentialOffer, CredentialRequestMetadata, DidValue, Locator,
     RevocationRegistryDefinition,
-    DidValue,
-    CredentialOffer,
 };
 
-use vdrtools::WalletHandle;
-use crate::error::VcxResult;
+use crate::errors::error::VcxResult;
 use crate::global::settings;
 use crate::utils;
+use vdrtools::WalletHandle;
 
 pub async fn libindy_prover_store_credential(
     wallet_handle: WalletHandle,
@@ -21,13 +16,18 @@ pub async fn libindy_prover_store_credential(
     cred_def_json: &str,
     rev_reg_def_json: Option<&str>,
 ) -> VcxResult<String> {
-    trace!("libindy_prover_store_credential >>> \
+    trace!(
+        "libindy_prover_store_credential >>> \
             cred_id: {:?}, \
             cred_req_meta: {}, \
             cred_json: {}, \
             cred_def_json: {}, \
             rev_reg_def_json: {:?}",
-           cred_id, cred_req_meta, cred_json, cred_def_json, rev_reg_def_json,
+        cred_id,
+        cred_req_meta,
+        cred_json,
+        cred_def_json,
+        rev_reg_def_json,
     );
 
     if settings::indy_mocks_enabled() {
@@ -42,9 +42,7 @@ pub async fn libindy_prover_store_credential(
 
     let rev_reg_def_json = match rev_reg_def_json {
         None => None,
-        Some(s) => {
-            Some(serde_json::from_str::<RevocationRegistryDefinition>(s)?)
-        }
+        Some(s) => Some(serde_json::from_str::<RevocationRegistryDefinition>(s)?),
     };
 
     let res = Locator::instance()
@@ -56,40 +54,32 @@ pub async fn libindy_prover_store_credential(
             cred_json,
             cred_def_json,
             rev_reg_def_json,
-        ).await?;
+        )
+        .await?;
 
     Ok(res)
 }
 
-pub async fn libindy_prover_get_credential(
-    wallet_handle: WalletHandle,
-    cred_id: &str,
-) -> VcxResult<String> {
-    trace!("libindy_prover_get_credential >>> \
+pub async fn libindy_prover_get_credential(wallet_handle: WalletHandle, cred_id: &str) -> VcxResult<String> {
+    trace!(
+        "libindy_prover_get_credential >>> \
             cred_id: {:?}",
-           cred_id,
+        cred_id,
     );
 
     let res = Locator::instance()
         .prover_controller
-        .get_credential(
-            wallet_handle,
-            cred_id.into(),
-        ).await?;
+        .get_credential(wallet_handle, cred_id.into())
+        .await?;
 
     Ok(res)
 }
 
-pub async fn libindy_prover_delete_credential(
-    wallet_handle: WalletHandle,
-    cred_id: &str,
-) -> VcxResult<()> {
+pub async fn libindy_prover_delete_credential(wallet_handle: WalletHandle, cred_id: &str) -> VcxResult<()> {
     Locator::instance()
         .prover_controller
-        .delete_credential(
-            wallet_handle,
-            cred_id.into(),
-        ).await?;
+        .delete_credential(wallet_handle, cred_id.into())
+        .await?;
 
     Ok(())
 }
@@ -104,10 +94,8 @@ pub async fn libindy_prover_create_master_secret(
 
     let res = Locator::instance()
         .prover_controller
-        .create_master_secret(
-            wallet_handle,
-            Some(master_secret_id.into()),
-        ).await?;
+        .create_master_secret(wallet_handle, Some(master_secret_id.into()))
+        .await?;
 
     Ok(res)
 }
@@ -117,7 +105,7 @@ pub async fn libindy_prover_create_credential_req(
     prover_did: &str,
     credential_offer_json: &str,
     credential_def_json: &str,
-    master_secret_name: &str
+    master_secret_name: &str,
 ) -> VcxResult<(String, String)> {
     if settings::indy_mocks_enabled() {
         return Ok((utils::constants::CREDENTIAL_REQ_STRING.to_owned(), String::new()));
@@ -135,7 +123,8 @@ pub async fn libindy_prover_create_credential_req(
             cred_offer,
             cred_def,
             master_secret_name.into(),
-        ).await?;
+        )
+        .await?;
 
     Ok(res)
 }

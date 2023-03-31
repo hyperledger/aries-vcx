@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
+use crate::errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 use crate::testing::mocking::AgencyMockDecrypted;
 use crate::wallet::base_agency_client_wallet::BaseAgencyClientWallet;
 

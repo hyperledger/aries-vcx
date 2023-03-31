@@ -1,16 +1,16 @@
 use std::sync::Arc;
 
 use crate::error::*;
-use crate::storage::Storage;
 use crate::storage::object_cache::ObjectCache;
-use aries_vcx::core::profile::profile::Profile;
-use aries_vcx::messages::connection::invite::Invitation;
-use aries_vcx::messages::connection::request::Request;
-use aries_vcx::messages::issuance::credential_offer::CredentialOffer;
-use aries_vcx::messages::issuance::credential_proposal::CredentialProposal;
-use aries_vcx::messages::proof_presentation::presentation_proposal::PresentationProposal;
-use aries_vcx::plugins::wallet::agency_client_wallet::ToBaseAgencyClientWallet;
+use crate::storage::Storage;
 use aries_vcx::common::ledger::transactions::into_did_doc;
+use aries_vcx::core::profile::profile::Profile;
+use aries_vcx::messages::protocols::connection::invite::Invitation;
+use aries_vcx::messages::protocols::connection::request::Request;
+use aries_vcx::messages::protocols::issuance::credential_offer::CredentialOffer;
+use aries_vcx::messages::protocols::issuance::credential_proposal::CredentialProposal;
+use aries_vcx::messages::protocols::proof_presentation::presentation_proposal::PresentationProposal;
+use aries_vcx::plugins::wallet::agency_client_wallet::ToBaseAgencyClientWallet;
 use aries_vcx::{
     agency_client::{agency_client::AgencyClient, configuration::AgencyClientConfig},
     handlers::connection::mediated_connection::{ConnectionState, MediatedConnection},
@@ -48,7 +48,7 @@ impl ServiceMediatedConnections {
 
     pub async fn create_invitation(&self) -> AgentResult<Invitation> {
         let mut connection = MediatedConnection::create("", &self.profile, &self.agency_client()?, true).await?;
-        connection.connect(&self.profile, &self.agency_client()?).await?;
+        connection.connect(&self.profile, &self.agency_client()?, None).await?;
         let invite = connection
             .get_invite_details()
             .ok_or_else(|| AgentError::from_kind(AgentErrorKind::InviteDetails))?
@@ -60,22 +60,16 @@ impl ServiceMediatedConnections {
 
     pub async fn receive_invitation(&self, invite: Invitation) -> AgentResult<String> {
         let ddo = into_did_doc(&self.profile, &invite).await?;
-        let connection = MediatedConnection::create_with_invite(
-            "",
-            &self.profile,
-            &self.agency_client()?,
-            invite,
-            ddo,
-            true,
-        )
-        .await?;
+        let connection =
+            MediatedConnection::create_with_invite("", &self.profile, &self.agency_client()?, invite, ddo, true)
+                .await?;
         self.mediated_connections
             .insert(&connection.get_thread_id(), connection)
     }
 
     pub async fn send_request(&self, thread_id: &str) -> AgentResult<()> {
         let mut connection = self.mediated_connections.get(thread_id)?;
-        connection.connect(&self.profile, &self.agency_client()?).await?;
+        connection.connect(&self.profile, &self.agency_client()?, None).await?;
         connection
             .find_message_and_update_state(&self.profile, &self.agency_client()?)
             .await?;

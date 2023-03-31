@@ -1,7 +1,7 @@
-use messages::a2a::MessageId;
-use messages::trust_ping::ping::Ping;
-use messages::trust_ping::ping_response::PingResponse;
 use crate::utils::uuid;
+use messages::a2a::{A2AMessage, MessageId};
+use messages::protocols::trust_ping::ping::Ping;
+use messages::protocols::trust_ping::ping_response::PingResponse;
 
 pub fn build_ping(request_response: bool, comment: Option<String>) -> Ping {
     Ping::create(MessageId(uuid::uuid()))
@@ -19,11 +19,15 @@ pub fn build_ping_response(ping: &Ping) -> PingResponse {
     PingResponse::create().set_thread_id(&thread_id).set_out_time()
 }
 
+pub fn build_ping_response_msg(ping: &Ping) -> A2AMessage {
+    build_ping_response(ping).to_a2a_message()
+}
+
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use messages::trust_ping::ping::unit_tests::{_ping, _ping_no_thread};
-    use messages::trust_ping::ping_response::unit_tests::_ping_response;
+    use messages::protocols::trust_ping::ping::unit_tests::{_ping, _ping_no_thread};
+    use messages::protocols::trust_ping::ping_response::unit_tests::_ping_response;
 
     use super::*;
 

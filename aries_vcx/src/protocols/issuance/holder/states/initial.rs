@@ -1,4 +1,4 @@
-use crate::error::prelude::*;
+use crate::errors::error::prelude::*;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct InitialHolderState {}
@@ -9,8 +9,8 @@ impl InitialHolderState {
     }
 
     pub fn is_revokable(&self) -> VcxResult<bool> {
-        Err(VcxError::from_msg(
-            VcxErrorKind::InvalidState,
+        Err(AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidState,
             "Revocation information not available in the initial state",
         ))
     }

@@ -13,10 +13,14 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Use Node.js ${{ inputs.node-version }}
+    - name: "Use Node.js ${{ inputs.node-version }}"
       uses: actions/setup-node@v3
       with:
         node-version: ${{ inputs.node-version }}
+    - name: "Install npm 8.19.3"
+      shell: bash
+      run: |
+        npm install -g npm@8.19.3
     - uses: actions-rs/toolchain@v1
       with:
         toolchain: 1.64.0
@@ -39,6 +43,14 @@ runs:
         docker run --rm -d --name indypool  --network host ${{ env.DOCKER_IMAGE_POOL }}
         sleep 5
         docker-compose -f ./ci/agency/docker-compose.yml up -d
+    - name: "Build binding module"
+      shell: bash
+      run: (cd wrappers/vcx-napi-rs && npm install && npm run build:napi:debug)
     - name: "Transpile TS wrapper"
       shell: bash
-      run: (cd wrappers/node && npm install && npm run tscversion && npm run compile)
+      run: (cd wrappers/node && npm install && npm run compile)
+    - name: "Check wrappers"
+      shell: bash
+      run: |
+        ls -lah wrappers/vcx-napi-rs
+        ls -lah wrappers/node

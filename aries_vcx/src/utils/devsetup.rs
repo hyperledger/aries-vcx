@@ -1,6 +1,6 @@
 use std::fs;
-use std::sync::{Once, Arc};
 use std::future::Future;
+use std::sync::{Arc, Once};
 
 use chrono::{DateTime, Duration, Utc};
 
@@ -11,16 +11,16 @@ use agency_client::agency_client::AgencyClient;
 use agency_client::configuration::AgentProvisionConfig;
 use agency_client::testing::mocking::{disable_agency_mocks, enable_agency_mocks, AgencyMockDecrypted};
 
-use crate::core::profile::indy_profile::IndySdkProfile;
-use crate::core::profile::modular_wallet_profile::{LedgerPoolConfig, ModularWalletProfile};
+use crate::core::profile::modular_libs_profile::ModularLibsProfile;
 use crate::core::profile::profile::Profile;
+use crate::core::profile::vdrtools_profile::VdrtoolsProfile;
 use crate::global::settings;
 use crate::global::settings::init_issuer_config;
 use crate::global::settings::{disable_indy_mocks, enable_indy_mocks, set_test_configs};
 use crate::indy::ledger::pool::test_utils::{
     create_test_ledger_config, create_tmp_genesis_txn_file, delete_test_pool, open_test_pool,
 };
-use crate::indy::ledger::pool::{PoolConfig};
+use crate::indy::ledger::pool::PoolConfig;
 use crate::indy::utils::mocks::did_mocks::DidMocks;
 use crate::indy::utils::mocks::pool_mocks::PoolMocks;
 use crate::indy::wallet::open_wallet;
@@ -28,6 +28,7 @@ use crate::indy::wallet::{
     close_wallet, create_and_open_wallet, create_indy_wallet, create_wallet_with_master_secret, delete_wallet,
     wallet_configure_issuer, WalletConfig,
 };
+use crate::plugins::ledger::indy_vdr_ledger::LedgerPoolConfig;
 use crate::plugins::wallet::base_wallet::BaseWallet;
 use crate::plugins::wallet::indy_wallet::IndySdkWallet;
 use crate::utils;
@@ -97,7 +98,7 @@ fn reset_global_state() {
     PoolMocks::clear_mocks();
     DidMocks::clear_mocks();
     disable_indy_mocks().unwrap();
-    settings::reset_config_values();
+    settings::reset_config_values().unwrap();
 }
 
 impl SetupEmpty {
@@ -174,7 +175,7 @@ impl SetupLibraryWallet {
 
     pub async fn run<F>(f: impl FnOnce(Self) -> F)
     where
-        F: Future<Output=()>,
+        F: Future<Output = ()>,
     {
         let init = Self::init().await;
 
@@ -183,13 +184,9 @@ impl SetupLibraryWallet {
 
         f(init).await;
 
-        close_wallet(handle)
-            .await
-            .unwrap();
+        close_wallet(handle).await.unwrap();
 
-        delete_wallet(&config)
-            .await
-            .unwrap();
+        delete_wallet(&config).await.unwrap();
 
         reset_global_state();
     }
@@ -224,10 +221,9 @@ impl TestSetupCreateWallet {
         self
     }
 
-
     pub async fn run<F>(f: impl FnOnce(Self) -> F)
     where
-        F: Future<Output=bool>,
+        F: Future<Output = bool>,
     {
         let init = Self::init().await;
 
@@ -243,7 +239,6 @@ impl TestSetupCreateWallet {
 
         reset_global_state();
     }
-
 }
 
 impl SetupPoolConfig {
@@ -310,7 +305,7 @@ impl SetupWalletPoolAgency {
 
     pub async fn run<F>(f: impl FnOnce(Self) -> F)
     where
-        F: Future<Output=()>,
+        F: Future<Output = ()>,
     {
         let init = Self::init().await;
 
@@ -318,8 +313,7 @@ impl SetupWalletPoolAgency {
 
         f(init).await;
 
-        delete_test_pool(pool_handle)
-            .await;
+        delete_test_pool(pool_handle).await;
 
         reset_global_state();
     }
@@ -347,7 +341,7 @@ impl SetupWalletPool {
 
     pub async fn run<F>(f: impl FnOnce(Self) -> F)
     where
-        F: Future<Output=()>,
+        F: Future<Output = ()>,
     {
         let init = Self::init().await;
 
@@ -355,8 +349,7 @@ impl SetupWalletPool {
 
         f(init).await;
 
-        delete_test_pool(pool_handle)
-            .await;
+        delete_test_pool(pool_handle).await;
 
         reset_global_state();
     }
@@ -368,20 +361,20 @@ impl SetupProfile {
     }
 
     pub async fn init() -> SetupProfile {
+        init_test_logging();
+        set_test_configs();
         if SetupProfile::should_run_modular() {
             info!("SetupProfile >> using modular profile");
             SetupProfile::init_modular().await
         } else {
             info!("SetupProfile >> using indy profile");
-        SetupProfile::init_indy().await
+            SetupProfile::init_indy().await
         }
     }
 
     // FUTURE - ideally no tests should be using this method, they should be using the generic init
     // after modular profile Anoncreds/Ledger methods have all been implemented, all tests should use init()
     async fn init_indy() -> SetupProfile {
-        init_test_logging();
-        set_test_configs();
         let (institution_did, wallet_handle) = setup_issuer_wallet().await;
 
         settings::set_config_value(
@@ -393,7 +386,7 @@ impl SetupProfile {
         .unwrap();
         let pool_handle = open_test_pool().await;
 
-        let profile: Arc<dyn Profile> = Arc::new(IndySdkProfile::new(wallet_handle, pool_handle.clone()));
+        let profile: Arc<dyn Profile> = Arc::new(VdrtoolsProfile::new(wallet_handle, pool_handle.clone()));
 
         async fn indy_teardown(pool_handle: i32) {
             delete_test_pool(pool_handle.clone()).await;
@@ -407,8 +400,6 @@ impl SetupProfile {
     }
 
     async fn init_modular() -> SetupProfile {
-        init_test_logging();
-        set_test_configs();
         let (institution_did, wallet_handle) = setup_issuer_wallet().await;
 
         let genesis_file_path = create_tmp_genesis_txn_file();
@@ -416,9 +407,13 @@ impl SetupProfile {
         let wallet = IndySdkWallet::new(wallet_handle);
 
         let profile: Arc<dyn Profile> =
-            Arc::new(ModularWalletProfile::new(Arc::new(wallet), LedgerPoolConfig { genesis_file_path }).unwrap());
+            Arc::new(ModularLibsProfile::new(Arc::new(wallet), LedgerPoolConfig { genesis_file_path }).unwrap());
 
-        Arc::clone(&profile).inject_anoncreds().prover_create_link_secret(settings::DEFAULT_LINK_SECRET_ALIAS).await.unwrap();
+        Arc::clone(&profile)
+            .inject_anoncreds()
+            .prover_create_link_secret(settings::DEFAULT_LINK_SECRET_ALIAS)
+            .await
+            .unwrap();
 
         async fn modular_teardown() {
             // nothing to do
@@ -433,7 +428,7 @@ impl SetupProfile {
 
     pub async fn run<F>(f: impl FnOnce(Self) -> F)
     where
-        F: Future<Output=()>,
+        F: Future<Output = ()>,
     {
         let init = Self::init().await;
 
@@ -450,7 +445,7 @@ impl SetupProfile {
     // after modular profile Anoncreds/Ledger methods have all been implemented, all tests should use run()
     pub async fn run_indy<F>(f: impl FnOnce(Self) -> F)
     where
-        F: Future<Output=()>,
+        F: Future<Output = ()>,
     {
         let init = Self::init_indy().await;
 
@@ -510,7 +505,7 @@ impl SetupPool {
 
     pub async fn run<F>(f: impl FnOnce(Self) -> F)
     where
-        F: Future<Output=()>,
+        F: Future<Output = ()>,
     {
         let init = Self::init().await;
 
@@ -518,13 +513,11 @@ impl SetupPool {
 
         f(init).await;
 
-        delete_test_pool(handle)
-            .await;
+        delete_test_pool(handle).await;
 
         reset_global_state();
     }
 }
-
 
 #[macro_export]
 macro_rules! assert_match {
@@ -636,7 +629,7 @@ impl TempFile {
 
 impl Drop for TempFile {
     fn drop(&mut self) {
-        fs::remove_file(&self.path).unwrap()
+        fs::remove_file(&self.path).unwrap_or(());
     }
 }
 

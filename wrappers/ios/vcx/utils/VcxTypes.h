@@ -9,6 +9,8 @@
 #ifndef VcxTypes_h
 #define VcxTypes_h
 
+#include <stdint.h>
+
 typedef enum {
     none = 0,
     initialized,

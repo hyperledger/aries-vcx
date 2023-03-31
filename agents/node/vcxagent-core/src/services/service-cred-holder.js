@@ -66,7 +66,7 @@ module.exports.createServiceCredHolder = function createServiceCredHolder ({ log
 
   async function createCredentialFromOfferAndSendRequest (connectionId, holderCredentialId, credentialOffer) {
     const connection = await loadConnection(connectionId)
-    const credential = await Credential.create({ sourceId: 'credential', offer: credentialOffer })
+    const credential = Credential.create({ sourceId: 'credential', offer: credentialOffer })
     await saveHolderCredential(holderCredentialId, credential)
     logger.info('Sending credential request')
     await credential.sendRequest({ connection, payment: 0 })
@@ -76,7 +76,7 @@ module.exports.createServiceCredHolder = function createServiceCredHolder ({ log
 
   async function createCredentialFromOfferAndDecline (connectionId, holderCredentialId, credentialOffer, comment) {
     const connection = await loadConnection(connectionId)
-    const credential = await Credential.create({ sourceId: 'credential', offer: credentialOffer })
+    const credential = Credential.create({ sourceId: 'credential', offer: credentialOffer })
     await saveHolderCredential(holderCredentialId, credential)
     logger.info('Declining credential offer')
     await credential.declineOffer(connection, comment)

@@ -1,37 +1,37 @@
-use messages::actors::Actors;
-use crate::error::prelude::*;
+use crate::errors::error::prelude::*;
 use crate::utils::qualifier;
+use messages::actors::Actors;
 
+use bs58;
 use openssl::bn::BigNum;
-use rust_base58::FromBase58;
 
 pub fn validate_did(did: &str) -> VcxResult<String> {
     if qualifier::is_fully_qualified(did) {
         Ok(did.to_string())
     } else {
-        //    assert len(base58.b58decode(did)) == 16
         let check_did = String::from(did);
-        match check_did.from_base58() {
+        match bs58::decode(check_did.clone()).into_vec() {
             Ok(ref x) if x.len() == 16 => Ok(check_did),
-            Ok(_) => {
-                warn!("ok(_)");
-                Err(VcxError::from_msg(VcxErrorKind::InvalidDid, "Invalid DID length"))
-            }
-            Err(x) => {
-                warn!("Err(x)");
-                return Err(VcxError::from_msg(
-                    VcxErrorKind::NotBase58,
-                    format!("Invalid DID: {}", x),
-                ));
-            }
+            Ok(x) => Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidDid,
+                format!("Invalid DID length, expected 16 bytes, decoded {} bytes", x.len()),
+            )),
+            Err(err) => Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::NotBase58,
+                format!("DID is not valid base58, details: {}", err),
+            )),
         }
     }
 }
 
 pub fn validate_nonce(nonce: &str) -> VcxResult<String> {
-    let nonce = BigNum::from_dec_str(nonce).map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidNonce, err))?;
+    let nonce =
+        BigNum::from_dec_str(nonce).map_err(|err| AriesVcxError::from_msg(AriesVcxErrorKind::InvalidNonce, err))?;
     if nonce.num_bits() > 80 {
-        return Err(VcxError::from_msg(VcxErrorKind::InvalidNonce, "Invalid Nonce length"));
+        return Err(AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidNonce,
+            "Invalid Nonce length",
+        ));
     }
     Ok(nonce.to_string())
 }
@@ -44,7 +44,7 @@ pub fn validate_key_delegate(delegate: &str) -> VcxResult<String> {
 
 pub fn validate_actors(actors: &str) -> VcxResult<Vec<Actors>> {
     ::serde_json::from_str(actors)
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidOption, format!("Invalid actors: {:?}", err)))
+        .map_err(|err| AriesVcxError::from_msg(AriesVcxErrorKind::InvalidOption, format!("Invalid actors: {:?}", err)))
 }
 
 #[cfg(test)]
@@ -71,7 +71,7 @@ mod unit_tests {
 
         let to_did = "8XFh8yBzrpJQmNyZzgoT";
         match validate_did(&to_did) {
-            Err(x) => assert_eq!(x.kind(), VcxErrorKind::InvalidDid),
+            Err(x) => assert_eq!(x.kind(), AriesVcxErrorKind::InvalidDid),
             Ok(_) => panic!("Should be invalid did"),
         }
     }
@@ -82,7 +82,7 @@ mod unit_tests {
 
         let to_did = "8*Fh8yBzrpJQmNyZzgoTqB";
         match validate_did(&to_did) {
-            Err(x) => assert_eq!(x.kind(), VcxErrorKind::NotBase58),
+            Err(x) => assert_eq!(x.kind(), AriesVcxErrorKind::NotBase58),
             Ok(_) => panic!("Should be invalid did"),
         }
     }

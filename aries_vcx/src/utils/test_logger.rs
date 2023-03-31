@@ -12,7 +12,7 @@ use std::io::Write;
 use chrono::format::{DelayedFormat, StrftimeItems};
 use chrono::Local;
 
-use crate::error::prelude::*;
+use crate::errors::error::prelude::*;
 
 use self::env_logger::fmt::Formatter;
 use self::env_logger::Builder as EnvLoggerBuilder;
@@ -55,7 +55,7 @@ fn text_no_color_format(buf: &mut Formatter, record: &Record) -> std::io::Result
 impl LibvcxDefaultLogger {
     pub fn init_testing_logger() {
         env::var("RUST_LOG").map_or((), |log_pattern| {
-            LibvcxDefaultLogger::init(Some(log_pattern)).unwrap();
+            LibvcxDefaultLogger::init(Some(log_pattern)).expect("Failed to initialize LibvcxDefaultLogger for testing");
         });
     }
 
@@ -93,7 +93,10 @@ impl LibvcxDefaultLogger {
                 .parse_filters(pattern.as_deref().unwrap_or("warn"))
                 .try_init()
                 .map_err(|err| {
-                    VcxError::from_msg(VcxErrorKind::LoggingError, format!("Cannot init logger: {:?}", err))
+                    AriesVcxError::from_msg(
+                        AriesVcxErrorKind::LoggingError,
+                        format!("Cannot init logger: {:?}", err),
+                    )
                 })?;
         }
         Ok(())

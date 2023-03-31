@@ -1,12 +1,12 @@
-use crate::error::prelude::*;
-use messages::out_of_band::invitation::OutOfBandInvitation;
-use messages::out_of_band::{GoalCode, HandshakeProtocol};
+use crate::errors::error::prelude::*;
 use messages::a2a::message_family::MessageFamilies;
 use messages::a2a::message_type::MessageType;
 use messages::a2a::A2AMessage;
-use messages::attachment::AttachmentId;
+use messages::concepts::attachment::AttachmentId;
+use messages::protocols::out_of_band::invitation::OutOfBandInvitation;
+use messages::protocols::out_of_band::{GoalCode, HandshakeProtocol};
 
-use messages::did_doc::service_resolvable::ServiceResolvable;
+use messages::protocols::out_of_band::service_oob::ServiceOob;
 
 #[derive(Default, Debug, PartialEq, Clone)]
 pub struct OutOfBandSender {
@@ -33,12 +33,12 @@ impl OutOfBandSender {
         self
     }
 
-    pub fn append_service(mut self, service: &ServiceResolvable) -> Self {
+    pub fn append_service(mut self, service: &ServiceOob) -> Self {
         self.oob.services.push(service.clone());
         self
     }
 
-    pub fn get_services(&self) -> Vec<ServiceResolvable> {
+    pub fn get_services(&self) -> Vec<ServiceOob> {
         self.oob.services.clone()
     }
 
@@ -50,7 +50,10 @@ impl OutOfBandSender {
         let new_protocol = match protocol {
             HandshakeProtocol::ConnectionV1 => MessageType::build(MessageFamilies::Connections, ""),
             HandshakeProtocol::DidExchangeV1 => {
-                return Err(VcxError::from(VcxErrorKind::ActionNotSupported));
+                return Err(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::ActionNotSupported,
+                    "DidExchange protocol is not implemented".to_string(),
+                ))
             }
         };
         match self.oob.handshake_protocols {
@@ -72,8 +75,8 @@ impl OutOfBandSender {
             a2a_msg @ A2AMessage::CredentialOffer(_) => (AttachmentId::CredentialOffer, json!(&a2a_msg).to_string()),
             _ => {
                 error!("Appended message type {:?} is not allowed.", msg);
-                return Err(VcxError::from_msg(
-                    VcxErrorKind::InvalidMessageFormat,
+                return Err(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidMessageFormat,
                     format!("Appended message type {:?} is not allowed.", msg),
                 ));
             }
@@ -102,10 +105,10 @@ impl OutOfBandSender {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 mod unit_tests {
-    use messages::did_doc::service_aries::AriesService;
-    use messages::connection::did::Did;
-    use messages::issuance::credential_offer::CredentialOffer;
     use crate::utils::devsetup::SetupMocks;
+    use messages::diddoc::aries::service::AriesService;
+    use messages::protocols::connection::did::Did;
+    use messages::protocols::issuance::credential_offer::CredentialOffer;
 
     use super::*;
 
@@ -116,8 +119,8 @@ mod unit_tests {
             .set_goal_code(&GoalCode::IssueVC)
     }
 
-    fn _create_service() -> ServiceResolvable {
-        ServiceResolvable::AriesService(
+    fn _create_service() -> ServiceOob {
+        ServiceOob::AriesService(
             AriesService::create()
                 .set_service_endpoint("http://example.org/agent".into())
                 .set_routing_keys(vec!["12345".into()])
@@ -141,7 +144,7 @@ mod unit_tests {
     fn test_append_did_service_object_to_oob_services() {
         let _setup = SetupMocks::init();
 
-        let service = ServiceResolvable::Did(Did::new("V4SGRU86Z58d6TV7PBUe6f").unwrap());
+        let service = ServiceOob::Did(Did::new("V4SGRU86Z58d6TV7PBUe6f").unwrap());
         let oob = _create_oob().append_service(&service);
         let resolved_service = oob.get_services();
 

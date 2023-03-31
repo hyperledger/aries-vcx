@@ -1,23 +1,18 @@
-use vdrtools::{
-    Locator, DidValue,
-};
+use vdrtools::{DidValue, Locator};
 
 use vdrtools::{PoolHandle, WalletHandle};
 
-use crate::error::{VcxError, VcxErrorKind, VcxResult};
+use crate::common::primitives::revocation_registry::RevocationRegistryDefinition;
+use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use crate::global::settings;
 use crate::indy::anoncreds;
 use crate::indy::ledger::transactions::{
-    build_rev_reg_delta_request, build_rev_reg_request,
-    check_response, sign_and_submit_to_ledger,
+    build_rev_reg_delta_request, build_rev_reg_request, check_response, sign_and_submit_to_ledger,
 };
 use crate::indy::wallet_non_secrets::{clear_rev_reg_delta, get_rev_reg_delta, set_rev_reg_delta};
-use crate::common::primitives::revocation_registry::RevocationRegistryDefinition;
 use crate::utils::parse_and_validate;
 
 pub const BLOB_STORAGE_TYPE: &str = "default";
-#[allow(dead_code)]
-pub const REVOCATION_REGISTRY_TYPE: &str = "ISSUANCE_BY_DEFAULT";
 
 // consider relocating out of primitive
 pub async fn libindy_create_and_store_revoc_reg(
@@ -34,10 +29,8 @@ pub async fn libindy_create_and_store_revoc_reg(
 
     let writer = Locator::instance()
         .blob_storage_controller
-        .open_writer(
-            BLOB_STORAGE_TYPE.into(),
-            tails_config,
-        ).await?;
+        .open_writer(BLOB_STORAGE_TYPE.into(), tails_config)
+        .await?;
 
     let res = Locator::instance()
         .issuer_controller
@@ -47,12 +40,13 @@ pub async fn libindy_create_and_store_revoc_reg(
             None,
             tag.into(),
             vdrtools::CredentialDefinitionId(cred_def_id.into()),
-            vdrtools::RevocationRegistryConfig{
+            vdrtools::RevocationRegistryConfig {
                 issuance_type: Some(vdrtools::IssuanceType::ISSUANCE_BY_DEFAULT),
                 max_cred_num: Some(max_creds),
             },
             writer,
-        ).await?;
+        )
+        .await?;
 
     Ok(res)
 }
@@ -64,8 +58,7 @@ pub async fn libindy_issuer_revoke_credential(
     rev_reg_id: &str,
     cred_rev_id: &str,
 ) -> VcxResult<String> {
-    let blob_handle = anoncreds::blob_storage_open_reader(tails_file)
-        .await?;
+    let blob_handle = anoncreds::blob_storage_open_reader(tails_file).await?;
 
     let res = Locator::instance()
         .issuer_controller
@@ -74,23 +67,17 @@ pub async fn libindy_issuer_revoke_credential(
             blob_handle,
             vdrtools::RevocationRegistryId(rev_reg_id.into()),
             cred_rev_id.into(),
-        ).await?;
+        )
+        .await?;
 
     Ok(res)
 }
 
 // consider relocating out of primitive
-pub async fn libindy_issuer_merge_revocation_registry_deltas(
-    old_delta: &str,
-    new_delta: &str,
-) -> VcxResult<String> {
-
+pub async fn libindy_issuer_merge_revocation_registry_deltas(old_delta: &str, new_delta: &str) -> VcxResult<String> {
     let res = Locator::instance()
         .issuer_controller
-        .merge_revocation_registry_deltas(
-            parse_and_validate(old_delta)?,
-            parse_and_validate(new_delta)?,
-        )?;
+        .merge_revocation_registry_deltas(parse_and_validate(old_delta)?, parse_and_validate(new_delta)?)?;
 
     Ok(res)
 }
@@ -108,23 +95,15 @@ pub async fn publish_rev_reg_def(
     }
 
     let rev_reg_def_json = serde_json::to_string(&rev_reg_def).map_err(|err| {
-        VcxError::from_msg(
-            VcxErrorKind::SerializationError,
+        AriesVcxError::from_msg(
+            AriesVcxErrorKind::SerializationError,
             format!("Failed to serialize rev_reg_def: {:?}, error: {:?}", rev_reg_def, err),
         )
     })?;
 
-    let rev_reg_def_req = build_rev_reg_request(
-        issuer_did,
-        &rev_reg_def_json)
-        .await?;
+    let rev_reg_def_req = build_rev_reg_request(issuer_did, &rev_reg_def_json).await?;
 
-    let response = sign_and_submit_to_ledger(
-        wallet_handle,
-        pool_handle,
-        issuer_did,
-        &rev_reg_def_req)
-        .await?;
+    let response = sign_and_submit_to_ledger(wallet_handle, pool_handle, issuer_did, &rev_reg_def_req).await?;
 
     check_response(&response)
 }
@@ -143,18 +122,9 @@ pub async fn publish_rev_reg_delta(
         revoc_reg_delta_json
     );
 
-    let request = build_rev_reg_delta_request(
-        issuer_did,
-        rev_reg_id,
-        revoc_reg_delta_json,
-    ).await?;
+    let request = build_rev_reg_delta_request(issuer_did, rev_reg_id, revoc_reg_delta_json).await?;
 
-    let response = sign_and_submit_to_ledger(
-        wallet_handle,
-        pool_handle,
-        issuer_did,
-        &request,
-    ).await?;
+    let response = sign_and_submit_to_ledger(wallet_handle, pool_handle, issuer_did, &request).await?;
 
     check_response(&response)?;
 
@@ -173,53 +143,53 @@ pub async fn revoke_credential_local(
     }
 
     let mut new_delta_json =
-        libindy_issuer_revoke_credential(
-            wallet_handle,
-            tails_file,
-            rev_reg_id,
-            cred_rev_id,
-        ).await?;
+        libindy_issuer_revoke_credential(wallet_handle, tails_file, rev_reg_id, cred_rev_id).await?;
 
     debug!("revoke_credential_local >>> new_delta_json: {}", new_delta_json);
 
     if let Some(old_delta_json) = get_rev_reg_delta(wallet_handle, rev_reg_id).await {
-        debug!("revoke_credential_local >>> old_delta_json: {}",
-               old_delta_json);
+        debug!("revoke_credential_local >>> old_delta_json: {}", old_delta_json);
         new_delta_json =
-            libindy_issuer_merge_revocation_registry_deltas(
-                old_delta_json.as_str(),
-                new_delta_json.as_str(),
-            ).await?;
+            libindy_issuer_merge_revocation_registry_deltas(old_delta_json.as_str(), new_delta_json.as_str()).await?;
         debug!("revoke_credential_local >>> merged_delta_json: {}", new_delta_json);
     }
 
-    set_rev_reg_delta(wallet_handle, rev_reg_id, &new_delta_json)
-        .await
+    set_rev_reg_delta(wallet_handle, rev_reg_id, &new_delta_json).await
 }
 
 // consider moving out of indy dir as this aggregates multiple calls
-pub async fn publish_local_revocations(wallet_handle: WalletHandle, pool_handle: PoolHandle, submitter_did: &str, rev_reg_id: &str) -> VcxResult<()> {
+pub async fn publish_local_revocations(
+    wallet_handle: WalletHandle,
+    pool_handle: PoolHandle,
+    submitter_did: &str,
+    rev_reg_id: &str,
+) -> VcxResult<()> {
     if let Some(delta) = get_rev_reg_delta(wallet_handle, rev_reg_id).await {
-        publish_rev_reg_delta(
-            wallet_handle,
-            pool_handle, &submitter_did, rev_reg_id, &delta).await?;
+        publish_rev_reg_delta(wallet_handle, pool_handle, submitter_did, rev_reg_id, &delta).await?;
 
-        info!("publish_local_revocations >>> rev_reg_delta published for rev_reg_id {}",
-              rev_reg_id);
+        info!(
+            "publish_local_revocations >>> rev_reg_delta published for rev_reg_id {}",
+            rev_reg_id
+        );
 
         match clear_rev_reg_delta(wallet_handle, rev_reg_id).await {
             Ok(_) => {
-                info!("publish_local_revocations >>> rev_reg_delta storage cleared for rev_reg_id {}",
-                      rev_reg_id);
+                info!(
+                    "publish_local_revocations >>> rev_reg_delta storage cleared for rev_reg_id {}",
+                    rev_reg_id
+                );
                 Ok(())
-            },
-            Err(err) => {
-                error!("publish_local_revocations >>> failed to clear revocation delta storage for rev_reg_id: {}, error: {}",
-                       rev_reg_id, err);
-                Err(VcxError::from(VcxErrorKind::RevDeltaFailedToClear))
             }
+            Err(err) => Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::RevDeltaFailedToClear,
+                format!(
+                    "Failed to clear revocation delta storage for rev_reg_id: {}, error: {}",
+                    rev_reg_id, err
+                ),
+            )),
         }
     } else {
-        Err(VcxError::from(VcxErrorKind::RevDeltaNotFound))
+        Err(AriesVcxError::from_msg(AriesVcxErrorKind::RevDeltaNotFound,
+                                    format!("Failed to publish revocation delta for revocation registry {}, no delta found. Possibly already published?", rev_reg_id)))
     }
 }

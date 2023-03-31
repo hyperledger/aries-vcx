@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::sync::RwLock;
 
-use crate::error::prelude::*;
+use crate::errors::error::prelude::*;
 use crate::indy::wallet::IssuerConfig;
 
 pub static CONFIG_POOL_NAME: &str = "pool_name";
@@ -56,7 +56,7 @@ pub fn disable_indy_mocks() -> VcxResult<()> {
 }
 
 pub fn indy_mocks_enabled() -> bool {
-    let config = SETTINGS.read().unwrap();
+    let config = SETTINGS.read().expect("Unable to access SETTINGS");
 
     match config.get(CONFIG_ENABLE_TEST_MODE) {
         None => false,
@@ -72,14 +72,14 @@ pub fn get_config_value(key: &str) -> VcxResult<String> {
 
     SETTINGS
         .read()
-        .or(Err(VcxError::from_msg(
-            VcxErrorKind::InvalidConfiguration,
+        .or(Err(AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidConfiguration,
             "Cannot read settings",
         )))?
         .get(key)
         .map(|v| v.to_string())
-        .ok_or(VcxError::from_msg(
-            VcxErrorKind::InvalidConfiguration,
+        .ok_or(AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidConfiguration,
             format!("Cannot read \"{}\" from settings", key),
         ))
 }
@@ -88,23 +88,26 @@ pub fn set_config_value(key: &str, value: &str) -> VcxResult<()> {
     trace!("set_config_value >>> key: {}, value: {}", key, value);
     SETTINGS
         .write()
-        .or(Err(VcxError::from_msg(
-            VcxErrorKind::UnknownError,
+        .or(Err(AriesVcxError::from_msg(
+            AriesVcxErrorKind::UnknownError,
             "Cannot write settings",
         )))?
         .insert(key.to_string(), value.to_string());
     Ok(())
 }
 
-pub fn reset_config_values() {
+pub fn reset_config_values() -> VcxResult<()> {
     trace!("reset_config_values >>>");
-    let mut config = SETTINGS.write().unwrap();
+    let mut config = SETTINGS.write()?;
     config.clear();
+    Ok(())
 }
 
 pub fn set_test_configs() -> String {
     trace!("set_testing_defaults >>>");
-    let mut settings = SETTINGS.write().unwrap();
+    let mut settings = SETTINGS
+        .write()
+        .expect("Unabled to access SETTINGS while setting test configs");
     let institution_did = CONFIG_INSTITUTION_DID;
     settings.insert(CONFIG_POOL_NAME.to_string(), DEFAULT_POOL_NAME.to_string());
     settings.insert(institution_did.to_string(), DEFAULT_DID.to_string());
@@ -174,7 +177,7 @@ pub mod unit_tests {
         // Fails with invalid key
         assert_eq!(
             get_config_value(&key).unwrap_err().kind(),
-            VcxErrorKind::InvalidConfiguration
+            AriesVcxErrorKind::InvalidConfiguration
         );
 
         set_config_value(&key, &value1).unwrap();

@@ -1,4 +1,7 @@
-const { getLedgerAuthorAgreement, setActiveTxnAuthorAgreementMeta } = require('@hyperledger/node-vcx-wrapper')
+const {
+  getLedgerAuthorAgreement,
+  setActiveTxnAuthorAgreementMeta
+} = require('@hyperledger/node-vcx-wrapper')
 const { createServiceLedgerCredDef } = require('./services/service-ledger-creddef')
 const { createServiceLedgerSchema } = require('./services/service-ledger-schema')
 const { createServiceVerifier } = require('./services/service-verifier')
@@ -6,12 +9,11 @@ const { createServiceProver } = require('./services/service-prover')
 const { createServiceCredHolder } = require('./services/service-cred-holder')
 const { createServiceCredIssuer } = require('./services/service-cred-issuer')
 const { createServiceConnections } = require('./services/service-connections')
-const { createServicePublicAgents } = require('./services/service-public-agents')
+const { createServiceNonmediatedConnections } = require('./services/service-nonmediated-connections')
 const { createServiceOutOfBand } = require('./services/service-out-of-band')
 const { createServiceLedgerRevocationRegistry } = require('./services/service-revocation-registry')
 const { provisionAgentInAgency } = require('./utils/vcx-workflows')
 const {
-  initThreadpool,
   createAgencyClientForMainWallet,
   initIssuerConfig,
   openMainWallet,
@@ -22,7 +24,7 @@ const {
 const { createStorageService } = require('./storage/storage-service')
 const { waitUntilAgencyIsReady, getAgencyConfig } = require('./common')
 
-async function createVcxAgent ({ agentName, genesisPath, agencyUrl, seed, walletExtraConfigs, logger }) {
+async function createVcxAgent ({ agentName, genesisPath, agencyUrl, seed, walletExtraConfigs, endpointInfo, logger }) {
   genesisPath = genesisPath || `${__dirname}/../resources/docker.txn`
 
   await waitUntilAgencyIsReady(agencyUrl, logger)
@@ -38,9 +40,8 @@ async function createVcxAgent ({ agentName, genesisPath, agencyUrl, seed, wallet
 
   async function agentInitVcx () {
     logger.info(`Initializing ${agentName} vcx session.`)
+
     logger.silly(`Using following agent provision to initialize VCX settings ${JSON.stringify(agentProvision, null, 2)}`)
-    logger.silly('Initializing threadpool')
-    await initThreadpool({})
     logger.silly('Initializing issuer config')
     await initIssuerConfig(agentProvision.issuerConfig)
     logger.silly('Opening main wallet')
@@ -78,9 +79,16 @@ async function createVcxAgent ({ agentName, genesisPath, agencyUrl, seed, wallet
     logger,
     saveConnection: storageService.saveConnection,
     loadConnection: storageService.loadConnection,
-    loadAgent: storageService.loadAgent,
     listConnectionIds: storageService.listConnectionKeys
   })
+
+  const serviceNonmediatedConnections = createServiceNonmediatedConnections({
+    logger,
+    saveNonmediatedConnection: storageService.saveNonmediatedConnection,
+    loadNonmediatedConnection: storageService.loadNonmediatedConnection,
+    endpointInfo
+  })
+
   const serviceLedgerSchema = createServiceLedgerSchema({
     logger,
     saveSchema: storageService.saveSchema,
@@ -130,11 +138,6 @@ async function createVcxAgent ({ agentName, genesisPath, agencyUrl, seed, wallet
     loadProof: storageService.loadProof,
     listProofIds: storageService.listProofKeys
   })
-  const servicePublicAgents = createServicePublicAgents({
-    logger,
-    saveAgent: storageService.saveAgent,
-    loadAgent: storageService.loadAgent
-  })
   const serviceOutOfBand = createServiceOutOfBand({
     logger,
     saveConnection: storageService.saveConnection,
@@ -156,6 +159,7 @@ async function createVcxAgent ({ agentName, genesisPath, agencyUrl, seed, wallet
 
     // connections
     serviceConnections,
+    serviceNonmediatedConnections,
 
     // credex
     serviceCredIssuer,
@@ -164,9 +168,6 @@ async function createVcxAgent ({ agentName, genesisPath, agencyUrl, seed, wallet
     // proofs
     serviceProver,
     serviceVerifier,
-
-    // agents
-    servicePublicAgents,
 
     // out of band
     serviceOutOfBand

@@ -1,7 +1,7 @@
-use crate::error::{VcxError, VcxErrorKind, VcxResult};
-use messages::out_of_band::invitation::OutOfBandInvitation;
-use messages::out_of_band::handshake_reuse::OutOfBandHandshakeReuse;
-use messages::out_of_band::handshake_reuse_accepted::OutOfBandHandshakeReuseAccepted;
+use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
+use messages::protocols::out_of_band::handshake_reuse::OutOfBandHandshakeReuse;
+use messages::protocols::out_of_band::handshake_reuse_accepted::OutOfBandHandshakeReuseAccepted;
+use messages::protocols::out_of_band::invitation::OutOfBandInvitation;
 
 pub fn build_handshake_reuse_msg(oob_invitation: &OutOfBandInvitation) -> OutOfBandHandshakeReuse {
     OutOfBandHandshakeReuse::default()
@@ -14,8 +14,8 @@ pub fn build_handshake_reuse_accepted_msg(
     handshake_reuse: &OutOfBandHandshakeReuse,
 ) -> VcxResult<OutOfBandHandshakeReuseAccepted> {
     let thread_id = handshake_reuse.get_thread_id();
-    let pthread_id = handshake_reuse.thread.pthid.as_deref().ok_or(VcxError::from_msg(
-        VcxErrorKind::InvalidOption,
+    let pthread_id = handshake_reuse.thread.pthid.as_deref().ok_or(AriesVcxError::from_msg(
+        AriesVcxErrorKind::InvalidOption,
         "Parent thread id missing",
     ))?;
     Ok(OutOfBandHandshakeReuseAccepted::default()
@@ -27,10 +27,10 @@ pub fn build_handshake_reuse_accepted_msg(
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 mod unit_tests {
-    use messages::out_of_band::invitation::OutOfBandInvitation;
-    use messages::a2a::MessageId;
     use crate::protocols::oob::{build_handshake_reuse_accepted_msg, build_handshake_reuse_msg};
     use crate::utils::devsetup::{was_in_past, SetupMocks};
+    use messages::a2a::MessageId;
+    use messages::protocols::out_of_band::invitation::OutOfBandInvitation;
 
     #[test]
     #[cfg(feature = "general_test")]

@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::sync::RwLock;
 
-use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
+use crate::errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 
 const CONFIG_AGENCY_TEST_MODE: &str = "enable_test_mode";
 
@@ -30,7 +30,7 @@ fn _set_test_config(key: &str, value: &str) {
     } else {
         AGENCY_SETTINGS
             .write()
-            .unwrap()
+            .expect("Could not write to AGENCY_SETTINGS")
             .insert(key.to_string(), value.to_string());
     }
 }

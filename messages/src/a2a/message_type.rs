@@ -68,12 +68,7 @@ impl std::string::ToString for MessageType {
             )
         // TODO: Remove once handshake protocol is implemented
         } else if self.msg_type.is_empty() {
-            format!(
-                "{}/{}/{}",
-                self.prefix,
-                self.family.to_string(),
-                self.version,
-            )
+            format!("{}/{}/{}", self.prefix, self.family.to_string(), self.version,)
         } else {
             format!(
                 "{}/{}/{}/{}",
@@ -96,7 +91,7 @@ pub fn parse_message_type_legacy(message_type: &str) -> Option<MessageType> {
             (?P<version>.*)/
             (?P<type>.*)"
         )
-        .unwrap();
+        .expect("unexpected regex error occurred.");
     }
 
     RE.captures(message_type).and_then(|cap| {
@@ -129,7 +124,7 @@ pub fn parse_message_type(message_type: &str) -> Option<MessageType> {
             (?P<type>.+)     # request
             "
         )
-        .unwrap();
+        .expect("unexpected regex error occurred.");
     }
 
     RE.captures(message_type).and_then(|cap| {

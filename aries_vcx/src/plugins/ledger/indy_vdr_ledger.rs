@@ -1,6 +1,7 @@
 use indy_vdr as vdr;
 use std::collections::hash_map::RandomState;
 use std::collections::HashMap;
+use std::fmt::{Debug, Formatter};
 use std::sync::Arc;
 use vdr::ledger::requests::schema::{AttributeNames, Schema, SchemaV1};
 
@@ -10,23 +11,26 @@ use tokio::sync::oneshot;
 use vdr::common::error::VdrError;
 use vdr::config::PoolConfig as IndyVdrPoolConfig;
 use vdr::ledger::identifiers::{CredentialDefinitionId, RevocationRegistryId, SchemaId};
-use vdr::ledger::requests::author_agreement::{GetTxnAuthorAgreementData, TxnAuthrAgrmtAcceptanceData};
+use vdr::ledger::requests::author_agreement::TxnAuthrAgrmtAcceptanceData;
 use vdr::ledger::RequestBuilder;
 use vdr::pool::{PoolBuilder, PoolTransactions};
 use vdr::pool::{PoolRunner, PreparedRequest, ProtocolVersion, RequestResult};
 use vdr::utils::did::DidValue;
-use vdr::utils::{Qualifiable, ValidationError};
+use vdr::utils::Qualifiable;
 
-use crate::core::profile::modular_wallet_profile::LedgerPoolConfig;
-use crate::core::profile::profile::Profile;
-use crate::error::VcxResult;
-use crate::error::{VcxError, VcxErrorKind};
+use crate::common::primitives::revocation_registry::RevocationRegistryDefinition;
+use crate::errors::error::VcxResult;
+use crate::errors::error::{AriesVcxError, AriesVcxErrorKind};
 use crate::global::settings;
+use crate::plugins::wallet::base_wallet::BaseWallet;
 use crate::utils::author_agreement::get_txn_author_agreement;
 use crate::utils::json::{AsTypeOrDeserializationError, TryGetIndex};
-use crate::common::primitives::revocation_registry::RevocationRegistryDefinition;
 
 use super::base_ledger::BaseLedger;
+
+pub struct LedgerPoolConfig {
+    pub genesis_file_path: String,
+}
 
 pub struct IndyVdrLedgerPool {
     // visibility strictly for internal unit testing
@@ -48,8 +52,8 @@ impl IndyVdrLedgerPool {
     }
 }
 
-impl std::fmt::Debug for IndyVdrLedgerPool {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Debug for IndyVdrLedgerPool {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("IndyVdrLedgerPool")
             .field("runner", &"PoolRunner")
             .finish()
@@ -57,13 +61,13 @@ impl std::fmt::Debug for IndyVdrLedgerPool {
 }
 
 pub struct IndyVdrLedger {
-    profile: Arc<dyn Profile>,
+    wallet: Arc<dyn BaseWallet>,
     pool: Arc<IndyVdrLedgerPool>,
 }
 
 impl IndyVdrLedger {
-    pub fn new(profile: Arc<dyn Profile>, pool: Arc<IndyVdrLedgerPool>) -> Self {
-        IndyVdrLedger { profile, pool }
+    pub fn new(wallet: Arc<dyn BaseWallet>, pool: Arc<IndyVdrLedgerPool>) -> Self {
+        IndyVdrLedger { wallet, pool }
     }
 
     pub fn request_builder(&self) -> VcxResult<RequestBuilder> {
@@ -84,7 +88,10 @@ impl IndyVdrLedger {
             .as_ref()
             .ok_or(
                 // should not happen - strictly for unit testing
-                VcxError::from_msg(VcxErrorKind::NoPoolOpen, "IndyVdrLedgerPool runner was not provided"),
+                AriesVcxError::from_msg(
+                    AriesVcxErrorKind::NoPoolOpen,
+                    "IndyVdrLedgerPool runner was not provided",
+                ),
             )?
             .send_request(
                 request,
@@ -96,7 +103,7 @@ impl IndyVdrLedger {
 
         let send_req_result: VdrSendRequestResult = recv
             .await
-            .map_err(|e| VcxError::from_msg(VcxErrorKind::InvalidState, e))?;
+            .map_err(|e| AriesVcxError::from_msg(AriesVcxErrorKind::InvalidState, e))?;
         let (result, _) = send_req_result?;
 
         let reply = match result {
@@ -111,44 +118,13 @@ impl IndyVdrLedger {
         let mut request = request;
         let to_sign = request.get_signature_input()?;
 
-        let wallet = self.profile.inject_wallet();
+        let signer_verkey = self.wallet.key_for_local_did(submitter_did).await?;
 
-        let signer_verkey = wallet.key_for_local_did(submitter_did).await?;
-
-        let signature = self
-            .profile
-            .inject_wallet()
-            .sign(&signer_verkey, to_sign.as_bytes())
-            .await?;
+        let signature = self.wallet.sign(&signer_verkey, to_sign.as_bytes()).await?;
 
         request.set_signature(&signature)?;
 
         self._submit_request(request).await
-    }
-
-    #[allow(dead_code)]
-    async fn get_txn_author_agreement(&self) -> VcxResult<GetTxnAuthorAgreementData> {
-        let request = self.build_get_txn_author_agreement_request()?;
-        let response = self._submit_request(request).await?;
-
-        let data = _get_response_json_data_field(&response)?;
-
-        let taa_data: GetTxnAuthorAgreementData = serde_json::from_value(data)?;
-
-        Ok(taa_data)
-    }
-
-    fn build_get_txn_author_agreement_request(&self) -> VcxResult<PreparedRequest> {
-        Ok(self
-            .request_builder()?
-            .build_get_txn_author_agreement_request(None, None)?)
-    }
-
-    #[allow(dead_code)]
-    fn build_get_acceptance_mechanism_request(&self) -> VcxResult<PreparedRequest> {
-        Ok(self
-            .request_builder()?
-            .build_get_acceptance_mechanisms_request(None, None, None)?)
     }
 
     async fn _build_get_cred_def_request(
@@ -205,6 +181,12 @@ impl IndyVdrLedger {
         Ok(self
             .request_builder()?
             .build_attrib_request(&identifier, &dest, None, attrib_json.as_ref(), None)?)
+    }
+}
+
+impl Debug for IndyVdrLedger {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "IndyVdrLedger instance")
     }
 }
 
@@ -361,7 +343,7 @@ impl BaseLedger for IndyVdrLedger {
     }
 
     async fn add_attr(&self, target_did: &str, attrib_json: &str) -> VcxResult<String> {
-        let request = self._build_attrib_request(target_did, target_did, Some(&attrib_json))?;
+        let request = self._build_attrib_request(target_did, target_did, Some(attrib_json))?;
         let request = _append_txn_author_agreement_to_request(request).await?;
 
         self._sign_and_submit_request(target_did, request).await
@@ -409,7 +391,7 @@ impl BaseLedger for IndyVdrLedger {
 
         if let Some(accum_from) = response_value
             .get("accum_from")
-            .and_then(|val| (!val.is_null()).then(|| val))
+            .and_then(|val| (!val.is_null()).then_some(val))
         {
             let prev_accum = accum_from.try_get("value")?.try_get("accum")?;
             // to check - should this be 'prevAccum'?
@@ -423,21 +405,21 @@ impl BaseLedger for IndyVdrLedger {
                 .try_get("accum_to")?
                 .try_get("txnTime")?
                 .as_u64()
-                .ok_or(VcxError::from_msg(
-                    VcxErrorKind::InvalidJson,
+                .ok_or(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidJson,
                     "Error parsing accum_to.txnTime value as u64",
                 ))?;
 
         let response_reg_def_id = (&res_data)
             .try_get("revocRegDefId")?
             .as_str()
-            .ok_or(VcxError::from_msg(
-                VcxErrorKind::InvalidJson,
+            .ok_or(AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidJson,
                 "Erroring parsing revocRegDefId value as string",
             ))?;
         if response_reg_def_id != rev_reg_id {
-            return Err(VcxError::from_msg(
-                VcxErrorKind::InvalidRevocationDetails,
+            return Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidRevocationDetails,
                 "ID of revocation registry response does not match requested ID",
             ));
         }
@@ -499,9 +481,9 @@ impl BaseLedger for IndyVdrLedger {
     }
 }
 
-fn unimplemented_method_err(method_name: &str) -> VcxError {
-    VcxError::from_msg(
-        VcxErrorKind::UnimplementedFeature,
+fn unimplemented_method_err(method_name: &str) -> AriesVcxError {
+    AriesVcxError::from_msg(
+        AriesVcxErrorKind::UnimplementedFeature,
         format!("method called '{}' is not yet implemented in AriesVCX", method_name),
     )
 }
@@ -521,7 +503,7 @@ async fn _append_txn_author_agreement_to_request(request: PreparedRequest) -> Vc
         };
         request.set_txn_author_agreement_acceptance(&acceptance)?;
 
-        return Ok(request);
+        Ok(request)
     } else {
         Ok(request)
     }
@@ -533,47 +515,15 @@ fn _get_response_json_data_field(response_json: &str) -> VcxResult<Value> {
     Ok(result.try_get("data")?.to_owned())
 }
 
-impl From<VdrError> for VcxError {
-    fn from(err: VdrError) -> Self {
-        match err.kind() {
-            indy_vdr::common::error::VdrErrorKind::Config => {
-                VcxError::from_msg(VcxErrorKind::InvalidConfiguration, err)
-            }
-            indy_vdr::common::error::VdrErrorKind::Connection => {
-                VcxError::from_msg(VcxErrorKind::PoolLedgerConnect, err)
-            }
-            indy_vdr::common::error::VdrErrorKind::FileSystem(_) => VcxError::from_msg(VcxErrorKind::IOError, err),
-            indy_vdr::common::error::VdrErrorKind::Input => VcxError::from_msg(VcxErrorKind::InvalidInput, err),
-            indy_vdr::common::error::VdrErrorKind::Resource => VcxError::from_msg(VcxErrorKind::UnknownError, err),
-            indy_vdr::common::error::VdrErrorKind::Unavailable => VcxError::from_msg(VcxErrorKind::UnknownError, err),
-            indy_vdr::common::error::VdrErrorKind::Unexpected => VcxError::from_msg(VcxErrorKind::UnknownError, err),
-            indy_vdr::common::error::VdrErrorKind::Incompatible => VcxError::from_msg(VcxErrorKind::UnknownError, err),
-            indy_vdr::common::error::VdrErrorKind::PoolNoConsensus => {
-                VcxError::from_msg(VcxErrorKind::UnknownError, err)
-            }
-            indy_vdr::common::error::VdrErrorKind::PoolRequestFailed(_) => {
-                VcxError::from_msg(VcxErrorKind::PoolLedgerConnect, err)
-            }
-            indy_vdr::common::error::VdrErrorKind::PoolTimeout => VcxError::from_msg(VcxErrorKind::UnknownError, err),
-        }
-    }
-}
-
-impl From<ValidationError> for VcxError {
-    fn from(err: ValidationError) -> Self {
-        VcxError::from_msg(VcxErrorKind::InvalidInput, err)
-    }
-}
-
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 mod unit_tests {
     use std::sync::Arc;
 
+    use crate::errors::error::{AriesVcxErrorKind, VcxResult};
     use crate::{
-        error::{VcxErrorKind, VcxResult},
-        plugins::ledger::{base_ledger::BaseLedger, indy_vdr_ledger::IndyVdrLedgerPool},
         common::{primitives::revocation_registry::RevocationRegistryDefinition, test_utils::mock_profile},
+        plugins::ledger::{base_ledger::BaseLedger, indy_vdr_ledger::IndyVdrLedgerPool},
     };
 
     use super::IndyVdrLedger;
@@ -583,12 +533,12 @@ mod unit_tests {
         // test used to assert which methods are unimplemented currently, can be removed after all methods implemented
 
         fn assert_unimplemented<T: std::fmt::Debug>(result: VcxResult<T>) {
-            assert_eq!(result.unwrap_err().kind(), VcxErrorKind::UnimplementedFeature)
+            assert_eq!(result.unwrap_err().kind(), AriesVcxErrorKind::UnimplementedFeature)
         }
 
         let profile = mock_profile();
         let pool = Arc::new(IndyVdrLedgerPool { runner: None });
-        let ledger: Box<dyn BaseLedger> = Box::new(IndyVdrLedger::new(profile, pool));
+        let ledger: Box<dyn BaseLedger> = Box::new(IndyVdrLedger::new(profile.inject_wallet(), pool));
 
         assert_unimplemented(ledger.endorse_transaction("", "").await);
         assert_unimplemented(ledger.set_endorser("", "", "").await);

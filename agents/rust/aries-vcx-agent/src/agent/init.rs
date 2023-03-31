@@ -2,12 +2,13 @@ use std::sync::Arc;
 
 use aries_vcx::{
     agency_client::{agency_client::AgencyClient, configuration::AgentProvisionConfig},
+    core::profile::{profile::Profile, vdrtools_profile::VdrtoolsProfile},
     global::settings::init_issuer_config,
     indy::{
         ledger::pool::{create_pool_ledger_config, open_pool_ledger, PoolConfigBuilder},
         wallet::{create_wallet_with_master_secret, open_wallet, wallet_configure_issuer, WalletConfig},
     },
-    utils::provision::provision_cloud_agent, core::profile::{indy_profile::IndySdkProfile, profile::Profile},
+    utils::provision::provision_cloud_agent,
 };
 
 use crate::{
@@ -80,13 +81,12 @@ impl Agent {
             &init_config.pool_config.pool_name,
             &init_config.pool_config.genesis_path,
         )
-        .await
         .unwrap();
         let pool_handle = open_pool_ledger(&init_config.pool_config.pool_name, Some(pool_config))
             .await
             .unwrap();
 
-        let indy_profile = IndySdkProfile::new(wallet_handle, pool_handle);
+        let indy_profile = VdrtoolsProfile::new(wallet_handle, pool_handle);
         let profile: Arc<dyn Profile> = Arc::new(indy_profile);
         let wallet = profile.inject_wallet();
 
@@ -98,10 +98,9 @@ impl Agent {
                 agent_seed: None,
             };
             let mut agency_client = AgencyClient::new();
-            let config_agency_client =
-                provision_cloud_agent(&mut agency_client, wallet, &config_provision_agent)
-                    .await
-                    .unwrap();
+            let config_agency_client = provision_cloud_agent(&mut agency_client, wallet, &config_provision_agent)
+                .await
+                .unwrap();
             (
                 Some(Arc::new(ServiceMediatedConnections::new(
                     Arc::clone(&profile),
@@ -127,10 +126,7 @@ impl Agent {
             config_issuer.institution_did.clone(),
         ));
         let issuer = Arc::new(ServiceCredentialsIssuer::new(Arc::clone(&profile), connections.clone()));
-        let holder = Arc::new(ServiceCredentialsHolder::new(
-            Arc::clone(&profile),
-            connections.clone(),
-        ));
+        let holder = Arc::new(ServiceCredentialsHolder::new(Arc::clone(&profile), connections.clone()));
         let verifier = Arc::new(ServiceVerifier::new(Arc::clone(&profile), connections.clone()));
         let prover = Arc::new(ServiceProver::new(Arc::clone(&profile), connections.clone()));
 

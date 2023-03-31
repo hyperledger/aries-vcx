@@ -1,6 +1,6 @@
 use std::sync::Mutex;
 
-use crate::error::AgencyClientResult;
+use crate::errors::error::AgencyClientResult;
 use crate::testing::test_settings::{disable_agency_test_mode, enable_agency_test_mode, get_config_agency_test_mode};
 
 lazy_static! {
@@ -19,16 +19,29 @@ pub struct HttpClientMockResponse {
 impl HttpClientMockResponse {
     pub fn set_next_response(response: AgencyClientResult<Vec<u8>>) {
         if agency_mocks_enabled() {
-            HTTPCLIENT_MOCK_RESPONSES.lock().unwrap().responses.push(response);
+            HTTPCLIENT_MOCK_RESPONSES
+                .lock()
+                .expect("Could not access HTTPCLIENT_MOCK_RESPONSES")
+                .responses
+                .push(response);
         }
     }
 
     pub fn has_response() -> bool {
-        !HTTPCLIENT_MOCK_RESPONSES.lock().unwrap().responses.is_empty()
+        !HTTPCLIENT_MOCK_RESPONSES
+            .lock()
+            .expect("Could not access HTTPCLIENT_MOCK_RESPONSES")
+            .responses
+            .is_empty()
     }
 
     pub fn get_response() -> AgencyClientResult<Vec<u8>> {
-        HTTPCLIENT_MOCK_RESPONSES.lock().unwrap().responses.pop().unwrap()
+        HTTPCLIENT_MOCK_RESPONSES
+            .lock()
+            .expect("Could not access HTTPCLIENT_MOCK_RESPONSES")
+            .responses
+            .pop()
+            .expect("No message on HTTPCLIENT_MOCK_RESPONSES stack to pop")
     }
 }
 
@@ -50,12 +63,21 @@ pub struct AgencyMockDecrypted {
 impl AgencyMock {
     pub fn set_next_response(body: Vec<u8>) {
         if agency_mocks_enabled() {
-            AGENCY_MOCK.lock().unwrap().responses.push(body);
+            AGENCY_MOCK
+                .lock()
+                .expect("Could not access AGENCY_MOCK")
+                .responses
+                .push(body);
         }
     }
 
     pub fn get_response() -> Vec<u8> {
-        AGENCY_MOCK.lock().unwrap().responses.pop().unwrap_or_default()
+        AGENCY_MOCK
+            .lock()
+            .expect("Could not access AGENCY_MOCK")
+            .responses
+            .pop()
+            .unwrap_or_default()
     }
 }
 
@@ -65,7 +87,7 @@ impl AgencyMockDecrypted {
             trace!("Mocks enabled, setting next decrypted response");
             AGENCY_MOCK_DECRYPTED_RESPONSES
                 .lock()
-                .unwrap()
+                .expect("Could not access AGENCY_MOCK_DECRYPTED_RESPONSES")
                 .responses
                 .push(body.into());
         }
@@ -74,7 +96,12 @@ impl AgencyMockDecrypted {
     pub fn get_next_decrypted_response() -> String {
         if Self::has_decrypted_mock_responses() {
             trace!("Mocks enabled, getting next decrypted response");
-            AGENCY_MOCK_DECRYPTED_RESPONSES.lock().unwrap().responses.pop().unwrap()
+            AGENCY_MOCK_DECRYPTED_RESPONSES
+                .lock()
+                .expect("Could not access AGENCY_MOCK_DECRYPTED_RESPONSES")
+                .responses
+                .pop()
+                .expect("No message on AGENCY_MOCK_DECRYPTED_MESSAGES stack to pop")
         } else {
             debug!("Attempting to obtain decrypted response when none were set, but decrypted messages available - returning empty response...");
             String::new()
@@ -82,7 +109,11 @@ impl AgencyMockDecrypted {
     }
 
     pub fn has_decrypted_mock_responses() -> bool {
-        !AGENCY_MOCK_DECRYPTED_RESPONSES.lock().unwrap().responses.is_empty()
+        !AGENCY_MOCK_DECRYPTED_RESPONSES
+            .lock()
+            .expect("Could not access AGENCY_MOCK_DECRYPTED_RESPONSES")
+            .responses
+            .is_empty()
     }
 
     pub fn set_next_decrypted_message(message: &str) {
@@ -90,23 +121,40 @@ impl AgencyMockDecrypted {
             trace!("Mocks enabled, getting next decrypted message");
             AGENCY_MOCK_DECRYPTED_MESSAGES
                 .lock()
-                .unwrap()
+                .expect("Could not access AGENCY_MOCK_DECRYPTED_MESSAGES")
                 .messages
                 .push(message.into());
         }
     }
 
     pub fn get_next_decrypted_message() -> String {
-        AGENCY_MOCK_DECRYPTED_MESSAGES.lock().unwrap().messages.pop().unwrap()
+        AGENCY_MOCK_DECRYPTED_MESSAGES
+            .lock()
+            .expect("Could not access AGENCY_MOCK_DECRYPTED_MESSAGES")
+            .messages
+            .pop()
+            .expect("No message on AGENCY_MOCK_DECRYPTED_MESSAGES stack to pop")
     }
 
     pub fn has_decrypted_mock_messages() -> bool {
-        !AGENCY_MOCK_DECRYPTED_MESSAGES.lock().unwrap().messages.is_empty()
+        !AGENCY_MOCK_DECRYPTED_MESSAGES
+            .lock()
+            .expect("Could not access AGENCY_MOCK_DECRYPTED_MESSAGES")
+            .messages
+            .is_empty()
     }
 
     pub fn clear_mocks() {
-        AGENCY_MOCK_DECRYPTED_MESSAGES.lock().unwrap().messages.clear();
-        AGENCY_MOCK_DECRYPTED_RESPONSES.lock().unwrap().responses.clear();
+        AGENCY_MOCK_DECRYPTED_MESSAGES
+            .lock()
+            .expect("Could not access AGENCY_MOCK_DECRYPTED_MESSAGES")
+            .messages
+            .clear();
+        AGENCY_MOCK_DECRYPTED_RESPONSES
+            .lock()
+            .expect("Could not access AGENCY_MOCK_DECRYPTED_RESPONSES")
+            .responses
+            .clear();
     }
 }
 

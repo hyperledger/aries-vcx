@@ -2,27 +2,25 @@
 require('jest')
 const sleep = require('sleep-promise')
 
-const { initRustapi } = require('../src/index')
 const { VerifierStateType } = require('@hyperledger/node-vcx-wrapper')
 const { createPairedAliceAndFaberViaOobMsg, createAliceAndFaber, connectViaOobMessage, createPairedAliceAndFaber } = require('./utils/utils')
 const { IssuerStateType, HolderStateType, OutOfBandReceiver } = require('@hyperledger/node-vcx-wrapper')
+const { initRustLogger } = require('../src')
+const { proofRequestDataStandard } = require('./utils/data')
+const path = require('path')
 
 beforeAll(async () => {
   jest.setTimeout(1000 * 60 * 4)
-  await initRustapi(process.env.VCX_LOG_LEVEL || 'error')
+  initRustLogger(process.env.RUST_LOG || 'vcx=error')
 })
 
 describe('test out of band communication', () => {
-  it('Faber establishes connection with Alice via service OOB message ', async () => {
-    await createPairedAliceAndFaberViaOobMsg(false)
-  })
-
-  it('Faber establishes connection with Alice via DID OOB message ', async () => {
-    await createPairedAliceAndFaberViaOobMsg(true)
+  it('Faber establishes connection with Alice via DID OOB message', async () => {
+    await createPairedAliceAndFaberViaOobMsg()
   })
 
   it('Faber establishes connection with Alice via OOB message and they exchange messages', async () => {
-    const { alice, faber } = await createPairedAliceAndFaberViaOobMsg(true)
+    const { alice, faber } = await createPairedAliceAndFaberViaOobMsg()
 
     await alice.sendMessage('Hello Faber')
     const msgsFaber = await faber.downloadReceivedMessagesV2()
@@ -46,7 +44,7 @@ describe('test out of band communication', () => {
   })
 
   it('Alice reuses a connection already established by Faber', async () => {
-    const { alice, faber } = await createPairedAliceAndFaberViaOobMsg(true)
+    const { alice, faber } = await createPairedAliceAndFaberViaOobMsg()
     const msg = await faber.createOobMessageWithDid()
     const reused = await alice.createOrReuseConnectionUsingOobMsg(msg)
     expect(reused).toBe(true)
@@ -55,7 +53,7 @@ describe('test out of band communication', () => {
   it('Faber issues credential via OOB', async () => {
     try {
       const { alice, faber } = await createAliceAndFaber()
-      const tailsDir = `${__dirname}/tmp/faber/tails`
+      const tailsDir = path.join(__dirname, '/tmp/faber/tails')
       await faber.buildLedgerPrimitives({ tailsDir, maxCreds: 5 })
       const oobCredOfferMsg = await faber.createOobCredOffer()
 
@@ -74,7 +72,7 @@ describe('test out of band communication', () => {
   it('Faber requests proof via OOB', async () => {
     try {
       const { alice, faber } = await createPairedAliceAndFaber()
-      const tailsDir = `${__dirname}/tmp/faber/tails`
+      const tailsDir = path.join(__dirname, '/tmp/faber/tails')
       await faber.buildLedgerPrimitives({ tailsDir, maxCreds: 5 })
       await faber.sendCredentialOffer()
       await alice.acceptCredentialOffer()
@@ -82,11 +80,12 @@ describe('test out of band communication', () => {
       await faber.sendCredential()
       await alice.updateStateCredential(HolderStateType.Finished)
 
-      const oobPresentationRequestMsg = await faber.createOobProofRequest()
+      const issuerDid = faber.getFaberDid()
+      const oobPresentationRequestMsg = await faber.createOobProofRequest(proofRequestDataStandard(issuerDid))
 
       const oobReceiver = await OutOfBandReceiver.createWithMessage(oobPresentationRequestMsg)
-      const presentationRequest = await oobReceiver.extractMessage()
-      await alice.sendHolderProof(presentationRequest, revRegId => tailsDir)
+      const presentationRequest = oobReceiver.extractMessage()
+      await alice.sendHolderProof(presentationRequest, revRegId => tailsDir, { attribute_3: 'Smith' })
       await faber.updateStateVerifierProof(VerifierStateType.Finished)
     } catch (e) {
       console.error(e.stack)

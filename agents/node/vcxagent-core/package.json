@@ -35,18 +35,20 @@
     "demo:faber:mysql": "node demo/faber.js --mysql",
     "demo:alice:sign": "node demo/alice-signature.js",
     "demo:faber:verify": "node demo/faber-verify-signature.js",
-    "test:integration": "npm run test:integration:issue-verify && npm run test:integration:signing && npm run test:integration:messaging && npm run test:integration:tails && npm run test:integration:trustping && npm run test:integration:feature-discovery && npm run test:integration:public-invite && npm run test:integration:out-of-band && npm run test:integration:nonmediation",
+    "test:integration": "npm run test:integration:issue-verify && npm run test:integration:signing && npm run test:integration:messaging && npm run test:integration:tails && npm run test:integration:trustping && npm run test:integration:feature-discovery && npm run test:integration:public-invite && npm run test:integration:out-of-band && npm run test:integration:nonmediated-endpoint && npm run test:integration:nonmediated-connection",
     "test:integration:issue-verify": "jest --forceExit --env=node --runInBand test/issue-verify.spec.js",
     "test:integration:signing": "jest --forceExit --env=node --runInBand test/sign-verify.spec.js",
-    "test:integration:messaging": "jest --forceExit --env=node --runInBand test/sign-messaging.spec.js",
+    "test:integration:messaging": "jest --forceExit --env=node --runInBand test/messaging.spec.js",
     "test:integration:tails": "jest --forceExit --env=node --runInBand test/distribute-tails.spec.js",
     "test:integration:trustping": "jest --forceExit --env=node --runInBand test/trustping.spec.js",
     "test:integration:feature-discovery": "jest --forceExit --env=node --runInBand test/feature-discovery.spec.js",
     "test:integration:public-invite": "jest --forceExit --env=node --runInBand test/public-invite.spec.js",
     "test:integration:out-of-band": "jest --forceExit --env=node --runInBand test/out-of-band.spec.js",
-    "test:integration:nonmediation": "jest --forceExit --env=node --runInBand test/nonmediated-endpoint.spec.js"
+    "test:integration:nonmediated-endpoint": "jest --forceExit --env=node --runInBand test/nonmediated-endpoint.spec.js",
+    "test:integration:nonmediated-connection": "jest --forceExit --env=node --runInBand test/nonmediated-connection.spec.js"
   },
   "dependencies": {
+    "@hyperledger/node-vcx-wrapper": "file:../../../wrappers/node",
     "axios": "^0.27.2",
     "ffi-napi": "^4.0.3",
     "fs-extra": "^4.0.3",
@@ -57,7 +59,6 @@
     "uuid": "^8.3.2"
   },
   "devDependencies": {
-    "@hyperledger/node-vcx-wrapper": "file:../../../wrappers/node",
     "body-parser": "^1.19.0",
     "command-line-args": "^5.2.0",
     "command-line-usage": "^5.0.5",
@@ -67,8 +68,5 @@
     "readline-sync": "^1.4.10",
     "standard": "^16.0.4",
     "winston": "^3.3.3"
-  },
-  "peerDependencies": {
-    "@hyperledger/node-vcx-wrapper": "^0.50.0"
   }
 }

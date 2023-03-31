@@ -112,6 +112,10 @@ export enum VCXCode {
   CREATE_OUT_OF_BAND = 1112,
   CREATE_AGENT = 1113,
   REV_DELTA_FAILED_TO_CLEAR = 1114,
+  INVALID_INPUT = 1115,
+  PARSING_ERROR = 1116,
+  UNIMPLEMENTED_FEATURE = 1117,
+  LEDGER_ITEM_NOT_FOUND = 1118,
 }
 export enum ConnectionStateType {
   Initial = 0,
@@ -159,10 +163,6 @@ export enum VerifierStateType {
   PresentationRequestSent = 3,
   Finished = 4,
   Failed = 5
-}
-
-export interface IInitVCXOptions {
-  libVCXPath?: string;
 }
 
 export interface ISerializedData<T> {

@@ -1,6 +1,7 @@
 use async_trait::async_trait;
 
-use crate::{error::VcxResult, utils::async_fn_iterator::AsyncFnIterator};
+use crate::errors::error::VcxResult;
+use crate::utils::async_fn_iterator::AsyncFnIterator;
 
 /// Trait defining standard 'wallet' related functionality. The APIs, including
 /// input and output types are loosely based off the indy Wallet API:
@@ -39,7 +40,12 @@ pub trait BaseWallet: std::fmt::Debug + Send + Sync {
 
     async fn delete_wallet_record_tags(&self, xtype: &str, id: &str, tag_names: &str) -> VcxResult<()>;
 
-    async fn iterate_wallet_records(&self, xtype: &str, query: &str, options: &str) -> VcxResult<Box<dyn AsyncFnIterator<Item = VcxResult<String>>>> ;
+    async fn iterate_wallet_records(
+        &self,
+        xtype: &str,
+        query: &str,
+        options: &str,
+    ) -> VcxResult<Box<dyn AsyncFnIterator<Item = VcxResult<String>>>>;
 
     // ---- crypto
 

@@ -1,4 +1,4 @@
-use crate::error::{VcxError, VcxErrorKind, VcxResult};
+use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ObjectWithVersion<'a, T> {
@@ -6,7 +6,7 @@ pub struct ObjectWithVersion<'a, T> {
     pub data: T,
 }
 
-impl<'a, 'de, T> ObjectWithVersion<'a, T>
+impl<'a, T> ObjectWithVersion<'a, T>
 where
     T: ::serde::Serialize + ::serde::de::DeserializeOwned,
 {
@@ -15,16 +15,24 @@ where
     }
 
     pub fn serialize(&self) -> VcxResult<String> {
-        ::serde_json::to_string(self)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot serialize object: {}", err)))
+        ::serde_json::to_string(self).map_err(|err| {
+            AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidJson,
+                format!("Cannot serialize object: {}", err),
+            )
+        })
     }
 
     pub fn deserialize(data: &str) -> VcxResult<ObjectWithVersion<T>>
     where
         T: ::serde::de::DeserializeOwned,
     {
-        ::serde_json::from_str(data)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize object: {}", err)))
+        ::serde_json::from_str(data).map_err(|err| {
+            AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidJson,
+                format!("Cannot deserialize object: {}", err),
+            )
+        })
     }
 }
 

@@ -1,0 +1,21 @@
+[package]
+name = "vcx-napi-rs"
+version.workspace = true
+authors.workspace = true
+license.workspace = true
+edition.workspace = true
+
+[lib]
+name = "vcx_napi_rs"
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+doctest = false
+
+[dependencies]
+libvcx_core = { path = "../../libvcx_core"  }
+log = "0.4.16"
+napi = { version = "2.10.14", default-features = false, features = [ "async" ] }
+napi-derive = { version = "2.10.1" }
+
+[build-dependencies]
+napi-build = "2.0.1"

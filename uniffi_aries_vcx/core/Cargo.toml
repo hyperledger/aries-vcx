@@ -1,0 +1,28 @@
+[package]
+name = "uniffi_aries_vcx"
+version.workspace = true
+authors.workspace = true
+license.workspace = true
+edition.workspace = true
+
+[lib]
+crate-type = ["cdylib"]
+name = "uniffi_vcx"
+
+[[bin]]
+name = "uniffi-bindgen"
+path = "uniffi-bindgen.rs"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+uniffi = "0.23.0"
+aries-vcx = { path = "../../aries_vcx" }
+tokio = { version = "1.24.1" }
+once_cell = "1.17.0"
+thiserror = "1.0.38"
+serde_json = "1.0.91"
+async-trait = "0.1.64"
+
+[build-dependencies]
+uniffi = { version = "0.23.0", features = [ "build", "cli" ] }

@@ -111,38 +111,12 @@
 
 - (int)vcxSchemaRelease:(NSNumber *)schemaHandle;
 
-- (void)vcxPublicAgentCreate:(NSString *)sourceId
-              institutionDid:(NSString *)institutionDid
-                  completion:(void (^)(
-                          NSError *error,
-                          NSNumber * agentHandle
-                  ))completion;
-
 - (void)vcxGeneratePublicInvite:(NSString *)publicDid
                           label:(NSString *)label
                      completion:(void (^)(
                              NSError *error,
                              NSString *publicInvite
                      ))completion;
-
-- (void)vcxPublicAgentDownloadConnectionRequests:(NSNumber *)agentHandle
-                                            uids:(NSString *)ids
-                                      completion:(void (^)(
-                                              NSError *error,
-                                              NSString *requests
-                                      ))completion;
-
-- (void)vcxPublicAgentDownloadMessage:(NSNumber *)agentHandle
-                                  uid:(NSString *)id
-                           completion:(void (^)(NSError *error, NSString *message))completion;
-
-- (void)vcxPublicAgentGetService:(NSNumber *)agentHandle
-                      completion:(void (^)(NSError *error, NSString *service))completion;
-
-- (void)vcxPublicAgentSerialize:(NSNumber *)agentHandle
-                     completion:(void (^)(NSError *error, NSString *serializedAgent))completion;
-
-- (int)vcxPublicAgentRelease:(NSNumber *)agentHandle;
 
 - (void)vcxOutOfBandSenderCreate:(NSString *)config
                       completion:(void (^)(NSError *error, NSNumber * oobHandle))completion;
@@ -567,7 +541,7 @@
                       completion:(void (^)(NSError *error))completion;
 
 - (void)verifierGetProofMessage:(NSNumber *)proofHandle
-                     completion:(void (^)(NSError *error, NSNumber * state, NSString *responseData))completion;
+                     completion:(void (^)(NSError *error, NSString *responseData))completion;
 
 - (void)verifierProofGetRequestMessage:(NSNumber *)proofHandle
                             completion:(void (^)(NSError *error, NSString *message))completion;

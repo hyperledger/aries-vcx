@@ -1,5 +1,5 @@
-use messages::proof_presentation::presentation_proposal::PresentationProposal;
-use messages::proof_presentation::presentation_request::PresentationRequest;
+use messages::protocols::proof_presentation::presentation_proposal::PresentationProposal;
+use messages::protocols::proof_presentation::presentation_request::PresentationRequest;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct PresentationProposalReceivedState {

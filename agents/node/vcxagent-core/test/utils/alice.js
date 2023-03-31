@@ -1,8 +1,8 @@
 /* eslint-env jest */
 const { createVcxAgent } = require('../../src/index')
-const { ConnectionStateType, ProverStateType, OutOfBandReceiver, HolderStateType } = require('@hyperledger/node-vcx-wrapper')
+const { ConnectionStateType, ProverStateType, OutOfBandReceiver, HolderStateType, unpack } = require('@hyperledger/node-vcx-wrapper')
 
-module.exports.createAlice = async function createAlice () {
+module.exports.createAlice = async function createAlice (serviceEndpoint = 'http://localhost:5401') {
   const agentName = `alice-${Math.floor(new Date() / 1000)}`
   const connectionId = 'connection-alice-to-faber'
   const holderCredentialId = 'credential-of-alice'
@@ -14,6 +14,10 @@ module.exports.createAlice = async function createAlice () {
     agencyUrl: 'http://localhost:8080',
     seed: '000000000000000000000000Alice000',
     webhookUrl: `http://localhost:7209/notifications/${agentName}`,
+    endpointInfo: {
+      serviceEndpoint,
+      routingKeys: []
+    },
     logger
   }
   const vcxAgent = await createVcxAgent(aliceAgentConfig)
@@ -29,12 +33,42 @@ module.exports.createAlice = async function createAlice () {
     await vcxAgent.agentShutdownVcx()
   }
 
+  async function createNonmediatedConnectionFromInvite (invite) {
+    logger.info(`Alice establishing connection with Faber using invite ${invite}`)
+    await vcxAgent.agentInitVcx()
+
+    await vcxAgent.serviceNonmediatedConnections.inviteeConnectionCreateFromInvite(connectionId, invite)
+    expect(await vcxAgent.serviceNonmediatedConnections.getState(connectionId)).toBe(ConnectionStateType.Requested)
+
+    await vcxAgent.agentShutdownVcx()
+  }
+
+  async function nonmediatedConnectionProcessResponse (response) {
+    logger.info(`Alice processing response ${response}`)
+    await vcxAgent.agentInitVcx()
+
+    await vcxAgent.serviceNonmediatedConnections.inviteeConnectionProcessResponse(connectionId, response)
+    expect(await vcxAgent.serviceNonmediatedConnections.getState(connectionId)).toBe(ConnectionStateType.Finished)
+
+    await vcxAgent.agentShutdownVcx()
+  }
+
   async function createConnectionUsingOobMessage (oobMsg) {
     logger.info('createConnectionUsingOobMessage >> Alice going to create connection using oob message')
     logger.debug(`createConnectionUsingOobMessage >> oobMsg = ${oobMsg}`)
     await vcxAgent.agentInitVcx()
 
     await vcxAgent.serviceOutOfBand.createConnectionFromOobMsg(connectionId, oobMsg)
+
+    await vcxAgent.agentShutdownVcx()
+  }
+
+  async function createNonmediatedConnectionUsingOobMessage (oobMsg) {
+    logger.info('createNonmediatedConnectionUsingOobMessage >> Alice going to create connection using oob message')
+    logger.debug(`createNonmediatedConnectionUsingOobMessage >> oobMsg = ${oobMsg}`)
+    await vcxAgent.agentInitVcx()
+
+    await vcxAgent.serviceOutOfBand.createNonmediatedConnectionFromOobMsg(connectionId, oobMsg)
 
     await vcxAgent.agentShutdownVcx()
   }
@@ -66,7 +100,7 @@ module.exports.createAlice = async function createAlice () {
   }
 
   async function handleMessage (ariesMsg) {
-    logger.info(`Alice is going to try handle incoming messages`)
+    logger.info('Alice is going to try handle incoming messages')
     await vcxAgent.agentInitVcx()
 
     await vcxAgent.serviceConnections.handleMessage(connectionId, ariesMsg)
@@ -88,7 +122,7 @@ module.exports.createAlice = async function createAlice () {
     logger.info('acceptOobCredentialOffer >>> Alice going to accept oob cred offer.')
 
     const oobReceiver = await OutOfBandReceiver.createWithMessage(oobCredOfferMsg)
-    const credOffer = await oobReceiver.extractMessage()
+    const credOffer = oobReceiver.extractMessage()
     logger.info('acceptOobCredentialOffer >>> Extracted attached message')
     logger.debug(`acceptOobCredentialOffer >>> attached message: ${credOffer}`)
     await vcxAgent.serviceCredHolder.createCredentialFromOfferAndSendRequest(connectionId, holderCredentialId, credOffer)
@@ -98,14 +132,22 @@ module.exports.createAlice = async function createAlice () {
     await vcxAgent.agentShutdownVcx()
   }
 
-  async function sendHolderProof (proofRequest, _mapRevRegId) {
+  async function sendHolderProof (proofRequest, _mapRevRegId, selfAttestedAttrs) {
     await vcxAgent.agentInitVcx()
 
     const mapRevRegId = _mapRevRegId || ((_revRegId) => { throw Error('Tails file should not be needed') })
     await vcxAgent.serviceProver.buildDisclosedProof(disclosedProofId, proofRequest)
     const { selectedCreds } = await vcxAgent.serviceProver.selectCredentials(disclosedProofId, mapRevRegId)
-    const selfAttestedAttrs = { attribute_3: 'Smith' }
     await vcxAgent.serviceProver.generateProof(disclosedProofId, selectedCreds, selfAttestedAttrs)
+    expect(await vcxAgent.serviceProver.sendDisclosedProof(disclosedProofId, connectionId)).toBe(ProverStateType.PresentationSent)
+
+    await vcxAgent.agentShutdownVcx()
+  }
+
+  async function sendHolderProofSelfAttested (proofRequest, selfAttestedAttrs) {
+    await vcxAgent.agentInitVcx()
+    await vcxAgent.serviceProver.buildDisclosedProof(disclosedProofId, proofRequest)
+    await vcxAgent.serviceProver.generateProof(disclosedProofId, { }, selfAttestedAttrs)
     expect(await vcxAgent.serviceProver.sendDisclosedProof(disclosedProofId, connectionId)).toBe(ProverStateType.PresentationSent)
 
     await vcxAgent.agentShutdownVcx()
@@ -146,6 +188,15 @@ module.exports.createAlice = async function createAlice () {
     await vcxAgent.agentInitVcx()
 
     await vcxAgent.serviceConnections.sendMessage(connectionId, message)
+
+    await vcxAgent.agentShutdownVcx()
+  }
+
+  async function nonmediatedConnectionSendMessage (message) {
+    logger.info('Alice is going to send message')
+    await vcxAgent.agentInitVcx()
+
+    await vcxAgent.serviceNonmediatedConnections.sendMessage(connectionId, message)
 
     await vcxAgent.agentShutdownVcx()
   }
@@ -202,11 +253,27 @@ module.exports.createAlice = async function createAlice () {
     await vcxAgent.agentShutdownVcx()
   }
 
+  async function unpackMsg (encryptedMsg) {
+    logger.info(`Alice is going to unpack message of length ${encryptedMsg.length}`)
+    await vcxAgent.agentInitVcx()
+
+    const { message, sender_verkey: senderVerkey } = await unpack(encryptedMsg)
+
+    logger.info(`Decrypted msg has length ${message.length}, sender verkey: ${senderVerkey}`)
+    await vcxAgent.agentShutdownVcx()
+
+    return { message, senderVerkey }
+  }
+
   return {
     sendMessage,
+    nonmediatedConnectionSendMessage,
     signData,
     acceptInvite,
+    createNonmediatedConnectionFromInvite,
+    nonmediatedConnectionProcessResponse,
     createConnectionUsingOobMessage,
+    createNonmediatedConnectionUsingOobMessage,
     createOrReuseConnectionUsingOobMsg,
     acceptOobCredentialOffer,
     updateConnection,
@@ -214,11 +281,13 @@ module.exports.createAlice = async function createAlice () {
     acceptCredentialOffer,
     updateStateCredential,
     sendHolderProof,
+    sendHolderProofSelfAttested,
     updateStateHolderProof,
     getTailsLocation,
     getTailsHash,
     downloadReceivedMessagesV2,
     sendPing,
-    discoverTheirFeatures
+    discoverTheirFeatures,
+    unpackMsg
   }
 }

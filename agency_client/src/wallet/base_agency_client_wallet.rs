@@ -1,9 +1,10 @@
 use async_trait::async_trait;
 
-use crate::{error::prelude::{AgencyClientResult, AgencyClientError, AgencyClientErrorKind}, testing::mocking::agency_mocks_enabled};
+use crate::errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
+use crate::testing::mocking::agency_mocks_enabled;
 
 #[async_trait]
-pub trait BaseAgencyClientWallet : std::fmt::Debug + Send + Sync {
+pub trait BaseAgencyClientWallet: std::fmt::Debug + Send + Sync {
     async fn pack_message(
         &self,
         sender_vk: Option<&str>,
@@ -31,7 +32,10 @@ impl BaseAgencyClientWallet for StubAgencyClientWallet {
             trace!("pack_message >>> mocks enabled, returning message");
             return Ok(msg.to_vec());
         }
-        Err(AgencyClientError::from_msg(AgencyClientErrorKind::UnknownError, "Error - using a stub method: StubAgencyClientWallet::pack_message"))
+        Err(AgencyClientError::from_msg(
+            AgencyClientErrorKind::UnknownError,
+            "Error - using a stub method: StubAgencyClientWallet::pack_message",
+        ))
     }
 
     async fn unpack_message(&self, msg: &[u8]) -> AgencyClientResult<Vec<u8>> {
@@ -39,6 +43,9 @@ impl BaseAgencyClientWallet for StubAgencyClientWallet {
             trace!("pack_message >>> mocks enabled, returning message");
             return Ok(msg.to_vec());
         }
-        Err(AgencyClientError::from_msg(AgencyClientErrorKind::UnknownError, "Error - using a stub method: StubAgencyClientWallet::unpack_message"))
+        Err(AgencyClientError::from_msg(
+            AgencyClientErrorKind::UnknownError,
+            "Error - using a stub method: StubAgencyClientWallet::unpack_message",
+        ))
     }
 }

@@ -21,7 +21,7 @@ module.exports.createServiceProver = function createServiceProver ({ logger, loa
 
     const [error] = await pollFunction(progressToAcceptedState, `Progress ProofSM to one of states ${JSON.stringify(targetStates)}`, logger, attemptsThreshold, timeoutMs)
     if (error) {
-      throw Error(`Couldn't progress credential to Accepted state. ${error}`)
+      throw Error(`Couldn't progress proof to Accepted state. ${error}`)
     }
   }
 
@@ -45,7 +45,7 @@ module.exports.createServiceProver = function createServiceProver ({ logger, loa
   async function waitForProofRequests (connectionId, attemptsThreshold = 20, timeoutMs = 500) {
     const connection = await loadConnection(connectionId)
     const proofRequests = await _getProofRequests(connection, attemptsThreshold, timeoutMs)
-    logger.info(`Found ${proofRequests.length} credential offers.`)
+    logger.info(`Found ${proofRequests.length} proof requests.`)
     return proofRequests
   }
 
@@ -112,11 +112,6 @@ module.exports.createServiceProver = function createServiceProver ({ logger, loa
       const state = await getState(id)
       logger.info(`DisclosedProof ${id} state=${state}`)
     }
-  }
-
-  async function getVcxDisclosedProof (disclosedProofId) {
-    logger.warn('Usage of getVcxDisclosedProof is not recommended. You should use vcxagent-core API rather than work with vcx object directly.')
-    return loadDisclosedProof(disclosedProofId)
   }
 
   return {

@@ -7,25 +7,16 @@ use agency_client::messages::update_message::UIDsByConn;
 use agency_client::wallet::base_agency_client_wallet::BaseAgencyClientWallet;
 
 use crate::agency_client::MessageStatusCode;
-use crate::error::prelude::*;
-use messages::a2a::A2AMessage;
-use crate::protocols::connection::pairwise_info::PairwiseInfo;
-use crate::utils::encryption_envelope::EncryptionEnvelope;
+use crate::errors::error::prelude::*;
 use crate::plugins::wallet::agency_client_wallet::ToBaseWallet;
+use crate::protocols::mediated_connection::pairwise_info::PairwiseInfo;
+use crate::utils::encryption_envelope::EncryptionEnvelope;
+use messages::a2a::A2AMessage;
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Default, Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct CloudAgentInfo {
     pub agent_did: String,
     pub agent_vk: String,
-}
-
-impl Default for CloudAgentInfo {
-    fn default() -> CloudAgentInfo {
-        CloudAgentInfo {
-            agent_did: String::new(),
-            agent_vk: String::new(),
-        }
-    }
 }
 
 pub async fn create_agent_keys(
@@ -42,10 +33,7 @@ pub async fn create_agent_keys(
         pw_verkey
     );
 
-    let (agent_did, agent_verkey) = agency_client
-        .create_connection_agent(pw_did, pw_verkey)
-        .await
-        .map_err(|err| err.extend("Cannot create pairwise keys"))?;
+    let (agent_did, agent_verkey) = agency_client.create_connection_agent(pw_did, pw_verkey).await?;
 
     trace!(
         "create_agent_keys <<< agent_did: {}, agent_verkey: {}",
@@ -201,8 +189,8 @@ impl CloudAgentInfo {
         let mut messages = self
             .download_encrypted_messages(agency_client, Some(vec![msg_id.to_string()]), None, pairwise_info)
             .await?;
-        let message = messages.pop().ok_or(VcxError::from_msg(
-            VcxErrorKind::InvalidMessages,
+        let message = messages.pop().ok_or(AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidMessages,
             format!("Message not found for id: {:?}", msg_id),
         ))?;
         let message = self
@@ -221,8 +209,7 @@ impl CloudAgentInfo {
         for message in messages {
             a2a_messages.insert(
                 message.uid.clone(),
-                self.decrypt_decode_message(wallet, message, expected_sender_vk)
-                    .await?,
+                self.decrypt_decode_message(wallet, message, expected_sender_vk).await?,
             );
         }
         Ok(a2a_messages)
@@ -257,6 +244,10 @@ impl CloudAgentInfo {
         wallet: &Arc<dyn BaseAgencyClientWallet>,
         message: &DownloadedMessageEncrypted,
     ) -> VcxResult<A2AMessage> {
-        Ok(EncryptionEnvelope::anon_unpack(&wallet.to_base_wallet(), message.payload()?).await?.0)
+        Ok(
+            EncryptionEnvelope::anon_unpack(&wallet.to_base_wallet(), message.payload()?)
+                .await?
+                .0,
+        )
     }
 }

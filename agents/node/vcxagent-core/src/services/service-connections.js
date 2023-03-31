@@ -6,32 +6,20 @@ const {
 } = require('@hyperledger/node-vcx-wrapper')
 const { pollFunction } = require('../common')
 
-module.exports.createServiceConnections = function createServiceConnections ({ logger, saveConnection, loadConnection, loadAgent, listConnectionIds }) {
+module.exports.createServiceConnections = function createServiceConnections ({ logger, saveConnection, loadConnection, listConnectionIds }) {
   async function inviterConnectionCreate (connectionId, cbInvitation) {
     logger.info(`InviterConnectionSM creating connection ${connectionId}`)
     const connection = await Connection.create({ id: connectionId })
-    logger.debug(`InviterConnectionSM after created connection:\n${JSON.stringify(await connection.serialize())}`)
+    logger.debug(`InviterConnectionSM after created connection:\n${JSON.stringify(connection.serialize())}`)
     await connection.connect('{}')
-    logger.debug(`InviterConnectionSM after invitation was generated:\n${JSON.stringify(await connection.serialize())}`)
-    const invite = await connection.inviteDetails()
+    logger.debug(`InviterConnectionSM after invitation was generated:\n${JSON.stringify(connection.serialize())}`)
+    const invite = connection.inviteDetails()
     if (cbInvitation) {
       cbInvitation(invite)
     }
     await saveConnection(connectionId, connection)
     logger.info(`InviterConnectionSM has established connection ${connectionId}`)
     return invite
-  }
-
-  async function inviterConnectionCreateFromRequest (connectionId, agentId, request) {
-    logger.info(`InviterConnectionSM creating connection ${connectionId} from received request ${request} and agent id ${agentId}`)
-    const agent = await loadAgent(agentId)
-    const connection = await Connection.createWithConnectionRequest({
-      id: connectionId,
-      agent,
-      request
-    })
-    await saveConnection(connectionId, connection)
-    return connection
   }
 
   async function inviterConnectionCreateFromRequestV2 (connectionId, pwInfo, request) {
@@ -126,7 +114,7 @@ module.exports.createServiceConnections = function createServiceConnections ({ l
     const connection = await loadConnection(connectionId)
     const data = Buffer.from(dataBase64, 'base64')
     const signature = Buffer.from(signatureBase64, 'base64')
-    return connection.verifySignature({ data, signature })
+    return await connection.verifySignature({ data, signature })
   }
 
   async function getConnectionPwDid (connectionId) {
@@ -195,7 +183,6 @@ module.exports.createServiceConnections = function createServiceConnections ({ l
   return {
     // inviter
     inviterConnectionCreate,
-    inviterConnectionCreateFromRequest,
     inviterConnectionCreateFromRequestV2,
     inviterConnectionCreateAndAccept,
 

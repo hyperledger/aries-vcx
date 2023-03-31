@@ -1,4 +1,4 @@
-use messages::revocation_notification::{
+use messages::protocols::revocation_notification::{
     revocation_ack::RevocationAck, revocation_notification::RevocationNotification,
 };
 

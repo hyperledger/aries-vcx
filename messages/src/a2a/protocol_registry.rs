@@ -1,10 +1,10 @@
 use regex::Regex;
 use strum::IntoEnumIterator;
 
+use crate::a2a::message_family::MessageFamilies;
 use crate::actors;
 use crate::actors::Actors;
-use crate::a2a::message_family::MessageFamilies;
-use crate::discovery::disclose::ProtocolDescriptor;
+use crate::protocols::discovery::disclose::ProtocolDescriptor;
 
 pub struct ProtocolRegistry {
     protocols: Vec<ProtocolDescriptor>,
@@ -36,7 +36,7 @@ impl ProtocolRegistry {
         registry
     }
 
-    pub fn add_protocol(&mut self, actors: &Vec<Actors>, family: MessageFamilies) {
+    pub fn add_protocol(&mut self, actors: &[Actors], family: MessageFamilies) {
         match family.actors() {
             None => self.protocols.push(ProtocolDescriptor {
                 pid: family.id(),
@@ -84,8 +84,6 @@ impl ProtocolRegistry {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use crate::utils::devsetup::SetupEmpty;
-
     use super::*;
 
     fn _protocols() -> Vec<ProtocolDescriptor> {
@@ -113,16 +111,12 @@ pub mod unit_tests {
 
     #[test]
     fn test_protocol_registry_init_works() {
-        let _setup = SetupEmpty::init();
-
         let registry: ProtocolRegistry = ProtocolRegistry::init();
         assert!(registry.protocols.len() > 0);
     }
 
     #[test]
     fn test_get_protocols_for_query_works_for_none_query() {
-        let _setup = SetupEmpty::init();
-
         let registry: ProtocolRegistry = _protocol_registry();
         let protocols = registry.get_protocols_for_query(None);
         assert_eq!(_protocols(), protocols);
@@ -130,8 +124,6 @@ pub mod unit_tests {
 
     #[test]
     fn test_get_protocols_for_query_works_for_placeholder() {
-        let _setup = SetupEmpty::init();
-
         let registry: ProtocolRegistry = _protocol_registry();
 
         let protocols = registry.get_protocols_for_query(Some("*"));
@@ -140,8 +132,6 @@ pub mod unit_tests {
 
     #[test]
     fn test_get_protocols_for_query_works_for_partial() {
-        let _setup = SetupEmpty::init();
-
         let registry: ProtocolRegistry = _protocol_registry();
 
         let protocols = registry.get_protocols_for_query(Some("protocol_1.0*"));
@@ -161,8 +151,6 @@ pub mod unit_tests {
 
     #[test]
     fn test_get_protocols_for_query_works_for_exact_protocol() {
-        let _setup = SetupEmpty::init();
-
         let registry: ProtocolRegistry = _protocol_registry();
 
         let protocols = registry.get_protocols_for_query(Some("protocol_1.0_test"));
@@ -176,8 +164,6 @@ pub mod unit_tests {
 
     #[test]
     fn test_get_protocols_for_query_works_for_no_matching() {
-        let _setup = SetupEmpty::init();
-
         let registry: ProtocolRegistry = _protocol_registry();
 
         let protocols = registry.get_protocols_for_query(Some("test_some_other"));
@@ -187,8 +173,6 @@ pub mod unit_tests {
 
     #[test]
     fn test_get_protocols_for_query_works_for_real() {
-        let _setup = SetupEmpty::init();
-
         let registry: ProtocolRegistry = ProtocolRegistry::init();
 
         let protocols = registry.get_protocols_for_query(None);

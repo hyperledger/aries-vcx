@@ -1,15 +1,11 @@
 use std::sync::Arc;
 
-use crate::{
-    error::{VcxError, VcxErrorKind, VcxResult},
-    utils::async_fn_iterator::AsyncFnIterator,
-};
+use crate::utils::async_fn_iterator::AsyncFnIterator;
 
 use super::base_wallet::BaseWallet;
-use agency_client::{
-    error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult},
-    wallet::base_agency_client_wallet::BaseAgencyClientWallet,
-};
+use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
+use agency_client::errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
+use agency_client::wallet::base_agency_client_wallet::BaseAgencyClientWallet;
 use async_trait::async_trait;
 
 #[derive(Debug)]
@@ -108,10 +104,10 @@ impl ToBaseWallet for Arc<dyn BaseAgencyClientWallet> {
     }
 }
 
-fn unimplemented_agency_client_wallet_method(method_name: &str) -> VcxError {
+fn unimplemented_agency_client_wallet_method(method_name: &str) -> AriesVcxError {
     // should not occur with proper internal usage - [AgencyClientWallet] is not public
-    VcxError::from_msg(
-        VcxErrorKind::UnimplementedFeature,
+    AriesVcxError::from_msg(
+        AriesVcxErrorKind::UnimplementedFeature,
         format!("AgencyClientWallet::{} is not intended to be used.", method_name),
     )
 }

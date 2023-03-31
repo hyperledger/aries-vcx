@@ -5,8 +5,8 @@ use futures::executor::block_on;
 use serde_json::Value;
 use vdrtools::{SearchHandle, WalletHandle};
 
+use crate::errors::error::{AriesVcxError, VcxResult};
 use crate::{
-    error::{VcxError, VcxResult},
     indy::{self},
     utils::{async_fn_iterator::AsyncFnIterator, json::TryGetIndex},
 };
@@ -127,7 +127,7 @@ impl IndyWalletRecordIterator {
         let item: Option<VcxResult<String>> = records
             .as_array()
             .and_then(|arr| arr.first())
-            .and_then(|item| Some(serde_json::to_string(item).map_err(VcxError::from)));
+            .map(|item| serde_json::to_string(item).map_err(AriesVcxError::from));
 
         item.transpose()
     }

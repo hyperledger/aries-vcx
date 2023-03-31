@@ -3,7 +3,7 @@ import '../module-resolver-helper';
 import { assert } from 'chai';
 import { credentialDefCreate } from 'helpers/entities';
 import { initVcxTestMode, shouldThrow } from 'helpers/utils';
-import { CredentialDef, CredentialDefState, VCXCode } from 'src';
+import { CredentialDef, VCXCode } from 'src';
 
 describe('CredentialDef:', () => {
   before(() => initVcxTestMode());
@@ -24,13 +24,12 @@ describe('CredentialDef:', () => {
       const { data, version } = serialized;
       assert.ok(data);
       assert.ok(version);
-      assert.equal(data.source_id, credentialDef.sourceId);
     });
 
     it('throws: not initialized', async () => {
-      const credentialDef = new CredentialDef(null as any, {} as any);
+      const credentialDef = new CredentialDef({} as any);
       const error = await shouldThrow(() => credentialDef.serialize());
-      assert.equal(error.vcxCode, VCXCode.INVALID_CREDENTIAL_DEF_HANDLE);
+      assert.equal(error.napiCode, 'NumberExpected');
     });
   });
 
@@ -39,7 +38,6 @@ describe('CredentialDef:', () => {
       const credentialDef1 = await credentialDefCreate();
       const data1 = await credentialDef1.serialize();
       const credentialDef2 = await CredentialDef.deserialize(data1);
-      assert.equal(credentialDef2.sourceId, credentialDef1.sourceId);
       const data2 = await credentialDef2.serialize();
       assert.deepEqual(data1, data2);
     });
@@ -48,6 +46,7 @@ describe('CredentialDef:', () => {
       const error = await shouldThrow(async () =>
         CredentialDef.deserialize({ data: { source_id: 'Invalid' } } as any),
       );
+      assert.equal(error.napiCode, 'GenericFailure');
       assert.equal(error.vcxCode, VCXCode.CREATE_CREDENTIAL_DEF_ERR);
     });
   });
@@ -58,10 +57,12 @@ describe('CredentialDef:', () => {
       assert.equal(await credentialDef.getCredDefId(), '2hoqvcwupRTUNkXn6ArYzs:3:CL:2471');
     });
 
-    it('throws: not initialized', async () => {
-      const credentialDef = new CredentialDef(null as any, {} as any);
+    it('throws: invalid handle', async () => {
+      const credentialDef = await credentialDefCreate();
+      credentialDef.releaseRustData()
       const error = await shouldThrow(() => credentialDef.getCredDefId());
-      assert.equal(error.vcxCode, VCXCode.INVALID_CREDENTIAL_DEF_HANDLE);
+      assert.equal(error.napiCode, 'GenericFailure');
+      assert.equal(error.vcxCode, VCXCode.INVALID_OBJ_HANDLE);
     });
   });
 });

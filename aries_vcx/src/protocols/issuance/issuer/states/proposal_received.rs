@@ -1,6 +1,6 @@
-use messages::issuance::credential_offer::{CredentialOffer, OfferInfo};
-use messages::issuance::credential_proposal::CredentialProposal;
 use crate::protocols::issuance::issuer::states::offer_sent::OfferSentState;
+use messages::protocols::issuance::credential_offer::{CredentialOffer, OfferInfo};
+use messages::protocols::issuance::credential_proposal::CredentialProposal;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ProposalReceivedState {

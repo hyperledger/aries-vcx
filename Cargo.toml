@@ -2,17 +2,25 @@
 members = [
     "aries_vcx",
     "libvcx",
+    "libvcx_core",
     "agency_client",
+    "libvdrtools",
     "messages",
-    "agents/rust/aries-vcx-agent"
+    "messages_macros",
+    "messages2",
+    "shared_vcx",
+    "diddoc",
+    "agents/rust/aries-vcx-agent",
+    "wrappers/vcx-napi-rs",
+    "uniffi_aries_vcx/core"
 ]
 
 [workspace.package]
-version = "0.50.0"
+version = "0.53.0"
 authors = ["Absa Group Limited", "Hyperledger Indy Contributors <hyperledger-indy@lists.hyperledger.org>"]
 description = "Absa's fork of HL LibVCX"
 license = "Apache-2.0"
-edition = "2018"
+edition = "2021"
 
 [profile.release]
 debug = 0

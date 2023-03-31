@@ -2,15 +2,14 @@ use std::env;
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use messages::did_doc::DidDoc;
 use vdrtools::types::validation::Validatable;
-use crate::error::{VcxResult, VcxError, VcxErrorKind};
-use messages::a2a::A2AMessage;
-use crate::utils::encryption_envelope::EncryptionEnvelope;
-use crate::plugins::wallet::base_wallet::BaseWallet;
 
-#[macro_use]
-pub mod version_constants;
+use messages::a2a::A2AMessage;
+use messages::diddoc::aries::diddoc::AriesDidDoc;
+
+use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
+use crate::plugins::wallet::base_wallet::BaseWallet;
+use crate::utils::encryption_envelope::EncryptionEnvelope;
 
 #[macro_use]
 #[cfg(feature = "test_utils")]
@@ -48,7 +47,7 @@ macro_rules! map (
 pub mod author_agreement;
 #[rustfmt::skip]
 pub mod constants;
-pub mod error;
+pub mod async_fn_iterator;
 pub mod file;
 pub mod json;
 pub mod mockdata;
@@ -57,7 +56,6 @@ pub mod provision;
 pub mod qualifier;
 pub mod random;
 pub mod uuid;
-pub mod async_fn_iterator;
 
 #[macro_use]
 pub mod test_logger;
@@ -75,16 +73,12 @@ pub fn get_temp_dir_path(filename: &str) -> PathBuf {
 pub async fn send_message(
     wallet: Arc<dyn BaseWallet>,
     sender_verkey: String,
-    did_doc: DidDoc,
+    did_doc: AriesDidDoc,
     message: A2AMessage,
 ) -> VcxResult<()> {
     trace!("send_message >>> message: {:?}, did_doc: {:?}", message, &did_doc);
-    let EncryptionEnvelope(envelope) = EncryptionEnvelope::create(
-        &wallet, 
-        &message, 
-        Some(&sender_verkey), 
-        &did_doc)
-        .await?;
+    let EncryptionEnvelope(envelope) =
+        EncryptionEnvelope::create(&wallet, &message, Some(&sender_verkey), &did_doc).await?;
 
     // TODO: Extract from agency client
     agency_client::httpclient::post_message(envelope, &did_doc.get_endpoint()).await?;
@@ -93,7 +87,7 @@ pub async fn send_message(
 
 pub async fn send_message_anonymously(
     wallet: Arc<dyn BaseWallet>,
-    did_doc: &DidDoc,
+    did_doc: &AriesDidDoc,
     message: &A2AMessage,
 ) -> VcxResult<()> {
     trace!(
@@ -101,17 +95,11 @@ pub async fn send_message_anonymously(
         message,
         &did_doc
     );
-    let EncryptionEnvelope(envelope) = EncryptionEnvelope::create(
-        &wallet, 
-        &message, 
-        None,
-        &did_doc)
-        .await?;
-        
+    let EncryptionEnvelope(envelope) = EncryptionEnvelope::create(&wallet, message, None, did_doc).await?;
+
     agency_client::httpclient::post_message(envelope, &did_doc.get_endpoint()).await?;
     Ok(())
 }
-
 
 pub fn parse_and_validate<'a, T>(s: &'a str) -> VcxResult<T>
 where
@@ -122,6 +110,6 @@ where
 
     match data.validate() {
         Ok(_) => Ok(data),
-        Err(s) => Err(VcxError::from_msg(VcxErrorKind::LibindyInvalidStructure, s)),
+        Err(s) => Err(AriesVcxError::from_msg(AriesVcxErrorKind::LibindyInvalidStructure, s)),
     }
 }

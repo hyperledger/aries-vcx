@@ -1,4 +1,4 @@
-const { VerifierStateType, ProofState, Proof } = require('@hyperledger/node-vcx-wrapper')
+const { VerifierStateType, ProofVerificationStatus, Proof } = require('@hyperledger/node-vcx-wrapper')
 const sleepPromise = require('sleep-promise')
 const { runScript } = require('./script-common')
 const logger = require('./logger')('Faber')
@@ -7,18 +7,19 @@ const uuid = require('uuid')
 const express = require('express')
 const bodyParser = require('body-parser')
 const { getFaberProofDataWithNonRevocation } = require('../test/utils/data')
-const { createVcxAgent, initRustapi, getSampleSchemaData } = require('../src/index')
+const { createVcxAgent, getSampleSchemaData } = require('../src/index')
 const { getAliceSchemaAttrs, getFaberCredDefName } = require('../test/utils/data')
 require('@hyperledger/node-vcx-wrapper')
 const { getStorageInfoMysql } = require('./wallet-common')
 const sleep = require('sleep-promise')
-const { testTailsUrl } = require('../src')
+const { testTailsUrl, initRustLogger } = require('../src')
 
 const tailsDir = '/tmp/tails'
 
 async function runFaber (options) {
   logger.info(`Starting. Revocation enabled=${options.revocation}`)
-  await initRustapi(process.env.VCX_LOG_LEVEL || 'vcx=error,agency_client=error')
+  initRustLogger(process.env.RUST_LOG || 'vcx=error')
+
   let faberServer
   let exitcode = 0
   let vcxAgent
@@ -28,7 +29,7 @@ async function runFaber (options) {
   const issuerCredId = 'cred-for-alice'
   try {
     const agentName = `faber-${uuid.v4()}`
-    const walletExtraConfigs = (options['mysql'])
+    const walletExtraConfigs = (options.mysql)
       ? getStorageInfoMysql()
       : {}
 
@@ -97,11 +98,11 @@ async function runFaber (options) {
     logger.info('#21 Poll agency and wait for alice to provide proof')
     let proofProtocolState = await vcxProof.updateStateV2(connectionToAlice)
     logger.debug(`vcxProof = ${JSON.stringify(vcxProof)}`)
-    logger.debug(`proofState = ${proofProtocolState}`)
+    logger.debug(`proofVerificationStatus = ${proofProtocolState}`)
     while (![VerifierStateType.Finished, VerifierStateType.Failed].includes(proofProtocolState)) {
       await sleepPromise(2000)
       proofProtocolState = await vcxProof.updateStateV2(connectionToAlice)
-      logger.info(`proofState=${proofProtocolState}`)
+      logger.info(`proofVerificationStatus=${proofProtocolState}`)
       if (proofProtocolState === VerifierStateType.Failed) {
         logger.error(`Faber proof protocol state is ${3} which an error has ocurred.`)
         logger.error(`Serialized proof state = ${JSON.stringify(await vcxProof.serialize())}`)
@@ -110,21 +111,23 @@ async function runFaber (options) {
     }
 
     logger.info('#27 Process the proof provided by alice.')
-    const { proofState, proof } = await vcxProof.getProof()
-    assert(proofState)
-    assert(proof)
+    const presentation = vcxProof.getPresentationMsg()
+    const verificationStatus = vcxProof.getVerificationStatus()
+    logger.info(`#27 Proof: proofVerificationStatus=${verificationStatus}, proof=${presentation}`)
+    assert(verificationStatus)
+    assert(presentation)
     logger.info(`Proof protocol state = ${JSON.stringify(proofProtocolState)}`)
-    logger.info(`Proof verification state =${proofState}`)
-    logger.debug(`Proof presentation = ${JSON.stringify(proof, null, 2)}`)
+    logger.info(`Proof verification state =${verificationStatus}`)
+    logger.debug(`Proof presentation = ${JSON.stringify(presentation, null, 2)}`)
     logger.debug(`Serialized Proof state machine ${JSON.stringify(await vcxProof.serialize())}`)
 
-    if (proofState === ProofState.Verified) {
+    if (verificationStatus === ProofVerificationStatus.Valid) {
       if (options.revocation) {
         throw Error('Proof was verified, but was expected to be invalid, because revocation was enabled.')
       } else {
         logger.info('Proof was verified.')
       }
-    } else if (proofState === ProofState.Invalid) {
+    } else if (verificationStatus === ProofVerificationStatus.Invalid) {
       if (options.revocation) {
         logger.info('Proof was determined as invalid, which was expected because the used credential was revoked.')
       } else {
@@ -132,7 +135,7 @@ async function runFaber (options) {
       }
       await sleepPromise(1000)
     } else {
-      logger.error(`Unexpected proof state '${proofState}'.`)
+      logger.error(`Unexpected proof state '${verificationStatus}'.`)
       process.exit(-1)
     }
 
