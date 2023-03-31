@@ -2,9 +2,8 @@ use diddoc::aries::diddoc::AriesDidDoc;
 use std::sync::{Arc, Mutex};
 
 use aries_vcx::{
-    protocols::connection::pairwise_info::PairwiseInfo,
-    protocols::connection::Connection as VcxConnection,
-    protocols::connection::{GenericConnection as VcxGenericConnection},
+    protocols::connection::pairwise_info::PairwiseInfo, protocols::connection::Connection as VcxConnection,
+    protocols::connection::GenericConnection as VcxGenericConnection,
 };
 use url::Url;
 

@@ -4,10 +4,10 @@ use aries_vcx::common::ledger::transactions::into_did_doc;
 use aries_vcx::handlers::out_of_band::receiver::OutOfBandReceiver;
 use aries_vcx::handlers::out_of_band::sender::OutOfBandSender;
 use aries_vcx::handlers::util::AnyInvitation;
-use aries_vcx::messages::AriesMessage;
-use aries_vcx::messages::msg_fields::protocols::out_of_band::OobGoalCode;
 use aries_vcx::messages::msg_fields::protocols::out_of_band::invitation::OobService;
+use aries_vcx::messages::msg_fields::protocols::out_of_band::OobGoalCode;
 use aries_vcx::messages::msg_types::Protocol;
+use aries_vcx::messages::AriesMessage;
 
 use crate::api_vcx::api_global::agency_client::get_main_agency_client;
 use crate::api_vcx::api_global::profile::get_main_profile;

@@ -1,4 +1,4 @@
-use crate::{protocols::issuance::issuer::state_machine::RevocationInfoV1, handlers::util::Status};
+use crate::{handlers::util::Status, protocols::issuance::issuer::state_machine::RevocationInfoV1};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct FinishedState {

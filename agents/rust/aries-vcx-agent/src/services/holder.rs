@@ -7,10 +7,10 @@ use crate::storage::object_cache::ObjectCache;
 use crate::storage::Storage;
 use aries_vcx::core::profile::profile::Profile;
 use aries_vcx::handlers::issuance::holder::Holder;
-use aries_vcx::messages::AriesMessage;
 use aries_vcx::messages::msg_fields::protocols::cred_issuance::issue_credential::IssueCredential;
 use aries_vcx::messages::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
 use aries_vcx::messages::msg_fields::protocols::cred_issuance::propose_credential::ProposeCredential;
+use aries_vcx::messages::AriesMessage;
 use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
 use aries_vcx::protocols::SendClosure;
 
