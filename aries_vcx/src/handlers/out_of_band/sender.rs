@@ -12,7 +12,10 @@ use messages::{
     AriesMessage,
 };
 
-use crate::{errors::error::prelude::*, handlers::util::make_attach_from_str};
+use crate::{
+    errors::error::prelude::*,
+    handlers::util::{make_attach_from_str, AttachmentId},
+};
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct OutOfBandSender {
@@ -75,10 +78,12 @@ impl OutOfBandSender {
     }
 
     pub fn append_a2a_message(mut self, msg: AriesMessage) -> VcxResult<Self> {
-        let attach = match msg {
-            a2a_msg @ AriesMessage::PresentProof(PresentProof::RequestPresentation(_)) => json!(&a2a_msg).to_string(),
+        let (attach_id, attach) = match msg {
+            a2a_msg @ AriesMessage::PresentProof(PresentProof::RequestPresentation(_)) => {
+                (AttachmentId::PresentationRequest, json!(&a2a_msg).to_string())
+            }
             a2a_msg @ AriesMessage::CredentialIssuance(CredentialIssuance::OfferCredential(_)) => {
-                json!(&a2a_msg).to_string()
+                (AttachmentId::CredentialOffer, json!(&a2a_msg).to_string())
             }
             _ => {
                 error!("Appended message type {:?} is not allowed.", msg);
@@ -89,7 +94,10 @@ impl OutOfBandSender {
             }
         };
 
-        self.oob.content.requests_attach.push(make_attach_from_str!(&attach));
+        self.oob
+            .content
+            .requests_attach
+            .push(make_attach_from_str!(&attach, json!(attach_id).to_string()));
 
         Ok(self)
     }

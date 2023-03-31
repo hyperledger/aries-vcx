@@ -5,7 +5,7 @@ use std::sync::Arc;
 use crate::core::profile::profile::Profile;
 use crate::errors::error::prelude::*;
 use crate::handlers::util::{
-    make_attach_from_str, matches_opt_thread_id, matches_thread_id, PresentationProposalData, Status,
+    make_attach_from_str, matches_opt_thread_id, matches_thread_id, AttachmentId, PresentationProposalData, Status,
 };
 use crate::protocols::common::build_problem_report_msg;
 use crate::protocols::proof_presentation::prover::messages::ProverMessages;
@@ -85,7 +85,10 @@ impl fmt::Display for ProverFullState {
 fn build_presentation_msg(thread_id: &str, presentation_attachment: String) -> VcxResult<Presentation> {
     let id = Uuid::new_v4().to_string();
 
-    let content = PresentationContent::new(vec![make_attach_from_str!(&presentation_attachment)]);
+    let content = PresentationContent::new(vec![make_attach_from_str!(
+        &presentation_attachment,
+        json!(AttachmentId::Presentation).to_string()
+    )]);
     let mut decorators = PresentationDecorators::new(Thread::new(thread_id.to_owned()));
     let mut timing = Timing::default();
     timing.out_time = Some(Utc::now());

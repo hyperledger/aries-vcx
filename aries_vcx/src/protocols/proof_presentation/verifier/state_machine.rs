@@ -5,7 +5,7 @@ use std::sync::Arc;
 use crate::common::proofs::proof_request::PresentationRequestData;
 use crate::core::profile::profile::Profile;
 use crate::errors::error::prelude::*;
-use crate::handlers::util::{make_attach_from_str, matches_opt_thread_id, matches_thread_id, Status};
+use crate::handlers::util::{make_attach_from_str, matches_opt_thread_id, matches_thread_id, AttachmentId, Status};
 use crate::protocols::common::build_problem_report_msg;
 use crate::protocols::proof_presentation::verifier::messages::VerifierMessages;
 use crate::protocols::proof_presentation::verifier::states::finished::FinishedState;
@@ -90,7 +90,10 @@ fn build_starting_presentation_request(
     comment: Option<String>,
 ) -> VcxResult<RequestPresentation> {
     let id = Uuid::new_v4().to_string();
-    let content = RequestPresentationContent::new(vec![make_attach_from_str!(&json!(request_data).to_string())]);
+    let content = RequestPresentationContent::new(vec![make_attach_from_str!(
+        &json!(request_data).to_string(),
+        json!(AttachmentId::PresentationRequest).to_string()
+    )]);
     let mut decorators = RequestPresentationDecorators::default();
     let mut timing = Timing::default();
     timing.out_time = Some(Utc::now());

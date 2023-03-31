@@ -4,7 +4,8 @@ use std::sync::Arc;
 
 use crate::core::profile::profile::Profile;
 use crate::handlers::util::{
-    get_attach_as_string, make_attach_from_str, matches_opt_thread_id, matches_thread_id, OfferInfo, Status,
+    get_attach_as_string, make_attach_from_str, matches_opt_thread_id, matches_thread_id, AttachmentId, OfferInfo,
+    Status,
 };
 use chrono::Utc;
 use messages::decorators::attachment::{Attachment, AttachmentData, AttachmentType};
@@ -101,7 +102,10 @@ pub struct IssuerSM {
 fn build_credential_message(libindy_credential: String) -> VcxResult<IssueCredential> {
     let id = Uuid::new_v4().to_string();
 
-    let content = IssueCredentialContent::new(vec![make_attach_from_str!(&libindy_credential)]);
+    let content = IssueCredentialContent::new(vec![make_attach_from_str!(
+        &libindy_credential,
+        json!(AttachmentId::Credential).to_string()
+    )]);
 
     let mut decorators = IssueCredentialDecorators::new(Thread::new(id.clone())); // this needs a Thread per RFC...
     let mut timing = Timing::default();
@@ -119,7 +123,13 @@ fn build_credential_offer(
 ) -> VcxResult<OfferCredential> {
     let id = Uuid::new_v4().to_string();
 
-    let mut content = OfferCredentialContent::new(credential_preview, vec![make_attach_from_str!(&credential_offer)]);
+    let mut content = OfferCredentialContent::new(
+        credential_preview,
+        vec![make_attach_from_str!(
+            &credential_offer,
+            json!(AttachmentId::CredentialOffer).to_string()
+        )],
+    );
     content.comment = comment;
 
     let mut decorators = OfferCredentialDecorators::default();

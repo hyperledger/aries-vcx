@@ -46,11 +46,13 @@ macro_rules! get_attach_as_string {
 }
 
 macro_rules! make_attach_from_str {
-    ($str_attach:expr) => {{
+    ($str_attach:expr, $id:expr) => {{
         let attach_type =
             messages::decorators::attachment::AttachmentType::Base64(base64::encode($str_attach).into_bytes());
         let attach_data = messages::decorators::attachment::AttachmentData::new(attach_type);
-        messages::decorators::attachment::Attachment::new(attach_data)
+        let mut attach = messages::decorators::attachment::Attachment::new(attach_data);
+        attach.id = Some($id);
+        attach
     }};
 }
 
@@ -126,6 +128,7 @@ pub enum AttachmentId {
     Presentation,
 }
 
+/// For retro-fitting the new messages.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(untagged)]
 pub enum AnyInvitation {

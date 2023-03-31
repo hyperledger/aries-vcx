@@ -24,7 +24,7 @@ use crate::core::profile::profile::Profile;
 use crate::errors::error::prelude::*;
 use crate::global::settings;
 use crate::handlers::util::{
-    get_attach_as_string, make_attach_from_str, matches_opt_thread_id, matches_thread_id, Status,
+    get_attach_as_string, make_attach_from_str, matches_opt_thread_id, matches_thread_id, AttachmentId, Status,
 };
 use crate::protocols::common::build_problem_report_msg;
 use crate::protocols::issuance::actions::CredentialIssuanceAction;
@@ -75,7 +75,10 @@ impl fmt::Display for HolderFullState {
 }
 
 fn build_credential_request_msg(credential_request_attach: String, thread_id: &str) -> VcxResult<RequestCredential> {
-    let content = RequestCredentialContent::new(vec![make_attach_from_str!(&credential_request_attach)]);
+    let content = RequestCredentialContent::new(vec![make_attach_from_str!(
+        &credential_request_attach,
+        json!(AttachmentId::CredentialRequest).to_string()
+    )]);
 
     let mut decorators = RequestCredentialDecorators::default();
 
