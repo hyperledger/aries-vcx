@@ -3,11 +3,11 @@ use std::collections::HashMap;
 use aries_vcx::common::ledger::transactions::into_did_doc;
 use aries_vcx::handlers::out_of_band::receiver::OutOfBandReceiver;
 use aries_vcx::handlers::out_of_band::sender::OutOfBandSender;
-use aries_vcx::messages::a2a::A2AMessage;
-use aries_vcx::messages::protocols::connection::did::Did;
-use aries_vcx::messages::protocols::connection::invite::Invitation;
-use aries_vcx::messages::protocols::out_of_band::service_oob::ServiceOob;
-use aries_vcx::messages::protocols::out_of_band::{GoalCode, HandshakeProtocol};
+use aries_vcx::handlers::util::AnyInvitation;
+use aries_vcx::messages::AriesMessage;
+use aries_vcx::messages::msg_fields::protocols::out_of_band::OobGoalCode;
+use aries_vcx::messages::msg_fields::protocols::out_of_band::invitation::OobService;
+use aries_vcx::messages::msg_types::Protocol;
 
 use crate::api_vcx::api_global::agency_client::get_main_agency_client;
 use crate::api_vcx::api_global::profile::get_main_profile;
@@ -26,10 +26,10 @@ lazy_static! {
 #[derive(Deserialize)]
 pub struct OOBConfig {
     pub label: Option<String>,
-    pub goal_code: Option<GoalCode>,
+    pub goal_code: Option<OobGoalCode>,
     pub goal: Option<String>,
     #[serde(default)]
-    pub handshake_protocols: Vec<HandshakeProtocol>,
+    pub handshake_protocols: Vec<Protocol>,
 }
 
 fn store_out_of_band_receiver(oob: OutOfBandReceiver) -> LibvcxResult<u32> {
@@ -60,17 +60,17 @@ pub fn create_out_of_band(config: &str) -> LibvcxResult<u32> {
         oob = oob.set_goal(goal);
     };
     if let Some(goal_code) = &config.goal_code {
-        oob = oob.set_goal_code(goal_code);
+        oob = oob.set_goal_code(*goal_code);
     };
     for protocol in config.handshake_protocols {
-        oob = oob.append_handshake_protocol(&protocol)?;
+        oob = oob.append_handshake_protocol(protocol)?;
     }
     store_out_of_band_sender(oob)
 }
 
 pub fn create_out_of_band_msg_from_msg(msg: &str) -> LibvcxResult<u32> {
     trace!("create_out_of_band_msg_from_msg >>> msg: {}", msg);
-    let msg: A2AMessage = serde_json::from_str(msg).map_err(|err| {
+    let msg: AriesMessage = serde_json::from_str(msg).map_err(|err| {
         LibvcxError::from_msg(
             LibvcxErrorKind::InvalidJson,
             format!("Cannot deserialize supplied message: {:?}", err),
@@ -101,18 +101,18 @@ pub fn append_service(handle: u32, service: &str) -> LibvcxResult<()> {
             format!("Cannot deserialize supplied message: {:?}", err),
         )
     })?;
-    oob = oob.clone().append_service(&ServiceOob::AriesService(service));
+    oob = oob.clone().append_service(&OobService::AriesService(service));
     OUT_OF_BAND_SENDER_MAP.insert(handle, oob)
 }
 
 pub fn append_service_did(handle: u32, did: &str) -> LibvcxResult<()> {
     trace!("append_service_did >>> handle: {}, did: {}", handle, did);
     let mut oob = OUT_OF_BAND_SENDER_MAP.get_cloned(handle)?;
-    oob = oob.clone().append_service(&ServiceOob::Did(Did::new(did)?));
+    oob = oob.clone().append_service(&OobService::Did(did.to_string()));
     OUT_OF_BAND_SENDER_MAP.insert(handle, oob)
 }
 
-pub fn get_services(handle: u32) -> LibvcxResult<Vec<ServiceOob>> {
+pub fn get_services(handle: u32) -> LibvcxResult<Vec<OobService>> {
     trace!("get_services >>> handle: {}", handle);
     OUT_OF_BAND_SENDER_MAP.get(handle, |oob| Ok(oob.get_services()))
 }
@@ -201,7 +201,7 @@ pub async fn nonmediated_connection_exists(handle: u32, conn_handles: &[u32]) ->
 pub async fn build_connection(handle: u32) -> LibvcxResult<String> {
     trace!("build_connection >>> handle: {}", handle);
     let oob = OUT_OF_BAND_RECEIVER_MAP.get_cloned(handle)?;
-    let invitation = Invitation::OutOfBand(oob.oob.clone());
+    let invitation = AnyInvitation::Oob(oob.oob.clone());
     let profile = get_main_profile()?;
     let ddo = into_did_doc(&profile, &invitation).await?;
     oob.build_connection(&profile, &get_main_agency_client()?, ddo, false)

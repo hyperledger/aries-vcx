@@ -3,7 +3,7 @@ use std::{any::type_name, collections::HashMap, sync::RwLock};
 use agency_client::httpclient::post_message;
 use aries_vcx::{
     errors::error::{AriesVcxError, VcxResult},
-    messages::protocols::connection::request::Request,
+    messages::msg_fields::protocols::connection::request::Request,
     protocols::connection::{
         invitee::InviteeConnection, inviter::InviterConnection, pairwise_info::PairwiseInfo, Connection,
         GenericConnection, State, ThinState,
@@ -258,9 +258,16 @@ pub async fn process_request(
     let request: Request = deserialize(request)?;
 
     let con = match con.state() {
-        ThinState::Inviter(State::Initial) => Connection::try_from(con)
-            .map_err(From::from)
-            .map(|c| c.into_invited(&request.get_thread_id())),
+        ThinState::Inviter(State::Initial) => Connection::try_from(con).map_err(From::from).map(|c| {
+            c.into_invited(
+                &request
+                    .decorators
+                    .thread
+                    .as_ref()
+                    .map(|t| t.thid.as_str())
+                    .unwrap_or(request.id.as_str()),
+            )
+        }),
         ThinState::Inviter(State::Invited) => Connection::try_from(con).map_err(From::from),
         s => Err(LibvcxError::from_msg(
             LibvcxErrorKind::ObjectAccessError,
@@ -272,7 +279,13 @@ pub async fn process_request(
     }?;
 
     let con = con
-        .handle_request(&wallet, request, service_endpoint, routing_keys, &HttpClient)
+        .handle_request(
+            &wallet,
+            request,
+            service_endpoint.parse().expect("valid url"),
+            routing_keys,
+            &HttpClient,
+        )
         .await?;
 
     insert_connection(handle, con)
@@ -334,7 +347,12 @@ pub async fn send_request(handle: u32, service_endpoint: String, routing_keys: V
     let con = get_cloned_connection(&handle)?;
     let wallet = get_main_profile()?.inject_wallet();
     let con = con
-        .send_request(&wallet, service_endpoint, routing_keys, &HttpClient)
+        .send_request(
+            &wallet,
+            service_endpoint.parse().expect("valid url"),
+            routing_keys,
+            &HttpClient,
+        )
         .await?;
 
     insert_connection(handle, con)
@@ -364,7 +382,7 @@ pub async fn create_invite(handle: u32, service_endpoint: String, routing_keys: 
     trace!("create_invite >>>");
 
     let con = get_cloned_connection(&handle)?;
-    let con = con.create_invitation(routing_keys, service_endpoint);
+    let con = con.create_invitation(routing_keys, service_endpoint.parse().expect("valid url"));
 
     insert_connection(handle, con)
 }

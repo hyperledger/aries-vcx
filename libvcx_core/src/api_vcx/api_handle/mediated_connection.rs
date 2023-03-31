@@ -1,17 +1,20 @@
 use std::collections::HashMap;
 
+use aries_vcx::handlers::util::AnyInvitation;
+use aries_vcx::messages::msg_fields::protocols::connection::invitation::{
+    Invitation, PublicInvitation, PublicInvitationContent,
+};
+use aries_vcx::messages::msg_fields::protocols::connection::request::Request;
+use aries_vcx::messages::AriesMessage;
 use serde_json;
 
 use aries_vcx::agency_client::api::downloaded_message::DownloadedMessage;
 use aries_vcx::agency_client::MessageStatusCode;
 use aries_vcx::common::ledger::transactions::into_did_doc;
 use aries_vcx::handlers::connection::mediated_connection::MediatedConnection;
-use aries_vcx::messages::a2a::A2AMessage;
-use aries_vcx::messages::protocols::connection::invite::Invitation as InvitationV3;
-use aries_vcx::messages::protocols::connection::invite::PublicInvitation;
-use aries_vcx::messages::protocols::connection::request::Request;
 use aries_vcx::protocols::mediated_connection::pairwise_info::PairwiseInfo;
 use aries_vcx::protocols::SendClosure;
+use uuid::Uuid;
 
 use crate::api_vcx::api_global::agency_client::get_main_agency_client;
 use crate::api_vcx::api_global::profile::{get_main_profile, get_main_profile_optional_pool};
@@ -31,8 +34,10 @@ pub fn generate_public_invitation(public_did: &str, label: &str) -> LibvcxResult
         public_did,
         label
     );
-    let invitation =
-        A2AMessage::ConnectionInvitationPublic(PublicInvitation::create().set_public_did(public_did)?.set_label(label));
+    let content = PublicInvitationContent::new(label.to_owned(), public_did.to_owned());
+    let invite = PublicInvitation::new(Uuid::new_v4().to_string(), content);
+
+    let invitation = AriesMessage::from(invite);
     Ok(json!(invitation).to_string())
 }
 
@@ -127,7 +132,7 @@ pub async fn create_connection(source_id: &str) -> LibvcxResult<u32> {
 
 pub async fn create_connection_with_invite(source_id: &str, details: &str) -> LibvcxResult<u32> {
     debug!("create connection {} with invite {}", source_id, details);
-    if let Ok(invitation) = serde_json::from_str::<InvitationV3>(details) {
+    if let Ok(invitation) = serde_json::from_str::<AnyInvitation>(details) {
         let profile = get_main_profile()?;
         let ddo = into_did_doc(&profile, &invitation).await?;
         let connection = MediatedConnection::create_with_invite(
@@ -181,7 +186,7 @@ pub async fn send_handshake_reuse(handle: u32, oob_msg: &str) -> LibvcxResult<()
 
 pub async fn update_state_with_message(handle: u32, message: &str) -> LibvcxResult<u32> {
     let mut connection = CONNECTION_MAP.get_cloned(handle)?;
-    let message: A2AMessage = serde_json::from_str(message).map_err(|err| {
+    let message: AriesMessage = serde_json::from_str(message).map_err(|err| {
         LibvcxError::from_msg(
             LibvcxErrorKind::InvalidJson,
             format!(
@@ -201,7 +206,7 @@ pub async fn update_state_with_message(handle: u32, message: &str) -> LibvcxResu
 
 pub async fn handle_message(handle: u32, message: &str) -> LibvcxResult<()> {
     let mut connection = CONNECTION_MAP.get_cloned(handle)?;
-    let message: A2AMessage = serde_json::from_str(message).map_err(|err| {
+    let message: AriesMessage = serde_json::from_str(message).map_err(|err| {
         LibvcxError::from_msg(
             LibvcxErrorKind::InvalidJson,
             format!(
@@ -252,9 +257,14 @@ pub async fn connect(handle: u32) -> LibvcxResult<Option<String>> {
     let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
     connection.connect(&profile, &get_main_agency_client()?, None).await?;
     let invitation = connection.get_invite_details().map(|invitation| match invitation {
-        InvitationV3::Pairwise(invitation) => json!(invitation.to_a2a_message()).to_string(),
-        InvitationV3::Public(invitation) => json!(invitation.to_a2a_message()).to_string(),
-        InvitationV3::OutOfBand(invitation) => json!(invitation.to_a2a_message()).to_string(),
+        AnyInvitation::Con(Invitation::Pairwise(invitation)) => {
+            json!(AriesMessage::from(invitation.clone())).to_string()
+        }
+        AnyInvitation::Con(Invitation::PairwiseDID(invitation)) => {
+            json!(AriesMessage::from(invitation.clone())).to_string()
+        }
+        AnyInvitation::Con(Invitation::Public(invitation)) => json!(AriesMessage::from(invitation.clone())).to_string(),
+        AnyInvitation::Oob(invitation) => json!(AriesMessage::from(invitation.clone())).to_string(),
     });
     CONNECTION_MAP.insert(handle, connection)?;
     Ok(invitation)
@@ -285,9 +295,16 @@ pub fn get_invite_details(handle: u32) -> LibvcxResult<String> {
             connection
                 .get_invite_details()
                 .map(|invitation| match invitation {
-                    InvitationV3::Pairwise(invitation) => json!(invitation.to_a2a_message()).to_string(),
-                    InvitationV3::Public(invitation) => json!(invitation.to_a2a_message()).to_string(),
-                    InvitationV3::OutOfBand(invitation) => json!(invitation.to_a2a_message()).to_string(),
+                    AnyInvitation::Con(Invitation::Pairwise(invitation)) => {
+                        json!(AriesMessage::from(invitation.clone())).to_string()
+                    }
+                    AnyInvitation::Con(Invitation::PairwiseDID(invitation)) => {
+                        json!(AriesMessage::from(invitation.clone())).to_string()
+                    }
+                    AnyInvitation::Con(Invitation::Public(invitation)) => {
+                        json!(AriesMessage::from(invitation.clone())).to_string()
+                    }
+                    AnyInvitation::Oob(invitation) => json!(AriesMessage::from(invitation.clone())).to_string(),
                 })
                 .ok_or(LibvcxError::from_msg(
                     LibvcxErrorKind::ActionNotSupported,
@@ -297,7 +314,7 @@ pub fn get_invite_details(handle: u32) -> LibvcxResult<String> {
         .map_err(|e| LibvcxError::from_msg(LibvcxErrorKind::InvalidConnectionHandle, e.to_string()))
 }
 
-pub async fn get_messages(handle: u32) -> LibvcxResult<HashMap<String, A2AMessage>> {
+pub async fn get_messages(handle: u32) -> LibvcxResult<HashMap<String, AriesMessage>> {
     let connection = CONNECTION_MAP.get_cloned(handle)?;
     connection
         .get_messages(&get_main_agency_client()?)
@@ -313,7 +330,7 @@ pub async fn update_message_status(handle: u32, uid: &str) -> LibvcxResult<()> {
         .map_err(|err| err.into())
 }
 
-pub async fn get_message_by_id(handle: u32, msg_id: &str) -> LibvcxResult<A2AMessage> {
+pub async fn get_message_by_id(handle: u32, msg_id: &str) -> LibvcxResult<AriesMessage> {
     let connection = CONNECTION_MAP.get_cloned(handle)?;
     connection
         .get_message_by_id(msg_id, &get_main_agency_client()?)
@@ -321,7 +338,7 @@ pub async fn get_message_by_id(handle: u32, msg_id: &str) -> LibvcxResult<A2AMes
         .map_err(|err| err.into())
 }
 
-pub async fn send_message(handle: u32, message: A2AMessage) -> LibvcxResult<()> {
+pub async fn send_message(handle: u32, message: AriesMessage) -> LibvcxResult<()> {
     trace!("connection::send_message >>>");
     let send_message = send_message_closure(handle).await?;
     send_message(message).await.map_err(|err| err.into())

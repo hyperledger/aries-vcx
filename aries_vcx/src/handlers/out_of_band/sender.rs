@@ -3,7 +3,7 @@ use messages::{
     msg_fields::protocols::{
         cred_issuance::CredentialIssuance,
         out_of_band::{
-            invitation::{Invitation, OobService},
+            invitation::{Invitation, InvitationContent, InvitationDecorators, OobService},
             OobGoalCode,
         },
         present_proof::PresentProof,
@@ -11,6 +11,7 @@ use messages::{
     msg_types::Protocol,
     AriesMessage,
 };
+use uuid::Uuid;
 
 use crate::{
     errors::error::prelude::*,
@@ -23,8 +24,14 @@ pub struct OutOfBandSender {
 }
 
 impl OutOfBandSender {
-    pub fn new(invitation: Invitation) -> Self {
-        Self { oob: invitation }
+    pub fn create() -> Self {
+        let id = Uuid::new_v4().to_string();
+        let content = InvitationContent::new(Vec::new(), Vec::new());
+        let decorators = InvitationDecorators::default();
+
+        Self {
+            oob: Invitation::with_decorators(id, content, decorators),
+        }
     }
 
     pub fn set_label(mut self, label: &str) -> Self {

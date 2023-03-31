@@ -2495,6 +2495,7 @@ dependencies = [
  "async-trait",
  "cfg-if 1.0.0",
  "chrono",
+ "diddoc",
  "env_logger 0.9.3",
  "futures",
  "lazy_static",
@@ -4543,11 +4544,13 @@ version = "0.54.1"
 dependencies = [
  "aries-vcx",
  "async-trait",
+ "diddoc",
  "once_cell",
  "serde_json",
  "thiserror",
  "tokio",
  "uniffi",
+ "url",
 ]
 
 [[package]]
@@ -4770,11 +4773,13 @@ checksum = "accd4ea62f7bb7a82fe23066fb0957d48ef677f6eeb8215f372f52e48bb32426"
 name = "vcx-napi-rs"
 version = "0.54.1"
 dependencies = [
+ "chrono",
  "libvcx_core",
  "log",
  "napi",
  "napi-build",
  "napi-derive",
+ "uuid 0.8.2",
 ]
 
 [[package]]

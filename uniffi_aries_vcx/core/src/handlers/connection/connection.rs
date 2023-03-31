@@ -1,11 +1,12 @@
+use diddoc::aries::diddoc::AriesDidDoc;
 use std::sync::{Arc, Mutex};
 
 use aries_vcx::{
-    messages::diddoc::aries::diddoc::AriesDidDoc,
     protocols::connection::pairwise_info::PairwiseInfo,
     protocols::connection::Connection as VcxConnection,
-    protocols::connection::{GenericConnection as VcxGenericConnection, ThinState},
+    protocols::connection::{GenericConnection as VcxGenericConnection},
 };
+use url::Url;
 
 use crate::{
     core::{http_client::HttpClient, profile::ProfileHolder},
@@ -82,16 +83,11 @@ impl Connection {
         let request = serde_json::from_str(&request)?;
 
         let connection = VcxConnection::try_from(handler.clone())?;
+        let url = Url::parse(&service_endpoint).expect("valid url");
 
         block_on(async {
             let new_conn = connection
-                .handle_request(
-                    &profile.inner.inject_wallet(),
-                    request,
-                    service_endpoint,
-                    routing_keys,
-                    &HttpClient,
-                )
+                .handle_request(&profile.inner.inject_wallet(), request, url, routing_keys, &HttpClient)
                 .await?;
 
             *handler = VcxGenericConnection::from(new_conn);
@@ -129,15 +125,11 @@ impl Connection {
         let mut handler = self.handler.lock()?;
 
         let connection = VcxConnection::try_from(handler.clone())?;
+        let url = Url::parse(&service_endpoint).expect("valid url");
 
         block_on(async {
             let new_conn = connection
-                .send_request(
-                    &profile.inner.inject_wallet(),
-                    service_endpoint,
-                    routing_keys,
-                    &HttpClient,
-                )
+                .send_request(&profile.inner.inject_wallet(), url, routing_keys, &HttpClient)
                 .await?;
             *handler = VcxGenericConnection::from(new_conn);
 

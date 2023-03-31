@@ -62,7 +62,7 @@ impl DelayedSerde for OutOfBand {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq)]
 pub enum OobGoalCode {
     #[serde(rename = "issue-vc")]
     IssueVC,
@@ -72,12 +72,6 @@ pub enum OobGoalCode {
     CreateAccount,
     #[serde(rename = "p2p-messaging")]
     P2PMessaging,
-}
-
-#[derive(Deserialize, Debug, PartialEq)]
-pub enum HandshakeProtocol {
-    ConnectionV1,
-    DidExchangeV1,
 }
 
 transit_to_aries_msg!(InvitationContent: InvitationDecorators, OutOfBand);

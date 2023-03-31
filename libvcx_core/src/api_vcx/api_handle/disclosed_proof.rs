@@ -1,9 +1,10 @@
+use aries_vcx::messages::msg_fields::protocols::present_proof::request::RequestPresentation;
+use aries_vcx::messages::msg_fields::protocols::present_proof::PresentProof;
+use aries_vcx::messages::AriesMessage;
 use serde_json;
 
 use aries_vcx::agency_client::testing::mocking::AgencyMockDecrypted;
 use aries_vcx::handlers::proof_presentation::prover::Prover;
-use aries_vcx::messages::a2a::A2AMessage;
-use aries_vcx::messages::protocols::proof_presentation::presentation_request::PresentationRequest;
 use aries_vcx::utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
 use aries_vcx::{
     global::settings::indy_mocks_enabled, utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION,
@@ -33,7 +34,7 @@ pub fn create_with_proof_request(source_id: &str, proof_req: &str) -> LibvcxResu
         proof_req
     );
 
-    let presentation_request: PresentationRequest = serde_json::from_str(proof_req).map_err(|err| LibvcxError::from_msg(LibvcxErrorKind::InvalidJson, format!("Strict `aries` protocol is enabled. Can not parse `aries` formatted Presentation Request: {}\nError: {}", proof_req, err)))?;
+    let presentation_request: RequestPresentation = serde_json::from_str(proof_req).map_err(|err| LibvcxError::from_msg(LibvcxErrorKind::InvalidJson, format!("Strict `aries` protocol is enabled. Can not parse `aries` formatted Presentation Request: {}\nError: {}", proof_req, err)))?;
 
     let proof = Prover::create_from_request(source_id, presentation_request)?;
     HANDLE_MAP.add(proof)
@@ -42,7 +43,7 @@ pub fn create_with_proof_request(source_id: &str, proof_req: &str) -> LibvcxResu
 pub async fn create_with_msgid(source_id: &str, connection_handle: u32, msg_id: &str) -> LibvcxResult<(u32, String)> {
     let proof_request = get_proof_request(connection_handle, msg_id).await?;
 
-    let presentation_request: PresentationRequest = serde_json::from_str(&proof_request).map_err(|err| LibvcxError::from_msg(LibvcxErrorKind::InvalidJson, format!("Strict `aries` protocol is enabled. Can not parse `aries` formatted Presentation Request: {}\nError: {}", proof_request, err)))?;
+    let presentation_request: RequestPresentation = serde_json::from_str(&proof_request).map_err(|err| LibvcxError::from_msg(LibvcxErrorKind::InvalidJson, format!("Strict `aries` protocol is enabled. Can not parse `aries` formatted Presentation Request: {}\nError: {}", proof_request, err)))?;
 
     let proof = Prover::create_from_request(source_id, presentation_request)?;
 
@@ -73,7 +74,7 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
     let profile = get_main_profile()?;
 
     if let Some(message) = message {
-        let message: A2AMessage = serde_json::from_str(message).map_err(|err| {
+        let message: AriesMessage = serde_json::from_str(message).map_err(|err| {
             LibvcxError::from_msg(
                 LibvcxErrorKind::InvalidOption,
                 format!(
@@ -242,7 +243,7 @@ async fn get_proof_request(connection_handle: u32, msg_id: &str) -> LibvcxResult
         let message = mediated_connection::get_message_by_id(connection_handle, msg_id).await?;
 
         match message {
-            A2AMessage::PresentationRequest(presentation_request) => presentation_request,
+            AriesMessage::PresentProof(PresentProof::RequestPresentation(presentation_request)) => presentation_request,
             msg => {
                 return Err(LibvcxError::from_msg(
                     LibvcxErrorKind::InvalidMessages,
@@ -265,11 +266,11 @@ pub async fn get_proof_request_messages(connection_handle: u32) -> LibvcxResult<
         connection_handle
     );
 
-    let presentation_requests: Vec<A2AMessage> = mediated_connection::get_messages(connection_handle)
+    let presentation_requests: Vec<AriesMessage> = mediated_connection::get_messages(connection_handle)
         .await?
         .into_iter()
         .filter_map(|(_, message)| match message {
-            A2AMessage::PresentationRequest(_) => Some(message),
+            AriesMessage::PresentProof(PresentProof::RequestPresentation(_)) => Some(message),
             _ => None,
         })
         .collect();

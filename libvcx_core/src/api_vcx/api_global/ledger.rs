@@ -3,8 +3,7 @@ use aries_vcx::common::ledger::transactions::{
     clear_attr, get_attr, get_service, write_endpoint, write_endpoint_legacy,
 };
 use aries_vcx::global::settings::CONFIG_INSTITUTION_DID;
-use aries_vcx::messages::diddoc::aries::service::AriesService;
-use aries_vcx::messages::protocols::connection::did::Did;
+use diddoc::aries::service::AriesService;
 
 use crate::api_vcx::api_global::profile::get_main_profile;
 use crate::api_vcx::api_global::settings::get_config_value;
@@ -43,7 +42,7 @@ pub async fn ledger_write_endpoint_legacy(
     endpoint: String,
 ) -> LibvcxResult<AriesService> {
     let service = AriesService::create()
-        .set_service_endpoint(endpoint)
+        .set_service_endpoint(endpoint.parse().expect("valid url"))
         .set_recipient_keys(recipient_keys)
         .set_routing_keys(routing_keys);
     let profile = get_main_profile()?;
@@ -69,7 +68,7 @@ pub async fn ledger_write_endpoint(
 }
 
 pub async fn ledger_get_service(target_did: &str) -> LibvcxResult<AriesService> {
-    let target_did = Did::new(target_did)?;
+    let target_did = target_did.to_owned();
     let profile = get_main_profile()?;
     map_ariesvcx_result(get_service(&profile, &target_did).await)
 }
