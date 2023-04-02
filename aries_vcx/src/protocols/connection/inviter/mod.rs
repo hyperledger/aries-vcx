@@ -81,7 +81,7 @@ impl InviterConnection<Initial> {
     // This is a workaround and it's not necessarily pretty, but is implemented
     // for backwards compatibility.
     pub fn into_invited(self, thread_id: &str) -> InviterConnection<Invited> {
-        let id = Uuid::new_v4().to_string();
+        let id = thread_id.to_owned();
         let content = PairwiseInvitationContent::new(
             self.source_id.clone(),
             vec![self.pairwise_info.pw_vk.clone()],
