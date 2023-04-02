@@ -220,7 +220,7 @@ impl SmConnectionInvitee {
                 did_doc.set_service_endpoint(service_endpoint);
                 did_doc.set_routing_keys(routing_keys);
                 did_doc.set_recipient_keys(recipient_keys);
-                did_doc.id = self.pairwise_info.pw_did.to_string();
+                did_doc.set_id(self.pairwise_info.pw_did.clone());
 
                 let con_data = ConnectionData::new(self.pairwise_info.pw_did.to_string(), did_doc);
                 let content = RequestContent::new(self.source_id.to_string(), con_data);
@@ -231,15 +231,20 @@ impl SmConnectionInvitee {
                 decorators.timing = Some(timing);
 
                 let (thread_id, thread) = match &state.invitation {
-                    AnyInvitation::Con(Invitation::Public(_)) | AnyInvitation::Oob(_) => {
+                    AnyInvitation::Con(Invitation::Public(_)) => {
                         let mut thread = Thread::new(id.clone());
                         thread.pthid = Some(self.thread_id.clone());
 
                         (id.clone(), thread)
                     }
                     AnyInvitation::Con(Invitation::Pairwise(_)) | AnyInvitation::Con(Invitation::PairwiseDID(_)) => {
-                        let mut thread = Thread::new(self.thread_id.clone());
+                        let thread = Thread::new(self.thread_id.clone());
                         (self.thread_id.clone(), thread)
+                    }
+                    AnyInvitation::Oob(invite) => {
+                        let mut thread = Thread::new(id.clone());
+                        thread.pthid = Some(invite.id.clone());
+                        (id.clone(), thread)
                     }
                 };
 

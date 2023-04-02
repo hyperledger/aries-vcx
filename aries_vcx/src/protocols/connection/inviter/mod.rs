@@ -110,10 +110,31 @@ impl InviterConnection<Invited> {
     async fn build_response_content(
         &self,
         wallet: &Arc<dyn BaseWallet>,
-        request: &Request,
+        request: &mut Request,
         new_pairwise_info: &PairwiseInfo,
+        new_service_endpoint: Url,
+        new_routing_keys: Vec<String>,
     ) -> VcxResult<Response> {
         let new_recipient_keys = vec![new_pairwise_info.pw_vk.clone()];
+
+        request
+            .content
+            .connection
+            .did_doc
+            .set_id(new_pairwise_info.pw_did.clone());
+
+        request
+            .content
+            .connection
+            .did_doc
+            .set_service_endpoint(new_service_endpoint);
+
+        request.content.connection.did_doc.set_routing_keys(new_routing_keys);
+        request
+            .content
+            .connection
+            .did_doc
+            .set_recipient_keys(new_recipient_keys);
 
         let id = Uuid::new_v4().to_string();
 
@@ -192,14 +213,14 @@ impl InviterConnection<Invited> {
         let new_pairwise_info = PairwiseInfo::create(wallet).await?;
         let did_doc = request.content.connection.did_doc.clone();
 
-        request
-            .content
-            .connection
-            .did_doc
-            .set_service_endpoint(new_service_endpoint);
-        request.content.connection.did_doc.set_routing_keys(new_routing_keys);
         let content = self
-            .build_response_content(wallet, &request, &new_pairwise_info)
+            .build_response_content(
+                wallet,
+                &mut request,
+                &new_pairwise_info,
+                new_service_endpoint,
+                new_routing_keys,
+            )
             .await?;
 
         let state = Requested::new(content, did_doc);
