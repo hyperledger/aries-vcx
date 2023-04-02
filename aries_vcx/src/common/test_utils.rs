@@ -4,7 +4,7 @@ use std::time::Duration;
 
 use vdrtools::{PoolHandle, WalletHandle};
 
-use crate::common::credentials::encoding::CredentialAttribute;
+use crate::common::credentials::encoding::CredentialAttributes;
 use crate::common::primitives::credential_definition::CredentialDef;
 use crate::common::primitives::credential_definition::CredentialDefConfigBuilder;
 use crate::common::primitives::revocation_registry::RevocationRegistry;
@@ -172,9 +172,12 @@ pub async fn create_and_store_credential(
 
     /* create cred */
     let credential_data = r#"{"address1": ["123 Main St"], "address2": ["Suite 3"], "city": ["Draper"], "state": ["UT"], "zip": ["84000"]}"#;
-    let attr_value = CredentialAttribute::new(credential_data).encode().unwrap();
+    let attributes = CredentialAttributes::new(credential_data)
+        .unwrap()
+        .encode_all()
+        .unwrap();
 
-    let encoded_attributes = attr_value.encoded().unwrap();
+    let encoded_attributes = attributes.encoded();
     let ledger = Arc::clone(issuer).inject_ledger();
     let rev_def_json = ledger.get_rev_reg_def_json(&rev_reg_id).await.unwrap();
     let tails_file = get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string();
@@ -225,8 +228,11 @@ pub async fn create_and_store_nonrevocable_credential(
 
     /* create cred */
     let credential_data = r#"{"address1": ["123 Main St"], "address2": ["Suite 3"], "city": ["Draper"], "state": ["UT"], "zip": ["84000"]}"#;
-    let attr_values = CredentialAttribute::new(&credential_data).encode().unwrap();
-    let encoded_attributes = attr_values.encoded().unwrap();
+    let attributes = CredentialAttributes::new(&credential_data)
+        .unwrap()
+        .encode_all()
+        .unwrap();
+    let encoded_attributes = attributes.encoded();
     let (cred, _, _) = Arc::clone(issuer)
         .inject_anoncreds()
         .issuer_create_credential(&offer, &req, &encoded_attributes, None, None)
