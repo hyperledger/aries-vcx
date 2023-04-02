@@ -86,7 +86,7 @@ impl InviterConnection<Initial> {
             self.source_id.clone(),
             vec![self.pairwise_info.pw_vk.clone()],
             vec![],
-            "https:://dummy.dummy/dummy".parse().expect("url should be valid"),
+            "https://dummy.dummy/dummy".parse().expect("url should be valid"),
         );
 
         let decorators = PwInvitationDecorators::default();

@@ -7,7 +7,7 @@ use crate::{error::MsgTypeResult, maybe_known::MaybeKnown, msg_types::role::Role
 /// The link downstream from the [`ProtocolVersion`] impl enum is done through the enum variant type binding.
 ///
 /// E.g: `RoutingV1_0` would implement this, and its variants would look like `RoutingV1_0::Forward`.
-/// From a protocol string such as `https:://didcomm.org/routing/1.0/forward`, the variant would correspond to `forward`.
+/// From a protocol string such as `https://didcomm.org/routing/1.0/forward`, the variant would correspond to `forward`.
 ///
 /// This trait is typically implemented through deriving [`messages_macros::MessageType`] on the [`ProtocolVersion`] impl enum
 /// and annotating its variants.
@@ -23,7 +23,7 @@ pub trait MessageKind: FromStr + AsRef<str> {
 /// the variants represent the minor version.
 ///
 /// E.g: `RoutingTypeV1` would implement this, and its variants would look like `RoutingTypeV1::V1_0`.
-/// From a protocol string such as `https:://didcomm.org/routing/1.0/forward`, these would correspond to
+/// From a protocol string such as `https://didcomm.org/routing/1.0/forward`, these would correspond to
 /// the `1` and `0`, respectively.
 ///
 /// This trait is typically implemented through deriving [`messages_macros::MessageType`].
@@ -60,7 +60,7 @@ pub trait ProtocolVersion: Sized {
 /// Trait implemented on enums that represent the name of a protocol.
 ///
 /// E.g: `RoutingType` would implement this, and its variants would look like `RoutingType::V1`.
-/// From a protocol string such as `https:://didcomm.org/routing/1.0/forward`, the enum would correspond to `routing`.
+/// From a protocol string such as `https://didcomm.org/routing/1.0/forward`, the enum would correspond to `routing`.
 ///
 /// This trait is typically implemented through deriving [`messages_macros::MessageType`] on the protocol specific enum.
 pub trait ProtocolName: Sized {

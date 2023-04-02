@@ -50,7 +50,7 @@ impl Default for AriesService {
             id: format!("did:example:123456789abcdefghi;{}", SERVICE_SUFFIX),
             type_: String::from(SERVICE_TYPE),
             priority: 0,
-            service_endpoint: "https:://dummy.dummy/dummy"
+            service_endpoint: "https://dummy.dummy/dummy"
                 .parse()
                 .expect("dummy url should get parsed"),
             recipient_keys: Vec::new(),
