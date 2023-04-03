@@ -207,7 +207,7 @@ impl SmConnectionInviter {
     pub fn create_invitation(self, routing_keys: Vec<String>, service_endpoint: Url) -> VcxResult<Self> {
         let state = match self.state {
             InviterFullState::Initial(state) => {
-                let id = Uuid::new_v4().to_string();
+                let id = self.thread_id.clone();
                 let content = PairwiseInvitationContent::new(
                     self.source_id.clone(),
                     vec![self.pairwise_info.pw_vk.clone()],
