@@ -1,14 +1,13 @@
 use std::env;
 use std::time::Duration;
-
+use log::{info, warn, error, debug};
 use reqwest;
 use reqwest::header::{CONTENT_TYPE, USER_AGENT};
 use reqwest::Client;
-use agency_client::agency_client::AgencyClient;
 
-use agency_client::errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
-use agency_client::testing::mocking;
-use agency_client::testing::mocking::{AgencyMock, AgencyMockDecrypted, HttpClientMockResponse};
+use crate::errors::error::{SharedAgencyClientError, SharedAgencyClientErrorKind, SharedAgencyClientResult};
+use crate::testing::mocking;
+use crate::testing::mocking::{AgencyMock, AgencyMockDecrypted, HttpClientMockResponse};
 
 lazy_static! {
     static ref HTTP_CLIENT: Client = {
@@ -23,7 +22,7 @@ lazy_static! {
     };
 }
 
-pub async fn post_message(body_content: Vec<u8>, url: &str) -> AgencyClientResult<Vec<u8>> {
+pub async fn post_message(body_content: Vec<u8>, url: &str) -> SharedAgencyClientResult<Vec<u8>> {
     if mocking::agency_mocks_enabled() {
         if HttpClientMockResponse::has_response() {
             warn!("post_message >> mocking response for POST {}", url);
@@ -59,8 +58,8 @@ pub async fn post_message(body_content: Vec<u8>, url: &str) -> AgencyClientResul
         .send()
         .await
         .map_err(|err| {
-            AgencyClientError::from_msg(
-                AgencyClientErrorKind::PostMessageFailed,
+            SharedAgencyClientError::from_msg(
+                SharedAgencyClientErrorKind::PostMessageFailed,
                 format!("HTTP Client could not connect with {}, err: {}", url, err),
             )
         })?;
@@ -72,8 +71,8 @@ pub async fn post_message(body_content: Vec<u8>, url: &str) -> AgencyClientResul
             if response_status.is_success() {
                 Ok(payload.into_bytes())
             } else {
-                Err(AgencyClientError::from_msg(
-                    AgencyClientErrorKind::PostMessageFailed,
+                Err(SharedAgencyClientError::from_msg(
+                    SharedAgencyClientErrorKind::PostMessageFailed,
                     format!(
                         "POST {} failed due to non-success HTTP status: {}, response body: {}",
                         url, response_status, payload
@@ -81,8 +80,8 @@ pub async fn post_message(body_content: Vec<u8>, url: &str) -> AgencyClientResul
                 ))
             }
         }
-        Err(error) => Err(AgencyClientError::from_msg(
-            AgencyClientErrorKind::PostMessageFailed,
+        Err(error) => Err(SharedAgencyClientError::from_msg(
+            SharedAgencyClientErrorKind::PostMessageFailed,
             format!(
                 "POST {} failed because response could not be decoded as utf-8, HTTP status: {}, \
                      content-length header: {:?}, error: {:?}",

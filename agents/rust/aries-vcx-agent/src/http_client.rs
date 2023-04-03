@@ -1,5 +1,5 @@
-use aries_vcx::{agency_client::httpclient::post_message, errors::error::VcxResult, transport::Transport};
-
+use aries_vcx::{errors::error::VcxResult, transport::Transport};
+use shared_vcx::http::httpclient::post_message;
 use async_trait::async_trait;
 
 pub struct HttpClient;

@@ -6,10 +6,18 @@ use vdrtools::types::validation::Validatable;
 
 use messages::a2a::A2AMessage;
 use messages::diddoc::aries::diddoc::AriesDidDoc;
+use shared_vcx::http::httpclient;
+use shared_vcx::errors::error::{SharedAgencyClientResult, SharedAgencyClientError};
 
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use crate::plugins::wallet::base_wallet::BaseWallet;
 use crate::utils::encryption_envelope::EncryptionEnvelope;
+
+impl From<SharedAgencyClientError> for AriesVcxError {
+    fn from(error: SharedAgencyClientError) -> Self {
+        AriesVcxError::from(error)
+    }
+}
 
 #[macro_use]
 #[cfg(feature = "test_utils")]
@@ -81,8 +89,7 @@ pub async fn send_message(
         EncryptionEnvelope::create(&wallet, &message, Some(&sender_verkey), &did_doc).await?;
 
     // TODO: Extract from agency client
-    agency_client::httpclient::post_message(envelope, &did_doc.get_endpoint()).await?;
-    Ok(())
+    httpclient::post_message(envelope, &did_doc.get_endpoint()).await?;   Ok(())
 }
 
 pub async fn send_message_anonymously(
@@ -97,7 +104,7 @@ pub async fn send_message_anonymously(
     );
     let EncryptionEnvelope(envelope) = EncryptionEnvelope::create(&wallet, message, None, did_doc).await?;
 
-    agency_client::httpclient::post_message(envelope, &did_doc.get_endpoint()).await?;
+    httpclient::post_message(envelope, &did_doc.get_endpoint()).await?;
     Ok(())
 }
 

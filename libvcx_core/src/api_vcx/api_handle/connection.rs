@@ -1,6 +1,7 @@
 use std::{any::type_name, collections::HashMap, sync::RwLock};
 
-use agency_client::httpclient::post_message;
+use shared_vcx::http::httpclient::post_message;
+
 use aries_vcx::{
     errors::error::{AriesVcxError, VcxResult},
     messages::protocols::connection::request::Request,
