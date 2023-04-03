@@ -71,7 +71,7 @@ impl BaseWallet for MockWallet {
         // not needed yet
         Err(AriesVcxError::from_msg(
             AriesVcxErrorKind::UnimplementedFeature,
-            "unimplemented mock method",
+            "unimplemented mock method: iterate_wallet_records",
         ))
     }
 

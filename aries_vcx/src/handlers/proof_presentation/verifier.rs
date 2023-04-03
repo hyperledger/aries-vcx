@@ -11,7 +11,8 @@ use crate::core::profile::profile::Profile;
 use crate::errors::error::prelude::*;
 use crate::handlers::connection::mediated_connection::MediatedConnection;
 use crate::protocols::proof_presentation::verifier::messages::VerifierMessages;
-use crate::protocols::proof_presentation::verifier::state_machine::{RevocationStatus, VerifierSM, VerifierState};
+use crate::protocols::proof_presentation::verifier::state_machine::{VerifierSM, VerifierState};
+use crate::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
 use crate::protocols::SendClosure;
 use messages::a2a::A2AMessage;
 use messages::protocols::proof_presentation::presentation_proposal::PresentationProposal;
@@ -144,12 +145,8 @@ impl Verifier {
         self.verifier_sm.get_presentation_msg()
     }
 
-    pub fn get_presentation_status(&self) -> Status {
-        self.verifier_sm.presentation_status()
-    }
-
-    pub fn get_revocation_status(&self) -> Option<RevocationStatus> {
-        self.verifier_sm.get_revocation_status()
+    pub fn get_verification_status(&self) -> PresentationVerificationStatus {
+        self.verifier_sm.get_verification_status()
     }
 
     pub fn get_presentation_attachment(&self) -> VcxResult<String> {
@@ -224,7 +221,7 @@ impl Verifier {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 mod unit_tests {
-    use crate::core::profile::indy_profile::IndySdkProfile;
+    use crate::core::profile::vdrtools_profile::VdrtoolsProfile;
     use crate::utils::constants::{REQUESTED_ATTRS, REQUESTED_PREDICATES};
     use crate::utils::devsetup::*;
     use crate::utils::mockdata::mock_settings::MockBuilder;
@@ -235,7 +232,7 @@ mod unit_tests {
     use super::*;
 
     fn _dummy_profile() -> Arc<dyn Profile> {
-        Arc::new(IndySdkProfile::new(WalletHandle(0), 0))
+        Arc::new(VdrtoolsProfile::new(WalletHandle(0), 0))
     }
 
     async fn _verifier() -> Verifier {

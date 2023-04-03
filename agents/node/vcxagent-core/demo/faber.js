@@ -112,22 +112,22 @@ async function runFaber (options) {
 
     logger.info('#27 Process the proof provided by alice.')
     const presentation = vcxProof.getPresentationMsg()
-    const verificationState = vcxProof.getPresentationVerificationStatus()
-    logger.info(`#27 Proof: proofVerificationStatus=${verificationState}, proof=${presentation}`)
-    assert(verificationState)
+    const verificationStatus = vcxProof.getVerificationStatus()
+    logger.info(`#27 Proof: proofVerificationStatus=${verificationStatus}, proof=${presentation}`)
+    assert(verificationStatus)
     assert(presentation)
     logger.info(`Proof protocol state = ${JSON.stringify(proofProtocolState)}`)
-    logger.info(`Proof verification state =${verificationState}`)
+    logger.info(`Proof verification state =${verificationStatus}`)
     logger.debug(`Proof presentation = ${JSON.stringify(presentation, null, 2)}`)
     logger.debug(`Serialized Proof state machine ${JSON.stringify(await vcxProof.serialize())}`)
 
-    if (verificationState === ProofVerificationStatus.Verified) {
+    if (verificationStatus === ProofVerificationStatus.Valid) {
       if (options.revocation) {
         throw Error('Proof was verified, but was expected to be invalid, because revocation was enabled.')
       } else {
         logger.info('Proof was verified.')
       }
-    } else if (verificationState === ProofVerificationStatus.Invalid) {
+    } else if (verificationStatus === ProofVerificationStatus.Invalid) {
       if (options.revocation) {
         logger.info('Proof was determined as invalid, which was expected because the used credential was revoked.')
       } else {
@@ -135,7 +135,7 @@ async function runFaber (options) {
       }
       await sleepPromise(1000)
     } else {
-      logger.error(`Unexpected proof state '${verificationState}'.`)
+      logger.error(`Unexpected proof state '${verificationStatus}'.`)
       process.exit(-1)
     }
 

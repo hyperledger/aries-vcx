@@ -12,6 +12,7 @@ use aries_vcx::messages::protocols::proof_presentation::presentation::Presentati
 use aries_vcx::messages::protocols::proof_presentation::presentation_proposal::PresentationProposal;
 use aries_vcx::messages::status::Status;
 use aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;
+use aries_vcx::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
 use aries_vcx::protocols::SendClosure;
 
 use super::connection::ServiceConnections;
@@ -72,9 +73,9 @@ impl ServiceVerifier {
         )
     }
 
-    pub fn get_presentation_status(&self, thread_id: &str) -> AgentResult<Status> {
+    pub fn get_presentation_status(&self, thread_id: &str) -> AgentResult<PresentationVerificationStatus> {
         let VerifierWrapper { verifier, .. } = self.verifiers.get(thread_id)?;
-        Ok(verifier.get_presentation_status())
+        Ok(verifier.get_verification_status())
     }
 
     pub async fn verify_presentation(&self, thread_id: &str, presentation: Presentation) -> AgentResult<()> {

@@ -44,6 +44,9 @@ It's also advisable to follow these [instructions](TUTORIAL.md) to check your en
 * ✅ Discover Features 1.0: [`https://didcomm.org/discover-features/1.0/*`](https://github.com/hyperledger/aries-rfcs/tree/master/features/0031-discover-features)
 * ✅ Revocation notification 2.0: [`https://didcomm.org/revocation_notification/2.0/*`](https://github.com/hyperledger/aries-rfcs/tree/master/features/0031-discover-features)
 
+### State machines guidelines
+Please follow these [guidelines](./docs/guidelines.md) when implementing new state machines.
+
 ## Architecture 
 
 <img alt="AriesVCX architecture diagram" src="../docs/architecture/architecture_230104_ariesvcx.png"/>

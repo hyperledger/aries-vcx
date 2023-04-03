@@ -1,20 +1,23 @@
-use std::sync::Arc;
-
 use async_trait::async_trait;
+use vdrtools::{PoolHandle, WalletHandle};
 
 use crate::errors::error::VcxResult;
-use crate::{core::profile::indy_profile::IndySdkProfile, indy};
+use crate::indy;
 
 use super::base_anoncreds::BaseAnonCreds;
 
 #[derive(Debug)]
 pub struct IndySdkAnonCreds {
-    profile: Arc<IndySdkProfile>,
+    indy_wallet_handle: WalletHandle,
+    indy_pool_handle: PoolHandle,
 }
 
 impl IndySdkAnonCreds {
-    pub fn new(profile: Arc<IndySdkProfile>) -> Self {
-        IndySdkAnonCreds { profile }
+    pub fn new(indy_wallet_handle: WalletHandle, indy_pool_handle: PoolHandle) -> Self {
+        IndySdkAnonCreds {
+            indy_wallet_handle,
+            indy_pool_handle,
+        }
     }
 }
 
@@ -49,7 +52,7 @@ impl BaseAnonCreds for IndySdkAnonCreds {
         tag: &str,
     ) -> VcxResult<(String, String, String)> {
         indy::primitives::revocation_registry::libindy_create_and_store_revoc_reg(
-            self.profile.indy_wallet_handle,
+            self.indy_wallet_handle,
             issuer_did,
             cred_def_id,
             tails_dir,
@@ -68,7 +71,7 @@ impl BaseAnonCreds for IndySdkAnonCreds {
         config_json: &str,
     ) -> VcxResult<(String, String)> {
         indy::primitives::credential_definition::libindy_create_and_store_credential_def(
-            self.profile.indy_wallet_handle,
+            self.indy_wallet_handle,
             issuer_did,
             schema_json,
             tag,
@@ -79,8 +82,7 @@ impl BaseAnonCreds for IndySdkAnonCreds {
     }
 
     async fn issuer_create_credential_offer(&self, cred_def_id: &str) -> VcxResult<String> {
-        indy::credentials::issuer::libindy_issuer_create_credential_offer(self.profile.indy_wallet_handle, cred_def_id)
-            .await
+        indy::credentials::issuer::libindy_issuer_create_credential_offer(self.indy_wallet_handle, cred_def_id).await
     }
 
     async fn issuer_create_credential(
@@ -92,7 +94,7 @@ impl BaseAnonCreds for IndySdkAnonCreds {
         tails_dir: Option<String>,
     ) -> VcxResult<(String, Option<String>, Option<String>)> {
         indy::credentials::issuer::libindy_issuer_create_credential(
-            self.profile.indy_wallet_handle,
+            self.indy_wallet_handle,
             cred_offer_json,
             cred_req_json,
             cred_values_json,
@@ -112,7 +114,7 @@ impl BaseAnonCreds for IndySdkAnonCreds {
         revoc_states_json: Option<&str>,
     ) -> VcxResult<String> {
         indy::proofs::prover::prover::libindy_prover_create_proof(
-            self.profile.indy_wallet_handle,
+            self.indy_wallet_handle,
             proof_req_json,
             requested_credentials_json,
             master_secret_id,
@@ -124,19 +126,16 @@ impl BaseAnonCreds for IndySdkAnonCreds {
     }
 
     async fn prover_get_credential(&self, cred_id: &str) -> VcxResult<String> {
-        indy::credentials::holder::libindy_prover_get_credential(self.profile.indy_wallet_handle, cred_id).await
+        indy::credentials::holder::libindy_prover_get_credential(self.indy_wallet_handle, cred_id).await
     }
 
     async fn prover_get_credentials(&self, filter_json: Option<&str>) -> VcxResult<String> {
-        indy::proofs::prover::prover::libindy_prover_get_credentials(self.profile.indy_wallet_handle, filter_json).await
+        indy::proofs::prover::prover::libindy_prover_get_credentials(self.indy_wallet_handle, filter_json).await
     }
 
     async fn prover_get_credentials_for_proof_req(&self, proof_req: &str) -> VcxResult<String> {
-        indy::proofs::prover::prover::libindy_prover_get_credentials_for_proof_req(
-            self.profile.indy_wallet_handle,
-            proof_req,
-        )
-        .await
+        indy::proofs::prover::prover::libindy_prover_get_credentials_for_proof_req(self.indy_wallet_handle, proof_req)
+            .await
     }
 
     async fn prover_create_credential_req(
@@ -147,7 +146,7 @@ impl BaseAnonCreds for IndySdkAnonCreds {
         master_secret_id: &str,
     ) -> VcxResult<(String, String)> {
         indy::credentials::holder::libindy_prover_create_credential_req(
-            self.profile.indy_wallet_handle,
+            self.indy_wallet_handle,
             prover_did,
             credential_offer_json,
             credential_def_json,
@@ -183,7 +182,7 @@ impl BaseAnonCreds for IndySdkAnonCreds {
         rev_reg_def_json: Option<&str>,
     ) -> VcxResult<String> {
         indy::credentials::holder::libindy_prover_store_credential(
-            self.profile.indy_wallet_handle,
+            self.indy_wallet_handle,
             cred_id,
             cred_req_meta,
             cred_json,
@@ -194,15 +193,11 @@ impl BaseAnonCreds for IndySdkAnonCreds {
     }
 
     async fn prover_delete_credential(&self, cred_id: &str) -> VcxResult<()> {
-        indy::credentials::holder::libindy_prover_delete_credential(self.profile.indy_wallet_handle, cred_id).await
+        indy::credentials::holder::libindy_prover_delete_credential(self.indy_wallet_handle, cred_id).await
     }
 
     async fn prover_create_link_secret(&self, master_secret_id: &str) -> VcxResult<String> {
-        indy::credentials::holder::libindy_prover_create_master_secret(
-            self.profile.indy_wallet_handle,
-            master_secret_id,
-        )
-        .await
+        indy::credentials::holder::libindy_prover_create_master_secret(self.indy_wallet_handle, master_secret_id).await
     }
 
     async fn issuer_create_schema(
@@ -217,7 +212,7 @@ impl BaseAnonCreds for IndySdkAnonCreds {
 
     async fn revoke_credential_local(&self, tails_dir: &str, rev_reg_id: &str, cred_rev_id: &str) -> VcxResult<()> {
         indy::primitives::revocation_registry::revoke_credential_local(
-            self.profile.indy_wallet_handle,
+            self.indy_wallet_handle,
             tails_dir,
             rev_reg_id,
             cred_rev_id,
@@ -227,8 +222,8 @@ impl BaseAnonCreds for IndySdkAnonCreds {
 
     async fn publish_local_revocations(&self, submitter_did: &str, rev_reg_id: &str) -> VcxResult<()> {
         indy::primitives::revocation_registry::publish_local_revocations(
-            self.profile.indy_wallet_handle,
-            self.profile.indy_pool_handle,
+            self.indy_wallet_handle,
+            self.indy_pool_handle,
             submitter_did,
             rev_reg_id,
         )
