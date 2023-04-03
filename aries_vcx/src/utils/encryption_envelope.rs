@@ -93,7 +93,7 @@ impl EncryptionEnvelope {
         let content = ForwardContent::new(to.to_string(), message);
         let message = Forward::new(Uuid::new_v4().to_string(), content);
 
-        let message = json!(message).to_string();
+        let message = json!(AriesMessage::from(message)).to_string();
         let receiver_keys = json!(vec![routing_key]).to_string();
 
         wallet
