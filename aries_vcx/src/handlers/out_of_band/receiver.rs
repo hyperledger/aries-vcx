@@ -265,7 +265,7 @@ impl OutOfBandReceiver {
     }
 
     pub fn to_string(&self) -> String {
-        json!(self.oob).to_string()
+        json!(AriesMessage::from(self.oob.clone())).to_string()
     }
 
     pub fn from_string(oob_data: &str) -> VcxResult<Self> {
