@@ -1079,10 +1079,10 @@ void checkErrorAndComplete(vcx_error_t ret, vcx_command_handle_t cmdHandle, void
 }
 
 
-- (void)deleteConnection:(VcxHandle)connectionHandle
+- (void)deleteConnection:(NSNumber *)connectionHandle
           withCompletion:(void (^)(NSError *))completion {
     vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
-    vcx_error_t ret = vcx_connection_delete_connection(handle, connectionHandle, &VcxWrapperCbNoResponse);
+    vcx_error_t ret = vcx_connection_delete_connection(handle, connectionHandle.unsignedIntValue, &VcxWrapperCbNoResponse);
 
     checkErrorAndComplete(ret, handle, ^{
         completion([NSError errorFromVcxError:ret]);
@@ -1154,7 +1154,7 @@ void checkErrorAndComplete(vcx_error_t ret, vcx_command_handle_t cmdHandle, void
 }
 
 
-- (void)connectionSendMessage:(VcxHandle)connectionHandle
+- (void)connectionSendMessage:(NSNumber *)connectionHandle
                   withMessage:(NSString *)message
        withSendMessageOptions:(NSString *)sendMessageOptions
                withCompletion:(void (^)(NSError *, NSString *))completion {
@@ -1164,7 +1164,7 @@ void checkErrorAndComplete(vcx_error_t ret, vcx_command_handle_t cmdHandle, void
     const char *sendMessageOptions_ctype = [sendMessageOptions cStringUsingEncoding:NSUTF8StringEncoding];
     vcx_error_t ret = vcx_connection_send_message(
             handle,
-            connectionHandle,
+            connectionHandle.unsignedIntValue,
             message_ctype,
             sendMessageOptions_ctype,
             &VcxWrapperCbResponseString
@@ -1175,7 +1175,7 @@ void checkErrorAndComplete(vcx_error_t ret, vcx_command_handle_t cmdHandle, void
     });
 }
 
-- (void)connectionSignData:(VcxHandle)connectionHandle
+- (void)connectionSignData:(NSNumber *)connectionHandle
                   withData:(NSData *)dataRaw
             withCompletion:(void (^)(NSError *, NSData *, vcx_u32_t))completion {
 
@@ -1189,7 +1189,7 @@ void checkErrorAndComplete(vcx_error_t ret, vcx_command_handle_t cmdHandle, void
 
     vcx_error_t ret = vcx_connection_sign_data(
             handle,
-            connectionHandle,
+            connectionHandle.unsignedIntValue,
             data_raw,
             data_length,
             &VcxWrapperCbResponseData
@@ -1200,7 +1200,7 @@ void checkErrorAndComplete(vcx_error_t ret, vcx_command_handle_t cmdHandle, void
     });
 }
 
-- (void)connectionVerifySignature:(VcxHandle)connectionHandle
+- (void)connectionVerifySignature:(NSNumber *)connectionHandle
                          withData:(NSData *)dataRaw
                 withSignatureData:(NSData *)signatureRaw
                    withCompletion:(void (^)(NSError *, vcx_bool_t))completion {
@@ -1219,7 +1219,7 @@ void checkErrorAndComplete(vcx_error_t ret, vcx_command_handle_t cmdHandle, void
     [signatureRaw length];
 
     vcx_error_t ret = vcx_connection_verify_signature(handle,
-            connectionHandle,
+            connectionHandle.unsignedIntValue,
             data_raw,
             data_length,
             signature_raw,
@@ -1273,7 +1273,7 @@ void checkErrorAndComplete(vcx_error_t ret, vcx_command_handle_t cmdHandle, void
 }
 
 
-- (void)connectionDownloadMessages:(VcxHandle)connectionHandle
+- (void)connectionDownloadMessages:(NSNumber *)connectionHandle
                      messageStatus:(NSString *)messageStatus
                              uid_s:(NSString *)uid_s
                         completion:(void (^)(NSError *, NSString *))completion {
@@ -1282,7 +1282,7 @@ void checkErrorAndComplete(vcx_error_t ret, vcx_command_handle_t cmdHandle, void
     const char *uids = [uid_s cStringUsingEncoding:NSUTF8StringEncoding];
     vcx_error_t ret = vcx_connection_messages_download(
             handle,
-            connectionHandle,
+            connectionHandle.unsignedIntValue,
             message_status,
             uids,
             &VcxWrapperCbResponseString
@@ -1293,14 +1293,14 @@ void checkErrorAndComplete(vcx_error_t ret, vcx_command_handle_t cmdHandle, void
     });
 }
 
-- (void)connectionSendHandshakeReuse:(VcxHandle)connectionHandle
+- (void)connectionSendHandshakeReuse:(NSNumber *)connectionHandle
                               oobMsg:(NSString *)oobMsg
                           completion:(void (^)(NSError *))completion {
     vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
     const char *oobMsg_ctype = [oobMsg cStringUsingEncoding:NSUTF8StringEncoding];
     vcx_error_t ret = vcx_connection_send_handshake_reuse(
             handle,
-            connectionHandle,
+            connectionHandle.unsignedIntValue,
             oobMsg_ctype,
             &VcxWrapperCbNoResponse
     );
