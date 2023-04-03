@@ -357,7 +357,7 @@ impl SetupWalletPool {
 
 impl SetupProfile {
     pub(self) fn should_run_modular() -> bool {
-        cfg!(feature = "modular_dependencies")
+        cfg!(feature = "modular_libs_tests")
     }
 
     pub async fn init() -> SetupProfile {

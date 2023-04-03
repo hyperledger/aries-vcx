@@ -11,16 +11,32 @@ path = "src/lib.rs"
 doctest = false
 
 [features]
+# By default, vdrtools is enabled to allow aries_vcx usage with vdrtools-based wallets/anoncreds/ledgers
 default = ["vdrtools"]
+########################## DEP FLAGS ################################
+# Feature flag to include the libvdrtools dependency
 vdrtools = ["dep:libvdrtools"]
-test_utils = [ "messages/test_utils" ]
+# Feature flag to include the 'modular library' dependencies (vdrtools alternatives; indy-vdr, indy-credx)
+modular_libs = ["dep:indy-vdr", "dep:indy-credx"]
+########################## TEST FLAGS ###############################
+# Feature flag for base requirments for running tests underneath the `test_utils` flag (most tests).
+# Both `vdrtools` and `modular_libs` are transitively enabled, so they can be used for tests (including interop tests).
+test_utils = [ "messages/test_utils", "vdrtools", "modular_libs" ]
+# Feature flag for categorising tests which require a ledger to be running
 pool_tests = [ "test_utils" ]
+# Feature flag for categorising tests which require a ledger and messaging agency to be running 
 agency_pool_tests = [ "test_utils" ]
+# Feature flag for categorising general tests (usually unit tests)
 general_test = [ "test_utils", "messages/general_test" ]
-fatal_warnings = []
-warnlog_fetched_messages = []
+# Feature flag to enable experimental tests of a mysql wallet
 mysql_test = ["test_utils" ]
-modular_dependencies = ["test_utils", "tokio/rt", "tokio/macros"]
+# Feature flag used to prompt some tests to run using the `modular_libs` dependencies instead of `vdrtools`
+modular_libs_tests = ["test_utils", "tokio/rt", "tokio/macros"]
+########################## OTHER FLAGS ##############################
+# Feature flag to make compiler warnings into failures
+fatal_warnings = []
+# Feature flag to log some extra warnings if enabled
+warnlog_fetched_messages = []
 
 [dependencies]
 bs58 = "0.4.0"
@@ -39,7 +55,7 @@ base64 = "0.10"
 openssl = { version = "0.10.35" }
 libvdrtools = { path = "../libvdrtools", optional = true }
 # vdrtools alternatives ----
-indy-vdr = { version = "0.3.4", default-features = false, features = ["ffi", "log"] }
+indy-vdr = { version = "0.3.4", default-features = false, features = ["ffi", "log"], optional = true }
 # PATCH (TO MONITOR IN FUTURE): The following patch changes the `indy-data-types` (within indy-shared-rs) to depend on
 # `ursa "0.3.6"` rather than `ursa "=0.3.6"`. Currently, `libvdrtools` depends on `ursa "0.3.7"`, which causes a mismatch of
 # `indy-utils` versions, which causes some types within credx to fail. Details about the issue can be found here: https://github.com/hyperledger/indy-shared-rs/issues/20
@@ -52,7 +68,7 @@ indy-vdr = { version = "0.3.4", default-features = false, features = ["ffi", "lo
 # - monitor anoncred-rs (which will replace indy-credx) as the fix will likely go in here,
 # - monitor the issue for other fixes from the maintainers: https://github.com/hyperledger/indy-shared-rs/issues/20
 # - update libvdrtools to use =0.3.6 ursa
-indy-credx = { git = "https://github.com/anonyome/indy-shared-rs.git", rev = "7342bc624d23ece8845d1a701cd2cdc9cd401bb0" }
+indy-credx = { git = "https://github.com/anonyome/indy-shared-rs.git", rev = "7342bc624d23ece8845d1a701cd2cdc9cd401bb0", optional = true }
 # ----------------------
 futures = { version = "0.3", default-features = false }
 libloading = "0.5.0"
