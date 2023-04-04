@@ -8,6 +8,13 @@ outputs:
   skip-android:
     description: "True if CI should skip Android build/testing"
     value: ${{ steps.main.outputs.skip-android }}
+  skip-napi-m1:
+    description: "True if CI should skip IOS build/testing"
+    value: ${{ steps.main.outputs.skip-ios }}
+  skip-ci:
+    description: "True if CI should skip Android build/testing"
+    value: ${{ steps.main.outputs.skip-android }}
+
 
 runs:
   using: "composite"
