@@ -11,7 +11,7 @@ pub mod traits;
 
 use std::{marker::PhantomData, str::FromStr};
 
-use serde::{de::Error, Deserialize, Serialize};
+use serde::Serialize;
 
 pub use protocols::{
     basic_message, connection, cred_issuance, discover_features, notification, out_of_band, present_proof,
@@ -21,7 +21,7 @@ pub use role::Role;
 
 use self::traits::MessageKind;
 
-/// Type used for deserialization of a fully qualified message type. After deserialization,
+/// Type used for parsing of a fully qualified message type. After parsing,
 /// it is matched on to determine the actual message struct to deserialize to.
 ///
 /// The [`Protocol`] and kind represent a complete `@type` field.
@@ -33,27 +33,23 @@ pub(crate) struct MessageType<'a> {
     pub kind: &'a str,
 }
 
-impl<'de> Deserialize<'de> for MessageType<'de> {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        // Deserialize to &str
-        let msg_type_str = <&str>::deserialize(deserializer)?;
+impl<'a> TryFrom<&'a str> for MessageType<'a> {
+    type Error = String;
 
+    fn try_from(msg_type_str: &'a str) -> Result<Self, Self::Error> {
         // Split (from the right) at the first '/'.
         // The first element will be the string repr of the protocol
         // while the second will be the message kind.
         let Some((protocol_str, kind)) = msg_type_str.rsplit_once('/') else {
-            return Err(D::Error::custom(format!("Invalid message type: {msg_type_str}")));
-        };
+                return Err(format!("Invalid message type: {msg_type_str}"));
+            };
 
         // Parse the Protocol instance
         let protocol = match Protocol::from_str(protocol_str) {
             Ok(v) => Ok(v),
             Err(e) => {
                 let msg = format!("Cannot parse message type: {msg_type_str}; Error: {e}");
-                Err(D::Error::custom(msg))
+                Err(msg)
             }
         }?;
 
@@ -120,7 +116,6 @@ where
 ///
 /// Good reads and references:
 /// - <https://doc.rust-lang.org/std/marker/struct.PhantomData.html>
-/// - <https://doc.rust-lang.org/nomicon/phantom-data.html>
 /// - <https://doc.rust-lang.org/nomicon/phantom-data.html>
 /// - <https://doc.rust-lang.org/nomicon/dropck.html>
 #[derive(Copy, Clone, Debug, PartialEq)]

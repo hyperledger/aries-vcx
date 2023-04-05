@@ -68,7 +68,8 @@ mod tests {
         let decorators = DiscloseDecorators::new(make_extended_thread());
 
         let expected = json!({
-            "protocols": content.protocols
+            "protocols": content.protocols,
+            "~thread": decorators.thread
         });
 
         test_utils::test_msg(content, decorators, DiscoverFeaturesTypeV1_0::Disclose, expected);

@@ -21,7 +21,7 @@ use msg_types::{
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::{
-    misc::utils::MSG_TYPE,
+    misc::utils::{CowStr, MSG_TYPE},
     msg_fields::{
         protocols::{
             basic_message::BasicMessage, connection::Connection, cred_issuance::CredentialIssuance,
@@ -66,7 +66,7 @@ pub enum AriesMessage {
 }
 
 impl DelayedSerde for AriesMessage {
-    type MsgType<'a> = (Protocol, &'a str);
+    type MsgType<'a> = MessageType<'a>;
 
     /// Match on every protocol variant and either:
     /// - call the equivalent type's [`DelayedSerde::delayed_deserialize`]
@@ -79,7 +79,10 @@ impl DelayedSerde for AriesMessage {
     where
         D: Deserializer<'de>,
     {
-        let (protocol, kind_str) = msg_type;
+        let MessageType {
+            protocol,
+            kind: kind_str,
+        } = msg_type;
 
         match protocol {
             Protocol::RoutingType(msg_type) => {
@@ -212,20 +215,24 @@ impl<'de> Deserialize<'de> for AriesMessage {
         // As it visits data, it looks for a certain field (MSG_TYPE here), deserializes it and stores it
         // separately. The rest of the data is stored as [`Content`], a thin deserialization format
         // that practically acts as a buffer so the other fields besides the tag are cached.
-        let tag_visitor = TaggedContentVisitor::<MessageType>::new(MSG_TYPE, "internally tagged enum A2AMessage");
+        let tag_visitor =
+            TaggedContentVisitor::<CowStr>::new(MSG_TYPE, concat!("internally tagged enum ", stringify!(AriesMessage)));
         let tagged = deserializer.deserialize_any(tag_visitor)?;
 
         // The TaggedContent struct has two fields, tag and content, where in our case the tag is
-        // `MessageType` and the content is [`Content`], the cached remaining fields of the
+        // `CowStr` and the content is [`Content`], the cached remaining fields of the
         // serialized data. Serde uses this [`ContentDeserializer`] to deserialize from that format.
         let deserializer = ContentDeserializer::<D::Error>::new(tagged.content);
-        let MessageType { protocol, kind } = tagged.tag;
+
+        // CowStr will try to borrow the data if possible, and we'll further 
+        // borrow from CowStr here until we know the message kind to try to parse.
+        let msg_type = tagged.tag.0.as_ref().try_into().map_err(D::Error::custom)?;
 
         // Instead of matching to oblivion and beyond on the [`MessageType`] protocol,
         // we make use of [`DelayedSerde`] so the matching happens incrementally.
         // This makes use of the provided deserializer and matches on the [`MessageType`]
         // to determine the type the content must be deserialized to.
-        Self::delayed_deserialize((protocol, kind), deserializer)
+        Self::delayed_deserialize(msg_type, deserializer)
     }
 }
 

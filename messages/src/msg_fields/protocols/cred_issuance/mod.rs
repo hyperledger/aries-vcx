@@ -21,7 +21,7 @@ use self::{
 use super::notification::AckDecorators;
 use crate::{
     misc::{
-        utils::{self, into_msg_with_type, transit_to_aries_msg},
+        utils::{self, into_msg_with_type, transit_to_aries_msg, CowStr},
         MimeType,
     },
     msg_fields::traits::DelayedSerde,
@@ -103,7 +103,7 @@ impl CredentialPreview {
 /// This is only encountered as part of an existent message.
 /// It is not a message on it's own.
 #[derive(Copy, Clone, Debug, Deserialize, PartialEq)]
-#[serde(try_from = "MessageType")]
+#[serde(try_from = "CowStr")]
 struct CredentialPreviewMsgType;
 
 impl<'a> From<&'a CredentialPreviewMsgType> for CredentialIssuanceTypeV1_0 {
@@ -112,14 +112,17 @@ impl<'a> From<&'a CredentialPreviewMsgType> for CredentialIssuanceTypeV1_0 {
     }
 }
 
-impl<'a> TryFrom<MessageType<'a>> for CredentialPreviewMsgType {
+impl<'a> TryFrom<CowStr<'a>> for CredentialPreviewMsgType {
     type Error = String;
 
-    fn try_from(value: MessageType) -> Result<Self, Self::Error> {
+    fn try_from(value: CowStr) -> Result<Self, Self::Error> {
+        let value = MessageType::try_from(value.0.as_ref())?;
+
         if let Protocol::CredentialIssuanceType(CredentialIssuanceKind::V1(CredentialIssuanceTypeV1::V1_0(_))) =
             value.protocol
         {
-            if let Ok(CredentialIssuanceTypeV1_0::CredentialPreview) = CredentialIssuanceTypeV1_0::from_str(value.kind)
+            if let Ok(CredentialIssuanceTypeV1_0::CredentialPreview) =
+                CredentialIssuanceTypeV1_0::from_str(value.kind)
             {
                 return Ok(CredentialPreviewMsgType);
             }

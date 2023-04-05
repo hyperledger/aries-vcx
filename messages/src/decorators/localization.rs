@@ -7,6 +7,8 @@ use serde::{
 };
 use url::Url;
 
+use crate::misc::utils::CowStr;
+
 /// Struct representing the `~l10n` decorator, when it decorates the entire message, from its [RFC](<https://github.com/hyperledger/aries-rfcs/blob/main/features/0043-l10n/README.md>).
 #[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq)]
 pub struct MsgLocalization {
@@ -67,7 +69,7 @@ impl Serialize for FieldLocalization {
 /// behavior is to use ISO 639-3 codes and we need ISO 639-1;
 #[derive(Copy, Clone, Debug, Deserialize, PartialEq, Hash, Eq)]
 #[repr(transparent)]
-#[serde(try_from = "&str")]
+#[serde(try_from = "CowStr")]
 pub struct Locale(pub Language);
 
 impl Default for Locale {
@@ -87,10 +89,11 @@ impl<'a> TryFrom<&'a Locale> for &'a str {
     }
 }
 
-impl<'a> TryFrom<&'a str> for Locale {
+impl<'a> TryFrom<CowStr<'a>> for Locale {
     type Error = String;
 
-    fn try_from(value: &'a str) -> Result<Self, Self::Error> {
+    fn try_from(value: CowStr<'a>) -> Result<Self, Self::Error> {
+        let value = value.0.as_ref();
         let lang = Language::from_639_1(value).ok_or_else(|| format!("unknown locale {value}"))?;
         Ok(Locale(lang))
     }

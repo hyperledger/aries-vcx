@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     decorators::{please_ack::PleaseAck, thread::Thread, timing::Timing},
+    misc::utils::CowStr,
     msg_parts::MsgParts,
     msg_types::{
         protocols::connection::{ConnectionType, ConnectionTypeV1, ConnectionTypeV1_0},
@@ -70,7 +71,7 @@ impl ResponseDecorators {
 /// This is only encountered as part of an existent message.
 /// It is not a message on it's own.
 #[derive(Copy, Clone, Debug, Deserialize, Default, PartialEq)]
-#[serde(try_from = "MessageType")]
+#[serde(try_from = "CowStr")]
 struct SigEd25519Sha512Single;
 
 impl<'a> From<&'a SigEd25519Sha512Single> for ConnectionTypeV1_0 {
@@ -79,10 +80,12 @@ impl<'a> From<&'a SigEd25519Sha512Single> for ConnectionTypeV1_0 {
     }
 }
 
-impl<'a> TryFrom<MessageType<'a>> for SigEd25519Sha512Single {
+impl<'a> TryFrom<CowStr<'a>> for SigEd25519Sha512Single {
     type Error = String;
 
-    fn try_from(value: MessageType<'a>) -> Result<Self, Self::Error> {
+    fn try_from(value: CowStr<'a>) -> Result<Self, Self::Error> {
+        let value = MessageType::try_from(value.0.as_ref())?;
+
         if let Protocol::ConnectionType(ConnectionType::V1(ConnectionTypeV1::V1_0(kind))) = value.protocol {
             if let Ok(ConnectionTypeV1_0::Ed25519Sha512Single) = kind.kind_from_str(value.kind) {
                 return Ok(SigEd25519Sha512Single);

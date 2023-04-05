@@ -13,6 +13,7 @@ pub mod test_utils {
     use serde_json::{json, Value};
 
     use crate::{
+        misc::utils::CowStr,
         msg_parts::MsgParts,
         msg_types::{traits::MessageKind, MessageType, Protocol},
         AriesMessage,
@@ -48,7 +49,8 @@ pub mod test_utils {
     {
         let s = format!("\"{protocol_str}/{kind_str}\"");
         let protocol = Protocol::from(protocol_type);
-        let deserialized = serde_json::from_str(&s).unwrap();
+        let deserialized: CowStr = serde_json::from_str(&s).unwrap();
+        let deserialized = MessageType::try_from(deserialized.0.as_ref()).unwrap();
 
         let expected = MessageType {
             protocol,
@@ -93,9 +95,15 @@ pub mod test_utils {
     where
         T: for<'de> Deserialize<'de> + Serialize + std::fmt::Debug + PartialEq,
     {
-        let deserialized = T::deserialize(&expected).unwrap();
-
+        // Test serialization
         assert_eq!(serde_json::to_value(&value).unwrap(), expected);
+
+        // Test deserialization from deserializer that owns data:
+        let deserialized = T::deserialize(expected.clone()).unwrap();
+        assert_eq!(deserialized, value);
+
+        // Test deserialization from deserialized that borrows data:
+        let deserialized = T::deserialize(&expected).unwrap();
         assert_eq!(deserialized, value);
     }
 

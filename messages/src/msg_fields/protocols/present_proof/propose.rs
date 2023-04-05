@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     decorators::{thread::Thread, timing::Timing},
-    misc::MimeType,
+    misc::{utils::CowStr, MimeType},
     msg_parts::MsgParts,
     msg_types::{
         protocols::present_proof::{PresentProofType, PresentProofTypeV1, PresentProofTypeV1_0},
@@ -63,7 +63,7 @@ impl PresentationPreview {
 /// This is only encountered as part of an existent message.
 /// It is not a message on it's own.
 #[derive(Copy, Clone, Debug, Deserialize, PartialEq)]
-#[serde(try_from = "MessageType")]
+#[serde(try_from = "CowStr")]
 struct PresentationPreviewMsgType;
 
 impl<'a> From<&'a PresentationPreviewMsgType> for PresentProofTypeV1_0 {
@@ -72,10 +72,12 @@ impl<'a> From<&'a PresentationPreviewMsgType> for PresentProofTypeV1_0 {
     }
 }
 
-impl<'a> TryFrom<MessageType<'a>> for PresentationPreviewMsgType {
+impl<'a> TryFrom<CowStr<'a>> for PresentationPreviewMsgType {
     type Error = String;
 
-    fn try_from(value: MessageType<'a>) -> Result<Self, Self::Error> {
+    fn try_from(value: CowStr<'a>) -> Result<Self, Self::Error> {
+        let value = MessageType::try_from(value.0.as_ref())?;
+
         if let Protocol::PresentProofType(PresentProofType::V1(PresentProofTypeV1::V1_0(_))) = value.protocol {
             if let Ok(PresentProofTypeV1_0::PresentationPreview) = PresentProofTypeV1_0::from_str(value.kind) {
                 return Ok(PresentationPreviewMsgType);

@@ -11,6 +11,7 @@ use self::{
 };
 use crate::{
     error::{MsgTypeError, MsgTypeResult},
+    misc::utils::CowStr,
     msg_types::traits::ProtocolName,
 };
 
@@ -41,7 +42,7 @@ pub mod trust_ping;
 /// is through our internal [`messages_macros::MessageType`] proc_macro. See the docs for that for
 /// more info.
 #[derive(Clone, Copy, Debug, From, TryInto, PartialEq, Deserialize)]
-#[serde(try_from = "&str")]
+#[serde(try_from = "CowStr")]
 pub enum Protocol {
     RoutingType(RoutingType),
     ConnectionType(ConnectionType),
@@ -161,10 +162,11 @@ impl FromStr for Protocol {
     }
 }
 
-impl<'a> TryFrom<&'a str> for Protocol {
+impl<'a> TryFrom<CowStr<'a>> for Protocol {
     type Error = MsgTypeError;
 
-    fn try_from(value: &'a str) -> Result<Self, Self::Error> {
+    fn try_from(value: CowStr<'a>) -> Result<Self, Self::Error> {
+        let value = value.0.as_ref();
         Self::from_str(value)
     }
 }

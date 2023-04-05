@@ -1,7 +1,15 @@
+use std::borrow::Cow;
+
 use chrono::{DateTime, Utc};
-use serde::{de::Error, Deserializer, Serialize};
+use serde::{de::Error, Deserialize, Deserializer, Serialize};
 
 pub const MSG_TYPE: &str = "@type";
+
+/// Wrapper used for allowing borrowing behavior on [`Cow<'_, str>`] where possible.
+/// See: <https://github.com/serde-rs/serde/issues/1852>
+#[derive(Debug, PartialEq, Deserialize)]
+#[serde(transparent)]
+pub(crate) struct CowStr<'a>(#[serde(borrow)] pub Cow<'a, str>);
 
 /// Used for creating a deserialization error.
 /// Some messages, or rather, message types, are not meant

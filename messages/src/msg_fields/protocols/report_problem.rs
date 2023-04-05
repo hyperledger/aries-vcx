@@ -14,7 +14,7 @@ use crate::{
         thread::Thread,
         timing::Timing,
     },
-    misc::utils::into_msg_with_type,
+    misc::utils::{into_msg_with_type, CowStr},
     msg_parts::MsgParts,
     msg_types::protocols::report_problem::ReportProblemTypeV1_0,
 };
@@ -166,7 +166,12 @@ impl<'de> Deserialize<'de> for Where {
     {
         let err_closure = |val: &str| D::Error::custom(format!("invalid where field: {val}"));
 
-        let where_str = <&str>::deserialize(deserializer)?;
+        // Try to avoid allocation if possible
+        let where_str = CowStr::deserialize(deserializer)?.0;
+
+        // Borrow as &str
+        let where_str = where_str.as_ref();
+
         let mut iter = where_str.split(" - ");
 
         let party = iter
@@ -211,7 +216,9 @@ mod tests {
         let content = ProblemReportContent::new("test_problem_report_code".to_owned());
         let decorators = ProblemReportDecorators::default();
 
-        let expected = json!({});
+        let expected = json!({
+            "description": content.description
+        });
 
         test_utils::test_msg(content, decorators, ReportProblemTypeV1_0::ProblemReport, expected);
     }
