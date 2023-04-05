@@ -117,6 +117,8 @@ impl InviterConnection<Invited> {
     ) -> VcxResult<Response> {
         let new_recipient_keys = vec![new_pairwise_info.pw_vk.clone()];
 
+        request.content.connection.did = new_pairwise_info.pw_did.clone();
+
         request
             .content
             .connection

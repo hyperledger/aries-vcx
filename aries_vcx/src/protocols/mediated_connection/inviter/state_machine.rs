@@ -348,6 +348,8 @@ impl SmConnectionInviter {
             InviterFullState::Invited(_) | InviterFullState::Initial(_) => {
                 let new_recipient_keys = vec![new_pairwise_info.pw_vk.clone()];
 
+                request.content.connection.did = new_pairwise_info.pw_did.clone();
+
                 request
                     .content
                     .connection
