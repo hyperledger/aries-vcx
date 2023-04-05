@@ -231,7 +231,7 @@ impl SmConnectionInviter {
     pub async fn handle_connection_request(
         self,
         wallet: Arc<dyn BaseWallet>,
-        request: Request,
+        mut request: Request,
         new_pairwise_info: &PairwiseInfo,
         new_routing_keys: Vec<String>,
         new_service_endpoint: Url,
@@ -269,7 +269,7 @@ impl SmConnectionInviter {
                 let signed_response = self
                     .build_response(
                         &wallet,
-                        &request,
+                        &mut request,
                         new_pairwise_info,
                         new_routing_keys,
                         new_service_endpoint,
@@ -339,7 +339,7 @@ impl SmConnectionInviter {
     async fn build_response(
         &self,
         wallet: &Arc<dyn BaseWallet>,
-        request: &Request,
+        request: &mut Request,
         new_pairwise_info: &PairwiseInfo,
         new_routing_keys: Vec<String>,
         new_service_endpoint: Url,
@@ -347,6 +347,25 @@ impl SmConnectionInviter {
         match &self.state {
             InviterFullState::Invited(_) | InviterFullState::Initial(_) => {
                 let new_recipient_keys = vec![new_pairwise_info.pw_vk.clone()];
+
+                request
+                    .content
+                    .connection
+                    .did_doc
+                    .set_id(new_pairwise_info.pw_did.clone());
+
+                request
+                    .content
+                    .connection
+                    .did_doc
+                    .set_service_endpoint(new_service_endpoint);
+
+                request.content.connection.did_doc.set_routing_keys(new_routing_keys);
+                request
+                    .content
+                    .connection
+                    .did_doc
+                    .set_recipient_keys(new_recipient_keys);
 
                 let id = Uuid::new_v4().to_string();
 
