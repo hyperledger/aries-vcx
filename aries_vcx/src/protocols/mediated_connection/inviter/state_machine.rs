@@ -266,6 +266,9 @@ impl SmConnectionInviter {
                         ..self
                     });
                 };
+
+                let initial_request = request.clone();
+
                 let signed_response = self
                     .build_response(
                         &wallet,
@@ -275,7 +278,7 @@ impl SmConnectionInviter {
                         new_service_endpoint,
                     )
                     .await?;
-                InviterFullState::Requested((request, signed_response).into())
+                InviterFullState::Requested((initial_request, signed_response).into())
             }
             _ => self.state,
         };

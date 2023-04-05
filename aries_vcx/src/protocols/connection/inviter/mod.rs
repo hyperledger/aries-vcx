@@ -186,7 +186,7 @@ impl InviterConnection<Invited> {
         );
 
         // There must be some other way to validate the thread ID other than cloning the entire Request
-        verify_thread_id(self.thread_id(), &request.clone().into());
+        verify_thread_id(self.thread_id(), &request.clone().into())?;
 
         // If the request's DidDoc validation fails, we generate and send a ProblemReport.
         // We then return early with the provided error.
