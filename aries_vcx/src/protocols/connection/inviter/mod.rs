@@ -4,6 +4,7 @@ use std::sync::Arc;
 
 use ::uuid::Uuid;
 use chrono::Utc;
+use diddoc::aries::diddoc::AriesDidDoc;
 use messages::decorators::thread::Thread;
 use messages::decorators::timing::Timing;
 use messages::msg_fields::protocols::connection::invitation::{
@@ -11,6 +12,7 @@ use messages::msg_fields::protocols::connection::invitation::{
 };
 use messages::msg_fields::protocols::connection::request::Request;
 use messages::msg_fields::protocols::connection::response::{Response, ResponseContent, ResponseDecorators};
+use messages::msg_fields::protocols::connection::ConnectionData;
 use messages::AriesMessage;
 use url::Url;
 
@@ -110,48 +112,29 @@ impl InviterConnection<Invited> {
     async fn build_response_content(
         &self,
         wallet: &Arc<dyn BaseWallet>,
-        request: &mut Request,
+        thread_id: String,
         new_pairwise_info: &PairwiseInfo,
         new_service_endpoint: Url,
         new_routing_keys: Vec<String>,
     ) -> VcxResult<Response> {
         let new_recipient_keys = vec![new_pairwise_info.pw_vk.clone()];
+        let mut did_doc = AriesDidDoc::default();
+        let did = new_pairwise_info.pw_did.clone();
 
-        request.content.connection.did = new_pairwise_info.pw_did.clone();
+        did_doc.set_id(new_pairwise_info.pw_did.clone());
+        did_doc.set_service_endpoint(new_service_endpoint);
+        did_doc.set_routing_keys(new_routing_keys);
+        did_doc.set_recipient_keys(new_recipient_keys);
 
-        request
-            .content
-            .connection
-            .did_doc
-            .set_id(new_pairwise_info.pw_did.clone());
-
-        request
-            .content
-            .connection
-            .did_doc
-            .set_service_endpoint(new_service_endpoint);
-
-        request.content.connection.did_doc.set_routing_keys(new_routing_keys);
-        request
-            .content
-            .connection
-            .did_doc
-            .set_recipient_keys(new_recipient_keys);
+        let con_data = ConnectionData::new(did, did_doc);
 
         let id = Uuid::new_v4().to_string();
 
-        let con_sig = sign_connection_response(wallet, &self.pairwise_info.pw_vk, &request.content.connection).await?;
+        let con_sig = sign_connection_response(wallet, &self.pairwise_info.pw_vk, &con_data).await?;
 
         let content = ResponseContent::new(con_sig);
 
-        let thread_id = request
-            .decorators
-            .thread
-            .as_ref()
-            .map(|t| t.thid.as_str())
-            .unwrap_or(request.id.as_str());
-
-        let mut decorators = ResponseDecorators::new(Thread::new(thread_id.to_owned()));
+        let mut decorators = ResponseDecorators::new(Thread::new(thread_id));
         let mut timing = Timing::default();
         timing.out_time = Some(Utc::now());
         decorators.timing = Some(timing);
@@ -196,7 +179,7 @@ impl InviterConnection<Invited> {
             self.send_problem_report(
                 wallet,
                 &err,
-                &request
+                request
                     .decorators
                     .thread
                     .as_ref()
@@ -213,12 +196,13 @@ impl InviterConnection<Invited> {
         // Generate new pairwise info that will be used from this point on
         // and incorporate that into the response.
         let new_pairwise_info = PairwiseInfo::create(wallet).await?;
-        let did_doc = request.content.connection.did_doc.clone();
+        let thread_id = request.decorators.thread.map(|t| t.thid).unwrap_or(request.id);
+        let did_doc = request.content.connection.did_doc;
 
         let content = self
             .build_response_content(
                 wallet,
-                &mut request,
+                thread_id,
                 &new_pairwise_info,
                 new_service_endpoint,
                 new_routing_keys,

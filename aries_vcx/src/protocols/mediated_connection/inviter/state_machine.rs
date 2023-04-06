@@ -15,7 +15,7 @@ use messages::msg_fields::protocols::connection::problem_report::{
 };
 use messages::msg_fields::protocols::connection::request::Request;
 use messages::msg_fields::protocols::connection::response::{Response, ResponseContent, ResponseDecorators};
-use messages::msg_fields::protocols::connection::Connection;
+use messages::msg_fields::protocols::connection::{Connection, ConnectionData};
 use messages::msg_fields::protocols::discover_features::disclose::Disclose;
 use messages::msg_fields::protocols::discover_features::query::QueryContent;
 use messages::msg_fields::protocols::discover_features::ProtocolDescriptor;
@@ -267,18 +267,23 @@ impl SmConnectionInviter {
                     });
                 };
 
-                let initial_request = request.clone();
+                let thread_id = request
+                    .decorators
+                    .thread
+                    .as_ref()
+                    .map(|t| t.thid.clone())
+                    .unwrap_or(request.id.clone());
 
                 let signed_response = self
                     .build_response(
                         &wallet,
-                        &mut request,
+                        thread_id,
                         new_pairwise_info,
                         new_routing_keys,
                         new_service_endpoint,
                     )
                     .await?;
-                InviterFullState::Requested((initial_request, signed_response).into())
+                InviterFullState::Requested((request, signed_response).into())
             }
             _ => self.state,
         };
@@ -342,7 +347,7 @@ impl SmConnectionInviter {
     async fn build_response(
         &self,
         wallet: &Arc<dyn BaseWallet>,
-        request: &mut Request,
+        thread_id: String,
         new_pairwise_info: &PairwiseInfo,
         new_routing_keys: Vec<String>,
         new_service_endpoint: Url,
@@ -350,43 +355,23 @@ impl SmConnectionInviter {
         match &self.state {
             InviterFullState::Invited(_) | InviterFullState::Initial(_) => {
                 let new_recipient_keys = vec![new_pairwise_info.pw_vk.clone()];
+                let mut did_doc = AriesDidDoc::default();
+                let did = new_pairwise_info.pw_did.clone();
 
-                request.content.connection.did = new_pairwise_info.pw_did.clone();
+                did_doc.set_id(new_pairwise_info.pw_did.clone());
+                did_doc.set_service_endpoint(new_service_endpoint);
+                did_doc.set_routing_keys(new_routing_keys);
+                did_doc.set_recipient_keys(new_recipient_keys);
 
-                request
-                    .content
-                    .connection
-                    .did_doc
-                    .set_id(new_pairwise_info.pw_did.clone());
-
-                request
-                    .content
-                    .connection
-                    .did_doc
-                    .set_service_endpoint(new_service_endpoint);
-
-                request.content.connection.did_doc.set_routing_keys(new_routing_keys);
-                request
-                    .content
-                    .connection
-                    .did_doc
-                    .set_recipient_keys(new_recipient_keys);
+                let con_data = ConnectionData::new(did, did_doc);
 
                 let id = Uuid::new_v4().to_string();
 
-                let con_sig =
-                    sign_connection_response(wallet, &self.pairwise_info.pw_vk, &request.content.connection).await?;
+                let con_sig = sign_connection_response(wallet, &self.pairwise_info.pw_vk, &con_data).await?;
 
                 let content = ResponseContent::new(con_sig);
 
-                let thread_id = request
-                    .decorators
-                    .thread
-                    .as_ref()
-                    .map(|t| t.thid.as_str())
-                    .unwrap_or(request.id.as_str());
-
-                let mut decorators = ResponseDecorators::new(Thread::new(thread_id.to_owned()));
+                let mut decorators = ResponseDecorators::new(Thread::new(thread_id));
                 let mut timing = Timing::default();
                 timing.out_time = Some(Utc::now());
                 decorators.timing = Some(timing);
