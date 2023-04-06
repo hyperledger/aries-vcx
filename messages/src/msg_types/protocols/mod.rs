@@ -141,10 +141,10 @@ impl FromStr for Protocol {
         //
         // We always skip at least one element, the prefix itself.
         let skip_slash = match s {
-            _ if s.starts_with(Self::DID_COM_ORG_PREFIX) => Ok(3),
-            _ if s.starts_with(Self::DID_SOV_PREFIX) => Ok(1),
-            _ => Err(MsgTypeError::unknown_prefix(s.to_owned())),
-        }?;
+            _ if s.starts_with(Self::DID_COM_ORG_PREFIX) => 3,
+            _ if s.starts_with(Self::DID_SOV_PREFIX) => 1,
+            _ => return Err(MsgTypeError::unknown_prefix(s.to_owned())),
+        };
 
         // We'll get the next components in order
         let mut iter = s.split('/').skip(skip_slash);
