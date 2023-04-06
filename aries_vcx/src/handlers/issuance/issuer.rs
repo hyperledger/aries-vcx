@@ -214,12 +214,12 @@ impl Issuer {
             .get_revocation_info()
             .ok_or(AriesVcxError::from_msg(
                 AriesVcxErrorKind::InvalidState,
-                "Credential is has not yet been created",
+                "Credential has not yet been created",
             ))?
             .cred_rev_id
             .ok_or(AriesVcxError::from_msg(
                 AriesVcxErrorKind::InvalidState,
-                "Credential is has not yet been created or is irrevocable",
+                "Credential has not yet been created or is irrevocable",
             ))
     }
 
