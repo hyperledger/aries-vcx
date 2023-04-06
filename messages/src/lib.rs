@@ -224,7 +224,7 @@ impl<'de> Deserialize<'de> for AriesMessage {
         // serialized data. Serde uses this [`ContentDeserializer`] to deserialize from that format.
         let deserializer = ContentDeserializer::<D::Error>::new(tagged.content);
 
-        // CowStr will try to borrow the data if possible, and we'll further 
+        // CowStr will try to borrow the data if possible, and we'll further
         // borrow from CowStr here until we know the message kind to try to parse.
         let msg_type = tagged.tag.0.as_ref().try_into().map_err(D::Error::custom)?;
 

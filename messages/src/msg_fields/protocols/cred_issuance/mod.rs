@@ -121,8 +121,7 @@ impl<'a> TryFrom<CowStr<'a>> for CredentialPreviewMsgType {
         if let Protocol::CredentialIssuanceType(CredentialIssuanceKind::V1(CredentialIssuanceTypeV1::V1_0(_))) =
             value.protocol
         {
-            if let Ok(CredentialIssuanceTypeV1_0::CredentialPreview) =
-                CredentialIssuanceTypeV1_0::from_str(value.kind)
+            if let Ok(CredentialIssuanceTypeV1_0::CredentialPreview) = CredentialIssuanceTypeV1_0::from_str(value.kind)
             {
                 return Ok(CredentialPreviewMsgType);
             }
