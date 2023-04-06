@@ -5,7 +5,7 @@ use messages::{
         discover_features::DiscoverFeatures,
         out_of_band::{invitation::Invitation as OobInvitation, OutOfBand},
         present_proof::{
-            propose::{Attribute, Predicate},
+            propose::{Predicate, PresentationAttr},
             PresentProof,
         },
         report_problem::ProblemReport,
@@ -197,7 +197,7 @@ impl OfferInfo {
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone, Default)]
 pub struct PresentationProposalData {
-    pub attributes: Vec<Attribute>,
+    pub attributes: Vec<PresentationAttr>,
     pub predicates: Vec<Predicate>,
     pub comment: Option<String>,
 }

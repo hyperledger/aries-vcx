@@ -45,12 +45,12 @@ pub struct ProposePresentationDecorators {
 pub struct PresentationPreview {
     #[serde(rename = "@type")]
     msg_type: PresentationPreviewMsgType,
-    pub attributes: Vec<Attribute>,
+    pub attributes: Vec<PresentationAttr>,
     pub predicates: Vec<Predicate>,
 }
 
 impl PresentationPreview {
-    pub fn new(attributes: Vec<Attribute>, predicates: Vec<Predicate>) -> Self {
+    pub fn new(attributes: Vec<PresentationAttr>, predicates: Vec<Predicate>) -> Self {
         Self {
             msg_type: PresentationPreviewMsgType,
             attributes,
@@ -99,16 +99,20 @@ impl Serialize for PresentationPreviewMsgType {
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
-pub struct Attribute {
+pub struct PresentationAttr {
     pub name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub cred_def_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "mime-type")]
     pub mime_type: Option<MimeType>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub value: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub referent: Option<String>,
 }
 
-impl Attribute {
+impl PresentationAttr {
     pub fn new(name: String) -> Self {
         Self {
             name,
@@ -178,7 +182,7 @@ mod tests {
 
     #[test]
     fn test_minimal_propose_proof() {
-        let attribute = Attribute::new("test_attribute_name".to_owned());
+        let attribute = PresentationAttr::new("test_attribute_name".to_owned());
         let predicate = Predicate::new(
             "test_predicate_name".to_owned(),
             PredicateOperator::GreaterOrEqual,
@@ -198,7 +202,7 @@ mod tests {
 
     #[test]
     fn test_extended_propose_proof() {
-        let attribute = Attribute::new("test_attribute_name".to_owned());
+        let attribute = PresentationAttr::new("test_attribute_name".to_owned());
         let predicate = Predicate::new(
             "test_predicate_name".to_owned(),
             PredicateOperator::GreaterOrEqual,

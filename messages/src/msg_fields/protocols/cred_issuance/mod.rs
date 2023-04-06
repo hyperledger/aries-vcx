@@ -148,6 +148,7 @@ pub struct CredentialAttr {
     pub name: String,
     pub value: String,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "mime-type")]
     pub mime_type: Option<MimeType>,
 }
 
