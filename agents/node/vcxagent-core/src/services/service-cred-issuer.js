@@ -103,7 +103,7 @@ module.exports.createServiceCredIssuer = function createServiceCredIssuer ({ log
 
   async function getRevocationId (issuerCredId) {
     const issuerCred = await loadIssuerCredential(issuerCredId)
-    return issuerCred.getRevRevocationId()
+    return issuerCred.getRevocationId()
   }
 
   async function _progressIssuerCredentialToState (issuerCredential, connection, credentialStateTarget, attemptsThreshold, timeoutMs) {
