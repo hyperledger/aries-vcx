@@ -68,7 +68,10 @@ export class IssuerCredential extends VcxBaseWithState<IIssuerCredentialData, Is
     }
   }
 
-  public async updateStateWithMessageNonmediated(connection: NonmediatedConnection, message: string): Promise<number> {
+  public async updateStateWithMessageNonmediated(
+    connection: NonmediatedConnection,
+    message: string,
+  ): Promise<number> {
     try {
       return await ffi.issuerCredentialUpdateStateWithMessageNonmediated(
         this.handle,
@@ -174,6 +177,14 @@ export class IssuerCredential extends VcxBaseWithState<IIssuerCredentialData, Is
   public getRevRegId(): string {
     try {
       return ffi.issuerCredentialGetRevRegId(this.handle);
+    } catch (err: any) {
+      throw new VCXInternalError(err);
+    }
+  }
+
+  public getRevRevocationId(): string {
+    try {
+      return ffi.issuerCredentialGetRevocationId(this.handle);
     } catch (err: any) {
       throw new VCXInternalError(err);
     }
