@@ -16,7 +16,7 @@ use self::{
     response::{Response, ResponseContent, ResponseDecorators},
 };
 use crate::{
-    misc::utils::{self, into_msg_with_type, transit_to_aries_msg},
+    misc::utils::{into_msg_with_type, transit_to_aries_msg},
     msg_fields::traits::DelayedSerde,
     msg_types::{
         protocols::connection::{ConnectionType as ConnectionKind, ConnectionTypeV1, ConnectionTypeV1_0},
@@ -50,7 +50,6 @@ impl DelayedSerde for Connection {
             ConnectionTypeV1_0::Request => Request::deserialize(deserializer).map(From::from),
             ConnectionTypeV1_0::Response => Response::deserialize(deserializer).map(From::from),
             ConnectionTypeV1_0::ProblemReport => ProblemReport::deserialize(deserializer).map(From::from),
-            ConnectionTypeV1_0::Ed25519Sha512Single => Err(utils::not_standalone_msg::<D>(kind_str)),
         }
     }
 

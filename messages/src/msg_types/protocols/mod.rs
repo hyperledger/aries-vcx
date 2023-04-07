@@ -7,7 +7,7 @@ use self::{
     basic_message::BasicMessageType, connection::ConnectionType, cred_issuance::CredentialIssuanceType,
     discover_features::DiscoverFeaturesType, notification::NotificationType, out_of_band::OutOfBandType,
     present_proof::PresentProofType, report_problem::ReportProblemType, revocation::RevocationType,
-    routing::RoutingType, trust_ping::TrustPingType,
+    routing::RoutingType, trust_ping::TrustPingType, signature::SignatureType,
 };
 use crate::{
     error::{MsgTypeError, MsgTypeResult},
@@ -26,6 +26,7 @@ pub mod report_problem;
 pub mod revocation;
 pub mod routing;
 pub mod trust_ping;
+pub mod signature;
 
 /// Type representing all protocols that are currently supported.
 ///
@@ -46,6 +47,7 @@ pub mod trust_ping;
 pub enum Protocol {
     RoutingType(RoutingType),
     ConnectionType(ConnectionType),
+    SignatureType(SignatureType),
     RevocationType(RevocationType),
     CredentialIssuanceType(CredentialIssuanceType),
     ReportProblemType(ReportProblemType),
@@ -80,6 +82,7 @@ impl Protocol {
     pub fn from_parts(protocol: &str, major: u8, minor: u8) -> MsgTypeResult<Self> {
         match_protocol!(RoutingType, protocol, major, minor);
         match_protocol!(ConnectionType, protocol, major, minor);
+        match_protocol!(SignatureType, protocol, major, minor);
         match_protocol!(RevocationType, protocol, major, minor);
         match_protocol!(CredentialIssuanceType, protocol, major, minor);
         match_protocol!(ReportProblemType, protocol, major, minor);
@@ -98,6 +101,7 @@ impl Protocol {
         match &self {
             Self::RoutingType(v) => v.as_protocol_parts(),
             Self::ConnectionType(v) => v.as_protocol_parts(),
+            Self::SignatureType(v) => v.as_protocol_parts(),
             Self::RevocationType(v) => v.as_protocol_parts(),
             Self::CredentialIssuanceType(v) => v.as_protocol_parts(),
             Self::ReportProblemType(v) => v.as_protocol_parts(),

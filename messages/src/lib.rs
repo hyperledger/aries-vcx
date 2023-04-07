@@ -15,6 +15,7 @@ pub mod msg_parts;
 pub mod msg_types;
 
 use derive_more::From;
+use misc::utils;
 use msg_types::{
     notification::NotificationTypeV1_0, report_problem::ReportProblemTypeV1_0, routing::RoutingTypeV1_0, MsgWithType,
 };
@@ -97,6 +98,7 @@ impl DelayedSerde for AriesMessage {
             Protocol::ConnectionType(msg_type) => {
                 Connection::delayed_deserialize((msg_type, kind_str), deserializer).map(From::from)
             }
+            Protocol::SignatureType(_) => Err(utils::not_standalone_msg::<D>(kind_str)),
             Protocol::RevocationType(msg_type) => {
                 Revocation::delayed_deserialize((msg_type, kind_str), deserializer).map(From::from)
             }

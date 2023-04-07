@@ -27,8 +27,6 @@ pub enum ConnectionTypeV1_0 {
     Request,
     Response,
     ProblemReport,
-    #[strum(serialize = "ed25519Sha512_single")]
-    Ed25519Sha512Single,
 }
 
 #[cfg(test)]
@@ -92,15 +90,6 @@ mod tests {
         test_utils::test_msg_type(
             "https://didcomm.org/connections/1.0",
             "problem_report",
-            ConnectionTypeV1::new_v1_0(),
-        )
-    }
-
-    #[test]
-    fn test_msg_type_sign() {
-        test_utils::test_msg_type(
-            "https://didcomm.org/connections/1.0",
-            "ed25519Sha512_single",
             ConnectionTypeV1::new_v1_0(),
         )
     }

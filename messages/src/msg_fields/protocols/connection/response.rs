@@ -5,7 +5,7 @@ use crate::{
     misc::utils::CowStr,
     msg_parts::MsgParts,
     msg_types::{
-        protocols::connection::{ConnectionType, ConnectionTypeV1, ConnectionTypeV1_0},
+        protocols::signature::{SignatureType, SignatureTypeV1, SignatureTypeV1_0},
         traits::MessageKind,
         MessageType, Protocol,
     },
@@ -74,9 +74,9 @@ impl ResponseDecorators {
 #[serde(try_from = "CowStr")]
 struct SigEd25519Sha512Single;
 
-impl<'a> From<&'a SigEd25519Sha512Single> for ConnectionTypeV1_0 {
+impl<'a> From<&'a SigEd25519Sha512Single> for SignatureTypeV1_0 {
     fn from(_value: &'a SigEd25519Sha512Single) -> Self {
-        ConnectionTypeV1_0::Ed25519Sha512Single
+        SignatureTypeV1_0::Ed25519Sha512Single
     }
 }
 
@@ -86,8 +86,8 @@ impl<'a> TryFrom<CowStr<'a>> for SigEd25519Sha512Single {
     fn try_from(value: CowStr<'a>) -> Result<Self, Self::Error> {
         let value = MessageType::try_from(value.0.as_ref())?;
 
-        if let Protocol::ConnectionType(ConnectionType::V1(ConnectionTypeV1::V1_0(kind))) = value.protocol {
-            if let Ok(ConnectionTypeV1_0::Ed25519Sha512Single) = kind.kind_from_str(value.kind) {
+        if let Protocol::SignatureType(SignatureType::V1(SignatureTypeV1::V1_0(kind))) = value.protocol {
+            if let Ok(SignatureTypeV1_0::Ed25519Sha512Single) = kind.kind_from_str(value.kind) {
                 return Ok(SigEd25519Sha512Single);
             }
         }
@@ -101,8 +101,8 @@ impl Serialize for SigEd25519Sha512Single {
     where
         S: serde::Serializer,
     {
-        let protocol = Protocol::from(ConnectionTypeV1_0::parent());
-        let kind = ConnectionTypeV1_0::from(self);
+        let protocol = Protocol::from(SignatureTypeV1_0::parent());
+        let kind = SignatureTypeV1_0::from(self);
         format_args!("{protocol}/{}", kind.as_ref()).serialize(serializer)
     }
 }
@@ -119,7 +119,7 @@ mod tests {
             please_ack::tests::make_minimal_please_ack, thread::tests::make_extended_thread,
             timing::tests::make_extended_timing,
         },
-        misc::test_utils,
+        misc::test_utils, msg_types::connection::ConnectionTypeV1_0,
     };
 
     #[test]
