@@ -1,4 +1,5 @@
 use std::clone::Clone;
+use std::str::FromStr;
 use std::sync::Arc;
 
 use agency_client::agency_client::AgencyClient;
@@ -135,7 +136,7 @@ impl OutOfBandReceiver {
             };
 
             let attach_id = if let Some(attach_id) = attach.id.as_deref() {
-                let attach_id: AttachmentId = serde_json::from_str(attach_id).map_err(|err| {
+                let attach_id = AttachmentId::from_str(attach_id).map_err(|err| {
                     AriesVcxError::from_msg(
                         AriesVcxErrorKind::SerializationError,
                         format!("Failed to deserialize attachment ID: {}", err),

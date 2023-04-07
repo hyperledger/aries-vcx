@@ -14,6 +14,7 @@ use messages::{
     },
     AriesMessage,
 };
+use strum_macros::{AsRefStr, EnumString};
 
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 
@@ -52,6 +53,7 @@ macro_rules! make_attach_from_str {
         let attach_data = messages::decorators::attachment::AttachmentData::new(attach_type);
         let mut attach = messages::decorators::attachment::Attachment::new(attach_data);
         attach.id = Some($id);
+        attach.mime_type = Some(messages::misc::MimeType::Json);
         attach
     }};
 }
@@ -114,17 +116,17 @@ pub fn verify_thread_id(thread_id: &str, message: &AriesMessage) -> VcxResult<()
     Ok(())
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, AsRefStr, EnumString, PartialEq)]
 pub enum AttachmentId {
-    #[serde(rename = "libindy-cred-offer-0")]
+    #[strum(serialize = "libindy-cred-offer-0")]
     CredentialOffer,
-    #[serde(rename = "libindy-cred-request-0")]
+    #[strum(serialize = "libindy-cred-request-0")]
     CredentialRequest,
-    #[serde(rename = "libindy-cred-0")]
+    #[strum(serialize = "libindy-cred-0")]
     Credential,
-    #[serde(rename = "libindy-request-presentation-0")]
+    #[strum(serialize = "libindy-request-presentation-0")]
     PresentationRequest,
-    #[serde(rename = "libindy-presentation-0")]
+    #[strum(serialize = "libindy-presentation-0")]
     Presentation,
 }
 

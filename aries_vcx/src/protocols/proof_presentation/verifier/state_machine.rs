@@ -92,7 +92,7 @@ fn build_starting_presentation_request(
     let id = Uuid::new_v4().to_string();
     let content = RequestPresentationContent::new(vec![make_attach_from_str!(
         &json!(request_data).to_string(),
-        json!(AttachmentId::PresentationRequest).to_string()
+        AttachmentId::PresentationRequest.as_ref().to_string()
     )]);
     let mut decorators = RequestPresentationDecorators::default();
     let mut timing = Timing::default();

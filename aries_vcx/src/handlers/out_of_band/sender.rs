@@ -104,7 +104,7 @@ impl OutOfBandSender {
         self.oob
             .content
             .requests_attach
-            .push(make_attach_from_str!(&attach, json!(attach_id).to_string()));
+            .push(make_attach_from_str!(&attach, attach_id.as_ref().to_string()));
 
         Ok(self)
     }

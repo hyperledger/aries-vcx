@@ -87,7 +87,7 @@ fn build_presentation_msg(thread_id: &str, presentation_attachment: String) -> V
 
     let content = PresentationContent::new(vec![make_attach_from_str!(
         &presentation_attachment,
-        json!(AttachmentId::Presentation).to_string()
+        AttachmentId::Presentation.as_ref().to_string()
     )]);
     let mut decorators = PresentationDecorators::new(Thread::new(thread_id.to_owned()));
     let mut timing = Timing::default();

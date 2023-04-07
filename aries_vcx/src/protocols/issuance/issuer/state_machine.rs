@@ -104,7 +104,7 @@ fn build_credential_message(libindy_credential: String) -> VcxResult<IssueCreden
 
     let content = IssueCredentialContent::new(vec![make_attach_from_str!(
         &libindy_credential,
-        json!(AttachmentId::Credential).to_string()
+        AttachmentId::Credential.as_ref().to_string()
     )]);
 
     let mut decorators = IssueCredentialDecorators::new(Thread::new(id.clone())); // this needs a Thread per RFC...
@@ -127,7 +127,7 @@ fn build_credential_offer(
         credential_preview,
         vec![make_attach_from_str!(
             &credential_offer,
-            json!(AttachmentId::CredentialOffer).to_string()
+            AttachmentId::CredentialOffer.as_ref().to_string()
         )],
     );
     content.comment = comment;
