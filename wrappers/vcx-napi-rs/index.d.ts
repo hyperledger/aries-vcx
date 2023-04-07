@@ -80,6 +80,7 @@ export function issuerCredentialGetRevRegId(handleCredential: number): string
 export function issuerCredentialCreate(sourceId: string): number
 export function issuerCredentialRevokeLocal(handleCredential: number): Promise<void>
 export function issuerCredentialIsRevokable(handleCredential: number): boolean
+export function issuerCredentialGetRevocationId(handleCredential: number): string
 export function issuerCredentialSendCredential(handleCredential: number, handleConnection: number): Promise<number>
 export function issuerCredentialSendCredentialNonmediated(handleCredential: number, handleConnection: number): Promise<number>
 export function issuerCredentialSendOfferV2(handleCredential: number, handleConnection: number): Promise<void>
