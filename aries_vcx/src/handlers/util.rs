@@ -49,7 +49,7 @@ macro_rules! get_attach_as_string {
 macro_rules! make_attach_from_str {
     ($str_attach:expr, $id:expr) => {{
         let attach_type =
-            messages::decorators::attachment::AttachmentType::Base64(base64::encode($str_attach).into_bytes());
+            messages::decorators::attachment::AttachmentType::Base64(base64::encode($str_attach));
         let attach_data = messages::decorators::attachment::AttachmentData::new(attach_type);
         let mut attach = messages::decorators::attachment::Attachment::new(attach_data);
         attach.id = Some($id);

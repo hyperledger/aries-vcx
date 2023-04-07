@@ -65,8 +65,8 @@ impl AttachmentData {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum AttachmentType {
-    // Base64 encoded bytes
-    Base64(Vec<u8>),
+    // Base64 encoded string
+    Base64(String),
     // A valid JSON value
     Json(Value),
     // An URL list
@@ -119,7 +119,7 @@ pub mod tests {
 
     #[test]
     fn test_base64_attach_type() {
-        let data = "test_base64_str".to_owned().into_bytes();
+        let data = "test_base64_str".to_owned();
 
         let expected = json!({ "base64": data });
         let attach_type = AttachmentType::Base64(data);
