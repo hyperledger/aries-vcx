@@ -17,6 +17,7 @@ use messages::msg_fields::protocols::present_proof::request::RequestPresentation
 use messages::msg_fields::protocols::present_proof::PresentProof;
 use messages::AriesMessage;
 use serde::Deserialize;
+use serde_json::Value;
 
 use crate::common::ledger::transactions::resolve_service;
 use crate::core::profile::profile::Profile;
@@ -128,12 +129,26 @@ impl OutOfBandReceiver {
     pub fn extract_a2a_message(&self) -> VcxResult<Option<AriesMessage>> {
         trace!("OutOfBandReceiver::extract_a2a_message >>>");
         if let Some(attach) = self.oob.content.requests_attach.as_ref().map(|v| v.get(0)).flatten() {
-            let AttachmentType::Json(attach_json) = &attach.data.content else {
+            let AttachmentType::Base64(encoded_attach) = &attach.data.content else {
                 return Err(AriesVcxError::from_msg(
                     AriesVcxErrorKind::SerializationError,
-                    format!("Attachment is not JSON: {:?}", attach),
+                    format!("Attachment is not base 64 encoded JSON: {attach:?}"),
                 ));
             };
+
+            let Ok(bytes) = base64::decode(encoded_attach) else {
+                    return Err(AriesVcxError::from_msg(
+                        AriesVcxErrorKind::SerializationError,
+                        format!("Attachment is not base 64 encoded JSON: {attach:?}"),
+                    ));
+                };
+
+            let attach_json: Value = serde_json::from_slice(&bytes).map_err(|_| {
+                AriesVcxError::from_msg(
+                    AriesVcxErrorKind::SerializationError,
+                    format!("Attachment is not base 64 encoded JSON: {attach:?}"),
+                )
+            })?;
 
             let attach_id = if let Some(attach_id) = attach.id.as_deref() {
                 let attach_id = AttachmentId::from_str(attach_id).map_err(|err| {
@@ -151,10 +166,10 @@ impl OutOfBandReceiver {
             match attach_id {
                 Some(id) => match id {
                     AttachmentId::CredentialOffer => {
-                        let mut offer = OfferCredential::deserialize(attach_json).map_err(|_| {
+                        let mut offer = OfferCredential::deserialize(&attach_json).map_err(|_| {
                             AriesVcxError::from_msg(
                                 AriesVcxErrorKind::SerializationError,
-                                format!("Failed to deserialize attachment: {}", attach_json),
+                                format!("Failed to deserialize attachment: {attach_json:?}"),
                             )
                         })?;
 
@@ -171,10 +186,10 @@ impl OutOfBandReceiver {
                         )));
                     }
                     AttachmentId::CredentialRequest => {
-                        let mut request = RequestCredential::deserialize(attach_json).map_err(|_| {
+                        let mut request = RequestCredential::deserialize(&attach_json).map_err(|_| {
                             AriesVcxError::from_msg(
                                 AriesVcxErrorKind::SerializationError,
-                                format!("Failed to deserialize attachment: {}", attach_json),
+                                format!("Failed to deserialize attachment: {attach_json:?}"),
                             )
                         })?;
 
@@ -191,10 +206,10 @@ impl OutOfBandReceiver {
                         )));
                     }
                     AttachmentId::Credential => {
-                        let mut credential = IssueCredential::deserialize(attach_json).map_err(|_| {
+                        let mut credential = IssueCredential::deserialize(&attach_json).map_err(|_| {
                             AriesVcxError::from_msg(
                                 AriesVcxErrorKind::SerializationError,
-                                format!("Failed to deserialize attachment: {}", attach_json),
+                                format!("Failed to deserialize attachment: {attach_json:?}"),
                             )
                         })?;
 
@@ -205,10 +220,10 @@ impl OutOfBandReceiver {
                         )));
                     }
                     AttachmentId::PresentationRequest => {
-                        let request = RequestPresentation::deserialize(attach_json).map_err(|_| {
+                        let request = RequestPresentation::deserialize(&attach_json).map_err(|_| {
                             AriesVcxError::from_msg(
                                 AriesVcxErrorKind::SerializationError,
-                                format!("Failed to deserialize attachment: {}", attach_json),
+                                format!("Failed to deserialize attachment: {attach_json:?}"),
                             )
                         })?;
 
@@ -217,10 +232,10 @@ impl OutOfBandReceiver {
                         ))));
                     }
                     AttachmentId::Presentation => {
-                        let mut presentation = Presentation::deserialize(attach_json).map_err(|_| {
+                        let mut presentation = Presentation::deserialize(&attach_json).map_err(|_| {
                             AriesVcxError::from_msg(
                                 AriesVcxErrorKind::SerializationError,
-                                format!("Failed to deserialize attachment: {}", attach_json),
+                                format!("Failed to deserialize attachment: {attach_json:?}"),
                             )
                         })?;
 

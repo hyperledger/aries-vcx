@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use crate::core::profile::profile::Profile;
 use crate::errors::error::prelude::*;
+use crate::handlers::util::get_attach_as_string;
 use crate::protocols::issuance::holder::state_machine::parse_cred_def_id_from_cred_offer;
 use crate::protocols::issuance::holder::states::request_sent::RequestSentState;
 use crate::protocols::issuance::is_cred_def_revokable;
@@ -61,20 +62,6 @@ impl OfferReceivedState {
     }
 
     pub fn get_attachment(&self) -> VcxResult<String> {
-        self.offer
-            .content
-            .offers_attach
-            .first()
-            .ok_or_else(|| "No attachment found")
-            .and_then(|a| match &a.data.content {
-                AttachmentType::Json(json) => Ok(json.to_string()),
-                _ => Err("Attachment is not json"),
-            })
-            .map_err(|err| {
-                AriesVcxError::from_msg(
-                    AriesVcxErrorKind::InvalidJson,
-                    format!("Failed to get credential offer attachment content: {}", err),
-                )
-            })
+        Ok(get_attach_as_string!(self.offer.content.offers_attach))
     }
 }
