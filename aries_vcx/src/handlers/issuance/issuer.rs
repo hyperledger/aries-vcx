@@ -209,6 +209,20 @@ impl Issuer {
         self.issuer_sm.find_message_to_handle(messages)
     }
 
+    pub fn get_revocation_id(&self) -> VcxResult<String> {
+        self.issuer_sm
+            .get_revocation_info()
+            .ok_or(AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidState,
+                "Credential has not yet been created",
+            ))?
+            .cred_rev_id
+            .ok_or(AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidState,
+                "Credential has not yet been created or is irrevocable",
+            ))
+    }
+
     pub async fn revoke_credential_local(&self, profile: &Arc<dyn Profile>) -> VcxResult<()> {
         let revocation_info: RevocationInfoV1 = self.issuer_sm.get_revocation_info().ok_or(AriesVcxError::from_msg(
             AriesVcxErrorKind::InvalidState,
