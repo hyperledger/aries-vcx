@@ -25,6 +25,7 @@ pub struct InvitationContent {
     pub accept: Option<Vec<MimeType>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub handshake_protocols: Option<Vec<MaybeKnown<Protocol>>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "requests~attach")]
     pub requests_attach: Option<Vec<Attachment>>,
     pub services: Vec<OobService>,
