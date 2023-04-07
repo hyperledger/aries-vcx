@@ -33,23 +33,33 @@ macro_rules! matches_opt_thread_id {
 
 macro_rules! get_attach_as_string {
     ($attachments:expr) => {{
-        if let Some(messages::decorators::attachment::AttachmentType::Json(attach_json)) =
-            $attachments.get(0).map(|a| &a.data.content)
-        {
-            attach_json.to_string()
-        } else {
-            return Err(AriesVcxError::from_msg(
-                AriesVcxErrorKind::SerializationError,
-                format!("Attachment is not JSON: {:?}", $attachments.get(0)),
-            ));
-        }
+        let __attach = $attachments.get(0).as_ref().map(|a| &a.data.content);
+        let Some(messages::decorators::attachment::AttachmentType::Base64(encoded_attach)) = __attach else {
+                    return Err(AriesVcxError::from_msg(
+                        AriesVcxErrorKind::SerializationError,
+                        format!("Attachment is not base 64 encoded JSON: {:?}", $attachments.get(0)),
+                    ));
+                };
+        let Ok(bytes) = base64::decode(encoded_attach) else {
+                    return Err(AriesVcxError::from_msg(
+                        AriesVcxErrorKind::SerializationError,
+                        format!("Attachment is not base 64 encoded JSON: {:?}", $attachments.get(0)),
+                    ));
+                };
+        let Ok(attach_string) = String::from_utf8(bytes) else {
+                    return Err(AriesVcxError::from_msg(
+                        AriesVcxErrorKind::SerializationError,
+                        format!("Attachment is not base 64 encoded JSON: {:?}", $attachments.get(0)),
+                    ));
+                };
+
+        attach_string
     }};
 }
 
 macro_rules! make_attach_from_str {
     ($str_attach:expr, $id:expr) => {{
-        let attach_type =
-            messages::decorators::attachment::AttachmentType::Base64(base64::encode($str_attach));
+        let attach_type = messages::decorators::attachment::AttachmentType::Base64(base64::encode($str_attach));
         let attach_data = messages::decorators::attachment::AttachmentData::new(attach_type);
         let mut attach = messages::decorators::attachment::Attachment::new(attach_data);
         attach.id = Some($id);

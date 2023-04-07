@@ -131,13 +131,8 @@ impl Verifier {
     }
 
     pub fn get_presentation_request_attachment(&self) -> VcxResult<String> {
-        Ok(get_attach_as_string!(
-            &self
-                .verifier_sm
-                .presentation_request_msg()?
-                .content
-                .request_presentations_attach
-        ))
+        let pres_req = &self.verifier_sm.presentation_request_msg()?;
+        Ok(get_attach_as_string!(pres_req.content.request_presentations_attach))
     }
 
     pub fn get_presentation_request(&self) -> VcxResult<RequestPresentation> {
@@ -153,9 +148,8 @@ impl Verifier {
     }
 
     pub fn get_presentation_attachment(&self) -> VcxResult<String> {
-        Ok(get_attach_as_string!(
-            &self.verifier_sm.get_presentation_msg()?.content.presentations_attach
-        ))
+        let presentation = &self.verifier_sm.get_presentation_msg()?;
+        Ok(get_attach_as_string!(presentation.content.presentations_attach))
     }
 
     pub fn get_presentation_proposal(&self) -> VcxResult<ProposePresentation> {
