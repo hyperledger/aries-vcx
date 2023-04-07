@@ -25,21 +25,21 @@ pub struct InvitationContent {
     pub accept: Option<Vec<MimeType>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub handshake_protocols: Option<Vec<MaybeKnown<Protocol>>>,
-    pub services: Vec<OobService>,
     #[serde(rename = "requests~attach")]
-    pub requests_attach: Vec<Attachment>,
+    pub requests_attach: Option<Vec<Attachment>>,
+    pub services: Vec<OobService>,
 }
 
 impl InvitationContent {
-    pub fn new(services: Vec<OobService>, requests_attach: Vec<Attachment>) -> Self {
+    pub fn new(services: Vec<OobService>) -> Self {
         Self {
             label: None,
             goal_code: None,
             goal: None,
             accept: None,
             handshake_protocols: None,
+            requests_attach: None,
             services,
-            requests_attach,
         }
     }
 }
@@ -73,16 +73,12 @@ mod tests {
 
     #[test]
     fn test_minimal_oob_invitation() {
-        let content = InvitationContent::new(
-            vec![OobService::Did("test_service_did".to_owned())],
-            vec![make_extended_attachment()],
-        );
+        let content = InvitationContent::new(vec![OobService::Did("test_service_did".to_owned())]);
 
         let decorators = InvitationDecorators::default();
 
         let expected = json!({
             "services": content.services,
-            "requests~attach": content.requests_attach,
         });
 
         test_utils::test_msg(content, decorators, OutOfBandTypeV1_1::Invitation, expected);
@@ -90,11 +86,9 @@ mod tests {
 
     #[test]
     fn test_extended_oob_invitation() {
-        let mut content = InvitationContent::new(
-            vec![OobService::Did("test_service_did".to_owned())],
-            vec![make_extended_attachment()],
-        );
+        let mut content = InvitationContent::new(vec![OobService::Did("test_service_did".to_owned())]);
 
+        content.requests_attach = Some(vec![make_extended_attachment()]);
         content.label = Some("test_label".to_owned());
         content.goal_code = Some(MaybeKnown::Known(OobGoalCode::P2PMessaging));
         content.goal = Some("test_oob_goal".to_owned());

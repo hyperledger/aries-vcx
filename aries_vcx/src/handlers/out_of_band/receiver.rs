@@ -127,7 +127,7 @@ impl OutOfBandReceiver {
     // TODO: There may be multiple A2AMessages in a single OoB msg
     pub fn extract_a2a_message(&self) -> VcxResult<Option<AriesMessage>> {
         trace!("OutOfBandReceiver::extract_a2a_message >>>");
-        if let Some(attach) = self.oob.content.requests_attach.get(0) {
+        if let Some(attach) = self.oob.content.requests_attach.as_ref().map(|v| v.get(0)).flatten() {
             let AttachmentType::Json(attach_json) = &attach.data.content else {
                 return Err(AriesVcxError::from_msg(
                     AriesVcxErrorKind::SerializationError,

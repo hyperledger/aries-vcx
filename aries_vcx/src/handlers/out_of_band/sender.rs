@@ -26,7 +26,7 @@ pub struct OutOfBandSender {
 impl OutOfBandSender {
     pub fn create() -> Self {
         let id = Uuid::new_v4().to_string();
-        let content = InvitationContent::new(Vec::new(), Vec::new());
+        let content = InvitationContent::new(Vec::new());
         let decorators = InvitationDecorators::default();
 
         Self {
@@ -104,6 +104,7 @@ impl OutOfBandSender {
         self.oob
             .content
             .requests_attach
+            .get_or_insert(Vec::with_capacity(1))
             .push(make_attach_from_str!(&attach, attach_id.as_ref().to_string()));
 
         Ok(self)
