@@ -9,7 +9,7 @@ use crate::{
         basic_message::BasicMessageTypeV1, connection::ConnectionTypeV1, cred_issuance::CredentialIssuanceTypeV1,
         discover_features::DiscoverFeaturesTypeV1, notification::NotificationTypeV1, out_of_band::OutOfBandTypeV1,
         present_proof::PresentProofTypeV1, report_problem::ReportProblemTypeV1, revocation::RevocationTypeV2,
-        routing::RoutingTypeV1, trust_ping::TrustPingTypeV1,
+        routing::RoutingTypeV1, trust_ping::TrustPingTypeV1, signature::SignatureTypeV1,
     },
 };
 type RegistryMap = HashMap<(&'static str, u8), Vec<RegistryEntry>>;
@@ -62,6 +62,7 @@ lazy_static! {
         map_insert(&mut m, extract_parts!(RoutingTypeV1::new_v1_0()));
         map_insert(&mut m, extract_parts!(BasicMessageTypeV1::new_v1_0()));
         map_insert(&mut m, extract_parts!(ConnectionTypeV1::new_v1_0()));
+        map_insert(&mut m, extract_parts!(SignatureTypeV1::new_v1_0()));
         map_insert(&mut m, extract_parts!(CredentialIssuanceTypeV1::new_v1_0()));
         map_insert(&mut m, extract_parts!(DiscoverFeaturesTypeV1::new_v1_0()));
         map_insert(&mut m, extract_parts!(NotificationTypeV1::new_v1_0()));
