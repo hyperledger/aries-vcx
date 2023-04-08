@@ -1,6 +1,5 @@
 use async_trait::async_trait;
 
-use crate::common::primitives::revocation_registry::RevocationRegistryDefinition;
 use crate::errors::error::VcxResult;
 
 /// Trait defining standard 'ledger' related functionality.
@@ -117,11 +116,7 @@ pub trait BaseLedger: std::fmt::Debug + Send + Sync {
 
     async fn publish_cred_def(&self, cred_def_json: &str, submitter_did: &str) -> VcxResult<()>;
 
-    async fn publish_rev_reg_def(
-        &self,
-        rev_reg_def: &RevocationRegistryDefinition,
-        submitter_did: &str,
-    ) -> VcxResult<()>;
+    async fn publish_rev_reg_def(&self, rev_reg_def: &str, submitter_did: &str) -> VcxResult<()>;
 
     async fn publish_rev_reg_delta(
         &self,

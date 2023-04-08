@@ -5,7 +5,6 @@ use vdrtools::{PoolHandle, WalletHandle};
 
 use crate::core::profile::vdrtools_profile::VdrtoolsProfile;
 
-use crate::common::primitives::revocation_registry::RevocationRegistryDefinition;
 use crate::errors::error::VcxResult;
 use crate::indy;
 
@@ -179,11 +178,7 @@ impl BaseLedger for IndySdkLedger {
         .await
     }
 
-    async fn publish_rev_reg_def(
-        &self,
-        rev_reg_def: &RevocationRegistryDefinition,
-        submitter_did: &str,
-    ) -> VcxResult<()> {
+    async fn publish_rev_reg_def(&self, rev_reg_def: &str, submitter_did: &str) -> VcxResult<()> {
         indy::primitives::revocation_registry::publish_rev_reg_def(
             self.indy_wallet_handle,
             self.indy_pool_handle,

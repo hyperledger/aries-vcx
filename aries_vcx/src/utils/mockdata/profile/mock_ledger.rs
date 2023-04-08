@@ -127,11 +127,7 @@ impl BaseLedger for MockLedger {
         Ok(())
     }
 
-    async fn publish_rev_reg_def(
-        &self,
-        rev_reg_def: &RevocationRegistryDefinition,
-        submitter_did: &str,
-    ) -> VcxResult<()> {
+    async fn publish_rev_reg_def(&self, rev_reg_def: &str, submitter_did: &str) -> VcxResult<()> {
         Ok(())
     }
 

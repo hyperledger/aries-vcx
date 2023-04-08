@@ -18,13 +18,12 @@ use vdr::pool::{PoolRunner, PreparedRequest, ProtocolVersion, RequestResult};
 use vdr::utils::did::DidValue;
 use vdr::utils::Qualifiable;
 
-use crate::common::primitives::revocation_registry::RevocationRegistryDefinition;
 use crate::errors::error::VcxResult;
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind};
 use crate::global::settings;
-use crate::plugins::wallet::base_wallet::BaseWallet;
 use crate::utils::author_agreement::get_txn_author_agreement;
 use crate::utils::json::{AsTypeOrDeserializationError, TryGetIndex};
+use crate::wallet::base_wallet::BaseWallet;
 
 use super::base_ledger::BaseLedger;
 
@@ -461,11 +460,7 @@ impl BaseLedger for IndyVdrLedger {
         Err(unimplemented_method_err("indy_vdr publish_cred_def"))
     }
 
-    async fn publish_rev_reg_def(
-        &self,
-        rev_reg_def: &RevocationRegistryDefinition,
-        submitter_did: &str,
-    ) -> VcxResult<()> {
+    async fn publish_rev_reg_def(&self, rev_reg_def: &str, submitter_did: &str) -> VcxResult<()> {
         let _ = (rev_reg_def, submitter_did);
         Err(unimplemented_method_err("indy_vdr publish_rev_reg_def"))
     }
@@ -522,7 +517,7 @@ mod unit_tests {
 
     use crate::errors::error::{AriesVcxErrorKind, VcxResult};
     use crate::{
-        common::{primitives::revocation_registry::RevocationRegistryDefinition, test_utils::mock_profile},
+        common::test_utils::mock_profile,
         plugins::ledger::{base_ledger::BaseLedger, indy_vdr_ledger::IndyVdrLedgerPool},
     };
 
@@ -548,10 +543,6 @@ mod unit_tests {
         assert_unimplemented(ledger.build_schema_request("", "").await);
         assert_unimplemented(ledger.publish_schema("", "", None).await);
         assert_unimplemented(ledger.publish_cred_def("", "").await);
-        assert_unimplemented(
-            ledger
-                .publish_rev_reg_def(&RevocationRegistryDefinition::default(), "")
-                .await,
-        );
+        assert_unimplemented(ledger.publish_rev_reg_def("", "").await);
     }
 }

@@ -344,7 +344,7 @@ pub mod integration_tests {
             .await
             .unwrap();
             ledger
-                .publish_rev_reg_def(&rev_reg_def_json, &setup.institution_did)
+                .publish_rev_reg_def(&json!(rev_reg_def_json).to_string(), &setup.institution_did)
                 .await
                 .unwrap();
             ledger

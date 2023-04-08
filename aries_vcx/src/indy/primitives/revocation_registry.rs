@@ -86,7 +86,7 @@ pub async fn publish_rev_reg_def(
     wallet_handle: WalletHandle,
     pool_handle: PoolHandle,
     issuer_did: &str,
-    rev_reg_def: &RevocationRegistryDefinition,
+    rev_reg_def: &str,
 ) -> VcxResult<()> {
     trace!("publish_rev_reg_def >>> issuer_did: {}, rev_reg_def: ...", issuer_did);
     if settings::indy_mocks_enabled() {
@@ -94,14 +94,7 @@ pub async fn publish_rev_reg_def(
         return Ok(());
     }
 
-    let rev_reg_def_json = serde_json::to_string(&rev_reg_def).map_err(|err| {
-        AriesVcxError::from_msg(
-            AriesVcxErrorKind::SerializationError,
-            format!("Failed to serialize rev_reg_def: {:?}, error: {:?}", rev_reg_def, err),
-        )
-    })?;
-
-    let rev_reg_def_req = build_rev_reg_request(issuer_did, &rev_reg_def_json).await?;
+    let rev_reg_def_req = build_rev_reg_request(issuer_did, &rev_reg_def).await?;
 
     let response = sign_and_submit_to_ledger(wallet_handle, pool_handle, issuer_did, &rev_reg_def_req).await?;
 
