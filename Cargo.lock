@@ -252,6 +252,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "aries_vcx_core"
+version = "0.1.0"
+dependencies = [
+ "agency_client",
+ "async-trait",
+ "derive_builder 0.12.0",
+ "futures",
+ "indy-credx",
+ "indy-vdr",
+ "lazy_static",
+ "libvdrtools",
+ "log",
+ "rand 0.7.3",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "time",
+ "tokio",
+ "uuid 1.3.0",
+]
+
+[[package]]
 name = "arrayref"
 version = "0.3.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4198,6 +4220,17 @@ name = "syn"
 version = "2.0.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fcf316d5356ed6847742d036f8a39c3b8435cac10bd528a4bd461928a6ab34d5"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "unicode-ident",
+]
+
+[[package]]
+name = "syn"
+version = "2.0.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4c9da457c5285ac1f936ebd076af6dac17a61cfe7826f2076b4d015cf47bc8ec"
 dependencies = [
  "proc-macro2",
  "quote",
