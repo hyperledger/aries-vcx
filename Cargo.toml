@@ -12,6 +12,7 @@ members = [
     "diddoc",
     "agents/rust/aries-vcx-agent",
     "wrappers/vcx-napi-rs",
+    "aries_vcx_core",
     "uniffi_aries_vcx/core"
 ]
 
