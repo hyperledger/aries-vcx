@@ -221,7 +221,8 @@ module.exports.createFaber = async function createFaber (serviceEndpoint = 'http
 
     logger.info('Issuer sending credential')
     expect(await vcxAgent.serviceCredIssuer.sendCredential(issuerCredId, connectionId)).toBe(IssuerStateType.CredentialSent)
-    logger.info('Credential sent')
+    const revocationId = await vcxAgent.serviceCredIssuer.getRevocationId(issuerCredId)
+    logger.info(`Sent credential with revocation id ${revocationId}`)
 
     await vcxAgent.agentShutdownVcx()
   }
