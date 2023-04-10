@@ -8,10 +8,10 @@ pub mod test_utils {
     use aries_vcx::core::profile::vdrtools_profile::VdrtoolsProfile;
     use aries_vcx::handlers::revocation_notification::receiver::RevocationNotificationReceiver;
     use aries_vcx::handlers::revocation_notification::sender::RevocationNotificationSender;
-    use aries_vcx::plugins::wallet::indy_wallet::IndySdkWallet;
     use aries_vcx::protocols::mediated_connection::pairwise_info::PairwiseInfo;
     use aries_vcx::protocols::revocation_notification::sender::state_machine::SenderConfigBuilder;
     use aries_vcx_core::wallet::base_wallet::BaseWallet;
+    use aries_vcx_core::wallet::indy_wallet::IndySdkWallet;
     use futures::future::BoxFuture;
     use messages::concepts::ack::please_ack::AckOn;
     use messages::diddoc::aries::service::AriesService;

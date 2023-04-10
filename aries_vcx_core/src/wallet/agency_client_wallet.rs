@@ -98,7 +98,7 @@ impl BaseWallet for AgencyClientWallet {
     }
 }
 
-pub(crate) trait ToBaseWallet {
+pub trait ToBaseWallet {
     fn to_base_wallet(&self) -> Arc<dyn BaseWallet>;
 }
 
