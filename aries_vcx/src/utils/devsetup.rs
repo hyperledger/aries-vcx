@@ -2,6 +2,13 @@ use std::fs;
 use std::future::Future;
 use std::sync::{Arc, Once};
 
+use aries_vcx_core::indy::ledger::pool::PoolConfig;
+use aries_vcx_core::indy::utils::mocks::did_mocks::DidMocks;
+use aries_vcx_core::indy::utils::mocks::pool_mocks::PoolMocks;
+use aries_vcx_core::indy::wallet::{
+    close_wallet, create_and_open_wallet, create_indy_wallet, create_wallet_with_master_secret, delete_wallet,
+    open_wallet, wallet_configure_issuer, WalletConfig,
+};
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use aries_vcx_core::wallet::indy_wallet::IndySdkWallet;
 use chrono::{DateTime, Duration, Utc};
@@ -21,14 +28,6 @@ use crate::global::settings::init_issuer_config;
 use crate::global::settings::{disable_indy_mocks, enable_indy_mocks, set_test_configs};
 use crate::indy::ledger::pool::test_utils::{
     create_test_ledger_config, create_tmp_genesis_txn_file, delete_test_pool, open_test_pool,
-};
-use crate::indy::ledger::pool::PoolConfig;
-use crate::indy::utils::mocks::did_mocks::DidMocks;
-use crate::indy::utils::mocks::pool_mocks::PoolMocks;
-use crate::indy::wallet::open_wallet;
-use crate::indy::wallet::{
-    close_wallet, create_and_open_wallet, create_indy_wallet, create_wallet_with_master_secret, delete_wallet,
-    wallet_configure_issuer, WalletConfig,
 };
 use crate::plugins::ledger::indy_vdr_ledger::LedgerPoolConfig;
 use crate::utils;

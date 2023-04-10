@@ -1,8 +1,9 @@
 use std::collections::HashMap;
 use std::sync::RwLock;
 
+use aries_vcx_core::indy::wallet::IssuerConfig;
+
 use crate::errors::error::prelude::*;
-use crate::indy::wallet::IssuerConfig;
 
 pub static CONFIG_POOL_NAME: &str = "pool_name";
 pub static CONFIG_SDK_TO_REMOTE_ROLE: &str = "sdk_to_remote_role";

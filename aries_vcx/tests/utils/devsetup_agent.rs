@@ -10,6 +10,10 @@ pub mod test_utils {
     use aries_vcx::handlers::revocation_notification::sender::RevocationNotificationSender;
     use aries_vcx::protocols::mediated_connection::pairwise_info::PairwiseInfo;
     use aries_vcx::protocols::revocation_notification::sender::state_machine::SenderConfigBuilder;
+    use aries_vcx_core::indy::wallet::{
+        close_wallet, create_wallet_with_master_secret, delete_wallet, open_wallet, wallet_configure_issuer,
+        IssuerConfig, WalletConfig,
+    };
     use aries_vcx_core::wallet::base_wallet::BaseWallet;
     use aries_vcx_core::wallet::indy_wallet::IndySdkWallet;
     use futures::future::BoxFuture;
@@ -39,10 +43,6 @@ pub mod test_utils {
     use aries_vcx::handlers::proof_presentation::prover::test_utils::get_proof_request_messages;
     use aries_vcx::handlers::proof_presentation::prover::Prover;
     use aries_vcx::handlers::proof_presentation::verifier::Verifier;
-    use aries_vcx::indy::wallet::{close_wallet, open_wallet};
-    use aries_vcx::indy::wallet::{
-        create_wallet_with_master_secret, delete_wallet, wallet_configure_issuer, IssuerConfig, WalletConfig,
-    };
     use aries_vcx::messages::a2a::A2AMessage;
     use aries_vcx::messages::protocols::connection::invite::{Invitation, PublicInvitation};
     use aries_vcx::messages::protocols::issuance::credential_offer::CredentialOffer;

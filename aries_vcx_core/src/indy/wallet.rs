@@ -5,9 +5,12 @@ use vdrtools::{
     Locator, SearchHandle, WalletHandle,
 };
 
-use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
 use crate::global::settings;
 use crate::indy::keys;
+use crate::{
+    errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
+    indy::credentials::holder,
+};
 
 #[derive(Clone, Debug, Default, Builder, Serialize, Deserialize)]
 #[builder(setter(into, strip_option), default)]
@@ -116,7 +119,7 @@ fn parse_key_derivation_method(method: &str) -> Result<KeyDerivationMethod, Arie
     }
 }
 
-pub(crate) async fn create_indy_wallet(wallet_config: &WalletConfig) -> VcxCoreResult<()> {
+pub async fn create_indy_wallet(wallet_config: &WalletConfig) -> VcxCoreResult<()> {
     trace!("create_wallet >>> {}", &wallet_config.wallet_name);
 
     let credentials = vdrtools::types::domain::wallet::Credentials {
@@ -167,6 +170,62 @@ pub(crate) async fn create_indy_wallet(wallet_config: &WalletConfig) -> VcxCoreR
             AriesVcxCoreErrorKind::WalletCreate,
             format!("could not create wallet {}: {}", wallet_config.wallet_name, err,),
         )),
+    }
+}
+
+pub async fn delete_wallet(wallet_config: &WalletConfig) -> VcxCoreResult<()> {
+    trace!("delete_wallet >>> wallet_name: {}", &wallet_config.wallet_name);
+
+    let credentials = vdrtools::types::domain::wallet::Credentials {
+        key: wallet_config.wallet_key.clone(),
+        key_derivation_method: parse_key_derivation_method(&wallet_config.wallet_key_derivation)?,
+
+        rekey: None,
+        rekey_derivation_method: default_key_derivation_method(),
+
+        storage_credentials: wallet_config
+            .storage_credentials
+            .as_deref()
+            .map(serde_json::from_str)
+            .transpose()?,
+    };
+
+    trace!("Credentials: {:?}", credentials);
+
+    let res = Locator::instance()
+        .wallet_controller
+        .delete(
+            vdrtools::types::domain::wallet::Config {
+                id: wallet_config.wallet_name.clone(),
+                storage_type: wallet_config.wallet_type.clone(),
+                storage_config: wallet_config
+                    .storage_config
+                    .as_deref()
+                    .map(serde_json::from_str)
+                    .transpose()?,
+                cache: None,
+            },
+            credentials,
+        )
+        .await;
+
+    match res {
+        Ok(_) => Ok(()),
+
+        Err(err) if err.kind() == IndyErrorKind::WalletAccessFailed => Err(AriesVcxCoreError::from_msg(
+            AriesVcxCoreErrorKind::WalletAccessFailed,
+            format!(
+                "Can not open wallet \"{}\". Invalid key has been provided.",
+                &wallet_config.wallet_name
+            ),
+        )),
+
+        Err(err) if err.kind() == IndyErrorKind::WalletNotFound => Err(AriesVcxCoreError::from_msg(
+            AriesVcxCoreErrorKind::WalletNotFound,
+            format!("Wallet \"{}\" not found or unavailable", &wallet_config.wallet_name,),
+        )),
+
+        Err(err) => Err(err.into()),
     }
 }
 
@@ -228,7 +287,7 @@ pub(crate) async fn get_wallet_record(
     Ok(res)
 }
 
-pub(crate) async fn delete_wallet_record(wallet_handle: WalletHandle, xtype: &str, id: &str) -> VcxCoreResult<()> {
+pub async fn delete_wallet_record(wallet_handle: WalletHandle, xtype: &str, id: &str) -> VcxCoreResult<()> {
     trace!("delete_record >>> xtype: {}, id: {}", secret!(&xtype), secret!(&id));
 
     if settings::indy_mocks_enabled() {
@@ -418,6 +477,21 @@ pub async fn wallet_configure_issuer(
         keys::create_and_store_my_did(wallet_handle, Some(enterprise_seed), None).await?;
 
     Ok(IssuerConfig { institution_did })
+}
+
+pub async fn create_wallet_with_master_secret(config: &WalletConfig) -> VcxCoreResult<()> {
+    let wallet_handle = create_and_open_wallet(config).await?;
+
+    trace!("Created wallet with handle {:?}", wallet_handle);
+
+    // If MS is already in wallet then just continue
+    holder::libindy_prover_create_master_secret(wallet_handle, settings::DEFAULT_LINK_SECRET_ALIAS)
+        .await
+        .ok();
+
+    Locator::instance().wallet_controller.close(wallet_handle).await?;
+
+    Ok(())
 }
 
 pub async fn create_and_open_wallet(wallet_config: &WalletConfig) -> VcxCoreResult<WalletHandle> {

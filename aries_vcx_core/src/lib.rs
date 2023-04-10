@@ -22,7 +22,7 @@ pub mod anoncreds;
 mod common;
 pub mod errors;
 mod global;
-pub(crate) mod indy;
+pub mod indy;
 pub mod ledger;
 pub mod utils;
 pub mod wallet;
