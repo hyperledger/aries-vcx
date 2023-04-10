@@ -42,7 +42,6 @@ use crate::utils::constants::GENESIS_PATH;
 use crate::utils::file::write_file;
 use crate::utils::get_temp_dir_path;
 use crate::utils::provision::provision_cloud_agent;
-use crate::utils::test_logger::LibvcxDefaultLogger;
 
 pub struct SetupEmpty;
 
@@ -561,7 +560,7 @@ lazy_static! {
 
 pub fn init_test_logging() {
     TEST_LOGGING_INIT.call_once(|| {
-        LibvcxDefaultLogger::init_testing_logger();
+        crate::utils::test_logger::TestLogger::init_testing_logger();
     })
 }
 

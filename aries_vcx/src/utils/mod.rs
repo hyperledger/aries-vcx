@@ -54,6 +54,7 @@ pub mod random;
 pub mod uuid;
 
 #[macro_use]
+#[cfg(feature = "test_utils")]
 pub mod test_logger;
 pub mod encryption_envelope;
 pub mod filters;
