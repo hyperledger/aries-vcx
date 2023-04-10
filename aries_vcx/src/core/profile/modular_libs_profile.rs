@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
+use aries_vcx_core::wallet::base_wallet::BaseWallet;
 
 use crate::errors::error::VcxResult;
 use crate::plugins::ledger::indy_vdr_ledger::LedgerPoolConfig;
@@ -10,7 +11,6 @@ use crate::plugins::{
         base_ledger::BaseLedger,
         indy_vdr_ledger::{IndyVdrLedger, IndyVdrLedgerPool},
     },
-    wallet::base_wallet::BaseWallet,
 };
 
 use super::profile::Profile;

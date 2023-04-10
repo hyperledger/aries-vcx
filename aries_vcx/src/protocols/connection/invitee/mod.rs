@@ -2,6 +2,7 @@ pub mod states;
 
 use std::sync::Arc;
 
+use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use messages::{diddoc::aries::diddoc::AriesDidDoc, protocols::connection::invite::Invitation};
 
 use crate::{
@@ -24,7 +25,6 @@ use crate::{
     common::signing::decode_signed_connection_response,
     errors::error::{AriesVcxError, AriesVcxErrorKind},
     handlers::util::verify_thread_id,
-    plugins::wallet::base_wallet::BaseWallet,
 };
 
 /// Convenience alias

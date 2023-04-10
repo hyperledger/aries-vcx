@@ -4,14 +4,10 @@ use std::{
     sync::Arc,
 };
 
-use crate::plugins::wallet::base_wallet::BaseWallet;
-use crate::{
-    plugins::wallet::base_wallet::AsyncFnIteratorCollect,
-    utils::{
-        constants::ATTRS,
-        json::{AsTypeOrDeserializationError, TryGetIndex},
-        uuid::uuid,
-    },
+use crate::utils::{
+    constants::ATTRS,
+    json::{AsTypeOrDeserializationError, TryGetIndex},
+    uuid::uuid,
 };
 use async_trait::async_trait;
 use credx::{
@@ -32,6 +28,7 @@ use serde_json::Value;
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds,
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
+    wallet::base_wallet::{AsyncFnIteratorCollect, BaseWallet},
 };
 
 const CATEGORY_CREDENTIAL: &str = "VCX_CREDENTIAL";

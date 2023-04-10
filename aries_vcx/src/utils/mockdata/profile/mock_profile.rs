@@ -1,11 +1,8 @@
 use std::sync::Arc;
 
-use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
+use aries_vcx_core::{anoncreds::base_anoncreds::BaseAnonCreds, wallet::base_wallet::BaseWallet};
 
-use crate::{
-    core::profile::profile::Profile,
-    plugins::{ledger::base_ledger::BaseLedger, wallet::base_wallet::BaseWallet},
-};
+use crate::{core::profile::profile::Profile, plugins::ledger::base_ledger::BaseLedger};
 
 use super::{mock_anoncreds::MockAnoncreds, mock_ledger::MockLedger, mock_wallet::MockWallet};
 

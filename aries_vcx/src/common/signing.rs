@@ -1,10 +1,11 @@
 use std::sync::Arc;
 
+use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use base64;
 use time;
 
 use crate::errors::error::prelude::*;
-use crate::{global::settings, plugins::wallet::base_wallet::BaseWallet};
+use crate::global::settings;
 use messages::protocols::connection::response::{ConnectionData, ConnectionSignature, Response, SignedResponse};
 
 async fn get_signature_data(wallet: &Arc<dyn BaseWallet>, data: String, key: &str) -> VcxResult<(Vec<u8>, Vec<u8>)> {

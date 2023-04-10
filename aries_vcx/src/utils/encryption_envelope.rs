@@ -1,12 +1,12 @@
 use std::sync::Arc;
 
+use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use futures::TryFutureExt;
 
 use agency_client::testing::mocking::AgencyMockDecrypted;
 
 use crate::errors::error::prelude::*;
 use crate::global::settings;
-use crate::plugins::wallet::base_wallet::BaseWallet;
 use crate::utils::constants;
 use messages::a2a::A2AMessage;
 use messages::diddoc::aries::diddoc::AriesDidDoc;
@@ -59,7 +59,10 @@ impl EncryptionEnvelope {
             pw_verkey, receiver_keys
         );
 
-        wallet.pack_message(pw_verkey, &receiver_keys, message.as_bytes()).await
+        wallet
+            .pack_message(pw_verkey, &receiver_keys, message.as_bytes())
+            .await
+            .map_err(|err| err.into())
     }
 
     async fn wrap_into_forward_messages(
@@ -94,7 +97,10 @@ impl EncryptionEnvelope {
         let message = json!(message).to_string();
         let receiver_keys = json!(vec![routing_key]).to_string();
 
-        wallet.pack_message(None, &receiver_keys, message.as_bytes()).await
+        wallet
+            .pack_message(None, &receiver_keys, message.as_bytes())
+            .await
+            .map_err(|err| err.into())
     }
 
     async fn _unpack_a2a_message(

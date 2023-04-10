@@ -31,7 +31,7 @@ pub async fn rotate_verkey_apply(profile: &Arc<dyn Profile>, did: &str, temp_vk:
     }
 
     let wallet = profile.inject_wallet();
-    wallet.replace_did_keys_apply(did).await
+    wallet.replace_did_keys_apply(did).await.map_err(|err| err.into())
 }
 
 pub async fn rotate_verkey(profile: &Arc<dyn Profile>, did: &str) -> VcxResult<()> {

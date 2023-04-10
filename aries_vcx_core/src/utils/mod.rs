@@ -2,7 +2,7 @@ use vdrtools::types::validation::Validatable;
 
 use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
 
-pub(crate) mod async_fn_iterator;
+pub mod async_fn_iterator;
 pub(crate) mod author_agreement;
 pub(crate) mod constants;
 pub(crate) mod json;

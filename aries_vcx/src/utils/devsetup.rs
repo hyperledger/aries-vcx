@@ -2,6 +2,7 @@ use std::fs;
 use std::future::Future;
 use std::sync::{Arc, Once};
 
+use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use chrono::{DateTime, Duration, Utc};
 
 use futures::future::BoxFuture;
@@ -29,7 +30,6 @@ use crate::indy::wallet::{
     wallet_configure_issuer, WalletConfig,
 };
 use crate::plugins::ledger::indy_vdr_ledger::LedgerPoolConfig;
-use crate::plugins::wallet::base_wallet::BaseWallet;
 use crate::plugins::wallet::indy_wallet::IndySdkWallet;
 use crate::utils;
 use crate::utils::constants::GENESIS_PATH;

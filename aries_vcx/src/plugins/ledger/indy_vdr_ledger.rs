@@ -1,3 +1,4 @@
+use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use indy_vdr as vdr;
 use std::collections::hash_map::RandomState;
 use std::collections::HashMap;
@@ -21,7 +22,6 @@ use vdr::utils::Qualifiable;
 use crate::errors::error::VcxResult;
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind};
 use crate::global::settings;
-use crate::plugins::wallet::base_wallet::BaseWallet;
 use crate::utils::author_agreement::get_txn_author_agreement;
 use crate::utils::json::{AsTypeOrDeserializationError, TryGetIndex};
 

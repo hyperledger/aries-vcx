@@ -2,13 +2,13 @@ use std::env;
 use std::path::PathBuf;
 use std::sync::Arc;
 
+use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use vdrtools::types::validation::Validatable;
 
 use messages::a2a::A2AMessage;
 use messages::diddoc::aries::diddoc::AriesDidDoc;
 
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
-use crate::plugins::wallet::base_wallet::BaseWallet;
 use crate::utils::encryption_envelope::EncryptionEnvelope;
 
 #[macro_use]

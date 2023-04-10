@@ -24,5 +24,5 @@ pub mod errors;
 mod global;
 pub(crate) mod indy;
 pub mod ledger;
-mod utils;
+pub mod utils;
 pub mod wallet;

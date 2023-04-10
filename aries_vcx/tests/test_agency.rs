@@ -22,9 +22,7 @@ mod integration_tests {
     use aries_vcx::global::settings;
     use aries_vcx::messages::a2a::A2AMessage;
     use aries_vcx::messages::concepts::ack::test_utils::_ack;
-    use aries_vcx::plugins::wallet::{
-        agency_client_wallet::ToBaseAgencyClientWallet, base_wallet::BaseWallet, indy_wallet::IndySdkWallet,
-    };
+    use aries_vcx::plugins::wallet::{agency_client_wallet::ToBaseAgencyClientWallet, indy_wallet::IndySdkWallet};
     use aries_vcx::utils::devsetup::SetupPool;
 
     use crate::utils::devsetup_agent::test_utils::{create_test_alice_instance, Faber};
@@ -407,6 +405,8 @@ mod integration_tests {
     #[cfg(feature = "agency_pool_tests")]
     #[tokio::test]
     async fn test_update_agent_webhook() {
+        use aries_vcx_core::wallet::base_wallet::BaseWallet;
+
         SetupPool::run(|_setup| async move {
             let wallet_config = WalletConfig {
                 wallet_name: format!("wallet_{}", uuid::Uuid::new_v4().to_string()),
