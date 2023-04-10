@@ -1,10 +1,10 @@
 use aries_vcx_core::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
+use aries_vcx_core::indy::utils::LibindyMock;
 use aries_vcx_core::ledger::base_ledger::BaseLedger;
 use async_trait::async_trait;
 
 use crate::{
     common::primitives::revocation_registry::RevocationRegistryDefinition,
-    indy::utils::LibindyMock,
     utils::{
         self,
         constants::{

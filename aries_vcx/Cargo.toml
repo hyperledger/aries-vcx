@@ -11,7 +11,7 @@ path = "src/lib.rs"
 doctest = false
 
 [features]
-test_utils = [ "messages/test_utils" ]
+test_utils = [ "messages/test_utils", "aries_vcx_core/test_utils" ]
 pool_tests = [ "test_utils" ]
 agency_pool_tests = [ "test_utils" ]
 general_test = [ "test_utils", "messages/general_test" ]

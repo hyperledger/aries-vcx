@@ -43,7 +43,6 @@ pub mod utils;
 pub mod handlers;
 
 pub mod global;
-pub mod indy;
 pub mod protocols;
 
 pub mod common;

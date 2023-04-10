@@ -213,8 +213,8 @@ impl EncryptionEnvelope {
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
     use crate::common::test_utils::{create_key, create_trustee_key, indy_handles_to_profile};
-    use crate::indy::utils::test_setup;
     use crate::utils::devsetup::SetupEmpty;
+    use aries_vcx_core::indy::utils::test_setup;
     use messages::concepts::ack::test_utils::_ack;
     use messages::diddoc::aries::diddoc::test_utils::*;
 

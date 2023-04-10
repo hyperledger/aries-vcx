@@ -2,6 +2,9 @@ use std::fs;
 use std::future::Future;
 use std::sync::{Arc, Once};
 
+use aries_vcx_core::indy::ledger::pool::test_utils::{
+    create_test_ledger_config, create_tmp_genesis_txn_file, delete_test_pool, open_test_pool,
+};
 use aries_vcx_core::indy::ledger::pool::PoolConfig;
 use aries_vcx_core::indy::utils::mocks::did_mocks::DidMocks;
 use aries_vcx_core::indy::utils::mocks::pool_mocks::PoolMocks;
@@ -26,9 +29,6 @@ use crate::core::profile::vdrtools_profile::VdrtoolsProfile;
 use crate::global::settings;
 use crate::global::settings::init_issuer_config;
 use crate::global::settings::{disable_indy_mocks, enable_indy_mocks, set_test_configs};
-use crate::indy::ledger::pool::test_utils::{
-    create_test_ledger_config, create_tmp_genesis_txn_file, delete_test_pool, open_test_pool,
-};
 use crate::plugins::ledger::indy_vdr_ledger::LedgerPoolConfig;
 use crate::utils;
 use crate::utils::constants::GENESIS_PATH;

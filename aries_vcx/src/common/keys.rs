@@ -75,7 +75,8 @@ pub async fn get_verkey_from_ledger(profile: &Arc<dyn Profile>, did: &str) -> Vc
 #[cfg(test)]
 #[cfg(feature = "pool_tests")]
 mod test {
-    use crate::indy::utils::mocks::pool_mocks::{enable_pool_mocks, PoolMocks};
+    use aries_vcx_core::indy::utils::mocks::pool_mocks::{enable_pool_mocks, PoolMocks};
+
     use crate::utils::devsetup::*;
     use crate::utils::mockdata::mockdata_pool;
 

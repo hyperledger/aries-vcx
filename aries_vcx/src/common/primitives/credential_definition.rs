@@ -1,9 +1,9 @@
 use aries_vcx_core::errors::error::AriesVcxCoreErrorKind;
+use aries_vcx_core::indy::utils::LibindyMock;
 use aries_vcx_core::ledger::base_ledger::BaseLedger;
 
 use crate::core::profile::profile::Profile;
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
-use crate::indy::utils::LibindyMock;
 use crate::utils::constants::{CRED_DEF_ID, CRED_DEF_JSON, DEFAULT_SERIALIZE_VERSION};
 use crate::utils::serialization::ObjectWithVersion;
 

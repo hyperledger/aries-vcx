@@ -1,9 +1,11 @@
-use aries_vcx_core::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
+use aries_vcx_core::{
+    errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
+    indy::utils::LibindyMock,
+};
 use async_trait::async_trait;
 
 use crate::{
     global::settings,
-    indy::utils::LibindyMock,
     utils::{
         self,
         constants::{LARGE_NONCE, LIBINDY_CRED_OFFER, REV_STATE_JSON},
