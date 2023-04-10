@@ -1,5 +1,7 @@
 use std::sync::Arc;
 
+use aries_vcx_core::errors::error::AriesVcxCoreErrorKind;
+
 use crate::core::profile::profile::Profile;
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use crate::global::settings;
@@ -105,7 +107,7 @@ impl RevocationRegistry {
             .await
             .map_err(|err| {
                 err.map(
-                    AriesVcxErrorKind::InvalidState,
+                    AriesVcxCoreErrorKind::InvalidState,
                     "Cannot publish revocation registry definition",
                 )
             })?;
@@ -123,7 +125,12 @@ impl RevocationRegistry {
         ledger
             .publish_rev_reg_delta(&self.rev_reg_id, &self.rev_reg_entry, issuer_did)
             .await
-            .map_err(|err| err.map(AriesVcxErrorKind::InvalidRevocationEntry, "Cannot post RevocationEntry"))?;
+            .map_err(|err| {
+                err.map(
+                    AriesVcxCoreErrorKind::InvalidRevocationEntry,
+                    "Cannot post RevocationEntry",
+                )
+            })?;
         self.rev_reg_delta_state = PublicEntityStateType::Published;
         Ok(())
     }

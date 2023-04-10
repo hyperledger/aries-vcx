@@ -253,6 +253,7 @@ pub async fn clear_attr(profile: &Arc<dyn Profile>, did: &str, attr_name: &str) 
     ledger
         .add_attr(did, &json!({ attr_name: Value::Null }).to_string())
         .await
+        .map_err(|err| err.into())
 }
 
 pub(self) fn check_response(response: &str) -> VcxResult<()> {

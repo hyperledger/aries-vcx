@@ -1,5 +1,6 @@
 use std::{collections::HashMap, sync::Arc};
 
+use aries_vcx_core::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind};
 use serde_json::Value;
 
 use crate::errors::error::prelude::*;
@@ -38,11 +39,11 @@ pub async fn build_schemas_json_prover(
             let schema_json = ledger
                 .get_schema(&cred_info.schema_id, None)
                 .await
-                .map_err(|err| err.map(AriesVcxErrorKind::InvalidSchema, "Cannot get schema"))?;
+                .map_err(|err| err.map(AriesVcxCoreErrorKind::InvalidSchema, "Cannot get schema"))?;
 
             let schema_json = serde_json::from_str(&schema_json).map_err(|err| {
-                AriesVcxError::from_msg(
-                    AriesVcxErrorKind::InvalidSchema,
+                AriesVcxCoreError::from_msg(
+                    AriesVcxCoreErrorKind::InvalidSchema,
                     format!("Cannot deserialize schema: {}", err),
                 )
             })?;
@@ -68,7 +69,7 @@ pub async fn build_cred_defs_json_prover(
         if rtn.get(&cred_info.cred_def_id).is_none() {
             let credential_def = ledger.get_cred_def(&cred_info.cred_def_id, None).await.map_err(|err| {
                 err.map(
-                    AriesVcxErrorKind::InvalidProofCredentialData,
+                    AriesVcxCoreErrorKind::InvalidProofCredentialData,
                     "Cannot get credential definition",
                 )
             })?;

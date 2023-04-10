@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use aries_vcx_core::errors::error::AriesVcxCoreErrorKind;
 use serde_json;
 use serde_json::Value;
 
@@ -137,7 +138,7 @@ pub async fn build_schemas_json_verifier(
             let schema_json = ledger
                 .get_schema(schema_id, None)
                 .await
-                .map_err(|err| err.map(AriesVcxErrorKind::InvalidSchema, "Cannot get schema"))?;
+                .map_err(|err| err.map(AriesVcxCoreErrorKind::InvalidSchema, "Cannot get schema"))?;
             let schema_val = serde_json::from_str(&schema_json).map_err(|err| {
                 AriesVcxError::from_msg(
                     AriesVcxErrorKind::InvalidSchema,

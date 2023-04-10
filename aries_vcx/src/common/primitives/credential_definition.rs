@@ -1,7 +1,9 @@
+use aries_vcx_core::errors::error::AriesVcxCoreErrorKind;
+use aries_vcx_core::ledger::base_ledger::BaseLedger;
+
 use crate::core::profile::profile::Profile;
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use crate::indy::utils::LibindyMock;
-use crate::plugins::ledger::base_ledger::BaseLedger;
 use crate::utils::constants::{CRED_DEF_ID, CRED_DEF_JSON, DEFAULT_SERIALIZE_VERSION};
 use crate::utils::serialization::ObjectWithVersion;
 
@@ -114,7 +116,7 @@ async fn _try_get_cred_def_from_ledger(
     }
     match ledger.get_cred_def(cred_def_id, Some(issuer_did)).await {
         Ok(cred_def) => Ok(Some(cred_def)),
-        Err(err) if err.kind() == AriesVcxErrorKind::LedgerItemNotFound => Ok(None),
+        Err(err) if err.kind() == AriesVcxCoreErrorKind::LedgerItemNotFound => Ok(None),
         Err(err) => Err(AriesVcxError::from_msg(
             AriesVcxErrorKind::InvalidLedgerResponse,
             format!(
