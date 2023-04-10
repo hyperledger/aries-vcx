@@ -198,7 +198,6 @@ dependencies = [
  "indy-credx",
  "indy-vdr",
  "lazy_static",
- "libloading 0.5.2",
  "libvdrtools",
  "log",
  "messages",
@@ -215,7 +214,6 @@ dependencies = [
  "time",
  "tokio",
  "uuid 0.8.2",
- "zmq",
 ]
 
 [[package]]
@@ -2372,16 +2370,6 @@ checksum = "201de327520df007757c1f0adce6e827fe8562fbc28bfd9c15571c66ca1f5f79"
 
 [[package]]
 name = "libloading"
-version = "0.5.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f2b111a074963af1d37a139918ac6d49ad1d0d5e47f72fd55388619691a7d753"
-dependencies = [
- "cc",
- "winapi",
-]
-
-[[package]]
-name = "libloading"
 version = "0.7.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b67380fd3b2fbe7527a606e18729d21c6f3951633d0500574c4dc22d2d638b9f"
@@ -2752,7 +2740,7 @@ version = "2.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "166b5ef52a3ab5575047a9fe8d4a030cdd0f63c96f071cd6907674453b07bae3"
 dependencies = [
- "libloading 0.7.4",
+ "libloading",
 ]
 
 [[package]]
