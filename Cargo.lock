@@ -212,7 +212,7 @@ dependencies = [
  "strum 0.16.0",
  "strum_macros 0.16.0",
  "thiserror",
- "time",
+ "time 0.2.0",
  "tokio",
  "uuid 0.8.2",
  "zmq",
@@ -725,7 +725,7 @@ dependencies = [
  "num-integer",
  "num-traits",
  "serde",
- "time",
+ "time 0.1.45",
  "wasm-bindgen",
  "winapi",
 ]
@@ -2440,7 +2440,7 @@ dependencies = [
  "serde_derive",
  "serde_json",
  "thiserror",
- "time",
+ "time 0.2.0",
  "tokio",
  "uuid 0.7.4",
 ]
@@ -2466,7 +2466,7 @@ dependencies = [
  "serde_derive",
  "serde_json",
  "thiserror",
- "time",
+ "time 0.2.0",
  "tokio",
  "uuid 0.7.4",
 ]
@@ -2507,7 +2507,7 @@ dependencies = [
  "serde_json",
  "sha2 0.9.9",
  "sha3 0.9.1",
- "time",
+ "time 0.2.0",
  "ursa",
  "uuid 0.8.2",
  "variant_count",
@@ -2605,7 +2605,7 @@ dependencies = [
  "strum 0.16.0",
  "strum_macros 0.16.0",
  "thiserror",
- "time",
+ "time 0.2.0",
  "url",
  "uuid 0.8.2",
 ]
@@ -4330,6 +4330,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "time"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fcc26de0a81a07c8352b548977862908fa9863e0e6e4f0eb36b2a9f4f8845585"
+
+[[package]]
 name = "tinytemplate"
 version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4743,7 +4749,7 @@ dependencies = [
  "sha2 0.9.9",
  "sha3 0.9.1",
  "subtle",
- "time",
+ "time 0.1.45",
  "x25519-dalek",
  "zeroize",
 ]
