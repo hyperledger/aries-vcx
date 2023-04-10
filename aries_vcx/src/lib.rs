@@ -49,7 +49,6 @@ pub mod protocols;
 pub mod common;
 pub mod core;
 pub mod errors;
-pub mod plugins;
 pub mod transport;
 
 #[cfg(test)]

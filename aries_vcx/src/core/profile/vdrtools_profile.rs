@@ -2,12 +2,10 @@ use std::sync::Arc;
 
 use aries_vcx_core::{
     anoncreds::{base_anoncreds::BaseAnonCreds, indy_anoncreds::IndySdkAnonCreds},
-    ledger::base_ledger::BaseLedger,
+    ledger::{base_ledger::BaseLedger, indy_ledger::IndySdkLedger},
     wallet::{base_wallet::BaseWallet, indy_wallet::IndySdkWallet},
 };
 use vdrtools::{PoolHandle, WalletHandle};
-
-use crate::plugins::ledger::indy_ledger::IndySdkLedger;
 
 use super::profile::Profile;
 
