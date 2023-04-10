@@ -281,7 +281,6 @@ pub fn get_thread_id(handle: u32) -> LibvcxResult<String> {
 
 #[cfg(test)]
 pub mod tests {
-    use aries_vcx::indy::utils::LibindyMock;
     use aries_vcx::utils::constants::V3_OBJECT_SERIALIZE_VERSION;
     use aries_vcx::utils::devsetup::{SetupEmpty, SetupMocks};
     use aries_vcx::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_REQUEST;
@@ -292,6 +291,7 @@ pub mod tests {
     use crate::api_vcx::api_handle::mediated_connection::test_utils::build_test_connection_inviter_requested;
     use crate::aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
     use crate::errors::error;
+    use aries_vcx::utils::mockdata::mock_settings::StatusCodeMock;
 
     use super::*;
 
@@ -360,7 +360,7 @@ pub mod tests {
         let credential_handle = _issuer_credential_create();
         assert_eq!(get_state(credential_handle).unwrap(), u32::from(IssuerState::Initial));
 
-        LibindyMock::set_next_result(error::TIMEOUT_LIBINDY_ERROR);
+        StatusCodeMock::set_next_result(error::TIMEOUT_LIBINDY_ERROR);
 
         let (_, cred_def_handle) = create_and_publish_nonrevocable_creddef().await;
         let _err = build_credential_offer_msg_v2(credential_handle, cred_def_handle, 1234, _cred_json(), None)

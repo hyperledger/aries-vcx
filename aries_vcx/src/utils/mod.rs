@@ -1,7 +1,7 @@
 use std::env;
 use std::path::PathBuf;
 use std::sync::Arc;
-
+#[cfg(feature = "vdrtools")]
 use vdrtools::types::validation::Validatable;
 
 use messages::a2a::A2AMessage;
@@ -101,6 +101,7 @@ pub async fn send_message_anonymously(
     Ok(())
 }
 
+#[cfg(feature = "vdrtools")]
 pub fn parse_and_validate<'a, T>(s: &'a str) -> VcxResult<T>
 where
     T: Validatable,

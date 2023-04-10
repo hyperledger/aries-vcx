@@ -18,5 +18,5 @@ pub fn get_config_value(key: &str) -> LibvcxResult<String> {
 }
 
 pub fn settings_init_issuer_config(issuer_config: &IssuerConfig) -> LibvcxResult<()> {
-    map_ariesvcx_result(init_issuer_config(issuer_config))
+    map_ariesvcx_result(init_issuer_config(&issuer_config.institution_did))
 }
