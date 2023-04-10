@@ -1,9 +1,5 @@
-use std::sync::Arc;
-
 use async_trait::async_trait;
 use vdrtools::{PoolHandle, WalletHandle};
-
-use crate::core::profile::vdrtools_profile::VdrtoolsProfile;
 
 use crate::common::primitives::revocation_registry::RevocationRegistryDefinition;
 use crate::errors::error::VcxResult;

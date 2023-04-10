@@ -5,9 +5,9 @@ use vdrtools::WalletHandle;
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use crate::global::settings;
 use crate::indy::anoncreds;
-use crate::indy::utils::LibindyMock;
 use crate::utils;
 use crate::utils::constants::LIBINDY_CRED_OFFER;
+use crate::utils::mockdata::mock_settings::StatusCodeMock;
 use crate::utils::parse_and_validate;
 
 pub async fn libindy_issuer_create_credential_offer(
@@ -15,7 +15,7 @@ pub async fn libindy_issuer_create_credential_offer(
     cred_def_id: &str,
 ) -> VcxResult<String> {
     if settings::indy_mocks_enabled() {
-        let rc = LibindyMock::get_result();
+        let rc = StatusCodeMock::get_result();
         if rc != 0 {
             return Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::InvalidState,

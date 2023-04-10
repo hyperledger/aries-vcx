@@ -2,7 +2,6 @@ use async_trait::async_trait;
 
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use crate::{
-    indy::utils::mocks::did_mocks::DidMocks,
     plugins::wallet::base_wallet::BaseWallet,
     utils::{self, async_fn_iterator::AsyncFnIterator},
 };
@@ -24,11 +23,11 @@ impl BaseWallet for MockWallet {
     }
 
     async fn key_for_local_did(&self, did: &str) -> VcxResult<String> {
-        get_next_mock_did_response_or_fail()
+        Ok(utils::constants::VERKEY.to_string())
     }
 
     async fn replace_did_keys_start(&self, target_did: &str) -> VcxResult<String> {
-        get_next_mock_did_response_or_fail()
+        Ok(utils::constants::VERKEY.to_string())
     }
 
     async fn replace_did_keys_apply(&self, target_did: &str) -> VcxResult<()> {
@@ -90,17 +89,5 @@ impl BaseWallet for MockWallet {
 
     async fn unpack_message(&self, msg: &[u8]) -> VcxResult<Vec<u8>> {
         Ok(msg.to_vec())
-    }
-}
-
-fn get_next_mock_did_response_or_fail() -> VcxResult<String> {
-    if DidMocks::has_did_mock_responses() {
-        warn!("key_for_local_did >> retrieving did mock response");
-        Ok(DidMocks::get_next_did_response())
-    } else {
-        Err(AriesVcxError::from_msg(
-            AriesVcxErrorKind::UnimplementedFeature,
-            "DidMocks data for must be set",
-        ))
     }
 }

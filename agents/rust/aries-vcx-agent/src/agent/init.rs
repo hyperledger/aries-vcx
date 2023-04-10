@@ -71,7 +71,7 @@ impl Agent {
         let config_issuer = wallet_configure_issuer(wallet_handle, &init_config.enterprise_seed)
             .await
             .unwrap();
-        init_issuer_config(&config_issuer).unwrap();
+        init_issuer_config(&config_issuer.institution_did).unwrap();
 
         let pool_config = PoolConfigBuilder::default()
             .genesis_path(&init_config.pool_config.genesis_path)

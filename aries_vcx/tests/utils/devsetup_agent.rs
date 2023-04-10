@@ -163,7 +163,7 @@ pub mod test_utils {
             let profile: Arc<dyn Profile> = Arc::new(indy_profile);
 
             let config_issuer = wallet_configure_issuer(wallet_handle, enterprise_seed).await.unwrap();
-            init_issuer_config(&config_issuer).unwrap();
+            init_issuer_config(&config_issuer.institution_did).unwrap();
             let mut agency_client = AgencyClient::new();
             let config_agency =
                 provision_cloud_agent(&mut agency_client, profile.inject_wallet(), &config_provision_agent)
@@ -444,7 +444,7 @@ pub mod test_utils {
     }
 
     pub async fn create_test_alice_instance(setup: &SetupPool) -> Alice {
-        let (alice_profile, teardown) = if cfg!(feature = "modular_dependencies") {
+        let (alice_profile, teardown) = if cfg!(feature = "modular_libs_tests") {
             let genesis_file_path = setup.genesis_file_path.clone();
             let config = LedgerPoolConfig { genesis_file_path };
             info!("create_test_alice_instance >> using modular profile");
