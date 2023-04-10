@@ -1,16 +1,14 @@
 use std::sync::Arc;
 
 use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
+use aries_vcx_core::anoncreds::credx_anoncreds::IndyCredxAnonCreds;
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 
 use crate::errors::error::VcxResult;
 use crate::plugins::ledger::indy_vdr_ledger::LedgerPoolConfig;
-use crate::plugins::{
-    anoncreds::credx_anoncreds::IndyCredxAnonCreds,
-    ledger::{
-        base_ledger::BaseLedger,
-        indy_vdr_ledger::{IndyVdrLedger, IndyVdrLedgerPool},
-    },
+use crate::plugins::ledger::{
+    base_ledger::BaseLedger,
+    indy_vdr_ledger::{IndyVdrLedger, IndyVdrLedgerPool},
 };
 
 use super::profile::Profile;
