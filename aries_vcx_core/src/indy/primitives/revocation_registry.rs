@@ -2,7 +2,7 @@ use vdrtools::{DidValue, Locator};
 
 use vdrtools::{PoolHandle, WalletHandle};
 
-use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
+use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
 use crate::global::settings;
 use crate::indy::anoncreds;
 use crate::indy::ledger::transactions::{
@@ -21,7 +21,7 @@ pub async fn libindy_create_and_store_revoc_reg(
     tails_dir: &str,
     max_creds: u32,
     tag: &str,
-) -> VcxResult<(String, String, String)> {
+) -> VcxCoreResult<(String, String, String)> {
     trace!("creating revocation: {}, {}, {}", cred_def_id, tails_dir, max_creds);
 
     let tails_config = json!({"base_dir": tails_dir,"uri_pattern": ""}).to_string();
@@ -56,7 +56,7 @@ pub async fn libindy_issuer_revoke_credential(
     tails_file: &str,
     rev_reg_id: &str,
     cred_rev_id: &str,
-) -> VcxResult<String> {
+) -> VcxCoreResult<String> {
     let blob_handle = anoncreds::blob_storage_open_reader(tails_file).await?;
 
     let res = Locator::instance()
@@ -73,7 +73,10 @@ pub async fn libindy_issuer_revoke_credential(
 }
 
 // consider relocating out of primitive
-pub async fn libindy_issuer_merge_revocation_registry_deltas(old_delta: &str, new_delta: &str) -> VcxResult<String> {
+pub async fn libindy_issuer_merge_revocation_registry_deltas(
+    old_delta: &str,
+    new_delta: &str,
+) -> VcxCoreResult<String> {
     let res = Locator::instance()
         .issuer_controller
         .merge_revocation_registry_deltas(parse_and_validate(old_delta)?, parse_and_validate(new_delta)?)?;
@@ -86,7 +89,7 @@ pub async fn publish_rev_reg_def(
     pool_handle: PoolHandle,
     issuer_did: &str,
     rev_reg_def: &str,
-) -> VcxResult<()> {
+) -> VcxCoreResult<()> {
     trace!("publish_rev_reg_def >>> issuer_did: {}, rev_reg_def: ...", issuer_did);
     if settings::indy_mocks_enabled() {
         debug!("publish_rev_reg_def >>> mocked success");
@@ -106,7 +109,7 @@ pub async fn publish_rev_reg_delta(
     issuer_did: &str,
     rev_reg_id: &str,
     revoc_reg_delta_json: &str,
-) -> VcxResult<String> {
+) -> VcxCoreResult<String> {
     trace!(
         "publish_rev_reg_delta >>> issuer_did: {}, rev_reg_id: {}, revoc_reg_delta_json: {}",
         issuer_did,
@@ -129,7 +132,7 @@ pub async fn revoke_credential_local(
     tails_file: &str,
     rev_reg_id: &str,
     cred_rev_id: &str,
-) -> VcxResult<()> {
+) -> VcxCoreResult<()> {
     if settings::indy_mocks_enabled() {
         return Ok(());
     }
@@ -155,7 +158,7 @@ pub async fn publish_local_revocations(
     pool_handle: PoolHandle,
     submitter_did: &str,
     rev_reg_id: &str,
-) -> VcxResult<()> {
+) -> VcxCoreResult<()> {
     if let Some(delta) = get_rev_reg_delta(wallet_handle, rev_reg_id).await {
         publish_rev_reg_delta(wallet_handle, pool_handle, submitter_did, rev_reg_id, &delta).await?;
 
@@ -172,8 +175,8 @@ pub async fn publish_local_revocations(
                 );
                 Ok(())
             }
-            Err(err) => Err(AriesVcxError::from_msg(
-                AriesVcxErrorKind::RevDeltaFailedToClear,
+            Err(err) => Err(AriesVcxCoreError::from_msg(
+                AriesVcxCoreErrorKind::RevDeltaFailedToClear,
                 format!(
                     "Failed to clear revocation delta storage for rev_reg_id: {}, error: {}",
                     rev_reg_id, err
@@ -181,7 +184,7 @@ pub async fn publish_local_revocations(
             )),
         }
     } else {
-        Err(AriesVcxError::from_msg(AriesVcxErrorKind::RevDeltaNotFound,
+        Err(AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::RevDeltaNotFound,
                                     format!("Failed to publish revocation delta for revocation registry {}, no delta found. Possibly already published?", rev_reg_id)))
     }
 }

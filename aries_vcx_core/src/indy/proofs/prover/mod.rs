@@ -2,7 +2,7 @@ pub mod prover;
 
 use vdrtools::Locator;
 
-use crate::errors::error::VcxResult;
+use crate::errors::error::VcxCoreResult;
 use crate::global::settings;
 use crate::indy;
 use crate::utils::constants::REV_STATE_JSON;
@@ -14,7 +14,7 @@ pub async fn libindy_prover_create_revocation_state(
     rev_reg_delta_json: &str,
     timestamp: u64,
     cred_rev_id: &str,
-) -> VcxResult<String> {
+) -> VcxCoreResult<String> {
     if settings::indy_mocks_enabled() {
         return Ok(REV_STATE_JSON.to_string());
     }

@@ -17,7 +17,7 @@ pub async fn libindy_prover_create_proof(
     schemas_json: &str,
     credential_defs_json: &str,
     revoc_states_json: Option<&str>,
-) -> VcxResult<String> {
+) -> VcxCoreResult<String> {
     if settings::indy_mocks_enabled() {
         return Ok(utils::constants::PROOF_JSON.to_owned());
     }
@@ -40,7 +40,10 @@ pub async fn libindy_prover_create_proof(
     Ok(res)
 }
 
-async fn fetch_credentials(search_handle: SearchHandle, requested_attributes: Map<String, Value>) -> VcxResult<String> {
+async fn fetch_credentials(
+    search_handle: SearchHandle,
+    requested_attributes: Map<String, Value>,
+) -> VcxCoreResult<String> {
     let mut v: Value = json!({});
 
     for item_referent in requested_attributes.keys() {
@@ -51,8 +54,8 @@ async fn fetch_credentials(search_handle: SearchHandle, requested_attributes: Ma
                 .await
                 .map_err(|_| {
                     error!("Invalid Json Parsing of Object Returned from Libindy. Did Libindy change its structure?");
-                    AriesVcxError::from_msg(
-                        AriesVcxErrorKind::InvalidConfiguration,
+                    AriesVcxCoreError::from_msg(
+                        AriesVcxCoreErrorKind::InvalidConfiguration,
                         "Invalid Json Parsing of Object Returned from Libindy. Did Libindy change its structure?",
                     )
                 })?,
@@ -65,7 +68,7 @@ async fn fetch_credentials(search_handle: SearchHandle, requested_attributes: Ma
 pub async fn libindy_prover_get_credentials(
     wallet_handle: WalletHandle,
     filter_json: Option<&str>,
-) -> VcxResult<String> {
+) -> VcxCoreResult<String> {
     let res = Locator::instance()
         .prover_controller
         .get_credentials(wallet_handle, filter_json.map(String::from))
@@ -80,7 +83,7 @@ pub async fn libindy_prover_get_credentials(
 pub async fn libindy_prover_get_credentials_for_proof_req(
     wallet_handle: WalletHandle,
     proof_req: &str,
-) -> VcxResult<String> {
+) -> VcxCoreResult<String> {
     trace!(
         "libindy_prover_get_credentials_for_proof_req >>> proof_req: {}",
         proof_req
@@ -100,8 +103,8 @@ pub async fn libindy_prover_get_credentials_for_proof_req(
 
     // this may be too redundant since Prover::search_credentials will validate the proof reqeuest already.
     let proof_request_json: Map<String, Value> = serde_json::from_str(proof_req).map_err(|err| {
-        AriesVcxError::from_msg(
-            AriesVcxErrorKind::InvalidProofRequest,
+        AriesVcxCoreError::from_msg(
+            AriesVcxCoreErrorKind::InvalidProofRequest,
             format!("Cannot deserialize ProofRequest: {:?}", err),
         )
     })?;
@@ -126,8 +129,8 @@ pub async fn libindy_prover_get_credentials_for_proof_req(
 
     // handle special case of "empty because json is bad" vs "empty because no attributes sepected"
     if requested_attributes.is_none() && requested_predicates.is_none() {
-        return Err(AriesVcxError::from_msg(
-            AriesVcxErrorKind::InvalidAttributesStructure,
+        return Err(AriesVcxCoreError::from_msg(
+            AriesVcxCoreErrorKind::InvalidAttributesStructure,
             "Invalid Json Parsing of Requested Attributes Retrieved From Libindy",
         ));
     }

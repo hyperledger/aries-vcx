@@ -4,7 +4,6 @@ use std::{
     sync::Arc,
 };
 
-use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use crate::plugins::wallet::base_wallet::BaseWallet;
 use crate::{
     plugins::wallet::base_wallet::AsyncFnIteratorCollect,
@@ -30,7 +29,10 @@ use credx::{
 use indy_credx as credx;
 use serde_json::Value;
 
-use super::base_anoncreds::BaseAnonCreds;
+use aries_vcx_core::{
+    anoncreds::base_anoncreds::BaseAnonCreds,
+    errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
+};
 
 const CATEGORY_CREDENTIAL: &str = "VCX_CREDENTIAL";
 const CATEGORY_LINK_SECRET: &str = "VCX_LINK_SECRET";
@@ -45,7 +47,7 @@ impl IndyCredxAnonCreds {
         IndyCredxAnonCreds { wallet }
     }
 
-    async fn get_link_secret(&self, link_secret_id: &str) -> VcxResult<MasterSecret> {
+    async fn get_link_secret(&self, link_secret_id: &str) -> VcxCoreResult<MasterSecret> {
         let record = self
             .wallet
             .get_wallet_record(CATEGORY_LINK_SECRET, link_secret_id, "{}")
@@ -56,8 +58,8 @@ impl IndyCredxAnonCreds {
         let ms_value = (&record).try_get("value")?;
         let ms_decimal = ms_value.try_as_str()?;
         let ms_bn: BigNumber = BigNumber::from_dec(ms_decimal).map_err(|err| {
-            AriesVcxError::from_msg(
-                AriesVcxErrorKind::UrsaError,
+            AriesVcxCoreError::from_msg(
+                AriesVcxCoreErrorKind::UrsaError,
                 format!("Failed to create BigNumber, UrsaErrorKind: {}", err.kind()),
             )
         })?;
@@ -66,7 +68,7 @@ impl IndyCredxAnonCreds {
         Ok(MasterSecret { value: ursa_ms })
     }
 
-    async fn _get_credential(&self, credential_id: &str) -> VcxResult<CredxCredential> {
+    async fn _get_credential(&self, credential_id: &str) -> VcxCoreResult<CredxCredential> {
         let cred_record = self
             .wallet
             .get_wallet_record(CATEGORY_CREDENTIAL, credential_id, "{}")
@@ -81,14 +83,14 @@ impl IndyCredxAnonCreds {
         Ok(credential)
     }
 
-    async fn _get_credentials(&self, wql: &str) -> VcxResult<Vec<(String, CredxCredential)>> {
+    async fn _get_credentials(&self, wql: &str) -> VcxCoreResult<Vec<(String, CredxCredential)>> {
         let mut record_iterator = self
             .wallet
             .iterate_wallet_records(CATEGORY_CREDENTIAL, wql, "{}")
             .await?;
         let records = record_iterator.collect().await?;
 
-        let id_cred_tuple_list: VcxResult<Vec<(String, CredxCredential)>> = records
+        let id_cred_tuple_list: VcxCoreResult<Vec<(String, CredxCredential)>> = records
             .iter()
             .map(|record| {
                 let cred_record: Value = serde_json::from_str(record)?;
@@ -111,7 +113,7 @@ impl IndyCredxAnonCreds {
         &self,
         restrictions: Option<&Value>,
         attr_name: &str,
-    ) -> VcxResult<Vec<(String, CredxCredential)>> {
+    ) -> VcxCoreResult<Vec<(String, CredxCredential)>> {
         let attr_marker_tag_name = _format_attribute_as_marker_tag_name(attr_name);
 
         let wql_attr_query = json!({
@@ -149,7 +151,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         credential_defs_json: &str,
         rev_reg_defs_json: &str,
         rev_regs_json: &str,
-    ) -> VcxResult<bool> {
+    ) -> VcxCoreResult<bool> {
         let _ = (
             proof_req_json,
             proof_json,
@@ -197,7 +199,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         tails_dir: &str,
         max_creds: u32,
         tag: &str,
-    ) -> VcxResult<(String, String, String)> {
+    ) -> VcxCoreResult<(String, String, String)> {
         let _ = (issuer_did, cred_def_id, tails_dir, max_creds, tag);
         Err(unimplemented_method_err("credx issuer_create_and_store_revoc_reg"))
     }
@@ -209,12 +211,12 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         tag: &str,
         sig_type: Option<&str>,
         config_json: &str,
-    ) -> VcxResult<(String, String)> {
+    ) -> VcxCoreResult<(String, String)> {
         let _ = (issuer_did, schema_json, tag, sig_type, config_json);
         Err(unimplemented_method_err("credx issuer_create_and_store_credential_def"))
     }
 
-    async fn issuer_create_credential_offer(&self, cred_def_id: &str) -> VcxResult<String> {
+    async fn issuer_create_credential_offer(&self, cred_def_id: &str) -> VcxCoreResult<String> {
         let _ = cred_def_id;
         Err(unimplemented_method_err("credx issuer_create_credential_offer"))
     }
@@ -226,7 +228,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         cred_values_json: &str,
         rev_reg_id: Option<String>,
         tails_dir: Option<String>,
-    ) -> VcxResult<(String, Option<String>, Option<String>)> {
+    ) -> VcxCoreResult<(String, Option<String>, Option<String>)> {
         let _ = (cred_offer_json, cred_req_json, cred_values_json, rev_reg_id, tails_dir);
         Err(unimplemented_method_err("credx issuer_create_credential"))
     }
@@ -252,7 +254,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         schemas_json: &str,
         credential_defs_json: &str,
         revoc_states_json: Option<&str>,
-    ) -> VcxResult<String> {
+    ) -> VcxCoreResult<String> {
         let pres_req: PresentationRequest = serde_json::from_str(proof_req_json)?;
 
         let requested_credentials: Value = serde_json::from_str(requested_credentials_json)?;
@@ -379,7 +381,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         Ok(serde_json::to_string(&presentation)?)
     }
 
-    async fn prover_get_credential(&self, cred_id: &str) -> VcxResult<String> {
+    async fn prover_get_credential(&self, cred_id: &str) -> VcxCoreResult<String> {
         let cred = self._get_credential(cred_id).await?;
 
         let cred_info = _make_cred_info(cred_id, &cred)?;
@@ -387,14 +389,14 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         Ok(serde_json::to_string(&cred_info)?)
     }
 
-    async fn prover_get_credentials(&self, filter_json: Option<&str>) -> VcxResult<String> {
+    async fn prover_get_credentials(&self, filter_json: Option<&str>) -> VcxCoreResult<String> {
         // filter_json should map to WQL query directly
         // TODO - future - may wish to validate the filter_json for more accurate error reporting
 
         let creds_wql = filter_json.map_or("{}", |x| x);
         let creds = self._get_credentials(creds_wql).await?;
 
-        let cred_info_list: VcxResult<Vec<Value>> = creds
+        let cred_info_list: VcxCoreResult<Vec<Value>> = creds
             .iter()
             .map(|(credential_id, cred)| _make_cred_info(credential_id, cred))
             .collect();
@@ -404,9 +406,9 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         Ok(serde_json::to_string(&cred_info_list)?)
     }
 
-    async fn prover_get_credentials_for_proof_req(&self, proof_req: &str) -> VcxResult<String> {
+    async fn prover_get_credentials_for_proof_req(&self, proof_req: &str) -> VcxCoreResult<String> {
         let proof_req_v: Value = serde_json::from_str(proof_req)
-            .map_err(|e| AriesVcxError::from_msg(AriesVcxErrorKind::InvalidProofRequest, e))?;
+            .map_err(|e| AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::InvalidProofRequest, e))?;
 
         let requested_attributes = proof_req_v.get("requested_attributes");
         let requested_attributes = if let Some(requested_attributes) = requested_attributes {
@@ -423,8 +425,8 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
 
         // handle special case of "empty because json is bad" vs "empty because no attributes sepected"
         if requested_attributes.is_none() && requested_predicates.is_none() {
-            return Err(AriesVcxError::from_msg(
-                AriesVcxErrorKind::InvalidAttributesStructure,
+            return Err(AriesVcxCoreError::from_msg(
+                AriesVcxCoreErrorKind::InvalidAttributesStructure,
                 "Invalid Json Parsing of Requested Attributes Retrieved From Libindy",
             ));
         }
@@ -448,9 +450,9 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
                 .as_ref()
                 .and_then(|req_attrs| req_attrs.get(&reft))
                 .or_else(|| requested_predicates.as_ref().and_then(|req_preds| req_preds.get(&reft)))
-                .ok_or(AriesVcxError::from_msg(
+                .ok_or(AriesVcxCoreError::from_msg(
                     // should not happen
-                    AriesVcxErrorKind::InvalidState,
+                    AriesVcxCoreErrorKind::InvalidState,
                     format!("Unknown referent: {}", reft),
                 ))?;
 
@@ -486,7 +488,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         credential_offer_json: &str,
         credential_def_json: &str,
         link_secret_id: &str,
-    ) -> VcxResult<(String, String)> {
+    ) -> VcxCoreResult<(String, String)> {
         let prover_did = DidValue::new(prover_did, None);
         let cred_def: CredentialDefinition = serde_json::from_str(credential_def_json)?;
         let credential_offer: CredentialOffer = serde_json::from_str(credential_offer_json)?;
@@ -513,7 +515,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         rev_reg_delta_json: &str,
         timestamp: u64,
         cred_rev_id: &str,
-    ) -> VcxResult<String> {
+    ) -> VcxCoreResult<String> {
         let revoc_reg_def: RevocationRegistryDefinition = serde_json::from_str(rev_reg_def_json)?;
         let tails_file_hash = match revoc_reg_def.borrow() {
             RevocationRegistryDefinition::RevocationRegistryDefinitionV1(r) => &r.value.tails_hash,
@@ -523,7 +525,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let rev_reg_delta: RevocationRegistryDelta = serde_json::from_str(rev_reg_delta_json)?;
         let rev_reg_idx: u32 = cred_rev_id
             .parse()
-            .map_err(|e| AriesVcxError::from_msg(AriesVcxErrorKind::ParsingError, e))?;
+            .map_err(|e| AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::ParsingError, e))?;
 
         let rev_state = credx::prover::create_or_update_revocation_state(
             tails_reader,
@@ -544,7 +546,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         cred_json: &str,
         cred_def_json: &str,
         rev_reg_def_json: Option<&str>,
-    ) -> VcxResult<String> {
+    ) -> VcxCoreResult<String> {
         let mut credential: CredxCredential = serde_json::from_str(cred_json)?;
         let cred_request_metadata: CredentialRequestMetadata = serde_json::from_str(cred_req_meta)?;
         let link_secret_id = &cred_request_metadata.master_secret_name;
@@ -566,15 +568,15 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
 
         let schema_id = &credential.schema_id;
         let (_schema_method, schema_issuer_did, schema_name, schema_version) =
-            schema_id.parts().ok_or(AriesVcxError::from_msg(
-                AriesVcxErrorKind::InvalidSchema,
+            schema_id.parts().ok_or(AriesVcxCoreError::from_msg(
+                AriesVcxCoreErrorKind::InvalidSchema,
                 "Could not process credential.schema_id as parts.",
             ))?;
 
         let cred_def_id = &credential.cred_def_id;
         let (_cred_def_method, issuer_did, _signature_type, _schema_id, _tag) =
-            cred_def_id.parts().ok_or(AriesVcxError::from_msg(
-                AriesVcxErrorKind::InvalidSchema,
+            cred_def_id.parts().ok_or(AriesVcxCoreError::from_msg(
+                AriesVcxCoreErrorKind::InvalidSchema,
                 "Could not process credential.cred_def_id as parts.",
             ))?;
 
@@ -614,7 +616,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         Ok(credential_id)
     }
 
-    async fn prover_create_link_secret(&self, link_secret_id: &str) -> VcxResult<String> {
+    async fn prover_create_link_secret(&self, link_secret_id: &str) -> VcxCoreResult<String> {
         let existing_record = self
             .wallet
             .get_wallet_record(CATEGORY_LINK_SECRET, link_secret_id, "{}")
@@ -622,8 +624,8 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             .ok(); // ignore error, as we only care about whether it exists or not
 
         if existing_record.is_some() {
-            return Err(AriesVcxError::from_msg(
-                AriesVcxErrorKind::DuplicationMasterSecret,
+            return Err(AriesVcxCoreError::from_msg(
+                AriesVcxCoreErrorKind::DuplicationMasterSecret,
                 format!("Master secret id: {} already exists in wallet.", link_secret_id),
             ));
         }
@@ -633,8 +635,8 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             .value
             .value()
             .map_err(|err| {
-                AriesVcxError::from_msg(
-                    AriesVcxErrorKind::UrsaError,
+                AriesVcxCoreError::from_msg(
+                    AriesVcxCoreErrorKind::UrsaError,
                     format!(
                         "failed to get BigNumber from master secret, UrsaErrorKind: {}",
                         err.kind()
@@ -643,8 +645,8 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             })?
             .to_dec()
             .map_err(|err| {
-                AriesVcxError::from_msg(
-                    AriesVcxErrorKind::UrsaError,
+                AriesVcxCoreError::from_msg(
+                    AriesVcxCoreErrorKind::UrsaError,
                     format!(
                         "Failed convert BigNumber to decimal string, UrsaErrorKind: {}",
                         err.kind()
@@ -659,8 +661,11 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         return Ok(link_secret_id.to_string());
     }
 
-    async fn prover_delete_credential(&self, cred_id: &str) -> VcxResult<()> {
-        self.wallet.delete_wallet_record(CATEGORY_CREDENTIAL, cred_id).await
+    async fn prover_delete_credential(&self, cred_id: &str) -> VcxCoreResult<()> {
+        self.wallet
+            .delete_wallet_record(CATEGORY_CREDENTIAL, cred_id)
+            .await
+            .map_err(|err| err.into())
     }
 
     async fn issuer_create_schema(
@@ -669,7 +674,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         name: &str,
         version: &str,
         attrs: &str,
-    ) -> VcxResult<(String, String)> {
+    ) -> VcxCoreResult<(String, String)> {
         let origin_did = DidValue::new(issuer_did, None);
         let attr_names = serde_json::from_str(attrs)?;
 
@@ -682,17 +687,17 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         Ok((schema_id.to_string(), schema_json))
     }
 
-    async fn revoke_credential_local(&self, tails_dir: &str, rev_reg_id: &str, cred_rev_id: &str) -> VcxResult<()> {
+    async fn revoke_credential_local(&self, tails_dir: &str, rev_reg_id: &str, cred_rev_id: &str) -> VcxCoreResult<()> {
         let _ = (tails_dir, rev_reg_id, cred_rev_id);
         Err(unimplemented_method_err("credx revoke_credential_local"))
     }
 
-    async fn publish_local_revocations(&self, submitter_did: &str, rev_reg_id: &str) -> VcxResult<()> {
+    async fn publish_local_revocations(&self, submitter_did: &str, rev_reg_id: &str) -> VcxCoreResult<()> {
         let _ = (submitter_did, rev_reg_id);
         Err(unimplemented_method_err("credx publish_local_revocations"))
     }
 
-    async fn generate_nonce(&self) -> VcxResult<String> {
+    async fn generate_nonce(&self) -> VcxCoreResult<String> {
         let nonce = credx::verifier::generate_nonce()?.to_string();
         Ok(nonce)
     }
@@ -703,23 +708,23 @@ fn get_rev_state(
     credential: &CredxCredential,
     detail: &Value,
     rev_states: Option<&Value>,
-) -> VcxResult<(Option<u64>, Option<CredentialRevocationState>)> {
+) -> VcxCoreResult<(Option<u64>, Option<CredentialRevocationState>)> {
     let timestamp = detail.get("timestamp").and_then(|timestamp| timestamp.as_u64());
     let cred_rev_reg_id = credential.rev_reg_id.as_ref().map(|id| id.0.to_string());
     let rev_state = if let (Some(timestamp), Some(cred_rev_reg_id)) = (timestamp, cred_rev_reg_id) {
         let rev_state = rev_states
             .as_ref()
             .and_then(|_rev_states| _rev_states.get(cred_rev_reg_id.to_string()));
-        let rev_state = rev_state.ok_or(AriesVcxError::from_msg(
-            AriesVcxErrorKind::InvalidJson,
+        let rev_state = rev_state.ok_or(AriesVcxCoreError::from_msg(
+            AriesVcxCoreErrorKind::InvalidJson,
             format!(
                 "No revocation states provided for credential '{}' with rev_reg_id '{}'",
                 cred_id, cred_rev_reg_id
             ),
         ))?;
 
-        let rev_state = rev_state.get(timestamp.to_string()).ok_or(AriesVcxError::from_msg(
-            AriesVcxErrorKind::InvalidJson,
+        let rev_state = rev_state.get(timestamp.to_string()).ok_or(AriesVcxCoreError::from_msg(
+            AriesVcxCoreErrorKind::InvalidJson,
             format!(
                 "No revocation states provided for credential '{}' with rev_reg_id '{}' at timestamp '{}'",
                 cred_id, cred_rev_reg_id, timestamp
@@ -740,7 +745,7 @@ fn _normalize_attr_name(name: &str) -> String {
     name.replace(' ', "").to_lowercase()
 }
 
-fn _make_cred_info(credential_id: &str, cred: &CredxCredential) -> VcxResult<Value> {
+fn _make_cred_info(credential_id: &str, cred: &CredxCredential) -> VcxCoreResult<Value> {
     let cred_sig = serde_json::to_value(&cred.signature)?;
 
     let rev_info = cred_sig.get("r_credential");
@@ -779,9 +784,9 @@ fn _format_attribute_as_marker_tag_name(attribute_name: &str) -> String {
     format!("attr::{attribute_name}::marker")
 }
 
-fn unimplemented_method_err(method_name: &str) -> AriesVcxError {
-    AriesVcxError::from_msg(
-        AriesVcxErrorKind::UnimplementedFeature,
+fn unimplemented_method_err(method_name: &str) -> AriesVcxCoreError {
+    AriesVcxCoreError::from_msg(
+        AriesVcxCoreErrorKind::UnimplementedFeature,
         format!("method '{}' is not yet implemented in AriesVCX", method_name),
     )
 }
@@ -804,8 +809,10 @@ where
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 mod unit_tests {
-    use crate::errors::error::{AriesVcxErrorKind, VcxResult};
-    use crate::{common::test_utils::mock_profile, plugins::anoncreds::base_anoncreds::BaseAnonCreds};
+    use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
+
+    use crate::common::test_utils::mock_profile;
+    use crate::errors::error::{AriesVcxCoreErrorKind, VcxResult};
 
     use super::IndyCredxAnonCreds;
 
@@ -814,7 +821,7 @@ mod unit_tests {
         // test used to assert which methods are unimplemented currently, can be removed after all methods implemented
 
         fn assert_unimplemented<T: std::fmt::Debug>(result: VcxResult<T>) {
-            assert_eq!(result.unwrap_err().kind(), AriesVcxErrorKind::UnimplementedFeature)
+            assert_eq!(result.unwrap_err().kind(), AriesVcxCoreErrorKind::UnimplementedFeature)
         }
 
         let profile = mock_profile();

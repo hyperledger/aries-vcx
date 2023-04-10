@@ -1,7 +1,7 @@
 use serde_json;
 use vdrtools::WalletHandle;
 
-use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
+use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
 use crate::indy::wallet::{add_wallet_record, delete_wallet_record, get_wallet_record, update_wallet_record_value};
 
 static WALLET_RECORD_TYPE: &str = "cache";
@@ -64,7 +64,7 @@ pub async fn get_rev_reg_delta(wallet_handle: WalletHandle, rev_reg_id: &str) ->
 /// `rev_reg_id`: revocation registry id.
 /// `cache`: Cache object.
 ///
-pub async fn set_rev_reg_delta(wallet_handle: WalletHandle, rev_reg_id: &str, cache: &str) -> VcxResult<()> {
+pub async fn set_rev_reg_delta(wallet_handle: WalletHandle, rev_reg_id: &str, cache: &str) -> VcxCoreResult<()> {
     debug!(
         "set_rev_reg_delta >> Setting store revocation registry delta for revocation registry {} to new value: {}",
         rev_reg_id, cache
@@ -80,8 +80,8 @@ pub async fn set_rev_reg_delta(wallet_handle: WalletHandle, rev_reg_id: &str, ca
                 Err(err) => Err(err),
             }
         }
-        Err(_) => Err(AriesVcxError::from_msg(
-            AriesVcxErrorKind::SerializationError,
+        Err(_) => Err(AriesVcxCoreError::from_msg(
+            AriesVcxCoreErrorKind::SerializationError,
             format!("Expected cache argument to be valid json. Found instead: {}", cache),
         )),
     }
@@ -93,7 +93,7 @@ pub async fn set_rev_reg_delta(wallet_handle: WalletHandle, rev_reg_id: &str, ca
 /// `rev_reg_id`: revocation registry id.
 /// `cache`: Cache object.
 ///
-pub async fn clear_rev_reg_delta(wallet_handle: WalletHandle, rev_reg_id: &str) -> VcxResult<String> {
+pub async fn clear_rev_reg_delta(wallet_handle: WalletHandle, rev_reg_id: &str) -> VcxCoreResult<String> {
     debug!(
         "clear_rev_reg_delta >> Clear revocation registry delta for rev_reg_id {}",
         rev_reg_id
@@ -107,8 +107,8 @@ pub async fn clear_rev_reg_delta(wallet_handle: WalletHandle, rev_reg_id: &str) 
         );
         Ok(last_delta)
     } else {
-        Err(AriesVcxError::from_msg(
-            AriesVcxErrorKind::IOError,
+        Err(AriesVcxCoreError::from_msg(
+            AriesVcxCoreErrorKind::IOError,
             format!(
                 "Couldn't fetch delta for rev_reg_id {} before deletion, deletion skipped",
                 rev_reg_id

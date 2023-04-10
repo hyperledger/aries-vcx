@@ -23,12 +23,12 @@ lazy_static! {
     static ref SETTINGS: RwLock<HashMap<String, String>> = RwLock::new(HashMap::new());
 }
 
-pub fn enable_indy_mocks() -> VcxResult<()> {
+pub fn enable_indy_mocks() -> VcxCoreResult<()> {
     debug!("enable_indy_mocks >>>");
     set_config_value(CONFIG_ENABLE_TEST_MODE, "true")
 }
 
-pub fn disable_indy_mocks() -> VcxResult<()> {
+pub fn disable_indy_mocks() -> VcxCoreResult<()> {
     debug!("disable_indy_mocks >>>");
     set_config_value(CONFIG_ENABLE_TEST_MODE, "false")
 }
@@ -45,36 +45,36 @@ pub fn indy_mocks_enabled() -> bool {
     }
 }
 
-pub fn get_config_value(key: &str) -> VcxResult<String> {
+pub fn get_config_value(key: &str) -> VcxCoreResult<String> {
     trace!("get_config_value >>> key: {}", key);
 
     SETTINGS
         .read()
-        .or(Err(AriesVcxError::from_msg(
-            AriesVcxErrorKind::InvalidConfiguration,
+        .or(Err(AriesVcxCoreError::from_msg(
+            AriesVcxCoreErrorKind::InvalidConfiguration,
             "Cannot read settings",
         )))?
         .get(key)
         .map(|v| v.to_string())
-        .ok_or(AriesVcxError::from_msg(
-            AriesVcxErrorKind::InvalidConfiguration,
+        .ok_or(AriesVcxCoreError::from_msg(
+            AriesVcxCoreErrorKind::InvalidConfiguration,
             format!("Cannot read \"{}\" from settings", key),
         ))
 }
 
-pub fn set_config_value(key: &str, value: &str) -> VcxResult<()> {
+pub fn set_config_value(key: &str, value: &str) -> VcxCoreResult<()> {
     trace!("set_config_value >>> key: {}, value: {}", key, value);
     SETTINGS
         .write()
-        .or(Err(AriesVcxError::from_msg(
-            AriesVcxErrorKind::UnknownError,
+        .or(Err(AriesVcxCoreError::from_msg(
+            AriesVcxCoreErrorKind::UnknownError,
             "Cannot write settings",
         )))?
         .insert(key.to_string(), value.to_string());
     Ok(())
 }
 
-pub fn reset_config_values() -> VcxResult<()> {
+pub fn reset_config_values() -> VcxCoreResult<()> {
     trace!("reset_config_values >>>");
     let mut config = SETTINGS.write()?;
     config.clear();
@@ -155,7 +155,7 @@ pub mod unit_tests {
         // Fails with invalid key
         assert_eq!(
             get_config_value(&key).unwrap_err().kind(),
-            AriesVcxErrorKind::InvalidConfiguration
+            AriesVcxCoreErrorKind::InvalidConfiguration
         );
 
         set_config_value(&key, &value1).unwrap();

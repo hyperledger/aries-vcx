@@ -1,6 +1,6 @@
 use vdrtools::{PoolHandle, WalletHandle};
 
-use crate::errors::error::VcxResult;
+use crate::errors::error::VcxCoreResult;
 use crate::global::settings;
 use crate::indy::ledger::transactions::{
     _check_schema_response, build_schema_request, set_endorser, sign_and_submit_to_ledger,
@@ -14,7 +14,7 @@ pub async fn publish_schema(
     submitter_did: &str,
     schema_json: &str,
     endorser_did: Option<String>,
-) -> VcxResult<()> {
+) -> VcxCoreResult<()> {
     trace!(
         "publish_schema >>> submitter_did: {:?}, schema_json: {:?}, endorser_did: {:?}",
         submitter_did,
@@ -43,7 +43,7 @@ pub async fn libindy_issuer_create_schema(
     name: &str,
     version: &str,
     attrs: &str,
-) -> VcxResult<(String, String)> {
+) -> VcxCoreResult<(String, String)> {
     trace!(
         "libindy_issuer_create_schema >>> issuer_did: {}, name: {}, version: {}, attrs: {}",
         issuer_did,

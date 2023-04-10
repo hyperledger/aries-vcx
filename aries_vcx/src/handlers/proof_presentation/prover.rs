@@ -55,6 +55,7 @@ impl Prover {
         anoncreds
             .prover_get_credentials_for_proof_req(&presentation_request)
             .await
+            .map_err(|err| err.into())
     }
 
     pub async fn generate_presentation(

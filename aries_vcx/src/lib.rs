@@ -33,6 +33,7 @@ extern crate derive_builder;
 #[cfg(test)]
 extern crate async_channel;
 
+extern crate aries_vcx_core;
 pub extern crate messages;
 
 #[macro_use]

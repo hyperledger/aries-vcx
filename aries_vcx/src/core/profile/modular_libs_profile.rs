@@ -1,9 +1,11 @@
 use std::sync::Arc;
 
+use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
+
 use crate::errors::error::VcxResult;
 use crate::plugins::ledger::indy_vdr_ledger::LedgerPoolConfig;
 use crate::plugins::{
-    anoncreds::{base_anoncreds::BaseAnonCreds, credx_anoncreds::IndyCredxAnonCreds},
+    anoncreds::credx_anoncreds::IndyCredxAnonCreds,
     ledger::{
         base_ledger::BaseLedger,
         indy_vdr_ledger::{IndyVdrLedger, IndyVdrLedgerPool},

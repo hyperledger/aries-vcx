@@ -2,7 +2,7 @@ use vdrtools::{CredentialOffer, CredentialRequest, CredentialValues, Locator, Re
 
 use vdrtools::WalletHandle;
 
-use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
+use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
 use crate::global::settings;
 use crate::indy::anoncreds;
 use crate::indy::utils::LibindyMock;
@@ -13,12 +13,12 @@ use crate::utils::parse_and_validate;
 pub async fn libindy_issuer_create_credential_offer(
     wallet_handle: WalletHandle,
     cred_def_id: &str,
-) -> VcxResult<String> {
+) -> VcxCoreResult<String> {
     if settings::indy_mocks_enabled() {
         let rc = LibindyMock::get_result();
         if rc != 0 {
-            return Err(AriesVcxError::from_msg(
-                AriesVcxErrorKind::InvalidState,
+            return Err(AriesVcxCoreError::from_msg(
+                AriesVcxCoreErrorKind::InvalidState,
                 "Mocked error result of libindy_issuer_create_credential_offer",
             ));
         };
@@ -40,7 +40,7 @@ pub async fn libindy_issuer_create_credential(
     cred_values_json: &str,
     rev_reg_id: Option<String>,
     tails_file: Option<String>,
-) -> VcxResult<(String, Option<String>, Option<String>)> {
+) -> VcxCoreResult<(String, Option<String>, Option<String>)> {
     if settings::indy_mocks_enabled() {
         return Ok((utils::constants::CREDENTIAL_JSON.to_owned(), None, None));
     }

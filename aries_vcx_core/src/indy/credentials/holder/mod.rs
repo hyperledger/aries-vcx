@@ -3,7 +3,7 @@ use vdrtools::{
     RevocationRegistryDefinition,
 };
 
-use crate::errors::error::VcxResult;
+use crate::errors::error::VcxCoreResult;
 use crate::global::settings;
 use crate::utils;
 use vdrtools::WalletHandle;
@@ -15,7 +15,7 @@ pub async fn libindy_prover_store_credential(
     cred_json: &str,
     cred_def_json: &str,
     rev_reg_def_json: Option<&str>,
-) -> VcxResult<String> {
+) -> VcxCoreResult<String> {
     trace!(
         "libindy_prover_store_credential >>> \
             cred_id: {:?}, \
@@ -60,7 +60,7 @@ pub async fn libindy_prover_store_credential(
     Ok(res)
 }
 
-pub async fn libindy_prover_get_credential(wallet_handle: WalletHandle, cred_id: &str) -> VcxResult<String> {
+pub async fn libindy_prover_get_credential(wallet_handle: WalletHandle, cred_id: &str) -> VcxCoreResult<String> {
     trace!(
         "libindy_prover_get_credential >>> \
             cred_id: {:?}",
@@ -75,7 +75,7 @@ pub async fn libindy_prover_get_credential(wallet_handle: WalletHandle, cred_id:
     Ok(res)
 }
 
-pub async fn libindy_prover_delete_credential(wallet_handle: WalletHandle, cred_id: &str) -> VcxResult<()> {
+pub async fn libindy_prover_delete_credential(wallet_handle: WalletHandle, cred_id: &str) -> VcxCoreResult<()> {
     Locator::instance()
         .prover_controller
         .delete_credential(wallet_handle, cred_id.into())
@@ -87,7 +87,7 @@ pub async fn libindy_prover_delete_credential(wallet_handle: WalletHandle, cred_
 pub async fn libindy_prover_create_master_secret(
     wallet_handle: WalletHandle,
     master_secret_id: &str,
-) -> VcxResult<String> {
+) -> VcxCoreResult<String> {
     if settings::indy_mocks_enabled() {
         return Ok(settings::DEFAULT_LINK_SECRET_ALIAS.to_string());
     }
@@ -106,7 +106,7 @@ pub async fn libindy_prover_create_credential_req(
     credential_offer_json: &str,
     credential_def_json: &str,
     master_secret_name: &str,
-) -> VcxResult<(String, String)> {
+) -> VcxCoreResult<(String, String)> {
     if settings::indy_mocks_enabled() {
         return Ok((utils::constants::CREDENTIAL_REQ_STRING.to_owned(), String::new()));
     }

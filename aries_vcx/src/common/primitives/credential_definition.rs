@@ -269,6 +269,7 @@ pub async fn generate_cred_def(
     anoncreds
         .issuer_create_and_store_credential_def(issuer_did, schema_json, tag, sig_type, &config_json)
         .await
+        .map_err(|err| err.into())
 }
 
 #[cfg(test)]

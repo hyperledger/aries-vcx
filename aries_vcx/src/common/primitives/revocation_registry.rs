@@ -184,6 +184,7 @@ impl RevocationRegistry {
         anoncreds
             .revoke_credential_local(&self.tails_dir, &self.rev_reg_id, cred_rev_id)
             .await
+            .map_err(|err| err.into())
     }
 
     pub async fn publish_local_revocations(&self, profile: &Arc<dyn Profile>, submitter_did: &str) -> VcxResult<()> {
@@ -192,6 +193,7 @@ impl RevocationRegistry {
         anoncreds
             .publish_local_revocations(submitter_did, &self.rev_reg_id)
             .await
+            .map_err(|err| err.into())
     }
 }
 

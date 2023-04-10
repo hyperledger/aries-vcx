@@ -1,6 +1,6 @@
 use vdrtools::Locator;
 
-use crate::errors::error::VcxResult;
+use crate::errors::error::VcxCoreResult;
 use crate::utils::parse_and_validate;
 
 pub async fn libindy_verifier_verify_proof(
@@ -10,7 +10,7 @@ pub async fn libindy_verifier_verify_proof(
     credential_defs_json: &str,
     rev_reg_defs_json: &str,
     rev_regs_json: &str,
-) -> VcxResult<bool> {
+) -> VcxCoreResult<bool> {
     let res = Locator::instance().verifier_controller.verify_proof(
         parse_and_validate(proof_req_json)?,
         parse_and_validate(proof_json)?,

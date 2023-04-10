@@ -1,27 +1,29 @@
-use crate::errors::error::{AriesVcxError, AriesVcxErrorKind};
+use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind};
 use indy_vdr::common::error::{VdrError, VdrErrorKind};
 use indy_vdr::utils::ValidationError;
 
-impl From<VdrError> for AriesVcxError {
+impl From<VdrError> for AriesVcxCoreError {
     fn from(err: VdrError) -> Self {
         match err.kind() {
-            VdrErrorKind::Config => AriesVcxError::from_msg(AriesVcxErrorKind::InvalidConfiguration, err),
-            VdrErrorKind::Connection => AriesVcxError::from_msg(AriesVcxErrorKind::PoolLedgerConnect, err),
-            VdrErrorKind::FileSystem(_) => AriesVcxError::from_msg(AriesVcxErrorKind::IOError, err),
-            VdrErrorKind::Input => AriesVcxError::from_msg(AriesVcxErrorKind::InvalidInput, err),
-            VdrErrorKind::Resource => AriesVcxError::from_msg(AriesVcxErrorKind::UnknownError, err),
-            VdrErrorKind::Unavailable => AriesVcxError::from_msg(AriesVcxErrorKind::UnknownError, err),
-            VdrErrorKind::Unexpected => AriesVcxError::from_msg(AriesVcxErrorKind::UnknownError, err),
-            VdrErrorKind::Incompatible => AriesVcxError::from_msg(AriesVcxErrorKind::UnknownError, err),
-            VdrErrorKind::PoolNoConsensus => AriesVcxError::from_msg(AriesVcxErrorKind::UnknownError, err),
-            VdrErrorKind::PoolRequestFailed(_) => AriesVcxError::from_msg(AriesVcxErrorKind::PoolLedgerConnect, err),
-            VdrErrorKind::PoolTimeout => AriesVcxError::from_msg(AriesVcxErrorKind::UnknownError, err),
+            VdrErrorKind::Config => AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::InvalidConfiguration, err),
+            VdrErrorKind::Connection => AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::PoolLedgerConnect, err),
+            VdrErrorKind::FileSystem(_) => AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::IOError, err),
+            VdrErrorKind::Input => AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::InvalidInput, err),
+            VdrErrorKind::Resource => AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::UnknownError, err),
+            VdrErrorKind::Unavailable => AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::UnknownError, err),
+            VdrErrorKind::Unexpected => AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::UnknownError, err),
+            VdrErrorKind::Incompatible => AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::UnknownError, err),
+            VdrErrorKind::PoolNoConsensus => AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::UnknownError, err),
+            VdrErrorKind::PoolRequestFailed(_) => {
+                AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::PoolLedgerConnect, err)
+            }
+            VdrErrorKind::PoolTimeout => AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::UnknownError, err),
         }
     }
 }
 
-impl From<ValidationError> for AriesVcxError {
+impl From<ValidationError> for AriesVcxCoreError {
     fn from(err: ValidationError) -> Self {
-        AriesVcxError::from_msg(AriesVcxErrorKind::InvalidInput, err)
+        AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::InvalidInput, err)
     }
 }

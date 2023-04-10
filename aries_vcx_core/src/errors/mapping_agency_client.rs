@@ -1,31 +1,31 @@
-use crate::errors::error::{AriesVcxError, AriesVcxErrorKind};
+use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind};
 use agency_client::errors::error::{AgencyClientError, AgencyClientErrorKind};
 
-impl From<AgencyClientError> for AriesVcxError {
-    fn from(agency_err: AgencyClientError) -> AriesVcxError {
-        let vcx_error_kind: AriesVcxErrorKind = agency_err.kind().into();
-        AriesVcxError::from_msg(vcx_error_kind, agency_err.to_string())
+impl From<AgencyClientError> for AriesVcxCoreError {
+    fn from(agency_err: AgencyClientError) -> AriesVcxCoreError {
+        let vcx_error_kind: AriesVcxCoreErrorKind = agency_err.kind().into();
+        AriesVcxCoreError::from_msg(vcx_error_kind, agency_err.to_string())
     }
 }
 
-impl From<AgencyClientErrorKind> for AriesVcxErrorKind {
-    fn from(agency_err: AgencyClientErrorKind) -> AriesVcxErrorKind {
+impl From<AgencyClientErrorKind> for AriesVcxCoreErrorKind {
+    fn from(agency_err: AgencyClientErrorKind) -> AriesVcxCoreErrorKind {
         match agency_err {
-            AgencyClientErrorKind::InvalidState => AriesVcxErrorKind::InvalidState,
-            AgencyClientErrorKind::InvalidConfiguration => AriesVcxErrorKind::InvalidConfiguration,
-            AgencyClientErrorKind::InvalidJson => AriesVcxErrorKind::InvalidJson,
-            AgencyClientErrorKind::InvalidOption => AriesVcxErrorKind::InvalidOption,
-            AgencyClientErrorKind::InvalidMessagePack => AriesVcxErrorKind::InvalidMessagePack,
-            AgencyClientErrorKind::IOError => AriesVcxErrorKind::IOError,
-            AgencyClientErrorKind::PostMessageFailed => AriesVcxErrorKind::PostMessageFailed,
-            AgencyClientErrorKind::InvalidWalletHandle => AriesVcxErrorKind::InvalidWalletHandle,
-            AgencyClientErrorKind::UnknownError => AriesVcxErrorKind::UnknownError,
-            AgencyClientErrorKind::InvalidDid => AriesVcxErrorKind::InvalidDid,
-            AgencyClientErrorKind::InvalidVerkey => AriesVcxErrorKind::InvalidVerkey,
-            AgencyClientErrorKind::InvalidUrl => AriesVcxErrorKind::InvalidUrl,
-            AgencyClientErrorKind::SerializationError => AriesVcxErrorKind::SerializationError,
-            AgencyClientErrorKind::NotBase58 => AriesVcxErrorKind::NotBase58,
-            AgencyClientErrorKind::InvalidHttpResponse => AriesVcxErrorKind::InvalidHttpResponse,
+            AgencyClientErrorKind::InvalidState => AriesVcxCoreErrorKind::InvalidState,
+            AgencyClientErrorKind::InvalidConfiguration => AriesVcxCoreErrorKind::InvalidConfiguration,
+            AgencyClientErrorKind::InvalidJson => AriesVcxCoreErrorKind::InvalidJson,
+            AgencyClientErrorKind::InvalidOption => AriesVcxCoreErrorKind::InvalidOption,
+            AgencyClientErrorKind::InvalidMessagePack => AriesVcxCoreErrorKind::InvalidMessagePack,
+            AgencyClientErrorKind::IOError => AriesVcxCoreErrorKind::IOError,
+            AgencyClientErrorKind::PostMessageFailed => AriesVcxCoreErrorKind::PostMessageFailed,
+            AgencyClientErrorKind::InvalidWalletHandle => AriesVcxCoreErrorKind::InvalidWalletHandle,
+            AgencyClientErrorKind::UnknownError => AriesVcxCoreErrorKind::UnknownError,
+            AgencyClientErrorKind::InvalidDid => AriesVcxCoreErrorKind::InvalidDid,
+            AgencyClientErrorKind::InvalidVerkey => AriesVcxCoreErrorKind::InvalidVerkey,
+            AgencyClientErrorKind::InvalidUrl => AriesVcxCoreErrorKind::InvalidUrl,
+            AgencyClientErrorKind::SerializationError => AriesVcxCoreErrorKind::SerializationError,
+            AgencyClientErrorKind::NotBase58 => AriesVcxCoreErrorKind::NotBase58,
+            AgencyClientErrorKind::InvalidHttpResponse => AriesVcxCoreErrorKind::InvalidHttpResponse,
         }
     }
 }

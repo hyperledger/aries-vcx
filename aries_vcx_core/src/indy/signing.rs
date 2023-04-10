@@ -5,7 +5,7 @@ use vdrtools::WalletHandle;
 use crate::errors::error::prelude::*;
 use crate::global::settings;
 
-pub async fn sign(wallet_handle: WalletHandle, my_vk: &str, msg: &[u8]) -> VcxResult<Vec<u8>> {
+pub async fn sign(wallet_handle: WalletHandle, my_vk: &str, msg: &[u8]) -> VcxCoreResult<Vec<u8>> {
     if settings::indy_mocks_enabled() {
         return Ok(Vec::from(msg));
     }
@@ -18,7 +18,7 @@ pub async fn sign(wallet_handle: WalletHandle, my_vk: &str, msg: &[u8]) -> VcxRe
     Ok(res)
 }
 
-pub async fn verify(vk: &str, msg: &[u8], signature: &[u8]) -> VcxResult<bool> {
+pub async fn verify(vk: &str, msg: &[u8], signature: &[u8]) -> VcxCoreResult<bool> {
     if settings::indy_mocks_enabled() {
         return Ok(true);
     }
@@ -36,19 +36,24 @@ pub async fn pack_message(
     sender_vk: Option<&str>,
     receiver_keys: &str,
     msg: &[u8],
-) -> VcxResult<Vec<u8>> {
+) -> VcxCoreResult<Vec<u8>> {
     if settings::indy_mocks_enabled() {
         return Ok(msg.to_vec());
     }
 
     // parse json array of keys
     let receiver_list = serde_json::from_str::<Vec<String>>(receiver_keys)
-        .map_err(|_| AriesVcxError::from_msg(AriesVcxErrorKind::InvalidJson, "Invalid RecipientKeys has been passed"))
+        .map_err(|_| {
+            AriesVcxCoreError::from_msg(
+                AriesVcxCoreErrorKind::InvalidJson,
+                "Invalid RecipientKeys has been passed",
+            )
+        })
         .and_then(|list| {
             // break early and error out if no receivers keys are provided
             if list.is_empty() {
-                Err(AriesVcxError::from_msg(
-                    AriesVcxErrorKind::InvalidLibindyParam,
+                Err(AriesVcxCoreError::from_msg(
+                    AriesVcxCoreErrorKind::InvalidLibindyParam,
                     "Empty RecipientKeys has been passed",
                 ))
             } else {
@@ -69,7 +74,7 @@ pub async fn pack_message(
     Ok(res)
 }
 
-pub async fn unpack_message(wallet_handle: WalletHandle, msg: &[u8]) -> VcxResult<Vec<u8>> {
+pub async fn unpack_message(wallet_handle: WalletHandle, msg: &[u8]) -> VcxCoreResult<Vec<u8>> {
     if settings::indy_mocks_enabled() {
         return Ok(Vec::from(msg));
     }
@@ -83,7 +88,7 @@ pub async fn unpack_message(wallet_handle: WalletHandle, msg: &[u8]) -> VcxResul
 }
 
 #[cfg(feature = "test_utils")]
-pub async fn create_key(wallet_handle: WalletHandle, seed: Option<&str>) -> VcxResult<String> {
+pub async fn create_key(wallet_handle: WalletHandle, seed: Option<&str>) -> VcxCoreResult<String> {
     use vdrtools::KeyInfo;
 
     let res = Locator::instance()

@@ -187,6 +187,7 @@ version = "0.53.0"
 dependencies = [
  "agency_client",
  "android_logger",
+ "aries_vcx_core",
  "async-channel",
  "async-trait",
  "base64 0.10.1",

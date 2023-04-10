@@ -574,7 +574,10 @@ async fn _delete_credential(profile: &Arc<dyn Profile>, cred_id: &str) -> VcxRes
     trace!("Holder::_delete_credential >>> cred_id: {}", cred_id);
 
     let anoncreds = Arc::clone(profile).inject_anoncreds();
-    anoncreds.prover_delete_credential(cred_id).await
+    anoncreds
+        .prover_delete_credential(cred_id)
+        .await
+        .map_err(|err| err.into())
 }
 
 pub async fn create_credential_request(
@@ -593,6 +596,7 @@ pub async fn create_credential_request(
         .await
         .map_err(|err| err.extend("Cannot create credential request"))
         .map(|(s1, s2)| (s1, s2, cred_def_id.to_string(), cred_def_json))
+        .map_err(|err| err.into())
 }
 
 async fn _make_credential_request(

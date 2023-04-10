@@ -14,7 +14,7 @@ use crate::utils::constants::{
 use crate::utils::parse_and_validate;
 use crate::utils::random::generate_random_did;
 
-pub async fn multisign_request(wallet_handle: WalletHandle, did: &str, request: &str) -> VcxResult<String> {
+pub async fn multisign_request(wallet_handle: WalletHandle, did: &str, request: &str) -> VcxCoreResult<String> {
     let res = Locator::instance()
         .ledger_controller
         .multi_sign_request(wallet_handle, DidValue(did.into()), request.into())
@@ -28,7 +28,7 @@ pub async fn libindy_sign_and_submit_request(
     pool_handle: PoolHandle,
     issuer_did: &str,
     request_json: &str,
-) -> VcxResult<String> {
+) -> VcxCoreResult<String> {
     trace!(
         "libindy_sign_and_submit_request >>> issuer_did: {}, request_json: {}",
         issuer_did,
@@ -55,7 +55,7 @@ pub async fn libindy_sign_and_submit_request(
     Ok(res)
 }
 
-pub async fn libindy_submit_request(pool_handle: PoolHandle, request_json: &str) -> VcxResult<String> {
+pub async fn libindy_submit_request(pool_handle: PoolHandle, request_json: &str) -> VcxCoreResult<String> {
     trace!("libindy_submit_request >>> request_json: {}", request_json);
 
     let res = Locator::instance()
@@ -66,7 +66,7 @@ pub async fn libindy_submit_request(pool_handle: PoolHandle, request_json: &str)
     Ok(res)
 }
 
-pub async fn libindy_build_schema_request(submitter_did: &str, data: &str) -> VcxResult<String> {
+pub async fn libindy_build_schema_request(submitter_did: &str, data: &str) -> VcxCoreResult<String> {
     trace!(
         "libindy_build_schema_request >>> submitter_did: {}, data: {}",
         submitter_did,
@@ -83,7 +83,7 @@ pub async fn libindy_build_schema_request(submitter_did: &str, data: &str) -> Vc
 pub async fn libindy_build_create_credential_def_txn(
     submitter_did: &str,
     credential_def_json: &str,
-) -> VcxResult<String> {
+) -> VcxCoreResult<String> {
     trace!(
         "libindy_build_create_credential_def_txn >>> submitter_did: {}, credential_def_json: {}",
         submitter_did,
@@ -97,7 +97,7 @@ pub async fn libindy_build_create_credential_def_txn(
     Ok(res)
 }
 
-pub async fn libindy_get_txn_author_agreement(pool_handle: PoolHandle) -> VcxResult<String> {
+pub async fn libindy_get_txn_author_agreement(pool_handle: PoolHandle) -> VcxCoreResult<String> {
     if settings::indy_mocks_enabled() {
         return Ok(utils::constants::DEFAULT_AUTHOR_AGREEMENT.to_string());
     }
@@ -111,7 +111,9 @@ pub async fn libindy_get_txn_author_agreement(pool_handle: PoolHandle) -> VcxRes
     let get_author_agreement_response = libindy_submit_request(pool_handle, &get_author_agreement_request).await?;
 
     let get_author_agreement_response = serde_json::from_str::<serde_json::Value>(&get_author_agreement_response)
-        .map_err(|err| AriesVcxError::from_msg(AriesVcxErrorKind::InvalidLedgerResponse, format!("{:?}", err)))?;
+        .map_err(|err| {
+            AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::InvalidLedgerResponse, format!("{:?}", err))
+        })?;
 
     let mut author_agreement_data = get_author_agreement_response["result"]["data"]
         .as_object()
@@ -125,8 +127,9 @@ pub async fn libindy_get_txn_author_agreement(pool_handle: PoolHandle) -> VcxRes
         libindy_submit_request(pool_handle, &get_acceptance_mechanism_request).await?;
 
     let get_acceptance_mechanism_response =
-        serde_json::from_str::<serde_json::Value>(&get_acceptance_mechanism_response)
-            .map_err(|err| AriesVcxError::from_msg(AriesVcxErrorKind::InvalidLedgerResponse, format!("{:?}", err)))?;
+        serde_json::from_str::<serde_json::Value>(&get_acceptance_mechanism_response).map_err(|err| {
+            AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::InvalidLedgerResponse, format!("{:?}", err))
+        })?;
 
     if let Some(aml) = get_acceptance_mechanism_response["result"]["data"]["aml"].as_object() {
         author_agreement_data["aml"] = json!(aml);
@@ -136,7 +139,7 @@ pub async fn libindy_get_txn_author_agreement(pool_handle: PoolHandle) -> VcxRes
 }
 
 // TODO: remove async
-pub async fn append_txn_author_agreement_to_request(request_json: &str) -> VcxResult<String> {
+pub async fn append_txn_author_agreement_to_request(request_json: &str) -> VcxCoreResult<String> {
     trace!("append_txn_author_agreement_to_request >>> request_json: ...");
 
     if let Some(author_agreement) = utils::author_agreement::get_txn_author_agreement()? {
@@ -150,7 +153,7 @@ pub async fn append_txn_author_agreement_to_request(request_json: &str) -> VcxRe
                 author_agreement.acceptance_mechanism_type,
                 author_agreement.time_of_acceptance,
             )
-            .map_err(AriesVcxError::from)
+            .map_err(AriesVcxCoreError::from)
     } else {
         Ok(request_json.to_string())
     }
@@ -163,7 +166,7 @@ pub async fn libindy_build_attrib_request(
     hash: Option<&str>,
     raw: Option<&str>,
     enc: Option<&str>,
-) -> VcxResult<String> {
+) -> VcxCoreResult<String> {
     let res = Locator::instance().ledger_controller.build_attrib_request(
         submitter_did.into(),
         target_did.into(),
@@ -176,7 +179,7 @@ pub async fn libindy_build_attrib_request(
 }
 
 // TODO: remove async
-pub async fn libindy_build_get_nym_request(submitter_did: Option<&str>, did: &str) -> VcxResult<String> {
+pub async fn libindy_build_get_nym_request(submitter_did: Option<&str>, did: &str) -> VcxCoreResult<String> {
     let res = Locator::instance()
         .ledger_controller
         .build_get_nym_request(submitter_did.map(|s| s.into()), did.into())?;
@@ -190,7 +193,7 @@ pub async fn libindy_build_nym_request(
     verkey: Option<&str>,
     data: Option<&str>,
     role: Option<&str>,
-) -> VcxResult<String> {
+) -> VcxCoreResult<String> {
     if PoolMocks::has_pool_mock_responses() {
         warn!("libindy_build_nym_request >> retrieving pool mock response");
         return Ok(PoolMocks::get_next_pool_response());
@@ -210,7 +213,7 @@ pub async fn libindy_build_nym_request(
     Ok(res)
 }
 
-pub async fn get_nym(pool_handle: PoolHandle, did: &str) -> VcxResult<String> {
+pub async fn get_nym(pool_handle: PoolHandle, did: &str) -> VcxCoreResult<String> {
     let submitter_did = generate_random_did();
 
     let get_nym_req = libindy_build_get_nym_request(Some(&submitter_did), did).await?;
@@ -218,10 +221,10 @@ pub async fn get_nym(pool_handle: PoolHandle, did: &str) -> VcxResult<String> {
     libindy_submit_request(pool_handle, &get_nym_req).await
 }
 
-fn parse_response(response: &str) -> VcxResult<Response> {
+fn parse_response(response: &str) -> VcxCoreResult<Response> {
     serde_json::from_str::<Response>(response).map_err(|err| {
-        AriesVcxError::from_msg(
-            AriesVcxErrorKind::InvalidJson,
+        AriesVcxCoreError::from_msg(
+            AriesVcxCoreErrorKind::InvalidJson,
             format!("Cannot deserialize object: {}", err),
         )
     })
@@ -232,7 +235,7 @@ pub async fn libindy_get_schema(
     pool_handle: PoolHandle,
     submitter_did: &str,
     schema_id: &str,
-) -> VcxResult<String> {
+) -> VcxCoreResult<String> {
     let res = Locator::instance()
         .cache_controller
         .get_schema(
@@ -251,7 +254,7 @@ async fn libindy_get_cred_def(
     wallet_handle: WalletHandle,
     pool_handle: PoolHandle,
     cred_def_id: &str,
-) -> VcxResult<String> {
+) -> VcxCoreResult<String> {
     let submitter_did = &generate_random_did();
     trace!(
         "libindy_get_cred_def >>> pool_handle: {}, wallet_handle: {:?}, submitter_did: {}",
@@ -279,7 +282,7 @@ pub async fn set_endorser(
     submitter_did: &str,
     request: &str,
     endorser: &str,
-) -> VcxResult<String> {
+) -> VcxCoreResult<String> {
     if settings::indy_mocks_enabled() {
         return Ok(utils::constants::REQUEST_WITH_ENDORSER.to_string());
     }
@@ -296,7 +299,7 @@ pub async fn endorse_transaction(
     pool_handle: PoolHandle,
     endorser_did: &str,
     transaction_json: &str,
-) -> VcxResult<()> {
+) -> VcxCoreResult<()> {
     //TODO Potentially VCX should handle case when endorser would like to pay fee
     if settings::indy_mocks_enabled() {
         return Ok(());
@@ -309,25 +312,25 @@ pub async fn endorse_transaction(
 
     match parse_response(&response)? {
         Response::Reply(_) => Ok(()),
-        Response::Reject(res) | Response::ReqNACK(res) => Err(AriesVcxError::from_msg(
-            AriesVcxErrorKind::PostMessageFailed,
+        Response::Reject(res) | Response::ReqNACK(res) => Err(AriesVcxCoreError::from_msg(
+            AriesVcxCoreErrorKind::PostMessageFailed,
             format!("{:?}", res.reason),
         )),
     }
 }
 
-fn _verify_transaction_can_be_endorsed(transaction_json: &str, _did: &str) -> VcxResult<()> {
+fn _verify_transaction_can_be_endorsed(transaction_json: &str, _did: &str) -> VcxCoreResult<()> {
     let transaction: Request = serde_json::from_str(transaction_json)
-        .map_err(|err| AriesVcxError::from_msg(AriesVcxErrorKind::InvalidJson, format!("{:?}", err)))?;
+        .map_err(|err| AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::InvalidJson, format!("{:?}", err)))?;
 
-    let transaction_endorser = transaction.endorser.ok_or(AriesVcxError::from_msg(
-        AriesVcxErrorKind::InvalidJson,
+    let transaction_endorser = transaction.endorser.ok_or(AriesVcxCoreError::from_msg(
+        AriesVcxCoreErrorKind::InvalidJson,
         "Transaction cannot be endorsed: endorser DID is not set.",
     ))?;
 
     if transaction_endorser != _did {
-        return Err(AriesVcxError::from_msg(
-            AriesVcxErrorKind::InvalidJson,
+        return Err(AriesVcxCoreError::from_msg(
+            AriesVcxCoreErrorKind::InvalidJson,
             format!(
                 "Transaction cannot be endorsed: transaction endorser DID `{}` and sender DID `{}` are different",
                 transaction_endorser, _did
@@ -343,8 +346,8 @@ fn _verify_transaction_can_be_endorsed(transaction_json: &str, _did: &str) -> Vc
             .map(|signatures| signatures.contains_key(identifier))
             .unwrap_or(false)
     {
-        return Err(AriesVcxError::from_msg(
-            AriesVcxErrorKind::InvalidJson,
+        return Err(AriesVcxCoreError::from_msg(
+            AriesVcxCoreErrorKind::InvalidJson,
             "Transaction cannot be endorsed: the author must sign the transaction.".to_string(),
         ));
     }
@@ -358,7 +361,7 @@ pub async fn build_attrib_request(
     hash: Option<&str>,
     raw: Option<&str>,
     enc: Option<&str>,
-) -> VcxResult<String> {
+) -> VcxCoreResult<String> {
     trace!(
         "build_attrib_request >>> submitter_did: {}, target_did: {}, hash: {:?}, raw: {:?}, enc: {:?}",
         submitter_did,
@@ -381,13 +384,13 @@ pub async fn add_attr(
     pool_handle: PoolHandle,
     did: &str,
     attrib_json: &str,
-) -> VcxResult<String> {
+) -> VcxCoreResult<String> {
     trace!("add_attr >>> did: {}, attrib_json: {}", did, attrib_json);
     let attrib_req = build_attrib_request(did, did, None, Some(attrib_json), None).await?;
     libindy_sign_and_submit_request(wallet_handle, pool_handle, did, &attrib_req).await
 }
 
-pub async fn get_attr(pool_handle: PoolHandle, did: &str, attr_name: &str) -> VcxResult<String> {
+pub async fn get_attr(pool_handle: PoolHandle, did: &str, attr_name: &str) -> VcxCoreResult<String> {
     let get_attrib_req = Locator::instance().ledger_controller.build_get_attrib_request(
         None,
         did.into(),
@@ -404,7 +407,7 @@ pub async fn sign_and_submit_to_ledger(
     pool_handle: PoolHandle,
     submitter_did: &str,
     req: &str,
-) -> VcxResult<String> {
+) -> VcxCoreResult<String> {
     debug!(
         "sign_and_submit_to_ledger(submitter_did: {}, req: {}",
         submitter_did, req
@@ -417,7 +420,7 @@ pub async fn sign_and_submit_to_ledger(
     Ok(response)
 }
 
-pub async fn libindy_build_revoc_reg_def_request(submitter_did: &str, rev_reg_def_json: &str) -> VcxResult<String> {
+pub async fn libindy_build_revoc_reg_def_request(submitter_did: &str, rev_reg_def_json: &str) -> VcxCoreResult<String> {
     if settings::indy_mocks_enabled() {
         return Ok("".to_string());
     }
@@ -435,7 +438,7 @@ pub async fn libindy_build_revoc_reg_entry_request(
     rev_reg_id: &str,
     rev_def_type: &str,
     value: &str,
-) -> VcxResult<String> {
+) -> VcxCoreResult<String> {
     if settings::indy_mocks_enabled() {
         return Ok("".to_string());
     }
@@ -450,7 +453,7 @@ pub async fn libindy_build_revoc_reg_entry_request(
     Ok(res)
 }
 
-pub async fn libindy_build_get_revoc_reg_def_request(submitter_did: &str, rev_reg_id: &str) -> VcxResult<String> {
+pub async fn libindy_build_get_revoc_reg_def_request(submitter_did: &str, rev_reg_id: &str) -> VcxCoreResult<String> {
     let res = Locator::instance()
         .ledger_controller
         .build_get_revoc_reg_def_request(Some(submitter_did.into()), rev_reg_id.into())?;
@@ -459,7 +462,7 @@ pub async fn libindy_build_get_revoc_reg_def_request(submitter_did: &str, rev_re
 }
 
 // TODO: remove async
-pub async fn libindy_parse_get_revoc_reg_def_response(rev_reg_def_json: &str) -> VcxResult<(String, String)> {
+pub async fn libindy_parse_get_revoc_reg_def_response(rev_reg_def_json: &str) -> VcxCoreResult<(String, String)> {
     let res = Locator::instance()
         .ledger_controller
         .parse_revoc_reg_def_response(rev_reg_def_json.into())?;
@@ -472,7 +475,7 @@ pub async fn libindy_build_get_revoc_reg_delta_request(
     rev_reg_id: &str,
     from: i64,
     to: i64,
-) -> VcxResult<String> {
+) -> VcxCoreResult<String> {
     let res = Locator::instance()
         .ledger_controller
         .build_get_revoc_reg_delta_request(Some(submitter_did.into()), rev_reg_id.into(), Some(from), to)?;
@@ -484,7 +487,7 @@ async fn libindy_build_get_revoc_reg_request(
     submitter_did: &str,
     rev_reg_id: &str,
     timestamp: u64,
-) -> VcxResult<String> {
+) -> VcxCoreResult<String> {
     let res = Locator::instance().ledger_controller.build_get_revoc_reg_request(
         Some(submitter_did.into()),
         rev_reg_id.into(),
@@ -494,7 +497,7 @@ async fn libindy_build_get_revoc_reg_request(
     Ok(res)
 }
 
-async fn libindy_parse_get_revoc_reg_response(get_cred_def_resp: &str) -> VcxResult<(String, String, u64)> {
+async fn libindy_parse_get_revoc_reg_response(get_cred_def_resp: &str) -> VcxCoreResult<(String, String, u64)> {
     let res = Locator::instance()
         .ledger_controller
         .parse_revoc_reg_response(get_cred_def_resp.into())?;
@@ -504,7 +507,7 @@ async fn libindy_parse_get_revoc_reg_response(get_cred_def_resp: &str) -> VcxRes
 
 pub async fn libindy_parse_get_revoc_reg_delta_response(
     get_rev_reg_delta_response: &str,
-) -> VcxResult<(String, String, u64)> {
+) -> VcxCoreResult<(String, String, u64)> {
     let res = Locator::instance()
         .ledger_controller
         .parse_revoc_reg_delta_response(get_rev_reg_delta_response.into())?;
@@ -512,7 +515,7 @@ pub async fn libindy_parse_get_revoc_reg_delta_response(
     Ok(res)
 }
 
-pub async fn build_schema_request(submitter_did: &str, schema: &str) -> VcxResult<String> {
+pub async fn build_schema_request(submitter_did: &str, schema: &str) -> VcxCoreResult<String> {
     trace!(
         "build_schema_request >>> submitter_did: {}, schema: {}",
         submitter_did,
@@ -530,7 +533,7 @@ pub async fn build_schema_request(submitter_did: &str, schema: &str) -> VcxResul
     Ok(request)
 }
 
-pub async fn build_rev_reg_request(issuer_did: &str, rev_reg_def_json: &str) -> VcxResult<String> {
+pub async fn build_rev_reg_request(issuer_did: &str, rev_reg_def_json: &str) -> VcxCoreResult<String> {
     if settings::indy_mocks_enabled() {
         debug!("build_rev_reg_request >>> returning mocked value");
         return Ok("".to_string());
@@ -541,7 +544,7 @@ pub async fn build_rev_reg_request(issuer_did: &str, rev_reg_def_json: &str) -> 
     Ok(rev_reg_def_req)
 }
 
-pub async fn get_rev_reg_def_json(pool_handle: PoolHandle, rev_reg_id: &str) -> VcxResult<(String, String)> {
+pub async fn get_rev_reg_def_json(pool_handle: PoolHandle, rev_reg_id: &str) -> VcxCoreResult<(String, String)> {
     if settings::indy_mocks_enabled() {
         debug!("get_rev_reg_def_json >>> returning mocked value");
         return Ok((REV_REG_ID.to_string(), rev_def_json()));
@@ -559,7 +562,7 @@ pub async fn build_rev_reg_delta_request(
     issuer_did: &str,
     rev_reg_id: &str,
     rev_reg_entry_json: &str,
-) -> VcxResult<String> {
+) -> VcxCoreResult<String> {
     trace!(
         "build_rev_reg_delta_request >>> issuer_did: {}, rev_reg_id: {}, rev_reg_entry_json: {}",
         issuer_did,
@@ -580,7 +583,7 @@ pub async fn get_rev_reg_delta_json(
     rev_reg_id: &str,
     from: Option<u64>,
     to: Option<u64>,
-) -> VcxResult<(String, String, u64)> {
+) -> VcxCoreResult<(String, String, u64)> {
     trace!(
         "get_rev_reg_delta_json >>> pool_handle: {:?}, rev_reg_id: {}, from: {:?}, to: {:?}",
         pool_handle,
@@ -613,7 +616,7 @@ pub async fn get_rev_reg(
     pool_handle: PoolHandle,
     rev_reg_id: &str,
     timestamp: u64,
-) -> VcxResult<(String, String, u64)> {
+) -> VcxCoreResult<(String, String, u64)> {
     if settings::indy_mocks_enabled() {
         return Ok((REV_REG_ID.to_string(), REV_REG_JSON.to_string(), 1));
     }
@@ -627,7 +630,7 @@ pub async fn get_rev_reg(
     libindy_parse_get_revoc_reg_response(&res).await
 }
 
-async fn libindy_build_get_txn_request(submitter_did: Option<&str>, seq_no: i32) -> VcxResult<String> {
+async fn libindy_build_get_txn_request(submitter_did: Option<&str>, seq_no: i32) -> VcxCoreResult<String> {
     let res =
         Locator::instance()
             .ledger_controller
@@ -636,7 +639,7 @@ async fn libindy_build_get_txn_request(submitter_did: Option<&str>, seq_no: i32)
     Ok(res)
 }
 
-pub async fn build_get_txn_request(submitter_did: Option<&str>, seq_no: i32) -> VcxResult<String> {
+pub async fn build_get_txn_request(submitter_did: Option<&str>, seq_no: i32) -> VcxCoreResult<String> {
     trace!(
         "build_get_txn_request >>> submitter_did: {:?}, seq_no: {}",
         submitter_did,
@@ -652,7 +655,7 @@ pub async fn get_ledger_txn(
     pool_handle: PoolHandle,
     seq_no: i32,
     submitter_did: Option<&str>,
-) -> VcxResult<String> {
+) -> VcxCoreResult<String> {
     trace!(
         "get_ledger_txn >>> submitter_did: {:?}, seq_no: {}",
         submitter_did,
@@ -668,29 +671,29 @@ pub async fn get_ledger_txn(
     Ok(res)
 }
 
-pub fn _check_schema_response(response: &str) -> VcxResult<()> {
+pub fn _check_schema_response(response: &str) -> VcxCoreResult<()> {
     // TODO: saved backwardcampatibilyty but actually we can better handle response
     match parse_response(response)? {
         Response::Reply(_) => Ok(()),
-        Response::Reject(reject) => Err(AriesVcxError::from_msg(
-            AriesVcxErrorKind::DuplicationSchema,
+        Response::Reject(reject) => Err(AriesVcxCoreError::from_msg(
+            AriesVcxCoreErrorKind::DuplicationSchema,
             format!("{:?}", reject),
         )),
-        Response::ReqNACK(reqnack) => Err(AriesVcxError::from_msg(
-            AriesVcxErrorKind::UnknownSchemaRejection,
+        Response::ReqNACK(reqnack) => Err(AriesVcxCoreError::from_msg(
+            AriesVcxCoreErrorKind::UnknownSchemaRejection,
             format!("{:?}", reqnack),
         )),
     }
 }
 
-pub(in crate::indy) fn check_response(response: &str) -> VcxResult<()> {
+pub(in crate::indy) fn check_response(response: &str) -> VcxCoreResult<()> {
     if settings::indy_mocks_enabled() {
         return Ok(());
     }
     match parse_response(response)? {
         Response::Reply(_) => Ok(()),
-        Response::Reject(res) | Response::ReqNACK(res) => Err(AriesVcxError::from_msg(
-            AriesVcxErrorKind::InvalidLedgerResponse,
+        Response::Reject(res) | Response::ReqNACK(res) => Err(AriesVcxCoreError::from_msg(
+            AriesVcxCoreErrorKind::InvalidLedgerResponse,
             format!("{:?}", res),
         )),
     }
@@ -700,7 +703,7 @@ pub async fn get_schema_json(
     wallet_handle: WalletHandle,
     pool_handle: PoolHandle,
     schema_id: &str,
-) -> VcxResult<(String, String)> {
+) -> VcxCoreResult<(String, String)> {
     trace!("get_schema_json >>> schema_id: {}", schema_id);
     if settings::indy_mocks_enabled() {
         return Ok((SCHEMA_ID.to_string(), SCHEMA_JSON.to_string()));
@@ -713,7 +716,7 @@ pub async fn get_schema_json(
     Ok((schema_id.to_string(), schema_json))
 }
 
-pub async fn build_cred_def_request(issuer_did: &str, cred_def_json: &str) -> VcxResult<String> {
+pub async fn build_cred_def_request(issuer_did: &str, cred_def_json: &str) -> VcxCoreResult<String> {
     if settings::indy_mocks_enabled() {
         return Ok(CRED_DEF_REQ.to_string());
     }
@@ -729,7 +732,7 @@ pub async fn get_cred_def_json(
     wallet_handle: WalletHandle,
     pool_handle: PoolHandle,
     cred_def_id: &str,
-) -> VcxResult<(String, String)> {
+) -> VcxCoreResult<(String, String)> {
     if settings::indy_mocks_enabled() {
         debug!("get_cred_def_json >>> returning mocked value");
         return Ok((CRED_DEF_ID.to_string(), CRED_DEF_JSON.to_string()));

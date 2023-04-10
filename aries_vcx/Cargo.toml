@@ -61,6 +61,7 @@ agency_client = { path = "../agency_client" }
 derive_builder = "0.10.2"
 tokio = { version = "1.20.4" }
 messages = { path  = "../messages" }
+aries_vcx_core = { path  = "../aries_vcx_core" }
 zmq = { version = "0.9.2" }
 thiserror = "1.0.37"
 

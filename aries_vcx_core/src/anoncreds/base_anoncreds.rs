@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 
-use crate::errors::error::VcxResult;
+use crate::errors::error::VcxCoreResult;
 
 /// Trait defining standard 'anoncreds' related functionality. The APIs, including
 /// input and output types are based off the indy Anoncreds API:
@@ -15,7 +15,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         credential_defs_json: &str,
         rev_reg_defs_json: &str,
         rev_regs_json: &str,
-    ) -> VcxResult<bool>;
+    ) -> VcxCoreResult<bool>;
 
     async fn issuer_create_and_store_revoc_reg(
         &self,
@@ -24,7 +24,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         tails_dir: &str,
         max_creds: u32,
         tag: &str,
-    ) -> VcxResult<(String, String, String)>;
+    ) -> VcxCoreResult<(String, String, String)>;
 
     async fn issuer_create_and_store_credential_def(
         &self,
@@ -33,9 +33,9 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         tag: &str,
         signature_type: Option<&str>,
         config_json: &str,
-    ) -> VcxResult<(String, String)>;
+    ) -> VcxCoreResult<(String, String)>;
 
-    async fn issuer_create_credential_offer(&self, cred_def_id: &str) -> VcxResult<String>;
+    async fn issuer_create_credential_offer(&self, cred_def_id: &str) -> VcxCoreResult<String>;
 
     async fn issuer_create_credential(
         &self,
@@ -44,7 +44,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         cred_values_json: &str,
         rev_reg_id: Option<String>,
         tails_dir: Option<String>,
-    ) -> VcxResult<(String, Option<String>, Option<String>)>;
+    ) -> VcxCoreResult<(String, Option<String>, Option<String>)>;
 
     async fn prover_create_proof(
         &self,
@@ -54,13 +54,13 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         schemas_json: &str,
         credential_defs_json: &str,
         revoc_states_json: Option<&str>,
-    ) -> VcxResult<String>;
+    ) -> VcxCoreResult<String>;
 
-    async fn prover_get_credential(&self, cred_id: &str) -> VcxResult<String>;
+    async fn prover_get_credential(&self, cred_id: &str) -> VcxCoreResult<String>;
 
-    async fn prover_get_credentials(&self, filter_json: Option<&str>) -> VcxResult<String>;
+    async fn prover_get_credentials(&self, filter_json: Option<&str>) -> VcxCoreResult<String>;
 
-    async fn prover_get_credentials_for_proof_req(&self, proof_request_json: &str) -> VcxResult<String>;
+    async fn prover_get_credentials_for_proof_req(&self, proof_request_json: &str) -> VcxCoreResult<String>;
 
     async fn prover_create_credential_req(
         &self,
@@ -68,7 +68,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         cred_offer_json: &str,
         cred_def_json: &str,
         master_secret_id: &str,
-    ) -> VcxResult<(String, String)>;
+    ) -> VcxCoreResult<(String, String)>;
 
     async fn create_revocation_state(
         &self,
@@ -77,7 +77,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         rev_reg_delta_json: &str,
         timestamp: u64,
         cred_rev_id: &str,
-    ) -> VcxResult<String>;
+    ) -> VcxCoreResult<String>;
 
     async fn prover_store_credential(
         &self,
@@ -86,11 +86,11 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         cred_json: &str,
         cred_def_json: &str,
         rev_reg_def_json: Option<&str>,
-    ) -> VcxResult<String>;
+    ) -> VcxCoreResult<String>;
 
-    async fn prover_delete_credential(&self, cred_id: &str) -> VcxResult<()>;
+    async fn prover_delete_credential(&self, cred_id: &str) -> VcxCoreResult<()>;
 
-    async fn prover_create_link_secret(&self, link_secret_id: &str) -> VcxResult<String>;
+    async fn prover_create_link_secret(&self, link_secret_id: &str) -> VcxCoreResult<String>;
 
     async fn issuer_create_schema(
         &self,
@@ -98,13 +98,13 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         name: &str,
         version: &str,
         attrs: &str,
-    ) -> VcxResult<(String, String)>;
+    ) -> VcxCoreResult<(String, String)>;
 
     // TODO - FUTURE - think about moving this to somewhere else, as it aggregates other calls (not PURE Anoncreds)
-    async fn revoke_credential_local(&self, tails_dir: &str, rev_reg_id: &str, cred_rev_id: &str) -> VcxResult<()>;
+    async fn revoke_credential_local(&self, tails_dir: &str, rev_reg_id: &str, cred_rev_id: &str) -> VcxCoreResult<()>;
 
     // TODO - FUTURE - think about moving this to somewhere else, as it aggregates other calls (not PURE Anoncreds)
-    async fn publish_local_revocations(&self, submitter_did: &str, rev_reg_id: &str) -> VcxResult<()>;
+    async fn publish_local_revocations(&self, submitter_did: &str, rev_reg_id: &str) -> VcxCoreResult<()>;
 
-    async fn generate_nonce(&self) -> VcxResult<String>;
+    async fn generate_nonce(&self) -> VcxCoreResult<String>;
 }

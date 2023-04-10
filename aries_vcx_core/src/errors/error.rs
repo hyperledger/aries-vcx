@@ -4,11 +4,11 @@ use std::fmt;
 use thiserror;
 
 pub mod prelude {
-    pub use super::{err_msg, AriesVcxError, AriesVcxErrorKind, VcxResult};
+    pub use super::{err_msg, AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug, thiserror::Error)]
-pub enum AriesVcxErrorKind {
+pub enum AriesVcxCoreErrorKind {
     // Common
     #[error("Object is in invalid state for requested operation")]
     InvalidState,
@@ -161,12 +161,12 @@ pub enum AriesVcxErrorKind {
 }
 
 #[derive(Debug, thiserror::Error)]
-pub struct AriesVcxError {
+pub struct AriesVcxCoreError {
     msg: String,
-    kind: AriesVcxErrorKind,
+    kind: AriesVcxCoreErrorKind,
 }
 
-impl fmt::Display for AriesVcxError {
+impl fmt::Display for AriesVcxCoreError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         writeln!(f, "Error: {}\n", self.msg)?;
         let mut current = self.source();
@@ -178,12 +178,12 @@ impl fmt::Display for AriesVcxError {
     }
 }
 
-impl AriesVcxError {
-    pub fn from_msg<D>(kind: AriesVcxErrorKind, msg: D) -> AriesVcxError
+impl AriesVcxCoreError {
+    pub fn from_msg<D>(kind: AriesVcxCoreErrorKind, msg: D) -> AriesVcxCoreError
     where
         D: fmt::Display + fmt::Debug + Send + Sync + 'static,
     {
-        AriesVcxError {
+        AriesVcxCoreError {
             msg: msg.to_string(),
             kind,
         }
@@ -200,36 +200,36 @@ impl AriesVcxError {
         self.to_string()
     }
 
-    pub fn kind(&self) -> AriesVcxErrorKind {
+    pub fn kind(&self) -> AriesVcxCoreErrorKind {
         self.kind
     }
 
-    pub fn extend<D>(self, msg: D) -> AriesVcxError
+    pub fn extend<D>(self, msg: D) -> AriesVcxCoreError
     where
         D: fmt::Display + fmt::Debug + Send + Sync + 'static,
     {
-        AriesVcxError {
+        AriesVcxCoreError {
             msg: msg.to_string(),
             ..self
         }
     }
 
-    pub fn map<D>(self, kind: AriesVcxErrorKind, msg: D) -> AriesVcxError
+    pub fn map<D>(self, kind: AriesVcxCoreErrorKind, msg: D) -> AriesVcxCoreError
     where
         D: fmt::Display + fmt::Debug + Send + Sync + 'static,
     {
-        AriesVcxError {
+        AriesVcxCoreError {
             msg: msg.to_string(),
             kind,
         }
     }
 }
 
-pub fn err_msg<D>(kind: AriesVcxErrorKind, msg: D) -> AriesVcxError
+pub fn err_msg<D>(kind: AriesVcxCoreErrorKind, msg: D) -> AriesVcxCoreError
 where
     D: fmt::Display + fmt::Debug + Send + Sync + 'static,
 {
-    AriesVcxError::from_msg(kind, msg)
+    AriesVcxCoreError::from_msg(kind, msg)
 }
 
-pub type VcxResult<T> = Result<T, AriesVcxError>;
+pub type VcxCoreResult<T> = Result<T, AriesVcxCoreError>;

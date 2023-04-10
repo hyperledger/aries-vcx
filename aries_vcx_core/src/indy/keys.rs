@@ -11,7 +11,7 @@ pub async fn create_and_store_my_did(
     wallet_handle: WalletHandle,
     seed: Option<&str>,
     method_name: Option<&str>,
-) -> VcxResult<(String, String)> {
+) -> VcxCoreResult<(String, String)> {
     trace!(
         "create_and_store_my_did >>> seed: {:?}, method_name: {:?}",
         seed,
@@ -37,7 +37,7 @@ pub async fn create_and_store_my_did(
     Ok(res)
 }
 
-pub async fn libindy_replace_keys_start(wallet_handle: WalletHandle, did: &str) -> VcxResult<String> {
+pub async fn libindy_replace_keys_start(wallet_handle: WalletHandle, did: &str) -> VcxCoreResult<String> {
     if DidMocks::has_did_mock_responses() {
         warn!("libindy_replace_keys_start >> retrieving did mock response");
         return Ok(DidMocks::get_next_did_response());
@@ -51,7 +51,7 @@ pub async fn libindy_replace_keys_start(wallet_handle: WalletHandle, did: &str) 
     Ok(res)
 }
 
-pub async fn libindy_replace_keys_apply(wallet_handle: WalletHandle, did: &str) -> VcxResult<()> {
+pub async fn libindy_replace_keys_apply(wallet_handle: WalletHandle, did: &str) -> VcxCoreResult<()> {
     if did_mocks_enabled() {
         warn!("libindy_replace_keys_apply >> retrieving did mock response");
         return Ok(());
@@ -65,7 +65,7 @@ pub async fn libindy_replace_keys_apply(wallet_handle: WalletHandle, did: &str) 
     Ok(())
 }
 
-pub async fn get_verkey_from_wallet(wallet_handle: WalletHandle, did: &str) -> VcxResult<String> {
+pub async fn get_verkey_from_wallet(wallet_handle: WalletHandle, did: &str) -> VcxCoreResult<String> {
     if DidMocks::has_did_mock_responses() {
         warn!("get_verkey_from_wallet >> retrieving did mock response");
         return Ok(DidMocks::get_next_did_response());

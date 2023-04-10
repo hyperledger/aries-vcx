@@ -5,7 +5,7 @@ use vdrtools::{
     Locator, SearchHandle, WalletHandle,
 };
 
-use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
+use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
 use crate::global::settings;
 use crate::indy::keys;
 
@@ -64,7 +64,7 @@ pub struct RestoreWalletConfigs {
     pub wallet_key_derivation: Option<String>,
 }
 
-pub async fn open_wallet(wallet_config: &WalletConfig) -> VcxResult<WalletHandle> {
+pub async fn open_wallet(wallet_config: &WalletConfig) -> VcxCoreResult<WalletHandle> {
     trace!("open_as_main_wallet >>> {}", &wallet_config.wallet_name);
 
     let handle_res = Locator::instance()
@@ -104,19 +104,19 @@ pub async fn open_wallet(wallet_config: &WalletConfig) -> VcxResult<WalletHandle
     Ok(handle_res?)
 }
 
-fn parse_key_derivation_method(method: &str) -> Result<KeyDerivationMethod, AriesVcxError> {
+fn parse_key_derivation_method(method: &str) -> Result<KeyDerivationMethod, AriesVcxCoreError> {
     match method {
         "RAW" => Ok(KeyDerivationMethod::RAW),
         "ARGON2I_MOD" => Ok(KeyDerivationMethod::ARGON2I_MOD),
         "ARGON2I_INT" => Ok(KeyDerivationMethod::ARGON2I_INT),
-        _ => Err(AriesVcxError::from_msg(
-            AriesVcxErrorKind::InvalidOption,
+        _ => Err(AriesVcxCoreError::from_msg(
+            AriesVcxCoreErrorKind::InvalidOption,
             format!("Unknown derivation method {}", method),
         )),
     }
 }
 
-pub(crate) async fn create_indy_wallet(wallet_config: &WalletConfig) -> VcxResult<()> {
+pub(crate) async fn create_indy_wallet(wallet_config: &WalletConfig) -> VcxCoreResult<()> {
     trace!("create_wallet >>> {}", &wallet_config.wallet_name);
 
     let credentials = vdrtools::types::domain::wallet::Credentials {
@@ -163,8 +163,8 @@ pub(crate) async fn create_indy_wallet(wallet_config: &WalletConfig) -> VcxResul
             Ok(())
         }
 
-        Err(err) => Err(AriesVcxError::from_msg(
-            AriesVcxErrorKind::WalletCreate,
+        Err(err) => Err(AriesVcxCoreError::from_msg(
+            AriesVcxCoreErrorKind::WalletCreate,
             format!("could not create wallet {}: {}", wallet_config.wallet_name, err,),
         )),
     }
@@ -176,7 +176,7 @@ pub(crate) async fn add_wallet_record(
     id: &str,
     value: &str,
     tags: Option<&str>,
-) -> VcxResult<()> {
+) -> VcxCoreResult<()> {
     trace!(
         "add_record >>> xtype: {}, id: {}, value: {}, tags: {:?}",
         secret!(&xtype),
@@ -208,7 +208,7 @@ pub(crate) async fn get_wallet_record(
     xtype: &str,
     id: &str,
     options: &str,
-) -> VcxResult<String> {
+) -> VcxCoreResult<String> {
     trace!(
         "get_record >>> xtype: {}, id: {}, options: {}",
         secret!(&xtype),
@@ -228,7 +228,7 @@ pub(crate) async fn get_wallet_record(
     Ok(res)
 }
 
-pub(crate) async fn delete_wallet_record(wallet_handle: WalletHandle, xtype: &str, id: &str) -> VcxResult<()> {
+pub(crate) async fn delete_wallet_record(wallet_handle: WalletHandle, xtype: &str, id: &str) -> VcxCoreResult<()> {
     trace!("delete_record >>> xtype: {}, id: {}", secret!(&xtype), secret!(&id));
 
     if settings::indy_mocks_enabled() {
@@ -248,7 +248,7 @@ pub(crate) async fn update_wallet_record_value(
     xtype: &str,
     id: &str,
     value: &str,
-) -> VcxResult<()> {
+) -> VcxCoreResult<()> {
     trace!(
         "update_record_value >>> xtype: {}, id: {}, value: {}",
         secret!(&xtype),
@@ -273,7 +273,7 @@ pub(crate) async fn add_wallet_record_tags(
     xtype: &str,
     id: &str,
     tags: &str,
-) -> VcxResult<()> {
+) -> VcxCoreResult<()> {
     trace!(
         "add_record_tags >>> xtype: {}, id: {}, tags: {:?}",
         secret!(&xtype),
@@ -298,7 +298,7 @@ pub(crate) async fn update_wallet_record_tags(
     xtype: &str,
     id: &str,
     tags: &str,
-) -> VcxResult<()> {
+) -> VcxCoreResult<()> {
     trace!(
         "update_record_tags >>> xtype: {}, id: {}, tags: {}",
         secret!(&xtype),
@@ -323,7 +323,7 @@ pub(crate) async fn delete_wallet_record_tags(
     xtype: &str,
     id: &str,
     tag_names: &str,
-) -> VcxResult<()> {
+) -> VcxCoreResult<()> {
     trace!(
         "delete_record_tags >>> xtype: {}, id: {}, tag_names: {}",
         secret!(&xtype),
@@ -349,7 +349,7 @@ pub async fn open_search_wallet(
     xtype: &str,
     query: &str,
     options: &str,
-) -> VcxResult<SearchHandle> {
+) -> VcxCoreResult<SearchHandle> {
     trace!(
         "open_search >>> xtype: {}, query: {}, options: {}",
         secret!(&xtype),
@@ -374,7 +374,7 @@ pub async fn fetch_next_records_wallet(
     wallet_handle: WalletHandle,
     search_handle: SearchHandle,
     count: usize,
-) -> VcxResult<String> {
+) -> VcxCoreResult<String> {
     trace!(
         "fetch_next_records >>> search_handle: {}, count: {}",
         search_handle.0,
@@ -394,7 +394,7 @@ pub async fn fetch_next_records_wallet(
 }
 
 // TODO - FUTURE - revert to pub(crate) after libvcx dependency is fixed
-pub async fn close_search_wallet(search_handle: SearchHandle) -> VcxResult<()> {
+pub async fn close_search_wallet(search_handle: SearchHandle) -> VcxCoreResult<()> {
     trace!("close_search >>> search_handle: {:?}", search_handle);
 
     if settings::indy_mocks_enabled() {
@@ -410,14 +410,17 @@ pub async fn close_search_wallet(search_handle: SearchHandle) -> VcxResult<()> {
 }
 
 // TODO - FUTURE - can this be moved externally - move to a generic setup util?
-pub async fn wallet_configure_issuer(wallet_handle: WalletHandle, enterprise_seed: &str) -> VcxResult<IssuerConfig> {
+pub async fn wallet_configure_issuer(
+    wallet_handle: WalletHandle,
+    enterprise_seed: &str,
+) -> VcxCoreResult<IssuerConfig> {
     let (institution_did, _institution_verkey) =
         keys::create_and_store_my_did(wallet_handle, Some(enterprise_seed), None).await?;
 
     Ok(IssuerConfig { institution_did })
 }
 
-pub async fn create_and_open_wallet(wallet_config: &WalletConfig) -> VcxResult<WalletHandle> {
+pub async fn create_and_open_wallet(wallet_config: &WalletConfig) -> VcxCoreResult<WalletHandle> {
     if settings::indy_mocks_enabled() {
         warn!("create_and_open_wallet ::: Indy mocks enabled, skipping opening main wallet.");
         return Ok(WalletHandle(1));
@@ -430,7 +433,7 @@ pub async fn create_and_open_wallet(wallet_config: &WalletConfig) -> VcxResult<W
     Ok(handle)
 }
 
-pub async fn close_wallet(wallet_handle: WalletHandle) -> VcxResult<()> {
+pub async fn close_wallet(wallet_handle: WalletHandle) -> VcxCoreResult<()> {
     trace!("close_wallet >>>");
 
     if settings::indy_mocks_enabled() {
@@ -446,7 +449,7 @@ pub async fn close_wallet(wallet_handle: WalletHandle) -> VcxResult<()> {
 #[cfg(feature = "general_test")]
 #[cfg(test)]
 mod test {
-    use crate::errors::error::AriesVcxErrorKind;
+    use crate::errors::error::AriesVcxCoreErrorKind;
     use crate::indy::wallet::add_wallet_record;
     use crate::utils::devsetup::SetupLibraryWallet;
 
@@ -459,7 +462,7 @@ mod test {
             let err = add_wallet_record(setup.wallet_handle, "record_type", "123", "Record Value", Some("{}"))
                 .await
                 .unwrap_err();
-            assert_eq!(err.kind(), AriesVcxErrorKind::DuplicationWalletRecord);
+            assert_eq!(err.kind(), AriesVcxCoreErrorKind::DuplicationWalletRecord);
         })
         .await;
     }

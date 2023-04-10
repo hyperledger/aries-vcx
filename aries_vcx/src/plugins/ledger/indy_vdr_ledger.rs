@@ -21,9 +21,9 @@ use vdr::utils::Qualifiable;
 use crate::errors::error::VcxResult;
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind};
 use crate::global::settings;
+use crate::plugins::wallet::base_wallet::BaseWallet;
 use crate::utils::author_agreement::get_txn_author_agreement;
 use crate::utils::json::{AsTypeOrDeserializationError, TryGetIndex};
-use crate::wallet::base_wallet::BaseWallet;
 
 use super::base_ledger::BaseLedger;
 
