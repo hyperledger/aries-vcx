@@ -1,7 +1,5 @@
 use vdrtools::{DidValue, Locator};
 
-use vdrtools::PoolHandle;
-
 use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
 use crate::global::settings;
 use crate::indy::anoncreds;
@@ -10,7 +8,7 @@ use crate::indy::ledger::transactions::{
 };
 use crate::indy::wallet_non_secrets::{clear_rev_reg_delta, get_rev_reg_delta, set_rev_reg_delta};
 use crate::utils::parse_and_validate;
-use crate::WalletHandle;
+use crate::{PoolHandle, WalletHandle};
 
 pub const BLOB_STORAGE_TYPE: &str = "default";
 

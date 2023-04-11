@@ -1,11 +1,9 @@
-use vdrtools::PoolHandle;
-
 use crate::errors::error::VcxCoreResult;
 use crate::global::settings;
 use crate::indy::ledger::transactions::{
     _check_schema_response, build_schema_request, set_endorser, sign_and_submit_to_ledger,
 };
-use crate::WalletHandle;
+use crate::{PoolHandle, WalletHandle};
 use vdrtools::{AttributeNames, DidValue, Locator};
 
 // consider relocating out of primitive

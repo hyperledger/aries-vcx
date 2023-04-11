@@ -1,8 +1,7 @@
 use async_trait::async_trait;
-use vdrtools::PoolHandle;
 
 use crate::errors::error::VcxCoreResult;
-use crate::{indy, WalletHandle};
+use crate::{indy, PoolHandle, WalletHandle};
 
 use super::base_ledger::BaseLedger;
 

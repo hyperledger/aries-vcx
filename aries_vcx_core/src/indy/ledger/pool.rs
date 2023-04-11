@@ -2,10 +2,10 @@ use serde::{Deserialize, Serialize};
 use vdrtools::Locator;
 
 use vdrtools::types::errors::IndyErrorKind;
-use vdrtools::PoolHandle;
 
 use crate::errors::error::prelude::*;
 use crate::global::settings;
+use crate::PoolHandle;
 
 pub fn set_protocol_version() -> VcxCoreResult<()> {
     Locator::instance()
@@ -64,7 +64,7 @@ pub async fn open_pool_ledger(pool_name: &str, config: Option<PoolConfig>) -> Vc
 pub async fn close(handle: PoolHandle) -> VcxCoreResult<()> {
     // TODO there was timeout here (before future-based Rust wrapper)
 
-    Locator::instance().pool_controller.close(handle).await?;
+    Locator::instance().pool_controller.close(handle.0).await?;
 
     Ok(())
 }
@@ -107,7 +107,7 @@ pub mod test_utils {
     pub async fn open_test_pool() -> PoolHandle {
         create_test_ledger_config().await;
         let handle = open_pool_ledger(POOL, None).await.unwrap();
-        handle
+        PoolHandle(handle)
     }
 
     pub fn get_txns(test_pool_ip: &str) -> Vec<String> {
