@@ -1,8 +1,8 @@
 use async_trait::async_trait;
-use vdrtools::{PoolHandle, WalletHandle};
+use vdrtools::PoolHandle;
 
 use crate::errors::error::VcxCoreResult;
-use crate::indy;
+use crate::{indy, WalletHandle};
 
 use super::base_anoncreds::BaseAnonCreds;
 

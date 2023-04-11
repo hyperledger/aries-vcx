@@ -1,14 +1,12 @@
 use vdrtools::{CredentialOffer, CredentialRequest, CredentialValues, Locator, RevocationRegistryId};
 
-use vdrtools::WalletHandle;
-
 use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
 use crate::global::settings;
 use crate::indy::anoncreds;
 use crate::indy::utils::LibindyMock;
-use crate::utils;
 use crate::utils::constants::LIBINDY_CRED_OFFER;
 use crate::utils::parse_and_validate;
+use crate::{utils, WalletHandle};
 
 pub async fn libindy_issuer_create_credential_offer(
     wallet_handle: WalletHandle,
@@ -27,7 +25,7 @@ pub async fn libindy_issuer_create_credential_offer(
 
     let res = Locator::instance()
         .issuer_controller
-        .create_credential_offer(wallet_handle, vdrtools::CredentialDefinitionId(cred_def_id.into()))
+        .create_credential_offer(wallet_handle.0, vdrtools::CredentialDefinitionId(cred_def_id.into()))
         .await?;
 
     Ok(res)
@@ -53,7 +51,7 @@ pub async fn libindy_issuer_create_credential(
     let res = Locator::instance()
         .issuer_controller
         .new_credential(
-            wallet_handle,
+            wallet_handle.0,
             parse_and_validate::<CredentialOffer>(cred_offer_json)?,
             parse_and_validate::<CredentialRequest>(cred_req_json)?,
             parse_and_validate::<CredentialValues>(cred_values_json)?,

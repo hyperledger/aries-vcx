@@ -26,3 +26,8 @@ pub mod indy;
 pub mod ledger;
 pub mod utils;
 pub mod wallet;
+
+#[derive(Debug, Hash, PartialEq, Eq, Copy, Clone)]
+pub struct WalletHandle(pub vdrtools::WalletHandle);
+#[derive(Debug, Clone)]
+pub struct PoolHandle(pub vdrtools::PoolHandle);

@@ -3,9 +3,10 @@ use std::thread;
 use async_trait::async_trait;
 use futures::executor::block_on;
 use serde_json::Value;
-use vdrtools::{SearchHandle, WalletHandle};
+use vdrtools::SearchHandle;
 
 use crate::errors::error::{AriesVcxCoreError, VcxCoreResult};
+use crate::WalletHandle;
 use crate::{
     indy,
     utils::{async_fn_iterator::AsyncFnIterator, json::TryGetIndex},

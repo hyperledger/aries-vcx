@@ -1,8 +1,8 @@
 use serde_json;
-use vdrtools::WalletHandle;
 
 use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
 use crate::indy::wallet::{add_wallet_record, delete_wallet_record, get_wallet_record, update_wallet_record_value};
+use crate::WalletHandle;
 
 static WALLET_RECORD_TYPE: &str = "cache";
 static RECORD_ID_PREFIX: &str = "rev_reg_delta:";

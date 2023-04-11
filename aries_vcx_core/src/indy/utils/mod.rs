@@ -49,13 +49,13 @@ impl LibindyMock {
 #[cfg(feature = "test_utils")]
 pub mod test_setup {
 
-    use crate::indy;
+    use crate::{indy, WalletHandle};
 
     const TRUSTEE_SEED: &'static str = "000000000000000000000000Trustee1";
     const WALLET_KEY: &str = "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY";
     const WALLET_KEY_DERIVATION: &str = "RAW";
 
-    pub async fn with_wallet<F>(f: impl FnOnce(vdrtools::WalletHandle) -> F)
+    pub async fn with_wallet<F>(f: impl FnOnce(WalletHandle) -> F)
     where
         F: std::future::Future<Output = ()>,
     {
@@ -77,13 +77,13 @@ pub mod test_setup {
         indy::wallet::delete_wallet(&wallet_config).await.unwrap();
     }
 
-    pub async fn create_trustee_key(wallet_handle: vdrtools::WalletHandle) -> String {
+    pub async fn create_trustee_key(wallet_handle: WalletHandle) -> String {
         indy::signing::create_key(wallet_handle, Some(TRUSTEE_SEED))
             .await
             .unwrap()
     }
 
-    pub async fn create_key(wallet_handle: vdrtools::WalletHandle) -> String {
+    pub async fn create_key(wallet_handle: WalletHandle) -> String {
         let seed: String = crate::utils::random::generate_random_seed();
 
         indy::signing::create_key(wallet_handle, Some(&seed)).await.unwrap()

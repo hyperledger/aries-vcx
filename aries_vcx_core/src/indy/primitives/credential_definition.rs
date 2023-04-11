@@ -4,7 +4,8 @@ use crate::errors::error::VcxCoreResult;
 use crate::global::settings;
 use crate::indy::ledger::transactions::{build_cred_def_request, check_response, sign_and_submit_to_ledger};
 use crate::utils::parse_and_validate;
-use vdrtools::{PoolHandle, WalletHandle};
+use crate::WalletHandle;
+use vdrtools::PoolHandle;
 
 // consider relocating out of primitive
 pub async fn publish_cred_def(
@@ -39,7 +40,7 @@ pub async fn libindy_create_and_store_credential_def(
     let res = Locator::instance()
         .issuer_controller
         .create_and_store_credential_definition(
-            wallet_handle,
+            wallet_handle.0,
             DidValue(issuer_did.into()),
             parse_and_validate(schema_json)?,
             tag.into(),

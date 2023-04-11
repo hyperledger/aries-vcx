@@ -1,23 +1,23 @@
 use vdrtools::{DidValue, Locator};
 
-use vdrtools::{PoolHandle, WalletHandle};
+use vdrtools::PoolHandle;
 
 use crate::common::ledger::transactions::{Request, Response};
 use crate::errors::error::prelude::*;
 use crate::global::settings;
 use crate::indy::utils::mocks::pool_mocks::PoolMocks;
-use crate::utils;
 use crate::utils::constants::{
     rev_def_json, CRED_DEF_ID, CRED_DEF_JSON, CRED_DEF_REQ, REVOC_REG_TYPE, REV_REG_DELTA_JSON, REV_REG_ID,
     REV_REG_JSON, SCHEMA_ID, SCHEMA_JSON, SCHEMA_TXN, SUBMIT_SCHEMA_RESPONSE,
 };
 use crate::utils::parse_and_validate;
 use crate::utils::random::generate_random_did;
+use crate::{utils, WalletHandle};
 
 pub async fn multisign_request(wallet_handle: WalletHandle, did: &str, request: &str) -> VcxCoreResult<String> {
     let res = Locator::instance()
         .ledger_controller
-        .multi_sign_request(wallet_handle, DidValue(did.into()), request.into())
+        .multi_sign_request(wallet_handle.0, DidValue(did.into()), request.into())
         .await?;
 
     Ok(res)
@@ -46,7 +46,7 @@ pub async fn libindy_sign_and_submit_request(
         .ledger_controller
         .sign_and_submit_request(
             pool_handle,
-            wallet_handle,
+            wallet_handle.0,
             DidValue(issuer_did.into()),
             request_json.into(),
         )
@@ -240,7 +240,7 @@ pub async fn libindy_get_schema(
         .cache_controller
         .get_schema(
             pool_handle,
-            wallet_handle,
+            wallet_handle.0,
             submitter_did.into(),
             vdrtools::SchemaId(schema_id.into()),
             serde_json::from_str("{}")?,
@@ -259,7 +259,7 @@ async fn libindy_get_cred_def(
     trace!(
         "libindy_get_cred_def >>> pool_handle: {}, wallet_handle: {:?}, submitter_did: {}",
         pool_handle,
-        wallet_handle,
+        wallet_handle.0,
         submitter_did
     );
 
@@ -267,7 +267,7 @@ async fn libindy_get_cred_def(
         .cache_controller
         .get_cred_def(
             pool_handle,
-            wallet_handle,
+            wallet_handle.0,
             submitter_did.into(),
             cred_def_id.into(),
             serde_json::from_str("{}")?,

@@ -1,13 +1,12 @@
 use serde_json::{Map, Value};
-use vdrtools::WalletHandle;
 use vdrtools::{Locator, SearchHandle};
 
 use crate::errors::error::prelude::*;
 use crate::global::settings;
 use crate::indy::anoncreds::close_search_handle;
-use crate::utils;
 use crate::utils::constants::{ATTRS, PROOF_REQUESTED_PREDICATES, REQUESTED_ATTRIBUTES};
 use crate::utils::parse_and_validate;
+use crate::{utils, WalletHandle};
 
 pub async fn libindy_prover_create_proof(
     wallet_handle: WalletHandle,
@@ -27,7 +26,7 @@ pub async fn libindy_prover_create_proof(
     let res = Locator::instance()
         .prover_controller
         .create_proof(
-            wallet_handle,
+            wallet_handle.0,
             parse_and_validate(proof_req_json)?,
             parse_and_validate(requested_credentials_json)?,
             master_secret_id.into(),
@@ -71,7 +70,7 @@ pub async fn libindy_prover_get_credentials(
 ) -> VcxCoreResult<String> {
     let res = Locator::instance()
         .prover_controller
-        .get_credentials(wallet_handle, filter_json.map(String::from))
+        .get_credentials(wallet_handle.0, filter_json.map(String::from))
         .await
         .map_err(|ec| {
             error!("Getting prover credentials failed.");
@@ -145,7 +144,7 @@ pub async fn libindy_prover_get_credentials_for_proof_req(
     if !fetch_attrs.is_empty() {
         let search_handle = Locator::instance()
             .prover_controller
-            .search_credentials_for_proof_req(wallet_handle, serde_json::from_str(proof_req)?, None)
+            .search_credentials_for_proof_req(wallet_handle.0, serde_json::from_str(proof_req)?, None)
             .await?;
 
         let creds: String = fetch_credentials(search_handle, fetch_attrs).await?;

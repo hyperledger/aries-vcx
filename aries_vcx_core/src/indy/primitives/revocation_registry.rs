@@ -1,6 +1,6 @@
 use vdrtools::{DidValue, Locator};
 
-use vdrtools::{PoolHandle, WalletHandle};
+use vdrtools::PoolHandle;
 
 use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
 use crate::global::settings;
@@ -10,6 +10,7 @@ use crate::indy::ledger::transactions::{
 };
 use crate::indy::wallet_non_secrets::{clear_rev_reg_delta, get_rev_reg_delta, set_rev_reg_delta};
 use crate::utils::parse_and_validate;
+use crate::WalletHandle;
 
 pub const BLOB_STORAGE_TYPE: &str = "default";
 
@@ -34,7 +35,7 @@ pub async fn libindy_create_and_store_revoc_reg(
     let res = Locator::instance()
         .issuer_controller
         .create_and_store_revocation_registry(
-            wallet_handle,
+            wallet_handle.0,
             DidValue(issuer_did.into()),
             None,
             tag.into(),
@@ -62,7 +63,7 @@ pub async fn libindy_issuer_revoke_credential(
     let res = Locator::instance()
         .issuer_controller
         .revoke_credential(
-            wallet_handle,
+            wallet_handle.0,
             blob_handle,
             vdrtools::RevocationRegistryId(rev_reg_id.into()),
             cred_rev_id.into(),

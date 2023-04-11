@@ -5,8 +5,7 @@ use vdrtools::{
 
 use crate::errors::error::VcxCoreResult;
 use crate::global::settings;
-use crate::utils;
-use vdrtools::WalletHandle;
+use crate::{utils, WalletHandle};
 
 pub async fn libindy_prover_store_credential(
     wallet_handle: WalletHandle,
@@ -48,7 +47,7 @@ pub async fn libindy_prover_store_credential(
     let res = Locator::instance()
         .prover_controller
         .store_credential(
-            wallet_handle,
+            wallet_handle.0,
             cred_id.map(ToOwned::to_owned),
             cred_req_meta,
             cred_json,
@@ -69,7 +68,7 @@ pub async fn libindy_prover_get_credential(wallet_handle: WalletHandle, cred_id:
 
     let res = Locator::instance()
         .prover_controller
-        .get_credential(wallet_handle, cred_id.into())
+        .get_credential(wallet_handle.0, cred_id.into())
         .await?;
 
     Ok(res)
@@ -78,7 +77,7 @@ pub async fn libindy_prover_get_credential(wallet_handle: WalletHandle, cred_id:
 pub async fn libindy_prover_delete_credential(wallet_handle: WalletHandle, cred_id: &str) -> VcxCoreResult<()> {
     Locator::instance()
         .prover_controller
-        .delete_credential(wallet_handle, cred_id.into())
+        .delete_credential(wallet_handle.0, cred_id.into())
         .await?;
 
     Ok(())
@@ -94,7 +93,7 @@ pub async fn libindy_prover_create_master_secret(
 
     let res = Locator::instance()
         .prover_controller
-        .create_master_secret(wallet_handle, Some(master_secret_id.into()))
+        .create_master_secret(wallet_handle.0, Some(master_secret_id.into()))
         .await?;
 
     Ok(res)
@@ -118,7 +117,7 @@ pub async fn libindy_prover_create_credential_req(
     let res = Locator::instance()
         .prover_controller
         .create_credential_request(
-            wallet_handle,
+            wallet_handle.0,
             DidValue(prover_did.into()),
             cred_offer,
             cred_def,
