@@ -121,7 +121,7 @@ fn build_credential_offer(
     credential_preview: CredentialPreview,
     comment: Option<String>,
 ) -> VcxResult<OfferCredential> {
-    let id = Uuid::new_v4().to_string();
+    let id = thread_id.to_owned();
 
     let mut content = OfferCredentialContent::new(
         credential_preview,

@@ -89,11 +89,14 @@ fn build_starting_presentation_request(
     request_data: &PresentationRequestData,
     comment: Option<String>,
 ) -> VcxResult<RequestPresentation> {
-    let id = Uuid::new_v4().to_string();
-    let content = RequestPresentationContent::new(vec![make_attach_from_str!(
+    let id = thread_id.to_owned();
+    
+    let mut content = RequestPresentationContent::new(vec![make_attach_from_str!(
         &json!(request_data).to_string(),
         AttachmentId::PresentationRequest.as_ref().to_string()
     )]);
+    content.comment = comment;
+
     let mut decorators = RequestPresentationDecorators::default();
     let mut timing = Timing::default();
     timing.out_time = Some(Utc::now());
