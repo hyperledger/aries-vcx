@@ -10,12 +10,12 @@ use aries_vcx::messages::protocols::connection::request::Request;
 use aries_vcx::messages::protocols::issuance::credential_offer::CredentialOffer;
 use aries_vcx::messages::protocols::issuance::credential_proposal::CredentialProposal;
 use aries_vcx::messages::protocols::proof_presentation::presentation_proposal::PresentationProposal;
-use aries_vcx::plugins::wallet::agency_client_wallet::ToBaseAgencyClientWallet;
 use aries_vcx::{
     agency_client::{agency_client::AgencyClient, configuration::AgencyClientConfig},
     handlers::connection::mediated_connection::{ConnectionState, MediatedConnection},
     messages::a2a::A2AMessage,
 };
+use aries_vcx_core::wallet::agency_client_wallet::ToBaseAgencyClientWallet;
 
 pub struct ServiceMediatedConnections {
     profile: Arc<dyn Profile>,

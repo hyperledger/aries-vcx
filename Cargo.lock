@@ -224,6 +224,7 @@ name = "aries-vcx-agent"
 version = "0.53.0"
 dependencies = [
  "aries-vcx",
+ "aries_vcx_core",
  "async-trait",
  "derive_builder 0.11.2",
  "log",
