@@ -67,11 +67,12 @@ pub mod tests {
     use aries_vcx::utils::devsetup::SetupMocks;
     use aries_vcx::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER;
     use aries_vcx::utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION;
-    use aries_vcx::vdrtools::INVALID_WALLET_HANDLE;
 
     #[tokio::test]
     #[cfg(feature = "general_test")]
     async fn test_shutdown() {
+        use aries_vcx_core::INVALID_WALLET_HANDLE;
+
         let _setup = SetupMocks::init();
 
         let data = r#"["name","male"]"#;
