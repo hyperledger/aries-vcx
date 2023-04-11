@@ -29,5 +29,6 @@ pub mod wallet;
 
 #[derive(Debug, Hash, PartialEq, Eq, Copy, Clone)]
 pub struct WalletHandle(pub vdrtools::WalletHandle);
+pub const INVALID_WALLET_HANDLE: WalletHandle = WalletHandle(vdrtools::INVALID_WALLET_HANDLE);
 #[derive(Debug, Clone)]
 pub struct PoolHandle(pub vdrtools::PoolHandle);

@@ -443,7 +443,7 @@ mod integration_tests {
                 .configure(wallet.to_base_agency_client_wallet(), &config)
                 .unwrap();
             client.update_agent_webhook("https://example.org").await.unwrap();
-            close_search_wallet(vdrtools::SearchHandle(wallet_handle.0))
+            close_search_wallet(vdrtools::SearchHandle(wallet_handle.0 .0))
                 .await
                 .unwrap();
         })

@@ -17,6 +17,7 @@ pub mod test_utils {
     use aries_vcx_core::ledger::indy_vdr_ledger::LedgerPoolConfig;
     use aries_vcx_core::wallet::base_wallet::BaseWallet;
     use aries_vcx_core::wallet::indy_wallet::IndySdkWallet;
+    use aries_vcx_core::WalletHandle;
     use futures::future::BoxFuture;
     use messages::concepts::ack::please_ack::AckOn;
     use messages::diddoc::aries::service::AriesService;
@@ -58,7 +59,7 @@ pub mod test_utils {
     use aries_vcx::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
     use aries_vcx::utils::devsetup::*;
     use aries_vcx::utils::provision::provision_cloud_agent;
-    use vdrtools::{PoolHandle, WalletHandle};
+    use vdrtools::PoolHandle;
 
     #[derive(Debug)]
     pub struct VcxAgencyMessage {

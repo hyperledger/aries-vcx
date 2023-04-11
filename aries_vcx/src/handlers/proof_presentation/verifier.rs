@@ -224,6 +224,7 @@ mod unit_tests {
     use crate::utils::constants::{REQUESTED_ATTRS, REQUESTED_PREDICATES};
     use crate::utils::devsetup::*;
     use crate::utils::mockdata::mock_settings::MockBuilder;
+    use aries_vcx_core::INVALID_WALLET_HANDLE;
     use messages::a2a::A2AMessage;
     use messages::protocols::proof_presentation::presentation::test_utils::_presentation;
     use vdrtools::WalletHandle;
@@ -231,7 +232,7 @@ mod unit_tests {
     use super::*;
 
     fn _dummy_profile() -> Arc<dyn Profile> {
-        Arc::new(VdrtoolsProfile::new(WalletHandle(0), 0))
+        Arc::new(VdrtoolsProfile::new(INVALID_WALLET_HANDLE, 0))
     }
 
     async fn _verifier() -> Verifier {

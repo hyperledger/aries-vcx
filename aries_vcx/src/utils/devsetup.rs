@@ -15,10 +15,11 @@ use aries_vcx_core::indy::wallet::{
 use aries_vcx_core::ledger::indy_vdr_ledger::LedgerPoolConfig;
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use aries_vcx_core::wallet::indy_wallet::IndySdkWallet;
+use aries_vcx_core::WalletHandle;
 use chrono::{DateTime, Duration, Utc};
 
 use futures::future::BoxFuture;
-use vdrtools::{PoolHandle, WalletHandle};
+use vdrtools::PoolHandle;
 
 use agency_client::agency_client::AgencyClient;
 use agency_client::configuration::AgentProvisionConfig;
