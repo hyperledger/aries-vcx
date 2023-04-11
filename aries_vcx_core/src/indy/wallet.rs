@@ -568,7 +568,7 @@ pub async fn export_wallet(wallet_handle: WalletHandle, path: &str, backup_key: 
     Locator::instance()
         .wallet_controller
         .export(
-            wallet_handle,
+            wallet_handle.0,
             vdrtools::types::domain::wallet::ExportConfig {
                 key: backup_key.into(),
                 path: path.into(),
