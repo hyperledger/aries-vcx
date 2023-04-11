@@ -3,12 +3,12 @@ use crate::api_vcx::api_global::pool::{close_main_pool, reset_main_pool_handle};
 
 use crate::api_vcx::api_global::settings::get_config_value;
 use crate::api_vcx::api_global::wallet::close_main_wallet;
+use aries_vcx::aries_vcx_core::indy::ledger::pool;
+use aries_vcx::aries_vcx_core::indy::wallet::{delete_wallet, WalletConfig};
 use aries_vcx::global::settings::{
     reset_config_values, CONFIG_POOL_NAME, CONFIG_WALLET_KEY, CONFIG_WALLET_KEY_DERIVATION, CONFIG_WALLET_NAME,
     CONFIG_WALLET_TYPE, DEFAULT_POOL_NAME, DEFAULT_WALLET_NAME, UNINITIALIZED_WALLET_KEY, WALLET_KDF_DEFAULT,
 };
-use aries_vcx_core::indy::ledger::pool;
-use aries_vcx_core::indy::wallet::{delete_wallet, WalletConfig};
 
 pub fn state_vcx_shutdown(delete: bool) {
     info!("vcx_shutdown >>>");
@@ -64,6 +64,7 @@ pub mod tests {
     use crate::api_vcx::api_handle::{
         credential, credential_def, disclosed_proof, issuer_credential, mediated_connection, proof, schema,
     };
+    use aries_vcx::aries_vcx_core::INVALID_WALLET_HANDLE;
     use aries_vcx::utils::devsetup::SetupMocks;
     use aries_vcx::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER;
     use aries_vcx::utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION;
@@ -71,8 +72,6 @@ pub mod tests {
     #[tokio::test]
     #[cfg(feature = "general_test")]
     async fn test_shutdown() {
-        use aries_vcx_core::INVALID_WALLET_HANDLE;
-
         let _setup = SetupMocks::init();
 
         let data = r#"["name","male"]"#;
