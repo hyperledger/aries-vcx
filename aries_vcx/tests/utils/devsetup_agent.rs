@@ -14,6 +14,7 @@ pub mod test_utils {
         close_wallet, create_wallet_with_master_secret, delete_wallet, open_wallet, wallet_configure_issuer,
         IssuerConfig, WalletConfig,
     };
+    use aries_vcx_core::ledger::indy_vdr_ledger::LedgerPoolConfig;
     use aries_vcx_core::wallet::base_wallet::BaseWallet;
     use aries_vcx_core::wallet::indy_wallet::IndySdkWallet;
     use futures::future::BoxFuture;
@@ -48,7 +49,6 @@ pub mod test_utils {
     use aries_vcx::messages::protocols::issuance::credential_offer::CredentialOffer;
     use aries_vcx::messages::protocols::issuance::credential_offer::OfferInfo;
     use aries_vcx::messages::protocols::proof_presentation::presentation_request::PresentationRequest;
-    use aries_vcx::plugins::ledger::indy_vdr_ledger::LedgerPoolConfig;
     use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
     use aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
     use aries_vcx::protocols::mediated_connection::invitee::state_machine::InviteeState;

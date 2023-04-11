@@ -210,16 +210,16 @@ impl BaseAnonCreds for MockAnoncreds {
 mod unit_tests {
 
     use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
+    use aries_vcx_core::errors::error::{AriesVcxCoreErrorKind, VcxCoreResult};
 
-    use crate::errors::error::{AriesVcxErrorKind, VcxResult};
     use crate::utils::mockdata::profile::mock_anoncreds::MockAnoncreds;
 
     #[tokio::test]
     async fn test_unimplemented_methods() {
         // test used to assert which methods are unimplemented currently, can be removed after all methods implemented
 
-        fn assert_unimplemented<T: std::fmt::Debug>(result: VcxResult<T>) {
-            assert_eq!(result.unwrap_err().kind(), AriesVcxErrorKind::UnimplementedFeature)
+        fn assert_unimplemented<T: std::fmt::Debug>(result: VcxCoreResult<T>) {
+            assert_eq!(result.unwrap_err().kind(), AriesVcxCoreErrorKind::UnimplementedFeature)
         }
 
         let anoncreds: Box<dyn BaseAnonCreds> = Box::new(MockAnoncreds);

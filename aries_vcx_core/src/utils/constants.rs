@@ -25,6 +25,8 @@ pub static SUBMIT_SCHEMA_RESPONSE: &str = r#"{"op":"REPLY","result":{"reqId":152
 pub static TEST_TAILS_HASH: &str = r#"5R6BWXL3vPrbJPKe9FsHAVG9hqKdDvVxonBuj3ETYuZh"#;
 pub static TEST_TAILS_LOCATION: &str =
     r#"/var/folders/kr/9gkxsj_s01b6fvx_72trl3mm0000gp/T/tails_file/5R6BWXL3vPrbJPKe9FsHAVG9hqKdDvVxonBuj3ETYuZh"#;
+pub static POOL: &str = "pool1";
+pub static GENESIS_PATH: &str = "pool1.txn";
 pub fn rev_def_json() -> String {
     json!({
         "ver":"1.0",

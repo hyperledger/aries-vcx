@@ -3,14 +3,9 @@ use aries_vcx_core::indy::utils::LibindyMock;
 use aries_vcx_core::ledger::base_ledger::BaseLedger;
 use async_trait::async_trait;
 
-use crate::{
-    common::primitives::revocation_registry::RevocationRegistryDefinition,
-    utils::{
-        self,
-        constants::{
-            rev_def_json, CRED_DEF_JSON, REV_REG_DELTA_JSON, REV_REG_ID, REV_REG_JSON, SCHEMA_JSON, SCHEMA_TXN,
-        },
-    },
+use crate::utils::{
+    self,
+    constants::{rev_def_json, CRED_DEF_JSON, REV_REG_DELTA_JSON, REV_REG_ID, REV_REG_JSON, SCHEMA_JSON, SCHEMA_TXN},
 };
 
 #[derive(Debug)]
@@ -145,9 +140,10 @@ impl BaseLedger for MockLedger {
 #[cfg(feature = "general_test")]
 mod unit_tests {
 
-    use aries_vcx_core::ledger::base_ledger::BaseLedger;
-
-    use crate::errors::error::{AriesVcxCoreErrorKind, VcxCoreResult};
+    use aries_vcx_core::{
+        errors::error::{AriesVcxCoreErrorKind, VcxCoreResult},
+        ledger::base_ledger::BaseLedger,
+    };
 
     use super::MockLedger;
 

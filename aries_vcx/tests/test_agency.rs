@@ -13,8 +13,6 @@ mod integration_tests {
     use std::thread;
     use std::time::Duration;
 
-    use aries_vcx::indy::wallet::{close_wallet, WalletConfig};
-
     use agency_client::agency_client::AgencyClient;
     use agency_client::api::downloaded_message::DownloadedMessage;
     use agency_client::messages::update_message::UIDsByConn;
@@ -22,8 +20,8 @@ mod integration_tests {
     use aries_vcx::global::settings;
     use aries_vcx::messages::a2a::A2AMessage;
     use aries_vcx::messages::concepts::ack::test_utils::_ack;
-    use aries_vcx::plugins::wallet::agency_client_wallet::ToBaseAgencyClientWallet;
     use aries_vcx::utils::devsetup::SetupPool;
+    use aries_vcx_core::wallet::agency_client_wallet::ToBaseAgencyClientWallet;
 
     use crate::utils::devsetup_agent::test_utils::{create_test_alice_instance, Faber};
     use crate::utils::scenarios::test_utils::create_connected_connections;
@@ -405,7 +403,10 @@ mod integration_tests {
     #[cfg(feature = "agency_pool_tests")]
     #[tokio::test]
     async fn test_update_agent_webhook() {
-        use aries_vcx_core::wallet::{base_wallet::BaseWallet, indy_wallet::IndySdkWallet};
+        use aries_vcx_core::{
+            indy::wallet::{close_search_wallet, create_and_open_wallet, WalletConfig},
+            wallet::{base_wallet::BaseWallet, indy_wallet::IndySdkWallet},
+        };
 
         SetupPool::run(|_setup| async move {
             let wallet_config = WalletConfig {
@@ -419,9 +420,7 @@ mod integration_tests {
                 rekey_derivation_method: None,
             };
 
-            let wallet_handle = aries_vcx::indy::wallet::create_and_open_wallet(&wallet_config)
-                .await
-                .unwrap();
+            let wallet_handle = create_and_open_wallet(&wallet_config).await.unwrap();
             let wallet: Arc<dyn BaseWallet> = Arc::new(IndySdkWallet::new(wallet_handle));
             let mut client = AgencyClient::new();
             let agency_url = "http://localhost:8080";
@@ -444,7 +443,9 @@ mod integration_tests {
                 .configure(wallet.to_base_agency_client_wallet(), &config)
                 .unwrap();
             client.update_agent_webhook("https://example.org").await.unwrap();
-            close_wallet(wallet_handle).await.unwrap();
+            close_search_wallet(vdrtools::SearchHandle(wallet_handle.0))
+                .await
+                .unwrap();
         })
         .await;
     }

@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
 use messages::protocols::proof_presentation::presentation::Presentation;
-use messages::status::Status;
 use std::sync::Arc;
 
 use agency_client::agency_client::AgencyClient;

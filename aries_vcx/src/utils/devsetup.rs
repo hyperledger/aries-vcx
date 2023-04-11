@@ -12,6 +12,7 @@ use aries_vcx_core::indy::wallet::{
     close_wallet, create_and_open_wallet, create_indy_wallet, create_wallet_with_master_secret, delete_wallet,
     open_wallet, wallet_configure_issuer, WalletConfig,
 };
+use aries_vcx_core::ledger::indy_vdr_ledger::LedgerPoolConfig;
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use aries_vcx_core::wallet::indy_wallet::IndySdkWallet;
 use chrono::{DateTime, Duration, Utc};
@@ -29,7 +30,6 @@ use crate::core::profile::vdrtools_profile::VdrtoolsProfile;
 use crate::global::settings;
 use crate::global::settings::init_issuer_config;
 use crate::global::settings::{disable_indy_mocks, enable_indy_mocks, set_test_configs};
-use crate::plugins::ledger::indy_vdr_ledger::LedgerPoolConfig;
 use crate::utils;
 use crate::utils::constants::GENESIS_PATH;
 use crate::utils::file::write_file;
