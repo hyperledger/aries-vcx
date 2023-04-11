@@ -114,8 +114,6 @@ impl From<u32> for LibvcxErrorKind {
 
 #[cfg(test)]
 mod tests {
-    use serde_json;
-
     use crate::errors::error::LibvcxErrorKind;
 
     #[test]

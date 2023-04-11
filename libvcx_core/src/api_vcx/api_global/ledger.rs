@@ -10,19 +10,20 @@ use crate::api_vcx::api_global::profile::get_main_profile;
 use crate::api_vcx::api_global::settings::get_config_value;
 use crate::errors::error::LibvcxResult;
 use crate::errors::mapping_from_ariesvcx::map_ariesvcx_result;
+use crate::errors::mapping_from_ariesvcxcore::map_ariesvcx_core_result;
 
 pub async fn endorse_transaction(transaction: &str) -> LibvcxResult<()> {
     let endorser_did = get_config_value(CONFIG_INSTITUTION_DID)?;
 
     let profile = get_main_profile()?;
     let ledger = profile.inject_ledger();
-    map_ariesvcx_result(ledger.endorse_transaction(&endorser_did, transaction).await)
+    map_ariesvcx_core_result(ledger.endorse_transaction(&endorser_did, transaction).await)
 }
 
 pub async fn get_ledger_txn(seq_no: i32, submitter_did: Option<String>) -> LibvcxResult<String> {
     let profile = get_main_profile()?;
     let ledger = profile.inject_ledger();
-    map_ariesvcx_result(ledger.get_ledger_txn(seq_no, submitter_did.as_deref()).await)
+    map_ariesvcx_core_result(ledger.get_ledger_txn(seq_no, submitter_did.as_deref()).await)
 }
 
 pub async fn rotate_verkey(did: &str) -> LibvcxResult<()> {
@@ -86,7 +87,7 @@ pub async fn ledger_clear_attr(target_did: &str, attr: &str) -> LibvcxResult<Str
 pub async fn ledger_get_txn_author_agreement() -> LibvcxResult<String> {
     let profile = get_main_profile()?;
     let ledger = profile.inject_ledger();
-    map_ariesvcx_result(ledger.get_txn_author_agreement().await)
+    map_ariesvcx_core_result(ledger.get_txn_author_agreement().await)
 }
 
 pub fn ledger_set_txn_author_agreement(

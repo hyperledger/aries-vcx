@@ -7,8 +7,8 @@ use aries_vcx::global::settings::{
     reset_config_values, CONFIG_POOL_NAME, CONFIG_WALLET_KEY, CONFIG_WALLET_KEY_DERIVATION, CONFIG_WALLET_NAME,
     CONFIG_WALLET_TYPE, DEFAULT_POOL_NAME, DEFAULT_WALLET_NAME, UNINITIALIZED_WALLET_KEY, WALLET_KDF_DEFAULT,
 };
-use aries_vcx::indy::ledger::pool;
-use aries_vcx::indy::wallet::{delete_wallet, WalletConfig};
+use aries_vcx_core::indy::ledger::pool;
+use aries_vcx_core::indy::wallet::{delete_wallet, WalletConfig};
 
 pub fn state_vcx_shutdown(delete: bool) {
     info!("vcx_shutdown >>>");

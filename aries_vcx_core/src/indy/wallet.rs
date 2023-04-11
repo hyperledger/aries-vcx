@@ -229,6 +229,46 @@ pub async fn delete_wallet(wallet_config: &WalletConfig) -> VcxCoreResult<()> {
     }
 }
 
+pub async fn import(restore_config: &RestoreWalletConfigs) -> VcxCoreResult<()> {
+    trace!(
+        "import >>> wallet: {} exported_wallet_path: {}",
+        restore_config.wallet_name,
+        restore_config.exported_wallet_path
+    );
+
+    Locator::instance()
+        .wallet_controller
+        .import(
+            vdrtools::types::domain::wallet::Config {
+                id: restore_config.wallet_name.clone(),
+                ..Default::default()
+            },
+            vdrtools::types::domain::wallet::Credentials {
+                key: restore_config.wallet_key.clone(),
+                key_derivation_method: restore_config
+                    .wallet_key_derivation
+                    .as_deref()
+                    .map(parse_key_derivation_method)
+                    .transpose()?
+                    .unwrap_or_else(default_key_derivation_method),
+
+                rekey: None,
+                rekey_derivation_method: default_key_derivation_method(), // default value
+
+                storage_credentials: None, // default value
+            },
+            vdrtools::types::domain::wallet::ExportConfig {
+                key: restore_config.backup_key.clone(),
+                path: restore_config.exported_wallet_path.clone(),
+
+                key_derivation_method: default_key_derivation_method(),
+            },
+        )
+        .await?;
+
+    Ok(())
+}
+
 pub(crate) async fn add_wallet_record(
     wallet_handle: WalletHandle,
     xtype: &str,
@@ -490,6 +530,29 @@ pub async fn create_wallet_with_master_secret(config: &WalletConfig) -> VcxCoreR
         .ok();
 
     Locator::instance().wallet_controller.close(wallet_handle).await?;
+
+    Ok(())
+}
+
+pub async fn export_wallet(wallet_handle: WalletHandle, path: &str, backup_key: &str) -> VcxCoreResult<()> {
+    trace!(
+        "export >>> wallet_handle: {:?}, path: {:?}, backup_key: ****",
+        wallet_handle,
+        path
+    );
+
+    Locator::instance()
+        .wallet_controller
+        .export(
+            wallet_handle,
+            vdrtools::types::domain::wallet::ExportConfig {
+                key: backup_key.into(),
+                path: path.into(),
+
+                key_derivation_method: default_key_derivation_method(),
+            },
+        )
+        .await?;
 
     Ok(())
 }
