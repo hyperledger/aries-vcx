@@ -178,6 +178,7 @@ pub mod test_utils {
     use aries_vcx::aries_vcx_core::indy::wallet::WalletConfig;
     use aries_vcx::global::settings::{CONFIG_WALLET_BACKUP_KEY, DEFAULT_WALLET_KEY, WALLET_KDF_RAW};
     use aries_vcx::utils::devsetup::TempFile;
+    use aries_vcx_core::indy::wallet::WalletConfig;
 
     use crate::api_vcx::api_global::profile::indy_wallet_handle_to_wallet;
     use crate::api_vcx::api_global::settings::get_config_value;
@@ -244,6 +245,7 @@ pub mod tests {
         CONFIG_WALLET_BACKUP_KEY, DEFAULT_WALLET_BACKUP_KEY, DEFAULT_WALLET_KEY, WALLET_KDF_RAW,
     };
     use aries_vcx::utils::devsetup::{SetupDefaults, SetupEmpty, TempFile};
+    use aries_vcx_core::indy::wallet::{delete_wallet, RestoreWalletConfigs, WalletConfig, WalletRecord};
 
     use crate::api_vcx::api_global::settings::get_config_value;
     use crate::api_vcx::api_global::wallet::test_utils::{_create_and_open_wallet, _create_main_wallet_and_its_backup};

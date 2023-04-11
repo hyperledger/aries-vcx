@@ -7,6 +7,7 @@ use aries_vcx::aries_vcx_core::{
 };
 use aries_vcx::core::profile::{profile::Profile, vdrtools_profile::VdrtoolsProfile};
 use aries_vcx::{global::settings::indy_mocks_enabled, utils::mockdata::profile::mock_profile::MockProfile};
+use aries_vcx_core::wallet::{base_wallet::BaseWallet, indy_wallet::IndySdkWallet};
 
 use super::{pool::get_main_pool_handle, wallet::get_main_wallet_handle};
 
