@@ -212,7 +212,7 @@ mod connection_serde_tests {
     use messages::decorators::thread::Thread;
     use messages::decorators::timing::Timing;
     use messages::msg_fields::protocols::connection::invitation::{
-        PairwiseInvitation, PairwiseInvitationContent, PwInvitationDecorators, Invitation,
+        Invitation, PairwiseInvitation, PairwiseInvitationContent, PwInvitationDecorators,
     };
     use messages::msg_fields::protocols::connection::request::{Request, RequestContent, RequestDecorators};
     use messages::msg_fields::protocols::connection::response::{Response, ResponseContent, ResponseDecorators};

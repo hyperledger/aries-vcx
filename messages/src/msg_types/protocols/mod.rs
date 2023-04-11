@@ -7,7 +7,7 @@ use self::{
     basic_message::BasicMessageType, connection::ConnectionType, cred_issuance::CredentialIssuanceType,
     discover_features::DiscoverFeaturesType, notification::NotificationType, out_of_band::OutOfBandType,
     present_proof::PresentProofType, report_problem::ReportProblemType, revocation::RevocationType,
-    routing::RoutingType, trust_ping::TrustPingType, signature::SignatureType,
+    routing::RoutingType, signature::SignatureType, trust_ping::TrustPingType,
 };
 use crate::{
     error::{MsgTypeError, MsgTypeResult},
@@ -25,8 +25,8 @@ pub mod present_proof;
 pub mod report_problem;
 pub mod revocation;
 pub mod routing;
-pub mod trust_ping;
 pub mod signature;
+pub mod trust_ping;
 
 /// Type representing all protocols that are currently supported.
 ///

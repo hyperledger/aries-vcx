@@ -4,7 +4,7 @@ use strum_macros::{AsRefStr, EnumString};
 use transitive::TransitiveFrom;
 
 use super::Protocol;
-use crate::msg_types::{MsgKindType};
+use crate::msg_types::MsgKindType;
 
 #[derive(Copy, Clone, Debug, From, TryInto, PartialEq, MessageType)]
 #[msg_type(protocol = "signature")]
