@@ -26,8 +26,6 @@ extern crate log;
 #[macro_use]
 extern crate derive_builder;
 
-pub extern crate vdrtools; // TODO: REMOVE THIS!
-
 pub mod anoncreds;
 mod common;
 pub mod errors;

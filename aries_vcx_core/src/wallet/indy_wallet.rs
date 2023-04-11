@@ -5,7 +5,6 @@ use futures::executor::block_on;
 use serde_json::Value;
 
 use crate::errors::error::{AriesVcxCoreError, VcxCoreResult};
-use crate::WalletHandle;
 use crate::{
     indy,
     utils::{async_fn_iterator::AsyncFnIterator, json::TryGetIndex},
