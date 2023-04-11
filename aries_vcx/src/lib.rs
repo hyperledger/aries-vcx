@@ -12,9 +12,6 @@
 
 pub extern crate agency_client;
 
-// TODO: remove reexports
-pub extern crate vdrtools;
-
 #[macro_use]
 extern crate lazy_static;
 

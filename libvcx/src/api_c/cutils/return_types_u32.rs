@@ -10,7 +10,6 @@ use std::time::Duration;
 use libc::c_char;
 
 use aries_vcx::aries_vcx_core::indy::utils::next_command_handle;
-use aries_vcx::vdrtools::CommandHandle;
 use libvcx_core::errors;
 use libvcx_core::errors::error::TIMEOUT_LIBINDY_ERROR;
 use libvcx_core::errors::mapping_ffi_tests::map_indy_error;
@@ -18,6 +17,7 @@ use libvcx_core::errors::mapping_ffi_tests::map_indy_error;
 use crate::api_c::cutils::callback::POISON_MSG;
 use crate::api_c::cutils::callback_u32 as callback;
 use crate::api_c::cutils::timeout::TimeoutUtils;
+use crate::api_c::types::CommandHandle;
 
 fn log_error<T: Display>(e: T) {
     warn!("Unable to send through libindy callback in vcx: {}", e);

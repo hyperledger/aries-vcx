@@ -2,15 +2,15 @@ use serde::{Deserialize, Serialize};
 use vdrtools::{
     types::domain::wallet::{default_key_derivation_method, KeyDerivationMethod},
     types::errors::IndyErrorKind,
-    Locator, SearchHandle,
+    Locator,
 };
 
-use crate::indy::keys;
 use crate::{
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
     indy::credentials::holder,
 };
 use crate::{global::settings, WalletHandle};
+use crate::{indy::keys, SearchHandle};
 
 #[derive(Clone, Debug, Default, Builder, Serialize, Deserialize)]
 #[builder(setter(into, strip_option), default)]
@@ -457,7 +457,7 @@ pub async fn open_search_wallet(
     );
 
     if settings::indy_mocks_enabled() {
-        return Ok(SearchHandle(1));
+        return Ok(SearchHandle(vdrtools::SearchHandle(1)));
     }
 
     let res = Locator::instance()
@@ -465,7 +465,7 @@ pub async fn open_search_wallet(
         .open_search(wallet_handle.0, xtype.into(), query.into(), options.into())
         .await?;
 
-    Ok(res)
+    Ok(SearchHandle(res))
 }
 
 // TODO - FUTURE - revert to pub(crate) after libvcx dependency is fixed
@@ -475,8 +475,8 @@ pub async fn fetch_next_records_wallet(
     count: usize,
 ) -> VcxCoreResult<String> {
     trace!(
-        "fetch_next_records >>> search_handle: {}, count: {}",
-        search_handle.0,
+        "fetch_next_records >>> search_handle: {:?}, count: {}",
+        search_handle,
         count
     );
 
@@ -486,7 +486,7 @@ pub async fn fetch_next_records_wallet(
 
     let res = Locator::instance()
         .non_secret_controller
-        .fetch_search_next_records(wallet_handle.0, search_handle, count)
+        .fetch_search_next_records(wallet_handle.0, search_handle.0, count)
         .await?;
 
     Ok(res)
@@ -502,7 +502,7 @@ pub async fn close_search_wallet(search_handle: SearchHandle) -> VcxCoreResult<(
 
     Locator::instance()
         .non_secret_controller
-        .close_search(search_handle)
+        .close_search(search_handle.0)
         .await?;
 
     Ok(())

@@ -1,10 +1,9 @@
 use aries_vcx::aries_vcx_core::indy::ledger::pool::{close, create_pool_ledger_config, open_pool_ledger, PoolConfig};
-use aries_vcx::aries_vcx_core::PoolHandle;
+use aries_vcx::aries_vcx_core::{PoolHandle, INVALID_POOL_HANDLE};
 use aries_vcx::global::settings::{indy_mocks_enabled, DEFAULT_POOL_NAME};
 use std::sync::RwLock;
 
 use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
-use aries_vcx::vdrtools::INVALID_POOL_HANDLE;
 
 lazy_static! {
     static ref POOL_HANDLE: RwLock<Option<i32>> = RwLock::new(None);
@@ -17,7 +16,7 @@ pub fn set_main_pool_handle(handle: Option<i32>) {
 
 pub fn get_main_pool_handle() -> LibvcxResult<i32> {
     if indy_mocks_enabled() {
-        return Ok(INVALID_POOL_HANDLE);
+        return Ok(INVALID_POOL_HANDLE.0);
     }
     POOL_HANDLE
         .read()

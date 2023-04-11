@@ -1,13 +1,12 @@
-use aries_vcx::aries_vcx_core::indy;
 use aries_vcx::aries_vcx_core::indy::wallet::{
     close_search_wallet, fetch_next_records_wallet, import, open_search_wallet, IssuerConfig, RestoreWalletConfigs,
     WalletConfig,
 };
+use aries_vcx::aries_vcx_core::{indy, SearchHandle};
 use aries_vcx::aries_vcx_core::{WalletHandle, INVALID_WALLET_HANDLE};
 use aries_vcx::common::signing::unpack_message_to_string;
 use aries_vcx::global::settings::DEFAULT_LINK_SECRET_ALIAS;
 use aries_vcx::protocols::mediated_connection::pairwise_info::PairwiseInfo;
-use aries_vcx::vdrtools::SearchHandle;
 
 use crate::api_vcx::api_global::profile::{get_main_profile, get_main_wallet, indy_handles_to_profile};
 use crate::errors::error::LibvcxResult;

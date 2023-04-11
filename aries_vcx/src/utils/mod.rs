@@ -3,7 +3,6 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
-use vdrtools::types::validation::Validatable;
 
 use messages::a2a::A2AMessage;
 use messages::diddoc::aries::diddoc::AriesDidDoc;
@@ -99,17 +98,4 @@ pub async fn send_message_anonymously(
 
     agency_client::httpclient::post_message(envelope, &did_doc.get_endpoint()).await?;
     Ok(())
-}
-
-pub fn parse_and_validate<'a, T>(s: &'a str) -> VcxResult<T>
-where
-    T: Validatable,
-    T: serde::Deserialize<'a>,
-{
-    let data = serde_json::from_str::<T>(s)?;
-
-    match data.validate() {
-        Ok(_) => Ok(data),
-        Err(s) => Err(AriesVcxError::from_msg(AriesVcxErrorKind::LibindyInvalidStructure, s)),
-    }
 }

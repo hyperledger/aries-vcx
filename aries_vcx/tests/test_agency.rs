@@ -404,7 +404,7 @@ mod integration_tests {
     #[tokio::test]
     async fn test_update_agent_webhook() {
         use aries_vcx_core::{
-            indy::wallet::{close_search_wallet, create_and_open_wallet, WalletConfig},
+            indy::wallet::{create_and_open_wallet, WalletConfig},
             wallet::{base_wallet::BaseWallet, indy_wallet::IndySdkWallet},
         };
 
@@ -443,9 +443,6 @@ mod integration_tests {
                 .configure(wallet.to_base_agency_client_wallet(), &config)
                 .unwrap();
             client.update_agent_webhook("https://example.org").await.unwrap();
-            close_search_wallet(vdrtools::SearchHandle(wallet_handle.0 .0))
-                .await
-                .unwrap();
         })
         .await;
     }
