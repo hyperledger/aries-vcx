@@ -1,7 +1,6 @@
 use aries_vcx::aries_vcx_core::indy::ledger::pool::{close, create_pool_ledger_config, open_pool_ledger, PoolConfig};
 use aries_vcx::aries_vcx_core::{PoolHandle, INVALID_POOL_HANDLE};
 use aries_vcx::global::settings::{indy_mocks_enabled, DEFAULT_POOL_NAME};
-use aries_vcx_core::indy::ledger::pool::{close, create_pool_ledger_config, open_pool_ledger, PoolConfig};
 use std::sync::RwLock;
 
 use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
@@ -90,10 +89,6 @@ pub mod tests {
     use aries_vcx::global::settings::{set_config_value, CONFIG_GENESIS_PATH};
     use aries_vcx::utils::constants::GENESIS_PATH;
     use aries_vcx::utils::devsetup::{SetupDefaults, SetupEmpty, TempFile};
-    use aries_vcx_core::indy::ledger::pool::test_utils::{
-        create_tmp_genesis_txn_file, delete_named_test_pool, delete_test_pool,
-    };
-    use aries_vcx_core::indy::ledger::pool::PoolConfig;
 
     #[tokio::test]
     #[cfg(feature = "pool_tests")]
