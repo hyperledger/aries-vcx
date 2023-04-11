@@ -25,7 +25,7 @@ mod integration_tests {
     #[tokio::test]
     async fn test_open_close_pool() {
         SetupWalletPool::run(|setup| async move {
-            assert!(setup.pool_handle > 0);
+            assert!(setup.pool_handle.0 > 0);
         })
         .await;
     }

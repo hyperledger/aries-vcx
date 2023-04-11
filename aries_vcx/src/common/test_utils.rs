@@ -2,8 +2,8 @@ use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
 
+use aries_vcx_core::PoolHandle;
 use aries_vcx_core::WalletHandle;
-use vdrtools::PoolHandle;
 
 use crate::common::credentials::encoding::encode_attributes;
 use crate::common::primitives::credential_definition::CredentialDef;

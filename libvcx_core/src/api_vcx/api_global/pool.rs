@@ -1,4 +1,5 @@
 use aries_vcx::aries_vcx_core::indy::ledger::pool::{close, create_pool_ledger_config, open_pool_ledger, PoolConfig};
+use aries_vcx::aries_vcx_core::PoolHandle;
 use aries_vcx::global::settings::{indy_mocks_enabled, DEFAULT_POOL_NAME};
 use std::sync::RwLock;
 
@@ -73,7 +74,7 @@ pub async fn open_main_pool(config: &PoolConfig) -> LibvcxResult<()> {
 
 pub async fn close_main_pool() -> LibvcxResult<()> {
     info!("close_main_pool >> Closing main pool");
-    close(get_main_pool_handle()?).await?;
+    close(PoolHandle(get_main_pool_handle()?)).await?;
     Ok(())
 }
 

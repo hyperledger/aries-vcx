@@ -269,6 +269,7 @@ pub mod test_utils {
 #[cfg(test)]
 mod tests {
     use crate::{common::test_utils::indy_handles_to_profile, utils::devsetup::*};
+    use aries_vcx_core::INVALID_POOL_HANDLE;
     use messages::protocols::proof_presentation::presentation_request::PresentationRequest;
 
     use super::*;
@@ -276,7 +277,7 @@ mod tests {
     #[tokio::test]
     async fn test_retrieve_credentials_fails_with_no_proof_req() {
         SetupLibraryWallet::run(|setup| async move {
-            let profile = indy_handles_to_profile(setup.wallet_handle, 0);
+            let profile = indy_handles_to_profile(setup.wallet_handle, INVALID_POOL_HANDLE);
             let proof_req = PresentationRequest::create();
             let proof = Prover::create_from_request("1", proof_req).unwrap();
             assert_eq!(

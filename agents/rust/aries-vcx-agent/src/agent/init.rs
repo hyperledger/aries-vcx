@@ -86,7 +86,7 @@ impl Agent {
             .await
             .unwrap();
 
-        let indy_profile = VdrtoolsProfile::new(wallet_handle, pool_handle);
+        let indy_profile = VdrtoolsProfile::new(wallet_handle, aries_vcx_core::PoolHandle(pool_handle));
         let profile: Arc<dyn Profile> = Arc::new(indy_profile);
         let wallet = profile.inject_wallet();
 

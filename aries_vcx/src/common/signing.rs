@@ -121,6 +121,7 @@ pub mod unit_tests {
     use crate::common::test_utils::{create_trustee_key, indy_handles_to_profile};
     use crate::utils::devsetup::SetupEmpty;
     use aries_vcx_core::indy::utils::test_setup::with_wallet;
+    use aries_vcx_core::INVALID_POOL_HANDLE;
     use messages::diddoc::aries::diddoc::test_utils::*;
     use messages::protocols::connection::response::test_utils::{_did, _response, _thread_id};
 
@@ -142,7 +143,7 @@ pub mod unit_tests {
     async fn test_response_encode_works() {
         SetupEmpty::init();
         with_wallet(|wallet_handle| async move {
-            let profile = indy_handles_to_profile(wallet_handle, 0);
+            let profile = indy_handles_to_profile(wallet_handle, INVALID_POOL_HANDLE);
             let trustee_key = create_trustee_key(&profile).await;
             let signed_response: SignedResponse =
                 sign_connection_response(&profile.inject_wallet(), &trustee_key, _response())
@@ -162,7 +163,7 @@ pub mod unit_tests {
     async fn test_decode_returns_error_if_signer_differs() {
         SetupEmpty::init();
         with_wallet(|wallet_handle| async move {
-            let profile = indy_handles_to_profile(wallet_handle, 0);
+            let profile = indy_handles_to_profile(wallet_handle, INVALID_POOL_HANDLE);
             let trustee_key = create_trustee_key(&profile).await;
             let mut signed_response: SignedResponse =
                 sign_connection_response(&profile.inject_wallet(), &trustee_key, _response())

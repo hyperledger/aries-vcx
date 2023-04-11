@@ -788,7 +788,7 @@ mod tests {
 
         // Assert pool was initialized
         assert_ne!(get_main_pool_handle().unwrap(), 0);
-        delete_test_pool(get_main_pool_handle().unwrap()).await;
+        delete_test_pool(aries_vcx::aries_vcx_core::PoolHandle(get_main_pool_handle().unwrap())).await;
         reset_main_pool_handle();
     }
 }

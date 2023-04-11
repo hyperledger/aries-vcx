@@ -15,11 +15,10 @@ use aries_vcx_core::indy::wallet::{
 use aries_vcx_core::ledger::indy_vdr_ledger::LedgerPoolConfig;
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use aries_vcx_core::wallet::indy_wallet::IndySdkWallet;
-use aries_vcx_core::WalletHandle;
+use aries_vcx_core::{PoolHandle, WalletHandle};
 use chrono::{DateTime, Duration, Utc};
 
 use futures::future::BoxFuture;
-use vdrtools::PoolHandle;
 
 use agency_client::agency_client::AgencyClient;
 use agency_client::configuration::AgentProvisionConfig;
@@ -388,7 +387,7 @@ impl SetupProfile {
 
         let profile: Arc<dyn Profile> = Arc::new(VdrtoolsProfile::new(wallet_handle, pool_handle.clone()));
 
-        async fn indy_teardown(pool_handle: i32) {
+        async fn indy_teardown(pool_handle: PoolHandle) {
             delete_test_pool(pool_handle.clone()).await;
         }
 
