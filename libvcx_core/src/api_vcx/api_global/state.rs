@@ -72,6 +72,8 @@ pub mod tests {
     #[tokio::test]
     #[cfg(feature = "general_test")]
     async fn test_shutdown() {
+        use aries_vcx_core::INVALID_WALLET_HANDLE;
+
         let _setup = SetupMocks::init();
 
         let data = r#"["name","male"]"#;
