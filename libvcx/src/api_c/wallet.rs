@@ -1,10 +1,11 @@
 use std::ptr::null;
 
+use aries_vcx::aries_vcx_core::WalletHandle;
 use futures::future::BoxFuture;
 use libc::c_char;
 
-use aries_vcx::indy::wallet::{RestoreWalletConfigs, WalletConfig};
-use aries_vcx::vdrtools::{CommandHandle, SearchHandle, WalletHandle};
+use aries_vcx::aries_vcx_core::indy::wallet::{RestoreWalletConfigs, WalletConfig};
+use aries_vcx::aries_vcx_core::vdrtools::{CommandHandle, SearchHandle};
 
 use libvcx_core;
 use libvcx_core::errors;
@@ -193,16 +194,20 @@ pub extern "C" fn vcx_open_main_wallet(
                     "vcx_open_main_wallet_cb(command_handle: {}, rc: {}",
                     command_handle, err
                 );
-                cb(command_handle, err.into(), aries_vcx::vdrtools::INVALID_WALLET_HANDLE.0);
+                cb(
+                    command_handle,
+                    err.into(),
+                    aries_vcx::aries_vcx_core::INVALID_WALLET_HANDLE.0 .0,
+                );
             }
             Ok(wh) => {
                 trace!(
                     "vcx_open_main_wallet_cb(command_handle: {}, rc: {}, wh: {})",
                     command_handle,
                     SUCCESS_ERR_CODE,
-                    wh.0
+                    wh.0 .0
                 );
-                cb(command_handle, 0, wh.0);
+                cb(command_handle, 0, wh.0 .0);
             }
         }
         Ok(())

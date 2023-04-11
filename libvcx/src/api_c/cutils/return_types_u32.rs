@@ -9,7 +9,7 @@ use std::time::Duration;
 
 use libc::c_char;
 
-use aries_vcx::indy::utils::next_command_handle;
+use aries_vcx::aries_vcx_core::indy::utils::next_command_handle;
 use aries_vcx::vdrtools::CommandHandle;
 use libvcx_core::errors;
 use libvcx_core::errors::error::TIMEOUT_LIBINDY_ERROR;

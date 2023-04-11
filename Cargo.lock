@@ -2506,7 +2506,6 @@ version = "0.53.0"
 dependencies = [
  "agency_client",
  "aries-vcx",
- "aries_vcx_core",
  "async-trait",
  "cfg-if 1.0.0",
  "chrono",

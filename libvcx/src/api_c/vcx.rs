@@ -4,8 +4,8 @@ use futures::future::{BoxFuture, FutureExt};
 use libc::c_char;
 
 use aries_vcx::agency_client::configuration::AgencyClientConfig;
-use aries_vcx::indy::ledger::pool::PoolConfig;
-use aries_vcx::indy::wallet::IssuerConfig;
+use aries_vcx::aries_vcx_core::indy::ledger::pool::PoolConfig;
+use aries_vcx::aries_vcx_core::indy::wallet::IssuerConfig;
 use libvcx_core::api_vcx::api_global::agency_client::create_agency_client_for_main_wallet;
 use libvcx_core::api_vcx::api_global::agency_client::update_webhook_url;
 use libvcx_core::api_vcx::api_global::ledger::{ledger_get_txn_author_agreement, ledger_set_txn_author_agreement};
@@ -598,17 +598,17 @@ mod tests {
     #[cfg(feature = "general_test")]
     use std::ptr;
 
+    use aries_vcx::aries_vcx_core::indy;
+    #[cfg(feature = "pool_tests")]
+    use aries_vcx::aries_vcx_core::indy::ledger::pool::{
+        test_utils::{create_tmp_genesis_txn_file, delete_named_test_pool, delete_test_pool},
+        PoolConfig,
+    };
+    use aries_vcx::aries_vcx_core::indy::wallet::{import, RestoreWalletConfigs, WalletConfig};
     use aries_vcx::global::settings::{
         set_config_value, set_test_configs, CONFIG_GENESIS_PATH, CONFIG_TXN_AUTHOR_AGREEMENT,
         DEFAULT_WALLET_BACKUP_KEY, DEFAULT_WALLET_KEY, WALLET_KDF_RAW,
     };
-    use aries_vcx::indy;
-    #[cfg(feature = "pool_tests")]
-    use aries_vcx::indy::ledger::pool::{
-        test_utils::{create_tmp_genesis_txn_file, delete_named_test_pool, delete_test_pool},
-        PoolConfig,
-    };
-    use aries_vcx::indy::wallet::{import, RestoreWalletConfigs, WalletConfig};
     use aries_vcx::utils::constants::GENESIS_PATH;
     use aries_vcx::utils::devsetup::{
         SetupDefaults, SetupEmpty, SetupMocks, SetupPoolConfig, TempFile, TestSetupCreateWallet,
