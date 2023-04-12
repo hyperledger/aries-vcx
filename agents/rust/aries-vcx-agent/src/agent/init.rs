@@ -6,6 +6,7 @@ use aries_vcx::{
     global::settings::init_issuer_config,
     utils::provision::provision_cloud_agent,
 };
+use url::Url;
 use aries_vcx_core::indy::{
     ledger::pool::{create_pool_ledger_config, open_pool_ledger, PoolConfigBuilder},
     wallet::{create_wallet_with_master_secret, open_wallet, wallet_configure_issuer, WalletConfig},
@@ -28,7 +29,7 @@ use crate::{
 };
 
 pub struct AgencyInitConfig {
-    pub agency_endpoint: String,
+    pub agency_endpoint: Url,
     pub agency_did: String,
     pub agency_verkey: String,
 }

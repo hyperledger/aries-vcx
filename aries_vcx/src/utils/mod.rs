@@ -78,7 +78,13 @@ pub async fn send_message(
         EncryptionEnvelope::create(&wallet, &message, Some(&sender_verkey), &did_doc).await?;
 
     // TODO: Extract from agency client
-    agency_client::httpclient::post_message(envelope, &did_doc.get_endpoint()).await?;
+    agency_client::httpclient::post_message(
+        envelope,
+        did_doc
+            .get_endpoint()
+            .ok_or_else(|| AriesVcxError::from_msg(AriesVcxErrorKind::InvalidUrl, "No URL in DID Doc"))?,
+    )
+    .await?;
     Ok(())
 }
 
@@ -94,6 +100,12 @@ pub async fn send_message_anonymously(
     );
     let EncryptionEnvelope(envelope) = EncryptionEnvelope::create(&wallet, message, None, did_doc).await?;
 
-    agency_client::httpclient::post_message(envelope, &did_doc.get_endpoint()).await?;
+    agency_client::httpclient::post_message(
+        envelope,
+        did_doc
+            .get_endpoint()
+            .ok_or_else(|| AriesVcxError::from_msg(AriesVcxErrorKind::InvalidUrl, "No URL in DID Doc"))?,
+    )
+    .await?;
     Ok(())
 }

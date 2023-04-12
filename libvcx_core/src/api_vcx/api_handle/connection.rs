@@ -1,4 +1,4 @@
-use std::{any::type_name, collections::HashMap, sync::RwLock};
+use std::{any::type_name, collections::HashMap, str::FromStr, sync::RwLock};
 
 use agency_client::httpclient::post_message;
 use aries_vcx::{
@@ -12,6 +12,7 @@ use aries_vcx::{
 };
 use async_trait::async_trait;
 use rand::Rng;
+use url::Url;
 
 use crate::{
     api_vcx::api_global::profile::get_main_profile,
@@ -29,7 +30,7 @@ pub struct HttpClient;
 
 #[async_trait]
 impl Transport for HttpClient {
-    async fn send_message(&self, msg: Vec<u8>, service_endpoint: &str) -> VcxResult<()> {
+    async fn send_message(&self, msg: Vec<u8>, service_endpoint: Url) -> VcxResult<()> {
         post_message(msg, service_endpoint).await?;
         Ok(())
     }
@@ -282,7 +283,8 @@ pub async fn process_request(
         .handle_request(
             &wallet,
             request,
-            service_endpoint.parse().expect("valid url"),
+            Url::from_str(&service_endpoint)
+                .map_err(|err| LibvcxError::from_msg(LibvcxErrorKind::InvalidUrl, err.to_string()))?,
             routing_keys,
             &HttpClient,
         )
@@ -349,7 +351,8 @@ pub async fn send_request(handle: u32, service_endpoint: String, routing_keys: V
     let con = con
         .send_request(
             &wallet,
-            service_endpoint.parse().expect("valid url"),
+            Url::from_str(&service_endpoint)
+                .map_err(|err| LibvcxError::from_msg(LibvcxErrorKind::InvalidUrl, err.to_string()))?,
             routing_keys,
             &HttpClient,
         )
@@ -382,7 +385,11 @@ pub async fn create_invite(handle: u32, service_endpoint: String, routing_keys: 
     trace!("create_invite >>>");
 
     let con = get_cloned_connection(&handle)?;
-    let con = con.create_invitation(routing_keys, service_endpoint.parse().expect("valid url"));
+    let con = con.create_invitation(
+        routing_keys,
+        Url::from_str(&service_endpoint)
+            .map_err(|err| LibvcxError::from_msg(LibvcxErrorKind::InvalidUrl, err.to_string()))?,
+    );
 
     insert_connection(handle, con)
 }

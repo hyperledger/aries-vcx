@@ -153,11 +153,8 @@ impl AriesDidDoc {
         service.routing_keys.to_vec()
     }
 
-    pub fn get_endpoint(&self) -> String {
-        match self.service.get(0) {
-            Some(service) => service.service_endpoint.to_string(),
-            None => String::new(),
-        }
+    pub fn get_endpoint(&self) -> Option<Url> {
+        self.service.get(0).map(|s| s.service_endpoint.clone())
     }
 
     pub fn get_service(&self) -> DiddocResult<AriesService> {

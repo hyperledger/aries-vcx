@@ -2,7 +2,9 @@ use diddoc::aries::diddoc::AriesDidDoc;
 use std::sync::{Arc, Mutex};
 
 use aries_vcx::{
-    protocols::connection::pairwise_info::PairwiseInfo, protocols::connection::Connection as VcxConnection,
+    errors::error::{AriesVcxError, AriesVcxErrorKind},
+    protocols::connection::pairwise_info::PairwiseInfo,
+    protocols::connection::Connection as VcxConnection,
     protocols::connection::GenericConnection as VcxGenericConnection,
 };
 use url::Url;
@@ -83,7 +85,8 @@ impl Connection {
         let request = serde_json::from_str(&request)?;
 
         let connection = VcxConnection::try_from(handler.clone())?;
-        let url = Url::parse(&service_endpoint).expect("valid url");
+        let url = Url::parse(&service_endpoint)
+            .map_err(|err| AriesVcxError::from_msg(AriesVcxErrorKind::InvalidUrl, err.to_string()))?;
 
         block_on(async {
             let new_conn = connection
@@ -125,7 +128,7 @@ impl Connection {
         let mut handler = self.handler.lock()?;
 
         let connection = VcxConnection::try_from(handler.clone())?;
-        let url = Url::parse(&service_endpoint).expect("valid url");
+        let url = Url::parse(&service_endpoint).map_err(|err| AriesVcxError::from_msg(AriesVcxErrorKind::InvalidUrl, err.to_string()))?;
 
         block_on(async {
             let new_conn = connection

@@ -218,6 +218,7 @@ mod connection_serde_tests {
     use messages::msg_fields::protocols::connection::response::{Response, ResponseContent, ResponseDecorators};
     use messages::msg_fields::protocols::connection::ConnectionData;
     use messages::msg_fields::protocols::notification::{Ack, AckContent, AckDecorators, AckStatus};
+    use url::Url;
     use uuid::Uuid;
 
     use super::*;
@@ -331,7 +332,7 @@ mod connection_serde_tests {
 
     #[async_trait]
     impl Transport for MockTransport {
-        async fn send_message(&self, _msg: Vec<u8>, _service_endpoint: &str) -> VcxResult<()> {
+        async fn send_message(&self, _msg: Vec<u8>, _service_endpoint: Url) -> VcxResult<()> {
             Ok(())
         }
     }

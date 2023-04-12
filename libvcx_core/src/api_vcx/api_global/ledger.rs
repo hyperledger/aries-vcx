@@ -1,13 +1,16 @@
+use std::str::FromStr;
+
 use aries_vcx::common::ledger::service_didsov::{DidSovServiceType, EndpointDidSov};
 use aries_vcx::common::ledger::transactions::{
     clear_attr, get_attr, get_service, write_endpoint, write_endpoint_legacy,
 };
 use aries_vcx::global::settings::CONFIG_INSTITUTION_DID;
 use diddoc::aries::service::AriesService;
+use url::Url;
 
 use crate::api_vcx::api_global::profile::get_main_profile;
 use crate::api_vcx::api_global::settings::get_config_value;
-use crate::errors::error::LibvcxResult;
+use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 use crate::errors::mapping_from_ariesvcx::map_ariesvcx_result;
 use crate::errors::mapping_from_ariesvcxcore::map_ariesvcx_core_result;
 
@@ -42,7 +45,10 @@ pub async fn ledger_write_endpoint_legacy(
     endpoint: String,
 ) -> LibvcxResult<AriesService> {
     let service = AriesService::create()
-        .set_service_endpoint(endpoint.parse().expect("valid url"))
+        .set_service_endpoint(
+            Url::from_str(&endpoint)
+                .map_err(|err| LibvcxError::from_msg(LibvcxErrorKind::InvalidUrl, err.to_string()))?,
+        )
         .set_recipient_keys(recipient_keys)
         .set_routing_keys(routing_keys);
     let profile = get_main_profile()?;

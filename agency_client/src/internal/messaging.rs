@@ -9,8 +9,8 @@ use serde_json::Value;
 
 impl AgencyClient {
     pub async fn post_to_agency(&self, body_content: Vec<u8>) -> AgencyClientResult<Vec<u8>> {
-        let url = self.get_agency_url_full();
-        httpclient::post_message(body_content, &url).await
+        let url = self.get_agency_url_full()?;
+        httpclient::post_message(body_content, url).await
     }
 
     pub async fn prepare_message_for_agency(

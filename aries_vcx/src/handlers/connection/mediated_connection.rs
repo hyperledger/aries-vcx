@@ -25,6 +25,7 @@ use serde_json::Value;
 use agency_client::agency_client::AgencyClient;
 use agency_client::api::downloaded_message::DownloadedMessage;
 use agency_client::MessageStatusCode;
+use url::Url;
 use uuid::Uuid;
 
 use crate::core::profile::profile::Profile;
@@ -84,7 +85,7 @@ struct SideConnectionInfo {
     did: String,
     recipient_keys: Vec<String>,
     routing_keys: Vec<String>,
-    service_endpoint: String,
+    service_endpoint: Url,
     #[serde(skip_serializing_if = "Option::is_none")]
     protocols: Option<Vec<ProtocolDescriptor>>,
 }
@@ -318,7 +319,7 @@ impl MediatedConnection {
                 let new_pairwise_info = PairwiseInfo::create(&profile.inject_wallet()).await?;
                 let new_cloud_agent = CloudAgentInfo::create(agency_client, &new_pairwise_info).await?;
                 let new_routing_keys = new_cloud_agent.routing_keys(agency_client)?;
-                let new_service_endpoint = agency_client.get_agency_url_full().parse().expect("url to be valid");
+                let new_service_endpoint = agency_client.get_agency_url_full()?;
                 (
                     SmConnection::Inviter(
                         sm_inviter
@@ -558,10 +559,8 @@ impl MediatedConnection {
                             let new_pairwise_info = PairwiseInfo::create(&profile.inject_wallet()).await?;
                             let new_cloud_agent = CloudAgentInfo::create(agency_client, &new_pairwise_info).await?;
                             let new_routing_keys = new_cloud_agent.routing_keys(agency_client)?;
-                            let new_service_endpoint = new_cloud_agent
-                                .service_endpoint(agency_client)?
-                                .parse()
-                                .expect("url to be valid");
+                            let new_service_endpoint = new_cloud_agent.service_endpoint(agency_client)?;
+
                             let sm_connection = sm_inviter
                                 .handle_connection_request(
                                     profile.inject_wallet(),
@@ -678,15 +677,10 @@ impl MediatedConnection {
             "Missing cloud agent info",
         ))?;
         self.connection_sm = match &self.connection_sm {
-            SmConnection::Inviter(sm_inviter) => SmConnection::Inviter(
-                sm_inviter.clone().create_invitation(
-                    cloud_agent_info.routing_keys(agency_client)?,
-                    cloud_agent_info
-                        .service_endpoint(agency_client)?
-                        .parse()
-                        .expect("url to be valid"),
-                )?,
-            ),
+            SmConnection::Inviter(sm_inviter) => SmConnection::Inviter(sm_inviter.clone().create_invitation(
+                cloud_agent_info.routing_keys(agency_client)?,
+                cloud_agent_info.service_endpoint(agency_client)?,
+            )?),
             SmConnection::Invitee(sm_invitee) => {
                 let send_message = send_message.unwrap_or(self.send_message_closure_connection(profile));
                 SmConnection::Invitee(
@@ -694,10 +688,7 @@ impl MediatedConnection {
                         .clone()
                         .send_connection_request(
                             cloud_agent_info.routing_keys(agency_client)?,
-                            cloud_agent_info
-                                .service_endpoint(agency_client)?
-                                .parse()
-                                .expect("url to be valid"),
+                            cloud_agent_info.service_endpoint(agency_client)?,
                             send_message,
                         )
                         .await?,
@@ -936,7 +927,9 @@ impl MediatedConnection {
                 did: did_doc.id.clone(),
                 recipient_keys: did_doc.recipient_keys()?,
                 routing_keys: did_doc.routing_keys(),
-                service_endpoint: did_doc.get_endpoint(),
+                service_endpoint: did_doc
+                    .get_endpoint()
+                    .ok_or_else(|| AriesVcxError::from_msg(AriesVcxErrorKind::InvalidUrl, "No URL in DID Doc"))?,
                 protocols: self.get_remote_protocols(),
             }),
             None => None,

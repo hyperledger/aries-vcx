@@ -15,7 +15,6 @@ use messages::{
         connection::problem_report::{ProblemReport, ProblemReportContent, ProblemReportDecorators},
         discover_features::{disclose::Disclose, query::QueryContent, ProtocolDescriptor},
     },
-    msg_types::registry::PROTOCOL_REGISTRY,
     AriesMessage,
 };
 use std::{error::Error, sync::Arc};
@@ -194,7 +193,9 @@ where
 {
     let env = EncryptionEnvelope::create(wallet, message, Some(sender_verkey), did_doc).await?;
     let msg = env.0;
-    let service_endpoint = did_doc.get_endpoint(); // This, like many other things, shouldn't clone...
+    let service_endpoint = did_doc
+        .get_endpoint()
+        .ok_or_else(|| AriesVcxError::from_msg(AriesVcxErrorKind::InvalidUrl, "No URL in DID Doc"))?; // This, like many other things, shouldn't clone...
 
-    transport.send_message(msg, &service_endpoint).await
+    transport.send_message(msg, service_endpoint).await
 }

@@ -6,6 +6,7 @@ use agency_client::api::downloaded_message::DownloadedMessageEncrypted;
 use agency_client::messages::update_message::UIDsByConn;
 use agency_client::wallet::base_agency_client_wallet::BaseAgencyClientWallet;
 use messages::AriesMessage;
+use url::Url;
 
 use crate::agency_client::MessageStatusCode;
 use crate::errors::error::prelude::*;
@@ -76,8 +77,8 @@ impl CloudAgentInfo {
     }
 
     // todo: eliminate this function
-    pub fn service_endpoint(&self, agency_client: &AgencyClient) -> VcxResult<String> {
-        Ok(agency_client.get_agency_url_full())
+    pub fn service_endpoint(&self, agency_client: &AgencyClient) -> VcxResult<Url> {
+        Ok(agency_client.get_agency_url_full()?)
     }
 
     // todo: implement this in agency_client
