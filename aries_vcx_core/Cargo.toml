@@ -4,13 +4,34 @@ version = "0.1.0"
 edition = "2021"
 
 [features]
-test_utils = []
+test_utils = [ "vdrtools", "modular_libs" ]
+default = ["vdrtools"]
+########################## DEP FLAGS ################################
+# Feature flag to include the libvdrtools dependency
+vdrtools = ["dep:libvdrtools"]
+# Feature flag to include the 'modular library' dependencies (vdrtools alternatives; indy-vdr, indy-credx)
+modular_libs = ["dep:indy-vdr", "dep:indy-credx"]
+########################## TEST FLAGS ###############################
+# Feature flag for base requirments for running tests underneath the `test_utils` flag (most tests).
+# Both `vdrtools` and `modular_libs` are transitively enabled, so they can be used for tests (including interop tests).
 
 [dependencies]
 agency_client = { path = "../agency_client" }
-indy-vdr = { version = "0.3.4", default-features = false, features = ["ffi", "log"] }
-indy-credx = { git = "https://github.com/anonyome/indy-shared-rs.git", rev = "7342bc624d23ece8845d1a701cd2cdc9cd401bb0" }
-libvdrtools = { path = "../libvdrtools" }
+indy-vdr = { version = "0.3.4", default-features = false, features = ["ffi", "log"], optional = true }
+# PATCH (TO MONITOR IN FUTURE): The following patch changes the `indy-data-types` (within indy-shared-rs) to depend on
+# `ursa "0.3.6"` rather than `ursa "=0.3.6"`. Currently, `libvdrtools` depends on `ursa "0.3.7"`, which causes a mismatch of
+# `indy-utils` versions, which causes some types within credx to fail. Details about the issue can be found here: https://github.com/hyperledger/indy-shared-rs/issues/20
+# `indy-data-types` depends on `ursa =0.3.6` due to a 'broken cl feature', see commmit: https://github.com/hyperledger/indy-shared-rs/commit/2403eed6449a3b5e347697b215a732fc33c014c0
+# however using ursa 0.3.7 does not seem to affect our usage of indy-credx currently. More testing would be ideal.
+# various combinations of indy-vdr and indy-credx have been tried to resolve the dependency mismatches, however this patch appears
+# to be the only quick solution.
+# Potential resolutions:
+# - wait for ursa 0.3.8+ to resolve the CL issue and update indy-shared-rs,
+# - monitor anoncred-rs (which will replace indy-credx) as the fix will likely go in here,
+# - monitor the issue for other fixes from the maintainers: https://github.com/hyperledger/indy-shared-rs/issues/20
+# - update libvdrtools to use =0.3.6 ursa
+indy-credx = { git = "https://github.com/anonyome/indy-shared-rs.git", rev = "7342bc624d23ece8845d1a701cd2cdc9cd401bb0", optional = true }
+libvdrtools = { path = "../libvdrtools", optional = true }
 async-trait = "0.1.68"
 futures = { version = "0.3", default-features = false }
 serde_json = "1.0.95"

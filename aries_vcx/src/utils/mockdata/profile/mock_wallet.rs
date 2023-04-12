@@ -23,11 +23,11 @@ impl BaseWallet for MockWallet {
     }
 
     async fn key_for_local_did(&self, did: &str) -> VcxCoreResult<String> {
-        get_next_mock_did_response_or_fail()
+        Ok(utils::constants::VERKEY.to_string())
     }
 
     async fn replace_did_keys_start(&self, target_did: &str) -> VcxCoreResult<String> {
-        get_next_mock_did_response_or_fail()
+        Ok(utils::constants::VERKEY.to_string())
     }
 
     async fn replace_did_keys_apply(&self, target_did: &str) -> VcxCoreResult<()> {
@@ -95,17 +95,5 @@ impl BaseWallet for MockWallet {
 
     async fn unpack_message(&self, msg: &[u8]) -> VcxCoreResult<Vec<u8>> {
         Ok(msg.to_vec())
-    }
-}
-
-fn get_next_mock_did_response_or_fail() -> VcxCoreResult<String> {
-    if DidMocks::has_did_mock_responses() {
-        warn!("key_for_local_did >> retrieving did mock response");
-        Ok(DidMocks::get_next_did_response())
-    } else {
-        Err(AriesVcxCoreError::from_msg(
-            AriesVcxCoreErrorKind::UnimplementedFeature,
-            "DidMocks data for must be set",
-        ))
     }
 }

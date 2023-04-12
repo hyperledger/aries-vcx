@@ -1,10 +1,10 @@
 use aries_vcx_core::errors::error::AriesVcxCoreErrorKind;
-use aries_vcx_core::indy::utils::LibindyMock;
 use aries_vcx_core::ledger::base_ledger::BaseLedger;
 
 use crate::core::profile::profile::Profile;
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use crate::utils::constants::{CRED_DEF_ID, CRED_DEF_JSON, DEFAULT_SERIALIZE_VERSION};
+use crate::utils::mockdata::mock_settings::StatusCodeMock;
 use crate::utils::serialization::ObjectWithVersion;
 
 use crate::global::settings::{self, indy_mocks_enabled};
@@ -112,7 +112,7 @@ async fn _try_get_cred_def_from_ledger(
     // TODO - future - may require more customized logic. We set the rc to 309, as the mock for ledger.get_cred_def will return a valid
     // mock cred def unless it reads an rc of 309. Returning a valid mock cred def will result in this method returning an error.
     if indy_mocks_enabled() {
-        LibindyMock::set_next_result(309)
+        StatusCodeMock::set_next_result(309)
     }
     match ledger.get_cred_def(cred_def_id, Some(issuer_did)).await {
         Ok(cred_def) => Ok(Some(cred_def)),

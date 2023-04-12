@@ -1,5 +1,5 @@
-use std::collections::HashMap;
 use std::sync::RwLock;
+use std::{collections::HashMap, sync::Mutex};
 
 use crate::errors::error::{AriesVcxCoreError, VcxCoreResult};
 
@@ -10,6 +10,7 @@ static MOCKED_VALIDATE_INDY_PROOF: &str = "mocked_validate_indy_proof";
 lazy_static! {
     static ref MOCK_SETTINGS: RwLock<HashMap<String, String>> = RwLock::new(HashMap::new());
     static ref MOCK_SETTINGS_RESULT_BOOL: RwLock<HashMap<String, VcxCoreResult<bool>>> = RwLock::new(HashMap::new());
+    static ref STATUS_CODE_MOCK: Mutex<StatusCodeMock> = Mutex::new(StatusCodeMock::default());
 }
 
 pub struct MockBuilder; // empty
@@ -83,4 +84,30 @@ pub fn get_mock_result_for_validate_indy_proof() -> Option<VcxCoreResult<bool>> 
         Ok(val) => Ok(*val),
         Err(err) => Err(AriesVcxCoreError::from_msg(err.kind(), err.to_string())),
     })
+}
+
+#[derive(Default)]
+pub struct StatusCodeMock {
+    results: Vec<u32>,
+}
+
+// todo: get rid of this, we no longer deal with rc return codes from vdrtools
+//      (this is leftover from times when we talked to vdrtool via FFI)
+impl StatusCodeMock {
+    pub fn set_next_result(rc: u32) {
+        STATUS_CODE_MOCK
+            .lock()
+            .expect("Unabled to access LIBINDY_MOCK")
+            .results
+            .push(rc);
+    }
+
+    pub fn get_result() -> u32 {
+        STATUS_CODE_MOCK
+            .lock()
+            .expect("Unable to access LIBINDY_MOCK")
+            .results
+            .pop()
+            .unwrap_or_default()
+    }
 }

@@ -3,7 +3,6 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
-
 use messages::a2a::A2AMessage;
 use messages::diddoc::aries::diddoc::AriesDidDoc;
 

@@ -90,7 +90,7 @@ mod dbtests {
         let wallet_handle = open_wallet(&config_wallet).await.unwrap();
         let profile = Arc::new(IndySdkWallet::new(wallet_handle));
         let config_issuer = wallet_configure_issuer(wallet_handle, enterprise_seed).await.unwrap();
-        init_issuer_config(&config_issuer).unwrap();
+        init_issuer_config(&config_issuer.institution_did).unwrap();
         let mut agency_client = AgencyClient::new();
         provision_cloud_agent(&mut agency_client, profile, &config_provision_agent)
             .await

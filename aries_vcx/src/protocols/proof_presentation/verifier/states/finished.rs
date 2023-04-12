@@ -12,24 +12,7 @@ pub struct FinishedState {
     pub presentation_request: Option<PresentationRequest>,
     pub presentation: Option<Presentation>,
     pub status: Status,
-    #[serde(default = "verification_status_unavailable")] // todo: to be removed in 0.54.0, this supports legacy serialization when the field was undefined
-    #[serde(deserialize_with = "null_to_unavailable")] // todo: to be removed in 0.54.0, this supports legacy serialization when the field was 'null'
-    #[serde(alias = "revocation_status")]
-    // todo: to be removed in 0.54.0, this supports legacy serialization when the field was named 'revocation_status'
     pub verification_status: PresentationVerificationStatus,
-}
-
-fn verification_status_unavailable() -> PresentationVerificationStatus {
-    PresentationVerificationStatus::Unavailable
-}
-
-// todo: to be removed in 0.54.0,  if "revocation_status / verification_status" is null, we deserialize as Unavailable
-fn null_to_unavailable<'de, D>(deserializer: D) -> Result<PresentationVerificationStatus, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    let opt = Option::deserialize(deserializer)?;
-    Ok(opt.unwrap_or(PresentationVerificationStatus::Unavailable))
 }
 
 impl FinishedState {
@@ -94,85 +77,5 @@ pub mod unit_tests {
         assert_eq!(serialized, expected);
         let deserialized: FinishedState = serde_json::from_str(&serialized).unwrap();
         assert_eq!(state, deserialized)
-    }
-
-    #[test]
-    fn test_verifier_state_finished_deser() {
-        {
-            let serialized =
-                r#"{"presentation":null,"presentation_request":null,"status":"Success","revocation_status":"Invalid"}"#;
-            let deserialized: FinishedState = serde_json::from_str(serialized).unwrap();
-            assert_eq!(
-                deserialized.verification_status,
-                PresentationVerificationStatus::Invalid
-            )
-        }
-        {
-            let serialized =
-                r#"{"presentation":null,"presentation_request":null,"status":"Success","revocation_status":"Valid"}"#;
-            let deserialized: FinishedState = serde_json::from_str(serialized).unwrap();
-            assert_eq!(deserialized.verification_status, PresentationVerificationStatus::Valid)
-        }
-    }
-
-    #[test]
-    fn test_verifier_state_finished_deser_legacy_values_verification_status() {
-        {
-            let serialized = r#"{"presentation":null,"presentation_request":null,"status":"Success"}"#;
-            let deserialized: FinishedState = serde_json::from_str(serialized).unwrap();
-            assert_eq!(
-                deserialized.verification_status,
-                PresentationVerificationStatus::Unavailable
-            )
-        }
-        {
-            let serialized =
-                r#"{"presentation":null,"presentation_request":null,"status":"Success","verification_status":null}"#;
-            let deserialized: FinishedState = serde_json::from_str(serialized).unwrap();
-            assert_eq!(
-                deserialized.verification_status,
-                PresentationVerificationStatus::Unavailable
-            )
-        }
-        {
-            let serialized = r#"{"presentation":null,"presentation_request":null,"status":"Success","verification_status":"Revoked"}"#;
-            let deserialized: FinishedState = serde_json::from_str(serialized).unwrap();
-            assert_eq!(
-                deserialized.verification_status,
-                PresentationVerificationStatus::Invalid
-            )
-        }
-        {
-            let serialized = r#"{"presentation":null,"presentation_request":null,"status":"Success","verification_status":"NonRevoked"}"#;
-            let deserialized: FinishedState = serde_json::from_str(serialized).unwrap();
-            assert_eq!(deserialized.verification_status, PresentationVerificationStatus::Valid)
-        }
-    }
-
-    #[test]
-    fn test_verifier_state_finished_deser_legacy_values_revocation_status() {
-        {
-            let serialized =
-                r#"{"presentation":null,"presentation_request":null,"status":"Success","revocation_status":null}"#;
-            let deserialized: FinishedState = serde_json::from_str(serialized).unwrap();
-            assert_eq!(
-                deserialized.verification_status,
-                PresentationVerificationStatus::Unavailable
-            )
-        }
-        {
-            let serialized =
-                r#"{"presentation":null,"presentation_request":null,"status":"Success","revocation_status":"Revoked"}"#;
-            let deserialized: FinishedState = serde_json::from_str(serialized).unwrap();
-            assert_eq!(
-                deserialized.verification_status,
-                PresentationVerificationStatus::Invalid
-            )
-        }
-        {
-            let serialized = r#"{"presentation":null,"presentation_request":null,"status":"Success","revocation_status":"NonRevoked"}"#;
-            let deserialized: FinishedState = serde_json::from_str(serialized).unwrap();
-            assert_eq!(deserialized.verification_status, PresentationVerificationStatus::Valid)
-        }
     }
 }

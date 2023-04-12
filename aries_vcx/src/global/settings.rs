@@ -186,7 +186,7 @@ pub mod unit_tests {
     }
 }
 
-pub fn init_issuer_config(config: &IssuerConfig) -> VcxResult<()> {
-    set_config_value(CONFIG_INSTITUTION_DID, &config.institution_did)?;
+pub fn init_issuer_config(institution_did: &str) -> VcxResult<()> {
+    set_config_value(CONFIG_INSTITUTION_DID, institution_did)?;
     Ok(())
 }

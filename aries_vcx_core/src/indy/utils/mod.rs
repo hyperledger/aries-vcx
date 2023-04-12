@@ -1,9 +1,5 @@
 use std::sync::atomic::{AtomicUsize, Ordering};
-use std::sync::Mutex;
-
 use vdrtools::CommandHandle;
-
-use crate::global::settings;
 
 pub mod mocks;
 
@@ -11,38 +7,6 @@ static COMMAND_HANDLE_COUNTER: AtomicUsize = AtomicUsize::new(1);
 
 pub fn next_command_handle() -> CommandHandle {
     (COMMAND_HANDLE_COUNTER.fetch_add(1, Ordering::SeqCst) + 1) as CommandHandle
-}
-
-lazy_static! {
-    static ref LIBINDY_MOCK: Mutex<LibindyMock> = Mutex::new(LibindyMock::default());
-}
-
-#[derive(Default)]
-pub struct LibindyMock {
-    results: Vec<u32>,
-}
-
-// todo: get rid of this, we no longer deal with rc return codes from vdrtools
-//      (this is leftover from times when we talked to vdrtool via FFI)
-impl LibindyMock {
-    pub fn set_next_result(rc: u32) {
-        if settings::indy_mocks_enabled() {
-            LIBINDY_MOCK
-                .lock()
-                .expect("Unabled to access LIBINDY_MOCK")
-                .results
-                .push(rc);
-        }
-    }
-
-    pub fn get_result() -> u32 {
-        LIBINDY_MOCK
-            .lock()
-            .expect("Unable to access LIBINDY_MOCK")
-            .results
-            .pop()
-            .unwrap_or_default()
-    }
 }
 
 // TODO:  move to devsetup, see if we can reuse this / merge with different setup
