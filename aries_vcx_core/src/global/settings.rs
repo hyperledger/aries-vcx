@@ -14,10 +14,8 @@ pub static CONFIG_PROTOCOL_VERSION: &str = "protocol_version";
 pub static CONFIG_TXN_AUTHOR_AGREEMENT: &str = "author_agreement";
 pub static DEFAULT_PROTOCOL_VERSION: usize = 2;
 pub static MAX_SUPPORTED_PROTOCOL_VERSION: usize = 2;
-pub static DEFAULT_POOL_NAME: &str = "pool1";
 pub static DEFAULT_LINK_SECRET_ALIAS: &str = "main";
 pub static DEFAULT_DID: &str = "2hoqvcwupRTUNkXn6ArYzs";
-pub static DEFAULT_WALLET_BACKUP_KEY: &str = "backup_wallet_key";
 
 lazy_static! {
     static ref SETTINGS: RwLock<HashMap<String, String>> = RwLock::new(HashMap::new());
@@ -74,32 +72,6 @@ pub fn set_config_value(key: &str, value: &str) -> VcxCoreResult<()> {
     Ok(())
 }
 
-pub fn reset_config_values() -> VcxCoreResult<()> {
-    trace!("reset_config_values >>>");
-    let mut config = SETTINGS.write()?;
-    config.clear();
-    Ok(())
-}
-
-pub fn set_test_configs() -> String {
-    trace!("set_testing_defaults >>>");
-    let mut settings = SETTINGS
-        .write()
-        .expect("Unabled to access SETTINGS while setting test configs");
-    let institution_did = CONFIG_INSTITUTION_DID;
-    settings.insert(CONFIG_POOL_NAME.to_string(), DEFAULT_POOL_NAME.to_string());
-    settings.insert(institution_did.to_string(), DEFAULT_DID.to_string());
-    settings.insert(
-        CONFIG_PROTOCOL_VERSION.to_string(),
-        DEFAULT_PROTOCOL_VERSION.to_string(),
-    );
-    settings.insert(
-        CONFIG_WALLET_BACKUP_KEY.to_string(),
-        DEFAULT_WALLET_BACKUP_KEY.to_string(),
-    );
-    institution_did.to_string()
-}
-
 pub fn get_protocol_version() -> usize {
     let protocol_version = match get_config_value(CONFIG_PROTOCOL_VERSION) {
         Ok(ver) => ver.parse::<usize>().unwrap_or_else(|err| {
@@ -125,40 +97,5 @@ pub fn get_protocol_version() -> usize {
         MAX_SUPPORTED_PROTOCOL_VERSION
     } else {
         protocol_version
-    }
-}
-
-#[cfg(test)]
-#[cfg(feature = "general_test")]
-pub mod unit_tests {
-    use crate::utils::devsetup::SetupDefaults;
-
-    use super::*;
-
-    fn _pool_config() -> String {
-        r#"{"timeout":40}"#.to_string()
-    }
-
-    fn _mandatory_config() -> HashMap<String, String> {
-        let mut config: HashMap<String, String> = HashMap::new();
-        config.insert(CONFIG_WALLET_KEY.to_string(), "password".to_string());
-        config
-    }
-
-    #[test]
-    fn test_get_and_set_values() {
-        let _setup = SetupDefaults::init();
-
-        let key = "key1".to_string();
-        let value1 = "value1".to_string();
-
-        // Fails with invalid key
-        assert_eq!(
-            get_config_value(&key).unwrap_err().kind(),
-            AriesVcxCoreErrorKind::InvalidConfiguration
-        );
-
-        set_config_value(&key, &value1).unwrap();
-        assert_eq!(get_config_value(&key).unwrap(), value1);
     }
 }
