@@ -33,7 +33,7 @@ libvdrtools = { path = "../libvdrtools", optional = true }
 async-trait = "0.1.68"
 futures = { version = "0.3", default-features = false }
 serde_json = "1.0.95"
-time = "0.1.44"
+time = "0.3.20"
 serde = { version = "1.0.159", features = ["derive"] }
 rand = "0.7.3"
 log = "0.4.17"

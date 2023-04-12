@@ -555,7 +555,7 @@ pub struct ResendableRequest {
     pub request: String,
     pub start_node: usize,
     pub next_node: usize,
-    pub next_try_send_time: Option<time::Tm>,
+    pub next_try_send_time: Option<time::OffsetDateTime>,
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -565,7 +565,7 @@ pub struct CommandProcess {
     pub accum_replies: Option<HashableValue>,
     pub parent_cmd_ids: Vec<CommandHandle>,
     pub resendable_request: Option<ResendableRequest>,
-    pub full_cmd_timeout: Option<time::Tm>,
+    pub full_cmd_timeout: Option<time::OffsetDateTime>,
 }
 
 #[derive(Debug, PartialEq, Eq)]

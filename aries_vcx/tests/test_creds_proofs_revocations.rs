@@ -46,11 +46,12 @@ mod integration_tests {
 
             assert!(!issuer_credential.is_revoked(&institution.profile).await.unwrap());
 
-            let time_before_revocation = time::get_time().sec as u64;
+            let time_before_revocation = time::OffsetDateTime::now_utc().unix_timestamp() as u64;
             info!("test_basic_revocation :: verifier :: Going to revoke credential");
             revoke_credential_and_publish_accumulator(&mut institution, &issuer_credential, &rev_reg.rev_reg_id).await;
+
             tokio::time::sleep(Duration::from_millis(1000)).await;
-            let time_after_revocation = time::get_time().sec as u64;
+            let time_after_revocation = time::OffsetDateTime::now_utc().unix_timestamp() as u64;
 
             assert!(issuer_credential.is_revoked(&institution.profile).await.unwrap());
 
@@ -468,7 +469,7 @@ mod integration_tests {
             assert!(!issuer_credential.is_revoked(&institution.profile).await.unwrap());
 
             tokio::time::sleep(Duration::from_millis(1000)).await;
-            let time_before_revocation = time::get_time().sec as u64;
+            let time_before_revocation = time::OffsetDateTime::now_utc().unix_timestamp() as u64;
             tokio::time::sleep(Duration::from_millis(1000)).await;
             info!("test_revoked_credential_might_still_work :: verifier :: Going to revoke credential");
             revoke_credential_and_publish_accumulator(&mut institution, &issuer_credential, &rev_reg.rev_reg_id).await;
