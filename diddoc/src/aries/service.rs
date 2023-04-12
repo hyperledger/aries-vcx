@@ -84,7 +84,7 @@ mod unit_tests {
             .set_routing_keys(_routing_keys());
 
         let service3 = AriesService::create()
-            .set_service_endpoint("bogus_endpoint".to_string())
+            .set_service_endpoint("https://dummy.dummy/dummy".parse().expect("valid url"))
             .set_recipient_keys(_recipient_keys())
             .set_routing_keys(_routing_keys());
 

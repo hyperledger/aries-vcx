@@ -291,6 +291,7 @@ impl AriesDidDoc {
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
+    use url::Url;
     use crate::aries::diddoc::AriesDidDoc;
     use crate::aries::service::AriesService;
     use crate::w3c::model::{
@@ -321,8 +322,8 @@ pub mod test_utils {
         String::from("VsKV7grR1BUE29mG2Fm2kX")
     }
 
-    pub fn _service_endpoint() -> String {
-        String::from("http://localhost:8080")
+    pub fn _service_endpoint() -> Url {
+        "http://localhost:8080".parse().expect("valid url")
     }
 
     pub fn _recipient_keys() -> Vec<String> {
@@ -590,7 +591,7 @@ mod unit_tests {
                         "Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR",
                         "3LYuxJBJkngDbvJj4zjx13DBUdZ2P96eNybwd2n9L9AU"
                     ],
-                    "serviceEndpoint": "http://localhost:8080"
+                    "serviceEndpoint": "http://localhost:8080/"
                 }
             ]
         });
