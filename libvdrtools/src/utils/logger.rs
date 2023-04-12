@@ -1,9 +1,3 @@
-#[cfg(target_os = "android")]
-extern crate android_logger;
-
-#[cfg(target_os = "android")]
-use self::android_logger::Filter;
-
 #[macro_export]
 macro_rules! try_log {
     ($expr:expr) => {

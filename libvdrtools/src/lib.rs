@@ -3,8 +3,6 @@
 #[macro_use]
 extern crate log;
 
-extern crate variant_count;
-
 #[macro_use]
 extern crate num_derive;
 
