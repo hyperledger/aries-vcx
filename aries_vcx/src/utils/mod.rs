@@ -87,8 +87,7 @@ pub async fn send_message(
     trace!("send_message >>> message: {:?}, did_doc: {:?}", message, &did_doc);
     let EncryptionEnvelope(envelope) =
         EncryptionEnvelope::create(&wallet, &message, Some(&sender_verkey), &did_doc).await?;
-
-    // TODO: Extract from agency client
+        
     httpclient::post_message(envelope, &did_doc.get_endpoint()).await?;   Ok(())
 }
 
