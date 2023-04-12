@@ -64,8 +64,7 @@ impl AgencyClient {
             res => Err(AgencyClientError::from_msg(
                 AgencyClientErrorKind::InvalidHttpResponse,
                 format!(
-                    "Expected to response of Client2AgencyMessage::CreateKeyResponse, but received: {:?}",
-                    res
+                    "Expected to response of Client2AgencyMessage::CreateKeyResponse, but received: {res:?}"
                 ),
             )),
         }

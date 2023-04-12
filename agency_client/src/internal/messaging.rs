@@ -27,13 +27,13 @@ impl AgencyClient {
         let message = ::serde_json::to_string(&message).map_err(|err| {
             AgencyClientError::from_msg(
                 AgencyClientErrorKind::SerializationError,
-                format!("Cannot serialize A2A message: {}", err),
+                format!("Cannot serialize A2A message: {err}"),
             )
         })?;
         let receiver_keys = ::serde_json::to_string(&vec![&agent_vk]).map_err(|err| {
             AgencyClientError::from_msg(
                 AgencyClientErrorKind::SerializationError,
-                format!("Cannot serialize receiver keys: {}", err),
+                format!("Cannot serialize receiver keys: {err}"),
             )
         })?;
         let message = self
@@ -55,13 +55,13 @@ impl AgencyClient {
         let message = ::serde_json::to_string(&message).map_err(|err| {
             AgencyClientError::from_msg(
                 AgencyClientErrorKind::SerializationError,
-                format!("Cannot serialize A2A message: {}", err),
+                format!("Cannot serialize A2A message: {err}"),
             )
         })?;
         let receiver_keys = ::serde_json::to_string(&vec![&agent_vk]).map_err(|err| {
             AgencyClientError::from_msg(
                 AgencyClientErrorKind::SerializationError,
-                format!("Cannot serialize receiver keys: {}", err),
+                format!("Cannot serialize receiver keys: {err}"),
             )
         })?;
         let message = self
@@ -77,7 +77,7 @@ impl AgencyClient {
         let message: Value = ::serde_json::from_slice(unpacked_msg.as_slice()).map_err(|err| {
             AgencyClientError::from_msg(
                 AgencyClientErrorKind::InvalidJson,
-                format!("Cannot deserialize response: {}", err),
+                format!("Cannot deserialize response: {err}"),
             )
         })?;
         Ok(message["message"]
@@ -108,7 +108,7 @@ impl AgencyClient {
         let message: Client2AgencyMessage = serde_json::from_str(&message).map_err(|err| {
             AgencyClientError::from_msg(
                 AgencyClientErrorKind::InvalidJson,
-                format!("Cannot deserialize A2A message: {}", err),
+                format!("Cannot deserialize A2A message: {err}"),
             )
         })?;
 
@@ -138,14 +138,14 @@ impl AgencyClient {
         let message = serde_json::to_string(message).map_err(|err| {
             AgencyClientError::from_msg(
                 AgencyClientErrorKind::SerializationError,
-                format!("Cannot serialize Forward message: {}", err),
+                format!("Cannot serialize Forward message: {err}"),
             )
         })?;
 
         let receiver_keys = serde_json::to_string(&vec![agency_vk]).map_err(|err| {
             AgencyClientError::from_msg(
                 AgencyClientErrorKind::SerializationError,
-                format!("Cannot serialize receiver keys: {}", err),
+                format!("Cannot serialize receiver keys: {err}"),
             )
         })?;
 
@@ -169,13 +169,13 @@ impl AgencyClient {
         let message = serde_json::to_string(message).map_err(|err| {
             AgencyClientError::from_msg(
                 AgencyClientErrorKind::SerializationError,
-                format!("Cannot serialize A2A message: {}", err),
+                format!("Cannot serialize A2A message: {err}"),
             )
         })?;
         let receiver_keys = serde_json::to_string(&vec![&agent_vk]).map_err(|err| {
             AgencyClientError::from_msg(
                 AgencyClientErrorKind::SerializationError,
-                format!("Cannot receiver keys: {}", err),
+                format!("Cannot receiver keys: {err}"),
             )
         })?;
 
