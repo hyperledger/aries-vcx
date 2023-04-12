@@ -29,8 +29,9 @@ pub fn create_inviter(profile: Arc<ProfileHolder>) -> VcxUniFFIResult<Arc<Connec
 }
 
 // seperate function since uniffi can't handle constructors with results
-pub fn create_invitee(profile: Arc<ProfileHolder>, did_doc: AriesDidDoc) -> VcxUniFFIResult<Arc<Connection>> {
+pub fn create_invitee(profile: Arc<ProfileHolder>, did_doc: String) -> VcxUniFFIResult<Arc<Connection>> {
     block_on(async {
+        let _did_doc: AriesDidDoc = serde_json::from_str(&did_doc)?;
         let pairwise_info = PairwiseInfo::create(&profile.inner.inject_wallet()).await?;
         let connection = VcxConnection::new_invitee(String::new(), pairwise_info);
         let handler = Mutex::new(VcxGenericConnection::from(connection));

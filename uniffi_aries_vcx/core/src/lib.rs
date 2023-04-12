@@ -9,7 +9,7 @@ use crate::core::profile::*;
 use crate::errors::error::*;
 use aries_vcx::{indy::wallet::WalletConfig, protocols::connection::pairwise_info::PairwiseInfo};
 use diddoc::{
-    aries::{diddoc::AriesDidDoc, service::AriesService},
+    aries::service::AriesService,
     w3c::model::{Authentication, Ed25519PublicKey},
 };
 use aries_vcx::{
