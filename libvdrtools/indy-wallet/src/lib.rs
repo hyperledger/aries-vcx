@@ -13,7 +13,6 @@ use std::{
 use indy_api_types::{
     domain::wallet::{Config, Credentials, ExportConfig, Tags},
     errors::prelude::*,
-    wallet::*,
     WalletHandle,
 };
 use indy_utils::{
@@ -35,8 +34,6 @@ use crate::{
     wallet::{Keys, Wallet},
 };
 use indy_api_types::domain::wallet::CacheConfig;
-
-//use crate::storage::plugged::PluggedStorageType; FXIME:
 
 mod encryption;
 mod iterator;
@@ -100,59 +97,6 @@ impl WalletService {
             pending_for_import: Mutex::new(HashMap::new()),
             cache_hit_metrics: WalletCacheHitMetrics::new(),
         }
-    }
-
-    pub fn register_wallet_storage(
-        &self,
-        type_: &str,
-        _create: WalletCreate,
-        _open: WalletOpen,
-        _close: WalletClose,
-        _delete: WalletDelete,
-        _add_record: WalletAddRecord,
-        _update_record_value: WalletUpdateRecordValue,
-        _update_record_tags: WalletUpdateRecordTags,
-        _add_record_tags: WalletAddRecordTags,
-        _delete_record_tags: WalletDeleteRecordTags,
-        _delete_record: WalletDeleteRecord,
-        _get_record: WalletGetRecord,
-        _get_record_id: WalletGetRecordId,
-        _get_record_type: WalletGetRecordType,
-        _get_record_value: WalletGetRecordValue,
-        _get_record_tags: WalletGetRecordTags,
-        _free_record: WalletFreeRecord,
-        _get_storage_metadata: WalletGetStorageMetadata,
-        _set_storage_metadata: WalletSetStorageMetadata,
-        _free_storage_metadata: WalletFreeStorageMetadata,
-        _search_records: WalletSearchRecords,
-        _search_all_records: WalletSearchAllRecords,
-        _get_search_total_count: WalletGetSearchTotalCount,
-        _fetch_search_next_record: WalletFetchSearchNextRecord,
-        _free_search: WalletFreeSearch,
-    ) -> IndyResult<()> {
-        trace!("register_wallet_storage >>> type_: {:?}", type_);
-        Ok(()) // FIXME: !!!
-
-        //         let mut storage_types = self.storage_types.lock().await;
-
-        //         if storage_types.contains_key(type_) {
-        //             return Err(err_msg(IndyErrorKind::WalletStorageTypeAlreadyRegistered, format!("Wallet storage is already registered for type: {}", type_)));
-        //         }
-
-        //         storage_types.insert(type_.to_string(),
-        //                              Box::new(
-        //                                  PluggedStorageType::new(create, open, close, delete,
-        //                                                          add_record, update_record_value,
-        //                                                          update_record_tags, add_record_tags, delete_record_tags,
-        //                                                          delete_record, get_record, get_record_id,
-        //                                                          get_record_type, get_record_value, get_record_tags, free_record,
-        //                                                          get_storage_metadata, set_storage_metadata, free_storage_metadata,
-        //                                                          search_records, search_all_records,
-        //                                                          get_search_total_count,
-        //                                                          fetch_search_next_record, free_search)));
-
-        //         trace!("register_wallet_storage <<<");
-        //         Ok(())
     }
 
     pub async fn create_wallet(
