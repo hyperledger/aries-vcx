@@ -227,7 +227,6 @@ mod unit_tests {
     use aries_vcx_core::{INVALID_POOL_HANDLE, INVALID_WALLET_HANDLE};
     use messages::a2a::A2AMessage;
     use messages::protocols::proof_presentation::presentation::test_utils::_presentation;
-    use vdrtools::WalletHandle;
 
     use super::*;
 

@@ -26,7 +26,7 @@ mysql_storage = []
 fatal_warnings = []
 
 [dependencies]
-async-std = "1.8.0"
+async-std = { version = "1.8.0", features = ["attributes"] }
 async-trait = "0.1.42"
 cfg-if = "1.0.0"
 etcommon-rlp = "0.2.4"
@@ -57,7 +57,7 @@ variant_count = "*"
 num-traits = "0.2"
 num-derive = "0.3"
 convert_case = "0.3.2"
-futures = { version = "0.3", default-features = false, features = [ "executor", "alloc" ] }
+futures = { version = "0.3", default-features = false, features = [ "executor", "alloc", "thread-pool" ] }
 uuid = { version = "0.8", default-features = false, features = ["v4"] }
 ursa = { version = "0.3.7", optional = true}
 

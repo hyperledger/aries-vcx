@@ -605,6 +605,7 @@ mod tests {
         PoolConfig,
     };
     use aries_vcx::aries_vcx_core::indy::wallet::{import, RestoreWalletConfigs, WalletConfig};
+    use aries_vcx::aries_vcx_core::INVALID_POOL_HANDLE;
     use aries_vcx::global::settings::{
         set_config_value, set_test_configs, CONFIG_GENESIS_PATH, CONFIG_TXN_AUTHOR_AGREEMENT,
         DEFAULT_WALLET_BACKUP_KEY, DEFAULT_WALLET_KEY, WALLET_KDF_RAW,
@@ -615,7 +616,6 @@ mod tests {
     };
     use aries_vcx::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER;
     use aries_vcx::utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION;
-    use aries_vcx::vdrtools::{INVALID_POOL_HANDLE, INVALID_WALLET_HANDLE};
     use libvcx_core;
     #[cfg(feature = "pool_tests")]
     use libvcx_core::api_vcx::api_global::pool::get_main_pool_handle;
@@ -655,7 +655,7 @@ mod tests {
                 _vcx_open_pool(&json!(setup_pool.pool_config).to_string()).unwrap();
 
                 // Assert config values were set correctly
-                assert_ne!(get_main_pool_handle().unwrap(), INVALID_POOL_HANDLE);
+                assert_ne!(get_main_pool_handle().unwrap(), INVALID_POOL_HANDLE.0);
 
                 // Verify shutdown was successful
                 vcx_shutdown(true);

@@ -2,6 +2,9 @@ use std::fs;
 use std::future::Future;
 use std::sync::{Arc, Once};
 
+use aries_vcx_core::global::settings::{
+    disable_indy_mocks as disable_indy_mocks_core, enable_indy_mocks as enable_indy_mocks_core,
+};
 use aries_vcx_core::indy::ledger::pool::test_utils::{
     create_test_ledger_config, create_tmp_genesis_txn_file, delete_test_pool, open_test_pool,
 };
@@ -97,6 +100,7 @@ fn reset_global_state() {
     PoolMocks::clear_mocks();
     DidMocks::clear_mocks();
     disable_indy_mocks().unwrap();
+    disable_indy_mocks_core().unwrap();
     settings::reset_config_values().unwrap();
 }
 
@@ -133,6 +137,7 @@ impl SetupMocks {
         let institution_did = set_test_configs();
         enable_agency_mocks();
         enable_indy_mocks().unwrap();
+        enable_indy_mocks_core().unwrap();
         SetupMocks { institution_did }
     }
 }
@@ -270,6 +275,7 @@ impl SetupIndyMocks {
     pub fn init() -> SetupIndyMocks {
         init_test_logging();
         enable_indy_mocks().unwrap();
+        enable_indy_mocks_core().unwrap();
         enable_agency_mocks();
         SetupIndyMocks {}
     }

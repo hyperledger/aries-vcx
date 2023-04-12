@@ -21,7 +21,7 @@ extern crate derive_builder;
 pub mod anoncreds;
 mod common;
 pub mod errors;
-mod global;
+pub mod global;
 pub mod indy;
 pub mod ledger;
 pub mod utils;
