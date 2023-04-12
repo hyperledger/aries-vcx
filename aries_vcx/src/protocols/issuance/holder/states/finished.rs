@@ -1,4 +1,3 @@
-use messages::decorators::attachment::AttachmentType;
 use messages::msg_fields::protocols::cred_issuance::issue_credential::IssueCredential;
 use messages::msg_fields::protocols::report_problem::ProblemReport;
 

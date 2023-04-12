@@ -252,22 +252,23 @@ pub fn release_receiver(handle: u32) -> LibvcxResult<()> {
 
 #[cfg(test)]
 pub mod tests {
-    use aries_vcx::messages::diddoc::aries::service::AriesService;
+    use aries_vcx::messages::msg_types::connection::{ConnectionType, ConnectionTypeV1};
+    use diddoc::aries::service::AriesService;
 
     use super::*;
 
     async fn build_and_append_service(did: &str) {
         let config = json!({
             "label": "foo",
-            "goal_code": GoalCode::IssueVC,
+            "goal_code": OobGoalCode::IssueVC,
             "goal": "foobar"
         })
         .to_string();
         let oob_handle = create_out_of_band(&config).unwrap();
         assert!(oob_handle > 0);
-        let service = ServiceOob::AriesService(
+        let service = OobService::AriesService(
             AriesService::create()
-                .set_service_endpoint("http://example.org/agent".into())
+                .set_service_endpoint("http://example.org/agent".parse().expect("valid url"))
                 .set_routing_keys(vec!["12345".into()])
                 .set_recipient_keys(vec!["abcde".into()]),
         );
@@ -276,7 +277,7 @@ pub mod tests {
         let resolved_services = get_services(oob_handle).unwrap();
         assert_eq!(resolved_services.len(), 2);
         assert_eq!(service, resolved_services[0]);
-        assert_eq!(ServiceOob::Did(Did::new(did).unwrap()), resolved_services[1]);
+        assert_eq!(OobService::Did(did.to_owned()), resolved_services[1]);
     }
 
     #[tokio::test]
@@ -298,7 +299,7 @@ pub mod tests {
         let config_actual: OOBConfig = serde_json::from_str(&config_str).unwrap();
         assert_eq!(
             config_actual.handshake_protocols,
-            vec![HandshakeProtocol::ConnectionV1, HandshakeProtocol::DidExchangeV1]
+            vec![Protocol::ConnectionType(ConnectionType::V1(ConnectionTypeV1::new_v1_0()))]
         );
 
         let config_str = json!({}).to_string();

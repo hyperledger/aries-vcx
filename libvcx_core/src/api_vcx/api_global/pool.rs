@@ -128,7 +128,7 @@ pub mod tests {
         );
         assert_eq!(get_main_pool_handle().unwrap_err().kind(), LibvcxErrorKind::NoPoolOpen);
 
-        delete_named_test_pool(INVALID_POOL_HANDLE, &pool_name);
+        delete_named_test_pool(INVALID_POOL_HANDLE, &pool_name).await;
         reset_main_pool_handle();
     }
 

@@ -248,21 +248,22 @@ impl Prover {
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
     use agency_client::agency_client::AgencyClient;
+    use messages::msg_fields::protocols::present_proof::PresentProof;
+    use messages::AriesMessage;
 
     use crate::errors::error::prelude::*;
     use crate::handlers::connection::mediated_connection::MediatedConnection;
-    use messages::a2a::A2AMessage;
 
     pub async fn get_proof_request_messages(
         agency_client: &AgencyClient,
         connection: &MediatedConnection,
     ) -> VcxResult<String> {
-        let presentation_requests: Vec<A2AMessage> = connection
+        let presentation_requests: Vec<AriesMessage> = connection
             .get_messages(agency_client)
             .await?
             .into_iter()
             .filter_map(|(_, message)| match message {
-                A2AMessage::PresentationRequest(_) => Some(message),
+                AriesMessage::PresentProof(PresentProof::RequestPresentation(_)) => Some(message),
                 _ => None,
             })
             .collect();
@@ -274,9 +275,13 @@ pub mod test_utils {
 #[cfg(feature = "general_test")]
 #[cfg(test)]
 mod tests {
+    use messages::msg_fields::protocols::present_proof::request::{
+        RequestPresentationContent, RequestPresentationDecorators,
+    };
+    use uuid::Uuid;
+
     use crate::{common::test_utils::indy_handles_to_profile, utils::devsetup::*};
     use aries_vcx_core::INVALID_POOL_HANDLE;
-    use messages::protocols::proof_presentation::presentation_request::PresentationRequest;
 
     use super::*;
 
@@ -284,7 +289,12 @@ mod tests {
     async fn test_retrieve_credentials_fails_with_no_proof_req() {
         SetupLibraryWallet::run(|setup| async move {
             let profile = indy_handles_to_profile(setup.wallet_handle, INVALID_POOL_HANDLE);
-            let proof_req = PresentationRequest::create();
+
+            let id = Uuid::new_v4().to_string();
+            let content = RequestPresentationContent::new(vec![]);
+            let decorators = RequestPresentationDecorators::default();
+
+            let proof_req = RequestPresentation::with_decorators(id, content, decorators);
             let proof = Prover::create_from_request("1", proof_req).unwrap();
             assert_eq!(
                 proof.retrieve_credentials(&profile).await.unwrap_err().kind(),

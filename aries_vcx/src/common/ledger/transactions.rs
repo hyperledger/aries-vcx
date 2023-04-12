@@ -2,7 +2,7 @@ use bs58;
 use diddoc::aries::diddoc::AriesDidDoc;
 use diddoc::aries::service::AriesService;
 use messages::msg_fields::protocols::connection::invitation::Invitation;
-use messages::msg_fields::protocols::out_of_band::invitation::{Invitation as OobInvitation, OobService};
+use messages::msg_fields::protocols::out_of_band::invitation::{OobService};
 use std::{collections::HashMap, sync::Arc};
 
 use crate::common::ledger::service_didsov::EndpointDidSov;

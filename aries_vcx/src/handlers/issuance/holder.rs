@@ -4,7 +4,6 @@ use messages::msg_fields::protocols::cred_issuance::issue_credential::IssueCrede
 use messages::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
 use messages::msg_fields::protocols::cred_issuance::propose_credential::ProposeCredential;
 use messages::msg_fields::protocols::revocation::revoke::Revoke;
-use messages::msg_fields::protocols::revocation::Revocation;
 use messages::AriesMessage;
 use std::sync::Arc;
 
@@ -222,21 +221,22 @@ impl Holder {
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
     use agency_client::agency_client::AgencyClient;
+    use messages::AriesMessage;
+    use messages::msg_fields::protocols::cred_issuance::CredentialIssuance;
 
     use crate::errors::error::prelude::*;
     use crate::handlers::connection::mediated_connection::MediatedConnection;
-    use messages::a2a::A2AMessage;
 
     pub async fn get_credential_offer_messages(
         agency_client: &AgencyClient,
         connection: &MediatedConnection,
     ) -> VcxResult<String> {
-        let credential_offers: Vec<A2AMessage> = connection
+        let credential_offers: Vec<AriesMessage> = connection
             .get_messages(agency_client)
             .await?
             .into_iter()
             .filter_map(|(_, a2a_message)| match a2a_message {
-                A2AMessage::CredentialOffer(_) => Some(a2a_message),
+                AriesMessage::CredentialIssuance(CredentialIssuance::OfferCredential(_)) => Some(a2a_message),
                 _ => None,
             })
             .collect();

@@ -8,7 +8,7 @@ use crate::common::proofs::verifier::verifier::validate_indy_proof;
 use crate::core::profile::profile::Profile;
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use crate::global::settings;
-use crate::handlers::util::{get_attach_as_string, matches_opt_thread_id, matches_thread_id, Status};
+use crate::handlers::util::{get_attach_as_string,  matches_thread_id, Status};
 use crate::protocols::proof_presentation::verifier::states::finished::FinishedState;
 use crate::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
 

@@ -8,7 +8,6 @@ use crate::handlers::util::{
     Status,
 };
 use chrono::Utc;
-use messages::decorators::attachment::{Attachment, AttachmentData, AttachmentType};
 use messages::decorators::please_ack::PleaseAck;
 use messages::decorators::thread::Thread;
 use messages::decorators::timing::Timing;

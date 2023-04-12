@@ -452,10 +452,8 @@ pub async fn download_messages(
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
-    use serde_json::Value;
-
     use aries_vcx::utils::mockdata::mockdata_mediated_connection::{
-        ARIES_CONNECTION_ACK, ARIES_CONNECTION_INVITATION, ARIES_CONNECTION_REQUEST, CONNECTION_SM_INVITEE_COMPLETED,
+        ARIES_CONNECTION_REQUEST, CONNECTION_SM_INVITEE_COMPLETED,
     };
 
     use super::*;
@@ -490,18 +488,19 @@ pub mod test_utils {
 
 #[cfg(test)]
 pub mod tests {
+    use aries_vcx::messages::msg_fields::protocols::connection::invitation::{
+        PairwiseInvitation, PairwiseInvitationContent, PwInvitationDecorators,
+    };
     use serde_json::Value;
 
     use aries_vcx;
     use aries_vcx::agency_client::testing::mocking::AgencyMockDecrypted;
-    use aries_vcx::messages::protocols::connection::invite::test_utils::{
-        _pairwise_invitation_json, _public_invitation_json,
-    };
     use aries_vcx::utils::constants;
     use aries_vcx::utils::devsetup::{SetupEmpty, SetupMocks};
     use aries_vcx::utils::mockdata::mockdata_mediated_connection::{
-        ARIES_CONNECTION_ACK, ARIES_CONNECTION_INVITATION, ARIES_CONNECTION_REQUEST, CONNECTION_SM_INVITEE_COMPLETED,
+        ARIES_CONNECTION_ACK, ARIES_CONNECTION_INVITATION, ARIES_CONNECTION_REQUEST,
     };
+    use diddoc::aries::diddoc::test_utils::*;
 
     use crate::api_vcx::api_handle::mediated_connection;
     use crate::api_vcx::api_handle::mediated_connection::test_utils::build_test_connection_inviter_invited;
@@ -539,8 +538,15 @@ pub mod tests {
     #[cfg(feature = "general_test")]
     async fn test_create_connection_with_pairwise_invite() {
         let _setup = SetupMocks::init();
+
+        let id = Uuid::new_v4().to_string();
+        let content = PairwiseInvitationContent::new(_label(), _recipient_keys(), _routing_keys(), _service_endpoint());
+        let decorators = PwInvitationDecorators::default();
+
+        let msg = AriesMessage::from(PairwiseInvitation::with_decorators(id, content, decorators));
+
         let connection_handle =
-            mediated_connection::create_connection_with_invite(_source_id(), &_pairwise_invitation_json())
+            mediated_connection::create_connection_with_invite(_source_id(), &serde_json::to_string(&msg).unwrap())
                 .await
                 .unwrap();
         assert!(mediated_connection::is_valid_handle(connection_handle));
@@ -551,8 +557,14 @@ pub mod tests {
     #[cfg(feature = "general_test")]
     async fn test_create_connection_with_public_invite() {
         let _setup = SetupMocks::init();
+
+        let id = Uuid::new_v4().to_string();
+        let content = PublicInvitationContent::new(_label(), _did());
+
+        let msg = AriesMessage::from(PublicInvitation::new(id, content));
+
         let connection_handle =
-            mediated_connection::create_connection_with_invite(_source_id(), &_public_invitation_json())
+            mediated_connection::create_connection_with_invite(_source_id(), &serde_json::to_string(&msg).unwrap())
                 .await
                 .unwrap();
         assert!(mediated_connection::is_valid_handle(connection_handle));

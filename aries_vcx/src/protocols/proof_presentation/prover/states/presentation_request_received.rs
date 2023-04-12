@@ -1,6 +1,5 @@
 use std::sync::Arc;
 
-use messages::decorators::attachment::AttachmentType;
 use messages::msg_fields::protocols::present_proof::present::Presentation;
 use messages::msg_fields::protocols::present_proof::request::{
     RequestPresentation, RequestPresentationContent, RequestPresentationDecorators,

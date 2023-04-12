@@ -346,6 +346,7 @@ pub mod tests_utils {
 
 #[cfg(test)]
 pub mod tests {
+    use aries_vcx::messages::msg_fields::protocols::cred_issuance::issue_credential::IssueCredential;
     use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
     use aries_vcx::utils::devsetup::{SetupDefaults, SetupMocks};
     use aries_vcx::utils::mockdata::mockdata_credex;
@@ -357,11 +358,10 @@ pub mod tests {
     use crate::api_vcx::api_handle::credential::{
         credential_create_with_offer, get_attributes, get_credential, send_credential_request,
     };
-    use crate::api_vcx::api_handle::mediated_connection;
     use crate::api_vcx::api_handle::mediated_connection::test_utils::{
         build_test_connection_invitee_completed, build_test_connection_inviter_requested,
     };
-    use crate::aries_vcx::messages::protocols::issuance::credential::Credential;
+    
 
     use super::*;
 
@@ -473,7 +473,7 @@ pub mod tests {
             "full_credential_test:: going to deserialize credential: {:?}",
             msg_value
         );
-        let _credential_struct: Credential = serde_json::from_str(msg_value.to_string().as_str()).unwrap();
+        let _credential_struct: IssueCredential = serde_json::from_str(msg_value.to_string().as_str()).unwrap();
 
         info!("full_credential_test:: going get offered attributes from final state");
         let offer_attrs: String = get_attributes(handle_cred).unwrap();
@@ -511,7 +511,7 @@ pub mod tests {
             .unwrap();
         let o: serde_json::Value = serde_json::from_str(&offer).unwrap();
         debug!("Serialized credential offer: {:?}", &o[0]);
-        let _credential_offer: CredentialOffer = serde_json::from_str(&o[0].to_string()).unwrap();
+        let _credential_offer: OfferCredential = serde_json::from_str(&o[0].to_string()).unwrap();
     }
 
     #[tokio::test]
@@ -522,6 +522,6 @@ pub mod tests {
         let handle = from_string(CREDENTIAL_SM_FINISHED).unwrap();
         let cred_string: String = get_credential(handle).unwrap();
         let cred_value: serde_json::Value = serde_json::from_str(&cred_string).unwrap();
-        let _credential_struct: Credential = serde_json::from_str(cred_value.to_string().as_str()).unwrap();
+        let _credential_struct: IssueCredential = serde_json::from_str(cred_value.to_string().as_str()).unwrap();
     }
 }

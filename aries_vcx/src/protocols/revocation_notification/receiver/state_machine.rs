@@ -209,7 +209,7 @@ impl RevocationNotificationReceiverSM {
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
-    use messages::a2a::A2AMessage;
+    use messages::AriesMessage;
 
     use crate::protocols::revocation_notification::test_utils::{_cred_rev_id, _rev_reg_id};
 
@@ -220,7 +220,7 @@ pub mod test_utils {
     }
 
     pub fn _send_message_but_fail() -> SendClosure {
-        Box::new(|_: A2AMessage| {
+        Box::new(|_: AriesMessage| {
             Box::pin(async { Err(AriesVcxError::from_msg(AriesVcxErrorKind::IOError, "Mocked error")) })
         })
     }
@@ -231,7 +231,7 @@ pub mod test_utils {
 pub mod unit_tests {
     use std::sync::mpsc::sync_channel;
 
-    use messages::a2a::A2AMessage;
+    use messages::AriesMessage;
 
     use crate::protocols::revocation_notification::{
         receiver::state_machine::test_utils::_receiver,
@@ -282,7 +282,7 @@ pub mod unit_tests {
     async fn test_handle_revocation_notification_sends_ack_when_requested() {
         let (sender, receiver) = sync_channel(1);
         let sender_cl = sender.clone();
-        let send_message: SendClosure = Box::new(move |_: A2AMessage| {
+        let send_message: SendClosure = Box::new(move |_: AriesMessage| {
             Box::pin(async move {
                 sender_cl.send(true).unwrap();
                 VcxResult::Ok(())

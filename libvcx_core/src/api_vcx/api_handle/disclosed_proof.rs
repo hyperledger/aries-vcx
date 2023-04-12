@@ -479,7 +479,7 @@ mod tests {
         let connection_h = build_test_connection_invitee_completed();
 
         let request = get_proof_request(connection_h, "123").await.unwrap();
-        let _request: PresentationRequest = serde_json::from_str(&request).unwrap();
+        let _request: RequestPresentation = serde_json::from_str(&request).unwrap();
     }
 
     #[tokio::test]

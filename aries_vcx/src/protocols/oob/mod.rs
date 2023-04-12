@@ -44,7 +44,7 @@ pub fn build_handshake_reuse_accepted_msg(handshake_reuse: &HandshakeReuse) -> V
     let mut thread = Thread::new(thread_id);
     thread.pthid = Some(pthread_id);
 
-    let mut decorators = HandshakeReuseAcceptedDecorators::new(thread);
+    let decorators = HandshakeReuseAcceptedDecorators::new(thread);
     let mut timing = Timing::default();
     timing.out_time = Some(Utc::now());
 

@@ -25,7 +25,7 @@ impl From<(CompletedState, Vec<ProtocolDescriptor>)> for CompletedState {
 }
 
 impl From<(RequestedState, AriesDidDoc, Response)> for CompletedState {
-    fn from((state, did_doc, response): (RequestedState, AriesDidDoc, Response)) -> CompletedState {
+    fn from((state, did_doc, _response): (RequestedState, AriesDidDoc, Response)) -> CompletedState {
         trace!("ConnectionInvitee: transit state from RequestedState to CompleteState");
         CompletedState {
             bootstrap_did_doc: state.did_doc,

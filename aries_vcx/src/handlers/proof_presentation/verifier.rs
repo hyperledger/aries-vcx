@@ -3,7 +3,6 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use agency_client::agency_client::AgencyClient;
-use messages::decorators::attachment::AttachmentType;
 use messages::msg_fields::protocols::present_proof::present::Presentation;
 use messages::msg_fields::protocols::present_proof::propose::ProposePresentation;
 use messages::msg_fields::protocols::present_proof::request::RequestPresentation;

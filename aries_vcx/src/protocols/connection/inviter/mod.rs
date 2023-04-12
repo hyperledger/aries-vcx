@@ -153,7 +153,7 @@ impl InviterConnection<Invited> {
     pub async fn handle_request<T>(
         self,
         wallet: &Arc<dyn BaseWallet>,
-        mut request: Request,
+        request: Request,
         new_service_endpoint: Url,
         new_routing_keys: Vec<String>,
         transport: &T,

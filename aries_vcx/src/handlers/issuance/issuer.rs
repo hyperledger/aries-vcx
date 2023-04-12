@@ -322,22 +322,23 @@ impl Issuer {
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
     use agency_client::agency_client::AgencyClient;
+    use messages::msg_fields::protocols::cred_issuance::propose_credential::ProposeCredential;
+    use messages::msg_fields::protocols::cred_issuance::CredentialIssuance;
+    use messages::AriesMessage;
 
     use crate::errors::error::prelude::*;
     use crate::handlers::connection::mediated_connection::MediatedConnection;
-    use messages::a2a::A2AMessage;
-    use messages::protocols::issuance::credential_proposal::CredentialProposal;
 
     pub async fn get_credential_proposal_messages(
         agency_client: &AgencyClient,
         connection: &MediatedConnection,
     ) -> VcxResult<String> {
-        let credential_proposals: Vec<CredentialProposal> = connection
+        let credential_proposals: Vec<ProposeCredential> = connection
             .get_messages(agency_client)
             .await?
             .into_iter()
             .filter_map(|(_, message)| match message {
-                A2AMessage::CredentialProposal(proposal) => Some(proposal),
+                AriesMessage::CredentialIssuance(CredentialIssuance::ProposeCredential(proposal)) => Some(proposal),
                 _ => None,
             })
             .collect();
@@ -349,13 +350,11 @@ pub mod test_utils {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
+    use messages::msg_fields::protocols::cred_issuance::CredentialIssuance;
+
     use crate::common::test_utils::mock_profile;
     use crate::protocols::issuance::issuer::state_machine::unit_tests::_send_message;
     use crate::utils::devsetup::SetupMocks;
-    use messages::concepts::ack::test_utils::_ack;
-    use messages::protocols::issuance::credential_offer::test_utils::{_offer_info, _offer_info_unrevokable};
-    use messages::protocols::issuance::credential_proposal::test_utils::_credential_proposal;
-    use messages::protocols::issuance::credential_request::test_utils::_credential_request;
 
     use super::*;
 
@@ -372,7 +371,7 @@ pub mod unit_tests {
     }
 
     fn _send_message_but_fail() -> Option<SendClosure> {
-        Some(Box::new(|_: A2AMessage| {
+        Some(Box::new(|_: AriesMessage| {
             Box::pin(async { Err(AriesVcxError::from_msg(AriesVcxErrorKind::IOError, "Mocked error")) })
         }))
     }
@@ -420,7 +419,7 @@ pub mod unit_tests {
 
     #[tokio::test]
     async fn test_build_credential_preview() {
-        fn verify_preview(preview: CredentialPreviewData) {
+        fn verify_preview(preview: CredentialPreview) {
             let value_name = preview
                 .attributes
                 .clone()
@@ -493,7 +492,7 @@ pub mod unit_tests {
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
 
         let messages = map!(
-            "key_1".to_string() => A2AMessage::CredentialRequest(_credential_request())
+            "key_1".to_string() => AriesMessage::CredentialIssuance(CredentialIssuance::RequestCredential(_credential_request()))
         );
         let (_, msg) = issuer.find_message_to_handle(messages).unwrap();
         issuer.step(&mock_profile(), msg.into(), _send_message()).await.unwrap();
@@ -506,7 +505,7 @@ pub mod unit_tests {
         assert_eq!(IssuerState::CredentialSent, issuer.get_state());
 
         let messages = map!(
-            "key_1".to_string() => A2AMessage::CredentialAck(_ack())
+            "key_1".to_string() => AriesMessage::CredentialIssuance(CredentialIssuance::Ack(_ack()))
         );
         let (_, msg) = issuer.find_message_to_handle(messages).unwrap();
         issuer.step(&mock_profile(), msg.into(), _send_message()).await.unwrap();
@@ -527,7 +526,7 @@ pub mod unit_tests {
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
 
         let messages = map!(
-            "key_1".to_string() => A2AMessage::CredentialProposal(_credential_proposal())
+            "key_1".to_string() => AriesMessage::CredentialIssuance(CredentialIssuance::ProposeCredential(_credential_proposal()))()
         );
         let (_, msg) = issuer.find_message_to_handle(messages).unwrap();
         issuer.step(&mock_profile(), msg.into(), _send_message()).await.unwrap();
@@ -541,7 +540,7 @@ pub mod unit_tests {
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
 
         let messages = map!(
-            "key_1".to_string() => A2AMessage::CredentialRequest(_credential_request())
+            "key_1".to_string() => AriesMessage::CredentialIssuance(CredentialIssuance::RequestCredential(_credential_request()))
         );
         let (_, msg) = issuer.find_message_to_handle(messages).unwrap();
         issuer.step(&mock_profile(), msg.into(), _send_message()).await.unwrap();
@@ -554,7 +553,7 @@ pub mod unit_tests {
         assert_eq!(IssuerState::CredentialSent, issuer.get_state());
 
         let messages = map!(
-            "key_1".to_string() => A2AMessage::CredentialAck(_ack())
+            "key_1".to_string() => AriesMessage::CredentialIssuance(CredentialIssuance::Ack(_ack()))
         );
         let (_, msg) = issuer.find_message_to_handle(messages).unwrap();
         issuer.step(&mock_profile(), msg.into(), _send_message()).await.unwrap();

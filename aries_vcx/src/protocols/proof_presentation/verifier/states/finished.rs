@@ -2,7 +2,7 @@ use messages::msg_fields::protocols::{
     present_proof::{present::Presentation, request::RequestPresentation},
     report_problem::ProblemReport,
 };
-use serde::{Deserialize, Deserializer};
+use serde::{Deserialize};
 
 use crate::{
     handlers::util::Status,

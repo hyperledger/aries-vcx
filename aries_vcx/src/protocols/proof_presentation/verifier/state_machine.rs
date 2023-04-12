@@ -273,10 +273,10 @@ impl VerifierSM {
         for (uid, message) in messages {
             match &self.state {
                 VerifierFullState::Initial(_) => match &message {
-                    AriesMessage::PresentProof(PresentProof::ProposePresentation(proposal)) => {
+                    AriesMessage::PresentProof(PresentProof::ProposePresentation(_)) => {
                         return Some((uid, message));
                     }
-                    AriesMessage::PresentProof(PresentProof::ProposePresentation(request)) => {
+                    AriesMessage::PresentProof(PresentProof::RequestPresentation(_)) => {
                         return Some((uid, message));
                     }
                     _ => {}

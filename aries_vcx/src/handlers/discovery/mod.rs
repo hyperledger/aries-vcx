@@ -39,7 +39,7 @@ pub async fn respond_discovery_query(
     query: Query,
     did_doc: &AriesDidDoc,
     pw_vk: &str,
-    supported_protocols: Vec<ProtocolDescriptor>,
+    _supported_protocols: Vec<ProtocolDescriptor>,
 ) -> VcxResult<()> {
     let content = DiscloseContent::default();
 

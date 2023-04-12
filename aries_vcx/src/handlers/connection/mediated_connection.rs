@@ -14,7 +14,6 @@ use messages::msg_fields::protocols::connection::request::Request;
 use messages::msg_fields::protocols::connection::Connection;
 use messages::msg_fields::protocols::discover_features::disclose::Disclose;
 use messages::msg_fields::protocols::discover_features::{DiscoverFeatures, ProtocolDescriptor};
-use messages::msg_fields::protocols::out_of_band::invitation::Invitation as OobInvitation;
 use messages::msg_fields::protocols::out_of_band::OutOfBand;
 use messages::msg_fields::protocols::trust_ping::TrustPing;
 use messages::AriesMessage;
@@ -437,8 +436,7 @@ impl MediatedConnection {
         let did_doc = self.their_did_doc().ok_or(AriesVcxError::from_msg(
             AriesVcxErrorKind::NotReady,
             format!(
-                "Can't answer message {:?} because counterparty did doc is not available",
-                message
+                "Can't answer message {message:?} because counterparty did doc is not available"
             ),
         ))?;
         let pw_vk = &self.pairwise_info().pw_vk;

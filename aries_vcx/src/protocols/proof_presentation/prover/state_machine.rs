@@ -20,7 +20,6 @@ use crate::protocols::proof_presentation::prover::verify_thread_id;
 use crate::protocols::SendClosure;
 
 use chrono::Utc;
-use messages::decorators::attachment::{Attachment, AttachmentData, AttachmentType};
 use messages::decorators::thread::Thread;
 use messages::decorators::timing::Timing;
 use messages::msg_fields::protocols::present_proof::ack::AckPresentation;
@@ -135,7 +134,7 @@ impl ProverSM {
                 let mut decorators = ProposePresentationDecorators::default();
                 decorators.thread = Some(Thread::new(self.thread_id.clone()));
 
-                let mut proposal = ProposePresentation::with_decorators(id, content, decorators);
+                let proposal = ProposePresentation::with_decorators(id, content, decorators);
 
                 send_message(proposal.clone().into()).await?;
                 ProverFullState::PresentationProposalSent(PresentationProposalSent::new(proposal))
@@ -149,7 +148,7 @@ impl ProverSM {
                 let mut decorators = ProposePresentationDecorators::default();
                 decorators.thread = Some(Thread::new(self.thread_id.clone()));
 
-                let mut proposal = ProposePresentation::with_decorators(id, content, decorators);
+                let proposal = ProposePresentation::with_decorators(id, content, decorators);
 
                 send_message(proposal.clone().into()).await?;
                 ProverFullState::PresentationProposalSent(PresentationProposalSent::new(proposal))

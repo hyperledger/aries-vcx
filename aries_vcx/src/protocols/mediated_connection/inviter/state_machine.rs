@@ -231,7 +231,7 @@ impl SmConnectionInviter {
     pub async fn handle_connection_request(
         self,
         wallet: Arc<dyn BaseWallet>,
-        mut request: Request,
+        request: Request,
         new_pairwise_info: &PairwiseInfo,
         new_routing_keys: Vec<String>,
         new_service_endpoint: Url,

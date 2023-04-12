@@ -568,7 +568,7 @@ pub async fn setup_issuer_wallet_and_agency_client() -> (String, WalletHandle, A
     let config_provision_agent = AgentProvisionConfig {
         agency_did: AGENCY_DID.to_string(),
         agency_verkey: AGENCY_VERKEY.to_string(),
-        agency_endpoint: AGENCY_ENDPOINT.to_string(),
+        agency_endpoint: AGENCY_ENDPOINT.parse().expect("valid url"),
         agent_seed: None,
     };
     create_wallet_with_master_secret(&config_wallet).await.unwrap();

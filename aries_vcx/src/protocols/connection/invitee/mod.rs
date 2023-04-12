@@ -37,7 +37,6 @@ use super::{initiation_type::Invitee, pairwise_info::PairwiseInfo, trait_bounds:
 use crate::{
     common::signing::decode_signed_connection_response,
     errors::error::{AriesVcxError, AriesVcxErrorKind},
-    handlers::util::verify_thread_id,
 };
 
 /// Convenience alias
@@ -135,7 +134,7 @@ impl InviteeConnection<Invited> {
                 (id.clone(), thread)
             }
             AnyInvitation::Con(Invitation::Pairwise(_)) | AnyInvitation::Con(Invitation::PairwiseDID(_)) => {
-                let mut thread = Thread::new(self.state.thread_id().to_owned());
+                let thread = Thread::new(self.state.thread_id().to_owned());
                 (self.state.thread_id().to_owned(), thread)
             }
         };

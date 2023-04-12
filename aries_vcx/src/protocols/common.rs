@@ -6,7 +6,7 @@ use uuid::Uuid;
 
 pub fn build_problem_report_msg(comment: Option<String>, thread_id: &str) -> ProblemReport {
     let id = Uuid::new_v4().to_string();
-    let mut content = ProblemReportContent::new(comment.unwrap_or_default());
+    let content = ProblemReportContent::new(comment.unwrap_or_default());
 
     let mut decorators = ProblemReportDecorators::default();
     decorators.thread = Some(Thread::new(thread_id.to_owned()));

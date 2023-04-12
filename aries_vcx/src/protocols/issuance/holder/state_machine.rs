@@ -3,7 +3,6 @@ use std::fmt;
 use std::sync::Arc;
 
 use chrono::Utc;
-use messages::decorators::attachment::{Attachment, AttachmentData, AttachmentType};
 use messages::decorators::thread::Thread;
 use messages::decorators::timing::Timing;
 use messages::msg_fields::protocols::cred_issuance::ack::{AckCredential, AckCredentialContent};
