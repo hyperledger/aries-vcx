@@ -2,12 +2,13 @@ use std::env;
 use std::path::PathBuf;
 use std::sync::Arc;
 
+
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use diddoc::aries::diddoc::AriesDidDoc;
 
-use messages::AriesMessage;
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use crate::utils::encryption_envelope::EncryptionEnvelope;
+use messages::AriesMessage;
 
 #[macro_use]
 #[cfg(feature = "test_utils")]
