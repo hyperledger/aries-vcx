@@ -7,14 +7,14 @@ use vdrtools::types::validation::Validatable;
 use messages::a2a::A2AMessage;
 use messages::diddoc::aries::diddoc::AriesDidDoc;
 use shared_vcx::http::httpclient;
-use shared_vcx::errors::error::{SharedAgencyClientResult, SharedAgencyClientError};
+use shared_vcx::errors::error::{SharedVcxResult, SharedVcxError};
 
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use crate::plugins::wallet::base_wallet::BaseWallet;
 use crate::utils::encryption_envelope::EncryptionEnvelope;
 
-impl From<SharedAgencyClientError> for AriesVcxError {
-    fn from(error: SharedAgencyClientError) -> Self {
+impl From<SharedVcxError> for AriesVcxError {
+    fn from(error: SharedVcxError) -> Self {
         AriesVcxError::from(error)
     }
 }
@@ -87,7 +87,7 @@ pub async fn send_message(
     trace!("send_message >>> message: {:?}, did_doc: {:?}", message, &did_doc);
     let EncryptionEnvelope(envelope) =
         EncryptionEnvelope::create(&wallet, &message, Some(&sender_verkey), &did_doc).await?;
-        
+
     httpclient::post_message(envelope, &did_doc.get_endpoint()).await?;   Ok(())
 }
 

@@ -5,7 +5,7 @@ use reqwest;
 use reqwest::header::{CONTENT_TYPE, USER_AGENT};
 use reqwest::Client;
 
-use crate::errors::error::{SharedAgencyClientError, SharedAgencyClientErrorKind, SharedAgencyClientResult};
+use crate::errors::error::{SharedVcxError, SharedVcxErrorKind, SharedVcxResult};
 use crate::testing::mocking;
 use crate::testing::mocking::{AgencyMock, AgencyMockDecrypted, HttpClientMockResponse};
 
@@ -22,7 +22,7 @@ lazy_static! {
     };
 }
 
-pub async fn post_message(body_content: Vec<u8>, url: &str) -> SharedAgencyClientResult<Vec<u8>> {
+pub async fn post_message(body_content: Vec<u8>, url: &str) -> SharedVcxResult<Vec<u8>> {
     if mocking::agency_mocks_enabled() {
         if HttpClientMockResponse::has_response() {
             warn!("post_message >> mocking response for POST {}", url);
@@ -58,8 +58,8 @@ pub async fn post_message(body_content: Vec<u8>, url: &str) -> SharedAgencyClien
         .send()
         .await
         .map_err(|err| {
-            SharedAgencyClientError::from_msg(
-                SharedAgencyClientErrorKind::PostMessageFailed,
+            SharedVcxError::from_msg(
+                SharedVcxErrorKind::PostMessageFailed,
                 format!("HTTP Client could not connect with {}, err: {}", url, err),
             )
         })?;
@@ -71,8 +71,8 @@ pub async fn post_message(body_content: Vec<u8>, url: &str) -> SharedAgencyClien
             if response_status.is_success() {
                 Ok(payload.into_bytes())
             } else {
-                Err(SharedAgencyClientError::from_msg(
-                    SharedAgencyClientErrorKind::PostMessageFailed,
+                Err(SharedVcxError::from_msg(
+                    SharedVcxErrorKind::PostMessageFailed,
                     format!(
                         "POST {} failed due to non-success HTTP status: {}, response body: {}",
                         url, response_status, payload
@@ -80,8 +80,8 @@ pub async fn post_message(body_content: Vec<u8>, url: &str) -> SharedAgencyClien
                 ))
             }
         }
-        Err(error) => Err(SharedAgencyClientError::from_msg(
-            SharedAgencyClientErrorKind::PostMessageFailed,
+        Err(error) => Err(SharedVcxError::from_msg(
+            SharedVcxErrorKind::PostMessageFailed,
             format!(
                 "POST {} failed because response could not be decoded as utf-8, HTTP status: {}, \
                      content-length header: {:?}, error: {:?}",

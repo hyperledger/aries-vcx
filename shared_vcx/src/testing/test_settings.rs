@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::sync::RwLock;
 use log::{trace, warn};
 
-use crate::errors::error::{SharedAgencyClientError, SharedAgencyClientErrorKind, SharedAgencyClientResult};
+use crate::errors::error::{SharedVcxError, SharedVcxErrorKind, SharedVcxResult};
 
 const CONFIG_AGENCY_TEST_MODE: &str = "enable_test_mode";
 
@@ -12,7 +12,7 @@ lazy_static! {
     static ref AGENCY_SETTINGS: RwLock<HashMap<String, String>> = RwLock::new(HashMap::new());
 }
 
-pub fn get_config_agency_test_mode() -> SharedAgencyClientResult<String> {
+pub fn get_config_agency_test_mode() -> SharedVcxResult<String> {
     _get_config_value(CONFIG_AGENCY_TEST_MODE)
 }
 
@@ -36,19 +36,19 @@ fn _set_test_config(key: &str, value: &str) {
     }
 }
 
-fn _get_config_value(key: &str) -> SharedAgencyClientResult<String> {
+fn _get_config_value(key: &str) -> SharedVcxResult<String> {
     trace!("get_config_value >>> key: {}", key);
 
     AGENCY_SETTINGS
         .read()
-        .or(Err(SharedAgencyClientError::from_msg(
-            SharedAgencyClientErrorKind::InvalidConfiguration,
+        .or(Err(SharedVcxError::from_msg(
+            SharedVcxErrorKind::InvalidConfiguration,
             "Cannot read AGENCY_SETTINGS",
         )))?
         .get(key)
         .map(|v| v.to_string())
-        .ok_or(SharedAgencyClientError::from_msg(
-            SharedAgencyClientErrorKind::InvalidConfiguration,
+        .ok_or(SharedVcxError::from_msg(
+            SharedVcxErrorKind::InvalidConfiguration,
             format!("Cannot read \"{}\" from AGENCY_SETTINGS", key),
         ))
 }

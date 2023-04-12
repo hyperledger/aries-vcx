@@ -1,7 +1,7 @@
 use std::sync::Mutex;
 use log::{trace, debug};
 
-use crate::errors::error::SharedAgencyClientResult;
+use crate::errors::error::SharedVcxResult;
 use crate::testing::test_settings::{disable_agency_test_mode, enable_agency_test_mode, get_config_agency_test_mode};
 
 lazy_static! {
@@ -14,11 +14,11 @@ lazy_static! {
 
 #[derive(Default)]
 pub struct HttpClientMockResponse {
-    responses: Vec<SharedAgencyClientResult<Vec<u8>>>,
+    responses: Vec<SharedVcxResult<Vec<u8>>>,
 }
 
 impl HttpClientMockResponse {
-    pub fn set_next_response(response: SharedAgencyClientResult<Vec<u8>>) {
+    pub fn set_next_response(response: SharedVcxResult<Vec<u8>>) {
         if agency_mocks_enabled() {
             HTTPCLIENT_MOCK_RESPONSES
                 .lock()
@@ -36,7 +36,7 @@ impl HttpClientMockResponse {
             .is_empty()
     }
 
-    pub fn get_response() -> SharedAgencyClientResult<Vec<u8>> {
+    pub fn get_response() -> SharedVcxResult<Vec<u8>> {
         HTTPCLIENT_MOCK_RESPONSES
             .lock()
             .expect("Could not access HTTPCLIENT_MOCK_RESPONSES")
