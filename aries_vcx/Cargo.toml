@@ -18,7 +18,12 @@ modular_libs = ["aries_vcx_core/modular_libs"]
 ########################## TEST FLAGS ###############################
 # Feature flag for base requirments for running tests underneath the `test_utils` flag (most tests).
 # Both `vdrtools` and `modular_libs` are transitively enabled, so they can be used for tests (including interop tests).
-test_utils = [ "aries_vcx_core/test_utils","vdrtools", "modular_libs"]
+test_utils = [
+    "aries_vcx_core/test_utils",
+    "messages/test_utils",
+    "vdrtools",
+    "modular_libs",
+]
 # Feature flag for categorising tests which require a ledger to be running
 pool_tests = ["test_utils"]
 # Feature flag for categorising tests which require a ledger and messaging agency to be running
