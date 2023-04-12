@@ -85,6 +85,7 @@ pub mod tests {
         create_tmp_genesis_txn_file, delete_named_test_pool, delete_test_pool,
     };
     use aries_vcx::aries_vcx_core::indy::ledger::pool::PoolConfig;
+    use aries_vcx::aries_vcx_core::INVALID_POOL_HANDLE;
     use aries_vcx::global::settings::{set_config_value, CONFIG_GENESIS_PATH};
     use aries_vcx::utils::constants::GENESIS_PATH;
     use aries_vcx::utils::devsetup::{SetupDefaults, SetupEmpty, TempFile};
@@ -101,7 +102,7 @@ pub mod tests {
             pool_config: None,
         };
         open_main_pool(&config).await.unwrap();
-        delete_test_pool(get_main_pool_handle().unwrap()).await;
+        delete_test_pool(aries_vcx::aries_vcx_core::PoolHandle(get_main_pool_handle().unwrap())).await;
         reset_main_pool_handle();
     }
 
@@ -127,7 +128,7 @@ pub mod tests {
         );
         assert_eq!(get_main_pool_handle().unwrap_err().kind(), LibvcxErrorKind::NoPoolOpen);
 
-        delete_named_test_pool(0, &pool_name);
+        delete_named_test_pool(INVALID_POOL_HANDLE, &pool_name);
         reset_main_pool_handle();
     }
 
