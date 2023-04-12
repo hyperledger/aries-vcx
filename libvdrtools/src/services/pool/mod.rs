@@ -827,49 +827,6 @@ pub mod tests {
             let res = block_on(ps.refresh(INVALID_POOL_HANDLE));
             assert_eq!(IndyErrorKind::InvalidPoolHandle, res.unwrap_err().kind());
         }
-
-        // FIXME:
-        // #[test]
-        // fn pool_register_sp_parser_works() {
-        //     test::cleanup_storage("pool_register_sp_parser_works");
-        //     REGISTERED_SP_PARSERS.lock().unwrap().clear();
-        //     extern "C" fn test_sp(
-        //         _reply_from_node: *const c_char,
-        //         _parsed_sp: *mut *const c_char,
-        //     ) -> ErrorCode {
-        //         ErrorCode::Success
-        //     }
-        //     extern "C" fn test_free(_data: *const c_char) -> ErrorCode {
-        //         ErrorCode::Success
-        //     }
-        //     PoolService::register_sp_parser("test", test_sp, test_free).unwrap();
-        // }
-
-        // FIMXE:
-        // #[test]
-        // fn pool_get_sp_parser_works() {
-        //     test::cleanup_storage("pool_get_sp_parser_works");
-        //     REGISTERED_SP_PARSERS.lock().unwrap().clear();
-        //     extern "C" fn test_sp(
-        //         _reply_from_node: *const c_char,
-        //         _parsed_sp: *mut *const c_char,
-        //     ) -> ErrorCode {
-        //         ErrorCode::Success
-        //     }
-        //     extern "C" fn test_free(_data: *const c_char) -> ErrorCode {
-        //         ErrorCode::Success
-        //     }
-        //     PoolService::register_sp_parser("test", test_sp, test_free).unwrap();
-        //     PoolService::get_sp_parser("test").unwrap();
-        // }
-
-        // FIXME:
-        // #[test]
-        // fn pool_get_sp_parser_works_for_invalid_name() {
-        //     test::cleanup_storage("pool_get_sp_parser_works_for_invalid_name");
-        //     REGISTERED_SP_PARSERS.lock().unwrap().clear();
-        //     assert_eq!(None, PoolService::get_sp_parser("test"));
-        // }
     }
 
     #[async_std::test]

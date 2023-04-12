@@ -5,7 +5,6 @@ use std::sync::Arc;
 use indy_api_types::{
     domain::wallet::{Config, Credentials, ExportConfig, KeyConfig},
     errors::prelude::*,
-    wallet::*,
     WalletHandle,
 };
 
@@ -32,98 +31,6 @@ impl WalletController {
             wallet_service,
             crypto_service,
         }
-    }
-
-    /// Register custom wallet storage implementation.
-    ///
-    /// #Params
-
-    /// type_: Storage type name.
-    /// create: WalletType create operation handler
-    /// open: WalletType open operation handler
-    /// close: Wallet close operation handler
-    /// delete: WalletType delete operation handler
-    /// add_record: WalletType add record operation handler
-    /// update_record_value: WalletType update record value operation handler
-    /// update_record_tags: WalletType update record tags operation handler
-    /// add_record_tags: WalletType add record tags operation handler
-    /// delete_record_tags: WalletType delete record tags operation handler
-    /// delete_record: WalletType delete record operation handler
-    /// get_record: WalletType get record operation handler
-    /// get_record_id: WalletType get record id operation handler
-    /// get_record_type: WalletType get record type operation handler
-    /// get_record_value: WalletType get record value operation handler
-    /// get_record_tags: WalletType get record tags operation handler
-    /// free_record: WalletType free record operation handler
-    /// search_records: WalletType search records operation handler
-    /// search_all_records: WalletType search all records operation handler
-    /// get_search_total_count: WalletType get search total count operation handler
-    /// fetch_search_next_record: WalletType fetch search next record operation handler
-    /// free_search: WalletType free search operation handler
-    /// free: Handler that allows to de-allocate strings allocated in caller code
-    ///
-    /// #Returns
-    /// Error code
-    pub fn register_type(
-        &self,
-        type_: String,
-        create: WalletCreate,
-        open: WalletOpen,
-        close: WalletClose,
-        delete: WalletDelete,
-        add_record: WalletAddRecord,
-        update_record_value: WalletUpdateRecordValue,
-        update_record_tags: WalletUpdateRecordTags,
-        add_record_tags: WalletAddRecordTags,
-        delete_record_tags: WalletDeleteRecordTags,
-        delete_record: WalletDeleteRecord,
-        get_record: WalletGetRecord,
-        get_record_id: WalletGetRecordId,
-        get_record_type: WalletGetRecordType,
-        get_record_value: WalletGetRecordValue,
-        get_record_tags: WalletGetRecordTags,
-        free_record: WalletFreeRecord,
-        get_storage_metadata: WalletGetStorageMetadata,
-        set_storage_metadata: WalletSetStorageMetadata,
-        free_storage_metadata: WalletFreeStorageMetadata,
-        search_records: WalletSearchRecords,
-        search_all_records: WalletSearchAllRecords,
-        get_search_total_count: WalletGetSearchTotalCount,
-        fetch_search_next_record: WalletFetchSearchNextRecord,
-        free_search: WalletFreeSearch,
-    ) -> IndyResult<()> {
-        trace!("register_type > type_: {:?}", type_);
-
-        self.wallet_service.register_wallet_storage(
-            &type_,
-            create,
-            open,
-            close,
-            delete,
-            add_record,
-            update_record_value,
-            update_record_tags,
-            add_record_tags,
-            delete_record_tags,
-            delete_record,
-            get_record,
-            get_record_id,
-            get_record_type,
-            get_record_value,
-            get_record_tags,
-            free_record,
-            get_storage_metadata,
-            set_storage_metadata,
-            free_storage_metadata,
-            search_records,
-            search_all_records,
-            get_search_total_count,
-            fetch_search_next_record,
-            free_search,
-        )?;
-
-        trace!("register_type < res: ()");
-        Ok(())
     }
 
     /// Create a new secure wallet.
