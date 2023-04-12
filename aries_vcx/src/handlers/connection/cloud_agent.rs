@@ -148,7 +148,6 @@ impl CloudAgentInfo {
         let a2a_messages = self
             .decrypt_decode_messages(&agency_client.get_wallet(), &messages, expect_sender_vk)
             .await?;
-        _log_messages_optionally(&a2a_messages);
         Ok(a2a_messages)
     }
 
@@ -174,7 +173,6 @@ impl CloudAgentInfo {
         let a2a_messages = self
             .decrypt_decode_messages_noauth(&agency_client.get_wallet(), &messages)
             .await?;
-        _log_messages_optionally(&a2a_messages);
         Ok(a2a_messages)
     }
 
