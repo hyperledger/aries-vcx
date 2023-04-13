@@ -10,7 +10,6 @@ pub mod utils;
 pub mod wallet; // temporarily left public due to wallet set up utils
 pub(crate) mod wallet_non_secrets;
 
-
 // Vdrtools handle wrappers
 
 #[derive(Debug, PartialEq, Copy, Clone)]

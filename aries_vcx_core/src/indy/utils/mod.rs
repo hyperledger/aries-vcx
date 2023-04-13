@@ -1,7 +1,7 @@
 use std::sync::atomic::{AtomicUsize, Ordering};
-use vdrtools::{CommandHandle, types::validation::Validatable};
+use vdrtools::{types::validation::Validatable, CommandHandle};
 
-use crate::errors::error::{VcxCoreResult, AriesVcxCoreError, AriesVcxCoreErrorKind};
+use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
 
 pub mod mocks;
 

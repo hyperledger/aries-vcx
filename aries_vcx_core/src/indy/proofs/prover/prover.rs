@@ -4,8 +4,8 @@ use vdrtools::{Locator, SearchHandle};
 use crate::errors::error::prelude::*;
 use crate::global::settings;
 use crate::indy::anoncreds::close_search_handle;
-use crate::utils::constants::{ATTRS, PROOF_REQUESTED_PREDICATES, REQUESTED_ATTRIBUTES};
 use crate::indy::utils::parse_and_validate;
+use crate::utils::constants::{ATTRS, PROOF_REQUESTED_PREDICATES, REQUESTED_ATTRIBUTES};
 use crate::{utils, WalletHandle};
 
 pub async fn libindy_prover_create_proof(
