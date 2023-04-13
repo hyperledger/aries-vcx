@@ -32,7 +32,7 @@ use crate::core::profile::profile::Profile;
 use crate::core::profile::vdrtools_profile::VdrtoolsProfile;
 use crate::global::settings;
 use crate::global::settings::init_issuer_config;
-use crate::global::settings::{disable_indy_mocks, enable_indy_mocks, set_test_configs};
+use crate::global::settings::{disable_indy_mocks, aries_vcx_enable_indy_mocks, set_test_configs};
 use crate::utils;
 use crate::utils::constants::GENESIS_PATH;
 use crate::utils::file::write_file;
@@ -136,7 +136,7 @@ impl SetupMocks {
         init_test_logging();
         let institution_did = set_test_configs();
         enable_agency_mocks();
-        enable_indy_mocks().unwrap();
+        aries_vcx_enable_indy_mocks().unwrap();
         enable_indy_mocks_core().unwrap();
         SetupMocks { institution_did }
     }
@@ -274,7 +274,7 @@ impl Drop for SetupPoolConfig {
 impl SetupIndyMocks {
     pub fn init() -> SetupIndyMocks {
         init_test_logging();
-        enable_indy_mocks().unwrap();
+        aries_vcx_enable_indy_mocks().unwrap();
         enable_indy_mocks_core().unwrap();
         enable_agency_mocks();
         SetupIndyMocks {}
