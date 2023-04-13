@@ -12,7 +12,7 @@ inputs:
   node-version:
     default: 18
   rust-version:
-    default: 1.64.0
+    default: 1.65.0
 
 runs:
   using: "composite"
