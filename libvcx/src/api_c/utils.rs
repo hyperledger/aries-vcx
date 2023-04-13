@@ -6,7 +6,7 @@ use serde_json;
 
 use aries_vcx::agency_client::configuration::AgentProvisionConfig;
 use aries_vcx::agency_client::messages::update_message::UIDsByConn;
-use aries_vcx::agency_client::testing::mocking::AgencyMock;
+use shared_vcx::testing::mocking::AgencyMock;
 use aries_vcx::agency_client::MessageStatusCode;
 use aries_vcx::utils::constants::*;
 use libvcx_core::api_vcx::api_global::agency_client::agency_update_messages;

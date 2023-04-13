@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use crate::errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
-use crate::testing::mocking::AgencyMockDecrypted;
+use shared_vcx::testing::mocking::AgencyMockDecrypted;
 use crate::wallet::base_agency_client_wallet::BaseAgencyClientWallet;
 
 #[derive(Debug)]

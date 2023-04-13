@@ -1,4 +1,4 @@
-use aries_vcx::agency_client::testing::mocking::enable_agency_mocks;
+use shared_vcx::testing::mocking::enable_agency_mocks;
 use aries_vcx::global::settings;
 use aries_vcx::global::settings::enable_indy_mocks;
 use aries_vcx::global::settings::init_issuer_config;

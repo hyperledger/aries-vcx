@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use futures::TryFutureExt;
 
-use agency_client::testing::mocking::AgencyMockDecrypted;
+use shared_vcx::testing::mocking::AgencyMockDecrypted;
 
 use crate::errors::error::prelude::*;
 use crate::global::settings;

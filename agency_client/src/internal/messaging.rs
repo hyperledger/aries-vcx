@@ -2,7 +2,7 @@ use crate::agency_client::AgencyClient;
 use crate::errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 use crate::messages::a2a_message::Client2AgencyMessage;
 use crate::messages::forward::ForwardV2;
-use crate::testing::mocking::AgencyMockDecrypted;
+use shared_vcx::testing::mocking::AgencyMockDecrypted;
 use shared_vcx::errors::error::{SharedVcxResult, SharedVcxError};
 use shared_vcx::http::httpclient;
 use core::u8;

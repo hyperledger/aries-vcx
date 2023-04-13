@@ -4,9 +4,10 @@ use crate::errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClien
 use crate::messages::a2a_message::Client2AgencyMessage;
 use crate::messages::get_messages::GetMessagesBuilder;
 use crate::messages::update_message::{UIDsByConn, UpdateMessageStatusByConnectionsBuilder};
-use crate::testing::mocking::AgencyMock;
-use crate::testing::{mocking, test_constants};
 use crate::MessageStatusCode;
+use crate::testing::test_constants;
+use shared_vcx::testing::mocking::AgencyMock;
+use shared_vcx::testing::mocking;
 
 impl AgencyClient {
     pub async fn update_messages(
