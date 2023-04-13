@@ -6,6 +6,14 @@ macro_rules! secret {
     }};
 }
 
+#[cfg(not(debug_assertions))]
+#[macro_export]
+macro_rules! secret {
+    ($val:expr) => {{
+        "_"
+    }};
+}
+
 #[macro_use]
 extern crate lazy_static;
 

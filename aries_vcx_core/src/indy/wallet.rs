@@ -1,3 +1,4 @@
+use crate::secret;
 use serde::{Deserialize, Serialize};
 use vdrtools::{
     types::domain::wallet::{default_key_derivation_method, KeyDerivationMethod},
