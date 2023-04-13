@@ -1,5 +1,4 @@
 use aries_vcx_core::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
-use aries_vcx_core::indy::utils::mocks::did_mocks::DidMocks;
 use aries_vcx_core::utils::async_fn_iterator::AsyncFnIterator;
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use async_trait::async_trait;

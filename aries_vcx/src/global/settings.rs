@@ -2,7 +2,6 @@ use std::collections::HashMap;
 use std::sync::RwLock;
 
 use aries_vcx_core::global::settings::{disable_indy_mocks, enable_indy_mocks};
-use aries_vcx_core::indy::wallet::IssuerConfig;
 
 use crate::errors::error::prelude::*;
 

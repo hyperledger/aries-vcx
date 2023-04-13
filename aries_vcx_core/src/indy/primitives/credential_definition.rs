@@ -3,7 +3,7 @@ use vdrtools::{DidValue, Locator};
 use crate::errors::error::VcxCoreResult;
 use crate::global::settings;
 use crate::indy::ledger::transactions::{build_cred_def_request, check_response, sign_and_submit_to_ledger};
-use crate::utils::parse_and_validate;
+use crate::indy::utils::parse_and_validate;
 use crate::{PoolHandle, WalletHandle};
 
 // consider relocating out of primitive

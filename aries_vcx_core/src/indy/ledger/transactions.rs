@@ -8,7 +8,7 @@ use crate::utils::constants::{
     rev_def_json, CRED_DEF_ID, CRED_DEF_JSON, CRED_DEF_REQ, REVOC_REG_TYPE, REV_REG_DELTA_JSON, REV_REG_ID,
     REV_REG_JSON, SCHEMA_ID, SCHEMA_JSON, SCHEMA_TXN, SUBMIT_SCHEMA_RESPONSE,
 };
-use crate::utils::parse_and_validate;
+use crate::indy::utils::parse_and_validate;
 use crate::utils::random::generate_random_did;
 use crate::{utils, PoolHandle, WalletHandle};
 
