@@ -603,6 +603,7 @@ jobs:
         with:
           toolchain: 1.64.0
       - uses: Swatinem/rust-cache@v2
+        key: "11"
       - name: "Install dependencies"
         shell: bash
         run: |
