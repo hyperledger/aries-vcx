@@ -8,6 +8,9 @@ impl From<SharedVcxErrorKind> for DiddocErrorKind {
             SharedVcxErrorKind::InvalidDid => DiddocErrorKind::InvalidDid,
             SharedVcxErrorKind::InvalidVerkey => DiddocErrorKind::InvalidVerkey,
             SharedVcxErrorKind::NotBase58 => DiddocErrorKind::NotBase58,
+            SharedVcxErrorKind::InvalidState => DiddocErrorKind::InvalidDid,
+            SharedVcxErrorKind::InvalidConfiguration => DiddocErrorKind::InvalidConfiguration,
+            SharedVcxErrorKind::PostMessageFailed => DiddocErrorKind::PostMessageFailed
         }
     }
 }

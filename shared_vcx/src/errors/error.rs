@@ -8,39 +8,16 @@ pub enum SharedVcxErrorKind {
     InvalidState,
     #[error("Invalid Configuration")]
     InvalidConfiguration,
-    #[error("Obj was not found with handle")]
-    InvalidJson,
-    #[error("Invalid Option")]
-    InvalidOption,
-    #[error("Invalid MessagePack")]
-    InvalidMessagePack,
-    #[error("IO Error, possibly creating a backup wallet")]
-    IOError,
-
     #[error("Message failed in post")]
     PostMessageFailed,
 
-    // Wallet
-    #[error("Invalid Wallet or Search Handle")]
-    InvalidWalletHandle,
-
     // Validation
-    #[error("Unknown Error")]
-    UnknownError,
     #[error("Invalid DID")]
     InvalidDid,
     #[error("Invalid VERKEY")]
     InvalidVerkey,
-    #[error("Invalid URL")]
-    InvalidUrl,
-    #[error("Unable to serialize")]
-    SerializationError,
     #[error("Value needs to be base58")]
     NotBase58,
-
-    // A2A
-    #[error("Invalid HTTP response.")]
-    InvalidHttpResponse,
 }
 
 #[derive(Debug, thiserror::Error)]

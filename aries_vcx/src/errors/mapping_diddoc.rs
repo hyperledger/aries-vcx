@@ -18,6 +18,8 @@ impl From<DiddocErrorKind> for AriesVcxErrorKind {
             DiddocErrorKind::InvalidUrl => AriesVcxErrorKind::InvalidUrl,
             DiddocErrorKind::NotBase58 => AriesVcxErrorKind::NotBase58,
             DiddocErrorKind::SerializationError => AriesVcxErrorKind::SerializationError,
+            DiddocErrorKind::InvalidConfiguration => AriesVcxErrorKind::InvalidConfiguration,
+            DiddocErrorKind::PostMessageFailed => AriesVcxErrorKind::PostMessageFailed,
         }
     }
 }

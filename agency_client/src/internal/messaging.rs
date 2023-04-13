@@ -8,12 +8,6 @@ use shared_vcx::http::httpclient;
 use core::u8;
 use serde_json::Value;
 
-impl From<SharedVcxError> for AgencyClientError {
-    fn from(error: SharedVcxError) -> Self {
-        AgencyClientError::from(error)
-    }
-}
-
 impl AgencyClient {
     pub async fn post_to_agency(&self, body_content: Vec<u8>) -> SharedVcxResult<Vec<u8>> {
         let url = self.get_agency_url_full();

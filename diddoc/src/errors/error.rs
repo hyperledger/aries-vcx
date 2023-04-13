@@ -22,6 +22,10 @@ pub enum DiddocErrorKind {
     InvalidVerkey,
     #[error("Value needs to be base58")]
     NotBase58,
+    #[error("Invalid Configuration")]
+    InvalidConfiguration,
+    #[error("Message failed in post")]
+    PostMessageFailed,
 }
 
 #[derive(Debug, thiserror::Error)]
