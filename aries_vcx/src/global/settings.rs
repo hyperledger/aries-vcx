@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::sync::RwLock;
 
-use aries_vcx_core::global::settings::enable_indy_mocks;
+use aries_vcx_core::global::settings::{disable_indy_mocks, enable_indy_mocks};
 use aries_vcx_core::indy::wallet::IssuerConfig;
 
 use crate::errors::error::prelude::*;
@@ -49,13 +49,13 @@ lazy_static! {
 
 pub fn aries_vcx_enable_indy_mocks() -> VcxResult<()> {
     debug!("enable_indy_mocks >>>");
-    enable_indy_mocks().unwrap();
+    enable_indy_mocks()?;
     set_config_value(CONFIG_ENABLE_TEST_MODE, "true")
 }
 
-pub fn disable_indy_mocks() -> VcxResult<()> {
+pub fn aries_vcx_disable_indy_mocks() -> VcxResult<()> {
     debug!("disable_indy_mocks >>>");
-    disable_indy_mocks().unwrap();
+    disable_indy_mocks()?;
     set_config_value(CONFIG_ENABLE_TEST_MODE, "false")
 }
 
