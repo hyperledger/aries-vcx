@@ -1,10 +1,10 @@
 use std::ptr::null;
 
+use aries_vcx::aries_vcx_core::{SearchHandle, WalletHandle, INVALID_SEARCH_HANDLE};
 use futures::future::BoxFuture;
 use libc::c_char;
 
-use aries_vcx::indy::wallet::{RestoreWalletConfigs, WalletConfig};
-use aries_vcx::vdrtools::{CommandHandle, SearchHandle, WalletHandle};
+use aries_vcx::aries_vcx_core::indy::wallet::{RestoreWalletConfigs, WalletConfig};
 
 use libvcx_core;
 use libvcx_core::errors;
@@ -23,6 +23,8 @@ use libvcx_core::api_vcx::api_global::wallet::{
     wallet_fetch_next_records_wallet, wallet_get_wallet_record, wallet_import, wallet_open_search_wallet,
     wallet_update_wallet_record_tags, wallet_update_wallet_record_value,
 };
+
+use super::types::CommandHandle;
 
 /// Creates new wallet and master secret using provided config. Keeps wallet closed.
 ///
@@ -193,16 +195,20 @@ pub extern "C" fn vcx_open_main_wallet(
                     "vcx_open_main_wallet_cb(command_handle: {}, rc: {}",
                     command_handle, err
                 );
-                cb(command_handle, err.into(), aries_vcx::vdrtools::INVALID_WALLET_HANDLE.0);
+                cb(
+                    command_handle,
+                    err.into(),
+                    aries_vcx::aries_vcx_core::INVALID_WALLET_HANDLE.0 .0,
+                );
             }
             Ok(wh) => {
                 trace!(
                     "vcx_open_main_wallet_cb(command_handle: {}, rc: {}, wh: {})",
                     command_handle,
                     SUCCESS_ERR_CODE,
-                    wh.0
+                    wh.0 .0
                 );
-                cb(command_handle, 0, wh.0);
+                cb(command_handle, 0, wh.0 .0);
             }
         }
         Ok(())
@@ -817,7 +823,7 @@ pub extern "C" fn vcx_wallet_open_search(
                     "null"
                 );
 
-                cb(command_handle, err.into(), SearchHandle(0));
+                cb(command_handle, err.into(), INVALID_SEARCH_HANDLE);
             }
         };
 

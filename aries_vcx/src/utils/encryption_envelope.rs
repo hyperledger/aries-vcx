@@ -1,12 +1,12 @@
 use std::sync::Arc;
 
+use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use futures::TryFutureExt;
 
 use agency_client::testing::mocking::AgencyMockDecrypted;
 
 use crate::errors::error::prelude::*;
 use crate::global::settings;
-use crate::plugins::wallet::base_wallet::BaseWallet;
 use crate::utils::constants;
 use messages::a2a::A2AMessage;
 use messages::diddoc::aries::diddoc::AriesDidDoc;
@@ -59,7 +59,10 @@ impl EncryptionEnvelope {
             pw_verkey, receiver_keys
         );
 
-        wallet.pack_message(pw_verkey, &receiver_keys, message.as_bytes()).await
+        wallet
+            .pack_message(pw_verkey, &receiver_keys, message.as_bytes())
+            .await
+            .map_err(|err| err.into())
     }
 
     async fn wrap_into_forward_messages(
@@ -94,7 +97,10 @@ impl EncryptionEnvelope {
         let message = json!(message).to_string();
         let receiver_keys = json!(vec![routing_key]).to_string();
 
-        wallet.pack_message(None, &receiver_keys, message.as_bytes()).await
+        wallet
+            .pack_message(None, &receiver_keys, message.as_bytes())
+            .await
+            .map_err(|err| err.into())
     }
 
     async fn _unpack_a2a_message(
@@ -207,8 +213,9 @@ impl EncryptionEnvelope {
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
     use crate::common::test_utils::{create_key, create_trustee_key, indy_handles_to_profile};
-    use crate::indy::utils::test_setup;
     use crate::utils::devsetup::SetupEmpty;
+    use aries_vcx_core::indy::utils::test_setup;
+    use aries_vcx_core::INVALID_POOL_HANDLE;
     use messages::concepts::ack::test_utils::_ack;
     use messages::diddoc::aries::diddoc::test_utils::*;
 
@@ -218,7 +225,7 @@ pub mod unit_tests {
     async fn test_encryption_envelope_works_for_no_keys() {
         SetupEmpty::init();
         test_setup::with_wallet(|wallet_handle| async move {
-            let profile = indy_handles_to_profile(wallet_handle, 0);
+            let profile = indy_handles_to_profile(wallet_handle, INVALID_POOL_HANDLE);
             let trustee_key = create_trustee_key(&profile).await;
 
             let message = A2AMessage::Ack(_ack());
@@ -239,7 +246,7 @@ pub mod unit_tests {
     async fn test_encryption_envelope_works_for_recipient_only() {
         SetupEmpty::init();
         test_setup::with_wallet(|wallet_handle| async move {
-            let profile = indy_handles_to_profile(wallet_handle, 0);
+            let profile = indy_handles_to_profile(wallet_handle, INVALID_POOL_HANDLE);
             let trustee_key = create_trustee_key(&profile).await;
 
             let message = A2AMessage::Ack(_ack());
@@ -267,7 +274,7 @@ pub mod unit_tests {
     async fn test_encryption_envelope_works_for_routing_keys() {
         SetupEmpty::init();
         test_setup::with_wallet(|wallet_handle| async move {
-            let profile = indy_handles_to_profile(wallet_handle, 0);
+            let profile = indy_handles_to_profile(wallet_handle, INVALID_POOL_HANDLE);
             let trustee_key = create_trustee_key(&profile).await;
 
             let key_1 = create_key(&profile).await;
@@ -326,11 +333,11 @@ pub mod unit_tests {
         SetupEmpty::init();
 
         test_setup::with_wallet(|recipient_wallet| async move {
-            let recipient_profile = indy_handles_to_profile(recipient_wallet, 0);
+            let recipient_profile = indy_handles_to_profile(recipient_wallet, INVALID_POOL_HANDLE);
             let recipient_key = test_setup::create_key(recipient_wallet).await;
 
             test_setup::with_wallet(|sender_wallet| async move {
-                let sender_profile = indy_handles_to_profile(sender_wallet, 0);
+                let sender_profile = indy_handles_to_profile(sender_wallet, INVALID_POOL_HANDLE);
                 let sender_key = test_setup::create_key(sender_wallet).await;
 
                 let mut did_doc = AriesDidDoc::default();
@@ -356,11 +363,11 @@ pub mod unit_tests {
         let _setup = SetupEmpty::init();
 
         test_setup::with_wallet(|recipient_wallet| async move {
-            let recipient_profile = indy_handles_to_profile(recipient_wallet, 0);
+            let recipient_profile = indy_handles_to_profile(recipient_wallet, INVALID_POOL_HANDLE);
             let recipient_key = test_setup::create_key(recipient_wallet).await;
 
             test_setup::with_wallet(|sender_wallet| async move {
-                let sender_profile = indy_handles_to_profile(sender_wallet, 0);
+                let sender_profile = indy_handles_to_profile(sender_wallet, INVALID_POOL_HANDLE);
                 let sender_key_1 = test_setup::create_key(sender_wallet).await;
                 let sender_key_2 = test_setup::create_key(sender_wallet).await;
 

@@ -1,7 +1,5 @@
-use aries_vcx::{
-    agency_client::configuration::AgencyClientConfig,
-    indy::wallet::{IssuerConfig, WalletConfig},
-};
+use aries_vcx::agency_client::configuration::AgencyClientConfig;
+use aries_vcx_core::indy::wallet::{IssuerConfig, WalletConfig};
 
 #[derive(Clone)]
 pub struct AgentConfig {

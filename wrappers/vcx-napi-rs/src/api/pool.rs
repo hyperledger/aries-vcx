@@ -1,5 +1,5 @@
 use libvcx_core::api_vcx::api_global::pool;
-use libvcx_core::aries_vcx::indy::ledger::pool::PoolConfig;
+use libvcx_core::aries_vcx::aries_vcx_core::indy::ledger::pool::PoolConfig;
 use libvcx_core::errors::error::{LibvcxError, LibvcxErrorKind};
 use libvcx_core::serde_json;
 use napi_derive::napi;

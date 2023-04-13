@@ -22,7 +22,6 @@ use messages::protocols::proof_presentation::presentation_ack::PresentationAck;
 use messages::protocols::proof_presentation::presentation_proposal::PresentationProposal;
 use messages::protocols::proof_presentation::presentation_request::PresentationRequest;
 use messages::status::Status;
-use strum_macros::{AsRefStr, EnumString};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct VerifierSM {
@@ -471,8 +470,6 @@ impl VerifierSM {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use std::str::FromStr;
-
     use crate::common::proofs::proof_request::test_utils::_presentation_request_data;
     use crate::common::test_utils::mock_profile;
     use crate::test::source_id;

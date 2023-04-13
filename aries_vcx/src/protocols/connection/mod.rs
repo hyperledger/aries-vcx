@@ -6,6 +6,7 @@ pub mod pairwise_info;
 mod serializable;
 mod trait_bounds;
 
+use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use messages::{
     a2a::{protocol_registry::ProtocolRegistry, A2AMessage},
     diddoc::aries::diddoc::AriesDidDoc,
@@ -18,7 +19,6 @@ use std::{error::Error, sync::Arc};
 
 use crate::{
     errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
-    plugins::wallet::base_wallet::BaseWallet,
     transport::Transport,
     utils::encryption_envelope::EncryptionEnvelope,
 };

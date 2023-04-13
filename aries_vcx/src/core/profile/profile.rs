@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use crate::plugins::{
+use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::BaseLedger, wallet::base_wallet::BaseWallet,
 };
 

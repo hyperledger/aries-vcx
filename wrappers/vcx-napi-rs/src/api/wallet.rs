@@ -1,6 +1,6 @@
 use libvcx_core::api_vcx::api_global::settings::settings_init_issuer_config;
 use libvcx_core::api_vcx::api_global::{ledger, wallet};
-use libvcx_core::aries_vcx::indy::wallet::{IssuerConfig, RestoreWalletConfigs, WalletConfig};
+use libvcx_core::aries_vcx::aries_vcx_core::indy::wallet::{IssuerConfig, RestoreWalletConfigs, WalletConfig};
 use libvcx_core::errors::error::{LibvcxError, LibvcxErrorKind};
 use libvcx_core::serde_json;
 use libvcx_core::serde_json::json;
@@ -20,7 +20,7 @@ pub async fn wallet_open_as_main(wallet_config: String) -> napi::Result<i32> {
         })
         .map_err(to_napi_err)?;
     let handle = wallet::open_as_main_wallet(&wallet_config).await.map_err(to_napi_err)?;
-    Ok(handle.0)
+    Ok(handle.0 .0)
 }
 
 #[napi]

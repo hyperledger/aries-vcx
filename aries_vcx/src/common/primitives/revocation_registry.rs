@@ -1,5 +1,7 @@
 use std::sync::Arc;
 
+use aries_vcx_core::errors::error::AriesVcxCoreErrorKind;
+
 use crate::core::profile::profile::Profile;
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use crate::global::settings;
@@ -101,11 +103,11 @@ impl RevocationRegistry {
         self.rev_reg_def.value.tails_location = String::from(tails_url);
         let ledger = Arc::clone(profile).inject_ledger();
         ledger
-            .publish_rev_reg_def(&self.rev_reg_def, issuer_did)
+            .publish_rev_reg_def(&json!(self.rev_reg_def).to_string(), issuer_did)
             .await
             .map_err(|err| {
                 err.map(
-                    AriesVcxErrorKind::InvalidState,
+                    AriesVcxCoreErrorKind::InvalidState,
                     "Cannot publish revocation registry definition",
                 )
             })?;
@@ -123,7 +125,12 @@ impl RevocationRegistry {
         ledger
             .publish_rev_reg_delta(&self.rev_reg_id, &self.rev_reg_entry, issuer_did)
             .await
-            .map_err(|err| err.map(AriesVcxErrorKind::InvalidRevocationEntry, "Cannot post RevocationEntry"))?;
+            .map_err(|err| {
+                err.map(
+                    AriesVcxCoreErrorKind::InvalidRevocationEntry,
+                    "Cannot post RevocationEntry",
+                )
+            })?;
         self.rev_reg_delta_state = PublicEntityStateType::Published;
         Ok(())
     }
@@ -184,6 +191,7 @@ impl RevocationRegistry {
         anoncreds
             .revoke_credential_local(&self.tails_dir, &self.rev_reg_id, cred_rev_id)
             .await
+            .map_err(|err| err.into())
     }
 
     pub async fn publish_local_revocations(&self, profile: &Arc<dyn Profile>, submitter_did: &str) -> VcxResult<()> {
@@ -192,6 +200,7 @@ impl RevocationRegistry {
         anoncreds
             .publish_local_revocations(submitter_did, &self.rev_reg_id)
             .await
+            .map_err(|err| err.into())
     }
 }
 

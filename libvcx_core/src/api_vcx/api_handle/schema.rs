@@ -169,7 +169,6 @@ pub fn get_state(handle: u32) -> LibvcxResult<u32> {
 pub mod test_utils {
     use rand::Rng;
 
-    use aries_vcx::utils::constants;
     use aries_vcx::utils::constants::SCHEMA_ID;
 
     use crate::api_vcx::api_global::settings::get_config_value;

@@ -51,6 +51,7 @@ pub async fn validate_indy_proof(
             &rev_regs_json,
         )
         .await
+        .map_err(|err| err.into())
 }
 
 #[cfg(test)]

@@ -2,10 +2,26 @@ use std::fs;
 use std::future::Future;
 use std::sync::{Arc, Once};
 
+use aries_vcx_core::global::settings::{
+    disable_indy_mocks as disable_indy_mocks_core, enable_indy_mocks as enable_indy_mocks_core,
+};
+use aries_vcx_core::indy::ledger::pool::test_utils::{
+    create_test_ledger_config, create_tmp_genesis_txn_file, delete_test_pool, open_test_pool,
+};
+use aries_vcx_core::indy::ledger::pool::PoolConfig;
+use aries_vcx_core::indy::utils::mocks::did_mocks::DidMocks;
+use aries_vcx_core::indy::utils::mocks::pool_mocks::PoolMocks;
+use aries_vcx_core::indy::wallet::{
+    close_wallet, create_and_open_wallet, create_indy_wallet, create_wallet_with_master_secret, delete_wallet,
+    open_wallet, wallet_configure_issuer, WalletConfig,
+};
+use aries_vcx_core::ledger::indy_vdr_ledger::LedgerPoolConfig;
+use aries_vcx_core::wallet::base_wallet::BaseWallet;
+use aries_vcx_core::wallet::indy_wallet::IndySdkWallet;
+use aries_vcx_core::{PoolHandle, WalletHandle};
 use chrono::{DateTime, Duration, Utc};
 
 use futures::future::BoxFuture;
-use vdrtools::{PoolHandle, WalletHandle};
 
 use agency_client::agency_client::AgencyClient;
 use agency_client::configuration::AgentProvisionConfig;
@@ -16,21 +32,7 @@ use crate::core::profile::profile::Profile;
 use crate::core::profile::vdrtools_profile::VdrtoolsProfile;
 use crate::global::settings;
 use crate::global::settings::init_issuer_config;
-use crate::global::settings::{disable_indy_mocks, enable_indy_mocks, set_test_configs};
-use crate::indy::ledger::pool::test_utils::{
-    create_test_ledger_config, create_tmp_genesis_txn_file, delete_test_pool, open_test_pool,
-};
-use crate::indy::ledger::pool::PoolConfig;
-use crate::indy::utils::mocks::did_mocks::DidMocks;
-use crate::indy::utils::mocks::pool_mocks::PoolMocks;
-use crate::indy::wallet::open_wallet;
-use crate::indy::wallet::{
-    close_wallet, create_and_open_wallet, create_indy_wallet, create_wallet_with_master_secret, delete_wallet,
-    wallet_configure_issuer, WalletConfig,
-};
-use crate::plugins::ledger::indy_vdr_ledger::LedgerPoolConfig;
-use crate::plugins::wallet::base_wallet::BaseWallet;
-use crate::plugins::wallet::indy_wallet::IndySdkWallet;
+use crate::global::settings::{aries_vcx_disable_indy_mocks, aries_vcx_enable_indy_mocks, set_test_configs};
 use crate::utils;
 use crate::utils::constants::GENESIS_PATH;
 use crate::utils::file::write_file;
@@ -97,7 +99,8 @@ fn reset_global_state() {
     AgencyMockDecrypted::clear_mocks();
     PoolMocks::clear_mocks();
     DidMocks::clear_mocks();
-    disable_indy_mocks().unwrap();
+    aries_vcx_disable_indy_mocks().unwrap();
+    disable_indy_mocks_core().unwrap();
     settings::reset_config_values().unwrap();
 }
 
@@ -133,7 +136,8 @@ impl SetupMocks {
         init_test_logging();
         let institution_did = set_test_configs();
         enable_agency_mocks();
-        enable_indy_mocks().unwrap();
+        aries_vcx_enable_indy_mocks().unwrap();
+        enable_indy_mocks_core().unwrap();
         SetupMocks { institution_did }
     }
 }
@@ -270,7 +274,8 @@ impl Drop for SetupPoolConfig {
 impl SetupIndyMocks {
     pub fn init() -> SetupIndyMocks {
         init_test_logging();
-        enable_indy_mocks().unwrap();
+        aries_vcx_enable_indy_mocks().unwrap();
+        enable_indy_mocks_core().unwrap();
         enable_agency_mocks();
         SetupIndyMocks {}
     }
@@ -388,7 +393,7 @@ impl SetupProfile {
 
         let profile: Arc<dyn Profile> = Arc::new(VdrtoolsProfile::new(wallet_handle, pool_handle.clone()));
 
-        async fn indy_teardown(pool_handle: i32) {
+        async fn indy_teardown(pool_handle: PoolHandle) {
             delete_test_pool(pool_handle.clone()).await;
         }
 

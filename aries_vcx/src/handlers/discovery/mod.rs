@@ -1,9 +1,9 @@
 use std::sync::Arc;
 
 use crate::errors::error::VcxResult;
+use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use messages::diddoc::aries::diddoc::AriesDidDoc;
 
-use crate::plugins::wallet::base_wallet::BaseWallet;
 use crate::utils::send_message;
 use messages::protocols::discovery::disclose::{Disclose, ProtocolDescriptor};
 use messages::protocols::discovery::query::Query;

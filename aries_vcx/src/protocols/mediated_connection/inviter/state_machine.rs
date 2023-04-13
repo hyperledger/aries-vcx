@@ -2,6 +2,7 @@ use std::clone::Clone;
 use std::collections::HashMap;
 use std::sync::Arc;
 
+use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use messages::a2a::protocol_registry::ProtocolRegistry;
 use messages::a2a::{A2AMessage, MessageId};
 use messages::diddoc::aries::diddoc::AriesDidDoc;
@@ -14,7 +15,6 @@ use messages::protocols::discovery::disclose::{Disclose, ProtocolDescriptor};
 use crate::common::signing::sign_connection_response;
 use crate::errors::error::prelude::*;
 use crate::handlers::util::verify_thread_id;
-use crate::plugins::wallet::base_wallet::BaseWallet;
 use crate::protocols::mediated_connection::inviter::states::completed::CompletedState;
 use crate::protocols::mediated_connection::inviter::states::initial::InitialState;
 use crate::protocols::mediated_connection::inviter::states::invited::InvitedState;

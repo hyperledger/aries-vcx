@@ -1,16 +1,11 @@
+use crate::utils::mockdata::mock_settings::StatusCodeMock;
+use aries_vcx_core::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
+use aries_vcx_core::ledger::base_ledger::BaseLedger;
 use async_trait::async_trait;
 
-use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
-use crate::utils::mockdata::mock_settings::StatusCodeMock;
-use crate::{
-    common::primitives::revocation_registry::RevocationRegistryDefinition,
-    plugins::ledger::base_ledger::BaseLedger,
-    utils::{
-        self,
-        constants::{
-            rev_def_json, CRED_DEF_JSON, REV_REG_DELTA_JSON, REV_REG_ID, REV_REG_JSON, SCHEMA_JSON, SCHEMA_TXN,
-        },
-    },
+use crate::utils::{
+    self,
+    constants::{rev_def_json, CRED_DEF_JSON, REV_REG_DELTA_JSON, REV_REG_ID, REV_REG_JSON, SCHEMA_JSON, SCHEMA_TXN},
 };
 
 #[derive(Debug)]
@@ -21,34 +16,34 @@ pub(crate) struct MockLedger;
 #[allow(unused)]
 #[async_trait]
 impl BaseLedger for MockLedger {
-    async fn sign_and_submit_request(&self, submitter_did: &str, request_json: &str) -> VcxResult<String> {
+    async fn sign_and_submit_request(&self, submitter_did: &str, request_json: &str) -> VcxCoreResult<String> {
         Ok(r#"{"rc":"success"}"#.to_string())
     }
 
-    async fn submit_request(&self, request_json: &str) -> VcxResult<String> {
+    async fn submit_request(&self, request_json: &str) -> VcxCoreResult<String> {
         // not needed yet
-        Err(AriesVcxError::from_msg(
-            AriesVcxErrorKind::UnimplementedFeature,
+        Err(AriesVcxCoreError::from_msg(
+            AriesVcxCoreErrorKind::UnimplementedFeature,
             "unimplemented mock method: submit_request",
         ))
     }
 
-    async fn endorse_transaction(&self, endorser_did: &str, request_json: &str) -> VcxResult<()> {
+    async fn endorse_transaction(&self, endorser_did: &str, request_json: &str) -> VcxCoreResult<()> {
         Ok(())
     }
 
-    async fn set_endorser(&self, submitter_did: &str, request: &str, endorser: &str) -> VcxResult<String> {
+    async fn set_endorser(&self, submitter_did: &str, request: &str, endorser: &str) -> VcxCoreResult<String> {
         Ok(utils::constants::REQUEST_WITH_ENDORSER.to_string())
     }
 
-    async fn get_txn_author_agreement(&self) -> VcxResult<String> {
+    async fn get_txn_author_agreement(&self) -> VcxCoreResult<String> {
         Ok(utils::constants::DEFAULT_AUTHOR_AGREEMENT.to_string())
     }
 
-    async fn get_nym(&self, did: &str) -> VcxResult<String> {
+    async fn get_nym(&self, did: &str) -> VcxCoreResult<String> {
         // not needed yet
-        Err(AriesVcxError::from_msg(
-            AriesVcxErrorKind::UnimplementedFeature,
+        Err(AriesVcxCoreError::from_msg(
+            AriesVcxCoreErrorKind::UnimplementedFeature,
             "unimplemented mock method: get_nym",
         ))
     }
@@ -60,35 +55,35 @@ impl BaseLedger for MockLedger {
         verkey: Option<&str>,
         data: Option<&str>,
         role: Option<&str>,
-    ) -> VcxResult<String> {
+    ) -> VcxCoreResult<String> {
         Ok(r#"{"rc":"success"}"#.to_string())
     }
 
-    async fn get_schema(&self, schema_id: &str, submitter_did: Option<&str>) -> VcxResult<String> {
+    async fn get_schema(&self, schema_id: &str, submitter_did: Option<&str>) -> VcxCoreResult<String> {
         Ok(SCHEMA_JSON.to_string())
     }
 
-    async fn get_cred_def(&self, cred_def_id: &str, submitter_did: Option<&str>) -> VcxResult<String> {
+    async fn get_cred_def(&self, cred_def_id: &str, submitter_did: Option<&str>) -> VcxCoreResult<String> {
         // TODO - FUTURE - below error is required for tests to pass which require a cred def to not exist (libvcx)
         // ideally we can migrate away from it
         if StatusCodeMock::get_result() == 309 {
-            return Err(AriesVcxError::from_msg(
-                AriesVcxErrorKind::LedgerItemNotFound,
+            return Err(AriesVcxCoreError::from_msg(
+                AriesVcxCoreErrorKind::LedgerItemNotFound,
                 "Mocked error".to_string(),
             ));
         };
         Ok(CRED_DEF_JSON.to_string())
     }
 
-    async fn get_attr(&self, target_did: &str, attr_name: &str) -> VcxResult<String> {
+    async fn get_attr(&self, target_did: &str, attr_name: &str) -> VcxCoreResult<String> {
         Ok(r#"{"rc":"success"}"#.to_string())
     }
 
-    async fn add_attr(&self, target_did: &str, attrib_json: &str) -> VcxResult<String> {
+    async fn add_attr(&self, target_did: &str, attrib_json: &str) -> VcxCoreResult<String> {
         Ok(r#"{"rc":"success"}"#.to_string())
     }
 
-    async fn get_rev_reg_def_json(&self, rev_reg_id: &str) -> VcxResult<String> {
+    async fn get_rev_reg_def_json(&self, rev_reg_id: &str) -> VcxCoreResult<String> {
         Ok(rev_def_json())
     }
 
@@ -97,19 +92,19 @@ impl BaseLedger for MockLedger {
         rev_reg_id: &str,
         from: Option<u64>,
         to: Option<u64>,
-    ) -> VcxResult<(String, String, u64)> {
+    ) -> VcxCoreResult<(String, String, u64)> {
         Ok((REV_REG_ID.to_string(), REV_REG_DELTA_JSON.to_string(), 1))
     }
 
-    async fn get_rev_reg(&self, rev_reg_id: &str, timestamp: u64) -> VcxResult<(String, String, u64)> {
+    async fn get_rev_reg(&self, rev_reg_id: &str, timestamp: u64) -> VcxCoreResult<(String, String, u64)> {
         Ok((REV_REG_ID.to_string(), REV_REG_JSON.to_string(), 1))
     }
 
-    async fn get_ledger_txn(&self, seq_no: i32, submitter_did: Option<&str>) -> VcxResult<String> {
+    async fn get_ledger_txn(&self, seq_no: i32, submitter_did: Option<&str>) -> VcxCoreResult<String> {
         Ok(r#"{"rc":"success"}"#.to_string())
     }
 
-    async fn build_schema_request(&self, submitter_did: &str, schema_json: &str) -> VcxResult<String> {
+    async fn build_schema_request(&self, submitter_did: &str, schema_json: &str) -> VcxCoreResult<String> {
         Ok(SCHEMA_TXN.to_string())
     }
 
@@ -118,19 +113,15 @@ impl BaseLedger for MockLedger {
         schema_json: &str,
         submitter_did: &str,
         endorser_did: Option<String>,
-    ) -> VcxResult<()> {
+    ) -> VcxCoreResult<()> {
         Ok(())
     }
 
-    async fn publish_cred_def(&self, cred_def_json: &str, submitter_did: &str) -> VcxResult<()> {
+    async fn publish_cred_def(&self, cred_def_json: &str, submitter_did: &str) -> VcxCoreResult<()> {
         Ok(())
     }
 
-    async fn publish_rev_reg_def(
-        &self,
-        rev_reg_def: &RevocationRegistryDefinition,
-        submitter_did: &str,
-    ) -> VcxResult<()> {
+    async fn publish_rev_reg_def(&self, rev_reg_def: &str, submitter_did: &str) -> VcxCoreResult<()> {
         Ok(())
     }
 
@@ -139,7 +130,7 @@ impl BaseLedger for MockLedger {
         rev_reg_id: &str,
         rev_reg_entry_json: &str,
         submitter_did: &str,
-    ) -> VcxResult<()> {
+    ) -> VcxCoreResult<()> {
         Ok(())
     }
 }
@@ -148,8 +139,10 @@ impl BaseLedger for MockLedger {
 #[cfg(feature = "general_test")]
 mod unit_tests {
 
-    use crate::errors::error::{AriesVcxErrorKind, VcxResult};
-    use crate::plugins::ledger::base_ledger::BaseLedger;
+    use aries_vcx_core::{
+        errors::error::{AriesVcxCoreErrorKind, VcxCoreResult},
+        ledger::base_ledger::BaseLedger,
+    };
 
     use super::MockLedger;
 
@@ -157,8 +150,8 @@ mod unit_tests {
     async fn test_unimplemented_methods() {
         // test used to assert which methods are unimplemented currently, can be removed after all methods implemented
 
-        fn assert_unimplemented<T: std::fmt::Debug>(result: VcxResult<T>) {
-            assert_eq!(result.unwrap_err().kind(), AriesVcxErrorKind::UnimplementedFeature)
+        fn assert_unimplemented<T: std::fmt::Debug>(result: VcxCoreResult<T>) {
+            assert_eq!(result.unwrap_err().kind(), AriesVcxCoreErrorKind::UnimplementedFeature)
         }
 
         let ledger: Box<dyn BaseLedger> = Box::new(MockLedger);

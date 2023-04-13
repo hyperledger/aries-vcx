@@ -7,7 +7,7 @@ use aries_vcx::agency_client::agency_client::AgencyClient;
 use aries_vcx::agency_client::configuration::{AgencyClientConfig, AgentProvisionConfig};
 use aries_vcx::agency_client::messages::update_message::UIDsByConn;
 use aries_vcx::agency_client::MessageStatusCode;
-use aries_vcx::plugins::wallet::agency_client_wallet::ToBaseAgencyClientWallet;
+use aries_vcx::aries_vcx_core::wallet::agency_client_wallet::ToBaseAgencyClientWallet;
 
 use super::profile::get_main_wallet;
 

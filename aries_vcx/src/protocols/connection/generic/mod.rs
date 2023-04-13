@@ -3,13 +3,13 @@ mod thin_state;
 
 use std::sync::Arc;
 
+use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use messages::{a2a::A2AMessage, diddoc::aries::diddoc::AriesDidDoc, protocols::connection::invite::Invitation};
 
 pub use self::thin_state::{State, ThinState};
 
 use crate::{
     errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
-    plugins::wallet::base_wallet::BaseWallet,
     protocols::connection::{
         invitee::states::{
             completed::Completed as InviteeCompleted, initial::Initial as InviteeInitial,

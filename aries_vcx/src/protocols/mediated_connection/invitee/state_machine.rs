@@ -5,7 +5,6 @@ use std::sync::Arc;
 use crate::common::signing::decode_signed_connection_response;
 use crate::errors::error::prelude::*;
 use crate::handlers::util::verify_thread_id;
-use crate::plugins::wallet::base_wallet::BaseWallet;
 use crate::protocols::mediated_connection::invitee::states::completed::CompletedState;
 use crate::protocols::mediated_connection::invitee::states::initial::InitialState;
 use crate::protocols::mediated_connection::invitee::states::invited::InvitedState;
@@ -13,6 +12,7 @@ use crate::protocols::mediated_connection::invitee::states::requested::Requested
 use crate::protocols::mediated_connection::invitee::states::responded::RespondedState;
 use crate::protocols::mediated_connection::pairwise_info::PairwiseInfo;
 use crate::protocols::SendClosureConnection;
+use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use messages::a2a::protocol_registry::ProtocolRegistry;
 use messages::a2a::A2AMessage;
 use messages::concepts::ack::Ack;
@@ -404,6 +404,7 @@ pub mod unit_tests {
 
     pub mod invitee {
 
+        use aries_vcx_core::wallet::base_wallet::BaseWallet;
         use messages::diddoc::aries::diddoc::test_utils::{_did_doc_inlined_recipient_keys, _service_endpoint};
         use messages::protocols::connection::response::{Response, SignedResponse};
 

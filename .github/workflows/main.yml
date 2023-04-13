@@ -19,7 +19,7 @@ env:
   DOCKER_REPO_LOCAL_LIBVCX: libvcx
   DOCKER_REPO_LOCAL_ANDROID: android-test
 
-  RUST_TOOLCHAIN_VERSON: 1.64.0
+  RUST_TOOLCHAIN_VERSON: 1.65.0
   NODE_VERSION: 18.x
 
 jobs:
@@ -30,7 +30,7 @@ jobs:
         uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: 1.64.0
+          toolchain: 1.65.0
           components: rustfmt, clippy
       - name: "Verify code formatting"
         run: |
@@ -58,7 +58,7 @@ jobs:
         uses: actions/checkout@v1
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: 1.64.0
+          toolchain: 1.65.0
       - name: "Construct CI run-info"
         id: run-info
         uses: ./.github/actions/construct-run-info
@@ -72,14 +72,24 @@ jobs:
 
           HASH_DOCKERFILE_ALPINE_CORE=${{ hashFiles('ci/alpine_core.dockerfile')}}
           HASH_DOCKERFILE_LIBVCX=${{ hashFiles('ci/libvcx.dockerfile') }}
+          HASH_SRC_LIBVDRTOOLS=${{ hashFiles('libvdrtools') }}
           HASH_SRC_LIBVCX=${{ hashFiles('libvcx') }}
           HASH_SRC_ARIESVCX=${{ hashFiles('aries_vcx') }}
+          HASH_SRC_ARIESVCX_CORE=${{ hashFiles('aries_vcx_core') }}
           HASH_SRC_AGENCYCLIENT=${{ hashFiles('agency_client') }}
+          HASH_SRC_DIDDOC=${{ hashFiles('diddoc') }}
           HASH_SRC_MESSAGES=${{ hashFiles('messages') }}
+          HASH_SRC_MESSAGES_2=${{ hashFiles('messages2') }}
           HASH_SRC_WRAPPER_JAVA=${{ hashFiles('wrappers/java') }}
 
-          HASH_DOCKER_LIBVCX=${HASH_DOCKERFILE_LIBVCX:0:11}-${HASH_SRC_LIBVCX:0:11}-${HASH_SRC_ARIESVCX:0:11}-${HASH_SRC_AGENCYCLIENT:0:11}-${HASH_SRC_MESSAGES:0:11}
-          HASH_DOCKER_ANDROID=${HASH_DOCKER_LIBVCX}-${HASH_SRC_ARIESVCX:0:11}-${HASH_SRC_WRAPPER_JAVA:0:15}
+          SEED_HASH_ARIESVCX=${HASH_SRC_LIBVDRTOOLS:0:11}-${HASH_SRC_ARIESVCX_CORE:0:11}-${HASH_SRC_ARIESVCX:0:11}-${HASH_SRC_AGENCYCLIENT:0:11}-${HASH_SRC_DIDDOC:0:11}-${HASH_SRC_MESSAGES:0:11}-${HASH_SRC_MESSAGES_2:0:11}
+          HASH_ARIESVCX=$(echo -n "$SEED_HASH_ARIESVCX" | sha256sum | awk '{print $1}')
+
+          SEED_HASH_DOCKER_LIBVCX=${HASH_ARIESVCX:0:11}-${HASH_DOCKERFILE_LIBVCX:0:11}-${HASH_SRC_LIBVCX:0:11}
+          HASH_DOCKER_LIBVCX=$(echo -n "$SEED_HASH_DOCKER_LIBVCX" | sha256sum | awk '{print $1}')
+
+          SEED_HASH_DOCKER_ANDROID=${HASH_ARIESVCX:0:11}-${HASH_DOCKER_LIBVCX:0:11}-${HASH_SRC_WRAPPER_JAVA:0:11}
+          HASH_DOCKER_ANDROID=$(echo -n "$SEED_HASH_DOCKER_ANDROID" | sha256sum | awk '{print $1}')
 
           echo "DOCKER_IMG_CACHED_ALPINE_CORE=$DOCKER_REPO_LOCAL_ALPINE_CORE:$HASH_DOCKERFILE_ALPINE_CORE" >> $GITHUB_OUTPUT
           echo "DOCKER_IMG_CACHED_LIBVCX=$DOCKER_REPO_LOCAL_LIBVCX:$HASH_DOCKER_LIBVCX" >> $GITHUB_OUTPUT
@@ -111,7 +121,7 @@ jobs:
         uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: 1.64.0
+          toolchain: 1.65.0
           components: rustfmt, clippy
       - name: "Install dependencies"
         shell: bash
@@ -129,7 +139,7 @@ jobs:
         uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: 1.64.0
+          toolchain: 1.65.0
           components: rustfmt, clippy
       - name: "Install dependencies"
         shell: bash
@@ -596,8 +606,10 @@ jobs:
         uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: 1.64.0
+          toolchain: 1.65.0
       - uses: Swatinem/rust-cache@v2
+        with:
+          key: "11"
       - name: "Install dependencies"
         shell: bash
         run: |
@@ -620,8 +632,10 @@ jobs:
         uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: 1.64.0
+          toolchain: 1.65.0
       - uses: Swatinem/rust-cache@v2
+        with:
+          key: "11"
       - name: "Install dependencies"
         shell: bash
         run: |

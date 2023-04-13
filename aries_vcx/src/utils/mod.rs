@@ -1,14 +1,12 @@
 use std::env;
 use std::path::PathBuf;
 use std::sync::Arc;
-#[cfg(feature = "vdrtools")]
-use vdrtools::types::validation::Validatable;
 
+use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use messages::a2a::A2AMessage;
 use messages::diddoc::aries::diddoc::AriesDidDoc;
 
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
-use crate::plugins::wallet::base_wallet::BaseWallet;
 use crate::utils::encryption_envelope::EncryptionEnvelope;
 
 #[macro_use]
@@ -47,9 +45,7 @@ macro_rules! map (
 pub mod author_agreement;
 #[rustfmt::skip]
 pub mod constants;
-pub mod async_fn_iterator;
 pub mod file;
-pub mod json;
 pub mod mockdata;
 pub mod openssl;
 pub mod provision;
@@ -99,18 +95,4 @@ pub async fn send_message_anonymously(
 
     agency_client::httpclient::post_message(envelope, &did_doc.get_endpoint()).await?;
     Ok(())
-}
-
-#[cfg(feature = "vdrtools")]
-pub fn parse_and_validate<'a, T>(s: &'a str) -> VcxResult<T>
-where
-    T: Validatable,
-    T: serde::Deserialize<'a>,
-{
-    let data = serde_json::from_str::<T>(s)?;
-
-    match data.validate() {
-        Ok(_) => Ok(data),
-        Err(s) => Err(AriesVcxError::from_msg(AriesVcxErrorKind::LibindyInvalidStructure, s)),
-    }
 }

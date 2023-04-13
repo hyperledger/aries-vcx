@@ -4,8 +4,8 @@ use futures::future::{BoxFuture, FutureExt};
 use libc::c_char;
 
 use aries_vcx::agency_client::configuration::AgencyClientConfig;
-use aries_vcx::indy::ledger::pool::PoolConfig;
-use aries_vcx::indy::wallet::IssuerConfig;
+use aries_vcx::aries_vcx_core::indy::ledger::pool::PoolConfig;
+use aries_vcx::aries_vcx_core::indy::wallet::IssuerConfig;
 use libvcx_core::api_vcx::api_global::agency_client::create_agency_client_for_main_wallet;
 use libvcx_core::api_vcx::api_global::agency_client::update_webhook_url;
 use libvcx_core::api_vcx::api_global::ledger::{ledger_get_txn_author_agreement, ledger_set_txn_author_agreement};
@@ -598,24 +598,24 @@ mod tests {
     #[cfg(feature = "general_test")]
     use std::ptr;
 
+    use aries_vcx::aries_vcx_core::indy;
+    #[cfg(feature = "pool_tests")]
+    use aries_vcx::aries_vcx_core::indy::ledger::pool::{
+        test_utils::{create_tmp_genesis_txn_file, delete_named_test_pool, delete_test_pool},
+        PoolConfig,
+    };
+    use aries_vcx::aries_vcx_core::indy::wallet::{import, RestoreWalletConfigs, WalletConfig};
+    use aries_vcx::aries_vcx_core::INVALID_POOL_HANDLE;
     use aries_vcx::global::settings::{
         set_config_value, set_test_configs, CONFIG_GENESIS_PATH, CONFIG_TXN_AUTHOR_AGREEMENT,
         DEFAULT_WALLET_BACKUP_KEY, DEFAULT_WALLET_KEY, WALLET_KDF_RAW,
     };
-    use aries_vcx::indy;
-    #[cfg(feature = "pool_tests")]
-    use aries_vcx::indy::ledger::pool::{
-        test_utils::{create_tmp_genesis_txn_file, delete_named_test_pool, delete_test_pool},
-        PoolConfig,
-    };
-    use aries_vcx::indy::wallet::{import, RestoreWalletConfigs, WalletConfig};
     use aries_vcx::utils::constants::GENESIS_PATH;
     use aries_vcx::utils::devsetup::{
         SetupDefaults, SetupEmpty, SetupMocks, SetupPoolConfig, TempFile, TestSetupCreateWallet,
     };
     use aries_vcx::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER;
     use aries_vcx::utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION;
-    use aries_vcx::vdrtools::{INVALID_POOL_HANDLE, INVALID_WALLET_HANDLE};
     use libvcx_core;
     #[cfg(feature = "pool_tests")]
     use libvcx_core::api_vcx::api_global::pool::get_main_pool_handle;
@@ -655,7 +655,7 @@ mod tests {
                 _vcx_open_pool(&json!(setup_pool.pool_config).to_string()).unwrap();
 
                 // Assert config values were set correctly
-                assert_ne!(get_main_pool_handle().unwrap(), INVALID_POOL_HANDLE);
+                assert_ne!(get_main_pool_handle().unwrap(), INVALID_POOL_HANDLE.0);
 
                 // Verify shutdown was successful
                 vcx_shutdown(true);
@@ -788,7 +788,7 @@ mod tests {
 
         // Assert pool was initialized
         assert_ne!(get_main_pool_handle().unwrap(), 0);
-        delete_test_pool(get_main_pool_handle().unwrap()).await;
+        delete_test_pool(aries_vcx::aries_vcx_core::PoolHandle(get_main_pool_handle().unwrap())).await;
         reset_main_pool_handle();
     }
 }

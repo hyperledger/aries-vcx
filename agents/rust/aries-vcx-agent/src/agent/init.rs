@@ -4,11 +4,11 @@ use aries_vcx::{
     agency_client::{agency_client::AgencyClient, configuration::AgentProvisionConfig},
     core::profile::{profile::Profile, vdrtools_profile::VdrtoolsProfile},
     global::settings::init_issuer_config,
-    indy::{
-        ledger::pool::{create_pool_ledger_config, open_pool_ledger, PoolConfigBuilder},
-        wallet::{create_wallet_with_master_secret, open_wallet, wallet_configure_issuer, WalletConfig},
-    },
     utils::provision::provision_cloud_agent,
+};
+use aries_vcx_core::indy::{
+    ledger::pool::{create_pool_ledger_config, open_pool_ledger, PoolConfigBuilder},
+    wallet::{create_wallet_with_master_secret, open_wallet, wallet_configure_issuer, WalletConfig},
 };
 
 use crate::{
@@ -86,7 +86,7 @@ impl Agent {
             .await
             .unwrap();
 
-        let indy_profile = VdrtoolsProfile::new(wallet_handle, pool_handle);
+        let indy_profile = VdrtoolsProfile::new(wallet_handle, aries_vcx_core::PoolHandle(pool_handle));
         let profile: Arc<dyn Profile> = Arc::new(indy_profile);
         let wallet = profile.inject_wallet();
 
