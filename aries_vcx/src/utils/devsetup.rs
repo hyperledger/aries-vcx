@@ -32,7 +32,7 @@ use crate::core::profile::profile::Profile;
 use crate::core::profile::vdrtools_profile::VdrtoolsProfile;
 use crate::global::settings;
 use crate::global::settings::init_issuer_config;
-use crate::global::settings::{disable_indy_mocks, aries_vcx_enable_indy_mocks, set_test_configs};
+use crate::global::settings::{aries_vcx_enable_indy_mocks, disable_indy_mocks, set_test_configs};
 use crate::utils;
 use crate::utils::constants::GENESIS_PATH;
 use crate::utils::file::write_file;
