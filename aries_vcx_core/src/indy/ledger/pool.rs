@@ -77,7 +77,6 @@ pub async fn delete(pool_name: &str) -> VcxCoreResult<()> {
     Ok(())
 }
 
-#[cfg(feature = "test_utils")]
 pub mod test_utils {
     use std::fs;
     use std::io::Write;

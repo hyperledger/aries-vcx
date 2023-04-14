@@ -4,7 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [features]
-test_utils = [ "vdrtools", "modular_libs" ]
 default = ["vdrtools"]
 ########################## DEP FLAGS ################################
 # Feature flag to include the libvdrtools dependency

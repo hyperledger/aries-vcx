@@ -742,7 +742,6 @@ pub async fn get_cred_def_json(
 }
 
 #[cfg(test)]
-#[cfg(feature = "general_test")]
 mod test {
     use crate::utils::devsetup::*;
 
@@ -769,13 +768,13 @@ mod test {
 }
 
 #[cfg(test)]
-#[cfg(feature = "pool_tests")]
 pub mod integration_tests {
     use crate::indy::ledger::transactions::get_ledger_txn;
     use crate::utils::devsetup::SetupWalletPool;
 
     #[tokio::test]
-    async fn test_get_txn() {
+    #[ignore]
+    async fn test_pool_get_txn() {
         SetupWalletPool::run(|setup| async move {
             get_ledger_txn(setup.wallet_handle, setup.pool_handle, 0, None)
                 .await

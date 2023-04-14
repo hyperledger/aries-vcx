@@ -28,7 +28,6 @@ where
 }
 
 // TODO:  move to devsetup, see if we can reuse this / merge with different setup
-#[cfg(feature = "test_utils")]
 pub mod test_setup {
 
     use crate::{indy, WalletHandle};

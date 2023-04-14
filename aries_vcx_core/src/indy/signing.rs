@@ -86,7 +86,6 @@ pub async fn unpack_message(wallet_handle: WalletHandle, msg: &[u8]) -> VcxCoreR
     Ok(res)
 }
 
-#[cfg(feature = "test_utils")]
 pub async fn create_key(wallet_handle: WalletHandle, seed: Option<&str>) -> VcxCoreResult<String> {
     use vdrtools::KeyInfo;
 

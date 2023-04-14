@@ -607,7 +607,6 @@ pub async fn close_wallet(wallet_handle: WalletHandle) -> VcxCoreResult<()> {
     Ok(())
 }
 
-#[cfg(feature = "general_test")]
 #[cfg(test)]
 mod test {
     use crate::errors::error::AriesVcxCoreErrorKind;

@@ -35,7 +35,6 @@ pub async fn generate_nonce() -> VcxCoreResult<String> {
 }
 
 #[cfg(test)]
-#[cfg(feature = "general_test")]
 mod unit_tests {
     use vdrtools::WalletHandle;
 
@@ -52,7 +51,6 @@ mod unit_tests {
     }
 }
 
-#[cfg(feature = "pool_tests")]
 #[cfg(test)]
 pub mod integration_tests {
 
@@ -63,7 +61,8 @@ pub mod integration_tests {
     use crate::utils::get_temp_dir_path;
 
     #[tokio::test]
-    async fn test_issuer_revoke_credential() {
+    #[ignore]
+    async fn test_pool_issuer_revoke_credential() {
         SetupWalletPool::run(|setup| async move {
             let rc = libindy_issuer_revoke_credential(
                 setup.wallet_handle,

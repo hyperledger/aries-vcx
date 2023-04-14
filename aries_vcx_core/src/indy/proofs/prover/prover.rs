@@ -88,7 +88,6 @@ pub async fn libindy_prover_get_credentials_for_proof_req(
         proof_req
     );
 
-    #[cfg(feature = "test_utils")]
     {
         use crate::utils::mockdata::mock_settings::get_mock_creds_retrieved_for_proof_request;
         match get_mock_creds_retrieved_for_proof_request() {
