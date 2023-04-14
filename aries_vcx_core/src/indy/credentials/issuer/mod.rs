@@ -3,9 +3,9 @@ use vdrtools::{CredentialOffer, CredentialRequest, CredentialValues, Locator, Re
 use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
 use crate::global::settings;
 use crate::indy::anoncreds;
+use crate::indy::utils::parse_and_validate;
 use crate::utils::constants::LIBINDY_CRED_OFFER;
 use crate::utils::mockdata::mock_settings::StatusCodeMock;
-use crate::utils::parse_and_validate;
 use crate::{utils, WalletHandle};
 
 pub async fn libindy_issuer_create_credential_offer(
