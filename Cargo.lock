@@ -2160,7 +2160,7 @@ dependencies = [
  "log",
  "openssl",
  "rand 0.7.3",
- "rmp-serde",
+ "rmp-serde 0.13.7",
  "serde",
  "serde_derive",
  "serde_json",
@@ -2227,7 +2227,7 @@ dependencies = [
  "pin-utils",
  "rand 0.8.5",
  "regex",
- "rmp-serde",
+ "rmp-serde 0.13.7",
  "serde",
  "serde_json",
  "sha3 0.10.7",
@@ -2249,7 +2249,7 @@ dependencies = [
  "libc",
  "log",
  "lru",
- "rmp-serde",
+ "rmp-serde 0.13.7",
  "serde",
  "serde_derive",
  "serde_json",
@@ -2507,7 +2507,7 @@ dependencies = [
  "num-traits",
  "rand 0.8.5",
  "regex",
- "rmp-serde",
+ "rmp-serde 1.1.1",
  "serde",
  "serde_derive",
  "serde_json",
@@ -3497,6 +3497,17 @@ name = "rmp-serde"
 version = "0.13.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "011e1d58446e9fa3af7cdc1fb91295b10621d3ac4cb3a85cc86385ee9ca50cd3"
+dependencies = [
+ "byteorder",
+ "rmp",
+ "serde",
+]
+
+[[package]]
+name = "rmp-serde"
+version = "1.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c5b13be192e0220b8afb7222aa5813cb62cc269ebb5cac346ca6487681d2913e"
 dependencies = [
  "byteorder",
  "rmp",
