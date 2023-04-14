@@ -446,17 +446,20 @@ pub mod test_utils {
         pub(self) teardown: Arc<dyn Fn() -> BoxFuture<'static, ()>>,
     }
 
-    #[cfg(feature = "modular_libs")]
     pub async fn create_test_alice_instance(setup: &SetupPool) -> Alice {
-        let (alice_profile, teardown) = if cfg!(feature = "modular_libs_tests") {
+        let (alice_profile, teardown) = {
+            info!("create_test_alice_instance >> using indy profile");
+            Alice::setup_indy_profile(setup.pool_handle).await
+        };
+
+        #[cfg(feature = "modular_libs")]
+        let (alice_profile, teardown) = {
             let genesis_file_path = setup.genesis_file_path.clone();
             let config = LedgerPoolConfig { genesis_file_path };
             info!("create_test_alice_instance >> using modular profile");
             Alice::setup_modular_profile(config).await
-        } else {
-            info!("create_test_alice_instance >> using indy profile");
-            Alice::setup_indy_profile(setup.pool_handle).await
         };
+        
         Alice::setup(alice_profile, teardown).await
     }
 

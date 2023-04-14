@@ -22,7 +22,8 @@ mod integration_tests {
     use messages::msg_fields::protocols::cred_issuance::offer_credential::OfferCredentialDecorators;
     use messages::msg_fields::protocols::cred_issuance::{CredentialAttr, CredentialPreview};
 
-    use crate::utils::devsetup_agent::test_utils::{create_test_alice_instance, Faber};
+    use crate::utils::devsetup_agent::test_utils::create_test_alice_instance;
+    use crate::utils::devsetup_agent::test_utils::Faber;
     use crate::utils::scenarios::test_utils::create_connected_connections;
 
     #[tokio::test]

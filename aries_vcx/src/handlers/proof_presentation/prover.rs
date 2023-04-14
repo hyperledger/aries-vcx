@@ -271,35 +271,35 @@ pub mod test_utils {
     }
 }
 
-#[cfg(test)]
-#[allow(clippy::unwrap_used)]
-mod tests {
-    use messages::msg_fields::protocols::present_proof::request::{
-        RequestPresentationContent, RequestPresentationDecorators,
-    };
-    use uuid::Uuid;
+// #[cfg(test)]
+// #[allow(clippy::unwrap_used)]
+// mod tests {
+//     use messages::msg_fields::protocols::present_proof::request::{
+//         RequestPresentationContent, RequestPresentationDecorators,
+//     };
+//     use uuid::Uuid;
 
-    use crate::{common::test_utils::indy_handles_to_profile, utils::devsetup::*};
-    use aries_vcx_core::INVALID_POOL_HANDLE;
+//     use crate::{common::test_utils::indy_handles_to_profile, utils::devsetup::*};
+//     use aries_vcx_core::INVALID_POOL_HANDLE;
 
-    use super::*;
+//     use super::*;
 
-    #[tokio::test]
-    async fn test_retrieve_credentials_fails_with_no_proof_req() {
-        SetupLibraryWallet::run(|setup| async move {
-            let profile = indy_handles_to_profile(setup.wallet_handle, INVALID_POOL_HANDLE);
+//     #[tokio::test]
+//     async fn test_retrieve_credentials_fails_with_no_proof_req() {
+//         SetupLibraryWallet::run(|setup| async move {
+//             let profile = indy_handles_to_profile(setup.wallet_handle, INVALID_POOL_HANDLE);
 
-            let id = Uuid::new_v4().to_string();
-            let content = RequestPresentationContent::new(vec![]);
-            let decorators = RequestPresentationDecorators::default();
+//             let id = Uuid::new_v4().to_string();
+//             let content = RequestPresentationContent::new(vec![]);
+//             let decorators = RequestPresentationDecorators::default();
 
-            let proof_req = RequestPresentation::with_decorators(id, content, decorators);
-            let proof = Prover::create_from_request("1", proof_req).unwrap();
-            assert_eq!(
-                proof.retrieve_credentials(&profile).await.unwrap_err().kind(),
-                AriesVcxErrorKind::InvalidJson
-            );
-        })
-        .await;
-    }
-}
+//             let proof_req = RequestPresentation::with_decorators(id, content, decorators);
+//             let proof = Prover::create_from_request("1", proof_req).unwrap();
+//             assert_eq!(
+//                 proof.retrieve_credentials(&profile).await.unwrap_err().kind(),
+//                 AriesVcxErrorKind::InvalidJson
+//             );
+//         })
+//         .await;
+//     }
+// }

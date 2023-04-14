@@ -112,7 +112,7 @@ mod integration_tests {
         SetupProfile::run(|setup| async move {
             let did = setup.institution_did.clone();
             let create_service = EndpointDidSov::create()
-                .set_service_endpoint("https://example.org".into())
+                .set_service_endpoint("https://example.org".parse().unwrap())
                 .set_routing_keys(Some(vec!["did:sov:456".into()]));
             write_endpoint(&setup.profile, &did, &create_service).await.unwrap();
             thread::sleep(Duration::from_millis(50));
@@ -140,7 +140,7 @@ mod integration_tests {
         SetupProfile::run(|setup| async move {
             let did = setup.institution_did.clone();
             let create_service = EndpointDidSov::create()
-                .set_service_endpoint("https://example.org".into())
+                .set_service_endpoint("https://example.org".parse().unwrap())
                 .set_routing_keys(None);
             write_endpoint(&setup.profile, &did, &create_service).await.unwrap();
             thread::sleep(Duration::from_millis(50));
@@ -183,7 +183,7 @@ mod integration_tests {
             let endpoint_url_2 = "https://example2.org";
             let routing_keys_2 = vec![];
             let service_2 = EndpointDidSov::create()
-                .set_service_endpoint(endpoint_url_2.into())
+                .set_service_endpoint(endpoint_url_2.parse().unwrap())
                 .set_routing_keys(Some(routing_keys_2.clone()));
             write_endpoint(&setup.profile, &did, &service_2).await.unwrap();
 

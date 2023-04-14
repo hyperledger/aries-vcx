@@ -104,7 +104,7 @@ mod unit_tests {
             ]));
 
         let expected = json!({
-            "endpoint": "http://localhost:8080",
+            "endpoint": "http://localhost:8080/",
             "routingKeys": [
                 "Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR",
                 "3LYuxJBJkngDbvJj4zjx13DBUdZ2P96eNybwd2n9L9AU"
