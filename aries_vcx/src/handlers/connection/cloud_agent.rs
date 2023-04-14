@@ -45,7 +45,6 @@ pub async fn create_agent_keys(
 }
 
 fn _log_messages_optionally(_a2a_messages: &HashMap<String, AriesMessage>) {
-    #[cfg(feature = "warnlog_fetched_messages")]
     {
         for message in _a2a_messages.values() {
             let serialized_msg = serde_json::to_string_pretty(message)

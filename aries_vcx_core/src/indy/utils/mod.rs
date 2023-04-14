@@ -32,7 +32,7 @@ pub mod test_setup {
 
     use crate::{indy, WalletHandle};
 
-    const TRUSTEE_SEED: &'static str = "000000000000000000000000Trustee1";
+    const TRUSTEE_SEED: &str = "000000000000000000000000Trustee1";
     const WALLET_KEY: &str = "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY";
     const WALLET_KEY_DERIVATION: &str = "RAW";
 

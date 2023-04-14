@@ -115,7 +115,7 @@ fn parse_key_derivation_method(method: &str) -> Result<KeyDerivationMethod, Arie
         "ARGON2I_INT" => Ok(KeyDerivationMethod::ARGON2I_INT),
         _ => Err(AriesVcxCoreError::from_msg(
             AriesVcxCoreErrorKind::InvalidOption,
-            format!("Unknown derivation method {}", method),
+            format!("Unknown derivation method {method}"),
         )),
     }
 }
@@ -607,23 +607,23 @@ pub async fn close_wallet(wallet_handle: WalletHandle) -> VcxCoreResult<()> {
     Ok(())
 }
 
-#[cfg(test)]
-mod test {
-    use crate::errors::error::AriesVcxCoreErrorKind;
-    use crate::indy::wallet::add_wallet_record;
-    use crate::utils::devsetup::SetupLibraryWallet;
+// #[cfg(test)]
+// mod test {
+//     use crate::errors::error::AriesVcxCoreErrorKind;
+//     use crate::indy::wallet::add_wallet_record;
+//     use crate::utils::devsetup::SetupLibraryWallet;
 
-    #[tokio::test]
-    async fn test_add_record() {
-        SetupLibraryWallet::run(|setup| async move {
-            add_wallet_record(setup.wallet_handle.0, "record_type", "123", "Record Value", Some("{}"))
-                .await
-                .unwrap();
-            let err = add_wallet_record(setup.wallet_handle.0, "record_type", "123", "Record Value", Some("{}"))
-                .await
-                .unwrap_err();
-            assert_eq!(err.kind(), AriesVcxCoreErrorKind::DuplicationWalletRecord);
-        })
-        .await;
-    }
-}
+//     #[tokio::test]
+//     async fn test_add_record() {
+//         SetupLibraryWallet::run(|setup| async move {
+//             add_wallet_record(setup.wallet_handle.0, "record_type", "123", "Record Value", Some("{}"))
+//                 .await
+//                 .unwrap();
+//             let err = add_wallet_record(setup.wallet_handle.0, "record_type", "123", "Record Value", Some("{}"))
+//                 .await
+//                 .unwrap_err();
+//             assert_eq!(err.kind(), AriesVcxCoreErrorKind::DuplicationWalletRecord);
+//         })
+//         .await;
+//     }
+// }

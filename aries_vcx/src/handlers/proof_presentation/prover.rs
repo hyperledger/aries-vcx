@@ -245,7 +245,6 @@ impl Prover {
     }
 }
 
-#[cfg(feature = "test_utils")]
 pub mod test_utils {
     use agency_client::agency_client::AgencyClient;
     use messages::msg_fields::protocols::present_proof::PresentProof;
@@ -272,8 +271,8 @@ pub mod test_utils {
     }
 }
 
-#[cfg(feature = "general_test")]
 #[cfg(test)]
+#[allow(clippy::unwrap_used)]
 mod tests {
     use messages::msg_fields::protocols::present_proof::request::{
         RequestPresentationContent, RequestPresentationDecorators,

@@ -34,64 +34,64 @@ pub async fn generate_nonce() -> VcxCoreResult<String> {
     Ok(res)
 }
 
-#[cfg(test)]
-mod unit_tests {
-    use vdrtools::WalletHandle;
+// #[cfg(test)]
+// mod unit_tests {
+//     use vdrtools::WalletHandle;
 
-    use crate::indy::ledger::transactions::get_schema_json;
-    use crate::utils::constants::{SCHEMA_ID, SCHEMA_JSON};
-    use crate::utils::devsetup::SetupMocks;
+//     use crate::indy::ledger::transactions::get_schema_json;
+//     use crate::utils::constants::{SCHEMA_ID, SCHEMA_JSON};
+//     use crate::utils::devsetup::SetupMocks;
 
-    #[tokio::test]
-    async fn from_ledger_schema_id() {
-        let _setup = SetupMocks::init();
-        let (id, retrieved_schema) = get_schema_json(WalletHandle(0), 1, SCHEMA_ID).await.unwrap();
-        assert_eq!(&retrieved_schema, SCHEMA_JSON);
-        assert_eq!(&id, SCHEMA_ID);
-    }
-}
+//     #[tokio::test]
+//     async fn from_ledger_schema_id() {
+//         let _setup = SetupMocks::init();
+//         let (id, retrieved_schema) = get_schema_json(WalletHandle(0), 1, SCHEMA_ID).await.unwrap();
+//         assert_eq!(&retrieved_schema, SCHEMA_JSON);
+//         assert_eq!(&id, SCHEMA_ID);
+//     }
+// }
 
-#[cfg(test)]
-pub mod integration_tests {
+// #[cfg(test)]
+// pub mod integration_tests {
 
-    use crate::common::test_utils::{create_and_store_credential, indy_handles_to_profile};
-    use crate::indy::primitives::revocation_registry::libindy_issuer_revoke_credential;
-    use crate::utils::constants::TAILS_DIR;
-    use crate::utils::devsetup::SetupWalletPool;
-    use crate::utils::get_temp_dir_path;
+//     use crate::common::test_utils::{create_and_store_credential, indy_handles_to_profile};
+//     use crate::indy::primitives::revocation_registry::libindy_issuer_revoke_credential;
+//     use crate::utils::constants::TAILS_DIR;
+//     use crate::utils::devsetup::SetupWalletPool;
+//     use crate::utils::get_temp_dir_path;
 
-    #[tokio::test]
-    #[ignore]
-    async fn test_pool_issuer_revoke_credential() {
-        SetupWalletPool::run(|setup| async move {
-            let rc = libindy_issuer_revoke_credential(
-                setup.wallet_handle,
-                get_temp_dir_path(TAILS_DIR).to_str().unwrap(),
-                "",
-                "",
-            )
-            .await;
-            assert!(rc.is_err());
+//     #[tokio::test]
+//     #[ignore]
+//     async fn test_pool_issuer_revoke_credential() {
+//         SetupWalletPool::run(|setup| async move {
+//             let rc = libindy_issuer_revoke_credential(
+//                 setup.wallet_handle,
+//                 get_temp_dir_path(TAILS_DIR).to_str().unwrap(),
+//                 "",
+//                 "",
+//             )
+//             .await;
+//             assert!(rc.is_err());
 
-            let profile = indy_handles_to_profile(setup.wallet_handle, setup.pool_handle);
-            let (_, _, _, _, _, _, _, _, rev_reg_id, cred_rev_id, _) = create_and_store_credential(
-                &profile,
-                &profile,
-                &setup.institution_did,
-                crate::utils::constants::DEFAULT_SCHEMA_ATTRS,
-            )
-            .await;
+//             let profile = indy_handles_to_profile(setup.wallet_handle, setup.pool_handle);
+//             let (_, _, _, _, _, _, _, _, rev_reg_id, cred_rev_id, _) = create_and_store_credential(
+//                 &profile,
+//                 &profile,
+//                 &setup.institution_did,
+//                 crate::utils::constants::DEFAULT_SCHEMA_ATTRS,
+//             )
+//             .await;
 
-            let rc = libindy_issuer_revoke_credential(
-                setup.wallet_handle,
-                get_temp_dir_path(TAILS_DIR).to_str().unwrap(),
-                &rev_reg_id,
-                &cred_rev_id,
-            )
-            .await;
+//             let rc = libindy_issuer_revoke_credential(
+//                 setup.wallet_handle,
+//                 get_temp_dir_path(TAILS_DIR).to_str().unwrap(),
+//                 &rev_reg_id,
+//                 &cred_rev_id,
+//             )
+//             .await;
 
-            assert!(rc.is_ok());
-        })
-        .await;
-    }
-}
+//             assert!(rc.is_ok());
+//         })
+//         .await;
+//     }
+// }

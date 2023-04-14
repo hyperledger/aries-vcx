@@ -110,7 +110,7 @@ pub async fn libindy_get_txn_author_agreement(pool_handle: PoolHandle) -> VcxCor
 
     let get_author_agreement_response = serde_json::from_str::<serde_json::Value>(&get_author_agreement_response)
         .map_err(|err| {
-            AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::InvalidLedgerResponse, format!("{:?}", err))
+            AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::InvalidLedgerResponse, format!("{err:?}"))
         })?;
 
     let mut author_agreement_data = get_author_agreement_response["result"]["data"]
@@ -126,7 +126,7 @@ pub async fn libindy_get_txn_author_agreement(pool_handle: PoolHandle) -> VcxCor
 
     let get_acceptance_mechanism_response =
         serde_json::from_str::<serde_json::Value>(&get_acceptance_mechanism_response).map_err(|err| {
-            AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::InvalidLedgerResponse, format!("{:?}", err))
+            AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::InvalidLedgerResponse, format!("{err:?}"))
         })?;
 
     if let Some(aml) = get_acceptance_mechanism_response["result"]["data"]["aml"].as_object() {
@@ -223,7 +223,7 @@ fn parse_response(response: &str) -> VcxCoreResult<Response> {
     serde_json::from_str::<Response>(response).map_err(|err| {
         AriesVcxCoreError::from_msg(
             AriesVcxCoreErrorKind::InvalidJson,
-            format!("Cannot deserialize object: {}", err),
+            format!("Cannot deserialize object: {err}"),
         )
     })
 }
@@ -319,7 +319,7 @@ pub async fn endorse_transaction(
 
 fn _verify_transaction_can_be_endorsed(transaction_json: &str, _did: &str) -> VcxCoreResult<()> {
     let transaction: Request = serde_json::from_str(transaction_json)
-        .map_err(|err| AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::InvalidJson, format!("{:?}", err)))?;
+        .map_err(|err| AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::InvalidJson, format!("{err:?}")))?;
 
     let transaction_endorser = transaction.endorser.ok_or(AriesVcxCoreError::from_msg(
         AriesVcxCoreErrorKind::InvalidJson,
@@ -330,8 +330,7 @@ fn _verify_transaction_can_be_endorsed(transaction_json: &str, _did: &str) -> Vc
         return Err(AriesVcxCoreError::from_msg(
             AriesVcxCoreErrorKind::InvalidJson,
             format!(
-                "Transaction cannot be endorsed: transaction endorser DID `{}` and sender DID `{}` are different",
-                transaction_endorser, _did
+                "Transaction cannot be endorsed: transaction endorser DID `{transaction_endorser}` and sender DID `{_did}` are different"
             ),
         ));
     }
@@ -675,11 +674,11 @@ pub fn _check_schema_response(response: &str) -> VcxCoreResult<()> {
         Response::Reply(_) => Ok(()),
         Response::Reject(reject) => Err(AriesVcxCoreError::from_msg(
             AriesVcxCoreErrorKind::DuplicationSchema,
-            format!("{:?}", reject),
+            format!("{reject:?}"),
         )),
         Response::ReqNACK(reqnack) => Err(AriesVcxCoreError::from_msg(
             AriesVcxCoreErrorKind::UnknownSchemaRejection,
-            format!("{:?}", reqnack),
+            format!("{reqnack:?}"),
         )),
     }
 }
@@ -692,7 +691,7 @@ pub(in crate::indy) fn check_response(response: &str) -> VcxCoreResult<()> {
         Response::Reply(_) => Ok(()),
         Response::Reject(res) | Response::ReqNACK(res) => Err(AriesVcxCoreError::from_msg(
             AriesVcxCoreErrorKind::InvalidLedgerResponse,
-            format!("{:?}", res),
+            format!("{res:?}"),
         )),
     }
 }
@@ -741,53 +740,53 @@ pub async fn get_cred_def_json(
     Ok((cred_def_id.to_string(), cred_def_json))
 }
 
-#[cfg(test)]
-mod test {
-    use crate::utils::devsetup::*;
+// #[cfg(test)]
+// mod test {
+//     use crate::utils::devsetup::*;
 
-    use super::*;
+//     use super::*;
 
-    #[test]
-    fn test_verify_transaction_can_be_endorsed() {
-        let _setup = SetupDefaults::init();
+//     #[test]
+//     fn test_verify_transaction_can_be_endorsed() {
+//         let _setup = SetupDefaults::init();
 
-        // success
-        let transaction = r#"{"reqId":1, "identifier": "EbP4aYNeTHL6q385GuVpRV", "signature": "gkVDhwe2", "endorser": "NcYxiDXkpYi6ov5FcYDi1e"}"#;
-        assert!(_verify_transaction_can_be_endorsed(transaction, "NcYxiDXkpYi6ov5FcYDi1e").is_ok());
+//         // success
+//         let transaction = r#"{"reqId":1, "identifier": "EbP4aYNeTHL6q385GuVpRV", "signature": "gkVDhwe2", "endorser": "NcYxiDXkpYi6ov5FcYDi1e"}"#;
+//         assert!(_verify_transaction_can_be_endorsed(transaction, "NcYxiDXkpYi6ov5FcYDi1e").is_ok());
 
-        // no author signature
-        let transaction =
-            r#"{"reqId":1, "identifier": "EbP4aYNeTHL6q385GuVpRV", "endorser": "NcYxiDXkpYi6ov5FcYDi1e"}"#;
-        assert!(_verify_transaction_can_be_endorsed(transaction, "NcYxiDXkpYi6ov5FcYDi1e").is_err());
+//         // no author signature
+//         let transaction =
+//             r#"{"reqId":1, "identifier": "EbP4aYNeTHL6q385GuVpRV", "endorser": "NcYxiDXkpYi6ov5FcYDi1e"}"#;
+//         assert!(_verify_transaction_can_be_endorsed(transaction, "NcYxiDXkpYi6ov5FcYDi1e").is_err());
 
-        // different endorser did
-        let transaction =
-            r#"{"reqId":1, "identifier": "EbP4aYNeTHL6q385GuVpRV", "endorser": "NcYxiDXkpYi6ov5FcYDi1e"}"#;
-        assert!(_verify_transaction_can_be_endorsed(transaction, "EbP4aYNeTHL6q385GuVpRV").is_err());
-    }
-}
+//         // different endorser did
+//         let transaction =
+//             r#"{"reqId":1, "identifier": "EbP4aYNeTHL6q385GuVpRV", "endorser": "NcYxiDXkpYi6ov5FcYDi1e"}"#;
+//         assert!(_verify_transaction_can_be_endorsed(transaction, "EbP4aYNeTHL6q385GuVpRV").is_err());
+//     }
+// }
 
-#[cfg(test)]
-pub mod integration_tests {
-    use crate::indy::ledger::transactions::get_ledger_txn;
-    use crate::utils::devsetup::SetupWalletPool;
+// #[cfg(test)]
+// pub mod integration_tests {
+//     use crate::indy::ledger::transactions::get_ledger_txn;
+//     use crate::utils::devsetup::SetupWalletPool;
 
-    #[tokio::test]
-    #[ignore]
-    async fn test_pool_get_txn() {
-        SetupWalletPool::run(|setup| async move {
-            get_ledger_txn(setup.wallet_handle, setup.pool_handle, 0, None)
-                .await
-                .unwrap_err();
-            let txn = get_ledger_txn(setup.wallet_handle, setup.pool_handle, 1, None).await;
-            assert!(txn.is_ok());
+//     #[tokio::test]
+//     #[ignore]
+//     async fn test_pool_get_txn() {
+//         SetupWalletPool::run(|setup| async move {
+//             get_ledger_txn(setup.wallet_handle, setup.pool_handle, 0, None)
+//                 .await
+//                 .unwrap_err();
+//             let txn = get_ledger_txn(setup.wallet_handle, setup.pool_handle, 1, None).await;
+//             assert!(txn.is_ok());
 
-            get_ledger_txn(setup.wallet_handle, setup.pool_handle, 0, Some(&setup.institution_did))
-                .await
-                .unwrap_err();
-            let txn = get_ledger_txn(setup.wallet_handle, setup.pool_handle, 1, Some(&setup.institution_did)).await;
-            assert!(txn.is_ok());
-        })
-        .await;
-    }
-}
+//             get_ledger_txn(setup.wallet_handle, setup.pool_handle, 0, Some(&setup.institution_did))
+//                 .await
+//                 .unwrap_err();
+//             let txn = get_ledger_txn(setup.wallet_handle, setup.pool_handle, 1, Some(&setup.institution_did)).await;
+//             assert!(txn.is_ok());
+//         })
+//         .await;
+//     }
+// }

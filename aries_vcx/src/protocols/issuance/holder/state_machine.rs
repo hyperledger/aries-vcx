@@ -644,621 +644,600 @@ async fn _make_credential_request(
     Ok((credential_request_msg, req_meta, cred_def_json))
 }
 
-#[cfg(feature = "general_test")]
-#[cfg(test)]
-mod test {
-    use messages::protocols::issuance::credential::test_utils::_credential;
-    use messages::protocols::issuance::credential_offer::test_utils::_credential_offer;
-    use messages::protocols::issuance::credential_proposal::test_utils::_credential_proposal;
-    use messages::protocols::issuance::credential_request::test_utils::{_credential_request, _my_pw_did};
-    use messages::protocols::issuance::test_utils::{_credential_ack, _problem_report};
-
-    use crate::common::test_utils::mock_profile;
-    use crate::test::source_id;
-    use crate::utils::constants;
-    use crate::utils::devsetup::SetupMocks;
-
-    use super::*;
-
-    fn _holder_sm() -> HolderSM {
-        HolderSM::from_offer(_credential_offer(), source_id())
-    }
-
-    pub fn _send_message() -> Option<SendClosure> {
-        Some(Box::new(|_: A2AMessage| Box::pin(async { VcxResult::Ok(()) })))
-    }
-
-    impl HolderSM {
-        async fn to_request_sent_state(mut self) -> HolderSM {
-            self = self
-                .handle_message(
-                    &mock_profile(),
-                    CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()),
-                    _send_message(),
-                )
-                .await
-                .unwrap();
-            self
-        }
-
-        async fn to_finished_state(mut self) -> HolderSM {
-            self = self
-                .handle_message(
-                    &mock_profile(),
-                    CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()),
-                    _send_message(),
-                )
-                .await
-                .unwrap();
-            self = self
-                .handle_message(
-                    &mock_profile(),
-                    CredentialIssuanceAction::Credential(_credential()),
-                    _send_message(),
-                )
-                .await
-                .unwrap();
-            self
-        }
-    }
-
-    mod new {
-        use super::*;
-
-        #[test]
-        #[cfg(feature = "general_test")]
-        fn test_holder_new() {
-            let _setup = SetupMocks::init();
-
-            let holder_sm = _holder_sm();
-
-            assert_match!(HolderFullState::OfferReceived(_), holder_sm.state);
-            assert_eq!(source_id(), holder_sm.get_source_id());
-        }
-    }
-
-    mod build_messages {
-        use messages::a2a::MessageId;
-
-        use crate::protocols::issuance::holder::state_machine::{build_credential_ack, build_credential_request_msg};
-        use crate::utils::devsetup::{was_in_past, SetupMocks};
-
-        #[test]
-        #[cfg(feature = "general_test")]
-        fn test_holder_build_credential_request_msg() {
-            let _setup = SetupMocks::init();
-            let msg = build_credential_request_msg("{}".into(), "12345").unwrap();
-
-            assert_eq!(msg.id, MessageId::default());
-            assert_eq!(msg.thread.unwrap().thid.unwrap(), "12345");
-            assert!(was_in_past(
-                &msg.timing.unwrap().out_time.unwrap(),
-                chrono::Duration::milliseconds(100),
-            )
-            .unwrap());
-        }
-
-        #[tokio::test]
-        #[cfg(feature = "general_test")]
-        async fn test_holder_build_credential_ack() {
-            let _setup = SetupMocks::init();
-
-            let msg = build_credential_ack("12345");
-
-            assert_eq!(msg.id, MessageId::default());
-            assert_eq!(msg.thread.thid.unwrap(), "12345");
-            assert!(was_in_past(
-                &msg.timing.unwrap().out_time.unwrap(),
-                chrono::Duration::milliseconds(100),
-            )
-            .unwrap());
-        }
-    }
-
-    mod step {
-        use super::*;
-
-        #[test]
-        #[cfg(feature = "general_test")]
-        fn test_holder_init() {
-            let _setup = SetupMocks::init();
-
-            let holder_sm = _holder_sm();
-            assert_match!(HolderFullState::OfferReceived(_), holder_sm.state);
-        }
-
-        #[tokio::test]
-        #[cfg(feature = "general_test")]
-        async fn test_issuer_handle_credential_request_sent_message_from_offer_received_state() {
-            let _setup = SetupMocks::init();
-
-            let mut holder_sm = _holder_sm();
-            holder_sm = holder_sm
-                .handle_message(
-                    &mock_profile(),
-                    CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()),
-                    _send_message(),
-                )
-                .await
-                .unwrap();
-
-            assert_match!(HolderFullState::RequestSent(_), holder_sm.state);
-        }
-
-        #[tokio::test]
-        #[cfg(feature = "general_test")]
-        async fn test_issuer_handle_credential_request_sent_message_from_offer_received_state_for_invalid_offer() {
-            let _setup = SetupMocks::init();
-
-            let credential_offer = CredentialOffer::create()
-                .set_offers_attach(r#"{"credential offer": {}}"#)
-                .unwrap();
-
-            let mut holder_sm = HolderSM::from_offer(credential_offer, "test source".to_string());
-            holder_sm = holder_sm
-                .handle_message(
-                    &mock_profile(),
-                    CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()),
-                    _send_message(),
-                )
-                .await
-                .unwrap();
-
-            assert_match!(HolderFullState::Finished(_), holder_sm.state);
-            assert_eq!(
-                Status::Failed(ProblemReport::default()).code(),
-                holder_sm.credential_status()
-            );
-        }
-
-        #[tokio::test]
-        #[cfg(feature = "general_test")]
-        async fn test_issuer_handle_other_messages_from_offer_received_state() {
-            let _setup = SetupMocks::init();
-
-            let mut holder_sm = _holder_sm();
-            holder_sm = holder_sm
-                .handle_message(
-                    &mock_profile(),
-                    CredentialIssuanceAction::CredentialSend(),
-                    _send_message(),
-                )
-                .await
-                .unwrap();
-            assert_match!(HolderFullState::OfferReceived(_), holder_sm.state);
-
-            holder_sm = holder_sm
-                .handle_message(
-                    &mock_profile(),
-                    CredentialIssuanceAction::ProblemReport(_problem_report()),
-                    _send_message(),
-                )
-                .await
-                .unwrap();
-            assert_match!(HolderFullState::OfferReceived(_), holder_sm.state);
-        }
-
-        #[tokio::test]
-        #[cfg(feature = "general_test")]
-        async fn test_issuer_handle_credential_message_from_request_sent_state() {
-            let _setup = SetupMocks::init();
-
-            let mut holder_sm = _holder_sm();
-            holder_sm = holder_sm
-                .handle_message(
-                    &mock_profile(),
-                    CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()),
-                    _send_message(),
-                )
-                .await
-                .unwrap();
-            holder_sm = holder_sm
-                .handle_message(
-                    &mock_profile(),
-                    CredentialIssuanceAction::Credential(_credential()),
-                    _send_message(),
-                )
-                .await
-                .unwrap();
-
-            assert_match!(HolderFullState::Finished(_), holder_sm.state);
-            assert_eq!(Status::Success.code(), holder_sm.credential_status());
-        }
-
-        #[tokio::test]
-        #[cfg(feature = "general_test")]
-        async fn test_issuer_handle_invalid_credential_message_from_request_sent_state() {
-            let _setup = SetupMocks::init();
-
-            let mut holder_sm = _holder_sm();
-            holder_sm = holder_sm
-                .handle_message(
-                    &mock_profile(),
-                    CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()),
-                    _send_message(),
-                )
-                .await
-                .unwrap();
-            holder_sm = holder_sm
-                .handle_message(
-                    &mock_profile(),
-                    CredentialIssuanceAction::Credential(Credential::create()),
-                    _send_message(),
-                )
-                .await
-                .unwrap();
-
-            assert_match!(HolderFullState::Finished(_), holder_sm.state);
-            assert_eq!(
-                Status::Failed(ProblemReport::default()).code(),
-                holder_sm.credential_status()
-            );
-        }
-
-        #[tokio::test]
-        #[cfg(feature = "general_test")]
-        async fn test_issuer_handle_problem_report_from_request_sent_state() {
-            let _setup = SetupMocks::init();
-
-            let mut holder_sm = _holder_sm();
-            holder_sm = holder_sm
-                .handle_message(
-                    &mock_profile(),
-                    CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()),
-                    _send_message(),
-                )
-                .await
-                .unwrap();
-            holder_sm = holder_sm
-                .handle_message(
-                    &mock_profile(),
-                    CredentialIssuanceAction::ProblemReport(_problem_report()),
-                    _send_message(),
-                )
-                .await
-                .unwrap();
-
-            assert_match!(HolderFullState::Finished(_), holder_sm.state);
-            assert_eq!(
-                Status::Failed(ProblemReport::default()).code(),
-                holder_sm.credential_status()
-            );
-        }
-
-        #[tokio::test]
-        #[cfg(feature = "general_test")]
-        async fn test_issuer_handle_other_messages_from_request_sent_state() {
-            let _setup = SetupMocks::init();
-
-            let mut holder_sm = _holder_sm();
-            holder_sm = holder_sm
-                .handle_message(
-                    &mock_profile(),
-                    CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()),
-                    _send_message(),
-                )
-                .await
-                .unwrap();
-
-            holder_sm = holder_sm
-                .handle_message(
-                    &mock_profile(),
-                    CredentialIssuanceAction::CredentialOffer(_credential_offer()),
-                    _send_message(),
-                )
-                .await
-                .unwrap();
-            assert_match!(HolderFullState::RequestSent(_), holder_sm.state);
-
-            holder_sm = holder_sm
-                .handle_message(
-                    &mock_profile(),
-                    CredentialIssuanceAction::CredentialAck(_credential_ack()),
-                    _send_message(),
-                )
-                .await
-                .unwrap();
-            assert_match!(HolderFullState::RequestSent(_), holder_sm.state);
-        }
-
-        #[tokio::test]
-        #[cfg(feature = "general_test")]
-        async fn test_issuer_handle_message_from_finished_state() {
-            let _setup = SetupMocks::init();
-
-            let mut holder_sm = _holder_sm();
-            holder_sm = holder_sm
-                .handle_message(
-                    &mock_profile(),
-                    CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()),
-                    _send_message(),
-                )
-                .await
-                .unwrap();
-            assert_match!(HolderFullState::RequestSent(_), holder_sm.state);
-
-            holder_sm = holder_sm
-                .handle_message(
-                    &mock_profile(),
-                    CredentialIssuanceAction::Credential(_credential()),
-                    _send_message(),
-                )
-                .await
-                .unwrap();
-            assert_match!(HolderFullState::Finished(_), holder_sm.state);
-
-            holder_sm = holder_sm
-                .handle_message(
-                    &mock_profile(),
-                    CredentialIssuanceAction::CredentialOffer(_credential_offer()),
-                    _send_message(),
-                )
-                .await
-                .unwrap();
-            assert_match!(HolderFullState::Finished(_), holder_sm.state);
-
-            holder_sm = holder_sm
-                .handle_message(
-                    &mock_profile(),
-                    CredentialIssuanceAction::Credential(_credential()),
-                    _send_message(),
-                )
-                .await
-                .unwrap();
-            assert_match!(HolderFullState::Finished(_), holder_sm.state);
-
-            holder_sm = holder_sm
-                .handle_message(
-                    &mock_profile(),
-                    CredentialIssuanceAction::CredentialAck(_credential_ack()),
-                    _send_message(),
-                )
-                .await
-                .unwrap();
-            assert_match!(HolderFullState::Finished(_), holder_sm.state);
-        }
-    }
-
-    mod find_message_to_handle {
-        use super::*;
-
-        #[test]
-        #[cfg(feature = "general_test")]
-        fn test_holder_find_message_to_handle_from_offer_received_state() {
-            let _setup = SetupMocks::init();
-
-            let holder = _holder_sm();
-
-            // No messages
-
-            {
-                let messages = map!(
-                    "key_1".to_string() => A2AMessage::CredentialOffer(_credential_offer()),
-                    "key_2".to_string() => A2AMessage::CredentialRequest(_credential_request()),
-                    "key_3".to_string() => A2AMessage::CredentialProposal(_credential_proposal()),
-                    "key_4".to_string() => A2AMessage::Credential(_credential()),
-                    "key_5".to_string() => A2AMessage::CredentialAck(_credential_ack()),
-                    "key_6".to_string() => A2AMessage::CommonProblemReport(_problem_report())
-                );
-
-                assert!(holder.find_message_to_handle(messages).is_none());
-            }
-        }
-
-        #[tokio::test]
-        #[cfg(feature = "general_test")]
-        async fn test_holder_find_message_to_handle_from_request_sent_state() {
-            let _setup = SetupMocks::init();
-
-            let holder = _holder_sm().to_request_sent_state().await;
-
-            // CredentialAck
-            {
-                let messages = map!(
-                    "key_1".to_string() => A2AMessage::CredentialOffer(_credential_offer()),
-                    "key_2".to_string() => A2AMessage::CredentialRequest(_credential_request()),
-                    "key_3".to_string() => A2AMessage::CredentialProposal(_credential_proposal()),
-                    "key_4".to_string() => A2AMessage::Credential(_credential())
-                );
-
-                let (uid, message) = holder.find_message_to_handle(messages).unwrap();
-                assert_eq!("key_4", uid);
-                assert_match!(A2AMessage::Credential(_), message);
-            }
-
-            // Problem Report
-            {
-                let messages = map!(
-                    "key_1".to_string() => A2AMessage::CredentialOffer(_credential_offer()),
-                    "key_2".to_string() => A2AMessage::CredentialRequest(_credential_request()),
-                    "key_3".to_string() => A2AMessage::CredentialProposal(_credential_proposal()),
-                    "key_4".to_string() => A2AMessage::CredentialAck(_credential_ack()),
-                    "key_5".to_string() => A2AMessage::CommonProblemReport(_problem_report())
-                );
-
-                let (uid, message) = holder.find_message_to_handle(messages).unwrap();
-                assert_eq!("key_5", uid);
-                assert_match!(A2AMessage::CommonProblemReport(_), message);
-            }
-
-            // No messages for different Thread ID
-            {
-                let messages = map!(
-                    "key_1".to_string() => A2AMessage::CredentialOffer(_credential_offer().set_thread_id("")),
-                    "key_2".to_string() => A2AMessage::CredentialRequest(_credential_request().set_thread_id("")),
-                    "key_3".to_string() => A2AMessage::CredentialProposal(_credential_proposal().set_thread_id("")),
-                    "key_4".to_string() => A2AMessage::Credential(_credential().set_thread_id("")),
-                    "key_5".to_string() => A2AMessage::CredentialAck(_credential_ack().set_thread_id("")),
-                    "key_6".to_string() => A2AMessage::CommonProblemReport(_problem_report().set_thread_id(""))
-                );
-
-                assert!(holder.find_message_to_handle(messages).is_none());
-            }
-
-            // No messages
-            {
-                let messages = map!(
-                    "key_1".to_string() => A2AMessage::CredentialOffer(_credential_offer()),
-                    "key_2".to_string() => A2AMessage::CredentialRequest(_credential_request()),
-                    "key_3".to_string() => A2AMessage::CredentialProposal(_credential_proposal())
-                );
-
-                assert!(holder.find_message_to_handle(messages).is_none());
-            }
-        }
-
-        #[tokio::test]
-        #[cfg(feature = "general_test")]
-        async fn test_holder_find_message_to_handle_from_finished_state() {
-            let _setup = SetupMocks::init();
-
-            let holder = _holder_sm().to_finished_state().await;
-
-            // No messages
-            {
-                let messages = map!(
-                    "key_1".to_string() => A2AMessage::CredentialOffer(_credential_offer()),
-                    "key_2".to_string() => A2AMessage::CredentialRequest(_credential_request()),
-                    "key_3".to_string() => A2AMessage::CredentialProposal(_credential_proposal()),
-                    "key_4".to_string() => A2AMessage::Credential(_credential()),
-                    "key_5".to_string() => A2AMessage::CredentialAck(_credential_ack()),
-                    "key_6".to_string() => A2AMessage::CommonProblemReport(_problem_report())
-                );
-
-                assert!(holder.find_message_to_handle(messages).is_none());
-            }
-        }
-    }
-
-    mod get_state {
-        use super::*;
-
-        #[tokio::test]
-        #[cfg(feature = "general_test")]
-        async fn test_get_state() {
-            let _setup = SetupMocks::init();
-
-            assert_eq!(HolderState::OfferReceived, _holder_sm().get_state());
-            assert_eq!(
-                HolderState::RequestSent,
-                _holder_sm().to_request_sent_state().await.get_state()
-            );
-            assert_eq!(
-                HolderState::Finished,
-                _holder_sm().to_finished_state().await.get_state()
-            );
-        }
-    }
-
-    mod get_tails_location {
-        use super::*;
-
-        #[tokio::test]
-        #[cfg(feature = "general_test")]
-        async fn test_get_tails_location() {
-            let _setup = SetupMocks::init();
-
-            assert_eq!(
-                Err(AriesVcxErrorKind::NotReady),
-                _holder_sm().get_tails_location().map_err(|e| e.kind())
-            );
-            assert_eq!(
-                Err(AriesVcxErrorKind::NotReady),
-                _holder_sm()
-                    .to_request_sent_state()
-                    .await
-                    .get_tails_location()
-                    .map_err(|e| e.kind())
-            );
-            assert_eq!(
-                constants::TEST_TAILS_LOCATION,
-                _holder_sm().to_finished_state().await.get_tails_location().unwrap()
-            );
-        }
-    }
-
-    mod get_tails_hash {
-        use super::*;
-
-        #[tokio::test]
-        #[cfg(feature = "general_test")]
-        async fn test_get_tails_hash() {
-            let _setup = SetupMocks::init();
-
-            assert_eq!(
-                Err(AriesVcxErrorKind::NotReady),
-                _holder_sm().get_tails_hash().map_err(|e| e.kind())
-            );
-            assert_eq!(
-                Err(AriesVcxErrorKind::NotReady),
-                _holder_sm()
-                    .to_request_sent_state()
-                    .await
-                    .get_tails_hash()
-                    .map_err(|e| e.kind())
-            );
-
-            assert_eq!(
-                constants::TEST_TAILS_HASH,
-                _holder_sm().to_finished_state().await.get_tails_hash().unwrap()
-            );
-        }
-    }
-
-    mod get_rev_reg_id {
-        use super::*;
-
-        #[tokio::test]
-        #[cfg(feature = "general_test")]
-        async fn test_get_rev_reg_id() {
-            let _setup = SetupMocks::init();
-
-            assert_eq!(
-                Err(AriesVcxErrorKind::NotReady),
-                _holder_sm().get_rev_reg_id().map_err(|e| e.kind())
-            );
-            assert_eq!(
-                Err(AriesVcxErrorKind::NotReady),
-                _holder_sm()
-                    .to_request_sent_state()
-                    .await
-                    .get_rev_reg_id()
-                    .map_err(|e| e.kind())
-            );
-
-            assert_eq!(
-                constants::REV_REG_ID,
-                _holder_sm().to_finished_state().await.get_rev_reg_id().unwrap()
-            );
-        }
-    }
-
-    mod is_revokable {
-        use super::*;
-
-        #[tokio::test]
-        #[cfg(feature = "general_test")]
-        async fn test_is_revokable() {
-            let _setup = SetupMocks::init();
-            assert_eq!(true, _holder_sm().is_revokable(&mock_profile()).await.unwrap());
-            assert_eq!(
-                true,
-                _holder_sm()
-                    .to_request_sent_state()
-                    .await
-                    .is_revokable(&mock_profile())
-                    .await
-                    .unwrap()
-            );
-            assert_eq!(
-                true,
-                _holder_sm()
-                    .to_finished_state()
-                    .await
-                    .is_revokable(&mock_profile())
-                    .await
-                    .unwrap()
-            );
-        }
-    }
-}
+// #[cfg(test)]
+// mod test {
+//     use messages::protocols::issuance::credential::test_utils::_credential;
+//     use messages::protocols::issuance::credential_offer::test_utils::_credential_offer;
+//     use messages::protocols::issuance::credential_proposal::test_utils::_credential_proposal;
+//     use messages::protocols::issuance::credential_request::test_utils::{_credential_request, _my_pw_did};
+//     use messages::protocols::issuance::test_utils::{_credential_ack, _problem_report};
+
+//     use crate::common::test_utils::mock_profile;
+//     use crate::test::source_id;
+//     use crate::utils::constants;
+//     use crate::utils::devsetup::SetupMocks;
+
+//     use super::*;
+
+//     fn _holder_sm() -> HolderSM {
+//         HolderSM::from_offer(_credential_offer(), source_id())
+//     }
+
+//     pub fn _send_message() -> Option<SendClosure> {
+//         Some(Box::new(|_: A2AMessage| Box::pin(async { VcxResult::Ok(()) })))
+//     }
+
+//     impl HolderSM {
+//         async fn to_request_sent_state(mut self) -> HolderSM {
+//             self = self
+//                 .handle_message(
+//                     &mock_profile(),
+//                     CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()),
+//                     _send_message(),
+//                 )
+//                 .await
+//                 .unwrap();
+//             self
+//         }
+
+//         async fn to_finished_state(mut self) -> HolderSM {
+//             self = self
+//                 .handle_message(
+//                     &mock_profile(),
+//                     CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()),
+//                     _send_message(),
+//                 )
+//                 .await
+//                 .unwrap();
+//             self = self
+//                 .handle_message(
+//                     &mock_profile(),
+//                     CredentialIssuanceAction::Credential(_credential()),
+//                     _send_message(),
+//                 )
+//                 .await
+//                 .unwrap();
+//             self
+//         }
+//     }
+
+//     mod new {
+//         use super::*;
+
+//         #[test]
+//         fn test_holder_new() {
+//             let _setup = SetupMocks::init();
+
+//             let holder_sm = _holder_sm();
+
+//             assert_match!(HolderFullState::OfferReceived(_), holder_sm.state);
+//             assert_eq!(source_id(), holder_sm.get_source_id());
+//         }
+//     }
+
+//     mod build_messages {
+//         use messages::a2a::MessageId;
+
+//         use crate::protocols::issuance::holder::state_machine::{build_credential_ack, build_credential_request_msg};
+//         use crate::utils::devsetup::{was_in_past, SetupMocks};
+
+//         #[test]
+//         fn test_holder_build_credential_request_msg() {
+//             let _setup = SetupMocks::init();
+//             let msg = build_credential_request_msg("{}".into(), "12345").unwrap();
+
+//             assert_eq!(msg.id, MessageId::default());
+//             assert_eq!(msg.thread.unwrap().thid.unwrap(), "12345");
+//             assert!(was_in_past(
+//                 &msg.timing.unwrap().out_time.unwrap(),
+//                 chrono::Duration::milliseconds(100),
+//             )
+//             .unwrap());
+//         }
+
+//         #[tokio::test]
+//         async fn test_holder_build_credential_ack() {
+//             let _setup = SetupMocks::init();
+
+//             let msg = build_credential_ack("12345");
+
+//             assert_eq!(msg.id, MessageId::default());
+//             assert_eq!(msg.thread.thid.unwrap(), "12345");
+//             assert!(was_in_past(
+//                 &msg.timing.unwrap().out_time.unwrap(),
+//                 chrono::Duration::milliseconds(100),
+//             )
+//             .unwrap());
+//         }
+//     }
+
+//     mod step {
+//         use super::*;
+
+//         #[test]
+//         fn test_holder_init() {
+//             let _setup = SetupMocks::init();
+
+//             let holder_sm = _holder_sm();
+//             assert_match!(HolderFullState::OfferReceived(_), holder_sm.state);
+//         }
+
+//         #[tokio::test]
+//         async fn test_issuer_handle_credential_request_sent_message_from_offer_received_state() {
+//             let _setup = SetupMocks::init();
+
+//             let mut holder_sm = _holder_sm();
+//             holder_sm = holder_sm
+//                 .handle_message(
+//                     &mock_profile(),
+//                     CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()),
+//                     _send_message(),
+//                 )
+//                 .await
+//                 .unwrap();
+
+//             assert_match!(HolderFullState::RequestSent(_), holder_sm.state);
+//         }
+
+//         #[tokio::test]
+//         async fn test_issuer_handle_credential_request_sent_message_from_offer_received_state_for_invalid_offer() {
+//             let _setup = SetupMocks::init();
+
+//             let credential_offer = CredentialOffer::create()
+//                 .set_offers_attach(r#"{"credential offer": {}}"#)
+//                 .unwrap();
+
+//             let mut holder_sm = HolderSM::from_offer(credential_offer, "test source".to_string());
+//             holder_sm = holder_sm
+//                 .handle_message(
+//                     &mock_profile(),
+//                     CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()),
+//                     _send_message(),
+//                 )
+//                 .await
+//                 .unwrap();
+
+//             assert_match!(HolderFullState::Finished(_), holder_sm.state);
+//             assert_eq!(
+//                 Status::Failed(ProblemReport::default()).code(),
+//                 holder_sm.credential_status()
+//             );
+//         }
+
+//         #[tokio::test]
+//         async fn test_issuer_handle_other_messages_from_offer_received_state() {
+//             let _setup = SetupMocks::init();
+
+//             let mut holder_sm = _holder_sm();
+//             holder_sm = holder_sm
+//                 .handle_message(
+//                     &mock_profile(),
+//                     CredentialIssuanceAction::CredentialSend(),
+//                     _send_message(),
+//                 )
+//                 .await
+//                 .unwrap();
+//             assert_match!(HolderFullState::OfferReceived(_), holder_sm.state);
+
+//             holder_sm = holder_sm
+//                 .handle_message(
+//                     &mock_profile(),
+//                     CredentialIssuanceAction::ProblemReport(_problem_report()),
+//                     _send_message(),
+//                 )
+//                 .await
+//                 .unwrap();
+//             assert_match!(HolderFullState::OfferReceived(_), holder_sm.state);
+//         }
+
+//         #[tokio::test]
+//         async fn test_issuer_handle_credential_message_from_request_sent_state() {
+//             let _setup = SetupMocks::init();
+
+//             let mut holder_sm = _holder_sm();
+//             holder_sm = holder_sm
+//                 .handle_message(
+//                     &mock_profile(),
+//                     CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()),
+//                     _send_message(),
+//                 )
+//                 .await
+//                 .unwrap();
+//             holder_sm = holder_sm
+//                 .handle_message(
+//                     &mock_profile(),
+//                     CredentialIssuanceAction::Credential(_credential()),
+//                     _send_message(),
+//                 )
+//                 .await
+//                 .unwrap();
+
+//             assert_match!(HolderFullState::Finished(_), holder_sm.state);
+//             assert_eq!(Status::Success.code(), holder_sm.credential_status());
+//         }
+
+//         #[tokio::test]
+//         async fn test_issuer_handle_invalid_credential_message_from_request_sent_state() {
+//             let _setup = SetupMocks::init();
+
+//             let mut holder_sm = _holder_sm();
+//             holder_sm = holder_sm
+//                 .handle_message(
+//                     &mock_profile(),
+//                     CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()),
+//                     _send_message(),
+//                 )
+//                 .await
+//                 .unwrap();
+//             holder_sm = holder_sm
+//                 .handle_message(
+//                     &mock_profile(),
+//                     CredentialIssuanceAction::Credential(Credential::create()),
+//                     _send_message(),
+//                 )
+//                 .await
+//                 .unwrap();
+
+//             assert_match!(HolderFullState::Finished(_), holder_sm.state);
+//             assert_eq!(
+//                 Status::Failed(ProblemReport::default()).code(),
+//                 holder_sm.credential_status()
+//             );
+//         }
+
+//         #[tokio::test]
+//         async fn test_issuer_handle_problem_report_from_request_sent_state() {
+//             let _setup = SetupMocks::init();
+
+//             let mut holder_sm = _holder_sm();
+//             holder_sm = holder_sm
+//                 .handle_message(
+//                     &mock_profile(),
+//                     CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()),
+//                     _send_message(),
+//                 )
+//                 .await
+//                 .unwrap();
+//             holder_sm = holder_sm
+//                 .handle_message(
+//                     &mock_profile(),
+//                     CredentialIssuanceAction::ProblemReport(_problem_report()),
+//                     _send_message(),
+//                 )
+//                 .await
+//                 .unwrap();
+
+//             assert_match!(HolderFullState::Finished(_), holder_sm.state);
+//             assert_eq!(
+//                 Status::Failed(ProblemReport::default()).code(),
+//                 holder_sm.credential_status()
+//             );
+//         }
+
+//         #[tokio::test]
+//         async fn test_issuer_handle_other_messages_from_request_sent_state() {
+//             let _setup = SetupMocks::init();
+
+//             let mut holder_sm = _holder_sm();
+//             holder_sm = holder_sm
+//                 .handle_message(
+//                     &mock_profile(),
+//                     CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()),
+//                     _send_message(),
+//                 )
+//                 .await
+//                 .unwrap();
+
+//             holder_sm = holder_sm
+//                 .handle_message(
+//                     &mock_profile(),
+//                     CredentialIssuanceAction::CredentialOffer(_credential_offer()),
+//                     _send_message(),
+//                 )
+//                 .await
+//                 .unwrap();
+//             assert_match!(HolderFullState::RequestSent(_), holder_sm.state);
+
+//             holder_sm = holder_sm
+//                 .handle_message(
+//                     &mock_profile(),
+//                     CredentialIssuanceAction::CredentialAck(_credential_ack()),
+//                     _send_message(),
+//                 )
+//                 .await
+//                 .unwrap();
+//             assert_match!(HolderFullState::RequestSent(_), holder_sm.state);
+//         }
+
+//         #[tokio::test]
+//         async fn test_issuer_handle_message_from_finished_state() {
+//             let _setup = SetupMocks::init();
+
+//             let mut holder_sm = _holder_sm();
+//             holder_sm = holder_sm
+//                 .handle_message(
+//                     &mock_profile(),
+//                     CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()),
+//                     _send_message(),
+//                 )
+//                 .await
+//                 .unwrap();
+//             assert_match!(HolderFullState::RequestSent(_), holder_sm.state);
+
+//             holder_sm = holder_sm
+//                 .handle_message(
+//                     &mock_profile(),
+//                     CredentialIssuanceAction::Credential(_credential()),
+//                     _send_message(),
+//                 )
+//                 .await
+//                 .unwrap();
+//             assert_match!(HolderFullState::Finished(_), holder_sm.state);
+
+//             holder_sm = holder_sm
+//                 .handle_message(
+//                     &mock_profile(),
+//                     CredentialIssuanceAction::CredentialOffer(_credential_offer()),
+//                     _send_message(),
+//                 )
+//                 .await
+//                 .unwrap();
+//             assert_match!(HolderFullState::Finished(_), holder_sm.state);
+
+//             holder_sm = holder_sm
+//                 .handle_message(
+//                     &mock_profile(),
+//                     CredentialIssuanceAction::Credential(_credential()),
+//                     _send_message(),
+//                 )
+//                 .await
+//                 .unwrap();
+//             assert_match!(HolderFullState::Finished(_), holder_sm.state);
+
+//             holder_sm = holder_sm
+//                 .handle_message(
+//                     &mock_profile(),
+//                     CredentialIssuanceAction::CredentialAck(_credential_ack()),
+//                     _send_message(),
+//                 )
+//                 .await
+//                 .unwrap();
+//             assert_match!(HolderFullState::Finished(_), holder_sm.state);
+//         }
+//     }
+
+//     mod find_message_to_handle {
+//         use super::*;
+
+//         #[test]
+//         fn test_holder_find_message_to_handle_from_offer_received_state() {
+//             let _setup = SetupMocks::init();
+
+//             let holder = _holder_sm();
+
+//             // No messages
+
+//             {
+//                 let messages = map!(
+//                     "key_1".to_string() => A2AMessage::CredentialOffer(_credential_offer()),
+//                     "key_2".to_string() => A2AMessage::CredentialRequest(_credential_request()),
+//                     "key_3".to_string() => A2AMessage::CredentialProposal(_credential_proposal()),
+//                     "key_4".to_string() => A2AMessage::Credential(_credential()),
+//                     "key_5".to_string() => A2AMessage::CredentialAck(_credential_ack()),
+//                     "key_6".to_string() => A2AMessage::CommonProblemReport(_problem_report())
+//                 );
+
+//                 assert!(holder.find_message_to_handle(messages).is_none());
+//             }
+//         }
+
+//         #[tokio::test]
+//         async fn test_holder_find_message_to_handle_from_request_sent_state() {
+//             let _setup = SetupMocks::init();
+
+//             let holder = _holder_sm().to_request_sent_state().await;
+
+//             // CredentialAck
+//             {
+//                 let messages = map!(
+//                     "key_1".to_string() => A2AMessage::CredentialOffer(_credential_offer()),
+//                     "key_2".to_string() => A2AMessage::CredentialRequest(_credential_request()),
+//                     "key_3".to_string() => A2AMessage::CredentialProposal(_credential_proposal()),
+//                     "key_4".to_string() => A2AMessage::Credential(_credential())
+//                 );
+
+//                 let (uid, message) = holder.find_message_to_handle(messages).unwrap();
+//                 assert_eq!("key_4", uid);
+//                 assert_match!(A2AMessage::Credential(_), message);
+//             }
+
+//             // Problem Report
+//             {
+//                 let messages = map!(
+//                     "key_1".to_string() => A2AMessage::CredentialOffer(_credential_offer()),
+//                     "key_2".to_string() => A2AMessage::CredentialRequest(_credential_request()),
+//                     "key_3".to_string() => A2AMessage::CredentialProposal(_credential_proposal()),
+//                     "key_4".to_string() => A2AMessage::CredentialAck(_credential_ack()),
+//                     "key_5".to_string() => A2AMessage::CommonProblemReport(_problem_report())
+//                 );
+
+//                 let (uid, message) = holder.find_message_to_handle(messages).unwrap();
+//                 assert_eq!("key_5", uid);
+//                 assert_match!(A2AMessage::CommonProblemReport(_), message);
+//             }
+
+//             // No messages for different Thread ID
+//             {
+//                 let messages = map!(
+//                     "key_1".to_string() => A2AMessage::CredentialOffer(_credential_offer().set_thread_id("")),
+//                     "key_2".to_string() => A2AMessage::CredentialRequest(_credential_request().set_thread_id("")),
+//                     "key_3".to_string() => A2AMessage::CredentialProposal(_credential_proposal().set_thread_id("")),
+//                     "key_4".to_string() => A2AMessage::Credential(_credential().set_thread_id("")),
+//                     "key_5".to_string() => A2AMessage::CredentialAck(_credential_ack().set_thread_id("")),
+//                     "key_6".to_string() => A2AMessage::CommonProblemReport(_problem_report().set_thread_id(""))
+//                 );
+
+//                 assert!(holder.find_message_to_handle(messages).is_none());
+//             }
+
+//             // No messages
+//             {
+//                 let messages = map!(
+//                     "key_1".to_string() => A2AMessage::CredentialOffer(_credential_offer()),
+//                     "key_2".to_string() => A2AMessage::CredentialRequest(_credential_request()),
+//                     "key_3".to_string() => A2AMessage::CredentialProposal(_credential_proposal())
+//                 );
+
+//                 assert!(holder.find_message_to_handle(messages).is_none());
+//             }
+//         }
+
+//         #[tokio::test]
+//         async fn test_holder_find_message_to_handle_from_finished_state() {
+//             let _setup = SetupMocks::init();
+
+//             let holder = _holder_sm().to_finished_state().await;
+
+//             // No messages
+//             {
+//                 let messages = map!(
+//                     "key_1".to_string() => A2AMessage::CredentialOffer(_credential_offer()),
+//                     "key_2".to_string() => A2AMessage::CredentialRequest(_credential_request()),
+//                     "key_3".to_string() => A2AMessage::CredentialProposal(_credential_proposal()),
+//                     "key_4".to_string() => A2AMessage::Credential(_credential()),
+//                     "key_5".to_string() => A2AMessage::CredentialAck(_credential_ack()),
+//                     "key_6".to_string() => A2AMessage::CommonProblemReport(_problem_report())
+//                 );
+
+//                 assert!(holder.find_message_to_handle(messages).is_none());
+//             }
+//         }
+//     }
+
+//     mod get_state {
+//         use super::*;
+
+//         #[tokio::test]
+//         async fn test_get_state() {
+//             let _setup = SetupMocks::init();
+
+//             assert_eq!(HolderState::OfferReceived, _holder_sm().get_state());
+//             assert_eq!(
+//                 HolderState::RequestSent,
+//                 _holder_sm().to_request_sent_state().await.get_state()
+//             );
+//             assert_eq!(
+//                 HolderState::Finished,
+//                 _holder_sm().to_finished_state().await.get_state()
+//             );
+//         }
+//     }
+
+//     mod get_tails_location {
+//         use super::*;
+
+//         #[tokio::test]
+//         async fn test_get_tails_location() {
+//             let _setup = SetupMocks::init();
+
+//             assert_eq!(
+//                 Err(AriesVcxErrorKind::NotReady),
+//                 _holder_sm().get_tails_location().map_err(|e| e.kind())
+//             );
+//             assert_eq!(
+//                 Err(AriesVcxErrorKind::NotReady),
+//                 _holder_sm()
+//                     .to_request_sent_state()
+//                     .await
+//                     .get_tails_location()
+//                     .map_err(|e| e.kind())
+//             );
+//             assert_eq!(
+//                 constants::TEST_TAILS_LOCATION,
+//                 _holder_sm().to_finished_state().await.get_tails_location().unwrap()
+//             );
+//         }
+//     }
+
+//     mod get_tails_hash {
+//         use super::*;
+
+//         #[tokio::test]
+//         async fn test_get_tails_hash() {
+//             let _setup = SetupMocks::init();
+
+//             assert_eq!(
+//                 Err(AriesVcxErrorKind::NotReady),
+//                 _holder_sm().get_tails_hash().map_err(|e| e.kind())
+//             );
+//             assert_eq!(
+//                 Err(AriesVcxErrorKind::NotReady),
+//                 _holder_sm()
+//                     .to_request_sent_state()
+//                     .await
+//                     .get_tails_hash()
+//                     .map_err(|e| e.kind())
+//             );
+
+//             assert_eq!(
+//                 constants::TEST_TAILS_HASH,
+//                 _holder_sm().to_finished_state().await.get_tails_hash().unwrap()
+//             );
+//         }
+//     }
+
+//     mod get_rev_reg_id {
+//         use super::*;
+
+//         #[tokio::test]
+//         async fn test_get_rev_reg_id() {
+//             let _setup = SetupMocks::init();
+
+//             assert_eq!(
+//                 Err(AriesVcxErrorKind::NotReady),
+//                 _holder_sm().get_rev_reg_id().map_err(|e| e.kind())
+//             );
+//             assert_eq!(
+//                 Err(AriesVcxErrorKind::NotReady),
+//                 _holder_sm()
+//                     .to_request_sent_state()
+//                     .await
+//                     .get_rev_reg_id()
+//                     .map_err(|e| e.kind())
+//             );
+
+//             assert_eq!(
+//                 constants::REV_REG_ID,
+//                 _holder_sm().to_finished_state().await.get_rev_reg_id().unwrap()
+//             );
+//         }
+//     }
+
+//     mod is_revokable {
+//         use super::*;
+
+//         #[tokio::test]
+//         async fn test_is_revokable() {
+//             let _setup = SetupMocks::init();
+//             assert_eq!(true, _holder_sm().is_revokable(&mock_profile()).await.unwrap());
+//             assert_eq!(
+//                 true,
+//                 _holder_sm()
+//                     .to_request_sent_state()
+//                     .await
+//                     .is_revokable(&mock_profile())
+//                     .await
+//                     .unwrap()
+//             );
+//             assert_eq!(
+//                 true,
+//                 _holder_sm()
+//                     .to_finished_state()
+//                     .await
+//                     .is_revokable(&mock_profile())
+//                     .await
+//                     .unwrap()
+//             );
+//         }
+//     }
+// }

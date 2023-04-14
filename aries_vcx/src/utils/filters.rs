@@ -95,7 +95,7 @@ pub fn filter_credential_offers_by_comment(offers: &str, comment: &str) -> VcxRe
 }
 
 #[cfg(test)]
-#[cfg(feature = "general_test")]
+#[allow(clippy::unwrap_used)]
 pub mod unit_tests {
     use crate::utils::mockdata::mockdata_proof;
 

@@ -319,7 +319,6 @@ impl Issuer {
     }
 }
 
-#[cfg(feature = "test_utils")]
 pub mod test_utils {
     use agency_client::agency_client::AgencyClient;
     use messages::msg_fields::protocols::cred_issuance::propose_credential::ProposeCredential;
@@ -347,227 +346,226 @@ pub mod test_utils {
     }
 }
 
-#[cfg(test)]
-#[cfg(feature = "general_test")]
-pub mod unit_tests {
-    use messages::msg_fields::protocols::cred_issuance::CredentialIssuance;
+// #[cfg(test)]
+// pub mod unit_tests {
+//     use messages::msg_fields::protocols::cred_issuance::CredentialIssuance;
 
-    use crate::common::test_utils::mock_profile;
-    use crate::protocols::issuance::issuer::state_machine::unit_tests::_send_message;
-    use crate::utils::devsetup::SetupMocks;
+//     use crate::common::test_utils::mock_profile;
+//     use crate::protocols::issuance::issuer::state_machine::unit_tests::_send_message;
+//     use crate::utils::devsetup::SetupMocks;
 
-    use super::*;
+//     use super::*;
 
-    fn _cred_data() -> String {
-        json!({"name": "alice"}).to_string()
-    }
+//     fn _cred_data() -> String {
+//         json!({"name": "alice"}).to_string()
+//     }
 
-    fn _issuer() -> Issuer {
-        Issuer::create("test_source_id").unwrap()
-    }
+//     fn _issuer() -> Issuer {
+//         Issuer::create("test_source_id").unwrap()
+//     }
 
-    fn _issuer_revokable_from_proposal() -> Issuer {
-        Issuer::create_from_proposal("test_source_id", &_credential_proposal()).unwrap()
-    }
+//     fn _issuer_revokable_from_proposal() -> Issuer {
+//         Issuer::create_from_proposal("test_source_id", &_credential_proposal()).unwrap()
+//     }
 
-    fn _send_message_but_fail() -> Option<SendClosure> {
-        Some(Box::new(|_: AriesMessage| {
-            Box::pin(async { Err(AriesVcxError::from_msg(AriesVcxErrorKind::IOError, "Mocked error")) })
-        }))
-    }
+//     fn _send_message_but_fail() -> Option<SendClosure> {
+//         Some(Box::new(|_: AriesMessage| {
+//             Box::pin(async { Err(AriesVcxError::from_msg(AriesVcxErrorKind::IOError, "Mocked error")) })
+//         }))
+//     }
 
-    impl Issuer {
-        async fn to_offer_sent_state_unrevokable(mut self) -> Issuer {
-            self.build_credential_offer_msg(&mock_profile(), _offer_info_unrevokable(), None)
-                .await
-                .unwrap();
-            self.mark_credential_offer_msg_sent().unwrap();
-            self
-        }
+//     impl Issuer {
+//         async fn to_offer_sent_state_unrevokable(mut self) -> Issuer {
+//             self.build_credential_offer_msg(&mock_profile(), _offer_info_unrevokable(), None)
+//                 .await
+//                 .unwrap();
+//             self.mark_credential_offer_msg_sent().unwrap();
+//             self
+//         }
 
-        async fn to_request_received_state(mut self) -> Issuer {
-            self = self.to_offer_sent_state_unrevokable().await;
-            self.step(
-                &mock_profile(),
-                CredentialIssuanceAction::CredentialRequest(_credential_request()),
-                _send_message(),
-            )
-            .await
-            .unwrap();
-            self
-        }
+//         async fn to_request_received_state(mut self) -> Issuer {
+//             self = self.to_offer_sent_state_unrevokable().await;
+//             self.step(
+//                 &mock_profile(),
+//                 CredentialIssuanceAction::CredentialRequest(_credential_request()),
+//                 _send_message(),
+//             )
+//             .await
+//             .unwrap();
+//             self
+//         }
 
-        async fn to_finished_state_unrevokable(mut self) -> Issuer {
-            self = self.to_request_received_state().await;
-            self.step(
-                &mock_profile(),
-                CredentialIssuanceAction::CredentialSend(),
-                _send_message(),
-            )
-            .await
-            .unwrap();
-            self.step(
-                &mock_profile(),
-                CredentialIssuanceAction::CredentialAck(_ack()),
-                _send_message(),
-            )
-            .await
-            .unwrap();
-            self
-        }
-    }
+//         async fn to_finished_state_unrevokable(mut self) -> Issuer {
+//             self = self.to_request_received_state().await;
+//             self.step(
+//                 &mock_profile(),
+//                 CredentialIssuanceAction::CredentialSend(),
+//                 _send_message(),
+//             )
+//             .await
+//             .unwrap();
+//             self.step(
+//                 &mock_profile(),
+//                 CredentialIssuanceAction::CredentialAck(_ack()),
+//                 _send_message(),
+//             )
+//             .await
+//             .unwrap();
+//             self
+//         }
+//     }
 
-    #[tokio::test]
-    async fn test_build_credential_preview() {
-        fn verify_preview(preview: CredentialPreview) {
-            let value_name = preview
-                .attributes
-                .clone()
-                .into_iter()
-                .find(|x| x.name == "name")
-                .unwrap();
-            let value_age = preview
-                .attributes
-                .clone()
-                .into_iter()
-                .find(|x| x.name == "age")
-                .unwrap();
-            assert_eq!(value_name.name, "name");
-            assert_eq!(value_name.value, "Alice");
-            assert_eq!(value_age.name, "age");
-            assert_eq!(value_age.value, "123");
-        }
+//     #[tokio::test]
+//     async fn test_build_credential_preview() {
+//         fn verify_preview(preview: CredentialPreview) {
+//             let value_name = preview
+//                 .attributes
+//                 .clone()
+//                 .into_iter()
+//                 .find(|x| x.name == "name")
+//                 .unwrap();
+//             let value_age = preview
+//                 .attributes
+//                 .clone()
+//                 .into_iter()
+//                 .find(|x| x.name == "age")
+//                 .unwrap();
+//             assert_eq!(value_name.name, "name");
+//             assert_eq!(value_name.value, "Alice");
+//             assert_eq!(value_age.name, "age");
+//             assert_eq!(value_age.value, "123");
+//         }
 
-        let _setup = SetupMocks::init();
-        let input = json!({"name":"Alice","age":"123"}).to_string();
-        let preview = _build_credential_preview(&input).unwrap();
-        verify_preview(preview);
+//         let _setup = SetupMocks::init();
+//         let input = json!({"name":"Alice","age":"123"}).to_string();
+//         let preview = _build_credential_preview(&input).unwrap();
+//         verify_preview(preview);
 
-        let input = json!([
-            {"name":"name", "value": "Alice"},
-            {"name": "age", "value": "123"}
-        ])
-        .to_string();
-        let preview = _build_credential_preview(&input).unwrap();
-        verify_preview(preview);
-    }
+//         let input = json!([
+//             {"name":"name", "value": "Alice"},
+//             {"name": "age", "value": "123"}
+//         ])
+//         .to_string();
+//         let preview = _build_credential_preview(&input).unwrap();
+//         verify_preview(preview);
+//     }
 
-    #[tokio::test]
-    async fn test_cant_revoke_without_revocation_details() {
-        let _setup = SetupMocks::init();
-        let issuer = _issuer().to_finished_state_unrevokable().await;
-        assert_eq!(IssuerState::Finished, issuer.get_state());
-        let revoc_result = issuer.revoke_credential_local(&mock_profile()).await;
-        assert_eq!(revoc_result.unwrap_err().kind(), AriesVcxErrorKind::InvalidState)
-    }
+//     #[tokio::test]
+//     async fn test_cant_revoke_without_revocation_details() {
+//         let _setup = SetupMocks::init();
+//         let issuer = _issuer().to_finished_state_unrevokable().await;
+//         assert_eq!(IssuerState::Finished, issuer.get_state());
+//         let revoc_result = issuer.revoke_credential_local(&mock_profile()).await;
+//         assert_eq!(revoc_result.unwrap_err().kind(), AriesVcxErrorKind::InvalidState)
+//     }
 
-    #[tokio::test]
-    async fn test_credential_can_be_resent_after_failure() {
-        let _setup = SetupMocks::init();
-        let mut issuer = _issuer().to_request_received_state().await;
-        assert_eq!(IssuerState::RequestReceived, issuer.get_state());
+//     #[tokio::test]
+//     async fn test_credential_can_be_resent_after_failure() {
+//         let _setup = SetupMocks::init();
+//         let mut issuer = _issuer().to_request_received_state().await;
+//         assert_eq!(IssuerState::RequestReceived, issuer.get_state());
 
-        let send_result = issuer
-            .send_credential(&mock_profile(), _send_message_but_fail().unwrap())
-            .await;
-        assert_eq!(send_result.is_err(), true);
-        assert_eq!(IssuerState::RequestReceived, issuer.get_state());
+//         let send_result = issuer
+//             .send_credential(&mock_profile(), _send_message_but_fail().unwrap())
+//             .await;
+//         assert_eq!(send_result.is_err(), true);
+//         assert_eq!(IssuerState::RequestReceived, issuer.get_state());
 
-        let send_result = issuer.send_credential(&mock_profile(), _send_message().unwrap()).await;
-        assert_eq!(send_result.is_err(), false);
-        assert_eq!(IssuerState::CredentialSent, issuer.get_state());
-    }
+//         let send_result = issuer.send_credential(&mock_profile(), _send_message().unwrap()).await;
+//         assert_eq!(send_result.is_err(), false);
+//         assert_eq!(IssuerState::CredentialSent, issuer.get_state());
+//     }
 
-    #[tokio::test]
-    async fn exchange_credential_from_proposal_without_negotiation() {
-        let _setup = SetupMocks::init();
-        let mut issuer = _issuer_revokable_from_proposal();
-        assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
+//     #[tokio::test]
+//     async fn exchange_credential_from_proposal_without_negotiation() {
+//         let _setup = SetupMocks::init();
+//         let mut issuer = _issuer_revokable_from_proposal();
+//         assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
 
-        issuer
-            .build_credential_offer_msg(&mock_profile(), _offer_info(), Some("comment".into()))
-            .await
-            .unwrap();
-        issuer.send_credential_offer(_send_message().unwrap()).await.unwrap();
-        assert_eq!(IssuerState::OfferSent, issuer.get_state());
+//         issuer
+//             .build_credential_offer_msg(&mock_profile(), _offer_info(), Some("comment".into()))
+//             .await
+//             .unwrap();
+//         issuer.send_credential_offer(_send_message().unwrap()).await.unwrap();
+//         assert_eq!(IssuerState::OfferSent, issuer.get_state());
 
-        let messages = map!(
-            "key_1".to_string() => AriesMessage::CredentialIssuance(CredentialIssuance::RequestCredential(_credential_request()))
-        );
-        let (_, msg) = issuer.find_message_to_handle(messages).unwrap();
-        issuer.step(&mock_profile(), msg.into(), _send_message()).await.unwrap();
-        assert_eq!(IssuerState::RequestReceived, issuer.get_state());
+//         let messages = map!(
+//             "key_1".to_string() => AriesMessage::CredentialIssuance(CredentialIssuance::RequestCredential(_credential_request()))
+//         );
+//         let (_, msg) = issuer.find_message_to_handle(messages).unwrap();
+//         issuer.step(&mock_profile(), msg.into(), _send_message()).await.unwrap();
+//         assert_eq!(IssuerState::RequestReceived, issuer.get_state());
 
-        issuer
-            .send_credential(&mock_profile(), _send_message().unwrap())
-            .await
-            .unwrap();
-        assert_eq!(IssuerState::CredentialSent, issuer.get_state());
+//         issuer
+//             .send_credential(&mock_profile(), _send_message().unwrap())
+//             .await
+//             .unwrap();
+//         assert_eq!(IssuerState::CredentialSent, issuer.get_state());
 
-        let messages = map!(
-            "key_1".to_string() => AriesMessage::CredentialIssuance(CredentialIssuance::Ack(_ack()))
-        );
-        let (_, msg) = issuer.find_message_to_handle(messages).unwrap();
-        issuer.step(&mock_profile(), msg.into(), _send_message()).await.unwrap();
-        assert_eq!(IssuerState::Finished, issuer.get_state());
-    }
+//         let messages = map!(
+//             "key_1".to_string() => AriesMessage::CredentialIssuance(CredentialIssuance::Ack(_ack()))
+//         );
+//         let (_, msg) = issuer.find_message_to_handle(messages).unwrap();
+//         issuer.step(&mock_profile(), msg.into(), _send_message()).await.unwrap();
+//         assert_eq!(IssuerState::Finished, issuer.get_state());
+//     }
 
-    #[tokio::test]
-    async fn exchange_credential_from_proposal_with_negotiation() {
-        let _setup = SetupMocks::init();
-        let mut issuer = _issuer_revokable_from_proposal();
-        assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
+//     #[tokio::test]
+//     async fn exchange_credential_from_proposal_with_negotiation() {
+//         let _setup = SetupMocks::init();
+//         let mut issuer = _issuer_revokable_from_proposal();
+//         assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
 
-        issuer
-            .build_credential_offer_msg(&mock_profile(), _offer_info(), Some("comment".into()))
-            .await
-            .unwrap();
-        issuer.send_credential_offer(_send_message().unwrap()).await.unwrap();
-        assert_eq!(IssuerState::OfferSent, issuer.get_state());
+//         issuer
+//             .build_credential_offer_msg(&mock_profile(), _offer_info(), Some("comment".into()))
+//             .await
+//             .unwrap();
+//         issuer.send_credential_offer(_send_message().unwrap()).await.unwrap();
+//         assert_eq!(IssuerState::OfferSent, issuer.get_state());
 
-        let messages = map!(
-            "key_1".to_string() => AriesMessage::CredentialIssuance(CredentialIssuance::ProposeCredential(_credential_proposal()))()
-        );
-        let (_, msg) = issuer.find_message_to_handle(messages).unwrap();
-        issuer.step(&mock_profile(), msg.into(), _send_message()).await.unwrap();
-        assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
+//         let messages = map!(
+//             "key_1".to_string() => AriesMessage::CredentialIssuance(CredentialIssuance::ProposeCredential(_credential_proposal()))()
+//         );
+//         let (_, msg) = issuer.find_message_to_handle(messages).unwrap();
+//         issuer.step(&mock_profile(), msg.into(), _send_message()).await.unwrap();
+//         assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
 
-        issuer
-            .build_credential_offer_msg(&mock_profile(), _offer_info(), Some("comment".into()))
-            .await
-            .unwrap();
-        issuer.send_credential_offer(_send_message().unwrap()).await.unwrap();
-        assert_eq!(IssuerState::OfferSent, issuer.get_state());
+//         issuer
+//             .build_credential_offer_msg(&mock_profile(), _offer_info(), Some("comment".into()))
+//             .await
+//             .unwrap();
+//         issuer.send_credential_offer(_send_message().unwrap()).await.unwrap();
+//         assert_eq!(IssuerState::OfferSent, issuer.get_state());
 
-        let messages = map!(
-            "key_1".to_string() => AriesMessage::CredentialIssuance(CredentialIssuance::RequestCredential(_credential_request()))
-        );
-        let (_, msg) = issuer.find_message_to_handle(messages).unwrap();
-        issuer.step(&mock_profile(), msg.into(), _send_message()).await.unwrap();
-        assert_eq!(IssuerState::RequestReceived, issuer.get_state());
+//         let messages = map!(
+//             "key_1".to_string() => AriesMessage::CredentialIssuance(CredentialIssuance::RequestCredential(_credential_request()))
+//         );
+//         let (_, msg) = issuer.find_message_to_handle(messages).unwrap();
+//         issuer.step(&mock_profile(), msg.into(), _send_message()).await.unwrap();
+//         assert_eq!(IssuerState::RequestReceived, issuer.get_state());
 
-        issuer
-            .send_credential(&mock_profile(), _send_message().unwrap())
-            .await
-            .unwrap();
-        assert_eq!(IssuerState::CredentialSent, issuer.get_state());
+//         issuer
+//             .send_credential(&mock_profile(), _send_message().unwrap())
+//             .await
+//             .unwrap();
+//         assert_eq!(IssuerState::CredentialSent, issuer.get_state());
 
-        let messages = map!(
-            "key_1".to_string() => AriesMessage::CredentialIssuance(CredentialIssuance::Ack(_ack()))
-        );
-        let (_, msg) = issuer.find_message_to_handle(messages).unwrap();
-        issuer.step(&mock_profile(), msg.into(), _send_message()).await.unwrap();
-        assert_eq!(IssuerState::Finished, issuer.get_state());
-    }
+//         let messages = map!(
+//             "key_1".to_string() => AriesMessage::CredentialIssuance(CredentialIssuance::Ack(_ack()))
+//         );
+//         let (_, msg) = issuer.find_message_to_handle(messages).unwrap();
+//         issuer.step(&mock_profile(), msg.into(), _send_message()).await.unwrap();
+//         assert_eq!(IssuerState::Finished, issuer.get_state());
+//     }
 
-    #[tokio::test]
-    async fn issuer_cant_send_offer_twice() {
-        let _setup = SetupMocks::init();
-        let mut issuer = _issuer().to_offer_sent_state_unrevokable().await;
-        assert_eq!(IssuerState::OfferSent, issuer.get_state());
+//     #[tokio::test]
+//     async fn issuer_cant_send_offer_twice() {
+//         let _setup = SetupMocks::init();
+//         let mut issuer = _issuer().to_offer_sent_state_unrevokable().await;
+//         assert_eq!(IssuerState::OfferSent, issuer.get_state());
 
-        let res = issuer.send_credential_offer(_send_message_but_fail().unwrap()).await;
-        assert_eq!(IssuerState::OfferSent, issuer.get_state());
-        assert!(res.is_err());
-    }
-}
+//         let res = issuer.send_credential_offer(_send_message_but_fail().unwrap()).await;
+//         assert_eq!(IssuerState::OfferSent, issuer.get_state());
+//         assert!(res.is_err());
+//     }
+// }

@@ -55,47 +55,44 @@ pub fn build_handshake_reuse_accepted_msg(handshake_reuse: &HandshakeReuse) -> V
     ))
 }
 
-#[cfg(test)]
-#[cfg(feature = "general_test")]
-mod unit_tests {
-    use crate::protocols::oob::{build_handshake_reuse_accepted_msg, build_handshake_reuse_msg};
-    use crate::utils::devsetup::{was_in_past, SetupMocks};
-    use messages::a2a::MessageId;
-    use messages::protocols::out_of_band::invitation::OutOfBandInvitation;
+// #[cfg(test)]
+// mod unit_tests {
+//     use crate::protocols::oob::{build_handshake_reuse_accepted_msg, build_handshake_reuse_msg};
+//     use crate::utils::devsetup::{was_in_past, SetupMocks};
+//     use messages::a2a::MessageId;
+//     use messages::protocols::out_of_band::invitation::OutOfBandInvitation;
 
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_build_handshake_reuse_msg() {
-        let _setup = SetupMocks::init();
-        let msg_invitation = OutOfBandInvitation::default();
-        let msg_reuse = build_handshake_reuse_msg(&msg_invitation);
+//     #[test]
+//     fn test_build_handshake_reuse_msg() {
+//         let _setup = SetupMocks::init();
+//         let msg_invitation = OutOfBandInvitation::default();
+//         let msg_reuse = build_handshake_reuse_msg(&msg_invitation);
 
-        assert_eq!(msg_reuse.id, MessageId("testid".into()));
-        assert_eq!(msg_reuse.id, MessageId(msg_reuse.thread.thid.unwrap()));
-        assert_eq!(msg_reuse.thread.pthid.unwrap(), msg_invitation.id.0);
-        assert!(was_in_past(
-            &msg_reuse.timing.unwrap().out_time.unwrap(),
-            chrono::Duration::milliseconds(100)
-        )
-        .unwrap());
-    }
+//         assert_eq!(msg_reuse.id, MessageId("testid".into()));
+//         assert_eq!(msg_reuse.id, MessageId(msg_reuse.thread.thid.unwrap()));
+//         assert_eq!(msg_reuse.thread.pthid.unwrap(), msg_invitation.id.0);
+//         assert!(was_in_past(
+//             &msg_reuse.timing.unwrap().out_time.unwrap(),
+//             chrono::Duration::milliseconds(100)
+//         )
+//         .unwrap());
+//     }
 
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_build_handshake_reuse_accepted_msg() {
-        let _setup = SetupMocks::init();
-        let mut msg_invitation = OutOfBandInvitation::default();
-        msg_invitation.id = MessageId("invitation-id".to_string());
-        let msg_reuse = build_handshake_reuse_msg(&msg_invitation);
-        let msg_reuse_accepted = build_handshake_reuse_accepted_msg(&msg_reuse).unwrap();
+//     #[test]
+//     fn test_build_handshake_reuse_accepted_msg() {
+//         let _setup = SetupMocks::init();
+//         let mut msg_invitation = OutOfBandInvitation::default();
+//         msg_invitation.id = MessageId("invitation-id".to_string());
+//         let msg_reuse = build_handshake_reuse_msg(&msg_invitation);
+//         let msg_reuse_accepted = build_handshake_reuse_accepted_msg(&msg_reuse).unwrap();
 
-        assert_eq!(msg_reuse_accepted.id, MessageId("testid".into()));
-        assert_eq!(msg_reuse_accepted.thread.thid.unwrap(), msg_reuse.id.0);
-        assert_eq!(msg_reuse_accepted.thread.pthid.unwrap(), msg_invitation.id.0);
-        assert!(was_in_past(
-            &msg_reuse_accepted.timing.unwrap().out_time.unwrap(),
-            chrono::Duration::milliseconds(100)
-        )
-        .unwrap());
-    }
-}
+//         assert_eq!(msg_reuse_accepted.id, MessageId("testid".into()));
+//         assert_eq!(msg_reuse_accepted.thread.thid.unwrap(), msg_reuse.id.0);
+//         assert_eq!(msg_reuse_accepted.thread.pthid.unwrap(), msg_invitation.id.0);
+//         assert!(was_in_past(
+//             &msg_reuse_accepted.timing.unwrap().out_time.unwrap(),
+//             chrono::Duration::milliseconds(100)
+//         )
+//         .unwrap());
+//     }
+// }

@@ -160,7 +160,7 @@ impl AriesDidDoc {
     pub fn get_service(&self) -> DiddocResult<AriesService> {
         let service: &AriesService = self.service.get(0).ok_or(DiddocError::from_msg(
             DiddocErrorKind::InvalidState,
-            format!("No service found on did doc: {:?}", self),
+            format!("No service found on did doc: {self:?}"),
         ))?;
         let recipient_keys = self.recipient_keys()?;
         let routing_keys = self.routing_keys();
@@ -207,7 +207,7 @@ impl AriesDidDoc {
             })
             .ok_or(DiddocError::from_msg(
                 DiddocErrorKind::InvalidJson,
-                format!("Failed to find entry in public_key by key reference: {:?}", key_ref),
+                format!("Failed to find entry in public_key by key reference: {key_ref:?}"),
             ))?;
         Ok(public_key.clone())
     }
@@ -219,7 +219,7 @@ impl AriesDidDoc {
             .find(|ddo_keys| ddo_keys.public_key_base_58 == key)
             .ok_or(DiddocError::from_msg(
                 DiddocErrorKind::InvalidJson,
-                format!("Failed to find entry in public_key by key value: {}", key),
+                format!("Failed to find entry in public_key by key value: {key}"),
             ))?;
         Ok(public_key.clone())
     }
@@ -244,8 +244,7 @@ impl AriesDidDoc {
             .ok_or(DiddocError::from_msg(
                 DiddocErrorKind::InvalidJson,
                 format!(
-                    "DIDDoc validation failed: Cannot find Authentication record key: {:?}",
-                    key
+                    "DIDDoc validation failed: Cannot find Authentication record key: {key:?}"
                 ),
             ))?;
 
@@ -263,7 +262,7 @@ impl AriesDidDoc {
     }
 
     fn build_key_reference(did: &str, id: &str) -> String {
-        format!("{}#{}", did, id)
+        format!("{did}#{id}")
     }
 
     fn key_parts(key: &str) -> Vec<&str> {
@@ -275,7 +274,7 @@ impl AriesDidDoc {
         match pars.len() {
             0 => Err(DiddocError::from_msg(
                 DiddocErrorKind::InvalidJson,
-                format!("DIDDoc validation failed: Invalid key reference: {:?}", key_reference),
+                format!("DIDDoc validation failed: Invalid key reference: {key_reference:?}"),
             )),
             1 => Ok(DdoKeyReference {
                 did: None,
@@ -468,6 +467,7 @@ pub mod test_utils {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used)]
 mod unit_tests {
     use crate::aries::diddoc::test_utils::*;
     use crate::aries::diddoc::AriesDidDoc;
@@ -559,7 +559,7 @@ mod unit_tests {
     #[test]
     fn test_did_doc_serialization() {
         let ddo = _did_doc_vcx_legacy();
-        let ddo_value = serde_json::to_value(&ddo).unwrap();
+        let ddo_value = serde_json::to_value(ddo).unwrap();
         let expected_value = json!({
             "@context": "https://w3id.org/did/v1",
             "id": "VsKV7grR1BUE29mG2Fm2kX",

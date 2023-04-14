@@ -6,7 +6,6 @@ extern crate serde_json;
 pub mod utils;
 
 #[cfg(test)]
-#[cfg(feature = "agency_pool_tests")]
 mod integration_tests {
     use std::thread;
     use std::time::Duration;
@@ -28,9 +27,9 @@ mod integration_tests {
 
     use super::*;
 
-    #[cfg(feature = "agency_pool_tests")]
     #[tokio::test]
-    async fn test_basic_revocation() {
+    #[ignore]
+    async fn test_agency_pool_basic_revocation() {
         SetupPool::run(|setup| async move {
             let mut institution = Faber::setup(setup.pool_handle).await;
             let mut consumer = create_test_alice_instance(&setup).await;
@@ -99,9 +98,9 @@ mod integration_tests {
         .await;
     }
 
-    #[cfg(feature = "agency_pool_tests")]
     #[tokio::test]
-    async fn test_revocation_notification() {
+    #[ignore]
+    async fn test_agency_pool_revocation_notification() {
         use messages::decorators::please_ack::AckOn;
 
         SetupPool::run(|setup| async move {
@@ -159,9 +158,9 @@ mod integration_tests {
         .await;
     }
 
-    #[cfg(feature = "agency_pool_tests")]
     #[tokio::test]
-    async fn test_local_revocation() {
+    #[ignore]
+    async fn test_agency_pool_local_revocation() {
         SetupPool::run(|setup| async move {
             let mut institution = Faber::setup(setup.pool_handle).await;
             let mut consumer = create_test_alice_instance(&setup).await;
@@ -238,9 +237,9 @@ mod integration_tests {
         .await;
     }
 
-    #[cfg(feature = "agency_pool_tests")]
     #[tokio::test]
-    async fn test_batch_revocation() {
+    #[ignore]
+    async fn test_agency_batch_revocation() {
         SetupPool::run(|setup| async move {
         let mut institution = Faber::setup(setup.pool_handle).await;
         let mut consumer1 = create_test_alice_instance(&setup).await;
@@ -449,9 +448,9 @@ mod integration_tests {
         }).await;
     }
 
-    #[cfg(feature = "agency_pool_tests")]
     #[tokio::test]
-    async fn test_revoked_credential_might_still_work() {
+    #[ignore]
+    async fn test_agency_pool_revoked_credential_might_still_work() {
         SetupPool::run(|setup| async move {
             let mut institution = Faber::setup(setup.pool_handle).await;
             let mut consumer = create_test_alice_instance(&setup).await;
@@ -545,8 +544,8 @@ mod integration_tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "agency_pool_tests")]
-    async fn test_two_creds_one_rev_reg_revoke_first() {
+    #[ignore]
+    async fn test_agency_pool_two_creds_one_rev_reg_revoke_first() {
         SetupPool::run(|setup| async move {
         let mut issuer = Faber::setup(setup.pool_handle).await;
         let mut verifier = Faber::setup(setup.pool_handle).await;
@@ -638,8 +637,8 @@ mod integration_tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "agency_pool_tests")]
-    async fn test_two_creds_one_rev_reg_revoke_second() {
+    #[ignore]
+    async fn test_agency_pool_two_creds_one_rev_reg_revoke_second() {
         SetupPool::run(|setup| async move {
         let mut issuer = Faber::setup(setup.pool_handle).await;
         let mut verifier = Faber::setup(setup.pool_handle).await;
@@ -727,8 +726,8 @@ mod integration_tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "agency_pool_tests")]
-    async fn test_two_creds_two_rev_reg_id() {
+    #[ignore]
+    async fn test_agency_pool_two_creds_two_rev_reg_id() {
         SetupPool::run(|setup| async move {
         let mut issuer = Faber::setup(setup.pool_handle).await;
         let mut verifier = Faber::setup(setup.pool_handle).await;
@@ -813,8 +812,8 @@ mod integration_tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "agency_pool_tests")]
-    async fn test_two_creds_two_rev_reg_id_revoke_first() {
+    #[ignore]
+    async fn test_agency_pool_two_creds_two_rev_reg_id_revoke_first() {
         SetupPool::run(|setup| async move {
         let mut issuer = Faber::setup(setup.pool_handle).await;
         let mut verifier = Faber::setup(setup.pool_handle).await;
@@ -903,8 +902,8 @@ mod integration_tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "agency_pool_tests")]
-    async fn test_two_creds_two_rev_reg_id_revoke_second() {
+    #[ignore]
+    async fn test_agency_pool_two_creds_two_rev_reg_id_revoke_second() {
         SetupPool::run(|setup| async move {
         let mut issuer = Faber::setup(setup.pool_handle).await;
         let mut verifier = Faber::setup(setup.pool_handle).await;

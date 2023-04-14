@@ -5,7 +5,6 @@ extern crate serde_json;
 
 pub mod utils;
 
-#[cfg(feature = "agency_pool_tests")]
 mod integration_tests {
     use std::sync::Arc;
 
@@ -28,7 +27,8 @@ mod integration_tests {
     use messages::AriesMessage;
 
     #[tokio::test]
-    async fn test_retrieve_credentials() {
+    #[ignore]
+    async fn test_agency_pool_retrieve_credentials() {
         // todo - use SetupProfile::run after modular impls
         SetupProfile::run_indy(|setup| async move {
             let holder_setup = init_holder_setup_in_indy_context(&setup).await;
@@ -66,7 +66,8 @@ mod integration_tests {
     }
 
     #[tokio::test]
-    async fn test_get_credential_def() {
+    #[ignore]
+    async fn test_agency_pool_get_credential_def() {
         // todo - use SetupProfile::run after modular impls
         SetupProfile::run_indy(|setup| async move {
             let (_, _, cred_def_id, cred_def_json, _) = create_and_store_nonrevocable_credential_def(
@@ -87,7 +88,8 @@ mod integration_tests {
     }
 
     #[tokio::test]
-    async fn test_retrieve_credentials_empty() {
+    #[ignore]
+    async fn test_agency_pool_retrieve_credentials_empty() {
         // todo - use SetupProfile::run after modular impls
         SetupProfile::run_indy(|setup| async move {
             let mut req = json!({
@@ -143,7 +145,8 @@ mod integration_tests {
     }
 
     #[tokio::test]
-    async fn test_case_for_proof_req_doesnt_matter_for_retrieve_creds() {
+    #[ignore]
+    async fn test_agency_pool_case_for_proof_req_doesnt_matter_for_retrieve_creds() {
         // todo - use SetupProfile::run after modular impls
         SetupProfile::run_indy(|setup| async move {
             create_and_store_nonrevocable_credential(
@@ -239,7 +242,8 @@ mod integration_tests {
     }
 
     #[tokio::test]
-    async fn test_generate_proof() {
+    #[ignore]
+    async fn test_agency_pool_generate_proof() {
         // todo - use SetupProfile::run after modular impls
         SetupProfile::run_indy(|setup| async move {
             create_and_store_credential(
@@ -319,7 +323,8 @@ mod integration_tests {
     }
 
     #[tokio::test]
-    async fn test_generate_proof_with_predicates() {
+    #[ignore]
+    async fn test_agency_pool_generate_proof_with_predicates() {
         // todo - use SetupProfile::run after modular impls
         SetupProfile::run_indy(|setup| async move {
             create_and_store_credential(
@@ -403,7 +408,8 @@ mod integration_tests {
     }
 
     #[tokio::test]
-    async fn test_generate_self_attested_proof() {
+    #[ignore]
+    async fn test_agency_pool_generate_self_attested_proof() {
         // todo - use SetupProfile::run after modular impls
         SetupProfile::run_indy(|setup| async move {
             let indy_proof_req = json!({
@@ -464,7 +470,6 @@ mod integration_tests {
 }
 
 #[cfg(test)]
-#[cfg(feature = "agency_pool_tests")]
 mod tests {
     use messages::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
     use messages::msg_fields::protocols::present_proof::request::RequestPresentation;
@@ -496,7 +501,8 @@ mod tests {
     use super::*;
 
     #[tokio::test]
-    async fn test_proof_should_be_validated() {
+    #[ignore]
+    async fn test_agency_pool_proof_should_be_validated() {
         SetupPool::run(|setup| async move {
             let mut institution = Faber::setup(setup.pool_handle).await;
             let mut consumer = create_test_alice_instance(&setup).await;
@@ -556,7 +562,8 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_proof_with_predicates_should_be_validated() {
+    #[ignore]
+    async fn test_agency_pool_proof_with_predicates_should_be_validated() {
         SetupPool::run(|setup| async move {
             let mut institution = Faber::setup(setup.pool_handle).await;
             let mut consumer = create_test_alice_instance(&setup).await;
@@ -616,7 +623,8 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_it_should_fail_to_select_credentials_for_predicate() {
+    #[ignore]
+    async fn test_agency_pool_it_should_fail_to_select_credentials_for_predicate() {
         SetupPool::run(|setup| async move {
             let mut institution = Faber::setup(setup.pool_handle).await;
             let mut consumer = create_test_alice_instance(&setup).await;
@@ -659,7 +667,8 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_double_issuance_separate_issuer_and_consumers() {
+    #[ignore]
+    async fn test_agency_pool_double_issuance_separate_issuer_and_consumers() {
         SetupPool::run(|setup| async move {
             let mut issuer = Faber::setup(setup.pool_handle).await;
             let mut verifier = Faber::setup(setup.pool_handle).await;
@@ -744,7 +753,8 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_double_issuance_separate_issuer() {
+    #[ignore]
+    async fn test_agency_pool_double_issuance_separate_issuer() {
         SetupPool::run(|setup| async move {
             let mut issuer = Faber::setup(setup.pool_handle).await;
             let mut verifier = Faber::setup(setup.pool_handle).await;
@@ -799,7 +809,8 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_double_issuance_issuer_is_verifier() {
+    #[ignore]
+    async fn test_agency_pool_double_issuance_issuer_is_verifier() {
         SetupPool::run(|setup| async move {
             let mut institution = Faber::setup(setup.pool_handle).await;
             let mut consumer = create_test_alice_instance(&setup).await;
@@ -872,7 +883,8 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_real_proof() {
+    #[ignore]
+    async fn test_agency_pool_real_proof() {
         SetupPool::run(|setup| async move {
             let mut institution = Faber::setup(setup.pool_handle).await;
             let mut consumer = create_test_alice_instance(&setup).await;
@@ -992,7 +1004,8 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_two_creds_one_rev_reg() {
+    #[ignore]
+    async fn test_agency_pool_two_creds_one_rev_reg() {
         SetupPool::run(|setup| async move {
             let mut issuer = Faber::setup(setup.pool_handle).await;
             let mut verifier = Faber::setup(setup.pool_handle).await;
@@ -1072,7 +1085,8 @@ mod tests {
     }
 
     #[tokio::test]
-    pub async fn test_credential_exchange_via_proposal() {
+    #[ignore]
+    pub async fn test_agency_pool_credential_exchange_via_proposal() {
         SetupPool::run(|setup| async move {
             let mut institution = Faber::setup(setup.pool_handle).await;
             let mut consumer = create_test_alice_instance(&setup).await;
@@ -1100,7 +1114,8 @@ mod tests {
     }
 
     #[tokio::test]
-    pub async fn test_credential_exchange_via_proposal_failed() {
+    #[ignore]
+    pub async fn test_agency_pool_credential_exchange_via_proposal_failed() {
         SetupPool::run(|setup| async move {
             let mut institution = Faber::setup(setup.pool_handle).await;
             let mut consumer = create_test_alice_instance(&setup).await;
@@ -1137,7 +1152,8 @@ mod tests {
     }
 
     #[tokio::test]
-    pub async fn test_credential_exchange_via_proposal_with_negotiation() {
+    #[ignore]
+    pub async fn test_agency_pool_credential_exchange_via_proposal_with_negotiation() {
         SetupPool::run(|setup| async move {
             let mut institution = Faber::setup(setup.pool_handle).await;
             let mut consumer = create_test_alice_instance(&setup).await;
@@ -1196,7 +1212,8 @@ mod tests {
     }
 
     #[tokio::test]
-    pub async fn test_presentation_via_proposal() {
+    #[ignore]
+    pub async fn test_agency_pool_presentation_via_proposal() {
         SetupPool::run(|setup| async move {
             let mut institution = Faber::setup(setup.pool_handle).await;
             let mut consumer = create_test_alice_instance(&setup).await;
@@ -1237,7 +1254,8 @@ mod tests {
     }
 
     #[tokio::test]
-    pub async fn test_presentation_via_proposal_with_rejection() {
+    #[ignore]
+    pub async fn test_agency_pool_presentation_via_proposal_with_rejection() {
         SetupPool::run(|setup| async move {
             let mut institution = Faber::setup(setup.pool_handle).await;
             let mut consumer = create_test_alice_instance(&setup).await;
@@ -1268,7 +1286,8 @@ mod tests {
     }
 
     #[tokio::test]
-    pub async fn test_presentation_via_proposal_with_negotiation() {
+    #[ignore]
+    pub async fn test_agency_pool_presentation_via_proposal_with_negotiation() {
         SetupPool::run(|setup| async move {
             let mut institution = Faber::setup(setup.pool_handle).await;
             let mut consumer = create_test_alice_instance(&setup).await;
@@ -1311,7 +1330,8 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn aries_demo() {
+    #[ignore]
+    async fn test_agency_pool_aries_demo() {
         let _setup = SetupEmpty::init();
         SetupPool::run(|pool| async move {
             let mut faber = Faber::setup(pool.pool_handle).await;
@@ -1348,7 +1368,8 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn aries_demo_create_with_message_id_flow() {
+    #[ignore]
+    async fn test_agency_pool_aries_demo_create_with_message_id_flow() {
         let _setup = SetupEmpty::init();
         SetupPool::run(|pool| async move {
             let mut faber = Faber::setup(pool.pool_handle).await;
@@ -1430,7 +1451,8 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn aries_demo_download_message_flow() {
+    #[ignore]
+    async fn test_agency_pool_aries_demo_download_message_flow() {
         SetupEmpty::init();
         SetupPool::run(|pool| async move {
             let mut faber = Faber::setup(pool.pool_handle).await;

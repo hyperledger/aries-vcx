@@ -1,4 +1,3 @@
-#[cfg(feature = "test_utils")]
 pub mod test_utils {
     use std::sync::Arc;
     use std::thread;

@@ -1,7 +1,6 @@
 pub mod receiver;
 pub mod sender;
 
-#[cfg(feature = "test_utils")]
 pub mod test_utils {
     use messages::decorators::please_ack::{AckOn, PleaseAck};
     use messages::maybe_known::MaybeKnown;

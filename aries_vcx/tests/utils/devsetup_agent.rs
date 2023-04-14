@@ -1,8 +1,8 @@
 #[cfg(test)]
-#[cfg(feature = "test_utils")]
 pub mod test_utils {
     use std::sync::Arc;
 
+    #[cfg(feature = "modular_libs")]
     use aries_vcx::core::profile::modular_libs_profile::ModularLibsProfile;
     use aries_vcx::core::profile::profile::Profile;
     use aries_vcx::core::profile::vdrtools_profile::VdrtoolsProfile;
@@ -15,6 +15,7 @@ pub mod test_utils {
         close_wallet, create_wallet_with_master_secret, delete_wallet, open_wallet, wallet_configure_issuer,
         IssuerConfig, WalletConfig,
     };
+    #[cfg(feature = "modular_libs")]
     use aries_vcx_core::ledger::indy_vdr_ledger::LedgerPoolConfig;
     use aries_vcx_core::wallet::base_wallet::BaseWallet;
     use aries_vcx_core::wallet::indy_wallet::IndySdkWallet;
@@ -445,6 +446,7 @@ pub mod test_utils {
         pub(self) teardown: Arc<dyn Fn() -> BoxFuture<'static, ()>>,
     }
 
+    #[cfg(feature = "modular_libs")]
     pub async fn create_test_alice_instance(setup: &SetupPool) -> Alice {
         let (alice_profile, teardown) = if cfg!(feature = "modular_libs_tests") {
             let genesis_file_path = setup.genesis_file_path.clone();
@@ -477,6 +479,7 @@ pub mod test_utils {
             (wallet_handle, config_wallet)
         }
 
+        #[cfg(feature = "modular_libs")]
         pub async fn setup_modular_profile(
             ledger_pool_config: LedgerPoolConfig,
         ) -> (Arc<dyn Profile>, Arc<dyn Fn() -> BoxFuture<'static, ()>>) {

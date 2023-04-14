@@ -7,7 +7,6 @@ extern crate serde_json;
 pub mod utils;
 
 #[cfg(test)]
-#[cfg(feature = "agency_pool_tests")]
 mod integration_tests {
     use aries_vcx::agency_client::MessageStatusCode;
     use aries_vcx::common::ledger::transactions::into_did_doc;
@@ -36,7 +35,8 @@ mod integration_tests {
     use super::*;
 
     #[tokio::test]
-    async fn test_establish_connection_via_public_invite() {
+    #[ignore]
+    async fn test_agency_pool_establish_connection_via_public_invite() {
         SetupPool::run(|setup| async move {
             let mut institution = Faber::setup(setup.pool_handle).await;
             let mut consumer = create_test_alice_instance(&setup).await;
@@ -59,7 +59,8 @@ mod integration_tests {
     }
 
     #[tokio::test]
-    async fn test_oob_connection_bootstrap() {
+    #[ignore]
+    async fn test_agency_pool_oob_connection_bootstrap() {
         SetupPool::run(|setup| async move {
             let mut institution = Faber::setup(setup.pool_handle).await;
             let mut consumer = create_test_alice_instance(&setup).await;
@@ -164,7 +165,8 @@ mod integration_tests {
     }
 
     #[tokio::test]
-    async fn test_oob_connection_reuse() {
+    #[ignore]
+    async fn test_agency_pool_oob_connection_reuse() {
         SetupPool::run(|setup| async move {
             let mut institution = Faber::setup(setup.pool_handle).await;
             let mut consumer = create_test_alice_instance(&setup).await;
@@ -199,7 +201,8 @@ mod integration_tests {
     }
 
     #[tokio::test]
-    async fn test_oob_connection_handshake_reuse() {
+    #[ignore]
+    async fn test_agency_pool_oob_connection_handshake_reuse() {
         SetupPool::run(|setup| async move {
             let mut institution = Faber::setup(setup.pool_handle).await;
             let mut consumer = create_test_alice_instance(&setup).await;
@@ -301,7 +304,8 @@ mod integration_tests {
     }
 
     #[tokio::test]
-    pub async fn test_two_enterprise_connections() {
+    #[ignore]
+    pub async fn test_agency_pool_two_enterprise_connections() {
         SetupPool::run(|setup| async move {
             let mut institution = Faber::setup(setup.pool_handle).await;
             let mut consumer1 = create_test_alice_instance(&setup).await;
@@ -313,7 +317,8 @@ mod integration_tests {
     }
 
     #[tokio::test]
-    async fn aries_demo_handle_connection_related_messages() {
+    #[ignore]
+    async fn test_agency_pool_aries_demo_handle_connection_related_messages() {
         SetupPool::run(|setup| async move {
             let mut faber = Faber::setup(setup.pool_handle).await;
             let mut alice = create_test_alice_instance(&setup).await;

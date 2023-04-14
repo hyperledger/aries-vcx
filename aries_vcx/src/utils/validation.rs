@@ -48,7 +48,6 @@ pub fn validate_actors(actors: &str) -> VcxResult<Vec<Role>> {
 }
 
 #[cfg(test)]
-#[cfg(feature = "general_test")]
 mod unit_tests {
     use crate::utils::devsetup::SetupDefaults;
 

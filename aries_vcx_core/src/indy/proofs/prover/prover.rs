@@ -103,7 +103,7 @@ pub async fn libindy_prover_get_credentials_for_proof_req(
     let proof_request_json: Map<String, Value> = serde_json::from_str(proof_req).map_err(|err| {
         AriesVcxCoreError::from_msg(
             AriesVcxCoreErrorKind::InvalidProofRequest,
-            format!("Cannot deserialize ProofRequest: {:?}", err),
+            format!("Cannot deserialize ProofRequest: {err:?}"),
         )
     })?;
 
@@ -150,7 +150,7 @@ pub async fn libindy_prover_get_credentials_for_proof_req(
 
         // should an error on closing a search handle throw an error, or just a warning?
         // for now we're are just outputting to the user that there is an issue, and continuing on.
-        let _ = close_search_handle(search_handle);
+        let _ = close_search_handle(search_handle).await;
 
         Ok(creds)
     } else {

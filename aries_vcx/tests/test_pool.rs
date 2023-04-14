@@ -6,7 +6,6 @@ extern crate serde_json;
 pub mod utils;
 
 #[cfg(test)]
-#[cfg(feature = "pool_tests")]
 mod integration_tests {
     use aries_vcx::common::keys::{get_verkey_from_ledger, rotate_verkey};
     use aries_vcx::common::ledger::service_didsov::EndpointDidSov;
@@ -22,7 +21,8 @@ mod integration_tests {
     use std::time::Duration;
 
     #[tokio::test]
-    async fn test_open_close_pool() {
+    #[ignore]
+    async fn test_pool_open_close_pool() {
         SetupWalletPool::run(|setup| async move {
             assert!(setup.pool_handle.0 > 0);
         })
@@ -30,7 +30,8 @@ mod integration_tests {
     }
 
     #[tokio::test]
-    async fn test_get_credential_def() {
+    #[ignore]
+    async fn test_pool_get_credential_def() {
         // TODO - use SetupProfile::run after modular impls
         SetupProfile::run_indy(|setup| async move {
             let (_, _, cred_def_id, cred_def_json, _) = create_and_store_nonrevocable_credential_def(
@@ -52,7 +53,8 @@ mod integration_tests {
     }
 
     #[tokio::test]
-    async fn test_rotate_verkey() {
+    #[ignore]
+    async fn test_pool_rotate_verkey() {
         SetupProfile::run(|setup| async move {
             let (did, verkey) = add_new_did(&setup.profile, &setup.institution_did, None).await.unwrap();
             rotate_verkey(&setup.profile, &did).await.unwrap();
@@ -84,7 +86,8 @@ mod integration_tests {
     // }
 
     #[tokio::test]
-    async fn test_add_get_service() {
+    #[ignore]
+    async fn test_pool_add_get_service() {
         SetupProfile::run(|setup| async move {
             let did = setup.institution_did.clone();
             let expect_service = AriesService::default();
@@ -104,7 +107,8 @@ mod integration_tests {
     }
 
     #[tokio::test]
-    async fn test_add_get_service_public() {
+    #[ignore]
+    async fn test_pool_add_get_service_public() {
         SetupProfile::run(|setup| async move {
             let did = setup.institution_did.clone();
             let create_service = EndpointDidSov::create()
@@ -131,7 +135,8 @@ mod integration_tests {
     }
 
     #[tokio::test]
-    async fn test_add_get_service_public_none_routing_keys() {
+    #[ignore]
+    async fn test_pool_add_get_service_public_none_routing_keys() {
         SetupProfile::run(|setup| async move {
             let did = setup.institution_did.clone();
             let create_service = EndpointDidSov::create()
@@ -158,7 +163,8 @@ mod integration_tests {
     }
 
     #[tokio::test]
-    async fn test_multiple_service_formats() {
+    #[ignore]
+    async fn test_pool_multiple_service_formats() {
         SetupProfile::run(|setup| async move {
             let did = setup.institution_did.clone();
 
@@ -209,7 +215,8 @@ mod integration_tests {
     }
 
     #[tokio::test]
-    async fn test_add_get_attr() {
+    #[ignore]
+    async fn test_pool_add_get_attr() {
         SetupProfile::run(|setup| async move {
             let did = setup.institution_did.clone();
             let attr_json = json!({

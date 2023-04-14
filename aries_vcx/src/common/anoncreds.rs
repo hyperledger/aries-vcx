@@ -1,5 +1,5 @@
 #[cfg(test)]
-#[cfg(feature = "pool_tests")]
+#[allow(clippy::unwrap_used)]
 pub mod integration_tests {
     use std::sync::Arc;
 
@@ -11,7 +11,8 @@ pub mod integration_tests {
     use crate::utils::get_temp_dir_path;
 
     #[tokio::test]
-    async fn tests_returns_error_if_proof_request_is_malformed() {
+    #[ignore]
+    async fn test_pool_returns_error_if_proof_request_is_malformed() {
         SetupProfile::run(|setup| async move {
             let proof_req = "{";
             let anoncreds = Arc::clone(&setup.profile).inject_anoncreds();
@@ -22,7 +23,8 @@ pub mod integration_tests {
     }
 
     #[tokio::test]
-    async fn tests_prover_get_credentials() {
+    #[ignore]
+    async fn test_pool_prover_get_credentials() {
         SetupProfile::run(|setup| async move {
             let proof_req = json!({
                "nonce":"123432421212",
@@ -56,7 +58,8 @@ pub mod integration_tests {
     }
 
     #[tokio::test]
-    async fn test_revoke_credential() {
+    #[ignore]
+    async fn test_pool_revoke_credential() {
         SetupProfile::run_indy(|setup| async move {
             let holder_setup = init_holder_setup_in_indy_context(&setup).await;
 

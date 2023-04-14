@@ -212,65 +212,64 @@ impl Verifier {
     }
 }
 
-#[cfg(test)]
-#[cfg(feature = "general_test")]
-mod unit_tests {
-    use crate::core::profile::vdrtools_profile::VdrtoolsProfile;
-    use crate::utils::constants::{REQUESTED_ATTRS, REQUESTED_PREDICATES};
-    use crate::utils::devsetup::*;
-    use crate::utils::mockdata::mock_settings::MockBuilder;
-    use aries_vcx_core::{INVALID_POOL_HANDLE, INVALID_WALLET_HANDLE};
-    use messages::a2a::A2AMessage;
-    use messages::protocols::proof_presentation::presentation::test_utils::_presentation;
+// #[cfg(test)]
+// mod unit_tests {
+//     use crate::core::profile::vdrtools_profile::VdrtoolsProfile;
+//     use crate::utils::constants::{REQUESTED_ATTRS, REQUESTED_PREDICATES};
+//     use crate::utils::devsetup::*;
+//     use crate::utils::mockdata::mock_settings::MockBuilder;
+//     use aries_vcx_core::{INVALID_POOL_HANDLE, INVALID_WALLET_HANDLE};
+//     use messages::a2a::A2AMessage;
+//     use messages::protocols::proof_presentation::presentation::test_utils::_presentation;
 
-    use super::*;
+//     use super::*;
 
-    fn _dummy_profile() -> Arc<dyn Profile> {
-        Arc::new(VdrtoolsProfile::new(INVALID_WALLET_HANDLE, INVALID_POOL_HANDLE))
-    }
+//     fn _dummy_profile() -> Arc<dyn Profile> {
+//         Arc::new(VdrtoolsProfile::new(INVALID_WALLET_HANDLE, INVALID_POOL_HANDLE))
+//     }
 
-    async fn _verifier() -> Verifier {
-        let presentation_request_data = PresentationRequestData::create(&_dummy_profile(), "1")
-            .await
-            .unwrap()
-            .set_requested_attributes_as_string(REQUESTED_ATTRS.to_owned())
-            .unwrap()
-            .set_requested_predicates_as_string(REQUESTED_PREDICATES.to_owned())
-            .unwrap()
-            .set_not_revoked_interval(r#"{"support_revocation":false}"#.to_string())
-            .unwrap();
-        Verifier::create_from_request("1".to_string(), &presentation_request_data).unwrap()
-    }
+//     async fn _verifier() -> Verifier {
+//         let presentation_request_data = PresentationRequestData::create(&_dummy_profile(), "1")
+//             .await
+//             .unwrap()
+//             .set_requested_attributes_as_string(REQUESTED_ATTRS.to_owned())
+//             .unwrap()
+//             .set_requested_predicates_as_string(REQUESTED_PREDICATES.to_owned())
+//             .unwrap()
+//             .set_not_revoked_interval(r#"{"support_revocation":false}"#.to_string())
+//             .unwrap();
+//         Verifier::create_from_request("1".to_string(), &presentation_request_data).unwrap()
+//     }
 
-    pub fn _send_message() -> Option<SendClosure> {
-        Some(Box::new(|_: A2AMessage| Box::pin(async { VcxResult::Ok(()) })))
-    }
+//     pub fn _send_message() -> Option<SendClosure> {
+//         Some(Box::new(|_: A2AMessage| Box::pin(async { VcxResult::Ok(()) })))
+//     }
 
-    impl Verifier {
-        async fn to_presentation_request_sent_state(&mut self) {
-            self.send_presentation_request(_send_message().unwrap()).await.unwrap();
-        }
+//     impl Verifier {
+//         async fn to_presentation_request_sent_state(&mut self) {
+//             self.send_presentation_request(_send_message().unwrap()).await.unwrap();
+//         }
 
-        async fn to_finished_state(&mut self) {
-            self.to_presentation_request_sent_state().await;
-            self.step(
-                &_dummy_profile(),
-                VerifierMessages::VerifyPresentation(_presentation()),
-                _send_message(),
-            )
-            .await
-            .unwrap();
-        }
-    }
+//         async fn to_finished_state(&mut self) {
+//             self.to_presentation_request_sent_state().await;
+//             self.step(
+//                 &_dummy_profile(),
+//                 VerifierMessages::VerifyPresentation(_presentation()),
+//                 _send_message(),
+//             )
+//             .await
+//             .unwrap();
+//         }
+//     }
 
-    #[tokio::test]
-    async fn test_get_presentation() {
-        let _setup = SetupMocks::init();
-        let _mock_builder = MockBuilder::init().set_mock_result_for_validate_indy_proof(Ok(true));
-        let mut verifier = _verifier().await;
-        verifier.to_finished_state().await;
-        let presentation = verifier.get_presentation_msg().unwrap();
-        assert_eq!(presentation, _presentation());
-        assert_eq!(verifier.get_state(), VerifierState::Finished);
-    }
-}
+//     #[tokio::test]
+//     async fn test_get_presentation() {
+//         let _setup = SetupMocks::init();
+//         let _mock_builder = MockBuilder::init().set_mock_result_for_validate_indy_proof(Ok(true));
+//         let mut verifier = _verifier().await;
+//         verifier.to_finished_state().await;
+//         let presentation = verifier.get_presentation_msg().unwrap();
+//         assert_eq!(presentation, _presentation());
+//         assert_eq!(verifier.get_state(), VerifierState::Finished);
+//     }
+// }

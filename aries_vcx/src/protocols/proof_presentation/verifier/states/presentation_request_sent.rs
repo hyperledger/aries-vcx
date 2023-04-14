@@ -69,7 +69,7 @@ impl
             presentation_request: Some(state.presentation_request),
             presentation: Some(presentation),
             status: Status::Success,
-            verification_status: verification_status,
+            verification_status,
         }
     }
 }

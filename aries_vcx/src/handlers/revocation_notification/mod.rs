@@ -1,7 +1,6 @@
 pub mod receiver;
 pub mod sender;
 
-#[cfg(feature = "test_utils")]
 pub mod test_utils {
     use agency_client::agency_client::AgencyClient;
     use messages::msg_fields::protocols::revocation::ack::AckRevoke;

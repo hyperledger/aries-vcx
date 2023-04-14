@@ -47,7 +47,7 @@ impl AriesService {
 impl Default for AriesService {
     fn default() -> AriesService {
         AriesService {
-            id: format!("did:example:123456789abcdefghi;{}", SERVICE_SUFFIX),
+            id: format!("did:example:123456789abcdefghi;{SERVICE_SUFFIX}"),
             type_: String::from(SERVICE_TYPE),
             priority: 0,
             service_endpoint: "https://dummy.dummy/dummy"

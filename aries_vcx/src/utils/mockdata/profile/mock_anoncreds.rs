@@ -203,7 +203,7 @@ impl BaseAnonCreds for MockAnoncreds {
 }
 
 #[cfg(test)]
-#[cfg(feature = "general_test")]
+#[allow(clippy::unwrap_used)]
 mod unit_tests {
 
     use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;

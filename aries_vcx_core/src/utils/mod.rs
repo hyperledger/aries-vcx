@@ -6,7 +6,6 @@ pub(crate) mod constants;
 pub(crate) mod json;
 pub(crate) mod mockdata;
 pub(crate) mod random;
-pub(crate) mod uuid;
 
 pub fn get_temp_dir_path(filename: &str) -> PathBuf {
     let mut path = env::temp_dir();

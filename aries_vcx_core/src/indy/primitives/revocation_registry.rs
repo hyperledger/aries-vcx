@@ -95,7 +95,7 @@ pub async fn publish_rev_reg_def(
         return Ok(());
     }
 
-    let rev_reg_def_req = build_rev_reg_request(issuer_did, &rev_reg_def).await?;
+    let rev_reg_def_req = build_rev_reg_request(issuer_did, rev_reg_def).await?;
 
     let response = sign_and_submit_to_ledger(wallet_handle, pool_handle, issuer_did, &rev_reg_def_req).await?;
 
@@ -177,13 +177,12 @@ pub async fn publish_local_revocations(
             Err(err) => Err(AriesVcxCoreError::from_msg(
                 AriesVcxCoreErrorKind::RevDeltaFailedToClear,
                 format!(
-                    "Failed to clear revocation delta storage for rev_reg_id: {}, error: {}",
-                    rev_reg_id, err
+                    "Failed to clear revocation delta storage for rev_reg_id: {rev_reg_id}, error: {err}"
                 ),
             )),
         }
     } else {
         Err(AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::RevDeltaNotFound,
-                                    format!("Failed to publish revocation delta for revocation registry {}, no delta found. Possibly already published?", rev_reg_id)))
+                                    format!("Failed to publish revocation delta for revocation registry {rev_reg_id}, no delta found. Possibly already published?")))
     }
 }

@@ -1,3 +1,5 @@
+#![allow(clippy::unwrap_used)]
+
 use std::fs;
 use std::future::Future;
 use std::sync::{Arc, Once};
@@ -6,7 +8,7 @@ use aries_vcx_core::global::settings::{
     disable_indy_mocks as disable_indy_mocks_core, enable_indy_mocks as enable_indy_mocks_core,
 };
 use aries_vcx_core::indy::ledger::pool::test_utils::{
-    create_test_ledger_config, create_tmp_genesis_txn_file, delete_test_pool, open_test_pool,
+    create_test_ledger_config,  delete_test_pool, open_test_pool,
 };
 use aries_vcx_core::indy::ledger::pool::PoolConfig;
 use aries_vcx_core::indy::utils::mocks::did_mocks::DidMocks;
@@ -15,6 +17,8 @@ use aries_vcx_core::indy::wallet::{
     close_wallet, create_and_open_wallet, create_indy_wallet, create_wallet_with_master_secret, delete_wallet,
     open_wallet, wallet_configure_issuer, WalletConfig,
 };
+
+#[cfg(feature = "modular_libs")]
 use aries_vcx_core::ledger::indy_vdr_ledger::LedgerPoolConfig;
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use aries_vcx_core::wallet::indy_wallet::IndySdkWallet;
@@ -27,6 +31,7 @@ use agency_client::agency_client::AgencyClient;
 use agency_client::configuration::AgentProvisionConfig;
 use agency_client::testing::mocking::{disable_agency_mocks, enable_agency_mocks, AgencyMockDecrypted};
 
+#[cfg(feature = "modular_libs")]
 use crate::core::profile::modular_libs_profile::ModularLibsProfile;
 use crate::core::profile::profile::Profile;
 use crate::core::profile::vdrtools_profile::VdrtoolsProfile;
@@ -156,7 +161,7 @@ impl SetupLibraryWallet {
 
         set_test_configs();
 
-        let wallet_name: String = format!("Test_SetupLibraryWallet_{}", uuid::Uuid::new_v4().to_string());
+        let wallet_name: String = format!("Test_SetupLibraryWallet_{}", uuid::Uuid::new_v4());
         let wallet_key: String = settings::DEFAULT_WALLET_KEY.into();
         let wallet_kdf: String = settings::WALLET_KDF_RAW.into();
         let wallet_config = WalletConfig {
@@ -183,7 +188,7 @@ impl SetupLibraryWallet {
     {
         let init = Self::init().await;
 
-        let handle = init.wallet_handle.clone();
+        let handle = init.wallet_handle;
         let config = init.wallet_config.clone();
 
         f(init).await;
@@ -368,13 +373,15 @@ impl SetupProfile {
     pub async fn init() -> SetupProfile {
         init_test_logging();
         set_test_configs();
-        if SetupProfile::should_run_modular() {
+
+        #[cfg(feature = "modular_libs")]
+        return {
             info!("SetupProfile >> using modular profile");
             SetupProfile::init_modular().await
-        } else {
-            info!("SetupProfile >> using indy profile");
-            SetupProfile::init_indy().await
-        }
+        };
+
+        info!("SetupProfile >> using indy profile");
+        SetupProfile::init_indy().await
     }
 
     // FUTURE - ideally no tests should be using this method, they should be using the generic init
@@ -404,6 +411,7 @@ impl SetupProfile {
         }
     }
 
+    #[cfg(feature = "modular_libs")]
     async fn init_modular() -> SetupProfile {
         let (institution_did, wallet_handle) = setup_issuer_wallet().await;
 
@@ -534,9 +542,9 @@ macro_rules! assert_match {
     };
 }
 
-pub const AGENCY_ENDPOINT: &'static str = "http://localhost:8080";
-pub const AGENCY_DID: &'static str = "VsKV7grR1BUE29mG2Fm2kX";
-pub const AGENCY_VERKEY: &'static str = "Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR";
+pub const AGENCY_ENDPOINT: &str = "http://localhost:8080";
+pub const AGENCY_DID: &str = "VsKV7grR1BUE29mG2Fm2kX";
+pub const AGENCY_VERKEY: &str = "Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR";
 
 lazy_static! {
     static ref TEST_LOGGING_INIT: Once = Once::new();
@@ -550,13 +558,13 @@ pub fn init_test_logging() {
 
 pub fn create_new_seed() -> String {
     let x = rand::random::<u32>();
-    format!("{:032}", x)
+    format!("{x:032}")
 }
 
 pub async fn setup_issuer_wallet_and_agency_client() -> (String, WalletHandle, AgencyClient) {
     let enterprise_seed = "000000000000000000000000Trustee1";
     let config_wallet = WalletConfig {
-        wallet_name: format!("wallet_{}", uuid::Uuid::new_v4().to_string()),
+        wallet_name: format!("wallet_{}", uuid::Uuid::new_v4()),
         wallet_key: settings::DEFAULT_WALLET_KEY.into(),
         wallet_key_derivation: settings::WALLET_KDF_RAW.into(),
         wallet_type: None,
@@ -638,7 +646,6 @@ impl Drop for TempFile {
     }
 }
 
-#[cfg(feature = "test_utils")]
 pub fn was_in_past(datetime_rfc3339: &str, threshold: Duration) -> chrono::ParseResult<bool> {
     let now = Utc::now();
     let datetime: DateTime<Utc> = DateTime::parse_from_rfc3339(datetime_rfc3339)?.into();
@@ -647,14 +654,12 @@ pub fn was_in_past(datetime_rfc3339: &str, threshold: Duration) -> chrono::Parse
 }
 
 #[cfg(test)]
-#[cfg(feature = "general_test")]
 pub mod unit_tests {
     use super::*;
     use chrono::SecondsFormat;
     use std::ops::Sub;
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_is_past_timestamp() {
         let now = Utc::now();
         let past1ms_rfc3339 = now

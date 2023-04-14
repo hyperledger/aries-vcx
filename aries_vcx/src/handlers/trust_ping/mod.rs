@@ -70,17 +70,18 @@ impl TrustPingSender {
 }
 
 #[cfg(test)]
-#[cfg(feature = "general_test")]
+#[allow(clippy::unwrap_used)]
 mod unit_tests {
+    use messages::AriesMessage;
+
     use crate::errors::error::VcxResult;
     use crate::handlers::trust_ping::TrustPingSender;
     use crate::protocols::trustping::build_ping_response;
     use crate::protocols::SendClosure;
     use crate::utils::devsetup::SetupMocks;
-    use messages::a2a::A2AMessage;
 
     pub fn _send_message() -> SendClosure {
-        Box::new(|_: A2AMessage| Box::pin(async { VcxResult::Ok(()) }))
+        Box::new(|_: AriesMessage| Box::pin(async { VcxResult::Ok(()) }))
     }
 
     #[tokio::test]
@@ -115,6 +116,6 @@ mod unit_tests {
     fn test_should_build_ping_with_comment() {
         let _setup = SetupMocks::init();
         let sender1 = TrustPingSender::build(false, Some("hello".to_string()));
-        assert_eq!(sender1.get_ping().comment, Some("hello".to_string()))
+        assert_eq!(sender1.get_ping().content.comment, Some("hello".to_string()))
     }
 }
