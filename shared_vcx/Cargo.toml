@@ -8,10 +8,6 @@ license.workspace = true
 [lib]
 doctest = false
 
-[features]
-test_utils = []
-general_test = ["test_utils"]
-
 [dependencies]
 lazy_static = "1.3"
 regex = "1.1.0"
