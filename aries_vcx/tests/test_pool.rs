@@ -14,10 +14,9 @@ mod integration_tests {
         add_attr, add_new_did, clear_attr, get_attr, get_service, write_endpoint, write_endpoint_legacy,
     };
     use aries_vcx::common::test_utils::create_and_store_nonrevocable_credential_def;
-    use aries_vcx::messages::protocols::connection::did::Did;
     use aries_vcx::utils::constants::DEFAULT_SCHEMA_ATTRS;
     use aries_vcx::utils::devsetup::{SetupProfile, SetupWalletPool};
-    use messages::diddoc::aries::service::AriesService;
+    use diddoc::aries::service::AriesService;
     use std::sync::Arc;
     use std::thread;
     use std::time::Duration;
@@ -93,7 +92,7 @@ mod integration_tests {
                 .await
                 .unwrap();
             thread::sleep(Duration::from_millis(50));
-            let service = get_service(&setup.profile, &Did::new(&did).unwrap()).await.unwrap();
+            let service = get_service(&setup.profile, &did).await.unwrap();
             assert_eq!(expect_service, service);
 
             // clean up written legacy service
@@ -113,12 +112,12 @@ mod integration_tests {
                 .set_routing_keys(Some(vec!["did:sov:456".into()]));
             write_endpoint(&setup.profile, &did, &create_service).await.unwrap();
             thread::sleep(Duration::from_millis(50));
-            let service = get_service(&setup.profile, &Did::new(&did).unwrap()).await.unwrap();
+            let service = get_service(&setup.profile, &did).await.unwrap();
             let expect_recipient_key = get_verkey_from_ledger(&setup.profile, &setup.institution_did)
                 .await
                 .unwrap();
             let expect_service = AriesService::default()
-                .set_service_endpoint("https://example.org".into())
+                .set_service_endpoint("https://example.org".parse().unwrap())
                 .set_recipient_keys(vec![expect_recipient_key])
                 .set_routing_keys(vec!["did:sov:456".into()]);
             assert_eq!(expect_service, service);
@@ -140,12 +139,12 @@ mod integration_tests {
                 .set_routing_keys(None);
             write_endpoint(&setup.profile, &did, &create_service).await.unwrap();
             thread::sleep(Duration::from_millis(50));
-            let service = get_service(&setup.profile, &Did::new(&did).unwrap()).await.unwrap();
+            let service = get_service(&setup.profile, &did).await.unwrap();
             let expect_recipient_key = get_verkey_from_ledger(&setup.profile, &setup.institution_did)
                 .await
                 .unwrap();
             let expect_service = AriesService::default()
-                .set_service_endpoint("https://example.org".into())
+                .set_service_endpoint("https://example.org".parse().unwrap())
                 .set_recipient_keys(vec![expect_recipient_key])
                 .set_routing_keys(vec![]);
             assert_eq!(expect_service, service);
@@ -165,13 +164,13 @@ mod integration_tests {
 
             // Write legacy service format
             let service_1 = AriesService::create()
-                .set_service_endpoint("https://example1.org".into())
+                .set_service_endpoint("https://example1.org".parse().unwrap())
                 .set_recipient_keys(vec!["did:sov:123".into()])
                 .set_routing_keys(vec!["did:sov:456".into()]);
             write_endpoint_legacy(&setup.profile, &did, &service_1).await.unwrap();
 
             // Get service and verify it is in the old format
-            let service = get_service(&setup.profile, &Did::new(&did).unwrap()).await.unwrap();
+            let service = get_service(&setup.profile, &did).await.unwrap();
             assert_eq!(service_1, service);
 
             // Write new service format
@@ -185,12 +184,12 @@ mod integration_tests {
             thread::sleep(Duration::from_millis(50));
 
             // Get service and verify it is in the new format
-            let service = get_service(&setup.profile, &Did::new(&did).unwrap()).await.unwrap();
+            let service = get_service(&setup.profile, &did).await.unwrap();
             let expect_recipient_key = get_verkey_from_ledger(&setup.profile, &setup.institution_did)
                 .await
                 .unwrap();
             let expect_service = AriesService::default()
-                .set_service_endpoint(endpoint_url_2.into())
+                .set_service_endpoint(endpoint_url_2.parse().unwrap())
                 .set_recipient_keys(vec![expect_recipient_key])
                 .set_routing_keys(routing_keys_2);
             assert_eq!(expect_service, service);
@@ -203,7 +202,7 @@ mod integration_tests {
             thread::sleep(Duration::from_millis(50));
 
             // Get service and verify it is in the old format
-            let service = get_service(&setup.profile, &Did::new(&did).unwrap()).await.unwrap();
+            let service = get_service(&setup.profile, &did).await.unwrap();
             assert_eq!(service_1, service);
         })
         .await;

@@ -82,7 +82,7 @@ mod dbtests {
         let config_provision_agent: AgentProvisionConfig = AgentProvisionConfig {
             agency_did: AGENCY_DID.to_string(),
             agency_verkey: AGENCY_VERKEY.to_string(),
-            agency_endpoint: AGENCY_ENDPOINT.to_string(),
+            agency_endpoint: AGENCY_ENDPOINT.parse().unwrap(),
             agent_seed: None,
         };
         // create_main_wallet(&config_wallet).await.unwrap();

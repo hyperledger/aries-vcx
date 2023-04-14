@@ -17,14 +17,13 @@ mod integration_tests {
     use aries_vcx::errors::error::VcxResult;
     use aries_vcx::handlers::proof_presentation::prover::Prover;
     use aries_vcx::handlers::proof_presentation::verifier::Verifier;
-    use aries_vcx::messages::protocols::proof_presentation::presentation_request::PresentationRequest;
+    use aries_vcx::handlers::util::AttachmentId;
     use aries_vcx::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
     use aries_vcx::utils::constants::{DEFAULT_SCHEMA_ATTRS, TAILS_DIR};
     use aries_vcx::utils::devsetup::{init_holder_setup_in_indy_context, SetupProfile};
     use aries_vcx::utils::get_temp_dir_path;
-    use messages::a2a::A2AMessage;
-    use messages::protocols::proof_presentation::presentation_request;
-    use messages::status::Status;
+    use messages::AriesMessage;
+    use messages::msg_fields::protocols::present_proof::request::{RequestPresentationContent, RequestPresentationDecorators, RequestPresentation};
 
     #[tokio::test]
     async fn test_retrieve_credentials() {
@@ -42,9 +41,19 @@ mod integration_tests {
             let (_, _, req, _) = create_indy_proof(&setup.profile, &holder_setup.profile, &setup.institution_did).await;
 
             let pres_req_data: PresentationRequestData = serde_json::from_str(&req).unwrap();
-            let proof_req = PresentationRequest::create()
-                .set_request_presentations_attach(&json!(pres_req_data).to_string())
-                .unwrap();
+            let id = "test_id".to_owned();
+
+            let attach_type = messages::decorators::attachment::AttachmentType::Base64(base64::encode(&json!(pres_req_data).to_string()));
+            let attach_data = messages::decorators::attachment::AttachmentData::new(attach_type);
+            let mut attach = messages::decorators::attachment::Attachment::new(attach_data);
+            attach.id = Some(AttachmentId::PresentationRequest.as_ref().to_owned());
+            attach.mime_type = Some(messages::misc::MimeType::Json);
+            
+
+            let content = RequestPresentationContent::new(vec![attach]);
+            let decorators = RequestPresentationDecorators::default();
+
+            let proof_req = RequestPresentation::with_decorators(id, content, decorators);
             let proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
 
             let retrieved_creds = proof.retrieve_credentials(&holder_setup.profile).await.unwrap();
@@ -87,9 +96,19 @@ mod integration_tests {
             });
 
             let pres_req_data: PresentationRequestData = serde_json::from_str(&req.to_string()).unwrap();
-            let proof_req = PresentationRequest::create()
-                .set_request_presentations_attach(&json!(pres_req_data).to_string())
-                .unwrap();
+            let id = "test_id".to_owned();
+
+            let attach_type = messages::decorators::attachment::AttachmentType::Base64(base64::encode(&json!(pres_req_data).to_string()));
+            let attach_data = messages::decorators::attachment::AttachmentData::new(attach_type);
+            let mut attach = messages::decorators::attachment::Attachment::new(attach_data);
+            attach.id = Some(AttachmentId::PresentationRequest.as_ref().to_owned());
+            attach.mime_type = Some(messages::misc::MimeType::Json);
+            
+
+            let content = RequestPresentationContent::new(vec![attach]);
+            let decorators = RequestPresentationDecorators::default();
+
+            let proof_req = RequestPresentation::with_decorators(id, content, decorators);
             let proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
 
             let retrieved_creds = proof.retrieve_credentials(&setup.profile).await.unwrap();
@@ -97,9 +116,19 @@ mod integration_tests {
 
             req["requested_attributes"]["address1_1"] = json!({"name": "address1"});
             let pres_req_data: PresentationRequestData = serde_json::from_str(&req.to_string()).unwrap();
-            let proof_req = PresentationRequest::create()
-                .set_request_presentations_attach(&json!(pres_req_data).to_string())
-                .unwrap();
+            let id = "test_id".to_owned();
+
+            let attach_type = messages::decorators::attachment::AttachmentType::Base64(base64::encode(&json!(pres_req_data).to_string()));
+            let attach_data = messages::decorators::attachment::AttachmentData::new(attach_type);
+            let mut attach = messages::decorators::attachment::Attachment::new(attach_data);
+            attach.id = Some(AttachmentId::PresentationRequest.as_ref().to_owned());
+            attach.mime_type = Some(messages::misc::MimeType::Json);
+            
+
+            let content = RequestPresentationContent::new(vec![attach]);
+            let decorators = RequestPresentationDecorators::default();
+
+            let proof_req = RequestPresentation::with_decorators(id, content, decorators);
             let proof: Prover = Prover::create_from_request("2", proof_req).unwrap();
 
             let retrieved_creds = proof.retrieve_credentials(&setup.profile).await.unwrap();
@@ -134,9 +163,19 @@ mod integration_tests {
             });
 
             let pres_req_data: PresentationRequestData = serde_json::from_str(&req.to_string()).unwrap();
-            let proof_req = PresentationRequest::create()
-                .set_request_presentations_attach(&json!(pres_req_data).to_string())
-                .unwrap();
+            let id = "test_id".to_owned();
+
+            let attach_type = messages::decorators::attachment::AttachmentType::Base64(base64::encode(&json!(pres_req_data).to_string()));
+            let attach_data = messages::decorators::attachment::AttachmentData::new(attach_type);
+            let mut attach = messages::decorators::attachment::Attachment::new(attach_data);
+            attach.id = Some(AttachmentId::PresentationRequest.as_ref().to_owned());
+            attach.mime_type = Some(messages::misc::MimeType::Json);
+            
+
+            let content = RequestPresentationContent::new(vec![attach]);
+            let decorators = RequestPresentationDecorators::default();
+
+            let proof_req = RequestPresentation::with_decorators(id, content, decorators);
             let proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
 
             // All lower case
@@ -151,9 +190,19 @@ mod integration_tests {
             // First letter upper
             req["requested_attributes"]["zip_1"]["name"] = json!("Zip");
             let pres_req_data: PresentationRequestData = serde_json::from_str(&req.to_string()).unwrap();
-            let proof_req = PresentationRequest::create()
-                .set_request_presentations_attach(&json!(pres_req_data).to_string())
-                .unwrap();
+            let id = "test_id".to_owned();
+
+            let attach_type = messages::decorators::attachment::AttachmentType::Base64(base64::encode(&json!(pres_req_data).to_string()));
+            let attach_data = messages::decorators::attachment::AttachmentData::new(attach_type);
+            let mut attach = messages::decorators::attachment::Attachment::new(attach_data);
+            attach.id = Some(AttachmentId::PresentationRequest.as_ref().to_owned());
+            attach.mime_type = Some(messages::misc::MimeType::Json);
+            
+
+            let content = RequestPresentationContent::new(vec![attach]);
+            let decorators = RequestPresentationDecorators::default();
+
+            let proof_req = RequestPresentation::with_decorators(id, content, decorators);
             let proof: Prover = Prover::create_from_request("2", proof_req).unwrap();
             let retrieved_creds2 = proof.retrieve_credentials(&setup.profile).await.unwrap();
             assert!(retrieved_creds2.contains(r#""zip":"84000""#));
@@ -161,9 +210,19 @@ mod integration_tests {
             // Entire word upper
             req["requested_attributes"]["zip_1"]["name"] = json!("ZIP");
             let pres_req_data: PresentationRequestData = serde_json::from_str(&req.to_string()).unwrap();
-            let proof_req = PresentationRequest::create()
-                .set_request_presentations_attach(&json!(pres_req_data).to_string())
-                .unwrap();
+            let id = "test_id".to_owned();
+
+            let attach_type = messages::decorators::attachment::AttachmentType::Base64(base64::encode(&json!(pres_req_data).to_string()));
+            let attach_data = messages::decorators::attachment::AttachmentData::new(attach_type);
+            let mut attach = messages::decorators::attachment::Attachment::new(attach_data);
+            attach.id = Some(AttachmentId::PresentationRequest.as_ref().to_owned());
+            attach.mime_type = Some(messages::misc::MimeType::Json);
+            
+
+            let content = RequestPresentationContent::new(vec![attach]);
+            let decorators = RequestPresentationDecorators::default();
+
+            let proof_req = RequestPresentation::with_decorators(id, content, decorators);
             let proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
             let retrieved_creds3 = proof.retrieve_credentials(&setup.profile).await.unwrap();
             assert!(retrieved_creds3.contains(r#""zip":"84000""#));
@@ -204,9 +263,19 @@ mod integration_tests {
             .to_string();
 
             let pres_req_data: PresentationRequestData = serde_json::from_str(&indy_proof_req).unwrap();
-            let proof_req = PresentationRequest::create()
-                .set_request_presentations_attach(&json!(pres_req_data).to_string())
-                .unwrap();
+            let id = "test_id".to_owned();
+
+            let attach_type = messages::decorators::attachment::AttachmentType::Base64(base64::encode(&json!(pres_req_data).to_string()));
+            let attach_data = messages::decorators::attachment::AttachmentData::new(attach_type);
+            let mut attach = messages::decorators::attachment::Attachment::new(attach_data);
+            attach.id = Some(AttachmentId::PresentationRequest.as_ref().to_owned());
+            attach.mime_type = Some(messages::misc::MimeType::Json);
+            
+
+            let content = RequestPresentationContent::new(vec![attach]);
+            let decorators = RequestPresentationDecorators::default();
+
+            let proof_req = RequestPresentation::with_decorators(id, content, decorators);
             let mut proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
 
             let all_creds: serde_json::Value =
@@ -275,9 +344,19 @@ mod integration_tests {
             .to_string();
 
             let pres_req_data: PresentationRequestData = serde_json::from_str(&indy_proof_req).unwrap();
-            let proof_req = PresentationRequest::create()
-                .set_request_presentations_attach(&json!(pres_req_data).to_string())
-                .unwrap();
+            let id = "test_id".to_owned();
+
+            let attach_type = messages::decorators::attachment::AttachmentType::Base64(base64::encode(&json!(pres_req_data).to_string()));
+            let attach_data = messages::decorators::attachment::AttachmentData::new(attach_type);
+            let mut attach = messages::decorators::attachment::Attachment::new(attach_data);
+            attach.id = Some(AttachmentId::PresentationRequest.as_ref().to_owned());
+            attach.mime_type = Some(messages::misc::MimeType::Json);
+            
+
+            let content = RequestPresentationContent::new(vec![attach]);
+            let decorators = RequestPresentationDecorators::default();
+
+            let proof_req = RequestPresentation::with_decorators(id, content, decorators);
             let mut proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
 
             let all_creds: serde_json::Value =
@@ -360,7 +439,7 @@ mod integration_tests {
                 .verify_presentation(
                     &setup.profile,
                     presentation,
-                    Box::new(|_: A2AMessage| Box::pin(async { Ok(()) })),
+                    Box::new(|_: AriesMessage| Box::pin(async { Ok(()) })),
                 )
                 .await
                 .unwrap();
@@ -377,14 +456,14 @@ mod integration_tests {
 #[cfg(test)]
 #[cfg(feature = "agency_pool_tests")]
 mod tests {
+    use messages::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
+    use messages::msg_fields::protocols::present_proof::request::RequestPresentation;
     use serde_json::Value;
 
     use aries_vcx::common::test_utils::create_and_store_nonrevocable_credential_def;
     use aries_vcx::handlers::issuance::holder::Holder;
     use aries_vcx::handlers::proof_presentation::prover::Prover;
     use aries_vcx::handlers::proof_presentation::verifier::Verifier;
-    use aries_vcx::messages::protocols::issuance::credential_offer::CredentialOffer;
-    use aries_vcx::messages::protocols::proof_presentation::presentation_request::PresentationRequest;
     use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
     use aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
     use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
@@ -1373,7 +1452,7 @@ mod tests {
             {
                 let message = alice.download_message(PayloadKinds::CredOffer).await.unwrap();
 
-                let cred_offer: CredentialOffer = serde_json::from_str(&message.decrypted_msg).unwrap();
+                let cred_offer: OfferCredential = serde_json::from_str(&message.decrypted_msg).unwrap();
                 alice.credential = Holder::create_from_offer("test", cred_offer).unwrap();
 
                 alice
@@ -1405,7 +1484,7 @@ mod tests {
             {
                 let agency_msg = alice.download_message(PayloadKinds::ProofRequest).await.unwrap();
 
-                let presentation_request: PresentationRequest =
+                let presentation_request: RequestPresentation =
                     serde_json::from_str(&agency_msg.decrypted_msg).unwrap();
                 alice.prover = Prover::create_from_request("test", presentation_request).unwrap();
 

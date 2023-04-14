@@ -332,14 +332,14 @@ mod test {
     async fn test_did_doc_from_invitation_with_didkey_encoding_works() {
         let recipient_keys = vec![_key_2()];
         let routing_keys_did_key = vec![_key_2_did_key()];
+        let id = Uuid::new_v4().to_string();
 
         let mut did_doc = AriesDidDoc::default();
-        did_doc.set_id(MessageId::id().0);
+        did_doc.set_id(id.clone());
         did_doc.set_service_endpoint(_service_endpoint());
         did_doc.set_recipient_keys(recipient_keys);
         did_doc.set_routing_keys(_routing_keys());
-
-        let mut invitation = OutOfBandInvitation::default();
+        
         let aries_service = ServiceOob::AriesService(
             AriesService::create()
                 .set_service_endpoint(_service_endpoint())

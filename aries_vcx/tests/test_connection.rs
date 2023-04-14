@@ -14,14 +14,18 @@ mod integration_tests {
     use aries_vcx::handlers::connection::mediated_connection::ConnectionState;
     use aries_vcx::handlers::out_of_band::receiver::OutOfBandReceiver;
     use aries_vcx::handlers::out_of_band::sender::OutOfBandSender;
-    use aries_vcx::messages::a2a::A2AMessage;
-    use aries_vcx::messages::protocols::out_of_band::{GoalCode, HandshakeProtocol};
+    use aries_vcx::handlers::util::AnyInvitation;
     use aries_vcx::protocols::mediated_connection::invitee::state_machine::InviteeState;
     use aries_vcx::utils::devsetup::*;
     use aries_vcx::utils::mockdata::mockdata_proof::REQUESTED_ATTRIBUTES;
     use async_channel::bounded;
-    use messages::protocols::connection::did::Did;
-    use messages::protocols::out_of_band::service_oob::ServiceOob;
+    use messages::msg_fields::protocols::connection::Connection;
+    use messages::msg_fields::protocols::out_of_band::invitation::OobService;
+    use messages::msg_fields::protocols::out_of_band::{OobGoalCode, OutOfBand};
+    use messages::msg_fields::protocols::present_proof::PresentProof;
+    use messages::msg_types::connection::{ConnectionType, ConnectionTypeV1};
+    use messages::msg_types::Protocol;
+    use messages::AriesMessage;
 
     use crate::utils::devsetup_agent::test_utils::{create_test_alice_instance, Faber};
     use crate::utils::scenarios::test_utils::{
@@ -56,28 +60,28 @@ mod integration_tests {
 
     #[tokio::test]
     async fn test_oob_connection_bootstrap() {
-        use messages::protocols::connection::invite::Invitation;
-
         SetupPool::run(|setup| async move {
             let mut institution = Faber::setup(setup.pool_handle).await;
             let mut consumer = create_test_alice_instance(&setup).await;
-            let (sender, receiver) = bounded::<A2AMessage>(1);
+            let (sender, receiver) = bounded::<AriesMessage>(1);
 
             let request_sender = create_proof_request(&mut institution, REQUESTED_ATTRIBUTES, "[]", "{}", None).await;
 
             let did = institution.config_issuer.institution_did.clone();
             let oob_sender = OutOfBandSender::create()
                 .set_label("test-label")
-                .set_goal_code(&GoalCode::P2PMessaging)
+                .set_goal_code(OobGoalCode::P2PMessaging)
                 .set_goal("To exchange message")
-                .append_service(&ServiceOob::Did(Did::new(&did).unwrap()))
-                .append_handshake_protocol(&HandshakeProtocol::ConnectionV1)
+                .append_service(&OobService::Did(did))
+                .append_handshake_protocol(Protocol::ConnectionType(ConnectionType::V1(
+                    ConnectionTypeV1::new_v1_0(),
+                )))
                 .unwrap()
-                .append_a2a_message(request_sender.to_a2a_message())
+                .append_a2a_message(AriesMessage::from(request_sender.clone()))
                 .unwrap();
-            let invitation = Invitation::OutOfBand(oob_sender.oob.clone());
+            let invitation = AnyInvitation::Oob(oob_sender.oob.clone());
             let ddo = into_did_doc(&consumer.profile, &invitation).await.unwrap();
-            let oob_msg = oob_sender.to_a2a_message();
+            let oob_msg = AriesMessage::from(oob_sender.oob.clone());
 
             let oob_receiver = OutOfBandReceiver::create_from_a2a_msg(&oob_msg).unwrap();
             let conns = vec![];
@@ -95,9 +99,10 @@ mod integration_tests {
                 ConnectionState::Invitee(InviteeState::Requested),
                 conn_receiver.get_state()
             );
-            assert_eq!(oob_sender.oob.id.0, oob_receiver.oob.id.0);
+            assert_eq!(oob_sender.oob.id, oob_receiver.oob.id);
 
-            let request = if let A2AMessage::ConnectionRequest(request) = receiver.recv().await.unwrap() {
+            let request = if let AriesMessage::Connection(Connection::Request(request)) = receiver.recv().await.unwrap()
+            {
                 request
             } else {
                 panic!("Received invalid message type")
@@ -125,11 +130,14 @@ mod integration_tests {
             assert!(conn.is_none());
 
             let a2a_msg = oob_receiver.extract_a2a_message().unwrap().unwrap();
-            assert!(matches!(a2a_msg, A2AMessage::PresentationRequest(..)));
-            if let A2AMessage::PresentationRequest(request_receiver) = a2a_msg {
+            assert!(matches!(
+                a2a_msg,
+                AriesMessage::PresentProof(PresentProof::RequestPresentation(..))
+            ));
+            if let AriesMessage::PresentProof(PresentProof::RequestPresentation(request_receiver)) = a2a_msg {
                 assert_eq!(
-                    request_receiver.request_presentations_attach,
-                    request_sender.request_presentations_attach
+                    request_receiver.content.request_presentations_attach,
+                    request_sender.content.request_presentations_attach
                 );
             }
 
@@ -167,10 +175,10 @@ mod integration_tests {
             let did = institution.config_issuer.institution_did.clone();
             let oob_sender = OutOfBandSender::create()
                 .set_label("test-label")
-                .set_goal_code(&GoalCode::P2PMessaging)
+                .set_goal_code(OobGoalCode::P2PMessaging)
                 .set_goal("To exchange message")
-                .append_service(&ServiceOob::Did(Did::new(&did).unwrap()));
-            let oob_msg = oob_sender.to_a2a_message();
+                .append_service(&OobService::Did(did));
+            let oob_msg = AriesMessage::from(oob_sender.oob.clone());
 
             let oob_receiver = OutOfBandReceiver::create_from_a2a_msg(&oob_msg).unwrap();
             let conns = vec![&consumer_to_institution];
@@ -202,18 +210,18 @@ mod integration_tests {
             let did = institution.config_issuer.institution_did.clone();
             let oob_sender = OutOfBandSender::create()
                 .set_label("test-label")
-                .set_goal_code(&GoalCode::P2PMessaging)
+                .set_goal_code(OobGoalCode::P2PMessaging)
                 .set_goal("To exchange message")
-                .append_service(&ServiceOob::Did(Did::new(&did).unwrap()));
+                .append_service(&OobService::Did(did));
             let sender_oob_id = oob_sender.get_id();
-            let oob_msg = oob_sender.to_a2a_message();
+            let oob_msg = AriesMessage::from(oob_sender.oob.clone());
 
             let oob_receiver = OutOfBandReceiver::create_from_a2a_msg(&oob_msg).unwrap();
             let conns = vec![&consumer_to_institution];
             let conn = oob_receiver.connection_exists(&consumer.profile, &conns).await.unwrap();
             assert!(conn.is_some());
             let receiver_oob_id = oob_receiver.get_id();
-            let receiver_msg = serde_json::to_string(&oob_receiver.to_a2a_message()).unwrap();
+            let receiver_msg = serde_json::to_string(&AriesMessage::from(oob_receiver.oob.clone())).unwrap();
             conn.unwrap()
                 .send_handshake_reuse(&consumer.profile, &receiver_msg)
                 .await
@@ -228,11 +236,11 @@ mod integration_tests {
                 .await
                 .unwrap();
             assert_eq!(msgs.len(), 1);
-            let reuse_msg = match serde_json::from_str::<A2AMessage>(&msgs.pop().unwrap().decrypted_msg).unwrap() {
-                A2AMessage::OutOfBandHandshakeReuse(ref a2a_msg) => {
-                    assert_eq!(sender_oob_id, a2a_msg.thread.pthid.as_ref().unwrap().to_string());
-                    assert_eq!(receiver_oob_id, a2a_msg.thread.pthid.as_ref().unwrap().to_string());
-                    assert_eq!(a2a_msg.id.0, a2a_msg.thread.thid.as_ref().unwrap().to_string());
+            let reuse_msg = match serde_json::from_str::<AriesMessage>(&msgs.pop().unwrap().decrypted_msg).unwrap() {
+                AriesMessage::OutOfBand(OutOfBand::HandshakeReuse(ref a2a_msg)) => {
+                    assert_eq!(sender_oob_id, a2a_msg.decorators.thread.pthid.as_ref().unwrap().to_string());
+                    assert_eq!(receiver_oob_id, a2a_msg.decorators.thread.pthid.as_ref().unwrap().to_string());
+                    assert_eq!(a2a_msg.id, a2a_msg.decorators.thread.thid.to_string());
                     a2a_msg.clone()
                 }
                 _ => {
@@ -241,7 +249,7 @@ mod integration_tests {
             };
             institution_to_consumer
                 .handle_message(
-                    A2AMessage::OutOfBandHandshakeReuse(reuse_msg.clone()),
+                    AriesMessage::OutOfBand(OutOfBand::HandshakeReuse(reuse_msg.clone())),
                     &institution.profile,
                 )
                 .await
@@ -252,11 +260,11 @@ mod integration_tests {
                 .await
                 .unwrap();
             assert_eq!(msgs.len(), 1);
-            let _reuse_ack_msg = match serde_json::from_str::<A2AMessage>(&msgs.pop().unwrap().decrypted_msg).unwrap() {
-                A2AMessage::OutOfBandHandshakeReuseAccepted(ref a2a_msg) => {
-                    assert_eq!(sender_oob_id, a2a_msg.thread.pthid.as_ref().unwrap().to_string());
-                    assert_eq!(receiver_oob_id, a2a_msg.thread.pthid.as_ref().unwrap().to_string());
-                    assert_eq!(reuse_msg.id.0, a2a_msg.thread.thid.as_ref().unwrap().to_string());
+            let _reuse_ack_msg = match serde_json::from_str::<AriesMessage>(&msgs.pop().unwrap().decrypted_msg).unwrap() {
+                AriesMessage::OutOfBand(OutOfBand::HandshakeReuseAccepted(ref a2a_msg)) => {
+                    assert_eq!(sender_oob_id, a2a_msg.decorators.thread.pthid.as_ref().unwrap().to_string());
+                    assert_eq!(receiver_oob_id, a2a_msg.decorators.thread.pthid.as_ref().unwrap().to_string());
+                    assert_eq!(reuse_msg.id, a2a_msg.decorators.thread.thid.to_string());
                     a2a_msg.clone()
                 }
                 _ => {

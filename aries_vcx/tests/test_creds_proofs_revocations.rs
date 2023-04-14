@@ -102,6 +102,8 @@ mod integration_tests {
     #[cfg(feature = "agency_pool_tests")]
     #[tokio::test]
     async fn test_revocation_notification() {
+        use messages::decorators::please_ack::AckOn;
+
         SetupPool::run(|setup| async move {
             let mut institution = Faber::setup(setup.pool_handle).await;
             let mut consumer = create_test_alice_instance(&setup).await;
@@ -125,7 +127,7 @@ mod integration_tests {
             assert!(issuer_credential.is_revoked(&institution.profile).await.unwrap());
             let config =
                 aries_vcx::protocols::revocation_notification::sender::state_machine::SenderConfigBuilder::default()
-                    .ack_on(vec![messages::concepts::ack::please_ack::AckOn::Receipt])
+                    .ack_on(vec![AckOn::Receipt])
                     .rev_reg_id(issuer_credential.get_rev_reg_id().unwrap())
                     .cred_rev_id(issuer_credential.get_rev_id().unwrap())
                     .comment(None)
