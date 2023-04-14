@@ -289,7 +289,6 @@ impl AriesDidDoc {
     }
 }
 
-#[cfg(feature = "test_utils")]
 pub mod test_utils {
     use crate::aries::diddoc::AriesDidDoc;
     use crate::aries::service::AriesService;
@@ -469,7 +468,6 @@ pub mod test_utils {
 }
 
 #[cfg(test)]
-#[cfg(feature = "general_test")]
 mod unit_tests {
     use crate::aries::diddoc::test_utils::*;
     use crate::aries::diddoc::AriesDidDoc;

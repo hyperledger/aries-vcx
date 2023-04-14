@@ -66,7 +66,6 @@ impl PartialEq for AriesService {
 }
 
 #[cfg(test)]
-#[cfg(feature = "general_test")]
 mod unit_tests {
     use crate::aries::diddoc::test_utils::{_recipient_keys, _routing_keys, _routing_keys_1, _service_endpoint};
     use crate::aries::service::AriesService;

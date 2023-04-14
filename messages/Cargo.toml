@@ -8,10 +8,6 @@ license.workspace = true
 [lib]
 doctest = false
 
-[features]
-test_utils = ["diddoc/test_utils"]
-general_test = ["test_utils"]
-
 [dependencies]
 serde = { version = "1.0.97", features = ["derive"] }
 chrono = { version = "0.4.23", features = ["serde"] }
