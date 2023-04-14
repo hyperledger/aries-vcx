@@ -291,12 +291,12 @@ impl AriesDidDoc {
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
-    use url::Url;
     use crate::aries::diddoc::AriesDidDoc;
     use crate::aries::service::AriesService;
     use crate::w3c::model::{
         Authentication, DdoKeyReference, Ed25519PublicKey, CONTEXT, KEY_AUTHENTICATION_TYPE, KEY_TYPE,
     };
+    use url::Url;
 
     pub fn _key_1() -> String {
         String::from("GJ1SzoWzavQYfNL9XkaJdrQejfztN4XqdsiV4ct3LXKL")

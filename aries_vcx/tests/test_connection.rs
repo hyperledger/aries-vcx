@@ -238,8 +238,14 @@ mod integration_tests {
             assert_eq!(msgs.len(), 1);
             let reuse_msg = match serde_json::from_str::<AriesMessage>(&msgs.pop().unwrap().decrypted_msg).unwrap() {
                 AriesMessage::OutOfBand(OutOfBand::HandshakeReuse(ref a2a_msg)) => {
-                    assert_eq!(sender_oob_id, a2a_msg.decorators.thread.pthid.as_ref().unwrap().to_string());
-                    assert_eq!(receiver_oob_id, a2a_msg.decorators.thread.pthid.as_ref().unwrap().to_string());
+                    assert_eq!(
+                        sender_oob_id,
+                        a2a_msg.decorators.thread.pthid.as_ref().unwrap().to_string()
+                    );
+                    assert_eq!(
+                        receiver_oob_id,
+                        a2a_msg.decorators.thread.pthid.as_ref().unwrap().to_string()
+                    );
                     assert_eq!(a2a_msg.id, a2a_msg.decorators.thread.thid.to_string());
                     a2a_msg.clone()
                 }
@@ -260,10 +266,17 @@ mod integration_tests {
                 .await
                 .unwrap();
             assert_eq!(msgs.len(), 1);
-            let _reuse_ack_msg = match serde_json::from_str::<AriesMessage>(&msgs.pop().unwrap().decrypted_msg).unwrap() {
+            let _reuse_ack_msg = match serde_json::from_str::<AriesMessage>(&msgs.pop().unwrap().decrypted_msg).unwrap()
+            {
                 AriesMessage::OutOfBand(OutOfBand::HandshakeReuseAccepted(ref a2a_msg)) => {
-                    assert_eq!(sender_oob_id, a2a_msg.decorators.thread.pthid.as_ref().unwrap().to_string());
-                    assert_eq!(receiver_oob_id, a2a_msg.decorators.thread.pthid.as_ref().unwrap().to_string());
+                    assert_eq!(
+                        sender_oob_id,
+                        a2a_msg.decorators.thread.pthid.as_ref().unwrap().to_string()
+                    );
+                    assert_eq!(
+                        receiver_oob_id,
+                        a2a_msg.decorators.thread.pthid.as_ref().unwrap().to_string()
+                    );
                     assert_eq!(reuse_msg.id, a2a_msg.decorators.thread.thid.to_string());
                     a2a_msg.clone()
                 }

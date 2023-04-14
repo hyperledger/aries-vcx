@@ -3,7 +3,7 @@ use messages::{
         present_proof::{
             ack::{AckPresentation, AckPresentationContent},
             present::Presentation,
-            propose::{PresentationPreview},
+            propose::PresentationPreview,
             request::RequestPresentation,
             PresentProof,
         },

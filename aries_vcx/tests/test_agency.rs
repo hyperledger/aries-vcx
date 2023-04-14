@@ -145,9 +145,11 @@ mod integration_tests {
 
             info!("test_connection_send_works:: Test if Send Message works");
             {
-                faber.connection.send_message_closure(&faber.profile).await.unwrap()(AriesMessage::from(message.clone()))
-                    .await
-                    .unwrap();
+                faber.connection.send_message_closure(&faber.profile).await.unwrap()(AriesMessage::from(
+                    message.clone(),
+                ))
+                .await
+                .unwrap();
             }
 
             {

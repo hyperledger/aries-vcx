@@ -7,14 +7,13 @@ pub mod test_utils {
     use aries_vcx::common::test_utils::create_and_store_credential_def;
     use aries_vcx::core::profile::profile::Profile;
     use aries_vcx::errors::error::{AriesVcxError, AriesVcxErrorKind};
-    use aries_vcx::handlers::util::{OfferInfo, PresentationProposalData, AnyInvitation};
+    use aries_vcx::handlers::util::{AnyInvitation, OfferInfo, PresentationProposalData};
     use aries_vcx::protocols::SendClosureConnection;
     use async_channel::{bounded, Sender};
     use diddoc::aries::diddoc::AriesDidDoc;
-    use messages::AriesMessage;
     use messages::misc::MimeType;
-    use messages::msg_fields::protocols::connection::Connection;
     use messages::msg_fields::protocols::connection::request::Request;
+    use messages::msg_fields::protocols::connection::Connection;
     use messages::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
     use messages::msg_fields::protocols::cred_issuance::propose_credential::{
         ProposeCredential, ProposeCredentialContent, ProposeCredentialDecorators,
@@ -22,6 +21,7 @@ pub mod test_utils {
     use messages::msg_fields::protocols::cred_issuance::{CredentialAttr, CredentialPreview};
     use messages::msg_fields::protocols::present_proof::propose::PresentationAttr;
     use messages::msg_fields::protocols::present_proof::request::RequestPresentation;
+    use messages::AriesMessage;
     use serde_json::{json, Value};
 
     use aries_vcx::common::ledger::transactions::into_did_doc;
@@ -563,7 +563,7 @@ pub mod test_utils {
         let attrs = requested_attr_objects_1(cred_def_id);
         let mut proposal_data = PresentationProposalData::default();
         for attr in attrs.into_iter() {
-            proposal_data.attributes.push(attr);;
+            proposal_data.attributes.push(attr);
         }
         prover
             .send_proposal(

@@ -299,7 +299,9 @@ pub mod tests {
         let config_actual: OOBConfig = serde_json::from_str(&config_str).unwrap();
         assert_eq!(
             config_actual.handshake_protocols,
-            vec![Protocol::ConnectionType(ConnectionType::V1(ConnectionTypeV1::new_v1_0()))]
+            vec![Protocol::ConnectionType(ConnectionType::V1(
+                ConnectionTypeV1::new_v1_0()
+            ))]
         );
 
         let config_str = json!({}).to_string();

@@ -282,7 +282,7 @@ pub fn get_thread_id(handle: u32) -> LibvcxResult<String> {
 pub mod tests {
     use aries_vcx::aries_vcx_core::indy::utils::LibindyMock;
     use aries_vcx::utils::constants::V3_OBJECT_SERIALIZE_VERSION;
-    use aries_vcx::utils::devsetup::{ SetupMocks};
+    use aries_vcx::utils::devsetup::SetupMocks;
     use aries_vcx::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_REQUEST;
     use aries_vcx::utils::mockdata::mockdata_mediated_connection::ARIES_CONNECTION_ACK;
 

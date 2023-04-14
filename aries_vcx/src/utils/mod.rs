@@ -2,7 +2,6 @@ use std::env;
 use std::path::PathBuf;
 use std::sync::Arc;
 
-
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use diddoc::aries::diddoc::AriesDidDoc;
 

@@ -435,9 +435,7 @@ impl MediatedConnection {
     pub async fn handle_message(&mut self, message: AriesMessage, profile: &Arc<dyn Profile>) -> VcxResult<()> {
         let did_doc = self.their_did_doc().ok_or(AriesVcxError::from_msg(
             AriesVcxErrorKind::NotReady,
-            format!(
-                "Can't answer message {message:?} because counterparty did doc is not available"
-            ),
+            format!("Can't answer message {message:?} because counterparty did doc is not available"),
         ))?;
         let pw_vk = &self.pairwise_info().pw_vk;
         match message {

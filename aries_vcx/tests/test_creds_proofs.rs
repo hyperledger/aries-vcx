@@ -22,8 +22,10 @@ mod integration_tests {
     use aries_vcx::utils::constants::{DEFAULT_SCHEMA_ATTRS, TAILS_DIR};
     use aries_vcx::utils::devsetup::{init_holder_setup_in_indy_context, SetupProfile};
     use aries_vcx::utils::get_temp_dir_path;
+    use messages::msg_fields::protocols::present_proof::request::{
+        RequestPresentation, RequestPresentationContent, RequestPresentationDecorators,
+    };
     use messages::AriesMessage;
-    use messages::msg_fields::protocols::present_proof::request::{RequestPresentationContent, RequestPresentationDecorators, RequestPresentation};
 
     #[tokio::test]
     async fn test_retrieve_credentials() {
@@ -43,12 +45,13 @@ mod integration_tests {
             let pres_req_data: PresentationRequestData = serde_json::from_str(&req).unwrap();
             let id = "test_id".to_owned();
 
-            let attach_type = messages::decorators::attachment::AttachmentType::Base64(base64::encode(&json!(pres_req_data).to_string()));
+            let attach_type = messages::decorators::attachment::AttachmentType::Base64(base64::encode(
+                &json!(pres_req_data).to_string(),
+            ));
             let attach_data = messages::decorators::attachment::AttachmentData::new(attach_type);
             let mut attach = messages::decorators::attachment::Attachment::new(attach_data);
             attach.id = Some(AttachmentId::PresentationRequest.as_ref().to_owned());
             attach.mime_type = Some(messages::misc::MimeType::Json);
-            
 
             let content = RequestPresentationContent::new(vec![attach]);
             let decorators = RequestPresentationDecorators::default();
@@ -98,12 +101,13 @@ mod integration_tests {
             let pres_req_data: PresentationRequestData = serde_json::from_str(&req.to_string()).unwrap();
             let id = "test_id".to_owned();
 
-            let attach_type = messages::decorators::attachment::AttachmentType::Base64(base64::encode(&json!(pres_req_data).to_string()));
+            let attach_type = messages::decorators::attachment::AttachmentType::Base64(base64::encode(
+                &json!(pres_req_data).to_string(),
+            ));
             let attach_data = messages::decorators::attachment::AttachmentData::new(attach_type);
             let mut attach = messages::decorators::attachment::Attachment::new(attach_data);
             attach.id = Some(AttachmentId::PresentationRequest.as_ref().to_owned());
             attach.mime_type = Some(messages::misc::MimeType::Json);
-            
 
             let content = RequestPresentationContent::new(vec![attach]);
             let decorators = RequestPresentationDecorators::default();
@@ -118,12 +122,13 @@ mod integration_tests {
             let pres_req_data: PresentationRequestData = serde_json::from_str(&req.to_string()).unwrap();
             let id = "test_id".to_owned();
 
-            let attach_type = messages::decorators::attachment::AttachmentType::Base64(base64::encode(&json!(pres_req_data).to_string()));
+            let attach_type = messages::decorators::attachment::AttachmentType::Base64(base64::encode(
+                &json!(pres_req_data).to_string(),
+            ));
             let attach_data = messages::decorators::attachment::AttachmentData::new(attach_type);
             let mut attach = messages::decorators::attachment::Attachment::new(attach_data);
             attach.id = Some(AttachmentId::PresentationRequest.as_ref().to_owned());
             attach.mime_type = Some(messages::misc::MimeType::Json);
-            
 
             let content = RequestPresentationContent::new(vec![attach]);
             let decorators = RequestPresentationDecorators::default();
@@ -165,12 +170,13 @@ mod integration_tests {
             let pres_req_data: PresentationRequestData = serde_json::from_str(&req.to_string()).unwrap();
             let id = "test_id".to_owned();
 
-            let attach_type = messages::decorators::attachment::AttachmentType::Base64(base64::encode(&json!(pres_req_data).to_string()));
+            let attach_type = messages::decorators::attachment::AttachmentType::Base64(base64::encode(
+                &json!(pres_req_data).to_string(),
+            ));
             let attach_data = messages::decorators::attachment::AttachmentData::new(attach_type);
             let mut attach = messages::decorators::attachment::Attachment::new(attach_data);
             attach.id = Some(AttachmentId::PresentationRequest.as_ref().to_owned());
             attach.mime_type = Some(messages::misc::MimeType::Json);
-            
 
             let content = RequestPresentationContent::new(vec![attach]);
             let decorators = RequestPresentationDecorators::default();
@@ -192,12 +198,13 @@ mod integration_tests {
             let pres_req_data: PresentationRequestData = serde_json::from_str(&req.to_string()).unwrap();
             let id = "test_id".to_owned();
 
-            let attach_type = messages::decorators::attachment::AttachmentType::Base64(base64::encode(&json!(pres_req_data).to_string()));
+            let attach_type = messages::decorators::attachment::AttachmentType::Base64(base64::encode(
+                &json!(pres_req_data).to_string(),
+            ));
             let attach_data = messages::decorators::attachment::AttachmentData::new(attach_type);
             let mut attach = messages::decorators::attachment::Attachment::new(attach_data);
             attach.id = Some(AttachmentId::PresentationRequest.as_ref().to_owned());
             attach.mime_type = Some(messages::misc::MimeType::Json);
-            
 
             let content = RequestPresentationContent::new(vec![attach]);
             let decorators = RequestPresentationDecorators::default();
@@ -212,12 +219,13 @@ mod integration_tests {
             let pres_req_data: PresentationRequestData = serde_json::from_str(&req.to_string()).unwrap();
             let id = "test_id".to_owned();
 
-            let attach_type = messages::decorators::attachment::AttachmentType::Base64(base64::encode(&json!(pres_req_data).to_string()));
+            let attach_type = messages::decorators::attachment::AttachmentType::Base64(base64::encode(
+                &json!(pres_req_data).to_string(),
+            ));
             let attach_data = messages::decorators::attachment::AttachmentData::new(attach_type);
             let mut attach = messages::decorators::attachment::Attachment::new(attach_data);
             attach.id = Some(AttachmentId::PresentationRequest.as_ref().to_owned());
             attach.mime_type = Some(messages::misc::MimeType::Json);
-            
 
             let content = RequestPresentationContent::new(vec![attach]);
             let decorators = RequestPresentationDecorators::default();
@@ -265,12 +273,13 @@ mod integration_tests {
             let pres_req_data: PresentationRequestData = serde_json::from_str(&indy_proof_req).unwrap();
             let id = "test_id".to_owned();
 
-            let attach_type = messages::decorators::attachment::AttachmentType::Base64(base64::encode(&json!(pres_req_data).to_string()));
+            let attach_type = messages::decorators::attachment::AttachmentType::Base64(base64::encode(
+                &json!(pres_req_data).to_string(),
+            ));
             let attach_data = messages::decorators::attachment::AttachmentData::new(attach_type);
             let mut attach = messages::decorators::attachment::Attachment::new(attach_data);
             attach.id = Some(AttachmentId::PresentationRequest.as_ref().to_owned());
             attach.mime_type = Some(messages::misc::MimeType::Json);
-            
 
             let content = RequestPresentationContent::new(vec![attach]);
             let decorators = RequestPresentationDecorators::default();
@@ -346,12 +355,13 @@ mod integration_tests {
             let pres_req_data: PresentationRequestData = serde_json::from_str(&indy_proof_req).unwrap();
             let id = "test_id".to_owned();
 
-            let attach_type = messages::decorators::attachment::AttachmentType::Base64(base64::encode(&json!(pres_req_data).to_string()));
+            let attach_type = messages::decorators::attachment::AttachmentType::Base64(base64::encode(
+                &json!(pres_req_data).to_string(),
+            ));
             let attach_data = messages::decorators::attachment::AttachmentData::new(attach_type);
             let mut attach = messages::decorators::attachment::Attachment::new(attach_data);
             attach.id = Some(AttachmentId::PresentationRequest.as_ref().to_owned());
             attach.mime_type = Some(messages::misc::MimeType::Json);
-            
 
             let content = RequestPresentationContent::new(vec![attach]);
             let decorators = RequestPresentationDecorators::default();

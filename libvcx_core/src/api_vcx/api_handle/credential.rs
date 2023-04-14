@@ -361,7 +361,6 @@ pub mod tests {
     use crate::api_vcx::api_handle::mediated_connection::test_utils::{
         build_test_connection_invitee_completed, build_test_connection_inviter_requested,
     };
-    
 
     use super::*;
 

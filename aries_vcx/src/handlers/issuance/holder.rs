@@ -221,8 +221,8 @@ impl Holder {
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
     use agency_client::agency_client::AgencyClient;
-    use messages::AriesMessage;
     use messages::msg_fields::protocols::cred_issuance::CredentialIssuance;
+    use messages::AriesMessage;
 
     use crate::errors::error::prelude::*;
     use crate::handlers::connection::mediated_connection::MediatedConnection;

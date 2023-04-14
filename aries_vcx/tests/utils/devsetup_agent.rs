@@ -8,7 +8,7 @@ pub mod test_utils {
     use aries_vcx::core::profile::vdrtools_profile::VdrtoolsProfile;
     use aries_vcx::handlers::revocation_notification::receiver::RevocationNotificationReceiver;
     use aries_vcx::handlers::revocation_notification::sender::RevocationNotificationSender;
-    use aries_vcx::handlers::util::{OfferInfo, AnyInvitation, Status};
+    use aries_vcx::handlers::util::{AnyInvitation, OfferInfo, Status};
     use aries_vcx::protocols::mediated_connection::pairwise_info::PairwiseInfo;
     use aries_vcx::protocols::revocation_notification::sender::state_machine::SenderConfigBuilder;
     use aries_vcx_core::indy::wallet::{
@@ -54,13 +54,13 @@ pub mod test_utils {
     use messages::decorators::please_ack::AckOn;
     use messages::msg_fields::protocols::connection::invitation::{PublicInvitation, PublicInvitationContent};
     use messages::msg_fields::protocols::connection::Connection;
-    use messages::msg_fields::protocols::cred_issuance::CredentialIssuance;
     use messages::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
-    use messages::msg_fields::protocols::present_proof::PresentProof;
-    use messages::AriesMessage;
+    use messages::msg_fields::protocols::cred_issuance::CredentialIssuance;
     use messages::msg_fields::protocols::present_proof::request::RequestPresentation;
+    use messages::msg_fields::protocols::present_proof::PresentProof;
     use messages::msg_fields::protocols::revocation::ack::AckRevoke;
     use messages::msg_fields::protocols::revocation::revoke::Revoke;
+    use messages::AriesMessage;
 
     #[derive(Debug)]
     pub struct VcxAgencyMessage {
@@ -639,10 +639,7 @@ pub mod test_utils {
                 .await
                 .unwrap();
             assert_eq!(HolderState::Finished, self.credential.get_state());
-            assert_eq!(
-                Status::Success.code(),
-                self.credential.get_credential_status().unwrap()
-            );
+            assert_eq!(Status::Success.code(), self.credential.get_credential_status().unwrap());
         }
 
         pub async fn get_proof_request_messages(&mut self) -> RequestPresentation {
@@ -663,7 +660,9 @@ pub mod test_utils {
                 .await
                 .unwrap()
             {
-                AriesMessage::PresentProof(PresentProof::RequestPresentation(presentation_request)) => Ok(presentation_request),
+                AriesMessage::PresentProof(PresentProof::RequestPresentation(presentation_request)) => {
+                    Ok(presentation_request)
+                }
                 msg => Err(AriesVcxError::from_msg(
                     AriesVcxErrorKind::InvalidMessages,
                     format!("Message of different type was received: {:?}", msg),
@@ -727,10 +726,7 @@ pub mod test_utils {
                 .update_state(&self.profile, &self.agency_client, &self.connection)
                 .await
                 .unwrap();
-            assert_eq!(
-                Status::Success.code(),
-                self.prover.presentation_status()
-            );
+            assert_eq!(Status::Success.code(), self.prover.presentation_status());
         }
 
         pub async fn receive_revocation_notification(&mut self, rev_not: Revoke) {

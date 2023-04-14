@@ -128,7 +128,8 @@ impl Connection {
         let mut handler = self.handler.lock()?;
 
         let connection = VcxConnection::try_from(handler.clone())?;
-        let url = Url::parse(&service_endpoint).map_err(|err| AriesVcxError::from_msg(AriesVcxErrorKind::InvalidUrl, err.to_string()))?;
+        let url = Url::parse(&service_endpoint)
+            .map_err(|err| AriesVcxError::from_msg(AriesVcxErrorKind::InvalidUrl, err.to_string()))?;
 
         block_on(async {
             let new_conn = connection

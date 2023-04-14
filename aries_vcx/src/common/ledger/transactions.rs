@@ -2,7 +2,7 @@ use bs58;
 use diddoc::aries::diddoc::AriesDidDoc;
 use diddoc::aries::service::AriesService;
 use messages::msg_fields::protocols::connection::invitation::Invitation;
-use messages::msg_fields::protocols::out_of_band::invitation::{OobService};
+use messages::msg_fields::protocols::out_of_band::invitation::OobService;
 use std::{collections::HashMap, sync::Arc};
 
 use crate::common::ledger::service_didsov::EndpointDidSov;
@@ -339,7 +339,7 @@ mod test {
         did_doc.set_service_endpoint(_service_endpoint());
         did_doc.set_recipient_keys(recipient_keys);
         did_doc.set_routing_keys(_routing_keys());
-        
+
         let aries_service = ServiceOob::AriesService(
             AriesService::create()
                 .set_service_endpoint(_service_endpoint())
