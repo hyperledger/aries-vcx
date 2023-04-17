@@ -173,3 +173,38 @@ impl Schema {
         self.state as u32
     }
 }
+
+#[cfg(test)]
+pub mod unit_tests {
+
+    use super::super::credential_schema::*;
+
+    #[test]
+    fn test_to_string_versioned() {
+        print!("test_to_string_versioned");
+        let mut mydata: Vec<String> = Vec::new();
+        mydata.push(String::from("Iloverust"));
+        static MY_JSON: &str = r#"{"source_id":"12".to_string(),
+                                "schema_id":"2hoqvcwupRTUNkXn6ArYzs:2:test-licence:4.4.4".to_string(),
+                                "schema_json":"{"seqNo":22,"dest":"2hoqvcwupRTUNkXn6ArYzs","data":{"name":"gvt","version":"1.0","attr_names":["address1","address2","zip","city","state"]}}",
+                                "name":["SLC"],
+                                "version":"1"
+                                "submitter_did":"2hoqvcwupRTUNkXn6ArYzs".to_string(),
+                                "state":"1"
+                                }"#;
+
+        let results_json = Schema {
+            data: mydata,
+            version: String::from("1"),
+            schema_id: "2hoqvcwupRTUNkXn6ArYzs:2:test-licence:4.4.4".to_string(),
+            name: String::from("SLC"),
+            source_id: String::from("1"),
+            submitter_did: "2hoqvcwupRTUNkXn6ArYzs".to_string(),
+            state: PublicEntityStateType::Published,
+            schema_json: MY_JSON.to_string(),
+        };
+
+        let op = results_json.to_string_versioned();
+        assert!(op.is_ok());
+    }
+}
