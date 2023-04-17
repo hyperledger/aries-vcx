@@ -7,6 +7,7 @@ use crate::protocols::issuance::actions::CredentialIssuanceAction;
 
 pub mod actions;
 pub mod holder;
+pub mod holder2;
 pub mod issuer;
 
 pub fn verify_thread_id(thread_id: &str, message: &CredentialIssuanceAction) -> VcxResult<()> {

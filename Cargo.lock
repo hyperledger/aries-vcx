@@ -201,6 +201,7 @@ dependencies = [
  "libvdrtools",
  "log",
  "messages",
+ "messages2",
  "openssl",
  "rand 0.7.3",
  "regex",
