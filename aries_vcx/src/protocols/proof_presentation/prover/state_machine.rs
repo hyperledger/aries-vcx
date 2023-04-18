@@ -126,13 +126,12 @@ impl ProverSM {
     ) -> VcxResult<Self> {
         let state = match self.state {
             ProverFullState::Initial(_) => {
-                let id = Uuid::new_v4().to_string();
+                let id = self.thread_id.clone();
                 let preview = PresentationPreview::new(proposal_data.attributes, proposal_data.predicates);
                 let mut content = ProposePresentationContent::new(preview);
                 content.comment = proposal_data.comment;
 
-                let mut decorators = ProposePresentationDecorators::default();
-                decorators.thread = Some(Thread::new(self.thread_id.clone()));
+                let decorators = ProposePresentationDecorators::default();
 
                 let proposal = ProposePresentation::with_decorators(id, content, decorators);
 

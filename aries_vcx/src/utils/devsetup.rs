@@ -413,6 +413,8 @@ impl SetupProfile {
 
     #[cfg(feature = "modular_libs")]
     async fn init_modular() -> SetupProfile {
+        use aries_vcx_core::indy::ledger::pool::test_utils::create_tmp_genesis_txn_file;
+
         let (institution_did, wallet_handle) = setup_issuer_wallet().await;
 
         let genesis_file_path = create_tmp_genesis_txn_file();

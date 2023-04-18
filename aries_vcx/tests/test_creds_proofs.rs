@@ -471,6 +471,9 @@ mod integration_tests {
 
 #[cfg(test)]
 mod tests {
+    use std::thread;
+    use std::time::Duration;
+
     use messages::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
     use messages::msg_fields::protocols::present_proof::request::RequestPresentation;
     use serde_json::Value;
@@ -1138,6 +1141,7 @@ mod tests {
                 accept_cred_proposal(&mut institution, &institution_to_consumer, rev_reg_id, Some(tails_file)).await;
             decline_offer(&mut consumer, &consumer_to_institution, &mut holder).await;
             assert_eq!(IssuerState::OfferSent, issuer.get_state());
+            tokio::time::sleep(Duration::from_millis(1000)).await;
             issuer
                 .update_state(
                     &institution.profile,
@@ -1197,6 +1201,7 @@ mod tests {
             )
             .await;
             accept_offer(&mut consumer, &consumer_to_institution, &mut holder).await;
+            tokio::time::sleep(Duration::from_millis(1000)).await;
             send_credential(
                 &mut consumer,
                 &mut institution,

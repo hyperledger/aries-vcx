@@ -49,7 +49,7 @@ mod integration_tests {
             let time_before_revocation = time::get_time().sec as u64;
             info!("test_basic_revocation :: verifier :: Going to revoke credential");
             revoke_credential_and_publish_accumulator(&mut institution, &issuer_credential, &rev_reg.rev_reg_id).await;
-            thread::sleep(Duration::from_millis(2000));
+            tokio::time::sleep(Duration::from_millis(1000)).await;
             let time_after_revocation = time::get_time().sec as u64;
 
             assert!(issuer_credential.is_revoked(&institution.profile).await.unwrap());
@@ -121,7 +121,7 @@ mod integration_tests {
 
             info!("test_revocation_notification :: verifier :: Going to revoke credential");
             revoke_credential_and_publish_accumulator(&mut institution, &issuer_credential, &rev_reg.rev_reg_id).await;
-            thread::sleep(Duration::from_millis(2000));
+            tokio::time::sleep(Duration::from_millis(1000)).await;
 
             assert!(issuer_credential.is_revoked(&institution.profile).await.unwrap());
             let config =
@@ -369,7 +369,7 @@ mod integration_tests {
 
         // Publish revocations and verify the two are invalid, third still valid
         publish_revocation(&mut institution, rev_reg_id.clone().unwrap()).await;
-        thread::sleep(Duration::from_millis(2000));
+        tokio::time::sleep(Duration::from_millis(1000)).await;
 
         assert!(issuer_credential1.is_revoked(&institution.profile).await.unwrap());
         assert!(issuer_credential2.is_revoked(&institution.profile).await.unwrap());
@@ -467,12 +467,12 @@ mod integration_tests {
 
             assert!(!issuer_credential.is_revoked(&institution.profile).await.unwrap());
 
-            thread::sleep(Duration::from_millis(1000));
+            tokio::time::sleep(Duration::from_millis(1000)).await;
             let time_before_revocation = time::get_time().sec as u64;
-            thread::sleep(Duration::from_millis(2000));
+            tokio::time::sleep(Duration::from_millis(1000)).await;
             info!("test_revoked_credential_might_still_work :: verifier :: Going to revoke credential");
             revoke_credential_and_publish_accumulator(&mut institution, &issuer_credential, &rev_reg.rev_reg_id).await;
-            thread::sleep(Duration::from_millis(2000));
+            tokio::time::sleep(Duration::from_millis(1000)).await;
 
             let from = time_before_revocation - 100;
             let to = time_before_revocation;

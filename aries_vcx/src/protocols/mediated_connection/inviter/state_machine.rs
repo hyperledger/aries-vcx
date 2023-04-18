@@ -241,7 +241,7 @@ impl SmConnectionInviter {
             verify_thread_id(&self.get_thread_id(), &request.clone().into())?;
         };
 
-        let state = match self.state {
+        let (state, thread_id) = match self.state {
             InviterFullState::Invited(_) | InviterFullState::Initial(_) => {
                 if let Err(err) = request.content.connection.did_doc.validate() {
                     let mut content = ProblemReportContent::default();
@@ -277,18 +277,22 @@ impl SmConnectionInviter {
                 let signed_response = self
                     .build_response(
                         &wallet,
-                        thread_id,
+                        thread_id.clone(),
                         new_pairwise_info,
                         new_routing_keys,
                         new_service_endpoint,
                     )
                     .await?;
-                InviterFullState::Requested((request, signed_response).into())
+                (
+                    InviterFullState::Requested((request, signed_response).into()),
+                    thread_id,
+                )
             }
-            _ => self.state,
+            _ => (self.state, self.thread_id.clone()),
         };
         Ok(Self {
             pairwise_info: new_pairwise_info.to_owned(),
+            thread_id,
             state,
             ..self
         })

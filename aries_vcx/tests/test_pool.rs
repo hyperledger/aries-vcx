@@ -58,7 +58,7 @@ mod integration_tests {
         SetupProfile::run(|setup| async move {
             let (did, verkey) = add_new_did(&setup.profile, &setup.institution_did, None).await.unwrap();
             rotate_verkey(&setup.profile, &did).await.unwrap();
-            thread::sleep(Duration::from_millis(100));
+            tokio::time::sleep(Duration::from_millis(1000)).await;
             let local_verkey = setup.profile.inject_wallet().key_for_local_did(&did).await.unwrap();
 
             let ledger_verkey = get_verkey_from_ledger(&setup.profile, &did).await.unwrap();

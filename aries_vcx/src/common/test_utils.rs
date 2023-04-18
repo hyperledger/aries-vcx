@@ -38,7 +38,7 @@ pub async fn create_and_write_test_schema(
     let (schema_id, schema_json) = create_schema(profile, attr_list, submitter_did).await;
     let ledger = Arc::clone(profile).inject_ledger();
     let _response = ledger.publish_schema(&schema_json, submitter_did, None).await.unwrap();
-    thread::sleep(Duration::from_millis(1000));
+    tokio::time::sleep(Duration::from_millis(1000)).await;
     (schema_id, schema_json)
 }
 
@@ -60,9 +60,9 @@ pub async fn create_and_store_nonrevocable_credential_def(
         .publish_cred_def(profile)
         .await
         .unwrap();
-    thread::sleep(Duration::from_millis(1000));
+    tokio::time::sleep(Duration::from_millis(1000)).await;
     let cred_def_id = cred_def.get_cred_def_id();
-    thread::sleep(Duration::from_millis(1000));
+    tokio::time::sleep(Duration::from_millis(1000)).await;
 
     let ledger = Arc::clone(profile).inject_ledger();
     let cred_def_json = ledger.get_cred_def(&cred_def_id, None).await.unwrap();
@@ -111,9 +111,9 @@ pub async fn create_and_store_credential_def(
         .await
         .unwrap();
 
-    thread::sleep(Duration::from_millis(1000));
+    tokio::time::sleep(Duration::from_millis(1000)).await;
     let cred_def_id = cred_def.get_cred_def_id();
-    thread::sleep(Duration::from_millis(1000));
+    tokio::time::sleep(Duration::from_millis(1000)).await;
     let ledger = Arc::clone(profile).inject_ledger();
     let cred_def_json = ledger.get_cred_def(&cred_def_id, None).await.unwrap();
     (

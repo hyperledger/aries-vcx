@@ -200,7 +200,7 @@ pub mod test_utils {
             .await
             .unwrap();
         info!("create_and_send_nonrevocable_cred_offer :: credential offer was sent");
-        thread::sleep(Duration::from_millis(100));
+        tokio::time::sleep(Duration::from_millis(1000)).await;
         issuer
     }
 
@@ -230,7 +230,7 @@ pub mod test_utils {
             .await
             .unwrap();
         info!("create_and_send_cred_offer :: credential offer was sent");
-        thread::sleep(Duration::from_millis(100));
+        tokio::time::sleep(Duration::from_millis(1000)).await;
         issuer
     }
 
@@ -269,7 +269,7 @@ pub mod test_utils {
             )
             .await
             .unwrap();
-        thread::sleep(Duration::from_millis(100));
+        tokio::time::sleep(Duration::from_millis(1000)).await;
         holder
     }
 
@@ -318,7 +318,7 @@ pub mod test_utils {
             .await
             .unwrap();
         assert_eq!(HolderState::ProposalSent, holder.get_state());
-        thread::sleep(Duration::from_millis(100));
+        tokio::time::sleep(Duration::from_millis(1000)).await;
         holder
     }
 
@@ -372,7 +372,7 @@ pub mod test_utils {
             .await
             .unwrap();
         assert_eq!(HolderState::ProposalSent, holder.get_state());
-        thread::sleep(Duration::from_millis(100));
+        tokio::time::sleep(Duration::from_millis(1000)).await;
     }
 
     pub async fn accept_cred_proposal(
@@ -392,7 +392,7 @@ pub mod test_utils {
         assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
         assert_eq!(proposal.clone(), issuer.get_proposal().unwrap());
         let offer_info = OfferInfo {
-            credential_json: json!(proposal.content.credential_proposal).to_string(),
+            credential_json: json!(proposal.content.credential_proposal.attributes).to_string(),
             cred_def_id: proposal.content.cred_def_id.clone(),
             rev_reg_id,
             tails_file,
@@ -406,7 +406,7 @@ pub mod test_utils {
             .await
             .unwrap();
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
-        thread::sleep(Duration::from_millis(100));
+        tokio::time::sleep(Duration::from_millis(1000)).await;
         issuer
     }
 
@@ -425,7 +425,7 @@ pub mod test_utils {
         assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
         let proposal = issuer.get_proposal().unwrap();
         let offer_info = OfferInfo {
-            credential_json: json!(proposal.content.credential_proposal).to_string(),
+            credential_json: json!(proposal.content.credential_proposal.attributes).to_string(),
             cred_def_id: proposal.content.cred_def_id.clone(),
             rev_reg_id,
             tails_file,
@@ -439,7 +439,7 @@ pub mod test_utils {
             .await
             .unwrap();
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
-        thread::sleep(Duration::from_millis(100));
+        tokio::time::sleep(Duration::from_millis(1000)).await;
     }
 
     pub async fn accept_offer(alice: &mut Alice, connection: &MediatedConnection, holder: &mut Holder) {
@@ -506,7 +506,7 @@ pub mod test_utils {
             )
             .await
             .unwrap();
-        thread::sleep(Duration::from_millis(100));
+        tokio::time::sleep(Duration::from_millis(1000)).await;
         assert_eq!(thread_id, issuer_credential.get_thread_id().unwrap());
 
         info!("send_credential >>> storing credential");
@@ -544,7 +544,7 @@ pub mod test_utils {
             .await
             .unwrap();
         assert_eq!(prover.get_state(), ProverState::PresentationProposalSent);
-        thread::sleep(Duration::from_millis(100));
+        tokio::time::sleep(Duration::from_millis(1000)).await;
         prover
     }
 
@@ -572,7 +572,7 @@ pub mod test_utils {
             .await
             .unwrap();
         assert_eq!(prover.get_state(), ProverState::PresentationProposalSent);
-        thread::sleep(Duration::from_millis(100));
+        tokio::time::sleep(Duration::from_millis(1000)).await;
     }
 
     pub async fn accept_proof_proposal(faber: &mut Faber, verifier: &mut Verifier, connection: &MediatedConnection) {
@@ -657,7 +657,7 @@ pub mod test_utils {
             .send_presentation_request(connection.send_message_closure(&faber.profile).await.unwrap())
             .await
             .unwrap();
-        thread::sleep(Duration::from_millis(100));
+        tokio::time::sleep(Duration::from_millis(1000)).await;
         verifier
     }
 
@@ -736,7 +736,7 @@ pub mod test_utils {
                 .unwrap();
             info!("generate_and_send_proof :: proof sent");
             assert_eq!(thread_id, prover.get_thread_id().unwrap());
-            thread::sleep(Duration::from_millis(100));
+            tokio::time::sleep(Duration::from_millis(1000)).await;
         }
     }
 
@@ -885,6 +885,7 @@ pub mod test_utils {
         let mut holder = send_cred_proposal(consumer, consumer_to_issuer, schema_id, cred_def_id, comment).await;
         let mut issuer = accept_cred_proposal(institution, issuer_to_consumer, rev_reg_id, tails_file).await;
         accept_offer(consumer, consumer_to_issuer, &mut holder).await;
+        tokio::time::sleep(Duration::from_millis(1000)).await;
         send_credential(
             consumer,
             institution,
@@ -1043,7 +1044,7 @@ pub mod test_utils {
         consumer_to_institution: &mut MediatedConnection,
         request: Request,
     ) -> MediatedConnection {
-        thread::sleep(Duration::from_millis(100));
+        tokio::time::sleep(Duration::from_millis(1000)).await;
         let mut institution_to_consumer = MediatedConnection::create_with_request(
             &faber.profile,
             request,
@@ -1074,7 +1075,7 @@ pub mod test_utils {
             consumer_to_institution.get_state()
         );
 
-        thread::sleep(Duration::from_millis(100));
+        tokio::time::sleep(Duration::from_millis(1000)).await;
         institution_to_consumer
             .find_message_and_update_state(&faber.profile, &faber.agency_client)
             .await
@@ -1163,7 +1164,7 @@ pub mod test_utils {
         let thread_id = consumer_to_institution.get_thread_id();
 
         debug!("Institution is going to process connection request.");
-        thread::sleep(Duration::from_millis(100));
+        tokio::time::sleep(Duration::from_millis(1000)).await;
         institution_to_consumer
             .find_message_and_update_state(&faber.profile, &faber.agency_client)
             .await
@@ -1186,7 +1187,7 @@ pub mod test_utils {
         assert_eq!(thread_id, consumer_to_institution.get_thread_id());
 
         debug!("Institution is going to complete the connection protocol.");
-        thread::sleep(Duration::from_millis(100));
+        tokio::time::sleep(Duration::from_millis(1000)).await;
         institution_to_consumer
             .find_message_and_update_state(&faber.profile, &faber.agency_client)
             .await

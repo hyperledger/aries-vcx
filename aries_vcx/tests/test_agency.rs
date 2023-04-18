@@ -49,7 +49,7 @@ mod integration_tests {
                 .await
                 .unwrap();
 
-            thread::sleep(Duration::from_millis(100));
+            tokio::time::sleep(Duration::from_millis(1000)).await;
 
             let msgs = faber_to_alice
                 .download_messages(&institution.agency_client, None, None)
@@ -350,7 +350,7 @@ mod integration_tests {
                 .await
                 .unwrap();
 
-            thread::sleep(Duration::from_millis(100));
+            tokio::time::sleep(Duration::from_millis(1000)).await;
 
             let received = alice_to_faber
                 .download_messages(&alice.agency_client, Some(vec![MessageStatusCode::Received]), None)

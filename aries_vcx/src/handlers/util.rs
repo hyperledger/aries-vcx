@@ -26,8 +26,10 @@ macro_rules! matches_thread_id {
 
 macro_rules! matches_opt_thread_id {
     ($msg:expr, $id:expr) => {
-        $msg.decorators.thread.as_ref().map(|t| t.thid.as_str()) == Some($id)
-            || $msg.decorators.thread.as_ref().map(|t| t.pthid.as_deref()).flatten() == Some($id)
+        match $msg.decorators.thread.as_ref() {
+            Some(t) => t.thid == $id || t.pthid.as_deref() == Some($id),
+            None => true,
+        }
     };
 }
 

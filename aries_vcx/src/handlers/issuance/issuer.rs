@@ -51,6 +51,7 @@ fn _build_credential_preview(credential_json: &str) -> VcxResult<CredentialPrevi
 
     // todo: should throw err if cred_values is not serde_json::Value::Array or serde_json::Value::Object
     let mut credential_preview = CredentialPreview::new(Vec::new());
+    
     match cred_values {
         serde_json::Value::Array(cred_values) => {
             for cred_value in cred_values.iter() {
@@ -62,6 +63,7 @@ fn _build_credential_preview(credential_json: &str) -> VcxResult<CredentialPrevi
                     AriesVcxErrorKind::InvalidAttributesStructure,
                     format!("No 'value' field in cred_value: {:?}", cred_value),
                 ))?;
+                
                 let mut attr = CredentialAttr::new(
                     key.as_str()
                         .ok_or(AriesVcxError::from_msg(
@@ -85,7 +87,7 @@ fn _build_credential_preview(credential_json: &str) -> VcxResult<CredentialPrevi
         serde_json::Value::Object(values_map) => {
             for item in values_map.iter() {
                 let (key, value) = item;
-
+                
                 let mut attr = CredentialAttr::new(
                     key.to_owned(),
                     value
