@@ -4,9 +4,9 @@ use crate::messages::a2a_message::Client2AgencyMessage;
 use crate::messages::create_key::CreateKeyBuilder;
 use crate::messages::update_com_method::{ComMethodType, UpdateComMethod};
 use crate::messages::update_connection::DeleteConnectionBuilder;
-use crate::testing::mocking::{agency_mocks_enabled, AgencyMock};
-use crate::testing::{mocking, test_constants};
-
+use crate::testing::test_constants;
+use shared_vcx::testing::mocking;
+use shared_vcx::testing::mocking::{agency_mocks_enabled, AgencyMock};
 impl AgencyClient {
     pub async fn delete_connection_agent(
         &self,

@@ -3,6 +3,7 @@ use std::sync::Mutex;
 use crate::errors::error::AgencyClientResult;
 use crate::testing::test_settings::{disable_agency_test_mode, enable_agency_test_mode, get_config_agency_test_mode};
 
+
 lazy_static! {
     static ref AGENCY_MOCK: Mutex<AgencyMock> = Mutex::new(AgencyMock::default());
     static ref AGENCY_MOCK_DECRYPTED_RESPONSES: Mutex<AgencyMockDecrypted> = Mutex::new(AgencyMockDecrypted::default());

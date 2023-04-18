@@ -1,6 +1,7 @@
 use serde_json;
 
-use aries_vcx::agency_client::testing::mocking::AgencyMockDecrypted;
+use shared_vcx::testing::mocking::AgencyMockDecrypted;
+
 use aries_vcx::handlers::issuance::holder::Holder;
 use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::messages::protocols::issuance::credential_offer::CredentialOffer;

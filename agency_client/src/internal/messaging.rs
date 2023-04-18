@@ -1,14 +1,15 @@
 use crate::agency_client::AgencyClient;
 use crate::errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
-use crate::httpclient;
 use crate::messages::a2a_message::Client2AgencyMessage;
 use crate::messages::forward::ForwardV2;
-use crate::testing::mocking::AgencyMockDecrypted;
 use core::u8;
 use serde_json::Value;
+use shared_vcx::errors::error::{SharedVcxError, SharedVcxResult};
+use shared_vcx::httpclient;
+use shared_vcx::testing::mocking::AgencyMockDecrypted;
 
 impl AgencyClient {
-    pub async fn post_to_agency(&self, body_content: Vec<u8>) -> AgencyClientResult<Vec<u8>> {
+    pub async fn post_to_agency(&self, body_content: Vec<u8>) -> SharedVcxResult<Vec<u8>> {
         let url = self.get_agency_url_full();
         httpclient::post_message(body_content, &url).await
     }

@@ -3,6 +3,15 @@ use std::fmt;
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug, thiserror::Error)]
 pub enum SharedVcxErrorKind {
+    // Common
+    #[error("Object is in invalid state for requested operation")]
+    InvalidState,
+    #[error("Invalid Configuration")]
+    InvalidConfiguration,
+    #[error("Message failed in post")]
+    PostMessageFailed,
+
+    // Validation
     #[error("Invalid DID")]
     InvalidDid,
     #[error("Invalid VERKEY")]

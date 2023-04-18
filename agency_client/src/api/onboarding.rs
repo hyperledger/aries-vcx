@@ -7,9 +7,9 @@ use crate::messages::a2a_message::Client2AgencyMessage;
 use crate::messages::connect::{Connect, ConnectResponse};
 use crate::messages::create_agent::{CreateAgent, CreateAgentResponse};
 use crate::messages::sign_up::{SignUp, SignUpResponse};
-use crate::testing::mocking::AgencyMockDecrypted;
 use crate::testing::test_constants;
 use crate::wallet::base_agency_client_wallet::BaseAgencyClientWallet;
+use shared_vcx::testing::mocking::AgencyMockDecrypted;
 
 impl AgencyClient {
     async fn _connect(

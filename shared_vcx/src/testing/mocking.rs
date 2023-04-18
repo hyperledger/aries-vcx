@@ -11,6 +11,8 @@ lazy_static! {
     static ref HTTPCLIENT_MOCK_RESPONSES: Mutex<HttpClientMockResponse> = Mutex::new(HttpClientMockResponse::default());
 }
 
+use log::{debug, trace};
+
 #[derive(Default)]
 pub struct HttpClientMockResponse {
     responses: Vec<SharedVcxResult<Vec<u8>>>,

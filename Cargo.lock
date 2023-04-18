@@ -2451,6 +2451,7 @@ dependencies = [
  "serde",
  "serde_derive",
  "serde_json",
+ "shared_vcx",
  "thiserror",
  "time 0.1.45",
  "tokio",
@@ -3830,7 +3831,9 @@ version = "0.54.1"
 dependencies = [
  "bs58 0.4.0",
  "lazy_static",
+ "log",
  "regex",
+ "reqwest",
  "thiserror",
 ]
 

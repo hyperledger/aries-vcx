@@ -1,3 +1,4 @@
+use log::{debug, error, info, warn};
 use std::env;
 use std::time::Duration;
 

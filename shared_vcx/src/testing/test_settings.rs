@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use std::sync::RwLock;
-
+use log::{trace, warn};
 use crate::errors::error::{SharedVcxError, SharedVcxErrorKind, SharedVcxResult};
 
 const CONFIG_AGENCY_TEST_MODE: &str = "enable_test_mode";

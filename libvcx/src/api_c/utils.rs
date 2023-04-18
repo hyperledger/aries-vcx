@@ -6,7 +6,6 @@ use serde_json;
 
 use aries_vcx::agency_client::configuration::AgentProvisionConfig;
 use aries_vcx::agency_client::messages::update_message::UIDsByConn;
-use aries_vcx::agency_client::testing::mocking::AgencyMock;
 use aries_vcx::agency_client::MessageStatusCode;
 use aries_vcx::utils::constants::*;
 use libvcx_core::api_vcx::api_global::agency_client::agency_update_messages;
@@ -23,6 +22,7 @@ use libvcx_core::api_vcx::api_handle::mediated_connection;
 use libvcx_core::api_vcx::api_handle::mediated_connection::{parse_connection_handles, parse_status_codes};
 use libvcx_core::errors;
 use libvcx_core::errors::error::{LibvcxError, LibvcxErrorKind};
+use shared_vcx::testing::mocking::AgencyMock;
 
 use crate::api_c::cutils::cstring::CStringUtils;
 use crate::api_c::cutils::current_error::{set_current_error, set_current_error_vcx};

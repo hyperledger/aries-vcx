@@ -1,6 +1,5 @@
 use serde_json;
 
-use aries_vcx::agency_client::testing::mocking::AgencyMockDecrypted;
 use aries_vcx::handlers::proof_presentation::prover::Prover;
 use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::messages::protocols::proof_presentation::presentation_request::PresentationRequest;
@@ -8,6 +7,7 @@ use aries_vcx::utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
 use aries_vcx::{
     global::settings::indy_mocks_enabled, utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION,
 };
+use shared_vcx::testing::mocking::AgencyMockDecrypted;
 
 use crate::api_vcx::api_global::profile::{get_main_profile, get_main_profile_optional_pool};
 use crate::api_vcx::api_handle::mediated_connection;

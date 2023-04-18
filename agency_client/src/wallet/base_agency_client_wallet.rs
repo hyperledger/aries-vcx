@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 
 use crate::errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
-use crate::testing::mocking::agency_mocks_enabled;
+use shared_vcx::testing::mocking::agency_mocks_enabled;
 
 #[async_trait]
 pub trait BaseAgencyClientWallet: std::fmt::Debug + Send + Sync {
