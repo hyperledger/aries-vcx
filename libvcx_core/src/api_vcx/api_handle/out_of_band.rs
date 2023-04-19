@@ -295,7 +295,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_serde_oob_config_handshake_protocols() {
-        let config_str = json!({ "handshake_protocols": vec!["ConnectionV1", "DidExchangeV1"] }).to_string();
+        let config_str = json!({ "handshake_protocols": vec!["https://didcomm.org/connections/1.0"] }).to_string();
         let config_actual: OOBConfig = serde_json::from_str(&config_str).unwrap();
         assert_eq!(
             config_actual.handshake_protocols,
