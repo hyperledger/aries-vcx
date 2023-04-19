@@ -303,7 +303,7 @@ jobs:
         run: |
           RUSTFLAGS='-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests' \
           RUSTDOCFLAGS='-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests' \
-          RUST_TEST_THREADS=1 CARGO_INCREMENTAL=0 TEST_POOL_IP=127.0.0.1 cargo test --package aries-vcx -F 'general_test';
+          RUST_TEST_THREADS=1 CARGO_INCREMENTAL=0 TEST_POOL_IP=127.0.0.1 cargo test --package aries-vcx;
 
           mkdir -p /tmp/artifacts/coverage
           grcov ./target/debug/ -s . -t lcov --llvm --branch --ignore-not-existing -o /tmp/artifacts/coverage/coverage.lcov
@@ -333,7 +333,7 @@ jobs:
         run: |
           RUSTFLAGS='-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests' \
           RUSTDOCFLAGS='-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests' \
-          RUST_TEST_THREADS=1 CARGO_INCREMENTAL=0 TEST_POOL_IP=127.0.0.1 cargo test --package aries-vcx -F 'pool_tests agency_pool_tests';
+          RUST_TEST_THREADS=1 CARGO_INCREMENTAL=0 TEST_POOL_IP=127.0.0.1 cargo test --package aries-vcx -- --ignored;
 
           mkdir -p /tmp/artifacts/coverage
           grcov ./target/debug/ -s . -t lcov --llvm --branch --ignore-not-existing -o /tmp/artifacts/coverage/coverage.lcov
@@ -364,7 +364,7 @@ jobs:
         run: |
           RUSTFLAGS='-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests' \
           RUSTDOCFLAGS='-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests' \
-          RUST_TEST_THREADS=1 CARGO_INCREMENTAL=0 TEST_POOL_IP=127.0.0.1 cargo test --package aries-vcx -F 'pool_tests agency_pool_tests modular_libs_tests';
+          RUST_TEST_THREADS=1 CARGO_INCREMENTAL=0 TEST_POOL_IP=127.0.0.1 cargo test --package aries-vcx -F 'modular_libs_tests' -- --ignored;
 
           mkdir -p /tmp/artifacts/coverage
           grcov ./target/debug/ -s . -t lcov --llvm --branch --ignore-not-existing -o /tmp/artifacts/coverage/coverage.lcov
@@ -395,7 +395,7 @@ jobs:
         with:
           skip-docker-setup: true
       - name: "Run workspace tests: general_test"
-        run: RUST_TEST_THREADS=1 cargo test --workspace --exclude aries-vcx-agent --exclude libvdrtools -F general_test
+        run: RUST_TEST_THREADS=1 cargo test --workspace --exclude aries-vcx-agent --exclude libvdrtools
 
   test-integration-aries-vcx:
     needs: workflow-setup
@@ -406,7 +406,7 @@ jobs:
       - name: "Setup rust testing environment"
         uses: ./.github/actions/setup-testing-rust
       - name: "Run aries-vcx tests: pool_tests agency_pool_tests"
-        run: RUST_TEST_THREADS=1 cargo test --manifest-path="aries_vcx/Cargo.toml" -F "pool_tests agency_pool_tests"
+        run: RUST_TEST_THREADS=1 cargo test --manifest-path="aries_vcx/Cargo.toml" -- --ignored;
 
   test-integration-aries-vcx-mysql:
     needs: workflow-setup
@@ -417,7 +417,7 @@ jobs:
       - name: "Setup rust testing environment"
         uses: ./.github/actions/setup-testing-rust
       - name: "Run aries-vcx tests: mysql_test"
-        run: RUST_TEST_THREADS=1 cargo test --manifest-path="aries_vcx/Cargo.toml" -F "mysql_test"
+        run: RUST_TEST_THREADS=1 cargo test --manifest-path="aries_vcx/Cargo.toml" test_mysql -- --include-ignored;
 
   test-integration-libvcx:
     needs: workflow-setup
@@ -430,7 +430,7 @@ jobs:
         uses: ./.github/actions/setup-testing-rust
       - name: "Run libvcx tests: pool_tests"
         run: |
-          RUST_TEST_THREADS=1 cargo test --manifest-path="libvcx/Cargo.toml" -F "pool_tests"
+          RUST_TEST_THREADS=1 cargo test --manifest-path="libvcx/Cargo.toml" --
 
   test-node-wrapper:
     needs: workflow-setup
