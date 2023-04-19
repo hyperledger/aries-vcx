@@ -430,7 +430,7 @@ jobs:
         uses: ./.github/actions/setup-testing-rust
       - name: "Run libvcx tests: pool_tests"
         run: |
-          RUST_TEST_THREADS=1 cargo test --manifest-path="libvcx/Cargo.toml" --
+          RUST_TEST_THREADS=1 cargo test --manifest-path="libvcx/Cargo.toml" test_pool -- --include-ignored
 
   test-node-wrapper:
     needs: workflow-setup
