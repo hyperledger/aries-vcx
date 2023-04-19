@@ -109,9 +109,7 @@ pub async fn libindy_get_txn_author_agreement(pool_handle: PoolHandle) -> VcxCor
     let get_author_agreement_response = libindy_submit_request(pool_handle, &get_author_agreement_request).await?;
 
     let get_author_agreement_response = serde_json::from_str::<serde_json::Value>(&get_author_agreement_response)
-        .map_err(|err| {
-            AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::InvalidLedgerResponse, format!("{err:?}"))
-        })?;
+        .map_err(|err| AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::InvalidLedgerResponse, format!("{err:?}")))?;
 
     let mut author_agreement_data = get_author_agreement_response["result"]["data"]
         .as_object()

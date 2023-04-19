@@ -243,9 +243,7 @@ impl AriesDidDoc {
             })
             .ok_or(DiddocError::from_msg(
                 DiddocErrorKind::InvalidJson,
-                format!(
-                    "DIDDoc validation failed: Cannot find Authentication record key: {key:?}"
-                ),
+                format!("DIDDoc validation failed: Cannot find Authentication record key: {key:?}"),
             ))?;
 
         if authentication_key.type_ != KEY_AUTHENTICATION_TYPE && authentication_key.type_ != KEY_TYPE {

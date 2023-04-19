@@ -459,7 +459,7 @@ pub mod test_utils {
             info!("create_test_alice_instance >> using modular profile");
             Alice::setup_modular_profile(config).await
         };
-        
+
         Alice::setup(alice_profile, teardown).await
     }
 

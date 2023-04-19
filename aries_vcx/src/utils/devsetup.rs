@@ -7,9 +7,7 @@ use std::sync::{Arc, Once};
 use aries_vcx_core::global::settings::{
     disable_indy_mocks as disable_indy_mocks_core, enable_indy_mocks as enable_indy_mocks_core,
 };
-use aries_vcx_core::indy::ledger::pool::test_utils::{
-    create_test_ledger_config,  delete_test_pool, open_test_pool,
-};
+use aries_vcx_core::indy::ledger::pool::test_utils::{create_test_ledger_config, delete_test_pool, open_test_pool};
 use aries_vcx_core::indy::ledger::pool::PoolConfig;
 use aries_vcx_core::indy::utils::mocks::did_mocks::DidMocks;
 use aries_vcx_core::indy::utils::mocks::pool_mocks::PoolMocks;

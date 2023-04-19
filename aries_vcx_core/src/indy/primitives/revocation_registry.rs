@@ -176,9 +176,7 @@ pub async fn publish_local_revocations(
             }
             Err(err) => Err(AriesVcxCoreError::from_msg(
                 AriesVcxCoreErrorKind::RevDeltaFailedToClear,
-                format!(
-                    "Failed to clear revocation delta storage for rev_reg_id: {rev_reg_id}, error: {err}"
-                ),
+                format!("Failed to clear revocation delta storage for rev_reg_id: {rev_reg_id}, error: {err}"),
             )),
         }
     } else {

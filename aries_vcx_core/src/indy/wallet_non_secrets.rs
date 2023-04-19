@@ -109,9 +109,7 @@ pub async fn clear_rev_reg_delta(wallet_handle: WalletHandle, rev_reg_id: &str) 
     } else {
         Err(AriesVcxCoreError::from_msg(
             AriesVcxCoreErrorKind::IOError,
-            format!(
-                "Couldn't fetch delta for rev_reg_id {rev_reg_id} before deletion, deletion skipped"
-            ),
+            format!("Couldn't fetch delta for rev_reg_id {rev_reg_id} before deletion, deletion skipped"),
         ))
     }
 }
