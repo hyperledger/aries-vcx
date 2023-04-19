@@ -1,5 +1,4 @@
 use aries_vcx_core::errors::error::AriesVcxCoreErrorKind;
-use aries_vcx_core::indy::utils::LibindyMock;
 use aries_vcx_core::ledger::base_ledger::BaseLedger;
 
 use crate::core::profile::profile::Profile;

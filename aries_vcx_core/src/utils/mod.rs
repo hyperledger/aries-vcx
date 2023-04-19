@@ -12,9 +12,3 @@ pub fn get_temp_dir_path(filename: &str) -> PathBuf {
     path.push(filename);
     path
 }
-
-pub fn get_temp_dir_path(filename: &str) -> PathBuf {
-    let mut path = env::temp_dir();
-    path.push(filename);
-    path
-}

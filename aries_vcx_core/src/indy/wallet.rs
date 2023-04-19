@@ -558,29 +558,6 @@ pub async fn export_wallet(wallet_handle: WalletHandle, path: &str, backup_key: 
     Ok(())
 }
 
-pub async fn export_wallet(wallet_handle: WalletHandle, path: &str, backup_key: &str) -> VcxCoreResult<()> {
-    trace!(
-        "export >>> wallet_handle: {:?}, path: {:?}, backup_key: ****",
-        wallet_handle,
-        path
-    );
-
-    Locator::instance()
-        .wallet_controller
-        .export(
-            wallet_handle.0,
-            vdrtools::types::domain::wallet::ExportConfig {
-                key: backup_key.into(),
-                path: path.into(),
-
-                key_derivation_method: default_key_derivation_method(),
-            },
-        )
-        .await?;
-
-    Ok(())
-}
-
 pub async fn create_and_open_wallet(wallet_config: &WalletConfig) -> VcxCoreResult<WalletHandle> {
     if settings::indy_mocks_enabled() {
         warn!("create_and_open_wallet ::: Indy mocks enabled, skipping opening main wallet.");

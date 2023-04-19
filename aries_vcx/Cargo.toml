@@ -20,6 +20,7 @@ modular_libs = ["aries_vcx_core/modular_libs"]
 [dependencies]
 agency_client = { path = "../agency_client" }
 messages = { path  = "../messages" }
+diddoc = { path = "../diddoc" }
 # default-features as false, since we transitively choose features via `vdrtools` and `modular_libs` features
 aries_vcx_core = { path  = "../aries_vcx_core", default-features = false }
 bs58 = "0.4.0"

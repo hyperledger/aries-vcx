@@ -62,7 +62,10 @@ pub async fn ledger_write_endpoint(
     endpoint: String,
 ) -> LibvcxResult<EndpointDidSov> {
     let service = EndpointDidSov::create()
-        .set_service_endpoint(endpoint)
+        .set_service_endpoint(
+            Url::from_str(&endpoint)
+                .map_err(|err| LibvcxError::from_msg(LibvcxErrorKind::InvalidUrl, err.to_string()))?,
+        )
         .set_types(Some(vec![
             DidSovServiceType::Endpoint,
             DidSovServiceType::DidCommunication,

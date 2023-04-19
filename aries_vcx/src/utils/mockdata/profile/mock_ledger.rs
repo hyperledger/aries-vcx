@@ -1,6 +1,5 @@
 use crate::utils::mockdata::mock_settings::StatusCodeMock;
 use aries_vcx_core::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
-use aries_vcx_core::indy::utils::LibindyMock;
 use aries_vcx_core::ledger::base_ledger::BaseLedger;
 use async_trait::async_trait;
 
