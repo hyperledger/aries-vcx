@@ -10,7 +10,7 @@ describe('Nonmediated connection:', () => {
 
   describe('create invitation:', () => {
     it('success', async () => {
-      const serviceEndpoint = 'http://localhost:8080';
+      const serviceEndpoint = 'http://localhost:8080/';
       const routingKeys = [ 'routingKey' ];
       const connection = await NonmediatedConnection.createInviter();
       assert.equal(connection.getState(), ConnectionStateType.Initial);
