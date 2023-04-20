@@ -14,7 +14,7 @@ OUTPUT_DIR=/tmp/artifacts
 setup() {
     echo "ios_legacy/ci/build.sh: running setup()"
     echo "Setup rustup"
-    rustup default 1.64.0
+    rustup default 1.65.0
     rustup component add rls-preview rust-analysis rust-src
 
     echo "Setup rustup target platforms"
