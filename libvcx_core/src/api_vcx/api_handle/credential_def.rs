@@ -137,6 +137,7 @@ pub mod tests {
         )
     }
 
+    #[cfg(feature = "test_utils")]
     pub async fn create_and_publish_nonrevocable_creddef() -> (u32, u32) {
         let schema_handle = schema::test_utils::create_schema_real().await;
         sleep(Duration::from_secs(1));

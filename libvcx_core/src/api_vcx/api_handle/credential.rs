@@ -354,10 +354,12 @@ pub mod tests {
         ARIES_CREDENTIAL_OFFER, ARIES_CREDENTIAL_OFFER_JSON_FORMAT, ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED,
     };
 
+    #[cfg(feature = "test_utils")]
     use crate::api_vcx::api_handle::credential::tests_utils::BAD_CREDENTIAL_OFFER;
     use crate::api_vcx::api_handle::credential::{
         credential_create_with_offer, get_attributes, get_credential, send_credential_request,
     };
+    #[cfg(feature = "test_utils")]
     use crate::api_vcx::api_handle::mediated_connection::test_utils::{
         build_test_connection_invitee_completed, build_test_connection_inviter_requested,
     };

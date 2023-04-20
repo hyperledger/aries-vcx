@@ -284,8 +284,9 @@ pub mod tests {
     use aries_vcx::utils::devsetup::SetupMocks;
     use aries_vcx::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_REQUEST;
     use aries_vcx::utils::mockdata::mockdata_mediated_connection::ARIES_CONNECTION_ACK;
-
+    #[cfg(feature = "test_utils")]
     use crate::api_vcx::api_handle::credential_def::tests::create_and_publish_nonrevocable_creddef;
+    #[cfg(feature = "test_utils")]
     use crate::api_vcx::api_handle::mediated_connection::test_utils::build_test_connection_inviter_requested;
     use crate::aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
     use crate::errors::error;

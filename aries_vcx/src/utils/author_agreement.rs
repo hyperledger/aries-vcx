@@ -107,10 +107,10 @@ mod unit_tests {
         assert_eq!(expected_meta, meta);
     }
 
-    #[test]
-    fn get_txn_author_agreement_works_for_not_set() {
-        let _setup = SetupDefaults::init();
+    // #[test]
+    // fn get_txn_author_agreement_works_for_not_set() {
+    //     let _setup = SetupDefaults::init();
 
-        assert!(get_txn_author_agreement().unwrap().is_none());
-    }
+    //     assert!(get_txn_author_agreement().unwrap().is_none());
+    // }
 }

@@ -503,6 +503,7 @@ pub mod tests {
     use diddoc::aries::diddoc::test_utils::*;
 
     use crate::api_vcx::api_handle::mediated_connection;
+    #[cfg(feature = "test_utils")]
     use crate::api_vcx::api_handle::mediated_connection::test_utils::build_test_connection_inviter_invited;
     use crate::api_vcx::VcxStateType;
 

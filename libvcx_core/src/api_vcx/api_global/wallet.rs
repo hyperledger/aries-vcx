@@ -238,6 +238,7 @@ pub mod test_utils {
 }
 
 #[cfg(test)]
+#[cfg(feature = "general_test")]
 pub mod tests {
     use aries_vcx::aries_vcx_core::indy::wallet::{delete_wallet, RestoreWalletConfigs, WalletConfig, WalletRecord};
     use aries_vcx::global::settings::{
