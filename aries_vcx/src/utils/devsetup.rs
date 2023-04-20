@@ -32,6 +32,7 @@ use agency_client::testing::mocking::{disable_agency_mocks, enable_agency_mocks,
 #[cfg(feature = "modular_libs")]
 use crate::core::profile::modular_libs_profile::ModularLibsProfile;
 use crate::core::profile::profile::Profile;
+#[cfg(feature = "vdrtools")]
 use crate::core::profile::vdrtools_profile::VdrtoolsProfile;
 use crate::global::settings;
 use crate::global::settings::init_issuer_config;
@@ -368,6 +369,7 @@ impl SetupProfile {
         cfg!(feature = "modular_libs_tests")
     }
 
+    #[cfg(any(feature = "modular_libs", feature = "vdrtools"))]
     pub async fn init() -> SetupProfile {
         init_test_logging();
         set_test_configs();
@@ -378,12 +380,16 @@ impl SetupProfile {
             SetupProfile::init_modular().await
         };
 
-        info!("SetupProfile >> using indy profile");
-        SetupProfile::init_indy().await
+        #[cfg(feature = "vdrtools")]
+        return {
+            info!("SetupProfile >> using indy profile");
+            SetupProfile::init_indy().await
+        };
     }
 
     // FUTURE - ideally no tests should be using this method, they should be using the generic init
     // after modular profile Anoncreds/Ledger methods have all been implemented, all tests should use init()
+    #[cfg(feature = "vdrtools")]
     async fn init_indy() -> SetupProfile {
         let (institution_did, wallet_handle) = setup_issuer_wallet().await;
 
@@ -439,6 +445,7 @@ impl SetupProfile {
         }
     }
 
+    #[cfg(any(feature = "modular_libs", feature = "vdrtools"))]
     pub async fn run<F>(f: impl FnOnce(Self) -> F)
     where
         F: Future<Output = ()>,
@@ -456,6 +463,7 @@ impl SetupProfile {
 
     // FUTURE - ideally no tests should be using this method, they should be using the generic run
     // after modular profile Anoncreds/Ledger methods have all been implemented, all tests should use run()
+    #[cfg(feature = "vdrtools")]
     pub async fn run_indy<F>(f: impl FnOnce(Self) -> F)
     where
         F: Future<Output = ()>,
@@ -474,6 +482,7 @@ impl SetupProfile {
 
 // TODO - FUTURE - delete this method after `SetupProfile::run_indy` is removed. The purpose of this helper method
 // is to return a test profile for a prover/holder given an existing indy-based profile setup (i.e. returned by SetupProfile::run_indy)
+#[cfg(any(feature = "modular_libs", feature = "vdrtools"))]
 pub async fn init_holder_setup_in_indy_context(indy_issuer_setup: &SetupProfile) -> SetupProfile {
     if SetupProfile::should_run_modular() {
         return SetupProfile::init().await; // create a new modular profile
