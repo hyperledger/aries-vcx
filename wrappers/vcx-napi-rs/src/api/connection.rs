@@ -1,9 +1,9 @@
 use chrono::Utc;
-use libvcx_core::aries_vcx::messages::AriesMessage;
 use libvcx_core::aries_vcx::messages::decorators::timing::Timing;
 use libvcx_core::aries_vcx::messages::msg_fields::protocols::basic_message::{
     BasicMessage, BasicMessageContent, BasicMessageDecorators,
 };
+use libvcx_core::aries_vcx::messages::AriesMessage;
 use napi::Error;
 use napi_derive::napi;
 
