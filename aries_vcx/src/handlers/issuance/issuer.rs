@@ -333,18 +333,18 @@ pub mod test_utils {
     pub async fn get_credential_proposal_messages(
         agency_client: &AgencyClient,
         connection: &MediatedConnection,
-    ) -> VcxResult<String> {
-        let credential_proposals: Vec<ProposeCredential> = connection
+    ) -> VcxResult<Vec<(String, ProposeCredential)>> {
+        let credential_proposals: Vec<(String, ProposeCredential)> = connection
             .get_messages(agency_client)
             .await?
             .into_iter()
-            .filter_map(|(_, message)| match message {
-                AriesMessage::CredentialIssuance(CredentialIssuance::ProposeCredential(proposal)) => Some(proposal),
+            .filter_map(|(uid, message)| match message {
+                AriesMessage::CredentialIssuance(CredentialIssuance::ProposeCredential(proposal)) => Some((uid, proposal)),
                 _ => None,
             })
             .collect();
 
-        Ok(json!(credential_proposals).to_string())
+        Ok(credential_proposals)
     }
 }
 

@@ -381,13 +381,12 @@ pub mod test_utils {
         rev_reg_id: Option<String>,
         tails_file: Option<String>,
     ) -> Issuer {
-        let proposals: Vec<ProposeCredential> = serde_json::from_str(
-            &get_credential_proposal_messages(&faber.agency_client, connection)
+        let proposals: Vec<(String, ProposeCredential)> = get_credential_proposal_messages(&faber.agency_client, connection)
                 .await
-                .unwrap(),
-        )
-        .unwrap();
-        let proposal = proposals.last().unwrap();
+                .unwrap();
+
+        let (uid, proposal) = proposals.last().unwrap();
+        connection.update_message_status(uid, &faber.agency_client).await.unwrap();
         let mut issuer = Issuer::create_from_proposal("TEST_CREDENTIAL", proposal).unwrap();
         assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
         assert_eq!(proposal.clone(), issuer.get_proposal().unwrap());
@@ -490,6 +489,8 @@ pub mod test_utils {
         let thread_id = issuer_credential.get_thread_id().unwrap();
         assert_eq!(IssuerState::OfferSent, issuer_credential.get_state());
         assert_eq!(issuer_credential.is_revokable(), false);
+
+
         issuer_credential
             .update_state(&faber.profile, &faber.agency_client, issuer_to_consumer)
             .await
