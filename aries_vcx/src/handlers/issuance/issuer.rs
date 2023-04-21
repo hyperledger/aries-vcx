@@ -339,7 +339,9 @@ pub mod test_utils {
             .await?
             .into_iter()
             .filter_map(|(uid, message)| match message {
-                AriesMessage::CredentialIssuance(CredentialIssuance::ProposeCredential(proposal)) => Some((uid, proposal)),
+                AriesMessage::CredentialIssuance(CredentialIssuance::ProposeCredential(proposal)) => {
+                    Some((uid, proposal))
+                }
                 _ => None,
             })
             .collect();
