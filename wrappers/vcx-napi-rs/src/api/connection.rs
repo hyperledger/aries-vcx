@@ -1,4 +1,5 @@
 use chrono::Utc;
+use libvcx_core::aries_vcx::messages::AriesMessage;
 use libvcx_core::aries_vcx::messages::decorators::timing::Timing;
 use libvcx_core::aries_vcx::messages::msg_fields::protocols::basic_message::{
     BasicMessage, BasicMessageContent, BasicMessageDecorators,
@@ -151,7 +152,7 @@ pub async fn connection_send_generic_message(handle: u32, content: String) -> na
     timing.out_time = Some(Utc::now());
     decorators.timing = Some(timing);
 
-    let message = BasicMessage::with_decorators(id, content, decorators);
+    let message = AriesMessage::from(BasicMessage::with_decorators(id, content, decorators));
 
     let basic_message = serde_json::to_string(&message)
         .map_err(From::from)
