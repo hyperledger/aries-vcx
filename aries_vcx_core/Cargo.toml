@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [features]
-test_utils = [ "vdrtools", "modular_libs" ]
+test_utils = ["vdrtools", "modular_libs"]
 default = ["vdrtools"]
 ########################## DEP FLAGS ################################
 # Feature flag to include the libvdrtools dependency
@@ -14,6 +14,7 @@ modular_libs = ["dep:indy-vdr", "dep:indy-credx"]
 ########################## TEST FLAGS ###############################
 # Feature flag for base requirments for running tests underneath the `test_utils` flag (most tests).
 # Both `vdrtools` and `modular_libs` are transitively enabled, so they can be used for tests (including interop tests).
+mock = ["dep:mockall"]
 
 [dependencies]
 agency_client = { path = "../agency_client" }
@@ -44,3 +45,7 @@ lazy_static = "1.4.0"
 derive_builder = "0.12.0"
 uuid = { version = "1.3.0", default-features = false, features = ["v4"] }
 tokio = { version = "1.20.4" }
+mockall = { version = "0.11.4", optional = true }
+
+[dev-dependencies]
+mockall = "0.11.4"
