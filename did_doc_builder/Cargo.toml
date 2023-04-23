@@ -1,0 +1,11 @@
+[package]
+name = "did_doc_builder"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+did_parser = { path = "../did_parser" }
+multibase = "0.9.1"
+serde = { version = "1.0.159", default-features = false, features = ["derive"] }
+serde_json = "1.0.95"
+uniresid = { version = "0.1.4", default-features = false, features = ["serde"] }
