@@ -657,7 +657,7 @@ mod tests {
                 _vcx_open_pool(&json!(setup_pool.pool_config).to_string()).unwrap();
 
                 // Assert config values were set correctly
-                assert_ne!(get_main_pool_handle().unwrap(), INVALID_POOL_HANDLE.0);
+                assert_ne!(get_main_pool_handle().unwrap(), INVALID_POOL_HANDLE);
 
                 // Verify shutdown was successful
                 vcx_shutdown(true);
@@ -790,7 +790,7 @@ mod tests {
 
         // Assert pool was initialized
         assert_ne!(get_main_pool_handle().unwrap(), 0);
-        delete_test_pool(aries_vcx::aries_vcx_core::PoolHandle(get_main_pool_handle().unwrap())).await;
+        delete_test_pool(get_main_pool_handle().unwrap()).await;
         reset_main_pool_handle();
     }
 }

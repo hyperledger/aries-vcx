@@ -24,7 +24,7 @@ mod integration_tests {
     #[ignore]
     async fn test_pool_open_close_pool() {
         SetupWalletPool::run(|setup| async move {
-            assert!(setup.pool_handle.0 > 0);
+            assert!(setup.pool_handle > 0);
         })
         .await;
     }

@@ -102,7 +102,7 @@ pub mod tests {
             pool_config: None,
         };
         open_main_pool(&config).await.unwrap();
-        delete_test_pool(aries_vcx::aries_vcx_core::PoolHandle(get_main_pool_handle().unwrap())).await;
+        delete_test_pool(get_main_pool_handle().unwrap()).await;
         reset_main_pool_handle();
     }
 
