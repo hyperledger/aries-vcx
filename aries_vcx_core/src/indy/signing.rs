@@ -11,7 +11,7 @@ pub async fn sign(wallet_handle: WalletHandle, my_vk: &str, msg: &[u8]) -> VcxCo
 
     let res = Locator::instance()
         .crypto_controller
-        .crypto_sign(wallet_handle.0, my_vk, msg)
+        .crypto_sign(wallet_handle, my_vk, msg)
         .await?;
 
     Ok(res)
@@ -66,7 +66,7 @@ pub async fn pack_message(
             msg.into(),
             receiver_list,
             sender_vk.map(ToOwned::to_owned),
-            wallet_handle.0,
+            wallet_handle,
         )
         .await?;
 
@@ -80,7 +80,7 @@ pub async fn unpack_message(wallet_handle: WalletHandle, msg: &[u8]) -> VcxCoreR
 
     let res = Locator::instance()
         .crypto_controller
-        .unpack_msg(serde_json::from_slice(msg)?, wallet_handle.0)
+        .unpack_msg(serde_json::from_slice(msg)?, wallet_handle)
         .await?;
 
     Ok(res)
@@ -92,7 +92,7 @@ pub async fn create_key(wallet_handle: WalletHandle, seed: Option<&str>) -> VcxC
     let res = Locator::instance()
         .crypto_controller
         .create_key(
-            wallet_handle.0,
+            wallet_handle,
             &KeyInfo {
                 seed: seed.map(ToOwned::to_owned),
                 crypto_type: None,

@@ -33,7 +33,7 @@ pub async fn libindy_create_and_store_revoc_reg(
     let res = Locator::instance()
         .issuer_controller
         .create_and_store_revocation_registry(
-            wallet_handle.0,
+            wallet_handle,
             DidValue(issuer_did.into()),
             None,
             tag.into(),
@@ -61,7 +61,7 @@ pub async fn libindy_issuer_revoke_credential(
     let res = Locator::instance()
         .issuer_controller
         .revoke_credential(
-            wallet_handle.0,
+            wallet_handle,
             blob_handle,
             vdrtools::RevocationRegistryId(rev_reg_id.into()),
             cred_rev_id.into(),

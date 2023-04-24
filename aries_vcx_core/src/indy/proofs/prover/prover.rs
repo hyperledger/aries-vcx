@@ -26,7 +26,7 @@ pub async fn libindy_prover_create_proof(
     let res = Locator::instance()
         .prover_controller
         .create_proof(
-            wallet_handle.0,
+            wallet_handle,
             parse_and_validate(proof_req_json)?,
             parse_and_validate(requested_credentials_json)?,
             master_secret_id.into(),
@@ -70,7 +70,7 @@ pub async fn libindy_prover_get_credentials(
 ) -> VcxCoreResult<String> {
     let res = Locator::instance()
         .prover_controller
-        .get_credentials(wallet_handle.0, filter_json.map(String::from))
+        .get_credentials(wallet_handle, filter_json.map(String::from))
         .await
         .map_err(|ec| {
             error!("Getting prover credentials failed.");
@@ -143,7 +143,7 @@ pub async fn libindy_prover_get_credentials_for_proof_req(
     if !fetch_attrs.is_empty() {
         let search_handle = Locator::instance()
             .prover_controller
-            .search_credentials_for_proof_req(wallet_handle.0, serde_json::from_str(proof_req)?, None)
+            .search_credentials_for_proof_req(wallet_handle, serde_json::from_str(proof_req)?, None)
             .await?;
 
         let creds: String = fetch_credentials(search_handle, fetch_attrs).await?;

@@ -64,7 +64,7 @@ pub async fn open_pool_ledger(pool_name: &str, config: Option<PoolConfig>) -> Vc
 pub async fn close(handle: PoolHandle) -> VcxCoreResult<()> {
     // TODO there was timeout here (before future-based Rust wrapper)
 
-    Locator::instance().pool_controller.close(handle.0).await?;
+    Locator::instance().pool_controller.close(handle).await?;
 
     Ok(())
 }
@@ -105,8 +105,7 @@ pub mod test_utils {
 
     pub async fn open_test_pool() -> PoolHandle {
         create_test_ledger_config().await;
-        let handle = open_pool_ledger(POOL, None).await.unwrap();
-        PoolHandle(handle)
+        open_pool_ledger(POOL, None).await.unwrap()
     }
 
     pub fn get_txns(test_pool_ip: &str) -> Vec<String> {

@@ -15,7 +15,7 @@ pub fn indy_wallet_handle_to_wallet(wallet_handle: WalletHandle) -> Arc<dyn Base
 }
 
 pub fn indy_handles_to_profile(wallet_handle: WalletHandle, pool_handle: i32) -> Arc<dyn Profile> {
-    Arc::new(VdrtoolsProfile::new(wallet_handle, PoolHandle(pool_handle)))
+    Arc::new(VdrtoolsProfile::new(wallet_handle, pool_handle))
 }
 
 pub fn get_main_wallet() -> Arc<dyn BaseWallet> {

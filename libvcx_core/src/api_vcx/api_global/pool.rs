@@ -16,7 +16,7 @@ pub fn set_main_pool_handle(handle: Option<i32>) {
 
 pub fn get_main_pool_handle() -> LibvcxResult<i32> {
     if indy_mocks_enabled() {
-        return Ok(INVALID_POOL_HANDLE.0);
+        return Ok(INVALID_POOL_HANDLE);
     }
     POOL_HANDLE
         .read()
@@ -73,7 +73,7 @@ pub async fn open_main_pool(config: &PoolConfig) -> LibvcxResult<()> {
 
 pub async fn close_main_pool() -> LibvcxResult<()> {
     info!("close_main_pool >> Closing main pool");
-    close(PoolHandle(get_main_pool_handle()?)).await?;
+    close(get_main_pool_handle()?).await?;
     Ok(())
 }
 

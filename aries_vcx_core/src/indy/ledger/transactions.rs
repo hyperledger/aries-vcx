@@ -15,7 +15,7 @@ use crate::{utils, PoolHandle, WalletHandle};
 pub async fn multisign_request(wallet_handle: WalletHandle, did: &str, request: &str) -> VcxCoreResult<String> {
     let res = Locator::instance()
         .ledger_controller
-        .multi_sign_request(wallet_handle.0, DidValue(did.into()), request.into())
+        .multi_sign_request(wallet_handle, DidValue(did.into()), request.into())
         .await?;
 
     Ok(res)
@@ -43,8 +43,8 @@ pub async fn libindy_sign_and_submit_request(
     let res = Locator::instance()
         .ledger_controller
         .sign_and_submit_request(
-            pool_handle.0,
-            wallet_handle.0,
+            pool_handle,
+            wallet_handle,
             DidValue(issuer_did.into()),
             request_json.into(),
         )
@@ -58,7 +58,7 @@ pub async fn libindy_submit_request(pool_handle: PoolHandle, request_json: &str)
 
     let res = Locator::instance()
         .ledger_controller
-        .submit_request(pool_handle.0, request_json.into())
+        .submit_request(pool_handle, request_json.into())
         .await?;
 
     Ok(res)
@@ -235,8 +235,8 @@ pub async fn libindy_get_schema(
     let res = Locator::instance()
         .cache_controller
         .get_schema(
-            pool_handle.0,
-            wallet_handle.0,
+            pool_handle,
+            wallet_handle,
             submitter_did.into(),
             vdrtools::SchemaId(schema_id.into()),
             serde_json::from_str("{}")?,
@@ -254,16 +254,16 @@ async fn libindy_get_cred_def(
     let submitter_did = &generate_random_did();
     trace!(
         "libindy_get_cred_def >>> pool_handle: {}, wallet_handle: {:?}, submitter_did: {}",
-        pool_handle.0,
-        wallet_handle.0,
+        pool_handle,
+        wallet_handle,
         submitter_did
     );
 
     let res = Locator::instance()
         .cache_controller
         .get_cred_def(
-            pool_handle.0,
-            wallet_handle.0,
+            pool_handle,
+            wallet_handle,
             submitter_did.into(),
             cred_def_id.into(),
             serde_json::from_str("{}")?,
