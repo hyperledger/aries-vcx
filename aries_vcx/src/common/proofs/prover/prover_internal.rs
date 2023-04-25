@@ -387,32 +387,30 @@ pub mod unit_tests {
         assert!(credential_def.contains(r#""id":"V4SGRU86Z58d6TV7PBUe6f:3:CL:47:tag1","schemaId":"47""#));
     }
 
-    // Idk why this is failing and at this point I'm too afraid to ask
-    //
-    // #[tokio::test]
-    // async fn test_find_credential_def_fails() {
-    //     SetupLibraryWallet::run(|setup| async move {
-    //         let profile = indy_handles_to_profile(setup.wallet_handle, INVALID_POOL_HANDLE);
-    //         let credential_ids = vec![CredInfoProver {
-    //             requested_attr: "1".to_string(),
-    //             referent: "2".to_string(),
-    //             schema_id: "3".to_string(),
-    //             cred_def_id: "3".to_string(),
-    //             rev_reg_id: Some("4".to_string()),
-    //             cred_rev_id: Some("5".to_string()),
-    //             revocation_interval: None,
-    //             tails_file: None,
-    //             timestamp: None,
-    //             revealed: None,
-    //         }];
-    //         let err_kind = build_cred_defs_json_prover(&profile, &credential_ids)
-    //             .await
-    //             .unwrap_err()
-    //             .kind();
-    //         assert_eq!(err_kind, AriesVcxErrorKind::InvalidProofCredentialData);
-    //     })
-    //     .await;
-    // }
+    #[tokio::test]
+    async fn test_find_credential_def_fails() {
+        SetupLibraryWallet::run(|setup| async move {
+            let profile = indy_handles_to_profile(setup.wallet_handle, INVALID_POOL_HANDLE);
+            let credential_ids = vec![CredInfoProver {
+                requested_attr: "1".to_string(),
+                referent: "2".to_string(),
+                schema_id: "3".to_string(),
+                cred_def_id: "3".to_string(),
+                rev_reg_id: Some("4".to_string()),
+                cred_rev_id: Some("5".to_string()),
+                revocation_interval: None,
+                tails_file: None,
+                timestamp: None,
+                revealed: None,
+            }];
+            let err_kind = build_cred_defs_json_prover(&profile, &credential_ids)
+                .await
+                .unwrap_err()
+                .kind();
+            assert_eq!(err_kind, AriesVcxErrorKind::InvalidProofCredentialData);
+        })
+        .await;
+    }
 
     #[tokio::test]
     async fn test_find_schemas_fails() {
