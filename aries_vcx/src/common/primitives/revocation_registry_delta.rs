@@ -58,13 +58,14 @@ impl RevocationRegistryDelta {
 }
 
 #[cfg(test)]
-#[cfg(feature = "pool_tests")]
+#[allow(clippy::unwrap_used)]
 pub mod integration_tests {
     use super::*;
     use crate::{common::test_utils::create_and_store_credential_def, utils::devsetup::SetupProfile};
 
     #[tokio::test]
-    async fn test_create_rev_reg_delta_from_ledger() {
+    #[ignore]
+    async fn test_pool_create_rev_reg_delta_from_ledger() {
         SetupProfile::run_indy(|setup| async move {
             let attrs = r#"["address1","address2","city","state","zip"]"#;
             let (_, _, _, _, rev_reg_id, _, _) =

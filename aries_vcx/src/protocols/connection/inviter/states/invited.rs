@@ -1,21 +1,29 @@
-use messages::protocols::connection::invite::Invitation;
+use messages::msg_fields::protocols::connection::invitation::Invitation;
 
-use crate::protocols::connection::trait_bounds::{HandleProblem, ThreadId};
+use crate::{
+    handlers::util::AnyInvitation,
+    protocols::connection::trait_bounds::{HandleProblem, ThreadId},
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Invited {
-    pub(crate) invitation: Invitation,
+    pub(crate) invitation: AnyInvitation,
 }
 
 impl Invited {
-    pub fn new(invitation: Invitation) -> Self {
+    pub fn new(invitation: AnyInvitation) -> Self {
         Self { invitation }
     }
 }
 
 impl ThreadId for Invited {
     fn thread_id(&self) -> &str {
-        self.invitation.get_id()
+        match &self.invitation {
+            AnyInvitation::Con(Invitation::Public(i)) => i.id.as_str(),
+            AnyInvitation::Con(Invitation::Pairwise(i)) => i.id.as_str(),
+            AnyInvitation::Con(Invitation::PairwiseDID(i)) => i.id.as_str(),
+            AnyInvitation::Oob(i) => i.id.as_str(),
+        }
     }
 }
 

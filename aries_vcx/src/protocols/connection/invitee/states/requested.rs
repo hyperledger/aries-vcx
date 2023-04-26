@@ -1,4 +1,4 @@
-use messages::diddoc::aries::diddoc::AriesDidDoc;
+use diddoc::aries::diddoc::AriesDidDoc;
 
 use crate::protocols::connection::trait_bounds::{BootstrapDidDoc, HandleProblem, TheirDidDoc, ThreadId};
 

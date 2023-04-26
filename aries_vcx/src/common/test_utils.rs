@@ -1,3 +1,5 @@
+#![allow(clippy::unwrap_used)]
+
 use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
@@ -10,6 +12,7 @@ use crate::common::primitives::credential_definition::CredentialDef;
 use crate::common::primitives::credential_definition::CredentialDefConfigBuilder;
 use crate::common::primitives::revocation_registry::RevocationRegistry;
 use crate::core::profile::profile::Profile;
+#[cfg(feature = "vdrtools")]
 use crate::core::profile::vdrtools_profile::VdrtoolsProfile;
 use crate::global::settings;
 use crate::utils::constants::{DEFAULT_SCHEMA_ATTRS, TAILS_DIR, TEST_TAILS_URL, TRUSTEE_SEED};
@@ -36,7 +39,7 @@ pub async fn create_and_write_test_schema(
     let (schema_id, schema_json) = create_schema(profile, attr_list, submitter_did).await;
     let ledger = Arc::clone(profile).inject_ledger();
     let _response = ledger.publish_schema(&schema_json, submitter_did, None).await.unwrap();
-    thread::sleep(Duration::from_millis(1000));
+    tokio::time::sleep(Duration::from_millis(1000)).await;
     (schema_id, schema_json)
 }
 
@@ -58,9 +61,9 @@ pub async fn create_and_store_nonrevocable_credential_def(
         .publish_cred_def(profile)
         .await
         .unwrap();
-    thread::sleep(Duration::from_millis(1000));
+    tokio::time::sleep(Duration::from_millis(1000)).await;
     let cred_def_id = cred_def.get_cred_def_id();
-    thread::sleep(Duration::from_millis(1000));
+    tokio::time::sleep(Duration::from_millis(1000)).await;
 
     let ledger = Arc::clone(profile).inject_ledger();
     let cred_def_json = ledger.get_cred_def(&cred_def_id, None).await.unwrap();
@@ -109,9 +112,9 @@ pub async fn create_and_store_credential_def(
         .await
         .unwrap();
 
-    thread::sleep(Duration::from_millis(1000));
+    tokio::time::sleep(Duration::from_millis(1000)).await;
     let cred_def_id = cred_def.get_cred_def_id();
-    thread::sleep(Duration::from_millis(1000));
+    tokio::time::sleep(Duration::from_millis(1000)).await;
     let ledger = Arc::clone(profile).inject_ledger();
     let cred_def_json = ledger.get_cred_def(&cred_def_id, None).await.unwrap();
     (
@@ -437,6 +440,7 @@ pub fn mock_profile() -> Arc<dyn Profile> {
 }
 
 // TODO - FUTURE - should only be used for quick mock setups, should be removable after full detachment from vdrtools dep
+#[cfg(feature = "vdrtools")]
 pub fn indy_handles_to_profile(wallet_handle: WalletHandle, pool_handle: PoolHandle) -> Arc<dyn Profile> {
     Arc::new(VdrtoolsProfile::new(wallet_handle, pool_handle))
 }

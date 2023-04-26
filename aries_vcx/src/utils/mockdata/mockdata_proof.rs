@@ -29,7 +29,7 @@ pub const ARIES_PROOF_PRESENTATION: &str = r#"
             "mime-type": "application/json"
         }
     ],
-    "~please_ack": {},
+    "~please_ack": {"on":[]},
     "~thread": {
         "received_orders": {},
         "sender_order": 0,

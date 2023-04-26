@@ -33,7 +33,7 @@ pub async fn libindy_create_and_store_revoc_reg(
     let res = Locator::instance()
         .issuer_controller
         .create_and_store_revocation_registry(
-            wallet_handle.0,
+            wallet_handle,
             DidValue(issuer_did.into()),
             None,
             tag.into(),
@@ -61,7 +61,7 @@ pub async fn libindy_issuer_revoke_credential(
     let res = Locator::instance()
         .issuer_controller
         .revoke_credential(
-            wallet_handle.0,
+            wallet_handle,
             blob_handle,
             vdrtools::RevocationRegistryId(rev_reg_id.into()),
             cred_rev_id.into(),
@@ -95,7 +95,7 @@ pub async fn publish_rev_reg_def(
         return Ok(());
     }
 
-    let rev_reg_def_req = build_rev_reg_request(issuer_did, &rev_reg_def).await?;
+    let rev_reg_def_req = build_rev_reg_request(issuer_did, rev_reg_def).await?;
 
     let response = sign_and_submit_to_ledger(wallet_handle, pool_handle, issuer_did, &rev_reg_def_req).await?;
 
@@ -176,14 +176,11 @@ pub async fn publish_local_revocations(
             }
             Err(err) => Err(AriesVcxCoreError::from_msg(
                 AriesVcxCoreErrorKind::RevDeltaFailedToClear,
-                format!(
-                    "Failed to clear revocation delta storage for rev_reg_id: {}, error: {}",
-                    rev_reg_id, err
-                ),
+                format!("Failed to clear revocation delta storage for rev_reg_id: {rev_reg_id}, error: {err}"),
             )),
         }
     } else {
         Err(AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::RevDeltaNotFound,
-                                    format!("Failed to publish revocation delta for revocation registry {}, no delta found. Possibly already published?", rev_reg_id)))
+                                    format!("Failed to publish revocation delta for revocation registry {rev_reg_id}, no delta found. Possibly already published?")))
     }
 }

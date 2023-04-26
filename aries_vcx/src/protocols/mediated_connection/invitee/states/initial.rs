@@ -1,7 +1,7 @@
-use crate::protocols::mediated_connection::invitee::states::invited::InvitedState;
-use messages::diddoc::aries::diddoc::AriesDidDoc;
-use messages::protocols::connection::invite::Invitation;
-use messages::protocols::connection::problem_report::ProblemReport;
+use diddoc::aries::diddoc::AriesDidDoc;
+use messages::msg_fields::protocols::connection::problem_report::ProblemReport;
+
+use crate::{handlers::util::AnyInvitation, protocols::mediated_connection::invitee::states::invited::InvitedState};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct InitialState {
@@ -9,8 +9,8 @@ pub struct InitialState {
     pub did_doc: Option<AriesDidDoc>,
 }
 
-impl From<(InitialState, Invitation, AriesDidDoc)> for InvitedState {
-    fn from((_state, invitation, did_doc): (InitialState, Invitation, AriesDidDoc)) -> InvitedState {
+impl From<(InitialState, AnyInvitation, AriesDidDoc)> for InvitedState {
+    fn from((_state, invitation, did_doc): (InitialState, AnyInvitation, AriesDidDoc)) -> InvitedState {
         trace!("ConnectionInvitee: transit state from InitialState to InvitedState");
         InvitedState { invitation, did_doc }
     }

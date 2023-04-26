@@ -98,7 +98,7 @@ pub fn encode_attributes(attributes: &str) -> VcxResult<String> {
 }
 
 #[cfg(test)]
-#[cfg(feature = "general_test")]
+#[allow(clippy::unwrap_used)]
 pub mod unit_tests {
     use serde_json::Value;
 

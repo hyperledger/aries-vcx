@@ -1,9 +1,9 @@
 use std::env;
 use std::time::Duration;
 
-use reqwest;
 use reqwest::header::{CONTENT_TYPE, USER_AGENT};
 use reqwest::Client;
+use reqwest::{self, Url};
 
 use crate::errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 use crate::testing::mocking;
@@ -22,21 +22,21 @@ lazy_static! {
     };
 }
 
-pub async fn post_message(body_content: Vec<u8>, url: &str) -> AgencyClientResult<Vec<u8>> {
+pub async fn post_message(body_content: Vec<u8>, url: Url) -> AgencyClientResult<Vec<u8>> {
     if mocking::agency_mocks_enabled() {
         if HttpClientMockResponse::has_response() {
-            warn!("post_message >> mocking response for POST {}", url);
+            warn!("post_message >> mocking response for POST {}", &url);
             return HttpClientMockResponse::get_response();
         }
         if AgencyMockDecrypted::has_decrypted_mock_responses() {
-            warn!("post_message >> will use mocked decrypted response for POST {}", url);
+            warn!("post_message >> will use mocked decrypted response for POST {}", &url);
             return Ok(vec![]);
         }
         let mocked_response = AgencyMock::get_response();
         warn!(
             "post_message >> mocking response of length {} for POST {}",
             mocked_response.len(),
-            url
+            &url
         );
         return Ok(mocked_response);
     }
@@ -48,7 +48,7 @@ pub async fn post_message(body_content: Vec<u8>, url: &str) -> AgencyClientResul
         set_ssl_cert_location();
     }
 
-    debug!("post_message >> http client sending request POST {}", url);
+    debug!("post_message >> http client sending request POST {}", &url);
 
     let response = HTTP_CLIENT
         .post(url)
@@ -60,7 +60,7 @@ pub async fn post_message(body_content: Vec<u8>, url: &str) -> AgencyClientResul
         .map_err(|err| {
             AgencyClientError::from_msg(
                 AgencyClientErrorKind::PostMessageFailed,
-                format!("HTTP Client could not connect with {}, err: {}", url, err),
+                format!("HTTP Client could not connect, err: {}", err),
             )
         })?;
 
@@ -74,8 +74,8 @@ pub async fn post_message(body_content: Vec<u8>, url: &str) -> AgencyClientResul
                 Err(AgencyClientError::from_msg(
                     AgencyClientErrorKind::PostMessageFailed,
                     format!(
-                        "POST {} failed due to non-success HTTP status: {}, response body: {}",
-                        url, response_status, payload
+                        "POST failed due to non-success HTTP status: {}, response body: {}",
+                        response_status, payload
                     ),
                 ))
             }
@@ -83,9 +83,9 @@ pub async fn post_message(body_content: Vec<u8>, url: &str) -> AgencyClientResul
         Err(error) => Err(AgencyClientError::from_msg(
             AgencyClientErrorKind::PostMessageFailed,
             format!(
-                "POST {} failed because response could not be decoded as utf-8, HTTP status: {}, \
+                "POST failed because response could not be decoded as utf-8, HTTP status: {}, \
                      content-length header: {:?}, error: {:?}",
-                url, response_status, content_length, error
+                response_status, content_length, error
             ),
         )),
     }

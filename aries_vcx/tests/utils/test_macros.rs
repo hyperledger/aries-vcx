@@ -1,5 +1,6 @@
-use messages::status::Status;
 use std::fmt;
+
+use aries_vcx::handlers::util::Status;
 
 macro_rules! enum_number {
     ($name:ident { $($variant:ident = $value:expr, )* }) => {

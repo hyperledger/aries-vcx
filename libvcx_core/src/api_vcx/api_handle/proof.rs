@@ -1,15 +1,14 @@
+use aries_vcx::messages::AriesMessage;
 use serde_json;
 
 use aries_vcx::common::proofs::proof_request::PresentationRequestData;
 use aries_vcx::handlers::proof_presentation::verifier::Verifier;
-use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
 use aries_vcx::protocols::SendClosure;
 
 use crate::api_vcx::api_global::profile::get_main_profile;
 use crate::api_vcx::api_handle::connection::HttpClient;
 use crate::api_vcx::api_handle::object_cache::ObjectCache;
-use crate::api_vcx::api_handle::out_of_band::to_a2a_message;
 use crate::api_vcx::api_handle::{connection, mediated_connection};
 use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 
@@ -60,7 +59,7 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
     let profile = get_main_profile()?;
 
     if let Some(message) = message {
-        let message: A2AMessage = serde_json::from_str(message).map_err(|err| {
+        let message: AriesMessage = serde_json::from_str(message).map_err(|err| {
             LibvcxError::from_msg(
                 LibvcxErrorKind::InvalidOption,
                 format!(
@@ -105,9 +104,9 @@ pub async fn update_state_nonmediated(handle: u32, connection_handle: u32, messa
     let wallet = profile.inject_wallet();
 
     let send_message: SendClosure =
-        Box::new(|msg: A2AMessage| Box::pin(async move { con.send_message(&wallet, &msg, &HttpClient).await }));
+        Box::new(|msg: AriesMessage| Box::pin(async move { con.send_message(&wallet, &msg, &HttpClient).await }));
 
-    let message: A2AMessage = serde_json::from_str(message).map_err(|err| {
+    let message: AriesMessage = serde_json::from_str(message).map_err(|err| {
         LibvcxError::from_msg(
             LibvcxErrorKind::InvalidOption,
             format!(
@@ -183,7 +182,7 @@ pub async fn send_proof_request_nonmediated(handle: u32, connection_handle: u32)
     let wallet = profile.inject_wallet();
 
     let send_message: SendClosure =
-        Box::new(|msg: A2AMessage| Box::pin(async move { con.send_message(&wallet, &msg, &HttpClient).await }));
+        Box::new(|msg: AriesMessage| Box::pin(async move { con.send_message(&wallet, &msg, &HttpClient).await }));
 
     proof.send_presentation_request(send_message).await?;
     PROOF_MAP.insert(handle, proof)
@@ -204,7 +203,7 @@ pub fn get_presentation_request_attachment(handle: u32) -> LibvcxResult<String> 
 
 pub fn get_presentation_request_msg(handle: u32) -> LibvcxResult<String> {
     PROOF_MAP.get(handle, |proof| {
-        let msg = proof.get_presentation_request_msg()?.to_a2a_message();
+        let msg = AriesMessage::from(proof.get_presentation_request_msg()?);
         Ok(json!(msg).to_string())
     })
 }
@@ -212,7 +211,7 @@ pub fn get_presentation_request_msg(handle: u32) -> LibvcxResult<String> {
 // --- Presentation ---
 pub fn get_presentation_msg(handle: u32) -> LibvcxResult<String> {
     PROOF_MAP.get(handle, |proof| {
-        let msg = proof.get_presentation_msg()?.to_a2a_message();
+        let msg = AriesMessage::from(proof.get_presentation_msg()?);
         Ok(json!(msg).to_string())
     })
 }
@@ -271,6 +270,7 @@ pub mod tests {
     use aries_vcx::utils::mockdata::mock_settings::MockBuilder;
     use aries_vcx::utils::mockdata::mockdata_proof;
 
+    #[cfg(feature = "test_utils")]
     use crate::api_vcx::api_handle::mediated_connection::test_utils::build_test_connection_inviter_requested;
     use crate::api_vcx::api_handle::proof;
     use crate::aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;

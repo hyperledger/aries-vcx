@@ -114,7 +114,7 @@ fn unimplemented_agency_client_wallet_method(method_name: &str) -> AriesVcxCoreE
     // should not occur with proper internal usage - [AgencyClientWallet] is not public
     AriesVcxCoreError::from_msg(
         AriesVcxCoreErrorKind::UnimplementedFeature,
-        format!("AgencyClientWallet::{} is not intended to be used.", method_name),
+        format!("AgencyClientWallet::{method_name} is not intended to be used."),
     )
 }
 
@@ -141,7 +141,7 @@ impl BaseAgencyClientWallet for BaseWalletAgencyClientWallet {
             .map_err(|e| {
                 AgencyClientError::from_msg(
                     AgencyClientErrorKind::UnknownError,
-                    format!("A VCXError occured while calling pack_message: {:?}", e),
+                    format!("A VCXError occured while calling pack_message: {e:?}"),
                 )
             })
     }
@@ -150,7 +150,7 @@ impl BaseAgencyClientWallet for BaseWalletAgencyClientWallet {
         self.inner.unpack_message(msg).await.map_err(|e| {
             AgencyClientError::from_msg(
                 AgencyClientErrorKind::UnknownError,
-                format!("A VCXError occured while calling unpack_message: {:?}", e),
+                format!("A VCXError occured while calling unpack_message: {e:?}"),
             )
         })
     }

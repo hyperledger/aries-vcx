@@ -275,7 +275,7 @@ pub async fn generate_cred_def(
 }
 
 #[cfg(test)]
-#[cfg(feature = "pool_tests")]
+#[allow(clippy::unwrap_used)]
 pub mod integration_tests {
     use std::sync::Arc;
 
@@ -286,7 +286,8 @@ pub mod integration_tests {
     use crate::utils::devsetup::SetupProfile;
 
     #[tokio::test]
-    async fn test_create_cred_def_real() {
+    #[ignore]
+    async fn test_pool_create_cred_def_real() {
         SetupProfile::run_indy(|setup| async move {
             let (schema_id, _) =
                 create_and_write_test_schema(&setup.profile, &setup.institution_did, DEFAULT_SCHEMA_ATTRS).await;
@@ -314,7 +315,8 @@ pub mod integration_tests {
     }
 
     #[tokio::test]
-    async fn test_create_rev_reg_def() {
+    #[ignore]
+    async fn test_pool_create_rev_reg_def() {
         SetupProfile::run_indy(|setup| async move {
             let (schema_id, _) =
                 create_and_write_test_schema(&setup.profile, &setup.institution_did, DEFAULT_SCHEMA_ATTRS).await;
