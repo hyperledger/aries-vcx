@@ -10,6 +10,7 @@ use crate::utils::encryption_envelope::EncryptionEnvelope;
 use messages::AriesMessage;
 
 #[macro_use]
+#[cfg(feature = "vdrtools")]
 pub mod devsetup;
 
 #[cfg(debug_assertions)]
