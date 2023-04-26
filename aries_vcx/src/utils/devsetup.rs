@@ -15,7 +15,6 @@ use aries_vcx_core::indy::wallet::{
     close_wallet, create_and_open_wallet, create_indy_wallet, create_wallet_with_master_secret, delete_wallet,
     open_wallet, wallet_configure_issuer, WalletConfig,
 };
-use aries_vcx_core::ledger::indy_vdr_ledger::LedgerPoolConfig;
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use aries_vcx_core::wallet::indy_wallet::IndySdkWallet;
 use aries_vcx_core::{PoolHandle, WalletHandle};
@@ -27,7 +26,6 @@ use agency_client::agency_client::AgencyClient;
 use agency_client::configuration::AgentProvisionConfig;
 use agency_client::testing::mocking::{disable_agency_mocks, enable_agency_mocks, AgencyMockDecrypted};
 
-use crate::core::profile::modular_libs_profile::ModularLibsProfile;
 use crate::core::profile::profile::Profile;
 use crate::core::profile::vdrtools_profile::VdrtoolsProfile;
 use crate::global::settings;
@@ -368,10 +366,13 @@ impl SetupProfile {
     pub async fn init() -> SetupProfile {
         init_test_logging();
         set_test_configs();
-        if SetupProfile::should_run_modular() {
+        #[cfg(feature = "modular_libs_tests")]
+        {
             info!("SetupProfile >> using modular profile");
             SetupProfile::init_modular().await
-        } else {
+        }
+        #[cfg(not(feature = "modular_libs_tests"))]
+        {
             info!("SetupProfile >> using indy profile");
             SetupProfile::init_indy().await
         }
@@ -404,7 +405,11 @@ impl SetupProfile {
         }
     }
 
+    #[cfg(feature = "modular_libs_tests")]
     async fn init_modular() -> SetupProfile {
+        use crate::core::profile::modular_libs_profile::ModularLibsProfile;
+        use aries_vcx_core::ledger::indy_vdr_ledger::LedgerPoolConfig;
+
         let (institution_did, wallet_handle) = setup_issuer_wallet().await;
 
         let genesis_file_path = create_tmp_genesis_txn_file();
