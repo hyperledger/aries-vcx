@@ -1,12 +1,13 @@
+use messages::msg_fields::protocols::cred_issuance::issue_credential::IssueCredential;
+use messages::msg_fields::protocols::report_problem::ProblemReport;
+
 use crate::errors::error::prelude::*;
-use messages::concepts::problem_report::ProblemReport;
-use messages::protocols::issuance::credential::{Credential, CredentialData};
-use messages::status::Status;
+use crate::handlers::util::{get_attach_as_string, CredentialData, Status};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct FinishedHolderState {
     pub cred_id: Option<String>,
-    pub credential: Option<Credential>,
+    pub credential: Option<IssueCredential>,
     pub status: Status,
     pub rev_reg_def_json: Option<String>,
 }
@@ -48,7 +49,8 @@ impl FinishedHolderState {
             AriesVcxErrorKind::InvalidState,
             "No credential found",
         ))?;
-        credential.credentials_attach.content().map_err(|err| err.into())
+
+        Ok(get_attach_as_string!(&credential.content.credentials_attach))
     }
 
     // TODO: Avoid duplication

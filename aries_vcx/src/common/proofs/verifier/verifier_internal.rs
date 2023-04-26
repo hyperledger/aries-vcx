@@ -212,7 +212,7 @@ pub async fn build_rev_reg_json(profile: &Arc<dyn Profile>, credential_data: &[C
 }
 
 #[cfg(test)]
-#[cfg(feature = "general_test")]
+#[allow(clippy::unwrap_used)]
 pub mod unit_tests {
     use crate::common::test_utils::mock_profile;
     use crate::utils::constants::*;

@@ -169,10 +169,7 @@ pub fn get_state(handle: u32) -> LibvcxResult<u32> {
 pub mod test_utils {
     use rand::Rng;
 
-    use aries_vcx::utils::constants::SCHEMA_ID;
-
     use crate::api_vcx::api_global::settings::get_config_value;
-    use crate::api_vcx::api_global::wallet::get_main_wallet_handle;
 
     use super::*;
 
@@ -190,7 +187,7 @@ pub mod test_utils {
     }
 
     pub async fn create_schema_real() -> u32 {
-        let (did, schema_name, schema_version, data) = prepare_schema_data();
+        let (_did, schema_name, schema_version, data) = prepare_schema_data();
         create_and_publish_schema("id", schema_name, schema_version, data)
             .await
             .unwrap()
@@ -216,22 +213,18 @@ pub mod test_utils {
 
 #[cfg(test)]
 pub mod tests {
-    use rand::Rng;
-
     #[cfg(feature = "pool_tests")]
     use aries_vcx::common::ledger::transactions::add_new_did;
     #[cfg(feature = "pool_tests")]
     use aries_vcx::common::test_utils::create_and_write_test_schema;
-    use aries_vcx::global::settings::CONFIG_INSTITUTION_DID;
     #[cfg(feature = "pool_tests")]
     use aries_vcx::utils::constants;
     use aries_vcx::utils::constants::SCHEMA_ID;
     use aries_vcx::utils::devsetup::{SetupDefaults, SetupEmpty, SetupMocks};
 
-    use crate::api_vcx::api_global::settings::get_config_value;
-    use crate::api_vcx::api_global::wallet::get_main_wallet_handle;
     #[cfg(feature = "pool_tests")]
     use crate::api_vcx::api_handle::schema;
+    #[cfg(feature = "pool_tests")]
     use crate::api_vcx::api_handle::schema::test_utils::{check_schema, create_schema_real, prepare_schema_data};
     #[cfg(feature = "pool_tests")]
     use crate::api_vcx::utils::devsetup::SetupGlobalsWalletPoolAgency;
@@ -243,7 +236,7 @@ pub mod tests {
     async fn test_vcx_schema_release() {
         let _setup = SetupMocks::init();
 
-        let (did, schema_name, schema_version, data) = prepare_schema_data();
+        let (_did, schema_name, schema_version, data) = prepare_schema_data();
         let handle = create_and_publish_schema("test_create_schema_success", schema_name, schema_version, data.clone())
             .await
             .unwrap();
@@ -256,7 +249,7 @@ pub mod tests {
     async fn test_create_schema_to_string() {
         let _setup = SetupMocks::init();
 
-        let (did, schema_name, schema_version, data) = prepare_schema_data();
+        let (_did, schema_name, schema_version, data) = prepare_schema_data();
         let handle = create_and_publish_schema("test_create_schema_success", schema_name, schema_version, data.clone())
             .await
             .unwrap();
@@ -282,7 +275,7 @@ pub mod tests {
     async fn test_create_schema_success() {
         let _setup = SetupMocks::init();
 
-        let (did, schema_name, schema_version, data) = prepare_schema_data();
+        let (_did, schema_name, schema_version, data) = prepare_schema_data();
         create_and_publish_schema("test_create_schema_success", schema_name, schema_version, data)
             .await
             .unwrap();
@@ -293,7 +286,7 @@ pub mod tests {
     async fn test_prepare_schema_success() {
         let _setup = SetupMocks::init();
 
-        let (did, schema_name, schema_version, data) = prepare_schema_data();
+        let (_did, schema_name, schema_version, data) = prepare_schema_data();
         prepare_schema_for_endorser(
             "test_create_schema_success",
             schema_name,
@@ -367,7 +360,7 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     async fn test_create_duplicate_fails() {
         SetupGlobalsWalletPoolAgency::run(|_setup| async move {
-            let (did, schema_name, schema_version, data) = prepare_schema_data();
+            let (_did, schema_name, schema_version, data) = prepare_schema_data();
 
             create_and_publish_schema("id", schema_name.clone(), schema_version.clone(), data.clone())
                 .await
@@ -387,7 +380,7 @@ pub mod tests {
     async fn test_release_all() {
         let _setup = SetupMocks::init();
 
-        let (did, schema_name, version, data) = prepare_schema_data();
+        let (_did, schema_name, version, data) = prepare_schema_data();
 
         let h1 = create_and_publish_schema("1", schema_name.clone(), version.clone(), data.clone())
             .await
@@ -418,7 +411,7 @@ pub mod tests {
     #[tokio::test]
     async fn test_vcx_endorse_schema() {
         SetupGlobalsWalletPoolAgency::run(|setup| async move {
-            let (did, schema_name, schema_version, data) = prepare_schema_data();
+            let (_did, schema_name, schema_version, data) = prepare_schema_data();
 
             let profile = get_main_profile().unwrap();
 
@@ -467,7 +460,7 @@ pub mod tests {
     #[tokio::test]
     async fn test_vcx_create_schema_with_pool() {
         SetupGlobalsWalletPoolAgency::run(|_setup| async move {
-            let (issuer_did, schema_name, schema_version, schema_data) = prepare_schema_data();
+            let (_issuer_did, schema_name, schema_version, schema_data) = prepare_schema_data();
             let _schema_handle =
                 schema::create_and_publish_schema("source_id", schema_name, schema_version, schema_data)
                     .await
@@ -480,7 +473,7 @@ pub mod tests {
     #[tokio::test]
     async fn test_vcx_schema_serialize_contains_version() {
         SetupGlobalsWalletPoolAgency::run(|_setup| async move {
-            let (issuer_did, schema_name, schema_version, schema_data) = prepare_schema_data();
+            let (_issuer_did, schema_name, schema_version, schema_data) = prepare_schema_data();
             let schema_handle =
                 schema::create_and_publish_schema("source_id", schema_name, schema_version, schema_data)
                     .await
@@ -499,7 +492,7 @@ pub mod tests {
     #[tokio::test]
     async fn test_vcx_schema_get_attrs_with_pool() {
         SetupGlobalsWalletPoolAgency::run(|_setup| async move {
-            let (issuer_did, schema_name, schema_version, schema_data) = prepare_schema_data();
+            let (_issuer_did, schema_name, schema_version, schema_data) = prepare_schema_data();
             let schema_handle =
                 schema::create_and_publish_schema("source_id", schema_name, schema_version, schema_data)
                     .await

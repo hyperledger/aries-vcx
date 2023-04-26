@@ -1,4 +1,3 @@
-#[cfg(feature = "test_utils")]
 pub mod test_utils {
     use std::sync::Arc;
     use std::thread;
@@ -7,11 +6,21 @@ pub mod test_utils {
     use aries_vcx::common::test_utils::create_and_store_credential_def;
     use aries_vcx::core::profile::profile::Profile;
     use aries_vcx::errors::error::{AriesVcxError, AriesVcxErrorKind};
+    use aries_vcx::handlers::util::{AnyInvitation, OfferInfo, PresentationProposalData};
     use aries_vcx::protocols::SendClosureConnection;
     use async_channel::{bounded, Sender};
-    use messages::a2a::A2AMessage;
-    use messages::diddoc::aries::diddoc::AriesDidDoc;
-    use messages::protocols::connection::request::Request;
+    use diddoc::aries::diddoc::AriesDidDoc;
+    use messages::misc::MimeType;
+    use messages::msg_fields::protocols::connection::request::Request;
+    use messages::msg_fields::protocols::connection::Connection;
+    use messages::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
+    use messages::msg_fields::protocols::cred_issuance::propose_credential::{
+        ProposeCredential, ProposeCredentialContent, ProposeCredentialDecorators,
+    };
+    use messages::msg_fields::protocols::cred_issuance::{CredentialAttr, CredentialPreview};
+    use messages::msg_fields::protocols::present_proof::propose::PresentationAttr;
+    use messages::msg_fields::protocols::present_proof::request::RequestPresentation;
+    use messages::AriesMessage;
     use serde_json::{json, Value};
 
     use aries_vcx::common::ledger::transactions::into_did_doc;
@@ -27,14 +36,6 @@ pub mod test_utils {
     use aries_vcx::handlers::proof_presentation::prover::test_utils::get_proof_request_messages;
     use aries_vcx::handlers::proof_presentation::prover::Prover;
     use aries_vcx::handlers::proof_presentation::verifier::Verifier;
-    use aries_vcx::messages::concepts::mime_type::MimeType;
-    use aries_vcx::messages::protocols::connection::invite::Invitation;
-    use aries_vcx::messages::protocols::issuance::credential_offer::{CredentialOffer, OfferInfo};
-    use aries_vcx::messages::protocols::issuance::credential_proposal::{CredentialProposal, CredentialProposalData};
-    use aries_vcx::messages::protocols::proof_presentation::presentation_proposal::{
-        Attribute, PresentationProposalData,
-    };
-    use aries_vcx::messages::protocols::proof_presentation::presentation_request::PresentationRequest;
     use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
     use aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
     use aries_vcx::protocols::mediated_connection::invitee::state_machine::InviteeState;
@@ -49,9 +50,9 @@ pub mod test_utils {
     use crate::utils::devsetup_agent::test_utils::{Alice, Faber};
     use crate::utils::test_macros::ProofStateType;
 
-    pub fn _send_message(sender: Sender<A2AMessage>) -> Option<SendClosureConnection> {
+    pub fn _send_message(sender: Sender<AriesMessage>) -> Option<SendClosureConnection> {
         Some(Box::new(
-            move |message: A2AMessage, _sender_vk: String, _did_doc: AriesDidDoc| {
+            move |message: AriesMessage, _sender_vk: String, _did_doc: AriesDidDoc| {
                 Box::pin(async move {
                     sender.send(message).await.map_err(|err| {
                         AriesVcxError::from_msg(
@@ -124,35 +125,53 @@ pub mod test_utils {
         ])
     }
 
-    pub fn requested_attr_objects(cred_def_id: &str) -> Vec<Attribute> {
+    pub fn requested_attr_objects(cred_def_id: &str) -> Vec<PresentationAttr> {
         let (address1, address2, city, state, zip) = attr_names();
-        let address1_attr = Attribute::create(&address1)
-            .set_cred_def_id(cred_def_id)
-            .set_value("123 Main St");
-        let address2_attr = Attribute::create(&address2)
-            .set_cred_def_id(cred_def_id)
-            .set_value("Suite 3");
-        let city_attr = Attribute::create(&city)
-            .set_cred_def_id(cred_def_id)
-            .set_value("Draper");
-        let state_attr = Attribute::create(&state).set_cred_def_id(cred_def_id).set_value("UT");
-        let zip_attr = Attribute::create(&zip).set_cred_def_id(cred_def_id).set_value("84000");
+        let mut address1_attr = PresentationAttr::new(address1);
+        address1_attr.cred_def_id = Some(cred_def_id.to_owned());
+        address1_attr.value = Some("123 Main St".to_owned());
+
+        let mut address2_attr = PresentationAttr::new(address2);
+        address2_attr.cred_def_id = Some(cred_def_id.to_owned());
+        address2_attr.value = Some("Suite 3".to_owned());
+
+        let mut city_attr = PresentationAttr::new(city);
+        city_attr.cred_def_id = Some(cred_def_id.to_owned());
+        city_attr.value = Some("Draper".to_owned());
+
+        let mut state_attr = PresentationAttr::new(state);
+        state_attr.cred_def_id = Some(cred_def_id.to_owned());
+        state_attr.value = Some("UT".to_owned());
+
+        let mut zip_attr = PresentationAttr::new(zip);
+        zip_attr.cred_def_id = Some(cred_def_id.to_owned());
+        zip_attr.value = Some("84000".to_owned());
+
         vec![address1_attr, address2_attr, city_attr, state_attr, zip_attr]
     }
 
-    pub fn requested_attr_objects_1(cred_def_id: &str) -> Vec<Attribute> {
+    pub fn requested_attr_objects_1(cred_def_id: &str) -> Vec<PresentationAttr> {
         let (address1, address2, city, state, zip) = attr_names();
-        let address1_attr = Attribute::create(&address1)
-            .set_cred_def_id(cred_def_id)
-            .set_value("456 Side St");
-        let address2_attr = Attribute::create(&address2)
-            .set_cred_def_id(cred_def_id)
-            .set_value("Suite 666");
-        let city_attr = Attribute::create(&city)
-            .set_cred_def_id(cred_def_id)
-            .set_value("Austin");
-        let state_attr = Attribute::create(&state).set_cred_def_id(cred_def_id).set_value("TC");
-        let zip_attr = Attribute::create(&zip).set_cred_def_id(cred_def_id).set_value("42000");
+        let mut address1_attr = PresentationAttr::new(address1);
+        address1_attr.cred_def_id = Some(cred_def_id.to_owned());
+        address1_attr.value = Some("456 Side St".to_owned());
+
+        let mut address2_attr = PresentationAttr::new(address2);
+        address2_attr.cred_def_id = Some(cred_def_id.to_owned());
+        address2_attr.value = Some("Suite 666".to_owned());
+
+        let mut city_attr = PresentationAttr::new(city);
+        city_attr.cred_def_id = Some(cred_def_id.to_owned());
+        city_attr.value = Some("Austin".to_owned());
+
+        let mut state_attr = PresentationAttr::new(state);
+        state_attr.cred_def_id = Some(cred_def_id.to_owned());
+        state_attr.value = Some("TC".to_owned());
+
+        let mut zip_attr = PresentationAttr::new(zip);
+        zip_attr.cred_def_id = Some(cred_def_id.to_owned());
+        zip_attr.value = Some("42000".to_owned());
+
         vec![address1_attr, address2_attr, city_attr, state_attr, zip_attr]
     }
 
@@ -181,7 +200,7 @@ pub mod test_utils {
             .await
             .unwrap();
         info!("create_and_send_nonrevocable_cred_offer :: credential offer was sent");
-        thread::sleep(Duration::from_millis(100));
+        tokio::time::sleep(Duration::from_millis(1000)).await;
         issuer
     }
 
@@ -211,7 +230,7 @@ pub mod test_utils {
             .await
             .unwrap();
         info!("create_and_send_cred_offer :: credential offer was sent");
-        thread::sleep(Duration::from_millis(100));
+        tokio::time::sleep(Duration::from_millis(1000)).await;
         issuer
     }
 
@@ -237,7 +256,7 @@ pub mod test_utils {
         assert_eq!(offers.len(), 1);
         let offer = serde_json::to_string(&offers[0]).unwrap();
         info!("send_cred_req :: creating credential from offer");
-        let cred_offer: CredentialOffer = serde_json::from_str(&offer).unwrap();
+        let cred_offer: OfferCredential = serde_json::from_str(&offer).unwrap();
         let mut holder = Holder::create_from_offer("TEST_CREDENTIAL", cred_offer).unwrap();
         assert_eq!(HolderState::OfferReceived, holder.get_state());
         info!("send_cred_req :: sending credential request");
@@ -250,7 +269,7 @@ pub mod test_utils {
             )
             .await
             .unwrap();
-        thread::sleep(Duration::from_millis(100));
+        tokio::time::sleep(Duration::from_millis(1000)).await;
         holder
     }
 
@@ -262,15 +281,36 @@ pub mod test_utils {
         comment: &str,
     ) -> Holder {
         let (address1, address2, city, state, zip) = attr_names();
-        let proposal = CredentialProposalData::create()
-            .set_schema_id(schema_id.to_string())
-            .set_cred_def_id(cred_def_id.to_string())
-            .set_comment(comment.to_string())
-            .add_credential_preview_data(&address1, "123 Main St", MimeType::Plain)
-            .add_credential_preview_data(&address2, "Suite 3", MimeType::Plain)
-            .add_credential_preview_data(&city, "Draper", MimeType::Plain)
-            .add_credential_preview_data(&state, "UT", MimeType::Plain)
-            .add_credential_preview_data(&zip, "84000", MimeType::Plain);
+        let id = "test".to_owned();
+        let mut attrs = Vec::new();
+
+        let mut attr = CredentialAttr::new(address1, "123 Main Str".to_owned());
+        attr.mime_type = Some(MimeType::Plain);
+        attrs.push(attr);
+
+        let mut attr = CredentialAttr::new(address2, "Suite 3".to_owned());
+        attr.mime_type = Some(MimeType::Plain);
+        attrs.push(attr);
+
+        let mut attr = CredentialAttr::new(city, "Draper".to_owned());
+        attr.mime_type = Some(MimeType::Plain);
+        attrs.push(attr);
+
+        let mut attr = CredentialAttr::new(state, "UT".to_owned());
+        attr.mime_type = Some(MimeType::Plain);
+        attrs.push(attr);
+
+        let mut attr = CredentialAttr::new(zip, "84000".to_owned());
+        attr.mime_type = Some(MimeType::Plain);
+        attrs.push(attr);
+
+        let preview = CredentialPreview::new(attrs);
+        let mut content = ProposeCredentialContent::new(preview, schema_id.to_owned(), cred_def_id.to_owned());
+        content.comment = Some(comment.to_owned());
+
+        let decorators = ProposeCredentialDecorators::default();
+
+        let proposal = ProposeCredential::with_decorators(id, content, decorators);
         let mut holder = Holder::create("TEST_CREDENTIAL").unwrap();
         assert_eq!(HolderState::Initial, holder.get_state());
         holder
@@ -278,7 +318,7 @@ pub mod test_utils {
             .await
             .unwrap();
         assert_eq!(HolderState::ProposalSent, holder.get_state());
-        thread::sleep(Duration::from_millis(100));
+        tokio::time::sleep(Duration::from_millis(1000)).await;
         holder
     }
 
@@ -297,21 +337,42 @@ pub mod test_utils {
         assert_eq!(HolderState::OfferReceived, holder.get_state());
         assert!(holder.get_offer().is_ok());
         let (address1, address2, city, state, zip) = attr_names();
-        let proposal = CredentialProposalData::create()
-            .set_schema_id(schema_id.to_string())
-            .set_cred_def_id(cred_def_id.to_string())
-            .set_comment(comment.to_string())
-            .add_credential_preview_data(&address1, "456 Side St", MimeType::Plain)
-            .add_credential_preview_data(&address2, "Suite 666", MimeType::Plain)
-            .add_credential_preview_data(&city, "Austin", MimeType::Plain)
-            .add_credential_preview_data(&state, "TX", MimeType::Plain)
-            .add_credential_preview_data(&zip, "42000", MimeType::Plain);
+        let id = "test".to_owned();
+        let mut attrs = Vec::new();
+
+        let mut attr = CredentialAttr::new(address1, "123 Main Str".to_owned());
+        attr.mime_type = Some(MimeType::Plain);
+        attrs.push(attr);
+
+        let mut attr = CredentialAttr::new(address2, "Suite 3".to_owned());
+        attr.mime_type = Some(MimeType::Plain);
+        attrs.push(attr);
+
+        let mut attr = CredentialAttr::new(city, "Draper".to_owned());
+        attr.mime_type = Some(MimeType::Plain);
+        attrs.push(attr);
+
+        let mut attr = CredentialAttr::new(state, "UT".to_owned());
+        attr.mime_type = Some(MimeType::Plain);
+        attrs.push(attr);
+
+        let mut attr = CredentialAttr::new(zip, "84000".to_owned());
+        attr.mime_type = Some(MimeType::Plain);
+        attrs.push(attr);
+
+        let preview = CredentialPreview::new(attrs);
+        let mut content = ProposeCredentialContent::new(preview, schema_id.to_owned(), cred_def_id.to_owned());
+        content.comment = Some(comment.to_owned());
+
+        let decorators = ProposeCredentialDecorators::default();
+
+        let proposal = ProposeCredential::with_decorators(id, content, decorators);
         holder
             .send_proposal(proposal, connection.send_message_closure(&alice.profile).await.unwrap())
             .await
             .unwrap();
         assert_eq!(HolderState::ProposalSent, holder.get_state());
-        thread::sleep(Duration::from_millis(100));
+        tokio::time::sleep(Duration::from_millis(1000)).await;
     }
 
     pub async fn accept_cred_proposal(
@@ -320,19 +381,22 @@ pub mod test_utils {
         rev_reg_id: Option<String>,
         tails_file: Option<String>,
     ) -> Issuer {
-        let proposals: Vec<CredentialProposal> = serde_json::from_str(
-            &get_credential_proposal_messages(&faber.agency_client, connection)
+        let proposals: Vec<(String, ProposeCredential)> =
+            get_credential_proposal_messages(&faber.agency_client, connection)
                 .await
-                .unwrap(),
-        )
-        .unwrap();
-        let proposal = proposals.last().unwrap();
+                .unwrap();
+
+        let (uid, proposal) = proposals.last().unwrap();
+        connection
+            .update_message_status(uid, &faber.agency_client)
+            .await
+            .unwrap();
         let mut issuer = Issuer::create_from_proposal("TEST_CREDENTIAL", proposal).unwrap();
         assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
         assert_eq!(proposal.clone(), issuer.get_proposal().unwrap());
         let offer_info = OfferInfo {
-            credential_json: proposal.credential_proposal.to_string().unwrap(),
-            cred_def_id: proposal.cred_def_id.clone(),
+            credential_json: json!(proposal.content.credential_proposal.attributes).to_string(),
+            cred_def_id: proposal.content.cred_def_id.clone(),
             rev_reg_id,
             tails_file,
         };
@@ -345,7 +409,7 @@ pub mod test_utils {
             .await
             .unwrap();
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
-        thread::sleep(Duration::from_millis(100));
+        tokio::time::sleep(Duration::from_millis(1000)).await;
         issuer
     }
 
@@ -364,8 +428,8 @@ pub mod test_utils {
         assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
         let proposal = issuer.get_proposal().unwrap();
         let offer_info = OfferInfo {
-            credential_json: proposal.credential_proposal.to_string().unwrap(),
-            cred_def_id: proposal.cred_def_id.clone(),
+            credential_json: json!(proposal.content.credential_proposal.attributes).to_string(),
+            cred_def_id: proposal.content.cred_def_id.clone(),
             rev_reg_id,
             tails_file,
         };
@@ -378,7 +442,7 @@ pub mod test_utils {
             .await
             .unwrap();
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
-        thread::sleep(Duration::from_millis(100));
+        tokio::time::sleep(Duration::from_millis(1000)).await;
     }
 
     pub async fn accept_offer(alice: &mut Alice, connection: &MediatedConnection, holder: &mut Holder) {
@@ -429,6 +493,7 @@ pub mod test_utils {
         let thread_id = issuer_credential.get_thread_id().unwrap();
         assert_eq!(IssuerState::OfferSent, issuer_credential.get_state());
         assert_eq!(issuer_credential.is_revokable(), false);
+
         issuer_credential
             .update_state(&faber.profile, &faber.agency_client, issuer_to_consumer)
             .await
@@ -445,7 +510,7 @@ pub mod test_utils {
             )
             .await
             .unwrap();
-        thread::sleep(Duration::from_millis(100));
+        tokio::time::sleep(Duration::from_millis(1000)).await;
         assert_eq!(thread_id, issuer_credential.get_thread_id().unwrap());
 
         info!("send_credential >>> storing credential");
@@ -470,9 +535,9 @@ pub mod test_utils {
 
     pub async fn send_proof_proposal(alice: &mut Alice, connection: &MediatedConnection, cred_def_id: &str) -> Prover {
         let attrs = requested_attr_objects(cred_def_id);
-        let mut proposal_data = PresentationProposalData::create();
+        let mut proposal_data = PresentationProposalData::default();
         for attr in attrs.into_iter() {
-            proposal_data = proposal_data.add_attribute(attr);
+            proposal_data.attributes.push(attr);
         }
         let mut prover = Prover::create("1").unwrap();
         prover
@@ -483,7 +548,7 @@ pub mod test_utils {
             .await
             .unwrap();
         assert_eq!(prover.get_state(), ProverState::PresentationProposalSent);
-        thread::sleep(Duration::from_millis(100));
+        tokio::time::sleep(Duration::from_millis(1000)).await;
         prover
     }
 
@@ -499,9 +564,9 @@ pub mod test_utils {
             .unwrap();
         assert_eq!(prover.get_state(), ProverState::PresentationRequestReceived);
         let attrs = requested_attr_objects_1(cred_def_id);
-        let mut proposal_data = PresentationProposalData::create();
+        let mut proposal_data = PresentationProposalData::default();
         for attr in attrs.into_iter() {
-            proposal_data = proposal_data.add_attribute(attr);
+            proposal_data.attributes.push(attr);
         }
         prover
             .send_proposal(
@@ -511,7 +576,7 @@ pub mod test_utils {
             .await
             .unwrap();
         assert_eq!(prover.get_state(), ProverState::PresentationProposalSent);
-        thread::sleep(Duration::from_millis(100));
+        tokio::time::sleep(Duration::from_millis(1000)).await;
     }
 
     pub async fn accept_proof_proposal(faber: &mut Faber, verifier: &mut Verifier, connection: &MediatedConnection) {
@@ -522,6 +587,7 @@ pub mod test_utils {
         assert_eq!(verifier.get_state(), VerifierState::PresentationProposalReceived);
         let proposal = verifier.get_presentation_proposal().unwrap();
         let attrs = proposal
+            .content
             .presentation_proposal
             .attributes
             .into_iter()
@@ -595,7 +661,7 @@ pub mod test_utils {
             .send_presentation_request(connection.send_message_closure(&faber.profile).await.unwrap())
             .await
             .unwrap();
-        thread::sleep(Duration::from_millis(100));
+        tokio::time::sleep(Duration::from_millis(1000)).await;
         verifier
     }
 
@@ -605,7 +671,7 @@ pub mod test_utils {
         requested_preds: &str,
         revocation_interval: &str,
         request_name: Option<&str>,
-    ) -> PresentationRequest {
+    ) -> RequestPresentation {
         let presentation_request = PresentationRequestData::create(&_faber.profile, request_name.unwrap_or("name"))
             .await
             .unwrap()
@@ -646,7 +712,7 @@ pub mod test_utils {
         let requests = requests.as_array().unwrap();
         assert_eq!(requests.len(), 1);
         let request = serde_json::to_string(&requests[0]).unwrap();
-        let presentation_request: PresentationRequest = serde_json::from_str(&request).unwrap();
+        let presentation_request: RequestPresentation = serde_json::from_str(&request).unwrap();
         Prover::create_from_request(DEFAULT_PROOF_NAME, presentation_request).unwrap()
     }
 
@@ -674,7 +740,7 @@ pub mod test_utils {
                 .unwrap();
             info!("generate_and_send_proof :: proof sent");
             assert_eq!(thread_id, prover.get_thread_id().unwrap());
-            thread::sleep(Duration::from_millis(100));
+            tokio::time::sleep(Duration::from_millis(1000)).await;
         }
     }
 
@@ -823,6 +889,7 @@ pub mod test_utils {
         let mut holder = send_cred_proposal(consumer, consumer_to_issuer, schema_id, cred_def_id, comment).await;
         let mut issuer = accept_cred_proposal(institution, issuer_to_consumer, rev_reg_id, tails_file).await;
         accept_offer(consumer, consumer_to_issuer, &mut holder).await;
+        tokio::time::sleep(Duration::from_millis(1000)).await;
         send_credential(
             consumer,
             institution,
@@ -981,7 +1048,7 @@ pub mod test_utils {
         consumer_to_institution: &mut MediatedConnection,
         request: Request,
     ) -> MediatedConnection {
-        thread::sleep(Duration::from_millis(100));
+        tokio::time::sleep(Duration::from_millis(1000)).await;
         let mut institution_to_consumer = MediatedConnection::create_with_request(
             &faber.profile,
             request,
@@ -1012,7 +1079,7 @@ pub mod test_utils {
             consumer_to_institution.get_state()
         );
 
-        thread::sleep(Duration::from_millis(100));
+        tokio::time::sleep(Duration::from_millis(1000)).await;
         institution_to_consumer
             .find_message_and_update_state(&faber.profile, &faber.agency_client)
             .await
@@ -1034,9 +1101,9 @@ pub mod test_utils {
         alice: &mut Alice,
         institution: &mut Faber,
     ) -> (MediatedConnection, MediatedConnection) {
-        let (sender, receiver) = bounded::<A2AMessage>(1);
+        let (sender, receiver) = bounded::<AriesMessage>(1);
         let public_invite_json = institution.create_public_invite().unwrap();
-        let public_invite: Invitation = serde_json::from_str(&public_invite_json).unwrap();
+        let public_invite: AnyInvitation = serde_json::from_str(&public_invite_json).unwrap();
         let ddo = into_did_doc(&alice.profile, &public_invite).await.unwrap();
 
         let mut consumer_to_institution = MediatedConnection::create_with_invite(
@@ -1054,7 +1121,7 @@ pub mod test_utils {
             .await
             .unwrap();
 
-        let request = if let A2AMessage::ConnectionRequest(request) = receiver.recv().await.unwrap() {
+        let request = if let AriesMessage::Connection(Connection::Request(request)) = receiver.recv().await.unwrap() {
             request
         } else {
             panic!("Received invalid message type")
@@ -1101,7 +1168,7 @@ pub mod test_utils {
         let thread_id = consumer_to_institution.get_thread_id();
 
         debug!("Institution is going to process connection request.");
-        thread::sleep(Duration::from_millis(100));
+        tokio::time::sleep(Duration::from_millis(1000)).await;
         institution_to_consumer
             .find_message_and_update_state(&faber.profile, &faber.agency_client)
             .await
@@ -1124,7 +1191,7 @@ pub mod test_utils {
         assert_eq!(thread_id, consumer_to_institution.get_thread_id());
 
         debug!("Institution is going to complete the connection protocol.");
-        thread::sleep(Duration::from_millis(100));
+        tokio::time::sleep(Duration::from_millis(1000)).await;
         institution_to_consumer
             .find_message_and_update_state(&faber.profile, &faber.agency_client)
             .await

@@ -238,6 +238,7 @@ pub mod test_utils {
 }
 
 #[cfg(test)]
+#[cfg(feature = "general_test")]
 pub mod tests {
     use aries_vcx::aries_vcx_core::indy::wallet::{delete_wallet, RestoreWalletConfigs, WalletConfig, WalletRecord};
     use aries_vcx::global::settings::{
@@ -327,7 +328,7 @@ pub mod tests {
             "retrieveTags": false
         })
         .to_string();
-        let err = wallet_get_wallet_record(&xtype, &id, &options).await.unwrap_err();
+        let _err = wallet_get_wallet_record(&xtype, &id, &options).await.unwrap_err();
         // copilot demo: example
         close_main_wallet().await.unwrap();
     }
@@ -351,12 +352,6 @@ pub mod tests {
         let record: WalletRecord = serde_json::from_str(&record)?;
         assert_eq!(record.value.unwrap(), value);
         Ok(())
-    }
-
-    async fn test_wallet_record_add_and_get() {
-        _create_and_open_wallet().await.unwrap();
-        _add_and_get_wallet_record().await.unwrap();
-        close_main_wallet().await.unwrap();
     }
 
     #[tokio::test]
@@ -416,7 +411,7 @@ pub mod tests {
     async fn test_wallet_open_with_incorrect_key_fails() {
         let _setup = SetupDefaults::init();
         let wallet_name = uuid::Uuid::new_v4().to_string();
-        let export_file = TempFile::prepare_path(&wallet_name);
+        let _export_file = TempFile::prepare_path(&wallet_name);
         let mut wallet_config = WalletConfig {
             wallet_name: wallet_name.into(),
             wallet_key: DEFAULT_WALLET_KEY.into(),

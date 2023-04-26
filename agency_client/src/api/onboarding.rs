@@ -1,5 +1,7 @@
 use std::sync::Arc;
 
+use url::Url;
+
 use crate::agency_client::AgencyClient;
 use crate::configuration::AgencyClientConfig;
 use crate::errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
@@ -97,7 +99,7 @@ impl AgencyClient {
         my_vk: &str,
         agency_did: &str,
         agency_vk: &str,
-        agency_url: &str,
+        agency_url: Url,
     ) -> AgencyClientResult<()> {
         info!(
             "provision_cloud_agent >>> my_did: {}, my_vk: {}, agency_did: {}, agency_vk: {}, agency_url: {}",

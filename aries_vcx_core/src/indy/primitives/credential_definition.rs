@@ -39,7 +39,7 @@ pub async fn libindy_create_and_store_credential_def(
     let res = Locator::instance()
         .issuer_controller
         .create_and_store_credential_definition(
-            wallet_handle.0,
+            wallet_handle,
             DidValue(issuer_did.into()),
             parse_and_validate(schema_json)?,
             tag.into(),

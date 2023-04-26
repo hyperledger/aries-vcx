@@ -1,7 +1,7 @@
 use std::clone::Clone;
 
-use messages::diddoc::aries::diddoc::AriesDidDoc;
-use messages::protocols::discovery::disclose::{Disclose, ProtocolDescriptor};
+use diddoc::aries::diddoc::AriesDidDoc;
+use messages::msg_fields::protocols::discover_features::{disclose::Disclose, ProtocolDescriptor};
 
 use crate::protocols::connection::trait_bounds::{BootstrapDidDoc, CompletedState, TheirDidDoc, ThreadId};
 
@@ -53,6 +53,6 @@ impl CompletedState for Completed {
     }
 
     fn handle_disclose(&mut self, disclose: Disclose) {
-        self.protocols = Some(disclose.protocols)
+        self.protocols = Some(disclose.content.protocols)
     }
 }

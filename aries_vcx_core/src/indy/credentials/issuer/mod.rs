@@ -25,7 +25,7 @@ pub async fn libindy_issuer_create_credential_offer(
 
     let res = Locator::instance()
         .issuer_controller
-        .create_credential_offer(wallet_handle.0, vdrtools::CredentialDefinitionId(cred_def_id.into()))
+        .create_credential_offer(wallet_handle, vdrtools::CredentialDefinitionId(cred_def_id.into()))
         .await?;
 
     Ok(res)
@@ -51,7 +51,7 @@ pub async fn libindy_issuer_create_credential(
     let res = Locator::instance()
         .issuer_controller
         .new_credential(
-            wallet_handle.0,
+            wallet_handle,
             parse_and_validate::<CredentialOffer>(cred_offer_json)?,
             parse_and_validate::<CredentialRequest>(cred_req_json)?,
             parse_and_validate::<CredentialValues>(cred_values_json)?,

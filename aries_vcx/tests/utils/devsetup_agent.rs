@@ -1,29 +1,27 @@
 #[cfg(test)]
-#[cfg(feature = "test_utils")]
 pub mod test_utils {
     use std::sync::Arc;
 
+    #[cfg(feature = "modular_libs")]
     use aries_vcx::core::profile::modular_libs_profile::ModularLibsProfile;
     use aries_vcx::core::profile::profile::Profile;
     use aries_vcx::core::profile::vdrtools_profile::VdrtoolsProfile;
     use aries_vcx::handlers::revocation_notification::receiver::RevocationNotificationReceiver;
     use aries_vcx::handlers::revocation_notification::sender::RevocationNotificationSender;
+    use aries_vcx::handlers::util::{AnyInvitation, OfferInfo, Status};
     use aries_vcx::protocols::mediated_connection::pairwise_info::PairwiseInfo;
     use aries_vcx::protocols::revocation_notification::sender::state_machine::SenderConfigBuilder;
     use aries_vcx_core::indy::wallet::{
         close_wallet, create_wallet_with_master_secret, delete_wallet, open_wallet, wallet_configure_issuer,
         IssuerConfig, WalletConfig,
     };
+    #[cfg(feature = "modular_libs")]
     use aries_vcx_core::ledger::indy_vdr_ledger::LedgerPoolConfig;
     use aries_vcx_core::wallet::base_wallet::BaseWallet;
     use aries_vcx_core::wallet::indy_wallet::IndySdkWallet;
     use aries_vcx_core::{PoolHandle, WalletHandle};
+    use diddoc::aries::service::AriesService;
     use futures::future::BoxFuture;
-    use messages::concepts::ack::please_ack::AckOn;
-    use messages::diddoc::aries::service::AriesService;
-    use messages::protocols::revocation_notification::revocation_ack::RevocationAck;
-    use messages::protocols::revocation_notification::revocation_notification::RevocationNotification;
-    use messages::status::Status;
 
     use agency_client::agency_client::AgencyClient;
     use agency_client::api::downloaded_message::DownloadedMessage;
@@ -45,11 +43,6 @@ pub mod test_utils {
     use aries_vcx::handlers::proof_presentation::prover::test_utils::get_proof_request_messages;
     use aries_vcx::handlers::proof_presentation::prover::Prover;
     use aries_vcx::handlers::proof_presentation::verifier::Verifier;
-    use aries_vcx::messages::a2a::A2AMessage;
-    use aries_vcx::messages::protocols::connection::invite::{Invitation, PublicInvitation};
-    use aries_vcx::messages::protocols::issuance::credential_offer::CredentialOffer;
-    use aries_vcx::messages::protocols::issuance::credential_offer::OfferInfo;
-    use aries_vcx::messages::protocols::proof_presentation::presentation_request::PresentationRequest;
     use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
     use aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
     use aries_vcx::protocols::mediated_connection::invitee::state_machine::InviteeState;
@@ -59,6 +52,16 @@ pub mod test_utils {
     use aries_vcx::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
     use aries_vcx::utils::devsetup::*;
     use aries_vcx::utils::provision::provision_cloud_agent;
+    use messages::decorators::please_ack::AckOn;
+    use messages::msg_fields::protocols::connection::invitation::{PublicInvitation, PublicInvitationContent};
+    use messages::msg_fields::protocols::connection::Connection;
+    use messages::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
+    use messages::msg_fields::protocols::cred_issuance::CredentialIssuance;
+    use messages::msg_fields::protocols::present_proof::request::RequestPresentation;
+    use messages::msg_fields::protocols::present_proof::PresentProof;
+    use messages::msg_fields::protocols::revocation::ack::AckRevoke;
+    use messages::msg_fields::protocols::revocation::revoke::Revoke;
+    use messages::AriesMessage;
 
     #[derive(Debug)]
     pub struct VcxAgencyMessage {
@@ -77,19 +80,19 @@ pub mod test_utils {
         Other(String),
     }
 
-    fn determine_message_type(a2a_message: A2AMessage) -> PayloadKinds {
+    fn determine_message_type(a2a_message: AriesMessage) -> PayloadKinds {
         debug!("determine_message_type >>> a2a_message: {:?}", a2a_message);
         match a2a_message.clone() {
-            A2AMessage::PresentationRequest(_) => PayloadKinds::ProofRequest,
-            A2AMessage::CredentialOffer(_) => PayloadKinds::CredOffer,
-            A2AMessage::Credential(_) => PayloadKinds::Cred,
-            A2AMessage::Presentation(_) => PayloadKinds::Proof,
-            A2AMessage::ConnectionRequest(_) => PayloadKinds::ConnRequest,
+            AriesMessage::PresentProof(PresentProof::RequestPresentation(_)) => PayloadKinds::ProofRequest,
+            AriesMessage::CredentialIssuance(CredentialIssuance::OfferCredential(_)) => PayloadKinds::CredOffer,
+            AriesMessage::CredentialIssuance(CredentialIssuance::IssueCredential(_)) => PayloadKinds::Cred,
+            AriesMessage::PresentProof(PresentProof::Presentation(_)) => PayloadKinds::Proof,
+            AriesMessage::Connection(Connection::Request(_)) => PayloadKinds::ConnRequest,
             _msg => PayloadKinds::Other(String::from("aries")),
         }
     }
 
-    fn str_message_to_a2a_message(message: &str) -> VcxResult<A2AMessage> {
+    fn str_message_to_a2a_message(message: &str) -> VcxResult<AriesMessage> {
         Ok(serde_json::from_str(message).map_err(|err| {
             AriesVcxError::from_msg(
                 AriesVcxErrorKind::InvalidJson,
@@ -153,7 +156,7 @@ pub mod test_utils {
             let config_provision_agent = AgentProvisionConfig {
                 agency_did: AGENCY_DID.to_string(),
                 agency_verkey: AGENCY_VERKEY.to_string(),
-                agency_endpoint: AGENCY_ENDPOINT.to_string(),
+                agency_endpoint: AGENCY_ENDPOINT.parse().unwrap(),
                 agent_seed: None,
             };
             create_wallet_with_master_secret(&config_wallet).await.unwrap();
@@ -175,7 +178,7 @@ pub mod test_utils {
 
             let pairwise_info = PairwiseInfo::create(&profile.inject_wallet()).await.unwrap();
             let service = AriesService::create()
-                .set_service_endpoint(agency_client.get_agency_url_full())
+                .set_service_endpoint(agency_client.get_agency_url_full().unwrap())
                 .set_recipient_keys(vec![pairwise_info.pw_vk.clone()]);
             write_endpoint_legacy(&profile, &config_issuer.institution_did, &service)
                 .await
@@ -274,10 +277,10 @@ pub mod test_utils {
         }
 
         pub fn create_public_invite(&mut self) -> VcxResult<String> {
-            let public_invitation = PublicInvitation::create()
-                .set_label("faber")
-                .set_public_did(&self.config_issuer.institution_did)?;
-            Ok(json!(public_invitation).to_string())
+            let id = "test_invite_id";
+            let content = PublicInvitationContent::new("faber".to_owned(), self.config_issuer.institution_did.clone());
+            let public_invitation = PublicInvitation::new(id.to_owned(), content);
+            Ok(json!(AriesMessage::from(public_invitation)).to_string())
         }
 
         pub async fn update_state(&mut self, expected_state: u32) {
@@ -421,7 +424,7 @@ pub mod test_utils {
                 .unwrap();
         }
 
-        pub async fn handle_revocation_notification_ack(&mut self, ack: RevocationAck) {
+        pub async fn handle_revocation_notification_ack(&mut self, ack: AckRevoke) {
             self.rev_not_sender = self
                 .rev_not_sender
                 .clone()
@@ -444,15 +447,19 @@ pub mod test_utils {
     }
 
     pub async fn create_test_alice_instance(setup: &SetupPool) -> Alice {
-        let (alice_profile, teardown) = if cfg!(feature = "modular_libs_tests") {
+        let (alice_profile, teardown) = {
+            info!("create_test_alice_instance >> using indy profile");
+            Alice::setup_indy_profile(setup.pool_handle).await
+        };
+
+        #[cfg(feature = "modular_libs")]
+        let (alice_profile, teardown) = {
             let genesis_file_path = setup.genesis_file_path.clone();
             let config = LedgerPoolConfig { genesis_file_path };
             info!("create_test_alice_instance >> using modular profile");
             Alice::setup_modular_profile(config).await
-        } else {
-            info!("create_test_alice_instance >> using indy profile");
-            Alice::setup_indy_profile(setup.pool_handle).await
         };
+
         Alice::setup(alice_profile, teardown).await
     }
 
@@ -475,6 +482,7 @@ pub mod test_utils {
             (wallet_handle, config_wallet)
         }
 
+        #[cfg(feature = "modular_libs")]
         pub async fn setup_modular_profile(
             ledger_pool_config: LedgerPoolConfig,
         ) -> (Arc<dyn Profile>, Arc<dyn Fn() -> BoxFuture<'static, ()>>) {
@@ -514,7 +522,7 @@ pub mod test_utils {
             let config_provision_agent = AgentProvisionConfig {
                 agency_did: AGENCY_DID.to_string(),
                 agency_verkey: AGENCY_VERKEY.to_string(),
-                agency_endpoint: AGENCY_ENDPOINT.to_string(),
+                agency_endpoint: AGENCY_ENDPOINT.parse().unwrap(),
                 agent_seed: None,
             };
             let mut agency_client = AgencyClient::new();
@@ -531,7 +539,7 @@ pub mod test_utils {
                 is_active: false,
                 config_agency,
                 connection,
-                credential: Holder::default(),
+                credential: Holder::create("test").unwrap(),
                 prover: Prover::default(),
                 rev_not_receiver: None,
                 teardown,
@@ -540,7 +548,7 @@ pub mod test_utils {
         }
 
         pub async fn accept_invite(&mut self, invite: &str) {
-            let invite: Invitation = serde_json::from_str(invite).unwrap();
+            let invite: AnyInvitation = serde_json::from_str(invite).unwrap();
             let ddo = into_did_doc(&self.profile, &invite).await.unwrap();
             self.connection =
                 MediatedConnection::create_with_invite("faber", &self.profile, &self.agency_client, invite, ddo, true)
@@ -604,7 +612,7 @@ pub mod test_utils {
                 .unwrap();
             let offer = serde_json::from_str::<Vec<::serde_json::Value>>(&offers).unwrap()[0].clone();
             let offer = serde_json::to_string(&offer).unwrap();
-            let cred_offer: CredentialOffer = serde_json::from_str(&offer)
+            let cred_offer: OfferCredential = serde_json::from_str(&offer)
                 .map_err(|err| {
                     AriesVcxError::from_msg(
                         AriesVcxErrorKind::InvalidJson,
@@ -637,31 +645,30 @@ pub mod test_utils {
                 .await
                 .unwrap();
             assert_eq!(HolderState::Finished, self.credential.get_state());
-            assert_eq!(
-                aries_vcx::messages::status::Status::Success.code(),
-                self.credential.get_credential_status().unwrap()
-            );
+            assert_eq!(Status::Success.code(), self.credential.get_credential_status().unwrap());
         }
 
-        pub async fn get_proof_request_messages(&mut self) -> PresentationRequest {
+        pub async fn get_proof_request_messages(&mut self) -> RequestPresentation {
             let presentation_requests = get_proof_request_messages(&self.agency_client, &self.connection)
                 .await
                 .unwrap();
             let presentation_request =
                 serde_json::from_str::<Vec<::serde_json::Value>>(&presentation_requests).unwrap()[0].clone();
             let presentation_request_json = serde_json::to_string(&presentation_request).unwrap();
-            let presentation_request: PresentationRequest = serde_json::from_str(&presentation_request_json).unwrap();
+            let presentation_request: RequestPresentation = serde_json::from_str(&presentation_request_json).unwrap();
             presentation_request
         }
 
-        pub async fn get_proof_request_by_msg_id(&mut self, msg_id: &str) -> VcxResult<PresentationRequest> {
+        pub async fn get_proof_request_by_msg_id(&mut self, msg_id: &str) -> VcxResult<RequestPresentation> {
             match self
                 .connection
                 .get_message_by_id(msg_id, &self.agency_client)
                 .await
                 .unwrap()
             {
-                A2AMessage::PresentationRequest(presentation_request) => Ok(presentation_request),
+                AriesMessage::PresentProof(PresentProof::RequestPresentation(presentation_request)) => {
+                    Ok(presentation_request)
+                }
                 msg => Err(AriesVcxError::from_msg(
                     AriesVcxErrorKind::InvalidMessages,
                     format!("Message of different type was received: {:?}", msg),
@@ -669,14 +676,14 @@ pub mod test_utils {
             }
         }
 
-        pub async fn get_credential_offer_by_msg_id(&mut self, msg_id: &str) -> VcxResult<CredentialOffer> {
+        pub async fn get_credential_offer_by_msg_id(&mut self, msg_id: &str) -> VcxResult<OfferCredential> {
             match self
                 .connection
                 .get_message_by_id(msg_id, &self.agency_client)
                 .await
                 .unwrap()
             {
-                A2AMessage::CredentialOffer(cred_offer) => Ok(cred_offer),
+                AriesMessage::CredentialIssuance(CredentialIssuance::OfferCredential(cred_offer)) => Ok(cred_offer),
                 msg => Err(AriesVcxError::from_msg(
                     AriesVcxErrorKind::InvalidMessages,
                     format!("Message of different type was received: {:?}", msg),
@@ -725,13 +732,10 @@ pub mod test_utils {
                 .update_state(&self.profile, &self.agency_client, &self.connection)
                 .await
                 .unwrap();
-            assert_eq!(
-                aries_vcx::messages::status::Status::Success.code(),
-                self.prover.presentation_status()
-            );
+            assert_eq!(Status::Success.code(), self.prover.presentation_status());
         }
 
-        pub async fn receive_revocation_notification(&mut self, rev_not: RevocationNotification) {
+        pub async fn receive_revocation_notification(&mut self, rev_not: Revoke) {
             let rev_reg_id = self.credential.get_rev_reg_id().unwrap();
             let cred_rev_id = self.credential.get_cred_rev_id(&self.profile).await.unwrap();
             let send_message = self.connection.send_message_closure(&self.profile).await.unwrap();

@@ -1,3 +1,5 @@
+#![allow(clippy::unwrap_used)]
+
 use std::fs;
 use std::future::Future;
 use std::sync::{Arc, Once};
@@ -5,9 +7,7 @@ use std::sync::{Arc, Once};
 use aries_vcx_core::global::settings::{
     disable_indy_mocks as disable_indy_mocks_core, enable_indy_mocks as enable_indy_mocks_core,
 };
-use aries_vcx_core::indy::ledger::pool::test_utils::{
-    create_test_ledger_config, create_tmp_genesis_txn_file, delete_test_pool, open_test_pool,
-};
+use aries_vcx_core::indy::ledger::pool::test_utils::{create_test_ledger_config, delete_test_pool, open_test_pool};
 use aries_vcx_core::indy::ledger::pool::PoolConfig;
 use aries_vcx_core::indy::utils::mocks::did_mocks::DidMocks;
 use aries_vcx_core::indy::utils::mocks::pool_mocks::PoolMocks;
@@ -15,6 +15,8 @@ use aries_vcx_core::indy::wallet::{
     close_wallet, create_and_open_wallet, create_indy_wallet, create_wallet_with_master_secret, delete_wallet,
     open_wallet, wallet_configure_issuer, WalletConfig,
 };
+
+#[cfg(feature = "modular_libs")]
 use aries_vcx_core::ledger::indy_vdr_ledger::LedgerPoolConfig;
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use aries_vcx_core::wallet::indy_wallet::IndySdkWallet;
@@ -27,8 +29,10 @@ use agency_client::agency_client::AgencyClient;
 use agency_client::configuration::AgentProvisionConfig;
 use agency_client::testing::mocking::{disable_agency_mocks, enable_agency_mocks, AgencyMockDecrypted};
 
+#[cfg(feature = "modular_libs")]
 use crate::core::profile::modular_libs_profile::ModularLibsProfile;
 use crate::core::profile::profile::Profile;
+#[cfg(feature = "vdrtools")]
 use crate::core::profile::vdrtools_profile::VdrtoolsProfile;
 use crate::global::settings;
 use crate::global::settings::init_issuer_config;
@@ -156,7 +160,7 @@ impl SetupLibraryWallet {
 
         set_test_configs();
 
-        let wallet_name: String = format!("Test_SetupLibraryWallet_{}", uuid::Uuid::new_v4().to_string());
+        let wallet_name: String = format!("Test_SetupLibraryWallet_{}", uuid::Uuid::new_v4());
         let wallet_key: String = settings::DEFAULT_WALLET_KEY.into();
         let wallet_kdf: String = settings::WALLET_KDF_RAW.into();
         let wallet_config = WalletConfig {
@@ -183,7 +187,7 @@ impl SetupLibraryWallet {
     {
         let init = Self::init().await;
 
-        let handle = init.wallet_handle.clone();
+        let handle = init.wallet_handle;
         let config = init.wallet_config.clone();
 
         f(init).await;
@@ -362,23 +366,30 @@ impl SetupWalletPool {
 
 impl SetupProfile {
     pub(self) fn should_run_modular() -> bool {
-        cfg!(feature = "modular_libs_tests")
+        cfg!(feature = "modular_libs")
     }
 
+    #[cfg(any(feature = "modular_libs", feature = "vdrtools"))]
     pub async fn init() -> SetupProfile {
         init_test_logging();
         set_test_configs();
-        if SetupProfile::should_run_modular() {
+
+        #[cfg(feature = "modular_libs")]
+        return {
             info!("SetupProfile >> using modular profile");
             SetupProfile::init_modular().await
-        } else {
+        };
+
+        #[cfg(feature = "vdrtools")]
+        return {
             info!("SetupProfile >> using indy profile");
             SetupProfile::init_indy().await
-        }
+        };
     }
 
     // FUTURE - ideally no tests should be using this method, they should be using the generic init
     // after modular profile Anoncreds/Ledger methods have all been implemented, all tests should use init()
+    #[cfg(feature = "vdrtools")]
     async fn init_indy() -> SetupProfile {
         let (institution_did, wallet_handle) = setup_issuer_wallet().await;
 
@@ -404,7 +415,10 @@ impl SetupProfile {
         }
     }
 
+    #[cfg(feature = "modular_libs")]
     async fn init_modular() -> SetupProfile {
+        use aries_vcx_core::indy::ledger::pool::test_utils::create_tmp_genesis_txn_file;
+
         let (institution_did, wallet_handle) = setup_issuer_wallet().await;
 
         let genesis_file_path = create_tmp_genesis_txn_file();
@@ -431,6 +445,7 @@ impl SetupProfile {
         }
     }
 
+    #[cfg(any(feature = "modular_libs", feature = "vdrtools"))]
     pub async fn run<F>(f: impl FnOnce(Self) -> F)
     where
         F: Future<Output = ()>,
@@ -448,6 +463,7 @@ impl SetupProfile {
 
     // FUTURE - ideally no tests should be using this method, they should be using the generic run
     // after modular profile Anoncreds/Ledger methods have all been implemented, all tests should use run()
+    #[cfg(feature = "vdrtools")]
     pub async fn run_indy<F>(f: impl FnOnce(Self) -> F)
     where
         F: Future<Output = ()>,
@@ -466,6 +482,7 @@ impl SetupProfile {
 
 // TODO - FUTURE - delete this method after `SetupProfile::run_indy` is removed. The purpose of this helper method
 // is to return a test profile for a prover/holder given an existing indy-based profile setup (i.e. returned by SetupProfile::run_indy)
+#[cfg(any(feature = "modular_libs", feature = "vdrtools"))]
 pub async fn init_holder_setup_in_indy_context(indy_issuer_setup: &SetupProfile) -> SetupProfile {
     if SetupProfile::should_run_modular() {
         return SetupProfile::init().await; // create a new modular profile
@@ -534,9 +551,9 @@ macro_rules! assert_match {
     };
 }
 
-pub const AGENCY_ENDPOINT: &'static str = "http://localhost:8080";
-pub const AGENCY_DID: &'static str = "VsKV7grR1BUE29mG2Fm2kX";
-pub const AGENCY_VERKEY: &'static str = "Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR";
+pub const AGENCY_ENDPOINT: &str = "http://localhost:8080";
+pub const AGENCY_DID: &str = "VsKV7grR1BUE29mG2Fm2kX";
+pub const AGENCY_VERKEY: &str = "Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR";
 
 lazy_static! {
     static ref TEST_LOGGING_INIT: Once = Once::new();
@@ -550,13 +567,13 @@ pub fn init_test_logging() {
 
 pub fn create_new_seed() -> String {
     let x = rand::random::<u32>();
-    format!("{:032}", x)
+    format!("{x:032}")
 }
 
 pub async fn setup_issuer_wallet_and_agency_client() -> (String, WalletHandle, AgencyClient) {
     let enterprise_seed = "000000000000000000000000Trustee1";
     let config_wallet = WalletConfig {
-        wallet_name: format!("wallet_{}", uuid::Uuid::new_v4().to_string()),
+        wallet_name: format!("wallet_{}", uuid::Uuid::new_v4()),
         wallet_key: settings::DEFAULT_WALLET_KEY.into(),
         wallet_key_derivation: settings::WALLET_KDF_RAW.into(),
         wallet_type: None,
@@ -568,7 +585,7 @@ pub async fn setup_issuer_wallet_and_agency_client() -> (String, WalletHandle, A
     let config_provision_agent = AgentProvisionConfig {
         agency_did: AGENCY_DID.to_string(),
         agency_verkey: AGENCY_VERKEY.to_string(),
-        agency_endpoint: AGENCY_ENDPOINT.to_string(),
+        agency_endpoint: AGENCY_ENDPOINT.parse().expect("valid url"),
         agent_seed: None,
     };
     create_wallet_with_master_secret(&config_wallet).await.unwrap();
@@ -638,7 +655,6 @@ impl Drop for TempFile {
     }
 }
 
-#[cfg(feature = "test_utils")]
 pub fn was_in_past(datetime_rfc3339: &str, threshold: Duration) -> chrono::ParseResult<bool> {
     let now = Utc::now();
     let datetime: DateTime<Utc> = DateTime::parse_from_rfc3339(datetime_rfc3339)?.into();
@@ -647,14 +663,12 @@ pub fn was_in_past(datetime_rfc3339: &str, threshold: Duration) -> chrono::Parse
 }
 
 #[cfg(test)]
-#[cfg(feature = "general_test")]
 pub mod unit_tests {
     use super::*;
     use chrono::SecondsFormat;
     use std::ops::Sub;
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_is_past_timestamp() {
         let now = Utc::now();
         let past1ms_rfc3339 = now

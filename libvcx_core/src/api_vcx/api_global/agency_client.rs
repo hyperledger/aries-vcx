@@ -96,7 +96,7 @@ pub mod tests {
         let config = AgentProvisionConfig {
             agency_did: "Ab8TvZa3Q19VNkQVzAWVL7".into(),
             agency_verkey: "5LXaR43B1aQyeh94VBP8LG1Sgvjk7aNfqiksBCSjwqbf".into(),
-            agency_endpoint: "https://enym-eagency.pdev.evernym.com".into(),
+            agency_endpoint: "https://enym-eagency.pdev.evernym.com".parse().expect("valid url"),
             agent_seed: None,
         };
         provision_cloud_agent(&config).await.unwrap();

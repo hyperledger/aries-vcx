@@ -56,7 +56,7 @@ pub fn get_config_value(key: &str) -> VcxCoreResult<String> {
         .map(|v| v.to_string())
         .ok_or(AriesVcxCoreError::from_msg(
             AriesVcxCoreErrorKind::InvalidConfiguration,
-            format!("Cannot read \"{}\" from settings", key),
+            format!("Cannot read \"{key}\" from settings"),
         ))
 }
 

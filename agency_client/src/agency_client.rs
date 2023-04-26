@@ -12,7 +12,7 @@ use crate::wallet::base_agency_client_wallet::{BaseAgencyClientWallet, StubAgenc
 #[derive(Clone, Debug)]
 pub struct AgencyClient {
     wallet: Arc<dyn BaseAgencyClientWallet>,
-    pub agency_url: String,
+    pub agency_url: Url,
     pub agency_did: String,
     pub agency_vk: String,
     pub agent_pwdid: String,
@@ -26,10 +26,15 @@ impl AgencyClient {
         Arc::clone(&self.wallet)
     }
 
-    pub fn get_agency_url_full(&self) -> String {
-        format!("{}/agency/msg", self.agency_url.clone())
+    pub fn get_agency_url_full(&self) -> AgencyClientResult<Url> {
+        self.agency_url.join("agency/msg").map_err(|_| {
+            AgencyClientError::from_msg(
+                AgencyClientErrorKind::InvalidUrl,
+                format!("Agency URL not valid: {}", self.agency_url),
+            )
+        })
     }
-    pub(crate) fn get_agency_url_config(&self) -> String {
+    pub(crate) fn get_agency_url_config(&self) -> Url {
         self.agency_url.clone()
     }
 
@@ -55,8 +60,8 @@ impl AgencyClient {
         self.wallet = wallet
     }
 
-    pub(crate) fn set_agency_url(&mut self, url: &str) {
-        self.agency_url = url.to_string();
+    pub(crate) fn set_agency_url(&mut self, url: Url) {
+        self.agency_url = url;
     }
     pub(crate) fn set_agency_did(&mut self, did: &str) {
         self.agency_did = did.to_string();
@@ -91,15 +96,7 @@ impl AgencyClient {
         validate_did(&config.remote_to_sdk_did)?;
         validate_verkey(&config.remote_to_sdk_verkey)?;
 
-        match Url::parse(&config.agency_endpoint) {
-            Err(_) => Err(AgencyClientError::from_msg(
-                AgencyClientErrorKind::InvalidUrl,
-                format!("Endpoint {} is not valid url", &config.agency_endpoint),
-            )),
-            _ => Ok(()),
-        }?;
-
-        self.set_agency_url(&config.agency_endpoint);
+        self.set_agency_url(config.agency_endpoint.clone());
         self.set_agency_did(&config.agency_did);
         self.set_agency_vk(&config.agency_verkey);
         self.set_agent_pwdid(&config.remote_to_sdk_did);
@@ -116,7 +113,7 @@ impl AgencyClient {
 
         let default_did = "VsKV7grR1BUE29mG2Fm2kX";
         let default_verkey = "Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR";
-        let default_url = "http://127.0.0.1:8080";
+        let default_url = "http://127.0.0.1:8080".parse().expect("should be valid url");
 
         self.set_agency_url(default_url);
         self.set_agency_did(default_did);
@@ -130,7 +127,7 @@ impl AgencyClient {
     pub fn new() -> Self {
         AgencyClient {
             wallet: Arc::new(StubAgencyClientWallet {}),
-            agency_url: "".to_string(),
+            agency_url: "http://127.0.0.1:8080".parse().expect("should be valid url"),
             agency_did: "".to_string(),
             agency_vk: "".to_string(),
             agent_pwdid: "".to_string(),

@@ -781,6 +781,7 @@ pub extern "C" fn vcx_proof_get_thread_id(
 }
 
 #[cfg(test)]
+#[cfg(feature = "test_utils")]
 mod tests {
     use std::ffi::CString;
     use std::ptr;

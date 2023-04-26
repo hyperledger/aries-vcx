@@ -3,28 +3,40 @@ pub mod states;
 use std::sync::Arc;
 
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
-use messages::{diddoc::aries::diddoc::AriesDidDoc, protocols::connection::invite::Invitation};
+use chrono::Utc;
+use diddoc::aries::diddoc::AriesDidDoc;
+use messages::{
+    decorators::{thread::Thread, timing::Timing},
+    msg_fields::protocols::{
+        connection::{
+            invitation::Invitation,
+            request::{Request, RequestContent, RequestDecorators},
+            response::Response,
+            ConnectionData,
+        },
+        notification::{Ack, AckContent, AckDecorators, AckStatus},
+    },
+};
+use url::Url;
+use uuid::Uuid;
 
 use crate::{
-    common::ledger::transactions::into_did_doc, core::profile::profile::Profile, errors::error::VcxResult,
-    protocols::connection::trait_bounds::ThreadId, transport::Transport,
+    common::ledger::transactions::into_did_doc,
+    core::profile::profile::Profile,
+    errors::error::VcxResult,
+    handlers::util::{matches_thread_id, AnyInvitation},
+    protocols::connection::trait_bounds::ThreadId,
+    transport::Transport,
 };
 
 use self::states::{
     completed::Completed, initial::Initial, invited::Invited, requested::Requested, responded::Responded,
 };
 
-use messages::{
-    a2a::A2AMessage,
-    concepts::ack::Ack,
-    protocols::connection::{request::Request, response::SignedResponse},
-};
-
 use super::{initiation_type::Invitee, pairwise_info::PairwiseInfo, trait_bounds::BootstrapDidDoc, Connection};
 use crate::{
     common::signing::decode_signed_connection_response,
     errors::error::{AriesVcxError, AriesVcxErrorKind},
-    handlers::util::verify_thread_id,
 };
 
 /// Convenience alias
@@ -49,7 +61,7 @@ impl InviteeConnection<Initial> {
     pub async fn accept_invitation(
         self,
         profile: &Arc<dyn Profile>,
-        invitation: Invitation,
+        invitation: AnyInvitation,
     ) -> VcxResult<InviteeConnection<Invited>> {
         trace!("Connection::accept_invitation >>> invitation: {:?}", &invitation);
 
@@ -75,7 +87,7 @@ impl InviteeConnection<Invited> {
     pub async fn send_request<T>(
         self,
         wallet: &Arc<dyn BaseWallet>,
-        service_endpoint: String,
+        service_endpoint: Url,
         routing_keys: Vec<String>,
         transport: &T,
     ) -> VcxResult<InviteeConnection<Requested>>
@@ -86,12 +98,21 @@ impl InviteeConnection<Invited> {
 
         let recipient_keys = vec![self.pairwise_info.pw_vk.clone()];
 
-        let request = Request::create()
-            .set_label(self.source_id.to_string())
-            .set_did(self.pairwise_info.pw_did.to_string())
-            .set_service_endpoint(service_endpoint)
-            .set_keys(recipient_keys, routing_keys)
-            .set_out_time();
+        let id = Uuid::new_v4().to_string();
+
+        let mut did_doc = AriesDidDoc::default();
+        did_doc.set_service_endpoint(service_endpoint);
+        did_doc.set_routing_keys(routing_keys);
+        did_doc.set_recipient_keys(recipient_keys);
+        did_doc.id = self.pairwise_info.pw_did.to_string();
+
+        let con_data = ConnectionData::new(self.pairwise_info.pw_did.to_string(), did_doc);
+        let content = RequestContent::new(self.source_id.to_string(), con_data);
+
+        let mut decorators = RequestDecorators::default();
+        let mut timing = Timing::default();
+        timing.out_time = Some(Utc::now());
+        decorators.timing = Some(timing);
 
         // Depending on the invitation type, we set the connection's thread ID
         // and the request parent and thread ID differently.
@@ -105,20 +126,24 @@ impl InviteeConnection<Invited> {
         // When the invitation is Pairwise, it is designed to be sent to a single invitee.
         // In this case, we reuse the invitation ID (current thread ID) as the thread ID
         // in both the connection and the request.
-        let (thread_id, request) = match &self.state.invitation {
-            Invitation::Public(_) | Invitation::OutOfBand(_) => (
-                request.id.0.clone(),
-                request
-                    .set_parent_thread_id(self.state.thread_id())
-                    .set_thread_id_matching_id(),
-            ),
-            Invitation::Pairwise(_) => (
-                self.state.thread_id().to_owned(),
-                request.set_thread_id(self.state.thread_id()),
-            ),
+        let (thread_id, thread) = match &self.state.invitation {
+            AnyInvitation::Con(Invitation::Public(_)) | AnyInvitation::Oob(_) => {
+                let mut thread = Thread::new(id.clone());
+                thread.pthid = Some(self.state.thread_id().to_owned());
+
+                (id.clone(), thread)
+            }
+            AnyInvitation::Con(Invitation::Pairwise(_)) | AnyInvitation::Con(Invitation::PairwiseDID(_)) => {
+                let thread = Thread::new(self.state.thread_id().to_owned());
+                (self.state.thread_id().to_owned(), thread)
+            }
         };
 
-        self.send_message(wallet, &request.to_a2a_message(), transport).await?;
+        decorators.thread = Some(thread);
+
+        let request = Request::with_decorators(id, content, decorators);
+
+        self.send_message(wallet, &request.into(), transport).await?;
 
         Ok(Connection {
             state: Requested::new(self.state.did_doc, thread_id),
@@ -141,16 +166,24 @@ impl InviteeConnection<Requested> {
     pub async fn handle_response<T>(
         self,
         wallet: &Arc<dyn BaseWallet>,
-        response: SignedResponse,
+        response: Response,
         transport: &T,
     ) -> VcxResult<InviteeConnection<Responded>>
     where
         T: Transport,
     {
-        verify_thread_id(
-            self.state.thread_id(),
-            &A2AMessage::ConnectionResponse(response.clone()),
-        )?;
+        let is_match = matches_thread_id!(response, self.state.thread_id());
+
+        if !is_match {
+            return Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidJson,
+                format!(
+                    "Cannot handle message {:?}: thread id does not match, expected {:?}",
+                    response,
+                    self.state.thread_id()
+                ),
+            ));
+        };
 
         let keys = &self.state.did_doc.recipient_keys()?;
         let their_vk = keys.first().ok_or(AriesVcxError::from_msg(
@@ -158,8 +191,8 @@ impl InviteeConnection<Requested> {
             "Cannot handle response: remote verkey not found",
         ))?;
 
-        let did_doc = match decode_signed_connection_response(wallet, response, their_vk).await {
-            Ok(response) => Ok(response.connection.did_doc),
+        let did_doc = match decode_signed_connection_response(wallet, response.content, their_vk).await {
+            Ok(con_data) => Ok(con_data.did_doc),
             Err(err) => {
                 error!("Request DidDoc validation failed! Sending ProblemReport...");
 
@@ -195,10 +228,15 @@ impl InviteeConnection<Responded> {
     where
         T: Transport,
     {
-        let msg = Ack::create()
-            .set_out_time()
-            .set_thread_id(&self.state.thread_id)
-            .to_a2a_message();
+        let id = Uuid::new_v4().to_string();
+        let content = AckContent::new(AckStatus::Ok);
+
+        let mut decorators = AckDecorators::new(Thread::new(self.state.thread_id.clone()));
+        let mut timing = Timing::default();
+        timing.out_time = Some(Utc::now());
+        decorators.timing = Some(timing);
+
+        let msg = Ack::with_decorators(id, content, decorators).into();
 
         self.send_message(wallet, &msg, transport).await?;
 

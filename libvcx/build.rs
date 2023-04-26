@@ -6,6 +6,10 @@ fn main() {
     let target = env::var("TARGET").unwrap();
     println!("target={}", target);
 
+    if target.contains("apple") {
+        println!("cargo:rustc-link-lib=dylib=c++")
+    }
+
     if target.contains("-windows-") {
         let profile = env::var("PROFILE").unwrap();
         println!("profile={}", profile);

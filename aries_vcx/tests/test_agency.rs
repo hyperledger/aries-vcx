@@ -7,7 +7,6 @@ extern crate serde_json;
 pub mod utils;
 
 #[cfg(test)]
-#[cfg(feature = "agency_pool_tests")]
 mod integration_tests {
     use std::sync::Arc;
     use std::thread;
@@ -18,17 +17,18 @@ mod integration_tests {
     use agency_client::messages::update_message::UIDsByConn;
     use agency_client::MessageStatusCode;
     use aries_vcx::global::settings;
-    use aries_vcx::messages::a2a::A2AMessage;
-    use aries_vcx::messages::concepts::ack::test_utils::_ack;
     use aries_vcx::utils::devsetup::SetupPool;
     use aries_vcx_core::wallet::agency_client_wallet::ToBaseAgencyClientWallet;
+    use messages::msg_fields::protocols::cred_issuance::offer_credential::OfferCredentialDecorators;
+    use messages::msg_fields::protocols::cred_issuance::{CredentialAttr, CredentialPreview};
 
-    use crate::utils::devsetup_agent::test_utils::{create_test_alice_instance, Faber};
+    use crate::utils::devsetup_agent::test_utils::create_test_alice_instance;
+    use crate::utils::devsetup_agent::test_utils::Faber;
     use crate::utils::scenarios::test_utils::create_connected_connections;
 
     #[tokio::test]
-    #[cfg(feature = "agency_pool_tests")]
-    async fn test_send_and_download_messages() {
+    #[ignore]
+    async fn test_agency_pool_send_and_download_messages() {
         SetupPool::run(|setup| async move {
             let mut institution = Faber::setup(setup.pool_handle).await;
             let mut consumer = create_test_alice_instance(&setup).await;
@@ -49,7 +49,7 @@ mod integration_tests {
                 .await
                 .unwrap();
 
-            thread::sleep(Duration::from_millis(100));
+            tokio::time::sleep(Duration::from_millis(1000)).await;
 
             let msgs = faber_to_alice
                 .download_messages(&institution.agency_client, None, None)
@@ -113,8 +113,18 @@ mod integration_tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "agency_pool_tests")]
-    async fn test_connection_send_works() {
+    #[ignore]
+    async fn test_agency_pool_connection_send_works() {
+        use aries_vcx::handlers::util::AttachmentId;
+        use messages::{
+            decorators::thread::Thread,
+            msg_fields::protocols::{
+                cred_issuance::offer_credential::{OfferCredential, OfferCredentialContent},
+                notification::{Ack, AckContent, AckDecorators, AckStatus},
+            },
+            AriesMessage,
+        };
+
         SetupPool::run(|setup| async move {
             let mut faber = Faber::setup(setup.pool_handle).await;
             let mut alice = create_test_alice_instance(&setup).await;
@@ -127,13 +137,19 @@ mod integration_tests {
             faber.update_state(4).await;
 
             let uid: String;
-            let message = _ack();
+            let id = "test_id".to_owned();
+            let content = AckContent::new(AckStatus::Ok);
+            let thread = Thread::new("testid".to_owned());
+            let decorators = AckDecorators::new(thread);
+            let message = Ack::with_decorators(id, content, decorators);
 
             info!("test_connection_send_works:: Test if Send Message works");
             {
-                faber.connection.send_message_closure(&faber.profile).await.unwrap()(message.to_a2a_message())
-                    .await
-                    .unwrap();
+                faber.connection.send_message_closure(&faber.profile).await.unwrap()(AriesMessage::from(
+                    message.clone(),
+                ))
+                .await
+                .unwrap();
             }
 
             {
@@ -146,7 +162,7 @@ mod integration_tests {
                 let received_message = messages.values().next().unwrap().clone();
 
                 match received_message {
-                    A2AMessage::Ack(received_message) => assert_eq!(message, received_message.clone()),
+                    AriesMessage::Notification(received_message) => assert_eq!(message, received_message.clone()),
                     _ => assert!(false),
                 }
             }
@@ -159,8 +175,14 @@ mod integration_tests {
                     .await
                     .unwrap();
 
+                let id = "test_id".to_owned();
+                let content = AckContent::new(AckStatus::Ok);
+                let thread = Thread::new("testid".to_owned());
+                let decorators = AckDecorators::new(thread);
+                let _ack = Ack::with_decorators(id, content, decorators);
+
                 match message {
-                    A2AMessage::Ack(ack) => assert_eq!(_ack(), ack),
+                    AriesMessage::Notification(ack) => assert_eq!(_ack, ack),
                     _ => assert!(false),
                 }
             }
@@ -192,7 +214,7 @@ mod integration_tests {
                 let message = messages.values().next().unwrap().clone();
 
                 match message {
-                    A2AMessage::BasicMessage(message) => assert_eq!(basic_message, message.content),
+                    AriesMessage::BasicMessage(message) => assert_eq!(basic_message, message.content.content),
                     _ => assert!(false),
                 }
                 alice
@@ -204,12 +226,32 @@ mod integration_tests {
 
             info!("test_connection_send_works:: Test if Download Messages");
             {
-                let credential_offer =
-                    aries_vcx::messages::protocols::issuance::credential_offer::test_utils::_credential_offer();
+                let attachment_json = json!({
+                    "schema_id":"NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0",
+                    "cred_def_id":"NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:TAG1"
+                });
 
-                faber.connection.send_message_closure(&faber.profile).await.unwrap()(credential_offer.to_a2a_message())
-                    .await
-                    .unwrap();
+                let attach_type = messages::decorators::attachment::AttachmentType::Base64(base64::encode(
+                    &attachment_json.to_string(),
+                ));
+                let attach_data = messages::decorators::attachment::AttachmentData::new(attach_type);
+                let mut attach = messages::decorators::attachment::Attachment::new(attach_data);
+                attach.id = Some(AttachmentId::CredentialOffer.as_ref().to_owned());
+                attach.mime_type = Some(messages::misc::MimeType::Json);
+
+                let id = "test_id".to_owned();
+                let preview =
+                    CredentialPreview::new(vec![CredentialAttr::new("attribute".to_owned(), "value".to_owned())]);
+                let content = OfferCredentialContent::new(preview, vec![attach]);
+                let decorators = OfferCredentialDecorators::default();
+
+                let credential_offer = OfferCredential::with_decorators(id, content, decorators);
+
+                faber.connection.send_message_closure(&faber.profile).await.unwrap()(AriesMessage::from(
+                    credential_offer,
+                ))
+                .await
+                .unwrap();
 
                 let msgs = alice
                     .connection
@@ -217,8 +259,7 @@ mod integration_tests {
                     .await
                     .unwrap();
                 let message: DownloadedMessage = msgs[0].clone();
-                let _payload: aries_vcx::messages::protocols::issuance::credential_offer::CredentialOffer =
-                    serde_json::from_str(&message.decrypted_msg).unwrap();
+                let _payload: OfferCredential = serde_json::from_str(&message.decrypted_msg).unwrap();
 
                 alice
                     .connection
@@ -230,9 +271,9 @@ mod integration_tests {
         .await;
     }
 
-    #[cfg(feature = "agency_pool_tests")]
     #[tokio::test]
-    async fn test_download_messages() {
+    #[ignore]
+    async fn test_agency_pool_download_messages() {
         SetupPool::run(|setup| async move {
             let mut institution = Faber::setup(setup.pool_handle).await;
             let mut consumer1 = create_test_alice_instance(&setup).await;
@@ -287,9 +328,9 @@ mod integration_tests {
         .await;
     }
 
-    #[cfg(feature = "agency_pool_tests")]
     #[tokio::test]
-    async fn test_update_agency_messages() {
+    #[ignore]
+    async fn test_agency_pool_update_agency_messages() {
         SetupPool::run(|setup| async move {
             let mut faber = Faber::setup(setup.pool_handle).await;
             let mut alice = create_test_alice_instance(&setup).await;
@@ -309,7 +350,7 @@ mod integration_tests {
                 .await
                 .unwrap();
 
-            thread::sleep(Duration::from_millis(100));
+            tokio::time::sleep(Duration::from_millis(1000)).await;
 
             let received = alice_to_faber
                 .download_messages(&alice.agency_client, Some(vec![MessageStatusCode::Received]), None)
@@ -363,9 +404,9 @@ mod integration_tests {
         .await;
     }
 
-    #[cfg(feature = "agency_pool_tests")]
     #[tokio::test]
-    async fn test_download_messages_from_multiple_connections() {
+    #[ignore]
+    async fn test_agency_pool_download_messages_from_multiple_connections() {
         SetupPool::run(|setup| async move {
             let mut institution = Faber::setup(setup.pool_handle).await;
             let mut consumer1 = create_test_alice_instance(&setup).await;
@@ -400,9 +441,9 @@ mod integration_tests {
         .await;
     }
 
-    #[cfg(feature = "agency_pool_tests")]
     #[tokio::test]
-    async fn test_update_agent_webhook() {
+    #[ignore]
+    async fn test_agency_pool_update_agent_webhook() {
         use aries_vcx_core::{
             indy::wallet::{create_and_open_wallet, WalletConfig},
             wallet::{base_wallet::BaseWallet, indy_wallet::IndySdkWallet},
@@ -423,7 +464,7 @@ mod integration_tests {
             let wallet_handle = create_and_open_wallet(&wallet_config).await.unwrap();
             let wallet: Arc<dyn BaseWallet> = Arc::new(IndySdkWallet::new(wallet_handle));
             let mut client = AgencyClient::new();
-            let agency_url = "http://localhost:8080";
+            let agency_url = "http://localhost:8080".parse().unwrap();
             let agency_did = "VsKV7grR1BUE29mG2Fm2kX";
             let agency_vk = "Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR";
             let (my_did, my_vk) = wallet.create_and_store_my_did(None, None).await.unwrap();

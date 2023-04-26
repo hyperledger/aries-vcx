@@ -42,7 +42,7 @@ impl Serialize for DdoKeyReference {
 }
 
 #[cfg(test)]
-#[cfg(feature = "general_test")]
+#[allow(clippy::unwrap_used)]
 mod unit_test {
     use crate::aries::diddoc::test_utils::_did;
     use crate::w3c::model::DdoKeyReference;

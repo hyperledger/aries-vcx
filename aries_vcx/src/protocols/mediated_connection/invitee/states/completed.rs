@@ -2,9 +2,9 @@ use std::clone::Clone;
 
 use crate::protocols::mediated_connection::invitee::states::requested::RequestedState;
 use crate::protocols::mediated_connection::invitee::states::responded::RespondedState;
-use messages::diddoc::aries::diddoc::AriesDidDoc;
-use messages::protocols::connection::response::Response;
-use messages::protocols::discovery::disclose::ProtocolDescriptor;
+use diddoc::aries::diddoc::AriesDidDoc;
+use messages::msg_fields::protocols::connection::response::Response;
+use messages::msg_fields::protocols::discover_features::ProtocolDescriptor;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct CompletedState {
@@ -24,12 +24,12 @@ impl From<(CompletedState, Vec<ProtocolDescriptor>)> for CompletedState {
     }
 }
 
-impl From<(RequestedState, Response)> for CompletedState {
-    fn from((state, response): (RequestedState, Response)) -> CompletedState {
+impl From<(RequestedState, AriesDidDoc, Response)> for CompletedState {
+    fn from((state, did_doc, _response): (RequestedState, AriesDidDoc, Response)) -> CompletedState {
         trace!("ConnectionInvitee: transit state from RequestedState to CompleteState");
         CompletedState {
             bootstrap_did_doc: state.did_doc,
-            did_doc: response.connection.did_doc,
+            did_doc,
             protocols: None,
         }
     }
@@ -40,7 +40,7 @@ impl From<RespondedState> for CompletedState {
         trace!("ConnectionInvitee: transit state from RespondedState to CompleteState");
         CompletedState {
             bootstrap_did_doc: state.did_doc,
-            did_doc: state.response.connection.did_doc,
+            did_doc: state.resp_con_data.did_doc,
             protocols: None,
         }
     }
