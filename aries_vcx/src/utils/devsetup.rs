@@ -366,7 +366,7 @@ impl SetupWalletPool {
 
 impl SetupProfile {
     pub(self) fn should_run_modular() -> bool {
-        cfg!(feature = "modular_libs_tests")
+        cfg!(feature = "modular_libs")
     }
 
     #[cfg(any(feature = "modular_libs", feature = "vdrtools"))]
