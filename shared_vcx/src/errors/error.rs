@@ -22,7 +22,7 @@ impl fmt::Display for SharedVcxError {
         writeln!(f, "Error: {}\n", self.msg)?;
         let mut current = self.source();
         while let Some(cause) = current {
-            writeln!(f, "Caused by:\n\t{}", cause)?;
+            writeln!(f, "Caused by:\n\t{cause}")?;
             current = cause.source();
         }
         Ok(())

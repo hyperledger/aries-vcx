@@ -1,3 +1,5 @@
+use url::Url;
+
 pub const SERVICE_SUFFIX: &str = "indy";
 
 pub const SERVICE_TYPE: &str = "IndyAgent";
@@ -18,7 +20,7 @@ pub struct AriesService {
     #[serde(rename = "routingKeys")]
     pub routing_keys: Vec<String>,
     #[serde(rename = "serviceEndpoint")]
-    pub service_endpoint: String,
+    pub service_endpoint: Url,
 }
 
 impl AriesService {
@@ -26,7 +28,7 @@ impl AriesService {
         Self::default()
     }
 
-    pub fn set_service_endpoint(mut self, service_endpoint: String) -> Self {
+    pub fn set_service_endpoint(mut self, service_endpoint: Url) -> Self {
         self.service_endpoint = service_endpoint;
         self
     }
@@ -45,10 +47,12 @@ impl AriesService {
 impl Default for AriesService {
     fn default() -> AriesService {
         AriesService {
-            id: format!("did:example:123456789abcdefghi;{}", SERVICE_SUFFIX),
+            id: format!("did:example:123456789abcdefghi;{SERVICE_SUFFIX}"),
             type_: String::from(SERVICE_TYPE),
             priority: 0,
-            service_endpoint: String::new(),
+            service_endpoint: "https://dummy.dummy/dummy"
+                .parse()
+                .expect("dummy url should get parsed"),
             recipient_keys: Vec::new(),
             routing_keys: Vec::new(),
         }
@@ -62,7 +66,6 @@ impl PartialEq for AriesService {
 }
 
 #[cfg(test)]
-#[cfg(feature = "general_test")]
 mod unit_tests {
     use crate::aries::diddoc::test_utils::{_recipient_keys, _routing_keys, _routing_keys_1, _service_endpoint};
     use crate::aries::service::AriesService;
@@ -80,7 +83,7 @@ mod unit_tests {
             .set_routing_keys(_routing_keys());
 
         let service3 = AriesService::create()
-            .set_service_endpoint("bogus_endpoint".to_string())
+            .set_service_endpoint("https://dummy.dummy/dummy".parse().expect("valid url"))
             .set_recipient_keys(_recipient_keys())
             .set_routing_keys(_routing_keys());
 

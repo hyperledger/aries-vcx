@@ -16,6 +16,8 @@ libvcx_core = { path = "../../libvcx_core"  }
 log = "0.4.16"
 napi = { version = "2.10.14", default-features = false, features = [ "async" ] }
 napi-derive = { version = "2.10.1" }
+uuid = { version = "0.8", default-features = false, features = ["v4"] }
+chrono = "0.4.23"
 
 [build-dependencies]
 napi-build = "2.0.1"

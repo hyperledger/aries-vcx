@@ -555,6 +555,7 @@ pub extern "C" fn vcx_schema_get_state(
 }
 
 #[cfg(test)]
+#[cfg(feature = "test_utils")]
 mod tests {
     use std::ffi::CString;
 

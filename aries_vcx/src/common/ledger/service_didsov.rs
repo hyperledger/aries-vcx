@@ -1,3 +1,5 @@
+use url::Url;
+
 pub const SERVICE_SUFFIX: &str = "indy";
 
 pub const SERVICE_TYPE: &str = "IndyAgent";
@@ -7,7 +9,7 @@ pub const SERVICE_TYPE: &str = "IndyAgent";
 #[cfg_attr(test, derive(PartialEq, Eq))]
 #[serde(rename_all = "camelCase")]
 pub struct EndpointDidSov {
-    pub endpoint: String,
+    pub endpoint: Url,
     #[serde(default)]
     pub routing_keys: Option<Vec<String>>,
     #[serde(default)]
@@ -32,7 +34,7 @@ impl EndpointDidSov {
         Self::default()
     }
 
-    pub fn set_service_endpoint(mut self, service_endpoint: String) -> Self {
+    pub fn set_service_endpoint(mut self, service_endpoint: Url) -> Self {
         self.endpoint = service_endpoint;
         self
     }
@@ -51,7 +53,7 @@ impl EndpointDidSov {
 impl Default for EndpointDidSov {
     fn default() -> EndpointDidSov {
         EndpointDidSov {
-            endpoint: String::new(),
+            endpoint: "https://dummy.dummy/dummy".parse().expect("valid url"),
             routing_keys: Some(Vec::new()),
             types: None,
         }
@@ -59,9 +61,9 @@ impl Default for EndpointDidSov {
 }
 
 #[cfg(test)]
-#[cfg(feature = "general_test")]
+#[allow(clippy::unwrap_used)]
 mod unit_tests {
-    use messages::diddoc::aries::diddoc::test_utils::{_routing_keys, _service_endpoint};
+    use diddoc::aries::diddoc::test_utils::{_routing_keys, _service_endpoint};
 
     use crate::common::ledger::service_didsov::{DidSovServiceType, EndpointDidSov};
     use crate::utils::devsetup::SetupEmpty;
@@ -77,7 +79,7 @@ mod unit_tests {
             .set_routing_keys(Some(_routing_keys()));
 
         let service3 = EndpointDidSov::create()
-            .set_service_endpoint("bogus_endpoint".to_string())
+            .set_service_endpoint("http://bogus_endpoint.com".parse().expect("valid url"))
             .set_routing_keys(Some(_routing_keys()));
 
         let service4 = EndpointDidSov::create()
@@ -102,7 +104,7 @@ mod unit_tests {
             ]));
 
         let expected = json!({
-            "endpoint": "http://localhost:8080",
+            "endpoint": "http://localhost:8080/",
             "routingKeys": [
                 "Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR",
                 "3LYuxJBJkngDbvJj4zjx13DBUdZ2P96eNybwd2n9L9AU"

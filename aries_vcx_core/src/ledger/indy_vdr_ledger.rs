@@ -511,7 +511,6 @@ fn _get_response_json_data_field(response_json: &str) -> VcxCoreResult<Value> {
 }
 
 #[cfg(test)]
-#[cfg(feature = "general_test")]
 mod unit_tests {
     use std::sync::Arc;
 
@@ -524,7 +523,8 @@ mod unit_tests {
     use super::IndyVdrLedger;
 
     #[tokio::test]
-    async fn test_unimplemented_methods() {
+    #[ignore]
+    async fn test_pool_unimplemented_methods() {
         // test used to assert which methods are unimplemented currently, can be removed after all methods implemented
 
         fn assert_unimplemented<T: std::fmt::Debug>(result: VcxCoreResult<T>) {

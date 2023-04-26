@@ -37,6 +37,6 @@ pub mod utils;
 pub mod wallet;
 
 #[cfg(feature = "vdrtools")]
-pub use indy::{
+pub use vdrtools::{
     PoolHandle, SearchHandle, WalletHandle, INVALID_POOL_HANDLE, INVALID_SEARCH_HANDLE, INVALID_WALLET_HANDLE,
 };

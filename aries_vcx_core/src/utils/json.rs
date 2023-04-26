@@ -19,7 +19,7 @@ impl<'a> TryGetIndex for &'a Value {
         self.get(index).ok_or_else(|| {
             AriesVcxCoreError::from_msg(
                 AriesVcxCoreErrorKind::InvalidJson,
-                format!("Could not index '{}' in Value payload: {:?}", index, self),
+                format!("Could not index '{index}' in Value payload: {self:?}"),
             )
         })
     }
@@ -39,28 +39,28 @@ impl AsTypeOrDeserializationError for &Value {
     fn try_as_str(&self) -> Result<&str, AriesVcxCoreError> {
         self.as_str().ok_or(AriesVcxCoreError::from_msg(
             AriesVcxCoreErrorKind::InvalidJson,
-            format!("Could not deserialize '{}' value as string", self),
+            format!("Could not deserialize '{self}' value as string"),
         ))
     }
 
     fn try_as_object(&self) -> Result<&Map<String, Value>, AriesVcxCoreError> {
         self.as_object().ok_or(AriesVcxCoreError::from_msg(
             AriesVcxCoreErrorKind::InvalidJson,
-            format!("Could not deserialize '{}' value as object", self),
+            format!("Could not deserialize '{self}' value as object"),
         ))
     }
 
     fn try_as_bool(&self) -> Result<bool, AriesVcxCoreError> {
         self.as_bool().ok_or(AriesVcxCoreError::from_msg(
             AriesVcxCoreErrorKind::InvalidJson,
-            format!("Could not deserialize '{}' value as bool", self),
+            format!("Could not deserialize '{self}' value as bool"),
         ))
     }
 
     fn try_as_array(&self) -> Result<&Vec<Value>, AriesVcxCoreError> {
         self.as_array().ok_or(AriesVcxCoreError::from_msg(
             AriesVcxCoreErrorKind::InvalidJson,
-            format!("Could not deserialize '{}' value as bool", self),
+            format!("Could not deserialize '{self}' value as bool"),
         ))
     }
 }

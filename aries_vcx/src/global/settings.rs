@@ -154,7 +154,7 @@ pub fn get_protocol_version() -> usize {
 }
 
 #[cfg(test)]
-#[cfg(feature = "general_test")]
+#[allow(clippy::unwrap_used)]
 pub mod unit_tests {
     use crate::utils::devsetup::SetupDefaults;
 

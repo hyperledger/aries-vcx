@@ -621,6 +621,7 @@ mod tests {
     use libvcx_core::api_vcx::api_global::pool::get_main_pool_handle;
     use libvcx_core::api_vcx::api_global::pool::reset_main_pool_handle;
     use libvcx_core::api_vcx::api_global::settings;
+    #[cfg(feature = "test_utils")]
     use libvcx_core::api_vcx::api_global::wallet::test_utils::_create_main_wallet_and_its_backup;
     use libvcx_core::api_vcx::api_global::wallet::wallet_import;
     use libvcx_core::api_vcx::api_global::wallet::{close_main_wallet, get_main_wallet_handle};
@@ -635,6 +636,7 @@ mod tests {
     use crate::api_c::cutils::return_types_u32;
     use crate::api_c::cutils::timeout::TimeoutUtils;
     use crate::api_c::protocols::mediated_connection::vcx_connection_create;
+    #[cfg(feature = "test_utils")]
     use crate::api_c::vcx::test_utils::{
         _vcx_init_threadpool, _vcx_init_threadpool_c_closure, _vcx_open_main_pool_c_closure,
         _vcx_open_main_wallet_c_closure, _vcx_open_pool,
@@ -655,7 +657,7 @@ mod tests {
                 _vcx_open_pool(&json!(setup_pool.pool_config).to_string()).unwrap();
 
                 // Assert config values were set correctly
-                assert_ne!(get_main_pool_handle().unwrap(), INVALID_POOL_HANDLE.0);
+                assert_ne!(get_main_pool_handle().unwrap(), INVALID_POOL_HANDLE);
 
                 // Verify shutdown was successful
                 vcx_shutdown(true);
@@ -788,7 +790,7 @@ mod tests {
 
         // Assert pool was initialized
         assert_ne!(get_main_pool_handle().unwrap(), 0);
-        delete_test_pool(aries_vcx::aries_vcx_core::PoolHandle(get_main_pool_handle().unwrap())).await;
+        delete_test_pool(get_main_pool_handle().unwrap()).await;
         reset_main_pool_handle();
     }
 }

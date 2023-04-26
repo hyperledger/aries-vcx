@@ -21,7 +21,7 @@ pub async fn provision_cloud_agent(
             &my_vk,
             &provision_config.agency_did,
             &provision_config.agency_verkey,
-            &provision_config.agency_endpoint,
+            provision_config.agency_endpoint.clone(),
         )
         .await?;
     let config = client.get_config()?;

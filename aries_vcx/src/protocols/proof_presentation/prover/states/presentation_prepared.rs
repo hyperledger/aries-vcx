@@ -1,12 +1,13 @@
+use messages::msg_fields::protocols::present_proof::present::Presentation;
+use messages::msg_fields::protocols::present_proof::request::RequestPresentation;
+
+use crate::handlers::util::Status;
 use crate::protocols::proof_presentation::prover::states::finished::FinishedState;
 use crate::protocols::proof_presentation::prover::states::presentation_sent::PresentationSentState;
-use messages::protocols::proof_presentation::presentation::Presentation;
-use messages::protocols::proof_presentation::presentation_request::PresentationRequest;
-use messages::status::Status;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct PresentationPreparedState {
-    pub presentation_request: PresentationRequest,
+    pub presentation_request: RequestPresentation,
     pub presentation: Presentation,
 }
 

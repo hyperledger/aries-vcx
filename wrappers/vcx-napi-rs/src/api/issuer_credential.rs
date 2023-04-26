@@ -1,6 +1,6 @@
 use crate::error::to_napi_err;
 use libvcx_core::api_vcx::api_handle::issuer_credential;
-use libvcx_core::aries_vcx::messages::a2a::A2AMessage;
+use libvcx_core::aries_vcx::messages::AriesMessage;
 use libvcx_core::serde_json::json;
 use napi_derive::napi;
 
@@ -134,7 +134,7 @@ async fn issuer_credential_build_offer_msg_v2(
 
 #[napi]
 fn issuer_credential_get_offer_msg(credential_handle: u32) -> napi::Result<String> {
-    let res: A2AMessage = issuer_credential::get_credential_offer_msg(credential_handle).map_err(to_napi_err)?;
+    let res: AriesMessage = issuer_credential::get_credential_offer_msg(credential_handle).map_err(to_napi_err)?;
     Ok(json!(res).to_string())
 }
 

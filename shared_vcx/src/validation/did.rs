@@ -25,7 +25,7 @@ pub fn validate_did(did: &str) -> SharedVcxResult<String> {
             )),
             Err(err) => Err(SharedVcxError::from_msg(
                 SharedVcxErrorKind::NotBase58,
-                format!("DID is not valid base58, details: {}", err),
+                format!("DID is not valid base58, details: {err}"),
             )),
         }
     }
@@ -36,30 +36,27 @@ mod tests {
     use super::*;
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_did_is_b58_and_valid_length() {
         let to_did = "8XFh8yBzrpJQmNyZzgoTqB";
-        match validate_did(&to_did) {
+        match validate_did(to_did) {
             Err(_) => panic!("Should be valid did"),
             Ok(x) => assert_eq!(x, to_did.to_string()),
         }
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_did_is_b58_but_invalid_length() {
         let to_did = "8XFh8yBzrpJQmNyZzgoT";
-        match validate_did(&to_did) {
+        match validate_did(to_did) {
             Err(x) => assert_eq!(x.kind(), SharedVcxErrorKind::InvalidDid),
             Ok(_) => panic!("Should be invalid did"),
         }
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_validate_did_with_non_base58() {
         let to_did = "8*Fh8yBzrpJQmNyZzgoTqB";
-        match validate_did(&to_did) {
+        match validate_did(to_did) {
             Err(x) => assert_eq!(x.kind(), SharedVcxErrorKind::NotBase58),
             Ok(_) => panic!("Should be invalid did"),
         }

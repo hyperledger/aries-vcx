@@ -73,7 +73,7 @@ pub async fn get_verkey_from_ledger(profile: &Arc<dyn Profile>, did: &str) -> Vc
 }
 
 #[cfg(test)]
-#[cfg(feature = "pool_tests")]
+#[allow(clippy::unwrap_used)]
 mod test {
     use aries_vcx_core::indy::utils::mocks::pool_mocks::{enable_pool_mocks, PoolMocks};
 
@@ -83,7 +83,8 @@ mod test {
     use super::*;
 
     #[tokio::test]
-    async fn test_rotate_verkey_fails() {
+    #[ignore]
+    async fn test_pool_rotate_verkey_fails() {
         SetupProfile::run_indy(|setup| async move {
             enable_pool_mocks();
 
