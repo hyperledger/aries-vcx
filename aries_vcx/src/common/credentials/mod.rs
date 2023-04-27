@@ -1,6 +1,6 @@
 use std::{collections::HashMap, sync::Arc};
 
-use time::get_time;
+use time::OffsetDateTime;
 
 use crate::core::profile::profile::Profile;
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
@@ -36,7 +36,7 @@ pub async fn get_cred_rev_id(profile: &Arc<dyn Profile>, cred_id: &str) -> VcxRe
 
 pub async fn is_cred_revoked(profile: &Arc<dyn Profile>, rev_reg_id: &str, rev_id: &str) -> VcxResult<bool> {
     let from = None;
-    let to = Some(get_time().sec as u64 + 100);
+    let to = Some(OffsetDateTime::now_utc().unix_timestamp() as u64 + 100);
     let rev_reg_delta = RevocationRegistryDelta::create_from_ledger(profile, rev_reg_id, from, to).await?;
     Ok(rev_reg_delta.revoked().iter().any(|s| s.to_string().eq(rev_id)))
 }

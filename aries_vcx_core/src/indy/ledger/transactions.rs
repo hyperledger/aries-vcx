@@ -1,3 +1,4 @@
+use time::OffsetDateTime;
 use vdrtools::{DidValue, Locator};
 
 use crate::common::ledger::transactions::{Request, Response};
@@ -597,7 +598,7 @@ pub async fn get_rev_reg_delta_json(
     let to = if let Some(_to) = to {
         _to as i64
     } else {
-        time::get_time().sec
+        OffsetDateTime::now_utc().unix_timestamp()
     };
 
     let req = libindy_build_get_revoc_reg_delta_request(&submitter_did, rev_reg_id, from, to).await?;
