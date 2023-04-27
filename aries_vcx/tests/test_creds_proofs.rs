@@ -253,7 +253,7 @@ mod integration_tests {
                 DEFAULT_SCHEMA_ATTRS,
             )
             .await;
-            let to = time::get_time().sec;
+            let to = time::OffsetDateTime::now_utc().unix_timestamp() as u64;
             let indy_proof_req = json!({
                 "nonce": "123432421212",
                 "name": "proof_req_1",
@@ -334,7 +334,7 @@ mod integration_tests {
                 DEFAULT_SCHEMA_ATTRS,
             )
             .await;
-            let to = time::get_time().sec;
+            let to = time::OffsetDateTime::now_utc().unix_timestamp() as u64;
             let indy_proof_req = json!({
                 "nonce": "123432421212",
                 "name": "proof_req_1",

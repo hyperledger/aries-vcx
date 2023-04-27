@@ -3,6 +3,7 @@ use std::collections::hash_map::RandomState;
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
 use std::sync::Arc;
+use time::OffsetDateTime;
 use vdr::ledger::requests::schema::{AttributeNames, Schema, SchemaV1};
 
 use async_trait::async_trait;
@@ -484,7 +485,7 @@ fn unimplemented_method_err(method_name: &str) -> AriesVcxCoreError {
 }
 
 fn current_epoch_time() -> i64 {
-    time::get_time().sec
+    OffsetDateTime::now_utc().unix_timestamp() as i64
 }
 
 async fn _append_txn_author_agreement_to_request(request: PreparedRequest) -> VcxCoreResult<PreparedRequest> {

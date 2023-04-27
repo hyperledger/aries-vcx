@@ -42,7 +42,8 @@ pub struct TxnAuthrAgrmtAcceptanceData {
 }
 
 fn get_req_id() -> u64 {
-    time::get_time().sec as u64 * (1e9 as u64) + time::get_time().nsec as u64
+    time::OffsetDateTime::now_utc().unix_timestamp() as u64 * (1e9 as u64)
+        + time::OffsetDateTime::now_utc().unix_timestamp_nanos() as u64
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]

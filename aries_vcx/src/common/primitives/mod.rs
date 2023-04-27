@@ -86,7 +86,7 @@ pub mod integration_tests {
 
             let ledger = Arc::clone(&setup.profile).inject_ledger();
             let (id, _rev_reg, _timestamp) = ledger
-                .get_rev_reg(&rev_reg_id, time::get_time().sec as u64)
+                .get_rev_reg(&rev_reg_id, time::OffsetDateTime::now_utc().unix_timestamp() as u64)
                 .await
                 .unwrap();
 
