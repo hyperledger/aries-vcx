@@ -10,7 +10,7 @@ use crate::utils::encryption_envelope::EncryptionEnvelope;
 use messages::AriesMessage;
 
 #[macro_use]
-#[cfg(feature = "vdrtools")]
+#[cfg(test)]
 pub mod devsetup;
 
 #[cfg(debug_assertions)]
@@ -54,7 +54,7 @@ pub mod random;
 pub mod uuid;
 
 #[macro_use]
-#[cfg(feature = "test_utils")]
+#[cfg(test)]
 pub mod test_logger;
 pub mod encryption_envelope;
 pub mod filters;

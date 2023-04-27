@@ -87,7 +87,6 @@ dependencies = [
 name = "agency_client"
 version = "0.55.0"
 dependencies = [
- "android_logger",
  "async-trait",
  "env_logger 0.9.3",
  "lazy_static",
@@ -186,7 +185,6 @@ name = "aries-vcx"
 version = "0.55.0"
 dependencies = [
  "agency_client",
- "android_logger",
  "aries_vcx_core",
  "async-channel",
  "async-trait",
@@ -197,7 +195,10 @@ dependencies = [
  "diddoc",
  "env_logger 0.9.3",
  "futures",
+ "indy-credx",
+ "indy-vdr",
  "lazy_static",
+ "libvdrtools",
  "log",
  "messages",
  "openssl",
@@ -4718,6 +4719,7 @@ name = "vcx-napi-rs"
 version = "0.55.0"
 dependencies = [
  "chrono",
+ "env_logger 0.9.3",
  "libvcx_core",
  "log",
  "napi",
