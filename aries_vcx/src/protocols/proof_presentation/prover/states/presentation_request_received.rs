@@ -1,23 +1,39 @@
 use std::sync::Arc;
 
+use messages::msg_fields::protocols::present_proof::present::Presentation;
+use messages::msg_fields::protocols::present_proof::request::{
+    RequestPresentation, RequestPresentationContent, RequestPresentationDecorators,
+};
+use messages::msg_fields::protocols::report_problem::ProblemReport;
+use uuid::Uuid;
+
 use crate::common::proofs::prover::prover::generate_indy_proof;
 use crate::core::profile::profile::Profile;
 use crate::errors::error::prelude::*;
+use crate::handlers::util::{get_attach_as_string, Status};
 use crate::protocols::proof_presentation::prover::states::finished::FinishedState;
 use crate::protocols::proof_presentation::prover::states::presentation_preparation_failed::PresentationPreparationFailedState;
 use crate::protocols::proof_presentation::prover::states::presentation_prepared::PresentationPreparedState;
-use messages::concepts::problem_report::ProblemReport;
-use messages::protocols::proof_presentation::presentation::Presentation;
-use messages::protocols::proof_presentation::presentation_request::PresentationRequest;
-use messages::status::Status;
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct PresentationRequestReceived {
-    pub presentation_request: PresentationRequest,
+    pub presentation_request: RequestPresentation,
+}
+
+impl Default for PresentationRequestReceived {
+    fn default() -> Self {
+        let id = Uuid::new_v4().to_string();
+        let content = RequestPresentationContent::new(Vec::new());
+        let decorators = RequestPresentationDecorators::default();
+
+        Self {
+            presentation_request: RequestPresentation::with_decorators(id, content, decorators),
+        }
+    }
 }
 
 impl PresentationRequestReceived {
-    pub fn new(presentation_request: PresentationRequest) -> Self {
+    pub fn new(presentation_request: RequestPresentation) -> Self {
         Self { presentation_request }
     }
 
@@ -27,13 +43,10 @@ impl PresentationRequestReceived {
         credentials: &str,
         self_attested_attrs: &str,
     ) -> VcxResult<String> {
-        generate_indy_proof(
-            profile,
-            credentials,
-            self_attested_attrs,
-            &self.presentation_request.request_presentations_attach.content()?,
-        )
-        .await
+        let proof_req_data_json =
+            get_attach_as_string!(&self.presentation_request.content.request_presentations_attach);
+
+        generate_indy_proof(profile, credentials, self_attested_attrs, &proof_req_data_json).await
     }
 }
 

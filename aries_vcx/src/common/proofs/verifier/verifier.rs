@@ -55,7 +55,7 @@ pub async fn validate_indy_proof(
 }
 
 #[cfg(test)]
-#[cfg(feature = "pool_tests")]
+#[allow(clippy::unwrap_used)]
 pub mod unit_tests {
     use crate::common::proofs::proof_request::ProofRequestData;
     use crate::common::test_utils::create_and_store_nonrevocable_credential;
@@ -65,7 +65,8 @@ pub mod unit_tests {
     use super::*;
 
     #[tokio::test]
-    async fn test_proof_self_attested_proof_validation() {
+    #[ignore]
+    async fn test_pool_proof_self_attested_proof_validation() {
         SetupProfile::run(|setup| async move {
             let requested_attrs = json!([
                 json!({
@@ -126,7 +127,8 @@ pub mod unit_tests {
     }
 
     #[tokio::test]
-    async fn test_proof_restrictions() {
+    #[ignore]
+    async fn test_pool_proof_restrictions() {
         SetupProfile::run_indy(|setup| async move {
             let holder_setup = init_holder_setup_in_indy_context(&setup).await;
 
@@ -214,7 +216,8 @@ pub mod unit_tests {
     }
 
     #[tokio::test]
-    async fn test_proof_validate_attribute() {
+    #[ignore]
+    async fn test_pool_proof_validate_attribute() {
         SetupProfile::run_indy(|setup| async move {
             let holder_setup = init_holder_setup_in_indy_context(&setup).await;
 
@@ -321,7 +324,7 @@ pub mod unit_tests {
 }
 
 #[cfg(test)]
-#[cfg(feature = "pool_tests")]
+#[allow(clippy::unwrap_used)]
 pub mod integration_tests {
     use std::sync::Arc;
 
@@ -329,7 +332,8 @@ pub mod integration_tests {
     use crate::utils::devsetup::{init_holder_setup_in_indy_context, SetupProfile};
 
     #[tokio::test]
-    async fn test_prover_verify_proof() {
+    #[ignore]
+    async fn test_pool_prover_verify_proof() {
         SetupProfile::run_indy(|setup| async move {
             let holder_setup = init_holder_setup_in_indy_context(&setup).await;
 
@@ -348,7 +352,8 @@ pub mod integration_tests {
     }
 
     #[tokio::test]
-    async fn test_prover_verify_proof_with_predicate_success_case() {
+    #[ignore]
+    async fn test_pool_prover_verify_proof_with_predicate_success_case() {
         SetupProfile::run_indy(|setup| async move {
             let holder_setup = init_holder_setup_in_indy_context(&setup).await;
 
@@ -367,7 +372,8 @@ pub mod integration_tests {
     }
 
     #[tokio::test]
-    async fn test_prover_verify_proof_with_predicate_fail_case() {
+    #[ignore]
+    async fn test_pool_prover_verify_proof_with_predicate_fail_case() {
         SetupProfile::run_indy(|setup| async move {
             let holder_setup = init_holder_setup_in_indy_context(&setup).await;
 

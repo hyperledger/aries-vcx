@@ -23,7 +23,7 @@ pub async fn create_and_store_my_did(
     let res = Locator::instance()
         .did_controller
         .create_and_store_my_did(
-            wallet_handle.0,
+            wallet_handle,
             MyDidInfo {
                 method_name: method_name.map(|m| DidMethod(m.into())),
                 seed: seed.map(ToOwned::to_owned),
@@ -43,7 +43,7 @@ pub async fn libindy_replace_keys_start(wallet_handle: WalletHandle, did: &str) 
 
     let res = Locator::instance()
         .did_controller
-        .replace_keys_start(wallet_handle.0, KeyInfo::default(), DidValue(did.into()))
+        .replace_keys_start(wallet_handle, KeyInfo::default(), DidValue(did.into()))
         .await?;
 
     Ok(res)
@@ -57,7 +57,7 @@ pub async fn libindy_replace_keys_apply(wallet_handle: WalletHandle, did: &str) 
 
     Locator::instance()
         .did_controller
-        .replace_keys_apply(wallet_handle.0, DidValue(did.into()))
+        .replace_keys_apply(wallet_handle, DidValue(did.into()))
         .await?;
 
     Ok(())
@@ -71,7 +71,7 @@ pub async fn get_verkey_from_wallet(wallet_handle: WalletHandle, did: &str) -> V
 
     let res = Locator::instance()
         .did_controller
-        .key_for_local_did(wallet_handle.0, DidValue(did.into()))
+        .key_for_local_did(wallet_handle, DidValue(did.into()))
         .await?;
 
     Ok(res)

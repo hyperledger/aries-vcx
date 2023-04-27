@@ -1,6 +1,6 @@
 use std::{collections::HashMap, sync::Arc};
 
-use time::get_time;
+use time::OffsetDateTime;
 
 use crate::core::profile::profile::Profile;
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
@@ -36,13 +36,13 @@ pub async fn get_cred_rev_id(profile: &Arc<dyn Profile>, cred_id: &str) -> VcxRe
 
 pub async fn is_cred_revoked(profile: &Arc<dyn Profile>, rev_reg_id: &str, rev_id: &str) -> VcxResult<bool> {
     let from = None;
-    let to = Some(get_time().sec as u64 + 100);
+    let to = Some(OffsetDateTime::now_utc().unix_timestamp() as u64 + 100);
     let rev_reg_delta = RevocationRegistryDelta::create_from_ledger(profile, rev_reg_id, from, to).await?;
     Ok(rev_reg_delta.revoked().iter().any(|s| s.to_string().eq(rev_id)))
 }
 
 #[cfg(test)]
-#[cfg(feature = "pool_tests")]
+#[allow(clippy::unwrap_used)]
 mod integration_tests {
     use super::*;
 
@@ -51,7 +51,8 @@ mod integration_tests {
     use crate::utils::devsetup::{init_holder_setup_in_indy_context, SetupProfile};
 
     #[tokio::test]
-    async fn test_prover_get_credential() {
+    #[ignore]
+    async fn test_pool_prover_get_credential() {
         SetupProfile::run_indy(|setup| async move {
             let holder_setup = init_holder_setup_in_indy_context(&setup).await;
 
@@ -82,7 +83,8 @@ mod integration_tests {
     }
 
     #[tokio::test]
-    async fn test_get_cred_rev_id() {
+    #[ignore]
+    async fn test_pool_get_cred_rev_id() {
         SetupProfile::run_indy(|setup| async move {
             let holder_setup = init_holder_setup_in_indy_context(&setup).await;
 
@@ -104,7 +106,8 @@ mod integration_tests {
     }
 
     #[tokio::test]
-    async fn test_is_cred_revoked() {
+    #[ignore]
+    async fn test_pool_is_cred_revoked() {
         SetupProfile::run_indy(|setup| async move {
             let holder_setup = init_holder_setup_in_indy_context(&setup).await;
 

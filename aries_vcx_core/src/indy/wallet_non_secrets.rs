@@ -21,7 +21,7 @@ pub async fn get_rev_reg_delta(wallet_handle: WalletHandle, rev_reg_id: &str) ->
         rev_reg_id
     );
 
-    let wallet_id = format!("{}{}", RECORD_ID_PREFIX, rev_reg_id);
+    let wallet_id = format!("{RECORD_ID_PREFIX}{rev_reg_id}");
 
     match get_wallet_record(
         wallet_handle,
@@ -71,7 +71,7 @@ pub async fn set_rev_reg_delta(wallet_handle: WalletHandle, rev_reg_id: &str, ca
     );
     match serde_json::to_string(cache) {
         Ok(json) => {
-            let wallet_id = format!("{}{}", RECORD_ID_PREFIX, rev_reg_id);
+            let wallet_id = format!("{RECORD_ID_PREFIX}{rev_reg_id}");
             match update_wallet_record_value(wallet_handle, WALLET_RECORD_TYPE, &wallet_id, &json)
                 .await
                 .or(add_wallet_record(wallet_handle, WALLET_RECORD_TYPE, &wallet_id, &json, None).await)
@@ -82,7 +82,7 @@ pub async fn set_rev_reg_delta(wallet_handle: WalletHandle, rev_reg_id: &str, ca
         }
         Err(_) => Err(AriesVcxCoreError::from_msg(
             AriesVcxCoreErrorKind::SerializationError,
-            format!("Expected cache argument to be valid json. Found instead: {}", cache),
+            format!("Expected cache argument to be valid json. Found instead: {cache}"),
         )),
     }
 }
@@ -99,7 +99,7 @@ pub async fn clear_rev_reg_delta(wallet_handle: WalletHandle, rev_reg_id: &str) 
         rev_reg_id
     );
     if let Some(last_delta) = get_rev_reg_delta(wallet_handle, rev_reg_id).await {
-        let wallet_id = format!("{}{}", RECORD_ID_PREFIX, rev_reg_id);
+        let wallet_id = format!("{RECORD_ID_PREFIX}{rev_reg_id}");
         delete_wallet_record(wallet_handle, WALLET_RECORD_TYPE, &wallet_id).await?;
         info!(
             "clear_rev_reg_delta >> Cleared stored revocation delta for revocation registry {}, wallet record: ${}",
@@ -109,10 +109,7 @@ pub async fn clear_rev_reg_delta(wallet_handle: WalletHandle, rev_reg_id: &str) 
     } else {
         Err(AriesVcxCoreError::from_msg(
             AriesVcxCoreErrorKind::IOError,
-            format!(
-                "Couldn't fetch delta for rev_reg_id {} before deletion, deletion skipped",
-                rev_reg_id
-            ),
+            format!("Couldn't fetch delta for rev_reg_id {rev_reg_id} before deletion, deletion skipped"),
         ))
     }
 }

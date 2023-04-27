@@ -7,10 +7,10 @@ use crate::storage::object_cache::ObjectCache;
 use crate::storage::Storage;
 use aries_vcx::core::profile::profile::Profile;
 use aries_vcx::handlers::proof_presentation::prover::Prover;
-use aries_vcx::messages::a2a::A2AMessage;
-use aries_vcx::messages::protocols::proof_presentation::presentation_ack::PresentationAck;
-use aries_vcx::messages::protocols::proof_presentation::presentation_proposal::PresentationProposalData;
-use aries_vcx::messages::protocols::proof_presentation::presentation_request::PresentationRequest;
+use aries_vcx::handlers::util::PresentationProposalData;
+use aries_vcx::messages::msg_fields::protocols::present_proof::ack::AckPresentation;
+use aries_vcx::messages::msg_fields::protocols::present_proof::request::RequestPresentation;
+use aries_vcx::messages::AriesMessage;
 use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
 use aries_vcx::protocols::SendClosure;
 use serde_json::Value;
@@ -76,7 +76,7 @@ impl ServiceProver {
         Ok(res_credentials.to_string())
     }
 
-    pub fn create_from_request(&self, connection_id: &str, request: PresentationRequest) -> AgentResult<String> {
+    pub fn create_from_request(&self, connection_id: &str, request: RequestPresentation) -> AgentResult<String> {
         self.service_connections.get_by_id(connection_id)?;
         let prover = Prover::create_from_request("", request)?;
         self.provers
@@ -93,7 +93,7 @@ impl ServiceProver {
 
         let wallet = self.profile.inject_wallet();
 
-        let send_closure: SendClosure = Box::new(|msg: A2AMessage| {
+        let send_closure: SendClosure = Box::new(|msg: AriesMessage| {
             Box::pin(async move { connection.send_message(&wallet, &msg, &HttpClient).await })
         });
 
@@ -122,7 +122,7 @@ impl ServiceProver {
 
         let wallet = self.profile.inject_wallet();
 
-        let send_closure: SendClosure = Box::new(|msg: A2AMessage| {
+        let send_closure: SendClosure = Box::new(|msg: AriesMessage| {
             Box::pin(async move { connection.send_message(&wallet, &msg, &HttpClient).await })
         });
 
@@ -132,7 +132,7 @@ impl ServiceProver {
         Ok(())
     }
 
-    pub fn process_presentation_ack(&self, thread_id: &str, ack: PresentationAck) -> AgentResult<String> {
+    pub fn process_presentation_ack(&self, thread_id: &str, ack: AckPresentation) -> AgentResult<String> {
         let ProverWrapper {
             mut prover,
             connection_id,

@@ -5,15 +5,15 @@ use crate::http_client::HttpClient;
 use crate::storage::object_cache::ObjectCache;
 use crate::storage::Storage;
 use aries_vcx::core::profile::profile::Profile;
-use aries_vcx::messages::a2a::A2AMessage;
-use aries_vcx::messages::concepts::ack::Ack;
-use aries_vcx::messages::protocols::connection::invite::Invitation;
-use aries_vcx::messages::protocols::connection::request::Request;
-use aries_vcx::messages::protocols::connection::response::SignedResponse;
+use aries_vcx::handlers::util::AnyInvitation;
+use aries_vcx::messages::msg_fields::protocols::connection::request::Request;
+use aries_vcx::messages::msg_fields::protocols::connection::response::Response;
+use aries_vcx::messages::msg_fields::protocols::notification::Ack;
 use aries_vcx::protocols::connection::pairwise_info::PairwiseInfo;
 use aries_vcx::protocols::connection::{Connection, GenericConnection, State, ThinState};
+use url::Url;
 
-pub type ServiceEndpoint = String;
+pub type ServiceEndpoint = Url;
 
 pub struct ServiceConnections {
     profile: Arc<dyn Profile>,
@@ -30,7 +30,7 @@ impl ServiceConnections {
         }
     }
 
-    pub async fn create_invitation(&self, pw_info: Option<PairwiseInfo>) -> AgentResult<Invitation> {
+    pub async fn create_invitation(&self, pw_info: Option<PairwiseInfo>) -> AgentResult<AnyInvitation> {
         let pw_info = pw_info.unwrap_or(PairwiseInfo::create(&self.profile.inject_wallet()).await?);
         let inviter =
             Connection::new_inviter("".to_owned(), pw_info).create_invitation(vec![], self.service_endpoint.clone());
@@ -42,7 +42,7 @@ impl ServiceConnections {
         Ok(invite)
     }
 
-    pub async fn receive_invitation(&self, invite: Invitation) -> AgentResult<String> {
+    pub async fn receive_invitation(&self, invite: AnyInvitation) -> AgentResult<String> {
         let pairwise_info = PairwiseInfo::create(&self.profile.inject_wallet()).await?;
         let invitee = Connection::new_invitee("".to_owned(), pairwise_info)
             .accept_invitation(&self.profile, invite)
@@ -74,7 +74,7 @@ impl ServiceConnections {
         let inviter = match inviter.state() {
             ThinState::Inviter(State::Initial) => Connection::try_from(inviter)
                 .map_err(From::from)
-                .map(|c| c.into_invited(&request.id.0)),
+                .map(|c| c.into_invited(&request.id)),
             ThinState::Inviter(State::Invited) => Connection::try_from(inviter).map_err(From::from),
             s => Err(AgentError::from_msg(
                 AgentErrorKind::GenericAriesVcxError,
@@ -111,7 +111,7 @@ impl ServiceConnections {
         Ok(())
     }
 
-    pub async fn accept_response(&self, thread_id: &str, response: SignedResponse) -> AgentResult<()> {
+    pub async fn accept_response(&self, thread_id: &str, response: Response) -> AgentResult<()> {
         let invitee: Connection<_, _> = self.connections.get(thread_id)?.try_into()?;
         let invitee = invitee
             .handle_response(&self.profile.inject_wallet(), response, &HttpClient)
@@ -133,7 +133,7 @@ impl ServiceConnections {
 
     pub async fn process_ack(&self, thread_id: &str, ack: Ack) -> AgentResult<()> {
         let inviter: Connection<_, _> = self.connections.get(thread_id)?.try_into()?;
-        let inviter = inviter.acknowledge_connection(&A2AMessage::Ack(ack))?;
+        let inviter = inviter.acknowledge_connection(&ack.into())?;
 
         self.connections.insert(thread_id, inviter.into())?;
 

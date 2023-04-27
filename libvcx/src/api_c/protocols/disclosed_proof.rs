@@ -1130,6 +1130,7 @@ pub extern "C" fn vcx_disclosed_proof_release(handle: u32) -> u32 {
 }
 
 #[cfg(test)]
+#[cfg(feature = "test_utils")]
 mod tests {
     use std::ffi::CString;
 

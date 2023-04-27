@@ -173,3 +173,72 @@ impl Schema {
         self.state as u32
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::utils::constants::SCHEMA_ID;
+
+    #[test]
+    fn test_to_string_versioned() {
+        let schema = Schema {
+            data: vec!["name".to_string(), "age".to_string()],
+            version: "1.0".to_string(),
+            schema_id: SCHEMA_ID.to_string(),
+            name: "test".to_string(),
+            source_id: "1".to_string(),
+            ..Schema::default()
+        };
+        let serialized = schema.to_string_versioned().unwrap();
+        assert!(serialized.contains(r#""version":"1.0""#));
+        assert!(serialized.contains(r#""name":"test""#));
+        assert!(serialized.contains(r#""schema_id":""#));
+        assert!(serialized.contains(r#""source_id":"1""#));
+        assert!(serialized.contains(r#""data":["name","age"]"#));
+    }
+
+    #[test]
+    fn test_from_string_versioned() {
+        let serialized = r#"
+{
+  "version": "1.0",
+  "data": {
+    "data": [
+      "name",
+      "age"
+    ],
+    "version": "1.0",
+    "schema_id": "test_schema_id",
+    "name": "test",
+    "source_id": "1",
+    "submitter_did": "",
+    "state": 1,
+    "schema_json": ""
+  }
+}
+"#;
+        let schema_result = Schema::from_string_versioned(serialized);
+        assert!(schema_result.is_ok());
+        let schema = schema_result.unwrap();
+
+        assert_eq!(schema.version, "1.0");
+        assert_eq!(schema.data, vec!["name".to_string(), "age".to_string()]);
+        assert_eq!(schema.schema_id, "test_schema_id");
+        assert_eq!(schema.name, "test");
+        assert_eq!(schema.source_id, "1");
+        assert_eq!(schema.state, PublicEntityStateType::Published);
+    }
+
+    #[test]
+    fn test_get_schema_id() {
+        let schema = Schema {
+            data: vec!["name".to_string(), "age".to_string()],
+            version: "1.0".to_string(),
+            schema_id: SCHEMA_ID.to_string(),
+            name: "test".to_string(),
+            source_id: "1".to_string(),
+            ..Schema::default()
+        };
+        assert_eq!(schema.get_schema_id(), SCHEMA_ID);
+    }
+}

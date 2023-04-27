@@ -41,7 +41,7 @@ RUN apt-get install -y nodejs
 USER indy
 
 # Install Rust toolchain
-ARG RUST_VER=1.64.0
+ARG RUST_VER=1.65.0
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain ${RUST_VER}
 ENV PATH /home/indy/.cargo/bin:$PATH
 

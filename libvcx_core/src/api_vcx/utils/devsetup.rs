@@ -18,7 +18,7 @@ impl SetupGlobalsWalletPoolAgency {
         SetupWalletPoolAgency::run(|setup| async move {
             set_main_wallet_handle(setup.wallet_handle);
             set_main_agency_client(setup.agency_client.clone());
-            set_main_pool_handle(Some(setup.pool_handle.0));
+            set_main_pool_handle(Some(setup.pool_handle));
 
             f(SetupGlobalsWalletPoolAgency { setup }).await;
 

@@ -3,6 +3,7 @@ use std::collections::hash_map::RandomState;
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
 use std::sync::Arc;
+use time::OffsetDateTime;
 use vdr::ledger::requests::schema::{AttributeNames, Schema, SchemaV1};
 
 use async_trait::async_trait;
@@ -484,7 +485,7 @@ fn unimplemented_method_err(method_name: &str) -> AriesVcxCoreError {
 }
 
 fn current_epoch_time() -> i64 {
-    time::get_time().sec
+    OffsetDateTime::now_utc().unix_timestamp() as i64
 }
 
 async fn _append_txn_author_agreement_to_request(request: PreparedRequest) -> VcxCoreResult<PreparedRequest> {
@@ -511,7 +512,6 @@ fn _get_response_json_data_field(response_json: &str) -> VcxCoreResult<Value> {
 }
 
 #[cfg(test)]
-#[cfg(feature = "general_test")]
 mod unit_tests {
     use std::sync::Arc;
 
@@ -524,7 +524,8 @@ mod unit_tests {
     use super::IndyVdrLedger;
 
     #[tokio::test]
-    async fn test_unimplemented_methods() {
+    #[ignore]
+    async fn test_pool_unimplemented_methods() {
         // test used to assert which methods are unimplemented currently, can be removed after all methods implemented
 
         fn assert_unimplemented<T: std::fmt::Debug>(result: VcxCoreResult<T>) {

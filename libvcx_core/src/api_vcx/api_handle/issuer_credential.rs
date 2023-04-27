@@ -1,11 +1,10 @@
+use aries_vcx::handlers::util::OfferInfo;
+use aries_vcx::messages::AriesMessage;
 use aries_vcx::protocols::SendClosure;
 use serde_json;
 
 use aries_vcx::handlers::issuance::issuer::Issuer;
-use aries_vcx::messages::a2a::A2AMessage;
-use aries_vcx::messages::protocols::issuance::credential_offer::OfferInfo;
 
-use crate::api_vcx::api_global::profile::get_main_profile;
 use crate::api_vcx::api_global::profile::get_main_profile_optional_pool;
 use crate::api_vcx::api_handle::connection;
 use crate::api_vcx::api_handle::connection::HttpClient;
@@ -42,7 +41,7 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
     let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
 
     if let Some(message) = message {
-        let message: A2AMessage = serde_json::from_str(message).map_err(|err| {
+        let message: AriesMessage = serde_json::from_str(message).map_err(|err| {
             LibvcxError::from_msg(
                 LibvcxErrorKind::InvalidOption,
                 format!("Cannot update state: Message deserialization failed: {:?}", err),
@@ -76,11 +75,11 @@ pub async fn update_state_with_message_nonmediated(
     let wallet = get_main_profile_optional_pool().inject_wallet();
 
     let send_message: SendClosure =
-        Box::new(|msg: A2AMessage| Box::pin(async move { con.send_message(&wallet, &msg, &HttpClient).await }));
+        Box::new(|msg: AriesMessage| Box::pin(async move { con.send_message(&wallet, &msg, &HttpClient).await }));
 
     let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
 
-    let message: A2AMessage = serde_json::from_str(message).map_err(|err| {
+    let message: AriesMessage = serde_json::from_str(message).map_err(|err| {
         LibvcxError::from_msg(
             LibvcxErrorKind::InvalidOption,
             format!("Cannot update state: Message deserialization failed: {:?}", err),
@@ -192,7 +191,7 @@ pub fn mark_credential_offer_msg_sent(handle: u32) -> LibvcxResult<()> {
     ISSUER_CREDENTIAL_MAP.insert(handle, credential)
 }
 
-pub fn get_credential_offer_msg(handle: u32) -> LibvcxResult<A2AMessage> {
+pub fn get_credential_offer_msg(handle: u32) -> LibvcxResult<AriesMessage> {
     ISSUER_CREDENTIAL_MAP.get(handle, |credential| Ok(credential.get_credential_offer_msg()?))
 }
 
@@ -211,7 +210,7 @@ pub async fn send_credential_offer_nonmediated(credential_handle: u32, connectio
     let wallet = get_main_profile_optional_pool().inject_wallet();
 
     let send_message: SendClosure =
-        Box::new(|msg: A2AMessage| Box::pin(async move { con.send_message(&wallet, &msg, &HttpClient).await }));
+        Box::new(|msg: AriesMessage| Box::pin(async move { con.send_message(&wallet, &msg, &HttpClient).await }));
 
     credential.send_credential_offer(send_message).await?;
     ISSUER_CREDENTIAL_MAP.insert(credential_handle, credential)?;
@@ -240,7 +239,7 @@ pub async fn send_credential_nonmediated(handle: u32, connection_handle: u32) ->
     let wallet = profile.inject_wallet();
 
     let send_message: SendClosure =
-        Box::new(|msg: A2AMessage| Box::pin(async move { con.send_message(&wallet, &msg, &HttpClient).await }));
+        Box::new(|msg: AriesMessage| Box::pin(async move { con.send_message(&wallet, &msg, &HttpClient).await }));
 
     credential.send_credential(&profile, send_message).await?;
     let state: u32 = credential.get_state().into();
@@ -281,17 +280,17 @@ pub fn get_thread_id(handle: u32) -> LibvcxResult<String> {
 
 #[cfg(test)]
 pub mod tests {
-    use aries_vcx::utils::constants::V3_OBJECT_SERIALIZE_VERSION;
-    use aries_vcx::utils::devsetup::{SetupEmpty, SetupMocks};
-    use aries_vcx::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_REQUEST;
-    use aries_vcx::utils::mockdata::mockdata_mediated_connection::ARIES_CONNECTION_ACK;
-
+    #[cfg(feature = "test_utils")]
     use crate::api_vcx::api_handle::credential_def::tests::create_and_publish_nonrevocable_creddef;
-    use crate::api_vcx::api_handle::issuer_credential;
+    #[cfg(feature = "test_utils")]
     use crate::api_vcx::api_handle::mediated_connection::test_utils::build_test_connection_inviter_requested;
     use crate::aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
     use crate::errors::error;
+    use aries_vcx::utils::constants::V3_OBJECT_SERIALIZE_VERSION;
+    use aries_vcx::utils::devsetup::SetupMocks;
     use aries_vcx::utils::mockdata::mock_settings::StatusCodeMock;
+    use aries_vcx::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_REQUEST;
+    use aries_vcx::utils::mockdata::mockdata_mediated_connection::ARIES_CONNECTION_ACK;
 
     use super::*;
 

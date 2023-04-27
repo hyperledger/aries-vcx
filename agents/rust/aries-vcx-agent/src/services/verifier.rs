@@ -7,10 +7,9 @@ use crate::storage::Storage;
 use aries_vcx::common::proofs::proof_request::PresentationRequestData;
 use aries_vcx::core::profile::profile::Profile;
 use aries_vcx::handlers::proof_presentation::verifier::Verifier;
-use aries_vcx::messages::a2a::A2AMessage;
-use aries_vcx::messages::protocols::proof_presentation::presentation::Presentation;
-use aries_vcx::messages::protocols::proof_presentation::presentation_proposal::PresentationProposal;
-use aries_vcx::messages::status::Status;
+use aries_vcx::messages::msg_fields::protocols::present_proof::present::Presentation;
+use aries_vcx::messages::msg_fields::protocols::present_proof::propose::ProposePresentation;
+use aries_vcx::messages::AriesMessage;
 use aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;
 use aries_vcx::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
 use aries_vcx::protocols::SendClosure;
@@ -51,7 +50,7 @@ impl ServiceVerifier {
         &self,
         connection_id: &str,
         request: PresentationRequestData,
-        proposal: Option<PresentationProposal>,
+        proposal: Option<ProposePresentation>,
     ) -> AgentResult<String> {
         let connection = self.service_connections.get_by_id(connection_id)?;
         let mut verifier = if let Some(proposal) = proposal {
@@ -62,7 +61,7 @@ impl ServiceVerifier {
 
         let wallet = self.profile.inject_wallet();
 
-        let send_closure: SendClosure = Box::new(|msg: A2AMessage| {
+        let send_closure: SendClosure = Box::new(|msg: AriesMessage| {
             Box::pin(async move { connection.send_message(&wallet, &msg, &HttpClient).await })
         });
 
@@ -86,7 +85,7 @@ impl ServiceVerifier {
         let connection = self.service_connections.get_by_id(&connection_id)?;
         let wallet = self.profile.inject_wallet();
 
-        let send_closure: SendClosure = Box::new(|msg: A2AMessage| {
+        let send_closure: SendClosure = Box::new(|msg: AriesMessage| {
             Box::pin(async move { connection.send_message(&wallet, &msg, &HttpClient).await })
         });
 

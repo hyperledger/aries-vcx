@@ -273,8 +273,8 @@ pub fn build_requested_credentials_json(
     Ok(rtn.to_string())
 }
 
-#[cfg(feature = "pool_tests")]
 #[cfg(test)]
+#[allow(clippy::unwrap_used)]
 pub mod pool_tests {
 
     use crate::common::proofs::prover::prover_internal::{build_rev_states_json, CredInfoProver};
@@ -283,7 +283,8 @@ pub mod pool_tests {
     use crate::utils::get_temp_dir_path;
 
     #[tokio::test]
-    async fn test_build_rev_states_json_empty() {
+    #[ignore]
+    async fn test_pool_build_rev_states_json_empty() {
         SetupProfile::run(|_setup| async move {
             // empty vector
             assert_eq!(
@@ -318,7 +319,7 @@ pub mod pool_tests {
 }
 
 #[cfg(test)]
-#[cfg(feature = "general_test")]
+#[allow(clippy::unwrap_used)]
 pub mod unit_tests {
     use aries_vcx_core::INVALID_POOL_HANDLE;
 

@@ -4,7 +4,7 @@ pub mod revocation_registry;
 pub mod revocation_registry_delta;
 
 #[cfg(test)]
-#[cfg(feature = "pool_tests")]
+#[allow(clippy::unwrap_used)]
 pub mod integration_tests {
     use std::sync::Arc;
 
@@ -18,7 +18,8 @@ pub mod integration_tests {
     use crate::utils::get_temp_dir_path;
 
     #[tokio::test]
-    async fn test_rev_reg_def_fails_for_cred_def_created_without_revocation() {
+    #[ignore]
+    async fn test_pool_rev_reg_def_fails_for_cred_def_created_without_revocation() {
         // todo: does not need agency setup
         SetupProfile::run_indy(|setup| async move {
             // Cred def is created with support_revocation=false,
@@ -46,7 +47,8 @@ pub mod integration_tests {
     }
 
     #[tokio::test]
-    async fn test_get_rev_reg_def_json() {
+    #[ignore]
+    async fn test_pool_get_rev_reg_def_json() {
         SetupProfile::run_indy(|setup| async move {
             let attrs = r#"["address1","address2","city","state","zip"]"#;
             let (_, _, _, _, rev_reg_id, _, _) =
@@ -59,7 +61,8 @@ pub mod integration_tests {
     }
 
     #[tokio::test]
-    async fn test_get_rev_reg_delta_json() {
+    #[ignore]
+    async fn test_pool_get_rev_reg_delta_json() {
         SetupProfile::run_indy(|setup| async move {
             let attrs = r#"["address1","address2","city","state","zip"]"#;
             let (_, _, _, _, rev_reg_id, _, _) =
@@ -74,7 +77,8 @@ pub mod integration_tests {
     }
 
     #[tokio::test]
-    async fn test_get_rev_reg() {
+    #[ignore]
+    async fn test_pool_get_rev_reg() {
         SetupProfile::run_indy(|setup| async move {
             let attrs = r#"["address1","address2","city","state","zip"]"#;
             let (_, _, _, _, rev_reg_id, _, _) =
@@ -82,7 +86,7 @@ pub mod integration_tests {
 
             let ledger = Arc::clone(&setup.profile).inject_ledger();
             let (id, _rev_reg, _timestamp) = ledger
-                .get_rev_reg(&rev_reg_id, time::get_time().sec as u64)
+                .get_rev_reg(&rev_reg_id, time::OffsetDateTime::now_utc().unix_timestamp() as u64)
                 .await
                 .unwrap();
 
@@ -92,7 +96,8 @@ pub mod integration_tests {
     }
 
     #[tokio::test]
-    async fn test_get_cred_def() {
+    #[ignore]
+    async fn test_pool_get_cred_def() {
         SetupProfile::run_indy(|setup| async move {
             let attrs = r#"["address1","address2","city","state","zip"]"#;
             let (_, _, cred_def_id, cred_def_json, _) =
@@ -110,7 +115,8 @@ pub mod integration_tests {
     }
 
     #[tokio::test]
-    async fn from_pool_ledger_with_id() {
+    #[ignore]
+    async fn test_pool_from_pool_ledger_with_id() {
         SetupProfile::run_indy(|setup| async move {
             let (schema_id, _schema_json) =
                 create_and_write_test_schema(&setup.profile, &setup.institution_did, DEFAULT_SCHEMA_ATTRS).await;

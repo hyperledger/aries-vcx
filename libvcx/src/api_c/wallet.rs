@@ -198,7 +198,7 @@ pub extern "C" fn vcx_open_main_wallet(
                 cb(
                     command_handle,
                     err.into(),
-                    aries_vcx::aries_vcx_core::INVALID_WALLET_HANDLE.0 .0,
+                    aries_vcx::aries_vcx_core::INVALID_WALLET_HANDLE.0,
                 );
             }
             Ok(wh) => {
@@ -206,9 +206,9 @@ pub extern "C" fn vcx_open_main_wallet(
                     "vcx_open_main_wallet_cb(command_handle: {}, rc: {}, wh: {})",
                     command_handle,
                     SUCCESS_ERR_CODE,
-                    wh.0 .0
+                    wh.0
                 );
-                cb(command_handle, 0, wh.0 .0);
+                cb(command_handle, 0, wh.0);
             }
         }
         Ok(())
