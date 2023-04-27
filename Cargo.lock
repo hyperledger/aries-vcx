@@ -85,7 +85,7 @@ dependencies = [
 
 [[package]]
 name = "agency_client"
-version = "0.54.1"
+version = "0.55.0"
 dependencies = [
  "android_logger",
  "async-trait",
@@ -183,7 +183,7 @@ checksum = "7de8ce5e0f9f8d88245311066a578d72b7af3e7088f32783804676302df237e4"
 
 [[package]]
 name = "aries-vcx"
-version = "0.54.1"
+version = "0.55.0"
 dependencies = [
  "agency_client",
  "android_logger",
@@ -194,6 +194,7 @@ dependencies = [
  "bs58 0.4.0",
  "chrono",
  "derive_builder 0.10.2",
+ "diddoc",
  "env_logger 0.9.3",
  "futures",
  "lazy_static",
@@ -211,12 +212,13 @@ dependencies = [
  "thiserror",
  "time",
  "tokio",
+ "url",
  "uuid 0.8.2",
 ]
 
 [[package]]
 name = "aries-vcx-agent"
-version = "0.54.1"
+version = "0.55.0"
 dependencies = [
  "aries-vcx",
  "aries_vcx_core",
@@ -226,6 +228,7 @@ dependencies = [
  "serde",
  "serde_json",
  "thiserror",
+ "url",
  "uuid 1.3.1",
 ]
 
@@ -422,7 +425,7 @@ checksum = "b9ccdd8f2a161be9bd5c023df56f1b2a0bd1d83872ae53b71a84a12c9bf6e842"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.14",
+ "syn 2.0.15",
 ]
 
 [[package]]
@@ -531,9 +534,9 @@ checksum = "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a"
 
 [[package]]
 name = "bitflags"
-version = "2.1.0"
+version = "2.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c70beb79cbb5ce9c4f8e20849978f34225931f665bb49efa6982875a4d5facb3"
+checksum = "07d1372b52fa64b8af7cf6e3848cfa2dadb81c21e810f144bdd9c26e21895235"
 
 [[package]]
 name = "blake2"
@@ -1015,7 +1018,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dd4056f63fce3b82d852c3da92b08ea59959890813a7f4ce9c0ff85b10cf301b"
 dependencies = [
  "quote",
- "syn 2.0.14",
+ "syn 2.0.15",
 ]
 
 [[package]]
@@ -1064,7 +1067,7 @@ dependencies = [
  "proc-macro2",
  "quote",
  "scratch",
- "syn 2.0.14",
+ "syn 2.0.15",
 ]
 
 [[package]]
@@ -1081,7 +1084,7 @@ checksum = "2345488264226bf682893e25de0769f3360aac9957980ec49361b083ddaa5bc5"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.14",
+ "syn 2.0.15",
 ]
 
 [[package]]
@@ -1307,7 +1310,7 @@ dependencies = [
 
 [[package]]
 name = "diddoc"
-version = "0.54.1"
+version = "0.55.0"
 dependencies = [
  "serde",
  "serde_derive",
@@ -1697,7 +1700,7 @@ checksum = "89ca545a94061b6365f2c7355b4b32bd20df3ff95f02da9329b34ccc3bd6ee72"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.14",
+ "syn 2.0.15",
 ]
 
 [[package]]
@@ -1831,9 +1834,9 @@ dependencies = [
 
 [[package]]
 name = "h2"
-version = "0.3.16"
+version = "0.3.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5be7b54589b581f624f566bf5d8eb2bab1db736c51528720b6bd36b96b55924d"
+checksum = "17f8a914c2987b688368b5138aa05321db91f4090cf26118185672ad588bce21"
 dependencies = [
  "bytes",
  "fnv",
@@ -1991,9 +1994,9 @@ checksum = "9a3a5bfb195931eeb336b2a7b4d761daec841b97f947d34394601737a7bba5e4"
 
 [[package]]
 name = "hyper"
-version = "0.14.25"
+version = "0.14.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cc5e554ff619822309ffd57d8734d77cd5ce6238bc956f037ea06c58238c9899"
+checksum = "ab302d72a6f11a3b910431ff93aae7e773078c769f0a3ef15fb9ec692ed147d4"
 dependencies = [
  "bytes",
  "futures-channel",
@@ -2431,7 +2434,7 @@ dependencies = [
 
 [[package]]
 name = "libvcx"
-version = "0.54.1"
+version = "0.55.0"
 dependencies = [
  "agency_client",
  "android_logger",
@@ -2459,13 +2462,14 @@ dependencies = [
 
 [[package]]
 name = "libvcx_core"
-version = "0.54.1"
+version = "0.55.0"
 dependencies = [
  "agency_client",
  "aries-vcx",
  "async-trait",
  "cfg-if 1.0.0",
  "chrono",
+ "diddoc",
  "env_logger 0.9.3",
  "futures",
  "lazy_static",
@@ -2480,6 +2484,7 @@ dependencies = [
  "thiserror",
  "time",
  "tokio",
+ "url",
  "uuid 0.7.4",
 ]
 
@@ -2531,9 +2536,9 @@ dependencies = [
 
 [[package]]
 name = "linux-raw-sys"
-version = "0.3.1"
+version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d59d8c75012853d2e872fb56bc8a2e53718e2cafe1a4c823143141c6d90c322f"
+checksum = "3f508063cc7bb32987c71511216bd5a32be15bccb6a80b52df8b9d7f01fc3aa2"
 
 [[package]]
 name = "lock_api"
@@ -2594,27 +2599,7 @@ dependencies = [
 
 [[package]]
 name = "messages"
-version = "0.54.1"
-dependencies = [
- "base64 0.10.1",
- "chrono",
- "diddoc",
- "lazy_static",
- "regex",
- "serde",
- "serde_derive",
- "serde_json",
- "strum 0.16.0",
- "strum_macros 0.16.0",
- "thiserror",
- "time",
- "url",
- "uuid 0.8.2",
-]
-
-[[package]]
-name = "messages2"
-version = "0.54.1"
+version = "0.55.0"
 dependencies = [
  "chrono",
  "derive_more",
@@ -2703,11 +2688,11 @@ checksum = "4330eca86d39f2b52d0481aa1e90fe21bfa61f11b0bf9b48ab95595013cefe48"
 
 [[package]]
 name = "napi"
-version = "2.12.4"
+version = "2.12.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "556470a21074b55be8adee5f27ca04389cfdaca323a28b4b0e9c15466de94731"
+checksum = "69b29acdc6cc5c918c3eabd51d241b1c6dfa8914f3552fcfd76e1d7536934581"
 dependencies = [
- "bitflags 2.1.0",
+ "bitflags 2.2.0",
  "ctor 0.2.0",
  "napi-derive",
  "napi-sys",
@@ -2928,7 +2913,7 @@ checksum = "a948666b637a0f465e8564c73e89d4dde00d72d4d473cc972f390fc3dcee7d9c"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.14",
+ "syn 2.0.15",
 ]
 
 [[package]]
@@ -3545,9 +3530,9 @@ dependencies = [
 
 [[package]]
 name = "rustc-demangle"
-version = "0.1.22"
+version = "0.1.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d4a36c42d1873f9a77c53bde094f9664d9891bc604a45b4798fd2c389ed12e5b"
+checksum = "d626bb9dae77e28219937af045c257c28bfd3f69333c512553507f5f9798cb76"
 
 [[package]]
 name = "rustc_version"
@@ -3726,14 +3711,14 @@ checksum = "291a097c63d8497e00160b166a967a4a79c64f3facdd01cbd7502231688d77df"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.14",
+ "syn 2.0.15",
 ]
 
 [[package]]
 name = "serde_json"
-version = "1.0.95"
+version = "1.0.96"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d721eca97ac802aa7777b701877c8004d950fc142651367300d21c1cc0194744"
+checksum = "057d394a50403bcac12672b2b18fb387ab6d289d957dab67dd201875391e52f1"
 dependencies = [
  "itoa 1.0.6",
  "ryu",
@@ -3826,7 +3811,7 @@ dependencies = [
 
 [[package]]
 name = "shared_vcx"
-version = "0.54.1"
+version = "0.55.0"
 dependencies = [
  "bs58 0.4.0",
  "lazy_static",
@@ -4195,9 +4180,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "2.0.14"
+version = "2.0.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fcf316d5356ed6847742d036f8a39c3b8435cac10bd528a4bd461928a6ab34d5"
+checksum = "a34fcf3e8b60f57e6a14301a2e916d323af98b0ea63c599441eec8558660c822"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -4261,7 +4246,7 @@ checksum = "f9456a42c5b0d803c8cd86e73dd7cc9edd429499f37a3550d286d5e86720569f"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.14",
+ "syn 2.0.15",
 ]
 
 [[package]]
@@ -4315,7 +4300,7 @@ checksum = "61a573bdc87985e9d6ddeed1b3d864e8a302c847e40d647746df2f1de209d1ce"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.14",
+ "syn 2.0.15",
 ]
 
 [[package]]
@@ -4499,15 +4484,17 @@ dependencies = [
 
 [[package]]
 name = "uniffi_aries_vcx"
-version = "0.54.1"
+version = "0.55.0"
 dependencies = [
  "aries-vcx",
  "async-trait",
+ "diddoc",
  "once_cell",
  "serde_json",
  "thiserror",
  "tokio",
  "uniffi",
+ "url",
 ]
 
 [[package]]
@@ -4728,13 +4715,15 @@ checksum = "accd4ea62f7bb7a82fe23066fb0957d48ef677f6eeb8215f372f52e48bb32426"
 
 [[package]]
 name = "vcx-napi-rs"
-version = "0.54.1"
+version = "0.55.0"
 dependencies = [
+ "chrono",
  "libvcx_core",
  "log",
  "napi",
  "napi-build",
  "napi-derive",
+ "uuid 0.8.2",
 ]
 
 [[package]]
@@ -5115,7 +5104,7 @@ checksum = "ce36e65b0d2999d2aafac989fb249189a141aee1f53c612c1f37d72631959f69"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.14",
+ "syn 2.0.15",
 ]
 
 [[package]]

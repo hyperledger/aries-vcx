@@ -229,6 +229,7 @@ pub static ARIES_PROVER_SELF_ATTESTED_ATTRS: &str = r#"{
 pub static PROOF_REJECT_RESPONSE_STR_V2: &str = r#"{
     "@id":"6ccc927b-84a4-4766-8145-d40d112999df",
     "@type":"https://didcomm.org/report-problem/1.0/problem-report",
+    "description": {"code": "something_something"}, 
     "comment":"Presentation Request was rejected",
     "~thread":{
         "received_orders":{},

@@ -42,7 +42,7 @@ pub async fn is_cred_revoked(profile: &Arc<dyn Profile>, rev_reg_id: &str, rev_i
 }
 
 #[cfg(test)]
-#[cfg(feature = "pool_tests")]
+#[allow(clippy::unwrap_used)]
 mod integration_tests {
     use super::*;
 
@@ -51,7 +51,8 @@ mod integration_tests {
     use crate::utils::devsetup::{init_holder_setup_in_indy_context, SetupProfile};
 
     #[tokio::test]
-    async fn test_prover_get_credential() {
+    #[ignore]
+    async fn test_pool_prover_get_credential() {
         SetupProfile::run_indy(|setup| async move {
             let holder_setup = init_holder_setup_in_indy_context(&setup).await;
 
@@ -82,7 +83,8 @@ mod integration_tests {
     }
 
     #[tokio::test]
-    async fn test_get_cred_rev_id() {
+    #[ignore]
+    async fn test_pool_get_cred_rev_id() {
         SetupProfile::run_indy(|setup| async move {
             let holder_setup = init_holder_setup_in_indy_context(&setup).await;
 
@@ -104,7 +106,8 @@ mod integration_tests {
     }
 
     #[tokio::test]
-    async fn test_is_cred_revoked() {
+    #[ignore]
+    async fn test_pool_is_cred_revoked() {
         SetupProfile::run_indy(|setup| async move {
             let holder_setup = init_holder_setup_in_indy_context(&setup).await;
 

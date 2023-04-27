@@ -136,7 +136,7 @@ impl BaseLedger for MockLedger {
 }
 
 #[cfg(test)]
-#[cfg(feature = "general_test")]
+#[allow(clippy::unwrap_used)]
 mod unit_tests {
 
     use aries_vcx_core::{

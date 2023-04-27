@@ -7,13 +7,13 @@ use std::{
 use crate::utils::{
     constants::ATTRS,
     json::{AsTypeOrDeserializationError, TryGetIndex},
-    uuid::uuid,
 };
 use crate::wallet::base_wallet::AsyncFnIteratorCollect;
 use crate::{
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
     wallet::base_wallet::BaseWallet,
 };
+
 use async_trait::async_trait;
 use credx::{
     types::{
@@ -29,6 +29,7 @@ use credx::{
 };
 use indy_credx as credx;
 use serde_json::Value;
+use uuid::Uuid;
 
 use super::base_anoncreds::BaseAnonCreds;
 
@@ -602,7 +603,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             tags[marker_tag_name] = Value::String("1".to_string());
         }
 
-        let credential_id = cred_id.map_or(uuid(), String::from);
+        let credential_id = cred_id.map_or(Uuid::new_v4().to_string(), String::from);
 
         let record_value = serde_json::to_string(&credential)?;
         let tags_json = serde_json::to_string(&tags)?;

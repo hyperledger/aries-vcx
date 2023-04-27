@@ -1,11 +1,13 @@
+use diddoc::aries::diddoc::AriesDidDoc;
 use std::sync::{Arc, Mutex};
 
 use aries_vcx::{
-    messages::diddoc::aries::diddoc::AriesDidDoc,
+    errors::error::{AriesVcxError, AriesVcxErrorKind},
     protocols::connection::pairwise_info::PairwiseInfo,
     protocols::connection::Connection as VcxConnection,
-    protocols::connection::{GenericConnection as VcxGenericConnection, ThinState},
+    protocols::connection::GenericConnection as VcxGenericConnection,
 };
+use url::Url;
 
 use crate::{
     core::{http_client::HttpClient, profile::ProfileHolder},
@@ -29,8 +31,9 @@ pub fn create_inviter(profile: Arc<ProfileHolder>) -> VcxUniFFIResult<Arc<Connec
 }
 
 // seperate function since uniffi can't handle constructors with results
-pub fn create_invitee(profile: Arc<ProfileHolder>, did_doc: AriesDidDoc) -> VcxUniFFIResult<Arc<Connection>> {
+pub fn create_invitee(profile: Arc<ProfileHolder>, did_doc: String) -> VcxUniFFIResult<Arc<Connection>> {
     block_on(async {
+        let _did_doc: AriesDidDoc = serde_json::from_str(&did_doc)?;
         let pairwise_info = PairwiseInfo::create(&profile.inner.inject_wallet()).await?;
         let connection = VcxConnection::new_invitee(String::new(), pairwise_info);
         let handler = Mutex::new(VcxGenericConnection::from(connection));
@@ -82,16 +85,12 @@ impl Connection {
         let request = serde_json::from_str(&request)?;
 
         let connection = VcxConnection::try_from(handler.clone())?;
+        let url = Url::parse(&service_endpoint)
+            .map_err(|err| AriesVcxError::from_msg(AriesVcxErrorKind::InvalidUrl, err.to_string()))?;
 
         block_on(async {
             let new_conn = connection
-                .handle_request(
-                    &profile.inner.inject_wallet(),
-                    request,
-                    service_endpoint,
-                    routing_keys,
-                    &HttpClient,
-                )
+                .handle_request(&profile.inner.inject_wallet(), request, url, routing_keys, &HttpClient)
                 .await?;
 
             *handler = VcxGenericConnection::from(new_conn);
@@ -129,15 +128,12 @@ impl Connection {
         let mut handler = self.handler.lock()?;
 
         let connection = VcxConnection::try_from(handler.clone())?;
+        let url = Url::parse(&service_endpoint)
+            .map_err(|err| AriesVcxError::from_msg(AriesVcxErrorKind::InvalidUrl, err.to_string()))?;
 
         block_on(async {
             let new_conn = connection
-                .send_request(
-                    &profile.inner.inject_wallet(),
-                    service_endpoint,
-                    routing_keys,
-                    &HttpClient,
-                )
+                .send_request(&profile.inner.inject_wallet(), url, routing_keys, &HttpClient)
                 .await?;
             *handler = VcxGenericConnection::from(new_conn);
 

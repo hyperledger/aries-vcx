@@ -15,31 +15,13 @@ default = ["vdrtools"]
 vdrtools = ["aries_vcx_core/vdrtools"]
 # Feature flag to include the 'modular library' dependencies (vdrtools alternatives; indy-vdr, indy-credx)
 modular_libs = ["aries_vcx_core/modular_libs"]
-########################## TEST FLAGS ###############################
-# Feature flag for base requirments for running tests underneath the `test_utils` flag (most tests).
-# Both `vdrtools` and `modular_libs` are transitively enabled, so they can be used for tests (including interop tests).
-test_utils = [ "messages/test_utils", "aries_vcx_core/test_utils", "vdrtools", "modular_libs" ]
-# Feature flag for categorising tests which require a ledger to be running
-pool_tests = [ "test_utils" ]
-# Feature flag for categorising tests which require a ledger and messaging agency to be running
-agency_pool_tests = [ "test_utils" ]
-# Feature flag for categorising general tests (usually unit tests)
-general_test = [ "test_utils", "messages/general_test" ]
-# Feature flag to enable experimental tests of a mysql wallet
-mysql_test = ["test_utils" ]
-# Feature flag used to prompt some tests to run using the `modular_libs` dependencies instead of `vdrtools`
-modular_libs_tests = ["test_utils", "tokio/rt", "tokio/macros"]
-########################## OTHER FLAGS ##############################
-# Feature flag to make compiler warnings into failures
-fatal_warnings = []
-# Feature flag to log some extra warnings if enabled
-warnlog_fetched_messages = []
+
 
 [dependencies]
 agency_client = { path = "../agency_client" }
 messages = { path  = "../messages" }
-# default-features as false, since we transitively choose features via `vdrtools` and `modular_libs` features
-aries_vcx_core = { path  = "../aries_vcx_core", default-features = false }
+diddoc = { path = "../diddoc" }
+aries_vcx_core = { path  = "../aries_vcx_core" }
 bs58 = "0.4.0"
 async-trait = "0.1.53"
 env_logger = "0.9.0"
@@ -61,11 +43,16 @@ strum_macros = "0.16.0"
 derive_builder = "0.10.2"
 tokio = { version = "1.20.4" }
 thiserror = "1.0.37"
+url = { version = "2.3", features = ["serde"] }
 
 [target.'cfg(target_os = "android")'.dependencies]
 android_logger = "0.5"
 
 [dev-dependencies]
 async-channel = "1.7.1"
-tokio = { version = "1.20", features = [ "rt", "macros", "rt-multi-thread" ] }
-sqlx = { version = "0.5",    features = [ "migrate", "mysql", "runtime-tokio-rustls" ] }
+tokio = { version = "1.20", features = ["rt", "macros", "rt-multi-thread"] }
+sqlx = { version = "0.5", features = [
+    "migrate",
+    "mysql",
+    "runtime-tokio-rustls",
+] }

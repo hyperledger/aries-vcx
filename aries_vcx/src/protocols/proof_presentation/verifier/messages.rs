@@ -1,8 +1,14 @@
-use messages::a2a::A2AMessage;
-use messages::concepts::problem_report::ProblemReport;
-use messages::protocols::proof_presentation::presentation::Presentation;
-use messages::protocols::proof_presentation::presentation_proposal::PresentationProposal;
-use messages::protocols::proof_presentation::presentation_request::PresentationRequest;
+use messages::{
+    msg_fields::protocols::{
+        present_proof::{
+            present::Presentation, propose::ProposePresentation, request::RequestPresentation, PresentProof,
+        },
+        report_problem::ProblemReport,
+    },
+    AriesMessage,
+};
+
+use crate::handlers::util::{matches_opt_thread_id, matches_thread_id};
 
 type Reason = String;
 
@@ -10,8 +16,8 @@ type Reason = String;
 pub enum VerifierMessages {
     VerifyPresentation(Presentation),
     RejectPresentationProposal(Reason),
-    SetPresentationRequest(PresentationRequest),
-    PresentationProposalReceived(PresentationProposal),
+    SetPresentationRequest(RequestPresentation),
+    PresentationProposalReceived(ProposePresentation),
     PresentationRejectReceived(ProblemReport),
     SendPresentationAck(),
     Unknown,
@@ -20,22 +26,24 @@ pub enum VerifierMessages {
 impl VerifierMessages {
     pub fn thread_id_matches(&self, thread_id: &str) -> bool {
         match self {
-            Self::VerifyPresentation(presentation) => presentation.from_thread(thread_id),
-            Self::PresentationProposalReceived(proposal) => proposal.from_thread(thread_id),
-            Self::PresentationRejectReceived(problem_report) => problem_report.from_thread(thread_id),
+            Self::VerifyPresentation(msg) => matches_thread_id!(msg, thread_id),
+            Self::PresentationProposalReceived(msg) => matches_opt_thread_id!(msg, thread_id),
+            Self::PresentationRejectReceived(msg) => matches_opt_thread_id!(msg, thread_id),
             _ => true,
         }
     }
 }
 
-impl From<A2AMessage> for VerifierMessages {
-    fn from(msg: A2AMessage) -> Self {
+impl From<AriesMessage> for VerifierMessages {
+    fn from(msg: AriesMessage) -> Self {
         match msg {
-            A2AMessage::Presentation(presentation) => VerifierMessages::VerifyPresentation(presentation),
-            A2AMessage::PresentationProposal(presentation_proposal) => {
+            AriesMessage::PresentProof(PresentProof::Presentation(presentation)) => {
+                VerifierMessages::VerifyPresentation(presentation)
+            }
+            AriesMessage::PresentProof(PresentProof::ProposePresentation(presentation_proposal)) => {
                 VerifierMessages::PresentationProposalReceived(presentation_proposal)
             }
-            A2AMessage::CommonProblemReport(report) => VerifierMessages::PresentationRejectReceived(report),
+            AriesMessage::ReportProblem(report) => VerifierMessages::PresentationRejectReceived(report),
             _ => VerifierMessages::Unknown,
         }
     }
