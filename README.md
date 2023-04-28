@@ -24,7 +24,7 @@ Aries-vcx can be used to build native mobile applications. There are 2 approache
   to enable `aries-vcx` on mobile, providing Swift and Kotlin wrappers. However, this is yet in POC stage 
   and new adopters of `aries-vcx` on mobile are highly encouraged to contribute to its development.
 
-Read more about `libvcx` deprecation and `unifii` benefits [here](https://github.com/hyperledger/libvcx#deprecation-notice)
+Read more about `libvcx` deprecation and `unifii` benefits [here](./libvcx/README.md)
 
 # Reach out 👋
 - Ask a question on [discord](https://discord.com/channels/905194001349627914/955480822675308604)
