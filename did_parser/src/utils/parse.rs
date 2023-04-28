@@ -60,6 +60,14 @@ pub fn parse_did_method_id(did_url: &str) -> Result<(DIDRange, DIDRange, DIDRang
         return Err(ParseError::InvalidInput(did_url.to_string()));
     }
 
+    // Disallowed characters are disallowed
+    if !did_url[id_start..id_end]
+        .chars()
+        .all(|c| c.is_ascii_alphanumeric() || ".-_%".contains(c))
+    {
+        return Err(ParseError::InvalidInput(did_url.to_string()));
+    }
+
     Ok((did, method, id))
 }
 

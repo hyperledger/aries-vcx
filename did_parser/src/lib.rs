@@ -1,6 +1,3 @@
-extern crate once_cell;
-extern crate regex;
-
 mod error;
 mod parsed_did;
 mod parsed_did_url;
