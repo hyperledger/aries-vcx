@@ -5,7 +5,7 @@ use std::str::FromStr;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::ParsedDIDUrl;
-use crate::{error::ParseError, is_valid_did, utils::parse::parse_did_method_id, DIDRange};
+use crate::{error::ParseError, utils::parse::parse_did_method_id, DIDRange};
 
 #[derive(Default, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ParsedDID {
@@ -16,13 +16,13 @@ pub struct ParsedDID {
 
 impl ParsedDID {
     pub fn parse(did: String) -> Result<Self, ParseError> {
-        if is_valid_did(&did) {
-            let (_, method, id) = parse_did_method_id(&did)?;
+        let (_, method, id) = parse_did_method_id(&did)?;
 
-            Ok(Self { did, method, id })
-        } else {
-            Err(ParseError::InvalidInput(format!("Invalid DID: {}", did)))
+        if id.end > did.len() {
+            return Err(ParseError::InvalidInput(format!("Invalid DID: {}", did)));
         }
+
+        Ok(Self { did, method, id })
     }
 
     pub fn did(&self) -> &str {
