@@ -14,34 +14,34 @@ const VALID_DID_DOC_JSON: &str = r##"
     "https://w3.org/ns/did/v1",
     "https://w3id.org/security/suites/ed25519-2018/v1"
   ],
-  "id": "did:web:did.actor:alice",
+  "id": "did:web:did-actor-alice",
   "alsoKnownAs": [
       "https://example.com/user-profile/123"
   ],
   "publicKey": [
     {
-      "id": "did:web:did.actor:alice#z6MkrmNwty5ajKtFqc1U48oL2MMLjWjartwc5sf2AihZwXDN",
-      "controller": "did:web:did.actor:alice",
+      "id": "did:web:did-actor-alice#z6MkrmNwty5ajKtFqc1U48oL2MMLjWjartwc5sf2AihZwXDN",
+      "controller": "did:web:did-actor-alice",
       "type": "Ed25519VerificationKey2018",
       "publicKeyBase58": "DK7uJiq9PnPnj7AmNZqVBFoLuwTjT1hFPrk6LSjZ2JRz"
     }
   ],
   "authentication": [
-    "did:web:did.actor:alice#z6MkrmNwty5ajKtFqc1U48oL2MMLjWjartwc5sf2AihZwXDN"
+    "did:web:did-actor-alice#z6MkrmNwty5ajKtFqc1U48oL2MMLjWjartwc5sf2AihZwXDN"
   ],
   "assertionMethod": [
-    "did:web:did.actor:alice#z6MkrmNwty5ajKtFqc1U48oL2MMLjWjartwc5sf2AihZwXDN"
+    "did:web:did-actor-alice#z6MkrmNwty5ajKtFqc1U48oL2MMLjWjartwc5sf2AihZwXDN"
   ],
   "capabilityDelegation": [
-    "did:web:did.actor:alice#z6MkrmNwty5ajKtFqc1U48oL2MMLjWjartwc5sf2AihZwXDN"
+    "did:web:did-actor-alice#z6MkrmNwty5ajKtFqc1U48oL2MMLjWjartwc5sf2AihZwXDN"
   ],
   "capabilityInvocation": [
-    "did:web:did.actor:alice#z6MkrmNwty5ajKtFqc1U48oL2MMLjWjartwc5sf2AihZwXDN"
+    "did:web:did-actor-alice#z6MkrmNwty5ajKtFqc1U48oL2MMLjWjartwc5sf2AihZwXDN"
   ],
   "verificationMethod": [
     {
       "id": "#g1",
-      "controller": "did:web:did.actor:alice",
+      "controller": "did:web:did-actor-alice",
       "type": "JsonWebKey2020",
       "publicKeyJwk": {
         "kty": "EC",
@@ -51,7 +51,7 @@ const VALID_DID_DOC_JSON: &str = r##"
     },
     {
       "id": "#g2",
-      "controller": "did:web:did.actor:alice",
+      "controller": "did:web:did-actor-alice",
       "type": "JsonWebKey2020",
       "publicKeyJwk": {
         "kty": "EC",
@@ -62,9 +62,9 @@ const VALID_DID_DOC_JSON: &str = r##"
   ],
   "keyAgreement": [
     {
-      "id": "did:web:did.actor:alice#zC8GybikEfyNaausDA4mkT4egP7SNLx2T1d1kujLQbcP6h",
+      "id": "did:web:did-actor-alice#zC8GybikEfyNaausDA4mkT4egP7SNLx2T1d1kujLQbcP6h",
       "type": "X25519KeyAgreementKey2019",
-      "controller": "did:web:did.actor:alice",
+      "controller": "did:web:did-actor-alice",
       "publicKeyBase58": "CaSHXEvLKS6SfN9aBfkVGBpp15jSnaHazqHgLHp8KZ3Y"
     }
   ]
@@ -77,17 +77,17 @@ fn test_deserialization() {
 
     assert_eq!(
         did_doc.id(),
-        &ParsedDID::from_str("did:web:did.actor:alice").unwrap()
+        &ParsedDID::from_str("did:web:did-actor-alice").unwrap()
     );
     assert_eq!(
         did_doc.also_known_as(),
         vec![Uri::from_str("https://example.com/user-profile/123").unwrap()]
     );
 
-    let controller = ParsedDID::from_str("did:web:did.actor:alice").unwrap();
+    let controller = ParsedDID::from_str("did:web:did-actor-alice").unwrap();
 
     let pk_id = ParsedDIDUrl::from_str(
-        "did:web:did.actor:alice#z6MkrmNwty5ajKtFqc1U48oL2MMLjWjartwc5sf2AihZwXDN",
+        "did:web:did-actor-alice#z6MkrmNwty5ajKtFqc1U48oL2MMLjWjartwc5sf2AihZwXDN",
     )
     .unwrap();
 
@@ -164,9 +164,9 @@ fn test_deserialization() {
         Value::Array(vec![Value::Object(
             serde_json::from_str(
                 r#"{
-                    "id": "did:web:did.actor:alice#z6MkrmNwty5ajKtFqc1U48oL2MMLjWjartwc5sf2AihZwXDN",
+                    "id": "did:web:did-actor-alice#z6MkrmNwty5ajKtFqc1U48oL2MMLjWjartwc5sf2AihZwXDN",
                     "type": "Ed25519VerificationKey2018",
-                    "controller": "did:web:did.actor:alice",
+                    "controller": "did:web:did-actor-alice",
                     "publicKeyBase58": "DK7uJiq9PnPnj7AmNZqVBFoLuwTjT1hFPrk6LSjZ2JRz"
                 }"#
             )
@@ -175,7 +175,7 @@ fn test_deserialization() {
     );
 
     let ka1_id = ParsedDIDUrl::from_str(
-        "did:web:did.actor:alice#zC8GybikEfyNaausDA4mkT4egP7SNLx2T1d1kujLQbcP6h",
+        "did:web:did-actor-alice#zC8GybikEfyNaausDA4mkT4egP7SNLx2T1d1kujLQbcP6h",
     )
     .unwrap();
     let ka1 = VerificationMethodBuilder::new(
