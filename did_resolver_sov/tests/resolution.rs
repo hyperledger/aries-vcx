@@ -11,12 +11,12 @@ use aries_vcx::{
     },
     utils::devsetup::SetupProfile,
 };
-use aries_vcx_core::ledger::base_ledger::MockBaseLedger;
 use did_resolver::did_parser::ParsedDID;
 use did_resolver::traits::resolvable::resolution_output::DIDResolutionOutput;
 use did_resolver::traits::resolvable::{
     resolution_options::DIDResolutionOptions, DIDResolvable, DIDResolvableMut,
 };
+use did_resolver_sov::reader::{ConcreteAttrReader, MockAttrReader};
 use did_resolver_sov::resolution::DIDSovResolver;
 use mockall::predicate::eq;
 
@@ -34,8 +34,10 @@ async fn write_service_on_ledger_and_resolve_did_doc() {
     SetupProfile::run(|init| async move {
         let did = format!("did:sov:{}", init.institution_did);
         write_test_endpoint(&init.profile, &init.institution_did).await;
-        let resolver =
-            DIDSovResolver::new(init.profile.inject_ledger(), NonZeroUsize::new(10).unwrap());
+        let resolver = DIDSovResolver::new(
+            Arc::<ConcreteAttrReader>::new(init.profile.inject_ledger().into()),
+            NonZeroUsize::new(10).unwrap(),
+        );
         let did_doc = resolver
             .resolve(
                 &ParsedDID::parse(did.clone()).unwrap(),
@@ -76,8 +78,8 @@ async fn test_resolver_caching_behavior() {
             .get_attr(&did, "endpoint")
             .await
             .unwrap();
-        let mut mock_ledger = MockBaseLedger::new();
-        mock_ledger
+        let mut mock_reader = MockAttrReader::new();
+        mock_reader
             .expect_get_attr()
             .with(eq(did.clone()), eq("endpoint"))
             .once()
@@ -86,8 +88,8 @@ async fn test_resolver_caching_behavior() {
                 Pin::from(Box::new(future))
             });
 
-        let arc_mock_ledger = Arc::new(mock_ledger);
-        let mut resolver = DIDSovResolver::new(arc_mock_ledger, cache_size);
+        let arc_mock_reader = Arc::new(mock_reader);
+        let mut resolver = DIDSovResolver::new(arc_mock_reader, cache_size);
 
         let did_doc = resolve_did_doc(did.clone(), &mut resolver).await;
         let did_doc_cached = resolve_did_doc(did, &mut resolver).await;
@@ -103,7 +105,10 @@ async fn test_error_handling_during_resolution() {
         let did = format!("did:unknownmethod:{}", init.institution_did);
 
         let cache_size = NonZeroUsize::new(2).unwrap();
-        let resolver = DIDSovResolver::new(init.profile.inject_ledger(), cache_size);
+        let resolver = DIDSovResolver::new(
+            Arc::<ConcreteAttrReader>::new(init.profile.inject_ledger().into()),
+            cache_size,
+        );
 
         let result = resolver
             .resolve(

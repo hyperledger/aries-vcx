@@ -1,6 +1,5 @@
 use std::{num::NonZeroUsize, sync::Arc};
 
-use aries_vcx_core::ledger::base_ledger::BaseLedger;
 use async_trait::async_trait;
 use did_resolver::{
     did_parser::ParsedDID,
@@ -12,17 +11,17 @@ use did_resolver::{
 };
 use lru::LruCache;
 
-use crate::error::DIDSovError;
+use crate::{error::DIDSovError, reader::AttrReader};
 
 use super::utils::{is_valid_sovrin_did_id, resolve_ddo};
 
 pub struct DIDSovResolver {
-    ledger: Arc<dyn BaseLedger>,
+    ledger: Arc<dyn AttrReader>,
     cache: LruCache<String, Arc<DIDResolutionOutput>>,
 }
 
 impl DIDSovResolver {
-    pub fn new(ledger: Arc<dyn BaseLedger>, cache_size: NonZeroUsize) -> Self {
+    pub fn new(ledger: Arc<dyn AttrReader>, cache_size: NonZeroUsize) -> Self {
         DIDSovResolver {
             ledger,
             cache: LruCache::new(cache_size),
