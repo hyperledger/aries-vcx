@@ -51,23 +51,23 @@ pub enum SerializableObjectWithState<T, P> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use serde::{Deserialize, Serialize};
+    use serde_json;
 
     #[test]
     fn test_serialize() {
-        let value = Schema {
+        let value = SerializableObjectWithState::V1 {
             data: vec!["name".to_string(), "age".to_string()],
-            state: null,
+            state: 1,
             source_id: "foo".to_string(),
-            thread_id: "bat".to_string(),
-            ..Schema::default()
+            thread_id: "bat".to_string()
         };
 
-        let serialized = value.serialize().unwrap();
+        let serialized = serde_json::to_string(&value).unwrap();
+
         assert!(serialized.contains(r#""data":["name","age"]"#));
+        assert!(serialized.contains(r#""state):"1""#));
         assert!(serialized.contains(r#""source_id":"foo""#));
-        assert!(serialized.contains(r#""state":"null""#));
-        assert!(serialized.contains(r#""thread":"bat""#));
+        assert!(serialized.contains(r#""thread_id":"bat""#));
 
     }
 
@@ -75,25 +75,27 @@ mod tests {
     fn test_deserialize() {
         let serialized = r#"
         {
-          "data": {
             "data": [
               "name",
               "age"
             ],
-            "state": 1,
+            "state": "1",
             "source_id": "foo",
-            "thread_id": "bat"
-          }
+            "thread_id": "bat",
+            "version": "1.0"
         }
         "#;
 
-        let result = deserialize(serialized);
-        assert!(result.is_ok());
-        let ans = result.unwrap();
+        let result = serde_json::from_str(&serialized);
+        let ans: SerializableObjectWithState<Vec<String>, String> = result.unwrap();
 
-        assert_eq!(ans.data, vec!["name".to_string(), "age".to_string()]);
-        assert_eq!(ans.state, PublicEntityStateType::Published);
-        assert_eq!(ans.source_id, "foo");
-        assert_eq!(ans.thread_id, "bat");
+        let (data, state, source_id, thread_id) = match ans {
+            SerializableObjectWithState::V1 { data, state, source_id, thread_id } => (data, state, source_id, thread_id),
+        };
+
+        assert_eq!(data, vec!["name".to_string(), "age".to_string()]);
+        assert_eq!(state, "1");
+        assert_eq!(source_id, "foo");
+        assert_eq!(thread_id, "bat");
     }
 }
