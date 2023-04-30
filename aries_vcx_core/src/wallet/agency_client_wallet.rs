@@ -1,6 +1,6 @@
-use std::sync::Arc;
-
 use crate::utils::async_fn_iterator::AsyncFnIterator;
+use std::collections::HashMap;
+use std::sync::Arc;
 
 use super::base_wallet::BaseWallet;
 use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
@@ -43,12 +43,12 @@ impl BaseWallet for AgencyClientWallet {
         xtype: &str,
         id: &str,
         value: &str,
-        tags_json: Option<&str>,
+        tags: Option<HashMap<String, String>>,
     ) -> VcxCoreResult<()> {
         Err(unimplemented_agency_client_wallet_method("add_wallet_record"))
     }
 
-    async fn get_wallet_record(&self, xtype: &str, id: &str, options_json: &str) -> VcxCoreResult<String> {
+    async fn get_wallet_record(&self, xtype: &str, id: &str, options: &str) -> VcxCoreResult<String> {
         Err(unimplemented_agency_client_wallet_method("get_wallet_record"))
     }
 
@@ -60,7 +60,7 @@ impl BaseWallet for AgencyClientWallet {
         Err(unimplemented_agency_client_wallet_method("update_wallet_record_value"))
     }
 
-    async fn add_wallet_record_tags(&self, xtype: &str, id: &str, tags_json: &str) -> VcxCoreResult<()> {
+    async fn add_wallet_record_tags(&self, xtype: &str, id: &str, tags: HashMap<String, String>) -> VcxCoreResult<()> {
         Err(unimplemented_agency_client_wallet_method("add_wallet_record_tags"))
     }
 
@@ -68,7 +68,12 @@ impl BaseWallet for AgencyClientWallet {
         Err(unimplemented_agency_client_wallet_method("delete_wallet_record_tags"))
     }
 
-    async fn update_wallet_record_tags(&self, xtype: &str, id: &str, tags_json: &str) -> VcxCoreResult<()> {
+    async fn update_wallet_record_tags(
+        &self,
+        xtype: &str,
+        id: &str,
+        tags: HashMap<String, String>,
+    ) -> VcxCoreResult<()> {
         Err(unimplemented_agency_client_wallet_method("update_wallet_record_tags"))
     }
 

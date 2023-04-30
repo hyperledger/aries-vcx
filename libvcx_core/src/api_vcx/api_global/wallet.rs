@@ -13,6 +13,8 @@ use crate::errors::error::LibvcxResult;
 use crate::errors::mapping_from_ariesvcx::map_ariesvcx_result;
 use crate::errors::mapping_from_ariesvcxcore::map_ariesvcx_core_result;
 
+use std::collections::HashMap;
+
 pub static mut WALLET_HANDLE: WalletHandle = INVALID_WALLET_HANDLE;
 
 pub fn set_main_wallet_handle(handle: WalletHandle) -> WalletHandle {
@@ -113,7 +115,8 @@ pub async fn wallet_configure_issuer(enterprise_seed: &str) -> LibvcxResult<Issu
 
 pub async fn wallet_add_wallet_record(type_: &str, id: &str, value: &str, option: Option<&str>) -> LibvcxResult<()> {
     let wallet = get_main_wallet();
-    map_ariesvcx_core_result(wallet.add_wallet_record(type_, id, value, option).await)
+    let tags: Option<HashMap<String, String>> = option.map(|tags| serde_json::from_str(tags)).transpose()?;
+    map_ariesvcx_core_result(wallet.add_wallet_record(type_, id, value, tags).await)
 }
 
 pub async fn wallet_update_wallet_record_value(xtype: &str, id: &str, value: &str) -> LibvcxResult<()> {
@@ -123,12 +126,14 @@ pub async fn wallet_update_wallet_record_value(xtype: &str, id: &str, value: &st
 
 pub async fn wallet_update_wallet_record_tags(xtype: &str, id: &str, tags_json: &str) -> LibvcxResult<()> {
     let wallet = get_main_wallet();
-    map_ariesvcx_core_result(wallet.update_wallet_record_tags(xtype, id, tags_json).await)
+    let tags: HashMap<String, String> = serde_json::from_str(tags_json)?;
+    map_ariesvcx_core_result(wallet.update_wallet_record_tags(xtype, id, tags).await)
 }
 
 pub async fn wallet_add_wallet_record_tags(xtype: &str, id: &str, tags_json: &str) -> LibvcxResult<()> {
     let wallet = get_main_wallet();
-    map_ariesvcx_core_result(wallet.add_wallet_record_tags(xtype, id, tags_json).await)
+    let tags: HashMap<String, String> = serde_json::from_str(tags_json)?;
+    map_ariesvcx_core_result(wallet.add_wallet_record_tags(xtype, id, tags).await)
 }
 
 pub async fn wallet_delete_wallet_record_tags(xtype: &str, id: &str, tags_json: &str) -> LibvcxResult<()> {

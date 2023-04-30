@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::thread;
 
 use async_trait::async_trait;
@@ -52,13 +53,15 @@ impl BaseWallet for IndySdkWallet {
         xtype: &str,
         id: &str,
         value: &str,
-        tags_json: Option<&str>,
+        tags: Option<HashMap<String, String>>,
     ) -> VcxCoreResult<()> {
+        let res = tags.map(|x| serde_json::to_string(&x)).transpose()?.to_owned();
+        let tags_json = res.as_deref();
         indy::wallet::add_wallet_record(self.wallet_handle, xtype, id, value, tags_json).await
     }
 
-    async fn get_wallet_record(&self, xtype: &str, id: &str, options_json: &str) -> VcxCoreResult<String> {
-        indy::wallet::get_wallet_record(self.wallet_handle, xtype, id, options_json).await
+    async fn get_wallet_record(&self, xtype: &str, id: &str, options: &str) -> VcxCoreResult<String> {
+        indy::wallet::get_wallet_record(self.wallet_handle, xtype, id, options).await
     }
 
     async fn delete_wallet_record(&self, xtype: &str, id: &str) -> VcxCoreResult<()> {
@@ -69,12 +72,19 @@ impl BaseWallet for IndySdkWallet {
         indy::wallet::update_wallet_record_value(self.wallet_handle, xtype, id, value).await
     }
 
-    async fn update_wallet_record_tags(&self, xtype: &str, id: &str, tags_json: &str) -> VcxCoreResult<()> {
-        indy::wallet::update_wallet_record_tags(self.wallet_handle, xtype, id, tags_json).await
+    async fn update_wallet_record_tags(
+        &self,
+        xtype: &str,
+        id: &str,
+        tags: HashMap<String, String>,
+    ) -> VcxCoreResult<()> {
+        let tags_json = serde_json::to_string(&tags)?;
+        indy::wallet::update_wallet_record_tags(self.wallet_handle, xtype, id, &tags_json).await
     }
 
-    async fn add_wallet_record_tags(&self, xtype: &str, id: &str, tags_json: &str) -> VcxCoreResult<()> {
-        indy::wallet::add_wallet_record_tags(self.wallet_handle, xtype, id, tags_json).await
+    async fn add_wallet_record_tags(&self, xtype: &str, id: &str, tags: HashMap<String, String>) -> VcxCoreResult<()> {
+        let tags_json = serde_json::to_string(&tags)?;
+        indy::wallet::add_wallet_record_tags(self.wallet_handle, xtype, id, &tags_json).await
     }
 
     async fn delete_wallet_record_tags(&self, xtype: &str, id: &str, tag_names: &str) -> VcxCoreResult<()> {
