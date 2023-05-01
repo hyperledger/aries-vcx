@@ -214,14 +214,15 @@ impl DIDDocumentBuilder {
     }
 
     pub fn build(self) -> DIDDocument {
+        let controller = if self.controller.is_empty() {
+            None
+        } else {
+            Some(OneOrList::List(self.controller))
+        };
         DIDDocument {
             id: self.id,
             also_known_as: self.also_known_as,
-            controller: if self.controller.is_empty() {
-                None
-            } else {
-                Some(OneOrList::List(self.controller))
-            },
+            controller,
             verification_method: self.verification_method,
             authentication: self.authentication,
             assertion_method: self.assertion_method,
@@ -242,7 +243,7 @@ mod tests {
     #[test]
     fn test_did_document_builder() {
         let id = ParsedDID::parse("did:example:123456789abcdefghi".to_string()).unwrap();
-        let also_known_as = Uri::new("https://example.com".to_string()).unwrap();
+        let also_known_as = Uri::new("https://example.com").unwrap();
         let controller = ParsedDID::parse("did:example:controller".to_string()).unwrap();
 
         let verification_method = VerificationMethodBuilder::new(
@@ -262,12 +263,12 @@ mod tests {
         .build()
         .unwrap();
 
-        let service_id = Uri::new("did:example:123456789abcdefghi;service-1".to_string()).unwrap();
+        let service_id = Uri::new("did:example:123456789abcdefghi;service-1").unwrap();
         let service_type = "test-service".to_string();
         let service_endpoint = "https://example.com/service".to_string();
         let service = ServiceBuilder::new(service_id, service_endpoint)
             .unwrap()
-            .add_type(service_type)
+            .add_service_type(service_type)
             .unwrap()
             .build()
             .unwrap();
@@ -338,10 +339,8 @@ mod tests {
         assert_eq!(
             document.capability_delegation(),
             &[
-                VerificationMethodAlias::VerificationMethod(verification_method.clone()),
-                VerificationMethodAlias::VerificationMethodReference(
-                    authentication_reference.clone()
-                )
+                VerificationMethodAlias::VerificationMethod(verification_method),
+                VerificationMethodAlias::VerificationMethodReference(authentication_reference)
             ]
         );
         assert_eq!(document.service(), &[service]);

@@ -1,6 +1,5 @@
 use std::convert::TryFrom;
 use std::fmt::{Display, Formatter};
-use std::str::FromStr;
 
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
@@ -38,11 +37,11 @@ impl ParsedDID {
     }
 }
 
-impl FromStr for ParsedDID {
-    type Err = ParseError;
+impl TryFrom<String> for ParsedDID {
+    type Error = ParseError;
 
-    fn from_str(did: &str) -> Result<Self, Self::Err> {
-        Self::parse(did.to_string())
+    fn try_from(did: String) -> Result<Self, Self::Error> {
+        Self::parse(did)
     }
 }
 

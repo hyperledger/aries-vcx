@@ -4,6 +4,7 @@ use async_trait::async_trait;
 use did_resolver::{
     did_parser::ParsedDID,
     error::GenericError,
+    shared_types::media_type::MediaType,
     traits::resolvable::{
         resolution_options::DIDResolutionOptions, resolution_output::DIDResolutionOutput,
         DIDResolvable, DIDResolvableMut,
@@ -37,7 +38,7 @@ impl DIDResolvable for DIDSovResolver {
         options: &DIDResolutionOptions,
     ) -> Result<DIDResolutionOutput, GenericError> {
         if let Some(accept) = options.accept() {
-            if accept != "application/did+json" {
+            if accept != &MediaType::DidJson {
                 return Err(Box::new(DIDSovError::RepresentationNotSupported(
                     accept.to_string(),
                 )));

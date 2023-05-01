@@ -4,7 +4,6 @@ use crate::errors::error::VcxCoreResult;
 
 /// Trait defining standard 'ledger' related functionality.
 #[async_trait]
-#[cfg_attr(any(test, feature = "mock"), mockall::automock)]
 pub trait BaseLedger: std::fmt::Debug + Send + Sync {
     // returns request result as JSON
     async fn sign_and_submit_request(&self, submitter_did: &str, request_json: &str) -> VcxCoreResult<String>;

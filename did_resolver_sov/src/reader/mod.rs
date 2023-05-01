@@ -11,7 +11,7 @@ use async_trait::async_trait;
 use crate::error::DIDSovError;
 
 #[async_trait]
-#[cfg_attr(any(test, feature = "mock"), mockall::automock)]
+#[mockall::automock]
 pub trait AttrReader: Send + Sync {
     async fn get_attr(&self, target_did: &str, attr_name: &str) -> Result<String, DIDSovError>;
 }

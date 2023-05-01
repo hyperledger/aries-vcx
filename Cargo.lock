@@ -256,7 +256,6 @@ dependencies = [
  "lazy_static",
  "libvdrtools",
  "log",
- "mockall",
  "rand 0.7.3",
  "serde",
  "serde_json",

@@ -13,7 +13,8 @@ type ServiceTypeAlias = OneOrList<String>;
 #[serde(rename_all = "camelCase")]
 pub struct Service {
     id: Uri,
-    r#type: ServiceTypeAlias,
+    #[serde(rename = "type")]
+    service_type: ServiceTypeAlias,
     service_endpoint: String,
     #[serde(flatten)]
     #[serde(skip_serializing_if = "HashMap::is_empty")]
@@ -33,8 +34,8 @@ impl Service {
         &self.id
     }
 
-    pub fn r#type(&self) -> &ServiceTypeAlias {
-        &self.r#type
+    pub fn service_type(&self) -> &ServiceTypeAlias {
+        &self.service_type
     }
 
     pub fn service_endpoint(&self) -> &str {
@@ -49,18 +50,18 @@ impl Service {
 #[derive(Debug, Default)]
 pub struct ServiceBuilder {
     id: Uri,
-    r#type: HashSet<String>,
+    service_type: HashSet<String>,
     service_endpoint: String,
     extra: HashMap<String, Value>,
 }
 
 impl ServiceBuilder {
     pub fn new(id: Uri, service_endpoint: String) -> Result<Self, DIDDocumentBuilderError> {
-        if id.is_empty() {
+        if id.as_ref().is_empty() {
             return Err(DIDDocumentBuilderError::MissingField("id"));
         }
         if service_endpoint.is_empty() {
-            return Err(DIDDocumentBuilderError::MissingField("serviceEndpoint"));
+            return Err(DIDDocumentBuilderError::MissingField("service_endpoint"));
         }
         Ok(Self {
             id,
@@ -69,11 +70,14 @@ impl ServiceBuilder {
         })
     }
 
-    pub fn add_type(mut self, r#type: String) -> Result<Self, DIDDocumentBuilderError> {
-        if r#type.is_empty() {
+    pub fn add_service_type(
+        mut self,
+        service_type: String,
+    ) -> Result<Self, DIDDocumentBuilderError> {
+        if service_type.is_empty() {
             return Err(DIDDocumentBuilderError::MissingField("type"));
         }
-        self.r#type.insert(r#type);
+        self.service_type.insert(service_type);
         Ok(self)
     }
 
@@ -83,12 +87,12 @@ impl ServiceBuilder {
     }
 
     pub fn build(self) -> Result<Service, DIDDocumentBuilderError> {
-        if self.r#type.is_empty() {
-            Err(DIDDocumentBuilderError::MissingField("type"))
+        if self.service_type.is_empty() {
+            Err(DIDDocumentBuilderError::MissingField("service_type"))
         } else {
             Ok(Service {
                 id: self.id,
-                r#type: OneOrList::List(self.r#type.into_iter().collect()),
+                service_type: OneOrList::List(self.service_type.into_iter().collect()),
                 service_endpoint: self.service_endpoint,
                 extra: self.extra,
             })
@@ -101,38 +105,38 @@ mod tests {
     use super::*;
 
     fn create_valid_uri() -> Uri {
-        Uri::new("http://example.com".to_string()).unwrap()
+        Uri::new("http://example.com").unwrap()
     }
 
     #[test]
     fn test_service_builder_basic() {
         let id = create_valid_uri();
         let service_endpoint = "http://example.com/endpoint".to_string();
-        let r#type = "DIDCommMessaging".to_string();
+        let service_type = "DIDCommMessaging".to_string();
 
         let service = ServiceBuilder::new(id.clone(), service_endpoint.clone())
             .unwrap()
-            .add_type(r#type.clone())
+            .add_service_type(service_type.clone())
             .unwrap()
             .build()
             .unwrap();
 
         assert_eq!(service.id(), &id);
         assert_eq!(service.service_endpoint(), &service_endpoint);
-        assert_eq!(service.r#type(), &OneOrList::List(vec![r#type]));
+        assert_eq!(service.service_type(), &OneOrList::List(vec![service_type]));
     }
 
     #[test]
     fn test_service_builder_add_extra() {
         let id = create_valid_uri();
         let service_endpoint = "http://example.com/endpoint".to_string();
-        let r#type = "DIDCommMessaging".to_string();
+        let service_type = "DIDCommMessaging".to_string();
         let extra_key = "foo".to_string();
         let extra_value = Value::String("bar".to_string());
 
-        let service = ServiceBuilder::new(id.clone(), service_endpoint.clone())
+        let service = ServiceBuilder::new(id, service_endpoint)
             .unwrap()
-            .add_type(r#type.clone())
+            .add_service_type(service_type)
             .unwrap()
             .add_extra(extra_key.clone(), extra_value.clone())
             .build()
@@ -145,25 +149,25 @@ mod tests {
     fn test_service_builder_add_duplicate_types() {
         let id = create_valid_uri();
         let service_endpoint = "http://example.com/endpoint".to_string();
-        let r#type = "DIDCommMessaging".to_string();
+        let service_type = "DIDCommMessaging".to_string();
 
-        let service = ServiceBuilder::new(id.clone(), service_endpoint.clone())
+        let service = ServiceBuilder::new(id, service_endpoint)
             .unwrap()
-            .add_type(r#type.clone())
+            .add_service_type(service_type.clone())
             .unwrap()
-            .add_type(r#type.clone())
+            .add_service_type(service_type.clone())
             .unwrap()
             .build()
             .unwrap();
 
-        assert_eq!(service.r#type(), &OneOrList::List(vec![r#type]));
+        assert_eq!(service.service_type(), &OneOrList::List(vec![service_type]));
     }
 
     #[test]
     fn test_service_builder_constructor_missing_service_endpoint() {
         let id = create_valid_uri();
 
-        let res = ServiceBuilder::new(id.clone(), "".to_string());
+        let res = ServiceBuilder::new(id, "".to_string());
         assert!(res.is_err());
     }
 
@@ -172,9 +176,9 @@ mod tests {
         let id = create_valid_uri();
         let service_endpoint = "http://example.com/endpoint".to_string();
 
-        let res = ServiceBuilder::new(id.clone(), service_endpoint.clone())
+        let res = ServiceBuilder::new(id, service_endpoint)
             .unwrap()
-            .add_type("".to_string());
+            .add_service_type("".to_string());
         assert!(res.is_err());
     }
 }

@@ -20,7 +20,7 @@ pub fn service_by_id<F>(services: &[Service], predicate: F) -> Option<&Service>
 where
     F: Fn(&str) -> bool,
 {
-    services.iter().find(|svc| predicate(&svc.id()))
+    services.iter().find(|svc| predicate(svc.id().as_ref()))
 }
 
 pub fn verification_by_id<F>(
@@ -48,8 +48,8 @@ fn content_stream_from(
     let id_matcher = |id: &str| id == did_url_string || id.ends_with(&fragment_string);
 
     let value = match (
-        service_by_id(&did_document.service(), id_matcher),
-        verification_by_id(&did_document.verification_method(), id_matcher),
+        service_by_id(did_document.service(), id_matcher),
+        verification_by_id(did_document.verification_method(), id_matcher),
     ) {
         (Some(service), None) => serde_json::to_value(service)?,
         (None, Some(authentication)) => serde_json::to_value(authentication)?,
@@ -100,7 +100,10 @@ mod tests {
     fn example_did_document_builder() -> DIDDocumentBuilder {
         let verification_method = VerificationMethod::builder(
             ParsedDIDUrl::parse("did:example:123456789abcdefghi#keys-1".to_string()).unwrap(),
-            "did:example:123456789abcdefghi".parse().unwrap(),
+            "did:example:123456789abcdefghi"
+                .to_string()
+                .try_into()
+                .unwrap(),
             "Ed25519VerificationKey2018".to_string(),
         )
         .add_extra(
@@ -115,7 +118,7 @@ mod tests {
             "https://agent.example.com/8377464".to_string(),
         )
         .unwrap()
-        .add_type("AgentService".to_string())
+        .add_service_type("AgentService".to_string())
         .unwrap()
         .build()
         .unwrap();
@@ -125,15 +128,20 @@ mod tests {
             "https://example.com/messages/8377464".to_string(),
         )
         .unwrap()
-        .add_type("MessagingService".to_string())
+        .add_service_type("MessagingService".to_string())
         .unwrap()
         .build()
         .unwrap();
 
-        DIDDocument::builder("did:example:123456789abcdefghi".parse().unwrap())
-            .add_verification_method(verification_method.into())
-            .add_service(agent_service)
-            .add_service(messaging_service)
+        DIDDocument::builder(
+            "did:example:123456789abcdefghi"
+                .to_string()
+                .try_into()
+                .unwrap(),
+        )
+        .add_verification_method(verification_method)
+        .add_service(agent_service)
+        .add_service(messaging_service)
     }
 
     fn example_resolution_output() -> DIDResolutionOutput {
@@ -207,7 +215,7 @@ mod tests {
                 "https://example.com/duplicated/8377464".to_string(),
             )
             .unwrap()
-            .add_type("DuplicatedService".to_string())
+            .add_service_type("DuplicatedService".to_string())
             .unwrap()
             .build()
             .unwrap();

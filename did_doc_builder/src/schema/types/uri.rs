@@ -1,4 +1,7 @@
-use std::{ops::Deref, str::FromStr};
+use std::{
+    fmt::{self, Display, Formatter},
+    str::FromStr,
+};
 
 use serde::{Deserialize, Serialize};
 
@@ -8,7 +11,7 @@ use crate::error::DIDDocumentBuilderError;
 pub struct Uri(uniresid::Uri);
 
 impl Uri {
-    pub fn new(uri: String) -> Result<Self, DIDDocumentBuilderError> {
+    pub fn new(uri: &str) -> Result<Self, DIDDocumentBuilderError> {
         Ok(Self(uniresid::Uri::try_from(uri).map_err(|e| {
             DIDDocumentBuilderError::InvalidInput(format!("Invalid URI: {}", e))
         })?))
@@ -19,20 +22,18 @@ impl FromStr for Uri {
     type Err = DIDDocumentBuilderError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Self::new(s.to_string())
+        Self::new(s)
     }
 }
 
-impl ToString for Uri {
-    fn to_string(&self) -> String {
-        self.0.to_string()
+impl Display for Uri {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
     }
 }
 
-impl Deref for Uri {
-    type Target = uniresid::Uri;
-
-    fn deref(&self) -> &Self::Target {
+impl AsRef<uniresid::Uri> for Uri {
+    fn as_ref(&self) -> &uniresid::Uri {
         &self.0
     }
 }
@@ -43,13 +44,13 @@ mod tests {
 
     #[test]
     fn test_uri_new_valid() {
-        let uri = Uri::new("http://example.com".to_string());
+        let uri = Uri::new("http://example.com");
         assert!(uri.is_ok());
     }
 
     #[test]
     fn test_uri_new_invalid() {
-        let uri = Uri::new(r"http:\\example.com\index.html".to_string());
+        let uri = Uri::new(r"http:\\example.com\index.html");
         assert!(uri.is_err());
     }
 

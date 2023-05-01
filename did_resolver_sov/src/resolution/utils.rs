@@ -15,7 +15,7 @@ use crate::{
 };
 
 fn prepare_ids(did: &str) -> Result<(Uri, ParsedDID), DIDSovError> {
-    let service_id = Uri::new(did.to_string())?;
+    let service_id = Uri::new(did)?;
     let ddo_id = ParsedDID::parse(did.to_string())?;
     Ok((service_id, ddo_id))
 }
@@ -25,7 +25,7 @@ fn get_data_from_response(resp: &str) -> Result<Value, DIDSovError> {
     match &resp["result"]["data"] {
         Value::String(ref data) => serde_json::from_str(data).map_err(|err| err.into()),
         Value::Null => Err(DIDSovError::NotFound("DID not found".to_string())),
-        resp @ _ => Err(DIDSovError::ParsingError(
+        resp => Err(DIDSovError::ParsingError(
             ParsingErrorSource::LedgerResponseParsingError(format!(
                 "Unexpected data format in ledger response: {resp}"
             )),
@@ -44,11 +44,8 @@ fn get_txn_time_from_response(resp: &str) -> Result<i64, DIDSovError> {
 }
 
 fn posix_to_datetime(posix_timestamp: i64) -> Option<DateTime<Utc>> {
-    if let Some(date_time) = NaiveDateTime::from_timestamp_opt(posix_timestamp, 0) {
-        Some(DateTime::<Utc>::from_utc(date_time, Utc))
-    } else {
-        None
-    }
+    NaiveDateTime::from_timestamp_opt(posix_timestamp, 0)
+        .map(|date_time| DateTime::<Utc>::from_utc(date_time, Utc))
 }
 
 pub(super) fn is_valid_sovrin_did_id(id: &str) -> bool {
@@ -67,17 +64,17 @@ pub(super) fn is_valid_sovrin_did_id(id: &str) -> bool {
 pub(super) async fn resolve_ddo(did: &str, resp: &str) -> Result<DIDResolutionOutput, DIDSovError> {
     let (service_id, ddo_id) = prepare_ids(did)?;
 
-    let service_data = get_data_from_response(&resp)?;
+    let service_data = get_data_from_response(resp)?;
     let endpoint: EndpointDidSov = serde_json::from_value(service_data["endpoint"].clone())?;
 
-    let txn_time = get_txn_time_from_response(&resp)?;
+    let txn_time = get_txn_time_from_response(resp)?;
     let datetime = posix_to_datetime(txn_time);
 
     let service = {
         let mut service_builder = Service::builder(service_id, endpoint.endpoint)?;
         for t in endpoint.types {
             if t != DidSovServiceType::Unknown {
-                service_builder = service_builder.add_type(t.to_string())?;
+                service_builder = service_builder.add_service_type(t.to_string())?;
             };
         }
         service_builder.build()?
@@ -123,7 +120,7 @@ mod tests {
                 "data": "{\"endpoint\":{\"endpoint\":\"https://example.com\"}}"
             }
         }"#;
-        let data = get_data_from_response(&resp).unwrap();
+        let data = get_data_from_response(resp).unwrap();
         assert_eq!(
             data["endpoint"]["endpoint"].as_str().unwrap(),
             "https://example.com"
@@ -137,7 +134,7 @@ mod tests {
                 "txnTime": 1629272938
             }
         }"#;
-        let txn_time = get_txn_time_from_response(&resp).unwrap();
+        let txn_time = get_txn_time_from_response(resp).unwrap();
         assert_eq!(txn_time, 1629272938);
     }
 
@@ -160,7 +157,7 @@ mod tests {
                 "txnTime": 1629272938
             }
         }"#;
-        let resolution_output = resolve_ddo(&did, &resp).await.unwrap();
+        let resolution_output = resolve_ddo(did, resp).await.unwrap();
         let ddo = resolution_output.did_document();
         assert_eq!(ddo.id().to_string(), "did:example:1234567890");
         assert_eq!(ddo.service()[0].id().to_string(), "did:example:1234567890");

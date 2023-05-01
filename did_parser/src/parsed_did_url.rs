@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fmt::Display, str::FromStr};
+use std::{collections::HashMap, fmt::Display};
 
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
@@ -148,11 +148,11 @@ impl ParsedDIDUrl {
     }
 }
 
-impl FromStr for ParsedDIDUrl {
-    type Err = ParseError;
+impl TryFrom<String> for ParsedDIDUrl {
+    type Error = ParseError;
 
-    fn from_str(did_url: &str) -> Result<Self, Self::Err> {
-        Self::parse(did_url.to_string())
+    fn try_from(did_url: String) -> Result<Self, Self::Error> {
+        Self::parse(did_url)
     }
 }
 
@@ -177,6 +177,6 @@ impl<'de> Deserialize<'de> for ParsedDIDUrl {
         D: Deserializer<'de>,
     {
         let did_url = String::deserialize(deserializer)?;
-        ParsedDIDUrl::from_str(&did_url).map_err(serde::de::Error::custom)
+        ParsedDIDUrl::parse(did_url).map_err(serde::de::Error::custom)
     }
 }

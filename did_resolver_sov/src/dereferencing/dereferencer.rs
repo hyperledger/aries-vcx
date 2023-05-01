@@ -30,6 +30,6 @@ impl DIDDereferenceable for DIDSovResolver {
             .resolve(&did_url.try_into()?, &DIDResolutionOptions::default())
             .await?;
 
-        dereference_did_document(&resolution_output, &did_url).map_err(|err| err.into())
+        dereference_did_document(&resolution_output, did_url).map_err(|err| err.into())
     }
 }

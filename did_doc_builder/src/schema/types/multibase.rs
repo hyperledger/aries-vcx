@@ -1,4 +1,7 @@
-use std::{ops::Deref, str::FromStr};
+use std::{
+    fmt::{self, Display, Formatter},
+    str::FromStr,
+};
 
 use multibase::{decode, Base};
 use serde::{Deserialize, Serialize};
@@ -47,16 +50,14 @@ impl FromStr for Multibase {
     }
 }
 
-impl ToString for Multibase {
-    fn to_string(&self) -> String {
-        self.base.encode(&self.bytes)
+impl Display for Multibase {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.base.encode(&self.bytes))
     }
 }
 
-impl Deref for Multibase {
-    type Target = Vec<u8>;
-
-    fn deref(&self) -> &Self::Target {
+impl AsRef<[u8]> for Multibase {
+    fn as_ref(&self) -> &[u8] {
         &self.bytes
     }
 }

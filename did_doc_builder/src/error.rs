@@ -2,7 +2,7 @@
 pub enum DIDDocumentBuilderError {
     InvalidInput(String),
     MissingField(&'static str),
-    SerdeError(serde_json::Error),
+    JsonError(serde_json::Error),
 }
 
 impl std::fmt::Display for DIDDocumentBuilderError {
@@ -14,7 +14,7 @@ impl std::fmt::Display for DIDDocumentBuilderError {
             DIDDocumentBuilderError::MissingField(field) => {
                 write!(f, "Missing field: {}", field)
             }
-            DIDDocumentBuilderError::SerdeError(error) => {
+            DIDDocumentBuilderError::JsonError(error) => {
                 write!(f, "(De)serialization error: {}", error)
             }
         }
@@ -26,13 +26,13 @@ impl std::error::Error for DIDDocumentBuilderError {
         match self {
             DIDDocumentBuilderError::InvalidInput(_) => None,
             DIDDocumentBuilderError::MissingField(_) => None,
-            DIDDocumentBuilderError::SerdeError(error) => Some(error),
+            DIDDocumentBuilderError::JsonError(error) => Some(error),
         }
     }
 }
 
 impl From<serde_json::Error> for DIDDocumentBuilderError {
     fn from(error: serde_json::Error) -> Self {
-        DIDDocumentBuilderError::SerdeError(error)
+        DIDDocumentBuilderError::JsonError(error)
     }
 }

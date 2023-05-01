@@ -10,12 +10,12 @@ impl DIDDereferencingOptions {
         Self { accept: None }
     }
 
-    pub fn set_accept(mut self, accept: String) -> Self {
+    pub fn set_accept(mut self, accept: MediaType) -> Self {
         self.accept = Some(accept);
         self
     }
 
-    pub fn accept(&self) -> Option<&String> {
+    pub fn accept(&self) -> Option<&MediaType> {
         self.accept.as_ref()
     }
 }
