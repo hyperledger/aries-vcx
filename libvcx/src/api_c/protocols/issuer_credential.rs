@@ -967,7 +967,6 @@ pub mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_vcx_issuer_create_credential_success() {
         let _setup = SetupMocks::init();
 
@@ -976,7 +975,6 @@ pub mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_vcx_issuer_create_credential_fails() {
         let _setup = SetupMocks::init();
 
@@ -989,7 +987,6 @@ pub mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_vcx_issuer_credential_serialize_deserialize() {
         let _setup = SetupMocks::init();
 
@@ -1018,7 +1015,6 @@ pub mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_create_credential_arguments_correct() {
         let _setup = SetupMocks::init();
 
@@ -1033,7 +1029,6 @@ pub mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_vcx_issuer_credential_get_state() {
         let _setup = SetupMocks::init();
 
@@ -1049,7 +1044,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_vcx_issuer_revoke_credential_local() {
         let _setup = SetupMocks::init();
 

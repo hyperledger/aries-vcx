@@ -70,7 +70,6 @@ pub mod tests {
     use aries_vcx::utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION;
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_shutdown() {
         let _setup = SetupMocks::init();
 

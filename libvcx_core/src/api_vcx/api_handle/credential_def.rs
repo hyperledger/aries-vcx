@@ -95,31 +95,23 @@ pub fn check_is_published(handle: u32) -> LibvcxResult<bool> {
 pub mod tests {
     use std::{thread::sleep, time::Duration};
 
-    #[cfg(feature = "pool_tests")]
     use aries_vcx::common::primitives::credential_definition::RevocationDetailsBuilder;
-    #[cfg(feature = "pool_tests")]
     use aries_vcx::common::test_utils::create_and_write_test_schema;
     use aries_vcx::global::settings::CONFIG_INSTITUTION_DID;
-    #[cfg(feature = "pool_tests")]
     use aries_vcx::utils;
     use aries_vcx::utils::constants::SCHEMA_ID;
     use aries_vcx::utils::devsetup::SetupMocks;
-    #[cfg(feature = "pool_tests")]
     use aries_vcx::utils::get_temp_dir_path;
 
     use crate::api_vcx::api_global::settings::get_config_value;
-    #[cfg(feature = "pool_tests")]
     use crate::api_vcx::api_handle::revocation_registry;
-    #[cfg(feature = "pool_tests")]
     use crate::api_vcx::api_handle::revocation_registry::RevocationRegistryConfig;
     use crate::api_vcx::api_handle::schema;
-    #[cfg(feature = "pool_tests")]
     use crate::api_vcx::utils::devsetup::SetupGlobalsWalletPoolAgency;
 
     use super::*;
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_vcx_credentialdef_release() {
         let _setup = SetupMocks::init();
         let schema_handle = schema::test_utils::create_schema_real().await;
@@ -137,7 +129,6 @@ pub mod tests {
         )
     }
 
-    #[cfg(feature = "test_utils")]
     pub async fn create_and_publish_nonrevocable_creddef() -> (u32, u32) {
         let schema_handle = schema::test_utils::create_schema_real().await;
         sleep(Duration::from_secs(1));
@@ -152,14 +143,12 @@ pub mod tests {
         (schema_handle, cred_def_handle)
     }
 
-    #[cfg(feature = "general_test")]
     #[tokio::test]
     async fn test_create_cred_def() {
         let _setup = SetupMocks::init();
         let (_, _) = create_and_publish_nonrevocable_creddef().await;
     }
 
-    #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn create_revocable_cred_def_and_check_tails_location() {
         SetupGlobalsWalletPoolAgency::run(|setup| async move {
@@ -201,7 +190,6 @@ pub mod tests {
         .await;
     }
 
-    #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_create_credential_def_real() {
         SetupGlobalsWalletPoolAgency::run(|_setup| async move {
@@ -214,7 +202,6 @@ pub mod tests {
         .await;
     }
 
-    #[cfg(feature = "general_test")]
     #[tokio::test]
     async fn test_to_string_succeeds() {
         let _setup = SetupMocks::init();
@@ -226,7 +213,6 @@ pub mod tests {
         assert_eq!(credential_values["version"].clone(), "1.0");
     }
 
-    #[cfg(feature = "general_test")]
     #[tokio::test]
     async fn test_from_string_succeeds() {
         let _setup = SetupMocks::init();
@@ -247,7 +233,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_release_all() {
         let _setup = SetupMocks::init();
 

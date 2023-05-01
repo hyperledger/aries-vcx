@@ -781,7 +781,6 @@ pub extern "C" fn vcx_proof_get_thread_id(
 }
 
 #[cfg(test)]
-#[cfg(feature = "test_utils")]
 mod tests {
     use std::ffi::CString;
     use std::ptr;
@@ -821,7 +820,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_vcx_create_proof_success() {
         let _setup = SetupMocks::init();
 
@@ -830,7 +828,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_vcx_create_proof_fails() {
         let _setup = SetupMocks::init();
 
@@ -850,7 +847,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_vcx_proof_get_request_msg() {
         let _setup = SetupMocks::init();
 
@@ -865,7 +861,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_vcx_proof_serialize() {
         let _setup = SetupMocks::init();
 
@@ -880,7 +875,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_vcx_proof_deserialize_succeeds() {
         let _setup = SetupMocks::init();
 
@@ -900,7 +894,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_proof_update_state() {
         let _setup = SetupMocks::init();
 
@@ -922,7 +915,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_vcx_proof_send_request() {
         let _setup = SetupMocks::init();
         let _mock_builder = MockBuilder::init().set_mock_result_for_validate_indy_proof(Ok(true));
@@ -969,7 +961,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_get_proof_fails_when_not_ready_with_proof() {
         let _setup = SetupMocks::init();
 
@@ -984,7 +975,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_vcx_connection_get_state() {
         let _setup = SetupMocks::init();
 

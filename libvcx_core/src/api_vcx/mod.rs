@@ -120,7 +120,6 @@ mod tests {
     use self::VcxStateType::*;
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_serialize_vcx_state_type() {
         let z = VcxStateNone;
         let y = serde_json::to_string(&z).unwrap();

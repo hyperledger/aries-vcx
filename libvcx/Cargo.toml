@@ -11,12 +11,6 @@ path = "src/lib.rs"
 crate-type = ["staticlib", "cdylib", "lib"]
 doctest = false
 
-[features]
-test_utils = [ "libvcx_core/test_utils" ]
-pool_tests = [ "test_utils" ]
-general_test = [ "test_utils" ]
-fatal_warnings = []
-
 [dependencies]
 num-traits = "0.2.0"
 once_cell = { version = "1.15" }

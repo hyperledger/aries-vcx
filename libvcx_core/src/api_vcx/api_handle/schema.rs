@@ -165,7 +165,6 @@ pub fn get_state(handle: u32) -> LibvcxResult<u32> {
     SCHEMA_MAP.get(handle, |s| Ok(s.get_state()))
 }
 
-#[cfg(feature = "test_utils")]
 pub mod test_utils {
     use rand::Rng;
 
@@ -213,26 +212,19 @@ pub mod test_utils {
 
 #[cfg(test)]
 pub mod tests {
-    #[cfg(feature = "pool_tests")]
     use aries_vcx::common::ledger::transactions::add_new_did;
-    #[cfg(feature = "pool_tests")]
     use aries_vcx::common::test_utils::create_and_write_test_schema;
-    #[cfg(feature = "pool_tests")]
     use aries_vcx::utils::constants;
     use aries_vcx::utils::constants::SCHEMA_ID;
     use aries_vcx::utils::devsetup::{SetupDefaults, SetupEmpty, SetupMocks};
 
-    #[cfg(feature = "pool_tests")]
     use crate::api_vcx::api_handle::schema;
-    #[cfg(feature = "pool_tests")]
     use crate::api_vcx::api_handle::schema::test_utils::{check_schema, create_schema_real, prepare_schema_data};
-    #[cfg(feature = "pool_tests")]
     use crate::api_vcx::utils::devsetup::SetupGlobalsWalletPoolAgency;
 
     use super::*;
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_vcx_schema_release() {
         let _setup = SetupMocks::init();
 
@@ -245,7 +237,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_create_schema_to_string() {
         let _setup = SetupMocks::init();
 
@@ -271,7 +262,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_create_schema_success() {
         let _setup = SetupMocks::init();
 
@@ -282,7 +272,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_prepare_schema_success() {
         let _setup = SetupMocks::init();
 
@@ -299,7 +288,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_get_schema_attrs_success() {
         let _setup = SetupMocks::init();
 
@@ -311,7 +299,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_create_schema_fails() {
         let _setup = SetupDefaults::init();
 
@@ -321,7 +308,6 @@ pub mod tests {
         assert_eq!(err.kind(), LibvcxErrorKind::SerializationError)
     }
 
-    #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_get_schema_attrs_from_ledger() {
         SetupGlobalsWalletPoolAgency::run(|setup| async move {
@@ -343,7 +329,6 @@ pub mod tests {
         .await;
     }
 
-    #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_create_schema_with_pool() {
         SetupGlobalsWalletPoolAgency::run(|_setup| async move {
@@ -357,7 +342,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "pool_tests")]
     async fn test_create_duplicate_fails() {
         SetupGlobalsWalletPoolAgency::run(|_setup| async move {
             let (_did, schema_name, schema_version, data) = prepare_schema_data();
@@ -376,7 +360,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_release_all() {
         let _setup = SetupMocks::init();
 
@@ -400,14 +383,12 @@ pub mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_handle_errors() {
         let _setup = SetupEmpty::init();
 
         assert_eq!(to_string(13435178).unwrap_err().kind(), LibvcxErrorKind::InvalidHandle);
     }
 
-    #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_vcx_endorse_schema() {
         SetupGlobalsWalletPoolAgency::run(|setup| async move {
@@ -446,7 +427,6 @@ pub mod tests {
         .await;
     }
 
-    #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_vcx_schema_get_state_with_ledger() {
         SetupGlobalsWalletPoolAgency::run(|_setup| async move {
@@ -456,7 +436,6 @@ pub mod tests {
         .await;
     }
 
-    #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_vcx_create_schema_with_pool() {
         SetupGlobalsWalletPoolAgency::run(|_setup| async move {
@@ -469,7 +448,6 @@ pub mod tests {
         .await;
     }
 
-    #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_vcx_schema_serialize_contains_version() {
         SetupGlobalsWalletPoolAgency::run(|_setup| async move {
@@ -488,7 +466,6 @@ pub mod tests {
         .await;
     }
 
-    #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_vcx_schema_get_attrs_with_pool() {
         SetupGlobalsWalletPoolAgency::run(|_setup| async move {

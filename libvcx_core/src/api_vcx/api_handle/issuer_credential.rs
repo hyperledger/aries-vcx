@@ -280,9 +280,7 @@ pub fn get_thread_id(handle: u32) -> LibvcxResult<String> {
 
 #[cfg(test)]
 pub mod tests {
-    #[cfg(feature = "test_utils")]
     use crate::api_vcx::api_handle::credential_def::tests::create_and_publish_nonrevocable_creddef;
-    #[cfg(feature = "test_utils")]
     use crate::api_vcx::api_handle::mediated_connection::test_utils::build_test_connection_inviter_requested;
     use crate::aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
     use crate::errors::error;
@@ -303,7 +301,6 @@ pub mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_vcx_issuer_credential_release() {
         let _setup = SetupMocks::init();
         let handle = _issuer_credential_create();
@@ -312,7 +309,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_issuer_credential_create_succeeds() {
         let _setup = SetupMocks::init();
 
@@ -321,7 +317,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_to_string_succeeds() {
         let _setup = SetupMocks::init();
 
@@ -331,7 +326,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_send_credential_offer() {
         let _setup = SetupMocks::init();
 
@@ -350,7 +344,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_retry_build_credential_offer() {
         let _setup = SetupMocks::init();
 
@@ -376,7 +369,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_from_string_succeeds() {
         let _setup = SetupMocks::init();
 
@@ -396,7 +388,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_update_state_with_message() {
         let _setup = SetupMocks::init();
 
@@ -421,7 +412,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_update_state_with_bad_message() {
         let _setup = SetupMocks::init();
 
@@ -441,7 +431,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_release_all() {
         let _setup = SetupMocks::init();
 

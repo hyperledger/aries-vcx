@@ -43,7 +43,6 @@ pub fn get_cb<H: Eq + Hash, T>(command_handle: H, map: &Mutex<HashMap<H, T>>) ->
 }
 
 #[cfg(test)]
-#[cfg(feature = "general_test")]
 mod tests {
     use crate::api_c::cutils::callback::{build_string, get_cb};
     use std::collections::HashMap;
@@ -55,7 +54,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_build_string() {
         let test_str = "Journey before destination".to_string();
 
@@ -64,7 +62,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_get_cb() {
         let mutex_map: Mutex<HashMap<i32, Box<dyn FnMut(i32) + Send>>> = Default::default();
         assert!(get_cb(2123, &mutex_map).is_none());

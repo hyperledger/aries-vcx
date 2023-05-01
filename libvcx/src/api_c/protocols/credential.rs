@@ -1188,7 +1188,6 @@ pub extern "C" fn vcx_credential_release(handle: u32) -> u32 {
     }
 }
 
-#[cfg(feature = "general_test")]
 #[cfg(test)]
 mod tests {
     use std::ffi::CString;
@@ -1231,7 +1230,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_vcx_credential_create_with_offer_success() {
         let _setup = SetupMocks::init();
 
@@ -1240,7 +1238,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_vcx_credential_create_with_offer_fails() {
         let _setup = SetupMocks::init();
 
@@ -1249,7 +1246,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_vcx_credential_serialize_and_deserialize() {
         let _setup = SetupMocks::init();
 
@@ -1280,7 +1276,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_vcx_credential_get_new_offers() {
         let _setup = SetupMocks::init();
 
@@ -1295,7 +1290,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_vcx_credential_create() {
         let _setup = SetupMocks::init();
 
@@ -1316,7 +1310,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_vcx_credential_get_state() {
         let _setup = SetupMocks::init();
 
@@ -1334,7 +1327,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_vcx_credential_update_state() {
         let _setup = SetupMocks::init();
 
@@ -1383,7 +1375,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_get_credential() {
         let _setup = SetupMocks::init();
 

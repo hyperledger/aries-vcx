@@ -122,7 +122,6 @@ pub mod tests {
     use aries_vcx::utils::devsetup::SetupMocks;
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_vcx_set_active_txn_author_agreement_meta() {
         let _setup = SetupMocks::init();
 
@@ -159,7 +158,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_vcx_get_ledger_author_agreement() {
         let _setup = SetupMocks::init();
 

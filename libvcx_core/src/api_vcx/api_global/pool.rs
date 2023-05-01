@@ -91,7 +91,6 @@ pub mod tests {
     use aries_vcx::utils::devsetup::{SetupDefaults, SetupEmpty, TempFile};
 
     #[tokio::test]
-    #[cfg(feature = "pool_tests")]
     async fn test_open_pool() {
         let _setup = SetupEmpty::init();
 
@@ -106,7 +105,6 @@ pub mod tests {
         reset_main_pool_handle();
     }
 
-    #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_open_pool_fails_if_genesis_file_is_invalid() {
         let _setup = SetupEmpty::init();
@@ -132,7 +130,6 @@ pub mod tests {
         reset_main_pool_handle();
     }
 
-    #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_open_pool_fails_if_genesis_path_is_invalid() {
         let _setup = SetupDefaults::init();

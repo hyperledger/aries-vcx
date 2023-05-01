@@ -331,7 +331,6 @@ mod tests {
 
     // #[ignore]
     // #[test]
-    // #[cfg(feature = "general_test")]
     // fn test_logging_get_logger() {
     //     LibvcxDefaultLogger::init(Some("debug".to_string())).unwrap();
     //     unsafe {
@@ -348,7 +347,6 @@ mod tests {
     // Can only have one test that initializes logging.
     #[ignore]
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_custom_logger() {
         unsafe {
             LibvcxLogger::init(

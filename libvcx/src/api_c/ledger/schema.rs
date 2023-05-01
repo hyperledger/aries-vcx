@@ -5,7 +5,6 @@ use libc::c_char;
 use serde_json;
 
 use libvcx_core::api_vcx::api_handle::schema;
-use libvcx_core::errors;
 use libvcx_core::errors::error::{LibvcxError, LibvcxErrorKind};
 
 use crate::api_c::cutils::cstring::CStringUtils;
@@ -555,7 +554,6 @@ pub extern "C" fn vcx_schema_get_state(
 }
 
 #[cfg(test)]
-#[cfg(feature = "test_utils")]
 mod tests {
     use std::ffi::CString;
 
@@ -564,11 +562,9 @@ mod tests {
     use aries_vcx::utils;
     use aries_vcx::utils::constants::{DEFAULT_SCHEMA_ID, SCHEMA_ID, SCHEMA_WITH_VERSION};
     use aries_vcx::utils::devsetup::SetupMocks;
-    use libvcx_core::api_vcx::api_global::settings;
     use libvcx_core::api_vcx::api_global::settings::get_config_value;
     use libvcx_core::api_vcx::api_handle::schema::prepare_schema_for_endorser;
     use libvcx_core::api_vcx::api_handle::schema::test_utils::prepare_schema_data;
-    use libvcx_core::errors;
 
     use crate::api_c::cutils::return_types_u32;
     use crate::api_c::cutils::timeout::TimeoutUtils;
@@ -605,7 +601,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_vcx_create_schema_success() {
         let _setup = SetupMocks::init();
 
@@ -615,7 +610,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_vcx_schema_serialize() {
         let _setup = SetupMocks::init();
 
@@ -626,7 +620,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_vcx_schema_deserialize_succeeds() {
         let _setup = SetupMocks::init();
 
@@ -642,7 +635,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_vcx_schema_get_schema_id_succeeds() {
         let _setup = SetupMocks::init();
 
@@ -659,7 +651,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_vcx_schema_get_attrs() {
         let _setup = SetupMocks::init();
 
@@ -681,7 +672,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_vcx_prepare_schema_success() {
         let _setup = SetupMocks::init();
 
@@ -707,7 +697,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_vcx_schema_get_state() {
         let _setup = SetupMocks::init();
 

@@ -132,7 +132,6 @@ pub extern "C" fn call_cb_u32_u32_str_str_str(
 }
 
 #[cfg(test)]
-#[cfg(feature = "general_test")]
 mod tests {
     use std::ffi::CString;
 
@@ -143,7 +142,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_build_string() {
         let test_str = "Journey before destination".to_string();
 
@@ -153,7 +151,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_get_cb() {
         let mutex_map: Mutex<HashMap<u32, Box<dyn FnMut(u32) + Send>>> = Default::default();
         assert!(get_cb(2123, &mutex_map).is_none());

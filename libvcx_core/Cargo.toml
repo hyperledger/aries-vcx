@@ -5,12 +5,6 @@ authors.workspace = true
 license.workspace = true
 edition.workspace = true
 
-[features]
-test_utils = []
-pool_tests = [ "test_utils" ]
-general_test = [ "test_utils" ]
-fatal_warnings = []
-
 [dependencies]
 num-traits = "0.2.0"
 once_cell = { version = "1.15" }

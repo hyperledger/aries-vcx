@@ -281,19 +281,16 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_build_oob_sender_append_services() {
         build_and_append_service("V4SGRU86Z58d6TV7PBUe6f").await
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_build_oob_sender_append_services_prefix_did_sov() {
         build_and_append_service("did:sov:V4SGRU86Z58d6TV7PBUe6f").await
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_serde_oob_config_handshake_protocols() {
         let config_str = json!({ "handshake_protocols": vec!["https://didcomm.org/connections/1.0"] }).to_string();
         let config_actual: OOBConfig = serde_json::from_str(&config_str).unwrap();

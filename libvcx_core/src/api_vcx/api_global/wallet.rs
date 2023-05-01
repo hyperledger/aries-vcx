@@ -173,7 +173,6 @@ pub async fn wallet_import(config: &RestoreWalletConfigs) -> LibvcxResult<()> {
     map_ariesvcx_core_result(import(config).await)
 }
 
-#[cfg(feature = "test_utils")]
 pub mod test_utils {
     use aries_vcx::aries_vcx_core::indy::wallet::WalletConfig;
     use aries_vcx::global::settings::{CONFIG_WALLET_BACKUP_KEY, DEFAULT_WALLET_KEY, WALLET_KDF_RAW};
@@ -238,7 +237,6 @@ pub mod test_utils {
 }
 
 #[cfg(test)]
-#[cfg(feature = "general_test")]
 pub mod tests {
     use aries_vcx::aries_vcx_core::indy::wallet::{delete_wallet, RestoreWalletConfigs, WalletConfig, WalletRecord};
     use aries_vcx::global::settings::{
@@ -256,7 +254,6 @@ pub mod tests {
     use crate::errors::error::{LibvcxErrorKind, LibvcxResult};
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_wallet_create() {
         let _setup = SetupEmpty::init();
 
@@ -272,7 +269,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_wallet_record_add_with_tag() {
         _create_and_open_wallet().await.unwrap();
 
@@ -288,7 +284,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_wallet_record_add_with_no_tag() {
         _create_and_open_wallet().await.unwrap();
 
@@ -301,7 +296,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_wallet_record_add_fails_with_duplication_error() {
         _create_and_open_wallet().await.unwrap();
 
@@ -316,7 +310,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_wallet_record_get_fails_if_record_does_not_exist() {
         _create_and_open_wallet().await.unwrap();
 
@@ -355,7 +348,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_wallet_record_delete() {
         _create_and_open_wallet().await.unwrap();
 
@@ -372,7 +364,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_wallet_export_import() {
         let _setup = SetupDefaults::init();
         let wallet_name = uuid::Uuid::new_v4().to_string();
@@ -407,7 +398,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_wallet_open_with_incorrect_key_fails() {
         let _setup = SetupDefaults::init();
         let wallet_name = uuid::Uuid::new_v4().to_string();
@@ -430,7 +420,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_wallet_open_with_wrong_name_fails() {
         let _setup = SetupDefaults::init();
 
@@ -448,7 +437,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_wallet_open_of_imported_wallet_succeeds() {
         let _setup = SetupDefaults::init();
 
@@ -476,7 +464,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_wallet_import_of_opened_wallet_fails() {
         let _setup = SetupDefaults::init();
 
@@ -498,7 +485,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_wallet_record_update() {
         _create_and_open_wallet().await.unwrap();
 

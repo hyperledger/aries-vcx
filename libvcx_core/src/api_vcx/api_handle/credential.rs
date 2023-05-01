@@ -339,7 +339,6 @@ pub async fn decline_offer(handle: u32, connection_handle: u32, comment: Option<
     HANDLE_MAP.insert(handle, credential)
 }
 
-#[cfg(feature = "test_utils")]
 pub mod tests_utils {
     pub const BAD_CREDENTIAL_OFFER: &str = r#"{"version": "0.1","to_did": "LtMgSjtFcyPwenK9SHCyb8","from_did": "LtMgSjtFcyPwenK9SHCyb8","claim": {"account_num": ["8BEaoLf8TBmK4BUyX8WWnA"],"name_on_account": ["Alice"]},"schema_seq_no": 48,"issuer_did": "Pd4fnFtRBcMKRVC2go5w3j","claim_name": "Account Certificate","claim_id": "3675417066","msg_ref_id": "ymy5nth"}"#;
 }
@@ -354,12 +353,10 @@ pub mod tests {
         ARIES_CREDENTIAL_OFFER, ARIES_CREDENTIAL_OFFER_JSON_FORMAT, ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED,
     };
 
-    #[cfg(feature = "test_utils")]
     use crate::api_vcx::api_handle::credential::tests_utils::BAD_CREDENTIAL_OFFER;
     use crate::api_vcx::api_handle::credential::{
         credential_create_with_offer, get_attributes, get_credential, send_credential_request,
     };
-    #[cfg(feature = "test_utils")]
     use crate::api_vcx::api_handle::mediated_connection::test_utils::{
         build_test_connection_invitee_completed, build_test_connection_inviter_requested,
     };
@@ -374,7 +371,6 @@ pub mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_vcx_credential_release() {
         let _setup = SetupDefaults::init();
         let handle = credential_create_with_offer("test_credential_create_with_offer", ARIES_CREDENTIAL_OFFER).unwrap();
@@ -383,7 +379,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_credential_create_with_offer() {
         let _setup = SetupDefaults::init();
 
@@ -392,7 +387,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_credential_create_with_offer_with_json_attach() {
         let _setup = SetupDefaults::init();
 
@@ -403,7 +397,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_credential_create_with_bad_offer() {
         let _setup = SetupDefaults::init();
 
@@ -413,7 +406,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_credential_serialize_deserialize() {
         let _setup = SetupDefaults::init();
 
@@ -432,7 +424,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn full_credential_test() {
         let _setup = SetupMocks::init();
 
@@ -486,7 +477,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_get_attributes_json_attach() {
         let _setup = SetupMocks::init();
 
@@ -501,7 +491,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_get_credential_offer() {
         let _setup = SetupMocks::init();
 
@@ -516,7 +505,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_get_credential_and_deserialize() {
         let _setup = SetupMocks::init();
 

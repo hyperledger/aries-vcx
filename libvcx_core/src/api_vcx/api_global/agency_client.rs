@@ -82,14 +82,12 @@ pub mod tests {
     use aries_vcx::utils::devsetup::SetupMocks;
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_update_institution_webhook() {
         let _setup = SetupMocks::init();
         update_webhook_url("https://example.com").await.unwrap();
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_provision_cloud_agent() {
         let _setup = SetupMocks::init();
 
@@ -103,7 +101,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_messages_update_status() {
         let _setup = SetupMocks::init();
         AgencyMockDecrypted::set_next_decrypted_response(constants::GET_MESSAGES_DECRYPTED_RESPONSE);

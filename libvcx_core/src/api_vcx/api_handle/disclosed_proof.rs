@@ -294,7 +294,6 @@ mod tests {
 
     use serde_json::Value;
 
-    #[cfg(feature = "test_utils")]
     use crate::api_vcx::api_handle::mediated_connection::test_utils::{
         build_test_connection_invitee_completed, build_test_connection_inviter_requested,
     };
@@ -320,7 +319,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_vcx_disclosed_proof_release() {
         let _setup = SetupMocks::init();
         let handle = create_with_proof_request("TEST_CREDENTIAL", ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
@@ -329,7 +327,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_create_proof() {
         let _setup = SetupMocks::init();
 
@@ -337,7 +334,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_create_fails() {
         let _setup = SetupMocks::init();
 
@@ -348,7 +344,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_proof_cycle() {
         let _setup = SetupMocks::init();
 
@@ -380,7 +375,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_proof_update_state_v2() {
         let _setup = SetupMocks::init();
 
@@ -416,7 +410,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_proof_reject_cycle() {
         let _setup = SetupMocks::init();
 
@@ -438,7 +431,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn get_state_test() {
         let _setup = SetupMocks::init();
 
@@ -450,7 +442,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn to_string_test() {
         let _setup = SetupMocks::init();
 
@@ -465,7 +456,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_deserialize_fails() {
         let _setup = SetupDefaults::init();
 
@@ -473,7 +463,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_get_proof_request() {
         let _setup = SetupMocks::init();
 
@@ -484,7 +473,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_deserialize_succeeds_with_self_attest_allowed() {
         let _setup = SetupDefaults::init();
 
@@ -495,7 +483,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_get_proof_request_attachment() {
         let _setup = SetupMocks::init();
 

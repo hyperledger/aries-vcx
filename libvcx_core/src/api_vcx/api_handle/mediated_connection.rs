@@ -450,7 +450,6 @@ pub async fn download_messages(
     Ok(res)
 }
 
-#[cfg(feature = "test_utils")]
 pub mod test_utils {
     use aries_vcx::utils::mockdata::mockdata_mediated_connection::{
         ARIES_CONNECTION_REQUEST, CONNECTION_SM_INVITEE_COMPLETED,
@@ -503,7 +502,6 @@ pub mod tests {
     use diddoc::aries::diddoc::test_utils::*;
 
     use crate::api_vcx::api_handle::mediated_connection;
-    #[cfg(feature = "test_utils")]
     use crate::api_vcx::api_handle::mediated_connection::test_utils::build_test_connection_inviter_invited;
     use crate::api_vcx::VcxStateType;
 
@@ -518,7 +516,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_vcx_connection_release() {
         let _setup = SetupMocks::init();
         let handle = mediated_connection::create_connection(_source_id()).await.unwrap();
@@ -527,7 +524,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_create_connection_works() {
         let _setup = SetupMocks::init();
         let connection_handle = mediated_connection::create_connection(_source_id()).await.unwrap();
@@ -536,7 +532,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_create_connection_with_pairwise_invite() {
         let _setup = SetupMocks::init();
 
@@ -555,7 +550,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_create_connection_with_public_invite() {
         let _setup = SetupMocks::init();
 
@@ -573,7 +567,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_get_connection_state_works() {
         let _setup = SetupMocks::init();
         let connection_handle = mediated_connection::create_connection(_source_id()).await.unwrap();
@@ -581,7 +574,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_connection_delete() {
         let _setup = SetupMocks::init();
         warn!(">> test_connection_delete going to create connection");
@@ -594,7 +586,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_create_connection() {
         let _setup = SetupMocks::init();
 
@@ -620,7 +611,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_create_drop_create() {
         let _setup = SetupMocks::init();
 
@@ -643,7 +633,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_get_state_fails() {
         let _setup = SetupEmpty::init();
 
@@ -652,7 +641,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_get_string_fails() {
         let _setup = SetupEmpty::init();
 
@@ -661,7 +649,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_get_service_endpoint() {
         let _setup = SetupMocks::init();
 
@@ -679,7 +666,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_retry_connection() {
         let _setup = SetupMocks::init();
 
@@ -692,7 +678,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_release_all() {
         let _setup = SetupMocks::init();
 
@@ -706,7 +691,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_create_with_valid_invite_details() {
         let _setup = SetupMocks::init();
 
@@ -722,7 +706,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_process_acceptance_message() {
         let _setup = SetupMocks::init();
 
@@ -733,7 +716,6 @@ pub mod tests {
     }
 
     //     #[tokio::test]
-    //     #[cfg(feature = "general_test")]
     //     async fn test_connection_handle_is_found() {
     //         let _setup = SetupMocks::init();
     //         let handle = create_connection_with_invite("alice", ARIES_CONNECTION_INVITATION).await.unwrap();
@@ -744,7 +726,6 @@ pub mod tests {
     //     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_send_generic_message_fails_with_invalid_connection() {
         let _setup = SetupMocks::init();
 
@@ -755,7 +736,6 @@ pub mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_generate_public_invitation() {
         let _setup = SetupMocks::init();
 
