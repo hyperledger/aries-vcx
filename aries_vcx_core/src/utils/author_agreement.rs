@@ -52,7 +52,6 @@ pub fn get_global_txn_author_agreement() -> VcxCoreResult<Option<TxnAuthorAgreem
     }
 }
 
-
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod unit_tests {
@@ -75,7 +74,7 @@ mod unit_tests {
             ACCEPTANCE_MECHANISM.to_string(),
             TIME_OF_ACCEPTANCE,
         )
-            .unwrap();
+        .unwrap();
 
         assert!(settings::get_config_value(settings::CONFIG_TXN_AUTHOR_AGREEMENT).is_ok());
     }
@@ -90,7 +89,7 @@ mod unit_tests {
             ACCEPTANCE_MECHANISM.to_string(),
             TIME_OF_ACCEPTANCE,
         )
-            .unwrap();
+        .unwrap();
 
         let meta = get_global_txn_author_agreement().unwrap().unwrap();
 
