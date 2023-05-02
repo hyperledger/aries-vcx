@@ -14,8 +14,6 @@ use self::{
 };
 
 #[async_trait]
-// TODO: Enable once associated type defaults are stable: https://github.com/rust-lang/rust/issues/29661
-// #[cfg_attr(test, mockall::automock)]
 pub trait DIDDereferenceable: DIDResolvable {
     type Output: Read + Send + Sync;
 
@@ -24,16 +22,4 @@ pub trait DIDDereferenceable: DIDResolvable {
         did: &ParsedDIDUrl,
         options: &DIDDereferencingOptions,
     ) -> Result<DIDDereferencingOutput<Self::Output>, GenericError>;
-}
-
-#[async_trait]
-// #[cfg_attr(test, mockall::automock)]
-pub trait DIDDereferenceableMut: DIDDereferenceable {
-    type Output: Read + Send + Sync;
-
-    async fn dereference_mut(
-        &mut self,
-        did: &ParsedDIDUrl,
-        options: &DIDDereferencingOptions,
-    ) -> Result<DIDDereferencingOutput<<Self as DIDDereferenceableMut>::Output>, GenericError>;
 }

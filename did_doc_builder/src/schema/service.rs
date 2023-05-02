@@ -57,9 +57,6 @@ pub struct ServiceBuilder {
 
 impl ServiceBuilder {
     pub fn new(id: Uri, service_endpoint: String) -> Result<Self, DIDDocumentBuilderError> {
-        if id.as_ref().is_empty() {
-            return Err(DIDDocumentBuilderError::MissingField("id"));
-        }
         if service_endpoint.is_empty() {
             return Err(DIDDocumentBuilderError::MissingField("service_endpoint"));
         }
