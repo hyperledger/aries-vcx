@@ -8,6 +8,8 @@ use crate::error::DIDDocumentBuilderError;
 
 use super::types::{jsonwebkey::JsonWebKey, multibase::Multibase};
 
+// Either a set of verification methods maps or DID URLs
+// https://www.w3.org/TR/did-core/#did-document-properties
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(untagged)]
 pub enum VerificationMethodAlias {

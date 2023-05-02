@@ -2,7 +2,7 @@ use std::fmt;
 
 #[derive(Debug)]
 pub enum ParseError {
-    InvalidInput(String),
+    InvalidInput(&'static str),
 }
 
 impl std::error::Error for ParseError {}

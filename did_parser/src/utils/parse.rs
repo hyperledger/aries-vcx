@@ -14,11 +14,13 @@ pub(crate) fn parse_key_value(
     let value_start = did_url[key_start..end]
         .find('=')
         .map(|i| key_start + i + 1)
-        .ok_or(ParseError::InvalidInput(did_url.to_string()))?;
+        .ok_or(ParseError::InvalidInput(
+            "No value found when parsing key value pair",
+        ))?;
 
     // Empty key or value is an error
     if value_start == key_start || value_start == end {
-        return Err(ParseError::InvalidInput(did_url.to_string()));
+        return Err(ParseError::InvalidInput("Empty key or value"));
     }
 
     // Value ends at end of string or next separator
@@ -34,14 +36,14 @@ pub fn parse_did_method_id(did_url: &str) -> Result<(DIDRange, DIDRange, DIDRang
     // DID = "did:" method ":" method-specific-id
     let method_start = did_url
         .find(':')
-        .ok_or(ParseError::InvalidInput(did_url.to_string()))?;
+        .ok_or(ParseError::InvalidInput("Failed to find method start"))?;
     if &did_url[..method_start] != "did" {
-        return Err(ParseError::InvalidInput(did_url.to_string()));
+        return Err(ParseError::InvalidInput("Invalid scheme"));
     }
     let method_end = did_url[method_start + 1..]
         .find(':')
         .map(|i| i + method_start + 1)
-        .ok_or(ParseError::InvalidInput(did_url.to_string()))?;
+        .ok_or(ParseError::InvalidInput("Failed to find method end"))?;
 
     // TODO
     // assumed: method-specific-id = 1*idchar
@@ -57,7 +59,7 @@ pub fn parse_did_method_id(did_url: &str) -> Result<(DIDRange, DIDRange, DIDRang
 
     // No method-specific-id is an error
     if id.is_empty() {
-        return Err(ParseError::InvalidInput(did_url.to_string()));
+        return Err(ParseError::InvalidInput("Empty method-specific-id"));
     }
 
     // Disallowed characters are disallowed
@@ -65,7 +67,7 @@ pub fn parse_did_method_id(did_url: &str) -> Result<(DIDRange, DIDRange, DIDRang
         .chars()
         .all(|c| c.is_ascii_alphanumeric() || ".-_%".contains(c))
     {
-        return Err(ParseError::InvalidInput(did_url.to_string()));
+        return Err(ParseError::InvalidInput("Disallowed character"));
     }
 
     Ok((did, method, id))
@@ -73,7 +75,7 @@ pub fn parse_did_method_id(did_url: &str) -> Result<(DIDRange, DIDRange, DIDRang
 
 pub(crate) fn parse_path(did_url: &str, current_pos: usize) -> Result<DIDRange, ParseError> {
     if !did_url[current_pos..].starts_with('/') {
-        return Err(ParseError::InvalidInput(did_url.to_string()));
+        return Err(ParseError::InvalidInput("Path must start with '/'"));
     }
     // Path ends with query, fragment, param or end of string
     let path_end = did_url[current_pos..]
@@ -81,7 +83,7 @@ pub(crate) fn parse_path(did_url: &str, current_pos: usize) -> Result<DIDRange, 
         .map_or(did_url.len(), |i| i + current_pos);
 
     if path_end - current_pos <= 1 {
-        return Err(ParseError::InvalidInput(did_url.to_string()));
+        return Err(ParseError::InvalidInput("Empty path"));
     }
 
     Ok(current_pos..path_end)

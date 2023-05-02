@@ -80,7 +80,7 @@ impl ParsedDIDUrl {
             && queries.is_empty()
             && params.is_empty()
         {
-            return Err(ParseError::InvalidInput(did_url));
+            return Err(ParseError::InvalidInput("Empty DID URL"));
         }
 
         Ok(ParsedDIDUrl {

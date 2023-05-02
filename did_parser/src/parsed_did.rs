@@ -18,7 +18,7 @@ impl ParsedDID {
         let (_, method, id) = parse_did_method_id(&did)?;
 
         if id.end > did.len() {
-            return Err(ParseError::InvalidInput(format!("Invalid DID: {}", did)));
+            return Err(ParseError::InvalidInput("Invalid DID"));
         }
 
         Ok(Self { did, method, id })
@@ -77,9 +77,7 @@ impl TryFrom<&ParsedDIDUrl> for ParsedDID {
         Self::parse(
             did_url
                 .did()
-                .ok_or(Self::Error::InvalidInput(
-                    "No DID provided in the DID URL".to_string(),
-                ))?
+                .ok_or(Self::Error::InvalidInput("No DID provided in the DID URL"))?
                 .to_string(),
         )
     }
