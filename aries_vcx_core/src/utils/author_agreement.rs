@@ -17,7 +17,7 @@ pub struct TxnAuthorAgreementAcceptanceData {
     pub time_of_acceptance: u64,
 }
 
-pub fn set_txn_author_agreement(
+pub fn set_global_txn_author_agreement(
     text: Option<String>,
     version: Option<String>,
     taa_digest: Option<String>,
@@ -40,7 +40,7 @@ pub fn set_txn_author_agreement(
     Ok(())
 }
 
-pub fn get_txn_author_agreement() -> VcxCoreResult<Option<TxnAuthorAgreementAcceptanceData>> {
+pub fn get_global_txn_author_agreement() -> VcxCoreResult<Option<TxnAuthorAgreementAcceptanceData>> {
     trace!("get_txn_author_agreement >>>");
     match settings::get_config_value(settings::CONFIG_TXN_AUTHOR_AGREEMENT) {
         Ok(value) => {

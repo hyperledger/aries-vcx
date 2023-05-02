@@ -139,7 +139,7 @@ pub async fn libindy_get_txn_author_agreement(pool_handle: PoolHandle) -> VcxCor
 pub async fn append_txn_author_agreement_to_request(request_json: &str) -> VcxCoreResult<String> {
     trace!("append_txn_author_agreement_to_request >>> request_json: ...");
 
-    if let Some(author_agreement) = utils::author_agreement::get_txn_author_agreement()? {
+    if let Some(author_agreement) = utils::author_agreement::get_global_txn_author_agreement()? {
         Locator::instance()
             .ledger_controller
             .append_txn_author_agreement_acceptance_to_request(
