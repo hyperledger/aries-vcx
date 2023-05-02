@@ -4,7 +4,7 @@ use std::{
 };
 
 use rand::{prelude::SliceRandom, thread_rng};
-use time::Tm;
+use time::OffsetDateTime;
 
 use crate::services::pool::{events::*, types::*};
 use indy_api_types::errors::prelude::*;
@@ -190,8 +190,8 @@ pub struct PoolConnection {
     ctx: zmq::Context,
     key_pair: zmq::CurveKeyPair,
     resend: Mutex<HashMap<String, (usize, String)>>,
-    timeouts: Mutex<HashMap<(String, String), Tm>>,
-    time_created: time::Tm,
+    timeouts: Mutex<HashMap<(String, String), OffsetDateTime>>,
+    time_created: time::OffsetDateTime,
     req_cnt: usize,
     active_timeout: i64,
 }
@@ -223,7 +223,7 @@ impl PoolConnection {
             ctx: zmq::Context::new(),
             key_pair: zmq::CurveKeyPair::new().expect("FIXME"),
             resend: Mutex::new(HashMap::new()),
-            time_created: time::now(),
+            time_created: OffsetDateTime::now_utc(),
             timeouts: Mutex::new(HashMap::new()),
             req_cnt: 0,
             active_timeout,
@@ -261,15 +261,21 @@ impl PoolConnection {
             .lock()
             .unwrap()
             .iter()
-            .map(|(key, value)| (key, (*value - time::now()).num_milliseconds()))
+            .map(|(key, value)| {
+                (
+                    key,
+                    (*value - OffsetDateTime::now_utc()).whole_milliseconds(),
+                )
+            })
             .min_by(|&(_, ref val1), &(_, ref val2)| val1.cmp(&val2))
         {
-            ((req_id.to_string(), node_alias.to_string()), timeout)
+            ((req_id.to_string(), node_alias.to_string()), timeout as i64)
         } else {
-            let time_from_start: Duration = time::now() - self.time_created;
+            let time_from_start =
+                (OffsetDateTime::now_utc() - self.time_created).whole_milliseconds() as i64;
             (
                 ("".to_string(), "".to_string()),
-                self.active_timeout * 1000 - time_from_start.num_milliseconds(),
+                self.active_timeout * 1000 - time_from_start,
             )
         }
     }
@@ -277,9 +283,10 @@ impl PoolConnection {
     fn is_active(&self) -> bool {
         trace!(
             "is_active >> time worked: {:?}",
-            time::now() - self.time_created
+            OffsetDateTime::now_utc() - self.time_created
         );
-        let res = time::now() - self.time_created < Duration::seconds(self.active_timeout);
+        let res =
+            OffsetDateTime::now_utc() - self.time_created < Duration::seconds(self.active_timeout);
         trace!("is_active << {}", res);
         res
     }
@@ -332,7 +339,7 @@ impl PoolConnection {
             .unwrap()
             .get_mut(&(req_id.to_string(), node_alias.to_string()))
         {
-            *timeout = time::now() + Duration::seconds(extended_timeout);
+            *timeout = OffsetDateTime::now_utc() + Duration::seconds(extended_timeout);
         } else {
             debug!("late REQACK for req_id {}, node {}", req_id, node_alias);
         }
@@ -389,7 +396,7 @@ impl PoolConnection {
         }
         self.timeouts.lock().unwrap().insert(
             (req_id, self.nodes[idx].name.clone()),
-            time::now() + Duration::seconds(timeout),
+            OffsetDateTime::now_utc() + Duration::seconds(timeout),
         );
         trace!("_send_msg_to_one_node <<");
         Ok(())
@@ -495,8 +502,6 @@ pub mod networker_tests {
 
     #[cfg(test)]
     mod networker {
-        use std::ops::Sub;
-
         use super::*;
 
         #[test]
@@ -745,7 +750,7 @@ pub mod networker_tests {
                 .cloned()
                 .collect::<Vec<i32>>()[0];
             let conn: &mut PoolConnection = networker.pool_connections.get_mut(&conn_id).unwrap();
-            conn.time_created = time::now().sub(Duration::seconds(5));
+            conn.time_created = OffsetDateTime::now_utc() - Duration::seconds(5);
         }
 
         #[test]
@@ -894,8 +899,6 @@ pub mod networker_tests {
 
     #[cfg(test)]
     mod pool_connection {
-        use std::ops::Sub;
-
         use super::*;
 
         #[test]
@@ -971,7 +974,7 @@ pub mod networker_tests {
 
             assert!(conn.is_active());
 
-            conn.time_created = time::now().sub(Duration::seconds(POOL_CON_ACTIVE_TO));
+            conn.time_created = OffsetDateTime::now_utc() - Duration::seconds(POOL_CON_ACTIVE_TO);
 
             assert!(!conn.is_active());
         }

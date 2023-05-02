@@ -10,7 +10,7 @@ use crate::errors::error::prelude::*;
 use crate::global::settings;
 
 async fn get_signature_data(wallet: &Arc<dyn BaseWallet>, data: String, key: &str) -> VcxResult<(Vec<u8>, Vec<u8>)> {
-    let now: u64 = time::get_time().sec as u64;
+    let now: u64 = time::OffsetDateTime::now_utc().unix_timestamp() as u64;
     let mut sig_data = now.to_be_bytes().to_vec();
     sig_data.extend(data.as_bytes());
 
