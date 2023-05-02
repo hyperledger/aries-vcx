@@ -4,8 +4,6 @@ use did_parser::{ParsedDID, ParsedDIDUrl};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::error::DIDDocumentBuilderError;
-
 use super::types::{jsonwebkey::JsonWebKey, multibase::Multibase};
 
 // Either a set of verification methods maps or DID URLs
@@ -41,8 +39,8 @@ impl VerificationMethod {
         id: ParsedDIDUrl,
         controller: ParsedDID,
         verification_method_type: String,
-    ) -> VerificationMethodBuilder {
-        VerificationMethodBuilder::new(id, controller, verification_method_type)
+    ) -> IncompleteVerificationMethodBuilder {
+        IncompleteVerificationMethodBuilder::new(id, controller, verification_method_type)
     }
 
     pub fn id(&self) -> &ParsedDIDUrl {
@@ -71,7 +69,15 @@ impl VerificationMethod {
 }
 
 #[derive(Debug, Default)]
-pub struct VerificationMethodBuilder {
+pub struct IncompleteVerificationMethodBuilder {
+    id: ParsedDIDUrl,
+    controller: ParsedDID,
+    verification_method_type: String,
+    extra: HashMap<String, Value>,
+}
+
+#[derive(Debug)]
+pub struct CompleteVerificationMethodBuilder {
     id: ParsedDIDUrl,
     controller: ParsedDID,
     verification_method_type: String,
@@ -80,7 +86,7 @@ pub struct VerificationMethodBuilder {
     extra: HashMap<String, Value>,
 }
 
-impl VerificationMethodBuilder {
+impl IncompleteVerificationMethodBuilder {
     pub fn new(id: ParsedDIDUrl, controller: ParsedDID, verification_method_type: String) -> Self {
         Self {
             id,
@@ -90,15 +96,32 @@ impl VerificationMethodBuilder {
         }
     }
 
-    // We will rely on users to provide valid multibase keys for now
-    pub fn add_public_key_multibase(mut self, public_key_multibase: Multibase) -> Self {
-        self.public_key_multibase = Some(public_key_multibase);
-        self
+    pub fn add_public_key_multibase(
+        self,
+        public_key_multibase: Multibase,
+    ) -> CompleteVerificationMethodBuilder {
+        CompleteVerificationMethodBuilder {
+            id: self.id,
+            controller: self.controller,
+            verification_method_type: self.verification_method_type,
+            public_key_multibase: Some(public_key_multibase),
+            public_key_jwk: None,
+            extra: self.extra,
+        }
     }
 
-    pub fn add_public_key_jwk(mut self, public_key_jwk: JsonWebKey) -> Self {
-        self.public_key_jwk = Some(public_key_jwk);
-        self
+    pub fn add_public_key_jwk(
+        self,
+        public_key_jwk: JsonWebKey,
+    ) -> CompleteVerificationMethodBuilder {
+        CompleteVerificationMethodBuilder {
+            id: self.id,
+            controller: self.controller,
+            verification_method_type: self.verification_method_type,
+            public_key_multibase: None,
+            public_key_jwk: Some(public_key_jwk),
+            extra: self.extra,
+        }
     }
 
     pub fn add_extra(mut self, key: String, value: Value) -> Self {
@@ -106,28 +129,38 @@ impl VerificationMethodBuilder {
         self
     }
 
-    pub fn build(self) -> Result<VerificationMethod, DIDDocumentBuilderError> {
-        if self.public_key_multibase.is_some() && self.public_key_jwk.is_some() {
-            Err(DIDDocumentBuilderError::InvalidInput(
-                "Cannot specify both public_key_multibase and public_key_jwk".to_string(),
-            ))
-        } else {
-            Ok(VerificationMethod {
-                id: self.id,
-                verification_method_type: self.verification_method_type,
-                controller: self.controller,
-                public_key_multibase: self.public_key_multibase,
-                public_key_jwk: self.public_key_jwk,
-                extra: self.extra,
-            })
+    pub fn build(self) -> VerificationMethod {
+        VerificationMethod {
+            id: self.id,
+            controller: self.controller,
+            verification_method_type: self.verification_method_type,
+            public_key_multibase: None,
+            public_key_jwk: None,
+            extra: self.extra,
+        }
+    }
+}
+
+impl CompleteVerificationMethodBuilder {
+    pub fn add_extra(mut self, key: String, value: Value) -> Self {
+        self.extra.insert(key, value);
+        self
+    }
+
+    pub fn build(self) -> VerificationMethod {
+        VerificationMethod {
+            id: self.id,
+            controller: self.controller,
+            verification_method_type: self.verification_method_type,
+            public_key_multibase: self.public_key_multibase,
+            public_key_jwk: self.public_key_jwk,
+            extra: self.extra,
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use serde_json::json;
-
     use super::*;
 
     fn create_valid_did() -> ParsedDID {
@@ -146,24 +179,16 @@ mod tests {
         "Ed25519VerificationKey2018".to_string()
     }
 
-    fn create_valid_jsonwebkey_string() -> String {
-        json!({
-            "kty": "OKP",
-            "crv": "Ed25519",
-            "x": "11qYAYKxCrfVS_7TyWQHOg7hcvPapiMlrwIaaPcHURo",
-        })
-        .to_string()
-    }
-
     #[test]
     fn test_verification_method_id() {
         let id = create_valid_did_url();
         let controller = create_valid_did();
         let verification_method_type = create_valid_verification_key_type();
-        let vm = VerificationMethod::builder(id.clone(), controller, verification_method_type)
-            .build()
-            .unwrap();
-        assert_eq!(vm.id(), &id);
+        let verification_method =
+            VerificationMethod::builder(id.clone(), controller, verification_method_type)
+                .add_public_key_multibase(create_valid_multibase())
+                .build();
+        assert_eq!(verification_method.id(), &id);
     }
 
     #[test]
@@ -179,8 +204,7 @@ mod tests {
             verification_method_type.clone(),
         )
         .add_public_key_multibase(public_key_multibase.clone())
-        .build()
-        .unwrap();
+        .build();
 
         assert_eq!(vm.id(), &id);
         assert_eq!(vm.controller(), &controller);
@@ -198,8 +222,7 @@ mod tests {
 
         let vm = VerificationMethod::builder(id, controller, verification_method_type)
             .add_extra(extra_key.clone(), extra_value.clone())
-            .build()
-            .unwrap();
+            .build();
         assert_eq!(vm.extra(&extra_key).unwrap(), &extra_value);
     }
 
@@ -219,29 +242,12 @@ mod tests {
         )
         .add_public_key_multibase(public_key_multibase.clone())
         .add_extra(extra_key.clone(), extra_value.clone())
-        .build()
-        .unwrap();
+        .build();
 
         assert_eq!(vm.id(), &id);
         assert_eq!(vm.controller(), &controller);
         assert_eq!(vm.verification_method_type(), &verification_method_type);
         assert_eq!(vm.public_key_multibase().unwrap(), &public_key_multibase);
         assert_eq!(vm.extra(&extra_key).unwrap(), &extra_value);
-    }
-
-    #[test]
-    fn test_verification_method_builder_duplicate_public_key() {
-        let id = create_valid_did_url();
-        let controller = create_valid_did();
-        let verification_method_type = create_valid_verification_key_type();
-        let public_key_multibase = create_valid_multibase();
-        let public_key_jwk = JsonWebKey::new(&create_valid_jsonwebkey_string()).unwrap();
-
-        let vm = VerificationMethod::builder(id, controller, verification_method_type)
-            .add_public_key_multibase(public_key_multibase)
-            .add_public_key_jwk(public_key_jwk)
-            .build();
-
-        assert!(vm.is_err());
     }
 }

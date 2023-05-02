@@ -238,7 +238,7 @@ impl DIDDocumentBuilder {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::schema::{service::ServiceBuilder, verification_method::VerificationMethodBuilder};
+    use crate::schema::service::ServiceBuilder;
 
     #[test]
     fn test_did_document_builder() {
@@ -246,22 +246,20 @@ mod tests {
         let also_known_as = Uri::new("https://example.com").unwrap();
         let controller = ParsedDID::parse("did:example:controller".to_string()).unwrap();
 
-        let verification_method = VerificationMethodBuilder::new(
+        let verification_method = VerificationMethod::builder(
             ParsedDIDUrl::parse("did:example:vm1".to_string()).unwrap(),
             ParsedDID::parse("did:example:vm2".to_string()).unwrap(),
             "typevm".to_string(),
         )
-        .build()
-        .unwrap();
+        .build();
         let authentication_reference =
             ParsedDIDUrl::parse("did:example:authref".to_string()).unwrap();
-        let assertion_method = VerificationMethodBuilder::new(
+        let assertion_method = VerificationMethod::builder(
             ParsedDIDUrl::parse("did:example:am1".to_string()).unwrap(),
             ParsedDID::parse("did:example:am2".to_string()).unwrap(),
             "typeam".to_string(),
         )
-        .build()
-        .unwrap();
+        .build();
 
         let service_id = Uri::new("did:example:123456789abcdefghi;service-1").unwrap();
         let service_type = "test-service".to_string();

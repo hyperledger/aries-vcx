@@ -110,8 +110,7 @@ mod tests {
             "publicKeyBase58".to_string(),
             Value::String("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".to_string()),
         )
-        .build()
-        .unwrap();
+        .build();
 
         let agent_service = Service::builder(
             "did:example:123456789abcdefghi#agent".parse().unwrap(),
