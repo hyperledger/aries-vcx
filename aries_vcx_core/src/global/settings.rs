@@ -106,3 +106,7 @@ pub fn get_protocol_version() -> usize {
         protocol_version
     }
 }
+
+pub fn get_sample_did() -> String {
+    DEFAULT_DID.to_string()
+}

@@ -96,14 +96,6 @@ pub struct StatusCodeMock {
 // todo: get rid of this, we no longer deal with rc return codes from vdrtools
 //      (this is leftover from times when we talked to vdrtool via FFI)
 impl StatusCodeMock {
-    pub fn set_next_result(rc: u32) {
-        STATUS_CODE_MOCK
-            .lock()
-            .expect("Unabled to access LIBINDY_MOCK")
-            .results
-            .push(rc);
-    }
-
     pub fn get_result() -> u32 {
         STATUS_CODE_MOCK
             .lock()

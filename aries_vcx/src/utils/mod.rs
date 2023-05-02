@@ -42,7 +42,6 @@ macro_rules! map (
      };
 );
 
-pub mod author_agreement;
 #[rustfmt::skip]
 pub mod constants;
 pub mod file;
