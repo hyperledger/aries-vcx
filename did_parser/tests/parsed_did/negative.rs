@@ -5,7 +5,7 @@ macro_rules! test_cases_negative {
         $(
             #[test]
             fn $name() {
-                println!("Testing {:?}", ParsedDID::parse($input.to_string()));
+                println!("Testing {}", $input);
                 assert!(ParsedDID::parse($input.to_string()).is_err());
             }
         )*

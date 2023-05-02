@@ -5,6 +5,7 @@ macro_rules! test_cases_positive {
         $(
             #[test]
             fn $name() {
+                println!("Testing {}", $input);
                 let parsed_did = ParsedDID::parse($input.to_string()).unwrap();
 
                 assert_eq!(parsed_did.did(), $expected_did, "DID");
@@ -21,4 +22,9 @@ test_cases_positive! {
         "did:example:123456789abcdefghi",
         "example",
         "123456789abcdefghi"
+    test_case2:
+        "did:web:w3c-ccg.github.io",
+        "did:web:w3c-ccg.github.io",
+        "web",
+        "w3c-ccg.github.io"
 }

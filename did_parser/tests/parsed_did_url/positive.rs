@@ -6,6 +6,7 @@ macro_rules! test_cases_positive {
         $(
             #[test]
             fn $name() {
+                println!("Testing {}", $input);
                 let parsed_did = ParsedDIDUrl::parse($input.to_string()).unwrap();
 
                 assert_eq!(parsed_did.did(), $expected_did, "DID");
@@ -299,6 +300,16 @@ test_cases_positive! {
         None,
         Some("/path"),
         Some("fragment"),
+        HashMap::new(),
+        HashMap::new()
+
+    test_case21:
+        "did:web:w3c-ccg.github.io:user:alice",
+        Some("did:web:w3c-ccg.github.io:user:alice"),
+        Some("web"),
+        Some("w3c-ccg.github.io:user:alice"),
+        None,
+        None,
         HashMap::new(),
         HashMap::new()
 }

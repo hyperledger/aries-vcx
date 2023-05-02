@@ -45,9 +45,7 @@ pub fn parse_did_method_id(did_url: &str) -> Result<(DIDRange, DIDRange, DIDRang
         .map(|i| i + method_start + 1)
         .ok_or(ParseError::InvalidInput("Failed to find method end"))?;
 
-    // TODO
-    // assumed: method-specific-id = 1*idchar
-    // actual : method-specific-id = *( *idchar ":" ) 1*idchar
+    // method-specific-id = *( *idchar ":" ) 1*idchar
     let id_start = method_end + 1;
     let id_end = did_url[id_start..]
         .find(|c: char| c == ';' || c == '/' || c == '?' || c == '#' || c == '&')
@@ -65,7 +63,7 @@ pub fn parse_did_method_id(did_url: &str) -> Result<(DIDRange, DIDRange, DIDRang
     // Disallowed characters are disallowed
     if !did_url[id_start..id_end]
         .chars()
-        .all(|c| c.is_ascii_alphanumeric() || ".-_%".contains(c))
+        .all(|c| c.is_ascii_alphanumeric() || ".-_%:".contains(c))
     {
         return Err(ParseError::InvalidInput("Disallowed character"));
     }
