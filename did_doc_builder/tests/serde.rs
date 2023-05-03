@@ -153,7 +153,7 @@ fn test_deserialization() {
     );
 
     assert_eq!(
-        did_doc.extra("publicKey").unwrap().clone(),
+        did_doc.get_extra_field("publicKey").unwrap().clone(),
         Value::Array(vec![Value::Object(
             serde_json::from_str(
                 r#"{
@@ -173,7 +173,7 @@ fn test_deserialization() {
     .unwrap();
     let ka1 =
         VerificationMethod::builder(ka1_id, controller, "X25519KeyAgreementKey2019".to_string())
-            .add_extra(
+            .add_extra_field(
                 "publicKeyBase58".to_string(),
                 Value::String("CaSHXEvLKS6SfN9aBfkVGBpp15jSnaHazqHgLHp8KZ3Y".to_string()),
             )

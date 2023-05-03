@@ -42,7 +42,7 @@ impl Service {
         self.service_endpoint.as_ref()
     }
 
-    pub fn extra(&self, key: &str) -> Option<&Value> {
+    pub fn get_extra_field(&self, key: &str) -> Option<&Value> {
         self.extra.get(key)
     }
 }
@@ -78,7 +78,7 @@ impl ServiceBuilder {
         Ok(self)
     }
 
-    pub fn add_extra(mut self, key: String, value: Value) -> Self {
+    pub fn add_extra_field(mut self, key: String, value: Value) -> Self {
         self.extra.insert(key, value);
         self
     }
@@ -135,11 +135,11 @@ mod tests {
             .unwrap()
             .add_service_type(service_type)
             .unwrap()
-            .add_extra(extra_key.clone(), extra_value.clone())
+            .add_extra_field(extra_key.clone(), extra_value.clone())
             .build()
             .unwrap();
 
-        assert_eq!(service.extra(&extra_key).unwrap(), &extra_value);
+        assert_eq!(service.get_extra_field(&extra_key).unwrap(), &extra_value);
     }
 
     #[test]

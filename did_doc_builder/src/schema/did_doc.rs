@@ -86,7 +86,7 @@ impl DIDDocument {
         self.service.as_ref()
     }
 
-    pub fn extra(&self, key: &str) -> Option<&Value> {
+    pub fn get_extra_field(&self, key: &str) -> Option<&Value> {
         self.extra.get(key)
     }
 }
@@ -208,7 +208,7 @@ impl DIDDocumentBuilder {
         self
     }
 
-    pub fn add_extra(mut self, key: String, value: Value) -> Self {
+    pub fn add_extra_field(mut self, key: String, value: Value) -> Self {
         self.extra.insert(key, value);
         self
     }

@@ -63,7 +63,7 @@ impl VerificationMethod {
         self.public_key_jwk.as_ref()
     }
 
-    pub fn extra(&self, key: &str) -> Option<&Value> {
+    pub fn get_extra_field(&self, key: &str) -> Option<&Value> {
         self.extra.get(key)
     }
 }
@@ -124,7 +124,7 @@ impl IncompleteVerificationMethodBuilder {
         }
     }
 
-    pub fn add_extra(mut self, key: String, value: Value) -> Self {
+    pub fn add_extra_field(mut self, key: String, value: Value) -> Self {
         self.extra.insert(key, value);
         self
     }
@@ -142,7 +142,7 @@ impl IncompleteVerificationMethodBuilder {
 }
 
 impl CompleteVerificationMethodBuilder {
-    pub fn add_extra(mut self, key: String, value: Value) -> Self {
+    pub fn add_extra_field(mut self, key: String, value: Value) -> Self {
         self.extra.insert(key, value);
         self
     }
@@ -221,9 +221,9 @@ mod tests {
         let extra_value = Value::String("bar".to_string());
 
         let vm = VerificationMethod::builder(id, controller, verification_method_type)
-            .add_extra(extra_key.clone(), extra_value.clone())
+            .add_extra_field(extra_key.clone(), extra_value.clone())
             .build();
-        assert_eq!(vm.extra(&extra_key).unwrap(), &extra_value);
+        assert_eq!(vm.get_extra_field(&extra_key).unwrap(), &extra_value);
     }
 
     #[test]
@@ -241,13 +241,13 @@ mod tests {
             verification_method_type.clone(),
         )
         .add_public_key_multibase(public_key_multibase.clone())
-        .add_extra(extra_key.clone(), extra_value.clone())
+        .add_extra_field(extra_key.clone(), extra_value.clone())
         .build();
 
         assert_eq!(vm.id(), &id);
         assert_eq!(vm.controller(), &controller);
         assert_eq!(vm.verification_method_type(), &verification_method_type);
         assert_eq!(vm.public_key_multibase().unwrap(), &public_key_multibase);
-        assert_eq!(vm.extra(&extra_key).unwrap(), &extra_value);
+        assert_eq!(vm.get_extra_field(&extra_key).unwrap(), &extra_value);
     }
 }

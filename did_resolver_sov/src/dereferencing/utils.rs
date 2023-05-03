@@ -106,7 +106,7 @@ mod tests {
                 .unwrap(),
             "Ed25519VerificationKey2018".to_string(),
         )
-        .add_extra(
+        .add_extra_field(
             "publicKeyBase58".to_string(),
             Value::String("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".to_string()),
         )
