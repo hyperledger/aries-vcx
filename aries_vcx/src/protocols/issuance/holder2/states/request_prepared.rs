@@ -1,4 +1,4 @@
-use messages2::msg_fields::protocols::cred_issuance::request_credential::RequestCredential;
+use messages::msg_fields::protocols::cred_issuance::request_credential::RequestCredential;
 
 pub struct RequestPrepared {
     pub(crate) credential_request_message: RequestCredential,

@@ -1,4 +1,4 @@
-use messages2::msg_fields::protocols::{
+use messages::msg_fields::protocols::{
     cred_issuance::{propose_credential::ProposeCredential, request_credential::RequestCredential},
     notification::Ack,
     report_problem::ProblemReport,

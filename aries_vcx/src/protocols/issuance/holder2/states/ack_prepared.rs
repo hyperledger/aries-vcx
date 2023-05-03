@@ -1,4 +1,4 @@
-use messages2::msg_fields::protocols::cred_issuance::ack::AckCredential;
+use messages::msg_fields::protocols::cred_issuance::ack::AckCredential;
 
 pub struct AckPrepared {
     pub(crate) ack_message: AckCredential,

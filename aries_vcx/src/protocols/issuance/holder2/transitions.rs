@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use messages2::{
+use messages::{
     decorators::thread::Thread,
     msg_fields::protocols::{
         cred_issuance::{
@@ -18,6 +18,7 @@ use crate::{
     core::profile::profile::Profile,
     errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
     global::settings,
+    handlers::util::{make_attach_from_str, matches_thread_id, AttachmentId, get_attach_as_string},
     protocols::issuance::holder2::states::ack_prepared::AckPrepared,
     utils::uuid::uuid,
 };
@@ -31,7 +32,7 @@ use super::{
 };
 
 impl Holder<ProposalPrepared> {
-    pub fn create_from_proposal(proposal_data: ProposeCredentialContent) -> Self {
+    pub fn create_from_proposal_data(proposal_data: ProposeCredentialContent) -> Self {
         let id = uuid();
         let decoratators = ProposeCredentialDecorators::default();
         let proposal_message = ProposeCredential::with_decorators(id.clone(), proposal_data, decoratators);
@@ -42,7 +43,28 @@ impl Holder<ProposalPrepared> {
     }
 
     pub async fn receive_offer(self, offer: OfferCredential) -> Result<Holder<OfferReceived>, Holder<Failed>> {
-        // let is_match = matches_thread_id!(offer, self.state.thread_id());
+        let expected_thread_id = self.thread_id();
+        let thread_matches = offer
+            .decorators
+            .thread
+            .as_ref()
+            .map(|thread| thread.thid == expected_thread_id)
+            .unwrap_or(false);
+
+        if !thread_matches {
+            let error = AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidJson,
+                format!(
+                    "Cannot handle message {:?}: thread id does not match, expected {:?}",
+                    offer,
+                    self.thread_id()
+                ),
+            );
+            return Err(Holder {
+                thread_id: self.thread_id,
+                state: Failed::from_error(error),
+            });
+        };
 
         let state = OfferReceived::new(offer);
         Ok(Holder {
@@ -83,7 +105,7 @@ impl Holder<OfferReceived> {
     ) -> Result<Holder<RequestPrepared>, (Holder<OfferReceived>, AriesVcxError)> {
         let thread_id = &self.thread_id;
         let offer = &self.state.offer_message;
-        match _make_credential_request(profile, thread_id.to_owned(), prover_did, offer).await {
+        match make_credential_request(profile, thread_id.to_owned(), prover_did, offer).await {
             Ok((request_msg, cred_request_metadata, cred_def)) => {
                 let state = RequestPrepared::new(request_msg, cred_request_metadata, cred_def);
                 let thread_id = self.thread_id;
@@ -95,7 +117,10 @@ impl Holder<OfferReceived> {
 
     // TODO - this name some what implies that the action will be taken... - maybe `prepare_decline_offer`?
     pub fn decline_offer(self, comment: Option<String>) -> Holder<Failed> {
-        todo!()
+        Holder {
+            thread_id: self.thread_id,
+            state: Failed::from_other_reason(comment.unwrap_or_default()),
+        }
     }
 }
 
@@ -105,11 +130,28 @@ impl Holder<RequestPrepared> {
         profile: &Arc<dyn Profile>,
         credential: IssueCredential,
     ) -> Result<HolderReceiveCredentialNextState, (Holder<RequestPrepared>, AriesVcxError)> {
+        let expected_thread_id = self.thread_id();
+        let thread_matches = matches_thread_id!(credential, expected_thread_id);
+
+        if !thread_matches {
+            let error = AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidJson,
+                format!(
+                    "Cannot handle message {:?}: thread id does not match, expected {:?}",
+                    credential,
+                    self.thread_id()
+                ),
+            );
+            // TODO - soft fail even tho it is a hard failure?!
+            return Err((self, error));
+        };
+
+        // TODO - check thread_id
         let credential_request_metdata = &self.state.credential_request_metadata;
         let cred_def_json = &self.state.credential_definition;
         let thread_id = self.thread_id.clone();
         let (credential_id, revocation_registry_definition) =
-            match _store_credential(profile, &credential, credential_request_metdata, cred_def_json).await {
+            match store_credential(profile, &credential, credential_request_metdata, cred_def_json).await {
                 Ok((credential_id, revocation_registry_definition)) => {
                     Ok((credential_id, revocation_registry_definition))
                 }
@@ -129,7 +171,7 @@ impl Holder<RequestPrepared> {
     }
 }
 
-async fn _make_credential_request(
+async fn make_credential_request(
     profile: &Arc<dyn Profile>,
     thread_id: String,
     my_pw_did: String,
@@ -141,7 +183,7 @@ async fn _make_credential_request(
         offer
     );
 
-    let cred_offer: String = String::from("TODO"); // get_attach_as_string!(&offer.content.offers_attach);
+    let cred_offer = get_attach_as_string!(&offer.content.offers_attach);
 
     trace!("Parsed cred offer attachment: {}", cred_offer);
     let cred_def_id = parse_cred_def_id_from_cred_offer(&cred_offer)?;
@@ -194,15 +236,14 @@ async fn create_credential_request(
         .await
         .map_err(|err| err.extend("Cannot create credential request"))
         .map(|(s1, s2)| (s1, s2, cred_def_id.to_string(), cred_def_json))
+        .map_err(AriesVcxError::from)
 }
 
 fn build_credential_request_msg(credential_request_attach: String, thread_id: &str) -> VcxResult<RequestCredential> {
-    let content = RequestCredentialContent::new(vec![
-    //     make_attach_from_str!(
-    //     &credential_request_attach,
-    //     AttachmentId::CredentialRequest.as_ref().to_string()
-    // )
-    ]);
+    let content = RequestCredentialContent::new(vec![make_attach_from_str!(
+        &credential_request_attach,
+        AttachmentId::CredentialRequest.as_ref().to_string()
+    )]);
 
     let mut decorators = RequestCredentialDecorators::default();
 
@@ -213,7 +254,7 @@ fn build_credential_request_msg(credential_request_attach: String, thread_id: &s
     Ok(RequestCredential::with_decorators(uuid(), content, decorators))
 }
 
-async fn _store_credential(
+async fn store_credential(
     profile: &Arc<dyn Profile>,
     issue_credential_message: &IssueCredential,
     credential_request_metdata: &str,
@@ -228,9 +269,9 @@ async fn _store_credential(
     let ledger = Arc::clone(profile).inject_ledger();
     let anoncreds = Arc::clone(profile).inject_anoncreds();
 
-    let credential_json = String::from("TODO"); // get_attach_as_string!(&credential.content.credentials_attach);
+    let credential_json = get_attach_as_string!(&issue_credential_message.content.credentials_attach);
 
-    let rev_reg_id = _parse_rev_reg_id_from_credential(&credential_json)?;
+    let rev_reg_id = parse_rev_reg_id_from_credential(&credential_json)?;
     let rev_reg_def_json = if let Some(rev_reg_id) = rev_reg_id {
         let json = ledger.get_rev_reg_def_json(&rev_reg_id).await?;
         Some(json)
@@ -249,7 +290,7 @@ async fn _store_credential(
     Ok((cred_id, rev_reg_def_json))
 }
 
-fn _parse_rev_reg_id_from_credential(credential: &str) -> VcxResult<Option<String>> {
+fn parse_rev_reg_id_from_credential(credential: &str) -> VcxResult<Option<String>> {
     trace!("Holder::_parse_rev_reg_id_from_credential >>>");
 
     let parsed_credential: serde_json::Value = serde_json::from_str(credential).map_err(|err| {

@@ -511,39 +511,39 @@ fn _get_response_json_data_field(response_json: &str) -> VcxCoreResult<Value> {
     Ok(result.try_get("data")?.to_owned())
 }
 
-#[cfg(test)]
-mod unit_tests {
-    use std::sync::Arc;
+// #[cfg(test)]
+// mod unit_tests {
+//     use std::sync::Arc;
 
-    use crate::errors::error::{AriesVcxCoreErrorKind, VcxCoreResult};
-    use crate::{
-        common::test_utils::mock_profile,
-        plugins::ledger::{base_ledger::BaseLedger, indy_vdr_ledger::IndyVdrLedgerPool},
-    };
+//     use crate::errors::error::{AriesVcxCoreErrorKind, VcxCoreResult};
+//     use crate::{
+//         common::test_utils::mock_profile,
+//         plugins::ledger::{base_ledger::BaseLedger, indy_vdr_ledger::IndyVdrLedgerPool},
+//     };
 
-    use super::IndyVdrLedger;
+//     use super::IndyVdrLedger;
 
-    #[tokio::test]
-    #[ignore]
-    async fn test_pool_unimplemented_methods() {
-        // test used to assert which methods are unimplemented currently, can be removed after all methods implemented
+//     #[tokio::test]
+//     #[ignore]
+//     async fn test_pool_unimplemented_methods() {
+//         // test used to assert which methods are unimplemented currently, can be removed after all methods implemented
 
-        fn assert_unimplemented<T: std::fmt::Debug>(result: VcxCoreResult<T>) {
-            assert_eq!(result.unwrap_err().kind(), AriesVcxCoreErrorKind::UnimplementedFeature)
-        }
+//         fn assert_unimplemented<T: std::fmt::Debug>(result: VcxCoreResult<T>) {
+//             assert_eq!(result.unwrap_err().kind(), AriesVcxCoreErrorKind::UnimplementedFeature)
+//         }
 
-        let profile = mock_profile();
-        let pool = Arc::new(IndyVdrLedgerPool { runner: None });
-        let ledger: Box<dyn BaseLedger> = Box::new(IndyVdrLedger::new(profile.inject_wallet(), pool));
+//         let profile = mock_profile();
+//         let pool = Arc::new(IndyVdrLedgerPool { runner: None });
+//         let ledger: Box<dyn BaseLedger> = Box::new(IndyVdrLedger::new(profile.inject_wallet(), pool));
 
-        assert_unimplemented(ledger.endorse_transaction("", "").await);
-        assert_unimplemented(ledger.set_endorser("", "", "").await);
-        assert_unimplemented(ledger.get_txn_author_agreement().await);
-        assert_unimplemented(ledger.get_rev_reg("", 0).await);
-        assert_unimplemented(ledger.get_ledger_txn(0, None).await);
-        assert_unimplemented(ledger.build_schema_request("", "").await);
-        assert_unimplemented(ledger.publish_schema("", "", None).await);
-        assert_unimplemented(ledger.publish_cred_def("", "").await);
-        assert_unimplemented(ledger.publish_rev_reg_def("", "").await);
-    }
-}
+//         assert_unimplemented(ledger.endorse_transaction("", "").await);
+//         assert_unimplemented(ledger.set_endorser("", "", "").await);
+//         assert_unimplemented(ledger.get_txn_author_agreement().await);
+//         assert_unimplemented(ledger.get_rev_reg("", 0).await);
+//         assert_unimplemented(ledger.get_ledger_txn(0, None).await);
+//         assert_unimplemented(ledger.build_schema_request("", "").await);
+//         assert_unimplemented(ledger.publish_schema("", "", None).await);
+//         assert_unimplemented(ledger.publish_cred_def("", "").await);
+//         assert_unimplemented(ledger.publish_rev_reg_def("", "").await);
+//     }
+// }

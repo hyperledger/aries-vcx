@@ -1,4 +1,4 @@
-use messages2::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
+use messages::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
 
 pub struct OfferReceived {
     pub(crate) offer_message: OfferCredential,
