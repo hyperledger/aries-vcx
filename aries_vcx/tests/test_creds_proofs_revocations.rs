@@ -6,7 +6,6 @@ extern crate serde_json;
 pub mod utils;
 
 #[cfg(test)]
-#[cfg(feature = "agency_pool_tests")]
 mod integration_tests {
     use std::thread;
     use std::time::Duration;
@@ -28,9 +27,9 @@ mod integration_tests {
 
     use super::*;
 
-    #[cfg(feature = "agency_pool_tests")]
     #[tokio::test]
-    async fn test_basic_revocation() {
+    #[ignore]
+    async fn test_agency_pool_basic_revocation() {
         SetupPool::run(|setup| async move {
             let mut institution = Faber::setup(setup.pool_handle).await;
             let mut consumer = create_test_alice_instance(&setup).await;
@@ -47,11 +46,12 @@ mod integration_tests {
 
             assert!(!issuer_credential.is_revoked(&institution.profile).await.unwrap());
 
-            let time_before_revocation = time::get_time().sec as u64;
+            let time_before_revocation = time::OffsetDateTime::now_utc().unix_timestamp() as u64;
             info!("test_basic_revocation :: verifier :: Going to revoke credential");
             revoke_credential_and_publish_accumulator(&mut institution, &issuer_credential, &rev_reg.rev_reg_id).await;
-            thread::sleep(Duration::from_millis(2000));
-            let time_after_revocation = time::get_time().sec as u64;
+
+            tokio::time::sleep(Duration::from_millis(1000)).await;
+            let time_after_revocation = time::OffsetDateTime::now_utc().unix_timestamp() as u64;
 
             assert!(issuer_credential.is_revoked(&institution.profile).await.unwrap());
 
@@ -99,9 +99,11 @@ mod integration_tests {
         .await;
     }
 
-    #[cfg(feature = "agency_pool_tests")]
     #[tokio::test]
-    async fn test_revocation_notification() {
+    #[ignore]
+    async fn test_agency_pool_revocation_notification() {
+        use messages::decorators::please_ack::AckOn;
+
         SetupPool::run(|setup| async move {
             let mut institution = Faber::setup(setup.pool_handle).await;
             let mut consumer = create_test_alice_instance(&setup).await;
@@ -120,12 +122,12 @@ mod integration_tests {
 
             info!("test_revocation_notification :: verifier :: Going to revoke credential");
             revoke_credential_and_publish_accumulator(&mut institution, &issuer_credential, &rev_reg.rev_reg_id).await;
-            thread::sleep(Duration::from_millis(2000));
+            tokio::time::sleep(Duration::from_millis(1000)).await;
 
             assert!(issuer_credential.is_revoked(&institution.profile).await.unwrap());
             let config =
                 aries_vcx::protocols::revocation_notification::sender::state_machine::SenderConfigBuilder::default()
-                    .ack_on(vec![messages::concepts::ack::please_ack::AckOn::Receipt])
+                    .ack_on(vec![AckOn::Receipt])
                     .rev_reg_id(issuer_credential.get_rev_reg_id().unwrap())
                     .cred_rev_id(issuer_credential.get_rev_id().unwrap())
                     .comment(None)
@@ -157,9 +159,9 @@ mod integration_tests {
         .await;
     }
 
-    #[cfg(feature = "agency_pool_tests")]
     #[tokio::test]
-    async fn test_local_revocation() {
+    #[ignore]
+    async fn test_agency_pool_local_revocation() {
         SetupPool::run(|setup| async move {
             let mut institution = Faber::setup(setup.pool_handle).await;
             let mut consumer = create_test_alice_instance(&setup).await;
@@ -236,9 +238,9 @@ mod integration_tests {
         .await;
     }
 
-    #[cfg(feature = "agency_pool_tests")]
     #[tokio::test]
-    async fn test_batch_revocation() {
+    #[ignore]
+    async fn test_agency_batch_revocation() {
         SetupPool::run(|setup| async move {
         let mut institution = Faber::setup(setup.pool_handle).await;
         let mut consumer1 = create_test_alice_instance(&setup).await;
@@ -368,7 +370,7 @@ mod integration_tests {
 
         // Publish revocations and verify the two are invalid, third still valid
         publish_revocation(&mut institution, rev_reg_id.clone().unwrap()).await;
-        thread::sleep(Duration::from_millis(2000));
+        tokio::time::sleep(Duration::from_millis(1000)).await;
 
         assert!(issuer_credential1.is_revoked(&institution.profile).await.unwrap());
         assert!(issuer_credential2.is_revoked(&institution.profile).await.unwrap());
@@ -447,9 +449,9 @@ mod integration_tests {
         }).await;
     }
 
-    #[cfg(feature = "agency_pool_tests")]
     #[tokio::test]
-    async fn test_revoked_credential_might_still_work() {
+    #[ignore]
+    async fn test_agency_pool_revoked_credential_might_still_work() {
         SetupPool::run(|setup| async move {
             let mut institution = Faber::setup(setup.pool_handle).await;
             let mut consumer = create_test_alice_instance(&setup).await;
@@ -466,12 +468,12 @@ mod integration_tests {
 
             assert!(!issuer_credential.is_revoked(&institution.profile).await.unwrap());
 
-            thread::sleep(Duration::from_millis(1000));
-            let time_before_revocation = time::get_time().sec as u64;
-            thread::sleep(Duration::from_millis(2000));
+            tokio::time::sleep(Duration::from_millis(1000)).await;
+            let time_before_revocation = time::OffsetDateTime::now_utc().unix_timestamp() as u64;
+            tokio::time::sleep(Duration::from_millis(1000)).await;
             info!("test_revoked_credential_might_still_work :: verifier :: Going to revoke credential");
             revoke_credential_and_publish_accumulator(&mut institution, &issuer_credential, &rev_reg.rev_reg_id).await;
-            thread::sleep(Duration::from_millis(2000));
+            tokio::time::sleep(Duration::from_millis(1000)).await;
 
             let from = time_before_revocation - 100;
             let to = time_before_revocation;
@@ -543,8 +545,8 @@ mod integration_tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "agency_pool_tests")]
-    async fn test_two_creds_one_rev_reg_revoke_first() {
+    #[ignore]
+    async fn test_agency_pool_two_creds_one_rev_reg_revoke_first() {
         SetupPool::run(|setup| async move {
         let mut issuer = Faber::setup(setup.pool_handle).await;
         let mut verifier = Faber::setup(setup.pool_handle).await;
@@ -636,8 +638,8 @@ mod integration_tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "agency_pool_tests")]
-    async fn test_two_creds_one_rev_reg_revoke_second() {
+    #[ignore]
+    async fn test_agency_pool_two_creds_one_rev_reg_revoke_second() {
         SetupPool::run(|setup| async move {
         let mut issuer = Faber::setup(setup.pool_handle).await;
         let mut verifier = Faber::setup(setup.pool_handle).await;
@@ -725,8 +727,8 @@ mod integration_tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "agency_pool_tests")]
-    async fn test_two_creds_two_rev_reg_id() {
+    #[ignore]
+    async fn test_agency_pool_two_creds_two_rev_reg_id() {
         SetupPool::run(|setup| async move {
         let mut issuer = Faber::setup(setup.pool_handle).await;
         let mut verifier = Faber::setup(setup.pool_handle).await;
@@ -811,8 +813,8 @@ mod integration_tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "agency_pool_tests")]
-    async fn test_two_creds_two_rev_reg_id_revoke_first() {
+    #[ignore]
+    async fn test_agency_pool_two_creds_two_rev_reg_id_revoke_first() {
         SetupPool::run(|setup| async move {
         let mut issuer = Faber::setup(setup.pool_handle).await;
         let mut verifier = Faber::setup(setup.pool_handle).await;
@@ -901,8 +903,8 @@ mod integration_tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "agency_pool_tests")]
-    async fn test_two_creds_two_rev_reg_id_revoke_second() {
+    #[ignore]
+    async fn test_agency_pool_two_creds_two_rev_reg_id_revoke_second() {
         SetupPool::run(|setup| async move {
         let mut issuer = Faber::setup(setup.pool_handle).await;
         let mut verifier = Faber::setup(setup.pool_handle).await;

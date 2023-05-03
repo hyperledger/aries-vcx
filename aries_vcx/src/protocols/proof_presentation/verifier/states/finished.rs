@@ -1,15 +1,17 @@
-use serde::{Deserialize, Deserializer};
+use messages::msg_fields::protocols::{
+    present_proof::{present::Presentation, request::RequestPresentation},
+    report_problem::ProblemReport,
+};
+use serde::Deserialize;
 
-use messages::concepts::problem_report::ProblemReport;
-use messages::protocols::proof_presentation::presentation::Presentation;
-use messages::protocols::proof_presentation::presentation_request::PresentationRequest;
-use messages::status::Status;
-
-use crate::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
+use crate::{
+    handlers::util::Status,
+    protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus,
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct FinishedState {
-    pub presentation_request: Option<PresentationRequest>,
+    pub presentation_request: Option<RequestPresentation>,
     pub presentation: Option<Presentation>,
     pub status: Status,
     pub verification_status: PresentationVerificationStatus,
@@ -28,19 +30,8 @@ impl FinishedState {
 }
 
 #[cfg(test)]
-#[cfg(feature = "general_test")]
+#[allow(clippy::unwrap_used)]
 pub mod unit_tests {
-    use std::str::FromStr;
-
-    use messages::protocols::proof_presentation::presentation::test_utils::{_presentation, _presentation_1};
-    use messages::protocols::proof_presentation::presentation_proposal::test_utils::_presentation_proposal;
-    use messages::protocols::proof_presentation::presentation_request::test_utils::_presentation_request;
-    use messages::protocols::proof_presentation::test_utils::{_ack, _problem_report};
-
-    use crate::common::test_utils::mock_profile;
-    use crate::test::source_id;
-    use crate::utils::devsetup::{SetupEmpty, SetupMocks};
-
     use super::*;
 
     #[test]

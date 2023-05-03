@@ -30,14 +30,24 @@ export enum GoalCode {
 }
 
 export enum HandshakeProtocol {
-  ConnectionV1 = 'ConnectionV1',
-  DidExchangeV1 = 'DidExchangeV1',
+  OldConnectionV1 = 'ConnectionV1',
+  OldDidExchangeV1 = 'DidExchangeV1',
+  ConnectionV1 = 'https://didcomm.org/connections/1.0',
+  DidExchangeV1 = 'https://didcomm.org/didexchange/1.0',
 }
 
 export class OutOfBandSender extends VcxBase<IOOBSerializedData> {
   public static create(config: IOOBCreateData): OutOfBandSender {
     const oob = new OutOfBandSender();
     try {
+      config.handshake_protocols?.forEach(function (protocol: HandshakeProtocol, index: number, array: HandshakeProtocol[]) {
+        if (protocol === HandshakeProtocol.OldConnectionV1) {
+          array[index] = HandshakeProtocol.ConnectionV1
+        } else if (protocol === HandshakeProtocol.OldDidExchangeV1) {
+          array[index] = HandshakeProtocol.DidExchangeV1
+        }
+      });
+
       oob._setHandle(ffi.outOfBandSenderCreate(JSON.stringify(config)));
       return oob;
     } catch (err: any) {

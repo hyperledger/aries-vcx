@@ -50,4 +50,3 @@ Please follow these [guidelines](./docs/guidelines.md) when implementing new sta
 ## Architecture 
 
 <img alt="AriesVCX architecture diagram" src="../docs/architecture/architecture_230104_ariesvcx.png"/>
-

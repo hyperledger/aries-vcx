@@ -4,8 +4,10 @@ use std::sync::Mutex;
 
 use libc::c_char;
 
-use crate::api_c::cutils::callback::{build_buf, build_string, get_cb};
-use aries_vcx::vdrtools::CommandHandle;
+use crate::api_c::{
+    cutils::callback::{build_buf, build_string, get_cb},
+    types::CommandHandle,
+};
 
 lazy_static! {
     pub static ref CALLBACKS_U32: Mutex<HashMap<CommandHandle, Box<dyn FnMut(u32) + Send>>> = Default::default();

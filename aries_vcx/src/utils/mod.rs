@@ -1,18 +1,16 @@
 use std::env;
 use std::path::PathBuf;
 use std::sync::Arc;
-#[cfg(feature = "vdrtools")]
-use vdrtools::types::validation::Validatable;
 
-use messages::a2a::A2AMessage;
-use messages::diddoc::aries::diddoc::AriesDidDoc;
+use aries_vcx_core::wallet::base_wallet::BaseWallet;
+use diddoc::aries::diddoc::AriesDidDoc;
 
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
-use crate::plugins::wallet::base_wallet::BaseWallet;
 use crate::utils::encryption_envelope::EncryptionEnvelope;
+use messages::AriesMessage;
 
 #[macro_use]
-#[cfg(feature = "test_utils")]
+#[cfg(feature = "vdrtools")]
 pub mod devsetup;
 
 #[cfg(debug_assertions)]
@@ -47,9 +45,7 @@ macro_rules! map (
 pub mod author_agreement;
 #[rustfmt::skip]
 pub mod constants;
-pub mod async_fn_iterator;
 pub mod file;
-pub mod json;
 pub mod mockdata;
 pub mod openssl;
 pub mod provision;
@@ -74,21 +70,27 @@ pub async fn send_message(
     wallet: Arc<dyn BaseWallet>,
     sender_verkey: String,
     did_doc: AriesDidDoc,
-    message: A2AMessage,
+    message: AriesMessage,
 ) -> VcxResult<()> {
     trace!("send_message >>> message: {:?}, did_doc: {:?}", message, &did_doc);
     let EncryptionEnvelope(envelope) =
         EncryptionEnvelope::create(&wallet, &message, Some(&sender_verkey), &did_doc).await?;
 
     // TODO: Extract from agency client
-    agency_client::httpclient::post_message(envelope, &did_doc.get_endpoint()).await?;
+    agency_client::httpclient::post_message(
+        envelope,
+        did_doc
+            .get_endpoint()
+            .ok_or_else(|| AriesVcxError::from_msg(AriesVcxErrorKind::InvalidUrl, "No URL in DID Doc"))?,
+    )
+    .await?;
     Ok(())
 }
 
 pub async fn send_message_anonymously(
     wallet: Arc<dyn BaseWallet>,
     did_doc: &AriesDidDoc,
-    message: &A2AMessage,
+    message: &AriesMessage,
 ) -> VcxResult<()> {
     trace!(
         "send_message_anonymously >>> message: {:?}, did_doc: {:?}",
@@ -97,20 +99,12 @@ pub async fn send_message_anonymously(
     );
     let EncryptionEnvelope(envelope) = EncryptionEnvelope::create(&wallet, message, None, did_doc).await?;
 
-    agency_client::httpclient::post_message(envelope, &did_doc.get_endpoint()).await?;
+    agency_client::httpclient::post_message(
+        envelope,
+        did_doc
+            .get_endpoint()
+            .ok_or_else(|| AriesVcxError::from_msg(AriesVcxErrorKind::InvalidUrl, "No URL in DID Doc"))?,
+    )
+    .await?;
     Ok(())
-}
-
-#[cfg(feature = "vdrtools")]
-pub fn parse_and_validate<'a, T>(s: &'a str) -> VcxResult<T>
-where
-    T: Validatable,
-    T: serde::Deserialize<'a>,
-{
-    let data = serde_json::from_str::<T>(s)?;
-
-    match data.validate() {
-        Ok(_) => Ok(data),
-        Err(s) => Err(AriesVcxError::from_msg(AriesVcxErrorKind::LibindyInvalidStructure, s)),
-    }
 }

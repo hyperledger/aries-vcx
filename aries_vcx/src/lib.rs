@@ -12,10 +12,6 @@
 
 pub extern crate agency_client;
 
-// TODO: remove reexports
-#[cfg(feature = "vdrtools")]
-pub extern crate vdrtools;
-
 #[macro_use]
 extern crate lazy_static;
 
@@ -34,6 +30,7 @@ extern crate derive_builder;
 #[cfg(test)]
 extern crate async_channel;
 
+pub extern crate aries_vcx_core;
 pub extern crate messages;
 
 #[macro_use]
@@ -43,14 +40,11 @@ pub mod utils;
 pub mod handlers;
 
 pub mod global;
-#[cfg(feature = "vdrtools")]
-pub mod indy;
 pub mod protocols;
 
 pub mod common;
 pub mod core;
 pub mod errors;
-pub mod plugins;
 pub mod transport;
 
 #[cfg(test)]

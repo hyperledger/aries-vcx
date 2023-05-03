@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 use std::sync::RwLock;
 
+use aries_vcx_core::global::settings::{disable_indy_mocks, enable_indy_mocks};
+
 use crate::errors::error::prelude::*;
 
 pub static CONFIG_POOL_NAME: &str = "pool_name";
@@ -44,13 +46,15 @@ lazy_static! {
     static ref SETTINGS: RwLock<HashMap<String, String>> = RwLock::new(HashMap::new());
 }
 
-pub fn enable_indy_mocks() -> VcxResult<()> {
+pub fn aries_vcx_enable_indy_mocks() -> VcxResult<()> {
     debug!("enable_indy_mocks >>>");
+    enable_indy_mocks()?;
     set_config_value(CONFIG_ENABLE_TEST_MODE, "true")
 }
 
-pub fn disable_indy_mocks() -> VcxResult<()> {
+pub fn aries_vcx_disable_indy_mocks() -> VcxResult<()> {
     debug!("disable_indy_mocks >>>");
+    disable_indy_mocks()?;
     set_config_value(CONFIG_ENABLE_TEST_MODE, "false")
 }
 
@@ -150,7 +154,7 @@ pub fn get_protocol_version() -> usize {
 }
 
 #[cfg(test)]
-#[cfg(feature = "general_test")]
+#[allow(clippy::unwrap_used)]
 pub mod unit_tests {
     use crate::utils::devsetup::SetupDefaults;
 

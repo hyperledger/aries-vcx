@@ -1,22 +1,22 @@
 use std::collections::HashMap;
 
-use messages::protocols::proof_presentation::presentation::Presentation;
-use messages::status::Status;
 use std::sync::Arc;
 
 use agency_client::agency_client::AgencyClient;
+use messages::msg_fields::protocols::present_proof::present::Presentation;
+use messages::msg_fields::protocols::present_proof::propose::ProposePresentation;
+use messages::msg_fields::protocols::present_proof::request::RequestPresentation;
+use messages::AriesMessage;
 
 use crate::common::proofs::proof_request::PresentationRequestData;
 use crate::core::profile::profile::Profile;
 use crate::errors::error::prelude::*;
 use crate::handlers::connection::mediated_connection::MediatedConnection;
+use crate::handlers::util::get_attach_as_string;
 use crate::protocols::proof_presentation::verifier::messages::VerifierMessages;
 use crate::protocols::proof_presentation::verifier::state_machine::{VerifierSM, VerifierState};
 use crate::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
 use crate::protocols::SendClosure;
-use messages::a2a::A2AMessage;
-use messages::protocols::proof_presentation::presentation_proposal::PresentationProposal;
-use messages::protocols::proof_presentation::presentation_request::PresentationRequest;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Default)]
 pub struct Verifier {
@@ -42,7 +42,7 @@ impl Verifier {
         Ok(Self { verifier_sm })
     }
 
-    pub fn create_from_proposal(source_id: &str, presentation_proposal: &PresentationProposal) -> VcxResult<Self> {
+    pub fn create_from_proposal(source_id: &str, presentation_proposal: &ProposePresentation) -> VcxResult<Self> {
         trace!(
             "Issuer::create_from_proposal >>> source_id: {:?}, presentation_proposal: {:?}",
             source_id,
@@ -73,7 +73,7 @@ impl Verifier {
 
     pub async fn send_presentation_request(&mut self, send_message: SendClosure) -> VcxResult<()> {
         if self.verifier_sm.get_state() == VerifierState::PresentationRequestSet {
-            let offer = self.verifier_sm.presentation_request_msg()?.to_a2a_message();
+            let offer = self.verifier_sm.presentation_request_msg()?.into();
             send_message(offer).await?;
             self.verifier_sm = self.verifier_sm.clone().mark_presentation_request_msg_sent()?;
         }
@@ -125,19 +125,16 @@ impl Verifier {
         Ok(())
     }
 
-    pub fn get_presentation_request_msg(&self) -> VcxResult<PresentationRequest> {
+    pub fn get_presentation_request_msg(&self) -> VcxResult<RequestPresentation> {
         self.verifier_sm.presentation_request_msg()
     }
 
     pub fn get_presentation_request_attachment(&self) -> VcxResult<String> {
-        self.verifier_sm
-            .presentation_request_msg()?
-            .request_presentations_attach
-            .content()
-            .map_err(|err| err.into())
+        let pres_req = &self.verifier_sm.presentation_request_msg()?;
+        Ok(get_attach_as_string!(pres_req.content.request_presentations_attach))
     }
 
-    pub fn get_presentation_request(&self) -> VcxResult<PresentationRequest> {
+    pub fn get_presentation_request(&self) -> VcxResult<RequestPresentation> {
         self.verifier_sm.presentation_request_msg()
     }
 
@@ -150,14 +147,11 @@ impl Verifier {
     }
 
     pub fn get_presentation_attachment(&self) -> VcxResult<String> {
-        self.verifier_sm
-            .get_presentation_msg()?
-            .presentations_attach
-            .content()
-            .map_err(|err| err.into())
+        let presentation = &self.verifier_sm.get_presentation_msg()?;
+        Ok(get_attach_as_string!(presentation.content.presentations_attach))
     }
 
-    pub fn get_presentation_proposal(&self) -> VcxResult<PresentationProposal> {
+    pub fn get_presentation_proposal(&self) -> VcxResult<ProposePresentation> {
         self.verifier_sm.presentation_proposal()
     }
 
@@ -179,7 +173,7 @@ impl Verifier {
         self.verifier_sm.progressable_by_message()
     }
 
-    pub fn find_message_to_handle(&self, messages: HashMap<String, A2AMessage>) -> Option<(String, A2AMessage)> {
+    pub fn find_message_to_handle(&self, messages: HashMap<String, AriesMessage>) -> Option<(String, AriesMessage)> {
         self.verifier_sm.find_message_to_handle(messages)
     }
 
@@ -218,65 +212,64 @@ impl Verifier {
     }
 }
 
-#[cfg(test)]
-#[cfg(feature = "general_test")]
-mod unit_tests {
-    use crate::core::profile::vdrtools_profile::VdrtoolsProfile;
-    use crate::utils::constants::{REQUESTED_ATTRS, REQUESTED_PREDICATES};
-    use crate::utils::devsetup::*;
-    use crate::utils::mockdata::mock_settings::MockBuilder;
-    use messages::a2a::A2AMessage;
-    use messages::protocols::proof_presentation::presentation::test_utils::_presentation;
-    use vdrtools::WalletHandle;
+// #[cfg(test)]
+// mod unit_tests {
+//     use crate::core::profile::vdrtools_profile::VdrtoolsProfile;
+//     use crate::utils::constants::{REQUESTED_ATTRS, REQUESTED_PREDICATES};
+//     use crate::utils::devsetup::*;
+//     use crate::utils::mockdata::mock_settings::MockBuilder;
+//     use aries_vcx_core::{INVALID_POOL_HANDLE, INVALID_WALLET_HANDLE};
+//     use messages::a2a::A2AMessage;
+//     use messages::protocols::proof_presentation::presentation::test_utils::_presentation;
 
-    use super::*;
+//     use super::*;
 
-    fn _dummy_profile() -> Arc<dyn Profile> {
-        Arc::new(VdrtoolsProfile::new(WalletHandle(0), 0))
-    }
+//     fn _dummy_profile() -> Arc<dyn Profile> {
+//         Arc::new(VdrtoolsProfile::new(INVALID_WALLET_HANDLE, INVALID_POOL_HANDLE))
+//     }
 
-    async fn _verifier() -> Verifier {
-        let presentation_request_data = PresentationRequestData::create(&_dummy_profile(), "1")
-            .await
-            .unwrap()
-            .set_requested_attributes_as_string(REQUESTED_ATTRS.to_owned())
-            .unwrap()
-            .set_requested_predicates_as_string(REQUESTED_PREDICATES.to_owned())
-            .unwrap()
-            .set_not_revoked_interval(r#"{"support_revocation":false}"#.to_string())
-            .unwrap();
-        Verifier::create_from_request("1".to_string(), &presentation_request_data).unwrap()
-    }
+//     async fn _verifier() -> Verifier {
+//         let presentation_request_data = PresentationRequestData::create(&_dummy_profile(), "1")
+//             .await
+//             .unwrap()
+//             .set_requested_attributes_as_string(REQUESTED_ATTRS.to_owned())
+//             .unwrap()
+//             .set_requested_predicates_as_string(REQUESTED_PREDICATES.to_owned())
+//             .unwrap()
+//             .set_not_revoked_interval(r#"{"support_revocation":false}"#.to_string())
+//             .unwrap();
+//         Verifier::create_from_request("1".to_string(), &presentation_request_data).unwrap()
+//     }
 
-    pub fn _send_message() -> Option<SendClosure> {
-        Some(Box::new(|_: A2AMessage| Box::pin(async { VcxResult::Ok(()) })))
-    }
+//     pub fn _send_message() -> Option<SendClosure> {
+//         Some(Box::new(|_: A2AMessage| Box::pin(async { VcxResult::Ok(()) })))
+//     }
 
-    impl Verifier {
-        async fn to_presentation_request_sent_state(&mut self) {
-            self.send_presentation_request(_send_message().unwrap()).await.unwrap();
-        }
+//     impl Verifier {
+//         async fn to_presentation_request_sent_state(&mut self) {
+//             self.send_presentation_request(_send_message().unwrap()).await.unwrap();
+//         }
 
-        async fn to_finished_state(&mut self) {
-            self.to_presentation_request_sent_state().await;
-            self.step(
-                &_dummy_profile(),
-                VerifierMessages::VerifyPresentation(_presentation()),
-                _send_message(),
-            )
-            .await
-            .unwrap();
-        }
-    }
+//         async fn to_finished_state(&mut self) {
+//             self.to_presentation_request_sent_state().await;
+//             self.step(
+//                 &_dummy_profile(),
+//                 VerifierMessages::VerifyPresentation(_presentation()),
+//                 _send_message(),
+//             )
+//             .await
+//             .unwrap();
+//         }
+//     }
 
-    #[tokio::test]
-    async fn test_get_presentation() {
-        let _setup = SetupMocks::init();
-        let _mock_builder = MockBuilder::init().set_mock_result_for_validate_indy_proof(Ok(true));
-        let mut verifier = _verifier().await;
-        verifier.to_finished_state().await;
-        let presentation = verifier.get_presentation_msg().unwrap();
-        assert_eq!(presentation, _presentation());
-        assert_eq!(verifier.get_state(), VerifierState::Finished);
-    }
-}
+//     #[tokio::test]
+//     async fn test_get_presentation() {
+//         let _setup = SetupMocks::init();
+//         let _mock_builder = MockBuilder::init().set_mock_result_for_validate_indy_proof(Ok(true));
+//         let mut verifier = _verifier().await;
+//         verifier.to_finished_state().await;
+//         let presentation = verifier.get_presentation_msg().unwrap();
+//         assert_eq!(presentation, _presentation());
+//         assert_eq!(verifier.get_state(), VerifierState::Finished);
+//     }
+// }

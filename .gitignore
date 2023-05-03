@@ -9,3 +9,4 @@ wrappers/ios/vcx/vcx.framework.dSYM/**
 wrappers/ios_legacy/vcx/vcx.framework/**
 wrappers/ios_legacy/vcx/vcx.framework.dSYM/**
 .vscode
+**/tails.txt

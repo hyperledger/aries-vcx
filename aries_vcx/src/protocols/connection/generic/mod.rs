@@ -3,13 +3,15 @@ mod thin_state;
 
 use std::sync::Arc;
 
-use messages::{a2a::A2AMessage, diddoc::aries::diddoc::AriesDidDoc, protocols::connection::invite::Invitation};
+use aries_vcx_core::wallet::base_wallet::BaseWallet;
+use diddoc::aries::diddoc::AriesDidDoc;
+use messages::AriesMessage;
 
 pub use self::thin_state::{State, ThinState};
 
 use crate::{
     errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
-    plugins::wallet::base_wallet::BaseWallet,
+    handlers::util::AnyInvitation,
     protocols::connection::{
         invitee::states::{
             completed::Completed as InviteeCompleted, initial::Initial as InviteeInitial,
@@ -172,7 +174,7 @@ impl GenericConnection {
             ))
     }
 
-    pub fn invitation(&self) -> Option<&Invitation> {
+    pub fn invitation(&self) -> Option<&AnyInvitation> {
         match &self.state {
             GenericState::Inviter(InviterState::Invited(s)) => Some(&s.invitation),
             GenericState::Invitee(InviteeState::Invited(s)) => Some(&s.invitation),
@@ -183,7 +185,7 @@ impl GenericConnection {
     pub async fn send_message<T>(
         &self,
         wallet: &Arc<dyn BaseWallet>,
-        message: &A2AMessage,
+        message: &AriesMessage,
         transport: &T,
     ) -> VcxResult<()>
     where
@@ -206,13 +208,23 @@ mod connection_serde_tests {
     #![allow(clippy::unwrap_used)]
 
     use async_trait::async_trait;
-    use messages::protocols::connection::invite::PairwiseInvitation;
-    use messages::protocols::connection::request::Request;
-    use messages::protocols::connection::response::Response;
+    use chrono::Utc;
+    use messages::decorators::thread::Thread;
+    use messages::decorators::timing::Timing;
+    use messages::msg_fields::protocols::connection::invitation::{
+        Invitation, PairwiseInvitation, PairwiseInvitationContent, PwInvitationDecorators,
+    };
+    use messages::msg_fields::protocols::connection::request::{Request, RequestContent, RequestDecorators};
+    use messages::msg_fields::protocols::connection::response::{Response, ResponseContent, ResponseDecorators};
+    use messages::msg_fields::protocols::connection::ConnectionData;
+    use messages::msg_fields::protocols::notification::{Ack, AckContent, AckDecorators, AckStatus};
+    use url::Url;
+    use uuid::Uuid;
 
     use super::*;
     use crate::common::signing::sign_connection_response;
     use crate::core::profile::profile::Profile;
+    use crate::handlers::util::AnyInvitation;
     use crate::protocols::connection::serializable::*;
     use crate::protocols::connection::{invitee::InviteeConnection, inviter::InviterConnection, Connection};
     use crate::utils::mockdata::profile::mock_profile::MockProfile;
@@ -320,7 +332,7 @@ mod connection_serde_tests {
 
     #[async_trait]
     impl Transport for MockTransport {
-        async fn send_message(&self, _msg: Vec<u8>, _service_endpoint: &str) -> VcxResult<()> {
+        async fn send_message(&self, _msg: Vec<u8>, _service_endpoint: Url) -> VcxResult<()> {
             Ok(())
         }
     }
@@ -377,8 +389,16 @@ mod connection_serde_tests {
 
     async fn make_invitee_invited() -> InviteeConnection<InviteeInvited> {
         let profile = make_mock_profile();
-        let pw_invite = PairwiseInvitation::default().set_recipient_keys(vec![PW_KEY.to_owned()]);
-        let invitation = Invitation::Pairwise(pw_invite);
+        let content = PairwiseInvitationContent::new(
+            String::new(),
+            vec![PW_KEY.to_owned()],
+            Vec::new(),
+            SERVICE_ENDPOINT.parse().unwrap(),
+        );
+
+        let decorators = PwInvitationDecorators::default();
+        let pw_invite = PairwiseInvitation::with_decorators(Uuid::new_v4().to_string(), content, decorators);
+        let invitation = AnyInvitation::Con(Invitation::Pairwise(pw_invite));
 
         make_invitee_initial()
             .await
@@ -389,7 +409,7 @@ mod connection_serde_tests {
 
     async fn make_invitee_requested() -> InviteeConnection<InviteeRequested> {
         let wallet = make_mock_profile().inject_wallet();
-        let service_endpoint = SERVICE_ENDPOINT.to_owned();
+        let service_endpoint = SERVICE_ENDPOINT.parse().unwrap();
         let routing_keys = vec![];
 
         make_invitee_invited()
@@ -402,13 +422,20 @@ mod connection_serde_tests {
     async fn make_invitee_responded() -> InviteeConnection<InviteeResponded> {
         let wallet = make_mock_profile().inject_wallet();
         let con = make_invitee_requested().await;
-        let response = Response::create()
-            .set_keys(vec![PW_KEY.to_owned()], vec![])
-            .ask_for_ack()
-            .set_thread_id(con.thread_id())
-            .set_out_time();
+        let mut con_data = ConnectionData::new(PW_KEY.to_owned(), AriesDidDoc::default());
+        con_data.did_doc.id = PW_KEY.to_owned();
+        con_data.did_doc.set_recipient_keys(vec![PW_KEY.to_owned()]);
+        con_data.did_doc.set_routing_keys(Vec::new());
 
-        let response = sign_connection_response(&wallet, PW_KEY, response).await.unwrap();
+        let sig_data = sign_connection_response(&wallet, PW_KEY, &con_data).await.unwrap();
+
+        let content = ResponseContent::new(sig_data);
+        let mut decorators = ResponseDecorators::new(Thread::new(con.thread_id().to_owned()));
+        let mut timing = Timing::default();
+        timing.out_time = Some(Utc::now());
+        decorators.timing = Some(timing);
+
+        let response = Response::with_decorators(Uuid::new_v4().to_string(), content, decorators);
 
         con.handle_response(&wallet, response, &MockTransport).await.unwrap()
     }
@@ -435,15 +462,22 @@ mod connection_serde_tests {
     async fn make_inviter_requested() -> InviterConnection<InviterRequested> {
         let wallet = make_mock_profile().inject_wallet();
         let con = make_inviter_invited().await;
-        let new_service_endpoint = SERVICE_ENDPOINT.to_owned();
+        let new_service_endpoint = SERVICE_ENDPOINT.to_owned().parse().expect("url should be valid");
         let new_routing_keys = vec![];
-        let request = Request::create()
-            .set_service_endpoint(new_service_endpoint.clone())
-            .set_label(SOURCE_ID.to_owned())
-            .set_did(PW_KEY.to_owned())
-            .set_keys(vec![PW_KEY.to_owned()], vec![])
-            .set_thread_id(con.thread_id())
-            .set_out_time();
+
+        let mut con_data = ConnectionData::new(PW_KEY.to_owned(), AriesDidDoc::default());
+        con_data.did_doc.id = PW_KEY.to_owned();
+        con_data.did_doc.set_recipient_keys(vec![PW_KEY.to_owned()]);
+        con_data.did_doc.set_routing_keys(Vec::new());
+
+        let content = RequestContent::new(PW_KEY.to_owned(), con_data);
+        let mut decorators = RequestDecorators::default();
+        decorators.thread = Some(Thread::new(con.thread_id().to_owned()));
+        let mut timing = Timing::default();
+        timing.out_time = Some(Utc::now());
+        decorators.timing = Some(timing);
+
+        let request = Request::with_decorators(Uuid::new_v4().to_string(), content, decorators);
 
         con.handle_request(&wallet, request, new_service_endpoint, new_routing_keys, &MockTransport)
             .await
@@ -461,9 +495,13 @@ mod connection_serde_tests {
     }
 
     async fn make_inviter_completed() -> InviterConnection<InviterCompleted> {
-        let msg = Request::create().to_a2a_message();
+        let con = make_inviter_responded().await;
 
-        make_inviter_responded().await.acknowledge_connection(&msg).unwrap()
+        let content = AckContent::new(AckStatus::Ok);
+        let decorators = AckDecorators::new(Thread::new(con.thread_id().to_owned()));
+
+        let msg = Ack::with_decorators(Uuid::new_v4().to_string(), content, decorators).into();
+        con.acknowledge_connection(&msg).unwrap()
     }
 
     macro_rules! generate_test {

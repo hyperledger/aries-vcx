@@ -5,13 +5,14 @@ use agency_client::agency_client::AgencyClient;
 use agency_client::api::downloaded_message::DownloadedMessageEncrypted;
 use agency_client::messages::update_message::UIDsByConn;
 use agency_client::wallet::base_agency_client_wallet::BaseAgencyClientWallet;
+use messages::AriesMessage;
+use url::Url;
 
 use crate::agency_client::MessageStatusCode;
 use crate::errors::error::prelude::*;
-use crate::plugins::wallet::agency_client_wallet::ToBaseWallet;
 use crate::protocols::mediated_connection::pairwise_info::PairwiseInfo;
 use crate::utils::encryption_envelope::EncryptionEnvelope;
-use messages::a2a::A2AMessage;
+use aries_vcx_core::wallet::agency_client_wallet::ToBaseWallet;
 
 #[derive(Default, Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct CloudAgentInfo {
@@ -43,12 +44,11 @@ pub async fn create_agent_keys(
     Ok((agent_did, agent_verkey))
 }
 
-fn _log_messages_optionally(_a2a_messages: &HashMap<String, A2AMessage>) {
-    #[cfg(feature = "warnlog_fetched_messages")]
+fn _log_messages_optionally(_a2a_messages: &HashMap<String, AriesMessage>) {
     {
         for message in _a2a_messages.values() {
             let serialized_msg = serde_json::to_string_pretty(message)
-                .unwrap_or_else(|_err| String::from("Failed to serialize A2AMessage."));
+                .unwrap_or_else(|_err| String::from("Failed to serialize AriesMessage."));
             warn!("Fetched decrypted connection messages:\n{}", serialized_msg);
         }
     }
@@ -76,8 +76,8 @@ impl CloudAgentInfo {
     }
 
     // todo: eliminate this function
-    pub fn service_endpoint(&self, agency_client: &AgencyClient) -> VcxResult<String> {
-        Ok(agency_client.get_agency_url_full())
+    pub fn service_endpoint(&self, agency_client: &AgencyClient) -> VcxResult<Url> {
+        Ok(agency_client.get_agency_url_full()?)
     }
 
     // todo: implement this in agency_client
@@ -131,7 +131,7 @@ impl CloudAgentInfo {
         agency_client: &AgencyClient,
         expect_sender_vk: &str,
         pairwise_info: &PairwiseInfo,
-    ) -> VcxResult<HashMap<String, A2AMessage>> {
+    ) -> VcxResult<HashMap<String, AriesMessage>> {
         trace!(
             "CloudAgentInfo::get_messages >>> expect_sender_vk: {}",
             expect_sender_vk
@@ -157,7 +157,7 @@ impl CloudAgentInfo {
         agency_client: &AgencyClient,
         pairwise_info: &PairwiseInfo,
         uids: Option<Vec<String>>,
-    ) -> VcxResult<HashMap<String, A2AMessage>> {
+    ) -> VcxResult<HashMap<String, AriesMessage>> {
         trace!("CloudAgentInfo::get_messages_noauth >>>");
         let messages = self
             .download_encrypted_messages(
@@ -184,7 +184,7 @@ impl CloudAgentInfo {
         msg_id: &str,
         expected_sender_vk: &str,
         pairwise_info: &PairwiseInfo,
-    ) -> VcxResult<A2AMessage> {
+    ) -> VcxResult<AriesMessage> {
         trace!("CloudAgentInfo::get_message_by_id >>> msg_id: {:?}", msg_id);
         let mut messages = self
             .download_encrypted_messages(agency_client, Some(vec![msg_id.to_string()]), None, pairwise_info)
@@ -204,8 +204,8 @@ impl CloudAgentInfo {
         wallet: &Arc<dyn BaseAgencyClientWallet>,
         messages: &Vec<DownloadedMessageEncrypted>,
         expected_sender_vk: &str,
-    ) -> VcxResult<HashMap<String, A2AMessage>> {
-        let mut a2a_messages: HashMap<String, A2AMessage> = HashMap::new();
+    ) -> VcxResult<HashMap<String, AriesMessage>> {
+        let mut a2a_messages: HashMap<String, AriesMessage> = HashMap::new();
         for message in messages {
             a2a_messages.insert(
                 message.uid.clone(),
@@ -219,8 +219,8 @@ impl CloudAgentInfo {
         &self,
         wallet: &Arc<dyn BaseAgencyClientWallet>,
         messages: &Vec<DownloadedMessageEncrypted>,
-    ) -> VcxResult<HashMap<String, A2AMessage>> {
-        let mut a2a_messages: HashMap<String, A2AMessage> = HashMap::new();
+    ) -> VcxResult<HashMap<String, AriesMessage>> {
+        let mut a2a_messages: HashMap<String, AriesMessage> = HashMap::new();
         for message in messages {
             a2a_messages.insert(
                 message.uid.clone(),
@@ -235,7 +235,7 @@ impl CloudAgentInfo {
         wallet: &Arc<dyn BaseAgencyClientWallet>,
         message: &DownloadedMessageEncrypted,
         expected_sender_vk: &str,
-    ) -> VcxResult<A2AMessage> {
+    ) -> VcxResult<AriesMessage> {
         EncryptionEnvelope::auth_unpack(&wallet.to_base_wallet(), message.payload()?, expected_sender_vk).await
     }
 
@@ -243,7 +243,7 @@ impl CloudAgentInfo {
         &self,
         wallet: &Arc<dyn BaseAgencyClientWallet>,
         message: &DownloadedMessageEncrypted,
-    ) -> VcxResult<A2AMessage> {
+    ) -> VcxResult<AriesMessage> {
         Ok(
             EncryptionEnvelope::anon_unpack(&wallet.to_base_wallet(), message.payload()?)
                 .await?

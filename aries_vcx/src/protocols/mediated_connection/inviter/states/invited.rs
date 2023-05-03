@@ -1,13 +1,14 @@
+use messages::msg_fields::protocols::connection::problem_report::ProblemReport;
+use messages::msg_fields::protocols::connection::request::Request;
+use messages::msg_fields::protocols::connection::response::Response;
+
+use crate::handlers::util::AnyInvitation;
 use crate::protocols::mediated_connection::inviter::states::initial::InitialState;
 use crate::protocols::mediated_connection::inviter::states::requested::RequestedState;
-use messages::protocols::connection::invite::Invitation;
-use messages::protocols::connection::problem_report::ProblemReport;
-use messages::protocols::connection::request::Request;
-use messages::protocols::connection::response::SignedResponse;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct InvitedState {
-    pub invitation: Invitation,
+    pub invitation: AnyInvitation,
 }
 
 // TODO: These have no justification for being here anymore
@@ -21,13 +22,13 @@ impl From<ProblemReport> for InitialState {
     }
 }
 
-impl From<(Request, SignedResponse)> for RequestedState {
-    fn from((request, signed_response): (Request, SignedResponse)) -> RequestedState {
+impl From<(Request, Response)> for RequestedState {
+    fn from((request, signed_response): (Request, Response)) -> RequestedState {
         trace!("ConnectionInviter: transit state to RespondedState");
         RequestedState {
             signed_response,
-            did_doc: request.connection.did_doc,
-            thread_id: request.id.0,
+            did_doc: request.content.connection.did_doc,
+            thread_id: request.id,
         }
     }
 }

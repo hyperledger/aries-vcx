@@ -11,40 +11,23 @@ path = "src/lib.rs"
 doctest = false
 
 [features]
-# By default, vdrtools is enabled to allow aries_vcx usage with vdrtools-based wallets/anoncreds/ledgers
 default = ["vdrtools"]
-########################## DEP FLAGS ################################
-# Feature flag to include the libvdrtools dependency
-vdrtools = ["dep:libvdrtools"]
+vdrtools = ["aries_vcx_core/vdrtools"]
 # Feature flag to include the 'modular library' dependencies (vdrtools alternatives; indy-vdr, indy-credx)
-modular_libs = ["dep:indy-vdr", "dep:indy-credx"]
-########################## TEST FLAGS ###############################
-# Feature flag for base requirments for running tests underneath the `test_utils` flag (most tests).
-# Both `vdrtools` and `modular_libs` are transitively enabled, so they can be used for tests (including interop tests).
-test_utils = [ "messages/test_utils", "vdrtools", "modular_libs" ]
-# Feature flag for categorising tests which require a ledger to be running
-pool_tests = [ "test_utils" ]
-# Feature flag for categorising tests which require a ledger and messaging agency to be running
-agency_pool_tests = [ "test_utils" ]
-# Feature flag for categorising general tests (usually unit tests)
-general_test = [ "test_utils", "messages/general_test" ]
-# Feature flag to enable experimental tests of a mysql wallet
-mysql_test = ["test_utils" ]
-# Feature flag used to prompt some tests to run using the `modular_libs` dependencies instead of `vdrtools`
-modular_libs_tests = ["test_utils", "tokio/rt", "tokio/macros"]
-########################## OTHER FLAGS ##############################
-# Feature flag to make compiler warnings into failures
-fatal_warnings = []
-# Feature flag to log some extra warnings if enabled
-warnlog_fetched_messages = []
+modular_libs = ["aries_vcx_core/modular_libs"]
+
 
 [dependencies]
+agency_client = { path = "../agency_client" }
+messages = { path  = "../messages" }
+diddoc = { path = "../diddoc" }
+aries_vcx_core = { path  = "../aries_vcx_core" }
 bs58 = "0.4.0"
 async-trait = "0.1.53"
 env_logger = "0.9.0"
 log = "0.4.16"
 chrono = "0.4.23"
-time = "0.1.44"
+time = "0.3.20"
 lazy_static = "1.3"
 rand = "0.7.3"
 serde = "1.0.97"
@@ -53,38 +36,23 @@ serde_derive = "1.0.97"
 regex = "1.1.0"
 base64 = "0.10"
 openssl = { version = "0.10.48" }
-libvdrtools = { path = "../libvdrtools", optional = true }
-# vdrtools alternatives ----
-indy-vdr = { version = "0.3.4", default-features = false, features = ["ffi", "log"], optional = true }
-# PATCH (TO MONITOR IN FUTURE): The following patch changes the `indy-data-types` (within indy-shared-rs) to depend on
-# `ursa "0.3.6"` rather than `ursa "=0.3.6"`. Currently, `libvdrtools` depends on `ursa "0.3.7"`, which causes a mismatch of
-# `indy-utils` versions, which causes some types within credx to fail. Details about the issue can be found here: https://github.com/hyperledger/indy-shared-rs/issues/20
-# `indy-data-types` depends on `ursa =0.3.6` due to a 'broken cl feature', see commmit: https://github.com/hyperledger/indy-shared-rs/commit/2403eed6449a3b5e347697b215a732fc33c014c0
-# however using ursa 0.3.7 does not seem to affect our usage of indy-credx currently. More testing would be ideal.
-# various combinations of indy-vdr and indy-credx have been tried to resolve the dependency mismatches, however this patch appears
-# to be the only quick solution.
-# Potential resolutions:
-# - wait for ursa 0.3.8+ to resolve the CL issue and update indy-shared-rs,
-# - monitor anoncred-rs (which will replace indy-credx) as the fix will likely go in here,
-# - monitor the issue for other fixes from the maintainers: https://github.com/hyperledger/indy-shared-rs/issues/20
-# - update libvdrtools to use =0.3.6 ursa
-indy-credx = { git = "https://github.com/anonyome/indy-shared-rs.git", rev = "7342bc624d23ece8845d1a701cd2cdc9cd401bb0", optional = true }
-# ----------------------
 futures = { version = "0.3", default-features = false }
 uuid = { version = "0.8", default-features = false, features = ["v4"] }
 strum = "0.16.0"
 strum_macros = "0.16.0"
-agency_client = { path = "../agency_client" }
 derive_builder = "0.10.2"
 tokio = { version = "1.20.4" }
-messages = { path  = "../messages" }
-messages2 = { path = "../messages2" }
 thiserror = "1.0.37"
+url = { version = "2.3", features = ["serde"] }
 
 [target.'cfg(target_os = "android")'.dependencies]
 android_logger = "0.5"
 
 [dev-dependencies]
 async-channel = "1.7.1"
-tokio = { version = "1.20", features = [ "rt", "macros", "rt-multi-thread" ] }
-sqlx = { version = "0.5",    features = [ "migrate", "mysql", "runtime-tokio-rustls" ] }
+tokio = { version = "1.20", features = ["rt", "macros", "rt-multi-thread"] }
+sqlx = { version = "0.5", features = [
+    "migrate",
+    "mysql",
+    "runtime-tokio-rustls",
+] }

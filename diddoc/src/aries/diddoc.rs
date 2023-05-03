@@ -37,7 +37,7 @@ impl AriesDidDoc {
         self.id = id;
     }
 
-    pub fn set_service_endpoint(&mut self, service_endpoint: String) {
+    pub fn set_service_endpoint(&mut self, service_endpoint: Url) {
         self.service.get_mut(0).map(|service| {
             service.service_endpoint = service_endpoint;
             service
@@ -113,16 +113,6 @@ impl AriesDidDoc {
         }
 
         for service in self.service.iter() {
-            Url::parse(&service.service_endpoint).map_err(|err| {
-                DiddocError::from_msg(
-                    DiddocErrorKind::InvalidUrl,
-                    format!(
-                        "DIDDoc validation failed: Endpoint {} is not valid url, err: {:?}",
-                        service.service_endpoint, err
-                    ),
-                )
-            })?;
-
             service.recipient_keys.iter().try_for_each(|recipient_key_entry| {
                 let public_key = self.get_key(recipient_key_entry)?;
                 self.is_authentication_key(&public_key.id)?;
@@ -163,17 +153,14 @@ impl AriesDidDoc {
         service.routing_keys.to_vec()
     }
 
-    pub fn get_endpoint(&self) -> String {
-        match self.service.get(0) {
-            Some(service) => service.service_endpoint.to_string(),
-            None => String::new(),
-        }
+    pub fn get_endpoint(&self) -> Option<Url> {
+        self.service.get(0).map(|s| s.service_endpoint.clone())
     }
 
     pub fn get_service(&self) -> DiddocResult<AriesService> {
         let service: &AriesService = self.service.get(0).ok_or(DiddocError::from_msg(
             DiddocErrorKind::InvalidState,
-            format!("No service found on did doc: {:?}", self),
+            format!("No service found on did doc: {self:?}"),
         ))?;
         let recipient_keys = self.recipient_keys()?;
         let routing_keys = self.routing_keys();
@@ -220,7 +207,7 @@ impl AriesDidDoc {
             })
             .ok_or(DiddocError::from_msg(
                 DiddocErrorKind::InvalidJson,
-                format!("Failed to find entry in public_key by key reference: {:?}", key_ref),
+                format!("Failed to find entry in public_key by key reference: {key_ref:?}"),
             ))?;
         Ok(public_key.clone())
     }
@@ -232,7 +219,7 @@ impl AriesDidDoc {
             .find(|ddo_keys| ddo_keys.public_key_base_58 == key)
             .ok_or(DiddocError::from_msg(
                 DiddocErrorKind::InvalidJson,
-                format!("Failed to find entry in public_key by key value: {}", key),
+                format!("Failed to find entry in public_key by key value: {key}"),
             ))?;
         Ok(public_key.clone())
     }
@@ -256,10 +243,7 @@ impl AriesDidDoc {
             })
             .ok_or(DiddocError::from_msg(
                 DiddocErrorKind::InvalidJson,
-                format!(
-                    "DIDDoc validation failed: Cannot find Authentication record key: {:?}",
-                    key
-                ),
+                format!("DIDDoc validation failed: Cannot find Authentication record key: {key:?}"),
             ))?;
 
         if authentication_key.type_ != KEY_AUTHENTICATION_TYPE && authentication_key.type_ != KEY_TYPE {
@@ -276,7 +260,7 @@ impl AriesDidDoc {
     }
 
     fn build_key_reference(did: &str, id: &str) -> String {
-        format!("{}#{}", did, id)
+        format!("{did}#{id}")
     }
 
     fn key_parts(key: &str) -> Vec<&str> {
@@ -288,7 +272,7 @@ impl AriesDidDoc {
         match pars.len() {
             0 => Err(DiddocError::from_msg(
                 DiddocErrorKind::InvalidJson,
-                format!("DIDDoc validation failed: Invalid key reference: {:?}", key_reference),
+                format!("DIDDoc validation failed: Invalid key reference: {key_reference:?}"),
             )),
             1 => Ok(DdoKeyReference {
                 did: None,
@@ -302,13 +286,13 @@ impl AriesDidDoc {
     }
 }
 
-#[cfg(feature = "test_utils")]
 pub mod test_utils {
     use crate::aries::diddoc::AriesDidDoc;
     use crate::aries::service::AriesService;
     use crate::w3c::model::{
         Authentication, DdoKeyReference, Ed25519PublicKey, CONTEXT, KEY_AUTHENTICATION_TYPE, KEY_TYPE,
     };
+    use url::Url;
 
     pub fn _key_1() -> String {
         String::from("GJ1SzoWzavQYfNL9XkaJdrQejfztN4XqdsiV4ct3LXKL")
@@ -334,8 +318,8 @@ pub mod test_utils {
         String::from("VsKV7grR1BUE29mG2Fm2kX")
     }
 
-    pub fn _service_endpoint() -> String {
-        String::from("http://localhost:8080")
+    pub fn _service_endpoint() -> Url {
+        "http://localhost:8080".parse().expect("valid url")
     }
 
     pub fn _recipient_keys() -> Vec<String> {
@@ -481,7 +465,7 @@ pub mod test_utils {
 }
 
 #[cfg(test)]
-#[cfg(feature = "general_test")]
+#[allow(clippy::unwrap_used)]
 mod unit_tests {
     use crate::aries::diddoc::test_utils::*;
     use crate::aries::diddoc::AriesDidDoc;
@@ -573,7 +557,7 @@ mod unit_tests {
     #[test]
     fn test_did_doc_serialization() {
         let ddo = _did_doc_vcx_legacy();
-        let ddo_value = serde_json::to_value(&ddo).unwrap();
+        let ddo_value = serde_json::to_value(ddo).unwrap();
         let expected_value = json!({
             "@context": "https://w3id.org/did/v1",
             "id": "VsKV7grR1BUE29mG2Fm2kX",
@@ -603,7 +587,7 @@ mod unit_tests {
                         "Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR",
                         "3LYuxJBJkngDbvJj4zjx13DBUdZ2P96eNybwd2n9L9AU"
                     ],
-                    "serviceEndpoint": "http://localhost:8080"
+                    "serviceEndpoint": "http://localhost:8080/"
                 }
             ]
         });

@@ -1,15 +1,11 @@
-#[cfg(feature = "mysql_test")]
 #[macro_use]
 extern crate log;
 
-#[cfg(feature = "mysql_test")]
 #[macro_use]
 extern crate serde_json;
 
-#[cfg(feature = "mysql_test")]
 extern crate sqlx;
 
-#[cfg(feature = "mysql_test")]
 mod test_utils {
     use sqlx::{Connection, MySqlConnection};
 
@@ -32,7 +28,6 @@ mod test_utils {
     }
 }
 
-#[cfg(feature = "mysql_test")]
 #[cfg(test)]
 mod dbtests {
     use std::sync::Arc;
@@ -41,19 +36,20 @@ mod dbtests {
     use agency_client::configuration::AgentProvisionConfig;
     use aries_vcx::global::settings;
     use aries_vcx::global::settings::init_issuer_config;
-    use aries_vcx::indy::wallet::{
-        close_wallet, create_wallet_with_master_secret, open_wallet, wallet_configure_issuer, WalletConfig,
-        WalletConfigBuilder,
-    };
-    use aries_vcx::plugins::wallet::indy_wallet::IndySdkWallet;
     use aries_vcx::utils::devsetup::{AGENCY_DID, AGENCY_ENDPOINT, AGENCY_VERKEY};
     use aries_vcx::utils::provision::provision_cloud_agent;
     use aries_vcx::utils::test_logger::LibvcxDefaultLogger;
+    use aries_vcx_core::indy::wallet::{
+        close_wallet, create_wallet_with_master_secret, open_wallet, wallet_configure_issuer, WalletConfig,
+        WalletConfigBuilder,
+    };
+    use aries_vcx_core::wallet::indy_wallet::IndySdkWallet;
 
     use crate::test_utils::setup_mysql_walletdb;
 
     #[tokio::test]
-    async fn test_provision_cloud_agent_with_mysql_wallet() {
+    #[ignore]
+    async fn test_mysql_provision_cloud_agent_with_mysql_wallet() {
         LibvcxDefaultLogger::init_testing_logger();
         let db_name = setup_mysql_walletdb().await.unwrap();
         let storage_config = json!({
@@ -82,7 +78,7 @@ mod dbtests {
         let config_provision_agent: AgentProvisionConfig = AgentProvisionConfig {
             agency_did: AGENCY_DID.to_string(),
             agency_verkey: AGENCY_VERKEY.to_string(),
-            agency_endpoint: AGENCY_ENDPOINT.to_string(),
+            agency_endpoint: AGENCY_ENDPOINT.parse().unwrap(),
             agent_seed: None,
         };
         // create_main_wallet(&config_wallet).await.unwrap();

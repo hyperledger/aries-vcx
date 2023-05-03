@@ -2,10 +2,10 @@ use std::sync::Arc;
 
 use agency_client::agency_client::AgencyClient;
 use agency_client::configuration::{AgencyClientConfig, AgentProvisionConfig};
+use aries_vcx_core::wallet::agency_client_wallet::ToBaseAgencyClientWallet;
+use aries_vcx_core::wallet::base_wallet::BaseWallet;
 
 use crate::errors::error::prelude::*;
-use crate::plugins::wallet::agency_client_wallet::ToBaseAgencyClientWallet;
-use crate::plugins::wallet::base_wallet::BaseWallet;
 
 pub async fn provision_cloud_agent(
     client: &mut AgencyClient,
@@ -21,7 +21,7 @@ pub async fn provision_cloud_agent(
             &my_vk,
             &provision_config.agency_did,
             &provision_config.agency_verkey,
-            &provision_config.agency_endpoint,
+            provision_config.agency_endpoint.clone(),
         )
         .await?;
     let config = client.get_config()?;

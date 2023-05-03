@@ -1,5 +1,6 @@
 use std::{collections::HashMap, sync::Arc};
 
+use aries_vcx_core::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind};
 use serde_json::Value;
 
 use crate::errors::error::prelude::*;
@@ -38,11 +39,11 @@ pub async fn build_schemas_json_prover(
             let schema_json = ledger
                 .get_schema(&cred_info.schema_id, None)
                 .await
-                .map_err(|err| err.map(AriesVcxErrorKind::InvalidSchema, "Cannot get schema"))?;
+                .map_err(|err| err.map(AriesVcxCoreErrorKind::InvalidSchema, "Cannot get schema"))?;
 
             let schema_json = serde_json::from_str(&schema_json).map_err(|err| {
-                AriesVcxError::from_msg(
-                    AriesVcxErrorKind::InvalidSchema,
+                AriesVcxCoreError::from_msg(
+                    AriesVcxCoreErrorKind::InvalidSchema,
                     format!("Cannot deserialize schema: {}", err),
                 )
             })?;
@@ -68,7 +69,7 @@ pub async fn build_cred_defs_json_prover(
         if rtn.get(&cred_info.cred_def_id).is_none() {
             let credential_def = ledger.get_cred_def(&cred_info.cred_def_id, None).await.map_err(|err| {
                 err.map(
-                    AriesVcxErrorKind::InvalidProofCredentialData,
+                    AriesVcxCoreErrorKind::InvalidProofCredentialData,
                     "Cannot get credential definition",
                 )
             })?;
@@ -272,8 +273,8 @@ pub fn build_requested_credentials_json(
     Ok(rtn.to_string())
 }
 
-#[cfg(feature = "pool_tests")]
 #[cfg(test)]
+#[allow(clippy::unwrap_used)]
 pub mod pool_tests {
 
     use crate::common::proofs::prover::prover_internal::{build_rev_states_json, CredInfoProver};
@@ -282,7 +283,8 @@ pub mod pool_tests {
     use crate::utils::get_temp_dir_path;
 
     #[tokio::test]
-    async fn test_build_rev_states_json_empty() {
+    #[ignore]
+    async fn test_pool_build_rev_states_json_empty() {
         SetupProfile::run(|_setup| async move {
             // empty vector
             assert_eq!(
@@ -317,8 +319,10 @@ pub mod pool_tests {
 }
 
 #[cfg(test)]
-#[cfg(feature = "general_test")]
+#[allow(clippy::unwrap_used)]
 pub mod unit_tests {
+    use aries_vcx_core::INVALID_POOL_HANDLE;
+
     use crate::common::test_utils::{indy_handles_to_profile, mock_profile};
     use crate::utils::devsetup::*;
     use crate::utils::{
@@ -386,7 +390,7 @@ pub mod unit_tests {
     #[tokio::test]
     async fn test_find_credential_def_fails() {
         SetupLibraryWallet::run(|setup| async move {
-            let profile = indy_handles_to_profile(setup.wallet_handle, 0);
+            let profile = indy_handles_to_profile(setup.wallet_handle, INVALID_POOL_HANDLE);
             let credential_ids = vec![CredInfoProver {
                 requested_attr: "1".to_string(),
                 referent: "2".to_string(),
@@ -411,7 +415,7 @@ pub mod unit_tests {
     #[tokio::test]
     async fn test_find_schemas_fails() {
         SetupLibraryWallet::run(|setup| async move {
-            let profile = indy_handles_to_profile(setup.wallet_handle, 0);
+            let profile = indy_handles_to_profile(setup.wallet_handle, INVALID_POOL_HANDLE);
             let credential_ids = vec![CredInfoProver {
                 requested_attr: "1".to_string(),
                 referent: "2".to_string(),

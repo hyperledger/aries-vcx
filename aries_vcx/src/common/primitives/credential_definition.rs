@@ -1,6 +1,8 @@
+use aries_vcx_core::errors::error::AriesVcxCoreErrorKind;
+use aries_vcx_core::ledger::base_ledger::BaseLedger;
+
 use crate::core::profile::profile::Profile;
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
-use crate::plugins::ledger::base_ledger::BaseLedger;
 use crate::utils::constants::{CRED_DEF_ID, CRED_DEF_JSON, DEFAULT_SERIALIZE_VERSION};
 use crate::utils::mockdata::mock_settings::StatusCodeMock;
 use crate::utils::serialization::ObjectWithVersion;
@@ -114,7 +116,7 @@ async fn _try_get_cred_def_from_ledger(
     }
     match ledger.get_cred_def(cred_def_id, Some(issuer_did)).await {
         Ok(cred_def) => Ok(Some(cred_def)),
-        Err(err) if err.kind() == AriesVcxErrorKind::LedgerItemNotFound => Ok(None),
+        Err(err) if err.kind() == AriesVcxCoreErrorKind::LedgerItemNotFound => Ok(None),
         Err(err) => Err(AriesVcxError::from_msg(
             AriesVcxErrorKind::InvalidLedgerResponse,
             format!(
@@ -269,10 +271,11 @@ pub async fn generate_cred_def(
     anoncreds
         .issuer_create_and_store_credential_def(issuer_did, schema_json, tag, sig_type, &config_json)
         .await
+        .map_err(|err| err.into())
 }
 
 #[cfg(test)]
-#[cfg(feature = "pool_tests")]
+#[allow(clippy::unwrap_used)]
 pub mod integration_tests {
     use std::sync::Arc;
 
@@ -283,7 +286,8 @@ pub mod integration_tests {
     use crate::utils::devsetup::SetupProfile;
 
     #[tokio::test]
-    async fn test_create_cred_def_real() {
+    #[ignore]
+    async fn test_pool_create_cred_def_real() {
         SetupProfile::run_indy(|setup| async move {
             let (schema_id, _) =
                 create_and_write_test_schema(&setup.profile, &setup.institution_did, DEFAULT_SCHEMA_ATTRS).await;
@@ -311,7 +315,8 @@ pub mod integration_tests {
     }
 
     #[tokio::test]
-    async fn test_create_rev_reg_def() {
+    #[ignore]
+    async fn test_pool_create_rev_reg_def() {
         SetupProfile::run_indy(|setup| async move {
             let (schema_id, _) =
                 create_and_write_test_schema(&setup.profile, &setup.institution_did, DEFAULT_SCHEMA_ATTRS).await;
@@ -344,7 +349,7 @@ pub mod integration_tests {
             .await
             .unwrap();
             ledger
-                .publish_rev_reg_def(&rev_reg_def_json, &setup.institution_did)
+                .publish_rev_reg_def(&json!(rev_reg_def_json).to_string(), &setup.institution_did)
                 .await
                 .unwrap();
             ledger

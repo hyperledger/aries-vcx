@@ -1,6 +1,7 @@
 use std::convert::From;
 
 use aries_vcx::errors::error::{AriesVcxError, AriesVcxErrorKind};
+use aries_vcx_core::errors::error::AriesVcxCoreError;
 
 use crate::error::*;
 
@@ -20,6 +21,15 @@ impl From<serde_json::Error> for AgentError {
     fn from(serde_err: serde_json::Error) -> AgentError {
         let kind = AgentErrorKind::SerializationError;
         let message = format!("(De)serialization failed; err: {:?}", serde_err.to_string());
+        AgentError { message, kind }
+    }
+}
+
+// TODO
+impl From<AriesVcxCoreError> for AgentError {
+    fn from(err: AriesVcxCoreError) -> Self {
+        let kind = AgentErrorKind::GenericAriesVcxError;
+        let message = format!("AriesVcxCore Error; err: {:?}", err.to_string());
         AgentError { message, kind }
     }
 }

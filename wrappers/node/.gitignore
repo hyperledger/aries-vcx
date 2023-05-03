@@ -1,7 +1,6 @@
 dist/
 lib/
 doc/
-package-lock.json
 .npmrc
 
 # Created by https://www.gitignore.io/api/node

@@ -1,15 +1,20 @@
 const sleepPromise = require('sleep-promise')
 const axios = require('axios')
+const combineURLs = require('axios/lib/helpers/combineURLs');
+
 module.exports.testTailsUrl = 'http://some-tails-url.org'
 
 async function waitUntilAgencyIsReady (agencyEndpoint, logger) {
   let agencyReady = false
+  
+  const url = combineURLs(agencyEndpoint, '/agency')
+
   while (!agencyReady) {
     try {
-      await axios.get(`${agencyEndpoint}/agency`)
+      await axios.get(url)
       agencyReady = true
     } catch (e) {
-      logger.warn(`Agency ${agencyEndpoint} should return 200OK on HTTP GET ${agencyEndpoint}/agency, but returns error: ${e}. Sleeping.`)
+      logger.warn(`Agency ${agencyEndpoint} should return 200OK on HTTP GET ${url}, but returns error: ${e}. Sleeping.`)
       await sleepPromise(1000)
     }
   }
@@ -17,10 +22,12 @@ async function waitUntilAgencyIsReady (agencyEndpoint, logger) {
 
 async function getAgencyConfig (agencyUrl, logger) {
   let agencyDid, agencyVerkey
-  const agencyInfoPath = `${agencyUrl}/agency`
-  logger.info(`Obtaining agency DID and verkey info from ${agencyInfoPath}`)
+
+  const url = combineURLs(agencyUrl, '/agency')
+  
+  logger.info(`Obtaining agency DID and verkey info from ${url}`)
   try {
-    const { data } = await axios.get(agencyInfoPath)
+    const { data } = await axios.get(url)
     agencyDid = data.DID
     agencyVerkey = data.verKey
     if (!agencyDid || !agencyVerkey) {

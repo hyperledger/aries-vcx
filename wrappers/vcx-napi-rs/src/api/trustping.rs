@@ -1,6 +1,6 @@
+use libvcx_core::aries_vcx::messages::msg_fields::protocols::trust_ping::ping::Ping;
 use napi_derive::napi;
 
-use libvcx_core::aries_vcx::messages::protocols::trust_ping::ping::Ping;
 use libvcx_core::aries_vcx::protocols::trustping;
 use libvcx_core::errors::error::{LibvcxError, LibvcxErrorKind};
 use libvcx_core::serde_json;

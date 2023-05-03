@@ -7,12 +7,9 @@ pub mod runtime;
 
 use crate::core::profile::*;
 use crate::errors::error::*;
-use aries_vcx::{
-    indy::wallet::WalletConfig,
-    messages::diddoc::{
-        aries::{diddoc::AriesDidDoc, service::AriesService},
-        w3c::model::{Authentication, Ed25519PublicKey},
-    },
-    protocols::connection::pairwise_info::PairwiseInfo,
+use aries_vcx::{aries_vcx_core::indy::wallet::WalletConfig, protocols::connection::pairwise_info::PairwiseInfo};
+use diddoc::{
+    aries::service::AriesService,
+    w3c::model::{Authentication, Ed25519PublicKey},
 };
 use handlers::connection::{connection::*, *};

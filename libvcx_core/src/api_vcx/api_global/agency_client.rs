@@ -7,7 +7,7 @@ use aries_vcx::agency_client::agency_client::AgencyClient;
 use aries_vcx::agency_client::configuration::{AgencyClientConfig, AgentProvisionConfig};
 use aries_vcx::agency_client::messages::update_message::UIDsByConn;
 use aries_vcx::agency_client::MessageStatusCode;
-use aries_vcx::plugins::wallet::agency_client_wallet::ToBaseAgencyClientWallet;
+use aries_vcx::aries_vcx_core::wallet::agency_client_wallet::ToBaseAgencyClientWallet;
 
 use super::profile::get_main_wallet;
 
@@ -96,7 +96,7 @@ pub mod tests {
         let config = AgentProvisionConfig {
             agency_did: "Ab8TvZa3Q19VNkQVzAWVL7".into(),
             agency_verkey: "5LXaR43B1aQyeh94VBP8LG1Sgvjk7aNfqiksBCSjwqbf".into(),
-            agency_endpoint: "https://enym-eagency.pdev.evernym.com".into(),
+            agency_endpoint: "https://enym-eagency.pdev.evernym.com".parse().expect("valid url"),
             agent_seed: None,
         };
         provision_cloud_agent(&config).await.unwrap();

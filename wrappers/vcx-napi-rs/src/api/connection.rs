@@ -1,11 +1,17 @@
+use chrono::Utc;
+use libvcx_core::aries_vcx::messages::decorators::timing::Timing;
+use libvcx_core::aries_vcx::messages::msg_fields::protocols::basic_message::{
+    BasicMessage, BasicMessageContent, BasicMessageDecorators,
+};
+use libvcx_core::aries_vcx::messages::AriesMessage;
 use napi::Error;
 use napi_derive::napi;
 
 use libvcx_core::api_vcx::api_handle::connection;
-use libvcx_core::aries_vcx::messages::protocols::basic_message::message::BasicMessage;
 use libvcx_core::aries_vcx::protocols::connection::pairwise_info::PairwiseInfo;
 use libvcx_core::errors::error::{LibvcxError, LibvcxErrorKind};
 use libvcx_core::serde_json;
+use uuid::Uuid;
 
 use crate::error::to_napi_err;
 
@@ -139,15 +145,19 @@ pub async fn connection_send_ack(handle: u32) -> napi::Result<()> {
 #[napi]
 pub async fn connection_send_generic_message(handle: u32, content: String) -> napi::Result<()> {
     trace!("connection_send_generic_message >>> handle: {:?}", handle);
-    let message = BasicMessage::create()
-        .set_content(content)
-        .set_time()
-        .set_out_time()
-        .to_a2a_message();
+    let id = Uuid::new_v4().to_string();
+    let content = BasicMessageContent::new(content, Utc::now());
+    let mut decorators = BasicMessageDecorators::default();
+    let mut timing = Timing::default();
+    timing.out_time = Some(Utc::now());
+    decorators.timing = Some(timing);
+
+    let message = AriesMessage::from(BasicMessage::with_decorators(id, content, decorators));
 
     let basic_message = serde_json::to_string(&message)
         .map_err(From::from)
         .map_err(to_napi_err)?;
+
     connection::send_generic_message(handle, basic_message)
         .await
         .map_err(to_napi_err)

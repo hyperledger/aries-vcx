@@ -1,10 +1,9 @@
+use aries_vcx::aries_vcx_core::indy::ledger::pool::{close, create_pool_ledger_config, open_pool_ledger, PoolConfig};
+use aries_vcx::aries_vcx_core::{PoolHandle, INVALID_POOL_HANDLE};
 use aries_vcx::global::settings::{indy_mocks_enabled, DEFAULT_POOL_NAME};
 use std::sync::RwLock;
 
 use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
-use aries_vcx::indy::ledger::pool::PoolConfig;
-use aries_vcx::indy::ledger::pool::{close, create_pool_ledger_config, open_pool_ledger};
-use aries_vcx::vdrtools::INVALID_POOL_HANDLE;
 
 lazy_static! {
     static ref POOL_HANDLE: RwLock<Option<i32>> = RwLock::new(None);
@@ -82,11 +81,12 @@ pub async fn close_main_pool() -> LibvcxResult<()> {
 pub mod tests {
     use crate::api_vcx::api_global::pool::{get_main_pool_handle, open_main_pool, reset_main_pool_handle};
     use crate::errors::error::LibvcxErrorKind;
-    use aries_vcx::global::settings::{set_config_value, CONFIG_GENESIS_PATH};
-    use aries_vcx::indy::ledger::pool::test_utils::{
+    use aries_vcx::aries_vcx_core::indy::ledger::pool::test_utils::{
         create_tmp_genesis_txn_file, delete_named_test_pool, delete_test_pool,
     };
-    use aries_vcx::indy::ledger::pool::PoolConfig;
+    use aries_vcx::aries_vcx_core::indy::ledger::pool::PoolConfig;
+    use aries_vcx::aries_vcx_core::INVALID_POOL_HANDLE;
+    use aries_vcx::global::settings::{set_config_value, CONFIG_GENESIS_PATH};
     use aries_vcx::utils::constants::GENESIS_PATH;
     use aries_vcx::utils::devsetup::{SetupDefaults, SetupEmpty, TempFile};
 
@@ -128,7 +128,7 @@ pub mod tests {
         );
         assert_eq!(get_main_pool_handle().unwrap_err().kind(), LibvcxErrorKind::NoPoolOpen);
 
-        delete_named_test_pool(0, &pool_name);
+        delete_named_test_pool(INVALID_POOL_HANDLE, &pool_name).await;
         reset_main_pool_handle();
     }
 

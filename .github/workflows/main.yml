@@ -12,14 +12,14 @@ env:
   DOCKER_BUILDKIT: 1
   MAIN_BRANCH: main
   URL_DOCKER_REGISTRY: ghcr.io
-  DOCKER_IMAGE_AGENCY: ghcr.io/absaoss/vcxagencynode/vcxagency-node:2.2.0
+  DOCKER_IMAGE_AGENCY: ghcr.io/absaoss/vcxagencynode/vcxagency-node:2.6.0
   DOCKER_IMAGE_POOL: ghcr.io/hyperledger/aries-vcx/indy_pool_localhost:1.15.0
 
   DOCKER_REPO_LOCAL_ALPINE_CORE: alpine-core
   DOCKER_REPO_LOCAL_LIBVCX: libvcx
   DOCKER_REPO_LOCAL_ANDROID: android-test
 
-  RUST_TOOLCHAIN_VERSON: 1.64.0
+  RUST_TOOLCHAIN_VERSON: 1.65.0
   NODE_VERSION: 18.x
 
 jobs:
@@ -30,7 +30,7 @@ jobs:
         uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: 1.64.0
+          toolchain: 1.65.0
           components: rustfmt, clippy
       - name: "Verify code formatting"
         run: |
@@ -58,7 +58,7 @@ jobs:
         uses: actions/checkout@v1
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: 1.64.0
+          toolchain: 1.65.0
       - name: "Construct CI run-info"
         id: run-info
         uses: ./.github/actions/construct-run-info
@@ -72,14 +72,24 @@ jobs:
 
           HASH_DOCKERFILE_ALPINE_CORE=${{ hashFiles('ci/alpine_core.dockerfile')}}
           HASH_DOCKERFILE_LIBVCX=${{ hashFiles('ci/libvcx.dockerfile') }}
+          HASH_SRC_LIBVDRTOOLS=${{ hashFiles('libvdrtools') }}
           HASH_SRC_LIBVCX=${{ hashFiles('libvcx') }}
           HASH_SRC_ARIESVCX=${{ hashFiles('aries_vcx') }}
+          HASH_SRC_ARIESVCX_CORE=${{ hashFiles('aries_vcx_core') }}
           HASH_SRC_AGENCYCLIENT=${{ hashFiles('agency_client') }}
+          HASH_SRC_DIDDOC=${{ hashFiles('diddoc') }}
           HASH_SRC_MESSAGES=${{ hashFiles('messages') }}
+          HASH_SRC_MESSAGES_2=${{ hashFiles('messages2') }}
           HASH_SRC_WRAPPER_JAVA=${{ hashFiles('wrappers/java') }}
 
-          HASH_DOCKER_LIBVCX=${HASH_DOCKERFILE_LIBVCX:0:11}-${HASH_SRC_LIBVCX:0:11}-${HASH_SRC_ARIESVCX:0:11}-${HASH_SRC_AGENCYCLIENT:0:11}-${HASH_SRC_MESSAGES:0:11}
-          HASH_DOCKER_ANDROID=${HASH_DOCKER_LIBVCX}-${HASH_SRC_ARIESVCX:0:11}-${HASH_SRC_WRAPPER_JAVA:0:15}
+          SEED_HASH_ARIESVCX=${HASH_SRC_LIBVDRTOOLS:0:11}-${HASH_SRC_ARIESVCX_CORE:0:11}-${HASH_SRC_ARIESVCX:0:11}-${HASH_SRC_AGENCYCLIENT:0:11}-${HASH_SRC_DIDDOC:0:11}-${HASH_SRC_MESSAGES:0:11}-${HASH_SRC_MESSAGES_2:0:11}
+          HASH_ARIESVCX=$(echo -n "$SEED_HASH_ARIESVCX" | sha256sum | awk '{print $1}')
+
+          SEED_HASH_DOCKER_LIBVCX=${HASH_ARIESVCX:0:11}-${HASH_DOCKERFILE_LIBVCX:0:11}-${HASH_SRC_LIBVCX:0:11}
+          HASH_DOCKER_LIBVCX=$(echo -n "$SEED_HASH_DOCKER_LIBVCX" | sha256sum | awk '{print $1}')
+
+          SEED_HASH_DOCKER_ANDROID=${HASH_ARIESVCX:0:11}-${HASH_DOCKER_LIBVCX:0:11}-${HASH_SRC_WRAPPER_JAVA:0:11}
+          HASH_DOCKER_ANDROID=$(echo -n "$SEED_HASH_DOCKER_ANDROID" | sha256sum | awk '{print $1}')
 
           echo "DOCKER_IMG_CACHED_ALPINE_CORE=$DOCKER_REPO_LOCAL_ALPINE_CORE:$HASH_DOCKERFILE_ALPINE_CORE" >> $GITHUB_OUTPUT
           echo "DOCKER_IMG_CACHED_LIBVCX=$DOCKER_REPO_LOCAL_LIBVCX:$HASH_DOCKER_LIBVCX" >> $GITHUB_OUTPUT
@@ -111,7 +121,7 @@ jobs:
         uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: 1.64.0
+          toolchain: 1.65.0
           components: rustfmt, clippy
       - name: "Install dependencies"
         shell: bash
@@ -129,7 +139,7 @@ jobs:
         uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: 1.64.0
+          toolchain: 1.65.0
           components: rustfmt, clippy
       - name: "Install dependencies"
         shell: bash
@@ -139,6 +149,28 @@ jobs:
       - name: "Verify clippy warnings"
         run: |
           cd libvcx && cargo clippy
+
+  check-aries-vcx-feature-variants:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: "Git checkout"
+        uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: 1.65.0
+          components: rustfmt, clippy
+      - name: "Install dependencies"
+        shell: bash
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y libsodium-dev libssl-dev libzmq3-dev
+      - name: "Verify aries_vcx compiles with different dependency feature variants"
+        run: |
+          cd aries_vcx
+          cargo check
+          cargo check --no-default-features
+          cargo check --features vdrtools --no-default-features
+          cargo check --features modular_libs --no-default-features
 
   ##########################################################################################
   ##############################   DOCKER BUILD   ##########################################
@@ -271,7 +303,7 @@ jobs:
         run: |
           RUSTFLAGS='-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests' \
           RUSTDOCFLAGS='-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests' \
-          RUST_TEST_THREADS=1 CARGO_INCREMENTAL=0 TEST_POOL_IP=127.0.0.1 cargo test --package aries-vcx -F 'general_test';
+          RUST_TEST_THREADS=1 CARGO_INCREMENTAL=0 TEST_POOL_IP=127.0.0.1 cargo test --package aries-vcx;
 
           mkdir -p /tmp/artifacts/coverage
           grcov ./target/debug/ -s . -t lcov --llvm --branch --ignore-not-existing -o /tmp/artifacts/coverage/coverage.lcov
@@ -301,7 +333,7 @@ jobs:
         run: |
           RUSTFLAGS='-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests' \
           RUSTDOCFLAGS='-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests' \
-          RUST_TEST_THREADS=1 CARGO_INCREMENTAL=0 TEST_POOL_IP=127.0.0.1 cargo test --package aries-vcx -F 'pool_tests agency_pool_tests';
+          RUST_TEST_THREADS=1 CARGO_INCREMENTAL=0 TEST_POOL_IP=127.0.0.1 cargo test --package aries-vcx -- --ignored;
 
           mkdir -p /tmp/artifacts/coverage
           grcov ./target/debug/ -s . -t lcov --llvm --branch --ignore-not-existing -o /tmp/artifacts/coverage/coverage.lcov
@@ -332,7 +364,7 @@ jobs:
         run: |
           RUSTFLAGS='-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests' \
           RUSTDOCFLAGS='-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests' \
-          RUST_TEST_THREADS=1 CARGO_INCREMENTAL=0 TEST_POOL_IP=127.0.0.1 cargo test --package aries-vcx -F 'pool_tests agency_pool_tests modular_libs_tests';
+          RUST_TEST_THREADS=1 CARGO_INCREMENTAL=0 TEST_POOL_IP=127.0.0.1 cargo test --package aries-vcx -F 'modular_libs' -- --ignored;
 
           mkdir -p /tmp/artifacts/coverage
           grcov ./target/debug/ -s . -t lcov --llvm --branch --ignore-not-existing -o /tmp/artifacts/coverage/coverage.lcov
@@ -363,7 +395,7 @@ jobs:
         with:
           skip-docker-setup: true
       - name: "Run workspace tests: general_test"
-        run: RUST_TEST_THREADS=1 cargo test --workspace --exclude aries-vcx-agent --exclude libvdrtools -F general_test
+        run: RUST_TEST_THREADS=1 cargo test --workspace --exclude aries-vcx-agent --exclude libvdrtools
 
   test-integration-aries-vcx:
     needs: workflow-setup
@@ -374,7 +406,7 @@ jobs:
       - name: "Setup rust testing environment"
         uses: ./.github/actions/setup-testing-rust
       - name: "Run aries-vcx tests: pool_tests agency_pool_tests"
-        run: RUST_TEST_THREADS=1 cargo test --manifest-path="aries_vcx/Cargo.toml" -F "pool_tests agency_pool_tests"
+        run: RUST_TEST_THREADS=1 cargo test --manifest-path="aries_vcx/Cargo.toml" -- --ignored;
 
   test-integration-aries-vcx-mysql:
     needs: workflow-setup
@@ -385,7 +417,7 @@ jobs:
       - name: "Setup rust testing environment"
         uses: ./.github/actions/setup-testing-rust
       - name: "Run aries-vcx tests: mysql_test"
-        run: RUST_TEST_THREADS=1 cargo test --manifest-path="aries_vcx/Cargo.toml" -F "mysql_test"
+        run: RUST_TEST_THREADS=1 cargo test --manifest-path="aries_vcx/Cargo.toml" test_mysql -- --include-ignored;
 
   test-integration-libvcx:
     needs: workflow-setup
@@ -398,7 +430,7 @@ jobs:
         uses: ./.github/actions/setup-testing-rust
       - name: "Run libvcx tests: pool_tests"
         run: |
-          RUST_TEST_THREADS=1 cargo test --manifest-path="libvcx/Cargo.toml" -F "pool_tests"
+          RUST_TEST_THREADS=1 cargo test --manifest-path="libvcx/Cargo.toml" -F "pool_tests";
 
   test-node-wrapper:
     needs: workflow-setup
@@ -596,8 +628,10 @@ jobs:
         uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: 1.64.0
+          toolchain: 1.65.0
       - uses: Swatinem/rust-cache@v2
+        with:
+          key: "11"
       - name: "Install dependencies"
         shell: bash
         run: |
@@ -620,8 +654,10 @@ jobs:
         uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: 1.64.0
+          toolchain: 1.65.0
       - uses: Swatinem/rust-cache@v2
+        with:
+          key: "11"
       - name: "Install dependencies"
         shell: bash
         run: |

@@ -14,7 +14,7 @@ OUTPUT_DIR=/tmp/artifacts
 setup() {
     echo "ios_legacy/ci/build.sh: running setup()"
     echo "Setup rustup"
-    rustup default 1.64.0
+    rustup default 1.65.0
     rustup component add rls-preview rust-analysis rust-src
 
     echo "Setup rustup target platforms"
@@ -155,6 +155,19 @@ build_libvcx() {
             echo TRIPLET=$TRIPLET
 
             export OPENSSL_LIB_DIR=$WORK_DIR/libs/openssl/${ARCH}
+            export SODIUM_LIB_DIR=$WORK_DIR/libs/sodium/${ARCH}
+            export PKG_CONFIG_PATH=$WORK_DIR
+
+            cat << EOF > $WORK_DIR/libzmq.pc
+Name: libzmq
+Description: 0MQ C++ library
+Version: 4.2.5
+Libs: -L${WORK_DIR}/libs/zmq/${ARCH} -lzmq
+Libs.private: -lstdc++ - lpthread
+Requires.private: libsodium
+Cflags: -I${WORK_DIR}/libzmq-ios/dist/ios/include
+EOF
+
             echo "Building vcx. OPENSSL_LIB_DIR=${OPENSSL_LIB_DIR}"
             cargo build --target "${TRIPLET}" --release
         done

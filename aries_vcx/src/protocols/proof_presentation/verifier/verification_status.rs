@@ -6,19 +6,8 @@ pub enum PresentationVerificationStatus {
 }
 
 #[cfg(test)]
-#[cfg(feature = "general_test")]
+#[allow(clippy::unwrap_used)]
 pub mod unit_tests {
-    use std::str::FromStr;
-
-    use crate::common::proofs::proof_request::test_utils::_presentation_request_data;
-    use crate::common::test_utils::mock_profile;
-    use crate::test::source_id;
-    use crate::utils::devsetup::{SetupEmpty, SetupMocks};
-    use messages::protocols::proof_presentation::presentation::test_utils::{_presentation, _presentation_1};
-    use messages::protocols::proof_presentation::presentation_proposal::test_utils::_presentation_proposal;
-    use messages::protocols::proof_presentation::presentation_request::test_utils::_presentation_request;
-    use messages::protocols::proof_presentation::test_utils::{_ack, _problem_report};
-
     use super::*;
 
     #[test]

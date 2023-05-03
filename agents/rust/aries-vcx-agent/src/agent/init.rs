@@ -4,12 +4,13 @@ use aries_vcx::{
     agency_client::{agency_client::AgencyClient, configuration::AgentProvisionConfig},
     core::profile::{profile::Profile, vdrtools_profile::VdrtoolsProfile},
     global::settings::init_issuer_config,
-    indy::{
-        ledger::pool::{create_pool_ledger_config, open_pool_ledger, PoolConfigBuilder},
-        wallet::{create_wallet_with_master_secret, open_wallet, wallet_configure_issuer, WalletConfig},
-    },
     utils::provision::provision_cloud_agent,
 };
+use aries_vcx_core::indy::{
+    ledger::pool::{create_pool_ledger_config, open_pool_ledger, PoolConfigBuilder},
+    wallet::{create_wallet_with_master_secret, open_wallet, wallet_configure_issuer, WalletConfig},
+};
+use url::Url;
 
 use crate::{
     agent::{agent_config::AgentConfig, agent_struct::Agent},
@@ -28,7 +29,7 @@ use crate::{
 };
 
 pub struct AgencyInitConfig {
-    pub agency_endpoint: String,
+    pub agency_endpoint: Url,
     pub agency_did: String,
     pub agency_verkey: String,
 }

@@ -5,7 +5,6 @@ extern crate serde_json;
 
 pub mod utils;
 
-#[cfg(feature = "agency_pool_tests")]
 mod integration_tests {
     use std::sync::Arc;
 
@@ -17,17 +16,19 @@ mod integration_tests {
     use aries_vcx::errors::error::VcxResult;
     use aries_vcx::handlers::proof_presentation::prover::Prover;
     use aries_vcx::handlers::proof_presentation::verifier::Verifier;
-    use aries_vcx::messages::protocols::proof_presentation::presentation_request::PresentationRequest;
+    use aries_vcx::handlers::util::AttachmentId;
     use aries_vcx::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
     use aries_vcx::utils::constants::{DEFAULT_SCHEMA_ATTRS, TAILS_DIR};
     use aries_vcx::utils::devsetup::{init_holder_setup_in_indy_context, SetupProfile};
     use aries_vcx::utils::get_temp_dir_path;
-    use messages::a2a::A2AMessage;
-    use messages::protocols::proof_presentation::presentation_request;
-    use messages::status::Status;
+    use messages::msg_fields::protocols::present_proof::request::{
+        RequestPresentation, RequestPresentationContent, RequestPresentationDecorators,
+    };
+    use messages::AriesMessage;
 
     #[tokio::test]
-    async fn test_retrieve_credentials() {
+    #[ignore]
+    async fn test_agency_pool_retrieve_credentials() {
         // todo - use SetupProfile::run after modular impls
         SetupProfile::run_indy(|setup| async move {
             let holder_setup = init_holder_setup_in_indy_context(&setup).await;
@@ -42,9 +43,20 @@ mod integration_tests {
             let (_, _, req, _) = create_indy_proof(&setup.profile, &holder_setup.profile, &setup.institution_did).await;
 
             let pres_req_data: PresentationRequestData = serde_json::from_str(&req).unwrap();
-            let proof_req = PresentationRequest::create()
-                .set_request_presentations_attach(&json!(pres_req_data).to_string())
-                .unwrap();
+            let id = "test_id".to_owned();
+
+            let attach_type = messages::decorators::attachment::AttachmentType::Base64(base64::encode(
+                &json!(pres_req_data).to_string(),
+            ));
+            let attach_data = messages::decorators::attachment::AttachmentData::new(attach_type);
+            let mut attach = messages::decorators::attachment::Attachment::new(attach_data);
+            attach.id = Some(AttachmentId::PresentationRequest.as_ref().to_owned());
+            attach.mime_type = Some(messages::misc::MimeType::Json);
+
+            let content = RequestPresentationContent::new(vec![attach]);
+            let decorators = RequestPresentationDecorators::default();
+
+            let proof_req = RequestPresentation::with_decorators(id, content, decorators);
             let proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
 
             let retrieved_creds = proof.retrieve_credentials(&holder_setup.profile).await.unwrap();
@@ -54,7 +66,8 @@ mod integration_tests {
     }
 
     #[tokio::test]
-    async fn test_get_credential_def() {
+    #[ignore]
+    async fn test_agency_pool_get_credential_def() {
         // todo - use SetupProfile::run after modular impls
         SetupProfile::run_indy(|setup| async move {
             let (_, _, cred_def_id, cred_def_json, _) = create_and_store_nonrevocable_credential_def(
@@ -75,7 +88,8 @@ mod integration_tests {
     }
 
     #[tokio::test]
-    async fn test_retrieve_credentials_empty() {
+    #[ignore]
+    async fn test_agency_pool_retrieve_credentials_empty() {
         // todo - use SetupProfile::run after modular impls
         SetupProfile::run_indy(|setup| async move {
             let mut req = json!({
@@ -87,9 +101,20 @@ mod integration_tests {
             });
 
             let pres_req_data: PresentationRequestData = serde_json::from_str(&req.to_string()).unwrap();
-            let proof_req = PresentationRequest::create()
-                .set_request_presentations_attach(&json!(pres_req_data).to_string())
-                .unwrap();
+            let id = "test_id".to_owned();
+
+            let attach_type = messages::decorators::attachment::AttachmentType::Base64(base64::encode(
+                &json!(pres_req_data).to_string(),
+            ));
+            let attach_data = messages::decorators::attachment::AttachmentData::new(attach_type);
+            let mut attach = messages::decorators::attachment::Attachment::new(attach_data);
+            attach.id = Some(AttachmentId::PresentationRequest.as_ref().to_owned());
+            attach.mime_type = Some(messages::misc::MimeType::Json);
+
+            let content = RequestPresentationContent::new(vec![attach]);
+            let decorators = RequestPresentationDecorators::default();
+
+            let proof_req = RequestPresentation::with_decorators(id, content, decorators);
             let proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
 
             let retrieved_creds = proof.retrieve_credentials(&setup.profile).await.unwrap();
@@ -97,9 +122,20 @@ mod integration_tests {
 
             req["requested_attributes"]["address1_1"] = json!({"name": "address1"});
             let pres_req_data: PresentationRequestData = serde_json::from_str(&req.to_string()).unwrap();
-            let proof_req = PresentationRequest::create()
-                .set_request_presentations_attach(&json!(pres_req_data).to_string())
-                .unwrap();
+            let id = "test_id".to_owned();
+
+            let attach_type = messages::decorators::attachment::AttachmentType::Base64(base64::encode(
+                &json!(pres_req_data).to_string(),
+            ));
+            let attach_data = messages::decorators::attachment::AttachmentData::new(attach_type);
+            let mut attach = messages::decorators::attachment::Attachment::new(attach_data);
+            attach.id = Some(AttachmentId::PresentationRequest.as_ref().to_owned());
+            attach.mime_type = Some(messages::misc::MimeType::Json);
+
+            let content = RequestPresentationContent::new(vec![attach]);
+            let decorators = RequestPresentationDecorators::default();
+
+            let proof_req = RequestPresentation::with_decorators(id, content, decorators);
             let proof: Prover = Prover::create_from_request("2", proof_req).unwrap();
 
             let retrieved_creds = proof.retrieve_credentials(&setup.profile).await.unwrap();
@@ -109,7 +145,8 @@ mod integration_tests {
     }
 
     #[tokio::test]
-    async fn test_case_for_proof_req_doesnt_matter_for_retrieve_creds() {
+    #[ignore]
+    async fn test_agency_pool_case_for_proof_req_doesnt_matter_for_retrieve_creds() {
         // todo - use SetupProfile::run after modular impls
         SetupProfile::run_indy(|setup| async move {
             create_and_store_nonrevocable_credential(
@@ -134,9 +171,20 @@ mod integration_tests {
             });
 
             let pres_req_data: PresentationRequestData = serde_json::from_str(&req.to_string()).unwrap();
-            let proof_req = PresentationRequest::create()
-                .set_request_presentations_attach(&json!(pres_req_data).to_string())
-                .unwrap();
+            let id = "test_id".to_owned();
+
+            let attach_type = messages::decorators::attachment::AttachmentType::Base64(base64::encode(
+                &json!(pres_req_data).to_string(),
+            ));
+            let attach_data = messages::decorators::attachment::AttachmentData::new(attach_type);
+            let mut attach = messages::decorators::attachment::Attachment::new(attach_data);
+            attach.id = Some(AttachmentId::PresentationRequest.as_ref().to_owned());
+            attach.mime_type = Some(messages::misc::MimeType::Json);
+
+            let content = RequestPresentationContent::new(vec![attach]);
+            let decorators = RequestPresentationDecorators::default();
+
+            let proof_req = RequestPresentation::with_decorators(id, content, decorators);
             let proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
 
             // All lower case
@@ -151,9 +199,20 @@ mod integration_tests {
             // First letter upper
             req["requested_attributes"]["zip_1"]["name"] = json!("Zip");
             let pres_req_data: PresentationRequestData = serde_json::from_str(&req.to_string()).unwrap();
-            let proof_req = PresentationRequest::create()
-                .set_request_presentations_attach(&json!(pres_req_data).to_string())
-                .unwrap();
+            let id = "test_id".to_owned();
+
+            let attach_type = messages::decorators::attachment::AttachmentType::Base64(base64::encode(
+                &json!(pres_req_data).to_string(),
+            ));
+            let attach_data = messages::decorators::attachment::AttachmentData::new(attach_type);
+            let mut attach = messages::decorators::attachment::Attachment::new(attach_data);
+            attach.id = Some(AttachmentId::PresentationRequest.as_ref().to_owned());
+            attach.mime_type = Some(messages::misc::MimeType::Json);
+
+            let content = RequestPresentationContent::new(vec![attach]);
+            let decorators = RequestPresentationDecorators::default();
+
+            let proof_req = RequestPresentation::with_decorators(id, content, decorators);
             let proof: Prover = Prover::create_from_request("2", proof_req).unwrap();
             let retrieved_creds2 = proof.retrieve_credentials(&setup.profile).await.unwrap();
             assert!(retrieved_creds2.contains(r#""zip":"84000""#));
@@ -161,9 +220,20 @@ mod integration_tests {
             // Entire word upper
             req["requested_attributes"]["zip_1"]["name"] = json!("ZIP");
             let pres_req_data: PresentationRequestData = serde_json::from_str(&req.to_string()).unwrap();
-            let proof_req = PresentationRequest::create()
-                .set_request_presentations_attach(&json!(pres_req_data).to_string())
-                .unwrap();
+            let id = "test_id".to_owned();
+
+            let attach_type = messages::decorators::attachment::AttachmentType::Base64(base64::encode(
+                &json!(pres_req_data).to_string(),
+            ));
+            let attach_data = messages::decorators::attachment::AttachmentData::new(attach_type);
+            let mut attach = messages::decorators::attachment::Attachment::new(attach_data);
+            attach.id = Some(AttachmentId::PresentationRequest.as_ref().to_owned());
+            attach.mime_type = Some(messages::misc::MimeType::Json);
+
+            let content = RequestPresentationContent::new(vec![attach]);
+            let decorators = RequestPresentationDecorators::default();
+
+            let proof_req = RequestPresentation::with_decorators(id, content, decorators);
             let proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
             let retrieved_creds3 = proof.retrieve_credentials(&setup.profile).await.unwrap();
             assert!(retrieved_creds3.contains(r#""zip":"84000""#));
@@ -172,7 +242,8 @@ mod integration_tests {
     }
 
     #[tokio::test]
-    async fn test_generate_proof() {
+    #[ignore]
+    async fn test_agency_pool_generate_proof() {
         // todo - use SetupProfile::run after modular impls
         SetupProfile::run_indy(|setup| async move {
             create_and_store_credential(
@@ -182,7 +253,7 @@ mod integration_tests {
                 DEFAULT_SCHEMA_ATTRS,
             )
             .await;
-            let to = time::get_time().sec;
+            let to = time::OffsetDateTime::now_utc().unix_timestamp() as u64;
             let indy_proof_req = json!({
                 "nonce": "123432421212",
                 "name": "proof_req_1",
@@ -204,9 +275,20 @@ mod integration_tests {
             .to_string();
 
             let pres_req_data: PresentationRequestData = serde_json::from_str(&indy_proof_req).unwrap();
-            let proof_req = PresentationRequest::create()
-                .set_request_presentations_attach(&json!(pres_req_data).to_string())
-                .unwrap();
+            let id = "test_id".to_owned();
+
+            let attach_type = messages::decorators::attachment::AttachmentType::Base64(base64::encode(
+                &json!(pres_req_data).to_string(),
+            ));
+            let attach_data = messages::decorators::attachment::AttachmentData::new(attach_type);
+            let mut attach = messages::decorators::attachment::Attachment::new(attach_data);
+            attach.id = Some(AttachmentId::PresentationRequest.as_ref().to_owned());
+            attach.mime_type = Some(messages::misc::MimeType::Json);
+
+            let content = RequestPresentationContent::new(vec![attach]);
+            let decorators = RequestPresentationDecorators::default();
+
+            let proof_req = RequestPresentation::with_decorators(id, content, decorators);
             let mut proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
 
             let all_creds: serde_json::Value =
@@ -241,7 +323,8 @@ mod integration_tests {
     }
 
     #[tokio::test]
-    async fn test_generate_proof_with_predicates() {
+    #[ignore]
+    async fn test_agency_pool_generate_proof_with_predicates() {
         // todo - use SetupProfile::run after modular impls
         SetupProfile::run_indy(|setup| async move {
             create_and_store_credential(
@@ -251,7 +334,7 @@ mod integration_tests {
                 DEFAULT_SCHEMA_ATTRS,
             )
             .await;
-            let to = time::get_time().sec;
+            let to = time::OffsetDateTime::now_utc().unix_timestamp() as u64;
             let indy_proof_req = json!({
                 "nonce": "123432421212",
                 "name": "proof_req_1",
@@ -275,9 +358,20 @@ mod integration_tests {
             .to_string();
 
             let pres_req_data: PresentationRequestData = serde_json::from_str(&indy_proof_req).unwrap();
-            let proof_req = PresentationRequest::create()
-                .set_request_presentations_attach(&json!(pres_req_data).to_string())
-                .unwrap();
+            let id = "test_id".to_owned();
+
+            let attach_type = messages::decorators::attachment::AttachmentType::Base64(base64::encode(
+                &json!(pres_req_data).to_string(),
+            ));
+            let attach_data = messages::decorators::attachment::AttachmentData::new(attach_type);
+            let mut attach = messages::decorators::attachment::Attachment::new(attach_data);
+            attach.id = Some(AttachmentId::PresentationRequest.as_ref().to_owned());
+            attach.mime_type = Some(messages::misc::MimeType::Json);
+
+            let content = RequestPresentationContent::new(vec![attach]);
+            let decorators = RequestPresentationDecorators::default();
+
+            let proof_req = RequestPresentation::with_decorators(id, content, decorators);
             let mut proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
 
             let all_creds: serde_json::Value =
@@ -314,7 +408,8 @@ mod integration_tests {
     }
 
     #[tokio::test]
-    async fn test_generate_self_attested_proof() {
+    #[ignore]
+    async fn test_agency_pool_generate_self_attested_proof() {
         // todo - use SetupProfile::run after modular impls
         SetupProfile::run_indy(|setup| async move {
             let indy_proof_req = json!({
@@ -360,7 +455,7 @@ mod integration_tests {
                 .verify_presentation(
                     &setup.profile,
                     presentation,
-                    Box::new(|_: A2AMessage| Box::pin(async { Ok(()) })),
+                    Box::new(|_: AriesMessage| Box::pin(async { Ok(()) })),
                 )
                 .await
                 .unwrap();
@@ -375,16 +470,18 @@ mod integration_tests {
 }
 
 #[cfg(test)]
-#[cfg(feature = "agency_pool_tests")]
 mod tests {
+    use std::thread;
+    use std::time::Duration;
+
+    use messages::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
+    use messages::msg_fields::protocols::present_proof::request::RequestPresentation;
     use serde_json::Value;
 
     use aries_vcx::common::test_utils::create_and_store_nonrevocable_credential_def;
     use aries_vcx::handlers::issuance::holder::Holder;
     use aries_vcx::handlers::proof_presentation::prover::Prover;
     use aries_vcx::handlers::proof_presentation::verifier::Verifier;
-    use aries_vcx::messages::protocols::issuance::credential_offer::CredentialOffer;
-    use aries_vcx::messages::protocols::proof_presentation::presentation_request::PresentationRequest;
     use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
     use aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
     use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
@@ -407,7 +504,8 @@ mod tests {
     use super::*;
 
     #[tokio::test]
-    async fn test_proof_should_be_validated() {
+    #[ignore]
+    async fn test_agency_pool_proof_should_be_validated() {
         SetupPool::run(|setup| async move {
             let mut institution = Faber::setup(setup.pool_handle).await;
             let mut consumer = create_test_alice_instance(&setup).await;
@@ -467,7 +565,8 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_proof_with_predicates_should_be_validated() {
+    #[ignore]
+    async fn test_agency_pool_proof_with_predicates_should_be_validated() {
         SetupPool::run(|setup| async move {
             let mut institution = Faber::setup(setup.pool_handle).await;
             let mut consumer = create_test_alice_instance(&setup).await;
@@ -527,7 +626,8 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_it_should_fail_to_select_credentials_for_predicate() {
+    #[ignore]
+    async fn test_agency_pool_it_should_fail_to_select_credentials_for_predicate() {
         SetupPool::run(|setup| async move {
             let mut institution = Faber::setup(setup.pool_handle).await;
             let mut consumer = create_test_alice_instance(&setup).await;
@@ -570,7 +670,8 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_double_issuance_separate_issuer_and_consumers() {
+    #[ignore]
+    async fn test_agency_pool_double_issuance_separate_issuer_and_consumers() {
         SetupPool::run(|setup| async move {
             let mut issuer = Faber::setup(setup.pool_handle).await;
             let mut verifier = Faber::setup(setup.pool_handle).await;
@@ -655,7 +756,8 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_double_issuance_separate_issuer() {
+    #[ignore]
+    async fn test_agency_pool_double_issuance_separate_issuer() {
         SetupPool::run(|setup| async move {
             let mut issuer = Faber::setup(setup.pool_handle).await;
             let mut verifier = Faber::setup(setup.pool_handle).await;
@@ -710,7 +812,8 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_double_issuance_issuer_is_verifier() {
+    #[ignore]
+    async fn test_agency_pool_double_issuance_issuer_is_verifier() {
         SetupPool::run(|setup| async move {
             let mut institution = Faber::setup(setup.pool_handle).await;
             let mut consumer = create_test_alice_instance(&setup).await;
@@ -783,7 +886,8 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_real_proof() {
+    #[ignore]
+    async fn test_agency_pool_real_proof() {
         SetupPool::run(|setup| async move {
             let mut institution = Faber::setup(setup.pool_handle).await;
             let mut consumer = create_test_alice_instance(&setup).await;
@@ -903,7 +1007,8 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_two_creds_one_rev_reg() {
+    #[ignore]
+    async fn test_agency_pool_two_creds_one_rev_reg() {
         SetupPool::run(|setup| async move {
             let mut issuer = Faber::setup(setup.pool_handle).await;
             let mut verifier = Faber::setup(setup.pool_handle).await;
@@ -983,7 +1088,8 @@ mod tests {
     }
 
     #[tokio::test]
-    pub async fn test_credential_exchange_via_proposal() {
+    #[ignore]
+    pub async fn test_agency_pool_credential_exchange_via_proposal() {
         SetupPool::run(|setup| async move {
             let mut institution = Faber::setup(setup.pool_handle).await;
             let mut consumer = create_test_alice_instance(&setup).await;
@@ -1011,7 +1117,8 @@ mod tests {
     }
 
     #[tokio::test]
-    pub async fn test_credential_exchange_via_proposal_failed() {
+    #[ignore]
+    pub async fn test_agency_pool_credential_exchange_via_proposal_failed() {
         SetupPool::run(|setup| async move {
             let mut institution = Faber::setup(setup.pool_handle).await;
             let mut consumer = create_test_alice_instance(&setup).await;
@@ -1034,6 +1141,7 @@ mod tests {
                 accept_cred_proposal(&mut institution, &institution_to_consumer, rev_reg_id, Some(tails_file)).await;
             decline_offer(&mut consumer, &consumer_to_institution, &mut holder).await;
             assert_eq!(IssuerState::OfferSent, issuer.get_state());
+            tokio::time::sleep(Duration::from_millis(1000)).await;
             issuer
                 .update_state(
                     &institution.profile,
@@ -1048,7 +1156,8 @@ mod tests {
     }
 
     #[tokio::test]
-    pub async fn test_credential_exchange_via_proposal_with_negotiation() {
+    #[ignore]
+    pub async fn test_agency_pool_credential_exchange_via_proposal_with_negotiation() {
         SetupPool::run(|setup| async move {
             let mut institution = Faber::setup(setup.pool_handle).await;
             let mut consumer = create_test_alice_instance(&setup).await;
@@ -1092,6 +1201,7 @@ mod tests {
             )
             .await;
             accept_offer(&mut consumer, &consumer_to_institution, &mut holder).await;
+            tokio::time::sleep(Duration::from_millis(1000)).await;
             send_credential(
                 &mut consumer,
                 &mut institution,
@@ -1107,7 +1217,8 @@ mod tests {
     }
 
     #[tokio::test]
-    pub async fn test_presentation_via_proposal() {
+    #[ignore]
+    pub async fn test_agency_pool_presentation_via_proposal() {
         SetupPool::run(|setup| async move {
             let mut institution = Faber::setup(setup.pool_handle).await;
             let mut consumer = create_test_alice_instance(&setup).await;
@@ -1148,7 +1259,8 @@ mod tests {
     }
 
     #[tokio::test]
-    pub async fn test_presentation_via_proposal_with_rejection() {
+    #[ignore]
+    pub async fn test_agency_pool_presentation_via_proposal_with_rejection() {
         SetupPool::run(|setup| async move {
             let mut institution = Faber::setup(setup.pool_handle).await;
             let mut consumer = create_test_alice_instance(&setup).await;
@@ -1179,7 +1291,8 @@ mod tests {
     }
 
     #[tokio::test]
-    pub async fn test_presentation_via_proposal_with_negotiation() {
+    #[ignore]
+    pub async fn test_agency_pool_presentation_via_proposal_with_negotiation() {
         SetupPool::run(|setup| async move {
             let mut institution = Faber::setup(setup.pool_handle).await;
             let mut consumer = create_test_alice_instance(&setup).await;
@@ -1222,7 +1335,8 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn aries_demo() {
+    #[ignore]
+    async fn test_agency_pool_aries_demo() {
         let _setup = SetupEmpty::init();
         SetupPool::run(|pool| async move {
             let mut faber = Faber::setup(pool.pool_handle).await;
@@ -1259,7 +1373,8 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn aries_demo_create_with_message_id_flow() {
+    #[ignore]
+    async fn test_agency_pool_aries_demo_create_with_message_id_flow() {
         let _setup = SetupEmpty::init();
         SetupPool::run(|pool| async move {
             let mut faber = Faber::setup(pool.pool_handle).await;
@@ -1341,7 +1456,8 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn aries_demo_download_message_flow() {
+    #[ignore]
+    async fn test_agency_pool_aries_demo_download_message_flow() {
         SetupEmpty::init();
         SetupPool::run(|pool| async move {
             let mut faber = Faber::setup(pool.pool_handle).await;
@@ -1373,7 +1489,7 @@ mod tests {
             {
                 let message = alice.download_message(PayloadKinds::CredOffer).await.unwrap();
 
-                let cred_offer: CredentialOffer = serde_json::from_str(&message.decrypted_msg).unwrap();
+                let cred_offer: OfferCredential = serde_json::from_str(&message.decrypted_msg).unwrap();
                 alice.credential = Holder::create_from_offer("test", cred_offer).unwrap();
 
                 alice
@@ -1405,7 +1521,7 @@ mod tests {
             {
                 let agency_msg = alice.download_message(PayloadKinds::ProofRequest).await.unwrap();
 
-                let presentation_request: PresentationRequest =
+                let presentation_request: RequestPresentation =
                     serde_json::from_str(&agency_msg.decrypted_msg).unwrap();
                 alice.prover = Prover::create_from_request("test", presentation_request).unwrap();
 

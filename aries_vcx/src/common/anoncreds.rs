@@ -1,27 +1,30 @@
 #[cfg(test)]
-#[cfg(feature = "pool_tests")]
+#[allow(clippy::unwrap_used)]
 pub mod integration_tests {
     use std::sync::Arc;
 
+    use aries_vcx_core::errors::error::AriesVcxCoreErrorKind;
+
     use crate::common::test_utils::create_and_store_credential;
-    use crate::errors::error::AriesVcxErrorKind;
     use crate::utils::constants::TAILS_DIR;
     use crate::utils::devsetup::{init_holder_setup_in_indy_context, SetupProfile};
     use crate::utils::get_temp_dir_path;
 
     #[tokio::test]
-    async fn tests_returns_error_if_proof_request_is_malformed() {
+    #[ignore]
+    async fn test_pool_returns_error_if_proof_request_is_malformed() {
         SetupProfile::run(|setup| async move {
             let proof_req = "{";
             let anoncreds = Arc::clone(&setup.profile).inject_anoncreds();
             let result = anoncreds.prover_get_credentials_for_proof_req(&proof_req).await;
-            assert_eq!(result.unwrap_err().kind(), AriesVcxErrorKind::InvalidProofRequest);
+            assert_eq!(result.unwrap_err().kind(), AriesVcxCoreErrorKind::InvalidProofRequest);
         })
         .await;
     }
 
     #[tokio::test]
-    async fn tests_prover_get_credentials() {
+    #[ignore]
+    async fn test_pool_prover_get_credentials() {
         SetupProfile::run(|setup| async move {
             let proof_req = json!({
                "nonce":"123432421212",
@@ -48,14 +51,15 @@ pub mod integration_tests {
             let result_malformed_json = anoncreds.prover_get_credentials_for_proof_req("{}").await.unwrap_err();
             assert_eq!(
                 result_malformed_json.kind(),
-                AriesVcxErrorKind::InvalidAttributesStructure
+                AriesVcxCoreErrorKind::InvalidAttributesStructure
             );
         })
         .await;
     }
 
     #[tokio::test]
-    async fn test_revoke_credential() {
+    #[ignore]
+    async fn test_pool_revoke_credential() {
         SetupProfile::run_indy(|setup| async move {
             let holder_setup = init_holder_setup_in_indy_context(&setup).await;
 

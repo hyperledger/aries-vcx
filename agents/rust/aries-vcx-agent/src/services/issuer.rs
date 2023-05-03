@@ -7,11 +7,11 @@ use crate::storage::object_cache::ObjectCache;
 use crate::storage::Storage;
 use aries_vcx::core::profile::profile::Profile;
 use aries_vcx::handlers::issuance::issuer::Issuer;
-use aries_vcx::messages::a2a::A2AMessage;
-use aries_vcx::messages::protocols::issuance::credential_ack::CredentialAck;
-use aries_vcx::messages::protocols::issuance::credential_offer::OfferInfo;
-use aries_vcx::messages::protocols::issuance::credential_proposal::CredentialProposal;
-use aries_vcx::messages::protocols::issuance::credential_request::CredentialRequest;
+use aries_vcx::handlers::util::OfferInfo;
+use aries_vcx::messages::msg_fields::protocols::cred_issuance::ack::AckCredential;
+use aries_vcx::messages::msg_fields::protocols::cred_issuance::propose_credential::ProposeCredential;
+use aries_vcx::messages::msg_fields::protocols::cred_issuance::request_credential::RequestCredential;
+use aries_vcx::messages::AriesMessage;
 use aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
 use aries_vcx::protocols::SendClosure;
 
@@ -55,7 +55,7 @@ impl ServiceCredentialsIssuer {
         Ok(connection_id)
     }
 
-    pub async fn accept_proposal(&self, connection_id: &str, proposal: &CredentialProposal) -> AgentResult<String> {
+    pub async fn accept_proposal(&self, connection_id: &str, proposal: &ProposeCredential) -> AgentResult<String> {
         let issuer = Issuer::create_from_proposal("", proposal)?;
         self.creds_issuer
             .insert(&issuer.get_thread_id()?, IssuerWrapper::new(issuer, connection_id))
@@ -80,7 +80,7 @@ impl ServiceCredentialsIssuer {
 
         let wallet = self.profile.inject_wallet();
 
-        let send_closure: SendClosure = Box::new(|msg: A2AMessage| {
+        let send_closure: SendClosure = Box::new(|msg: AriesMessage| {
             Box::pin(async move { connection.send_message(&wallet, &msg, &HttpClient).await })
         });
 
@@ -89,7 +89,7 @@ impl ServiceCredentialsIssuer {
             .insert(&issuer.get_thread_id()?, IssuerWrapper::new(issuer, &connection_id))
     }
 
-    pub fn process_credential_request(&self, thread_id: &str, request: CredentialRequest) -> AgentResult<()> {
+    pub fn process_credential_request(&self, thread_id: &str, request: RequestCredential) -> AgentResult<()> {
         let IssuerWrapper {
             mut issuer,
             connection_id,
@@ -100,7 +100,7 @@ impl ServiceCredentialsIssuer {
         Ok(())
     }
 
-    pub fn process_credential_ack(&self, thread_id: &str, ack: CredentialAck) -> AgentResult<()> {
+    pub fn process_credential_ack(&self, thread_id: &str, ack: AckCredential) -> AgentResult<()> {
         let IssuerWrapper {
             mut issuer,
             connection_id,
@@ -120,7 +120,7 @@ impl ServiceCredentialsIssuer {
 
         let wallet = self.profile.inject_wallet();
 
-        let send_closure: SendClosure = Box::new(|msg: A2AMessage| {
+        let send_closure: SendClosure = Box::new(|msg: AriesMessage| {
             Box::pin(async move { connection.send_message(&wallet, &msg, &HttpClient).await })
         });
 
@@ -144,7 +144,7 @@ impl ServiceCredentialsIssuer {
         issuer.get_rev_id().map_err(|err| err.into())
     }
 
-    pub fn get_proposal(&self, thread_id: &str) -> AgentResult<CredentialProposal> {
+    pub fn get_proposal(&self, thread_id: &str) -> AgentResult<ProposeCredential> {
         let issuer = self.get_issuer(thread_id)?;
         issuer.get_proposal().map_err(|err| err.into())
     }

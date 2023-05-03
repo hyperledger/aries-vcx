@@ -25,7 +25,7 @@ pub fn encode(s: &str) -> VcxResult<String> {
 }
 
 #[cfg(test)]
-#[cfg(feature = "general_test")]
+#[allow(clippy::unwrap_used)]
 mod test {
     use super::*;
 

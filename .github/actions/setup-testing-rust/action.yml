@@ -12,7 +12,7 @@ runs:
   steps:
     - uses: actions-rs/toolchain@v1
       with:
-        toolchain: 1.64.0
+        toolchain: 1.65.0
     - uses: Swatinem/rust-cache@v2
     - name: "Install dependencies"
       shell: bash

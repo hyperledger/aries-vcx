@@ -5,17 +5,19 @@ use crate::storage::object_cache::ObjectCache;
 use crate::storage::Storage;
 use aries_vcx::common::ledger::transactions::into_did_doc;
 use aries_vcx::core::profile::profile::Profile;
-use aries_vcx::messages::protocols::connection::invite::Invitation;
-use aries_vcx::messages::protocols::connection::request::Request;
-use aries_vcx::messages::protocols::issuance::credential_offer::CredentialOffer;
-use aries_vcx::messages::protocols::issuance::credential_proposal::CredentialProposal;
-use aries_vcx::messages::protocols::proof_presentation::presentation_proposal::PresentationProposal;
-use aries_vcx::plugins::wallet::agency_client_wallet::ToBaseAgencyClientWallet;
+use aries_vcx::handlers::util::AnyInvitation;
+use aries_vcx::messages::msg_fields::protocols::connection::request::Request;
+use aries_vcx::messages::msg_fields::protocols::connection::Connection;
+use aries_vcx::messages::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
+use aries_vcx::messages::msg_fields::protocols::cred_issuance::propose_credential::ProposeCredential;
+use aries_vcx::messages::msg_fields::protocols::cred_issuance::CredentialIssuance;
+use aries_vcx::messages::msg_fields::protocols::present_proof::propose::ProposePresentation;
+use aries_vcx::messages::msg_fields::protocols::present_proof::PresentProof;
 use aries_vcx::{
     agency_client::{agency_client::AgencyClient, configuration::AgencyClientConfig},
     handlers::connection::mediated_connection::{ConnectionState, MediatedConnection},
-    messages::a2a::A2AMessage,
 };
+use aries_vcx_core::wallet::agency_client_wallet::ToBaseAgencyClientWallet;
 
 pub struct ServiceMediatedConnections {
     profile: Arc<dyn Profile>,
@@ -46,7 +48,7 @@ impl ServiceMediatedConnections {
             })
     }
 
-    pub async fn create_invitation(&self) -> AgentResult<Invitation> {
+    pub async fn create_invitation(&self) -> AgentResult<AnyInvitation> {
         let mut connection = MediatedConnection::create("", &self.profile, &self.agency_client()?, true).await?;
         connection.connect(&self.profile, &self.agency_client()?, None).await?;
         let invite = connection
@@ -58,7 +60,7 @@ impl ServiceMediatedConnections {
         Ok(invite)
     }
 
-    pub async fn receive_invitation(&self, invite: Invitation) -> AgentResult<String> {
+    pub async fn receive_invitation(&self, invite: AnyInvitation) -> AgentResult<String> {
         let ddo = into_did_doc(&self.profile, &invite).await?;
         let connection =
             MediatedConnection::create_with_invite("", &self.profile, &self.agency_client()?, invite, ddo, true)
@@ -112,14 +114,14 @@ impl ServiceMediatedConnections {
     }
 }
 
-macro_rules! get_messages (($msg_type:ty, $a2a_msg:ident, $name:ident) => (
+macro_rules! get_messages (($msg_type:ty, $a2a_msg:ident, $var:ident, $name:ident) => (
     impl ServiceMediatedConnections {
         pub async fn $name(&self, thread_id: &str) -> AgentResult<Vec<$msg_type>> {
             let connection = self.mediated_connections.get(thread_id)?;
             let agency_client = self.agency_client()?;
             let mut messages = Vec::<$msg_type>::new();
             for (uid, message) in connection.get_messages_noauth(&agency_client).await?.into_iter() {
-                if let A2AMessage::$a2a_msg(message) = message {
+                if let aries_vcx::messages::AriesMessage::$a2a_msg($a2a_msg::$var(message)) = message {
                     connection
                         .update_message_status(&uid, &agency_client)
                         .await
@@ -132,7 +134,22 @@ macro_rules! get_messages (($msg_type:ty, $a2a_msg:ident, $name:ident) => (
     }
 ));
 
-get_messages!(Request, ConnectionRequest, get_connection_requests);
-get_messages!(CredentialProposal, CredentialProposal, get_credential_proposals);
-get_messages!(CredentialOffer, CredentialOffer, get_credential_offers);
-get_messages!(PresentationProposal, PresentationProposal, get_proof_proposals);
+get_messages!(Request, Connection, Request, get_connection_requests);
+get_messages!(
+    ProposeCredential,
+    CredentialIssuance,
+    ProposeCredential,
+    get_credential_proposals
+);
+get_messages!(
+    OfferCredential,
+    CredentialIssuance,
+    OfferCredential,
+    get_credential_offers
+);
+get_messages!(
+    ProposePresentation,
+    PresentProof,
+    ProposePresentation,
+    get_proof_proposals
+);
