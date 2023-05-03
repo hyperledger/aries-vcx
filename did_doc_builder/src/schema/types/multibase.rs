@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::error::DIDDocumentBuilderError;
 
+// https://datatracker.ietf.org/doc/html/draft-multiformats-multibase-03
 #[derive(Clone, Debug, PartialEq)]
 pub struct Multibase {
     base: Base,
