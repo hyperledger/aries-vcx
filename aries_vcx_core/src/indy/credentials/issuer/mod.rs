@@ -1,7 +1,6 @@
 use vdrtools::{CredentialOffer, CredentialRequest, CredentialValues, Locator, RevocationRegistryId};
 
 use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
-use crate::global::mockdata::mock_settings::StatusCodeMock;
 use crate::global::settings;
 use crate::indy::anoncreds;
 use crate::indy::utils::parse_and_validate;
@@ -13,13 +12,6 @@ pub async fn libindy_issuer_create_credential_offer(
     cred_def_id: &str,
 ) -> VcxCoreResult<String> {
     if settings::indy_mocks_enabled() {
-        let rc = StatusCodeMock::get_result();
-        if rc != 0 {
-            return Err(AriesVcxCoreError::from_msg(
-                AriesVcxCoreErrorKind::InvalidState,
-                "Mocked error result of libindy_issuer_create_credential_offer",
-            ));
-        };
         return Ok(LIBINDY_CRED_OFFER.to_string());
     }
 
