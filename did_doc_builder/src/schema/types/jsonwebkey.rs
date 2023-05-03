@@ -1,4 +1,5 @@
 use std::{
+    collections::HashMap,
     fmt::{self, Display, Formatter},
     str::FromStr,
 };
@@ -9,21 +10,22 @@ use serde_json::Value;
 use crate::error::DIDDocumentBuilderError;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
-// TODO: Introduce custom type instead of Value
+// TODO: Introduce proper custom type
 // Unfortunately only supports curves from the original RFC
 // pub struct JsonWebKey(jsonwebkey::JsonWebKey);
-pub struct JsonWebKey(Value);
+pub struct JsonWebKey {
+    kty: String,
+    crv: String,
+    x: String,
+    #[serde(flatten)]
+    #[serde(skip_serializing_if = "HashMap::is_empty")]
+    #[serde(default)]
+    extra: HashMap<String, Value>,
+}
 
 impl JsonWebKey {
     pub fn new(jwk: &str) -> Result<Self, DIDDocumentBuilderError> {
-        if is_valid_jwk(jwk) {
-            Ok(Self(Value::from_str(jwk)?))
-        } else {
-            Err(DIDDocumentBuilderError::InvalidInput(format!(
-                "Invalid JWK: {}",
-                jwk
-            )))
-        }
+        Ok(serde_json::from_str(jwk)?)
     }
 }
 
@@ -37,20 +39,6 @@ impl FromStr for JsonWebKey {
 
 impl Display for JsonWebKey {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", serde_json::to_string(&self.0).unwrap())
-    }
-}
-
-fn is_valid_jwk(jwk: &str) -> bool {
-    // TODO: Validate properly
-    // TODO: Use is_ok_and once stabilized
-    match serde_json::from_str::<Value>(jwk) {
-        Ok(jwk) => {
-            jwk.is_object()
-                && jwk.get("kty").is_some()
-                && jwk.get("crv").is_some()
-                && jwk.get("x").is_some()
-        }
-        Err(_) => false,
+        write!(f, "{}", serde_json::to_string(&self).unwrap())
     }
 }
