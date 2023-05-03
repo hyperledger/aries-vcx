@@ -263,8 +263,8 @@ mod tests {
 
         let service_id = Uri::new("did:example:123456789abcdefghi;service-1").unwrap();
         let service_type = "test-service".to_string();
-        let service_endpoint = "https://example.com/service".to_string();
-        let service = ServiceBuilder::new(service_id, service_endpoint)
+        let service_endpoint = "https://example.com/service";
+        let service = ServiceBuilder::new(service_id, service_endpoint.try_into().unwrap())
             .unwrap()
             .add_service_type(service_type)
             .unwrap()

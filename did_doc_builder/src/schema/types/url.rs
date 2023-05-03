@@ -7,11 +7,21 @@ use crate::error::DIDDocumentBuilderError;
 pub struct Url(UrlDep);
 
 impl Url {
-    pub fn new(url: String) -> Result<Self, DIDDocumentBuilderError> {
-        Ok(Self(UrlDep::parse(&url).unwrap()))
+    pub fn new(url: &str) -> Result<Self, DIDDocumentBuilderError> {
+        Ok(Self(UrlDep::parse(url)?))
     }
+}
 
-    pub fn as_ref(&self) -> &str {
+impl TryFrom<&str> for Url {
+    type Error = DIDDocumentBuilderError;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        Ok(Self(UrlDep::parse(value)?))
+    }
+}
+
+impl AsRef<str> for Url {
+    fn as_ref(&self) -> &str {
         self.0.as_str()
     }
 }

@@ -71,7 +71,8 @@ pub(super) async fn resolve_ddo(did: &str, resp: &str) -> Result<DIDResolutionOu
     let datetime = posix_to_datetime(txn_time);
 
     let service = {
-        let mut service_builder = Service::builder(service_id, endpoint.endpoint)?;
+        let mut service_builder =
+            Service::builder(service_id, endpoint.endpoint.as_str().try_into()?)?;
         for t in endpoint.types {
             if t != DidSovServiceType::Unknown {
                 service_builder = service_builder.add_service_type(t.to_string())?;
@@ -163,7 +164,7 @@ mod tests {
         assert_eq!(ddo.service()[0].id().to_string(), "did:example:1234567890");
         assert_eq!(
             ddo.service()[0].service_endpoint().to_string(),
-            "https://example.com"
+            "https://example.com/"
         );
         assert_eq!(
             resolution_output.did_document_metadata().updated().unwrap(),
