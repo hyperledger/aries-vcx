@@ -1,9 +1,8 @@
 mod mime_type;
-mod no_decorators;
 pub(crate) mod utils;
 
 pub use mime_type::MimeType;
-pub use no_decorators::NoDecorators;
+pub use shared_vcx::misc::{no_decorators::NoDecorators, utils::CowStr};
 
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
@@ -11,9 +10,9 @@ pub mod test_utils {
     use chrono::{DateTime, Utc};
     use serde::{Deserialize, Serialize};
     use serde_json::{json, Value};
+    use shared_vcx::misc::utils::CowStr;
 
     use crate::{
-        misc::utils::CowStr,
         msg_parts::MsgParts,
         msg_types::{traits::MessageKind, MessageType, Protocol},
         AriesMessage,

@@ -1,8 +1,8 @@
 use serde::{Deserialize, Serialize};
+use shared_vcx::misc::no_decorators::NoDecorators;
 
 use crate::{
     decorators::{thread::Thread, timing::Timing},
-    misc::NoDecorators,
     msg_parts::MsgParts,
 };
 

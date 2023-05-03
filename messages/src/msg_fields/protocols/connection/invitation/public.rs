@@ -23,10 +23,8 @@ mod tests {
     use serde_json::json;
 
     use super::*;
-    use crate::{
-        misc::{test_utils, NoDecorators},
-        msg_types::connection::ConnectionTypeV1_0,
-    };
+    use crate::{misc::test_utils, msg_types::connection::ConnectionTypeV1_0};
+    use shared_vcx::misc::no_decorators::NoDecorators;
 
     #[test]
     fn test_minimal_conn_invite_public() {

@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::misc::NoDecorators;
+use shared_vcx::misc::no_decorators::NoDecorators;
 
 /// Struct representing a complete message (apart from the `@type` field) as defined in a protocol
 /// RFC. The purpose of this type is to allow decomposition of certain message parts so they can be
