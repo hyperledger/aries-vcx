@@ -2,7 +2,7 @@ mod mime_type;
 pub(crate) mod utils;
 
 pub use mime_type::MimeType;
-pub use shared_vcx::misc::{no_decorators::NoDecorators, utils::CowStr};
+pub use shared_vcx::misc::{serde_ignored::SerdeIgnored as NoDecorators, utils::CowStr};
 
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]

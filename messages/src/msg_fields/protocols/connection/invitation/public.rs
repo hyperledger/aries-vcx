@@ -24,7 +24,9 @@ mod tests {
 
     use super::*;
     use crate::{misc::test_utils, msg_types::connection::ConnectionTypeV1_0};
-    use shared_vcx::misc::no_decorators::NoDecorators;
+
+    // Bind `shared_vcx::misc::serde_ignored::SerdeIgnored` type as `NoDecorators`.
+    use shared_vcx::misc::serde_ignored::SerdeIgnored as NoDecorators;
 
     #[test]
     fn test_minimal_conn_invite_public() {

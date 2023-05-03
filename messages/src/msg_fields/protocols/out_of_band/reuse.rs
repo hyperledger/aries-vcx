@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
-use shared_vcx::misc::no_decorators::NoDecorators;
+
+// Bind `shared_vcx::misc::serde_ignored::SerdeIgnored` type as `NoDecorators`.
+use shared_vcx::misc::serde_ignored::SerdeIgnored as NoDecorators;
 
 use crate::{
     decorators::{thread::Thread, timing::Timing},

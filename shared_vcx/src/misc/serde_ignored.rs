@@ -1,12 +1,12 @@
 use serde::{de::IgnoredAny, Deserialize, Serialize};
 
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
-pub struct NoDecorators;
+pub struct SerdeIgnored;
 
 /// Custom impl that, through [`Option`], handles the field not being
 /// provided at all and, through [`IgnoredAny`], also ignores anything
 /// that was provided for the field.
-impl<'de> Deserialize<'de> for NoDecorators {
+impl<'de> Deserialize<'de> for SerdeIgnored {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,
@@ -21,7 +21,7 @@ impl<'de> Deserialize<'de> for NoDecorators {
 /// The really cool thing, though, is that flattening this actually
 /// results in completely nothing, making a field of this type
 /// to be completely ignored.
-impl Serialize for NoDecorators {
+impl Serialize for SerdeIgnored {
     fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
