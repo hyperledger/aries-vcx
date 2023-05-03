@@ -105,7 +105,7 @@ pub fn ledger_set_txn_author_agreement(
     acc_mech_type: String,
     time_of_acceptance: u64,
 ) -> LibvcxResult<()> {
-    map_ariesvcx_result(aries_vcx::global::author_agreement::set_txn_author_agreement(
+    map_ariesvcx_result(aries_vcx::global::author_agreement::proxy_set_txn_author_agreement(
         text,
         version,
         hash,

@@ -1,4 +1,3 @@
-use crate::utils::mockdata::mock_settings::StatusCodeMock;
 use aries_vcx_core::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
 use async_trait::async_trait;
 
@@ -65,12 +64,6 @@ impl BaseAnonCreds for MockAnoncreds {
     }
 
     async fn issuer_create_credential_offer(&self, _cred_def_id: &str) -> VcxCoreResult<String> {
-        if StatusCodeMock::get_result() != 0 {
-            return Err(AriesVcxCoreError::from_msg(
-                AriesVcxCoreErrorKind::InvalidState,
-                "Mocked error result of issuer_create_credential_offer: issuer_create_credential_offer",
-            ));
-        };
         Ok(LIBINDY_CRED_OFFER.to_string())
     }
 

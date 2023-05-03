@@ -4,7 +4,6 @@ use aries_vcx_core::ledger::base_ledger::BaseLedger;
 use crate::core::profile::profile::Profile;
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use crate::utils::constants::{CRED_DEF_ID, CRED_DEF_JSON, DEFAULT_SERIALIZE_VERSION};
-use crate::utils::mockdata::mock_settings::StatusCodeMock;
 use crate::utils::serialization::ObjectWithVersion;
 
 use crate::global::settings::{self, indy_mocks_enabled};
