@@ -10,9 +10,9 @@ use super::types::{jsonwebkey::JsonWebKey, multibase::Multibase};
 // https://www.w3.org/TR/did-core/#did-document-properties
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(untagged)]
-pub enum VerificationMethodAlias {
-    VerificationMethod(VerificationMethod),
-    VerificationMethodReference(ParsedDIDUrl),
+pub enum VerificationMethodKind {
+    VerificationMethodResolved(VerificationMethod),
+    VerificationMethodResolvable(ParsedDIDUrl),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -63,7 +63,7 @@ impl VerificationMethod {
         self.public_key_jwk.as_ref()
     }
 
-    pub fn get_extra_field(&self, key: &str) -> Option<&Value> {
+    pub fn extra_field(&self, key: &str) -> Option<&Value> {
         self.extra.get(key)
     }
 }
@@ -223,7 +223,7 @@ mod tests {
         let vm = VerificationMethod::builder(id, controller, verification_method_type)
             .add_extra_field(extra_key.clone(), extra_value.clone())
             .build();
-        assert_eq!(vm.get_extra_field(&extra_key).unwrap(), &extra_value);
+        assert_eq!(vm.extra_field(&extra_key).unwrap(), &extra_value);
     }
 
     #[test]
@@ -248,6 +248,6 @@ mod tests {
         assert_eq!(vm.controller(), &controller);
         assert_eq!(vm.verification_method_type(), &verification_method_type);
         assert_eq!(vm.public_key_multibase().unwrap(), &public_key_multibase);
-        assert_eq!(vm.get_extra_field(&extra_key).unwrap(), &extra_value);
+        assert_eq!(vm.extra_field(&extra_key).unwrap(), &extra_value);
     }
 }

@@ -8,7 +8,7 @@ use super::{
     service::Service,
     types::uri::Uri,
     utils::OneOrList,
-    verification_method::{VerificationMethod, VerificationMethodAlias},
+    verification_method::{VerificationMethod, VerificationMethodKind},
 };
 
 type ControllerAlias = OneOrList<ParsedDID>;
@@ -25,15 +25,15 @@ pub struct DIDDocument {
     #[serde(skip_serializing_if = "Vec::is_empty")]
     verification_method: Vec<VerificationMethod>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
-    authentication: Vec<VerificationMethodAlias>,
+    authentication: Vec<VerificationMethodKind>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
-    assertion_method: Vec<VerificationMethodAlias>,
+    assertion_method: Vec<VerificationMethodKind>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
-    key_agreement: Vec<VerificationMethodAlias>,
+    key_agreement: Vec<VerificationMethodKind>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
-    capability_invocation: Vec<VerificationMethodAlias>,
+    capability_invocation: Vec<VerificationMethodKind>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
-    capability_delegation: Vec<VerificationMethodAlias>,
+    capability_delegation: Vec<VerificationMethodKind>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     service: Vec<Service>,
     #[serde(skip_serializing_if = "HashMap::is_empty")]
@@ -62,23 +62,23 @@ impl DIDDocument {
         self.verification_method.as_ref()
     }
 
-    pub fn authentication(&self) -> &[VerificationMethodAlias] {
+    pub fn authentication(&self) -> &[VerificationMethodKind] {
         self.authentication.as_ref()
     }
 
-    pub fn assertion_method(&self) -> &[VerificationMethodAlias] {
+    pub fn assertion_method(&self) -> &[VerificationMethodKind] {
         self.assertion_method.as_ref()
     }
 
-    pub fn key_agreement(&self) -> &[VerificationMethodAlias] {
+    pub fn key_agreement(&self) -> &[VerificationMethodKind] {
         self.key_agreement.as_ref()
     }
 
-    pub fn capability_invocation(&self) -> &[VerificationMethodAlias] {
+    pub fn capability_invocation(&self) -> &[VerificationMethodKind] {
         self.capability_invocation.as_ref()
     }
 
-    pub fn capability_delegation(&self) -> &[VerificationMethodAlias] {
+    pub fn capability_delegation(&self) -> &[VerificationMethodKind] {
         self.capability_delegation.as_ref()
     }
 
@@ -86,7 +86,7 @@ impl DIDDocument {
         self.service.as_ref()
     }
 
-    pub fn get_extra_field(&self, key: &str) -> Option<&Value> {
+    pub fn extra_field(&self, key: &str) -> Option<&Value> {
         self.extra.get(key)
     }
 }
@@ -97,11 +97,11 @@ pub struct DIDDocumentBuilder {
     also_known_as: Vec<Uri>,
     controller: Vec<ParsedDID>,
     verification_method: Vec<VerificationMethod>,
-    authentication: Vec<VerificationMethodAlias>,
-    assertion_method: Vec<VerificationMethodAlias>,
-    key_agreement: Vec<VerificationMethodAlias>,
-    capability_invocation: Vec<VerificationMethodAlias>,
-    capability_delegation: Vec<VerificationMethodAlias>,
+    authentication: Vec<VerificationMethodKind>,
+    assertion_method: Vec<VerificationMethodKind>,
+    key_agreement: Vec<VerificationMethodKind>,
+    capability_invocation: Vec<VerificationMethodKind>,
+    capability_delegation: Vec<VerificationMethodKind>,
     service: Vec<Service>,
     extra: HashMap<String, Value>,
 }
@@ -131,13 +131,13 @@ impl DIDDocumentBuilder {
 
     pub fn add_authentication_method(mut self, method: VerificationMethod) -> Self {
         self.authentication
-            .push(VerificationMethodAlias::VerificationMethod(method));
+            .push(VerificationMethodKind::VerificationMethodResolved(method));
         self
     }
 
     pub fn add_authentication_reference(mut self, reference: ParsedDIDUrl) -> Self {
         self.authentication
-            .push(VerificationMethodAlias::VerificationMethodReference(
+            .push(VerificationMethodKind::VerificationMethodResolvable(
                 reference,
             ));
         self
@@ -145,13 +145,13 @@ impl DIDDocumentBuilder {
 
     pub fn add_assertion_method(mut self, method: VerificationMethod) -> Self {
         self.assertion_method
-            .push(VerificationMethodAlias::VerificationMethod(method));
+            .push(VerificationMethodKind::VerificationMethodResolved(method));
         self
     }
 
     pub fn add_assertion_method_reference(mut self, reference: ParsedDIDUrl) -> Self {
         self.assertion_method
-            .push(VerificationMethodAlias::VerificationMethodReference(
+            .push(VerificationMethodKind::VerificationMethodResolvable(
                 reference,
             ));
         self
@@ -159,13 +159,15 @@ impl DIDDocumentBuilder {
 
     pub fn add_key_agreement(mut self, key_agreement: VerificationMethod) -> Self {
         self.key_agreement
-            .push(VerificationMethodAlias::VerificationMethod(key_agreement));
+            .push(VerificationMethodKind::VerificationMethodResolved(
+                key_agreement,
+            ));
         self
     }
 
     pub fn add_key_agreement_refrence(mut self, reference: ParsedDIDUrl) -> Self {
         self.key_agreement
-            .push(VerificationMethodAlias::VerificationMethodReference(
+            .push(VerificationMethodKind::VerificationMethodResolvable(
                 reference,
             ));
         self
@@ -173,7 +175,7 @@ impl DIDDocumentBuilder {
 
     pub fn add_capability_invocation(mut self, capability_invocation: VerificationMethod) -> Self {
         self.capability_invocation
-            .push(VerificationMethodAlias::VerificationMethod(
+            .push(VerificationMethodKind::VerificationMethodResolved(
                 capability_invocation,
             ));
         self
@@ -181,7 +183,7 @@ impl DIDDocumentBuilder {
 
     pub fn add_capability_invocation_refrence(mut self, reference: ParsedDIDUrl) -> Self {
         self.capability_invocation
-            .push(VerificationMethodAlias::VerificationMethodReference(
+            .push(VerificationMethodKind::VerificationMethodResolvable(
                 reference,
             ));
         self
@@ -189,7 +191,7 @@ impl DIDDocumentBuilder {
 
     pub fn add_capability_delegation(mut self, capability_delegation: VerificationMethod) -> Self {
         self.capability_delegation
-            .push(VerificationMethodAlias::VerificationMethod(
+            .push(VerificationMethodKind::VerificationMethodResolved(
                 capability_delegation,
             ));
         self
@@ -197,7 +199,7 @@ impl DIDDocumentBuilder {
 
     pub fn add_capability_delegation_refrence(mut self, reference: ParsedDIDUrl) -> Self {
         self.capability_delegation
-            .push(VerificationMethodAlias::VerificationMethodReference(
+            .push(VerificationMethodKind::VerificationMethodResolvable(
                 reference,
             ));
         self
@@ -301,8 +303,8 @@ mod tests {
         assert_eq!(
             document.authentication(),
             &[
-                VerificationMethodAlias::VerificationMethod(verification_method.clone()),
-                VerificationMethodAlias::VerificationMethodReference(
+                VerificationMethodKind::VerificationMethodResolved(verification_method.clone()),
+                VerificationMethodKind::VerificationMethodResolvable(
                     authentication_reference.clone()
                 )
             ]
@@ -310,8 +312,8 @@ mod tests {
         assert_eq!(
             document.assertion_method(),
             &[
-                VerificationMethodAlias::VerificationMethod(assertion_method),
-                VerificationMethodAlias::VerificationMethodReference(
+                VerificationMethodKind::VerificationMethodResolved(assertion_method),
+                VerificationMethodKind::VerificationMethodResolvable(
                     authentication_reference.clone()
                 )
             ]
@@ -319,8 +321,8 @@ mod tests {
         assert_eq!(
             document.key_agreement(),
             &[
-                VerificationMethodAlias::VerificationMethod(verification_method.clone()),
-                VerificationMethodAlias::VerificationMethodReference(
+                VerificationMethodKind::VerificationMethodResolved(verification_method.clone()),
+                VerificationMethodKind::VerificationMethodResolvable(
                     authentication_reference.clone()
                 )
             ]
@@ -328,8 +330,8 @@ mod tests {
         assert_eq!(
             document.capability_invocation(),
             &[
-                VerificationMethodAlias::VerificationMethod(verification_method.clone()),
-                VerificationMethodAlias::VerificationMethodReference(
+                VerificationMethodKind::VerificationMethodResolved(verification_method.clone()),
+                VerificationMethodKind::VerificationMethodResolvable(
                     authentication_reference.clone()
                 )
             ]
@@ -337,8 +339,8 @@ mod tests {
         assert_eq!(
             document.capability_delegation(),
             &[
-                VerificationMethodAlias::VerificationMethod(verification_method),
-                VerificationMethodAlias::VerificationMethodReference(authentication_reference)
+                VerificationMethodKind::VerificationMethodResolved(verification_method),
+                VerificationMethodKind::VerificationMethodResolvable(authentication_reference)
             ]
         );
         assert_eq!(document.service(), &[service]);

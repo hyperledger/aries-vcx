@@ -3,7 +3,7 @@ use std::str::FromStr;
 use did_doc_builder::schema::{
     did_doc::DIDDocument,
     types::{jsonwebkey::JsonWebKey, uri::Uri},
-    verification_method::{VerificationMethod, VerificationMethodAlias},
+    verification_method::{VerificationMethod, VerificationMethodKind},
 };
 use did_parser::{ParsedDID, ParsedDIDUrl};
 use serde_json::Value;
@@ -128,32 +128,32 @@ fn test_deserialization() {
 
     assert_eq!(
         did_doc.authentication(),
-        &[VerificationMethodAlias::VerificationMethodReference(
+        &[VerificationMethodKind::VerificationMethodResolvable(
             pk_id.clone()
         )]
     );
 
     assert_eq!(
         did_doc.assertion_method(),
-        &[VerificationMethodAlias::VerificationMethodReference(
+        &[VerificationMethodKind::VerificationMethodResolvable(
             pk_id.clone()
         )]
     );
 
     assert_eq!(
         did_doc.capability_delegation(),
-        &[VerificationMethodAlias::VerificationMethodReference(
+        &[VerificationMethodKind::VerificationMethodResolvable(
             pk_id.clone()
         )]
     );
 
     assert_eq!(
         did_doc.capability_invocation(),
-        &[VerificationMethodAlias::VerificationMethodReference(pk_id)]
+        &[VerificationMethodKind::VerificationMethodResolvable(pk_id)]
     );
 
     assert_eq!(
-        did_doc.get_extra_field("publicKey").unwrap().clone(),
+        did_doc.extra_field("publicKey").unwrap().clone(),
         Value::Array(vec![Value::Object(
             serde_json::from_str(
                 r#"{
@@ -181,7 +181,7 @@ fn test_deserialization() {
 
     assert_eq!(
         did_doc.key_agreement(),
-        &[VerificationMethodAlias::VerificationMethod(ka1)]
+        &[VerificationMethodKind::VerificationMethodResolved(ka1)]
     );
 }
 

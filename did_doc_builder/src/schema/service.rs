@@ -45,7 +45,7 @@ impl Service {
         self.service_endpoint.as_ref()
     }
 
-    pub fn get_extra_field(&self, key: &str) -> Option<&Value> {
+    pub fn extra_field(&self, key: &str) -> Option<&Value> {
         self.extra.get(key)
     }
 }
@@ -140,7 +140,7 @@ mod tests {
             .build()
             .unwrap();
 
-        assert_eq!(service.get_extra_field(&extra_key).unwrap(), &extra_value);
+        assert_eq!(service.extra_field(&extra_key).unwrap(), &extra_value);
     }
 
     #[test]
