@@ -14,6 +14,7 @@ use crate::error::DidSovError;
 #[cfg_attr(test, mockall::automock)]
 pub trait AttrReader: Send + Sync {
     async fn get_attr(&self, target_did: &str, attr_name: &str) -> Result<String, DidSovError>;
+    async fn get_nym(&self, did: &str) -> Result<String, DidSovError>;
 }
 
 pub struct ConcreteAttrReader {
@@ -27,6 +28,10 @@ impl AttrReader for ConcreteAttrReader {
             .get_attr(target_did, attr_name)
             .await
             .map_err(|err| err.into())
+    }
+
+    async fn get_nym(&self, did: &str) -> Result<String, DidSovError> {
+        self.ledger.get_nym(did).await.map_err(|err| err.into())
     }
 }
 

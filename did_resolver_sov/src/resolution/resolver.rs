@@ -10,8 +10,12 @@ use did_resolver::{
         DidResolvable,
     },
 };
+use serde_json::Value;
 
-use crate::{error::DidSovError, reader::AttrReader};
+use crate::{
+    error::{parsing::ParsingErrorSource, DidSovError},
+    reader::AttrReader,
+};
 
 use super::utils::{is_valid_sovrin_did_id, ledger_response_to_ddo};
 
@@ -51,8 +55,32 @@ impl DidResolvable for DidSovResolver {
         }
         let did = parsed_did.did();
         let ledger_response = self.ledger.get_attr(did, "endpoint").await?;
-        ledger_response_to_ddo(did, &ledger_response)
+        let verkey = self.get_verkey(did).await?;
+        ledger_response_to_ddo(did, &ledger_response, verkey)
             .await
             .map_err(|err| err.into())
+    }
+}
+
+impl DidSovResolver {
+    async fn get_verkey(&self, did: &str) -> Result<String, DidSovError> {
+        let nym_response = self.ledger.get_nym(did).await?;
+        let nym_json: Value = serde_json::from_str(&nym_response)?;
+        let nym_data = nym_json["result"]["data"]
+            .as_str()
+            .ok_or(DidSovError::ParsingError(
+                ParsingErrorSource::LedgerResponseParsingError(
+                    "Failed to parse nym data".to_string(),
+                ),
+            ))?;
+        let nym_data: Value = serde_json::from_str(nym_data)?;
+        let verkey = nym_data["verkey"]
+            .as_str()
+            .ok_or(DidSovError::ParsingError(
+                ParsingErrorSource::LedgerResponseParsingError(
+                    "Failed to parse verkey from nym data".to_string(),
+                ),
+            ))?;
+        Ok(verkey.to_string())
     }
 }

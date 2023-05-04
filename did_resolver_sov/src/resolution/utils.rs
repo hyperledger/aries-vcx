@@ -1,6 +1,9 @@
 use chrono::{DateTime, NaiveDateTime, Utc};
 use did_resolver::{
-    did_doc_builder::schema::{did_doc::DidDocument, service::Service, types::uri::Uri},
+    did_doc_builder::schema::{
+        did_doc::DidDocument, service::Service, types::uri::Uri,
+        verification_method::VerificationMethod,
+    },
     did_parser::Did,
     shared_types::did_document_metadata::DidDocumentMetadata,
     traits::resolvable::{
@@ -59,6 +62,7 @@ pub(super) fn is_valid_sovrin_did_id(id: &str) -> bool {
 pub(super) async fn ledger_response_to_ddo(
     did: &str,
     resp: &str,
+    verkey: String,
 ) -> Result<DidResolutionOutput, DidSovError> {
     let (service_id, ddo_id) = prepare_ids(did)?;
 
@@ -79,7 +83,22 @@ pub(super) async fn ledger_response_to_ddo(
         service_builder.build()?
     };
 
-    let ddo = DidDocument::builder(ddo_id).add_service(service).build();
+    // TODO: Use multibase instead of base58
+    let verification_method = VerificationMethod::builder(
+        did.to_string().try_into()?,
+        did.to_string().try_into()?,
+        "Ed25519VerificationKey2018".to_string(),
+    )
+    .add_extra_field(
+        "publicKeyBase58".to_string(),
+        Value::String(verkey.to_string()),
+    )
+    .build();
+
+    let ddo = DidDocument::builder(ddo_id)
+        .add_service(service)
+        .add_verification_method(verification_method)
+        .build();
 
     let ddo_metadata = {
         let mut metadata_builder = DidDocumentMetadata::builder().deactivated(false);
@@ -156,13 +175,18 @@ mod tests {
                 "txnTime": 1629272938
             }
         }"#;
-        let resolution_output = ledger_response_to_ddo(did, resp).await.unwrap();
+        let verkey = "9wvq2i4xUa5umXoThe83CDgx1e5bsjZKJL4DEWvTP9qe".to_string();
+        let resolution_output = ledger_response_to_ddo(did, resp, verkey).await.unwrap();
         let ddo = resolution_output.did_document();
         assert_eq!(ddo.id().to_string(), "did:example:1234567890");
         assert_eq!(ddo.service()[0].id().to_string(), "did:example:1234567890");
         assert_eq!(
             ddo.service()[0].service_endpoint().to_string(),
             "https://example.com/"
+        );
+        assert_eq!(
+            ddo.verification_method()[0].extra_field("publicKeyBase58"),
+            Value::String("9wvq2i4xUa5umXoThe83CDgx1e5bsjZKJL4DEWvTP9qe".to_string())
         );
         assert_eq!(
             resolution_output.did_document_metadata().updated().unwrap(),
