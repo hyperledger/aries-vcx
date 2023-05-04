@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use did_parser::{ParsedDID, ParsedDIDUrl};
+use did_parser::{DidUrl, ParsedDid};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -11,13 +11,13 @@ use super::{
     verification_method::{VerificationMethod, VerificationMethodKind},
 };
 
-type ControllerAlias = OneOrList<ParsedDID>;
+type ControllerAlias = OneOrList<ParsedDid>;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 #[serde(default)]
 #[serde(rename_all = "camelCase")]
-pub struct DIDDocument {
-    id: ParsedDID,
+pub struct DidDocument {
+    id: ParsedDid,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     also_known_as: Vec<Uri>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -41,12 +41,12 @@ pub struct DIDDocument {
     extra: HashMap<String, Value>,
 }
 
-impl DIDDocument {
-    pub fn builder(id: ParsedDID) -> DIDDocumentBuilder {
-        DIDDocumentBuilder::new(id)
+impl DidDocument {
+    pub fn builder(id: ParsedDid) -> DidDocumentBuilder {
+        DidDocumentBuilder::new(id)
     }
 
-    pub fn id(&self) -> &ParsedDID {
+    pub fn id(&self) -> &ParsedDid {
         &self.id
     }
 
@@ -54,7 +54,7 @@ impl DIDDocument {
         self.also_known_as.as_ref()
     }
 
-    pub fn controller(&self) -> Option<&OneOrList<ParsedDID>> {
+    pub fn controller(&self) -> Option<&OneOrList<ParsedDid>> {
         self.controller.as_ref()
     }
 
@@ -92,10 +92,10 @@ impl DIDDocument {
 }
 
 #[derive(Debug, Default)]
-pub struct DIDDocumentBuilder {
-    id: ParsedDID,
+pub struct DidDocumentBuilder {
+    id: ParsedDid,
     also_known_as: Vec<Uri>,
-    controller: Vec<ParsedDID>,
+    controller: Vec<ParsedDid>,
     verification_method: Vec<VerificationMethod>,
     authentication: Vec<VerificationMethodKind>,
     assertion_method: Vec<VerificationMethodKind>,
@@ -106,8 +106,8 @@ pub struct DIDDocumentBuilder {
     extra: HashMap<String, Value>,
 }
 
-impl DIDDocumentBuilder {
-    pub fn new(id: ParsedDID) -> Self {
+impl DidDocumentBuilder {
+    pub fn new(id: ParsedDid) -> Self {
         Self {
             id,
             ..Default::default()
@@ -119,7 +119,7 @@ impl DIDDocumentBuilder {
         self
     }
 
-    pub fn add_controller(mut self, controller: ParsedDID) -> Self {
+    pub fn add_controller(mut self, controller: ParsedDid) -> Self {
         self.controller.push(controller);
         self
     }
@@ -135,7 +135,7 @@ impl DIDDocumentBuilder {
         self
     }
 
-    pub fn add_authentication_reference(mut self, reference: ParsedDIDUrl) -> Self {
+    pub fn add_authentication_reference(mut self, reference: DidUrl) -> Self {
         self.authentication
             .push(VerificationMethodKind::Resolvable(reference));
         self
@@ -147,7 +147,7 @@ impl DIDDocumentBuilder {
         self
     }
 
-    pub fn add_assertion_method_reference(mut self, reference: ParsedDIDUrl) -> Self {
+    pub fn add_assertion_method_reference(mut self, reference: DidUrl) -> Self {
         self.assertion_method
             .push(VerificationMethodKind::Resolvable(reference));
         self
@@ -159,7 +159,7 @@ impl DIDDocumentBuilder {
         self
     }
 
-    pub fn add_key_agreement_refrence(mut self, reference: ParsedDIDUrl) -> Self {
+    pub fn add_key_agreement_refrence(mut self, reference: DidUrl) -> Self {
         self.key_agreement
             .push(VerificationMethodKind::Resolvable(reference));
         self
@@ -171,7 +171,7 @@ impl DIDDocumentBuilder {
         self
     }
 
-    pub fn add_capability_invocation_refrence(mut self, reference: ParsedDIDUrl) -> Self {
+    pub fn add_capability_invocation_refrence(mut self, reference: DidUrl) -> Self {
         self.capability_invocation
             .push(VerificationMethodKind::Resolvable(reference));
         self
@@ -183,7 +183,7 @@ impl DIDDocumentBuilder {
         self
     }
 
-    pub fn add_capability_delegation_refrence(mut self, reference: ParsedDIDUrl) -> Self {
+    pub fn add_capability_delegation_refrence(mut self, reference: DidUrl) -> Self {
         self.capability_delegation
             .push(VerificationMethodKind::Resolvable(reference));
         self
@@ -199,13 +199,13 @@ impl DIDDocumentBuilder {
         self
     }
 
-    pub fn build(self) -> DIDDocument {
+    pub fn build(self) -> DidDocument {
         let controller = if self.controller.is_empty() {
             None
         } else {
             Some(OneOrList::List(self.controller))
         };
-        DIDDocument {
+        DidDocument {
             id: self.id,
             also_known_as: self.also_known_as,
             controller,
@@ -228,21 +228,20 @@ mod tests {
 
     #[test]
     fn test_did_document_builder() {
-        let id = ParsedDID::parse("did:example:123456789abcdefghi".to_string()).unwrap();
+        let id = ParsedDid::parse("did:example:123456789abcdefghi".to_string()).unwrap();
         let also_known_as = Uri::new("https://example.com").unwrap();
-        let controller = ParsedDID::parse("did:example:controller".to_string()).unwrap();
+        let controller = ParsedDid::parse("did:example:controller".to_string()).unwrap();
 
         let verification_method = VerificationMethod::builder(
-            ParsedDIDUrl::parse("did:example:vm1".to_string()).unwrap(),
-            ParsedDID::parse("did:example:vm2".to_string()).unwrap(),
+            DidUrl::parse("did:example:vm1".to_string()).unwrap(),
+            ParsedDid::parse("did:example:vm2".to_string()).unwrap(),
             "typevm".to_string(),
         )
         .build();
-        let authentication_reference =
-            ParsedDIDUrl::parse("did:example:authref".to_string()).unwrap();
+        let authentication_reference = DidUrl::parse("did:example:authref".to_string()).unwrap();
         let assertion_method = VerificationMethod::builder(
-            ParsedDIDUrl::parse("did:example:am1".to_string()).unwrap(),
-            ParsedDID::parse("did:example:am2".to_string()).unwrap(),
+            DidUrl::parse("did:example:am1".to_string()).unwrap(),
+            ParsedDid::parse("did:example:am2".to_string()).unwrap(),
             "typeam".to_string(),
         )
         .build();
@@ -257,7 +256,7 @@ mod tests {
             .build()
             .unwrap();
 
-        let document = DIDDocumentBuilder::new(id.clone())
+        let document = DidDocumentBuilder::new(id.clone())
             .add_also_known_as(also_known_as.clone())
             .add_controller(controller.clone())
             .add_verification_method(verification_method.clone())

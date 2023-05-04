@@ -1,4 +1,4 @@
 mod resolver;
 mod utils;
 
-pub use resolver::DIDSovResolver;
+pub use resolver::DidSovResolver;

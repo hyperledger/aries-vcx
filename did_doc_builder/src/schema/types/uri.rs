@@ -5,21 +5,21 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 
-use crate::error::DIDDocumentBuilderError;
+use crate::error::DidDocumentBuilderError;
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct Uri(uniresid::Uri);
 
 impl Uri {
-    pub fn new(uri: &str) -> Result<Self, DIDDocumentBuilderError> {
+    pub fn new(uri: &str) -> Result<Self, DidDocumentBuilderError> {
         Ok(Self(uniresid::Uri::try_from(uri).map_err(|e| {
-            DIDDocumentBuilderError::InvalidInput(format!("Invalid URI: {}", e))
+            DidDocumentBuilderError::InvalidInput(format!("Invalid URI: {}", e))
         })?))
     }
 }
 
 impl FromStr for Uri {
-    type Err = DIDDocumentBuilderError;
+    type Err = DidDocumentBuilderError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Self::new(s)

@@ -1,11 +1,11 @@
 use crate::shared_types::media_type::MediaType;
 
 #[derive(Debug, Clone, PartialEq, Default)]
-pub struct DIDDereferencingOptions {
+pub struct DidDereferencingOptions {
     accept: Option<MediaType>,
 }
 
-impl DIDDereferencingOptions {
+impl DidDereferencingOptions {
     pub fn new() -> Self {
         Self { accept: None }
     }

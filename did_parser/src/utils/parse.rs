@@ -1,5 +1,5 @@
 use crate::error::ParseError;
-use crate::DIDRange;
+use crate::DidRange;
 
 pub(crate) fn parse_key_value(
     did_url: &str,
@@ -32,7 +32,7 @@ pub(crate) fn parse_key_value(
 }
 
 // TODO: Support tunnel methods
-pub fn parse_did_method_id(did_url: &str) -> Result<(DIDRange, DIDRange, DIDRange), ParseError> {
+pub fn parse_did_method_id(did_url: &str) -> Result<(DidRange, DidRange, DidRange), ParseError> {
     // DID = "did:" method ":" method-specific-id
     let method_start = did_url
         .find(':')
@@ -71,7 +71,7 @@ pub fn parse_did_method_id(did_url: &str) -> Result<(DIDRange, DIDRange, DIDRang
     Ok((did, method, id))
 }
 
-pub(crate) fn parse_path(did_url: &str, current_pos: usize) -> Result<DIDRange, ParseError> {
+pub(crate) fn parse_path(did_url: &str, current_pos: usize) -> Result<DidRange, ParseError> {
     if !did_url[current_pos..].starts_with('/') {
         return Err(ParseError::InvalidInput("Path must start with '/'"));
     }

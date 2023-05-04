@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
-pub enum DIDResolutionError {
+pub enum DidResolutionError {
     InvalidDid,
     NotFound,
     RepresentationNotSupported,
@@ -23,39 +23,39 @@ pub enum DIDResolutionError {
     NotAllowedGlobalDuplicateKey,
 }
 
-impl Display for DIDResolutionError {
+impl Display for DidResolutionError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            DIDResolutionError::InvalidDid => write!(f, "invalidDid"),
-            DIDResolutionError::NotFound => write!(f, "notFound"),
-            DIDResolutionError::RepresentationNotSupported => {
+            DidResolutionError::InvalidDid => write!(f, "invalidDid"),
+            DidResolutionError::NotFound => write!(f, "notFound"),
+            DidResolutionError::RepresentationNotSupported => {
                 write!(f, "representationNotSupported")
             }
-            DIDResolutionError::MethodNotSupported => write!(f, "methodNotSupported"),
-            DIDResolutionError::InternalError => write!(f, "internalError"),
-            DIDResolutionError::InvalidPublicKey => write!(f, "invalidPublicKey"),
-            DIDResolutionError::InvalidPublicKeyLength => write!(f, "invalidPublicKeyLength"),
-            DIDResolutionError::InvalidPublicKeyType => write!(f, "invalidPublicKeyType"),
-            DIDResolutionError::UnsupportedPublicKeyType => {
+            DidResolutionError::MethodNotSupported => write!(f, "methodNotSupported"),
+            DidResolutionError::InternalError => write!(f, "internalError"),
+            DidResolutionError::InvalidPublicKey => write!(f, "invalidPublicKey"),
+            DidResolutionError::InvalidPublicKeyLength => write!(f, "invalidPublicKeyLength"),
+            DidResolutionError::InvalidPublicKeyType => write!(f, "invalidPublicKeyType"),
+            DidResolutionError::UnsupportedPublicKeyType => {
                 write!(f, "unsupportedPublicKeyType")
             }
-            DIDResolutionError::NotAllowedVerificationMethodType => {
+            DidResolutionError::NotAllowedVerificationMethodType => {
                 write!(f, "notAllowedVerificationMethodType")
             }
-            DIDResolutionError::NotAllowedKeyType => write!(f, "notAllowedKeyType"),
-            DIDResolutionError::NotAllowedMethod => write!(f, "notAllowedMethod"),
-            DIDResolutionError::NotAllowedCertificate => write!(f, "notAllowedCertificate"),
-            DIDResolutionError::NotAllowedLocalDuplicateKey => {
+            DidResolutionError::NotAllowedKeyType => write!(f, "notAllowedKeyType"),
+            DidResolutionError::NotAllowedMethod => write!(f, "notAllowedMethod"),
+            DidResolutionError::NotAllowedCertificate => write!(f, "notAllowedCertificate"),
+            DidResolutionError::NotAllowedLocalDuplicateKey => {
                 write!(f, "notAllowedLocalDuplicateKey")
             }
-            DIDResolutionError::NotAllowedLocalDerivedKey => {
+            DidResolutionError::NotAllowedLocalDerivedKey => {
                 write!(f, "notAllowedLocalDerivedKey")
             }
-            DIDResolutionError::NotAllowedGlobalDuplicateKey => {
+            DidResolutionError::NotAllowedGlobalDuplicateKey => {
                 write!(f, "notAllowedGlobalDuplicateKey")
             }
         }
     }
 }
 
-impl Error for DIDResolutionError {}
+impl Error for DidResolutionError {}

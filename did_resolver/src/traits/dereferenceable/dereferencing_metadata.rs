@@ -1,44 +1,44 @@
-use super::dereferencing_error::DIDDereferencingError;
+use super::dereferencing_error::DidDereferencingError;
 
 #[derive(Debug, Clone, PartialEq, Default)]
-pub struct DIDDereferencingMetadata {
+pub struct DidDereferencingMetadata {
     content_type: Option<String>,
-    error: Option<DIDDereferencingError>,
+    error: Option<DidDereferencingError>,
 }
 
-impl DIDDereferencingMetadata {
-    pub fn builder() -> DIDDereferencingMetadataBuilder {
-        DIDDereferencingMetadataBuilder::default()
+impl DidDereferencingMetadata {
+    pub fn builder() -> DidDereferencingMetadataBuilder {
+        DidDereferencingMetadataBuilder::default()
     }
 
     pub fn content_type(&self) -> Option<&String> {
         self.content_type.as_ref()
     }
 
-    pub fn error(&self) -> Option<&DIDDereferencingError> {
+    pub fn error(&self) -> Option<&DidDereferencingError> {
         self.error.as_ref()
     }
 }
 
 #[derive(Default)]
-pub struct DIDDereferencingMetadataBuilder {
+pub struct DidDereferencingMetadataBuilder {
     content_type: Option<String>,
-    error: Option<DIDDereferencingError>,
+    error: Option<DidDereferencingError>,
 }
 
-impl DIDDereferencingMetadataBuilder {
+impl DidDereferencingMetadataBuilder {
     pub fn content_type(mut self, content_type: String) -> Self {
         self.content_type = Some(content_type);
         self
     }
 
-    pub fn error(mut self, error: DIDDereferencingError) -> Self {
+    pub fn error(mut self, error: DidDereferencingError) -> Self {
         self.error = Some(error);
         self
     }
 
-    pub fn build(self) -> DIDDereferencingMetadata {
-        DIDDereferencingMetadata {
+    pub fn build(self) -> DidDereferencingMetadata {
+        DidDereferencingMetadata {
             content_type: self.content_type,
             error: self.error,
         }

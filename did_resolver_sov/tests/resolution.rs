@@ -10,10 +10,10 @@ use aries_vcx::{
     },
     utils::devsetup::SetupProfile,
 };
-use did_resolver::did_parser::ParsedDID;
-use did_resolver::traits::resolvable::{resolution_options::DIDResolutionOptions, DIDResolvable};
+use did_resolver::did_parser::ParsedDid;
+use did_resolver::traits::resolvable::{resolution_options::DidResolutionOptions, DidResolvable};
 use did_resolver_sov::reader::ConcreteAttrReader;
-use did_resolver_sov::resolution::DIDSovResolver;
+use did_resolver_sov::resolution::DidSovResolver;
 
 async fn write_test_endpoint(profile: &Arc<dyn Profile>, did: &str) {
     let endpoint = EndpointDidSov::create()
@@ -29,13 +29,13 @@ async fn write_service_on_ledger_and_resolve_did_doc() {
     SetupProfile::run(|init| async move {
         let did = format!("did:sov:{}", init.institution_did);
         write_test_endpoint(&init.profile, &init.institution_did).await;
-        let resolver = DIDSovResolver::new(Arc::<ConcreteAttrReader>::new(
+        let resolver = DidSovResolver::new(Arc::<ConcreteAttrReader>::new(
             init.profile.inject_ledger().into(),
         ));
         let did_doc = resolver
             .resolve(
-                &ParsedDID::parse(did.clone()).unwrap(),
-                &DIDResolutionOptions::default(),
+                &ParsedDid::parse(did.clone()).unwrap(),
+                &DidResolutionOptions::default(),
             )
             .await
             .unwrap();
@@ -49,14 +49,14 @@ async fn test_error_handling_during_resolution() {
     SetupProfile::run(|init| async move {
         let did = format!("did:unknownmethod:{}", init.institution_did);
 
-        let resolver = DIDSovResolver::new(Arc::<ConcreteAttrReader>::new(
+        let resolver = DidSovResolver::new(Arc::<ConcreteAttrReader>::new(
             init.profile.inject_ledger().into(),
         ));
 
         let result = resolver
             .resolve(
-                &ParsedDID::parse(did.clone()).unwrap(),
-                &DIDResolutionOptions::default(),
+                &ParsedDid::parse(did.clone()).unwrap(),
+                &DidResolutionOptions::default(),
             )
             .await;
 

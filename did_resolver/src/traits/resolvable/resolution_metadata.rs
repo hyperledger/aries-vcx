@@ -1,46 +1,46 @@
 use serde::{Deserialize, Serialize};
 
-use super::resolution_error::DIDResolutionError;
+use super::resolution_error::DidResolutionError;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
-pub struct DIDResolutionMetadata {
+pub struct DidResolutionMetadata {
     content_type: Option<String>,
-    error: Option<DIDResolutionError>,
+    error: Option<DidResolutionError>,
 }
 
-impl DIDResolutionMetadata {
-    pub fn builder() -> DIDResolutionMetadataBuilder {
-        DIDResolutionMetadataBuilder::default()
+impl DidResolutionMetadata {
+    pub fn builder() -> DidResolutionMetadataBuilder {
+        DidResolutionMetadataBuilder::default()
     }
 
     pub fn content_type(&self) -> Option<&String> {
         self.content_type.as_ref()
     }
 
-    pub fn error(&self) -> Option<&DIDResolutionError> {
+    pub fn error(&self) -> Option<&DidResolutionError> {
         self.error.as_ref()
     }
 }
 
 #[derive(Default)]
-pub struct DIDResolutionMetadataBuilder {
+pub struct DidResolutionMetadataBuilder {
     content_type: Option<String>,
-    error: Option<DIDResolutionError>,
+    error: Option<DidResolutionError>,
 }
 
-impl DIDResolutionMetadataBuilder {
+impl DidResolutionMetadataBuilder {
     pub fn content_type(mut self, content_type: String) -> Self {
         self.content_type = Some(content_type);
         self
     }
 
-    pub fn error(mut self, error: DIDResolutionError) -> Self {
+    pub fn error(mut self, error: DidResolutionError) -> Self {
         self.error = Some(error);
         self
     }
 
-    pub fn build(self) -> DIDResolutionMetadata {
-        DIDResolutionMetadata {
+    pub fn build(self) -> DidResolutionMetadata {
+        DidResolutionMetadata {
             content_type: self.content_type,
             error: self.error,
         }

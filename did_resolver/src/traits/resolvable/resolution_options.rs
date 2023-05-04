@@ -1,11 +1,11 @@
 use crate::shared_types::media_type::MediaType;
 
 #[derive(Debug, Clone, PartialEq, Default)]
-pub struct DIDResolutionOptions {
+pub struct DidResolutionOptions {
     accept: Option<MediaType>,
 }
 
-impl DIDResolutionOptions {
+impl DidResolutionOptions {
     pub fn new() -> Self {
         Self { accept: None }
     }

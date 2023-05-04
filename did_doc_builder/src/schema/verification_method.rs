@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use did_parser::{ParsedDID, ParsedDIDUrl};
+use did_parser::{DidUrl, ParsedDid};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -12,14 +12,14 @@ use super::types::{jsonwebkey::JsonWebKey, multibase::Multibase};
 #[serde(untagged)]
 pub enum VerificationMethodKind {
     Resolved(VerificationMethod),
-    Resolvable(ParsedDIDUrl),
+    Resolvable(DidUrl),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct VerificationMethod {
-    id: ParsedDIDUrl,
-    controller: ParsedDID,
+    id: DidUrl,
+    controller: ParsedDid,
     #[serde(rename = "type")]
     verification_method_type: String,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -36,18 +36,18 @@ pub struct VerificationMethod {
 
 impl VerificationMethod {
     pub fn builder(
-        id: ParsedDIDUrl,
-        controller: ParsedDID,
+        id: DidUrl,
+        controller: ParsedDid,
         verification_method_type: String,
     ) -> IncompleteVerificationMethodBuilder {
         IncompleteVerificationMethodBuilder::new(id, controller, verification_method_type)
     }
 
-    pub fn id(&self) -> &ParsedDIDUrl {
+    pub fn id(&self) -> &DidUrl {
         &self.id
     }
 
-    pub fn controller(&self) -> &ParsedDID {
+    pub fn controller(&self) -> &ParsedDid {
         &self.controller
     }
 
@@ -70,16 +70,16 @@ impl VerificationMethod {
 
 #[derive(Debug, Default)]
 pub struct IncompleteVerificationMethodBuilder {
-    id: ParsedDIDUrl,
-    controller: ParsedDID,
+    id: DidUrl,
+    controller: ParsedDid,
     verification_method_type: String,
     extra: HashMap<String, Value>,
 }
 
 #[derive(Debug)]
 pub struct CompleteVerificationMethodBuilder {
-    id: ParsedDIDUrl,
-    controller: ParsedDID,
+    id: DidUrl,
+    controller: ParsedDid,
     verification_method_type: String,
     public_key_multibase: Option<Multibase>,
     public_key_jwk: Option<JsonWebKey>,
@@ -87,7 +87,7 @@ pub struct CompleteVerificationMethodBuilder {
 }
 
 impl IncompleteVerificationMethodBuilder {
-    pub fn new(id: ParsedDIDUrl, controller: ParsedDID, verification_method_type: String) -> Self {
+    pub fn new(id: DidUrl, controller: ParsedDid, verification_method_type: String) -> Self {
         Self {
             id,
             verification_method_type,
@@ -163,12 +163,12 @@ impl CompleteVerificationMethodBuilder {
 mod tests {
     use super::*;
 
-    fn create_valid_did() -> ParsedDID {
-        ParsedDID::parse("did:example:123456789abcdefghi".to_string()).unwrap()
+    fn create_valid_did() -> ParsedDid {
+        ParsedDid::parse("did:example:123456789abcdefghi".to_string()).unwrap()
     }
 
-    fn create_valid_did_url() -> ParsedDIDUrl {
-        ParsedDIDUrl::parse("did:example:123456789abcdefghi#fragment".to_string()).unwrap()
+    fn create_valid_did_url() -> DidUrl {
+        DidUrl::parse("did:example:123456789abcdefghi#fragment".to_string()).unwrap()
     }
 
     fn create_valid_multibase() -> Multibase {

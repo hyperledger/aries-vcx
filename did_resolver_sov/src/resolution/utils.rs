@@ -1,31 +1,31 @@
 use chrono::{DateTime, NaiveDateTime, Utc};
 use did_resolver::{
-    did_doc_builder::schema::{did_doc::DIDDocument, service::Service, types::uri::Uri},
-    did_parser::ParsedDID,
-    shared_types::did_document_metadata::DIDDocumentMetadata,
+    did_doc_builder::schema::{did_doc::DidDocument, service::Service, types::uri::Uri},
+    did_parser::ParsedDid,
+    shared_types::did_document_metadata::DidDocumentMetadata,
     traits::resolvable::{
-        resolution_metadata::DIDResolutionMetadata, resolution_output::DIDResolutionOutput,
+        resolution_metadata::DidResolutionMetadata, resolution_output::DidResolutionOutput,
     },
 };
 use serde_json::Value;
 
 use crate::{
-    error::{parsing::ParsingErrorSource, DIDSovError},
+    error::{parsing::ParsingErrorSource, DidSovError},
     service::{DidSovServiceType, EndpointDidSov},
 };
 
-fn prepare_ids(did: &str) -> Result<(Uri, ParsedDID), DIDSovError> {
+fn prepare_ids(did: &str) -> Result<(Uri, ParsedDid), DidSovError> {
     let service_id = Uri::new(did)?;
-    let ddo_id = ParsedDID::parse(did.to_string())?;
+    let ddo_id = ParsedDid::parse(did.to_string())?;
     Ok((service_id, ddo_id))
 }
 
-fn get_data_from_response(resp: &str) -> Result<Value, DIDSovError> {
+fn get_data_from_response(resp: &str) -> Result<Value, DidSovError> {
     let resp: serde_json::Value = serde_json::from_str(resp)?;
     match &resp["result"]["data"] {
         Value::String(ref data) => serde_json::from_str(data).map_err(|err| err.into()),
-        Value::Null => Err(DIDSovError::NotFound("DID not found".to_string())),
-        resp => Err(DIDSovError::ParsingError(
+        Value::Null => Err(DidSovError::NotFound("DID not found".to_string())),
+        resp => Err(DidSovError::ParsingError(
             ParsingErrorSource::LedgerResponseParsingError(format!(
                 "Unexpected data format in ledger response: {resp}"
             )),
@@ -33,11 +33,11 @@ fn get_data_from_response(resp: &str) -> Result<Value, DIDSovError> {
     }
 }
 
-fn get_txn_time_from_response(resp: &str) -> Result<i64, DIDSovError> {
+fn get_txn_time_from_response(resp: &str) -> Result<i64, DidSovError> {
     let resp: serde_json::Value = serde_json::from_str(resp)?;
     let txn_time = resp["result"]["txnTime"]
         .as_i64()
-        .ok_or(DIDSovError::ParsingError(
+        .ok_or(DidSovError::ParsingError(
             ParsingErrorSource::LedgerResponseParsingError("Failed to parse txnTime".to_string()),
         ))?;
     Ok(txn_time)
@@ -59,7 +59,7 @@ pub(super) fn is_valid_sovrin_did_id(id: &str) -> bool {
 pub(super) async fn ledger_response_to_ddo(
     did: &str,
     resp: &str,
-) -> Result<DIDResolutionOutput, DIDSovError> {
+) -> Result<DidResolutionOutput, DidSovError> {
     let (service_id, ddo_id) = prepare_ids(did)?;
 
     let service_data = get_data_from_response(resp)?;
@@ -79,21 +79,21 @@ pub(super) async fn ledger_response_to_ddo(
         service_builder.build()?
     };
 
-    let ddo = DIDDocument::builder(ddo_id).add_service(service).build();
+    let ddo = DidDocument::builder(ddo_id).add_service(service).build();
 
     let ddo_metadata = {
-        let mut metadata_builder = DIDDocumentMetadata::builder().deactivated(false);
+        let mut metadata_builder = DidDocumentMetadata::builder().deactivated(false);
         if let Some(datetime) = datetime {
             metadata_builder = metadata_builder.updated(datetime);
         };
         metadata_builder.build()
     };
 
-    let resolution_metadata = DIDResolutionMetadata::builder()
+    let resolution_metadata = DidResolutionMetadata::builder()
         .content_type("application/did+json".to_string())
         .build();
 
-    Ok(DIDResolutionOutput::builder(ddo)
+    Ok(DidResolutionOutput::builder(ddo)
         .did_document_metadata(ddo_metadata)
         .did_resolution_metadata(resolution_metadata)
         .build())

@@ -1,11 +1,11 @@
 use std::str::FromStr;
 
 use did_doc_builder::schema::{
-    did_doc::DIDDocument,
+    did_doc::DidDocument,
     types::{jsonwebkey::JsonWebKey, uri::Uri},
     verification_method::{VerificationMethod, VerificationMethodKind},
 };
-use did_parser::{ParsedDID, ParsedDIDUrl};
+use did_parser::{DidUrl, ParsedDid};
 use serde_json::Value;
 
 const VALID_DID_DOC_JSON: &str = r##"
@@ -73,7 +73,7 @@ const VALID_DID_DOC_JSON: &str = r##"
 
 #[test]
 fn test_deserialization() {
-    let did_doc: DIDDocument = serde_json::from_str(VALID_DID_DOC_JSON).unwrap();
+    let did_doc: DidDocument = serde_json::from_str(VALID_DID_DOC_JSON).unwrap();
 
     assert_eq!(
         did_doc.id(),
@@ -84,14 +84,14 @@ fn test_deserialization() {
         vec![Uri::from_str("https://example.com/user-profile/123").unwrap()]
     );
 
-    let controller: ParsedDID = "did:web:did-actor-alice".to_string().try_into().unwrap();
+    let controller: ParsedDid = "did:web:did-actor-alice".to_string().try_into().unwrap();
 
-    let pk_id = ParsedDIDUrl::parse(
+    let pk_id = DidUrl::parse(
         "did:web:did-actor-alice#z6MkrmNwty5ajKtFqc1U48oL2MMLjWjartwc5sf2AihZwXDN".to_string(),
     )
     .unwrap();
 
-    let vm1_id = ParsedDIDUrl::parse("#g1".to_string()).unwrap();
+    let vm1_id = DidUrl::parse("#g1".to_string()).unwrap();
     let vm1 = VerificationMethod::builder(vm1_id, controller.clone(), "JsonWebKey2020".to_string())
         .add_public_key_jwk(
             JsonWebKey::from_str(
@@ -105,7 +105,7 @@ fn test_deserialization() {
         )
         .build();
 
-    let vm2_id = ParsedDIDUrl::parse("#g2".to_string()).unwrap();
+    let vm2_id = DidUrl::parse("#g2".to_string()).unwrap();
     let vm2 = VerificationMethod::builder(
         vm2_id,
         controller.clone(),
@@ -161,7 +161,7 @@ fn test_deserialization() {
         )])
     );
 
-    let ka1_id = ParsedDIDUrl::parse(
+    let ka1_id = DidUrl::parse(
         "did:web:did-actor-alice#zC8GybikEfyNaausDA4mkT4egP7SNLx2T1d1kujLQbcP6h".to_string(),
     )
     .unwrap();
@@ -181,11 +181,11 @@ fn test_deserialization() {
 
 #[test]
 fn test_serialization() {
-    let did_doc: DIDDocument = serde_json::from_str(VALID_DID_DOC_JSON).unwrap();
+    let did_doc: DidDocument = serde_json::from_str(VALID_DID_DOC_JSON).unwrap();
 
     let serialized_json = serde_json::to_string(&did_doc).unwrap();
 
-    let original_json_value: DIDDocument = serde_json::from_str(VALID_DID_DOC_JSON).unwrap();
-    let serialized_json_value: DIDDocument = serde_json::from_str(&serialized_json).unwrap();
+    let original_json_value: DidDocument = serde_json::from_str(VALID_DID_DOC_JSON).unwrap();
+    let serialized_json_value: DidDocument = serde_json::from_str(&serialized_json).unwrap();
     assert_eq!(serialized_json_value, original_json_value);
 }

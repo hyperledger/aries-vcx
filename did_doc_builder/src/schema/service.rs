@@ -3,7 +3,7 @@ use std::collections::{HashMap, HashSet};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::error::DIDDocumentBuilderError;
+use crate::error::DidDocumentBuilderError;
 
 use super::{
     types::{uri::Uri, url::Url},
@@ -29,7 +29,7 @@ impl Service {
     pub fn builder(
         id: Uri,
         service_endpoint: Url,
-    ) -> Result<ServiceBuilder, DIDDocumentBuilderError> {
+    ) -> Result<ServiceBuilder, DidDocumentBuilderError> {
         ServiceBuilder::new(id, service_endpoint)
     }
 
@@ -59,7 +59,7 @@ pub struct ServiceBuilder {
 }
 
 impl ServiceBuilder {
-    pub fn new(id: Uri, service_endpoint: Url) -> Result<Self, DIDDocumentBuilderError> {
+    pub fn new(id: Uri, service_endpoint: Url) -> Result<Self, DidDocumentBuilderError> {
         Ok(Self {
             id,
             service_endpoint,
@@ -71,9 +71,9 @@ impl ServiceBuilder {
     pub fn add_service_type(
         mut self,
         service_type: String,
-    ) -> Result<Self, DIDDocumentBuilderError> {
+    ) -> Result<Self, DidDocumentBuilderError> {
         if service_type.is_empty() {
-            return Err(DIDDocumentBuilderError::MissingField("type"));
+            return Err(DidDocumentBuilderError::MissingField("type"));
         }
         self.service_type.insert(service_type);
         Ok(self)
@@ -84,9 +84,9 @@ impl ServiceBuilder {
         self
     }
 
-    pub fn build(self) -> Result<Service, DIDDocumentBuilderError> {
+    pub fn build(self) -> Result<Service, DidDocumentBuilderError> {
         if self.service_type.is_empty() {
-            Err(DIDDocumentBuilderError::MissingField("type"))
+            Err(DidDocumentBuilderError::MissingField("type"))
         } else {
             Ok(Service {
                 id: self.id,

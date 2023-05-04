@@ -5,22 +5,22 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use crate::{
     error::ParseError,
     utils::parse::{parse_did_method_id, parse_key_value, parse_path},
-    DIDRange,
+    DidRange,
 };
 
 #[derive(Default, Debug, Clone, PartialEq)]
-pub struct ParsedDIDUrl {
+pub struct DidUrl {
     did_url: String,
-    did: Option<DIDRange>,
-    method: Option<DIDRange>,
-    id: Option<DIDRange>,
-    path: Option<DIDRange>,
-    fragment: Option<DIDRange>,
-    queries: HashMap<DIDRange, DIDRange>,
-    params: HashMap<DIDRange, DIDRange>,
+    did: Option<DidRange>,
+    method: Option<DidRange>,
+    id: Option<DidRange>,
+    path: Option<DidRange>,
+    fragment: Option<DidRange>,
+    queries: HashMap<DidRange, DidRange>,
+    params: HashMap<DidRange, DidRange>,
 }
 
-impl ParsedDIDUrl {
+impl DidUrl {
     pub fn parse(did_url: String) -> Result<Self, ParseError> {
         let (did, method, id) = if did_url.starts_with('#')
             || did_url.starts_with('/')
@@ -83,7 +83,7 @@ impl ParsedDIDUrl {
             return Err(ParseError::InvalidInput("Empty DID URL"));
         }
 
-        Ok(ParsedDIDUrl {
+        Ok(DidUrl {
             did_url,
             did,
             method,
@@ -148,7 +148,7 @@ impl ParsedDIDUrl {
     }
 }
 
-impl TryFrom<String> for ParsedDIDUrl {
+impl TryFrom<String> for DidUrl {
     type Error = ParseError;
 
     fn try_from(did_url: String) -> Result<Self, Self::Error> {
@@ -156,13 +156,13 @@ impl TryFrom<String> for ParsedDIDUrl {
     }
 }
 
-impl Display for ParsedDIDUrl {
+impl Display for DidUrl {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.did_url)
     }
 }
 
-impl Serialize for ParsedDIDUrl {
+impl Serialize for DidUrl {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -171,12 +171,12 @@ impl Serialize for ParsedDIDUrl {
     }
 }
 
-impl<'de> Deserialize<'de> for ParsedDIDUrl {
+impl<'de> Deserialize<'de> for DidUrl {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
         let did_url = String::deserialize(deserializer)?;
-        ParsedDIDUrl::parse(did_url).map_err(serde::de::Error::custom)
+        DidUrl::parse(did_url).map_err(serde::de::Error::custom)
     }
 }

@@ -1,21 +1,21 @@
 use did_resolver::traits::resolvable::{
-    resolution_error::DIDResolutionError, resolution_metadata::DIDResolutionMetadata,
+    resolution_error::DidResolutionError, resolution_metadata::DidResolutionMetadata,
 };
 
-use super::DIDSovError;
+use super::DidSovError;
 
-impl From<&DIDSovError> for DIDResolutionError {
-    fn from(err: &DIDSovError) -> Self {
+impl From<&DidSovError> for DidResolutionError {
+    fn from(err: &DidSovError) -> Self {
         match err {
-            DIDSovError::NotFound(_) => DIDResolutionError::NotFound,
-            DIDSovError::MethodNotSupported(_) => DIDResolutionError::MethodNotSupported,
-            _ => DIDResolutionError::InternalError,
+            DidSovError::NotFound(_) => DidResolutionError::NotFound,
+            DidSovError::MethodNotSupported(_) => DidResolutionError::MethodNotSupported,
+            _ => DidResolutionError::InternalError,
         }
     }
 }
 
-impl From<&DIDSovError> for DIDResolutionMetadata {
-    fn from(err: &DIDSovError) -> Self {
-        DIDResolutionMetadata::builder().error(err.into()).build()
+impl From<&DidSovError> for DidResolutionMetadata {
+    fn from(err: &DidSovError) -> Self {
+        DidResolutionMetadata::builder().error(err.into()).build()
     }
 }

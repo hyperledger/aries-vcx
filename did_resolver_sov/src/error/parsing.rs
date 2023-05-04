@@ -1,7 +1,7 @@
 use did_resolver::did_parser;
 use thiserror::Error;
 
-use super::DIDSovError;
+use super::DidSovError;
 
 #[derive(Error, Debug)]
 pub enum ParsingErrorSource {
@@ -13,14 +13,14 @@ pub enum ParsingErrorSource {
     LedgerResponseParsingError(String),
 }
 
-impl From<did_parser::ParseError> for DIDSovError {
+impl From<did_parser::ParseError> for DidSovError {
     fn from(error: did_parser::ParseError) -> Self {
-        DIDSovError::ParsingError(ParsingErrorSource::DidDocumentParsingError(error))
+        DidSovError::ParsingError(ParsingErrorSource::DidDocumentParsingError(error))
     }
 }
 
-impl From<serde_json::Error> for DIDSovError {
+impl From<serde_json::Error> for DidSovError {
     fn from(error: serde_json::Error) -> Self {
-        DIDSovError::ParsingError(ParsingErrorSource::SerdeError(error))
+        DidSovError::ParsingError(ParsingErrorSource::SerdeError(error))
     }
 }

@@ -2,7 +2,7 @@ pub mod parsing;
 mod resolution;
 
 use aries_vcx_core::errors::error::AriesVcxCoreError;
-use did_resolver::did_doc_builder::error::DIDDocumentBuilderError;
+use did_resolver::did_doc_builder::error::DidDocumentBuilderError;
 use thiserror::Error;
 
 use self::parsing::ParsingErrorSource;
@@ -12,7 +12,7 @@ use self::parsing::ParsingErrorSource;
 // TODO: Perhaps split into input errors and external errors?
 #[derive(Error, Debug)]
 #[non_exhaustive]
-pub enum DIDSovError {
+pub enum DidSovError {
     #[error("Not found: {0}")]
     NotFound(String),
     #[error("DID method not supported: {0}")]
@@ -22,11 +22,11 @@ pub enum DIDSovError {
     #[error("Internal error")]
     InternalError,
     #[error("Invalid DID: {0}")]
-    InvalidDID(String),
+    InvalidDid(String),
     #[error("AriesVCX Core error: {0}")]
     AriesVcxCoreError(#[from] AriesVcxCoreError),
     #[error("DID Document Builder Error: {0}")]
-    DIDDocumentBuilderError(#[from] DIDDocumentBuilderError),
+    DidDocumentBuilderError(#[from] DidDocumentBuilderError),
     #[error("Parsing error: {0}")]
     ParsingError(#[from] ParsingErrorSource),
     #[error(transparent)]

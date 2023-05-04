@@ -7,7 +7,7 @@ use std::{
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::error::DIDDocumentBuilderError;
+use crate::error::DidDocumentBuilderError;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 // TODO: Introduce proper custom type
@@ -24,13 +24,13 @@ pub struct JsonWebKey {
 }
 
 impl JsonWebKey {
-    pub fn new(jwk: &str) -> Result<Self, DIDDocumentBuilderError> {
+    pub fn new(jwk: &str) -> Result<Self, DidDocumentBuilderError> {
         Ok(serde_json::from_str(jwk)?)
     }
 }
 
 impl FromStr for JsonWebKey {
-    type Err = DIDDocumentBuilderError;
+    type Err = DidDocumentBuilderError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Self::new(s)

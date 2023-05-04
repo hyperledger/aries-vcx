@@ -2,19 +2,19 @@ use std::io::Cursor;
 
 use did_resolver::{
     did_doc_builder::schema::{
-        did_doc::DIDDocument, service::Service, verification_method::VerificationMethod,
+        did_doc::DidDocument, service::Service, verification_method::VerificationMethod,
     },
-    did_parser::ParsedDIDUrl,
+    did_parser::DidUrl,
     traits::{
         dereferenceable::{
-            dereferencing_metadata::DIDDereferencingMetadata,
-            dereferencing_output::DIDDereferencingOutput,
+            dereferencing_metadata::DidDereferencingMetadata,
+            dereferencing_output::DidDereferencingOutput,
         },
-        resolvable::resolution_output::DIDResolutionOutput,
+        resolvable::resolution_output::DidResolutionOutput,
     },
 };
 
-use crate::error::DIDSovError;
+use crate::error::DidSovError;
 
 pub fn service_by_id<F>(services: &[Service], predicate: F) -> Option<&Service>
 where
@@ -36,11 +36,11 @@ where
 }
 
 fn content_stream_from(
-    did_document: &DIDDocument,
-    did_url: &ParsedDIDUrl,
-) -> Result<Cursor<Vec<u8>>, DIDSovError> {
+    did_document: &DidDocument,
+    did_url: &DidUrl,
+) -> Result<Cursor<Vec<u8>>, DidSovError> {
     let fragment = did_url.fragment().ok_or_else(|| {
-        DIDSovError::InvalidDID(format!("No fragment provided in the DID URL {}", did_url))
+        DidSovError::InvalidDid(format!("No fragment provided in the DID URL {}", did_url))
     })?;
 
     let did_url_string = did_url.to_string();
@@ -54,13 +54,13 @@ fn content_stream_from(
         (Some(service), None) => serde_json::to_value(service)?,
         (None, Some(authentication)) => serde_json::to_value(authentication)?,
         (None, None) => {
-            return Err(DIDSovError::NotFound(format!(
+            return Err(DidSovError::NotFound(format!(
                 "Fragment '{}' not found in the DID document",
                 fragment
             )));
         }
         (Some(_), Some(_)) => {
-            return Err(DIDSovError::InvalidDID(format!(
+            return Err(DidSovError::InvalidDid(format!(
                 "Fragment '{}' is ambiguous",
                 fragment
             )));
@@ -71,18 +71,18 @@ fn content_stream_from(
 
 // TODO: Currently, only fragment dereferencing is supported
 pub(crate) fn dereference_did_document(
-    resolution_output: &DIDResolutionOutput,
-    did_url: &ParsedDIDUrl,
-) -> Result<DIDDereferencingOutput<Cursor<Vec<u8>>>, DIDSovError> {
+    resolution_output: &DidResolutionOutput,
+    did_url: &DidUrl,
+) -> Result<DidDereferencingOutput<Cursor<Vec<u8>>>, DidSovError> {
     let content_stream = content_stream_from(resolution_output.did_document(), did_url)?;
 
     let content_metadata = resolution_output.did_document_metadata().clone();
 
-    let dereferencing_metadata = DIDDereferencingMetadata::builder()
+    let dereferencing_metadata = DidDereferencingMetadata::builder()
         .content_type("application/did+json".to_string())
         .build();
 
-    Ok(DIDDereferencingOutput::builder(content_stream)
+    Ok(DidDereferencingOutput::builder(content_stream)
         .content_metadata(content_metadata)
         .dereferencing_metadata(dereferencing_metadata)
         .build())
@@ -92,14 +92,14 @@ pub(crate) fn dereference_did_document(
 mod tests {
     use super::*;
 
-    use did_resolver::did_doc_builder::schema::did_doc::DIDDocumentBuilder;
-    use did_resolver::did_parser::ParsedDIDUrl;
-    use did_resolver::traits::resolvable::resolution_output::DIDResolutionOutput;
+    use did_resolver::did_doc_builder::schema::did_doc::DidDocumentBuilder;
+    use did_resolver::did_parser::DidUrl;
+    use did_resolver::traits::resolvable::resolution_output::DidResolutionOutput;
     use serde_json::Value;
 
-    fn example_did_document_builder() -> DIDDocumentBuilder {
+    fn example_did_document_builder() -> DidDocumentBuilder {
         let verification_method = VerificationMethod::builder(
-            ParsedDIDUrl::parse("did:example:123456789abcdefghi#keys-1".to_string()).unwrap(),
+            DidUrl::parse("did:example:123456789abcdefghi#keys-1".to_string()).unwrap(),
             "did:example:123456789abcdefghi"
                 .to_string()
                 .try_into()
@@ -132,7 +132,7 @@ mod tests {
         .build()
         .unwrap();
 
-        DIDDocument::builder(
+        DidDocument::builder(
             "did:example:123456789abcdefghi"
                 .to_string()
                 .try_into()
@@ -143,15 +143,14 @@ mod tests {
         .add_service(messaging_service)
     }
 
-    fn example_resolution_output() -> DIDResolutionOutput {
-        DIDResolutionOutput::builder(example_did_document_builder().build()).build()
+    fn example_resolution_output() -> DidResolutionOutput {
+        DidResolutionOutput::builder(example_did_document_builder().build()).build()
     }
 
     #[test]
     fn test_content_stream_from() {
         let did_document = example_did_document_builder().build();
-        let did_url =
-            ParsedDIDUrl::parse("did:example:123456789abcdefghi#keys-1".to_string()).unwrap();
+        let did_url = DidUrl::parse("did:example:123456789abcdefghi#keys-1".to_string()).unwrap();
         let content_stream = content_stream_from(&did_document, &did_url).unwrap();
         let content_value: Value = serde_json::from_reader(content_stream).unwrap();
 
@@ -169,8 +168,7 @@ mod tests {
     #[test]
     fn test_dereference_did_document() {
         let resolution_output = example_resolution_output();
-        let did_url =
-            ParsedDIDUrl::parse("did:example:123456789abcdefghi#keys-1".to_string()).unwrap();
+        let did_url = DidUrl::parse("did:example:123456789abcdefghi#keys-1".to_string()).unwrap();
         let dereferencing_output = dereference_did_document(&resolution_output, &did_url).unwrap();
 
         let content_value: Value =
@@ -200,9 +198,9 @@ mod tests {
     fn test_dereference_did_document_not_found() {
         let resolution_output = example_resolution_output();
         let did_url =
-            ParsedDIDUrl::parse("did:example:123456789abcdefghi#non-existent".to_string()).unwrap();
+            DidUrl::parse("did:example:123456789abcdefghi#non-existent".to_string()).unwrap();
         let result = dereference_did_document(&resolution_output, &did_url);
-        assert!(matches!(result, Err(DIDSovError::NotFound(_))));
+        assert!(matches!(result, Err(DidSovError::NotFound(_))));
     }
 
     #[test]
@@ -221,10 +219,9 @@ mod tests {
             did_document_builder.add_service(additional_service).build()
         };
 
-        let resolution_output = DIDResolutionOutput::builder(did_document).build();
-        let did_url =
-            ParsedDIDUrl::parse("did:example:123456789abcdefghi#keys-1".to_string()).unwrap();
+        let resolution_output = DidResolutionOutput::builder(did_document).build();
+        let did_url = DidUrl::parse("did:example:123456789abcdefghi#keys-1".to_string()).unwrap();
         let result = dereference_did_document(&resolution_output, &did_url);
-        assert!(matches!(result, Err(DIDSovError::InvalidDID(_))));
+        assert!(matches!(result, Err(DidSovError::InvalidDid(_))));
     }
 }

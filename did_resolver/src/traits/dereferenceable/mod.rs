@@ -5,21 +5,21 @@ pub mod dereferencing_output;
 
 use std::io::Read;
 
-use crate::{error::GenericError, traits::resolvable::DIDResolvable};
+use crate::{error::GenericError, traits::resolvable::DidResolvable};
 use async_trait::async_trait;
-use did_parser::ParsedDIDUrl;
+use did_parser::DidUrl;
 
 use self::{
-    dereferencing_options::DIDDereferencingOptions, dereferencing_output::DIDDereferencingOutput,
+    dereferencing_options::DidDereferencingOptions, dereferencing_output::DidDereferencingOutput,
 };
 
 #[async_trait]
-pub trait DIDDereferenceable: DIDResolvable {
+pub trait DidDereferenceable: DidResolvable {
     type Output: Read + Send + Sync;
 
     async fn dereference(
         &self,
-        did: &ParsedDIDUrl,
-        options: &DIDDereferencingOptions,
-    ) -> Result<DIDDereferencingOutput<Self::Output>, GenericError>;
+        did: &DidUrl,
+        options: &DidDereferencingOptions,
+    ) -> Result<DidDereferencingOutput<Self::Output>, GenericError>;
 }

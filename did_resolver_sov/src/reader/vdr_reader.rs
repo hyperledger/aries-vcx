@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use crate::error::DIDSovError;
+use crate::error::DidSovError;
 use aries_vcx_core::{
     ledger::indy_vdr_ledger::{IndyVdrLedger, IndyVdrLedgerPool, LedgerPoolConfig},
     wallet::{base_wallet::BaseWallet, indy_wallet::IndySdkWallet},
@@ -10,7 +10,7 @@ use aries_vcx_core::{
 use super::ConcreteAttrReader;
 
 impl TryFrom<LedgerPoolConfig> for ConcreteAttrReader {
-    type Error = DIDSovError;
+    type Error = DidSovError;
 
     fn try_from(pool_config: LedgerPoolConfig) -> Result<Self, Self::Error> {
         let wallet = Arc::new(IndySdkWallet::new(INVALID_WALLET_HANDLE)) as Arc<dyn BaseWallet>;

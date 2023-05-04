@@ -1,4 +1,4 @@
-use did_parser::ParsedDID;
+use did_parser::ParsedDid;
 
 macro_rules! test_cases_negative {
     ($($name:ident: $input:expr)*) => {
@@ -6,7 +6,7 @@ macro_rules! test_cases_negative {
             #[test]
             fn $name() {
                 println!("Testing {}", $input);
-                assert!(ParsedDID::parse($input.to_string()).is_err());
+                assert!(ParsedDid::parse($input.to_string()).is_err());
             }
         )*
     };

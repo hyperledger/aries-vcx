@@ -1,46 +1,46 @@
 use url::ParseError;
 
 #[derive(Debug)]
-pub enum DIDDocumentBuilderError {
+pub enum DidDocumentBuilderError {
     InvalidInput(String),
     MissingField(&'static str),
     JsonError(serde_json::Error),
 }
 
-impl std::fmt::Display for DIDDocumentBuilderError {
+impl std::fmt::Display for DidDocumentBuilderError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            DIDDocumentBuilderError::InvalidInput(input) => {
+            DidDocumentBuilderError::InvalidInput(input) => {
                 write!(f, "Invalid input: {}", input)
             }
-            DIDDocumentBuilderError::MissingField(field) => {
+            DidDocumentBuilderError::MissingField(field) => {
                 write!(f, "Missing field: {}", field)
             }
-            DIDDocumentBuilderError::JsonError(error) => {
+            DidDocumentBuilderError::JsonError(error) => {
                 write!(f, "(De)serialization error: {}", error)
             }
         }
     }
 }
 
-impl std::error::Error for DIDDocumentBuilderError {
+impl std::error::Error for DidDocumentBuilderError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
-            DIDDocumentBuilderError::InvalidInput(_) => None,
-            DIDDocumentBuilderError::MissingField(_) => None,
-            DIDDocumentBuilderError::JsonError(error) => Some(error),
+            DidDocumentBuilderError::InvalidInput(_) => None,
+            DidDocumentBuilderError::MissingField(_) => None,
+            DidDocumentBuilderError::JsonError(error) => Some(error),
         }
     }
 }
 
-impl From<serde_json::Error> for DIDDocumentBuilderError {
+impl From<serde_json::Error> for DidDocumentBuilderError {
     fn from(error: serde_json::Error) -> Self {
-        DIDDocumentBuilderError::JsonError(error)
+        DidDocumentBuilderError::JsonError(error)
     }
 }
 
-impl From<ParseError> for DIDDocumentBuilderError {
+impl From<ParseError> for DidDocumentBuilderError {
     fn from(error: ParseError) -> Self {
-        DIDDocumentBuilderError::InvalidInput(error.to_string())
+        DidDocumentBuilderError::InvalidInput(error.to_string())
     }
 }

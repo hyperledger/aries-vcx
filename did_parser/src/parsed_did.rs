@@ -3,17 +3,17 @@ use std::fmt::{Display, Formatter};
 
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-use crate::ParsedDIDUrl;
-use crate::{error::ParseError, utils::parse::parse_did_method_id, DIDRange};
+use crate::DidUrl;
+use crate::{error::ParseError, utils::parse::parse_did_method_id, DidRange};
 
 #[derive(Default, Debug, Clone, PartialEq, Eq, Hash)]
-pub struct ParsedDID {
+pub struct ParsedDid {
     did: String,
-    method: DIDRange,
-    id: DIDRange,
+    method: DidRange,
+    id: DidRange,
 }
 
-impl ParsedDID {
+impl ParsedDid {
     pub fn parse(did: String) -> Result<Self, ParseError> {
         let (_, method, id) = parse_did_method_id(&did)?;
 
@@ -37,7 +37,7 @@ impl ParsedDID {
     }
 }
 
-impl TryFrom<String> for ParsedDID {
+impl TryFrom<String> for ParsedDid {
     type Error = ParseError;
 
     fn try_from(did: String) -> Result<Self, Self::Error> {
@@ -45,13 +45,13 @@ impl TryFrom<String> for ParsedDID {
     }
 }
 
-impl Display for ParsedDID {
+impl Display for ParsedDid {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.did)
     }
 }
 
-impl Serialize for ParsedDID {
+impl Serialize for ParsedDid {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -60,7 +60,7 @@ impl Serialize for ParsedDID {
     }
 }
 
-impl<'de> Deserialize<'de> for ParsedDID {
+impl<'de> Deserialize<'de> for ParsedDid {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
@@ -70,10 +70,10 @@ impl<'de> Deserialize<'de> for ParsedDID {
     }
 }
 
-impl TryFrom<&ParsedDIDUrl> for ParsedDID {
+impl TryFrom<&DidUrl> for ParsedDid {
     type Error = ParseError;
 
-    fn try_from(did_url: &ParsedDIDUrl) -> Result<Self, Self::Error> {
+    fn try_from(did_url: &DidUrl) -> Result<Self, Self::Error> {
         Self::parse(
             did_url
                 .did()

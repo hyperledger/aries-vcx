@@ -1,19 +1,19 @@
 use serde::{Deserialize, Serialize};
 use url::Url as UrlDep;
 
-use crate::error::DIDDocumentBuilderError;
+use crate::error::DidDocumentBuilderError;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct Url(UrlDep);
 
 impl Url {
-    pub fn new(url: &str) -> Result<Self, DIDDocumentBuilderError> {
+    pub fn new(url: &str) -> Result<Self, DidDocumentBuilderError> {
         Ok(Self(UrlDep::parse(url)?))
     }
 }
 
 impl TryFrom<&str> for Url {
-    type Error = DIDDocumentBuilderError;
+    type Error = DidDocumentBuilderError;
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         Ok(Self(UrlDep::parse(value)?))

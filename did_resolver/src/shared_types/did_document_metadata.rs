@@ -1,13 +1,13 @@
 use std::collections::HashSet;
 
 use chrono::{DateTime, Utc};
-use did_parser::ParsedDID;
+use did_parser::ParsedDid;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 #[serde(default)]
 #[serde(rename_all = "camelCase")]
-pub struct DIDDocumentMetadata {
+pub struct DidDocumentMetadata {
     #[serde(skip_serializing_if = "Option::is_none")]
     created: Option<DateTime<Utc>>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -21,14 +21,14 @@ pub struct DIDDocumentMetadata {
     #[serde(skip_serializing_if = "Option::is_none")]
     next_version_id: Option<String>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
-    equivalent_id: Vec<ParsedDID>,
+    equivalent_id: Vec<ParsedDid>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    canonical_id: Option<ParsedDID>,
+    canonical_id: Option<ParsedDid>,
 }
 
-impl DIDDocumentMetadata {
-    pub fn builder() -> DIDDocumentMetadataBuilder {
-        DIDDocumentMetadataBuilder::default()
+impl DidDocumentMetadata {
+    pub fn builder() -> DidDocumentMetadataBuilder {
+        DidDocumentMetadataBuilder::default()
     }
 
     pub fn created(&self) -> Option<DateTime<Utc>> {
@@ -55,28 +55,28 @@ impl DIDDocumentMetadata {
         self.next_version_id.as_ref()
     }
 
-    pub fn equivalent_id(&self) -> &[ParsedDID] {
+    pub fn equivalent_id(&self) -> &[ParsedDid] {
         self.equivalent_id.as_ref()
     }
 
-    pub fn canonical_id(&self) -> Option<&ParsedDID> {
+    pub fn canonical_id(&self) -> Option<&ParsedDid> {
         self.canonical_id.as_ref()
     }
 }
 
 #[derive(Default)]
-pub struct DIDDocumentMetadataBuilder {
+pub struct DidDocumentMetadataBuilder {
     created: Option<DateTime<Utc>>,
     updated: Option<DateTime<Utc>>,
     deactivated: Option<bool>,
     next_update: Option<DateTime<Utc>>,
     version_id: Option<String>,
     next_version_id: Option<String>,
-    equivalent_id: HashSet<ParsedDID>,
-    canonical_id: Option<ParsedDID>,
+    equivalent_id: HashSet<ParsedDid>,
+    canonical_id: Option<ParsedDid>,
 }
 
-impl DIDDocumentMetadataBuilder {
+impl DidDocumentMetadataBuilder {
     pub fn created(mut self, created: DateTime<Utc>) -> Self {
         self.created = Some(created);
         self
@@ -107,18 +107,18 @@ impl DIDDocumentMetadataBuilder {
         self
     }
 
-    pub fn add_equivalent_id(mut self, equivalent_id: ParsedDID) -> Self {
+    pub fn add_equivalent_id(mut self, equivalent_id: ParsedDid) -> Self {
         self.equivalent_id.insert(equivalent_id);
         self
     }
 
-    pub fn canonical_id(mut self, canonical_id: ParsedDID) -> Self {
+    pub fn canonical_id(mut self, canonical_id: ParsedDid) -> Self {
         self.canonical_id = Some(canonical_id);
         self
     }
 
-    pub fn build(self) -> DIDDocumentMetadata {
-        DIDDocumentMetadata {
+    pub fn build(self) -> DidDocumentMetadata {
+        DidDocumentMetadata {
             created: self.created,
             updated: self.updated,
             deactivated: self.deactivated,
