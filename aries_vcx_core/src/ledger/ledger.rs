@@ -13,25 +13,6 @@ pub trait LedgerRead {
     type RevRegDelta;
     type RevReg;
 
-    type Request;
-    type ReqResult;
-
-    // returns request result as JSON
-    async fn submit_request(&self, request_json: Self::Request) -> VcxCoreResult<Self::ReqResult>;
-
-    // adds endorser to request and signs with submitter_did, returns the transaction ready for endorser to take
-    async fn set_endorser(
-        &self,
-        submitter_did: &str,
-        request: Self::Request,
-        endorser: &str,
-    ) -> VcxCoreResult<Self::Request>;
-
-    async fn get_txn_author_agreement(&self) -> VcxCoreResult<String>;
-
-    // returns request result as JSON
-    async fn get_nym(&self, did: &str) -> VcxCoreResult<Self::ReqResult>;
-
     // Schema json.
     // {
     //     id: identifier of schema
@@ -47,9 +28,6 @@ pub trait LedgerRead {
     // if submitter_did provided, try use cache
     // TO CONSIDER - do we need to return the cred def ID in a tuple? is it ever different to the input?
     async fn get_cred_def(&self, cred_def_id: &str, submitter_did: Option<&str>) -> VcxCoreResult<Self::CredDef>;
-
-    // returns request result as JSON
-    async fn get_attr(&self, target_did: &str, attr_name: &str) -> VcxCoreResult<Self::ReqResult>;
 
     // # Returns
     // Revocation Registry Definition Id and Revocation Registry Definition json.
@@ -97,43 +75,10 @@ pub trait LedgerRead {
     //     "ver": string - version revocation registry json
     // }
     async fn get_rev_reg(&self, rev_reg_id: &str, timestamp: u64) -> VcxCoreResult<(String, Self::RevReg, u64)>;
-
-    // returns request result as JSON
-    async fn get_ledger_txn(&self, seq_no: i32, submitter_did: Option<&str>) -> VcxCoreResult<Self::ReqResult>;
 }
 
 #[async_trait]
 pub trait LedgerWrite: LedgerRead {
-    // returns request result as JSON
-    async fn sign_and_submit_request(
-        &self,
-        submitter_did: &str,
-        request_json: Self::Schema,
-    ) -> VcxCoreResult<Self::ReqResult>;
-
-    // endorsers/multi signs a request, submits to ledger, and verifies successful result
-    async fn endorse_transaction(&self, endorser_did: &str, request_json: Self::Request) -> VcxCoreResult<()>;
-
-    // returns request result as JSON
-    async fn add_attr(&self, target_did: &str, attrib_json: &str) -> VcxCoreResult<Self::ReqResult>;
-
-    // returns request result as JSON
-    async fn publish_nym(
-        &self,
-        submitter_did: &str,
-        target_did: &str,
-        verkey: Option<&str>,
-        data: Option<&str>,
-        role: Option<&str>,
-    ) -> VcxCoreResult<Self::ReqResult>;
-
-    // returns request as JSON
-    async fn build_schema_request(
-        &self,
-        submitter_did: &str,
-        schema_json: Self::Schema,
-    ) -> VcxCoreResult<Self::ReqResult>;
-
     async fn publish_schema(
         &self,
         schema_json: Self::Schema,
@@ -151,4 +96,6 @@ pub trait LedgerWrite: LedgerRead {
         rev_reg_entry_json: &str,
         submitter_did: &str,
     ) -> VcxCoreResult<()>;
+
+    async fn publish_rev_reg(&self, rev_reg_id: &str, rev_reg: Self::RevReg, timestamp: u64) -> VcxCoreResult<()>;
 }
