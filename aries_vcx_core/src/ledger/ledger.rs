@@ -17,10 +17,15 @@ pub trait LedgerRead {
     type ReqResult;
 
     // returns request result as JSON
-    async fn submit_request(&self, request_json: &str) -> VcxCoreResult<Self::ReqResult>;
+    async fn submit_request(&self, request_json: Self::Request) -> VcxCoreResult<Self::ReqResult>;
 
     // adds endorser to request and signs with submitter_did, returns the transaction ready for endorser to take
-    async fn set_endorser(&self, submitter_did: &str, request: &str, endorser: &str) -> VcxCoreResult<Self::Request>;
+    async fn set_endorser(
+        &self,
+        submitter_did: &str,
+        request: Self::Request,
+        endorser: &str,
+    ) -> VcxCoreResult<Self::Request>;
 
     async fn get_txn_author_agreement(&self) -> VcxCoreResult<String>;
 
@@ -100,10 +105,14 @@ pub trait LedgerRead {
 #[async_trait]
 pub trait LedgerWrite: LedgerRead {
     // returns request result as JSON
-    async fn sign_and_submit_request(&self, submitter_did: &str, request_json: &str) -> VcxCoreResult<Self::ReqResult>;
+    async fn sign_and_submit_request(
+        &self,
+        submitter_did: &str,
+        request_json: Self::Schema,
+    ) -> VcxCoreResult<Self::ReqResult>;
 
     // endorsers/multi signs a request, submits to ledger, and verifies successful result
-    async fn endorse_transaction(&self, endorser_did: &str, request_json: &str) -> VcxCoreResult<()>;
+    async fn endorse_transaction(&self, endorser_did: &str, request_json: Self::Request) -> VcxCoreResult<()>;
 
     // returns request result as JSON
     async fn add_attr(&self, target_did: &str, attrib_json: &str) -> VcxCoreResult<Self::ReqResult>;
@@ -119,11 +128,15 @@ pub trait LedgerWrite: LedgerRead {
     ) -> VcxCoreResult<Self::ReqResult>;
 
     // returns request as JSON
-    async fn build_schema_request(&self, submitter_did: &str, schema_json: Self::Schema) -> VcxCoreResult<Self::ReqResult>;
+    async fn build_schema_request(
+        &self,
+        submitter_did: &str,
+        schema_json: Self::Schema,
+    ) -> VcxCoreResult<Self::ReqResult>;
 
     async fn publish_schema(
         &self,
-        schema_json: &str,
+        schema_json: Self::Schema,
         submitter_did: &str,
         endorser_did: Option<String>,
     ) -> VcxCoreResult<()>;
