@@ -6,9 +6,7 @@ use crate::errors::error::VcxCoreResult;
 #[async_trait]
 pub trait LedgerRead {
     type Schema;
-
     type CredDef;
-
     type RevRegDef;
     type RevRegDelta;
     type RevReg;
