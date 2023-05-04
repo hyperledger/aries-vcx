@@ -22,6 +22,14 @@ impl Multibase {
         })?;
         Ok(Self { base, bytes })
     }
+
+    pub fn base_to_multibase(base: Base, encoded: &str) -> Self {
+        let multibase_encoded = format!("{}{}", base.code(), encoded);
+        Self {
+            base,
+            bytes: multibase_encoded.as_bytes().to_vec(),
+        }
+    }
 }
 
 impl Serialize for Multibase {
@@ -121,5 +129,22 @@ mod tests {
             multibase.to_string(),
             "QmWvQxTqbG2Z9HPJgG57jjwR154cKhbtJenbyYTWkjgF3e"
         );
+    }
+
+    #[test]
+    fn test_base_to_multibase() {
+        let multibase = Multibase::base_to_multibase(
+            Base::Base58Btc,
+            "QmWvQxTqbG2Z9HPJgG57jjwR154cKhbtJenbyYTWkjgF3e",
+        );
+        assert_eq!(
+            multibase,
+            Multibase {
+                base: Base::Base58Btc,
+                bytes: "zQmWvQxTqbG2Z9HPJgG57jjwR154cKhbtJenbyYTWkjgF3e"
+                    .as_bytes()
+                    .to_vec()
+            }
+        )
     }
 }

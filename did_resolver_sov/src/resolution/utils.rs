@@ -185,7 +185,10 @@ mod tests {
             "https://example.com/"
         );
         assert_eq!(
-            ddo.verification_method()[0].extra_field("publicKeyBase58"),
+            ddo.verification_method()[0]
+                .extra_field("publicKeyBase58")
+                .unwrap()
+                .clone(),
             Value::String("9wvq2i4xUa5umXoThe83CDgx1e5bsjZKJL4DEWvTP9qe".to_string())
         );
         assert_eq!(
