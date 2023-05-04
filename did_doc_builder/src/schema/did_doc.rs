@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use did_parser::{DidUrl, ParsedDid};
+use did_parser::{Did, DidUrl};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -11,13 +11,13 @@ use super::{
     verification_method::{VerificationMethod, VerificationMethodKind},
 };
 
-type ControllerAlias = OneOrList<ParsedDid>;
+type ControllerAlias = OneOrList<Did>;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 #[serde(default)]
 #[serde(rename_all = "camelCase")]
 pub struct DidDocument {
-    id: ParsedDid,
+    id: Did,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     also_known_as: Vec<Uri>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -42,11 +42,11 @@ pub struct DidDocument {
 }
 
 impl DidDocument {
-    pub fn builder(id: ParsedDid) -> DidDocumentBuilder {
+    pub fn builder(id: Did) -> DidDocumentBuilder {
         DidDocumentBuilder::new(id)
     }
 
-    pub fn id(&self) -> &ParsedDid {
+    pub fn id(&self) -> &Did {
         &self.id
     }
 
@@ -54,7 +54,7 @@ impl DidDocument {
         self.also_known_as.as_ref()
     }
 
-    pub fn controller(&self) -> Option<&OneOrList<ParsedDid>> {
+    pub fn controller(&self) -> Option<&OneOrList<Did>> {
         self.controller.as_ref()
     }
 
@@ -93,9 +93,9 @@ impl DidDocument {
 
 #[derive(Debug, Default)]
 pub struct DidDocumentBuilder {
-    id: ParsedDid,
+    id: Did,
     also_known_as: Vec<Uri>,
-    controller: Vec<ParsedDid>,
+    controller: Vec<Did>,
     verification_method: Vec<VerificationMethod>,
     authentication: Vec<VerificationMethodKind>,
     assertion_method: Vec<VerificationMethodKind>,
@@ -107,7 +107,7 @@ pub struct DidDocumentBuilder {
 }
 
 impl DidDocumentBuilder {
-    pub fn new(id: ParsedDid) -> Self {
+    pub fn new(id: Did) -> Self {
         Self {
             id,
             ..Default::default()
@@ -119,7 +119,7 @@ impl DidDocumentBuilder {
         self
     }
 
-    pub fn add_controller(mut self, controller: ParsedDid) -> Self {
+    pub fn add_controller(mut self, controller: Did) -> Self {
         self.controller.push(controller);
         self
     }
@@ -228,20 +228,20 @@ mod tests {
 
     #[test]
     fn test_did_document_builder() {
-        let id = ParsedDid::parse("did:example:123456789abcdefghi".to_string()).unwrap();
+        let id = Did::parse("did:example:123456789abcdefghi".to_string()).unwrap();
         let also_known_as = Uri::new("https://example.com").unwrap();
-        let controller = ParsedDid::parse("did:example:controller".to_string()).unwrap();
+        let controller = Did::parse("did:example:controller".to_string()).unwrap();
 
         let verification_method = VerificationMethod::builder(
             DidUrl::parse("did:example:vm1".to_string()).unwrap(),
-            ParsedDid::parse("did:example:vm2".to_string()).unwrap(),
+            Did::parse("did:example:vm2".to_string()).unwrap(),
             "typevm".to_string(),
         )
         .build();
         let authentication_reference = DidUrl::parse("did:example:authref".to_string()).unwrap();
         let assertion_method = VerificationMethod::builder(
             DidUrl::parse("did:example:am1".to_string()).unwrap(),
-            ParsedDid::parse("did:example:am2".to_string()).unwrap(),
+            Did::parse("did:example:am2".to_string()).unwrap(),
             "typeam".to_string(),
         )
         .build();

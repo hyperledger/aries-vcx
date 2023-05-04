@@ -5,7 +5,7 @@ pub mod resolution_output;
 
 use crate::error::GenericError;
 use async_trait::async_trait;
-use did_parser::ParsedDid;
+use did_parser::Did;
 
 use self::{resolution_options::DidResolutionOptions, resolution_output::DidResolutionOutput};
 
@@ -13,7 +13,7 @@ use self::{resolution_options::DidResolutionOptions, resolution_output::DidResol
 pub trait DidResolvable {
     async fn resolve(
         &self,
-        did: &ParsedDid,
+        did: &Did,
         options: &DidResolutionOptions,
     ) -> Result<DidResolutionOutput, GenericError>;
 }

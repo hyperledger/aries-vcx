@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use did_resolver::{
-    did_parser::ParsedDid,
+    did_parser::Did,
     error::GenericError,
     shared_types::media_type::MediaType,
     traits::resolvable::{
@@ -29,7 +29,7 @@ impl DidSovResolver {
 impl DidResolvable for DidSovResolver {
     async fn resolve(
         &self,
-        parsed_did: &ParsedDid,
+        parsed_did: &Did,
         options: &DidResolutionOptions,
     ) -> Result<DidResolutionOutput, GenericError> {
         if let Some(accept) = options.accept() {

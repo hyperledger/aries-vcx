@@ -1,7 +1,7 @@
 use chrono::{DateTime, NaiveDateTime, Utc};
 use did_resolver::{
     did_doc_builder::schema::{did_doc::DidDocument, service::Service, types::uri::Uri},
-    did_parser::ParsedDid,
+    did_parser::Did,
     shared_types::did_document_metadata::DidDocumentMetadata,
     traits::resolvable::{
         resolution_metadata::DidResolutionMetadata, resolution_output::DidResolutionOutput,
@@ -14,9 +14,9 @@ use crate::{
     service::{DidSovServiceType, EndpointDidSov},
 };
 
-fn prepare_ids(did: &str) -> Result<(Uri, ParsedDid), DidSovError> {
+fn prepare_ids(did: &str) -> Result<(Uri, Did), DidSovError> {
     let service_id = Uri::new(did)?;
-    let ddo_id = ParsedDid::parse(did.to_string())?;
+    let ddo_id = Did::parse(did.to_string())?;
     Ok((service_id, ddo_id))
 }
 

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use did_parser::{DidUrl, ParsedDid};
+use did_parser::{Did, DidUrl};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -19,7 +19,7 @@ pub enum VerificationMethodKind {
 #[serde(rename_all = "camelCase")]
 pub struct VerificationMethod {
     id: DidUrl,
-    controller: ParsedDid,
+    controller: Did,
     #[serde(rename = "type")]
     verification_method_type: String,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -37,7 +37,7 @@ pub struct VerificationMethod {
 impl VerificationMethod {
     pub fn builder(
         id: DidUrl,
-        controller: ParsedDid,
+        controller: Did,
         verification_method_type: String,
     ) -> IncompleteVerificationMethodBuilder {
         IncompleteVerificationMethodBuilder::new(id, controller, verification_method_type)
@@ -47,7 +47,7 @@ impl VerificationMethod {
         &self.id
     }
 
-    pub fn controller(&self) -> &ParsedDid {
+    pub fn controller(&self) -> &Did {
         &self.controller
     }
 
@@ -71,7 +71,7 @@ impl VerificationMethod {
 #[derive(Debug, Default)]
 pub struct IncompleteVerificationMethodBuilder {
     id: DidUrl,
-    controller: ParsedDid,
+    controller: Did,
     verification_method_type: String,
     extra: HashMap<String, Value>,
 }
@@ -79,7 +79,7 @@ pub struct IncompleteVerificationMethodBuilder {
 #[derive(Debug)]
 pub struct CompleteVerificationMethodBuilder {
     id: DidUrl,
-    controller: ParsedDid,
+    controller: Did,
     verification_method_type: String,
     public_key_multibase: Option<Multibase>,
     public_key_jwk: Option<JsonWebKey>,
@@ -87,7 +87,7 @@ pub struct CompleteVerificationMethodBuilder {
 }
 
 impl IncompleteVerificationMethodBuilder {
-    pub fn new(id: DidUrl, controller: ParsedDid, verification_method_type: String) -> Self {
+    pub fn new(id: DidUrl, controller: Did, verification_method_type: String) -> Self {
         Self {
             id,
             verification_method_type,
@@ -163,8 +163,8 @@ impl CompleteVerificationMethodBuilder {
 mod tests {
     use super::*;
 
-    fn create_valid_did() -> ParsedDid {
-        ParsedDid::parse("did:example:123456789abcdefghi".to_string()).unwrap()
+    fn create_valid_did() -> Did {
+        Did::parse("did:example:123456789abcdefghi".to_string()).unwrap()
     }
 
     fn create_valid_did_url() -> DidUrl {

@@ -10,7 +10,7 @@ use aries_vcx::{
     },
     utils::devsetup::SetupProfile,
 };
-use did_resolver::did_parser::ParsedDid;
+use did_resolver::did_parser::Did;
 use did_resolver::traits::resolvable::{resolution_options::DidResolutionOptions, DidResolvable};
 use did_resolver_sov::reader::ConcreteAttrReader;
 use did_resolver_sov::resolution::DidSovResolver;
@@ -34,7 +34,7 @@ async fn write_service_on_ledger_and_resolve_did_doc() {
         ));
         let did_doc = resolver
             .resolve(
-                &ParsedDid::parse(did.clone()).unwrap(),
+                &Did::parse(did.clone()).unwrap(),
                 &DidResolutionOptions::default(),
             )
             .await
@@ -55,7 +55,7 @@ async fn test_error_handling_during_resolution() {
 
         let result = resolver
             .resolve(
-                &ParsedDid::parse(did.clone()).unwrap(),
+                &Did::parse(did.clone()).unwrap(),
                 &DidResolutionOptions::default(),
             )
             .await;

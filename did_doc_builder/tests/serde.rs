@@ -5,7 +5,7 @@ use did_doc_builder::schema::{
     types::{jsonwebkey::JsonWebKey, uri::Uri},
     verification_method::{VerificationMethod, VerificationMethodKind},
 };
-use did_parser::{DidUrl, ParsedDid};
+use did_parser::{Did, DidUrl};
 use serde_json::Value;
 
 const VALID_DID_DOC_JSON: &str = r##"
@@ -84,7 +84,7 @@ fn test_deserialization() {
         vec![Uri::from_str("https://example.com/user-profile/123").unwrap()]
     );
 
-    let controller: ParsedDid = "did:web:did-actor-alice".to_string().try_into().unwrap();
+    let controller: Did = "did:web:did-actor-alice".to_string().try_into().unwrap();
 
     let pk_id = DidUrl::parse(
         "did:web:did-actor-alice#z6MkrmNwty5ajKtFqc1U48oL2MMLjWjartwc5sf2AihZwXDN".to_string(),

@@ -1,4 +1,4 @@
-use did_parser::ParsedDid;
+use did_parser::Did;
 
 macro_rules! test_cases_positive {
     ($($name:ident: $input:expr, $expected_did:expr, $expected_method:expr, $expected_id:expr)*) => {
@@ -6,7 +6,7 @@ macro_rules! test_cases_positive {
             #[test]
             fn $name() {
                 println!("Testing {}", $input);
-                let parsed_did = ParsedDid::parse($input.to_string()).unwrap();
+                let parsed_did = Did::parse($input.to_string()).unwrap();
 
                 assert_eq!(parsed_did.did(), $expected_did, "DID");
                 assert_eq!(parsed_did.method(), $expected_method, "Method");

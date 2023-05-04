@@ -3,7 +3,7 @@ pub mod error;
 use std::collections::HashMap;
 
 use did_resolver::{
-    did_parser::ParsedDid,
+    did_parser::Did,
     error::GenericError,
     traits::resolvable::{
         resolution_options::DidResolutionOptions, resolution_output::DidResolutionOutput,
@@ -33,7 +33,7 @@ impl ResolverRegistry {
 
     pub async fn resolve(
         &self,
-        did: &ParsedDid,
+        did: &Did,
         options: &DidResolutionOptions,
     ) -> Result<DidResolutionOutput, GenericError> {
         let method = did.method();
@@ -59,11 +59,11 @@ mod tests {
     impl DidResolvable for DummyDidResolver {
         async fn resolve(
             &self,
-            did: &ParsedDid,
+            did: &Did,
             _options: &DidResolutionOptions,
         ) -> Result<DidResolutionOutput, GenericError> {
             Ok(DidResolutionOutput::builder(
-                DidDocumentBuilder::new(ParsedDid::parse(did.did().to_string()).unwrap()).build(),
+                DidDocumentBuilder::new(Did::parse(did.did().to_string()).unwrap()).build(),
             )
             .build())
         }
@@ -82,7 +82,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_resolve_error() {
-        let did = ParsedDid::parse("did:example:1234".to_string()).unwrap();
+        let did = Did::parse("did:example:1234".to_string()).unwrap();
         let method = did.method().to_string();
 
         let mut mock_resolver = MockDummyDidResolver::new();
@@ -116,7 +116,7 @@ mod tests {
     #[tokio::test]
     async fn test_resolve_success() {
         let did = "did:example:1234";
-        let parsed_did = ParsedDid::parse(did.to_string()).unwrap();
+        let parsed_did = Did::parse(did.to_string()).unwrap();
         let method = parsed_did.method().to_string();
 
         let mut mock_resolver = MockDummyDidResolver::new();
@@ -128,8 +128,7 @@ mod tests {
                 let future = async move {
                     Ok::<DidResolutionOutput, GenericError>(
                         DidResolutionOutput::builder(
-                            DidDocumentBuilder::new(ParsedDid::parse(did.to_string()).unwrap())
-                                .build(),
+                            DidDocumentBuilder::new(Did::parse(did.to_string()).unwrap()).build(),
                         )
                         .build(),
                     )
@@ -165,7 +164,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_resolve_unsupported_method() {
-        let did = ParsedDid::parse("did:unknown:1234".to_string()).unwrap();
+        let did = Did::parse("did:unknown:1234".to_string()).unwrap();
 
         let registry = ResolverRegistry::new();
         let result = registry
@@ -184,7 +183,7 @@ mod tests {
     #[tokio::test]
     async fn test_resolve_after_registering_resolver() {
         let did = "did:example:1234";
-        let parsed_did = ParsedDid::parse(did.to_string()).unwrap();
+        let parsed_did = Did::parse(did.to_string()).unwrap();
         let method = parsed_did.method().to_string();
 
         let mut mock_resolver = MockDummyDidResolver::new();
@@ -196,8 +195,7 @@ mod tests {
                 let future = async move {
                     Ok::<DidResolutionOutput, GenericError>(
                         DidResolutionOutput::builder(
-                            DidDocumentBuilder::new(ParsedDid::parse(did.to_string()).unwrap())
-                                .build(),
+                            DidDocumentBuilder::new(Did::parse(did.to_string()).unwrap()).build(),
                         )
                         .build(),
                     )
