@@ -128,28 +128,22 @@ fn test_deserialization() {
 
     assert_eq!(
         did_doc.authentication(),
-        &[VerificationMethodKind::VerificationMethodResolvable(
-            pk_id.clone()
-        )]
+        &[VerificationMethodKind::Resolvable(pk_id.clone())]
     );
 
     assert_eq!(
         did_doc.assertion_method(),
-        &[VerificationMethodKind::VerificationMethodResolvable(
-            pk_id.clone()
-        )]
+        &[VerificationMethodKind::Resolvable(pk_id.clone())]
     );
 
     assert_eq!(
         did_doc.capability_delegation(),
-        &[VerificationMethodKind::VerificationMethodResolvable(
-            pk_id.clone()
-        )]
+        &[VerificationMethodKind::Resolvable(pk_id.clone())]
     );
 
     assert_eq!(
         did_doc.capability_invocation(),
-        &[VerificationMethodKind::VerificationMethodResolvable(pk_id)]
+        &[VerificationMethodKind::Resolvable(pk_id)]
     );
 
     assert_eq!(
@@ -181,7 +175,7 @@ fn test_deserialization() {
 
     assert_eq!(
         did_doc.key_agreement(),
-        &[VerificationMethodKind::VerificationMethodResolved(ka1)]
+        &[VerificationMethodKind::Resolved(ka1)]
     );
 }
 

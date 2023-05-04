@@ -13,7 +13,7 @@ use did_resolver::{
 
 use crate::{error::DIDSovError, reader::AttrReader};
 
-use super::utils::{is_valid_sovrin_did_id, resolve_ddo};
+use super::utils::{is_valid_sovrin_did_id, ledger_response_to_ddo};
 
 pub struct DIDSovResolver {
     ledger: Arc<dyn AttrReader>,
@@ -51,7 +51,7 @@ impl DIDResolvable for DIDSovResolver {
         }
         let did = parsed_did.did();
         let ledger_response = self.ledger.get_attr(did, "endpoint").await?;
-        resolve_ddo(did, &ledger_response)
+        ledger_response_to_ddo(did, &ledger_response)
             .await
             .map_err(|err| err.into())
     }

@@ -11,8 +11,8 @@ use super::types::{jsonwebkey::JsonWebKey, multibase::Multibase};
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(untagged)]
 pub enum VerificationMethodKind {
-    VerificationMethodResolved(VerificationMethod),
-    VerificationMethodResolvable(ParsedDIDUrl),
+    Resolved(VerificationMethod),
+    Resolvable(ParsedDIDUrl),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]

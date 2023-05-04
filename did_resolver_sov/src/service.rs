@@ -2,11 +2,12 @@ use std::collections::HashSet;
 use std::fmt::Display;
 
 use serde::{Deserialize, Deserializer};
+use url::Url;
 
 #[derive(Debug, Deserialize, Clone, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct EndpointDidSov {
-    pub endpoint: String,
+    pub endpoint: Url,
     #[serde(default)]
     pub routing_keys: Vec<String>,
     #[serde(
@@ -77,7 +78,10 @@ mod tests {
             "types": ["endpoint", "did-communication"]
         }"#;
         let endpoint_did_sov: EndpointDidSov = from_str(json).unwrap();
-        assert_eq!(endpoint_did_sov.endpoint, "https://example.com");
+        assert_eq!(
+            endpoint_did_sov.endpoint,
+            "https://example.com".parse().unwrap()
+        );
         assert_eq!(endpoint_did_sov.routing_keys, vec!["key1", "key2"]);
         assert_eq!(
             endpoint_did_sov.types,
@@ -93,7 +97,10 @@ mod tests {
             "types": ["endpoint", "DIDComm"]
         }"#;
         let endpoint_did_sov: EndpointDidSov = from_str(json).unwrap();
-        assert_eq!(endpoint_did_sov.endpoint, "https://example.com");
+        assert_eq!(
+            endpoint_did_sov.endpoint,
+            "https://example.com".parse().unwrap()
+        );
         assert_eq!(endpoint_did_sov.routing_keys, vec!["key1", "key2"]);
         assert_eq!(
             endpoint_did_sov.types,
@@ -109,7 +116,10 @@ mod tests {
             "types": ["endpoint", "endpoint"]
         }"#;
         let endpoint_did_sov: EndpointDidSov = from_str(json).unwrap();
-        assert_eq!(endpoint_did_sov.endpoint, "https://example.com");
+        assert_eq!(
+            endpoint_did_sov.endpoint,
+            "https://example.com".parse().unwrap()
+        );
         assert_eq!(endpoint_did_sov.routing_keys, vec!["key1", "key2"]);
         assert_eq!(
             endpoint_did_sov.types,
@@ -122,7 +132,10 @@ mod tests {
             "types": ["invalid"]
         }"#;
         let endpoint_did_sov: EndpointDidSov = from_str(json).unwrap();
-        assert_eq!(endpoint_did_sov.endpoint, "https://example.com");
+        assert_eq!(
+            endpoint_did_sov.endpoint,
+            "https://example.com".parse().unwrap()
+        );
         assert_eq!(endpoint_did_sov.routing_keys, vec!["key1", "key2"]);
         assert_eq!(endpoint_did_sov.types, default_didsov_service_types());
 
@@ -131,7 +144,10 @@ mod tests {
             "routingKeys": ["key1", "key2"]
         }"#;
         let endpoint_did_sov: EndpointDidSov = from_str(json).unwrap();
-        assert_eq!(endpoint_did_sov.endpoint, "https://example.com");
+        assert_eq!(
+            endpoint_did_sov.endpoint,
+            "https://example.com".parse().unwrap()
+        );
         assert_eq!(endpoint_did_sov.routing_keys, vec!["key1", "key2"]);
         assert_eq!(endpoint_did_sov.types, default_didsov_service_types());
 
@@ -139,7 +155,10 @@ mod tests {
             "endpoint": "https://example.com"
         }"#;
         let endpoint_did_sov: EndpointDidSov = from_str(json).unwrap();
-        assert_eq!(endpoint_did_sov.endpoint, "https://example.com");
+        assert_eq!(
+            endpoint_did_sov.endpoint,
+            "https://example.com".parse().unwrap()
+        );
         assert!(endpoint_did_sov.routing_keys.is_empty());
         assert_eq!(endpoint_did_sov.types, default_didsov_service_types());
     }

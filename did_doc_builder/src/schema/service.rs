@@ -171,4 +171,42 @@ mod tests {
             .add_service_type("".to_string());
         assert!(res.is_err());
     }
+
+    #[test]
+    fn test_service_serde() {
+        let service_serialized = r##"{
+          "id": "did:sov:HR6vs6GEZ8rHaVgjg2WodM#did-communication",
+          "type": "did-communication",
+          "priority": 0,
+          "recipientKeys": [
+            "did:sov:HR6vs6GEZ8rHaVgjg2WodM#key-agreement-1"
+          ],
+          "routingKeys": [],
+          "accept": [
+            "didcomm/aip2;env=rfc19"
+          ],
+          "serviceEndpoint": "https://example.com/endpoint"
+        }"##;
+
+        let service: Service = serde_json::from_str(service_serialized).unwrap();
+        assert_eq!(
+            service.id(),
+            &Uri::new("did:sov:HR6vs6GEZ8rHaVgjg2WodM#did-communication").unwrap()
+        );
+        assert_eq!(
+            service.service_type(),
+            &OneOrList::One("did-communication".to_string())
+        );
+        assert_eq!(service.service_endpoint(), "https://example.com/endpoint");
+        assert_eq!(
+            service.extra_field("priority").unwrap(),
+            &Value::Number(0.into())
+        );
+        assert_eq!(
+            service.extra_field("recipientKeys").unwrap(),
+            &Value::Array(vec![Value::String(
+                "did:sov:HR6vs6GEZ8rHaVgjg2WodM#key-agreement-1".to_string()
+            )])
+        );
+    }
 }

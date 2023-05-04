@@ -43,7 +43,7 @@ fn get_txn_time_from_response(resp: &str) -> Result<i64, DIDSovError> {
     Ok(txn_time)
 }
 
-fn posix_to_datetime(posix_timestamp: i64) -> Option<DateTime<Utc>> {
+fn unix_to_datetime(posix_timestamp: i64) -> Option<DateTime<Utc>> {
     NaiveDateTime::from_timestamp_opt(posix_timestamp, 0)
         .map(|date_time| DateTime::<Utc>::from_utc(date_time, Utc))
 }
@@ -52,23 +52,21 @@ pub(super) fn is_valid_sovrin_did_id(id: &str) -> bool {
     if id.len() < 21 || id.len() > 22 {
         return false;
     }
-    for c in id.chars() {
-        match c {
-            '1'..='9' | 'A'..='H' | 'J'..='N' | 'P'..='Z' | 'a'..='k' | 'm'..='z' => {}
-            _ => return false,
-        }
-    }
-    true
+    let base58_chars = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+    id.chars().all(|c| base58_chars.contains(c))
 }
 
-pub(super) async fn resolve_ddo(did: &str, resp: &str) -> Result<DIDResolutionOutput, DIDSovError> {
+pub(super) async fn ledger_response_to_ddo(
+    did: &str,
+    resp: &str,
+) -> Result<DIDResolutionOutput, DIDSovError> {
     let (service_id, ddo_id) = prepare_ids(did)?;
 
     let service_data = get_data_from_response(resp)?;
     let endpoint: EndpointDidSov = serde_json::from_value(service_data["endpoint"].clone())?;
 
     let txn_time = get_txn_time_from_response(resp)?;
-    let datetime = posix_to_datetime(txn_time);
+    let datetime = unix_to_datetime(txn_time);
 
     let service = {
         let mut service_builder =
@@ -142,7 +140,7 @@ mod tests {
     #[test]
     fn test_posix_to_datetime() {
         let posix_timestamp = 1629272938;
-        let datetime = posix_to_datetime(posix_timestamp).unwrap();
+        let datetime = unix_to_datetime(posix_timestamp).unwrap();
         assert_eq!(
             datetime,
             chrono::Utc.timestamp_opt(posix_timestamp, 0).unwrap()
@@ -158,7 +156,7 @@ mod tests {
                 "txnTime": 1629272938
             }
         }"#;
-        let resolution_output = resolve_ddo(did, resp).await.unwrap();
+        let resolution_output = ledger_response_to_ddo(did, resp).await.unwrap();
         let ddo = resolution_output.did_document();
         assert_eq!(ddo.id().to_string(), "did:example:1234567890");
         assert_eq!(ddo.service()[0].id().to_string(), "did:example:1234567890");

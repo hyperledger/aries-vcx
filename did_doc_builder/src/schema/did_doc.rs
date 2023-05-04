@@ -131,77 +131,61 @@ impl DIDDocumentBuilder {
 
     pub fn add_authentication_method(mut self, method: VerificationMethod) -> Self {
         self.authentication
-            .push(VerificationMethodKind::VerificationMethodResolved(method));
+            .push(VerificationMethodKind::Resolved(method));
         self
     }
 
     pub fn add_authentication_reference(mut self, reference: ParsedDIDUrl) -> Self {
         self.authentication
-            .push(VerificationMethodKind::VerificationMethodResolvable(
-                reference,
-            ));
+            .push(VerificationMethodKind::Resolvable(reference));
         self
     }
 
     pub fn add_assertion_method(mut self, method: VerificationMethod) -> Self {
         self.assertion_method
-            .push(VerificationMethodKind::VerificationMethodResolved(method));
+            .push(VerificationMethodKind::Resolved(method));
         self
     }
 
     pub fn add_assertion_method_reference(mut self, reference: ParsedDIDUrl) -> Self {
         self.assertion_method
-            .push(VerificationMethodKind::VerificationMethodResolvable(
-                reference,
-            ));
+            .push(VerificationMethodKind::Resolvable(reference));
         self
     }
 
     pub fn add_key_agreement(mut self, key_agreement: VerificationMethod) -> Self {
         self.key_agreement
-            .push(VerificationMethodKind::VerificationMethodResolved(
-                key_agreement,
-            ));
+            .push(VerificationMethodKind::Resolved(key_agreement));
         self
     }
 
     pub fn add_key_agreement_refrence(mut self, reference: ParsedDIDUrl) -> Self {
         self.key_agreement
-            .push(VerificationMethodKind::VerificationMethodResolvable(
-                reference,
-            ));
+            .push(VerificationMethodKind::Resolvable(reference));
         self
     }
 
     pub fn add_capability_invocation(mut self, capability_invocation: VerificationMethod) -> Self {
         self.capability_invocation
-            .push(VerificationMethodKind::VerificationMethodResolved(
-                capability_invocation,
-            ));
+            .push(VerificationMethodKind::Resolved(capability_invocation));
         self
     }
 
     pub fn add_capability_invocation_refrence(mut self, reference: ParsedDIDUrl) -> Self {
         self.capability_invocation
-            .push(VerificationMethodKind::VerificationMethodResolvable(
-                reference,
-            ));
+            .push(VerificationMethodKind::Resolvable(reference));
         self
     }
 
     pub fn add_capability_delegation(mut self, capability_delegation: VerificationMethod) -> Self {
         self.capability_delegation
-            .push(VerificationMethodKind::VerificationMethodResolved(
-                capability_delegation,
-            ));
+            .push(VerificationMethodKind::Resolved(capability_delegation));
         self
     }
 
     pub fn add_capability_delegation_refrence(mut self, reference: ParsedDIDUrl) -> Self {
         self.capability_delegation
-            .push(VerificationMethodKind::VerificationMethodResolvable(
-                reference,
-            ));
+            .push(VerificationMethodKind::Resolvable(reference));
         self
     }
 
@@ -303,44 +287,36 @@ mod tests {
         assert_eq!(
             document.authentication(),
             &[
-                VerificationMethodKind::VerificationMethodResolved(verification_method.clone()),
-                VerificationMethodKind::VerificationMethodResolvable(
-                    authentication_reference.clone()
-                )
+                VerificationMethodKind::Resolved(verification_method.clone()),
+                VerificationMethodKind::Resolvable(authentication_reference.clone())
             ]
         );
         assert_eq!(
             document.assertion_method(),
             &[
-                VerificationMethodKind::VerificationMethodResolved(assertion_method),
-                VerificationMethodKind::VerificationMethodResolvable(
-                    authentication_reference.clone()
-                )
+                VerificationMethodKind::Resolved(assertion_method),
+                VerificationMethodKind::Resolvable(authentication_reference.clone())
             ]
         );
         assert_eq!(
             document.key_agreement(),
             &[
-                VerificationMethodKind::VerificationMethodResolved(verification_method.clone()),
-                VerificationMethodKind::VerificationMethodResolvable(
-                    authentication_reference.clone()
-                )
+                VerificationMethodKind::Resolved(verification_method.clone()),
+                VerificationMethodKind::Resolvable(authentication_reference.clone())
             ]
         );
         assert_eq!(
             document.capability_invocation(),
             &[
-                VerificationMethodKind::VerificationMethodResolved(verification_method.clone()),
-                VerificationMethodKind::VerificationMethodResolvable(
-                    authentication_reference.clone()
-                )
+                VerificationMethodKind::Resolved(verification_method.clone()),
+                VerificationMethodKind::Resolvable(authentication_reference.clone())
             ]
         );
         assert_eq!(
             document.capability_delegation(),
             &[
-                VerificationMethodKind::VerificationMethodResolved(verification_method),
-                VerificationMethodKind::VerificationMethodResolvable(authentication_reference)
+                VerificationMethodKind::Resolved(verification_method),
+                VerificationMethodKind::Resolvable(authentication_reference)
             ]
         );
         assert_eq!(document.service(), &[service]);
