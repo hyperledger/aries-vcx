@@ -21,8 +21,8 @@ use vdr::utils::Qualifiable;
 
 use crate::errors::error::VcxCoreResult;
 use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind};
+use crate::global::author_agreement::get_txn_author_agreement;
 use crate::global::settings;
-use crate::utils::author_agreement::get_global_txn_author_agreement;
 use crate::utils::json::{AsTypeOrDeserializationError, TryGetIndex};
 use crate::wallet::base_wallet::BaseWallet;
 
@@ -489,7 +489,7 @@ fn current_epoch_time() -> i64 {
 }
 
 async fn _append_txn_author_agreement_to_request(request: PreparedRequest) -> VcxCoreResult<PreparedRequest> {
-    if let Some(taa) = get_global_txn_author_agreement()? {
+    if let Some(taa) = get_txn_author_agreement()? {
         let mut request = request;
         let acceptance = TxnAuthrAgrmtAcceptanceData {
             mechanism: taa.acceptance_mechanism_type,

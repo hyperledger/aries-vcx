@@ -2,6 +2,7 @@ use serde_json::{Map, Value};
 use vdrtools::{Locator, SearchHandle};
 
 use crate::errors::error::prelude::*;
+use crate::global::mockdata::mock_settings::get_mock_creds_retrieved_for_proof_request;
 use crate::global::settings;
 use crate::indy::anoncreds::close_search_handle;
 use crate::indy::utils::parse_and_validate;
@@ -89,7 +90,6 @@ pub async fn libindy_prover_get_credentials_for_proof_req(
     );
 
     {
-        use crate::utils::mockdata::mock_settings::get_mock_creds_retrieved_for_proof_request;
         match get_mock_creds_retrieved_for_proof_request() {
             None => {}
             Some(mocked_creds) => {

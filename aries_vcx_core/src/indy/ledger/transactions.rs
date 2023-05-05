@@ -3,14 +3,15 @@ use vdrtools::{DidValue, Locator};
 
 use crate::common::ledger::transactions::{Request, Response};
 use crate::errors::error::prelude::*;
+use crate::global::author_agreement::get_txn_author_agreement;
 use crate::global::settings;
+use crate::global::settings::get_sample_did;
 use crate::indy::utils::mocks::pool_mocks::PoolMocks;
 use crate::indy::utils::parse_and_validate;
 use crate::utils::constants::{
     rev_def_json, CRED_DEF_ID, CRED_DEF_JSON, CRED_DEF_REQ, REVOC_REG_TYPE, REV_REG_DELTA_JSON, REV_REG_ID,
     REV_REG_JSON, SCHEMA_ID, SCHEMA_JSON, SCHEMA_TXN, SUBMIT_SCHEMA_RESPONSE,
 };
-use crate::utils::random::generate_random_did;
 use crate::{utils, PoolHandle, WalletHandle};
 
 pub async fn multisign_request(wallet_handle: WalletHandle, did: &str, request: &str) -> VcxCoreResult<String> {
@@ -101,7 +102,7 @@ pub async fn libindy_get_txn_author_agreement(pool_handle: PoolHandle) -> VcxCor
         return Ok(utils::constants::DEFAULT_AUTHOR_AGREEMENT.to_string());
     }
 
-    let did = &generate_random_did();
+    let did = &get_sample_did();
 
     let get_author_agreement_request = Locator::instance()
         .ledger_controller
@@ -139,7 +140,7 @@ pub async fn libindy_get_txn_author_agreement(pool_handle: PoolHandle) -> VcxCor
 pub async fn append_txn_author_agreement_to_request(request_json: &str) -> VcxCoreResult<String> {
     trace!("append_txn_author_agreement_to_request >>> request_json: ...");
 
-    if let Some(author_agreement) = utils::author_agreement::get_global_txn_author_agreement()? {
+    if let Some(author_agreement) = get_txn_author_agreement()? {
         Locator::instance()
             .ledger_controller
             .append_txn_author_agreement_acceptance_to_request(
@@ -211,7 +212,7 @@ pub async fn libindy_build_nym_request(
 }
 
 pub async fn get_nym(pool_handle: PoolHandle, did: &str) -> VcxCoreResult<String> {
-    let submitter_did = generate_random_did();
+    let submitter_did = get_sample_did();
 
     let get_nym_req = libindy_build_get_nym_request(Some(&submitter_did), did).await?;
 
@@ -252,7 +253,7 @@ async fn libindy_get_cred_def(
     pool_handle: PoolHandle,
     cred_def_id: &str,
 ) -> VcxCoreResult<String> {
-    let submitter_did = &generate_random_did();
+    let submitter_did = &get_sample_did();
     trace!(
         "libindy_get_cred_def >>> pool_handle: {}, wallet_handle: {:?}, submitter_did: {}",
         pool_handle,
@@ -546,7 +547,7 @@ pub async fn get_rev_reg_def_json(pool_handle: PoolHandle, rev_reg_id: &str) -> 
         return Ok((REV_REG_ID.to_string(), rev_def_json()));
     }
 
-    let submitter_did = generate_random_did();
+    let submitter_did = get_sample_did();
 
     let req = libindy_build_get_revoc_reg_def_request(&submitter_did, rev_reg_id).await?;
     let res = libindy_submit_request(pool_handle, &req).await?;
@@ -592,7 +593,7 @@ pub async fn get_rev_reg_delta_json(
         return Ok((REV_REG_ID.to_string(), REV_REG_DELTA_JSON.to_string(), 1));
     }
 
-    let submitter_did = generate_random_did();
+    let submitter_did = get_sample_did();
 
     let from: i64 = if let Some(_from) = from { _from as i64 } else { -1 };
     let to = if let Some(_to) = to {
@@ -617,7 +618,7 @@ pub async fn get_rev_reg(
         return Ok((REV_REG_ID.to_string(), REV_REG_JSON.to_string(), 1));
     }
 
-    let submitter_did = generate_random_did();
+    let submitter_did = get_sample_did();
 
     let req = libindy_build_get_revoc_reg_request(&submitter_did, rev_reg_id, timestamp).await?;
 
@@ -705,7 +706,7 @@ pub async fn get_schema_json(
         return Ok((SCHEMA_ID.to_string(), SCHEMA_JSON.to_string()));
     }
 
-    let submitter_did = generate_random_did();
+    let submitter_did = get_sample_did();
 
     let schema_json = libindy_get_schema(wallet_handle, pool_handle, &submitter_did, schema_id).await?;
 

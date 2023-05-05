@@ -20,6 +20,7 @@ fn set_active_txn_author_agreement_meta(
     acc_mech_type: String,
     time_of_acceptance: u32,
 ) -> napi::Result<()> {
+    info!("set_active_txn_author_agreement_meta >>>");
     ledger::ledger_set_txn_author_agreement(text, version, hash, acc_mech_type, time_of_acceptance as u64)
         .map_err(to_napi_err)
 }

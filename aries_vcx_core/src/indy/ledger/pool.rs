@@ -80,13 +80,17 @@ pub async fn delete(pool_name: &str) -> VcxCoreResult<()> {
 pub mod test_utils {
     use std::fs;
     use std::io::Write;
+    use std::{env, path::PathBuf};
 
-    use crate::utils::{
-        constants::{GENESIS_PATH, POOL},
-        get_temp_dir_path,
-    };
+    use crate::utils::constants::{GENESIS_PATH, POOL};
 
     use super::*;
+
+    pub fn get_temp_dir_path(filename: &str) -> PathBuf {
+        let mut path = env::temp_dir();
+        path.push(filename);
+        path
+    }
 
     pub async fn create_test_ledger_config() {
         create_tmp_genesis_txn_file();
