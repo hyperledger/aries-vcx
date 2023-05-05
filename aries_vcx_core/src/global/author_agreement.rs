@@ -17,7 +17,7 @@ pub struct TxnAuthorAgreementAcceptanceData {
     pub time_of_acceptance: u64,
 }
 
-pub fn set_global_txn_author_agreement(
+pub fn set_txn_author_agreement(
     text: Option<String>,
     version: Option<String>,
     taa_digest: Option<String>,
@@ -40,7 +40,7 @@ pub fn set_global_txn_author_agreement(
     Ok(())
 }
 
-pub fn get_global_txn_author_agreement() -> VcxCoreResult<Option<TxnAuthorAgreementAcceptanceData>> {
+pub fn get_txn_author_agreement() -> VcxCoreResult<Option<TxnAuthorAgreementAcceptanceData>> {
     trace!("get_txn_author_agreement >>>");
     match settings::get_config_value(settings::CONFIG_TXN_AUTHOR_AGREEMENT) {
         Ok(value) => {
@@ -67,7 +67,7 @@ mod unit_tests {
         settings::reset_config_values().unwrap();
         assert!(settings::get_config_value(settings::CONFIG_TXN_AUTHOR_AGREEMENT).is_err());
 
-        set_global_txn_author_agreement(
+        set_txn_author_agreement(
             Some(TEXT.to_string()),
             Some(VERSION.to_string()),
             None,
@@ -82,7 +82,7 @@ mod unit_tests {
     #[test]
     fn get_txn_author_agreement_works() {
         settings::reset_config_values().unwrap();
-        set_global_txn_author_agreement(
+        set_txn_author_agreement(
             Some(TEXT.to_string()),
             Some(VERSION.to_string()),
             None,
@@ -91,7 +91,7 @@ mod unit_tests {
         )
         .unwrap();
 
-        let meta = get_global_txn_author_agreement().unwrap().unwrap();
+        let meta = get_txn_author_agreement().unwrap().unwrap();
 
         let expected_meta = TxnAuthorAgreementAcceptanceData {
             text: Some(TEXT.to_string()),
@@ -107,6 +107,6 @@ mod unit_tests {
     #[test]
     fn get_txn_author_agreement_works_for_not_set() {
         settings::reset_config_values().unwrap();
-        assert!(get_global_txn_author_agreement().unwrap().is_none());
+        assert!(get_txn_author_agreement().unwrap().is_none());
     }
 }

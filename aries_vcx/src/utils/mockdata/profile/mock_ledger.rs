@@ -1,4 +1,3 @@
-use crate::utils::mockdata::mock_settings::StatusCodeMock;
 use aries_vcx_core::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
 use aries_vcx_core::ledger::base_ledger::BaseLedger;
 use async_trait::async_trait;
@@ -64,14 +63,6 @@ impl BaseLedger for MockLedger {
     }
 
     async fn get_cred_def(&self, cred_def_id: &str, submitter_did: Option<&str>) -> VcxCoreResult<String> {
-        // TODO - FUTURE - below error is required for tests to pass which require a cred def to not exist (libvcx)
-        // ideally we can migrate away from it
-        if StatusCodeMock::get_result() == 309 {
-            return Err(AriesVcxCoreError::from_msg(
-                AriesVcxCoreErrorKind::LedgerItemNotFound,
-                "Mocked error".to_string(),
-            ));
-        };
         Ok(CRED_DEF_JSON.to_string())
     }
 

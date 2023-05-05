@@ -5,7 +5,6 @@ use crate::global::settings;
 use crate::indy::anoncreds;
 use crate::indy::utils::parse_and_validate;
 use crate::utils::constants::LIBINDY_CRED_OFFER;
-use crate::utils::mockdata::mock_settings::StatusCodeMock;
 use crate::{utils, WalletHandle};
 
 pub async fn libindy_issuer_create_credential_offer(
@@ -13,13 +12,6 @@ pub async fn libindy_issuer_create_credential_offer(
     cred_def_id: &str,
 ) -> VcxCoreResult<String> {
     if settings::indy_mocks_enabled() {
-        let rc = StatusCodeMock::get_result();
-        if rc != 0 {
-            return Err(AriesVcxCoreError::from_msg(
-                AriesVcxCoreErrorKind::InvalidState,
-                "Mocked error result of libindy_issuer_create_credential_offer",
-            ));
-        };
         return Ok(LIBINDY_CRED_OFFER.to_string());
     }
 
