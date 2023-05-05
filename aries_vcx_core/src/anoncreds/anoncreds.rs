@@ -6,31 +6,6 @@ use crate::{errors::error::VcxCoreResult, ledger::ledger::LedgerRead};
 /// input and output types are based off the indy Anoncreds API:
 /// see: <https://github.com/hyperledger/indy-sdk/blob/main/libindy/src/api/anoncreds.rs>
 
-pub struct IndyAnonCredsVerifier;
-
-pub struct IndyLedger;
-
-#[async_trait]
-impl LedgerRead for IndyVdrLedger {
-    type Schema = anoncreds::IndyVdrSchema;
-    type CredDef = anoncreds::AnonCredsCredDef;
-
-}
-
-impl LedgerRead for VdrToolsLedger {
-    type Schema = anoncreds::IndyVdrSchema;
-    type CredDef = anoncreds::IndyVdrCredDef;
-}
-
-#[async_trait]
-impl AnonCredsVerifier for IndyAnonCredsVerifier {
-    type Ledger = VdrToolsLedger;
-
-
-}
-
-
-
 #[async_trait]
 pub trait AnonCredsVerifier {
     type Ledger: LedgerRead;
