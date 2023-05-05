@@ -1,6 +1,7 @@
+use serde::{Deserialize, Serialize};
 use serde_json;
 
-use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
+use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
 use crate::global::settings;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
@@ -22,7 +23,7 @@ pub fn set_txn_author_agreement(
     taa_digest: Option<String>,
     acc_mech_type: String,
     time_of_acceptance: u64,
-) -> VcxResult<()> {
+) -> VcxCoreResult<()> {
     let meta = TxnAuthorAgreementAcceptanceData {
         text,
         version,
@@ -31,20 +32,20 @@ pub fn set_txn_author_agreement(
         time_of_acceptance,
     };
 
-    let meta =
-        serde_json::to_string(&meta).map_err(|err| AriesVcxError::from_msg(AriesVcxErrorKind::InvalidOption, err))?;
+    let meta = serde_json::to_string(&meta)
+        .map_err(|err| AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::InvalidOption, err))?;
 
     settings::set_config_value(settings::CONFIG_TXN_AUTHOR_AGREEMENT, &meta)?;
 
     Ok(())
 }
 
-pub fn get_txn_author_agreement() -> VcxResult<Option<TxnAuthorAgreementAcceptanceData>> {
+pub fn get_txn_author_agreement() -> VcxCoreResult<Option<TxnAuthorAgreementAcceptanceData>> {
     trace!("get_txn_author_agreement >>>");
     match settings::get_config_value(settings::CONFIG_TXN_AUTHOR_AGREEMENT) {
         Ok(value) => {
             let meta: TxnAuthorAgreementAcceptanceData = serde_json::from_str(&value)
-                .map_err(|err| AriesVcxError::from_msg(AriesVcxErrorKind::InvalidState, err))?;
+                .map_err(|err| AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::InvalidState, err))?;
             Ok(Some(meta))
         }
         Err(_) => Ok(None),
@@ -54,8 +55,6 @@ pub fn get_txn_author_agreement() -> VcxResult<Option<TxnAuthorAgreementAcceptan
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod unit_tests {
-    use crate::utils::devsetup::SetupDefaults;
-
     use super::*;
 
     const TEXT: &str = "indy agreement";
@@ -65,8 +64,7 @@ mod unit_tests {
 
     #[test]
     fn set_txn_author_agreement_works() {
-        let _setup = SetupDefaults::init();
-
+        settings::reset_config_values().unwrap();
         assert!(settings::get_config_value(settings::CONFIG_TXN_AUTHOR_AGREEMENT).is_err());
 
         set_txn_author_agreement(
@@ -83,8 +81,7 @@ mod unit_tests {
 
     #[test]
     fn get_txn_author_agreement_works() {
-        let _setup = SetupDefaults::init();
-
+        settings::reset_config_values().unwrap();
         set_txn_author_agreement(
             Some(TEXT.to_string()),
             Some(VERSION.to_string()),
@@ -109,8 +106,7 @@ mod unit_tests {
 
     #[test]
     fn get_txn_author_agreement_works_for_not_set() {
-        let _setup = SetupDefaults::init();
-
+        settings::reset_config_values().unwrap();
         assert!(get_txn_author_agreement().unwrap().is_none());
     }
 }

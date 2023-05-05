@@ -228,22 +228,28 @@ impl VerifierSM {
         let state = match self.state {
             VerifierFullState::PresentationRequestSent(state) => {
                 let verification_result = state.verify_presentation(profile, &presentation, &self.thread_id).await;
-                let ack = build_verification_ack(&self.thread_id);
-                send_message(ack.into()).await?;
-                match verification_result {
+
+                let (sm, message) = match verification_result {
                     Ok(()) => {
-                        VerifierFullState::Finished((state, presentation, PresentationVerificationStatus::Valid).into())
+                        let sm = VerifierFullState::Finished(
+                            (state, presentation, PresentationVerificationStatus::Valid).into(),
+                        );
+                        let ack = build_verification_ack(&self.thread_id).into();
+                        (sm, ack)
                     }
-                    Err(err) => match err.kind() {
-                        AriesVcxErrorKind::InvalidProof => VerifierFullState::Finished(
-                            (state, presentation, PresentationVerificationStatus::Invalid).into(),
-                        ),
-                        _ => {
-                            let problem_report = build_problem_report_msg(Some(err.to_string()), &self.thread_id);
-                            VerifierFullState::Finished((state, problem_report).into())
-                        }
-                    },
-                }
+                    Err(err) => {
+                        let problem_report = build_problem_report_msg(Some(err.to_string()), &self.thread_id);
+                        let sm = match err.kind() {
+                            AriesVcxErrorKind::InvalidProof => VerifierFullState::Finished(
+                                (state, presentation, PresentationVerificationStatus::Invalid).into(),
+                            ),
+                            _ => VerifierFullState::Finished((state, problem_report.clone()).into()),
+                        };
+                        (sm, AriesMessage::from(problem_report))
+                    }
+                };
+                send_message(message).await?;
+                sm
             }
             s => {
                 warn!("Unable to verify presentation in state {}", s);

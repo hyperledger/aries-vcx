@@ -72,6 +72,13 @@ pub fn set_config_value(key: &str, value: &str) -> VcxCoreResult<()> {
     Ok(())
 }
 
+pub fn reset_config_values() -> VcxCoreResult<()> {
+    trace!("reset_config_values >>>");
+    let mut config = SETTINGS.write()?;
+    config.clear();
+    Ok(())
+}
+
 pub fn get_protocol_version() -> usize {
     let protocol_version = match get_config_value(CONFIG_PROTOCOL_VERSION) {
         Ok(ver) => ver.parse::<usize>().unwrap_or_else(|err| {
@@ -98,4 +105,8 @@ pub fn get_protocol_version() -> usize {
     } else {
         protocol_version
     }
+}
+
+pub fn get_sample_did() -> String {
+    DEFAULT_DID.to_string()
 }

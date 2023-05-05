@@ -29,6 +29,22 @@ where
 
 // TODO:  move to devsetup, see if we can reuse this / merge with different setup
 pub mod test_setup {
+    use rand::distributions::Alphanumeric;
+    use rand::Rng;
+
+    pub fn generate_random_name() -> String {
+        rand::thread_rng()
+            .sample_iter(&Alphanumeric)
+            .take(25)
+            .collect::<String>()
+    }
+
+    pub fn generate_random_seed() -> String {
+        rand::thread_rng()
+            .sample_iter(&Alphanumeric)
+            .take(32)
+            .collect::<String>()
+    }
 
     use crate::{indy, WalletHandle};
 
@@ -41,7 +57,7 @@ pub mod test_setup {
         F: std::future::Future<Output = ()>,
     {
         let wallet_config = indy::wallet::WalletConfig {
-            wallet_name: crate::utils::random::generate_random_name(),
+            wallet_name: generate_random_name(),
             wallet_key: WALLET_KEY.into(),
             wallet_key_derivation: WALLET_KEY_DERIVATION.into(),
             ..Default::default()
@@ -65,7 +81,7 @@ pub mod test_setup {
     }
 
     pub async fn create_key(wallet_handle: WalletHandle) -> String {
-        let seed: String = crate::utils::random::generate_random_seed();
+        let seed: String = generate_random_seed();
 
         indy::signing::create_key(wallet_handle, Some(&seed)).await.unwrap()
     }
