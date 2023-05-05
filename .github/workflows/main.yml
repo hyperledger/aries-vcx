@@ -280,6 +280,7 @@ jobs:
           username: $GITHUB_ACTOR
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: "Publish versioned image"
+        if: ${{ env.IS_FORK == 'false' }}
         uses: ./.github/actions/publish-image
         with:
           docker-img: ${{ env.DOCKER_IMG_CACHED }}
