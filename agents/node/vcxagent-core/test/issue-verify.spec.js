@@ -138,7 +138,7 @@ describe('test update state', () => {
     const request = await faber.requestProofFromAlice(proofRequestDataStandard(issuerDid))
     await alice.sendHolderProof(JSON.parse(request), revRegId => tailsDir, { attribute_3: 'Smith' })
     await faber.updateStateVerifierProof(VerifierStateType.Finished)
-    await alice.updateStateHolderProof(ProverStateType.Finished)
+    await alice.updateStateHolderProof(ProverStateType.Failed)
     const {
       presentationVerificationStatus
     } = await faber.getPresentationInfo()
