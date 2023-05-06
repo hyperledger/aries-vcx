@@ -1,6 +1,7 @@
 use indy_vdr as vdr;
 use std::collections::hash_map::RandomState;
 use std::collections::HashMap;
+use std::fmt::{Debug, Formatter};
 use std::sync::Arc;
 use vdr::ledger::requests::schema::{AttributeNames, Schema, SchemaV1};
 
@@ -18,15 +19,18 @@ use vdr::utils::did::DidValue;
 use vdr::utils::Qualifiable;
 
 use crate::common::primitives::revocation_registry::RevocationRegistryDefinition;
-use crate::core::profile::modular_wallet_profile::LedgerPoolConfig;
-use crate::core::profile::profile::Profile;
 use crate::errors::error::VcxResult;
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind};
 use crate::global::settings;
+use crate::plugins::wallet::base_wallet::BaseWallet;
 use crate::utils::author_agreement::get_txn_author_agreement;
 use crate::utils::json::{AsTypeOrDeserializationError, TryGetIndex};
 
 use super::base_ledger::BaseLedger;
+
+pub struct LedgerPoolConfig {
+    pub genesis_file_path: String,
+}
 
 pub struct IndyVdrLedgerPool {
     // visibility strictly for internal unit testing
@@ -48,8 +52,8 @@ impl IndyVdrLedgerPool {
     }
 }
 
-impl std::fmt::Debug for IndyVdrLedgerPool {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Debug for IndyVdrLedgerPool {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("IndyVdrLedgerPool")
             .field("runner", &"PoolRunner")
             .finish()
@@ -57,13 +61,13 @@ impl std::fmt::Debug for IndyVdrLedgerPool {
 }
 
 pub struct IndyVdrLedger {
-    profile: Arc<dyn Profile>,
+    wallet: Arc<dyn BaseWallet>,
     pool: Arc<IndyVdrLedgerPool>,
 }
 
 impl IndyVdrLedger {
-    pub fn new(profile: Arc<dyn Profile>, pool: Arc<IndyVdrLedgerPool>) -> Self {
-        IndyVdrLedger { profile, pool }
+    pub fn new(wallet: Arc<dyn BaseWallet>, pool: Arc<IndyVdrLedgerPool>) -> Self {
+        IndyVdrLedger { wallet, pool }
     }
 
     pub fn request_builder(&self) -> VcxResult<RequestBuilder> {
@@ -114,15 +118,9 @@ impl IndyVdrLedger {
         let mut request = request;
         let to_sign = request.get_signature_input()?;
 
-        let wallet = self.profile.inject_wallet();
+        let signer_verkey = self.wallet.key_for_local_did(submitter_did).await?;
 
-        let signer_verkey = wallet.key_for_local_did(submitter_did).await?;
-
-        let signature = self
-            .profile
-            .inject_wallet()
-            .sign(&signer_verkey, to_sign.as_bytes())
-            .await?;
+        let signature = self.wallet.sign(&signer_verkey, to_sign.as_bytes()).await?;
 
         request.set_signature(&signature)?;
 
@@ -183,6 +181,12 @@ impl IndyVdrLedger {
         Ok(self
             .request_builder()?
             .build_attrib_request(&identifier, &dest, None, attrib_json.as_ref(), None)?)
+    }
+}
+
+impl Debug for IndyVdrLedger {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "IndyVdrLedger instance")
     }
 }
 
@@ -534,7 +538,7 @@ mod unit_tests {
 
         let profile = mock_profile();
         let pool = Arc::new(IndyVdrLedgerPool { runner: None });
-        let ledger: Box<dyn BaseLedger> = Box::new(IndyVdrLedger::new(profile, pool));
+        let ledger: Box<dyn BaseLedger> = Box::new(IndyVdrLedger::new(profile.inject_wallet(), pool));
 
         assert_unimplemented(ledger.endorse_transaction("", "").await);
         assert_unimplemented(ledger.set_endorser("", "", "").await);
