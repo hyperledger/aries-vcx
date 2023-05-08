@@ -20,9 +20,10 @@ use msg_types::{
     notification::NotificationTypeV1_0, report_problem::ReportProblemTypeV1_0, routing::RoutingTypeV1_0, MsgWithType,
 };
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
+use shared_vcx::misc::utils::CowStr;
 
 use crate::{
-    misc::utils::{CowStr, MSG_TYPE},
+    misc::utils::MSG_TYPE,
     msg_fields::{
         protocols::{
             basic_message::BasicMessage, connection::Connection, cred_issuance::CredentialIssuance,

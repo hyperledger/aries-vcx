@@ -10,6 +10,7 @@ use std::str::FromStr;
 
 use derive_more::From;
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
+use shared_vcx::misc::utils::CowStr;
 
 use self::{
     ack::{AckCredential, AckCredentialContent},
@@ -21,7 +22,7 @@ use self::{
 use super::notification::AckDecorators;
 use crate::{
     misc::{
-        utils::{self, into_msg_with_type, transit_to_aries_msg, CowStr},
+        utils::{self, into_msg_with_type, transit_to_aries_msg},
         MimeType,
     },
     msg_fields::traits::DelayedSerde,

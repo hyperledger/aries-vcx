@@ -5,6 +5,7 @@ use std::{collections::HashMap, fmt::Display};
 use serde::{
     de::Error as DeError, ser::Error as SerError, ser::SerializeMap, Deserialize, Deserializer, Serialize, Serializer,
 };
+use shared_vcx::misc::utils::CowStr;
 use strum_macros::{AsRefStr, EnumString};
 use url::Url;
 
@@ -14,7 +15,7 @@ use crate::{
         thread::Thread,
         timing::Timing,
     },
-    misc::utils::{into_msg_with_type, CowStr},
+    misc::utils::into_msg_with_type,
     msg_parts::MsgParts,
     msg_types::protocols::report_problem::ReportProblemTypeV1_0,
 };

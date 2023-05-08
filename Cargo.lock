@@ -2609,6 +2609,7 @@ dependencies = [
  "messages_macros",
  "serde",
  "serde_json",
+ "shared_vcx",
  "strum 0.24.1",
  "strum_macros 0.24.3",
  "thiserror",
@@ -3817,6 +3818,7 @@ dependencies = [
  "bs58 0.4.0",
  "lazy_static",
  "regex",
+ "serde",
  "thiserror",
 ]
 

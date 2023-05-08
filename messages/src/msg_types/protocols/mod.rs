@@ -2,6 +2,7 @@ use std::{fmt::Display, str::FromStr};
 
 use derive_more::{From, TryInto};
 use serde::{Deserialize, Serialize};
+use shared_vcx::misc::utils::CowStr;
 
 use self::{
     basic_message::BasicMessageType, connection::ConnectionType, cred_issuance::CredentialIssuanceType,
@@ -11,7 +12,6 @@ use self::{
 };
 use crate::{
     error::{MsgTypeError, MsgTypeResult},
-    misc::utils::CowStr,
     msg_types::traits::ProtocolName,
 };
 

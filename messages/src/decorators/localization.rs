@@ -5,9 +5,8 @@ use serde::{
     ser::{Error, SerializeMap},
     Deserialize, Serialize, Serializer,
 };
+use shared_vcx::misc::utils::CowStr;
 use url::Url;
-
-use crate::misc::utils::CowStr;
 
 /// Struct representing the `~l10n` decorator, when it decorates the entire message, from its [RFC](<https://github.com/hyperledger/aries-rfcs/blob/main/features/0043-l10n/README.md>).
 #[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq)]
