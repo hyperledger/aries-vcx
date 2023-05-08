@@ -609,6 +609,7 @@ async fn _create_credential(
             tails_file.clone(),
         )
         .await?;
+
     let credential = build_credential_message(libindy_credential)?;
     Ok((credential, cred_rev_id))
 }
