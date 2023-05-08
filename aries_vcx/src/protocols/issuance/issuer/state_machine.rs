@@ -25,7 +25,7 @@ use messages::msg_fields::protocols::report_problem::ProblemReport;
 use messages::AriesMessage;
 use uuid::Uuid;
 
-use crate::common::credentials::encoding::encode_attributes;
+use crate::common::credentials::encoding::{CredentialAttributes};
 use crate::common::credentials::is_cred_revoked;
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use crate::protocols::common::build_problem_report_msg;
@@ -598,10 +598,17 @@ async fn _create_credential(
 
     let request = get_attach_as_string!(&request.content.requests_attach);
 
-    let cred_data = encode_attributes(cred_data)?;
+    let cred_attrs = CredentialAttributes::new(cred_data)?.encode_all()?;
     let (libindy_credential, cred_rev_id, _) = anoncreds
-        .issuer_create_credential(&offer, &request, &cred_data, rev_reg_id.clone(), tails_file.clone())
+        .issuer_create_credential(
+            &offer,
+            &request,
+            cred_attrs.encoded(),
+            rev_reg_id.clone(),
+            tails_file.clone(),
+        )
         .await?;
+
     let credential = build_credential_message(libindy_credential)?;
     Ok((credential, cred_rev_id))
 }
