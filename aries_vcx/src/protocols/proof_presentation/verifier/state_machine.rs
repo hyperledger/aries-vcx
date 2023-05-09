@@ -20,6 +20,9 @@ use chrono::Utc;
 use messages::decorators::thread::Thread;
 use messages::decorators::timing::Timing;
 use messages::msg_fields::protocols::notification::ack::{AckDecorators, AckStatus};
+use messages::msg_fields::protocols::notification::problem_report::{
+    NotificationProblemReport, NotificationProblemReportContent,
+};
 use messages::msg_fields::protocols::present_proof::ack::{AckPresentation, AckPresentationContent};
 use messages::msg_fields::protocols::present_proof::request::{
     RequestPresentation, RequestPresentationContent, RequestPresentationDecorators,
@@ -27,6 +30,7 @@ use messages::msg_fields::protocols::present_proof::request::{
 use messages::msg_fields::protocols::present_proof::PresentProof;
 use messages::msg_fields::protocols::present_proof::{present::Presentation, propose::ProposePresentation};
 use messages::msg_fields::protocols::report_problem::ProblemReport;
+use messages::msg_parts::MsgParts;
 use messages::AriesMessage;
 use uuid::Uuid;
 
@@ -239,12 +243,28 @@ impl VerifierSM {
                     }
                     Err(err) => {
                         let problem_report = build_problem_report_msg(Some(err.to_string()), &self.thread_id);
+
                         let sm = match err.kind() {
                             AriesVcxErrorKind::InvalidProof => VerifierFullState::Finished(
                                 (state, presentation, PresentationVerificationStatus::Invalid).into(),
                             ),
                             _ => VerifierFullState::Finished((state, problem_report.clone()).into()),
                         };
+
+                        // Use the ProblemReport message as part of 
+                        // the Notification message family
+                        let MsgParts {
+                            id,
+                            content,
+                            decorators,
+                        } = build_problem_report_msg(Some(err.to_string()), &self.thread_id);
+
+                        let problem_report = NotificationProblemReport::with_decorators(
+                            id,
+                            NotificationProblemReportContent(content),
+                            decorators,
+                        );
+
                         (sm, AriesMessage::from(problem_report))
                     }
                 };
