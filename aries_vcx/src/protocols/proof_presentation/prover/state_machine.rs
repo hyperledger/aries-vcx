@@ -291,6 +291,11 @@ impl ProverSM {
                             return Some((uid, message));
                         }
                     }
+                    AriesMessage::Notification(Notification::ProblemReport(msg)) => {
+                        if matches_opt_thread_id!(msg, self.thread_id.as_str()) {
+                            return Some((uid, message));
+                        }
+                    }
                     AriesMessage::PresentProof(PresentProof::RequestPresentation(msg)) => {
                         if matches_opt_thread_id!(msg, self.thread_id.as_str()) {
                             return Some((uid, message));
@@ -310,6 +315,11 @@ impl ProverSM {
                         }
                     }
                     AriesMessage::ReportProblem(msg) => {
+                        if matches_opt_thread_id!(msg, self.thread_id.as_str()) {
+                            return Some((uid, message));
+                        }
+                    }
+                    AriesMessage::Notification(Notification::ProblemReport(msg)) => {
                         if matches_opt_thread_id!(msg, self.thread_id.as_str()) {
                             return Some((uid, message));
                         }
