@@ -13,8 +13,8 @@ use messages::msg_fields::protocols::cred_issuance::request_credential::{
     RequestCredential, RequestCredentialContent, RequestCredentialDecorators,
 };
 use messages::msg_fields::protocols::cred_issuance::CredentialIssuance;
-use messages::msg_fields::protocols::notification::Notification;
 use messages::msg_fields::protocols::notification::ack::{AckDecorators, AckStatus};
+use messages::msg_fields::protocols::notification::Notification;
 use messages::msg_fields::protocols::report_problem::ProblemReport;
 use messages::AriesMessage;
 use uuid::Uuid;
