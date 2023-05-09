@@ -1,12 +1,12 @@
+mod did;
+mod did_url;
 mod error;
-mod parsed_did;
-mod parsed_did_url;
 mod utils;
 
 use std::ops::Range;
 
 type DidRange = Range<usize>;
 
+pub use did::Did;
+pub use did_url::DidUrl;
 pub use error::ParseError;
-pub use parsed_did::Did;
-pub use parsed_did_url::DidUrl;
