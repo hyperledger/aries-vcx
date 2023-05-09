@@ -5,7 +5,7 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use crate::{
     error::ParseError,
     utils::parse::{parse_did_method_id, parse_key_value, parse_path},
-    DidRange,
+    Did, DidRange,
 };
 
 #[derive(Default, Debug, Clone, PartialEq)]
@@ -178,5 +178,23 @@ impl<'de> Deserialize<'de> for DidUrl {
     {
         let did_url = String::deserialize(deserializer)?;
         DidUrl::parse(did_url).map_err(serde::de::Error::custom)
+    }
+}
+
+impl TryFrom<&DidUrl> for Did {
+    type Error = ParseError;
+
+    fn try_from(did_url: &DidUrl) -> Result<Self, Self::Error> {
+        if let (Some(did), Some(method), Some(id)) = (did_url.did(), &did_url.method, &did_url.id) {
+            Ok(Did::from_parts(
+                did.to_owned(),
+                method.to_owned(),
+                id.to_owned(),
+            ))
+        } else {
+            Err(ParseError::InvalidInput(
+                "Unable to construct a DID from relative DID URL",
+            ))
+        }
     }
 }

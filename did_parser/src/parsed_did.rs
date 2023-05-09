@@ -3,7 +3,6 @@ use std::fmt::{Display, Formatter};
 
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-use crate::DidUrl;
 use crate::{error::ParseError, utils::parse::parse_did_method_id, DidRange};
 
 #[derive(Default, Debug, Clone, PartialEq, Eq, Hash)]
@@ -34,6 +33,10 @@ impl Did {
 
     pub fn id(&self) -> &str {
         self.did[self.id.clone()].as_ref()
+    }
+
+    pub(crate) fn from_parts(did: String, method: DidRange, id: DidRange) -> Self {
+        Self { did, method, id }
     }
 }
 
@@ -67,18 +70,5 @@ impl<'de> Deserialize<'de> for Did {
     {
         let did = String::deserialize(deserializer)?;
         Self::parse(did).map_err(serde::de::Error::custom)
-    }
-}
-
-impl TryFrom<&DidUrl> for Did {
-    type Error = ParseError;
-
-    fn try_from(did_url: &DidUrl) -> Result<Self, Self::Error> {
-        Self::parse(
-            did_url
-                .did()
-                .ok_or(Self::Error::InvalidInput("No DID provided in the DID URL"))?
-                .to_string(),
-        )
     }
 }
