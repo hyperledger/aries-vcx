@@ -257,7 +257,7 @@ impl VerifierSM {
                             id,
                             content,
                             decorators,
-                        } = build_problem_report_msg(Some(err.to_string()), &self.thread_id);
+                        } = problem_report;
 
                         let problem_report = NotificationProblemReport::with_decorators(
                             id,
