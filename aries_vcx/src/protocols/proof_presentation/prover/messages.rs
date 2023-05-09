@@ -1,5 +1,6 @@
 use messages::{
     msg_fields::protocols::{
+        notification::Notification,
         present_proof::{
             ack::{AckPresentation, AckPresentationContent},
             present::Presentation,
@@ -7,7 +8,7 @@ use messages::{
             request::RequestPresentation,
             PresentProof,
         },
-        report_problem::ProblemReport, notification::Notification,
+        report_problem::ProblemReport,
     },
     msg_parts::MsgParts,
     AriesMessage,

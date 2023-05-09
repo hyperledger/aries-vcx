@@ -163,7 +163,9 @@ mod integration_tests {
                 let received_message = messages.values().next().unwrap().clone();
 
                 match received_message {
-                    AriesMessage::Notification(Notification::Ack(received_message)) => assert_eq!(message, received_message.clone()),
+                    AriesMessage::Notification(Notification::Ack(received_message)) => {
+                        assert_eq!(message, received_message.clone())
+                    }
                     _ => assert!(false),
                 }
             }

@@ -6,7 +6,10 @@ pub mod problem_report;
 use derive_more::From;
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 
-use self::{ack::{Ack, AckContent, AckDecorators}, problem_report::{NotificationProblemReport, NotificationProblemReportContent}};
+use self::{
+    ack::{Ack, AckContent, AckDecorators},
+    problem_report::{NotificationProblemReport, NotificationProblemReportContent},
+};
 use crate::{
     misc::utils::{into_msg_with_type, transit_to_aries_msg},
     msg_fields::traits::DelayedSerde,

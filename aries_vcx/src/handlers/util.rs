@@ -3,6 +3,7 @@ use messages::{
         connection::{invitation::Invitation, Connection},
         cred_issuance::CredentialIssuance,
         discover_features::DiscoverFeatures,
+        notification::Notification,
         out_of_band::{invitation::Invitation as OobInvitation, OutOfBand},
         present_proof::{
             propose::{Predicate, PresentationAttr},
@@ -10,7 +11,7 @@ use messages::{
         },
         report_problem::ProblemReport,
         revocation::Revocation,
-        trust_ping::TrustPing, notification::Notification,
+        trust_ping::TrustPing,
     },
     AriesMessage,
 };
