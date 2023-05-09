@@ -21,6 +21,7 @@ mod integration_tests {
     use aries_vcx_core::wallet::agency_client_wallet::ToBaseAgencyClientWallet;
     use messages::msg_fields::protocols::cred_issuance::offer_credential::OfferCredentialDecorators;
     use messages::msg_fields::protocols::cred_issuance::{CredentialAttr, CredentialPreview};
+    use messages::msg_fields::protocols::notification::Notification;
 
     use crate::utils::devsetup_agent::test_utils::create_test_alice_instance;
     use crate::utils::devsetup_agent::test_utils::Faber;
@@ -120,7 +121,7 @@ mod integration_tests {
             decorators::thread::Thread,
             msg_fields::protocols::{
                 cred_issuance::offer_credential::{OfferCredential, OfferCredentialContent},
-                notification::{Ack, AckContent, AckDecorators, AckStatus},
+                notification::ack::{Ack, AckContent, AckDecorators, AckStatus},
             },
             AriesMessage,
         };
@@ -162,7 +163,7 @@ mod integration_tests {
                 let received_message = messages.values().next().unwrap().clone();
 
                 match received_message {
-                    AriesMessage::Notification(received_message) => assert_eq!(message, received_message.clone()),
+                    AriesMessage::Notification(Notification::Ack(received_message)) => assert_eq!(message, received_message.clone()),
                     _ => assert!(false),
                 }
             }
@@ -182,7 +183,7 @@ mod integration_tests {
                 let _ack = Ack::with_decorators(id, content, decorators);
 
                 match message {
-                    AriesMessage::Notification(ack) => assert_eq!(_ack, ack),
+                    AriesMessage::Notification(Notification::Ack(ack)) => assert_eq!(_ack, ack),
                     _ => assert!(false),
                 }
             }

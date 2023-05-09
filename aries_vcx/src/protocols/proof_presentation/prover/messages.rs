@@ -7,7 +7,7 @@ use messages::{
             request::RequestPresentation,
             PresentProof,
         },
-        report_problem::ProblemReport,
+        report_problem::ProblemReport, notification::Notification,
     },
     msg_parts::MsgParts,
     AriesMessage,
@@ -43,7 +43,7 @@ impl ProverMessages {
 impl From<AriesMessage> for ProverMessages {
     fn from(msg: AriesMessage) -> Self {
         match msg {
-            AriesMessage::Notification(ack) => {
+            AriesMessage::Notification(Notification::Ack(ack)) => {
                 let MsgParts {
                     id,
                     content,

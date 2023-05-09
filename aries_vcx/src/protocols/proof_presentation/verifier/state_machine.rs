@@ -19,7 +19,7 @@ use crate::protocols::SendClosure;
 use chrono::Utc;
 use messages::decorators::thread::Thread;
 use messages::decorators::timing::Timing;
-use messages::msg_fields::protocols::notification::{AckDecorators, AckStatus};
+use messages::msg_fields::protocols::notification::ack::{AckDecorators, AckStatus};
 use messages::msg_fields::protocols::present_proof::ack::{AckPresentation, AckPresentationContent};
 use messages::msg_fields::protocols::present_proof::request::{
     RequestPresentation, RequestPresentationContent, RequestPresentationDecorators,

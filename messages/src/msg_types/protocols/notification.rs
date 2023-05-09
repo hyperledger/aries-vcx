@@ -24,6 +24,7 @@ pub enum NotificationTypeV1 {
 #[strum(serialize_all = "kebab-case")]
 pub enum NotificationTypeV1_0 {
     Ack,
+    ProblemReport
 }
 
 #[cfg(test)]
