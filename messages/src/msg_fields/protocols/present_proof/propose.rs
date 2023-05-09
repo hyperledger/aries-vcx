@@ -2,6 +2,7 @@ use std::str::FromStr;
 
 use serde::{Deserialize, Serialize};
 use shared_vcx::misc::utils::CowStr;
+use crate::msg_fields::common::attr_value::AttrValue;
 
 use crate::{
     decorators::{thread::Thread, timing::Timing},
@@ -104,22 +105,17 @@ pub struct PresentationAttr {
     pub name: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cred_def_id: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[serde(rename = "mime-type")]
-    pub mime_type: Option<MimeType>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub value: Option<String>,
+    pub value: AttrValue,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub referent: Option<String>,
 }
 
 impl PresentationAttr {
-    pub fn new(name: String) -> Self {
+    pub fn new(name: String, value: AttrValue) -> Self {
         Self {
             name,
             cred_def_id: None,
-            mime_type: None,
-            value: None,
+            value,
             referent: None,
         }
     }
@@ -183,7 +179,13 @@ mod tests {
 
     #[test]
     fn test_minimal_propose_proof() {
-        let attribute = PresentationAttr::new("test_attribute_name".to_owned());
+        let attribute = PresentationAttr::new(
+            "test_attribute_name".to_owned(),
+            AttrValue::Encoded(EncodedAttrValue {
+                value: "encoded_test_value".to_owned(),
+                mime_type: None,
+            }),
+        );
         let predicate = Predicate::new(
             "test_predicate_name".to_owned(),
             PredicateOperator::GreaterOrEqual,
@@ -203,7 +205,12 @@ mod tests {
 
     #[test]
     fn test_extended_propose_proof() {
-        let attribute = PresentationAttr::new("test_attribute_name".to_owned());
+        let attribute = PresentationAttr::new(
+            "test_attribute_name".to_owned(),
+            AttrValue::Plain(PlainAttrValue {
+                value: "test_value".to_owned(),
+            }),
+        );
         let predicate = Predicate::new(
             "test_predicate_name".to_owned(),
             PredicateOperator::GreaterOrEqual,

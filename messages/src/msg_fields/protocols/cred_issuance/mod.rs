@@ -11,6 +11,7 @@ use std::str::FromStr;
 use derive_more::From;
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 use shared_vcx::misc::utils::CowStr;
+use crate::msg_fields::common::attr_value::AttrValue;
 
 use self::{
     ack::{AckCredential, AckCredentialContent},
@@ -147,18 +148,14 @@ impl Serialize for CredentialPreviewMsgType {
 #[serde(rename_all = "kebab-case")]
 pub struct CredentialAttr {
     pub name: String,
-    pub value: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[serde(rename = "mime-type")]
-    pub mime_type: Option<MimeType>,
+    pub value: AttrValue,
 }
 
 impl CredentialAttr {
-    pub fn new(name: String, value: String) -> Self {
+    pub fn new(name: String, value: AttrValue) -> Self {
         Self {
             name,
             value,
-            mime_type: None,
         }
     }
 }
