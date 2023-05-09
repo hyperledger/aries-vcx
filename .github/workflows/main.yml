@@ -396,7 +396,7 @@ jobs:
         with:
           skip-docker-setup: true
       - name: "Run workspace tests: general_test"
-        run: RUST_TEST_THREADS=1 cargo test --workspace --exclude aries-vcx-agent --exclude libvdrtools
+        run: RUST_TEST_THREADS=1 cargo test --workspace --lib --exclude aries-vcx-agent --exclude libvdrtools
 
   test-integration-aries-vcx:
     needs: workflow-setup
@@ -432,6 +432,19 @@ jobs:
       - name: "Run libvcx tests: pool_tests"
         run: |
           RUST_TEST_THREADS=1 cargo test --manifest-path="libvcx/Cargo.toml" -F "pool_tests";
+
+  test-integration-resolver:
+    needs: workflow-setup
+    if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
+    runs-on: ubuntu-20.04
+    steps:
+      - name: "Git checkout"
+        uses: actions/checkout@v3
+      - name: "Setup rust testing environment"
+        uses: ./.github/actions/setup-testing-rust
+      - name: "Run resolver tests"
+        run: |
+          RUST_TEST_THREADS=1 cargo test -p did_doc_builder -p did_parser -p did_resolver -p did_resolver_registry -p did_resolver_sov --test "*"
 
   test-node-wrapper:
     needs: workflow-setup

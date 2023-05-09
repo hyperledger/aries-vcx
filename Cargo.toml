@@ -12,7 +12,12 @@ members = [
     "agents/rust/aries-vcx-agent",
     "wrappers/vcx-napi-rs",
     "aries_vcx_core",
-    "uniffi_aries_vcx/core"
+    "uniffi_aries_vcx/core",
+    "did_doc_builder",
+    "did_parser",
+    "did_resolver",
+    "did_resolver_registry",
+    "did_resolver_sov"
 ]
 
 [workspace.package]
