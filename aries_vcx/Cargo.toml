@@ -15,7 +15,7 @@ default = ["vdrtools"]
 vdrtools = ["aries_vcx_core/vdrtools"]
 # Feature flag to include the 'modular library' dependencies (vdrtools alternatives; indy-vdr, indy-credx)
 modular_libs = ["aries_vcx_core/modular_libs"]
-
+vdr_proxy_ledger = ["aries_vcx_core/vdr_proxy_ledger"]
 
 [dependencies]
 agency_client = { path = "../agency_client" }

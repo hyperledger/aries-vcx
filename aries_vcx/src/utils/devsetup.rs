@@ -380,6 +380,12 @@ impl SetupProfile {
             SetupProfile::init_modular().await
         };
 
+        #[cfg(feature = "vdr_proxy_ledger")]
+        return {
+            info!("SetupProfile >> using vdr proxy profile");
+            SetupProfile::init_vdr_proxy_ledger().await
+        };
+
         #[cfg(feature = "vdrtools")]
         return {
             info!("SetupProfile >> using indy profile");
@@ -445,7 +451,34 @@ impl SetupProfile {
         }
     }
 
-    #[cfg(any(feature = "modular_libs", feature = "vdrtools"))]
+    #[cfg(feature = "vdr_proxy_ledger")]
+    async fn init_vdr_proxy_ledger() -> SetupProfile {
+        use std::env;
+
+        use crate::core::profile::vdr_proxy_profile::VdrProxyProfile;
+        use aries_vcx_core::VdrProxyClient;
+
+        let (institution_did, wallet_handle) = setup_issuer_wallet().await;
+
+        // TODO: Test configuration should be handled uniformly
+        let client_url = env::var("VDR_PROXY_CLIENT_URL").unwrap_or_else(|_| "http://127.0.0.1:3030".to_string());
+        let wallet = IndySdkWallet::new(wallet_handle);
+        let client = VdrProxyClient::new(&client_url).unwrap();
+
+        let profile: Arc<dyn Profile> = Arc::new(VdrProxyProfile::new(Arc::new(wallet), client));
+
+        async fn vdr_proxy_teardown() {
+            // nothing to do
+        }
+
+        SetupProfile {
+            institution_did,
+            profile,
+            teardown: Arc::new(move || Box::pin(vdr_proxy_teardown())),
+        }
+    }
+
+    #[cfg(any(feature = "modular_libs", feature = "vdrtools", feature = "vdr_proxy_ledger"))]
     pub async fn run<F>(f: impl FnOnce(Self) -> F)
     where
         F: Future<Output = ()>,

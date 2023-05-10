@@ -80,9 +80,10 @@ pub async fn add_new_did(
 
     let ledger = Arc::clone(profile).inject_ledger();
 
-    ledger
+    let res = ledger
         .publish_nym(submitter_did, &did, Some(&verkey), None, role)
         .await?;
+    check_response(&res)?;
 
     Ok((did, verkey))
 }
