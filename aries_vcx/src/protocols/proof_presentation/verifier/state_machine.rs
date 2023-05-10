@@ -413,7 +413,6 @@ impl VerifierSM {
     }
 
     pub fn get_state(&self) -> VerifierState {
-        warn!("get_state >>> {:?}", self.state);
         match self.state {
             VerifierFullState::Initial(_) => VerifierState::Initial,
             VerifierFullState::PresentationRequestSet(_) => VerifierState::PresentationRequestSet,
