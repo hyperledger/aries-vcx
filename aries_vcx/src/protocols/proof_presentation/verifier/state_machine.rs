@@ -251,8 +251,6 @@ impl VerifierSM {
                             _ => VerifierFullState::Finished((state, problem_report.clone()).into()),
                         };
 
-                        // Use the ProblemReport message as part of
-                        // the Notification message family
                         let MsgParts {
                             id,
                             content,
