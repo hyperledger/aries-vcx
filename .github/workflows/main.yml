@@ -444,7 +444,7 @@ jobs:
         uses: ./.github/actions/setup-testing-rust
       - name: "Run resolver tests"
         run: |
-          RUST_TEST_THREADS=1 cargo test -p did_doc_builder -p did_parser -p did_resolver -p did_resolver_registry -p did_resolver_sov --test "*"
+          RUST_TEST_THREADS=1 cargo test -p did_doc_builder -p did_parser -p did_resolver -p did_resolver_registry -p did_resolver_sov -p did_resolver_web --test "*"
 
   test-node-wrapper:
     needs: workflow-setup

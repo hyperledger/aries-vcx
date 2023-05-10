@@ -17,7 +17,8 @@ members = [
     "did_parser",
     "did_resolver",
     "did_resolver_registry",
-    "did_resolver_sov"
+    "did_resolver_sov",
+    "did_resolver_web"
 ]
 
 [workspace.package]
