@@ -25,7 +25,7 @@ use messages::msg_fields::protocols::report_problem::ProblemReport;
 use messages::AriesMessage;
 use uuid::Uuid;
 
-use crate::common::credentials::encoding::{CredentialAttributes};
+use crate::common::credentials::encoding::CredentialAttributes;
 use crate::common::credentials::is_cred_revoked;
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use crate::protocols::common::build_problem_report_msg;
