@@ -6,6 +6,10 @@ inputs:
     description: 'If true, skip spinning up docker containers'
     required: false
     default: false
+  skip-vdrproxy-setup:
+    description: 'If true, skip spinning up vdrproxy'
+    required: false
+    default: true
 
 runs:
   using: "composite"
@@ -27,3 +31,8 @@ runs:
         docker run --rm -d --name indypool  --network host ${{ env.DOCKER_IMAGE_POOL }}
         sleep 5
         docker-compose -f ./ci/agency/docker-compose.yml up -d
+    - name: "Start vdrproxy"
+      if: ${{ inputs.skip-vdrproxy-setup != 'false' }}
+      shell: bash
+      run: |
+        docker run --rm -d --name vdrproxy --network host -e GENESIS=${{ env.GENESIS_URL }} -e PORT=${{ env.VDR_PROXY_PORT }} ${{ env.DOCKER_IMAGE_VDRPROXY }}

@@ -79,10 +79,9 @@ jobs:
           HASH_SRC_AGENCYCLIENT=${{ hashFiles('agency_client') }}
           HASH_SRC_DIDDOC=${{ hashFiles('diddoc') }}
           HASH_SRC_MESSAGES=${{ hashFiles('messages') }}
-          HASH_SRC_MESSAGES_2=${{ hashFiles('messages2') }}
           HASH_SRC_WRAPPER_JAVA=${{ hashFiles('wrappers/java') }}
 
-          SEED_HASH_ARIESVCX=${HASH_SRC_LIBVDRTOOLS:0:11}-${HASH_SRC_ARIESVCX_CORE:0:11}-${HASH_SRC_ARIESVCX:0:11}-${HASH_SRC_AGENCYCLIENT:0:11}-${HASH_SRC_DIDDOC:0:11}-${HASH_SRC_MESSAGES:0:11}-${HASH_SRC_MESSAGES_2:0:11}
+          SEED_HASH_ARIESVCX=${HASH_SRC_LIBVDRTOOLS:0:11}-${HASH_SRC_ARIESVCX_CORE:0:11}-${HASH_SRC_ARIESVCX:0:11}-${HASH_SRC_AGENCYCLIENT:0:11}-${HASH_SRC_DIDDOC:0:11}-${HASH_SRC_MESSAGES:0:11}}
           HASH_ARIESVCX=$(echo -n "$SEED_HASH_ARIESVCX" | sha256sum | awk '{print $1}')
 
           SEED_HASH_DOCKER_LIBVCX=${HASH_ARIESVCX:0:11}-${HASH_DOCKERFILE_LIBVCX:0:11}-${HASH_SRC_LIBVCX:0:11}
@@ -256,6 +255,53 @@ jobs:
           branch-main: ${{ env.MAIN_BRANCH }}
           docker-repo-local-name: ${{ env.DOCKER_REPO_LOCAL_ANDROID }}
 
+  build-docker-vdrproxy:
+    needs: [ workflow-setup, build-docker-alpine-core ]
+    if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
+    runs-on: ubuntu-20.04
+    env:
+      DOCKER_IMG_CACHED: ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_VDRPROXY }}
+      DOCKER_IMG_CACHED_ALPINE_CORE: ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_ALPINE_CORE }}
+      BRANCH_NAME: ${{ needs.workflow-setup.outputs.BRANCH_NAME }}
+    outputs:
+      image-name: ${{ steps.meta.outputs.tags }}
+    steps:
+      - name: "Git checkout"
+        uses: actions/checkout@v3
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=semver,pattern={{version}},value=${{ needs.workflow-setup.outputs.publish-version }}
+          flavor: |
+            latest=false
+
+      # TODO: Is this step necessary?
+      # TODO: This step would be definitely unnecessary if alpine image was published
+      - name: "Load alpine core image"
+        uses: ./.github/actions/load-image
+        with:
+          docker-img: ${{ env.DOCKER_IMG_CACHED_ALPINE_CORE }}
+
+      - name: Build and publish docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./ci/vdrproxy.dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            ALPINE_CORE_IMAGE=${{ env.DOCKER_IMG_CACHED_ALPINE_CORE }}
 
   ##########################################################################################
   ##############################   DOCKER PUBLISH   ########################################
@@ -419,6 +465,25 @@ jobs:
         uses: ./.github/actions/setup-testing-rust
       - name: "Run aries-vcx tests: mysql_test"
         run: RUST_TEST_THREADS=1 cargo test --manifest-path="aries_vcx/Cargo.toml" test_mysql -- --include-ignored;
+
+  test-integration-aries-vcx-vdrproxy:
+    needs: [workflow-setup, build-docker-vdrproxy]
+    runs-on: ubuntu-20.04
+    env:
+      RUST_TEST_THREADS: 1
+      VDR_PROXY_CLIENT_URL: http://127.0.0.1:3030
+      DOCKER_IMAGE_VDRPROXY: ${{ needs.build-docker-vdrproxy.outputs.image-name }}
+      GENESIS_URL: //raw.githubusercontent.com/AbsaOSS/sovrin-networks/master/genesis/127.0.0.1
+      VDR_PROXY_PORT: 3030
+    steps:
+      - name: "Git checkout"
+        uses: actions/checkout@v3
+      - name: "Setup rust testing environment"
+        uses: ./.github/actions/setup-testing-rust
+        with:
+          skip-vdrproxy-setup: false
+      - name: "Run aries-vcx tests: vdrproxy_test"
+        run: cargo test --manifest-path="aries_vcx/Cargo.toml" --test test_pool -F vdr_proxy_ledger -- --ignored
 
   test-integration-libvcx:
     needs: workflow-setup
