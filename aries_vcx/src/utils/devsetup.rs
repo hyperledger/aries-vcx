@@ -17,7 +17,7 @@ use aries_vcx_core::indy::wallet::{
 };
 
 #[cfg(feature = "modular_libs")]
-use aries_vcx_core::ledger::indy_vdr_ledger::LedgerPoolConfig;
+use aries_vcx_core::ledger::request_submitter::vdr_ledger::LedgerPoolConfig;
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use aries_vcx_core::wallet::indy_wallet::IndySdkWallet;
 use aries_vcx_core::{PoolHandle, WalletHandle};

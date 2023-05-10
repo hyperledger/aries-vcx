@@ -1,13 +1,13 @@
 use std::sync::Arc;
 
 use aries_vcx_core::{
-    anoncreds::{base_anoncreds::BaseAnonCreds, credx_anoncreds::IndyCredxAnonCreds, indy_anoncreds::IndySdkAnonCreds},
-    ledger::{base_ledger::BaseLedger, indy_ledger::IndySdkLedger, vdr_proxy_ledger::VdrProxyLedger},
-    wallet::{base_wallet::BaseWallet, indy_wallet::IndySdkWallet},
-    PoolHandle, VdrProxyClient, WalletHandle,
+    anoncreds::{base_anoncreds::BaseAnonCreds, credx_anoncreds::IndyCredxAnonCreds},
+    ledger::{
+        base_ledger::BaseLedger, indy_vdr_ledger::IndyVdrLedger, request_submitter::vdr_proxy::VdrProxySubmitter,
+    },
+    wallet::base_wallet::BaseWallet,
+    VdrProxyClient,
 };
-
-use crate::errors::error::VcxResult;
 
 use super::profile::Profile;
 
@@ -20,7 +20,8 @@ pub struct VdrProxyProfile {
 
 impl VdrProxyProfile {
     pub fn new(wallet: Arc<dyn BaseWallet>, client: VdrProxyClient) -> Self {
-        let ledger = Arc::new(VdrProxyLedger::new(wallet.clone(), client));
+        let submitter = Arc::new(VdrProxySubmitter::new(Arc::new(client)));
+        let ledger = Arc::new(IndyVdrLedger::new(wallet.clone(), submitter));
         let anoncreds = Arc::new(IndyCredxAnonCreds::new(Arc::clone(&wallet)));
         VdrProxyProfile {
             wallet,

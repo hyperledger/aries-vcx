@@ -3,7 +3,8 @@ use std::sync::Arc;
 use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
 use aries_vcx_core::anoncreds::credx_anoncreds::IndyCredxAnonCreds;
 use aries_vcx_core::ledger::base_ledger::BaseLedger;
-use aries_vcx_core::ledger::indy_vdr_ledger::{IndyVdrLedger, IndyVdrLedgerPool, LedgerPoolConfig};
+use aries_vcx_core::ledger::indy_vdr_ledger::IndyVdrLedger;
+use aries_vcx_core::ledger::request_submitter::vdr_ledger::{IndyVdrLedgerPool, IndyVdrSubmitter, LedgerPoolConfig};
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 
 use crate::errors::error::VcxResult;
@@ -21,7 +22,8 @@ pub struct ModularLibsProfile {
 impl ModularLibsProfile {
     pub fn new(wallet: Arc<dyn BaseWallet>, ledger_pool_config: LedgerPoolConfig) -> VcxResult<Self> {
         let ledger_pool = Arc::new(IndyVdrLedgerPool::new(ledger_pool_config)?);
-        let ledger = Arc::new(IndyVdrLedger::new(Arc::clone(&wallet), ledger_pool));
+        let submitter = Arc::new(IndyVdrSubmitter::new(ledger_pool));
+        let ledger = Arc::new(IndyVdrLedger::new(Arc::clone(&wallet), submitter));
         let anoncreds = Arc::new(IndyCredxAnonCreds::new(Arc::clone(&wallet)));
         Ok(ModularLibsProfile {
             wallet,
