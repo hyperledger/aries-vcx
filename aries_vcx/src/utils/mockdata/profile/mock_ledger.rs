@@ -136,6 +136,39 @@ impl BaseLedger for MockLedger {
 }
 
 #[cfg(test)]
+pub mod mocks {
+    use aries_vcx_core::ledger::base_ledger::BaseLedger;
+    use mockall::mock;
+
+    mock! {
+        #[derive(Debug)]
+        pub MockAllLedger {}
+        impl BaseLedger for MockAllLedger {
+            fn sign_and_submit_request<'life0,'life1,'life2,'async_trait>(&'life0 self,submitter_did: &'life1 str,request_json: &'life2 str) ->  core::pin::Pin<Box<dyn core::future::Future<Output = aries_vcx_core::errors::error::VcxCoreResult<String> > + core::marker::Send+'async_trait> >where 'life0:'async_trait,'life1:'async_trait,'life2:'async_trait,Self:'async_trait;
+            fn submit_request<'life0,'life1,'async_trait>(&'life0 self,request_json: &'life1 str) ->  core::pin::Pin<Box<dyn core::future::Future<Output = aries_vcx_core::errors::error::VcxCoreResult<String> > + core::marker::Send+'async_trait> >where 'life0:'async_trait,'life1:'async_trait,Self:'async_trait;
+            fn endorse_transaction<'life0,'life1,'life2,'async_trait>(&'life0 self,endorser_did: &'life1 str,request_json: &'life2 str) ->  core::pin::Pin<Box<dyn core::future::Future<Output = aries_vcx_core::errors::error::VcxCoreResult<()> > + core::marker::Send+'async_trait> >where 'life0:'async_trait,'life1:'async_trait,'life2:'async_trait,Self:'async_trait;
+            fn set_endorser<'life0,'life1,'life2,'life3,'async_trait>(&'life0 self,submitter_did: &'life1 str,request: &'life2 str,endorser: &'life3 str) ->  core::pin::Pin<Box<dyn core::future::Future<Output = aries_vcx_core::errors::error::VcxCoreResult<String> > + core::marker::Send+'async_trait> >where 'life0:'async_trait,'life1:'async_trait,'life2:'async_trait,'life3:'async_trait,Self:'async_trait;
+            fn get_txn_author_agreement<'life0,'async_trait>(&'life0 self) ->  core::pin::Pin<Box<dyn core::future::Future<Output = aries_vcx_core::errors::error::VcxCoreResult<String> > + core::marker::Send+'async_trait> >where 'life0:'async_trait,Self:'async_trait;
+            fn get_nym<'life0,'life1,'async_trait>(&'life0 self,did: &'life1 str) ->  core::pin::Pin<Box<dyn core::future::Future<Output = aries_vcx_core::errors::error::VcxCoreResult<String> > + core::marker::Send+'async_trait> >where 'life0:'async_trait,'life1:'async_trait,Self:'async_trait;
+            fn publish_nym<'life0,'life1,'life2,'life3,'life4,'life5,'async_trait>(&'life0 self,submitter_did: &'life1 str,target_did: &'life2 str,verkey:Option< &'life3 str> ,data:Option< &'life4 str> ,role:Option< &'life5 str> ,) ->  core::pin::Pin<Box<dyn core::future::Future<Output = aries_vcx_core::errors::error::VcxCoreResult<String> > + core::marker::Send+'async_trait> >where 'life0:'async_trait,'life1:'async_trait,'life2:'async_trait,'life3:'async_trait,'life4:'async_trait,'life5:'async_trait,Self:'async_trait;
+            fn get_schema<'life0,'life1,'life2,'async_trait>(&'life0 self,schema_id: &'life1 str,submitter_did:Option< &'life2 str>) ->  core::pin::Pin<Box<dyn core::future::Future<Output = aries_vcx_core::errors::error::VcxCoreResult<String> > + core::marker::Send+'async_trait> >where 'life0:'async_trait,'life1:'async_trait,'life2:'async_trait,Self:'async_trait;
+            fn get_cred_def<'life0,'life1,'life2,'async_trait>(&'life0 self,cred_def_id: &'life1 str,submitter_did:Option< &'life2 str>) ->  core::pin::Pin<Box<dyn core::future::Future<Output = aries_vcx_core::errors::error::VcxCoreResult<String> > + core::marker::Send+'async_trait> >where 'life0:'async_trait,'life1:'async_trait,'life2:'async_trait,Self:'async_trait;
+            fn get_attr<'life0,'life1,'life2,'async_trait>(&'life0 self,target_did: &'life1 str,attr_name: &'life2 str) ->  core::pin::Pin<Box<dyn core::future::Future<Output = aries_vcx_core::errors::error::VcxCoreResult<String> > + core::marker::Send+'async_trait> >where 'life0:'async_trait,'life1:'async_trait,'life2:'async_trait,Self:'async_trait;
+            fn add_attr<'life0,'life1,'life2,'async_trait>(&'life0 self,target_did: &'life1 str,attrib_json: &'life2 str) ->  core::pin::Pin<Box<dyn core::future::Future<Output = aries_vcx_core::errors::error::VcxCoreResult<String> > + core::marker::Send+'async_trait> >where 'life0:'async_trait,'life1:'async_trait,'life2:'async_trait,Self:'async_trait;
+            fn get_rev_reg_def_json<'life0,'life1,'async_trait>(&'life0 self,rev_reg_id: &'life1 str) ->  core::pin::Pin<Box<dyn core::future::Future<Output = aries_vcx_core::errors::error::VcxCoreResult<String> > + core::marker::Send+'async_trait> >where 'life0:'async_trait,'life1:'async_trait,Self:'async_trait;
+            fn get_rev_reg_delta_json<'life0,'life1,'async_trait>(&'life0 self,rev_reg_id: &'life1 str,from:Option<u64> ,to:Option<u64> ,) ->  core::pin::Pin<Box<dyn core::future::Future<Output = aries_vcx_core::errors::error::VcxCoreResult<(String,String,u64)> > + core::marker::Send+'async_trait> >where 'life0:'async_trait,'life1:'async_trait,Self:'async_trait;
+            fn get_rev_reg<'life0,'life1,'async_trait>(&'life0 self,rev_reg_id: &'life1 str,timestamp:u64) ->  core::pin::Pin<Box<dyn core::future::Future<Output = aries_vcx_core::errors::error::VcxCoreResult<(String,String,u64)> > + core::marker::Send+'async_trait> >where 'life0:'async_trait,'life1:'async_trait,Self:'async_trait;
+            fn get_ledger_txn<'life0,'life1,'async_trait>(&'life0 self,seq_no:i32,submitter_did:Option< &'life1 str>) ->  core::pin::Pin<Box<dyn core::future::Future<Output = aries_vcx_core::errors::error::VcxCoreResult<String> > + core::marker::Send+'async_trait> >where 'life0:'async_trait,'life1:'async_trait,Self:'async_trait;
+            fn build_schema_request<'life0,'life1,'life2,'async_trait>(&'life0 self,submitter_did: &'life1 str,schema_json: &'life2 str) ->  core::pin::Pin<Box<dyn core::future::Future<Output = aries_vcx_core::errors::error::VcxCoreResult<String> > + core::marker::Send+'async_trait> >where 'life0:'async_trait,'life1:'async_trait,'life2:'async_trait,Self:'async_trait;
+            fn publish_schema<'life0,'life1,'life2,'async_trait>(&'life0 self,schema_json: &'life1 str,submitter_did: &'life2 str,endorser_did:Option<String> ,) ->  core::pin::Pin<Box<dyn core::future::Future<Output = aries_vcx_core::errors::error::VcxCoreResult<()> > + core::marker::Send+'async_trait> >where 'life0:'async_trait,'life1:'async_trait,'life2:'async_trait,Self:'async_trait;
+            fn publish_cred_def<'life0,'life1,'life2,'async_trait>(&'life0 self,cred_def_json: &'life1 str,submitter_did: &'life2 str) ->  core::pin::Pin<Box<dyn core::future::Future<Output = aries_vcx_core::errors::error::VcxCoreResult<()> > + core::marker::Send+'async_trait> >where 'life0:'async_trait,'life1:'async_trait,'life2:'async_trait,Self:'async_trait;
+            fn publish_rev_reg_def<'life0,'life1,'life2,'async_trait>(&'life0 self,rev_reg_def: &'life1 str,submitter_did: &'life2 str) ->  core::pin::Pin<Box<dyn core::future::Future<Output = aries_vcx_core::errors::error::VcxCoreResult<()> > + core::marker::Send+'async_trait> >where 'life0:'async_trait,'life1:'async_trait,'life2:'async_trait,Self:'async_trait;
+            fn publish_rev_reg_delta<'life0,'life1,'life2,'life3,'async_trait>(&'life0 self,rev_reg_id: &'life1 str,rev_reg_entry_json: &'life2 str,submitter_did: &'life3 str,) ->  core::pin::Pin<Box<dyn core::future::Future<Output = aries_vcx_core::errors::error::VcxCoreResult<()> > + core::marker::Send+'async_trait> >where 'life0:'async_trait,'life1:'async_trait,'life2:'async_trait,'life3:'async_trait,Self:'async_trait;
+        }
+    }
+}
+
+#[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod unit_tests {
 

@@ -1,10 +1,12 @@
 use crate::errors::error::AriesVcxError;
 
+#[derive(Debug)]
 pub enum FailureReason {
     Error(AriesVcxError),
     OtherReason(String),
 }
 
+#[derive(Debug)]
 pub struct Failed {
     pub reason: FailureReason,
 }

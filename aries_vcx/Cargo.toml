@@ -56,3 +56,4 @@ sqlx = { version = "0.5", features = [
     "mysql",
     "runtime-tokio-rustls",
 ] }
+mockall = "0.11.4"

@@ -26,3 +26,57 @@ impl Profile for MockProfile {
         Arc::new(MockWallet {})
     }
 }
+
+#[cfg(test)]
+pub mod mocks {
+    use std::sync::Arc;
+
+    use aries_vcx_core::{ledger::base_ledger::BaseLedger, anoncreds::base_anoncreds::BaseAnonCreds, wallet::base_wallet::BaseWallet};
+
+    use crate::core::profile::profile::Profile;
+
+
+    #[derive(Default, Debug)]
+    pub struct MockPartsProfile {
+        ledger: Option<Arc<dyn BaseLedger>>,
+        anoncreds: Option<Arc<dyn BaseAnonCreds>>,
+        wallet: Option<Arc<dyn BaseWallet>>,
+    }
+
+    impl MockPartsProfile {
+        pub fn set_ledger(self, ledger: Arc<dyn BaseLedger>) -> Self {
+            MockPartsProfile {
+                ledger: Some(ledger),
+                ..self
+            }
+        }
+
+        pub fn set_anoncreds(self, anoncreds: Arc<dyn BaseAnonCreds>) -> Self {
+            MockPartsProfile {
+                anoncreds: Some(anoncreds),
+                ..self
+            }
+        }
+
+        pub fn set_wallet(self, wallet: Arc<dyn BaseWallet>) -> Self {
+            MockPartsProfile {
+                wallet: Some(wallet),
+                ..self
+            }
+        }
+    }
+
+    impl Profile for MockPartsProfile {
+        fn inject_ledger(self: Arc<Self>) -> Arc<dyn BaseLedger> {
+            self.ledger.as_ref().unwrap().clone()
+        }
+
+        fn inject_anoncreds(self: Arc<Self>) -> Arc<dyn BaseAnonCreds> {
+            self.anoncreds.as_ref().unwrap().clone()
+        }
+
+        fn inject_wallet(&self) -> Arc<dyn BaseWallet> {
+            self.wallet.as_ref().unwrap().clone()
+        }
+    }
+}

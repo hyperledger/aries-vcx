@@ -1,3 +1,4 @@
+#[derive(Debug)]
 pub struct Finished {
     pub(crate) credential_id: String,
 }

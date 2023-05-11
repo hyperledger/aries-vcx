@@ -1,5 +1,6 @@
 use messages::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
 
+#[derive(Debug)]
 pub struct OfferReceived {
     pub(crate) offer_message: OfferCredential,
 }

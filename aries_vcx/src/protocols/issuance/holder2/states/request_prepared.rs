@@ -1,5 +1,6 @@
 use messages::msg_fields::protocols::cred_issuance::request_credential::RequestCredential;
 
+#[derive(Debug)]
 pub struct RequestPrepared {
     pub(crate) credential_request_message: RequestCredential,
     pub(crate) credential_request_metadata: String,

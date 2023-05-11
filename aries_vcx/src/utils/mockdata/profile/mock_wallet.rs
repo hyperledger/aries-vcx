@@ -96,3 +96,33 @@ impl BaseWallet for MockWallet {
         Ok(msg.to_vec())
     }
 }
+
+#[cfg(test)]
+pub mod mocks {
+    use aries_vcx_core::wallet::base_wallet::BaseWallet;
+    use mockall::mock;
+
+    mock! {
+        #[derive(Debug)]
+        pub MockAllWallet {}
+
+        impl BaseWallet for MockAllWallet {
+            fn create_and_store_my_did<'life0,'life1,'life2,'async_trait>(&'life0 self,seed:Option< &'life1 str> ,method_name:Option< &'life2 str> ,) ->  core::pin::Pin<Box<dyn core::future::Future<Output = aries_vcx_core::errors::error::VcxCoreResult<(String,String)> > + core::marker::Send+'async_trait> >where 'life0:'async_trait,'life1:'async_trait,'life2:'async_trait,Self:'async_trait;
+            fn key_for_local_did<'life0,'life1,'async_trait>(&'life0 self,did: &'life1 str) ->  core::pin::Pin<Box<dyn core::future::Future<Output = aries_vcx_core::errors::error::VcxCoreResult<String> > + core::marker::Send+'async_trait> >where 'life0:'async_trait,'life1:'async_trait,Self:'async_trait;
+            fn replace_did_keys_start<'life0,'life1,'async_trait>(&'life0 self,target_did: &'life1 str) ->  core::pin::Pin<Box<dyn core::future::Future<Output = aries_vcx_core::errors::error::VcxCoreResult<String> > + core::marker::Send+'async_trait> >where 'life0:'async_trait,'life1:'async_trait,Self:'async_trait;
+            fn replace_did_keys_apply<'life0,'life1,'async_trait>(&'life0 self,target_did: &'life1 str) ->  core::pin::Pin<Box<dyn core::future::Future<Output = aries_vcx_core::errors::error::VcxCoreResult<()> > + core::marker::Send+'async_trait> >where 'life0:'async_trait,'life1:'async_trait,Self:'async_trait;
+            fn add_wallet_record<'life0,'life1,'life2,'life3,'life4,'async_trait>(&'life0 self,xtype: &'life1 str,id: &'life2 str,value: &'life3 str,tags_json:Option< &'life4 str>) ->  core::pin::Pin<Box<dyn core::future::Future<Output = aries_vcx_core::errors::error::VcxCoreResult<()> > + core::marker::Send+'async_trait> >where 'life0:'async_trait,'life1:'async_trait,'life2:'async_trait,'life3:'async_trait,'life4:'async_trait,Self:'async_trait;
+            fn get_wallet_record<'life0,'life1,'life2,'life3,'async_trait>(&'life0 self,xtype: &'life1 str,id: &'life2 str,options_json: &'life3 str) ->  core::pin::Pin<Box<dyn core::future::Future<Output = aries_vcx_core::errors::error::VcxCoreResult<String> > + core::marker::Send+'async_trait> >where 'life0:'async_trait,'life1:'async_trait,'life2:'async_trait,'life3:'async_trait,Self:'async_trait;
+            fn delete_wallet_record<'life0,'life1,'life2,'async_trait>(&'life0 self,xtype: &'life1 str,id: &'life2 str) ->  core::pin::Pin<Box<dyn core::future::Future<Output = aries_vcx_core::errors::error::VcxCoreResult<()> > + core::marker::Send+'async_trait> >where 'life0:'async_trait,'life1:'async_trait,'life2:'async_trait,Self:'async_trait;
+            fn update_wallet_record_value<'life0,'life1,'life2,'life3,'async_trait>(&'life0 self,xtype: &'life1 str,id: &'life2 str,value: &'life3 str) ->  core::pin::Pin<Box<dyn core::future::Future<Output = aries_vcx_core::errors::error::VcxCoreResult<()> > + core::marker::Send+'async_trait> >where 'life0:'async_trait,'life1:'async_trait,'life2:'async_trait,'life3:'async_trait,Self:'async_trait;
+            fn add_wallet_record_tags<'life0,'life1,'life2,'life3,'async_trait>(&'life0 self,xtype: &'life1 str,id: &'life2 str,tags_json: &'life3 str) ->  core::pin::Pin<Box<dyn core::future::Future<Output = aries_vcx_core::errors::error::VcxCoreResult<()> > + core::marker::Send+'async_trait> >where 'life0:'async_trait,'life1:'async_trait,'life2:'async_trait,'life3:'async_trait,Self:'async_trait;
+            fn update_wallet_record_tags<'life0,'life1,'life2,'life3,'async_trait>(&'life0 self,xtype: &'life1 str,id: &'life2 str,tags_json: &'life3 str) ->  core::pin::Pin<Box<dyn core::future::Future<Output = aries_vcx_core::errors::error::VcxCoreResult<()> > + core::marker::Send+'async_trait> >where 'life0:'async_trait,'life1:'async_trait,'life2:'async_trait,'life3:'async_trait,Self:'async_trait;
+            fn delete_wallet_record_tags<'life0,'life1,'life2,'life3,'async_trait>(&'life0 self,xtype: &'life1 str,id: &'life2 str,tag_names: &'life3 str) ->  core::pin::Pin<Box<dyn core::future::Future<Output = aries_vcx_core::errors::error::VcxCoreResult<()> > + core::marker::Send+'async_trait> >where 'life0:'async_trait,'life1:'async_trait,'life2:'async_trait,'life3:'async_trait,Self:'async_trait;
+            fn iterate_wallet_records<'life0,'life1,'life2,'life3,'async_trait>(&'life0 self,xtype: &'life1 str,query: &'life2 str,options: &'life3 str,) ->  core::pin::Pin<Box<dyn core::future::Future<Output = aries_vcx_core::errors::error::VcxCoreResult<Box<dyn aries_vcx_core::utils::async_fn_iterator::AsyncFnIterator<Item = aries_vcx_core::errors::error::VcxCoreResult<String> > > > > + core::marker::Send+'async_trait> >where 'life0:'async_trait,'life1:'async_trait,'life2:'async_trait,'life3:'async_trait,Self:'async_trait;
+            fn sign<'life0,'life1,'life2,'async_trait>(&'life0 self,my_vk: &'life1 str,msg: &'life2[u8]) ->  core::pin::Pin<Box<dyn core::future::Future<Output = aries_vcx_core::errors::error::VcxCoreResult<Vec<u8> > > + core::marker::Send+'async_trait> >where 'life0:'async_trait,'life1:'async_trait,'life2:'async_trait,Self:'async_trait;
+            fn verify<'life0,'life1,'life2,'life3,'async_trait>(&'life0 self,vk: &'life1 str,msg: &'life2[u8],signature: &'life3[u8]) ->  core::pin::Pin<Box<dyn core::future::Future<Output = aries_vcx_core::errors::error::VcxCoreResult<bool> > + core::marker::Send+'async_trait> >where 'life0:'async_trait,'life1:'async_trait,'life2:'async_trait,'life3:'async_trait,Self:'async_trait;
+            fn pack_message<'life0,'life1,'life2,'life3,'async_trait>(&'life0 self,sender_vk:Option< &'life1 str> ,receiver_keys: &'life2 str,msg: &'life3[u8]) ->  core::pin::Pin<Box<dyn core::future::Future<Output = aries_vcx_core::errors::error::VcxCoreResult<Vec<u8> > > + core::marker::Send+'async_trait> >where 'life0:'async_trait,'life1:'async_trait,'life2:'async_trait,'life3:'async_trait,Self:'async_trait;
+            fn unpack_message<'life0,'life1,'async_trait>(&'life0 self,msg: &'life1[u8]) ->  core::pin::Pin<Box<dyn core::future::Future<Output = aries_vcx_core::errors::error::VcxCoreResult<Vec<u8> > > + core::marker::Send+'async_trait> >where 'life0:'async_trait,'life1:'async_trait,Self:'async_trait;
+        }
+    }
+}

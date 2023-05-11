@@ -18,7 +18,7 @@ use crate::{
     core::profile::profile::Profile,
     errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
     global::settings,
-    handlers::util::{make_attach_from_str, matches_thread_id, AttachmentId, get_attach_as_string},
+    handlers::util::{get_attach_as_string, make_attach_from_str, matches_thread_id, AttachmentId},
     protocols::issuance::holder2::states::ack_prepared::AckPrepared,
     utils::uuid::uuid,
 };
@@ -195,6 +195,10 @@ async fn make_credential_request(
     Ok((credential_request_msg, req_meta, cred_def_json))
 }
 
+
+
+
+
 // TODO - idk where to put these functions
 
 fn parse_cred_def_id_from_cred_offer(cred_offer: &str) -> VcxResult<String> {
@@ -311,4 +315,104 @@ fn build_credential_ack(thread_id: &str) -> AckCredential {
     let decorators = AckDecorators::new(Thread::new(thread_id.to_owned()));
 
     AckCredential::with_decorators(uuid(), content, decorators)
+}
+
+#[cfg(test)]
+mod unit_tests {
+    use std::sync::Arc;
+
+    use messages::{
+        decorators::attachment::{Attachment, AttachmentData, AttachmentType},
+        msg_fields::protocols::cred_issuance::{
+            offer_credential::{OfferCredential, OfferCredentialContent, OfferCredentialDecorators},
+            CredentialAttr, CredentialPreview,
+        },
+    };
+
+    use crate::{
+        core::profile::profile::Profile,
+        protocols::issuance::holder2::Holder,
+        utils::{
+            mockdata::profile::{
+                mock_anoncreds::mocks::MockMockAllAnonCreds, mock_ledger::mocks::MockMockAllLedger,
+                mock_profile::mocks::MockPartsProfile,
+            },
+            uuid::uuid,
+        },
+    };
+
+    fn create_dummy_offer() -> OfferCredential {
+        let attr = CredentialAttr::new("attr1".to_owned(), "val1".to_owned());
+        let credential_preview = CredentialPreview::new(vec![attr.clone()]);
+        let cred_offer_data = String::from("eyJjcmVkX2RlZl9pZCI6ICJkdW1teV9jcmVkX2RlZiJ9");
+        OfferCredential::with_decorators(
+            uuid(),
+            OfferCredentialContent::new(
+                credential_preview,
+                vec![Attachment::new(AttachmentData::new(AttachmentType::Base64(
+                    cred_offer_data,
+                )))],
+            ),
+            OfferCredentialDecorators::default(),
+        )
+    }
+
+    #[tokio::test]
+    async fn test_prepare_request_happy_path() {
+        // init dummy offered holder
+        let offer = create_dummy_offer();
+        let holder = Holder::create_from_offer(offer);
+
+        // mock ledger call
+        let mut ledger = MockMockAllLedger::new();
+        ledger
+            .expect_get_cred_def()
+            .times(1)
+            .withf(|cred_def_id, submitted_did| cred_def_id == "dummy_cred_def" && submitted_did.is_none())
+            .returning(|_, _| Box::pin(async { Ok(String::from("dummy_cred_def_json")) }));
+
+        // mock anoncreds call
+        let mut anoncreds = MockMockAllAnonCreds::new();
+        anoncreds
+            .expect_prover_create_credential_req()
+            .times(1)
+            .withf(|prover_did, offer, cred_def_json, master_secret_id| {
+                assert_eq!(prover_did, "DID123");
+                assert_eq!(offer, "{\"cred_def_id\": \"dummy_cred_def\"}");
+                assert_eq!(cred_def_json, "dummy_cred_def_json");
+                assert_eq!(master_secret_id, "main");
+                true
+            })
+            .returning(|_, _, _, _| {
+                Box::pin(async { Ok((String::from("dummy_cred_req"), String::from("dummy_cred_req_metadata"))) })
+            });
+
+        // assemble profile
+        let profile = MockPartsProfile::default()
+            .set_ledger(Arc::new(ledger))
+            .set_anoncreds(Arc::new(anoncreds));
+
+        let profile: Arc<dyn Profile> = Arc::new(profile);
+
+        // call make to prepare request
+        let holder = holder.prepare_request(&profile, String::from("DID123")).await.unwrap();
+
+        // assert new holder state data
+        assert_eq!(holder.state.credential_definition, "dummy_cred_def_json");
+        assert_eq!(holder.state.credential_request_metadata, "dummy_cred_req_metadata");
+
+        // assert cred request attachment as expected
+        let request_message = holder.state.credential_request_message;
+        assert_eq!(request_message.content.requests_attach.len(), 1);
+        let request_attached = &request_message.content.requests_attach[0];
+        assert_eq!(request_attached.id, Some(String::from("libindy-cred-request-0")));
+        assert_eq!(request_attached.mime_type, Some(messages::misc::MimeType::Json));
+        let attached_content = &request_attached.data.content;
+        let attached_content_b64 = match attached_content {
+            AttachmentType::Base64(data) => data,
+            _ => panic!("failed"),
+        };
+        let attached_cred_req = base64::decode(attached_content_b64).unwrap();
+        assert_eq!(String::from_utf8(attached_cred_req).unwrap(), "dummy_cred_req");
+    }
 }

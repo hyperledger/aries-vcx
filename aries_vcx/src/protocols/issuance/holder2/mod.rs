@@ -11,6 +11,7 @@ use self::states::{
 pub mod states;
 pub mod transitions;
 
+#[derive(Debug)]
 pub struct Holder<S> {
     thread_id: String,
     state: S,
