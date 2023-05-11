@@ -12,7 +12,13 @@ WORKDIR /home/indy/indy-vdr/indy-vdr-proxy
 RUN cargo build --release
 
 FROM alpine:3.18
+RUN apk update && apk upgrade && \
+    apk add --no-cache \
+        libstdc++ \
+        libgcc
+
 ENV PORT 3030
 ENV GENESIS genesis.txn
+
 COPY --from=builder /home/indy/indy-vdr/target/release/indy-vdr-proxy indy-vdr-proxy
-ENTRYPOINT ["./indy-vdr-proxy", "-p", "${PORT}", "-g", "${GENESIS}"]
+ENTRYPOINT ./indy-vdr-proxy -p ${PORT} -g ${GENESIS}
