@@ -688,9 +688,12 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         Err(unimplemented_method_err("credx revoke_credential_local"))
     }
 
-    async fn publish_local_revocations(&self, submitter_did: &str, rev_reg_id: &str) -> VcxCoreResult<()> {
-        let _ = (submitter_did, rev_reg_id);
-        Err(unimplemented_method_err("credx publish_local_revocations"))
+    async fn get_rev_reg_delta(&self, rev_reg_id: &str) -> VcxCoreResult<Option<String>> {
+        Err(unimplemented_method_err("credx get_rev_reg_delta"))
+    }
+
+    async fn clear_rev_reg_delta(&self, rev_reg_id: &str) -> VcxCoreResult<()> {
+        Err(unimplemented_method_err("credx clear_rev_reg_delta"))
     }
 
     async fn generate_nonce(&self) -> VcxCoreResult<String> {

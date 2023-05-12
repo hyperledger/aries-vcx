@@ -103,8 +103,9 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
     // TODO - FUTURE - think about moving this to somewhere else, as it aggregates other calls (not PURE Anoncreds)
     async fn revoke_credential_local(&self, tails_dir: &str, rev_reg_id: &str, cred_rev_id: &str) -> VcxCoreResult<()>;
 
-    // TODO - FUTURE - think about moving this to somewhere else, as it aggregates other calls (not PURE Anoncreds)
-    async fn publish_local_revocations(&self, submitter_did: &str, rev_reg_id: &str) -> VcxCoreResult<()>;
+    async fn get_rev_reg_delta(&self, rev_reg_id: &str) -> VcxCoreResult<Option<String>>;
+
+    async fn clear_rev_reg_delta(&self, rev_reg_id: &str) -> VcxCoreResult<()>;
 
     async fn generate_nonce(&self) -> VcxCoreResult<String>;
 }

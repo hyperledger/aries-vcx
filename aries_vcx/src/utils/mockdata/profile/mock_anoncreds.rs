@@ -5,7 +5,7 @@ use crate::{
     global::settings,
     utils::{
         self,
-        constants::{LARGE_NONCE, LIBINDY_CRED_OFFER, REV_STATE_JSON},
+        constants::{LARGE_NONCE, LIBINDY_CRED_OFFER, REV_REG_DELTA_JSON, REV_STATE_JSON},
         mockdata::mock_settings::get_mock_creds_retrieved_for_proof_request,
     },
 };
@@ -186,7 +186,11 @@ impl BaseAnonCreds for MockAnoncreds {
         Ok(())
     }
 
-    async fn publish_local_revocations(&self, _submitter_did: &str, _rev_reg_id: &str) -> VcxCoreResult<()> {
+    async fn get_rev_reg_delta(&self, _rev_reg_id: &str) -> VcxCoreResult<Option<String>> {
+        Ok(Some(REV_REG_DELTA_JSON.to_string()))
+    }
+
+    async fn clear_rev_reg_delta(&self, _rev_reg_id: &str) -> VcxCoreResult<()> {
         Ok(())
     }
 

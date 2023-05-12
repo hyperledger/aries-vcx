@@ -759,12 +759,11 @@ pub mod test_utils {
     pub async fn revoke_credential_and_publish_accumulator(
         faber: &mut Faber,
         issuer_credential: &Issuer,
-        rev_reg_id: &str,
+        rev_reg: &RevocationRegistry,
     ) {
-        revoke_credential_local(faber, issuer_credential, &rev_reg_id).await;
-        let anoncreds = Arc::clone(&faber.profile).inject_anoncreds();
-        anoncreds
-            .publish_local_revocations(&faber.config_issuer.institution_did, &rev_reg_id)
+        revoke_credential_local(faber, issuer_credential, &rev_reg.rev_reg_id).await;
+        rev_reg
+            .publish_local_revocations(&faber.profile, &faber.config_issuer.institution_did)
             .await
             .unwrap();
     }
@@ -803,10 +802,9 @@ pub mod test_utils {
         rev_reg_new
     }
 
-    pub async fn publish_revocation(institution: &mut Faber, rev_reg_id: String) {
-        let anoncreds = Arc::clone(&institution.profile).inject_anoncreds();
-        anoncreds
-            .publish_local_revocations(&institution.config_issuer.institution_did, rev_reg_id.as_str())
+    pub async fn publish_revocation(institution: &mut Faber, rev_reg: &RevocationRegistry) {
+        rev_reg
+            .publish_local_revocations(&institution.profile, &institution.config_issuer.institution_did)
             .await
             .unwrap();
     }

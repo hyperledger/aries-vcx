@@ -20,7 +20,7 @@ impl VdrtoolsProfile {
     pub fn new(indy_wallet_handle: WalletHandle, indy_pool_handle: PoolHandle) -> Self {
         let wallet = Arc::new(IndySdkWallet::new(indy_wallet_handle));
         let ledger = Arc::new(IndySdkLedger::new(indy_wallet_handle, indy_pool_handle));
-        let anoncreds = Arc::new(IndySdkAnonCreds::new(indy_wallet_handle, indy_pool_handle));
+        let anoncreds = Arc::new(IndySdkAnonCreds::new(indy_wallet_handle));
         VdrtoolsProfile {
             wallet,
             ledger,

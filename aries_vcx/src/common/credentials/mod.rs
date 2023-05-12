@@ -121,6 +121,7 @@ mod integration_tests {
             let rev_reg_id = res.8;
             let cred_rev_id = res.9;
             let tails_file = res.10;
+            let rev_reg = res.11;
 
             assert!(!is_cred_revoked(&holder_setup.profile, &rev_reg_id, &cred_rev_id)
                 .await
@@ -132,8 +133,8 @@ mod integration_tests {
                 .revoke_credential_local(&tails_file, &rev_reg_id, &cred_rev_id)
                 .await
                 .unwrap();
-            anoncreds
-                .publish_local_revocations(&setup.institution_did, &rev_reg_id)
+            rev_reg
+                .publish_local_revocations(&setup.profile, &setup.institution_did)
                 .await
                 .unwrap();
 

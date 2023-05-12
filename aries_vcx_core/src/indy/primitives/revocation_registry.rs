@@ -1,5 +1,8 @@
+use std::sync::Arc;
+
 use vdrtools::{DidValue, Locator};
 
+use crate::anoncreds::base_anoncreds::BaseAnonCreds;
 use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
 use crate::global::settings;
 use crate::indy::anoncreds;
@@ -8,6 +11,7 @@ use crate::indy::ledger::transactions::{
 };
 use crate::indy::utils::parse_and_validate;
 use crate::indy::wallet_non_secrets::{clear_rev_reg_delta, get_rev_reg_delta, set_rev_reg_delta};
+use crate::ledger::base_ledger::BaseLedger;
 use crate::{PoolHandle, WalletHandle};
 
 pub const BLOB_STORAGE_TYPE: &str = "default";
@@ -149,38 +153,4 @@ pub async fn revoke_credential_local(
     }
 
     set_rev_reg_delta(wallet_handle, rev_reg_id, &new_delta_json).await
-}
-
-// consider moving out of indy dir as this aggregates multiple calls
-pub async fn publish_local_revocations(
-    wallet_handle: WalletHandle,
-    pool_handle: PoolHandle,
-    submitter_did: &str,
-    rev_reg_id: &str,
-) -> VcxCoreResult<()> {
-    if let Some(delta) = get_rev_reg_delta(wallet_handle, rev_reg_id).await {
-        publish_rev_reg_delta(wallet_handle, pool_handle, submitter_did, rev_reg_id, &delta).await?;
-
-        info!(
-            "publish_local_revocations >>> rev_reg_delta published for rev_reg_id {}",
-            rev_reg_id
-        );
-
-        match clear_rev_reg_delta(wallet_handle, rev_reg_id).await {
-            Ok(_) => {
-                info!(
-                    "publish_local_revocations >>> rev_reg_delta storage cleared for rev_reg_id {}",
-                    rev_reg_id
-                );
-                Ok(())
-            }
-            Err(err) => Err(AriesVcxCoreError::from_msg(
-                AriesVcxCoreErrorKind::RevDeltaFailedToClear,
-                format!("Failed to clear revocation delta storage for rev_reg_id: {rev_reg_id}, error: {err}"),
-            )),
-        }
-    } else {
-        Err(AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::RevDeltaNotFound,
-                                    format!("Failed to publish revocation delta for revocation registry {rev_reg_id}, no delta found. Possibly already published?")))
-    }
 }
