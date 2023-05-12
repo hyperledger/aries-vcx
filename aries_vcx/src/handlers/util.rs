@@ -98,6 +98,9 @@ pub fn verify_thread_id(thread_id: &str, message: &AriesMessage) -> VcxResult<()
         AriesMessage::CredentialIssuance(CredentialIssuance::RequestCredential(msg)) => {
             matches_opt_thread_id!(msg, thread_id)
         }
+        AriesMessage::CredentialIssuance(CredentialIssuance::ProblemReport(msg)) => {
+            matches_opt_thread_id!(msg, thread_id)
+        }
         AriesMessage::DiscoverFeatures(DiscoverFeatures::Query(msg)) => msg.id == thread_id,
         AriesMessage::DiscoverFeatures(DiscoverFeatures::Disclose(msg)) => matches_thread_id!(msg, thread_id),
         AriesMessage::Notification(Notification::Ack(msg)) => matches_thread_id!(msg, thread_id),
@@ -109,6 +112,7 @@ pub fn verify_thread_id(thread_id: &str, message: &AriesMessage) -> VcxResult<()
         AriesMessage::PresentProof(PresentProof::Presentation(msg)) => matches_thread_id!(msg, thread_id),
         AriesMessage::PresentProof(PresentProof::ProposePresentation(msg)) => matches_opt_thread_id!(msg, thread_id),
         AriesMessage::PresentProof(PresentProof::RequestPresentation(msg)) => matches_opt_thread_id!(msg, thread_id),
+        AriesMessage::PresentProof(PresentProof::ProblemReport(msg)) => matches_opt_thread_id!(msg, thread_id),
         AriesMessage::ReportProblem(msg) => matches_opt_thread_id!(msg, thread_id),
         AriesMessage::Revocation(Revocation::Revoke(msg)) => matches_opt_thread_id!(msg, thread_id),
         AriesMessage::Revocation(Revocation::Ack(msg)) => matches_thread_id!(msg, thread_id),

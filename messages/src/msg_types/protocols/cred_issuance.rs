@@ -29,6 +29,7 @@ pub enum CredentialIssuanceTypeV1_0 {
     IssueCredential,
     CredentialPreview,
     Ack,
+    ProblemReport,
 }
 
 #[cfg(test)]

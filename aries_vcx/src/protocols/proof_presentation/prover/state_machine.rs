@@ -324,6 +324,11 @@ impl ProverSM {
                             return Some((uid, message));
                         }
                     }
+                    AriesMessage::PresentProof(PresentProof::ProblemReport(msg)) => {
+                        if matches_opt_thread_id!(msg, self.thread_id.as_str()) {
+                            return Some((uid, message));
+                        }
+                    }
                     _ => {}
                 },
                 _ => {}

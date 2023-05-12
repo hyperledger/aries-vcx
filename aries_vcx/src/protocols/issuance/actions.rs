@@ -76,6 +76,15 @@ impl From<AriesMessage> for CredentialIssuanceAction {
                 let report = ProblemReport::with_decorators(id, content.0, decorators);
                 CredentialIssuanceAction::ProblemReport(report)
             }
+            AriesMessage::CredentialIssuance(CredentialIssuance::ProblemReport(report)) => {
+                let MsgParts {
+                    id,
+                    content,
+                    decorators,
+                } = report;
+                let report = ProblemReport::with_decorators(id, content.0, decorators);
+                CredentialIssuanceAction::ProblemReport(report)
+            }
             _ => CredentialIssuanceAction::Unknown,
         }
     }

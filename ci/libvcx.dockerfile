@@ -30,6 +30,6 @@ RUN cp /usr/share/zoneinfo/UTC /etc/localtime && echo UTC > /etc/timezone
 ENV TZ=UTC
 
 RUN echo 'https://dl-cdn.alpinelinux.org/alpine/v3.17/main' >> /etc/apk/repositories
-RUN apk add --no-cache nodejs=18.14.2-r0
+RUN apk add --no-cache nodejs~=18
 
 USER node
