@@ -63,7 +63,7 @@ pub mod integration_tests {
         SetupProfile::run_indy(|setup| async move {
             let holder_setup = init_holder_setup_in_indy_context(&setup).await;
 
-            let (_, _, _, _, _, _, _, _, rev_reg_id, cred_rev_id, _) = create_and_store_credential(
+            let (_, _, _, _, _, _, _, _, rev_reg_id, cred_rev_id, _, rev_reg) = create_and_store_credential(
                 &setup.profile,
                 &holder_setup.profile,
                 &setup.institution_did,
@@ -93,8 +93,8 @@ pub mod integration_tests {
                 .await
                 .unwrap();
 
-            anoncreds
-                .publish_local_revocations(&setup.institution_did, &rev_reg_id)
+            rev_reg
+                .publish_local_revocations(&setup.profile, &setup.institution_did)
                 .await
                 .unwrap();
 

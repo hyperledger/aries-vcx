@@ -196,11 +196,38 @@ impl RevocationRegistry {
 
     pub async fn publish_local_revocations(&self, profile: &Arc<dyn Profile>, submitter_did: &str) -> VcxResult<()> {
         let anoncreds = Arc::clone(profile).inject_anoncreds();
+        let ledger = Arc::clone(profile).inject_ledger();
 
-        anoncreds
-            .publish_local_revocations(submitter_did, &self.rev_reg_id)
-            .await
-            .map_err(|err| err.into())
+        if let Some(delta) = anoncreds.get_rev_reg_delta(&self.rev_reg_id).await? {
+            ledger
+                .publish_rev_reg_delta(&self.rev_reg_id, &delta, submitter_did)
+                .await?;
+
+            info!(
+                "publish_local_revocations >>> rev_reg_delta published for rev_reg_id {}",
+                self.rev_reg_id
+            );
+
+            match anoncreds.clear_rev_reg_delta(&self.rev_reg_id).await {
+                Ok(_) => {
+                    info!(
+                        "publish_local_revocations >>> rev_reg_delta storage cleared for rev_reg_id {}",
+                        self.rev_reg_id
+                    );
+                    Ok(())
+                }
+                Err(err) => Err(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::RevDeltaFailedToClear,
+                    format!(
+                        "Failed to clear revocation delta storage for rev_reg_id: {}, error: {err}",
+                        self.rev_reg_id
+                    ),
+                )),
+            }
+        } else {
+            Err(AriesVcxError::from_msg(AriesVcxErrorKind::RevDeltaNotFound,
+                                        format!("Failed to publish revocation delta for revocation registry {}, no delta found. Possibly already published?", self.rev_reg_id)))
+        }
     }
 }
 

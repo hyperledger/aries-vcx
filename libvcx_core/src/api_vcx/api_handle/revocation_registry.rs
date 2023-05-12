@@ -46,12 +46,11 @@ pub async fn publish_revocations(handle: u32) -> LibvcxResult<()> {
     let submitter_did = get_config_value(CONFIG_INSTITUTION_DID)?;
 
     let rev_reg = REV_REG_MAP.get_cloned(handle)?;
-    let rev_reg_id = rev_reg.get_rev_reg_id();
 
-    // TODO: Check result
-    let profile = get_main_profile()?;
-    let anoncreds = profile.inject_anoncreds();
-    anoncreds.publish_local_revocations(&submitter_did, &rev_reg_id).await?;
+    rev_reg
+        .publish_local_revocations(&get_main_profile()?, &submitter_did)
+        .await?;
+
     Ok(())
 }
 
