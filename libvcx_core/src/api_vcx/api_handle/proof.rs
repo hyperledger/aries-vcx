@@ -259,6 +259,7 @@ pub fn get_thread_id(handle: u32) -> LibvcxResult<String> {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used)]
 pub mod tests {
     use serde_json::Value;
 

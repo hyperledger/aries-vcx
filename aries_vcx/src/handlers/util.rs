@@ -3,6 +3,7 @@ use messages::{
         connection::{invitation::Invitation, Connection},
         cred_issuance::CredentialIssuance,
         discover_features::DiscoverFeatures,
+        notification::Notification,
         out_of_band::{invitation::Invitation as OobInvitation, OutOfBand},
         present_proof::{
             propose::{Predicate, PresentationAttr},
@@ -99,7 +100,8 @@ pub fn verify_thread_id(thread_id: &str, message: &AriesMessage) -> VcxResult<()
         }
         AriesMessage::DiscoverFeatures(DiscoverFeatures::Query(msg)) => msg.id == thread_id,
         AriesMessage::DiscoverFeatures(DiscoverFeatures::Disclose(msg)) => matches_thread_id!(msg, thread_id),
-        AriesMessage::Notification(msg) => matches_thread_id!(msg, thread_id),
+        AriesMessage::Notification(Notification::Ack(msg)) => matches_thread_id!(msg, thread_id),
+        AriesMessage::Notification(Notification::ProblemReport(msg)) => matches_opt_thread_id!(msg, thread_id),
         AriesMessage::OutOfBand(OutOfBand::Invitation(msg)) => msg.id == thread_id,
         AriesMessage::OutOfBand(OutOfBand::HandshakeReuse(msg)) => matches_thread_id!(msg, thread_id),
         AriesMessage::OutOfBand(OutOfBand::HandshakeReuseAccepted(msg)) => matches_thread_id!(msg, thread_id),

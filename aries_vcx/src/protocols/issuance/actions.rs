@@ -4,6 +4,7 @@ use messages::msg_fields::protocols::cred_issuance::offer_credential::OfferCrede
 use messages::msg_fields::protocols::cred_issuance::propose_credential::ProposeCredential;
 use messages::msg_fields::protocols::cred_issuance::request_credential::RequestCredential;
 use messages::msg_fields::protocols::cred_issuance::CredentialIssuance;
+use messages::msg_fields::protocols::notification::Notification;
 use messages::msg_fields::protocols::report_problem::ProblemReport;
 use messages::msg_parts::MsgParts;
 use messages::AriesMessage;
@@ -56,7 +57,7 @@ impl From<AriesMessage> for CredentialIssuanceAction {
             AriesMessage::CredentialIssuance(CredentialIssuance::Ack(ack)) => {
                 CredentialIssuanceAction::CredentialAck(ack)
             }
-            AriesMessage::Notification(ack) => {
+            AriesMessage::Notification(Notification::Ack(ack)) => {
                 let MsgParts {
                     id,
                     content,
@@ -66,6 +67,15 @@ impl From<AriesMessage> for CredentialIssuanceAction {
                 CredentialIssuanceAction::CredentialAck(ack)
             }
             AriesMessage::ReportProblem(report) => CredentialIssuanceAction::ProblemReport(report),
+            AriesMessage::Notification(Notification::ProblemReport(report)) => {
+                let MsgParts {
+                    id,
+                    content,
+                    decorators,
+                } = report;
+                let report = ProblemReport::with_decorators(id, content.0, decorators);
+                CredentialIssuanceAction::ProblemReport(report)
+            }
             _ => CredentialIssuanceAction::Unknown,
         }
     }

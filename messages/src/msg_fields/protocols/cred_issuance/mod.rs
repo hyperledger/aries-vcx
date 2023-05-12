@@ -19,7 +19,7 @@ use self::{
     propose_credential::{ProposeCredential, ProposeCredentialContent, ProposeCredentialDecorators},
     request_credential::{RequestCredential, RequestCredentialContent, RequestCredentialDecorators},
 };
-use super::notification::AckDecorators;
+use super::notification::ack::AckDecorators;
 use crate::{
     misc::{
         utils::{self, into_msg_with_type, transit_to_aries_msg},

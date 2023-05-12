@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    msg_fields::protocols::notification::{AckContent, AckDecorators, AckStatus},
+    msg_fields::protocols::notification::ack::{AckContent, AckDecorators, AckStatus},
     msg_parts::MsgParts,
 };
 

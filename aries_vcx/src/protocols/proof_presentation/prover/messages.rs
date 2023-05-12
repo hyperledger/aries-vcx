@@ -1,5 +1,6 @@
 use messages::{
     msg_fields::protocols::{
+        notification::Notification,
         present_proof::{
             ack::{AckPresentation, AckPresentationContent},
             present::Presentation,
@@ -43,7 +44,7 @@ impl ProverMessages {
 impl From<AriesMessage> for ProverMessages {
     fn from(msg: AriesMessage) -> Self {
         match msg {
-            AriesMessage::Notification(ack) => {
+            AriesMessage::Notification(Notification::Ack(ack)) => {
                 let MsgParts {
                     id,
                     content,
@@ -54,6 +55,15 @@ impl From<AriesMessage> for ProverMessages {
             }
             AriesMessage::PresentProof(PresentProof::Ack(ack)) => ProverMessages::PresentationAckReceived(ack),
             AriesMessage::ReportProblem(report) => ProverMessages::PresentationRejectReceived(report),
+            AriesMessage::Notification(Notification::ProblemReport(report)) => {
+                let MsgParts {
+                    id,
+                    content,
+                    decorators,
+                } = report;
+                let report = ProblemReport::with_decorators(id, content.0, decorators);
+                ProverMessages::PresentationRejectReceived(report)
+            }
             AriesMessage::PresentProof(PresentProof::RequestPresentation(request)) => {
                 ProverMessages::PresentationRequestReceived(request)
             }
