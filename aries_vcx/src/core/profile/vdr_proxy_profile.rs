@@ -1,12 +1,12 @@
 use std::sync::Arc;
 
 use aries_vcx_core::{
-    anoncreds::{base_anoncreds::BaseAnonCreds, credx_anoncreds::IndyCredxAnonCreds},
+    anoncreds::{base_anoncreds::BaseAnonCreds, indy_anoncreds::IndySdkAnonCreds},
     ledger::{
         base_ledger::BaseLedger, indy_vdr_ledger::IndyVdrLedger, request_submitter::vdr_proxy::VdrProxySubmitter,
     },
-    wallet::base_wallet::BaseWallet,
-    VdrProxyClient,
+    wallet::{base_wallet::BaseWallet, indy_wallet::IndySdkWallet},
+    VdrProxyClient, WalletHandle,
 };
 
 use super::profile::Profile;
@@ -19,10 +19,11 @@ pub struct VdrProxyProfile {
 }
 
 impl VdrProxyProfile {
-    pub fn new(wallet: Arc<dyn BaseWallet>, client: VdrProxyClient) -> Self {
+    pub fn new(wallet_handle: WalletHandle, client: VdrProxyClient) -> Self {
+        let wallet = Arc::new(IndySdkWallet::new(wallet_handle));
         let submitter = Arc::new(VdrProxySubmitter::new(Arc::new(client)));
         let ledger = Arc::new(IndyVdrLedger::new(wallet.clone(), submitter));
-        let anoncreds = Arc::new(IndyCredxAnonCreds::new(Arc::clone(&wallet)));
+        let anoncreds = Arc::new(IndySdkAnonCreds::new(wallet_handle));
         VdrProxyProfile {
             wallet,
             ledger,

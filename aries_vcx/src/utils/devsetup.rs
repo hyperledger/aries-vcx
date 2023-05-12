@@ -462,10 +462,9 @@ impl SetupProfile {
 
         // TODO: Test configuration should be handled uniformly
         let client_url = env::var("VDR_PROXY_CLIENT_URL").unwrap_or_else(|_| "http://127.0.0.1:3030".to_string());
-        let wallet = IndySdkWallet::new(wallet_handle);
         let client = VdrProxyClient::new(&client_url).unwrap();
 
-        let profile: Arc<dyn Profile> = Arc::new(VdrProxyProfile::new(Arc::new(wallet), client));
+        let profile: Arc<dyn Profile> = Arc::new(VdrProxyProfile::new(wallet_handle, client));
 
         async fn vdr_proxy_teardown() {
             // nothing to do

@@ -53,7 +53,7 @@ mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_pool_prover_get_credential() {
-        SetupProfile::run_indy(|setup| async move {
+        SetupProfile::run(|setup| async move {
             let holder_setup = init_holder_setup_in_indy_context(&setup).await;
 
             let res = create_and_store_credential(
@@ -85,7 +85,7 @@ mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_pool_get_cred_rev_id() {
-        SetupProfile::run_indy(|setup| async move {
+        SetupProfile::run(|setup| async move {
             let holder_setup = init_holder_setup_in_indy_context(&setup).await;
 
             let res = create_and_store_credential(
@@ -108,7 +108,7 @@ mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_pool_is_cred_revoked() {
-        SetupProfile::run_indy(|setup| async move {
+        SetupProfile::run(|setup| async move {
             let holder_setup = init_holder_setup_in_indy_context(&setup).await;
 
             let res = create_and_store_credential(
