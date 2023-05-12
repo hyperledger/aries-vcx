@@ -26,3 +26,4 @@ transitive = "0.4.2"
 isolang = { version = "2.2.0" }
 messages_macros = { path = "../messages_macros" }
 diddoc = { path = "../diddoc" }
+shared_vcx = { path = "../shared_vcx" }

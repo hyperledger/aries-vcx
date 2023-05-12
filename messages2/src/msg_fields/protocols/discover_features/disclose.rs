@@ -1,9 +1,9 @@
 use serde::{Deserialize, Serialize};
+use shared_vcx::maybe_known::MaybeKnown;
 
 use super::ProtocolDescriptor;
 use crate::{
     decorators::{thread::Thread, timing::Timing},
-    maybe_known::MaybeKnown,
     msg_parts::MsgParts,
     msg_types::registry::PROTOCOL_REGISTRY,
 };
@@ -51,10 +51,10 @@ mod tests {
     use super::*;
     use crate::{
         decorators::{thread::tests::make_extended_thread, timing::tests::make_extended_timing},
-        maybe_known::MaybeKnown,
         misc::test_utils,
         msg_types::discover_features::DiscoverFeaturesTypeV1_0,
     };
+    use shared_vcx::maybe_known::MaybeKnown;
 
     #[test]
     fn test_minimal_disclose() {
