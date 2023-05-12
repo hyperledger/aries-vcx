@@ -17,8 +17,5 @@ RUN apk update && apk upgrade && \
         libstdc++ \
         libgcc
 
-ENV PORT 3030
-ENV GENESIS genesis.txn
-
 COPY --from=builder /home/indy/indy-vdr/target/release/indy-vdr-proxy indy-vdr-proxy
-ENTRYPOINT ./indy-vdr-proxy -p ${PORT} -g ${GENESIS}
+ENTRYPOINT ["./indy-vdr-proxy"]

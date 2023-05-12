@@ -35,4 +35,4 @@ runs:
       if: ${{ inputs.skip-vdrproxy-setup != 'true' }}
       shell: bash
       run: |
-        docker run --rm -d --name vdrproxy --network host -e GENESIS=${{ env.GENESIS_URL }} -e PORT=${{ env.VDR_PROXY_PORT }} ${{ env.DOCKER_IMAGE_VDRPROXY }}
+        docker run --rm -d --name vdrproxy --network host ${{ env.DOCKER_IMAGE_VDRPROXY }} -p ${{ env.VDR_PROXY_PORT }} -g ${{ env.GENESIS_URL }}
