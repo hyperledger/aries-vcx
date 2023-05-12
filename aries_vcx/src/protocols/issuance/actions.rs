@@ -56,7 +56,7 @@ impl From<AriesMessage> for CredentialIssuanceAction {
             }
             AriesMessage::CredentialIssuance(CredentialIssuance::Ack(ack)) => {
                 CredentialIssuanceAction::CredentialAck(ack)
-            }
+            },
             AriesMessage::Notification(Notification::Ack(ack)) => {
                 let MsgParts {
                     id,
@@ -68,6 +68,15 @@ impl From<AriesMessage> for CredentialIssuanceAction {
             }
             AriesMessage::ReportProblem(report) => CredentialIssuanceAction::ProblemReport(report),
             AriesMessage::Notification(Notification::ProblemReport(report)) => {
+                let MsgParts {
+                    id,
+                    content,
+                    decorators,
+                } = report;
+                let report = ProblemReport::with_decorators(id, content.0, decorators);
+                CredentialIssuanceAction::ProblemReport(report)
+            }
+            AriesMessage::CredentialIssuance(CredentialIssuance::ProblemReport(report)) => {
                 let MsgParts {
                     id,
                     content,

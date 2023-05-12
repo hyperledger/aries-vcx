@@ -20,10 +20,8 @@ use chrono::Utc;
 use messages::decorators::thread::Thread;
 use messages::decorators::timing::Timing;
 use messages::msg_fields::protocols::notification::ack::{AckDecorators, AckStatus};
-use messages::msg_fields::protocols::notification::problem_report::{
-    NotificationProblemReport, NotificationProblemReportContent,
-};
 use messages::msg_fields::protocols::present_proof::ack::{AckPresentation, AckPresentationContent};
+use messages::msg_fields::protocols::present_proof::problem_report::{PresentProofProblemReport, PresentProofProblemReportContent};
 use messages::msg_fields::protocols::present_proof::request::{
     RequestPresentation, RequestPresentationContent, RequestPresentationDecorators,
 };
@@ -257,9 +255,9 @@ impl VerifierSM {
                             decorators,
                         } = problem_report;
 
-                        let problem_report = NotificationProblemReport::with_decorators(
+                        let problem_report = PresentProofProblemReport::with_decorators(
                             id,
-                            NotificationProblemReportContent(content),
+                            PresentProofProblemReportContent(content),
                             decorators,
                         );
 

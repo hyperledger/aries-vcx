@@ -172,6 +172,11 @@ impl HolderSM {
                             return Some((uid, message));
                         }
                     }
+                    AriesMessage::CredentialIssuance(CredentialIssuance::ProblemReport(problem_report)) => {
+                        if matches_opt_thread_id!(problem_report, self.thread_id.as_str()) {
+                            return Some((uid, message));
+                        }
+                    }
                     AriesMessage::ReportProblem(problem_report) => {
                         if matches_opt_thread_id!(problem_report, self.thread_id.as_str()) {
                             return Some((uid, message));

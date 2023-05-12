@@ -54,6 +54,9 @@ impl From<AriesMessage> for ProverMessages {
                 ProverMessages::PresentationAckReceived(ack)
             }
             AriesMessage::PresentProof(PresentProof::Ack(ack)) => ProverMessages::PresentationAckReceived(ack),
+            AriesMessage::PresentProof(PresentProof::RequestPresentation(request)) => {
+                ProverMessages::PresentationRequestReceived(request)
+            }
             AriesMessage::ReportProblem(report) => ProverMessages::PresentationRejectReceived(report),
             AriesMessage::Notification(Notification::ProblemReport(report)) => {
                 let MsgParts {
@@ -64,8 +67,14 @@ impl From<AriesMessage> for ProverMessages {
                 let report = ProblemReport::with_decorators(id, content.0, decorators);
                 ProverMessages::PresentationRejectReceived(report)
             }
-            AriesMessage::PresentProof(PresentProof::RequestPresentation(request)) => {
-                ProverMessages::PresentationRequestReceived(request)
+            AriesMessage::PresentProof(PresentProof::ProblemReport(report)) => {
+                let MsgParts {
+                    id,
+                    content,
+                    decorators,
+                } = report;
+                let report = ProblemReport::with_decorators(id, content.0, decorators);
+                ProverMessages::PresentationRejectReceived(report)
             }
             _ => ProverMessages::Unknown,
         }
