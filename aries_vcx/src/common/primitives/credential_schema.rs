@@ -175,6 +175,7 @@ impl Schema {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used)]
 mod tests {
     use super::*;
     use crate::utils::constants::SCHEMA_ID;

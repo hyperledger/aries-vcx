@@ -22,6 +22,7 @@ use crate::protocols::SendClosure;
 use chrono::Utc;
 use messages::decorators::thread::Thread;
 use messages::decorators::timing::Timing;
+use messages::msg_fields::protocols::notification::Notification;
 use messages::msg_fields::protocols::present_proof::ack::AckPresentation;
 use messages::msg_fields::protocols::present_proof::present::{
     Presentation, PresentationContent, PresentationDecorators,
@@ -290,6 +291,11 @@ impl ProverSM {
                             return Some((uid, message));
                         }
                     }
+                    AriesMessage::Notification(Notification::ProblemReport(msg)) => {
+                        if matches_opt_thread_id!(msg, self.thread_id.as_str()) {
+                            return Some((uid, message));
+                        }
+                    }
                     AriesMessage::PresentProof(PresentProof::RequestPresentation(msg)) => {
                         if matches_opt_thread_id!(msg, self.thread_id.as_str()) {
                             return Some((uid, message));
@@ -298,7 +304,7 @@ impl ProverSM {
                     _ => {}
                 },
                 ProverFullState::PresentationSent(_) => match &message {
-                    AriesMessage::Notification(msg) => {
+                    AriesMessage::Notification(Notification::Ack(msg)) => {
                         if matches_thread_id!(msg, self.thread_id.as_str()) {
                             return Some((uid, message));
                         }
@@ -309,6 +315,11 @@ impl ProverSM {
                         }
                     }
                     AriesMessage::ReportProblem(msg) => {
+                        if matches_opt_thread_id!(msg, self.thread_id.as_str()) {
+                            return Some((uid, message));
+                        }
+                    }
+                    AriesMessage::Notification(Notification::ProblemReport(msg)) => {
                         if matches_opt_thread_id!(msg, self.thread_id.as_str()) {
                             return Some((uid, message));
                         }

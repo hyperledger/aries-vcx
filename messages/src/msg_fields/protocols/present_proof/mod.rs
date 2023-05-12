@@ -14,7 +14,7 @@ use self::{
     propose::{ProposePresentation, ProposePresentationContent, ProposePresentationDecorators},
     request::{RequestPresentation, RequestPresentationContent, RequestPresentationDecorators},
 };
-use super::notification::AckDecorators;
+use super::notification::ack::AckDecorators;
 use crate::{
     misc::utils::{self, into_msg_with_type, transit_to_aries_msg},
     msg_fields::traits::DelayedSerde,

@@ -16,17 +16,16 @@ pub mod msg_types;
 
 use derive_more::From;
 use misc::utils;
-use msg_types::{
-    notification::NotificationTypeV1_0, report_problem::ReportProblemTypeV1_0, routing::RoutingTypeV1_0, MsgWithType,
-};
+use msg_types::{report_problem::ReportProblemTypeV1_0, routing::RoutingTypeV1_0, MsgWithType};
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
+use shared_vcx::misc::utils::CowStr;
 
 use crate::{
-    misc::utils::{CowStr, MSG_TYPE},
+    misc::utils::MSG_TYPE,
     msg_fields::{
         protocols::{
             basic_message::BasicMessage, connection::Connection, cred_issuance::CredentialIssuance,
-            discover_features::DiscoverFeatures, notification::Ack, out_of_band::OutOfBand,
+            discover_features::DiscoverFeatures, notification::Notification, out_of_band::OutOfBand,
             present_proof::PresentProof, report_problem::ProblemReport, revocation::Revocation, routing::Forward,
             trust_ping::TrustPing,
         },
@@ -36,7 +35,6 @@ use crate::{
         basic_message::BasicMessageTypeV1_0,
         protocols::{
             basic_message::{BasicMessageType, BasicMessageTypeV1},
-            notification::{NotificationType, NotificationTypeV1},
             report_problem::{ReportProblemType, ReportProblemTypeV1},
             routing::{RoutingType, RoutingTypeV1},
         },
@@ -63,7 +61,7 @@ pub enum AriesMessage {
     DiscoverFeatures(DiscoverFeatures),
     BasicMessage(BasicMessage),
     OutOfBand(OutOfBand),
-    Notification(Ack),
+    Notification(Notification),
 }
 
 impl DelayedSerde for AriesMessage {
@@ -136,13 +134,7 @@ impl DelayedSerde for AriesMessage {
                 OutOfBand::delayed_deserialize((msg_type, kind_str), deserializer).map(From::from)
             }
             Protocol::NotificationType(msg_type) => {
-                let kind = match msg_type {
-                    NotificationType::V1(NotificationTypeV1::V1_0(kind)) => kind.kind_from_str(kind_str),
-                };
-
-                match kind.map_err(D::Error::custom)? {
-                    NotificationTypeV1_0::Ack => Ack::deserialize(deserializer).map(From::from),
-                }
+                Notification::delayed_deserialize((msg_type, kind_str), deserializer).map(From::from)
             }
         }
     }
@@ -162,7 +154,7 @@ impl DelayedSerde for AriesMessage {
             Self::DiscoverFeatures(v) => v.delayed_serialize(serializer),
             Self::BasicMessage(v) => MsgWithType::from(v).serialize(serializer),
             Self::OutOfBand(v) => v.delayed_serialize(serializer),
-            Self::Notification(v) => MsgWithType::from(v).serialize(serializer),
+            Self::Notification(v) => v.delayed_serialize(serializer),
         }
     }
 }

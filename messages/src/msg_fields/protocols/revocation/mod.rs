@@ -10,7 +10,7 @@ use self::{
     ack::{AckRevoke, AckRevokeContent},
     revoke::{Revoke, RevokeContent, RevokeDecorators},
 };
-use super::notification::AckDecorators;
+use super::notification::ack::AckDecorators;
 use crate::{
     misc::utils::{into_msg_with_type, transit_to_aries_msg},
     msg_fields::traits::DelayedSerde,

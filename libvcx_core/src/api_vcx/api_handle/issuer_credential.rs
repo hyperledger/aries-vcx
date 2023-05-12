@@ -279,6 +279,7 @@ pub fn get_thread_id(handle: u32) -> LibvcxResult<String> {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used)]
 pub mod tests {
     #[cfg(feature = "test_utils")]
     use crate::api_vcx::api_handle::credential_def::tests::create_and_publish_nonrevocable_creddef;

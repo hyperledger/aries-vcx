@@ -1,10 +1,11 @@
 use std::str::FromStr;
 
 use serde::{Deserialize, Serialize};
+use shared_vcx::misc::utils::CowStr;
 
 use crate::{
     decorators::{thread::Thread, timing::Timing},
-    misc::{utils::CowStr, MimeType},
+    misc::MimeType,
     msg_parts::MsgParts,
     msg_types::{
         protocols::present_proof::{PresentProofType, PresentProofTypeV1, PresentProofTypeV1_0},

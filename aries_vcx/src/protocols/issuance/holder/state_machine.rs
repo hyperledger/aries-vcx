@@ -13,7 +13,8 @@ use messages::msg_fields::protocols::cred_issuance::request_credential::{
     RequestCredential, RequestCredentialContent, RequestCredentialDecorators,
 };
 use messages::msg_fields::protocols::cred_issuance::CredentialIssuance;
-use messages::msg_fields::protocols::notification::{AckDecorators, AckStatus};
+use messages::msg_fields::protocols::notification::ack::{AckDecorators, AckStatus};
+use messages::msg_fields::protocols::notification::Notification;
 use messages::msg_fields::protocols::report_problem::ProblemReport;
 use messages::AriesMessage;
 use uuid::Uuid;
@@ -173,6 +174,11 @@ impl HolderSM {
                     }
                     AriesMessage::ReportProblem(problem_report) => {
                         if matches_opt_thread_id!(problem_report, self.thread_id.as_str()) {
+                            return Some((uid, message));
+                        }
+                    }
+                    AriesMessage::Notification(Notification::ProblemReport(msg)) => {
+                        if matches_opt_thread_id!(msg, self.thread_id.as_str()) {
                             return Some((uid, message));
                         }
                     }
