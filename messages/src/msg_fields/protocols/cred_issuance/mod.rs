@@ -3,9 +3,9 @@
 pub mod ack;
 pub mod issue_credential;
 pub mod offer_credential;
+pub mod problem_report;
 pub mod propose_credential;
 pub mod request_credential;
-pub mod problem_report;
 
 use std::str::FromStr;
 
@@ -17,8 +17,9 @@ use self::{
     ack::{AckCredential, AckCredentialContent},
     issue_credential::{IssueCredential, IssueCredentialContent, IssueCredentialDecorators},
     offer_credential::{OfferCredential, OfferCredentialContent, OfferCredentialDecorators},
+    problem_report::{CredIssuanceProblemReport, CredIssuanceProblemReportContent},
     propose_credential::{ProposeCredential, ProposeCredentialContent, ProposeCredentialDecorators},
-    request_credential::{RequestCredential, RequestCredentialContent, RequestCredentialDecorators}, problem_report::{CredIssuanceProblemReport, CredIssuanceProblemReportContent},
+    request_credential::{RequestCredential, RequestCredentialContent, RequestCredentialDecorators},
 };
 use super::{notification::ack::AckDecorators, report_problem::ProblemReportDecorators};
 use crate::{
@@ -68,7 +69,9 @@ impl DelayedSerde for CredentialIssuance {
             }
             CredentialIssuanceTypeV1_0::IssueCredential => IssueCredential::deserialize(deserializer).map(From::from),
             CredentialIssuanceTypeV1_0::Ack => AckCredential::deserialize(deserializer).map(From::from),
-            CredentialIssuanceTypeV1_0::ProblemReport => CredIssuanceProblemReport::deserialize(deserializer).map(From::from),
+            CredentialIssuanceTypeV1_0::ProblemReport => {
+                CredIssuanceProblemReport::deserialize(deserializer).map(From::from)
+            }
             CredentialIssuanceTypeV1_0::CredentialPreview => Err(utils::not_standalone_msg::<D>(kind_str)),
         }
     }
@@ -178,7 +181,10 @@ transit_to_aries_msg!(
 );
 transit_to_aries_msg!(IssueCredentialContent: IssueCredentialDecorators, CredentialIssuance);
 transit_to_aries_msg!(AckCredentialContent: AckDecorators, CredentialIssuance);
-transit_to_aries_msg!(CredIssuanceProblemReportContent: ProblemReportDecorators, CredentialIssuance);
+transit_to_aries_msg!(
+    CredIssuanceProblemReportContent: ProblemReportDecorators,
+    CredentialIssuance
+);
 
 into_msg_with_type!(OfferCredential, CredentialIssuanceTypeV1_0, OfferCredential);
 into_msg_with_type!(ProposeCredential, CredentialIssuanceTypeV1_0, ProposeCredential);

@@ -56,7 +56,7 @@ impl From<AriesMessage> for CredentialIssuanceAction {
             }
             AriesMessage::CredentialIssuance(CredentialIssuance::Ack(ack)) => {
                 CredentialIssuanceAction::CredentialAck(ack)
-            },
+            }
             AriesMessage::Notification(Notification::Ack(ack)) => {
                 let MsgParts {
                     id,

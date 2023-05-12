@@ -2,9 +2,9 @@
 
 pub mod ack;
 pub mod present;
+pub mod problem_report;
 pub mod propose;
 pub mod request;
-pub mod problem_report;
 
 use derive_more::From;
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
@@ -12,8 +12,9 @@ use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 use self::{
     ack::{AckPresentation, AckPresentationContent},
     present::{Presentation, PresentationContent, PresentationDecorators},
+    problem_report::{PresentProofProblemReport, PresentProofProblemReportContent},
     propose::{ProposePresentation, ProposePresentationContent, ProposePresentationDecorators},
-    request::{RequestPresentation, RequestPresentationContent, RequestPresentationDecorators}, problem_report::{PresentProofProblemReport, PresentProofProblemReportContent},
+    request::{RequestPresentation, RequestPresentationContent, RequestPresentationDecorators},
 };
 use super::{notification::ack::AckDecorators, report_problem::ProblemReportDecorators};
 use crate::{
@@ -31,7 +32,7 @@ pub enum PresentProof {
     RequestPresentation(RequestPresentation),
     Presentation(Presentation),
     Ack(AckPresentation),
-    ProblemReport(PresentProofProblemReport)
+    ProblemReport(PresentProofProblemReport),
 }
 
 impl DelayedSerde for PresentProof {
