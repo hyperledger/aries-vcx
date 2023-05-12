@@ -477,7 +477,7 @@ jobs:
         with:
           skip-vdrproxy-setup: false
       - name: "Run aries-vcx tests: vdrproxy_test"
-        run: cargo test --manifest-path="aries_vcx/Cargo.toml" --test test_pool -F vdr_proxy_ledger -- --ignored
+        run: cargo test --manifest-path="aries_vcx/Cargo.toml" -F vdr_proxy_ledger -- --ignored
 
   test-integration-libvcx:
     needs: workflow-setup
