@@ -167,7 +167,8 @@ fn process_version(Version { ident, data, major }: Version) -> SynResult<TokenSt
 
         // If the variant matches the one in this iteration, return a Vec
         // containing each provided `Role` wrapped in `MaybeKnown::Known`.
-        roles_match_arms.push(quote! {Self::#var_ident(_) => vec![#(shared_vcx::maybe_known::MaybeKnown::Known(#roles)),*]});
+        roles_match_arms
+            .push(quote! {Self::#var_ident(_) => vec![#(shared_vcx::maybe_known::MaybeKnown::Known(#roles)),*]});
 
         // Implement a function such as `new_v1_0` which returns the enum variant in this iteration.
         constructor_impls

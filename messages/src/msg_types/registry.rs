@@ -4,13 +4,11 @@ use lazy_static::lazy_static;
 use shared_vcx::maybe_known::MaybeKnown;
 
 use super::{role::Role, Protocol};
-use crate::{
-    msg_types::protocols::{
-        basic_message::BasicMessageTypeV1, connection::ConnectionTypeV1, cred_issuance::CredentialIssuanceTypeV1,
-        discover_features::DiscoverFeaturesTypeV1, notification::NotificationTypeV1, out_of_band::OutOfBandTypeV1,
-        present_proof::PresentProofTypeV1, report_problem::ReportProblemTypeV1, revocation::RevocationTypeV2,
-        routing::RoutingTypeV1, signature::SignatureTypeV1, trust_ping::TrustPingTypeV1,
-    },
+use crate::msg_types::protocols::{
+    basic_message::BasicMessageTypeV1, connection::ConnectionTypeV1, cred_issuance::CredentialIssuanceTypeV1,
+    discover_features::DiscoverFeaturesTypeV1, notification::NotificationTypeV1, out_of_band::OutOfBandTypeV1,
+    present_proof::PresentProofTypeV1, report_problem::ReportProblemTypeV1, revocation::RevocationTypeV2,
+    routing::RoutingTypeV1, signature::SignatureTypeV1, trust_ping::TrustPingTypeV1,
 };
 type RegistryMap = HashMap<(&'static str, u8), Vec<RegistryEntry>>;
 

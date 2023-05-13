@@ -10,8 +10,8 @@ use messages::{
     msg_types::Protocol,
     AriesMessage,
 };
-use uuid::Uuid;
 use shared_vcx::maybe_known::MaybeKnown;
+use uuid::Uuid;
 
 use crate::{
     errors::error::prelude::*,
