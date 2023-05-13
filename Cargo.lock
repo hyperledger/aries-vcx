@@ -206,6 +206,7 @@ dependencies = [
  "serde",
  "serde_derive",
  "serde_json",
+ "shared_vcx",
  "sqlx 0.5.11",
  "strum 0.16.0",
  "strum_macros 0.16.0",
@@ -2777,6 +2778,7 @@ dependencies = [
  "darling 0.14.4",
  "proc-macro2",
  "quote",
+ "shared_vcx",
  "syn 1.0.109",
 ]
 

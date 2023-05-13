@@ -1,5 +1,5 @@
 use messages::decorators::please_ack::{AckOn, PleaseAck};
-use messages::maybe_known::MaybeKnown;
+use shared_vcx::maybe_known::MaybeKnown;
 use messages::msg_fields::protocols::revocation::ack::AckRevoke;
 use messages::msg_fields::protocols::revocation::revoke::{RevocationFormat, Revoke, RevokeContent, RevokeDecorators};
 use uuid::Uuid;

@@ -1,6 +1,7 @@
 use std::str::FromStr;
+use shared_vcx::maybe_known::MaybeKnown;
 
-use crate::{error::MsgTypeResult, maybe_known::MaybeKnown, msg_types::role::Role};
+use crate::{error::MsgTypeResult, msg_types::role::Role};
 
 /// Trait implemented on enums that represent the message kind of a protocol.
 /// They link upstream to the [`ProtocolVersion`] impl enum they are part of.

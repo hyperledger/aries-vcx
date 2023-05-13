@@ -1,10 +1,10 @@
 use std::collections::HashMap;
 
 use lazy_static::lazy_static;
+use shared_vcx::maybe_known::MaybeKnown;
 
 use super::{role::Role, Protocol};
 use crate::{
-    maybe_known::MaybeKnown,
     msg_types::protocols::{
         basic_message::BasicMessageTypeV1, connection::ConnectionTypeV1, cred_issuance::CredentialIssuanceTypeV1,
         discover_features::DiscoverFeaturesTypeV1, notification::NotificationTypeV1, out_of_band::OutOfBandTypeV1,

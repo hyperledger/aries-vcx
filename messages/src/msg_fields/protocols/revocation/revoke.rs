@@ -1,8 +1,8 @@
 use serde::{Deserialize, Serialize};
+use shared_vcx::maybe_known::MaybeKnown;
 
 use crate::{
     decorators::{please_ack::PleaseAck, thread::Thread, timing::Timing},
-    maybe_known::MaybeKnown,
     msg_parts::MsgParts,
 };
 

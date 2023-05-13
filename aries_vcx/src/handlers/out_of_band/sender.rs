@@ -1,5 +1,4 @@
 use messages::{
-    maybe_known::MaybeKnown,
     msg_fields::protocols::{
         cred_issuance::CredentialIssuance,
         out_of_band::{
@@ -12,6 +11,7 @@ use messages::{
     AriesMessage,
 };
 use uuid::Uuid;
+use shared_vcx::maybe_known::MaybeKnown;
 
 use crate::{
     errors::error::prelude::*,
