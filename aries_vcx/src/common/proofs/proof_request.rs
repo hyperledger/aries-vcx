@@ -60,6 +60,26 @@ impl ProofRequestData {
         Ok(self)
     }
 
+    pub fn set_requested_predicates_as_string(mut self, requested_predicates: String) -> VcxResult<Self> {
+        match serde_json::from_str::<HashMap<String, PredicateInfo>>(&requested_predicates) {
+            Ok(predicates) => self.requested_predicates = predicates,
+            Err(_err) => {
+                let requested_predicates: Vec<PredicateInfo> =
+                    ::serde_json::from_str(&requested_predicates).map_err(|err| {
+                        AriesVcxError::from_msg(
+                            AriesVcxErrorKind::InvalidJson,
+                            format!(
+                                "Invalid Requested Predicates: {:?}, err: {:?}",
+                                requested_predicates, err
+                            ),
+                        )
+                    })?;
+                self = self.set_requested_predicates_as_vec(requested_predicates)?;
+            }
+        }
+        Ok(self)
+    }
+
     pub fn set_requested_attributes_as_vec(mut self, requested_attrs: Vec<AttrInfo>) -> VcxResult<Self> {
         self.requested_attributes = requested_attrs
             .into_iter()
@@ -69,22 +89,11 @@ impl ProofRequestData {
         Ok(self)
     }
 
-    pub fn set_requested_predicates_as_string(mut self, requested_predicates: String) -> VcxResult<Self> {
-        let requested_predicates: Vec<PredicateInfo> =
-            ::serde_json::from_str(&requested_predicates).map_err(|err| {
-                AriesVcxError::from_msg(
-                    AriesVcxErrorKind::InvalidJson,
-                    format!(
-                        "Invalid Requested Predicates: {:?}, err: {:?}",
-                        requested_predicates, err
-                    ),
-                )
-            })?;
-
-        self.requested_predicates = requested_predicates
+    fn set_requested_predicates_as_vec(mut self, predicates: Vec<PredicateInfo>) -> VcxResult<Self> {
+        self.requested_predicates = predicates
             .into_iter()
             .enumerate()
-            .map(|(index, attribute)| (format!("predicate_{}", index), attribute))
+            .map(|(index, predicate)| (format!("predicate_{}", index), predicate))
             .collect();
         Ok(self)
     }
