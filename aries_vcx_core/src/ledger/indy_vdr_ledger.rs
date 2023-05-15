@@ -1,4 +1,5 @@
 use indy_credx::ursa::cl::RevocationRegistryDelta as UrsaRevocationRegistryDelta;
+use indy_ledger_response_parser::{ResponseParser, RevocationRegistryDeltaInfo, RevocationRegistryInfo};
 use indy_vdr as vdr;
 use std::fmt::{Debug, Formatter};
 use std::sync::Arc;
@@ -27,22 +28,33 @@ use crate::wallet::base_wallet::BaseWallet;
 use super::base_ledger::BaseLedger;
 use super::request_submitter::RequestSubmitter;
 
+pub struct IndyVdrLedgerConfig<T>
+where
+    T: RequestSubmitter + Send + Sync,
+{
+    pub wallet: Arc<dyn BaseWallet>,
+    pub request_submitter: Arc<T>,
+    pub response_parser: Arc<ResponseParser>,
+}
+
 pub struct IndyVdrLedger<T>
 where
     T: RequestSubmitter + Send + Sync,
 {
     wallet: Arc<dyn BaseWallet>,
     request_submitter: Arc<T>,
+    response_parser: Arc<ResponseParser>,
 }
 
 impl<T> IndyVdrLedger<T>
 where
     T: RequestSubmitter + Send + Sync,
 {
-    pub fn new(wallet: Arc<dyn BaseWallet>, request_submitter: Arc<T>) -> Self {
-        IndyVdrLedger {
-            wallet,
-            request_submitter,
+    pub fn new(config: IndyVdrLedgerConfig<T>) -> Self {
+        Self {
+            wallet: config.wallet,
+            request_submitter: config.request_submitter,
+            response_parser: config.response_parser,
         }
     }
 
@@ -248,89 +260,20 @@ where
         self._sign_and_submit_request(submitter_did, request).await
     }
 
-    async fn get_schema(&self, schema_id: &str, submitter_did: Option<&str>) -> VcxCoreResult<String> {
-        let _ = submitter_did;
-        // TODO - future - try from cache first
-        // TODO - future - do we need to handle someone submitting a schema request by seq number?
-
-        let id = SchemaId::from_str(schema_id)?;
-
-        let request = self.request_builder()?.build_get_schema_request(None, &id)?;
-
+    async fn get_schema(&self, schema_id: &str, _submitter_did: Option<&str>) -> VcxCoreResult<String> {
+        let request = self
+            .request_builder()?
+            .build_get_schema_request(None, &SchemaId::from_str(schema_id)?)?;
         let response = self._submit_request(request).await?;
-
-        // process the response
-        let response_json: Value = serde_json::from_str(&response)?;
-        let result_json = (&response_json).try_get("result")?;
-        let data_json = result_json.try_get("data")?;
-
-        let seq_no = result_json.get("seqNo").and_then(|x| x.as_u64().map(|x| x as u32));
-
-        let name = data_json.try_get("name")?;
-        let name = name.try_as_str()?;
-        let version = data_json.try_get("version")?;
-        let version = version.try_as_str()?;
-        let dest = result_json.try_get("dest")?;
-        let dest = dest.try_as_str()?;
-        let schema_id = SchemaId::new(&DidValue::from_str(dest)?, name, version);
-
-        let attr_names = data_json.try_get("attr_names")?;
-        let attr_names: AttributeNames = serde_json::from_value(attr_names.to_owned())?;
-
-        let schema = SchemaV1 {
-            id: schema_id,
-            name: name.to_string(),
-            version: version.to_string(),
-            attr_names,
-            seq_no,
-        };
-
-        // TODO - future - store in cache if submitter_did provided
-
-        Ok(serde_json::to_string(&Schema::SchemaV1(schema))?)
+        let schema = self.response_parser.parse_get_schema_response(&response, None)?;
+        Ok(serde_json::to_string(&schema)?)
     }
 
     async fn get_cred_def(&self, cred_def_id: &str, submitter_did: Option<&str>) -> VcxCoreResult<String> {
-        // todo - try from cache if submitter_did provided
-
         let request = self._build_get_cred_def_request(submitter_did, cred_def_id).await?;
-
         let response = self._submit_request(request).await?;
-
-        // process the response
-
-        let response_json: Value = serde_json::from_str(&response)?;
-        let result_json = (&response_json).try_get("result")?;
-
-        let schema_id = result_json.try_get("ref")?;
-        let signature_type = result_json.try_get("signature_type")?;
-        let tag = result_json.get("tag").map_or(json!("default"), |x| x.to_owned());
-        let origin_did = result_json.try_get("origin")?;
-        // (from ACApy) FIXME: issuer has a method to create a cred def ID
-        // may need to qualify the DID
-        let cred_def_id = format!(
-            "{}:3:{}:{}:{}",
-            origin_did.try_as_str()?,
-            signature_type.try_as_str()?,
-            schema_id,
-            (&tag).try_as_str()?
-        );
-        let data = _get_response_json_data_field(&response)?;
-
-        let cred_def_value = json!({
-            "ver": "1.0",
-            "id": cred_def_id,
-            "schemaId": schema_id.to_string(), // expected as json string, not as json int
-            "type": signature_type,
-            "tag": tag,
-            "value": data
-        });
-
-        let cred_def_json = serde_json::to_string(&cred_def_value)?;
-
-        // todo - store in cache if submitter_did provided
-
-        Ok(cred_def_json)
+        let cred_def = self.response_parser.parse_get_cred_def_response(&response, None)?;
+        Ok(serde_json::to_string(&cred_def)?)
     }
 
     async fn get_attr(&self, target_did: &str, attr_name: &str) -> VcxCoreResult<String> {
@@ -351,11 +294,9 @@ where
         let request = self.request_builder()?.build_get_revoc_reg_def_request(None, &id)?;
         let res = self._submit_request(request).await?;
 
-        let mut data = _get_response_json_data_field(&res)?;
+        let rev_reg_def = self.response_parser.parse_get_revoc_reg_def_response(&res)?;
 
-        data["ver"] = Value::String("1.0".to_string());
-
-        Ok(serde_json::to_string(&data)?)
+        Ok(serde_json::to_string(&rev_reg_def)?)
     }
 
     async fn get_rev_reg_delta_json(
@@ -375,56 +316,20 @@ where
             .build_get_revoc_reg_delta_request(None, &revoc_reg_def_id, from, to)?;
         let res = self._submit_request(request).await?;
 
-        let res_data = _get_response_json_data_field(&res)?;
-        let response_value = (&res_data).try_get("value")?;
+        let RevocationRegistryDeltaInfo {
+            revoc_reg_def_id,
+            revoc_reg_delta,
+            timestamp,
+        } = self.response_parser.parse_get_revoc_reg_delta_response(&res)?;
 
-        let empty_json_list = json!([]);
-
-        let mut delta_value = json!({
-            "accum": response_value.try_get("accum_to")?.try_get("value")?.try_get("accum")?,
-            "issued": if let Some(v) = response_value.get("issued") { v } else { &empty_json_list },
-            "revoked": if let Some(v) = response_value.get("revoked") { v } else { &empty_json_list }
-        });
-
-        if let Some(accum_from) = response_value
-            .get("accum_from")
-            .and_then(|val| (!val.is_null()).then_some(val))
-        {
-            let prev_accum = accum_from.try_get("value")?.try_get("accum")?;
-            // to check - should this be 'prevAccum'?
-            delta_value["prev_accum"] = prev_accum.to_owned();
-        }
-
-        let reg_delta = json!({"ver": "1.0", "value": delta_value});
-
-        let delta_timestamp =
-            response_value
-                .try_get("accum_to")?
-                .try_get("txnTime")?
-                .as_u64()
-                .ok_or(AriesVcxCoreError::from_msg(
-                    AriesVcxCoreErrorKind::InvalidJson,
-                    "Error parsing accum_to.txnTime value as u64",
-                ))?;
-
-        let response_reg_def_id = (&res_data)
-            .try_get("revocRegDefId")?
-            .as_str()
-            .ok_or(AriesVcxCoreError::from_msg(
-                AriesVcxCoreErrorKind::InvalidJson,
-                "Erroring parsing revocRegDefId value as string",
-            ))?;
-        if response_reg_def_id != rev_reg_id {
-            return Err(AriesVcxCoreError::from_msg(
-                AriesVcxCoreErrorKind::InvalidRevocationDetails,
-                "ID of revocation registry response does not match requested ID",
-            ));
-        }
+        let delta_value = match revoc_reg_delta.clone() {
+            RevocationRegistryDelta::RevocationRegistryDeltaV1(delta) => delta.value,
+        };
 
         Ok((
-            rev_reg_id.to_string(),
-            serde_json::to_string(&reg_delta)?,
-            delta_timestamp,
+            revoc_reg_def_id.to_string(),
+            serde_json::to_string(&revoc_reg_delta)?,
+            timestamp,
         ))
     }
 
@@ -438,22 +343,17 @@ where
         )?;
         let res = self._submit_request(request).await?;
 
-        let res_data = _get_response_json_data_field(&res)?;
+        let RevocationRegistryInfo {
+            revoc_reg_def_id,
+            revoc_reg,
+            timestamp,
+        } = self.response_parser.parse_get_revoc_reg_response(&res)?;
 
-        let rev_reg_def_id = res_data["revocRegDefId"]
-            .as_str()
-            .ok_or(AriesVcxCoreError::from_msg(
-                AriesVcxCoreErrorKind::InvalidJson,
-                "Error parsing revocRegDefId value as string",
-            ))?
-            .to_string();
-
-        let timestamp = res_data["txnTime"].as_u64().ok_or(AriesVcxCoreError::from_msg(
-            AriesVcxCoreErrorKind::InvalidJson,
-            "Error parsing txnTime value as u64",
-        ))?;
-
-        Ok((rev_reg_def_id, res_data["value"].to_string(), timestamp))
+        Ok((
+            revoc_reg_def_id.to_string(),
+            serde_json::to_string(&revoc_reg)?,
+            timestamp,
+        ))
     }
 
     async fn get_ledger_txn(&self, seq_no: i32, submitter_did: Option<&str>) -> VcxCoreResult<String> {
@@ -531,19 +431,5 @@ async fn _append_txn_author_agreement_to_request(request: PreparedRequest) -> Vc
         Ok(request)
     } else {
         Ok(request)
-    }
-}
-
-fn _get_response_json_data_field(response_json: &str) -> VcxCoreResult<Value> {
-    let res: Value = serde_json::from_str(response_json)?;
-    let result = (&res).try_get("result")?;
-    let data = result.try_get("data")?.to_owned();
-    if data.is_null() {
-        Err(AriesVcxCoreError::from_msg(
-            AriesVcxCoreErrorKind::LedgerItemNotFound,
-            "No data in response",
-        ))
-    } else {
-        Ok(data)
     }
 }

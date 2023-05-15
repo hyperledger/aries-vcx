@@ -7,5 +7,5 @@ mod mapping_indyvdr;
 #[cfg(feature = "vdr_proxy_ledger")]
 mod mapping_indyvdr_proxy;
 mod mapping_others;
-#[cfg(feature = "vdrtools")]
+#[cfg(any(feature = "vdrtools", feature = "modular_libs", feature = "vdr_proxy_ledger"))]
 mod mapping_vdrtools;
