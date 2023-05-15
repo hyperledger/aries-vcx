@@ -1,7 +1,6 @@
 const { NonmediatedConnection } = require('@hyperledger/node-vcx-wrapper')
 
 module.exports.createServiceNonmediatedConnections = function createServiceNonmediatedConnections ({ logger, saveNonmediatedConnection, loadNonmediatedConnection, endpointInfo }) {
-
   async function inviterConnectionCreatePwInvite (connectionId) {
     logger.info(`inviterConnectionCreatePwInvite >> connectionId=${connectionId}`)
     const connection = await NonmediatedConnection.createInviter()
@@ -82,6 +81,6 @@ module.exports.createServiceNonmediatedConnections = function createServiceNonme
     inviteeConnectionCreateFromInvite,
     inviteeConnectionProcessResponse,
     sendMessage,
-    getState,
+    getState
   }
 }

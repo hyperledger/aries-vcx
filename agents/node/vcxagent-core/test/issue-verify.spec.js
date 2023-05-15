@@ -38,7 +38,7 @@ describe('test update state', () => {
     await faber.receiveCredentialAck()
 
     const request = await faber.requestProofFromAlice(proofRequestDataStandard(issuerDid))
-    await alice.sendHolderProof(JSON.parse(request), revRegId => tailsDir, { attribute_3: 'Smith' })
+    await alice.sendHolderProof(JSON.parse(request), revRegId => tailsDir, { attr_nickname: 'Smith' })
     await faber.updateStateVerifierProof(VerifierStateType.Finished)
     await alice.updateStateHolderProof(ProverStateType.Finished)
     const {
@@ -48,7 +48,7 @@ describe('test update state', () => {
     } = await faber.getPresentationInfo()
     expect(presentationVerificationStatus).toBe(ProofVerificationStatus.Valid)
     expect(presentationRequestAttachment.requested_attributes).toStrictEqual({
-      attribute_0: {
+      attr_basic_identity: {
         names: [
           'name',
           'last_name',
@@ -60,38 +60,38 @@ describe('test update state', () => {
           }
         ]
       },
-      attribute_1: {
+      attr_date: {
         name: 'date',
         restrictions: {
           issuer_did: 'V4SGRU86Z58d6TV7PBUe6f'
         }
       },
-      attribute_2: {
+      attr_education: {
         name: 'degree',
         restrictions: {
           'attr::degree::value': 'maths'
         }
       },
-      attribute_3: {
+      attr_nickname: {
         name: 'nickname',
         self_attest_allowed: true
       }
     })
     expect(presentationAttachment.requested_proof).toStrictEqual({
       revealed_attrs: {
-        attribute_1: {
+        attr_date: {
           sub_proof_index: 0,
           raw: '05-2018',
           encoded: '101085817956371643310471822530712840836446570298192279302750234554843339322886'
         },
-        attribute_2: {
+        attr_education: {
           sub_proof_index: 0,
           raw: 'maths',
           encoded: '78137204873448776862705240258723141940757006710839733585634143215803847410018'
         }
       },
       revealed_attr_groups: {
-        attribute_0: {
+        attr_basic_identity: {
           sub_proof_index: 0,
           values: {
             sex: {
@@ -110,11 +110,11 @@ describe('test update state', () => {
         }
       },
       self_attested_attrs: {
-        attribute_3: 'Smith'
+        attr_nickname: 'Smith'
       },
       unrevealed_attrs: {},
       predicates: {
-        predicate_0: {
+        predicate_is_adult: {
           sub_proof_index: 0
         }
       }
@@ -136,7 +136,7 @@ describe('test update state', () => {
     await faber.revokeCredential()
 
     const request = await faber.requestProofFromAlice(proofRequestDataStandard(issuerDid))
-    await alice.sendHolderProof(JSON.parse(request), revRegId => tailsDir, { attribute_3: 'Smith' })
+    await alice.sendHolderProof(JSON.parse(request), revRegId => tailsDir, { attr_nickname: 'Smith' })
     await faber.updateStateVerifierProof(VerifierStateType.Finished)
     await alice.updateStateHolderProof(ProverStateType.Failed)
     const {
@@ -148,7 +148,7 @@ describe('test update state', () => {
   it('Faber should verify proof with self attestation', async () => {
     const { alice, faber } = await createPairedAliceAndFaber()
     const request = await faber.requestProofFromAlice(proofRequestDataSelfAttest())
-    await alice.sendHolderProofSelfAttested(JSON.parse(request), { attribute_0: 'Smith' })
+    await alice.sendHolderProofSelfAttested(JSON.parse(request), { attr_nickname: 'Smith' })
     await faber.updateStateVerifierProof(VerifierStateType.Finished)
     await alice.updateStateHolderProof(ProverStateType.Finished)
     const {
@@ -160,13 +160,13 @@ describe('test update state', () => {
     expect(presentationAttachment.requested_proof).toStrictEqual({
       revealed_attrs: {},
       self_attested_attrs: {
-        attribute_0: 'Smith'
+        attr_nickname: 'Smith'
       },
       unrevealed_attrs: {},
       predicates: {}
     })
     expect(presentationRequestAttachment.requested_attributes).toStrictEqual({
-      attribute_0: {
+      attr_nickname: {
         name: 'nickname',
         self_attest_allowed: true
       }
