@@ -4,7 +4,7 @@ import { assert } from 'chai';
 import {
   createConnectionInviterInvited,
   createConnectionInviterRequested,
-  dataProofCreate,
+  dataProofCreateLegacy, dataProofCreate,
   proofCreate,
 } from 'helpers/entities';
 import { initVcxTestMode, shouldThrow } from 'helpers/utils';
@@ -14,8 +14,12 @@ describe('Proof:', () => {
   before(() => initVcxTestMode());
 
   describe('create:', () => {
+    it('lgeacy success', async () => {
+      await proofCreate(dataProofCreateLegacy());
+    });
+
     it('success', async () => {
-      await proofCreate();
+      await proofCreate(dataProofCreate());
     });
 
     it('throws: missing sourceId', async () => {
@@ -39,7 +43,7 @@ describe('Proof:', () => {
 
   describe('serialize:', () => {
     it('success', async () => {
-      const proof = await proofCreate();
+      const proof = await proofCreate(dataProofCreateLegacy());
       const { data } = await proof.serialize();
       assert.ok(data);
     });
@@ -47,9 +51,9 @@ describe('Proof:', () => {
 
   describe('deserialize:', () => {
     it('success', async () => {
-      const proof1 = await proofCreate();
+      const proof1 = await proofCreate(dataProofCreate());
       const data1 = await proof1.serialize();
-      const proof2 = await Proof.deserialize(data1);
+      const proof2 = await Proof.deserialize(data1 as any);
       const data2 = await proof2.serialize();
       assert.deepEqual(data1, data2);
     });
@@ -89,7 +93,7 @@ describe('Proof:', () => {
     });
 
     it('build presentation request and mark as sent', async () => {
-      const proof = await proofCreate();
+      const proof = await proofCreate(dataProofCreateLegacy());
       assert.equal(await proof.getState(), VerifierStateType.PresentationRequestSet);
       await proof.markPresentationRequestMsgSent();
       assert.equal(await proof.getState(), VerifierStateType.PresentationRequestSent);
@@ -99,13 +103,13 @@ describe('Proof:', () => {
   describe('requestProof:', () => {
     it('success', async () => {
       const connection = await createConnectionInviterRequested();
-      const proof = await proofCreate();
+      const proof = await proofCreate(dataProofCreateLegacy());
       await proof.requestProof(connection);
       assert.equal(await proof.getState(), VerifierStateType.PresentationRequestSent);
     });
 
     it('successfully get request message', async () => {
-      const proof = await proofCreate();
+      const proof = await proofCreate(dataProofCreateLegacy());
       const msg = await proof.getProofRequestMessage();
       assert(msg);
     });
@@ -119,7 +123,7 @@ describe('Proof:', () => {
 
     it('throws: connection not initialized', async () => {
       const connection = await createConnectionInviterInvited();
-      const proof = await proofCreate();
+      const proof = await proofCreate(dataProofCreateLegacy());
       const error = await shouldThrow(() => proof.requestProof(connection));
       assert.equal(error.napiCode, 'GenericFailure');
       assert.equal(error.vcxCode, VCXCode.NOT_READY);
