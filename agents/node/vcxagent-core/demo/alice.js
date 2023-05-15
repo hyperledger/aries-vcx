@@ -81,7 +81,7 @@ async function runAlice (options) {
   logger.debug(`Proof request presentation attachment ${JSON.stringify(requestInfo, null, 2)}`)
 
   const { selectedCreds } = await vcxAgent.serviceProver.selectCredentials(disclosedProofId, mapRevRegIdToTailsFile)
-  const selfAttestedAttrs = { attribute_3: 'Smith' }
+  const selfAttestedAttrs = { attr_nickname: 'Smith' }
   await vcxAgent.serviceProver.generateProof(disclosedProofId, selectedCreds, selfAttestedAttrs)
   await vcxAgent.serviceProver.sendDisclosedProofAndProgress(disclosedProofId, connectionId)
   logger.info('Faber received the proof')
