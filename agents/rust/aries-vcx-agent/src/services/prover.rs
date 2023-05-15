@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::sync::Arc;
 
 use crate::error::*;
@@ -59,17 +58,16 @@ impl ServiceProver {
 
     async fn get_credentials_for_presentation(&self, prover: &Prover, tails_dir: Option<&str>) -> AgentResult<String> {
         let credentials = prover.retrieve_credentials(&self.profile).await?;
-        let credentials: HashMap<String, Value> = serde_json::from_str(&credentials).unwrap();
+        // let credentials: HashMap<String, Value> = serde_json::from_str(&credentials).unwrap();
 
         let mut res_credentials = json!({});
 
-        for (key, val) in credentials["attrs"].as_object().unwrap().iter() {
-            let cred_array = val.as_array().unwrap();
+        for (referent, cred_array) in credentials.credentials_by_referent.iter() {
             if !cred_array.is_empty() {
                 let first_cred = &cred_array[0];
-                res_credentials["attrs"][key]["credential"] = first_cred.clone();
+                res_credentials["attrs"][referent]["credential"] = serde_json::to_value(first_cred.clone())?;
                 if let Some(tails_dir) = tails_dir {
-                    res_credentials["attrs"][key]["tails_file"] = Value::from(tails_dir);
+                    res_credentials["attrs"][referent]["tails_file"] = Value::from(tails_dir);
                 }
             }
         }

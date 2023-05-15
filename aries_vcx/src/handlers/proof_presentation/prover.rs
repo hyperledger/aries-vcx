@@ -17,6 +17,8 @@ use crate::protocols::proof_presentation::prover::messages::ProverMessages;
 use crate::protocols::proof_presentation::prover::state_machine::{ProverSM, ProverState};
 use crate::protocols::SendClosure;
 
+use super::types::RetrievedCredentials;
+
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Prover {
     prover_sm: ProverSM,
@@ -49,14 +51,15 @@ impl Prover {
         self.prover_sm.get_presentation_status()
     }
 
-    pub async fn retrieve_credentials(&self, profile: &Arc<dyn Profile>) -> VcxResult<String> {
+    pub async fn retrieve_credentials(&self, profile: &Arc<dyn Profile>) -> VcxResult<RetrievedCredentials> {
         trace!("Prover::retrieve_credentials >>>");
         let presentation_request = self.presentation_request_data()?;
         let anoncreds = Arc::clone(profile).inject_anoncreds();
-        anoncreds
+        let json_retrieved_credentials = anoncreds
             .prover_get_credentials_for_proof_req(&presentation_request)
-            .await
-            .map_err(|err| err.into())
+            .await?;
+
+        Ok(serde_json::from_str(&json_retrieved_credentials)?)
     }
 
     pub async fn generate_presentation(

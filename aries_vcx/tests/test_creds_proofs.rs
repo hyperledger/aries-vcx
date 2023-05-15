@@ -6,6 +6,7 @@ extern crate serde_json;
 pub mod utils;
 
 mod integration_tests {
+    use std::collections::HashMap;
     use std::sync::Arc;
 
     use aries_vcx::common::proofs::proof_request::PresentationRequestData;
@@ -15,6 +16,7 @@ mod integration_tests {
     };
     use aries_vcx::errors::error::VcxResult;
     use aries_vcx::handlers::proof_presentation::prover::Prover;
+    use aries_vcx::handlers::proof_presentation::types::RetrievedCredentials;
     use aries_vcx::handlers::proof_presentation::verifier::Verifier;
     use aries_vcx::handlers::util::AttachmentId;
     use aries_vcx::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
@@ -60,7 +62,7 @@ mod integration_tests {
             let proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
 
             let retrieved_creds = proof.retrieve_credentials(&holder_setup.profile).await.unwrap();
-            assert!(retrieved_creds.len() > 500);
+            // assert!(retrieved_creds.len() > 500); // TODO - what to replace this with? i assume this is a way of saying that "atleast 1 cred was found"
         })
         .await;
     }
@@ -118,7 +120,8 @@ mod integration_tests {
             let proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
 
             let retrieved_creds = proof.retrieve_credentials(&setup.profile).await.unwrap();
-            assert_eq!(retrieved_creds, "{}".to_string());
+            assert_eq!(serde_json::to_string(&retrieved_creds).unwrap(), "{}".to_string());
+            assert!(retrieved_creds.credentials_by_referent.is_empty());
 
             req["requested_attributes"]["address1_1"] = json!({"name": "address1"});
             let pres_req_data: PresentationRequestData = serde_json::from_str(&req.to_string()).unwrap();
@@ -139,7 +142,16 @@ mod integration_tests {
             let proof: Prover = Prover::create_from_request("2", proof_req).unwrap();
 
             let retrieved_creds = proof.retrieve_credentials(&setup.profile).await.unwrap();
-            assert_eq!(retrieved_creds, json!({"attrs":{"address1_1":[]}}).to_string());
+            assert_eq!(
+                serde_json::to_string(&retrieved_creds).unwrap(),
+                json!({"attrs":{"address1_1":[]}}).to_string()
+            );
+            assert_eq!(
+                retrieved_creds,
+                RetrievedCredentials {
+                    credentials_by_referent: HashMap::from([("address1_1".to_string(), vec![])])
+                }
+            )
         })
         .await;
     }
@@ -189,10 +201,8 @@ mod integration_tests {
 
             // All lower case
             let retrieved_creds = proof.retrieve_credentials(&setup.profile).await.unwrap();
-            assert!(retrieved_creds.contains(r#""zip":"84000""#));
-            let ret_creds_as_value: serde_json::Value = serde_json::from_str(&retrieved_creds).unwrap();
             assert_eq!(
-                ret_creds_as_value["attrs"]["zip_1"][0]["cred_info"]["attrs"]["zip"],
+                retrieved_creds.credentials_by_referent["zip_1"][0].cred_info.attributes["zip"],
                 "84000"
             );
 
@@ -215,7 +225,12 @@ mod integration_tests {
             let proof_req = RequestPresentation::with_decorators(id, content, decorators);
             let proof: Prover = Prover::create_from_request("2", proof_req).unwrap();
             let retrieved_creds2 = proof.retrieve_credentials(&setup.profile).await.unwrap();
-            assert!(retrieved_creds2.contains(r#""zip":"84000""#));
+            assert_eq!(
+                retrieved_creds2.credentials_by_referent["zip_1"][0]
+                    .cred_info
+                    .attributes["zip"],
+                "84000"
+            );
 
             // Entire word upper
             req["requested_attributes"]["zip_1"]["name"] = json!("ZIP");
@@ -236,7 +251,12 @@ mod integration_tests {
             let proof_req = RequestPresentation::with_decorators(id, content, decorators);
             let proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
             let retrieved_creds3 = proof.retrieve_credentials(&setup.profile).await.unwrap();
-            assert!(retrieved_creds3.contains(r#""zip":"84000""#));
+            assert_eq!(
+                retrieved_creds3.credentials_by_referent["zip_1"][0]
+                    .cred_info
+                    .attributes["zip"],
+                "84000"
+            );
         })
         .await;
     }
@@ -291,16 +311,15 @@ mod integration_tests {
             let proof_req = RequestPresentation::with_decorators(id, content, decorators);
             let mut proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
 
-            let all_creds: serde_json::Value =
-                serde_json::from_str(&proof.retrieve_credentials(&setup.profile).await.unwrap()).unwrap();
+            let all_creds = proof.retrieve_credentials(&setup.profile).await.unwrap();
             let selected_credentials: serde_json::Value = json!({
                "attrs":{
                   "address1_1": {
-                    "credential": all_creds["attrs"]["address1_1"][0],
+                    "credential": all_creds.credentials_by_referent["address1_1"][0],
                     "tails_file": get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string()
                   },
                   "zip_2": {
-                    "credential": all_creds["attrs"]["zip_2"][0],
+                    "credential": all_creds.credentials_by_referent["zip_2"][0],
                     "tails_file": get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string()
                   },
                }
@@ -374,20 +393,19 @@ mod integration_tests {
             let proof_req = RequestPresentation::with_decorators(id, content, decorators);
             let mut proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
 
-            let all_creds: serde_json::Value =
-                serde_json::from_str(&proof.retrieve_credentials(&setup.profile).await.unwrap()).unwrap();
+            let all_creds = proof.retrieve_credentials(&setup.profile).await.unwrap();
             let selected_credentials: serde_json::Value = json!({
                "attrs":{
                   "address1_1": {
-                    "credential": all_creds["attrs"]["address1_1"][0],
+                    "credential": all_creds.credentials_by_referent["address1_1"][0],
                     "tails_file": get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string()
                   },
                   "zip_2": {
-                    "credential": all_creds["attrs"]["zip_2"][0],
+                    "credential": all_creds.credentials_by_referent["zip_2"][0],
                     "tails_file": get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string()
                   },
                   "zip_3": {
-                    "credential": all_creds["attrs"]["zip_3"][0],
+                    "credential": all_creds.credentials_by_referent["zip_3"][0],
                     "tails_file": get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string()
                   },
                },

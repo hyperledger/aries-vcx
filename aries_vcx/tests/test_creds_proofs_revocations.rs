@@ -507,7 +507,7 @@ mod integration_tests {
 
             let retrieved_credentials = prover.retrieve_credentials(&consumer.profile).await.unwrap();
             info!(
-                "test_revoked_credential_might_still_work :: prover :: based on proof, retrieved credentials: {}",
+                "test_revoked_credential_might_still_work :: prover :: based on proof, retrieved credentials: {:?}",
                 &retrieved_credentials
             );
 

@@ -693,12 +693,10 @@ pub mod test_utils {
 
         pub async fn get_credentials_for_presentation(&mut self) -> serde_json::Value {
             let credentials = self.prover.retrieve_credentials(&self.profile).await.unwrap();
-            let credentials: std::collections::HashMap<String, serde_json::Value> =
-                serde_json::from_str(&credentials).unwrap();
 
             let mut use_credentials = json!({});
 
-            for (referent, credentials) in credentials["attrs"].as_object().unwrap().iter() {
+            for (referent, credentials) in credentials.credentials_by_referent.iter() {
                 use_credentials["attrs"][referent] = json!({
                     "credential": credentials[0]
                 })
