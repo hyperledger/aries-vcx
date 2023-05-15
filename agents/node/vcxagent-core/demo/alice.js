@@ -43,12 +43,12 @@ async function getInvitationString (fetchInviteUrl) {
 async function runAlice (options) {
   logger.info('Starting.')
 
-    initRustLogger(process.env.RUST_LOG || 'vcx=error')
+  initRustLogger(process.env.RUST_LOG || 'vcx=error')
   const agentName = `alice-${uuid.v4()}`
   const connectionId = 'alice-to-faber'
   const holderCredentialId = 'alice-credential'
   const disclosedProofId = 'alice-proof'
-  const walletExtraConfigs = (options['mysql'])
+  const walletExtraConfigs = (options.mysql)
     ? getStorageInfoMysql()
     : {}
 

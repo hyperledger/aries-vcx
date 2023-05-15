@@ -1,5 +1,4 @@
 const { OutOfBandSender, OutOfBandReceiver } = require('@hyperledger/node-vcx-wrapper')
-const assert = require('assert')
 
 module.exports.createServiceOutOfBand = function createServiceOutOfBand ({ logger, saveConnection, loadConnection }) {
   function _createOobSender (message, label) {

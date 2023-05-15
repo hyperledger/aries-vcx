@@ -9,7 +9,7 @@ const {
   RevocationRegistry,
   Schema,
   DisclosedProof,
-  Proof,
+  Proof
 } = require('@hyperledger/node-vcx-wrapper')
 
 async function createStorageService (agentName) {
