@@ -308,6 +308,8 @@ pub mod integration_tests {
                 .await
                 .unwrap();
 
+            std::thread::sleep(std::time::Duration::from_secs(2));
+
             let cred_def_json_ledger = ledger
                 .get_cred_def(&cred_def_id, Some(&setup.institution_did))
                 .await
