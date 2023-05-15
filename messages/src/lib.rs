@@ -8,7 +8,6 @@
 
 pub mod decorators;
 mod error;
-pub mod maybe_known;
 pub mod misc;
 pub mod msg_fields;
 pub mod msg_parts;
