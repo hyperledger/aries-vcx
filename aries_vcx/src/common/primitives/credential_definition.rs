@@ -285,7 +285,7 @@ pub mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_pool_create_cred_def_real() {
-        SetupProfile::run(|setup| async move {
+        SetupProfile::run_indy(|setup| async move {
             let (schema_id, _) =
                 create_and_write_test_schema(&setup.profile, &setup.institution_did, DEFAULT_SCHEMA_ATTRS).await;
 
@@ -322,7 +322,7 @@ pub mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_pool_create_rev_reg_def() {
-        SetupProfile::run(|setup| async move {
+        SetupProfile::run_indy(|setup| async move {
             let (schema_id, _) =
                 create_and_write_test_schema(&setup.profile, &setup.institution_did, DEFAULT_SCHEMA_ATTRS).await;
             let ledger = Arc::clone(&setup.profile).inject_ledger();

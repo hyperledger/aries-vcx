@@ -29,8 +29,7 @@ mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_retrieve_credentials() {
-        // todo - use SetupProfile::run after modular impls
-        SetupProfile::run(|setup| async move {
+        SetupProfile::run_indy(|setup| async move {
             let holder_setup = init_holder_setup_in_indy_context(&setup).await;
 
             create_and_store_nonrevocable_credential(
@@ -68,8 +67,7 @@ mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_get_credential_def() {
-        // todo - use SetupProfile::run after modular impls
-        SetupProfile::run(|setup| async move {
+        SetupProfile::run_indy(|setup| async move {
             let (_, _, cred_def_id, cred_def_json, _) = create_and_store_nonrevocable_credential_def(
                 &setup.profile,
                 &setup.institution_did,
@@ -90,8 +88,7 @@ mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_retrieve_credentials_empty() {
-        // todo - use SetupProfile::run after modular impls
-        SetupProfile::run(|setup| async move {
+        SetupProfile::run_indy(|setup| async move {
             let mut req = json!({
                "nonce":"123432421212",
                "name":"proof_req_1",
@@ -147,8 +144,7 @@ mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_case_for_proof_req_doesnt_matter_for_retrieve_creds() {
-        // todo - use SetupProfile::run after modular impls
-        SetupProfile::run(|setup| async move {
+        SetupProfile::run_indy(|setup| async move {
             create_and_store_nonrevocable_credential(
                 &setup.profile,
                 &setup.profile,
@@ -244,8 +240,7 @@ mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_generate_proof() {
-        // todo - use SetupProfile::run after modular impls
-        SetupProfile::run(|setup| async move {
+        SetupProfile::run_indy(|setup| async move {
             create_and_store_credential(
                 &setup.profile,
                 &setup.profile,
@@ -325,8 +320,7 @@ mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_generate_proof_with_predicates() {
-        // todo - use SetupProfile::run after modular impls
-        SetupProfile::run(|setup| async move {
+        SetupProfile::run_indy(|setup| async move {
             create_and_store_credential(
                 &setup.profile,
                 &setup.profile,
@@ -410,8 +404,7 @@ mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_generate_self_attested_proof() {
-        // todo - use SetupProfile::run after modular impls
-        SetupProfile::run(|setup| async move {
+        SetupProfile::run_indy(|setup| async move {
             let indy_proof_req = json!({
                "nonce":"123432421212",
                "name":"proof_req_1",

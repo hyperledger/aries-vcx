@@ -33,7 +33,7 @@ mod integration_tests {
     #[ignore]
     async fn test_pool_get_credential_def() {
         // TODO - use SetupProfile::run after modular impls
-        SetupProfile::run(|setup| async move {
+        SetupProfile::run_indy(|setup| async move {
             let (_, _, cred_def_id, cred_def_json, _) = create_and_store_nonrevocable_credential_def(
                 &setup.profile,
                 &setup.institution_did,
@@ -71,7 +71,7 @@ mod integration_tests {
     // TODO - future - bring back after all endorser methods added to baseledger
     // #[tokio::test]
     // async fn test_endorse_transaction() {
-    //     SetupProfile::run(|setup| async move {
+    //     SetupProfile::run_indy(|setup| async move {
     //         let ledger = Arc::clone(&setup.profile).inject_ledger();
     //         let (author_did, _) = add_new_did(&setup.profile, &setup.institution_did, None).await.unwrap();
     //         let (endorser_did, _) = add_new_did(&setup.profile, &setup.institution_did, Some("ENDORSER")).await.unwrap();

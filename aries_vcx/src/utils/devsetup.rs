@@ -495,11 +495,15 @@ impl SetupProfile {
 
     // FUTURE - ideally no tests should be using this method, they should be using the generic run
     // after modular profile Anoncreds/Ledger methods have all been implemented, all tests should use run()
-    #[cfg(feature = "vdrtools")]
+    #[cfg(any(feature = "vdrtools", feature = "vdr_proxy_ledger"))]
     pub async fn run_indy<F>(f: impl FnOnce(Self) -> F)
     where
         F: Future<Output = ()>,
     {
+        #[cfg(feature = "vdr_proxy_ledger")]
+        let init = Self::init_vdr_proxy_ledger().await;
+
+        #[cfg(all(feature = "vdrtools", not(feature = "vdr_proxy_ledger")))]
         let init = Self::init_indy().await;
 
         let teardown = Arc::clone(&init.teardown);

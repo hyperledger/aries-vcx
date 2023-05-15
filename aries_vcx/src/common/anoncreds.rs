@@ -25,7 +25,7 @@ pub mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_pool_prover_get_credentials() {
-        SetupProfile::run(|setup| async move {
+        SetupProfile::run_indy(|setup| async move {
             let proof_req = json!({
                "nonce":"123432421212",
                "name":"proof_req_1",
@@ -60,7 +60,7 @@ pub mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_pool_revoke_credential() {
-        SetupProfile::run(|setup| async move {
+        SetupProfile::run_indy(|setup| async move {
             let holder_setup = init_holder_setup_in_indy_context(&setup).await;
 
             let (_, _, _, _, _, _, _, _, rev_reg_id, cred_rev_id, _, rev_reg) = create_and_store_credential(
