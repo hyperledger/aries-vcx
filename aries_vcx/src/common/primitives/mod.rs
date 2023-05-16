@@ -116,7 +116,7 @@ pub mod integration_tests {
 
     #[tokio::test]
     #[ignore]
-    async fn test_pool_from_pool_ledger_with_id() {
+    async fn test_pool_create_and_get_schema() {
         SetupProfile::run(|setup| async move {
             let (schema_id, _schema_json) =
                 create_and_write_test_schema(&setup.profile, &setup.institution_did, DEFAULT_SCHEMA_ATTRS).await;

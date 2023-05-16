@@ -25,7 +25,7 @@ pub mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_pool_prover_get_credentials() {
-        SetupProfile::run_indy(|setup| async move {
+        SetupProfile::run(|setup| async move {
             let proof_req = json!({
                "nonce":"123432421212",
                "name":"proof_req_1",
