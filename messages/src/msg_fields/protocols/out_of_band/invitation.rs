@@ -1,4 +1,4 @@
-use diddoc::aries::service::AriesService;
+use diddoc_legacy::aries::service::AriesService;
 
 use serde::{Deserialize, Serialize};
 use shared_vcx::maybe_known::MaybeKnown;

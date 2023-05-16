@@ -103,7 +103,7 @@ pub async fn unpack_message_to_string(wallet: &Arc<dyn BaseWallet>, msg: &[u8]) 
 //     use crate::utils::devsetup::SetupEmpty;
 //     use aries_vcx_core::indy::utils::test_setup::with_wallet;
 //     use aries_vcx_core::INVALID_POOL_HANDLE;
-//     use diddoc::aries::diddoc::test_utils::*;
+//     use diddoc_legacy::aries::diddoc::test_utils::*;
 //     use messages::protocols::connection::response::test_utils::{_did, _response, _thread_id};
 
 //     use super::*;

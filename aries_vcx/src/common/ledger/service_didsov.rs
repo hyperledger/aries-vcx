@@ -63,7 +63,7 @@ impl Default for EndpointDidSov {
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod unit_tests {
-    use diddoc::aries::diddoc::test_utils::{_routing_keys, _service_endpoint};
+    use diddoc_legacy::aries::diddoc::test_utils::{_routing_keys, _service_endpoint};
 
     use crate::common::ledger::service_didsov::{DidSovServiceType, EndpointDidSov};
     use crate::utils::devsetup::SetupEmpty;

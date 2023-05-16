@@ -3,7 +3,7 @@ use std::str::FromStr;
 use std::sync::Arc;
 
 use agency_client::agency_client::AgencyClient;
-use diddoc::aries::diddoc::AriesDidDoc;
+use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use messages::decorators::attachment::AttachmentType;
 use messages::decorators::thread::Thread;
 use messages::msg_fields::protocols::cred_issuance::issue_credential::IssueCredential;

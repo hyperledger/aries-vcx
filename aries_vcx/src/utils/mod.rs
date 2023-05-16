@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
-use diddoc::aries::diddoc::AriesDidDoc;
+use diddoc_legacy::aries::diddoc::AriesDidDoc;
 
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use crate::utils::encryption_envelope::EncryptionEnvelope;

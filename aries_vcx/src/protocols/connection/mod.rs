@@ -8,7 +8,7 @@ mod trait_bounds;
 
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use chrono::Utc;
-use diddoc::aries::diddoc::AriesDidDoc;
+use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use messages::{
     decorators::{thread::Thread, timing::Timing},
     msg_fields::protocols::{

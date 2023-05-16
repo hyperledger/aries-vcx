@@ -1,4 +1,4 @@
-use did_resolver::did_doc_builder::schema::did_doc::DidDocument;
+use did_resolver::did_doc::schema::did_doc::DidDocument;
 use did_resolver::did_parser::Did;
 use did_resolver::traits::resolvable::{resolution_options::DidResolutionOptions, DidResolvable};
 use did_resolver_web::resolution::resolver::DidWebResolver;

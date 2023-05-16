@@ -4,7 +4,7 @@ mod thin_state;
 use std::sync::Arc;
 
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
-use diddoc::aries::diddoc::AriesDidDoc;
+use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use messages::AriesMessage;
 
 pub use self::thin_state::{State, ThinState};

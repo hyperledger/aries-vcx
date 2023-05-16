@@ -1,4 +1,4 @@
-use diddoc::aries::diddoc::AriesDidDoc;
+use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use messages::msg_fields::protocols::connection::invitation::Invitation;
 
 use crate::{

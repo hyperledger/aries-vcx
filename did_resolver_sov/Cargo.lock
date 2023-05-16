@@ -1122,7 +1122,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "did_doc_builder"
+name = "did_doc"
 version = "0.1.0"
 dependencies = [
  "did_parser",
@@ -1149,7 +1149,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "chrono",
- "did_doc_builder",
+ "did_doc",
  "did_parser",
  "serde",
 ]

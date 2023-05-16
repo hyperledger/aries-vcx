@@ -1,4 +1,4 @@
-use diddoc::aries::diddoc::AriesDidDoc;
+use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use messages::msg_fields::protocols::connection::problem_report::ProblemReport;
 
 use crate::{handlers::util::AnyInvitation, protocols::mediated_connection::invitee::states::invited::InvitedState};

@@ -14,7 +14,7 @@ use crate::protocols::mediated_connection::pairwise_info::PairwiseInfo;
 use crate::protocols::SendClosureConnection;
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use chrono::Utc;
-use diddoc::aries::diddoc::AriesDidDoc;
+use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use messages::decorators::thread::Thread;
 use messages::decorators::timing::Timing;
 use messages::msg_fields::protocols::connection::invitation::Invitation;
