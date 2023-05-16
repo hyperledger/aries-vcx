@@ -2,15 +2,14 @@ use std::collections::HashMap;
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct RetrievedCredentials {
-    #[serde(rename = "attrs", skip_serializing_if = "HashMap::is_empty")]
+    #[serde(rename = "attrs", skip_serializing_if = "HashMap::is_empty", default)]
     pub credentials_by_referent: HashMap<String, Vec<RetrievedCredentialForReferent>>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct RetrievedCredentialForReferent {
     pub cred_info: CredentialInfo,
-    #[serde(rename = "non_revoc_interval")]
-    pub non_revoked_interval: NonRevokedInterval,
+    pub interval: Option<NonRevokedInterval>,
 }
 
 // NOTE: this could probably be moved to a more common location
@@ -37,7 +36,7 @@ pub struct NonRevokedInterval {
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
 pub struct SelectedCredentials {
-    #[serde(rename = "attrs")]
+    #[serde(rename = "attrs", skip_serializing_if = "HashMap::is_empty", default)]
     pub credential_for_referent: HashMap<String, SelectedCredentialForReferent>,
 }
 
