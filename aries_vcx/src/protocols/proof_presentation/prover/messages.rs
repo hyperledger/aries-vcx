@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use messages::{
     msg_fields::protocols::{
         notification::Notification,
@@ -14,7 +16,10 @@ use messages::{
     AriesMessage,
 };
 
-use crate::handlers::util::{matches_opt_thread_id, matches_thread_id, PresentationProposalData};
+use crate::handlers::{
+    proof_presentation::types::SelectedCredentials,
+    util::{matches_opt_thread_id, matches_thread_id, PresentationProposalData},
+};
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 pub enum ProverMessages {
@@ -22,7 +27,7 @@ pub enum ProverMessages {
     PresentationRequestReceived(RequestPresentation),
     RejectPresentationRequest(String),
     SetPresentation(Presentation),
-    PreparePresentation((String, String)),
+    PreparePresentation((SelectedCredentials, HashMap<String, String>)),
     SendPresentation,
     PresentationAckReceived(AckPresentation),
     PresentationRejectReceived(ProblemReport),

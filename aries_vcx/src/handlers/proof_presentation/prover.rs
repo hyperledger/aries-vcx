@@ -17,7 +17,7 @@ use crate::protocols::proof_presentation::prover::messages::ProverMessages;
 use crate::protocols::proof_presentation::prover::state_machine::{ProverSM, ProverState};
 use crate::protocols::SendClosure;
 
-use super::types::RetrievedCredentials;
+use super::types::{RetrievedCredentials, SelectedCredentials};
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Prover {
@@ -65,11 +65,11 @@ impl Prover {
     pub async fn generate_presentation(
         &mut self,
         profile: &Arc<dyn Profile>,
-        credentials: String,
-        self_attested_attrs: String,
+        credentials: SelectedCredentials,
+        self_attested_attrs: HashMap<String, String>,
     ) -> VcxResult<()> {
         trace!(
-            "Prover::generate_presentation >>> credentials: {}, self_attested_attrs: {:?}",
+            "Prover::generate_presentation >>> credentials: {:?}, self_attested_attrs: {:?}",
             credentials,
             self_attested_attrs
         );

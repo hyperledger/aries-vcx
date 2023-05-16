@@ -1,11 +1,15 @@
 #[cfg(test)]
 pub mod test_utils {
+    use std::collections::HashMap;
     use std::sync::Arc;
 
     #[cfg(feature = "modular_libs")]
     use aries_vcx::core::profile::modular_libs_profile::ModularLibsProfile;
     use aries_vcx::core::profile::profile::Profile;
     use aries_vcx::core::profile::vdrtools_profile::VdrtoolsProfile;
+    use aries_vcx::handlers::proof_presentation::types::{
+        SelectedCredentialForReferent, SelectedCredentialForReferentCredential, SelectedCredentials,
+    };
     use aries_vcx::handlers::revocation_notification::receiver::RevocationNotificationReceiver;
     use aries_vcx::handlers::revocation_notification::sender::RevocationNotificationSender;
     use aries_vcx::handlers::util::{AnyInvitation, OfferInfo, Status};
@@ -691,15 +695,21 @@ pub mod test_utils {
             }
         }
 
-        pub async fn get_credentials_for_presentation(&mut self) -> serde_json::Value {
+        pub async fn get_credentials_for_presentation(&mut self) -> SelectedCredentials {
             let credentials = self.prover.retrieve_credentials(&self.profile).await.unwrap();
 
-            let mut use_credentials = json!({});
+            let mut use_credentials = SelectedCredentials {
+                credential_for_referent: HashMap::new(),
+            };
 
-            for (referent, credentials) in credentials.credentials_by_referent.iter() {
-                use_credentials["attrs"][referent] = json!({
-                    "credential": credentials[0]
-                })
+            for (referent, credentials) in credentials.credentials_by_referent {
+                use_credentials.credential_for_referent.insert(
+                    referent,
+                    SelectedCredentialForReferent {
+                        credential: SelectedCredentialForReferentCredential::from(credentials[0].clone()),
+                        tails_dir: None,
+                    },
+                );
             }
 
             use_credentials
@@ -713,7 +723,7 @@ pub mod test_utils {
             let credentials = self.get_credentials_for_presentation().await;
 
             self.prover
-                .generate_presentation(&self.profile, credentials.to_string(), String::from("{}"))
+                .generate_presentation(&self.profile, credentials, HashMap::new())
                 .await
                 .unwrap();
             assert_eq!(ProverState::PresentationPrepared, self.prover.get_state());

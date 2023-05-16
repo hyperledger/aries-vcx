@@ -4,6 +4,7 @@ use std::sync::Arc;
 
 use crate::core::profile::profile::Profile;
 use crate::errors::error::prelude::*;
+use crate::handlers::proof_presentation::types::SelectedCredentials;
 use crate::handlers::util::{
     make_attach_from_str, matches_opt_thread_id, matches_thread_id, AttachmentId, PresentationProposalData, Status,
 };
@@ -206,8 +207,8 @@ impl ProverSM {
     pub async fn generate_presentation(
         self,
         profile: &Arc<dyn Profile>,
-        credentials: String,
-        self_attested_attrs: String,
+        credentials: SelectedCredentials,
+        self_attested_attrs: HashMap<String, String>,
     ) -> VcxResult<Self> {
         let state = match self.state {
             ProverFullState::PresentationRequestReceived(state) => {

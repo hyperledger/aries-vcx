@@ -14,7 +14,6 @@ mod integration_tests {
         create_and_store_credential, create_and_store_nonrevocable_credential,
         create_and_store_nonrevocable_credential_def, create_indy_proof,
     };
-    use aries_vcx::errors::error::VcxResult;
     use aries_vcx::handlers::proof_presentation::prover::Prover;
     use aries_vcx::handlers::proof_presentation::types::RetrievedCredentials;
     use aries_vcx::handlers::proof_presentation::verifier::Verifier;
@@ -332,8 +331,8 @@ mod integration_tests {
             let generated_proof = proof
                 .generate_presentation(
                     &setup.profile,
-                    selected_credentials.to_string(),
-                    self_attested.to_string(),
+                    serde_json::from_value(selected_credentials).unwrap(),
+                    serde_json::from_value(self_attested).unwrap(),
                 )
                 .await;
             assert!(generated_proof.is_ok());
@@ -416,8 +415,8 @@ mod integration_tests {
             let generated_proof = proof
                 .generate_presentation(
                     &setup.profile,
-                    selected_credentials.to_string(),
-                    self_attested.to_string(),
+                    serde_json::from_value(selected_credentials).unwrap(),
+                    serde_json::from_value(self_attested).unwrap(),
                 )
                 .await;
             assert!(generated_proof.is_ok());
@@ -461,8 +460,8 @@ mod integration_tests {
             proof
                 .generate_presentation(
                     &setup.profile,
-                    selected_credentials.to_string(),
-                    self_attested.to_string(),
+                    serde_json::from_value(selected_credentials).unwrap(),
+                    serde_json::from_value(self_attested).unwrap(),
                 )
                 .await
                 .unwrap();
@@ -489,7 +488,7 @@ mod integration_tests {
 
 #[cfg(test)]
 mod tests {
-    use std::thread;
+    use std::collections::HashMap;
     use std::time::Duration;
 
     use messages::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
@@ -517,7 +516,6 @@ mod tests {
         send_cred_proposal, send_cred_proposal_1, send_cred_req, send_credential, send_proof_proposal,
         send_proof_proposal_1, send_proof_request, verifier_create_proof_and_send_request, verify_proof,
     };
-    use crate::utils::test_macros::ProofStateType;
 
     use super::*;
 
@@ -999,13 +997,7 @@ mod tests {
             let selected_credentials = retrieved_to_selected_credentials_simple(&retrieved_credentials, false);
 
             info!("test_real_proof :: generating and sending proof");
-            generate_and_send_proof(
-                &mut consumer,
-                &mut prover,
-                &consumer_to_issuer,
-                &serde_json::to_string(&selected_credentials).unwrap(),
-            )
-            .await;
+            generate_and_send_proof(&mut consumer, &mut prover, &consumer_to_issuer, selected_credentials).await;
             assert_eq!(ProverState::PresentationSent, prover.get_state());
             assert_eq!(presentation_thread_id, prover.get_thread_id().unwrap());
             assert_eq!(presentation_thread_id, verifier.get_thread_id().unwrap());
@@ -1262,13 +1254,13 @@ mod tests {
             let mut prover = send_proof_proposal(&mut consumer, &consumer_to_institution, &cred_def_id).await;
             let mut verifier = Verifier::create("1").unwrap();
             accept_proof_proposal(&mut institution, &mut verifier, &institution_to_consumer).await;
-            let selected_credentials_str =
+            let selected_credentials =
                 prover_select_credentials(&mut prover, &mut consumer, &consumer_to_institution, None).await;
             generate_and_send_proof(
                 &mut consumer,
                 &mut prover,
                 &consumer_to_institution,
-                &selected_credentials_str,
+                selected_credentials,
             )
             .await;
             verify_proof(&mut institution, &mut verifier, &institution_to_consumer).await;
@@ -1338,13 +1330,13 @@ mod tests {
             accept_proof_proposal(&mut institution, &mut verifier, &institution_to_consumer).await;
             send_proof_proposal_1(&mut consumer, &mut prover, &consumer_to_institution, &cred_def_id).await;
             accept_proof_proposal(&mut institution, &mut verifier, &institution_to_consumer).await;
-            let selected_credentials_str =
+            let selected_credentials =
                 prover_select_credentials(&mut prover, &mut consumer, &consumer_to_institution, None).await;
             generate_and_send_proof(
                 &mut consumer,
                 &mut prover,
                 &consumer_to_institution,
-                &selected_credentials_str,
+                selected_credentials,
             )
             .await;
             verify_proof(&mut institution, &mut verifier, &institution_to_consumer).await;
@@ -1455,7 +1447,7 @@ mod tests {
 
                 alice
                     .prover
-                    .generate_presentation(&alice.profile, credentials.to_string(), String::from("{}"))
+                    .generate_presentation(&alice.profile, credentials, HashMap::new())
                     .await
                     .unwrap();
                 assert_eq!(ProverState::PresentationPrepared, alice.prover.get_state());
@@ -1553,7 +1545,7 @@ mod tests {
 
                 alice
                     .prover
-                    .generate_presentation(&alice.profile, credentials.to_string(), String::from("{}"))
+                    .generate_presentation(&alice.profile, credentials, HashMap::new())
                     .await
                     .unwrap();
                 assert_eq!(ProverState::PresentationPrepared, alice.prover.get_state());

@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::sync::Arc;
 
 use messages::msg_fields::protocols::present_proof::present::Presentation;
@@ -10,6 +11,7 @@ use uuid::Uuid;
 use crate::common::proofs::prover::prover::generate_indy_proof;
 use crate::core::profile::profile::Profile;
 use crate::errors::error::prelude::*;
+use crate::handlers::proof_presentation::types::SelectedCredentials;
 use crate::handlers::util::{get_attach_as_string, Status};
 use crate::protocols::proof_presentation::prover::states::finished::FinishedState;
 use crate::protocols::proof_presentation::prover::states::presentation_preparation_failed::PresentationPreparationFailedState;
@@ -40,8 +42,8 @@ impl PresentationRequestReceived {
     pub async fn build_presentation(
         &self,
         profile: &Arc<dyn Profile>,
-        credentials: &str,
-        self_attested_attrs: &str,
+        credentials: &SelectedCredentials,
+        self_attested_attrs: &HashMap<String, String>,
     ) -> VcxResult<String> {
         let proof_req_data_json =
             get_attach_as_string!(&self.presentation_request.content.request_presentations_attach);
