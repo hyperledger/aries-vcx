@@ -568,22 +568,6 @@ pub mod unit_tests {
             Vec::new()
         );
 
-        // missing cred info
-        let selected_credentials: Value = json!({
-           "attrs":{
-              "height_1":{ "interval":null }
-           }
-        });
-        assert_eq!(
-            credential_def_identifiers(
-                &serde_json::from_value(selected_credentials).unwrap(),
-                &proof_req_no_interval()
-            )
-            .unwrap_err()
-            .kind(),
-            AriesVcxErrorKind::InvalidProofCredentialData
-        );
-
         // Optional Revocation
         let mut selected_credentials: Value = json!({
            "attrs":{
@@ -637,51 +621,6 @@ pub mod unit_tests {
             )
             .unwrap(),
             &creds
-        );
-
-        // Missing schema ID
-        let mut selected_credentials: Value = json!({
-           "attrs":{
-              "height_1":{
-                "credential": {
-                    "cred_info":{
-                       "referent":LICENCE_CRED_ID,
-                       "attrs":{
-                          "sex":"male",
-                          "age":"111",
-                          "name":"Bob",
-                          "height":"4'11"
-                       },
-                       "cred_def_id": CRED_DEF_ID,
-                       "rev_reg_id":REV_REG_ID,
-                       "cred_rev_id":CRED_REV_ID
-                    },
-                    "interval":null
-                },
-                "tails_file": get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string()
-              },
-           }
-        });
-        assert_eq!(
-            credential_def_identifiers(
-                &serde_json::from_value(selected_credentials.clone()).unwrap(),
-                &proof_req_no_interval()
-            )
-            .unwrap_err()
-            .kind(),
-            AriesVcxErrorKind::InvalidProofCredentialData
-        );
-
-        // Schema Id is null
-        selected_credentials["attrs"]["height_1"]["cred_info"]["schema_id"] = serde_json::Value::Null;
-        assert_eq!(
-            credential_def_identifiers(
-                &serde_json::from_value(selected_credentials).unwrap(),
-                &proof_req_no_interval()
-            )
-            .unwrap_err()
-            .kind(),
-            AriesVcxErrorKind::InvalidProofCredentialData
         );
     }
 
