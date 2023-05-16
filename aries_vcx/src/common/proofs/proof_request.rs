@@ -36,16 +36,27 @@ impl ProofRequestData {
         })
     }
 
-    pub fn set_requested_attributes_as_string(mut self, requested_attrs: String) -> VcxResult<Self> {
-        match serde_json::from_str::<HashMap<String, AttrInfo>>(&requested_attrs) {
+    // Support requested_attributes in 2 formats
+    // Referent-less format, deprecated:
+    // [ { name: 'age' }, { name: 'balance' } ]
+    // Explicit referent format:
+    // { 'attr_age': { 'name': 'age' }, 'attr_balance': { 'name': 'balance' } }
+    // todo: move String parsing to libvcx_core
+    pub fn set_requested_attributes_as_string(mut self, requested_attributes: String) -> VcxResult<Self> {
+        match serde_json::from_str::<HashMap<String, AttrInfo>>(&requested_attributes) {
             Ok(attrs) => self.requested_attributes = attrs,
             Err(_err) => {
-                let requested_attributes: Vec<AttrInfo> = ::serde_json::from_str(&requested_attrs).map_err(|err| {
-                    AriesVcxError::from_msg(
-                        AriesVcxErrorKind::InvalidJson,
-                        format!("Invalid Requested Attributes: {:?}, err: {:?}", requested_attrs, err),
-                    )
-                })?;
+                warn!("Requested attributes are not in referent format. Trying to parse as array of attributes (deprecated).");
+                let requested_attributes: Vec<AttrInfo> =
+                    ::serde_json::from_str(&requested_attributes).map_err(|err| {
+                        AriesVcxError::from_msg(
+                            AriesVcxErrorKind::InvalidJson,
+                            format!(
+                                "Invalid Requested Attributes: {:?}, err: {:?}",
+                                requested_attributes, err
+                            ),
+                        )
+                    })?;
                 for attribute in requested_attributes.iter() {
                     if attribute.name.is_some() && attribute.names.is_some() {
                         return Err(AriesVcxError::from_msg(
@@ -60,6 +71,33 @@ impl ProofRequestData {
         Ok(self)
     }
 
+    // Support requested_predicates in 2 formats
+    // Referent-less format, deprecated:
+    // [ { name: 'age', p_type: '>=', p_value: 18 } ]
+    // Explicit referent format:
+    // { 'is_adult': { name: 'age', p_type: '>=', p_value: 18 } }
+    // todo: move String parsing to libvcx_core
+    pub fn set_requested_predicates_as_string(mut self, requested_predicates: String) -> VcxResult<Self> {
+        match serde_json::from_str::<HashMap<String, PredicateInfo>>(&requested_predicates) {
+            Ok(predicates) => self.requested_predicates = predicates,
+            Err(_err) => {
+                warn!("Requested predicates are not in referent format. Trying to parse as array of predicates (deprecated).");
+                let requested_predicates: Vec<PredicateInfo> =
+                    ::serde_json::from_str(&requested_predicates).map_err(|err| {
+                        AriesVcxError::from_msg(
+                            AriesVcxErrorKind::InvalidJson,
+                            format!(
+                                "Invalid Requested Predicates: {:?}, err: {:?}",
+                                requested_predicates, err
+                            ),
+                        )
+                    })?;
+                self = self.set_requested_predicates_as_vec(requested_predicates)?;
+            }
+        }
+        Ok(self)
+    }
+
     pub fn set_requested_attributes_as_vec(mut self, requested_attrs: Vec<AttrInfo>) -> VcxResult<Self> {
         self.requested_attributes = requested_attrs
             .into_iter()
@@ -69,22 +107,11 @@ impl ProofRequestData {
         Ok(self)
     }
 
-    pub fn set_requested_predicates_as_string(mut self, requested_predicates: String) -> VcxResult<Self> {
-        let requested_predicates: Vec<PredicateInfo> =
-            ::serde_json::from_str(&requested_predicates).map_err(|err| {
-                AriesVcxError::from_msg(
-                    AriesVcxErrorKind::InvalidJson,
-                    format!(
-                        "Invalid Requested Predicates: {:?}, err: {:?}",
-                        requested_predicates, err
-                    ),
-                )
-            })?;
-
-        self.requested_predicates = requested_predicates
+    fn set_requested_predicates_as_vec(mut self, predicates: Vec<PredicateInfo>) -> VcxResult<Self> {
+        self.requested_predicates = predicates
             .into_iter()
             .enumerate()
-            .map(|(index, attribute)| (format!("predicate_{}", index), attribute))
+            .map(|(index, predicate)| (format!("predicate_{}", index), predicate))
             .collect();
         Ok(self)
     }

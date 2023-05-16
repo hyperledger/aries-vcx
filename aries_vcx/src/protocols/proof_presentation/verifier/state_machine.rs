@@ -19,14 +19,18 @@ use crate::protocols::SendClosure;
 use chrono::Utc;
 use messages::decorators::thread::Thread;
 use messages::decorators::timing::Timing;
-use messages::msg_fields::protocols::notification::{AckDecorators, AckStatus};
+use messages::msg_fields::protocols::notification::ack::{AckDecorators, AckStatus};
 use messages::msg_fields::protocols::present_proof::ack::{AckPresentation, AckPresentationContent};
+use messages::msg_fields::protocols::present_proof::problem_report::{
+    PresentProofProblemReport, PresentProofProblemReportContent,
+};
 use messages::msg_fields::protocols::present_proof::request::{
     RequestPresentation, RequestPresentationContent, RequestPresentationDecorators,
 };
 use messages::msg_fields::protocols::present_proof::PresentProof;
 use messages::msg_fields::protocols::present_proof::{present::Presentation, propose::ProposePresentation};
 use messages::msg_fields::protocols::report_problem::ProblemReport;
+use messages::msg_parts::MsgParts;
 use messages::AriesMessage;
 use uuid::Uuid;
 
@@ -228,22 +232,42 @@ impl VerifierSM {
         let state = match self.state {
             VerifierFullState::PresentationRequestSent(state) => {
                 let verification_result = state.verify_presentation(profile, &presentation, &self.thread_id).await;
-                let ack = build_verification_ack(&self.thread_id);
-                send_message(ack.into()).await?;
-                match verification_result {
+
+                let (sm, message) = match verification_result {
                     Ok(()) => {
-                        VerifierFullState::Finished((state, presentation, PresentationVerificationStatus::Valid).into())
+                        let sm = VerifierFullState::Finished(
+                            (state, presentation, PresentationVerificationStatus::Valid).into(),
+                        );
+                        let ack = build_verification_ack(&self.thread_id).into();
+                        (sm, ack)
                     }
-                    Err(err) => match err.kind() {
-                        AriesVcxErrorKind::InvalidProof => VerifierFullState::Finished(
-                            (state, presentation, PresentationVerificationStatus::Invalid).into(),
-                        ),
-                        _ => {
-                            let problem_report = build_problem_report_msg(Some(err.to_string()), &self.thread_id);
-                            VerifierFullState::Finished((state, problem_report).into())
-                        }
-                    },
-                }
+                    Err(err) => {
+                        let problem_report = build_problem_report_msg(Some(err.to_string()), &self.thread_id);
+
+                        let sm = match err.kind() {
+                            AriesVcxErrorKind::InvalidProof => VerifierFullState::Finished(
+                                (state, presentation, PresentationVerificationStatus::Invalid).into(),
+                            ),
+                            _ => VerifierFullState::Finished((state, problem_report.clone()).into()),
+                        };
+
+                        let MsgParts {
+                            id,
+                            content,
+                            decorators,
+                        } = problem_report;
+
+                        let problem_report = PresentProofProblemReport::with_decorators(
+                            id,
+                            PresentProofProblemReportContent(content),
+                            decorators,
+                        );
+
+                        (sm, AriesMessage::from(problem_report))
+                    }
+                };
+                send_message(message).await?;
+                sm
             }
             s => {
                 warn!("Unable to verify presentation in state {}", s);
@@ -407,7 +431,6 @@ impl VerifierSM {
     }
 
     pub fn get_state(&self) -> VerifierState {
-        warn!("get_state >>> {:?}", self.state);
         match self.state {
             VerifierFullState::Initial(_) => VerifierState::Initial,
             VerifierFullState::PresentationRequestSet(_) => VerifierState::PresentationRequestSet,

@@ -48,7 +48,7 @@ mod integration_tests {
 
             let time_before_revocation = time::OffsetDateTime::now_utc().unix_timestamp() as u64;
             info!("test_basic_revocation :: verifier :: Going to revoke credential");
-            revoke_credential_and_publish_accumulator(&mut institution, &issuer_credential, &rev_reg.rev_reg_id).await;
+            revoke_credential_and_publish_accumulator(&mut institution, &issuer_credential, &rev_reg).await;
 
             tokio::time::sleep(Duration::from_millis(1000)).await;
             let time_after_revocation = time::OffsetDateTime::now_utc().unix_timestamp() as u64;
@@ -121,7 +121,7 @@ mod integration_tests {
             assert!(!issuer_credential.is_revoked(&institution.profile).await.unwrap());
 
             info!("test_revocation_notification :: verifier :: Going to revoke credential");
-            revoke_credential_and_publish_accumulator(&mut institution, &issuer_credential, &rev_reg.rev_reg_id).await;
+            revoke_credential_and_publish_accumulator(&mut institution, &issuer_credential, &rev_reg).await;
             tokio::time::sleep(Duration::from_millis(1000)).await;
 
             assert!(issuer_credential.is_revoked(&institution.profile).await.unwrap());
@@ -206,7 +206,7 @@ mod integration_tests {
 
             assert!(!issuer_credential.is_revoked(&institution.profile).await.unwrap());
 
-            publish_revocation(&mut institution, rev_reg.rev_reg_id.clone()).await;
+            publish_revocation(&mut institution, &rev_reg).await;
             let request_name2 = Some("request2");
             let mut verifier = verifier_create_proof_and_send_request(
                 &mut institution,
@@ -255,7 +255,7 @@ mod integration_tests {
             create_connected_connections(&mut consumer3, &mut institution).await;
 
         // Issue and send three credentials of the same schema
-        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, rev_reg_id) =
+        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _rev_reg_id) =
             _create_address_schema(&institution.profile, &institution.config_issuer.institution_did).await;
         let (address1, address2, city, state, zip) = attr_names();
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
@@ -369,7 +369,7 @@ mod integration_tests {
             );
 
         // Publish revocations and verify the two are invalid, third still valid
-        publish_revocation(&mut institution, rev_reg_id.clone().unwrap()).await;
+        publish_revocation(&mut institution, &rev_reg).await;
         tokio::time::sleep(Duration::from_millis(1000)).await;
 
         assert!(issuer_credential1.is_revoked(&institution.profile).await.unwrap());
@@ -472,7 +472,7 @@ mod integration_tests {
             let time_before_revocation = time::OffsetDateTime::now_utc().unix_timestamp() as u64;
             tokio::time::sleep(Duration::from_millis(1000)).await;
             info!("test_revoked_credential_might_still_work :: verifier :: Going to revoke credential");
-            revoke_credential_and_publish_accumulator(&mut institution, &issuer_credential, &rev_reg.rev_reg_id).await;
+            revoke_credential_and_publish_accumulator(&mut institution, &issuer_credential, &rev_reg).await;
             tokio::time::sleep(Duration::from_millis(1000)).await;
 
             let from = time_before_revocation - 100;
@@ -556,7 +556,7 @@ mod integration_tests {
             create_connected_connections(&mut consumer, &mut verifier).await;
         let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut issuer).await;
 
-        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, rev_reg_id) =
+        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _rev_reg_id) =
             _create_address_schema(&issuer.profile, &issuer.config_issuer.institution_did).await;
         let (address1, address2, city, state, zip) = attr_names();
         let (req1, req2) = (Some("request1"), Some("request2"));
@@ -588,7 +588,7 @@ mod integration_tests {
         assert!(!issuer_credential1.is_revoked(&issuer.profile).await.unwrap());
         assert!(!issuer_credential2.is_revoked(&issuer.profile).await.unwrap());
 
-        revoke_credential_and_publish_accumulator(&mut issuer, &issuer_credential1, &rev_reg_id.unwrap()).await;
+        revoke_credential_and_publish_accumulator(&mut issuer, &issuer_credential1, &rev_reg).await;
 
         let mut proof_verifier = verifier_create_proof_and_send_request(
             &mut verifier,
@@ -649,7 +649,7 @@ mod integration_tests {
             create_connected_connections(&mut consumer, &mut verifier).await;
         let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut issuer).await;
 
-        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, rev_reg_id) =
+        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _rev_reg_id) =
             _create_address_schema(&issuer.profile, &issuer.config_issuer.institution_did).await;
         let (address1, address2, city, state, zip) = attr_names();
         let (req1, req2) = (Some("request1"), Some("request2"));
@@ -681,7 +681,7 @@ mod integration_tests {
         assert!(!issuer_credential1.is_revoked(&issuer.profile).await.unwrap());
         assert!(!issuer_credential2.is_revoked(&issuer.profile).await.unwrap());
 
-        revoke_credential_and_publish_accumulator(&mut issuer, &issuer_credential2, &rev_reg_id.unwrap()).await;
+        revoke_credential_and_publish_accumulator(&mut issuer, &issuer_credential2, &rev_reg).await;
 
         let mut proof_verifier = verifier_create_proof_and_send_request(
             &mut verifier,
@@ -857,7 +857,7 @@ mod integration_tests {
         assert!(!issuer_credential1.is_revoked(&issuer.profile).await.unwrap());
         assert!(!issuer_credential2.is_revoked(&issuer.profile).await.unwrap());
 
-        revoke_credential_and_publish_accumulator(&mut issuer, &issuer_credential1, &rev_reg.rev_reg_id).await;
+        revoke_credential_and_publish_accumulator(&mut issuer, &issuer_credential1, &rev_reg).await;
 
         let mut proof_verifier = verifier_create_proof_and_send_request(
             &mut verifier,
@@ -947,7 +947,7 @@ mod integration_tests {
         assert!(!issuer_credential1.is_revoked(&issuer.profile).await.unwrap());
         assert!(!issuer_credential2.is_revoked(&issuer.profile).await.unwrap());
 
-        revoke_credential_and_publish_accumulator(&mut issuer, &issuer_credential2, &rev_reg_2.rev_reg_id).await;
+        revoke_credential_and_publish_accumulator(&mut issuer, &issuer_credential2, &rev_reg_2).await;
 
         let mut proof_verifier = verifier_create_proof_and_send_request(
             &mut verifier,

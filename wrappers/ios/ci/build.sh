@@ -3,9 +3,8 @@
 set -ex
 
 export PKG_CONFIG_ALLOW_CROSS=1
-export CARGO_INCREMENTAL=1
-export RUST_LOG=vdrtools=trace
-export RUST_TEST_THREADS=1
+
+OPENSSL_VERSION="1.1.1t"
 
 REPO_DIR=$PWD
 SCRIPT_DIR="$( cd "$(dirname "$0")" ; pwd -P )"
@@ -13,6 +12,7 @@ OUTPUT_DIR=/tmp/artifacts
 
 setup() {
     echo "ios/ci/build.sh: running setup()"
+
     echo "Setup rustup"
     rustup default 1.65.0
     rustup component add rls-preview rust-analysis rust-src
@@ -39,214 +39,127 @@ setup() {
 
     echo "Install required native libraries and utilities"
     which pkg-config &>/dev/null || brew install pkg-config
-    # Libsodium version<1.0.15 is required
-    # brew install https://raw.githubusercontent.com/Homebrew/homebrew-core/65effd2b617bade68a8a2c5b39e1c3089cc0e945/Formula/libsodium.rb
     which automake &>/dev/null || brew install automake
     which autoconf &>/dev/null || brew install autoconf
     which cmake &>/dev/null || brew install cmake
-    which wget &>/dev/null || brew install wget
-    brew list openssl &>/dev/null || brew install openssl@1.1
-    brew list zmq &>/dev/null || brew install zmq
-    brew list libzip &>/dev/null || brew install libzip
 
-    mkdir -p $OUTPUT_DIR
-
-    # Figure out which OPENSSL we have available
-    export OPENSSL_BASE_DIR="/usr/local/Cellar/openssl@1.1"
-    for f in $(ls -t "$OPENSSL_BASE_DIR"); do
-      local ABSOLUTE_FILE_PATH="${OPENSSL_BASE_DIR}/${f}"
-      if [ -d "$ABSOLUTE_FILE_PATH" ] && [ -d "$ABSOLUTE_FILE_PATH/lib" ]; then
-        export OPENSSL_VERSION=$f
-        export OPENSSL_DIR=$ABSOLUTE_FILE_PATH # Used later by cyclone
-        break
-      fi
-    done
-    if [ -z "$OPENSSL_VERSION" ]; then
-      echo >&2 "Error: Failed to find an OpenSSL installation in $OPENSSL_BASE_DIR"
-      exit 1
-    else
-      echo "Found OpenSSL version $OPENSSL_VERSION"
-    fi
+    mkdir -p $OUTPUT_DIR/libs
+    mkdir -p $OUTPUT_DIR/arch_libs
 }
 
-# NOTE: Each built archive must be a fat file, i.e support all required architectures
-# Can be checked via e.g. `lipo -info $OUTPUT_DIR/OpenSSL-for-iPhone/lib/libssl.a`
 build_crypto() {
     echo "ios/ci/build.sh: running build_crypto()"
+
     if [ ! -d $OUTPUT_DIR/OpenSSL-for-iPhone ]; then
         git clone https://github.com/x2on/OpenSSL-for-iPhone.git $OUTPUT_DIR/OpenSSL-for-iPhone
-        cd $OUTPUT_DIR/OpenSSL-for-iPhone
-        git checkout b77ace70b2594de69c88d0748326d2a1190bbac1
-        cd -
+
+        # Need to use an older version of the build script to support older iOS versions
+        pushd $OUTPUT_DIR/OpenSSL-for-iPhone
+            git checkout b77ace70b2594de69c88d0748326d2a1190bbac1
+        popd
     fi
 
     pushd $OUTPUT_DIR/OpenSSL-for-iPhone
-        OPENSSL_VERSION_STRIPPED=$( echo "$OPENSSL_VERSION" | grep -Eo '[0-9]\.[0-9]\.[0-9][a-z]') # example: 1.1.1l_1a ---> 1.1.1l
-        ./build-libssl.sh --version="$OPENSSL_VERSION_STRIPPED"
+        ./build-libssl.sh --version="$OPENSSL_VERSION" --targets="ios64-cross-arm64 ios-sim-cross-x86_64"
+        mv lib/libssl.a lib/libssl.a.fat
+        mv lib/libcrypto.a lib/libcrypto.a.fat
     popd
+
+    export OPENSSL_INCLUDE_DIR="$OUTPUT_DIR/OpenSSL-for-iPhone/include"
+}
+
+extract_crypto_lib() {
+    echo "ios/ci/build.sh: running extract_crypto_lib()"
+
+    ARCH=$1
+    LIBS="libcrypto libssl"
+    echo "ios/ci/build.sh: running extract_crypto_lib()"
+
+    for LIB in ${LIBS[*]}; do
+        pushd $OUTPUT_DIR/OpenSSL-for-iPhone/lib
+            rm -f ${LIB}.a
+            lipo ${LIB}.a.fat -thin ${ARCH} -output ${LIB}.a
+        popd
+    done
 }
 
 build_libsodium() {
     echo "ios/ci/build.sh: running build_libsodium()"
-    if [ ! -d $OUTPUT_DIR/libsodium-ios ]; then
-        git clone https://github.com/evernym/libsodium-ios.git $OUTPUT_DIR/libsodium-ios
+
+    if [ ! -d "$OUTPUT_DIR/libsodium-ios" ]; then
+        mkdir $OUTPUT_DIR/libsodium-ios
     fi
 
     pushd $OUTPUT_DIR/libsodium-ios
-        ./libsodium.rb
+        $REPO_DIR/wrappers/ios/ci/build_libsodium.sh "$OUTPUT_DIR/libsodium-ios" $1 $OUTPUT_DIR/libs
     popd
 }
 
 build_libzmq() {
     echo "ios/ci/build.sh: running build_libzmq()"
-    if [ ! -d $OUTPUT_DIR/libzmq-ios ]; then
-        git clone https://github.com/evernym/libzmq-ios.git $OUTPUT_DIR/libzmq-ios
+
+    if [ ! -d "$OUTPUT_DIR/libzmq-ios" ]; then
+        mkdir $OUTPUT_DIR/libzmq-ios
     fi
-    pushd $OUTPUT_DIR/libzmq-ios
-      git restore .
-    popd
 
     pushd $OUTPUT_DIR/libzmq-ios
-        git checkout -- libzmq.rb
-        git apply --ignore-space-change --ignore-whitespace $SCRIPT_DIR/patches/libzmq.rb.patch
-        ./libzmq.rb
-    popd
-}
-
-# NOTE: $OUTPUT_DIR/libs/{arm64,x86_64}/$LIB_NAME.a should be a non-fat file with arm64 / x86_64 architecture
-extract_architectures() {
-    ARCHS="arm64 x86_64"
-    FILE_PATH=$1
-    LIB_FILE_NAME=$2
-    LIB_NAME=$3
-    echo "ios/ci/build.sh: running extract_architectures() FILE_PATH=${FILE_PATH} LIB_FILE_NAME=${LIB_FILE_NAME} LIB_NAME=${LIB_NAME}"
-
-    echo FILE_PATH=$FILE_PATH
-    echo LIB_FILE_NAME=$LIB_FILE_NAME
-
-    mkdir -p $OUTPUT_DIR/libs
-    pushd $OUTPUT_DIR/libs
-        echo "Extracting architectures for $LIB_FILE_NAME..."
-        lipo -info $FILE_PATH
-        for ARCH in ${ARCHS[*]}; do
-            DESTINATION=${LIB_NAME}/${ARCH}
-
-            echo "Destination $DESTINATION"
-
-            mkdir -p $DESTINATION
-            lipo -extract ${ARCH} $FILE_PATH -o $DESTINATION/$LIB_FILE_NAME-fat.a
-            lipo $DESTINATION/$LIB_FILE_NAME-fat.a -thin $ARCH -output $DESTINATION/$LIB_FILE_NAME.a
-            rm $DESTINATION/$LIB_FILE_NAME-fat.a
-        done
+        $REPO_DIR/wrappers/ios/ci/build_libzmq.sh "$OUTPUT_DIR/libzmq-ios" $1 $OUTPUT_DIR/libs $OUTPUT_DIR/libsodium-ios
     popd
 }
 
 build_libvcx() {
     echo "ios/ci/build.sh: running build_libvcx()"
-    WORK_DIR=$(abspath "$OUTPUT_DIR")
-    ARCHS="arm64 x86_64"
-
-    echo WORK_DIR=$WORK_DIR
 
     pushd $REPO_DIR/libvcx
-        for ARCH in ${ARCHS[*]}; do
-            generate_flags $ARCH
-            echo ARCH=$ARCH
-            echo TRIPLET=$TRIPLET
+        ARCH=$1
+        TRIPLET=$2
 
-            export OPENSSL_LIB_DIR=$WORK_DIR/libs/openssl/${ARCH}
-            export SODIUM_LIB_DIR=$WORK_DIR/libs/sodium/${ARCH}
-            export PKG_CONFIG_PATH=$WORK_DIR
+        export OPENSSL_LIB_DIR="$OUTPUT_DIR/OpenSSL-for-iPhone/lib"
+        export PKG_CONFIG_PATH="$OUTPUT_DIR/libsodium-ios/build/${ARCH}/lib/pkgconfig:$OUTPUT_DIR/libzmq-ios/build/${ARCH}/lib/pkgconfig"
 
-            cat << EOF > $WORK_DIR/libzmq.pc
-Name: libzmq
-Description: 0MQ C++ library
-Version: 4.2.5
-Libs: -L${WORK_DIR}/libs/zmq/${ARCH} -lzmq
-Libs.private: -lstdc++ - lpthread
-Requires.private: libsodium
-Cflags: -I${WORK_DIR}/libzmq-ios/dist/ios/include
-EOF
+        cargo build --target "${TRIPLET}" --release
 
-
-            echo "Building vcx. OPENSSL_LIB_DIR=${OPENSSL_LIB_DIR}"
-            cargo build --target "${TRIPLET}" --release
-        done
+        rm -f "$OUTPUT_DIR/libs/libvcx.a"
+        ln -s "$REPO_DIR/target/$TRIPLET/release/libvcx.a" "$OUTPUT_DIR/libs/libvcx.a"
     popd
 }
 
-copy_libvcx_architectures() {
-    echo "ios/ci/build.sh: running copy_libvcx_architectures()"
-    ARCHS="arm64 x86_64"
-    LIB_NAME="vcx"
+combine_static_libs() {
+    echo "ios/ci/build.sh: running combine_static_libs()"
 
-    mkdir -p $OUTPUT_DIR/libs
-
-    echo "Copying architectures for $LIB_NAME..."
-    for ARCH in ${ARCHS[*]}; do
-        generate_flags $ARCH
-
-        echo ARCH=$ARCH
-        echo TRIPLET=$TRIPLET
-
-        mkdir -p $OUTPUT_DIR/libs/$LIB_NAME/$ARCH
-
-        cp -v $REPO_DIR/target/$TRIPLET/release/libvcx.a $OUTPUT_DIR/libs/$LIB_NAME/$ARCH/libvcx.a
-    done
-}
-
-copy_libs_to_combine() {
-    echo "ios/ci/build.sh: running copy_libs_to_combine()"
-    mkdir -p $OUTPUT_DIR/cache/arch_libs
-
-    copy_lib_tocombine sodium libsodium
-    copy_lib_tocombine zmq libzmq
-    copy_lib_tocombine vcx libvcx
-}
-
-copy_lib_tocombine() {
-    LIB_NAME=$1
-    LIB_FILE_NAME=$2
-
-    ARCHS="arm64 x86_64"
-
-    for ARCH in ${ARCHS[*]}; do
-        cp -v "$OUTPUT_DIR/libs/$LIB_NAME/$ARCH/$LIB_FILE_NAME.a" "$OUTPUT_DIR/cache/arch_libs/${LIB_FILE_NAME}_$ARCH.a"
-    done
-}
-
-combine_libs() {
-    echo "ios/ci/build.sh: running combine_libs()"
     COMBINED_LIB=$1
-
-    BUILD_CACHE=$(abspath "$OUTPUT_DIR/cache")
-
-    ARCHS="arm64 x86_64"
+    ARCH=$2
     combined_libs_paths=""
-    for arch in ${ARCHS[*]}; do
-        libraries="libsodium libzmq libvcx" # libssl, libcrypto, libindy were statically linked into libvcx during its build (see libvcx/build.rs)
 
-        libs_to_combine_paths=""
-        for library in ${libraries[*]}; do
-          libs_to_combine_paths="${libs_to_combine_paths} ${BUILD_CACHE}/arch_libs/${library}_${arch}.a"
-        done
+    libraries="libsodium libzmq libvcx" # libssl, libcrypto, libindy were statically linked into libvcx during its build (see libvcx/build.rs)
+    libs_to_combine_paths=""
 
-        COMBINED_LIB_PATH=${BUILD_CACHE}/arch_libs/${COMBINED_LIB}_${arch}.a
-        echo "Going to combine following libraries: '${libs_to_combine_paths}' to create combined library: '$COMBINED_LIB_PATH'"
-        rm -rf "$COMBINED_LIB_PATH"
-        libtool -static ${libs_to_combine_paths} -o "$COMBINED_LIB_PATH"
-        combined_libs_paths="${combined_libs_paths} $COMBINED_LIB_PATH"
+    for library in ${libraries[*]}; do
+        libs_to_combine_paths="${libs_to_combine_paths} "$OUTPUT_DIR/libs/${library}".a"
     done
 
+    COMBINED_LIB_PATH=${OUTPUT_DIR}/arch_libs/${COMBINED_LIB}_${ARCH}.a
+    echo "Going to combine following libraries: '${libs_to_combine_paths}' to create combined library: '$COMBINED_LIB_PATH'"
+    libtool -static ${libs_to_combine_paths} -o "$COMBINED_LIB_PATH"
+}
+
+make_fat_library() {
+    echo "ios/ci/build.sh: running make_fat_library()"
+
+    COMBINED_LIB=$1
+    ARCHS="arm64 x86_64"
+    COMBINED_LIB_PATHS=""
+
     for arch in ${ARCHS[*]}; do
-        COMBINED_LIB_PATH=${BUILD_CACHE}/arch_libs/${COMBINED_LIB}_${arch}.a
+        COMBINED_LIB_PATH=${OUTPUT_DIR}/arch_libs/${COMBINED_LIB}_${arch}.a
+        COMBINED_LIB_PATHS="${COMBINED_LIB_PATHS} $COMBINED_LIB_PATH"
         echo "Lipo info about combined library ${COMBINED_LIB_PATH}:"
         lipo -info "$COMBINED_LIB_PATH"
     done
 
     FAT_COMBINED_LIB_PATH="$OUTPUT_DIR/${COMBINED_LIB}.a"
-    echo "Using combined_libs_paths: ${combined_libs_paths} to combine them into single fat library: ${FAT_COMBINED_LIB_PATH}"
-    lipo -create ${combined_libs_paths} -o "${FAT_COMBINED_LIB_PATH}"
+    echo "Using combined_libs_paths: ${COMBINED_LIB_PATHS} to combine them into single fat library: ${FAT_COMBINED_LIB_PATH}"
+    lipo -create ${COMBINED_LIB_PATHS} -o "${FAT_COMBINED_LIB_PATH}"
 
     echo "Lipo info about combined library ${FAT_COMBINED_LIB_PATH}:"
     lipo -info "${FAT_COMBINED_LIB_PATH}"
@@ -254,6 +167,7 @@ combine_libs() {
 
 build_vcx_framework() {
     echo "ios/ci/build.sh: running build_vcx_framework() COMBINED_LIB=${COMBINED_LIB}"
+
     COMBINED_LIB=$1
     ARCHS="arm64 x86_64"
 
@@ -301,6 +215,7 @@ build_vcx_framework() {
         UNIVERSAL_BUILD_PATH=$OUTPUT_DIR/universal/vcx
         mkdir -p $UNIVERSAL_BUILD_PATH
         cp -rvp vcx.framework $UNIVERSAL_BUILD_PATH
+
         pushd $UNIVERSAL_BUILD_PATH
             zip -r $OUTPUT_DIR/libvcx-ios-${LIBVCX_VERSION}-universal.zip ./*
         popd
@@ -309,6 +224,7 @@ build_vcx_framework() {
         mkdir -p $DEVICE_BUILD_PATH
         cp -rvp vcx.framework $DEVICE_BUILD_PATH
         lipo -extract arm64 $DEVICE_BUILD_PATH/vcx.framework/vcx -o $DEVICE_BUILD_PATH/vcx.framework/vcx
+
         pushd $DEVICE_BUILD_PATH
             zip -r $OUTPUT_DIR/libvcx-ios-${LIBVCX_VERSION}-device.zip ./*
         popd
@@ -316,71 +232,26 @@ build_vcx_framework() {
     popd
 }
 
-generate_flags() {
-    if [ -z $1 ]; then
-        echo "please provide the arch e.g. arm64 or x86_64"
-        exit 1
-    fi
-
-    if [ $1 == "arm64" ]; then
-        export TRIPLET="aarch64-apple-ios"
-    elif [ $1 == "x86_64" ]; then
-        export TRIPLET="x86_64-apple-ios"
-    fi
-}
-
-abspath() {
-    # generate absolute path from relative path
-    # $1     : relative filename
-    # return : absolute path
-    if [ -d "$1" ]; then
-        # dir
-        (
-            cd "$1"
-            pwd
-        )
-    elif [ -f "$1" ]; then
-        # file
-        if [[ $1 = /* ]]; then
-            echo "$1"
-        elif [[ $1 == */* ]]; then
-            echo "$(
-                cd "${1%/*}"
-                pwd
-            )/${1##*/}"
-        else
-            echo "$(pwd)/$1"
-        fi
-    fi
-}
-
-# Setup environment
+# Initial setup and OpenSSL building
 setup
+build_crypto 
 
-# Build 3rd party libraries
-build_crypto   # builds into:  $OUTPUT_DIR/OpenSSL-for-iPhone # builds: x86_64 arm64 arm64e, TODO: keep only arm64, x86_64
-build_libsodium # builds into: $OUTPUT_DIR/libsodium-ios # builds: armv7 armv7s i386 x86_64 arm64, TODO: keep only arm64, x86_64
-# TODO: also remove excessively building non-ios platform artifacts:
-# Architectures in the fat file: ./libsodium-ios/dist/macos/lib/libsodium.a are: x86_64
-# Architectures in the fat file: ./libsodium-ios/dist/watchos/lib/libsodium.a are: armv7k i386
-# Architectures in the fat file: ./libsodium-ios/dist/ios/lib/libsodium.a are: armv7 armv7s i386 x86_64 arm64
-build_libzmq   # builds into:  $OUTPUT_DIR/libzmq-ios # builds: x86_64 arm64
+########### iOS ARM64 ###########
+extract_crypto_lib "arm64"
+build_libsodium "arm64"
+build_libzmq "arm64"
+build_libvcx "arm64" "aarch64-apple-ios"
+combine_static_libs "libvcx_all" "arm64"
 
-# Extract architectures from fat files into non-fat files
-extract_architectures $OUTPUT_DIR/libsodium-ios/dist/ios/lib/libsodium.a libsodium sodium
-extract_architectures $OUTPUT_DIR/libzmq-ios/dist/ios/lib/libzmq.a libzmq zmq
-extract_architectures $OUTPUT_DIR/OpenSSL-for-iPhone/lib/libssl.a libssl openssl
-extract_architectures $OUTPUT_DIR/OpenSSL-for-iPhone/lib/libcrypto.a libcrypto openssl
+########### iOS x86_64 Simulator ###########
+extract_crypto_lib "x86_64"
+build_libsodium "x86_64"
+build_libzmq "x86_64"
+build_libvcx "x86_64" "x86_64-apple-ios"
+combine_static_libs "libvcx_all" "x86_64"
 
-# Build vcx
-build_libvcx
-copy_libvcx_architectures
+# Combine each arch libvcx lib into one fat lib
+make_fat_library "libvcx_all"
 
-# Copy libraries to combine
-copy_libs_to_combine
-
-# Combine libs by arch and merge libs to single fat binary
-combine_libs libvcx_all
-
-# Build vcx.framework
-build_vcx_framework libvcx_all
+# Build Xcode framework
+build_vcx_framework "libvcx_all"

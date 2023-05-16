@@ -14,7 +14,7 @@ use messages::{
             response::Response,
             ConnectionData,
         },
-        notification::{Ack, AckContent, AckDecorators, AckStatus},
+        notification::ack::{Ack, AckContent, AckDecorators, AckStatus},
     },
 };
 use url::Url;

@@ -1,6 +1,7 @@
 use async_trait::async_trait;
 
 use crate::errors::error::VcxCoreResult;
+use crate::indy::wallet_non_secrets::{clear_rev_reg_delta, get_rev_reg_delta};
 use crate::{indy, PoolHandle, WalletHandle};
 
 use super::base_anoncreds::BaseAnonCreds;
@@ -8,15 +9,11 @@ use super::base_anoncreds::BaseAnonCreds;
 #[derive(Debug)]
 pub struct IndySdkAnonCreds {
     indy_wallet_handle: WalletHandle,
-    indy_pool_handle: PoolHandle,
 }
 
 impl IndySdkAnonCreds {
-    pub fn new(indy_wallet_handle: WalletHandle, indy_pool_handle: PoolHandle) -> Self {
-        IndySdkAnonCreds {
-            indy_wallet_handle,
-            indy_pool_handle,
-        }
+    pub fn new(indy_wallet_handle: WalletHandle) -> Self {
+        IndySdkAnonCreds { indy_wallet_handle }
     }
 }
 
@@ -219,14 +216,13 @@ impl BaseAnonCreds for IndySdkAnonCreds {
         .await
     }
 
-    async fn publish_local_revocations(&self, submitter_did: &str, rev_reg_id: &str) -> VcxCoreResult<()> {
-        indy::primitives::revocation_registry::publish_local_revocations(
-            self.indy_wallet_handle,
-            self.indy_pool_handle,
-            submitter_did,
-            rev_reg_id,
-        )
-        .await
+    async fn get_rev_reg_delta(&self, rev_reg_id: &str) -> VcxCoreResult<Option<String>> {
+        Ok(get_rev_reg_delta(self.indy_wallet_handle, rev_reg_id).await)
+    }
+
+    async fn clear_rev_reg_delta(&self, rev_reg_id: &str) -> VcxCoreResult<()> {
+        clear_rev_reg_delta(self.indy_wallet_handle, rev_reg_id).await?;
+        Ok(())
     }
 
     async fn generate_nonce(&self) -> VcxCoreResult<String> {

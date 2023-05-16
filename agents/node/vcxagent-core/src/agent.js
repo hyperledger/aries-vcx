@@ -23,9 +23,10 @@ const {
 } = require('@hyperledger/node-vcx-wrapper')
 const { createStorageService } = require('./storage/storage-service')
 const { waitUntilAgencyIsReady, getAgencyConfig } = require('./common')
+const path = require('path')
 
 async function createVcxAgent ({ agentName, genesisPath, agencyUrl, seed, walletExtraConfigs, endpointInfo, logger }) {
-  genesisPath = genesisPath || `${__dirname}/../resources/docker.txn`
+  genesisPath = genesisPath || path.join(__dirname, '/../resources/docker.txn')
 
   await waitUntilAgencyIsReady(agencyUrl, logger)
   const agencyConfig = await getAgencyConfig(agencyUrl, logger)

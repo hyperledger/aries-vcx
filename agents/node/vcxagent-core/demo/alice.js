@@ -43,12 +43,12 @@ async function getInvitationString (fetchInviteUrl) {
 async function runAlice (options) {
   logger.info('Starting.')
 
-    initRustLogger(process.env.RUST_LOG || 'vcx=error')
+  initRustLogger(process.env.RUST_LOG || 'vcx=error')
   const agentName = `alice-${uuid.v4()}`
   const connectionId = 'alice-to-faber'
   const holderCredentialId = 'alice-credential'
   const disclosedProofId = 'alice-proof'
-  const walletExtraConfigs = (options['mysql'])
+  const walletExtraConfigs = (options.mysql)
     ? getStorageInfoMysql()
     : {}
 
@@ -81,7 +81,7 @@ async function runAlice (options) {
   logger.debug(`Proof request presentation attachment ${JSON.stringify(requestInfo, null, 2)}`)
 
   const { selectedCreds } = await vcxAgent.serviceProver.selectCredentials(disclosedProofId, mapRevRegIdToTailsFile)
-  const selfAttestedAttrs = { attribute_3: 'Smith' }
+  const selfAttestedAttrs = { attr_nickname: 'Smith' }
   await vcxAgent.serviceProver.generateProof(disclosedProofId, selectedCreds, selfAttestedAttrs)
   await vcxAgent.serviceProver.sendDisclosedProofAndProgress(disclosedProofId, connectionId)
   logger.info('Faber received the proof')

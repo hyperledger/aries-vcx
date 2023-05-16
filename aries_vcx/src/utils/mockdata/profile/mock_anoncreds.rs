@@ -1,4 +1,3 @@
-use crate::utils::mockdata::mock_settings::StatusCodeMock;
 use aries_vcx_core::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
 use async_trait::async_trait;
 
@@ -6,7 +5,7 @@ use crate::{
     global::settings,
     utils::{
         self,
-        constants::{LARGE_NONCE, LIBINDY_CRED_OFFER, REV_STATE_JSON},
+        constants::{LARGE_NONCE, LIBINDY_CRED_OFFER, REV_REG_DELTA_JSON, REV_STATE_JSON},
         mockdata::mock_settings::get_mock_creds_retrieved_for_proof_request,
     },
 };
@@ -65,12 +64,6 @@ impl BaseAnonCreds for MockAnoncreds {
     }
 
     async fn issuer_create_credential_offer(&self, _cred_def_id: &str) -> VcxCoreResult<String> {
-        if StatusCodeMock::get_result() != 0 {
-            return Err(AriesVcxCoreError::from_msg(
-                AriesVcxCoreErrorKind::InvalidState,
-                "Mocked error result of issuer_create_credential_offer: issuer_create_credential_offer",
-            ));
-        };
         Ok(LIBINDY_CRED_OFFER.to_string())
     }
 
@@ -193,7 +186,11 @@ impl BaseAnonCreds for MockAnoncreds {
         Ok(())
     }
 
-    async fn publish_local_revocations(&self, _submitter_did: &str, _rev_reg_id: &str) -> VcxCoreResult<()> {
+    async fn get_rev_reg_delta(&self, _rev_reg_id: &str) -> VcxCoreResult<Option<String>> {
+        Ok(Some(REV_REG_DELTA_JSON.to_string()))
+    }
+
+    async fn clear_rev_reg_delta(&self, _rev_reg_id: &str) -> VcxCoreResult<()> {
         Ok(())
     }
 
@@ -228,7 +225,8 @@ pub mod mocks {
             fn prover_create_link_secret<'life0,'life1,'async_trait>(&'life0 self,link_secret_id: &'life1 str) ->  core::pin::Pin<Box<dyn core::future::Future<Output = aries_vcx_core::errors::error::VcxCoreResult<String> > + core::marker::Send+'async_trait> >where 'life0:'async_trait,'life1:'async_trait,Self:'async_trait;
             fn issuer_create_schema<'life0,'life1,'life2,'life3,'life4,'async_trait>(&'life0 self,issuer_did: &'life1 str,name: &'life2 str,version: &'life3 str,attrs: &'life4 str,) ->  core::pin::Pin<Box<dyn core::future::Future<Output = aries_vcx_core::errors::error::VcxCoreResult<(String,String)> > + core::marker::Send+'async_trait> >where 'life0:'async_trait,'life1:'async_trait,'life2:'async_trait,'life3:'async_trait,'life4:'async_trait,Self:'async_trait;
             fn revoke_credential_local<'life0,'life1,'life2,'life3,'async_trait>(&'life0 self,tails_dir: &'life1 str,rev_reg_id: &'life2 str,cred_rev_id: &'life3 str) ->  core::pin::Pin<Box<dyn core::future::Future<Output = aries_vcx_core::errors::error::VcxCoreResult<()> > + core::marker::Send+'async_trait> >where 'life0:'async_trait,'life1:'async_trait,'life2:'async_trait,'life3:'async_trait,Self:'async_trait;
-            fn publish_local_revocations<'life0,'life1,'life2,'async_trait>(&'life0 self,submitter_did: &'life1 str,rev_reg_id: &'life2 str) ->  core::pin::Pin<Box<dyn core::future::Future<Output = aries_vcx_core::errors::error::VcxCoreResult<()> > + core::marker::Send+'async_trait> >where 'life0:'async_trait,'life1:'async_trait,'life2:'async_trait,Self:'async_trait;
+            fn get_rev_reg_delta<'life0,'life1,'async_trait>(&'life0 self,rev_reg_id: &'life1 str) ->  core::pin::Pin<Box<dyn core::future::Future<Output = aries_vcx_core::errors::error::VcxCoreResult<Option<String> > > + core::marker::Send+'async_trait> >where 'life0:'async_trait,'life1:'async_trait,Self:'async_trait;
+            fn clear_rev_reg_delta<'life0,'life1,'async_trait>(&'life0 self,rev_reg_id: &'life1 str) ->  core::pin::Pin<Box<dyn core::future::Future<Output = aries_vcx_core::errors::error::VcxCoreResult<()> > + core::marker::Send+'async_trait> >where 'life0:'async_trait,'life1:'async_trait,Self:'async_trait;
             fn generate_nonce<'life0,'async_trait>(&'life0 self) ->  core::pin::Pin<Box<dyn core::future::Future<Output = aries_vcx_core::errors::error::VcxCoreResult<String> > + core::marker::Send+'async_trait> >where 'life0:'async_trait,Self:'async_trait;
         }
     }

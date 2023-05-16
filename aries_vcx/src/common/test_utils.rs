@@ -167,8 +167,9 @@ pub async fn create_and_store_credential(
     String,
     String,
     String,
+    RevocationRegistry,
 ) {
-    let (schema_id, schema_json, cred_def_id, cred_def_json, rev_reg_id, _, _) =
+    let (schema_id, schema_json, cred_def_id, cred_def_json, rev_reg_id, _, rev_reg) =
         create_and_store_credential_def(issuer, institution_did, attr_list).await;
 
     let (offer, req, req_meta) =
@@ -210,6 +211,7 @@ pub async fn create_and_store_credential(
         rev_reg_id,
         cred_rev_id.unwrap(),
         tails_file,
+        rev_reg,
     )
 }
 

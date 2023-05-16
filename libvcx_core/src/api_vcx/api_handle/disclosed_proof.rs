@@ -289,6 +289,7 @@ pub fn get_presentation_status(handle: u32) -> LibvcxResult<u32> {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used)]
 mod tests {
     extern crate serde_json;
 

@@ -1,8 +1,8 @@
 use serde::{Deserialize, Serialize};
+use shared_vcx::misc::utils::CowStr;
 
 use crate::{
     decorators::{please_ack::PleaseAck, thread::Thread, timing::Timing},
-    misc::utils::CowStr,
     msg_parts::MsgParts,
     msg_types::{
         protocols::signature::{SignatureType, SignatureTypeV1, SignatureTypeV1_0},

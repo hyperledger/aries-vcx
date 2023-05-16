@@ -1,11 +1,11 @@
 use diddoc::aries::service::AriesService;
 
 use serde::{Deserialize, Serialize};
+use shared_vcx::maybe_known::MaybeKnown;
 
 use super::OobGoalCode;
 use crate::{
     decorators::{attachment::Attachment, timing::Timing},
-    maybe_known::MaybeKnown,
     misc::MimeType,
     msg_parts::MsgParts,
     msg_types::Protocol,

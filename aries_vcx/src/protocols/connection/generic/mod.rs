@@ -217,7 +217,7 @@ mod connection_serde_tests {
     use messages::msg_fields::protocols::connection::request::{Request, RequestContent, RequestDecorators};
     use messages::msg_fields::protocols::connection::response::{Response, ResponseContent, ResponseDecorators};
     use messages::msg_fields::protocols::connection::ConnectionData;
-    use messages::msg_fields::protocols::notification::{Ack, AckContent, AckDecorators, AckStatus};
+    use messages::msg_fields::protocols::notification::ack::{Ack, AckContent, AckDecorators, AckStatus};
     use url::Url;
     use uuid::Uuid;
 

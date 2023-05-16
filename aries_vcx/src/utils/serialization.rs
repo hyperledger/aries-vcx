@@ -47,3 +47,60 @@ pub enum SerializableObjectWithState<T, P> {
         thread_id: String,
     },
 }
+
+#[cfg(test)]
+#[allow(clippy::unwrap_used)]
+mod tests {
+    use super::*;
+    use serde_json;
+
+    #[test]
+    fn test_serialize() {
+        let value = SerializableObjectWithState::V1 {
+            data: vec!["name".to_string(), "age".to_string()],
+            state: "1".to_string(),
+            source_id: "foo".to_string(),
+            thread_id: "bat".to_string(),
+        };
+
+        let serialized = serde_json::to_string(&value).unwrap();
+
+        assert!(serialized.contains(r#""data":["name","age"]"#));
+        assert!(serialized.contains(r#""state":"1""#));
+        assert!(serialized.contains(r#""source_id":"foo""#));
+        assert!(serialized.contains(r#""thread_id":"bat""#));
+    }
+
+    #[test]
+    fn test_deserialize() {
+        let serialized = r#"
+        {
+            "data": [
+            "name",
+            "age"
+            ],
+            "state": "1",
+            "source_id": "foo",
+            "thread_id": "bat",
+            "version": "1.0"
+        }
+        "#;
+
+        let result = serde_json::from_str(&serialized);
+        let ans: SerializableObjectWithState<Vec<String>, String> = result.unwrap();
+
+        let (data, state, source_id, thread_id) = match ans {
+            SerializableObjectWithState::V1 {
+                data,
+                state,
+                source_id,
+                thread_id,
+            } => (data, state, source_id, thread_id),
+        };
+
+        assert_eq!(data, vec!["name".to_string(), "age".to_string()]);
+        assert_eq!(state, "1");
+        assert_eq!(source_id, "foo");
+        assert_eq!(thread_id, "bat");
+    }
+}

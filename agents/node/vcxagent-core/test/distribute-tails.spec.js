@@ -48,7 +48,7 @@ describe('test tails distribution', () => {
       })
       const issuerDid = faber.getFaberDid()
       const request = await faber.requestProofFromAlice(proofRequestDataStandard(issuerDid))
-      await alice.sendHolderProof(JSON.parse(request), revRegId => aliceTailsFileDir, { attribute_3: 'Smith' })
+      await alice.sendHolderProof(JSON.parse(request), revRegId => aliceTailsFileDir, { attr_nickname: 'Smith' })
       await faber.updateStateVerifierProof(VerifierStateType.Finished)
       await alice.updateStateHolderProof(ProverStateType.Finished)
     } catch (err) {

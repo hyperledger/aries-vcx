@@ -279,6 +279,7 @@ pub fn get_thread_id(handle: u32) -> LibvcxResult<String> {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used)]
 pub mod tests {
     #[cfg(feature = "test_utils")]
     use crate::api_vcx::api_handle::credential_def::tests::create_and_publish_nonrevocable_creddef;
@@ -288,7 +289,6 @@ pub mod tests {
     use crate::errors::error;
     use aries_vcx::utils::constants::V3_OBJECT_SERIALIZE_VERSION;
     use aries_vcx::utils::devsetup::SetupMocks;
-    use aries_vcx::utils::mockdata::mock_settings::StatusCodeMock;
     use aries_vcx::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_REQUEST;
     use aries_vcx::utils::mockdata::mockdata_mediated_connection::ARIES_CONNECTION_ACK;
 

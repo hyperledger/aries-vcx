@@ -10,7 +10,7 @@ use messages::{
             propose_credential::{ProposeCredential, ProposeCredentialContent, ProposeCredentialDecorators},
             request_credential::{RequestCredential, RequestCredentialContent, RequestCredentialDecorators},
         },
-        notification::{AckDecorators, AckStatus},
+        notification::ack::{AckDecorators, AckStatus},
     },
 };
 

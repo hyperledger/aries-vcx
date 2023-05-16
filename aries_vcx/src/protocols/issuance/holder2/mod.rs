@@ -1,7 +1,6 @@
 use messages::msg_fields::protocols::{
     cred_issuance::{propose_credential::ProposeCredential, request_credential::RequestCredential},
-    notification::Ack,
-    report_problem::ProblemReport,
+    report_problem::ProblemReport, notification::ack::Ack,
 };
 
 use self::states::{
