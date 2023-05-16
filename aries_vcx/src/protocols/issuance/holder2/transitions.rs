@@ -195,10 +195,6 @@ async fn make_credential_request(
     Ok((credential_request_msg, req_meta, cred_def_json))
 }
 
-
-
-
-
 // TODO - idk where to put these functions
 
 fn parse_cred_def_id_from_cred_offer(cred_offer: &str) -> VcxResult<String> {

@@ -31,10 +31,11 @@ impl Profile for MockProfile {
 pub mod mocks {
     use std::sync::Arc;
 
-    use aries_vcx_core::{ledger::base_ledger::BaseLedger, anoncreds::base_anoncreds::BaseAnonCreds, wallet::base_wallet::BaseWallet};
+    use aries_vcx_core::{
+        anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::BaseLedger, wallet::base_wallet::BaseWallet,
+    };
 
     use crate::core::profile::profile::Profile;
-
 
     #[derive(Default, Debug)]
     pub struct MockPartsProfile {
