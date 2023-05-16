@@ -411,7 +411,7 @@ module.exports.createFaber = async function createFaber (serviceEndpoint = 'http
       presentationMsg,
       presentationVerificationStatus,
       presentationAttachment,
-      presentationRequestAttachment,
+      presentationRequestAttachment
     }
   }
 

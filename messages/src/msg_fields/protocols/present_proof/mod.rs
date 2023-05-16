@@ -2,6 +2,7 @@
 
 pub mod ack;
 pub mod present;
+pub mod problem_report;
 pub mod propose;
 pub mod request;
 
@@ -11,10 +12,11 @@ use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 use self::{
     ack::{AckPresentation, AckPresentationContent},
     present::{Presentation, PresentationContent, PresentationDecorators},
+    problem_report::{PresentProofProblemReport, PresentProofProblemReportContent},
     propose::{ProposePresentation, ProposePresentationContent, ProposePresentationDecorators},
     request::{RequestPresentation, RequestPresentationContent, RequestPresentationDecorators},
 };
-use super::notification::AckDecorators;
+use super::{notification::ack::AckDecorators, report_problem::ProblemReportDecorators};
 use crate::{
     misc::utils::{self, into_msg_with_type, transit_to_aries_msg},
     msg_fields::traits::DelayedSerde,
@@ -30,6 +32,7 @@ pub enum PresentProof {
     RequestPresentation(RequestPresentation),
     Presentation(Presentation),
     Ack(AckPresentation),
+    ProblemReport(PresentProofProblemReport),
 }
 
 impl DelayedSerde for PresentProof {
@@ -50,6 +53,7 @@ impl DelayedSerde for PresentProof {
             PresentProofTypeV1_0::RequestPresentation => RequestPresentation::deserialize(deserializer).map(From::from),
             PresentProofTypeV1_0::Presentation => Presentation::deserialize(deserializer).map(From::from),
             PresentProofTypeV1_0::Ack => AckPresentation::deserialize(deserializer).map(From::from),
+            PresentProofTypeV1_0::ProblemReport => PresentProofProblemReport::deserialize(deserializer).map(From::from),
             PresentProofTypeV1_0::PresentationPreview => Err(utils::not_standalone_msg::<D>(kind_str)),
         }
     }
@@ -63,6 +67,7 @@ impl DelayedSerde for PresentProof {
             Self::RequestPresentation(v) => MsgWithType::from(v).serialize(serializer),
             Self::Presentation(v) => MsgWithType::from(v).serialize(serializer),
             Self::Ack(v) => MsgWithType::from(v).serialize(serializer),
+            Self::ProblemReport(v) => MsgWithType::from(v).serialize(serializer),
         }
     }
 }
@@ -71,8 +76,10 @@ transit_to_aries_msg!(ProposePresentationContent: ProposePresentationDecorators,
 transit_to_aries_msg!(RequestPresentationContent: RequestPresentationDecorators, PresentProof);
 transit_to_aries_msg!(PresentationContent: PresentationDecorators, PresentProof);
 transit_to_aries_msg!(AckPresentationContent: AckDecorators, PresentProof);
+transit_to_aries_msg!(PresentProofProblemReportContent: ProblemReportDecorators, PresentProof);
 
 into_msg_with_type!(ProposePresentation, PresentProofTypeV1_0, ProposePresentation);
 into_msg_with_type!(RequestPresentation, PresentProofTypeV1_0, RequestPresentation);
 into_msg_with_type!(Presentation, PresentProofTypeV1_0, Presentation);
 into_msg_with_type!(AckPresentation, PresentProofTypeV1_0, Ack);
+into_msg_with_type!(PresentProofProblemReport, PresentProofTypeV1_0, ProblemReport);

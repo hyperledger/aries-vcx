@@ -1,10 +1,12 @@
 use messages::{
     msg_fields::protocols::{
+        notification::Notification,
         present_proof::{
             present::Presentation, propose::ProposePresentation, request::RequestPresentation, PresentProof,
         },
         report_problem::ProblemReport,
     },
+    msg_parts::MsgParts,
     AriesMessage,
 };
 
@@ -44,6 +46,24 @@ impl From<AriesMessage> for VerifierMessages {
                 VerifierMessages::PresentationProposalReceived(presentation_proposal)
             }
             AriesMessage::ReportProblem(report) => VerifierMessages::PresentationRejectReceived(report),
+            AriesMessage::Notification(Notification::ProblemReport(report)) => {
+                let MsgParts {
+                    id,
+                    content,
+                    decorators,
+                } = report;
+                let report = ProblemReport::with_decorators(id, content.0, decorators);
+                VerifierMessages::PresentationRejectReceived(report)
+            }
+            AriesMessage::PresentProof(PresentProof::ProblemReport(report)) => {
+                let MsgParts {
+                    id,
+                    content,
+                    decorators,
+                } = report;
+                let report = ProblemReport::with_decorators(id, content.0, decorators);
+                VerifierMessages::PresentationRejectReceived(report)
+            }
             _ => VerifierMessages::Unknown,
         }
     }

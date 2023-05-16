@@ -2,10 +2,10 @@ use chrono::Utc;
 use messages::decorators::please_ack::AckOn;
 use messages::decorators::thread::Thread;
 use messages::decorators::timing::Timing;
-use messages::maybe_known::MaybeKnown;
-use messages::msg_fields::protocols::notification::{AckDecorators, AckStatus};
+use messages::msg_fields::protocols::notification::ack::{AckDecorators, AckStatus};
 use messages::msg_fields::protocols::revocation::ack::{AckRevoke, AckRevokeContent};
 use messages::msg_fields::protocols::revocation::revoke::{RevocationFormat, Revoke};
+use shared_vcx::maybe_known::MaybeKnown;
 use uuid::Uuid;
 
 use crate::errors::error::prelude::*;

@@ -345,6 +345,7 @@ pub mod tests_utils {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used)]
 pub mod tests {
     use aries_vcx::messages::msg_fields::protocols::cred_issuance::issue_credential::IssueCredential;
     use aries_vcx::protocols::issuance::holder::state_machine::HolderState;

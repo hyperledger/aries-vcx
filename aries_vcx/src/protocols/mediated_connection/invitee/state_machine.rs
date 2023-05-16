@@ -27,7 +27,7 @@ use messages::msg_fields::protocols::connection::{Connection, ConnectionData};
 use messages::msg_fields::protocols::discover_features::disclose::Disclose;
 use messages::msg_fields::protocols::discover_features::query::QueryContent;
 use messages::msg_fields::protocols::discover_features::ProtocolDescriptor;
-use messages::msg_fields::protocols::notification::{Ack, AckContent, AckDecorators, AckStatus};
+use messages::msg_fields::protocols::notification::ack::{Ack, AckContent, AckDecorators, AckStatus};
 use messages::AriesMessage;
 use url::Url;
 use uuid::Uuid;

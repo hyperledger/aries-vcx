@@ -869,6 +869,7 @@ pub extern "C" fn vcx_issuer_credential_get_thread_id(
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used)]
 pub mod tests {
     extern crate serde_json;
 

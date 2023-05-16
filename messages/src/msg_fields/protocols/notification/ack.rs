@@ -1,12 +1,8 @@
-//! Module containing the `acks` messages, as defined in the [RFC](<https://github.com/hyperledger/aries-rfcs/blob/main/features/0015-acks/README.md>).
-
 use serde::{Deserialize, Serialize};
 
 use crate::{
     decorators::{thread::Thread, timing::Timing},
-    misc::utils::into_msg_with_type,
     msg_parts::MsgParts,
-    msg_types::protocols::notification::NotificationTypeV1_0,
 };
 
 pub type Ack = MsgParts<AckContent, AckDecorators>;
@@ -44,8 +40,6 @@ impl AckDecorators {
     }
 }
 
-into_msg_with_type!(Ack, NotificationTypeV1_0, Ack);
-
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 #[allow(clippy::field_reassign_with_default)]
@@ -56,6 +50,7 @@ mod tests {
     use crate::{
         decorators::{thread::tests::make_extended_thread, timing::tests::make_extended_timing},
         misc::test_utils,
+        msg_types::notification::NotificationTypeV1_0,
     };
 
     #[test]

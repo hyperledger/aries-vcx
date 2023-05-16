@@ -1,6 +1,6 @@
 const { RevocationRegistry } = require('@hyperledger/node-vcx-wrapper')
 
-module.exports.createServiceLedgerRevocationRegistry = function createServiceLedgerRevocationRegistry ({ logger, saveRevReg, loadRevReg, listRevRegIds }) {
+module.exports.createServiceLedgerRevocationRegistry = function createServiceLedgerRevocationRegistry ({ logger, saveRevReg, loadRevReg }) {
   async function createRevocationRegistry (issuerDid, credDefId, tag, tailsDir, maxCreds, tailsUrl = 'dummy.org') {
     const data = {
       issuerDid,

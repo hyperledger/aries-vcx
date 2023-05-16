@@ -21,6 +21,7 @@ use messages::msg_fields::protocols::cred_issuance::offer_credential::{
 use messages::msg_fields::protocols::cred_issuance::propose_credential::ProposeCredential;
 use messages::msg_fields::protocols::cred_issuance::request_credential::RequestCredential;
 use messages::msg_fields::protocols::cred_issuance::{CredentialIssuance, CredentialPreview};
+use messages::msg_fields::protocols::notification::Notification;
 use messages::msg_fields::protocols::report_problem::ProblemReport;
 use messages::AriesMessage;
 use uuid::Uuid;
@@ -299,7 +300,7 @@ impl IssuerSM {
                             return Some((uid, message));
                         }
                     }
-                    AriesMessage::Notification(msg) => {
+                    AriesMessage::Notification(Notification::Ack(msg)) => {
                         if matches_thread_id!(msg, self.thread_id.as_str()) {
                             return Some((uid, message));
                         }

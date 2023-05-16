@@ -13,29 +13,18 @@ export interface IProofCreateData {
   revocationInterval: IRevocationInterval;
 }
 
+export interface IProofCreateDataV2 {
+  sourceId: string;
+  attrs: Record<string, any>;
+  preds: Record<string, IProofPredicate>;
+  name: string;
+  revocationInterval: IRevocationInterval;
+}
+
 export interface IProofConstructorData {
   attrs: IProofAttr[];
   preds: IProofPredicate[];
   name: string;
-}
-
-export interface IProofData {
-  source_id: string;
-  handle: number;
-  requested_attrs: string;
-  requested_predicates: string;
-  prover_did: string;
-  state: number;
-  name: string;
-  proof_state: ProofVerificationStatus;
-  proof: any; // eslint-disable-line @typescript-eslint/no-explicit-any
-}
-
-export enum ProofFieldType {
-  Revealed = 'revealed',
-  Unrevealed = 'unrevealed',
-  SelfAttested = 'self_attested',
-  Predicate = 'predicate',
 }
 
 export enum PredicateTypes {
@@ -80,8 +69,11 @@ export interface IRevocationInterval {
   to?: number;
 }
 
-export class Proof extends VcxBaseWithState<IProofData, VerifierStateType> {
-  public static async create({ sourceId, ...createDataRest }: IProofCreateData): Promise<Proof> {
+export class Proof extends VcxBaseWithState<Record<string, unknown>, VerifierStateType> {
+  public static async create({
+    sourceId,
+    ...createDataRest
+  }: IProofCreateData | IProofCreateDataV2): Promise<Proof> {
     try {
       const proof = new Proof();
       const handle = await ffi.proofCreate(
@@ -98,9 +90,9 @@ export class Proof extends VcxBaseWithState<IProofData, VerifierStateType> {
     }
   }
 
-  public static deserialize(proofData: ISerializedData<IProofData>): Proof {
+  public static deserialize(serializedData: Record<string, unknown>): Proof {
     try {
-      return super._deserialize<Proof, IProofConstructorData>(Proof, proofData as any);
+      return super._deserialize<Proof, IProofConstructorData>(Proof, serializedData);
     } catch (err: any) {
       throw new VCXInternalError(err);
     }
@@ -111,15 +103,6 @@ export class Proof extends VcxBaseWithState<IProofData, VerifierStateType> {
   protected _getStFn = ffi.proofGetState;
   protected _serializeFn = ffi.proofSerialize;
   protected _deserializeFn = ffi.proofDeserialize;
-
-  private static getParams(proofData: ISerializedData<IProofData>): IProofConstructorData {
-    const {
-      data: { requested_attrs, requested_predicates, name },
-    } = proofData;
-    const attrs = JSON.parse(requested_attrs);
-    const preds = JSON.parse(requested_predicates);
-    return { attrs, name, preds };
-  }
 
   public async updateStateWithMessage(connection: Connection, message: string): Promise<number> {
     try {

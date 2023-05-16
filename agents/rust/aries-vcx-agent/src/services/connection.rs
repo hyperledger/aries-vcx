@@ -8,7 +8,7 @@ use aries_vcx::core::profile::profile::Profile;
 use aries_vcx::handlers::util::AnyInvitation;
 use aries_vcx::messages::msg_fields::protocols::connection::request::Request;
 use aries_vcx::messages::msg_fields::protocols::connection::response::Response;
-use aries_vcx::messages::msg_fields::protocols::notification::Ack;
+use aries_vcx::messages::msg_fields::protocols::notification::ack::Ack;
 use aries_vcx::protocols::connection::pairwise_info::PairwiseInfo;
 use aries_vcx::protocols::connection::{Connection, GenericConnection, State, ThinState};
 use url::Url;

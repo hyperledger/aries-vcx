@@ -1,9 +1,8 @@
 use serde::{Deserialize, Serialize};
+use shared_vcx::maybe_known::MaybeKnown;
 
 use super::ProtocolDescriptor;
-use crate::{
-    decorators::timing::Timing, maybe_known::MaybeKnown, msg_parts::MsgParts, msg_types::registry::PROTOCOL_REGISTRY,
-};
+use crate::{decorators::timing::Timing, msg_parts::MsgParts, msg_types::registry::PROTOCOL_REGISTRY};
 
 pub type Query = MsgParts<QueryContent, QueryDecorators>;
 

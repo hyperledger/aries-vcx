@@ -28,6 +28,7 @@ pub enum PresentProofTypeV1_0 {
     Presentation,
     PresentationPreview,
     Ack,
+    ProblemReport,
 }
 
 #[cfg(test)]
