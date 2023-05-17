@@ -175,6 +175,7 @@ jobs:
           cargo check --no-default-features
           cargo check --features vdrtools --no-default-features
           cargo check --features modular_libs --no-default-features
+          cargo check --features vdr_proxy_ledger --no-default-features
 
   ##########################################################################################
   ##############################   DOCKER BUILD   ##########################################
