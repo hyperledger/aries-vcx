@@ -12,8 +12,9 @@ mod integration_tests {
     use aries_vcx::common::ledger::transactions::{
         add_attr, add_new_did, clear_attr, get_attr, get_service, write_endpoint, write_endpoint_legacy,
     };
+    use aries_vcx::common::primitives::credential_schema::{Schema, SchemaData};
     use aries_vcx::common::test_utils::create_and_store_nonrevocable_credential_def;
-    use aries_vcx::utils::constants::DEFAULT_SCHEMA_ATTRS;
+    use aries_vcx::utils::constants::{DEFAULT_SCHEMA_ATTRS, SCHEMA_DATA};
     use aries_vcx::utils::devsetup::{SetupProfile, SetupWalletPool};
     use diddoc_legacy::aries::service::AriesService;
     use std::sync::Arc;
@@ -68,22 +69,34 @@ mod integration_tests {
         .await;
     }
 
-    // TODO - future - bring back after all endorser methods added to baseledger
-    // #[tokio::test]
-    // async fn test_endorse_transaction() {
-    //     SetupProfile::run_indy(|setup| async move {
-    //         let ledger = Arc::clone(&setup.profile).inject_ledger();
-    //         let (author_did, _) = add_new_did(&setup.profile, &setup.institution_did, None).await.unwrap();
-    //         let (endorser_did, _) = add_new_did(&setup.profile, &setup.institution_did, Some("ENDORSER")).await.unwrap();
+    #[tokio::test]
+    #[ignore]
+    async fn test_endorse_transaction() {
+        SetupProfile::run_indy(|setup| async move {
+            let ledger = Arc::clone(&setup.profile).inject_ledger();
+            let (author_did, _) = add_new_did(&setup.profile, &setup.institution_did, None).await.unwrap();
+            let (endorser_did, _) = add_new_did(&setup.profile, &setup.institution_did, Some("ENDORSER"))
+                .await
+                .unwrap();
 
-    //         let schema_request = ledger.build_schema_request(&author_did, SCHEMA_DATA).await.unwrap();
-    //         let schema_request = append_request_endorser(&schema_request, &endorser_did).await.unwrap();
-    //         let schema_request = multisign_request(setup.wallet_handle, &author_did, &schema_request)
-    //             .await
-    //             .unwrap();
-    //         ledger.endorse_transaction(&endorser_did, &schema_request).await.unwrap();
-    //     }).await;
-    // }
+            let schema_request = ledger.build_schema_request(&author_did, SCHEMA_DATA).await.unwrap();
+            let schema_request = ledger
+                .set_endorser(&author_did, &schema_request, &endorser_did)
+                .await
+                .unwrap();
+            ledger
+                .endorse_transaction(&endorser_did, &schema_request)
+                .await
+                .unwrap();
+            let schema_data: SchemaData = serde_json::from_str(&SCHEMA_DATA).unwrap();
+            let schema_id = format!("{}:2:{}:1.0", author_did, schema_data.name);
+            thread::sleep(Duration::from_millis(50));
+            Schema::create_from_ledger_json(&setup.profile, "source_id", &schema_id)
+                .await
+                .unwrap();
+        })
+        .await;
+    }
 
     #[tokio::test]
     #[ignore]

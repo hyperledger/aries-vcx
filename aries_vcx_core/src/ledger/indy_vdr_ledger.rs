@@ -1,4 +1,3 @@
-use indy_credx::ursa::cl::RevocationRegistryDelta as UrsaRevocationRegistryDelta;
 use indy_ledger_response_parser::{ResponseParser, RevocationRegistryDeltaInfo, RevocationRegistryInfo};
 use indy_vdr as vdr;
 use std::fmt::{Debug, Formatter};
@@ -7,7 +6,7 @@ use time::OffsetDateTime;
 use vdr::ledger::requests::cred_def::CredentialDefinitionV1;
 use vdr::ledger::requests::rev_reg::{RevocationRegistryDelta, RevocationRegistryDeltaV1};
 use vdr::ledger::requests::rev_reg_def::{RegistryType, RevocationRegistryDefinition, RevocationRegistryDefinitionV1};
-use vdr::ledger::requests::schema::{AttributeNames, Schema, SchemaV1};
+use vdr::ledger::requests::schema::{Schema, SchemaV1};
 
 use async_trait::async_trait;
 use serde_json::Value;
@@ -18,11 +17,10 @@ use vdr::pool::{LedgerType, PreparedRequest, ProtocolVersion};
 use vdr::utils::did::DidValue;
 use vdr::utils::Qualifiable;
 
+use crate::common::ledger::transactions::verify_transaction_can_be_endorsed;
 use crate::errors::error::VcxCoreResult;
-use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind};
 use crate::global::author_agreement::get_txn_author_agreement;
 use crate::global::settings;
-use crate::utils::json::{AsTypeOrDeserializationError, TryGetIndex};
 use crate::wallet::base_wallet::BaseWallet;
 
 use super::base_ledger::BaseLedger;
@@ -69,16 +67,17 @@ where
         self.request_submitter.submit(request).await
     }
 
+    async fn _get_request_signature(&self, did: &str, request: &PreparedRequest) -> VcxCoreResult<Vec<u8>> {
+        let to_sign = request.get_signature_input()?;
+        let signer_verkey = self.wallet.key_for_local_did(did).await?;
+        let signature = self.wallet.sign(&signer_verkey, to_sign.as_bytes()).await?;
+        Ok(signature)
+    }
+
     async fn _sign_and_submit_request(&self, submitter_did: &str, request: PreparedRequest) -> VcxCoreResult<String> {
         let mut request = request;
-        let to_sign = request.get_signature_input()?;
-
-        let signer_verkey = self.wallet.key_for_local_did(submitter_did).await?;
-
-        let signature = self.wallet.sign(&signer_verkey, to_sign.as_bytes()).await?;
-
+        let signature = self._get_request_signature(submitter_did, &request).await?;
         request.set_signature(&signature)?;
-
         self._submit_request(request).await
     }
 
@@ -185,6 +184,13 @@ where
             .request_builder()?
             .build_get_txn_request(identifier.as_ref(), LedgerType::DOMAIN.to_id(), seq_no)?)
     }
+
+    fn _build_taa_request(&self, submitter_did: Option<&str>) -> VcxCoreResult<PreparedRequest> {
+        let submitter_did = submitter_did.map(DidValue::from_str).transpose()?;
+        Ok(self
+            .request_builder()?
+            .build_get_txn_author_agreement_request(submitter_did.as_ref(), None)?)
+    }
 }
 
 impl<T> Debug for IndyVdrLedger<T>
@@ -213,17 +219,26 @@ where
     }
 
     async fn endorse_transaction(&self, endorser_did: &str, request_json: &str) -> VcxCoreResult<()> {
-        let _ = (endorser_did, request_json);
-        Err(unimplemented_method_err("indy_vdr endorse_transaction"))
+        let mut request = PreparedRequest::from_request_json(&request_json)?;
+        verify_transaction_can_be_endorsed(request_json, endorser_did)?;
+        let signature_endorser = self._get_request_signature(endorser_did, &request).await?;
+        request.set_multi_signature(&DidValue::from_str(endorser_did)?, &signature_endorser)?;
+        self._submit_request(request).await.map(|_| ())
     }
 
     async fn set_endorser(&self, submitter_did: &str, request_json: &str, endorser: &str) -> VcxCoreResult<String> {
-        let _ = (submitter_did, request_json, endorser);
-        Err(unimplemented_method_err("indy_vdr set_endorser"))
+        let mut request = PreparedRequest::from_request_json(request_json)?;
+        request.set_endorser(&DidValue::from_str(endorser)?)?;
+        let signature_submitter = self._get_request_signature(submitter_did, &request).await?;
+        request.set_multi_signature(&DidValue::from_str(submitter_did)?, &signature_submitter)?;
+        Ok(request.req_json.to_string())
     }
 
     async fn get_txn_author_agreement(&self) -> VcxCoreResult<String> {
-        Err(unimplemented_method_err("indy_vdr get_txn_author_agreement"))
+        let request = self
+            .request_builder()?
+            .build_get_txn_author_agreement_request(None, None)?;
+        self._submit_request(request).await
     }
 
     async fn get_nym(&self, did: &str) -> VcxCoreResult<String> {
@@ -238,22 +253,16 @@ where
         submitter_did: &str,
         target_did: &str,
         verkey: Option<&str>,
-        data: Option<&str>,
+        alias: Option<&str>,
         role: Option<&str>,
     ) -> VcxCoreResult<String> {
-        // TODO - FUTURE: convert data into "alias" for indy vdr. for now throw unimplemented
-        if data.is_some() {
-            return Err(unimplemented_method_err("indy_vdr publish_nym with data"));
-        }
-        let alias = None;
-
         let identifier = DidValue::from_str(submitter_did)?;
         let dest = DidValue::from_str(target_did)?;
         let request = self.request_builder()?.build_nym_request(
             &identifier,
             &dest,
             verkey.map(String::from),
-            alias,
+            alias.map(String::from),
             role.map(String::from),
         )?;
 
@@ -322,10 +331,6 @@ where
             timestamp,
         } = self.response_parser.parse_get_revoc_reg_delta_response(&res)?;
 
-        let delta_value = match revoc_reg_delta.clone() {
-            RevocationRegistryDelta::RevocationRegistryDeltaV1(delta) => delta.value,
-        };
-
         Ok((
             revoc_reg_def_id.to_string(),
             serde_json::to_string(&revoc_reg_delta)?,
@@ -371,26 +376,23 @@ where
         &self,
         schema_json: &str,
         submitter_did: &str,
-        endorser_did: Option<String>,
+        _endorser_did: Option<String>,
     ) -> VcxCoreResult<()> {
         let request = self._build_schema_request(submitter_did, schema_json)?;
         let request = _append_txn_author_agreement_to_request(request).await?;
-        self._sign_and_submit_request(submitter_did, request).await?;
-        Ok(())
+        self._sign_and_submit_request(submitter_did, request).await.map(|_| ())
     }
 
     async fn publish_cred_def(&self, cred_def_json: &str, submitter_did: &str) -> VcxCoreResult<()> {
         let request = self._build_cred_def_request(submitter_did, cred_def_json)?;
         let request = _append_txn_author_agreement_to_request(request).await?;
-        self._sign_and_submit_request(submitter_did, request).await?;
-        Ok(())
+        self._sign_and_submit_request(submitter_did, request).await.map(|_| ())
     }
 
     async fn publish_rev_reg_def(&self, rev_reg_def: &str, submitter_did: &str) -> VcxCoreResult<()> {
         let request = self._build_rev_reg_def_request(submitter_did, rev_reg_def)?;
         let request = _append_txn_author_agreement_to_request(request).await?;
-        self._sign_and_submit_request(submitter_did, request).await?;
-        Ok(())
+        self._sign_and_submit_request(submitter_did, request).await.map(|_| ())
     }
 
     async fn publish_rev_reg_delta(
@@ -401,16 +403,8 @@ where
     ) -> VcxCoreResult<()> {
         let request = self._build_rev_reg_delta_request(submitter_did, rev_reg_id, rev_reg_entry_json)?;
         let request = _append_txn_author_agreement_to_request(request).await?;
-        self._sign_and_submit_request(submitter_did, request).await?;
-        Ok(())
+        self._sign_and_submit_request(submitter_did, request).await.map(|_| ())
     }
-}
-
-fn unimplemented_method_err(method_name: &str) -> AriesVcxCoreError {
-    AriesVcxCoreError::from_msg(
-        AriesVcxCoreErrorKind::UnimplementedFeature,
-        format!("method called '{}' is not yet implemented in AriesVCX", method_name),
-    )
 }
 
 fn current_epoch_time() -> i64 {
