@@ -1,7 +1,7 @@
 use std::io::Cursor;
 
 use did_resolver::{
-    did_doc_builder::schema::{
+    did_doc::schema::{
         did_doc::DidDocument, service::Service, verification_method::VerificationMethod,
     },
     did_parser::DidUrl,
@@ -92,7 +92,7 @@ pub(crate) fn dereference_did_document(
 mod tests {
     use super::*;
 
-    use did_resolver::did_doc_builder::schema::did_doc::DidDocumentBuilder;
+    use did_resolver::did_doc::schema::did_doc::DidDocumentBuilder;
     use did_resolver::did_parser::DidUrl;
     use did_resolver::traits::resolvable::resolution_output::DidResolutionOutput;
     use serde_json::Value;

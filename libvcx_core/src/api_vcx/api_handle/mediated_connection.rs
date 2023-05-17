@@ -500,7 +500,7 @@ pub mod tests {
     use aries_vcx::utils::mockdata::mockdata_mediated_connection::{
         ARIES_CONNECTION_ACK, ARIES_CONNECTION_INVITATION, ARIES_CONNECTION_REQUEST,
     };
-    use diddoc::aries::diddoc::test_utils::*;
+    use diddoc_legacy::aries::diddoc::test_utils::*;
 
     use crate::api_vcx::api_handle::mediated_connection;
     #[cfg(feature = "test_utils")]

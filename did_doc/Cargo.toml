@@ -1,5 +1,5 @@
 [package]
-name = "did_doc_builder"
+name = "did_doc"
 version = "0.1.0"
 edition = "2021"
 
