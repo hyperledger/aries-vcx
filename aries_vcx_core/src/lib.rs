@@ -40,3 +40,6 @@ pub mod wallet;
 pub use vdrtools::{
     PoolHandle, SearchHandle, WalletHandle, INVALID_POOL_HANDLE, INVALID_SEARCH_HANDLE, INVALID_WALLET_HANDLE,
 };
+
+#[cfg(feature = "vdr_proxy_ledger")]
+pub use indy_vdr_proxy_client::VdrProxyClient;

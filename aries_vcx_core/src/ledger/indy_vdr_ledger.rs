@@ -1,21 +1,19 @@
+use indy_credx::ursa::cl::RevocationRegistryDelta as UrsaRevocationRegistryDelta;
 use indy_vdr as vdr;
-use std::collections::hash_map::RandomState;
-use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
 use std::sync::Arc;
 use time::OffsetDateTime;
+use vdr::ledger::requests::cred_def::CredentialDefinitionV1;
+use vdr::ledger::requests::rev_reg::{RevocationRegistryDelta, RevocationRegistryDeltaV1};
+use vdr::ledger::requests::rev_reg_def::{RegistryType, RevocationRegistryDefinition, RevocationRegistryDefinitionV1};
 use vdr::ledger::requests::schema::{AttributeNames, Schema, SchemaV1};
 
 use async_trait::async_trait;
 use serde_json::Value;
-use tokio::sync::oneshot;
-use vdr::common::error::VdrError;
-use vdr::config::PoolConfig as IndyVdrPoolConfig;
 use vdr::ledger::identifiers::{CredentialDefinitionId, RevocationRegistryId, SchemaId};
-use vdr::ledger::requests::author_agreement::TxnAuthrAgrmtAcceptanceData;
+use vdr::ledger::requests::{author_agreement::TxnAuthrAgrmtAcceptanceData, cred_def::CredentialDefinition};
 use vdr::ledger::RequestBuilder;
-use vdr::pool::{PoolBuilder, PoolTransactions};
-use vdr::pool::{PoolRunner, PreparedRequest, ProtocolVersion, RequestResult};
+use vdr::pool::{LedgerType, PreparedRequest, ProtocolVersion};
 use vdr::utils::did::DidValue;
 use vdr::utils::Qualifiable;
 
@@ -27,47 +25,25 @@ use crate::utils::json::{AsTypeOrDeserializationError, TryGetIndex};
 use crate::wallet::base_wallet::BaseWallet;
 
 use super::base_ledger::BaseLedger;
+use super::request_submitter::RequestSubmitter;
 
-pub struct LedgerPoolConfig {
-    pub genesis_file_path: String,
-}
-
-pub struct IndyVdrLedgerPool {
-    // visibility strictly for internal unit testing
-    pub(self) runner: Option<PoolRunner>,
-}
-
-impl IndyVdrLedgerPool {
-    pub fn new_from_runner(runner: PoolRunner) -> Self {
-        IndyVdrLedgerPool { runner: Some(runner) }
-    }
-
-    pub fn new(config: LedgerPoolConfig) -> VcxCoreResult<Self> {
-        let vdr_config = IndyVdrPoolConfig::default();
-        let txns = PoolTransactions::from_json_file(config.genesis_file_path)?;
-
-        let runner = PoolBuilder::from(vdr_config).transactions(txns)?.into_runner()?;
-
-        Ok(IndyVdrLedgerPool { runner: Some(runner) })
-    }
-}
-
-impl Debug for IndyVdrLedgerPool {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("IndyVdrLedgerPool")
-            .field("runner", &"PoolRunner")
-            .finish()
-    }
-}
-
-pub struct IndyVdrLedger {
+pub struct IndyVdrLedger<T>
+where
+    T: RequestSubmitter + Send + Sync,
+{
     wallet: Arc<dyn BaseWallet>,
-    pool: Arc<IndyVdrLedgerPool>,
+    request_submitter: Arc<T>,
 }
 
-impl IndyVdrLedger {
-    pub fn new(wallet: Arc<dyn BaseWallet>, pool: Arc<IndyVdrLedgerPool>) -> Self {
-        IndyVdrLedger { wallet, pool }
+impl<T> IndyVdrLedger<T>
+where
+    T: RequestSubmitter + Send + Sync,
+{
+    pub fn new(wallet: Arc<dyn BaseWallet>, request_submitter: Arc<T>) -> Self {
+        IndyVdrLedger {
+            wallet,
+            request_submitter,
+        }
     }
 
     pub fn request_builder(&self) -> VcxCoreResult<RequestBuilder> {
@@ -78,40 +54,7 @@ impl IndyVdrLedger {
     }
 
     async fn _submit_request(&self, request: PreparedRequest) -> VcxCoreResult<String> {
-        // indyvdr send_request is Async via a callback.
-        // Use oneshot channel to send result from callback, converting the fn to future.
-        type VdrSendRequestResult =
-            Result<(RequestResult<String>, Option<HashMap<String, f32, RandomState>>), VdrError>;
-        let (sender, recv) = oneshot::channel::<VdrSendRequestResult>();
-        self.pool
-            .runner
-            .as_ref()
-            .ok_or(
-                // should not happen - strictly for unit testing
-                AriesVcxCoreError::from_msg(
-                    AriesVcxCoreErrorKind::NoPoolOpen,
-                    "IndyVdrLedgerPool runner was not provided",
-                ),
-            )?
-            .send_request(
-                request,
-                Box::new(move |result| {
-                    // unable to handle a failure from `send` here
-                    sender.send(result).ok();
-                }),
-            )?;
-
-        let send_req_result: VdrSendRequestResult = recv
-            .await
-            .map_err(|e| AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::InvalidState, e))?;
-        let (result, _) = send_req_result?;
-
-        let reply = match result {
-            RequestResult::Reply(reply) => Ok(reply),
-            RequestResult::Failed(failed) => Err(failed),
-        };
-
-        Ok(reply?)
+        self.request_submitter.submit(request).await
     }
 
     async fn _sign_and_submit_request(&self, submitter_did: &str, request: PreparedRequest) -> VcxCoreResult<String> {
@@ -132,11 +75,7 @@ impl IndyVdrLedger {
         submitter_did: Option<&str>,
         cred_def_id: &str,
     ) -> VcxCoreResult<PreparedRequest> {
-        let identifier = if let Some(did) = submitter_did {
-            Some(DidValue::from_str(did)?)
-        } else {
-            None
-        };
+        let identifier = submitter_did.map(DidValue::from_str).transpose()?;
         let id = CredentialDefinitionId::from_str(cred_def_id)?;
         Ok(self
             .request_builder()?
@@ -182,16 +121,74 @@ impl IndyVdrLedger {
             .request_builder()?
             .build_attrib_request(&identifier, &dest, None, attrib_json.as_ref(), None)?)
     }
+
+    fn _build_schema_request(&self, submitter_did: &str, schema_data: &str) -> VcxCoreResult<PreparedRequest> {
+        let identifier = DidValue::from_str(submitter_did)?;
+        let schema_data: SchemaV1 = serde_json::from_str(schema_data)?;
+        Ok(self
+            .request_builder()?
+            .build_schema_request(&identifier, Schema::SchemaV1(schema_data))?)
+    }
+
+    fn _build_cred_def_request(&self, submitter_did: &str, cred_def_data: &str) -> VcxCoreResult<PreparedRequest> {
+        let identifier = DidValue::from_str(submitter_did)?;
+        let cred_def_data: CredentialDefinitionV1 = serde_json::from_str(cred_def_data)?;
+        Ok(self
+            .request_builder()?
+            .build_cred_def_request(&identifier, CredentialDefinition::CredentialDefinitionV1(cred_def_data))?)
+    }
+
+    fn _build_rev_reg_def_request(
+        &self,
+        submitter_did: &str,
+        rev_reg_def_data: &str,
+    ) -> VcxCoreResult<PreparedRequest> {
+        let identifier = DidValue::from_str(submitter_did)?;
+        let rev_reg_def_data: RevocationRegistryDefinitionV1 = serde_json::from_str(rev_reg_def_data)?;
+        Ok(self.request_builder()?.build_revoc_reg_def_request(
+            &identifier,
+            RevocationRegistryDefinition::RevocationRegistryDefinitionV1(rev_reg_def_data),
+        )?)
+    }
+
+    fn _build_rev_reg_delta_request(
+        &self,
+        submitter_did: &str,
+        rev_reg_id: &str,
+        rev_reg_delta_data: &str,
+    ) -> VcxCoreResult<PreparedRequest> {
+        let identifier = DidValue::from_str(submitter_did)?;
+        let rev_reg_delta_data: RevocationRegistryDeltaV1 = serde_json::from_str(rev_reg_delta_data)?;
+        Ok(self.request_builder()?.build_revoc_reg_entry_request(
+            &identifier,
+            &RevocationRegistryId::from_str(rev_reg_id)?,
+            &RegistryType::CL_ACCUM,
+            RevocationRegistryDelta::RevocationRegistryDeltaV1(rev_reg_delta_data),
+        )?)
+    }
+
+    fn _build_get_txn_request(&self, submitter_did: Option<&str>, seq_no: i32) -> VcxCoreResult<PreparedRequest> {
+        let identifier = submitter_did.map(DidValue::from_str).transpose()?;
+        Ok(self
+            .request_builder()?
+            .build_get_txn_request(identifier.as_ref(), LedgerType::DOMAIN.to_id(), seq_no)?)
+    }
 }
 
-impl Debug for IndyVdrLedger {
+impl<T> Debug for IndyVdrLedger<T>
+where
+    T: RequestSubmitter + Send + Sync,
+{
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "IndyVdrLedger instance")
     }
 }
 
 #[async_trait]
-impl BaseLedger for IndyVdrLedger {
+impl<T> BaseLedger for IndyVdrLedger<T>
+where
+    T: RequestSubmitter + Send + Sync,
+{
     async fn sign_and_submit_request(&self, submitter_did: &str, request_json: &str) -> VcxCoreResult<String> {
         let request = PreparedRequest::from_request_json(request_json)?;
 
@@ -432,18 +429,42 @@ impl BaseLedger for IndyVdrLedger {
     }
 
     async fn get_rev_reg(&self, rev_reg_id: &str, timestamp: u64) -> VcxCoreResult<(String, String, u64)> {
-        let _ = (rev_reg_id, timestamp);
-        Err(unimplemented_method_err("indy_vdr get_rev_reg"))
+        let revoc_reg_def_id = RevocationRegistryId::from_str(rev_reg_id)?;
+
+        let request = self.request_builder()?.build_get_revoc_reg_request(
+            None,
+            &revoc_reg_def_id,
+            timestamp.try_into().unwrap(),
+        )?;
+        let res = self._submit_request(request).await?;
+
+        let res_data = _get_response_json_data_field(&res)?;
+
+        let rev_reg_def_id = res_data["revocRegDefId"]
+            .as_str()
+            .ok_or(AriesVcxCoreError::from_msg(
+                AriesVcxCoreErrorKind::InvalidJson,
+                "Error parsing revocRegDefId value as string",
+            ))?
+            .to_string();
+
+        let timestamp = res_data["txnTime"].as_u64().ok_or(AriesVcxCoreError::from_msg(
+            AriesVcxCoreErrorKind::InvalidJson,
+            "Error parsing txnTime value as u64",
+        ))?;
+
+        Ok((rev_reg_def_id, res_data["value"].to_string(), timestamp))
     }
 
     async fn get_ledger_txn(&self, seq_no: i32, submitter_did: Option<&str>) -> VcxCoreResult<String> {
-        let _ = (seq_no, submitter_did);
-        Err(unimplemented_method_err("indy_vdr get_ledger_txn"))
+        let request = self._build_get_txn_request(submitter_did, seq_no)?;
+        self._submit_request(request).await
     }
 
     async fn build_schema_request(&self, submitter_did: &str, schema_json: &str) -> VcxCoreResult<String> {
-        let _ = (submitter_did, schema_json);
-        Err(unimplemented_method_err("indy_vdr build_schema_request"))
+        let request = self._build_schema_request(submitter_did, schema_json)?;
+        let request = _append_txn_author_agreement_to_request(request).await?;
+        Ok(request.req_json.to_string())
     }
 
     async fn publish_schema(
@@ -452,18 +473,24 @@ impl BaseLedger for IndyVdrLedger {
         submitter_did: &str,
         endorser_did: Option<String>,
     ) -> VcxCoreResult<()> {
-        let _ = (schema_json, submitter_did, endorser_did);
-        Err(unimplemented_method_err("indy_vdr publish_schema"))
+        let request = self._build_schema_request(submitter_did, schema_json)?;
+        let request = _append_txn_author_agreement_to_request(request).await?;
+        self._sign_and_submit_request(submitter_did, request).await?;
+        Ok(())
     }
 
     async fn publish_cred_def(&self, cred_def_json: &str, submitter_did: &str) -> VcxCoreResult<()> {
-        let _ = (cred_def_json, submitter_did);
-        Err(unimplemented_method_err("indy_vdr publish_cred_def"))
+        let request = self._build_cred_def_request(submitter_did, cred_def_json)?;
+        let request = _append_txn_author_agreement_to_request(request).await?;
+        self._sign_and_submit_request(submitter_did, request).await?;
+        Ok(())
     }
 
     async fn publish_rev_reg_def(&self, rev_reg_def: &str, submitter_did: &str) -> VcxCoreResult<()> {
-        let _ = (rev_reg_def, submitter_did);
-        Err(unimplemented_method_err("indy_vdr publish_rev_reg_def"))
+        let request = self._build_rev_reg_def_request(submitter_did, rev_reg_def)?;
+        let request = _append_txn_author_agreement_to_request(request).await?;
+        self._sign_and_submit_request(submitter_did, request).await?;
+        Ok(())
     }
 
     async fn publish_rev_reg_delta(
@@ -472,8 +499,10 @@ impl BaseLedger for IndyVdrLedger {
         rev_reg_entry_json: &str,
         submitter_did: &str,
     ) -> VcxCoreResult<()> {
-        let _ = (rev_reg_entry_json, rev_reg_id, submitter_did);
-        Err(unimplemented_method_err("indy_vdr publish_rev_reg_delta"))
+        let request = self._build_rev_reg_delta_request(submitter_did, rev_reg_id, rev_reg_entry_json)?;
+        let request = _append_txn_author_agreement_to_request(request).await?;
+        self._sign_and_submit_request(submitter_did, request).await?;
+        Ok(())
     }
 }
 
@@ -508,42 +537,13 @@ async fn _append_txn_author_agreement_to_request(request: PreparedRequest) -> Vc
 fn _get_response_json_data_field(response_json: &str) -> VcxCoreResult<Value> {
     let res: Value = serde_json::from_str(response_json)?;
     let result = (&res).try_get("result")?;
-    Ok(result.try_get("data")?.to_owned())
-}
-
-#[cfg(test)]
-mod unit_tests {
-    use std::sync::Arc;
-
-    use crate::errors::error::{AriesVcxCoreErrorKind, VcxCoreResult};
-    use crate::{
-        common::test_utils::mock_profile,
-        plugins::ledger::{base_ledger::BaseLedger, indy_vdr_ledger::IndyVdrLedgerPool},
-    };
-
-    use super::IndyVdrLedger;
-
-    #[tokio::test]
-    #[ignore]
-    async fn test_pool_unimplemented_methods() {
-        // test used to assert which methods are unimplemented currently, can be removed after all methods implemented
-
-        fn assert_unimplemented<T: std::fmt::Debug>(result: VcxCoreResult<T>) {
-            assert_eq!(result.unwrap_err().kind(), AriesVcxCoreErrorKind::UnimplementedFeature)
-        }
-
-        let profile = mock_profile();
-        let pool = Arc::new(IndyVdrLedgerPool { runner: None });
-        let ledger: Box<dyn BaseLedger> = Box::new(IndyVdrLedger::new(profile.inject_wallet(), pool));
-
-        assert_unimplemented(ledger.endorse_transaction("", "").await);
-        assert_unimplemented(ledger.set_endorser("", "", "").await);
-        assert_unimplemented(ledger.get_txn_author_agreement().await);
-        assert_unimplemented(ledger.get_rev_reg("", 0).await);
-        assert_unimplemented(ledger.get_ledger_txn(0, None).await);
-        assert_unimplemented(ledger.build_schema_request("", "").await);
-        assert_unimplemented(ledger.publish_schema("", "", None).await);
-        assert_unimplemented(ledger.publish_cred_def("", "").await);
-        assert_unimplemented(ledger.publish_rev_reg_def("", "").await);
+    let data = result.try_get("data")?.to_owned();
+    if data.is_null() {
+        Err(AriesVcxCoreError::from_msg(
+            AriesVcxCoreErrorKind::LedgerItemNotFound,
+            "No data in response",
+        ))
+    } else {
+        Ok(data)
     }
 }

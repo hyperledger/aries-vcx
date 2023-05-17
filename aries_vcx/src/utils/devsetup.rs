@@ -17,7 +17,7 @@ use aries_vcx_core::indy::wallet::{
 };
 
 #[cfg(feature = "modular_libs")]
-use aries_vcx_core::ledger::indy_vdr_ledger::LedgerPoolConfig;
+use aries_vcx_core::ledger::request_submitter::vdr_ledger::LedgerPoolConfig;
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use aries_vcx_core::wallet::indy_wallet::IndySdkWallet;
 use aries_vcx_core::{PoolHandle, WalletHandle};
@@ -380,6 +380,12 @@ impl SetupProfile {
             SetupProfile::init_modular().await
         };
 
+        #[cfg(feature = "vdr_proxy_ledger")]
+        return {
+            info!("SetupProfile >> using vdr proxy profile");
+            SetupProfile::init_vdr_proxy_ledger().await
+        };
+
         #[cfg(feature = "vdrtools")]
         return {
             info!("SetupProfile >> using indy profile");
@@ -445,7 +451,33 @@ impl SetupProfile {
         }
     }
 
-    #[cfg(any(feature = "modular_libs", feature = "vdrtools"))]
+    #[cfg(feature = "vdr_proxy_ledger")]
+    async fn init_vdr_proxy_ledger() -> SetupProfile {
+        use std::env;
+
+        use crate::core::profile::vdr_proxy_profile::VdrProxyProfile;
+        use aries_vcx_core::VdrProxyClient;
+
+        let (institution_did, wallet_handle) = setup_issuer_wallet().await;
+
+        // TODO: Test configuration should be handled uniformly
+        let client_url = env::var("VDR_PROXY_CLIENT_URL").unwrap_or_else(|_| "http://127.0.0.1:3030".to_string());
+        let client = VdrProxyClient::new(&client_url).unwrap();
+
+        let profile: Arc<dyn Profile> = Arc::new(VdrProxyProfile::new(wallet_handle, client));
+
+        async fn vdr_proxy_teardown() {
+            // nothing to do
+        }
+
+        SetupProfile {
+            institution_did,
+            profile,
+            teardown: Arc::new(move || Box::pin(vdr_proxy_teardown())),
+        }
+    }
+
+    #[cfg(any(feature = "modular_libs", feature = "vdrtools", feature = "vdr_proxy_ledger"))]
     pub async fn run<F>(f: impl FnOnce(Self) -> F)
     where
         F: Future<Output = ()>,
@@ -463,11 +495,15 @@ impl SetupProfile {
 
     // FUTURE - ideally no tests should be using this method, they should be using the generic run
     // after modular profile Anoncreds/Ledger methods have all been implemented, all tests should use run()
-    #[cfg(feature = "vdrtools")]
+    #[cfg(any(feature = "vdrtools", feature = "vdr_proxy_ledger"))]
     pub async fn run_indy<F>(f: impl FnOnce(Self) -> F)
     where
         F: Future<Output = ()>,
     {
+        #[cfg(feature = "vdr_proxy_ledger")]
+        let init = Self::init_vdr_proxy_ledger().await;
+
+        #[cfg(all(feature = "vdrtools", not(feature = "vdr_proxy_ledger")))]
         let init = Self::init_indy().await;
 
         let teardown = Arc::clone(&init.teardown);
