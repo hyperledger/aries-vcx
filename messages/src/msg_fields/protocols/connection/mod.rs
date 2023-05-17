@@ -6,7 +6,7 @@ pub mod request;
 pub mod response;
 
 use derive_more::From;
-use diddoc::aries::diddoc::AriesDidDoc;
+use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 
 use self::{

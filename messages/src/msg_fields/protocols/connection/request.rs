@@ -35,7 +35,7 @@ pub struct RequestDecorators {
 #[allow(clippy::unwrap_used)]
 #[allow(clippy::field_reassign_with_default)]
 mod tests {
-    use diddoc::aries::diddoc::AriesDidDoc;
+    use diddoc_legacy::aries::diddoc::AriesDidDoc;
     use serde_json::json;
 
     use super::*;

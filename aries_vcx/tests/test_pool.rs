@@ -15,7 +15,7 @@ mod integration_tests {
     use aries_vcx::common::test_utils::create_and_store_nonrevocable_credential_def;
     use aries_vcx::utils::constants::DEFAULT_SCHEMA_ATTRS;
     use aries_vcx::utils::devsetup::{SetupProfile, SetupWalletPool};
-    use diddoc::aries::service::AriesService;
+    use diddoc_legacy::aries::service::AriesService;
     use std::sync::Arc;
     use std::thread;
     use std::time::Duration;

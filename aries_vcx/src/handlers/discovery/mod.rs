@@ -3,7 +3,7 @@ use std::sync::Arc;
 use crate::errors::error::VcxResult;
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use chrono::Utc;
-use diddoc::aries::diddoc::AriesDidDoc;
+use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use messages::decorators::thread::Thread;
 use messages::decorators::timing::Timing;
 use messages::msg_fields::protocols::discover_features::disclose::{Disclose, DiscloseContent, DiscloseDecorators};

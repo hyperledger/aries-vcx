@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use did_doc_builder::schema::{
+use did_doc::schema::{
     did_doc::DidDocument,
     types::{jsonwebkey::JsonWebKey, uri::Uri},
     verification_method::{VerificationMethod, VerificationMethodKind},

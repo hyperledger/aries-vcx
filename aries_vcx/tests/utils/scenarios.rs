@@ -9,7 +9,7 @@ pub mod test_utils {
     use aries_vcx::handlers::util::{AnyInvitation, OfferInfo, PresentationProposalData};
     use aries_vcx::protocols::SendClosureConnection;
     use async_channel::{bounded, Sender};
-    use diddoc::aries::diddoc::AriesDidDoc;
+    use diddoc_legacy::aries::diddoc::AriesDidDoc;
     use messages::misc::MimeType;
     use messages::msg_fields::protocols::connection::request::Request;
     use messages::msg_fields::protocols::connection::Connection;

@@ -5,7 +5,7 @@ use aries_vcx::common::ledger::transactions::{
     clear_attr, get_attr, get_service, write_endpoint, write_endpoint_legacy,
 };
 use aries_vcx::global::settings::CONFIG_INSTITUTION_DID;
-use diddoc::aries::service::AriesService;
+use diddoc_legacy::aries::service::AriesService;
 use url::Url;
 
 use crate::api_vcx::api_global::profile::get_main_profile;

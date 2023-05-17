@@ -254,7 +254,7 @@ pub fn release_receiver(handle: u32) -> LibvcxResult<()> {
 #[allow(clippy::unwrap_used)]
 pub mod tests {
     use aries_vcx::messages::msg_types::connection::{ConnectionType, ConnectionTypeV1};
-    use diddoc::aries::service::AriesService;
+    use diddoc_legacy::aries::service::AriesService;
 
     use super::*;
 
