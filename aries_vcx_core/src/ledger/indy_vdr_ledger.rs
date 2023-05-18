@@ -25,37 +25,44 @@ use crate::global::settings;
 use super::base_ledger::BaseLedger;
 use super::request_signer::RequestSigner;
 use super::request_submitter::RequestSubmitter;
+use super::response_cacher::ResponseCacher;
 
-pub struct IndyVdrLedgerConfig<T, U>
+pub struct IndyVdrLedgerConfig<T, U, V>
 where
     T: RequestSubmitter + Send + Sync,
     U: RequestSigner + Send + Sync,
+    V: ResponseCacher + Send + Sync,
 {
     pub request_signer: Arc<U>,
     pub request_submitter: Arc<T>,
     pub response_parser: Arc<ResponseParser>,
+    pub response_cacher: Arc<V>,
 }
 
-pub struct IndyVdrLedger<T, U>
+pub struct IndyVdrLedger<T, U, V>
 where
     T: RequestSubmitter + Send + Sync,
     U: RequestSigner + Send + Sync,
+    V: ResponseCacher + Send + Sync,
 {
     request_signer: Arc<U>,
     request_submitter: Arc<T>,
     response_parser: Arc<ResponseParser>,
+    response_cacher: Arc<V>,
 }
 
-impl<T, U> IndyVdrLedger<T, U>
+impl<T, U, V> IndyVdrLedger<T, U, V>
 where
     T: RequestSubmitter + Send + Sync,
     U: RequestSigner + Send + Sync,
+    V: ResponseCacher + Send + Sync,
 {
-    pub fn new(config: IndyVdrLedgerConfig<T, U>) -> Self {
+    pub fn new(config: IndyVdrLedgerConfig<T, U, V>) -> Self {
         Self {
             request_signer: config.request_signer,
             request_submitter: config.request_submitter,
             response_parser: config.response_parser,
+            response_cacher: config.response_cacher,
         }
     }
 
@@ -64,6 +71,17 @@ where
         let v = settings::get_protocol_version();
         let version = ProtocolVersion::from_id(v as u64)?;
         Ok(RequestBuilder::new(version))
+    }
+
+    async fn _submit_request_cached(&self, id: &str, request: PreparedRequest) -> VcxCoreResult<String> {
+        match self.response_cacher.get(id, None).await? {
+            Some(response) => Ok(response),
+            None => {
+                let response = self.request_submitter.submit(request).await?;
+                self.response_cacher.put(id, response.clone()).await?;
+                Ok(response)
+            }
+        }
     }
 
     async fn _submit_request(&self, request: PreparedRequest) -> VcxCoreResult<String> {
@@ -193,10 +211,11 @@ where
     }
 }
 
-impl<T, U> Debug for IndyVdrLedger<T, U>
+impl<T, U, V> Debug for IndyVdrLedger<T, U, V>
 where
     T: RequestSubmitter + Send + Sync,
     U: RequestSigner + Send + Sync,
+    V: ResponseCacher + Send + Sync,
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "IndyVdrLedger instance")
@@ -204,10 +223,11 @@ where
 }
 
 #[async_trait]
-impl<T, U> BaseLedger for IndyVdrLedger<T, U>
+impl<T, U, V> BaseLedger for IndyVdrLedger<T, U, V>
 where
     T: RequestSubmitter + Send + Sync,
     U: RequestSigner + Send + Sync,
+    V: ResponseCacher + Send + Sync,
 {
     async fn sign_and_submit_request(&self, submitter_did: &str, request_json: &str) -> VcxCoreResult<String> {
         let request = PreparedRequest::from_request_json(request_json)?;
@@ -247,7 +267,7 @@ where
         let dest = DidValue::from_str(did)?;
         let request = self.request_builder()?.build_get_nym_request(None, &dest)?;
 
-        self._submit_request(request).await
+        self._submit_request_cached(did, request).await
     }
 
     async fn publish_nym(
@@ -275,7 +295,7 @@ where
         let request = self
             .request_builder()?
             .build_get_schema_request(None, &SchemaId::from_str(schema_id)?)?;
-        let response = self._submit_request(request).await?;
+        let response = self._submit_request_cached(schema_id, request).await?;
         let schema = self.response_parser.parse_get_schema_response(&response, None)?;
         Ok(serde_json::to_string(&schema)?)
     }
@@ -303,7 +323,7 @@ where
     async fn get_rev_reg_def_json(&self, rev_reg_id: &str) -> VcxCoreResult<String> {
         let id = RevocationRegistryId::from_str(rev_reg_id)?;
         let request = self.request_builder()?.build_get_revoc_reg_def_request(None, &id)?;
-        let res = self._submit_request(request).await?;
+        let res = self._submit_request_cached(rev_reg_id, request).await?;
 
         let rev_reg_def = self.response_parser.parse_get_revoc_reg_def_response(&res)?;
 

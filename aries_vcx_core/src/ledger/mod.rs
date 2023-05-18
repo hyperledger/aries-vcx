@@ -7,3 +7,5 @@ pub mod indy_vdr_ledger;
 pub mod request_signer;
 #[cfg(any(feature = "modular_libs", feature = "vdr_proxy_ledger"))]
 pub mod request_submitter;
+#[cfg(any(feature = "modular_libs", feature = "vdr_proxy_ledger"))]
+pub mod response_cacher;

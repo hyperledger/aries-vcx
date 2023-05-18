@@ -8,8 +8,8 @@ edition = "2021"
 # Feature flag to include the libvdrtools dependency
 vdrtools = ["dep:libvdrtools"]
 # Feature flag to include the 'modular library' dependencies (vdrtools alternatives; indy-vdr, indy-credx)
-modular_libs = ["dep:indy-vdr", "dep:indy-credx", "dep:indy-ledger-response-parser"]
-vdr_proxy_ledger = ["dep:indy-vdr", "dep:indy-credx", "dep:indy-vdr-proxy-client", "dep:indy-ledger-response-parser"]
+modular_libs = ["dep:indy-vdr", "dep:indy-credx", "dep:indy-ledger-response-parser", "dep:lru"]
+vdr_proxy_ledger = ["dep:indy-vdr", "dep:indy-credx", "dep:indy-vdr-proxy-client", "dep:indy-ledger-response-parser", "dep:lru"]
 
 [dependencies]
 agency_client = { path = "../agency_client" }
@@ -43,6 +43,7 @@ tokio = { version = "1.20" }
 # TODO: Point to the official repo if / when vdr-proxy-client PR is merged: https://github.com/hyperledger/indy-vdr/pull/184
 indy-vdr-proxy-client = { git = "https://github.com/mirgee/indy-vdr.git", rev = "fab0535", optional = true }
 indy-ledger-response-parser = { path = "../indy_ledger_response_parser", optional = true }
+lru = { version = "0.10.0", optional = true }
 
 [dev-dependencies]
 tokio = { version = "1.20", features = ["rt", "macros", "rt-multi-thread"] }

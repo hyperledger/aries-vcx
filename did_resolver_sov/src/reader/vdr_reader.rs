@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 
 use crate::error::DidSovError;
 use aries_vcx_core::{
@@ -6,6 +6,7 @@ use aries_vcx_core::{
         indy_vdr_ledger::{IndyVdrLedger, IndyVdrLedgerConfig},
         request_signer::base_wallet::BaseWalletRequestSigner,
         request_submitter::vdr_ledger::{IndyVdrLedgerPool, IndyVdrSubmitter, LedgerPoolConfig},
+        response_cacher::in_memory::{InMemoryResponseCacher, InMemoryResponseCacherConfig},
     },
     wallet::{base_wallet::BaseWallet, indy_wallet::IndySdkWallet},
     ResponseParser, INVALID_WALLET_HANDLE,
@@ -22,10 +23,16 @@ impl TryFrom<LedgerPoolConfig> for ConcreteAttrReader {
         let request_submitter = Arc::new(IndyVdrSubmitter::new(ledger_pool));
         let request_signer = Arc::new(BaseWalletRequestSigner::new(wallet.clone()));
         let response_parser = Arc::new(ResponseParser::new());
+        let cacher_config = InMemoryResponseCacherConfig::builder()
+            .ttl(Duration::from_secs(60))
+            .capacity(1000)?
+            .build();
+        let response_cacher = Arc::new(InMemoryResponseCacher::new(cacher_config));
         let config = IndyVdrLedgerConfig {
             request_signer,
             request_submitter,
             response_parser,
+            response_cacher,
         };
         let ledger = Arc::new(IndyVdrLedger::new(config));
         Ok(Self { ledger })

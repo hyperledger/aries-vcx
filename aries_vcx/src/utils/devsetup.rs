@@ -464,7 +464,7 @@ impl SetupProfile {
         let client_url = env::var("VDR_PROXY_CLIENT_URL").unwrap_or_else(|_| "http://127.0.0.1:3030".to_string());
         let client = VdrProxyClient::new(&client_url).unwrap();
 
-        let profile: Arc<dyn Profile> = Arc::new(VdrProxyProfile::new(wallet_handle, client));
+        let profile: Arc<dyn Profile> = Arc::new(VdrProxyProfile::new(wallet_handle, client).unwrap());
 
         async fn vdr_proxy_teardown() {
             // nothing to do

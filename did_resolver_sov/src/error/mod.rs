@@ -29,6 +29,8 @@ pub enum DidSovError {
     DidDocumentBuilderError(#[from] DidDocumentBuilderError),
     #[error("Parsing error: {0}")]
     ParsingError(#[from] ParsingErrorSource),
+    #[error("Invalid configuration: {0}")]
+    InvalidConfiguration(String),
     #[error(transparent)]
     Other(#[from] Box<dyn std::error::Error + Send + Sync>),
 }
