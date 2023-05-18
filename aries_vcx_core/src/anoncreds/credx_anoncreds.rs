@@ -42,6 +42,8 @@ const CATEGORY_CREDENTIAL: &str = "VCX_CREDENTIAL";
 const CATEGORY_CRED_DEF: &str = "VCX_CRED_DEF";
 const CATEGORY_CRED_KEY_PROOF: &str = "VCX_CRED_DEF_PROOF";
 const CATEGORY_CRED_DEF_PRIV: &str = "VCX_CRED_DEF_PRIV";
+const CATEGORY_CRED_SCHEMA: &str = "VCX_CRED_SCHEMA";
+const CATEGORY_CRED_SCHEMA_ID: &str = "VCX_CRED_SCHEMA_ID";
 
 const CATEGORY_REV_REG: &str = "VCX_REV_REG";
 const CATEGORY_REV_REG_DELTA: &str = "VCX_REV_REG_DELTA";
@@ -352,6 +354,14 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
 
         self.wallet
             .add_wallet_record(CATEGORY_CRED_KEY_PROOF, &cred_def_id.0, &str_cred_key_proof, None)
+            .await?;
+
+        self.wallet
+            .add_wallet_record(CATEGORY_CRED_SCHEMA, schema.id(), schema_json, None)
+            .await?;
+
+        self.wallet
+            .add_wallet_record(CATEGORY_CRED_SCHEMA_ID, &cred_def_id.0, schema.id(), None)
             .await?;
 
         // Return the ID and the cred def
@@ -1034,11 +1044,36 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
     }
 
     async fn get_rev_reg_delta(&self, rev_reg_id: &str) -> VcxCoreResult<Option<String>> {
-        Err(unimplemented_method_err("credx get_rev_reg_delta"))
+        let options = json!({
+            "retrieve_type": false,
+            "retrieve_value": true,
+            "retrieve_tags": false,
+        })
+        .to_string();
+
+        let res_rev_reg_delta = self
+            .wallet
+            .get_wallet_record(CATEGORY_REV_REG_DELTA, rev_reg_id, &options)
+            .await;
+
+        if let Err(err) = &res_rev_reg_delta {
+            warn!(
+                "get_rev_reg_delta >> Unable to get rev_reg_delta cache for rev_reg_id: {}, error: {}",
+                rev_reg_id, err
+            );
+        }
+
+        Ok(res_rev_reg_delta.ok())
     }
 
     async fn clear_rev_reg_delta(&self, rev_reg_id: &str) -> VcxCoreResult<()> {
-        Err(unimplemented_method_err("credx clear_rev_reg_delta"))
+        if self.get_rev_reg_delta(rev_reg_id).await?.is_some() {
+            self.wallet
+                .delete_wallet_record(CATEGORY_REV_REG_DELTA, rev_reg_id)
+                .await?;
+        }
+
+        Ok(())
     }
 
     async fn generate_nonce(&self) -> VcxCoreResult<String> {
