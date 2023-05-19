@@ -1,4 +1,3 @@
-use indy_credx::ursa::cl::RevocationRegistryDelta as UrsaRevocationRegistryDelta;
 use indy_ledger_response_parser::{ResponseParser, RevocationRegistryDeltaInfo, RevocationRegistryInfo};
 use indy_vdr as vdr;
 use std::fmt::{Debug, Formatter};
@@ -22,36 +21,39 @@ use crate::common::ledger::transactions::verify_transaction_can_be_endorsed;
 use crate::errors::error::VcxCoreResult;
 use crate::global::author_agreement::get_txn_author_agreement;
 use crate::global::settings;
-use crate::wallet::base_wallet::BaseWallet;
 
 use super::base_ledger::BaseLedger;
+use super::request_signer::RequestSigner;
 use super::request_submitter::RequestSubmitter;
 
-pub struct IndyVdrLedgerConfig<T>
+pub struct IndyVdrLedgerConfig<T, U>
 where
     T: RequestSubmitter + Send + Sync,
+    U: RequestSigner + Send + Sync,
 {
-    pub wallet: Arc<dyn BaseWallet>,
+    pub request_signer: Arc<U>,
     pub request_submitter: Arc<T>,
     pub response_parser: Arc<ResponseParser>,
 }
 
-pub struct IndyVdrLedger<T>
+pub struct IndyVdrLedger<T, U>
 where
     T: RequestSubmitter + Send + Sync,
+    U: RequestSigner + Send + Sync,
 {
-    wallet: Arc<dyn BaseWallet>,
+    request_signer: Arc<U>,
     request_submitter: Arc<T>,
     response_parser: Arc<ResponseParser>,
 }
 
-impl<T> IndyVdrLedger<T>
+impl<T, U> IndyVdrLedger<T, U>
 where
     T: RequestSubmitter + Send + Sync,
+    U: RequestSigner + Send + Sync,
 {
-    pub fn new(config: IndyVdrLedgerConfig<T>) -> Self {
+    pub fn new(config: IndyVdrLedgerConfig<T, U>) -> Self {
         Self {
-            wallet: config.wallet,
+            request_signer: config.request_signer,
             request_submitter: config.request_submitter,
             response_parser: config.response_parser,
         }
@@ -69,10 +71,7 @@ where
     }
 
     async fn _get_request_signature(&self, did: &str, request: &PreparedRequest) -> VcxCoreResult<Vec<u8>> {
-        let to_sign = request.get_signature_input()?;
-        let signer_verkey = self.wallet.key_for_local_did(did).await?;
-        let signature = self.wallet.sign(&signer_verkey, to_sign.as_bytes()).await?;
-        Ok(signature)
+        self.request_signer.sign(did, request).await
     }
 
     async fn _sign_and_submit_request(&self, submitter_did: &str, request: PreparedRequest) -> VcxCoreResult<String> {
@@ -194,9 +193,10 @@ where
     }
 }
 
-impl<T> Debug for IndyVdrLedger<T>
+impl<T, U> Debug for IndyVdrLedger<T, U>
 where
     T: RequestSubmitter + Send + Sync,
+    U: RequestSigner + Send + Sync,
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "IndyVdrLedger instance")
@@ -204,9 +204,10 @@ where
 }
 
 #[async_trait]
-impl<T> BaseLedger for IndyVdrLedger<T>
+impl<T, U> BaseLedger for IndyVdrLedger<T, U>
 where
     T: RequestSubmitter + Send + Sync,
+    U: RequestSigner + Send + Sync,
 {
     async fn sign_and_submit_request(&self, submitter_did: &str, request_json: &str) -> VcxCoreResult<String> {
         let request = PreparedRequest::from_request_json(request_json)?;

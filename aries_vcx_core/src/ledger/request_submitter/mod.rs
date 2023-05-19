@@ -9,6 +9,6 @@ pub mod vdr_ledger;
 pub mod vdr_proxy;
 
 #[async_trait]
-pub trait RequestSubmitter {
+pub trait RequestSubmitter: Send + Sync {
     async fn submit(&self, request: PreparedRequest) -> VcxCoreResult<String>;
 }

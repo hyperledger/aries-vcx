@@ -5,6 +5,7 @@ use aries_vcx_core::{
     ledger::{
         base_ledger::BaseLedger,
         indy_vdr_ledger::{IndyVdrLedger, IndyVdrLedgerConfig},
+        request_signer::base_wallet::BaseWalletRequestSigner,
         request_submitter::vdr_proxy::VdrProxySubmitter,
     },
     wallet::{base_wallet::BaseWallet, indy_wallet::IndySdkWallet},
@@ -24,10 +25,11 @@ impl VdrProxyProfile {
     pub fn new(wallet_handle: WalletHandle, client: VdrProxyClient) -> Self {
         let wallet = Arc::new(IndySdkWallet::new(wallet_handle));
         let anoncreds = Arc::new(IndySdkAnonCreds::new(wallet_handle));
+        let request_signer = Arc::new(BaseWalletRequestSigner::new(wallet.clone()));
         let request_submitter = Arc::new(VdrProxySubmitter::new(Arc::new(client)));
         let response_parser = Arc::new(ResponseParser::new());
         let config = IndyVdrLedgerConfig {
-            wallet: wallet.clone(),
+            request_signer,
             request_submitter,
             response_parser,
         };
