@@ -1,3 +1,4 @@
+use indy_credx::ursa::cl::RevocationRegistryDelta as UrsaRevocationRegistryDelta;
 use indy_ledger_response_parser::{ResponseParser, RevocationRegistryDeltaInfo, RevocationRegistryInfo};
 use indy_vdr as vdr;
 use std::fmt::{Debug, Formatter};
