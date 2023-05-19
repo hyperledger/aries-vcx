@@ -53,20 +53,20 @@ pub struct ReplyDataV1 {
     pub result: serde_json::Value,
 }
 
-pub fn verify_transaction_can_be_endorsed(transaction_json: &str, did: &str) -> VcxCoreResult<()> {
+pub fn verify_transaction_can_be_endorsed(transaction_json: &str, submitter_did: &str) -> VcxCoreResult<()> {
     let transaction: Request = serde_json::from_str(transaction_json)
         .map_err(|err| AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::InvalidJson, format!("{err:?}")))?;
 
-    let transaction_endorser = transaction.endorser.ok_or(AriesVcxCoreError::from_msg(
+    let endorser_did = transaction.endorser.ok_or(AriesVcxCoreError::from_msg(
         AriesVcxCoreErrorKind::InvalidJson,
         "Transaction cannot be endorsed: endorser DID is not set.",
     ))?;
 
-    if transaction_endorser != did {
+    if endorser_did != submitter_did {
         return Err(AriesVcxCoreError::from_msg(
             AriesVcxCoreErrorKind::InvalidJson,
             format!(
-                "Transaction cannot be endorsed: transaction endorser DID `{transaction_endorser}` and sender DID `{did}` are different"
+                "Transaction cannot be endorsed: transaction endorser DID `{endorser_did}` and sender DID `{submitter_did}` are different"
             ),
         ));
     }

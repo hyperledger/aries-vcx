@@ -72,7 +72,7 @@ mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_endorse_transaction() {
-        SetupProfile::run_indy(|setup| async move {
+        SetupProfile::run(|setup| async move {
             let ledger = Arc::clone(&setup.profile).inject_ledger();
             let (author_did, _) = add_new_did(&setup.profile, &setup.institution_did, None).await.unwrap();
             let (endorser_did, _) = add_new_did(&setup.profile, &setup.institution_did, Some("ENDORSER"))

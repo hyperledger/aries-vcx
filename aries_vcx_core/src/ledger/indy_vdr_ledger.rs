@@ -376,10 +376,16 @@ where
         &self,
         schema_json: &str,
         submitter_did: &str,
-        _endorser_did: Option<String>,
+        endorser_did: Option<String>,
     ) -> VcxCoreResult<()> {
-        let request = self._build_schema_request(submitter_did, schema_json)?;
-        let request = _append_txn_author_agreement_to_request(request).await?;
+        let mut request = self._build_schema_request(submitter_did, schema_json)?;
+        request = _append_txn_author_agreement_to_request(request).await?;
+        if let Some(endorser_did) = endorser_did {
+            request = PreparedRequest::from_request_json(
+                self.set_endorser(submitter_did, &request.req_json.to_string(), &endorser_did)
+                    .await?,
+            )?
+        }
         self._sign_and_submit_request(submitter_did, request).await.map(|_| ())
     }
 
