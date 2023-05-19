@@ -21,7 +21,8 @@ impl<T> Reply<T> {
     pub fn result(self) -> T {
         match self {
             Reply::ReplyV0(reply) => reply.result,
-            Reply::ReplyV1(mut reply) => reply.data.result.remove(0).result,
+            //  SAFETY: Empty array cannot be instantiated
+            Reply::ReplyV1(reply) => reply.data.result.into_iter().next().unwrap().result,
         }
     }
 }
@@ -38,7 +39,7 @@ pub struct ReplyV1<T> {
 
 #[derive(Debug, Deserialize)]
 pub struct ReplyDataV1<T> {
-    pub result: Vec<ReplyV0<T>>,
+    pub result: [ReplyV0<T>; 1],
 }
 
 #[derive(Debug, Deserialize)]
@@ -124,14 +125,15 @@ where
 {
     type Error = IndyError;
 
-    fn try_from(mut value: ReplyV1<TypedReply<'a, T>>) -> Result<Self, Self::Error> {
+    fn try_from(value: ReplyV1<TypedReply<'a, T>>) -> Result<Self, Self::Error> {
         let value = value
             .data
             .result
-            .pop()
+            .into_iter()
+            .next()
             .ok_or_else(|| err_msg(IndyErrorKind::InvalidTransaction, "Invalid response type"))?;
         let data = ReplyDataV1 {
-            result: vec![value.try_into()?],
+            result: [value.try_into()?],
         };
         Ok(ReplyV1 { data })
     }
