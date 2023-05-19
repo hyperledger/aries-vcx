@@ -6,6 +6,7 @@ extern crate serde_json;
 
 mod domain;
 
+use domain::response::MessageWithTypedReply;
 pub use indy_api_types::{errors, ErrorCode};
 use indy_api_types::{
     errors::{err_msg, IndyErrorKind, IndyResult, IndyResultExt},
@@ -62,10 +63,7 @@ impl ResponseParser {
             GetNymReplyResult::GetNymReplyResultV0(res) => {
                 let data: GetNymResultDataV0 = res
                     .data
-                    .ok_or(IndyError::from_msg(
-                        IndyErrorKind::LedgerItemNotFound,
-                        format!("Nym not found"),
-                    ))
+                    .ok_or_else(|| IndyError::from_msg(IndyErrorKind::LedgerItemNotFound, format!("Nym not found")))
                     .and_then(|data| {
                         serde_json::from_str(&data).map_err(|err| {
                             IndyError::from_msg(
@@ -207,12 +205,16 @@ impl ResponseParser {
         };
 
         let revoc_reg_delta = RevocationRegistryDeltaV1 {
-            value: json!(UrsaRevocationDelta::from_parts(
+            value: serde_json::to_value(UrsaRevocationDelta::from_parts(
                 revoc_reg.value.accum_from.map(|accum| accum.value).as_ref(),
                 &revoc_reg.value.accum_to.value,
                 &revoc_reg.value.issued,
                 &revoc_reg.value.revoked,
-            )),
+            ))
+            .to_indy(
+                IndyErrorKind::InvalidStructure,
+                "Cannot convert RevocationRegistryDelta to Value",
+            )?,
         };
 
         Ok(RevocationRegistryDeltaInfo {
@@ -226,19 +228,12 @@ impl ResponseParser {
     where
         T: DeserializeOwned + ReplyType + ::std::fmt::Debug,
     {
-        let message: serde_json::Value =
-            serde_json::from_str(&response).to_indy(IndyErrorKind::InvalidTransaction, "Response is invalid json")?;
-
-        if message["op"] == json!("REPLY") && message["result"]["type"] != json!(T::get_type()) {
-            return Err(err_msg(IndyErrorKind::InvalidTransaction, "Invalid response type"));
-        }
-
-        let message: Message<T> = serde_json::from_value(message).to_indy(
+        let message: MessageWithTypedReply<T> = serde_json::from_str(response).to_indy(
             IndyErrorKind::LedgerItemNotFound,
             "Structure doesn't correspond to type. Most probably not found",
         )?; // FIXME: Review how we handle not found
 
-        match message {
+        match message.try_into()? {
             Message::Reject(response) | Message::ReqNACK(response) => Err(err_msg(
                 IndyErrorKind::InvalidTransaction,
                 format!("Transaction has been failed: {:?}", response.reason),

@@ -1,3 +1,8 @@
+use indy_api_types::{
+    errors::{err_msg, IndyErrorKind},
+    IndyError,
+};
+
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Response {
@@ -73,4 +78,52 @@ pub enum Message<T> {
 
 pub trait ReplyType {
     fn get_type<'a>() -> &'a str;
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(tag = "op")]
+pub enum MessageWithTypedReply<'a, T> {
+    #[serde(rename = "REQNACK")]
+    ReqNACK(Response),
+    #[serde(borrow)]
+    #[serde(rename = "REPLY")]
+    Reply(Reply<TypedReply<'a, T>>),
+    #[serde(rename = "REJECT")]
+    Reject(Response),
+}
+
+#[derive(Deserialize, Debug)]
+pub struct TypedReply<'a, T> {
+    #[serde(flatten)]
+    data: T,
+    #[serde(rename = "type")]
+    type_: &'a str,
+}
+
+impl<'a, T> TryFrom<TypedReply<'a, T>> for Reply<T>
+where
+    T: ReplyType,
+{
+    type Error = IndyError;
+    fn try_from(value: TypedReply<'a, T>) -> Result<Self, Self::Error> {
+        if value.type_ != T::get_type() {
+            Err(err_msg(IndyErrorKind::InvalidTransaction, "Invalid response type"))
+        } else {
+            Ok(Reply::ReplyV0(ReplyV0 { result: value.data }))
+        }
+    }
+}
+
+impl<'a, T> TryFrom<MessageWithTypedReply<'a, T>> for Message<T>
+where
+    T: ReplyType,
+{
+    type Error = IndyError;
+    fn try_from(value: MessageWithTypedReply<'a, T>) -> Result<Self, Self::Error> {
+        match value {
+            MessageWithTypedReply::ReqNACK(r) => Ok(Message::ReqNACK(r)),
+            MessageWithTypedReply::Reply(r) => Ok(Message::Reply(r.result().try_into()?)),
+            MessageWithTypedReply::Reject(r) => Ok(Message::Reject(r)),
+        }
+    }
 }
