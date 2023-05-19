@@ -88,22 +88,16 @@ mod tests {
         field: String,
     }
 
-    fn _cacher_config(secs: Option<u64>) -> InMemoryResponseCacherConfig {
+    fn _cacher_config(ttl: Duration) -> InMemoryResponseCacherConfig {
         InMemoryResponseCacherConfig::builder()
-            .ttl(Duration::from_secs(secs.unwrap_or(60)))
+            .ttl(ttl)
             .capacity(2)
             .unwrap()
             .build()
     }
 
-    fn _cacher_options(secs: Option<u64>) -> InMemoryResponseCacherOptions {
-        InMemoryResponseCacherOptions::builder()
-            .ttl(Duration::from_secs(secs.unwrap_or(60)))
-            .build()
-    }
-
-    fn _cacher(secs: Option<u64>) -> InMemoryResponseCacher {
-        InMemoryResponseCacher::new(_cacher_config(secs))
+    fn _cacher_options(ttl: Duration) -> InMemoryResponseCacherOptions {
+        InMemoryResponseCacherOptions::builder().ttl(ttl).build()
     }
 
     fn _test_object() -> TestStruct {
@@ -114,7 +108,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_put_and_get() -> VcxCoreResult<()> {
-        let cacher = _cacher(None);
+        let cacher = InMemoryResponseCacher::new(_cacher_config(Duration::from_secs(1)));
         let test_object = _test_object();
 
         cacher.put("id1", test_object.clone()).await?;
@@ -127,12 +121,12 @@ mod tests {
 
     #[tokio::test]
     async fn test_expiration() -> VcxCoreResult<()> {
-        let cacher = _cacher(Some(1));
+        let cacher = InMemoryResponseCacher::new(_cacher_config(Duration::from_millis(1)));
         let test_object = _test_object();
 
         cacher.put("id1", test_object).await?;
 
-        tokio::time::sleep(Duration::from_secs(2)).await;
+        tokio::time::sleep(Duration::from_millis(1)).await;
 
         let cached_object: Option<TestStruct> = cacher.get("id1", None).await?;
         assert_eq!(None, cached_object);
@@ -142,7 +136,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_capacity() -> VcxCoreResult<()> {
-        let cacher = _cacher(None);
+        let cacher = InMemoryResponseCacher::new(_cacher_config(Duration::from_secs(1)));
         let test_object = _test_object();
 
         cacher.put("id1", test_object.clone()).await?;
@@ -157,7 +151,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_nonexistent_key() -> VcxCoreResult<()> {
-        let cacher = _cacher(None);
+        let cacher = InMemoryResponseCacher::new(_cacher_config(Duration::from_secs(1)));
 
         let cached_object: Option<TestStruct> = cacher.get("nonexistent", None).await?;
         assert_eq!(None, cached_object);
@@ -167,14 +161,16 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_options_ttl_override_global_config_ttl() -> VcxCoreResult<()> {
-        let cacher = _cacher(Some(1));
+        let cacher = InMemoryResponseCacher::new(_cacher_config((Duration::from_millis(1))));
         let test_object = _test_object();
 
         cacher.put("id1", test_object.clone()).await?;
 
-        tokio::time::sleep(Duration::from_secs(2)).await;
+        tokio::time::sleep(Duration::from_millis(1)).await;
 
-        let cached_object: Option<TestStruct> = cacher.get("id1", Some(_cacher_options(Some(3)))).await?;
+        let cached_object: Option<TestStruct> = cacher
+            .get("id1", Some(_cacher_options(Duration::from_millis(10))))
+            .await?;
         assert_eq!(Some(test_object), cached_object);
 
         Ok(())
