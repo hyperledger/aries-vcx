@@ -6,7 +6,6 @@ extern crate serde_json;
 
 mod domain;
 
-use domain::response::MessageWithTypedReply;
 pub use indy_api_types::{errors, ErrorCode};
 use indy_api_types::{
     errors::{err_msg, IndyErrorKind, IndyResult, IndyResultExt},
@@ -228,12 +227,12 @@ impl ResponseParser {
     where
         T: DeserializeOwned + ReplyType + ::std::fmt::Debug,
     {
-        let message: MessageWithTypedReply<T> = serde_json::from_str(response).to_indy(
+        let message: Message<T> = serde_json::from_str(response).to_indy(
             IndyErrorKind::LedgerItemNotFound,
             "Structure doesn't correspond to type. Most probably not found",
         )?; // FIXME: Review how we handle not found
 
-        match message.try_into()? {
+        match message {
             Message::Reject(response) | Message::ReqNACK(response) => Err(err_msg(
                 IndyErrorKind::InvalidTransaction,
                 format!("Transaction has been failed: {:?}", response.reason),

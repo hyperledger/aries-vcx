@@ -66,13 +66,15 @@ pub struct TxnMetadata {
 }
 
 #[derive(Deserialize, Debug)]
-#[serde(tag = "op")]
+#[serde(try_from = "MessageWithTypedReply<'de, T>")]
+#[serde(bound(deserialize = "
+    Self: TryFrom<MessageWithTypedReply<'de, T>>,
+    T: serde::Deserialize<'de>,
+    <Self as TryFrom<MessageWithTypedReply<'de, T>>>::Error: std::fmt::Display
+"))]
 pub enum Message<T> {
-    #[serde(rename = "REQNACK")]
     ReqNACK(Response),
-    #[serde(rename = "REPLY")]
     Reply(Reply<T>),
-    #[serde(rename = "REJECT")]
     Reject(Response),
 }
 
@@ -82,7 +84,7 @@ pub trait ReplyType {
 
 #[derive(Deserialize, Debug)]
 #[serde(tag = "op")]
-pub enum MessageWithTypedReply<'a, T> {
+enum MessageWithTypedReply<'a, T> {
     #[serde(rename = "REQNACK")]
     ReqNACK(Response),
     #[serde(borrow)]
@@ -93,24 +95,60 @@ pub enum MessageWithTypedReply<'a, T> {
 }
 
 #[derive(Deserialize, Debug)]
-pub struct TypedReply<'a, T> {
+struct TypedReply<'a, T> {
     #[serde(flatten)]
-    data: T,
+    reply: T,
     #[serde(rename = "type")]
     type_: &'a str,
 }
 
-impl<'a, T> TryFrom<TypedReply<'a, T>> for Reply<T>
+impl<'a, T> TryFrom<ReplyV0<TypedReply<'a, T>>> for ReplyV0<T>
 where
     T: ReplyType,
 {
     type Error = IndyError;
-    fn try_from(value: TypedReply<'a, T>) -> Result<Self, Self::Error> {
-        if value.type_ != T::get_type() {
+    fn try_from(value: ReplyV0<TypedReply<'a, T>>) -> Result<Self, Self::Error> {
+        if value.result.type_ != T::get_type() {
             Err(err_msg(IndyErrorKind::InvalidTransaction, "Invalid response type"))
         } else {
-            Ok(Reply::ReplyV0(ReplyV0 { result: value.data }))
+            Ok(ReplyV0 {
+                result: value.result.reply,
+            })
         }
+    }
+}
+
+impl<'a, T> TryFrom<ReplyV1<TypedReply<'a, T>>> for ReplyV1<T>
+where
+    T: ReplyType,
+{
+    type Error = IndyError;
+
+    fn try_from(mut value: ReplyV1<TypedReply<'a, T>>) -> Result<Self, Self::Error> {
+        let value = value
+            .data
+            .result
+            .pop()
+            .ok_or_else(|| err_msg(IndyErrorKind::InvalidTransaction, "Invalid response type"))?;
+        let data = ReplyDataV1 {
+            result: vec![value.try_into()?],
+        };
+        Ok(ReplyV1 { data })
+    }
+}
+
+impl<'a, T> TryFrom<Reply<TypedReply<'a, T>>> for Reply<T>
+where
+    T: ReplyType,
+{
+    type Error = IndyError;
+
+    fn try_from(value: Reply<TypedReply<'a, T>>) -> Result<Self, Self::Error> {
+        let reply = match value {
+            Reply::ReplyV0(r) => Reply::ReplyV0(r.try_into()?),
+            Reply::ReplyV1(r) => Reply::ReplyV1(r.try_into()?),
+        };
+        Ok(reply)
     }
 }
 
@@ -119,10 +157,11 @@ where
     T: ReplyType,
 {
     type Error = IndyError;
+
     fn try_from(value: MessageWithTypedReply<'a, T>) -> Result<Self, Self::Error> {
         match value {
             MessageWithTypedReply::ReqNACK(r) => Ok(Message::ReqNACK(r)),
-            MessageWithTypedReply::Reply(r) => Ok(Message::Reply(r.result().try_into()?)),
+            MessageWithTypedReply::Reply(r) => Ok(Message::Reply(r.try_into()?)),
             MessageWithTypedReply::Reject(r) => Ok(Message::Reject(r)),
         }
     }
