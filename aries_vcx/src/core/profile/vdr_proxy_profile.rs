@@ -3,10 +3,12 @@ use std::sync::Arc;
 use aries_vcx_core::{
     anoncreds::{base_anoncreds::BaseAnonCreds, indy_anoncreds::IndySdkAnonCreds},
     ledger::{
-        base_ledger::BaseLedger, indy_vdr_ledger::IndyVdrLedger, request_submitter::vdr_proxy::VdrProxySubmitter,
+        base_ledger::BaseLedger,
+        indy_vdr_ledger::{IndyVdrLedger, IndyVdrLedgerConfig},
+        request_submitter::vdr_proxy::VdrProxySubmitter,
     },
     wallet::{base_wallet::BaseWallet, indy_wallet::IndySdkWallet},
-    VdrProxyClient, WalletHandle,
+    ResponseParser, VdrProxyClient, WalletHandle,
 };
 
 use super::profile::Profile;
@@ -21,9 +23,15 @@ pub struct VdrProxyProfile {
 impl VdrProxyProfile {
     pub fn new(wallet_handle: WalletHandle, client: VdrProxyClient) -> Self {
         let wallet = Arc::new(IndySdkWallet::new(wallet_handle));
-        let submitter = Arc::new(VdrProxySubmitter::new(Arc::new(client)));
-        let ledger = Arc::new(IndyVdrLedger::new(wallet.clone(), submitter));
         let anoncreds = Arc::new(IndySdkAnonCreds::new(wallet_handle));
+        let request_submitter = Arc::new(VdrProxySubmitter::new(Arc::new(client)));
+        let response_parser = Arc::new(ResponseParser::new());
+        let config = IndyVdrLedgerConfig {
+            wallet: wallet.clone(),
+            request_submitter,
+            response_parser,
+        };
+        let ledger = Arc::new(IndyVdrLedger::new(config));
         VdrProxyProfile {
             wallet,
             ledger,

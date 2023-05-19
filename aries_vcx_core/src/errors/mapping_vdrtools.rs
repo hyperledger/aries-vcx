@@ -1,11 +1,23 @@
-use vdrtools::types;
-use vdrtools::types::errors::IndyErrorKind;
+#[cfg(feature = "vdrtools")]
+use vdrtools::types::{
+    errors::{IndyError, IndyErrorKind},
+    ErrorCode,
+};
+
+#[cfg(all(
+    not(feature = "vdrtools"),
+    any(feature = "modular_libs", feature = "vdr_proxy_ledger")
+))]
+use indy_ledger_response_parser::{
+    errors::{IndyError, IndyErrorKind},
+    ErrorCode,
+};
 
 use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind};
 
 impl From<IndyErrorKind> for AriesVcxCoreErrorKind {
     fn from(indy: IndyErrorKind) -> Self {
-        use types::errors::IndyErrorKind::*;
+        use IndyErrorKind::*;
 
         match indy {
             InvalidParam(_) => AriesVcxCoreErrorKind::InvalidLibindyParam,
@@ -33,15 +45,15 @@ impl From<IndyErrorKind> for AriesVcxCoreErrorKind {
             WalletAccessFailed => AriesVcxCoreErrorKind::WalletAccessFailed,
             ProofRejected => AriesVcxCoreErrorKind::ProofRejected,
             _ => {
-                let err_code = types::ErrorCode::from(indy) as u32;
+                let err_code = ErrorCode::from(indy) as u32;
                 AriesVcxCoreErrorKind::VdrToolsError(err_code)
             }
         }
     }
 }
 
-impl From<types::errors::IndyError> for AriesVcxCoreError {
-    fn from(indy: types::errors::IndyError) -> Self {
+impl From<IndyError> for AriesVcxCoreError {
+    fn from(indy: IndyError) -> Self {
         let vcx_kind: AriesVcxCoreErrorKind = indy.kind().into();
         AriesVcxCoreError::from_msg(vcx_kind, indy.to_string())
     }

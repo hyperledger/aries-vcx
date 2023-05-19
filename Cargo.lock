@@ -211,7 +211,7 @@ dependencies = [
  "strum 0.16.0",
  "strum_macros 0.16.0",
  "thiserror",
- "time 0.3.20",
+ "time 0.3.21",
  "tokio",
  "url",
  "uuid 0.8.2",
@@ -242,6 +242,7 @@ dependencies = [
  "derive_builder 0.12.0",
  "futures",
  "indy-credx",
+ "indy-ledger-response-parser",
  "indy-vdr",
  "indy-vdr-proxy-client",
  "lazy_static",
@@ -251,7 +252,7 @@ dependencies = [
  "serde",
  "serde_json",
  "thiserror",
- "time 0.3.20",
+ "time 0.3.21",
  "tokio",
  "uuid 1.3.1",
 ]
@@ -2315,6 +2316,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "indy-ledger-response-parser"
+version = "0.1.0"
+dependencies = [
+ "indy-api-types",
+ "indy-vdr",
+ "serde",
+ "serde_json",
+ "time 0.3.21",
+ "ursa",
+]
+
+[[package]]
 name = "indy-utils"
 version = "0.1.0"
 dependencies = [
@@ -2630,7 +2643,7 @@ dependencies = [
  "serde_derive",
  "serde_json",
  "thiserror",
- "time 0.3.20",
+ "time 0.3.21",
  "tokio",
  "uuid 0.7.4",
 ]
@@ -2657,7 +2670,7 @@ dependencies = [
  "serde_derive",
  "serde_json",
  "thiserror",
- "time 0.3.20",
+ "time 0.3.21",
  "tokio",
  "url",
  "uuid 0.7.4",
@@ -2693,7 +2706,7 @@ dependencies = [
  "serde_json",
  "sha2 0.9.9",
  "sha3 0.9.1",
- "time 0.3.20",
+ "time 0.3.21",
  "ursa",
  "uuid 0.8.2",
  "zeroize",
@@ -3950,9 +3963,9 @@ dependencies = [
 
 [[package]]
 name = "serde"
-version = "1.0.160"
+version = "1.0.163"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bb2f3770c8bce3bcda7e149193a069a0f4365bda1fa5cd88e03bca26afc1216c"
+checksum = "2113ab51b87a539ae008b5c6c02dc020ffa39afd2d83cffcb3f4eb2722cebec2"
 dependencies = [
  "serde_derive",
 ]
@@ -3968,9 +3981,9 @@ dependencies = [
 
 [[package]]
 name = "serde_derive"
-version = "1.0.160"
+version = "1.0.163"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "291a097c63d8497e00160b166a967a4a79c64f3facdd01cbd7502231688d77df"
+checksum = "8c805777e3930c8883389c602315a24224bcc738b63905ef87cd1420353ea93e"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -4533,9 +4546,9 @@ dependencies = [
 
 [[package]]
 name = "time"
-version = "0.3.20"
+version = "0.3.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cd0cbfecb4d19b5ea75bb31ad904eb5b9fa13f21079c3b92017ebdf4999a5890"
+checksum = "8f3403384eaacbca9923fa06940178ac13e4edb725486d70e8e15881d0c836cc"
 dependencies = [
  "serde",
  "time-core",
@@ -4543,9 +4556,9 @@ dependencies = [
 
 [[package]]
 name = "time-core"
-version = "0.1.0"
+version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2e153e1f1acaef8acc537e68b44906d2db6436e2b35ac2c6b42640fff91f00fd"
+checksum = "7300fbefb4dadc1af235a9cef3737cea692a9d97e1b9cbcd4ebdae6f8868e6fb"
 
 [[package]]
 name = "tinyvec"

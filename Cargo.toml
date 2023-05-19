@@ -18,7 +18,8 @@ members = [
     "did_resolver",
     "did_resolver_registry",
     "did_resolver_sov",
-    "did_resolver_web"
+    "did_resolver_web",
+    "indy_ledger_response_parser"
 ]
 
 [workspace.package]

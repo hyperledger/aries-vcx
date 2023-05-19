@@ -43,3 +43,6 @@ pub use vdrtools::{
 
 #[cfg(feature = "vdr_proxy_ledger")]
 pub use indy_vdr_proxy_client::VdrProxyClient;
+
+#[cfg(any(feature = "modular_libs", feature = "vdr_proxy_ledger"))]
+pub use indy_ledger_response_parser::ResponseParser;
