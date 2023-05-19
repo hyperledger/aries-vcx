@@ -1,7 +1,7 @@
 use time::OffsetDateTime;
 use vdrtools::{DidValue, Locator};
 
-use crate::common::ledger::transactions::{Request, Response};
+use crate::common::ledger::transactions::{verify_transaction_can_be_endorsed, Response};
 use crate::errors::error::prelude::*;
 use crate::global::author_agreement::get_txn_author_agreement;
 use crate::global::settings;
@@ -303,7 +303,7 @@ pub async fn endorse_transaction(
         return Ok(());
     }
 
-    _verify_transaction_can_be_endorsed(transaction_json, endorser_did)?;
+    verify_transaction_can_be_endorsed(transaction_json, endorser_did)?;
 
     let transaction = multisign_request(wallet_handle, endorser_did, transaction_json).await?;
     let response = libindy_submit_request(pool_handle, &transaction).await?;
@@ -315,41 +315,6 @@ pub async fn endorse_transaction(
             format!("{:?}", res.reason),
         )),
     }
-}
-
-fn _verify_transaction_can_be_endorsed(transaction_json: &str, _did: &str) -> VcxCoreResult<()> {
-    let transaction: Request = serde_json::from_str(transaction_json)
-        .map_err(|err| AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::InvalidJson, format!("{err:?}")))?;
-
-    let transaction_endorser = transaction.endorser.ok_or(AriesVcxCoreError::from_msg(
-        AriesVcxCoreErrorKind::InvalidJson,
-        "Transaction cannot be endorsed: endorser DID is not set.",
-    ))?;
-
-    if transaction_endorser != _did {
-        return Err(AriesVcxCoreError::from_msg(
-            AriesVcxCoreErrorKind::InvalidJson,
-            format!(
-                "Transaction cannot be endorsed: transaction endorser DID `{transaction_endorser}` and sender DID `{_did}` are different"
-            ),
-        ));
-    }
-
-    let identifier = transaction.identifier.as_str();
-    if transaction.signature.is_none()
-        && !transaction
-            .signatures
-            .as_ref()
-            .map(|signatures| signatures.contains_key(identifier))
-            .unwrap_or(false)
-    {
-        return Err(AriesVcxCoreError::from_msg(
-            AriesVcxCoreErrorKind::InvalidJson,
-            "Transaction cannot be endorsed: the author must sign the transaction.".to_string(),
-        ));
-    }
-
-    Ok(())
 }
 
 pub async fn build_attrib_request(
