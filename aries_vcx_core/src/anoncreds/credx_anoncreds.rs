@@ -253,7 +253,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             return Ok((rev_reg_id.0, rev_reg, rev_reg_def));
         }
 
-        let (rev_reg_def, rev_reg_def_priv, rev_reg, rev_reg_delta) = credx::issuer::create_revocation_registry(
+        let (rev_reg_def, rev_reg_def_priv, rev_reg, _rev_reg_delta) = credx::issuer::create_revocation_registry(
             &issuer_did,
             &cred_def,
             tag,
@@ -292,12 +292,6 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
 
         self.wallet
             .add_wallet_record(CATEGORY_REV_REG, &rev_reg_id.0, &str_rev_reg, None)
-            .await?;
-
-        let str_rev_reg_delta = serde_json::to_string(&rev_reg_delta)?;
-
-        self.wallet
-            .add_wallet_record(CATEGORY_REV_REG_DELTA, &rev_reg_id.0, &str_rev_reg_delta, None)
             .await?;
 
         Ok((rev_reg_id.0, str_rev_reg_def, str_rev_reg))
@@ -473,9 +467,10 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let str_rev_reg = rev_reg.as_ref().map(serde_json::to_string).transpose()?;
         let str_rev_reg_delta = rev_reg_delta.as_ref().map(serde_json::to_string).transpose()?;
 
-        if let (Some(rev_reg_id), Some(str_rev_reg), Some(str_rev_reg_delta), Some((_, _, _, rev_reg_info, _))) =
-            (rev_reg_id, &str_rev_reg, &str_rev_reg_delta, revocation_config_parts)
+        let cred_rev_id = if let (Some(rev_reg_id), Some(str_rev_reg), Some((_, _, _, rev_reg_info, _))) =
+            (rev_reg_id, &str_rev_reg, revocation_config_parts)
         {
+            let cred_rev_id = rev_reg_info.curr_id.to_string();
             let str_rev_reg_info = serde_json::to_string(&rev_reg_info)?;
 
             self.wallet
@@ -483,17 +478,17 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
                 .await?;
 
             self.wallet
-                .update_wallet_record_value(CATEGORY_REV_REG_DELTA, &rev_reg_id, str_rev_reg_delta)
-                .await?;
-
-            self.wallet
                 .update_wallet_record_value(CATEGORY_REV_REG_INFO, &rev_reg_id, &str_rev_reg_info)
                 .await?;
+
+            Some(cred_rev_id)
+        } else {
+            None
         };
 
         let str_cred = serde_json::to_string(&cred)?;
 
-        Ok((str_cred, str_rev_reg, str_rev_reg_delta))
+        Ok((str_cred, cred_rev_id, str_rev_reg_delta))
     }
 
     /// * `requested_credentials_json`: either a credential or self-attested attribute for each requested attribute
@@ -954,8 +949,6 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
 
         let rev_reg = self.get_wallet_record_value(CATEGORY_REV_REG, rev_reg_id).await?;
 
-        let rev_reg_delta = self.get_wallet_record_value(CATEGORY_REV_REG_DELTA, rev_reg_id).await?;
-
         let rev_reg_def = self.get_wallet_record_value(CATEGORY_REV_REG_DEF, rev_reg_id).await?;
 
         let tails_file_hash = match &rev_reg_def {
@@ -968,7 +961,17 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let (rev_reg, new_rev_reg_delta) =
             credx::issuer::revoke_credential(&rev_reg_def, &rev_reg, cred_rev_id, &tails_reader)?;
 
-        let rev_reg_delta = credx::issuer::merge_revocation_registry_deltas(&rev_reg_delta, &new_rev_reg_delta)?;
+        let old_str_rev_reg_delta = self.get_rev_reg_delta(rev_reg_id).await?;
+
+        let rev_reg_delta = old_str_rev_reg_delta
+            .as_ref()
+            .map(|s| serde_json::from_str(s))
+            .transpose()?;
+
+        let rev_reg_delta = rev_reg_delta
+            .map(|rev_reg_delta| credx::issuer::merge_revocation_registry_deltas(&rev_reg_delta, &new_rev_reg_delta))
+            .transpose()?
+            .unwrap_or(new_rev_reg_delta);
 
         let str_rev_reg = serde_json::to_string(&rev_reg)?;
         let str_rev_reg_delta = serde_json::to_string(&rev_reg_delta)?;
@@ -977,9 +980,18 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             .update_wallet_record_value(CATEGORY_REV_REG, rev_reg_id, &str_rev_reg)
             .await?;
 
-        self.wallet
-            .update_wallet_record_value(CATEGORY_REV_REG_DELTA, rev_reg_id, &str_rev_reg_delta)
-            .await?;
+        match old_str_rev_reg_delta {
+            Some(_) => {
+                self.wallet
+                    .update_wallet_record_value(CATEGORY_REV_REG_DELTA, rev_reg_id, &str_rev_reg_delta)
+                    .await?
+            }
+            None => {
+                self.wallet
+                    .add_wallet_record(CATEGORY_REV_REG_DELTA, rev_reg_id, &str_rev_reg_delta, None)
+                    .await?
+            }
+        }
 
         Ok(())
     }
