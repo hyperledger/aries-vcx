@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 
 use aries_vcx_core::{
     anoncreds::{base_anoncreds::BaseAnonCreds, indy_anoncreds::IndySdkAnonCreds},
@@ -7,10 +7,13 @@ use aries_vcx_core::{
         indy_vdr_ledger::{IndyVdrLedger, IndyVdrLedgerConfig},
         request_signer::base_wallet::BaseWalletRequestSigner,
         request_submitter::vdr_proxy::VdrProxySubmitter,
+        response_cacher::in_memory::{InMemoryResponseCacher, InMemoryResponseCacherConfig},
     },
     wallet::{base_wallet::BaseWallet, indy_wallet::IndySdkWallet},
     ResponseParser, VdrProxyClient, WalletHandle,
 };
+
+use crate::errors::error::VcxResult;
 
 use super::profile::Profile;
 
@@ -22,23 +25,29 @@ pub struct VdrProxyProfile {
 }
 
 impl VdrProxyProfile {
-    pub fn new(wallet_handle: WalletHandle, client: VdrProxyClient) -> Self {
+    pub fn new(wallet_handle: WalletHandle, client: VdrProxyClient) -> VcxResult<Self> {
         let wallet = Arc::new(IndySdkWallet::new(wallet_handle));
         let anoncreds = Arc::new(IndySdkAnonCreds::new(wallet_handle));
         let request_signer = Arc::new(BaseWalletRequestSigner::new(wallet.clone()));
         let request_submitter = Arc::new(VdrProxySubmitter::new(Arc::new(client)));
         let response_parser = Arc::new(ResponseParser::new());
+        let cacher_config = InMemoryResponseCacherConfig::builder()
+            .ttl(Duration::from_secs(60))
+            .capacity(1000)?
+            .build();
+        let response_cacher = Arc::new(InMemoryResponseCacher::new(cacher_config));
         let config = IndyVdrLedgerConfig {
             request_signer,
             request_submitter,
             response_parser,
+            response_cacher,
         };
         let ledger = Arc::new(IndyVdrLedger::new(config));
-        VdrProxyProfile {
+        Ok(VdrProxyProfile {
             wallet,
             ledger,
             anoncreds,
-        }
+        })
     }
 }
 
