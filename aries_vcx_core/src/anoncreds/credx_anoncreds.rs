@@ -423,11 +423,9 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
 
         let revocation_config = match &mut revocation_config_parts {
             Some((rev_reg_def, rev_reg_def_priv, rev_reg, rev_reg_info, tails_dir)) => {
-                let tails_reader = TailsFileReader::new(tails_dir);
-
                 rev_reg_info.curr_id += 1;
 
-                match rev_reg_def {
+                let tails_file_hash = match rev_reg_def {
                     RevocationRegistryDefinition::RevocationRegistryDefinitionV1(rev_reg_def) => {
                         if rev_reg_info.curr_id > rev_reg_def.value.max_cred_num {
                             return Err(AriesVcxCoreError::from_msg(
@@ -439,8 +437,13 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
                         if rev_reg_def.value.issuance_type == IssuanceType::ISSUANCE_ON_DEMAND {
                             rev_reg_info.used_ids.insert(rev_reg_info.curr_id);
                         }
+
+                        &rev_reg_def.value.tails_hash
                     }
-                }
+                };
+
+                let tails_file_path = format!("{}/{}", tails_dir, tails_file_hash);
+                let tails_reader = TailsFileReader::new(&tails_file_path);
 
                 let revocation_config = CredentialRevocationConfig {
                     reg_def: rev_reg_def,
@@ -947,13 +950,18 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             .parse()
             .map_err(|e| AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::InvalidInput, e))?;
 
-        let tails_reader = TailsFileReader::new(tails_dir);
-
         let rev_reg = self.get_wallet_record_value(CATEGORY_REV_REG, rev_reg_id).await?;
 
         let rev_reg_delta = self.get_wallet_record_value(CATEGORY_REV_REG_DELTA, rev_reg_id).await?;
 
         let rev_reg_def = self.get_wallet_record_value(CATEGORY_REV_REG_DEF, rev_reg_id).await?;
+
+        let tails_file_hash = match &rev_reg_def {
+            RevocationRegistryDefinition::RevocationRegistryDefinitionV1(r) => &r.value.tails_hash,
+        };
+
+        let tails_file_path = format!("{tails_dir}/{tails_file_hash}");
+        let tails_reader = TailsFileReader::new(&tails_file_path);
 
         let (rev_reg, new_rev_reg_delta) =
             credx::issuer::revoke_credential(&rev_reg_def, &rev_reg, cred_rev_id, &tails_reader)?;
