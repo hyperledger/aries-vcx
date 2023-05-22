@@ -943,9 +943,12 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
     }
 
     async fn revoke_credential_local(&self, tails_dir: &str, rev_reg_id: &str, cred_rev_id: &str) -> VcxCoreResult<()> {
-        let cred_rev_id = cred_rev_id
-            .parse()
-            .map_err(|e| AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::InvalidInput, e))?;
+        let cred_rev_id = cred_rev_id.parse().map_err(|e| {
+            AriesVcxCoreError::from_msg(
+                AriesVcxCoreErrorKind::InvalidInput,
+                format!("Invalid cred_rev_id {cred_rev_id} - {e}"),
+            )
+        })?;
 
         let rev_reg = self.get_wallet_record_value(CATEGORY_REV_REG, rev_reg_id).await?;
 

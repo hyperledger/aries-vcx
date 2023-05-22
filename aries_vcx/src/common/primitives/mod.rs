@@ -41,7 +41,7 @@ pub mod integration_tests {
             )
             .await;
 
-            assert_eq!(rc.unwrap_err().kind(), AriesVcxErrorKind::LibindyInvalidStructure);
+            assert_eq!(rc.unwrap_err().kind(), AriesVcxErrorKind::InvalidInput);
         })
         .await;
     }
