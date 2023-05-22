@@ -355,8 +355,10 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             .add_wallet_record(CATEGORY_CRED_SCHEMA, schema.id(), schema_json, None)
             .await?;
 
+        let str_schema_id = serde_json::to_string(schema.id())?;
+
         self.wallet
-            .add_wallet_record(CATEGORY_CRED_SCHEMA_ID, &cred_def_id.0, schema.id(), None)
+            .add_wallet_record(CATEGORY_CRED_SCHEMA_ID, &cred_def_id.0, &str_schema_id, None)
             .await?;
 
         // Return the ID and the cred def
@@ -370,12 +372,12 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             .get_wallet_record_value(CATEGORY_CRED_KEY_PROOF, cred_def_id)
             .await?;
 
-        let schema_id = match &cred_def {
-            CredentialDefinition::CredentialDefinitionV1(c) => &c.schema_id,
-        };
+        let schema_id = self
+            .get_wallet_record_value(CATEGORY_CRED_SCHEMA_ID, cred_def_id)
+            .await?;
 
         // If cred_def contains schema ID, why take it as an argument here...?
-        let offer = credx::issuer::create_credential_offer(schema_id, &cred_def, &correctness_proof)?;
+        let offer = credx::issuer::create_credential_offer(&schema_id, &cred_def, &correctness_proof)?;
 
         serde_json::to_string(&offer).map_err(From::from)
     }
