@@ -4,7 +4,8 @@ use async_trait::async_trait;
 use futures::executor::block_on;
 use serde_json::Value;
 
-use crate::errors::error::{AriesVcxCoreError, VcxCoreResult};
+use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
+use crate::indy::wallet::WalletRecord;
 use crate::{
     indy,
     utils::{async_fn_iterator::AsyncFnIterator, json::TryGetIndex},
@@ -59,6 +60,23 @@ impl BaseWallet for IndySdkWallet {
 
     async fn get_wallet_record(&self, xtype: &str, id: &str, options_json: &str) -> VcxCoreResult<String> {
         indy::wallet::get_wallet_record(self.wallet_handle, xtype, id, options_json).await
+    }
+
+    async fn get_wallet_record_value(&self, xtype: &str, id: &str) -> VcxCoreResult<String> {
+        let options = r#"{
+                "retrieve_type": false,
+                "retrieve_value": true,
+                "retrieve_tags": false
+            }"#;
+
+        let str_record = self.get_wallet_record(xtype, id, options).await?;
+        let wallet_record: WalletRecord = serde_json::from_str(&str_record)?;
+        wallet_record.value.ok_or_else(|| {
+            AriesVcxCoreError::from_msg(
+                AriesVcxCoreErrorKind::WalletRecordNotFound,
+                "The wallet record does not have a value",
+            )
+        })
     }
 
     async fn delete_wallet_record(&self, xtype: &str, id: &str) -> VcxCoreResult<()> {
