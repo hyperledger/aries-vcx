@@ -101,7 +101,7 @@ pub async fn build_cred_defs_json_verifier(
     credential_data: &[CredInfoVerifier],
 ) -> VcxResult<String> {
     debug!("building credential_def_json for proof validation");
-    let ledger = Arc::clone(profile).inject_ledger();
+    let ledger = Arc::clone(profile).inject_anoncreds_ledger_read();
     let mut credential_json = json!({});
 
     for cred_info in credential_data.iter() {
@@ -129,7 +129,7 @@ pub async fn build_schemas_json_verifier(
 ) -> VcxResult<String> {
     debug!("building schemas json for proof validation");
 
-    let ledger = Arc::clone(profile).inject_ledger();
+    let ledger = Arc::clone(profile).inject_anoncreds_ledger_read();
     let mut schemas_json = json!({});
 
     for cred_info in credential_data.iter() {
@@ -158,7 +158,7 @@ pub async fn build_rev_reg_defs_json(
 ) -> VcxResult<String> {
     debug!("building rev_reg_def_json for proof validation");
 
-    let ledger = Arc::clone(profile).inject_ledger();
+    let ledger = Arc::clone(profile).inject_anoncreds_ledger_read();
     let mut rev_reg_defs_json = json!({});
 
     for cred_info in credential_data.iter() {
@@ -183,7 +183,7 @@ pub async fn build_rev_reg_defs_json(
 pub async fn build_rev_reg_json(profile: &Arc<dyn Profile>, credential_data: &[CredInfoVerifier]) -> VcxResult<String> {
     debug!("building rev_reg_json for proof validation");
 
-    let ledger = Arc::clone(profile).inject_ledger();
+    let ledger = Arc::clone(profile).inject_anoncreds_ledger_read();
     let mut rev_regs_json = json!({});
 
     for cred_info in credential_data.iter() {

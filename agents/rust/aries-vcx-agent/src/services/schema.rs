@@ -34,7 +34,7 @@ impl ServiceSchemas {
     }
 
     pub async fn schema_json(&self, thread_id: &str) -> AgentResult<String> {
-        let ledger = Arc::clone(&self.profile).inject_ledger();
+        let ledger = Arc::clone(&self.profile).inject_anoncreds_ledger_read();
         Ok(ledger.get_schema(thread_id, None).await?)
     }
 

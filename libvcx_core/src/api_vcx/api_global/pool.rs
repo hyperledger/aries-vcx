@@ -1,5 +1,5 @@
 use aries_vcx::aries_vcx_core::indy::ledger::pool::{close, create_pool_ledger_config, open_pool_ledger, PoolConfig};
-use aries_vcx::aries_vcx_core::{PoolHandle, INVALID_POOL_HANDLE};
+use aries_vcx::aries_vcx_core::INVALID_POOL_HANDLE;
 use aries_vcx::global::settings::{indy_mocks_enabled, DEFAULT_POOL_NAME};
 use std::sync::RwLock;
 

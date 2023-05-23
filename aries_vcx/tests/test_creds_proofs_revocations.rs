@@ -7,7 +7,6 @@ pub mod utils;
 
 #[cfg(test)]
 mod integration_tests {
-    use std::thread;
     use std::time::Duration;
 
     use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
@@ -23,7 +22,6 @@ mod integration_tests {
         revoke_credential_and_publish_accumulator, revoke_credential_local, rotate_rev_reg, send_proof_request,
         verifier_create_proof_and_send_request,
     };
-    use crate::utils::test_macros::ProofStateType;
 
     use super::*;
 

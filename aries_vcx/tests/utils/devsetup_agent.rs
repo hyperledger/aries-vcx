@@ -447,6 +447,7 @@ pub mod test_utils {
     }
 
     pub async fn create_test_alice_instance(setup: &SetupPool) -> Alice {
+        #[cfg(not(feature = "modular_libs"))]
         let (alice_profile, teardown) = {
             info!("create_test_alice_instance >> using indy profile");
             Alice::setup_indy_profile(setup.pool_handle).await

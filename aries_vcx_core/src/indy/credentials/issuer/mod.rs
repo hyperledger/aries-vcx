@@ -1,6 +1,6 @@
 use vdrtools::{CredentialOffer, CredentialRequest, CredentialValues, Locator, RevocationRegistryId};
 
-use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
+use crate::errors::error::VcxCoreResult;
 use crate::global::settings;
 use crate::indy::anoncreds;
 use crate::indy::utils::parse_and_validate;

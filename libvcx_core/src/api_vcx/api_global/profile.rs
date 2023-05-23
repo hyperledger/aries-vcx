@@ -3,7 +3,7 @@ use std::sync::Arc;
 use crate::errors::error::LibvcxResult;
 use aries_vcx::aries_vcx_core::{
     wallet::{base_wallet::BaseWallet, indy_wallet::IndySdkWallet},
-    PoolHandle, WalletHandle,
+    WalletHandle,
 };
 use aries_vcx::core::profile::{profile::Profile, vdrtools_profile::VdrtoolsProfile};
 use aries_vcx::{global::settings::indy_mocks_enabled, utils::mockdata::profile::mock_profile::MockProfile};
