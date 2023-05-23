@@ -4,17 +4,14 @@ use std::{
     sync::Arc,
 };
 
+use crate::utils::{
+    constants::ATTRS,
+    json::{AsTypeOrDeserializationError, TryGetIndex},
+};
 use crate::wallet::base_wallet::AsyncFnIteratorCollect;
 use crate::{
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
     wallet::base_wallet::BaseWallet,
-};
-use crate::{
-    indy::wallet::WalletRecord,
-    utils::{
-        constants::ATTRS,
-        json::{AsTypeOrDeserializationError, TryGetIndex},
-    },
 };
 
 use async_trait::async_trait;
@@ -75,22 +72,8 @@ impl IndyCredxAnonCreds {
     where
         T: DeserializeOwned,
     {
-        let options = r#"{
-            "retrieve_type": false,
-            "retrieve_value": true,
-            "retrieve_tags": false
-        }"#;
-
-        let str_record = self.wallet.get_wallet_record(category, id, options).await?;
-        let wallet_record: WalletRecord = serde_json::from_str(&str_record)?;
-        let str_value = wallet_record.value.ok_or_else(|| {
-            AriesVcxCoreError::from_msg(
-                AriesVcxCoreErrorKind::WalletRecordNotFound,
-                "The wallet record does not have a value",
-            )
-        })?;
-
-        serde_json::from_str(&str_value).map_err(From::from)
+        let str_record = self.wallet.get_wallet_record_value(category, id).await?;
+        serde_json::from_str(&str_record).map_err(From::from)
     }
 
     async fn get_link_secret(&self, link_secret_id: &str) -> VcxCoreResult<MasterSecret> {

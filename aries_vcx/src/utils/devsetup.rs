@@ -367,10 +367,6 @@ impl SetupWalletPool {
 }
 
 impl SetupProfile {
-    pub(self) fn should_run_modular() -> bool {
-        cfg!(feature = "modular_libs")
-    }
-
     #[cfg(any(feature = "modular_libs", feature = "vdrtools"))]
     pub async fn init() -> SetupProfile {
         init_test_logging();
@@ -534,13 +530,10 @@ impl SetupProfile {
     }
 }
 
-// TODO - FUTURE - delete this method after `SetupProfile::run_indy` is removed. The purpose of this helper method
-// is to return a test profile for a prover/holder given an existing indy-based profile setup (i.e. returned by SetupProfile::run_indy)
-#[cfg(any(feature = "modular_libs", feature = "vdrtools"))]
 pub async fn init_holder_setup_in_indy_context(indy_issuer_setup: &SetupProfile) -> SetupProfile {
-    if SetupProfile::should_run_modular() {
-        return SetupProfile::init().await; // create a new modular profile
-    }
+    #[cfg(all(not(feature = "mixed_breed"), feature = "modular_libs"))]
+    return SetupProfile::init().await; // create a new modular profile
+
     indy_issuer_setup.clone() // if indy runtime, just re-use the issuer setup
 }
 

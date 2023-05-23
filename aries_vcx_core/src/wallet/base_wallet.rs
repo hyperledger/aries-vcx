@@ -1,6 +1,8 @@
 use async_trait::async_trait;
+use serde::de::DeserializeOwned;
 
-use crate::errors::error::VcxCoreResult;
+use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
+use crate::indy::wallet::WalletRecord;
 use crate::utils::async_fn_iterator::AsyncFnIterator;
 
 /// Trait defining standard 'wallet' related functionality. The APIs, including
@@ -30,6 +32,23 @@ pub trait BaseWallet: std::fmt::Debug + Send + Sync {
         -> VcxCoreResult<()>;
 
     async fn get_wallet_record(&self, xtype: &str, id: &str, options_json: &str) -> VcxCoreResult<String>;
+
+    async fn get_wallet_record_value(&self, xtype: &str, id: &str) -> VcxCoreResult<String> {
+        let options = r#"{
+                "retrieve_type": false,
+                "retrieve_value": true,
+                "retrieve_tags": false
+            }"#;
+
+        let str_record = self.get_wallet_record(xtype, id, options).await?;
+        let wallet_record: WalletRecord = serde_json::from_str(&str_record)?;
+        wallet_record.value.ok_or_else(|| {
+            AriesVcxCoreError::from_msg(
+                AriesVcxCoreErrorKind::WalletRecordNotFound,
+                "The wallet record does not have a value",
+            )
+        })
+    }
 
     async fn delete_wallet_record(&self, xtype: &str, id: &str) -> VcxCoreResult<()>;
 
