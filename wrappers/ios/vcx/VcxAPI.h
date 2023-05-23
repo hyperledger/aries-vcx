@@ -90,17 +90,6 @@
           paymentHandle:(NSNumber *)paymentHandle
              completion:(void (^)(NSError *error, NSNumber * credDefHandle))completion;
 
-- (void)vcxSchemaPrepareForEndorser:(NSString *)sourceId
-                         schemaName:(NSString *)schemaName
-                      schemaVersion:(NSString *)schemaVersion
-                         schemaData:(NSString *)schemaData
-                           endorser:(NSString *)endorser
-                         completion:(void (^)(
-                                 NSError *error,
-                                 NSNumber * schemaHandle,
-                                 NSString *schemaTransaction
-                         ))completion;
-
 - (void)vcxSchemaGetSchemaId:(NSString *)sourceId
                 schemaHandle:(NSNumber *)schemaHandle
                   completion:(void (^)(NSError *error, NSString *schemaId))completion;

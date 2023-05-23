@@ -48,11 +48,6 @@ public abstract class LibVcx {
          */
         public int vcx_schema_create(int command_handle, String source_id, String schema_name, String version, String schema_data, int payment_handle, Callback cb);
 
-         /**
-         * Create a Schema that will be published by Endorser later.
-         */
-        public int vcx_schema_prepare_for_endorser(int command_handle, String source_id, String schema_name, String version, String schema_data, String endorser, Callback cb);
-
         /**
          * Populates status with the current State of this claim.
          */
@@ -615,13 +610,13 @@ public abstract class LibVcx {
         /**
          * OOB
          */
-        
+
         public int vcx_out_of_band_sender_create(int command_handle, String config, Callback cb);
-  
+
         public int vcx_out_of_band_receiver_create(int command_handle, String message, Callback cb);
 
         public int vcx_out_of_band_sender_get_thread_id(int command_handle, int handle, Callback cb);
-        
+
         public int vcx_out_of_band_receiver_get_thread_id(int command_handle, int handle, Callback cb);
 
         public int vcx_out_of_band_sender_append_message(int command_handle, int handle, String message, Callback cb);
@@ -639,17 +634,17 @@ public abstract class LibVcx {
         public int vcx_out_of_band_receiver_build_connection(int command_handle, int handle, Callback cb);
 
         public int vcx_out_of_band_sender_serialize(int command_handle, int handle, Callback cb);
-        
+
         public int vcx_out_of_band_receiver_serialize(int command_handle, int handle, Callback cb);
 
         public int vcx_out_of_band_sender_deserialize(int command_handle, String oob_json, Callback cb);
-        
+
         public int vcx_out_of_band_receiver_deserialize(int command_handle, String oob_json, Callback cb);
 
         public int vcx_out_of_band_sender_release(int command_handle);
-        
+
         public int vcx_out_of_band_receiver_release(int command_handle);
-        
+
         public int vcx_get_verkey_from_ledger(int command_handle, String did, Callback cb);
     }
 

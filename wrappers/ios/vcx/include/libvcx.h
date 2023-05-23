@@ -156,21 +156,6 @@ vcx_error_t vcx_schema_create(
         void (*cb)(vcx_command_handle_t xcommand_handle, vcx_error_t err, vcx_u32_t cred_def_handle)
 );
 
-vcx_error_t vcx_schema_prepare_for_endorser(
-        vcx_command_handle_t command_handle,
-        const char *source_id,
-        const char *schema_name,
-        const char *version,
-        const char *schema_data,
-        const char *endorser,
-        void (*cb)(
-                vcx_command_handle_t xcommand_handle,
-                vcx_error_t err,
-                vcx_u32_t schema_handle,
-                const char *schema_transaction
-        )
-);
-
 vcx_error_t vcx_schema_get_schema_id(
         vcx_command_handle_t command_handle,
         vcx_u32_t schema_handle,

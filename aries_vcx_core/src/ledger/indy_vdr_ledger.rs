@@ -229,12 +229,6 @@ where
     U: RequestSigner + Send + Sync,
     V: ResponseCacher + Send + Sync,
 {
-    async fn sign_and_submit_request(&self, submitter_did: &str, request_json: &str) -> VcxCoreResult<String> {
-        let request = PreparedRequest::from_request_json(request_json)?;
-
-        self._sign_and_submit_request(submitter_did, request).await
-    }
-
     async fn submit_request(&self, request_json: &str) -> VcxCoreResult<String> {
         let request = PreparedRequest::from_request_json(request_json)?;
         self._submit_request(request).await
@@ -386,12 +380,6 @@ where
     async fn get_ledger_txn(&self, seq_no: i32, submitter_did: Option<&str>) -> VcxCoreResult<String> {
         let request = self._build_get_txn_request(submitter_did, seq_no)?;
         self._submit_request(request).await
-    }
-
-    async fn build_schema_request(&self, submitter_did: &str, schema_json: &str) -> VcxCoreResult<String> {
-        let request = self._build_schema_request(submitter_did, schema_json)?;
-        let request = _append_txn_author_agreement_to_request(request).await?;
-        Ok(request.req_json.to_string())
     }
 
     async fn publish_schema(
