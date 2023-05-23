@@ -5,3 +5,5 @@ pub mod profile;
 pub mod vdr_proxy_profile;
 #[cfg(feature = "vdrtools")]
 pub mod vdrtools_profile;
+#[cfg(feature =  "mixed_breed")]
+pub mod mixed_breed_profile;

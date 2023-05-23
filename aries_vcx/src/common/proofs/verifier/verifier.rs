@@ -128,8 +128,9 @@ pub mod unit_tests {
 
     #[tokio::test]
     #[ignore]
+    #[cfg(feature = "vdrtools")]
     async fn test_pool_proof_restrictions() {
-        SetupProfile::run_indy(|setup| async move {
+        SetupProfile::run(|setup| async move {
             let holder_setup = init_holder_setup_in_indy_context(&setup).await;
 
             let requested_attrs = json!([
@@ -217,8 +218,9 @@ pub mod unit_tests {
 
     #[tokio::test]
     #[ignore]
+    #[cfg(feature = "vdrtools")]
     async fn test_pool_proof_validate_attribute() {
-        SetupProfile::run_indy(|setup| async move {
+        SetupProfile::run(|setup| async move {
             let holder_setup = init_holder_setup_in_indy_context(&setup).await;
 
             let requested_attrs = json!([
@@ -333,8 +335,9 @@ pub mod integration_tests {
 
     #[tokio::test]
     #[ignore]
+    #[cfg(feature = "vdrtools")]
     async fn test_pool_prover_verify_proof() {
-        SetupProfile::run_indy(|setup| async move {
+        SetupProfile::run(|setup| async move {
             let holder_setup = init_holder_setup_in_indy_context(&setup).await;
 
             let (schemas, cred_defs, proof_req, proof) =
@@ -353,8 +356,9 @@ pub mod integration_tests {
 
     #[tokio::test]
     #[ignore]
+    #[cfg(feature = "vdrtools")]
     async fn test_pool_prover_verify_proof_with_predicate_success_case() {
-        SetupProfile::run_indy(|setup| async move {
+        SetupProfile::run(|setup| async move {
             let holder_setup = init_holder_setup_in_indy_context(&setup).await;
 
             let (schemas, cred_defs, proof_req, proof) =
@@ -373,8 +377,9 @@ pub mod integration_tests {
 
     #[tokio::test]
     #[ignore]
+    #[cfg(feature = "vdrtools")]
     async fn test_pool_prover_verify_proof_with_predicate_fail_case() {
-        SetupProfile::run_indy(|setup| async move {
+        SetupProfile::run(|setup| async move {
             let holder_setup = init_holder_setup_in_indy_context(&setup).await;
 
             let (schemas, cred_defs, proof_req, proof) =

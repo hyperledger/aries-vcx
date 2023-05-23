@@ -31,9 +31,10 @@ mod integration_tests {
 
     #[tokio::test]
     #[ignore]
+    #[cfg(feature = "vdrtools")]
     async fn test_pool_get_credential_def() {
         // TODO - use SetupProfile::run after modular impls
-        SetupProfile::run_indy(|setup| async move {
+        SetupProfile::run(|setup| async move {
             let (_, _, cred_def_id, cred_def_json, _) = create_and_store_nonrevocable_credential_def(
                 &setup.profile,
                 &setup.institution_did,
