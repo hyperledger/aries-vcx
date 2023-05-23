@@ -547,7 +547,9 @@ pub mod unit_tests {
             &serde_json::from_str(&proof_req).unwrap(),
         )
         .unwrap();
-        assert_eq!(creds, vec![cred1, cred2]);
+        assert_eq!(creds.len(), 2);
+        assert!(creds.contains(&cred1));
+        assert!(creds.contains(&cred2));
     }
 
     #[test]
