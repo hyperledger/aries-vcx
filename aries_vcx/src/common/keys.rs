@@ -77,7 +77,11 @@ pub async fn get_verkey_from_ledger(profile: &Arc<dyn Profile>, did: &str) -> Vc
 mod test {
     #[tokio::test]
     #[ignore]
-    #[cfg(all(not(feature = "vdr_proxy_ledger"), not(feature = "modular_libs"), not(feature = "mixed_breed")))]
+    #[cfg(all(
+        not(feature = "vdr_proxy_ledger"),
+        not(feature = "modular_libs"),
+        not(feature = "mixed_breed")
+    ))]
     async fn test_pool_rotate_verkey_fails() {
         use super::*;
 
