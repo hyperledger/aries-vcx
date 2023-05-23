@@ -8,8 +8,7 @@ pub mod test_utils {
     use aries_vcx::core::profile::profile::Profile;
     use aries_vcx::errors::error::{AriesVcxError, AriesVcxErrorKind};
     use aries_vcx::handlers::proof_presentation::types::{
-        RetrievedCredentialForReferent, RetrievedCredentials, SelectedCredentialForReferent,
-        SelectedCredentialForReferentCredential, SelectedCredentials,
+        RetrievedCredentialForReferent, RetrievedCredentials, SelectedCredentials,
     };
     use aries_vcx::handlers::util::{AnyInvitation, OfferInfo, PresentationProposalData};
     use aries_vcx::protocols::SendClosureConnection;
@@ -1222,12 +1221,10 @@ pub mod test_utils {
             if cred_array.len() > 0 {
                 let first_cred = cred_array[0].clone();
                 let tails_dir = with_tails.then_some(get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_owned());
-                selected_credentials.credential_for_referent.insert(
+                selected_credentials.select_credential_for_referent_from_retrieved(
                     referent.to_owned(),
-                    SelectedCredentialForReferent {
-                        credential: SelectedCredentialForReferentCredential::from(first_cred),
-                        tails_dir,
-                    },
+                    first_cred,
+                    tails_dir,
                 );
             }
         }
@@ -1266,12 +1263,10 @@ pub mod test_utils {
                 .collect();
             let first_cred = filtered[0].clone();
             let tails_dir = with_tails.then_some(get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_owned());
-            selected_credentials.credential_for_referent.insert(
-                referent.clone(),
-                SelectedCredentialForReferent {
-                    credential: SelectedCredentialForReferentCredential::from(first_cred),
-                    tails_dir,
-                },
+            selected_credentials.select_credential_for_referent_from_retrieved(
+                referent.to_owned(),
+                first_cred,
+                tails_dir,
             );
         }
         return selected_credentials;

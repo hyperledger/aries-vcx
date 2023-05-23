@@ -7,9 +7,7 @@ use crate::storage::object_cache::ObjectCache;
 use crate::storage::Storage;
 use aries_vcx::core::profile::profile::Profile;
 use aries_vcx::handlers::proof_presentation::prover::Prover;
-use aries_vcx::handlers::proof_presentation::types::{
-    SelectedCredentialForReferent, SelectedCredentialForReferentCredential, SelectedCredentials,
-};
+use aries_vcx::handlers::proof_presentation::types::SelectedCredentials;
 use aries_vcx::handlers::util::PresentationProposalData;
 use aries_vcx::messages::msg_fields::protocols::present_proof::ack::AckPresentation;
 use aries_vcx::messages::msg_fields::protocols::present_proof::request::RequestPresentation;
@@ -73,13 +71,7 @@ impl ServiceProver {
             if !cred_array.is_empty() {
                 let first_cred = cred_array[0].clone();
                 let tails_dir = tails_dir.map(|x| x.to_owned());
-                res_credentials.credential_for_referent.insert(
-                    referent,
-                    SelectedCredentialForReferent {
-                        credential: SelectedCredentialForReferentCredential::from(first_cred),
-                        tails_dir,
-                    },
-                );
+                res_credentials.select_credential_for_referent_from_retrieved(referent, first_cred, tails_dir);
             }
         }
         Ok(res_credentials)

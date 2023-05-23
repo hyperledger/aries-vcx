@@ -7,9 +7,7 @@ pub mod test_utils {
     use aries_vcx::core::profile::modular_libs_profile::ModularLibsProfile;
     use aries_vcx::core::profile::profile::Profile;
     use aries_vcx::core::profile::vdrtools_profile::VdrtoolsProfile;
-    use aries_vcx::handlers::proof_presentation::types::{
-        SelectedCredentialForReferent, SelectedCredentialForReferentCredential, SelectedCredentials,
-    };
+    use aries_vcx::handlers::proof_presentation::types::SelectedCredentials;
     use aries_vcx::handlers::revocation_notification::receiver::RevocationNotificationReceiver;
     use aries_vcx::handlers::revocation_notification::sender::RevocationNotificationSender;
     use aries_vcx::handlers::util::{AnyInvitation, OfferInfo, Status};
@@ -703,13 +701,7 @@ pub mod test_utils {
             };
 
             for (referent, credentials) in credentials.credentials_by_referent {
-                use_credentials.credential_for_referent.insert(
-                    referent,
-                    SelectedCredentialForReferent {
-                        credential: SelectedCredentialForReferentCredential::from(credentials[0].clone()),
-                        tails_dir: None,
-                    },
-                );
+                use_credentials.select_credential_for_referent_from_retrieved(referent, credentials[0].clone(), None);
             }
 
             use_credentials
