@@ -18,11 +18,11 @@ pub mod test_utils {
         IssuerConfig, WalletConfig,
     };
     #[cfg(feature = "modular_libs")]
-    use aries_vcx_core::ledger::indy_vdr_ledger::LedgerPoolConfig;
+    use aries_vcx_core::ledger::request_submitter::vdr_ledger::LedgerPoolConfig;
     use aries_vcx_core::wallet::base_wallet::BaseWallet;
     use aries_vcx_core::wallet::indy_wallet::IndySdkWallet;
     use aries_vcx_core::{PoolHandle, WalletHandle};
-    use diddoc::aries::service::AriesService;
+    use diddoc_legacy::aries::service::AriesService;
     use futures::future::BoxFuture;
 
     use agency_client::agency_client::AgencyClient;

@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use ::uuid::Uuid;
 use chrono::Utc;
-use diddoc::aries::diddoc::AriesDidDoc;
+use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use messages::decorators::thread::Thread;
 use messages::decorators::timing::Timing;
 use messages::msg_fields::protocols::connection::invitation::{

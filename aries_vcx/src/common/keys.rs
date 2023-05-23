@@ -84,6 +84,7 @@ mod test {
 
     #[tokio::test]
     #[ignore]
+    #[cfg(not(feature = "vdr_proxy_ledger"))]
     async fn test_pool_rotate_verkey_fails() {
         SetupProfile::run_indy(|setup| async move {
             enable_pool_mocks();

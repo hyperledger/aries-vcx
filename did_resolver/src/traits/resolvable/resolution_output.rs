@@ -1,4 +1,4 @@
-use did_doc_builder::schema::did_doc::DidDocument;
+use did_doc::schema::did_doc::DidDocument;
 use serde::{Deserialize, Serialize};
 
 use super::resolution_metadata::DidResolutionMetadata;

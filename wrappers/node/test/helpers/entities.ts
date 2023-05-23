@@ -2,23 +2,23 @@ import '../module-resolver-helper';
 
 import { assert } from 'chai';
 import {
-  ARIES_CREDENTIAL_OFFER,
-  ARIES_PROOF_REQUEST,
-  Connection,
-  Credential,
-  CredentialDef,
-  DisclosedProof,
-  IConnectionCreateData,
-  ICredentialCreateWithOffer,
-  ICredentialDefCreateDataV2,
-  IDisclosedProofCreateData,
-  IIssuerCredentialBuildOfferDataV2,
-  IProofCreateData,
-  ISchemaCreateData,
-  IssuerCredential,
-  Proof,
-  RevocationRegistry,
-  Schema,
+    ARIES_CREDENTIAL_OFFER,
+    ARIES_PROOF_REQUEST,
+    Connection,
+    Credential,
+    CredentialDef,
+    DisclosedProof,
+    IConnectionCreateData,
+    ICredentialCreateWithOffer,
+    ICredentialDefCreateDataV2,
+    IDisclosedProofCreateData,
+    IIssuerCredentialBuildOfferDataV2,
+    IProofCreateData, IProofCreateDataV2,
+    ISchemaCreateData,
+    IssuerCredential,
+    Proof,
+    RevocationRegistry,
+    Schema,
 } from 'src';
 import * as uuid from 'uuid';
 import { ARIES_CONNECTION_ACK, ARIES_CONNECTION_REQUEST } from './mockdata';
@@ -147,7 +147,7 @@ export const issuerCredentialCreate = async (): Promise<
   return [issuerCredential, buildOfferData];
 };
 
-export const dataProofCreate = (): IProofCreateData => ({
+export const dataProofCreateLegacy = (): IProofCreateData => ({
   attrs: [{ name: 'attr1' }, { name: 'attr2' }, { names: ['attr3', 'attr4'] }],
   name: 'Proof',
   preds: [{ name: 'pred1', p_type: 'GE', p_value: 123 }],
@@ -158,7 +158,22 @@ export const dataProofCreate = (): IProofCreateData => ({
   sourceId: 'testProofSourceId',
 });
 
-export const proofCreate = async (data = dataProofCreate()): Promise<Proof> => {
+export const dataProofCreate = (): IProofCreateDataV2 => ({
+  attrs: {
+    ref1: { name: 'attr1' },
+    ref2: { name: 'attr2' },
+    ref3: { names: ['attr3', 'attr4'] },
+  },
+  name: 'Proof',
+  preds: { pred1: { name: 'pred1', p_type: 'GE', p_value: 123 }},
+  revocationInterval: {
+    from: undefined,
+    to: undefined,
+  },
+  sourceId: 'testProofSourceId',
+});
+
+export const proofCreate = async (data: IProofCreateData | IProofCreateDataV2): Promise<Proof> => {
   const proof = await Proof.create(data);
   assert.notEqual(proof.handle, undefined);
   return proof;

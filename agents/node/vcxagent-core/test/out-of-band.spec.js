@@ -85,7 +85,7 @@ describe('test out of band communication', () => {
 
       const oobReceiver = await OutOfBandReceiver.createWithMessage(oobPresentationRequestMsg)
       const presentationRequest = oobReceiver.extractMessage()
-      await alice.sendHolderProof(presentationRequest, revRegId => tailsDir, { attribute_3: 'Smith' })
+      await alice.sendHolderProof(presentationRequest, revRegId => tailsDir, { attr_nickname: 'Smith' })
       await faber.updateStateVerifierProof(VerifierStateType.Finished)
     } catch (e) {
       console.error(e.stack)

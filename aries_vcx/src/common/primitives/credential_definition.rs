@@ -292,7 +292,7 @@ pub mod integration_tests {
             let ledger = Arc::clone(&setup.profile).inject_ledger();
             let schema_json = ledger.get_schema(&schema_id, None).await.unwrap();
 
-            let (_, cred_def_json) = generate_cred_def(
+            let (cred_def_id, cred_def_json_local) = generate_cred_def(
                 &setup.profile,
                 &setup.institution_did,
                 &schema_json,
@@ -304,9 +304,19 @@ pub mod integration_tests {
             .unwrap();
 
             ledger
-                .publish_cred_def(&cred_def_json, &setup.institution_did)
+                .publish_cred_def(&cred_def_json_local, &setup.institution_did)
                 .await
                 .unwrap();
+
+            std::thread::sleep(std::time::Duration::from_secs(2));
+
+            let cred_def_json_ledger = ledger
+                .get_cred_def(&cred_def_id, Some(&setup.institution_did))
+                .await
+                .unwrap();
+
+            assert!(cred_def_json_local.contains(&cred_def_id));
+            assert!(cred_def_json_ledger.contains(&cred_def_id));
         })
         .await;
     }

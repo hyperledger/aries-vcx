@@ -2,7 +2,7 @@ pub mod parsing;
 mod resolution;
 
 use aries_vcx_core::errors::error::AriesVcxCoreError;
-use did_resolver::did_doc_builder::error::DidDocumentBuilderError;
+use did_resolver::did_doc::error::DidDocumentBuilderError;
 use thiserror::Error;
 
 use self::parsing::ParsingErrorSource;
@@ -29,6 +29,8 @@ pub enum DidSovError {
     DidDocumentBuilderError(#[from] DidDocumentBuilderError),
     #[error("Parsing error: {0}")]
     ParsingError(#[from] ParsingErrorSource),
+    #[error("Invalid configuration: {0}")]
+    InvalidConfiguration(String),
     #[error(transparent)]
     Other(#[from] Box<dyn std::error::Error + Send + Sync>),
 }

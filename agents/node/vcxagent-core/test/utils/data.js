@@ -9,28 +9,28 @@ function getFaberProofDataWithNonRevocation (issuerDid) {
 }
 
 function proofRequestDataStandard (issuerDid) {
-  const proofAttributes = [
-    {
+  const proofAttributes = {
+    attr_basic_identity: {
       names: ['name', 'last_name', 'sex'],
       restrictions: [{ issuer_did: issuerDid }]
     },
-    {
+    attr_date: {
       name: 'date',
       restrictions: { issuer_did: issuerDid }
     },
-    {
+    attr_education: {
       name: 'degree',
       restrictions: { 'attr::degree::value': 'maths' }
     },
-    {
+    attr_nickname: {
       name: 'nickname',
       self_attest_allowed: true
     }
-  ]
+  }
 
-  const proofPredicates = [
-    { name: 'age', p_type: '>=', p_value: 20, restrictions: [{ issuer_did: issuerDid }] }
-  ]
+  const proofPredicates = {
+    predicate_is_adult: { name: 'age', p_type: '>=', p_value: 18, restrictions: [{ issuer_did: issuerDid }] }
+  }
 
   return {
     sourceId: '213',
@@ -42,12 +42,12 @@ function proofRequestDataStandard (issuerDid) {
 }
 
 function proofRequestDataSelfAttest () {
-  const proofAttributes = [
-    {
+  const proofAttributes = {
+    attr_nickname: {
       name: 'nickname',
       self_attest_allowed: true
     }
-  ]
+  }
 
   return {
     sourceId: '213',

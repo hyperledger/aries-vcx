@@ -31,7 +31,6 @@ mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_retrieve_credentials() {
-        // todo - use SetupProfile::run after modular impls
         SetupProfile::run_indy(|setup| async move {
             let holder_setup = init_holder_setup_in_indy_context(&setup).await;
 
@@ -73,7 +72,6 @@ mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_get_credential_def() {
-        // todo - use SetupProfile::run after modular impls
         SetupProfile::run_indy(|setup| async move {
             let (_, _, cred_def_id, cred_def_json, _) = create_and_store_nonrevocable_credential_def(
                 &setup.profile,
@@ -165,7 +163,6 @@ mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_case_for_proof_req_doesnt_matter_for_retrieve_creds() {
-        // todo - use SetupProfile::run after modular impls
         SetupProfile::run_indy(|setup| async move {
             let holder_setup = init_holder_setup_in_indy_context(&setup).await;
 
@@ -272,7 +269,6 @@ mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_generate_proof() {
-        // todo - use SetupProfile::run after modular impls
         SetupProfile::run_indy(|setup| async move {
             let holder_setup = init_holder_setup_in_indy_context(&setup).await;
 
@@ -443,7 +439,6 @@ mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_generate_self_attested_proof() {
-        // todo - use SetupProfile::run after modular impls
         SetupProfile::run_indy(|setup| async move {
             let holder_setup = init_holder_setup_in_indy_context(&setup).await;
 

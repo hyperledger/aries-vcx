@@ -1,6 +1,6 @@
 use chrono::{DateTime, NaiveDateTime, Utc};
 use did_resolver::{
-    did_doc_builder::schema::{
+    did_doc::schema::{
         did_doc::DidDocument, service::Service, types::uri::Uri,
         verification_method::VerificationMethod,
     },
