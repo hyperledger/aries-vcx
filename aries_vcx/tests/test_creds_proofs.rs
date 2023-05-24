@@ -30,7 +30,6 @@ mod integration_tests {
 
     #[tokio::test]
     #[ignore]
-    #[cfg(feature = "vdrtools")]
     async fn test_agency_pool_retrieve_credentials() {
         SetupProfile::run(|setup| async move {
             let holder_setup = init_holder_setup_in_indy_context(&setup).await;
@@ -72,7 +71,6 @@ mod integration_tests {
 
     #[tokio::test]
     #[ignore]
-    #[cfg(feature = "vdrtools")]
     async fn test_agency_pool_get_credential_def() {
         SetupProfile::run(|setup| async move {
             let (_, _, cred_def_id, cred_def_json, _) = create_and_store_nonrevocable_credential_def(
@@ -94,7 +92,6 @@ mod integration_tests {
 
     #[tokio::test]
     #[ignore]
-    #[cfg(feature = "vdrtools")]
     async fn test_agency_pool_retrieve_credentials_empty() {
         SetupProfile::run(|setup| async move {
             // create skeleton proof request attachment data

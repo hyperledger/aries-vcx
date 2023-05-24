@@ -65,7 +65,6 @@ pub mod integration_tests {
 
     #[tokio::test]
     #[ignore]
-    #[cfg(feature = "vdrtools")]
     async fn test_pool_create_rev_reg_delta_from_ledger() {
         SetupProfile::run(|setup| async move {
             let attrs = r#"["address1","address2","city","state","zip"]"#;

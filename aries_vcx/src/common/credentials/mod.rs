@@ -52,7 +52,6 @@ mod integration_tests {
 
     #[tokio::test]
     #[ignore]
-    #[cfg(feature = "vdrtools")]
     async fn test_pool_prover_get_credential() {
         SetupProfile::run(|setup| async move {
             let holder_setup = init_holder_setup_in_indy_context(&setup).await;
@@ -85,7 +84,6 @@ mod integration_tests {
 
     #[tokio::test]
     #[ignore]
-    #[cfg(feature = "vdrtools")]
     async fn test_pool_get_cred_rev_id() {
         SetupProfile::run(|setup| async move {
             let holder_setup = init_holder_setup_in_indy_context(&setup).await;
@@ -109,7 +107,6 @@ mod integration_tests {
 
     #[tokio::test]
     #[ignore]
-    #[cfg(feature = "vdrtools")]
     async fn test_pool_is_cred_revoked() {
         SetupProfile::run(|setup| async move {
             let holder_setup = init_holder_setup_in_indy_context(&setup).await;

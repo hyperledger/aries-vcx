@@ -19,7 +19,6 @@ pub mod integration_tests {
 
     #[tokio::test]
     #[ignore]
-    #[cfg(feature = "vdrtools")]
     async fn test_pool_rev_reg_def_fails_for_cred_def_created_without_revocation() {
         // todo: does not need agency setup
         SetupProfile::run(|setup| async move {
@@ -49,7 +48,6 @@ pub mod integration_tests {
 
     #[tokio::test]
     #[ignore]
-    #[cfg(feature = "vdrtools")]
     async fn test_pool_get_rev_reg_def_json() {
         SetupProfile::run(|setup| async move {
             let attrs = r#"["address1","address2","city","state","zip"]"#;
@@ -64,7 +62,6 @@ pub mod integration_tests {
 
     #[tokio::test]
     #[ignore]
-    #[cfg(feature = "vdrtools")]
     async fn test_pool_get_rev_reg_delta_json() {
         SetupProfile::run(|setup| async move {
             let attrs = r#"["address1","address2","city","state","zip"]"#;
@@ -81,7 +78,6 @@ pub mod integration_tests {
 
     #[tokio::test]
     #[ignore]
-    #[cfg(feature = "vdrtools")]
     async fn test_pool_get_rev_reg() {
         SetupProfile::run(|setup| async move {
             let attrs = r#"["address1","address2","city","state","zip"]"#;
@@ -101,7 +97,6 @@ pub mod integration_tests {
 
     #[tokio::test]
     #[ignore]
-    #[cfg(feature = "vdrtools")]
     async fn test_pool_get_cred_def() {
         SetupProfile::run(|setup| async move {
             let attrs = r#"["address1","address2","city","state","zip"]"#;

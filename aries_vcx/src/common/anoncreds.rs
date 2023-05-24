@@ -59,7 +59,6 @@ pub mod integration_tests {
 
     #[tokio::test]
     #[ignore]
-    #[cfg(feature = "vdrtools")]
     async fn test_pool_revoke_credential() {
         SetupProfile::run(|setup| async move {
             let holder_setup = init_holder_setup_in_indy_context(&setup).await;

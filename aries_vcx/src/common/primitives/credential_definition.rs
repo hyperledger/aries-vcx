@@ -288,7 +288,6 @@ pub mod integration_tests {
 
     #[tokio::test]
     #[ignore]
-    #[cfg(feature = "vdrtools")]
     async fn test_pool_create_cred_def_real() {
         SetupProfile::run(|setup| async move {
             let (schema_id, _) =
@@ -329,7 +328,6 @@ pub mod integration_tests {
 
     #[tokio::test]
     #[ignore]
-    #[cfg(feature = "vdrtools")]
     async fn test_pool_create_rev_reg_def() {
         SetupProfile::run(|setup| async move {
             let (schema_id, _) =

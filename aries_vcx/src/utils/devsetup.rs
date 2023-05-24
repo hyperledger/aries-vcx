@@ -367,7 +367,6 @@ impl SetupWalletPool {
 }
 
 impl SetupProfile {
-    #[cfg(any(feature = "modular_libs", feature = "vdrtools"))]
     pub async fn init() -> SetupProfile {
         init_test_logging();
         set_test_configs();
@@ -513,7 +512,6 @@ impl SetupProfile {
         }
     }
 
-    #[cfg(any(feature = "modular_libs", feature = "vdrtools"))]
     pub async fn run<F>(f: impl FnOnce(Self) -> F)
     where
         F: Future<Output = ()>,
