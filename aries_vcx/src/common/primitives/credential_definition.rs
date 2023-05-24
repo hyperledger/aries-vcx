@@ -353,11 +353,14 @@ pub mod integration_tests {
                 .await
                 .unwrap();
 
+            let path = get_temp_dir_path(TAILS_DIR);
+            std::fs::create_dir_all(&path).unwrap();
+
             let (rev_reg_def_id, rev_reg_def_json, rev_reg_entry_json) = generate_rev_reg(
                 &setup.profile,
                 &setup.institution_did,
                 &cred_def_id,
-                get_temp_dir_path(TAILS_DIR).to_str().unwrap(),
+                path.to_str().unwrap(),
                 2,
                 "tag1",
             )
