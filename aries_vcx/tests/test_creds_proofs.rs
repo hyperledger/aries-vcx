@@ -21,7 +21,7 @@ mod integration_tests {
     use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
     use aries_vcx::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
     use aries_vcx::utils::constants::{DEFAULT_SCHEMA_ATTRS, TAILS_DIR};
-    use aries_vcx::utils::devsetup::{init_holder_setup_in_indy_context, SetupProfile};
+    use aries_vcx::utils::devsetup::SetupProfile;
     use aries_vcx::utils::get_temp_dir_path;
     use messages::msg_fields::protocols::present_proof::request::{
         RequestPresentation, RequestPresentationContent, RequestPresentationDecorators,
@@ -32,16 +32,14 @@ mod integration_tests {
     #[ignore]
     async fn test_agency_pool_retrieve_credentials() {
         SetupProfile::run(|setup| async move {
-            let holder_setup = init_holder_setup_in_indy_context(&setup).await;
-
             create_and_store_nonrevocable_credential(
                 &setup.profile,
-                &holder_setup.profile,
+                &setup.profile,
                 &setup.institution_did,
                 DEFAULT_SCHEMA_ATTRS,
             )
             .await;
-            let (_, _, req, _) = create_indy_proof(&setup.profile, &holder_setup.profile, &setup.institution_did).await;
+            let (_, _, req, _) = create_indy_proof(&setup.profile, &setup.profile, &setup.institution_did).await;
 
             let pres_req_data: PresentationRequestData = serde_json::from_str(&req).unwrap();
             let id = "test_id".to_owned();
@@ -60,7 +58,7 @@ mod integration_tests {
             let proof_req = RequestPresentation::with_decorators(id, content, decorators);
             let proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
 
-            let retrieved_creds = proof.retrieve_credentials(&holder_setup.profile).await.unwrap();
+            let retrieved_creds = proof.retrieve_credentials(&setup.profile).await.unwrap();
             // assert number of cred matches for different requested referents
             assert_eq!(retrieved_creds.credentials_by_referent["address1_1"].len(), 2);
             assert_eq!(retrieved_creds.credentials_by_referent["zip_2"].len(), 2);

@@ -528,13 +528,6 @@ impl SetupProfile {
     }
 }
 
-pub async fn init_holder_setup_in_indy_context(indy_issuer_setup: &SetupProfile) -> SetupProfile {
-    #[cfg(all(not(feature = "mixed_breed"), feature = "modular_libs"))]
-    return SetupProfile::init().await; // create a new modular profile
-
-    indy_issuer_setup.clone() // if indy runtime, just re-use the issuer setup
-}
-
 impl SetupInstitutionWallet {
     pub async fn init() -> SetupInstitutionWallet {
         init_test_logging();

@@ -60,7 +60,7 @@ pub mod unit_tests {
     use crate::common::proofs::proof_request::ProofRequestData;
     use crate::common::test_utils::create_and_store_nonrevocable_credential;
     use crate::utils;
-    use crate::utils::devsetup::{init_holder_setup_in_indy_context, SetupProfile};
+    use crate::utils::devsetup::SetupProfile;
 
     use super::*;
 
@@ -130,8 +130,6 @@ pub mod unit_tests {
     #[ignore]
     async fn test_pool_proof_restrictions() {
         SetupProfile::run(|setup| async move {
-            let holder_setup = init_holder_setup_in_indy_context(&setup).await;
-
             let requested_attrs = json!([
                 json!({
                     "name":"address1",
@@ -165,7 +163,7 @@ pub mod unit_tests {
             let (schema_id, schema_json, cred_def_id, cred_def_json, _offer, _req, _req_meta, cred_id) =
                 create_and_store_nonrevocable_credential(
                     &setup.profile,
-                    &holder_setup.profile,
+                    &setup.profile,
                     &setup.institution_did,
                     utils::constants::DEFAULT_SCHEMA_ATTRS,
                 )
@@ -173,7 +171,7 @@ pub mod unit_tests {
             let cred_def_json: serde_json::Value = serde_json::from_str(&cred_def_json).unwrap();
             let schema_json: serde_json::Value = serde_json::from_str(&schema_json).unwrap();
 
-            let anoncreds = Arc::clone(&holder_setup.profile).inject_anoncreds();
+            let anoncreds = Arc::clone(&setup.profile).inject_anoncreds();
             let prover_proof_json = anoncreds
                 .prover_create_proof(
                     &proof_req_json,
@@ -196,7 +194,7 @@ pub mod unit_tests {
                 .await
                 .unwrap();
             assert_eq!(
-                validate_indy_proof(&holder_setup.profile, &prover_proof_json, &proof_req_json)
+                validate_indy_proof(&setup.profile, &prover_proof_json, &proof_req_json)
                     .await
                     .unwrap_err()
                     .kind(),
@@ -206,7 +204,7 @@ pub mod unit_tests {
             let mut proof_req_json: serde_json::Value = serde_json::from_str(&proof_req_json).unwrap();
             proof_req_json["requested_attributes"]["attribute_0"]["restrictions"] = json!({});
             assert_eq!(
-                validate_indy_proof(&holder_setup.profile, &prover_proof_json, &proof_req_json.to_string())
+                validate_indy_proof(&setup.profile, &prover_proof_json, &proof_req_json.to_string())
                     .await
                     .unwrap(),
                 true
@@ -219,8 +217,6 @@ pub mod unit_tests {
     #[ignore]
     async fn test_pool_proof_validate_attribute() {
         SetupProfile::run(|setup| async move {
-            let holder_setup = init_holder_setup_in_indy_context(&setup).await;
-
             let requested_attrs = json!([
                 json!({
                     "name":"address1",
@@ -255,7 +251,7 @@ pub mod unit_tests {
             let (schema_id, schema_json, cred_def_id, cred_def_json, _offer, _req, _req_meta, cred_id) =
                 create_and_store_nonrevocable_credential(
                     &setup.profile,
-                    &holder_setup.profile,
+                    &setup.profile,
                     &setup.institution_did,
                     utils::constants::DEFAULT_SCHEMA_ATTRS,
                 )
@@ -263,7 +259,7 @@ pub mod unit_tests {
             let cred_def_json: serde_json::Value = serde_json::from_str(&cred_def_json).unwrap();
             let schema_json: serde_json::Value = serde_json::from_str(&schema_json).unwrap();
 
-            let anoncreds = Arc::clone(&holder_setup.profile).inject_anoncreds();
+            let anoncreds = Arc::clone(&setup.profile).inject_anoncreds();
             let prover_proof_json = anoncreds
                 .prover_create_proof(
                     &proof_req_json,
@@ -286,7 +282,7 @@ pub mod unit_tests {
                 .await
                 .unwrap();
             assert_eq!(
-                validate_indy_proof(&holder_setup.profile, &prover_proof_json, &proof_req_json)
+                validate_indy_proof(&setup.profile, &prover_proof_json, &proof_req_json)
                     .await
                     .unwrap(),
                 true
@@ -298,7 +294,7 @@ pub mod unit_tests {
                 let prover_proof_json = serde_json::to_string(&proof_obj).unwrap();
 
                 assert_eq!(
-                    validate_indy_proof(&holder_setup.profile, &prover_proof_json, &proof_req_json)
+                    validate_indy_proof(&setup.profile, &prover_proof_json, &proof_req_json)
                         .await
                         .unwrap_err()
                         .kind(),
@@ -311,7 +307,7 @@ pub mod unit_tests {
                 let prover_proof_json = serde_json::to_string(&proof_obj).unwrap();
 
                 assert_eq!(
-                    validate_indy_proof(&holder_setup.profile, &prover_proof_json, &proof_req_json)
+                    validate_indy_proof(&setup.profile, &prover_proof_json, &proof_req_json)
                         .await
                         .unwrap_err()
                         .kind(),
@@ -329,18 +325,16 @@ pub mod integration_tests {
     use std::sync::Arc;
 
     use crate::common::test_utils::{create_indy_proof, create_proof_with_predicate};
-    use crate::utils::devsetup::{init_holder_setup_in_indy_context, SetupProfile};
+    use crate::utils::devsetup::SetupProfile;
 
     #[tokio::test]
     #[ignore]
     async fn test_pool_prover_verify_proof() {
         SetupProfile::run(|setup| async move {
-            let holder_setup = init_holder_setup_in_indy_context(&setup).await;
-
             let (schemas, cred_defs, proof_req, proof) =
-                create_indy_proof(&setup.profile, &holder_setup.profile, &setup.institution_did).await;
+                create_indy_proof(&setup.profile, &setup.profile, &setup.institution_did).await;
 
-            let anoncreds = Arc::clone(&holder_setup.profile).inject_anoncreds();
+            let anoncreds = Arc::clone(&setup.profile).inject_anoncreds();
             let proof_validation = anoncreds
                 .verifier_verify_proof(&proof_req, &proof, &schemas, &cred_defs, "{}", "{}")
                 .await
@@ -355,12 +349,10 @@ pub mod integration_tests {
     #[ignore]
     async fn test_pool_prover_verify_proof_with_predicate_success_case() {
         SetupProfile::run(|setup| async move {
-            let holder_setup = init_holder_setup_in_indy_context(&setup).await;
-
             let (schemas, cred_defs, proof_req, proof) =
-                create_proof_with_predicate(&setup.profile, &holder_setup.profile, &setup.institution_did, true).await;
+                create_proof_with_predicate(&setup.profile, &setup.profile, &setup.institution_did, true).await;
 
-            let anoncreds = Arc::clone(&holder_setup.profile).inject_anoncreds();
+            let anoncreds = Arc::clone(&setup.profile).inject_anoncreds();
             let proof_validation = anoncreds
                 .verifier_verify_proof(&proof_req, &proof, &schemas, &cred_defs, "{}", "{}")
                 .await
@@ -375,12 +367,10 @@ pub mod integration_tests {
     #[ignore]
     async fn test_pool_prover_verify_proof_with_predicate_fail_case() {
         SetupProfile::run(|setup| async move {
-            let holder_setup = init_holder_setup_in_indy_context(&setup).await;
-
             let (schemas, cred_defs, proof_req, proof) =
-                create_proof_with_predicate(&setup.profile, &holder_setup.profile, &setup.institution_did, false).await;
+                create_proof_with_predicate(&setup.profile, &setup.profile, &setup.institution_did, false).await;
 
-            let anoncreds = Arc::clone(&holder_setup.profile).inject_anoncreds();
+            let anoncreds = Arc::clone(&setup.profile).inject_anoncreds();
             anoncreds
                 .verifier_verify_proof(&proof_req, &proof, &schemas, &cred_defs, "{}", "{}")
                 .await
