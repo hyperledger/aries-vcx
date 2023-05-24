@@ -11,10 +11,6 @@ pub(crate) struct MockLedger;
 #[allow(unused)]
 #[async_trait]
 impl IndyLedgerRead for MockLedger {
-    async fn set_endorser(&self, submitter_did: &str, request: &str, endorser: &str) -> VcxCoreResult<String> {
-        Ok(utils::constants::REQUEST_WITH_ENDORSER.to_string())
-    }
-
     async fn get_txn_author_agreement(&self) -> VcxCoreResult<String> {
         Ok(utils::constants::DEFAULT_AUTHOR_AGREEMENT.to_string())
     }
@@ -39,6 +35,10 @@ impl IndyLedgerRead for MockLedger {
 #[allow(unused)]
 #[async_trait]
 impl IndyLedgerWrite for MockLedger {
+    async fn set_endorser(&self, submitter_did: &str, request: &str, endorser: &str) -> VcxCoreResult<String> {
+        Ok(utils::constants::REQUEST_WITH_ENDORSER.to_string())
+    }
+
     async fn endorse_transaction(&self, endorser_did: &str, request_json: &str) -> VcxCoreResult<()> {
         Ok(())
     }

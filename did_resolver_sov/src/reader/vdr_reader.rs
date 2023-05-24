@@ -3,7 +3,7 @@ use std::{sync::Arc, time::Duration};
 use crate::error::DidSovError;
 use aries_vcx_core::{
     ledger::{
-        indy_vdr_ledger::{IndyVdrLedger, IndyVdrLedgerConfig},
+        indy_vdr_ledger::{IndyVdrLedgerRead, IndyVdrLedgerReadConfig},
         request_signer::base_wallet::BaseWalletRequestSigner,
         request_submitter::vdr_ledger::{IndyVdrLedgerPool, IndyVdrSubmitter, LedgerPoolConfig},
         response_cacher::in_memory::{InMemoryResponseCacher, InMemoryResponseCacherConfig},
@@ -28,13 +28,13 @@ impl TryFrom<LedgerPoolConfig> for ConcreteAttrReader {
             .capacity(1000)?
             .build();
         let response_cacher = Arc::new(InMemoryResponseCacher::new(cacher_config));
-        let config = IndyVdrLedgerConfig {
+        let config = IndyVdrLedgerReadConfig {
             request_signer,
             request_submitter,
             response_parser,
             response_cacher,
         };
-        let ledger = Arc::new(IndyVdrLedger::new(config));
+        let ledger = Arc::new(IndyVdrLedgerRead::new(config));
         Ok(Self { ledger })
     }
 }

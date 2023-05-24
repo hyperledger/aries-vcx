@@ -9,7 +9,6 @@ pub trait IndyLedgerRead: Debug + Send + Sync {
     async fn get_attr(&self, target_did: &str, attr_name: &str) -> VcxCoreResult<String>;
     async fn get_nym(&self, did: &str) -> VcxCoreResult<String>;
     async fn get_txn_author_agreement(&self) -> VcxCoreResult<String>;
-    async fn set_endorser(&self, submitter_did: &str, request: &str, endorser: &str) -> VcxCoreResult<String>;
     async fn get_ledger_txn(&self, seq_no: i32, submitter_did: Option<&str>) -> VcxCoreResult<String>;
 }
 
@@ -23,6 +22,7 @@ pub trait IndyLedgerWrite: Debug + Send + Sync {
         data: Option<&str>,
         role: Option<&str>,
     ) -> VcxCoreResult<String>;
+    async fn set_endorser(&self, submitter_did: &str, request: &str, endorser: &str) -> VcxCoreResult<String>;
     async fn endorse_transaction(&self, endorser_did: &str, request_json: &str) -> VcxCoreResult<()>;
     async fn add_attr(&self, target_did: &str, attrib_json: &str) -> VcxCoreResult<String>;
 }

@@ -27,39 +27,51 @@ use super::request_signer::RequestSigner;
 use super::request_submitter::RequestSubmitter;
 use super::response_cacher::ResponseCacher;
 
-pub struct IndyVdrLedgerConfig<T, U, V>
+pub struct IndyVdrLedgerReadConfig<T, V>
 where
     T: RequestSubmitter + Send + Sync,
-    U: RequestSigner + Send + Sync,
     V: ResponseCacher + Send + Sync,
 {
-    pub request_signer: Arc<U>,
     pub request_submitter: Arc<T>,
     pub response_parser: Arc<ResponseParser>,
     pub response_cacher: Arc<V>,
 }
 
-pub struct IndyVdrLedger<T, U, V>
+pub struct IndyVdrLedgerWriteConfig<T, U>
 where
     T: RequestSubmitter + Send + Sync,
     U: RequestSigner + Send + Sync,
+{
+    pub request_signer: Arc<U>,
+    pub request_submitter: Arc<T>,
+}
+
+pub struct IndyVdrLedgerRead<T, V>
+where
+    T: RequestSubmitter + Send + Sync,
     V: ResponseCacher + Send + Sync,
 {
-    request_signer: Arc<U>,
     request_submitter: Arc<T>,
     response_parser: Arc<ResponseParser>,
     response_cacher: Arc<V>,
 }
 
-impl<T, U, V> IndyVdrLedger<T, U, V>
+pub struct IndyVdrLedgerWrite<T, U>
 where
     T: RequestSubmitter + Send + Sync,
     U: RequestSigner + Send + Sync,
+{
+    request_signer: Arc<U>,
+    request_submitter: Arc<T>,
+}
+
+impl<T, V> IndyVdrLedgerRead<T, V>
+where
+    T: RequestSubmitter + Send + Sync,
     V: ResponseCacher + Send + Sync,
 {
-    pub fn new(config: IndyVdrLedgerConfig<T, U, V>) -> Self {
+    pub fn new(config: IndyVdrLedgerReadConfig<T, V>) -> Self {
         Self {
-            request_signer: config.request_signer,
             request_submitter: config.request_submitter,
             response_parser: config.response_parser,
             response_cacher: config.response_cacher,
@@ -67,13 +79,12 @@ where
     }
 
     pub fn request_builder(&self) -> VcxCoreResult<RequestBuilder> {
-        // TODO - confirm correct protocol version?
         let v = settings::get_protocol_version();
         let version = ProtocolVersion::from_id(v as u64)?;
         Ok(RequestBuilder::new(version))
     }
 
-    async fn _submit_request_cached(&self, id: &str, request: PreparedRequest) -> VcxCoreResult<String> {
+    async fn submit_request_cached(&self, id: &str, request: PreparedRequest) -> VcxCoreResult<String> {
         match self.response_cacher.get(id, None).await? {
             Some(response) => Ok(response),
             None => {
@@ -83,192 +94,95 @@ where
             }
         }
     }
-
-    async fn _submit_request(&self, request: PreparedRequest) -> VcxCoreResult<String> {
-        self.request_submitter.submit(request).await
-    }
-
-    async fn _get_request_signature(&self, did: &str, request: &PreparedRequest) -> VcxCoreResult<Vec<u8>> {
-        self.request_signer.sign(did, request).await
-    }
-
-    async fn _sign_and_submit_request(&self, submitter_did: &str, request: PreparedRequest) -> VcxCoreResult<String> {
-        let mut request = request;
-        let signature = self._get_request_signature(submitter_did, &request).await?;
-        request.set_signature(&signature)?;
-        self._submit_request(request).await
-    }
-
-    async fn _build_get_cred_def_request(
-        &self,
-        submitter_did: Option<&str>,
-        cred_def_id: &str,
-    ) -> VcxCoreResult<PreparedRequest> {
-        let identifier = submitter_did.map(DidValue::from_str).transpose()?;
-        let id = CredentialDefinitionId::from_str(cred_def_id)?;
-        Ok(self
-            .request_builder()?
-            .build_get_cred_def_request(identifier.as_ref(), &id)?)
-    }
-
-    async fn _build_get_attr_request(
-        &self,
-        submitter_did: Option<&str>,
-        target_did: &str,
-        attribute_name: &str,
-    ) -> VcxCoreResult<PreparedRequest> {
-        let identifier = if let Some(did) = submitter_did {
-            Some(DidValue::from_str(did)?)
-        } else {
-            None
-        };
-        let dest = DidValue::from_str(target_did)?;
-        Ok(self.request_builder()?.build_get_attrib_request(
-            identifier.as_ref(),
-            &dest,
-            Some(attribute_name.to_string()),
-            None,
-            None,
-        )?)
-    }
-
-    fn _build_attrib_request(
-        &self,
-        submitter_did: &str,
-        target_did: &str,
-        attrib_json_str: Option<&str>,
-    ) -> VcxCoreResult<PreparedRequest> {
-        let identifier = DidValue::from_str(submitter_did)?;
-        let dest = DidValue::from_str(target_did)?;
-        let attrib_json = if let Some(attrib) = attrib_json_str {
-            Some(serde_json::from_str::<Value>(attrib)?)
-        } else {
-            None
-        };
-
-        Ok(self
-            .request_builder()?
-            .build_attrib_request(&identifier, &dest, None, attrib_json.as_ref(), None)?)
-    }
-
-    fn _build_schema_request(&self, submitter_did: &str, schema_data: &str) -> VcxCoreResult<PreparedRequest> {
-        let identifier = DidValue::from_str(submitter_did)?;
-        let schema_data: SchemaV1 = serde_json::from_str(schema_data)?;
-        Ok(self
-            .request_builder()?
-            .build_schema_request(&identifier, Schema::SchemaV1(schema_data))?)
-    }
-
-    fn _build_cred_def_request(&self, submitter_did: &str, cred_def_data: &str) -> VcxCoreResult<PreparedRequest> {
-        let identifier = DidValue::from_str(submitter_did)?;
-        let cred_def_data: CredentialDefinitionV1 = serde_json::from_str(cred_def_data)?;
-        Ok(self
-            .request_builder()?
-            .build_cred_def_request(&identifier, CredentialDefinition::CredentialDefinitionV1(cred_def_data))?)
-    }
-
-    fn _build_rev_reg_def_request(
-        &self,
-        submitter_did: &str,
-        rev_reg_def_data: &str,
-    ) -> VcxCoreResult<PreparedRequest> {
-        let identifier = DidValue::from_str(submitter_did)?;
-        let rev_reg_def_data: RevocationRegistryDefinitionV1 = serde_json::from_str(rev_reg_def_data)?;
-        Ok(self.request_builder()?.build_revoc_reg_def_request(
-            &identifier,
-            RevocationRegistryDefinition::RevocationRegistryDefinitionV1(rev_reg_def_data),
-        )?)
-    }
-
-    fn _build_rev_reg_delta_request(
-        &self,
-        submitter_did: &str,
-        rev_reg_id: &str,
-        rev_reg_delta_data: &str,
-    ) -> VcxCoreResult<PreparedRequest> {
-        let identifier = DidValue::from_str(submitter_did)?;
-        let rev_reg_delta_data: RevocationRegistryDeltaV1 = serde_json::from_str(rev_reg_delta_data)?;
-        Ok(self.request_builder()?.build_revoc_reg_entry_request(
-            &identifier,
-            &RevocationRegistryId::from_str(rev_reg_id)?,
-            &RegistryType::CL_ACCUM,
-            RevocationRegistryDelta::RevocationRegistryDeltaV1(rev_reg_delta_data),
-        )?)
-    }
-
-    fn _build_get_txn_request(&self, submitter_did: Option<&str>, seq_no: i32) -> VcxCoreResult<PreparedRequest> {
-        let identifier = submitter_did.map(DidValue::from_str).transpose()?;
-        Ok(self
-            .request_builder()?
-            .build_get_txn_request(identifier.as_ref(), LedgerType::DOMAIN.to_id(), seq_no)?)
-    }
-
-    fn _build_taa_request(&self, submitter_did: Option<&str>) -> VcxCoreResult<PreparedRequest> {
-        let submitter_did = submitter_did.map(DidValue::from_str).transpose()?;
-        Ok(self
-            .request_builder()?
-            .build_get_txn_author_agreement_request(submitter_did.as_ref(), None)?)
-    }
 }
 
-impl<T, U, V> Debug for IndyVdrLedger<T, U, V>
+impl<T, U> IndyVdrLedgerWrite<T, U>
 where
     T: RequestSubmitter + Send + Sync,
     U: RequestSigner + Send + Sync,
+{
+    pub fn new(config: IndyVdrLedgerWriteConfig<T, U>) -> Self {
+        Self {
+            request_signer: config.request_signer,
+            request_submitter: config.request_submitter,
+        }
+    }
+
+    pub fn request_builder(&self) -> VcxCoreResult<RequestBuilder> {
+        let v = settings::get_protocol_version();
+        let version = ProtocolVersion::from_id(v as u64)?;
+        Ok(RequestBuilder::new(version))
+    }
+
+    async fn sign_and_submit_request(&self, submitter_did: &str, request: PreparedRequest) -> VcxCoreResult<String> {
+        let mut request = request;
+        let signature = self.request_signer.sign(submitter_did, &request).await?;
+        request.set_signature(&signature)?;
+        self.request_submitter.submit(request).await
+    }
+}
+
+impl<T, V> Debug for IndyVdrLedgerRead<T, V>
+where
+    T: RequestSubmitter + Send + Sync,
     V: ResponseCacher + Send + Sync,
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "IndyVdrLedger instance")
+        write!(f, "IndyVdrLedgerRead instance")
+    }
+}
+
+impl<T, U> Debug for IndyVdrLedgerWrite<T, U>
+where
+    T: RequestSubmitter + Send + Sync,
+    U: RequestSigner + Send + Sync,
+{
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "IndyVdrLedgerWrite instance")
     }
 }
 
 #[async_trait]
-impl<T, U, V> IndyLedgerRead for IndyVdrLedger<T, U, V>
+impl<T, V> IndyLedgerRead for IndyVdrLedgerRead<T, V>
 where
     T: RequestSubmitter + Send + Sync,
-    U: RequestSigner + Send + Sync,
     V: ResponseCacher + Send + Sync,
 {
     async fn get_attr(&self, target_did: &str, attr_name: &str) -> VcxCoreResult<String> {
-        let request = self._build_get_attr_request(None, target_did, attr_name).await?;
-        self._submit_request(request).await
+        let dest = DidValue::from_str(target_did)?;
+        let request =
+            self.request_builder()?
+                .build_get_attrib_request(None, &dest, Some(attr_name.to_string()), None, None)?;
+        self.request_submitter.submit(request).await
     }
 
     async fn get_nym(&self, did: &str) -> VcxCoreResult<String> {
         let dest = DidValue::from_str(did)?;
         let request = self.request_builder()?.build_get_nym_request(None, &dest)?;
-
-        self._submit_request_cached(did, request).await
+        self.submit_request_cached(did, request).await
     }
 
     async fn get_txn_author_agreement(&self) -> VcxCoreResult<String> {
         let request = self
             .request_builder()?
             .build_get_txn_author_agreement_request(None, None)?;
-        self._submit_request(request).await
-    }
-
-    async fn set_endorser(&self, submitter_did: &str, request_json: &str, endorser: &str) -> VcxCoreResult<String> {
-        let mut request = PreparedRequest::from_request_json(request_json)?;
-        request.set_endorser(&DidValue::from_str(endorser)?)?;
-        let signature_submitter = self._get_request_signature(submitter_did, &request).await?;
-        request.set_multi_signature(&DidValue::from_str(submitter_did)?, &signature_submitter)?;
-        Ok(request.req_json.to_string())
+        self.request_submitter.submit(request).await
     }
 
     async fn get_ledger_txn(&self, seq_no: i32, submitter_did: Option<&str>) -> VcxCoreResult<String> {
-        let request = self._build_get_txn_request(submitter_did, seq_no)?;
-        self._submit_request(request).await
+        let identifier = submitter_did.map(DidValue::from_str).transpose()?;
+        let request =
+            self.request_builder()?
+                .build_get_txn_request(identifier.as_ref(), LedgerType::DOMAIN.to_id(), seq_no)?;
+        self.request_submitter.submit(request).await
     }
 }
 
 #[async_trait]
-#[async_trait]
-impl<T, U, V> IndyLedgerWrite for IndyVdrLedger<T, U, V>
+impl<T, U> IndyLedgerWrite for IndyVdrLedgerWrite<T, U>
 where
     T: RequestSubmitter + Send + Sync,
     U: RequestSigner + Send + Sync,
-    V: ResponseCacher + Send + Sync,
 {
     async fn publish_nym(
         &self,
@@ -288,21 +202,37 @@ where
             role.map(String::from),
         )?;
 
-        self._sign_and_submit_request(submitter_did, request).await
+        self.sign_and_submit_request(submitter_did, request).await
+    }
+
+    async fn set_endorser(&self, submitter_did: &str, request_json: &str, endorser: &str) -> VcxCoreResult<String> {
+        let mut request = PreparedRequest::from_request_json(request_json)?;
+        request.set_endorser(&DidValue::from_str(endorser)?)?;
+        let signature_submitter = self.request_signer.sign(submitter_did, &request).await?;
+        request.set_multi_signature(&DidValue::from_str(submitter_did)?, &signature_submitter)?;
+        Ok(request.req_json.to_string())
     }
 
     async fn endorse_transaction(&self, endorser_did: &str, request_json: &str) -> VcxCoreResult<()> {
         let mut request = PreparedRequest::from_request_json(&request_json)?;
         verify_transaction_can_be_endorsed(request_json, endorser_did)?;
-        let signature_endorser = self._get_request_signature(endorser_did, &request).await?;
+        let signature_endorser = self.request_signer.sign(endorser_did, &request).await?;
         request.set_multi_signature(&DidValue::from_str(endorser_did)?, &signature_endorser)?;
-        self._submit_request(request).await.map(|_| ())
+        self.request_submitter.submit(request).await.map(|_| ())
     }
 
     async fn add_attr(&self, target_did: &str, attrib_json: &str) -> VcxCoreResult<String> {
-        let request = self._build_attrib_request(target_did, target_did, Some(attrib_json))?;
+        let identifier = DidValue::from_str(target_did)?;
+        let dest = DidValue::from_str(target_did)?;
+        let request = self.request_builder()?.build_attrib_request(
+            &identifier,
+            &dest,
+            None,
+            Some(&serde_json::to_value(attrib_json)?),
+            None,
+        )?;
         let request = _append_txn_author_agreement_to_request(request).await?;
-        self._sign_and_submit_request(target_did, request).await
+        self.sign_and_submit_request(target_did, request).await
     }
 }
 
@@ -320,7 +250,6 @@ async fn _append_txn_author_agreement_to_request(request: PreparedRequest) -> Vc
             time: taa.time_of_acceptance,
         };
         request.set_txn_author_agreement_acceptance(&acceptance)?;
-
         Ok(request)
     } else {
         Ok(request)
@@ -328,24 +257,27 @@ async fn _append_txn_author_agreement_to_request(request: PreparedRequest) -> Vc
 }
 
 #[async_trait]
-impl<T, U, V> AnoncredsLedgerRead for IndyVdrLedger<T, U, V>
+impl<T, V> AnoncredsLedgerRead for IndyVdrLedgerRead<T, V>
 where
     T: RequestSubmitter + Send + Sync,
-    U: RequestSigner + Send + Sync,
     V: ResponseCacher + Send + Sync,
 {
     async fn get_schema(&self, schema_id: &str, _submitter_did: Option<&str>) -> VcxCoreResult<String> {
         let request = self
             .request_builder()?
             .build_get_schema_request(None, &SchemaId::from_str(schema_id)?)?;
-        let response = self._submit_request_cached(schema_id, request).await?;
+        let response = self.submit_request_cached(schema_id, request).await?;
         let schema = self.response_parser.parse_get_schema_response(&response, None)?;
         Ok(serde_json::to_string(&schema)?)
     }
 
     async fn get_cred_def(&self, cred_def_id: &str, submitter_did: Option<&str>) -> VcxCoreResult<String> {
-        let request = self._build_get_cred_def_request(submitter_did, cred_def_id).await?;
-        let response = self._submit_request(request).await?;
+        let identifier = submitter_did.map(DidValue::from_str).transpose()?;
+        let id = CredentialDefinitionId::from_str(cred_def_id)?;
+        let request = self
+            .request_builder()?
+            .build_get_cred_def_request(identifier.as_ref(), &id)?;
+        let response = self.request_submitter.submit(request).await?;
         let cred_def = self.response_parser.parse_get_cred_def_response(&response, None)?;
         Ok(serde_json::to_string(&cred_def)?)
     }
@@ -353,10 +285,8 @@ where
     async fn get_rev_reg_def_json(&self, rev_reg_id: &str) -> VcxCoreResult<String> {
         let id = RevocationRegistryId::from_str(rev_reg_id)?;
         let request = self.request_builder()?.build_get_revoc_reg_def_request(None, &id)?;
-        let res = self._submit_request_cached(rev_reg_id, request).await?;
-
+        let res = self.submit_request_cached(rev_reg_id, request).await?;
         let rev_reg_def = self.response_parser.parse_get_revoc_reg_def_response(&res)?;
-
         Ok(serde_json::to_string(&rev_reg_def)?)
     }
 
@@ -375,7 +305,7 @@ where
         let request = self
             .request_builder()?
             .build_get_revoc_reg_delta_request(None, &revoc_reg_def_id, from, to)?;
-        let res = self._submit_request(request).await?;
+        let res = self.request_submitter.submit(request).await?;
 
         let RevocationRegistryDeltaInfo {
             revoc_reg_def_id,
@@ -398,7 +328,7 @@ where
             &revoc_reg_def_id,
             timestamp.try_into().unwrap(),
         )?;
-        let res = self._submit_request(request).await?;
+        let res = self.request_submitter.submit(request).await?;
 
         let RevocationRegistryInfo {
             revoc_reg_def_id,
@@ -415,11 +345,10 @@ where
 }
 
 #[async_trait]
-impl<T, U, V> AnoncredsLedgerWrite for IndyVdrLedger<T, U, V>
+impl<T, U> AnoncredsLedgerWrite for IndyVdrLedgerWrite<T, U>
 where
     T: RequestSubmitter + Send + Sync,
     U: RequestSigner + Send + Sync,
-    V: ResponseCacher + Send + Sync,
 {
     async fn publish_schema(
         &self,
@@ -427,27 +356,40 @@ where
         submitter_did: &str,
         endorser_did: Option<String>,
     ) -> VcxCoreResult<()> {
-        let mut request = self._build_schema_request(submitter_did, schema_json)?;
+        let identifier = DidValue::from_str(submitter_did)?;
+        let schema_data: SchemaV1 = serde_json::from_str(schema_json)?;
+        let mut request = self
+            .request_builder()?
+            .build_schema_request(&identifier, Schema::SchemaV1(schema_data))?;
         request = _append_txn_author_agreement_to_request(request).await?;
-        if let Some(endorser_did) = endorser_did {
-            request = PreparedRequest::from_request_json(
-                self.set_endorser(submitter_did, &request.req_json.to_string(), &endorser_did)
-                    .await?,
-            )?
-        }
-        self._sign_and_submit_request(submitter_did, request).await.map(|_| ())
+        // if let Some(endorser_did) = endorser_did {
+        //     request = PreparedRequest::from_request_json(
+        //         self.set_endorser(submitter_did, &request.req_json.to_string(), &endorser_did)
+        //             .await?,
+        //     )?
+        // }
+        self.sign_and_submit_request(submitter_did, request).await.map(|_| ())
     }
 
     async fn publish_cred_def(&self, cred_def_json: &str, submitter_did: &str) -> VcxCoreResult<()> {
-        let request = self._build_cred_def_request(submitter_did, cred_def_json)?;
+        let identifier = DidValue::from_str(submitter_did)?;
+        let cred_def_data: CredentialDefinitionV1 = serde_json::from_str(cred_def_json)?;
+        let request = self
+            .request_builder()?
+            .build_cred_def_request(&identifier, CredentialDefinition::CredentialDefinitionV1(cred_def_data))?;
         let request = _append_txn_author_agreement_to_request(request).await?;
-        self._sign_and_submit_request(submitter_did, request).await.map(|_| ())
+        self.sign_and_submit_request(submitter_did, request).await.map(|_| ())
     }
 
     async fn publish_rev_reg_def(&self, rev_reg_def: &str, submitter_did: &str) -> VcxCoreResult<()> {
-        let request = self._build_rev_reg_def_request(submitter_did, rev_reg_def)?;
+        let identifier = DidValue::from_str(submitter_did)?;
+        let rev_reg_def_data: RevocationRegistryDefinitionV1 = serde_json::from_str(rev_reg_def)?;
+        let request = self.request_builder()?.build_revoc_reg_def_request(
+            &identifier,
+            RevocationRegistryDefinition::RevocationRegistryDefinitionV1(rev_reg_def_data),
+        )?;
         let request = _append_txn_author_agreement_to_request(request).await?;
-        self._sign_and_submit_request(submitter_did, request).await.map(|_| ())
+        self.sign_and_submit_request(submitter_did, request).await.map(|_| ())
     }
 
     async fn publish_rev_reg_delta(
@@ -456,8 +398,15 @@ where
         rev_reg_entry_json: &str,
         submitter_did: &str,
     ) -> VcxCoreResult<()> {
-        let request = self._build_rev_reg_delta_request(submitter_did, rev_reg_id, rev_reg_entry_json)?;
+        let identifier = DidValue::from_str(submitter_did)?;
+        let rev_reg_delta_data: RevocationRegistryDeltaV1 = serde_json::from_str(rev_reg_entry_json)?;
+        let request = self.request_builder()?.build_revoc_reg_entry_request(
+            &identifier,
+            &RevocationRegistryId::from_str(rev_reg_id)?,
+            &RegistryType::CL_ACCUM,
+            RevocationRegistryDelta::RevocationRegistryDeltaV1(rev_reg_delta_data),
+        )?;
         let request = _append_txn_author_agreement_to_request(request).await?;
-        self._sign_and_submit_request(submitter_did, request).await.map(|_| ())
+        self.sign_and_submit_request(submitter_did, request).await.map(|_| ())
     }
 }
