@@ -228,7 +228,7 @@ where
             &identifier,
             &dest,
             None,
-            Some(&serde_json::to_value(attrib_json)?),
+            Some(&serde_json::from_str::<Value>(attrib_json)?),
             None,
         )?;
         let request = _append_txn_author_agreement_to_request(request).await?;
