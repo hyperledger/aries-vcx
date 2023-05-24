@@ -1,3 +1,4 @@
+pub use indy_ledger_response_parser::GetTxnAuthorAgreementResult;
 use indy_ledger_response_parser::{ResponseParser, RevocationRegistryDeltaInfo, RevocationRegistryInfo};
 use indy_vdr as vdr;
 use std::fmt::{Debug, Formatter};
@@ -21,6 +22,7 @@ use crate::common::ledger::transactions::verify_transaction_can_be_endorsed;
 use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
 
 use super::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite};
+use super::map_error_not_found_to_none;
 use super::request_signer::RequestSigner;
 use super::request_submitter::RequestSubmitter;
 use super::response_cacher::ResponseCacher;
@@ -172,7 +174,7 @@ where
             .request_builder()?
             .build_get_txn_author_agreement_request(None, None)?;
         let response = self.request_submitter.submit(request).await?;
-        not_found_to_none(self.response_parser.parse_get_txn_author_agreement_response(&response))?
+        map_error_not_found_to_none(self.response_parser.parse_get_txn_author_agreement_response(&response))?
             .map(|taa| serde_json::to_string(&taa).map_err(Into::into))
             .transpose()
     }
@@ -232,7 +234,7 @@ where
             data.map(String::from),
             role.map(String::from),
         )?;
-
+        let request = self.append_txn_author_agreement_to_request(request).await?;
         self.sign_and_submit_request(submitter_did, request).await
     }
 
@@ -445,20 +447,4 @@ pub struct TxnAuthrAgrmtOptions {
     pub text: String,
     pub version: String,
     pub aml_label: String,
-}
-
-fn not_found_to_none<T, E>(res: Result<T, E>) -> Result<Option<T>, AriesVcxCoreError>
-where
-    E: Into<AriesVcxCoreError>,
-{
-    match res {
-        Ok(response) => Ok(Some(response)),
-        Err(err) => {
-            let err_converted = Into::<AriesVcxCoreError>::into(err);
-            match err_converted.kind() {
-                AriesVcxCoreErrorKind::LedgerItemNotFound => Ok(None),
-                _ => Err(err_converted),
-            }
-        }
-    }
 }

@@ -411,7 +411,7 @@ impl SetupProfile {
         .unwrap();
         let pool_handle = open_test_pool().await;
 
-        let profile: Arc<dyn Profile> = Arc::new(VdrtoolsProfile::new(wallet_handle, pool_handle.clone()));
+        let profile: Arc<dyn Profile> = Arc::new(VdrtoolsProfile::init(wallet_handle, pool_handle.clone()));
 
         async fn indy_teardown(pool_handle: PoolHandle) {
             delete_test_pool(pool_handle.clone()).await;
@@ -434,8 +434,11 @@ impl SetupProfile {
 
         let wallet = IndySdkWallet::new(wallet_handle);
 
-        let profile: Arc<dyn Profile> =
-            Arc::new(ModularLibsProfile::new(Arc::new(wallet), LedgerPoolConfig { genesis_file_path }).unwrap());
+        let profile: Arc<dyn Profile> = Arc::new(
+            ModularLibsProfile::init(Arc::new(wallet), LedgerPoolConfig { genesis_file_path })
+                .await
+                .unwrap(),
+        );
 
         Arc::clone(&profile)
             .inject_anoncreds()
@@ -499,7 +502,7 @@ impl SetupProfile {
         let client_url = env::var("VDR_PROXY_CLIENT_URL").unwrap_or_else(|_| "http://127.0.0.1:3030".to_string());
         let client = VdrProxyClient::new(&client_url).unwrap();
 
-        let profile: Arc<dyn Profile> = Arc::new(VdrProxyProfile::new(wallet_handle, client).unwrap());
+        let profile: Arc<dyn Profile> = Arc::new(VdrProxyProfile::init(wallet_handle, client).await.unwrap());
 
         async fn vdr_proxy_teardown() {
             // nothing to do

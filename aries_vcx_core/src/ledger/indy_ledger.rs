@@ -4,6 +4,7 @@ use crate::errors::error::VcxCoreResult;
 use crate::{indy, PoolHandle, WalletHandle};
 
 use super::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite};
+use super::map_error_not_found_to_none;
 
 #[derive(Debug)]
 pub struct IndySdkLedgerRead {
@@ -46,9 +47,9 @@ impl IndyLedgerRead for IndySdkLedgerRead {
     }
 
     async fn get_txn_author_agreement(&self) -> VcxCoreResult<Option<String>> {
-        Ok(Some(
-            indy::ledger::transactions::libindy_get_txn_author_agreement(self.indy_pool_handle).await?,
-        ))
+        map_error_not_found_to_none(
+            indy::ledger::transactions::libindy_get_txn_author_agreement(self.indy_pool_handle).await,
+        )
     }
 
     async fn get_ledger_txn(&self, seq_no: i32, submitter_did: Option<&str>) -> VcxCoreResult<String> {

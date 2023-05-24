@@ -15,6 +15,7 @@ use aries_vcx_core::ResponseParser;
 
 use crate::errors::error::VcxResult;
 
+use super::prepare_taa_options;
 use super::profile::Profile;
 
 #[allow(dead_code)]
@@ -29,7 +30,7 @@ pub struct ModularLibsProfile {
 }
 
 impl ModularLibsProfile {
-    pub fn new(wallet: Arc<dyn BaseWallet>, ledger_pool_config: LedgerPoolConfig) -> VcxResult<Self> {
+    pub async fn init(wallet: Arc<dyn BaseWallet>, ledger_pool_config: LedgerPoolConfig) -> VcxResult<Self> {
         let anoncreds = Arc::new(IndyCredxAnonCreds::new(Arc::clone(&wallet)));
         let ledger_pool = Arc::new(IndyVdrLedgerPool::new(ledger_pool_config)?);
         let request_signer = Arc::new(BaseWalletRequestSigner::new(wallet.clone()));
@@ -40,20 +41,23 @@ impl ModularLibsProfile {
             .capacity(1000)?
             .build();
         let response_cacher = Arc::new(InMemoryResponseCacher::new(cacher_config));
+
         let config_read = IndyVdrLedgerReadConfig {
             request_submitter: request_submitter.clone(),
             response_parser,
             response_cacher,
             protocol_version: ProtocolVersion::node_1_4(),
         };
+        let ledger_read = Arc::new(IndyVdrLedgerRead::new(config_read));
+
         let config_write = IndyVdrLedgerWriteConfig {
             request_signer,
             request_submitter,
-            taa_options: None,
+            taa_options: prepare_taa_options(ledger_read.clone()).await?,
             protocol_version: ProtocolVersion::node_1_4(),
         };
-        let ledger_read = Arc::new(IndyVdrLedgerRead::new(config_read));
         let ledger_write = Arc::new(IndyVdrLedgerWrite::new(config_write));
+
         Ok(ModularLibsProfile {
             wallet,
             anoncreds,

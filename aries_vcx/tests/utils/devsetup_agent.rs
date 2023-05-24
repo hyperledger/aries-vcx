@@ -164,7 +164,7 @@ pub mod test_utils {
             create_wallet_with_master_secret(&config_wallet).await.unwrap();
             let wallet_handle = open_wallet(&config_wallet).await.unwrap();
 
-            let indy_profile = VdrtoolsProfile::new(wallet_handle, pool_handle);
+            let indy_profile = VdrtoolsProfile::init(wallet_handle, pool_handle);
             let profile: Arc<dyn Profile> = Arc::new(indy_profile);
 
             let config_issuer = wallet_configure_issuer(wallet_handle, enterprise_seed).await.unwrap();
@@ -493,7 +493,7 @@ pub mod test_utils {
 
             let wallet: Arc<dyn BaseWallet> = Arc::new(IndySdkWallet::new(wallet_handle));
 
-            let profile = Arc::new(ModularLibsProfile::new(wallet, ledger_pool_config).unwrap());
+            let profile = Arc::new(ModularLibsProfile::init(wallet, ledger_pool_config).await.unwrap());
 
             // set up anoncreds link/master secret
             Arc::clone(&profile)
@@ -513,7 +513,7 @@ pub mod test_utils {
         ) -> (Arc<dyn Profile>, Arc<dyn Fn() -> BoxFuture<'static, ()>>) {
             let (wallet_handle, config_wallet) = Alice::setup_indy_wallet().await;
 
-            let indy_profile = VdrtoolsProfile::new(wallet_handle, pool_handle);
+            let indy_profile = VdrtoolsProfile::init(wallet_handle, pool_handle);
 
             (
                 Arc::new(indy_profile),

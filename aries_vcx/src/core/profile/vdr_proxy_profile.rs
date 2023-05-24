@@ -17,7 +17,7 @@ use aries_vcx_core::{
 
 use crate::errors::error::VcxResult;
 
-use super::profile::Profile;
+use super::{prepare_taa_options, profile::Profile};
 
 #[derive(Debug)]
 pub struct VdrProxyProfile {
@@ -30,7 +30,7 @@ pub struct VdrProxyProfile {
 }
 
 impl VdrProxyProfile {
-    pub fn new(wallet_handle: WalletHandle, client: VdrProxyClient) -> VcxResult<Self> {
+    pub async fn init(wallet_handle: WalletHandle, client: VdrProxyClient) -> VcxResult<Self> {
         let wallet = Arc::new(IndySdkWallet::new(wallet_handle));
         let anoncreds = Arc::new(IndySdkAnonCreds::new(wallet_handle));
         let request_signer = Arc::new(BaseWalletRequestSigner::new(wallet.clone()));
@@ -41,20 +41,23 @@ impl VdrProxyProfile {
             .capacity(1000)?
             .build();
         let response_cacher = Arc::new(InMemoryResponseCacher::new(cacher_config));
+
         let config_read = IndyVdrLedgerReadConfig {
             request_submitter: request_submitter.clone(),
             response_parser,
             response_cacher,
             protocol_version: ProtocolVersion::node_1_4(),
         };
+        let ledger_read = Arc::new(IndyVdrLedgerRead::new(config_read));
+
         let config_write = IndyVdrLedgerWriteConfig {
             request_submitter,
             request_signer,
-            taa_options: None,
+            taa_options: prepare_taa_options(ledger_read.clone()).await?,
             protocol_version: ProtocolVersion::node_1_4(),
         };
-        let ledger_read = Arc::new(IndyVdrLedgerRead::new(config_read));
         let ledger_write = Arc::new(IndyVdrLedgerWrite::new(config_write));
+
         Ok(VdrProxyProfile {
             wallet,
             anoncreds,
