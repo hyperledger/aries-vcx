@@ -17,7 +17,7 @@ impl NoopResponseCacher {
 impl ResponseCacher for NoopResponseCacher {
     type Options = ();
 
-    async fn put<S, T>(&self, id: S, obj: T) -> VcxCoreResult<()>
+    async fn put<S, T>(&self, _id: S, _obj: T) -> VcxCoreResult<()>
     where
         S: ToString + Send,
         T: Serialize + for<'de> Deserialize<'de> + Send,
@@ -25,7 +25,7 @@ impl ResponseCacher for NoopResponseCacher {
         Ok(())
     }
 
-    async fn get<S, T>(&self, id: S, opt: Option<Self::Options>) -> VcxCoreResult<Option<T>>
+    async fn get<S, T>(&self, _id: S, _opt: Option<Self::Options>) -> VcxCoreResult<Option<T>>
     where
         S: ToString + Send,
         T: Serialize + for<'de> Deserialize<'de> + Send,

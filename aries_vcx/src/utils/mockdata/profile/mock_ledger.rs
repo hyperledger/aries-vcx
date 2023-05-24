@@ -4,7 +4,7 @@ use async_trait::async_trait;
 
 use crate::utils::{
     self,
-    constants::{rev_def_json, CRED_DEF_JSON, REV_REG_DELTA_JSON, REV_REG_ID, REV_REG_JSON, SCHEMA_JSON, SCHEMA_TXN},
+    constants::{rev_def_json, CRED_DEF_JSON, REV_REG_DELTA_JSON, REV_REG_ID, REV_REG_JSON, SCHEMA_JSON},
 };
 
 #[derive(Debug)]
@@ -15,10 +15,6 @@ pub(crate) struct MockLedger;
 #[allow(unused)]
 #[async_trait]
 impl BaseLedger for MockLedger {
-    async fn sign_and_submit_request(&self, submitter_did: &str, request_json: &str) -> VcxCoreResult<String> {
-        Ok(r#"{"rc":"success"}"#.to_string())
-    }
-
     async fn submit_request(&self, request_json: &str) -> VcxCoreResult<String> {
         // not needed yet
         Err(AriesVcxCoreError::from_msg(
@@ -93,10 +89,6 @@ impl BaseLedger for MockLedger {
 
     async fn get_ledger_txn(&self, seq_no: i32, submitter_did: Option<&str>) -> VcxCoreResult<String> {
         Ok(r#"{"rc":"success"}"#.to_string())
-    }
-
-    async fn build_schema_request(&self, submitter_did: &str, schema_json: &str) -> VcxCoreResult<String> {
-        Ok(SCHEMA_TXN.to_string())
     }
 
     async fn publish_schema(

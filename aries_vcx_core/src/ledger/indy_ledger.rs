@@ -22,16 +22,6 @@ impl IndySdkLedger {
 
 #[async_trait]
 impl BaseLedger for IndySdkLedger {
-    async fn sign_and_submit_request(&self, submitter_did: &str, request_json: &str) -> VcxCoreResult<String> {
-        indy::ledger::transactions::libindy_sign_and_submit_request(
-            self.indy_wallet_handle,
-            self.indy_pool_handle,
-            submitter_did,
-            request_json,
-        )
-        .await
-    }
-
     async fn submit_request(&self, request_json: &str) -> VcxCoreResult<String> {
         indy::ledger::transactions::libindy_submit_request(self.indy_pool_handle, request_json).await
     }
@@ -141,10 +131,6 @@ impl BaseLedger for IndySdkLedger {
             submitter_did,
         )
         .await
-    }
-
-    async fn build_schema_request(&self, submitter_did: &str, schema_json: &str) -> VcxCoreResult<String> {
-        indy::ledger::transactions::build_schema_request(submitter_did, schema_json).await
     }
 
     async fn publish_schema(
