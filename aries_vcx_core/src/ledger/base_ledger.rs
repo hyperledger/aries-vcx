@@ -8,7 +8,7 @@ use crate::errors::error::VcxCoreResult;
 pub trait IndyLedgerRead: Debug + Send + Sync {
     async fn get_attr(&self, target_did: &str, attr_name: &str) -> VcxCoreResult<String>;
     async fn get_nym(&self, did: &str) -> VcxCoreResult<String>;
-    async fn get_txn_author_agreement(&self) -> VcxCoreResult<String>;
+    async fn get_txn_author_agreement(&self) -> VcxCoreResult<Option<String>>;
     async fn get_ledger_txn(&self, seq_no: i32, submitter_did: Option<&str>) -> VcxCoreResult<String>;
 }
 

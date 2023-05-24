@@ -4,7 +4,9 @@ use aries_vcx_core::{
     anoncreds::{base_anoncreds::BaseAnonCreds, indy_anoncreds::IndySdkAnonCreds},
     ledger::{
         base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite},
-        indy_vdr_ledger::{IndyVdrLedgerRead, IndyVdrLedgerReadConfig, IndyVdrLedgerWrite, IndyVdrLedgerWriteConfig},
+        indy_vdr_ledger::{
+            IndyVdrLedgerRead, IndyVdrLedgerReadConfig, IndyVdrLedgerWrite, IndyVdrLedgerWriteConfig, ProtocolVersion,
+        },
         request_signer::base_wallet::BaseWalletRequestSigner,
         request_submitter::vdr_proxy::VdrProxySubmitter,
         response_cacher::in_memory::{InMemoryResponseCacher, InMemoryResponseCacherConfig},
@@ -43,10 +45,13 @@ impl VdrProxyProfile {
             request_submitter: request_submitter.clone(),
             response_parser,
             response_cacher,
+            protocol_version: ProtocolVersion::node_1_4(),
         };
         let config_write = IndyVdrLedgerWriteConfig {
             request_submitter,
             request_signer,
+            taa_options: None,
+            protocol_version: ProtocolVersion::node_1_4(),
         };
         let ledger_read = Arc::new(IndyVdrLedgerRead::new(config_read));
         let ledger_write = Arc::new(IndyVdrLedgerWrite::new(config_write));

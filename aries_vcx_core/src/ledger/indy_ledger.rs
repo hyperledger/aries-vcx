@@ -45,8 +45,10 @@ impl IndyLedgerRead for IndySdkLedgerRead {
         indy::ledger::transactions::get_nym(self.indy_pool_handle, did).await
     }
 
-    async fn get_txn_author_agreement(&self) -> VcxCoreResult<String> {
-        indy::ledger::transactions::libindy_get_txn_author_agreement(self.indy_pool_handle).await
+    async fn get_txn_author_agreement(&self) -> VcxCoreResult<Option<String>> {
+        Ok(Some(
+            indy::ledger::transactions::libindy_get_txn_author_agreement(self.indy_pool_handle).await?,
+        ))
     }
 
     async fn get_ledger_txn(&self, seq_no: i32, submitter_did: Option<&str>) -> VcxCoreResult<String> {

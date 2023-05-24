@@ -95,7 +95,8 @@ pub async fn ledger_clear_attr(target_did: &str, attr: &str) -> LibvcxResult<Str
 pub async fn ledger_get_txn_author_agreement() -> LibvcxResult<String> {
     let profile = get_main_profile()?;
     let ledger = profile.inject_indy_ledger_read();
-    map_ariesvcx_core_result(ledger.get_txn_author_agreement().await)
+    // TODO: Handle empty result!
+    map_ariesvcx_core_result(ledger.get_txn_author_agreement().await).map(|agreement| agreement.unwrap_or_default())
 }
 
 pub fn ledger_set_txn_author_agreement(

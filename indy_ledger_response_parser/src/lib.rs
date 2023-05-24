@@ -5,6 +5,7 @@ extern crate serde_json;
 
 mod domain;
 
+use domain::author_agreement::GetTxnAuthorAgreementResult;
 pub use indy_api_types::{errors, ErrorCode};
 use indy_api_types::{
     errors::{err_msg, IndyErrorKind, IndyResult, IndyResultExt},
@@ -187,6 +188,14 @@ impl ResponseParser {
             revoc_reg_def_id,
             timestamp,
         })
+    }
+
+    pub fn parse_get_txn_author_agreement_response(
+        &self,
+        taa_response: &str,
+    ) -> IndyResult<GetTxnAuthorAgreementResult> {
+        let reply: Reply<GetTxnAuthorAgreementResult> = Self::parse_response(taa_response)?;
+        Ok(reply.result())
     }
 
     pub fn parse_get_revoc_reg_delta_response(

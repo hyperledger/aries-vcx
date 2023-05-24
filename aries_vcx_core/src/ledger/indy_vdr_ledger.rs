@@ -11,22 +11,22 @@ use vdr::ledger::requests::schema::{Schema, SchemaV1};
 use async_trait::async_trait;
 use serde_json::Value;
 use vdr::ledger::identifiers::{CredentialDefinitionId, RevocationRegistryId, SchemaId};
-use vdr::ledger::requests::{author_agreement::TxnAuthrAgrmtAcceptanceData, cred_def::CredentialDefinition};
+use vdr::ledger::requests::cred_def::CredentialDefinition;
 use vdr::ledger::RequestBuilder;
-use vdr::pool::{LedgerType, PreparedRequest, ProtocolVersion};
+use vdr::pool::{LedgerType, PreparedRequest, ProtocolVersion as VdrProtocolVersion};
 use vdr::utils::did::DidValue;
 use vdr::utils::Qualifiable;
 
 use crate::common::ledger::transactions::verify_transaction_can_be_endorsed;
-use crate::errors::error::VcxCoreResult;
-use crate::global::author_agreement::get_txn_author_agreement;
-use crate::global::settings;
+use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
 
 use super::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite};
 use super::request_signer::RequestSigner;
 use super::request_submitter::RequestSubmitter;
 use super::response_cacher::ResponseCacher;
 
+// TODO: Should implement builders for these configs...
+// Good first issue?
 pub struct IndyVdrLedgerReadConfig<T, V>
 where
     T: RequestSubmitter + Send + Sync,
@@ -35,6 +35,7 @@ where
     pub request_submitter: Arc<T>,
     pub response_parser: Arc<ResponseParser>,
     pub response_cacher: Arc<V>,
+    pub protocol_version: ProtocolVersion,
 }
 
 pub struct IndyVdrLedgerWriteConfig<T, U>
@@ -44,6 +45,8 @@ where
 {
     pub request_signer: Arc<U>,
     pub request_submitter: Arc<T>,
+    pub taa_options: Option<TxnAuthrAgrmtOptions>,
+    pub protocol_version: ProtocolVersion,
 }
 
 pub struct IndyVdrLedgerRead<T, V>
@@ -54,6 +57,7 @@ where
     request_submitter: Arc<T>,
     response_parser: Arc<ResponseParser>,
     response_cacher: Arc<V>,
+    protocol_version: ProtocolVersion,
 }
 
 pub struct IndyVdrLedgerWrite<T, U>
@@ -63,6 +67,8 @@ where
 {
     request_signer: Arc<U>,
     request_submitter: Arc<T>,
+    taa_options: Option<TxnAuthrAgrmtOptions>,
+    protocol_version: ProtocolVersion,
 }
 
 impl<T, V> IndyVdrLedgerRead<T, V>
@@ -75,13 +81,12 @@ where
             request_submitter: config.request_submitter,
             response_parser: config.response_parser,
             response_cacher: config.response_cacher,
+            protocol_version: config.protocol_version,
         }
     }
 
     pub fn request_builder(&self) -> VcxCoreResult<RequestBuilder> {
-        let v = settings::get_protocol_version();
-        let version = ProtocolVersion::from_id(v as u64)?;
-        Ok(RequestBuilder::new(version))
+        Ok(RequestBuilder::new(self.protocol_version.0))
     }
 
     async fn submit_request_cached(&self, id: &str, request: PreparedRequest) -> VcxCoreResult<String> {
@@ -105,13 +110,13 @@ where
         Self {
             request_signer: config.request_signer,
             request_submitter: config.request_submitter,
+            taa_options: None,
+            protocol_version: config.protocol_version,
         }
     }
 
     pub fn request_builder(&self) -> VcxCoreResult<RequestBuilder> {
-        let v = settings::get_protocol_version();
-        let version = ProtocolVersion::from_id(v as u64)?;
-        Ok(RequestBuilder::new(version))
+        Ok(RequestBuilder::new(self.protocol_version.0))
     }
 
     async fn sign_and_submit_request(&self, submitter_did: &str, request: PreparedRequest) -> VcxCoreResult<String> {
@@ -162,11 +167,14 @@ where
         self.submit_request_cached(did, request).await
     }
 
-    async fn get_txn_author_agreement(&self) -> VcxCoreResult<String> {
+    async fn get_txn_author_agreement(&self) -> VcxCoreResult<Option<String>> {
         let request = self
             .request_builder()?
             .build_get_txn_author_agreement_request(None, None)?;
-        self.request_submitter.submit(request).await
+        let response = self.request_submitter.submit(request).await?;
+        not_found_to_none(self.response_parser.parse_get_txn_author_agreement_response(&response))?
+            .map(|taa| serde_json::to_string(&taa).map_err(Into::into))
+            .transpose()
     }
 
     async fn get_ledger_txn(&self, seq_no: i32, submitter_did: Option<&str>) -> VcxCoreResult<String> {
@@ -175,6 +183,29 @@ where
             self.request_builder()?
                 .build_get_txn_request(identifier.as_ref(), LedgerType::DOMAIN.to_id(), seq_no)?;
         self.request_submitter.submit(request).await
+    }
+}
+
+impl<T, U> IndyVdrLedgerWrite<T, U>
+where
+    T: RequestSubmitter + Send + Sync,
+    U: RequestSigner + Send + Sync,
+{
+    async fn append_txn_author_agreement_to_request(&self, request: PreparedRequest) -> VcxCoreResult<PreparedRequest> {
+        if let Some(taa_options) = &self.taa_options {
+            let mut request = request;
+            let taa_data = self.request_builder()?.prepare_txn_author_agreement_acceptance_data(
+                Some(&taa_options.text),
+                Some(&taa_options.version),
+                None,
+                &taa_options.aml_label,
+                OffsetDateTime::now_utc().unix_timestamp() as u64,
+            )?;
+            request.set_txn_author_agreement_acceptance(&taa_data)?;
+            Ok(request)
+        } else {
+            Ok(request)
+        }
     }
 }
 
@@ -231,28 +262,8 @@ where
             Some(&serde_json::from_str::<Value>(attrib_json)?),
             None,
         )?;
-        let request = _append_txn_author_agreement_to_request(request).await?;
+        let request = self.append_txn_author_agreement_to_request(request).await?;
         self.sign_and_submit_request(target_did, request).await
-    }
-}
-
-fn current_epoch_time() -> i64 {
-    OffsetDateTime::now_utc().unix_timestamp() as i64
-}
-
-async fn _append_txn_author_agreement_to_request(request: PreparedRequest) -> VcxCoreResult<PreparedRequest> {
-    if let Some(taa) = get_txn_author_agreement()? {
-        let mut request = request;
-        let acceptance = TxnAuthrAgrmtAcceptanceData {
-            mechanism: taa.acceptance_mechanism_type,
-            // TODO - investigate default digest
-            taa_digest: taa.taa_digest.map_or(String::from(""), |v| v),
-            time: taa.time_of_acceptance,
-        };
-        request.set_txn_author_agreement_acceptance(&acceptance)?;
-        Ok(request)
-    } else {
-        Ok(request)
     }
 }
 
@@ -299,7 +310,7 @@ where
         let revoc_reg_def_id = RevocationRegistryId::from_str(rev_reg_id)?;
 
         let from = from.map(|x| x as i64);
-        let current_time = current_epoch_time();
+        let current_time = OffsetDateTime::now_utc().unix_timestamp() as i64;
         let to = to.map_or(current_time, |x| x as i64);
 
         let request = self
@@ -361,7 +372,7 @@ where
         let mut request = self
             .request_builder()?
             .build_schema_request(&identifier, Schema::SchemaV1(schema_data))?;
-        request = _append_txn_author_agreement_to_request(request).await?;
+        request = self.append_txn_author_agreement_to_request(request).await?;
         // if let Some(endorser_did) = endorser_did {
         //     request = PreparedRequest::from_request_json(
         //         self.set_endorser(submitter_did, &request.req_json.to_string(), &endorser_did)
@@ -377,7 +388,7 @@ where
         let request = self
             .request_builder()?
             .build_cred_def_request(&identifier, CredentialDefinition::CredentialDefinitionV1(cred_def_data))?;
-        let request = _append_txn_author_agreement_to_request(request).await?;
+        let request = self.append_txn_author_agreement_to_request(request).await?;
         self.sign_and_submit_request(submitter_did, request).await.map(|_| ())
     }
 
@@ -388,7 +399,7 @@ where
             &identifier,
             RevocationRegistryDefinition::RevocationRegistryDefinitionV1(rev_reg_def_data),
         )?;
-        let request = _append_txn_author_agreement_to_request(request).await?;
+        let request = self.append_txn_author_agreement_to_request(request).await?;
         self.sign_and_submit_request(submitter_did, request).await.map(|_| ())
     }
 
@@ -406,7 +417,48 @@ where
             &RegistryType::CL_ACCUM,
             RevocationRegistryDelta::RevocationRegistryDeltaV1(rev_reg_delta_data),
         )?;
-        let request = _append_txn_author_agreement_to_request(request).await?;
+        let request = self.append_txn_author_agreement_to_request(request).await?;
         self.sign_and_submit_request(submitter_did, request).await.map(|_| ())
+    }
+}
+
+#[derive(Debug)]
+pub struct ProtocolVersion(VdrProtocolVersion);
+
+impl Default for ProtocolVersion {
+    fn default() -> Self {
+        ProtocolVersion(VdrProtocolVersion::Node1_4)
+    }
+}
+
+impl ProtocolVersion {
+    pub fn node_1_3() -> Self {
+        ProtocolVersion(VdrProtocolVersion::Node1_3)
+    }
+
+    pub fn node_1_4() -> Self {
+        ProtocolVersion(VdrProtocolVersion::Node1_4)
+    }
+}
+
+pub struct TxnAuthrAgrmtOptions {
+    pub text: String,
+    pub version: String,
+    pub aml_label: String,
+}
+
+fn not_found_to_none<T, E>(res: Result<T, E>) -> Result<Option<T>, AriesVcxCoreError>
+where
+    E: Into<AriesVcxCoreError>,
+{
+    match res {
+        Ok(response) => Ok(Some(response)),
+        Err(err) => {
+            let err_converted = Into::<AriesVcxCoreError>::into(err);
+            match err_converted.kind() {
+                AriesVcxCoreErrorKind::LedgerItemNotFound => Ok(None),
+                _ => Err(err_converted),
+            }
+        }
     }
 }

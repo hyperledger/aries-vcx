@@ -5,7 +5,7 @@ use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
 use aries_vcx_core::anoncreds::credx_anoncreds::IndyCredxAnonCreds;
 use aries_vcx_core::ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite};
 use aries_vcx_core::ledger::indy_vdr_ledger::{
-    IndyVdrLedgerRead, IndyVdrLedgerReadConfig, IndyVdrLedgerWrite, IndyVdrLedgerWriteConfig,
+    IndyVdrLedgerRead, IndyVdrLedgerReadConfig, IndyVdrLedgerWrite, IndyVdrLedgerWriteConfig, ProtocolVersion,
 };
 use aries_vcx_core::ledger::request_signer::base_wallet::BaseWalletRequestSigner;
 use aries_vcx_core::ledger::request_submitter::vdr_ledger::{IndyVdrLedgerPool, IndyVdrSubmitter, LedgerPoolConfig};
@@ -44,10 +44,13 @@ impl ModularLibsProfile {
             request_submitter: request_submitter.clone(),
             response_parser,
             response_cacher,
+            protocol_version: ProtocolVersion::node_1_4(),
         };
         let config_write = IndyVdrLedgerWriteConfig {
             request_signer,
             request_submitter,
+            taa_options: None,
+            protocol_version: ProtocolVersion::node_1_4(),
         };
         let ledger_read = Arc::new(IndyVdrLedgerRead::new(config_read));
         let ledger_write = Arc::new(IndyVdrLedgerWrite::new(config_write));

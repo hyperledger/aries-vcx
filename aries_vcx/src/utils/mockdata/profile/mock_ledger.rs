@@ -11,8 +11,8 @@ pub(crate) struct MockLedger;
 #[allow(unused)]
 #[async_trait]
 impl IndyLedgerRead for MockLedger {
-    async fn get_txn_author_agreement(&self) -> VcxCoreResult<String> {
-        Ok(utils::constants::DEFAULT_AUTHOR_AGREEMENT.to_string())
+    async fn get_txn_author_agreement(&self) -> VcxCoreResult<Option<String>> {
+        Ok(Some(utils::constants::DEFAULT_AUTHOR_AGREEMENT.to_string()))
     }
 
     async fn get_nym(&self, did: &str) -> VcxCoreResult<String> {
