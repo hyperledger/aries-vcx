@@ -790,7 +790,6 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         })?;
 
         let tails_reader = TailsFileReader::new(tails_path);
-        let tails_reader: credx::tails::TailsReader = credx::tails::TailsFileReader::new(&tails_file_path);
         let rev_reg_delta: RevocationRegistryDelta = serde_json::from_str(rev_reg_delta_json)?;
         let rev_reg_idx: u32 = cred_rev_id
             .parse()
