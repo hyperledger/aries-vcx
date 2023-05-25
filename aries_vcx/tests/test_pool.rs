@@ -71,35 +71,6 @@ mod integration_tests {
 
     #[tokio::test]
     #[ignore]
-    async fn test_endorse_transaction() {
-        SetupProfile::run(|setup| async move {
-            let ledger = Arc::clone(&setup.profile).inject_ledger();
-            let (author_did, _) = add_new_did(&setup.profile, &setup.institution_did, None).await.unwrap();
-            let (endorser_did, _) = add_new_did(&setup.profile, &setup.institution_did, Some("ENDORSER"))
-                .await
-                .unwrap();
-
-            let schema_request = ledger.build_schema_request(&author_did, SCHEMA_DATA).await.unwrap();
-            let schema_request = ledger
-                .set_endorser(&author_did, &schema_request, &endorser_did)
-                .await
-                .unwrap();
-            ledger
-                .endorse_transaction(&endorser_did, &schema_request)
-                .await
-                .unwrap();
-            let schema_data: SchemaData = serde_json::from_str(&SCHEMA_DATA).unwrap();
-            let schema_id = format!("{}:2:{}:1.0", author_did, schema_data.name);
-            thread::sleep(Duration::from_millis(50));
-            Schema::create_from_ledger_json(&setup.profile, "source_id", &schema_id)
-                .await
-                .unwrap();
-        })
-        .await;
-    }
-
-    #[tokio::test]
-    #[ignore]
     async fn test_pool_add_get_service() {
         SetupProfile::run(|setup| async move {
             let did = setup.institution_did.clone();

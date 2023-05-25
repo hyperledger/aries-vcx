@@ -180,33 +180,6 @@ public class SchemaApi extends VcxJava.API {
         }
     };
 
-    public static CompletableFuture<SchemaPrepareForEndorserResult> schemaPrepareForEndorser(String sourceId,
-                                                                                             String schemaName,
-                                                                                             String version,
-                                                                                             String data,
-                                                                                             String endorser) throws VcxException {
-        ParamGuard.notNullOrWhiteSpace(sourceId, "sourceId");
-        ParamGuard.notNull(schemaName, "schemaName");
-        ParamGuard.notNull(version, "version");
-        ParamGuard.notNull(data, "data");
-        ParamGuard.notNull(endorser, "endorserendorser");
-	    logger.debug("schemaCreate() called with: sourceId = [" + sourceId + "], schemaName = [" + schemaName + "], version = [" + version + "]" + " data = <" + data + ">" + " endorser = <" + endorser + ">");
-        CompletableFuture<SchemaPrepareForEndorserResult> future = new CompletableFuture<SchemaPrepareForEndorserResult>();
-        int commandHandle = addFuture(future);
-
-        int result = LibVcx.api.vcx_schema_prepare_for_endorser(
-                commandHandle,
-		        sourceId,
-		        schemaName,
-		        version,
-		        data,
-		        endorser,
-		        schemaPrepareForEndorserCB);
-        checkResult(result);
-
-        return future;
-    }
-
 	private static Callback vcxIntegerCB = new Callback() {
 		@SuppressWarnings({"unused", "unchecked"})
 		public void callback(int commandHandle, int err, int s) {

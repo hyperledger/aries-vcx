@@ -324,36 +324,6 @@ void checkErrorAndComplete(vcx_error_t ret, vcx_command_handle_t cmdHandle, void
     });
 }
 
-- (void)vcxSchemaPrepareForEndorser:(NSString *)sourceId
-                         schemaName:(NSString *)schemaName
-                      schemaVersion:(NSString *)schemaVersion
-                         schemaData:(NSString *)schemaData
-                           endorser:(NSString *)endorser
-                         completion:(void (^)(NSError *, NSNumber *, NSString *))completion {
-
-    vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
-    const char *sourceId_char = [sourceId cStringUsingEncoding:NSUTF8StringEncoding];
-    const char *schemaName_char = [schemaName cStringUsingEncoding:NSUTF8StringEncoding];
-    const char *schemaVersion_char = [schemaVersion cStringUsingEncoding:NSUTF8StringEncoding];
-    const char *schemaData_char = [schemaData cStringUsingEncoding:NSUTF8StringEncoding];
-    const char *endorser_char = [endorser cStringUsingEncoding:NSUTF8StringEncoding];
-
-    vcx_error_t ret = vcx_schema_prepare_for_endorser(
-            handle,
-            sourceId_char,
-            schemaName_char,
-            schemaVersion_char,
-            schemaData_char,
-            endorser_char,
-            &VcxWrapperCbResponseUnsignedIntAndString
-    );
-
-    checkErrorAndComplete(ret, handle, ^{
-        completion([NSError errorFromVcxError:ret], ERROR_RESPONSE_NUMBER, ERROR_RESPONSE_STRING);
-    });
-}
-
-
 - (void)vcxSchemaGetSchemaId:(NSString *)sourceId
                 schemaHandle:(NSNumber *)schemaHandle
                   completion:(void (^)(NSError *, NSString *))completion {

@@ -4,7 +4,6 @@ mod options;
 pub use config::*;
 pub use options::*;
 
-use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Instant;
 
@@ -161,7 +160,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_options_ttl_override_global_config_ttl() -> VcxCoreResult<()> {
-        let cacher = InMemoryResponseCacher::new(_cacher_config((Duration::from_millis(1))));
+        let cacher = InMemoryResponseCacher::new(_cacher_config(Duration::from_millis(1)));
         let test_object = _test_object();
 
         cacher.put("id1", test_object.clone()).await?;

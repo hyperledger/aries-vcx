@@ -6,9 +6,6 @@ use crate::errors::error::VcxCoreResult;
 #[async_trait]
 pub trait BaseLedger: std::fmt::Debug + Send + Sync {
     // returns request result as JSON
-    async fn sign_and_submit_request(&self, submitter_did: &str, request_json: &str) -> VcxCoreResult<String>;
-
-    // returns request result as JSON
     async fn submit_request(&self, request_json: &str) -> VcxCoreResult<String>;
 
     // endorsers/multi signs a request, submits to ledger, and verifies successful result
@@ -103,9 +100,6 @@ pub trait BaseLedger: std::fmt::Debug + Send + Sync {
 
     // returns request result as JSON
     async fn get_ledger_txn(&self, seq_no: i32, submitter_did: Option<&str>) -> VcxCoreResult<String>;
-
-    // returns request as JSON
-    async fn build_schema_request(&self, submitter_did: &str, schema_json: &str) -> VcxCoreResult<String>;
 
     async fn publish_schema(
         &self,

@@ -84,74 +84,6 @@ pub extern "C" fn vcx_schema_create(
     SUCCESS_ERR_CODE
 }
 
-/// Create a new Schema object that will be published by Endorser later.
-///
-/// Note that Schema can't be used for credential issuing until it will be published on the ledger.
-///
-/// #Params
-/// command_handle: command handle to map callback to user context.
-///
-/// source_id: Enterprise's personal identification for the user.
-///
-/// schema_name: Name of schema
-///
-/// version: version of schema
-///
-/// schema_data: list of attributes that will make up the schema (the number of attributes should be less or equal than 125)
-///
-/// endorser: DID of the Endorser that will submit the transaction.
-///
-/// # Example schema_data -> "["attr1", "attr2", "attr3"]"
-///
-/// cb: Callback that provides Schema handle and Schema transaction that should be passed to Endorser for publishing.
-///
-/// #Returns
-/// Error code as a u32
-#[no_mangle]
-pub extern "C" fn vcx_schema_prepare_for_endorser(
-    command_handle: CommandHandle,
-    source_id: *const c_char,
-    schema_name: *const c_char,
-    version: *const c_char,
-    schema_data: *const c_char,
-    endorser: *const c_char,
-    cb: Option<
-        extern "C" fn(xcommand_handle: CommandHandle, err: u32, schema_handle: u32, schema_transaction: *const c_char),
-    >,
-) -> u32 {
-    info!("vcx_schema_prepare_for_endorser >>>");
-
-    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
-    check_useful_c_str!(schema_name, LibvcxErrorKind::InvalidOption);
-    check_useful_c_str!(version, LibvcxErrorKind::InvalidOption);
-    check_useful_c_str!(source_id, LibvcxErrorKind::InvalidOption);
-    check_useful_c_str!(schema_data, LibvcxErrorKind::InvalidOption);
-    check_useful_c_str!(endorser, LibvcxErrorKind::InvalidOption);
-
-    trace!(target: "vcx", "vcx_schema_prepare_for_endorser(command_handle: {}, source_id: {}, schema_name: {},  schema_data: {},  endorser: {})",
-           command_handle, source_id, schema_name, schema_data, endorser);
-
-    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match schema::prepare_schema_for_endorser(&source_id, schema_name, version, schema_data, endorser).await {
-            Ok((handle, transaction)) => {
-                trace!(target: "vcx", "vcx_schema_prepare_for_endorser(command_handle: {}, rc: {}, handle: {}, transaction: {}) source_id: {}",
-                       command_handle, SUCCESS_ERR_CODE, handle, transaction, source_id);
-                let transaction = CStringUtils::string_to_cstring(transaction);
-                cb(command_handle, SUCCESS_ERR_CODE, handle, transaction.as_ptr());
-            }
-            Err(err) => {
-                set_current_error_vcx(&err);
-                error!("vcx_schema_prepare_for_endorser(command_handle: {}, rc: {}, handle: {}, transaction: {}) source_id: {}", command_handle, err, 0, "", source_id);
-                cb(command_handle, err.into(), 0, ptr::null_mut());
-            }
-        };
-
-        Ok(())
-    }));
-
-    SUCCESS_ERR_CODE
-}
-
 /// Takes the schema object and returns a json string of all its attributes
 ///
 /// #Params
@@ -566,7 +498,6 @@ mod tests {
     use aries_vcx::utils::devsetup::SetupMocks;
     use libvcx_core::api_vcx::api_global::settings;
     use libvcx_core::api_vcx::api_global::settings::get_config_value;
-    use libvcx_core::api_vcx::api_handle::schema::prepare_schema_for_endorser;
     use libvcx_core::api_vcx::api_handle::schema::test_utils::prepare_schema_data;
     use libvcx_core::errors;
 
@@ -680,55 +611,13 @@ mod tests {
         assert_eq!(schema_as_json["data"].to_string(), data);
     }
 
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_vcx_prepare_schema_success() {
-        let _setup = SetupMocks::init();
-
-        let cb = return_types_u32::Return_U32_U32_STR::new().unwrap();
-        assert_eq!(
-            vcx_schema_prepare_for_endorser(
-                cb.command_handle,
-                CString::new("Test Source ID").unwrap().into_raw(),
-                CString::new("Test Schema").unwrap().into_raw(),
-                CString::new("0.0").unwrap().into_raw(),
-                CString::new("[\"attr\", \"att2\"]").unwrap().into_raw(),
-                CString::new("V4SGRU86Z58d6TV7PBUe6f").unwrap().into_raw(),
-                Some(cb.get_callback()),
-            ),
-            SUCCESS_ERR_CODE
-        );
-        let (_handle, schema_transaction) = cb.receive(TimeoutUtils::some_short()).unwrap();
-        let schema_transaction = schema_transaction.unwrap();
-        let schema_transaction: serde_json::Value = serde_json::from_str(&schema_transaction).unwrap();
-        let expected_schema_transaction: serde_json::Value =
-            serde_json::from_str(utils::constants::REQUEST_WITH_ENDORSER).unwrap();
-        assert_eq!(expected_schema_transaction, schema_transaction);
-    }
-
     #[tokio::test]
     #[cfg(feature = "general_test")]
     async fn test_vcx_schema_get_state() {
         let _setup = SetupMocks::init();
 
-        let did = get_config_value(CONFIG_INSTITUTION_DID).unwrap();
-        let (handle, _) = prepare_schema_for_endorser(
-            "testid",
-            "name".to_string(),
-            "1.0".to_string(),
-            "[\"name\",\"gender\"]".to_string(),
-            "V4SGRU86Z58d6TV7PBUe6f".to_string(),
-        )
-        .await
-        .unwrap();
-        {
-            let cb = return_types_u32::Return_U32_U32::new().unwrap();
-            let _rc = vcx_schema_get_state(cb.command_handle, handle, Some(cb.get_callback()));
-            assert_eq!(
-                cb.receive(TimeoutUtils::some_medium()).unwrap(),
-                PublicEntityStateType::Built as u32
-            )
-        }
+        let (_, schema_name, schema_version, data) = prepare_schema_data();
+        let handle = vcx_schema_create_c_closure(&schema_name, &schema_version, &data).unwrap();
         {
             let cb = return_types_u32::Return_U32_U32::new().unwrap();
             let _rc = vcx_schema_update_state(cb.command_handle, handle, Some(cb.get_callback()));
