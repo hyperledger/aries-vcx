@@ -1,5 +1,5 @@
 use crate::errors::error::VcxResult;
-use aries_vcx_core::global::author_agreement::{set_txn_author_agreement, TxnAuthorAgreementAcceptanceData};
+use aries_vcx_core::global::author_agreement::set_txn_author_agreement;
 
 pub fn proxy_set_txn_author_agreement(
     text: Option<String>,

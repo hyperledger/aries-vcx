@@ -578,7 +578,7 @@ async fn _store_credential(
         cred_def_json
     );
 
-    let ledger = Arc::clone(profile).inject_ledger();
+    let ledger = Arc::clone(profile).inject_anoncreds_ledger_read();
     let anoncreds = Arc::clone(profile).inject_anoncreds();
 
     let credential_json = get_attach_as_string!(&credential.content.credentials_attach);
@@ -619,7 +619,7 @@ pub async fn create_credential_request(
     prover_did: &str,
     cred_offer: &str,
 ) -> VcxResult<(String, String, String, String)> {
-    let ledger = Arc::clone(profile).inject_ledger();
+    let ledger = Arc::clone(profile).inject_anoncreds_ledger_read();
     let anoncreds = Arc::clone(profile).inject_anoncreds();
     let cred_def_json = ledger.get_cred_def(cred_def_id, None).await?;
 

@@ -48,7 +48,6 @@ pub mod test_utils {
     use aries_vcx::utils::get_temp_dir_path;
 
     use crate::utils::devsetup_agent::test_utils::{Alice, Faber};
-    use crate::utils::test_macros::ProofStateType;
 
     pub fn _send_message(sender: Sender<AriesMessage>) -> Option<SendClosureConnection> {
         Some(Box::new(
@@ -769,7 +768,7 @@ pub mod test_utils {
     }
 
     pub async fn revoke_credential_local(faber: &mut Faber, issuer_credential: &Issuer, rev_reg_id: &str) {
-        let ledger = Arc::clone(&faber.profile).inject_ledger();
+        let ledger = Arc::clone(&faber.profile).inject_anoncreds_ledger_read();
         let (_, delta, timestamp) = ledger.get_rev_reg_delta_json(&rev_reg_id, None, None).await.unwrap();
         info!("revoking credential locally");
         issuer_credential.revoke_credential_local(&faber.profile).await.unwrap();

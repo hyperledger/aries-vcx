@@ -90,7 +90,7 @@ impl Schema {
         source_id: &str,
         schema_id: &str,
     ) -> VcxResult<Self> {
-        let ledger = Arc::clone(profile).inject_ledger();
+        let ledger = Arc::clone(profile).inject_anoncreds_ledger_read();
         let schema_json = ledger.get_schema(schema_id, None).await?;
         let schema_data: SchemaData = serde_json::from_str(&schema_json).map_err(|err| {
             AriesVcxError::from_msg(
@@ -121,7 +121,7 @@ impl Schema {
             });
         }
 
-        let ledger = Arc::clone(profile).inject_ledger();
+        let ledger = Arc::clone(profile).inject_anoncreds_ledger_write();
         ledger
             .publish_schema(&self.schema_json, &self.submitter_did, endorser_did)
             .await?;
@@ -153,7 +153,7 @@ impl Schema {
     }
 
     pub async fn update_state(&mut self, profile: &Arc<dyn Profile>) -> VcxResult<u32> {
-        let ledger = Arc::clone(profile).inject_ledger();
+        let ledger = Arc::clone(profile).inject_anoncreds_ledger_read();
         if ledger.get_schema(&self.schema_id, None).await.is_ok() {
             self.state = PublicEntityStateType::Published
         }
@@ -164,7 +164,7 @@ impl Schema {
         if !self.schema_json.is_empty() {
             Ok(self.schema_json.clone())
         } else {
-            let ledger = Arc::clone(profile).inject_ledger();
+            let ledger = Arc::clone(profile).inject_anoncreds_ledger_read();
             Ok(ledger.get_schema(&self.schema_id, None).await?)
         }
     }

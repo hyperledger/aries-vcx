@@ -37,7 +37,7 @@ pub async fn create_and_write_test_schema(
     attr_list: &str,
 ) -> (String, String) {
     let (schema_id, schema_json) = create_schema(profile, attr_list, submitter_did).await;
-    let ledger = Arc::clone(profile).inject_ledger();
+    let ledger = Arc::clone(profile).inject_anoncreds_ledger_write();
     let _response = ledger.publish_schema(&schema_json, submitter_did, None).await.unwrap();
     tokio::time::sleep(Duration::from_millis(1000)).await;
     (schema_id, schema_json)
@@ -65,7 +65,7 @@ pub async fn create_and_store_nonrevocable_credential_def(
     let cred_def_id = cred_def.get_cred_def_id();
     tokio::time::sleep(Duration::from_millis(1000)).await;
 
-    let ledger = Arc::clone(profile).inject_ledger();
+    let ledger = Arc::clone(profile).inject_anoncreds_ledger_read();
     let cred_def_json = ledger.get_cred_def(&cred_def_id, None).await.unwrap();
     (schema_id, schema_json, cred_def_id, cred_def_json, cred_def)
 }
@@ -115,7 +115,7 @@ pub async fn create_and_store_credential_def(
     tokio::time::sleep(Duration::from_millis(1000)).await;
     let cred_def_id = cred_def.get_cred_def_id();
     tokio::time::sleep(Duration::from_millis(1000)).await;
-    let ledger = Arc::clone(profile).inject_ledger();
+    let ledger = Arc::clone(profile).inject_anoncreds_ledger_read();
     let cred_def_json = ledger.get_cred_def(&cred_def_id, None).await.unwrap();
     (
         schema_id,
@@ -178,7 +178,7 @@ pub async fn create_and_store_credential(
     /* create cred */
     let credential_data = r#"{"address1": ["123 Main St"], "address2": ["Suite 3"], "city": ["Draper"], "state": ["UT"], "zip": ["84000"]}"#;
     let encoded_attributes = encode_attributes(&credential_data).unwrap();
-    let ledger = Arc::clone(issuer).inject_ledger();
+    let ledger = Arc::clone(issuer).inject_anoncreds_ledger_read();
     let rev_def_json = ledger.get_rev_reg_def_json(&rev_reg_id).await.unwrap();
     let tails_file = get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string();
 

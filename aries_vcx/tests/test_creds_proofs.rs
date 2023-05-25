@@ -13,7 +13,6 @@ mod integration_tests {
         create_and_store_credential, create_and_store_nonrevocable_credential,
         create_and_store_nonrevocable_credential_def, create_indy_proof,
     };
-    use aries_vcx::errors::error::VcxResult;
     use aries_vcx::handlers::proof_presentation::prover::Prover;
     use aries_vcx::handlers::proof_presentation::verifier::Verifier;
     use aries_vcx::handlers::util::AttachmentId;
@@ -75,7 +74,7 @@ mod integration_tests {
             )
             .await;
 
-            let ledger = Arc::clone(&setup.profile).inject_ledger();
+            let ledger = Arc::clone(&setup.profile).inject_anoncreds_ledger_read();
             let r_cred_def_json = ledger.get_cred_def(&cred_def_id, None).await.unwrap();
 
             let def1: serde_json::Value = serde_json::from_str(&cred_def_json).unwrap();
@@ -464,7 +463,6 @@ mod integration_tests {
 
 #[cfg(test)]
 mod tests {
-    use std::thread;
     use std::time::Duration;
 
     use messages::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
@@ -492,7 +490,6 @@ mod tests {
         send_cred_proposal, send_cred_proposal_1, send_cred_req, send_credential, send_proof_proposal,
         send_proof_proposal_1, send_proof_request, verifier_create_proof_and_send_request, verify_proof,
     };
-    use crate::utils::test_macros::ProofStateType;
 
     use super::*;
 
