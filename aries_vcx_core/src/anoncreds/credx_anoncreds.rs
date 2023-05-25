@@ -43,7 +43,9 @@ const CATEGORY_CRED_DEF: &str = "VCX_CRED_DEF";
 const CATEGORY_CRED_KEY_PROOF: &str = "VCX_CRED_DEF_PROOF";
 const CATEGORY_CRED_DEF_PRIV: &str = "VCX_CRED_DEF_PRIV";
 const CATEGORY_CRED_SCHEMA: &str = "VCX_CRED_SCHEMA";
-const CATEGORY_CRED_SCHEMA_ID: &str = "VCX_CRED_SCHEMA_ID";
+
+// Category used for mapping a cred_def_id to a schema_id
+const CATEGORY_CRED_MAP_SCHEMA_ID: &str = "VCX_CRED_MAP_SCHEMA_ID";
 
 const CATEGORY_REV_REG: &str = "VCX_REV_REG";
 const CATEGORY_REV_REG_DELTA: &str = "VCX_REV_REG_DELTA";
@@ -335,7 +337,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let str_schema_id = serde_json::to_string(schema.id())?;
 
         self.wallet
-            .add_wallet_record(CATEGORY_CRED_SCHEMA_ID, &cred_def_id.0, &str_schema_id, None)
+            .add_wallet_record(CATEGORY_CRED_MAP_SCHEMA_ID, &cred_def_id.0, &str_schema_id, None)
             .await?;
 
         // Return the ID and the cred def
@@ -350,7 +352,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             .await?;
 
         let schema_id = self
-            .get_wallet_record_value(CATEGORY_CRED_SCHEMA_ID, cred_def_id)
+            .get_wallet_record_value(CATEGORY_CRED_MAP_SCHEMA_ID, cred_def_id)
             .await?;
 
         // If cred_def contains schema ID, why take it as an argument here...?
@@ -921,7 +923,6 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let schema_json = serde_json::to_string(&schema)?;
         let schema_id = &schema.id().0;
 
-        // TODO - future - store as cache against issuer_did - why? indy_anoncreds.rs doesn't seem to cache it either
         Ok((schema_id.to_string(), schema_json))
     }
 
@@ -1103,13 +1104,6 @@ fn _format_attribute_as_marker_tag_name(attribute_name: &str) -> String {
     format!("attr::{attribute_name}::marker")
 }
 
-fn unimplemented_method_err(method_name: &str) -> AriesVcxCoreError {
-    AriesVcxCoreError::from_msg(
-        AriesVcxCoreErrorKind::UnimplementedFeature,
-        format!("method '{}' is not yet implemented in AriesVCX", method_name),
-    )
-}
-
 // common transformation requirement in credx
 fn hashmap_as_ref<'a, T, U>(map: &'a HashMap<T, U>) -> HashMap<T, &'a U>
 where
@@ -1123,36 +1117,4 @@ where
     }
 
     new_map
-}
-
-#[cfg(test)]
-#[cfg(feature = "general_test")]
-mod unit_tests {
-    use crate::errors::error::{AriesVcxCoreErrorKind, VcxCoreResult};
-    use crate::{common::test_utils::mock_profile, plugins::anoncreds::base_anoncreds::BaseAnonCreds};
-
-    use super::IndyCredxAnonCreds;
-
-    #[tokio::test]
-    async fn test_unimplemented_methods() {
-        // test used to assert which methods are unimplemented currently, can be removed after all methods implemented
-
-        fn assert_unimplemented<T: std::fmt::Debug>(result: VcxCoreResult<T>) {
-            assert_eq!(result.unwrap_err().kind(), AriesVcxCoreErrorKind::UnimplementedFeature)
-        }
-
-        let profile = mock_profile();
-        let anoncreds: Box<dyn BaseAnonCreds> = Box::new(IndyCredxAnonCreds::new(profile.inject_wallet()));
-
-        assert_unimplemented(anoncreds.issuer_create_and_store_revoc_reg("", "", "", 0, "").await);
-        assert_unimplemented(
-            anoncreds
-                .issuer_create_and_store_credential_def("", "", "", None, "")
-                .await,
-        );
-        assert_unimplemented(anoncreds.issuer_create_credential_offer("").await);
-        assert_unimplemented(anoncreds.issuer_create_credential("", "", "", None, None).await);
-        assert_unimplemented(anoncreds.revoke_credential_local("", "", "").await);
-        assert_unimplemented(anoncreds.publish_local_revocations("", "").await);
-    }
 }
