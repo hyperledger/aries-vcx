@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::sync::Arc;
 
 use crate::common::proofs::proof_request::ProofRequestData;
@@ -8,16 +9,17 @@ use crate::common::proofs::prover::prover_internal::{
 use crate::core::profile::profile::Profile;
 use crate::errors::error::prelude::*;
 use crate::global::settings;
+use crate::handlers::proof_presentation::types::SelectedCredentials;
 use crate::utils::mockdata::mock_settings::get_mock_generate_indy_proof;
 
 pub async fn generate_indy_proof(
     profile: &Arc<dyn Profile>,
-    credentials: &str,
-    self_attested_attrs: &str,
+    credentials: &SelectedCredentials,
+    self_attested_attrs: &HashMap<String, String>,
     proof_req_data_json: &str,
 ) -> VcxResult<String> {
     trace!(
-        "generate_indy_proof >>> credentials: {}, self_attested_attrs: {}",
+        "generate_indy_proof >>> credentials: {:?}, self_attested_attrs: {:?}",
         secret!(&credentials),
         secret!(&self_attested_attrs)
     );

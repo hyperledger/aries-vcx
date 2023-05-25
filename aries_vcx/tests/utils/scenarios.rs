@@ -1,4 +1,5 @@
 pub mod test_utils {
+    use std::collections::HashMap;
     use std::sync::Arc;
     use std::thread;
     use std::time::Duration;
@@ -6,6 +7,9 @@ pub mod test_utils {
     use aries_vcx::common::test_utils::create_and_store_credential_def;
     use aries_vcx::core::profile::profile::Profile;
     use aries_vcx::errors::error::{AriesVcxError, AriesVcxErrorKind};
+    use aries_vcx::handlers::proof_presentation::types::{
+        RetrievedCredentialForReferent, RetrievedCredentials, SelectedCredentials,
+    };
     use aries_vcx::handlers::util::{AnyInvitation, OfferInfo, PresentationProposalData};
     use aries_vcx::protocols::SendClosureConnection;
     use async_channel::{bounded, Sender};
@@ -719,15 +723,15 @@ pub mod test_utils {
         alice: &mut Alice,
         prover: &mut Prover,
         connection: &MediatedConnection,
-        selected_credentials: &str,
+        selected_credentials: SelectedCredentials,
     ) {
         let thread_id = prover.get_thread_id().unwrap();
         info!(
-            "generate_and_send_proof >>> generating proof using selected credentials {}",
+            "generate_and_send_proof >>> generating proof using selected credentials {:?}",
             selected_credentials
         );
         prover
-            .generate_presentation(&alice.profile, selected_credentials.into(), "{}".to_string())
+            .generate_presentation(&alice.profile, selected_credentials, HashMap::new())
             .await
             .unwrap();
         assert_eq!(thread_id, prover.get_thread_id().unwrap());
@@ -967,14 +971,14 @@ pub mod test_utils {
         alice: &mut Alice,
         connection: &MediatedConnection,
         requested_values: Option<&str>,
-    ) -> String {
+    ) -> SelectedCredentials {
         prover
             .update_state(&alice.profile, &alice.agency_client, connection)
             .await
             .unwrap();
         assert_eq!(prover.get_state(), ProverState::PresentationRequestReceived);
         let retrieved_credentials = prover.retrieve_credentials(&alice.profile).await.unwrap();
-        let selected_credentials_value = match requested_values {
+        let selected_credentials = match requested_values {
             Some(requested_values) => {
                 let credential_data = prover.presentation_request_data().unwrap();
                 retrieved_to_selected_credentials_specific(
@@ -986,7 +990,8 @@ pub mod test_utils {
             }
             _ => retrieved_to_selected_credentials_simple(&retrieved_credentials, true),
         };
-        serde_json::to_string(&selected_credentials_value).unwrap()
+
+        selected_credentials
     }
 
     pub async fn prover_select_credentials_and_send_proof_and_assert(
@@ -997,13 +1002,13 @@ pub mod test_utils {
         expected_prover_state: ProverState,
     ) {
         let mut prover = create_proof(alice, consumer_to_institution, request_name).await;
-        let selected_credentials_str =
+        let selected_credentials =
             prover_select_credentials(&mut prover, alice, consumer_to_institution, requested_values).await;
         info!(
-            "Prover :: Retrieved credential converted to selected: {}",
-            &selected_credentials_str
+            "Prover :: Retrieved credential converted to selected: {:?}",
+            &selected_credentials
         );
-        generate_and_send_proof(alice, &mut prover, consumer_to_institution, &selected_credentials_str).await;
+        generate_and_send_proof(alice, &mut prover, consumer_to_institution, selected_credentials).await;
         assert_eq!(expected_prover_state, prover.get_state());
     }
 
@@ -1202,66 +1207,68 @@ pub mod test_utils {
         (consumer_to_institution, institution_to_consumer)
     }
 
-    pub fn retrieved_to_selected_credentials_simple(retrieved_credentials: &str, with_tails: bool) -> Value {
+    pub fn retrieved_to_selected_credentials_simple(
+        retrieved_credentials: &RetrievedCredentials,
+        with_tails: bool,
+    ) -> SelectedCredentials {
         info!(
-            "test_real_proof >>> retrieved matching credentials {}",
+            "test_real_proof >>> retrieved matching credentials {:?}",
             retrieved_credentials
         );
-        let data: Value = serde_json::from_str(retrieved_credentials).unwrap();
-        let mut credentials_mapped: Value = json!({"attrs":{}});
+        let mut selected_credentials = SelectedCredentials::default();
 
-        for (key, val) in data["attrs"].as_object().unwrap().iter() {
-            let cred_array = val.as_array().unwrap();
+        for (referent, cred_array) in retrieved_credentials.credentials_by_referent.iter() {
             if cred_array.len() > 0 {
-                let first_cred = &cred_array[0];
-                credentials_mapped["attrs"][key]["credential"] = first_cred.clone();
-                if with_tails {
-                    credentials_mapped["attrs"][key]["tails_file"] =
-                        Value::from(get_temp_dir_path(TAILS_DIR).to_str().unwrap());
-                }
+                let first_cred = cred_array[0].clone();
+                let tails_dir = with_tails.then_some(get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_owned());
+                selected_credentials.select_credential_for_referent_from_retrieved(
+                    referent.to_owned(),
+                    first_cred,
+                    tails_dir,
+                );
             }
         }
-        return credentials_mapped;
+        return selected_credentials;
     }
 
     pub fn retrieved_to_selected_credentials_specific(
-        retrieved_credentials: &str,
+        retrieved_credentials: &RetrievedCredentials,
         requested_values: &str,
         credential_data: &str,
         with_tails: bool,
-    ) -> Value {
+    ) -> SelectedCredentials {
         info!(
-            "test_real_proof >>> retrieved matching credentials {}",
+            "test_real_proof >>> retrieved matching credentials {:?}",
             retrieved_credentials
         );
-        let retrieved_credentials: Value = serde_json::from_str(retrieved_credentials).unwrap();
         let credential_data: Value = serde_json::from_str(credential_data).unwrap();
         let requested_values: Value = serde_json::from_str(requested_values).unwrap();
         let requested_attributes: &Value = &credential_data["requested_attributes"];
-        let mut credentials_mapped: Value = json!({"attrs":{}});
 
-        for (key, val) in retrieved_credentials["attrs"].as_object().unwrap().iter() {
-            let filtered: Vec<&Value> = val
-                .as_array()
-                .unwrap()
+        let mut selected_credentials = SelectedCredentials::default();
+
+        for (referent, cred_array) in retrieved_credentials.credentials_by_referent.iter() {
+            let filtered: Vec<RetrievedCredentialForReferent> = cred_array
+                .clone()
                 .into_iter()
                 .filter_map(|cred| {
-                    let attribute_name = requested_attributes[key]["name"].as_str().unwrap();
+                    let attribute_name = requested_attributes[referent]["name"].as_str().unwrap();
                     let requested_value = requested_values[attribute_name].as_str().unwrap();
-                    if cred["cred_info"]["attrs"][attribute_name].as_str().unwrap() == requested_value {
+                    if cred.cred_info.attributes[attribute_name] == requested_value {
                         Some(cred)
                     } else {
                         None
                     }
                 })
                 .collect();
-            let first_cred: &serde_json::Value = &filtered[0];
-            credentials_mapped["attrs"][key]["credential"] = first_cred.clone();
-            if with_tails {
-                credentials_mapped["attrs"][key]["tails_file"] =
-                    Value::from(get_temp_dir_path(TAILS_DIR).to_str().unwrap());
-            }
+            let first_cred = filtered[0].clone();
+            let tails_dir = with_tails.then_some(get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_owned());
+            selected_credentials.select_credential_for_referent_from_retrieved(
+                referent.to_owned(),
+                first_cred,
+                tails_dir,
+            );
         }
-        return credentials_mapped;
+        return selected_credentials;
     }
 }

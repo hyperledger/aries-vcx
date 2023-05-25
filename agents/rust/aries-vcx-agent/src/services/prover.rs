@@ -7,6 +7,7 @@ use crate::storage::object_cache::ObjectCache;
 use crate::storage::Storage;
 use aries_vcx::core::profile::profile::Profile;
 use aries_vcx::handlers::proof_presentation::prover::Prover;
+use aries_vcx::handlers::proof_presentation::types::SelectedCredentials;
 use aries_vcx::handlers::util::PresentationProposalData;
 use aries_vcx::messages::msg_fields::protocols::present_proof::ack::AckPresentation;
 use aries_vcx::messages::msg_fields::protocols::present_proof::request::RequestPresentation;
@@ -57,23 +58,23 @@ impl ServiceProver {
         Ok(connection_id)
     }
 
-    async fn get_credentials_for_presentation(&self, prover: &Prover, tails_dir: Option<&str>) -> AgentResult<String> {
+    async fn get_credentials_for_presentation(
+        &self,
+        prover: &Prover,
+        tails_dir: Option<&str>,
+    ) -> AgentResult<SelectedCredentials> {
         let credentials = prover.retrieve_credentials(&self.profile).await?;
-        let credentials: HashMap<String, Value> = serde_json::from_str(&credentials).unwrap();
 
-        let mut res_credentials = json!({});
+        let mut res_credentials = SelectedCredentials::default();
 
-        for (key, val) in credentials["attrs"].as_object().unwrap().iter() {
-            let cred_array = val.as_array().unwrap();
+        for (referent, cred_array) in credentials.credentials_by_referent.into_iter() {
             if !cred_array.is_empty() {
-                let first_cred = &cred_array[0];
-                res_credentials["attrs"][key]["credential"] = first_cred.clone();
-                if let Some(tails_dir) = tails_dir {
-                    res_credentials["attrs"][key]["tails_file"] = Value::from(tails_dir);
-                }
+                let first_cred = cred_array[0].clone();
+                let tails_dir = tails_dir.map(|x| x.to_owned());
+                res_credentials.select_credential_for_referent_from_retrieved(referent, first_cred, tails_dir);
             }
         }
-        Ok(res_credentials.to_string())
+        Ok(res_credentials)
     }
 
     pub fn create_from_request(&self, connection_id: &str, request: RequestPresentation) -> AgentResult<String> {
@@ -117,7 +118,7 @@ impl ServiceProver {
         let connection = self.service_connections.get_by_id(&connection_id)?;
         let credentials = self.get_credentials_for_presentation(&prover, tails_dir).await?;
         prover
-            .generate_presentation(&self.profile, credentials, "{}".to_string())
+            .generate_presentation(&self.profile, credentials, HashMap::new())
             .await?;
 
         let wallet = self.profile.inject_wallet();
