@@ -330,9 +330,14 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             .add_wallet_record(CATEGORY_CRED_KEY_PROOF, &cred_def_id.0, &str_cred_key_proof, None)
             .await?;
 
-        self.wallet
+        let store_schema_res = self
+            .wallet
             .add_wallet_record(CATEGORY_CRED_SCHEMA, schema.id(), schema_json, None)
-            .await?;
+            .await;
+
+        if let Err(e) = store_schema_res {
+            warn!("Storing schema {schema_json} failed - {e}. It's possible it is already stored.")
+        }
 
         let str_schema_id = serde_json::to_string(schema.id())?;
 
