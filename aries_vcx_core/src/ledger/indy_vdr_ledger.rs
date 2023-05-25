@@ -1,4 +1,4 @@
-pub use indy_ledger_response_parser::GetTxnAuthorAgreementResult;
+pub use indy_ledger_response_parser::GetTxnAuthorAgreementData;
 use indy_ledger_response_parser::{ResponseParser, RevocationRegistryDeltaInfo, RevocationRegistryInfo};
 use indy_vdr as vdr;
 use std::fmt::{Debug, Formatter};
