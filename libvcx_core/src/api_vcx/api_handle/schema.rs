@@ -57,52 +57,6 @@ pub async fn create_and_publish_schema(
         .map_err(|e| LibvcxError::from_msg(LibvcxErrorKind::CreateSchema, e.to_string()))
 }
 
-pub async fn prepare_schema_for_endorser(
-    source_id: &str,
-    name: String,
-    version: String,
-    data: String,
-    endorser: String,
-) -> LibvcxResult<(u32, String)> {
-    let issuer_did = get_config_value(CONFIG_INSTITUTION_DID)?;
-
-    trace!(
-        "create_schema_for_endorser >>> source_id: {}, issuer_did: {}, name: {}, version: {}, data: {}, endorser: {}",
-        source_id,
-        issuer_did,
-        name,
-        version,
-        data,
-        endorser
-    );
-    debug!(
-        "preparing schema for endorser with source_id: {}, name: {}, issuer_did: {}",
-        source_id, name, issuer_did
-    );
-
-    let data: Vec<String> = serde_json::from_str(&data).map_err(|err| {
-        LibvcxError::from_msg(
-            LibvcxErrorKind::SerializationError,
-            format!("Cannot deserialize schema data to vec: {:?}", err),
-        )
-    })?;
-    let profile = get_main_profile()?;
-    let schema = Schema::create(&profile, source_id, &issuer_did, &name, &version, &data).await?;
-    let schema_json = schema.get_schema_json(&profile).await?;
-    let schema_id = schema.get_schema_id();
-    let ledger = Arc::clone(&profile).inject_ledger();
-    let schema_request = ledger.build_schema_request(&issuer_did, &schema_json).await?;
-    let schema_request = ledger.set_endorser(&issuer_did, &schema_request, &endorser).await?;
-
-    debug!("prepared schema for endorser with id: {}", schema_id);
-
-    let schema_handle = SCHEMA_MAP
-        .add(schema)
-        .map_err(|e| LibvcxError::from_msg(LibvcxErrorKind::CreateSchema, e.to_string()))?;
-
-    Ok((schema_handle, schema_request))
-}
-
 pub async fn get_schema_attrs(source_id: String, schema_id: String) -> LibvcxResult<(u32, String)> {
     trace!(
         "get_schema_attrs >>> source_id: {}, schema_id: {}",
@@ -283,23 +237,6 @@ pub mod tests {
 
     #[tokio::test]
     #[cfg(feature = "general_test")]
-    async fn test_prepare_schema_success() {
-        let _setup = SetupMocks::init();
-
-        let (_did, schema_name, schema_version, data) = prepare_schema_data();
-        prepare_schema_for_endorser(
-            "test_create_schema_success",
-            schema_name,
-            schema_version,
-            data,
-            "V4SGRU86Z58d6TV7PBUe6f".to_string(),
-        )
-        .await
-        .unwrap();
-    }
-
-    #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_get_schema_attrs_success() {
         let _setup = SetupMocks::init();
 
@@ -405,45 +342,6 @@ pub mod tests {
         let _setup = SetupEmpty::init();
 
         assert_eq!(to_string(13435178).unwrap_err().kind(), LibvcxErrorKind::InvalidHandle);
-    }
-
-    #[cfg(feature = "pool_tests")]
-    #[tokio::test]
-    async fn test_vcx_endorse_schema() {
-        SetupGlobalsWalletPoolAgency::run(|setup| async move {
-            let (_did, schema_name, schema_version, data) = prepare_schema_data();
-
-            let profile = get_main_profile().unwrap();
-
-            let (endorser_did, _) = add_new_did(&profile, &setup.setup.institution_did, Some("ENDORSER"))
-                .await
-                .unwrap();
-
-            let (schema_handle, schema_request) = prepare_schema_for_endorser(
-                "test_vcx_schema_update_state_with_ledger",
-                schema_name,
-                schema_version,
-                data,
-                endorser_did.clone(),
-            )
-            .await
-            .unwrap();
-            assert_eq!(0, get_state(schema_handle).unwrap());
-            assert_eq!(0, update_state(schema_handle).await.unwrap());
-
-            let ledger = profile.inject_ledger();
-
-            ledger
-                .endorse_transaction(&endorser_did, &schema_request)
-                .await
-                .unwrap();
-
-            std::thread::sleep(std::time::Duration::from_millis(1000));
-
-            assert_eq!(1, update_state(schema_handle).await.unwrap());
-            assert_eq!(1, get_state(schema_handle).unwrap());
-        })
-        .await;
     }
 
     #[cfg(feature = "pool_tests")]
