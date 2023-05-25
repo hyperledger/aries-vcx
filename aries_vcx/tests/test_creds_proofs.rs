@@ -80,7 +80,7 @@ mod integration_tests {
             )
             .await;
 
-            let ledger = Arc::clone(&setup.profile).inject_ledger();
+            let ledger = Arc::clone(&setup.profile).inject_anoncreds_ledger_read();
             let r_cred_def_json = ledger.get_cred_def(&cred_def_id, None).await.unwrap();
 
             let def1: serde_json::Value = serde_json::from_str(&cred_def_json).unwrap();

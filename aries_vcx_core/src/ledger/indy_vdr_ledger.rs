@@ -22,7 +22,7 @@ use crate::errors::error::VcxCoreResult;
 use crate::global::author_agreement::get_txn_author_agreement;
 use crate::global::settings;
 
-use super::base_ledger::BaseLedger;
+use super::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite};
 use super::request_signer::RequestSigner;
 use super::request_submitter::RequestSubmitter;
 use super::response_cacher::ResponseCacher;
@@ -223,37 +223,14 @@ where
 }
 
 #[async_trait]
-impl<T, U, V> BaseLedger for IndyVdrLedger<T, U, V>
+impl<T, U, V> IndyLedgerRead for IndyVdrLedger<T, U, V>
 where
     T: RequestSubmitter + Send + Sync,
     U: RequestSigner + Send + Sync,
     V: ResponseCacher + Send + Sync,
 {
-    async fn submit_request(&self, request_json: &str) -> VcxCoreResult<String> {
-        let request = PreparedRequest::from_request_json(request_json)?;
-        self._submit_request(request).await
-    }
-
-    async fn endorse_transaction(&self, endorser_did: &str, request_json: &str) -> VcxCoreResult<()> {
-        let mut request = PreparedRequest::from_request_json(&request_json)?;
-        verify_transaction_can_be_endorsed(request_json, endorser_did)?;
-        let signature_endorser = self._get_request_signature(endorser_did, &request).await?;
-        request.set_multi_signature(&DidValue::from_str(endorser_did)?, &signature_endorser)?;
-        self._submit_request(request).await.map(|_| ())
-    }
-
-    async fn set_endorser(&self, submitter_did: &str, request_json: &str, endorser: &str) -> VcxCoreResult<String> {
-        let mut request = PreparedRequest::from_request_json(request_json)?;
-        request.set_endorser(&DidValue::from_str(endorser)?)?;
-        let signature_submitter = self._get_request_signature(submitter_did, &request).await?;
-        request.set_multi_signature(&DidValue::from_str(submitter_did)?, &signature_submitter)?;
-        Ok(request.req_json.to_string())
-    }
-
-    async fn get_txn_author_agreement(&self) -> VcxCoreResult<String> {
-        let request = self
-            .request_builder()?
-            .build_get_txn_author_agreement_request(None, None)?;
+    async fn get_attr(&self, target_did: &str, attr_name: &str) -> VcxCoreResult<String> {
+        let request = self._build_get_attr_request(None, target_did, attr_name).await?;
         self._submit_request(request).await
     }
 
@@ -264,12 +241,41 @@ where
         self._submit_request_cached(did, request).await
     }
 
+    async fn get_txn_author_agreement(&self) -> VcxCoreResult<String> {
+        let request = self
+            .request_builder()?
+            .build_get_txn_author_agreement_request(None, None)?;
+        self._submit_request(request).await
+    }
+
+    async fn set_endorser(&self, submitter_did: &str, request_json: &str, endorser: &str) -> VcxCoreResult<String> {
+        let mut request = PreparedRequest::from_request_json(request_json)?;
+        request.set_endorser(&DidValue::from_str(endorser)?)?;
+        let signature_submitter = self._get_request_signature(submitter_did, &request).await?;
+        request.set_multi_signature(&DidValue::from_str(submitter_did)?, &signature_submitter)?;
+        Ok(request.req_json.to_string())
+    }
+
+    async fn get_ledger_txn(&self, seq_no: i32, submitter_did: Option<&str>) -> VcxCoreResult<String> {
+        let request = self._build_get_txn_request(submitter_did, seq_no)?;
+        self._submit_request(request).await
+    }
+}
+
+#[async_trait]
+#[async_trait]
+impl<T, U, V> IndyLedgerWrite for IndyVdrLedger<T, U, V>
+where
+    T: RequestSubmitter + Send + Sync,
+    U: RequestSigner + Send + Sync,
+    V: ResponseCacher + Send + Sync,
+{
     async fn publish_nym(
         &self,
         submitter_did: &str,
         target_did: &str,
         verkey: Option<&str>,
-        alias: Option<&str>,
+        data: Option<&str>,
         role: Option<&str>,
     ) -> VcxCoreResult<String> {
         let identifier = DidValue::from_str(submitter_did)?;
@@ -278,13 +284,56 @@ where
             &identifier,
             &dest,
             verkey.map(String::from),
-            alias.map(String::from),
+            data.map(String::from),
             role.map(String::from),
         )?;
 
         self._sign_and_submit_request(submitter_did, request).await
     }
 
+    async fn endorse_transaction(&self, endorser_did: &str, request_json: &str) -> VcxCoreResult<()> {
+        let mut request = PreparedRequest::from_request_json(&request_json)?;
+        verify_transaction_can_be_endorsed(request_json, endorser_did)?;
+        let signature_endorser = self._get_request_signature(endorser_did, &request).await?;
+        request.set_multi_signature(&DidValue::from_str(endorser_did)?, &signature_endorser)?;
+        self._submit_request(request).await.map(|_| ())
+    }
+
+    async fn add_attr(&self, target_did: &str, attrib_json: &str) -> VcxCoreResult<String> {
+        let request = self._build_attrib_request(target_did, target_did, Some(attrib_json))?;
+        let request = _append_txn_author_agreement_to_request(request).await?;
+        self._sign_and_submit_request(target_did, request).await
+    }
+}
+
+fn current_epoch_time() -> i64 {
+    OffsetDateTime::now_utc().unix_timestamp() as i64
+}
+
+async fn _append_txn_author_agreement_to_request(request: PreparedRequest) -> VcxCoreResult<PreparedRequest> {
+    if let Some(taa) = get_txn_author_agreement()? {
+        let mut request = request;
+        let acceptance = TxnAuthrAgrmtAcceptanceData {
+            mechanism: taa.acceptance_mechanism_type,
+            // TODO - investigate default digest
+            taa_digest: taa.taa_digest.map_or(String::from(""), |v| v),
+            time: taa.time_of_acceptance,
+        };
+        request.set_txn_author_agreement_acceptance(&acceptance)?;
+
+        Ok(request)
+    } else {
+        Ok(request)
+    }
+}
+
+#[async_trait]
+impl<T, U, V> AnoncredsLedgerRead for IndyVdrLedger<T, U, V>
+where
+    T: RequestSubmitter + Send + Sync,
+    U: RequestSigner + Send + Sync,
+    V: ResponseCacher + Send + Sync,
+{
     async fn get_schema(&self, schema_id: &str, _submitter_did: Option<&str>) -> VcxCoreResult<String> {
         let request = self
             .request_builder()?
@@ -299,19 +348,6 @@ where
         let response = self._submit_request(request).await?;
         let cred_def = self.response_parser.parse_get_cred_def_response(&response, None)?;
         Ok(serde_json::to_string(&cred_def)?)
-    }
-
-    async fn get_attr(&self, target_did: &str, attr_name: &str) -> VcxCoreResult<String> {
-        let request = self._build_get_attr_request(None, target_did, attr_name).await?;
-
-        self._submit_request(request).await
-    }
-
-    async fn add_attr(&self, target_did: &str, attrib_json: &str) -> VcxCoreResult<String> {
-        let request = self._build_attrib_request(target_did, target_did, Some(attrib_json))?;
-        let request = _append_txn_author_agreement_to_request(request).await?;
-
-        self._sign_and_submit_request(target_did, request).await
     }
 
     async fn get_rev_reg_def_json(&self, rev_reg_id: &str) -> VcxCoreResult<String> {
@@ -376,12 +412,15 @@ where
             timestamp,
         ))
     }
+}
 
-    async fn get_ledger_txn(&self, seq_no: i32, submitter_did: Option<&str>) -> VcxCoreResult<String> {
-        let request = self._build_get_txn_request(submitter_did, seq_no)?;
-        self._submit_request(request).await
-    }
-
+#[async_trait]
+impl<T, U, V> AnoncredsLedgerWrite for IndyVdrLedger<T, U, V>
+where
+    T: RequestSubmitter + Send + Sync,
+    U: RequestSigner + Send + Sync,
+    V: ResponseCacher + Send + Sync,
+{
     async fn publish_schema(
         &self,
         schema_json: &str,
@@ -420,26 +459,5 @@ where
         let request = self._build_rev_reg_delta_request(submitter_did, rev_reg_id, rev_reg_entry_json)?;
         let request = _append_txn_author_agreement_to_request(request).await?;
         self._sign_and_submit_request(submitter_did, request).await.map(|_| ())
-    }
-}
-
-fn current_epoch_time() -> i64 {
-    OffsetDateTime::now_utc().unix_timestamp() as i64
-}
-
-async fn _append_txn_author_agreement_to_request(request: PreparedRequest) -> VcxCoreResult<PreparedRequest> {
-    if let Some(taa) = get_txn_author_agreement()? {
-        let mut request = request;
-        let acceptance = TxnAuthrAgrmtAcceptanceData {
-            mechanism: taa.acceptance_mechanism_type,
-            // TODO - investigate default digest
-            taa_digest: taa.taa_digest.map_or(String::from(""), |v| v),
-            time: taa.time_of_acceptance,
-        };
-        request.set_txn_author_agreement_acceptance(&acceptance)?;
-
-        Ok(request)
-    } else {
-        Ok(request)
     }
 }

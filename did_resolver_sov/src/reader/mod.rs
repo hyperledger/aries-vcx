@@ -5,7 +5,7 @@ pub mod vdr_reader;
 
 use std::sync::Arc;
 
-use aries_vcx_core::ledger::base_ledger::BaseLedger;
+use aries_vcx_core::ledger::base_ledger::IndyLedgerRead;
 use async_trait::async_trait;
 
 use crate::error::DidSovError;
@@ -18,7 +18,7 @@ pub trait AttrReader: Send + Sync {
 }
 
 pub struct ConcreteAttrReader {
-    ledger: Arc<dyn BaseLedger>,
+    ledger: Arc<dyn IndyLedgerRead>,
 }
 
 #[async_trait]
@@ -35,8 +35,8 @@ impl AttrReader for ConcreteAttrReader {
     }
 }
 
-impl From<Arc<dyn BaseLedger>> for ConcreteAttrReader {
-    fn from(ledger: Arc<dyn BaseLedger>) -> Self {
+impl From<Arc<dyn IndyLedgerRead>> for ConcreteAttrReader {
+    fn from(ledger: Arc<dyn IndyLedgerRead>) -> Self {
         Self { ledger }
     }
 }

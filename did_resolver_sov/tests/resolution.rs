@@ -30,7 +30,7 @@ async fn write_service_on_ledger_and_resolve_did_doc() {
         let did = format!("did:sov:{}", init.institution_did);
         write_test_endpoint(&init.profile, &init.institution_did).await;
         let resolver = DidSovResolver::new(Arc::<ConcreteAttrReader>::new(
-            init.profile.inject_ledger().into(),
+            init.profile.inject_indy_ledger_read().into(),
         ));
         let did_doc = resolver
             .resolve(
@@ -50,7 +50,7 @@ async fn test_error_handling_during_resolution() {
         let did = format!("did:unknownmethod:{}", init.institution_did);
 
         let resolver = DidSovResolver::new(Arc::<ConcreteAttrReader>::new(
-            init.profile.inject_ledger().into(),
+            init.profile.inject_indy_ledger_read().into(),
         ));
 
         let result = resolver

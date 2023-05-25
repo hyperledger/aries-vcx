@@ -101,7 +101,7 @@ impl RevocationRegistry {
             &self.rev_reg_def
         );
         self.rev_reg_def.value.tails_location = String::from(tails_url);
-        let ledger = Arc::clone(profile).inject_ledger();
+        let ledger = Arc::clone(profile).inject_anoncreds_ledger_write();
         ledger
             .publish_rev_reg_def(&json!(self.rev_reg_def).to_string(), issuer_did)
             .await
@@ -121,7 +121,7 @@ impl RevocationRegistry {
             issuer_did,
             self.rev_reg_id
         );
-        let ledger = Arc::clone(profile).inject_ledger();
+        let ledger = Arc::clone(profile).inject_anoncreds_ledger_write();
         ledger
             .publish_rev_reg_delta(&self.rev_reg_id, &self.rev_reg_entry, issuer_did)
             .await
@@ -196,7 +196,7 @@ impl RevocationRegistry {
 
     pub async fn publish_local_revocations(&self, profile: &Arc<dyn Profile>, submitter_did: &str) -> VcxResult<()> {
         let anoncreds = Arc::clone(profile).inject_anoncreds();
-        let ledger = Arc::clone(profile).inject_ledger();
+        let ledger = Arc::clone(profile).inject_anoncreds_ledger_write();
 
         if let Some(delta) = anoncreds.get_rev_reg_delta(&self.rev_reg_id).await? {
             ledger

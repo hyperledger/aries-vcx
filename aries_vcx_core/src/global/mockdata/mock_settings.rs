@@ -1,5 +1,5 @@
+use std::collections::HashMap;
 use std::sync::RwLock;
-use std::{collections::HashMap, sync::Mutex};
 
 use crate::errors::error::VcxCoreResult;
 

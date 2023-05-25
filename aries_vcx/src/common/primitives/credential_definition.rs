@@ -1,5 +1,5 @@
 use aries_vcx_core::errors::error::AriesVcxCoreErrorKind;
-use aries_vcx_core::ledger::base_ledger::BaseLedger;
+use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
 
 use crate::core::profile::profile::Profile;
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
@@ -104,7 +104,7 @@ impl Default for PublicEntityStateType {
 }
 
 async fn _try_get_cred_def_from_ledger(
-    ledger: &Arc<dyn BaseLedger>,
+    ledger: &Arc<dyn AnoncredsLedgerRead>,
     issuer_did: &str,
     cred_def_id: &str,
 ) -> VcxResult<Option<String>> {
@@ -140,7 +140,7 @@ impl CredentialDef {
             schema_id,
             tag,
         } = config;
-        let ledger = Arc::clone(profile).inject_ledger();
+        let ledger = Arc::clone(profile).inject_anoncreds_ledger_read();
         let schema_json = ledger.get_schema(&schema_id, Some(&issuer_did)).await?;
         let (cred_def_id, cred_def_json) =
             generate_cred_def(profile, &issuer_did, &schema_json, &tag, None, Some(support_revocation)).await?;
@@ -170,8 +170,10 @@ impl CredentialDef {
             self.issuer_did,
             self.id
         );
-        let ledger = Arc::clone(profile).inject_ledger();
-        if let Some(ledger_cred_def_json) = _try_get_cred_def_from_ledger(&ledger, &self.issuer_did, &self.id).await? {
+        let ledger_read = Arc::clone(profile).inject_anoncreds_ledger_read();
+        if let Some(ledger_cred_def_json) =
+            _try_get_cred_def_from_ledger(&ledger_read, &self.issuer_did, &self.id).await?
+        {
             return Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::CredDefAlreadyCreated,
                 format!(
@@ -180,6 +182,7 @@ impl CredentialDef {
                 ),
             ));
         }
+        let ledger = Arc::clone(profile).inject_anoncreds_ledger_write();
         ledger.publish_cred_def(&self.cred_def_json, &self.issuer_did).await?;
         Ok(Self {
             state: PublicEntityStateType::Published,
@@ -230,7 +233,7 @@ impl CredentialDef {
     }
 
     pub async fn update_state(&mut self, profile: &Arc<dyn Profile>) -> VcxResult<u32> {
-        let ledger = Arc::clone(profile).inject_ledger();
+        let ledger = Arc::clone(profile).inject_anoncreds_ledger_read();
         if (ledger.get_cred_def(&self.id, None).await).is_ok() {
             self.state = PublicEntityStateType::Published
         }
@@ -289,8 +292,9 @@ pub mod integration_tests {
             let (schema_id, _) =
                 create_and_write_test_schema(&setup.profile, &setup.institution_did, DEFAULT_SCHEMA_ATTRS).await;
 
-            let ledger = Arc::clone(&setup.profile).inject_ledger();
-            let schema_json = ledger.get_schema(&schema_id, None).await.unwrap();
+            let ledger_read = Arc::clone(&setup.profile).inject_anoncreds_ledger_read();
+            let ledger_write = Arc::clone(&setup.profile).inject_anoncreds_ledger_write();
+            let schema_json = ledger_read.get_schema(&schema_id, None).await.unwrap();
 
             let (cred_def_id, cred_def_json_local) = generate_cred_def(
                 &setup.profile,
@@ -303,14 +307,14 @@ pub mod integration_tests {
             .await
             .unwrap();
 
-            ledger
+            ledger_write
                 .publish_cred_def(&cred_def_json_local, &setup.institution_did)
                 .await
                 .unwrap();
 
             std::thread::sleep(std::time::Duration::from_secs(2));
 
-            let cred_def_json_ledger = ledger
+            let cred_def_json_ledger = ledger_read
                 .get_cred_def(&cred_def_id, Some(&setup.institution_did))
                 .await
                 .unwrap();
@@ -327,8 +331,9 @@ pub mod integration_tests {
         SetupProfile::run_indy(|setup| async move {
             let (schema_id, _) =
                 create_and_write_test_schema(&setup.profile, &setup.institution_did, DEFAULT_SCHEMA_ATTRS).await;
-            let ledger = Arc::clone(&setup.profile).inject_ledger();
-            let schema_json = ledger.get_schema(&schema_id, None).await.unwrap();
+            let ledger_read = Arc::clone(&setup.profile).inject_anoncreds_ledger_read();
+            let ledger_write = Arc::clone(&setup.profile).inject_anoncreds_ledger_write();
+            let schema_json = ledger_read.get_schema(&schema_id, None).await.unwrap();
 
             let (cred_def_id, cred_def_json) = generate_cred_def(
                 &setup.profile,
@@ -340,7 +345,7 @@ pub mod integration_tests {
             )
             .await
             .unwrap();
-            ledger
+            ledger_write
                 .publish_cred_def(&cred_def_json, &setup.institution_did)
                 .await
                 .unwrap();
@@ -355,11 +360,11 @@ pub mod integration_tests {
             )
             .await
             .unwrap();
-            ledger
+            ledger_write
                 .publish_rev_reg_def(&json!(rev_reg_def_json).to_string(), &setup.institution_did)
                 .await
                 .unwrap();
-            ledger
+            ledger_write
                 .publish_rev_reg_delta(&rev_reg_def_id, &rev_reg_entry_json, &setup.institution_did)
                 .await
                 .unwrap();

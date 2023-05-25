@@ -32,7 +32,7 @@ pub async fn build_schemas_json_prover(
         "build_schemas_json_prover >>> credentials_identifiers: {:?}",
         credentials_identifiers
     );
-    let ledger = Arc::clone(profile).inject_ledger();
+    let ledger = Arc::clone(profile).inject_anoncreds_ledger_read();
     let mut rtn: Value = json!({});
 
     for cred_info in credentials_identifiers {
@@ -63,7 +63,7 @@ pub async fn build_cred_defs_json_prover(
         "build_cred_defs_json_prover >>> credentials_identifiers: {:?}",
         credentials_identifiers
     );
-    let ledger = Arc::clone(profile).inject_ledger();
+    let ledger = Arc::clone(profile).inject_anoncreds_ledger_read();
     let mut rtn: Value = json!({});
 
     for cred_info in credentials_identifiers {
@@ -140,7 +140,7 @@ pub async fn build_rev_states_json(
         "build_rev_states_json >> credentials_identifiers: {:?}",
         credentials_identifiers
     );
-    let ledger = Arc::clone(profile).inject_ledger();
+    let ledger = Arc::clone(profile).inject_anoncreds_ledger_read();
     let anoncreds = Arc::clone(profile).inject_anoncreds();
     let mut rtn: Value = json!({});
     let mut timestamps: HashMap<String, u64> = HashMap::new();
