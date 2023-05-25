@@ -428,8 +428,17 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
                     }
                 };
 
-                let tails_file_path = format!("{}/{}", tails_dir, tails_file_hash);
-                let tails_reader = TailsFileReader::new(&tails_file_path);
+                let mut tails_file_path = std::path::PathBuf::new();
+                tails_file_path.push(&tails_dir);
+                tails_file_path.push(tails_file_hash);
+
+                let tails_path = tails_file_path.to_str().ok_or_else(|| {
+                    AriesVcxCoreError::from_msg(
+                        AriesVcxCoreErrorKind::InvalidOption,
+                        "tails file is not an unicode string",
+                    )
+                })?;
+                let tails_reader = TailsFileReader::new(tails_path);
 
                 let revocation_config = CredentialRevocationConfig {
                     reg_def: rev_reg_def,
@@ -768,7 +777,19 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let tails_file_hash = match revoc_reg_def.borrow() {
             RevocationRegistryDefinition::RevocationRegistryDefinitionV1(r) => &r.value.tails_hash,
         };
-        let tails_file_path = format!("{}/{}", tails_dir, tails_file_hash);
+
+        let mut tails_file_path = std::path::PathBuf::new();
+        tails_file_path.push(&tails_dir);
+        tails_file_path.push(tails_file_hash);
+
+        let tails_path = tails_file_path.to_str().ok_or_else(|| {
+            AriesVcxCoreError::from_msg(
+                AriesVcxCoreErrorKind::InvalidOption,
+                "tails file is not an unicode string",
+            )
+        })?;
+
+        let tails_reader = TailsFileReader::new(tails_path);
         let tails_reader: credx::tails::TailsReader = credx::tails::TailsFileReader::new(&tails_file_path);
         let rev_reg_delta: RevocationRegistryDelta = serde_json::from_str(rev_reg_delta_json)?;
         let rev_reg_idx: u32 = cred_rev_id
