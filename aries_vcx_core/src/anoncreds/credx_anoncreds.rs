@@ -416,7 +416,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
                         if rev_reg_info.curr_id > rev_reg_def.value.max_cred_num {
                             return Err(AriesVcxCoreError::from_msg(
                                 AriesVcxCoreErrorKind::ActionNotSupported,
-                                "RevocationRegistryAccumulator is full",
+                                "The revocation registry is full",
                             ));
                         }
 
