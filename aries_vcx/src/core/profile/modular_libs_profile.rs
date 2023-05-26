@@ -4,7 +4,9 @@ use std::time::Duration;
 use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
 use aries_vcx_core::anoncreds::credx_anoncreds::IndyCredxAnonCreds;
 use aries_vcx_core::ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite};
-use aries_vcx_core::ledger::indy_vdr_ledger::{IndyVdrLedger, IndyVdrLedgerConfig};
+use aries_vcx_core::ledger::indy_vdr_ledger::{
+    IndyVdrLedgerRead, IndyVdrLedgerReadConfig, IndyVdrLedgerWrite, IndyVdrLedgerWriteConfig,
+};
 use aries_vcx_core::ledger::request_signer::base_wallet::BaseWalletRequestSigner;
 use aries_vcx_core::ledger::request_submitter::vdr_ledger::{IndyVdrLedgerPool, IndyVdrSubmitter, LedgerPoolConfig};
 use aries_vcx_core::ledger::response_cacher::in_memory::{InMemoryResponseCacher, InMemoryResponseCacherConfig};
@@ -38,20 +40,24 @@ impl ModularLibsProfile {
             .capacity(1000)?
             .build();
         let response_cacher = Arc::new(InMemoryResponseCacher::new(cacher_config));
-        let config = IndyVdrLedgerConfig {
-            request_signer,
-            request_submitter,
+        let config_read = IndyVdrLedgerReadConfig {
+            request_submitter: request_submitter.clone(),
             response_parser,
             response_cacher,
         };
-        let ledger = Arc::new(IndyVdrLedger::new(config));
+        let config_write = IndyVdrLedgerWriteConfig {
+            request_signer,
+            request_submitter,
+        };
+        let ledger_read = Arc::new(IndyVdrLedgerRead::new(config_read));
+        let ledger_write = Arc::new(IndyVdrLedgerWrite::new(config_write));
         Ok(ModularLibsProfile {
             wallet,
             anoncreds,
-            anoncreds_ledger_read: ledger.clone(),
-            anoncreds_ledger_write: ledger.clone(),
-            indy_ledger_read: ledger.clone(),
-            indy_ledger_write: ledger,
+            anoncreds_ledger_read: ledger_read.clone(),
+            anoncreds_ledger_write: ledger_write.clone(),
+            indy_ledger_read: ledger_read.clone(),
+            indy_ledger_write: ledger_write,
         })
     }
 }

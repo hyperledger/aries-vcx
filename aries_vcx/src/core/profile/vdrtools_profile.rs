@@ -4,7 +4,7 @@ use aries_vcx_core::{
     anoncreds::{base_anoncreds::BaseAnonCreds, indy_anoncreds::IndySdkAnonCreds},
     ledger::{
         base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite},
-        indy_ledger::IndySdkLedger,
+        indy_ledger::{IndySdkLedgerRead, IndySdkLedgerWrite},
     },
     wallet::{base_wallet::BaseWallet, indy_wallet::IndySdkWallet},
     PoolHandle, WalletHandle,
@@ -26,14 +26,15 @@ impl VdrtoolsProfile {
     pub fn new(indy_wallet_handle: WalletHandle, indy_pool_handle: PoolHandle) -> Self {
         let wallet = Arc::new(IndySdkWallet::new(indy_wallet_handle));
         let anoncreds = Arc::new(IndySdkAnonCreds::new(indy_wallet_handle));
-        let ledger = Arc::new(IndySdkLedger::new(indy_wallet_handle, indy_pool_handle));
+        let ledger_read = Arc::new(IndySdkLedgerRead::new(indy_wallet_handle, indy_pool_handle));
+        let ledger_write = Arc::new(IndySdkLedgerWrite::new(indy_wallet_handle, indy_pool_handle));
         VdrtoolsProfile {
             wallet,
             anoncreds,
-            anoncreds_ledger_read: ledger.clone(),
-            anoncreds_ledger_write: ledger.clone(),
-            indy_ledger_read: ledger.clone(),
-            indy_ledger_write: ledger,
+            anoncreds_ledger_read: ledger_read.clone(),
+            anoncreds_ledger_write: ledger_write.clone(),
+            indy_ledger_read: ledger_read,
+            indy_ledger_write: ledger_write,
         }
     }
 }

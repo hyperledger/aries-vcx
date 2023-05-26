@@ -4,7 +4,7 @@ use aries_vcx_core::{
     anoncreds::{base_anoncreds::BaseAnonCreds, indy_anoncreds::IndySdkAnonCreds},
     ledger::{
         base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite},
-        indy_vdr_ledger::{IndyVdrLedger, IndyVdrLedgerConfig},
+        indy_vdr_ledger::{IndyVdrLedgerRead, IndyVdrLedgerReadConfig, IndyVdrLedgerWrite, IndyVdrLedgerWriteConfig},
         request_signer::base_wallet::BaseWalletRequestSigner,
         request_submitter::vdr_proxy::VdrProxySubmitter,
         response_cacher::in_memory::{InMemoryResponseCacher, InMemoryResponseCacherConfig},
@@ -39,20 +39,24 @@ impl VdrProxyProfile {
             .capacity(1000)?
             .build();
         let response_cacher = Arc::new(InMemoryResponseCacher::new(cacher_config));
-        let config = IndyVdrLedgerConfig {
-            request_signer,
-            request_submitter,
+        let config_read = IndyVdrLedgerReadConfig {
+            request_submitter: request_submitter.clone(),
             response_parser,
             response_cacher,
         };
-        let ledger = Arc::new(IndyVdrLedger::new(config));
+        let config_write = IndyVdrLedgerWriteConfig {
+            request_submitter,
+            request_signer,
+        };
+        let ledger_read = Arc::new(IndyVdrLedgerRead::new(config_read));
+        let ledger_write = Arc::new(IndyVdrLedgerWrite::new(config_write));
         Ok(VdrProxyProfile {
             wallet,
             anoncreds,
-            anoncreds_ledger_read: ledger.clone(),
-            anoncreds_ledger_write: ledger.clone(),
-            indy_ledger_read: ledger.clone(),
-            indy_ledger_write: ledger,
+            anoncreds_ledger_read: ledger_read.clone(),
+            anoncreds_ledger_write: ledger_write.clone(),
+            indy_ledger_read: ledger_read,
+            indy_ledger_write: ledger_write,
         })
     }
 }
