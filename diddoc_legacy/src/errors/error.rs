@@ -1,6 +1,8 @@
 use std::error::Error;
 use std::fmt;
 
+use did_doc::error::DidDocumentBuilderError;
+
 pub mod prelude {
     pub use crate::errors::error::{err_msg, DiddocError, DiddocErrorKind, DiddocResult};
 }
@@ -22,6 +24,8 @@ pub enum DiddocErrorKind {
     InvalidVerkey,
     #[error("Value needs to be base58")]
     NotBase58,
+    #[error("Conversion error")]
+    ConversionError,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -66,3 +70,9 @@ where
 }
 
 pub type DiddocResult<T> = Result<T, DiddocError>;
+
+impl From<DidDocumentBuilderError> for DiddocError {
+    fn from(err: DidDocumentBuilderError) -> Self {
+        DiddocError::from_msg(DiddocErrorKind::ConversionError, err.to_string())
+    }
+}

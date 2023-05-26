@@ -90,15 +90,17 @@ pub const ARIES_CONNECTION_REQUEST: &str = r#"
             "@context": "https://w3id.org/did/v1",
             "authentication": [
                 {
-                    "publicKey": "2RjtVytftf9Psbh3E8jqyq#1",
+                    "controller": "did:sov:2RjtVytftf9Psbh3E8jqyq",
+                    "id": "did:sov:2RjtVytftf9Psbh3E8jqyq#1",
+                    "publicKey": "Av4ZDAKgpniTnxLukLQFZ2DbdNqPub8MBxxynCZ5VuFi",
                     "type": "Ed25519SignatureAuthentication2018"
                 }
             ],
-            "id": "2RjtVytftf9Psbh3E8jqyq",
-            "publicKey": [
+            "id": "did:sov:2RjtVytftf9Psbh3E8jqyq",
+            "keyAgreement": [
                 {
-                    "controller": "2RjtVytftf9Psbh3E8jqyq",
-                    "id": "1",
+                    "controller": "did:sov:2RjtVytftf9Psbh3E8jqyq",
+                    "id": "did:sov:2RjtVytftf9Psbh3E8jqyq#1",
                     "publicKeyBase58": "n6ZJrPGhbkLxQBxH11BvQHSKch58sx3MAqDTkUG4GmK",
                     "type": "Ed25519VerificationKey2018"
                 }
@@ -108,7 +110,7 @@ pub const ARIES_CONNECTION_REQUEST: &str = r#"
                     "id": "did:example:123456789abcdefghi;indy",
                     "priority": 0,
                     "recipientKeys": [
-                        "2RjtVytftf9Psbh3E8jqyq#1"
+                        "n6ZJrPGhbkLxQBxH11BvQHSKch58sx3MAqDTkUG4GmK"
                     ],
                     "routingKeys": [
                         "AKnC8qR9xsZZEBY7mdV6fzjmmtKxeegrNatpz4jSJhrH",
@@ -235,7 +237,6 @@ pub const ARIES_CONNECTION_RESPONSE: &str = r#"
     }
 }"#;
 
-// Alice (invitee) connection SM after Faber accepted connection by sending connection response
 pub const CONNECTION_SM_INVITEE_COMPLETED: &str = r#"
 {
     "version": "1.0",
@@ -352,19 +353,21 @@ pub const CONNECTION_SM_INVITER_COMPLETED: &str = r#"
             "Completed": {
                 "did_doc": {
                     "@context": "https://w3id.org/did/v1",
-                    "id": "KC6NKcpXcpVnpjL8uKH3tV",
-                    "publicKey": [
+                    "id": "did:sov:KC6NKcpXcpVnpjL8uKH3tV",
+                    "keyAgreement": [
                         {
-                            "id": "1",
+                            "id": "did:sov:2RjtVytftf9Psbh3E8jqyq#1",
+                            "controller": "did:sov:KC6NKcpXcpVnpjL8uKH3tV",
                             "type": "Ed25519VerificationKey2018",
-                            "controller": "KC6NKcpXcpVnpjL8uKH3tV",
                             "publicKeyBase58": "Av4ZDAKgpniTnxLukLQFZ2DbdNqPub8MBxxynCZ5VuFi"
                         }
                     ],
                     "authentication": [
                         {
+                            "id": "did:sov:2RjtVytftf9Psbh3E8jqyq#1",
+                            "controller": "did:sov:KC6NKcpXcpVnpjL8uKH3tV",
                             "type": "Ed25519SignatureAuthentication2018",
-                            "publicKey": "KC6NKcpXcpVnpjL8uKH3tV#1"
+                            "publicKey": "Av4ZDAKgpniTnxLukLQFZ2DbdNqPub8MBxxynCZ5VuFi"
                         }
                     ],
                     "service": [
@@ -373,7 +376,7 @@ pub const CONNECTION_SM_INVITER_COMPLETED: &str = r#"
                             "type": "IndyAgent",
                             "priority": 0,
                             "recipientKeys": [
-                                "KC6NKcpXcpVnpjL8uKH3tV#1"
+                                "Av4ZDAKgpniTnxLukLQFZ2DbdNqPub8MBxxynCZ5VuFi"
                             ],
                             "routingKeys": [
                                 "9drH4FZk79Y4bx5jzPBaJEmB4woEGG1XQSfgF7NkyKvV",

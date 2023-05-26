@@ -6,7 +6,8 @@ pub mod request;
 pub mod response;
 
 use derive_more::From;
-use diddoc_legacy::aries::diddoc::AriesDidDoc;
+use did_doc::schema::did_doc::DidDocument;
+use did_resolver_sov::resolution::ExtraFieldsSov;
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 
 use self::{
@@ -71,11 +72,11 @@ pub struct ConnectionData {
     #[serde(rename = "DID")]
     pub did: String,
     #[serde(rename = "DIDDoc")]
-    pub did_doc: AriesDidDoc,
+    pub did_doc: DidDocument<ExtraFieldsSov>,
 }
 
 impl ConnectionData {
-    pub fn new(did: String, did_doc: AriesDidDoc) -> Self {
+    pub fn new(did: String, did_doc: DidDocument<ExtraFieldsSov>) -> Self {
         Self { did, did_doc }
     }
 }

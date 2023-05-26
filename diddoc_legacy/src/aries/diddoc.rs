@@ -65,7 +65,9 @@ impl AriesDidDoc {
             });
 
             self.service.get_mut(0).map(|service| {
-                service.recipient_keys.push(key_in_base58.clone());
+                if !service.recipient_keys.contains(key_in_base58) {
+                    service.recipient_keys.push(key_in_base58.clone());
+                }
                 service
             });
         });
@@ -88,7 +90,9 @@ impl AriesDidDoc {
             //     });
 
             self.service.get_mut(0).map(|service| {
-                service.routing_keys.push(key.to_string());
+                if !service.routing_keys.contains(key) {
+                    service.routing_keys.push(key.to_string());
+                }
                 service
             });
         });

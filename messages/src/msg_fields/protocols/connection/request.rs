@@ -35,7 +35,8 @@ pub struct RequestDecorators {
 #[allow(clippy::unwrap_used)]
 #[allow(clippy::field_reassign_with_default)]
 mod tests {
-    use diddoc_legacy::aries::diddoc::AriesDidDoc;
+    use did_doc::schema::did_doc::DidDocument;
+    use did_resolver_sov::resolution::ExtraFieldsSov;
     use serde_json::json;
 
     use super::*;
@@ -47,7 +48,7 @@ mod tests {
 
     #[test]
     fn test_minimal_conn_request() {
-        let did_doc = AriesDidDoc::default(); // We really need to improve this creation.
+        let did_doc = DidDocument::<ExtraFieldsSov>::builder(Default::default()).build();
         let conn_data = ConnectionData::new("test_did".to_owned(), did_doc);
         let content = RequestContent::new("test_request_label".to_owned(), conn_data);
 
@@ -63,7 +64,7 @@ mod tests {
 
     #[test]
     fn test_extended_conn_request() {
-        let did_doc = AriesDidDoc::default(); // We really need to improve this creation.
+        let did_doc = DidDocument::<ExtraFieldsSov>::builder(Default::default()).build();
         let conn_data = ConnectionData::new("test_did".to_owned(), did_doc);
         let content = RequestContent::new("test_request_label".to_owned(), conn_data);
 

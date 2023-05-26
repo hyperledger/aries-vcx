@@ -24,6 +24,7 @@ thiserror = "1.0.38"
 serde_json = "1.0.91"
 async-trait = "0.1.64"
 diddoc_legacy = { path = "../../diddoc_legacy" }
+did_doc = { path = "../../did_doc" }
 url = "2.3.1"
 
 [build-dependencies]

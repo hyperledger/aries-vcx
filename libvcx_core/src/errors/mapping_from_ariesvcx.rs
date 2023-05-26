@@ -82,6 +82,7 @@ impl From<AriesVcxErrorKind> for LibvcxErrorKind {
             AriesVcxErrorKind::LedgerItemNotFound => LibvcxErrorKind::LedgerItemNotFound,
             AriesVcxErrorKind::UrsaError => LibvcxErrorKind::UrsaError,
             AriesVcxErrorKind::ProofRejected => LibvcxErrorKind::ProofRejected,
+            AriesVcxErrorKind::DidDocumentError => LibvcxErrorKind::DidDocumentError,
         }
     }
 }

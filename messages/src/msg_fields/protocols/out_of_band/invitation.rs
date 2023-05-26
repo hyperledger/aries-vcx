@@ -1,4 +1,5 @@
-use diddoc_legacy::aries::service::AriesService;
+use did_doc::schema::service::Service;
+use did_resolver_sov::resolution::ExtraFieldsSov;
 
 use serde::{Deserialize, Serialize};
 use shared_vcx::maybe_known::MaybeKnown;
@@ -55,7 +56,7 @@ pub struct InvitationDecorators {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(untagged)]
 pub enum OobService {
-    AriesService(AriesService),
+    AriesService(Service<ExtraFieldsSov>),
     Did(String),
 }
 

@@ -2,6 +2,7 @@ use messages::msg_fields::protocols::connection::problem_report::ProblemReport;
 use messages::msg_fields::protocols::connection::request::Request;
 use messages::msg_fields::protocols::connection::response::Response;
 
+use crate::errors::error::AriesVcxError;
 use crate::handlers::util::AnyInvitation;
 use crate::protocols::mediated_connection::inviter::states::initial::InitialState;
 use crate::protocols::mediated_connection::inviter::states::requested::RequestedState;
@@ -22,13 +23,15 @@ impl From<ProblemReport> for InitialState {
     }
 }
 
-impl From<(Request, Response)> for RequestedState {
-    fn from((request, signed_response): (Request, Response)) -> RequestedState {
+impl TryFrom<(Request, Response)> for RequestedState {
+    type Error = AriesVcxError;
+
+    fn try_from((request, signed_response): (Request, Response)) -> Result<RequestedState, Self::Error> {
         trace!("ConnectionInviter: transit state to RespondedState");
-        RequestedState {
+        Ok(RequestedState {
             signed_response,
-            did_doc: request.content.connection.did_doc,
+            did_doc: request.content.connection.did_doc.try_into()?,
             thread_id: request.id,
-        }
+        })
     }
 }

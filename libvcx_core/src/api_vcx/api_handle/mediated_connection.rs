@@ -140,7 +140,7 @@ pub async fn create_connection_with_invite(source_id: &str, details: &str) -> Li
             &profile,
             &get_main_agency_client()?,
             invitation,
-            ddo,
+            ddo.try_into()?,
             true,
         )
         .await?;

@@ -11,7 +11,7 @@ mod test_utils {
 
     pub async fn setup_mysql_walletdb() -> Result<String, sqlx::Error> {
         debug!("Running query.");
-        let db_name = format!("mysqltest_{}", uuid::Uuid::new_v4().to_string()).replace("-", "_");
+        let db_name = format!("mysqltest_{}", uuid::Uuid::new_v4()).replace('-', "_");
         let url = "mysql://root:mysecretpassword@localhost:3306";
         let mut connection = MySqlConnection::connect(url).await?;
         let query = format!("CREATE DATABASE {};", db_name);
@@ -55,9 +55,9 @@ mod dbtests {
         let storage_config = json!({
             "read_host": "localhost",
             "write_host": "localhost",
-            "port": 3306 as u32,
+            "port": 3306_u32,
             "db_name": db_name,
-            "default_connection_limit": 50 as u32
+            "default_connection_limit": 50_u32
         })
         .to_string();
         let storage_credentials = json!({

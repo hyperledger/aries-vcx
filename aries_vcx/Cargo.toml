@@ -26,6 +26,8 @@ mixed_breed = ["vdrtools", "modular_libs"]
 agency_client = { path = "../agency_client" }
 messages = { path  = "../messages" }
 diddoc_legacy = { path = "../diddoc_legacy" }
+did_doc = { path = "../did_doc" }
+did_resolver_sov = { path = "../did_resolver_sov" }
 aries_vcx_core = { path  = "../aries_vcx_core" }
 shared_vcx = { path = "../shared_vcx" }
 bs58 = "0.4.0"

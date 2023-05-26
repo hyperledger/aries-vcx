@@ -4,7 +4,8 @@ mod thin_state;
 use std::sync::Arc;
 
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
-use diddoc_legacy::aries::diddoc::AriesDidDoc;
+use did_doc::schema::did_doc::DidDocument;
+use did_resolver_sov::resolution::ExtraFieldsSov;
 use messages::AriesMessage;
 
 pub use self::thin_state::{State, ThinState};
@@ -36,8 +37,8 @@ use super::{trait_bounds::BootstrapDidDoc, wrap_and_send_msg};
 /// connection information.
 ///
 /// However, using methods directly from [`super::Connection`], if possible, comes with certain
-/// benefits such as being able to obtain an [`AriesDidDoc`] directly (if the state contains it)
-/// and not an [`Option<AriesDidDoc>`] (which is what [`GenericConnection`] provides).
+/// benefits such as being able to obtain an [`DidDocument`] directly (if the state contains it)
+/// and not an [`Option<DidDocument>`] (which is what [`GenericConnection`] provides).
 ///
 /// [`GenericConnection`] implements [`From`] for all [`super::Connection`] states and
 /// [`super::Connection`] implements [`TryFrom`] from [`GenericConnection`], with the conversion failing
@@ -128,7 +129,7 @@ impl GenericConnection {
         &self.pairwise_info
     }
 
-    pub fn their_did_doc(&self) -> Option<&AriesDidDoc> {
+    pub fn their_did_doc(&self) -> Option<&DidDocument<ExtraFieldsSov>> {
         match &self.state {
             GenericState::Invitee(InviteeState::Initial(_)) => None,
             GenericState::Invitee(InviteeState::Invited(s)) => Some(s.their_did_doc()),
@@ -143,7 +144,7 @@ impl GenericConnection {
         }
     }
 
-    pub fn bootstrap_did_doc(&self) -> Option<&AriesDidDoc> {
+    pub fn bootstrap_did_doc(&self) -> Option<&DidDocument<ExtraFieldsSov>> {
         match &self.state {
             GenericState::Inviter(_) => None,
             GenericState::Invitee(InviteeState::Initial(_)) => None,
@@ -155,7 +156,7 @@ impl GenericConnection {
     }
 
     pub fn remote_did(&self) -> Option<&str> {
-        self.their_did_doc().map(|d| d.id.as_str())
+        self.their_did_doc().map(|d| d.id().did())
     }
 
     pub fn remote_vk(&self) -> VcxResult<String> {
@@ -165,7 +166,11 @@ impl GenericConnection {
         ))?;
 
         did_doc
-            .recipient_keys()?
+            .service()
+            .get(0)
+            .ok_or_else(|| AriesVcxError::from_msg(AriesVcxErrorKind::DidDocumentError, "No service found"))?
+            .extra()
+            .recipient_keys()
             .first()
             .map(ToOwned::to_owned)
             .ok_or(AriesVcxError::from_msg(
@@ -209,6 +214,7 @@ mod connection_serde_tests {
 
     use async_trait::async_trait;
     use chrono::Utc;
+    use did_doc::schema::service::Service;
     use messages::decorators::thread::Thread;
     use messages::decorators::timing::Timing;
     use messages::msg_fields::protocols::connection::invitation::{
@@ -373,6 +379,22 @@ mod connection_serde_tests {
         Arc::new(MockProfile)
     }
 
+    fn make_con_data() -> ConnectionData {
+        let service = Service::builder(PW_KEY.parse().unwrap(), SERVICE_ENDPOINT.try_into().unwrap())
+            .unwrap()
+            .add_service_type("did-communication".to_string())
+            .unwrap()
+            .add_extra(
+                ExtraFieldsSov::builder()
+                    .set_recipient_keys(vec![PW_KEY.parse().unwrap()])
+                    .build(),
+            )
+            .build()
+            .unwrap();
+        let did_document = DidDocument::builder(Default::default()).add_service(service).build();
+        ConnectionData::new(PW_KEY.to_owned(), did_document)
+    }
+
     async fn make_initial_parts() -> (String, PairwiseInfo) {
         let source_id = SOURCE_ID.to_owned();
         let pairwise_info = PairwiseInfo::create(&make_mock_profile().inject_wallet())
@@ -422,11 +444,7 @@ mod connection_serde_tests {
     async fn make_invitee_responded() -> InviteeConnection<InviteeResponded> {
         let wallet = make_mock_profile().inject_wallet();
         let con = make_invitee_requested().await;
-        let mut con_data = ConnectionData::new(PW_KEY.to_owned(), AriesDidDoc::default());
-        con_data.did_doc.id = PW_KEY.to_owned();
-        con_data.did_doc.set_recipient_keys(vec![PW_KEY.to_owned()]);
-        con_data.did_doc.set_routing_keys(Vec::new());
-
+        let con_data = make_con_data();
         let sig_data = sign_connection_response(&wallet, PW_KEY, &con_data).await.unwrap();
 
         let content = ResponseContent::new(sig_data);
@@ -464,11 +482,7 @@ mod connection_serde_tests {
         let con = make_inviter_invited().await;
         let new_service_endpoint = SERVICE_ENDPOINT.to_owned().parse().expect("url should be valid");
         let new_routing_keys = vec![];
-
-        let mut con_data = ConnectionData::new(PW_KEY.to_owned(), AriesDidDoc::default());
-        con_data.did_doc.id = PW_KEY.to_owned();
-        con_data.did_doc.set_recipient_keys(vec![PW_KEY.to_owned()]);
-        con_data.did_doc.set_routing_keys(Vec::new());
+        let con_data = make_con_data();
 
         let content = RequestContent::new(PW_KEY.to_owned(), con_data);
         let mut decorators = RequestDecorators::default();

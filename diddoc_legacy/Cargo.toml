@@ -15,6 +15,9 @@ serde_derive = "1.0.97"
 url = { version = "2.3", features = ["serde"] }
 thiserror = "1.0.37"
 shared_vcx = { path = "../shared_vcx" }
+did_doc = { path = "../did_doc" }
+did_parser = { path = "../did_parser" }
+did_resolver_sov = { path = "../did_resolver_sov" }
 
 [dev-dependencies]
 serde_json = "1.0.91"

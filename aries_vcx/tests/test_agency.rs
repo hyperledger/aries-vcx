@@ -163,7 +163,7 @@ mod integration_tests {
 
                 match received_message {
                     AriesMessage::Notification(Notification::Ack(received_message)) => {
-                        assert_eq!(message, received_message.clone())
+                        assert_eq!(message, received_message)
                     }
                     _ => assert!(false),
                 }
@@ -453,7 +453,7 @@ mod integration_tests {
 
         SetupPool::run(|_setup| async move {
             let wallet_config = WalletConfig {
-                wallet_name: format!("wallet_{}", uuid::Uuid::new_v4().to_string()),
+                wallet_name: format!("wallet_{}", uuid::Uuid::new_v4()),
                 wallet_key: settings::DEFAULT_WALLET_KEY.into(),
                 wallet_key_derivation: settings::WALLET_KDF_RAW.into(),
                 wallet_type: None,

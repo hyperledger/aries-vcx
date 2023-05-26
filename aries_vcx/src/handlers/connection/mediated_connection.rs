@@ -453,7 +453,7 @@ impl MediatedConnection {
                     send_message(
                         profile.inject_wallet(),
                         pw_vk.to_string(),
-                        did_doc.clone(),
+                        did_doc.try_into()?,
                         build_ping_response(&ping).into(),
                     )
                     .await?;
@@ -465,7 +465,13 @@ impl MediatedConnection {
                 info!("Answering OutOfBand::HandshakeReuse message, thread: {}", thread_id);
 
                 let msg = build_handshake_reuse_accepted_msg(&handshake_reuse)?;
-                send_message(profile.inject_wallet(), pw_vk.to_string(), did_doc.clone(), msg.into()).await?;
+                send_message(
+                    profile.inject_wallet(),
+                    pw_vk.to_string(),
+                    did_doc.try_into()?,
+                    msg.into(),
+                )
+                .await?;
             }
             AriesMessage::DiscoverFeatures(DiscoverFeatures::Query(query)) => {
                 let supported_protocols = query.content.lookup();
@@ -475,7 +481,14 @@ impl MediatedConnection {
                     &query.id, &supported_protocols
                 );
 
-                respond_discovery_query(&profile.inject_wallet(), query, &did_doc, pw_vk, supported_protocols).await?;
+                respond_discovery_query(
+                    &profile.inject_wallet(),
+                    query,
+                    &did_doc.try_into()?,
+                    pw_vk,
+                    supported_protocols,
+                )
+                .await?;
             }
             AriesMessage::DiscoverFeatures(DiscoverFeatures::Disclose(disclose)) => {
                 let thread_id = disclose.decorators.thread.thid.as_str();
@@ -785,7 +798,12 @@ impl MediatedConnection {
         let sender_vk = self.pairwise_info().pw_vk.clone();
         let wallet = profile.inject_wallet();
         Ok(Box::new(move |message: AriesMessage| {
-            Box::pin(send_message(wallet, sender_vk.clone(), did_doc.clone(), message))
+            Box::pin(send_message(
+                wallet,
+                sender_vk.clone(),
+                did_doc.try_into().expect("DDO conversion failed"),
+                message,
+            ))
         }))
     }
 
@@ -793,7 +811,12 @@ impl MediatedConnection {
         trace!("send_message_closure_connection >>>");
         let wallet = profile.inject_wallet();
         Box::new(move |message: AriesMessage, sender_vk: String, did_doc: AriesDidDoc| {
-            Box::pin(send_message(wallet, sender_vk, did_doc, message))
+            Box::pin(send_message(
+                wallet,
+                sender_vk,
+                did_doc.try_into().expect("DDO conversion failed"),
+                message,
+            ))
         })
     }
 
@@ -893,7 +916,7 @@ impl MediatedConnection {
             &profile.inject_wallet(),
             query,
             comment,
-            &did_doc,
+            &did_doc.try_into()?,
             &self.pairwise_info().pw_vk,
         )
         .await?;

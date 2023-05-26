@@ -1,4 +1,5 @@
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind};
+use did_doc::error::DidDocumentBuilderError;
 use diddoc_legacy::errors::error::{DiddocError, DiddocErrorKind};
 
 impl From<DiddocError> for AriesVcxError {
@@ -18,6 +19,13 @@ impl From<DiddocErrorKind> for AriesVcxErrorKind {
             DiddocErrorKind::InvalidUrl => AriesVcxErrorKind::InvalidUrl,
             DiddocErrorKind::NotBase58 => AriesVcxErrorKind::NotBase58,
             DiddocErrorKind::SerializationError => AriesVcxErrorKind::SerializationError,
+            DiddocErrorKind::ConversionError => AriesVcxErrorKind::DidDocumentError,
         }
+    }
+}
+
+impl From<DidDocumentBuilderError> for AriesVcxError {
+    fn from(msg_err: DidDocumentBuilderError) -> AriesVcxError {
+        AriesVcxError::from_msg(AriesVcxErrorKind::DidDocumentError, msg_err.to_string())
     }
 }

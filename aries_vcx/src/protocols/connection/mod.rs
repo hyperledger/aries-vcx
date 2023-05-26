@@ -8,7 +8,8 @@ mod trait_bounds;
 
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use chrono::Utc;
-use diddoc_legacy::aries::diddoc::AriesDidDoc;
+use did_doc::schema::did_doc::DidDocument;
+use did_resolver_sov::resolution::ExtraFieldsSov;
 use messages::{
     decorators::{thread::Thread, timing::Timing},
     msg_fields::protocols::{
@@ -92,17 +93,21 @@ impl<I, S> Connection<I, S>
 where
     S: TheirDidDoc,
 {
-    pub fn their_did_doc(&self) -> &AriesDidDoc {
+    pub fn their_did_doc(&self) -> &DidDocument<ExtraFieldsSov> {
         self.state.their_did_doc()
     }
 
     pub fn remote_did(&self) -> &str {
-        &self.their_did_doc().id
+        &self.their_did_doc().id().did()
     }
 
     pub fn remote_vk(&self) -> VcxResult<String> {
         self.their_did_doc()
-            .recipient_keys()?
+            .service()
+            .get(0)
+            .ok_or_else(|| AriesVcxError::from_msg(AriesVcxErrorKind::DidDocumentError, "No service found"))?
+            .extra()
+            .recipient_keys()
             .first()
             .map(ToOwned::to_owned)
             .ok_or(AriesVcxError::from_msg(
@@ -150,7 +155,7 @@ where
         wallet: &Arc<dyn BaseWallet>,
         err: &E,
         thread_id: &str,
-        did_doc: &AriesDidDoc,
+        did_doc: &DidDocument<ExtraFieldsSov>,
         transport: &T,
     ) where
         E: Error,
@@ -185,7 +190,7 @@ pub(crate) async fn wrap_and_send_msg<T>(
     wallet: &Arc<dyn BaseWallet>,
     message: &AriesMessage,
     sender_verkey: &str,
-    did_doc: &AriesDidDoc,
+    did_doc: &DidDocument<ExtraFieldsSov>,
     transport: &T,
 ) -> VcxResult<()>
 where
@@ -194,8 +199,10 @@ where
     let env = EncryptionEnvelope::create(wallet, message, Some(sender_verkey), did_doc).await?;
     let msg = env.0;
     let service_endpoint = did_doc
-        .get_endpoint()
-        .ok_or_else(|| AriesVcxError::from_msg(AriesVcxErrorKind::InvalidUrl, "No URL in DID Doc"))?; // This, like many other things, shouldn't clone...
+        .service()
+        .get(0)
+        .ok_or_else(|| AriesVcxError::from_msg(AriesVcxErrorKind::InvalidUrl, "No service found in did doc"))?
+        .service_endpoint();
 
-    transport.send_message(msg, service_endpoint).await
+    transport.send_message(msg, service_endpoint.to_owned().into()).await
 }

@@ -31,10 +31,10 @@
     "access": "public"
   },
   "dependencies": {
+    "@hyperledger/vcx-napi-rs": "file:../vcx-napi-rs",
     "fs-extra": "^4.0.2",
     "lodash": "^4.17.21",
     "uuid": "^8.3.2",
-    "@hyperledger/vcx-napi-rs": "file:../vcx-napi-rs",
     "weak-napi": "^2.0.2"
   },
   "devDependencies": {

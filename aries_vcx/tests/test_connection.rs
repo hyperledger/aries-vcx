@@ -350,7 +350,10 @@ mod integration_tests {
 
             let faber_connection_info = faber.connection_info().await;
             warn!("faber_connection_info: {}", faber_connection_info);
-            assert!(faber_connection_info["their"]["protocols"].as_array().unwrap().len() > 0);
+            assert!(!faber_connection_info["their"]["protocols"]
+                .as_array()
+                .unwrap()
+                .is_empty());
         })
         .await;
     }

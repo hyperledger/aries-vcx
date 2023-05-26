@@ -1,7 +1,8 @@
 use std::sync::Arc;
 
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
-use diddoc_legacy::aries::diddoc::AriesDidDoc;
+use did_doc::schema::did_doc::DidDocument;
+use did_resolver_sov::resolution::ExtraFieldsSov;
 use futures::TryFutureExt;
 
 use agency_client::testing::mocking::AgencyMockDecrypted;
@@ -21,7 +22,7 @@ impl EncryptionEnvelope {
         wallet: &Arc<dyn BaseWallet>,
         message: &AriesMessage,
         pw_verkey: Option<&str>,
-        did_doc: &AriesDidDoc,
+        did_doc: &DidDocument<ExtraFieldsSov>,
     ) -> VcxResult<EncryptionEnvelope> {
         trace!(
             "EncryptionEnvelope::create >>> message: {:?}, pw_verkey: {:?}, did_doc: {:?}",
@@ -46,11 +47,16 @@ impl EncryptionEnvelope {
         wallet: &Arc<dyn BaseWallet>,
         message: &AriesMessage,
         pw_verkey: Option<&str>,
-        did_doc: &AriesDidDoc,
+        did_doc: &DidDocument<ExtraFieldsSov>,
     ) -> VcxResult<Vec<u8>> {
         let message = json!(message).to_string();
 
-        let receiver_keys = json!(did_doc.recipient_keys()?).to_string();
+        let receiver_keys = did_doc
+            .service()
+            .get(0)
+            .ok_or_else(|| AriesVcxError::from_msg(AriesVcxErrorKind::DidDocumentError, "No service found"))?
+            .extra()
+            .recipient_keys();
 
         debug!(
             "Encrypting for pairwise; pw_verkey: {:?}, receiver_keys: {:?}",
@@ -58,7 +64,7 @@ impl EncryptionEnvelope {
         );
 
         wallet
-            .pack_message(pw_verkey, &receiver_keys, message.as_bytes())
+            .pack_message(pw_verkey, &serde_json::to_string(&receiver_keys)?, message.as_bytes())
             .await
             .map_err(|err| err.into())
     }
@@ -66,19 +72,26 @@ impl EncryptionEnvelope {
     async fn wrap_into_forward_messages(
         wallet: &Arc<dyn BaseWallet>,
         mut message: Vec<u8>,
-        did_doc: &AriesDidDoc,
+        did_doc: &DidDocument<ExtraFieldsSov>,
     ) -> VcxResult<Vec<u8>> {
-        let recipient_keys = did_doc.recipient_keys()?;
-        let routing_keys = did_doc.routing_keys();
+        // TODO: Perhaps the service type should be generic so that the fields are easier to access
+        let service = did_doc
+            .service()
+            .get(0)
+            .ok_or_else(|| AriesVcxError::from_msg(AriesVcxErrorKind::DidDocumentError, "No service found"))?;
+        let recipient_keys = service.extra().recipient_keys();
+        let routing_keys = service.extra().routing_keys();
 
-        let mut to = recipient_keys.get(0).map(String::from).ok_or(AriesVcxError::from_msg(
-            AriesVcxErrorKind::InvalidState,
-            format!("Recipient Key not found in DIDDoc: {:?}", did_doc),
-        ))?;
+        let mut to = recipient_keys.get(0).ok_or_else(|| {
+            AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidState,
+                format!("Recipient Key not found in DIDDoc: {:?}", did_doc),
+            )
+        })?;
 
         for routing_key in routing_keys.iter() {
             message = EncryptionEnvelope::wrap_into_forward(wallet, message, &to, routing_key).await?;
-            to = routing_key.clone();
+            to = routing_key;
         }
 
         Ok(message)
@@ -232,7 +245,7 @@ impl EncryptionEnvelope {
 //                 &profile.inject_wallet(),
 //                 &message,
 //                 Some(&trustee_key),
-//                 &AriesDidDoc::default(),
+//                 &DidDocument::default(),
 //             )
 //             .await;
 //             assert_eq!(res.unwrap_err().kind(), AriesVcxErrorKind::InvalidLibindyParam);
@@ -278,7 +291,7 @@ impl EncryptionEnvelope {
 //             let key_1 = create_key(&profile).await;
 //             let key_2 = create_key(&profile).await;
 
-//             let mut did_doc = AriesDidDoc::default();
+//             let mut did_doc = DidDocument::default();
 //             did_doc.set_service_endpoint(_service_endpoint());
 //             did_doc.set_recipient_keys(_recipient_keys());
 //             did_doc.set_routing_keys(vec![key_1.clone(), key_2.clone()]);
@@ -338,7 +351,7 @@ impl EncryptionEnvelope {
 //                 let sender_profile = indy_handles_to_profile(sender_wallet, INVALID_POOL_HANDLE);
 //                 let sender_key = test_setup::create_key(sender_wallet).await;
 
-//                 let mut did_doc = AriesDidDoc::default();
+//                 let mut did_doc = DidDocument::default();
 //                 did_doc.set_recipient_keys(vec![recipient_key]);
 
 //                 let ack = A2AMessage::Ack(_ack());
@@ -369,7 +382,7 @@ impl EncryptionEnvelope {
 //                 let sender_key_1 = test_setup::create_key(sender_wallet).await;
 //                 let sender_key_2 = test_setup::create_key(sender_wallet).await;
 
-//                 let mut did_doc = AriesDidDoc::default();
+//                 let mut did_doc = DidDocument::default();
 
 //                 did_doc.set_recipient_keys(vec![recipient_key]);
 

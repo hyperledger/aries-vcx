@@ -158,6 +158,9 @@ pub enum AriesVcxErrorKind {
 
     #[error("Invalid message format")]
     InvalidMessageFormat,
+
+    #[error("Did document error")]
+    DidDocumentError,
 }
 
 #[derive(Debug, thiserror::Error)]

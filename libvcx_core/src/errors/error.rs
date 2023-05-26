@@ -197,6 +197,9 @@ pub enum LibvcxErrorKind {
     PoisonedLock,
     #[error("Error accessing an object")]
     ObjectAccessError,
+
+    #[error("Did document error")]
+    DidDocumentError,
 }
 
 #[derive(Debug, thiserror::Error)]

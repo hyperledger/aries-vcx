@@ -1,6 +1,7 @@
 use std::sync::PoisonError;
 
 use aries_vcx_core::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind};
+use did_doc::did_parser;
 
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind};
 use crate::protocols::revocation_notification::sender::state_machine::SenderConfigBuilderError;
@@ -21,6 +22,18 @@ impl From<serde_json::Error> for AriesVcxError {
 impl<T> From<PoisonError<T>> for AriesVcxError {
     fn from(err: PoisonError<T>) -> Self {
         AriesVcxError::from_msg(AriesVcxErrorKind::InvalidState, err.to_string())
+    }
+}
+
+impl From<url::ParseError> for AriesVcxError {
+    fn from(err: url::ParseError) -> Self {
+        AriesVcxError::from_msg(AriesVcxErrorKind::ParsingError, err.to_string())
+    }
+}
+
+impl From<did_parser::ParseError> for AriesVcxError {
+    fn from(err: did_parser::ParseError) -> Self {
+        AriesVcxError::from_msg(AriesVcxErrorKind::ParsingError, err.to_string())
     }
 }
 
@@ -90,6 +103,7 @@ impl From<AriesVcxCoreError> for AriesVcxError {
             AriesVcxCoreErrorKind::UrsaError => AriesVcxErrorKind::UrsaError,
             AriesVcxCoreErrorKind::NoAgentInformation => AriesVcxErrorKind::NoAgentInformation,
             AriesVcxCoreErrorKind::InvalidMessageFormat => AriesVcxErrorKind::InvalidMessageFormat,
+            AriesVcxCoreErrorKind::DidDocumentError => AriesVcxErrorKind::DidDocumentError,
         };
         AriesVcxError::from_msg(kind, format!("AriesVcxCoreError: {}", err.to_string()))
     }
@@ -161,6 +175,7 @@ impl From<AriesVcxError> for AriesVcxCoreError {
             AriesVcxErrorKind::UrsaError => AriesVcxCoreErrorKind::UrsaError,
             AriesVcxErrorKind::NoAgentInformation => AriesVcxCoreErrorKind::NoAgentInformation,
             AriesVcxErrorKind::InvalidMessageFormat => AriesVcxCoreErrorKind::InvalidMessageFormat,
+            AriesVcxErrorKind::DidDocumentError => AriesVcxCoreErrorKind::DidDocumentError,
         };
         AriesVcxCoreError::from_msg(kind, format!("AriesVcxError: {}", err.to_string()))
     }

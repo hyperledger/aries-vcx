@@ -15,7 +15,8 @@ mod integration_tests {
     use aries_vcx::common::test_utils::create_and_store_nonrevocable_credential_def;
     use aries_vcx::utils::constants::DEFAULT_SCHEMA_ATTRS;
     use aries_vcx::utils::devsetup::{SetupProfile, SetupWalletPool};
-    use diddoc_legacy::aries::service::AriesService;
+    use did_doc::schema::service::Service;
+    use did_resolver_sov::resolution::ExtraFieldsSov;
     use std::sync::Arc;
     use std::thread;
     use std::time::Duration;
@@ -72,7 +73,12 @@ mod integration_tests {
     async fn test_pool_add_get_service() {
         SetupProfile::run(|setup| async move {
             let did = setup.institution_did.clone();
-            let expect_service = AriesService::default();
+            let expect_service = Service::builder(did.parse().unwrap(), "https://example.org".parse().unwrap())
+                .unwrap()
+                .add_service_type("did-communication".to_string())
+                .unwrap()
+                .build()
+                .unwrap();
             write_endpoint_legacy(&setup.profile, &did, &expect_service)
                 .await
                 .unwrap();
@@ -102,10 +108,21 @@ mod integration_tests {
             let expect_recipient_key = get_verkey_from_ledger(&setup.profile, &setup.institution_did)
                 .await
                 .unwrap();
-            let expect_service = AriesService::default()
-                .set_service_endpoint("https://example.org".parse().unwrap())
-                .set_recipient_keys(vec![expect_recipient_key])
-                .set_routing_keys(vec!["did:sov:456".into()]);
+            let expect_service = Service::builder(
+                setup.institution_did.parse().unwrap(),
+                "https://example.org".parse().unwrap(),
+            )
+            .unwrap()
+            .add_extra(
+                ExtraFieldsSov::builder()
+                    .add_recipient_key(expect_recipient_key)
+                    .add_routing_key("did:sov:456".into())
+                    .build(),
+            )
+            .add_service_type("did-communication".to_string())
+            .unwrap()
+            .build()
+            .unwrap();
             assert_eq!(expect_service, service);
 
             // clean up written endpoint
@@ -130,10 +147,20 @@ mod integration_tests {
             let expect_recipient_key = get_verkey_from_ledger(&setup.profile, &setup.institution_did)
                 .await
                 .unwrap();
-            let expect_service = AriesService::default()
-                .set_service_endpoint("https://example.org".parse().unwrap())
-                .set_recipient_keys(vec![expect_recipient_key])
-                .set_routing_keys(vec![]);
+            let expect_service = Service::builder(
+                setup.institution_did.parse().unwrap(),
+                "https://example.org".parse().unwrap(),
+            )
+            .unwrap()
+            .add_extra(
+                ExtraFieldsSov::builder()
+                    .add_recipient_key(expect_recipient_key)
+                    .build(),
+            )
+            .add_service_type("did-communication".to_string())
+            .unwrap()
+            .build()
+            .unwrap();
             assert_eq!(expect_service, service);
 
             // clean up written endpoint
@@ -151,10 +178,18 @@ mod integration_tests {
             let did = setup.institution_did.clone();
 
             // Write legacy service format
-            let service_1 = AriesService::create()
-                .set_service_endpoint("https://example1.org".parse().unwrap())
-                .set_recipient_keys(vec!["did:sov:123".into()])
-                .set_routing_keys(vec!["did:sov:456".into()]);
+            let service_1 = Service::builder(did.parse().unwrap(), "https://example1.org".parse().unwrap())
+                .unwrap()
+                .add_extra(
+                    ExtraFieldsSov::builder()
+                        .set_recipient_keys(vec!["did:sov:123".into()])
+                        .set_routing_keys(vec!["did:sov:456".into()])
+                        .build(),
+                )
+                .add_service_type("did-communication".to_string())
+                .unwrap()
+                .build()
+                .unwrap();
             write_endpoint_legacy(&setup.profile, &did, &service_1).await.unwrap();
 
             // Get service and verify it is in the old format
@@ -176,10 +211,18 @@ mod integration_tests {
             let expect_recipient_key = get_verkey_from_ledger(&setup.profile, &setup.institution_did)
                 .await
                 .unwrap();
-            let expect_service = AriesService::default()
-                .set_service_endpoint(endpoint_url_2.parse().unwrap())
-                .set_recipient_keys(vec![expect_recipient_key])
-                .set_routing_keys(routing_keys_2);
+            let expect_service = Service::builder(did.parse().unwrap(), endpoint_url_2.parse().unwrap())
+                .unwrap()
+                .add_extra(
+                    ExtraFieldsSov::builder()
+                        .add_recipient_key(expect_recipient_key)
+                        .set_routing_keys(routing_keys_2)
+                        .build(),
+                )
+                .add_service_type("did-communication".to_string())
+                .unwrap()
+                .build()
+                .unwrap();
             assert_eq!(expect_service, service);
 
             // Clear up written endpoint

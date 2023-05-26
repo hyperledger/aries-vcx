@@ -33,7 +33,8 @@ impl BaseWallet for IndySdkWallet {
         seed: Option<&str>,
         method_name: Option<&str>,
     ) -> VcxCoreResult<(String, String)> {
-        indy::keys::create_and_store_my_did(self.wallet_handle, seed, method_name).await
+        // TODO: Set method based on context?
+        indy::keys::create_and_store_my_did(self.wallet_handle, seed, None).await
     }
 
     async fn key_for_local_did(&self, did: &str) -> VcxCoreResult<String> {

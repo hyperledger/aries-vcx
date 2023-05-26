@@ -205,6 +205,8 @@ dependencies = [
  "bs58 0.4.0",
  "chrono",
  "derive_builder 0.10.2",
+ "did_doc",
+ "did_resolver_sov",
  "diddoc_legacy",
  "env_logger 0.9.3",
  "futures",
@@ -236,6 +238,7 @@ dependencies = [
  "aries_vcx_core",
  "async-trait",
  "derive_builder 0.11.2",
+ "diddoc_legacy",
  "log",
  "serde",
  "serde_json",
@@ -1443,6 +1446,9 @@ dependencies = [
 name = "diddoc_legacy"
 version = "0.56.0"
 dependencies = [
+ "did_doc",
+ "did_parser",
+ "did_resolver_sov",
  "serde",
  "serde_derive",
  "serde_json",
@@ -2658,6 +2664,8 @@ dependencies = [
  "async-trait",
  "cfg-if 1.0.0",
  "chrono",
+ "did_doc",
+ "did_resolver_sov",
  "diddoc_legacy",
  "env_logger 0.9.3",
  "futures",
@@ -2792,6 +2800,8 @@ version = "0.56.0"
 dependencies = [
  "chrono",
  "derive_more",
+ "did_doc",
+ "did_resolver_sov",
  "diddoc_legacy",
  "isolang",
  "lazy_static",
@@ -4790,6 +4800,7 @@ version = "0.56.0"
 dependencies = [
  "aries-vcx",
  "async-trait",
+ "did_doc",
  "diddoc_legacy",
  "once_cell",
  "serde_json",

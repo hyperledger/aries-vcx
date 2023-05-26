@@ -4,7 +4,8 @@ use std::sync::Arc;
 
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use chrono::Utc;
-use diddoc_legacy::aries::diddoc::AriesDidDoc;
+use did_doc::schema::{did_doc::DidDocument, service::Service};
+use did_resolver_sov::resolution::ExtraFieldsSov;
 use messages::{
     decorators::{thread::Thread, timing::Timing},
     msg_fields::protocols::{
@@ -100,11 +101,17 @@ impl InviteeConnection<Invited> {
 
         let id = Uuid::new_v4().to_string();
 
-        let mut did_doc = AriesDidDoc::default();
-        did_doc.set_service_endpoint(service_endpoint);
-        did_doc.set_routing_keys(routing_keys);
-        did_doc.set_recipient_keys(recipient_keys);
-        did_doc.id = self.pairwise_info.pw_did.to_string();
+        let extra_fields_sov = ExtraFieldsSov::builder()
+            .set_recipient_keys(recipient_keys)
+            .set_routing_keys(routing_keys)
+            .build();
+        let service = Service::builder(id.parse()?, service_endpoint.into())?
+            .add_extra(extra_fields_sov)
+            .add_service_type("did-communication".to_string())?
+            .build()?;
+        let did_doc = DidDocument::<ExtraFieldsSov>::builder(self.pairwise_info.pw_did.parse()?)
+            .add_service(service)
+            .build();
 
         let con_data = ConnectionData::new(self.pairwise_info.pw_did.to_string(), did_doc);
         let content = RequestContent::new(self.source_id.to_string(), con_data);
@@ -185,11 +192,24 @@ impl InviteeConnection<Requested> {
             ));
         };
 
-        let keys = &self.state.did_doc.recipient_keys()?;
-        let their_vk = keys.first().ok_or(AriesVcxError::from_msg(
-            AriesVcxErrorKind::InvalidState,
-            "Cannot handle response: remote verkey not found",
-        ))?;
+        let their_vk = &self
+            .state
+            .did_doc
+            .service()
+            .get(0)
+            .ok_or_else(|| {
+                AriesVcxError::from_msg(AriesVcxErrorKind::DidDocumentError, "Cannot handle message: no service")
+            })?
+            .extra()
+            .recipient_keys()
+            .first()
+            .ok_or_else(|| {
+                AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidState,
+                    "Cannot handle response: remote verkey not found",
+                )
+            })?
+            .to_string();
 
         let did_doc = match decode_signed_connection_response(wallet, response.content, their_vk).await {
             Ok(con_data) => Ok(con_data.did_doc),
@@ -260,7 +280,7 @@ impl<S> InviteeConnection<S>
 where
     S: BootstrapDidDoc,
 {
-    pub fn bootstrap_did_doc(&self) -> &AriesDidDoc {
+    pub fn bootstrap_did_doc(&self) -> &DidDocument<ExtraFieldsSov> {
         self.state.bootstrap_did_doc()
     }
 }

@@ -1,17 +1,18 @@
-use diddoc_legacy::aries::diddoc::AriesDidDoc;
+use did_doc::schema::did_doc::DidDocument;
+use did_resolver_sov::resolution::ExtraFieldsSov;
 use messages::msg_fields::protocols::discover_features::{disclose::Disclose, ProtocolDescriptor};
 
-/// Trait implemented for [`super::Connection`] states that store an [`AriesDidDoc`].
+/// Trait implemented for [`super::Connection`] states that store an [`DidDocument`].
 pub trait TheirDidDoc {
-    /// Returns the [`AriesDidDoc`] currently being used by a [`super::Connection`].
-    fn their_did_doc(&self) -> &AriesDidDoc;
+    /// Returns the [`DidDocument`] currently being used by a [`super::Connection`].
+    fn their_did_doc(&self) -> &DidDocument<ExtraFieldsSov>;
 }
 
 pub trait BootstrapDidDoc: TheirDidDoc {
-    /// Returns the [`AriesDidDoc`] used to bootstrap the connection.
-    /// By default, this will be the same as the [`AriesDidDoc`] currently being used
+    /// Returns the [`DidDocument`] used to bootstrap the connection.
+    /// By default, this will be the same as the [`DidDocument`] currently being used
     /// by the connection.
-    fn bootstrap_did_doc(&self) -> &AriesDidDoc {
+    fn bootstrap_did_doc(&self) -> &DidDocument<ExtraFieldsSov> {
         self.their_did_doc()
     }
 }

@@ -3,7 +3,9 @@ use std::str::FromStr;
 use std::sync::Arc;
 
 use agency_client::agency_client::AgencyClient;
-use diddoc_legacy::aries::diddoc::AriesDidDoc;
+use did_doc::schema::did_doc::DidDocument;
+use did_doc::schema::service::Service;
+use did_resolver_sov::resolution::ExtraFieldsSov;
 use messages::decorators::attachment::AttachmentType;
 use messages::decorators::thread::Thread;
 use messages::msg_fields::protocols::cred_issuance::issue_credential::IssueCredential;
@@ -60,7 +62,7 @@ impl OutOfBandReceiver {
                                 return Ok(Some(connection));
                             }
                         };
-                        if did_doc.get_service()? == resolve_service(profile, service).await? {
+                        if did_doc.get_service()? == resolve_service(profile, service).await?.into() {
                             return Ok(Some(connection));
                         };
                     }
@@ -99,7 +101,11 @@ impl OutOfBandReceiver {
         }
     }
 
-    async fn did_doc_matches_service(profile: &Arc<dyn Profile>, service: &OobService, did_doc: &AriesDidDoc) -> bool {
+    async fn did_doc_matches_service(
+        profile: &Arc<dyn Profile>,
+        service: &OobService,
+        did_doc: &DidDocument<ExtraFieldsSov>,
+    ) -> bool {
         // Ugly, but it's best to short-circuit.
         Self::did_doc_matches_service_did(service, did_doc)
             || Self::did_doc_matches_resolved_service(profile, service, did_doc)
@@ -107,9 +113,9 @@ impl OutOfBandReceiver {
                 .unwrap_or(false)
     }
 
-    fn did_doc_matches_service_did(service: &OobService, did_doc: &AriesDidDoc) -> bool {
+    fn did_doc_matches_service_did(service: &OobService, did_doc: &DidDocument<ExtraFieldsSov>) -> bool {
         match service {
-            OobService::Did(did) => did.to_string() == did_doc.id,
+            OobService::Did(did) => did.to_string() == did_doc.id().to_string(),
             _ => false,
         }
     }
@@ -117,12 +123,15 @@ impl OutOfBandReceiver {
     async fn did_doc_matches_resolved_service(
         profile: &Arc<dyn Profile>,
         service: &OobService,
-        did_doc: &AriesDidDoc,
+        did_doc: &DidDocument<ExtraFieldsSov>,
     ) -> VcxResult<bool> {
-        let did_doc_service = did_doc.get_service()?;
-        let oob_service = resolve_service(profile, service).await?;
+        let did_doc_service = did_doc
+            .service()
+            .get(0)
+            .ok_or_else(|| AriesVcxError::from_msg(AriesVcxErrorKind::InvalidState, "No service found in did doc"))?;
+        let oob_service: Service<ExtraFieldsSov> = resolve_service(profile, service).await?;
 
-        Ok(did_doc_service == oob_service)
+        Ok(*did_doc_service == oob_service)
     }
 
     // TODO: There may be multiple A2AMessages in a single OoB msg
@@ -258,7 +267,7 @@ impl OutOfBandReceiver {
         &self,
         profile: &Arc<dyn Profile>,
         agency_client: &AgencyClient,
-        did_doc: AriesDidDoc,
+        did_doc: DidDocument<ExtraFieldsSov>,
         autohop_enabled: bool,
     ) -> VcxResult<MediatedConnection> {
         trace!(
@@ -270,7 +279,7 @@ impl OutOfBandReceiver {
             profile,
             agency_client,
             AnyInvitation::Oob(self.oob.clone()),
-            did_doc,
+            did_doc.try_into()?,
             autohop_enabled,
         )
         .await

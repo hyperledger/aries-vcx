@@ -1,3 +1,5 @@
+use did_doc::schema::service::Service;
+use did_resolver_sov::resolution::ExtraFieldsSov;
 use url::Url;
 
 pub const SERVICE_SUFFIX: &str = "indy";
@@ -62,6 +64,20 @@ impl Default for AriesService {
 impl PartialEq for AriesService {
     fn eq(&self, other: &Self) -> bool {
         self.recipient_keys == other.recipient_keys && self.routing_keys == other.routing_keys
+    }
+}
+
+impl From<Service<ExtraFieldsSov>> for AriesService {
+    fn from(service: Service<ExtraFieldsSov>) -> Self {
+        let mut aries_service = AriesService::default();
+        aries_service.id = service.id().to_string();
+        aries_service.type_ = service.service_type().to_string();
+        aries_service.priority = 0;
+        let aries_service = aries_service
+            .set_service_endpoint(service.service_endpoint().to_owned().into())
+            .set_routing_keys(service.extra().routing_keys().to_vec())
+            .set_recipient_keys(service.extra().recipient_keys().to_vec());
+        aries_service
     }
 }
 

@@ -222,7 +222,7 @@ impl SmConnectionInvitee {
                 did_doc.set_recipient_keys(recipient_keys);
                 did_doc.set_id(self.pairwise_info.pw_did.clone());
 
-                let con_data = ConnectionData::new(self.pairwise_info.pw_did.to_string(), did_doc);
+                let con_data = ConnectionData::new(self.pairwise_info.pw_did.to_string(), did_doc.try_into()?);
                 let content = RequestContent::new(self.source_id.to_string(), con_data);
 
                 let mut decorators = RequestDecorators::default();
@@ -425,8 +425,8 @@ impl SmConnectionInvitee {
             InviteeFullState::Responded(ref state) => {
                 let sender_vk = self.pairwise_info().pw_vk.clone();
                 let did_doc = state.resp_con_data.did_doc.clone();
-                send_message(self.build_connection_ack_msg()?.into(), sender_vk, did_doc).await?;
-                InviteeFullState::Completed((state.clone()).into())
+                send_message(self.build_connection_ack_msg()?.into(), sender_vk, did_doc.try_into()?).await?;
+                InviteeFullState::Completed((state.clone()).try_into()?)
             }
             _ => self.state.clone(),
         };

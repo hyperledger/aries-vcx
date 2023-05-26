@@ -4,7 +4,9 @@ use std::sync::Arc;
 
 use ::uuid::Uuid;
 use chrono::Utc;
-use diddoc_legacy::aries::diddoc::AriesDidDoc;
+use did_doc::schema::did_doc::DidDocument;
+use did_doc::schema::service::Service;
+use did_resolver_sov::resolution::ExtraFieldsSov;
 use messages::decorators::thread::Thread;
 use messages::decorators::timing::Timing;
 use messages::msg_fields::protocols::connection::invitation::{
@@ -118,15 +120,20 @@ impl InviterConnection<Invited> {
         new_routing_keys: Vec<String>,
     ) -> VcxResult<Response> {
         let new_recipient_keys = vec![new_pairwise_info.pw_vk.clone()];
-        let mut did_doc = AriesDidDoc::default();
-        let did = new_pairwise_info.pw_did.clone();
 
-        did_doc.set_id(new_pairwise_info.pw_did.clone());
-        did_doc.set_service_endpoint(new_service_endpoint);
-        did_doc.set_routing_keys(new_routing_keys);
-        did_doc.set_recipient_keys(new_recipient_keys);
+        let extra_fields_sov = ExtraFieldsSov::builder()
+            .set_recipient_keys(new_recipient_keys)
+            .set_routing_keys(new_routing_keys)
+            .build();
+        let service = Service::builder(new_pairwise_info.pw_did.parse()?, new_service_endpoint.into())?
+            .add_extra(extra_fields_sov)
+            .add_service_type("did-communication".to_string())?
+            .build()?;
+        let did_doc = DidDocument::<ExtraFieldsSov>::builder(new_pairwise_info.pw_did.to_string().try_into()?)
+            .add_service(service)
+            .build();
 
-        let con_data = ConnectionData::new(did, did_doc);
+        let con_data = ConnectionData::new(new_pairwise_info.pw_did.clone(), did_doc);
 
         let id = Uuid::new_v4().to_string();
 

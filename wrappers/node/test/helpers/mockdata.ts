@@ -40,29 +40,31 @@ export const ARIES_CONNECTION_REQUEST = {
   '@id': 'b5517062-303f-4267-9a29-09bc89497c06',
   '@type': 'did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/connections/1.0/request',
   connection: {
-    DID: '2RjtVytftf9Psbh3E8jqyq',
+    DID: 'did:sov:2RjtVytftf9Psbh3E8jqyq',
     DIDDoc: {
       '@context': 'https://w3id.org/did/v1',
       authentication: [
         {
-          publicKey: '2RjtVytftf9Psbh3E8jqyq#1',
+          id: 'did:sov:2RjtVytftf9Psbh3E8jqyq#1',
+          controller: 'did:sov:2RjtVytftf9Psbh3E8jqyq',
           type: 'Ed25519SignatureAuthentication2018',
+          publicKey: 'n6ZJrPGhbkLxQBxH11BvQHSKch58sx3MAqDTkUG4GmK',
         },
       ],
-      id: '2RjtVytftf9Psbh3E8jqyq',
-      publicKey: [
+      id: 'did:sov:2RjtVytftf9Psbh3E8jqyq',
+      keyAgreement: [
         {
-          controller: '2RjtVytftf9Psbh3E8jqyq',
-          id: '1',
-          publicKeyBase58: 'n6ZJrPGhbkLxQBxH11BvQHSKch58sx3MAqDTkUG4GmK',
+          id: 'did:sov:2RjtVytftf9Psbh3E8jqyq#1',
+          controller: 'did:sov:2RjtVytftf9Psbh3E8jqyq',
           type: 'Ed25519VerificationKey2018',
+          publicKeyBase58: 'n6ZJrPGhbkLxQBxH11BvQHSKch58sx3MAqDTkUG4GmK',
         },
       ],
       service: [
         {
           id: 'did:example:123456789abcdefghi;indy',
           priority: 0,
-          recipientKeys: ['2RjtVytftf9Psbh3E8jqyq#1'],
+          recipientKeys: ['n6ZJrPGhbkLxQBxH11BvQHSKch58sx3MAqDTkUG4GmK'],
           routingKeys: [
             'AKnC8qR9xsZZEBY7mdV6fzjmmtKxeegrNatpz4jSJhrH',
             'Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR',

@@ -1,5 +1,6 @@
 use std::clone::Clone;
 
+use crate::errors::error::AriesVcxError;
 use crate::protocols::mediated_connection::invitee::states::requested::RequestedState;
 use crate::protocols::mediated_connection::invitee::states::responded::RespondedState;
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
@@ -35,13 +36,15 @@ impl From<(RequestedState, AriesDidDoc, Response)> for CompletedState {
     }
 }
 
-impl From<RespondedState> for CompletedState {
-    fn from(state: RespondedState) -> CompletedState {
+impl TryFrom<RespondedState> for CompletedState {
+    type Error = AriesVcxError;
+
+    fn try_from(state: RespondedState) -> Result<CompletedState, Self::Error> {
         trace!("ConnectionInvitee: transit state from RespondedState to CompleteState");
-        CompletedState {
+        Ok(CompletedState {
             bootstrap_did_doc: state.did_doc,
-            did_doc: state.resp_con_data.did_doc,
+            did_doc: state.resp_con_data.did_doc.try_into()?,
             protocols: None,
-        }
+        })
     }
 }

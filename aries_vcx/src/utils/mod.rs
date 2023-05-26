@@ -3,7 +3,8 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
-use diddoc_legacy::aries::diddoc::AriesDidDoc;
+use did_doc::schema::did_doc::DidDocument;
+use did_resolver_sov::resolution::ExtraFieldsSov;
 
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use crate::utils::encryption_envelope::EncryptionEnvelope;
@@ -68,7 +69,7 @@ pub fn get_temp_dir_path(filename: &str) -> PathBuf {
 pub async fn send_message(
     wallet: Arc<dyn BaseWallet>,
     sender_verkey: String,
-    did_doc: AriesDidDoc,
+    did_doc: DidDocument<ExtraFieldsSov>,
     message: AriesMessage,
 ) -> VcxResult<()> {
     trace!("send_message >>> message: {:?}, did_doc: {:?}", message, &did_doc);
@@ -79,8 +80,12 @@ pub async fn send_message(
     agency_client::httpclient::post_message(
         envelope,
         did_doc
-            .get_endpoint()
-            .ok_or_else(|| AriesVcxError::from_msg(AriesVcxErrorKind::InvalidUrl, "No URL in DID Doc"))?,
+            .service()
+            .get(0)
+            .ok_or_else(|| AriesVcxError::from_msg(AriesVcxErrorKind::DidDocumentError, "No service found"))?
+            .service_endpoint()
+            .to_owned()
+            .into(),
     )
     .await?;
     Ok(())
@@ -88,7 +93,7 @@ pub async fn send_message(
 
 pub async fn send_message_anonymously(
     wallet: Arc<dyn BaseWallet>,
-    did_doc: &AriesDidDoc,
+    did_doc: &DidDocument<ExtraFieldsSov>,
     message: &AriesMessage,
 ) -> VcxResult<()> {
     trace!(
@@ -101,8 +106,12 @@ pub async fn send_message_anonymously(
     agency_client::httpclient::post_message(
         envelope,
         did_doc
-            .get_endpoint()
-            .ok_or_else(|| AriesVcxError::from_msg(AriesVcxErrorKind::InvalidUrl, "No URL in DID Doc"))?,
+            .service()
+            .get(0)
+            .ok_or_else(|| AriesVcxError::from_msg(AriesVcxErrorKind::DidDocumentError, "No service found"))?
+            .service_endpoint()
+            .to_owned()
+            .into(),
     )
     .await?;
     Ok(())

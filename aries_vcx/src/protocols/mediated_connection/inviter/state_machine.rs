@@ -258,7 +258,7 @@ impl SmConnectionInviter {
                     let sender_vk = self.pairwise_info().pw_vk.clone();
                     let did_doc = request.content.connection.did_doc.clone();
 
-                    send_message(problem_report.clone().into(), sender_vk, did_doc)
+                    send_message(problem_report.clone().into(), sender_vk, did_doc.try_into()?)
                         .await
                         .ok();
                     return Ok(Self {
@@ -284,7 +284,7 @@ impl SmConnectionInviter {
                     )
                     .await?;
                 (
-                    InviterFullState::Requested((request, signed_response).into()),
+                    InviterFullState::Requested((request, signed_response).try_into()?),
                     thread_id,
                 )
             }
@@ -367,7 +367,7 @@ impl SmConnectionInviter {
                 did_doc.set_routing_keys(new_routing_keys);
                 did_doc.set_recipient_keys(new_recipient_keys);
 
-                let con_data = ConnectionData::new(did, did_doc);
+                let con_data = ConnectionData::new(did, did_doc.try_into()?);
 
                 let id = Uuid::new_v4().to_string();
 

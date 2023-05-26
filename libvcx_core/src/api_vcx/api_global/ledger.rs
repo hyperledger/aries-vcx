@@ -5,7 +5,8 @@ use aries_vcx::common::ledger::transactions::{
     clear_attr, get_attr, get_service, write_endpoint, write_endpoint_legacy,
 };
 use aries_vcx::global::settings::CONFIG_INSTITUTION_DID;
-use diddoc_legacy::aries::service::AriesService;
+use did_doc::schema::service::Service;
+use did_resolver_sov::resolution::ExtraFieldsSov;
 use url::Url;
 
 use crate::api_vcx::api_global::profile::get_main_profile;
@@ -43,14 +44,16 @@ pub async fn ledger_write_endpoint_legacy(
     recipient_keys: Vec<String>,
     routing_keys: Vec<String>,
     endpoint: String,
-) -> LibvcxResult<AriesService> {
-    let service = AriesService::create()
-        .set_service_endpoint(
-            Url::from_str(&endpoint)
-                .map_err(|err| LibvcxError::from_msg(LibvcxErrorKind::InvalidUrl, err.to_string()))?,
+) -> LibvcxResult<Service<ExtraFieldsSov>> {
+    let service = Service::builder(target_did.parse()?, endpoint.parse()?)?
+        .add_extra(
+            ExtraFieldsSov::builder()
+                .set_recipient_keys(recipient_keys)
+                .set_routing_keys(routing_keys)
+                .build(),
         )
-        .set_recipient_keys(recipient_keys)
-        .set_routing_keys(routing_keys);
+        .add_service_type("did-communication".to_string())?
+        .build()?;
     let profile = get_main_profile()?;
     write_endpoint_legacy(&profile, target_did, &service).await?;
     Ok(service)
@@ -76,7 +79,7 @@ pub async fn ledger_write_endpoint(
     Ok(service)
 }
 
-pub async fn ledger_get_service(target_did: &str) -> LibvcxResult<AriesService> {
+pub async fn ledger_get_service(target_did: &str) -> LibvcxResult<Service<ExtraFieldsSov>> {
     let target_did = target_did.to_owned();
     let profile = get_main_profile()?;
     map_ariesvcx_result(get_service(&profile, &target_did).await)

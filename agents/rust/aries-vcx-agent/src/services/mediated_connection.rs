@@ -62,9 +62,15 @@ impl ServiceMediatedConnections {
 
     pub async fn receive_invitation(&self, invite: AnyInvitation) -> AgentResult<String> {
         let ddo = into_did_doc(&self.profile, &invite).await?;
-        let connection =
-            MediatedConnection::create_with_invite("", &self.profile, &self.agency_client()?, invite, ddo, true)
-                .await?;
+        let connection = MediatedConnection::create_with_invite(
+            "",
+            &self.profile,
+            &self.agency_client()?,
+            invite,
+            ddo.try_into()?,
+            true,
+        )
+        .await?;
         self.mediated_connections
             .insert(&connection.get_thread_id(), connection)
     }

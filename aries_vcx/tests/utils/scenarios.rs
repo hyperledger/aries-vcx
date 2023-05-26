@@ -495,14 +495,14 @@ pub mod test_utils {
         info!("send_credential >>> getting offers");
         let thread_id = issuer_credential.get_thread_id().unwrap();
         assert_eq!(IssuerState::OfferSent, issuer_credential.get_state());
-        assert_eq!(issuer_credential.is_revokable(), false);
+        assert!(!issuer_credential.is_revokable());
 
         issuer_credential
             .update_state(&faber.profile, &faber.agency_client, issuer_to_consumer)
             .await
             .unwrap();
         assert_eq!(IssuerState::RequestReceived, issuer_credential.get_state());
-        assert_eq!(issuer_credential.is_revokable(), false);
+        assert!(!issuer_credential.is_revokable());
         assert_eq!(thread_id, issuer_credential.get_thread_id().unwrap());
 
         info!("send_credential >>> sending credential");
@@ -595,7 +595,7 @@ pub mod test_utils {
             .attributes
             .into_iter()
             .map(|attr| AttrInfo {
-                name: Some(attr.name.clone()),
+                name: Some(attr.name),
                 ..AttrInfo::default()
             })
             .collect();
@@ -708,7 +708,7 @@ pub mod test_utils {
                     );
                     filtered
                 }
-                _ => _requests.to_string(),
+                _ => _requests,
             }
         };
         let requests: Value = serde_json::from_str(&requests).unwrap();
@@ -749,7 +749,7 @@ pub mod test_utils {
 
     pub async fn verify_proof(faber: &mut Faber, verifier: &mut Verifier, connection: &MediatedConnection) {
         verifier
-            .update_state(&faber.profile, &faber.agency_client, &connection)
+            .update_state(&faber.profile, &faber.agency_client, connection)
             .await
             .unwrap();
         assert_eq!(verifier.get_state(), VerifierState::Finished);
@@ -773,7 +773,7 @@ pub mod test_utils {
 
     pub async fn revoke_credential_local(faber: &mut Faber, issuer_credential: &Issuer, rev_reg_id: &str) {
         let ledger = Arc::clone(&faber.profile).inject_anoncreds_ledger_read();
-        let (_, delta, timestamp) = ledger.get_rev_reg_delta_json(&rev_reg_id, None, None).await.unwrap();
+        let (_, delta, timestamp) = ledger.get_rev_reg_delta_json(rev_reg_id, None, None).await.unwrap();
         info!("revoking credential locally");
         issuer_credential.revoke_credential_local(&faber.profile).await.unwrap();
         let (_, delta_after_revoke, _) = ledger
@@ -827,11 +827,11 @@ pub mod test_utils {
         info!("_create_address_schema >>> ");
         let attrs_list = json!(["address1", "address2", "city", "state", "zip"]).to_string();
         let (schema_id, schema_json, cred_def_id, cred_def_json, rev_reg_id, cred_def, rev_reg) =
-            create_and_store_credential_def(profile, &institution_did, &attrs_list).await;
+            create_and_store_credential_def(profile, institution_did, &attrs_list).await;
         (
             schema_id,
             schema_json,
-            cred_def_id.to_string(),
+            cred_def_id,
             cred_def_json,
             cred_def,
             rev_reg,
@@ -949,8 +949,8 @@ pub mod test_utils {
     ) -> Verifier {
         let _requested_attrs = requested_attrs(
             &institution.config_issuer.institution_did,
-            &schema_id,
-            &cred_def_id,
+            schema_id,
+            cred_def_id,
             None,
             None,
         );
@@ -978,7 +978,8 @@ pub mod test_utils {
             .unwrap();
         assert_eq!(prover.get_state(), ProverState::PresentationRequestReceived);
         let retrieved_credentials = prover.retrieve_credentials(&alice.profile).await.unwrap();
-        let selected_credentials = match requested_values {
+
+        match requested_values {
             Some(requested_values) => {
                 let credential_data = prover.presentation_request_data().unwrap();
                 retrieved_to_selected_credentials_specific(
@@ -989,9 +990,7 @@ pub mod test_utils {
                 )
             }
             _ => retrieved_to_selected_credentials_simple(&retrieved_credentials, true),
-        };
-
-        selected_credentials
+        }
     }
 
     pub async fn prover_select_credentials_and_send_proof_and_assert(
@@ -1113,7 +1112,7 @@ pub mod test_utils {
             &alice.profile,
             &alice.agency_client,
             public_invite,
-            ddo,
+            ddo.try_into().unwrap(),
             true,
         )
         .await
@@ -1150,13 +1149,13 @@ pub mod test_utils {
         let details = institution_to_consumer.get_invite_details().unwrap();
 
         debug!("Consumer is going to accept connection invitation.");
-        let ddo = into_did_doc(&alice.profile, &details).await.unwrap();
+        let ddo = into_did_doc(&alice.profile, details).await.unwrap();
         let mut consumer_to_institution = MediatedConnection::create_with_invite(
             "institution",
             &alice.profile,
             &alice.agency_client,
             details.clone(),
-            ddo,
+            ddo.try_into().unwrap(),
             true,
         )
         .await
@@ -1218,7 +1217,7 @@ pub mod test_utils {
         let mut selected_credentials = SelectedCredentials::default();
 
         for (referent, cred_array) in retrieved_credentials.credentials_by_referent.iter() {
-            if cred_array.len() > 0 {
+            if !cred_array.is_empty() {
                 let first_cred = cred_array[0].clone();
                 let tails_dir = with_tails.then_some(get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_owned());
                 selected_credentials.select_credential_for_referent_from_retrieved(
@@ -1228,7 +1227,7 @@ pub mod test_utils {
                 );
             }
         }
-        return selected_credentials;
+        selected_credentials
     }
 
     pub fn retrieved_to_selected_credentials_specific(
@@ -1269,6 +1268,6 @@ pub mod test_utils {
                 tails_dir,
             );
         }
-        return selected_credentials;
+        selected_credentials
     }
 }

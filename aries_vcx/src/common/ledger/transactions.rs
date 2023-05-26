@@ -1,6 +1,7 @@
 use bs58;
-use diddoc_legacy::aries::diddoc::AriesDidDoc;
-use diddoc_legacy::aries::service::AriesService;
+use did_doc::schema::did_doc::DidDocument;
+use did_doc::schema::service::Service;
+use did_resolver_sov::resolution::ExtraFieldsSov;
 use messages::msg_fields::protocols::connection::invitation::Invitation;
 use messages::msg_fields::protocols::out_of_band::invitation::OobService;
 use std::{collections::HashMap, sync::Arc};
@@ -64,7 +65,7 @@ pub struct ReplyDataV1 {
 const DID_KEY_PREFIX: &str = "did:key:";
 const ED25519_MULTIBASE_CODEC: [u8; 2] = [0xed, 0x01];
 
-pub async fn resolve_service(profile: &Arc<dyn Profile>, service: &OobService) -> VcxResult<AriesService> {
+pub async fn resolve_service(profile: &Arc<dyn Profile>, service: &OobService) -> VcxResult<Service<ExtraFieldsSov>> {
     match service {
         OobService::AriesService(service) => Ok(service.clone()),
         OobService::Did(did) => get_service(profile, did).await,
@@ -88,27 +89,26 @@ pub async fn add_new_did(
     Ok((did, verkey))
 }
 
-pub async fn into_did_doc(profile: &Arc<dyn Profile>, invitation: &AnyInvitation) -> VcxResult<AriesDidDoc> {
-    let mut did_doc: AriesDidDoc = AriesDidDoc::default();
-    let (service_endpoint, recipient_keys, routing_keys) = match invitation {
+pub async fn into_did_doc(
+    profile: &Arc<dyn Profile>,
+    invitation: &AnyInvitation,
+) -> VcxResult<DidDocument<ExtraFieldsSov>> {
+    let (id, service_endpoint, recipient_keys, routing_keys) = match invitation {
         AnyInvitation::Con(Invitation::Public(invitation)) => {
-            did_doc.set_id(invitation.content.did.to_string());
-            let service = get_service(profile, &invitation.content.did)
-                .await
-                .unwrap_or_else(|err| {
-                    error!("Failed to obtain service definition from the ledger: {}", err);
-                    AriesService::default()
-                });
-            (service.service_endpoint, service.recipient_keys, service.routing_keys)
-        }
-        AnyInvitation::Con(Invitation::Pairwise(invitation)) => {
-            did_doc.set_id(invitation.id.clone());
+            let service = get_service(profile, &invitation.content.did).await?;
             (
-                invitation.content.service_endpoint.clone(),
-                invitation.content.recipient_keys.clone(),
-                invitation.content.routing_keys.clone(),
+                invitation.content.did.to_string(),
+                service.service_endpoint().to_owned().into(),
+                service.extra().recipient_keys().to_vec(),
+                service.extra().routing_keys().to_vec(),
             )
         }
+        AnyInvitation::Con(Invitation::Pairwise(invitation)) => (
+            invitation.id.clone(),
+            invitation.content.service_endpoint.clone(),
+            invitation.content.recipient_keys.clone(),
+            invitation.content.routing_keys.clone(),
+        ),
         AnyInvitation::Con(Invitation::PairwiseDID(_)) => {
             return Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::InvalidDid,
@@ -116,24 +116,29 @@ pub async fn into_did_doc(profile: &Arc<dyn Profile>, invitation: &AnyInvitation
             ))
         }
         AnyInvitation::Oob(invitation) => {
-            did_doc.set_id(invitation.id.clone());
-            let service = resolve_service(profile, &invitation.content.services[0])
-                .await
-                .unwrap_or_else(|err| {
-                    error!("Failed to obtain service definition from the ledger: {}", err);
-                    AriesService::default()
-                });
-            let recipient_keys = normalize_keys_as_naked(service.recipient_keys).unwrap_or_else(|err| {
-                error!("Is not did valid: {}", err);
-                Vec::new()
-            });
-            (service.service_endpoint, recipient_keys, service.routing_keys)
+            let service = resolve_service(profile, &invitation.content.services[0]).await?;
+            let recipient_keys = normalize_keys_as_naked(service.extra().recipient_keys())?;
+            (
+                invitation.id.clone(),
+                service.service_endpoint().to_owned().into(),
+                recipient_keys,
+                service.extra().routing_keys().to_vec(),
+            )
         }
     };
-    did_doc.set_service_endpoint(service_endpoint);
-    did_doc.set_recipient_keys(recipient_keys);
-    did_doc.set_routing_keys(routing_keys);
-    Ok(did_doc)
+    let extra_fields_sov = ExtraFieldsSov::builder()
+        .set_recipient_keys(recipient_keys)
+        .set_routing_keys(routing_keys)
+        .build();
+    let service = Service::builder(id.parse()?, service_endpoint.into())?
+        .add_extra(extra_fields_sov)
+        .add_service_type("did-communication".to_string())?
+        .build()?;
+    Ok(
+        DidDocument::<ExtraFieldsSov>::builder(id.try_into().unwrap_or_default())
+            .add_service(service)
+            .build(),
+    )
 }
 
 fn _ed25519_public_key_to_did_key(public_key_base58: &str) -> VcxResult<String> {
@@ -150,7 +155,7 @@ fn _ed25519_public_key_to_did_key(public_key_base58: &str) -> VcxResult<String> 
     Ok(did_key)
 }
 
-fn normalize_keys_as_naked(keys_list: Vec<String>) -> VcxResult<Vec<String>> {
+fn normalize_keys_as_naked(keys_list: &[String]) -> VcxResult<Vec<String>> {
     let mut result = Vec::new();
     for key in keys_list {
         if let Some(stripped_didkey) = key.strip_prefix(DID_KEY_PREFIX) {
@@ -178,13 +183,13 @@ fn normalize_keys_as_naked(keys_list: Vec<String>) -> VcxResult<Vec<String>> {
             }?;
             result.push(verkey);
         } else {
-            result.push(key);
+            result.push(key.to_owned());
         }
     }
     Ok(result)
 }
 
-pub async fn get_service(profile: &Arc<dyn Profile>, did: &String) -> VcxResult<AriesService> {
+pub async fn get_service(profile: &Arc<dyn Profile>, did: &String) -> VcxResult<Service<ExtraFieldsSov>> {
     let did_raw = did.to_string();
     let did_raw = match did_raw.rsplit_once(':') {
         None => did_raw,
@@ -198,15 +203,25 @@ pub async fn get_service(profile: &Arc<dyn Profile>, did: &String) -> VcxResult<
         let recipient_keys = vec![get_verkey_from_ledger(profile, &did_raw).await?];
         let endpoint_url = endpoint.endpoint;
 
-        return Ok(AriesService::create()
-            .set_recipient_keys(recipient_keys)
-            .set_service_endpoint(endpoint_url)
-            .set_routing_keys(endpoint.routing_keys.unwrap_or_default()));
+        Service::builder(did_raw.parse()?, endpoint_url.into())?
+            .add_extra(
+                ExtraFieldsSov::builder()
+                    .set_recipient_keys(recipient_keys)
+                    .set_routing_keys(endpoint.routing_keys.unwrap_or_default())
+                    .build(),
+            )
+            .add_service_type("did-communication".to_string())?
+            .build()
+            .map_err(|err| err.into())
+    } else {
+        parse_legacy_endpoint_attrib(profile, &did_raw).await
     }
-    parse_legacy_endpoint_attrib(profile, &did_raw).await
 }
 
-pub async fn parse_legacy_endpoint_attrib(profile: &Arc<dyn Profile>, did_raw: &str) -> VcxResult<AriesService> {
+pub async fn parse_legacy_endpoint_attrib(
+    profile: &Arc<dyn Profile>,
+    did_raw: &str,
+) -> VcxResult<Service<ExtraFieldsSov>> {
     let ledger = Arc::clone(profile).inject_indy_ledger_read();
     let attr_resp = ledger.get_attr(did_raw, "service").await?;
     let data = get_data_from_response(&attr_resp)?;
@@ -225,7 +240,11 @@ pub async fn parse_legacy_endpoint_attrib(profile: &Arc<dyn Profile>, did_raw: &
     })
 }
 
-pub async fn write_endpoint_legacy(profile: &Arc<dyn Profile>, did: &str, service: &AriesService) -> VcxResult<String> {
+pub async fn write_endpoint_legacy(
+    profile: &Arc<dyn Profile>,
+    did: &str,
+    service: &Service<ExtraFieldsSov>,
+) -> VcxResult<String> {
     let attrib_json = json!({ "service": service }).to_string();
     let ledger = Arc::clone(profile).inject_indy_ledger_write();
     let res = ledger.add_attr(did, &attrib_json).await?;

@@ -514,6 +514,7 @@ pub async fn wallet_configure_issuer(
     enterprise_seed: &str,
 ) -> VcxCoreResult<IssuerConfig> {
     let (institution_did, _institution_verkey) =
+        // TODO: Set method based on context?
         keys::create_and_store_my_did(wallet_handle, Some(enterprise_seed), None).await?;
 
     Ok(IssuerConfig { institution_did })

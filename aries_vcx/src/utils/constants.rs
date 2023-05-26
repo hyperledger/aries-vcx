@@ -1800,7 +1800,7 @@ pub const PROOF_RESPONSE: &[u8; 18153] = &[
     100, 68, 97, 116, 101, 84, 105, 109, 101, 204, 189, 50, 48, 49, 55, 45, 49, 50, 45, 49, 52, 84, 48, 51, 58, 51, 53,
     58, 50, 48, 46, 52, 52, 52, 90, 91, 85, 84, 67, 93,
 ];
-pub const DID: &str = "FhrSrYtQcw3p9xwf7NYemf";
+pub const DID: &str = "did:sov:FhrSrYtQcw3p9xwf7NYemf";
 pub const VERKEY: &str = "91qMFrZjXDoi2Vc8Mm14Ys112tEZdDegBZZoembFEATE";
 #[cfg(test)]
 pub static INDY_PROOF_REQ_JSON: &str = r#"{ "nonce":"123432421212", "name":"proof_req_1", "version":"0.1", "requested_attributes":{ "attr1_referent":{ "name":"name" }, "attr2_referent":{ "name":"sex" }, "attr3_referent":{"name":"phone"} }, "requested_predicates":{ "predicate1_referent":{"name":"age","p_type":">=","p_value":18} } }"#;

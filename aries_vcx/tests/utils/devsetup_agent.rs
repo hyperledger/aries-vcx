@@ -19,10 +19,10 @@ pub mod test_utils {
     };
     #[cfg(feature = "modular_libs")]
     use aries_vcx_core::ledger::request_submitter::vdr_ledger::LedgerPoolConfig;
-    use aries_vcx_core::wallet::base_wallet::BaseWallet;
-    use aries_vcx_core::wallet::indy_wallet::IndySdkWallet;
+
     use aries_vcx_core::{PoolHandle, WalletHandle};
-    use diddoc_legacy::aries::service::AriesService;
+    use did_doc::schema::service::Service;
+    use did_resolver_sov::resolution::ExtraFieldsSov;
     use futures::future::BoxFuture;
 
     use agency_client::agency_client::AgencyClient;
@@ -84,7 +84,7 @@ pub mod test_utils {
 
     fn determine_message_type(a2a_message: AriesMessage) -> PayloadKinds {
         debug!("determine_message_type >>> a2a_message: {:?}", a2a_message);
-        match a2a_message.clone() {
+        match a2a_message {
             AriesMessage::PresentProof(PresentProof::RequestPresentation(_)) => PayloadKinds::ProofRequest,
             AriesMessage::CredentialIssuance(CredentialIssuance::OfferCredential(_)) => PayloadKinds::CredOffer,
             AriesMessage::CredentialIssuance(CredentialIssuance::IssueCredential(_)) => PayloadKinds::Cred,
@@ -95,12 +95,12 @@ pub mod test_utils {
     }
 
     fn str_message_to_a2a_message(message: &str) -> VcxResult<AriesMessage> {
-        Ok(serde_json::from_str(message).map_err(|err| {
+        serde_json::from_str(message).map_err(|err| {
             AriesVcxError::from_msg(
                 AriesVcxErrorKind::InvalidJson,
                 format!("Cannot deserialize A2A message: {}", err),
             )
-        })?)
+        })
     }
 
     fn str_message_to_payload_type(message: &str) -> VcxResult<PayloadKinds> {
@@ -146,7 +146,7 @@ pub mod test_utils {
             settings::reset_config_values().unwrap();
             let enterprise_seed = "000000000000000000000000Trustee1";
             let config_wallet = WalletConfig {
-                wallet_name: format!("faber_wallet_{}", uuid::Uuid::new_v4().to_string()),
+                wallet_name: format!("faber_wallet_{}", uuid::Uuid::new_v4()),
                 wallet_key: settings::DEFAULT_WALLET_KEY.into(),
                 wallet_key_derivation: settings::WALLET_KDF_RAW.into(),
                 wallet_type: None,
@@ -179,16 +179,28 @@ pub mod test_utils {
                 .unwrap();
 
             let pairwise_info = PairwiseInfo::create(&profile.inject_wallet()).await.unwrap();
-            let service = AriesService::create()
-                .set_service_endpoint(agency_client.get_agency_url_full().unwrap())
-                .set_recipient_keys(vec![pairwise_info.pw_vk.clone()]);
+            let service = Service::<ExtraFieldsSov>::builder(
+                pairwise_info.pw_vk.parse().unwrap(),
+                agency_client.get_agency_url_full().unwrap().into(),
+            )
+            .unwrap()
+            .add_extra(
+                ExtraFieldsSov::builder()
+                    .set_recipient_keys(vec![pairwise_info.pw_vk.to_owned()])
+                    .build(),
+            )
+            .add_service_type("did-communication".to_string())
+            .unwrap()
+            .build()
+            .unwrap();
+
             write_endpoint_legacy(&profile, &config_issuer.institution_did, &service)
                 .await
                 .unwrap();
 
             let rev_not_sender = RevocationNotificationSender::build();
 
-            let faber = Faber {
+            Faber {
                 profile,
                 agency_client,
                 is_active: false,
@@ -202,8 +214,7 @@ pub mod test_utils {
                 rev_not_sender,
                 pairwise_info,
                 teardown: Arc::new(move || Box::pin(teardown_indy_wallet(wallet_handle, config_wallet.clone()))),
-            };
-            faber
+            }
         }
 
         pub async fn create_schema(&mut self) {
@@ -470,7 +481,7 @@ pub mod test_utils {
         async fn setup_indy_wallet() -> (WalletHandle, WalletConfig) {
             settings::reset_config_values().unwrap();
             let config_wallet = WalletConfig {
-                wallet_name: format!("alice_wallet_{}", uuid::Uuid::new_v4().to_string()),
+                wallet_name: format!("alice_wallet_{}", uuid::Uuid::new_v4()),
                 wallet_key: settings::DEFAULT_WALLET_KEY.into(),
                 wallet_key_derivation: settings::WALLET_KDF_RAW.into(),
                 wallet_type: None,
@@ -489,6 +500,8 @@ pub mod test_utils {
         pub async fn setup_modular_profile(
             ledger_pool_config: LedgerPoolConfig,
         ) -> (Arc<dyn Profile>, Arc<dyn Fn() -> BoxFuture<'static, ()>>) {
+            use aries_vcx_core::wallet::{base_wallet::BaseWallet, indy_wallet::IndySdkWallet};
+
             let (wallet_handle, config_wallet) = Alice::setup_indy_wallet().await;
 
             let wallet: Arc<dyn BaseWallet> = Arc::new(IndySdkWallet::new(wallet_handle));
@@ -536,7 +549,8 @@ pub mod test_utils {
             let connection = MediatedConnection::create("tmp_empoty", &profile, &agency_client, true)
                 .await
                 .unwrap();
-            let alice = Alice {
+
+            Alice {
                 profile,
                 agency_client,
                 is_active: false,
@@ -546,17 +560,22 @@ pub mod test_utils {
                 prover: Prover::default(),
                 rev_not_receiver: None,
                 teardown,
-            };
-            alice
+            }
         }
 
         pub async fn accept_invite(&mut self, invite: &str) {
             let invite: AnyInvitation = serde_json::from_str(invite).unwrap();
             let ddo = into_did_doc(&self.profile, &invite).await.unwrap();
-            self.connection =
-                MediatedConnection::create_with_invite("faber", &self.profile, &self.agency_client, invite, ddo, true)
-                    .await
-                    .unwrap();
+            self.connection = MediatedConnection::create_with_invite(
+                "faber",
+                &self.profile,
+                &self.agency_client,
+                invite,
+                ddo.try_into().unwrap(),
+                true,
+            )
+            .await
+            .unwrap();
             self.connection
                 .connect(&self.profile, &self.agency_client, None)
                 .await
@@ -605,7 +624,7 @@ pub mod test_utils {
                 .await
                 .ok_or(AriesVcxError::from_msg(
                     AriesVcxErrorKind::UnknownError,
-                    format!("Failed to download a message"),
+                    "Failed to download a message".to_string(),
                 ))
         }
 

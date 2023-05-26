@@ -1,22 +1,23 @@
 use std::clone::Clone;
 
-use diddoc_legacy::aries::diddoc::AriesDidDoc;
+use did_doc::schema::did_doc::DidDocument;
+use did_resolver_sov::resolution::ExtraFieldsSov;
 use messages::msg_fields::protocols::discover_features::{disclose::Disclose, ProtocolDescriptor};
 
 use crate::protocols::connection::trait_bounds::{BootstrapDidDoc, CompletedState, TheirDidDoc, ThreadId};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Completed {
-    pub(crate) did_doc: AriesDidDoc,
-    pub(crate) bootstrap_did_doc: AriesDidDoc,
+    pub(crate) did_doc: DidDocument<ExtraFieldsSov>,
+    pub(crate) bootstrap_did_doc: DidDocument<ExtraFieldsSov>,
     pub(crate) thread_id: String,
     pub(crate) protocols: Option<Vec<ProtocolDescriptor>>,
 }
 
 impl Completed {
     pub fn new(
-        did_doc: AriesDidDoc,
-        bootstrap_did_doc: AriesDidDoc,
+        did_doc: DidDocument<ExtraFieldsSov>,
+        bootstrap_did_doc: DidDocument<ExtraFieldsSov>,
         thread_id: String,
         protocols: Option<Vec<ProtocolDescriptor>>,
     ) -> Self {
@@ -30,13 +31,13 @@ impl Completed {
 }
 
 impl TheirDidDoc for Completed {
-    fn their_did_doc(&self) -> &AriesDidDoc {
+    fn their_did_doc(&self) -> &DidDocument<ExtraFieldsSov> {
         &self.did_doc
     }
 }
 
 impl BootstrapDidDoc for Completed {
-    fn bootstrap_did_doc(&self) -> &AriesDidDoc {
+    fn bootstrap_did_doc(&self) -> &DidDocument<ExtraFieldsSov> {
         &self.bootstrap_did_doc
     }
 }

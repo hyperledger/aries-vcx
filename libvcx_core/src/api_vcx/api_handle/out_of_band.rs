@@ -254,7 +254,8 @@ pub fn release_receiver(handle: u32) -> LibvcxResult<()> {
 #[allow(clippy::unwrap_used)]
 pub mod tests {
     use aries_vcx::messages::msg_types::connection::{ConnectionType, ConnectionTypeV1};
-    use diddoc_legacy::aries::service::AriesService;
+    use did_doc::schema::{service::Service, types::uri::Uri};
+    use did_resolver_sov::resolution::ExtraFieldsSov;
 
     use super::*;
 
@@ -268,10 +269,18 @@ pub mod tests {
         let oob_handle = create_out_of_band(&config).unwrap();
         assert!(oob_handle > 0);
         let service = OobService::AriesService(
-            AriesService::create()
-                .set_service_endpoint("http://example.org/agent".parse().expect("valid url"))
-                .set_routing_keys(vec!["12345".into()])
-                .set_recipient_keys(vec!["abcde".into()]),
+            Service::<ExtraFieldsSov>::builder(Uri::default(), "http://example.org/agent".parse().unwrap())
+                .unwrap()
+                .add_extra(
+                    ExtraFieldsSov::builder()
+                        .add_routing_key("abcde".into())
+                        .add_recipient_key("12345".into())
+                        .build(),
+                )
+                .add_service_type("did-communication".to_string())
+                .unwrap()
+                .build()
+                .unwrap(),
         );
         append_service(oob_handle, &json!(service).to_string()).unwrap();
         append_service_did(oob_handle, did).unwrap();

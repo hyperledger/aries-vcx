@@ -33,3 +33,11 @@ impl From<AriesVcxCoreError> for AgentError {
         AgentError { message, kind }
     }
 }
+
+impl From<diddoc_legacy::errors::error::DiddocError> for AgentError {
+    fn from(err: diddoc_legacy::errors::error::DiddocError) -> Self {
+        let kind = AgentErrorKind::GenericAriesVcxError;
+        let message = format!("Diddoc Error; err: {:?}", err.to_string());
+        AgentError { message, kind }
+    }
+}
