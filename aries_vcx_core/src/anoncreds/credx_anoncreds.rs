@@ -327,7 +327,12 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let str_cred_key_proof = serde_json::to_string(&cred_key_correctness_proof)?;
 
         self.wallet
-            .add_wallet_record(CATEGORY_CRED_KEY_CORRECTNESS_PROOF, &cred_def_id.0, &str_cred_key_proof, None)
+            .add_wallet_record(
+                CATEGORY_CRED_KEY_CORRECTNESS_PROOF,
+                &cred_def_id.0,
+                &str_cred_key_proof,
+                None,
+            )
             .await?;
 
         let store_schema_res = self
