@@ -40,7 +40,7 @@ const CATEGORY_LINK_SECRET: &str = "VCX_LINK_SECRET";
 
 const CATEGORY_CREDENTIAL: &str = "VCX_CREDENTIAL";
 const CATEGORY_CRED_DEF: &str = "VCX_CRED_DEF";
-const CATEGORY_CRED_KEY_PROOF: &str = "VCX_CRED_DEF_PROOF";
+const CATEGORY_CRED_KEY_CORRECTNESS_PROOF: &str = "VCX_CRED_KEY_CORRECTNESS_PROOF";
 const CATEGORY_CRED_DEF_PRIV: &str = "VCX_CRED_DEF_PRIV";
 const CATEGORY_CRED_SCHEMA: &str = "VCX_CRED_SCHEMA";
 
@@ -327,7 +327,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let str_cred_key_proof = serde_json::to_string(&cred_key_correctness_proof)?;
 
         self.wallet
-            .add_wallet_record(CATEGORY_CRED_KEY_PROOF, &cred_def_id.0, &str_cred_key_proof, None)
+            .add_wallet_record(CATEGORY_CRED_KEY_CORRECTNESS_PROOF, &cred_def_id.0, &str_cred_key_proof, None)
             .await?;
 
         let store_schema_res = self
@@ -353,7 +353,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let cred_def = self.get_wallet_record_value(CATEGORY_CRED_DEF, cred_def_id).await?;
 
         let correctness_proof = self
-            .get_wallet_record_value(CATEGORY_CRED_KEY_PROOF, cred_def_id)
+            .get_wallet_record_value(CATEGORY_CRED_KEY_CORRECTNESS_PROOF, cred_def_id)
             .await?;
 
         let schema_id = self
