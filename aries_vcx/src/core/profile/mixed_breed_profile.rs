@@ -4,7 +4,7 @@ use aries_vcx_core::{
     anoncreds::{base_anoncreds::BaseAnonCreds, credx_anoncreds::IndyCredxAnonCreds},
     ledger::{
         base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite},
-        indy_ledger::IndySdkLedger,
+        indy_ledger::{IndySdkLedgerRead, IndySdkLedgerWrite},
     },
     wallet::{base_wallet::BaseWallet, indy_wallet::IndySdkWallet},
     PoolHandle, WalletHandle,
@@ -26,15 +26,16 @@ impl MixedBreedProfile {
     pub fn new(indy_wallet_handle: WalletHandle, indy_pool_handle: PoolHandle) -> Self {
         let wallet: Arc<dyn BaseWallet> = Arc::new(IndySdkWallet::new(indy_wallet_handle));
         let anoncreds = Arc::new(IndyCredxAnonCreds::new(Arc::clone(&wallet)));
-        let ledger = Arc::new(IndySdkLedger::new(indy_wallet_handle, indy_pool_handle));
+        let ledger_read = Arc::new(IndySdkLedgerRead::new(indy_wallet_handle, indy_pool_handle));
+        let ledger_write = Arc::new(IndySdkLedgerWrite::new(indy_wallet_handle, indy_pool_handle));
 
         MixedBreedProfile {
             wallet,
             anoncreds,
-            anoncreds_ledger_read: ledger.clone(),
-            anoncreds_ledger_write: ledger.clone(),
-            indy_ledger_read: ledger.clone(),
-            indy_ledger_write: ledger,
+            anoncreds_ledger_read: ledger_read.clone(),
+            anoncreds_ledger_write: ledger_write.clone(),
+            indy_ledger_read: ledger_read,
+            indy_ledger_write: ledger_write,
         }
     }
 }
