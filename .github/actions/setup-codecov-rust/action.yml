@@ -10,10 +10,10 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Install latest nightly
+    - name: Install nightly 1.71
       uses: actions-rs/toolchain@v1
       with:
-        toolchain: nightly
+        toolchain: nightly-2023-05-08
         override: true
     - uses: Swatinem/rust-cache@v2
     - name: "Install dependencies"
