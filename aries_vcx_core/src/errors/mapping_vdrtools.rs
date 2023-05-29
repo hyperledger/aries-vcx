@@ -21,7 +21,7 @@ impl From<IndyErrorKind> for AriesVcxCoreErrorKind {
 
         match indy {
             InvalidParam(_) => AriesVcxCoreErrorKind::InvalidLibindyParam,
-            InvalidStructure => AriesVcxCoreErrorKind::LibindyInvalidStructure,
+            InvalidStructure => AriesVcxCoreErrorKind::InvalidInput,
             IOError => AriesVcxCoreErrorKind::IOError,
             InvalidWalletHandle => AriesVcxCoreErrorKind::InvalidWalletHandle,
             WalletAlreadyExists => AriesVcxCoreErrorKind::DuplicationWallet,

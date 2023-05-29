@@ -21,7 +21,7 @@ pub mod integration_tests {
     #[ignore]
     async fn test_pool_rev_reg_def_fails_for_cred_def_created_without_revocation() {
         // todo: does not need agency setup
-        SetupProfile::run_indy(|setup| async move {
+        SetupProfile::run(|setup| async move {
             // Cred def is created with support_revocation=false,
             // revoc_reg_def will fail in libindy because cred_Def doesn't have revocation keys
             let (_, _, cred_def_id, _, _) = create_and_store_nonrevocable_credential_def(
@@ -41,7 +41,7 @@ pub mod integration_tests {
             )
             .await;
 
-            assert_eq!(rc.unwrap_err().kind(), AriesVcxErrorKind::LibindyInvalidStructure);
+            assert_eq!(rc.unwrap_err().kind(), AriesVcxErrorKind::InvalidInput);
         })
         .await;
     }
@@ -49,7 +49,7 @@ pub mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_pool_get_rev_reg_def_json() {
-        SetupProfile::run_indy(|setup| async move {
+        SetupProfile::run(|setup| async move {
             let attrs = r#"["address1","address2","city","state","zip"]"#;
             let (_, _, _, _, rev_reg_id, _, _) =
                 create_and_store_credential_def(&setup.profile, &setup.institution_did, attrs).await;
@@ -63,7 +63,7 @@ pub mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_pool_get_rev_reg_delta_json() {
-        SetupProfile::run_indy(|setup| async move {
+        SetupProfile::run(|setup| async move {
             let attrs = r#"["address1","address2","city","state","zip"]"#;
             let (_, _, _, _, rev_reg_id, _, _) =
                 create_and_store_credential_def(&setup.profile, &setup.institution_did, attrs).await;
@@ -79,7 +79,7 @@ pub mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_pool_get_rev_reg() {
-        SetupProfile::run_indy(|setup| async move {
+        SetupProfile::run(|setup| async move {
             let attrs = r#"["address1","address2","city","state","zip"]"#;
             let (_, _, _, _, rev_reg_id, _, _) =
                 create_and_store_credential_def(&setup.profile, &setup.institution_did, attrs).await;
@@ -98,7 +98,7 @@ pub mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_pool_get_cred_def() {
-        SetupProfile::run_indy(|setup| async move {
+        SetupProfile::run(|setup| async move {
             let attrs = r#"["address1","address2","city","state","zip"]"#;
             let (_, _, cred_def_id, cred_def_json, _) =
                 create_and_store_nonrevocable_credential_def(&setup.profile, &setup.institution_did, attrs).await;

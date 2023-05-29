@@ -77,7 +77,11 @@ pub async fn get_verkey_from_ledger(profile: &Arc<dyn Profile>, did: &str) -> Vc
 mod test {
     #[tokio::test]
     #[ignore]
-    #[cfg(not(feature = "vdr_proxy_ledger"))]
+    #[cfg(all(
+        not(feature = "vdr_proxy_ledger"),
+        not(feature = "modular_libs"),
+        not(feature = "mixed_breed")
+    ))]
     async fn test_pool_rotate_verkey_fails() {
         use super::*;
 
@@ -86,7 +90,7 @@ mod test {
         use crate::utils::devsetup::*;
         use crate::utils::mockdata::mockdata_pool;
 
-        SetupProfile::run_indy(|setup| async move {
+        SetupProfile::run(|setup| async move {
             enable_pool_mocks();
 
             PoolMocks::set_next_pool_response(mockdata_pool::RESPONSE_REQNACK);

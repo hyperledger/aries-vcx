@@ -31,6 +31,8 @@ pub trait BaseWallet: std::fmt::Debug + Send + Sync {
 
     async fn get_wallet_record(&self, xtype: &str, id: &str, options_json: &str) -> VcxCoreResult<String>;
 
+    async fn get_wallet_record_value(&self, xtype: &str, id: &str) -> VcxCoreResult<String>;
+
     async fn delete_wallet_record(&self, xtype: &str, id: &str) -> VcxCoreResult<()>;
 
     async fn update_wallet_record_value(&self, xtype: &str, id: &str, value: &str) -> VcxCoreResult<()>;

@@ -21,7 +21,7 @@ mod integration_tests {
     use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
     use aries_vcx::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
     use aries_vcx::utils::constants::{DEFAULT_SCHEMA_ATTRS, TAILS_DIR};
-    use aries_vcx::utils::devsetup::{init_holder_setup_in_indy_context, SetupProfile};
+    use aries_vcx::utils::devsetup::SetupProfile;
     use aries_vcx::utils::get_temp_dir_path;
     use messages::msg_fields::protocols::present_proof::request::{
         RequestPresentation, RequestPresentationContent, RequestPresentationDecorators,
@@ -31,17 +31,15 @@ mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_retrieve_credentials() {
-        SetupProfile::run_indy(|setup| async move {
-            let holder_setup = init_holder_setup_in_indy_context(&setup).await;
-
+        SetupProfile::run(|setup| async move {
             create_and_store_nonrevocable_credential(
                 &setup.profile,
-                &holder_setup.profile,
+                &setup.profile,
                 &setup.institution_did,
                 DEFAULT_SCHEMA_ATTRS,
             )
             .await;
-            let (_, _, req, _) = create_indy_proof(&setup.profile, &holder_setup.profile, &setup.institution_did).await;
+            let (_, _, req, _) = create_indy_proof(&setup.profile, &setup.profile, &setup.institution_did).await;
 
             let pres_req_data: PresentationRequestData = serde_json::from_str(&req).unwrap();
             let id = "test_id".to_owned();
@@ -60,7 +58,7 @@ mod integration_tests {
             let proof_req = RequestPresentation::with_decorators(id, content, decorators);
             let proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
 
-            let retrieved_creds = proof.retrieve_credentials(&holder_setup.profile).await.unwrap();
+            let retrieved_creds = proof.retrieve_credentials(&setup.profile).await.unwrap();
             // assert number of cred matches for different requested referents
             assert_eq!(retrieved_creds.credentials_by_referent["address1_1"].len(), 2);
             assert_eq!(retrieved_creds.credentials_by_referent["zip_2"].len(), 2);
@@ -72,7 +70,7 @@ mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_get_credential_def() {
-        SetupProfile::run_indy(|setup| async move {
+        SetupProfile::run(|setup| async move {
             let (_, _, cred_def_id, cred_def_json, _) = create_and_store_nonrevocable_credential_def(
                 &setup.profile,
                 &setup.institution_did,
@@ -163,12 +161,10 @@ mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_case_for_proof_req_doesnt_matter_for_retrieve_creds() {
-        SetupProfile::run_indy(|setup| async move {
-            let holder_setup = init_holder_setup_in_indy_context(&setup).await;
-
+        SetupProfile::run(|setup| async move {
             create_and_store_nonrevocable_credential(
                 &setup.profile,
-                &holder_setup.profile,
+                &setup.profile,
                 &setup.institution_did,
                 DEFAULT_SCHEMA_ATTRS,
             )
@@ -205,7 +201,7 @@ mod integration_tests {
             let proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
 
             // All lower case
-            let retrieved_creds = proof.retrieve_credentials(&holder_setup.profile).await.unwrap();
+            let retrieved_creds = proof.retrieve_credentials(&setup.profile).await.unwrap();
             assert_eq!(
                 retrieved_creds.credentials_by_referent["zip_1"][0].cred_info.attributes["zip"],
                 "84000"
@@ -229,7 +225,7 @@ mod integration_tests {
 
             let proof_req = RequestPresentation::with_decorators(id, content, decorators);
             let proof: Prover = Prover::create_from_request("2", proof_req).unwrap();
-            let retrieved_creds2 = proof.retrieve_credentials(&holder_setup.profile).await.unwrap();
+            let retrieved_creds2 = proof.retrieve_credentials(&setup.profile).await.unwrap();
             assert_eq!(
                 retrieved_creds2.credentials_by_referent["zip_1"][0]
                     .cred_info
@@ -255,7 +251,7 @@ mod integration_tests {
 
             let proof_req = RequestPresentation::with_decorators(id, content, decorators);
             let proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
-            let retrieved_creds3 = proof.retrieve_credentials(&holder_setup.profile).await.unwrap();
+            let retrieved_creds3 = proof.retrieve_credentials(&setup.profile).await.unwrap();
             assert_eq!(
                 retrieved_creds3.credentials_by_referent["zip_1"][0]
                     .cred_info
@@ -269,12 +265,10 @@ mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_generate_proof() {
-        SetupProfile::run_indy(|setup| async move {
-            let holder_setup = init_holder_setup_in_indy_context(&setup).await;
-
+        SetupProfile::run(|setup| async move {
             create_and_store_credential(
                 &setup.profile,
-                &holder_setup.profile,
+                &setup.profile,
                 &setup.institution_did,
                 DEFAULT_SCHEMA_ATTRS,
             )
@@ -317,7 +311,7 @@ mod integration_tests {
             let proof_req = RequestPresentation::with_decorators(id, content, decorators);
             let mut proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
 
-            let all_creds = proof.retrieve_credentials(&holder_setup.profile).await.unwrap();
+            let all_creds = proof.retrieve_credentials(&setup.profile).await.unwrap();
             let selected_credentials: serde_json::Value = json!({
                "attrs":{
                   "address1_1": {
@@ -337,7 +331,7 @@ mod integration_tests {
 
             let generated_proof = proof
                 .generate_presentation(
-                    &holder_setup.profile,
+                    &setup.profile,
                     serde_json::from_value(selected_credentials).unwrap(),
                     serde_json::from_value(self_attested).unwrap(),
                 )
@@ -351,13 +345,10 @@ mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_generate_proof_with_predicates() {
-        // todo - use SetupProfile::run after modular impls
-        SetupProfile::run_indy(|setup: SetupProfile| async move {
-            let holder_setup = init_holder_setup_in_indy_context(&setup).await;
-
+        SetupProfile::run(|setup| async move {
             create_and_store_credential(
                 &setup.profile,
-                &holder_setup.profile,
+                &setup.profile,
                 &setup.institution_did,
                 DEFAULT_SCHEMA_ATTRS,
             )
@@ -402,7 +393,7 @@ mod integration_tests {
             let proof_req = RequestPresentation::with_decorators(id, content, decorators);
             let mut proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
 
-            let all_creds = proof.retrieve_credentials(&holder_setup.profile).await.unwrap();
+            let all_creds = proof.retrieve_credentials(&setup.profile).await.unwrap();
             let selected_credentials: serde_json::Value = json!({
                "attrs":{
                   "address1_1": {
@@ -424,7 +415,7 @@ mod integration_tests {
             });
             let generated_proof = proof
                 .generate_presentation(
-                    &holder_setup.profile,
+                    &setup.profile,
                     serde_json::from_value(selected_credentials).unwrap(),
                     serde_json::from_value(self_attested).unwrap(),
                 )
@@ -439,9 +430,7 @@ mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_generate_self_attested_proof() {
-        SetupProfile::run_indy(|setup| async move {
-            let holder_setup = init_holder_setup_in_indy_context(&setup).await;
-
+        SetupProfile::run(|setup| async move {
             let indy_proof_req = json!({
                "nonce":"123432421212",
                "name":"proof_req_1",
@@ -472,7 +461,7 @@ mod integration_tests {
             });
             proof
                 .generate_presentation(
-                    &holder_setup.profile,
+                    &setup.profile,
                     serde_json::from_value(selected_credentials).unwrap(),
                     serde_json::from_value(self_attested).unwrap(),
                 )

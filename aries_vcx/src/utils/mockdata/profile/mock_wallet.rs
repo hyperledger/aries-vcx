@@ -47,6 +47,10 @@ impl BaseWallet for MockWallet {
         Ok(r#"{"id":"123","type":"record type","value":"record value","tags":null}"#.to_string())
     }
 
+    async fn get_wallet_record_value(&self, xtype: &str, id: &str) -> VcxCoreResult<String> {
+        Ok(r#""record value""#.to_owned())
+    }
+
     async fn delete_wallet_record(&self, xtype: &str, id: &str) -> VcxCoreResult<()> {
         Ok(())
     }

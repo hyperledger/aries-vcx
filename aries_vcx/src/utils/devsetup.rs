@@ -29,6 +29,8 @@ use agency_client::agency_client::AgencyClient;
 use agency_client::configuration::AgentProvisionConfig;
 use agency_client::testing::mocking::{disable_agency_mocks, enable_agency_mocks, AgencyMockDecrypted};
 
+#[cfg(feature = "mixed_breed")]
+use crate::core::profile::mixed_breed_profile::MixedBreedProfile;
 #[cfg(feature = "modular_libs")]
 use crate::core::profile::modular_libs_profile::ModularLibsProfile;
 use crate::core::profile::profile::Profile;
@@ -365,14 +367,15 @@ impl SetupWalletPool {
 }
 
 impl SetupProfile {
-    pub(self) fn should_run_modular() -> bool {
-        cfg!(feature = "modular_libs")
-    }
-
-    #[cfg(any(feature = "modular_libs", feature = "vdrtools"))]
     pub async fn init() -> SetupProfile {
         init_test_logging();
         set_test_configs();
+
+        #[cfg(feature = "mixed_breed")]
+        return {
+            info!("SetupProfile >> using mixed breed profile");
+            SetupProfile::init_mixed_breed().await
+        };
 
         #[cfg(feature = "modular_libs")]
         return {
@@ -451,6 +454,38 @@ impl SetupProfile {
         }
     }
 
+    #[cfg(feature = "mixed_breed")]
+    async fn init_mixed_breed() -> SetupProfile {
+        let (institution_did, wallet_handle) = setup_issuer_wallet().await;
+
+        settings::set_config_value(
+            settings::CONFIG_GENESIS_PATH,
+            utils::get_temp_dir_path(settings::DEFAULT_GENESIS_PATH)
+                .to_str()
+                .unwrap(),
+        )
+        .unwrap();
+        let pool_handle = open_test_pool().await;
+
+        let profile: Arc<dyn Profile> = Arc::new(MixedBreedProfile::new(wallet_handle, pool_handle.clone()));
+
+        Arc::clone(&profile)
+            .inject_anoncreds()
+            .prover_create_link_secret(settings::DEFAULT_LINK_SECRET_ALIAS)
+            .await
+            .unwrap();
+
+        async fn indy_teardown(pool_handle: PoolHandle) {
+            delete_test_pool(pool_handle.clone()).await;
+        }
+
+        SetupProfile {
+            institution_did,
+            profile,
+            teardown: Arc::new(move || Box::pin(indy_teardown(pool_handle))),
+        }
+    }
+
     #[cfg(feature = "vdr_proxy_ledger")]
     async fn init_vdr_proxy_ledger() -> SetupProfile {
         use std::env;
@@ -477,7 +512,6 @@ impl SetupProfile {
         }
     }
 
-    #[cfg(any(feature = "modular_libs", feature = "vdrtools", feature = "vdr_proxy_ledger"))]
     pub async fn run<F>(f: impl FnOnce(Self) -> F)
     where
         F: Future<Output = ()>,
@@ -492,38 +526,6 @@ impl SetupProfile {
 
         reset_global_state();
     }
-
-    // FUTURE - ideally no tests should be using this method, they should be using the generic run
-    // after modular profile Anoncreds/Ledger methods have all been implemented, all tests should use run()
-    #[cfg(any(feature = "vdrtools", feature = "vdr_proxy_ledger"))]
-    pub async fn run_indy<F>(f: impl FnOnce(Self) -> F)
-    where
-        F: Future<Output = ()>,
-    {
-        #[cfg(feature = "vdr_proxy_ledger")]
-        let init = Self::init_vdr_proxy_ledger().await;
-
-        #[cfg(all(feature = "vdrtools", not(feature = "vdr_proxy_ledger")))]
-        let init = Self::init_indy().await;
-
-        let teardown = Arc::clone(&init.teardown);
-
-        f(init).await;
-
-        (teardown)().await;
-
-        reset_global_state();
-    }
-}
-
-// TODO - FUTURE - delete this method after `SetupProfile::run_indy` is removed. The purpose of this helper method
-// is to return a test profile for a prover/holder given an existing indy-based profile setup (i.e. returned by SetupProfile::run_indy)
-#[cfg(any(feature = "modular_libs", feature = "vdrtools"))]
-pub async fn init_holder_setup_in_indy_context(indy_issuer_setup: &SetupProfile) -> SetupProfile {
-    if SetupProfile::should_run_modular() {
-        return SetupProfile::init().await; // create a new modular profile
-    }
-    indy_issuer_setup.clone() // if indy runtime, just re-use the issuer setup
 }
 
 impl SetupInstitutionWallet {

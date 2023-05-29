@@ -7,7 +7,7 @@ pub mod integration_tests {
 
     use crate::common::test_utils::create_and_store_credential;
     use crate::utils::constants::TAILS_DIR;
-    use crate::utils::devsetup::{init_holder_setup_in_indy_context, SetupProfile};
+    use crate::utils::devsetup::SetupProfile;
     use crate::utils::get_temp_dir_path;
 
     #[tokio::test]
@@ -60,18 +60,16 @@ pub mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_pool_revoke_credential() {
-        SetupProfile::run_indy(|setup| async move {
-            let holder_setup = init_holder_setup_in_indy_context(&setup).await;
-
+        SetupProfile::run(|setup| async move {
             let (_, _, _, _, _, _, _, _, rev_reg_id, cred_rev_id, _, rev_reg) = create_and_store_credential(
                 &setup.profile,
-                &holder_setup.profile,
+                &setup.profile,
                 &setup.institution_did,
                 crate::utils::constants::DEFAULT_SCHEMA_ATTRS,
             )
             .await;
 
-            let ledger = Arc::clone(&holder_setup.profile).inject_anoncreds_ledger_read();
+            let ledger = Arc::clone(&setup.profile).inject_anoncreds_ledger_read();
 
             let (_, first_rev_reg_delta, first_timestamp) =
                 ledger.get_rev_reg_delta_json(&rev_reg_id, None, None).await.unwrap();

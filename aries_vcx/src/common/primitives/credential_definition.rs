@@ -282,13 +282,14 @@ pub mod integration_tests {
     use crate::common::primitives::credential_definition::generate_cred_def;
     use crate::common::primitives::revocation_registry::generate_rev_reg;
     use crate::common::test_utils::create_and_write_test_schema;
-    use crate::utils::constants::DEFAULT_SCHEMA_ATTRS;
+    use crate::utils::constants::{DEFAULT_SCHEMA_ATTRS, TAILS_DIR};
     use crate::utils::devsetup::SetupProfile;
+    use crate::utils::get_temp_dir_path;
 
     #[tokio::test]
     #[ignore]
     async fn test_pool_create_cred_def_real() {
-        SetupProfile::run_indy(|setup| async move {
+        SetupProfile::run(|setup| async move {
             let (schema_id, _) =
                 create_and_write_test_schema(&setup.profile, &setup.institution_did, DEFAULT_SCHEMA_ATTRS).await;
 
@@ -328,7 +329,7 @@ pub mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_pool_create_rev_reg_def() {
-        SetupProfile::run_indy(|setup| async move {
+        SetupProfile::run(|setup| async move {
             let (schema_id, _) =
                 create_and_write_test_schema(&setup.profile, &setup.institution_did, DEFAULT_SCHEMA_ATTRS).await;
             let ledger_read = Arc::clone(&setup.profile).inject_anoncreds_ledger_read();
@@ -350,11 +351,14 @@ pub mod integration_tests {
                 .await
                 .unwrap();
 
+            let path = get_temp_dir_path(TAILS_DIR);
+            std::fs::create_dir_all(&path).unwrap();
+
             let (rev_reg_def_id, rev_reg_def_json, rev_reg_entry_json) = generate_rev_reg(
                 &setup.profile,
                 &setup.institution_did,
                 &cred_def_id,
-                "tails.txt",
+                path.to_str().unwrap(),
                 2,
                 "tag1",
             )
