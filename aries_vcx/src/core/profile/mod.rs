@@ -21,7 +21,7 @@ use aries_vcx_core::ledger::{
 use crate::errors::error::VcxResult;
 
 #[cfg(any(feature = "modular_libs", feature = "vdr_proxy_ledger"))]
-async fn prepare_taa_options(ledger_read: Arc<dyn IndyLedgerRead>) -> VcxResult<Option<TxnAuthrAgrmtOptions>> {
+pub async fn prepare_taa_options(ledger_read: Arc<dyn IndyLedgerRead>) -> VcxResult<Option<TxnAuthrAgrmtOptions>> {
     if let Some(taa_result) = ledger_read.get_txn_author_agreement().await? {
         let taa_result: GetTxnAuthorAgreementData = serde_json::from_str(&taa_result)?;
         Ok(Some(TxnAuthrAgrmtOptions {

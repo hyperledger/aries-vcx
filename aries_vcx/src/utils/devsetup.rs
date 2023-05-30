@@ -425,6 +425,37 @@ impl SetupProfile {
     }
 
     #[cfg(feature = "modular_libs")]
+    async fn init_modular_profile(
+        wallet: Arc<dyn BaseWallet>,
+        ledger_pool_config: LedgerPoolConfig,
+    ) -> Arc<dyn Profile> {
+        use aries_vcx_core::{
+            anoncreds::credx_anoncreds::IndyCredxAnonCreds,
+            ledger::request_submitter::vdr_ledger::{IndyVdrLedgerPool, IndyVdrSubmitter},
+        };
+
+        use crate::core::profile::prepare_taa_options;
+        let anoncreds = Arc::new(IndyCredxAnonCreds::new(Arc::clone(&wallet)));
+
+        let ledger_pool = Arc::new(IndyVdrLedgerPool::new(ledger_pool_config).unwrap());
+        let request_submitter = Arc::new(IndyVdrSubmitter::new(ledger_pool));
+
+        let ledger_read = ModularLibsProfile::init_ledger_read(request_submitter.clone()).unwrap();
+        let taa_options = prepare_taa_options(ledger_read.clone()).await.unwrap();
+        let ledger_write =
+            ModularLibsProfile::init_ledger_write(wallet.clone(), request_submitter, taa_options).unwrap();
+
+        Arc::new(ModularLibsProfile {
+            wallet,
+            anoncreds,
+            anoncreds_ledger_read: ledger_read.clone(),
+            anoncreds_ledger_write: ledger_write.clone(),
+            indy_ledger_read: ledger_read.clone(),
+            indy_ledger_write: ledger_write,
+        })
+    }
+
+    #[cfg(feature = "modular_libs")]
     async fn init_modular() -> SetupProfile {
         use aries_vcx_core::indy::ledger::pool::test_utils::create_tmp_genesis_txn_file;
 
@@ -434,11 +465,8 @@ impl SetupProfile {
 
         let wallet = IndySdkWallet::new(wallet_handle);
 
-        let profile: Arc<dyn Profile> = Arc::new(
-            ModularLibsProfile::init(Arc::new(wallet), LedgerPoolConfig { genesis_file_path })
-                .await
-                .unwrap(),
-        );
+        let profile: Arc<dyn Profile> =
+            Self::init_modular_profile(Arc::new(wallet), LedgerPoolConfig { genesis_file_path }).await;
 
         Arc::clone(&profile)
             .inject_anoncreds()

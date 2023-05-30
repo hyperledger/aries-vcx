@@ -493,7 +493,7 @@ pub mod test_utils {
 
             let wallet: Arc<dyn BaseWallet> = Arc::new(IndySdkWallet::new(wallet_handle));
 
-            let profile = Arc::new(ModularLibsProfile::init(wallet, ledger_pool_config).await.unwrap());
+            let profile = Arc::new(ModularLibsProfile::init(wallet, ledger_pool_config).unwrap());
 
             // set up anoncreds link/master secret
             Arc::clone(&profile)
