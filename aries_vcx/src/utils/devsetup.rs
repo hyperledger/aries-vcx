@@ -398,8 +398,6 @@ impl SetupProfile {
         };
     }
 
-    // FUTURE - ideally no tests should be using this method, they should be using the generic init
-    // after modular profile Anoncreds/Ledger methods have all been implemented, all tests should use init()
     #[cfg(feature = "vdrtools")]
     async fn init_indy() -> SetupProfile {
         let (institution_did, wallet_handle) = setup_issuer_wallet().await;
