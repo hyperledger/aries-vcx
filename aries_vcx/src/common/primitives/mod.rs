@@ -21,7 +21,7 @@ pub mod integration_tests {
     #[ignore]
     async fn test_pool_rev_reg_def_fails_for_cred_def_created_without_revocation() {
         // todo: does not need agency setup
-        SetupProfile::run_indy(|setup| async move {
+        SetupProfile::run(|setup| async move {
             // Cred def is created with support_revocation=false,
             // revoc_reg_def will fail in libindy because cred_Def doesn't have revocation keys
             let (_, _, cred_def_id, _, _) = create_and_store_nonrevocable_credential_def(
@@ -41,7 +41,7 @@ pub mod integration_tests {
             )
             .await;
 
-            assert_eq!(rc.unwrap_err().kind(), AriesVcxErrorKind::LibindyInvalidStructure);
+            assert_eq!(rc.unwrap_err().kind(), AriesVcxErrorKind::InvalidInput);
         })
         .await;
     }
@@ -49,12 +49,12 @@ pub mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_pool_get_rev_reg_def_json() {
-        SetupProfile::run_indy(|setup| async move {
+        SetupProfile::run(|setup| async move {
             let attrs = r#"["address1","address2","city","state","zip"]"#;
             let (_, _, _, _, rev_reg_id, _, _) =
                 create_and_store_credential_def(&setup.profile, &setup.institution_did, attrs).await;
 
-            let ledger = Arc::clone(&setup.profile).inject_ledger();
+            let ledger = Arc::clone(&setup.profile).inject_anoncreds_ledger_read();
             let _json = ledger.get_rev_reg_def_json(&rev_reg_id).await.unwrap();
         })
         .await;
@@ -63,12 +63,12 @@ pub mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_pool_get_rev_reg_delta_json() {
-        SetupProfile::run_indy(|setup| async move {
+        SetupProfile::run(|setup| async move {
             let attrs = r#"["address1","address2","city","state","zip"]"#;
             let (_, _, _, _, rev_reg_id, _, _) =
                 create_and_store_credential_def(&setup.profile, &setup.institution_did, attrs).await;
 
-            let ledger = Arc::clone(&setup.profile).inject_ledger();
+            let ledger = Arc::clone(&setup.profile).inject_anoncreds_ledger_read();
             let (id, _delta, _timestamp) = ledger.get_rev_reg_delta_json(&rev_reg_id, None, None).await.unwrap();
 
             assert_eq!(id, rev_reg_id);
@@ -79,12 +79,12 @@ pub mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_pool_get_rev_reg() {
-        SetupProfile::run_indy(|setup| async move {
+        SetupProfile::run(|setup| async move {
             let attrs = r#"["address1","address2","city","state","zip"]"#;
             let (_, _, _, _, rev_reg_id, _, _) =
                 create_and_store_credential_def(&setup.profile, &setup.institution_did, attrs).await;
 
-            let ledger = Arc::clone(&setup.profile).inject_ledger();
+            let ledger = Arc::clone(&setup.profile).inject_anoncreds_ledger_read();
             let (id, _rev_reg, _timestamp) = ledger
                 .get_rev_reg(&rev_reg_id, time::OffsetDateTime::now_utc().unix_timestamp() as u64)
                 .await
@@ -98,12 +98,12 @@ pub mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_pool_get_cred_def() {
-        SetupProfile::run_indy(|setup| async move {
+        SetupProfile::run(|setup| async move {
             let attrs = r#"["address1","address2","city","state","zip"]"#;
             let (_, _, cred_def_id, cred_def_json, _) =
                 create_and_store_nonrevocable_credential_def(&setup.profile, &setup.institution_did, attrs).await;
 
-            let ledger = Arc::clone(&setup.profile).inject_ledger();
+            let ledger = Arc::clone(&setup.profile).inject_anoncreds_ledger_read();
             let cred_def = ledger.get_cred_def(&cred_def_id, None).await.unwrap();
 
             assert_eq!(
@@ -121,7 +121,7 @@ pub mod integration_tests {
             let (schema_id, _schema_json) =
                 create_and_write_test_schema(&setup.profile, &setup.institution_did, DEFAULT_SCHEMA_ATTRS).await;
 
-            let ledger = Arc::clone(&setup.profile).inject_ledger();
+            let ledger = Arc::clone(&setup.profile).inject_anoncreds_ledger_read();
             let rc = ledger.get_schema(&schema_id, None).await;
 
             let retrieved_schema = rc.unwrap();

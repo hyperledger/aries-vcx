@@ -23,7 +23,7 @@ pub fn verify_thread_id(thread_id: &str, message: &CredentialIssuanceAction) -> 
 }
 
 pub async fn is_cred_def_revokable(profile: &Arc<dyn Profile>, cred_def_id: &str) -> VcxResult<bool> {
-    let ledger = Arc::clone(profile).inject_ledger();
+    let ledger = Arc::clone(profile).inject_anoncreds_ledger_read();
     let cred_def_json = ledger.get_cred_def(cred_def_id, None).await.map_err(|err| {
         AriesVcxError::from_msg(
             AriesVcxErrorKind::InvalidLedgerResponse,

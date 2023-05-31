@@ -18,13 +18,13 @@ pub async fn endorse_transaction(transaction: &str) -> LibvcxResult<()> {
     let endorser_did = get_config_value(CONFIG_INSTITUTION_DID)?;
 
     let profile = get_main_profile()?;
-    let ledger = profile.inject_ledger();
+    let ledger = profile.inject_indy_ledger_write();
     map_ariesvcx_core_result(ledger.endorse_transaction(&endorser_did, transaction).await)
 }
 
 pub async fn get_ledger_txn(seq_no: i32, submitter_did: Option<String>) -> LibvcxResult<String> {
     let profile = get_main_profile()?;
-    let ledger = profile.inject_ledger();
+    let ledger = profile.inject_indy_ledger_read();
     map_ariesvcx_core_result(ledger.get_ledger_txn(seq_no, submitter_did.as_deref()).await)
 }
 
@@ -94,7 +94,7 @@ pub async fn ledger_clear_attr(target_did: &str, attr: &str) -> LibvcxResult<Str
 
 pub async fn ledger_get_txn_author_agreement() -> LibvcxResult<String> {
     let profile = get_main_profile()?;
-    let ledger = profile.inject_ledger();
+    let ledger = profile.inject_indy_ledger_read();
     map_ariesvcx_core_result(ledger.get_txn_author_agreement().await)
 }
 

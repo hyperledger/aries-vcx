@@ -9,7 +9,6 @@ pub mod utils;
 #[cfg(test)]
 mod integration_tests {
     use std::sync::Arc;
-    use std::thread;
     use std::time::Duration;
 
     use agency_client::agency_client::AgencyClient;

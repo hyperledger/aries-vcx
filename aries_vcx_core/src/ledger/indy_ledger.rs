@@ -3,17 +3,32 @@ use async_trait::async_trait;
 use crate::errors::error::VcxCoreResult;
 use crate::{indy, PoolHandle, WalletHandle};
 
-use super::base_ledger::BaseLedger;
+use super::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite};
 
 #[derive(Debug)]
-pub struct IndySdkLedger {
+pub struct IndySdkLedgerRead {
     indy_wallet_handle: WalletHandle,
     indy_pool_handle: PoolHandle,
 }
 
-impl IndySdkLedger {
+impl IndySdkLedgerRead {
     pub fn new(indy_wallet_handle: WalletHandle, indy_pool_handle: PoolHandle) -> Self {
-        IndySdkLedger {
+        IndySdkLedgerRead {
+            indy_wallet_handle,
+            indy_pool_handle,
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct IndySdkLedgerWrite {
+    indy_wallet_handle: WalletHandle,
+    indy_pool_handle: PoolHandle,
+}
+
+impl IndySdkLedgerWrite {
+    pub fn new(indy_wallet_handle: WalletHandle, indy_pool_handle: PoolHandle) -> Self {
+        IndySdkLedgerWrite {
             indy_wallet_handle,
             indy_pool_handle,
         }
@@ -21,34 +36,32 @@ impl IndySdkLedger {
 }
 
 #[async_trait]
-impl BaseLedger for IndySdkLedger {
-    async fn submit_request(&self, request_json: &str) -> VcxCoreResult<String> {
-        indy::ledger::transactions::libindy_submit_request(self.indy_pool_handle, request_json).await
-    }
-
-    async fn endorse_transaction(&self, endorser_did: &str, request_json: &str) -> VcxCoreResult<()> {
-        indy::ledger::transactions::endorse_transaction(
-            self.indy_wallet_handle,
-            self.indy_pool_handle,
-            endorser_did,
-            request_json,
-        )
-        .await
-    }
-
-    async fn set_endorser(&self, submitter_did: &str, request_json: &str, endorser: &str) -> VcxCoreResult<String> {
-        indy::ledger::transactions::set_endorser(self.indy_wallet_handle, submitter_did, request_json, endorser).await
-    }
-
-    async fn get_txn_author_agreement(&self) -> VcxCoreResult<String> {
-        indy::ledger::transactions::libindy_get_txn_author_agreement(self.indy_pool_handle).await
+impl IndyLedgerRead for IndySdkLedgerRead {
+    async fn get_attr(&self, target_did: &str, attr_name: &str) -> VcxCoreResult<String> {
+        indy::ledger::transactions::get_attr(self.indy_pool_handle, target_did, attr_name).await
     }
 
     async fn get_nym(&self, did: &str) -> VcxCoreResult<String> {
         indy::ledger::transactions::get_nym(self.indy_pool_handle, did).await
     }
 
-    // returns request result as JSON
+    async fn get_txn_author_agreement(&self) -> VcxCoreResult<String> {
+        indy::ledger::transactions::libindy_get_txn_author_agreement(self.indy_pool_handle).await
+    }
+
+    async fn get_ledger_txn(&self, seq_no: i32, submitter_did: Option<&str>) -> VcxCoreResult<String> {
+        indy::ledger::transactions::get_ledger_txn(
+            self.indy_wallet_handle,
+            self.indy_pool_handle,
+            seq_no,
+            submitter_did,
+        )
+        .await
+    }
+}
+
+#[async_trait]
+impl IndyLedgerWrite for IndySdkLedgerWrite {
     async fn publish_nym(
         &self,
         submitter_did: &str,
@@ -71,6 +84,28 @@ impl BaseLedger for IndySdkLedger {
         .await
     }
 
+    async fn set_endorser(&self, submitter_did: &str, request: &str, endorser: &str) -> VcxCoreResult<String> {
+        indy::ledger::transactions::set_endorser(self.indy_wallet_handle, submitter_did, request, endorser).await
+    }
+
+    async fn endorse_transaction(&self, endorser_did: &str, request_json: &str) -> VcxCoreResult<()> {
+        indy::ledger::transactions::endorse_transaction(
+            self.indy_wallet_handle,
+            self.indy_pool_handle,
+            endorser_did,
+            request_json,
+        )
+        .await
+    }
+
+    async fn add_attr(&self, target_did: &str, attrib_json: &str) -> VcxCoreResult<String> {
+        indy::ledger::transactions::add_attr(self.indy_wallet_handle, self.indy_pool_handle, target_did, attrib_json)
+            .await
+    }
+}
+
+#[async_trait]
+impl AnoncredsLedgerRead for IndySdkLedgerRead {
     async fn get_schema(&self, schema_id: &str, submitter_did: Option<&str>) -> VcxCoreResult<String> {
         if let Some(submitter_did) = submitter_did {
             // with cache if possible
@@ -95,15 +130,6 @@ impl BaseLedger for IndySdkLedger {
             .map(|(_id, json)| json)
     }
 
-    async fn get_attr(&self, target_did: &str, attr_name: &str) -> VcxCoreResult<String> {
-        indy::ledger::transactions::get_attr(self.indy_pool_handle, target_did, attr_name).await
-    }
-
-    async fn add_attr(&self, target_did: &str, attrib_json: &str) -> VcxCoreResult<String> {
-        indy::ledger::transactions::add_attr(self.indy_wallet_handle, self.indy_pool_handle, target_did, attrib_json)
-            .await
-    }
-
     async fn get_rev_reg_def_json(&self, rev_reg_id: &str) -> VcxCoreResult<String> {
         indy::ledger::transactions::get_rev_reg_def_json(self.indy_pool_handle, rev_reg_id)
             .await
@@ -122,17 +148,10 @@ impl BaseLedger for IndySdkLedger {
     async fn get_rev_reg(&self, rev_reg_id: &str, timestamp: u64) -> VcxCoreResult<(String, String, u64)> {
         indy::ledger::transactions::get_rev_reg(self.indy_pool_handle, rev_reg_id, timestamp).await
     }
+}
 
-    async fn get_ledger_txn(&self, seq_no: i32, submitter_did: Option<&str>) -> VcxCoreResult<String> {
-        indy::ledger::transactions::get_ledger_txn(
-            self.indy_wallet_handle,
-            self.indy_pool_handle,
-            seq_no,
-            submitter_did,
-        )
-        .await
-    }
-
+#[async_trait]
+impl AnoncredsLedgerWrite for IndySdkLedgerWrite {
     async fn publish_schema(
         &self,
         schema_json: &str,

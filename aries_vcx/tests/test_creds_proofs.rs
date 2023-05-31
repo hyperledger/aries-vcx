@@ -6,6 +6,7 @@ extern crate serde_json;
 pub mod utils;
 
 mod integration_tests {
+    use std::collections::HashMap;
     use std::sync::Arc;
 
     use aries_vcx::common::proofs::proof_request::PresentationRequestData;
@@ -13,13 +14,14 @@ mod integration_tests {
         create_and_store_credential, create_and_store_nonrevocable_credential,
         create_and_store_nonrevocable_credential_def, create_indy_proof,
     };
-    use aries_vcx::errors::error::VcxResult;
     use aries_vcx::handlers::proof_presentation::prover::Prover;
+    use aries_vcx::handlers::proof_presentation::types::RetrievedCredentials;
     use aries_vcx::handlers::proof_presentation::verifier::Verifier;
     use aries_vcx::handlers::util::AttachmentId;
+    use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
     use aries_vcx::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
     use aries_vcx::utils::constants::{DEFAULT_SCHEMA_ATTRS, TAILS_DIR};
-    use aries_vcx::utils::devsetup::{init_holder_setup_in_indy_context, SetupProfile};
+    use aries_vcx::utils::devsetup::SetupProfile;
     use aries_vcx::utils::get_temp_dir_path;
     use messages::msg_fields::protocols::present_proof::request::{
         RequestPresentation, RequestPresentationContent, RequestPresentationDecorators,
@@ -29,17 +31,15 @@ mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_retrieve_credentials() {
-        SetupProfile::run_indy(|setup| async move {
-            let holder_setup = init_holder_setup_in_indy_context(&setup).await;
-
+        SetupProfile::run(|setup| async move {
             create_and_store_nonrevocable_credential(
                 &setup.profile,
-                &holder_setup.profile,
+                &setup.profile,
                 &setup.institution_did,
                 DEFAULT_SCHEMA_ATTRS,
             )
             .await;
-            let (_, _, req, _) = create_indy_proof(&setup.profile, &holder_setup.profile, &setup.institution_did).await;
+            let (_, _, req, _) = create_indy_proof(&setup.profile, &setup.profile, &setup.institution_did).await;
 
             let pres_req_data: PresentationRequestData = serde_json::from_str(&req).unwrap();
             let id = "test_id".to_owned();
@@ -58,8 +58,11 @@ mod integration_tests {
             let proof_req = RequestPresentation::with_decorators(id, content, decorators);
             let proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
 
-            let retrieved_creds = proof.retrieve_credentials(&holder_setup.profile).await.unwrap();
-            assert!(retrieved_creds.len() > 500);
+            let retrieved_creds = proof.retrieve_credentials(&setup.profile).await.unwrap();
+            // assert number of cred matches for different requested referents
+            assert_eq!(retrieved_creds.credentials_by_referent["address1_1"].len(), 2);
+            assert_eq!(retrieved_creds.credentials_by_referent["zip_2"].len(), 2);
+            assert_eq!(retrieved_creds.credentials_by_referent["self_attest_3"].len(), 0);
         })
         .await;
     }
@@ -67,7 +70,7 @@ mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_get_credential_def() {
-        SetupProfile::run_indy(|setup| async move {
+        SetupProfile::run(|setup| async move {
             let (_, _, cred_def_id, cred_def_json, _) = create_and_store_nonrevocable_credential_def(
                 &setup.profile,
                 &setup.institution_did,
@@ -75,7 +78,7 @@ mod integration_tests {
             )
             .await;
 
-            let ledger = Arc::clone(&setup.profile).inject_ledger();
+            let ledger = Arc::clone(&setup.profile).inject_anoncreds_ledger_read();
             let r_cred_def_json = ledger.get_cred_def(&cred_def_id, None).await.unwrap();
 
             let def1: serde_json::Value = serde_json::from_str(&cred_def_json).unwrap();
@@ -88,7 +91,8 @@ mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_retrieve_credentials_empty() {
-        SetupProfile::run_indy(|setup| async move {
+        SetupProfile::run(|setup| async move {
+            // create skeleton proof request attachment data
             let mut req = json!({
                "nonce":"123432421212",
                "name":"proof_req_1",
@@ -98,7 +102,6 @@ mod integration_tests {
             });
 
             let pres_req_data: PresentationRequestData = serde_json::from_str(&req.to_string()).unwrap();
-            let id = "test_id".to_owned();
 
             let attach_type = messages::decorators::attachment::AttachmentType::Base64(base64::encode(
                 &json!(pres_req_data).to_string(),
@@ -111,15 +114,18 @@ mod integration_tests {
             let content = RequestPresentationContent::new(vec![attach]);
             let decorators = RequestPresentationDecorators::default();
 
+            // test retrieving credentials for empty proof request returns "{}"
+            let id = "test_id".to_owned();
             let proof_req = RequestPresentation::with_decorators(id, content, decorators);
             let proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
 
             let retrieved_creds = proof.retrieve_credentials(&setup.profile).await.unwrap();
-            assert_eq!(retrieved_creds, "{}".to_string());
+            assert_eq!(serde_json::to_string(&retrieved_creds).unwrap(), "{}".to_string());
+            assert!(retrieved_creds.credentials_by_referent.is_empty());
 
+            // populate proof request with a single attribute referent request
             req["requested_attributes"]["address1_1"] = json!({"name": "address1"});
             let pres_req_data: PresentationRequestData = serde_json::from_str(&req.to_string()).unwrap();
-            let id = "test_id".to_owned();
 
             let attach_type = messages::decorators::attachment::AttachmentType::Base64(base64::encode(
                 &json!(pres_req_data).to_string(),
@@ -132,11 +138,22 @@ mod integration_tests {
             let content = RequestPresentationContent::new(vec![attach]);
             let decorators = RequestPresentationDecorators::default();
 
+            // test retrieving credentials for the proof request returns the referent with no cred matches
+            let id = "test_id".to_owned();
             let proof_req = RequestPresentation::with_decorators(id, content, decorators);
             let proof: Prover = Prover::create_from_request("2", proof_req).unwrap();
 
             let retrieved_creds = proof.retrieve_credentials(&setup.profile).await.unwrap();
-            assert_eq!(retrieved_creds, json!({"attrs":{"address1_1":[]}}).to_string());
+            assert_eq!(
+                serde_json::to_string(&retrieved_creds).unwrap(),
+                json!({"attrs":{"address1_1":[]}}).to_string()
+            );
+            assert_eq!(
+                retrieved_creds,
+                RetrievedCredentials {
+                    credentials_by_referent: HashMap::from([("address1_1".to_string(), vec![])])
+                }
+            )
         })
         .await;
     }
@@ -144,7 +161,7 @@ mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_case_for_proof_req_doesnt_matter_for_retrieve_creds() {
-        SetupProfile::run_indy(|setup| async move {
+        SetupProfile::run(|setup| async move {
             create_and_store_nonrevocable_credential(
                 &setup.profile,
                 &setup.profile,
@@ -185,10 +202,8 @@ mod integration_tests {
 
             // All lower case
             let retrieved_creds = proof.retrieve_credentials(&setup.profile).await.unwrap();
-            assert!(retrieved_creds.contains(r#""zip":"84000""#));
-            let ret_creds_as_value: serde_json::Value = serde_json::from_str(&retrieved_creds).unwrap();
             assert_eq!(
-                ret_creds_as_value["attrs"]["zip_1"][0]["cred_info"]["attrs"]["zip"],
+                retrieved_creds.credentials_by_referent["zip_1"][0].cred_info.attributes["zip"],
                 "84000"
             );
 
@@ -211,7 +226,12 @@ mod integration_tests {
             let proof_req = RequestPresentation::with_decorators(id, content, decorators);
             let proof: Prover = Prover::create_from_request("2", proof_req).unwrap();
             let retrieved_creds2 = proof.retrieve_credentials(&setup.profile).await.unwrap();
-            assert!(retrieved_creds2.contains(r#""zip":"84000""#));
+            assert_eq!(
+                retrieved_creds2.credentials_by_referent["zip_1"][0]
+                    .cred_info
+                    .attributes["zip"],
+                "84000"
+            );
 
             // Entire word upper
             req["requested_attributes"]["zip_1"]["name"] = json!("ZIP");
@@ -232,7 +252,12 @@ mod integration_tests {
             let proof_req = RequestPresentation::with_decorators(id, content, decorators);
             let proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
             let retrieved_creds3 = proof.retrieve_credentials(&setup.profile).await.unwrap();
-            assert!(retrieved_creds3.contains(r#""zip":"84000""#));
+            assert_eq!(
+                retrieved_creds3.credentials_by_referent["zip_1"][0]
+                    .cred_info
+                    .attributes["zip"],
+                "84000"
+            );
         })
         .await;
     }
@@ -240,7 +265,7 @@ mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_generate_proof() {
-        SetupProfile::run_indy(|setup| async move {
+        SetupProfile::run(|setup| async move {
             create_and_store_credential(
                 &setup.profile,
                 &setup.profile,
@@ -286,16 +311,15 @@ mod integration_tests {
             let proof_req = RequestPresentation::with_decorators(id, content, decorators);
             let mut proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
 
-            let all_creds: serde_json::Value =
-                serde_json::from_str(&proof.retrieve_credentials(&setup.profile).await.unwrap()).unwrap();
+            let all_creds = proof.retrieve_credentials(&setup.profile).await.unwrap();
             let selected_credentials: serde_json::Value = json!({
                "attrs":{
                   "address1_1": {
-                    "credential": all_creds["attrs"]["address1_1"][0],
+                    "credential": all_creds.credentials_by_referent["address1_1"][0],
                     "tails_file": get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string()
                   },
                   "zip_2": {
-                    "credential": all_creds["attrs"]["zip_2"][0],
+                    "credential": all_creds.credentials_by_referent["zip_2"][0],
                     "tails_file": get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string()
                   },
                }
@@ -308,11 +332,12 @@ mod integration_tests {
             let generated_proof = proof
                 .generate_presentation(
                     &setup.profile,
-                    selected_credentials.to_string(),
-                    self_attested.to_string(),
+                    serde_json::from_value(selected_credentials).unwrap(),
+                    serde_json::from_value(self_attested).unwrap(),
                 )
                 .await;
             assert!(generated_proof.is_ok());
+            assert!(matches!(proof.get_state(), ProverState::PresentationPrepared));
         })
         .await;
     }
@@ -320,7 +345,7 @@ mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_generate_proof_with_predicates() {
-        SetupProfile::run_indy(|setup| async move {
+        SetupProfile::run(|setup| async move {
             create_and_store_credential(
                 &setup.profile,
                 &setup.profile,
@@ -339,7 +364,7 @@ mod integration_tests {
                         "restrictions": [{"issuer_did": setup.institution_did}],
                         "non_revoked":  {"from": 123, "to": to}
                     },
-                    "zip_2": { "name": "zip" }
+                    "state_2": { "name": "state" }
                 },
                 "self_attested_attr_3": json!({
                        "name":"self_attested_attr",
@@ -368,20 +393,19 @@ mod integration_tests {
             let proof_req = RequestPresentation::with_decorators(id, content, decorators);
             let mut proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
 
-            let all_creds: serde_json::Value =
-                serde_json::from_str(&proof.retrieve_credentials(&setup.profile).await.unwrap()).unwrap();
+            let all_creds = proof.retrieve_credentials(&setup.profile).await.unwrap();
             let selected_credentials: serde_json::Value = json!({
                "attrs":{
                   "address1_1": {
-                    "credential": all_creds["attrs"]["address1_1"][0],
+                    "credential": all_creds.credentials_by_referent["address1_1"][0],
                     "tails_file": get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string()
                   },
-                  "zip_2": {
-                    "credential": all_creds["attrs"]["zip_2"][0],
+                  "state_2": {
+                    "credential": all_creds.credentials_by_referent["state_2"][0],
                     "tails_file": get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string()
                   },
                   "zip_3": {
-                    "credential": all_creds["attrs"]["zip_3"][0],
+                    "credential": all_creds.credentials_by_referent["zip_3"][0],
                     "tails_file": get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string()
                   },
                },
@@ -392,11 +416,13 @@ mod integration_tests {
             let generated_proof = proof
                 .generate_presentation(
                     &setup.profile,
-                    selected_credentials.to_string(),
-                    self_attested.to_string(),
+                    serde_json::from_value(selected_credentials).unwrap(),
+                    serde_json::from_value(self_attested).unwrap(),
                 )
                 .await;
             assert!(generated_proof.is_ok());
+
+            assert!(matches!(proof.get_state(), ProverState::PresentationPrepared));
         })
         .await;
     }
@@ -404,7 +430,7 @@ mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_generate_self_attested_proof() {
-        SetupProfile::run_indy(|setup| async move {
+        SetupProfile::run(|setup| async move {
             let indy_proof_req = json!({
                "nonce":"123432421212",
                "name":"proof_req_1",
@@ -436,8 +462,8 @@ mod integration_tests {
             proof
                 .generate_presentation(
                     &setup.profile,
-                    selected_credentials.to_string(),
-                    self_attested.to_string(),
+                    serde_json::from_value(selected_credentials).unwrap(),
+                    serde_json::from_value(self_attested).unwrap(),
                 )
                 .await
                 .unwrap();
@@ -464,7 +490,7 @@ mod integration_tests {
 
 #[cfg(test)]
 mod tests {
-    use std::thread;
+    use std::collections::HashMap;
     use std::time::Duration;
 
     use messages::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
@@ -492,7 +518,6 @@ mod tests {
         send_cred_proposal, send_cred_proposal_1, send_cred_req, send_credential, send_proof_proposal,
         send_proof_proposal_1, send_proof_request, verifier_create_proof_and_send_request, verify_proof,
     };
-    use crate::utils::test_macros::ProofStateType;
 
     use super::*;
 
@@ -974,13 +999,7 @@ mod tests {
             let selected_credentials = retrieved_to_selected_credentials_simple(&retrieved_credentials, false);
 
             info!("test_real_proof :: generating and sending proof");
-            generate_and_send_proof(
-                &mut consumer,
-                &mut prover,
-                &consumer_to_issuer,
-                &serde_json::to_string(&selected_credentials).unwrap(),
-            )
-            .await;
+            generate_and_send_proof(&mut consumer, &mut prover, &consumer_to_issuer, selected_credentials).await;
             assert_eq!(ProverState::PresentationSent, prover.get_state());
             assert_eq!(presentation_thread_id, prover.get_thread_id().unwrap());
             assert_eq!(presentation_thread_id, verifier.get_thread_id().unwrap());
@@ -1237,13 +1256,13 @@ mod tests {
             let mut prover = send_proof_proposal(&mut consumer, &consumer_to_institution, &cred_def_id).await;
             let mut verifier = Verifier::create("1").unwrap();
             accept_proof_proposal(&mut institution, &mut verifier, &institution_to_consumer).await;
-            let selected_credentials_str =
+            let selected_credentials =
                 prover_select_credentials(&mut prover, &mut consumer, &consumer_to_institution, None).await;
             generate_and_send_proof(
                 &mut consumer,
                 &mut prover,
                 &consumer_to_institution,
-                &selected_credentials_str,
+                selected_credentials,
             )
             .await;
             verify_proof(&mut institution, &mut verifier, &institution_to_consumer).await;
@@ -1313,13 +1332,13 @@ mod tests {
             accept_proof_proposal(&mut institution, &mut verifier, &institution_to_consumer).await;
             send_proof_proposal_1(&mut consumer, &mut prover, &consumer_to_institution, &cred_def_id).await;
             accept_proof_proposal(&mut institution, &mut verifier, &institution_to_consumer).await;
-            let selected_credentials_str =
+            let selected_credentials =
                 prover_select_credentials(&mut prover, &mut consumer, &consumer_to_institution, None).await;
             generate_and_send_proof(
                 &mut consumer,
                 &mut prover,
                 &consumer_to_institution,
-                &selected_credentials_str,
+                selected_credentials,
             )
             .await;
             verify_proof(&mut institution, &mut verifier, &institution_to_consumer).await;
@@ -1430,7 +1449,7 @@ mod tests {
 
                 alice
                     .prover
-                    .generate_presentation(&alice.profile, credentials.to_string(), String::from("{}"))
+                    .generate_presentation(&alice.profile, credentials, HashMap::new())
                     .await
                     .unwrap();
                 assert_eq!(ProverState::PresentationPrepared, alice.prover.get_state());
@@ -1528,7 +1547,7 @@ mod tests {
 
                 alice
                     .prover
-                    .generate_presentation(&alice.profile, credentials.to_string(), String::from("{}"))
+                    .generate_presentation(&alice.profile, credentials, HashMap::new())
                     .await
                     .unwrap();
                 assert_eq!(ProverState::PresentationPrepared, alice.prover.get_state());

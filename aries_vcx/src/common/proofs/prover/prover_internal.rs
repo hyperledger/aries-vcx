@@ -4,6 +4,7 @@ use aries_vcx_core::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind};
 use serde_json::Value;
 
 use crate::errors::error::prelude::*;
+use crate::handlers::proof_presentation::types::SelectedCredentials;
 use crate::{
     common::proofs::{proof_request::ProofRequestData, proof_request_internal::NonRevokedInterval},
     core::profile::profile::Profile,
@@ -11,8 +12,8 @@ use crate::{
 
 #[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct CredInfoProver {
-    pub requested_attr: String,
     pub referent: String,
+    pub credential_referent: String,
     pub schema_id: String,
     pub cred_def_id: String,
     pub rev_reg_id: Option<String>,
@@ -31,7 +32,7 @@ pub async fn build_schemas_json_prover(
         "build_schemas_json_prover >>> credentials_identifiers: {:?}",
         credentials_identifiers
     );
-    let ledger = Arc::clone(profile).inject_ledger();
+    let ledger = Arc::clone(profile).inject_anoncreds_ledger_read();
     let mut rtn: Value = json!({});
 
     for cred_info in credentials_identifiers {
@@ -62,7 +63,7 @@ pub async fn build_cred_defs_json_prover(
         "build_cred_defs_json_prover >>> credentials_identifiers: {:?}",
         credentials_identifiers
     );
-    let ledger = Arc::clone(profile).inject_ledger();
+    let ledger = Arc::clone(profile).inject_anoncreds_ledger_read();
     let mut rtn: Value = json!({});
 
     for cred_info in credentials_identifiers {
@@ -87,7 +88,10 @@ pub async fn build_cred_defs_json_prover(
     Ok(rtn.to_string())
 }
 
-pub fn credential_def_identifiers(credentials: &str, proof_req: &ProofRequestData) -> VcxResult<Vec<CredInfoProver>> {
+pub fn credential_def_identifiers(
+    credentials: &SelectedCredentials,
+    proof_req: &ProofRequestData,
+) -> VcxResult<Vec<CredInfoProver>> {
     trace!(
         "credential_def_identifiers >>> credentials: {:?}, proof_req: {:?}",
         credentials,
@@ -95,51 +99,20 @@ pub fn credential_def_identifiers(credentials: &str, proof_req: &ProofRequestDat
     );
     let mut rtn = Vec::new();
 
-    let credentials: Value = serde_json::from_str(credentials).map_err(|err| {
-        AriesVcxError::from_msg(
-            AriesVcxErrorKind::InvalidJson,
-            format!("Cannot deserialize credentials: {}", err),
-        )
-    })?;
-
-    if let Value::Object(ref attrs) = credentials["attrs"] {
-        for (requested_attr, value) in attrs {
-            if let (Some(referent), Some(schema_id), Some(cred_def_id)) = (
-                value["credential"]["cred_info"]["referent"].as_str(),
-                value["credential"]["cred_info"]["schema_id"].as_str(),
-                value["credential"]["cred_info"]["cred_def_id"].as_str(),
-            ) {
-                let rev_reg_id = value["credential"]["cred_info"]["rev_reg_id"]
-                    .as_str()
-                    .map(|x| x.to_string());
-
-                let cred_rev_id = value["credential"]["cred_info"]["cred_rev_id"]
-                    .as_str()
-                    .map(|x| x.to_string());
-
-                let tails_file = value["tails_file"].as_str().map(|x| x.to_string());
-
-                let revealed = value["credential"]["cred_info"]["revealed"].as_bool();
-
-                rtn.push(CredInfoProver {
-                    requested_attr: requested_attr.to_string(),
-                    referent: referent.to_string(),
-                    schema_id: schema_id.to_string(),
-                    cred_def_id: cred_def_id.to_string(),
-                    revocation_interval: _get_revocation_interval(requested_attr, proof_req)?,
-                    timestamp: None,
-                    rev_reg_id,
-                    cred_rev_id,
-                    tails_file,
-                    revealed,
-                });
-            } else {
-                return Err(AriesVcxError::from_msg(
-                    AriesVcxErrorKind::InvalidProofCredentialData,
-                    "Cannot get identifiers",
-                ));
-            }
-        }
+    for (referent, selected_cred) in credentials.credential_for_referent.iter() {
+        let cred_info = &selected_cred.credential.cred_info;
+        rtn.push(CredInfoProver {
+            referent: referent.clone(),
+            credential_referent: cred_info.referent.clone(),
+            schema_id: cred_info.schema_id.clone(),
+            cred_def_id: cred_info.cred_def_id.clone(),
+            revocation_interval: _get_revocation_interval(&referent, proof_req)?,
+            timestamp: None,
+            rev_reg_id: cred_info.rev_reg_id.clone(),
+            cred_rev_id: cred_info.cred_rev_id.clone(),
+            tails_file: selected_cred.tails_dir.clone(),
+            revealed: cred_info.revealed,
+        });
     }
 
     Ok(rtn)
@@ -167,7 +140,7 @@ pub async fn build_rev_states_json(
         "build_rev_states_json >> credentials_identifiers: {:?}",
         credentials_identifiers
     );
-    let ledger = Arc::clone(profile).inject_ledger();
+    let ledger = Arc::clone(profile).inject_anoncreds_ledger_read();
     let anoncreds = Arc::clone(profile).inject_anoncreds();
     let mut rtn: Value = json!({});
     let mut timestamps: HashMap<String, u64> = HashMap::new();
@@ -228,7 +201,7 @@ pub async fn build_rev_states_json(
 
 pub fn build_requested_credentials_json(
     credentials_identifiers: &Vec<CredInfoProver>,
-    self_attested_attrs: &str,
+    self_attested_attrs: &HashMap<String, String>,
     proof_req: &ProofRequestData,
 ) -> VcxResult<String> {
     trace!(
@@ -245,24 +218,24 @@ pub fn build_requested_credentials_json(
     // do same for predicates and self_attested
     if let Value::Object(ref mut map) = rtn["requested_attributes"] {
         for cred_info in credentials_identifiers {
-            if proof_req.requested_attributes.get(&cred_info.requested_attr).is_some() {
-                let insert_val = json!({"cred_id": cred_info.referent, "revealed": cred_info.revealed.unwrap_or(true), "timestamp": cred_info.timestamp});
-                map.insert(cred_info.requested_attr.to_owned(), insert_val);
+            if proof_req.requested_attributes.get(&cred_info.referent).is_some() {
+                let insert_val = json!({"cred_id": cred_info.credential_referent, "revealed": cred_info.revealed.unwrap_or(true), "timestamp": cred_info.timestamp});
+                map.insert(cred_info.referent.to_owned(), insert_val);
             }
         }
     }
 
     if let Value::Object(ref mut map) = rtn["requested_predicates"] {
         for cred_info in credentials_identifiers {
-            if proof_req.requested_predicates.get(&cred_info.requested_attr).is_some() {
-                let insert_val = json!({"cred_id": cred_info.referent, "timestamp": cred_info.timestamp});
-                map.insert(cred_info.requested_attr.to_owned(), insert_val);
+            if proof_req.requested_predicates.get(&cred_info.referent).is_some() {
+                let insert_val = json!({"cred_id": cred_info.credential_referent, "timestamp": cred_info.timestamp});
+                map.insert(cred_info.referent.to_owned(), insert_val);
             }
         }
     }
 
     // handle if the attribute is not revealed
-    let self_attested_attrs: Value = serde_json::from_str(self_attested_attrs).map_err(|err| {
+    let self_attested_attrs: Value = serde_json::to_value(self_attested_attrs).map_err(|err| {
         AriesVcxError::from_msg(
             AriesVcxErrorKind::InvalidJson,
             format!("Cannot deserialize self attested attributes: {}", err),
@@ -296,8 +269,8 @@ pub mod pool_tests {
 
             // no rev_reg_id
             let cred1 = CredInfoProver {
-                requested_attr: "height_1".to_string(),
-                referent: LICENCE_CRED_ID.to_string(),
+                referent: "height_1".to_string(),
+                credential_referent: LICENCE_CRED_ID.to_string(),
                 schema_id: SCHEMA_ID.to_string(),
                 cred_def_id: CRED_DEF_ID.to_string(),
                 rev_reg_id: None,
@@ -357,8 +330,8 @@ pub mod unit_tests {
         let _setup = SetupMocks::init();
 
         let cred1 = CredInfoProver {
-            requested_attr: "height_1".to_string(),
-            referent: LICENCE_CRED_ID.to_string(),
+            referent: "height_1".to_string(),
+            credential_referent: LICENCE_CRED_ID.to_string(),
             schema_id: SCHEMA_ID.to_string(),
             cred_def_id: CRED_DEF_ID.to_string(),
             rev_reg_id: Some(REV_REG_ID.to_string()),
@@ -369,8 +342,8 @@ pub mod unit_tests {
             revealed: None,
         };
         let cred2 = CredInfoProver {
-            requested_attr: "zip_2".to_string(),
-            referent: ADDRESS_CRED_ID.to_string(),
+            referent: "zip_2".to_string(),
+            credential_referent: ADDRESS_CRED_ID.to_string(),
             schema_id: ADDRESS_SCHEMA_ID.to_string(),
             cred_def_id: ADDRESS_CRED_DEF_ID.to_string(),
             rev_reg_id: Some(ADDRESS_REV_REG_ID.to_string()),
@@ -392,8 +365,8 @@ pub mod unit_tests {
         SetupLibraryWallet::run(|setup| async move {
             let profile = indy_handles_to_profile(setup.wallet_handle, INVALID_POOL_HANDLE);
             let credential_ids = vec![CredInfoProver {
-                requested_attr: "1".to_string(),
-                referent: "2".to_string(),
+                referent: "1".to_string(),
+                credential_referent: "2".to_string(),
                 schema_id: "3".to_string(),
                 cred_def_id: "3".to_string(),
                 rev_reg_id: Some("4".to_string()),
@@ -417,8 +390,8 @@ pub mod unit_tests {
         SetupLibraryWallet::run(|setup| async move {
             let profile = indy_handles_to_profile(setup.wallet_handle, INVALID_POOL_HANDLE);
             let credential_ids = vec![CredInfoProver {
-                requested_attr: "1".to_string(),
-                referent: "2".to_string(),
+                referent: "1".to_string(),
+                credential_referent: "2".to_string(),
                 schema_id: "3".to_string(),
                 cred_def_id: "3".to_string(),
                 rev_reg_id: Some("4".to_string()),
@@ -450,8 +423,8 @@ pub mod unit_tests {
         );
 
         let cred1 = CredInfoProver {
-            requested_attr: "height_1".to_string(),
-            referent: LICENCE_CRED_ID.to_string(),
+            referent: "height_1".to_string(),
+            credential_referent: LICENCE_CRED_ID.to_string(),
             schema_id: SCHEMA_ID.to_string(),
             cred_def_id: CRED_DEF_ID.to_string(),
             rev_reg_id: Some(REV_REG_ID.to_string()),
@@ -462,8 +435,8 @@ pub mod unit_tests {
             revealed: None,
         };
         let cred2 = CredInfoProver {
-            requested_attr: "zip_2".to_string(),
-            referent: ADDRESS_CRED_ID.to_string(),
+            referent: "zip_2".to_string(),
+            credential_referent: ADDRESS_CRED_ID.to_string(),
             schema_id: ADDRESS_SCHEMA_ID.to_string(),
             cred_def_id: ADDRESS_CRED_DEF_ID.to_string(),
             rev_reg_id: Some(ADDRESS_REV_REG_ID.to_string()),
@@ -485,8 +458,8 @@ pub mod unit_tests {
         let _setup = SetupDefaults::init();
 
         let cred1 = CredInfoProver {
-            requested_attr: "height_1".to_string(),
-            referent: LICENCE_CRED_ID.to_string(),
+            referent: "height_1".to_string(),
+            credential_referent: LICENCE_CRED_ID.to_string(),
             schema_id: SCHEMA_ID.to_string(),
             cred_def_id: CRED_DEF_ID.to_string(),
             rev_reg_id: Some(REV_REG_ID.to_string()),
@@ -500,8 +473,8 @@ pub mod unit_tests {
             revealed: None,
         };
         let cred2 = CredInfoProver {
-            requested_attr: "zip_2".to_string(),
-            referent: ADDRESS_CRED_ID.to_string(),
+            referent: "zip_2".to_string(),
+            credential_referent: ADDRESS_CRED_ID.to_string(),
             schema_id: ADDRESS_SCHEMA_ID.to_string(),
             cred_def_id: ADDRESS_CRED_DEF_ID.to_string(),
             rev_reg_id: Some(ADDRESS_REV_REG_ID.to_string()),
@@ -570,46 +543,31 @@ pub mod unit_tests {
         .to_string();
 
         let creds = credential_def_identifiers(
-            &selected_credentials.to_string(),
+            &serde_json::from_value(selected_credentials).unwrap(),
             &serde_json::from_str(&proof_req).unwrap(),
         )
         .unwrap();
-        assert_eq!(creds, vec![cred1, cred2]);
+        assert_eq!(creds.len(), 2);
+        assert!(creds.contains(&cred1));
+        assert!(creds.contains(&cred2));
     }
 
     #[test]
     fn test_credential_def_identifiers_failure() {
         let _setup = SetupDefaults::init();
 
-        // selected credentials has incorrect json
-        assert_eq!(
-            credential_def_identifiers("", &proof_req_no_interval())
-                .unwrap_err()
-                .kind(),
-            AriesVcxErrorKind::InvalidJson
-        );
-
         // No Creds
         assert_eq!(
-            credential_def_identifiers("{}", &proof_req_no_interval()).unwrap(),
+            credential_def_identifiers(&serde_json::from_str("{}").unwrap(), &proof_req_no_interval()).unwrap(),
             Vec::new()
         );
         assert_eq!(
-            credential_def_identifiers(r#"{"attrs":{}}"#, &proof_req_no_interval()).unwrap(),
+            credential_def_identifiers(
+                &serde_json::from_str(r#"{"attrs":{}}"#).unwrap(),
+                &proof_req_no_interval()
+            )
+            .unwrap(),
             Vec::new()
-        );
-
-        // missing cred info
-        let selected_credentials: Value = json!({
-           "attrs":{
-              "height_1":{ "interval":null }
-           }
-        });
-        assert_eq!(
-            credential_def_identifiers(&selected_credentials.to_string(), &proof_req_no_interval())
-                .unwrap_err()
-                .kind(),
-            AriesVcxErrorKind::InvalidProofCredentialData
         );
 
         // Optional Revocation
@@ -636,8 +594,8 @@ pub mod unit_tests {
            }
         });
         let creds = vec![CredInfoProver {
-            requested_attr: "height_1".to_string(),
-            referent: LICENCE_CRED_ID.to_string(),
+            referent: "height_1".to_string(),
+            credential_referent: LICENCE_CRED_ID.to_string(),
             schema_id: SCHEMA_ID.to_string(),
             cred_def_id: CRED_DEF_ID.to_string(),
             rev_reg_id: None,
@@ -648,54 +606,23 @@ pub mod unit_tests {
             revealed: None,
         }];
         assert_eq!(
-            &credential_def_identifiers(&selected_credentials.to_string(), &proof_req_no_interval()).unwrap(),
+            &credential_def_identifiers(
+                &serde_json::from_value(selected_credentials.clone()).unwrap(),
+                &proof_req_no_interval()
+            )
+            .unwrap(),
             &creds
         );
 
         // rev_reg_id is null
         selected_credentials["attrs"]["height_1"]["cred_info"]["rev_reg_id"] = serde_json::Value::Null;
         assert_eq!(
-            &credential_def_identifiers(&selected_credentials.to_string(), &proof_req_no_interval()).unwrap(),
+            &credential_def_identifiers(
+                &serde_json::from_value(selected_credentials).unwrap(),
+                &proof_req_no_interval()
+            )
+            .unwrap(),
             &creds
-        );
-
-        // Missing schema ID
-        let mut selected_credentials: Value = json!({
-           "attrs":{
-              "height_1":{
-                "credential": {
-                    "cred_info":{
-                       "referent":LICENCE_CRED_ID,
-                       "attrs":{
-                          "sex":"male",
-                          "age":"111",
-                          "name":"Bob",
-                          "height":"4'11"
-                       },
-                       "cred_def_id": CRED_DEF_ID,
-                       "rev_reg_id":REV_REG_ID,
-                       "cred_rev_id":CRED_REV_ID
-                    },
-                    "interval":null
-                },
-                "tails_file": get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string()
-              },
-           }
-        });
-        assert_eq!(
-            credential_def_identifiers(&selected_credentials.to_string(), &proof_req_no_interval())
-                .unwrap_err()
-                .kind(),
-            AriesVcxErrorKind::InvalidProofCredentialData
-        );
-
-        // Schema Id is null
-        selected_credentials["attrs"]["height_1"]["cred_info"]["schema_id"] = serde_json::Value::Null;
-        assert_eq!(
-            credential_def_identifiers(&selected_credentials.to_string(), &proof_req_no_interval())
-                .unwrap_err()
-                .kind(),
-            AriesVcxErrorKind::InvalidProofCredentialData
         );
     }
 
@@ -704,8 +631,8 @@ pub mod unit_tests {
         let _setup = SetupMocks::init();
 
         let cred1 = CredInfoProver {
-            requested_attr: "height_1".to_string(),
-            referent: LICENCE_CRED_ID.to_string(),
+            referent: "height_1".to_string(),
+            credential_referent: LICENCE_CRED_ID.to_string(),
             schema_id: SCHEMA_ID.to_string(),
             cred_def_id: CRED_DEF_ID.to_string(),
             rev_reg_id: Some(REV_REG_ID.to_string()),
@@ -716,8 +643,8 @@ pub mod unit_tests {
             revealed: None,
         };
         let cred2 = CredInfoProver {
-            requested_attr: "zip_2".to_string(),
-            referent: ADDRESS_CRED_ID.to_string(),
+            referent: "zip_2".to_string(),
+            credential_referent: ADDRESS_CRED_ID.to_string(),
             schema_id: ADDRESS_SCHEMA_ID.to_string(),
             cred_def_id: ADDRESS_CRED_DEF_ID.to_string(),
             rev_reg_id: Some(ADDRESS_REV_REG_ID.to_string()),
@@ -761,7 +688,9 @@ pub mod unit_tests {
             "non_revoked": {"from": 098, "to": 123}
         });
         let proof_req: ProofRequestData = serde_json::from_value(proof_req).unwrap();
-        let requested_credential = build_requested_credentials_json(&creds, &self_attested_attrs, &proof_req).unwrap();
+        let requested_credential =
+            build_requested_credentials_json(&creds, &serde_json::from_str(&self_attested_attrs).unwrap(), &proof_req)
+                .unwrap();
         assert_eq!(test.to_string(), requested_credential);
     }
 
@@ -770,8 +699,8 @@ pub mod unit_tests {
         let _setup = SetupMocks::init();
 
         let cred1 = CredInfoProver {
-            requested_attr: "height".to_string(),
-            referent: "abc".to_string(),
+            referent: "height".to_string(),
+            credential_referent: "abc".to_string(),
             schema_id: SCHEMA_ID.to_string(),
             cred_def_id: CRED_DEF_ID.to_string(),
             rev_reg_id: Some(REV_REG_ID.to_string()),

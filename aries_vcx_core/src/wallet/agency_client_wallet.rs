@@ -52,6 +52,10 @@ impl BaseWallet for AgencyClientWallet {
         Err(unimplemented_agency_client_wallet_method("get_wallet_record"))
     }
 
+    async fn get_wallet_record_value(&self, xtype: &str, id: &str) -> VcxCoreResult<String> {
+        Err(unimplemented_agency_client_wallet_method("get_wallet_record_value"))
+    }
+
     async fn delete_wallet_record(&self, xtype: &str, id: &str) -> VcxCoreResult<()> {
         Err(unimplemented_agency_client_wallet_method("delete_wallet_record"))
     }

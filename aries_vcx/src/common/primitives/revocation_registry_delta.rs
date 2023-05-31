@@ -38,7 +38,7 @@ impl RevocationRegistryDelta {
         from: Option<u64>,
         to: Option<u64>,
     ) -> VcxResult<Self> {
-        let ledger = Arc::clone(profile).inject_ledger();
+        let ledger = Arc::clone(profile).inject_anoncreds_ledger_read();
         let (_, rev_reg_delta_json, _) = ledger.get_rev_reg_delta_json(rev_reg_id, from, to).await?;
         serde_json::from_str(&rev_reg_delta_json).map_err(|err| {
             AriesVcxError::from_msg(
@@ -66,7 +66,7 @@ pub mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_pool_create_rev_reg_delta_from_ledger() {
-        SetupProfile::run_indy(|setup| async move {
+        SetupProfile::run(|setup| async move {
             let attrs = r#"["address1","address2","city","state","zip"]"#;
             let (_, _, _, _, rev_reg_id, _, _) =
                 create_and_store_credential_def(&setup.profile, &setup.institution_did, attrs).await;

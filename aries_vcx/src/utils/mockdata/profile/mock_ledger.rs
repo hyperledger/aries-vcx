@@ -1,36 +1,16 @@
 use aries_vcx_core::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
-use aries_vcx_core::ledger::base_ledger::BaseLedger;
+use aries_vcx_core::ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite};
 use async_trait::async_trait;
 
-use crate::utils::{
-    self,
-    constants::{rev_def_json, CRED_DEF_JSON, REV_REG_DELTA_JSON, REV_REG_ID, REV_REG_JSON, SCHEMA_JSON},
-};
+use crate::utils;
+use crate::utils::constants::{rev_def_json, CRED_DEF_JSON, REV_REG_DELTA_JSON, REV_REG_ID, REV_REG_JSON, SCHEMA_JSON};
 
 #[derive(Debug)]
 pub(crate) struct MockLedger;
 
-// NOTE : currently matches the expected results if indy_mocks are enabled
-/// Implementation of [BaseLedger] which responds with mock data
 #[allow(unused)]
 #[async_trait]
-impl BaseLedger for MockLedger {
-    async fn submit_request(&self, request_json: &str) -> VcxCoreResult<String> {
-        // not needed yet
-        Err(AriesVcxCoreError::from_msg(
-            AriesVcxCoreErrorKind::UnimplementedFeature,
-            "unimplemented mock method: submit_request",
-        ))
-    }
-
-    async fn endorse_transaction(&self, endorser_did: &str, request_json: &str) -> VcxCoreResult<()> {
-        Ok(())
-    }
-
-    async fn set_endorser(&self, submitter_did: &str, request: &str, endorser: &str) -> VcxCoreResult<String> {
-        Ok(utils::constants::REQUEST_WITH_ENDORSER.to_string())
-    }
-
+impl IndyLedgerRead for MockLedger {
     async fn get_txn_author_agreement(&self) -> VcxCoreResult<String> {
         Ok(utils::constants::DEFAULT_AUTHOR_AGREEMENT.to_string())
     }
@@ -41,6 +21,26 @@ impl BaseLedger for MockLedger {
             AriesVcxCoreErrorKind::UnimplementedFeature,
             "unimplemented mock method: get_nym",
         ))
+    }
+
+    async fn get_attr(&self, target_did: &str, attr_name: &str) -> VcxCoreResult<String> {
+        Ok(r#"{"rc":"success"}"#.to_string())
+    }
+
+    async fn get_ledger_txn(&self, seq_no: i32, submitter_did: Option<&str>) -> VcxCoreResult<String> {
+        Ok(r#"{"rc":"success"}"#.to_string())
+    }
+}
+
+#[allow(unused)]
+#[async_trait]
+impl IndyLedgerWrite for MockLedger {
+    async fn set_endorser(&self, submitter_did: &str, request: &str, endorser: &str) -> VcxCoreResult<String> {
+        Ok(utils::constants::REQUEST_WITH_ENDORSER.to_string())
+    }
+
+    async fn endorse_transaction(&self, endorser_did: &str, request_json: &str) -> VcxCoreResult<()> {
+        Ok(())
     }
 
     async fn publish_nym(
@@ -54,20 +54,20 @@ impl BaseLedger for MockLedger {
         Ok(r#"{"rc":"success"}"#.to_string())
     }
 
+    async fn add_attr(&self, target_did: &str, attrib_json: &str) -> VcxCoreResult<String> {
+        Ok(r#"{"rc":"success"}"#.to_string())
+    }
+}
+
+#[allow(unused)]
+#[async_trait]
+impl AnoncredsLedgerRead for MockLedger {
     async fn get_schema(&self, schema_id: &str, submitter_did: Option<&str>) -> VcxCoreResult<String> {
         Ok(SCHEMA_JSON.to_string())
     }
 
     async fn get_cred_def(&self, cred_def_id: &str, submitter_did: Option<&str>) -> VcxCoreResult<String> {
         Ok(CRED_DEF_JSON.to_string())
-    }
-
-    async fn get_attr(&self, target_did: &str, attr_name: &str) -> VcxCoreResult<String> {
-        Ok(r#"{"rc":"success"}"#.to_string())
-    }
-
-    async fn add_attr(&self, target_did: &str, attrib_json: &str) -> VcxCoreResult<String> {
-        Ok(r#"{"rc":"success"}"#.to_string())
     }
 
     async fn get_rev_reg_def_json(&self, rev_reg_id: &str) -> VcxCoreResult<String> {
@@ -86,11 +86,11 @@ impl BaseLedger for MockLedger {
     async fn get_rev_reg(&self, rev_reg_id: &str, timestamp: u64) -> VcxCoreResult<(String, String, u64)> {
         Ok((REV_REG_ID.to_string(), REV_REG_JSON.to_string(), 1))
     }
+}
 
-    async fn get_ledger_txn(&self, seq_no: i32, submitter_did: Option<&str>) -> VcxCoreResult<String> {
-        Ok(r#"{"rc":"success"}"#.to_string())
-    }
-
+#[allow(unused)]
+#[async_trait]
+impl AnoncredsLedgerWrite for MockLedger {
     async fn publish_schema(
         &self,
         schema_json: &str,
@@ -124,7 +124,7 @@ mod unit_tests {
 
     use aries_vcx_core::{
         errors::error::{AriesVcxCoreErrorKind, VcxCoreResult},
-        ledger::base_ledger::BaseLedger,
+        ledger::base_ledger::IndyLedgerRead,
     };
 
     use super::MockLedger;
@@ -137,9 +137,8 @@ mod unit_tests {
             assert_eq!(result.unwrap_err().kind(), AriesVcxCoreErrorKind::UnimplementedFeature)
         }
 
-        let ledger: Box<dyn BaseLedger> = Box::new(MockLedger);
+        let ledger: Box<dyn IndyLedgerRead> = Box::new(MockLedger);
 
-        assert_unimplemented(ledger.submit_request("").await);
         assert_unimplemented(ledger.get_nym("").await);
     }
 }

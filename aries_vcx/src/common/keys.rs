@@ -6,7 +6,7 @@ use crate::core::profile::profile::Profile;
 use crate::errors::error::prelude::*;
 
 pub async fn rotate_verkey_apply(profile: &Arc<dyn Profile>, did: &str, temp_vk: &str) -> VcxResult<()> {
-    let ledger = Arc::clone(profile).inject_ledger();
+    let ledger = Arc::clone(profile).inject_indy_ledger_write();
 
     let nym_result = ledger.publish_nym(did, did, Some(temp_vk), None, None).await?;
 
@@ -41,7 +41,7 @@ pub async fn rotate_verkey(profile: &Arc<dyn Profile>, did: &str) -> VcxResult<(
 }
 
 pub async fn get_verkey_from_ledger(profile: &Arc<dyn Profile>, did: &str) -> VcxResult<String> {
-    let ledger = Arc::clone(profile).inject_ledger();
+    let ledger = Arc::clone(profile).inject_indy_ledger_read();
 
     let nym_response: String = ledger.get_nym(did).await?;
     let nym_json: Value = serde_json::from_str(&nym_response).map_err(|err| {
@@ -75,18 +75,22 @@ pub async fn get_verkey_from_ledger(profile: &Arc<dyn Profile>, did: &str) -> Vc
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod test {
-    use aries_vcx_core::indy::utils::mocks::pool_mocks::{enable_pool_mocks, PoolMocks};
-
-    use crate::utils::devsetup::*;
-    use crate::utils::mockdata::mockdata_pool;
-
-    use super::*;
-
     #[tokio::test]
     #[ignore]
-    #[cfg(not(feature = "vdr_proxy_ledger"))]
+    #[cfg(all(
+        not(feature = "vdr_proxy_ledger"),
+        not(feature = "modular_libs"),
+        not(feature = "mixed_breed")
+    ))]
     async fn test_pool_rotate_verkey_fails() {
-        SetupProfile::run_indy(|setup| async move {
+        use super::*;
+
+        use aries_vcx_core::indy::utils::mocks::pool_mocks::{enable_pool_mocks, PoolMocks};
+
+        use crate::utils::devsetup::*;
+        use crate::utils::mockdata::mockdata_pool;
+
+        SetupProfile::run(|setup| async move {
             enable_pool_mocks();
 
             PoolMocks::set_next_pool_response(mockdata_pool::RESPONSE_REQNACK);

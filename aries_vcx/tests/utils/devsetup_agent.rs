@@ -1,11 +1,13 @@
 #[cfg(test)]
 pub mod test_utils {
+    use std::collections::HashMap;
     use std::sync::Arc;
 
     #[cfg(feature = "modular_libs")]
     use aries_vcx::core::profile::modular_libs_profile::ModularLibsProfile;
     use aries_vcx::core::profile::profile::Profile;
     use aries_vcx::core::profile::vdrtools_profile::VdrtoolsProfile;
+    use aries_vcx::handlers::proof_presentation::types::SelectedCredentials;
     use aries_vcx::handlers::revocation_notification::receiver::RevocationNotificationReceiver;
     use aries_vcx::handlers::revocation_notification::sender::RevocationNotificationSender;
     use aries_vcx::handlers::util::{AnyInvitation, OfferInfo, Status};
@@ -447,6 +449,7 @@ pub mod test_utils {
     }
 
     pub async fn create_test_alice_instance(setup: &SetupPool) -> Alice {
+        #[cfg(not(feature = "modular_libs"))]
         let (alice_profile, teardown) = {
             info!("create_test_alice_instance >> using indy profile");
             Alice::setup_indy_profile(setup.pool_handle).await
@@ -691,17 +694,15 @@ pub mod test_utils {
             }
         }
 
-        pub async fn get_credentials_for_presentation(&mut self) -> serde_json::Value {
+        pub async fn get_credentials_for_presentation(&mut self) -> SelectedCredentials {
             let credentials = self.prover.retrieve_credentials(&self.profile).await.unwrap();
-            let credentials: std::collections::HashMap<String, serde_json::Value> =
-                serde_json::from_str(&credentials).unwrap();
 
-            let mut use_credentials = json!({});
+            let mut use_credentials = SelectedCredentials {
+                credential_for_referent: HashMap::new(),
+            };
 
-            for (referent, credentials) in credentials["attrs"].as_object().unwrap().iter() {
-                use_credentials["attrs"][referent] = json!({
-                    "credential": credentials[0]
-                })
+            for (referent, credentials) in credentials.credentials_by_referent {
+                use_credentials.select_credential_for_referent_from_retrieved(referent, credentials[0].clone(), None);
             }
 
             use_credentials
@@ -715,7 +716,7 @@ pub mod test_utils {
             let credentials = self.get_credentials_for_presentation().await;
 
             self.prover
-                .generate_presentation(&self.profile, credentials.to_string(), String::from("{}"))
+                .generate_presentation(&self.profile, credentials, HashMap::new())
                 .await
                 .unwrap();
             assert_eq!(ProverState::PresentationPrepared, self.prover.get_state());

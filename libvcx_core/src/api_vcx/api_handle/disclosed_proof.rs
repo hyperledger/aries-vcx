@@ -178,7 +178,11 @@ pub async fn generate_proof(handle: u32, credentials: &str, self_attested_attrs:
     let mut proof = HANDLE_MAP.get_cloned(handle)?;
     let profile = get_main_profile()?;
     proof
-        .generate_presentation(&profile, credentials.to_string(), self_attested_attrs.to_string())
+        .generate_presentation(
+            &profile,
+            serde_json::from_str(credentials)?,
+            serde_json::from_str(self_attested_attrs)?,
+        )
         .await?;
     HANDLE_MAP.insert(handle, proof)
 }
@@ -204,7 +208,9 @@ pub async fn decline_presentation_request(
 pub async fn retrieve_credentials(handle: u32) -> LibvcxResult<String> {
     let proof = HANDLE_MAP.get_cloned(handle)?;
     let profile = get_main_profile_optional_pool(); // do not throw if pool not open
-    proof.retrieve_credentials(&profile).await.map_err(|err| err.into())
+    let retrieved_creds = proof.retrieve_credentials(&profile).await?;
+
+    Ok(serde_json::to_string(&retrieved_creds)?)
 }
 
 pub fn get_proof_request_data(handle: u32) -> LibvcxResult<String> {

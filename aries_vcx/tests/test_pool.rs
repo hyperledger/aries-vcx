@@ -12,9 +12,8 @@ mod integration_tests {
     use aries_vcx::common::ledger::transactions::{
         add_attr, add_new_did, clear_attr, get_attr, get_service, write_endpoint, write_endpoint_legacy,
     };
-    use aries_vcx::common::primitives::credential_schema::{Schema, SchemaData};
     use aries_vcx::common::test_utils::create_and_store_nonrevocable_credential_def;
-    use aries_vcx::utils::constants::{DEFAULT_SCHEMA_ATTRS, SCHEMA_DATA};
+    use aries_vcx::utils::constants::DEFAULT_SCHEMA_ATTRS;
     use aries_vcx::utils::devsetup::{SetupProfile, SetupWalletPool};
     use diddoc_legacy::aries::service::AriesService;
     use std::sync::Arc;
@@ -33,8 +32,7 @@ mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_pool_get_credential_def() {
-        // TODO - use SetupProfile::run after modular impls
-        SetupProfile::run_indy(|setup| async move {
+        SetupProfile::run(|setup| async move {
             let (_, _, cred_def_id, cred_def_json, _) = create_and_store_nonrevocable_credential_def(
                 &setup.profile,
                 &setup.institution_did,
@@ -42,7 +40,7 @@ mod integration_tests {
             )
             .await;
 
-            let ledger = Arc::clone(&setup.profile).inject_ledger();
+            let ledger = Arc::clone(&setup.profile).inject_anoncreds_ledger_read();
 
             let r_cred_def_json = ledger.get_cred_def(&cred_def_id, None).await.unwrap();
 

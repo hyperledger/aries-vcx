@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use aries_vcx_core::{
-    anoncreds::{base_anoncreds::BaseAnonCreds, indy_anoncreds::IndySdkAnonCreds},
+    anoncreds::{base_anoncreds::BaseAnonCreds, credx_anoncreds::IndyCredxAnonCreds},
     ledger::{
         base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite},
         indy_ledger::{IndySdkLedgerRead, IndySdkLedgerWrite},
@@ -13,7 +13,7 @@ use aries_vcx_core::{
 use super::profile::Profile;
 
 #[derive(Debug)]
-pub struct VdrtoolsProfile {
+pub struct MixedBreedProfile {
     wallet: Arc<dyn BaseWallet>,
     anoncreds: Arc<dyn BaseAnonCreds>,
     anoncreds_ledger_read: Arc<dyn AnoncredsLedgerRead>,
@@ -22,13 +22,14 @@ pub struct VdrtoolsProfile {
     indy_ledger_write: Arc<dyn IndyLedgerWrite>,
 }
 
-impl VdrtoolsProfile {
+impl MixedBreedProfile {
     pub fn new(indy_wallet_handle: WalletHandle, indy_pool_handle: PoolHandle) -> Self {
-        let wallet = Arc::new(IndySdkWallet::new(indy_wallet_handle));
-        let anoncreds = Arc::new(IndySdkAnonCreds::new(indy_wallet_handle));
+        let wallet: Arc<dyn BaseWallet> = Arc::new(IndySdkWallet::new(indy_wallet_handle));
+        let anoncreds = Arc::new(IndyCredxAnonCreds::new(Arc::clone(&wallet)));
         let ledger_read = Arc::new(IndySdkLedgerRead::new(indy_wallet_handle, indy_pool_handle));
         let ledger_write = Arc::new(IndySdkLedgerWrite::new(indy_wallet_handle, indy_pool_handle));
-        VdrtoolsProfile {
+
+        MixedBreedProfile {
             wallet,
             anoncreds,
             anoncreds_ledger_read: ledger_read.clone(),
@@ -39,7 +40,7 @@ impl VdrtoolsProfile {
     }
 }
 
-impl Profile for VdrtoolsProfile {
+impl Profile for MixedBreedProfile {
     fn inject_indy_ledger_read(self: Arc<Self>) -> Arc<dyn IndyLedgerRead> {
         Arc::clone(&self.indy_ledger_read)
     }

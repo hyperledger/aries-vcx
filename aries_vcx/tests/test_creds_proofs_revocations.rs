@@ -7,7 +7,6 @@ pub mod utils;
 
 #[cfg(test)]
 mod integration_tests {
-    use std::thread;
     use std::time::Duration;
 
     use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
@@ -23,7 +22,6 @@ mod integration_tests {
         revoke_credential_and_publish_accumulator, revoke_credential_local, rotate_rev_reg, send_proof_request,
         verifier_create_proof_and_send_request,
     };
-    use crate::utils::test_macros::ProofStateType;
 
     use super::*;
 
@@ -507,21 +505,20 @@ mod integration_tests {
 
             let retrieved_credentials = prover.retrieve_credentials(&consumer.profile).await.unwrap();
             info!(
-                "test_revoked_credential_might_still_work :: prover :: based on proof, retrieved credentials: {}",
+                "test_revoked_credential_might_still_work :: prover :: based on proof, retrieved credentials: {:?}",
                 &retrieved_credentials
             );
 
-            let selected_credentials_value = retrieved_to_selected_credentials_simple(&retrieved_credentials, true);
-            let selected_credentials_str = serde_json::to_string(&selected_credentials_value).unwrap();
+            let selected_credentials = retrieved_to_selected_credentials_simple(&retrieved_credentials, true);
             info!(
-                "test_revoked_credential_might_still_work :: prover :: retrieved credential converted to selected: {}",
-                &selected_credentials_str
+                "test_revoked_credential_might_still_work :: prover :: retrieved credential converted to selected: {:?}",
+                &selected_credentials
             );
             generate_and_send_proof(
                 &mut consumer,
                 &mut prover,
                 &consumer_to_institution,
-                &selected_credentials_str,
+                selected_credentials,
             )
             .await;
             assert_eq!(ProverState::PresentationSent, prover.get_state());
