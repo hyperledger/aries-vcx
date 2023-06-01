@@ -67,7 +67,7 @@ pub use domain::{
 };
 
 pub use indy_api_types::{
-    CommandHandle, PoolHandle, SearchHandle, WalletHandle, INVALID_COMMAND_HANDLE,
+    CommandHandle, IndyError, PoolHandle, SearchHandle, WalletHandle, INVALID_COMMAND_HANDLE,
     INVALID_POOL_HANDLE, INVALID_SEARCH_HANDLE, INVALID_WALLET_HANDLE,
 };
 

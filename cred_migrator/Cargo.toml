@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 aries_vcx_core = { path = "../aries_vcx_core", features = ["vdrtools", "modular_libs"] }
+vdrtools = { package = "libvdrtools", path = "../libvdrtools" }

@@ -36,22 +36,22 @@ use uuid::Uuid;
 
 use super::base_anoncreds::BaseAnonCreds;
 
-const CATEGORY_LINK_SECRET: &str = "VCX_LINK_SECRET";
+pub const CATEGORY_LINK_SECRET: &str = "VCX_LINK_SECRET";
 
-const CATEGORY_CREDENTIAL: &str = "VCX_CREDENTIAL";
-const CATEGORY_CRED_DEF: &str = "VCX_CRED_DEF";
-const CATEGORY_CRED_KEY_CORRECTNESS_PROOF: &str = "VCX_CRED_KEY_CORRECTNESS_PROOF";
-const CATEGORY_CRED_DEF_PRIV: &str = "VCX_CRED_DEF_PRIV";
-const CATEGORY_CRED_SCHEMA: &str = "VCX_CRED_SCHEMA";
+pub const CATEGORY_CREDENTIAL: &str = "VCX_CREDENTIAL";
+pub const CATEGORY_CRED_DEF: &str = "VCX_CRED_DEF";
+pub const CATEGORY_CRED_KEY_CORRECTNESS_PROOF: &str = "VCX_CRED_KEY_CORRECTNESS_PROOF";
+pub const CATEGORY_CRED_DEF_PRIV: &str = "VCX_CRED_DEF_PRIV";
+pub const CATEGORY_CRED_SCHEMA: &str = "VCX_CRED_SCHEMA";
 
 // Category used for mapping a cred_def_id to a schema_id
-const CATEGORY_CRED_MAP_SCHEMA_ID: &str = "VCX_CRED_MAP_SCHEMA_ID";
+pub const CATEGORY_CRED_MAP_SCHEMA_ID: &str = "VCX_CRED_MAP_SCHEMA_ID";
 
-const CATEGORY_REV_REG: &str = "VCX_REV_REG";
-const CATEGORY_REV_REG_DELTA: &str = "VCX_REV_REG_DELTA";
-const CATEGORY_REV_REG_INFO: &str = "VCX_REV_REG_INFO";
-const CATEGORY_REV_REG_DEF: &str = "VCX_REV_REG_DEF";
-const CATEGORY_REV_REG_DEF_PRIV: &str = "VCX_REV_REG_DEF_PRIV";
+pub const CATEGORY_REV_REG: &str = "VCX_REV_REG";
+pub const CATEGORY_REV_REG_DELTA: &str = "VCX_REV_REG_DELTA";
+pub const CATEGORY_REV_REG_INFO: &str = "VCX_REV_REG_INFO";
+pub const CATEGORY_REV_REG_DEF: &str = "VCX_REV_REG_DEF";
+pub const CATEGORY_REV_REG_DEF_PRIV: &str = "VCX_REV_REG_DEF_PRIV";
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct RevocationRegistryInfo {

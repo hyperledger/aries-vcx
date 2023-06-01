@@ -11,7 +11,7 @@ use std::{
 };
 
 use indy_api_types::{
-    domain::wallet::{Config, Credentials, ExportConfig, Tags},
+    domain::wallet::{Config, Credentials, ExportConfig, Record, Tags},
     errors::prelude::*,
     WalletHandle,
 };
@@ -27,7 +27,9 @@ use std::sync::Mutex;
 pub use crate::encryption::KeyDerivationData;
 use crate::{
     cache::wallet_cache::{WalletCache, WalletCacheHitData, WalletCacheHitMetrics},
-    export_import::{export_continue, finish_import, preparse_file_to_import},
+    export_import::{
+        export_continue, finish_import, finish_import_migration, preparse_file_to_import,
+    },
     storage::{
         default::SQLiteStorageType, mysql::MySqlStorageType, WalletStorage, WalletStorageType,
     },
@@ -826,6 +828,66 @@ impl WalletService {
         //        self.close_wallet(wallet_handle)?;
 
         trace!("import_wallet <<<");
+        res
+    }
+
+    pub async fn import_and_migrate_wallet_continue(
+        &self,
+        wallet_handle: WalletHandle,
+        config: &Config,
+        credentials: &Credentials,
+        key: (MasterKey, MasterKey),
+        migrate_fn: impl Fn(Record) -> IndyResult<Record>,
+    ) -> IndyResult<()> {
+        let (reader, nonce, chunk_size, header_bytes, key_data) = self
+            .pending_for_import
+            .lock()
+            .unwrap()
+            .remove(&wallet_handle)
+            .unwrap();
+
+        let (import_key, master_key) = key;
+
+        let keys = self
+            ._create_wallet(config, credentials, (&key_data, &master_key))
+            .await?;
+
+        self._is_id_from_config_not_used(config)?;
+
+        let storage = self._open_storage(config, credentials).await?;
+        let metadata = storage.get_storage_metadata().await?;
+
+        let res = {
+            let wallet = Wallet::new(
+                WalletService::_get_wallet_id(config),
+                storage,
+                Arc::new(keys),
+                WalletCache::new(None),
+            );
+
+            finish_import_migration(
+                &wallet,
+                reader,
+                import_key,
+                nonce,
+                chunk_size,
+                header_bytes,
+                migrate_fn,
+            )
+            .await
+        };
+
+        if res.is_err() {
+            let metadata: Metadata = serde_json::from_slice(&metadata)
+                .to_indy(IndyErrorKind::InvalidState, "Cannot deserialize metadata")?;
+
+            self.delete_wallet_continue(config, credentials, &metadata, &master_key)
+                .await?;
+        }
+
+        //        self.close_wallet(wallet_handle)?;
+
+        trace!("import_and_migrate_wallet <<<");
         res
     }
 
