@@ -9,14 +9,14 @@ use crate::shared_types::did_document_metadata::DidDocumentMetadata;
 // non-empty field in DidResolutionOutput in the error case.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
-pub struct DidResolutionOutput {
-    did_document: DidDocument,
+pub struct DidResolutionOutput<E: Default> {
+    did_document: DidDocument<E>,
     did_resolution_metadata: DidResolutionMetadata,
     did_document_metadata: DidDocumentMetadata,
 }
 
-impl DidResolutionOutput {
-    pub fn builder(did_document: DidDocument) -> DidResolutionOutputBuilder {
+impl<E: Default> DidResolutionOutput<E> {
+    pub fn builder(did_document: DidDocument<E>) -> DidResolutionOutputBuilder<E> {
         DidResolutionOutputBuilder {
             did_document,
             did_resolution_metadata: None,
@@ -24,7 +24,7 @@ impl DidResolutionOutput {
         }
     }
 
-    pub fn did_document(&self) -> &DidDocument {
+    pub fn did_document(&self) -> &DidDocument<E> {
         &self.did_document
     }
 
@@ -37,13 +37,13 @@ impl DidResolutionOutput {
     }
 }
 
-pub struct DidResolutionOutputBuilder {
-    did_document: DidDocument,
+pub struct DidResolutionOutputBuilder<E: Default> {
+    did_document: DidDocument<E>,
     did_resolution_metadata: Option<DidResolutionMetadata>,
     did_document_metadata: Option<DidDocumentMetadata>,
 }
 
-impl DidResolutionOutputBuilder {
+impl<E: Default> DidResolutionOutputBuilder<E> {
     pub fn did_resolution_metadata(
         mut self,
         did_resolution_metadata: DidResolutionMetadata,
@@ -57,7 +57,7 @@ impl DidResolutionOutputBuilder {
         self
     }
 
-    pub fn build(self) -> DidResolutionOutput {
+    pub fn build(self) -> DidResolutionOutput<E> {
         DidResolutionOutput {
             did_document: self.did_document,
             did_resolution_metadata: self.did_resolution_metadata.unwrap_or_default(),

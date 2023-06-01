@@ -65,7 +65,13 @@ impl<C> DidResolvable for DidWebResolver<C>
 where
     C: Connect + Send + Sync + Clone + 'static,
 {
-    async fn resolve(&self, did: &Did, options: &DidResolutionOptions) -> Result<DidResolutionOutput, GenericError> {
+    type ExtraFields = ();
+
+    async fn resolve(
+        &self,
+        did: &Did,
+        options: &DidResolutionOptions,
+    ) -> Result<DidResolutionOutput<()>, GenericError> {
         if did.method() != "web" {
             return Err(Box::new(DidWebError::MethodNotSupported(did.method().to_string())));
         }

@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fmt::Display};
+use std::{collections::HashMap, fmt::Display, str::FromStr};
 
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
@@ -153,6 +153,14 @@ impl TryFrom<String> for DidUrl {
 
     fn try_from(did_url: String) -> Result<Self, Self::Error> {
         Self::parse(did_url)
+    }
+}
+
+impl FromStr for DidUrl {
+    type Err = ParseError;
+
+    fn from_str(did: &str) -> Result<Self, Self::Err> {
+        Self::parse(did.to_string())
     }
 }
 

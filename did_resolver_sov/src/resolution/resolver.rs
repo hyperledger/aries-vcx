@@ -31,11 +31,14 @@ impl DidSovResolver {
 
 #[async_trait]
 impl DidResolvable for DidSovResolver {
+    // TODO: Change to ExtraFields from Sovrin-specific DDO wrapper
+    type ExtraFields = ();
+
     async fn resolve(
         &self,
         parsed_did: &Did,
         options: &DidResolutionOptions,
-    ) -> Result<DidResolutionOutput, GenericError> {
+    ) -> Result<DidResolutionOutput<Self::ExtraFields>, GenericError> {
         if let Some(accept) = options.accept() {
             if accept != &MediaType::DidJson {
                 return Err(Box::new(DidSovError::RepresentationNotSupported(

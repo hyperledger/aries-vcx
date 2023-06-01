@@ -1,11 +1,12 @@
 use std::convert::TryFrom;
 use std::fmt::{Display, Formatter};
+use std::str::FromStr;
 
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::{error::ParseError, utils::parse::parse_did_method_id, DidRange};
 
-#[derive(Default, Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Did {
     did: String,
     method: DidRange,
@@ -48,9 +49,27 @@ impl TryFrom<String> for Did {
     }
 }
 
+impl FromStr for Did {
+    type Err = ParseError;
+
+    fn from_str(did: &str) -> Result<Self, Self::Err> {
+        Self::parse(did.to_string())
+    }
+}
+
 impl Display for Did {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.did)
+    }
+}
+
+impl Default for Did {
+    fn default() -> Self {
+        Self {
+            did: "did:example:123456789abcdefghi".to_string(),
+            method: 4..11,
+            id: 12..30,
+        }
     }
 }
 

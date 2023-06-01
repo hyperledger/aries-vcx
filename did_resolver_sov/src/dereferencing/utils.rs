@@ -13,10 +13,11 @@ use did_resolver::{
         resolvable::resolution_output::DidResolutionOutput,
     },
 };
+use serde::Serialize;
 
 use crate::error::DidSovError;
 
-pub fn service_by_id<F>(services: &[Service], predicate: F) -> Option<&Service>
+pub fn service_by_id<F, E: Default>(services: &[Service<E>], predicate: F) -> Option<&Service<E>>
 where
     F: Fn(&str) -> bool,
 {
@@ -35,8 +36,8 @@ where
         .find(|auth| predicate(auth.id().did_url()))
 }
 
-fn content_stream_from(
-    did_document: &DidDocument,
+fn content_stream_from<E: Default + Serialize>(
+    did_document: &DidDocument<E>,
     did_url: &DidUrl,
 ) -> Result<Cursor<Vec<u8>>, DidSovError> {
     let fragment = did_url.fragment().ok_or_else(|| {
@@ -70,8 +71,8 @@ fn content_stream_from(
 }
 
 // TODO: Currently, only fragment dereferencing is supported
-pub(crate) fn dereference_did_document(
-    resolution_output: &DidResolutionOutput,
+pub(crate) fn dereference_did_document<E: Default + Serialize>(
+    resolution_output: &DidResolutionOutput<E>,
     did_url: &DidUrl,
 ) -> Result<DidDereferencingOutput<Cursor<Vec<u8>>>, DidSovError> {
     let content_stream = content_stream_from(resolution_output.did_document(), did_url)?;
@@ -97,7 +98,7 @@ mod tests {
     use did_resolver::traits::resolvable::resolution_output::DidResolutionOutput;
     use serde_json::Value;
 
-    fn example_did_document_builder() -> DidDocumentBuilder {
+    fn example_did_document_builder() -> DidDocumentBuilder<()> {
         let verification_method = VerificationMethod::builder(
             DidUrl::parse("did:example:123456789abcdefghi#keys-1".to_string()).unwrap(),
             "did:example:123456789abcdefghi"
@@ -132,18 +133,13 @@ mod tests {
         .build()
         .unwrap();
 
-        DidDocument::builder(
-            "did:example:123456789abcdefghi"
-                .to_string()
-                .try_into()
-                .unwrap(),
-        )
-        .add_verification_method(verification_method)
-        .add_service(agent_service)
-        .add_service(messaging_service)
+        DidDocument::builder(Default::default())
+            .add_verification_method(verification_method)
+            .add_service(agent_service)
+            .add_service(messaging_service)
     }
 
-    fn example_resolution_output() -> DidResolutionOutput {
+    fn example_resolution_output() -> DidResolutionOutput<()> {
         DidResolutionOutput::builder(example_did_document_builder().build()).build()
     }
 

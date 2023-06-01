@@ -73,7 +73,7 @@ const VALID_DID_DOC_JSON: &str = r##"
 
 #[test]
 fn test_deserialization() {
-    let did_doc: DidDocument = serde_json::from_str(VALID_DID_DOC_JSON).unwrap();
+    let did_doc: DidDocument<()> = serde_json::from_str(VALID_DID_DOC_JSON).unwrap();
 
     assert_eq!(
         did_doc.id(),
@@ -181,11 +181,11 @@ fn test_deserialization() {
 
 #[test]
 fn test_serialization() {
-    let did_doc: DidDocument = serde_json::from_str(VALID_DID_DOC_JSON).unwrap();
+    let did_doc: DidDocument<()> = serde_json::from_str(VALID_DID_DOC_JSON).unwrap();
 
     let serialized_json = serde_json::to_string(&did_doc).unwrap();
 
-    let original_json_value: DidDocument = serde_json::from_str(VALID_DID_DOC_JSON).unwrap();
-    let serialized_json_value: DidDocument = serde_json::from_str(&serialized_json).unwrap();
+    let original_json_value: DidDocument<()> = serde_json::from_str(VALID_DID_DOC_JSON).unwrap();
+    let serialized_json_value: DidDocument<()> = serde_json::from_str(&serialized_json).unwrap();
     assert_eq!(serialized_json_value, original_json_value);
 }

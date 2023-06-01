@@ -88,7 +88,7 @@ async fn create_mock_server(port: u16) -> String {
 
 #[tokio::test]
 async fn test_did_web_resolver() {
-    fn verify_did_document(did_document: &DidDocument) {
+    fn verify_did_document(did_document: &DidDocument<()>) {
         assert_eq!(did_document.id().to_string(), "did:web:example.com".to_string());
         assert_eq!(did_document.verification_method().len(), 3);
         assert_eq!(did_document.authentication().len(), 2);

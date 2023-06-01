@@ -13,7 +13,7 @@ use did_resolver::{
 use error::DidResolverRegistryError;
 
 pub struct ResolverRegistry {
-    resolvers: HashMap<String, Box<dyn DidResolvable>>,
+    resolvers: HashMap<String, Box<dyn DidResolvable<ExtraFields = ()>>>, // TODO: Use e.g. hashmap
 }
 
 impl ResolverRegistry {
@@ -23,7 +23,11 @@ impl ResolverRegistry {
         }
     }
 
-    pub fn register_resolver(&mut self, method: String, resolver: Box<dyn DidResolvable>) {
+    pub fn register_resolver(
+        &mut self,
+        method: String,
+        resolver: Box<dyn DidResolvable<ExtraFields = ()>>,
+    ) {
         self.resolvers.insert(method, resolver);
     }
 
@@ -35,7 +39,7 @@ impl ResolverRegistry {
         &self,
         did: &Did,
         options: &DidResolutionOptions,
-    ) -> Result<DidResolutionOutput, GenericError> {
+    ) -> Result<DidResolutionOutput<()>, GenericError> {
         let method = did.method();
         match self.resolvers.get(method) {
             Some(resolver) => resolver.resolve(did, options).await,
@@ -57,11 +61,13 @@ mod tests {
     #[async_trait]
     #[automock]
     impl DidResolvable for DummyDidResolver {
+        type ExtraFields = ();
+
         async fn resolve(
             &self,
             did: &Did,
             _options: &DidResolutionOptions,
-        ) -> Result<DidResolutionOutput, GenericError> {
+        ) -> Result<DidResolutionOutput<()>, GenericError> {
             Ok(DidResolutionOutput::builder(
                 DidDocumentBuilder::new(Did::parse(did.did().to_string()).unwrap()).build(),
             )
@@ -92,7 +98,7 @@ mod tests {
             .times(1)
             .return_once(move |_, _| {
                 let future = async move {
-                    Err::<DidResolutionOutput, GenericError>(Box::new(DummyResolverError))
+                    Err::<DidResolutionOutput<()>, GenericError>(Box::new(DummyResolverError))
                 };
                 Pin::from(Box::new(future))
             });
@@ -126,7 +132,7 @@ mod tests {
             .times(1)
             .return_once(move |_, _| {
                 let future = async move {
-                    Ok::<DidResolutionOutput, GenericError>(
+                    Ok::<DidResolutionOutput<()>, GenericError>(
                         DidResolutionOutput::builder(
                             DidDocumentBuilder::new(Did::parse(did.to_string()).unwrap()).build(),
                         )
@@ -193,7 +199,7 @@ mod tests {
             .times(1)
             .return_once(move |_, _| {
                 let future = async move {
-                    Ok::<DidResolutionOutput, GenericError>(
+                    Ok::<DidResolutionOutput<()>, GenericError>(
                         DidResolutionOutput::builder(
                             DidDocumentBuilder::new(Did::parse(did.to_string()).unwrap()).build(),
                         )

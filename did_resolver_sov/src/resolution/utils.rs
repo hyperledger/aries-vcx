@@ -59,11 +59,11 @@ pub(super) fn is_valid_sovrin_did_id(id: &str) -> bool {
     id.chars().all(|c| base58_chars.contains(c))
 }
 
-pub(super) async fn ledger_response_to_ddo(
+pub(super) async fn ledger_response_to_ddo<E: Default>(
     did: &str,
     resp: &str,
     verkey: String,
-) -> Result<DidResolutionOutput, DidSovError> {
+) -> Result<DidResolutionOutput<E>, DidSovError> {
     let (service_id, ddo_id) = prepare_ids(did)?;
 
     let service_data = get_data_from_response(resp)?;
@@ -176,12 +176,14 @@ mod tests {
             }
         }"#;
         let verkey = "9wvq2i4xUa5umXoThe83CDgx1e5bsjZKJL4DEWvTP9qe".to_string();
-        let resolution_output = ledger_response_to_ddo(did, resp, verkey).await.unwrap();
+        let resolution_output = ledger_response_to_ddo::<()>(did, resp, verkey)
+            .await
+            .unwrap();
         let ddo = resolution_output.did_document();
         assert_eq!(ddo.id().to_string(), "did:example:1234567890");
         assert_eq!(ddo.service()[0].id().to_string(), "did:example:1234567890");
         assert_eq!(
-            ddo.service()[0].service_endpoint().to_string(),
+            ddo.service()[0].service_endpoint().as_ref(),
             "https://example.com/"
         );
         assert_eq!(
