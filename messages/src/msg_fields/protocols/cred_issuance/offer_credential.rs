@@ -87,11 +87,25 @@ mod tests {
         decorators.timing = Some(make_extended_timing());
 
         let expected = json!({
-            "offers~attach": content.offers_attach,
-            "credential_preview": content.credential_preview,
-            "comment": content.comment,
-            "~thread": decorators.thread,
-            "~timing": decorators.timing
+            "offers~attach": {
+                "field1": "value1",
+                "field2": "value2",
+            },
+            "credential_preview": {
+                "field1": "value1",
+                "field2": "value2",
+            },
+            "comment": {
+                "field1": "value1",
+            },
+            "~thread": {
+                "field_1": "value1",
+                "field_1": "value1"
+            },
+            "~timing": {
+                "field1": "value1",
+                "field2": "value2",
+            }
         });
 
         test_utils::test_msg(

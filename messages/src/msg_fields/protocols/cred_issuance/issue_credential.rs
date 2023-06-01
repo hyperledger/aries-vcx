@@ -69,8 +69,14 @@ mod tests {
         let decorators = IssueCredentialDecorators::new(make_extended_thread());
 
         let expected = json!({
-            "credentials~attach": content.credentials_attach,
-            "~thread": decorators.thread
+            "credentials~attach": {
+                "field1": "value1",
+                "field2": "value2",
+            },
+            "~thread": {
+                "field_1": "value1",
+                "field_2": "value2",
+            }
         });
 
         test_utils::test_msg(
@@ -91,11 +97,26 @@ mod tests {
         decorators.please_ack = Some(make_minimal_please_ack());
 
         let expected = json!({
-            "credentials~attach": content.credentials_attach,
-            "comment": content.comment,
-            "~thread": decorators.thread,
-            "~timing": decorators.timing,
-            "~please_ack": decorators.please_ack
+            "credentials~attach": {
+                "field1": "value1",
+                "field2": "value2",
+            },
+            "comment": {
+                "field1": "value1",
+                "field2": "value2",
+            },
+            "~thread": {
+                "field1": "value1",
+                "field1": "value1",
+            },
+            "~timing": {
+                "field1": "value1",
+                "field2": "value2"
+            },
+            "~please_ack": {
+                "field1": "value1",
+                "field2": "value2",
+            }
         });
 
         test_utils::test_msg(
