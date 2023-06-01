@@ -17,7 +17,7 @@ use super::base_wallet::BaseWallet;
 
 #[derive(Debug)]
 pub struct IndySdkWallet {
-    wallet_handle: WalletHandle,
+    pub wallet_handle: WalletHandle,
 }
 
 impl IndySdkWallet {

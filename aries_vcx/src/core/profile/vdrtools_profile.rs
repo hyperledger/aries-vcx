@@ -16,7 +16,7 @@ use async_trait::async_trait;
 
 #[derive(Debug)]
 pub struct VdrtoolsProfile {
-    wallet: Arc<dyn BaseWallet>,
+    wallet: Arc<IndySdkWallet>,
     anoncreds: Arc<dyn BaseAnonCreds>,
     anoncreds_ledger_read: Arc<dyn AnoncredsLedgerRead>,
     anoncreds_ledger_write: Arc<dyn AnoncredsLedgerWrite>,
@@ -64,7 +64,11 @@ impl Profile for VdrtoolsProfile {
     }
 
     fn inject_wallet(&self) -> Arc<dyn BaseWallet> {
-        Arc::clone(&self.wallet)
+        self.wallet.clone()
+    }
+
+    fn wallet_handle(&self) -> Option<WalletHandle> {
+        Some(self.wallet.wallet_handle)
     }
 
     fn update_taa_configuration(&self, _taa_options: TxnAuthrAgrmtOptions) -> VcxResult<()> {

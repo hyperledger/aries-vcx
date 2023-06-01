@@ -35,6 +35,8 @@ pub async fn migrate_wallet(
     backup_key: &str,
     wallet_config: &RestoreWalletConfigs,
 ) -> Result<(), String> {
+    println!("Migrating wallet");
+    
     indy::wallet::export_wallet(wallet_handle, path, backup_key)
         .await
         .as_ref()
@@ -72,7 +74,7 @@ mod tests {
             rekey_derivation_method: None,
         };
 
-        let wallet_handle = indy::wallet::create_and_open_wallet(&config_wallet).await.unwrap();
+        let wallet_handle = indy::wallet::open_wallet(&config_wallet).await.unwrap();
 
         let backup_file_path = env::temp_dir().join("wallet.bkup").to_str().unwrap().to_owned();
         let backup_key = "super_secret_backup_key_that_no_one_will_ever_ever_guess".to_owned();

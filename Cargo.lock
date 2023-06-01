@@ -204,6 +204,7 @@ dependencies = [
  "base64 0.10.1",
  "bs58 0.4.0",
  "chrono",
+ "cred_migrator",
  "derive_builder 0.10.2",
  "diddoc_legacy",
  "env_logger 0.9.3",

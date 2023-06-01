@@ -14,6 +14,7 @@ mod integration_tests {
         create_and_store_credential, create_and_store_nonrevocable_credential,
         create_and_store_nonrevocable_credential_def, create_indy_proof,
     };
+    use aries_vcx::global::settings::{DEFAULT_WALLET_KEY, WALLET_KDF_RAW};
     use aries_vcx::handlers::proof_presentation::prover::Prover;
     use aries_vcx::handlers::proof_presentation::types::RetrievedCredentials;
     use aries_vcx::handlers::proof_presentation::verifier::Verifier;
@@ -98,6 +99,35 @@ mod integration_tests {
             let def1: serde_json::Value = serde_json::from_str(&cred_def_json).unwrap();
             let def2: serde_json::Value = serde_json::from_str(&r_cred_def_json).unwrap();
             assert_eq!(def1, def2);
+
+            // Attempt to export and migrate the wallet data.
+            // For some reason, the data does not get exported.
+            {
+                let wallet_handle = setup.profile.wallet_handle().unwrap();
+
+                let wallet_key = DEFAULT_WALLET_KEY.to_owned();
+                let wallet_key_derivation = WALLET_KDF_RAW.to_owned();
+
+                let backup_file_path = std::env::temp_dir().join("wallet.bkup").to_str().unwrap().to_owned();
+                let backup_key = "super_secret_backup_key_that_no_one_will_ever_ever_guess".to_owned();
+
+                let new_wallet_name = "new_better_wallet".to_owned();
+
+                let migration_config = aries_vcx_core::indy::wallet::RestoreWalletConfigs {
+                    wallet_name: new_wallet_name,
+                    wallet_key,
+                    exported_wallet_path: backup_file_path.clone(),
+                    backup_key: backup_key.clone(),
+                    wallet_key_derivation: Some(wallet_key_derivation),
+                };
+
+                let res =
+                    cred_migrator::migrate_wallet(wallet_handle, &backup_file_path, &backup_key, &migration_config)
+                        .await;
+                if let Ok(()) = res {
+                    std::fs::remove_file(&backup_file_path).ok();
+                }
+            }
         })
         .await;
     }
