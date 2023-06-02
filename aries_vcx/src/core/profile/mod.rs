@@ -13,10 +13,9 @@ const DEFAULT_AML_LABEL: &str = "eula";
 use std::sync::Arc;
 
 #[cfg(any(feature = "modular_libs", feature = "vdr_proxy_ledger"))]
-use aries_vcx_core::ledger::{
-    base_ledger::IndyLedgerRead,
-    indy_vdr_ledger::{GetTxnAuthorAgreementData, TxnAuthrAgrmtOptions},
-};
+use aries_vcx_core::ledger::base_ledger::TxnAuthrAgrmtOptions;
+#[cfg(any(feature = "modular_libs", feature = "vdr_proxy_ledger"))]
+use aries_vcx_core::ledger::{base_ledger::IndyLedgerRead, indy_vdr_ledger::GetTxnAuthorAgreementData};
 
 use crate::errors::error::VcxResult;
 

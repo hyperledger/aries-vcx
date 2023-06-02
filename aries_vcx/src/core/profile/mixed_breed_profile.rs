@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use aries_vcx_core::ledger::base_ledger::TxnAuthrAgrmtOptions;
 use aries_vcx_core::{
     anoncreds::{base_anoncreds::BaseAnonCreds, credx_anoncreds::IndyCredxAnonCreds},
     ledger::{
@@ -9,6 +10,7 @@ use aries_vcx_core::{
     wallet::{base_wallet::BaseWallet, indy_wallet::IndySdkWallet},
     PoolHandle, WalletHandle,
 };
+use async_trait::async_trait;
 
 use super::profile::Profile;
 
@@ -40,6 +42,7 @@ impl MixedBreedProfile {
     }
 }
 
+#[async_trait]
 impl Profile for MixedBreedProfile {
     fn inject_indy_ledger_read(self: Arc<Self>) -> Arc<dyn IndyLedgerRead> {
         Arc::clone(&self.indy_ledger_read)
@@ -63,5 +66,9 @@ impl Profile for MixedBreedProfile {
 
     fn inject_wallet(&self) -> Arc<dyn BaseWallet> {
         Arc::clone(&self.wallet)
+    }
+
+    async fn update_taa_configuration(self: Arc<Self>, taa_options: TxnAuthrAgrmtOptions) {
+        todo!()
     }
 }

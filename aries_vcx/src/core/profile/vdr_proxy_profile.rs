@@ -1,5 +1,7 @@
 use std::{sync::Arc, time::Duration};
 
+use crate::errors::error::VcxResult;
+use aries_vcx_core::ledger::base_ledger::TxnAuthrAgrmtOptions;
 use aries_vcx_core::{
     anoncreds::{base_anoncreds::BaseAnonCreds, indy_anoncreds::IndySdkAnonCreds},
     ledger::{
@@ -14,8 +16,7 @@ use aries_vcx_core::{
     wallet::{base_wallet::BaseWallet, indy_wallet::IndySdkWallet},
     ResponseParser, VdrProxyClient, WalletHandle,
 };
-
-use crate::errors::error::VcxResult;
+use async_trait::async_trait;
 
 use super::{prepare_taa_options, profile::Profile};
 
@@ -69,6 +70,7 @@ impl VdrProxyProfile {
     }
 }
 
+#[async_trait]
 impl Profile for VdrProxyProfile {
     fn inject_indy_ledger_read(self: Arc<Self>) -> Arc<dyn IndyLedgerRead> {
         Arc::clone(&self.indy_ledger_read)
@@ -92,5 +94,9 @@ impl Profile for VdrProxyProfile {
 
     fn inject_wallet(&self) -> Arc<dyn BaseWallet> {
         Arc::clone(&self.wallet)
+    }
+
+    async fn update_taa_configuration(self: Arc<Self>, taa_options: TxnAuthrAgrmtOptions) {
+        todo!()
     }
 }

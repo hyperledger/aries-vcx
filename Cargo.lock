@@ -200,6 +200,7 @@ dependencies = [
  "android_logger",
  "aries_vcx_core",
  "async-channel",
+ "async-lock",
  "async-trait",
  "base64 0.10.1",
  "bs58 0.4.0",

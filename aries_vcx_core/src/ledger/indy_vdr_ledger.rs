@@ -20,6 +20,7 @@ use vdr::utils::Qualifiable;
 
 use crate::common::ledger::transactions::verify_transaction_can_be_endorsed;
 use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
+use crate::ledger::base_ledger::{TaaConfigurator, TxnAuthrAgrmtOptions};
 
 use super::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite};
 use super::map_error_not_found_to_none;
@@ -126,6 +127,16 @@ where
         let signature = self.request_signer.sign(submitter_did, &request).await?;
         request.set_signature(&signature)?;
         self.request_submitter.submit(request).await
+    }
+}
+
+impl<T, U> TaaConfigurator for IndyVdrLedgerWrite<T, U>
+where
+    T: RequestSubmitter + Send + Sync,
+    U: RequestSigner + Send + Sync,
+{
+    fn set_txn_author_agreement_options(&mut self, taa_options: TxnAuthrAgrmtOptions) {
+        self.taa_options = Some(taa_options);
     }
 }
 
@@ -441,10 +452,4 @@ impl ProtocolVersion {
     pub fn node_1_4() -> Self {
         ProtocolVersion(VdrProtocolVersion::Node1_4)
     }
-}
-
-pub struct TxnAuthrAgrmtOptions {
-    pub text: String,
-    pub version: String,
-    pub aml_label: String,
 }
