@@ -117,21 +117,17 @@ mod tests {
             "did:example:123456789abcdefghi#agent".parse().unwrap(),
             "https://agent.example.com/8377464".try_into().unwrap(),
         )
-        .unwrap()
         .add_service_type("AgentService".to_string())
         .unwrap()
-        .build()
-        .unwrap();
+        .build();
 
         let messaging_service = Service::builder(
             "did:example:123456789abcdefghi#messages".parse().unwrap(),
             "https://example.com/messages/8377464".try_into().unwrap(),
         )
-        .unwrap()
         .add_service_type("MessagingService".to_string())
         .unwrap()
-        .build()
-        .unwrap();
+        .build();
 
         DidDocument::builder(Default::default())
             .add_verification_method(verification_method)
@@ -207,11 +203,9 @@ mod tests {
                 "did:example:123456789abcdefghi#keys-1".parse().unwrap(),
                 "https://example.com/duplicated/8377464".try_into().unwrap(),
             )
-            .unwrap()
             .add_service_type("DuplicatedService".to_string())
             .unwrap()
-            .build()
-            .unwrap();
+            .build();
             did_document_builder.add_service(additional_service).build()
         };
 
