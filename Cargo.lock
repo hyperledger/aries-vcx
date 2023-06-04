@@ -1380,6 +1380,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "did_doc_sov"
+version = "0.1.0"
+dependencies = [
+ "did_doc",
+ "serde",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
 name = "did_parser"
 version = "0.1.0"
 dependencies = [

@@ -13,7 +13,7 @@ use super::{
     verification_method::{VerificationMethod, VerificationMethodKind},
 };
 
-type ControllerAlias = OneOrList<Did>;
+pub type ControllerAlias = OneOrList<Did>;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 #[serde(default)]

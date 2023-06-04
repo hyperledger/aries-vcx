@@ -1,0 +1,26 @@
+use did_doc::schema::service::Service;
+
+use crate::{error::DidDocumentSovError, extra_fields::ExtraFields};
+
+use super::ServiceSov;
+
+pub struct ServicesList<'a> {
+    services: &'a [Service<ExtraFields>],
+}
+
+impl<'a> ServicesList<'a> {
+    pub fn new(services: &'a [Service<ExtraFields>]) -> Self {
+        Self { services }
+    }
+
+    pub fn get(&self, index: usize) -> Result<ServiceSov, DidDocumentSovError> {
+        self.services
+            .get(index)
+            .ok_or(DidDocumentSovError::IndexOutOfBounds(index))
+            .and_then(|service| ServiceSov::try_from(service.to_owned()))
+    }
+
+    pub fn len(&self) -> usize {
+        self.services.len()
+    }
+}
