@@ -67,6 +67,6 @@ impl Profile for VdrtoolsProfile {
     }
 
     async fn update_taa_configuration(self: Arc<Self>, taa_options: TxnAuthrAgrmtOptions) {
-        todo!()
+        panic!("update_taa_configuration not implemented for VdrtoolsProfile")
     }
 }

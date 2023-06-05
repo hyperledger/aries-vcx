@@ -43,6 +43,6 @@ impl Profile for MockProfile {
     }
 
     async fn update_taa_configuration(self: Arc<Self>, taa_options: TxnAuthrAgrmtOptions) {
-        todo!()
+        error!("update_taa_configuration not implemented for MockProfile")
     }
 }
