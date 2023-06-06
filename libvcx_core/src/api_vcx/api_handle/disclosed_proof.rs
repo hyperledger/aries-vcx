@@ -85,14 +85,24 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
         })?;
         trace!("disclosed_proof::update_state >>> updating using message {:?}", message);
         proof
-            .handle_message(&profile, message.into(), Some(send_message))
+            .handle_message(
+                &profile.inject_anoncreds_ledger_read(),
+                &profile.inject_anoncreds(),
+                message.into(),
+                Some(send_message),
+            )
             .await?;
     } else {
         let messages = mediated_connection::get_messages(connection_handle).await?;
         trace!("disclosed_proof::update_state >>> found messages: {:?}", messages);
         if let Some((uid, message)) = proof.find_message_to_handle(messages) {
             proof
-                .handle_message(&profile, message.into(), Some(send_message))
+                .handle_message(
+                    &profile.inject_anoncreds_ledger_read(),
+                    &profile.inject_anoncreds(),
+                    message.into(),
+                    Some(send_message),
+                )
                 .await?;
             mediated_connection::update_message_status(connection_handle, &uid).await?;
         };
@@ -179,7 +189,8 @@ pub async fn generate_proof(handle: u32, credentials: &str, self_attested_attrs:
     let profile = get_main_profile()?;
     proof
         .generate_presentation(
-            &profile,
+            &profile.inject_anoncreds_ledger_read(),
+            &profile.inject_anoncreds(),
             serde_json::from_str(credentials)?,
             serde_json::from_str(self_attested_attrs)?,
         )
@@ -208,7 +219,7 @@ pub async fn decline_presentation_request(
 pub async fn retrieve_credentials(handle: u32) -> LibvcxResult<String> {
     let proof = HANDLE_MAP.get_cloned(handle)?;
     let profile = get_main_profile_optional_pool(); // do not throw if pool not open
-    let retrieved_creds = proof.retrieve_credentials(&profile).await?;
+    let retrieved_creds = proof.retrieve_credentials(&profile.inject_anoncreds()).await?;
 
     Ok(serde_json::to_string(&retrieved_creds)?)
 }

@@ -8,6 +8,9 @@ use messages::AriesMessage;
 use std::sync::Arc;
 
 use agency_client::agency_client::AgencyClient;
+use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
+use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
+use aries_vcx_core::wallet::base_wallet::BaseWallet;
 
 use crate::common::credentials::get_cred_rev_id;
 use crate::core::profile::profile::Profile;
@@ -55,14 +58,15 @@ impl Holder {
 
     pub async fn send_request(
         &mut self,
-        profile: &Arc<dyn Profile>,
+        ledger: &Arc<dyn AnoncredsLedgerRead>,
+        anoncreds: &Arc<dyn BaseAnonCreds>,
         my_pw_did: String,
         send_message: SendClosure,
     ) -> VcxResult<()> {
         self.holder_sm = self
             .holder_sm
             .clone()
-            .send_request(profile, my_pw_did, send_message)
+            .send_request(ledger, anoncreds, my_pw_did, send_message)
             .await?;
         Ok(())
     }
@@ -78,14 +82,15 @@ impl Holder {
 
     pub async fn process_credential(
         &mut self,
-        profile: &Arc<dyn Profile>,
+        ledger: &Arc<dyn AnoncredsLedgerRead>,
+        anoncreds: &Arc<dyn BaseAnonCreds>,
         credential: IssueCredential,
         send_message: SendClosure,
     ) -> VcxResult<()> {
         self.holder_sm = self
             .holder_sm
             .clone()
-            .receive_credential(profile, credential, send_message)
+            .receive_credential(ledger, anoncreds, credential, send_message)
             .await?;
         Ok(())
     }
@@ -142,36 +147,42 @@ impl Holder {
         self.holder_sm.get_thread_id()
     }
 
-    pub async fn is_revokable(&self, profile: &Arc<dyn Profile>) -> VcxResult<bool> {
-        self.holder_sm.is_revokable(profile).await
+    pub async fn is_revokable(&self, ledger: &Arc<dyn AnoncredsLedgerRead>) -> VcxResult<bool> {
+        self.holder_sm.is_revokable(ledger).await
     }
 
-    pub async fn is_revoked(&self, profile: &Arc<dyn Profile>) -> VcxResult<bool> {
-        self.holder_sm.is_revoked(profile).await
+    pub async fn is_revoked(
+        &self,
+        ledger: &Arc<dyn AnoncredsLedgerRead>,
+        anoncreds: &Arc<dyn BaseAnonCreds>,
+    ) -> VcxResult<bool> {
+        self.holder_sm.is_revoked(ledger, anoncreds).await
     }
 
-    pub async fn delete_credential(&self, profile: &Arc<dyn Profile>) -> VcxResult<()> {
-        self.holder_sm.delete_credential(profile).await
+    pub async fn delete_credential(&self, anoncreds: &Arc<dyn BaseAnonCreds>) -> VcxResult<()> {
+        self.holder_sm.delete_credential(anoncreds).await
     }
 
     pub fn get_credential_status(&self) -> VcxResult<u32> {
         Ok(self.holder_sm.credential_status())
     }
 
-    pub async fn get_cred_rev_id(&self, profile: &Arc<dyn Profile>) -> VcxResult<String> {
-        get_cred_rev_id(profile, &self.get_cred_id()?).await
+    pub async fn get_cred_rev_id(&self, anoncreds: &Arc<dyn BaseAnonCreds>) -> VcxResult<String> {
+        get_cred_rev_id(anoncreds, &self.get_cred_id()?).await
     }
 
     pub async fn handle_revocation_notification(
         &self,
-        profile: &Arc<dyn Profile>,
+        ledger: &Arc<dyn AnoncredsLedgerRead>,
+        anoncreds: &Arc<dyn BaseAnonCreds>,
+        wallet: &Arc<dyn BaseWallet>,
         connection: &MediatedConnection,
         notification: Revoke,
     ) -> VcxResult<()> {
-        if self.holder_sm.is_revokable(profile).await? {
-            let send_message = connection.send_message_closure(profile.inject_wallet()).await?;
+        if self.holder_sm.is_revokable(ledger).await? {
+            let send_message = connection.send_message_closure(Arc::clone(wallet)).await?;
             // TODO: Store to remember notification was received along with details
-            RevocationNotificationReceiver::build(self.get_rev_reg_id()?, self.get_cred_rev_id(profile).await?)
+            RevocationNotificationReceiver::build(self.get_rev_reg_id()?, self.get_cred_rev_id(anoncreds).await?)
                 .handle_revocation_notification(notification, send_message)
                 .await?;
             Ok(())
@@ -185,21 +196,24 @@ impl Holder {
 
     pub async fn step(
         &mut self,
-        profile: &Arc<dyn Profile>,
+        ledger: &Arc<dyn AnoncredsLedgerRead>,
+        anoncreds: &Arc<dyn BaseAnonCreds>,
         message: CredentialIssuanceAction,
         send_message: Option<SendClosure>,
     ) -> VcxResult<()> {
         self.holder_sm = self
             .holder_sm
             .clone()
-            .handle_message(profile, message, send_message)
+            .handle_message(ledger, anoncreds, message, send_message)
             .await?;
         Ok(())
     }
 
     pub async fn update_state(
         &mut self,
-        profile: &Arc<dyn Profile>,
+        ledger: &Arc<dyn AnoncredsLedgerRead>,
+        anoncreds: &Arc<dyn BaseAnonCreds>,
+        wallet: &Arc<dyn BaseWallet>,
         agency_client: &AgencyClient,
         connection: &MediatedConnection,
     ) -> VcxResult<HolderState> {
@@ -207,11 +221,11 @@ impl Holder {
         if self.is_terminal_state() {
             return Ok(self.get_state());
         }
-        let send_message = connection.send_message_closure(profile.inject_wallet()).await?;
+        let send_message = connection.send_message_closure(Arc::clone(wallet)).await?;
 
         let messages = connection.get_messages(agency_client).await?;
         if let Some((uid, msg)) = self.find_message_to_handle(messages) {
-            self.step(profile, msg.into(), Some(send_message)).await?;
+            self.step(ledger, anoncreds, msg.into(), Some(send_message)).await?;
             connection.update_message_status(&uid, agency_client).await?;
         }
         Ok(self.get_state())

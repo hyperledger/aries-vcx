@@ -1,5 +1,7 @@
 use std::{collections::HashMap, sync::Arc};
 
+use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
+use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
 use time::OffsetDateTime;
 
 use crate::core::profile::profile::Profile;
@@ -19,8 +21,7 @@ struct ProverCredential {
     cred_rev_id: Option<String>,
 }
 
-pub async fn get_cred_rev_id(profile: &Arc<dyn Profile>, cred_id: &str) -> VcxResult<String> {
-    let anoncreds = Arc::clone(profile).inject_anoncreds();
+pub async fn get_cred_rev_id(anoncreds: &Arc<dyn BaseAnonCreds>, cred_id: &str) -> VcxResult<String> {
     let cred_json = anoncreds.prover_get_credential(cred_id).await?;
     let prover_cred = serde_json::from_str::<ProverCredential>(&cred_json).map_err(|err| {
         AriesVcxError::from_msg(
@@ -34,10 +35,10 @@ pub async fn get_cred_rev_id(profile: &Arc<dyn Profile>, cred_id: &str) -> VcxRe
     ))
 }
 
-pub async fn is_cred_revoked(profile: &Arc<dyn Profile>, rev_reg_id: &str, rev_id: &str) -> VcxResult<bool> {
+pub async fn is_cred_revoked(ledger: &Arc<dyn AnoncredsLedgerRead>, rev_reg_id: &str, rev_id: &str) -> VcxResult<bool> {
     let from = None;
     let to = Some(OffsetDateTime::now_utc().unix_timestamp() as u64 + 100);
-    let rev_reg_delta = RevocationRegistryDelta::create_from_ledger(profile, rev_reg_id, from, to).await?;
+    let rev_reg_delta = RevocationRegistryDelta::create_from_ledger(ledger, rev_reg_id, from, to).await?;
     Ok(rev_reg_delta.revoked().iter().any(|s| s.to_string().eq(rev_id)))
 }
 
@@ -94,7 +95,9 @@ mod integration_tests {
             let cred_id = res.7;
             let cred_rev_id = res.9;
 
-            let cred_rev_id_ = get_cred_rev_id(&setup.profile, &cred_id).await.unwrap();
+            let cred_rev_id_ = get_cred_rev_id(&setup.profile.inject_anoncreds(), &cred_id)
+                .await
+                .unwrap();
 
             assert_eq!(cred_rev_id, cred_rev_id_.to_string());
         })

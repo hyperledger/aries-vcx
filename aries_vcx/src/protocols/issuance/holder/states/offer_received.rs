@@ -1,3 +1,4 @@
+use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
 use std::sync::Arc;
 
 use crate::core::profile::profile::Profile;
@@ -45,7 +46,7 @@ impl OfferReceivedState {
         Ok(serde_json::Value::Object(new_map).to_string())
     }
 
-    pub async fn is_revokable(&self, profile: &Arc<dyn Profile>) -> VcxResult<bool> {
+    pub async fn is_revokable(&self, ledger: &Arc<dyn AnoncredsLedgerRead>) -> VcxResult<bool> {
         let offer = self.get_attachment()?;
 
         let cred_def_id = parse_cred_def_id_from_cred_offer(&offer).map_err(|err| {
@@ -57,7 +58,7 @@ impl OfferReceivedState {
                 ),
             )
         })?;
-        is_cred_def_revokable(profile, &cred_def_id).await
+        is_cred_def_revokable(ledger, &cred_def_id).await
     }
 
     pub fn get_attachment(&self) -> VcxResult<String> {

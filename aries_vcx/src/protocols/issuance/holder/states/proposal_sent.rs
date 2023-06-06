@@ -1,3 +1,4 @@
+use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
 use std::sync::Arc;
 
 use messages::msg_fields::protocols::cred_issuance::propose_credential::ProposeCredential;
@@ -16,7 +17,7 @@ impl ProposalSentState {
         Self { credential_proposal }
     }
 
-    pub async fn is_revokable(&self, profile: &Arc<dyn Profile>) -> VcxResult<bool> {
-        is_cred_def_revokable(profile, &self.credential_proposal.content.cred_def_id).await
+    pub async fn is_revokable(&self, ledger: &Arc<dyn AnoncredsLedgerRead>) -> VcxResult<bool> {
+        is_cred_def_revokable(ledger, &self.credential_proposal.content.cred_def_id).await
     }
 }

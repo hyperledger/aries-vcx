@@ -99,7 +99,14 @@ impl ServiceCredentialsHolder {
             Box::pin(async move { connection.send_message(&wallet, &msg, &HttpClient).await })
         });
 
-        holder.send_request(&self.profile, pw_did, send_closure).await?;
+        holder
+            .send_request(
+                &self.profile.inject_anoncreds_ledger_read(),
+                &self.profile.inject_anoncreds(),
+                pw_did,
+                send_closure,
+            )
+            .await?;
         self.creds_holder
             .insert(&holder.get_thread_id()?, HolderWrapper::new(holder, &connection_id))
     }
@@ -115,7 +122,12 @@ impl ServiceCredentialsHolder {
         });
 
         holder
-            .process_credential(&self.profile, credential, send_closure)
+            .process_credential(
+                &self.profile.inject_anoncreds_ledger_read(),
+                &self.profile.inject_anoncreds(),
+                credential,
+                send_closure,
+            )
             .await?;
         self.creds_holder
             .insert(&holder.get_thread_id()?, HolderWrapper::new(holder, &connection_id))
@@ -127,7 +139,7 @@ impl ServiceCredentialsHolder {
 
     pub async fn is_revokable(&self, thread_id: &str) -> AgentResult<bool> {
         self.get_holder(thread_id)?
-            .is_revokable(&self.profile)
+            .is_revokable(&self.profile.inject_anoncreds_ledger_read())
             .await
             .map_err(|err| err.into())
     }

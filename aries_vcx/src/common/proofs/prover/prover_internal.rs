@@ -1,6 +1,8 @@
 use std::{collections::HashMap, sync::Arc};
 
+use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
 use aries_vcx_core::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind};
+use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
 use serde_json::Value;
 
 use crate::errors::error::prelude::*;
@@ -25,14 +27,13 @@ pub struct CredInfoProver {
 }
 
 pub async fn build_schemas_json_prover(
-    profile: &Arc<dyn Profile>,
+    ledger: &Arc<dyn AnoncredsLedgerRead>,
     credentials_identifiers: &Vec<CredInfoProver>,
 ) -> VcxResult<String> {
     trace!(
         "build_schemas_json_prover >>> credentials_identifiers: {:?}",
         credentials_identifiers
     );
-    let ledger = Arc::clone(profile).inject_anoncreds_ledger_read();
     let mut rtn: Value = json!({});
 
     for cred_info in credentials_identifiers {
@@ -56,14 +57,13 @@ pub async fn build_schemas_json_prover(
 }
 
 pub async fn build_cred_defs_json_prover(
-    profile: &Arc<dyn Profile>,
+    ledger: &Arc<dyn AnoncredsLedgerRead>,
     credentials_identifiers: &Vec<CredInfoProver>,
 ) -> VcxResult<String> {
     trace!(
         "build_cred_defs_json_prover >>> credentials_identifiers: {:?}",
         credentials_identifiers
     );
-    let ledger = Arc::clone(profile).inject_anoncreds_ledger_read();
     let mut rtn: Value = json!({});
 
     for cred_info in credentials_identifiers {
@@ -133,15 +133,14 @@ fn _get_revocation_interval(attr_name: &str, proof_req: &ProofRequestData) -> Vc
 }
 
 pub async fn build_rev_states_json(
-    profile: &Arc<dyn Profile>,
+    ledger: &Arc<dyn AnoncredsLedgerRead>,
+    anoncreds: &Arc<dyn BaseAnonCreds>,
     credentials_identifiers: &mut Vec<CredInfoProver>,
 ) -> VcxResult<String> {
     trace!(
         "build_rev_states_json >> credentials_identifiers: {:?}",
         credentials_identifiers
     );
-    let ledger = Arc::clone(profile).inject_anoncreds_ledger_read();
-    let anoncreds = Arc::clone(profile).inject_anoncreds();
     let mut rtn: Value = json!({});
     let mut timestamps: HashMap<String, u64> = HashMap::new();
 

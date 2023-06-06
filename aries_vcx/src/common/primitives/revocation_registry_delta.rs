@@ -1,3 +1,4 @@
+use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
 use std::sync::Arc;
 
 use crate::core::profile::profile::Profile;
@@ -33,12 +34,11 @@ impl RevocationRegistryDeltaValue {
 
 impl RevocationRegistryDelta {
     pub async fn create_from_ledger(
-        profile: &Arc<dyn Profile>,
+        ledger: &Arc<dyn AnoncredsLedgerRead>,
         rev_reg_id: &str,
         from: Option<u64>,
         to: Option<u64>,
     ) -> VcxResult<Self> {
-        let ledger = Arc::clone(profile).inject_anoncreds_ledger_read();
         let (_, rev_reg_delta_json, _) = ledger.get_rev_reg_delta_json(rev_reg_id, from, to).await?;
         serde_json::from_str(&rev_reg_delta_json).map_err(|err| {
             AriesVcxError::from_msg(

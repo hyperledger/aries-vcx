@@ -10,6 +10,9 @@ use messages::AriesMessage;
 use std::sync::Arc;
 
 use agency_client::agency_client::AgencyClient;
+use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
+use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
+use aries_vcx_core::wallet::base_wallet::BaseWallet;
 
 use crate::core::profile::profile::Profile;
 use crate::errors::error::prelude::*;
@@ -128,11 +131,10 @@ impl Issuer {
     // todo: "build_credential_offer_msg" should take optional revReg as parameter, build OfferInfo from that
     pub async fn build_credential_offer_msg(
         &mut self,
-        profile: &Arc<dyn Profile>,
+        anoncreds: &Arc<dyn BaseAnonCreds>,
         offer_info: OfferInfo,
         comment: Option<String>,
     ) -> VcxResult<()> {
-        let anoncreds = Arc::clone(profile).inject_anoncreds();
         let credential_preview = _build_credential_preview(&offer_info.credential_json)?;
         let libindy_cred_offer = anoncreds
             .issuer_create_credential_offer(&offer_info.cred_def_id)
@@ -171,8 +173,12 @@ impl Issuer {
         Ok(())
     }
 
-    pub async fn send_credential(&mut self, profile: &Arc<dyn Profile>, send_message: SendClosure) -> VcxResult<()> {
-        self.issuer_sm = self.issuer_sm.clone().send_credential(profile, send_message).await?;
+    pub async fn send_credential(
+        &mut self,
+        anoncreds: &Arc<dyn BaseAnonCreds>,
+        send_message: SendClosure,
+    ) -> VcxResult<()> {
+        self.issuer_sm = self.issuer_sm.clone().send_credential(anoncreds, send_message).await?;
         Ok(())
     }
 
@@ -236,7 +242,7 @@ impl Issuer {
             ))
     }
 
-    pub async fn revoke_credential_local(&self, profile: &Arc<dyn Profile>) -> VcxResult<()> {
+    pub async fn revoke_credential_local(&self, anoncreds: &Arc<dyn BaseAnonCreds>) -> VcxResult<()> {
         let revocation_info: RevocationInfoV1 = self.issuer_sm.get_revocation_info().ok_or(AriesVcxError::from_msg(
             AriesVcxErrorKind::InvalidState,
             "Credential is not revocable, no revocation info has been found.",
@@ -246,7 +252,6 @@ impl Issuer {
             revocation_info.rev_reg_id,
             revocation_info.tails_file,
         ) {
-            let anoncreds = Arc::clone(profile).inject_anoncreds();
             anoncreds
                 .revoke_credential_local(&tails_file, &rev_reg_id, &cred_rev_id)
                 .await?;
@@ -283,27 +288,28 @@ impl Issuer {
         self.issuer_sm.is_revokable()
     }
 
-    pub async fn is_revoked(&self, profile: &Arc<dyn Profile>) -> VcxResult<bool> {
-        self.issuer_sm.is_revoked(profile).await
+    pub async fn is_revoked(&self, ledger: &Arc<dyn AnoncredsLedgerRead>) -> VcxResult<bool> {
+        self.issuer_sm.is_revoked(ledger).await
     }
 
     pub async fn step(
         &mut self,
-        profile: &Arc<dyn Profile>,
+        anoncreds: &Arc<dyn BaseAnonCreds>,
         message: CredentialIssuanceAction,
         send_message: Option<SendClosure>,
     ) -> VcxResult<()> {
         self.issuer_sm = self
             .issuer_sm
             .clone()
-            .handle_message(profile, message, send_message)
+            .handle_message(anoncreds, message, send_message)
             .await?;
         Ok(())
     }
 
     pub async fn update_state(
         &mut self,
-        profile: &Arc<dyn Profile>,
+        wallet: &Arc<dyn BaseWallet>,
+        anoncreds: &Arc<dyn BaseAnonCreds>,
         agency_client: &AgencyClient,
         connection: &MediatedConnection,
     ) -> VcxResult<IssuerState> {
@@ -311,10 +317,10 @@ impl Issuer {
         if self.is_terminal_state() {
             return Ok(self.get_state());
         }
-        let send_message = connection.send_message_closure(profile.inject_wallet()).await?;
+        let send_message = connection.send_message_closure(Arc::clone(wallet)).await?;
         let messages = connection.get_messages(agency_client).await?;
         if let Some((uid, msg)) = self.find_message_to_handle(messages) {
-            self.step(profile, msg.into(), Some(send_message)).await?;
+            self.step(anoncreds, msg.into(), Some(send_message)).await?;
             connection.update_message_status(&uid, agency_client).await?;
         }
         Ok(self.get_state())

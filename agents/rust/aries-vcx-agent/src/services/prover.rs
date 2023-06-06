@@ -63,7 +63,7 @@ impl ServiceProver {
         prover: &Prover,
         tails_dir: Option<&str>,
     ) -> AgentResult<SelectedCredentials> {
-        let credentials = prover.retrieve_credentials(&self.profile).await?;
+        let credentials = prover.retrieve_credentials(&self.profile.inject_anoncreds()).await?;
 
         let mut res_credentials = SelectedCredentials::default();
 
@@ -118,7 +118,12 @@ impl ServiceProver {
         let connection = self.service_connections.get_by_id(&connection_id)?;
         let credentials = self.get_credentials_for_presentation(&prover, tails_dir).await?;
         prover
-            .generate_presentation(&self.profile, credentials, HashMap::new())
+            .generate_presentation(
+                &self.profile.inject_anoncreds_ledger_read(),
+                &self.profile.inject_anoncreds(),
+                credentials,
+                HashMap::new(),
+            )
             .await?;
 
         let wallet = self.profile.inject_wallet();

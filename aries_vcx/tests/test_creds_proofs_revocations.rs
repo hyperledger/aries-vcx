@@ -42,7 +42,10 @@ mod integration_tests {
             )
             .await;
 
-            assert!(!issuer_credential.is_revoked(&institution.profile).await.unwrap());
+            assert!(!issuer_credential
+                .is_revoked(&institution.profile.inject_anoncreds_ledger_read())
+                .await
+                .unwrap());
 
             let time_before_revocation = time::OffsetDateTime::now_utc().unix_timestamp() as u64;
             info!("test_basic_revocation :: verifier :: Going to revoke credential");
@@ -51,7 +54,10 @@ mod integration_tests {
             tokio::time::sleep(Duration::from_millis(1000)).await;
             let time_after_revocation = time::OffsetDateTime::now_utc().unix_timestamp() as u64;
 
-            assert!(issuer_credential.is_revoked(&institution.profile).await.unwrap());
+            assert!(issuer_credential
+                .is_revoked(&institution.profile.inject_anoncreds_ledger_read())
+                .await
+                .unwrap());
 
             let _requested_attrs = requested_attrs(
                 &institution.config_issuer.institution_did,
@@ -118,13 +124,19 @@ mod integration_tests {
             )
             .await;
 
-            assert!(!issuer_credential.is_revoked(&institution.profile).await.unwrap());
+            assert!(!issuer_credential
+                .is_revoked(&institution.profile.inject_anoncreds_ledger_read())
+                .await
+                .unwrap());
 
             info!("test_revocation_notification :: verifier :: Going to revoke credential");
             revoke_credential_and_publish_accumulator(&mut institution, &issuer_credential, &rev_reg).await;
             tokio::time::sleep(Duration::from_millis(1000)).await;
 
-            assert!(issuer_credential.is_revoked(&institution.profile).await.unwrap());
+            assert!(issuer_credential
+                .is_revoked(&institution.profile.inject_anoncreds_ledger_read())
+                .await
+                .unwrap());
             let config =
                 aries_vcx::protocols::revocation_notification::sender::state_machine::SenderConfigBuilder::default()
                     .ack_on(vec![AckOn::Receipt])
@@ -177,7 +189,10 @@ mod integration_tests {
             .await;
 
             revoke_credential_local(&mut institution, &issuer_credential, &rev_reg.rev_reg_id).await;
-            assert!(!issuer_credential.is_revoked(&institution.profile).await.unwrap());
+            assert!(!issuer_credential
+                .is_revoked(&institution.profile.inject_anoncreds_ledger_read())
+                .await
+                .unwrap());
             let request_name1 = Some("request1");
             let mut verifier = verifier_create_proof_and_send_request(
                 &mut institution,
@@ -206,7 +221,10 @@ mod integration_tests {
                 PresentationVerificationStatus::Valid
             );
 
-            assert!(!issuer_credential.is_revoked(&institution.profile).await.unwrap());
+            assert!(!issuer_credential
+                .is_revoked(&institution.profile.inject_anoncreds_ledger_read())
+                .await
+                .unwrap());
 
             publish_revocation(&mut institution, &rev_reg).await;
             let request_name2 = Some("request2");
@@ -237,7 +255,10 @@ mod integration_tests {
                 PresentationVerificationStatus::Invalid
             );
 
-            assert!(issuer_credential.is_revoked(&institution.profile).await.unwrap());
+            assert!(issuer_credential
+                .is_revoked(&institution.profile.inject_anoncreds_ledger_read())
+                .await
+                .unwrap());
         })
         .await;
     }
@@ -301,9 +322,9 @@ mod integration_tests {
 
         revoke_credential_local(&mut institution, &issuer_credential1, &rev_reg.rev_reg_id).await;
         revoke_credential_local(&mut institution, &issuer_credential2, &rev_reg.rev_reg_id).await;
-        assert!(!issuer_credential1.is_revoked(&institution.profile).await.unwrap());
-        assert!(!issuer_credential2.is_revoked(&institution.profile).await.unwrap());
-        assert!(!issuer_credential3.is_revoked(&institution.profile).await.unwrap());
+        assert!(!issuer_credential1.is_revoked(&institution.profile.inject_anoncreds_ledger_read()).await.unwrap());
+        assert!(!issuer_credential2.is_revoked(&institution.profile.inject_anoncreds_ledger_read()).await.unwrap());
+        assert!(!issuer_credential3.is_revoked(&institution.profile.inject_anoncreds_ledger_read()).await.unwrap());
 
         // Revoke two locally and verify their are all still valid
         let request_name1 = Some("request1");
@@ -337,6 +358,7 @@ mod integration_tests {
 
         verifier1
             .update_state(
+                &institution.profile.inject_wallet(),
                 &institution.profile.inject_anoncreds_ledger_read(),
                 &institution.profile.inject_anoncreds(),
                 &institution.agency_client,
@@ -346,6 +368,7 @@ mod integration_tests {
             .unwrap();
         verifier2
             .update_state(
+                &institution.profile.inject_wallet(),
                 &institution.profile.inject_anoncreds_ledger_read(),
                 &institution.profile.inject_anoncreds(),
                 &institution.agency_client,
@@ -355,6 +378,7 @@ mod integration_tests {
             .unwrap();
         verifier3
             .update_state(
+                &institution.profile.inject_wallet(),
                 &institution.profile.inject_anoncreds_ledger_read(),
                 &institution.profile.inject_anoncreds(),
                 &institution.agency_client,
@@ -379,9 +403,9 @@ mod integration_tests {
         publish_revocation(&mut institution, &rev_reg).await;
         tokio::time::sleep(Duration::from_millis(1000)).await;
 
-        assert!(issuer_credential1.is_revoked(&institution.profile).await.unwrap());
-        assert!(issuer_credential2.is_revoked(&institution.profile).await.unwrap());
-        assert!(!issuer_credential3.is_revoked(&institution.profile).await.unwrap());
+        assert!(issuer_credential1.is_revoked(&institution.profile.inject_anoncreds_ledger_read()).await.unwrap());
+        assert!(issuer_credential2.is_revoked(&institution.profile.inject_anoncreds_ledger_read()).await.unwrap());
+        assert!(!issuer_credential3.is_revoked(&institution.profile.inject_anoncreds_ledger_read()).await.unwrap());
 
         let request_name2 = Some("request2");
         let mut verifier1 = verifier_create_proof_and_send_request(
@@ -417,6 +441,7 @@ mod integration_tests {
 
         verifier1
             .update_state(
+                &institution.profile.inject_wallet(),
                 &institution.profile.inject_anoncreds_ledger_read(),
                 &institution.profile.inject_anoncreds(),
                 &institution.agency_client,
@@ -426,6 +451,7 @@ mod integration_tests {
             .unwrap();
         verifier2
             .update_state(
+                &institution.profile.inject_wallet(),
                 &institution.profile.inject_anoncreds_ledger_read(),
                 &institution.profile.inject_anoncreds(),
                 &institution.agency_client,
@@ -435,6 +461,7 @@ mod integration_tests {
             .unwrap();
         verifier3
             .update_state(
+                &institution.profile.inject_wallet(),
                 &institution.profile.inject_anoncreds_ledger_read(),
                 &institution.profile.inject_anoncreds(),
                 &institution.agency_client,
@@ -476,7 +503,7 @@ mod integration_tests {
             )
             .await;
 
-            assert!(!issuer_credential.is_revoked(&institution.profile).await.unwrap());
+            assert!(!issuer_credential.is_revoked(&institution.profile.inject_anoncreds_ledger_read()).await.unwrap());
 
             tokio::time::sleep(Duration::from_millis(1000)).await;
             let time_before_revocation = time::OffsetDateTime::now_utc().unix_timestamp() as u64;
@@ -612,7 +639,12 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1))
             .await;
         proof_verifier
-            .update_state(&verifier.profile.inject_anoncreds_ledger_read(), &verifier.profile.inject_anoncreds(), &verifier.agency_client, &verifier_to_consumer)
+            .update_state(
+                &verifier.profile.inject_wallet(),
+                &verifier.profile.inject_anoncreds_ledger_read(),
+                &verifier.profile.inject_anoncreds(),
+                &verifier.agency_client,
+                &verifier_to_consumer)
             .await
             .unwrap();
             assert_eq!(
@@ -635,7 +667,13 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2))
             .await;
         proof_verifier
-            .update_state(&verifier.profile.inject_anoncreds_ledger_read(), &verifier.profile.inject_anoncreds(), &verifier.agency_client, &verifier_to_consumer)
+            .update_state(
+                &verifier.profile.inject_wallet(),
+                &verifier.profile.inject_anoncreds_ledger_read(),
+                &verifier.profile.inject_anoncreds(),
+                &verifier.agency_client,
+                &verifier_to_consumer
+            )
             .await
             .unwrap();
         assert_eq!(
@@ -705,7 +743,13 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1))
             .await;
         proof_verifier
-            .update_state(&verifier.profile.inject_anoncreds_ledger_read(), &verifier.profile.inject_anoncreds(), &verifier.agency_client, &verifier_to_consumer)
+            .update_state(
+                &verifier.profile.inject_wallet(),
+                &verifier.profile.inject_anoncreds_ledger_read(),
+                &verifier.profile.inject_anoncreds(),
+                &verifier.agency_client,
+                &verifier_to_consumer
+            )
             .await
             .unwrap();
         assert_eq!(
@@ -724,7 +768,13 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2))
             .await;
         proof_verifier
-            .update_state(&verifier.profile.inject_anoncreds_ledger_read(), &verifier.profile.inject_anoncreds(), &verifier.agency_client, &verifier_to_consumer)
+            .update_state(
+                &verifier.profile.inject_wallet(),
+                &verifier.profile.inject_anoncreds_ledger_read(),
+                &verifier.profile.inject_anoncreds(),
+                &verifier.agency_client,
+                &verifier_to_consumer
+            )
             .await
             .unwrap();
         assert_eq!(
@@ -790,7 +840,13 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1))
             .await;
         proof_verifier
-            .update_state(&verifier.profile.inject_anoncreds_ledger_read(), &verifier.profile.inject_anoncreds(), &verifier.agency_client, &verifier_to_consumer)
+            .update_state(
+                &verifier.profile.inject_wallet(),
+                &verifier.profile.inject_anoncreds_ledger_read(),
+                &verifier.profile.inject_anoncreds(),
+                &verifier.agency_client,
+                &verifier_to_consumer
+            )
             .await
             .unwrap();
         assert_eq!(
@@ -810,7 +866,12 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2))
             .await;
         proof_verifier
-            .update_state(&verifier.profile.inject_anoncreds_ledger_read(), &verifier.profile.inject_anoncreds(), &verifier.agency_client, &verifier_to_consumer)
+            .update_state(
+                &verifier.profile.inject_wallet(),
+                &verifier.profile.inject_anoncreds_ledger_read(),
+                &verifier.profile.inject_anoncreds(),
+                &verifier.agency_client,
+                &verifier_to_consumer)
             .await
             .unwrap();
         assert_eq!(
@@ -881,7 +942,12 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1))
             .await;
         proof_verifier
-            .update_state(&verifier.profile.inject_anoncreds_ledger_read(), &verifier.profile.inject_anoncreds(), &verifier.agency_client, &verifier_to_consumer)
+            .update_state(
+                &verifier.profile.inject_wallet(),
+                &verifier.profile.inject_anoncreds_ledger_read(),
+                &verifier.profile.inject_anoncreds(),
+                &verifier.agency_client,
+                &verifier_to_consumer)
             .await
             .unwrap();
         assert_eq!(
@@ -900,7 +966,13 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2))
             .await;
         proof_verifier
-            .update_state(&verifier.profile.inject_anoncreds_ledger_read(), &verifier.profile.inject_anoncreds(), &verifier.agency_client, &verifier_to_consumer)
+            .update_state(
+                &verifier.profile.inject_wallet(),
+                &verifier.profile.inject_anoncreds_ledger_read(),
+                &verifier.profile.inject_anoncreds(),
+                &verifier.agency_client,
+                &verifier_to_consumer
+            )
             .await
             .unwrap();
         assert_eq!(
@@ -971,7 +1043,13 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1))
             .await;
         proof_verifier
-            .update_state(&verifier.profile.inject_anoncreds_ledger_read(), &verifier.profile.inject_anoncreds(), &verifier.agency_client, &verifier_to_consumer)
+            .update_state(
+                &verifier.profile.inject_wallet(),
+                &verifier.profile.inject_anoncreds_ledger_read(),
+                &verifier.profile.inject_anoncreds(),
+                &verifier.agency_client,
+                &verifier_to_consumer
+            )
             .await
             .unwrap();
         assert_eq!(
@@ -990,7 +1068,13 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2))
             .await;
         proof_verifier
-            .update_state(&verifier.profile.inject_anoncreds_ledger_read(), &verifier.profile.inject_anoncreds(), &verifier.agency_client, &verifier_to_consumer)
+            .update_state(
+                &verifier.profile.inject_wallet(),
+                &verifier.profile.inject_anoncreds_ledger_read(),
+                &verifier.profile.inject_anoncreds(),
+                &verifier.agency_client,
+                &verifier_to_consumer
+            )
             .await
             .unwrap();
         assert_eq!(
