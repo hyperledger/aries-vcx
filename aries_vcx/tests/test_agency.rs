@@ -145,9 +145,11 @@ mod integration_tests {
 
             info!("test_connection_send_works:: Test if Send Message works");
             {
-                faber.connection.send_message_closure(&faber.profile).await.unwrap()(AriesMessage::from(
-                    message.clone(),
-                ))
+                faber
+                    .connection
+                    .send_message_closure(faber.profile.inject_wallet())
+                    .await
+                    .unwrap()(AriesMessage::from(message.clone()))
                 .await
                 .unwrap();
             }
@@ -249,9 +251,11 @@ mod integration_tests {
 
                 let credential_offer = OfferCredential::with_decorators(id, content, decorators);
 
-                faber.connection.send_message_closure(&faber.profile).await.unwrap()(AriesMessage::from(
-                    credential_offer,
-                ))
+                faber
+                    .connection
+                    .send_message_closure(faber.profile.inject_wallet())
+                    .await
+                    .unwrap()(AriesMessage::from(credential_offer))
                 .await
                 .unwrap();
 

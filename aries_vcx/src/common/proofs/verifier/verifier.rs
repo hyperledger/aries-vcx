@@ -118,7 +118,7 @@ pub mod unit_tests {
 
             assert_eq!(
                 validate_indy_proof(
-                    &setup.profile.inject_indy_ledger_read(),
+                    &setup.profile.inject_anoncreds_ledger_read(),
                     &setup.profile.inject_anoncreds(),
                     &prover_proof_json,
                     &proof_req_json

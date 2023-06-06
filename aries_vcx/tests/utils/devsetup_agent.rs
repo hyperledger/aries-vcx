@@ -341,7 +341,7 @@ pub mod test_utils {
             };
             self.issuer_credential = Issuer::create("alice_degree").unwrap();
             self.issuer_credential
-                .build_credential_offer_msg(&self.profile, offer_info, None)
+                .build_credential_offer_msg(&self.profile.inject_anoncreds(), offer_info, None)
                 .await
                 .unwrap();
             self.issuer_credential
@@ -414,7 +414,7 @@ pub mod test_utils {
                 .unwrap();
             self.verifier
                 .update_state(
-                    &institution.profile.inject_wallet(),
+                    &self.profile.inject_wallet(),
                     &self.profile.inject_anoncreds_ledger_read(),
                     &self.profile.inject_anoncreds(),
                     &self.agency_client,
@@ -438,7 +438,7 @@ pub mod test_utils {
         ) {
             self.verifier
                 .update_state(
-                    &institution.profile.inject_wallet(),
+                    &self.profile.inject_wallet(),
                     &self.profile.inject_anoncreds_ledger_read(),
                     &self.profile.inject_anoncreds(),
                     &self.agency_client,

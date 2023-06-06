@@ -777,7 +777,7 @@ mod tests {
             prover_select_credentials_and_send_proof(&mut consumer1, &consumer1_to_verifier, None, None).await;
             proof_verifier
                 .update_state(
-                    &institution.profile.inject_wallet(), &institution.profile.inject_anoncreds_ledger_read(), &institution.profile.inject_anoncreds(), &verifier.agency_client, &verifier_to_consumer1)
+                    &verifier.profile.inject_wallet(), &verifier.profile.inject_anoncreds_ledger_read(), &verifier.profile.inject_anoncreds(), &verifier.agency_client, &verifier_to_consumer1)
                 .await
                 .unwrap();
             assert_eq!(
@@ -797,7 +797,12 @@ mod tests {
             prover_select_credentials_and_send_proof(&mut consumer2, &consumer2_to_verifier, None, None).await;
             proof_verifier
                 .update_state(
-                    &institution.profile.inject_wallet(), &institution.profile.inject_anoncreds_ledger_read(), &institution.profile.inject_anoncreds(), &verifier.agency_client, &verifier_to_consumer2)
+                    &verifier.profile.inject_wallet(),
+                    &verifier.profile.inject_anoncreds_ledger_read(),
+                    &verifier.profile.inject_anoncreds(),
+                    &verifier.agency_client,
+                    &verifier_to_consumer2
+                )
                 .await
                 .unwrap();
             assert_eq!(
@@ -834,9 +839,9 @@ mod tests {
             prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, request_name1, None).await;
             proof_verifier
                 .update_state(
-                    &institution.profile.inject_wallet(),
-                    &institution.profile.inject_anoncreds_ledger_read(),
-                    &institution.profile.inject_anoncreds(),
+                    &verifier.profile.inject_wallet(),
+                    &verifier.profile.inject_anoncreds_ledger_read(),
+                    &verifier.profile.inject_anoncreds(),
                     &verifier.agency_client,
                     &verifier_to_consumer,
                 )
@@ -859,9 +864,9 @@ mod tests {
             prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, request_name2, None).await;
             proof_verifier
                 .update_state(
-                    &institution.profile.inject_wallet(),
-                    &institution.profile.inject_anoncreds_ledger_read(),
-                    &institution.profile.inject_anoncreds(),
+                    &verifier.profile.inject_wallet(),
+                    &verifier.profile.inject_anoncreds_ledger_read(),
+                    &verifier.profile.inject_anoncreds(),
                     &verifier.agency_client,
                     &verifier_to_consumer,
                 )
@@ -1045,7 +1050,10 @@ mod tests {
             let mut prover = create_proof(&mut consumer, &consumer_to_issuer, None).await;
             info!("test_real_proof :: retrieving matching credentials");
 
-            let retrieved_credentials = prover.retrieve_credentials(&consumer.profile).await.unwrap();
+            let retrieved_credentials = prover
+                .retrieve_credentials(&consumer.profile.inject_anoncreds())
+                .await
+                .unwrap();
             let selected_credentials = retrieved_to_selected_credentials_simple(&retrieved_credentials, false);
 
             info!("test_real_proof :: generating and sending proof");
@@ -1127,7 +1135,7 @@ mod tests {
                 .await;
             proof_verifier
                 .update_state(
-                    &institution.profile.inject_wallet(), &institution.profile.inject_anoncreds_ledger_read(), &institution.profile.inject_anoncreds(), &verifier.agency_client, &verifier_to_consumer)
+                    &verifier.profile.inject_wallet(), &verifier.profile.inject_anoncreds_ledger_read(), &verifier.profile.inject_anoncreds(), &verifier.agency_client, &verifier_to_consumer)
                 .await
                 .unwrap();
             assert_eq!(
@@ -1147,7 +1155,7 @@ mod tests {
                 .await;
             proof_verifier
                 .update_state(
-                    &institution.profile.inject_wallet(), &institution.profile.inject_anoncreds_ledger_read(), &institution.profile.inject_anoncreds(), &verifier.agency_client, &verifier_to_consumer)
+                    &verifier.profile.inject_wallet(), &verifier.profile.inject_anoncreds_ledger_read(), &verifier.profile.inject_anoncreds(), &verifier.agency_client, &verifier_to_consumer)
                 .await
                 .unwrap();
             assert_eq!(

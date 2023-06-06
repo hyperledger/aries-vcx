@@ -120,9 +120,11 @@ mod integration_tests {
             let tails_file = res.10;
             let rev_reg = res.11;
 
-            assert!(!is_cred_revoked(&setup.profile, &rev_reg_id, &cred_rev_id)
-                .await
-                .unwrap());
+            assert!(
+                !is_cred_revoked(&setup.profile.inject_anoncreds_ledger_read(), &rev_reg_id, &cred_rev_id)
+                    .await
+                    .unwrap()
+            );
 
             let anoncreds = Arc::clone(&setup.profile).inject_anoncreds();
 
@@ -137,9 +139,11 @@ mod integration_tests {
 
             std::thread::sleep(std::time::Duration::from_millis(500));
 
-            assert!(is_cred_revoked(&setup.profile, &rev_reg_id, &cred_rev_id)
-                .await
-                .unwrap());
+            assert!(
+                is_cred_revoked(&setup.profile.inject_anoncreds_ledger_read(), &rev_reg_id, &cred_rev_id)
+                    .await
+                    .unwrap()
+            );
         })
         .await;
     }

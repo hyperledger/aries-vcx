@@ -146,7 +146,7 @@ mod integration_tests {
                     .build()
                     .unwrap();
             let send_message = institution_to_consumer
-                .send_message_closure(&institution.profile)
+                .send_message_closure(institution.profile.inject_wallet())
                 .await
                 .unwrap();
             aries_vcx::handlers::revocation_notification::sender::RevocationNotificationSender::build()
@@ -542,7 +542,7 @@ mod integration_tests {
             let mut prover = create_proof(&mut consumer, &consumer_to_institution, None).await;
             info!("test_revoked_credential_might_still_work :: retrieving matching credentials");
 
-            let retrieved_credentials = prover.retrieve_credentials(&consumer.profile).await.unwrap();
+            let retrieved_credentials = prover.retrieve_credentials(&consumer.profile.inject_anoncreds()).await.unwrap();
             info!(
                 "test_revoked_credential_might_still_work :: prover :: based on proof, retrieved credentials: {:?}",
                 &retrieved_credentials
@@ -623,8 +623,8 @@ mod integration_tests {
         )
         .await;
 
-        assert!(!issuer_credential1.is_revoked(&issuer.profile).await.unwrap());
-        assert!(!issuer_credential2.is_revoked(&issuer.profile).await.unwrap());
+        assert!(!issuer_credential1.is_revoked(&issuer.profile.inject_anoncreds_ledger_read()).await.unwrap());
+        assert!(!issuer_credential2.is_revoked(&issuer.profile.inject_anoncreds_ledger_read()).await.unwrap());
 
         revoke_credential_and_publish_accumulator(&mut issuer, &issuer_credential1, &rev_reg).await;
 
@@ -681,8 +681,8 @@ mod integration_tests {
             PresentationVerificationStatus::Valid
         );
 
-        assert!(issuer_credential1.is_revoked(&issuer.profile).await.unwrap());
-        assert!(!issuer_credential2.is_revoked(&issuer.profile).await.unwrap());
+        assert!(issuer_credential1.is_revoked(&issuer.profile.inject_anoncreds_ledger_read()).await.unwrap());
+        assert!(!issuer_credential2.is_revoked(&issuer.profile.inject_anoncreds_ledger_read()).await.unwrap());
         }).await;
     }
 
@@ -727,8 +727,8 @@ mod integration_tests {
         )
         .await;
 
-        assert!(!issuer_credential1.is_revoked(&issuer.profile).await.unwrap());
-        assert!(!issuer_credential2.is_revoked(&issuer.profile).await.unwrap());
+        assert!(!issuer_credential1.is_revoked(&issuer.profile.inject_anoncreds_ledger_read()).await.unwrap());
+        assert!(!issuer_credential2.is_revoked(&issuer.profile.inject_anoncreds_ledger_read()).await.unwrap());
 
         revoke_credential_and_publish_accumulator(&mut issuer, &issuer_credential2, &rev_reg).await;
 
@@ -782,8 +782,8 @@ mod integration_tests {
             PresentationVerificationStatus::Invalid
         );
 
-        assert!(!issuer_credential1.is_revoked(&issuer.profile).await.unwrap());
-        assert!(issuer_credential2.is_revoked(&issuer.profile).await.unwrap());
+        assert!(!issuer_credential1.is_revoked(&issuer.profile.inject_anoncreds_ledger_read()).await.unwrap());
+        assert!(issuer_credential2.is_revoked(&issuer.profile.inject_anoncreds_ledger_read()).await.unwrap());
         }).await;
     }
 
@@ -879,8 +879,8 @@ mod integration_tests {
             PresentationVerificationStatus::Valid
         );
 
-        assert!(!issuer_credential1.is_revoked(&issuer.profile).await.unwrap());
-        assert!(!issuer_credential2.is_revoked(&issuer.profile).await.unwrap());
+        assert!(!issuer_credential1.is_revoked(&issuer.profile.inject_anoncreds_ledger_read()).await.unwrap());
+        assert!(!issuer_credential2.is_revoked(&issuer.profile.inject_anoncreds_ledger_read()).await.unwrap());
         }).await;
     }
 
@@ -926,8 +926,8 @@ mod integration_tests {
         )
         .await;
 
-        assert!(!issuer_credential1.is_revoked(&issuer.profile).await.unwrap());
-        assert!(!issuer_credential2.is_revoked(&issuer.profile).await.unwrap());
+        assert!(!issuer_credential1.is_revoked(&issuer.profile.inject_anoncreds_ledger_read()).await.unwrap());
+        assert!(!issuer_credential2.is_revoked(&issuer.profile.inject_anoncreds_ledger_read()).await.unwrap());
 
         revoke_credential_and_publish_accumulator(&mut issuer, &issuer_credential1, &rev_reg).await;
 
@@ -980,8 +980,8 @@ mod integration_tests {
             PresentationVerificationStatus::Valid
         );
 
-        assert!(issuer_credential1.is_revoked(&issuer.profile).await.unwrap());
-        assert!(!issuer_credential2.is_revoked(&issuer.profile).await.unwrap());
+        assert!(issuer_credential1.is_revoked(&issuer.profile.inject_anoncreds_ledger_read()).await.unwrap());
+        assert!(!issuer_credential2.is_revoked(&issuer.profile.inject_anoncreds_ledger_read()).await.unwrap());
         }).await;
     }
 
@@ -1027,8 +1027,8 @@ mod integration_tests {
         )
         .await;
 
-        assert!(!issuer_credential1.is_revoked(&issuer.profile).await.unwrap());
-        assert!(!issuer_credential2.is_revoked(&issuer.profile).await.unwrap());
+        assert!(!issuer_credential1.is_revoked(&issuer.profile.inject_anoncreds_ledger_read()).await.unwrap());
+        assert!(!issuer_credential2.is_revoked(&issuer.profile.inject_anoncreds_ledger_read()).await.unwrap());
 
         revoke_credential_and_publish_accumulator(&mut issuer, &issuer_credential2, &rev_reg_2).await;
 
@@ -1082,8 +1082,8 @@ mod integration_tests {
             PresentationVerificationStatus::Invalid
         );
 
-        assert!(!issuer_credential1.is_revoked(&issuer.profile).await.unwrap());
-        assert!(issuer_credential2.is_revoked(&issuer.profile).await.unwrap());
+        assert!(!issuer_credential1.is_revoked(&issuer.profile.inject_anoncreds_ledger_read()).await.unwrap());
+        assert!(issuer_credential2.is_revoked(&issuer.profile.inject_anoncreds_ledger_read()).await.unwrap());
         }).await;
     }
 }

@@ -195,7 +195,7 @@ pub mod test_utils {
         let mut issuer = Issuer::create("1").unwrap();
         info!("create_and_send_nonrevocable_cred_offer :: sending credential offer");
         issuer
-            .build_credential_offer_msg(&faber.profile, offer_info, comment.map(String::from))
+            .build_credential_offer_msg(&faber.profile.inject_anoncreds(), offer_info, comment.map(String::from))
             .await
             .unwrap();
         issuer
@@ -230,7 +230,7 @@ pub mod test_utils {
         let mut issuer = Issuer::create("1").unwrap();
         info!("create_and_send_cred_offer :: sending credential offer");
         issuer
-            .build_credential_offer_msg(&faber.profile, offer_info, comment.map(String::from))
+            .build_credential_offer_msg(&faber.profile.inject_anoncreds(), offer_info, comment.map(String::from))
             .await
             .unwrap();
         issuer
@@ -436,7 +436,7 @@ pub mod test_utils {
             tails_file,
         };
         issuer
-            .build_credential_offer_msg(&faber.profile, offer_info, Some("comment".into()))
+            .build_credential_offer_msg(&faber.profile.inject_anoncreds(), offer_info, Some("comment".into()))
             .await
             .unwrap();
         issuer
@@ -479,7 +479,7 @@ pub mod test_utils {
             tails_file,
         };
         issuer
-            .build_credential_offer_msg(&faber.profile, offer_info, Some("comment".into()))
+            .build_credential_offer_msg(&faber.profile.inject_anoncreds(), offer_info, Some("comment".into()))
             .await
             .unwrap();
         issuer
@@ -592,7 +592,13 @@ pub mod test_utils {
 
         info!("send_credential >>> storing credential");
         assert_eq!(thread_id, holder_credential.get_thread_id().unwrap());
-        assert_eq!(holder_credential.is_revokable(&alice.profile).await.unwrap(), revokable);
+        assert_eq!(
+            holder_credential
+                .is_revokable(&alice.profile.inject_anoncreds_ledger_read())
+                .await
+                .unwrap(),
+            revokable
+        );
         holder_credential
             .update_state(
                 &alice.profile.inject_anoncreds_ledger_read(),
@@ -604,7 +610,13 @@ pub mod test_utils {
             .await
             .unwrap();
         assert_eq!(HolderState::Finished, holder_credential.get_state());
-        assert_eq!(holder_credential.is_revokable(&alice.profile).await.unwrap(), revokable);
+        assert_eq!(
+            holder_credential
+                .is_revokable(&alice.profile.inject_anoncreds_ledger_read())
+                .await
+                .unwrap(),
+            revokable
+        );
         assert_eq!(thread_id, holder_credential.get_thread_id().unwrap());
 
         if revokable {
@@ -645,7 +657,13 @@ pub mod test_utils {
         cred_def_id: &str,
     ) {
         prover
-            .update_state(&alice.profile.inject_wallet(), &alice.agency_client, connection)
+            .update_state(
+                &alice.profile.inject_anoncreds_ledger_read(),
+                &alice.profile.inject_anoncreds(),
+                &alice.profile.inject_wallet(),
+                &alice.agency_client,
+                connection,
+            )
             .await
             .unwrap();
         assert_eq!(prover.get_state(), ProverState::PresentationRequestReceived);
@@ -742,7 +760,13 @@ pub mod test_utils {
     ) {
         assert_eq!(prover.get_state(), ProverState::PresentationProposalSent);
         prover
-            .update_state(&alice.profile.inject_wallet(), &alice.agency_client, connection)
+            .update_state(
+                &alice.profile.inject_anoncreds_ledger_read(),
+                &alice.profile.inject_anoncreds(),
+                &alice.profile.inject_wallet(),
+                &alice.agency_client,
+                connection,
+            )
             .await
             .unwrap();
         assert_eq!(prover.get_state(), ProverState::Failed);
@@ -842,7 +866,12 @@ pub mod test_utils {
             selected_credentials
         );
         prover
-            .generate_presentation(&alice.profile, selected_credentials, HashMap::new())
+            .generate_presentation(
+                &alice.profile.inject_anoncreds_ledger_read(),
+                &alice.profile.inject_anoncreds(),
+                selected_credentials,
+                HashMap::new(),
+            )
             .await
             .unwrap();
         assert_eq!(thread_id, prover.get_thread_id().unwrap());
@@ -1104,11 +1133,20 @@ pub mod test_utils {
         requested_values: Option<&str>,
     ) -> SelectedCredentials {
         prover
-            .update_state(&alice.profile.inject_wallet(), &alice.agency_client, connection)
+            .update_state(
+                &alice.profile.inject_anoncreds_ledger_read(),
+                &alice.profile.inject_anoncreds(),
+                &alice.profile.inject_wallet(),
+                &alice.agency_client,
+                connection,
+            )
             .await
             .unwrap();
         assert_eq!(prover.get_state(), ProverState::PresentationRequestReceived);
-        let retrieved_credentials = prover.retrieve_credentials(&alice.profile).await.unwrap();
+        let retrieved_credentials = prover
+            .retrieve_credentials(&alice.profile.inject_anoncreds())
+            .await
+            .unwrap();
         let selected_credentials = match requested_values {
             Some(requested_values) => {
                 let credential_data = prover.presentation_request_data().unwrap();

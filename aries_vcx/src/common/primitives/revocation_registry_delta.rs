@@ -71,11 +71,14 @@ pub mod integration_tests {
             let (_, _, _, _, rev_reg_id, _, _) =
                 create_and_store_credential_def(&setup.profile, &setup.institution_did, attrs).await;
 
-            assert!(
-                RevocationRegistryDelta::create_from_ledger(&setup.profile, &rev_reg_id, None, None)
-                    .await
-                    .is_ok()
-            );
+            assert!(RevocationRegistryDelta::create_from_ledger(
+                &setup.profile.inject_anoncreds_ledger_read(),
+                &rev_reg_id,
+                None,
+                None
+            )
+            .await
+            .is_ok());
         })
         .await;
     }

@@ -257,12 +257,16 @@ pub mod pool_tests {
     #[tokio::test]
     #[ignore]
     async fn test_pool_build_rev_states_json_empty() {
-        SetupProfile::run(|_setup| async move {
+        SetupProfile::run(|setup| async move {
             // empty vector
             assert_eq!(
-                build_rev_states_json(&_setup.profile, Vec::new().as_mut())
-                    .await
-                    .unwrap(),
+                build_rev_states_json(
+                    &setup.profile.inject_anoncreds_ledger_read(),
+                    &setup.profile.inject_anoncreds(),
+                    Vec::new().as_mut()
+                )
+                .await
+                .unwrap(),
                 "{}".to_string()
             );
 
@@ -280,9 +284,13 @@ pub mod pool_tests {
                 revealed: None,
             };
             assert_eq!(
-                build_rev_states_json(&_setup.profile, vec![cred1].as_mut())
-                    .await
-                    .unwrap(),
+                build_rev_states_json(
+                    &setup.profile.inject_anoncreds_ledger_read(),
+                    &setup.profile.inject_anoncreds(),
+                    vec![cred1].as_mut()
+                )
+                .await
+                .unwrap(),
                 "{}".to_string()
             );
         })
@@ -354,7 +362,9 @@ pub mod unit_tests {
         };
         let creds = vec![cred1, cred2];
 
-        let credential_def = build_cred_defs_json_prover(&mock_profile(), &creds).await.unwrap();
+        let credential_def = build_cred_defs_json_prover(&mock_profile().inject_anoncreds_ledger_read(), &creds)
+            .await
+            .unwrap();
         assert!(credential_def.len() > 0);
         assert!(credential_def.contains(r#""id":"V4SGRU86Z58d6TV7PBUe6f:3:CL:47:tag1","schemaId":"47""#));
     }
@@ -375,7 +385,7 @@ pub mod unit_tests {
                 timestamp: None,
                 revealed: None,
             }];
-            let err_kind = build_cred_defs_json_prover(&profile, &credential_ids)
+            let err_kind = build_cred_defs_json_prover(&profile.inject_anoncreds_ledger_read(), &credential_ids)
                 .await
                 .unwrap_err()
                 .kind();
@@ -402,7 +412,7 @@ pub mod unit_tests {
             }];
 
             assert_eq!(
-                build_schemas_json_prover(&profile, &credential_ids)
+                build_schemas_json_prover(&profile.inject_anoncreds_ledger_read(), &credential_ids)
                     .await
                     .unwrap_err()
                     .kind(),
@@ -417,7 +427,9 @@ pub mod unit_tests {
         let _setup = SetupMocks::init();
 
         assert_eq!(
-            build_schemas_json_prover(&mock_profile(), &Vec::new()).await.unwrap(),
+            build_schemas_json_prover(&mock_profile().inject_anoncreds_ledger_read(), &Vec::new())
+                .await
+                .unwrap(),
             "{}".to_string()
         );
 
@@ -447,7 +459,9 @@ pub mod unit_tests {
         };
         let creds = vec![cred1, cred2];
 
-        let schemas = build_schemas_json_prover(&mock_profile(), &creds).await.unwrap();
+        let schemas = build_schemas_json_prover(&mock_profile().inject_anoncreds_ledger_read(), &creds)
+            .await
+            .unwrap();
         assert!(schemas.len() > 0);
         assert!(schemas.contains(r#""id":"2hoqvcwupRTUNkXn6ArYzs:2:test-licence:4.4.4","name":"test-licence""#));
     }
@@ -710,9 +724,13 @@ pub mod unit_tests {
             revealed: None,
         };
         let mut cred_info = vec![cred1];
-        let states = build_rev_states_json(&mock_profile(), cred_info.as_mut())
-            .await
-            .unwrap();
+        let states = build_rev_states_json(
+            &mock_profile().inject_anoncreds_ledger_read(),
+            &mock_profile().inject_anoncreds(),
+            cred_info.as_mut(),
+        )
+        .await
+        .unwrap();
         let rev_state_json: Value = serde_json::from_str(REV_STATE_JSON).unwrap();
         let expected = json!({REV_REG_ID: {"1": rev_state_json}}).to_string();
         assert_eq!(states, expected);
