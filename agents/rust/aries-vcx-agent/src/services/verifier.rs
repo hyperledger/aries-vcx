@@ -90,7 +90,12 @@ impl ServiceVerifier {
         });
 
         verifier
-            .verify_presentation(&self.profile, presentation, send_closure)
+            .verify_presentation(
+                &self.profile.inject_anoncreds_ledger_read(),
+                &self.profile.inject_anoncreds(),
+                presentation,
+                send_closure,
+            )
             .await?;
         self.verifiers
             .insert(thread_id, VerifierWrapper::new(verifier, &connection_id))?;

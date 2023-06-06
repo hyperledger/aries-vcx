@@ -16,6 +16,8 @@ use crate::protocols::proof_presentation::verifier::states::presentation_request
 use crate::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
 use crate::protocols::proof_presentation::verifier::verify_thread_id;
 use crate::protocols::SendClosure;
+use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
+use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
 use chrono::Utc;
 use messages::decorators::thread::Thread;
 use messages::decorators::timing::Timing;
@@ -219,9 +221,10 @@ impl VerifierSM {
         })
     }
 
-    pub async fn verify_presentation(
+    pub async fn verify_presentation<'a>(
         self,
-        profile: &Arc<dyn Profile>,
+        ledger: &'a Arc<dyn AnoncredsLedgerRead>,
+        anoncreds: &'a Arc<dyn BaseAnonCreds>,
         presentation: Presentation,
         send_message: SendClosure,
     ) -> VcxResult<Self> {
@@ -231,7 +234,9 @@ impl VerifierSM {
         )?;
         let state = match self.state {
             VerifierFullState::PresentationRequestSent(state) => {
-                let verification_result = state.verify_presentation(profile, &presentation, &self.thread_id).await;
+                let verification_result = state
+                    .verify_presentation(ledger, anoncreds, &presentation, &self.thread_id)
+                    .await;
 
                 let (sm, message) = match verification_result {
                     Ok(()) => {
@@ -383,7 +388,8 @@ impl VerifierSM {
 
     pub async fn step(
         self,
-        profile: &Arc<dyn Profile>,
+        ledger: &Arc<dyn AnoncredsLedgerRead>,
+        anoncreds: &Arc<dyn BaseAnonCreds>,
         message: VerifierMessages,
         send_message: Option<SendClosure>,
     ) -> VcxResult<Self> {
@@ -402,7 +408,8 @@ impl VerifierSM {
                     AriesVcxErrorKind::InvalidState,
                     "Attempted to call undefined send_message callback",
                 ))?;
-                self.verify_presentation(profile, presentation, send_message).await?
+                self.verify_presentation(ledger, anoncreds, presentation, send_message)
+                    .await?
             }
             VerifierMessages::SendPresentationAck() => {
                 let send_message = send_message.ok_or(AriesVcxError::from_msg(

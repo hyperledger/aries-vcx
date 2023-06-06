@@ -348,7 +348,7 @@ pub async fn send_message_closure(handle: u32) -> LibvcxResult<SendClosure> {
     let connection = CONNECTION_MAP.get_cloned(handle)?;
     let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
     connection
-        .send_message_closure(&profile)
+        .send_message_closure(profile.inject_wallet())
         .await
         .map_err(|err| err.into())
 }

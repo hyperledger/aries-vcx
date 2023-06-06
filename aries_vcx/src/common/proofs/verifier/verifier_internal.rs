@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use aries_vcx_core::errors::error::AriesVcxCoreErrorKind;
+use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
 use serde_json;
 use serde_json::Value;
 
@@ -97,11 +98,10 @@ pub fn validate_proof_revealed_attributes(proof_json: &str) -> VcxResult<()> {
 }
 
 pub async fn build_cred_defs_json_verifier(
-    profile: &Arc<dyn Profile>,
+    ledger: &Arc<dyn AnoncredsLedgerRead>,
     credential_data: &[CredInfoVerifier],
 ) -> VcxResult<String> {
     debug!("building credential_def_json for proof validation");
-    let ledger = Arc::clone(profile).inject_anoncreds_ledger_read();
     let mut credential_json = json!({});
 
     for cred_info in credential_data.iter() {
@@ -124,12 +124,11 @@ pub async fn build_cred_defs_json_verifier(
 }
 
 pub async fn build_schemas_json_verifier(
-    profile: &Arc<dyn Profile>,
+    ledger: &Arc<dyn AnoncredsLedgerRead>,
     credential_data: &[CredInfoVerifier],
 ) -> VcxResult<String> {
     debug!("building schemas json for proof validation");
 
-    let ledger = Arc::clone(profile).inject_anoncreds_ledger_read();
     let mut schemas_json = json!({});
 
     for cred_info in credential_data.iter() {
@@ -153,12 +152,11 @@ pub async fn build_schemas_json_verifier(
 }
 
 pub async fn build_rev_reg_defs_json(
-    profile: &Arc<dyn Profile>,
+    ledger: &Arc<dyn AnoncredsLedgerRead>,
     credential_data: &[CredInfoVerifier],
 ) -> VcxResult<String> {
     debug!("building rev_reg_def_json for proof validation");
 
-    let ledger = Arc::clone(profile).inject_anoncreds_ledger_read();
     let mut rev_reg_defs_json = json!({});
 
     for cred_info in credential_data.iter() {
@@ -180,10 +178,12 @@ pub async fn build_rev_reg_defs_json(
     Ok(rev_reg_defs_json.to_string())
 }
 
-pub async fn build_rev_reg_json(profile: &Arc<dyn Profile>, credential_data: &[CredInfoVerifier]) -> VcxResult<String> {
+pub async fn build_rev_reg_json(
+    ledger: &Arc<dyn AnoncredsLedgerRead>,
+    credential_data: &[CredInfoVerifier],
+) -> VcxResult<String> {
     debug!("building rev_reg_json for proof validation");
 
-    let ledger = Arc::clone(profile).inject_anoncreds_ledger_read();
     let mut rev_regs_json = json!({});
 
     for cred_info in credential_data.iter() {

@@ -472,7 +472,8 @@ mod integration_tests {
             // verifier receives the presentation
             verifier
                 .verify_presentation(
-                    &setup.profile,
+                    &setup.profile.inject_anoncreds_ledger_read(),
+                    &setup.profile.inject_anoncreds(),
                     presentation,
                     Box::new(|_: AriesMessage| Box::pin(async { Ok(()) })),
                 )
@@ -568,7 +569,9 @@ mod tests {
             info!("test_proof_should_be_validated :: verifier :: going to verify proof");
             verifier
                 .update_state(
-                    &institution.profile,
+                    &institution.profile.inject_wallet(),
+                    &institution.profile.inject_anoncreds_ledger_read(),
+                    &institution.profile.inject_anoncreds(),
                     &institution.agency_client,
                     &institution_to_consumer,
                 )
@@ -625,7 +628,9 @@ mod tests {
             info!("test_proof_with_predicates_should_be_validated :: verifier :: going to verify proof");
             verifier
                 .update_state(
-                    &institution.profile,
+                    &institution.profile.inject_wallet(),
+                    &institution.profile.inject_anoncreds_ledger_read(),
+                    &institution.profile.inject_anoncreds(),
                     &institution.agency_client,
                     &institution_to_consumer,
                 )
@@ -744,7 +749,8 @@ mod tests {
                 .await;
             prover_select_credentials_and_send_proof(&mut consumer1, &consumer1_to_verifier, None, None).await;
             proof_verifier
-                .update_state(&verifier.profile, &verifier.agency_client, &verifier_to_consumer1)
+                .update_state(
+                    &institution.profile.inject_wallet(), &institution.profile.inject_anoncreds_ledger_read(), &institution.profile.inject_anoncreds(), &verifier.agency_client, &verifier_to_consumer1)
                 .await
                 .unwrap();
             assert_eq!(
@@ -763,7 +769,8 @@ mod tests {
                 .await;
             prover_select_credentials_and_send_proof(&mut consumer2, &consumer2_to_verifier, None, None).await;
             proof_verifier
-                .update_state(&verifier.profile, &verifier.agency_client, &verifier_to_consumer2)
+                .update_state(
+                    &institution.profile.inject_wallet(), &institution.profile.inject_anoncreds_ledger_read(), &institution.profile.inject_anoncreds(), &verifier.agency_client, &verifier_to_consumer2)
                 .await
                 .unwrap();
             assert_eq!(
@@ -799,7 +806,13 @@ mod tests {
             .await;
             prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, request_name1, None).await;
             proof_verifier
-                .update_state(&verifier.profile, &verifier.agency_client, &verifier_to_consumer)
+                .update_state(
+                    &institution.profile.inject_wallet(),
+                    &institution.profile.inject_anoncreds_ledger_read(),
+                    &institution.profile.inject_anoncreds(),
+                    &verifier.agency_client,
+                    &verifier_to_consumer,
+                )
                 .await
                 .unwrap();
             assert_eq!(
@@ -818,7 +831,13 @@ mod tests {
             .await;
             prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, request_name2, None).await;
             proof_verifier
-                .update_state(&verifier.profile, &verifier.agency_client, &verifier_to_consumer)
+                .update_state(
+                    &institution.profile.inject_wallet(),
+                    &institution.profile.inject_anoncreds_ledger_read(),
+                    &institution.profile.inject_anoncreds(),
+                    &verifier.agency_client,
+                    &verifier_to_consumer,
+                )
                 .await
                 .unwrap();
             assert_eq!(
@@ -867,7 +886,9 @@ mod tests {
             prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_institution, request_name1, None).await;
             verifier
                 .update_state(
-                    &institution.profile,
+                    &institution.profile.inject_wallet(),
+                    &institution.profile.inject_anoncreds_ledger_read(),
+                    &institution.profile.inject_anoncreds(),
                     &institution.agency_client,
                     &institution_to_consumer,
                 )
@@ -890,7 +911,9 @@ mod tests {
             prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_institution, request_name2, None).await;
             verifier
                 .update_state(
-                    &institution.profile,
+                    &institution.profile.inject_wallet(),
+                    &institution.profile.inject_anoncreds_ledger_read(),
+                    &institution.profile.inject_anoncreds(),
                     &institution.agency_client,
                     &institution_to_consumer,
                 )
@@ -1006,7 +1029,13 @@ mod tests {
 
             info!("test_real_proof :: AS INSTITUTION VALIDATE PROOF");
             verifier
-                .update_state(&institution.profile, &institution.agency_client, &issuer_to_consumer)
+                .update_state(
+                    &institution.profile.inject_wallet(),
+                    &institution.profile.inject_anoncreds_ledger_read(),
+                    &institution.profile.inject_anoncreds(),
+                    &institution.agency_client,
+                    &issuer_to_consumer,
+                )
                 .await
                 .unwrap();
             assert_eq!(
@@ -1070,7 +1099,8 @@ mod tests {
             prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1))
                 .await;
             proof_verifier
-                .update_state(&verifier.profile, &verifier.agency_client, &verifier_to_consumer)
+                .update_state(
+                    &institution.profile.inject_wallet(), &institution.profile.inject_anoncreds_ledger_read(), &institution.profile.inject_anoncreds(), &verifier.agency_client, &verifier_to_consumer)
                 .await
                 .unwrap();
             assert_eq!(
@@ -1089,7 +1119,8 @@ mod tests {
             prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2))
                 .await;
             proof_verifier
-                .update_state(&verifier.profile, &verifier.agency_client, &verifier_to_consumer)
+                .update_state(
+                    &institution.profile.inject_wallet(), &institution.profile.inject_anoncreds_ledger_read(), &institution.profile.inject_anoncreds(), &verifier.agency_client, &verifier_to_consumer)
                 .await
                 .unwrap();
             assert_eq!(

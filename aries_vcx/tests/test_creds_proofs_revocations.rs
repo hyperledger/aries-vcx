@@ -82,7 +82,9 @@ mod integration_tests {
             info!("test_basic_revocation :: verifier :: going to verify proof");
             verifier
                 .update_state(
-                    &institution.profile,
+                    &institution.profile.inject_wallet(),
+                    &institution.profile.inject_anoncreds_ledger_read(),
+                    &institution.profile.inject_anoncreds(),
                     &institution.agency_client,
                     &institution_to_consumer,
                 )
@@ -190,7 +192,9 @@ mod integration_tests {
 
             verifier
                 .update_state(
-                    &institution.profile,
+                    &institution.profile.inject_wallet(),
+                    &institution.profile.inject_anoncreds_ledger_read(),
+                    &institution.profile.inject_anoncreds(),
                     &institution.agency_client,
                     &institution_to_consumer,
                 )
@@ -219,7 +223,9 @@ mod integration_tests {
 
             verifier
                 .update_state(
-                    &institution.profile,
+                    &institution.profile.inject_wallet(),
+                    &institution.profile.inject_anoncreds_ledger_read(),
+                    &institution.profile.inject_anoncreds(),
                     &institution.agency_client,
                     &institution_to_consumer,
                 )
@@ -331,7 +337,8 @@ mod integration_tests {
 
         verifier1
             .update_state(
-                &institution.profile,
+                &institution.profile.inject_anoncreds_ledger_read(),
+                &institution.profile.inject_anoncreds(),
                 &institution.agency_client,
                 &institution_to_consumer1,
             )
@@ -339,7 +346,8 @@ mod integration_tests {
             .unwrap();
         verifier2
             .update_state(
-                &institution.profile,
+                &institution.profile.inject_anoncreds_ledger_read(),
+                &institution.profile.inject_anoncreds(),
                 &institution.agency_client,
                 &institution_to_consumer2,
             )
@@ -347,7 +355,8 @@ mod integration_tests {
             .unwrap();
         verifier3
             .update_state(
-                &institution.profile,
+                &institution.profile.inject_anoncreds_ledger_read(),
+                &institution.profile.inject_anoncreds(),
                 &institution.agency_client,
                 &institution_to_consumer3,
             )
@@ -408,7 +417,8 @@ mod integration_tests {
 
         verifier1
             .update_state(
-                &institution.profile,
+                &institution.profile.inject_anoncreds_ledger_read(),
+                &institution.profile.inject_anoncreds(),
                 &institution.agency_client,
                 &institution_to_consumer1,
             )
@@ -416,7 +426,8 @@ mod integration_tests {
             .unwrap();
         verifier2
             .update_state(
-                &institution.profile,
+                &institution.profile.inject_anoncreds_ledger_read(),
+                &institution.profile.inject_anoncreds(),
                 &institution.agency_client,
                 &institution_to_consumer2,
             )
@@ -424,7 +435,8 @@ mod integration_tests {
             .unwrap();
         verifier3
             .update_state(
-                &institution.profile,
+                &institution.profile.inject_anoncreds_ledger_read(),
+                &institution.profile.inject_anoncreds(),
                 &institution.agency_client,
                 &institution_to_consumer3,
             )
@@ -526,7 +538,9 @@ mod integration_tests {
             info!("test_revoked_credential_might_still_work :: verifier :: going to verify proof");
             verifier
                 .update_state(
-                    &institution.profile,
+                    &institution.profile.inject_wallet(),
+                    &institution.profile.inject_anoncreds_ledger_read(),
+                    &institution.profile.inject_anoncreds(),
                     &institution.agency_client,
                     &institution_to_consumer,
                 )
@@ -598,7 +612,7 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1))
             .await;
         proof_verifier
-            .update_state(&verifier.profile, &verifier.agency_client, &verifier_to_consumer)
+            .update_state(&verifier.profile.inject_anoncreds_ledger_read(), &verifier.profile.inject_anoncreds(), &verifier.agency_client, &verifier_to_consumer)
             .await
             .unwrap();
             assert_eq!(
@@ -621,7 +635,7 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2))
             .await;
         proof_verifier
-            .update_state(&verifier.profile, &verifier.agency_client, &verifier_to_consumer)
+            .update_state(&verifier.profile.inject_anoncreds_ledger_read(), &verifier.profile.inject_anoncreds(), &verifier.agency_client, &verifier_to_consumer)
             .await
             .unwrap();
         assert_eq!(
@@ -691,7 +705,7 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1))
             .await;
         proof_verifier
-            .update_state(&verifier.profile, &verifier.agency_client, &verifier_to_consumer)
+            .update_state(&verifier.profile.inject_anoncreds_ledger_read(), &verifier.profile.inject_anoncreds(), &verifier.agency_client, &verifier_to_consumer)
             .await
             .unwrap();
         assert_eq!(
@@ -710,7 +724,7 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2))
             .await;
         proof_verifier
-            .update_state(&verifier.profile, &verifier.agency_client, &verifier_to_consumer)
+            .update_state(&verifier.profile.inject_anoncreds_ledger_read(), &verifier.profile.inject_anoncreds(), &verifier.agency_client, &verifier_to_consumer)
             .await
             .unwrap();
         assert_eq!(
@@ -776,7 +790,7 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1))
             .await;
         proof_verifier
-            .update_state(&verifier.profile, &verifier.agency_client, &verifier_to_consumer)
+            .update_state(&verifier.profile.inject_anoncreds_ledger_read(), &verifier.profile.inject_anoncreds(), &verifier.agency_client, &verifier_to_consumer)
             .await
             .unwrap();
         assert_eq!(
@@ -796,7 +810,7 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2))
             .await;
         proof_verifier
-            .update_state(&verifier.profile, &verifier.agency_client, &verifier_to_consumer)
+            .update_state(&verifier.profile.inject_anoncreds_ledger_read(), &verifier.profile.inject_anoncreds(), &verifier.agency_client, &verifier_to_consumer)
             .await
             .unwrap();
         assert_eq!(
@@ -867,7 +881,7 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1))
             .await;
         proof_verifier
-            .update_state(&verifier.profile, &verifier.agency_client, &verifier_to_consumer)
+            .update_state(&verifier.profile.inject_anoncreds_ledger_read(), &verifier.profile.inject_anoncreds(), &verifier.agency_client, &verifier_to_consumer)
             .await
             .unwrap();
         assert_eq!(
@@ -886,7 +900,7 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2))
             .await;
         proof_verifier
-            .update_state(&verifier.profile, &verifier.agency_client, &verifier_to_consumer)
+            .update_state(&verifier.profile.inject_anoncreds_ledger_read(), &verifier.profile.inject_anoncreds(), &verifier.agency_client, &verifier_to_consumer)
             .await
             .unwrap();
         assert_eq!(
@@ -957,7 +971,7 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1))
             .await;
         proof_verifier
-            .update_state(&verifier.profile, &verifier.agency_client, &verifier_to_consumer)
+            .update_state(&verifier.profile.inject_anoncreds_ledger_read(), &verifier.profile.inject_anoncreds(), &verifier.agency_client, &verifier_to_consumer)
             .await
             .unwrap();
         assert_eq!(
@@ -976,7 +990,7 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2))
             .await;
         proof_verifier
-            .update_state(&verifier.profile, &verifier.agency_client, &verifier_to_consumer)
+            .update_state(&verifier.profile.inject_anoncreds_ledger_read(), &verifier.profile.inject_anoncreds(), &verifier.agency_client, &verifier_to_consumer)
             .await
             .unwrap();
         assert_eq!(

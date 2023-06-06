@@ -385,7 +385,13 @@ pub mod test_utils {
                 .await
                 .unwrap();
             self.verifier
-                .update_state(&self.profile, &self.agency_client, &self.connection)
+                .update_state(
+                    &institution.profile.inject_wallet(),
+                    &self.profile.inject_anoncreds_ledger_read(),
+                    &self.profile.inject_anoncreds(),
+                    &self.agency_client,
+                    &self.connection,
+                )
                 .await
                 .unwrap();
 
@@ -403,7 +409,13 @@ pub mod test_utils {
             expected_verification_status: PresentationVerificationStatus,
         ) {
             self.verifier
-                .update_state(&self.profile, &self.agency_client, &self.connection)
+                .update_state(
+                    &institution.profile.inject_wallet(),
+                    &self.profile.inject_anoncreds_ledger_read(),
+                    &self.profile.inject_anoncreds(),
+                    &self.agency_client,
+                    &self.connection,
+                )
                 .await
                 .unwrap();
             assert_eq!(expected_state, self.verifier.get_state());

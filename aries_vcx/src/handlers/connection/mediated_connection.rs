@@ -24,6 +24,7 @@ use serde_json::Value;
 use agency_client::agency_client::AgencyClient;
 use agency_client::api::downloaded_message::DownloadedMessage;
 use agency_client::MessageStatusCode;
+use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use url::Url;
 use uuid::Uuid;
 
@@ -776,14 +777,13 @@ impl MediatedConnection {
             .await
     }
 
-    pub async fn send_message_closure(&self, profile: &Arc<dyn Profile>) -> VcxResult<SendClosure> {
+    pub async fn send_message_closure(&self, wallet: Arc<dyn BaseWallet>) -> VcxResult<SendClosure> {
         trace!("send_message_closure >>>");
         let did_doc = self.their_did_doc().ok_or(AriesVcxError::from_msg(
             AriesVcxErrorKind::NotReady,
             "Cannot send message: Remote Connection information is not set",
         ))?;
         let sender_vk = self.pairwise_info().pw_vk.clone();
-        let wallet = profile.inject_wallet();
         Ok(Box::new(move |message: AriesMessage| {
             Box::pin(send_message(wallet, sender_vk.clone(), did_doc.clone(), message))
         }))
@@ -819,13 +819,13 @@ impl MediatedConnection {
     pub async fn send_generic_message(&self, profile: &Arc<dyn Profile>, message: &str) -> VcxResult<String> {
         trace!("MediatedConnection::send_generic_message >>> message: {:?}", message);
         let message = Self::build_basic_message(message);
-        let send_message = self.send_message_closure(profile).await?;
+        let send_message = self.send_message_closure(profile.inject_wallet()).await?;
         send_message(message).await.map(|_| String::new())
     }
 
     pub async fn send_a2a_message(&self, profile: &Arc<dyn Profile>, message: &AriesMessage) -> VcxResult<String> {
         trace!("MediatedConnection::send_a2a_message >>> message: {:?}", message);
-        let send_message = self.send_message_closure(profile).await?;
+        let send_message = self.send_message_closure(profile.inject_wallet()).await?;
         send_message(message.clone()).await.map(|_| String::new())
     }
 
@@ -835,7 +835,9 @@ impl MediatedConnection {
         comment: Option<String>,
     ) -> VcxResult<TrustPingSender> {
         let mut trust_ping = TrustPingSender::build(true, comment);
-        trust_ping.send_ping(self.send_message_closure(profile).await?).await?;
+        trust_ping
+            .send_ping(self.send_message_closure(profile.inject_wallet()).await?)
+            .await?;
         Ok(trust_ping)
     }
 
@@ -859,7 +861,7 @@ impl MediatedConnection {
                 ));
             }
         };
-        let send_message = self.send_message_closure(profile).await?;
+        let send_message = self.send_message_closure(profile.inject_wallet()).await?;
         send_message(build_handshake_reuse_msg(&oob).into()).await
     }
 

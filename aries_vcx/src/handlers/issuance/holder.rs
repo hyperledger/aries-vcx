@@ -169,7 +169,7 @@ impl Holder {
         notification: Revoke,
     ) -> VcxResult<()> {
         if self.holder_sm.is_revokable(profile).await? {
-            let send_message = connection.send_message_closure(profile).await?;
+            let send_message = connection.send_message_closure(profile.inject_wallet()).await?;
             // TODO: Store to remember notification was received along with details
             RevocationNotificationReceiver::build(self.get_rev_reg_id()?, self.get_cred_rev_id(profile).await?)
                 .handle_revocation_notification(notification, send_message)
@@ -207,7 +207,7 @@ impl Holder {
         if self.is_terminal_state() {
             return Ok(self.get_state());
         }
-        let send_message = connection.send_message_closure(profile).await?;
+        let send_message = connection.send_message_closure(profile.inject_wallet()).await?;
 
         let messages = connection.get_messages(agency_client).await?;
         if let Some((uid, msg)) = self.find_message_to_handle(messages) {

@@ -237,7 +237,7 @@ impl Prover {
         if !self.progressable_by_message() {
             return Ok(self.get_state());
         }
-        let send_message = connection.send_message_closure(profile).await?;
+        let send_message = connection.send_message_closure(profile.inject_wallet()).await?;
 
         let messages = connection.get_messages(agency_client).await?;
         if let Some((uid, msg)) = self.find_message_to_handle(messages) {
