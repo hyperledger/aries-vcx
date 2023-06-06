@@ -78,23 +78,23 @@ impl VdrProxyProfile {
 
 #[async_trait]
 impl Profile for VdrProxyProfile {
-    fn inject_indy_ledger_read(self: Arc<Self>) -> Arc<dyn IndyLedgerRead> {
+    fn inject_indy_ledger_read(&self) -> Arc<dyn IndyLedgerRead> {
         Arc::clone(&self.indy_ledger_read)
     }
 
-    fn inject_indy_ledger_write(self: Arc<Self>) -> Arc<dyn IndyLedgerWrite> {
+    fn inject_indy_ledger_write(&self) -> Arc<dyn IndyLedgerWrite> {
         Arc::clone(&self.indy_ledger_write)
     }
 
-    fn inject_anoncreds(self: Arc<Self>) -> Arc<dyn BaseAnonCreds> {
+    fn inject_anoncreds(&self) -> Arc<dyn BaseAnonCreds> {
         Arc::clone(&self.anoncreds)
     }
 
-    fn inject_anoncreds_ledger_read(self: Arc<Self>) -> Arc<dyn AnoncredsLedgerRead> {
+    fn inject_anoncreds_ledger_read(&self) -> Arc<dyn AnoncredsLedgerRead> {
         Arc::clone(&self.anoncreds_ledger_read)
     }
 
-    fn inject_anoncreds_ledger_write(self: Arc<Self>) -> Arc<dyn AnoncredsLedgerWrite> {
+    fn inject_anoncreds_ledger_write(&self) -> Arc<dyn AnoncredsLedgerWrite> {
         Arc::clone(&self.anoncreds_ledger_write)
     }
 
@@ -102,7 +102,7 @@ impl Profile for VdrProxyProfile {
         Arc::clone(&self.wallet)
     }
 
-    fn update_taa_configuration(self: Arc<Self>, taa_options: TxnAuthrAgrmtOptions) -> VcxResult<()> {
+    fn update_taa_configuration(&self, taa_options: TxnAuthrAgrmtOptions) -> VcxResult<()> {
         self.taa_configurator
             .set_txn_author_agreement_options(taa_options)
             .map_err(|e| e.into())
