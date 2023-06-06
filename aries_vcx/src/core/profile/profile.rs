@@ -1,5 +1,6 @@
 use std::sync::{Arc, RwLock};
 
+use crate::errors::error::VcxResult;
 use aries_vcx_core::ledger::base_ledger::{TaaConfigurator, TxnAuthrAgrmtOptions};
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds,
@@ -22,5 +23,5 @@ pub trait Profile: std::fmt::Debug + Send + Sync {
 
     fn inject_wallet(&self) -> Arc<dyn BaseWallet>;
 
-    async fn update_taa_configuration(self: Arc<Self>, taa_options: TxnAuthrAgrmtOptions);
+    fn update_taa_configuration(self: Arc<Self>, taa_options: TxnAuthrAgrmtOptions) -> VcxResult<()>;
 }

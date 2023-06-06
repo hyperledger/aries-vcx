@@ -60,9 +60,10 @@ pub trait AnoncredsLedgerWrite: Debug + Send + Sync {
 }
 
 pub trait TaaConfigurator: Debug + Send + Sync {
-    fn set_txn_author_agreement_options(&mut self, taa_options: TxnAuthrAgrmtOptions);
+    fn set_txn_author_agreement_options(&self, taa_options: TxnAuthrAgrmtOptions) -> VcxCoreResult<()>;
 }
 
+#[derive(Clone)]
 pub struct TxnAuthrAgrmtOptions {
     pub text: String,
     pub version: String,

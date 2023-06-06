@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use super::profile::Profile;
+use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use aries_vcx_core::ledger::base_ledger::{TaaConfigurator, TxnAuthrAgrmtOptions};
 use aries_vcx_core::{
     anoncreds::{base_anoncreds::BaseAnonCreds, indy_anoncreds::IndySdkAnonCreds},
@@ -66,7 +67,10 @@ impl Profile for VdrtoolsProfile {
         Arc::clone(&self.wallet)
     }
 
-    async fn update_taa_configuration(self: Arc<Self>, taa_options: TxnAuthrAgrmtOptions) {
-        panic!("update_taa_configuration not implemented for VdrtoolsProfile")
+    fn update_taa_configuration(self: Arc<Self>, _taa_options: TxnAuthrAgrmtOptions) -> VcxResult<()> {
+        Err(AriesVcxError::from_msg(
+            AriesVcxErrorKind::ActionNotSupported,
+            format!("update_taa_configuration no implemented for VdrtoolsProfile"),
+        ))
     }
 }
