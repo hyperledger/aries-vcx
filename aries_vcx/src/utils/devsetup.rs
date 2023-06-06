@@ -413,7 +413,7 @@ impl SetupProfile {
         .unwrap();
         let pool_handle = open_test_pool().await;
 
-        let mut profile = Arc::new(VdrtoolsProfile::init(wallet_handle, pool_handle.clone()));
+        let profile = Arc::new(VdrtoolsProfile::init(wallet_handle, pool_handle.clone()));
 
         async fn indy_teardown(pool_handle: PoolHandle) {
             delete_test_pool(pool_handle.clone()).await;
