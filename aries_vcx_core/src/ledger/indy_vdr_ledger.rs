@@ -2,7 +2,7 @@ pub use indy_ledger_response_parser::GetTxnAuthorAgreementData;
 use indy_ledger_response_parser::{ResponseParser, RevocationRegistryDeltaInfo, RevocationRegistryInfo};
 use indy_vdr as vdr;
 use std::fmt::{Debug, Formatter};
-use std::sync::Arc;
+use std::sync::{Arc, RwLock};
 use time::OffsetDateTime;
 use vdr::ledger::requests::cred_def::CredentialDefinitionV1;
 use vdr::ledger::requests::rev_reg::{RevocationRegistryDelta, RevocationRegistryDeltaV1};
@@ -20,6 +20,7 @@ use vdr::utils::Qualifiable;
 
 use crate::common::ledger::transactions::verify_transaction_can_be_endorsed;
 use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
+use crate::ledger::base_ledger::{TaaConfigurator, TxnAuthrAgrmtOptions};
 
 use super::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite};
 use super::map_error_not_found_to_none;
@@ -69,7 +70,7 @@ where
 {
     request_signer: Arc<U>,
     request_submitter: Arc<T>,
-    taa_options: Option<TxnAuthrAgrmtOptions>,
+    taa_options: RwLock<Option<TxnAuthrAgrmtOptions>>,
     protocol_version: ProtocolVersion,
 }
 
@@ -112,7 +113,7 @@ where
         Self {
             request_signer: config.request_signer,
             request_submitter: config.request_submitter,
-            taa_options: None,
+            taa_options: RwLock::new(None),
             protocol_version: config.protocol_version,
         }
     }
@@ -126,6 +127,18 @@ where
         let signature = self.request_signer.sign(submitter_did, &request).await?;
         request.set_signature(&signature)?;
         self.request_submitter.submit(request).await
+    }
+}
+
+impl<T, U> TaaConfigurator for IndyVdrLedgerWrite<T, U>
+where
+    T: RequestSubmitter + Send + Sync,
+    U: RequestSigner + Send + Sync,
+{
+    fn set_txn_author_agreement_options(&self, taa_options: TxnAuthrAgrmtOptions) -> VcxCoreResult<()> {
+        let mut m = self.taa_options.write()?;
+        *m = Some(taa_options);
+        Ok(())
     }
 }
 
@@ -194,7 +207,8 @@ where
     U: RequestSigner + Send + Sync,
 {
     async fn append_txn_author_agreement_to_request(&self, request: PreparedRequest) -> VcxCoreResult<PreparedRequest> {
-        if let Some(taa_options) = &self.taa_options {
+        let taa_options = (*self.taa_options.read()?).clone();
+        if let Some(taa_options) = taa_options {
             let mut request = request;
             let taa_data = self.request_builder()?.prepare_txn_author_agreement_acceptance_data(
                 Some(&taa_options.text),
@@ -441,10 +455,4 @@ impl ProtocolVersion {
     pub fn node_1_4() -> Self {
         ProtocolVersion(VdrProtocolVersion::Node1_4)
     }
-}
-
-pub struct TxnAuthrAgrmtOptions {
-    pub text: String,
-    pub version: String,
-    pub aml_label: String,
 }

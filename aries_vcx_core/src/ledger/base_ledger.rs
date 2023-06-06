@@ -58,3 +58,14 @@ pub trait AnoncredsLedgerWrite: Debug + Send + Sync {
         submitter_did: &str,
     ) -> VcxCoreResult<()>;
 }
+
+pub trait TaaConfigurator: Debug + Send + Sync {
+    fn set_txn_author_agreement_options(&self, taa_options: TxnAuthrAgrmtOptions) -> VcxCoreResult<()>;
+}
+
+#[derive(Clone)]
+pub struct TxnAuthrAgrmtOptions {
+    pub text: String,
+    pub version: String,
+    pub aml_label: String,
+}
