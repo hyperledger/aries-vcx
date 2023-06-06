@@ -227,7 +227,10 @@ mod connection_serde_tests {
     use crate::handlers::util::AnyInvitation;
     use crate::protocols::connection::serializable::*;
     use crate::protocols::connection::{invitee::InviteeConnection, inviter::InviterConnection, Connection};
+    use crate::utils::mockdata::profile::mock_ledger::MockLedger;
     use crate::utils::mockdata::profile::mock_profile::MockProfile;
+    use crate::utils::mockdata::profile::mock_wallet::MockWallet;
+    use aries_vcx_core::ledger::base_ledger::IndyLedgerRead;
     use std::sync::Arc;
 
     impl<'a> From<RefInviteeState<'a>> for InviteeState {
@@ -369,15 +372,10 @@ mod connection_serde_tests {
     const PW_KEY: &str = "7Z9ZajGKvb6BMsZ9TBEqxMHktxGdts3FvAbKSJT5XgzK";
     const SERVICE_ENDPOINT: &str = "https://localhost:8080";
 
-    fn make_mock_profile() -> Arc<dyn Profile> {
-        Arc::new(MockProfile)
-    }
-
     async fn make_initial_parts() -> (String, PairwiseInfo) {
         let source_id = SOURCE_ID.to_owned();
-        let pairwise_info = PairwiseInfo::create(&make_mock_profile().inject_wallet())
-            .await
-            .unwrap();
+        let wallet: Arc<dyn BaseWallet> = Arc::new(MockWallet {});
+        let pairwise_info = PairwiseInfo::create(&wallet).await.unwrap();
 
         (source_id, pairwise_info)
     }
@@ -388,7 +386,7 @@ mod connection_serde_tests {
     }
 
     async fn make_invitee_invited() -> InviteeConnection<InviteeInvited> {
-        let profile = make_mock_profile();
+        let indy_ledger: Arc<dyn IndyLedgerRead> = Arc::new(MockLedger {});
         let content = PairwiseInvitationContent::new(
             String::new(),
             vec![PW_KEY.to_owned()],
@@ -402,13 +400,13 @@ mod connection_serde_tests {
 
         make_invitee_initial()
             .await
-            .accept_invitation(&profile, invitation)
+            .accept_invitation(&indy_ledger, invitation)
             .await
             .unwrap()
     }
 
     async fn make_invitee_requested() -> InviteeConnection<InviteeRequested> {
-        let wallet = make_mock_profile().inject_wallet();
+        let wallet: Arc<dyn BaseWallet> = Arc::new(MockWallet {});
         let service_endpoint = SERVICE_ENDPOINT.parse().unwrap();
         let routing_keys = vec![];
 
@@ -420,7 +418,7 @@ mod connection_serde_tests {
     }
 
     async fn make_invitee_responded() -> InviteeConnection<InviteeResponded> {
-        let wallet = make_mock_profile().inject_wallet();
+        let wallet: Arc<dyn BaseWallet> = Arc::new(MockWallet {});
         let con = make_invitee_requested().await;
         let mut con_data = ConnectionData::new(PW_KEY.to_owned(), AriesDidDoc::default());
         con_data.did_doc.id = PW_KEY.to_owned();
@@ -441,7 +439,7 @@ mod connection_serde_tests {
     }
 
     async fn make_invitee_completed() -> InviteeConnection<InviteeCompleted> {
-        let wallet = make_mock_profile().inject_wallet();
+        let wallet: Arc<dyn BaseWallet> = Arc::new(MockWallet {});
 
         make_invitee_responded()
             .await
@@ -460,7 +458,7 @@ mod connection_serde_tests {
     }
 
     async fn make_inviter_requested() -> InviterConnection<InviterRequested> {
-        let wallet = make_mock_profile().inject_wallet();
+        let wallet: Arc<dyn BaseWallet> = Arc::new(MockWallet {});
         let con = make_inviter_invited().await;
         let new_service_endpoint = SERVICE_ENDPOINT.to_owned().parse().expect("url should be valid");
         let new_routing_keys = vec![];
@@ -485,7 +483,7 @@ mod connection_serde_tests {
     }
 
     async fn make_inviter_responded() -> InviterConnection<InviterResponded> {
-        let wallet = make_mock_profile().inject_wallet();
+        let wallet: Arc<dyn BaseWallet> = Arc::new(MockWallet {});
 
         make_inviter_requested()
             .await

@@ -174,7 +174,7 @@ pub mod test_utils {
                 provision_cloud_agent(&mut agency_client, profile.inject_wallet(), &config_provision_agent)
                     .await
                     .unwrap();
-            let connection = MediatedConnection::create("faber", &profile, &agency_client, true)
+            let connection = MediatedConnection::create("faber", &profile.inject_wallet(), &agency_client, true)
                 .await
                 .unwrap();
 
@@ -182,9 +182,13 @@ pub mod test_utils {
             let service = AriesService::create()
                 .set_service_endpoint(agency_client.get_agency_url_full().unwrap())
                 .set_recipient_keys(vec![pairwise_info.pw_vk.clone()]);
-            write_endpoint_legacy(&profile, &config_issuer.institution_did, &service)
-                .await
-                .unwrap();
+            write_endpoint_legacy(
+                &profile.inject_indy_ledger_write(),
+                &config_issuer.institution_did,
+                &service,
+            )
+            .await
+            .unwrap();
 
             let rev_not_sender = RevocationNotificationSender::build();
 
@@ -253,7 +257,7 @@ pub mod test_utils {
                 {"name": "empty_param", "restrictions": {"attr::empty_param::value": ""}}
             ])
             .to_string();
-            let presentation_request_data = PresentationRequestData::create(&self.profile, "1")
+            let presentation_request_data = PresentationRequestData::create(&self.profile.inject_anoncreds(), "1")
                 .await
                 .unwrap()
                 .set_requested_attributes_as_string(requested_attrs)
@@ -263,11 +267,11 @@ pub mod test_utils {
 
         pub async fn create_invite(&mut self) -> String {
             self.connection
-                .connect(&self.profile, &self.agency_client, None)
+                .connect(&self.profile.inject_wallet(), &self.agency_client, None)
                 .await
                 .unwrap();
             self.connection
-                .find_message_and_update_state(&self.profile, &self.agency_client)
+                .find_message_and_update_state(&self.profile.inject_wallet(), &self.agency_client)
                 .await
                 .unwrap();
             assert_eq!(
@@ -287,7 +291,7 @@ pub mod test_utils {
 
         pub async fn update_state(&mut self, expected_state: u32) {
             self.connection
-                .find_message_and_update_state(&self.profile, &self.agency_client)
+                .find_message_and_update_state(&self.profile.inject_wallet(), &self.agency_client)
                 .await
                 .unwrap();
             assert_eq!(expected_state, u32::from(self.connection.get_state()));
@@ -295,26 +299,29 @@ pub mod test_utils {
 
         pub async fn handle_messages(&mut self) {
             self.connection
-                .find_and_handle_message(&self.profile, &self.agency_client)
+                .find_and_handle_message(&self.profile.inject_wallet(), &self.agency_client)
                 .await
                 .unwrap();
         }
 
         pub async fn respond_messages(&mut self, expected_state: u32) {
             self.connection
-                .find_and_handle_message(&self.profile, &self.agency_client)
+                .find_and_handle_message(&self.profile.inject_wallet(), &self.agency_client)
                 .await
                 .unwrap();
             assert_eq!(expected_state, u32::from(self.connection.get_state()));
         }
 
         pub async fn ping(&mut self) {
-            self.connection.send_ping(&self.profile, None).await.unwrap();
+            self.connection
+                .send_ping(self.profile.inject_wallet(), None)
+                .await
+                .unwrap();
         }
 
         pub async fn discovery_features(&mut self) {
             self.connection
-                .send_discovery_query(&self.profile, None, None)
+                .send_discovery_query(&self.profile.inject_wallet(), None, None)
                 .await
                 .unwrap();
         }
@@ -577,7 +584,7 @@ pub mod test_utils {
                 provision_cloud_agent(&mut agency_client, profile.inject_wallet(), &config_provision_agent)
                     .await
                     .unwrap();
-            let connection = MediatedConnection::create("tmp_empoty", &profile, &agency_client, true)
+            let connection = MediatedConnection::create("tmp_empoty", &profile.inject_wallet(), &agency_client, true)
                 .await
                 .unwrap();
             let alice = Alice {
@@ -596,17 +603,25 @@ pub mod test_utils {
 
         pub async fn accept_invite(&mut self, invite: &str) {
             let invite: AnyInvitation = serde_json::from_str(invite).unwrap();
-            let ddo = into_did_doc(&self.profile, &invite).await.unwrap();
-            self.connection =
-                MediatedConnection::create_with_invite("faber", &self.profile, &self.agency_client, invite, ddo, true)
-                    .await
-                    .unwrap();
+            let ddo = into_did_doc(&self.profile.inject_indy_ledger_read(), &invite)
+                .await
+                .unwrap();
+            self.connection = MediatedConnection::create_with_invite(
+                "faber",
+                &self.profile.inject_wallet(),
+                &self.agency_client,
+                invite,
+                ddo,
+                true,
+            )
+            .await
+            .unwrap();
             self.connection
-                .connect(&self.profile, &self.agency_client, None)
+                .connect(&self.profile.inject_wallet(), &self.agency_client, None)
                 .await
                 .unwrap();
             self.connection
-                .find_message_and_update_state(&self.profile, &self.agency_client)
+                .find_message_and_update_state(&self.profile.inject_wallet(), &self.agency_client)
                 .await
                 .unwrap();
             assert_eq!(
@@ -617,7 +632,7 @@ pub mod test_utils {
 
         pub async fn update_state(&mut self, expected_state: u32) {
             self.connection
-                .find_message_and_update_state(&self.profile, &self.agency_client)
+                .find_message_and_update_state(&self.profile.inject_wallet(), &self.agency_client)
                 .await
                 .unwrap();
             assert_eq!(expected_state, u32::from(self.connection.get_state()));
@@ -625,14 +640,14 @@ pub mod test_utils {
 
         pub async fn handle_messages(&mut self) {
             self.connection
-                .find_and_handle_message(&self.profile, &self.agency_client)
+                .find_and_handle_message(&self.profile.inject_wallet(), &self.agency_client)
                 .await
                 .unwrap();
         }
 
         pub async fn respond_messages(&mut self, expected_state: u32) {
             self.connection
-                .find_and_handle_message(&self.profile, &self.agency_client)
+                .find_and_handle_message(&self.profile.inject_wallet(), &self.agency_client)
                 .await
                 .unwrap();
             assert_eq!(expected_state, u32::from(self.connection.get_state()));

@@ -709,7 +709,7 @@ pub mod test_utils {
                 ..AttrInfo::default()
             })
             .collect();
-        let presentation_request_data = PresentationRequestData::create(&faber.profile, "request-1")
+        let presentation_request_data = PresentationRequestData::create(&faber.profile.inject_anoncreds(), "request-1")
             .await
             .unwrap()
             .set_requested_attributes_as_vec(attrs)
@@ -780,15 +780,16 @@ pub mod test_utils {
         revocation_interval: &str,
         request_name: Option<&str>,
     ) -> Verifier {
-        let presentation_request_data = PresentationRequestData::create(&faber.profile, request_name.unwrap_or("name"))
-            .await
-            .unwrap()
-            .set_requested_attributes_as_string(requested_attrs.to_string())
-            .unwrap()
-            .set_requested_predicates_as_string(requested_preds.to_string())
-            .unwrap()
-            .set_not_revoked_interval(revocation_interval.to_string())
-            .unwrap();
+        let presentation_request_data =
+            PresentationRequestData::create(&faber.profile.inject_anoncreds(), request_name.unwrap_or("name"))
+                .await
+                .unwrap()
+                .set_requested_attributes_as_string(requested_attrs.to_string())
+                .unwrap()
+                .set_requested_predicates_as_string(requested_preds.to_string())
+                .unwrap()
+                .set_not_revoked_interval(revocation_interval.to_string())
+                .unwrap();
         let mut verifier = Verifier::create_from_request("1".to_string(), &presentation_request_data).unwrap();
         verifier
             .send_presentation_request(
@@ -810,15 +811,16 @@ pub mod test_utils {
         revocation_interval: &str,
         request_name: Option<&str>,
     ) -> RequestPresentation {
-        let presentation_request = PresentationRequestData::create(&_faber.profile, request_name.unwrap_or("name"))
-            .await
-            .unwrap()
-            .set_requested_attributes_as_string(requested_attrs.to_string())
-            .unwrap()
-            .set_requested_predicates_as_string(requested_preds.to_string())
-            .unwrap()
-            .set_not_revoked_interval(revocation_interval.to_string())
-            .unwrap();
+        let presentation_request =
+            PresentationRequestData::create(&_faber.profile.inject_anoncreds(), request_name.unwrap_or("name"))
+                .await
+                .unwrap()
+                .set_requested_attributes_as_string(requested_attrs.to_string())
+                .unwrap()
+                .set_requested_predicates_as_string(requested_preds.to_string())
+                .unwrap()
+                .set_not_revoked_interval(revocation_interval.to_string())
+                .unwrap();
         let verifier = Verifier::create_from_request("1".to_string(), &presentation_request).unwrap();
         verifier.get_presentation_request().unwrap()
     }
@@ -1221,7 +1223,7 @@ pub mod test_utils {
     ) -> MediatedConnection {
         tokio::time::sleep(Duration::from_millis(1000)).await;
         let mut institution_to_consumer = MediatedConnection::create_with_request(
-            &faber.profile,
+            &faber.profile.inject_wallet(),
             request,
             faber.pairwise_info.clone(),
             &faber.agency_client,
@@ -1233,7 +1235,7 @@ pub mod test_utils {
             institution_to_consumer.get_state()
         );
         institution_to_consumer
-            .find_message_and_update_state(&faber.profile, &faber.agency_client)
+            .find_message_and_update_state(&faber.profile.inject_wallet(), &faber.agency_client)
             .await
             .unwrap();
         assert_eq!(
@@ -1242,7 +1244,7 @@ pub mod test_utils {
         );
 
         consumer_to_institution
-            .find_message_and_update_state(&alice.profile, &alice.agency_client)
+            .find_message_and_update_state(&alice.profile.inject_wallet(), &alice.agency_client)
             .await
             .unwrap();
         assert_eq!(
@@ -1252,7 +1254,7 @@ pub mod test_utils {
 
         tokio::time::sleep(Duration::from_millis(1000)).await;
         institution_to_consumer
-            .find_message_and_update_state(&faber.profile, &faber.agency_client)
+            .find_message_and_update_state(&faber.profile.inject_wallet(), &faber.agency_client)
             .await
             .unwrap();
         assert_eq!(
@@ -1275,11 +1277,13 @@ pub mod test_utils {
         let (sender, receiver) = bounded::<AriesMessage>(1);
         let public_invite_json = institution.create_public_invite().unwrap();
         let public_invite: AnyInvitation = serde_json::from_str(&public_invite_json).unwrap();
-        let ddo = into_did_doc(&alice.profile, &public_invite).await.unwrap();
+        let ddo = into_did_doc(&alice.profile.inject_indy_ledger_read(), &public_invite)
+            .await
+            .unwrap();
 
         let mut consumer_to_institution = MediatedConnection::create_with_invite(
             "institution",
-            &alice.profile,
+            &alice.profile.inject_wallet(),
             &alice.agency_client,
             public_invite,
             ddo,
@@ -1288,7 +1292,11 @@ pub mod test_utils {
         .await
         .unwrap();
         consumer_to_institution
-            .connect(&alice.profile, &alice.agency_client, _send_message(sender))
+            .connect(
+                &alice.profile.inject_wallet(),
+                &alice.agency_client,
+                _send_message(sender),
+            )
             .await
             .unwrap();
 
@@ -1309,20 +1317,22 @@ pub mod test_utils {
     ) -> (MediatedConnection, MediatedConnection) {
         debug!("Institution is going to create connection.");
         let mut institution_to_consumer =
-            MediatedConnection::create("consumer", &faber.profile, &faber.agency_client, true)
+            MediatedConnection::create("consumer", &faber.profile.inject_wallet(), &faber.agency_client, true)
                 .await
                 .unwrap();
         institution_to_consumer
-            .connect(&faber.profile, &faber.agency_client, None)
+            .connect(&faber.profile.inject_wallet(), &faber.agency_client, None)
             .await
             .unwrap();
         let details = institution_to_consumer.get_invite_details().unwrap();
 
         debug!("Consumer is going to accept connection invitation.");
-        let ddo = into_did_doc(&alice.profile, &details).await.unwrap();
+        let ddo = into_did_doc(&alice.profile.inject_indy_ledger_read(), &details)
+            .await
+            .unwrap();
         let mut consumer_to_institution = MediatedConnection::create_with_invite(
             "institution",
-            &alice.profile,
+            &alice.profile.inject_wallet(),
             &alice.agency_client,
             details.clone(),
             ddo,
@@ -1332,7 +1342,7 @@ pub mod test_utils {
         .unwrap();
 
         consumer_to_institution
-            .connect(&alice.profile, &alice.agency_client, None)
+            .connect(&alice.profile.inject_wallet(), &alice.agency_client, None)
             .await
             .unwrap();
 
@@ -1341,7 +1351,7 @@ pub mod test_utils {
         debug!("Institution is going to process connection request.");
         tokio::time::sleep(Duration::from_millis(1000)).await;
         institution_to_consumer
-            .find_message_and_update_state(&faber.profile, &faber.agency_client)
+            .find_message_and_update_state(&faber.profile.inject_wallet(), &faber.agency_client)
             .await
             .unwrap();
         assert_eq!(
@@ -1352,7 +1362,7 @@ pub mod test_utils {
 
         debug!("Consumer is going to complete the connection protocol.");
         consumer_to_institution
-            .find_message_and_update_state(&alice.profile, &alice.agency_client)
+            .find_message_and_update_state(&alice.profile.inject_wallet(), &alice.agency_client)
             .await
             .unwrap();
         assert_eq!(
@@ -1364,7 +1374,7 @@ pub mod test_utils {
         debug!("Institution is going to complete the connection protocol.");
         tokio::time::sleep(Duration::from_millis(1000)).await;
         institution_to_consumer
-            .find_message_and_update_state(&faber.profile, &faber.agency_client)
+            .find_message_and_update_state(&faber.profile.inject_wallet(), &faber.agency_client)
             .await
             .unwrap();
         assert_eq!(

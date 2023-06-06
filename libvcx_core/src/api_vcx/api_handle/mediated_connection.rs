@@ -122,7 +122,7 @@ pub async fn create_connection(source_id: &str) -> LibvcxResult<u32> {
     trace!("create_connection >>> source_id: {}", source_id);
     let connection = MediatedConnection::create(
         source_id,
-        &get_main_profile_optional_pool(), // do not throw if pool is not open
+        &get_main_profile_optional_pool().inject_wallet(), // do not throw if pool is not open
         &get_main_agency_client()?,
         true,
     )
@@ -133,11 +133,10 @@ pub async fn create_connection(source_id: &str) -> LibvcxResult<u32> {
 pub async fn create_connection_with_invite(source_id: &str, details: &str) -> LibvcxResult<u32> {
     debug!("create connection {} with invite {}", source_id, details);
     if let Ok(invitation) = serde_json::from_str::<AnyInvitation>(details) {
-        let profile = get_main_profile()?;
-        let ddo = into_did_doc(&profile, &invitation).await?;
+        let ddo = into_did_doc(&get_main_profile()?.inject_indy_ledger_read(), &invitation).await?;
         let connection = MediatedConnection::create_with_invite(
             source_id,
-            &profile,
+            &get_main_profile()?.inject_wallet(),
             &get_main_agency_client()?,
             invitation,
             ddo,
@@ -162,7 +161,8 @@ pub async fn create_with_request_v2(request: &str, pw_info: PairwiseInfo) -> Lib
     })?;
     let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
     let connection =
-        MediatedConnection::create_with_request(&profile, request, pw_info, &get_main_agency_client()?).await?;
+        MediatedConnection::create_with_request(&profile.inject_wallet(), request, pw_info, &get_main_agency_client()?)
+            .await?;
     store_connection(connection)
 }
 
@@ -170,7 +170,7 @@ pub async fn send_generic_message(handle: u32, msg: &str) -> LibvcxResult<String
     let connection = CONNECTION_MAP.get_cloned(handle)?;
     let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
     connection
-        .send_generic_message(&profile, msg)
+        .send_generic_message(&profile.inject_wallet(), msg)
         .await
         .map_err(|err| err.into())
 }
@@ -179,7 +179,7 @@ pub async fn send_handshake_reuse(handle: u32, oob_msg: &str) -> LibvcxResult<()
     let connection = CONNECTION_MAP.get_cloned(handle)?;
     let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
     connection
-        .send_handshake_reuse(&profile, oob_msg)
+        .send_handshake_reuse(&profile.inject_wallet(), oob_msg)
         .await
         .map_err(|err| err.into())
 }
@@ -197,7 +197,7 @@ pub async fn update_state_with_message(handle: u32, message: &str) -> LibvcxResu
     })?;
     let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
     connection
-        .update_state_with_message(&profile, get_main_agency_client()?, Some(message))
+        .update_state_with_message(profile.inject_wallet(), get_main_agency_client()?, Some(message))
         .await?;
     let state: u32 = connection.get_state().into();
     CONNECTION_MAP.insert(handle, connection)?;
@@ -216,7 +216,7 @@ pub async fn handle_message(handle: u32, message: &str) -> LibvcxResult<()> {
         )
     })?;
     let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
-    connection.handle_message(message, &profile).await?;
+    connection.handle_message(message, &profile.inject_wallet()).await?;
     CONNECTION_MAP.insert(handle, connection)
 }
 
@@ -229,7 +229,7 @@ pub async fn update_state(handle: u32) -> LibvcxResult<u32> {
         );
         let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
         connection
-            .find_and_handle_message(&profile, &get_main_agency_client()?)
+            .find_and_handle_message(&profile.inject_wallet(), &get_main_agency_client()?)
             .await?
     } else {
         info!(
@@ -238,7 +238,7 @@ pub async fn update_state(handle: u32) -> LibvcxResult<u32> {
         );
         let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
         connection
-            .find_message_and_update_state(&profile, &get_main_agency_client()?)
+            .find_message_and_update_state(&profile.inject_wallet(), &get_main_agency_client()?)
             .await?
     };
     let state: u32 = connection.get_state().into();
@@ -255,7 +255,9 @@ pub async fn delete_connection(handle: u32) -> LibvcxResult<()> {
 pub async fn connect(handle: u32) -> LibvcxResult<Option<String>> {
     let mut connection = CONNECTION_MAP.get_cloned(handle)?;
     let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
-    connection.connect(&profile, &get_main_agency_client()?, None).await?;
+    connection
+        .connect(&profile.inject_wallet(), &get_main_agency_client()?, None)
+        .await?;
     let invitation = connection.get_invite_details().map(|invitation| match invitation {
         AnyInvitation::Con(Invitation::Pairwise(invitation)) => {
             json!(AriesMessage::from(invitation.clone())).to_string()
@@ -356,7 +358,9 @@ pub async fn send_message_closure(handle: u32) -> LibvcxResult<SendClosure> {
 pub async fn send_ping(handle: u32, comment: Option<&str>) -> LibvcxResult<()> {
     let mut connection = CONNECTION_MAP.get_cloned(handle)?;
     let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
-    connection.send_ping(&profile, comment.map(String::from)).await?;
+    connection
+        .send_ping(profile.inject_wallet(), comment.map(String::from))
+        .await?;
     CONNECTION_MAP.insert(handle, connection)
 }
 
@@ -364,7 +368,11 @@ pub async fn send_discovery_features(handle: u32, query: Option<&str>, comment: 
     let connection = CONNECTION_MAP.get_cloned(handle)?;
     let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
     connection
-        .send_discovery_query(&profile, query.map(String::from), comment.map(String::from))
+        .send_discovery_query(
+            &profile.inject_wallet(),
+            query.map(String::from),
+            comment.map(String::from),
+        )
         .await?;
     CONNECTION_MAP.insert(handle, connection)
 }

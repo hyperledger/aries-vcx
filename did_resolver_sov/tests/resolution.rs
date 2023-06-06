@@ -20,7 +20,9 @@ async fn write_test_endpoint(profile: &Arc<dyn Profile>, did: &str) {
         .set_service_endpoint("http://localhost:8080".parse().unwrap())
         .set_routing_keys(Some(vec!["key1".to_string(), "key2".to_string()]))
         .set_types(Some(vec![DidSovServiceType::Endpoint]));
-    write_endpoint(profile, did, &endpoint).await.unwrap();
+    write_endpoint(&profile.inject_indy_ledger_write(), did, &endpoint)
+        .await
+        .unwrap();
     thread::sleep(Duration::from_millis(50));
 }
 

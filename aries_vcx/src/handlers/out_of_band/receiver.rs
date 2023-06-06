@@ -3,6 +3,8 @@ use std::str::FromStr;
 use std::sync::Arc;
 
 use agency_client::agency_client::AgencyClient;
+use aries_vcx_core::ledger::base_ledger::IndyLedgerRead;
+use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use messages::decorators::attachment::AttachmentType;
 use messages::decorators::thread::Thread;
@@ -47,7 +49,7 @@ impl OutOfBandReceiver {
 
     pub async fn connection_exists<'a>(
         &self,
-        profile: &Arc<dyn Profile>,
+        indy_ledger: &Arc<dyn IndyLedgerRead>,
         connections: &'a Vec<&'a MediatedConnection>,
     ) -> VcxResult<Option<&'a MediatedConnection>> {
         trace!("OutOfBandReceiver::connection_exists >>>");
@@ -60,7 +62,7 @@ impl OutOfBandReceiver {
                                 return Ok(Some(connection));
                             }
                         };
-                        if did_doc.get_service()? == resolve_service(profile, service).await? {
+                        if did_doc.get_service()? == resolve_service(indy_ledger, service).await? {
                             return Ok(Some(connection));
                         };
                     }
@@ -71,7 +73,11 @@ impl OutOfBandReceiver {
         Ok(None)
     }
 
-    pub async fn nonmediated_connection_exists<'a, I, T>(&self, profile: &Arc<dyn Profile>, connections: I) -> Option<T>
+    pub async fn nonmediated_connection_exists<'a, I, T>(
+        &self,
+        indy_ledger: &Arc<dyn IndyLedgerRead>,
+        connections: I,
+    ) -> Option<T>
     where
         I: IntoIterator<Item = (T, &'a GenericConnection)> + Clone,
     {
@@ -79,7 +85,7 @@ impl OutOfBandReceiver {
 
         for service in &self.oob.content.services {
             for (idx, connection) in connections.clone() {
-                if Self::connection_matches_service(profile, connection, service).await {
+                if Self::connection_matches_service(indy_ledger, connection, service).await {
                     return Some(idx);
                 }
             }
@@ -89,20 +95,24 @@ impl OutOfBandReceiver {
     }
 
     async fn connection_matches_service(
-        profile: &Arc<dyn Profile>,
+        indy_ledger: &Arc<dyn IndyLedgerRead>,
         connection: &GenericConnection,
         service: &OobService,
     ) -> bool {
         match connection.bootstrap_did_doc() {
             None => false,
-            Some(did_doc) => Self::did_doc_matches_service(profile, service, did_doc).await,
+            Some(did_doc) => Self::did_doc_matches_service(indy_ledger, service, did_doc).await,
         }
     }
 
-    async fn did_doc_matches_service(profile: &Arc<dyn Profile>, service: &OobService, did_doc: &AriesDidDoc) -> bool {
+    async fn did_doc_matches_service(
+        indy_ledger: &Arc<dyn IndyLedgerRead>,
+        service: &OobService,
+        did_doc: &AriesDidDoc,
+    ) -> bool {
         // Ugly, but it's best to short-circuit.
         Self::did_doc_matches_service_did(service, did_doc)
-            || Self::did_doc_matches_resolved_service(profile, service, did_doc)
+            || Self::did_doc_matches_resolved_service(indy_ledger, service, did_doc)
                 .await
                 .unwrap_or(false)
     }
@@ -115,12 +125,12 @@ impl OutOfBandReceiver {
     }
 
     async fn did_doc_matches_resolved_service(
-        profile: &Arc<dyn Profile>,
+        indy_ledger: &Arc<dyn IndyLedgerRead>,
         service: &OobService,
         did_doc: &AriesDidDoc,
     ) -> VcxResult<bool> {
         let did_doc_service = did_doc.get_service()?;
-        let oob_service = resolve_service(profile, service).await?;
+        let oob_service = resolve_service(indy_ledger, service).await?;
 
         Ok(did_doc_service == oob_service)
     }
@@ -256,7 +266,7 @@ impl OutOfBandReceiver {
 
     pub async fn build_connection(
         &self,
-        profile: &Arc<dyn Profile>,
+        wallet: &Arc<dyn BaseWallet>,
         agency_client: &AgencyClient,
         did_doc: AriesDidDoc,
         autohop_enabled: bool,
@@ -267,7 +277,7 @@ impl OutOfBandReceiver {
         );
         MediatedConnection::create_with_invite(
             &self.oob.id,
-            profile,
+            wallet,
             agency_client,
             AnyInvitation::Oob(self.oob.clone()),
             did_doc,

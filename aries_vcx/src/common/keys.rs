@@ -1,14 +1,21 @@
 use std::sync::Arc;
 
+use aries_vcx_core::ledger::base_ledger::{IndyLedgerRead, IndyLedgerWrite};
+use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use serde_json::Value;
 
 use crate::core::profile::profile::Profile;
 use crate::errors::error::prelude::*;
 
-pub async fn rotate_verkey_apply(profile: &Arc<dyn Profile>, did: &str, temp_vk: &str) -> VcxResult<()> {
-    let ledger = Arc::clone(profile).inject_indy_ledger_write();
-
-    let nym_result = ledger.publish_nym(did, did, Some(temp_vk), None, None).await?;
+pub async fn rotate_verkey_apply(
+    wallet: &Arc<dyn BaseWallet>,
+    indy_ledger_write: &Arc<dyn IndyLedgerWrite>,
+    did: &str,
+    temp_vk: &str,
+) -> VcxResult<()> {
+    let nym_result = indy_ledger_write
+        .publish_nym(did, did, Some(temp_vk), None, None)
+        .await?;
 
     let nym_result_json: Value = serde_json::from_str(&nym_result).map_err(|err| {
         AriesVcxError::from_msg(
@@ -30,20 +37,20 @@ pub async fn rotate_verkey_apply(profile: &Arc<dyn Profile>, did: &str, temp_vk:
         ));
     }
 
-    let wallet = profile.inject_wallet();
     wallet.replace_did_keys_apply(did).await.map_err(|err| err.into())
 }
 
-pub async fn rotate_verkey(profile: &Arc<dyn Profile>, did: &str) -> VcxResult<()> {
-    let wallet = profile.inject_wallet();
+pub async fn rotate_verkey(
+    wallet: &Arc<dyn BaseWallet>,
+    indy_ledger_write: &Arc<dyn IndyLedgerWrite>,
+    did: &str,
+) -> VcxResult<()> {
     let trustee_temp_verkey = wallet.replace_did_keys_start(did).await?;
-    rotate_verkey_apply(profile, did, &trustee_temp_verkey).await
+    rotate_verkey_apply(wallet, indy_ledger_write, did, &trustee_temp_verkey).await
 }
 
-pub async fn get_verkey_from_ledger(profile: &Arc<dyn Profile>, did: &str) -> VcxResult<String> {
-    let ledger = Arc::clone(profile).inject_indy_ledger_read();
-
-    let nym_response: String = ledger.get_nym(did).await?;
+pub async fn get_verkey_from_ledger(indy_ledger: &Arc<dyn IndyLedgerRead>, did: &str) -> VcxResult<String> {
+    let nym_response: String = indy_ledger.get_nym(did).await?;
     let nym_json: Value = serde_json::from_str(&nym_response).map_err(|err| {
         AriesVcxError::from_msg(
             AriesVcxErrorKind::SerializationError,

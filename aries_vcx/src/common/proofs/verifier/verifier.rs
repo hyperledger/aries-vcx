@@ -83,7 +83,7 @@ pub mod unit_tests {
             let revocation_details = r#"{"support_revocation":false}"#.to_string();
             let name = "Optional".to_owned();
 
-            let proof_req_json = ProofRequestData::create(&setup.profile, &name)
+            let proof_req_json = ProofRequestData::create(&setup.profile.inject_anoncreds(), &name)
                 .await
                 .unwrap()
                 .set_requested_attributes_as_string(requested_attrs)
@@ -153,7 +153,7 @@ pub mod unit_tests {
             let revocation_details = r#"{"support_revocation":true}"#.to_string();
             let name = "Optional".to_owned();
 
-            let proof_req_json = ProofRequestData::create(&setup.profile, &name)
+            let proof_req_json = ProofRequestData::create(&setup.profile.inject_anoncreds(), &name)
                 .await
                 .unwrap()
                 .set_requested_attributes_as_string(requested_attrs)
@@ -251,7 +251,7 @@ pub mod unit_tests {
             let revocation_details = r#"{"support_revocation":true}"#.to_string();
             let name = "Optional".to_owned();
 
-            let proof_req_json = ProofRequestData::create(&setup.profile, &name)
+            let proof_req_json = ProofRequestData::create(&setup.profile.inject_anoncreds(), &name)
                 .await
                 .unwrap()
                 .set_requested_attributes_as_string(requested_attrs)

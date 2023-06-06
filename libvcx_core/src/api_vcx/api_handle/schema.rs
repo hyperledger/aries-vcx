@@ -167,8 +167,6 @@ pub mod test_utils {
 #[cfg(test)]
 pub mod tests {
     #[cfg(feature = "pool_tests")]
-    use aries_vcx::common::ledger::transactions::add_new_did;
-    #[cfg(feature = "pool_tests")]
     use aries_vcx::common::test_utils::create_and_write_test_schema;
     #[cfg(feature = "pool_tests")]
     use aries_vcx::utils::constants;

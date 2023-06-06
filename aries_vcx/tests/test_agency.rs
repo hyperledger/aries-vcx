@@ -36,16 +36,16 @@ mod integration_tests {
             let (alice_to_faber, faber_to_alice) = create_connected_connections(&mut consumer, &mut institution).await;
 
             faber_to_alice
-                .send_generic_message(&institution.profile, "Hello Alice")
+                .send_generic_message(&institution.profile.inject_wallet(), "Hello Alice")
                 .await
                 .unwrap();
             faber_to_alice
-                .send_generic_message(&institution.profile, "How are you Alice?")
+                .send_generic_message(&institution.profile.inject_wallet(), "How are you Alice?")
                 .await
                 .unwrap();
 
             alice_to_faber
-                .send_generic_message(&consumer.profile, "Hello Faber")
+                .send_generic_message(&institution.profile.inject_wallet(), "Hello Faber")
                 .await
                 .unwrap();
 
@@ -207,7 +207,7 @@ mod integration_tests {
                 let basic_message = r#"Hi there"#;
                 faber
                     .connection
-                    .send_generic_message(&faber.profile, basic_message)
+                    .send_generic_message(&faber.profile.inject_wallet(), basic_message)
                     .await
                     .unwrap();
 
@@ -291,11 +291,11 @@ mod integration_tests {
                 create_connected_connections(&mut consumer2, &mut institution).await;
 
             consumer1_to_institution
-                .send_generic_message(&consumer1.profile, "Hello Institution from consumer1")
+                .send_generic_message(&consumer1.profile.inject_wallet(), "Hello Institution from consumer1")
                 .await
                 .unwrap();
             consumer2_to_institution
-                .send_generic_message(&consumer2.profile, "Hello Institution from consumer2")
+                .send_generic_message(&consumer2.profile.inject_wallet(), "Hello Institution from consumer2")
                 .await
                 .unwrap();
 
@@ -344,15 +344,15 @@ mod integration_tests {
             let (alice_to_faber, faber_to_alice) = create_connected_connections(&mut alice, &mut faber).await;
 
             faber_to_alice
-                .send_generic_message(&faber.profile, "Hello 1")
+                .send_generic_message(&faber.profile.inject_wallet(), "Hello 1")
                 .await
                 .unwrap();
             faber_to_alice
-                .send_generic_message(&faber.profile, "Hello 2")
+                .send_generic_message(&faber.profile.inject_wallet(), "Hello 2")
                 .await
                 .unwrap();
             faber_to_alice
-                .send_generic_message(&faber.profile, "Hello 3")
+                .send_generic_message(&faber.profile.inject_wallet(), "Hello 3")
                 .await
                 .unwrap();
 
@@ -424,11 +424,11 @@ mod integration_tests {
                 create_connected_connections(&mut consumer2, &mut institution).await;
 
             consumer1_to_institution
-                .send_generic_message(&consumer1.profile, "Hello Institution from consumer1")
+                .send_generic_message(&consumer1.profile.inject_wallet(), "Hello Institution from consumer1")
                 .await
                 .unwrap();
             consumer2_to_institution
-                .send_generic_message(&consumer2.profile, "Hello Institution from consumer2")
+                .send_generic_message(&consumer2.profile.inject_wallet(), "Hello Institution from consumer2")
                 .await
                 .unwrap();
 

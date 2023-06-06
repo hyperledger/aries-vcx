@@ -94,7 +94,15 @@ pub async fn replace_did_keys_start(did: &str) -> LibvcxResult<String> {
 
 pub async fn rotate_verkey_apply(did: &str, temp_vk: &str) -> LibvcxResult<()> {
     let profile = get_main_profile()?;
-    map_ariesvcx_result(aries_vcx::common::keys::rotate_verkey_apply(&profile, did, temp_vk).await)
+    map_ariesvcx_result(
+        aries_vcx::common::keys::rotate_verkey_apply(
+            &profile.inject_wallet(),
+            &profile.inject_indy_ledger_write(),
+            did,
+            temp_vk,
+        )
+        .await,
+    )
 }
 
 pub async fn wallet_unpack_message_to_string(payload: &[u8]) -> LibvcxResult<String> {

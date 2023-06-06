@@ -30,12 +30,15 @@ pub async fn get_ledger_txn(seq_no: i32, submitter_did: Option<String>) -> Libvc
 
 pub async fn rotate_verkey(did: &str) -> LibvcxResult<()> {
     let profile = get_main_profile()?;
-    map_ariesvcx_result(aries_vcx::common::keys::rotate_verkey(&profile, did).await)
+    map_ariesvcx_result(
+        aries_vcx::common::keys::rotate_verkey(&profile.inject_wallet(), &profile.inject_indy_ledger_write(), did)
+            .await,
+    )
 }
 
 pub async fn get_verkey_from_ledger(did: &str) -> LibvcxResult<String> {
-    let profile = get_main_profile()?;
-    map_ariesvcx_result(aries_vcx::common::keys::get_verkey_from_ledger(&profile, did).await)
+    let indy_ledger = get_main_profile()?.inject_indy_ledger_read();
+    map_ariesvcx_result(aries_vcx::common::keys::get_verkey_from_ledger(&indy_ledger, did).await)
 }
 
 pub async fn ledger_write_endpoint_legacy(
@@ -52,7 +55,7 @@ pub async fn ledger_write_endpoint_legacy(
         .set_recipient_keys(recipient_keys)
         .set_routing_keys(routing_keys);
     let profile = get_main_profile()?;
-    write_endpoint_legacy(&profile, target_did, &service).await?;
+    write_endpoint_legacy(&profile.inject_indy_ledger_write(), target_did, &service).await?;
     Ok(service)
 }
 
@@ -72,24 +75,24 @@ pub async fn ledger_write_endpoint(
         ]))
         .set_routing_keys(Some(routing_keys));
     let profile = get_main_profile()?;
-    write_endpoint(&profile, target_did, &service).await?;
+    write_endpoint(&profile.inject_indy_ledger_write(), target_did, &service).await?;
     Ok(service)
 }
 
 pub async fn ledger_get_service(target_did: &str) -> LibvcxResult<AriesService> {
     let target_did = target_did.to_owned();
     let profile = get_main_profile()?;
-    map_ariesvcx_result(get_service(&profile, &target_did).await)
+    map_ariesvcx_result(get_service(&profile.inject_indy_ledger_read(), &target_did).await)
 }
 
 pub async fn ledger_get_attr(target_did: &str, attr: &str) -> LibvcxResult<String> {
     let profile = get_main_profile()?;
-    map_ariesvcx_result(get_attr(&profile, &target_did, attr).await)
+    map_ariesvcx_result(get_attr(&profile.inject_indy_ledger_read(), &target_did, attr).await)
 }
 
 pub async fn ledger_clear_attr(target_did: &str, attr: &str) -> LibvcxResult<String> {
     let profile = get_main_profile()?;
-    map_ariesvcx_result(clear_attr(&profile, &target_did, attr).await)
+    map_ariesvcx_result(clear_attr(&profile.inject_indy_ledger_write(), &target_did, attr).await)
 }
 
 pub async fn ledger_get_txn_author_agreement() -> LibvcxResult<String> {

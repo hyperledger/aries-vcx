@@ -236,10 +236,6 @@ impl Verifier {
 
 //     use super::*;
 
-//     fn _dummy_profile() -> Arc<dyn Profile> {
-//         Arc::new(VdrtoolsProfile::new(INVALID_WALLET_HANDLE, INVALID_POOL_HANDLE))
-//     }
-
 //     async fn _verifier() -> Verifier {
 //         let presentation_request_data = PresentationRequestData::create(&_dummy_profile(), "1")
 //             .await

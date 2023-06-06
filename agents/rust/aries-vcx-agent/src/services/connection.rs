@@ -45,7 +45,7 @@ impl ServiceConnections {
     pub async fn receive_invitation(&self, invite: AnyInvitation) -> AgentResult<String> {
         let pairwise_info = PairwiseInfo::create(&self.profile.inject_wallet()).await?;
         let invitee = Connection::new_invitee("".to_owned(), pairwise_info)
-            .accept_invitation(&self.profile, invite)
+            .accept_invitation(&self.profile.inject_indy_ledger_read(), invite)
             .await?;
 
         let thread_id = invitee.thread_id().to_owned();

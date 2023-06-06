@@ -237,10 +237,10 @@ pub fn get_invitation(handle: u32) -> LibvcxResult<String> {
 pub async fn process_invite(handle: u32, invitation: &str) -> LibvcxResult<()> {
     trace!("process_invite >>>");
 
-    let profile = get_main_profile()?;
+    let ledger = get_main_profile()?.inject_indy_ledger_read();
     let invitation = deserialize(invitation)?;
     let con = get_cloned_connection(&handle)?
-        .accept_invitation(&profile, invitation)
+        .accept_invitation(&ledger, invitation)
         .await?;
 
     insert_connection(handle, con)

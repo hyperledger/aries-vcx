@@ -31,7 +31,7 @@ pub async fn create_proof(
     name: String,
 ) -> LibvcxResult<u32> {
     let profile = get_main_profile()?;
-    let presentation_request = PresentationRequestData::create(&profile, &name)
+    let presentation_request = PresentationRequestData::create(&profile.inject_anoncreds(), &name)
         .await?
         .set_requested_attributes_as_string(requested_attrs)?
         .set_requested_predicates_as_string(requested_predicates)?
