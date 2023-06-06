@@ -1,5 +1,7 @@
 use std::sync::Arc;
 
+use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
+use aries_vcx_core::ledger::base_ledger::{TaaConfigurator, TxnAuthrAgrmtOptions};
 use aries_vcx_core::{
     anoncreds::{base_anoncreds::BaseAnonCreds, credx_anoncreds::IndyCredxAnonCreds},
     ledger::{
@@ -9,6 +11,7 @@ use aries_vcx_core::{
     wallet::{base_wallet::BaseWallet, indy_wallet::IndySdkWallet},
     PoolHandle, WalletHandle,
 };
+use async_trait::async_trait;
 
 use super::profile::Profile;
 
@@ -16,9 +19,13 @@ use super::profile::Profile;
 pub struct MixedBreedProfile {
     wallet: Arc<dyn BaseWallet>,
     anoncreds: Arc<dyn BaseAnonCreds>,
+
+    // ledger reads
     anoncreds_ledger_read: Arc<dyn AnoncredsLedgerRead>,
-    anoncreds_ledger_write: Arc<dyn AnoncredsLedgerWrite>,
     indy_ledger_read: Arc<dyn IndyLedgerRead>,
+
+    // ledger writes
+    anoncreds_ledger_write: Arc<dyn AnoncredsLedgerWrite>,
     indy_ledger_write: Arc<dyn IndyLedgerWrite>,
 }
 
@@ -40,6 +47,7 @@ impl MixedBreedProfile {
     }
 }
 
+#[async_trait]
 impl Profile for MixedBreedProfile {
     fn inject_indy_ledger_read(self: Arc<Self>) -> Arc<dyn IndyLedgerRead> {
         Arc::clone(&self.indy_ledger_read)
@@ -63,5 +71,12 @@ impl Profile for MixedBreedProfile {
 
     fn inject_wallet(&self) -> Arc<dyn BaseWallet> {
         Arc::clone(&self.wallet)
+    }
+
+    fn update_taa_configuration(self: Arc<Self>, _taa_options: TxnAuthrAgrmtOptions) -> VcxResult<()> {
+        Err(AriesVcxError::from_msg(
+            AriesVcxErrorKind::ActionNotSupported,
+            format!("update_taa_configuration no implemented for MixedBreedProfile"),
+        ))
     }
 }

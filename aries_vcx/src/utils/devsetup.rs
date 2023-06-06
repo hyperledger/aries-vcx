@@ -33,6 +33,8 @@ use agency_client::testing::mocking::{disable_agency_mocks, enable_agency_mocks,
 use crate::core::profile::mixed_breed_profile::MixedBreedProfile;
 #[cfg(feature = "modular_libs")]
 use crate::core::profile::modular_libs_profile::ModularLibsProfile;
+#[cfg(feature = "modular_libs")]
+use crate::core::profile::prepare_taa_options;
 use crate::core::profile::profile::Profile;
 #[cfg(feature = "vdrtools")]
 use crate::core::profile::vdrtools_profile::VdrtoolsProfile;
@@ -411,7 +413,7 @@ impl SetupProfile {
         .unwrap();
         let pool_handle = open_test_pool().await;
 
-        let profile: Arc<dyn Profile> = Arc::new(VdrtoolsProfile::new(wallet_handle, pool_handle.clone()));
+        let profile = Arc::new(VdrtoolsProfile::init(wallet_handle, pool_handle.clone()));
 
         async fn indy_teardown(pool_handle: PoolHandle) {
             delete_test_pool(pool_handle.clone()).await;
@@ -434,14 +436,22 @@ impl SetupProfile {
 
         let wallet = IndySdkWallet::new(wallet_handle);
 
-        let profile: Arc<dyn Profile> =
-            Arc::new(ModularLibsProfile::new(Arc::new(wallet), LedgerPoolConfig { genesis_file_path }).unwrap());
+        let profile =
+            Arc::new(ModularLibsProfile::init(Arc::new(wallet), LedgerPoolConfig { genesis_file_path }).unwrap());
 
         Arc::clone(&profile)
             .inject_anoncreds()
             .prover_create_link_secret(settings::DEFAULT_LINK_SECRET_ALIAS)
             .await
             .unwrap();
+
+        let indy_read = Arc::clone(&profile).inject_indy_ledger_read();
+        match prepare_taa_options(indy_read).await.unwrap() {
+            None => {}
+            Some(taa_options) => {
+                Arc::clone(&profile).update_taa_configuration(taa_options);
+            }
+        }
 
         async fn modular_teardown() {
             // nothing to do
@@ -499,7 +509,7 @@ impl SetupProfile {
         let client_url = env::var("VDR_PROXY_CLIENT_URL").unwrap_or_else(|_| "http://127.0.0.1:3030".to_string());
         let client = VdrProxyClient::new(&client_url).unwrap();
 
-        let profile: Arc<dyn Profile> = Arc::new(VdrProxyProfile::new(wallet_handle, client).unwrap());
+        let profile: Arc<dyn Profile> = Arc::new(VdrProxyProfile::init(wallet_handle, client).await.unwrap());
 
         async fn vdr_proxy_teardown() {
             // nothing to do

@@ -5,6 +5,8 @@ extern crate serde_json;
 
 mod domain;
 
+pub use domain::author_agreement::GetTxnAuthorAgreementData;
+use domain::author_agreement::GetTxnAuthorAgreementResult;
 pub use indy_api_types::{errors, ErrorCode};
 use indy_api_types::{
     errors::{err_msg, IndyErrorKind, IndyResult, IndyResultExt},
@@ -186,6 +188,24 @@ impl ResponseParser {
             revoc_reg: RevocationRegistry::RevocationRegistryV1(revoc_reg),
             revoc_reg_def_id,
             timestamp,
+        })
+    }
+
+    pub fn parse_get_txn_author_agreement_response(&self, taa_response: &str) -> IndyResult<GetTxnAuthorAgreementData> {
+        let reply: Reply<GetTxnAuthorAgreementResult> = Self::parse_response(taa_response)?;
+
+        let data = match reply.result() {
+            GetTxnAuthorAgreementResult::GetTxnAuthorAgreementResultV1(res) => res
+                .data
+                .ok_or_else(|| IndyError::from_msg(IndyErrorKind::LedgerItemNotFound, "TAA not found"))?,
+        };
+
+        Ok(GetTxnAuthorAgreementData {
+            text: data.text,
+            version: data.version,
+            aml: data.aml,
+            ratification_ts: data.ratification_ts,
+            digest: data.digest,
         })
     }
 

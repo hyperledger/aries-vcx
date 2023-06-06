@@ -1,5 +1,8 @@
 use std::sync::Arc;
 
+use super::profile::Profile;
+use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
+use aries_vcx_core::ledger::base_ledger::{TaaConfigurator, TxnAuthrAgrmtOptions};
 use aries_vcx_core::{
     anoncreds::{base_anoncreds::BaseAnonCreds, indy_anoncreds::IndySdkAnonCreds},
     ledger::{
@@ -9,8 +12,7 @@ use aries_vcx_core::{
     wallet::{base_wallet::BaseWallet, indy_wallet::IndySdkWallet},
     PoolHandle, WalletHandle,
 };
-
-use super::profile::Profile;
+use async_trait::async_trait;
 
 #[derive(Debug)]
 pub struct VdrtoolsProfile {
@@ -23,7 +25,7 @@ pub struct VdrtoolsProfile {
 }
 
 impl VdrtoolsProfile {
-    pub fn new(indy_wallet_handle: WalletHandle, indy_pool_handle: PoolHandle) -> Self {
+    pub fn init(indy_wallet_handle: WalletHandle, indy_pool_handle: PoolHandle) -> Self {
         let wallet = Arc::new(IndySdkWallet::new(indy_wallet_handle));
         let anoncreds = Arc::new(IndySdkAnonCreds::new(indy_wallet_handle));
         let ledger_read = Arc::new(IndySdkLedgerRead::new(indy_wallet_handle, indy_pool_handle));
@@ -39,6 +41,7 @@ impl VdrtoolsProfile {
     }
 }
 
+#[async_trait]
 impl Profile for VdrtoolsProfile {
     fn inject_indy_ledger_read(self: Arc<Self>) -> Arc<dyn IndyLedgerRead> {
         Arc::clone(&self.indy_ledger_read)
@@ -62,5 +65,12 @@ impl Profile for VdrtoolsProfile {
 
     fn inject_wallet(&self) -> Arc<dyn BaseWallet> {
         Arc::clone(&self.wallet)
+    }
+
+    fn update_taa_configuration(self: Arc<Self>, _taa_options: TxnAuthrAgrmtOptions) -> VcxResult<()> {
+        Err(AriesVcxError::from_msg(
+            AriesVcxErrorKind::ActionNotSupported,
+            format!("update_taa_configuration no implemented for VdrtoolsProfile"),
+        ))
     }
 }

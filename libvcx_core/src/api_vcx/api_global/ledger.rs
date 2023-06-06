@@ -93,9 +93,16 @@ pub async fn ledger_clear_attr(target_did: &str, attr: &str) -> LibvcxResult<Str
 }
 
 pub async fn ledger_get_txn_author_agreement() -> LibvcxResult<String> {
-    let profile = get_main_profile()?;
-    let ledger = profile.inject_indy_ledger_read();
-    map_ariesvcx_core_result(ledger.get_txn_author_agreement().await)
+    get_main_profile()?
+        .inject_indy_ledger_read()
+        .get_txn_author_agreement()
+        .await?
+        .ok_or_else(|| {
+            LibvcxError::from_msg(
+                LibvcxErrorKind::LedgerItemNotFound,
+                "No transaction author agreement found",
+            )
+        })
 }
 
 pub fn ledger_set_txn_author_agreement(
@@ -105,13 +112,16 @@ pub fn ledger_set_txn_author_agreement(
     acc_mech_type: String,
     time_of_acceptance: u64,
 ) -> LibvcxResult<()> {
-    map_ariesvcx_result(aries_vcx::global::author_agreement::proxy_set_txn_author_agreement(
-        text,
-        version,
-        hash,
-        acc_mech_type,
-        time_of_acceptance,
-    ))
+    map_ariesvcx_result(
+        aries_vcx::aries_vcx_core::global::author_agreement::set_txn_author_agreement(
+            text,
+            version,
+            hash,
+            acc_mech_type,
+            time_of_acceptance,
+        )
+        .map_err(|err| err.into()),
+    )
 }
 
 #[cfg(test)]

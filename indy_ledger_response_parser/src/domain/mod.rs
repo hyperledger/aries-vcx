@@ -1,4 +1,5 @@
 pub mod attrib;
+pub mod author_agreement;
 pub mod constants;
 pub mod cred_def;
 pub mod did;

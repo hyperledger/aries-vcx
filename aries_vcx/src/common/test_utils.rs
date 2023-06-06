@@ -448,5 +448,5 @@ pub fn mock_profile() -> Arc<dyn Profile> {
 // TODO - FUTURE - should only be used for quick mock setups, should be removable after full detachment from vdrtools dep
 #[cfg(feature = "vdrtools")]
 pub fn indy_handles_to_profile(wallet_handle: WalletHandle, pool_handle: PoolHandle) -> Arc<dyn Profile> {
-    Arc::new(VdrtoolsProfile::new(wallet_handle, pool_handle))
+    Arc::new(VdrtoolsProfile::init(wallet_handle, pool_handle))
 }
