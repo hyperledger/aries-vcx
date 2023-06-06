@@ -19,23 +19,23 @@ pub struct MockProfile;
 
 #[async_trait]
 impl Profile for MockProfile {
-    fn inject_indy_ledger_read(self: Arc<Self>) -> Arc<dyn IndyLedgerRead> {
+    fn inject_indy_ledger_read(&self) -> Arc<dyn IndyLedgerRead> {
         Arc::new(MockLedger {})
     }
 
-    fn inject_indy_ledger_write(self: Arc<Self>) -> Arc<dyn IndyLedgerWrite> {
+    fn inject_indy_ledger_write(&self) -> Arc<dyn IndyLedgerWrite> {
         Arc::new(MockLedger {})
     }
 
-    fn inject_anoncreds(self: Arc<Self>) -> Arc<dyn BaseAnonCreds> {
+    fn inject_anoncreds(&self) -> Arc<dyn BaseAnonCreds> {
         Arc::new(MockAnoncreds {})
     }
 
-    fn inject_anoncreds_ledger_read(self: Arc<Self>) -> Arc<dyn AnoncredsLedgerRead> {
+    fn inject_anoncreds_ledger_read(&self) -> Arc<dyn AnoncredsLedgerRead> {
         Arc::new(MockLedger {})
     }
 
-    fn inject_anoncreds_ledger_write(self: Arc<Self>) -> Arc<dyn AnoncredsLedgerWrite> {
+    fn inject_anoncreds_ledger_write(&self) -> Arc<dyn AnoncredsLedgerWrite> {
         Arc::new(MockLedger {})
     }
 
@@ -43,7 +43,7 @@ impl Profile for MockProfile {
         Arc::new(MockWallet {})
     }
 
-    fn update_taa_configuration(self: Arc<Self>, _taa_options: TxnAuthrAgrmtOptions) -> VcxResult<()> {
+    fn update_taa_configuration(&self, _taa_options: TxnAuthrAgrmtOptions) -> VcxResult<()> {
         error!("update_taa_configuration not implemented for MockProfile");
         Ok(())
     }
