@@ -37,12 +37,15 @@ pub async fn create_schema(
 
 pub async fn create_and_write_test_schema(
     anoncreds: &Arc<dyn BaseAnonCreds>,
-    ledger: &Arc<dyn AnoncredsLedgerWrite>,
+    ledger_write: &Arc<dyn AnoncredsLedgerWrite>,
     submitter_did: &str,
     attr_list: &str,
 ) -> (String, String) {
     let (schema_id, schema_json) = create_schema(anoncreds, attr_list, submitter_did).await;
-    let _response = ledger.publish_schema(&schema_json, submitter_did, None).await.unwrap();
+    let _response = ledger_write
+        .publish_schema(&schema_json, submitter_did, None)
+        .await
+        .unwrap();
     tokio::time::sleep(Duration::from_millis(1000)).await;
     (schema_id, schema_json)
 }

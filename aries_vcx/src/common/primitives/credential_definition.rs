@@ -125,7 +125,7 @@ async fn _try_get_cred_def_from_ledger(
 }
 impl CredentialDef {
     pub async fn create(
-        ledger: &Arc<dyn AnoncredsLedgerRead>,
+        ledger_read: &Arc<dyn AnoncredsLedgerRead>,
         anoncreds: &Arc<dyn BaseAnonCreds>,
         source_id: String,
         config: CredentialDefConfig,
@@ -141,7 +141,7 @@ impl CredentialDef {
             schema_id,
             tag,
         } = config;
-        let schema_json = ledger.get_schema(&schema_id, Some(&issuer_did)).await?;
+        let schema_json = ledger_read.get_schema(&schema_id, Some(&issuer_did)).await?;
         let (cred_def_id, cred_def_json) = generate_cred_def(
             anoncreds,
             &issuer_did,
@@ -301,7 +301,7 @@ pub mod integration_tests {
         SetupProfile::run(|setup| async move {
             let (schema_id, _) = create_and_write_test_schema(
                 &setup.profile.inject_anoncreds(),
-                &setup.profile.inject_anoncreds_ledger_read(),
+                &setup.profile.inject_anoncreds_ledger_write(),
                 &setup.institution_did,
                 DEFAULT_SCHEMA_ATTRS,
             )
@@ -374,7 +374,7 @@ pub mod integration_tests {
             std::fs::create_dir_all(&path).unwrap();
 
             let (rev_reg_def_id, rev_reg_def_json, rev_reg_entry_json) = generate_rev_reg(
-                &setup.profile,
+                &setup.profile.inject_anoncreds(),
                 &setup.institution_did,
                 &cred_def_id,
                 path.to_str().unwrap(),

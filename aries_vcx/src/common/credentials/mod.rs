@@ -139,7 +139,11 @@ mod integration_tests {
                 .await
                 .unwrap();
             rev_reg
-                .publish_local_revocations(&setup.profile, &setup.institution_did)
+                .publish_local_revocations(
+                    &setup.profile.inject_anoncreds(),
+                    &setup.profile.inject_anoncreds_ledger_write(),
+                    &setup.institution_did,
+                )
                 .await
                 .unwrap();
 

@@ -41,7 +41,14 @@ mod integration_tests {
                 DEFAULT_SCHEMA_ATTRS,
             )
             .await;
-            let (_, _, req, _) = create_indy_proof(&setup.profile, &setup.profile, &setup.institution_did).await;
+            let (_, _, req, _) = create_indy_proof(
+                &setup.profile.inject_anoncreds(),
+                &setup.profile.inject_anoncreds(),
+                &setup.profile.inject_anoncreds_ledger_read(),
+                &setup.profile.inject_anoncreds_ledger_write(),
+                &setup.institution_did,
+            )
+            .await;
 
             let pres_req_data: PresentationRequestData = serde_json::from_str(&req).unwrap();
             let id = "test_id".to_owned();
@@ -77,7 +84,9 @@ mod integration_tests {
     async fn test_agency_pool_get_credential_def() {
         SetupProfile::run(|setup| async move {
             let (_, _, cred_def_id, cred_def_json, _) = create_and_store_nonrevocable_credential_def(
-                &setup.profile,
+                &setup.profile.inject_anoncreds(),
+                &setup.profile.inject_anoncreds_ledger_read(),
+                &setup.profile.inject_anoncreds_ledger_write(),
                 &setup.institution_did,
                 DEFAULT_SCHEMA_ATTRS,
             )
@@ -987,7 +996,9 @@ mod tests {
             let attrs_list = attrs_list.to_string();
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def) =
                 create_and_store_nonrevocable_credential_def(
-                    &institution.profile,
+                    &institution.profile.inject_anoncreds(),
+                    &institution.profile.inject_anoncreds_ledger_read(),
+                    &institution.profile.inject_anoncreds_ledger_write(),
                     &institution.config_issuer.institution_did,
                     &attrs_list,
                 )

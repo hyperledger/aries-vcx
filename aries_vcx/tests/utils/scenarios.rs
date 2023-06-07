@@ -919,7 +919,11 @@ pub mod test_utils {
     ) {
         revoke_credential_local(faber, issuer_credential, &rev_reg.rev_reg_id).await;
         rev_reg
-            .publish_local_revocations(&faber.profile, &faber.config_issuer.institution_did)
+            .publish_local_revocations(
+                &faber.profile.inject_anoncreds(),
+                &faber.profile.inject_anoncreds_ledger_write(),
+                &faber.config_issuer.institution_did,
+            )
             .await
             .unwrap();
     }
@@ -945,7 +949,7 @@ pub mod test_utils {
         rev_reg: &RevocationRegistry,
     ) -> RevocationRegistry {
         let mut rev_reg_new = RevocationRegistry::create(
-            &faber.profile,
+            &faber.profile.inject_anoncreds(),
             &faber.config_issuer.institution_did,
             &credential_def.get_cred_def_id(),
             &rev_reg.get_tails_dir(),
@@ -955,7 +959,7 @@ pub mod test_utils {
         .await
         .unwrap();
         rev_reg_new
-            .publish_revocation_primitives(&faber.profile, TEST_TAILS_URL)
+            .publish_revocation_primitives(&faber.profile.inject_anoncreds_ledger_write(), TEST_TAILS_URL)
             .await
             .unwrap();
         rev_reg_new
@@ -963,7 +967,11 @@ pub mod test_utils {
 
     pub async fn publish_revocation(institution: &mut Faber, rev_reg: &RevocationRegistry) {
         rev_reg
-            .publish_local_revocations(&institution.profile, &institution.config_issuer.institution_did)
+            .publish_local_revocations(
+                &institution.profile.inject_anoncreds(),
+                &institution.profile.inject_anoncreds_ledger_write(),
+                &institution.config_issuer.institution_did,
+            )
             .await
             .unwrap();
     }
@@ -983,7 +991,14 @@ pub mod test_utils {
         info!("_create_address_schema >>> ");
         let attrs_list = json!(["address1", "address2", "city", "state", "zip"]).to_string();
         let (schema_id, schema_json, cred_def_id, cred_def_json, rev_reg_id, cred_def, rev_reg) =
-            create_and_store_credential_def(profile, &institution_did, &attrs_list).await;
+            create_and_store_credential_def(
+                &profile.inject_anoncreds(),
+                &profile.inject_anoncreds_ledger_read(),
+                &profile.inject_anoncreds_ledger_write(),
+                &institution_did,
+                &attrs_list,
+            )
+            .await;
         (
             schema_id,
             schema_json,

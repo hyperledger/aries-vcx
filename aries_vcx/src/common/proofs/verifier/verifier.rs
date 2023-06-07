@@ -365,8 +365,14 @@ pub mod integration_tests {
     #[ignore]
     async fn test_pool_prover_verify_proof() {
         SetupProfile::run(|setup| async move {
-            let (schemas, cred_defs, proof_req, proof) =
-                create_indy_proof(&setup.profile, &setup.profile, &setup.institution_did).await;
+            let (schemas, cred_defs, proof_req, proof) = create_indy_proof(
+                &setup.profile.inject_anoncreds(),
+                &setup.profile.inject_anoncreds(),
+                &setup.profile.inject_anoncreds_ledger_read(),
+                &setup.profile.inject_anoncreds_ledger_write(),
+                &setup.institution_did,
+            )
+            .await;
 
             let anoncreds = Arc::clone(&setup.profile).inject_anoncreds();
             let proof_validation = anoncreds

@@ -241,12 +241,21 @@ pub mod test_utils {
                 .build()
                 .unwrap();
 
-            self.cred_def = CredentialDef::create(&self.profile, String::from("test_cred_def"), config, false)
-                .await
-                .unwrap()
-                .publish_cred_def(&self.profile)
-                .await
-                .unwrap();
+            self.cred_def = CredentialDef::create(
+                &self.profile.inject_anoncreds_ledger_read(),
+                &self.profile.inject_anoncreds(),
+                String::from("test_cred_def"),
+                config,
+                false,
+            )
+            .await
+            .unwrap()
+            .publish_cred_def(
+                &self.profile.inject_anoncreds_ledger_read(),
+                &self.profile.inject_anoncreds_ledger_write(),
+            )
+            .await
+            .unwrap();
         }
 
         pub async fn create_presentation_request(&self) -> Verifier {

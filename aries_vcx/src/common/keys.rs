@@ -84,11 +84,11 @@ pub async fn get_verkey_from_ledger(indy_ledger: &Arc<dyn IndyLedgerRead>, did: 
 mod test {
     #[tokio::test]
     #[ignore]
-    #[cfg(all(
-        not(feature = "vdr_proxy_ledger"),
-        not(feature = "modular_libs"),
-        not(feature = "mixed_breed")
-    ))]
+    // #[cfg(all(
+    //     not(feature = "vdr_proxy_ledger"),
+    //     not(feature = "modular_libs"),
+    //     not(feature = "mixed_breed")
+    // ))]
     async fn test_pool_rotate_verkey_fails() {
         use super::*;
 
@@ -110,10 +110,14 @@ mod test {
                 .await
                 .unwrap();
             assert_eq!(
-                rotate_verkey(&setup.profile, &setup.institution_did)
-                    .await
-                    .unwrap_err()
-                    .kind(),
+                rotate_verkey(
+                    &setup.profile.inject_wallet(),
+                    &setup.profile.inject_indy_ledger_write(),
+                    &setup.institution_did
+                )
+                .await
+                .unwrap_err()
+                .kind(),
                 AriesVcxErrorKind::InvalidLedgerResponse
             );
             let local_verkey_2 = setup
