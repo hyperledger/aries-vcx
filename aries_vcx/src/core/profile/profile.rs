@@ -11,17 +11,17 @@ use async_trait::async_trait;
 
 #[async_trait]
 pub trait Profile: std::fmt::Debug + Send + Sync {
-    fn inject_indy_ledger_read(self: Arc<Self>) -> Arc<dyn IndyLedgerRead>;
+    fn inject_indy_ledger_read(&self) -> Arc<dyn IndyLedgerRead>;
 
-    fn inject_indy_ledger_write(self: Arc<Self>) -> Arc<dyn IndyLedgerWrite>;
+    fn inject_indy_ledger_write(&self) -> Arc<dyn IndyLedgerWrite>;
 
-    fn inject_anoncreds(self: Arc<Self>) -> Arc<dyn BaseAnonCreds>;
+    fn inject_anoncreds(&self) -> Arc<dyn BaseAnonCreds>;
 
-    fn inject_anoncreds_ledger_read(self: Arc<Self>) -> Arc<dyn AnoncredsLedgerRead>;
+    fn inject_anoncreds_ledger_read(&self) -> Arc<dyn AnoncredsLedgerRead>;
 
-    fn inject_anoncreds_ledger_write(self: Arc<Self>) -> Arc<dyn AnoncredsLedgerWrite>;
+    fn inject_anoncreds_ledger_write(&self) -> Arc<dyn AnoncredsLedgerWrite>;
 
     fn inject_wallet(&self) -> Arc<dyn BaseWallet>;
 
-    fn update_taa_configuration(self: Arc<Self>, taa_options: TxnAuthrAgrmtOptions) -> VcxResult<()>;
+    fn update_taa_configuration(&self, taa_options: TxnAuthrAgrmtOptions) -> VcxResult<()>;
 }
