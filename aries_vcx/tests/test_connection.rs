@@ -165,10 +165,7 @@ mod integration_tests {
                 .await
                 .unwrap();
             conn_receiver
-                .send_generic_message(
-                    &consumer.profile.inject_wallet(),
-                    "Hello oob sender, from oob receiver",
-                )
+                .send_generic_message(&consumer.profile.inject_wallet(), "Hello oob sender, from oob receiver")
                 .await
                 .unwrap();
             let sender_msgs = conn_sender
@@ -211,10 +208,7 @@ mod integration_tests {
                 .unwrap();
             assert!(conn.is_some());
             conn.unwrap()
-                .send_generic_message(
-                    &consumer.profile.inject_wallet(),
-                    "Hello oob sender, from oob receiver",
-                )
+                .send_generic_message(&consumer.profile.inject_wallet(), "Hello oob sender, from oob receiver")
                 .await
                 .unwrap();
 

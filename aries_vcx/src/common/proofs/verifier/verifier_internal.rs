@@ -214,10 +214,10 @@ pub async fn build_rev_reg_json(
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 pub mod unit_tests {
-    use crate::utils::mockdata::profile::mock_anoncreds::MockAnoncreds;
-    use crate::utils::mockdata::profile::mock_ledger::MockLedger;
     use crate::utils::constants::*;
     use crate::utils::devsetup::*;
+    use crate::utils::mockdata::profile::mock_anoncreds::MockAnoncreds;
+    use crate::utils::mockdata::profile::mock_ledger::MockLedger;
 
     use super::*;
 
@@ -239,10 +239,7 @@ pub mod unit_tests {
         };
         let credentials = vec![cred1, cred2];
         let ledger_read: Arc<dyn AnoncredsLedgerRead> = Arc::new(MockLedger {});
-        let credential_json =
-            build_cred_defs_json_verifier(&ledger_read, &credentials)
-                .await
-                .unwrap();
+        let credential_json = build_cred_defs_json_verifier(&ledger_read, &credentials).await.unwrap();
 
         let json: Value = serde_json::from_str(CRED_DEF_JSON).unwrap();
         let expected = json!({ CRED_DEF_ID: json }).to_string();
@@ -267,9 +264,7 @@ pub mod unit_tests {
         };
         let ledger_read: Arc<dyn AnoncredsLedgerRead> = Arc::new(MockLedger {});
         let credentials = vec![cred1, cred2];
-        let schema_json = build_schemas_json_verifier(&ledger_read, &credentials)
-            .await
-            .unwrap();
+        let schema_json = build_schemas_json_verifier(&ledger_read, &credentials).await.unwrap();
 
         let json: Value = serde_json::from_str(SCHEMA_JSON).unwrap();
         let expected = json!({ SCHEMA_ID: json }).to_string();
@@ -294,9 +289,7 @@ pub mod unit_tests {
         };
         let ledger_read: Arc<dyn AnoncredsLedgerRead> = Arc::new(MockLedger {});
         let credentials = vec![cred1, cred2];
-        let rev_reg_defs_json = build_rev_reg_defs_json(&ledger_read, &credentials)
-            .await
-            .unwrap();
+        let rev_reg_defs_json = build_rev_reg_defs_json(&ledger_read, &credentials).await.unwrap();
 
         let json: Value = serde_json::from_str(&rev_def_json()).unwrap();
         let expected = json!({ REV_REG_ID: json }).to_string();
@@ -321,9 +314,7 @@ pub mod unit_tests {
         };
         let ledger_read: Arc<dyn AnoncredsLedgerRead> = Arc::new(MockLedger {});
         let credentials = vec![cred1, cred2];
-        let rev_reg_json = build_rev_reg_json(&ledger_read, &credentials)
-            .await
-            .unwrap();
+        let rev_reg_json = build_rev_reg_json(&ledger_read, &credentials).await.unwrap();
 
         let json: Value = serde_json::from_str(REV_REG_JSON).unwrap();
         let expected = json!({REV_REG_ID:{"1":json}}).to_string();

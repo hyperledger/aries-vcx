@@ -305,6 +305,8 @@ pub mod unit_tests {
 
     use crate::core::profile::vdrtools_profile::VdrtoolsProfile;
     use crate::utils::devsetup::*;
+    use crate::utils::mockdata::profile::mock_anoncreds::MockAnoncreds;
+    use crate::utils::mockdata::profile::mock_ledger::MockLedger;
     use crate::utils::{
         constants::{
             ADDRESS_CRED_DEF_ID, ADDRESS_CRED_ID, ADDRESS_CRED_REV_ID, ADDRESS_REV_REG_ID, ADDRESS_SCHEMA_ID,
@@ -312,8 +314,6 @@ pub mod unit_tests {
         },
         get_temp_dir_path,
     };
-    use crate::utils::mockdata::profile::mock_anoncreds::MockAnoncreds;
-    use crate::utils::mockdata::profile::mock_ledger::MockLedger;
 
     use super::*;
 
@@ -365,9 +365,7 @@ pub mod unit_tests {
         let creds = vec![cred1, cred2];
 
         let ledger_read: Arc<dyn AnoncredsLedgerRead> = Arc::new(MockLedger {});
-        let credential_def = build_cred_defs_json_prover(&ledger_read, &creds)
-            .await
-            .unwrap();
+        let credential_def = build_cred_defs_json_prover(&ledger_read, &creds).await.unwrap();
         assert!(credential_def.len() > 0);
         assert!(credential_def.contains(r#""id":"V4SGRU86Z58d6TV7PBUe6f:3:CL:47:tag1","schemaId":"47""#));
     }
@@ -433,9 +431,7 @@ pub mod unit_tests {
 
         let ledger_read: Arc<dyn AnoncredsLedgerRead> = Arc::new(MockLedger {});
         assert_eq!(
-            build_schemas_json_prover(&ledger_read, &Vec::new())
-                .await
-                .unwrap(),
+            build_schemas_json_prover(&ledger_read, &Vec::new()).await.unwrap(),
             "{}".to_string()
         );
 
@@ -466,9 +462,7 @@ pub mod unit_tests {
         let creds = vec![cred1, cred2];
 
         let ledger_read: Arc<dyn AnoncredsLedgerRead> = Arc::new(MockLedger {});
-        let schemas = build_schemas_json_prover(&ledger_read, &creds)
-            .await
-            .unwrap();
+        let schemas = build_schemas_json_prover(&ledger_read, &creds).await.unwrap();
         assert!(schemas.len() > 0);
         assert!(schemas.contains(r#""id":"2hoqvcwupRTUNkXn6ArYzs:2:test-licence:4.4.4","name":"test-licence""#));
     }
@@ -731,15 +725,11 @@ pub mod unit_tests {
             revealed: None,
         };
         let mut cred_info = vec![cred1];
-        let anoncreds: Arc<dyn BaseAnonCreds> = Arc::new( MockAnoncreds {} );
+        let anoncreds: Arc<dyn BaseAnonCreds> = Arc::new(MockAnoncreds {});
         let ledger_read: Arc<dyn AnoncredsLedgerRead> = Arc::new(MockLedger {});
-        let states = build_rev_states_json(
-            &ledger_read,
-            &anoncreds,
-            cred_info.as_mut(),
-        )
-        .await
-        .unwrap();
+        let states = build_rev_states_json(&ledger_read, &anoncreds, cred_info.as_mut())
+            .await
+            .unwrap();
         let rev_state_json: Value = serde_json::from_str(REV_STATE_JSON).unwrap();
         let expected = json!({REV_REG_ID: {"1": rev_state_json}}).to_string();
         assert_eq!(states, expected);
