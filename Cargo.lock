@@ -1425,6 +1425,7 @@ dependencies = [
  "aries_vcx_core",
  "async-trait",
  "chrono",
+ "did_doc_sov",
  "did_resolver",
  "mockall",
  "serde",
