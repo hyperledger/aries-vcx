@@ -4,6 +4,8 @@ use did_parser::{Did, DidUrl};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
+use crate::error::DidDocumentBuilderError;
+
 use super::{
     service::Service,
     types::uri::Uri,
@@ -16,7 +18,10 @@ type ControllerAlias = OneOrList<Did>;
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 #[serde(default)]
 #[serde(rename_all = "camelCase")]
-pub struct DidDocument {
+pub struct DidDocument<E>
+where
+    E: Default,
+{
     id: Did,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     also_known_as: Vec<Uri>,
@@ -35,14 +40,17 @@ pub struct DidDocument {
     #[serde(skip_serializing_if = "Vec::is_empty")]
     capability_delegation: Vec<VerificationMethodKind>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
-    service: Vec<Service>,
+    service: Vec<Service<E>>,
     #[serde(skip_serializing_if = "HashMap::is_empty")]
     #[serde(flatten)]
     extra: HashMap<String, Value>,
 }
 
-impl DidDocument {
-    pub fn builder(id: Did) -> DidDocumentBuilder {
+impl<E> DidDocument<E>
+where
+    E: Default,
+{
+    pub fn builder(id: Did) -> DidDocumentBuilder<E> {
         DidDocumentBuilder::new(id)
     }
 
@@ -82,17 +90,24 @@ impl DidDocument {
         self.capability_delegation.as_ref()
     }
 
-    pub fn service(&self) -> &[Service] {
+    pub fn service(&self) -> &[Service<E>] {
         self.service.as_ref()
     }
 
     pub fn extra_field(&self, key: &str) -> Option<&Value> {
         self.extra.get(key)
     }
+
+    pub fn validate(&self) -> Result<(), DidDocumentBuilderError> {
+        Ok(())
+    }
 }
 
 #[derive(Debug, Default)]
-pub struct DidDocumentBuilder {
+pub struct DidDocumentBuilder<E>
+where
+    E: Default,
+{
     id: Did,
     also_known_as: Vec<Uri>,
     controller: Vec<Did>,
@@ -102,11 +117,14 @@ pub struct DidDocumentBuilder {
     key_agreement: Vec<VerificationMethodKind>,
     capability_invocation: Vec<VerificationMethodKind>,
     capability_delegation: Vec<VerificationMethodKind>,
-    service: Vec<Service>,
+    service: Vec<Service<E>>,
     extra: HashMap<String, Value>,
 }
 
-impl DidDocumentBuilder {
+impl<E> DidDocumentBuilder<E>
+where
+    E: Default,
+{
     pub fn new(id: Did) -> Self {
         Self {
             id,
@@ -189,7 +207,7 @@ impl DidDocumentBuilder {
         self
     }
 
-    pub fn add_service(mut self, service: Service) -> Self {
+    pub fn add_service(mut self, service: Service<E>) -> Self {
         self.service.push(service);
         self
     }
@@ -199,7 +217,7 @@ impl DidDocumentBuilder {
         self
     }
 
-    pub fn build(self) -> DidDocument {
+    pub fn build(self) -> DidDocument<E> {
         let controller = if self.controller.is_empty() {
             None
         } else {
@@ -249,7 +267,7 @@ mod tests {
         let service_id = Uri::new("did:example:123456789abcdefghi;service-1").unwrap();
         let service_type = "test-service".to_string();
         let service_endpoint = "https://example.com/service";
-        let service = ServiceBuilder::new(service_id, service_endpoint.try_into().unwrap())
+        let service = ServiceBuilder::<()>::new(service_id, service_endpoint.try_into().unwrap())
             .unwrap()
             .add_service_type(service_type)
             .unwrap()

@@ -11,9 +11,11 @@ use self::{resolution_options::DidResolutionOptions, resolution_output::DidResol
 
 #[async_trait]
 pub trait DidResolvable {
+    type ExtraFields: Default;
+
     async fn resolve(
         &self,
         did: &Did,
         options: &DidResolutionOptions,
-    ) -> Result<DidResolutionOutput, GenericError>;
+    ) -> Result<DidResolutionOutput<Self::ExtraFields>, GenericError>;
 }
