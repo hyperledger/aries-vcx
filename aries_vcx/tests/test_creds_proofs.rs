@@ -33,8 +33,10 @@ mod integration_tests {
     async fn test_agency_pool_retrieve_credentials() {
         SetupProfile::run(|setup| async move {
             create_and_store_nonrevocable_credential(
-                &setup.profile,
-                &setup.profile,
+                &setup.profile.inject_anoncreds(),
+                &setup.profile.inject_anoncreds(),
+                &setup.profile.inject_anoncreds_ledger_read(),
+                &setup.profile.inject_anoncreds_ledger_write(),
                 &setup.institution_did,
                 DEFAULT_SCHEMA_ATTRS,
             )
@@ -172,8 +174,10 @@ mod integration_tests {
     async fn test_agency_pool_case_for_proof_req_doesnt_matter_for_retrieve_creds() {
         SetupProfile::run(|setup| async move {
             create_and_store_nonrevocable_credential(
-                &setup.profile,
-                &setup.profile,
+                &setup.profile.inject_anoncreds(),
+                &setup.profile.inject_anoncreds(),
+                &setup.profile.inject_anoncreds_ledger_read(),
+                &setup.profile.inject_anoncreds_ledger_write(),
                 &setup.institution_did,
                 DEFAULT_SCHEMA_ATTRS,
             )
@@ -285,8 +289,10 @@ mod integration_tests {
     async fn test_agency_pool_generate_proof() {
         SetupProfile::run(|setup| async move {
             create_and_store_credential(
-                &setup.profile,
-                &setup.profile,
+                &setup.profile.inject_anoncreds(),
+                &setup.profile.inject_anoncreds(),
+                &setup.profile.inject_anoncreds_ledger_read(),
+                &setup.profile.inject_anoncreds_ledger_write(),
                 &setup.institution_did,
                 DEFAULT_SCHEMA_ATTRS,
             )
@@ -369,8 +375,10 @@ mod integration_tests {
     async fn test_agency_pool_generate_proof_with_predicates() {
         SetupProfile::run(|setup| async move {
             create_and_store_credential(
-                &setup.profile,
-                &setup.profile,
+                &setup.profile.inject_anoncreds(),
+                &setup.profile.inject_anoncreds(),
+                &setup.profile.inject_anoncreds_ledger_read(),
+                &setup.profile.inject_anoncreds_ledger_write(),
                 &setup.institution_did,
                 DEFAULT_SCHEMA_ATTRS,
             )

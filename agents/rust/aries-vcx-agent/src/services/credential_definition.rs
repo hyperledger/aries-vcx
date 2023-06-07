@@ -22,13 +22,25 @@ impl ServiceCredentialDefinitions {
     }
 
     pub async fn create_cred_def(&self, config: CredentialDefConfig) -> AgentResult<String> {
-        let cd = CredentialDef::create(&self.profile, "".to_string(), config, true).await?;
+        let cd = CredentialDef::create(
+            &self.profile.inject_anoncreds_ledger_read(),
+            &self.profile.inject_anoncreds(),
+            "".to_string(),
+            config,
+            true,
+        )
+        .await?;
         self.cred_defs.insert(&cd.get_cred_def_id(), cd)
     }
 
     pub async fn publish_cred_def(&self, thread_id: &str) -> AgentResult<()> {
         let cred_def = self.cred_defs.get(thread_id)?;
-        let cred_def = cred_def.publish_cred_def(&self.profile).await?;
+        let cred_def = cred_def
+            .publish_cred_def(
+                &self.profile.inject_anoncreds_ledger_read(),
+                &self.profile.inject_anoncreds_ledger_write(),
+            )
+            .await?;
         self.cred_defs.insert(thread_id, cred_def)?;
         Ok(())
     }

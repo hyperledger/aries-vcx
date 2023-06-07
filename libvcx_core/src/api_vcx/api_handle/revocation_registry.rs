@@ -29,7 +29,15 @@ pub async fn create(config: RevocationRegistryConfig) -> LibvcxResult<u32> {
         tag,
     } = config;
     let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
-    let rev_reg = RevocationRegistry::create(&profile, &issuer_did, &cred_def_id, &tails_dir, max_creds, tag).await?;
+    let rev_reg = RevocationRegistry::create(
+        &profile.inject_anoncreds(),
+        &issuer_did,
+        &cred_def_id,
+        &tails_dir,
+        max_creds,
+        tag,
+    )
+    .await?;
     let handle = REV_REG_MAP.add(rev_reg)?;
     Ok(handle)
 }
@@ -37,7 +45,9 @@ pub async fn create(config: RevocationRegistryConfig) -> LibvcxResult<u32> {
 pub async fn publish(handle: u32, tails_url: &str) -> LibvcxResult<u32> {
     let mut rev_reg = REV_REG_MAP.get_cloned(handle)?;
     let profile = get_main_profile()?;
-    rev_reg.publish_revocation_primitives(&profile, tails_url).await?;
+    rev_reg
+        .publish_revocation_primitives(&profile.inject_anoncreds_ledger_write(), tails_url)
+        .await?;
     REV_REG_MAP.insert(handle, rev_reg)?;
     Ok(handle)
 }
@@ -48,7 +58,11 @@ pub async fn publish_revocations(handle: u32) -> LibvcxResult<()> {
     let rev_reg = REV_REG_MAP.get_cloned(handle)?;
 
     rev_reg
-        .publish_local_revocations(&get_main_profile()?, &submitter_did)
+        .publish_local_revocations(
+            &get_main_profile()?.inject_anoncreds(),
+            &get_main_profile()?.inject_anoncreds_ledger_write(),
+            &submitter_did,
+        )
         .await?;
 
     Ok(())

@@ -219,7 +219,7 @@ pub mod test_utils {
             let version: String = String::from("1.0");
 
             self.schema = Schema::create(
-                &self.profile,
+                &self.profile.inject_anoncreds(),
                 "",
                 &self.config_issuer.institution_did,
                 &name,
@@ -228,7 +228,7 @@ pub mod test_utils {
             )
             .await
             .unwrap()
-            .publish(&self.profile, None)
+            .publish(&self.profile.inject_anoncreds_ledger_write(), None)
             .await
             .unwrap();
         }

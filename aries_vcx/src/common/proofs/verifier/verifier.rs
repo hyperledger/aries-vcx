@@ -167,8 +167,10 @@ pub mod unit_tests {
 
             let (schema_id, schema_json, cred_def_id, cred_def_json, _offer, _req, _req_meta, cred_id) =
                 create_and_store_nonrevocable_credential(
-                    &setup.profile,
-                    &setup.profile,
+                    &setup.profile.inject_anoncreds(),
+                    &setup.profile.inject_anoncreds(),
+                    &setup.profile.inject_anoncreds_ledger_read(),
+                    &setup.profile.inject_anoncreds_ledger_write(),
                     &setup.institution_did,
                     utils::constants::DEFAULT_SCHEMA_ATTRS,
                 )
@@ -265,8 +267,10 @@ pub mod unit_tests {
 
             let (schema_id, schema_json, cred_def_id, cred_def_json, _offer, _req, _req_meta, cred_id) =
                 create_and_store_nonrevocable_credential(
-                    &setup.profile,
-                    &setup.profile,
+                    &setup.profile.inject_anoncreds(),
+                    &setup.profile.inject_anoncreds(),
+                    &setup.profile.inject_anoncreds_ledger_read(),
+                    &setup.profile.inject_anoncreds_ledger_write(),
                     &setup.institution_did,
                     utils::constants::DEFAULT_SCHEMA_ATTRS,
                 )
@@ -379,8 +383,15 @@ pub mod integration_tests {
     #[ignore]
     async fn test_pool_prover_verify_proof_with_predicate_success_case() {
         SetupProfile::run(|setup| async move {
-            let (schemas, cred_defs, proof_req, proof) =
-                create_proof_with_predicate(&setup.profile, &setup.profile, &setup.institution_did, true).await;
+            let (schemas, cred_defs, proof_req, proof) = create_proof_with_predicate(
+                &setup.profile.inject_anoncreds(),
+                &setup.profile.inject_anoncreds(),
+                &setup.profile.inject_anoncreds_ledger_read(),
+                &setup.profile.inject_anoncreds_ledger_write(),
+                &setup.institution_did,
+                true,
+            )
+            .await;
 
             let anoncreds = Arc::clone(&setup.profile).inject_anoncreds();
             let proof_validation = anoncreds
@@ -397,8 +408,15 @@ pub mod integration_tests {
     #[ignore]
     async fn test_pool_prover_verify_proof_with_predicate_fail_case() {
         SetupProfile::run(|setup| async move {
-            let (schemas, cred_defs, proof_req, proof) =
-                create_proof_with_predicate(&setup.profile, &setup.profile, &setup.institution_did, false).await;
+            let (schemas, cred_defs, proof_req, proof) = create_proof_with_predicate(
+                &setup.profile.inject_anoncreds(),
+                &setup.profile.inject_anoncreds(),
+                &setup.profile.inject_anoncreds_ledger_read(),
+                &setup.profile.inject_anoncreds_ledger_write(),
+                &setup.institution_did,
+                false,
+            )
+            .await;
 
             let anoncreds = Arc::clone(&setup.profile).inject_anoncreds();
             anoncreds

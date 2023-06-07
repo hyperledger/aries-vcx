@@ -22,13 +22,23 @@ impl ServiceSchemas {
     }
 
     pub async fn create_schema(&self, name: &str, version: &str, attributes: &Vec<String>) -> AgentResult<String> {
-        let schema = Schema::create(&self.profile, "", &self.issuer_did, name, version, attributes).await?;
+        let schema = Schema::create(
+            &self.profile.inject_anoncreds(),
+            "",
+            &self.issuer_did,
+            name,
+            version,
+            attributes,
+        )
+        .await?;
         self.schemas.insert(&schema.get_schema_id(), schema)
     }
 
     pub async fn publish_schema(&self, thread_id: &str) -> AgentResult<()> {
         let schema = self.schemas.get(thread_id)?;
-        let schema = schema.publish(&self.profile, None).await?;
+        let schema = schema
+            .publish(&self.profile.inject_anoncreds_ledger_write(), None)
+            .await?;
         self.schemas.insert(thread_id, schema)?;
         Ok(())
     }

@@ -303,7 +303,8 @@ pub mod pool_tests {
 pub mod unit_tests {
     use aries_vcx_core::INVALID_POOL_HANDLE;
 
-    use crate::common::test_utils::{indy_handles_to_profile, mock_profile};
+    use crate::common::test_utils::mock_profile;
+    use crate::core::profile::vdrtools_profile::VdrtoolsProfile;
     use crate::utils::devsetup::*;
     use crate::utils::{
         constants::{
@@ -372,7 +373,7 @@ pub mod unit_tests {
     #[tokio::test]
     async fn test_find_credential_def_fails() {
         SetupLibraryWallet::run(|setup| async move {
-            let profile = indy_handles_to_profile(setup.wallet_handle, INVALID_POOL_HANDLE);
+            let profile = Arc::new(VdrtoolsProfile::init(setup.wallet_handle, INVALID_POOL_HANDLE));
             let credential_ids = vec![CredInfoProver {
                 referent: "1".to_string(),
                 credential_referent: "2".to_string(),
@@ -397,7 +398,7 @@ pub mod unit_tests {
     #[tokio::test]
     async fn test_find_schemas_fails() {
         SetupLibraryWallet::run(|setup| async move {
-            let profile = indy_handles_to_profile(setup.wallet_handle, INVALID_POOL_HANDLE);
+            let profile = Arc::new(VdrtoolsProfile::init(setup.wallet_handle, INVALID_POOL_HANDLE));
             let credential_ids = vec![CredInfoProver {
                 referent: "1".to_string(),
                 credential_referent: "2".to_string(),

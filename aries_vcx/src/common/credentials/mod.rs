@@ -56,8 +56,10 @@ mod integration_tests {
     async fn test_pool_prover_get_credential() {
         SetupProfile::run(|setup| async move {
             let res = create_and_store_credential(
-                &setup.profile,
-                &setup.profile,
+                &setup.profile.inject_anoncreds(),
+                &setup.profile.inject_anoncreds(),
+                &setup.profile.inject_anoncreds_ledger_read(),
+                &setup.profile.inject_anoncreds_ledger_write(),
                 &setup.institution_did,
                 DEFAULT_SCHEMA_ATTRS,
             )
@@ -86,8 +88,10 @@ mod integration_tests {
     async fn test_pool_get_cred_rev_id() {
         SetupProfile::run(|setup| async move {
             let res = create_and_store_credential(
-                &setup.profile,
-                &setup.profile,
+                &setup.profile.inject_anoncreds(),
+                &setup.profile.inject_anoncreds(),
+                &setup.profile.inject_anoncreds_ledger_read(),
+                &setup.profile.inject_anoncreds_ledger_write(),
                 &setup.institution_did,
                 DEFAULT_SCHEMA_ATTRS,
             )
@@ -109,8 +113,10 @@ mod integration_tests {
     async fn test_pool_is_cred_revoked() {
         SetupProfile::run(|setup| async move {
             let res = create_and_store_credential(
-                &setup.profile,
-                &setup.profile,
+                &setup.profile.inject_anoncreds(),
+                &setup.profile.inject_anoncreds(),
+                &setup.profile.inject_anoncreds_ledger_read(),
+                &setup.profile.inject_anoncreds_ledger_write(),
                 &setup.institution_did,
                 DEFAULT_SCHEMA_ATTRS,
             )
