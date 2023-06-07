@@ -268,11 +268,9 @@ mod tests {
         let service_type = "test-service".to_string();
         let service_endpoint = "https://example.com/service";
         let service = ServiceBuilder::<()>::new(service_id, service_endpoint.try_into().unwrap())
-            .unwrap()
             .add_service_type(service_type)
             .unwrap()
-            .build()
-            .unwrap();
+            .build();
 
         let document = DidDocumentBuilder::new(id.clone())
             .add_also_known_as(also_known_as.clone())

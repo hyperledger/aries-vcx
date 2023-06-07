@@ -29,10 +29,7 @@ impl<E> Service<E>
 where
     E: Default,
 {
-    pub fn builder(
-        id: Uri,
-        service_endpoint: Url,
-    ) -> Result<ServiceBuilder<E>, DidDocumentBuilderError> {
+    pub fn builder(id: Uri, service_endpoint: Url) -> ServiceBuilder<E> {
         ServiceBuilder::new(id, service_endpoint)
     }
 
@@ -56,6 +53,13 @@ where
 #[derive(Debug)]
 pub struct ServiceBuilder<E> {
     id: Uri,
+    service_endpoint: Url,
+    extra: E,
+}
+
+#[derive(Debug)]
+pub struct ServiceBuilderWithServiceType<E> {
+    id: Uri,
     service_type: HashSet<String>,
     service_endpoint: Url,
     extra: E,
@@ -65,15 +69,52 @@ impl<E> ServiceBuilder<E>
 where
     E: Default,
 {
-    pub fn new(id: Uri, service_endpoint: Url) -> Result<Self, DidDocumentBuilderError> {
-        Ok(Self {
+    pub fn new(id: Uri, service_endpoint: Url) -> Self {
+        Self {
             id,
             service_endpoint,
-            service_type: HashSet::new(),
             extra: E::default(),
+        }
+    }
+
+    pub fn add_service_type(
+        self,
+        service_type: String,
+    ) -> Result<ServiceBuilderWithServiceType<E>, DidDocumentBuilderError> {
+        if service_type.is_empty() {
+            return Err(DidDocumentBuilderError::MissingField("type"));
+        }
+        let mut service_types = HashSet::new();
+        service_types.insert(service_type);
+        Ok(ServiceBuilderWithServiceType {
+            id: self.id,
+            service_type: service_types,
+            service_endpoint: self.service_endpoint,
+            extra: self.extra,
         })
     }
 
+    pub fn add_service_types(
+        self,
+        service_types: Vec<String>,
+    ) -> Result<ServiceBuilderWithServiceType<E>, DidDocumentBuilderError> {
+        if service_types.is_empty() {
+            return Err(DidDocumentBuilderError::MissingField("type"));
+        }
+        let service_types = service_types.into_iter().collect::<HashSet<_>>();
+        Ok(ServiceBuilderWithServiceType {
+            id: self.id,
+            service_type: service_types,
+            service_endpoint: self.service_endpoint,
+            extra: self.extra,
+        })
+    }
+}
+
+impl<E> ServiceBuilderWithServiceType<E>
+where
+    E: Default,
+{
     pub fn add_service_type(
         mut self,
         service_type: String,
@@ -90,16 +131,12 @@ where
         self
     }
 
-    pub fn build(self) -> Result<Service<E>, DidDocumentBuilderError> {
-        if self.service_type.is_empty() {
-            Err(DidDocumentBuilderError::MissingField("type"))
-        } else {
-            Ok(Service {
-                id: self.id,
-                service_type: OneOrList::List(self.service_type.into_iter().collect()),
-                service_endpoint: self.service_endpoint,
-                extra: self.extra,
-            })
+    pub fn build(self) -> Service<E> {
+        Service {
+            id: self.id,
+            service_type: OneOrList::List(self.service_type.into_iter().collect()),
+            service_endpoint: self.service_endpoint,
+            extra: self.extra,
         }
     }
 }
@@ -128,11 +165,9 @@ mod tests {
 
         let service =
             ServiceBuilder::<ExtraSov>::new(id.clone(), service_endpoint.try_into().unwrap())
-                .unwrap()
                 .add_service_type(service_type.clone())
                 .unwrap()
-                .build()
-                .unwrap();
+                .build();
 
         assert_eq!(service.id(), &id);
         assert_eq!(service.service_endpoint().as_ref(), service_endpoint);
@@ -153,12 +188,10 @@ mod tests {
         };
 
         let service = ServiceBuilder::<ExtraSov>::new(id, service_endpoint.try_into().unwrap())
-            .unwrap()
             .add_service_type(service_type)
             .unwrap()
             .add_extra(extra)
-            .build()
-            .unwrap();
+            .build();
 
         assert_eq!(service.extra().recipient_keys, recipient_keys);
         assert_eq!(service.extra().routing_keys, routing_keys);
@@ -171,13 +204,11 @@ mod tests {
         let service_type = "DIDCommMessaging".to_string();
 
         let service = ServiceBuilder::<ExtraSov>::new(id, service_endpoint.try_into().unwrap())
-            .unwrap()
             .add_service_type(service_type.clone())
             .unwrap()
             .add_service_type(service_type.clone())
             .unwrap()
-            .build()
-            .unwrap();
+            .build();
 
         assert_eq!(service.service_type(), &OneOrList::List(vec![service_type]));
     }
@@ -188,7 +219,6 @@ mod tests {
         let service_endpoint = "http://example.com/endpoint";
 
         let res = ServiceBuilder::<ExtraSov>::new(id, service_endpoint.try_into().unwrap())
-            .unwrap()
             .add_service_type("".to_string());
         assert!(res.is_err());
     }

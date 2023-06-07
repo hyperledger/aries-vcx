@@ -17,7 +17,10 @@ use crate::{
     reader::AttrReader,
 };
 
-use super::utils::{is_valid_sovrin_did_id, ledger_response_to_ddo};
+use super::{
+    utils::{is_valid_sovrin_did_id, ledger_response_to_ddo},
+    ExtraFieldsSov,
+};
 
 pub struct DidSovResolver {
     ledger: Arc<dyn AttrReader>,
