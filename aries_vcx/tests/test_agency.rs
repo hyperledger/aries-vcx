@@ -45,7 +45,7 @@ mod integration_tests {
                 .unwrap();
 
             alice_to_faber
-                .send_generic_message(&institution.profile.inject_wallet(), "Hello Faber")
+                .send_generic_message(&consumer.profile.inject_wallet(), "Hello Faber")
                 .await
                 .unwrap();
 

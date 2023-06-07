@@ -166,7 +166,7 @@ mod integration_tests {
                 .unwrap();
             conn_receiver
                 .send_generic_message(
-                    &institution.profile.inject_wallet(),
+                    &consumer.profile.inject_wallet(),
                     "Hello oob sender, from oob receiver",
                 )
                 .await
@@ -212,7 +212,7 @@ mod integration_tests {
             assert!(conn.is_some());
             conn.unwrap()
                 .send_generic_message(
-                    &institution.profile.inject_wallet(),
+                    &consumer.profile.inject_wallet(),
                     "Hello oob sender, from oob receiver",
                 )
                 .await
