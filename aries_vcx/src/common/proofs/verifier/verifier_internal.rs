@@ -214,7 +214,8 @@ pub async fn build_rev_reg_json(
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 pub mod unit_tests {
-    use crate::common::test_utils::mock_profile;
+    use crate::utils::mockdata::profile::mock_anoncreds::MockAnoncreds;
+    use crate::utils::mockdata::profile::mock_ledger::MockLedger;
     use crate::utils::constants::*;
     use crate::utils::devsetup::*;
 
@@ -237,8 +238,9 @@ pub mod unit_tests {
             timestamp: None,
         };
         let credentials = vec![cred1, cred2];
+        let ledger_read: Arc<dyn AnoncredsLedgerRead> = Arc::new(MockLedger {});
         let credential_json =
-            build_cred_defs_json_verifier(&mock_profile().inject_anoncreds_ledger_read(), &credentials)
+            build_cred_defs_json_verifier(&ledger_read, &credentials)
                 .await
                 .unwrap();
 
@@ -263,8 +265,9 @@ pub mod unit_tests {
             rev_reg_id: None,
             timestamp: None,
         };
+        let ledger_read: Arc<dyn AnoncredsLedgerRead> = Arc::new(MockLedger {});
         let credentials = vec![cred1, cred2];
-        let schema_json = build_schemas_json_verifier(&mock_profile().inject_anoncreds_ledger_read(), &credentials)
+        let schema_json = build_schemas_json_verifier(&ledger_read, &credentials)
             .await
             .unwrap();
 
@@ -289,8 +292,9 @@ pub mod unit_tests {
             rev_reg_id: Some(REV_REG_ID.to_string()),
             timestamp: None,
         };
+        let ledger_read: Arc<dyn AnoncredsLedgerRead> = Arc::new(MockLedger {});
         let credentials = vec![cred1, cred2];
-        let rev_reg_defs_json = build_rev_reg_defs_json(&mock_profile().inject_anoncreds_ledger_read(), &credentials)
+        let rev_reg_defs_json = build_rev_reg_defs_json(&ledger_read, &credentials)
             .await
             .unwrap();
 
@@ -315,8 +319,9 @@ pub mod unit_tests {
             rev_reg_id: Some("id2".to_string()),
             timestamp: Some(2),
         };
+        let ledger_read: Arc<dyn AnoncredsLedgerRead> = Arc::new(MockLedger {});
         let credentials = vec![cred1, cred2];
-        let rev_reg_json = build_rev_reg_json(&mock_profile().inject_anoncreds_ledger_read(), &credentials)
+        let rev_reg_json = build_rev_reg_json(&ledger_read, &credentials)
             .await
             .unwrap();
 

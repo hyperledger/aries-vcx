@@ -474,8 +474,3 @@ pub async fn create_key(wallet: &Arc<dyn BaseWallet>) -> String {
     let seed: String = crate::utils::random::generate_random_seed();
     wallet.create_and_store_my_did(Some(&seed), None).await.unwrap().1
 }
-
-// used for mocking profile
-pub fn mock_profile() -> Arc<dyn Profile> {
-    Arc::new(MockProfile {})
-}

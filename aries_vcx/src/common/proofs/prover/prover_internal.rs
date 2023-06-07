@@ -133,7 +133,7 @@ fn _get_revocation_interval(attr_name: &str, proof_req: &ProofRequestData) -> Vc
 }
 
 pub async fn build_rev_states_json(
-    ledger: &Arc<dyn AnoncredsLedgerRead>,
+    ledger_read: &Arc<dyn AnoncredsLedgerRead>,
     anoncreds: &Arc<dyn BaseAnonCreds>,
     credentials_identifiers: &mut Vec<CredInfoProver>,
 ) -> VcxResult<String> {
@@ -156,10 +156,10 @@ pub async fn build_rev_states_json(
                     (None, None)
                 };
 
-                let rev_reg_def_json = ledger.get_rev_reg_def_json(rev_reg_id).await?;
+                let rev_reg_def_json = ledger_read.get_rev_reg_def_json(rev_reg_id).await?;
 
                 let (rev_reg_id, rev_reg_delta_json, timestamp) =
-                    ledger.get_rev_reg_delta_json(rev_reg_id, from, to).await?;
+                    ledger_read.get_rev_reg_delta_json(rev_reg_id, from, to).await?;
 
                 let rev_state_json = anoncreds
                     .create_revocation_state(
@@ -303,7 +303,6 @@ pub mod pool_tests {
 pub mod unit_tests {
     use aries_vcx_core::INVALID_POOL_HANDLE;
 
-    use crate::common::test_utils::mock_profile;
     use crate::core::profile::vdrtools_profile::VdrtoolsProfile;
     use crate::utils::devsetup::*;
     use crate::utils::{
@@ -313,6 +312,8 @@ pub mod unit_tests {
         },
         get_temp_dir_path,
     };
+    use crate::utils::mockdata::profile::mock_anoncreds::MockAnoncreds;
+    use crate::utils::mockdata::profile::mock_ledger::MockLedger;
 
     use super::*;
 
@@ -363,7 +364,8 @@ pub mod unit_tests {
         };
         let creds = vec![cred1, cred2];
 
-        let credential_def = build_cred_defs_json_prover(&mock_profile().inject_anoncreds_ledger_read(), &creds)
+        let ledger_read: Arc<dyn AnoncredsLedgerRead> = Arc::new(MockLedger {});
+        let credential_def = build_cred_defs_json_prover(&ledger_read, &creds)
             .await
             .unwrap();
         assert!(credential_def.len() > 0);
@@ -386,7 +388,8 @@ pub mod unit_tests {
                 timestamp: None,
                 revealed: None,
             }];
-            let err_kind = build_cred_defs_json_prover(&profile.inject_anoncreds_ledger_read(), &credential_ids)
+            let ledger_read: Arc<dyn AnoncredsLedgerRead> = Arc::new(MockLedger {});
+            let err_kind = build_cred_defs_json_prover(&ledger_read, &credential_ids)
                 .await
                 .unwrap_err()
                 .kind();
@@ -412,8 +415,9 @@ pub mod unit_tests {
                 revealed: None,
             }];
 
+            let ledger_read: Arc<dyn AnoncredsLedgerRead> = Arc::new(MockLedger {});
             assert_eq!(
-                build_schemas_json_prover(&profile.inject_anoncreds_ledger_read(), &credential_ids)
+                build_schemas_json_prover(&ledger_read, &credential_ids)
                     .await
                     .unwrap_err()
                     .kind(),
@@ -427,8 +431,9 @@ pub mod unit_tests {
     async fn test_find_schemas() {
         let _setup = SetupMocks::init();
 
+        let ledger_read: Arc<dyn AnoncredsLedgerRead> = Arc::new(MockLedger {});
         assert_eq!(
-            build_schemas_json_prover(&mock_profile().inject_anoncreds_ledger_read(), &Vec::new())
+            build_schemas_json_prover(&ledger_read, &Vec::new())
                 .await
                 .unwrap(),
             "{}".to_string()
@@ -460,7 +465,8 @@ pub mod unit_tests {
         };
         let creds = vec![cred1, cred2];
 
-        let schemas = build_schemas_json_prover(&mock_profile().inject_anoncreds_ledger_read(), &creds)
+        let ledger_read: Arc<dyn AnoncredsLedgerRead> = Arc::new(MockLedger {});
+        let schemas = build_schemas_json_prover(&ledger_read, &creds)
             .await
             .unwrap();
         assert!(schemas.len() > 0);
@@ -725,9 +731,11 @@ pub mod unit_tests {
             revealed: None,
         };
         let mut cred_info = vec![cred1];
+        let anoncreds: Arc<dyn BaseAnonCreds> = Arc::new( MockAnoncreds {} );
+        let ledger_read: Arc<dyn AnoncredsLedgerRead> = Arc::new(MockLedger {});
         let states = build_rev_states_json(
-            &mock_profile().inject_anoncreds_ledger_read(),
-            &mock_profile().inject_anoncreds(),
+            &ledger_read,
+            &anoncreds,
             cred_info.as_mut(),
         )
         .await
