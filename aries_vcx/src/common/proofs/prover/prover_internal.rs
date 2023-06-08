@@ -386,8 +386,7 @@ pub mod unit_tests {
                 timestamp: None,
                 revealed: None,
             }];
-            let ledger_read: Arc<dyn AnoncredsLedgerRead> = Arc::new(MockLedger {});
-            let err_kind = build_cred_defs_json_prover(&ledger_read, &credential_ids)
+            let err_kind = build_cred_defs_json_prover(&profile.inject_anoncreds_ledger_read(), &credential_ids)
                 .await
                 .unwrap_err()
                 .kind();
@@ -413,9 +412,8 @@ pub mod unit_tests {
                 revealed: None,
             }];
 
-            let ledger_read: Arc<dyn AnoncredsLedgerRead> = Arc::new(MockLedger {});
             assert_eq!(
-                build_schemas_json_prover(&ledger_read, &credential_ids)
+                build_schemas_json_prover(&profile.inject_anoncreds_ledger_read(), &credential_ids)
                     .await
                     .unwrap_err()
                     .kind(),
