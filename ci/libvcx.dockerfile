@@ -7,7 +7,6 @@ WORKDIR /home/indy
 COPY --chown=indy  ./ ./
 
 USER indy
-ENV RUSTFLAGS="-C target-feature=-crt-static"
 RUN cargo build --release --manifest-path=/home/indy/libvcx/Cargo.toml
 USER root
 RUN mv /home/indy/target/release/libvcx.so .

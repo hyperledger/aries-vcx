@@ -27,12 +27,12 @@ runs:
       if: ${{ inputs.skip-docker-setup != 'true' }}
       shell: bash
       run: |
-        docker run --rm -d --name mysql     --network host -e MYSQL_ROOT_PASSWORD=mysecretpassword mysql:5.7.35
-        docker run --rm -d --name indypool  --network host ${{ env.DOCKER_IMAGE_POOL }}
+        docker run -d --name mysql     --network host -e MYSQL_ROOT_PASSWORD=mysecretpassword mysql:5.7.35
+        docker run -d --name indypool  --network host ${{ env.DOCKER_IMAGE_POOL }}
         sleep 5
         docker-compose -f ./ci/agency/docker-compose.yml up -d
     - name: "Start vdrproxy"
       if: ${{ inputs.skip-vdrproxy-setup != 'true' }}
       shell: bash
       run: |
-        docker run --rm -d --name vdrproxy --network host ${{ env.DOCKER_IMAGE_VDRPROXY }} -p ${{ env.VDR_PROXY_PORT }} -g ${{ env.GENESIS_URL }}
+        docker run -d --name vdrproxy --network host ${{ env.DOCKER_IMAGE_VDRPROXY }} -p ${{ env.VDR_PROXY_PORT }} -g ${{ env.GENESIS_URL }}
