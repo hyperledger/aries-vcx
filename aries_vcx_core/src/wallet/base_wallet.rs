@@ -10,8 +10,10 @@ use std::collections::HashMap;
 /// see: <https://github.com/hyperledger/indy-sdk/blob/main/libindy/src/api/wallet.rs>
 #[async_trait]
 pub trait BaseWallet: std::fmt::Debug + Send + Sync {
-    // ----- DIDs
+    // todo: workaround, this needs to be removed, vdrtools wallet specific concept
+    fn get_wallet_handle(&self) -> i32;
 
+    // ----- DIDs
     async fn create_and_store_my_did(
         &self,
         seed: Option<&str>,

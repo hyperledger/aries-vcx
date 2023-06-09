@@ -5,12 +5,9 @@ use aries_vcx_core::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind};
 use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
 use serde_json::Value;
 
+use crate::common::proofs::{proof_request::ProofRequestData, proof_request_internal::NonRevokedInterval};
 use crate::errors::error::prelude::*;
 use crate::handlers::proof_presentation::types::SelectedCredentials;
-use crate::{
-    common::proofs::{proof_request::ProofRequestData, proof_request_internal::NonRevokedInterval},
-    core::profile::profile::Profile,
-};
 
 #[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct CredInfoProver {
@@ -368,59 +365,6 @@ pub mod unit_tests {
         let credential_def = build_cred_defs_json_prover(&ledger_read, &creds).await.unwrap();
         assert!(credential_def.len() > 0);
         assert!(credential_def.contains(r#""id":"V4SGRU86Z58d6TV7PBUe6f:3:CL:47:tag1","schemaId":"47""#));
-    }
-
-    #[tokio::test]
-    async fn test_find_credential_def_fails() {
-        SetupLibraryWallet::run(|setup| async move {
-            let profile = Arc::new(VdrtoolsProfile::init(setup.wallet_handle, INVALID_POOL_HANDLE));
-            let credential_ids = vec![CredInfoProver {
-                referent: "1".to_string(),
-                credential_referent: "2".to_string(),
-                schema_id: "3".to_string(),
-                cred_def_id: "3".to_string(),
-                rev_reg_id: Some("4".to_string()),
-                cred_rev_id: Some("5".to_string()),
-                revocation_interval: None,
-                tails_file: None,
-                timestamp: None,
-                revealed: None,
-            }];
-            let err_kind = build_cred_defs_json_prover(&profile.inject_anoncreds_ledger_read(), &credential_ids)
-                .await
-                .unwrap_err()
-                .kind();
-            assert_eq!(err_kind, AriesVcxErrorKind::InvalidProofCredentialData);
-        })
-        .await;
-    }
-
-    #[tokio::test]
-    async fn test_find_schemas_fails() {
-        SetupLibraryWallet::run(|setup| async move {
-            let profile = Arc::new(VdrtoolsProfile::init(setup.wallet_handle, INVALID_POOL_HANDLE));
-            let credential_ids = vec![CredInfoProver {
-                referent: "1".to_string(),
-                credential_referent: "2".to_string(),
-                schema_id: "3".to_string(),
-                cred_def_id: "3".to_string(),
-                rev_reg_id: Some("4".to_string()),
-                cred_rev_id: Some("5".to_string()),
-                revocation_interval: None,
-                tails_file: None,
-                timestamp: None,
-                revealed: None,
-            }];
-
-            assert_eq!(
-                build_schemas_json_prover(&profile.inject_anoncreds_ledger_read(), &credential_ids)
-                    .await
-                    .unwrap_err()
-                    .kind(),
-                AriesVcxErrorKind::InvalidSchema
-            );
-        })
-        .await;
     }
 
     #[tokio::test]

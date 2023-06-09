@@ -12,7 +12,6 @@ use messages::msg_fields::protocols::present_proof::request::RequestPresentation
 use messages::AriesMessage;
 
 use crate::common::proofs::proof_request::PresentationRequestData;
-use crate::core::profile::profile::Profile;
 use crate::errors::error::prelude::*;
 use crate::handlers::connection::mediated_connection::MediatedConnection;
 use crate::handlers::util::get_attach_as_string;

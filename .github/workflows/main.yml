@@ -385,7 +385,7 @@ jobs:
         uses: ./.github/actions/setup-codecov-rust
         with:
           skip-docker-setup: true
-      - name: "Run workspace tests: general_test"
+      - name: "Run aries-vcx unit tests"
         run: |
           RUSTFLAGS='-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests' \
           RUSTDOCFLAGS='-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests' \
@@ -415,7 +415,7 @@ jobs:
         uses: actions/checkout@v3
       - name: "Setup rust codecov environment"
         uses: ./.github/actions/setup-codecov-rust
-      - name: "Run workspace tests: pool_tests agency_pool_tests"
+      - name: "Run workspace tests: vdrtools profile"
         run: |
           RUSTFLAGS='-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests' \
           RUSTDOCFLAGS='-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests' \
@@ -436,8 +436,7 @@ jobs:
           name: code-coverage-report-unit-aries-vcx
           path: /tmp/artifacts/coverage
 
-  #TODO - can this be included within code-coverage-aries-vcx-integration-tests?
-  code-coverage-aries-vcx-modular-dependencies-integration-tests:
+  code-coverage-aries-vcx-integration-modular-libs:
     needs: workflow-setup
     if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
     runs-on: ubuntu-20.04
@@ -446,7 +445,7 @@ jobs:
         uses: actions/checkout@v3
       - name: "Setup rust codecov environment"
         uses: ./.github/actions/setup-codecov-rust
-      - name: "Run workspace tests: modular_libs_tests pool_tests agency_pool_tests"
+      - name: "Run workspace tests: modular libs profile"
         run: |
           RUSTFLAGS='-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests' \
           RUSTDOCFLAGS='-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests' \
@@ -480,7 +479,7 @@ jobs:
         uses: ./.github/actions/setup-testing-rust
         with:
           skip-docker-setup: true
-      - name: "Run workspace tests: general_test"
+      - name: "Run workspace unit tests"
         run: RUST_TEST_THREADS=1 cargo test --workspace --lib --exclude aries-vcx-agent --exclude libvdrtools --exclude wallet_migrator
 
   test-integration-aries-vcx:
@@ -491,8 +490,8 @@ jobs:
         uses: actions/checkout@v3
       - name: "Setup rust testing environment"
         uses: ./.github/actions/setup-testing-rust
-      - name: "Run aries-vcx tests: pool_tests agency_pool_tests"
-        run: RUST_TEST_THREADS=1 cargo test --manifest-path="aries_vcx/Cargo.toml" -- --ignored;
+      - name: "Run aries-vcx integration tests"
+        run: RUST_LOG=trace RUST_TEST_THREADS=1 cargo test --manifest-path="aries_vcx/Cargo.toml" -- --ignored;
 
   test-integration-aries-vcx-mysql:
     needs: workflow-setup
@@ -526,7 +525,7 @@ jobs:
         with:
           skip-vdrproxy-setup: false
       - name: "Run aries-vcx tests: vdrproxy_test"
-        run: cargo test --manifest-path="aries_vcx/Cargo.toml" -F vdr_proxy_ledger -- --ignored
+        run: RUST_TEST_THREADS=1 cargo test --manifest-path="aries_vcx/Cargo.toml" -F vdr_proxy_ledger -- --ignored
       - name: "Collect docker logs on failure"
         if: failure()
         uses: ./.github/actions/upload-docker-logs
@@ -541,7 +540,7 @@ jobs:
         uses: actions/checkout@v3
       - name: "Setup rust testing environment"
         uses: ./.github/actions/setup-testing-rust
-      - name: "Run aries-vcx tests: pool_tests agency_pool_tests"
+      - name: "Run aries-vcx integration tests"
         run: RUST_TEST_THREADS=1 cargo test --manifest-path="aries_vcx/Cargo.toml" -F mixed_breed -- --include-ignored;
 
   test-integration-aries-vcx-migration:
@@ -567,10 +566,10 @@ jobs:
         uses: actions/checkout@v3
       - name: "Setup rust testing environment"
         uses: ./.github/actions/setup-testing-rust
-      - name: "Run libvcx tests: pool_tests"
+      - name: "Run libvcx integration tests"
         run: |
-          RUST_TEST_THREADS=1 cargo test --manifest-path="libvcx/Cargo.toml" -F "pool_tests";
-          RUST_TEST_THREADS=1 cargo test --manifest-path="libvcx_core/Cargo.toml" -F "pool_tests";
+          RUST_TEST_THREADS=1 cargo test --manifest-path="libvcx/Cargo.toml" -- --include-ignored;
+          RUST_TEST_THREADS=1 cargo test --manifest-path="libvcx_core/Cargo.toml" -- --include-ignored;
 
   test-integration-resolver:
     needs: workflow-setup

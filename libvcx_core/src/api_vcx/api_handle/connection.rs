@@ -14,6 +14,7 @@ use async_trait::async_trait;
 use rand::Rng;
 use url::Url;
 
+use crate::api_vcx::api_global::profile::{get_main_indy_ledger_read, get_main_wallet};
 use crate::{
     api_vcx::api_global::profile::get_main_profile,
     errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult},
@@ -134,22 +135,15 @@ where
 // ----------------------------- CONSTRUCTORS ------------------------------------
 pub async fn create_inviter(pw_info: Option<PairwiseInfo>) -> LibvcxResult<u32> {
     trace!("create_inviter >>>");
-    let profile = get_main_profile()?;
-
-    let pw_info = pw_info.unwrap_or(PairwiseInfo::create(&profile.inject_wallet()).await?);
+    let pw_info = pw_info.unwrap_or(PairwiseInfo::create(&get_main_wallet()?).await?);
     let con = InviterConnection::new_inviter("".to_owned(), pw_info);
-
     add_connection(con)
 }
 
 pub async fn create_invitee(_invitation: &str) -> LibvcxResult<u32> {
     trace!("create_invitee >>>");
-
-    let profile = get_main_profile()?;
-    let pairwise_info = PairwiseInfo::create(&profile.inject_wallet()).await?;
-
+    let pairwise_info = PairwiseInfo::create(&get_main_wallet()?).await?;
     let con = InviteeConnection::new_invitee("".to_owned(), pairwise_info);
-
     add_connection(con)
 }
 
@@ -237,7 +231,7 @@ pub fn get_invitation(handle: u32) -> LibvcxResult<String> {
 pub async fn process_invite(handle: u32, invitation: &str) -> LibvcxResult<()> {
     trace!("process_invite >>>");
 
-    let ledger = get_main_profile()?.inject_indy_ledger_read();
+    let ledger = get_main_indy_ledger_read()?;
     let invitation = deserialize(invitation)?;
     let con = get_cloned_connection(&handle)?
         .accept_invitation(&ledger, invitation)
@@ -255,7 +249,7 @@ pub async fn process_request(
     trace!("process_request >>>");
 
     let con = get_cloned_generic_connection(&handle)?;
-    let wallet = get_main_profile()?.inject_wallet();
+    let wallet = get_main_wallet()?;
     let request: Request = deserialize(request)?;
 
     let con = match con.state() {
@@ -297,9 +291,8 @@ pub async fn process_response(handle: u32, response: &str) -> LibvcxResult<()> {
     trace!("process_response >>>");
 
     let con = get_cloned_connection(&handle)?;
-    let wallet = get_main_profile()?.inject_wallet();
     let response = deserialize(response)?;
-    let con = con.handle_response(&wallet, response, &HttpClient).await?;
+    let con = con.handle_response(&get_main_wallet()?, response, &HttpClient).await?;
 
     insert_connection(handle, con)
 }
@@ -337,8 +330,7 @@ pub async fn send_response(handle: u32) -> LibvcxResult<()> {
     trace!("send_response >>>");
 
     let con = get_cloned_connection(&handle)?;
-    let wallet = get_main_profile()?.inject_wallet();
-    let con = con.send_response(&wallet, &HttpClient).await?;
+    let con = con.send_response(&get_main_wallet()?, &HttpClient).await?;
 
     insert_connection(handle, con)
 }
@@ -347,10 +339,9 @@ pub async fn send_request(handle: u32, service_endpoint: String, routing_keys: V
     trace!("send_request >>>");
 
     let con = get_cloned_connection(&handle)?;
-    let wallet = get_main_profile()?.inject_wallet();
     let con = con
         .send_request(
-            &wallet,
+            &get_main_wallet()?,
             Url::from_str(&service_endpoint)
                 .map_err(|err| LibvcxError::from_msg(LibvcxErrorKind::InvalidUrl, err.to_string()))?,
             routing_keys,
@@ -365,8 +356,7 @@ pub async fn send_ack(handle: u32) -> LibvcxResult<()> {
     trace!("send_ack >>>");
 
     let con = get_cloned_connection(&handle)?;
-    let wallet = get_main_profile()?.inject_wallet();
-    let con = con.send_ack(&wallet, &HttpClient).await?;
+    let con = con.send_ack(&get_main_wallet()?, &HttpClient).await?;
 
     insert_connection(handle, con)
 }
@@ -374,10 +364,9 @@ pub async fn send_ack(handle: u32) -> LibvcxResult<()> {
 pub async fn send_generic_message(handle: u32, content: String) -> LibvcxResult<()> {
     trace!("send_generic_message >>>");
 
-    let wallet = get_main_profile()?.inject_wallet();
     let message = serde_json::from_str(&content)?;
     let con = get_cloned_generic_connection(&handle)?;
-    con.send_message(&wallet, &message, &HttpClient).await?;
+    con.send_message(&get_main_wallet()?, &message, &HttpClient).await?;
     Ok(())
 }
 

@@ -11,7 +11,7 @@ use failure::Context;
 use crate::{
     domain::{
         ledger::request::ProtocolVersion,
-        pool::{PoolMode, PoolOpenConfig},
+        pool::{PoolMode, VdrtoolsPoolOpenConfig},
     },
     services::{
         ledger::merkletree::merkletree::MerkleTree,
@@ -690,7 +690,7 @@ pub struct Pool<S: Networker, R: RequestHandler<S>> {
 }
 
 impl<S: Networker, R: RequestHandler<S>> Pool<S, R> {
-    pub fn new(name: &str, id: PoolHandle, config: PoolOpenConfig) -> Self {
+    pub fn new(name: &str, id: PoolHandle, config: VdrtoolsPoolOpenConfig) -> Self {
         trace!("Pool::new name {}, id {:?}, config {:?}", name, id, config);
 
         Pool {
@@ -1147,7 +1147,7 @@ mod tests {
             let _p: Pool<MockNetworker, MockRequestHandler> = Pool::new(
                 "pool_new_works",
                 next_pool_handle(),
-                PoolOpenConfig::default(),
+                VdrtoolsPoolOpenConfig::default(),
             );
         }
 
@@ -1155,7 +1155,7 @@ mod tests {
         pub fn pool_get_name_works() {
             let name = "pool_get_name_works";
             let p: Pool<MockNetworker, MockRequestHandler> =
-                Pool::new(name, next_pool_handle(), PoolOpenConfig::default());
+                Pool::new(name, next_pool_handle(), VdrtoolsPoolOpenConfig::default());
             assert_eq!(name, p.get_name());
         }
 
@@ -1164,7 +1164,7 @@ mod tests {
             let name = "pool_get_id_works";
             let id = next_pool_handle();
             let p: Pool<MockNetworker, MockRequestHandler> =
-                Pool::new(name, id, PoolOpenConfig::default());
+                Pool::new(name, id, VdrtoolsPoolOpenConfig::default());
             assert_eq!(id, p.get_id());
         }
     }

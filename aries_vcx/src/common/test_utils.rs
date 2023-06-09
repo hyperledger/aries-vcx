@@ -7,18 +7,14 @@ use std::thread;
 use std::time::Duration;
 
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
-use aries_vcx_core::PoolHandle;
-use aries_vcx_core::WalletHandle;
 
 use crate::common::credentials::encoding::encode_attributes;
 use crate::common::primitives::credential_definition::CredentialDef;
 use crate::common::primitives::credential_definition::CredentialDefConfigBuilder;
 use crate::common::primitives::revocation_registry::RevocationRegistry;
-use crate::core::profile::profile::Profile;
 use crate::global::settings;
 use crate::utils::constants::{DEFAULT_SCHEMA_ATTRS, TAILS_DIR, TEST_TAILS_URL, TRUSTEE_SEED};
 use crate::utils::get_temp_dir_path;
-use crate::utils::mockdata::profile::mock_profile::MockProfile;
 
 pub async fn create_schema(
     anoncreds: &Arc<dyn BaseAnonCreds>,

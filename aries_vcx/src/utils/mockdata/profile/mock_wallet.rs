@@ -7,13 +7,17 @@ use crate::utils::{self};
 use std::collections::HashMap;
 
 #[derive(Debug)]
-pub(crate) struct MockWallet;
+pub struct MockWallet;
 
 // NOTE : currently matches the expected results if did_mocks and indy_mocks are enabled
 /// Implementation of [BaseAnoncreds] which responds with mock data
 #[allow(unused)]
 #[async_trait]
 impl BaseWallet for MockWallet {
+    fn get_wallet_handle(&self) -> i32 {
+        1
+    }
+
     async fn create_and_store_my_did(
         &self,
         seed: Option<&str>,

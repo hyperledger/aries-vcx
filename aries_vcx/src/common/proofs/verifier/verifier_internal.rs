@@ -5,7 +5,6 @@ use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
 use serde_json;
 use serde_json::Value;
 
-use crate::core::profile::profile::Profile;
 use crate::errors::error::prelude::*;
 use crate::global::settings;
 use crate::utils::openssl::encode;

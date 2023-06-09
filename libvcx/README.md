@@ -29,11 +29,11 @@ Before you try to build/test `libvcx` crate on your machine, make sure you can b
 
 - Run unit tests:
 ```
-cargo test  --features "general_test" -- --test-threads=1
+cargo test -- --test-threads=1
 ```
 - Run integration tests (you need to have Indy pool running)
 ```
-TEST_POOL_IP=127.0.0.1 cargo test  --features "pool_tests" -- --test-threads=1
+TEST_POOL_IP=127.0.0.1 cargo test -- --include-ignored --test-threads=1
 ```
 
 ## Architecture

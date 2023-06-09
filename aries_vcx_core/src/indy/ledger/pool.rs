@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use vdrtools::domain::pool::VdrtoolsPoolOpenConfig;
 use vdrtools::Locator;
 
 use vdrtools::types::errors::IndyErrorKind;
@@ -6,14 +7,6 @@ use vdrtools::types::errors::IndyErrorKind;
 use crate::errors::error::prelude::*;
 use crate::global::settings;
 use crate::PoolHandle;
-
-pub fn set_protocol_version() -> VcxCoreResult<()> {
-    Locator::instance()
-        .pool_controller
-        .set_protocol_version(settings::get_protocol_version())?;
-
-    Ok(())
-}
 
 pub fn create_pool_ledger_config(pool_name: &str, path: &str) -> VcxCoreResult<()> {
     let res = Locator::instance().pool_controller.create(
@@ -37,20 +30,12 @@ pub fn create_pool_ledger_config(pool_name: &str, path: &str) -> VcxCoreResult<(
     }
 }
 
-pub async fn open_pool_ledger(pool_name: &str, config: Option<PoolConfig>) -> VcxCoreResult<i32> {
-    set_protocol_version()?;
-
-    let handle = Locator::instance()
+pub async fn indy_open_pool(pool_name: &str, config: Option<VdrtoolsPoolOpenConfig>) -> VcxCoreResult<i32> {
+    Locator::instance()
         .pool_controller
-        .open(
-            pool_name.into(),
-            config
-                .and_then(|c| c.pool_config)
-                .as_deref()
-                .map(serde_json::from_str)
-                .transpose()?,
-        )
-        .await;
+        .set_protocol_version(settings::get_protocol_version())?;
+
+    let handle = Locator::instance().pool_controller.open(pool_name.into(), config).await;
 
     match handle {
         Ok(handle) => Ok(handle),
@@ -61,7 +46,7 @@ pub async fn open_pool_ledger(pool_name: &str, config: Option<PoolConfig>) -> Vc
     }
 }
 
-pub async fn close(handle: PoolHandle) -> VcxCoreResult<()> {
+pub async fn indy_close_pool(handle: PoolHandle) -> VcxCoreResult<()> {
     // TODO there was timeout here (before future-based Rust wrapper)
 
     Locator::instance().pool_controller.close(handle).await?;
@@ -69,7 +54,7 @@ pub async fn close(handle: PoolHandle) -> VcxCoreResult<()> {
     Ok(())
 }
 
-pub async fn delete(pool_name: &str) -> VcxCoreResult<()> {
+pub async fn indy_delete_pool(pool_name: &str) -> VcxCoreResult<()> {
     trace!("delete >>> pool_name: {}", pool_name);
 
     Locator::instance().pool_controller.delete(pool_name.into()).await?;
@@ -92,26 +77,6 @@ pub mod test_utils {
         path
     }
 
-    pub async fn create_test_ledger_config() {
-        create_tmp_genesis_txn_file();
-        create_pool_ledger_config(POOL, get_temp_dir_path(GENESIS_PATH).to_str().unwrap()).unwrap();
-    }
-
-    pub async fn delete_named_test_pool(pool_handle: PoolHandle, pool_name: &str) {
-        close(pool_handle).await.ok();
-        delete(pool_name).await.unwrap();
-    }
-
-    pub async fn delete_test_pool(pool_handle: PoolHandle) {
-        close(pool_handle).await.unwrap();
-        delete(POOL).await.unwrap();
-    }
-
-    pub async fn open_test_pool() -> PoolHandle {
-        create_test_ledger_config().await;
-        open_pool_ledger(POOL, None).await.unwrap()
-    }
-
     pub fn get_txns(test_pool_ip: &str) -> Vec<String> {
         vec![
             format!(
@@ -129,17 +94,15 @@ pub mod test_utils {
         ]
     }
 
-    pub fn create_tmp_genesis_txn_file() -> String {
-        let test_pool_ip = ::std::env::var("TEST_POOL_IP").unwrap_or("127.0.0.1".to_string());
+    pub fn create_testpool_genesis_txn_file(genesis_file_path: &str) {
+        let test_pool_ip = env::var("TEST_POOL_IP").unwrap_or("127.0.0.1".to_string());
 
         let node_txns = get_txns(&test_pool_ip);
         let txn_file_data = node_txns[0..4].join("\n");
-        let file_path = String::from(get_temp_dir_path(GENESIS_PATH).to_str().unwrap());
-        let mut f = fs::File::create(&file_path).unwrap();
+        let mut f = fs::File::create(&genesis_file_path).unwrap();
         f.write_all(txn_file_data.as_bytes()).unwrap();
         f.flush().unwrap();
         f.sync_all().unwrap();
-        file_path
     }
 }
 
@@ -148,5 +111,5 @@ pub mod test_utils {
 pub struct PoolConfig {
     pub genesis_path: String,
     pub pool_name: Option<String>,
-    pub pool_config: Option<String>,
+    pub pool_config: Option<VdrtoolsPoolOpenConfig>,
 }

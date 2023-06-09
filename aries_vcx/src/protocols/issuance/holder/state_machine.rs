@@ -22,7 +22,6 @@ use messages::AriesMessage;
 use uuid::Uuid;
 
 use crate::common::credentials::{get_cred_rev_id, is_cred_revoked};
-use crate::core::profile::profile::Profile;
 use crate::errors::error::prelude::*;
 use crate::global::settings;
 use crate::handlers::util::{

@@ -132,6 +132,10 @@ impl BaseWallet for IndySdkWallet {
     async fn unpack_message(&self, msg: &[u8]) -> VcxCoreResult<Vec<u8>> {
         indy::signing::unpack_message(self.wallet_handle, msg).await
     }
+
+    fn get_wallet_handle(&self) -> i32 {
+        self.wallet_handle.0
+    }
 }
 
 struct IndyWalletRecordIterator {

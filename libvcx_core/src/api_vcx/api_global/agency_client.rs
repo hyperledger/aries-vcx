@@ -26,7 +26,7 @@ pub fn get_main_agency_client() -> LibvcxResult<AgencyClient> {
 }
 
 pub fn create_agency_client_for_main_wallet(config: &AgencyClientConfig) -> LibvcxResult<()> {
-    let client = get_main_agency_client()?.configure(get_main_wallet().to_base_agency_client_wallet(), config)?;
+    let client = get_main_agency_client()?.configure(get_main_wallet()?.to_base_agency_client_wallet(), config)?;
     set_main_agency_client(client);
     Ok(())
 }
@@ -63,7 +63,7 @@ pub async fn update_webhook_url(webhook_url: &str) -> LibvcxResult<()> {
 }
 
 pub async fn provision_cloud_agent(agency_config: &AgentProvisionConfig) -> LibvcxResult<AgencyClientConfig> {
-    let wallet = get_main_wallet();
+    let wallet = get_main_wallet()?;
     let mut client = get_main_agency_client()?;
     let res = aries_vcx::utils::provision::provision_cloud_agent(&mut client, wallet, agency_config).await;
     map_ariesvcx_result(res)
@@ -82,14 +82,12 @@ pub mod tests {
     use aries_vcx::utils::devsetup::SetupMocks;
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_update_institution_webhook() {
         let _setup = SetupMocks::init();
         update_webhook_url("https://example.com").await.unwrap();
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_provision_cloud_agent() {
         let _setup = SetupMocks::init();
 
@@ -103,7 +101,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_messages_update_status() {
         let _setup = SetupMocks::init();
         AgencyMockDecrypted::set_next_decrypted_response(constants::GET_MESSAGES_DECRYPTED_RESPONSE);

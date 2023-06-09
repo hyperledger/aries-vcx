@@ -7,16 +7,13 @@ use libc::c_char;
 use aries_vcx::aries_vcx_core::indy::wallet::{RestoreWalletConfigs, WalletConfig};
 
 use libvcx_core;
-use libvcx_core::errors;
 use libvcx_core::errors::error::{LibvcxError, LibvcxErrorKind};
 
 use crate::api_c::cutils::cstring::CStringUtils;
 use crate::api_c::cutils::current_error::{set_current_error, set_current_error_vcx};
 use crate::api_c::cutils::runtime::execute_async;
 use crate::error::SUCCESS_ERR_CODE;
-use libvcx_core::api_vcx::api_global::wallet::{
-    close_main_wallet, create_main_wallet, open_as_main_wallet, set_main_wallet_handle,
-};
+use libvcx_core::api_vcx::api_global::wallet::{close_main_wallet, create_main_wallet, open_as_main_wallet};
 use libvcx_core::api_vcx::api_global::wallet::{
     export_main_wallet, wallet_add_wallet_record, wallet_add_wallet_record_tags, wallet_close_search_wallet,
     wallet_configure_issuer, wallet_delete_wallet_record, wallet_delete_wallet_record_tags,
@@ -1083,17 +1080,4 @@ pub extern "C" fn vcx_wallet_import(
     }));
 
     SUCCESS_ERR_CODE
-}
-
-/// Set the wallet handle before calling vcx_init_minimal
-///
-/// #params
-///
-/// handle: wallet handle that libvcx should use
-///
-/// #Returns
-/// Error code as u32
-#[no_mangle]
-pub extern "C" fn vcx_wallet_set_handle(handle: WalletHandle) -> WalletHandle {
-    set_main_wallet_handle(handle)
 }

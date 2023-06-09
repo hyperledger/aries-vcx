@@ -8,8 +8,10 @@ pub mod vdr_proxy_profile;
 #[cfg(feature = "vdrtools")]
 pub mod vdrtools_profile;
 
+#[cfg(any(feature = "modular_libs", feature = "vdr_proxy_ledger"))]
 const DEFAULT_AML_LABEL: &str = "eula";
 
+#[cfg(any(feature = "modular_libs", feature = "vdr_proxy_ledger"))]
 use std::sync::Arc;
 
 #[cfg(any(feature = "modular_libs", feature = "vdr_proxy_ledger"))]

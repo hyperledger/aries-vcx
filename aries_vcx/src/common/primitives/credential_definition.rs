@@ -5,7 +5,7 @@ use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use crate::utils::constants::{CRED_DEF_ID, CRED_DEF_JSON, DEFAULT_SERIALIZE_VERSION};
 use crate::utils::serialization::ObjectWithVersion;
 
-use crate::global::settings::{self, indy_mocks_enabled};
+use crate::global::settings::indy_mocks_enabled;
 use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
 use std::fmt;
 use std::sync::Arc;

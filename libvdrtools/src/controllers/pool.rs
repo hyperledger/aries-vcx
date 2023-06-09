@@ -5,7 +5,7 @@ use indy_api_types::{errors::prelude::*, PoolHandle};
 use crate::{
     domain::{
         ledger::request::ProtocolVersion,
-        pool::{PoolConfig, PoolOpenConfig},
+        pool::{PoolConfig, VdrtoolsPoolOpenConfig},
     },
     services::PoolService,
 };
@@ -103,7 +103,7 @@ impl PoolController {
     pub async fn open(
         &self,
         name: String,
-        config: Option<PoolOpenConfig>,
+        config: Option<VdrtoolsPoolOpenConfig>,
     ) -> IndyResult<PoolHandle> {
         trace!("open > name {:?} config {:?}", name, config);
 

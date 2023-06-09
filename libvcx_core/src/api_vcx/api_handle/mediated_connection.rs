@@ -17,7 +17,7 @@ use aries_vcx::protocols::SendClosure;
 use uuid::Uuid;
 
 use crate::api_vcx::api_global::agency_client::get_main_agency_client;
-use crate::api_vcx::api_global::profile::{get_main_profile, get_main_profile_optional_pool};
+use crate::api_vcx::api_global::profile::{get_main_indy_ledger_read, get_main_profile, get_main_wallet};
 use crate::api_vcx::api_global::wallet::{wallet_sign, wallet_verify};
 use crate::api_vcx::api_handle::object_cache::ObjectCache;
 
@@ -120,23 +120,18 @@ pub fn store_connection(connection: MediatedConnection) -> LibvcxResult<u32> {
 
 pub async fn create_connection(source_id: &str) -> LibvcxResult<u32> {
     trace!("create_connection >>> source_id: {}", source_id);
-    let connection = MediatedConnection::create(
-        source_id,
-        &get_main_profile_optional_pool().inject_wallet(), // do not throw if pool is not open
-        &get_main_agency_client()?,
-        true,
-    )
-    .await?;
+    let connection =
+        MediatedConnection::create(source_id, &get_main_wallet()?, &get_main_agency_client()?, true).await?;
     store_connection(connection)
 }
 
 pub async fn create_connection_with_invite(source_id: &str, details: &str) -> LibvcxResult<u32> {
     debug!("create connection {} with invite {}", source_id, details);
     if let Ok(invitation) = serde_json::from_str::<AnyInvitation>(details) {
-        let ddo = into_did_doc(&get_main_profile()?.inject_indy_ledger_read(), &invitation).await?;
+        let ddo = into_did_doc(&get_main_indy_ledger_read()?, &invitation).await?;
         let connection = MediatedConnection::create_with_invite(
             source_id,
-            &get_main_profile()?.inject_wallet(),
+            &get_main_wallet()?,
             &get_main_agency_client()?,
             invitation,
             ddo,
@@ -159,27 +154,27 @@ pub async fn create_with_request_v2(request: &str, pw_info: PairwiseInfo) -> Lib
             format!("Cannot deserialize connection request: {:?}", err),
         )
     })?;
-    let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
+    let profile = get_main_profile(); // do not throw if pool is not open
     let connection =
-        MediatedConnection::create_with_request(&profile.inject_wallet(), request, pw_info, &get_main_agency_client()?)
+        MediatedConnection::create_with_request(&get_main_wallet()?, request, pw_info, &get_main_agency_client()?)
             .await?;
     store_connection(connection)
 }
 
 pub async fn send_generic_message(handle: u32, msg: &str) -> LibvcxResult<String> {
     let connection = CONNECTION_MAP.get_cloned(handle)?;
-    let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
+    let profile = get_main_profile(); // do not throw if pool is not open
     connection
-        .send_generic_message(&profile.inject_wallet(), msg)
+        .send_generic_message(&get_main_wallet()?, msg)
         .await
         .map_err(|err| err.into())
 }
 
 pub async fn send_handshake_reuse(handle: u32, oob_msg: &str) -> LibvcxResult<()> {
     let connection = CONNECTION_MAP.get_cloned(handle)?;
-    let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
+    let profile = get_main_profile(); // do not throw if pool is not open
     connection
-        .send_handshake_reuse(&profile.inject_wallet(), oob_msg)
+        .send_handshake_reuse(&get_main_wallet()?, oob_msg)
         .await
         .map_err(|err| err.into())
 }
@@ -195,9 +190,9 @@ pub async fn update_state_with_message(handle: u32, message: &str) -> LibvcxResu
             ),
         )
     })?;
-    let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
+    let profile = get_main_profile(); // do not throw if pool is not open
     connection
-        .update_state_with_message(profile.inject_wallet(), get_main_agency_client()?, Some(message))
+        .update_state_with_message(get_main_wallet()?, get_main_agency_client()?, Some(message))
         .await?;
     let state: u32 = connection.get_state().into();
     CONNECTION_MAP.insert(handle, connection)?;
@@ -215,8 +210,8 @@ pub async fn handle_message(handle: u32, message: &str) -> LibvcxResult<()> {
             ),
         )
     })?;
-    let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
-    connection.handle_message(message, &profile.inject_wallet()).await?;
+    let profile = get_main_profile(); // do not throw if pool is not open
+    connection.handle_message(message, &get_main_wallet()?).await?;
     CONNECTION_MAP.insert(handle, connection)
 }
 
@@ -227,18 +222,18 @@ pub async fn update_state(handle: u32) -> LibvcxResult<u32> {
             "connection::update_state >> connection {} is in final state, trying to respond to messages",
             handle
         );
-        let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
+        let profile = get_main_profile(); // do not throw if pool is not open
         connection
-            .find_and_handle_message(&profile.inject_wallet(), &get_main_agency_client()?)
+            .find_and_handle_message(&get_main_wallet()?, &get_main_agency_client()?)
             .await?
     } else {
         info!(
             "connection::update_state >> connection {} is not in final state, trying to update state",
             handle
         );
-        let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
+        let profile = get_main_profile(); // do not throw if pool is not open
         connection
-            .find_message_and_update_state(&profile.inject_wallet(), &get_main_agency_client()?)
+            .find_message_and_update_state(&get_main_wallet()?, &get_main_agency_client()?)
             .await?
     };
     let state: u32 = connection.get_state().into();
@@ -254,9 +249,9 @@ pub async fn delete_connection(handle: u32) -> LibvcxResult<()> {
 
 pub async fn connect(handle: u32) -> LibvcxResult<Option<String>> {
     let mut connection = CONNECTION_MAP.get_cloned(handle)?;
-    let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
+    let profile = get_main_profile(); // do not throw if pool is not open
     connection
-        .connect(&profile.inject_wallet(), &get_main_agency_client()?, None)
+        .connect(&get_main_wallet()?, &get_main_agency_client()?, None)
         .await?;
     let invitation = connection.get_invite_details().map(|invitation| match invitation {
         AnyInvitation::Con(Invitation::Pairwise(invitation)) => {
@@ -348,31 +343,27 @@ pub async fn send_message(handle: u32, message: AriesMessage) -> LibvcxResult<()
 
 pub async fn send_message_closure(handle: u32) -> LibvcxResult<SendClosure> {
     let connection = CONNECTION_MAP.get_cloned(handle)?;
-    let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
+    let profile = get_main_profile(); // do not throw if pool is not open
     connection
-        .send_message_closure(profile.inject_wallet())
+        .send_message_closure(get_main_wallet()?)
         .await
         .map_err(|err| err.into())
 }
 
 pub async fn send_ping(handle: u32, comment: Option<&str>) -> LibvcxResult<()> {
     let mut connection = CONNECTION_MAP.get_cloned(handle)?;
-    let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
+    let profile = get_main_profile(); // do not throw if pool is not open
     connection
-        .send_ping(profile.inject_wallet(), comment.map(String::from))
+        .send_ping(get_main_wallet()?, comment.map(String::from))
         .await?;
     CONNECTION_MAP.insert(handle, connection)
 }
 
 pub async fn send_discovery_features(handle: u32, query: Option<&str>, comment: Option<&str>) -> LibvcxResult<()> {
     let connection = CONNECTION_MAP.get_cloned(handle)?;
-    let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
+    let profile = get_main_profile(); // do not throw if pool is not open
     connection
-        .send_discovery_query(
-            &profile.inject_wallet(),
-            query.map(String::from),
-            comment.map(String::from),
-        )
+        .send_discovery_query(&get_main_wallet()?, query.map(String::from), comment.map(String::from))
         .await?;
     CONNECTION_MAP.insert(handle, connection)
 }
@@ -458,7 +449,7 @@ pub async fn download_messages(
     Ok(res)
 }
 
-#[cfg(feature = "test_utils")]
+#[allow(clippy::unwrap_used)]
 pub mod test_utils {
     use aries_vcx::utils::mockdata::mockdata_mediated_connection::{
         ARIES_CONNECTION_REQUEST, CONNECTION_SM_INVITEE_COMPLETED,
@@ -511,7 +502,7 @@ pub mod tests {
     use diddoc_legacy::aries::diddoc::test_utils::*;
 
     use crate::api_vcx::api_handle::mediated_connection;
-    #[cfg(feature = "test_utils")]
+    #[cfg(test)]
     use crate::api_vcx::api_handle::mediated_connection::test_utils::build_test_connection_inviter_invited;
     use crate::api_vcx::VcxStateType;
 
@@ -526,7 +517,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_vcx_connection_release() {
         let _setup = SetupMocks::init();
         let handle = mediated_connection::create_connection(_source_id()).await.unwrap();
@@ -535,7 +525,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_create_connection_works() {
         let _setup = SetupMocks::init();
         let connection_handle = mediated_connection::create_connection(_source_id()).await.unwrap();
@@ -544,7 +533,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_create_connection_with_pairwise_invite() {
         let _setup = SetupMocks::init();
 
@@ -563,7 +551,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_create_connection_with_public_invite() {
         let _setup = SetupMocks::init();
 
@@ -581,7 +568,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_get_connection_state_works() {
         let _setup = SetupMocks::init();
         let connection_handle = mediated_connection::create_connection(_source_id()).await.unwrap();
@@ -589,7 +575,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_connection_delete() {
         let _setup = SetupMocks::init();
         warn!(">> test_connection_delete going to create connection");
@@ -602,7 +587,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_create_connection() {
         let _setup = SetupMocks::init();
 
@@ -628,7 +612,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_create_drop_create() {
         let _setup = SetupMocks::init();
 
@@ -651,7 +634,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_get_state_fails() {
         let _setup = SetupEmpty::init();
 
@@ -660,7 +642,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_get_string_fails() {
         let _setup = SetupEmpty::init();
 
@@ -669,7 +650,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_get_service_endpoint() {
         let _setup = SetupMocks::init();
 
@@ -687,7 +667,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_retry_connection() {
         let _setup = SetupMocks::init();
 
@@ -700,7 +679,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_release_all() {
         let _setup = SetupMocks::init();
 
@@ -714,7 +692,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_create_with_valid_invite_details() {
         let _setup = SetupMocks::init();
 
@@ -730,7 +707,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_process_acceptance_message() {
         let _setup = SetupMocks::init();
 
@@ -752,7 +728,6 @@ pub mod tests {
     //     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_send_generic_message_fails_with_invalid_connection() {
         let _setup = SetupMocks::init();
 
@@ -763,7 +738,6 @@ pub mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_generate_public_invitation() {
         let _setup = SetupMocks::init();
 

@@ -3,7 +3,6 @@ use std::fmt::Display;
 use std::sync::Arc;
 
 use crate::common::proofs::proof_request::PresentationRequestData;
-use crate::core::profile::profile::Profile;
 use crate::errors::error::prelude::*;
 use crate::handlers::util::{make_attach_from_str, matches_opt_thread_id, matches_thread_id, AttachmentId, Status};
 use crate::protocols::common::build_problem_report_msg;

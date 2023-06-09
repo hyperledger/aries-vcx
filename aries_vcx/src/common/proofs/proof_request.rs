@@ -5,7 +5,6 @@ use std::vec::Vec;
 use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
 use serde_json;
 
-use crate::core::profile::profile::Profile;
 use crate::errors::error::prelude::*;
 
 use super::proof_request_internal::{AttrInfo, NonRevokedInterval, PredicateInfo};

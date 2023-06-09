@@ -117,7 +117,6 @@ mod tests {
     use crate::errors::error::LibvcxErrorKind;
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn it_should_map_error_kinds_to_codes() {
         assert_eq!(u32::from(LibvcxErrorKind::InvalidState), 1081);
         assert_eq!(u32::from(LibvcxErrorKind::InvalidConfiguration), 1004);
@@ -198,7 +197,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn it_should_map_error_codes_to_error_kinds() {
         assert_eq!(LibvcxErrorKind::from(1081), LibvcxErrorKind::InvalidState);
         assert_eq!(LibvcxErrorKind::from(1004), LibvcxErrorKind::InvalidConfiguration);

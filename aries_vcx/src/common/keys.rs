@@ -4,7 +4,6 @@ use aries_vcx_core::ledger::base_ledger::{IndyLedgerRead, IndyLedgerWrite};
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use serde_json::Value;
 
-use crate::core::profile::profile::Profile;
 use crate::errors::error::prelude::*;
 
 pub async fn rotate_verkey_apply(

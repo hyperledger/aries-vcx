@@ -7,7 +7,7 @@ use aries_vcx::{
     utils::provision::provision_cloud_agent,
 };
 use aries_vcx_core::indy::{
-    ledger::pool::{create_pool_ledger_config, open_pool_ledger, PoolConfigBuilder},
+    ledger::pool::{create_pool_ledger_config, indy_open_pool, PoolConfigBuilder},
     wallet::{create_wallet_with_master_secret, open_wallet, wallet_configure_issuer, WalletConfig},
 };
 use url::Url;
@@ -83,7 +83,7 @@ impl Agent {
             &init_config.pool_config.genesis_path,
         )
         .unwrap();
-        let pool_handle = open_pool_ledger(&init_config.pool_config.pool_name, Some(pool_config))
+        let pool_handle = indy_open_pool(&init_config.pool_config.pool_name, pool_config.pool_config)
             .await
             .unwrap();
 

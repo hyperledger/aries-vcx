@@ -6,7 +6,9 @@ use aries_vcx::handlers::proof_presentation::verifier::Verifier;
 use aries_vcx::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
 use aries_vcx::protocols::SendClosure;
 
-use crate::api_vcx::api_global::profile::get_main_profile;
+use crate::api_vcx::api_global::profile::{
+    get_main_anoncreds, get_main_anoncreds_ledger_read, get_main_profile, get_main_wallet,
+};
 use crate::api_vcx::api_handle::connection::HttpClient;
 use crate::api_vcx::api_handle::object_cache::ObjectCache;
 use crate::api_vcx::api_handle::{connection, mediated_connection};
@@ -30,8 +32,8 @@ pub async fn create_proof(
     revocation_details: String,
     name: String,
 ) -> LibvcxResult<u32> {
-    let profile = get_main_profile()?;
-    let presentation_request = PresentationRequestData::create(&profile.inject_anoncreds(), &name)
+    let profile = get_main_profile();
+    let presentation_request = PresentationRequestData::create(&get_main_anoncreds()?, &name)
         .await?
         .set_requested_attributes_as_string(requested_attrs)?
         .set_requested_predicates_as_string(requested_predicates)?
@@ -56,7 +58,7 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
         return Ok(proof.get_state().into());
     }
     let send_message = mediated_connection::send_message_closure(connection_handle).await?;
-    let profile = get_main_profile()?;
+    let profile = get_main_profile();
 
     if let Some(message) = message {
         let message: AriesMessage = serde_json::from_str(message).map_err(|err| {
@@ -71,8 +73,8 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
         trace!("proof::update_state >>> updating using message {:?}", message);
         proof
             .handle_message(
-                &profile.inject_anoncreds_ledger_read(),
-                &profile.inject_anoncreds(),
+                &get_main_anoncreds_ledger_read()?,
+                &get_main_anoncreds()?,
                 message.into(),
                 Some(send_message),
             )
@@ -83,8 +85,8 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
         if let Some((uid, message)) = proof.find_message_to_handle(messages) {
             proof
                 .handle_message(
-                    &profile.inject_anoncreds_ledger_read(),
-                    &profile.inject_anoncreds(),
+                    &get_main_anoncreds_ledger_read()?,
+                    &get_main_anoncreds()?,
                     message.into(),
                     Some(send_message),
                 )
@@ -109,9 +111,8 @@ pub async fn update_state_nonmediated(handle: u32, connection_handle: u32, messa
         return Ok(proof.get_state().into());
     }
 
-    let profile = get_main_profile()?;
     let con = connection::get_cloned_generic_connection(&connection_handle)?;
-    let wallet = profile.inject_wallet();
+    let wallet = get_main_wallet()?;
 
     let send_message: SendClosure =
         Box::new(|msg: AriesMessage| Box::pin(async move { con.send_message(&wallet, &msg, &HttpClient).await }));
@@ -127,8 +128,8 @@ pub async fn update_state_nonmediated(handle: u32, connection_handle: u32, messa
     })?;
     proof
         .handle_message(
-            &profile.inject_anoncreds_ledger_read(),
-            &profile.inject_anoncreds(),
+            &get_main_anoncreds_ledger_read()?,
+            &get_main_anoncreds()?,
             message.into(),
             Some(send_message),
         )
@@ -192,9 +193,9 @@ pub async fn send_proof_request(handle: u32, connection_handle: u32) -> LibvcxRe
 pub async fn send_proof_request_nonmediated(handle: u32, connection_handle: u32) -> LibvcxResult<()> {
     let mut proof = PROOF_MAP.get_cloned(handle)?;
 
-    let profile = get_main_profile()?;
+    let profile = get_main_profile();
     let con = connection::get_cloned_generic_connection(&connection_handle)?;
-    let wallet = profile.inject_wallet();
+    let wallet = get_main_wallet()?;
 
     let send_message: SendClosure =
         Box::new(|msg: AriesMessage| Box::pin(async move { con.send_message(&wallet, &msg, &HttpClient).await }));
@@ -286,7 +287,7 @@ pub mod tests {
     use aries_vcx::utils::mockdata::mock_settings::MockBuilder;
     use aries_vcx::utils::mockdata::mockdata_proof;
 
-    #[cfg(feature = "test_utils")]
+    #[cfg(test)]
     use crate::api_vcx::api_handle::mediated_connection::test_utils::build_test_connection_inviter_requested;
     use crate::api_vcx::api_handle::proof;
     use crate::aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;
@@ -306,7 +307,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_get_proof_returns_proof_with_proof_state_invalid() {
         let _setup = SetupMocks::init();
         let handle = create_default_proof().await;
@@ -315,14 +315,12 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_create_proof_succeeds() {
         let _setup = SetupMocks::init();
         create_default_proof().await;
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_revocation_details() {
         let _setup = SetupMocks::init();
 
@@ -345,7 +343,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_to_string_succeeds() {
         let _setup = SetupMocks::init();
 
@@ -358,7 +355,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_from_string_succeeds() {
         let _setup = SetupMocks::init();
 
@@ -370,7 +366,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_release_proof() {
         let _setup = SetupMocks::init();
 
@@ -380,7 +375,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_send_proof_request() {
         let _setup = SetupMocks::init();
 
@@ -395,7 +389,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_get_proof_fails_with_no_proof() {
         let _setup = SetupMocks::init();
 
@@ -405,7 +398,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_proof_update_state_v2() {
         let _setup = SetupMocks::init();
         let _mock_builder = MockBuilder::init().set_mock_result_for_validate_indy_proof(Ok(true));
@@ -434,7 +426,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_update_state() {
         let _setup = SetupMocks::init();
         let _mock_builder = MockBuilder::init().set_mock_result_for_validate_indy_proof(Ok(true));
@@ -459,7 +450,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_proof_validation_with_predicate() {
         let _setup = SetupMocks::init();
         let _mock_builder = MockBuilder::init().set_mock_result_for_validate_indy_proof(Ok(true));
@@ -484,7 +474,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_update_state_with_reject_message() {
         let _setup = SetupMocks::init();
 
@@ -500,7 +489,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_send_presentation_request() {
         let _setup = SetupMocks::init();
 
@@ -515,7 +503,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_get_proof() {
         let _setup = SetupMocks::init();
         let _mock_builder = MockBuilder::init().set_mock_result_for_validate_indy_proof(Ok(true));
@@ -548,7 +535,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_release_all() {
         let _setup = SetupMocks::init();
 
@@ -586,7 +572,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_send_proof_request_can_be_retried() {
         let _setup = SetupMocks::init();
 
@@ -617,7 +602,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_proof_accepted() {
         let _setup = SetupMocks::init();
         let _mock_builder = MockBuilder::init().set_mock_result_for_validate_indy_proof(Ok(true));
@@ -638,7 +622,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_proof_errors() {
         let _setup = SetupMocks::init();
 

@@ -576,7 +576,9 @@ mod tests {
     use aries_vcx::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
     use aries_vcx::utils::devsetup::*;
 
-    use crate::utils::devsetup_agent::test_utils::{create_test_alice_instance, Faber, PayloadKinds};
+    use crate::utils::devsetup_alice::create_alice;
+    use crate::utils::devsetup_faber::{create_faber, Faber};
+    use crate::utils::devsetup_util::test_utils::PayloadKinds;
     use crate::utils::scenarios::test_utils::{
         _create_address_schema, _exchange_credential, _exchange_credential_with_proposal, accept_cred_proposal,
         accept_cred_proposal_1, accept_offer, accept_proof_proposal, attr_names,
@@ -594,9 +596,9 @@ mod tests {
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_proof_should_be_validated() {
-        SetupPool::run(|setup| async move {
-            let mut institution = Faber::setup(setup.pool_handle).await;
-            let mut consumer = create_test_alice_instance(&setup).await;
+        SetupPoolDirectory::run(|setup| async move {
+            let mut institution = create_faber(setup.genesis_file_path.clone()).await;
+            let mut consumer = create_alice(setup.genesis_file_path).await;
 
             let (consumer_to_institution, institution_to_consumer) =
                 create_connected_connections(&mut consumer, &mut institution).await;
@@ -616,7 +618,7 @@ mod tests {
             {
                 "name": "address1",
                 "restrictions": [{
-                  "issuer_did": institution.config_issuer.institution_did,
+                  "issuer_did": institution.institution_did,
                   "schema_id": schema_id,
                   "cred_def_id": cred_def_id,
                 }]
@@ -664,9 +666,9 @@ mod tests {
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_proof_with_predicates_should_be_validated() {
-        SetupPool::run(|setup| async move {
-            let mut institution = Faber::setup(setup.pool_handle).await;
-            let mut consumer = create_test_alice_instance(&setup).await;
+        SetupPoolDirectory::run(|setup| async move {
+            let mut institution = create_faber(setup.genesis_file_path.clone()).await;
+            let mut consumer = create_alice(setup.genesis_file_path).await;
 
             let (consumer_to_institution, institution_to_consumer) =
                 create_connected_connections(&mut consumer, &mut institution).await;
@@ -734,9 +736,9 @@ mod tests {
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_it_should_fail_to_select_credentials_for_predicate() {
-        SetupPool::run(|setup| async move {
-            let mut institution = Faber::setup(setup.pool_handle).await;
-            let mut consumer = create_test_alice_instance(&setup).await;
+        SetupPoolDirectory::run(|setup| async move {
+            let mut institution = create_faber(setup.genesis_file_path.clone()).await;
+            let mut consumer = create_alice(setup.genesis_file_path).await;
 
             let (consumer_to_institution, institution_to_consumer) =
                 create_connected_connections(&mut consumer, &mut institution).await;
@@ -786,11 +788,11 @@ mod tests {
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_double_issuance_separate_issuer_and_consumers() {
-        SetupPool::run(|setup| async move {
-            let mut issuer = Faber::setup(setup.pool_handle).await;
-            let mut verifier = Faber::setup(setup.pool_handle).await;
-            let mut consumer1 = create_test_alice_instance(&setup).await;
-            let mut consumer2 = create_test_alice_instance(&setup).await;
+        SetupPoolDirectory::run(|setup| async move {
+            let mut issuer = create_faber(setup.genesis_file_path.clone()).await;
+            let mut verifier = create_faber(setup.genesis_file_path.clone()).await;
+            let mut consumer1 = create_alice(setup.genesis_file_path.clone()).await;
+            let mut consumer2 = create_alice(setup.genesis_file_path).await;
 
             let (consumer1_to_verifier, verifier_to_consumer1) =
                 create_connected_connections(&mut consumer1, &mut verifier).await;
@@ -805,7 +807,7 @@ mod tests {
             issuer.migrate().await;
 
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _rev_reg_id) =
-                _create_address_schema(&issuer.profile, &issuer.config_issuer.institution_did).await;
+                _create_address_schema(&issuer.profile, &issuer.institution_did).await;
             let (address1, address2, city, state, zip) = attr_names();
             let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
             let _credential_handle1 = _exchange_credential(
@@ -894,10 +896,10 @@ mod tests {
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_double_issuance_separate_issuer() {
-        SetupPool::run(|setup| async move {
-            let mut issuer = Faber::setup(setup.pool_handle).await;
-            let mut verifier = Faber::setup(setup.pool_handle).await;
-            let mut consumer = create_test_alice_instance(&setup).await;
+        SetupPoolDirectory::run(|setup| async move {
+            let mut issuer = create_faber(setup.genesis_file_path.clone()).await;
+            let mut verifier = create_faber(setup.genesis_file_path.clone()).await;
+            let mut consumer = create_alice(setup.genesis_file_path).await;
 
             let (consumer_to_verifier, verifier_to_consumer) =
                 create_connected_connections(&mut consumer, &mut verifier).await;
@@ -974,15 +976,15 @@ mod tests {
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_double_issuance_issuer_is_verifier() {
-        SetupPool::run(|setup| async move {
-            let mut institution = Faber::setup(setup.pool_handle).await;
-            let mut consumer = create_test_alice_instance(&setup).await;
+        SetupPoolDirectory::run(|setup| async move {
+            let mut institution = create_faber(setup.genesis_file_path.clone()).await;
+            let mut consumer = create_alice(setup.genesis_file_path.clone()).await;
 
             let (consumer_to_institution, institution_to_consumer) =
                 create_connected_connections(&mut consumer, &mut institution).await;
 
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _rev_reg_id) =
-                _create_address_schema(&institution.profile, &institution.config_issuer.institution_did).await;
+                _create_address_schema(&institution.profile, &institution.institution_did).await;
             let (address1, address, city, state, zip) = attr_names();
             let credential_data = json!({address1.clone(): "5th Avenue", address.clone(): "Suite 1234", city.clone(): "NYC", state.clone(): "NYS", zip.clone(): "84712"}).to_string();
             let _credential_handle = _exchange_credential(
@@ -1060,9 +1062,9 @@ mod tests {
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_real_proof() {
-        SetupPool::run(|setup| async move {
-            let mut institution = Faber::setup(setup.pool_handle).await;
-            let mut consumer = create_test_alice_instance(&setup).await;
+        SetupPoolDirectory::run(|setup| async move {
+            let mut institution = create_faber(setup.genesis_file_path.clone()).await;
+            let mut consumer = create_alice(setup.genesis_file_path.clone()).await;
 
             let (consumer_to_issuer, issuer_to_consumer) =
                 create_connected_connections(&mut consumer, &mut institution).await;
@@ -1081,7 +1083,7 @@ mod tests {
                     &institution.profile.inject_anoncreds(),
                     &institution.profile.inject_anoncreds_ledger_read(),
                     &institution.profile.inject_anoncreds_ledger_write(),
-                    &institution.config_issuer.institution_did,
+                    &institution.institution_did,
                     &attrs_list,
                 )
                 .await;
@@ -1128,7 +1130,7 @@ mod tests {
 
             info!("test_real_proof :: AS INSTITUTION SEND PROOF REQUEST");
 
-            let institution_did = &institution.config_issuer.institution_did.clone();
+            let institution_did = &institution.institution_did.clone();
             let restrictions =
                 json!({ "issuer_did": institution_did, "schema_id": schema_id, "cred_def_id": cred_def_id, });
             let mut attrs: Value = serde_json::Value::Array(vec![]);
@@ -1193,17 +1195,17 @@ mod tests {
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_two_creds_one_rev_reg() {
-        SetupPool::run(|setup| async move {
-            let mut issuer = Faber::setup(setup.pool_handle).await;
-            let mut verifier = Faber::setup(setup.pool_handle).await;
-            let mut consumer = create_test_alice_instance(&setup).await;
+        SetupPoolDirectory::run(|setup| async move {
+            let mut issuer = create_faber(setup.genesis_file_path.clone()).await;
+            let mut verifier = create_faber(setup.genesis_file_path.clone()).await;
+            let mut consumer = create_alice(setup.genesis_file_path).await;
 
             let (consumer_to_verifier, verifier_to_consumer) =
                 create_connected_connections(&mut consumer, &mut verifier).await;
             let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut issuer).await;
 
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _rev_reg_id) =
-                _create_address_schema(&issuer.profile, &issuer.config_issuer.institution_did).await;
+                _create_address_schema(&issuer.profile, &issuer.institution_did).await;
             let (address1, address2, city, state, zip) = attr_names();
             let (req1, req2) = (Some("request1"), Some("request2"));
             let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
@@ -1288,14 +1290,14 @@ mod tests {
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_credential_exchange_via_proposal() {
-        SetupPool::run(|setup| async move {
-            let mut institution = Faber::setup(setup.pool_handle).await;
-            let mut consumer = create_test_alice_instance(&setup).await;
+        SetupPoolDirectory::run(|setup| async move {
+            let mut institution = create_faber(setup.genesis_file_path.clone()).await;
+            let mut consumer = create_alice(setup.genesis_file_path).await;
 
             let (consumer_to_institution, institution_to_consumer) =
                 create_connected_connections(&mut consumer, &mut institution).await;
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, _cred_def, rev_reg, rev_reg_id) =
-                _create_address_schema(&institution.profile, &institution.config_issuer.institution_did).await;
+                _create_address_schema(&institution.profile, &institution.institution_did).await;
             let tails_file = rev_reg.get_tails_dir();
 
             #[cfg(feature = "migration")]
@@ -1320,14 +1322,14 @@ mod tests {
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_credential_exchange_via_proposal_failed() {
-        SetupPool::run(|setup| async move {
-            let mut institution = Faber::setup(setup.pool_handle).await;
-            let mut consumer = create_test_alice_instance(&setup).await;
+        SetupPoolDirectory::run(|setup| async move {
+            let mut institution = create_faber(setup.genesis_file_path.clone()).await;
+            let mut consumer = create_alice(setup.genesis_file_path.clone()).await;
 
             let (consumer_to_institution, institution_to_consumer) =
                 create_connected_connections(&mut consumer, &mut institution).await;
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, _cred_def, rev_reg, rev_reg_id) =
-                _create_address_schema(&institution.profile, &institution.config_issuer.institution_did).await;
+                _create_address_schema(&institution.profile, &institution.institution_did).await;
             let tails_file = rev_reg.get_tails_dir();
 
             let mut holder = send_cred_proposal(
@@ -1364,14 +1366,14 @@ mod tests {
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_credential_exchange_via_proposal_with_negotiation() {
-        SetupPool::run(|setup| async move {
-            let mut institution = Faber::setup(setup.pool_handle).await;
-            let mut consumer = create_test_alice_instance(&setup).await;
+        SetupPoolDirectory::run(|setup| async move {
+            let mut institution = create_faber(setup.genesis_file_path.clone()).await;
+            let mut consumer = create_alice(setup.genesis_file_path.clone()).await;
 
             let (consumer_to_institution, institution_to_consumer) =
                 create_connected_connections(&mut consumer, &mut institution).await;
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, _cred_def, rev_reg, rev_reg_id) =
-                _create_address_schema(&institution.profile, &institution.config_issuer.institution_did).await;
+                _create_address_schema(&institution.profile, &institution.institution_did).await;
             let tails_file = rev_reg.get_tails_dir();
 
             #[cfg(feature = "migration")]
@@ -1432,14 +1434,14 @@ mod tests {
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_presentation_via_proposal() {
-        SetupPool::run(|setup| async move {
-            let mut institution = Faber::setup(setup.pool_handle).await;
-            let mut consumer = create_test_alice_instance(&setup).await;
+        SetupPoolDirectory::run(|setup| async move {
+            let mut institution = create_faber(setup.genesis_file_path.clone()).await;
+            let mut consumer = create_alice(setup.genesis_file_path.clone()).await;
 
             let (consumer_to_institution, institution_to_consumer) =
                 create_connected_connections(&mut consumer, &mut institution).await;
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, _cred_def, rev_reg, rev_reg_id) =
-                _create_address_schema(&institution.profile, &institution.config_issuer.institution_did).await;
+                _create_address_schema(&institution.profile, &institution.institution_did).await;
             let tails_file = rev_reg.get_tails_dir();
 
             #[cfg(feature = "migration")]
@@ -1481,14 +1483,14 @@ mod tests {
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_presentation_via_proposal_with_rejection() {
-        SetupPool::run(|setup| async move {
-            let mut institution = Faber::setup(setup.pool_handle).await;
-            let mut consumer = create_test_alice_instance(&setup).await;
+        SetupPoolDirectory::run(|setup| async move {
+            let mut institution = create_faber(setup.genesis_file_path.clone()).await;
+            let mut consumer = create_alice(setup.genesis_file_path.clone()).await;
 
             let (consumer_to_institution, institution_to_consumer) =
                 create_connected_connections(&mut consumer, &mut institution).await;
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, _cred_def, rev_reg, rev_reg_id) =
-                _create_address_schema(&institution.profile, &institution.config_issuer.institution_did).await;
+                _create_address_schema(&institution.profile, &institution.institution_did).await;
             let tails_file = rev_reg.get_tails_dir();
 
             #[cfg(feature = "migration")]
@@ -1516,14 +1518,14 @@ mod tests {
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_presentation_via_proposal_with_negotiation() {
-        SetupPool::run(|setup| async move {
-            let mut institution = Faber::setup(setup.pool_handle).await;
-            let mut consumer = create_test_alice_instance(&setup).await;
+        SetupPoolDirectory::run(|setup| async move {
+            let mut institution = create_faber(setup.genesis_file_path.clone()).await;
+            let mut consumer = create_alice(setup.genesis_file_path.clone()).await;
 
             let (consumer_to_institution, institution_to_consumer) =
                 create_connected_connections(&mut consumer, &mut institution).await;
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, _cred_def, rev_reg, rev_reg_id) =
-                _create_address_schema(&institution.profile, &institution.config_issuer.institution_did).await;
+                _create_address_schema(&institution.profile, &institution.institution_did).await;
             let tails_file = rev_reg.get_tails_dir();
 
             #[cfg(feature = "migration")]
@@ -1568,9 +1570,9 @@ mod tests {
     #[ignore]
     async fn test_agency_pool_aries_demo() {
         let _setup = SetupEmpty::init();
-        SetupPool::run(|pool| async move {
-            let mut faber = Faber::setup(pool.pool_handle).await;
-            let mut alice = create_test_alice_instance(&pool).await;
+        SetupPoolDirectory::run(|setup| async move {
+            let mut faber = create_faber(setup.genesis_file_path.clone()).await;
+            let mut alice = create_alice(setup.genesis_file_path.clone()).await;
 
             // Publish Schema and Credential Definition
             faber.create_schema().await;
@@ -1612,9 +1614,9 @@ mod tests {
     #[ignore]
     async fn test_agency_pool_aries_demo_create_with_message_id_flow() {
         let _setup = SetupEmpty::init();
-        SetupPool::run(|pool| async move {
-            let mut faber = Faber::setup(pool.pool_handle).await;
-            let mut alice = create_test_alice_instance(&pool).await;
+        SetupPoolDirectory::run(|setup| async move {
+            let mut faber = create_faber(setup.genesis_file_path.clone()).await;
+            let mut alice = create_alice(setup.genesis_file_path.clone()).await;
 
             // Publish Schema and Credential Definition
             faber.create_schema().await;
@@ -1717,9 +1719,9 @@ mod tests {
     #[ignore]
     async fn test_agency_pool_aries_demo_download_message_flow() {
         SetupEmpty::init();
-        SetupPool::run(|pool| async move {
-            let mut faber = Faber::setup(pool.pool_handle).await;
-            let mut alice = create_test_alice_instance(&pool).await;
+        SetupPoolDirectory::run(|setup| async move {
+            let mut faber = create_faber(setup.genesis_file_path.clone()).await;
+            let mut alice = create_alice(setup.genesis_file_path.clone()).await;
 
             // Publish Schema and Credential Definition
             faber.create_schema().await;

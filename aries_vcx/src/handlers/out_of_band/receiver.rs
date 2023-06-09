@@ -22,7 +22,6 @@ use serde::Deserialize;
 use serde_json::Value;
 
 use crate::common::ledger::transactions::resolve_service;
-use crate::core::profile::profile::Profile;
 use crate::errors::error::prelude::*;
 use crate::handlers::connection::mediated_connection::MediatedConnection;
 use crate::handlers::util::{AnyInvitation, AttachmentId};

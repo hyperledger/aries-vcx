@@ -1892,10 +1892,6 @@ void checkErrorAndComplete(vcx_error_t ret, vcx_command_handle_t cmdHandle, void
     });
 }
 
-- (int)walletSetHandle:(NSNumber *)handle {
-    return vcx_wallet_set_handle(handle.integerValue);
-}
-
 - (void)exportWallet:(NSString *)exportPath
          encryptWith:(NSString *)encryptionKey
           completion:(void (^)(NSError *, NSNumber *))completion {

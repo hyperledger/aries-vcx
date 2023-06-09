@@ -328,40 +328,4 @@ mod tests {
     ) {
         unsafe { COUNT = COUNT + 1 }
     }
-
-    // #[ignore]
-    // #[test]
-    // #[cfg(feature = "general_test")]
-    // fn test_logging_get_logger() {
-    //     LibvcxDefaultLogger::init(Some("debug".to_string())).unwrap();
-    //     unsafe {
-    //         let (context, enabled_cb, _log_cb, _flush_cb) = LOGGER_STATE.get();
-    //         assert_eq!(context, ptr::null());
-    //         let target = CStringUtils::string_to_cstring("target".to_string());
-    //         let level = 1;
-    //         let b = LibvcxDefaultLogger::enabled(ptr::null(), 1, target.as_ptr());
-
-    //         assert_eq!(enabled_cb.unwrap()(ptr::null(), level, target.as_ptr()), b);
-    //     }
-    // }
-
-    // Can only have one test that initializes logging.
-    #[ignore]
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_custom_logger() {
-        unsafe {
-            LibvcxLogger::init(
-                get_custom_context(),
-                Some(custom_enabled),
-                custom_log,
-                Some(custom_flush),
-            )
-            .unwrap();
-        }
-        error!("error level message"); // first call of log function
-        unsafe {
-            assert_eq!(COUNT, 2) // second-time log function was called inside libindy
-        }
-    }
 }

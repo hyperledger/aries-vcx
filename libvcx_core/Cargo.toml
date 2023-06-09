@@ -6,9 +6,6 @@ license.workspace = true
 edition.workspace = true
 
 [features]
-test_utils = []
-pool_tests = [ "test_utils" ]
-general_test = [ "test_utils" ]
 fatal_warnings = []
 
 [dependencies]
