@@ -1,5 +1,6 @@
 use std::fmt::Display;
 
+use did_doc::did_parser::DidUrl;
 use serde::{Deserialize, Deserializer, Serialize};
 
 use crate::error::DidDocumentSovError;
@@ -24,6 +25,7 @@ impl Display for AcceptType {
         }
     }
 }
+
 impl<'de> Deserialize<'de> for AcceptType {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
@@ -35,6 +37,19 @@ impl<'de> Deserialize<'de> for AcceptType {
             "didcomm/v2" => Ok(AcceptType::DIDCommV2),
             _ => Ok(AcceptType::Other(s)),
         }
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(untagged)]
+pub enum KeyKind {
+    Reference(DidUrl),
+    Value(String),
+}
+
+impl Default for KeyKind {
+    fn default() -> Self {
+        KeyKind::Value(String::default())
     }
 }
 
@@ -53,7 +68,7 @@ impl Default for ExtraFields {
 }
 
 impl ExtraFields {
-    pub fn recipient_keys(&self) -> Result<&[String], DidDocumentSovError> {
+    pub fn recipient_keys(&self) -> Result<&[KeyKind], DidDocumentSovError> {
         match self {
             ExtraFields::DIDCommV1(extra) => Ok(extra.recipient_keys()),
             ExtraFields::AIP1(_) | ExtraFields::DIDCommV2(_) => {
@@ -62,7 +77,7 @@ impl ExtraFields {
         }
     }
 
-    pub fn routing_keys(&self) -> Result<&[String], DidDocumentSovError> {
+    pub fn routing_keys(&self) -> Result<&[KeyKind], DidDocumentSovError> {
         match self {
             ExtraFields::DIDCommV1(extra) => Ok(extra.routing_keys()),
             ExtraFields::DIDCommV2(extra) => Ok(extra.routing_keys()),
@@ -70,13 +85,13 @@ impl ExtraFields {
         }
     }
 
-    pub fn first_recipient_key(&self) -> Result<&String, DidDocumentSovError> {
+    pub fn first_recipient_key(&self) -> Result<&KeyKind, DidDocumentSovError> {
         self.recipient_keys()?
             .first()
             .ok_or(DidDocumentSovError::EmptyCollection("recipient_keys"))
     }
 
-    pub fn first_routing_key(&self) -> Result<&String, DidDocumentSovError> {
+    pub fn first_routing_key(&self) -> Result<&KeyKind, DidDocumentSovError> {
         self.routing_keys()?
             .first()
             .ok_or(DidDocumentSovError::EmptyCollection("routing_keys"))

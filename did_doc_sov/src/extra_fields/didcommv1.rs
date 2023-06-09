@@ -1,13 +1,13 @@
 use serde::{Deserialize, Serialize};
 
-use super::AcceptType;
+use super::{AcceptType, KeyKind};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct ExtraFieldsDidCommV1 {
     priority: u32,
-    recipient_keys: Vec<String>,
-    routing_keys: Vec<String>,
+    recipient_keys: Vec<KeyKind>,
+    routing_keys: Vec<KeyKind>,
     accept: Vec<AcceptType>,
 }
 
@@ -20,11 +20,11 @@ impl ExtraFieldsDidCommV1 {
         self.priority
     }
 
-    pub fn recipient_keys(&self) -> &[String] {
+    pub fn recipient_keys(&self) -> &[KeyKind] {
         self.recipient_keys.as_ref()
     }
 
-    pub fn routing_keys(&self) -> &[String] {
+    pub fn routing_keys(&self) -> &[KeyKind] {
         self.routing_keys.as_ref()
     }
 
@@ -36,8 +36,8 @@ impl ExtraFieldsDidCommV1 {
 #[derive(Default)]
 pub struct ExtraFieldsDidCommV1Builder {
     priority: u32,
-    recipient_keys: Vec<String>,
-    routing_keys: Vec<String>,
+    recipient_keys: Vec<KeyKind>,
+    routing_keys: Vec<KeyKind>,
 }
 
 impl ExtraFieldsDidCommV1Builder {
@@ -46,12 +46,12 @@ impl ExtraFieldsDidCommV1Builder {
         self
     }
 
-    pub fn set_recipient_keys(mut self, recipient_keys: Vec<String>) -> Self {
+    pub fn set_recipient_keys(mut self, recipient_keys: Vec<KeyKind>) -> Self {
         self.recipient_keys = recipient_keys;
         self
     }
 
-    pub fn set_routing_keys(mut self, routing_keys: Vec<String>) -> Self {
+    pub fn set_routing_keys(mut self, routing_keys: Vec<KeyKind>) -> Self {
         self.routing_keys = routing_keys;
         self
     }
