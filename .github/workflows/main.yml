@@ -555,6 +555,7 @@ jobs:
       - name: "Run libvcx tests: pool_tests"
         run: |
           RUST_TEST_THREADS=1 cargo test --manifest-path="libvcx/Cargo.toml" -F "pool_tests";
+          RUST_TEST_THREADS=1 cargo test --manifest-path="libvcx_core/Cargo.toml" -F "pool_tests";
 
   test-integration-resolver:
     needs: workflow-setup
