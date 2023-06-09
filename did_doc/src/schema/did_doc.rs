@@ -18,10 +18,7 @@ type ControllerAlias = OneOrList<Did>;
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 #[serde(default)]
 #[serde(rename_all = "camelCase")]
-pub struct DidDocument<E>
-where
-    E: Default,
-{
+pub struct DidDocument<E> {
     id: Did,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     also_known_as: Vec<Uri>,
@@ -46,10 +43,7 @@ where
     extra: HashMap<String, Value>,
 }
 
-impl<E> DidDocument<E>
-where
-    E: Default,
-{
+impl<E> DidDocument<E> {
     pub fn builder(id: Did) -> DidDocumentBuilder<E> {
         DidDocumentBuilder::new(id)
     }
@@ -103,11 +97,8 @@ where
     }
 }
 
-#[derive(Debug, Default)]
-pub struct DidDocumentBuilder<E>
-where
-    E: Default,
-{
+#[derive(Debug)]
+pub struct DidDocumentBuilder<E> {
     id: Did,
     also_known_as: Vec<Uri>,
     controller: Vec<Did>,
@@ -121,10 +112,25 @@ where
     extra: HashMap<String, Value>,
 }
 
-impl<E> DidDocumentBuilder<E>
-where
-    E: Default,
-{
+impl<E> Default for DidDocumentBuilder<E> {
+    fn default() -> Self {
+        Self {
+            id: Default::default(),
+            also_known_as: Default::default(),
+            controller: Default::default(),
+            verification_method: Default::default(),
+            authentication: Default::default(),
+            assertion_method: Default::default(),
+            key_agreement: Default::default(),
+            capability_invocation: Default::default(),
+            capability_delegation: Default::default(),
+            service: Default::default(),
+            extra: Default::default(),
+        }
+    }
+}
+
+impl<E> DidDocumentBuilder<E> {
     pub fn new(id: Did) -> Self {
         Self {
             id,
@@ -267,10 +273,14 @@ mod tests {
         let service_id = Uri::new("did:example:123456789abcdefghi;service-1").unwrap();
         let service_type = "test-service".to_string();
         let service_endpoint = "https://example.com/service";
-        let service = ServiceBuilder::<()>::new(service_id, service_endpoint.try_into().unwrap())
-            .add_service_type(service_type)
-            .unwrap()
-            .build();
+        let service = ServiceBuilder::<()>::new(
+            service_id,
+            service_endpoint.try_into().unwrap(),
+            Default::default(),
+        )
+        .add_service_type(service_type)
+        .unwrap()
+        .build();
 
         let document = DidDocumentBuilder::new(id.clone())
             .add_also_known_as(also_known_as.clone())

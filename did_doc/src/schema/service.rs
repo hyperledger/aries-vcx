@@ -13,10 +13,7 @@ type ServiceTypeAlias = OneOrList<String>;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
-pub struct Service<E>
-where
-    E: Default,
-{
+pub struct Service<E> {
     id: Uri,
     #[serde(rename = "type")]
     service_type: ServiceTypeAlias,
@@ -25,12 +22,9 @@ where
     extra: E,
 }
 
-impl<E> Service<E>
-where
-    E: Default,
-{
-    pub fn builder(id: Uri, service_endpoint: Url) -> ServiceBuilder<E> {
-        ServiceBuilder::new(id, service_endpoint)
+impl<E> Service<E> {
+    pub fn builder(id: Uri, service_endpoint: Url, extra: E) -> ServiceBuilder<E> {
+        ServiceBuilder::new(id, service_endpoint, extra)
     }
 
     pub fn id(&self) -> &Uri {
@@ -65,15 +59,12 @@ pub struct ServiceBuilderWithServiceType<E> {
     extra: E,
 }
 
-impl<E> ServiceBuilder<E>
-where
-    E: Default,
-{
-    pub fn new(id: Uri, service_endpoint: Url) -> Self {
+impl<E> ServiceBuilder<E> {
+    pub fn new(id: Uri, service_endpoint: Url, extra: E) -> Self {
         Self {
             id,
             service_endpoint,
-            extra: E::default(),
+            extra,
         }
     }
 
@@ -111,10 +102,7 @@ where
     }
 }
 
-impl<E> ServiceBuilderWithServiceType<E>
-where
-    E: Default,
-{
+impl<E> ServiceBuilderWithServiceType<E> {
     pub fn add_service_type(
         mut self,
         service_type: String,
@@ -124,11 +112,6 @@ where
         }
         self.service_type.insert(service_type);
         Ok(self)
-    }
-
-    pub fn add_extra(mut self, extra: E) -> Self {
-        self.extra = extra;
-        self
     }
 
     pub fn build(self) -> Service<E> {
@@ -163,11 +146,14 @@ mod tests {
         let service_endpoint = "http://example.com/endpoint";
         let service_type = "DIDCommMessaging".to_string();
 
-        let service =
-            ServiceBuilder::<ExtraSov>::new(id.clone(), service_endpoint.try_into().unwrap())
-                .add_service_type(service_type.clone())
-                .unwrap()
-                .build();
+        let service = ServiceBuilder::<ExtraSov>::new(
+            id.clone(),
+            service_endpoint.try_into().unwrap(),
+            Default::default(),
+        )
+        .add_service_type(service_type.clone())
+        .unwrap()
+        .build();
 
         assert_eq!(service.id(), &id);
         assert_eq!(service.service_endpoint().as_ref(), service_endpoint);
@@ -187,11 +173,11 @@ mod tests {
             routing_keys: routing_keys.clone(),
         };
 
-        let service = ServiceBuilder::<ExtraSov>::new(id, service_endpoint.try_into().unwrap())
-            .add_service_type(service_type)
-            .unwrap()
-            .add_extra(extra)
-            .build();
+        let service =
+            ServiceBuilder::<ExtraSov>::new(id, service_endpoint.try_into().unwrap(), extra)
+                .add_service_type(service_type)
+                .unwrap()
+                .build();
 
         assert_eq!(service.extra().recipient_keys, recipient_keys);
         assert_eq!(service.extra().routing_keys, routing_keys);
@@ -203,12 +189,16 @@ mod tests {
         let service_endpoint = "http://example.com/endpoint";
         let service_type = "DIDCommMessaging".to_string();
 
-        let service = ServiceBuilder::<ExtraSov>::new(id, service_endpoint.try_into().unwrap())
-            .add_service_type(service_type.clone())
-            .unwrap()
-            .add_service_type(service_type.clone())
-            .unwrap()
-            .build();
+        let service = ServiceBuilder::<ExtraSov>::new(
+            id,
+            service_endpoint.try_into().unwrap(),
+            Default::default(),
+        )
+        .add_service_type(service_type.clone())
+        .unwrap()
+        .add_service_type(service_type.clone())
+        .unwrap()
+        .build();
 
         assert_eq!(service.service_type(), &OneOrList::List(vec![service_type]));
     }
@@ -218,8 +208,12 @@ mod tests {
         let id = create_valid_uri();
         let service_endpoint = "http://example.com/endpoint";
 
-        let res = ServiceBuilder::<ExtraSov>::new(id, service_endpoint.try_into().unwrap())
-            .add_service_type("".to_string());
+        let res = ServiceBuilder::<ExtraSov>::new(
+            id,
+            service_endpoint.try_into().unwrap(),
+            Default::default(),
+        )
+        .add_service_type("".to_string());
         assert!(res.is_err());
     }
 
