@@ -880,10 +880,10 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let credential_id = cred_id.map_or(Uuid::new_v4().to_string(), String::from);
 
         let record_value = serde_json::to_string(&credential)?;
-        let tags_json = serde_json::to_string(&tags)?;
+        let tags_json: HashMap<String, String> = serde_json::from_value(tags)?;
 
         self.wallet
-            .add_wallet_record(CATEGORY_CREDENTIAL, &credential_id, &record_value, Some(&tags_json))
+            .add_wallet_record(CATEGORY_CREDENTIAL, &credential_id, &record_value, Some(tags_json))
             .await?;
 
         Ok(credential_id)

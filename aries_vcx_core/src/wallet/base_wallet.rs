@@ -3,6 +3,8 @@ use async_trait::async_trait;
 use crate::errors::error::VcxCoreResult;
 use crate::utils::async_fn_iterator::AsyncFnIterator;
 
+use std::collections::HashMap;
+
 /// Trait defining standard 'wallet' related functionality. The APIs, including
 /// input and output types are loosely based off the indy Wallet API:
 /// see: <https://github.com/hyperledger/indy-sdk/blob/main/libindy/src/api/wallet.rs>
@@ -26,10 +28,15 @@ pub trait BaseWallet: std::fmt::Debug + Send + Sync {
 
     // ---- records
 
-    async fn add_wallet_record(&self, xtype: &str, id: &str, value: &str, tags_json: Option<&str>)
-        -> VcxCoreResult<()>;
+    async fn add_wallet_record(
+        &self,
+        xtype: &str,
+        id: &str,
+        value: &str,
+        tags: Option<HashMap<String, String>>,
+    ) -> VcxCoreResult<()>;
 
-    async fn get_wallet_record(&self, xtype: &str, id: &str, options_json: &str) -> VcxCoreResult<String>;
+    async fn get_wallet_record(&self, xtype: &str, id: &str, options: &str) -> VcxCoreResult<String>;
 
     async fn get_wallet_record_value(&self, xtype: &str, id: &str) -> VcxCoreResult<String>;
 
@@ -37,9 +44,14 @@ pub trait BaseWallet: std::fmt::Debug + Send + Sync {
 
     async fn update_wallet_record_value(&self, xtype: &str, id: &str, value: &str) -> VcxCoreResult<()>;
 
-    async fn add_wallet_record_tags(&self, xtype: &str, id: &str, tags_json: &str) -> VcxCoreResult<()>;
+    async fn add_wallet_record_tags(&self, xtype: &str, id: &str, tags: HashMap<String, String>) -> VcxCoreResult<()>;
 
-    async fn update_wallet_record_tags(&self, xtype: &str, id: &str, tags_json: &str) -> VcxCoreResult<()>;
+    async fn update_wallet_record_tags(
+        &self,
+        xtype: &str,
+        id: &str,
+        tags: HashMap<String, String>,
+    ) -> VcxCoreResult<()>;
 
     async fn delete_wallet_record_tags(&self, xtype: &str, id: &str, tag_names: &str) -> VcxCoreResult<()>;
 

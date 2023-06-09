@@ -4,6 +4,7 @@ use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use async_trait::async_trait;
 
 use crate::utils::{self};
+use std::collections::HashMap;
 
 #[derive(Debug)]
 pub(crate) struct MockWallet;
@@ -38,12 +39,12 @@ impl BaseWallet for MockWallet {
         xtype: &str,
         id: &str,
         value: &str,
-        tags_json: Option<&str>,
+        tags: Option<HashMap<String, String>>,
     ) -> VcxCoreResult<()> {
         Ok(())
     }
 
-    async fn get_wallet_record(&self, xtype: &str, id: &str, options_json: &str) -> VcxCoreResult<String> {
+    async fn get_wallet_record(&self, xtype: &str, id: &str, options: &str) -> VcxCoreResult<String> {
         Ok(r#"{"id":"123","type":"record type","value":"record value","tags":null}"#.to_string())
     }
 
@@ -59,11 +60,16 @@ impl BaseWallet for MockWallet {
         Ok(())
     }
 
-    async fn add_wallet_record_tags(&self, xtype: &str, id: &str, tags_json: &str) -> VcxCoreResult<()> {
+    async fn add_wallet_record_tags(&self, xtype: &str, id: &str, tags: HashMap<String, String>) -> VcxCoreResult<()> {
         Ok(())
     }
 
-    async fn update_wallet_record_tags(&self, xtype: &str, id: &str, tags_json: &str) -> VcxCoreResult<()> {
+    async fn update_wallet_record_tags(
+        &self,
+        xtype: &str,
+        id: &str,
+        tags: HashMap<String, String>,
+    ) -> VcxCoreResult<()> {
         Ok(())
     }
 
