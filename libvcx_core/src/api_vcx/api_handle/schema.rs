@@ -269,14 +269,13 @@ pub mod tests {
         SetupGlobalsWalletPoolAgency::run(|setup| async move {
             let profile = get_main_profile().unwrap();
 
-            let (schema_id, _) =
-                create_and_write_test_schema(
-                    &profile.inject_anoncreds(),
-                    &profile.inject_anoncreds_ledger_write(),
-                    &setup.setup.institution_did,
-                    constants::DEFAULT_SCHEMA_ATTRS
-                )
-                    .await;
+            let (schema_id, _) = create_and_write_test_schema(
+                &profile.inject_anoncreds(),
+                &profile.inject_anoncreds_ledger_write(),
+                &setup.setup.institution_did,
+                constants::DEFAULT_SCHEMA_ATTRS,
+            )
+            .await;
 
             let (schema_handle, schema_attrs) = get_schema_attrs("id".to_string(), schema_id.clone()).await.unwrap();
 
