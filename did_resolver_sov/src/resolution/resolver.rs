@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use did_doc_sov::extra_fields::ExtraFields;
+use did_doc_sov::extra_fields::ExtraFieldsSov;
 use did_resolver::{
     did_parser::Did,
     error::GenericError,
@@ -32,7 +32,7 @@ impl DidSovResolver {
 
 #[async_trait]
 impl DidResolvable for DidSovResolver {
-    type ExtraFields = ExtraFields;
+    type ExtraFields = ExtraFieldsSov;
 
     async fn resolve(
         &self,

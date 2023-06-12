@@ -6,7 +6,7 @@ use did_doc::schema::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::{error::DidDocumentSovError, extra_fields::ExtraFields};
+use crate::{error::DidDocumentSovError, extra_fields::ExtraFieldsSov};
 
 pub mod aip1;
 pub mod didcommv1;
@@ -63,28 +63,28 @@ impl ServiceSov {
         }
     }
 
-    pub fn extra(&self) -> ExtraFields {
+    pub fn extra(&self) -> ExtraFieldsSov {
         match self {
-            ServiceSov::AIP1(service) => ExtraFields::AIP1(service.extra().to_owned()),
-            ServiceSov::DIDCommV1(service) => ExtraFields::DIDCommV1(service.extra().to_owned()),
-            ServiceSov::DIDCommV2(service) => ExtraFields::DIDCommV2(service.extra().to_owned()),
+            ServiceSov::AIP1(service) => ExtraFieldsSov::AIP1(service.extra().to_owned()),
+            ServiceSov::DIDCommV1(service) => ExtraFieldsSov::DIDCommV1(service.extra().to_owned()),
+            ServiceSov::DIDCommV2(service) => ExtraFieldsSov::DIDCommV2(service.extra().to_owned()),
         }
     }
 }
 
-impl TryFrom<Service<ExtraFields>> for ServiceSov {
+impl TryFrom<Service<ExtraFieldsSov>> for ServiceSov {
     type Error = DidDocumentSovError;
 
-    fn try_from(service: Service<ExtraFields>) -> Result<Self, Self::Error> {
+    fn try_from(service: Service<ExtraFieldsSov>) -> Result<Self, Self::Error> {
         match service.extra() {
-            ExtraFields::AIP1(_extra) => Ok(ServiceSov::AIP1(service.try_into()?)),
-            ExtraFields::DIDCommV1(_extra) => Ok(ServiceSov::DIDCommV1(service.try_into()?)),
-            ExtraFields::DIDCommV2(_extra) => Ok(ServiceSov::DIDCommV2(service.try_into()?)),
+            ExtraFieldsSov::AIP1(_extra) => Ok(ServiceSov::AIP1(service.try_into()?)),
+            ExtraFieldsSov::DIDCommV1(_extra) => Ok(ServiceSov::DIDCommV1(service.try_into()?)),
+            ExtraFieldsSov::DIDCommV2(_extra) => Ok(ServiceSov::DIDCommV2(service.try_into()?)),
         }
     }
 }
 
-impl TryFrom<ServiceSov> for Service<ExtraFields> {
+impl TryFrom<ServiceSov> for Service<ExtraFieldsSov> {
     type Error = DidDocumentSovError;
 
     fn try_from(service: ServiceSov) -> Result<Self, Self::Error> {
@@ -92,21 +92,21 @@ impl TryFrom<ServiceSov> for Service<ExtraFields> {
             ServiceSov::AIP1(service) => Ok(Service::builder(
                 service.id().clone(),
                 service.service_endpoint().clone(),
-                ExtraFields::AIP1(service.extra().to_owned()),
+                ExtraFieldsSov::AIP1(service.extra().to_owned()),
             )
             .add_service_type(service.service_type().to_string())?
             .build()),
             ServiceSov::DIDCommV1(service) => Ok(Service::builder(
                 service.id().clone(),
                 service.service_endpoint().clone(),
-                ExtraFields::DIDCommV1(service.extra().to_owned()),
+                ExtraFieldsSov::DIDCommV1(service.extra().to_owned()),
             )
             .add_service_type(service.service_type().to_string())?
             .build()),
             ServiceSov::DIDCommV2(service) => Ok(Service::builder(
                 service.id().clone(),
                 service.service_endpoint().clone(),
-                ExtraFields::DIDCommV2(service.extra().to_owned()),
+                ExtraFieldsSov::DIDCommV2(service.extra().to_owned()),
             )
             .add_service_type(service.service_type().to_string())?
             .build()),

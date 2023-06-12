@@ -1,15 +1,15 @@
 use did_doc::schema::service::Service;
 
-use crate::{error::DidDocumentSovError, extra_fields::ExtraFields};
+use crate::{error::DidDocumentSovError, extra_fields::ExtraFieldsSov};
 
 use super::ServiceSov;
 
 pub struct ServicesList<'a> {
-    services: &'a [Service<ExtraFields>],
+    services: &'a [Service<ExtraFieldsSov>],
 }
 
 impl<'a> ServicesList<'a> {
-    pub fn new(services: &'a [Service<ExtraFields>]) -> Self {
+    pub fn new(services: &'a [Service<ExtraFieldsSov>]) -> Self {
         Self { services }
     }
 

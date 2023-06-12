@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     error::DidDocumentSovError,
-    extra_fields::{aip1::ExtraFieldsAIP1, ExtraFields},
+    extra_fields::{aip1::ExtraFieldsAIP1, ExtraFieldsSov},
 };
 
 use super::ServiceType;
@@ -44,12 +44,12 @@ impl ServiceAIP1 {
     }
 }
 
-impl TryFrom<Service<ExtraFields>> for ServiceAIP1 {
+impl TryFrom<Service<ExtraFieldsSov>> for ServiceAIP1 {
     type Error = DidDocumentSovError;
 
-    fn try_from(service: Service<ExtraFields>) -> Result<Self, Self::Error> {
+    fn try_from(service: Service<ExtraFieldsSov>) -> Result<Self, Self::Error> {
         match service.extra() {
-            ExtraFields::AIP1(extra) => {
+            ExtraFieldsSov::AIP1(extra) => {
                 Self::new(service.id().clone(), service.service_endpoint().clone(), extra.clone())
             }
             _ => Err(DidDocumentSovError::UnexpectedServiceType(
@@ -64,14 +64,14 @@ impl<'de> Deserialize<'de> for ServiceAIP1 {
     where
         D: serde::Deserializer<'de>,
     {
-        let service = Service::<ExtraFields>::deserialize(deserializer)?;
+        let service = Service::<ExtraFieldsSov>::deserialize(deserializer)?;
         match service.service_type() {
             OneOrList::One(service_type) if *service_type == ServiceType::AIP1.to_string() => {}
             OneOrList::List(service_types) if service_types.contains(&ServiceType::AIP1.to_string()) => {}
             _ => return Err(serde::de::Error::custom("Extra fields don't match service type")),
         };
         match service.extra() {
-            ExtraFields::AIP1(extra) => Ok(Self {
+            ExtraFieldsSov::AIP1(extra) => Ok(Self {
                 service: Service::builder(service.id().clone(), service.service_endpoint().clone(), extra.clone())
                     .add_service_type(ServiceType::AIP1.to_string())
                     .map_err(serde::de::Error::custom)?

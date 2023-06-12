@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     error::DidDocumentSovError,
-    extra_fields::{didcommv1::ExtraFieldsDidCommV1, ExtraFields},
+    extra_fields::{didcommv1::ExtraFieldsDidCommV1, ExtraFieldsSov},
 };
 
 use super::ServiceType;
@@ -44,12 +44,12 @@ impl ServiceDidCommV1 {
     }
 }
 
-impl TryFrom<Service<ExtraFields>> for ServiceDidCommV1 {
+impl TryFrom<Service<ExtraFieldsSov>> for ServiceDidCommV1 {
     type Error = DidDocumentSovError;
 
-    fn try_from(service: Service<ExtraFields>) -> Result<Self, Self::Error> {
+    fn try_from(service: Service<ExtraFieldsSov>) -> Result<Self, Self::Error> {
         match service.extra() {
-            ExtraFields::DIDCommV1(extra) => {
+            ExtraFieldsSov::DIDCommV1(extra) => {
                 Self::new(service.id().clone(), service.service_endpoint().clone(), extra.clone())
             }
             _ => Err(DidDocumentSovError::UnexpectedServiceType(
@@ -64,14 +64,14 @@ impl<'de> Deserialize<'de> for ServiceDidCommV1 {
     where
         D: serde::Deserializer<'de>,
     {
-        let service = Service::<ExtraFields>::deserialize(deserializer)?;
+        let service = Service::<ExtraFieldsSov>::deserialize(deserializer)?;
         match service.service_type() {
             OneOrList::One(service_type) if *service_type == ServiceType::DIDCommV1.to_string() => {}
             OneOrList::List(service_types) if service_types.contains(&ServiceType::DIDCommV1.to_string()) => {}
             _ => return Err(serde::de::Error::custom("Extra fields don't match service type")),
         };
         match service.extra() {
-            ExtraFields::DIDCommV1(extra) => Ok(Self {
+            ExtraFieldsSov::DIDCommV1(extra) => Ok(Self {
                 service: Service::builder(service.id().clone(), service.service_endpoint().clone(), extra.clone())
                     .add_service_type(ServiceType::DIDCommV1.to_string())
                     .map_err(serde::de::Error::custom)?

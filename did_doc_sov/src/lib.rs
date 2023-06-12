@@ -11,7 +11,7 @@ use did_doc::{
     },
 };
 use error::DidDocumentSovError;
-use extra_fields::ExtraFields;
+use extra_fields::ExtraFieldsSov;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use service::{services_list::ServicesList, ServiceSov};
@@ -19,7 +19,7 @@ use service::{services_list::ServicesList, ServiceSov};
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct DidDocumentSov {
     #[serde(flatten)]
-    did_doc: DidDocument<ExtraFields>,
+    did_doc: DidDocument<ExtraFieldsSov>,
 }
 
 impl DidDocumentSov {
@@ -78,7 +78,7 @@ impl DidDocumentSov {
 
 #[derive(Default)]
 pub struct DidDocumentSovBuilder {
-    ddo_builder: DidDocumentBuilder<ExtraFields>,
+    ddo_builder: DidDocumentBuilder<ExtraFieldsSov>,
 }
 
 impl DidDocumentSovBuilder {

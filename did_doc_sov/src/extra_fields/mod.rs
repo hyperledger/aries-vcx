@@ -70,23 +70,23 @@ impl Display for KeyKind {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(untagged)]
-pub enum ExtraFields {
+pub enum ExtraFieldsSov {
     DIDCommV1(didcommv1::ExtraFieldsDidCommV1),
     DIDCommV2(didcommv2::ExtraFieldsDidCommV2),
     AIP1(aip1::ExtraFieldsAIP1),
 }
 
-impl Default for ExtraFields {
+impl Default for ExtraFieldsSov {
     fn default() -> Self {
-        ExtraFields::AIP1(aip1::ExtraFieldsAIP1::default())
+        ExtraFieldsSov::AIP1(aip1::ExtraFieldsAIP1::default())
     }
 }
 
-impl ExtraFields {
+impl ExtraFieldsSov {
     pub fn recipient_keys(&self) -> Result<&[KeyKind], DidDocumentSovError> {
         match self {
-            ExtraFields::DIDCommV1(extra) => Ok(extra.recipient_keys()),
-            ExtraFields::AIP1(_) | ExtraFields::DIDCommV2(_) => {
+            ExtraFieldsSov::DIDCommV1(extra) => Ok(extra.recipient_keys()),
+            ExtraFieldsSov::AIP1(_) | ExtraFieldsSov::DIDCommV2(_) => {
                 Err(DidDocumentSovError::EmptyCollection("recipient_keys"))
             }
         }
@@ -94,9 +94,9 @@ impl ExtraFields {
 
     pub fn routing_keys(&self) -> Result<&[KeyKind], DidDocumentSovError> {
         match self {
-            ExtraFields::DIDCommV1(extra) => Ok(extra.routing_keys()),
-            ExtraFields::DIDCommV2(extra) => Ok(extra.routing_keys()),
-            ExtraFields::AIP1(_) => Err(DidDocumentSovError::EmptyCollection("routing_keys")),
+            ExtraFieldsSov::DIDCommV1(extra) => Ok(extra.routing_keys()),
+            ExtraFieldsSov::DIDCommV2(extra) => Ok(extra.routing_keys()),
+            ExtraFieldsSov::AIP1(_) => Err(DidDocumentSovError::EmptyCollection("routing_keys")),
         }
     }
 
@@ -114,15 +114,15 @@ impl ExtraFields {
 
     pub fn accept(&self) -> Result<&[AcceptType], DidDocumentSovError> {
         match self {
-            ExtraFields::DIDCommV1(extra) => Ok(extra.accept()),
-            ExtraFields::DIDCommV2(extra) => Ok(extra.accept()),
-            ExtraFields::AIP1(_) => Err(DidDocumentSovError::EmptyCollection("accept")),
+            ExtraFieldsSov::DIDCommV1(extra) => Ok(extra.accept()),
+            ExtraFieldsSov::DIDCommV2(extra) => Ok(extra.accept()),
+            ExtraFieldsSov::AIP1(_) => Err(DidDocumentSovError::EmptyCollection("accept")),
         }
     }
 
     pub fn priority(&self) -> Result<u32, DidDocumentSovError> {
         match self {
-            ExtraFields::DIDCommV1(extra) => Ok(extra.priority()),
+            ExtraFieldsSov::DIDCommV1(extra) => Ok(extra.priority()),
             _ => Err(DidDocumentSovError::EmptyCollection("priority")),
         }
     }
