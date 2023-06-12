@@ -390,7 +390,7 @@ impl WalletController {
         res
     }
 
-    pub async fn migrate(
+    pub async fn migrate_records(
         &self,
         old_wh: WalletHandle,
         new_wh: WalletHandle,

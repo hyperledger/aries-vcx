@@ -49,7 +49,7 @@ pub async fn migrate_wallet(
 
     locator
         .wallet_controller
-        .migrate(wallet_handle, new_wh, migrate_record)
+        .migrate_records(wallet_handle, new_wh, migrate_record)
         .await?;
 
     locator.wallet_controller.close(new_wh).await?;
