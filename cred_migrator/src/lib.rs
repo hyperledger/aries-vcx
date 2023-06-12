@@ -21,7 +21,7 @@ pub use vdrtools::{
 // pub const CATEGORY_REV_REG_DEF_PRIV: &str = "VCX_REV_REG_DEF_PRIV";
 
 /// Contains the logic for record mapping and migration.
-fn migrate_record(record: Record) -> Result<Record, IndyError> {
+pub fn migrate_any_record(record: Record) -> Result<Record, IndyError> {
     println!("{record:?}");
     Ok(record)
 }
@@ -35,6 +35,7 @@ pub async fn migrate_wallet(
     wallet_handle: WalletHandle,
     config: Config,
     credentials: Credentials,
+    migrate_fn: impl Fn(Record) -> Result<Record, IndyError>,
 ) -> Result<(), IndyError> {
     println!("Migrating wallet");
 
@@ -49,7 +50,7 @@ pub async fn migrate_wallet(
 
     locator
         .wallet_controller
-        .migrate_records(wallet_handle, new_wh, migrate_record)
+        .migrate_records(wallet_handle, new_wh, migrate_fn)
         .await?;
 
     locator.wallet_controller.close(new_wh).await?;
@@ -109,7 +110,14 @@ mod tests {
             cache: None,
         };
 
-        if let Ok(()) = migrate_wallet(wallet_handle, new_config.clone(), new_credentials.clone()).await {
+        if let Ok(()) = migrate_wallet(
+            wallet_handle,
+            new_config.clone(),
+            new_credentials.clone(),
+            migrate_any_record,
+        )
+        .await
+        {
             Locator::instance()
                 .wallet_controller
                 .delete(config, credentials)
