@@ -3,7 +3,7 @@ use std::str::FromStr;
 use did_doc::schema::{
     did_doc::DidDocument,
     types::{jsonwebkey::JsonWebKey, uri::Uri},
-    verification_method::{VerificationMethod, VerificationMethodKind},
+    verification_method::{VerificationMethod, VerificationMethodKind, VerificationMethodType},
 };
 use did_parser::{Did, DidUrl};
 use serde_json::Value;
@@ -92,24 +92,28 @@ fn test_deserialization() {
     .unwrap();
 
     let vm1_id = DidUrl::parse("#g1".to_string()).unwrap();
-    let vm1 = VerificationMethod::builder(vm1_id, controller.clone(), "JsonWebKey2020".to_string())
-        .add_public_key_jwk(
-            JsonWebKey::from_str(
-                r#"{
+    let vm1 = VerificationMethod::builder(
+        vm1_id,
+        controller.clone(),
+        VerificationMethodType::JsonWebKey2020,
+    )
+    .add_public_key_jwk(
+        JsonWebKey::from_str(
+            r#"{
                 "kty": "EC",
                 "crv": "BLS12381_G1",
                 "x": "hxF12gtsn9ju4-kJq2-nUjZQKVVWpcBAYX5VHnUZMDilClZsGuOaDjlXS8pFE1GG"
             }"#,
-            )
-            .unwrap(),
         )
-        .build();
+        .unwrap(),
+    )
+    .build();
 
     let vm2_id = DidUrl::parse("#g2".to_string()).unwrap();
     let vm2 = VerificationMethod::builder(
         vm2_id,
         controller.clone(),
-        "JsonWebKey2020".to_string(),
+        VerificationMethodType::JsonWebKey2020,
     )
     .add_public_key_jwk(
         JsonWebKey::from_str(
@@ -165,10 +169,13 @@ fn test_deserialization() {
         "did:web:did-actor-alice#zC8GybikEfyNaausDA4mkT4egP7SNLx2T1d1kujLQbcP6h".to_string(),
     )
     .unwrap();
-    let ka1 =
-        VerificationMethod::builder(ka1_id, controller, "X25519KeyAgreementKey2019".to_string())
-            .add_public_key_base58("CaSHXEvLKS6SfN9aBfkVGBpp15jSnaHazqHgLHp8KZ3Y".to_string())
-            .build();
+    let ka1 = VerificationMethod::builder(
+        ka1_id,
+        controller,
+        VerificationMethodType::X25519KeyAgreementKey2019,
+    )
+    .add_public_key_base58("CaSHXEvLKS6SfN9aBfkVGBpp15jSnaHazqHgLHp8KZ3Y".to_string())
+    .build();
 
     assert_eq!(
         did_doc.key_agreement(),

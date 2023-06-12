@@ -248,7 +248,7 @@ impl<E> DidDocumentBuilder<E> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::schema::service::ServiceBuilder;
+    use crate::schema::{service::ServiceBuilder, verification_method::VerificationMethodType};
 
     #[test]
     fn test_did_document_builder() {
@@ -259,7 +259,7 @@ mod tests {
         let verification_method = VerificationMethod::builder(
             DidUrl::parse("did:example:vm1".to_string()).unwrap(),
             Did::parse("did:example:vm2".to_string()).unwrap(),
-            "typevm".to_string(),
+            VerificationMethodType::Ed25519VerificationKey2018,
         )
         .add_public_key_base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".to_string())
         .build();
@@ -267,7 +267,7 @@ mod tests {
         let assertion_method = VerificationMethod::builder(
             DidUrl::parse("did:example:am1".to_string()).unwrap(),
             Did::parse("did:example:am2".to_string()).unwrap(),
-            "typeam".to_string(),
+            VerificationMethodType::Ed25519VerificationKey2018,
         )
         .add_public_key_base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".to_string())
         .build();

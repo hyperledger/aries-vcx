@@ -31,6 +31,8 @@ pub enum PublicKeyField {
     Hex { public_key_hex: String },
     #[serde(rename_all = "camelCase")]
     Pem { public_key_pem: String },
+    #[serde(rename_all = "camelCase")]
+    Pgp { public_key_pgp: String },
 }
 
 impl PublicKeyField {
@@ -50,8 +52,22 @@ impl PublicKeyField {
             PublicKeyField::Pem { public_key_pem } => {
                 Ok(pem::parse(public_key_pem.as_bytes())?.contents().to_vec())
             }
+            PublicKeyField::Pgp { public_key_pgp: _ } => unimplemented!(),
         }
     }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub enum VerificationMethodType {
+    JsonWebKey2020,
+    EcdsaSecp256k1VerificationKey2019,
+    Ed25519VerificationKey2018,
+    Bls12381G1Key2020,
+    Bls12381G2Key2020,
+    PgpVerificationKey2021,
+    RsaVerificationKey2018,
+    X25519KeyAgreementKey2019,
+    EcdsaSecp256k1RecoveryMethod2020,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -60,7 +76,7 @@ pub struct VerificationMethod {
     id: DidUrl,
     controller: Did,
     #[serde(rename = "type")]
-    verification_method_type: String,
+    verification_method_type: VerificationMethodType,
     #[serde(flatten)]
     public_key: PublicKeyField,
 }
@@ -69,7 +85,7 @@ impl VerificationMethod {
     pub fn builder(
         id: DidUrl,
         controller: Did,
-        verification_method_type: String,
+        verification_method_type: VerificationMethodType,
     ) -> IncompleteVerificationMethodBuilder {
         IncompleteVerificationMethodBuilder::new(id, controller, verification_method_type)
     }
@@ -82,8 +98,8 @@ impl VerificationMethod {
         &self.controller
     }
 
-    pub fn verification_method_type(&self) -> &str {
-        self.verification_method_type.as_ref()
+    pub fn verification_method_type(&self) -> &VerificationMethodType {
+        &self.verification_method_type
     }
 
     pub fn public_key(&self) -> &PublicKeyField {
@@ -91,28 +107,31 @@ impl VerificationMethod {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct IncompleteVerificationMethodBuilder {
     id: DidUrl,
     controller: Did,
-    verification_method_type: String,
+    verification_method_type: VerificationMethodType,
 }
 
 #[derive(Debug)]
 pub struct CompleteVerificationMethodBuilder {
     id: DidUrl,
     controller: Did,
-    verification_method_type: String,
+    verification_method_type: VerificationMethodType,
     public_key: Option<PublicKeyField>,
 }
 
 impl IncompleteVerificationMethodBuilder {
-    pub fn new(id: DidUrl, controller: Did, verification_method_type: String) -> Self {
+    pub fn new(
+        id: DidUrl,
+        controller: Did,
+        verification_method_type: VerificationMethodType,
+    ) -> Self {
         Self {
             id,
             verification_method_type,
             controller,
-            ..Default::default()
         }
     }
 
@@ -213,8 +232,8 @@ mod tests {
         Multibase::new("zQmWvQxTqbG2Z9HPJgG57jjwR154cKhbtJenbyYTWkjgF3e".to_string()).unwrap()
     }
 
-    fn create_valid_verification_key_type() -> String {
-        "Ed25519VerificationKey2018".to_string()
+    fn create_valid_verification_key_type() -> VerificationMethodType {
+        VerificationMethodType::Ed25519VerificationKey2018
     }
 
     fn create_valid_verification_method_value() -> Value {
