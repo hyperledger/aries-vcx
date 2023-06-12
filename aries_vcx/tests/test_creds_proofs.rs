@@ -116,7 +116,7 @@ mod integration_tests {
                 let migration_config = aries_vcx_core::indy::wallet::WalletConfig {
                     wallet_name: new_wallet_name,
                     wallet_key,
-                    wallet_key_derivation: Some(wallet_key_derivation),
+                    wallet_key_derivation,
                     wallet_type: None,
                     storage_config: None,
                     storage_credentials: None,
