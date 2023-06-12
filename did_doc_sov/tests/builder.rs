@@ -37,8 +37,8 @@ fn test_service_build_aip1() {
 fn test_service_build_didcommv1() {
     let extra_fields_didcommv1 = ExtraFieldsDidCommV1::builder()
         .set_priority(1)
-        .set_routing_keys(vec!["foo".to_owned()])
-        .set_recipient_keys(vec!["bar".to_owned()])
+        .set_routing_keys(vec!["foo".to_owned().into()])
+        .set_recipient_keys(vec!["bar".to_owned().into()])
         .build();
     let service = ServiceDidCommV1::new(
         ID.parse().unwrap(),
@@ -59,14 +59,14 @@ fn test_service_build_didcommv1() {
     );
     let first_extra = first_service.extra();
     assert_eq!(first_extra.priority().unwrap(), 1);
-    assert_eq!(first_extra.recipient_keys().unwrap(), &["bar"]);
-    assert_eq!(first_extra.routing_keys().unwrap(), &["foo"]);
+    assert_eq!(first_extra.recipient_keys().unwrap(), &["bar".to_owned().into()]);
+    assert_eq!(first_extra.routing_keys().unwrap(), &["foo".to_owned().into()]);
 }
 
 #[test]
 fn test_service_build_didcommv2() {
     let extra_fields_didcommv2 = ExtraFieldsDidCommV2::builder()
-        .set_routing_keys(vec!["foo".to_owned()])
+        .set_routing_keys(vec!["foo".to_owned().into()])
         .build();
     let service = ServiceDidCommV2::new(
         ID.parse().unwrap(),
@@ -88,5 +88,5 @@ fn test_service_build_didcommv2() {
     let first_extra = first_service.extra();
     assert!(first_extra.priority().is_err());
     assert!(first_extra.recipient_keys().is_err());
-    assert_eq!(first_extra.routing_keys().unwrap(), &["foo"]);
+    assert_eq!(first_extra.routing_keys().unwrap(), &["foo".to_owned().into()]);
 }

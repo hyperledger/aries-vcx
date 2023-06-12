@@ -21,9 +21,8 @@ pub struct ServiceAIP1 {
 impl ServiceAIP1 {
     pub fn new(id: Uri, service_endpoint: Url, extra: ExtraFieldsAIP1) -> Result<Self, DidDocumentSovError> {
         Ok(Self {
-            service: Service::builder(id, service_endpoint)
+            service: Service::builder(id, service_endpoint, extra)
                 .add_service_type(ServiceType::AIP1.to_string())?
-                .add_extra(extra)
                 .build(),
         })
     }
@@ -73,10 +72,9 @@ impl<'de> Deserialize<'de> for ServiceAIP1 {
         };
         match service.extra() {
             ExtraFields::AIP1(extra) => Ok(Self {
-                service: Service::builder(service.id().clone(), service.service_endpoint().clone())
+                service: Service::builder(service.id().clone(), service.service_endpoint().clone(), extra.clone())
                     .add_service_type(ServiceType::AIP1.to_string())
                     .map_err(serde::de::Error::custom)?
-                    .add_extra(extra.clone())
                     .build(),
             }),
             _ => Err(serde::de::Error::custom("Extra fields don't match service type")),

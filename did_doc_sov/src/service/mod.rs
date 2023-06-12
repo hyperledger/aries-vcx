@@ -89,25 +89,26 @@ impl TryFrom<ServiceSov> for Service<ExtraFields> {
 
     fn try_from(service: ServiceSov) -> Result<Self, Self::Error> {
         match service {
-            ServiceSov::AIP1(service) => Ok(
-                Service::builder(service.id().clone(), service.service_endpoint().clone())
-                    .add_service_type(service.service_type().to_string())?
-                    .add_extra(ExtraFields::AIP1(service.extra().to_owned()))
-                    .build(),
-            ),
+            ServiceSov::AIP1(service) => Ok(Service::builder(
+                service.id().clone(),
+                service.service_endpoint().clone(),
+                ExtraFields::AIP1(service.extra().to_owned()),
+            )
+            .add_service_type(service.service_type().to_string())?
+            .build()),
             ServiceSov::DIDCommV1(service) => Ok(Service::builder(
                 service.id().clone(),
                 service.service_endpoint().clone(),
+                ExtraFields::DIDCommV1(service.extra().to_owned()),
             )
             .add_service_type(service.service_type().to_string())?
-            .add_extra(ExtraFields::DIDCommV1(service.extra().to_owned()))
             .build()),
             ServiceSov::DIDCommV2(service) => Ok(Service::builder(
                 service.id().clone(),
                 service.service_endpoint().clone(),
+                ExtraFields::DIDCommV2(service.extra().to_owned()),
             )
             .add_service_type(service.service_type().to_string())?
-            .add_extra(ExtraFields::DIDCommV2(service.extra().to_owned()))
             .build()),
         }
     }

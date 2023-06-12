@@ -53,6 +53,12 @@ impl Default for KeyKind {
     }
 }
 
+impl From<String> for KeyKind {
+    fn from(s: String) -> Self {
+        KeyKind::Value(s)
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(untagged)]
 pub enum ExtraFields {
