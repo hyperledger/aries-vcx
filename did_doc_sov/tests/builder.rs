@@ -20,8 +20,9 @@ fn test_service_build_aip1() {
         .add_service(ServiceSov::AIP1(service))
         .unwrap()
         .build();
-    assert_eq!(did_doc.service().len(), 1);
-    let first_service = did_doc.service().get(0).unwrap();
+    let services = did_doc.service().unwrap();
+    assert_eq!(services.len(), 1);
+    let first_service = services.get(0).unwrap();
     assert_eq!(first_service.id().clone(), ID.parse::<Uri>().unwrap());
     assert_eq!(
         first_service.service_endpoint().clone(),
@@ -50,8 +51,9 @@ fn test_service_build_didcommv1() {
         .add_service(ServiceSov::DIDCommV1(service))
         .unwrap()
         .build();
-    assert_eq!(did_doc.service().len(), 1);
-    let first_service = did_doc.service().get(0).unwrap();
+    let services = did_doc.service().unwrap();
+    assert_eq!(services.len(), 1);
+    let first_service = services.get(0).unwrap();
     assert_eq!(first_service.id().clone(), ID.parse::<Uri>().unwrap());
     assert_eq!(
         first_service.service_endpoint().clone(),
@@ -78,8 +80,9 @@ fn test_service_build_didcommv2() {
         .add_service(ServiceSov::DIDCommV2(service))
         .unwrap()
         .build();
-    assert_eq!(did_doc.service().len(), 1);
-    let first_service = did_doc.service().get(0).unwrap();
+    let services = did_doc.service().unwrap();
+    assert_eq!(services.len(), 1);
+    let first_service = services.get(0).unwrap();
     assert_eq!(first_service.id().clone(), ID.parse::<Uri>().unwrap());
     assert_eq!(
         first_service.service_endpoint().clone(),

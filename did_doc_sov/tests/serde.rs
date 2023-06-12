@@ -75,16 +75,17 @@ fn test_serde() {
     assert_eq!(did_doc.authentication().len(), 1);
     assert_eq!(did_doc.assertion_method().len(), 1);
     assert_eq!(did_doc.key_agreement().len(), 1);
-    assert_eq!(did_doc.service().len(), 3);
+    assert_eq!(did_doc.service().unwrap().len(), 3);
 
-    let first_service = did_doc.service().get(0).unwrap();
+    let services = did_doc.service().unwrap();
+    let first_service = services.get(0).unwrap();
     assert_eq!(
         first_service.service_endpoint().to_string(),
         "https://example.com/endpoint"
     );
     assert_eq!(first_service.service_type(), ServiceType::AIP1);
 
-    let second_service = did_doc.service().get(1).unwrap();
+    let second_service = services.get(1).unwrap();
     assert_eq!(
         second_service.id().to_string(),
         "did:sov:HR6vs6GEZ8rHaVgjg2WodM#did-communication"
@@ -95,7 +96,7 @@ fn test_serde() {
         "https://example.com/endpoint"
     );
 
-    let third_service = did_doc.service().get(2).unwrap();
+    let third_service = services.get(2).unwrap();
     assert_eq!(
         third_service.id().to_string(),
         "did:sov:HR6vs6GEZ8rHaVgjg2WodM#didcomm-1"

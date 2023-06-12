@@ -47,8 +47,14 @@ impl DidDocumentSov {
         self.did_doc.authentication()
     }
 
-    pub fn service(&self) -> ServicesList {
-        ServicesList::new(self.did_doc.service())
+    pub fn service(&self) -> Result<ServicesList, DidDocumentSovError> {
+        Ok(ServicesList::new(
+            self.did_doc
+                .service()
+                .iter()
+                .map(|s| ServiceSov::try_from(s.to_owned()))
+                .collect::<Result<Vec<ServiceSov>, _>>()?,
+        ))
     }
 
     pub fn assertion_method(&self) -> &[VerificationMethodKind] {
