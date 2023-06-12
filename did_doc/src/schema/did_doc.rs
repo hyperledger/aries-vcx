@@ -261,6 +261,7 @@ mod tests {
             Did::parse("did:example:vm2".to_string()).unwrap(),
             "typevm".to_string(),
         )
+        .add_public_key_base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".to_string())
         .build();
         let authentication_reference = DidUrl::parse("did:example:authref".to_string()).unwrap();
         let assertion_method = VerificationMethod::builder(
@@ -268,6 +269,7 @@ mod tests {
             Did::parse("did:example:am2".to_string()).unwrap(),
             "typeam".to_string(),
         )
+        .add_public_key_base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".to_string())
         .build();
 
         let service_id = Uri::new("did:example:123456789abcdefghi;service-1").unwrap();

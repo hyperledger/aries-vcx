@@ -167,10 +167,7 @@ fn test_deserialization() {
     .unwrap();
     let ka1 =
         VerificationMethod::builder(ka1_id, controller, "X25519KeyAgreementKey2019".to_string())
-            .add_extra_field(
-                "publicKeyBase58".to_string(),
-                Value::String("CaSHXEvLKS6SfN9aBfkVGBpp15jSnaHazqHgLHp8KZ3Y".to_string()),
-            )
+            .add_public_key_base58("CaSHXEvLKS6SfN9aBfkVGBpp15jSnaHazqHgLHp8KZ3Y".to_string())
             .build();
 
     assert_eq!(
