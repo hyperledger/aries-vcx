@@ -5,6 +5,10 @@ pub enum DidDocumentBuilderError {
     InvalidInput(String),
     MissingField(&'static str),
     JsonError(serde_json::Error),
+    PemError(pem::PemError),
+    Base58DecodeError(bs58::decode::Error),
+    Base64DecodeError(base64::DecodeError),
+    HexDecodeError(hex::FromHexError),
 }
 
 impl std::fmt::Display for DidDocumentBuilderError {
@@ -19,6 +23,18 @@ impl std::fmt::Display for DidDocumentBuilderError {
             DidDocumentBuilderError::JsonError(error) => {
                 write!(f, "(De)serialization error: {}", error)
             }
+            DidDocumentBuilderError::PemError(error) => {
+                write!(f, "PEM error: {}", error)
+            }
+            DidDocumentBuilderError::Base58DecodeError(error) => {
+                write!(f, "Base58 decode error: {}", error)
+            }
+            DidDocumentBuilderError::Base64DecodeError(error) => {
+                write!(f, "Base64 decode error: {}", error)
+            }
+            DidDocumentBuilderError::HexDecodeError(error) => {
+                write!(f, "Hex decode error: {}", error)
+            }
         }
     }
 }
@@ -29,6 +45,10 @@ impl std::error::Error for DidDocumentBuilderError {
             DidDocumentBuilderError::InvalidInput(_) => None,
             DidDocumentBuilderError::MissingField(_) => None,
             DidDocumentBuilderError::JsonError(error) => Some(error),
+            DidDocumentBuilderError::PemError(error) => Some(error),
+            DidDocumentBuilderError::Base58DecodeError(error) => Some(error),
+            DidDocumentBuilderError::Base64DecodeError(error) => Some(error),
+            DidDocumentBuilderError::HexDecodeError(error) => Some(error),
         }
     }
 }
@@ -36,6 +56,30 @@ impl std::error::Error for DidDocumentBuilderError {
 impl From<serde_json::Error> for DidDocumentBuilderError {
     fn from(error: serde_json::Error) -> Self {
         DidDocumentBuilderError::JsonError(error)
+    }
+}
+
+impl From<pem::PemError> for DidDocumentBuilderError {
+    fn from(error: pem::PemError) -> Self {
+        DidDocumentBuilderError::PemError(error)
+    }
+}
+
+impl From<bs58::decode::Error> for DidDocumentBuilderError {
+    fn from(error: bs58::decode::Error) -> Self {
+        DidDocumentBuilderError::Base58DecodeError(error)
+    }
+}
+
+impl From<base64::DecodeError> for DidDocumentBuilderError {
+    fn from(error: base64::DecodeError) -> Self {
+        DidDocumentBuilderError::Base64DecodeError(error)
+    }
+}
+
+impl From<hex::FromHexError> for DidDocumentBuilderError {
+    fn from(error: hex::FromHexError) -> Self {
+        DidDocumentBuilderError::HexDecodeError(error)
     }
 }
 

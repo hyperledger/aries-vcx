@@ -1,5 +1,8 @@
+use base64::{engine::general_purpose, Engine};
 use did_parser::{Did, DidUrl};
-use serde::{de, Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Serialize};
+
+use crate::error::DidDocumentBuilderError;
 
 use super::types::{jsonwebkey::JsonWebKey, multibase::Multibase};
 
@@ -12,31 +15,54 @@ pub enum VerificationMethodKind {
     Resolvable(DidUrl),
 }
 
-#[derive(Serialize, Clone, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(untagged)]
+#[serde(deny_unknown_fields)]
+pub enum PublicKeyField {
+    #[serde(rename_all = "camelCase")]
+    Multibase { public_key_multibase: Multibase },
+    #[serde(rename_all = "camelCase")]
+    Jwk { public_key_jwk: JsonWebKey },
+    #[serde(rename_all = "camelCase")]
+    Base58 { public_key_base58: String },
+    #[serde(rename_all = "camelCase")]
+    Base64 { public_key_base64: String },
+    #[serde(rename_all = "camelCase")]
+    Hex { public_key_hex: String },
+    #[serde(rename_all = "camelCase")]
+    Pem { public_key_pem: String },
+}
+
+impl PublicKeyField {
+    pub fn key_decoded(&self) -> Result<Vec<u8>, DidDocumentBuilderError> {
+        match self {
+            PublicKeyField::Multibase {
+                public_key_multibase,
+            } => Ok(public_key_multibase.as_ref().to_vec()),
+            PublicKeyField::Jwk { public_key_jwk } => public_key_jwk.to_vec(),
+            PublicKeyField::Base58 { public_key_base58 } => {
+                Ok(bs58::decode(public_key_base58).into_vec()?)
+            }
+            PublicKeyField::Base64 { public_key_base64 } => {
+                Ok(general_purpose::STANDARD.decode(public_key_base64.as_bytes())?)
+            }
+            PublicKeyField::Hex { public_key_hex } => Ok(hex::decode(public_key_hex)?),
+            PublicKeyField::Pem { public_key_pem } => {
+                Ok(pem::parse(public_key_pem.as_bytes())?.contents().to_vec())
+            }
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct VerificationMethod {
     id: DidUrl,
     controller: Did,
     #[serde(rename = "type")]
     verification_method_type: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[serde(default)]
-    public_key_multibase: Option<Multibase>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[serde(default)]
-    public_key_jwk: Option<JsonWebKey>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[serde(default)]
-    public_key_base58: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[serde(default)]
-    public_key_base64: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[serde(default)]
-    public_key_hex: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[serde(default)]
-    public_key_pem: Option<String>,
+    #[serde(flatten)]
+    public_key: PublicKeyField,
 }
 
 impl VerificationMethod {
@@ -60,28 +86,8 @@ impl VerificationMethod {
         self.verification_method_type.as_ref()
     }
 
-    pub fn public_key_multibase(&self) -> Option<&Multibase> {
-        self.public_key_multibase.as_ref()
-    }
-
-    pub fn public_key_jwk(&self) -> Option<&JsonWebKey> {
-        self.public_key_jwk.as_ref()
-    }
-
-    pub fn public_key_base58(&self) -> Option<&String> {
-        self.public_key_base58.as_ref()
-    }
-
-    pub fn public_key_base64(&self) -> Option<&String> {
-        self.public_key_base64.as_ref()
-    }
-
-    pub fn public_key_hex(&self) -> Option<&String> {
-        self.public_key_hex.as_ref()
-    }
-
-    pub fn public_key_pem(&self) -> Option<&String> {
-        self.public_key_pem.as_ref()
+    pub fn public_key(&self) -> &PublicKeyField {
+        &self.public_key
     }
 }
 
@@ -92,17 +98,12 @@ pub struct IncompleteVerificationMethodBuilder {
     verification_method_type: String,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct CompleteVerificationMethodBuilder {
     id: DidUrl,
     controller: Did,
     verification_method_type: String,
-    public_key_multibase: Option<Multibase>,
-    public_key_jwk: Option<JsonWebKey>,
-    public_key_base58: Option<String>,
-    public_key_base64: Option<String>,
-    public_key_hex: Option<String>,
-    public_key_pem: Option<String>,
+    public_key: Option<PublicKeyField>,
 }
 
 impl IncompleteVerificationMethodBuilder {
@@ -123,8 +124,9 @@ impl IncompleteVerificationMethodBuilder {
             id: self.id,
             controller: self.controller,
             verification_method_type: self.verification_method_type,
-            public_key_multibase: Some(public_key_multibase),
-            ..Default::default()
+            public_key: Some(PublicKeyField::Multibase {
+                public_key_multibase,
+            }),
         }
     }
 
@@ -136,8 +138,7 @@ impl IncompleteVerificationMethodBuilder {
             id: self.id,
             controller: self.controller,
             verification_method_type: self.verification_method_type,
-            public_key_jwk: Some(public_key_jwk),
-            ..Default::default()
+            public_key: Some(PublicKeyField::Jwk { public_key_jwk }),
         }
     }
 
@@ -149,8 +150,7 @@ impl IncompleteVerificationMethodBuilder {
             id: self.id,
             controller: self.controller,
             verification_method_type: self.verification_method_type,
-            public_key_base58: Some(public_key_base58),
-            ..Default::default()
+            public_key: Some(PublicKeyField::Base58 { public_key_base58 }),
         }
     }
 
@@ -162,8 +162,7 @@ impl IncompleteVerificationMethodBuilder {
             id: self.id,
             controller: self.controller,
             verification_method_type: self.verification_method_type,
-            public_key_base64: Some(public_key_base64),
-            ..Default::default()
+            public_key: Some(PublicKeyField::Base64 { public_key_base64 }),
         }
     }
 
@@ -172,8 +171,7 @@ impl IncompleteVerificationMethodBuilder {
             id: self.id,
             controller: self.controller,
             verification_method_type: self.verification_method_type,
-            public_key_hex: Some(public_key_hex),
-            ..Default::default()
+            public_key: Some(PublicKeyField::Hex { public_key_hex }),
         }
     }
 
@@ -182,8 +180,7 @@ impl IncompleteVerificationMethodBuilder {
             id: self.id,
             controller: self.controller,
             verification_method_type: self.verification_method_type,
-            public_key_pem: Some(public_key_pem),
-            ..Default::default()
+            public_key: Some(PublicKeyField::Pem { public_key_pem }),
         }
     }
 }
@@ -194,81 +191,7 @@ impl CompleteVerificationMethodBuilder {
             id: self.id,
             controller: self.controller,
             verification_method_type: self.verification_method_type,
-            public_key_multibase: self.public_key_multibase,
-            public_key_jwk: self.public_key_jwk,
-            public_key_base58: self.public_key_base58,
-            public_key_base64: self.public_key_base64,
-            public_key_hex: self.public_key_hex,
-            public_key_pem: self.public_key_pem,
-        }
-    }
-}
-
-impl<'de> Deserialize<'de> for VerificationMethod {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        #[derive(Deserialize, Debug)]
-        #[serde(rename_all = "camelCase")]
-        struct VerificationMethodTmp {
-            id: DidUrl,
-            controller: Did,
-            #[serde(rename = "type")]
-            verification_method_type: String,
-            #[serde(default)]
-            public_key_multibase: Option<Multibase>,
-            #[serde(default)]
-            public_key_jwk: Option<JsonWebKey>,
-            #[serde(default)]
-            public_key_base58: Option<String>,
-            #[serde(default)]
-            public_key_base64: Option<String>,
-            #[serde(default)]
-            public_key_hex: Option<String>,
-            #[serde(default)]
-            public_key_pem: Option<String>,
-        }
-
-        let tmp = VerificationMethodTmp::deserialize(deserializer)?;
-
-        let mut count = 0;
-        if tmp.public_key_multibase.is_some() {
-            count += 1;
-        }
-        if tmp.public_key_jwk.is_some() {
-            count += 1;
-        }
-        if tmp.public_key_base58.is_some() {
-            count += 1;
-        }
-        if tmp.public_key_base64.is_some() {
-            count += 1;
-        }
-        if tmp.public_key_hex.is_some() {
-            count += 1;
-        }
-        if tmp.public_key_pem.is_some() {
-            count += 1;
-        }
-
-        if count != 1 {
-            Err(de::Error::custom(format!(
-                "Expected exactly one `public_key` field, but found {}",
-                count
-            )))
-        } else {
-            Ok(VerificationMethod {
-                id: tmp.id,
-                controller: tmp.controller,
-                verification_method_type: tmp.verification_method_type,
-                public_key_multibase: tmp.public_key_multibase,
-                public_key_jwk: tmp.public_key_jwk,
-                public_key_base58: tmp.public_key_base58,
-                public_key_base64: tmp.public_key_base64,
-                public_key_hex: tmp.public_key_hex,
-                public_key_pem: tmp.public_key_pem,
-            })
+            public_key: self.public_key.unwrap(), // SAFETY: The builder will always set the public key
         }
     }
 }
@@ -347,7 +270,14 @@ mod tests {
         assert_eq!(vm.id(), &id);
         assert_eq!(vm.controller(), &controller);
         assert_eq!(vm.verification_method_type(), &verification_method_type);
-        assert_eq!(vm.public_key_multibase().unwrap(), &public_key_multibase);
+        match vm.public_key() {
+            PublicKeyField::Multibase {
+                public_key_multibase,
+            } => {
+                assert_eq!(public_key_multibase, public_key_multibase)
+            }
+            _ => panic!("Expected public key to be multibase"),
+        }
     }
 
     #[test]
@@ -368,7 +298,14 @@ mod tests {
         assert_eq!(vm.id(), &id);
         assert_eq!(vm.controller(), &controller);
         assert_eq!(vm.verification_method_type(), &verification_method_type);
-        assert_eq!(vm.public_key_multibase().unwrap(), &public_key_multibase);
+        match vm.public_key() {
+            PublicKeyField::Multibase {
+                public_key_multibase,
+            } => {
+                assert_eq!(public_key_multibase, public_key_multibase)
+            }
+            _ => panic!("Expected public key to be multibase"),
+        }
     }
 
     #[test]
