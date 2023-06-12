@@ -708,7 +708,7 @@ impl WalletService {
         &self,
         old_wh: WalletHandle,
         new_wh: WalletHandle,
-        migrate_fn: impl Fn(Record) -> IndyResult<Record>,
+        migrate_fn: impl Fn(Record) -> IndyResult<Option<Record>>,
     ) -> IndyResult<()> {
         let old_wallet = self.get_wallet(old_wh).await?;
         let new_wallet = self.get_wallet(new_wh).await?;
@@ -744,11 +744,11 @@ impl WalletService {
                 })?,
             };
 
-            let record = migrate_fn(record)?;
-
-            new_wallet
-                .add(&record.type_, &record.id, &record.value, &record.tags)
-                .await?;
+            if let Some(record) = migrate_fn(record)? {
+                new_wallet
+                    .add(&record.type_, &record.id, &record.value, &record.tags)
+                    .await?;
+            }
         }
 
         Ok(())

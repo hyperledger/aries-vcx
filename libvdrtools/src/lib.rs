@@ -51,6 +51,7 @@ pub use domain::{
         credential_definition::CredentialDefinition,
         credential_offer::CredentialOffer,
         credential_request::{CredentialRequest, CredentialRequestMetadata},
+        master_secret::MasterSecret,
         revocation_registry_definition::{
             IssuanceType, RevocationRegistryConfig, RevocationRegistryDefinition,
             RevocationRegistryId,

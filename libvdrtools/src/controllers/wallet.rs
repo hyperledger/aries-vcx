@@ -394,7 +394,7 @@ impl WalletController {
         &self,
         old_wh: WalletHandle,
         new_wh: WalletHandle,
-        migrate_fn: impl Fn(Record) -> IndyResult<Record>,
+        migrate_fn: impl Fn(Record) -> IndyResult<Option<Record>>,
     ) -> IndyResult<()> {
         self.wallet_service
             .migrate_records(old_wh, new_wh, migrate_fn)

@@ -962,7 +962,9 @@ checksum = "ccaeedb56da03b09f598226e25e80088cb4cd25f316e6e4df7d695f0feeb1403"
 name = "cred_migrator"
 version = "0.1.0"
 dependencies = [
+ "aries_vcx_core",
  "libvdrtools",
+ "serde_json",
  "tokio",
 ]
 

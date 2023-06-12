@@ -1,3 +1,5 @@
+use aries_vcx_core::anoncreds::credx_anoncreds::CATEGORY_LINK_SECRET;
+use vdrtools::types::errors::IndyErrorKind;
 pub use vdrtools::{
     types::domain::wallet::{Config, Credentials, KeyDerivationMethod, Record},
     IndyError, Locator, WalletHandle,
@@ -21,21 +23,41 @@ pub use vdrtools::{
 // pub const CATEGORY_REV_REG_DEF_PRIV: &str = "VCX_REV_REG_DEF_PRIV";
 
 /// Contains the logic for record mapping and migration.
-pub fn migrate_any_record(record: Record) -> Result<Record, IndyError> {
-    println!("{record:?}");
+pub fn migrate_any_record(record: Record) -> Result<Option<Record>, IndyError> {
+    match record.type_.as_str() {
+        "Indy::MasterSecret" => Some(convert_master_secret(record)).transpose(),
+        // "Indy::Did" => Ok(Some(record)),
+        // "Indy::Key" => Ok(Some(record)),
+
+        "Indy::Credential" => Ok(Some(record)),
+        "Indy::CredentialDefinition" => Ok(Some(record)),
+        "Indy::CredentialDefinitionPrivateKey" => Ok(Some(record)),
+        "Indy::CredentialDefinitionCorrectnessProof" => Ok(Some(record)),
+        "Indy::Schema" => Ok(Some(record)),
+        "Indy::SchemaId" => Ok(Some(record)),
+        _ => Ok(None), // Ignore unknown/uninteresting records
+    }
+}
+
+pub fn convert_master_secret(mut record: Record) -> Result<Record, IndyError> {
+    let master_secret: vdrtools::MasterSecret =
+        serde_json::from_str(&record.value).map_err(|e| IndyError::from_msg(IndyErrorKind::WalletItemNotFound, e))?;
+
+    record.type_ = CATEGORY_LINK_SECRET.to_owned();
+    record.value = master_secret.value.value()?.to_dec()?;
     Ok(record)
 }
 
-/// Exports the wallet given through the [`WalletHandle`] to the given path,
-/// encrypting it with the given key.
+/// Retrieves all records from a wallet and migrates them
+/// by applying the `migrate_fn` argument.
 ///
-/// The backup file is then imported into a wallet given by [`RestoreWalletConfigs`]
-/// and the records get migrated before storage.
+/// The migrated records are inserted into a newly created
+/// wallet, based on the provided `config` and `credentials`.
 pub async fn migrate_wallet(
     wallet_handle: WalletHandle,
     config: Config,
     credentials: Credentials,
-    migrate_fn: impl Fn(Record) -> Result<Record, IndyError>,
+    migrate_fn: impl Fn(Record) -> Result<Option<Record>, IndyError>,
 ) -> Result<(), IndyError> {
     println!("Migrating wallet");
 
