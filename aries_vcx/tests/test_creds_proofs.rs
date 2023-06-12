@@ -14,7 +14,6 @@ mod integration_tests {
         create_and_store_credential, create_and_store_nonrevocable_credential,
         create_and_store_nonrevocable_credential_def, create_indy_proof,
     };
-    use aries_vcx::global::settings::{DEFAULT_WALLET_KEY, WALLET_KDF_RAW};
     use aries_vcx::handlers::proof_presentation::prover::Prover;
     use aries_vcx::handlers::proof_presentation::types::RetrievedCredentials;
     use aries_vcx::handlers::proof_presentation::verifier::Verifier;
@@ -24,7 +23,6 @@ mod integration_tests {
     use aries_vcx::utils::constants::{DEFAULT_SCHEMA_ATTRS, TAILS_DIR};
     use aries_vcx::utils::devsetup::SetupProfile;
     use aries_vcx::utils::get_temp_dir_path;
-    use aries_vcx_core::indy::wallet::{close_wallet, delete_wallet};
     use messages::msg_fields::protocols::present_proof::request::{
         RequestPresentation, RequestPresentationContent, RequestPresentationDecorators,
     };
