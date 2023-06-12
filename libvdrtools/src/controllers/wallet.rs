@@ -390,6 +390,17 @@ impl WalletController {
         res
     }
 
+    pub async fn migrate(
+        &self,
+        old_wh: WalletHandle,
+        new_wh: WalletHandle,
+        migrate_fn: impl Fn(Record) -> IndyResult<Record>,
+    ) -> IndyResult<()> {
+        self.wallet_service
+            .migrate_records(old_wh, new_wh, migrate_fn)
+            .await
+    }
+
     pub async fn import_and_migrate(
         &self,
         config: Config,

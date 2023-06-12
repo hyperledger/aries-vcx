@@ -113,20 +113,18 @@ mod integration_tests {
 
                 let new_wallet_name = "new_better_wallet".to_owned();
 
-                let migration_config = aries_vcx_core::indy::wallet::RestoreWalletConfigs {
+                let migration_config = aries_vcx_core::indy::wallet::WalletConfig {
                     wallet_name: new_wallet_name,
                     wallet_key,
-                    exported_wallet_path: backup_file_path.clone(),
-                    backup_key: backup_key.clone(),
                     wallet_key_derivation: Some(wallet_key_derivation),
+                    wallet_type: None,
+                    storage_config: None,
+                    storage_credentials: None,
+                    rekey: None,
+                    rekey_derivation_method: None,
                 };
 
-                let res =
-                    cred_migrator::migrate_wallet(wallet_handle, &backup_file_path, &backup_key, &migration_config)
-                        .await;
-                if let Ok(()) = res {
-                    std::fs::remove_file(&backup_file_path).ok();
-                }
+                let res = cred_migrator::migrate_wallet(wallet_handle, &migration_config).await;
             }
         })
         .await;

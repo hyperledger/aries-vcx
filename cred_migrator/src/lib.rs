@@ -1,5 +1,5 @@
-use aries_vcx_core::indy::{self, wallet::RestoreWalletConfigs};
-use vdrtools::{types::domain::wallet::Record, IndyError, WalletHandle};
+use aries_vcx_core::indy::{self, wallet::WalletConfig};
+use vdrtools::{types::domain::wallet::Record, IndyError, Locator, WalletHandle};
 
 // pub const CATEGORY_LINK_SECRET: &str = "VCX_LINK_SECRET";
 
@@ -29,23 +29,18 @@ fn migrate_record(record: Record) -> Result<Record, IndyError> {
 ///
 /// The backup file is then imported into a wallet given by [`RestoreWalletConfigs`]
 /// and the records get migrated before storage.
-pub async fn migrate_wallet(
-    wallet_handle: WalletHandle,
-    path: &str,
-    backup_key: &str,
-    wallet_config: &RestoreWalletConfigs,
-) -> Result<(), String> {
+pub async fn migrate_wallet(wallet_handle: WalletHandle, wallet_config: &WalletConfig) -> Result<(), String> {
     println!("Migrating wallet");
-    
-    indy::wallet::export_wallet(wallet_handle, path, backup_key)
-        .await
-        .as_ref()
-        .map_err(ToString::to_string)?;
 
-    indy::wallet::import_and_migrate(wallet_config, migrate_record)
+    let new_wh = indy::wallet::create_and_open_wallet(wallet_config)
         .await
-        .as_ref()
-        .map_err(ToString::to_string)?;
+        .map_err(|ref e| format!("{e}"))?;
+
+    Locator::instance()
+        .wallet_controller
+        .migrate(wallet_handle, new_wh, migrate_record)
+        .await
+        .map_err(|ref e| format!("{e}"))?;
 
     Ok(())
 }
@@ -81,21 +76,20 @@ mod tests {
 
         let new_wallet_name = "new_better_wallet".to_owned();
 
-        let migration_config = RestoreWalletConfigs {
+        let mut new_config_wallet = WalletConfig {
             wallet_name: new_wallet_name,
-            wallet_key,
-            exported_wallet_path: backup_file_path.clone(),
-            backup_key: backup_key.clone(),
-            wallet_key_derivation: Some(wallet_key_derivation),
+            wallet_key: wallet_key.clone(),
+            wallet_key_derivation,
+            wallet_type: None,
+            storage_config: None,
+            storage_credentials: None,
+            rekey: None,
+            rekey_derivation_method: None,
         };
 
-        if let Ok(()) = migrate_wallet(wallet_handle, &backup_file_path, &backup_key, &migration_config).await {
+        if let Ok(()) = migrate_wallet(wallet_handle, &new_config_wallet).await {
             indy::wallet::delete_wallet(&config_wallet).await.ok();
-
-            config_wallet.wallet_name = migration_config.wallet_name.clone();
-            indy::wallet::delete_wallet(&config_wallet).await.ok();
-
-            fs::remove_file(&backup_file_path).ok();
+            indy::wallet::delete_wallet(&new_config_wallet).await.ok();
         }
     }
 }

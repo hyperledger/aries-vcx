@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use vdrtools::{
     types::domain::wallet::{default_key_derivation_method, KeyDerivationMethod, Record},
     types::errors::IndyErrorKind,
-    IndyError, Locator,
+    Locator,
 };
 
 use crate::{
@@ -551,50 +551,6 @@ pub async fn export_wallet(wallet_handle: WalletHandle, path: &str, backup_key: 
 
                 key_derivation_method: default_key_derivation_method(),
             },
-        )
-        .await?;
-
-    Ok(())
-}
-
-pub async fn import_and_migrate(
-    restore_config: &RestoreWalletConfigs,
-    migrate_fn: impl Fn(Record) -> Result<Record, IndyError>,
-) -> VcxCoreResult<()> {
-    trace!(
-        "import >>> wallet: {} exported_wallet_path: {}",
-        restore_config.wallet_name,
-        restore_config.exported_wallet_path
-    );
-
-    Locator::instance()
-        .wallet_controller
-        .import_and_migrate(
-            vdrtools::types::domain::wallet::Config {
-                id: restore_config.wallet_name.clone(),
-                ..Default::default()
-            },
-            vdrtools::types::domain::wallet::Credentials {
-                key: restore_config.wallet_key.clone(),
-                key_derivation_method: restore_config
-                    .wallet_key_derivation
-                    .as_deref()
-                    .map(parse_key_derivation_method)
-                    .transpose()?
-                    .unwrap_or_else(default_key_derivation_method),
-
-                rekey: None,
-                rekey_derivation_method: default_key_derivation_method(), // default value
-
-                storage_credentials: None, // default value
-            },
-            vdrtools::types::domain::wallet::ExportConfig {
-                key: restore_config.backup_key.clone(),
-                path: restore_config.exported_wallet_path.clone(),
-
-                key_derivation_method: default_key_derivation_method(),
-            },
-            migrate_fn,
         )
         .await?;
 

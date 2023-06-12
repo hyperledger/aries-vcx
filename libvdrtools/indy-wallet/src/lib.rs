@@ -706,6 +706,56 @@ impl WalletService {
         Ok(())
     }
 
+    pub async fn migrate_records(
+        &self,
+        old_wh: WalletHandle,
+        new_wh: WalletHandle,
+        migrate_fn: impl Fn(Record) -> IndyResult<Record>,
+    ) -> IndyResult<()> {
+        let old_wallet = self.get_wallet(old_wh).await?;
+        let new_wallet = self.get_wallet(new_wh).await?;
+
+        let mut records = old_wallet.get_all().await?;
+
+        while let Some(WalletRecord {
+            type_,
+            id,
+            value,
+            tags,
+        }) = records.next().await?
+        {
+            let record = Record {
+                type_: type_.ok_or_else(|| {
+                    err_msg(
+                        IndyErrorKind::InvalidState,
+                        "No type fetched for exported record",
+                    )
+                })?,
+                id,
+                value: value.ok_or_else(|| {
+                    err_msg(
+                        IndyErrorKind::InvalidState,
+                        "No value fetched for exported record",
+                    )
+                })?,
+                tags: tags.ok_or_else(|| {
+                    err_msg(
+                        IndyErrorKind::InvalidState,
+                        "No tags fetched for exported record",
+                    )
+                })?,
+            };
+
+            let record = migrate_fn(record)?;
+
+            new_wallet
+                .add(&record.type_, &record.id, &record.value, &record.tags)
+                .await?;
+        }
+
+        Ok(())
+    }
+
     pub async fn export_wallet(
         &self,
         wallet_handle: WalletHandle,
