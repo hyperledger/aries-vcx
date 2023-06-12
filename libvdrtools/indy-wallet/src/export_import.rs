@@ -323,56 +323,6 @@ where
     Ok(())
 }
 
-pub(super) async fn finish_import_migration<T>(
-    wallet: &Wallet,
-    reader: BufReader<T>,
-    key: chacha20poly1305_ietf::Key,
-    nonce: chacha20poly1305_ietf::Nonce,
-    chunk_size: usize,
-    header_bytes: Vec<u8>,
-    migrate_fn: impl Fn(Record) -> IndyResult<Record>,
-) -> IndyResult<()>
-where
-    T: Read,
-{
-    // Reads encrypted
-    let mut reader = chacha20poly1305_ietf::Reader::new(reader, key, nonce, chunk_size);
-
-    let mut header_hash = vec![0u8; HASHBYTES];
-    reader.read_exact(&mut header_hash).map_err(_map_io_err)?;
-
-    if hash(&header_bytes)? != header_hash {
-        return Err(err_msg(
-            IndyErrorKind::InvalidStructure,
-            "Invalid header hash",
-        ));
-    }
-
-    loop {
-        let record_len = reader.read_u32::<LittleEndian>().map_err(_map_io_err)? as usize;
-
-        if record_len == 0 {
-            break;
-        }
-
-        let mut record = vec![0u8; record_len];
-        reader.read_exact(&mut record).map_err(_map_io_err)?;
-
-        let record: Record = rmp_serde::from_slice(&record).to_indy(
-            IndyErrorKind::InvalidStructure,
-            "Record is malformed msgpack",
-        )?;
-
-        let record = migrate_fn(record)?;
-
-        wallet
-            .add(&record.type_, &record.id, &record.value, &record.tags)
-            .await?;
-    }
-
-    Ok(())
-}
-
 fn _map_io_err(e: io::Error) -> IndyError {
     match e {
         ref e

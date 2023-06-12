@@ -100,41 +100,6 @@ mod integration_tests {
             let def1: serde_json::Value = serde_json::from_str(&cred_def_json).unwrap();
             let def2: serde_json::Value = serde_json::from_str(&r_cred_def_json).unwrap();
             assert_eq!(def1, def2);
-
-            // Attempt to migrate the wallet data to a new wallet.
-            {
-                let wallet_handle = setup.profile.wallet_handle().unwrap();
-
-                let wallet_key = DEFAULT_WALLET_KEY.to_owned();
-                let wallet_key_derivation = WALLET_KDF_RAW.to_owned();
-
-                let new_wallet_name = "new_better_wallet".to_owned();
-
-                let credentials = cred_migrator::Credentials {
-                    key: wallet_key.clone(),
-                    key_derivation_method: cred_migrator::KeyDerivationMethod::RAW,
-                    rekey: None,
-                    rekey_derivation_method: cred_migrator::KeyDerivationMethod::ARGON2I_MOD,
-                    storage_credentials: None,
-                };
-
-                let config = cred_migrator::Config {
-                    id: new_wallet_name,
-                    storage_type: None,
-                    storage_config: None,
-                    cache: None,
-                };
-
-                cred_migrator::migrate_wallet(wallet_handle, config.clone(), credentials.clone())
-                    .await
-                    .ok();
-
-                cred_migrator::Locator::instance()
-                    .wallet_controller
-                    .delete(config, credentials)
-                    .await
-                    .unwrap();
-            }
         })
         .await;
     }

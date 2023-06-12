@@ -306,7 +306,7 @@ impl NonSecretsController {
             options_json
         );
 
-        self._check_type(&type_)?;
+        // self._check_type(&type_)?;
 
         serde_json::from_str::<RecordOptions>(&options_json).to_indy(
             IndyErrorKind::InvalidStructure,

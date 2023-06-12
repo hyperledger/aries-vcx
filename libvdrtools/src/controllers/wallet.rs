@@ -401,45 +401,6 @@ impl WalletController {
             .await
     }
 
-    pub async fn import_and_migrate(
-        &self,
-        config: Config,
-        credentials: Credentials,
-        import_config: ExportConfig,
-        migrate_fn: impl Fn(Record) -> IndyResult<Record>,
-    ) -> IndyResult<()> {
-        trace!(
-            "import and migrate > config: {:?} credentials: {:?} import_config: {:?}",
-            &config,
-            secret!(&credentials),
-            secret!(&import_config)
-        );
-        // TODO: try to refactor to avoid usage of continue methods
-
-        let (wallet_handle, key_data, import_key_data) = self
-            .wallet_service
-            .import_wallet_prepare(&config, &credentials, &import_config)
-            .await?;
-
-        let import_key = Self::_derive_key(&import_key_data).await?;
-        let key = Self::_derive_key(&key_data).await?;
-
-        let res = self
-            .wallet_service
-            .import_and_migrate_wallet_continue(
-                wallet_handle,
-                &config,
-                &credentials,
-                (import_key, key),
-                migrate_fn,
-            )
-            .await;
-
-        trace!("import and migrate < {:?}", res);
-
-        res
-    }
-
     /// Generate wallet master key.
     /// Returned key is compatible with "RAW" key derivation method.
     /// It allows to avoid expensive key derivation for use cases when wallet keys can be stored in a secure enclave.
