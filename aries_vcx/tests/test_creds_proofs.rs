@@ -24,6 +24,7 @@ mod integration_tests {
     use aries_vcx::utils::constants::{DEFAULT_SCHEMA_ATTRS, TAILS_DIR};
     use aries_vcx::utils::devsetup::SetupProfile;
     use aries_vcx::utils::get_temp_dir_path;
+    use aries_vcx_core::indy::wallet::{close_wallet, delete_wallet};
     use messages::msg_fields::protocols::present_proof::request::{
         RequestPresentation, RequestPresentationContent, RequestPresentationDecorators,
     };
@@ -109,18 +110,30 @@ mod integration_tests {
 
                 let new_wallet_name = "new_better_wallet".to_owned();
 
-                let migration_config = aries_vcx_core::indy::wallet::WalletConfig {
-                    wallet_name: new_wallet_name,
-                    wallet_key,
-                    wallet_key_derivation,
-                    wallet_type: None,
-                    storage_config: None,
-                    storage_credentials: None,
+                let credentials = cred_migrator::Credentials {
+                    key: wallet_key.clone(),
+                    key_derivation_method: cred_migrator::KeyDerivationMethod::RAW,
                     rekey: None,
-                    rekey_derivation_method: None,
+                    rekey_derivation_method: cred_migrator::KeyDerivationMethod::ARGON2I_MOD,
+                    storage_credentials: None,
                 };
 
-                cred_migrator::migrate_wallet(wallet_handle, &migration_config).await.unwrap();
+                let config = cred_migrator::Config {
+                    id: new_wallet_name,
+                    storage_type: None,
+                    storage_config: None,
+                    cache: None,
+                };
+
+                cred_migrator::migrate_wallet(wallet_handle, config.clone(), credentials.clone())
+                    .await
+                    .ok();
+
+                cred_migrator::Locator::instance()
+                    .wallet_controller
+                    .delete(config, credentials)
+                    .await
+                    .unwrap();
             }
         })
         .await;

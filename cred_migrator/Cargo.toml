@@ -6,7 +6,6 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-aries_vcx_core = { path = "../aries_vcx_core", features = ["vdrtools", "modular_libs"] }
 vdrtools = { package = "libvdrtools", path = "../libvdrtools" }
 
 [dev-dependencies]
