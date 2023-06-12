@@ -59,6 +59,15 @@ impl From<String> for KeyKind {
     }
 }
 
+impl Display for KeyKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            KeyKind::Reference(did_url) => write!(f, "{}", did_url),
+            KeyKind::Value(value) => write!(f, "{}", value),
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(untagged)]
 pub enum ExtraFields {

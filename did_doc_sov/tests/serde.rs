@@ -1,4 +1,8 @@
-use did_doc_sov::{extra_fields::AcceptType, service::ServiceType, DidDocumentSov};
+use did_doc_sov::{
+    extra_fields::{AcceptType, KeyKind},
+    service::ServiceType,
+    DidDocumentSov,
+};
 
 const DID_DOC_DATA: &'static str = r#"
 {
@@ -123,4 +127,11 @@ fn test_serde() {
         AcceptType::DIDCommV2
     );
     assert!(third_extra.priority().is_err());
+
+    if let KeyKind::Reference(reference) = second_extra.first_recipient_key().unwrap() {
+        let vm = did_doc.dereference_key(&reference).unwrap();
+        assert_eq!(vm.id().to_string(), "did:sov:HR6vs6GEZ8rHaVgjg2WodM#key-agreement-1");
+    } else {
+        panic!("Expected reference key kind");
+    }
 }

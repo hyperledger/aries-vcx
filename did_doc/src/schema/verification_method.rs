@@ -52,7 +52,9 @@ impl PublicKeyField {
             PublicKeyField::Pem { public_key_pem } => {
                 Ok(pem::parse(public_key_pem.as_bytes())?.contents().to_vec())
             }
-            PublicKeyField::Pgp { public_key_pgp: _ } => unimplemented!(),
+            PublicKeyField::Pgp { public_key_pgp: _ } => Err(
+                DidDocumentBuilderError::UnsupportedPublicKeyField("publicKeyPgp"),
+            ),
         }
     }
 }

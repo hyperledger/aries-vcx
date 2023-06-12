@@ -3,7 +3,7 @@ pub mod extra_fields;
 pub mod service;
 
 use did_doc::{
-    did_parser::Did,
+    did_parser::{Did, DidUrl},
     schema::{
         did_doc::{ControllerAlias, DidDocument, DidDocumentBuilder},
         types::uri::Uri,
@@ -69,6 +69,10 @@ impl DidDocumentSov {
 
     pub fn extra_field(&self, key: &str) -> Option<&Value> {
         self.did_doc.extra_field(key)
+    }
+
+    pub fn dereference_key(&self, reference: &DidUrl) -> Option<&VerificationMethod> {
+        self.did_doc.dereference_key(reference)
     }
 }
 

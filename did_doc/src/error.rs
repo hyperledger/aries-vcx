@@ -4,6 +4,7 @@ use url::ParseError;
 pub enum DidDocumentBuilderError {
     InvalidInput(String),
     MissingField(&'static str),
+    UnsupportedPublicKeyField(&'static str),
     JsonError(serde_json::Error),
     PemError(pem::PemError),
     Base58DecodeError(bs58::decode::Error),
@@ -19,6 +20,9 @@ impl std::fmt::Display for DidDocumentBuilderError {
             }
             DidDocumentBuilderError::MissingField(field) => {
                 write!(f, "Missing field: {}", field)
+            }
+            DidDocumentBuilderError::UnsupportedPublicKeyField(field) => {
+                write!(f, "Unsupported public key field: {}", field)
             }
             DidDocumentBuilderError::JsonError(error) => {
                 write!(f, "(De)serialization error: {}", error)
@@ -42,13 +46,12 @@ impl std::fmt::Display for DidDocumentBuilderError {
 impl std::error::Error for DidDocumentBuilderError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
-            DidDocumentBuilderError::InvalidInput(_) => None,
-            DidDocumentBuilderError::MissingField(_) => None,
             DidDocumentBuilderError::JsonError(error) => Some(error),
             DidDocumentBuilderError::PemError(error) => Some(error),
             DidDocumentBuilderError::Base58DecodeError(error) => Some(error),
             DidDocumentBuilderError::Base64DecodeError(error) => Some(error),
             DidDocumentBuilderError::HexDecodeError(error) => Some(error),
+            _ => None,
         }
     }
 }
