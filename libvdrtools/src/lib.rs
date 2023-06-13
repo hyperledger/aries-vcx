@@ -47,8 +47,11 @@ pub use controllers::CredentialDefinitionId;
 
 pub use domain::{
     anoncreds::{
-        credential::{Credential, CredentialValues},
-        credential_definition::CredentialDefinition,
+        credential::{AttributeValues, Credential, CredentialValues},
+        credential_definition::{
+            CredentialDefinition, CredentialDefinitionCorrectnessProof,
+            CredentialDefinitionPrivateKey, CredentialDefinitionV1,
+        },
         credential_offer::CredentialOffer,
         credential_request::{CredentialRequest, CredentialRequestMetadata},
         master_secret::MasterSecret,

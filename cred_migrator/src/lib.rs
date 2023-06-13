@@ -41,8 +41,7 @@ pub async fn migrate_wallet<E>(
 where
     E: Display,
 {
-    println!("Migrating wallet");
-
+    // LOG: migrating wallet
     let locator = Locator::instance();
 
     locator
@@ -50,14 +49,24 @@ where
         .create(config.clone(), credentials.clone())
         .await?;
 
-    let new_wh = locator.wallet_controller.open(config, credentials).await?;
-
-    locator
+    let new_wh = locator
         .wallet_controller
-        .migrate_records(wallet_handle, new_wh, migrate_fn)
+        .open(config.clone(), credentials.clone())
         .await?;
 
+    let res = locator
+        .wallet_controller
+        .migrate_records(wallet_handle, new_wh, migrate_fn)
+        .await;
+
     locator.wallet_controller.close(new_wh).await?;
+
+    if res.is_err() {
+        // LOG: error encountered -> deleting newly created wallet.
+        locator.wallet_controller.delete(config, credentials).await.ok();
+    }
+
+    res?;
 
     Ok(())
 }
