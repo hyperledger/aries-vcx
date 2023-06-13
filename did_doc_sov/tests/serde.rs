@@ -75,9 +75,9 @@ fn test_serde() {
     assert_eq!(did_doc.authentication().len(), 1);
     assert_eq!(did_doc.assertion_method().len(), 1);
     assert_eq!(did_doc.key_agreement().len(), 1);
-    assert_eq!(did_doc.service().unwrap().len(), 3);
+    assert_eq!(did_doc.service().len(), 3);
 
-    let services = did_doc.service().unwrap();
+    let services = did_doc.service();
     let first_service = services.get(0).unwrap();
     assert_eq!(
         first_service.service_endpoint().to_string(),

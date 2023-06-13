@@ -10,16 +10,15 @@ use did_doc::{
         verification_method::{VerificationMethod, VerificationMethodKind},
     },
 };
-use error::DidDocumentSovError;
 use extra_fields::ExtraFieldsSov;
-use serde::{Deserialize, Serialize};
+use serde::{de, Deserialize, Deserializer, Serialize};
 use serde_json::Value;
-use service::{services_list::ServicesList, ServiceSov};
+use service::ServiceSov;
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Serialize, Clone, Debug, PartialEq)]
 pub struct DidDocumentSov {
-    #[serde(flatten)]
     did_doc: DidDocument<ExtraFieldsSov>,
+    services: Vec<ServiceSov>,
 }
 
 impl DidDocumentSov {
@@ -47,14 +46,8 @@ impl DidDocumentSov {
         self.did_doc.authentication()
     }
 
-    pub fn service(&self) -> Result<ServicesList, DidDocumentSovError> {
-        Ok(ServicesList::new(
-            self.did_doc
-                .service()
-                .iter()
-                .map(|s| ServiceSov::try_from(s.to_owned()))
-                .collect::<Result<Vec<ServiceSov>, _>>()?,
-        ))
+    pub fn service(&self) -> &[ServiceSov] {
+        self.services.as_ref()
     }
 
     pub fn assertion_method(&self) -> &[VerificationMethodKind] {
@@ -85,12 +78,14 @@ impl DidDocumentSov {
 #[derive(Default)]
 pub struct DidDocumentSovBuilder {
     ddo_builder: DidDocumentBuilder<ExtraFieldsSov>,
+    services: Vec<ServiceSov>,
 }
 
 impl DidDocumentSovBuilder {
     pub fn new(id: Did) -> Self {
         Self {
             ddo_builder: DidDocumentBuilder::new(id),
+            services: Vec::new(),
         }
     }
 
@@ -104,14 +99,43 @@ impl DidDocumentSovBuilder {
         self
     }
 
-    pub fn add_service(mut self, service: ServiceSov) -> Result<Self, DidDocumentSovError> {
-        self.ddo_builder = self.ddo_builder.add_service(service.try_into()?);
-        Ok(self)
+    pub fn add_service(mut self, service: ServiceSov) -> Self {
+        self.services.push(service);
+        self
     }
 
     pub fn build(self) -> DidDocumentSov {
         DidDocumentSov {
             did_doc: self.ddo_builder.build(),
+            services: self.services,
         }
+    }
+}
+
+impl<'de> Deserialize<'de> for DidDocumentSov {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        #[derive(Deserialize, Clone, Debug, PartialEq)]
+        struct TempDidDocumentSov {
+            #[serde(flatten)]
+            did_doc: DidDocument<ExtraFieldsSov>,
+        }
+
+        let temp = TempDidDocumentSov::deserialize(deserializer)?;
+
+        let services = temp
+            .did_doc
+            .service()
+            .iter()
+            .map(|s| ServiceSov::try_from(s.clone()))
+            .collect::<Result<Vec<ServiceSov>, _>>()
+            .map_err(|_| de::Error::custom("Failed to convert service"))?;
+
+        Ok(DidDocumentSov {
+            did_doc: temp.did_doc,
+            services,
+        })
     }
 }

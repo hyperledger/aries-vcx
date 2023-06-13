@@ -16,11 +16,8 @@ fn test_service_build_aip1() {
         ExtraFieldsAIP1::default(),
     )
     .unwrap();
-    let did_doc = DidDocumentSov::builder()
-        .add_service(ServiceSov::AIP1(service))
-        .unwrap()
-        .build();
-    let services = did_doc.service().unwrap();
+    let did_doc = DidDocumentSov::builder().add_service(ServiceSov::AIP1(service)).build();
+    let services = did_doc.service();
     assert_eq!(services.len(), 1);
     let first_service = services.get(0).unwrap();
     assert_eq!(first_service.id().clone(), ID.parse::<Uri>().unwrap());
@@ -49,9 +46,8 @@ fn test_service_build_didcommv1() {
     .unwrap();
     let did_doc = DidDocumentSov::builder()
         .add_service(ServiceSov::DIDCommV1(service))
-        .unwrap()
         .build();
-    let services = did_doc.service().unwrap();
+    let services = did_doc.service();
     assert_eq!(services.len(), 1);
     let first_service = services.get(0).unwrap();
     assert_eq!(first_service.id().clone(), ID.parse::<Uri>().unwrap());
@@ -81,9 +77,8 @@ fn test_service_build_didcommv2() {
     .unwrap();
     let did_doc = DidDocumentSov::builder()
         .add_service(ServiceSov::DIDCommV2(service))
-        .unwrap()
         .build();
-    let services = did_doc.service().unwrap();
+    let services = did_doc.service();
     assert_eq!(services.len(), 1);
     let first_service = services.get(0).unwrap();
     assert_eq!(first_service.id().clone(), ID.parse::<Uri>().unwrap());

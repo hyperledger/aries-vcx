@@ -11,7 +11,6 @@ use crate::{error::DidDocumentSovError, extra_fields::ExtraFieldsSov};
 pub mod aip1;
 pub mod didcommv1;
 pub mod didcommv2;
-pub mod services_list;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub enum ServiceType {
