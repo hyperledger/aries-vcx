@@ -336,7 +336,7 @@ mod tests {
     fn _write_genesis_txns(pool_name: &str, txns: &str) {
         let path = get_pool_stored_path_base(pool_name, true, pool_name, POOL_EXT);
         let mut f = fs::File::create(path.as_path()).unwrap();
-        f.write(txns.as_bytes()).unwrap();
+        f.write_all(txns.as_bytes()).unwrap();
         f.flush().unwrap();
         f.sync_all().unwrap();
     }

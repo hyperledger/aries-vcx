@@ -704,12 +704,15 @@ impl WalletService {
         Ok(())
     }
 
-    pub async fn migrate_records(
+    pub async fn migrate_records<E>(
         &self,
         old_wh: WalletHandle,
         new_wh: WalletHandle,
-        migrate_fn: impl Fn(Record) -> IndyResult<Option<Record>>,
-    ) -> IndyResult<()> {
+        mut migrate_fn: impl FnMut(Record) -> Result<Option<Record>, E>,
+    ) -> IndyResult<()>
+    where
+        E: std::fmt::Display,
+    {
         let old_wallet = self.get_wallet(old_wh).await?;
         let new_wallet = self.get_wallet(new_wh).await?;
 
@@ -744,7 +747,9 @@ impl WalletService {
                 })?,
             };
 
-            if let Some(record) = migrate_fn(record)? {
+            if let Some(record) = migrate_fn(record)
+                .to_indy(IndyErrorKind::InvalidStructure, "record migration failed")?
+            {
                 new_wallet
                     .add(&record.type_, &record.id, &record.value, &record.tags)
                     .await?;

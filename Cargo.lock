@@ -965,6 +965,7 @@ dependencies = [
  "aries_vcx_core",
  "libvdrtools",
  "serde_json",
+ "thiserror",
  "tokio",
 ]
 
@@ -2308,7 +2309,6 @@ version = "0.1.0"
 dependencies = [
  "aes 0.7.5",
  "bs58 0.4.0",
- "failure",
  "futures",
  "libc",
  "log",
@@ -2317,6 +2317,7 @@ dependencies = [
  "serde_derive",
  "serde_json",
  "sqlx 0.5.8",
+ "thiserror",
  "ursa",
  "zeroize",
  "zmq",
