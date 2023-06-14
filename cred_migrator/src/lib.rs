@@ -10,23 +10,6 @@ pub use vdrtools::{
     Locator, WalletHandle,
 };
 
-// pub const CATEGORY_LINK_SECRET: &str = "VCX_LINK_SECRET";
-
-// pub const CATEGORY_CREDENTIAL: &str = "VCX_CREDENTIAL";
-// pub const CATEGORY_CRED_DEF: &str = "VCX_CRED_DEF";
-// pub const CATEGORY_CRED_KEY_CORRECTNESS_PROOF: &str = "VCX_CRED_KEY_CORRECTNESS_PROOF";
-// pub const CATEGORY_CRED_DEF_PRIV: &str = "VCX_CRED_DEF_PRIV";
-// pub const CATEGORY_CRED_SCHEMA: &str = "VCX_CRED_SCHEMA";
-
-// // Category used for mapping a cred_def_id to a schema_id
-// pub const CATEGORY_CRED_MAP_SCHEMA_ID: &str = "VCX_CRED_MAP_SCHEMA_ID";
-
-// pub const CATEGORY_REV_REG: &str = "VCX_REV_REG";
-// pub const CATEGORY_REV_REG_DELTA: &str = "VCX_REV_REG_DELTA";
-// pub const CATEGORY_REV_REG_INFO: &str = "VCX_REV_REG_INFO";
-// pub const CATEGORY_REV_REG_DEF: &str = "VCX_REV_REG_DEF";
-// pub const CATEGORY_REV_REG_DEF_PRIV: &str = "VCX_REV_REG_DEF_PRIV";
-
 /// Retrieves all records from a wallet and migrates them
 /// by applying the `migrate_fn` argument.
 ///
