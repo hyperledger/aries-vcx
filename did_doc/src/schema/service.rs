@@ -115,9 +115,16 @@ impl<E> ServiceBuilderWithServiceType<E> {
     }
 
     pub fn build(self) -> Service<E> {
+        let service_type = match self.service_type.len() {
+            // SAFETY: The only way to get to this state is to add at least one service type
+            0 => unreachable!(),
+            // SAFETY: We know that the length is non-zero
+            1 => OneOrList::One(self.service_type.into_iter().next().unwrap()),
+            _ => OneOrList::List(self.service_type.into_iter().collect()),
+        };
         Service {
             id: self.id,
-            service_type: OneOrList::List(self.service_type.into_iter().collect()),
+            service_type,
             service_endpoint: self.service_endpoint,
             extra: self.extra,
         }
@@ -157,7 +164,7 @@ mod tests {
 
         assert_eq!(service.id(), &id);
         assert_eq!(service.service_endpoint().as_ref(), service_endpoint);
-        assert_eq!(service.service_type(), &OneOrList::List(vec![service_type]));
+        assert_eq!(service.service_type(), &OneOrList::One(service_type));
     }
 
     #[test]
@@ -200,7 +207,7 @@ mod tests {
         .unwrap()
         .build();
 
-        assert_eq!(service.service_type(), &OneOrList::List(vec![service_type]));
+        assert_eq!(service.service_type(), &OneOrList::One(service_type));
     }
 
     #[test]

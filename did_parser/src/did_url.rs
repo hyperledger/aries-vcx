@@ -146,6 +146,48 @@ impl DidUrl {
             })
             .collect()
     }
+
+    // TODO: Ideally we would have a builder instead of purpose-specific constructors
+    pub fn from_fragment(fragment: String) -> Result<Self, ParseError> {
+        // TODO: Better validation
+        if fragment.contains("#") {
+            return Err(ParseError::InvalidInput(
+                "Fragment cannot contain '#' character",
+            ));
+        }
+        if fragment.is_empty() {
+            return Err(ParseError::InvalidInput("Empty fragment"));
+        }
+        let len = fragment.len();
+        Ok(Self {
+            did_url: format!("#{}", fragment),
+            did: None,
+            method: None,
+            id: None,
+            path: None,
+            fragment: Some(1..len + 1),
+            queries: HashMap::new(),
+            params: HashMap::new(),
+        })
+    }
+
+    pub(crate) fn from_did_parts(
+        did_url: String,
+        did: DidRange,
+        method: DidRange,
+        id: DidRange,
+    ) -> Self {
+        Self {
+            did_url,
+            did: Some(did),
+            method: Some(method),
+            id: Some(id),
+            path: None,
+            fragment: None,
+            queries: HashMap::new(),
+            params: HashMap::new(),
+        }
+    }
 }
 
 impl TryFrom<String> for DidUrl {
