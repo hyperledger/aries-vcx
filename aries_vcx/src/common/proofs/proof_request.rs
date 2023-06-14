@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::vec::Vec;
 
+use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
 use serde_json;
 
 use crate::core::profile::profile::Profile;
@@ -27,8 +28,8 @@ pub struct ProofRequestData {
 impl ProofRequestData {
     const DEFAULT_VERSION: &'static str = "1.0";
 
-    pub async fn create(profile: &Arc<dyn Profile>, name: &str) -> VcxResult<Self> {
-        let nonce = Arc::clone(profile).inject_anoncreds().generate_nonce().await?;
+    pub async fn create(anoncreds: &Arc<dyn BaseAnonCreds>, name: &str) -> VcxResult<Self> {
+        let nonce = anoncreds.generate_nonce().await?;
         Ok(Self {
             name: name.to_string(),
             nonce,
@@ -164,11 +165,11 @@ pub mod test_utils {
 mod unit_tests {
     use serde_json::Value;
 
-    use crate::common::test_utils::mock_profile;
     use crate::utils;
     use crate::utils::constants::{REQUESTED_ATTRS, REQUESTED_PREDICATES};
     use crate::utils::devsetup::SetupDefaults;
     use crate::utils::mockdata::mockdata_proof;
+    use crate::utils::mockdata::profile::mock_anoncreds::MockAnoncreds;
 
     use super::*;
 
@@ -188,7 +189,8 @@ mod unit_tests {
     async fn test_proof_request_msg() {
         let _setup = SetupDefaults::init();
 
-        let request = ProofRequestData::create(&mock_profile(), "Test")
+        let anoncreds: Arc<dyn BaseAnonCreds> = Arc::new(MockAnoncreds {});
+        let request = ProofRequestData::create(&anoncreds, "Test")
             .await
             .unwrap()
             .set_not_revoked_interval(r#"{"from":1100000000, "to": 1600000000}"#.into())
@@ -213,7 +215,8 @@ mod unit_tests {
     async fn test_requested_attrs_constructed_correctly() {
         let _setup = SetupDefaults::init();
 
-        let request = ProofRequestData::create(&mock_profile(), "")
+        let anoncreds: Arc<dyn BaseAnonCreds> = Arc::new(MockAnoncreds {});
+        let request = ProofRequestData::create(&anoncreds, "")
             .await
             .unwrap()
             .set_requested_attributes_as_string(REQUESTED_ATTRS.into())
@@ -228,7 +231,8 @@ mod unit_tests {
         let expected_req_attrs = _expected_req_attrs();
         let req_attrs_string = serde_json::to_string(&expected_req_attrs).unwrap();
 
-        let request = ProofRequestData::create(&mock_profile(), "")
+        let anoncreds: Arc<dyn BaseAnonCreds> = Arc::new(MockAnoncreds {});
+        let request = ProofRequestData::create(&anoncreds, "")
             .await
             .unwrap()
             .set_requested_attributes_as_string(req_attrs_string)
@@ -269,7 +273,8 @@ mod unit_tests {
         .unwrap();
         check_predicates.insert("predicate_0".to_string(), attr_info1);
 
-        let request = ProofRequestData::create(&mock_profile(), "")
+        let anoncreds: Arc<dyn BaseAnonCreds> = Arc::new(MockAnoncreds {});
+        let request = ProofRequestData::create(&anoncreds, "")
             .await
             .unwrap()
             .set_requested_predicates_as_string(REQUESTED_PREDICATES.into())
@@ -292,7 +297,8 @@ mod unit_tests {
 
         let requested_attrs = json!([attr_info, attr_info_2]).to_string();
 
-        let request = ProofRequestData::create(&mock_profile(), "")
+        let anoncreds: Arc<dyn BaseAnonCreds> = Arc::new(MockAnoncreds {});
+        let request = ProofRequestData::create(&anoncreds, "")
             .await
             .unwrap()
             .set_requested_attributes_as_string(requested_attrs.into())
@@ -316,7 +322,8 @@ mod unit_tests {
 
         let requested_attrs = json!([attr_info]).to_string();
 
-        let err = ProofRequestData::create(&mock_profile(), "")
+        let anoncreds: Arc<dyn BaseAnonCreds> = Arc::new(MockAnoncreds {});
+        let err = ProofRequestData::create(&anoncreds, "")
             .await
             .unwrap()
             .set_requested_attributes_as_string(requested_attrs.into())

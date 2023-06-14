@@ -45,7 +45,7 @@ mod integration_tests {
                 create_connected_connections_via_public_invite(&mut consumer, &mut institution).await;
 
             institution_to_consumer
-                .send_generic_message(&institution.profile, "Hello Alice, Faber here")
+                .send_generic_message(&institution.profile.inject_wallet(), "Hello Alice, Faber here")
                 .await
                 .unwrap();
 
@@ -81,19 +81,28 @@ mod integration_tests {
                 .append_a2a_message(AriesMessage::from(request_sender.clone()))
                 .unwrap();
             let invitation = AnyInvitation::Oob(oob_sender.oob.clone());
-            let ddo = into_did_doc(&consumer.profile, &invitation).await.unwrap();
+            let ddo = into_did_doc(&consumer.profile.inject_indy_ledger_read(), &invitation)
+                .await
+                .unwrap();
             let oob_msg = AriesMessage::from(oob_sender.oob.clone());
 
             let oob_receiver = OutOfBandReceiver::create_from_a2a_msg(&oob_msg).unwrap();
             let conns = vec![];
-            let conn = oob_receiver.connection_exists(&consumer.profile, &conns).await.unwrap();
+            let conn = oob_receiver
+                .connection_exists(&consumer.profile.inject_indy_ledger_read(), &conns)
+                .await
+                .unwrap();
             assert!(conn.is_none());
             let mut conn_receiver = oob_receiver
-                .build_connection(&consumer.profile, &consumer.agency_client, ddo, true)
+                .build_connection(&consumer.profile.inject_wallet(), &consumer.agency_client, ddo, true)
                 .await
                 .unwrap();
             conn_receiver
-                .connect(&consumer.profile, &consumer.agency_client, _send_message(sender))
+                .connect(
+                    &consumer.profile.inject_wallet(),
+                    &consumer.agency_client,
+                    _send_message(sender),
+                )
                 .await
                 .unwrap();
             assert_eq!(
@@ -122,12 +131,18 @@ mod integration_tests {
                 create_connected_connections(&mut consumer, &mut institution).await;
 
             let conns = vec![&conn_receiver, &conn_receiver_pw1, &conn_receiver_pw2];
-            let conn = oob_receiver.connection_exists(&consumer.profile, &conns).await.unwrap();
+            let conn = oob_receiver
+                .connection_exists(&consumer.profile.inject_indy_ledger_read(), &conns)
+                .await
+                .unwrap();
             assert!(conn.is_some());
             assert!(*conn.unwrap() == conn_receiver);
 
             let conns = vec![&conn_receiver_pw1, &conn_receiver_pw2];
-            let conn = oob_receiver.connection_exists(&consumer.profile, &conns).await.unwrap();
+            let conn = oob_receiver
+                .connection_exists(&consumer.profile.inject_indy_ledger_read(), &conns)
+                .await
+                .unwrap();
             assert!(conn.is_none());
 
             let a2a_msg = oob_receiver.extract_a2a_message().unwrap().unwrap();
@@ -143,11 +158,14 @@ mod integration_tests {
             }
 
             conn_sender
-                .send_generic_message(&institution.profile, "Hello oob receiver, from oob sender")
+                .send_generic_message(
+                    &institution.profile.inject_wallet(),
+                    "Hello oob receiver, from oob sender",
+                )
                 .await
                 .unwrap();
             conn_receiver
-                .send_generic_message(&consumer.profile, "Hello oob sender, from oob receiver")
+                .send_generic_message(&consumer.profile.inject_wallet(), "Hello oob sender, from oob receiver")
                 .await
                 .unwrap();
             let sender_msgs = conn_sender
@@ -184,10 +202,13 @@ mod integration_tests {
 
             let oob_receiver = OutOfBandReceiver::create_from_a2a_msg(&oob_msg).unwrap();
             let conns = vec![&consumer_to_institution];
-            let conn = oob_receiver.connection_exists(&consumer.profile, &conns).await.unwrap();
+            let conn = oob_receiver
+                .connection_exists(&consumer.profile.inject_indy_ledger_read(), &conns)
+                .await
+                .unwrap();
             assert!(conn.is_some());
             conn.unwrap()
-                .send_generic_message(&consumer.profile, "Hello oob sender, from oob receiver")
+                .send_generic_message(&consumer.profile.inject_wallet(), "Hello oob sender, from oob receiver")
                 .await
                 .unwrap();
 
@@ -221,12 +242,15 @@ mod integration_tests {
 
             let oob_receiver = OutOfBandReceiver::create_from_a2a_msg(&oob_msg).unwrap();
             let conns = vec![&consumer_to_institution];
-            let conn = oob_receiver.connection_exists(&consumer.profile, &conns).await.unwrap();
+            let conn = oob_receiver
+                .connection_exists(&consumer.profile.inject_indy_ledger_read(), &conns)
+                .await
+                .unwrap();
             assert!(conn.is_some());
             let receiver_oob_id = oob_receiver.get_id();
             let receiver_msg = serde_json::to_string(&AriesMessage::from(oob_receiver.oob.clone())).unwrap();
             conn.unwrap()
-                .send_handshake_reuse(&consumer.profile, &receiver_msg)
+                .send_handshake_reuse(&consumer.profile.inject_wallet(), &receiver_msg)
                 .await
                 .unwrap();
 
@@ -259,7 +283,7 @@ mod integration_tests {
             institution_to_consumer
                 .handle_message(
                     AriesMessage::OutOfBand(OutOfBand::HandshakeReuse(reuse_msg.clone())),
-                    &institution.profile,
+                    &institution.profile.inject_wallet(),
                 )
                 .await
                 .unwrap();
@@ -288,7 +312,7 @@ mod integration_tests {
                 }
             };
             consumer_to_institution
-                .find_and_handle_message(&consumer.profile, &consumer.agency_client)
+                .find_and_handle_message(&consumer.profile.inject_wallet(), &consumer.agency_client)
                 .await
                 .unwrap();
             assert_eq!(

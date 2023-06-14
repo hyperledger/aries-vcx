@@ -228,11 +228,11 @@ impl SmConnectionInviter {
         Ok(Self { state, ..self })
     }
 
-    pub async fn handle_connection_request(
+    pub async fn handle_connection_request<'a>(
         self,
-        wallet: Arc<dyn BaseWallet>,
+        wallet: &'a Arc<dyn BaseWallet>,
         request: Request,
-        new_pairwise_info: &PairwiseInfo,
+        new_pairwise_info: &'a PairwiseInfo,
         new_routing_keys: Vec<String>,
         new_service_endpoint: Url,
         send_message: SendClosureConnection,
@@ -276,7 +276,7 @@ impl SmConnectionInviter {
 
                 let signed_response = self
                     .build_response(
-                        &wallet,
+                        wallet,
                         thread_id.clone(),
                         new_pairwise_info,
                         new_routing_keys,

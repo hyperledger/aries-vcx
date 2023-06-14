@@ -33,13 +33,22 @@ mod integration_tests {
     async fn test_agency_pool_retrieve_credentials() {
         SetupProfile::run(|setup| async move {
             create_and_store_nonrevocable_credential(
-                &setup.profile,
-                &setup.profile,
+                &setup.profile.inject_anoncreds(),
+                &setup.profile.inject_anoncreds(),
+                &setup.profile.inject_anoncreds_ledger_read(),
+                &setup.profile.inject_anoncreds_ledger_write(),
                 &setup.institution_did,
                 DEFAULT_SCHEMA_ATTRS,
             )
             .await;
-            let (_, _, req, _) = create_indy_proof(&setup.profile, &setup.profile, &setup.institution_did).await;
+            let (_, _, req, _) = create_indy_proof(
+                &setup.profile.inject_anoncreds(),
+                &setup.profile.inject_anoncreds(),
+                &setup.profile.inject_anoncreds_ledger_read(),
+                &setup.profile.inject_anoncreds_ledger_write(),
+                &setup.institution_did,
+            )
+            .await;
 
             let pres_req_data: PresentationRequestData = serde_json::from_str(&req).unwrap();
             let id = "test_id".to_owned();
@@ -58,7 +67,10 @@ mod integration_tests {
             let proof_req = RequestPresentation::with_decorators(id, content, decorators);
             let proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
 
-            let retrieved_creds = proof.retrieve_credentials(&setup.profile).await.unwrap();
+            let retrieved_creds = proof
+                .retrieve_credentials(&setup.profile.inject_anoncreds())
+                .await
+                .unwrap();
             // assert number of cred matches for different requested referents
             assert_eq!(retrieved_creds.credentials_by_referent["address1_1"].len(), 2);
             assert_eq!(retrieved_creds.credentials_by_referent["zip_2"].len(), 2);
@@ -72,7 +84,9 @@ mod integration_tests {
     async fn test_agency_pool_get_credential_def() {
         SetupProfile::run(|setup| async move {
             let (_, _, cred_def_id, cred_def_json, _) = create_and_store_nonrevocable_credential_def(
-                &setup.profile,
+                &setup.profile.inject_anoncreds(),
+                &setup.profile.inject_anoncreds_ledger_read(),
+                &setup.profile.inject_anoncreds_ledger_write(),
                 &setup.institution_did,
                 DEFAULT_SCHEMA_ATTRS,
             )
@@ -119,7 +133,10 @@ mod integration_tests {
             let proof_req = RequestPresentation::with_decorators(id, content, decorators);
             let proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
 
-            let retrieved_creds = proof.retrieve_credentials(&setup.profile).await.unwrap();
+            let retrieved_creds = proof
+                .retrieve_credentials(&setup.profile.inject_anoncreds())
+                .await
+                .unwrap();
             assert_eq!(serde_json::to_string(&retrieved_creds).unwrap(), "{}".to_string());
             assert!(retrieved_creds.credentials_by_referent.is_empty());
 
@@ -143,7 +160,10 @@ mod integration_tests {
             let proof_req = RequestPresentation::with_decorators(id, content, decorators);
             let proof: Prover = Prover::create_from_request("2", proof_req).unwrap();
 
-            let retrieved_creds = proof.retrieve_credentials(&setup.profile).await.unwrap();
+            let retrieved_creds = proof
+                .retrieve_credentials(&setup.profile.inject_anoncreds())
+                .await
+                .unwrap();
             assert_eq!(
                 serde_json::to_string(&retrieved_creds).unwrap(),
                 json!({"attrs":{"address1_1":[]}}).to_string()
@@ -163,8 +183,10 @@ mod integration_tests {
     async fn test_agency_pool_case_for_proof_req_doesnt_matter_for_retrieve_creds() {
         SetupProfile::run(|setup| async move {
             create_and_store_nonrevocable_credential(
-                &setup.profile,
-                &setup.profile,
+                &setup.profile.inject_anoncreds(),
+                &setup.profile.inject_anoncreds(),
+                &setup.profile.inject_anoncreds_ledger_read(),
+                &setup.profile.inject_anoncreds_ledger_write(),
                 &setup.institution_did,
                 DEFAULT_SCHEMA_ATTRS,
             )
@@ -201,7 +223,10 @@ mod integration_tests {
             let proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
 
             // All lower case
-            let retrieved_creds = proof.retrieve_credentials(&setup.profile).await.unwrap();
+            let retrieved_creds = proof
+                .retrieve_credentials(&setup.profile.inject_anoncreds())
+                .await
+                .unwrap();
             assert_eq!(
                 retrieved_creds.credentials_by_referent["zip_1"][0].cred_info.attributes["zip"],
                 "84000"
@@ -225,7 +250,10 @@ mod integration_tests {
 
             let proof_req = RequestPresentation::with_decorators(id, content, decorators);
             let proof: Prover = Prover::create_from_request("2", proof_req).unwrap();
-            let retrieved_creds2 = proof.retrieve_credentials(&setup.profile).await.unwrap();
+            let retrieved_creds2 = proof
+                .retrieve_credentials(&setup.profile.inject_anoncreds())
+                .await
+                .unwrap();
             assert_eq!(
                 retrieved_creds2.credentials_by_referent["zip_1"][0]
                     .cred_info
@@ -251,7 +279,10 @@ mod integration_tests {
 
             let proof_req = RequestPresentation::with_decorators(id, content, decorators);
             let proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
-            let retrieved_creds3 = proof.retrieve_credentials(&setup.profile).await.unwrap();
+            let retrieved_creds3 = proof
+                .retrieve_credentials(&setup.profile.inject_anoncreds())
+                .await
+                .unwrap();
             assert_eq!(
                 retrieved_creds3.credentials_by_referent["zip_1"][0]
                     .cred_info
@@ -267,8 +298,10 @@ mod integration_tests {
     async fn test_agency_pool_generate_proof() {
         SetupProfile::run(|setup| async move {
             create_and_store_credential(
-                &setup.profile,
-                &setup.profile,
+                &setup.profile.inject_anoncreds(),
+                &setup.profile.inject_anoncreds(),
+                &setup.profile.inject_anoncreds_ledger_read(),
+                &setup.profile.inject_anoncreds_ledger_write(),
                 &setup.institution_did,
                 DEFAULT_SCHEMA_ATTRS,
             )
@@ -311,7 +344,10 @@ mod integration_tests {
             let proof_req = RequestPresentation::with_decorators(id, content, decorators);
             let mut proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
 
-            let all_creds = proof.retrieve_credentials(&setup.profile).await.unwrap();
+            let all_creds = proof
+                .retrieve_credentials(&setup.profile.inject_anoncreds())
+                .await
+                .unwrap();
             let selected_credentials: serde_json::Value = json!({
                "attrs":{
                   "address1_1": {
@@ -331,7 +367,8 @@ mod integration_tests {
 
             let generated_proof = proof
                 .generate_presentation(
-                    &setup.profile,
+                    &setup.profile.inject_anoncreds_ledger_read(),
+                    &setup.profile.inject_anoncreds(),
                     serde_json::from_value(selected_credentials).unwrap(),
                     serde_json::from_value(self_attested).unwrap(),
                 )
@@ -347,8 +384,10 @@ mod integration_tests {
     async fn test_agency_pool_generate_proof_with_predicates() {
         SetupProfile::run(|setup| async move {
             create_and_store_credential(
-                &setup.profile,
-                &setup.profile,
+                &setup.profile.inject_anoncreds(),
+                &setup.profile.inject_anoncreds(),
+                &setup.profile.inject_anoncreds_ledger_read(),
+                &setup.profile.inject_anoncreds_ledger_write(),
                 &setup.institution_did,
                 DEFAULT_SCHEMA_ATTRS,
             )
@@ -393,7 +432,10 @@ mod integration_tests {
             let proof_req = RequestPresentation::with_decorators(id, content, decorators);
             let mut proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
 
-            let all_creds = proof.retrieve_credentials(&setup.profile).await.unwrap();
+            let all_creds = proof
+                .retrieve_credentials(&setup.profile.inject_anoncreds())
+                .await
+                .unwrap();
             let selected_credentials: serde_json::Value = json!({
                "attrs":{
                   "address1_1": {
@@ -415,7 +457,8 @@ mod integration_tests {
             });
             let generated_proof = proof
                 .generate_presentation(
-                    &setup.profile,
+                    &setup.profile.inject_anoncreds_ledger_read(),
+                    &setup.profile.inject_anoncreds(),
                     serde_json::from_value(selected_credentials).unwrap(),
                     serde_json::from_value(self_attested).unwrap(),
                 )
@@ -461,7 +504,8 @@ mod integration_tests {
             });
             proof
                 .generate_presentation(
-                    &setup.profile,
+                    &setup.profile.inject_anoncreds_ledger_read(),
+                    &setup.profile.inject_anoncreds(),
                     serde_json::from_value(selected_credentials).unwrap(),
                     serde_json::from_value(self_attested).unwrap(),
                 )
@@ -472,7 +516,8 @@ mod integration_tests {
             // verifier receives the presentation
             verifier
                 .verify_presentation(
-                    &setup.profile,
+                    &setup.profile.inject_anoncreds_ledger_read(),
+                    &setup.profile.inject_anoncreds(),
                     presentation,
                     Box::new(|_: AriesMessage| Box::pin(async { Ok(()) })),
                 )
@@ -568,7 +613,9 @@ mod tests {
             info!("test_proof_should_be_validated :: verifier :: going to verify proof");
             verifier
                 .update_state(
-                    &institution.profile,
+                    &institution.profile.inject_wallet(),
+                    &institution.profile.inject_anoncreds_ledger_read(),
+                    &institution.profile.inject_anoncreds(),
                     &institution.agency_client,
                     &institution_to_consumer,
                 )
@@ -625,7 +672,9 @@ mod tests {
             info!("test_proof_with_predicates_should_be_validated :: verifier :: going to verify proof");
             verifier
                 .update_state(
-                    &institution.profile,
+                    &institution.profile.inject_wallet(),
+                    &institution.profile.inject_anoncreds_ledger_read(),
+                    &institution.profile.inject_anoncreds(),
                     &institution.agency_client,
                     &institution_to_consumer,
                 )
@@ -744,7 +793,8 @@ mod tests {
                 .await;
             prover_select_credentials_and_send_proof(&mut consumer1, &consumer1_to_verifier, None, None).await;
             proof_verifier
-                .update_state(&verifier.profile, &verifier.agency_client, &verifier_to_consumer1)
+                .update_state(
+                    &verifier.profile.inject_wallet(), &verifier.profile.inject_anoncreds_ledger_read(), &verifier.profile.inject_anoncreds(), &verifier.agency_client, &verifier_to_consumer1)
                 .await
                 .unwrap();
             assert_eq!(
@@ -763,7 +813,13 @@ mod tests {
                 .await;
             prover_select_credentials_and_send_proof(&mut consumer2, &consumer2_to_verifier, None, None).await;
             proof_verifier
-                .update_state(&verifier.profile, &verifier.agency_client, &verifier_to_consumer2)
+                .update_state(
+                    &verifier.profile.inject_wallet(),
+                    &verifier.profile.inject_anoncreds_ledger_read(),
+                    &verifier.profile.inject_anoncreds(),
+                    &verifier.agency_client,
+                    &verifier_to_consumer2
+                )
                 .await
                 .unwrap();
             assert_eq!(
@@ -799,7 +855,13 @@ mod tests {
             .await;
             prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, request_name1, None).await;
             proof_verifier
-                .update_state(&verifier.profile, &verifier.agency_client, &verifier_to_consumer)
+                .update_state(
+                    &verifier.profile.inject_wallet(),
+                    &verifier.profile.inject_anoncreds_ledger_read(),
+                    &verifier.profile.inject_anoncreds(),
+                    &verifier.agency_client,
+                    &verifier_to_consumer,
+                )
                 .await
                 .unwrap();
             assert_eq!(
@@ -818,7 +880,13 @@ mod tests {
             .await;
             prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, request_name2, None).await;
             proof_verifier
-                .update_state(&verifier.profile, &verifier.agency_client, &verifier_to_consumer)
+                .update_state(
+                    &verifier.profile.inject_wallet(),
+                    &verifier.profile.inject_anoncreds_ledger_read(),
+                    &verifier.profile.inject_anoncreds(),
+                    &verifier.agency_client,
+                    &verifier_to_consumer,
+                )
                 .await
                 .unwrap();
             assert_eq!(
@@ -867,7 +935,9 @@ mod tests {
             prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_institution, request_name1, None).await;
             verifier
                 .update_state(
-                    &institution.profile,
+                    &institution.profile.inject_wallet(),
+                    &institution.profile.inject_anoncreds_ledger_read(),
+                    &institution.profile.inject_anoncreds(),
                     &institution.agency_client,
                     &institution_to_consumer,
                 )
@@ -890,7 +960,9 @@ mod tests {
             prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_institution, request_name2, None).await;
             verifier
                 .update_state(
-                    &institution.profile,
+                    &institution.profile.inject_wallet(),
+                    &institution.profile.inject_anoncreds_ledger_read(),
+                    &institution.profile.inject_anoncreds(),
                     &institution.agency_client,
                     &institution_to_consumer,
                 )
@@ -924,7 +996,9 @@ mod tests {
             let attrs_list = attrs_list.to_string();
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def) =
                 create_and_store_nonrevocable_credential_def(
-                    &institution.profile,
+                    &institution.profile.inject_anoncreds(),
+                    &institution.profile.inject_anoncreds_ledger_read(),
+                    &institution.profile.inject_anoncreds_ledger_write(),
                     &institution.config_issuer.institution_did,
                     &attrs_list,
                 )
@@ -995,7 +1069,10 @@ mod tests {
             let mut prover = create_proof(&mut consumer, &consumer_to_issuer, None).await;
             info!("test_real_proof :: retrieving matching credentials");
 
-            let retrieved_credentials = prover.retrieve_credentials(&consumer.profile).await.unwrap();
+            let retrieved_credentials = prover
+                .retrieve_credentials(&consumer.profile.inject_anoncreds())
+                .await
+                .unwrap();
             let selected_credentials = retrieved_to_selected_credentials_simple(&retrieved_credentials, false);
 
             info!("test_real_proof :: generating and sending proof");
@@ -1006,7 +1083,13 @@ mod tests {
 
             info!("test_real_proof :: AS INSTITUTION VALIDATE PROOF");
             verifier
-                .update_state(&institution.profile, &institution.agency_client, &issuer_to_consumer)
+                .update_state(
+                    &institution.profile.inject_wallet(),
+                    &institution.profile.inject_anoncreds_ledger_read(),
+                    &institution.profile.inject_anoncreds(),
+                    &institution.agency_client,
+                    &issuer_to_consumer,
+                )
                 .await
                 .unwrap();
             assert_eq!(
@@ -1070,7 +1153,8 @@ mod tests {
             prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1))
                 .await;
             proof_verifier
-                .update_state(&verifier.profile, &verifier.agency_client, &verifier_to_consumer)
+                .update_state(
+                    &verifier.profile.inject_wallet(), &verifier.profile.inject_anoncreds_ledger_read(), &verifier.profile.inject_anoncreds(), &verifier.agency_client, &verifier_to_consumer)
                 .await
                 .unwrap();
             assert_eq!(
@@ -1089,7 +1173,8 @@ mod tests {
             prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2))
                 .await;
             proof_verifier
-                .update_state(&verifier.profile, &verifier.agency_client, &verifier_to_consumer)
+                .update_state(
+                    &verifier.profile.inject_wallet(), &verifier.profile.inject_anoncreds_ledger_read(), &verifier.profile.inject_anoncreds(), &verifier.agency_client, &verifier_to_consumer)
                 .await
                 .unwrap();
             assert_eq!(
@@ -1156,7 +1241,8 @@ mod tests {
             tokio::time::sleep(Duration::from_millis(1000)).await;
             issuer
                 .update_state(
-                    &institution.profile,
+                    &institution.profile.inject_wallet(),
+                    &institution.profile.inject_anoncreds(),
                     &institution.agency_client,
                     &institution_to_consumer,
                 )
@@ -1424,9 +1510,14 @@ mod tests {
                 alice
                     .credential
                     .send_request(
-                        &alice.profile,
+                        &alice.profile.inject_anoncreds_ledger_read(),
+                        &alice.profile.inject_anoncreds(),
                         pw_did,
-                        alice.connection.send_message_closure(&alice.profile).await.unwrap(),
+                        alice
+                            .connection
+                            .send_message_closure(alice.profile.inject_wallet())
+                            .await
+                            .unwrap(),
                     )
                     .await
                     .unwrap();
@@ -1449,14 +1540,25 @@ mod tests {
 
                 alice
                     .prover
-                    .generate_presentation(&alice.profile, credentials, HashMap::new())
+                    .generate_presentation(
+                        &alice.profile.inject_anoncreds_ledger_read(),
+                        &alice.profile.inject_anoncreds(),
+                        credentials,
+                        HashMap::new(),
+                    )
                     .await
                     .unwrap();
                 assert_eq!(ProverState::PresentationPrepared, alice.prover.get_state());
 
                 alice
                     .prover
-                    .send_presentation(alice.connection.send_message_closure(&alice.profile).await.unwrap())
+                    .send_presentation(
+                        alice
+                            .connection
+                            .send_message_closure(alice.profile.inject_wallet())
+                            .await
+                            .unwrap(),
+                    )
                     .await
                     .unwrap();
                 assert_eq!(ProverState::PresentationSent, alice.prover.get_state());
@@ -1514,9 +1616,14 @@ mod tests {
                 alice
                     .credential
                     .send_request(
-                        &alice.profile,
+                        &alice.profile.inject_anoncreds_ledger_read(),
+                        &alice.profile.inject_anoncreds(),
                         pw_did,
-                        alice.connection.send_message_closure(&alice.profile).await.unwrap(),
+                        alice
+                            .connection
+                            .send_message_closure(alice.profile.inject_wallet())
+                            .await
+                            .unwrap(),
                     )
                     .await
                     .unwrap();
@@ -1547,14 +1654,25 @@ mod tests {
 
                 alice
                     .prover
-                    .generate_presentation(&alice.profile, credentials, HashMap::new())
+                    .generate_presentation(
+                        &alice.profile.inject_anoncreds_ledger_read(),
+                        &alice.profile.inject_anoncreds(),
+                        credentials,
+                        HashMap::new(),
+                    )
                     .await
                     .unwrap();
                 assert_eq!(ProverState::PresentationPrepared, alice.prover.get_state());
 
                 alice
                     .prover
-                    .send_presentation(alice.connection.send_message_closure(&alice.profile).await.unwrap())
+                    .send_presentation(
+                        alice
+                            .connection
+                            .send_message_closure(alice.profile.inject_wallet())
+                            .await
+                            .unwrap(),
+                    )
                     .await
                     .unwrap();
                 assert_eq!(ProverState::PresentationSent, alice.prover.get_state());

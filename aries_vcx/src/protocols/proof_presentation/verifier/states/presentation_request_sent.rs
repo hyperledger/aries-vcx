@@ -1,3 +1,5 @@
+use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
+use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
 use std::sync::Arc;
 
 use messages::msg_fields::protocols::present_proof::present::Presentation;
@@ -20,7 +22,8 @@ pub struct PresentationRequestSentState {
 impl PresentationRequestSentState {
     pub async fn verify_presentation(
         &self,
-        profile: &Arc<dyn Profile>,
+        ledger: &Arc<dyn AnoncredsLedgerRead>,
+        anoncreds: &Arc<dyn BaseAnonCreds>,
         presentation: &Presentation,
         thread_id: &str,
     ) -> VcxResult<()> {
@@ -37,7 +40,7 @@ impl PresentationRequestSentState {
         let proof_json = get_attach_as_string!(&presentation.content.presentations_attach);
         let proof_req_json = get_attach_as_string!(&self.presentation_request.content.request_presentations_attach);
 
-        let valid = validate_indy_proof(profile, &proof_json, &proof_req_json).await?;
+        let valid = validate_indy_proof(ledger, anoncreds, &proof_json, &proof_req_json).await?;
 
         if !valid {
             return Err(AriesVcxError::from_msg(

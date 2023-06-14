@@ -62,8 +62,10 @@ pub mod integration_tests {
     async fn test_pool_revoke_credential() {
         SetupProfile::run(|setup| async move {
             let (_, _, _, _, _, _, _, _, rev_reg_id, cred_rev_id, _, rev_reg) = create_and_store_credential(
-                &setup.profile,
-                &setup.profile,
+                &setup.profile.inject_anoncreds(),
+                &setup.profile.inject_anoncreds(),
+                &setup.profile.inject_anoncreds_ledger_read(),
+                &setup.profile.inject_anoncreds_ledger_write(),
                 &setup.institution_did,
                 crate::utils::constants::DEFAULT_SCHEMA_ATTRS,
             )
@@ -92,7 +94,11 @@ pub mod integration_tests {
                 .unwrap();
 
             rev_reg
-                .publish_local_revocations(&setup.profile, &setup.institution_did)
+                .publish_local_revocations(
+                    &setup.profile.inject_anoncreds(),
+                    &setup.profile.inject_anoncreds_ledger_write(),
+                    &setup.institution_did,
+                )
                 .await
                 .unwrap();
 

@@ -1,37 +1,37 @@
+use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
+use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
 use std::sync::Arc;
 
 use crate::common::proofs::verifier::verifier_internal::{
     build_cred_defs_json_verifier, build_rev_reg_defs_json, build_rev_reg_json, build_schemas_json_verifier,
     get_credential_info, validate_proof_revealed_attributes,
 };
-use crate::core::profile::profile::Profile;
 use crate::errors::error::prelude::*;
 use crate::utils::mockdata::mock_settings::get_mock_result_for_validate_indy_proof;
 
 pub async fn validate_indy_proof(
-    profile: &Arc<dyn Profile>,
+    ledger: &Arc<dyn AnoncredsLedgerRead>,
+    anoncreds: &Arc<dyn BaseAnonCreds>,
     proof_json: &str,
     proof_req_json: &str,
 ) -> VcxResult<bool> {
     if let Some(mock_result) = get_mock_result_for_validate_indy_proof() {
         return mock_result;
     }
-
-    let anoncreds = Arc::clone(profile).inject_anoncreds();
     validate_proof_revealed_attributes(proof_json)?;
 
     let credential_data = get_credential_info(proof_json)?;
 
-    let credential_defs_json = build_cred_defs_json_verifier(profile, &credential_data)
+    let credential_defs_json = build_cred_defs_json_verifier(ledger, &credential_data)
         .await
         .unwrap_or(json!({}).to_string());
-    let schemas_json = build_schemas_json_verifier(profile, &credential_data)
+    let schemas_json = build_schemas_json_verifier(ledger, &credential_data)
         .await
         .unwrap_or(json!({}).to_string());
-    let rev_reg_defs_json = build_rev_reg_defs_json(profile, &credential_data)
+    let rev_reg_defs_json = build_rev_reg_defs_json(ledger, &credential_data)
         .await
         .unwrap_or(json!({}).to_string());
-    let rev_regs_json = build_rev_reg_json(profile, &credential_data)
+    let rev_regs_json = build_rev_reg_json(ledger, &credential_data)
         .await
         .unwrap_or(json!({}).to_string());
 
@@ -83,7 +83,7 @@ pub mod unit_tests {
             let revocation_details = r#"{"support_revocation":false}"#.to_string();
             let name = "Optional".to_owned();
 
-            let proof_req_json = ProofRequestData::create(&setup.profile, &name)
+            let proof_req_json = ProofRequestData::create(&setup.profile.inject_anoncreds(), &name)
                 .await
                 .unwrap()
                 .set_requested_attributes_as_string(requested_attrs)
@@ -117,9 +117,14 @@ pub mod unit_tests {
                 .unwrap();
 
             assert_eq!(
-                validate_indy_proof(&setup.profile, &prover_proof_json, &proof_req_json.to_string())
-                    .await
-                    .unwrap(),
+                validate_indy_proof(
+                    &setup.profile.inject_anoncreds_ledger_read(),
+                    &setup.profile.inject_anoncreds(),
+                    &prover_proof_json,
+                    &proof_req_json
+                )
+                .await
+                .unwrap(),
                 true
             );
         })
@@ -148,7 +153,7 @@ pub mod unit_tests {
             let revocation_details = r#"{"support_revocation":true}"#.to_string();
             let name = "Optional".to_owned();
 
-            let proof_req_json = ProofRequestData::create(&setup.profile, &name)
+            let proof_req_json = ProofRequestData::create(&setup.profile.inject_anoncreds(), &name)
                 .await
                 .unwrap()
                 .set_requested_attributes_as_string(requested_attrs)
@@ -162,8 +167,10 @@ pub mod unit_tests {
 
             let (schema_id, schema_json, cred_def_id, cred_def_json, _offer, _req, _req_meta, cred_id) =
                 create_and_store_nonrevocable_credential(
-                    &setup.profile,
-                    &setup.profile,
+                    &setup.profile.inject_anoncreds(),
+                    &setup.profile.inject_anoncreds(),
+                    &setup.profile.inject_anoncreds_ledger_read(),
+                    &setup.profile.inject_anoncreds_ledger_write(),
                     &setup.institution_did,
                     utils::constants::DEFAULT_SCHEMA_ATTRS,
                 )
@@ -194,19 +201,29 @@ pub mod unit_tests {
                 .await
                 .unwrap();
             assert_eq!(
-                validate_indy_proof(&setup.profile, &prover_proof_json, &proof_req_json)
-                    .await
-                    .unwrap_err()
-                    .kind(),
+                validate_indy_proof(
+                    &setup.profile.inject_anoncreds_ledger_read(),
+                    &setup.profile.inject_anoncreds(),
+                    &prover_proof_json,
+                    &proof_req_json
+                )
+                .await
+                .unwrap_err()
+                .kind(),
                 AriesVcxErrorKind::ProofRejected
             );
 
             let mut proof_req_json: serde_json::Value = serde_json::from_str(&proof_req_json).unwrap();
             proof_req_json["requested_attributes"]["attribute_0"]["restrictions"] = json!({});
             assert_eq!(
-                validate_indy_proof(&setup.profile, &prover_proof_json, &proof_req_json.to_string())
-                    .await
-                    .unwrap(),
+                validate_indy_proof(
+                    &setup.profile.inject_anoncreds_ledger_read(),
+                    &setup.profile.inject_anoncreds(),
+                    &prover_proof_json,
+                    &proof_req_json.to_string()
+                )
+                .await
+                .unwrap(),
                 true
             );
         })
@@ -236,7 +253,7 @@ pub mod unit_tests {
             let revocation_details = r#"{"support_revocation":true}"#.to_string();
             let name = "Optional".to_owned();
 
-            let proof_req_json = ProofRequestData::create(&setup.profile, &name)
+            let proof_req_json = ProofRequestData::create(&setup.profile.inject_anoncreds(), &name)
                 .await
                 .unwrap()
                 .set_requested_attributes_as_string(requested_attrs)
@@ -250,8 +267,10 @@ pub mod unit_tests {
 
             let (schema_id, schema_json, cred_def_id, cred_def_json, _offer, _req, _req_meta, cred_id) =
                 create_and_store_nonrevocable_credential(
-                    &setup.profile,
-                    &setup.profile,
+                    &setup.profile.inject_anoncreds(),
+                    &setup.profile.inject_anoncreds(),
+                    &setup.profile.inject_anoncreds_ledger_read(),
+                    &setup.profile.inject_anoncreds_ledger_write(),
                     &setup.institution_did,
                     utils::constants::DEFAULT_SCHEMA_ATTRS,
                 )
@@ -282,9 +301,14 @@ pub mod unit_tests {
                 .await
                 .unwrap();
             assert_eq!(
-                validate_indy_proof(&setup.profile, &prover_proof_json, &proof_req_json)
-                    .await
-                    .unwrap(),
+                validate_indy_proof(
+                    &setup.profile.inject_anoncreds_ledger_read(),
+                    &setup.profile.inject_anoncreds(),
+                    &prover_proof_json,
+                    &proof_req_json
+                )
+                .await
+                .unwrap(),
                 true
             );
 
@@ -294,10 +318,15 @@ pub mod unit_tests {
                 let prover_proof_json = serde_json::to_string(&proof_obj).unwrap();
 
                 assert_eq!(
-                    validate_indy_proof(&setup.profile, &prover_proof_json, &proof_req_json)
-                        .await
-                        .unwrap_err()
-                        .kind(),
+                    validate_indy_proof(
+                        &setup.profile.inject_anoncreds_ledger_read(),
+                        &setup.profile.inject_anoncreds(),
+                        &prover_proof_json,
+                        &proof_req_json
+                    )
+                    .await
+                    .unwrap_err()
+                    .kind(),
                     AriesVcxErrorKind::InvalidProof
                 );
             }
@@ -307,10 +336,15 @@ pub mod unit_tests {
                 let prover_proof_json = serde_json::to_string(&proof_obj).unwrap();
 
                 assert_eq!(
-                    validate_indy_proof(&setup.profile, &prover_proof_json, &proof_req_json)
-                        .await
-                        .unwrap_err()
-                        .kind(),
+                    validate_indy_proof(
+                        &setup.profile.inject_anoncreds_ledger_read(),
+                        &setup.profile.inject_anoncreds(),
+                        &prover_proof_json,
+                        &proof_req_json
+                    )
+                    .await
+                    .unwrap_err()
+                    .kind(),
                     AriesVcxErrorKind::InvalidProof
                 );
             }
@@ -331,8 +365,14 @@ pub mod integration_tests {
     #[ignore]
     async fn test_pool_prover_verify_proof() {
         SetupProfile::run(|setup| async move {
-            let (schemas, cred_defs, proof_req, proof) =
-                create_indy_proof(&setup.profile, &setup.profile, &setup.institution_did).await;
+            let (schemas, cred_defs, proof_req, proof) = create_indy_proof(
+                &setup.profile.inject_anoncreds(),
+                &setup.profile.inject_anoncreds(),
+                &setup.profile.inject_anoncreds_ledger_read(),
+                &setup.profile.inject_anoncreds_ledger_write(),
+                &setup.institution_did,
+            )
+            .await;
 
             let anoncreds = Arc::clone(&setup.profile).inject_anoncreds();
             let proof_validation = anoncreds
@@ -349,8 +389,15 @@ pub mod integration_tests {
     #[ignore]
     async fn test_pool_prover_verify_proof_with_predicate_success_case() {
         SetupProfile::run(|setup| async move {
-            let (schemas, cred_defs, proof_req, proof) =
-                create_proof_with_predicate(&setup.profile, &setup.profile, &setup.institution_did, true).await;
+            let (schemas, cred_defs, proof_req, proof) = create_proof_with_predicate(
+                &setup.profile.inject_anoncreds(),
+                &setup.profile.inject_anoncreds(),
+                &setup.profile.inject_anoncreds_ledger_read(),
+                &setup.profile.inject_anoncreds_ledger_write(),
+                &setup.institution_did,
+                true,
+            )
+            .await;
 
             let anoncreds = Arc::clone(&setup.profile).inject_anoncreds();
             let proof_validation = anoncreds
@@ -367,8 +414,15 @@ pub mod integration_tests {
     #[ignore]
     async fn test_pool_prover_verify_proof_with_predicate_fail_case() {
         SetupProfile::run(|setup| async move {
-            let (schemas, cred_defs, proof_req, proof) =
-                create_proof_with_predicate(&setup.profile, &setup.profile, &setup.institution_did, false).await;
+            let (schemas, cred_defs, proof_req, proof) = create_proof_with_predicate(
+                &setup.profile.inject_anoncreds(),
+                &setup.profile.inject_anoncreds(),
+                &setup.profile.inject_anoncreds_ledger_read(),
+                &setup.profile.inject_anoncreds_ledger_write(),
+                &setup.institution_did,
+                false,
+            )
+            .await;
 
             let anoncreds = Arc::clone(&setup.profile).inject_anoncreds();
             anoncreds

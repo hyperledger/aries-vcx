@@ -44,10 +44,17 @@ pub async fn create_and_publish_schema(
         )
     })?;
     let profile = get_main_profile()?;
-    let schema = Schema::create(&profile, source_id, &issuer_did, &name, &version, &data)
-        .await?
-        .publish(&profile, None)
-        .await?;
+    let schema = Schema::create(
+        &profile.inject_anoncreds(),
+        source_id,
+        &issuer_did,
+        &name,
+        &version,
+        &data,
+    )
+    .await?
+    .publish(&profile.inject_anoncreds_ledger_write(), None)
+    .await?;
     std::thread::sleep(std::time::Duration::from_millis(100));
     debug!("created schema on ledger with id: {}", schema.get_schema_id());
 
@@ -63,7 +70,8 @@ pub async fn get_schema_attrs(source_id: String, schema_id: String) -> LibvcxRes
         schema_id
     );
     let profile = get_main_profile()?;
-    let schema = Schema::create_from_ledger_json(&profile, &source_id, &schema_id).await?;
+    let schema =
+        Schema::create_from_ledger_json(&profile.inject_anoncreds_ledger_read(), &source_id, &schema_id).await?;
     let schema_json = schema.to_string_versioned()?;
 
     let handle = SCHEMA_MAP
@@ -109,7 +117,7 @@ pub async fn update_state(schema_handle: u32) -> LibvcxResult<u32> {
     let pool_handle = get_main_pool_handle()?;
     let mut schema = SCHEMA_MAP.get_cloned(schema_handle)?;
     let profile = indy_handles_to_profile(wallet_handle, pool_handle);
-    let res = schema.update_state(&profile).await?;
+    let res = schema.update_state(&profile.inject_anoncreds_ledger_read()).await?;
     SCHEMA_MAP.insert(schema_handle, schema)?;
     Ok(res)
 }
@@ -166,8 +174,6 @@ pub mod test_utils {
 
 #[cfg(test)]
 pub mod tests {
-    #[cfg(feature = "pool_tests")]
-    use aries_vcx::common::ledger::transactions::add_new_did;
     #[cfg(feature = "pool_tests")]
     use aries_vcx::common::test_utils::create_and_write_test_schema;
     #[cfg(feature = "pool_tests")]
@@ -263,9 +269,13 @@ pub mod tests {
         SetupGlobalsWalletPoolAgency::run(|setup| async move {
             let profile = get_main_profile().unwrap();
 
-            let (schema_id, _) =
-                create_and_write_test_schema(&profile, &setup.setup.institution_did, constants::DEFAULT_SCHEMA_ATTRS)
-                    .await;
+            let (schema_id, _) = create_and_write_test_schema(
+                &profile.inject_anoncreds(),
+                &profile.inject_anoncreds_ledger_write(),
+                &setup.setup.institution_did,
+                constants::DEFAULT_SCHEMA_ATTRS,
+            )
+            .await;
 
             let (schema_handle, schema_attrs) = get_schema_attrs("id".to_string(), schema_id.clone()).await.unwrap();
 

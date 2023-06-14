@@ -75,7 +75,7 @@ impl ServiceCredentialsIssuer {
         };
         let connection = self.service_connections.get_by_id(&connection_id)?;
         issuer
-            .build_credential_offer_msg(&self.profile, offer_info, None)
+            .build_credential_offer_msg(&self.profile.inject_anoncreds(), offer_info, None)
             .await?;
 
         let wallet = self.profile.inject_wallet();
@@ -124,7 +124,9 @@ impl ServiceCredentialsIssuer {
             Box::pin(async move { connection.send_message(&wallet, &msg, &HttpClient).await })
         });
 
-        issuer.send_credential(&self.profile, send_closure).await?;
+        issuer
+            .send_credential(&self.profile.inject_anoncreds(), send_closure)
+            .await?;
         self.creds_issuer
             .insert(&issuer.get_thread_id()?, IssuerWrapper::new(issuer, &connection_id))?;
         Ok(())

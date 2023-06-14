@@ -3,6 +3,9 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use agency_client::agency_client::AgencyClient;
+use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
+use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
+use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use messages::msg_fields::protocols::present_proof::ack::AckPresentation;
 use messages::msg_fields::protocols::present_proof::present::Presentation;
 use messages::msg_fields::protocols::present_proof::propose::PresentationPreview;
@@ -51,10 +54,9 @@ impl Prover {
         self.prover_sm.get_presentation_status()
     }
 
-    pub async fn retrieve_credentials(&self, profile: &Arc<dyn Profile>) -> VcxResult<RetrievedCredentials> {
+    pub async fn retrieve_credentials(&self, anoncreds: &Arc<dyn BaseAnonCreds>) -> VcxResult<RetrievedCredentials> {
         trace!("Prover::retrieve_credentials >>>");
         let presentation_request = self.presentation_request_data()?;
-        let anoncreds = Arc::clone(profile).inject_anoncreds();
         let json_retrieved_credentials = anoncreds
             .prover_get_credentials_for_proof_req(&presentation_request)
             .await?;
@@ -64,7 +66,8 @@ impl Prover {
 
     pub async fn generate_presentation(
         &mut self,
-        profile: &Arc<dyn Profile>,
+        ledger: &Arc<dyn AnoncredsLedgerRead>,
+        anoncreds: &Arc<dyn BaseAnonCreds>,
         credentials: SelectedCredentials,
         self_attested_attrs: HashMap<String, String>,
     ) -> VcxResult<()> {
@@ -76,7 +79,7 @@ impl Prover {
         self.prover_sm = self
             .prover_sm
             .clone()
-            .generate_presentation(profile, credentials, self_attested_attrs)
+            .generate_presentation(ledger, anoncreds, credentials, self_attested_attrs)
             .await?;
         Ok(())
     }
@@ -127,12 +130,13 @@ impl Prover {
 
     pub async fn handle_message(
         &mut self,
-        profile: &Arc<dyn Profile>,
+        ledger: &Arc<dyn AnoncredsLedgerRead>,
+        anoncreds: &Arc<dyn BaseAnonCreds>,
         message: ProverMessages,
         send_message: Option<SendClosure>,
     ) -> VcxResult<()> {
         trace!("Prover::handle_message >>> message: {:?}", message);
-        self.step(profile, message, send_message).await
+        self.step(ledger, anoncreds, message, send_message).await
     }
 
     pub fn presentation_request_data(&self) -> VcxResult<String> {
@@ -173,11 +177,16 @@ impl Prover {
 
     pub async fn step(
         &mut self,
-        profile: &Arc<dyn Profile>,
+        ledger: &Arc<dyn AnoncredsLedgerRead>,
+        anoncreds: &Arc<dyn BaseAnonCreds>,
         message: ProverMessages,
         send_message: Option<SendClosure>,
     ) -> VcxResult<()> {
-        self.prover_sm = self.prover_sm.clone().step(profile, message, send_message).await?;
+        self.prover_sm = self
+            .prover_sm
+            .clone()
+            .step(ledger, anoncreds, message, send_message)
+            .await?;
         Ok(())
     }
 
@@ -229,7 +238,9 @@ impl Prover {
 
     pub async fn update_state(
         &mut self,
-        profile: &Arc<dyn Profile>,
+        ledger: &Arc<dyn AnoncredsLedgerRead>,
+        anoncreds: &Arc<dyn BaseAnonCreds>,
+        wallet: &Arc<dyn BaseWallet>,
         agency_client: &AgencyClient,
         connection: &MediatedConnection,
     ) -> VcxResult<ProverState> {
@@ -237,11 +248,11 @@ impl Prover {
         if !self.progressable_by_message() {
             return Ok(self.get_state());
         }
-        let send_message = connection.send_message_closure(profile).await?;
+        let send_message = connection.send_message_closure(Arc::clone(wallet)).await?;
 
         let messages = connection.get_messages(agency_client).await?;
         if let Some((uid, msg)) = self.find_message_to_handle(messages) {
-            self.step(profile, msg.into(), Some(send_message)).await?;
+            self.step(ledger, anoncreds, msg.into(), Some(send_message)).await?;
             connection.update_message_status(&uid, agency_client).await?;
         }
         Ok(self.get_state())

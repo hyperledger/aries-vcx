@@ -2,6 +2,8 @@ use std::collections::HashMap;
 use std::fmt;
 use std::sync::Arc;
 
+use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
+use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
 use chrono::Utc;
 use messages::decorators::thread::Thread;
 use messages::decorators::timing::Timing;
@@ -197,7 +199,8 @@ impl HolderSM {
 
     pub async fn handle_message(
         self,
-        profile: &Arc<dyn Profile>,
+        ledger: &Arc<dyn AnoncredsLedgerRead>,
+        anoncreds: &Arc<dyn BaseAnonCreds>,
         cim: CredentialIssuanceAction,
         send_message: Option<SendClosure>,
     ) -> VcxResult<HolderSM> {
@@ -218,7 +221,7 @@ impl HolderSM {
                     AriesVcxErrorKind::InvalidState,
                     "Attempted to call undefined send_message callback",
                 ))?;
-                self.send_request(profile, my_pw_did, send_message).await?
+                self.send_request(ledger, anoncreds, my_pw_did, send_message).await?
             }
             CredentialIssuanceAction::CredentialOfferReject(comment) => {
                 let send_message = send_message.ok_or(AriesVcxError::from_msg(
@@ -232,7 +235,8 @@ impl HolderSM {
                     AriesVcxErrorKind::InvalidState,
                     "Attempted to call undefined send_message callback",
                 ))?;
-                self.receive_credential(profile, credential, send_message).await?
+                self.receive_credential(ledger, anoncreds, credential, send_message)
+                    .await?
             }
             CredentialIssuanceAction::ProblemReport(problem_report) => self.receive_problem_report(problem_report)?,
             _ => self,
@@ -281,15 +285,18 @@ impl HolderSM {
         Ok(Self { state, ..self })
     }
 
-    pub async fn send_request(
+    pub async fn send_request<'a>(
         self,
-        profile: &Arc<dyn Profile>,
+        ledger: &'a Arc<dyn AnoncredsLedgerRead>,
+        anoncreds: &'a Arc<dyn BaseAnonCreds>,
         my_pw_did: String,
         send_message: SendClosure,
     ) -> VcxResult<Self> {
         let state = match self.state {
             HolderFullState::OfferReceived(state_data) => {
-                match _make_credential_request(profile, self.thread_id.clone(), my_pw_did, &state_data.offer).await {
+                match _make_credential_request(ledger, anoncreds, self.thread_id.clone(), my_pw_did, &state_data.offer)
+                    .await
+                {
                     Ok((cred_request, req_meta, cred_def_json)) => {
                         send_message(cred_request.into()).await?;
                         HolderFullState::RequestSent((state_data, req_meta, cred_def_json).into())
@@ -328,15 +335,24 @@ impl HolderSM {
         Ok(Self { state, ..self })
     }
 
-    pub async fn receive_credential(
+    pub async fn receive_credential<'a>(
         self,
-        profile: &Arc<dyn Profile>,
+        ledger: &'a Arc<dyn AnoncredsLedgerRead>,
+        anoncreds: &'a Arc<dyn BaseAnonCreds>,
         credential: IssueCredential,
         send_message: SendClosure,
     ) -> VcxResult<Self> {
         let state = match self.state {
             HolderFullState::RequestSent(state_data) => {
-                match _store_credential(profile, &credential, &state_data.req_meta, &state_data.cred_def_json).await {
+                match _store_credential(
+                    ledger,
+                    anoncreds,
+                    &credential,
+                    &state_data.req_meta,
+                    &state_data.cred_def_json,
+                )
+                .await
+                {
                     Ok((cred_id, rev_reg_def_json)) => {
                         if credential.decorators.please_ack.is_some() {
                             let ack = build_credential_ack(&self.thread_id);
@@ -483,22 +499,26 @@ impl HolderSM {
         Ok(self.thread_id.clone())
     }
 
-    pub async fn is_revokable(&self, profile: &Arc<dyn Profile>) -> VcxResult<bool> {
+    pub async fn is_revokable(&self, ledger: &Arc<dyn AnoncredsLedgerRead>) -> VcxResult<bool> {
         match self.state {
             HolderFullState::Initial(ref state) => state.is_revokable(),
-            HolderFullState::ProposalSent(ref state) => state.is_revokable(profile).await,
-            HolderFullState::OfferReceived(ref state) => state.is_revokable(profile).await,
+            HolderFullState::ProposalSent(ref state) => state.is_revokable(ledger).await,
+            HolderFullState::OfferReceived(ref state) => state.is_revokable(ledger).await,
             HolderFullState::RequestSent(ref state) => state.is_revokable(),
             HolderFullState::Finished(ref state) => state.is_revokable(),
         }
     }
 
-    pub async fn is_revoked(&self, profile: &Arc<dyn Profile>) -> VcxResult<bool> {
-        if self.is_revokable(profile).await? {
+    pub async fn is_revoked(
+        &self,
+        ledger: &Arc<dyn AnoncredsLedgerRead>,
+        anoncreds: &Arc<dyn BaseAnonCreds>,
+    ) -> VcxResult<bool> {
+        if self.is_revokable(ledger).await? {
             let rev_reg_id = self.get_rev_reg_id()?;
             let cred_id = self.get_cred_id()?;
-            let rev_id = get_cred_rev_id(profile, &cred_id).await?;
-            is_cred_revoked(profile, &rev_reg_id, &rev_id).await
+            let rev_id = get_cred_rev_id(anoncreds, &cred_id).await?;
+            is_cred_revoked(ledger, &rev_reg_id, &rev_id).await
         } else {
             Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::InvalidState,
@@ -507,7 +527,7 @@ impl HolderSM {
         }
     }
 
-    pub async fn delete_credential(&self, profile: &Arc<dyn Profile>) -> VcxResult<()> {
+    pub async fn delete_credential(&self, anoncreds: &Arc<dyn BaseAnonCreds>) -> VcxResult<()> {
         trace!("Holder::delete_credential");
 
         match self.state {
@@ -516,7 +536,7 @@ impl HolderSM {
                     AriesVcxErrorKind::InvalidState,
                     "Cannot get credential: credential id not found",
                 ))?;
-                _delete_credential(profile, &cred_id).await
+                _delete_credential(anoncreds, &cred_id).await
             }
             _ => Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::NotReady,
@@ -566,7 +586,8 @@ fn _parse_rev_reg_id_from_credential(credential: &str) -> VcxResult<Option<Strin
 }
 
 async fn _store_credential(
-    profile: &Arc<dyn Profile>,
+    ledger: &Arc<dyn AnoncredsLedgerRead>,
+    anoncreds: &Arc<dyn BaseAnonCreds>,
     credential: &IssueCredential,
     req_meta: &str,
     cred_def_json: &str,
@@ -577,9 +598,6 @@ async fn _store_credential(
         req_meta,
         cred_def_json
     );
-
-    let ledger = Arc::clone(profile).inject_anoncreds_ledger_read();
-    let anoncreds = Arc::clone(profile).inject_anoncreds();
 
     let credential_json = get_attach_as_string!(&credential.content.credentials_attach);
 
@@ -603,10 +621,9 @@ async fn _store_credential(
     Ok((cred_id, rev_reg_def_json))
 }
 
-async fn _delete_credential(profile: &Arc<dyn Profile>, cred_id: &str) -> VcxResult<()> {
+async fn _delete_credential(anoncreds: &Arc<dyn BaseAnonCreds>, cred_id: &str) -> VcxResult<()> {
     trace!("Holder::_delete_credential >>> cred_id: {}", cred_id);
 
-    let anoncreds = Arc::clone(profile).inject_anoncreds();
     anoncreds
         .prover_delete_credential(cred_id)
         .await
@@ -614,13 +631,12 @@ async fn _delete_credential(profile: &Arc<dyn Profile>, cred_id: &str) -> VcxRes
 }
 
 pub async fn create_credential_request(
-    profile: &Arc<dyn Profile>,
+    ledger: &Arc<dyn AnoncredsLedgerRead>,
+    anoncreds: &Arc<dyn BaseAnonCreds>,
     cred_def_id: &str,
     prover_did: &str,
     cred_offer: &str,
 ) -> VcxResult<(String, String, String, String)> {
-    let ledger = Arc::clone(profile).inject_anoncreds_ledger_read();
-    let anoncreds = Arc::clone(profile).inject_anoncreds();
     let cred_def_json = ledger.get_cred_def(cred_def_id, None).await?;
 
     let master_secret_id = settings::DEFAULT_LINK_SECRET_ALIAS;
@@ -633,7 +649,8 @@ pub async fn create_credential_request(
 }
 
 async fn _make_credential_request(
-    profile: &Arc<dyn Profile>,
+    ledger: &Arc<dyn AnoncredsLedgerRead>,
+    anoncreds: &Arc<dyn BaseAnonCreds>,
     thread_id: String,
     my_pw_did: String,
     offer: &OfferCredential,
@@ -649,7 +666,7 @@ async fn _make_credential_request(
     trace!("Parsed cred offer attachment: {}", cred_offer);
     let cred_def_id = parse_cred_def_id_from_cred_offer(&cred_offer)?;
     let (req, req_meta, _cred_def_id, cred_def_json) =
-        create_credential_request(profile, &cred_def_id, &my_pw_did, &cred_offer).await?;
+        create_credential_request(ledger, anoncreds, &cred_def_id, &my_pw_did, &cred_offer).await?;
     trace!("Created cred def json: {}", cred_def_json);
     let credential_request_msg = build_credential_request_msg(req, &thread_id)?;
     Ok((credential_request_msg, req_meta, cred_def_json))

@@ -31,7 +31,7 @@ pub async fn create_proof(
     name: String,
 ) -> LibvcxResult<u32> {
     let profile = get_main_profile()?;
-    let presentation_request = PresentationRequestData::create(&profile, &name)
+    let presentation_request = PresentationRequestData::create(&profile.inject_anoncreds(), &name)
         .await?
         .set_requested_attributes_as_string(requested_attrs)?
         .set_requested_predicates_as_string(requested_predicates)?
@@ -70,14 +70,24 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
         })?;
         trace!("proof::update_state >>> updating using message {:?}", message);
         proof
-            .handle_message(&profile, message.into(), Some(send_message))
+            .handle_message(
+                &profile.inject_anoncreds_ledger_read(),
+                &profile.inject_anoncreds(),
+                message.into(),
+                Some(send_message),
+            )
             .await?;
     } else {
         let messages = mediated_connection::get_messages(connection_handle).await?;
         trace!("proof::update_state >>> found messages: {:?}", messages);
         if let Some((uid, message)) = proof.find_message_to_handle(messages) {
             proof
-                .handle_message(&profile, message.into(), Some(send_message))
+                .handle_message(
+                    &profile.inject_anoncreds_ledger_read(),
+                    &profile.inject_anoncreds(),
+                    message.into(),
+                    Some(send_message),
+                )
                 .await?;
             mediated_connection::update_message_status(connection_handle, &uid).await?;
         };
@@ -116,7 +126,12 @@ pub async fn update_state_nonmediated(handle: u32, connection_handle: u32, messa
         )
     })?;
     proof
-        .handle_message(&profile, message.into(), Some(send_message))
+        .handle_message(
+            &profile.inject_anoncreds_ledger_read(),
+            &profile.inject_anoncreds(),
+            message.into(),
+            Some(send_message),
+        )
         .await?;
 
     let state: u32 = proof.get_state().into();

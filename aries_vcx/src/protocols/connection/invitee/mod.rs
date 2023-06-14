@@ -2,6 +2,7 @@ pub mod states;
 
 use std::sync::Arc;
 
+use aries_vcx_core::ledger::base_ledger::IndyLedgerRead;
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use chrono::Utc;
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
@@ -60,12 +61,12 @@ impl InviteeConnection<Initial> {
     /// Will error out if a DidDoc could not be resolved from the [`Invitation`].
     pub async fn accept_invitation(
         self,
-        profile: &Arc<dyn Profile>,
+        indy_ledger: &Arc<dyn IndyLedgerRead>,
         invitation: AnyInvitation,
     ) -> VcxResult<InviteeConnection<Invited>> {
         trace!("Connection::accept_invitation >>> invitation: {:?}", &invitation);
 
-        let did_doc = into_did_doc(profile, &invitation).await?;
+        let did_doc = into_did_doc(indy_ledger, &invitation).await?;
         let state = Invited::new(did_doc, invitation);
 
         // Convert to `InvitedState`

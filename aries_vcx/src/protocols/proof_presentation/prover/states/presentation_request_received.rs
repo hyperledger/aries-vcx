@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
+use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
+use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
 use messages::msg_fields::protocols::present_proof::present::Presentation;
 use messages::msg_fields::protocols::present_proof::request::{
     RequestPresentation, RequestPresentationContent, RequestPresentationDecorators,
@@ -41,14 +43,22 @@ impl PresentationRequestReceived {
 
     pub async fn build_presentation(
         &self,
-        profile: &Arc<dyn Profile>,
+        ledger: &Arc<dyn AnoncredsLedgerRead>,
+        anoncreds: &Arc<dyn BaseAnonCreds>,
         credentials: &SelectedCredentials,
         self_attested_attrs: &HashMap<String, String>,
     ) -> VcxResult<String> {
         let proof_req_data_json =
             get_attach_as_string!(&self.presentation_request.content.request_presentations_attach);
 
-        generate_indy_proof(profile, credentials, self_attested_attrs, &proof_req_data_json).await
+        generate_indy_proof(
+            ledger,
+            anoncreds,
+            credentials,
+            self_attested_attrs,
+            &proof_req_data_json,
+        )
+        .await
     }
 }
 

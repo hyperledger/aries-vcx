@@ -64,7 +64,9 @@ impl Connection {
         let connection = VcxConnection::try_from(handler.clone())?;
 
         block_on(async {
-            let new_conn = connection.accept_invitation(&profile.inner, invitation).await?;
+            let new_conn = connection
+                .accept_invitation(&profile.inner.inject_indy_ledger_read(), invitation)
+                .await?;
             *handler = VcxGenericConnection::from(new_conn);
             Ok(())
         })

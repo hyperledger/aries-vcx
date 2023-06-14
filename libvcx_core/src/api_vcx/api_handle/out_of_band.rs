@@ -162,7 +162,10 @@ pub async fn connection_exists(handle: u32, conn_handles: &Vec<u32>) -> LibvcxRe
     let connections = conn_map.values().collect();
     let profile = get_main_profile()?;
 
-    if let Some(connection) = oob.connection_exists(&profile, &connections).await? {
+    if let Some(connection) = oob
+        .connection_exists(&profile.inject_indy_ledger_read(), &connections)
+        .await?
+    {
         if let Some((&handle, _)) = conn_map.iter().find(|(_, conn)| *conn == connection) {
             Ok((handle, true))
         } else {
@@ -183,14 +186,14 @@ pub async fn nonmediated_connection_exists(handle: u32, conn_handles: &[u32]) ->
         handle,
         conn_handles
     );
-    let profile = get_main_profile()?;
+    let indy_ledger = get_main_profile()?.inject_indy_ledger_read();
     let oob = OUT_OF_BAND_RECEIVER_MAP.get_cloned(handle)?;
 
     let filter_closure = |h: &u32| connection::get_cloned_generic_connection(h).ok().map(|c| (*h, c));
     let connections: HashMap<_, _> = conn_handles.iter().filter_map(filter_closure).collect();
 
     match oob
-        .nonmediated_connection_exists::<_, &u32>(&profile, &connections)
+        .nonmediated_connection_exists::<_, &u32>(&indy_ledger, &connections)
         .await
     {
         None => Ok((0, false)),
@@ -203,8 +206,8 @@ pub async fn build_connection(handle: u32) -> LibvcxResult<String> {
     let oob = OUT_OF_BAND_RECEIVER_MAP.get_cloned(handle)?;
     let invitation = AnyInvitation::Oob(oob.oob.clone());
     let profile = get_main_profile()?;
-    let ddo = into_did_doc(&profile, &invitation).await?;
-    oob.build_connection(&profile, &get_main_agency_client()?, ddo, false)
+    let ddo = into_did_doc(&profile.inject_indy_ledger_read(), &invitation).await?;
+    oob.build_connection(&profile.inject_wallet(), &get_main_agency_client()?, ddo, false)
         .await?
         .to_string()
         .map_err(|err| err.into())

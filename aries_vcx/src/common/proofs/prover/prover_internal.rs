@@ -1,6 +1,8 @@
 use std::{collections::HashMap, sync::Arc};
 
+use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
 use aries_vcx_core::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind};
+use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
 use serde_json::Value;
 
 use crate::errors::error::prelude::*;
@@ -25,14 +27,13 @@ pub struct CredInfoProver {
 }
 
 pub async fn build_schemas_json_prover(
-    profile: &Arc<dyn Profile>,
+    ledger: &Arc<dyn AnoncredsLedgerRead>,
     credentials_identifiers: &Vec<CredInfoProver>,
 ) -> VcxResult<String> {
     trace!(
         "build_schemas_json_prover >>> credentials_identifiers: {:?}",
         credentials_identifiers
     );
-    let ledger = Arc::clone(profile).inject_anoncreds_ledger_read();
     let mut rtn: Value = json!({});
 
     for cred_info in credentials_identifiers {
@@ -56,14 +57,13 @@ pub async fn build_schemas_json_prover(
 }
 
 pub async fn build_cred_defs_json_prover(
-    profile: &Arc<dyn Profile>,
+    ledger: &Arc<dyn AnoncredsLedgerRead>,
     credentials_identifiers: &Vec<CredInfoProver>,
 ) -> VcxResult<String> {
     trace!(
         "build_cred_defs_json_prover >>> credentials_identifiers: {:?}",
         credentials_identifiers
     );
-    let ledger = Arc::clone(profile).inject_anoncreds_ledger_read();
     let mut rtn: Value = json!({});
 
     for cred_info in credentials_identifiers {
@@ -133,15 +133,14 @@ fn _get_revocation_interval(attr_name: &str, proof_req: &ProofRequestData) -> Vc
 }
 
 pub async fn build_rev_states_json(
-    profile: &Arc<dyn Profile>,
+    ledger_read: &Arc<dyn AnoncredsLedgerRead>,
+    anoncreds: &Arc<dyn BaseAnonCreds>,
     credentials_identifiers: &mut Vec<CredInfoProver>,
 ) -> VcxResult<String> {
     trace!(
         "build_rev_states_json >> credentials_identifiers: {:?}",
         credentials_identifiers
     );
-    let ledger = Arc::clone(profile).inject_anoncreds_ledger_read();
-    let anoncreds = Arc::clone(profile).inject_anoncreds();
     let mut rtn: Value = json!({});
     let mut timestamps: HashMap<String, u64> = HashMap::new();
 
@@ -157,10 +156,10 @@ pub async fn build_rev_states_json(
                     (None, None)
                 };
 
-                let rev_reg_def_json = ledger.get_rev_reg_def_json(rev_reg_id).await?;
+                let rev_reg_def_json = ledger_read.get_rev_reg_def_json(rev_reg_id).await?;
 
                 let (rev_reg_id, rev_reg_delta_json, timestamp) =
-                    ledger.get_rev_reg_delta_json(rev_reg_id, from, to).await?;
+                    ledger_read.get_rev_reg_delta_json(rev_reg_id, from, to).await?;
 
                 let rev_state_json = anoncreds
                     .create_revocation_state(
@@ -258,12 +257,16 @@ pub mod pool_tests {
     #[tokio::test]
     #[ignore]
     async fn test_pool_build_rev_states_json_empty() {
-        SetupProfile::run(|_setup| async move {
+        SetupProfile::run(|setup| async move {
             // empty vector
             assert_eq!(
-                build_rev_states_json(&_setup.profile, Vec::new().as_mut())
-                    .await
-                    .unwrap(),
+                build_rev_states_json(
+                    &setup.profile.inject_anoncreds_ledger_read(),
+                    &setup.profile.inject_anoncreds(),
+                    Vec::new().as_mut()
+                )
+                .await
+                .unwrap(),
                 "{}".to_string()
             );
 
@@ -281,9 +284,13 @@ pub mod pool_tests {
                 revealed: None,
             };
             assert_eq!(
-                build_rev_states_json(&_setup.profile, vec![cred1].as_mut())
-                    .await
-                    .unwrap(),
+                build_rev_states_json(
+                    &setup.profile.inject_anoncreds_ledger_read(),
+                    &setup.profile.inject_anoncreds(),
+                    vec![cred1].as_mut()
+                )
+                .await
+                .unwrap(),
                 "{}".to_string()
             );
         })
@@ -296,8 +303,10 @@ pub mod pool_tests {
 pub mod unit_tests {
     use aries_vcx_core::INVALID_POOL_HANDLE;
 
-    use crate::common::test_utils::{indy_handles_to_profile, mock_profile};
+    use crate::core::profile::vdrtools_profile::VdrtoolsProfile;
     use crate::utils::devsetup::*;
+    use crate::utils::mockdata::profile::mock_anoncreds::MockAnoncreds;
+    use crate::utils::mockdata::profile::mock_ledger::MockLedger;
     use crate::utils::{
         constants::{
             ADDRESS_CRED_DEF_ID, ADDRESS_CRED_ID, ADDRESS_CRED_REV_ID, ADDRESS_REV_REG_ID, ADDRESS_SCHEMA_ID,
@@ -355,7 +364,8 @@ pub mod unit_tests {
         };
         let creds = vec![cred1, cred2];
 
-        let credential_def = build_cred_defs_json_prover(&mock_profile(), &creds).await.unwrap();
+        let ledger_read: Arc<dyn AnoncredsLedgerRead> = Arc::new(MockLedger {});
+        let credential_def = build_cred_defs_json_prover(&ledger_read, &creds).await.unwrap();
         assert!(credential_def.len() > 0);
         assert!(credential_def.contains(r#""id":"V4SGRU86Z58d6TV7PBUe6f:3:CL:47:tag1","schemaId":"47""#));
     }
@@ -363,7 +373,7 @@ pub mod unit_tests {
     #[tokio::test]
     async fn test_find_credential_def_fails() {
         SetupLibraryWallet::run(|setup| async move {
-            let profile = indy_handles_to_profile(setup.wallet_handle, INVALID_POOL_HANDLE);
+            let profile = Arc::new(VdrtoolsProfile::init(setup.wallet_handle, INVALID_POOL_HANDLE));
             let credential_ids = vec![CredInfoProver {
                 referent: "1".to_string(),
                 credential_referent: "2".to_string(),
@@ -376,7 +386,7 @@ pub mod unit_tests {
                 timestamp: None,
                 revealed: None,
             }];
-            let err_kind = build_cred_defs_json_prover(&profile, &credential_ids)
+            let err_kind = build_cred_defs_json_prover(&profile.inject_anoncreds_ledger_read(), &credential_ids)
                 .await
                 .unwrap_err()
                 .kind();
@@ -388,7 +398,7 @@ pub mod unit_tests {
     #[tokio::test]
     async fn test_find_schemas_fails() {
         SetupLibraryWallet::run(|setup| async move {
-            let profile = indy_handles_to_profile(setup.wallet_handle, INVALID_POOL_HANDLE);
+            let profile = Arc::new(VdrtoolsProfile::init(setup.wallet_handle, INVALID_POOL_HANDLE));
             let credential_ids = vec![CredInfoProver {
                 referent: "1".to_string(),
                 credential_referent: "2".to_string(),
@@ -403,7 +413,7 @@ pub mod unit_tests {
             }];
 
             assert_eq!(
-                build_schemas_json_prover(&profile, &credential_ids)
+                build_schemas_json_prover(&profile.inject_anoncreds_ledger_read(), &credential_ids)
                     .await
                     .unwrap_err()
                     .kind(),
@@ -417,8 +427,9 @@ pub mod unit_tests {
     async fn test_find_schemas() {
         let _setup = SetupMocks::init();
 
+        let ledger_read: Arc<dyn AnoncredsLedgerRead> = Arc::new(MockLedger {});
         assert_eq!(
-            build_schemas_json_prover(&mock_profile(), &Vec::new()).await.unwrap(),
+            build_schemas_json_prover(&ledger_read, &Vec::new()).await.unwrap(),
             "{}".to_string()
         );
 
@@ -448,7 +459,8 @@ pub mod unit_tests {
         };
         let creds = vec![cred1, cred2];
 
-        let schemas = build_schemas_json_prover(&mock_profile(), &creds).await.unwrap();
+        let ledger_read: Arc<dyn AnoncredsLedgerRead> = Arc::new(MockLedger {});
+        let schemas = build_schemas_json_prover(&ledger_read, &creds).await.unwrap();
         assert!(schemas.len() > 0);
         assert!(schemas.contains(r#""id":"2hoqvcwupRTUNkXn6ArYzs:2:test-licence:4.4.4","name":"test-licence""#));
     }
@@ -711,7 +723,9 @@ pub mod unit_tests {
             revealed: None,
         };
         let mut cred_info = vec![cred1];
-        let states = build_rev_states_json(&mock_profile(), cred_info.as_mut())
+        let anoncreds: Arc<dyn BaseAnonCreds> = Arc::new(MockAnoncreds {});
+        let ledger_read: Arc<dyn AnoncredsLedgerRead> = Arc::new(MockLedger {});
+        let states = build_rev_states_json(&ledger_read, &anoncreds, cred_info.as_mut())
             .await
             .unwrap();
         let rev_state_json: Value = serde_json::from_str(REV_STATE_JSON).unwrap();

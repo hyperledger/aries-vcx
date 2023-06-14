@@ -1,6 +1,7 @@
+use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
+use aries_vcx_core::ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite};
 use std::sync::Arc;
 
-use crate::core::profile::profile::Profile;
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use crate::global::settings;
 use crate::utils::constants::{DEFAULT_SERIALIZE_VERSION, SCHEMA_ID, SCHEMA_JSON};
@@ -33,7 +34,7 @@ pub struct Schema {
 
 impl Schema {
     pub async fn create(
-        profile: &Arc<dyn Profile>,
+        anoncreds: &Arc<dyn BaseAnonCreds>,
         source_id: &str,
         submitter_did: &str,
         name: &str,
@@ -68,7 +69,6 @@ impl Schema {
             )
         })?;
 
-        let anoncreds = Arc::clone(profile).inject_anoncreds();
         let (schema_id, schema_json) = anoncreds
             .issuer_create_schema(submitter_did, name, version, &data_str)
             .await?;
@@ -86,11 +86,10 @@ impl Schema {
     }
 
     pub async fn create_from_ledger_json(
-        profile: &Arc<dyn Profile>,
+        ledger: &Arc<dyn AnoncredsLedgerRead>,
         source_id: &str,
         schema_id: &str,
     ) -> VcxResult<Self> {
-        let ledger = Arc::clone(profile).inject_anoncreds_ledger_read();
         let schema_json = ledger.get_schema(schema_id, None).await?;
         let schema_data: SchemaData = serde_json::from_str(&schema_json).map_err(|err| {
             AriesVcxError::from_msg(
@@ -111,7 +110,11 @@ impl Schema {
         })
     }
 
-    pub async fn publish(self, profile: &Arc<dyn Profile>, endorser_did: Option<String>) -> VcxResult<Self> {
+    pub async fn publish(
+        self,
+        ledger: &Arc<dyn AnoncredsLedgerWrite>,
+        endorser_did: Option<String>,
+    ) -> VcxResult<Self> {
         trace!("Schema::publish >>>");
 
         if settings::indy_mocks_enabled() {
@@ -121,7 +124,6 @@ impl Schema {
             });
         }
 
-        let ledger = Arc::clone(profile).inject_anoncreds_ledger_write();
         ledger
             .publish_schema(&self.schema_json, &self.submitter_did, endorser_did)
             .await?;
@@ -152,19 +154,17 @@ impl Schema {
             .map_err(|err: AriesVcxError| err.extend("Cannot deserialize Schema"))
     }
 
-    pub async fn update_state(&mut self, profile: &Arc<dyn Profile>) -> VcxResult<u32> {
-        let ledger = Arc::clone(profile).inject_anoncreds_ledger_read();
+    pub async fn update_state(&mut self, ledger: &Arc<dyn AnoncredsLedgerRead>) -> VcxResult<u32> {
         if ledger.get_schema(&self.schema_id, None).await.is_ok() {
             self.state = PublicEntityStateType::Published
         }
         Ok(self.state as u32)
     }
 
-    pub async fn get_schema_json(&self, profile: &Arc<dyn Profile>) -> VcxResult<String> {
+    pub async fn get_schema_json(&self, ledger: &Arc<dyn AnoncredsLedgerRead>) -> VcxResult<String> {
         if !self.schema_json.is_empty() {
             Ok(self.schema_json.clone())
         } else {
-            let ledger = Arc::clone(profile).inject_anoncreds_ledger_read();
             Ok(ledger.get_schema(&self.schema_id, None).await?)
         }
     }

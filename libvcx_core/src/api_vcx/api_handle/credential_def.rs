@@ -27,7 +27,14 @@ pub async fn create(source_id: String, schema_id: String, tag: String, support_r
             )
         })?;
     let profile = get_main_profile()?;
-    let cred_def = CredentialDef::create(&profile, source_id, config, support_revocation).await?;
+    let cred_def = CredentialDef::create(
+        &profile.inject_anoncreds_ledger_read(),
+        &profile.inject_anoncreds(),
+        source_id,
+        config,
+        support_revocation,
+    )
+    .await?;
     let handle = CREDENTIALDEF_MAP.add(cred_def)?;
     Ok(handle)
 }
@@ -36,7 +43,12 @@ pub async fn publish(handle: u32) -> LibvcxResult<()> {
     let mut cd = CREDENTIALDEF_MAP.get_cloned(handle)?;
     if !cd.was_published() {
         let profile = get_main_profile()?;
-        cd = cd.publish_cred_def(&profile).await?;
+        cd = cd
+            .publish_cred_def(
+                &profile.inject_anoncreds_ledger_read(),
+                &profile.inject_anoncreds_ledger_write(),
+            )
+            .await?;
     } else {
         info!("publish >>> Credential definition was already published")
     }
@@ -78,7 +90,7 @@ pub fn release_all() {
 pub async fn update_state(handle: u32) -> LibvcxResult<u32> {
     let mut cd = CREDENTIALDEF_MAP.get_cloned(handle)?;
     let profile = get_main_profile()?;
-    let res = cd.update_state(&profile).await?;
+    let res = cd.update_state(&profile.inject_anoncreds_ledger_read()).await?;
     CREDENTIALDEF_MAP.insert(handle, cd)?;
     Ok(res)
 }
@@ -165,7 +177,8 @@ pub mod tests {
         SetupGlobalsWalletPoolAgency::run(|setup| async move {
             let profile = get_main_profile().unwrap();
             let (schema_id, _) = create_and_write_test_schema(
-                &profile,
+                &profile.inject_anoncreds(),
+                &profile.inject_anoncreds_ledger_write(),
                 &setup.setup.institution_did,
                 utils::constants::DEFAULT_SCHEMA_ATTRS,
             )

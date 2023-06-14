@@ -7,6 +7,8 @@ use std::{collections::HashMap, sync::Arc};
 
 use crate::common::ledger::service_didsov::EndpointDidSov;
 use crate::handlers::util::AnyInvitation;
+use aries_vcx_core::ledger::base_ledger::{IndyLedgerRead, IndyLedgerWrite};
+use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use serde_json::Value;
 
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
@@ -64,23 +66,22 @@ pub struct ReplyDataV1 {
 const DID_KEY_PREFIX: &str = "did:key:";
 const ED25519_MULTIBASE_CODEC: [u8; 2] = [0xed, 0x01];
 
-pub async fn resolve_service(profile: &Arc<dyn Profile>, service: &OobService) -> VcxResult<AriesService> {
+pub async fn resolve_service(indy_ledger: &Arc<dyn IndyLedgerRead>, service: &OobService) -> VcxResult<AriesService> {
     match service {
         OobService::AriesService(service) => Ok(service.clone()),
-        OobService::Did(did) => get_service(profile, did).await,
+        OobService::Did(did) => get_service(indy_ledger, did).await,
     }
 }
 
 pub async fn add_new_did(
-    profile: &Arc<dyn Profile>,
+    wallet: &Arc<dyn BaseWallet>,
+    indy_ledger_write: &Arc<dyn IndyLedgerWrite>,
     submitter_did: &str,
     role: Option<&str>,
 ) -> VcxResult<(String, String)> {
-    let (did, verkey) = profile.inject_wallet().create_and_store_my_did(None, None).await?;
+    let (did, verkey) = wallet.create_and_store_my_did(None, None).await?;
 
-    let ledger = Arc::clone(profile).inject_indy_ledger_write();
-
-    let res = ledger
+    let res = indy_ledger_write
         .publish_nym(submitter_did, &did, Some(&verkey), None, role)
         .await?;
     check_response(&res)?;
@@ -88,12 +89,12 @@ pub async fn add_new_did(
     Ok((did, verkey))
 }
 
-pub async fn into_did_doc(profile: &Arc<dyn Profile>, invitation: &AnyInvitation) -> VcxResult<AriesDidDoc> {
+pub async fn into_did_doc(indy_ledger: &Arc<dyn IndyLedgerRead>, invitation: &AnyInvitation) -> VcxResult<AriesDidDoc> {
     let mut did_doc: AriesDidDoc = AriesDidDoc::default();
     let (service_endpoint, recipient_keys, routing_keys) = match invitation {
         AnyInvitation::Con(Invitation::Public(invitation)) => {
             did_doc.set_id(invitation.content.did.to_string());
-            let service = get_service(profile, &invitation.content.did)
+            let service = get_service(indy_ledger, &invitation.content.did)
                 .await
                 .unwrap_or_else(|err| {
                     error!("Failed to obtain service definition from the ledger: {}", err);
@@ -117,7 +118,7 @@ pub async fn into_did_doc(profile: &Arc<dyn Profile>, invitation: &AnyInvitation
         }
         AnyInvitation::Oob(invitation) => {
             did_doc.set_id(invitation.id.clone());
-            let service = resolve_service(profile, &invitation.content.services[0])
+            let service = resolve_service(indy_ledger, &invitation.content.services[0])
                 .await
                 .unwrap_or_else(|err| {
                     error!("Failed to obtain service definition from the ledger: {}", err);
@@ -184,18 +185,17 @@ fn normalize_keys_as_naked(keys_list: Vec<String>) -> VcxResult<Vec<String>> {
     Ok(result)
 }
 
-pub async fn get_service(profile: &Arc<dyn Profile>, did: &String) -> VcxResult<AriesService> {
+pub async fn get_service(ledger: &Arc<dyn IndyLedgerRead>, did: &String) -> VcxResult<AriesService> {
     let did_raw = did.to_string();
     let did_raw = match did_raw.rsplit_once(':') {
         None => did_raw,
         Some((_, value)) => value.to_string(),
     };
-    let ledger = Arc::clone(profile).inject_indy_ledger_read();
     let attr_resp = ledger.get_attr(&did_raw, "endpoint").await?;
     let data = get_data_from_response(&attr_resp)?;
     if data["endpoint"].is_object() {
         let endpoint: EndpointDidSov = serde_json::from_value(data["endpoint"].clone())?;
-        let recipient_keys = vec![get_verkey_from_ledger(profile, &did_raw).await?];
+        let recipient_keys = vec![get_verkey_from_ledger(ledger, &did_raw).await?];
         let endpoint_url = endpoint.endpoint;
 
         return Ok(AriesService::create()
@@ -203,12 +203,14 @@ pub async fn get_service(profile: &Arc<dyn Profile>, did: &String) -> VcxResult<
             .set_service_endpoint(endpoint_url)
             .set_routing_keys(endpoint.routing_keys.unwrap_or_default()));
     }
-    parse_legacy_endpoint_attrib(profile, &did_raw).await
+    parse_legacy_endpoint_attrib(ledger, &did_raw).await
 }
 
-pub async fn parse_legacy_endpoint_attrib(profile: &Arc<dyn Profile>, did_raw: &str) -> VcxResult<AriesService> {
-    let ledger = Arc::clone(profile).inject_indy_ledger_read();
-    let attr_resp = ledger.get_attr(did_raw, "service").await?;
+pub async fn parse_legacy_endpoint_attrib(
+    indy_ledger: &Arc<dyn IndyLedgerRead>,
+    did_raw: &str,
+) -> VcxResult<AriesService> {
+    let attr_resp = indy_ledger.get_attr(did_raw, "service").await?;
     let data = get_data_from_response(&attr_resp)?;
     let ser_service = match data["service"].as_str() {
         Some(ser_service) => ser_service.to_string(),
@@ -225,30 +227,34 @@ pub async fn parse_legacy_endpoint_attrib(profile: &Arc<dyn Profile>, did_raw: &
     })
 }
 
-pub async fn write_endpoint_legacy(profile: &Arc<dyn Profile>, did: &str, service: &AriesService) -> VcxResult<String> {
+pub async fn write_endpoint_legacy(
+    indy_ledger_write: &Arc<dyn IndyLedgerWrite>,
+    did: &str,
+    service: &AriesService,
+) -> VcxResult<String> {
     let attrib_json = json!({ "service": service }).to_string();
-    let ledger = Arc::clone(profile).inject_indy_ledger_write();
-    let res = ledger.add_attr(did, &attrib_json).await?;
+    let res = indy_ledger_write.add_attr(did, &attrib_json).await?;
     check_response(&res)?;
     Ok(res)
 }
 
-pub async fn write_endpoint(profile: &Arc<dyn Profile>, did: &str, service: &EndpointDidSov) -> VcxResult<String> {
+pub async fn write_endpoint(
+    indy_ledger_write: &Arc<dyn IndyLedgerWrite>,
+    did: &str,
+    service: &EndpointDidSov,
+) -> VcxResult<String> {
     let attrib_json = json!({ "endpoint": service }).to_string();
-    let ledger = Arc::clone(profile).inject_indy_ledger_write();
-    let res = ledger.add_attr(did, &attrib_json).await?;
+    let res = indy_ledger_write.add_attr(did, &attrib_json).await?;
     check_response(&res)?;
     Ok(res)
 }
 
-pub async fn add_attr(profile: &Arc<dyn Profile>, did: &str, attr: &str) -> VcxResult<()> {
-    let ledger = Arc::clone(profile).inject_indy_ledger_write();
-    let res = ledger.add_attr(did, &attr).await?;
+pub async fn add_attr(indy_ledger_write: &Arc<dyn IndyLedgerWrite>, did: &str, attr: &str) -> VcxResult<()> {
+    let res = indy_ledger_write.add_attr(did, &attr).await?;
     check_response(&res)
 }
 
-pub async fn get_attr(profile: &Arc<dyn Profile>, did: &str, attr_name: &str) -> VcxResult<String> {
-    let ledger = Arc::clone(profile).inject_indy_ledger_read();
+pub async fn get_attr(ledger: &Arc<dyn IndyLedgerRead>, did: &str, attr_name: &str) -> VcxResult<String> {
     let attr_resp = ledger.get_attr(did, attr_name).await?;
     let data = get_data_from_response(&attr_resp)?;
     match data.get(attr_name) {
@@ -258,10 +264,8 @@ pub async fn get_attr(profile: &Arc<dyn Profile>, did: &str, attr_name: &str) ->
     }
 }
 
-pub async fn clear_attr(profile: &Arc<dyn Profile>, did: &str, attr_name: &str) -> VcxResult<String> {
-    let ledger = Arc::clone(profile).inject_indy_ledger_write();
-
-    ledger
+pub async fn clear_attr(indy_ledger_write: &Arc<dyn IndyLedgerWrite>, did: &str, attr_name: &str) -> VcxResult<String> {
+    indy_ledger_write
         .add_attr(did, &json!({ attr_name: Value::Null }).to_string())
         .await
         .map_err(|err| err.into())

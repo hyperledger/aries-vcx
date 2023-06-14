@@ -174,7 +174,7 @@ pub mod test_utils {
                 provision_cloud_agent(&mut agency_client, profile.inject_wallet(), &config_provision_agent)
                     .await
                     .unwrap();
-            let connection = MediatedConnection::create("faber", &profile, &agency_client, true)
+            let connection = MediatedConnection::create("faber", &profile.inject_wallet(), &agency_client, true)
                 .await
                 .unwrap();
 
@@ -182,9 +182,13 @@ pub mod test_utils {
             let service = AriesService::create()
                 .set_service_endpoint(agency_client.get_agency_url_full().unwrap())
                 .set_recipient_keys(vec![pairwise_info.pw_vk.clone()]);
-            write_endpoint_legacy(&profile, &config_issuer.institution_did, &service)
-                .await
-                .unwrap();
+            write_endpoint_legacy(
+                &profile.inject_indy_ledger_write(),
+                &config_issuer.institution_did,
+                &service,
+            )
+            .await
+            .unwrap();
 
             let rev_not_sender = RevocationNotificationSender::build();
 
@@ -215,7 +219,7 @@ pub mod test_utils {
             let version: String = String::from("1.0");
 
             self.schema = Schema::create(
-                &self.profile,
+                &self.profile.inject_anoncreds(),
                 "",
                 &self.config_issuer.institution_did,
                 &name,
@@ -224,7 +228,7 @@ pub mod test_utils {
             )
             .await
             .unwrap()
-            .publish(&self.profile, None)
+            .publish(&self.profile.inject_anoncreds_ledger_write(), None)
             .await
             .unwrap();
         }
@@ -237,12 +241,21 @@ pub mod test_utils {
                 .build()
                 .unwrap();
 
-            self.cred_def = CredentialDef::create(&self.profile, String::from("test_cred_def"), config, false)
-                .await
-                .unwrap()
-                .publish_cred_def(&self.profile)
-                .await
-                .unwrap();
+            self.cred_def = CredentialDef::create(
+                &self.profile.inject_anoncreds_ledger_read(),
+                &self.profile.inject_anoncreds(),
+                String::from("test_cred_def"),
+                config,
+                false,
+            )
+            .await
+            .unwrap()
+            .publish_cred_def(
+                &self.profile.inject_anoncreds_ledger_read(),
+                &self.profile.inject_anoncreds_ledger_write(),
+            )
+            .await
+            .unwrap();
         }
 
         pub async fn create_presentation_request(&self) -> Verifier {
@@ -253,7 +266,7 @@ pub mod test_utils {
                 {"name": "empty_param", "restrictions": {"attr::empty_param::value": ""}}
             ])
             .to_string();
-            let presentation_request_data = PresentationRequestData::create(&self.profile, "1")
+            let presentation_request_data = PresentationRequestData::create(&self.profile.inject_anoncreds(), "1")
                 .await
                 .unwrap()
                 .set_requested_attributes_as_string(requested_attrs)
@@ -263,11 +276,11 @@ pub mod test_utils {
 
         pub async fn create_invite(&mut self) -> String {
             self.connection
-                .connect(&self.profile, &self.agency_client, None)
+                .connect(&self.profile.inject_wallet(), &self.agency_client, None)
                 .await
                 .unwrap();
             self.connection
-                .find_message_and_update_state(&self.profile, &self.agency_client)
+                .find_message_and_update_state(&self.profile.inject_wallet(), &self.agency_client)
                 .await
                 .unwrap();
             assert_eq!(
@@ -287,7 +300,7 @@ pub mod test_utils {
 
         pub async fn update_state(&mut self, expected_state: u32) {
             self.connection
-                .find_message_and_update_state(&self.profile, &self.agency_client)
+                .find_message_and_update_state(&self.profile.inject_wallet(), &self.agency_client)
                 .await
                 .unwrap();
             assert_eq!(expected_state, u32::from(self.connection.get_state()));
@@ -295,26 +308,29 @@ pub mod test_utils {
 
         pub async fn handle_messages(&mut self) {
             self.connection
-                .find_and_handle_message(&self.profile, &self.agency_client)
+                .find_and_handle_message(&self.profile.inject_wallet(), &self.agency_client)
                 .await
                 .unwrap();
         }
 
         pub async fn respond_messages(&mut self, expected_state: u32) {
             self.connection
-                .find_and_handle_message(&self.profile, &self.agency_client)
+                .find_and_handle_message(&self.profile.inject_wallet(), &self.agency_client)
                 .await
                 .unwrap();
             assert_eq!(expected_state, u32::from(self.connection.get_state()));
         }
 
         pub async fn ping(&mut self) {
-            self.connection.send_ping(&self.profile, None).await.unwrap();
+            self.connection
+                .send_ping(self.profile.inject_wallet(), None)
+                .await
+                .unwrap();
         }
 
         pub async fn discovery_features(&mut self) {
             self.connection
-                .send_discovery_query(&self.profile, None, None)
+                .send_discovery_query(&self.profile.inject_wallet(), None, None)
                 .await
                 .unwrap();
         }
@@ -341,15 +357,25 @@ pub mod test_utils {
             };
             self.issuer_credential = Issuer::create("alice_degree").unwrap();
             self.issuer_credential
-                .build_credential_offer_msg(&self.profile, offer_info, None)
+                .build_credential_offer_msg(&self.profile.inject_anoncreds(), offer_info, None)
                 .await
                 .unwrap();
             self.issuer_credential
-                .send_credential_offer(self.connection.send_message_closure(&self.profile).await.unwrap())
+                .send_credential_offer(
+                    self.connection
+                        .send_message_closure(self.profile.inject_wallet())
+                        .await
+                        .unwrap(),
+                )
                 .await
                 .unwrap();
             self.issuer_credential
-                .update_state(&self.profile, &self.agency_client, &self.connection)
+                .update_state(
+                    &self.profile.inject_wallet(),
+                    &self.profile.inject_anoncreds(),
+                    &self.agency_client,
+                    &self.connection,
+                )
                 .await
                 .unwrap();
             assert_eq!(IssuerState::OfferSent, self.issuer_credential.get_state());
@@ -357,20 +383,33 @@ pub mod test_utils {
 
         pub async fn send_credential(&mut self) {
             self.issuer_credential
-                .update_state(&self.profile, &self.agency_client, &self.connection)
+                .update_state(
+                    &self.profile.inject_wallet(),
+                    &self.profile.inject_anoncreds(),
+                    &self.agency_client,
+                    &self.connection,
+                )
                 .await
                 .unwrap();
             assert_eq!(IssuerState::RequestReceived, self.issuer_credential.get_state());
 
             self.issuer_credential
                 .send_credential(
-                    &self.profile,
-                    self.connection.send_message_closure(&self.profile).await.unwrap(),
+                    &self.profile.inject_anoncreds(),
+                    self.connection
+                        .send_message_closure(self.profile.inject_wallet())
+                        .await
+                        .unwrap(),
                 )
                 .await
                 .unwrap();
             self.issuer_credential
-                .update_state(&self.profile, &self.agency_client, &self.connection)
+                .update_state(
+                    &self.profile.inject_wallet(),
+                    &self.profile.inject_anoncreds(),
+                    &self.agency_client,
+                    &self.connection,
+                )
                 .await
                 .unwrap();
             assert_eq!(IssuerState::CredentialSent, self.issuer_credential.get_state());
@@ -381,11 +420,22 @@ pub mod test_utils {
             assert_eq!(VerifierState::PresentationRequestSet, self.verifier.get_state());
 
             self.verifier
-                .send_presentation_request(self.connection.send_message_closure(&self.profile).await.unwrap())
+                .send_presentation_request(
+                    self.connection
+                        .send_message_closure(self.profile.inject_wallet())
+                        .await
+                        .unwrap(),
+                )
                 .await
                 .unwrap();
             self.verifier
-                .update_state(&self.profile, &self.agency_client, &self.connection)
+                .update_state(
+                    &self.profile.inject_wallet(),
+                    &self.profile.inject_anoncreds_ledger_read(),
+                    &self.profile.inject_anoncreds(),
+                    &self.agency_client,
+                    &self.connection,
+                )
                 .await
                 .unwrap();
 
@@ -403,7 +453,13 @@ pub mod test_utils {
             expected_verification_status: PresentationVerificationStatus,
         ) {
             self.verifier
-                .update_state(&self.profile, &self.agency_client, &self.connection)
+                .update_state(
+                    &self.profile.inject_wallet(),
+                    &self.profile.inject_anoncreds_ledger_read(),
+                    &self.profile.inject_anoncreds(),
+                    &self.agency_client,
+                    &self.connection,
+                )
                 .await
                 .unwrap();
             assert_eq!(expected_state, self.verifier.get_state());
@@ -417,7 +473,11 @@ pub mod test_utils {
                 .cred_rev_id(self.issuer_credential.get_rev_id().unwrap())
                 .build()
                 .unwrap();
-            let send_message = self.connection.send_message_closure(&self.profile).await.unwrap();
+            let send_message = self
+                .connection
+                .send_message_closure(self.profile.inject_wallet())
+                .await
+                .unwrap();
             self.rev_not_sender = self
                 .rev_not_sender
                 .clone()
@@ -533,7 +593,7 @@ pub mod test_utils {
                 provision_cloud_agent(&mut agency_client, profile.inject_wallet(), &config_provision_agent)
                     .await
                     .unwrap();
-            let connection = MediatedConnection::create("tmp_empoty", &profile, &agency_client, true)
+            let connection = MediatedConnection::create("tmp_empoty", &profile.inject_wallet(), &agency_client, true)
                 .await
                 .unwrap();
             let alice = Alice {
@@ -552,17 +612,25 @@ pub mod test_utils {
 
         pub async fn accept_invite(&mut self, invite: &str) {
             let invite: AnyInvitation = serde_json::from_str(invite).unwrap();
-            let ddo = into_did_doc(&self.profile, &invite).await.unwrap();
-            self.connection =
-                MediatedConnection::create_with_invite("faber", &self.profile, &self.agency_client, invite, ddo, true)
-                    .await
-                    .unwrap();
+            let ddo = into_did_doc(&self.profile.inject_indy_ledger_read(), &invite)
+                .await
+                .unwrap();
+            self.connection = MediatedConnection::create_with_invite(
+                "faber",
+                &self.profile.inject_wallet(),
+                &self.agency_client,
+                invite,
+                ddo,
+                true,
+            )
+            .await
+            .unwrap();
             self.connection
-                .connect(&self.profile, &self.agency_client, None)
+                .connect(&self.profile.inject_wallet(), &self.agency_client, None)
                 .await
                 .unwrap();
             self.connection
-                .find_message_and_update_state(&self.profile, &self.agency_client)
+                .find_message_and_update_state(&self.profile.inject_wallet(), &self.agency_client)
                 .await
                 .unwrap();
             assert_eq!(
@@ -573,7 +641,7 @@ pub mod test_utils {
 
         pub async fn update_state(&mut self, expected_state: u32) {
             self.connection
-                .find_message_and_update_state(&self.profile, &self.agency_client)
+                .find_message_and_update_state(&self.profile.inject_wallet(), &self.agency_client)
                 .await
                 .unwrap();
             assert_eq!(expected_state, u32::from(self.connection.get_state()));
@@ -581,14 +649,14 @@ pub mod test_utils {
 
         pub async fn handle_messages(&mut self) {
             self.connection
-                .find_and_handle_message(&self.profile, &self.agency_client)
+                .find_and_handle_message(&self.profile.inject_wallet(), &self.agency_client)
                 .await
                 .unwrap();
         }
 
         pub async fn respond_messages(&mut self, expected_state: u32) {
             self.connection
-                .find_and_handle_message(&self.profile, &self.agency_client)
+                .find_and_handle_message(&self.profile.inject_wallet(), &self.agency_client)
                 .await
                 .unwrap();
             assert_eq!(expected_state, u32::from(self.connection.get_state()));
@@ -633,9 +701,13 @@ pub mod test_utils {
             let pw_did = self.connection.pairwise_info().pw_did.to_string();
             self.credential
                 .send_request(
-                    &self.profile,
+                    &self.profile.inject_anoncreds_ledger_read(),
+                    &self.profile.inject_anoncreds(),
                     pw_did,
-                    self.connection.send_message_closure(&self.profile).await.unwrap(),
+                    self.connection
+                        .send_message_closure(self.profile.inject_wallet())
+                        .await
+                        .unwrap(),
                 )
                 .await
                 .unwrap();
@@ -644,7 +716,13 @@ pub mod test_utils {
 
         pub async fn accept_credential(&mut self) {
             self.credential
-                .update_state(&self.profile, &self.agency_client, &self.connection)
+                .update_state(
+                    &self.profile.inject_anoncreds_ledger_read(),
+                    &self.profile.inject_anoncreds(),
+                    &self.profile.inject_wallet(),
+                    &self.agency_client,
+                    &self.connection,
+                )
                 .await
                 .unwrap();
             assert_eq!(HolderState::Finished, self.credential.get_state());
@@ -695,7 +773,11 @@ pub mod test_utils {
         }
 
         pub async fn get_credentials_for_presentation(&mut self) -> SelectedCredentials {
-            let credentials = self.prover.retrieve_credentials(&self.profile).await.unwrap();
+            let credentials = self
+                .prover
+                .retrieve_credentials(&self.profile.inject_anoncreds())
+                .await
+                .unwrap();
 
             let mut use_credentials = SelectedCredentials {
                 credential_for_referent: HashMap::new(),
@@ -716,13 +798,23 @@ pub mod test_utils {
             let credentials = self.get_credentials_for_presentation().await;
 
             self.prover
-                .generate_presentation(&self.profile, credentials, HashMap::new())
+                .generate_presentation(
+                    &self.profile.inject_anoncreds_ledger_read(),
+                    &self.profile.inject_anoncreds(),
+                    credentials,
+                    HashMap::new(),
+                )
                 .await
                 .unwrap();
             assert_eq!(ProverState::PresentationPrepared, self.prover.get_state());
 
             self.prover
-                .send_presentation(self.connection.send_message_closure(&self.profile).await.unwrap())
+                .send_presentation(
+                    self.connection
+                        .send_message_closure(self.profile.inject_wallet())
+                        .await
+                        .unwrap(),
+                )
                 .await
                 .unwrap();
             assert_eq!(ProverState::PresentationSent, self.prover.get_state());
@@ -730,7 +822,13 @@ pub mod test_utils {
 
         pub async fn ensure_presentation_verified(&mut self) {
             self.prover
-                .update_state(&self.profile, &self.agency_client, &self.connection)
+                .update_state(
+                    &self.profile.inject_anoncreds_ledger_read(),
+                    &self.profile.inject_anoncreds(),
+                    &self.profile.inject_wallet(),
+                    &self.agency_client,
+                    &self.connection,
+                )
                 .await
                 .unwrap();
             assert_eq!(Status::Success.code(), self.prover.presentation_status());
@@ -738,8 +836,16 @@ pub mod test_utils {
 
         pub async fn receive_revocation_notification(&mut self, rev_not: Revoke) {
             let rev_reg_id = self.credential.get_rev_reg_id().unwrap();
-            let cred_rev_id = self.credential.get_cred_rev_id(&self.profile).await.unwrap();
-            let send_message = self.connection.send_message_closure(&self.profile).await.unwrap();
+            let cred_rev_id = self
+                .credential
+                .get_cred_rev_id(&self.profile.inject_anoncreds())
+                .await
+                .unwrap();
+            let send_message = self
+                .connection
+                .send_message_closure(self.profile.inject_wallet())
+                .await
+                .unwrap();
             let rev_not_receiver = RevocationNotificationReceiver::build(rev_reg_id, cred_rev_id)
                 .handle_revocation_notification(rev_not, send_message)
                 .await

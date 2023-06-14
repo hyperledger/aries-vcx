@@ -129,11 +129,25 @@ pub async fn update_state(credential_handle: u32, message: Option<&str>, connect
                 format!("Cannot update state: Message deserialization failed: {:?}", err),
             )
         })?;
-        credential.step(&profile, message.into(), Some(send_message)).await?;
+        credential
+            .step(
+                &profile.inject_anoncreds_ledger_read(),
+                &profile.inject_anoncreds(),
+                message.into(),
+                Some(send_message),
+            )
+            .await?;
     } else {
         let messages = mediated_connection::get_messages(connection_handle).await?;
         if let Some((uid, msg)) = credential.find_message_to_handle(messages) {
-            credential.step(&profile, msg.into(), Some(send_message)).await?;
+            credential
+                .step(
+                    &profile.inject_anoncreds_ledger_read(),
+                    &profile.inject_anoncreds(),
+                    msg.into(),
+                    Some(send_message),
+                )
+                .await?;
             mediated_connection::update_message_status(connection_handle, &uid).await?;
         }
     }
@@ -181,15 +195,17 @@ pub fn get_rev_reg_id(handle: u32) -> LibvcxResult<String> {
 pub async fn is_revokable(handle: u32) -> LibvcxResult<bool> {
     let credential = HANDLE_MAP.get_cloned(handle)?;
     let profile = get_main_profile()?;
-    credential.is_revokable(&profile).await.map_err(|err| err.into())
+    credential
+        .is_revokable(&profile.inject_anoncreds_ledger_read())
+        .await
+        .map_err(|err| err.into())
 }
 
 pub async fn delete_credential(handle: u32) -> LibvcxResult<()> {
     trace!("Credential::delete_credential >>> credential_handle: {}", handle);
     let credential = HANDLE_MAP.get_cloned(handle)?;
     let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
-
-    credential.delete_credential(&profile).await?;
+    credential.delete_credential(&profile.inject_anoncreds()).await?;
     HANDLE_MAP.release(handle)
 }
 
@@ -215,7 +231,14 @@ pub async fn send_credential_request(handle: u32, connection_handle: u32) -> Lib
     let my_pw_did = mediated_connection::get_pw_did(connection_handle)?;
     let send_message = mediated_connection::send_message_closure(connection_handle).await?;
     let profile = get_main_profile()?;
-    credential.send_request(&profile, my_pw_did, send_message).await?;
+    credential
+        .send_request(
+            &profile.inject_anoncreds_ledger_read(),
+            &profile.inject_anoncreds(),
+            my_pw_did,
+            send_message,
+        )
+        .await?;
     HANDLE_MAP.insert(handle, credential)
 }
 

@@ -1,3 +1,5 @@
+use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
+use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
 use std::sync::Arc;
 
 use crate::core::profile::profile::Profile;
@@ -22,8 +24,7 @@ pub fn verify_thread_id(thread_id: &str, message: &CredentialIssuanceAction) -> 
     Ok(())
 }
 
-pub async fn is_cred_def_revokable(profile: &Arc<dyn Profile>, cred_def_id: &str) -> VcxResult<bool> {
-    let ledger = Arc::clone(profile).inject_anoncreds_ledger_read();
+pub async fn is_cred_def_revokable(ledger: &Arc<dyn AnoncredsLedgerRead>, cred_def_id: &str) -> VcxResult<bool> {
     let cred_def_json = ledger.get_cred_def(cred_def_id, None).await.map_err(|err| {
         AriesVcxError::from_msg(
             AriesVcxErrorKind::InvalidLedgerResponse,

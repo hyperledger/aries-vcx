@@ -20,6 +20,8 @@ use crate::protocols::proof_presentation::prover::states::presentation_sent::Pre
 use crate::protocols::proof_presentation::prover::verify_thread_id;
 use crate::protocols::SendClosure;
 
+use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
+use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
 use chrono::Utc;
 use messages::decorators::thread::Thread;
 use messages::decorators::timing::Timing;
@@ -206,14 +208,15 @@ impl ProverSM {
 
     pub async fn generate_presentation(
         self,
-        profile: &Arc<dyn Profile>,
+        ledger: &Arc<dyn AnoncredsLedgerRead>,
+        anoncreds: &Arc<dyn BaseAnonCreds>,
         credentials: SelectedCredentials,
         self_attested_attrs: HashMap<String, String>,
     ) -> VcxResult<Self> {
         let state = match self.state {
             ProverFullState::PresentationRequestReceived(state) => {
                 match state
-                    .build_presentation(profile, &credentials, &self_attested_attrs)
+                    .build_presentation(ledger, anoncreds, &credentials, &self_attested_attrs)
                     .await
                 {
                     Ok(presentation) => {
@@ -340,7 +343,8 @@ impl ProverSM {
 
     pub async fn step(
         self,
-        profile: &Arc<dyn Profile>,
+        ledger: &Arc<dyn AnoncredsLedgerRead>,
+        anoncreds: &Arc<dyn BaseAnonCreds>,
         message: ProverMessages,
         send_message: Option<SendClosure>,
     ) -> VcxResult<ProverSM> {
@@ -388,7 +392,7 @@ impl ProverSM {
                 }
                 ProverMessages::SetPresentation(presentation) => self.set_presentation(presentation)?,
                 ProverMessages::PreparePresentation((credentials, self_attested_attrs)) => {
-                    self.generate_presentation(profile, credentials, self_attested_attrs)
+                    self.generate_presentation(ledger, anoncreds, credentials, self_attested_attrs)
                         .await?
                 }
                 ProverMessages::RejectPresentationRequest(reason) => {

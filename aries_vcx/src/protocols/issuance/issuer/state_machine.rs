@@ -7,6 +7,8 @@ use crate::handlers::util::{
     get_attach_as_string, make_attach_from_str, matches_opt_thread_id, matches_thread_id, AttachmentId, OfferInfo,
     Status,
 };
+use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
+use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
 use chrono::Utc;
 use messages::decorators::please_ack::PleaseAck;
 use messages::decorators::thread::Thread;
@@ -249,11 +251,11 @@ impl IssuerSM {
         }
     }
 
-    pub async fn is_revoked(&self, profile: &Arc<dyn Profile>) -> VcxResult<bool> {
+    pub async fn is_revoked(&self, ledger: &Arc<dyn AnoncredsLedgerRead>) -> VcxResult<bool> {
         if self.is_revokable() {
             let rev_reg_id = self.get_rev_reg_id()?;
             let rev_id = self.get_rev_id()?;
-            is_cred_revoked(profile, &rev_reg_id, &rev_id).await
+            is_cred_revoked(ledger, &rev_reg_id, &rev_id).await
         } else {
             Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::InvalidState,
@@ -466,11 +468,15 @@ impl IssuerSM {
         Ok(Self { state, ..self })
     }
 
-    pub async fn send_credential(self, profile: &Arc<dyn Profile>, send_message: SendClosure) -> VcxResult<Self> {
+    pub async fn send_credential(
+        self,
+        anoncreds: &Arc<dyn BaseAnonCreds>,
+        send_message: SendClosure,
+    ) -> VcxResult<Self> {
         let state = match self.state {
             IssuerFullState::RequestReceived(state_data) => {
                 match _create_credential(
-                    profile,
+                    anoncreds,
                     &state_data.request,
                     &state_data.rev_reg_id,
                     &state_data.tails_file,
@@ -535,7 +541,7 @@ impl IssuerSM {
 
     pub async fn handle_message(
         self,
-        profile: &Arc<dyn Profile>,
+        anoncreds: &Arc<dyn BaseAnonCreds>,
         cim: CredentialIssuanceAction,
         send_message: Option<SendClosure>,
     ) -> VcxResult<Self> {
@@ -549,7 +555,7 @@ impl IssuerSM {
                     AriesVcxErrorKind::InvalidState,
                     "Attempted to call undefined send_message callback",
                 ))?;
-                self.send_credential(profile, send_message).await?
+                self.send_credential(anoncreds, send_message).await?
             }
             CredentialIssuanceAction::CredentialAck(ack) => self.receive_ack(ack)?,
             CredentialIssuanceAction::ProblemReport(problem_report) => self.receive_problem_report(problem_report)?,
@@ -577,7 +583,7 @@ impl IssuerSM {
 }
 
 async fn _create_credential(
-    profile: &Arc<dyn Profile>,
+    anoncreds: &Arc<dyn BaseAnonCreds>,
     request: &RequestCredential,
     rev_reg_id: &Option<String>,
     tails_file: &Option<String>,
@@ -585,8 +591,6 @@ async fn _create_credential(
     cred_data: &str,
     thread_id: &str,
 ) -> VcxResult<(IssueCredential, Option<String>)> {
-    let anoncreds = Arc::clone(profile).inject_anoncreds();
-
     let offer = get_attach_as_string!(&offer.content.offers_attach);
 
     trace!("Issuer::_create_credential >>> request: {:?}, rev_reg_id: {:?}, tails_file: {:?}, offer: {}, cred_data: {}, thread_id: {}", request, rev_reg_id, tails_file, offer, cred_data, thread_id);

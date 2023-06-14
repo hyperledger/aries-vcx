@@ -49,8 +49,11 @@ impl ServiceMediatedConnections {
     }
 
     pub async fn create_invitation(&self) -> AgentResult<AnyInvitation> {
-        let mut connection = MediatedConnection::create("", &self.profile, &self.agency_client()?, true).await?;
-        connection.connect(&self.profile, &self.agency_client()?, None).await?;
+        let mut connection =
+            MediatedConnection::create("", &self.profile.inject_wallet(), &self.agency_client()?, true).await?;
+        connection
+            .connect(&self.profile.inject_wallet(), &self.agency_client()?, None)
+            .await?;
         let invite = connection
             .get_invite_details()
             .ok_or_else(|| AgentError::from_kind(AgentErrorKind::InviteDetails))?
@@ -61,19 +64,27 @@ impl ServiceMediatedConnections {
     }
 
     pub async fn receive_invitation(&self, invite: AnyInvitation) -> AgentResult<String> {
-        let ddo = into_did_doc(&self.profile, &invite).await?;
-        let connection =
-            MediatedConnection::create_with_invite("", &self.profile, &self.agency_client()?, invite, ddo, true)
-                .await?;
+        let ddo = into_did_doc(&self.profile.inject_indy_ledger_read(), &invite).await?;
+        let connection = MediatedConnection::create_with_invite(
+            "",
+            &self.profile.inject_wallet(),
+            &self.agency_client()?,
+            invite,
+            ddo,
+            true,
+        )
+        .await?;
         self.mediated_connections
             .insert(&connection.get_thread_id(), connection)
     }
 
     pub async fn send_request(&self, thread_id: &str) -> AgentResult<()> {
         let mut connection = self.mediated_connections.get(thread_id)?;
-        connection.connect(&self.profile, &self.agency_client()?, None).await?;
         connection
-            .find_message_and_update_state(&self.profile, &self.agency_client()?)
+            .connect(&self.profile.inject_wallet(), &self.agency_client()?, None)
+            .await?;
+        connection
+            .find_message_and_update_state(&self.profile.inject_wallet(), &self.agency_client()?)
             .await?;
         self.mediated_connections.insert(thread_id, connection)?;
         Ok(())
@@ -82,16 +93,16 @@ impl ServiceMediatedConnections {
     pub async fn accept_request(&self, thread_id: &str, request: Request) -> AgentResult<()> {
         let mut connection = self.mediated_connections.get(thread_id)?;
         connection
-            .process_request(&self.profile, &self.agency_client()?, request)
+            .process_request(&self.profile.inject_wallet(), &self.agency_client()?, request)
             .await?;
-        connection.send_response(&self.profile).await?;
+        connection.send_response(&self.profile.inject_wallet()).await?;
         self.mediated_connections.insert(thread_id, connection)?;
         Ok(())
     }
 
     pub async fn send_ping(&self, thread_id: &str) -> AgentResult<()> {
         let mut connection = self.mediated_connections.get(thread_id)?;
-        connection.send_ping(&self.profile, None).await?;
+        connection.send_ping(self.profile.inject_wallet(), None).await?;
         self.mediated_connections.insert(thread_id, connection)?;
         Ok(())
     }
@@ -103,7 +114,7 @@ impl ServiceMediatedConnections {
     pub async fn update_state(&self, thread_id: &str) -> AgentResult<ConnectionState> {
         let mut connection = self.mediated_connections.get(thread_id)?;
         connection
-            .find_message_and_update_state(&self.profile, &self.agency_client()?)
+            .find_message_and_update_state(&self.profile.inject_wallet(), &self.agency_client()?)
             .await?;
         self.mediated_connections.insert(thread_id, connection)?;
         Ok(self.mediated_connections.get(thread_id)?.get_state())

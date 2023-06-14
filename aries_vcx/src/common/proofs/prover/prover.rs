@@ -1,3 +1,5 @@
+use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
+use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -13,7 +15,8 @@ use crate::handlers::proof_presentation::types::SelectedCredentials;
 use crate::utils::mockdata::mock_settings::get_mock_generate_indy_proof;
 
 pub async fn generate_indy_proof(
-    profile: &Arc<dyn Profile>,
+    ledger: &Arc<dyn AnoncredsLedgerRead>,
+    anoncreds: &Arc<dyn BaseAnonCreds>,
     credentials: &SelectedCredentials,
     self_attested_attrs: &HashMap<String, String>,
     proof_req_data_json: &str,
@@ -31,8 +34,6 @@ pub async fn generate_indy_proof(
             return Ok(mocked_indy_proof);
         }
     }
-    let anoncreds = Arc::clone(profile).inject_anoncreds();
-
     let proof_request: ProofRequestData = serde_json::from_str(proof_req_data_json).map_err(|err| {
         AriesVcxError::from_msg(
             AriesVcxErrorKind::InvalidJson,
@@ -42,12 +43,12 @@ pub async fn generate_indy_proof(
 
     let mut credentials_identifiers = credential_def_identifiers(credentials, &proof_request)?;
 
-    let revoc_states_json = build_rev_states_json(profile, &mut credentials_identifiers).await?;
+    let revoc_states_json = build_rev_states_json(ledger, anoncreds, &mut credentials_identifiers).await?;
     let requested_credentials =
         build_requested_credentials_json(&credentials_identifiers, self_attested_attrs, &proof_request)?;
 
-    let schemas_json = build_schemas_json_prover(profile, &credentials_identifiers).await?;
-    let credential_defs_json = build_cred_defs_json_prover(profile, &credentials_identifiers).await?;
+    let schemas_json = build_schemas_json_prover(ledger, &credentials_identifiers).await?;
+    let credential_defs_json = build_cred_defs_json_prover(ledger, &credentials_identifiers).await?;
 
     let proof = anoncreds
         .prover_create_proof(

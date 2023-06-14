@@ -47,11 +47,15 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
                 format!("Cannot update state: Message deserialization failed: {:?}", err),
             )
         })?;
-        credential.step(&profile, message.into(), Some(send_message)).await?;
+        credential
+            .step(&profile.inject_anoncreds(), message.into(), Some(send_message))
+            .await?;
     } else {
         let messages = mediated_connection::get_messages(connection_handle).await?;
         if let Some((uid, msg)) = credential.find_message_to_handle(messages) {
-            credential.step(&profile, msg.into(), Some(send_message)).await?;
+            credential
+                .step(&profile.inject_anoncreds(), msg.into(), Some(send_message))
+                .await?;
             mediated_connection::update_message_status(connection_handle, &uid).await?;
         }
     }
@@ -85,7 +89,9 @@ pub async fn update_state_with_message_nonmediated(
             format!("Cannot update state: Message deserialization failed: {:?}", err),
         )
     })?;
-    credential.step(&profile, message.into(), Some(send_message)).await?;
+    credential
+        .step(&profile.inject_anoncreds(), message.into(), Some(send_message))
+        .await?;
 
     let res: u32 = credential.get_state().into();
     ISSUER_CREDENTIAL_MAP.insert(handle, credential)?;
@@ -180,7 +186,11 @@ pub async fn build_credential_offer_msg_v2(
     };
     let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
     credential
-        .build_credential_offer_msg(&profile, offer_info.clone(), comment.map(|s| s.to_string()))
+        .build_credential_offer_msg(
+            &profile.inject_anoncreds(),
+            offer_info.clone(),
+            comment.map(|s| s.to_string()),
+        )
         .await?;
     ISSUER_CREDENTIAL_MAP.insert(credential_handle, credential)
 }
@@ -222,7 +232,7 @@ pub async fn send_credential(handle: u32, connection_handle: u32) -> LibvcxResul
     let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
     credential
         .send_credential(
-            &profile,
+            &profile.inject_anoncreds(),
             mediated_connection::send_message_closure(connection_handle).await?,
         )
         .await?;
@@ -241,7 +251,9 @@ pub async fn send_credential_nonmediated(handle: u32, connection_handle: u32) ->
     let send_message: SendClosure =
         Box::new(|msg: AriesMessage| Box::pin(async move { con.send_message(&wallet, &msg, &HttpClient).await }));
 
-    credential.send_credential(&profile, send_message).await?;
+    credential
+        .send_credential(&profile.inject_anoncreds(), send_message)
+        .await?;
     let state: u32 = credential.get_state().into();
     ISSUER_CREDENTIAL_MAP.insert(handle, credential)?;
     Ok(state)
@@ -251,7 +263,7 @@ pub async fn revoke_credential_local(handle: u32) -> LibvcxResult<()> {
     let credential = ISSUER_CREDENTIAL_MAP.get_cloned(handle)?;
     let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
     credential
-        .revoke_credential_local(&profile)
+        .revoke_credential_local(&profile.inject_anoncreds())
         .await
         .map_err(|err| err.into())
 }

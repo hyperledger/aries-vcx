@@ -1,8 +1,9 @@
+use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
 use std::sync::Arc;
 
 use aries_vcx_core::errors::error::AriesVcxCoreErrorKind;
+use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerWrite;
 
-use crate::core::profile::profile::Profile;
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use crate::global::settings;
 use crate::utils::constants::REV_REG_ID;
@@ -25,7 +26,7 @@ pub struct RevocationRegistry {
 
 impl RevocationRegistry {
     pub async fn create(
-        profile: &Arc<dyn Profile>,
+        anoncreds: &Arc<dyn BaseAnonCreds>,
         issuer_did: &str,
         cred_def_id: &str,
         tails_dir: &str,
@@ -41,7 +42,7 @@ impl RevocationRegistry {
             tag
         );
         let (rev_reg_id, rev_reg_def, rev_reg_entry) = generate_rev_reg(
-            profile,
+            anoncreds,
             issuer_did,
             cred_def_id,
             tails_dir,
@@ -90,7 +91,7 @@ impl RevocationRegistry {
 
     pub async fn publish_rev_reg_def(
         &mut self,
-        profile: &Arc<dyn Profile>,
+        ledger: &Arc<dyn AnoncredsLedgerWrite>,
         issuer_did: &str,
         tails_url: &str,
     ) -> VcxResult<()> {
@@ -101,7 +102,6 @@ impl RevocationRegistry {
             &self.rev_reg_def
         );
         self.rev_reg_def.value.tails_location = String::from(tails_url);
-        let ledger = Arc::clone(profile).inject_anoncreds_ledger_write();
         ledger
             .publish_rev_reg_def(&json!(self.rev_reg_def).to_string(), issuer_did)
             .await
@@ -115,14 +115,17 @@ impl RevocationRegistry {
         Ok(())
     }
 
-    pub async fn publish_rev_reg_delta(&mut self, profile: &Arc<dyn Profile>, issuer_did: &str) -> VcxResult<()> {
+    pub async fn publish_rev_reg_delta(
+        &mut self,
+        ledger_write: &Arc<dyn AnoncredsLedgerWrite>,
+        issuer_did: &str,
+    ) -> VcxResult<()> {
         trace!(
             "RevocationRegistry::publish_rev_reg_delta >>> issuer_did:{}, rev_reg_id: {}",
             issuer_did,
             self.rev_reg_id
         );
-        let ledger = Arc::clone(profile).inject_anoncreds_ledger_write();
-        ledger
+        ledger_write
             .publish_rev_reg_delta(&self.rev_reg_id, &self.rev_reg_entry, issuer_did)
             .await
             .map_err(|err| {
@@ -137,33 +140,37 @@ impl RevocationRegistry {
 
     pub async fn publish_revocation_primitives(
         &mut self,
-        profile: &Arc<dyn Profile>,
+        ledger_write: &Arc<dyn AnoncredsLedgerWrite>,
         tails_url: &str,
     ) -> VcxResult<()> {
         trace!(
             "RevocationRegistry::publish_revocation_primitives >>> tails_url: {}",
             tails_url
         );
-        self.publish_built_rev_reg_def(profile, tails_url).await?;
-        self.publish_built_rev_reg_delta(profile).await
+        self.publish_built_rev_reg_def(ledger_write, tails_url).await?;
+        self.publish_built_rev_reg_delta(ledger_write).await
     }
 
-    async fn publish_built_rev_reg_delta(&mut self, profile: &Arc<dyn Profile>) -> VcxResult<()> {
+    async fn publish_built_rev_reg_delta(&mut self, ledger_write: &Arc<dyn AnoncredsLedgerWrite>) -> VcxResult<()> {
         let issuer_did = &self.issuer_did.clone();
         if self.was_rev_reg_delta_published() {
             info!("No unpublished revocation registry delta found, nothing to publish")
         } else {
-            self.publish_rev_reg_delta(profile, issuer_did).await?;
+            self.publish_rev_reg_delta(ledger_write, issuer_did).await?;
         }
         Ok(())
     }
 
-    async fn publish_built_rev_reg_def(&mut self, profile: &Arc<dyn Profile>, tails_url: &str) -> VcxResult<()> {
+    async fn publish_built_rev_reg_def(
+        &mut self,
+        ledger_write: &Arc<dyn AnoncredsLedgerWrite>,
+        tails_url: &str,
+    ) -> VcxResult<()> {
         let issuer_did = &self.issuer_did.clone();
         if self.was_rev_reg_def_published() {
             info!("No unpublished revocation registry definition found, nothing to publish")
         } else {
-            self.publish_rev_reg_def(profile, issuer_did, tails_url).await?;
+            self.publish_rev_reg_def(ledger_write, issuer_did, tails_url).await?;
         }
         Ok(())
     }
@@ -186,20 +193,25 @@ impl RevocationRegistry {
         })
     }
 
-    pub async fn revoke_credential_local(&self, profile: &Arc<dyn Profile>, cred_rev_id: &str) -> VcxResult<()> {
-        let anoncreds = Arc::clone(profile).inject_anoncreds();
+    pub async fn revoke_credential_local(
+        &self,
+        anoncreds: &Arc<dyn BaseAnonCreds>,
+        cred_rev_id: &str,
+    ) -> VcxResult<()> {
         anoncreds
             .revoke_credential_local(&self.tails_dir, &self.rev_reg_id, cred_rev_id)
             .await
             .map_err(|err| err.into())
     }
 
-    pub async fn publish_local_revocations(&self, profile: &Arc<dyn Profile>, submitter_did: &str) -> VcxResult<()> {
-        let anoncreds = Arc::clone(profile).inject_anoncreds();
-        let ledger = Arc::clone(profile).inject_anoncreds_ledger_write();
-
+    pub async fn publish_local_revocations(
+        &self,
+        anoncreds: &Arc<dyn BaseAnonCreds>,
+        ledger_write: &Arc<dyn AnoncredsLedgerWrite>,
+        submitter_did: &str,
+    ) -> VcxResult<()> {
         if let Some(delta) = anoncreds.get_rev_reg_delta(&self.rev_reg_id).await? {
-            ledger
+            ledger_write
                 .publish_rev_reg_delta(&self.rev_reg_id, &delta, submitter_did)
                 .await?;
 
@@ -252,7 +264,7 @@ pub struct RevocationRegistryDefinition {
     pub ver: String,
 }
 pub async fn generate_rev_reg(
-    profile: &Arc<dyn Profile>,
+    anoncreds: &Arc<dyn BaseAnonCreds>,
     issuer_did: &str,
     cred_def_id: &str,
     tails_dir: &str,
@@ -275,8 +287,6 @@ pub async fn generate_rev_reg(
             "".to_string(),
         ));
     }
-
-    let anoncreds = Arc::clone(profile).inject_anoncreds();
 
     let (rev_reg_id, rev_reg_def_json, rev_reg_entry_json) = anoncreds
         .issuer_create_and_store_revoc_reg(issuer_did, cred_def_id, tails_dir, max_creds, tag)
