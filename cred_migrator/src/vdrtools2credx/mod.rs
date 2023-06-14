@@ -7,9 +7,6 @@ use crate::error::MigrationResult;
 /// Contains the logic for record mapping and migration.
 pub fn migrate_any_record(record: Record) -> MigrationResult<Option<Record>> {
     match record.type_.as_str() {
-        // Are these needed?
-        // "Indy::Did" => Ok(Some(record)),
-        // "Indy::Key" => Ok(Some(record)),
         // Master secret
         "Indy::MasterSecret" => Some(conv::convert_master_secret(record)).transpose(),
         // Credential
