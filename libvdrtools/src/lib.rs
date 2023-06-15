@@ -75,6 +75,7 @@ pub use indy_api_types::{
     INVALID_POOL_HANDLE, INVALID_SEARCH_HANDLE, INVALID_WALLET_HANDLE,
 };
 
+pub use indy_wallet::WalletRecord;
 pub use services::AnoncredsHelpers;
 
 // Global (lazy inited) instance of Locator

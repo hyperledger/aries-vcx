@@ -4,18 +4,18 @@ use vdrtools::types::domain::wallet::Record;
 
 use crate::error::MigrationResult;
 
-const INDY_MASTER_SECRET: &str = "Indy::MasterSecret";
-const INDY_CRED: &str = "Indy::Credential";
-const INDY_CRED_DEF: &str = "Indy::CredentialDefinition";
-const INDY_CRED_DEF_PRIV: &str = "Indy::CredentialDefinitionPrivateKey";
-const INDY_CRED_DEF_CR_PROOF: &str = "Indy::CredentialDefinitionCorrectnessProof";
-const INDY_SCHEMA: &str = "Indy::Schema";
-const INDY_SCHEMA_ID: &str = "Indy::SchemaId";
-const INDY_REV_REG: &str = "Indy::RevocationRegistry";
-const INDY_REV_REG_DELTA: &str = "Indy::RevocationRegistryDelta";
-const INDY_REV_REG_INFO: &str = "Indy::RevocationRegistryInfo";
-const INDY_REV_REG_DEF: &str = "Indy::RevocationRegistryDefinition";
-const INDY_REV_REG_DEF_PRIV: &str = "Indy::RevocationRegistryDefinitionPrivate";
+pub(crate) const INDY_MASTER_SECRET: &str = "Indy::MasterSecret";
+pub(crate) const INDY_CRED: &str = "Indy::Credential";
+pub(crate) const INDY_CRED_DEF: &str = "Indy::CredentialDefinition";
+pub(crate) const INDY_CRED_DEF_PRIV: &str = "Indy::CredentialDefinitionPrivateKey";
+pub(crate) const INDY_CRED_DEF_CR_PROOF: &str = "Indy::CredentialDefinitionCorrectnessProof";
+pub(crate) const INDY_SCHEMA: &str = "Indy::Schema";
+pub(crate) const INDY_SCHEMA_ID: &str = "Indy::SchemaId";
+pub(crate) const INDY_REV_REG: &str = "Indy::RevocationRegistry";
+pub(crate) const INDY_REV_REG_DELTA: &str = "Indy::RevocationRegistryDelta";
+pub(crate) const INDY_REV_REG_INFO: &str = "Indy::RevocationRegistryInfo";
+pub(crate) const INDY_REV_REG_DEF: &str = "Indy::RevocationRegistryDefinition";
+pub(crate) const INDY_REV_REG_DEF_PRIV: &str = "Indy::RevocationRegistryDefinitionPrivate";
 
 /// Contains the logic for record mapping and migration.
 pub fn migrate_any_record(record: Record) -> MigrationResult<Option<Record>> {

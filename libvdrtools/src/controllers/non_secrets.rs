@@ -492,12 +492,12 @@ impl NonSecretsController {
     }
 
     fn _check_type(&self, type_: &str) -> IndyResult<()> {
-        if type_.starts_with(WalletService::PREFIX) {
-            Err(err_msg(
-                IndyErrorKind::WalletAccessFailed,
-                format!("Record of type \"{}\" is not available for fetching", type_),
-            ))?;
-        }
+        // if type_.starts_with(WalletService::PREFIX) {
+        //     Err(err_msg(
+        //         IndyErrorKind::WalletAccessFailed,
+        //         format!("Record of type \"{}\" is not available for fetching", type_),
+        //     ))?;
+        // }
 
         Ok(())
     }
