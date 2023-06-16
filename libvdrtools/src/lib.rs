@@ -50,7 +50,7 @@ pub use domain::{
         credential::{AttributeValues, Credential, CredentialValues},
         credential_definition::{
             CredentialDefinition, CredentialDefinitionCorrectnessProof,
-            CredentialDefinitionPrivateKey, CredentialDefinitionV1,
+            CredentialDefinitionPrivateKey, CredentialDefinitionV1, SignatureType, CredentialDefinitionData
         },
         credential_offer::CredentialOffer,
         credential_request::{CredentialRequest, CredentialRequestMetadata},

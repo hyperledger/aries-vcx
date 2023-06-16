@@ -58,12 +58,16 @@ where
 mod tests {
     use std::collections::HashMap;
 
-    use aries_vcx_core::anoncreds::credx_anoncreds::{CATEGORY_CREDENTIAL, CATEGORY_LINK_SECRET};
+    use aries_vcx_core::anoncreds::credx_anoncreds::{
+        CATEGORY_CREDENTIAL, CATEGORY_CRED_DEF, CATEGORY_CRED_DEF_PRIV, CATEGORY_CRED_KEY_CORRECTNESS_PROOF,
+        CATEGORY_LINK_SECRET,
+    };
     use credx::ursa::bn::BigNumber;
     use serde_json::json;
-    use vdrtools::WalletRecord;
 
-    use crate::vdrtools2credx::{INDY_CRED, INDY_MASTER_SECRET};
+    use crate::vdrtools2credx::{
+        INDY_CRED, INDY_CRED_DEF, INDY_CRED_DEF_CR_PROOF, INDY_CRED_DEF_PRIV, INDY_MASTER_SECRET,
+    };
 
     use super::*;
 
@@ -83,12 +87,118 @@ mod tests {
         };
     }
 
+    macro_rules! get_wallet_item {
+        ($wh:expr, $category:expr, $res:ty) => {{
+            let val = get_wallet_item_raw($wh, $category).await;
+            serde_json::from_str::<$res>(&val).unwrap()
+        }};
+    }
+
+    #[tokio::test]
+    async fn test_migration() {
+        let wallet_key = "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY".to_owned();
+        let (credentials, config) = make_wallet_reqs(wallet_key.clone(), "wallet_test_migration".to_owned());
+
+        Locator::instance()
+            .wallet_controller
+            .delete(config.clone(), credentials.clone())
+            .await
+            .ok();
+
+        Locator::instance()
+            .wallet_controller
+            .create(config.clone(), credentials.clone())
+            .await
+            .unwrap();
+
+        let wallet_handle = Locator::instance()
+            .wallet_controller
+            .open(config.clone(), credentials.clone())
+            .await
+            .unwrap();
+
+        add_wallet_item!(wallet_handle, INDY_MASTER_SECRET, make_dummy_master_secret());
+        add_wallet_item!(wallet_handle, INDY_CRED, make_dummy_cred());
+        add_wallet_item!(wallet_handle, INDY_CRED_DEF, make_dummy_cred_def());
+        add_wallet_item!(wallet_handle, INDY_CRED_DEF_PRIV, make_dummy_cred_def_priv_key());
+        add_wallet_item!(
+            wallet_handle,
+            INDY_CRED_DEF_CR_PROOF,
+            make_dummy_cred_def_correctness_proof()
+        );
+
+        let (new_credentials, new_config) = make_wallet_reqs(wallet_key, "new_better_wallet".to_owned());
+
+        Locator::instance()
+            .wallet_controller
+            .delete(new_config.clone(), new_credentials.clone())
+            .await
+            .ok();
+
+        migrate_wallet(
+            wallet_handle,
+            new_config.clone(),
+            new_credentials.clone(),
+            vdrtools2credx::migrate_any_record,
+        )
+        .await
+        .unwrap();
+
+        Locator::instance()
+            .wallet_controller
+            .close(wallet_handle)
+            .await
+            .unwrap();
+
+        Locator::instance()
+            .wallet_controller
+            .delete(config, credentials)
+            .await
+            .unwrap();
+
+        let new_wallet_handle = Locator::instance()
+            .wallet_controller
+            .open(new_config.clone(), new_credentials.clone())
+            .await
+            .unwrap();
+
+        get_master_secret(new_wallet_handle).await;
+        get_wallet_item!(new_wallet_handle, CATEGORY_CREDENTIAL, credx::types::Credential);
+        get_wallet_item!(new_wallet_handle, CATEGORY_CRED_DEF, credx::types::CredentialDefinition);
+        get_wallet_item!(
+            new_wallet_handle,
+            CATEGORY_CRED_DEF_PRIV,
+            credx::types::CredentialDefinitionPrivate
+        );
+        get_wallet_item!(
+            new_wallet_handle,
+            CATEGORY_CRED_KEY_CORRECTNESS_PROOF,
+            credx::types::CredentialKeyCorrectnessProof
+        );
+
+        Locator::instance()
+            .wallet_controller
+            .close(new_wallet_handle)
+            .await
+            .unwrap();
+
+        Locator::instance()
+            .wallet_controller
+            .delete(new_config, new_credentials)
+            .await
+            .unwrap();
+    }
+
+    async fn get_master_secret(wallet_handle: WalletHandle) {
+        let ms_decimal = get_wallet_item_raw(wallet_handle, CATEGORY_LINK_SECRET).await;
+        let ms_bn = BigNumber::from_dec(&ms_decimal).unwrap();
+
+        let ursa_ms: credx::ursa::cl::MasterSecret = serde_json::from_value(json!({ "ms": ms_bn })).unwrap();
+        let _ = credx::types::MasterSecret { value: ursa_ms };
+    }
+
     async fn get_wallet_item_raw(wallet_handle: WalletHandle, category: &str) -> String {
-        let options = r#"{
-            "retrieve_type": false,
-            "retrieve_value": true,
-            "retrieve_tags": false
-        }"#;
+        let options = r#"{"retrieveType": true, "retrieveValue": true, "retrieveTags": true}"#;
 
         let record_str = Locator::instance()
             .non_secret_controller
@@ -102,15 +212,8 @@ mod tests {
             .unwrap();
 
         println!("{record_str}");
-        let record: WalletRecord = serde_json::from_str(&record_str).unwrap();
-        record.get_value().unwrap().to_owned()
-    }
-
-    macro_rules! get_wallet_item {
-        ($wh:expr, $category:expr, $res:ty) => {{
-            let val = get_wallet_item_raw($wh, $category).await;
-            serde_json::from_str::<$res>(&val).unwrap()
-        }};
+        let record: Record = serde_json::from_str(&record_str).unwrap();
+        record.value
     }
 
     fn make_wallet_reqs(wallet_key: String, wallet_name: String) -> (Credentials, Config) {
@@ -173,85 +276,52 @@ mod tests {
         }
     }
 
-    #[tokio::test]
-    async fn test_migration() {
-        let wallet_key = "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY".to_owned();
-        let (credentials, config) = make_wallet_reqs(wallet_key.clone(), "wallet_test_migration".to_owned());
+    fn make_dummy_cred_def() -> vdrtools::CredentialDefinition {
+        let primary = json!({
+            "n": "1234567890",
+            "s": "1234567890",
+            "r": {},
+            "rctxt": "1234567890",
+            "z": "1234567890",
+        })
+        .to_string();
 
-        Locator::instance()
-            .wallet_controller
-            .delete(config.clone(), credentials.clone())
-            .await
-            .ok();
+        vdrtools::CredentialDefinition::CredentialDefinitionV1(vdrtools::CredentialDefinitionV1 {
+            id: vdrtools::CredentialDefinitionId("test_cred_def_id".to_owned()),
+            schema_id: vdrtools::SchemaId("test_schema_id".to_owned()),
+            signature_type: vdrtools::SignatureType::CL,
+            tag: "{}".to_owned(),
+            value: vdrtools::CredentialDefinitionData {
+                primary: serde_json::from_str(&primary).unwrap(),
+                revocation: None,
+            },
+        })
+    }
 
-        Locator::instance()
-            .wallet_controller
-            .create(config.clone(), credentials.clone())
-            .await
-            .unwrap();
+    fn make_dummy_cred_def_priv_key() -> vdrtools::CredentialDefinitionPrivateKey {
+        let priv_key = json!({
+            "p_key": {
+                "p": "1234567890",
+                "q": "1234567890"
+            }
+        })
+        .to_string();
 
-        let wallet_handle = Locator::instance()
-            .wallet_controller
-            .open(config.clone(), credentials.clone())
-            .await
-            .unwrap();
+        vdrtools::CredentialDefinitionPrivateKey {
+            value: serde_json::from_str(&priv_key).unwrap(),
+        }
+    }
 
-        add_wallet_item!(wallet_handle, INDY_MASTER_SECRET, make_dummy_master_secret());
-        add_wallet_item!(wallet_handle, INDY_CRED, make_dummy_cred());
+    fn make_dummy_cred_def_correctness_proof() -> vdrtools::CredentialDefinitionCorrectnessProof {
+        let cor_proof = json!({
+            "c": "1234567890",
+            "xz_cap": "1234567890",
+            "xr_cap": []
+        })
+        .to_string();
 
-        let (new_credentials, new_config) = make_wallet_reqs(wallet_key, "new_better_wallet".to_owned());
-
-        Locator::instance()
-            .wallet_controller
-            .delete(new_config.clone(), new_credentials.clone())
-            .await
-            .ok();
-
-        migrate_wallet(
-            wallet_handle,
-            new_config.clone(),
-            new_credentials.clone(),
-            vdrtools2credx::migrate_any_record,
-        )
-        .await
-        .unwrap();
-
-        Locator::instance()
-            .wallet_controller
-            .close(wallet_handle)
-            .await
-            .unwrap();
-
-        Locator::instance()
-            .wallet_controller
-            .delete(config, credentials)
-            .await
-            .unwrap();
-
-        let new_wallet_handle = Locator::instance()
-            .wallet_controller
-            .open(new_config.clone(), new_credentials.clone())
-            .await
-            .unwrap();
-
-        let ms_decimal = get_wallet_item_raw(new_wallet_handle, CATEGORY_LINK_SECRET).await;
-        let ms_bn = BigNumber::from_dec(&ms_decimal).unwrap();
-
-        let ursa_ms: credx::ursa::cl::MasterSecret = serde_json::from_value(json!({ "ms": ms_bn })).unwrap();
-        let _ = credx::types::MasterSecret { value: ursa_ms };
-
-        get_wallet_item!(new_wallet_handle, CATEGORY_CREDENTIAL, credx::types::Credential);
-
-        Locator::instance()
-            .wallet_controller
-            .close(new_wallet_handle)
-            .await
-            .unwrap();
-
-        Locator::instance()
-            .wallet_controller
-            .delete(new_config, new_credentials)
-            .await
-            .unwrap();
+        vdrtools::CredentialDefinitionCorrectnessProof {
+            value: serde_json::from_str(&cor_proof).unwrap(),
+        }
     }
 }
