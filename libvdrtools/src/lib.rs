@@ -49,18 +49,22 @@ pub use domain::{
     anoncreds::{
         credential::{AttributeValues, Credential, CredentialValues},
         credential_definition::{
-            CredentialDefinition, CredentialDefinitionCorrectnessProof,
-            CredentialDefinitionPrivateKey, CredentialDefinitionV1, SignatureType, CredentialDefinitionData
+            CredentialDefinition, CredentialDefinitionCorrectnessProof, CredentialDefinitionData,
+            CredentialDefinitionPrivateKey, CredentialDefinitionV1, SignatureType,
         },
         credential_offer::CredentialOffer,
         credential_request::{CredentialRequest, CredentialRequestMetadata},
         master_secret::MasterSecret,
+        revocation_registry::{RevocationRegistry, RevocationRegistryV1},
         revocation_registry_definition::{
-            IssuanceType, RevocationRegistryConfig, RevocationRegistryDefinition,
-            RevocationRegistryId,
+            IssuanceType, RegistryType, RevocationRegistryConfig, RevocationRegistryDefinition,
+            RevocationRegistryDefinitionV1, RevocationRegistryDefinitionValue,
+            RevocationRegistryDefinitionValuePublicKeys, RevocationRegistryId,
+            RevocationRegistryInfo, RevocationRegistryDefinitionPrivate
         },
+        revocation_registry_delta::{RevocationRegistryDelta, RevocationRegistryDeltaV1},
         revocation_state::RevocationStates,
-        schema::{AttributeNames, Schema, SchemaId},
+        schema::{AttributeNames, Schema, SchemaId, SchemaV1},
     },
     crypto::{
         did::{DidMethod, DidValue, MyDidInfo},
