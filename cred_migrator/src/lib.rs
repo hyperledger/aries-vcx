@@ -102,12 +102,15 @@ mod tests {
         let wallet_key = "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY".to_owned();
         let (credentials, config) = make_wallet_reqs(wallet_key.clone(), "wallet_test_migration".to_owned());
 
+        // Removes old wallet if it already exists
         Locator::instance()
             .wallet_controller
             .delete(config.clone(), credentials.clone())
             .await
             .ok();
 
+        // Create and open the old wallet
+        // where we'll store old indy anoncreds types
         Locator::instance()
             .wallet_controller
             .create(config.clone(), credentials.clone())
@@ -119,6 +122,12 @@ mod tests {
             .open(config.clone(), credentials.clone())
             .await
             .unwrap();
+
+        // Construct and add legacy indy records
+        // These are dummy records with dummy values
+        // and are NOT expected to be functional
+        //
+        // ################# Ingestion start #################
 
         // Master secret
         add_wallet_item!(wallet_handle, INDY_MASTER_SECRET, make_dummy_master_secret());
@@ -144,14 +153,18 @@ mod tests {
         add_wallet_item!(wallet_handle, INDY_REV_REG_DEF, make_dummy_rev_reg_def());
         add_wallet_item!(wallet_handle, INDY_REV_REG_DEF_PRIV, make_dummy_rev_reg_def_priv());
 
+        // ################# Ingestion end #################
+
         let (new_credentials, new_config) = make_wallet_reqs(wallet_key, "new_better_wallet".to_owned());
 
+        // Remove new wallet if it already exists
         Locator::instance()
             .wallet_controller
             .delete(new_config.clone(), new_credentials.clone())
             .await
             .ok();
 
+        // Migrate the records
         migrate_wallet(
             wallet_handle,
             new_config.clone(),
@@ -161,6 +174,7 @@ mod tests {
         .await
         .unwrap();
 
+        // Old wallet cleanup
         Locator::instance()
             .wallet_controller
             .close(wallet_handle)
@@ -173,11 +187,15 @@ mod tests {
             .await
             .unwrap();
 
+        // Open new wallet and retrieve
+        // records in their credx representation
         let new_wallet_handle = Locator::instance()
             .wallet_controller
             .open(new_config.clone(), new_credentials.clone())
             .await
             .unwrap();
+
+        // ################# Retrieval start #################
 
         // Master secret
         get_master_secret(new_wallet_handle).await;
@@ -219,6 +237,9 @@ mod tests {
             credx::types::RevocationRegistryDefinitionPrivate
         );
 
+        // ################# Retrieval end #################
+
+        // New wallet cleanup new wallet
         Locator::instance()
             .wallet_controller
             .close(new_wallet_handle)
@@ -232,12 +253,23 @@ mod tests {
             .unwrap();
     }
 
-    async fn get_master_secret(wallet_handle: WalletHandle) {
-        let ms_decimal = get_wallet_item_raw(wallet_handle, CATEGORY_LINK_SECRET).await;
-        let ms_bn = BigNumber::from_dec(&ms_decimal).unwrap();
+    fn make_wallet_reqs(wallet_key: String, wallet_name: String) -> (Credentials, Config) {
+        let credentials = Credentials {
+            key: wallet_key,
+            key_derivation_method: KeyDerivationMethod::RAW,
+            rekey: None,
+            rekey_derivation_method: KeyDerivationMethod::ARGON2I_MOD,
+            storage_credentials: None,
+        };
 
-        let ursa_ms: credx::ursa::cl::MasterSecret = serde_json::from_value(json!({ "ms": ms_bn })).unwrap();
-        let _ = credx::types::MasterSecret { value: ursa_ms };
+        let config = Config {
+            id: wallet_name,
+            storage_type: None,
+            storage_config: None,
+            cache: None,
+        };
+
+        (credentials, config)
     }
 
     async fn get_wallet_item_raw(wallet_handle: WalletHandle, category: &str) -> String {
@@ -258,23 +290,13 @@ mod tests {
         record.value
     }
 
-    fn make_wallet_reqs(wallet_key: String, wallet_name: String) -> (Credentials, Config) {
-        let credentials = Credentials {
-            key: wallet_key,
-            key_derivation_method: KeyDerivationMethod::RAW,
-            rekey: None,
-            rekey_derivation_method: KeyDerivationMethod::ARGON2I_MOD,
-            storage_credentials: None,
-        };
+    // MasterSecret needs special processing
+    async fn get_master_secret(wallet_handle: WalletHandle) {
+        let ms_decimal = get_wallet_item_raw(wallet_handle, CATEGORY_LINK_SECRET).await;
+        let ms_bn = BigNumber::from_dec(&ms_decimal).unwrap();
 
-        let config = Config {
-            id: wallet_name,
-            storage_type: None,
-            storage_config: None,
-            cache: None,
-        };
-
-        (credentials, config)
+        let ursa_ms: credx::ursa::cl::MasterSecret = serde_json::from_value(json!({ "ms": ms_bn })).unwrap();
+        let _ = credx::types::MasterSecret { value: ursa_ms };
     }
 
     fn make_dummy_master_secret() -> vdrtools::MasterSecret {

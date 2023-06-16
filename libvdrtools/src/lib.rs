@@ -58,9 +58,9 @@ pub use domain::{
         revocation_registry::{RevocationRegistry, RevocationRegistryV1},
         revocation_registry_definition::{
             IssuanceType, RegistryType, RevocationRegistryConfig, RevocationRegistryDefinition,
-            RevocationRegistryDefinitionV1, RevocationRegistryDefinitionValue,
-            RevocationRegistryDefinitionValuePublicKeys, RevocationRegistryId,
-            RevocationRegistryInfo, RevocationRegistryDefinitionPrivate
+            RevocationRegistryDefinitionPrivate, RevocationRegistryDefinitionV1,
+            RevocationRegistryDefinitionValue, RevocationRegistryDefinitionValuePublicKeys,
+            RevocationRegistryId, RevocationRegistryInfo,
         },
         revocation_registry_delta::{RevocationRegistryDelta, RevocationRegistryDeltaV1},
         revocation_state::RevocationStates,
