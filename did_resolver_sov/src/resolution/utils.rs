@@ -1,8 +1,10 @@
 use chrono::{DateTime, NaiveDateTime, Utc};
 use did_resolver::{
     did_doc::schema::{
-        did_doc::DidDocument, service::Service, types::uri::Uri,
-        verification_method::VerificationMethod,
+        did_doc::DidDocument,
+        service::Service,
+        types::uri::Uri,
+        verification_method::{VerificationMethod, VerificationMethodType},
     },
     did_parser::Did,
     shared_types::did_document_metadata::DidDocumentMetadata,
@@ -92,12 +94,9 @@ pub(super) async fn ledger_response_to_ddo<E: Default>(
     let verification_method = VerificationMethod::builder(
         did.to_string().try_into()?,
         did.to_string().try_into()?,
-        "Ed25519VerificationKey2018".to_string(),
+        VerificationMethodType::Ed25519VerificationKey2018,
     )
-    .add_extra_field(
-        "publicKeyBase58".to_string(),
-        Value::String(verkey.to_string()),
-    )
+    .add_public_key_base58(verkey.to_string())
     .build();
 
     let ddo = DidDocument::builder(ddo_id)
@@ -127,6 +126,7 @@ pub(super) async fn ledger_response_to_ddo<E: Default>(
 mod tests {
     use super::*;
     use chrono::TimeZone;
+    use did_resolver::did_doc::schema::verification_method::PublicKeyField;
 
     #[test]
     fn test_prepare_ids() {
@@ -192,13 +192,6 @@ mod tests {
             "https://example.com/"
         );
         assert_eq!(
-            ddo.verification_method()[0]
-                .extra_field("publicKeyBase58")
-                .unwrap()
-                .clone(),
-            Value::String("9wvq2i4xUa5umXoThe83CDgx1e5bsjZKJL4DEWvTP9qe".to_string())
-        );
-        assert_eq!(
             resolution_output.did_document_metadata().updated().unwrap(),
             chrono::Utc.timestamp_opt(1629272938, 0).unwrap()
         );
@@ -209,5 +202,15 @@ mod tests {
                 .unwrap(),
             "application/did+json"
         );
+        if let PublicKeyField::Base58 { public_key_base58 } =
+            ddo.verification_method()[0].public_key()
+        {
+            assert_eq!(
+                public_key_base58,
+                "9wvq2i4xUa5umXoThe83CDgx1e5bsjZKJL4DEWvTP9qe"
+            );
+        } else {
+            panic!("Unexpected public key type");
+        }
     }
 }

@@ -550,9 +550,9 @@ checksum = "9e1b586273c5702936fe7b7d6896644d8be71e6314cfe09d3167c95f712589e8"
 
 [[package]]
 name = "base64"
-version = "0.21.0"
+version = "0.21.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a4a4ddaa51a5bc52a6948f74c06d20aaaddb71924eab79b8c97a8c556e942d6a"
+checksum = "604178f6c5c21f02dc555784810edfb88d34ac2c73b2eae109655649ee73ce3d"
 
 [[package]]
 name = "base64ct"
@@ -674,6 +674,15 @@ name = "bs58"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "771fe0050b883fcc3ea2359b1a96bcfbc090b7116eae7c3c512c7a083fdf23d3"
+
+[[package]]
+name = "bs58"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f5353f36341f7451062466f0b755b96ac3a9547e4d7f6b70d603fc721a7d7896"
+dependencies = [
+ "tinyvec",
+]
 
 [[package]]
 name = "bumpalo"
@@ -1371,12 +1380,26 @@ dependencies = [
 name = "did_doc"
 version = "0.1.0"
 dependencies = [
+ "base64 0.21.2",
+ "bs58 0.5.0",
  "did_parser",
+ "hex",
  "multibase",
+ "pem 2.0.1",
  "serde",
  "serde_json",
  "uniresid",
  "url",
+]
+
+[[package]]
+name = "did_doc_sov"
+version = "0.1.0"
+dependencies = [
+ "did_doc",
+ "serde",
+ "serde_json",
+ "thiserror",
 ]
 
 [[package]]
@@ -1415,6 +1438,7 @@ dependencies = [
  "aries_vcx_core",
  "async-trait",
  "chrono",
+ "did_doc_sov",
  "did_resolver",
  "mockall",
  "serde",
@@ -3225,6 +3249,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "pem"
+version = "2.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6b13fe415cdf3c8e44518e18a7c95a13431d9bdf6d15367d82b23c377fdd441a"
+dependencies = [
+ "base64 0.21.2",
+ "serde",
+]
+
+[[package]]
 name = "pem-rfc7468"
 version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3686,7 +3720,7 @@ version = "0.11.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cde824a14b7c14f85caff81225f411faacc04a2013f41670f41443742b1c1c55"
 dependencies = [
- "base64 0.21.0",
+ "base64 0.21.2",
  "bytes",
  "encoding_rs",
  "futures-core",
@@ -3778,7 +3812,7 @@ dependencies = [
  "num-integer",
  "num-iter",
  "num-traits",
- "pem",
+ "pem 0.8.3",
  "rand 0.8.5",
  "simple_asn1",
  "subtle",

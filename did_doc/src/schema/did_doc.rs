@@ -13,7 +13,7 @@ use super::{
     verification_method::{VerificationMethod, VerificationMethodKind},
 };
 
-type ControllerAlias = OneOrList<Did>;
+pub type ControllerAlias = OneOrList<Did>;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 #[serde(default)]
@@ -90,6 +90,13 @@ impl<E> DidDocument<E> {
 
     pub fn extra_field(&self, key: &str) -> Option<&Value> {
         self.extra.get(key)
+    }
+
+    pub fn dereference_key(&self, reference: &DidUrl) -> Option<&VerificationMethod> {
+        // TODO: Should check controller (if present)
+        self.verification_method
+            .iter()
+            .find(|vm| vm.id().fragment() == reference.fragment())
     }
 
     pub fn validate(&self) -> Result<(), DidDocumentBuilderError> {
@@ -183,7 +190,7 @@ impl<E> DidDocumentBuilder<E> {
         self
     }
 
-    pub fn add_key_agreement_refrence(mut self, reference: DidUrl) -> Self {
+    pub fn add_key_agreement_reference(mut self, reference: DidUrl) -> Self {
         self.key_agreement
             .push(VerificationMethodKind::Resolvable(reference));
         self
@@ -195,7 +202,7 @@ impl<E> DidDocumentBuilder<E> {
         self
     }
 
-    pub fn add_capability_invocation_refrence(mut self, reference: DidUrl) -> Self {
+    pub fn add_capability_invocation_reference(mut self, reference: DidUrl) -> Self {
         self.capability_invocation
             .push(VerificationMethodKind::Resolvable(reference));
         self
@@ -248,7 +255,7 @@ impl<E> DidDocumentBuilder<E> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::schema::service::ServiceBuilder;
+    use crate::schema::{service::ServiceBuilder, verification_method::VerificationMethodType};
 
     #[test]
     fn test_did_document_builder() {
@@ -256,18 +263,21 @@ mod tests {
         let also_known_as = Uri::new("https://example.com").unwrap();
         let controller = Did::parse("did:example:controller".to_string()).unwrap();
 
+        let vm1_id = DidUrl::parse("did:example:vm1#vm1".to_string()).unwrap();
         let verification_method = VerificationMethod::builder(
-            DidUrl::parse("did:example:vm1".to_string()).unwrap(),
-            Did::parse("did:example:vm2".to_string()).unwrap(),
-            "typevm".to_string(),
+            vm1_id.clone(),
+            Did::parse("did:example:vm1".to_string()).unwrap(),
+            VerificationMethodType::Ed25519VerificationKey2018,
         )
+        .add_public_key_base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".to_string())
         .build();
         let authentication_reference = DidUrl::parse("did:example:authref".to_string()).unwrap();
         let assertion_method = VerificationMethod::builder(
             DidUrl::parse("did:example:am1".to_string()).unwrap(),
             Did::parse("did:example:am2".to_string()).unwrap(),
-            "typeam".to_string(),
+            VerificationMethodType::Ed25519VerificationKey2018,
         )
+        .add_public_key_base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".to_string())
         .build();
 
         let service_id = Uri::new("did:example:123456789abcdefghi;service-1").unwrap();
@@ -291,9 +301,9 @@ mod tests {
             .add_assertion_method(assertion_method.clone())
             .add_assertion_method_reference(authentication_reference.clone())
             .add_key_agreement(verification_method.clone())
-            .add_key_agreement_refrence(authentication_reference.clone())
+            .add_key_agreement_reference(authentication_reference.clone())
             .add_capability_invocation(verification_method.clone())
-            .add_capability_invocation_refrence(authentication_reference.clone())
+            .add_capability_invocation_reference(authentication_reference.clone())
             .add_capability_delegation(verification_method.clone())
             .add_capability_delegation_refrence(authentication_reference.clone())
             .add_service(service.clone())
@@ -345,5 +355,12 @@ mod tests {
             ]
         );
         assert_eq!(document.service(), &[service]);
+
+        let vm = document.dereference_key(&vm1_id);
+        if let Some(vm) = vm {
+            assert_eq!(vm.id(), &vm1_id);
+        } else {
+            panic!("Verification method not found")
+        };
     }
 }

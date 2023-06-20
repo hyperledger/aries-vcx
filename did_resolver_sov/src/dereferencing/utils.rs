@@ -94,6 +94,7 @@ mod tests {
     use super::*;
 
     use did_resolver::did_doc::schema::did_doc::DidDocumentBuilder;
+    use did_resolver::did_doc::schema::verification_method::VerificationMethodType;
     use did_resolver::did_parser::DidUrl;
     use did_resolver::traits::resolvable::resolution_output::DidResolutionOutput;
     use serde_json::Value;
@@ -105,12 +106,9 @@ mod tests {
                 .to_string()
                 .try_into()
                 .unwrap(),
-            "Ed25519VerificationKey2018".to_string(),
+            VerificationMethodType::Ed25519VerificationKey2018,
         )
-        .add_extra_field(
-            "publicKeyBase58".to_string(),
-            Value::String("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".to_string()),
-        )
+        .add_public_key_base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".to_string())
         .build();
 
         let agent_service = Service::builder(

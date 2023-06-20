@@ -9,7 +9,7 @@ use super::{
     utils::OneOrList,
 };
 
-type ServiceTypeAlias = OneOrList<String>;
+pub type ServiceTypeAlias = OneOrList<String>;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]

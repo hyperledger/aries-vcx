@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
+use did_doc_sov::extra_fields::ExtraFieldsSov;
 use did_resolver::{
     did_parser::Did,
     error::GenericError,
@@ -17,10 +18,7 @@ use crate::{
     reader::AttrReader,
 };
 
-use super::{
-    utils::{is_valid_sovrin_did_id, ledger_response_to_ddo},
-    ExtraFieldsSov,
-};
+use super::utils::{is_valid_sovrin_did_id, ledger_response_to_ddo};
 
 pub struct DidSovResolver {
     ledger: Arc<dyn AttrReader>,
@@ -34,8 +32,7 @@ impl DidSovResolver {
 
 #[async_trait]
 impl DidResolvable for DidSovResolver {
-    // TODO: Change to ExtraFields from Sovrin-specific DDO wrapper
-    type ExtraFields = ();
+    type ExtraFields = ExtraFieldsSov;
 
     async fn resolve(
         &self,

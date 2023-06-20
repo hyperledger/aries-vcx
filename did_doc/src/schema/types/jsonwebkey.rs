@@ -27,6 +27,10 @@ impl JsonWebKey {
     pub fn new(jwk: &str) -> Result<Self, DidDocumentBuilderError> {
         Ok(serde_json::from_str(jwk)?)
     }
+
+    pub fn to_vec(&self) -> Result<Vec<u8>, DidDocumentBuilderError> {
+        serde_json::to_vec(self).map_err(|e| e.into())
+    }
 }
 
 impl FromStr for JsonWebKey {
