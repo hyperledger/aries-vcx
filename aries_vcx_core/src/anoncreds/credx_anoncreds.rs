@@ -209,7 +209,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             &pres_req,
             &hashmap_as_ref(&schemas),
             &hashmap_as_ref(&cred_defs),
-            rev_reg_defs.as_ref().map(|regs| hashmap_as_ref(regs)).as_ref(),
+            rev_reg_defs.as_ref().map(hashmap_as_ref).as_ref(),
             rev_regs.as_ref(),
         )?)
     }
