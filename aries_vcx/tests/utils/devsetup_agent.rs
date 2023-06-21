@@ -509,13 +509,13 @@ pub mod test_utils {
     }
 
     pub async fn create_test_alice_instance(setup: &SetupPool) -> Alice {
-        #[cfg(not(feature = "modular_libs"))]
+        #[cfg(any(not(feature = "modular_libs"), feature = "migration"))]
         let (alice_profile, teardown) = {
             info!("create_test_alice_instance >> using indy profile");
             Alice::setup_indy_profile(setup.pool_handle).await
         };
 
-        #[cfg(feature = "modular_libs")]
+        #[cfg(all(feature = "modular_libs", not(feature = "migration")))]
         let (alice_profile, teardown) = {
             let genesis_file_path = setup.genesis_file_path.clone();
             let config = LedgerPoolConfig { genesis_file_path };

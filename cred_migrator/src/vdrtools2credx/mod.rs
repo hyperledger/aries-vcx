@@ -1,9 +1,12 @@
 pub mod conv;
 
+use log::trace;
 use vdrtools::types::domain::wallet::Record;
 
 use crate::error::MigrationResult;
 
+pub(crate) const INDY_DID: &str = "Indy::Did";
+pub(crate) const INDY_KEY: &str = "Indy::Key";
 pub(crate) const INDY_MASTER_SECRET: &str = "Indy::MasterSecret";
 pub(crate) const INDY_CRED: &str = "Indy::Credential";
 pub(crate) const INDY_CRED_DEF: &str = "Indy::CredentialDefinition";
@@ -19,7 +22,11 @@ pub(crate) const INDY_REV_REG_DEF_PRIV: &str = "Indy::RevocationRegistryDefiniti
 
 /// Contains the logic for record mapping and migration.
 pub fn migrate_any_record(record: Record) -> MigrationResult<Option<Record>> {
+    trace!("Migrating wallet record {record:?}");
+
     match record.type_.as_str() {
+        // Indy wallet records - to be left alone!
+        INDY_DID | INDY_KEY => Ok(Some(record)),
         // Master secret
         INDY_MASTER_SECRET => Some(conv::convert_master_secret(record)).transpose(),
         // Credential

@@ -5,6 +5,7 @@ pub mod vdrtools2credx;
 use std::fmt::Display;
 
 use error::MigrationResult;
+use log::{debug, error, info, warn};
 pub use vdrtools::{
     types::domain::wallet::{Config, Credentials, KeyDerivationMethod, Record},
     Locator, WalletHandle,
@@ -24,18 +25,23 @@ pub async fn migrate_wallet<E>(
 where
     E: Display,
 {
-    // LOG: migrating wallet
+    info!("Starting wallet migration...");
     let locator = Locator::instance();
 
+    debug!("Creating new wallet {} ...", config.id);
     locator
         .wallet_controller
         .create(config.clone(), credentials.clone())
         .await?;
 
+    debug!("Opening new wallet...");
+
     let new_wh = locator
         .wallet_controller
         .open(config.clone(), credentials.clone())
         .await?;
+
+    debug!("Migrating records from wallet with handle {wallet_handle:?} to wallet with handle {new_wh:?}");
 
     let res = locator
         .wallet_controller
@@ -44,9 +50,13 @@ where
 
     locator.wallet_controller.close(new_wh).await?;
 
-    if res.is_err() {
-        // LOG: error encountered -> deleting newly created wallet.
-        locator.wallet_controller.delete(config, credentials).await.ok();
+    if let Err(e) = &res {
+        error!("Migration error encountered: {e}");
+
+        match locator.wallet_controller.delete(config, credentials).await.ok() {
+            Some(_) => debug!("Newly created wallet deleted"),
+            None => warn!("Could not delete newly created wallet!"),
+        };
     }
 
     res?;

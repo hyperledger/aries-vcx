@@ -373,6 +373,14 @@ impl SetupProfile {
         init_test_logging();
         set_test_configs();
 
+        // We have to start with the vdrtools profile
+        // in order to perform the migration
+        #[cfg(feature = "migration")]
+        return {
+            info!("SetupProfile >> using indy profile");
+            SetupProfile::init_indy().await
+        };
+
         #[cfg(feature = "mixed_breed")]
         return {
             info!("SetupProfile >> using mixed breed profile");

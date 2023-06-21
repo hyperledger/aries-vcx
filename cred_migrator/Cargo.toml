@@ -11,6 +11,7 @@ credx = { package = "indy-credx", git = "https://github.com/anonyome/indy-shared
 vdrtools = { package = "libvdrtools", path = "../libvdrtools" }
 serde_json = "1.0.96"
 thiserror = "1.0.40"
+log = "0.4.19"
 
 [dev-dependencies]
 tokio = { version = "1.28.2", features = ["macros", "rt"] }
