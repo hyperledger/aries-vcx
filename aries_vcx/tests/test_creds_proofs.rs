@@ -28,6 +28,7 @@ mod integration_tests {
     };
     use messages::AriesMessage;
 
+    #[cfg(feature = "migration")]
     use crate::utils::migration::Migratable;
 
     #[tokio::test]
@@ -576,7 +577,6 @@ mod tests {
     use aries_vcx::utils::devsetup::*;
 
     use crate::utils::devsetup_agent::test_utils::{create_test_alice_instance, Faber, PayloadKinds};
-    use crate::utils::migration::Migratable;
     use crate::utils::scenarios::test_utils::{
         _create_address_schema, _exchange_credential, _exchange_credential_with_proposal, accept_cred_proposal,
         accept_cred_proposal_1, accept_offer, accept_proof_proposal, attr_names,
@@ -587,6 +587,9 @@ mod tests {
         send_cred_proposal, send_cred_proposal_1, send_cred_req, send_credential, send_proof_proposal,
         send_proof_proposal_1, send_proof_request, verifier_create_proof_and_send_request, verify_proof,
     };
+
+    #[cfg(feature = "migration")]
+    use crate::utils::migration::Migratable;
 
     #[tokio::test]
     #[ignore]

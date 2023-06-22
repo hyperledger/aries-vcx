@@ -14,7 +14,6 @@ mod integration_tests {
     use aries_vcx::utils::devsetup::*;
 
     use crate::utils::devsetup_agent::test_utils::{create_test_alice_instance, Faber};
-    use crate::utils::migration::Migratable;
     use crate::utils::scenarios::test_utils::{
         _create_address_schema, _exchange_credential, attr_names, create_connected_connections, create_proof,
         generate_and_send_proof, issue_address_credential, prover_select_credentials_and_send_proof,
@@ -22,6 +21,9 @@ mod integration_tests {
         revoke_credential_and_publish_accumulator, revoke_credential_local, rotate_rev_reg, send_proof_request,
         verifier_create_proof_and_send_request,
     };
+
+    #[cfg(feature = "migration")]
+    use crate::utils::migration::Migratable;
 
     use super::*;
 
