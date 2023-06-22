@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use aries_vcx::{
-    core::profile::{modular_libs_profile::ModularLibsProfile, profile::Profile},
+    core::profile::modular_libs_profile::ModularLibsProfile,
     utils::{constants::GENESIS_PATH, devsetup::SetupProfile, get_temp_dir_path},
 };
 use aries_vcx_core::{
@@ -10,8 +10,8 @@ use aries_vcx_core::{
     WalletHandle,
 };
 use async_trait::async_trait;
-use cred_migrator::{Config, Credentials, KeyDerivationMethod, Locator};
 use uuid::Uuid;
+use wallet_migrator::{Config, Credentials, KeyDerivationMethod, Locator};
 
 use super::devsetup_agent::test_utils::{Alice, Faber};
 
@@ -53,11 +53,11 @@ impl Migratable for Faber {
 
 async fn migrate_and_replace_profile(wallet_handle: WalletHandle) -> WalletHandle {
     let (credentials, config) = make_new_wallet_config();
-    cred_migrator::migrate_wallet(
+    wallet_migrator::migrate_wallet(
         wallet_handle,
         config.clone(),
         credentials.clone(),
-        cred_migrator::vdrtools2credx::migrate_any_record,
+        wallet_migrator::vdrtools2credx::migrate_any_record,
     )
     .await
     .unwrap();
