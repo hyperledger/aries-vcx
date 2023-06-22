@@ -553,7 +553,9 @@ jobs:
       - name: "Setup rust testing environment"
         uses: ./.github/actions/setup-testing-rust
       - name: "Run aries-vcx tests: pool_tests agency_pool_tests"
-        run: RUST_TEST_THREADS=1 cargo test --manifest-path="aries_vcx/Cargo.toml" -F migration -- --include-ignored;
+        run: |
+        RUST_TEST_THREADS=1 cargo test --manifest-path="aries_vcx/Cargo.toml" -F migration --test test_creds_proofs -- --include-ignored;
+        RUST_TEST_THREADS=1 cargo test --manifest-path="aries_vcx/Cargo.toml" -F migration --test test_creds_proofs_revocations -- --include-ignored;
 
   test-integration-libvcx:
     needs: workflow-setup
