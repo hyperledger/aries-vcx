@@ -548,7 +548,7 @@ pub mod test_utils {
         #[cfg(feature = "modular_libs")]
         pub async fn setup_modular_profile(
             ledger_pool_config: LedgerPoolConfig,
-        ) -> (Arc<dyn Profile>, Arc<dyn Fn() -> BoxFuture<'static, ()>>) {
+        ) -> (Arc<dyn Profile>, Arc<dyn Fn() -> BoxFuture<'static, ()> + Send + Sync>) {
             let (wallet_handle, config_wallet) = Alice::setup_indy_wallet().await;
 
             let wallet: Arc<dyn BaseWallet> = Arc::new(IndySdkWallet::new(wallet_handle));
