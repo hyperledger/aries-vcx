@@ -89,7 +89,7 @@ pub struct SetupWalletPool {
 pub struct SetupProfile {
     pub institution_did: String,
     pub profile: Arc<dyn Profile>,
-    pub(self) teardown: Arc<dyn Fn() -> BoxFuture<'static, ()>>,
+    pub(self) teardown: Arc<dyn Fn() -> BoxFuture<'static, ()> + Send + Sync>,
 }
 
 pub struct SetupInstitutionWallet {

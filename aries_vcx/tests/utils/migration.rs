@@ -2,15 +2,56 @@ use std::sync::Arc;
 
 use aries_vcx::{
     core::profile::{modular_libs_profile::ModularLibsProfile, profile::Profile},
-    utils::{constants::GENESIS_PATH, get_temp_dir_path},
+    utils::{constants::GENESIS_PATH, devsetup::SetupProfile, get_temp_dir_path},
 };
 use aries_vcx_core::{
-    ledger::request_submitter::vdr_ledger::LedgerPoolConfig, wallet::indy_wallet::IndySdkWallet, WalletHandle,
+    ledger::request_submitter::vdr_ledger::LedgerPoolConfig,
+    wallet::{agency_client_wallet::ToBaseAgencyClientWallet, base_wallet::BaseWallet, indy_wallet::IndySdkWallet},
+    WalletHandle,
 };
+use async_trait::async_trait;
 use cred_migrator::{Config, Credentials, KeyDerivationMethod, Locator};
 use uuid::Uuid;
 
-pub async fn migrate_and_replace_profile(wallet_handle: WalletHandle) -> WalletHandle {
+use super::devsetup_agent::test_utils::{Alice, Faber};
+
+#[async_trait]
+pub trait Migratable {
+    async fn migrate(&mut self);
+}
+
+#[async_trait]
+impl Migratable for SetupProfile {
+    async fn migrate(&mut self) {
+        let old_wh = self.profile.wallet_handle().unwrap();
+        let new_wh = migrate_and_replace_profile(old_wh).await;
+        self.profile = make_modular_profile(new_wh);
+    }
+}
+
+#[async_trait]
+impl Migratable for Alice {
+    async fn migrate(&mut self) {
+        let old_wh = self.profile.wallet_handle().unwrap();
+        let new_wh = migrate_and_replace_profile(old_wh).await;
+        self.profile = make_modular_profile(new_wh);
+        let new_wallet: Arc<dyn BaseWallet> = Arc::new(IndySdkWallet::new(new_wh));
+        self.agency_client.wallet = new_wallet.to_base_agency_client_wallet();
+    }
+}
+
+#[async_trait]
+impl Migratable for Faber {
+    async fn migrate(&mut self) {
+        let old_wh = self.profile.wallet_handle().unwrap();
+        let new_wh = migrate_and_replace_profile(old_wh).await;
+        self.profile = make_modular_profile(new_wh);
+        let new_wallet: Arc<dyn BaseWallet> = Arc::new(IndySdkWallet::new(new_wh));
+        self.agency_client.wallet = new_wallet.to_base_agency_client_wallet();
+    }
+}
+
+async fn migrate_and_replace_profile(wallet_handle: WalletHandle) -> WalletHandle {
     let (credentials, config) = make_new_wallet_config();
     cred_migrator::migrate_wallet(
         wallet_handle,

@@ -28,10 +28,12 @@ mod integration_tests {
     };
     use messages::AriesMessage;
 
+    use crate::utils::migration::Migratable;
+
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_retrieve_credentials() {
-        SetupProfile::run(|setup| async move {
+        SetupProfile::run(|mut setup: SetupProfile| async move {
             create_and_store_nonrevocable_credential(
                 &setup.profile.inject_anoncreds(),
                 &setup.profile.inject_anoncreds(),
@@ -41,6 +43,10 @@ mod integration_tests {
                 DEFAULT_SCHEMA_ATTRS,
             )
             .await;
+
+            #[cfg(feature = "migration")]
+            setup.migrate().await;
+
             let (_, _, req, _) = create_indy_proof(
                 &setup.profile.inject_anoncreds(),
                 &setup.profile.inject_anoncreds(),
@@ -82,7 +88,7 @@ mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_get_credential_def() {
-        SetupProfile::run(|setup| async move {
+        SetupProfile::run(|mut setup| async move {
             let (_, _, cred_def_id, cred_def_json, _) = create_and_store_nonrevocable_credential_def(
                 &setup.profile.inject_anoncreds(),
                 &setup.profile.inject_anoncreds_ledger_read(),
@@ -91,6 +97,9 @@ mod integration_tests {
                 DEFAULT_SCHEMA_ATTRS,
             )
             .await;
+
+            #[cfg(feature = "migration")]
+            setup.migrate().await;
 
             let ledger = Arc::clone(&setup.profile).inject_anoncreds_ledger_read();
             let r_cred_def_json = ledger.get_cred_def(&cred_def_id, None).await.unwrap();
@@ -105,7 +114,7 @@ mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_retrieve_credentials_empty() {
-        SetupProfile::run(|setup| async move {
+        SetupProfile::run(|mut setup| async move {
             // create skeleton proof request attachment data
             let mut req = json!({
                "nonce":"123432421212",
@@ -132,6 +141,9 @@ mod integration_tests {
             let id = "test_id".to_owned();
             let proof_req = RequestPresentation::with_decorators(id, content, decorators);
             let proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
+
+            #[cfg(feature = "migration")]
+            setup.migrate().await;
 
             let retrieved_creds = proof
                 .retrieve_credentials(&setup.profile.inject_anoncreds())
@@ -181,7 +193,7 @@ mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_case_for_proof_req_doesnt_matter_for_retrieve_creds() {
-        SetupProfile::run(|setup| async move {
+        SetupProfile::run(|mut setup| async move {
             create_and_store_nonrevocable_credential(
                 &setup.profile.inject_anoncreds(),
                 &setup.profile.inject_anoncreds(),
@@ -248,6 +260,9 @@ mod integration_tests {
             let content = RequestPresentationContent::new(vec![attach]);
             let decorators = RequestPresentationDecorators::default();
 
+            #[cfg(feature = "migration")]
+            setup.migrate().await;
+
             let proof_req = RequestPresentation::with_decorators(id, content, decorators);
             let proof: Prover = Prover::create_from_request("2", proof_req).unwrap();
             let retrieved_creds2 = proof
@@ -296,7 +311,7 @@ mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_generate_proof() {
-        SetupProfile::run(|setup| async move {
+        SetupProfile::run(|mut setup| async move {
             create_and_store_credential(
                 &setup.profile.inject_anoncreds(),
                 &setup.profile.inject_anoncreds(),
@@ -323,9 +338,12 @@ mod integration_tests {
                        "name":"self_attested_attr",
                  }),
                 "requested_predicates": {},
-                "non_revoked": {"from": 098, "to": to}
+                "non_revoked": {"from": 98, "to": to}
             })
             .to_string();
+
+            #[cfg(feature = "migration")]
+            setup.migrate().await;
 
             let pres_req_data: PresentationRequestData = serde_json::from_str(&indy_proof_req).unwrap();
             let id = "test_id".to_owned();
@@ -382,7 +400,7 @@ mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_generate_proof_with_predicates() {
-        SetupProfile::run(|setup| async move {
+        SetupProfile::run(|mut setup| async move {
             create_and_store_credential(
                 &setup.profile.inject_anoncreds(),
                 &setup.profile.inject_anoncreds(),
@@ -411,7 +429,7 @@ mod integration_tests {
                 "requested_predicates": json!({
                     "zip_3": {"name":"zip", "p_type":">=", "p_value":18}
                 }),
-                "non_revoked": {"from": 098, "to": to}
+                "non_revoked": {"from": 98, "to": to}
             })
             .to_string();
 
@@ -431,6 +449,9 @@ mod integration_tests {
 
             let proof_req = RequestPresentation::with_decorators(id, content, decorators);
             let mut proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
+
+            #[cfg(feature = "migration")]
+            setup.migrate().await;
 
             let all_creds = proof
                 .retrieve_credentials(&setup.profile.inject_anoncreds())
@@ -473,7 +494,7 @@ mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_generate_self_attested_proof() {
-        SetupProfile::run(|setup| async move {
+        SetupProfile::run(|mut setup| async move {
             let indy_proof_req = json!({
                "nonce":"123432421212",
                "name":"proof_req_1",
@@ -493,6 +514,9 @@ mod integration_tests {
             let mut verifier = Verifier::create_from_request("foo".into(), &pres_req_data).unwrap();
             let presentation_request = verifier.get_presentation_request_msg().unwrap();
             verifier.mark_presentation_request_msg_sent().unwrap();
+
+            #[cfg(feature = "migration")]
+            setup.migrate().await;
 
             // prover receives request and generates presentation
             let mut proof: Prover = Prover::create_from_request("1", presentation_request).unwrap();
@@ -533,7 +557,6 @@ mod integration_tests {
     }
 }
 
-#[cfg(test)]
 mod tests {
     use std::collections::HashMap;
     use std::time::Duration;
@@ -553,6 +576,7 @@ mod tests {
     use aries_vcx::utils::devsetup::*;
 
     use crate::utils::devsetup_agent::test_utils::{create_test_alice_instance, Faber, PayloadKinds};
+    use crate::utils::migration::Migratable;
     use crate::utils::scenarios::test_utils::{
         _create_address_schema, _exchange_credential, _exchange_credential_with_proposal, accept_cred_proposal,
         accept_cred_proposal_1, accept_offer, accept_proof_proposal, attr_names,
@@ -563,8 +587,6 @@ mod tests {
         send_cred_proposal, send_cred_proposal_1, send_cred_req, send_credential, send_proof_proposal,
         send_proof_proposal_1, send_proof_request, verifier_create_proof_and_send_request, verify_proof,
     };
-
-    use super::*;
 
     #[tokio::test]
     #[ignore]
@@ -583,6 +605,10 @@ mod tests {
                     &institution_to_consumer,
                 )
                 .await;
+
+            #[cfg(feature = "migration")]
+            institution.migrate().await;
+
             let requested_attrs_string = serde_json::to_string(&json!([
             {
                 "name": "address1",
@@ -607,6 +633,9 @@ mod tests {
                 None,
             )
             .await;
+
+            #[cfg(feature = "migration")]
+            consumer.migrate().await;
 
             prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_institution, None, None).await;
 
@@ -645,6 +674,10 @@ mod tests {
                 &institution_to_consumer,
             )
             .await;
+
+            #[cfg(feature = "migration")]
+            institution.migrate().await;
+
             let requested_preds_string = serde_json::to_string(&json!([
             {
                 "name": "zip",
@@ -666,6 +699,9 @@ mod tests {
                 None,
             )
             .await;
+
+            #[cfg(feature = "migration")]
+            consumer.migrate().await;
 
             prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_institution, None, None).await;
 
@@ -708,6 +744,10 @@ mod tests {
                 &institution_to_consumer,
             )
             .await;
+
+            #[cfg(feature = "migration")]
+            institution.migrate().await;
+
             let requested_preds_string = serde_json::to_string(&json!([
             {
                 "name": "zip",
@@ -720,6 +760,7 @@ mod tests {
                 "test_basic_proof :: Going to seng proof request with attributes {}",
                 &requested_preds_string
             );
+
             send_proof_request(
                 &mut institution,
                 &institution_to_consumer,
@@ -729,6 +770,9 @@ mod tests {
                 None,
             )
             .await;
+
+            #[cfg(feature = "migration")]
+            consumer.migrate().await;
 
             prover_select_credentials_and_fail_to_generate_proof(&mut consumer, &consumer_to_institution, None, None)
                 .await;
@@ -754,6 +798,9 @@ mod tests {
             let (consumer2_to_issuer, issuer_to_consumer2) =
                 create_connected_connections(&mut consumer2, &mut issuer).await;
 
+            #[cfg(feature = "migration")]
+            issuer.migrate().await;
+
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _rev_reg_id) =
                 _create_address_schema(&issuer.profile, &issuer.config_issuer.institution_did).await;
             let (address1, address2, city, state, zip) = attr_names();
@@ -769,6 +816,10 @@ mod tests {
                 None,
             )
                 .await;
+
+            #[cfg(feature = "migration")]
+            verifier.migrate().await;
+
             let credential_data2 = json!({address1.clone(): "101 Tela Lane", address2.clone(): "Suite 1", city.clone(): "SLC", state.clone(): "WA", zip.clone(): "8721"}).to_string();
             let _credential_handle2 = _exchange_credential(
                 &mut consumer2,
@@ -791,6 +842,10 @@ mod tests {
                 request_name1,
             )
                 .await;
+
+                #[cfg(feature = "migration")]
+                consumer1.migrate().await;
+
             prover_select_credentials_and_send_proof(&mut consumer1, &consumer1_to_verifier, None, None).await;
             proof_verifier
                 .update_state(
@@ -811,6 +866,10 @@ mod tests {
                 request_name2,
             )
                 .await;
+
+                #[cfg(feature = "migration")]
+            consumer2.migrate().await;
+
             prover_select_credentials_and_send_proof(&mut consumer2, &consumer2_to_verifier, None, None).await;
             proof_verifier
                 .update_state(
@@ -844,6 +903,10 @@ mod tests {
 
             let (schema_id, cred_def_id, _rev_reg_id, _cred_def, _rev_reg, _credential_handle) =
                 issue_address_credential(&mut consumer, &mut issuer, &consumer_to_issuer, &issuer_to_consumer).await;
+
+            #[cfg(feature = "migration")]
+            issuer.migrate().await;
+
             let request_name1 = Some("request1");
             let mut proof_verifier = verifier_create_proof_and_send_request(
                 &mut verifier,
@@ -853,6 +916,10 @@ mod tests {
                 request_name1,
             )
             .await;
+
+            #[cfg(feature = "migration")]
+            verifier.migrate().await;
+
             prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, request_name1, None).await;
             proof_verifier
                 .update_state(
@@ -878,6 +945,10 @@ mod tests {
                 request_name2,
             )
             .await;
+
+            #[cfg(feature = "migration")]
+            consumer.migrate().await;
+
             prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, request_name2, None).await;
             proof_verifier
                 .update_state(
@@ -932,6 +1003,10 @@ mod tests {
                 request_name1,
             )
                 .await;
+
+                #[cfg(feature = "migration")]
+                institution.migrate().await;
+
             prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_institution, request_name1, None).await;
             verifier
                 .update_state(
@@ -957,6 +1032,10 @@ mod tests {
                 request_name2,
             )
                 .await;
+
+                #[cfg(feature = "migration")]
+                consumer.migrate().await;
+
             prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_institution, request_name2, None).await;
             verifier
                 .update_state(
@@ -1007,6 +1086,10 @@ mod tests {
             for i in 1..number_of_attributes {
                 credential_data[format!("key{}", i)] = Value::String(format!("value{}", i));
             }
+
+            #[cfg(feature = "migration")]
+            institution.migrate().await;
+
             info!("test_real_proof :: sending credential offer");
             let credential_data = credential_data.to_string();
             info!("test_real_proof :: generated credential data: {}", credential_data);
@@ -1022,6 +1105,9 @@ mod tests {
 
             info!("test_real_proof :: AS CONSUMER SEND CREDENTIAL REQUEST");
             let mut holder_credential = send_cred_req(&mut consumer, &consumer_to_issuer, None).await;
+
+            #[cfg(feature = "migration")]
+            consumer.migrate().await;
 
             info!("test_real_proof :: AS INSTITUTION SEND CREDENTIAL");
             send_credential(
@@ -1129,6 +1215,10 @@ mod tests {
                 req1,
             )
                 .await;
+
+                #[cfg(feature = "migration")]
+                issuer.migrate().await;
+
             let credential_data2 = json!({address1.clone(): "101 Tela Lane", address2.clone(): "Suite 1", city.clone(): "SLC", state.clone(): "WA", zip.clone(): "8721"}).to_string();
             let _credential_handle2 = _exchange_credential(
                 &mut consumer,
@@ -1141,6 +1231,9 @@ mod tests {
                 req2,
             )
                 .await;
+
+                #[cfg(feature = "migration")]
+                verifier.migrate().await;
 
             let mut proof_verifier = verifier_create_proof_and_send_request(
                 &mut verifier,
@@ -1170,6 +1263,11 @@ mod tests {
                 req2,
             )
                 .await;
+
+
+                #[cfg(feature = "migration")]
+                consumer.migrate().await;
+
             prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2))
                 .await;
             proof_verifier
@@ -1186,7 +1284,7 @@ mod tests {
 
     #[tokio::test]
     #[ignore]
-    pub async fn test_agency_pool_credential_exchange_via_proposal() {
+    async fn test_agency_pool_credential_exchange_via_proposal() {
         SetupPool::run(|setup| async move {
             let mut institution = Faber::setup(setup.pool_handle).await;
             let mut consumer = create_test_alice_instance(&setup).await;
@@ -1196,6 +1294,9 @@ mod tests {
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, _cred_def, rev_reg, rev_reg_id) =
                 _create_address_schema(&institution.profile, &institution.config_issuer.institution_did).await;
             let tails_file = rev_reg.get_tails_dir();
+
+            #[cfg(feature = "migration")]
+            institution.migrate().await;
 
             _exchange_credential_with_proposal(
                 &mut consumer,
@@ -1215,7 +1316,7 @@ mod tests {
 
     #[tokio::test]
     #[ignore]
-    pub async fn test_agency_pool_credential_exchange_via_proposal_failed() {
+    async fn test_agency_pool_credential_exchange_via_proposal_failed() {
         SetupPool::run(|setup| async move {
             let mut institution = Faber::setup(setup.pool_handle).await;
             let mut consumer = create_test_alice_instance(&setup).await;
@@ -1234,6 +1335,10 @@ mod tests {
                 "comment",
             )
             .await;
+
+            #[cfg(feature = "migration")]
+            institution.migrate().await;
+
             let mut issuer =
                 accept_cred_proposal(&mut institution, &institution_to_consumer, rev_reg_id, Some(tails_file)).await;
             decline_offer(&mut consumer, &consumer_to_institution, &mut holder).await;
@@ -1255,7 +1360,7 @@ mod tests {
 
     #[tokio::test]
     #[ignore]
-    pub async fn test_agency_pool_credential_exchange_via_proposal_with_negotiation() {
+    async fn test_agency_pool_credential_exchange_via_proposal_with_negotiation() {
         SetupPool::run(|setup| async move {
             let mut institution = Faber::setup(setup.pool_handle).await;
             let mut consumer = create_test_alice_instance(&setup).await;
@@ -1265,6 +1370,9 @@ mod tests {
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, _cred_def, rev_reg, rev_reg_id) =
                 _create_address_schema(&institution.profile, &institution.config_issuer.institution_did).await;
             let tails_file = rev_reg.get_tails_dir();
+
+            #[cfg(feature = "migration")]
+            institution.migrate().await;
 
             let mut holder = send_cred_proposal(
                 &mut consumer,
@@ -1281,6 +1389,10 @@ mod tests {
                 Some(tails_file.clone()),
             )
             .await;
+
+            #[cfg(feature = "migration")]
+            consumer.migrate().await;
+
             send_cred_proposal_1(
                 &mut holder,
                 &mut consumer,
@@ -1316,7 +1428,7 @@ mod tests {
 
     #[tokio::test]
     #[ignore]
-    pub async fn test_agency_pool_presentation_via_proposal() {
+    async fn test_agency_pool_presentation_via_proposal() {
         SetupPool::run(|setup| async move {
             let mut institution = Faber::setup(setup.pool_handle).await;
             let mut consumer = create_test_alice_instance(&setup).await;
@@ -1326,6 +1438,9 @@ mod tests {
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, _cred_def, rev_reg, rev_reg_id) =
                 _create_address_schema(&institution.profile, &institution.config_issuer.institution_did).await;
             let tails_file = rev_reg.get_tails_dir();
+
+            #[cfg(feature = "migration")]
+            institution.migrate().await;
 
             _exchange_credential_with_proposal(
                 &mut consumer,
@@ -1342,6 +1457,10 @@ mod tests {
             let mut prover = send_proof_proposal(&mut consumer, &consumer_to_institution, &cred_def_id).await;
             let mut verifier = Verifier::create("1").unwrap();
             accept_proof_proposal(&mut institution, &mut verifier, &institution_to_consumer).await;
+
+            #[cfg(feature = "migration")]
+            consumer.migrate().await;
+
             let selected_credentials =
                 prover_select_credentials(&mut prover, &mut consumer, &consumer_to_institution, None).await;
             generate_and_send_proof(
@@ -1358,7 +1477,7 @@ mod tests {
 
     #[tokio::test]
     #[ignore]
-    pub async fn test_agency_pool_presentation_via_proposal_with_rejection() {
+    async fn test_agency_pool_presentation_via_proposal_with_rejection() {
         SetupPool::run(|setup| async move {
             let mut institution = Faber::setup(setup.pool_handle).await;
             let mut consumer = create_test_alice_instance(&setup).await;
@@ -1368,6 +1487,9 @@ mod tests {
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, _cred_def, rev_reg, rev_reg_id) =
                 _create_address_schema(&institution.profile, &institution.config_issuer.institution_did).await;
             let tails_file = rev_reg.get_tails_dir();
+
+            #[cfg(feature = "migration")]
+            institution.migrate().await;
 
             _exchange_credential_with_proposal(
                 &mut consumer,
@@ -1390,7 +1512,7 @@ mod tests {
 
     #[tokio::test]
     #[ignore]
-    pub async fn test_agency_pool_presentation_via_proposal_with_negotiation() {
+    async fn test_agency_pool_presentation_via_proposal_with_negotiation() {
         SetupPool::run(|setup| async move {
             let mut institution = Faber::setup(setup.pool_handle).await;
             let mut consumer = create_test_alice_instance(&setup).await;
@@ -1400,6 +1522,9 @@ mod tests {
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, _cred_def, rev_reg, rev_reg_id) =
                 _create_address_schema(&institution.profile, &institution.config_issuer.institution_did).await;
             let tails_file = rev_reg.get_tails_dir();
+
+            #[cfg(feature = "migration")]
+            institution.migrate().await;
 
             _exchange_credential_with_proposal(
                 &mut consumer,
@@ -1415,6 +1540,10 @@ mod tests {
             .await;
             let mut prover = send_proof_proposal(&mut consumer, &consumer_to_institution, &cred_def_id).await;
             let mut verifier = Verifier::create("1").unwrap();
+
+            #[cfg(feature = "migration")]
+            consumer.migrate().await;
+
             accept_proof_proposal(&mut institution, &mut verifier, &institution_to_consumer).await;
             send_proof_proposal_1(&mut consumer, &mut prover, &consumer_to_institution, &cred_def_id).await;
             accept_proof_proposal(&mut institution, &mut verifier, &institution_to_consumer).await;
@@ -1447,6 +1576,9 @@ mod tests {
 
             faber.create_nonrevocable_credential_definition().await;
 
+            #[cfg(feature = "migration")]
+            faber.migrate().await;
+
             // Connection
             let invite = faber.create_invite().await;
             alice.accept_invite(&invite).await;
@@ -1454,6 +1586,9 @@ mod tests {
             faber.update_state(3).await;
             alice.update_state(4).await;
             faber.update_state(4).await;
+
+            #[cfg(feature = "migration")]
+            alice.migrate().await;
 
             // Credential issuance
             faber.offer_non_revocable_credential().await;
@@ -1484,6 +1619,9 @@ mod tests {
             std::thread::sleep(std::time::Duration::from_secs(2));
 
             faber.create_nonrevocable_credential_definition().await;
+
+            #[cfg(feature = "migration")]
+            faber.migrate().await;
 
             // Connection
             let invite = faber.create_invite().await;
@@ -1523,6 +1661,9 @@ mod tests {
                     .unwrap();
                 assert_eq!(HolderState::RequestSent, alice.credential.get_state());
             }
+
+            #[cfg(feature = "migration")]
+            alice.migrate().await;
 
             faber.send_credential().await;
             alice.accept_credential().await;
@@ -1584,6 +1725,9 @@ mod tests {
 
             faber.create_nonrevocable_credential_definition().await;
 
+            #[cfg(feature = "migration")]
+            faber.migrate().await;
+
             // Connection
             let invite = faber.create_invite().await;
             alice.accept_invite(&invite).await;
@@ -1632,6 +1776,9 @@ mod tests {
 
             faber.send_credential().await;
             alice.accept_credential().await;
+
+            #[cfg(feature = "migration")]
+            alice.migrate().await;
 
             // Credential Presentation
             faber.request_presentation().await;

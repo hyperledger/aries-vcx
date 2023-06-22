@@ -138,7 +138,7 @@ pub mod test_utils {
         pub verifier: Verifier,
         pub pairwise_info: PairwiseInfo,
         pub agency_client: AgencyClient,
-        pub(self) teardown: Arc<dyn Fn() -> BoxFuture<'static, ()>>,
+        pub(self) teardown: Arc<dyn Fn() -> BoxFuture<'static, ()> + Send + Sync>,
     }
 
     impl Faber {
@@ -505,7 +505,7 @@ pub mod test_utils {
         pub rev_not_receiver: Option<RevocationNotificationReceiver>,
         pub prover: Prover,
         pub agency_client: AgencyClient,
-        pub(self) teardown: Arc<dyn Fn() -> BoxFuture<'static, ()>>,
+        pub(self) teardown: Arc<dyn Fn() -> BoxFuture<'static, ()> + Send + Sync>,
     }
 
     pub async fn create_test_alice_instance(setup: &SetupPool) -> Alice {
@@ -570,7 +570,7 @@ pub mod test_utils {
 
         pub async fn setup_indy_profile(
             pool_handle: PoolHandle,
-        ) -> (Arc<dyn Profile>, Arc<dyn Fn() -> BoxFuture<'static, ()>>) {
+        ) -> (Arc<dyn Profile>, Arc<dyn Fn() -> BoxFuture<'static, ()> + Send + Sync>) {
             let (wallet_handle, config_wallet) = Alice::setup_indy_wallet().await;
 
             let indy_profile = VdrtoolsProfile::init(wallet_handle, pool_handle);
@@ -581,7 +581,10 @@ pub mod test_utils {
             )
         }
 
-        pub async fn setup(profile: Arc<dyn Profile>, teardown: Arc<dyn Fn() -> BoxFuture<'static, ()>>) -> Alice {
+        pub async fn setup(
+            profile: Arc<dyn Profile>,
+            teardown: Arc<dyn Fn() -> BoxFuture<'static, ()> + Send + Sync>,
+        ) -> Alice {
             let config_provision_agent = AgentProvisionConfig {
                 agency_did: AGENCY_DID.to_string(),
                 agency_verkey: AGENCY_VERKEY.to_string(),
