@@ -1,5 +1,5 @@
 [package]
-name = "cred_migrator"
+name = "wallet_migrator"
 version = "0.1.0"
 edition = "2021"
 
