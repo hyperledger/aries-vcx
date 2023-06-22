@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use super::profile::Profile;
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
-use aries_vcx_core::ledger::base_ledger::{TaaConfigurator, TxnAuthrAgrmtOptions};
+use aries_vcx_core::ledger::base_ledger::TxnAuthrAgrmtOptions;
 use aries_vcx_core::{
     anoncreds::{base_anoncreds::BaseAnonCreds, indy_anoncreds::IndySdkAnonCreds},
     ledger::{
@@ -67,6 +67,7 @@ impl Profile for VdrtoolsProfile {
         self.wallet.clone()
     }
 
+    #[cfg(feature = "migration")]
     fn wallet_handle(&self) -> Option<WalletHandle> {
         Some(self.wallet.wallet_handle)
     }
