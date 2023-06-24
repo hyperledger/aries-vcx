@@ -38,6 +38,11 @@ accept_licenses(){
     yes | sdkmanager --licenses
 }
 
+
+download_emulator() {
+    curl -o /home/indy/emu.zip https://dl.google.com/android/repository/emulator-linux-5889189.zip
+}
+
 # TODO: Recreating avd for more than a single arch doesn't work
 create_avd(){
     echo "${GREEN}Creating Android SDK${RESET}"
@@ -47,17 +52,16 @@ create_avd(){
     if [ ! -d "${ANDROID_SDK}/emulator/" ] ; then
         echo "y" |
               sdkmanager --no_https \
-                "emulator" \
                 "platform-tools" \
                 "platforms;android-24" \
                 "system-images;android-24;default;${ABI}" > sdkmanager.install.emulator.and.tools.out 2>&1
 
         # TODO sdkmanager upgrades by default. Hack to downgrade Android Emulator so as to work in headless mode (node display).
         # Remove as soon as headless mode is fixed.
+        download_emulator
         mv /home/indy/emu.zip emu.zip
-        mv emulator emulator_backup
         unzip emu.zip
-        rm "emu.zip"
+        rm emu.zip
     else
         echo "Skipping sdkmanager activity"
     fi
@@ -70,7 +74,12 @@ create_avd(){
             --package "system-images;android-24;default;${ABI}" \
             -f \
             -c 3000M
-    ANDROID_SDK_ROOT=${ANDROID_SDK} ANDROID_HOME=${ANDROID_SDK} ${ANDROID_HOME}/tools/emulator -avd ${ABSOLUTE_ARCH} -netdelay none -partition-size 3000 -netspeed full -no-audio -no-window -no-snapshot -no-accel &
+
+    echo "foobar123"
+    ls ${ANDROID_HOME}/tools/emulator
+    echo "xyz123"
+    which emulator
+    ANDROID_SDK_ROOT=${ANDROID_SDK} ANDROID_HOME=${ANDROID_SDK} emulator -avd ${ABSOLUTE_ARCH} -netdelay none -partition-size 3000 -netspeed full -no-audio -no-window -no-snapshot -no-accel &
 }
 
 kill_avd(){
@@ -120,10 +129,6 @@ cat << EOF > ${HOME}/.cargo/config
 ar = "$(realpath ${AR})"
 linker = "$(realpath ${CC})"
 EOF
-}
-
-download_emulator() {
-    curl -o /home/indy/emu.zip https://dl.google.com/android/repository/emulator-linux-5889189.zip
 }
 
 download_and_unzip_if_missed() {
