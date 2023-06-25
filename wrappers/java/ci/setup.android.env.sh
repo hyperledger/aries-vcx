@@ -52,16 +52,19 @@ create_avd(){
     if [ ! -d "${ANDROID_SDK}/emulator/" ] ; then
         echo "y" |
               sdkmanager --no_https \
+                "emulator" \
                 "platform-tools" \
                 "platforms;android-24" \
                 "system-images;android-24;default;${ABI}" > sdkmanager.install.emulator.and.tools.out 2>&1
 
         # TODO sdkmanager upgrades by default. Hack to downgrade Android Emulator so as to work in headless mode (node display).
         # Remove as soon as headless mode is fixed.
+        # todo: Why do we download emulator manually if we've just installed it above with sdkmanager?
         download_emulator
         mv /home/indy/emu.zip emu.zip
+        mv emulator emulator_backup
         unzip emu.zip
-        rm emu.zip
+        rm "emu.zip"
     else
         echo "Skipping sdkmanager activity"
     fi
@@ -74,12 +77,7 @@ create_avd(){
             --package "system-images;android-24;default;${ABI}" \
             -f \
             -c 3000M
-
-    echo "foobar123"
-    ls ${ANDROID_HOME}/tools/emulator
-    echo "xyz123"
-    which emulator
-    ANDROID_SDK_ROOT=${ANDROID_SDK} ANDROID_HOME=${ANDROID_SDK} emulator -avd ${ABSOLUTE_ARCH} -netdelay none -partition-size 3000 -netspeed full -no-audio -no-window -no-snapshot -no-accel &
+    ANDROID_SDK_ROOT=${ANDROID_SDK} ANDROID_HOME=${ANDROID_SDK} ${ANDROID_HOME}/tools/emulator -avd ${ABSOLUTE_ARCH} -netdelay none -partition-size 3000 -netspeed full -no-audio -no-window -no-snapshot -no-accel &
 }
 
 kill_avd(){
