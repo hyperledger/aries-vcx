@@ -68,11 +68,8 @@ impl ExtraFieldsDidCommV1Builder {
         self
     }
 
-    pub fn set_accept<I>(mut self, accept: I) -> Self
-    where
-        I: IntoIterator<Item = AcceptType>,
-    {
-        self.accept = accept.into_iter().collect();
+    pub fn set_accept(mut self, accept: Vec<AcceptType>) -> Self {
+        self.accept = accept;
         self
     }
 
@@ -86,7 +83,7 @@ impl ExtraFieldsDidCommV1Builder {
             priority: self.priority,
             recipient_keys: self.recipient_keys,
             routing_keys: self.routing_keys,
-            accept: self.accept.into_iter().collect(),
+            accept: self.accept,
         }
     }
 }

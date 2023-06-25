@@ -1,13 +1,11 @@
-use did_doc::schema::{service::Service, types::url::Url, utils::OneOrList};
-use did_doc_sov::extra_fields::{AcceptType, ExtraFieldsSov, KeyKind};
+use did_doc::schema::types::url::Url;
+use did_doc_sov::extra_fields::{AcceptType, KeyKind};
 use serde::{Deserialize, Serialize};
-
-use crate::error::DidPeerError;
 
 #[derive(Serialize, Deserialize)]
 pub struct ServiceAbbreviated {
     #[serde(rename = "t")]
-    _type: String,
+    service_type: String,
     #[serde(rename = "s")]
     service_endpoint: Url,
     #[serde(rename = "r")]
@@ -21,8 +19,12 @@ pub struct ServiceAbbreviated {
 }
 
 impl ServiceAbbreviated {
+    pub fn builder() -> ServiceAbbreviatedTypeBuilder {
+        ServiceAbbreviatedTypeBuilder::default()
+    }
+
     pub fn service_type(&self) -> &str {
-        self._type.as_ref()
+        self.service_type.as_ref()
     }
 
     pub fn service_endpoint(&self) -> &str {
@@ -45,7 +47,7 @@ impl ServiceAbbreviated {
         accept: &[AcceptType],
     ) -> Self {
         Self {
-            _type: service_type.to_string(),
+            service_type: service_type.to_string(),
             service_endpoint: service_endpoint.parse().unwrap(),
             routing_keys: routing_keys.to_vec(),
             accept: accept.to_vec(),
@@ -53,38 +55,54 @@ impl ServiceAbbreviated {
     }
 }
 
-impl TryFrom<&Service<ExtraFieldsSov>> for ServiceAbbreviated {
-    type Error = DidPeerError;
+#[derive(Default)]
+pub struct ServiceAbbreviatedTypeBuilder;
 
-    fn try_from(value: &Service<ExtraFieldsSov>) -> Result<Self, Self::Error> {
-        let service_endpoint = value.service_endpoint().clone();
-        let (routing_keys, accept) = match value.extra() {
-            ExtraFieldsSov::DIDCommV2(extra) => (extra.routing_keys().to_vec(), extra.accept().to_vec()),
-            ExtraFieldsSov::DIDCommV1(extra) => (extra.routing_keys().to_vec(), extra.accept().to_vec()),
-            _ => (vec![], vec![]),
-        };
-        let service_type = match value.service_type() {
-            OneOrList::One(service_type) => service_type,
-            OneOrList::List(service_types) => {
-                if let Some(first_service) = service_types.first() {
-                    first_service
-                } else {
-                    return Err(DidPeerError::InvalidServiceType);
-                }
-            }
-        };
+pub struct ServiceAbbreviatedEndpointBuilder {
+    service_type: String,
+}
 
-        let service_type_abbr = if service_type.to_lowercase() == "didcommmessaging" {
-            "dm"
-        } else {
-            service_type
-        };
+pub struct ServiceAbbreviatedCompleteBuilder {
+    service_type: String,
+    service_endpoint: Url,
+    routing_keys: Vec<KeyKind>,
+    accept: Vec<AcceptType>,
+}
 
-        Ok(Self {
-            _type: service_type_abbr.to_string(),
+impl ServiceAbbreviatedTypeBuilder {
+    pub fn set_service_type(self, service_type: String) -> ServiceAbbreviatedEndpointBuilder {
+        ServiceAbbreviatedEndpointBuilder { service_type }
+    }
+}
+
+impl ServiceAbbreviatedEndpointBuilder {
+    pub fn set_service_endpoint(self, service_endpoint: Url) -> ServiceAbbreviatedCompleteBuilder {
+        ServiceAbbreviatedCompleteBuilder {
+            service_type: self.service_type,
             service_endpoint,
-            routing_keys,
-            accept,
-        })
+            routing_keys: Vec::new(),
+            accept: Vec::new(),
+        }
+    }
+}
+
+impl ServiceAbbreviatedCompleteBuilder {
+    pub fn set_routing_keys(&mut self, routing_keys: Vec<KeyKind>) -> &mut ServiceAbbreviatedCompleteBuilder {
+        self.routing_keys = routing_keys;
+        self
+    }
+
+    pub fn set_accept_types(&mut self, accept: Vec<AcceptType>) -> &mut ServiceAbbreviatedCompleteBuilder {
+        self.accept = accept;
+        self
+    }
+
+    pub fn build(&self) -> ServiceAbbreviated {
+        ServiceAbbreviated {
+            service_type: self.service_type.to_owned(),
+            service_endpoint: self.service_endpoint.to_owned(),
+            routing_keys: self.routing_keys.to_owned(),
+            accept: self.accept.to_owned(),
+        }
     }
 }

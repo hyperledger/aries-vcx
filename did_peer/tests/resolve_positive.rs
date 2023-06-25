@@ -21,8 +21,7 @@ macro_rules! resolve_positive_test {
         #[test]
         async fn $test_name() {
             let resolver = PeerDidResolver::new();
-            let options =
-                DidResolutionOptions::new().set_extra(ExtraFieldsOptions::new().set_public_key_encoding($encoding));
+            let options = DidResolutionOptions::new(ExtraFieldsOptions::new().set_public_key_encoding($encoding));
             let did_document_expected = serde_json::from_str::<DidDocument<ExtraFieldsSov>>($did_doc).unwrap();
             let ddo = resolver
                 .resolve(&$peer_did.parse().unwrap(), &options)

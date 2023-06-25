@@ -1,5 +1,7 @@
 use base64::{engine::general_purpose::STANDARD_NO_PAD, Engine};
-use did_doc::schema::{did_doc::DidDocument, verification_method::VerificationMethodKind};
+use did_doc::schema::{
+    did_doc::DidDocument, service::Service, utils::OneOrList, verification_method::VerificationMethodKind,
+};
 use did_doc_sov::extra_fields::ExtraFieldsSov;
 
 use crate::{
@@ -51,7 +53,7 @@ pub fn append_encoded_service_segment(
     let services_abbreviated = did_document
         .service()
         .iter()
-        .map(|s| s.try_into())
+        .map(abbreviate_service)
         .collect::<Result<Vec<ServiceAbbreviated>, _>>()?;
 
     let service_encoded = if services_abbreviated.len() == 1 {
@@ -90,6 +92,38 @@ fn append_encoded_key_segment(
     did.push_str(&encoded);
 
     Ok(did)
+}
+
+fn abbreviate_service(service: &Service<ExtraFieldsSov>) -> Result<ServiceAbbreviated, DidPeerError> {
+    let service_endpoint = service.service_endpoint().clone();
+    let (routing_keys, accept) = match service.extra() {
+        ExtraFieldsSov::DIDCommV2(extra) => (extra.routing_keys().to_vec(), extra.accept().to_vec()),
+        ExtraFieldsSov::DIDCommV1(extra) => (extra.routing_keys().to_vec(), extra.accept().to_vec()),
+        _ => (vec![], vec![]),
+    };
+    let service_type = match service.service_type() {
+        OneOrList::One(service_type) => service_type,
+        OneOrList::List(service_types) => {
+            if let Some(first_service) = service_types.first() {
+                first_service
+            } else {
+                return Err(DidPeerError::InvalidServiceType);
+            }
+        }
+    };
+
+    let service_type_abbr = if service_type.to_lowercase() == "didcommmessaging" {
+        "dm"
+    } else {
+        service_type
+    };
+
+    Ok(ServiceAbbreviated::builder()
+        .set_service_type(service_type_abbr.to_string())
+        .set_service_endpoint(service_endpoint)
+        .set_routing_keys(routing_keys)
+        .set_accept_types(accept)
+        .build())
 }
 
 #[cfg(test)]

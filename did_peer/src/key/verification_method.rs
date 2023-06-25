@@ -5,28 +5,27 @@ use did_parser::{Did, DidUrl};
 
 use crate::{error::DidPeerError, peer_did_resolver::options::PublicKeyEncoding};
 
-use super::{Key, SupportedKeyType};
+use super::{Key, KeyType};
 
 pub fn get_verification_methods_by_key(
     key: &Key,
     did: &Did,
     public_key_encoding: &PublicKeyEncoding,
 ) -> Result<Vec<VerificationMethod>, DidPeerError> {
-    let id = DidUrl::from_fragment(key.prefixless_fingerprint().chars().take(8).collect::<String>())?;
+    let prefixless_fingerprint = key.fingerprint().trim_start_matches('z').to_string();
+    let id = DidUrl::from_fragment(prefixless_fingerprint.chars().take(8).collect::<String>())?;
     let vm_type = match key.key_type() {
-        SupportedKeyType::Ed25519 => VerificationMethodType::Ed25519VerificationKey2020,
-        SupportedKeyType::Bls12381g1 => VerificationMethodType::Bls12381G1Key2020,
-        SupportedKeyType::Bls12381g2 => VerificationMethodType::Bls12381G2Key2020,
-        SupportedKeyType::X25519 => VerificationMethodType::X25519KeyAgreementKey2020,
-        SupportedKeyType::P256 => VerificationMethodType::JsonWebKey2020,
-        SupportedKeyType::P384 => VerificationMethodType::JsonWebKey2020,
-        SupportedKeyType::P521 => VerificationMethodType::JsonWebKey2020,
-        SupportedKeyType::Bls12381g1g2 => {
-            let g1_key = Key::new(key.key()[..48].to_vec(), SupportedKeyType::Bls12381g1)?;
-            let g2_key = Key::new(key.key()[48..].to_vec(), SupportedKeyType::Bls12381g2)?;
+        KeyType::Ed25519 => VerificationMethodType::Ed25519VerificationKey2020,
+        KeyType::Bls12381g1 => VerificationMethodType::Bls12381G1Key2020,
+        KeyType::Bls12381g2 => VerificationMethodType::Bls12381G2Key2020,
+        KeyType::X25519 => VerificationMethodType::X25519KeyAgreementKey2020,
+        KeyType::P256 => VerificationMethodType::JsonWebKey2020,
+        KeyType::P384 => VerificationMethodType::JsonWebKey2020,
+        KeyType::P521 => VerificationMethodType::JsonWebKey2020,
+        KeyType::Bls12381g1g2 => {
             return Ok(build_verification_methods_from_bls_multikey(
-                g1_key,
-                g2_key,
+                &Key::new(key.key()[..48].to_vec(), KeyType::Bls12381g1)?,
+                &Key::new(key.key()[48..].to_vec(), KeyType::Bls12381g2)?,
                 id,
                 did.to_owned(),
                 public_key_encoding,
@@ -45,12 +44,12 @@ pub fn get_verification_methods_by_key(
 pub fn get_key_by_verification_method(vm: &VerificationMethod) -> Result<Key, DidPeerError> {
     let key_type = match vm.verification_method_type() {
         VerificationMethodType::Ed25519VerificationKey2018 | VerificationMethodType::Ed25519VerificationKey2020 => {
-            SupportedKeyType::Ed25519
+            KeyType::Ed25519
         }
-        VerificationMethodType::Bls12381G1Key2020 => SupportedKeyType::Bls12381g1,
-        VerificationMethodType::Bls12381G2Key2020 => SupportedKeyType::Bls12381g2,
+        VerificationMethodType::Bls12381G1Key2020 => KeyType::Bls12381g1,
+        VerificationMethodType::Bls12381G2Key2020 => KeyType::Bls12381g2,
         VerificationMethodType::X25519KeyAgreementKey2019 | VerificationMethodType::X25519KeyAgreementKey2020 => {
-            SupportedKeyType::X25519
+            KeyType::X25519
         }
         t @ _ => return Err(DidPeerError::UnsupportedVerificationMethodType(t.to_owned())),
     };
@@ -64,34 +63,31 @@ fn build_verification_methods_from_type_and_key(
     did: Did,
     public_key_encoding: &PublicKeyEncoding,
 ) -> Vec<VerificationMethod> {
-    vec![VerificationMethod::builder(id, did, vm_type)]
-        .iter()
-        .map(|builder| add_public_key_to_builder(builder.to_owned(), key, public_key_encoding))
-        .collect::<Vec<VerificationMethod>>()
+    vec![add_public_key_to_builder(
+        VerificationMethod::builder(id, did, vm_type),
+        key,
+        public_key_encoding,
+    )]
 }
 
 fn build_verification_methods_from_bls_multikey(
-    g1_key: Key,
-    g2_key: Key,
+    g1_key: &Key,
+    g2_key: &Key,
     id: DidUrl,
     did: Did,
     public_key_encoding: &PublicKeyEncoding,
 ) -> Vec<VerificationMethod> {
-    vec![
+    let vm1 = add_public_key_to_builder(
         VerificationMethod::builder(id.to_owned(), did.to_owned(), VerificationMethodType::Bls12381G1Key2020),
+        g1_key,
+        public_key_encoding,
+    );
+    let vm2 = add_public_key_to_builder(
         VerificationMethod::builder(id, did, VerificationMethodType::Bls12381G2Key2020),
-    ]
-    .iter()
-    .enumerate()
-    .map(|(index, builder)| {
-        let key = match index {
-            0 => &g1_key,
-            1 => &g2_key,
-            _ => unreachable!(),
-        };
-        add_public_key_to_builder(builder.to_owned(), key, public_key_encoding)
-    })
-    .collect::<Vec<VerificationMethod>>()
+        g2_key,
+        public_key_encoding,
+    );
+    vec![vm1, vm2]
 }
 
 fn add_public_key_to_builder(
@@ -155,7 +151,10 @@ mod tests {
         fn test_get_verification_methods_by_key_multibase(key: &Key) {
             let vms = get_verification_methods_by_key(key, &did(), &PublicKeyEncoding::Multibase).unwrap();
             assert_eq!(vms.len(), 1);
-            assert_eq!(vms[0].public_key().key_decoded().unwrap(), key.prefixed_key());
+            assert_eq!(
+                vms[0].public_key().key_decoded().unwrap(),
+                key.multicodec_prefixed_key()
+            );
             assert_ne!(vms[0].public_key().key_decoded().unwrap(), key.key());
         }
 
@@ -163,7 +162,10 @@ mod tests {
         fn test_get_verification_methods_by_key_base58(key: &Key) {
             let vms = get_verification_methods_by_key(key, &did(), &PublicKeyEncoding::Base58).unwrap();
             assert_eq!(vms.len(), 1);
-            assert_ne!(vms[0].public_key().key_decoded().unwrap(), key.prefixed_key());
+            assert_ne!(
+                vms[0].public_key().key_decoded().unwrap(),
+                key.multicodec_prefixed_key()
+            );
             assert_eq!(vms[0].public_key().key_decoded().unwrap(), key.key());
         }
 

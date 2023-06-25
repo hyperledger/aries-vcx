@@ -1,7 +1,7 @@
 use crate::error::DidPeerError;
 
-#[derive(Debug, Clone, PartialEq)]
-pub enum SupportedKeyType {
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum KeyType {
     Ed25519,
     Bls12381g1g2,
     Bls12381g1,
@@ -12,34 +12,46 @@ pub enum SupportedKeyType {
     P521,
 }
 
-impl From<&SupportedKeyType> for u64 {
-    fn from(key_type: &SupportedKeyType) -> Self {
+impl KeyType {
+    const C_BLS12381G1: u64 = 234;
+    const C_BLS12381G2: u64 = 235;
+    const C_X25519: u64 = 236;
+    const C_ED25519: u64 = 237;
+    const C_BLS12381G1G2: u64 = 238;
+    const C_P256: u64 = 4608;
+    const C_P384: u64 = 4609;
+    const C_P521: u64 = 4610;
+}
+
+// https://github.com/multiformats/multicodec/blob/master/table.csv
+impl From<&KeyType> for u64 {
+    fn from(key_type: &KeyType) -> Self {
         match key_type {
-            SupportedKeyType::Ed25519 => 237,
-            SupportedKeyType::Bls12381g1 => 234,
-            SupportedKeyType::Bls12381g2 => 235,
-            SupportedKeyType::X25519 => 236,
-            SupportedKeyType::P256 => 4608,
-            SupportedKeyType::P384 => 4609,
-            SupportedKeyType::P521 => 4610,
-            SupportedKeyType::Bls12381g1g2 => 238,
+            KeyType::Bls12381g1 => KeyType::C_BLS12381G1,
+            KeyType::Bls12381g2 => KeyType::C_BLS12381G2,
+            KeyType::X25519 => KeyType::C_X25519,
+            KeyType::Ed25519 => KeyType::C_ED25519,
+            KeyType::Bls12381g1g2 => KeyType::C_BLS12381G1G2,
+            KeyType::P256 => KeyType::C_P256,
+            KeyType::P384 => KeyType::C_P384,
+            KeyType::P521 => KeyType::C_P521,
         }
     }
 }
 
-impl TryFrom<u64> for SupportedKeyType {
+impl TryFrom<u64> for KeyType {
     type Error = DidPeerError;
 
     fn try_from(value: u64) -> Result<Self, Self::Error> {
         match value {
-            234 => Ok(SupportedKeyType::Bls12381g1),
-            235 => Ok(SupportedKeyType::Bls12381g2),
-            236 => Ok(SupportedKeyType::X25519),
-            237 => Ok(SupportedKeyType::Ed25519),
-            238 => Ok(SupportedKeyType::Bls12381g1g2),
-            4608 => Ok(SupportedKeyType::P256),
-            4609 => Ok(SupportedKeyType::P384),
-            4610 => Ok(SupportedKeyType::P521),
+            KeyType::C_BLS12381G1 => Ok(KeyType::Bls12381g1),
+            KeyType::C_BLS12381G2 => Ok(KeyType::Bls12381g2),
+            KeyType::C_X25519 => Ok(KeyType::X25519),
+            KeyType::C_ED25519 => Ok(KeyType::Ed25519),
+            KeyType::C_BLS12381G1G2 => Ok(KeyType::Bls12381g1g2),
+            KeyType::C_P256 => Ok(KeyType::P256),
+            KeyType::C_P384 => Ok(KeyType::P384),
+            KeyType::C_P521 => Ok(KeyType::P521),
             p @ _ => Err(DidPeerError::UnsupportedMulticodecDescriptor(p)),
         }
     }

@@ -15,11 +15,10 @@ pub fn process_elements(
     did: &Did,
     public_key_encoding: &PublicKeyEncoding,
 ) -> Result<DidDocumentBuilder<ExtraFieldsSov>, DidPeerError> {
-    let numalgoless_id = did.id().chars().skip(1).collect::<String>();
     let mut service_index: usize = 0;
 
     // Skipping one here because the first element is empty string
-    for element in numalgoless_id.split('.').skip(1) {
+    for element in did.id()[1..].split('.').skip(1) {
         did_doc_builder = process_element(element, did_doc_builder, &mut service_index, did, public_key_encoding)?;
     }
 
@@ -41,7 +40,7 @@ fn process_element(
             element
         )))?
         .try_into()?;
-    let purposeless_element = element.chars().skip(1).collect::<String>();
+    let purposeless_element = &element[1..];
 
     if purpose == ElementPurpose::Service {
         did_doc_builder = process_service_element(&purposeless_element, did_doc_builder, service_index)?;

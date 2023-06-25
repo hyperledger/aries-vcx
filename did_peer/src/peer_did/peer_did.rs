@@ -4,16 +4,9 @@ use crate::{error::DidPeerError, numalgos::numalgo2::generate_numalgo2};
 use did_doc::schema::did_doc::DidDocument;
 use did_doc_sov::extra_fields::ExtraFieldsSov;
 use did_parser::Did;
-use once_cell::sync::Lazy;
-use regex::Regex;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-use super::{numalgo::Numalgo, transform::Transform};
-
-// TODO: This regex does not cover peer:did:3
-static PEER_DID_REGEX: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"^did:peer:(([01](z)([1-9a-km-zA-HJ-NP-Z]{5,200}))|(2((.[AEVID](z)([1-9a-km-zA-HJ-NP-Z]{5,200}))+(.(S)[0-9a-zA-Z=]*)?)))$").unwrap()
-});
+use super::{numalgo::Numalgo, regex::PEER_DID_REGEX, transform::Transform};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct PeerDid {

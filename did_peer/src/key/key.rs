@@ -1,22 +1,22 @@
 use crate::error::DidPeerError;
 
-use super::SupportedKeyType;
+use super::KeyType;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Key {
-    key_type: SupportedKeyType,
+    key_type: KeyType,
     key: Vec<u8>,
 }
 
 impl Key {
-    pub fn new(key: Vec<u8>, key_type: SupportedKeyType) -> Result<Self, DidPeerError> {
+    pub fn new(key: Vec<u8>, key_type: KeyType) -> Result<Self, DidPeerError> {
         // If the key is a multibase key coming from a verification method, for some reason it is also
         // multicodec encoded, so we need to strip that. But should it be?
         let key = Self::strip_multicodec_prefix_if_present(key, &key_type);
         Ok(Self { key_type, key })
     }
 
-    pub fn key_type(&self) -> &SupportedKeyType {
+    pub fn key_type(&self) -> &KeyType {
         &self.key_type
     }
 
@@ -24,7 +24,7 @@ impl Key {
         self.key.as_ref()
     }
 
-    pub fn prefixed_key(&self) -> Vec<u8> {
+    pub fn multicodec_prefixed_key(&self) -> Vec<u8> {
         let code = self.key_type().into();
         let mut buffer = [0u8; 10];
         let bytes = unsigned_varint::encode::u64(code, &mut buffer);
@@ -34,18 +34,14 @@ impl Key {
     }
 
     pub fn fingerprint(&self) -> String {
-        multibase::encode(multibase::Base::Base58Btc, &self.prefixed_key())
-    }
-
-    pub fn prefixless_fingerprint(&self) -> String {
-        self.fingerprint().trim_start_matches('z').to_string()
+        multibase::encode(multibase::Base::Base58Btc, &self.multicodec_prefixed_key())
     }
 
     pub fn base58(&self) -> String {
         bs58::encode(&self.key).into_string()
     }
 
-    pub fn multibase(&self) -> String {
+    pub fn multibase58(&self) -> String {
         multibase::encode(multibase::Base::Base58Btc, &self.key)
     }
 
@@ -58,7 +54,7 @@ impl Key {
         })
     }
 
-    fn strip_multicodec_prefix_if_present(key: Vec<u8>, key_type: &SupportedKeyType) -> Vec<u8> {
+    fn strip_multicodec_prefix_if_present(key: Vec<u8>, key_type: &KeyType) -> Vec<u8> {
         if let Ok((value, remaining)) = unsigned_varint::decode::u64(&key) {
             if value == Into::<u64>::into(key_type) {
                 remaining.to_vec()
@@ -75,7 +71,7 @@ impl Key {
 mod tests {
     use super::*;
 
-    fn new_key_test(key_bytes: Vec<u8>, key_type: SupportedKeyType) {
+    fn new_key_test(key_bytes: Vec<u8>, key_type: KeyType) {
         let key = Key::new(key_bytes.clone(), key_type.clone());
         assert!(key.is_ok());
         let key = key.unwrap();
@@ -85,40 +81,43 @@ mod tests {
 
     fn prefixed_key_test(
         key_bytes: Vec<u8>,
-        key_type: SupportedKeyType,
+        key_type: KeyType,
         expected_prefixed_key: String,
         encode_fn: fn(Vec<u8>) -> String,
     ) {
         let key = Key::new(key_bytes, key_type).unwrap();
-        let prefixed_key = key.prefixed_key();
+        let prefixed_key = key.multicodec_prefixed_key();
         assert_eq!(expected_prefixed_key, encode_fn(prefixed_key),);
     }
 
-    fn fingerprint_test(key_bytes: Vec<u8>, key_type: SupportedKeyType, expected_fingerprint: &str) {
+    fn fingerprint_test(key_bytes: Vec<u8>, key_type: KeyType, expected_fingerprint: &str) {
         let key = Key::new(key_bytes, key_type).unwrap();
         let fingerprint = key.fingerprint();
         assert_eq!(fingerprint, expected_fingerprint);
     }
 
-    fn base58_test(key_bytes: Vec<u8>, key_type: SupportedKeyType, expected_base58: &str) {
+    fn base58_test(key_bytes: Vec<u8>, key_type: KeyType, expected_base58: &str) {
         let key = Key::new(key_bytes, key_type).unwrap();
         let base58 = key.base58();
         assert_eq!(base58, expected_base58);
     }
 
-    fn from_fingerprint_test(key_bytes: Vec<u8>, key_type: SupportedKeyType, fingerprint: &str) {
+    fn from_fingerprint_test(key_bytes: Vec<u8>, key_type: KeyType, fingerprint: &str) {
         let key = Key::new(key_bytes, key_type).unwrap();
         let key_from_fingerprint = Key::from_fingerprint(fingerprint);
         assert!(key_from_fingerprint.is_ok());
         let key_from_fingerprint = key_from_fingerprint.unwrap();
         assert_eq!(key.key_type(), key_from_fingerprint.key_type());
         assert_eq!(key.key(), key_from_fingerprint.key());
-        assert_eq!(key.prefixed_key(), key_from_fingerprint.prefixed_key());
+        assert_eq!(
+            key.multicodec_prefixed_key(),
+            key_from_fingerprint.multicodec_prefixed_key()
+        );
         assert_eq!(key.fingerprint(), fingerprint);
         assert_eq!(key_from_fingerprint.fingerprint(), fingerprint);
     }
 
-    fn strip_multicodec_prefix_if_present_test(key_bytes: Vec<u8>, key_type: &SupportedKeyType) {
+    fn strip_multicodec_prefix_if_present_test(key_bytes: Vec<u8>, key_type: &KeyType) {
         let key_type_u64: u64 = key_type.into();
 
         let mut buffer = [0u8; 10];
@@ -158,14 +157,14 @@ mod tests {
 
         #[test]
         fn new_key_test() {
-            super::new_key_test(key_bytes(), SupportedKeyType::Ed25519);
+            super::new_key_test(key_bytes(), KeyType::Ed25519);
         }
 
         #[test]
         fn prefixed_key_test() {
             super::prefixed_key_test(
                 key_bytes(),
-                SupportedKeyType::Ed25519,
+                KeyType::Ed25519,
                 TEST_FINGERPRINT.to_string(),
                 encode_multibase,
             );
@@ -173,22 +172,22 @@ mod tests {
 
         #[test]
         fn fingerprint_test() {
-            super::fingerprint_test(key_bytes(), SupportedKeyType::Ed25519, TEST_FINGERPRINT);
+            super::fingerprint_test(key_bytes(), KeyType::Ed25519, TEST_FINGERPRINT);
         }
 
         #[test]
         fn base58_test() {
-            super::base58_test(key_bytes(), SupportedKeyType::Ed25519, TEST_KEY_BASE58);
+            super::base58_test(key_bytes(), KeyType::Ed25519, TEST_KEY_BASE58);
         }
 
         #[test]
         fn from_fingerprint_test() {
-            super::from_fingerprint_test(key_bytes(), SupportedKeyType::Ed25519, TEST_FINGERPRINT);
+            super::from_fingerprint_test(key_bytes(), KeyType::Ed25519, TEST_FINGERPRINT);
         }
 
         #[test]
         fn strip_multicodec_prefix_if_present_test() {
-            super::strip_multicodec_prefix_if_present_test(key_bytes(), &SupportedKeyType::Ed25519);
+            super::strip_multicodec_prefix_if_present_test(key_bytes(), &KeyType::Ed25519);
         }
     }
 
@@ -208,14 +207,14 @@ mod tests {
 
         #[test]
         fn new_key_test() {
-            super::new_key_test(key_bytes(), SupportedKeyType::X25519);
+            super::new_key_test(key_bytes(), KeyType::X25519);
         }
 
         #[test]
         fn prefixed_key_test() {
             super::prefixed_key_test(
                 key_bytes(),
-                SupportedKeyType::X25519,
+                KeyType::X25519,
                 TEST_FINGERPRINT.to_string(),
                 encode_multibase,
             );
@@ -223,22 +222,22 @@ mod tests {
 
         #[test]
         fn fingerprint_test() {
-            super::fingerprint_test(key_bytes(), SupportedKeyType::X25519, TEST_FINGERPRINT);
+            super::fingerprint_test(key_bytes(), KeyType::X25519, TEST_FINGERPRINT);
         }
 
         #[test]
         fn base58_test() {
-            super::base58_test(key_bytes(), SupportedKeyType::X25519, TEST_KEY_BASE58);
+            super::base58_test(key_bytes(), KeyType::X25519, TEST_KEY_BASE58);
         }
 
         #[test]
         fn from_fingerprint_test() {
-            super::from_fingerprint_test(key_bytes(), SupportedKeyType::X25519, TEST_FINGERPRINT);
+            super::from_fingerprint_test(key_bytes(), KeyType::X25519, TEST_FINGERPRINT);
         }
 
         #[test]
         fn strip_multicodec_prefix_if_present_test() {
-            super::strip_multicodec_prefix_if_present_test(key_bytes(), &SupportedKeyType::X25519);
+            super::strip_multicodec_prefix_if_present_test(key_bytes(), &KeyType::X25519);
         }
     }
 }

@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use crate::error::DidPeerError;
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Numalgo {
     InceptionKeyWithoutDoc,
     GenesisDoc,

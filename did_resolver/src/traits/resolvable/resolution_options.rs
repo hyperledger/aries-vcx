@@ -1,26 +1,21 @@
 use crate::shared_types::media_type::MediaType;
 
 #[derive(Debug, Clone, PartialEq, Default)]
-pub struct DidResolutionOptions<E: Default> {
+pub struct DidResolutionOptions<E> {
     accept: Option<MediaType>,
     extra: E,
 }
 
-impl<E: Default> DidResolutionOptions<E> {
-    pub fn new() -> Self {
+impl<E> DidResolutionOptions<E> {
+    pub fn new(extra: E) -> Self {
         Self {
             accept: None,
-            extra: E::default(),
+            extra,
         }
     }
 
     pub fn set_accept(mut self, accept: MediaType) -> Self {
         self.accept = Some(accept);
-        self
-    }
-
-    pub fn set_extra(mut self, extra: E) -> Self {
-        self.extra = extra;
         self
     }
 

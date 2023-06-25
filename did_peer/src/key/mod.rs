@@ -7,5 +7,5 @@ mod key_type;
 mod verification_method;
 
 pub use key::Key;
-pub use key_type::SupportedKeyType;
+pub use key_type::KeyType;
 pub use verification_method::{get_key_by_verification_method, get_verification_methods_by_key};
