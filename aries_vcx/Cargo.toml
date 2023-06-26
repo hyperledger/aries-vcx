@@ -60,8 +60,3 @@ android_logger = "0.5"
 wallet_migrator = { path = "../wallet_migrator" }
 async-channel = "1.7.1"
 tokio = { version = "1.20", features = ["rt", "macros", "rt-multi-thread"] }
-sqlx = { version = "0.5", features = [
-    "migrate",
-    "mysql",
-    "runtime-tokio-rustls",
-] }
