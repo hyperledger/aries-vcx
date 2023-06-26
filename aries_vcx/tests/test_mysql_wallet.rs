@@ -52,7 +52,7 @@ mod dbtests {
             agency_endpoint: AGENCY_ENDPOINT.parse().unwrap(),
             agent_seed: None,
         };
-        
+
         create_wallet_with_master_secret(&config_wallet).await.unwrap();
         let wallet_handle = open_wallet(&config_wallet).await.unwrap();
         let profile = Arc::new(IndySdkWallet::new(wallet_handle));
