@@ -973,4 +973,95 @@ mod integration_tests {
         })
         .await;
     }
+
+    #[tokio::test]
+    #[ignore]
+    async fn test_agency_pool_three_creds_one_rev_reg_revoke_all() {
+        SetupPool::run(|setup| async move {
+            let mut issuer = Faber::setup(setup.pool_handle).await;
+            let mut consumer = create_test_alice_instance(&setup).await;
+
+            let (consumer_to_issuer, issuer_to_consumer) =
+                create_connected_connections(&mut consumer, &mut issuer).await;
+
+            let (_, _schema_json, _, _cred_def_json, cred_def, rev_reg, _rev_reg_id) =
+                _create_address_schema(&issuer.profile, &issuer.config_issuer.institution_did).await;
+            let (address1, address2, city, state, zip) = attr_names();
+            let (req1, req2) = (Some("request1"), Some("request2"));
+            let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
+            let issuer_credential1 = _exchange_credential(
+                &mut consumer,
+                &mut issuer,
+                credential_data1.clone(),
+                &cred_def,
+                &rev_reg,
+                &consumer_to_issuer,
+                &issuer_to_consumer,
+                req1,
+            )
+            .await;
+
+            assert!(!issuer_credential1
+                .is_revoked(&issuer.profile.inject_anoncreds_ledger_read())
+                .await
+                .unwrap());
+            revoke_credential_local(&mut issuer, &issuer_credential1, &rev_reg.rev_reg_id).await;
+
+            let credential_data2 = json!({address1.clone(): "101 Tela Lane", address2.clone(): "Suite 1", city.clone(): "SLC", state.clone(): "WA", zip.clone(): "8721"}).to_string();
+
+            let issuer_credential2 = _exchange_credential(
+                &mut consumer,
+                &mut issuer,
+                credential_data2.clone(),
+                &cred_def,
+                &rev_reg,
+                &consumer_to_issuer,
+                &issuer_to_consumer,
+                req2,
+            )
+            .await;
+
+            assert!(!issuer_credential2
+                .is_revoked(&issuer.profile.inject_anoncreds_ledger_read())
+                .await
+                .unwrap());
+
+            #[cfg(feature = "migration")]
+            issuer.migrate().await;
+
+            #[cfg(feature = "migration")]
+            consumer.migrate().await;
+
+            revoke_credential_local(&mut issuer, &issuer_credential2, &rev_reg.rev_reg_id).await;
+
+            let credential_data3 = json!({address1.clone(): "221 Baker Street", address2.clone(): "Apt. B", city.clone(): "London", state.clone(): "", zip.clone(): "NW1 6XE."}).to_string();
+
+            let issuer_credential3 = _exchange_credential(
+                &mut consumer,
+                &mut issuer,
+                credential_data3.clone(),
+                &cred_def,
+                &rev_reg,
+                &consumer_to_issuer,
+                &issuer_to_consumer,
+                req2,
+            )
+            .await;
+
+            revoke_credential_and_publish_accumulator(&mut issuer, &issuer_credential3, &rev_reg).await;
+
+            assert!(issuer_credential1
+                .is_revoked(&issuer.profile.inject_anoncreds_ledger_read())
+                .await
+                .unwrap());
+            assert!(issuer_credential2
+                .is_revoked(&issuer.profile.inject_anoncreds_ledger_read())
+                .await
+                .unwrap());
+            assert!(issuer_credential3
+                .is_revoked(&issuer.profile.inject_anoncreds_ledger_read())
+                .await
+                .unwrap());
+        }).await;
+    }
 }
