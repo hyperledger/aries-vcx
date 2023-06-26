@@ -984,10 +984,12 @@ mod integration_tests {
             let (consumer_to_issuer, issuer_to_consumer) =
                 create_connected_connections(&mut consumer, &mut issuer).await;
 
-            let (_, _schema_json, _, _cred_def_json, cred_def, rev_reg, _rev_reg_id) =
+            let (_schema_id, _schema_json, _cred_def_id, _cred_def_json, cred_def, rev_reg, _rev_reg_id) =
                 _create_address_schema(&issuer.profile, &issuer.config_issuer.institution_did).await;
+
             let (address1, address2, city, state, zip) = attr_names();
-            let (req1, req2) = (Some("request1"), Some("request2"));
+            let (req1, req2, req3) = (Some("request1"), Some("request2"), Some("request3"));
+
             let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
             let issuer_credential1 = _exchange_credential(
                 &mut consumer,
@@ -1044,7 +1046,7 @@ mod integration_tests {
                 &rev_reg,
                 &consumer_to_issuer,
                 &issuer_to_consumer,
-                req2,
+                req3,
             )
             .await;
 
