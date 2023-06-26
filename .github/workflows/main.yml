@@ -554,6 +554,7 @@ jobs:
         uses: ./.github/actions/setup-testing-rust
       - name: "Run aries-vcx tests: pool_tests agency_pool_tests"
         run: |
+          cargo test --manifest-path="wallet_migrator/Cargo.toml";
           RUST_TEST_THREADS=1 CARGO_INCREMENTAL=0 TEST_POOL_IP=127.0.0.1 cargo test --manifest-path="aries_vcx/Cargo.toml" -F migration --test test_creds_proofs -- --include-ignored;
           RUST_TEST_THREADS=1 CARGO_INCREMENTAL=0 TEST_POOL_IP=127.0.0.1 cargo test --manifest-path="aries_vcx/Cargo.toml" -F migration --test test_creds_proofs_revocations -- --include-ignored;
 
