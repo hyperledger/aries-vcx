@@ -14,6 +14,7 @@ members = [
     "aries_vcx_core",
     "uniffi_aries_vcx/core",
     "did_doc",
+    "did_peer",
     "did_doc_sov",
     "did_parser",
     "did_resolver",

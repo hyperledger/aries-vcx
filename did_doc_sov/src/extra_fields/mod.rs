@@ -9,11 +9,21 @@ pub mod aip1;
 pub mod didcommv1;
 pub mod didcommv2;
 
-#[derive(Serialize, Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash)]
 pub enum AcceptType {
     DIDCommV1,
     DIDCommV2,
     Other(String),
+}
+
+impl From<&str> for AcceptType {
+    fn from(s: &str) -> Self {
+        match s {
+            "didcomm/aip2;env=rfc19" => AcceptType::DIDCommV1,
+            "didcomm/v2" => AcceptType::DIDCommV2,
+            _ => AcceptType::Other(s.to_string()),
+        }
+    }
 }
 
 impl Display for AcceptType {
@@ -36,6 +46,19 @@ impl<'de> Deserialize<'de> for AcceptType {
             "didcomm/aip2;env=rfc19" => Ok(AcceptType::DIDCommV1),
             "didcomm/v2" => Ok(AcceptType::DIDCommV2),
             _ => Ok(AcceptType::Other(s)),
+        }
+    }
+}
+
+impl Serialize for AcceptType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        match self {
+            AcceptType::DIDCommV1 => serializer.serialize_str("didcomm/aip2;env=rfc19"),
+            AcceptType::DIDCommV2 => serializer.serialize_str("didcomm/v2"),
+            AcceptType::Other(other) => serializer.serialize_str(other),
         }
     }
 }

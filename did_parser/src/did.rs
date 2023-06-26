@@ -4,6 +4,7 @@ use std::str::FromStr;
 
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
+use crate::DidUrl;
 use crate::{error::ParseError, utils::parse::parse_did_method_id, DidRange};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -13,6 +14,7 @@ pub struct Did {
     id: DidRange,
 }
 
+// TODO: Add a builder / constructor so that we don't have to create strings and parse them?
 impl Did {
     pub fn parse(did: String) -> Result<Self, ParseError> {
         let (_, method, id) = parse_did_method_id(&did)?;
@@ -89,5 +91,11 @@ impl<'de> Deserialize<'de> for Did {
     {
         let did = String::deserialize(deserializer)?;
         Self::parse(did).map_err(serde::de::Error::custom)
+    }
+}
+
+impl From<Did> for DidUrl {
+    fn from(did: Did) -> Self {
+        Self::from_did_parts(did.did().to_string(), 0..did.did.len(), did.method, did.id)
     }
 }

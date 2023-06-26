@@ -13,7 +13,8 @@ use did_resolver::{
 use error::DidResolverRegistryError;
 
 pub struct ResolverRegistry {
-    resolvers: HashMap<String, Box<dyn DidResolvable<ExtraFields = ()>>>, // TODO: Use e.g. hashmap
+    resolvers:
+        HashMap<String, Box<dyn DidResolvable<ExtraFieldsService = (), ExtraFieldsOptions = ()>>>, // TODO: Use e.g. hashmap
 }
 
 impl ResolverRegistry {
@@ -26,7 +27,7 @@ impl ResolverRegistry {
     pub fn register_resolver(
         &mut self,
         method: String,
-        resolver: Box<dyn DidResolvable<ExtraFields = ()>>,
+        resolver: Box<dyn DidResolvable<ExtraFieldsService = (), ExtraFieldsOptions = ()>>,
     ) {
         self.resolvers.insert(method, resolver);
     }
@@ -38,7 +39,7 @@ impl ResolverRegistry {
     pub async fn resolve(
         &self,
         did: &Did,
-        options: &DidResolutionOptions,
+        options: &DidResolutionOptions<()>,
     ) -> Result<DidResolutionOutput<()>, GenericError> {
         let method = did.method();
         match self.resolvers.get(method) {
@@ -61,12 +62,13 @@ mod tests {
     #[async_trait]
     #[automock]
     impl DidResolvable for DummyDidResolver {
-        type ExtraFields = ();
+        type ExtraFieldsService = ();
+        type ExtraFieldsOptions = ();
 
         async fn resolve(
             &self,
             did: &Did,
-            _options: &DidResolutionOptions,
+            _options: &DidResolutionOptions<()>,
         ) -> Result<DidResolutionOutput<()>, GenericError> {
             Ok(DidResolutionOutput::builder(
                 DidDocumentBuilder::new(Did::parse(did.did().to_string()).unwrap()).build(),

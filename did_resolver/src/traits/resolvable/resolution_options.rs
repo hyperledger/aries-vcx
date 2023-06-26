@@ -1,13 +1,17 @@
 use crate::shared_types::media_type::MediaType;
 
 #[derive(Debug, Clone, PartialEq, Default)]
-pub struct DidResolutionOptions {
+pub struct DidResolutionOptions<E> {
     accept: Option<MediaType>,
+    extra: E,
 }
 
-impl DidResolutionOptions {
-    pub fn new() -> Self {
-        Self { accept: None }
+impl<E> DidResolutionOptions<E> {
+    pub fn new(extra: E) -> Self {
+        Self {
+            accept: None,
+            extra,
+        }
     }
 
     pub fn set_accept(mut self, accept: MediaType) -> Self {
@@ -17,5 +21,9 @@ impl DidResolutionOptions {
 
     pub fn accept(&self) -> Option<&MediaType> {
         self.accept.as_ref()
+    }
+
+    pub fn extra(&self) -> &E {
+        &self.extra
     }
 }

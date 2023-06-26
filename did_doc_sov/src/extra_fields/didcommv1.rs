@@ -8,6 +8,7 @@ pub struct ExtraFieldsDidCommV1 {
     priority: u32,
     recipient_keys: Vec<KeyKind>,
     routing_keys: Vec<KeyKind>,
+    #[serde(default)]
     accept: Vec<AcceptType>,
 }
 
@@ -33,11 +34,22 @@ impl ExtraFieldsDidCommV1 {
     }
 }
 
-#[derive(Default)]
 pub struct ExtraFieldsDidCommV1Builder {
     priority: u32,
     recipient_keys: Vec<KeyKind>,
     routing_keys: Vec<KeyKind>,
+    accept: Vec<AcceptType>,
+}
+
+impl Default for ExtraFieldsDidCommV1Builder {
+    fn default() -> Self {
+        Self {
+            priority: 0,
+            recipient_keys: Vec::new(),
+            routing_keys: Vec::new(),
+            accept: vec![AcceptType::DIDCommV1],
+        }
+    }
 }
 
 impl ExtraFieldsDidCommV1Builder {
@@ -56,12 +68,22 @@ impl ExtraFieldsDidCommV1Builder {
         self
     }
 
+    pub fn set_accept(mut self, accept: Vec<AcceptType>) -> Self {
+        self.accept = accept;
+        self
+    }
+
+    pub fn add_accept(mut self, accept: AcceptType) -> Self {
+        self.accept.push(accept);
+        self
+    }
+
     pub fn build(self) -> ExtraFieldsDidCommV1 {
         ExtraFieldsDidCommV1 {
             priority: self.priority,
             recipient_keys: self.recipient_keys,
             routing_keys: self.routing_keys,
-            accept: vec![AcceptType::DIDCommV1],
+            accept: self.accept,
         }
     }
 }

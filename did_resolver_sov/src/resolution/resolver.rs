@@ -32,13 +32,14 @@ impl DidSovResolver {
 
 #[async_trait]
 impl DidResolvable for DidSovResolver {
-    type ExtraFields = ExtraFieldsSov;
+    type ExtraFieldsService = ExtraFieldsSov;
+    type ExtraFieldsOptions = ();
 
     async fn resolve(
         &self,
         parsed_did: &Did,
-        options: &DidResolutionOptions,
-    ) -> Result<DidResolutionOutput<Self::ExtraFields>, GenericError> {
+        options: &DidResolutionOptions<()>,
+    ) -> Result<DidResolutionOutput<Self::ExtraFieldsService>, GenericError> {
         if let Some(accept) = options.accept() {
             if accept != &MediaType::DidJson {
                 return Err(Box::new(DidSovError::RepresentationNotSupported(

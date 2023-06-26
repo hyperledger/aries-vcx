@@ -5,8 +5,9 @@ use super::{AcceptType, KeyKind};
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct ExtraFieldsDidCommV2 {
-    accept: Vec<AcceptType>,
     routing_keys: Vec<KeyKind>,
+    #[serde(default)]
+    accept: Vec<AcceptType>,
 }
 
 impl ExtraFieldsDidCommV2 {
@@ -23,9 +24,18 @@ impl ExtraFieldsDidCommV2 {
     }
 }
 
-#[derive(Default)]
 pub struct ExtraFieldsDidCommV2Builder {
     routing_keys: Vec<KeyKind>,
+    accept: Vec<AcceptType>,
+}
+
+impl Default for ExtraFieldsDidCommV2Builder {
+    fn default() -> Self {
+        Self {
+            routing_keys: Vec::new(),
+            accept: vec![AcceptType::DIDCommV2],
+        }
+    }
 }
 
 impl ExtraFieldsDidCommV2Builder {
@@ -34,10 +44,20 @@ impl ExtraFieldsDidCommV2Builder {
         self
     }
 
+    pub fn set_accept(mut self, accept: Vec<AcceptType>) -> Self {
+        self.accept = accept;
+        self
+    }
+
+    pub fn add_accept(mut self, accept: AcceptType) -> Self {
+        self.accept.push(accept);
+        self
+    }
+
     pub fn build(self) -> ExtraFieldsDidCommV2 {
         ExtraFieldsDidCommV2 {
-            accept: vec![AcceptType::DIDCommV2],
             routing_keys: self.routing_keys,
+            accept: self.accept,
         }
     }
 }

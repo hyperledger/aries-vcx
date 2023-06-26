@@ -1,0 +1,45 @@
+mod fixtures;
+
+use did_doc::schema::did_doc::DidDocument;
+use did_doc_sov::extra_fields::ExtraFieldsSov;
+use did_peer::peer_did::PeerDid;
+
+use crate::fixtures::{
+    basic::{DID_DOC_BASIC, PEER_DID_NUMALGO_2_BASIC},
+    multiple_services::{DID_DOC_MULTIPLE_SERVICES, PEER_DID_NUMALGO_2_MULTIPLE_SERVICES},
+    no_routing_keys::{DID_DOC_NO_ROUTING_KEYS, PEER_DID_NUMALGO_2_NO_ROUTING_KEYS},
+    no_services::{DID_DOC_NO_SERVICES, PEER_DID_NUMALGO_2_NO_SERVICES},
+};
+
+macro_rules! generate_test {
+    ($test_name:ident, $did_doc:expr, $peer_did:expr) => {
+        #[test]
+        fn $test_name() {
+            let did_document = serde_json::from_str::<DidDocument<ExtraFieldsSov>>($did_doc).unwrap();
+            assert_eq!(
+                PeerDid::parse($peer_did.to_string()).unwrap(),
+                PeerDid::generate_numalgo2(did_document).unwrap()
+            );
+        }
+    };
+}
+
+generate_test!(test_generate_numalgo2_basic, DID_DOC_BASIC, PEER_DID_NUMALGO_2_BASIC);
+
+generate_test!(
+    test_generate_numalgo2_multiple_services,
+    DID_DOC_MULTIPLE_SERVICES,
+    PEER_DID_NUMALGO_2_MULTIPLE_SERVICES
+);
+
+generate_test!(
+    test_generate_numalgo2_no_services,
+    DID_DOC_NO_SERVICES,
+    PEER_DID_NUMALGO_2_NO_SERVICES
+);
+
+generate_test!(
+    test_generate_numalgo2_no_routing_keys,
+    DID_DOC_NO_ROUTING_KEYS,
+    PEER_DID_NUMALGO_2_NO_ROUTING_KEYS
+);
