@@ -74,7 +74,7 @@ mod tests {
     async fn test_sqlite_migration() {
         let (credentials, config) = make_wallet_reqs("wallet_test_migration".to_owned());
         let (new_credentials, new_config) = make_wallet_reqs("new_better_wallet".to_owned());
-        
+
         test_migration(credentials, config, new_credentials, new_config).await;
     }
 
