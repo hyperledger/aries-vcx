@@ -10,11 +10,12 @@ vdrtools = ["dep:libvdrtools"]
 # Feature flag to include the 'modular library' dependencies (vdrtools alternatives; indy-vdr, indy-credx)
 modular_libs = ["dep:indy-vdr", "dep:indy-credx", "dep:indy-ledger-response-parser", "dep:lru"]
 vdr_proxy_ledger = ["dep:indy-vdr", "dep:indy-credx", "dep:indy-vdr-proxy-client", "dep:indy-ledger-response-parser", "dep:lru"]
+anoncreds = ["dep:anoncreds"]
 
 [dependencies]
 agency_client = { path = "../agency_client" }
 indy-vdr = { version = "0.3.4", default-features = false, features = ["ffi", "log"], optional = true }
-# PATCH (TO MONITOR IN FUTURE): The following patch changes the `indy-data-types` (within indy-shared-rs) to depend on
+# PATCH (TO MONITOR IN THE FUTURE): The following patch changes the `indy-data-types` (within indy-shared-rs) to depend on
 # `ursa "0.3.6"` rather than `ursa "=0.3.6"`. Currently, `libvdrtools` depends on `ursa "0.3.7"`, which causes a mismatch of
 # `indy-utils` versions, which causes some types within credx to fail. Details about the issue can be found here: https://github.com/hyperledger/indy-shared-rs/issues/20
 # `indy-data-types` depends on `ursa =0.3.6` due to a 'broken cl feature', see commmit: https://github.com/hyperledger/indy-shared-rs/commit/2403eed6449a3b5e347697b215a732fc33c014c0
@@ -27,6 +28,13 @@ indy-vdr = { version = "0.3.4", default-features = false, features = ["ffi", "lo
 # - monitor the issue for other fixes from the maintainers: https://github.com/hyperledger/indy-shared-rs/issues/20
 # - update libvdrtools to use =0.3.6 ursa
 indy-credx = { git = "https://github.com/anonyome/indy-shared-rs.git", rev = "7342bc624d23ece8845d1a701cd2cdc9cd401bb0", optional = true }
+
+# PATCH (TO MONITOR IN THE FUTURE): The `anoncreds-rs` crate is vendored so that we tune back the `zeroize` crate dependency so that
+# everything can co-exist. This will probably keep on being necessary for a while, as even when we keep just the Indy wallet implementation
+# in `libvdrtools` we'll still depend on `ursa`, and that's where the dependency conflict comes from.
+# But the optimal solution still needs to be figured out. Maybe dropping the indy specific stuff will after all help with
+# the dependency resolution, yet that remains to be seen.
+anoncreds = { git = "https://github.com/bobozaur/anoncreds-rs", optional = true }
 libvdrtools = { path = "../libvdrtools", optional = true }
 async-trait = "0.1.68"
 futures = { version = "0.3", default-features = false }
