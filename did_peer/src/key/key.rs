@@ -37,6 +37,10 @@ impl Key {
         multibase::encode(multibase::Base::Base58Btc, &self.multicodec_prefixed_key())
     }
 
+    pub fn prefixless_fingerprint(&self) -> String {
+        self.fingerprint().trim_start_matches('z').to_string()
+    }
+
     pub fn base58(&self) -> String {
         bs58::encode(&self.key).into_string()
     }

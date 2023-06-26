@@ -12,8 +12,7 @@ pub fn get_verification_methods_by_key(
     did: &Did,
     public_key_encoding: &PublicKeyEncoding,
 ) -> Result<Vec<VerificationMethod>, DidPeerError> {
-    let prefixless_fingerprint = key.fingerprint().trim_start_matches('z').to_string();
-    let id = DidUrl::from_fragment(prefixless_fingerprint.chars().take(8).collect::<String>())?;
+    let id = to_did_url_reference(key)?;
     let vm_type = match key.key_type() {
         KeyType::Ed25519 => VerificationMethodType::Ed25519VerificationKey2020,
         KeyType::Bls12381g1 => VerificationMethodType::Bls12381G1Key2020,
@@ -26,7 +25,6 @@ pub fn get_verification_methods_by_key(
             return Ok(build_verification_methods_from_bls_multikey(
                 &Key::new(key.key()[..48].to_vec(), KeyType::Bls12381g1)?,
                 &Key::new(key.key()[48..].to_vec(), KeyType::Bls12381g2)?,
-                id,
                 did.to_owned(),
                 public_key_encoding,
             ));
@@ -73,17 +71,23 @@ fn build_verification_methods_from_type_and_key(
 fn build_verification_methods_from_bls_multikey(
     g1_key: &Key,
     g2_key: &Key,
-    id: DidUrl,
     did: Did,
     public_key_encoding: &PublicKeyEncoding,
 ) -> Vec<VerificationMethod> {
+    let id1 = to_did_url_reference(g1_key).unwrap();
+    let id2 = to_did_url_reference(g2_key).unwrap();
+
     let vm1 = add_public_key_to_builder(
-        VerificationMethod::builder(id.to_owned(), did.to_owned(), VerificationMethodType::Bls12381G1Key2020),
+        VerificationMethod::builder(
+            id1.to_owned(),
+            did.to_owned(),
+            VerificationMethodType::Bls12381G1Key2020,
+        ),
         g1_key,
         public_key_encoding,
     );
     let vm2 = add_public_key_to_builder(
-        VerificationMethod::builder(id, did, VerificationMethodType::Bls12381G2Key2020),
+        VerificationMethod::builder(id2, did, VerificationMethodType::Bls12381G2Key2020),
         g2_key,
         public_key_encoding,
     );
@@ -99,6 +103,10 @@ fn add_public_key_to_builder(
         PublicKeyEncoding::Base58 => builder.add_public_key_base58(key.base58()).build(),
         PublicKeyEncoding::Multibase => builder.add_public_key_multibase(key.fingerprint()).build(),
     }
+}
+
+fn to_did_url_reference(key: &Key) -> Result<DidUrl, DidPeerError> {
+    DidUrl::from_fragment(key.prefixless_fingerprint().chars().take(8).collect::<String>()).map_err(Into::into)
 }
 
 #[cfg(test)]
