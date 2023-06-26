@@ -29,10 +29,6 @@ repositories {
     maven {
         url "https://jitpack.io"
     }
-    maven {
-        // All of React Native (JS, Obj-C sources, Android binaries) is installed from npm
-        url "./node_modules/react-native/android"
-    }
 }
 
 allprojects {
@@ -180,7 +176,6 @@ dependencies {
     testImplementation group: 'org.json', name: 'json', version:'20160810'
     testImplementation 'net.java.dev.jna:jna:4.5.0'
     testImplementation 'org.awaitility:awaitility-scala:3.1.2'
-    androidTestImplementation('com.facebook.react:react-native:0.59.9') { force = true }
     androidTestImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support:support-annotations:26.1.0'
     androidTestImplementation 'com.android.support.test:runner:1.0.1'

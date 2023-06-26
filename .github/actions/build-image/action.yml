@@ -1,7 +1,7 @@
 name: 'build-image'
 description: |
-  Tries to load <docker-img> from github cache. 
-  On cache miss, load up layers of last build of this image within the same branch. If no such image is found, try 
+  Tries to load <docker-img> from github cache.
+  On cache miss, load up layers of last build of this image within the same branch. If no such image is found, try
     to load last build of this image from master branch.
   Then image is built ( and reusing the pre-loaded layers from last branch/master build ).
   Finally, image is pushed to docker registry.
@@ -51,7 +51,7 @@ runs:
         set -x
         GITHUB_REPOSITORY_LOWERCASE=`echo $GITHUB_REPOSITORY | awk '{print tolower($0)}'`
         REMOTE_DOCKER_REPOSITORY="${URL_DOCKER_REGISTRY}/${GITHUB_REPOSITORY_LOWERCASE}/${{ inputs.docker-repo-local-name }}"
-        
+
         LAST_BRANCH_BUILD="$REMOTE_DOCKER_REPOSITORY:${{ inputs.branch-name }}"
         if ! docker pull "$LAST_BRANCH_BUILD"; then
           LAST_MASTER_BUILD="$REMOTE_DOCKER_REPOSITORY:${{ inputs.branch-main }}"
@@ -72,6 +72,7 @@ runs:
         else
           docker build -t "${{ inputs.docker-img }}" --build-arg ${{ inputs.build-arg }} -f ${{ inputs.dockerfile-path }} .
         fi;
+        docker image ls -a
         docker save "${{ inputs.docker-img }}" > "${{ steps.setup.outputs.cache-file-path }}"
     - name: "Publish branch image"
       if: steps.loadcachedimg.outputs.cache-hit != 'true'

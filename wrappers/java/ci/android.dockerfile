@@ -33,11 +33,6 @@ RUN usermod -aG sudo indy
 
 WORKDIR /home/indy
 
-# Install node
-ARG NODE_VER=12.x
-RUN curl -sL https://deb.nodesource.com/setup_${NODE_VER} | bash -
-RUN apt-get install -y nodejs
-
 USER indy
 
 # Install Rust toolchain

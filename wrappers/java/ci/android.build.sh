@@ -42,10 +42,6 @@ prepare_artifacts(){
 
 build_android_wrapper(){
     pushd ${JAVA_WRAPPER_DIR}
-        pushd android
-            npm install
-        popd
-
         ./gradlew --no-daemon clean build --project-dir=android
     popd
 }

@@ -38,6 +38,11 @@ accept_licenses(){
     yes | sdkmanager --licenses
 }
 
+
+download_emulator() {
+    curl -o /home/indy/emu.zip https://dl.google.com/android/repository/emulator-linux-5889189.zip
+}
+
 # TODO: Recreating avd for more than a single arch doesn't work
 create_avd(){
     echo "${GREEN}Creating Android SDK${RESET}"
@@ -54,6 +59,8 @@ create_avd(){
 
         # TODO sdkmanager upgrades by default. Hack to downgrade Android Emulator so as to work in headless mode (node display).
         # Remove as soon as headless mode is fixed.
+        # todo: Why do we download emulator manually if we've just installed it above with sdkmanager?
+        download_emulator
         mv /home/indy/emu.zip emu.zip
         mv emulator emulator_backup
         unzip emu.zip
@@ -120,10 +127,6 @@ cat << EOF > ${HOME}/.cargo/config
 ar = "$(realpath ${AR})"
 linker = "$(realpath ${CC})"
 EOF
-}
-
-download_emulator() {
-    curl -o /home/indy/emu.zip https://dl.google.com/android/repository/emulator-linux-5889189.zip
 }
 
 download_and_unzip_if_missed() {
