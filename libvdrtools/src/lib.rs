@@ -1,9 +1,8 @@
 #![cfg_attr(feature = "fatal_warnings", deny(warnings))]
+#![allow(clippy::all)]
 
 #[macro_use]
 extern crate log;
-
-extern crate num_derive;
 
 extern crate num_traits;
 

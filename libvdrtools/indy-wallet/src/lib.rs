@@ -1,5 +1,4 @@
-#[macro_use]
-extern crate serde_json;
+#![allow(clippy::all)]
 
 use std::{
     collections::{HashMap, HashSet},

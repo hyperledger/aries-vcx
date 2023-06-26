@@ -173,16 +173,6 @@ pub(super) async fn export_continue(
     Ok(())
 }
 
-#[cfg(test)]
-async fn import<T>(wallet: &Wallet, reader: T, passphrase: &str) -> IndyResult<()>
-where
-    T: Read,
-{
-    let (reader, import_key_derivation_data, nonce, chunk_size, header_bytes) =
-        preparse_file_to_import(reader, passphrase)?;
-    let import_key = import_key_derivation_data.calc_master_key()?;
-    finish_import(wallet, reader, import_key, nonce, chunk_size, header_bytes).await
-}
 
 pub(super) fn preparse_file_to_import<T>(
     reader: T,

@@ -834,7 +834,6 @@ impl WalletStorageType for MySqlStorageType {
 
         let mut my_sql_connect_options = MySqlConnectOptions::new()
             .host(&config.write_host)
-            .database(&config.db_name)
             .username(&credentials.user)
             .password(&credentials.pass);
         my_sql_connect_options.log_statements(LevelFilter::Debug);
@@ -997,6 +996,7 @@ impl WalletStorageType for MySqlStorageType {
 
 #[cfg(test)]
 mod tests {
+    #[allow(unused_imports)]
     use indy_utils::{assert_kind, environment};
 
     use super::{super::Tag, *};
