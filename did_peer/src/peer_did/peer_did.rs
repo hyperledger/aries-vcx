@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use crate::{error::DidPeerError, numalgos::numalgo2::generate_numalgo2};
+use crate::{error::DidPeerError, numalgos::numalgo2::generate_numalgo2, numalgos::numalgo3::generate_numalgo3};
 use did_doc::schema::did_doc::DidDocument;
 use did_doc_sov::extra_fields::ExtraFieldsSov;
 use did_parser::Did;
@@ -48,6 +48,17 @@ impl PeerDid {
 
     pub fn generate_numalgo2(did_document: DidDocument<ExtraFieldsSov>) -> Result<PeerDid, DidPeerError> {
         generate_numalgo2(did_document)
+    }
+
+    pub fn generate_numalgo3(did_document: DidDocument<ExtraFieldsSov>) -> Result<PeerDid, DidPeerError> {
+        generate_numalgo3(Self::generate_numalgo2(did_document)?.did())
+    }
+
+    pub fn to_numalgo3(&self) -> Result<PeerDid, DidPeerError> {
+        match self.numalgo() {
+            Numalgo::MultipleInceptionKeys => generate_numalgo3(self.did()),
+            n @ _ => Err(DidPeerError::UnsupportedNumalgo(n.clone())),
+        }
     }
 
     fn validate(did: &Did) -> Result<(), DidPeerError> {
@@ -107,7 +118,7 @@ mod tests {
     mod parse {
         use super::*;
 
-        macro_rules! generate_parse_test {
+        macro_rules! generate_negative_parse_test {
             ($test_name:ident, $input:expr, $error_pattern:pat) => {
                 #[test]
                 fn $test_name() {
@@ -117,7 +128,7 @@ mod tests {
             };
         }
 
-        generate_parse_test!(
+        generate_negative_parse_test!(
             test_peer_did_parse_unsupported_transform_code,
             "did:peer:2\
             .Ea6LSbysY2xFMRpGMhb7tFTLMpeuPRaqaWM1yECx2AtzE3KCc\
@@ -126,7 +137,7 @@ mod tests {
             DidPeerError::DidValidationError(_)
         );
 
-        generate_parse_test!(
+        generate_negative_parse_test!(
             test_peer_did_parse_malformed_base58_encoding_signing,
             "did:peer:2\
             .Ez6LSbysY2xFMRpGMhb7tFTLMpeuPRaqaWM1yECx2AtzE3KCc\
@@ -135,7 +146,7 @@ mod tests {
             DidPeerError::DidValidationError(_)
         );
 
-        generate_parse_test!(
+        generate_negative_parse_test!(
             test_peer_did_parse_malformed_base58_encoding_encryption,
             "did:peer:2\
             .Ez6LSbysY2xFMRpG0hb7tFTLMpeuPRaqaWM1yECx2AtzE3KCc\
@@ -143,5 +154,11 @@ mod tests {
             .SeyJ0IjoiZG0iLCJzIjoiaHR0cHM6Ly9leGFtcGxlLmNvbS9lbmRwb2ludCIsInIiOlsiZGlkOmV4YW1wbGU6c29tZW1lZGlhdG9yI3NvbWVrZXkiXX0=",
             DidPeerError::DidParserError(_)
         );
+
+        #[test]
+        fn test_peer_did_numalgo2() {
+            let did = "did:peer:3.8a33de52d9e9e9cfd5c5fd8a7e5da5d3c73208bfc5e5fd5a4eb4af3f3b3f3a3a";
+            assert!(PeerDid::parse(did.to_string()).is_ok());
+        }
     }
 }
