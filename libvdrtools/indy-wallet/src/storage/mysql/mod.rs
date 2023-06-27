@@ -866,12 +866,13 @@ impl WalletStorageType for MySqlStorageType {
         sqlx::query(
             r#"
             CREATE TABLE IF NOT EXISTS `items` (
+                `id` int NOT NULL AUTO_INCREMENT,
                 `wallet_id` int NOT NULL,
                 `type` varchar(256) NOT NULL,
                 `name` varchar(256) NOT NULL,
                 `value` blob NOT NULL,
                 `tags` varchar(256) DEFAULT NULL,
-            PRIMARY KEY (wallet_id, type, name)
+            PRIMARY KEY (`id`)
             );"#,
         )
         .execute(&mut con)
