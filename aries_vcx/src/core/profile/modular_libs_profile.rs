@@ -1,10 +1,8 @@
-use std::ops::Deref;
 use std::sync::Arc;
 use std::time::Duration;
 
 use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
 use aries_vcx_core::anoncreds::credx_anoncreds::IndyCredxAnonCreds;
-use aries_vcx_core::errors::error::VcxCoreResult;
 use aries_vcx_core::ledger::base_ledger::{
     AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite, TaaConfigurator, TxnAuthrAgrmtOptions,
 };
@@ -50,7 +48,7 @@ impl ModularLibsProfile {
         let response_cacher = Arc::new(InMemoryResponseCacher::new(cacher_config));
 
         let config_read = IndyVdrLedgerReadConfig {
-            request_submitter: request_submitter.clone(),
+            request_submitter,
             response_parser,
             response_cacher,
             protocol_version: ProtocolVersion::node_1_4(),

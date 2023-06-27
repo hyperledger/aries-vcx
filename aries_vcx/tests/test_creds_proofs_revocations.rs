@@ -1036,7 +1036,7 @@ mod integration_tests {
 
             revoke_credential_local(&mut issuer, &issuer_credential2, &rev_reg.rev_reg_id).await;
 
-            let credential_data3 = json!({address1.clone(): "221 Baker Street", address2.clone(): "Apt. B", city.clone(): "London", state.clone(): "", zip.clone(): "NW1 6XE."}).to_string();
+            let credential_data3 = json!({address1.clone(): "221 Baker Street", address2.clone(): "Apt. B", city.clone(): "London", state.clone(): "N/A", zip.clone(): "NW1 6XE."}).to_string();
 
             let issuer_credential3 = _exchange_credential(
                 &mut consumer,
