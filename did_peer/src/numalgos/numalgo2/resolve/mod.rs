@@ -10,7 +10,7 @@ use self::helpers::process_elements;
 
 pub fn resolve_numalgo2(
     did: &Did,
-    public_key_encoding: &PublicKeyEncoding,
+    public_key_encoding: PublicKeyEncoding,
 ) -> Result<DidDocument<ExtraFieldsSov>, DidPeerError> {
     let mut did_doc_builder: DidDocumentBuilder<ExtraFieldsSov> = DidDocument::builder(did.to_owned());
 

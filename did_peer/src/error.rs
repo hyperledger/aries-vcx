@@ -3,7 +3,7 @@ use std::convert::Infallible;
 use did_doc::schema::verification_method::VerificationMethodType;
 use thiserror::Error;
 
-use crate::peer_did::Numalgo;
+use crate::peer_did::numalgos::NumalgoKind;
 
 #[derive(Debug, Error)]
 pub enum DidPeerError {
@@ -20,7 +20,7 @@ pub enum DidPeerError {
     #[error("Sovrin DID document builder error: {0}")]
     DidDocumentSovBuilderError(#[from] did_doc_sov::error::DidDocumentSovError),
     #[error("Unsupported numalgo: {0}")]
-    UnsupportedNumalgo(Numalgo),
+    UnsupportedNumalgo(NumalgoKind),
     #[error("Invalid numalgo character: {0}")]
     InvalidNumalgoCharacter(char),
     #[error("Unsupported purpose character: {0}")]

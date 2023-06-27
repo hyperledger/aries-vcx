@@ -1,3 +1,4 @@
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum PublicKeyEncoding {
     Multibase,
     Base58,
@@ -25,7 +26,7 @@ impl ExtraFieldsOptions {
         self
     }
 
-    pub fn public_key_encoding(&self) -> &PublicKeyEncoding {
-        &self.public_key_encoding
+    pub fn public_key_encoding(&self) -> PublicKeyEncoding {
+        self.public_key_encoding
     }
 }
