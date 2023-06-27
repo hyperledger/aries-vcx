@@ -811,7 +811,7 @@ impl WalletStorageType for MySqlStorageType {
         credentials: Option<&str>,
         metadata: &[u8],
     ) -> IndyResult<()> {
-        let config = config
+        let mut config = config
             .map(serde_json::from_str::<Config>)
             .transpose()
             .to_indy(IndyErrorKind::InvalidStructure, "Malformed config json")?
@@ -838,7 +838,7 @@ impl WalletStorageType for MySqlStorageType {
             .password(&credentials.pass);
         my_sql_connect_options.log_statements(LevelFilter::Debug);
 
-        let pool = MySqlPoolOptions::default()
+        let mut pool = MySqlPoolOptions::default()
             .max_connections(1)
             .test_before_acquire(false)
             .connect_with(my_sql_connect_options)
@@ -846,10 +846,22 @@ impl WalletStorageType for MySqlStorageType {
 
         let mut con = pool.acquire().await?;
 
-        sqlx::query("CREATE DATABASE IF NOT EXISTS ?;")
-            .bind(&config.db_name)
-            .execute(&mut con)
-            .await?;
+        // Basic SQL injection prevention
+        // since we cannot bind the database identifier
+        config.db_name = config.db_name.replace('`', "``");
+
+        sqlx::query(&format!(
+            "CREATE DATABASE IF NOT EXISTS `{}`;",
+            config.db_name
+        ))
+        .execute(&mut con)
+        .await?;
+
+        // Replace the previous single use pool
+        // with the actual one, get a connection
+        // and create the required tables
+        pool = self._connect(false, config, credentials).await?;
+        con = pool.acquire().await?;
 
         sqlx::query(
             r#"
@@ -877,11 +889,7 @@ impl WalletStorageType for MySqlStorageType {
         .execute(&mut con)
         .await?;
 
-        let mut tx = self
-            ._connect(false, config, credentials)
-            .await?
-            .begin()
-            .await?;
+        let mut tx = pool.begin().await?;
 
         let res = sqlx::query(
             r#"
