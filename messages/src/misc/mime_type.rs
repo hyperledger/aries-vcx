@@ -14,4 +14,12 @@ pub enum MimeType {
     Pdf,
     #[serde(rename = "text/plain")]
     Plain,
+    #[serde(rename = "didcomm/aip1")]
+    Aip1,
+    #[serde(rename = "didcomm/aip2;env=rfc19")]
+    Aip2Rfc19,
+    #[serde(rename = "didcomm/aip2;env=rfc587")]
+    Aip2Rfc587,
+    #[serde(rename = "didcomm/v2")]
+    DidcommV2,
 }

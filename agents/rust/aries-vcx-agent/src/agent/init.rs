@@ -5,6 +5,10 @@ use aries_vcx::core::profile::ledger::{build_ledger_components, VcxPoolConfig};
 use aries_vcx::global::settings::DEFAULT_LINK_SECRET_ALIAS;
 use aries_vcx::{
     agency_client::{agency_client::AgencyClient, configuration::AgentProvisionConfig},
+    common::ledger::{
+        service_didsov::{DidSovServiceType, EndpointDidSov},
+        transactions::{add_new_did, write_endpoint},
+    },
     core::profile::{profile::Profile, vdrtools_profile::VdrtoolsProfile},
     global::settings::init_issuer_config,
     utils::provision::provision_cloud_agent,
@@ -12,6 +16,9 @@ use aries_vcx::{
 use aries_vcx_core::ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite};
 use aries_vcx_core::wallet::indy::wallet::{create_and_open_wallet, wallet_configure_issuer};
 use aries_vcx_core::wallet::indy::{IndySdkWallet, WalletConfig};
+use did_peer::peer_did_resolver::resolver::PeerDidResolver;
+use did_resolver_registry::ResolverRegistry;
+use did_resolver_sov::{reader::ConcreteAttrReader, resolution::DidSovResolver};
 use url::Url;
 
 use crate::{
@@ -20,9 +27,11 @@ use crate::{
     services::{
         connection::{ServiceConnections, ServiceEndpoint},
         credential_definition::ServiceCredentialDefinitions,
+        did_exchange::ServiceDidExchange,
         holder::ServiceCredentialsHolder,
         issuer::ServiceCredentialsIssuer,
         mediated_connection::ServiceMediatedConnections,
+        out_of_band::ServiceOutOfBand,
         prover::ServiceProver,
         revocation_registry::ServiceRevocationRegistries,
         schema::ServiceSchemas,
@@ -101,6 +110,29 @@ impl Agent {
             .await
             .unwrap();
 
+        // TODO: This setup should be easier
+        // The default issuer did can't be used - its verkey is not in base58 - TODO: double-check
+        let (public_did, _verkey) = add_new_did(
+            &wallet,
+            &profile.inject_indy_ledger_write(),
+            &config_issuer.institution_did,
+            None,
+        )
+        .await?;
+        let endpoint = EndpointDidSov::create()
+            .set_service_endpoint(init_config.service_endpoint.clone())
+            .set_types(Some(vec![DidSovServiceType::DidCommunication]));
+        write_endpoint(&profile.inject_indy_ledger_write(), &public_did, &endpoint).await?;
+
+        let did_peer_resolver = PeerDidResolver::new();
+        let did_sov_resolver =
+            DidSovResolver::new(Arc::<ConcreteAttrReader>::new(profile.inject_indy_ledger_read().into()));
+        let did_resolver_registry = Arc::new(
+            ResolverRegistry::new()
+                .register_resolver::<PeerDidResolver>("peer".into(), did_peer_resolver.into())
+                .register_resolver::<DidSovResolver>("sov".into(), did_sov_resolver.into()),
+        );
+
         let (mediated_connections, config_agency_client) = if let Some(agency_config) = init_config.agency_config {
             let config_provision_agent = AgentProvisionConfig {
                 agency_did: agency_config.agency_did,
@@ -125,6 +157,16 @@ impl Agent {
 
         let connections = Arc::new(ServiceConnections::new(
             Arc::clone(&profile),
+            init_config.service_endpoint.clone(),
+        ));
+        let did_exchange = Arc::new(ServiceDidExchange::new(
+            Arc::clone(&profile),
+            did_resolver_registry.clone(),
+            init_config.service_endpoint.clone(),
+            public_did,
+        ));
+        let out_of_band = Arc::new(ServiceOutOfBand::new(
+            Arc::clone(&profile),
             init_config.service_endpoint,
         ));
         let schemas = Arc::new(ServiceSchemas::new(
@@ -144,7 +186,9 @@ impl Agent {
         Ok(Self {
             profile,
             connections,
+            did_exchange,
             mediated_connections,
+            out_of_band,
             schemas,
             cred_defs,
             rev_regs,

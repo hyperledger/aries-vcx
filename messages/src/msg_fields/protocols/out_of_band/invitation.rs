@@ -1,3 +1,4 @@
+use did_doc_sov::service::ServiceSov;
 use diddoc_legacy::aries::service::AriesService;
 
 use serde::{Deserialize, Serialize};
@@ -55,6 +56,11 @@ pub struct InvitationDecorators {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(untagged)]
 pub enum OobService {
+    // TODO: DidCommV2 and AIP2 services don't include recipient keys
+    // and if service id is not a resolvable did (it must be just a URI)
+    // then there is no way to resolve the recipient keys
+    // must be missing something
+    SovService(ServiceSov),
     AriesService(AriesService),
     Did(String),
 }

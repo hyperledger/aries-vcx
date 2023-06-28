@@ -1,6 +1,7 @@
 pub mod basic_message;
 pub mod connection;
 pub mod cred_issuance;
+pub mod did_exchange;
 pub mod discover_features;
 pub mod notification;
 pub mod out_of_band;
