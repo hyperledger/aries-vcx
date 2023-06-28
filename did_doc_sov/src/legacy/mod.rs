@@ -16,6 +16,7 @@ use crate::{extra_fields::ExtraFieldsSov, service::legacy::ServiceLegacy};
 // TODO: Remove defaults if it turns out they are not needed. Preserved based on the original
 // legacy DDO implementation.
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
+#[serde(deny_unknown_fields)]
 pub struct LegacyDidDoc {
     id: Did,
     #[serde(default)]

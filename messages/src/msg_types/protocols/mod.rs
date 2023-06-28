@@ -6,11 +6,10 @@ use shared::misc::utils::CowStr;
 
 use self::{
     basic_message::BasicMessageType, connection::ConnectionType,
-    coordinate_mediation::CoordinateMediationType, cred_issuance::CredentialIssuanceType,
-    discover_features::DiscoverFeaturesType, notification::NotificationType,
-    out_of_band::OutOfBandType, pickup::PickupType, present_proof::PresentProofType,
-    report_problem::ReportProblemType, revocation::RevocationType, routing::RoutingType,
-    signature::SignatureType, trust_ping::TrustPingType,
+    coordinate_mediation::CoordinateMediationType, did_exchange::DidExchangeType, cred_issuance::CredentialIssuanceType, discover_features::DiscoverFeaturesType,
+    notification::NotificationType, out_of_band::OutOfBandType, pickup::PickupType,
+    present_proof::PresentProofType, report_problem::ReportProblemType, revocation::RevocationType,
+    routing::RoutingType, signature::SignatureType, trust_ping::TrustPingType,
 };
 use crate::{
     error::{MsgTypeError, MsgTypeResult},
@@ -21,6 +20,7 @@ pub mod basic_message;
 pub mod connection;
 pub mod coordinate_mediation;
 pub mod cred_issuance;
+pub mod did_exchange;
 pub mod discover_features;
 pub mod notification;
 pub mod out_of_band;
@@ -63,6 +63,7 @@ pub enum Protocol {
     NotificationType(NotificationType),
     PickupType(PickupType),
     CoordinateMediationType(CoordinateMediationType),
+    DidExchangeType(DidExchangeType),
 }
 
 /// Utility macro to avoid harder to read and error prone calling
@@ -100,6 +101,7 @@ impl Protocol {
         match_protocol!(NotificationType, protocol, major, minor);
         match_protocol!(PickupType, protocol, major, minor);
         match_protocol!(CoordinateMediationType, protocol, major, minor);
+        match_protocol!(DidExchangeType, protocol, major, minor);
 
         Err(MsgTypeError::unknown_protocol(protocol.to_owned()))
     }
@@ -121,6 +123,7 @@ impl Protocol {
             Self::NotificationType(v) => v.as_protocol_parts(),
             Self::PickupType(v) => v.as_protocol_parts(),
             Self::CoordinateMediationType(v) => v.as_protocol_parts(),
+            Self::DidExchangeType(v) => v.as_protocol_parts(),
         }
     }
 
@@ -197,7 +200,6 @@ impl Serialize for Protocol {
 }
 
 #[cfg(test)]
-
 mod tests {
     use serde_json::json;
 

@@ -14,8 +14,8 @@ use messages::msg_fields::protocols::{
     out_of_band::invitation::OobService,
 };
 use serde_json::Value;
-
 use crate::{
+    utils::from_service_sov_to_legacy,
     common::{keys::get_verkey_from_ledger, ledger::service_didsov::EndpointDidSov},
     errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
     handlers::util::AnyInvitation,
@@ -79,6 +79,7 @@ pub async fn resolve_service(
 ) -> VcxResult<AriesService> {
     match service {
         OobService::AriesService(service) => Ok(service.clone()),
+        OobService::SovService(service) => Ok(from_service_sov_to_legacy(service.to_owned())),
         OobService::Did(did) => get_service(indy_ledger, did).await,
     }
 }
@@ -97,6 +98,62 @@ pub async fn add_new_did(
     check_response(&res)?;
 
     Ok((did, verkey))
+}
+
+pub async fn resolve_oob_invitation(
+    resolver_registry: &Arc<ResolverRegistry>,
+    invitation: OobInvitation,
+) -> VcxResult<DidDocumentSov> {
+    let mut builder = DidDocumentSov::builder(Default::default());
+
+    let mut resolved_services = vec![];
+    let mut resolved_vms = vec![];
+    let mut resolved_kas = vec![];
+    let mut resolved_dids = vec![];
+
+    for service in invitation.content.services {
+        match service {
+            OobService::SovService(service) => {
+                builder = builder.add_service(service.clone());
+            }
+            OobService::Did(did) => {
+                let parsed_did = Did::parse(did)?;
+                let DidResolutionOutput { did_document, .. } =
+                    resolver_registry.resolve(&parsed_did, &Default::default()).await?;
+                resolved_services.extend(
+                    did_document
+                        .service()
+                        .iter()
+                        .map(|s| ServiceSov::try_from(s.clone()))
+                        .collect::<Result<Vec<_>, _>>()?,
+                );
+                resolved_vms.extend_from_slice(did_document.verification_method());
+                resolved_kas.extend_from_slice(did_document.key_agreement());
+                resolved_dids.push(parsed_did);
+            }
+            OobService::AriesService(service) => {
+                resolved_services.push(from_legacy_service_to_service_sov(service.clone())?)
+            }
+        }
+    }
+
+    for service in resolved_services {
+        builder = builder.add_service(service);
+    }
+
+    for vm in resolved_vms {
+        builder = builder.add_verification_method(vm.clone());
+    }
+
+    for ka in resolved_kas {
+        builder = builder.add_key_agreement(ka.clone());
+    }
+
+    for did in resolved_dids {
+        builder = builder.add_controller(did);
+    }
+
+    Ok(builder.build())
 }
 
 pub async fn into_did_doc(

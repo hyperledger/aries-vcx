@@ -20,7 +20,7 @@ pub enum ServiceType {
     AIP1,
     #[serde(rename = "did-communication")]
     DIDCommV1,
-    #[serde(rename = "DIDComm")]
+    #[serde(rename = "DIDCommMessaging")]
     DIDCommV2,
     #[serde(rename = "IndyAgent")]
     Legacy,
@@ -31,7 +31,14 @@ impl Display for ServiceType {
         match self {
             ServiceType::AIP1 => write!(f, "endpoint"),
             ServiceType::DIDCommV1 => write!(f, "did-communication"),
-            ServiceType::DIDCommV2 => write!(f, "DIDComm"),
+            // Interop note: AFJ useses DIDComm, Acapy uses DIDCommMessaging
+            // Not matching spec:
+            // * did:sov method - https://sovrin-foundation.github.io/sovrin/spec/did-method-spec-template.html#crud-operation-definitions
+            // Matching spec:
+            // * did:peer method - https://identity.foundation/peer-did-method-spec/#multi-key-creation
+            // * did core - https://www.w3.org/TR/did-spec-registries/#didcommmessaging
+            // * didcommv2 - https://identity.foundation/didcomm-messaging/spec/#service-endpoint
+            ServiceType::DIDCommV2 => write!(f, "DIDCommMessaging"),
             ServiceType::Legacy => write!(f, "IndyAgent"),
         }
     }

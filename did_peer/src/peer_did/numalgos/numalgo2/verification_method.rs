@@ -116,6 +116,11 @@ fn to_did_url_reference(key: &Key) -> Result<DidUrl, DidPeerError> {
     .map_err(Into::into)
 }
 
+// TODO: post-rebase check if this is applicable version
+// fn to_did_url_reference(key: &Key) -> Result<DidUrl, DidPeerError> {
+//     DidUrl::from_fragment(key.short_prefixless_fingerprint()).map_err(Into::into)
+// }
+
 #[cfg(test)]
 mod tests {
     use did_doc::schema::verification_method::{VerificationMethod, VerificationMethodType};

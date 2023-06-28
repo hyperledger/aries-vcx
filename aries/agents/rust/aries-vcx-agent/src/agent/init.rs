@@ -14,13 +14,15 @@ use crate::{
     agent::{agent_config::AgentConfig, agent_struct::Agent},
     error::AgentResult,
     services::{
+        out_of_band::ServiceOutOfBand,
         connection::{ServiceConnections, ServiceEndpoint},
+        did_exchange::ServiceDidExchange,
+        schema::ServiceSchemas,
         credential_definition::ServiceCredentialDefinitions,
+        revocation_registry::ServiceRevocationRegistries,
         holder::ServiceCredentialsHolder,
         issuer::ServiceCredentialsIssuer,
         prover::ServiceProver,
-        revocation_registry::ServiceRevocationRegistries,
-        schema::ServiceSchemas,
         verifier::ServiceVerifier,
     },
 };
@@ -83,9 +85,42 @@ impl Agent {
             .await
             .unwrap();
 
+        // TODO: This setup should be easier
+        // The default issuer did can't be used - its verkey is not in base58 - TODO: double-check
+        let (public_did, _verkey) = add_new_did(
+            &wallet,
+            &profile.inject_indy_ledger_write(),
+            &config_issuer.institution_did,
+            None,
+        )
+            .await?;
+        let endpoint = EndpointDidSov::create()
+            .set_service_endpoint(init_config.service_endpoint.clone())
+            .set_types(Some(vec![DidSovServiceType::DidCommunication]));
+        write_endpoint(&profile.inject_indy_ledger_write(), &public_did, &endpoint).await?;
+
+        let did_peer_resolver = PeerDidResolver::new();
+        let did_sov_resolver =
+            DidSovResolver::new(Arc::<ConcreteAttrReader>::new(profile.inject_indy_ledger_read().into()));
+        let did_resolver_registry = Arc::new(
+            ResolverRegistry::new()
+                .register_resolver::<PeerDidResolver>("peer".into(), did_peer_resolver.into())
+                .register_resolver::<DidSovResolver>("sov".into(), did_sov_resolver.into()),
+        );
+
         let connections = Arc::new(ServiceConnections::new(
             ledger_read.clone(),
             wallet.clone(),
+            init_config.service_endpoint.clone(),
+        ));
+        let did_exchange = Arc::new(ServiceDidExchange::new(
+            Arc::clone(&profile),
+            did_resolver_registry.clone(),
+            init_config.service_endpoint.clone(),
+            public_did,
+        ));
+        let out_of_band = Arc::new(ServiceOutOfBand::new(
+            Arc::clone(&profile),
             init_config.service_endpoint,
         ));
         let schemas = Arc::new(ServiceSchemas::new(
@@ -137,6 +172,8 @@ impl Agent {
             anoncreds,
             wallet,
             connections,
+            did_exchange,
+            out_of_band,
             schemas,
             cred_defs,
             rev_regs,

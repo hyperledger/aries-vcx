@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -38,7 +40,7 @@ pub struct AttachmentData {
     // There probably is a better type for this???
     #[builder(default, setter(strip_option))]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub jws: Option<String>,
+    pub jws: Option<HashMap<String, Value>>,
     // Better type for this as well?
     #[builder(default, setter(strip_option))]
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -142,7 +144,7 @@ pub mod tests {
 
     #[test]
     fn test_extended_attach_data() {
-        let jws = "test_jws".to_owned();
+        let jws = json!({ "jws": "test_jws".to_owned()});
         let sha256 = "test_sha256".to_owned();
 
         let data = json!({
@@ -155,6 +157,8 @@ pub mod tests {
             "sha256": sha256
         });
 
+        let mut jws = HashMap::new();
+        jws.insert("jws".to_owned(), Value::String("test_jws".to_owned()));
         let content = AttachmentType::Json(data);
         let attach_data = AttachmentData::builder()
             .content(content)

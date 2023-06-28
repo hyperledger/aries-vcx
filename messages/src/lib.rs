@@ -6,7 +6,7 @@
 #![allow(clippy::large_enum_variant)]
 
 pub mod decorators;
-mod error;
+pub mod error;
 pub mod misc;
 pub mod msg_fields;
 pub mod msg_parts;
@@ -15,6 +15,7 @@ pub mod msg_types;
 use derive_more::From;
 use misc::utils;
 use msg_fields::protocols::{
+    did_exchange::DidExchange,
     cred_issuance::{v1::CredentialIssuanceV1, v2::CredentialIssuanceV2, CredentialIssuance},
     pickup::Pickup,
     present_proof::{v2::PresentProofV2, PresentProof},
@@ -69,6 +70,7 @@ pub enum AriesMessage {
     Notification(Notification),
     Pickup(Pickup),
     CoordinateMediation(CoordinateMediation),
+    DidExchange(DidExchange),
 }
 
 impl DelayedSerde for AriesMessage {
@@ -185,6 +187,9 @@ impl DelayedSerde for AriesMessage {
                 CoordinateMediation::delayed_deserialize((msg_type, kind_str), deserializer)
                     .map(From::from)
             }
+            Protocol::DidExchangeType(msg_type) => {
+                DidExchange::delayed_deserialize((msg_type, kind_str), deserializer).map(From::from)
+            }
         }
     }
 
@@ -208,6 +213,7 @@ impl DelayedSerde for AriesMessage {
             Self::Notification(v) => v.delayed_serialize(serializer),
             Self::Pickup(v) => v.delayed_serialize(serializer),
             Self::CoordinateMediation(v) => v.delayed_serialize(serializer),
+            Self::DidExchange(v) => v.delayed_serialize(serializer),
         }
     }
 }

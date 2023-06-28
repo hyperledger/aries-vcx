@@ -6,6 +6,8 @@ use aries_vcx_core::{
     wallet::indy::IndySdkWallet,
 };
 
+use crate::services::did_exchange::ServiceDidExchange;
+use crate::services::out_of_band::ServiceOutOfBand;
 use crate::{
     agent::agent_config::AgentConfig,
     services::{
@@ -31,6 +33,8 @@ pub struct Agent {
     pub(super) issuer: Arc<ServiceCredentialsIssuer>,
     pub(super) verifier: Arc<ServiceVerifier>,
     pub(super) prover: Arc<ServiceProver>,
+    pub(super) out_of_band: Arc<ServiceOutOfBand>,
+    pub(super) did_exchange: Arc<ServiceDidExchange>,
 }
 
 impl Agent {
@@ -62,6 +66,14 @@ impl Agent {
         self.connections.clone()
     }
 
+    pub fn out_of_band(&self) -> Arc<ServiceOutOfBand> {
+        self.out_of_band.clone()
+    }
+
+    pub fn did_exchange(&self) -> Arc<ServiceDidExchange> {
+        self.did_exchange.clone()
+    }
+
     pub fn schemas(&self) -> Arc<ServiceSchemas> {
         self.schemas.clone()
     }
@@ -88,5 +100,9 @@ impl Agent {
 
     pub fn prover(&self) -> Arc<ServiceProver> {
         self.prover.clone()
+    }
+
+    pub fn public_did(&self) -> &str {
+        self.did_exchange.public_did().as_ref()
     }
 }

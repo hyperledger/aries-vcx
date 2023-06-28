@@ -22,6 +22,19 @@ pub struct Thread {
     pub goal_code: Option<MaybeKnown<ThreadGoalCode>>,
 }
 
+// TODO: post-rebase check if this is dead code
+impl Thread {
+    pub fn new(thid: String) -> Self {
+        Self {
+            thid,
+            pthid: None,
+            sender_order: None,
+            received_orders: None,
+            goal_code: None,
+        }
+    }
+}
+
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub enum ThreadGoalCode {
     #[serde(rename = "aries.vc")]

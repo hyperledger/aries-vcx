@@ -18,4 +18,6 @@ pub enum AgentErrorKind {
     MediatedConnectionServiceUnavailable,
     #[error("Failed to submit http request")]
     PostMessageFailed,
+    #[error("Invalid state")]
+    InvalidState,
 }
