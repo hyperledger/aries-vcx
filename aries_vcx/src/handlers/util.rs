@@ -2,6 +2,7 @@ use messages::{
     msg_fields::protocols::{
         connection::{invitation::Invitation, Connection},
         cred_issuance::CredentialIssuance,
+        did_exchange::DidExchange,
         discover_features::DiscoverFeatures,
         notification::Notification,
         out_of_band::{invitation::Invitation as OobInvitation, OutOfBand},
@@ -119,6 +120,10 @@ pub fn verify_thread_id(thread_id: &str, message: &AriesMessage) -> VcxResult<()
         AriesMessage::Routing(msg) => msg.id == thread_id,
         AriesMessage::TrustPing(TrustPing::Ping(msg)) => matches_opt_thread_id!(msg, thread_id),
         AriesMessage::TrustPing(TrustPing::PingResponse(msg)) => matches_thread_id!(msg, thread_id),
+        AriesMessage::DidExchange(DidExchange::Request(msg)) => matches_opt_thread_id!(msg, thread_id),
+        AriesMessage::DidExchange(DidExchange::Response(msg)) => matches_thread_id!(msg, thread_id),
+        AriesMessage::DidExchange(DidExchange::Complete(msg)) => matches_thread_id!(msg, thread_id),
+        AriesMessage::DidExchange(DidExchange::ProblemReport(msg)) => matches_thread_id!(msg, thread_id),
     };
 
     if !is_match {
@@ -154,6 +159,17 @@ pub enum AttachmentId {
 pub enum AnyInvitation {
     Con(Invitation),
     Oob(OobInvitation),
+}
+
+impl AnyInvitation {
+    pub fn get_id(&self) -> &str {
+        match self {
+            AnyInvitation::Con(Invitation::Public(msg)) => &msg.id,
+            AnyInvitation::Con(Invitation::Pairwise(msg)) => &msg.id,
+            AnyInvitation::Con(Invitation::PairwiseDID(msg)) => &msg.id,
+            AnyInvitation::Oob(msg) => &msg.id,
+        }
+    }
 }
 
 // todo: this is shared by multiple protocols to express different things - needs to be split

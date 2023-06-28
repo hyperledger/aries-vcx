@@ -29,6 +29,8 @@ impl Thread {
     }
 }
 
+// TODO: These goal codes are not necessarily specific to threads, should be
+// renamed and moved.
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub enum ThreadGoalCode {
     #[serde(rename = "aries.vc")]

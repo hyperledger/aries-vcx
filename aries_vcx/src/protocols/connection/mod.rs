@@ -181,7 +181,7 @@ where
     }
 }
 
-pub(crate) async fn wrap_and_send_msg<T>(
+pub async fn wrap_and_send_msg<T>(
     wallet: &Arc<dyn BaseWallet>,
     message: &AriesMessage,
     sender_verkey: &str,

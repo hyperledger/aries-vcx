@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -44,7 +46,7 @@ impl Attachment {
 pub struct AttachmentData {
     // There probably is a better type for this???
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub jws: Option<String>,
+    pub jws: Option<HashMap<String, Value>>,
     // Better type for this as well?
     #[serde(skip_serializing_if = "Option::is_none")]
     pub sha256: Option<String>,

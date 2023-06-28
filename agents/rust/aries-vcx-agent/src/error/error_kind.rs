@@ -16,4 +16,6 @@ pub enum AgentErrorKind {
     CredDefAlreadyCreated,
     #[error("Mediated connections not configured")]
     MediatedConnectionServiceUnavailable,
+    #[error("Invalid state")]
+    InvalidState,
 }
