@@ -918,6 +918,7 @@ pub mod test_utils {
         rev_reg: &RevocationRegistry,
     ) {
         revoke_credential_local(faber, issuer_credential, &rev_reg.rev_reg_id).await;
+
         rev_reg
             .publish_local_revocations(
                 &faber.profile.inject_anoncreds(),

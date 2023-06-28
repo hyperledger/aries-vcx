@@ -6,8 +6,8 @@ pub type MigrationResult<T> = Result<T, MigrationError>;
 
 #[derive(Debug, ThisError)]
 pub enum MigrationError {
-    #[error("could not serialize/deserialize record value")]
+    #[error("JSON error: {0}")]
     Json(#[from] JsonError),
-    #[error(transparent)]
+    #[error("Indy error: {0}")]
     Indy(#[from] IndyError),
 }

@@ -747,7 +747,7 @@ impl WalletService {
             };
 
             if let Some(record) = migrate_fn(record)
-                .to_indy(IndyErrorKind::InvalidStructure, "record migration failed")?
+                .map_err(|e| IndyError::from_msg(IndyErrorKind::InvalidStructure, e.to_string()))?
             {
                 new_wallet
                     .add(&record.type_, &record.id, &record.value, &record.tags)

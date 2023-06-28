@@ -7,6 +7,9 @@ use vdrtools::{types::domain::wallet::Record, IndyError};
 
 use crate::error::MigrationResult;
 
+// The deltas in libvdrtools are prefixed. For absolutely no reason.
+const REV_REG_DELTA_ID_PREFIX: &str = "rev_reg_delta:";
+
 pub fn convert_master_secret(mut record: Record) -> MigrationResult<Record> {
     let master_secret: vdrtools::MasterSecret = serde_json::from_str(&record.value)?;
 
@@ -70,6 +73,16 @@ pub fn convert_rev_reg(mut record: Record) -> MigrationResult<Record> {
 
 pub fn convert_rev_reg_delta(mut record: Record) -> MigrationResult<Record> {
     record.type_ = CATEGORY_REV_REG_DELTA.to_owned();
+
+    // Shave off the useless prefix, if found.
+    record.id = record
+        .id
+        .strip_prefix(REV_REG_DELTA_ID_PREFIX)
+        .map(ToOwned::to_owned)
+        .unwrap_or(record.id);
+
+    // Them indy devs serializing a String to JSON...
+    record.value = serde_json::from_str(&record.value)?;
     let _: credx::types::RevocationRegistryDelta = serde_json::from_str(&record.value)?;
     Ok(record)
 }
