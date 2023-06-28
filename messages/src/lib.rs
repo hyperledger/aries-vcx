@@ -7,7 +7,7 @@
 #![deny(clippy::unwrap_used)]
 
 pub mod decorators;
-mod error;
+pub mod error;
 pub mod misc;
 pub mod msg_fields;
 pub mod msg_parts;
@@ -15,6 +15,7 @@ pub mod msg_types;
 
 use derive_more::From;
 use misc::utils;
+use msg_fields::protocols::did_exchange::DidExchange;
 use msg_types::{report_problem::ReportProblemTypeV1_0, routing::RoutingTypeV1_0, MsgWithType};
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 
@@ -59,6 +60,7 @@ pub enum AriesMessage {
     BasicMessage(BasicMessage),
     OutOfBand(OutOfBand),
     Notification(Notification),
+    DidExchange(DidExchange),
 }
 
 impl DelayedSerde for AriesMessage {
@@ -133,6 +135,9 @@ impl DelayedSerde for AriesMessage {
             Protocol::NotificationType(msg_type) => {
                 Notification::delayed_deserialize((msg_type, kind_str), deserializer).map(From::from)
             }
+            Protocol::DidExchangeType(msg_type) => {
+                DidExchange::delayed_deserialize((msg_type, kind_str), deserializer).map(From::from)
+            }
         }
     }
 
@@ -152,6 +157,7 @@ impl DelayedSerde for AriesMessage {
             Self::BasicMessage(v) => MsgWithType::from(v).serialize(serializer),
             Self::OutOfBand(v) => v.delayed_serialize(serializer),
             Self::Notification(v) => v.delayed_serialize(serializer),
+            Self::DidExchange(v) => v.delayed_serialize(serializer),
         }
     }
 }

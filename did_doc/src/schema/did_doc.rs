@@ -252,6 +252,29 @@ impl<E> DidDocumentBuilder<E> {
     }
 }
 
+impl<E> From<DidDocument<E>> for DidDocumentBuilder<E> {
+    fn from(did_document: DidDocument<E>) -> Self {
+        let controller = match did_document.controller {
+            Some(OneOrList::List(list)) => list,
+            _ => Vec::new(),
+        };
+
+        Self {
+            id: did_document.id,
+            also_known_as: did_document.also_known_as,
+            controller,
+            verification_method: did_document.verification_method,
+            authentication: did_document.authentication,
+            assertion_method: did_document.assertion_method,
+            key_agreement: did_document.key_agreement,
+            capability_invocation: did_document.capability_invocation,
+            capability_delegation: did_document.capability_delegation,
+            service: did_document.service,
+            extra: did_document.extra,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

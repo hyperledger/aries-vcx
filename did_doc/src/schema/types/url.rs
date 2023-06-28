@@ -5,6 +5,7 @@ use url::Url as UrlDep;
 
 use crate::error::DidDocumentBuilderError;
 
+// TODO: This was bad idea, get rid of it
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct Url(UrlDep);
 

@@ -2,11 +2,15 @@ pub mod error;
 pub mod extra_fields;
 pub mod service;
 
+use std::collections::HashMap;
+
 use did_doc::{
     did_parser::{Did, DidUrl},
     schema::{
         did_doc::{ControllerAlias, DidDocument, DidDocumentBuilder},
+        service::Service,
         types::uri::Uri,
+        utils::OneOrList,
         verification_method::{VerificationMethod, VerificationMethodKind},
     },
 };
@@ -15,15 +19,15 @@ use serde::{de, Deserialize, Deserializer, Serialize};
 use serde_json::Value;
 use service::ServiceSov;
 
-#[derive(Serialize, Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct DidDocumentSov {
     did_doc: DidDocument<ExtraFieldsSov>,
     services: Vec<ServiceSov>,
 }
 
 impl DidDocumentSov {
-    pub fn builder() -> DidDocumentSovBuilder {
-        DidDocumentSovBuilder::default()
+    pub fn builder(id: Did) -> DidDocumentSovBuilder {
+        DidDocumentSovBuilder::new(id)
     }
 
     pub fn id(&self) -> &Did {
@@ -75,7 +79,6 @@ impl DidDocumentSov {
     }
 }
 
-#[derive(Default)]
 pub struct DidDocumentSovBuilder {
     ddo_builder: DidDocumentBuilder<ExtraFieldsSov>,
     services: Vec<ServiceSov>,
@@ -99,8 +102,20 @@ impl DidDocumentSovBuilder {
         self
     }
 
+    pub fn add_key_agreement(mut self, key_agreement: VerificationMethodKind) -> Self {
+        match key_agreement {
+            VerificationMethodKind::Resolved(ka) => {
+                self.ddo_builder = self.ddo_builder.add_key_agreement(ka);
+            }
+            VerificationMethodKind::Resolvable(ka_ref) => {
+                self.ddo_builder = self.ddo_builder.add_key_agreement_reference(ka_ref);
+            }
+        }
+        self
+    }
+
     pub fn add_service(mut self, service: ServiceSov) -> Self {
-        self.services.push(service);
+        self.services.push(service.clone());
         self
     }
 
@@ -137,5 +152,89 @@ impl<'de> Deserialize<'de> for DidDocumentSov {
             did_doc: temp.did_doc,
             services,
         })
+    }
+}
+
+impl Serialize for DidDocumentSov {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let mut builder: DidDocumentBuilder<ExtraFieldsSov> = self.did_doc.clone().into();
+
+        for service_sov in &self.services {
+            let service: Service<ExtraFieldsSov> = service_sov.clone().try_into().map_err(serde::ser::Error::custom)?;
+            builder = builder.add_service(service);
+        }
+
+        builder.build().serialize(serializer)
+    }
+}
+
+impl From<DidDocumentSov> for DidDocument<ExtraFieldsSov> {
+    fn from(ddo: DidDocumentSov) -> Self {
+        let mut ddo_builder = DidDocument::<ExtraFieldsSov>::builder(ddo.did_doc.id().clone());
+        for service in ddo.service() {
+            ddo_builder = ddo_builder.add_service(service.clone().try_into().unwrap());
+        }
+        if let Some(controller) = ddo.did_doc.controller() {
+            match controller {
+                OneOrList::One(controller) => {
+                    ddo_builder = ddo_builder.add_controller(controller.clone());
+                }
+                OneOrList::List(list) => {
+                    for controller in list {
+                        ddo_builder = ddo_builder.add_controller(controller.clone());
+                    }
+                }
+            }
+        }
+        for vm in ddo.verification_method() {
+            ddo_builder = ddo_builder.add_verification_method(vm.clone());
+        }
+        for ka in ddo.key_agreement() {
+            match ka {
+                VerificationMethodKind::Resolved(ka) => {
+                    ddo_builder = ddo_builder.add_key_agreement(ka.clone());
+                }
+                VerificationMethodKind::Resolvable(ka_ref) => {
+                    ddo_builder = ddo_builder.add_key_agreement_reference(ka_ref.clone());
+                }
+            }
+        }
+        ddo_builder.build()
+    }
+}
+
+impl From<DidDocument<ExtraFieldsSov>> for DidDocumentSov {
+    fn from(ddo: DidDocument<ExtraFieldsSov>) -> Self {
+        let mut builder = DidDocumentSov::builder(ddo.id().clone());
+        for service in ddo.service() {
+            builder = builder.add_service(service.clone().try_into().unwrap());
+        }
+        for vm in ddo.verification_method() {
+            builder = builder.add_verification_method(vm.clone());
+        }
+        for ka in ddo.key_agreement() {
+            builder = builder.add_key_agreement(ka.clone());
+        }
+        // TODO: Controller
+        builder.build()
+    }
+}
+
+impl From<DidDocument<HashMap<String, Value>>> for DidDocumentSov {
+    fn from(ddo: DidDocument<HashMap<String, Value>>) -> Self {
+        let mut builder = DidDocumentSov::builder(ddo.id().clone());
+        for service in ddo.service() {
+            builder = builder.add_service(service.clone().try_into().unwrap());
+        }
+        for vm in ddo.verification_method() {
+            builder = builder.add_verification_method(vm.clone());
+        }
+        for ka in ddo.key_agreement() {
+            builder = builder.add_key_agreement(ka.clone());
+        }
+        builder.build()
     }
 }

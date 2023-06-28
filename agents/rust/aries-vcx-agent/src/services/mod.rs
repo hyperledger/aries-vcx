@@ -1,8 +1,10 @@
 pub(crate) mod connection;
 pub(crate) mod credential_definition;
+pub(crate) mod did_exchange;
 pub(crate) mod holder;
 pub(crate) mod issuer;
 pub(crate) mod mediated_connection;
+pub(crate) mod out_of_band;
 pub(crate) mod prover;
 pub(crate) mod revocation_registry;
 pub(crate) mod schema;

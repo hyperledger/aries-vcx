@@ -7,6 +7,7 @@ use std::{collections::HashMap, sync::Arc};
 
 use crate::common::ledger::service_didsov::EndpointDidSov;
 use crate::handlers::util::AnyInvitation;
+use crate::utils::from_service_sov_to_legacy;
 use aries_vcx_core::ledger::base_ledger::{IndyLedgerRead, IndyLedgerWrite};
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use serde_json::Value;
@@ -69,6 +70,7 @@ const ED25519_MULTIBASE_CODEC: [u8; 2] = [0xed, 0x01];
 pub async fn resolve_service(indy_ledger: &Arc<dyn IndyLedgerRead>, service: &OobService) -> VcxResult<AriesService> {
     match service {
         OobService::AriesService(service) => Ok(service.clone()),
+        OobService::SovService(service) => Ok(from_service_sov_to_legacy(service.to_owned())),
         OobService::Did(did) => get_service(indy_ledger, did).await,
     }
 }

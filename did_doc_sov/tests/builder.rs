@@ -16,7 +16,9 @@ fn test_service_build_aip1() {
         ExtraFieldsAIP1::default(),
     )
     .unwrap();
-    let did_doc = DidDocumentSov::builder().add_service(ServiceSov::AIP1(service)).build();
+    let did_doc = DidDocumentSov::builder(Default::default())
+        .add_service(ServiceSov::AIP1(service))
+        .build();
     let services = did_doc.service();
     assert_eq!(services.len(), 1);
     let first_service = services.get(0).unwrap();
@@ -44,7 +46,7 @@ fn test_service_build_didcommv1() {
         extra_fields_didcommv1,
     )
     .unwrap();
-    let did_doc = DidDocumentSov::builder()
+    let did_doc = DidDocumentSov::builder(Default::default())
         .add_service(ServiceSov::DIDCommV1(service))
         .build();
     let services = did_doc.service();
@@ -75,7 +77,7 @@ fn test_service_build_didcommv2() {
         extra_fields_didcommv2,
     )
     .unwrap();
-    let did_doc = DidDocumentSov::builder()
+    let did_doc = DidDocumentSov::builder(Default::default())
         .add_service(ServiceSov::DIDCommV2(service))
         .build();
     let services = did_doc.service();
