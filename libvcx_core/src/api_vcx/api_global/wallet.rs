@@ -3,6 +3,8 @@ use std::sync::Arc;
 use std::sync::RwLock;
 
 use aries_vcx::aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
+#[cfg(all(feature = "anoncreds_credx"))]
+use aries_vcx::aries_vcx_core::anoncreds::credx_anoncreds::IndyCredxAnonCreds;
 use aries_vcx::aries_vcx_core::anoncreds::indy_anoncreds::IndySdkAnonCreds;
 use aries_vcx::aries_vcx_core::indy::wallet::{
     close_search_wallet, fetch_next_records_wallet, import, open_search_wallet, IssuerConfig, RestoreWalletConfigs,
@@ -24,8 +26,8 @@ use crate::errors::mapping_from_ariesvcx::map_ariesvcx_result;
 use crate::errors::mapping_from_ariesvcxcore::map_ariesvcx_core_result;
 
 lazy_static! {
-    pub static ref base_wallet: RwLock<Option<Arc<dyn BaseWallet>>> = RwLock::new(None);
-    pub static ref base_anoncreds: RwLock<Option<Arc<dyn BaseAnonCreds>>> = RwLock::new(None);
+    pub static ref global_base_wallet: RwLock<Option<Arc<dyn BaseWallet>>> = RwLock::new(None);
+    pub static ref global_base_anoncreds: RwLock<Option<Arc<dyn BaseAnonCreds>>> = RwLock::new(None);
 }
 
 pub fn get_main_wallet_handle() -> LibvcxResult<WalletHandle> {
@@ -37,14 +39,30 @@ pub async fn export_main_wallet(path: &str, backup_key: &str) -> LibvcxResult<()
     map_ariesvcx_core_result(indy::wallet::export_wallet(wallet_handle, path, backup_key).await)
 }
 
-fn setup_global_wallet(handle: WalletHandle) -> LibvcxResult<()> {
+fn build_component_base_wallet(wallet_handle: WalletHandle) -> Arc<dyn BaseWallet> {
+    return Arc::new(IndySdkWallet::new(wallet_handle));
+}
+
+fn build_component_anoncreds(base_wallet: Arc<dyn BaseWallet>) -> Arc<dyn BaseAnonCreds> {
+    #[cfg(all(feature = "anoncreds_vdrtools"))]
+    {
+        let wallet_handle = WalletHandle(base_wallet.get_wallet_handle());
+        return Arc::new(IndySdkAnonCreds::new(wallet_handle));
+    }
+    #[cfg(all(feature = "anoncreds_credx"))]
+    {
+        return Arc::new(IndyCredxAnonCreds::new(Arc::clone(&base_wallet)));
+    }
+}
+
+fn setup_global_wallet(wallet_handle: WalletHandle) -> LibvcxResult<()> {
     // new way
-    let base_wallet_impl: Arc<dyn BaseWallet> = Arc::new(IndySdkWallet::new(handle));
-    let mut b_wallet = base_wallet.write()?;
-    *b_wallet = Some(base_wallet_impl);
+    let base_wallet_impl = build_component_base_wallet(wallet_handle);
+    let mut b_wallet = global_base_wallet.write()?;
+    *b_wallet = Some(base_wallet_impl.clone());
     // anoncreds
-    let base_anoncreds_impl: Arc<dyn BaseAnonCreds> = Arc::new(IndySdkAnonCreds::new(handle));
-    let mut b_anoncreds = base_anoncreds.write()?;
+    let base_anoncreds_impl: Arc<dyn BaseAnonCreds> = build_component_anoncreds(base_wallet_impl);
+    let mut b_anoncreds = global_base_anoncreds.write()?;
     *b_anoncreds = Some(base_anoncreds_impl);
     Ok(())
 }
@@ -73,7 +91,7 @@ pub async fn close_main_wallet() -> LibvcxResult<()> {
         }
         Some(wallet) => {
             indy::wallet::close_wallet(WalletHandle(wallet.get_wallet_handle())).await?;
-            let mut b_wallet = base_wallet.write()?;
+            let mut b_wallet = global_base_wallet.write()?;
             *b_wallet = None;
         }
     }
