@@ -23,7 +23,6 @@ use aries_vcx::core::profile::profile::Profile;
 use aries_vcx::errors::error::{AriesVcxError, VcxResult};
 use std::sync::Arc;
 use std::sync::RwLock;
-use aries_vcx::aries_vcx_core::errors::error::AriesVcxCoreError;
 
 lazy_static! {
     static ref POOL_HANDLE: RwLock<Option<i32>> = RwLock::new(None);
