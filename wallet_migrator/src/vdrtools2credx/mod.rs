@@ -457,7 +457,7 @@ mod tests {
         })
     }
 
-    fn make_dummy_rev_reg_delta() -> vdrtools::RevocationRegistryDelta {
+    fn make_dummy_rev_reg_delta() -> String {
         let rev_reg = json!({
             "prevAccum": "21 11ED98357F9B9B3077E633D35A72CECEF107F85DA7BBFBF2873E2EE7E0F27D326 21 1371CDA6174D6F01A39157428768D328B4B80088EB14AA0AAB7F046B645E1A235 6 65BBFAC37012790BB8B283F164BE3C0585AB60CD7B72123E4DC43DDA7A6A4E6D 4 3BB64FAF922865095CD5AA4349C0437D04EA30FB7592D932531732F2DCB83DB8 6 77039B80A78AB4A2476373C6F8ECC5E2D94B8F37F924549AFA247E2D6EE86DEE 4 24E94FB6B5233B22BDF47745AA821A1797BC6504BC11D5B825B4F8137F1E307F",
             "accum": "21 11ED98357F9B9B3077E633D35A72CECEF107F85DA7BBFBF2873E2EE7E0F27D326 21 1371CDA6174D6F01A39157428768D328B4B80088EB14AA0AAB7F046B645E1A235 6 65BBFAC37012790BB8B283F164BE3C0585AB60CD7B72123E4DC43DDA7A6A4E6D 4 3BB64FAF922865095CD5AA4349C0437D04EA30FB7592D932531732F2DCB83DB8 6 77039B80A78AB4A2476373C6F8ECC5E2D94B8F37F924549AFA247E2D6EE86DEE 4 24E94FB6B5233B22BDF47745AA821A1797BC6504BC11D5B825B4F8137F1E307F",
@@ -465,9 +465,14 @@ mod tests {
             "revoked": []
         }).to_string();
 
-        vdrtools::RevocationRegistryDelta::RevocationRegistryDeltaV1(vdrtools::RevocationRegistryDeltaV1 {
-            value: serde_json::from_str(&rev_reg).unwrap(),
-        })
+        let rev_reg_delta =
+            vdrtools::RevocationRegistryDelta::RevocationRegistryDeltaV1(vdrtools::RevocationRegistryDeltaV1 {
+                value: serde_json::from_str(&rev_reg).unwrap(),
+            });
+
+        // Vdrtools serializes this to String.
+        // Sad, I know...
+        json!(rev_reg_delta).to_string()
     }
 
     fn make_dummy_rev_reg_info() -> vdrtools::RevocationRegistryInfo {
