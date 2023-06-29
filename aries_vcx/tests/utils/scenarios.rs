@@ -933,7 +933,7 @@ pub mod test_utils {
         let ledger = Arc::clone(&faber.profile).inject_anoncreds_ledger_read();
         let (_, delta, timestamp) = ledger.get_rev_reg_delta_json(rev_reg_id, None, None).await.unwrap();
         info!("revoking credential locally");
-        
+
         issuer_credential
             .revoke_credential_local(&faber.profile.inject_anoncreds())
             .await
