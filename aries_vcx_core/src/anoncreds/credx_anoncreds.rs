@@ -969,6 +969,34 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
 
         let rev_reg_def = self.get_wallet_record_value(CATEGORY_REV_REG_DEF, rev_reg_id).await?;
 
+        let mut rev_reg_info: RevocationRegistryInfo =
+            self.get_wallet_record_value(CATEGORY_REV_REG_INFO, rev_reg_id).await?;
+
+        let issuance_type = match &rev_reg_def {
+            RevocationRegistryDefinition::RevocationRegistryDefinitionV1(r) => r.value.issuance_type,
+        };
+
+        match issuance_type {
+            IssuanceType::ISSUANCE_ON_DEMAND => {
+                if !rev_reg_info.used_ids.remove(&cred_rev_id) {
+                    return Err(AriesVcxCoreError::from_msg(
+                        AriesVcxCoreErrorKind::InvalidInput,
+                        format!("Revocation id: {:?} not found in RevocationRegistry", cred_rev_id),
+                    ));
+                };
+            }
+            IssuanceType::ISSUANCE_BY_DEFAULT => {
+                if !rev_reg_info.used_ids.insert(cred_rev_id) {
+                    return Err(AriesVcxCoreError::from_msg(
+                        AriesVcxCoreErrorKind::InvalidInput,
+                        format!("Revocation id: {:?} not found in RevocationRegistry", cred_rev_id),
+                    ));
+                }
+            }
+        };
+
+        let str_rev_reg_info = serde_json::to_string(&rev_reg_info)?;
+
         let tails_file_hash = match &rev_reg_def {
             RevocationRegistryDefinition::RevocationRegistryDefinitionV1(r) => &r.value.tails_hash,
         };
@@ -996,6 +1024,10 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
 
         self.wallet
             .update_wallet_record_value(CATEGORY_REV_REG, rev_reg_id, &str_rev_reg)
+            .await?;
+
+        self.wallet
+            .update_wallet_record_value(CATEGORY_REV_REG_INFO, rev_reg_id, &str_rev_reg_info)
             .await?;
 
         match old_str_rev_reg_delta {
