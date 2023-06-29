@@ -384,6 +384,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let cred_request = serde_json::from_str(cred_req_json)?;
         let cred_values = serde_json::from_str(cred_values_json)?;
 
+        // TODO: Might need to qualify with offer method or something - look into how vdrtools does it
         let cred_def_id = &cred_offer.cred_def_id.0;
 
         let cred_def = self.get_wallet_record_value(CATEGORY_CRED_DEF, cred_def_id).await?;
