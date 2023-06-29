@@ -50,7 +50,12 @@ impl RevocationRegistry {
             &format!("tag{}", tag),
         )
         .await
-        .map_err(|err| err.map(AriesVcxErrorKind::CreateRevRegDef, "Cannot create Revocation Registry"))?;
+        .map_err(|err| {
+            AriesVcxError::from_msg(
+                AriesVcxErrorKind::SerializationError,
+                format!("Failed to locally create a new Revocation Registry: {:?}", err),
+            )
+        })?;
         Ok(RevocationRegistry {
             cred_def_id: cred_def_id.to_string(),
             issuer_did: issuer_did.to_string(),

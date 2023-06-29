@@ -395,7 +395,20 @@ where
         //             .await?,
         //     )?
         // }
-        self.sign_and_submit_request(submitter_did, request).await.map(|_| ())
+        let sign_result = self.sign_and_submit_request(submitter_did, request).await;
+
+        if let Err(err) = &sign_result {
+            if let AriesVcxCoreErrorKind::InvalidLedgerResponse = err.kind() {
+                return Err(AriesVcxCoreError::from_msg(
+                    AriesVcxCoreErrorKind::DuplicationSchema,
+                    format!(
+                        "Schema probably already exists, ledger request failed: {:?}",
+                        err.clone()
+                    ),
+                ));
+            }
+        }
+        sign_result.map(|_| ())
     }
 
     async fn publish_cred_def(&self, cred_def_json: &str, submitter_did: &str) -> VcxCoreResult<()> {

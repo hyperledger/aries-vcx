@@ -3,6 +3,7 @@ use async_trait::async_trait;
 use crate::errors::error::VcxCoreResult;
 use crate::utils::async_fn_iterator::AsyncFnIterator;
 
+use crate::WalletHandle;
 use std::collections::HashMap;
 
 /// Trait defining standard 'wallet' related functionality. The APIs, including
@@ -11,7 +12,7 @@ use std::collections::HashMap;
 #[async_trait]
 pub trait BaseWallet: std::fmt::Debug + Send + Sync {
     // todo: workaround, this needs to be removed, vdrtools wallet specific concept
-    fn get_wallet_handle(&self) -> i32;
+    fn get_wallet_handle(&self) -> WalletHandle;
 
     // ----- DIDs
     async fn create_and_store_my_did(
