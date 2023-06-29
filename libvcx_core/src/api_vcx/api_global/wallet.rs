@@ -31,7 +31,7 @@ lazy_static! {
 }
 
 pub fn get_main_wallet_handle() -> LibvcxResult<WalletHandle> {
-    get_main_wallet().map(|wallet| WalletHandle(wallet.get_wallet_handle()))
+    get_main_wallet().map(|wallet| wallet.get_wallet_handle())
 }
 
 pub async fn export_main_wallet(path: &str, backup_key: &str) -> LibvcxResult<()> {
@@ -46,7 +46,7 @@ fn build_component_base_wallet(wallet_handle: WalletHandle) -> Arc<dyn BaseWalle
 fn build_component_anoncreds(base_wallet: Arc<dyn BaseWallet>) -> Arc<dyn BaseAnonCreds> {
     #[cfg(all(feature = "anoncreds_vdrtools"))]
     {
-        let wallet_handle = WalletHandle(base_wallet.get_wallet_handle());
+        let wallet_handle = base_wallet.get_wallet_handle();
         return Arc::new(IndySdkAnonCreds::new(wallet_handle));
     }
     #[cfg(all(feature = "anoncreds_credx"))]
@@ -90,7 +90,7 @@ pub async fn close_main_wallet() -> LibvcxResult<()> {
             warn!("Skipping wallet close, no global wallet component available.")
         }
         Some(wallet) => {
-            indy::wallet::close_wallet(WalletHandle(wallet.get_wallet_handle())).await?;
+            indy::wallet::close_wallet(wallet.get_wallet_handle()).await?;
             let mut b_wallet = global_base_wallet.write()?;
             *b_wallet = None;
         }

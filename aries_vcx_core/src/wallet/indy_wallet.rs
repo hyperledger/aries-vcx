@@ -133,8 +133,8 @@ impl BaseWallet for IndySdkWallet {
         indy::signing::unpack_message(self.wallet_handle, msg).await
     }
 
-    fn get_wallet_handle(&self) -> i32 {
-        self.wallet_handle.0
+    fn get_wallet_handle(&self) -> WalletHandle {
+        self.wallet_handle
     }
 }
 
