@@ -18,7 +18,7 @@ use indy_utils::{
     crypto::chacha20poly1305_ietf::{self, Key as MasterKey},
     secret,
 };
-use log::trace;
+use log::{trace, debug};
 use serde::{Deserialize, Serialize};
 use serde_json::Value as SValue;
 use std::sync::Mutex;
@@ -716,6 +716,7 @@ impl WalletService {
         let new_wallet = self.get_wallet(new_wh).await?;
 
         let mut records = old_wallet.get_all().await?;
+        let mut num_records = 0;
 
         while let Some(WalletRecord {
             type_,
@@ -724,6 +725,7 @@ impl WalletService {
             tags,
         }) = records.next().await?
         {
+            num_records += 1;
             let record = Record {
                 type_: type_.ok_or_else(|| {
                     err_msg(
@@ -754,6 +756,8 @@ impl WalletService {
                     .await?;
             }
         }
+
+        debug!("{num_records} records have been migrated!");
 
         Ok(())
     }
