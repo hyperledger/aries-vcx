@@ -48,14 +48,16 @@ where
         .migrate_records(wallet_handle, new_wh, migrate_fn)
         .await;
 
-    locator.wallet_controller.close(new_wh).await?;
+    if let Err(e) = locator.wallet_controller.close(new_wh).await {
+        error!("Closing the wallet failed: {e}");
+    }
 
     if let Err(e) = &res {
         error!("Migration error encountered: {e}");
 
-        match locator.wallet_controller.delete(config, credentials).await.ok() {
-            Some(_) => debug!("Newly created wallet deleted"),
-            None => warn!("Could not delete newly created wallet!"),
+        match locator.wallet_controller.delete(config, credentials).await {
+            Ok(_) => debug!("Newly created wallet deleted"),
+            Err(e) => warn!("Could not delete newly created wallet: {e}!"),
         };
     }
 

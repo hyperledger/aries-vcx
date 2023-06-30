@@ -18,7 +18,7 @@ use indy_utils::{
     crypto::chacha20poly1305_ietf::{self, Key as MasterKey},
     secret,
 };
-use log::{trace, debug};
+use log::{debug, trace};
 use serde::{Deserialize, Serialize};
 use serde_json::Value as SValue;
 use std::sync::Mutex;
