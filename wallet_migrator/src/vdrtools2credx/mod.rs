@@ -24,7 +24,7 @@ pub(crate) const INDY_REV_REG_DEF_PRIV: &str = "Indy::RevocationRegistryDefiniti
 pub fn migrate_any_record(record: Record) -> MigrationResult<Option<Record>> {
     trace!("Migrating wallet record {record:?}");
 
-    match record.type_.as_str() {
+    let record = match record.type_.as_str() {
         // Indy wallet records - to be left alone!
         INDY_DID | INDY_KEY => Ok(Some(record)),
         // Master secret
@@ -44,7 +44,10 @@ pub fn migrate_any_record(record: Record) -> MigrationResult<Option<Record>> {
         INDY_REV_REG_DEF => Some(conv::convert_rev_reg_def(record)).transpose(),
         INDY_REV_REG_DEF_PRIV => Some(conv::convert_rev_reg_def_priv(record)).transpose(),
         _ => Ok(None), // Ignore unknown/uninteresting records
-    }
+    };
+
+    trace!("Converted wallet record to {record:?}");
+    record
 }
 
 #[cfg(test)]
