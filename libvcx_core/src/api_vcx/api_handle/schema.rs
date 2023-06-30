@@ -183,7 +183,7 @@ pub mod tests {
 
     #[cfg(feature = "pool_tests")]
     use crate::api_vcx::api_handle::schema;
-    #[cfg(feature = "pool_tests")]
+    #[cfg(any(feature = "pool_tests", feature = "general_test"))]
     use crate::api_vcx::api_handle::schema::test_utils::{check_schema, create_schema_real, prepare_schema_data};
     #[cfg(feature = "pool_tests")]
     use crate::api_vcx::utils::devsetup::SetupGlobalsWalletPoolAgency;
