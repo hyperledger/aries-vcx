@@ -192,6 +192,7 @@ jobs:
         run: |
           cd aries_vcx
           cargo check
+          cargo check --tests --all-features
           cargo check --no-default-features
           cargo check --features vdrtools --no-default-features
           cargo check --features modular_libs --no-default-features

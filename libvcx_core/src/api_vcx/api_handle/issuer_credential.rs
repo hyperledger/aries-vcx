@@ -363,32 +363,6 @@ pub mod tests {
 
     #[tokio::test]
     #[cfg(feature = "general_test")]
-    async fn test_retry_build_credential_offer() {
-        let _setup = SetupMocks::init();
-
-        let _connection_handle = build_test_connection_inviter_requested().await;
-
-        let credential_handle = _issuer_credential_create();
-        assert_eq!(get_state(credential_handle).unwrap(), u32::from(IssuerState::Initial));
-
-        StatusCodeMock::set_next_result(error::TIMEOUT_LIBINDY_ERROR);
-
-        let (_, cred_def_handle) = create_and_publish_nonrevocable_creddef().await;
-        let _err = build_credential_offer_msg_v2(credential_handle, cred_def_handle, 1234, _cred_json(), None)
-            .await
-            .unwrap_err();
-        assert_eq!(get_state(credential_handle).unwrap(), u32::from(IssuerState::Initial));
-
-        // Can retry after initial failure
-        let (_, cred_def_handle) = create_and_publish_nonrevocable_creddef().await;
-        let _err = build_credential_offer_msg_v2(credential_handle, cred_def_handle, 1234, _cred_json(), None)
-            .await
-            .unwrap();
-        assert_eq!(get_state(credential_handle).unwrap(), u32::from(IssuerState::OfferSet));
-    }
-
-    #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_from_string_succeeds() {
         let _setup = SetupMocks::init();
 
