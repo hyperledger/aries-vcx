@@ -166,7 +166,7 @@ mod tests {
             .await
             .unwrap();
 
-        let wallet_handle = Locator::instance()
+        let src_wallet_handle = Locator::instance()
             .wallet_controller
             .open(config.clone(), credentials.clone())
             .await
@@ -179,28 +179,28 @@ mod tests {
         // ################# Ingestion start #################
 
         // Master secret
-        add_wallet_item!(wallet_handle, INDY_MASTER_SECRET, make_dummy_master_secret());
+        add_wallet_item!(src_wallet_handle, INDY_MASTER_SECRET, make_dummy_master_secret());
 
         // Credential
-        add_wallet_item!(wallet_handle, INDY_CRED, make_dummy_cred());
-        add_wallet_item!(wallet_handle, INDY_CRED_DEF, make_dummy_cred_def());
-        add_wallet_item!(wallet_handle, INDY_CRED_DEF_PRIV, make_dummy_cred_def_priv_key());
+        add_wallet_item!(src_wallet_handle, INDY_CRED, make_dummy_cred());
+        add_wallet_item!(src_wallet_handle, INDY_CRED_DEF, make_dummy_cred_def());
+        add_wallet_item!(src_wallet_handle, INDY_CRED_DEF_PRIV, make_dummy_cred_def_priv_key());
         add_wallet_item!(
-            wallet_handle,
+            src_wallet_handle,
             INDY_CRED_DEF_CR_PROOF,
             make_dummy_cred_def_correctness_proof()
         );
 
         // Schema
-        add_wallet_item!(wallet_handle, INDY_SCHEMA, make_dummy_schema());
-        add_wallet_item!(wallet_handle, INDY_SCHEMA_ID, make_dummy_schema_id());
+        add_wallet_item!(src_wallet_handle, INDY_SCHEMA, make_dummy_schema());
+        add_wallet_item!(src_wallet_handle, INDY_SCHEMA_ID, make_dummy_schema_id());
 
         // Revocation registry
-        add_wallet_item!(wallet_handle, INDY_REV_REG, make_dummy_rev_reg());
-        add_wallet_item!(wallet_handle, INDY_REV_REG_DELTA, make_dummy_rev_reg_delta());
-        add_wallet_item!(wallet_handle, INDY_REV_REG_INFO, make_dummy_rev_reg_info());
-        add_wallet_item!(wallet_handle, INDY_REV_REG_DEF, make_dummy_rev_reg_def());
-        add_wallet_item!(wallet_handle, INDY_REV_REG_DEF_PRIV, make_dummy_rev_reg_def_priv());
+        add_wallet_item!(src_wallet_handle, INDY_REV_REG, make_dummy_rev_reg());
+        add_wallet_item!(src_wallet_handle, INDY_REV_REG_DELTA, make_dummy_rev_reg_delta());
+        add_wallet_item!(src_wallet_handle, INDY_REV_REG_INFO, make_dummy_rev_reg_info());
+        add_wallet_item!(src_wallet_handle, INDY_REV_REG_DEF, make_dummy_rev_reg_def());
+        add_wallet_item!(src_wallet_handle, INDY_REV_REG_DEF_PRIV, make_dummy_rev_reg_def_priv());
 
         // ################# Ingestion end #################
 
@@ -211,20 +211,27 @@ mod tests {
             .await
             .ok();
 
+        Locator::instance()
+            .wallet_controller
+            .create(new_config.clone(), new_credentials.clone())
+            .await
+            .unwrap();
+
+        let dest_wallet_handle = Locator::instance()
+            .wallet_controller
+            .open(new_config.clone(), new_credentials.clone())
+            .await
+            .unwrap();
+
         // Migrate the records
-        migrate_wallet(
-            wallet_handle,
-            new_config.clone(),
-            new_credentials.clone(),
-            migrate_any_record,
-        )
-        .await
-        .unwrap();
+        migrate_wallet(src_wallet_handle, dest_wallet_handle, migrate_any_record)
+            .await
+            .unwrap();
 
         // Old wallet cleanup
         Locator::instance()
             .wallet_controller
-            .close(wallet_handle)
+            .close(src_wallet_handle)
             .await
             .unwrap();
 
@@ -234,62 +241,58 @@ mod tests {
             .await
             .unwrap();
 
-        // Open new wallet and retrieve
-        // records in their credx representation
-        let new_wallet_handle = Locator::instance()
-            .wallet_controller
-            .open(new_config.clone(), new_credentials.clone())
-            .await
-            .unwrap();
-
         // ################# Retrieval start #################
 
         // Master secret
-        get_master_secret(new_wallet_handle).await;
+        get_master_secret(dest_wallet_handle).await;
 
         // Credential
-        get_wallet_item!(new_wallet_handle, CATEGORY_CREDENTIAL, credx::types::Credential);
-        get_wallet_item!(new_wallet_handle, CATEGORY_CRED_DEF, credx::types::CredentialDefinition);
+        get_wallet_item!(dest_wallet_handle, CATEGORY_CREDENTIAL, credx::types::Credential);
         get_wallet_item!(
-            new_wallet_handle,
+            dest_wallet_handle,
+            CATEGORY_CRED_DEF,
+            credx::types::CredentialDefinition
+        );
+        get_wallet_item!(
+            dest_wallet_handle,
             CATEGORY_CRED_DEF_PRIV,
             credx::types::CredentialDefinitionPrivate
         );
         get_wallet_item!(
-            new_wallet_handle,
+            dest_wallet_handle,
             CATEGORY_CRED_KEY_CORRECTNESS_PROOF,
             credx::types::CredentialKeyCorrectnessProof
         );
 
         // Schema
-        get_wallet_item!(new_wallet_handle, CATEGORY_CRED_SCHEMA, credx::types::Schema);
-        get_wallet_item!(new_wallet_handle, CATEGORY_CRED_MAP_SCHEMA_ID, credx::types::SchemaId);
+        get_wallet_item!(dest_wallet_handle, CATEGORY_CRED_SCHEMA, credx::types::Schema);
+        get_wallet_item!(dest_wallet_handle, CATEGORY_CRED_MAP_SCHEMA_ID, credx::types::SchemaId);
 
         // Revocation registry
-        get_wallet_item!(new_wallet_handle, CATEGORY_REV_REG, credx::types::RevocationRegistry);
+        get_wallet_item!(dest_wallet_handle, CATEGORY_REV_REG, credx::types::RevocationRegistry);
         get_wallet_item!(
-            new_wallet_handle,
+            dest_wallet_handle,
             CATEGORY_REV_REG_DELTA,
             credx::types::RevocationRegistryDelta
         );
-        get_wallet_item!(new_wallet_handle, CATEGORY_REV_REG_INFO, RevocationRegistryInfo);
+        get_wallet_item!(dest_wallet_handle, CATEGORY_REV_REG_INFO, RevocationRegistryInfo);
         get_wallet_item!(
-            new_wallet_handle,
+            dest_wallet_handle,
             CATEGORY_REV_REG_DEF,
             credx::types::RevocationRegistryDefinition
         );
         get_wallet_item!(
-            new_wallet_handle,
+            dest_wallet_handle,
             CATEGORY_REV_REG_DEF_PRIV,
             credx::types::RevocationRegistryDefinitionPrivate
         );
 
         // ################# Retrieval end #################
 
-        // Cleanup new wallet
+        // New wallet cleanup
         Locator::instance()
             .wallet_controller
-            .close(new_wallet_handle)
+            .close(dest_wallet_handle)
             .await
             .unwrap();
 

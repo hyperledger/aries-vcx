@@ -2,16 +2,17 @@ use std::sync::Arc;
 
 use aries_vcx::{
     core::profile::modular_libs_profile::ModularLibsProfile,
+    global::settings::WALLET_KDF_RAW,
     utils::{constants::GENESIS_PATH, devsetup::SetupProfile, get_temp_dir_path},
 };
 use aries_vcx_core::{
+    indy::wallet::{create_and_open_wallet, WalletConfig},
     ledger::request_submitter::vdr_ledger::LedgerPoolConfig,
     wallet::{agency_client_wallet::ToBaseAgencyClientWallet, base_wallet::BaseWallet, indy_wallet::IndySdkWallet},
     WalletHandle,
 };
 use async_trait::async_trait;
 use uuid::Uuid;
-use wallet_migrator::{Config, Credentials, KeyDerivationMethod, Locator};
 
 use super::devsetup_agent::test_utils::{Alice, Faber};
 
@@ -51,22 +52,19 @@ impl Migratable for Faber {
     }
 }
 
-async fn migrate_and_replace_profile(wallet_handle: WalletHandle) -> WalletHandle {
-    let (credentials, config) = make_new_wallet_config();
+async fn migrate_and_replace_profile(src_wallet_handle: WalletHandle) -> WalletHandle {
+    let wallet_config = make_wallet_config();
+    let dest_wallet_handle = create_and_open_wallet(&wallet_config).await.unwrap();
+
     wallet_migrator::migrate_wallet(
-        wallet_handle,
-        config.clone(),
-        credentials.clone(),
+        src_wallet_handle,
+        dest_wallet_handle,
         wallet_migrator::vdrtools2credx::migrate_any_record,
     )
     .await
     .unwrap();
 
-    Locator::instance()
-        .wallet_controller
-        .open(config.clone(), credentials.clone())
-        .await
-        .unwrap()
+    dest_wallet_handle
 }
 
 pub fn make_modular_profile(wallet_handle: WalletHandle) -> Arc<ModularLibsProfile> {
@@ -76,24 +74,14 @@ pub fn make_modular_profile(wallet_handle: WalletHandle) -> Arc<ModularLibsProfi
     Arc::new(ModularLibsProfile::init(Arc::new(wallet), LedgerPoolConfig { genesis_file_path }).unwrap())
 }
 
-fn make_new_wallet_config() -> (Credentials, Config) {
+fn make_wallet_config() -> WalletConfig {
     let wallet_key = "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY".to_owned();
     let wallet_name = format!("wallet_{}", Uuid::new_v4());
 
-    let credentials = Credentials {
-        key: wallet_key,
-        key_derivation_method: KeyDerivationMethod::RAW,
-        rekey: None,
-        rekey_derivation_method: KeyDerivationMethod::ARGON2I_MOD,
-        storage_credentials: None,
-    };
-
-    let config = Config {
-        id: wallet_name,
-        storage_type: None,
-        storage_config: None,
-        cache: None,
-    };
-
-    (credentials, config)
+    WalletConfig {
+        wallet_name,
+        wallet_key,
+        wallet_key_derivation: WALLET_KDF_RAW.to_string(),
+        ..Default::default()
+    }
 }

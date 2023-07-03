@@ -10,4 +10,6 @@ pub enum MigrationError {
     Json(#[from] JsonError),
     #[error("Indy error: {0}")]
     Indy(#[from] IndyError),
+    #[error("Source and destination wallets must be different!")]
+    EqualWalletHandles,
 }
