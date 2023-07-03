@@ -21,7 +21,8 @@ members = [
     "did_resolver_registry",
     "did_resolver_sov",
     "did_resolver_web",
-    "indy_ledger_response_parser"
+    "indy_ledger_response_parser",
+    "tools/simple_local_relay"
 ]
 
 [workspace.package]
