@@ -13,7 +13,7 @@ use crate::{
 pub fn process_elements(
     mut did_doc_builder: DidDocumentBuilder<ExtraFieldsSov>,
     did: &Did,
-    public_key_encoding: &PublicKeyEncoding,
+    public_key_encoding: PublicKeyEncoding,
 ) -> Result<DidDocumentBuilder<ExtraFieldsSov>, DidPeerError> {
     let mut service_index: usize = 0;
 
@@ -30,7 +30,7 @@ fn process_element(
     mut did_doc_builder: DidDocumentBuilder<ExtraFieldsSov>,
     service_index: &mut usize,
     did: &Did,
-    public_key_encoding: &PublicKeyEncoding,
+    public_key_encoding: PublicKeyEncoding,
 ) -> Result<DidDocumentBuilder<ExtraFieldsSov>, DidPeerError> {
     let purpose: ElementPurpose = element
         .chars()
@@ -80,7 +80,7 @@ fn process_key_element(
     element: &str,
     mut did_doc_builder: DidDocumentBuilder<ExtraFieldsSov>,
     did: &Did,
-    public_key_encoding: &PublicKeyEncoding,
+    public_key_encoding: PublicKeyEncoding,
     purpose: ElementPurpose,
 ) -> Result<DidDocumentBuilder<ExtraFieldsSov>, DidPeerError> {
     let key = Key::from_fingerprint(&element)?;
@@ -164,7 +164,7 @@ mod tests {
         let built_ddo = process_elements(
             DidDocumentBuilder::<ExtraFieldsSov>::new(did.clone()),
             &did,
-            &PublicKeyEncoding::Base58,
+            PublicKeyEncoding::Base58,
         )
         .unwrap()
         .build();
@@ -182,7 +182,7 @@ mod tests {
         let processed_did_doc_builder = process_elements(
             DidDocumentBuilder::<ExtraFieldsSov>::new(did.clone()),
             &did,
-            &PublicKeyEncoding::Multibase,
+            PublicKeyEncoding::Multibase,
         )
         .unwrap();
         let built_ddo = processed_did_doc_builder.build();
@@ -204,7 +204,7 @@ mod tests {
         match process_elements(
             DidDocumentBuilder::<ExtraFieldsSov>::new(did.clone()),
             &did,
-            &PublicKeyEncoding::Multibase,
+            PublicKeyEncoding::Multibase,
         ) {
             Ok(_) => panic!("Expected Err, got Ok"),
             Err(e) => {
@@ -288,7 +288,7 @@ mod tests {
             purposeless_key_element,
             ddo_builder,
             &did,
-            &public_key_encoding,
+            public_key_encoding,
             ElementPurpose::Verification,
         )
         .unwrap()
@@ -307,7 +307,7 @@ mod tests {
             "z6MkqRYqQiSgvZQdnBytw86Qbs2ZWUkGv22od935YF4s8M7V",
             DidDocumentBuilder::<ExtraFieldsSov>::new(did.clone()),
             &did,
-            &PublicKeyEncoding::Multibase,
+            PublicKeyEncoding::Multibase,
             ElementPurpose::Service
         )
         .is_err());
