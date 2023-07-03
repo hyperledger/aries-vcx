@@ -563,16 +563,41 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        features: ["ledger_vdrtools,anoncreds_vdrtools", "ledger_indyvdr,anoncreds_credx"]
+        features: [
+          "ledger_vdrtools,anoncreds_vdrtools",
+          "ledger_vdrtools,anoncreds_credx",
+          "ledger_indyvdr,anoncreds_vdrtools",
+          "ledger_indyvdr,anoncreds_credx"
+        ]
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
       - name: "Setup rust testing environment"
         uses: ./.github/actions/setup-testing-rust
-      - name: "Run libvcx integration tests"
+      - name: "Run libvcx_core integration tests"
         run: |
-          RUST_TEST_THREADS=1 cargo test --features ${{ matrix.features }} --manifest-path="libvcx/Cargo.toml" -- --include-ignored;
           RUST_TEST_THREADS=1 cargo test --features ${{ matrix.features }} --manifest-path="libvcx_core/Cargo.toml" -- --include-ignored;
+
+  test-integration-libvcx-c:
+    needs: workflow-setup
+    if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        features: [
+          "ledger_vdrtools,anoncreds_vdrtools",
+          "ledger_vdrtools,anoncreds_credx",
+          "ledger_indyvdr,anoncreds_vdrtools",
+          "ledger_indyvdr,anoncreds_credx"
+        ]
+    steps:
+      - name: "Git checkout"
+        uses: actions/checkout@v3
+      - name: "Setup rust testing environment"
+        uses: ./.github/actions/setup-testing-rust
+      - name: "Run libvcx unit tests"
+        run: |
+          RUST_TEST_THREADS=1 cargo test --features ${{ matrix.features }} --manifest-path="libvcx/Cargo.toml";
 
   test-integration-resolver:
     needs: workflow-setup
