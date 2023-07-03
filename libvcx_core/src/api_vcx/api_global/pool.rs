@@ -10,6 +10,7 @@ use aries_vcx::global::settings::{indy_mocks_enabled, DEFAULT_POOL_NAME};
 use crate::api_vcx::api_global::profile::get_main_wallet;
 use crate::api_vcx::api_global::wallet::get_main_wallet_handle;
 use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
+use aries_vcx::aries_vcx_core::errors::error::AriesVcxCoreError;
 use aries_vcx::aries_vcx_core::ledger::indy_ledger::{IndySdkLedgerRead, IndySdkLedgerWrite};
 #[cfg(feature = "ledger_indyvdr")]
 use aries_vcx::aries_vcx_core::ledger::request_submitter::vdr_ledger::{
@@ -19,7 +20,7 @@ use aries_vcx::aries_vcx_core::wallet::base_wallet::BaseWallet;
 #[cfg(feature = "ledger_indyvdr")]
 use aries_vcx::core::profile::modular_libs_profile::{indyvdr_build_ledger_read, indyvdr_build_ledger_write};
 use aries_vcx::core::profile::profile::Profile;
-use aries_vcx::errors::error::VcxResult;
+use aries_vcx::errors::error::{AriesVcxError, VcxResult};
 use std::sync::Arc;
 use std::sync::RwLock;
 
@@ -110,6 +111,10 @@ async fn build_components_ledger(
         let indy_read: Arc<dyn IndyLedgerRead> = ledger_read.clone();
         let indy_write: Arc<dyn IndyLedgerWrite> = ledger_write.clone();
         return Ok((anoncreds_read, anoncreds_write, indy_read, indy_write));
+    }
+    #[cfg(not(any(feature = "ledger_indyvdr", feature = "ledger_vdrtools")))]
+    {
+        panic!("No ledger implementation has been selected by feature flag upon build");
     }
 }
 

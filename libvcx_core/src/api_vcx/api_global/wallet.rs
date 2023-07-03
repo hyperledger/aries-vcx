@@ -53,6 +53,10 @@ fn build_component_anoncreds(base_wallet: Arc<dyn BaseWallet>) -> Arc<dyn BaseAn
     {
         return Arc::new(IndyCredxAnonCreds::new(Arc::clone(&base_wallet)));
     }
+    #[cfg(not(any(feature = "anoncreds_vdrtools", feature = "anoncreds_credx")))]
+    {
+        panic!("No anoncreds implementation enabled by feature flag upon build");
+    }
 }
 
 fn setup_global_wallet(wallet_handle: WalletHandle) -> LibvcxResult<()> {
