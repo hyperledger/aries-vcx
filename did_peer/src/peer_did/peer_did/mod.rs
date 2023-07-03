@@ -41,7 +41,7 @@ impl<N: Numalgo> PeerDid<N> {
 
 impl<N: ToNumalgo3> PeerDid<N> {
     pub fn to_numalgo3(&self) -> Result<PeerDid<Numalgo3>, DidPeerError> {
-        self.numalgo.to_numalgo3(self.did())
+        N::to_numalgo3(self.did())
     }
 }
 

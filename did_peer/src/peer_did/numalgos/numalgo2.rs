@@ -32,7 +32,7 @@ impl ResolvableNumalgo for Numalgo2 {
 }
 
 impl ToNumalgo3 for Numalgo2 {
-    fn to_numalgo3(&self, did: &Did) -> Result<PeerDid<Numalgo3>, DidPeerError> {
+    fn to_numalgo3(did: &Did) -> Result<PeerDid<Numalgo3>, DidPeerError> {
         generate_numalgo3(did)
     }
 }

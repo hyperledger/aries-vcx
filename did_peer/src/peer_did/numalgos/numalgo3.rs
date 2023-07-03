@@ -12,7 +12,7 @@ impl Numalgo for Numalgo3 {
 }
 
 impl ToNumalgo3 for Numalgo3 {
-    fn to_numalgo3(&self, did: &Did) -> Result<PeerDid<Numalgo3>, DidPeerError> {
+    fn to_numalgo3(did: &Did) -> Result<PeerDid<Numalgo3>, DidPeerError> {
         Ok(PeerDid::from_parts(did.to_owned(), Self::default()))
     }
 }

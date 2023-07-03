@@ -46,5 +46,5 @@ pub trait ResolvableNumalgo: Numalgo {
 }
 
 pub trait ToNumalgo3: Numalgo {
-    fn to_numalgo3(&self, did: &Did) -> Result<PeerDid<Numalgo3>, DidPeerError>;
+    fn to_numalgo3(did: &Did) -> Result<PeerDid<Numalgo3>, DidPeerError>;
 }
