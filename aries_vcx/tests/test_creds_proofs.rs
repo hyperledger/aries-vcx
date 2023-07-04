@@ -590,7 +590,7 @@ mod tests {
         send_proof_proposal_1, send_proof_request, verifier_create_proof_and_send_request, verify_proof,
     };
 
-    // #[cfg(feature = "migration")]
+    #[cfg(feature = "migration")]
     use crate::utils::migration::Migratable;
 
     #[tokio::test]

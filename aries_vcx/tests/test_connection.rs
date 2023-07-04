@@ -9,7 +9,7 @@ pub mod utils;
 #[cfg(test)]
 mod integration_tests {
     use crate::utils::devsetup_alice::create_alice;
-    use crate::utils::devsetup_faber::{create_faber, Faber};
+    use crate::utils::devsetup_faber::create_faber;
     use aries_vcx::agency_client::MessageStatusCode;
     use aries_vcx::common::ledger::transactions::into_did_doc;
     use aries_vcx::handlers::connection::mediated_connection::ConnectionState;

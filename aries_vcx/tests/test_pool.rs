@@ -16,7 +16,6 @@ mod integration_tests {
     use aries_vcx::utils::constants::DEFAULT_SCHEMA_ATTRS;
     use aries_vcx::utils::devsetup::SetupProfile;
     use diddoc_legacy::aries::service::AriesService;
-    use std::sync::Arc;
     use std::thread;
     use std::time::Duration;
 

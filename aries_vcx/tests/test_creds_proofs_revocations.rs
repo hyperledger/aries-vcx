@@ -760,7 +760,7 @@ mod integration_tests {
         )
         .await;
 
-        let mut proof_verifier = verifier_create_proof_and_send_request(
+        verifier_create_proof_and_send_request(
             &mut verifier,
             &verifier_to_consumer,
             &schema_id,
