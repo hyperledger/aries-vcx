@@ -67,8 +67,6 @@ pub mod test_utils {
     use std::io::Write;
     use std::{env, path::PathBuf};
 
-    use crate::utils::constants::{GENESIS_PATH, POOL};
-
     use super::*;
 
     pub fn get_temp_dir_path(filename: &str) -> PathBuf {

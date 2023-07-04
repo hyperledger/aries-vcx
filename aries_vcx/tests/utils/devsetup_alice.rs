@@ -48,22 +48,28 @@ pub struct Alice {
     pub rev_not_receiver: Option<RevocationNotificationReceiver>,
     pub prover: Prover,
     pub agency_client: AgencyClient,
-    pub teardown: Arc<dyn Fn() -> BoxFuture<'static, ()>>,
+    pub genesis_file_path: String,
+    pub(self) teardown: Arc<dyn Fn() -> BoxFuture<'static, ()> + Send + Sync>,
 }
 
 pub async fn create_alice(genesis_file_path: String) -> Alice {
     let profile_setup = SetupProfile::build_profile(genesis_file_path).await;
     let SetupProfile {
+        genesis_file_path,
         institution_did,
         profile,
         teardown,
     } = profile_setup;
-    Alice::setup(profile, teardown).await
+    Alice::setup(profile, genesis_file_path, teardown).await
 }
 
 impl Alice {
     // todo: we could rather have Drop in Profile, why is Alice doing this ...
-    pub async fn setup(profile: Arc<dyn Profile>, teardown: Arc<dyn Fn() -> BoxFuture<'static, ()>>) -> Alice {
+    pub async fn setup(
+        profile: Arc<dyn Profile>,
+        genesis_file_path: String,
+        teardown: Arc<dyn Fn() -> BoxFuture<'static, ()> + Send + Sync>,
+    ) -> Alice {
         let config_provision_agent = AgentProvisionConfig {
             agency_did: AGENCY_DID.to_string(),
             agency_verkey: AGENCY_VERKEY.to_string(),
@@ -78,6 +84,7 @@ impl Alice {
             .await
             .unwrap();
         let alice = Alice {
+            genesis_file_path,
             profile,
             agency_client,
             is_active: false,

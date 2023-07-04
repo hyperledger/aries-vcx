@@ -1,9 +1,12 @@
 use std::sync::Arc;
 
+use crate::utils::devsetup_alice::Alice;
+use crate::utils::devsetup_faber::Faber;
+use aries_vcx::utils::devsetup::make_modular_profile;
 use aries_vcx::{
     core::profile::modular_libs_profile::ModularLibsProfile,
     global::settings::WALLET_KDF_RAW,
-    utils::{constants::GENESIS_PATH, devsetup::SetupProfile, get_temp_dir_path},
+    utils::{devsetup::SetupProfile, get_temp_dir_path},
 };
 use aries_vcx_core::{
     indy::wallet::{create_and_open_wallet, WalletConfig},
@@ -14,8 +17,6 @@ use aries_vcx_core::{
 use async_trait::async_trait;
 use uuid::Uuid;
 
-use super::devsetup_agent::test_utils::{Alice, Faber};
-
 #[async_trait]
 pub trait Migratable {
     async fn migrate(&mut self);
@@ -24,18 +25,20 @@ pub trait Migratable {
 #[async_trait]
 impl Migratable for SetupProfile {
     async fn migrate(&mut self) {
+        info!("SetupProfile::migrate >>>");
         let old_wh = self.profile.wallet_handle().unwrap();
-        let new_wh = migrate_and_replace_profile(old_wh).await;
-        self.profile = make_modular_profile(new_wh);
+        let new_wh = migrate_to_new_wallet(old_wh).await;
+        self.profile = make_modular_profile(new_wh, self.genesis_file_path.clone());
     }
 }
 
 #[async_trait]
 impl Migratable for Alice {
     async fn migrate(&mut self) {
+        info!("Alice::migrate >>>");
         let old_wh = self.profile.wallet_handle().unwrap();
-        let new_wh = migrate_and_replace_profile(old_wh).await;
-        self.profile = make_modular_profile(new_wh);
+        let new_wh = migrate_to_new_wallet(old_wh).await;
+        self.profile = make_modular_profile(new_wh, self.genesis_file_path.clone());
         let new_wallet: Arc<dyn BaseWallet> = Arc::new(IndySdkWallet::new(new_wh));
         self.agency_client.wallet = new_wallet.to_base_agency_client_wallet();
     }
@@ -44,15 +47,16 @@ impl Migratable for Alice {
 #[async_trait]
 impl Migratable for Faber {
     async fn migrate(&mut self) {
+        info!("Faber::migrate >>>");
         let old_wh = self.profile.wallet_handle().unwrap();
-        let new_wh = migrate_and_replace_profile(old_wh).await;
-        self.profile = make_modular_profile(new_wh);
+        let new_wh = migrate_to_new_wallet(old_wh).await;
+        self.profile = make_modular_profile(new_wh, self.genesis_file_path.clone());
         let new_wallet: Arc<dyn BaseWallet> = Arc::new(IndySdkWallet::new(new_wh));
         self.agency_client.wallet = new_wallet.to_base_agency_client_wallet();
     }
 }
 
-async fn migrate_and_replace_profile(src_wallet_handle: WalletHandle) -> WalletHandle {
+async fn migrate_to_new_wallet(src_wallet_handle: WalletHandle) -> WalletHandle {
     let wallet_config = make_wallet_config();
     let dest_wallet_handle = create_and_open_wallet(&wallet_config).await.unwrap();
 
@@ -65,13 +69,6 @@ async fn migrate_and_replace_profile(src_wallet_handle: WalletHandle) -> WalletH
     .unwrap();
 
     dest_wallet_handle
-}
-
-pub fn make_modular_profile(wallet_handle: WalletHandle) -> Arc<ModularLibsProfile> {
-    let genesis_file_path = String::from(get_temp_dir_path(GENESIS_PATH).to_str().unwrap());
-    let wallet = IndySdkWallet::new(wallet_handle);
-
-    Arc::new(ModularLibsProfile::init(Arc::new(wallet), LedgerPoolConfig { genesis_file_path }).unwrap())
 }
 
 fn make_wallet_config() -> WalletConfig {

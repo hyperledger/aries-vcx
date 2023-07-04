@@ -64,6 +64,7 @@ pub struct SetupProfile {
     pub institution_did: String,
     pub profile: Arc<dyn Profile>,
     pub teardown: Arc<dyn Fn() -> BoxFuture<'static, ()> + Send + Sync>,
+    pub genesis_file_path: String,
 }
 
 pub struct SetupPoolDirectory {
@@ -124,16 +125,20 @@ impl Drop for SetupMocks {
     }
 }
 
+#[cfg(feature = "migration")]
+pub fn make_modular_profile(wallet_handle: WalletHandle, genesis_file_path: String) -> Arc<ModularLibsProfile> {
+    let wallet = IndySdkWallet::new(wallet_handle);
+    Arc::new(ModularLibsProfile::init(Arc::new(wallet), LedgerPoolConfig { genesis_file_path }).unwrap())
+}
+
 impl SetupProfile {
     pub async fn build_profile(genesis_file_path: String) -> SetupProfile {
-        // We have to start with the vdrtools profile
-        // in order to perform the migration
-        #[cfg(feature = "migration")]
+        // In case of migration test setup, we are starting with vdrtools, then we migrate
+        #[cfg(any(feature = "vdrtools", feature = "migration"))]
         return {
             info!("SetupProfile >> using indy profile");
-            SetupProfile::init_indy(genesis_file_path).await
+            SetupProfile::build_profile_vdrtools(genesis_file_path).await
         };
-
         #[cfg(feature = "mixed_breed")]
         return {
             info!("SetupProfile >> using mixed breed profile");
@@ -150,12 +155,6 @@ impl SetupProfile {
         return {
             info!("SetupProfile >> using vdr proxy profile");
             SetupProfile::build_profile_vdr_proxy_ledger(genesis_file_path).await
-        };
-
-        #[cfg(feature = "vdrtools")]
-        return {
-            info!("SetupProfile >> using indy profile");
-            SetupProfile::build_profile_vdrtools(genesis_file_path).await
         };
     }
 
@@ -175,6 +174,7 @@ impl SetupProfile {
         }
 
         SetupProfile {
+            genesis_file_path,
             institution_did,
             profile,
             teardown: Arc::new(move || Box::pin(indy_teardown(pool_handle, pool_name.clone()))),
@@ -187,9 +187,17 @@ impl SetupProfile {
 
         let wallet = IndySdkWallet::new(wallet_handle);
 
-        let profile =
-            Arc::new(ModularLibsProfile::init(Arc::new(wallet), LedgerPoolConfig { genesis_file_path }).unwrap());
+        let profile = Arc::new(
+            ModularLibsProfile::init(
+                Arc::new(wallet),
+                LedgerPoolConfig {
+                    genesis_file_path: genesis_file_path.clone(),
+                },
+            )
+            .unwrap(),
+        );
 
+        // todo: this setup should be extracted out, is shared between profiles
         Arc::clone(&profile)
             .inject_anoncreds()
             .prover_create_link_secret(settings::DEFAULT_LINK_SECRET_ALIAS)
@@ -201,6 +209,7 @@ impl SetupProfile {
         }
 
         SetupProfile {
+            genesis_file_path,
             institution_did,
             profile,
             teardown: Arc::new(move || Box::pin(modular_teardown())),
@@ -230,6 +239,7 @@ impl SetupProfile {
         }
 
         SetupProfile {
+            genesis_file_path,
             institution_did,
             profile,
             teardown: Arc::new(move || Box::pin(indy_teardown(pool_handle, pool_name.clone()))),
@@ -237,7 +247,7 @@ impl SetupProfile {
     }
 
     #[cfg(feature = "vdr_proxy_ledger")]
-    async fn build_profile_vdr_proxy_ledger(_genesis_file_path: String) -> SetupProfile {
+    async fn build_profile_vdr_proxy_ledger(genesis_file_path: String) -> SetupProfile {
         use std::env;
 
         use crate::core::profile::vdr_proxy_profile::VdrProxyProfile;
@@ -255,6 +265,7 @@ impl SetupProfile {
         }
 
         SetupProfile {
+            genesis_file_path,
             institution_did,
             profile,
             teardown: Arc::new(move || Box::pin(vdr_proxy_teardown())),

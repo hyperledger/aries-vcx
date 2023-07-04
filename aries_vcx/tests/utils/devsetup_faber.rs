@@ -50,24 +50,27 @@ pub struct Faber {
     pub verifier: Verifier,
     pub pairwise_info: PairwiseInfo,
     pub agency_client: AgencyClient,
-    pub teardown: Arc<dyn Fn() -> BoxFuture<'static, ()>>,
+    pub genesis_file_path: String,
+    pub(self) teardown: Arc<dyn Fn() -> BoxFuture<'static, ()> + Send + Sync>,
 }
 
 pub async fn create_faber(genesis_file_path: String) -> Faber {
     let profile_setup = SetupProfile::build_profile(genesis_file_path).await;
     let SetupProfile {
+        genesis_file_path,
         institution_did,
         profile,
         teardown,
     } = profile_setup;
-    Faber::setup(profile, institution_did, teardown).await
+    Faber::setup(profile, genesis_file_path, institution_did, teardown).await
 }
 
 impl Faber {
     pub async fn setup(
         profile: Arc<dyn Profile>,
+        genesis_file_path: String,
         institution_did: String,
-        teardown: Arc<dyn Fn() -> BoxFuture<'static, ()>>,
+        teardown: Arc<dyn Fn() -> BoxFuture<'static, ()> + Send + Sync>,
     ) -> Faber {
         settings::reset_config_values_ariesvcx().unwrap();
 
@@ -99,6 +102,7 @@ impl Faber {
         let rev_not_sender = RevocationNotificationSender::build();
 
         let faber = Faber {
+            genesis_file_path,
             profile,
             agency_client,
             is_active: false,

@@ -577,7 +577,7 @@ mod tests {
     use aries_vcx::utils::devsetup::*;
 
     use crate::utils::devsetup_alice::create_alice;
-    use crate::utils::devsetup_faber::{create_faber, Faber};
+    use crate::utils::devsetup_faber::create_faber;
     use crate::utils::devsetup_util::test_utils::PayloadKinds;
     use crate::utils::scenarios::test_utils::{
         _create_address_schema, _exchange_credential, _exchange_credential_with_proposal, accept_cred_proposal,
@@ -590,7 +590,7 @@ mod tests {
         send_proof_proposal_1, send_proof_request, verifier_create_proof_and_send_request, verify_proof,
     };
 
-    #[cfg(feature = "migration")]
+    // #[cfg(feature = "migration")]
     use crate::utils::migration::Migratable;
 
     #[tokio::test]
