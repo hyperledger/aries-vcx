@@ -561,7 +561,7 @@ pub mod test_utils {
         info!("send_credential >>> getting offers");
         let thread_id = issuer_credential.get_thread_id().unwrap();
         assert_eq!(IssuerState::OfferSent, issuer_credential.get_state());
-        assert_eq!(issuer_credential.is_revokable(), false);
+        assert!(!issuer_credential.is_revokable());
 
         issuer_credential
             .update_state(
@@ -573,7 +573,7 @@ pub mod test_utils {
             .await
             .unwrap();
         assert_eq!(IssuerState::RequestReceived, issuer_credential.get_state());
-        assert_eq!(issuer_credential.is_revokable(), false);
+        assert!(!issuer_credential.is_revokable());
         assert_eq!(thread_id, issuer_credential.get_thread_id().unwrap());
 
         info!("send_credential >>> sending credential");
@@ -705,7 +705,7 @@ pub mod test_utils {
             .attributes
             .into_iter()
             .map(|attr| AttrInfo {
-                name: Some(attr.name.clone()),
+                name: Some(attr.name),
                 ..AttrInfo::default()
             })
             .collect();
@@ -918,6 +918,7 @@ pub mod test_utils {
         rev_reg: &RevocationRegistry,
     ) {
         revoke_credential_local(faber, issuer_credential, &rev_reg.rev_reg_id).await;
+
         rev_reg
             .publish_local_revocations(
                 &faber.profile.inject_anoncreds(),
@@ -930,16 +931,19 @@ pub mod test_utils {
 
     pub async fn revoke_credential_local(faber: &mut Faber, issuer_credential: &Issuer, rev_reg_id: &str) {
         let ledger = Arc::clone(&faber.profile).inject_anoncreds_ledger_read();
-        let (_, delta, timestamp) = ledger.get_rev_reg_delta_json(&rev_reg_id, None, None).await.unwrap();
+        let (_, delta, timestamp) = ledger.get_rev_reg_delta_json(rev_reg_id, None, None).await.unwrap();
         info!("revoking credential locally");
+
         issuer_credential
             .revoke_credential_local(&faber.profile.inject_anoncreds())
             .await
             .unwrap();
+
         let (_, delta_after_revoke, _) = ledger
             .get_rev_reg_delta_json(rev_reg_id, Some(timestamp + 1), None)
             .await
             .unwrap();
+
         assert_ne!(delta, delta_after_revoke); // They will not equal as we have saved the delta in cache
     }
 

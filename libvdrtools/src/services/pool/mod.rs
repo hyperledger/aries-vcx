@@ -851,7 +851,7 @@ pub mod tests {
             pool_path.push(pool_name);
             pool_path.set_extension("txn");
             let mut file = fs::File::create(pool_path).unwrap();
-            file.write(&gen_txn.as_bytes()).unwrap();
+            file.write_all(gen_txn.as_bytes()).unwrap();
 
             let pool_id = next_pool_handle();
             let mut pool = Pool::new(pool_name, pool_id, PoolOpenConfig::default());

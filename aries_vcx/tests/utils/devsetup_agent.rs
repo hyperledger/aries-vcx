@@ -138,7 +138,7 @@ pub mod test_utils {
         pub verifier: Verifier,
         pub pairwise_info: PairwiseInfo,
         pub agency_client: AgencyClient,
-        pub(self) teardown: Arc<dyn Fn() -> BoxFuture<'static, ()>>,
+        pub(self) teardown: Arc<dyn Fn() -> BoxFuture<'static, ()> + Send + Sync>,
     }
 
     impl Faber {
@@ -505,17 +505,17 @@ pub mod test_utils {
         pub rev_not_receiver: Option<RevocationNotificationReceiver>,
         pub prover: Prover,
         pub agency_client: AgencyClient,
-        pub(self) teardown: Arc<dyn Fn() -> BoxFuture<'static, ()>>,
+        pub(self) teardown: Arc<dyn Fn() -> BoxFuture<'static, ()> + Send + Sync>,
     }
 
     pub async fn create_test_alice_instance(setup: &SetupPool) -> Alice {
-        #[cfg(not(feature = "modular_libs"))]
+        #[cfg(any(not(feature = "modular_libs"), feature = "migration"))]
         let (alice_profile, teardown) = {
             info!("create_test_alice_instance >> using indy profile");
             Alice::setup_indy_profile(setup.pool_handle).await
         };
 
-        #[cfg(feature = "modular_libs")]
+        #[cfg(all(feature = "modular_libs", not(feature = "migration")))]
         let (alice_profile, teardown) = {
             let genesis_file_path = setup.genesis_file_path.clone();
             let config = LedgerPoolConfig { genesis_file_path };
@@ -548,7 +548,7 @@ pub mod test_utils {
         #[cfg(feature = "modular_libs")]
         pub async fn setup_modular_profile(
             ledger_pool_config: LedgerPoolConfig,
-        ) -> (Arc<dyn Profile>, Arc<dyn Fn() -> BoxFuture<'static, ()>>) {
+        ) -> (Arc<dyn Profile>, Arc<dyn Fn() -> BoxFuture<'static, ()> + Send + Sync>) {
             let (wallet_handle, config_wallet) = Alice::setup_indy_wallet().await;
 
             let wallet: Arc<dyn BaseWallet> = Arc::new(IndySdkWallet::new(wallet_handle));
@@ -570,7 +570,7 @@ pub mod test_utils {
 
         pub async fn setup_indy_profile(
             pool_handle: PoolHandle,
-        ) -> (Arc<dyn Profile>, Arc<dyn Fn() -> BoxFuture<'static, ()>>) {
+        ) -> (Arc<dyn Profile>, Arc<dyn Fn() -> BoxFuture<'static, ()> + Send + Sync>) {
             let (wallet_handle, config_wallet) = Alice::setup_indy_wallet().await;
 
             let indy_profile = VdrtoolsProfile::init(wallet_handle, pool_handle);
@@ -581,7 +581,10 @@ pub mod test_utils {
             )
         }
 
-        pub async fn setup(profile: Arc<dyn Profile>, teardown: Arc<dyn Fn() -> BoxFuture<'static, ()>>) -> Alice {
+        pub async fn setup(
+            profile: Arc<dyn Profile>,
+            teardown: Arc<dyn Fn() -> BoxFuture<'static, ()> + Send + Sync>,
+        ) -> Alice {
             let config_provision_agent = AgentProvisionConfig {
                 agency_did: AGENCY_DID.to_string(),
                 agency_verkey: AGENCY_VERKEY.to_string(),

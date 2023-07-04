@@ -1914,7 +1914,7 @@ mod tests {
             let txns = test::gen_txns().join("\n");
 
             let mut f = test_pool_create_poolfile(pool_name);
-            f.write(txns.as_bytes()).unwrap();
+            f.write_all(txns.as_bytes()).unwrap();
             f.flush().unwrap();
             f.sync_all().unwrap();
         }

@@ -1,5 +1,4 @@
-#[macro_use]
-extern crate serde_json;
+#![allow(clippy::all)]
 
 use std::{
     collections::{HashMap, HashSet},
@@ -11,7 +10,7 @@ use std::{
 };
 
 use indy_api_types::{
-    domain::wallet::{Config, Credentials, ExportConfig, Tags},
+    domain::wallet::{Config, Credentials, ExportConfig, Record, Tags},
     errors::prelude::*,
     WalletHandle,
 };
@@ -19,7 +18,7 @@ use indy_utils::{
     crypto::chacha20poly1305_ietf::{self, Key as MasterKey},
     secret,
 };
-use log::trace;
+use log::{debug, trace};
 use serde::{Deserialize, Serialize};
 use serde_json::Value as SValue;
 use std::sync::Mutex;
@@ -701,6 +700,65 @@ impl WalletService {
 
     pub async fn check(&self, handle: WalletHandle) -> IndyResult<()> {
         self.get_wallet(handle).await?;
+        Ok(())
+    }
+
+    pub async fn migrate_records<E>(
+        &self,
+        old_wh: WalletHandle,
+        new_wh: WalletHandle,
+        mut migrate_fn: impl FnMut(Record) -> Result<Option<Record>, E>,
+    ) -> IndyResult<()>
+    where
+        E: std::fmt::Display,
+    {
+        let old_wallet = self.get_wallet(old_wh).await?;
+        let new_wallet = self.get_wallet(new_wh).await?;
+
+        let mut records = old_wallet.get_all().await?;
+        let mut num_records = 0;
+
+        while let Some(WalletRecord {
+            type_,
+            id,
+            value,
+            tags,
+        }) = records.next().await?
+        {
+            num_records += 1;
+            let record = Record {
+                type_: type_.ok_or_else(|| {
+                    err_msg(
+                        IndyErrorKind::InvalidState,
+                        "No type fetched for exported record",
+                    )
+                })?,
+                id,
+                value: value.ok_or_else(|| {
+                    err_msg(
+                        IndyErrorKind::InvalidState,
+                        "No value fetched for exported record",
+                    )
+                })?,
+                tags: tags.ok_or_else(|| {
+                    err_msg(
+                        IndyErrorKind::InvalidState,
+                        "No tags fetched for exported record",
+                    )
+                })?,
+            };
+
+            if let Some(record) = migrate_fn(record)
+                .map_err(|e| IndyError::from_msg(IndyErrorKind::InvalidStructure, e.to_string()))?
+            {
+                new_wallet
+                    .add(&record.type_, &record.id, &record.value, &record.tags)
+                    .await?;
+            }
+        }
+
+        debug!("{num_records} records have been migrated!");
+
         Ok(())
     }
 

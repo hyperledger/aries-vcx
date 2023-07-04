@@ -89,7 +89,7 @@ pub struct SetupWalletPool {
 pub struct SetupProfile {
     pub institution_did: String,
     pub profile: Arc<dyn Profile>,
-    pub(self) teardown: Arc<dyn Fn() -> BoxFuture<'static, ()>>,
+    pub(self) teardown: Arc<dyn Fn() -> BoxFuture<'static, ()> + Send + Sync>,
 }
 
 pub struct SetupInstitutionWallet {
@@ -373,6 +373,14 @@ impl SetupProfile {
         init_test_logging();
         set_test_configs();
 
+        // We have to start with the vdrtools profile
+        // in order to perform the migration
+        #[cfg(feature = "migration")]
+        return {
+            info!("SetupProfile >> using indy profile");
+            SetupProfile::init_indy().await
+        };
+
         #[cfg(feature = "mixed_breed")]
         return {
             info!("SetupProfile >> using mixed breed profile");
@@ -398,8 +406,6 @@ impl SetupProfile {
         };
     }
 
-    // FUTURE - ideally no tests should be using this method, they should be using the generic init
-    // after modular profile Anoncreds/Ledger methods have all been implemented, all tests should use init()
     #[cfg(feature = "vdrtools")]
     async fn init_indy() -> SetupProfile {
         let (institution_did, wallet_handle) = setup_issuer_wallet().await;

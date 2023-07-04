@@ -344,6 +344,7 @@ impl Wallet {
                 IndyErrorKind::InvalidStructure,
                 "RecordOptions is malformed json",
             )?;
+
             match self.cache.get(type_, &etype, &ename, &record_options).await {
                 Some(result) => {
                     cache_hit_metrics.inc_cache_hit(type_).await;
@@ -352,7 +353,14 @@ impl Wallet {
                 None => {
                     // no item in cache, lets retrieve it and put it in cache.
                     let metrics_fut = cache_hit_metrics.inc_cache_miss(type_);
-                    let full_options = RecordOptions::id_value_tags();
+                    let full_options = RecordOptions {
+                        retrieve_type: record_options.retrieve_type,
+                        retrieve_value: true,
+                        retrieve_tags: true,
+                    };
+
+                    let full_options = serde_json::to_string(&full_options).unwrap();
+
                     let storage_fut = self.storage.get(&etype, &ename, &full_options);
                     // run these two futures in parallel.
                     let full_result = join(storage_fut, metrics_fut).await.0?;

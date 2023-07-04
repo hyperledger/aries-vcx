@@ -481,7 +481,7 @@ jobs:
         with:
           skip-docker-setup: true
       - name: "Run workspace tests: general_test"
-        run: RUST_TEST_THREADS=1 cargo test --workspace --lib --exclude aries-vcx-agent --exclude libvdrtools
+        run: RUST_TEST_THREADS=1 cargo test --workspace --lib --exclude aries-vcx-agent --exclude libvdrtools --exclude wallet_migrator
 
   test-integration-aries-vcx:
     needs: workflow-setup
@@ -543,6 +543,20 @@ jobs:
         uses: ./.github/actions/setup-testing-rust
       - name: "Run aries-vcx tests: pool_tests agency_pool_tests"
         run: RUST_TEST_THREADS=1 cargo test --manifest-path="aries_vcx/Cargo.toml" -F mixed_breed -- --include-ignored;
+
+  test-integration-aries-vcx-migration:
+    needs: workflow-setup
+    runs-on: ubuntu-20.04
+    steps:
+      - name: "Git checkout"
+        uses: actions/checkout@v3
+      - name: "Setup rust testing environment"
+        uses: ./.github/actions/setup-testing-rust
+      - name: "Run aries-vcx tests: pool_tests agency_pool_tests"
+        run: |
+          cargo test --manifest-path="wallet_migrator/Cargo.toml";
+          RUST_TEST_THREADS=1 CARGO_INCREMENTAL=0 TEST_POOL_IP=127.0.0.1 cargo test --manifest-path="aries_vcx/Cargo.toml" -F migration --test test_creds_proofs -- --include-ignored;
+          RUST_TEST_THREADS=1 CARGO_INCREMENTAL=0 TEST_POOL_IP=127.0.0.1 cargo test --manifest-path="aries_vcx/Cargo.toml" -F migration --test test_creds_proofs_revocations -- --include-ignored;
 
   test-integration-libvcx:
     needs: workflow-setup

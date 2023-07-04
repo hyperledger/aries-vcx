@@ -1,4 +1,3 @@
-use failure::ResultExt;
 use indy_api_types::errors::prelude::*;
 
 pub fn encode(doc: &[u8]) -> String {
@@ -7,9 +6,7 @@ pub fn encode(doc: &[u8]) -> String {
 
 pub fn decode(doc: &str) -> Result<Vec<u8>, IndyError> {
     base64::decode(doc)
-        .context("Invalid base64 sequence")
-        .context(IndyErrorKind::InvalidStructure)
-        .map_err(|err| err.into())
+        .map_err(|e| e.to_indy(IndyErrorKind::InvalidStructure, "Invalid base64 sequence"))
 }
 
 pub fn encode_urlsafe(doc: &[u8]) -> String {
@@ -17,10 +14,12 @@ pub fn encode_urlsafe(doc: &[u8]) -> String {
 }
 
 pub fn decode_urlsafe(doc: &str) -> Result<Vec<u8>, IndyError> {
-    base64::decode_config(doc, base64::URL_SAFE_NO_PAD)
-        .context("Invalid base64URL_SAFE sequence")
-        .context(IndyErrorKind::InvalidStructure)
-        .map_err(|err| err.into())
+    base64::decode_config(doc, base64::URL_SAFE_NO_PAD).map_err(|e| {
+        e.to_indy(
+            IndyErrorKind::InvalidStructure,
+            "Invalid base64URL_SAFE sequence",
+        )
+    })
 }
 
 #[cfg(test)]
