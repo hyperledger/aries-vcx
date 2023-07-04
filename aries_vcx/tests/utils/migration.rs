@@ -1,7 +1,8 @@
 use std::sync::Arc;
 
-use crate::utils::devsetup_alice::Alice;
-use crate::utils::devsetup_faber::Faber;
+use async_trait::async_trait;
+use uuid::Uuid;
+
 use aries_vcx::utils::devsetup::make_modular_profile;
 use aries_vcx::{
     core::profile::modular_libs_profile::ModularLibsProfile,
@@ -14,8 +15,9 @@ use aries_vcx_core::{
     wallet::{agency_client_wallet::ToBaseAgencyClientWallet, base_wallet::BaseWallet, indy_wallet::IndySdkWallet},
     WalletHandle,
 };
-use async_trait::async_trait;
-use uuid::Uuid;
+
+use crate::utils::devsetup_alice::Alice;
+use crate::utils::devsetup_faber::Faber;
 
 #[async_trait]
 pub trait Migratable {

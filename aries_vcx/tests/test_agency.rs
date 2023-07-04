@@ -1,6 +1,5 @@
 #[macro_use]
 extern crate log;
-
 #[macro_use]
 extern crate serde_json;
 
@@ -11,8 +10,6 @@ mod integration_tests {
     use std::sync::Arc;
     use std::time::Duration;
 
-    use crate::utils::devsetup_alice::create_alice;
-    use crate::utils::devsetup_faber::{create_faber, Faber};
     use agency_client::agency_client::AgencyClient;
     use agency_client::api::downloaded_message::DownloadedMessage;
     use agency_client::messages::update_message::UIDsByConn;
@@ -24,6 +21,8 @@ mod integration_tests {
     use messages::msg_fields::protocols::cred_issuance::{CredentialAttr, CredentialPreview};
     use messages::msg_fields::protocols::notification::Notification;
 
+    use crate::utils::devsetup_alice::create_alice;
+    use crate::utils::devsetup_faber::{create_faber, Faber};
     use crate::utils::scenarios::test_utils::create_connected_connections;
 
     #[tokio::test]

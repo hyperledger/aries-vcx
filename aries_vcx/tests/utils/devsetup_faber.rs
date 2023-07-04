@@ -1,3 +1,8 @@
+use std::sync::Arc;
+
+use futures::future::BoxFuture;
+use serde_json::json;
+
 use agency_client::agency_client::AgencyClient;
 use agency_client::configuration::{AgencyClientConfig, AgentProvisionConfig};
 use aries_vcx::common::ledger::transactions::write_endpoint_legacy;
@@ -29,13 +34,10 @@ use aries_vcx_core::indy::wallet::{
 use aries_vcx_core::ledger::request_submitter::vdr_ledger::LedgerPoolConfig;
 use aries_vcx_core::{PoolHandle, WalletHandle};
 use diddoc_legacy::aries::service::AriesService;
-use futures::future::BoxFuture;
 use messages::decorators::please_ack::AckOn;
 use messages::msg_fields::protocols::connection::invitation::public::{PublicInvitation, PublicInvitationContent};
 use messages::msg_fields::protocols::revocation::ack::AckRevoke;
 use messages::AriesMessage;
-use serde_json::json;
-use std::sync::Arc;
 
 pub struct Faber {
     pub profile: Arc<dyn Profile>,

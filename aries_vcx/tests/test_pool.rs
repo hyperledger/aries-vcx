@@ -7,6 +7,9 @@ pub mod utils;
 
 #[cfg(test)]
 mod integration_tests {
+    use std::thread;
+    use std::time::Duration;
+
     use aries_vcx::common::keys::{get_verkey_from_ledger, rotate_verkey};
     use aries_vcx::common::ledger::service_didsov::EndpointDidSov;
     use aries_vcx::common::ledger::transactions::{
@@ -16,8 +19,6 @@ mod integration_tests {
     use aries_vcx::utils::constants::DEFAULT_SCHEMA_ATTRS;
     use aries_vcx::utils::devsetup::SetupProfile;
     use diddoc_legacy::aries::service::AriesService;
-    use std::thread;
-    use std::time::Duration;
 
     #[cfg(foobar)]
     #[tokio::test]

@@ -1,6 +1,5 @@
 #[macro_use]
 extern crate log;
-
 #[macro_use]
 extern crate serde_json;
 
@@ -8,8 +7,8 @@ pub mod utils;
 
 #[cfg(test)]
 mod integration_tests {
-    use crate::utils::devsetup_alice::create_alice;
-    use crate::utils::devsetup_faber::create_faber;
+    use async_channel::bounded;
+
     use aries_vcx::agency_client::MessageStatusCode;
     use aries_vcx::common::ledger::transactions::into_did_doc;
     use aries_vcx::handlers::connection::mediated_connection::ConnectionState;
@@ -19,7 +18,6 @@ mod integration_tests {
     use aries_vcx::protocols::mediated_connection::invitee::state_machine::InviteeState;
     use aries_vcx::utils::devsetup::*;
     use aries_vcx::utils::mockdata::mockdata_proof::REQUESTED_ATTRIBUTES;
-    use async_channel::bounded;
     use messages::msg_fields::protocols::connection::Connection;
     use messages::msg_fields::protocols::out_of_band::invitation::OobService;
     use messages::msg_fields::protocols::out_of_band::{OobGoalCode, OutOfBand};
@@ -28,6 +26,8 @@ mod integration_tests {
     use messages::msg_types::Protocol;
     use messages::AriesMessage;
 
+    use crate::utils::devsetup_alice::create_alice;
+    use crate::utils::devsetup_faber::create_faber;
     use crate::utils::scenarios::test_utils::{
         _send_message, connect_using_request_sent_to_public_agent, create_connected_connections,
         create_connected_connections_via_public_invite, create_proof_request,

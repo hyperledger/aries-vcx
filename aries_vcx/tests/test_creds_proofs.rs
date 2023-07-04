@@ -562,8 +562,6 @@ mod tests {
     use std::collections::HashMap;
     use std::time::Duration;
 
-    use messages::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
-    use messages::msg_fields::protocols::present_proof::request::RequestPresentation;
     use serde_json::Value;
 
     use aries_vcx::common::test_utils::create_and_store_nonrevocable_credential_def;
@@ -575,10 +573,14 @@ mod tests {
     use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
     use aries_vcx::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
     use aries_vcx::utils::devsetup::*;
+    use messages::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
+    use messages::msg_fields::protocols::present_proof::request::RequestPresentation;
 
     use crate::utils::devsetup_alice::create_alice;
     use crate::utils::devsetup_faber::create_faber;
     use crate::utils::devsetup_util::test_utils::PayloadKinds;
+    #[cfg(feature = "migration")]
+    use crate::utils::migration::Migratable;
     use crate::utils::scenarios::test_utils::{
         _create_address_schema, _exchange_credential, _exchange_credential_with_proposal, accept_cred_proposal,
         accept_cred_proposal_1, accept_offer, accept_proof_proposal, attr_names,
@@ -589,9 +591,6 @@ mod tests {
         send_cred_proposal, send_cred_proposal_1, send_cred_req, send_credential, send_proof_proposal,
         send_proof_proposal_1, send_proof_request, verifier_create_proof_and_send_request, verify_proof,
     };
-
-    #[cfg(feature = "migration")]
-    use crate::utils::migration::Migratable;
 
     #[tokio::test]
     #[ignore]
@@ -848,8 +847,8 @@ mod tests {
             )
                 .await;
 
-                #[cfg(feature = "migration")]
-                consumer1.migrate().await;
+            #[cfg(feature = "migration")]
+            consumer1.migrate().await;
 
             prover_select_credentials_and_send_proof(&mut consumer1, &consumer1_to_verifier, None, None).await;
             proof_verifier
@@ -872,7 +871,7 @@ mod tests {
             )
                 .await;
 
-                #[cfg(feature = "migration")]
+            #[cfg(feature = "migration")]
             consumer2.migrate().await;
 
             prover_select_credentials_and_send_proof(&mut consumer2, &consumer2_to_verifier, None, None).await;
@@ -882,7 +881,7 @@ mod tests {
                     &verifier.profile.inject_anoncreds_ledger_read(),
                     &verifier.profile.inject_anoncreds(),
                     &verifier.agency_client,
-                    &verifier_to_consumer2
+                    &verifier_to_consumer2,
                 )
                 .await
                 .unwrap();
@@ -1009,8 +1008,8 @@ mod tests {
             )
                 .await;
 
-                #[cfg(feature = "migration")]
-                institution.migrate().await;
+            #[cfg(feature = "migration")]
+            institution.migrate().await;
 
             prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_institution, request_name1, None).await;
             verifier
@@ -1038,8 +1037,8 @@ mod tests {
             )
                 .await;
 
-                #[cfg(feature = "migration")]
-                consumer.migrate().await;
+            #[cfg(feature = "migration")]
+            consumer.migrate().await;
 
             prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_institution, request_name2, None).await;
             verifier
@@ -1221,8 +1220,8 @@ mod tests {
             )
                 .await;
 
-                #[cfg(feature = "migration")]
-                issuer.migrate().await;
+            #[cfg(feature = "migration")]
+            issuer.migrate().await;
 
             let credential_data2 = json!({address1.clone(): "101 Tela Lane", address2.clone(): "Suite 1", city.clone(): "SLC", state.clone(): "WA", zip.clone(): "8721"}).to_string();
             let _credential_handle2 = _exchange_credential(
@@ -1237,8 +1236,8 @@ mod tests {
             )
                 .await;
 
-                #[cfg(feature = "migration")]
-                verifier.migrate().await;
+            #[cfg(feature = "migration")]
+            verifier.migrate().await;
 
             let mut proof_verifier = verifier_create_proof_and_send_request(
                 &mut verifier,
@@ -1270,8 +1269,8 @@ mod tests {
                 .await;
 
 
-                #[cfg(feature = "migration")]
-                consumer.migrate().await;
+            #[cfg(feature = "migration")]
+            consumer.migrate().await;
 
             prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2))
                 .await;

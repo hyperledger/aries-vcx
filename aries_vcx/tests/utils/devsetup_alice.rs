@@ -1,4 +1,8 @@
-use crate::utils::devsetup_util::test_utils::{filter_messages, PayloadKinds, VcxAgencyMessage};
+use std::collections::HashMap;
+use std::sync::Arc;
+
+use futures::future::BoxFuture;
+
 use agency_client::agency_client::AgencyClient;
 use agency_client::configuration::{AgencyClientConfig, AgentProvisionConfig};
 use agency_client::MessageStatusCode;
@@ -29,15 +33,14 @@ use aries_vcx_core::ledger::request_submitter::vdr_ledger::LedgerPoolConfig;
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use aries_vcx_core::wallet::indy_wallet::IndySdkWallet;
 use aries_vcx_core::{PoolHandle, WalletHandle};
-use futures::future::BoxFuture;
 use messages::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
 use messages::msg_fields::protocols::cred_issuance::CredentialIssuance;
 use messages::msg_fields::protocols::present_proof::request::RequestPresentation;
 use messages::msg_fields::protocols::present_proof::PresentProof;
 use messages::msg_fields::protocols::revocation::revoke::Revoke;
 use messages::AriesMessage;
-use std::collections::HashMap;
-use std::sync::Arc;
+
+use crate::utils::devsetup_util::test_utils::{filter_messages, PayloadKinds, VcxAgencyMessage};
 
 pub struct Alice {
     pub profile: Arc<dyn Profile>,
