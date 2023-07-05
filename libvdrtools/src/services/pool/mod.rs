@@ -19,7 +19,7 @@ use zmq::Socket;
 use crate::{
     domain::{
         ledger::response::{Message, Reply, ResponseMetadata},
-        pool::{PoolConfig, PoolOpenConfig},
+        pool::{PoolConfig, VdrtoolsPoolOpenConfig},
     },
     utils::environment,
 };
@@ -165,7 +165,7 @@ impl PoolService {
     pub(crate) async fn open(
         &self,
         name: String,
-        config: Option<PoolOpenConfig>,
+        config: Option<VdrtoolsPoolOpenConfig>,
         handle: Option<PoolHandle>,
     ) -> IndyResult<(PoolHandle, String)> {
         trace!("PoolService::open >>>");
@@ -612,7 +612,7 @@ pub mod tests {
             ps.open_pools.lock().await.insert(
                 pool_id,
                 Arc::new(ZMQPool::new(
-                    Pool::new("", pool_id, PoolOpenConfig::default()),
+                    Pool::new("", pool_id, VdrtoolsPoolOpenConfig::default()),
                     send_cmd_sock,
                 )),
             );
@@ -641,7 +641,7 @@ pub mod tests {
             ps.open_pools.lock().await.insert(
                 pool_id,
                 Arc::new(ZMQPool::new(
-                    Pool::new("", pool_id, PoolOpenConfig::default()),
+                    Pool::new("", pool_id, VdrtoolsPoolOpenConfig::default()),
                     send_cmd_sock,
                 )),
             );
@@ -688,7 +688,7 @@ pub mod tests {
             let path: path::PathBuf = environment::pool_path(pool_name);
             let pool_id = next_pool_handle();
 
-            let pool = Pool::new(pool_name, pool_id, PoolOpenConfig::default());
+            let pool = Pool::new(pool_name, pool_id, VdrtoolsPoolOpenConfig::default());
             ps.open_pools
                 .lock()
                 .await
@@ -710,7 +710,7 @@ pub mod tests {
             let name = "test";
             let (send_cmd_sock, recv_cmd_sock) = pool_create_pair_of_sockets("pool_send_tx_works");
             let pool_id = next_pool_handle();
-            let pool = Pool::new(name, pool_id, PoolOpenConfig::default());
+            let pool = Pool::new(name, pool_id, VdrtoolsPoolOpenConfig::default());
             let ps = PoolService::new();
 
             ps.open_pools
@@ -750,7 +750,7 @@ pub mod tests {
             let send_cmd_sock = zmq_ctx.socket(zmq::SocketType::PAIR).unwrap();
 
             let pool_id = next_pool_handle();
-            let pool = Pool::new(name, pool_id, PoolOpenConfig::default());
+            let pool = Pool::new(name, pool_id, VdrtoolsPoolOpenConfig::default());
             let ps = PoolService::new();
 
             ps.open_pools
@@ -778,7 +778,11 @@ pub mod tests {
                 pool_create_pair_of_sockets("pool_send_action_works");
 
             let pool_id = next_pool_handle();
-            let pool = Pool::new("pool_send_action_works", pool_id, PoolOpenConfig::default());
+            let pool = Pool::new(
+                "pool_send_action_works",
+                pool_id,
+                VdrtoolsPoolOpenConfig::default(),
+            );
             let ps = PoolService::new();
 
             ps.open_pools
@@ -854,7 +858,7 @@ pub mod tests {
             file.write_all(gen_txn.as_bytes()).unwrap();
 
             let pool_id = next_pool_handle();
-            let mut pool = Pool::new(pool_name, pool_id, PoolOpenConfig::default());
+            let mut pool = Pool::new(pool_name, pool_id, VdrtoolsPoolOpenConfig::default());
             pool.work(recv_cmd_sock);
 
             ps.open_pools

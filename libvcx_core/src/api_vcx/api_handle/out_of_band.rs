@@ -10,7 +10,7 @@ use aries_vcx::messages::msg_types::Protocol;
 use aries_vcx::messages::AriesMessage;
 
 use crate::api_vcx::api_global::agency_client::get_main_agency_client;
-use crate::api_vcx::api_global::profile::get_main_profile;
+use crate::api_vcx::api_global::profile::{get_main_indy_ledger_read, get_main_profile, get_main_wallet};
 use crate::api_vcx::api_handle::connection;
 use crate::api_vcx::api_handle::mediated_connection::CONNECTION_MAP as MEDIATED_CONS_MAP;
 use crate::api_vcx::api_handle::object_cache::ObjectCache;
@@ -160,10 +160,10 @@ pub async fn connection_exists(handle: u32, conn_handles: &Vec<u32>) -> LibvcxRe
         conn_map.insert(*conn_handle, connection);
     }
     let connections = conn_map.values().collect();
-    let profile = get_main_profile()?;
+    let profile = get_main_profile();
 
     if let Some(connection) = oob
-        .connection_exists(&profile.inject_indy_ledger_read(), &connections)
+        .connection_exists(&get_main_indy_ledger_read()?, &connections)
         .await?
     {
         if let Some((&handle, _)) = conn_map.iter().find(|(_, conn)| *conn == connection) {
@@ -186,7 +186,7 @@ pub async fn nonmediated_connection_exists(handle: u32, conn_handles: &[u32]) ->
         handle,
         conn_handles
     );
-    let indy_ledger = get_main_profile()?.inject_indy_ledger_read();
+    let indy_ledger = get_main_indy_ledger_read()?;
     let oob = OUT_OF_BAND_RECEIVER_MAP.get_cloned(handle)?;
 
     let filter_closure = |h: &u32| connection::get_cloned_generic_connection(h).ok().map(|c| (*h, c));
@@ -205,9 +205,8 @@ pub async fn build_connection(handle: u32) -> LibvcxResult<String> {
     trace!("build_connection >>> handle: {}", handle);
     let oob = OUT_OF_BAND_RECEIVER_MAP.get_cloned(handle)?;
     let invitation = AnyInvitation::Oob(oob.oob.clone());
-    let profile = get_main_profile()?;
-    let ddo = into_did_doc(&profile.inject_indy_ledger_read(), &invitation).await?;
-    oob.build_connection(&profile.inject_wallet(), &get_main_agency_client()?, ddo, false)
+    let ddo = into_did_doc(&get_main_indy_ledger_read()?, &invitation).await?;
+    oob.build_connection(&get_main_wallet()?, &get_main_agency_client()?, ddo, false)
         .await?
         .to_string()
         .map_err(|err| err.into())
@@ -285,19 +284,16 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_build_oob_sender_append_services() {
         build_and_append_service("V4SGRU86Z58d6TV7PBUe6f").await
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_build_oob_sender_append_services_prefix_did_sov() {
         build_and_append_service("did:sov:V4SGRU86Z58d6TV7PBUe6f").await
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_serde_oob_config_handshake_protocols() {
         let config_str = json!({ "handshake_protocols": vec!["https://didcomm.org/connections/1.0"] }).to_string();
         let config_actual: OOBConfig = serde_json::from_str(&config_str).unwrap();

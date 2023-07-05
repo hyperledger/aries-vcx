@@ -5,7 +5,7 @@ use serde_json;
 
 use aries_vcx::handlers::issuance::issuer::Issuer;
 
-use crate::api_vcx::api_global::profile::get_main_profile_optional_pool;
+use crate::api_vcx::api_global::profile::{get_main_anoncreds, get_main_wallet};
 use crate::api_vcx::api_handle::connection;
 use crate::api_vcx::api_handle::connection::HttpClient;
 use crate::api_vcx::api_handle::credential_def;
@@ -38,7 +38,6 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
         return Ok(credential.get_state().into());
     }
     let send_message = mediated_connection::send_message_closure(connection_handle).await?;
-    let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
 
     if let Some(message) = message {
         let message: AriesMessage = serde_json::from_str(message).map_err(|err| {
@@ -48,13 +47,13 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
             )
         })?;
         credential
-            .step(&profile.inject_anoncreds(), message.into(), Some(send_message))
+            .step(&get_main_anoncreds()?, message.into(), Some(send_message))
             .await?;
     } else {
         let messages = mediated_connection::get_messages(connection_handle).await?;
         if let Some((uid, msg)) = credential.find_message_to_handle(messages) {
             credential
-                .step(&profile.inject_anoncreds(), msg.into(), Some(send_message))
+                .step(&get_main_anoncreds()?, msg.into(), Some(send_message))
                 .await?;
             mediated_connection::update_message_status(connection_handle, &uid).await?;
         }
@@ -76,12 +75,10 @@ pub async fn update_state_with_message_nonmediated(
     }
 
     let con = connection::get_cloned_generic_connection(&connection_handle)?;
-    let wallet = get_main_profile_optional_pool().inject_wallet();
+    let wallet = get_main_wallet()?;
 
     let send_message: SendClosure =
         Box::new(|msg: AriesMessage| Box::pin(async move { con.send_message(&wallet, &msg, &HttpClient).await }));
-
-    let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
 
     let message: AriesMessage = serde_json::from_str(message).map_err(|err| {
         LibvcxError::from_msg(
@@ -90,7 +87,7 @@ pub async fn update_state_with_message_nonmediated(
         )
     })?;
     credential
-        .step(&profile.inject_anoncreds(), message.into(), Some(send_message))
+        .step(&get_main_anoncreds()?, message.into(), Some(send_message))
         .await?;
 
     let res: u32 = credential.get_state().into();
@@ -184,10 +181,9 @@ pub async fn build_credential_offer_msg_v2(
             tails_file: None,
         }
     };
-    let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
     credential
         .build_credential_offer_msg(
-            &profile.inject_anoncreds(),
+            &get_main_anoncreds()?,
             offer_info.clone(),
             comment.map(|s| s.to_string()),
         )
@@ -217,7 +213,7 @@ pub async fn send_credential_offer_nonmediated(credential_handle: u32, connectio
     let mut credential = ISSUER_CREDENTIAL_MAP.get_cloned(credential_handle)?;
 
     let con = connection::get_cloned_generic_connection(&connection_handle)?;
-    let wallet = get_main_profile_optional_pool().inject_wallet();
+    let wallet = get_main_wallet()?;
 
     let send_message: SendClosure =
         Box::new(|msg: AriesMessage| Box::pin(async move { con.send_message(&wallet, &msg, &HttpClient).await }));
@@ -229,10 +225,9 @@ pub async fn send_credential_offer_nonmediated(credential_handle: u32, connectio
 
 pub async fn send_credential(handle: u32, connection_handle: u32) -> LibvcxResult<u32> {
     let mut credential = ISSUER_CREDENTIAL_MAP.get_cloned(handle)?;
-    let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
     credential
         .send_credential(
-            &profile.inject_anoncreds(),
+            &get_main_anoncreds()?,
             mediated_connection::send_message_closure(connection_handle).await?,
         )
         .await?;
@@ -243,17 +238,13 @@ pub async fn send_credential(handle: u32, connection_handle: u32) -> LibvcxResul
 
 pub async fn send_credential_nonmediated(handle: u32, connection_handle: u32) -> LibvcxResult<u32> {
     let mut credential = ISSUER_CREDENTIAL_MAP.get_cloned(handle)?;
-    let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
-
     let con = connection::get_cloned_generic_connection(&connection_handle)?;
-    let wallet = profile.inject_wallet();
+    let wallet = get_main_wallet()?;
 
     let send_message: SendClosure =
         Box::new(|msg: AriesMessage| Box::pin(async move { con.send_message(&wallet, &msg, &HttpClient).await }));
 
-    credential
-        .send_credential(&profile.inject_anoncreds(), send_message)
-        .await?;
+    credential.send_credential(&get_main_anoncreds()?, send_message).await?;
     let state: u32 = credential.get_state().into();
     ISSUER_CREDENTIAL_MAP.insert(handle, credential)?;
     Ok(state)
@@ -261,9 +252,8 @@ pub async fn send_credential_nonmediated(handle: u32, connection_handle: u32) ->
 
 pub async fn revoke_credential_local(handle: u32) -> LibvcxResult<()> {
     let credential = ISSUER_CREDENTIAL_MAP.get_cloned(handle)?;
-    let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
     credential
-        .revoke_credential_local(&profile.inject_anoncreds())
+        .revoke_credential_local(&get_main_anoncreds()?)
         .await
         .map_err(|err| err.into())
 }
@@ -293,9 +283,9 @@ pub fn get_thread_id(handle: u32) -> LibvcxResult<String> {
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 pub mod tests {
-    #[cfg(feature = "test_utils")]
+    #[cfg(test)]
     use crate::api_vcx::api_handle::credential_def::tests::create_and_publish_nonrevocable_creddef;
-    #[cfg(feature = "test_utils")]
+    #[cfg(test)]
     use crate::api_vcx::api_handle::mediated_connection::test_utils::build_test_connection_inviter_requested;
     use crate::aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
     use crate::errors::error;
@@ -315,7 +305,6 @@ pub mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_vcx_issuer_credential_release() {
         let _setup = SetupMocks::init();
         let handle = _issuer_credential_create();
@@ -324,7 +313,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_issuer_credential_create_succeeds() {
         let _setup = SetupMocks::init();
 
@@ -333,7 +321,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_to_string_succeeds() {
         let _setup = SetupMocks::init();
 
@@ -343,7 +330,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_send_credential_offer() {
         let _setup = SetupMocks::init();
 
@@ -362,7 +348,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_from_string_succeeds() {
         let _setup = SetupMocks::init();
 
@@ -382,7 +367,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_update_state_with_message() {
         let _setup = SetupMocks::init();
 
@@ -407,7 +391,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_update_state_with_bad_message() {
         let _setup = SetupMocks::init();
 
@@ -427,7 +410,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_release_all() {
         let _setup = SetupMocks::init();
 

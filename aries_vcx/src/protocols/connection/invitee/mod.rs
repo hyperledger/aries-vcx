@@ -23,7 +23,6 @@ use uuid::Uuid;
 
 use crate::{
     common::ledger::transactions::into_did_doc,
-    core::profile::profile::Profile,
     errors::error::VcxResult,
     handlers::util::{matches_thread_id, AnyInvitation},
     protocols::connection::trait_bounds::ThreadId,

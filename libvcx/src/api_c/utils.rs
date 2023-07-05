@@ -21,7 +21,6 @@ use libvcx_core::api_vcx::api_global::wallet::{
 };
 use libvcx_core::api_vcx::api_handle::mediated_connection;
 use libvcx_core::api_vcx::api_handle::mediated_connection::{parse_connection_handles, parse_status_codes};
-use libvcx_core::errors;
 use libvcx_core::errors::error::{LibvcxError, LibvcxErrorKind};
 
 use crate::api_c::cutils::cstring::CStringUtils;
@@ -380,13 +379,7 @@ pub extern "C" fn vcx_messages_update_status(
 /// Error code as u32
 #[no_mangle]
 pub extern "C" fn vcx_pool_set_handle(handle: i32) -> i32 {
-    if handle <= 0 {
-        libvcx_core::api_vcx::api_global::pool::set_main_pool_handle(None);
-    } else {
-        libvcx_core::api_vcx::api_global::pool::set_main_pool_handle(Some(handle));
-    }
-
-    handle
+    unimplemented!("vcx_pool_set_handle is not supported")
 }
 
 /// Endorse transaction to the ledger preserving an original author

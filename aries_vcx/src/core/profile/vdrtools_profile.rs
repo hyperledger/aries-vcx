@@ -25,11 +25,11 @@ pub struct VdrtoolsProfile {
 }
 
 impl VdrtoolsProfile {
-    pub fn init(indy_wallet_handle: WalletHandle, indy_pool_handle: PoolHandle) -> Self {
-        let wallet = Arc::new(IndySdkWallet::new(indy_wallet_handle));
-        let anoncreds = Arc::new(IndySdkAnonCreds::new(indy_wallet_handle));
-        let ledger_read = Arc::new(IndySdkLedgerRead::new(indy_wallet_handle, indy_pool_handle));
-        let ledger_write = Arc::new(IndySdkLedgerWrite::new(indy_wallet_handle, indy_pool_handle));
+    pub fn init(wallet_handle: WalletHandle, pool_handle: PoolHandle) -> Self {
+        let wallet = Arc::new(IndySdkWallet::new(wallet_handle));
+        let anoncreds = Arc::new(IndySdkAnonCreds::new(wallet_handle));
+        let ledger_read = Arc::new(IndySdkLedgerRead::new(wallet_handle, pool_handle));
+        let ledger_write = Arc::new(IndySdkLedgerWrite::new(wallet_handle, pool_handle));
         VdrtoolsProfile {
             wallet,
             anoncreds,

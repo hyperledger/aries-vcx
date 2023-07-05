@@ -11,7 +11,6 @@ use messages::msg_fields::protocols::report_problem::ProblemReport;
 use uuid::Uuid;
 
 use crate::common::proofs::prover::prover::generate_indy_proof;
-use crate::core::profile::profile::Profile;
 use crate::errors::error::prelude::*;
 use crate::handlers::proof_presentation::types::SelectedCredentials;
 use crate::handlers::util::{get_attach_as_string, Status};

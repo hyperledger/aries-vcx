@@ -3,7 +3,6 @@ use std::sync::RwLock;
 
 use crate::errors::error::prelude::*;
 
-pub static CONFIG_POOL_NAME: &str = "pool_name";
 pub static CONFIG_INSTITUTION_DID: &str = "institution_did";
 
 // functionally not used
@@ -72,7 +71,7 @@ pub fn set_config_value(key: &str, value: &str) -> VcxCoreResult<()> {
     Ok(())
 }
 
-pub fn reset_config_values() -> VcxCoreResult<()> {
+pub fn reset_config_values_ariesvcxcore() -> VcxCoreResult<()> {
     trace!("reset_config_values >>>");
     let mut config = SETTINGS.write()?;
     config.clear();

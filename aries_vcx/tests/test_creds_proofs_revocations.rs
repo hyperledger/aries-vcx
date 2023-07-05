@@ -13,7 +13,10 @@ mod integration_tests {
     use aries_vcx::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
     use aries_vcx::utils::devsetup::*;
 
-    use crate::utils::devsetup_agent::test_utils::{create_test_alice_instance, Faber};
+    use crate::utils::devsetup_alice::create_alice;
+    use crate::utils::devsetup_faber::{create_faber, Faber};
+    #[cfg(feature = "migration")]
+    use crate::utils::migration::Migratable;
     use crate::utils::scenarios::test_utils::{
         _create_address_schema, _exchange_credential, attr_names, create_connected_connections, create_proof,
         generate_and_send_proof, issue_address_credential, prover_select_credentials_and_send_proof,
@@ -22,17 +25,14 @@ mod integration_tests {
         verifier_create_proof_and_send_request,
     };
 
-    #[cfg(feature = "migration")]
-    use crate::utils::migration::Migratable;
-
     use super::*;
 
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_basic_revocation() {
-        SetupPool::run(|setup| async move {
-            let mut institution = Faber::setup(setup.pool_handle).await;
-            let mut consumer = create_test_alice_instance(&setup).await;
+        SetupPoolDirectory::run(|setup| async move {
+            let mut institution = create_faber(setup.genesis_file_path.clone()).await;
+            let mut consumer = create_alice(setup.genesis_file_path).await;
 
             let (consumer_to_institution, institution_to_consumer) =
                 create_connected_connections(&mut consumer, &mut institution).await;
@@ -68,7 +68,7 @@ mod integration_tests {
                 .unwrap());
 
             let _requested_attrs = requested_attrs(
-                &institution.config_issuer.institution_did,
+                &institution.institution_did,
                 &schema_id,
                 &cred_def_id,
                 None,
@@ -118,9 +118,9 @@ mod integration_tests {
     async fn test_agency_pool_revocation_notification() {
         use messages::decorators::please_ack::AckOn;
 
-        SetupPool::run(|setup| async move {
-            let mut institution = Faber::setup(setup.pool_handle).await;
-            let mut consumer = create_test_alice_instance(&setup).await;
+        SetupPoolDirectory::run(|setup| async move {
+            let mut institution = create_faber(setup.genesis_file_path.clone()).await;
+            let mut consumer = create_alice(setup.genesis_file_path).await;
 
             let (consumer_to_institution, institution_to_consumer) =
                 create_connected_connections(&mut consumer, &mut institution).await;
@@ -188,9 +188,9 @@ mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_local_revocation() {
-        SetupPool::run(|setup| async move {
-            let mut institution = Faber::setup(setup.pool_handle).await;
-            let mut consumer = create_test_alice_instance(&setup).await;
+        SetupPoolDirectory::run(|setup| async move {
+            let mut institution = create_faber(setup.genesis_file_path.clone()).await;
+            let mut consumer = create_alice(setup.genesis_file_path).await;
 
             let (consumer_to_institution, institution_to_consumer) =
                 create_connected_connections(&mut consumer, &mut institution).await;
@@ -287,18 +287,19 @@ mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_agency_batch_revocation() {
-        SetupPool::run(|setup| async move {
-            let mut institution = Faber::setup(setup.pool_handle).await;
-            let mut consumer1 = create_test_alice_instance(&setup).await;
-            let mut consumer2 = create_test_alice_instance(&setup).await;
-            let mut consumer3 = create_test_alice_instance(&setup).await;
+        SetupPoolDirectory::run(|setup| async move {
+            let mut institution = create_faber(setup.genesis_file_path.clone()).await;
+            let mut consumer1 = create_alice(setup.genesis_file_path.clone()).await;
+            let mut consumer2 = create_alice(setup.genesis_file_path.clone()).await;
+            let mut consumer3 = create_alice(setup.genesis_file_path).await;
 
             let (consumer_to_institution1, institution_to_consumer1) = create_connected_connections(&mut consumer1, &mut institution).await;
             let (consumer_to_institution2, institution_to_consumer2) = create_connected_connections(&mut consumer2, &mut institution).await;
             let (consumer_to_institution3, institution_to_consumer3) = create_connected_connections(&mut consumer3, &mut institution).await;
 
             // Issue and send three credentials of the same schema
-            let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _rev_reg_id) = _create_address_schema(&institution.profile, &institution.config_issuer.institution_did).await;
+            let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _rev_reg_id) =
+                _create_address_schema(&institution.profile, &institution.institution_did).await;
             let (address1, address2, city, state, zip) = attr_names();
             let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
             let issuer_credential1 = _exchange_credential(
@@ -311,7 +312,8 @@ mod integration_tests {
                 &institution_to_consumer1,
                 None,
             )
-            .await;
+                .await;
+
 
             #[cfg(feature = "migration")]
             institution.migrate().await;
@@ -327,7 +329,8 @@ mod integration_tests {
                 &institution_to_consumer2,
                 None,
             )
-            .await;
+                .await;
+
 
             #[cfg(feature = "migration")]
             consumer1.migrate().await;
@@ -343,7 +346,7 @@ mod integration_tests {
                 &institution_to_consumer3,
                 None,
             )
-            .await;
+                .await;
 
             revoke_credential_local(&mut institution, &issuer_credential1, &rev_reg.rev_reg_id).await;
             revoke_credential_local(&mut institution, &issuer_credential2, &rev_reg.rev_reg_id).await;
@@ -456,15 +459,15 @@ mod integration_tests {
 
             assert_eq!(verifier3.get_verification_status(), PresentationVerificationStatus::Valid);
         })
-        .await;
+            .await;
     }
 
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_revoked_credential_might_still_work() {
-        SetupPool::run(|setup| async move {
-            let mut institution = Faber::setup(setup.pool_handle).await;
-            let mut consumer = create_test_alice_instance(&setup).await;
+        SetupPoolDirectory::run(|setup| async move {
+            let mut institution = create_faber(setup.genesis_file_path.clone()).await;
+            let mut consumer = create_alice(setup.genesis_file_path).await;
 
             let (consumer_to_institution, institution_to_consumer) = create_connected_connections(&mut consumer, &mut institution).await;
             let (schema_id, cred_def_id, _, _cred_def, rev_reg, issuer_credential) =
@@ -487,7 +490,7 @@ mod integration_tests {
 
             let from = time_before_revocation - 100;
             let to = time_before_revocation;
-            let _requested_attrs = requested_attrs(&institution.config_issuer.institution_did, &schema_id, &cred_def_id, Some(from), Some(to));
+            let _requested_attrs = requested_attrs(&institution.institution_did, &schema_id, &cred_def_id, Some(from), Some(to));
             let interval = json!({"from": from, "to": to}).to_string();
             let requested_attrs_string = serde_json::to_string(&_requested_attrs).unwrap();
 
@@ -526,21 +529,22 @@ mod integration_tests {
             assert_eq!(verifier.get_state(), VerifierState::Finished);
             assert_eq!(verifier.get_verification_status(), PresentationVerificationStatus::Valid);
         })
-        .await;
+            .await;
     }
 
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_two_creds_one_rev_reg_revoke_first() {
-        SetupPool::run(|setup| async move {
-            let mut issuer = Faber::setup(setup.pool_handle).await;
-            let mut verifier = Faber::setup(setup.pool_handle).await;
-            let mut consumer = create_test_alice_instance(&setup).await;
+        SetupPoolDirectory::run(|setup| async move {
+            let mut issuer = create_faber(setup.genesis_file_path.clone()).await;
+            let mut verifier = create_faber(setup.genesis_file_path.clone()).await;
+            let mut consumer = create_alice(setup.genesis_file_path).await;
 
             let (consumer_to_verifier, verifier_to_consumer) = create_connected_connections(&mut consumer, &mut verifier).await;
             let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut issuer).await;
 
-            let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _rev_reg_id) = _create_address_schema(&issuer.profile, &issuer.config_issuer.institution_did).await;
+            let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _rev_reg_id) =
+                _create_address_schema(&issuer.profile, &issuer.institution_did).await;
             let (address1, address2, city, state, zip) = attr_names();
             let (req1, req2) = (Some("request1"), Some("request2"));
             let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
@@ -554,13 +558,13 @@ mod integration_tests {
                 &issuer_to_consumer,
                 req1,
             )
-            .await;
+                .await;
+
 
             #[cfg(feature = "migration")]
             issuer.migrate().await;
 
             let credential_data2 = json!({address1.clone(): "101 Tela Lane", address2.clone(): "Suite 1", city.clone(): "SLC", state.clone(): "WA", zip.clone(): "8721"}).to_string();
-
             let issuer_credential2 = _exchange_credential(
                 &mut consumer,
                 &mut issuer,
@@ -571,7 +575,7 @@ mod integration_tests {
                 &issuer_to_consumer,
                 req2,
             )
-            .await;
+                .await;
 
             assert!(!issuer_credential1.is_revoked(&issuer.profile.inject_anoncreds_ledger_read()).await.unwrap());
             assert!(!issuer_credential2.is_revoked(&issuer.profile.inject_anoncreds_ledger_read()).await.unwrap());
@@ -617,21 +621,22 @@ mod integration_tests {
             assert!(issuer_credential1.is_revoked(&issuer.profile.inject_anoncreds_ledger_read()).await.unwrap());
             assert!(!issuer_credential2.is_revoked(&issuer.profile.inject_anoncreds_ledger_read()).await.unwrap());
         })
-        .await;
+            .await;
     }
 
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_two_creds_one_rev_reg_revoke_second() {
-        SetupPool::run(|setup| async move {
-            let mut issuer = Faber::setup(setup.pool_handle).await;
-            let mut verifier = Faber::setup(setup.pool_handle).await;
-            let mut consumer = create_test_alice_instance(&setup).await;
+        SetupPoolDirectory::run(|setup| async move {
+            let mut issuer = create_faber(setup.genesis_file_path.clone()).await;
+            let mut verifier = create_faber(setup.genesis_file_path.clone()).await;
+            let mut consumer = create_alice(setup.genesis_file_path).await;
 
             let (consumer_to_verifier, verifier_to_consumer) = create_connected_connections(&mut consumer, &mut verifier).await;
             let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut issuer).await;
 
-            let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _rev_reg_id) = _create_address_schema(&issuer.profile, &issuer.config_issuer.institution_did).await;
+            let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _rev_reg_id) =
+                _create_address_schema(&issuer.profile, &issuer.institution_did).await;
             let (address1, address2, city, state, zip) = attr_names();
             let (req1, req2) = (Some("request1"), Some("request2"));
             let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
@@ -645,7 +650,7 @@ mod integration_tests {
                 &issuer_to_consumer,
                 req1,
             )
-            .await;
+                .await;
 
             #[cfg(feature = "migration")]
             issuer.migrate().await;
@@ -661,7 +666,7 @@ mod integration_tests {
                 &issuer_to_consumer,
                 req2,
             )
-            .await;
+                .await;
 
             assert!(!issuer_credential1.is_revoked(&issuer.profile.inject_anoncreds_ledger_read()).await.unwrap());
             assert!(!issuer_credential2.is_revoked(&issuer.profile.inject_anoncreds_ledger_read()).await.unwrap());
@@ -706,21 +711,22 @@ mod integration_tests {
             assert!(!issuer_credential1.is_revoked(&issuer.profile.inject_anoncreds_ledger_read()).await.unwrap());
             assert!(issuer_credential2.is_revoked(&issuer.profile.inject_anoncreds_ledger_read()).await.unwrap());
         })
-        .await;
+            .await;
     }
 
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_two_creds_two_rev_reg_id() {
-        SetupPool::run(|setup| async move {
-            let mut issuer = Faber::setup(setup.pool_handle).await;
-            let mut verifier = Faber::setup(setup.pool_handle).await;
-            let mut consumer = create_test_alice_instance(&setup).await;
+        SetupPoolDirectory::run(|setup| async move {
+            let mut issuer = create_faber(setup.genesis_file_path.clone()).await;
+            let mut verifier = create_faber(setup.genesis_file_path.clone()).await;
+            let mut consumer = create_alice(setup.genesis_file_path).await;
 
             let (consumer_to_verifier, verifier_to_consumer) = create_connected_connections(&mut consumer, &mut verifier).await;
             let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut issuer).await;
 
-            let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _) = _create_address_schema(&issuer.profile, &issuer.config_issuer.institution_did).await;
+            let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _) =
+                _create_address_schema(&issuer.profile, &issuer.institution_did).await;
             let (address1, address2, city, state, zip) = attr_names();
             let (req1, req2) = (Some("request1"), Some("request2"));
             let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
@@ -734,7 +740,7 @@ mod integration_tests {
                 &issuer_to_consumer,
                 req1,
             )
-            .await;
+                .await;
 
             #[cfg(feature = "migration")]
             issuer.migrate().await;
@@ -751,7 +757,7 @@ mod integration_tests {
                 &issuer_to_consumer,
                 req2,
             )
-            .await;
+                .await;
 
             let mut proof_verifier = verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id, req1).await;
             prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1)).await;
@@ -791,21 +797,22 @@ mod integration_tests {
             assert!(!issuer_credential1.is_revoked(&issuer.profile.inject_anoncreds_ledger_read()).await.unwrap());
             assert!(!issuer_credential2.is_revoked(&issuer.profile.inject_anoncreds_ledger_read()).await.unwrap());
         })
-        .await;
+            .await;
     }
 
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_two_creds_two_rev_reg_id_revoke_first() {
-        SetupPool::run(|setup| async move {
-            let mut issuer = Faber::setup(setup.pool_handle).await;
-            let mut verifier = Faber::setup(setup.pool_handle).await;
-            let mut consumer = create_test_alice_instance(&setup).await;
+        SetupPoolDirectory::run(|setup| async move {
+            let mut issuer = create_faber(setup.genesis_file_path.clone()).await;
+            let mut verifier = create_faber(setup.genesis_file_path.clone()).await;
+            let mut consumer = create_alice(setup.genesis_file_path).await;
 
             let (consumer_to_verifier, verifier_to_consumer) = create_connected_connections(&mut consumer, &mut verifier).await;
             let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut issuer).await;
 
-            let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _) = _create_address_schema(&issuer.profile, &issuer.config_issuer.institution_did).await;
+            let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _) =
+                _create_address_schema(&issuer.profile, &issuer.institution_did).await;
             let (address1, address2, city, state, zip) = attr_names();
             let (req1, req2) = (Some("request1"), Some("request2"));
             let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
@@ -819,7 +826,7 @@ mod integration_tests {
                 &issuer_to_consumer,
                 req1,
             )
-            .await;
+                .await;
 
             #[cfg(feature = "migration")]
             issuer.migrate().await;
@@ -836,7 +843,7 @@ mod integration_tests {
                 &issuer_to_consumer,
                 req2,
             )
-            .await;
+                .await;
 
             assert!(!issuer_credential1.is_revoked(&issuer.profile.inject_anoncreds_ledger_read()).await.unwrap());
             assert!(!issuer_credential2.is_revoked(&issuer.profile.inject_anoncreds_ledger_read()).await.unwrap());
@@ -880,21 +887,22 @@ mod integration_tests {
             assert!(issuer_credential1.is_revoked(&issuer.profile.inject_anoncreds_ledger_read()).await.unwrap());
             assert!(!issuer_credential2.is_revoked(&issuer.profile.inject_anoncreds_ledger_read()).await.unwrap());
         })
-        .await;
+            .await;
     }
 
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_two_creds_two_rev_reg_id_revoke_second() {
-        SetupPool::run(|setup| async move {
-            let mut issuer = Faber::setup(setup.pool_handle).await;
-            let mut verifier = Faber::setup(setup.pool_handle).await;
-            let mut consumer = create_test_alice_instance(&setup).await;
+        SetupPoolDirectory::run(|setup| async move {
+            let mut issuer = create_faber(setup.genesis_file_path.clone()).await;
+            let mut verifier = create_faber(setup.genesis_file_path.clone()).await;
+            let mut consumer = create_alice(setup.genesis_file_path).await;
 
             let (consumer_to_verifier, verifier_to_consumer) = create_connected_connections(&mut consumer, &mut verifier).await;
             let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut issuer).await;
 
-            let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _) = _create_address_schema(&issuer.profile, &issuer.config_issuer.institution_did).await;
+            let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _) =
+                _create_address_schema(&issuer.profile, &issuer.institution_did).await;
             let (address1, address2, city, state, zip) = attr_names();
             let (req1, req2) = (Some("request1"), Some("request2"));
             let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
@@ -908,7 +916,7 @@ mod integration_tests {
                 &issuer_to_consumer,
                 req1,
             )
-            .await;
+                .await;
 
             #[cfg(feature = "migration")]
             issuer.migrate().await;
@@ -925,7 +933,7 @@ mod integration_tests {
                 &issuer_to_consumer,
                 req2,
             )
-            .await;
+                .await;
 
             assert!(!issuer_credential1.is_revoked(&issuer.profile.inject_anoncreds_ledger_read()).await.unwrap());
             assert!(!issuer_credential2.is_revoked(&issuer.profile.inject_anoncreds_ledger_read()).await.unwrap());
@@ -971,21 +979,21 @@ mod integration_tests {
             assert!(!issuer_credential1.is_revoked(&issuer.profile.inject_anoncreds_ledger_read()).await.unwrap());
             assert!(issuer_credential2.is_revoked(&issuer.profile.inject_anoncreds_ledger_read()).await.unwrap());
         })
-        .await;
+            .await;
     }
 
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_three_creds_one_rev_reg_revoke_all() {
-        SetupPool::run(|setup| async move {
-            let mut issuer = Faber::setup(setup.pool_handle).await;
-            let mut consumer = create_test_alice_instance(&setup).await;
+        SetupPoolDirectory::run(|setup| async move {
+            let mut issuer = create_faber(setup.genesis_file_path.clone()).await;
+            let mut consumer = create_alice(setup.genesis_file_path.clone()).await;
 
             let (consumer_to_issuer, issuer_to_consumer) =
                 create_connected_connections(&mut consumer, &mut issuer).await;
 
             let (_schema_id, _schema_json, _cred_def_id, _cred_def_json, cred_def, rev_reg, _rev_reg_id) =
-                _create_address_schema(&issuer.profile, &issuer.config_issuer.institution_did).await;
+                _create_address_schema(&issuer.profile, &issuer.institution_did).await;
 
             let (address1, address2, city, state, zip) = attr_names();
             let (req1, req2, req3) = (Some("request1"), Some("request2"), Some("request3"));
@@ -1001,7 +1009,7 @@ mod integration_tests {
                 &issuer_to_consumer,
                 req1,
             )
-            .await;
+                .await;
 
             assert!(!issuer_credential1
                 .is_revoked(&issuer.profile.inject_anoncreds_ledger_read())
@@ -1021,7 +1029,7 @@ mod integration_tests {
                 &issuer_to_consumer,
                 req2,
             )
-            .await;
+                .await;
 
             assert!(!issuer_credential2
                 .is_revoked(&issuer.profile.inject_anoncreds_ledger_read())
@@ -1048,7 +1056,7 @@ mod integration_tests {
                 &issuer_to_consumer,
                 req3,
             )
-            .await;
+                .await;
 
             revoke_credential_and_publish_accumulator(&mut issuer, &issuer_credential3, &rev_reg).await;
 

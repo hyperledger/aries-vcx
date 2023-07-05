@@ -1,7 +1,6 @@
 use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
 use std::sync::Arc;
 
-use crate::core::profile::profile::Profile;
 use crate::errors::error::prelude::*;
 
 #[derive(Clone, Deserialize, Debug, Serialize, Default)]

@@ -8,7 +8,9 @@ use aries_vcx::global::settings::CONFIG_INSTITUTION_DID;
 use diddoc_legacy::aries::service::AriesService;
 use url::Url;
 
-use crate::api_vcx::api_global::profile::get_main_profile;
+use crate::api_vcx::api_global::profile::{
+    get_main_indy_ledger_read, get_main_indy_ledger_write, get_main_profile, get_main_wallet,
+};
 use crate::api_vcx::api_global::settings::get_config_value;
 use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 use crate::errors::mapping_from_ariesvcx::map_ariesvcx_result;
@@ -17,27 +19,22 @@ use crate::errors::mapping_from_ariesvcxcore::map_ariesvcx_core_result;
 pub async fn endorse_transaction(transaction: &str) -> LibvcxResult<()> {
     let endorser_did = get_config_value(CONFIG_INSTITUTION_DID)?;
 
-    let profile = get_main_profile()?;
-    let ledger = profile.inject_indy_ledger_write();
+    let ledger = get_main_indy_ledger_write()?;
     map_ariesvcx_core_result(ledger.endorse_transaction(&endorser_did, transaction).await)
 }
 
 pub async fn get_ledger_txn(seq_no: i32, submitter_did: Option<String>) -> LibvcxResult<String> {
-    let profile = get_main_profile()?;
-    let ledger = profile.inject_indy_ledger_read();
+    let ledger = get_main_indy_ledger_read()?;
     map_ariesvcx_core_result(ledger.get_ledger_txn(seq_no, submitter_did.as_deref()).await)
 }
 
 pub async fn rotate_verkey(did: &str) -> LibvcxResult<()> {
-    let profile = get_main_profile()?;
-    map_ariesvcx_result(
-        aries_vcx::common::keys::rotate_verkey(&profile.inject_wallet(), &profile.inject_indy_ledger_write(), did)
-            .await,
-    )
+    let result = aries_vcx::common::keys::rotate_verkey(&get_main_wallet()?, &get_main_indy_ledger_write()?, did).await;
+    map_ariesvcx_result(result)
 }
 
 pub async fn get_verkey_from_ledger(did: &str) -> LibvcxResult<String> {
-    let indy_ledger = get_main_profile()?.inject_indy_ledger_read();
+    let indy_ledger = get_main_indy_ledger_read()?;
     map_ariesvcx_result(aries_vcx::common::keys::get_verkey_from_ledger(&indy_ledger, did).await)
 }
 
@@ -54,8 +51,7 @@ pub async fn ledger_write_endpoint_legacy(
         )
         .set_recipient_keys(recipient_keys)
         .set_routing_keys(routing_keys);
-    let profile = get_main_profile()?;
-    write_endpoint_legacy(&profile.inject_indy_ledger_write(), target_did, &service).await?;
+    write_endpoint_legacy(&get_main_indy_ledger_write()?, target_did, &service).await?;
     Ok(service)
 }
 
@@ -74,30 +70,25 @@ pub async fn ledger_write_endpoint(
             DidSovServiceType::DidCommunication,
         ]))
         .set_routing_keys(Some(routing_keys));
-    let profile = get_main_profile()?;
-    write_endpoint(&profile.inject_indy_ledger_write(), target_did, &service).await?;
+    write_endpoint(&get_main_indy_ledger_write()?, target_did, &service).await?;
     Ok(service)
 }
 
 pub async fn ledger_get_service(target_did: &str) -> LibvcxResult<AriesService> {
     let target_did = target_did.to_owned();
-    let profile = get_main_profile()?;
-    map_ariesvcx_result(get_service(&profile.inject_indy_ledger_read(), &target_did).await)
+    map_ariesvcx_result(get_service(&get_main_indy_ledger_read()?, &target_did).await)
 }
 
 pub async fn ledger_get_attr(target_did: &str, attr: &str) -> LibvcxResult<String> {
-    let profile = get_main_profile()?;
-    map_ariesvcx_result(get_attr(&profile.inject_indy_ledger_read(), &target_did, attr).await)
+    map_ariesvcx_result(get_attr(&get_main_indy_ledger_read()?, &target_did, attr).await)
 }
 
 pub async fn ledger_clear_attr(target_did: &str, attr: &str) -> LibvcxResult<String> {
-    let profile = get_main_profile()?;
-    map_ariesvcx_result(clear_attr(&profile.inject_indy_ledger_write(), &target_did, attr).await)
+    map_ariesvcx_result(clear_attr(&get_main_indy_ledger_write()?, &target_did, attr).await)
 }
 
 pub async fn ledger_get_txn_author_agreement() -> LibvcxResult<String> {
-    get_main_profile()?
-        .inject_indy_ledger_read()
+    get_main_indy_ledger_read()?
         .get_txn_author_agreement()
         .await?
         .ok_or_else(|| {
@@ -116,7 +107,7 @@ pub fn ledger_set_txn_author_agreement(
     time_of_acceptance: u64,
 ) -> LibvcxResult<()> {
     map_ariesvcx_result(
-        aries_vcx::aries_vcx_core::global::author_agreement::set_txn_author_agreement(
+        aries_vcx::aries_vcx_core::global::author_agreement::set_vdrtools_config_txn_author_agreement(
             text,
             version,
             hash,
@@ -131,15 +122,15 @@ pub fn ledger_set_txn_author_agreement(
 pub mod tests {
     use crate::api_vcx::api_global::ledger::{ledger_get_txn_author_agreement, ledger_set_txn_author_agreement};
     use crate::api_vcx::api_global::settings::get_config_value;
-    use aries_vcx::global::settings::{set_test_configs, CONFIG_TXN_AUTHOR_AGREEMENT};
+    use aries_vcx::aries_vcx_core::global::author_agreement::get_vdrtools_config_txn_author_agreement;
+    use aries_vcx::global::settings::CONFIG_TXN_AUTHOR_AGREEMENT;
     use aries_vcx::utils::devsetup::SetupMocks;
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_vcx_set_active_txn_author_agreement_meta() {
         let _setup = SetupMocks::init();
 
-        assert!(&get_config_value(CONFIG_TXN_AUTHOR_AGREEMENT).is_err());
+        assert!(&get_vdrtools_config_txn_author_agreement().unwrap().is_none());
 
         let text = "text";
         let version = "1.0.0";
@@ -154,7 +145,7 @@ pub mod tests {
             time_of_acceptance,
         )
         .unwrap();
-        let auth_agreement = get_config_value(CONFIG_TXN_AUTHOR_AGREEMENT).unwrap();
+        let auth_agreement = get_vdrtools_config_txn_author_agreement().unwrap().unwrap();
 
         let expected = json!({
             "text": text,
@@ -163,16 +154,12 @@ pub mod tests {
             "timeOfAcceptance": time_of_acceptance,
         });
 
-        let auth_agreement = serde_json::from_str::<::serde_json::Value>(&auth_agreement).unwrap();
+        let auth_agreement = serde_json::to_value(&auth_agreement).unwrap();
 
         assert_eq!(expected, auth_agreement);
-
-        // todo: delete the reset below?
-        set_test_configs();
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_vcx_get_ledger_author_agreement() {
         let _setup = SetupMocks::init();
 

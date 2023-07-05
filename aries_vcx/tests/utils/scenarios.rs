@@ -27,6 +27,8 @@ pub mod test_utils {
     use messages::AriesMessage;
     use serde_json::{json, Value};
 
+    use crate::utils::devsetup_alice::Alice;
+    use crate::utils::devsetup_faber::Faber;
     use aries_vcx::common::ledger::transactions::into_did_doc;
     use aries_vcx::common::primitives::credential_definition::CredentialDef;
     use aries_vcx::common::primitives::revocation_registry::RevocationRegistry;
@@ -50,8 +52,6 @@ pub mod test_utils {
     use aries_vcx::utils::constants::{DEFAULT_PROOF_NAME, TAILS_DIR, TEST_TAILS_URL};
     use aries_vcx::utils::filters::{filter_credential_offers_by_comment, filter_proof_requests_by_name};
     use aries_vcx::utils::get_temp_dir_path;
-
-    use crate::utils::devsetup_agent::test_utils::{Alice, Faber};
 
     pub fn _send_message(sender: Sender<AriesMessage>) -> Option<SendClosureConnection> {
         Some(Box::new(
@@ -923,7 +923,7 @@ pub mod test_utils {
             .publish_local_revocations(
                 &faber.profile.inject_anoncreds(),
                 &faber.profile.inject_anoncreds_ledger_write(),
-                &faber.config_issuer.institution_did,
+                &faber.institution_did,
             )
             .await
             .unwrap();
@@ -954,7 +954,7 @@ pub mod test_utils {
     ) -> RevocationRegistry {
         let mut rev_reg_new = RevocationRegistry::create(
             &faber.profile.inject_anoncreds(),
-            &faber.config_issuer.institution_did,
+            &faber.institution_did,
             &credential_def.get_cred_def_id(),
             &rev_reg.get_tails_dir(),
             10,
@@ -974,7 +974,7 @@ pub mod test_utils {
             .publish_local_revocations(
                 &institution.profile.inject_anoncreds(),
                 &institution.profile.inject_anoncreds_ledger_write(),
-                &institution.config_issuer.institution_did,
+                &institution.institution_did,
             )
             .await
             .unwrap();
@@ -1099,7 +1099,7 @@ pub mod test_utils {
         Issuer,
     ) {
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, rev_reg_id) =
-            _create_address_schema(&institution.profile, &institution.config_issuer.institution_did).await;
+            _create_address_schema(&institution.profile, &institution.institution_did).await;
 
         info!("test_real_proof_with_revocation :: AS INSTITUTION SEND CREDENTIAL OFFER");
         let (address1, address2, city, state, zip) = attr_names();
@@ -1128,13 +1128,7 @@ pub mod test_utils {
         cred_def_id: &str,
         request_name: Option<&str>,
     ) -> Verifier {
-        let _requested_attrs = requested_attrs(
-            &institution.config_issuer.institution_did,
-            &schema_id,
-            &cred_def_id,
-            None,
-            None,
-        );
+        let _requested_attrs = requested_attrs(&institution.institution_did, &schema_id, &cred_def_id, None, None);
         let requested_attrs_string = serde_json::to_string(&_requested_attrs).unwrap();
         send_proof_request(
             institution,

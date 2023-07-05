@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use aries_vcx_core::ledger::base_ledger::{TaaConfigurator, TxnAuthrAgrmtOptions};
+use aries_vcx_core::ledger::base_ledger::TxnAuthrAgrmtOptions;
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds,
     ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite},

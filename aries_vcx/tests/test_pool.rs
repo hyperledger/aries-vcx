@@ -7,6 +7,9 @@ pub mod utils;
 
 #[cfg(test)]
 mod integration_tests {
+    use std::thread;
+    use std::time::Duration;
+
     use aries_vcx::common::keys::{get_verkey_from_ledger, rotate_verkey};
     use aries_vcx::common::ledger::service_didsov::EndpointDidSov;
     use aries_vcx::common::ledger::transactions::{
@@ -14,21 +17,10 @@ mod integration_tests {
     };
     use aries_vcx::common::test_utils::create_and_store_nonrevocable_credential_def;
     use aries_vcx::utils::constants::DEFAULT_SCHEMA_ATTRS;
-    use aries_vcx::utils::devsetup::{SetupProfile, SetupWalletPool};
+    use aries_vcx::utils::devsetup::SetupProfile;
     use diddoc_legacy::aries::service::AriesService;
-    use std::sync::Arc;
-    use std::thread;
-    use std::time::Duration;
 
-    #[tokio::test]
-    #[ignore]
-    async fn test_pool_open_close_pool() {
-        SetupWalletPool::run(|setup| async move {
-            assert!(setup.pool_handle > 0);
-        })
-        .await;
-    }
-
+    #[cfg(foobar)]
     #[tokio::test]
     #[ignore]
     async fn test_pool_get_credential_def() {

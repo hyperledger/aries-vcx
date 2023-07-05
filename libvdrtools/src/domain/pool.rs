@@ -27,26 +27,26 @@ pub enum PoolMode {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct PoolOpenConfig {
-    #[serde(default = "PoolOpenConfig::default_timeout")]
+pub struct VdrtoolsPoolOpenConfig {
+    #[serde(default = "VdrtoolsPoolOpenConfig::default_timeout")]
     pub timeout: i64,
-    #[serde(default = "PoolOpenConfig::default_extended_timeout")]
+    #[serde(default = "VdrtoolsPoolOpenConfig::default_extended_timeout")]
     pub extended_timeout: i64,
-    #[serde(default = "PoolOpenConfig::default_conn_limit")]
+    #[serde(default = "VdrtoolsPoolOpenConfig::default_conn_limit")]
     pub conn_limit: usize,
-    #[serde(default = "PoolOpenConfig::default_conn_active_timeout")]
+    #[serde(default = "VdrtoolsPoolOpenConfig::default_conn_active_timeout")]
     pub conn_active_timeout: i64,
-    #[serde(default = "PoolOpenConfig::default_preordered_nodes")]
+    #[serde(default = "VdrtoolsPoolOpenConfig::default_preordered_nodes")]
     pub preordered_nodes: Vec<String>,
-    #[serde(default = "PoolOpenConfig::default_number_read_nodes")]
+    #[serde(default = "VdrtoolsPoolOpenConfig::default_number_read_nodes")]
     pub number_read_nodes: u8,
-    #[serde(default = "PoolOpenConfig::default_pool_mode")]
+    #[serde(default = "VdrtoolsPoolOpenConfig::default_pool_mode")]
     pub pool_mode: PoolMode,
     #[serde(default)]
     pub transactions: Option<String>,
 }
 
-impl Validatable for PoolOpenConfig {
+impl Validatable for VdrtoolsPoolOpenConfig {
     fn validate(&self) -> Result<(), String> {
         if self.timeout <= 0 {
             return Err(String::from("`timeout` must be greater than 0"));
@@ -72,22 +72,22 @@ impl Validatable for PoolOpenConfig {
     }
 }
 
-impl Default for PoolOpenConfig {
+impl Default for VdrtoolsPoolOpenConfig {
     fn default() -> Self {
-        PoolOpenConfig {
-            timeout: PoolOpenConfig::default_timeout(),
-            extended_timeout: PoolOpenConfig::default_extended_timeout(),
-            conn_limit: PoolOpenConfig::default_conn_limit(),
-            conn_active_timeout: PoolOpenConfig::default_conn_active_timeout(),
-            preordered_nodes: PoolOpenConfig::default_preordered_nodes(),
-            number_read_nodes: PoolOpenConfig::default_number_read_nodes(),
-            pool_mode: PoolOpenConfig::default_pool_mode(),
+        VdrtoolsPoolOpenConfig {
+            timeout: VdrtoolsPoolOpenConfig::default_timeout(),
+            extended_timeout: VdrtoolsPoolOpenConfig::default_extended_timeout(),
+            conn_limit: VdrtoolsPoolOpenConfig::default_conn_limit(),
+            conn_active_timeout: VdrtoolsPoolOpenConfig::default_conn_active_timeout(),
+            preordered_nodes: VdrtoolsPoolOpenConfig::default_preordered_nodes(),
+            number_read_nodes: VdrtoolsPoolOpenConfig::default_number_read_nodes(),
+            pool_mode: VdrtoolsPoolOpenConfig::default_pool_mode(),
             transactions: None,
         }
     }
 }
 
-impl PoolOpenConfig {
+impl VdrtoolsPoolOpenConfig {
     fn default_timeout() -> i64 {
         POOL_ACK_TIMEOUT
     }

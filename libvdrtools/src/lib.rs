@@ -23,7 +23,7 @@ mod utils;
 
 #[macro_use]
 mod controllers;
-mod domain;
+pub mod domain;
 mod services;
 
 use std::sync::Arc;

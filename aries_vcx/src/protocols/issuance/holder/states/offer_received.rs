@@ -1,7 +1,6 @@
 use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
 use std::sync::Arc;
 
-use crate::core::profile::profile::Profile;
 use crate::errors::error::prelude::*;
 use crate::handlers::util::get_attach_as_string;
 use crate::protocols::issuance::holder::state_machine::parse_cred_def_id_from_cred_offer;

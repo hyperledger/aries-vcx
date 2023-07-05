@@ -6,7 +6,6 @@ use libc::c_char;
 use aries_vcx::protocols::mediated_connection::pairwise_info::PairwiseInfo;
 use libvcx_core::api_vcx::api_handle::mediated_connection;
 use libvcx_core::api_vcx::api_handle::mediated_connection::*;
-use libvcx_core::errors;
 use libvcx_core::errors::error::{LibvcxError, LibvcxErrorKind};
 
 use crate::api_c::cutils;
@@ -1581,7 +1580,7 @@ pub extern "C" fn vcx_connection_messages_download(
 }
 
 #[cfg(test)]
-#[cfg(feature = "general_test")]
+
 mod tests {
     use std::ffi::CString;
     use std::ptr;
@@ -1607,7 +1606,6 @@ mod tests {
     use super::*;
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_vcx_connection_create() {
         let _setup = SetupMocks::init();
 
@@ -1622,7 +1620,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_vcx_connection_create_fails() {
         let _setup = SetupMocks::init();
 
@@ -1634,7 +1631,7 @@ mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
+
     async fn test_vcx_connection_connect() {
         let _setup = SetupMocks::init();
 
@@ -1664,7 +1661,7 @@ mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
+
     async fn test_vcx_connection_connect_returns_invitation() {
         let _setup = SetupMocks::init();
 
@@ -1679,7 +1676,7 @@ mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
+
     async fn test_vcx_connection_update_state() {
         let _setup = SetupMocks::init();
 
@@ -1710,7 +1707,7 @@ mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
+
     async fn test_vcx_connection_update_state_with_message() {
         let _setup = SetupMocks::init();
 
@@ -1745,7 +1742,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_vcx_connection_update_state_fails() {
         let _setup = SetupMocks::init();
 
@@ -1754,7 +1750,7 @@ mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
+
     async fn test_vcx_connection_serialize() {
         let _setup = SetupMocks::init();
 
@@ -1769,7 +1765,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_vcx_connection_deserialize_succeeds() {
         let _setup = SetupMocks::init();
 
@@ -1785,7 +1780,7 @@ mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
+
     async fn test_vcx_connection_get_state() {
         let _setup = SetupMocks::init();
 
@@ -1812,7 +1807,7 @@ mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
+
     async fn test_vcx_connection_delete_connection() {
         let _setup = SetupMocks::init();
 
@@ -1836,7 +1831,7 @@ mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
+
     async fn test_send_message() {
         let _setup = SetupMocks::init();
 
@@ -1862,7 +1857,7 @@ mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
+
     async fn test_sign() {
         let _setup = SetupMocks::init();
 
@@ -1887,7 +1882,7 @@ mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
+
     async fn test_verify_signature() {
         let _setup = SetupMocks::init();
 

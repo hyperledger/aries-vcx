@@ -12,7 +12,7 @@ use crate::{
 use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
 
 #[derive(Debug)]
-pub(crate) struct MockAnoncreds;
+pub struct MockAnoncreds;
 
 // NOTE : currently matches the expected results if indy_mocks are enabled
 /// Implementation of [BaseAnoncreds] which responds with mock data

@@ -1,6 +1,5 @@
 #[macro_use]
 extern crate log;
-
 #[macro_use]
 extern crate serde_json;
 
@@ -16,22 +15,22 @@ mod integration_tests {
     use agency_client::messages::update_message::UIDsByConn;
     use agency_client::MessageStatusCode;
     use aries_vcx::global::settings;
-    use aries_vcx::utils::devsetup::SetupPool;
+    use aries_vcx::utils::devsetup::SetupPoolDirectory;
     use aries_vcx_core::wallet::agency_client_wallet::ToBaseAgencyClientWallet;
     use messages::msg_fields::protocols::cred_issuance::offer_credential::OfferCredentialDecorators;
     use messages::msg_fields::protocols::cred_issuance::{CredentialAttr, CredentialPreview};
     use messages::msg_fields::protocols::notification::Notification;
 
-    use crate::utils::devsetup_agent::test_utils::create_test_alice_instance;
-    use crate::utils::devsetup_agent::test_utils::Faber;
+    use crate::utils::devsetup_alice::create_alice;
+    use crate::utils::devsetup_faber::{create_faber, Faber};
     use crate::utils::scenarios::test_utils::create_connected_connections;
 
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_send_and_download_messages() {
-        SetupPool::run(|setup| async move {
-            let mut institution = Faber::setup(setup.pool_handle).await;
-            let mut consumer = create_test_alice_instance(&setup).await;
+        SetupPoolDirectory::run(|setup| async move {
+            let mut institution = create_faber(setup.genesis_file_path.clone()).await;
+            let mut consumer = create_alice(setup.genesis_file_path).await;
 
             let (alice_to_faber, faber_to_alice) = create_connected_connections(&mut consumer, &mut institution).await;
 
@@ -125,9 +124,9 @@ mod integration_tests {
             AriesMessage,
         };
 
-        SetupPool::run(|setup| async move {
-            let mut faber = Faber::setup(setup.pool_handle).await;
-            let mut alice = create_test_alice_instance(&setup).await;
+        SetupPoolDirectory::run(|setup| async move {
+            let mut faber = create_faber(setup.genesis_file_path.clone()).await;
+            let mut alice = create_alice(setup.genesis_file_path.clone()).await;
 
             let invite = faber.create_invite().await;
             alice.accept_invite(&invite).await;
@@ -280,10 +279,10 @@ mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_download_messages() {
-        SetupPool::run(|setup| async move {
-            let mut institution = Faber::setup(setup.pool_handle).await;
-            let mut consumer1 = create_test_alice_instance(&setup).await;
-            let mut consumer2 = create_test_alice_instance(&setup).await;
+        SetupPoolDirectory::run(|setup| async move {
+            let mut institution = create_faber(setup.genesis_file_path.clone()).await;
+            let mut consumer1 = create_alice(setup.genesis_file_path.clone()).await;
+            let mut consumer2 = create_alice(setup.genesis_file_path).await;
 
             let (consumer1_to_institution, institution_to_consumer1) =
                 create_connected_connections(&mut consumer1, &mut institution).await;
@@ -337,9 +336,9 @@ mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_update_agency_messages() {
-        SetupPool::run(|setup| async move {
-            let mut faber = Faber::setup(setup.pool_handle).await;
-            let mut alice = create_test_alice_instance(&setup).await;
+        SetupPoolDirectory::run(|setup| async move {
+            let mut faber = create_faber(setup.genesis_file_path.clone()).await;
+            let mut alice = create_alice(setup.genesis_file_path).await;
 
             let (alice_to_faber, faber_to_alice) = create_connected_connections(&mut alice, &mut faber).await;
 
@@ -413,10 +412,10 @@ mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_download_messages_from_multiple_connections() {
-        SetupPool::run(|setup| async move {
-            let mut institution = Faber::setup(setup.pool_handle).await;
-            let mut consumer1 = create_test_alice_instance(&setup).await;
-            let mut consumer2 = create_test_alice_instance(&setup).await;
+        SetupPoolDirectory::run(|setup| async move {
+            let mut institution = create_faber(setup.genesis_file_path.clone()).await;
+            let mut consumer1 = create_alice(setup.genesis_file_path.clone()).await;
+            let mut consumer2 = create_alice(setup.genesis_file_path.clone()).await;
 
             let (consumer1_to_institution, institution_to_consumer1) =
                 create_connected_connections(&mut consumer1, &mut institution).await;
@@ -455,7 +454,7 @@ mod integration_tests {
             wallet::{base_wallet::BaseWallet, indy_wallet::IndySdkWallet},
         };
 
-        SetupPool::run(|_setup| async move {
+        SetupPoolDirectory::run(|_setup| async move {
             let wallet_config = WalletConfig {
                 wallet_name: format!("wallet_{}", uuid::Uuid::new_v4().to_string()),
                 wallet_key: settings::DEFAULT_WALLET_KEY.into(),

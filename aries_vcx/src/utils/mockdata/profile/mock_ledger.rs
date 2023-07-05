@@ -6,7 +6,7 @@ use crate::utils;
 use crate::utils::constants::{rev_def_json, CRED_DEF_JSON, REV_REG_DELTA_JSON, REV_REG_ID, REV_REG_JSON, SCHEMA_JSON};
 
 #[derive(Debug)]
-pub(crate) struct MockLedger;
+pub struct MockLedger;
 
 #[allow(unused)]
 #[async_trait]

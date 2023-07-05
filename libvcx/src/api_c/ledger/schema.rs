@@ -5,7 +5,6 @@ use libc::c_char;
 use serde_json;
 
 use libvcx_core::api_vcx::api_handle::schema;
-use libvcx_core::errors;
 use libvcx_core::errors::error::{LibvcxError, LibvcxErrorKind};
 
 use crate::api_c::cutils::cstring::CStringUtils;
@@ -487,7 +486,6 @@ pub extern "C" fn vcx_schema_get_state(
 }
 
 #[cfg(test)]
-#[cfg(feature = "test_utils")]
 mod tests {
     use std::ffi::CString;
 
@@ -536,7 +534,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_vcx_create_schema_success() {
         let _setup = SetupMocks::init();
 
@@ -546,7 +543,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_vcx_schema_serialize() {
         let _setup = SetupMocks::init();
 
@@ -557,7 +553,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_vcx_schema_deserialize_succeeds() {
         let _setup = SetupMocks::init();
 
@@ -573,7 +568,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_vcx_schema_get_schema_id_succeeds() {
         let _setup = SetupMocks::init();
 
@@ -590,7 +584,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_vcx_schema_get_attrs() {
         let _setup = SetupMocks::init();
 
@@ -612,7 +605,7 @@ mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
+
     async fn test_vcx_schema_get_state() {
         let _setup = SetupMocks::init();
 

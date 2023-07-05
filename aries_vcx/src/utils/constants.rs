@@ -1815,8 +1815,7 @@ pub static DEFAULT_PROOF_NAME: &str = "PROOF_NAME";
 pub static DEMO_AGENT_PW_SEED: &str = "00000000000000000000001DIRECTION";
 pub static DEMO_ISSUER_PW_SEED: &str = "000000000000000000000000Issuer08";
 pub static CONSUMER_SEED: &str = "00000000000000000000002DIRECTION";
-pub static POOL: &str = "pool1";
-pub static GENESIS_PATH: &str = "pool1.txn";
+pub static POOL1_TXN: &str = "pool1.txn";
 pub static INSTITUTION_DID: &str = "2hoqvcwupRTUNkXn6ArYzs";
 pub static DEV_GENESIS_NODE_TXNS: &[&str; 4] = &[
     r#"{"data":{"alias":"Node1","blskey":"4N8aUNHSgjQVgkpm8nhNEfDf6txHznoYREg9kirmJrkivgL4oSEimFF6nsQ6M41QvhM2Z33nves5vfSn9n1UwNFJBYtWVnHYMATn76vLuL3zU88KyeAYcHfsih3He6UHcXDxcaecHVz6jhCYz1P2UZn2bDVruL5wXpehgBfBaLKm3Ba","client_ip":"35.164.240.131","client_port":9702,"node_ip":"35.164.240.131","node_port":9701,"services":["VALIDATOR"]},"dest":"Gw6pDLhcBcoQesN72qfotTgFa7cbuqZpkX3Xo6pLhPhv","identifier":"Th7MpTaRZVRYnPiabds81Y","txnId":"fea82e10e894419fe2bea7d96296a6d46f50f93f9eeda954ec461b2ed2950b62","type":"0"}"#,

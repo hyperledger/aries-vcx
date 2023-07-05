@@ -8,7 +8,9 @@ use aries_vcx::handlers::issuance::holder::Holder;
 use aries_vcx::utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
 use aries_vcx::{global::settings::indy_mocks_enabled, utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER};
 
-use crate::api_vcx::api_global::profile::{get_main_profile, get_main_profile_optional_pool};
+use crate::api_vcx::api_global::profile::{
+    get_main_anoncreds, get_main_anoncreds_ledger_read, get_main_indy_ledger_read, get_main_profile,
+};
 use crate::api_vcx::api_handle::mediated_connection;
 use crate::api_vcx::api_handle::object_cache::ObjectCache;
 
@@ -114,7 +116,7 @@ pub async fn credential_create_with_msgid(
 
 pub async fn update_state(credential_handle: u32, message: Option<&str>, connection_handle: u32) -> LibvcxResult<u32> {
     let mut credential = HANDLE_MAP.get_cloned(credential_handle)?;
-    let profile = get_main_profile()?;
+    let profile = get_main_profile();
 
     trace!("credential::update_state >>> ");
     if credential.is_terminal_state() {
@@ -131,8 +133,8 @@ pub async fn update_state(credential_handle: u32, message: Option<&str>, connect
         })?;
         credential
             .step(
-                &profile.inject_anoncreds_ledger_read(),
-                &profile.inject_anoncreds(),
+                &get_main_anoncreds_ledger_read()?,
+                &get_main_anoncreds()?,
                 message.into(),
                 Some(send_message),
             )
@@ -142,8 +144,8 @@ pub async fn update_state(credential_handle: u32, message: Option<&str>, connect
         if let Some((uid, msg)) = credential.find_message_to_handle(messages) {
             credential
                 .step(
-                    &profile.inject_anoncreds_ledger_read(),
-                    &profile.inject_anoncreds(),
+                    &get_main_anoncreds_ledger_read()?,
+                    &get_main_anoncreds()?,
                     msg.into(),
                     Some(send_message),
                 )
@@ -194,9 +196,8 @@ pub fn get_rev_reg_id(handle: u32) -> LibvcxResult<String> {
 
 pub async fn is_revokable(handle: u32) -> LibvcxResult<bool> {
     let credential = HANDLE_MAP.get_cloned(handle)?;
-    let profile = get_main_profile()?;
     credential
-        .is_revokable(&profile.inject_anoncreds_ledger_read())
+        .is_revokable(&get_main_anoncreds_ledger_read()?)
         .await
         .map_err(|err| err.into())
 }
@@ -204,8 +205,7 @@ pub async fn is_revokable(handle: u32) -> LibvcxResult<bool> {
 pub async fn delete_credential(handle: u32) -> LibvcxResult<()> {
     trace!("Credential::delete_credential >>> credential_handle: {}", handle);
     let credential = HANDLE_MAP.get_cloned(handle)?;
-    let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
-    credential.delete_credential(&profile.inject_anoncreds()).await?;
+    credential.delete_credential(&get_main_anoncreds()?).await?;
     HANDLE_MAP.release(handle)
 }
 
@@ -230,11 +230,10 @@ pub async fn send_credential_request(handle: u32, connection_handle: u32) -> Lib
     let mut credential = HANDLE_MAP.get_cloned(handle)?;
     let my_pw_did = mediated_connection::get_pw_did(connection_handle)?;
     let send_message = mediated_connection::send_message_closure(connection_handle).await?;
-    let profile = get_main_profile()?;
     credential
         .send_request(
-            &profile.inject_anoncreds_ledger_read(),
-            &profile.inject_anoncreds(),
+            &get_main_anoncreds_ledger_read()?,
+            &get_main_anoncreds()?,
             my_pw_did,
             send_message,
         )
@@ -362,7 +361,6 @@ pub async fn decline_offer(handle: u32, connection_handle: u32, comment: Option<
     HANDLE_MAP.insert(handle, credential)
 }
 
-#[cfg(feature = "test_utils")]
 pub mod tests_utils {
     pub const BAD_CREDENTIAL_OFFER: &str = r#"{"version": "0.1","to_did": "LtMgSjtFcyPwenK9SHCyb8","from_did": "LtMgSjtFcyPwenK9SHCyb8","claim": {"account_num": ["8BEaoLf8TBmK4BUyX8WWnA"],"name_on_account": ["Alice"]},"schema_seq_no": 48,"issuer_did": "Pd4fnFtRBcMKRVC2go5w3j","claim_name": "Account Certificate","claim_id": "3675417066","msg_ref_id": "ymy5nth"}"#;
 }
@@ -378,12 +376,12 @@ pub mod tests {
         ARIES_CREDENTIAL_OFFER, ARIES_CREDENTIAL_OFFER_JSON_FORMAT, ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED,
     };
 
-    #[cfg(feature = "test_utils")]
+    #[cfg(test)]
     use crate::api_vcx::api_handle::credential::tests_utils::BAD_CREDENTIAL_OFFER;
     use crate::api_vcx::api_handle::credential::{
         credential_create_with_offer, get_attributes, get_credential, send_credential_request,
     };
-    #[cfg(feature = "test_utils")]
+    #[cfg(test)]
     use crate::api_vcx::api_handle::mediated_connection::test_utils::{
         build_test_connection_invitee_completed, build_test_connection_inviter_requested,
     };
@@ -398,7 +396,6 @@ pub mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_vcx_credential_release() {
         let _setup = SetupDefaults::init();
         let handle = credential_create_with_offer("test_credential_create_with_offer", ARIES_CREDENTIAL_OFFER).unwrap();
@@ -407,7 +404,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_credential_create_with_offer() {
         let _setup = SetupDefaults::init();
 
@@ -416,7 +412,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_credential_create_with_offer_with_json_attach() {
         let _setup = SetupDefaults::init();
 
@@ -427,7 +422,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_credential_create_with_bad_offer() {
         let _setup = SetupDefaults::init();
 
@@ -437,7 +431,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_credential_serialize_deserialize() {
         let _setup = SetupDefaults::init();
 
@@ -456,7 +449,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn full_credential_test() {
         let _setup = SetupMocks::init();
 
@@ -510,7 +502,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_get_attributes_json_attach() {
         let _setup = SetupMocks::init();
 
@@ -525,7 +516,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_get_credential_offer() {
         let _setup = SetupMocks::init();
 
@@ -540,7 +530,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_get_credential_and_deserialize() {
         let _setup = SetupMocks::init();
 

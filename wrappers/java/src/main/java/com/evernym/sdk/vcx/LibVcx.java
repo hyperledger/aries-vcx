@@ -555,9 +555,6 @@ public abstract class LibVcx {
         /** Close a search */
         public int vcx_wallet_close_search(int command_handle, int search_handle, Callback cb);
 
-        /** Set wallet handle manually */
-        public int vcx_wallet_set_handle(int handle);
-
         /**
          * message object
          *

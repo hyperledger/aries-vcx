@@ -105,6 +105,10 @@ impl BaseWallet for AgencyClientWallet {
     async fn unpack_message(&self, msg: &[u8]) -> VcxCoreResult<Vec<u8>> {
         Ok(self.inner.unpack_message(msg).await?)
     }
+
+    fn get_wallet_handle(&self) -> i32 {
+        unimplemented!("AgencyClientWallet::get_wallet_handle - this was not expected to be called")
+    }
 }
 
 pub trait ToBaseWallet {

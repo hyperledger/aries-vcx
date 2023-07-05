@@ -2,7 +2,6 @@ use std::collections::HashMap;
 use std::fmt;
 use std::sync::Arc;
 
-use crate::core::profile::profile::Profile;
 use crate::errors::error::prelude::*;
 use crate::handlers::proof_presentation::types::SelectedCredentials;
 use crate::handlers::util::{

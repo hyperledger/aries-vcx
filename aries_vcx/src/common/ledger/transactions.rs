@@ -12,7 +12,7 @@ use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use serde_json::Value;
 
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
-use crate::{common::keys::get_verkey_from_ledger, core::profile::profile::Profile, global::settings};
+use crate::{common::keys::get_verkey_from_ledger, global::settings};
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
