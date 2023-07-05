@@ -850,7 +850,7 @@ jobs:
               set -e
               sudo apt-get update -y
               sudo apt-get install -y libssl-dev libzmq3-dev
-              npm run build:napi -- --target x86_64-unknown-linux-gnu
+              npm run build:napi -- --target x86_64-unknown-linux-gnu --features "ledger_indyvdr,anoncreds_credx"
               strip *.node
           - host: ubuntu-20.04
             target: x86_64-unknown-linux-musl
@@ -858,13 +858,13 @@ jobs:
             build: |-
               set -e
               cd wrappers/vcx-napi-rs
-              npm run build:napi
+              npm run build:napi --features "ledger_indyvdr,anoncreds_credx"
               strip *.node
           - host: macos-latest
             target: x86_64-apple-darwin
             build: |
               brew install openssl zmq pkg-config
-              npm run build:napi
+              npm run build:napi --features "ledger_indyvdr,anoncreds_credx"
               strip -x *.node
           - host: macos-latest
             target: aarch64-apple-darwin
@@ -888,7 +888,7 @@ jobs:
               export PKG_CONFIG_ALLOW_CROSS=1
               export PKG_CONFIG_SYSROOT_DIR=/
               export RUST_BACKTRACE=1
-              npm run build:napi -- --target aarch64-apple-darwin
+              npm run build:napi -- --target aarch64-apple-darwin --features "ledger_indyvdr,anoncreds_credx"
               strip -x *.node
     name: ${{ matrix.settings.target }}
     runs-on: ${{ matrix.settings.host }}
