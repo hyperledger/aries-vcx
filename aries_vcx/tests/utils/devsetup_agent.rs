@@ -3,6 +3,7 @@ pub mod test_utils {
     use std::collections::HashMap;
     use std::sync::Arc;
 
+    use aries_vcx::common::proofs::proof_request_internal::{AttrInfo, Restrictions};
     #[cfg(feature = "modular_libs")]
     use aries_vcx::core::profile::modular_libs_profile::ModularLibsProfile;
     use aries_vcx::core::profile::profile::Profile;
@@ -259,17 +260,30 @@ pub mod test_utils {
         }
 
         pub async fn create_presentation_request(&self) -> Verifier {
-            let requested_attrs = json!([
-                {"name": "name"},
-                {"name": "date"},
-                {"name": "degree"},
-                {"name": "empty_param", "restrictions": {"attr::empty_param::value": ""}}
-            ])
-            .to_string();
+            let requested_attrs = vec![
+                AttrInfo {
+                    name: Some(String::from("name")),
+                    ..AttrInfo::default()
+                },
+                AttrInfo {
+                    name: Some(String::from("date")),
+                    ..AttrInfo::default()
+                },
+                AttrInfo {
+                    name: Some(String::from("degree")),
+                    ..AttrInfo::default()
+                },
+                AttrInfo {
+                    name: Some(String::from("empty_param")),
+                    restrictions: Some(Restrictions::V2(json!([{ "attr::empty_param::value": "" }]))),
+                    ..AttrInfo::default()
+                },
+            ];
+
             let presentation_request_data = PresentationRequestData::create(&self.profile.inject_anoncreds(), "1")
                 .await
                 .unwrap()
-                .set_requested_attributes_as_string(requested_attrs)
+                .set_requested_attributes_as_vec(requested_attrs)
                 .unwrap();
             Verifier::create_from_request(String::from("alice_degree"), &presentation_request_data).unwrap()
         }

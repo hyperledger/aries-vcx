@@ -58,6 +58,7 @@ pub async fn validate_indy_proof(
 #[allow(clippy::unwrap_used)]
 pub mod unit_tests {
     use crate::common::proofs::proof_request::ProofRequestData;
+    use crate::common::proofs::proof_request_internal::{AttrInfo, Filter, PredicateInfo, Restrictions};
     use crate::common::test_utils::create_and_store_nonrevocable_credential;
     use crate::utils;
     use crate::utils::devsetup::SetupProfile;
@@ -68,17 +69,18 @@ pub mod unit_tests {
     #[ignore]
     async fn test_pool_proof_self_attested_proof_validation() {
         SetupProfile::run(|setup| async move {
-            let requested_attrs = json!([
-                json!({
-                    "name":"address1",
-                    "self_attest_allowed": true,
-                }),
-                json!({
-                    "name":"zip",
-                    "self_attest_allowed": true,
-                }),
-            ])
-            .to_string();
+            let requested_attrs = vec![
+                AttrInfo {
+                    name: Some(String::from("address1")),
+                    self_attest_allowed: Some(true),
+                    ..AttrInfo::default()
+                },
+                AttrInfo {
+                    name: Some(String::from("zip")),
+                    self_attest_allowed: Some(true),
+                    ..AttrInfo::default()
+                },
+            ];
             let requested_predicates = json!([]).to_string();
             let revocation_details = r#"{"support_revocation":false}"#.to_string();
             let name = "Optional".to_owned();
@@ -86,7 +88,7 @@ pub mod unit_tests {
             let proof_req_json = ProofRequestData::create(&setup.profile.inject_anoncreds(), &name)
                 .await
                 .unwrap()
-                .set_requested_attributes_as_string(requested_attrs)
+                .set_requested_attributes_as_vec(requested_attrs)
                 .unwrap()
                 .set_requested_predicates_as_string(requested_predicates)
                 .unwrap()
@@ -135,20 +137,23 @@ pub mod unit_tests {
     #[ignore]
     async fn test_pool_proof_restrictions() {
         SetupProfile::run(|setup| async move {
-            let requested_attrs = json!([
-                json!({
-                    "name":"address1",
-                    "restrictions": [{ "issuer_did": "Not Here" }],
-                }),
-                json!({
-                    "name":"zip",
-                }),
-                json!({
-                    "name":"self_attest",
-                    "self_attest_allowed": true,
-                }),
-            ])
-            .to_string();
+            let requested_attrs = vec![
+                AttrInfo {
+                    name: Some(String::from("address1")),
+                    restrictions: Some(Restrictions::V2(json!([{ "issuer_did": "Not Here" }]))),
+                    ..AttrInfo::default()
+                },
+                AttrInfo {
+                    name: Some(String::from("zip")),
+                    ..AttrInfo::default()
+                },
+                AttrInfo {
+                    name: Some(String::from("self_attest")),
+                    self_attest_allowed: Some(true),
+                    ..AttrInfo::default()
+                },
+            ];
+
             let requested_predicates = json!([]).to_string();
             let revocation_details = r#"{"support_revocation":true}"#.to_string();
             let name = "Optional".to_owned();
@@ -156,7 +161,7 @@ pub mod unit_tests {
             let proof_req_json = ProofRequestData::create(&setup.profile.inject_anoncreds(), &name)
                 .await
                 .unwrap()
-                .set_requested_attributes_as_string(requested_attrs)
+                .set_requested_attributes_as_vec(requested_attrs)
                 .unwrap()
                 .set_requested_predicates_as_string(requested_predicates)
                 .unwrap()
@@ -234,21 +239,23 @@ pub mod unit_tests {
     #[ignore]
     async fn test_pool_proof_validate_attribute() {
         SetupProfile::run(|setup| async move {
-            let requested_attrs = json!([
-                json!({
-                    "name":"address1",
-                    "restrictions": [json!({ "issuer_did": setup.institution_did })]
-                }),
-                json!({
-                    "name":"zip",
-                    "restrictions": [json!({ "issuer_did": setup.institution_did })]
-                }),
-                json!({
-                    "name":"self_attest",
-                    "self_attest_allowed": true,
-                }),
-            ])
-            .to_string();
+            let requested_attrs = vec![
+                AttrInfo {
+                    name: Some(String::from("address1")),
+                    restrictions: Some(Restrictions::V2(json!([{ "issuer_did": "setup.institution_did" }]))),
+                    ..AttrInfo::default()
+                },
+                AttrInfo {
+                    name: Some(String::from("zip")),
+                    restrictions: Some(Restrictions::V2(json!([{ "issuer_did": "setup.institution_did" }]))),
+                    ..AttrInfo::default()
+                },
+                AttrInfo {
+                    name: Some(String::from("self_attest")),
+                    self_attest_allowed: Some(true),
+                    ..AttrInfo::default()
+                },
+            ];
             let requested_predicates = json!([]).to_string();
             let revocation_details = r#"{"support_revocation":true}"#.to_string();
             let name = "Optional".to_owned();
@@ -256,7 +263,7 @@ pub mod unit_tests {
             let proof_req_json = ProofRequestData::create(&setup.profile.inject_anoncreds(), &name)
                 .await
                 .unwrap()
-                .set_requested_attributes_as_string(requested_attrs)
+                .set_requested_attributes_as_vec(requested_attrs)
                 .unwrap()
                 .set_requested_predicates_as_string(requested_predicates)
                 .unwrap()

@@ -108,7 +108,7 @@ impl ProofRequestData {
         Ok(self)
     }
 
-    fn set_requested_predicates_as_vec(mut self, predicates: Vec<PredicateInfo>) -> VcxResult<Self> {
+    pub fn set_requested_predicates_as_vec(mut self, predicates: Vec<PredicateInfo>) -> VcxResult<Self> {
         self.requested_predicates = predicates
             .into_iter()
             .enumerate()
@@ -155,7 +155,10 @@ pub mod test_utils {
 
     pub fn _presentation_request_data() -> PresentationRequestData {
         PresentationRequestData::default()
-            .set_requested_attributes_as_string(json!([{"name": "name"}]).to_string())
+            .set_requested_attributes_as_vec(vec![AttrInfo {
+                name: Some(String::from("name")),
+                ..AttrInfo::default()
+            }])
             .unwrap()
     }
 }
