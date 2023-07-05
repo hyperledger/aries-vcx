@@ -607,7 +607,6 @@ mod tests {
     use aries_vcx::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER;
     use aries_vcx::utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION;
     use libvcx_core;
-    use libvcx_core::api_vcx::api_global::pool::reset_global_ledger_components;
     use libvcx_core::api_vcx::api_global::settings;
     use libvcx_core::api_vcx::api_global::wallet::close_main_wallet;
     #[cfg(test)]

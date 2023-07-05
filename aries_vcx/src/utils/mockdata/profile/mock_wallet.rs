@@ -4,6 +4,8 @@ use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use async_trait::async_trait;
 
 use crate::utils::{self};
+#[cfg(feature = "vdrtools")]
+use aries_vcx_core::WalletHandle;
 use std::collections::HashMap;
 
 #[derive(Debug)]
@@ -14,8 +16,9 @@ pub struct MockWallet;
 #[allow(unused)]
 #[async_trait]
 impl BaseWallet for MockWallet {
-    fn get_wallet_handle(&self) -> i32 {
-        1
+    #[cfg(feature = "vdrtools")]
+    fn get_wallet_handle(&self) -> WalletHandle {
+        WalletHandle(1)
     }
 
     async fn create_and_store_my_did(

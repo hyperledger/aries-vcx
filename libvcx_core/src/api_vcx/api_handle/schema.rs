@@ -275,6 +275,8 @@ pub mod tests {
             let err = create_and_publish_schema("id_2", schema_name, schema_version, data)
                 .await
                 .unwrap_err();
+            error!("err: {:?}", err);
+            // .unwrap_err();
 
             assert_eq!(err.kind(), LibvcxErrorKind::DuplicationSchema);
         })

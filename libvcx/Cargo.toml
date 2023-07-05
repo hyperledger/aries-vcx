@@ -14,6 +14,12 @@ doctest = false
 [features]
 fatal_warnings = []
 
+ledger_indyvdr = ["libvcx_core/ledger_indyvdr"]
+ledger_vdrtools = ["libvcx_core/ledger_vdrtools"]
+
+anoncreds_credx = ["libvcx_core/anoncreds_credx"]
+anoncreds_vdrtools = ["libvcx_core/anoncreds_vdrtools"]
+
 [dependencies]
 num-traits = "0.2.0"
 once_cell = { version = "1.15" }

@@ -2,9 +2,9 @@ use std::fmt::{Debug, Formatter};
 use std::sync::{Arc, RwLockReadGuard};
 
 use crate::api_vcx::api_global::pool::{
-    ledger_anoncreds_read, ledger_anoncreds_write, ledger_indy_read, ledger_indy_write,
+    global_ledger_anoncreds_read, global_ledger_anoncreds_write, global_ledger_indy_read, global_ledger_indy_write,
 };
-use crate::api_vcx::api_global::wallet::{base_anoncreds, base_wallet};
+use crate::api_vcx::api_global::wallet::{global_base_anoncreds, global_base_wallet};
 use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 use aries_vcx::aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
 use aries_vcx::aries_vcx_core::ledger::base_ledger::{
@@ -50,7 +50,7 @@ impl Debug for VcxGlobalsProfile {
 
 impl ProfileV2 for VcxGlobalsProfile {
     fn inject_indy_ledger_read(&self) -> LibvcxResult<Arc<dyn IndyLedgerRead>> {
-        let ledger = ledger_indy_read.read()?;
+        let ledger = global_ledger_indy_read.read()?;
         match ledger.as_ref() {
             None => Err(LibvcxError::from_msg(
                 LibvcxErrorKind::NotReady,
@@ -61,7 +61,7 @@ impl ProfileV2 for VcxGlobalsProfile {
     }
 
     fn inject_indy_ledger_write(&self) -> LibvcxResult<Arc<dyn IndyLedgerWrite>> {
-        let ledger = ledger_indy_write.read()?;
+        let ledger = global_ledger_indy_write.read()?;
         match ledger.as_ref() {
             None => Err(LibvcxError::from_msg(
                 LibvcxErrorKind::NotReady,
@@ -72,7 +72,7 @@ impl ProfileV2 for VcxGlobalsProfile {
     }
 
     fn inject_anoncreds(&self) -> LibvcxResult<Arc<dyn BaseAnonCreds>> {
-        let anoncreds = base_anoncreds.read()?;
+        let anoncreds = global_base_anoncreds.read()?;
         match anoncreds.as_ref() {
             None => Err(LibvcxError::from_msg(
                 LibvcxErrorKind::NotReady,
@@ -83,7 +83,7 @@ impl ProfileV2 for VcxGlobalsProfile {
     }
 
     fn inject_anoncreds_ledger_read(&self) -> LibvcxResult<Arc<dyn AnoncredsLedgerRead>> {
-        let ledger = ledger_anoncreds_read.read()?;
+        let ledger = global_ledger_anoncreds_read.read()?;
         match ledger.as_ref() {
             None => Err(LibvcxError::from_msg(
                 LibvcxErrorKind::NotReady,
@@ -94,7 +94,7 @@ impl ProfileV2 for VcxGlobalsProfile {
     }
 
     fn inject_anoncreds_ledger_write(&self) -> LibvcxResult<Arc<dyn AnoncredsLedgerWrite>> {
-        let ledger = ledger_anoncreds_write.read()?;
+        let ledger = global_ledger_anoncreds_write.read()?;
         match ledger.as_ref() {
             None => Err(LibvcxError::from_msg(
                 LibvcxErrorKind::NotReady,
@@ -105,8 +105,8 @@ impl ProfileV2 for VcxGlobalsProfile {
     }
 
     fn inject_wallet(&self) -> LibvcxResult<Arc<dyn BaseWallet>> {
-        let global_base_wallet = base_wallet.read()?;
-        match global_base_wallet.as_ref() {
+        let base_wallet = global_base_wallet.read()?;
+        match base_wallet.as_ref() {
             None => Err(LibvcxError::from_msg(
                 LibvcxErrorKind::NotReady,
                 "Wallet is not initialized",
@@ -116,8 +116,8 @@ impl ProfileV2 for VcxGlobalsProfile {
     }
 
     fn try_inject_wallet(&self) -> LibvcxResult<Option<Arc<dyn BaseWallet>>> {
-        let global_base_wallet = base_wallet.read()?;
-        global_base_wallet
+        let base_wallet = global_base_wallet.read()?;
+        base_wallet
             .as_ref()
             .map(|w| Some(Arc::clone(w)))
             .ok_or_else(|| LibvcxError::from_msg(LibvcxErrorKind::NotReady, "Wallet is not initialized"))
