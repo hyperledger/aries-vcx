@@ -401,10 +401,7 @@ where
             if let AriesVcxCoreErrorKind::InvalidLedgerResponse = err.kind() {
                 return Err(AriesVcxCoreError::from_msg(
                     AriesVcxCoreErrorKind::DuplicationSchema,
-                    format!(
-                        "Schema probably already exists, ledger request failed: {:?}",
-                        err.clone()
-                    ),
+                    format!("Schema probably already exists, ledger request failed: {:?}", &err),
                 ));
             }
         }
