@@ -11,10 +11,6 @@ path = "src/lib.rs"
 crate-type = ["cdylib"]
 doctest = false
 
-[features]
-#default = [ "ledger_vdrtools", "anoncreds_credx" ]
-default = [ "ledger_indyvdr", "anoncreds_vdrtools" ]
-
 ledger_indyvdr = ["libvcx_core/ledger_indyvdr"]
 ledger_vdrtools = ["libvcx_core/ledger_vdrtools"]
 
