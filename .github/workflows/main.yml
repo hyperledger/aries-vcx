@@ -491,7 +491,7 @@ jobs:
       - name: "Setup rust testing environment"
         uses: ./.github/actions/setup-testing-rust
       - name: "Run aries-vcx integration tests"
-        run: RUST_LOG=trace RUST_TEST_THREADS=1 cargo test --manifest-path="aries_vcx/Cargo.toml" -- --ignored;
+        run: RUST_TEST_THREADS=1 cargo test --manifest-path="aries_vcx/Cargo.toml" -- --ignored;
 
   test-integration-aries-vcx-mysql:
     needs: workflow-setup
@@ -600,7 +600,7 @@ jobs:
           skip-docker-setup: true
           node-version: ${{ matrix.node-version }}
       - name: "Run tests"
-        run: cd wrappers/node && RUST_LOG=vcx=trace npm run test
+        run: cd wrappers/node && npm run test
 
   test-integration-node-wrapper:
     needs: workflow-setup
