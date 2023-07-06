@@ -4526,7 +4526,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "simple_local_relay"
+name = "simple_message_relay"
 version = "0.1.0"
 dependencies = [
  "actix-web",

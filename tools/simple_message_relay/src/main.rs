@@ -69,7 +69,7 @@ async fn main() -> std::io::Result<()> {
             .service(receive_user_message)
             .service(status)
     })
-    .bind(("127.0.0.1", 8208))?
+    .bind(("127.0.0.1", 8420))?
     .run()
     .await
 }
