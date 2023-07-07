@@ -1,8 +1,6 @@
 use chrono::{DateTime, Utc};
 use serde::{de::Error, Deserializer, Serialize};
 
-pub const MSG_TYPE: &str = "@type";
-
 /// Used for creating a deserialization error.
 /// Some messages, or rather, message types, are not meant
 /// to be used as standalone messages.
