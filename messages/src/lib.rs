@@ -17,10 +17,8 @@ use derive_more::From;
 use misc::utils;
 use msg_types::{report_problem::ReportProblemTypeV1_0, routing::RoutingTypeV1_0, MsgWithType};
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
-use shared_vcx::misc::utils::CowStr;
 
 use crate::{
-    misc::utils::MSG_TYPE,
     msg_fields::{
         protocols::{
             basic_message::BasicMessage, connection::Connection, cred_issuance::CredentialIssuance,
@@ -170,11 +168,10 @@ impl DelayedSerde for AriesMessage {
 //
 //  2) Without this, the implementation would either rely on something inefficient such as [`Value`]
 // as an intermediary, use some custom map which fails on duplicate entries as intermediary or
-// basically use [`serde_value`] which seems to be an old replica of [`Content`] and
-// [`ContentDeserializer`] and requires a pretty much copy paste of [`TaggedContentVisitor`].
+// basically use [`serde_value`] which seems to be an old replica of [`Content`] and [`ContentDeserializer`].
 // Also, [`serde_value::Value`] seems to always allocate. Using something like `HashMap::<&str,
-// &RawValue>` wouldn't work either, as there are issues flattening `serde_json::RawValue`. It
-// would also require some custom deserialization afterwards.
+// &RawValue>` wouldn't work either, as there are issues flattening `serde_json::RawValue`.
+// It would also require some custom deserialization afterwards.
 //
 //  3) Exposing these parts as public is in progress from serde. When that will happen is still
 // unknown. See: <https://github.com/serde-rs/serde/issues/741>. With [`serde_value`] lacking
@@ -186,7 +183,7 @@ impl DelayedSerde for AriesMessage {
 //
 //
 // In the event of a `serde` version bump and this breaking, the fix is a matter of
-// implementing a struct such as:
+// implementing a struct such as and expanding the derive macro to see what it does:
 // ```
 // #[derive(Deserialize)]
 // #[serde(tag = "@type")]
@@ -195,36 +192,36 @@ impl DelayedSerde for AriesMessage {
 //     Var2(u8),
 // }
 // ```
-//
-// Then analyze the expanded [`Deserialize`] impl and adapt the actual implementation below.
 impl<'de> Deserialize<'de> for AriesMessage {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
-        use serde::__private::de::{ContentDeserializer, TaggedContentVisitor};
+        use std::borrow::Cow;
 
-        // TaggedContentVisitor is a visitor used in serde_derive for internally tagged enums.
-        // As it visits data, it looks for a certain field (MSG_TYPE here), deserializes it and stores it
-        // separately. The rest of the data is stored as [`Content`], a thin deserialization format
-        // that practically acts as a buffer so the other fields besides the tag are cached.
-        let tag_visitor =
-            TaggedContentVisitor::<CowStr>::new(MSG_TYPE, concat!("internally tagged enum ", stringify!(AriesMessage)));
-        let tagged = deserializer.deserialize_any(tag_visitor)?;
+        use serde::__private::de::{Content, ContentDeserializer};
 
-        // The TaggedContent struct has two fields, tag and content, where in our case the tag is
-        // `CowStr` and the content is [`Content`], the cached remaining fields of the
+        /// Helper that will only deserialize the message type and buffer the
+        /// rest of the fields (borrowing where possible).
+        #[derive(Deserialize)]
+        struct TypeAndContent<'a> {
+            #[serde(rename = "@type")]
+            #[serde(borrow)]
+            msg_type: Cow<'a, str>,
+            #[serde(flatten)]
+            #[serde(borrow)]
+            content: Content<'a>,
+        }
+
+        let TypeAndContent { msg_type, content } = TypeAndContent::deserialize(deserializer)?;
+
+        // Parse the message type field to get the protocol and message kind
+        let msg_type = msg_type.as_ref().try_into().map_err(D::Error::custom)?;
+
+        // The content is [`Content`], the cached remaining fields of the
         // serialized data. Serde uses this [`ContentDeserializer`] to deserialize from that format.
-        let deserializer = ContentDeserializer::<D::Error>::new(tagged.content);
+        let deserializer = ContentDeserializer::<D::Error>::new(content);
 
-        // CowStr will try to borrow the data if possible, and we'll further
-        // borrow from CowStr here until we know the message kind to try to parse.
-        let msg_type = tagged.tag.0.as_ref().try_into().map_err(D::Error::custom)?;
-
-        // Instead of matching to oblivion and beyond on the [`MessageType`] protocol,
-        // we make use of [`DelayedSerde`] so the matching happens incrementally.
-        // This makes use of the provided deserializer and matches on the [`MessageType`]
-        // to determine the type the content must be deserialized to.
         Self::delayed_deserialize(msg_type, deserializer)
     }
 }
