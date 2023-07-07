@@ -15,9 +15,16 @@ use crate::{
 };
 
 use anoncreds::{
-    data_types::{cred_def::CredentialDefinition, credential::Credential},
-    types::LinkSecret,
-    ursa::bn::BigNumber,
+    data_types::{
+        cred_def::{CredentialDefinition, CredentialDefinitionId},
+        credential::Credential,
+        rev_reg::RevocationRegistryId,
+        rev_reg_def::RevocationRegistryDefinitionId,
+        schema::{Schema, SchemaId},
+    },
+    tails::TailsFileWriter,
+    types::{LinkSecret, Presentation, PresentationRequest, RevocationRegistryDefinition, RevocationStatusList},
+    ursa::{bn::BigNumber, cl::RevocationRegistry},
 };
 use async_trait::async_trait;
 
@@ -127,9 +134,6 @@ impl Anoncreds {
             })
             .collect();
 
-        let x = "blabla";
-        let x = x.get(0);
-
         id_cred_tuple_list
     }
 
@@ -137,7 +141,7 @@ impl Anoncreds {
         &self,
         restrictions: Option<&Value>,
         attr_name: &str,
-    ) -> VcxCoreResult<Vec<(String, CredxCredential)>> {
+    ) -> VcxCoreResult<Vec<(String, Credential)>> {
         let attr_marker_tag_name = _format_attribute_as_marker_tag_name(attr_name);
 
         let wql_attr_query = json!({
@@ -174,7 +178,7 @@ impl BaseAnonCreds for Anoncreds {
         schemas_json: &str,
         credential_defs_json: &str,
         rev_reg_defs_json: &str,
-        rev_regs_json: &str,
+        rev_status_lists: &str,
     ) -> VcxCoreResult<bool> {
         let presentation: Presentation = serde_json::from_str(proof_json)?;
         let pres_req: PresentationRequest = serde_json::from_str(proof_req_json)?;
@@ -183,27 +187,22 @@ impl BaseAnonCreds for Anoncreds {
         let cred_defs: HashMap<CredentialDefinitionId, CredentialDefinition> =
             serde_json::from_str(credential_defs_json)?;
 
-        let rev_reg_defs: Option<HashMap<RevocationRegistryId, RevocationRegistryDefinition>> =
+        let rev_reg_defs: Option<HashMap<RevocationRegistryDefinitionId, RevocationRegistryDefinition>> =
             serde_json::from_str(rev_reg_defs_json)?;
 
-        let rev_regs: Option<HashMap<RevocationRegistryId, HashMap<u64, RevocationRegistry>>> =
-            serde_json::from_str(rev_regs_json)?;
-        let rev_regs: Option<HashMap<RevocationRegistryId, HashMap<u64, &RevocationRegistry>>> =
-            rev_regs.as_ref().map(|regs| {
-                let mut new_regs: HashMap<RevocationRegistryId, HashMap<u64, &RevocationRegistry>> = HashMap::new();
-                for (k, v) in regs {
-                    new_regs.insert(k.clone(), hashmap_as_ref(v));
-                }
-                new_regs
-            });
+        let rev_status_lists: Option<Vec<RevocationStatusList>> = serde_json::from_str(rev_status_lists)?;
 
-        Ok(credx::verifier::verify_presentation(
+        // Anoncreds args are sooooooo bad...
+        let ref_rev_status_lists = rev_status_lists.map(|v| v.iter().collect());
+
+        Ok(anoncreds::verifier::verify_presentation(
             &presentation,
             &pres_req,
             &hashmap_as_ref(&schemas),
             &hashmap_as_ref(&cred_defs),
             rev_reg_defs.as_ref().map(hashmap_as_ref).as_ref(),
-            rev_regs.as_ref(),
+            ref_rev_status_lists,
+            None, // no idea what this is
         )?)
     }
 
@@ -221,7 +220,7 @@ impl BaseAnonCreds for Anoncreds {
 
         let cred_def = self.get_wallet_record_value(CATEGORY_CRED_DEF, cred_def_id).await?;
 
-        let rev_reg_id =
+        let rev_reg_id = RevocationRegistryId::new()
             credx::issuer::make_revocation_registry_id(&issuer_did, &cred_def, tag, RegistryType::CL_ACCUM)?;
 
         let res_rev_reg = self.get_wallet_record_value(CATEGORY_REV_REG, &rev_reg_id.0).await;
@@ -1129,16 +1128,10 @@ fn _format_attribute_as_marker_tag_name(attribute_name: &str) -> String {
 }
 
 // common transformation requirement in credx
-fn hashmap_as_ref<'a, T, U>(map: &'a HashMap<T, U>) -> HashMap<T, &'a U>
+fn hashmap_as_ref<T, U>(map: &HashMap<T, U>) -> HashMap<&T, &U>
 where
     T: std::hash::Hash,
     T: std::cmp::Eq,
-    T: std::clone::Clone,
 {
-    let mut new_map: HashMap<T, &U> = HashMap::new();
-    for (k, v) in map.iter() {
-        new_map.insert(k.clone(), v);
-    }
-
-    new_map
+    map.iter().map(|(k, v)| (k, v)).collect()
 }

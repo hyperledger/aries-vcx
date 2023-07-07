@@ -1,5 +1,7 @@
 pub mod error;
 mod mapping_agency_client;
+#[cfg(feature = "anoncreds")]
+mod mapping_anoncreds;
 #[cfg(any(feature = "modular_libs", feature = "vdr_proxy_ledger"))]
 mod mapping_credx;
 #[cfg(any(feature = "modular_libs", feature = "vdr_proxy_ledger"))]
