@@ -9,6 +9,14 @@ export async function createWallet(config: object): Promise<void> {
   }
 }
 
+export async function migrateWallet(srcWalletHandle: number, destWalletHandle: number): Promise<void> {
+  try {
+    return await ffi.walletMigrate(srcWalletHandle, destWalletHandle);
+  } catch (err: any) {
+    throw new VCXInternalError(err);
+  }
+}
+
 export async function configureIssuerWallet(seed: string): Promise<string> {
   try {
     return await ffi.configureIssuerWallet(seed);

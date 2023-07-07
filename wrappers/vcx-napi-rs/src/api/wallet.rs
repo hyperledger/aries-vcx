@@ -104,6 +104,17 @@ pub async fn wallet_export(path: String, backup_key: String) -> napi::Result<()>
 }
 
 #[napi]
+pub async fn wallet_migrate(src_wallet_handle: i32, dest_wallet_handle: i32) -> napi::Result<()> {
+    wallet_migrator::migrate_wallet(
+        src_wallet_handle.into(),
+        dest_wallet_handle.into(),
+        wallet_migrator::vdrtools2credx::migrate_any_record,
+    )
+    .await
+    .map_err(|e| napi::Error::from_reason(e.to_string()))
+}
+
+#[napi]
 pub async fn get_verkey_from_wallet(did: String) -> napi::Result<String> {
     wallet::key_for_local_did(&did).await.map_err(to_napi_err)
 }
