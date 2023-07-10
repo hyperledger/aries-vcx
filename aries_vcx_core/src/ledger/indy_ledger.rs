@@ -1,4 +1,5 @@
 use async_trait::async_trait;
+use serde_json::Value;
 
 use crate::errors::error::VcxCoreResult;
 use crate::{indy, PoolHandle, WalletHandle};
@@ -144,7 +145,7 @@ impl AnoncredsLedgerRead for IndySdkLedgerRead {
         rev_reg_id: &str,
         from: Option<u64>,
         to: Option<u64>,
-    ) -> VcxCoreResult<(String, String, u64)> {
+    ) -> VcxCoreResult<(String, String, String, u64)> {
         indy::ledger::transactions::get_rev_reg_delta_json(self.indy_pool_handle, rev_reg_id, from, to).await
     }
 

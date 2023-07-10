@@ -47,6 +47,7 @@ pub struct RevocationRegistryDeltaInfo {
     pub revoc_reg_delta: RevocationRegistryDelta,
     pub revoc_reg_def_id: RevocationRegistryId,
     pub timestamp: u64,
+    pub issuer_did: String,
 }
 
 pub struct ResponseParser {}
@@ -215,10 +216,12 @@ impl ResponseParser {
     ) -> IndyResult<RevocationRegistryDeltaInfo> {
         let reply: Reply<GetRevocRegDeltaReplyResult> = Self::parse_response(get_revoc_reg_delta_response)?;
 
-        let (revoc_reg_def_id, revoc_reg) = match reply.result() {
-            GetRevocRegDeltaReplyResult::GetRevocRegDeltaReplyResultV0(res) => (res.revoc_reg_def_id, res.data),
+        let (revoc_reg_def_id, revoc_reg, req_metadata) = match reply.result() {
+            GetRevocRegDeltaReplyResult::GetRevocRegDeltaReplyResultV0(res) => {
+                (res.revoc_reg_def_id, res.data, res.metadata)
+            }
             GetRevocRegDeltaReplyResult::GetRevocRegDeltaReplyResultV1(res) => {
-                (res.txn.data.revoc_reg_def_id, res.txn.data.value)
+                (res.txn.data.revoc_reg_def_id, res.txn.data.value, res.txn.metadata)
             }
         };
 
@@ -239,6 +242,7 @@ impl ResponseParser {
             revoc_reg_delta: RevocationRegistryDelta::RevocationRegistryDeltaV1(revoc_reg_delta),
             revoc_reg_def_id,
             timestamp: revoc_reg.value.accum_to.txn_time,
+            issuer_did: req_metadata.from,
         })
     }
 

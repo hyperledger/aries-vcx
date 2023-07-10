@@ -1346,7 +1346,7 @@ impl LedgerController {
     pub fn parse_revoc_reg_delta_response(
         &self,
         get_revoc_reg_delta_response: String,
-    ) -> IndyResult<(String, String, u64)> {
+    ) -> IndyResult<(String, String, String, u64)> {
         debug!(
             "parse_revoc_reg_delta_response > get_revoc_reg_delta_response {:?}",
             get_revoc_reg_delta_response

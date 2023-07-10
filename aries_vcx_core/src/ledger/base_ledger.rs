@@ -37,7 +37,7 @@ pub trait AnoncredsLedgerRead: Debug + Send + Sync {
         rev_reg_id: &str,
         from: Option<u64>,
         to: Option<u64>,
-    ) -> VcxCoreResult<(String, String, u64)>;
+    ) -> VcxCoreResult<(String, String, String, u64)>;
     async fn get_rev_reg(&self, rev_reg_id: &str, timestamp: u64) -> VcxCoreResult<(String, String, u64)>;
 }
 

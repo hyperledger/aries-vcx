@@ -469,7 +469,7 @@ async fn libindy_parse_get_revoc_reg_response(get_cred_def_resp: &str) -> VcxCor
 
 pub async fn libindy_parse_get_revoc_reg_delta_response(
     get_rev_reg_delta_response: &str,
-) -> VcxCoreResult<(String, String, u64)> {
+) -> VcxCoreResult<(String, String, String, u64)> {
     let res = Locator::instance()
         .ledger_controller
         .parse_revoc_reg_delta_response(get_rev_reg_delta_response.into())?;
@@ -545,7 +545,7 @@ pub async fn get_rev_reg_delta_json(
     rev_reg_id: &str,
     from: Option<u64>,
     to: Option<u64>,
-) -> VcxCoreResult<(String, String, u64)> {
+) -> VcxCoreResult<(String, String, String, u64)> {
     trace!(
         "get_rev_reg_delta_json >>> pool_handle: {:?}, rev_reg_id: {}, from: {:?}, to: {:?}",
         pool_handle,
@@ -555,7 +555,7 @@ pub async fn get_rev_reg_delta_json(
     );
     if settings::indy_mocks_enabled() {
         debug!("get_rev_reg_delta_json >>> returning mocked value");
-        return Ok((REV_REG_ID.to_string(), REV_REG_DELTA_JSON.to_string(), 1));
+        return Ok((REV_REG_ID.to_string(), "".to_owned(), REV_REG_DELTA_JSON.to_string(), 1));
     }
 
     let submitter_did = get_sample_did();

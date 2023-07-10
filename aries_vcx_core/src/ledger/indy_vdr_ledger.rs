@@ -322,7 +322,7 @@ where
         rev_reg_id: &str,
         from: Option<u64>,
         to: Option<u64>,
-    ) -> VcxCoreResult<(String, String, u64)> {
+    ) -> VcxCoreResult<(String, String, String, u64)> {
         let revoc_reg_def_id = RevocationRegistryId::from_str(rev_reg_id)?;
 
         let from = from.map(|x| x as i64);
@@ -338,10 +338,12 @@ where
             revoc_reg_def_id,
             revoc_reg_delta,
             timestamp,
+            issuer_did,
         } = self.response_parser.parse_get_revoc_reg_delta_response(&res)?;
 
         Ok((
             revoc_reg_def_id.to_string(),
+            issuer_did,
             serde_json::to_string(&revoc_reg_delta)?,
             timestamp,
         ))

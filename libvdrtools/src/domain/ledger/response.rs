@@ -51,6 +51,26 @@ pub struct GetReplyResultV1<T> {
 #[derive(Debug, Deserialize)]
 pub struct GetReplyTxnV1<T> {
     pub data: T,
+    pub metadata: RequestMetadata,
+}
+
+#[derive(Serialize, Deserialize, Debug, Eq, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct RequestMetadata {
+    pub req_id: u64,
+    pub from: String,
+    pub endorser: Option<String>,
+    pub digest: String,
+    pub payload_digest: String,
+    pub taa_acceptance: Option<RequestTaaAcceptance>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Eq, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct RequestTaaAcceptance {
+    pub taa_digest: String,
+    pub mechanim: String,
+    pub time: u64,
 }
 
 #[derive(Serialize, Deserialize, Debug, Eq, PartialEq)]

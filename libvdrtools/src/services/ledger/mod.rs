@@ -604,21 +604,24 @@ impl LedgerService {
     pub(crate) fn parse_get_revoc_reg_delta_response(
         &self,
         get_revoc_reg_delta_response: &str,
-    ) -> IndyResult<(String, String, u64)> {
+    ) -> IndyResult<(String, String, String, u64)> {
         let reply: Reply<GetRevocRegDeltaReplyResult> =
             LedgerService::parse_response(get_revoc_reg_delta_response)?;
 
-        let (revoc_reg_def_id, revoc_reg) = match reply.result() {
+        let (revoc_reg_def_id, revoc_reg, req_metadata) = match reply.result() {
             GetRevocRegDeltaReplyResult::GetRevocRegDeltaReplyResultV0(res) => {
-                (res.revoc_reg_def_id, res.data)
+                (res.revoc_reg_def_id, res.data, res.metadata)
             }
-            GetRevocRegDeltaReplyResult::GetRevocRegDeltaReplyResultV1(res) => {
-                (res.txn.data.revoc_reg_def_id, res.txn.data.value)
-            }
+            GetRevocRegDeltaReplyResult::GetRevocRegDeltaReplyResultV1(res) => (
+                res.txn.data.revoc_reg_def_id,
+                res.txn.data.value,
+                res.txn.metadata,
+            ),
         };
 
         let res = (
             revoc_reg_def_id.0,
+            req_metadata.from,
             serde_json::to_string(&RevocationRegistryDelta::RevocationRegistryDeltaV1(
                 RevocationRegistryDeltaV1 {
                     value: CryproRevocationRegistryDelta::from_parts(

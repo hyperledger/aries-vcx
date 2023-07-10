@@ -1,4 +1,7 @@
-use super::constants::{GET_REVOC_REG, GET_REVOC_REG_DELTA};
+use super::{
+    constants::{GET_REVOC_REG, GET_REVOC_REG_DELTA},
+    response::RequestMetadata,
+};
 
 use indy_vdr::ledger::{identifiers::RevocationRegistryId, requests::rev_reg::RevocationRegistryV1};
 use ursa::cl::RevocationRegistry;
@@ -76,6 +79,7 @@ pub struct GetRevocRegDeltaResultV0 {
     pub seq_no: i32,
     pub revoc_reg_def_id: RevocationRegistryId,
     pub data: RevocationRegistryDeltaData,
+    pub metadata: RequestMetadata,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

@@ -1,4 +1,7 @@
-use super::constants::{GET_REVOC_REG, GET_REVOC_REG_DELTA, REVOC_REG_ENTRY};
+use super::{
+    constants::{GET_REVOC_REG, GET_REVOC_REG_DELTA, REVOC_REG_ENTRY},
+    response::RequestMetadata,
+};
 
 use ursa::cl::{RevocationRegistry, RevocationRegistryDelta};
 
@@ -152,6 +155,7 @@ pub struct GetRevocRegDeltaResultV0 {
     pub seq_no: i32,
     pub revoc_reg_def_id: RevocationRegistryId,
     pub data: RevocationRegistryDeltaData,
+    pub metadata: RequestMetadata,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
