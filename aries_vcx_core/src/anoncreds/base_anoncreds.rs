@@ -14,7 +14,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         schemas_json: &str,
         credential_defs_json: &str,
         rev_reg_defs_json: &str,
-        rev_regs_json: &str,
+        rev_regs_deltas_json: &str,
     ) -> VcxCoreResult<bool>;
 
     async fn issuer_create_and_store_revoc_reg(

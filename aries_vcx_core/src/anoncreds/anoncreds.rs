@@ -18,9 +18,9 @@ use anoncreds::{
     data_types::{
         cred_def::{CredentialDefinition, CredentialDefinitionId},
         credential::Credential,
-        rev_reg::RevocationRegistryId,
+        rev_reg::{RevocationRegistryId, UrsaRevocationRegistry},
         rev_reg_def::RevocationRegistryDefinitionId,
-        schema::{Schema, SchemaId},
+        schema::{Schema, SchemaId}, issuer_id::IssuerId,
     },
     tails::TailsFileWriter,
     types::{LinkSecret, Presentation, PresentationRequest, RevocationRegistryDefinition, RevocationStatusList},
@@ -28,6 +28,7 @@ use anoncreds::{
 };
 use async_trait::async_trait;
 
+use bitvec::{vec::BitVec, bitvec};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use serde_json::Value;
 use uuid::Uuid;
@@ -51,15 +52,19 @@ pub const CATEGORY_REV_REG_INFO: &str = "VCX_REV_REG_INFO";
 pub const CATEGORY_REV_REG_DEF: &str = "VCX_REV_REG_DEF";
 pub const CATEGORY_REV_REG_DEF_PRIV: &str = "VCX_REV_REG_DEF_PRIV";
 
-pub trait Something {
-    type A<T>;
-    type B<T>;
+#[derive(Debug, Deserialize)]
+struct RevRegDeltaSubParts {
+    issuer_id: String,
+    accum: String,
+    #[serde(default)]
+    issued: HashSet<u32>,
+    #[serde(default)]
+    revoked: HashSet<u32>,
 }
 
-impl Something for String {
-    type A<T> = Option<T>;
-
-    type B<T> = Result<T, String>;
+#[derive(Debug, Deserialize)]
+struct RevRegDeltaParts {
+    value: RevRegDeltaSubParts
 }
 
 #[derive(Debug)]
@@ -178,7 +183,7 @@ impl BaseAnonCreds for Anoncreds {
         schemas_json: &str,
         credential_defs_json: &str,
         rev_reg_defs_json: &str,
-        rev_status_lists: &str,
+        rev_reg_deltas_json: &str,
     ) -> VcxCoreResult<bool> {
         let presentation: Presentation = serde_json::from_str(proof_json)?;
         let pres_req: PresentationRequest = serde_json::from_str(proof_req_json)?;
@@ -190,10 +195,34 @@ impl BaseAnonCreds for Anoncreds {
         let rev_reg_defs: Option<HashMap<RevocationRegistryDefinitionId, RevocationRegistryDefinition>> =
             serde_json::from_str(rev_reg_defs_json)?;
 
-        let rev_status_lists: Option<Vec<RevocationStatusList>> = serde_json::from_str(rev_status_lists)?;
+        let mut rev_reg_deltas: Option<HashMap<RevocationRegistryId, HashMap<u64, RevRegDeltaParts>>> =
+            serde_json::from_str(rev_regs_deltas_json)?;
+
+        let rev_status_lists = if let Some(map) = rev_reg_deltas {
+            let mut lists = Vec::new();
+            for (rev_reg_def_id, sub_map) in map {
+                for (timestamp, delta) in sub_map {
+                    let rev_reg_def_id = Some(rev_reg_def_id.0.as_str());
+                    let issuer_id = IssuerId::new_unchecked(issuer_id);
+                    let RevRegDeltaSubParts { issuer_id, accum, issued, revoked } = delta.value;
+                    let max = issued.into_iter().fold(0, |(max, idx)| std::cmp::max(max, idx));
+                    let mut revocation_list = bitvec!(0; max);
+                    revoked.into_iter().for_each(|id| revocation_list.get_mut(id as usize).map(|b| *b = 1));
+                    let registry = UrsaRevocationRegistry::try_from(&accum)?;
+
+                    let rev_status_list = RevocationStatusList::new(rev_reg_def_id, issuer_id, revocation_list, Some(registry), Some(timestamp))?;
+                    lists.push(rev_status_list);
+
+                }
+            }
+
+            Some(lists)
+        } else {
+            None
+        };
 
         // Anoncreds args are sooooooo bad...
-        let ref_rev_status_lists = rev_status_lists.map(|v| v.iter().collect());
+        let rev_status_lists = rev_status_lists.map(|v| v.iter().collect());
 
         Ok(anoncreds::verifier::verify_presentation(
             &presentation,
@@ -201,7 +230,7 @@ impl BaseAnonCreds for Anoncreds {
             &hashmap_as_ref(&schemas),
             &hashmap_as_ref(&cred_defs),
             rev_reg_defs.as_ref().map(hashmap_as_ref).as_ref(),
-            ref_rev_status_lists,
+            rev_status_lists,
             None, // no idea what this is
         )?)
     }

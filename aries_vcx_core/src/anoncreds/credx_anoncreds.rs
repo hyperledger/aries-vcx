@@ -181,7 +181,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         schemas_json: &str,
         credential_defs_json: &str,
         rev_reg_defs_json: &str,
-        rev_regs_json: &str,
+        rev_regs_deltas_json: &str,
     ) -> VcxCoreResult<bool> {
         let presentation: Presentation = serde_json::from_str(proof_json)?;
         let pres_req: PresentationRequest = serde_json::from_str(proof_req_json)?;
@@ -193,8 +193,10 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let rev_reg_defs: Option<HashMap<RevocationRegistryId, RevocationRegistryDefinition>> =
             serde_json::from_str(rev_reg_defs_json)?;
 
-        let rev_regs: Option<HashMap<RevocationRegistryId, HashMap<u64, RevocationRegistry>>> =
-            serde_json::from_str(rev_regs_json)?;
+        // Thankfully the Registry can be deserialized form the Delta payload
+        let mut rev_regs: Option<HashMap<RevocationRegistryId, HashMap<u64, RevocationRegistry>>> =
+            serde_json::from_str(rev_regs_deltas_json)?;
+
         let rev_regs: Option<HashMap<RevocationRegistryId, HashMap<u64, &RevocationRegistry>>> =
             rev_regs.as_ref().map(|regs| {
                 let mut new_regs: HashMap<RevocationRegistryId, HashMap<u64, &RevocationRegistry>> = HashMap::new();

@@ -273,6 +273,7 @@ dependencies = [
  "agency_client",
  "anoncreds",
  "async-trait",
+ "bitvec",
  "derive_builder 0.12.0",
  "futures",
  "indy-credx",

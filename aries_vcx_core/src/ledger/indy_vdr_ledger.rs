@@ -19,7 +19,7 @@ use vdr::utils::did::DidValue;
 use vdr::utils::Qualifiable;
 
 use crate::common::ledger::transactions::verify_transaction_can_be_endorsed;
-use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
+use crate::errors::error::VcxCoreResult;
 use crate::ledger::base_ledger::{TaaConfigurator, TxnAuthrAgrmtOptions};
 
 use super::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite};

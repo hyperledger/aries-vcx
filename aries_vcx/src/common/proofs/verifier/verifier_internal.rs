@@ -178,7 +178,7 @@ pub async fn build_rev_reg_defs_json(
     Ok(rev_reg_defs_json.to_string())
 }
 
-pub async fn build_rev_reg_json(
+pub async fn build_rev_reg_delta_json(
     ledger: &Arc<dyn AnoncredsLedgerRead>,
     credential_data: &[CredInfoVerifier],
 ) -> VcxResult<String> {
@@ -192,19 +192,27 @@ pub async fn build_rev_reg_json(
             format!("Missing rev_reg_id in the record {:?}", cred_info),
         ))?;
 
-        let timestamp = cred_info.timestamp.as_ref().ok_or(AriesVcxError::from_msg(
+        let timestamp = cred_info.timestamp.ok_or(AriesVcxError::from_msg(
             AriesVcxErrorKind::InvalidRevocationTimestamp,
             format!("Revocation timestamp is missing on record {:?}", cred_info),
         ))?;
 
         if rev_regs_json.get(rev_reg_id).is_none() {
-            let (id, rev_reg_json, timestamp) = ledger.get_rev_reg(rev_reg_id, timestamp.to_owned()).await?;
-            let rev_reg_json: Value = serde_json::from_str(&rev_reg_json).or(Err(AriesVcxError::from_msg(
-                AriesVcxErrorKind::InvalidJson,
-                format!("Failed to deserialize as json: {}", rev_reg_json),
-            )))?;
-            let rev_reg_json = json!({ timestamp.to_string(): rev_reg_json });
-            rev_regs_json[id] = rev_reg_json;
+            // The `from` arg is `None` because I think this is how
+            // we retrieve all the credentials issued/revoked up until timestamp `to`.
+            // Which is what anoncreds uses.
+            let (id, issuer_id, rev_reg_delta_json, timestamp) = ledger
+                .get_rev_reg_delta_json(rev_reg_id, None, Some(timestamp))
+                .await?;
+            let mut rev_reg_delta_json: Value =
+                serde_json::from_str(&rev_reg_delta_json).or(Err(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidJson,
+                    format!("Failed to deserialize as json: {}", rev_reg_delta_json),
+                )))?;
+
+            rev_reg_delta_json["issuer_id"] = json!(issuer_id);
+            let rev_reg_delta_json = json!({ timestamp.to_string(): rev_reg_delta_json });
+            rev_regs_json[id] = rev_reg_delta_json;
         }
     }
 
@@ -314,7 +322,7 @@ pub mod unit_tests {
         };
         let ledger_read: Arc<dyn AnoncredsLedgerRead> = Arc::new(MockLedger {});
         let credentials = vec![cred1, cred2];
-        let rev_reg_json = build_rev_reg_json(&ledger_read, &credentials).await.unwrap();
+        let rev_reg_json = build_rev_reg_delta_json(&ledger_read, &credentials).await.unwrap();
 
         let json: Value = serde_json::from_str(REV_REG_JSON).unwrap();
         let expected = json!({REV_REG_ID:{"1":json}}).to_string();

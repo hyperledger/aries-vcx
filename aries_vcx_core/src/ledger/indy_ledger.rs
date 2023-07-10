@@ -1,5 +1,4 @@
 use async_trait::async_trait;
-use serde_json::Value;
 
 use crate::errors::error::VcxCoreResult;
 use crate::{indy, PoolHandle, WalletHandle};

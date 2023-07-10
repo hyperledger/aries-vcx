@@ -2,7 +2,7 @@ use async_trait::async_trait;
 
 use crate::errors::error::VcxCoreResult;
 use crate::indy::wallet_non_secrets::{clear_rev_reg_delta, get_rev_reg_delta};
-use crate::{indy, PoolHandle, WalletHandle};
+use crate::{indy, WalletHandle};
 
 use super::base_anoncreds::BaseAnonCreds;
 
@@ -26,7 +26,7 @@ impl BaseAnonCreds for IndySdkAnonCreds {
         schemas_json: &str,
         credential_defs_json: &str,
         rev_reg_defs_json: &str,
-        rev_regs_json: &str,
+        rev_regs_deltas_json: &str,
     ) -> VcxCoreResult<bool> {
         indy::proofs::verifier::verifier::libindy_verifier_verify_proof(
             proof_req_json,
@@ -34,7 +34,7 @@ impl BaseAnonCreds for IndySdkAnonCreds {
             schemas_json,
             credential_defs_json,
             rev_reg_defs_json,
-            rev_regs_json,
+            rev_regs_deltas_json,
         )
         .await
     }

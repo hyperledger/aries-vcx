@@ -3,7 +3,7 @@ use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
 use std::sync::Arc;
 
 use crate::common::proofs::verifier::verifier_internal::{
-    build_cred_defs_json_verifier, build_rev_reg_defs_json, build_rev_reg_json, build_schemas_json_verifier,
+    build_cred_defs_json_verifier, build_rev_reg_defs_json, build_rev_reg_delta_json, build_schemas_json_verifier,
     get_credential_info, validate_proof_revealed_attributes,
 };
 use crate::errors::error::prelude::*;
@@ -31,7 +31,7 @@ pub async fn validate_indy_proof(
     let rev_reg_defs_json = build_rev_reg_defs_json(ledger, &credential_data)
         .await
         .unwrap_or(json!({}).to_string());
-    let rev_regs_json = build_rev_reg_json(ledger, &credential_data)
+    let rev_regs_delta_json = build_rev_reg_delta_json(ledger, &credential_data)
         .await
         .unwrap_or(json!({}).to_string());
 
@@ -40,7 +40,7 @@ pub async fn validate_indy_proof(
     debug!("*******\n{}\n********", proof_json);
     debug!("*******\n{}\n********", proof_req_json);
     debug!("*******\n{}\n********", rev_reg_defs_json);
-    debug!("*******\n{}\n********", rev_regs_json);
+    debug!("*******\n{}\n********", rev_regs_delta_json);
     anoncreds
         .verifier_verify_proof(
             proof_req_json,
@@ -48,7 +48,7 @@ pub async fn validate_indy_proof(
             &schemas_json,
             &credential_defs_json,
             &rev_reg_defs_json,
-            &rev_regs_json,
+            &rev_regs_delta_json,
         )
         .await
         .map_err(|err| err.into())
