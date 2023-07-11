@@ -29,6 +29,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
     async fn issuer_create_and_store_credential_def(
         &self,
         issuer_did: &str,
+        schema_id: &str,
         schema_json: &str,
         tag: &str,
         signature_type: Option<&str>,

@@ -61,6 +61,7 @@ impl BaseAnonCreds for IndySdkAnonCreds {
     async fn issuer_create_and_store_credential_def(
         &self,
         issuer_did: &str,
+        schema_id: &str,
         schema_json: &str,
         tag: &str,
         sig_type: Option<&str>,

@@ -145,6 +145,7 @@ impl CredentialDef {
         let (cred_def_id, cred_def_json) = generate_cred_def(
             anoncreds,
             &issuer_did,
+            &schema_id,
             &schema_json,
             &tag,
             None,
@@ -258,6 +259,7 @@ impl CredentialDef {
 pub async fn generate_cred_def(
     anoncreds: &Arc<dyn BaseAnonCreds>,
     issuer_did: &str,
+    schema_id: &str,
     schema_json: &str,
     tag: &str,
     sig_type: Option<&str>,
@@ -278,7 +280,7 @@ pub async fn generate_cred_def(
     let config_json = json!({"support_revocation": support_revocation.unwrap_or(false)}).to_string();
 
     anoncreds
-        .issuer_create_and_store_credential_def(issuer_did, schema_json, tag, sig_type, &config_json)
+        .issuer_create_and_store_credential_def(issuer_did, schema_id, schema_json, tag, sig_type, &config_json)
         .await
         .map_err(|err| err.into())
 }
@@ -314,6 +316,7 @@ pub mod integration_tests {
             let (cred_def_id, cred_def_json_local) = generate_cred_def(
                 &setup.profile.inject_anoncreds(),
                 &setup.institution_did,
+                &schema_id,
                 &schema_json,
                 "tag_1",
                 None,
@@ -358,6 +361,7 @@ pub mod integration_tests {
             let (cred_def_id, cred_def_json) = generate_cred_def(
                 &setup.profile.inject_anoncreds(),
                 &setup.institution_did,
+                &schema_id,
                 &schema_json,
                 "tag_1",
                 None,

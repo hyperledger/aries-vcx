@@ -275,6 +275,7 @@ dependencies = [
  "async-trait",
  "bitvec",
  "derive_builder 0.12.0",
+ "did_parser",
  "futures",
  "indy-credx",
  "indy-ledger-response-parser",

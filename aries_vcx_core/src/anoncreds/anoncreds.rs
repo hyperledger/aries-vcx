@@ -18,19 +18,25 @@ use anoncreds::{
     data_types::{
         cred_def::{CredentialDefinition, CredentialDefinitionId},
         credential::Credential,
+        issuer_id::IssuerId,
         rev_reg::{RevocationRegistryId, UrsaRevocationRegistry},
-        rev_reg_def::RevocationRegistryDefinitionId,
-        schema::{Schema, SchemaId}, issuer_id::IssuerId,
+        rev_reg_def::{RevocationRegistryDefinitionId, CL_ACCUM},
+        schema::{Schema, SchemaId},
     },
     tails::TailsFileWriter,
-    types::{LinkSecret, Presentation, PresentationRequest, RevocationRegistryDefinition, RevocationStatusList},
+    types::{
+        LinkSecret, Presentation, PresentationRequest, RegistryType, RevocationRegistryDefinition,
+        RevocationStatusList, SignatureType,
+    },
     ursa::{bn::BigNumber, cl::RevocationRegistry},
 };
 use async_trait::async_trait;
 
-use bitvec::{vec::BitVec, bitvec};
+use bitvec::{bitvec, vec::BitVec};
+use did_parser::Did;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use serde_json::Value;
+use time::OffsetDateTime;
 use uuid::Uuid;
 
 use super::base_anoncreds::BaseAnonCreds;
@@ -52,6 +58,13 @@ pub const CATEGORY_REV_REG_INFO: &str = "VCX_REV_REG_INFO";
 pub const CATEGORY_REV_REG_DEF: &str = "VCX_REV_REG_DEF";
 pub const CATEGORY_REV_REG_DEF_PRIV: &str = "VCX_REV_REG_DEF_PRIV";
 
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct RevocationRegistryInfo {
+    pub id: RevocationRegistryId,
+    pub curr_id: u32,
+    pub used_ids: HashSet<u32>,
+}
+
 #[derive(Debug, Deserialize)]
 struct RevRegDeltaSubParts {
     issuer_id: String,
@@ -64,7 +77,7 @@ struct RevRegDeltaSubParts {
 
 #[derive(Debug, Deserialize)]
 struct RevRegDeltaParts {
-    value: RevRegDeltaSubParts
+    value: RevRegDeltaSubParts,
 }
 
 #[derive(Debug)]
@@ -196,23 +209,39 @@ impl BaseAnonCreds for Anoncreds {
             serde_json::from_str(rev_reg_defs_json)?;
 
         let mut rev_reg_deltas: Option<HashMap<RevocationRegistryId, HashMap<u64, RevRegDeltaParts>>> =
-            serde_json::from_str(rev_regs_deltas_json)?;
+            serde_json::from_str(rev_reg_deltas_json)?;
 
         let rev_status_lists = if let Some(map) = rev_reg_deltas {
             let mut lists = Vec::new();
             for (rev_reg_def_id, sub_map) in map {
                 for (timestamp, delta) in sub_map {
                     let rev_reg_def_id = Some(rev_reg_def_id.0.as_str());
+                    let RevRegDeltaSubParts {
+                        issuer_id,
+                        accum,
+                        issued,
+                        revoked,
+                    } = delta.value;
+
                     let issuer_id = IssuerId::new_unchecked(issuer_id);
-                    let RevRegDeltaSubParts { issuer_id, accum, issued, revoked } = delta.value;
-                    let max = issued.into_iter().fold(0, |(max, idx)| std::cmp::max(max, idx));
-                    let mut revocation_list = bitvec!(0; max);
-                    revoked.into_iter().for_each(|id| revocation_list.get_mut(id as usize).map(|b| *b = 1));
-                    let registry = UrsaRevocationRegistry::try_from(&accum)?;
+                    let max = issued.into_iter().fold(0, |max, idx| std::cmp::max(max, idx));
+                    let mut revocation_list = bitvec!(0; max as usize);
+                    revoked.into_iter().for_each(|id| {
+                        revocation_list
+                            .get_mut(id as usize)
+                            .map(|b| *b = true)
+                            .unwrap_or_default()
+                    });
+                    let registry = UrsaRevocationRegistry::try_from(accum.as_str())?;
 
-                    let rev_status_list = RevocationStatusList::new(rev_reg_def_id, issuer_id, revocation_list, Some(registry), Some(timestamp))?;
+                    let rev_status_list = RevocationStatusList::new(
+                        rev_reg_def_id,
+                        issuer_id,
+                        revocation_list,
+                        Some(registry),
+                        Some(timestamp),
+                    )?;
                     lists.push(rev_status_list);
-
                 }
             }
 
@@ -243,14 +272,15 @@ impl BaseAnonCreds for Anoncreds {
         max_creds: u32,
         tag: &str,
     ) -> VcxCoreResult<(String, String, String)> {
-        let issuer_did = issuer_did.to_owned().into();
+        let issuer_did = Did::parse(issuer_did.to_owned())
+            .map_err(|e| AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::InvalidDid, e))?;
 
         let mut tails_writer = TailsFileWriter::new(Some(tails_dir.to_owned()));
 
         let cred_def = self.get_wallet_record_value(CATEGORY_CRED_DEF, cred_def_id).await?;
+        let cred_def_id = CredentialDefinitionId::new_unchecked(cred_def_id);
 
-        let rev_reg_id = RevocationRegistryId::new()
-            credx::issuer::make_revocation_registry_id(&issuer_did, &cred_def, tag, RegistryType::CL_ACCUM)?;
+        let rev_reg_id = make_revocation_registry_id(&issuer_did, &cred_def_id, tag, RegistryType::CL_ACCUM);
 
         let res_rev_reg = self.get_wallet_record_value(CATEGORY_REV_REG, &rev_reg_id.0).await;
         let res_rev_reg_def = self.get_wallet_record_value(CATEGORY_REV_REG_DEF, &rev_reg_id.0).await;
@@ -259,15 +289,28 @@ impl BaseAnonCreds for Anoncreds {
             return Ok((rev_reg_id.0, rev_reg, rev_reg_def));
         }
 
-        let (rev_reg_def, rev_reg_def_priv, rev_reg, _rev_reg_delta) = credx::issuer::create_revocation_registry(
-            &issuer_did,
+        let (rev_reg_def, rev_reg_def_priv) = anoncreds::issuer::create_revocation_registry_def(
             &cred_def,
+            cred_def_id.0.as_str(),
+            issuer_did.did(),
             tag,
             RegistryType::CL_ACCUM,
-            IssuanceType::ISSUANCE_BY_DEFAULT,
             max_creds,
             &mut tails_writer,
         )?;
+
+        let timestamp = OffsetDateTime::now_utc().unix_timestamp() as u64;
+
+        let rev_status_list = anoncreds::issuer::create_revocation_status_list(
+            rev_reg_id.0.as_str(),
+            &rev_reg_def,
+            issuer_did.did(),
+            Some(timestamp),
+            true,
+        )?;
+
+        let opt_rev_reg: Option<RevocationRegistry> = (&rev_status_list).try_into()?;
+        let rev_reg = opt_rev_reg.expect("creating a RevocationStatusList always generates a RevocationRegistry");
 
         // Store stuff in wallet
         let rev_reg_info = RevocationRegistryInfo {
@@ -306,22 +349,18 @@ impl BaseAnonCreds for Anoncreds {
     async fn issuer_create_and_store_credential_def(
         &self,
         issuer_did: &str,
+        schema_id: &str,
         schema_json: &str,
         tag: &str,
         sig_type: Option<&str>,
         config_json: &str,
     ) -> VcxCoreResult<(String, String)> {
-        let issuer_did = issuer_did.to_owned().into();
         let schema = serde_json::from_str(schema_json)?;
         let sig_type = sig_type.map(serde_json::from_str).unwrap_or(Ok(SignatureType::CL))?;
         let config = serde_json::from_str(config_json)?;
 
-        let schema_seq_no = match &schema {
-            Schema::SchemaV1(s) => s.seq_no,
-        };
-
-        let cred_def_id =
-            credx::issuer::make_credential_definition_id(&issuer_did, schema.id(), schema_seq_no, tag, sig_type)?;
+        // let cred_def_id =
+            // credx::issuer::make_credential_definition_id(&issuer_did, schema.id(), schema_seq_no, tag, sig_type)?;
 
         // If cred def already exists, return it
         if let Ok(cred_def) = self.get_wallet_record_value(CATEGORY_CRED_DEF, &cred_def_id.0).await {
@@ -330,7 +369,7 @@ impl BaseAnonCreds for Anoncreds {
 
         // Otherwise, create cred def
         let (cred_def, cred_def_priv, cred_key_correctness_proof) =
-            credx::issuer::create_credential_definition(&issuer_did, &schema, tag, sig_type, config)?;
+            anoncreds::issuer::create_credential_definition(schema_id, &schema, issuer_did,  tag, sig_type, config)?;
 
         let str_cred_def = serde_json::to_string(&cred_def)?;
 
@@ -1163,4 +1202,27 @@ where
     T: std::cmp::Eq,
 {
     map.iter().map(|(k, v)| (k, v)).collect()
+}
+
+fn make_revocation_registry_id(
+    origin_did: &Did,
+    cred_def_id: &CredentialDefinitionId,
+    tag: &str,
+    rev_reg_type: RegistryType,
+) -> RevocationRegistryId {
+    let rev_reg_type = match rev_reg_type {
+        RegistryType::CL_ACCUM => CL_ACCUM,
+    };
+
+    let id = format!(
+        "revreg:{}:{}:{}:{}:{}:{}",
+        origin_did.method(),
+        origin_did.did(),
+        "4",
+        cred_def_id.0,
+        rev_reg_type,
+        tag
+    );
+
+    RevocationRegistryId::new_unchecked(id)
 }
