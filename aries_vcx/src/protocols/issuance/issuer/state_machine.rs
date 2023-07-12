@@ -604,7 +604,7 @@ async fn _create_credential(
     let request = get_attach_as_string!(&request.content.requests_attach);
 
     let cred_data = encode_attributes(cred_data)?;
-    let (libindy_credential, cred_rev_id, _) = anoncreds
+    let (libindy_credential, cred_rev_id) = anoncreds
         .issuer_create_credential(&offer, &request, &cred_data, rev_reg_id.clone(), tails_file.clone())
         .await?;
     let credential = build_credential_message(libindy_credential)?;

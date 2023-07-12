@@ -16,19 +16,20 @@ use crate::{
 
 use anoncreds::{
     data_types::{
-        cred_def::{CredentialDefinition, CredentialDefinitionId},
+        cred_def::{CredentialDefinition, CredentialDefinitionId, CL_SIGNATURE_TYPE},
         credential::Credential,
         issuer_id::IssuerId,
         rev_reg::{RevocationRegistryId, UrsaRevocationRegistry},
         rev_reg_def::{RevocationRegistryDefinitionId, CL_ACCUM},
+        rev_status_list,
         schema::{Schema, SchemaId},
     },
-    tails::TailsFileWriter,
+    tails::{TailsFileReader, TailsFileWriter},
     types::{
-        LinkSecret, Presentation, PresentationRequest, RegistryType, RevocationRegistryDefinition,
-        RevocationStatusList, SignatureType,
+        CredentialOffer, CredentialRevocationConfig, LinkSecret, Presentation, PresentationRequest, RegistryType,
+        RevocationRegistry, RevocationRegistryDefinition, RevocationStatusList, SignatureType,
     },
-    ursa::{bn::BigNumber, cl::RevocationRegistry},
+    ursa::bn::BigNumber,
 };
 use async_trait::async_trait;
 
@@ -65,9 +66,11 @@ pub struct RevocationRegistryInfo {
     pub used_ids: HashSet<u32>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 struct RevRegDeltaSubParts {
+    #[serde(skip_serializing_if = "String::is_empty")]
     issuer_id: String,
+    prev_accum: Option<String>,
     accum: String,
     #[serde(default)]
     issued: HashSet<u32>,
@@ -221,6 +224,7 @@ impl BaseAnonCreds for Anoncreds {
                         accum,
                         issued,
                         revoked,
+                        ..
                     } = delta.value;
 
                     let issuer_id = IssuerId::new_unchecked(issuer_id);
@@ -355,12 +359,14 @@ impl BaseAnonCreds for Anoncreds {
         sig_type: Option<&str>,
         config_json: &str,
     ) -> VcxCoreResult<(String, String)> {
+        let issuer_did = Did::parse(issuer_did.to_owned())
+            .map_err(|e| AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::InvalidDid, e))?;
+
         let schema = serde_json::from_str(schema_json)?;
         let sig_type = sig_type.map(serde_json::from_str).unwrap_or(Ok(SignatureType::CL))?;
         let config = serde_json::from_str(config_json)?;
 
-        // let cred_def_id =
-            // credx::issuer::make_credential_definition_id(&issuer_did, schema.id(), schema_seq_no, tag, sig_type)?;
+        let cred_def_id = make_credential_definition_id(&issuer_did, schema_id, tag, sig_type);
 
         // If cred def already exists, return it
         if let Ok(cred_def) = self.get_wallet_record_value(CATEGORY_CRED_DEF, &cred_def_id.0).await {
@@ -368,8 +374,14 @@ impl BaseAnonCreds for Anoncreds {
         }
 
         // Otherwise, create cred def
-        let (cred_def, cred_def_priv, cred_key_correctness_proof) =
-            anoncreds::issuer::create_credential_definition(schema_id, &schema, issuer_did,  tag, sig_type, config)?;
+        let (cred_def, cred_def_priv, cred_key_correctness_proof) = anoncreds::issuer::create_credential_definition(
+            schema_id,
+            &schema,
+            issuer_did.did(),
+            tag,
+            sig_type,
+            config,
+        )?;
 
         let str_cred_def = serde_json::to_string(&cred_def)?;
 
@@ -397,7 +409,7 @@ impl BaseAnonCreds for Anoncreds {
 
         let store_schema_res = self
             .wallet
-            .add_wallet_record(CATEGORY_CRED_SCHEMA, schema.id(), schema_json, None)
+            .add_wallet_record(CATEGORY_CRED_SCHEMA, schema_id, schema_json, None)
             .await;
 
         if let Err(e) = store_schema_res {
@@ -405,7 +417,7 @@ impl BaseAnonCreds for Anoncreds {
         }
 
         self.wallet
-            .add_wallet_record(CATEGORY_CRED_MAP_SCHEMA_ID, &cred_def_id.0, &schema.id().0, None)
+            .add_wallet_record(CATEGORY_CRED_MAP_SCHEMA_ID, &cred_def_id.0, schema_id, None)
             .await?;
 
         // Return the ID and the cred def
@@ -413,8 +425,6 @@ impl BaseAnonCreds for Anoncreds {
     }
 
     async fn issuer_create_credential_offer(&self, cred_def_id: &str) -> VcxCoreResult<String> {
-        let cred_def = self.get_wallet_record_value(CATEGORY_CRED_DEF, cred_def_id).await?;
-
         let correctness_proof = self
             .get_wallet_record_value(CATEGORY_CRED_KEY_CORRECTNESS_PROOF, cred_def_id)
             .await?;
@@ -424,10 +434,8 @@ impl BaseAnonCreds for Anoncreds {
             .get_wallet_record_value(CATEGORY_CRED_MAP_SCHEMA_ID, cred_def_id)
             .await?;
 
-        let schema_id = SchemaId(schema_id);
-
         // If cred_def contains schema ID, why take it as an argument here...?
-        let offer = credx::issuer::create_credential_offer(&schema_id, &cred_def, &correctness_proof)?;
+        let offer = anoncreds::issuer::create_credential_offer(schema_id.as_str(), cred_def_id, &correctness_proof)?;
 
         serde_json::to_string(&offer).map_err(From::from)
     }
@@ -439,7 +447,7 @@ impl BaseAnonCreds for Anoncreds {
         cred_values_json: &str,
         rev_reg_id: Option<String>,
         tails_dir: Option<String>,
-    ) -> VcxCoreResult<(String, Option<String>, Option<String>)> {
+    ) -> VcxCoreResult<(String, Option<String>)> {
         let cred_offer: CredentialOffer = serde_json::from_str(cred_offer_json)?;
         let cred_request = serde_json::from_str(cred_req_json)?;
         let cred_values = serde_json::from_str(cred_values_json)?;
@@ -454,13 +462,14 @@ impl BaseAnonCreds for Anoncreds {
 
         let mut revocation_config_parts = match (tails_dir, &rev_reg_id) {
             (Some(tails_dir), Some(rev_reg_id)) => {
-                let rev_reg_def = self.get_wallet_record_value(CATEGORY_REV_REG_DEF, rev_reg_id).await?;
+                let rev_reg_def: RevocationRegistryDefinition =
+                    self.get_wallet_record_value(CATEGORY_REV_REG_DEF, rev_reg_id).await?;
 
                 let rev_reg_def_priv = self
                     .get_wallet_record_value(CATEGORY_REV_REG_DEF_PRIV, rev_reg_id)
                     .await?;
 
-                let rev_reg = self.get_wallet_record_value(CATEGORY_REV_REG, rev_reg_id).await?;
+                let rev_reg: RevocationRegistry = self.get_wallet_record_value(CATEGORY_REV_REG, rev_reg_id).await?;
                 let rev_reg_info: RevocationRegistryInfo =
                     self.get_wallet_record_value(CATEGORY_REV_REG_INFO, rev_reg_id).await?;
 
@@ -473,26 +482,28 @@ impl BaseAnonCreds for Anoncreds {
             }
         };
 
-        let revocation_config = match &mut revocation_config_parts {
+        let (revocation_config, rev_status_list) = match &mut revocation_config_parts {
             Some((rev_reg_def, rev_reg_def_priv, rev_reg, rev_reg_info, tails_dir)) => {
                 rev_reg_info.curr_id += 1;
 
-                let tails_file_hash = match rev_reg_def {
-                    RevocationRegistryDefinition::RevocationRegistryDefinitionV1(rev_reg_def) => {
-                        if rev_reg_info.curr_id > rev_reg_def.value.max_cred_num {
-                            return Err(AriesVcxCoreError::from_msg(
-                                AriesVcxCoreErrorKind::ActionNotSupported,
-                                "The revocation registry is full",
-                            ));
-                        }
+                if rev_reg_info.curr_id > rev_reg_def.value.max_cred_num {
+                    return Err(AriesVcxCoreError::from_msg(
+                        AriesVcxCoreErrorKind::ActionNotSupported,
+                        "The revocation registry is full",
+                    ));
+                }
 
-                        if rev_reg_def.value.issuance_type == IssuanceType::ISSUANCE_ON_DEMAND {
-                            rev_reg_info.used_ids.insert(rev_reg_info.curr_id);
-                        }
+                let rev_status_list = RevocationStatusList::new(
+                    None,
+                    IssuerId::new_unchecked(String::new()),
+                    BitVec::new(),
+                    Some(rev_reg.value.clone().try_into()?),
+                    None,
+                )?;
 
-                        &rev_reg_def.value.tails_hash
-                    }
-                };
+                rev_reg_info.used_ids.insert(rev_reg_info.curr_id);
+
+                let tails_file_hash = &rev_reg_def.value.tails_hash;
 
                 let mut tails_file_path = std::path::PathBuf::new();
                 tails_file_path.push(&tails_dir);
@@ -504,33 +515,34 @@ impl BaseAnonCreds for Anoncreds {
                         "tails file is not an unicode string",
                     )
                 })?;
-                let tails_reader = TailsFileReader::new(tails_path);
+                let tails_reader = TailsFileReader::new_tails_reader(tails_path);
 
                 let revocation_config = CredentialRevocationConfig {
                     reg_def: rev_reg_def,
                     reg_def_private: rev_reg_def_priv,
-                    registry: rev_reg,
                     registry_idx: rev_reg_info.curr_id,
-                    registry_used: &rev_reg_info.used_ids,
                     tails_reader,
                 };
 
-                Some(revocation_config)
+                (Some(revocation_config), Some(rev_status_list))
             }
-            None => None,
+            None => (None, None),
         };
 
-        let (cred, rev_reg, rev_reg_delta) = credx::issuer::create_credential(
+        let cred = anoncreds::issuer::create_credential(
             &cred_def,
             &cred_def_private,
             &cred_offer,
             &cred_request,
             cred_values,
+            rev_reg_id.map(|s| RevocationRegistryId::new_unchecked(s)),
+            rev_status_list.as_ref(),
             revocation_config,
         )?;
 
-        let str_rev_reg = rev_reg.as_ref().map(serde_json::to_string).transpose()?;
-        let str_rev_reg_delta = rev_reg_delta.as_ref().map(serde_json::to_string).transpose()?;
+        let rev_reg = cred.rev_reg.as_ref();
+
+        let str_rev_reg = rev_reg.map(serde_json::to_string).transpose()?;
 
         let cred_rev_id = if let (Some(rev_reg_id), Some(str_rev_reg), Some((_, _, _, rev_reg_info, _))) =
             (rev_reg_id, &str_rev_reg, revocation_config_parts)
@@ -553,7 +565,7 @@ impl BaseAnonCreds for Anoncreds {
 
         let str_cred = serde_json::to_string(&cred)?;
 
-        Ok((str_cred, cred_rev_id, str_rev_reg_delta))
+        Ok((str_cred, cred_rev_id))
     }
 
     /// * `requested_credentials_json`: either a credential or self-attested attribute for each requested attribute
@@ -1225,4 +1237,33 @@ fn make_revocation_registry_id(
     );
 
     RevocationRegistryId::new_unchecked(id)
+}
+
+pub fn make_credential_definition_id(
+    origin_did: &Did,
+    schema_id: &str,
+    tag: &str,
+    signature_type: SignatureType,
+) -> CredentialDefinitionId {
+    let signature_type = match signature_type {
+        SignatureType::CL => CL_SIGNATURE_TYPE,
+    };
+
+    let tag = if tag.is_empty() {
+        String::new()
+    } else {
+        format!(":{}", tag)
+    };
+
+    let id = format!(
+        "creddef:{}:{}:{}:{}:{}{}",
+        origin_did.method(),
+        origin_did.did(),
+        "3",
+        signature_type,
+        schema_id.0.as_str(),
+        tag
+    );
+
+    CredentialDefinitionId::new_unchecked(id)
 }

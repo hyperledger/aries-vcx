@@ -45,7 +45,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         cred_values_json: &str,
         rev_reg_id: Option<String>,
         tails_dir: Option<String>,
-    ) -> VcxCoreResult<(String, Option<String>, Option<String>)>;
+    ) -> VcxCoreResult<(String, Option<String>)>;
 
     async fn prover_create_proof(
         &self,

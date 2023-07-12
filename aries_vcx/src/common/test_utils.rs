@@ -200,7 +200,7 @@ pub async fn create_and_store_credential(
     let rev_def_json = ledger_read.get_rev_reg_def_json(&rev_reg_id).await.unwrap();
     let tails_file = get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string();
 
-    let (cred, cred_rev_id, _) = anoncreds_issuer
+    let (cred, cred_rev_id) = anoncreds_issuer
         .issuer_create_credential(
             &offer,
             &req,
@@ -262,7 +262,7 @@ pub async fn create_and_store_nonrevocable_credential(
     let credential_data = r#"{"address1": ["123 Main St"], "address2": ["Suite 3"], "city": ["Draper"], "state": ["UT"], "zip": ["84000"]}"#;
     let encoded_attributes = encode_attributes(&credential_data).unwrap();
 
-    let (cred, _, _) = anoncreds_issuer
+    let (cred, _) = anoncreds_issuer
         .issuer_create_credential(&offer, &req, &encoded_attributes, None, None)
         .await
         .unwrap();

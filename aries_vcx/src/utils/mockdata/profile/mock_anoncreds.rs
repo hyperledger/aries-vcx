@@ -74,8 +74,8 @@ impl BaseAnonCreds for MockAnoncreds {
         _cred_values_json: &str,
         _rev_reg_id: Option<String>,
         _tails_dir: Option<String>,
-    ) -> VcxCoreResult<(String, Option<String>, Option<String>)> {
-        Ok((utils::constants::CREDENTIAL_JSON.to_owned(), None, None))
+    ) -> VcxCoreResult<(String, Option<String>)> {
+        Ok((utils::constants::CREDENTIAL_JSON.to_owned(), None))
     }
 
     async fn prover_create_proof(
@@ -222,7 +222,7 @@ mod unit_tests {
         assert_unimplemented(anoncreds.issuer_create_and_store_revoc_reg("", "", "", 0, "").await);
         assert_unimplemented(
             anoncreds
-                .issuer_create_and_store_credential_def("", "", "", None, "")
+                .issuer_create_and_store_credential_def("", "", "", "", None, "")
                 .await,
         );
         assert_unimplemented(anoncreds.prover_get_credential("").await);

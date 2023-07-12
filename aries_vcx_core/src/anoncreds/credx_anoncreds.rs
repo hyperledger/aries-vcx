@@ -382,7 +382,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         cred_values_json: &str,
         rev_reg_id: Option<String>,
         tails_dir: Option<String>,
-    ) -> VcxCoreResult<(String, Option<String>, Option<String>)> {
+    ) -> VcxCoreResult<(String, Option<String>)> {
         let cred_offer: CredentialOffer = serde_json::from_str(cred_offer_json)?;
         let cred_request = serde_json::from_str(cred_req_json)?;
         let cred_values = serde_json::from_str(cred_values_json)?;
@@ -464,7 +464,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             None => None,
         };
 
-        let (cred, rev_reg, rev_reg_delta) = credx::issuer::create_credential(
+        let (cred, rev_reg, _) = credx::issuer::create_credential(
             &cred_def,
             &cred_def_private,
             &cred_offer,
@@ -474,7 +474,6 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         )?;
 
         let str_rev_reg = rev_reg.as_ref().map(serde_json::to_string).transpose()?;
-        let str_rev_reg_delta = rev_reg_delta.as_ref().map(serde_json::to_string).transpose()?;
 
         let cred_rev_id = if let (Some(rev_reg_id), Some(str_rev_reg), Some((_, _, _, rev_reg_info, _))) =
             (rev_reg_id, &str_rev_reg, revocation_config_parts)
@@ -497,7 +496,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
 
         let str_cred = serde_json::to_string(&cred)?;
 
-        Ok((str_cred, cred_rev_id, str_rev_reg_delta))
+        Ok((str_cred, cred_rev_id))
     }
 
     /// * `requested_credentials_json`: either a credential or self-attested attribute for each requested attribute

@@ -89,8 +89,8 @@ impl BaseAnonCreds for IndySdkAnonCreds {
         cred_values_json: &str,
         rev_reg_id: Option<String>,
         tails_dir: Option<String>,
-    ) -> VcxCoreResult<(String, Option<String>, Option<String>)> {
-        indy::credentials::issuer::libindy_issuer_create_credential(
+    ) -> VcxCoreResult<(String, Option<String>)> {
+        let (cred, cred_rev_id, _) = indy::credentials::issuer::libindy_issuer_create_credential(
             self.indy_wallet_handle,
             cred_offer_json,
             cred_req_json,
@@ -98,7 +98,8 @@ impl BaseAnonCreds for IndySdkAnonCreds {
             rev_reg_id,
             tails_dir,
         )
-        .await
+        .await?;
+        Ok((cred, cred_rev_id))
     }
 
     async fn prover_create_proof(
