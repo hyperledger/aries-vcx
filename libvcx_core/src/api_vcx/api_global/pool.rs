@@ -236,7 +236,7 @@ pub mod tests {
         #[cfg(feature = "ledger_vdrtools")]
         assert_eq!(
             open_main_pool(&pool_config).await.unwrap_err().kind(),
-            LibvcxErrorKind::InvalidGenesisTxnPath
+            LibvcxErrorKind::PoolLedgerConnect
         );
         // todo: indy-vdr panics if the file is invalid, see: indy-vdr-0.3.4/src/pool/runner.rs:44:22
         // #[cfg(feature = "ledger_indyvdr")]
