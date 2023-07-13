@@ -1,5 +1,5 @@
 use crate::api_vcx::api_global::agency_client::reset_main_agency_client;
-use crate::api_vcx::api_global::pool::{close_main_pool, reset_global_ledger_components};
+use crate::api_vcx::api_global::pool::{close_main_pool, reset_ledger_components};
 
 use crate::api_vcx::api_global::settings::get_config_value;
 use crate::api_vcx::api_global::wallet::close_main_wallet;
@@ -27,7 +27,7 @@ pub fn state_vcx_shutdown() {
 
     let _ = reset_config_values_ariesvcx();
     reset_main_agency_client();
-    match reset_global_ledger_components() {
+    match reset_ledger_components() {
         Ok(_) => {}
         Err(err) => {
             error!("Failed to reset global pool: {}", err);

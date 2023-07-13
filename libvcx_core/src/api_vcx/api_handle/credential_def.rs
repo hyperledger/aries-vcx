@@ -173,13 +173,9 @@ pub mod tests {
             .await;
             let issuer_did = get_config_value(CONFIG_INSTITUTION_DID).unwrap();
 
-            let revocation_details = RevocationDetailsBuilder::default()
-                .support_revocation(true)
-                .tails_dir(get_temp_dir_path("tails.txt").to_str().unwrap())
-                .max_creds(2 as u32)
-                .build()
-                .unwrap();
-            let _revocation_details = serde_json::to_string(&revocation_details).unwrap();
+            let path = get_temp_dir_path("tails.txt");
+            std::fs::create_dir_all(&path).unwrap();
+
             let handle_cred_def = create("1".to_string(), schema_id, "tag1".to_string(), true)
                 .await
                 .unwrap();
@@ -189,7 +185,7 @@ pub mod tests {
                 issuer_did,
                 cred_def_id: get_cred_def_id(handle_cred_def).unwrap(),
                 tag: 1,
-                tails_dir: String::from(get_temp_dir_path("tails.txt").to_str().unwrap()),
+                tails_dir: String::from(path.to_str().unwrap()),
                 max_creds: 2,
             };
             let handle_rev_reg = revocation_registry::create(rev_reg_config).await.unwrap();
