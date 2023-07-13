@@ -230,7 +230,7 @@ impl BaseAnonCreds for Anoncreds {
                     } = delta.value;
 
                     let issuer_id = IssuerId::new_unchecked(issuer_id);
-                    let max = issued.into_iter().fold(0, |max, idx| std::cmp::max(max, idx));
+                    let max = issued.into_iter().fold(0, std::cmp::max);
                     let mut revocation_list = bitvec!(0; max as usize);
                     revoked.into_iter().for_each(|id| {
                         revocation_list
@@ -1124,10 +1124,12 @@ impl BaseAnonCreds for Anoncreds {
         Ok(res_rev_reg_delta.ok().flatten())
     }
 
-    async fn clear_rev_reg_delta(&self, _rev_reg_id: &str) -> VcxCoreResult<()> {
-        // We must NOT delete the stored deltas, as silly as that sounds
-        // Keeping them will make properly implementing anoncreds-rs easier
-        // because we'll have all the history needed to build a RevocationStatusList (which is complete, not a delta)
+    async fn clear_rev_reg_delta(&self, rev_reg_id: &str) -> VcxCoreResult<()> {
+        if self.get_rev_reg_delta(rev_reg_id).await?.is_some() {
+            self.wallet
+                .delete_wallet_record(CATEGORY_REV_REG_DELTA, rev_reg_id)
+                .await?;
+        }
 
         Ok(())
     }
