@@ -1,3 +1,5 @@
+#[cfg(feature = "anoncreds")]
+pub mod anoncreds_profile;
 #[cfg(feature = "mixed_breed")]
 pub mod mixed_breed_profile;
 #[cfg(feature = "modular_libs")]

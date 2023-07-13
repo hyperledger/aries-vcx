@@ -381,6 +381,12 @@ impl SetupProfile {
             SetupProfile::init_indy().await
         };
 
+        #[cfg(feature = "anoncreds")]
+        return {
+            info!("SetupProfile >> using mixed breed profile");
+            SetupProfile::init_anoncreds().await
+        };
+
         #[cfg(feature = "mixed_breed")]
         return {
             info!("SetupProfile >> using mixed breed profile");
@@ -444,6 +450,46 @@ impl SetupProfile {
 
         let profile =
             Arc::new(ModularLibsProfile::init(Arc::new(wallet), LedgerPoolConfig { genesis_file_path }).unwrap());
+
+        Arc::clone(&profile)
+            .inject_anoncreds()
+            .prover_create_link_secret(settings::DEFAULT_LINK_SECRET_ALIAS)
+            .await
+            .unwrap();
+
+        let indy_read = Arc::clone(&profile).inject_indy_ledger_read();
+        match prepare_taa_options(indy_read).await.unwrap() {
+            None => {}
+            Some(taa_options) => {
+                Arc::clone(&profile).update_taa_configuration(taa_options);
+            }
+        }
+
+        async fn modular_teardown() {
+            // nothing to do
+        }
+
+        SetupProfile {
+            institution_did,
+            profile,
+            teardown: Arc::new(move || Box::pin(modular_teardown())),
+        }
+    }
+
+    #[cfg(feature = "anoncreds")]
+    async fn init_anoncreds() -> SetupProfile {
+        use aries_vcx_core::indy::ledger::pool::test_utils::create_tmp_genesis_txn_file;
+
+        use crate::core::profile::anoncreds_profile::AnoncredsProfile;
+
+        let (institution_did, wallet_handle) = setup_issuer_wallet().await;
+
+        let genesis_file_path = create_tmp_genesis_txn_file();
+
+        let wallet = IndySdkWallet::new(wallet_handle);
+
+        let profile =
+            Arc::new(AnoncredsProfile::init(Arc::new(wallet), LedgerPoolConfig { genesis_file_path }).unwrap());
 
         Arc::clone(&profile)
             .inject_anoncreds()

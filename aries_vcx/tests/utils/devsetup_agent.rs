@@ -509,6 +509,7 @@ pub mod test_utils {
     }
 
     pub async fn create_test_alice_instance(setup: &SetupPool) -> Alice {
+        /// Migration needs to start from the Indy profile
         #[cfg(any(not(feature = "modular_libs"), feature = "migration"))]
         let (alice_profile, teardown) = {
             info!("create_test_alice_instance >> using indy profile");

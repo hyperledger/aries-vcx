@@ -23,6 +23,8 @@ vdr_proxy_ledger = ["aries_vcx_core/vdr_proxy_ledger", "vdrtools"]
 mixed_breed = ["vdrtools", "modular_libs"]
 # Used for testing the migrator
 migration = ["vdrtools", "modular_libs"]
+# Feature flag to include the `anoncreds-rs` dependency library
+anoncreds = ["modular_libs", "aries_vcx_core/anoncreds"]
 
 [dependencies]
 agency_client = { path = "../agency_client" }
