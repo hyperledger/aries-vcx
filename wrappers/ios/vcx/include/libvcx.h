@@ -1283,9 +1283,6 @@ vcx_error_t vcx_set_active_txn_author_agreement_meta(
         vcx_u64_t type_
 );
 
-/** For testing purposes only */
-void vcx_set_next_agency_response(int);
-
 #ifdef __cplusplus
 }
 #endif

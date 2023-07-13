@@ -118,23 +118,6 @@ pub extern "C" fn vcx_provision_cloud_agent(
     SUCCESS_ERR_CODE
 }
 
-#[no_mangle]
-pub extern "C" fn vcx_set_next_agency_response(message_index: u32) {
-    info!("vcx_set_next_agency_response >>>");
-
-    let message = match message_index {
-        4 => UPDATE_CREDENTIAL_RESPONSE.to_vec(),
-        5 => UPDATE_PROOF_RESPONSE.to_vec(),
-        6 => CREDENTIAL_REQ_RESPONSE.to_vec(),
-        7 => PROOF_RESPONSE.to_vec(),
-        8 => CREDENTIAL_RESPONSE.to_vec(),
-        9 => GET_MESSAGES_INVITE_ACCEPTED_RESPONSE.to_vec(),
-        _ => Vec::new(),
-    };
-
-    AgencyMock::set_next_response(message);
-}
-
 /// Retrieve messages from the agent
 ///
 /// #params
