@@ -1,6 +1,7 @@
 #![allow(clippy::unwrap_used)]
 
 use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
+use aries_vcx_core::indy::ledger::pool::test_utils::{get_temp_dir_path, get_temp_file_path};
 use aries_vcx_core::ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite};
 use std::sync::Arc;
 use std::thread;
@@ -13,8 +14,7 @@ use crate::common::primitives::credential_definition::CredentialDef;
 use crate::common::primitives::credential_definition::CredentialDefConfigBuilder;
 use crate::common::primitives::revocation_registry::RevocationRegistry;
 use crate::global::settings;
-use crate::utils::constants::{DEFAULT_SCHEMA_ATTRS, TAILS_DIR, TEST_TAILS_URL, TRUSTEE_SEED};
-use crate::utils::get_temp_dir_path;
+use crate::utils::constants::{DEFAULT_SCHEMA_ATTRS, TEST_TAILS_URL, TRUSTEE_SEED};
 
 pub async fn create_schema(
     anoncreds: &Arc<dyn BaseAnonCreds>,
@@ -74,13 +74,14 @@ pub async fn create_and_store_nonrevocable_credential_def(
     (schema_id, schema_json, cred_def_id, cred_def_json, cred_def)
 }
 
-pub async fn create_and_store_credential_def(
+pub async fn create_and_store_credential_def_and_rev_reg(
     anoncreds: &Arc<dyn BaseAnonCreds>,
     ledger_read: &Arc<dyn AnoncredsLedgerRead>,
     ledger_write: &Arc<dyn AnoncredsLedgerWrite>,
     issuer_did: &str,
     attr_list: &str,
 ) -> (
+    String,
     String,
     String,
     String,
@@ -104,19 +105,11 @@ pub async fn create_and_store_credential_def(
         .await
         .unwrap();
 
-    let path = get_temp_dir_path(TAILS_DIR);
-    std::fs::create_dir_all(&path).unwrap();
+    let tails_dir = String::from(get_temp_dir_path().as_path().to_str().unwrap());
 
-    let mut rev_reg = RevocationRegistry::create(
-        anoncreds,
-        issuer_did,
-        &cred_def.get_cred_def_id(),
-        path.to_str().unwrap(),
-        10,
-        1,
-    )
-    .await
-    .unwrap();
+    let mut rev_reg = RevocationRegistry::create(anoncreds, issuer_did, &cred_def.get_cred_def_id(), &tails_dir, 10, 1)
+        .await
+        .unwrap();
     rev_reg
         .publish_revocation_primitives(ledger_write, TEST_TAILS_URL)
         .await
@@ -132,6 +125,7 @@ pub async fn create_and_store_credential_def(
         cred_def_id,
         cred_def_json,
         rev_reg.get_rev_reg_id(),
+        tails_dir,
         cred_def,
         rev_reg,
     )
@@ -178,8 +172,15 @@ pub async fn create_and_store_credential(
     String,
     RevocationRegistry,
 ) {
-    let (schema_id, schema_json, cred_def_id, cred_def_json, rev_reg_id, _, rev_reg) =
-        create_and_store_credential_def(anoncreds_issuer, ledger_read, ledger_write, institution_did, attr_list).await;
+    let (schema_id, schema_json, cred_def_id, cred_def_json, rev_reg_id, tails_dir, _, rev_reg) =
+        create_and_store_credential_def_and_rev_reg(
+            anoncreds_issuer,
+            ledger_read,
+            ledger_write,
+            institution_did,
+            attr_list,
+        )
+        .await;
 
     let (offer, req, req_meta) = create_credential_req(
         anoncreds_issuer,
@@ -194,7 +195,6 @@ pub async fn create_and_store_credential(
     let credential_data = r#"{"address1": ["123 Main St"], "address2": ["Suite 3"], "city": ["Draper"], "state": ["UT"], "zip": ["84000"]}"#;
     let encoded_attributes = encode_attributes(&credential_data).unwrap();
     let rev_def_json = ledger_read.get_rev_reg_def_json(&rev_reg_id).await.unwrap();
-    let tails_file = get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string();
 
     let (cred, cred_rev_id, _) = anoncreds_issuer
         .issuer_create_credential(
@@ -202,7 +202,7 @@ pub async fn create_and_store_credential(
             &req,
             &encoded_attributes,
             Some(rev_reg_id.clone()),
-            Some(tails_file.clone()),
+            Some(tails_dir.clone()),
         )
         .await
         .unwrap();
@@ -222,7 +222,7 @@ pub async fn create_and_store_credential(
         cred_id,
         rev_reg_id,
         cred_rev_id.unwrap(),
-        tails_file,
+        tails_dir,
         rev_reg,
     )
 }

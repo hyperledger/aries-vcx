@@ -6,16 +6,17 @@ pub mod revocation_registry_delta;
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 pub mod integration_tests {
+    use aries_vcx_core::indy::ledger::pool::test_utils::get_temp_file_path;
     use std::sync::Arc;
 
     use crate::common::primitives::revocation_registry::generate_rev_reg;
     use crate::common::test_utils::{
-        create_and_store_credential_def, create_and_store_nonrevocable_credential_def, create_and_write_test_schema,
+        create_and_store_credential_def_and_rev_reg, create_and_store_nonrevocable_credential_def,
+        create_and_write_test_schema,
     };
     use crate::errors::error::AriesVcxErrorKind;
     use crate::utils::constants::DEFAULT_SCHEMA_ATTRS;
     use crate::utils::devsetup::SetupProfile;
-    use crate::utils::get_temp_dir_path;
 
     #[tokio::test]
     #[ignore]
@@ -37,7 +38,7 @@ pub mod integration_tests {
                 &setup.profile.inject_anoncreds(),
                 &setup.institution_did,
                 &cred_def_id,
-                get_temp_dir_path("path.txt").to_str().unwrap(),
+                get_temp_file_path("path.txt").to_str().unwrap(),
                 2,
                 "tag1",
             )
@@ -53,7 +54,7 @@ pub mod integration_tests {
     async fn test_pool_get_rev_reg_def_json() {
         SetupProfile::run(|setup| async move {
             let attrs = r#"["address1","address2","city","state","zip"]"#;
-            let (_, _, _, _, rev_reg_id, _, _) = create_and_store_credential_def(
+            let (_, _, _, _, rev_reg_id, _, _, _) = create_and_store_credential_def_and_rev_reg(
                 &setup.profile.inject_anoncreds(),
                 &setup.profile.inject_anoncreds_ledger_read(),
                 &setup.profile.inject_anoncreds_ledger_write(),
@@ -73,7 +74,7 @@ pub mod integration_tests {
     async fn test_pool_get_rev_reg_delta_json() {
         SetupProfile::run(|setup| async move {
             let attrs = r#"["address1","address2","city","state","zip"]"#;
-            let (_, _, _, _, rev_reg_id, _, _) = create_and_store_credential_def(
+            let (_, _, _, _, rev_reg_id, _, _, _) = create_and_store_credential_def_and_rev_reg(
                 &setup.profile.inject_anoncreds(),
                 &setup.profile.inject_anoncreds_ledger_read(),
                 &setup.profile.inject_anoncreds_ledger_write(),
@@ -95,7 +96,7 @@ pub mod integration_tests {
     async fn test_pool_get_rev_reg() {
         SetupProfile::run(|setup| async move {
             let attrs = r#"["address1","address2","city","state","zip"]"#;
-            let (_, _, _, _, rev_reg_id, _, _) = create_and_store_credential_def(
+            let (_, _, _, _, rev_reg_id, _, _, _) = create_and_store_credential_def_and_rev_reg(
                 &setup.profile.inject_anoncreds(),
                 &setup.profile.inject_anoncreds_ledger_read(),
                 &setup.profile.inject_anoncreds_ledger_write(),

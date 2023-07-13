@@ -4,7 +4,7 @@ pub mod test_utils {
     use std::thread;
     use std::time::Duration;
 
-    use aries_vcx::common::test_utils::create_and_store_credential_def;
+    use aries_vcx::common::test_utils::create_and_store_credential_def_and_rev_reg;
     use aries_vcx::core::profile::profile::Profile;
     use aries_vcx::errors::error::{AriesVcxError, AriesVcxErrorKind};
     use aries_vcx::handlers::proof_presentation::types::{
@@ -49,9 +49,9 @@ pub mod test_utils {
     use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
     use aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;
     use aries_vcx::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
-    use aries_vcx::utils::constants::{DEFAULT_PROOF_NAME, TAILS_DIR, TEST_TAILS_URL};
+    use aries_vcx::utils::constants::{DEFAULT_PROOF_NAME, TEST_TAILS_URL};
     use aries_vcx::utils::filters::{filter_credential_offers_by_comment, filter_proof_requests_by_name};
-    use aries_vcx::utils::get_temp_dir_path;
+    use aries_vcx_core::indy::ledger::pool::test_utils::get_temp_dir_path;
 
     pub fn _send_message(sender: Sender<AriesMessage>) -> Option<SendClosureConnection> {
         Some(Box::new(
@@ -414,7 +414,7 @@ pub mod test_utils {
         faber: &mut Faber,
         connection: &MediatedConnection,
         rev_reg_id: Option<String>,
-        tails_file: Option<String>,
+        tails_dir: Option<String>,
     ) -> Issuer {
         let proposals: Vec<(String, ProposeCredential)> =
             get_credential_proposal_messages(&faber.agency_client, connection)
@@ -433,7 +433,7 @@ pub mod test_utils {
             credential_json: json!(proposal.content.credential_proposal.attributes).to_string(),
             cred_def_id: proposal.content.cred_def_id.clone(),
             rev_reg_id,
-            tails_file,
+            tails_file: tails_dir,
         };
         issuer
             .build_credential_offer_msg(&faber.profile.inject_anoncreds(), offer_info, Some("comment".into()))
@@ -458,7 +458,7 @@ pub mod test_utils {
         faber: &mut Faber,
         connection: &MediatedConnection,
         rev_reg_id: Option<String>,
-        tails_file: Option<String>,
+        tails_dir: Option<String>,
     ) {
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
         issuer
@@ -476,7 +476,7 @@ pub mod test_utils {
             credential_json: json!(proposal.content.credential_proposal.attributes).to_string(),
             cred_def_id: proposal.content.cred_def_id.clone(),
             rev_reg_id,
-            tails_file,
+            tails_file: tails_dir,
         };
         issuer
             .build_credential_offer_msg(&faber.profile.inject_anoncreds(), offer_info, Some("comment".into()))
@@ -980,7 +980,7 @@ pub mod test_utils {
             .unwrap();
     }
 
-    pub async fn _create_address_schema(
+    pub async fn _create_address_schema_creddef_revreg(
         profile: &Arc<dyn Profile>,
         institution_did: &str,
     ) -> (
@@ -994,8 +994,8 @@ pub mod test_utils {
     ) {
         info!("_create_address_schema >>> ");
         let attrs_list = json!(["address1", "address2", "city", "state", "zip"]).to_string();
-        let (schema_id, schema_json, cred_def_id, cred_def_json, rev_reg_id, cred_def, rev_reg) =
-            create_and_store_credential_def(
+        let (schema_id, schema_json, cred_def_id, cred_def_json, rev_reg_id, tails_dir, cred_def, rev_reg) =
+            create_and_store_credential_def_and_rev_reg(
                 &profile.inject_anoncreds(),
                 &profile.inject_anoncreds_ledger_read(),
                 &profile.inject_anoncreds_ledger_write(),
@@ -1065,11 +1065,11 @@ pub mod test_utils {
         schema_id: &str,
         cred_def_id: &str,
         rev_reg_id: Option<String>,
-        tails_file: Option<String>,
+        tails_dir: Option<String>,
         comment: &str,
     ) -> (Holder, Issuer) {
         let mut holder = send_cred_proposal(consumer, consumer_to_issuer, schema_id, cred_def_id, comment).await;
-        let mut issuer = accept_cred_proposal(institution, issuer_to_consumer, rev_reg_id, tails_file).await;
+        let mut issuer = accept_cred_proposal(institution, issuer_to_consumer, rev_reg_id, tails_dir).await;
         accept_offer(consumer, consumer_to_issuer, &mut holder).await;
         tokio::time::sleep(Duration::from_millis(1000)).await;
         send_credential(
@@ -1099,7 +1099,7 @@ pub mod test_utils {
         Issuer,
     ) {
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, rev_reg_id) =
-            _create_address_schema(&institution.profile, &institution.institution_did).await;
+            _create_address_schema_creddef_revreg(&institution.profile, &institution.institution_did).await;
 
         info!("test_real_proof_with_revocation :: AS INSTITUTION SEND CREDENTIAL OFFER");
         let (address1, address2, city, state, zip) = attr_names();
@@ -1412,7 +1412,7 @@ pub mod test_utils {
         for (referent, cred_array) in retrieved_credentials.credentials_by_referent.iter() {
             if cred_array.len() > 0 {
                 let first_cred = cred_array[0].clone();
-                let tails_dir = with_tails.then_some(get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_owned());
+                let tails_dir = with_tails.then_some(get_temp_dir_path().to_str().unwrap().to_owned());
                 selected_credentials.select_credential_for_referent_from_retrieved(
                     referent.to_owned(),
                     first_cred,
@@ -1454,7 +1454,7 @@ pub mod test_utils {
                 })
                 .collect();
             let first_cred = filtered[0].clone();
-            let tails_dir = with_tails.then_some(get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_owned());
+            let tails_dir = with_tails.then_some(get_temp_dir_path().to_str().unwrap().to_owned());
             selected_credentials.select_credential_for_referent_from_retrieved(
                 referent.to_owned(),
                 first_cred,

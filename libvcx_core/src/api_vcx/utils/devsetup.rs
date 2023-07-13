@@ -1,6 +1,6 @@
 use agency_client::agency_client::AgencyClient;
 use aries_vcx::aries_vcx_core::global::settings;
-use aries_vcx::aries_vcx_core::indy::ledger::pool::test_utils::create_testpool_genesis_txn_file;
+use aries_vcx::aries_vcx_core::indy::ledger::pool::test_utils::{create_testpool_genesis_txn_file, get_temp_file_path};
 use aries_vcx::aries_vcx_core::indy::ledger::pool::{
     create_pool_ledger_config, indy_close_pool, indy_open_pool, PoolConfig,
 };
@@ -13,7 +13,6 @@ use std::future::Future;
 use uuid::Uuid;
 
 use aries_vcx::utils::devsetup::{init_test_logging, reset_global_state, setup_issuer_wallet_and_agency_client};
-use aries_vcx::utils::get_temp_dir_path;
 
 use crate::api_vcx::api_global::agency_client::{reset_main_agency_client, set_main_agency_client};
 use crate::api_vcx::api_global::pool::{close_main_pool, setup_ledger_components};
@@ -45,7 +44,7 @@ impl SetupGlobalsWalletPoolAgency {
         let init = Self::init().await;
 
         let pool_name = Uuid::new_v4().to_string();
-        let genesis_path = get_temp_dir_path(DEFAULT_GENESIS_PATH).to_str().unwrap().to_string();
+        let genesis_path = get_temp_file_path(DEFAULT_GENESIS_PATH).to_str().unwrap().to_string();
         create_testpool_genesis_txn_file(&genesis_path);
         create_pool_ledger_config(&pool_name, &genesis_path).unwrap();
 

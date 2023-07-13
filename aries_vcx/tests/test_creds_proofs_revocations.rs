@@ -18,8 +18,8 @@ mod integration_tests {
     #[cfg(feature = "migration")]
     use crate::utils::migration::Migratable;
     use crate::utils::scenarios::test_utils::{
-        _create_address_schema, _exchange_credential, attr_names, create_connected_connections, create_proof,
-        generate_and_send_proof, issue_address_credential, prover_select_credentials_and_send_proof,
+        _create_address_schema_creddef_revreg, _exchange_credential, attr_names, create_connected_connections,
+        create_proof, generate_and_send_proof, issue_address_credential, prover_select_credentials_and_send_proof,
         publish_revocation, requested_attrs, retrieved_to_selected_credentials_simple,
         revoke_credential_and_publish_accumulator, revoke_credential_local, rotate_rev_reg, send_proof_request,
         verifier_create_proof_and_send_request,
@@ -299,7 +299,7 @@ mod integration_tests {
 
             // Issue and send three credentials of the same schema
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _rev_reg_id) =
-                _create_address_schema(&institution.profile, &institution.institution_did).await;
+                _create_address_schema_creddef_revreg(&institution.profile, &institution.institution_did).await;
             let (address1, address2, city, state, zip) = attr_names();
             let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
             let issuer_credential1 = _exchange_credential(
@@ -544,7 +544,7 @@ mod integration_tests {
             let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut issuer).await;
 
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _rev_reg_id) =
-                _create_address_schema(&issuer.profile, &issuer.institution_did).await;
+                _create_address_schema_creddef_revreg(&issuer.profile, &issuer.institution_did).await;
             let (address1, address2, city, state, zip) = attr_names();
             let (req1, req2) = (Some("request1"), Some("request2"));
             let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
@@ -636,7 +636,7 @@ mod integration_tests {
             let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut issuer).await;
 
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _rev_reg_id) =
-                _create_address_schema(&issuer.profile, &issuer.institution_did).await;
+                _create_address_schema_creddef_revreg(&issuer.profile, &issuer.institution_did).await;
             let (address1, address2, city, state, zip) = attr_names();
             let (req1, req2) = (Some("request1"), Some("request2"));
             let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
@@ -726,7 +726,7 @@ mod integration_tests {
             let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut issuer).await;
 
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _) =
-                _create_address_schema(&issuer.profile, &issuer.institution_did).await;
+                _create_address_schema_creddef_revreg(&issuer.profile, &issuer.institution_did).await;
             let (address1, address2, city, state, zip) = attr_names();
             let (req1, req2) = (Some("request1"), Some("request2"));
             let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
@@ -812,7 +812,7 @@ mod integration_tests {
             let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut issuer).await;
 
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _) =
-                _create_address_schema(&issuer.profile, &issuer.institution_did).await;
+                _create_address_schema_creddef_revreg(&issuer.profile, &issuer.institution_did).await;
             let (address1, address2, city, state, zip) = attr_names();
             let (req1, req2) = (Some("request1"), Some("request2"));
             let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
@@ -902,7 +902,7 @@ mod integration_tests {
             let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut issuer).await;
 
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _) =
-                _create_address_schema(&issuer.profile, &issuer.institution_did).await;
+                _create_address_schema_creddef_revreg(&issuer.profile, &issuer.institution_did).await;
             let (address1, address2, city, state, zip) = attr_names();
             let (req1, req2) = (Some("request1"), Some("request2"));
             let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
@@ -993,7 +993,7 @@ mod integration_tests {
                 create_connected_connections(&mut consumer, &mut issuer).await;
 
             let (_schema_id, _schema_json, _cred_def_id, _cred_def_json, cred_def, rev_reg, _rev_reg_id) =
-                _create_address_schema(&issuer.profile, &issuer.institution_did).await;
+                _create_address_schema_creddef_revreg(&issuer.profile, &issuer.institution_did).await;
 
             let (address1, address2, city, state, zip) = attr_names();
             let (req1, req2, req3) = (Some("request1"), Some("request2"), Some("request3"));

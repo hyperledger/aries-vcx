@@ -189,21 +189,22 @@ pub mod tests {
     use crate::api_vcx::api_global::wallet::close_main_wallet;
     use crate::api_vcx::api_global::wallet::test_utils::_create_and_open_wallet;
     use crate::errors::error::LibvcxErrorKind;
-    use aries_vcx::aries_vcx_core::indy::ledger::pool::test_utils::create_testpool_genesis_txn_file;
+    use aries_vcx::aries_vcx_core::indy::ledger::pool::test_utils::{
+        create_testpool_genesis_txn_file, get_temp_file_path,
+    };
     use aries_vcx::aries_vcx_core::indy::ledger::pool::{indy_delete_pool, PoolConfig};
     use aries_vcx::aries_vcx_core::INVALID_POOL_HANDLE;
     use aries_vcx::core::profile::profile::Profile;
     use aries_vcx::global::settings::{set_config_value, CONFIG_GENESIS_PATH, DEFAULT_GENESIS_PATH};
     use aries_vcx::utils::constants::POOL1_TXN;
     use aries_vcx::utils::devsetup::{SetupDefaults, SetupEmpty, TempFile};
-    use aries_vcx::utils::get_temp_dir_path;
 
     #[tokio::test]
     #[ignore]
     async fn test_open_pool() {
         let _setup = SetupEmpty::init();
         _create_and_open_wallet().await.unwrap();
-        let genesis_path = get_temp_dir_path(DEFAULT_GENESIS_PATH).to_str().unwrap().to_string();
+        let genesis_path = get_temp_file_path(DEFAULT_GENESIS_PATH).to_str().unwrap().to_string();
         create_testpool_genesis_txn_file(&genesis_path);
         let config = PoolConfig {
             genesis_path,

@@ -122,7 +122,7 @@ mod integration_tests {
             .await;
             let rev_reg_id = res.8;
             let cred_rev_id = res.9;
-            let tails_file = res.10;
+            let tails_dir = res.10;
             let rev_reg = res.11;
 
             assert!(
@@ -134,7 +134,7 @@ mod integration_tests {
             let anoncreds = Arc::clone(&setup.profile).inject_anoncreds();
 
             anoncreds
-                .revoke_credential_local(&tails_file, &rev_reg_id, &cred_rev_id)
+                .revoke_credential_local(&tails_dir, &rev_reg_id, &cred_rev_id)
                 .await
                 .unwrap();
             rev_reg

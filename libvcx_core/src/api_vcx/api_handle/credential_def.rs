@@ -103,6 +103,7 @@ pub fn check_is_published(handle: u32) -> LibvcxResult<bool> {
 
 #[cfg(test)]
 pub mod tests {
+    use aries_vcx::aries_vcx_core::indy::ledger::pool::test_utils::get_temp_dir_path;
     use std::{thread::sleep, time::Duration};
 
     use aries_vcx::common::primitives::credential_definition::RevocationDetailsBuilder;
@@ -111,7 +112,6 @@ pub mod tests {
     use aries_vcx::utils;
     use aries_vcx::utils::constants::SCHEMA_ID;
     use aries_vcx::utils::devsetup::SetupMocks;
-    use aries_vcx::utils::get_temp_dir_path;
 
     use crate::api_vcx::api_global::settings::get_config_value;
     use crate::api_vcx::api_handle::revocation_registry;
@@ -173,8 +173,7 @@ pub mod tests {
             .await;
             let issuer_did = get_config_value(CONFIG_INSTITUTION_DID).unwrap();
 
-            let path = get_temp_dir_path("tails.txt");
-            std::fs::create_dir_all(&path).unwrap();
+            let path = get_temp_dir_path();
 
             let handle_cred_def = create("1".to_string(), schema_id, "tag1".to_string(), true)
                 .await

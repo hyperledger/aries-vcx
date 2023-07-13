@@ -876,7 +876,7 @@ pub mod tests {
     use std::ptr;
 
     use aries_vcx::utils::devsetup::*;
-    use aries_vcx::utils::get_temp_dir_path;
+    use aries_vcx::utils::get_temp_file_path;
     use aries_vcx::utils::mockdata::mockdata_credex::CREDENTIAL_ISSUER_SM_FINISHED;
     use libvcx_core::errors;
 
@@ -893,7 +893,7 @@ pub mod tests {
             "version": "1.0",
             "data": {
                 "cred_def_handle":1,
-                "tails_file": get_temp_dir_path("tails").to_str().unwrap(),
+                "tails_file": get_temp_file_path("tails").to_str().unwrap(),
                 "rev_reg_id": "123",
                 "cred_rev_id": "456",
                 "source_id": "standard_credential",

@@ -245,11 +245,10 @@ pub fn build_requested_credentials_json(
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 pub mod pool_tests {
-
     use crate::common::proofs::prover::prover_internal::{build_rev_states_json, CredInfoProver};
-    use crate::utils::constants::{CRED_DEF_ID, CRED_REV_ID, LICENCE_CRED_ID, SCHEMA_ID, TAILS_DIR};
+    use crate::utils::constants::{CRED_DEF_ID, CRED_REV_ID, LICENCE_CRED_ID, SCHEMA_ID};
     use crate::utils::devsetup::SetupProfile;
-    use crate::utils::get_temp_dir_path;
+    use aries_vcx_core::indy::ledger::pool::test_utils::get_temp_dir_path;
 
     #[tokio::test]
     #[ignore]
@@ -275,7 +274,7 @@ pub mod pool_tests {
                 cred_def_id: CRED_DEF_ID.to_string(),
                 rev_reg_id: None,
                 cred_rev_id: Some(CRED_REV_ID.to_string()),
-                tails_file: Some(get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string()),
+                tails_file: Some(get_temp_dir_path().to_str().unwrap().to_string()),
                 revocation_interval: None,
                 timestamp: None,
                 revealed: None,
@@ -298,19 +297,17 @@ pub mod pool_tests {
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 pub mod unit_tests {
+    use aries_vcx_core::indy::ledger::pool::test_utils::get_temp_dir_path;
     use aries_vcx_core::INVALID_POOL_HANDLE;
 
     use crate::core::profile::vdrtools_profile::VdrtoolsProfile;
+    use crate::utils::constants::{
+        ADDRESS_CRED_DEF_ID, ADDRESS_CRED_ID, ADDRESS_CRED_REV_ID, ADDRESS_REV_REG_ID, ADDRESS_SCHEMA_ID, CRED_DEF_ID,
+        CRED_REV_ID, LICENCE_CRED_ID, REV_REG_ID, REV_STATE_JSON, SCHEMA_ID,
+    };
     use crate::utils::devsetup::*;
     use crate::utils::mockdata::profile::mock_anoncreds::MockAnoncreds;
     use crate::utils::mockdata::profile::mock_ledger::MockLedger;
-    use crate::utils::{
-        constants::{
-            ADDRESS_CRED_DEF_ID, ADDRESS_CRED_ID, ADDRESS_CRED_REV_ID, ADDRESS_REV_REG_ID, ADDRESS_SCHEMA_ID,
-            CRED_DEF_ID, CRED_REV_ID, LICENCE_CRED_ID, REV_REG_ID, REV_STATE_JSON, SCHEMA_ID, TAILS_DIR,
-        },
-        get_temp_dir_path,
-    };
 
     use super::*;
 
@@ -424,7 +421,7 @@ pub mod unit_tests {
                 from: Some(123),
                 to: Some(456),
             }),
-            tails_file: Some(get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string()),
+            tails_file: Some(get_temp_dir_path().to_str().unwrap().to_string()),
             timestamp: None,
             revealed: None,
         };
@@ -462,7 +459,7 @@ pub mod unit_tests {
                     },
                     "interval":null
                 },
-                "tails_file": get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string(),
+                "tails_file": get_temp_dir_path().to_str().unwrap().to_string(),
               },
               "zip_2":{
                 "credential": {
@@ -545,7 +542,7 @@ pub mod unit_tests {
                     },
                     "interval":null
                 },
-                "tails_file": get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string(),
+                "tails_file": get_temp_dir_path().to_str().unwrap().to_string(),
               },
            }
         });
@@ -557,7 +554,7 @@ pub mod unit_tests {
             rev_reg_id: None,
             cred_rev_id: Some(CRED_REV_ID.to_string()),
             revocation_interval: None,
-            tails_file: Some(get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string()),
+            tails_file: Some(get_temp_dir_path().to_str().unwrap().to_string()),
             timestamp: None,
             revealed: None,
         }];
@@ -661,7 +658,7 @@ pub mod unit_tests {
             cred_def_id: CRED_DEF_ID.to_string(),
             rev_reg_id: Some(REV_REG_ID.to_string()),
             cred_rev_id: Some(CRED_REV_ID.to_string()),
-            tails_file: Some(get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string()),
+            tails_file: Some(get_temp_dir_path().to_str().unwrap().to_string()),
             revocation_interval: None,
             timestamp: None,
             revealed: None,
