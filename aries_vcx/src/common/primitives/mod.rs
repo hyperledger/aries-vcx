@@ -83,7 +83,8 @@ pub mod integration_tests {
             .await;
 
             let ledger = Arc::clone(&setup.profile).inject_anoncreds_ledger_read();
-            let (id, _delta, _timestamp) = ledger.get_rev_reg_delta_json(&rev_reg_id, None, None).await.unwrap();
+            let (id, _issuer_did, _delta, _timestamp) =
+                ledger.get_rev_reg_delta_json(&rev_reg_id, None, None).await.unwrap();
 
             assert_eq!(id, rev_reg_id);
         })

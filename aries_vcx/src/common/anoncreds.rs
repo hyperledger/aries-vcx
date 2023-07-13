@@ -73,10 +73,10 @@ pub mod integration_tests {
 
             let ledger = Arc::clone(&setup.profile).inject_anoncreds_ledger_read();
 
-            let (_, first_rev_reg_delta, first_timestamp) =
+            let (_, _, first_rev_reg_delta, first_timestamp) =
                 ledger.get_rev_reg_delta_json(&rev_reg_id, None, None).await.unwrap();
 
-            let (_, test_same_delta, test_same_timestamp) =
+            let (_, _, test_same_delta, test_same_timestamp) =
                 ledger.get_rev_reg_delta_json(&rev_reg_id, None, None).await.unwrap();
 
             assert_eq!(first_rev_reg_delta, test_same_delta);
@@ -103,7 +103,7 @@ pub mod integration_tests {
                 .unwrap();
 
             // Delta should change after revocation
-            let (_, second_rev_reg_delta, _) = ledger
+            let (_, _, second_rev_reg_delta, _) = ledger
                 .get_rev_reg_delta_json(&rev_reg_id, Some(first_timestamp + 1), None)
                 .await
                 .unwrap();

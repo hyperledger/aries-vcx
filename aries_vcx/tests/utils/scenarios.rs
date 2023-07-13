@@ -931,7 +931,7 @@ pub mod test_utils {
 
     pub async fn revoke_credential_local(faber: &mut Faber, issuer_credential: &Issuer, rev_reg_id: &str) {
         let ledger = Arc::clone(&faber.profile).inject_anoncreds_ledger_read();
-        let (_, delta, timestamp) = ledger.get_rev_reg_delta_json(rev_reg_id, None, None).await.unwrap();
+        let (_, _, delta, timestamp) = ledger.get_rev_reg_delta_json(rev_reg_id, None, None).await.unwrap();
         info!("revoking credential locally");
 
         issuer_credential
@@ -939,7 +939,7 @@ pub mod test_utils {
             .await
             .unwrap();
 
-        let (_, delta_after_revoke, _) = ledger
+        let (_, _, delta_after_revoke, _) = ledger
             .get_rev_reg_delta_json(rev_reg_id, Some(timestamp + 1), None)
             .await
             .unwrap();

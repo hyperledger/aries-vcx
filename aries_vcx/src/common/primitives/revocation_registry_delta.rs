@@ -39,7 +39,7 @@ impl RevocationRegistryDelta {
         from: Option<u64>,
         to: Option<u64>,
     ) -> VcxResult<Self> {
-        let (_, rev_reg_delta_json, _) = ledger.get_rev_reg_delta_json(rev_reg_id, from, to).await?;
+        let (_, _, rev_reg_delta_json, _) = ledger.get_rev_reg_delta_json(rev_reg_id, from, to).await?;
         serde_json::from_str(&rev_reg_delta_json).map_err(|err| {
             AriesVcxError::from_msg(
                 AriesVcxErrorKind::SerializationError,

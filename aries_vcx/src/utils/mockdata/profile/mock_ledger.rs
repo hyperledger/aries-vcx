@@ -3,7 +3,9 @@ use aries_vcx_core::ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWr
 use async_trait::async_trait;
 
 use crate::utils;
-use crate::utils::constants::{rev_def_json, CRED_DEF_JSON, REV_REG_DELTA_JSON, REV_REG_ID, REV_REG_JSON, SCHEMA_JSON};
+use crate::utils::constants::{
+    rev_def_json, CRED_DEF_JSON, INSTITUTION_DID, REV_REG_DELTA_JSON, REV_REG_ID, REV_REG_JSON, SCHEMA_JSON,
+};
 
 #[derive(Debug)]
 pub(crate) struct MockLedger;
@@ -79,8 +81,13 @@ impl AnoncredsLedgerRead for MockLedger {
         rev_reg_id: &str,
         from: Option<u64>,
         to: Option<u64>,
-    ) -> VcxCoreResult<(String, String, u64)> {
-        Ok((REV_REG_ID.to_string(), REV_REG_DELTA_JSON.to_string(), 1))
+    ) -> VcxCoreResult<(String, String, String, u64)> {
+        Ok((
+            REV_REG_ID.to_string(),
+            INSTITUTION_DID.to_owned(),
+            REV_REG_DELTA_JSON.to_string(),
+            1,
+        ))
     }
 
     async fn get_rev_reg(&self, rev_reg_id: &str, timestamp: u64) -> VcxCoreResult<(String, String, u64)> {
