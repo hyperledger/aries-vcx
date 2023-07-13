@@ -189,7 +189,7 @@ dependencies = [
 [[package]]
 name = "anoncreds"
 version = "0.1.0"
-source = "git+https://github.com/bobozaur/anoncreds-rs#632d60a53c99707da014f98cda8f52d361821a81"
+source = "git+https://github.com/bobozaur/anoncreds-rs#5b233903a8058106c3653b0a0de3d002e70d194e"
 dependencies = [
  "bitvec",
  "bs58 0.4.0",

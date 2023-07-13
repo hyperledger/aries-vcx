@@ -73,6 +73,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
 
     async fn create_revocation_state(
         &self,
+        issuer_did: &str,
         tails_dir: &str,
         rev_reg_def_json: &str,
         rev_reg_delta_json: &str,

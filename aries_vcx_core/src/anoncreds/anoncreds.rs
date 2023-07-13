@@ -26,10 +26,11 @@ use anoncreds::{
     },
     tails::{TailsFileReader, TailsFileWriter},
     types::{
-        CredentialOffer, CredentialRevocationConfig, LinkSecret, Presentation, PresentationRequest, RegistryType,
-        RevocationRegistry, RevocationRegistryDefinition, RevocationStatusList, SignatureType,
+        CredentialOffer, CredentialRequestMetadata, CredentialRevocationConfig, CredentialRevocationState, LinkSecret,
+        PresentCredentials, Presentation, PresentationRequest, RegistryType, RevocationRegistry,
+        RevocationRegistryDefinition, RevocationStatusList, SignatureType,
     },
-    ursa::bn::BigNumber,
+    ursa::{bn::BigNumber, cl::RevocationRegistryDelta},
 };
 use async_trait::async_trait;
 
@@ -68,6 +69,7 @@ pub struct RevocationRegistryInfo {
 
 #[derive(Debug, Deserialize, Serialize)]
 struct RevRegDeltaSubParts {
+    #[serde(default)]
     #[serde(skip_serializing_if = "String::is_empty")]
     issuer_id: String,
     prev_accum: Option<String>,
@@ -211,7 +213,7 @@ impl BaseAnonCreds for Anoncreds {
         let rev_reg_defs: Option<HashMap<RevocationRegistryDefinitionId, RevocationRegistryDefinition>> =
             serde_json::from_str(rev_reg_defs_json)?;
 
-        let mut rev_reg_deltas: Option<HashMap<RevocationRegistryId, HashMap<u64, RevRegDeltaParts>>> =
+        let rev_reg_deltas: Option<HashMap<RevocationRegistryId, HashMap<u64, RevRegDeltaParts>>> =
             serde_json::from_str(rev_reg_deltas_json)?;
 
         let rev_status_lists = if let Some(map) = rev_reg_deltas {
@@ -233,7 +235,7 @@ impl BaseAnonCreds for Anoncreds {
                     revoked.into_iter().for_each(|id| {
                         revocation_list
                             .get_mut(id as usize)
-                            .map(|b| *b = true)
+                            .map(|mut b| *b = true)
                             .unwrap_or_default()
                     });
                     let registry = UrsaRevocationRegistry::try_from(accum.as_str())?;
@@ -255,7 +257,7 @@ impl BaseAnonCreds for Anoncreds {
         };
 
         // Anoncreds args are sooooooo bad...
-        let rev_status_lists = rev_status_lists.map(|v| v.iter().collect());
+        let rev_status_lists = rev_status_lists.as_ref().map(|v| v.iter().collect());
 
         Ok(anoncreds::verifier::verify_presentation(
             &presentation,
@@ -535,7 +537,7 @@ impl BaseAnonCreds for Anoncreds {
             &cred_offer,
             &cred_request,
             cred_values,
-            rev_reg_id.map(|s| RevocationRegistryId::new_unchecked(s)),
+            rev_reg_id.as_ref().map(|s| RevocationRegistryId::new_unchecked(s)),
             rev_status_list.as_ref(),
             revocation_config,
         )?;
@@ -608,12 +610,12 @@ impl BaseAnonCreds for Anoncreds {
         let cred_defs: HashMap<CredentialDefinitionId, CredentialDefinition> =
             serde_json::from_str(credential_defs_json)?;
 
-        let mut present_credentials: PresentCredentials = PresentCredentials::new();
+        let mut present_credentials: PresentCredentials = PresentCredentials::default();
 
         let mut proof_details_by_cred_id: HashMap<
             String,
             (
-                CredxCredential,
+                Credential,
                 Option<u64>,
                 Option<CredentialRevocationState>,
                 Vec<(String, bool)>,
@@ -704,7 +706,7 @@ impl BaseAnonCreds for Anoncreds {
 
         let link_secret = self.get_link_secret(link_secret_id).await?;
 
-        let presentation = credx::prover::create_presentation(
+        let presentation = anoncreds::prover::create_presentation(
             &pres_req,
             present_credentials,
             self_attested,
@@ -824,13 +826,15 @@ impl BaseAnonCreds for Anoncreds {
         credential_def_json: &str,
         link_secret_id: &str,
     ) -> VcxCoreResult<(String, String)> {
-        let prover_did = DidValue::new(prover_did, None);
+        let prover_did = Did::parse(prover_did.to_owned())
+            .map_err(|e| AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::InvalidDid, e))?;
         let cred_def: CredentialDefinition = serde_json::from_str(credential_def_json)?;
         let credential_offer: CredentialOffer = serde_json::from_str(credential_offer_json)?;
         let link_secret = self.get_link_secret(link_secret_id).await?;
 
-        let (cred_req, cred_req_metadata) = credx::prover::create_credential_request(
-            &prover_did,
+        let (cred_req, cred_req_metadata) = anoncreds::prover::create_credential_request(
+            None,
+            Some(prover_did.did()),
             &cred_def,
             &link_secret,
             link_secret_id,
@@ -845,6 +849,7 @@ impl BaseAnonCreds for Anoncreds {
 
     async fn create_revocation_state(
         &self,
+        issuer_did: &str,
         tails_dir: &str,
         rev_reg_def_json: &str,
         rev_reg_delta_json: &str,
@@ -852,9 +857,7 @@ impl BaseAnonCreds for Anoncreds {
         cred_rev_id: &str,
     ) -> VcxCoreResult<String> {
         let revoc_reg_def: RevocationRegistryDefinition = serde_json::from_str(rev_reg_def_json)?;
-        let tails_file_hash = match revoc_reg_def.borrow() {
-            RevocationRegistryDefinition::RevocationRegistryDefinitionV1(r) => &r.value.tails_hash,
-        };
+        let tails_file_hash = revoc_reg_def.value.tails_hash.as_str();
 
         let mut tails_file_path = std::path::PathBuf::new();
         tails_file_path.push(&tails_dir);
@@ -867,18 +870,41 @@ impl BaseAnonCreds for Anoncreds {
             )
         })?;
 
-        let tails_reader = TailsFileReader::new(tails_path);
-        let rev_reg_delta: RevocationRegistryDelta = serde_json::from_str(rev_reg_delta_json)?;
+        let mut delta: RevRegDeltaParts = serde_json::from_str(rev_reg_delta_json)?;
+        delta.value.issuer_id = issuer_did.to_owned();
+
+        let RevRegDeltaSubParts {
+            issuer_id,
+            accum,
+            issued,
+            revoked,
+            ..
+        } = delta.value;
+
+        let issuer_id = IssuerId::new_unchecked(issuer_id);
+        let max = issued.into_iter().fold(0, |max, idx| std::cmp::max(max, idx));
+        let mut revocation_list = bitvec!(0; max as usize);
+        revoked.into_iter().for_each(|id| {
+            revocation_list
+                .get_mut(id as usize)
+                .map(|mut b| *b = true)
+                .unwrap_or_default()
+        });
+        let registry = UrsaRevocationRegistry::try_from(accum.as_str())?;
+
+        let rev_status_list =
+            RevocationStatusList::new(None, issuer_id, revocation_list, Some(registry), Some(timestamp))?;
+
         let rev_reg_idx: u32 = cred_rev_id
             .parse()
             .map_err(|e| AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::ParsingError, e))?;
 
-        let rev_state = credx::prover::create_or_update_revocation_state(
-            tails_reader,
+        let rev_state = anoncreds::prover::create_or_update_revocation_state(
+            tails_path,
             &revoc_reg_def,
-            &rev_reg_delta,
+            &rev_status_list,
             rev_reg_idx,
-            timestamp,
+            None,
             None,
         )?;
 
@@ -893,9 +919,9 @@ impl BaseAnonCreds for Anoncreds {
         cred_def_json: &str,
         rev_reg_def_json: Option<&str>,
     ) -> VcxCoreResult<String> {
-        let mut credential: CredxCredential = serde_json::from_str(cred_json)?;
+        let mut credential: Credential = serde_json::from_str(cred_json)?;
         let cred_request_metadata: CredentialRequestMetadata = serde_json::from_str(cred_req_meta)?;
-        let link_secret_id = &cred_request_metadata.master_secret_name;
+        let link_secret_id = &cred_request_metadata.link_secret_name;
         let link_secret = self.get_link_secret(link_secret_id).await?;
         let cred_def: CredentialDefinition = serde_json::from_str(cred_def_json)?;
         let rev_reg_def: Option<RevocationRegistryDefinition> = if let Some(rev_reg_def_json) = rev_reg_def_json {
@@ -904,7 +930,7 @@ impl BaseAnonCreds for Anoncreds {
             None
         };
 
-        credx::prover::process_credential(
+        anoncreds::prover::process_credential(
             &mut credential,
             &cred_request_metadata,
             &link_secret,
@@ -913,25 +939,25 @@ impl BaseAnonCreds for Anoncreds {
         )?;
 
         let schema_id = &credential.schema_id;
-        let (_schema_method, schema_issuer_did, schema_name, schema_version) =
-            schema_id.parts().ok_or(AriesVcxCoreError::from_msg(
+        let (_schema_method, schema_issuer_did, schema_name, schema_version) = schema_parts(schema_id.0.as_str())
+            .ok_or(AriesVcxCoreError::from_msg(
                 AriesVcxCoreErrorKind::InvalidSchema,
                 "Could not process credential.schema_id as parts.",
             ))?;
 
         let cred_def_id = &credential.cred_def_id;
-        let (_cred_def_method, issuer_did, _signature_type, _schema_id, _tag) =
-            cred_def_id.parts().ok_or(AriesVcxCoreError::from_msg(
+        let (_cred_def_method, issuer_did, _signature_type, _schema_id, _tag) = cred_parts(cred_def_id.0.as_str())
+            .ok_or(AriesVcxCoreError::from_msg(
                 AriesVcxCoreErrorKind::InvalidSchema,
                 "Could not process credential.cred_def_id as parts.",
             ))?;
 
         let mut tags = json!({
             "schema_id": schema_id.0,
-            "schema_issuer_did": schema_issuer_did.0,
+            "schema_issuer_did": schema_issuer_did.did(),
             "schema_name": schema_name,
             "schema_version": schema_version,
-            "issuer_did": issuer_did.0,
+            "issuer_did": issuer_did.did(),
             "cred_def_id": cred_def_id.0
         });
 
@@ -976,29 +1002,16 @@ impl BaseAnonCreds for Anoncreds {
             ));
         }
 
-        let secret = credx::prover::create_master_secret()?;
-        let ms_decimal = secret
-            .value
-            .value()
-            .map_err(|err| {
-                AriesVcxCoreError::from_msg(
-                    AriesVcxCoreErrorKind::UrsaError,
-                    format!(
-                        "failed to get BigNumber from master secret, UrsaErrorKind: {}",
-                        err.kind()
-                    ),
-                )
-            })?
-            .to_dec()
-            .map_err(|err| {
-                AriesVcxCoreError::from_msg(
-                    AriesVcxCoreErrorKind::UrsaError,
-                    format!(
-                        "Failed convert BigNumber to decimal string, UrsaErrorKind: {}",
-                        err.kind()
-                    ),
-                )
-            })?;
+        let secret = anoncreds::prover::create_link_secret()?;
+        let ms_decimal = secret.0.to_dec().map_err(|err| {
+            AriesVcxCoreError::from_msg(
+                AriesVcxCoreErrorKind::UrsaError,
+                format!(
+                    "Failed convert BigNumber to decimal string, UrsaErrorKind: {}",
+                    err.kind()
+                ),
+            )
+        })?;
 
         self.wallet
             .add_wallet_record(CATEGORY_LINK_SECRET, link_secret_id, &ms_decimal, None)
@@ -1018,13 +1031,14 @@ impl BaseAnonCreds for Anoncreds {
         version: &str,
         attrs: &str,
     ) -> VcxCoreResult<(String, String)> {
-        let origin_did = DidValue::new(issuer_did, None);
         let attr_names = serde_json::from_str(attrs)?;
 
-        let schema = credx::issuer::create_schema(&origin_did, name, version, attr_names, None)?;
+        let schema = anoncreds::issuer::create_schema(name, version, issuer_did, attr_names)?;
+        let issuer_did = Did::parse(issuer_did.to_owned())
+            .map_err(|e| AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::InvalidDid, e))?;
 
         let schema_json = serde_json::to_string(&schema)?;
-        let schema_id = &schema.id().0;
+        let schema_id = make_schema_id(&issuer_did, name, version);
 
         Ok((schema_id.to_string(), schema_json))
     }
@@ -1037,30 +1051,30 @@ impl BaseAnonCreds for Anoncreds {
             )
         })?;
 
-        let rev_reg = self.get_wallet_record_value(CATEGORY_REV_REG, rev_reg_id).await?;
+        let mut rev_reg = self.get_wallet_record_value(CATEGORY_REV_REG, rev_reg_id).await?;
 
-        let rev_reg_def = self.get_wallet_record_value(CATEGORY_REV_REG_DEF, rev_reg_id).await?;
+        let rev_reg_def: RevocationRegistryDefinition =
+            self.get_wallet_record_value(CATEGORY_REV_REG_DEF, rev_reg_id).await?;
 
-        let tails_file_hash = match &rev_reg_def {
-            RevocationRegistryDefinition::RevocationRegistryDefinitionV1(r) => &r.value.tails_hash,
-        };
+        let tails_file_hash = &rev_reg_def.value.tails_hash;
 
         let tails_file_path = format!("{tails_dir}/{tails_file_hash}");
-        let tails_reader = TailsFileReader::new(&tails_file_path);
+        let tails_reader = TailsFileReader::new_tails_reader(&tails_file_path);
 
-        let (rev_reg, new_rev_reg_delta) =
-            credx::issuer::revoke_credential(&rev_reg_def, &rev_reg, cred_rev_id, &tails_reader)?;
+        let new_rev_reg_delta =
+            anoncreds::issuer::revoke_credential(&rev_reg_def, &mut rev_reg, cred_rev_id, &tails_reader)?;
 
         let old_str_rev_reg_delta = self.get_rev_reg_delta(rev_reg_id).await?;
 
         let rev_reg_delta = old_str_rev_reg_delta
             .as_ref()
-            .map(|s| serde_json::from_str(s))
+            .map(|s| serde_json::from_str::<RevocationRegistryDelta>(s))
             .transpose()?;
 
         let rev_reg_delta = rev_reg_delta
-            .map(|rev_reg_delta| credx::issuer::merge_revocation_registry_deltas(&rev_reg_delta, &new_rev_reg_delta))
-            .transpose()?
+            .map(|mut rev_reg_delta| rev_reg_delta.merge(&new_rev_reg_delta).map(|_| rev_reg_delta))
+            .transpose()
+            .map_err(|e| AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::InvalidRevocationDetails, e))?
             .unwrap_or(new_rev_reg_delta);
 
         let str_rev_reg = serde_json::to_string(&rev_reg)?;
@@ -1110,25 +1124,23 @@ impl BaseAnonCreds for Anoncreds {
         Ok(res_rev_reg_delta.ok().flatten())
     }
 
-    async fn clear_rev_reg_delta(&self, rev_reg_id: &str) -> VcxCoreResult<()> {
-        if self.get_rev_reg_delta(rev_reg_id).await?.is_some() {
-            self.wallet
-                .delete_wallet_record(CATEGORY_REV_REG_DELTA, rev_reg_id)
-                .await?;
-        }
+    async fn clear_rev_reg_delta(&self, _rev_reg_id: &str) -> VcxCoreResult<()> {
+        // We must NOT delete the stored deltas, as silly as that sounds
+        // Keeping them will make properly implementing anoncreds-rs easier
+        // because we'll have all the history needed to build a RevocationStatusList (which is complete, not a delta)
 
         Ok(())
     }
 
     async fn generate_nonce(&self) -> VcxCoreResult<String> {
-        let nonce = credx::verifier::generate_nonce()?.to_string();
+        let nonce = anoncreds::verifier::generate_nonce()?.to_string();
         Ok(nonce)
     }
 }
 
 fn get_rev_state(
     cred_id: &str,
-    credential: &CredxCredential,
+    credential: &Credential,
     detail: &Value,
     rev_states: Option<&Value>,
 ) -> VcxCoreResult<(Option<u64>, Option<CredentialRevocationState>)> {
@@ -1168,7 +1180,7 @@ fn _normalize_attr_name(name: &str) -> String {
     name.replace(' ', "").to_lowercase()
 }
 
-fn _make_cred_info(credential_id: &str, cred: &CredxCredential) -> VcxCoreResult<Value> {
+fn _make_cred_info(credential_id: &str, cred: &Credential) -> VcxCoreResult<Value> {
     let cred_sig = serde_json::to_value(&cred.signature)?;
 
     let rev_info = cred_sig.get("r_credential");
@@ -1216,6 +1228,11 @@ where
     map.iter().map(|(k, v)| (k, v)).collect()
 }
 
+pub fn make_schema_id(did: &Did, name: &str, version: &str) -> SchemaId {
+    let id = format!("schema:{}:{}:2:{}:{}", did.method(), did.did(), name, version);
+    SchemaId::new_unchecked(id)
+}
+
 fn make_revocation_registry_id(
     origin_did: &Did,
     cred_def_id: &CredentialDefinitionId,
@@ -1227,10 +1244,9 @@ fn make_revocation_registry_id(
     };
 
     let id = format!(
-        "revreg:{}:{}:{}:{}:{}:{}",
+        "revreg:{}:{}:4:{}:{}:{}",
         origin_did.method(),
         origin_did.did(),
-        "4",
         cred_def_id.0,
         rev_reg_type,
         tag
@@ -1256,14 +1272,111 @@ pub fn make_credential_definition_id(
     };
 
     let id = format!(
-        "creddef:{}:{}:{}:{}:{}{}",
+        "creddef:{}:{}:3:{}:{}{}",
         origin_did.method(),
         origin_did.did(),
-        "3",
         signature_type,
-        schema_id.0.as_str(),
+        schema_id,
         tag
     );
 
     CredentialDefinitionId::new_unchecked(id)
+}
+
+pub fn schema_parts(id: &str) -> Option<(Option<&str>, Did, String, String)> {
+    let parts = id.split_terminator(":").collect::<Vec<&str>>();
+
+    if parts.len() == 1 {
+        // 1
+        return None;
+    }
+
+    if parts.len() == 4 {
+        // NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0
+        let did = parts[0].to_string();
+        let Ok(did) = Did::parse(did) else {return None};
+        let name = parts[2].to_string();
+        let version = parts[3].to_string();
+        return Some((None, did, name, version));
+    }
+
+    if parts.len() == 8 {
+        // schema:sov:did:sov:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0
+        let method = parts[1];
+        let did = parts[2..5].join(":");
+        let Ok(did) = Did::parse(did) else {return None};
+        let name = parts[6].to_string();
+        let version = parts[7].to_string();
+        return Some((Some(method), did, name, version));
+    }
+
+    None
+}
+
+pub fn cred_parts(id: &str) -> Option<(Option<&str>, Did, String, SchemaId, String)> {
+    let parts = id.split_terminator(":").collect::<Vec<&str>>();
+
+    if parts.len() == 4 {
+        // Th7MpTaRZVRYnPiabds81Y:3:CL:1
+        let did = parts[0].to_string();
+        let Ok(did) = Did::parse(did) else {return None};
+        let signature_type = parts[2].to_string();
+        let schema_id = parts[3].to_string();
+        let tag = String::new();
+        return Some((None, did, signature_type, SchemaId(schema_id), tag));
+    }
+
+    if parts.len() == 5 {
+        // Th7MpTaRZVRYnPiabds81Y:3:CL:1:tag
+        let did = parts[0].to_string();
+        let Ok(did) = Did::parse(did) else {return None};
+        let signature_type = parts[2].to_string();
+        let schema_id = parts[3].to_string();
+        let tag = parts[4].to_string();
+        return Some((None, did, signature_type, SchemaId(schema_id), tag));
+    }
+
+    if parts.len() == 7 {
+        // NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0
+        let did = parts[0].to_string();
+        let Ok(did) = Did::parse(did) else {return None};
+        let signature_type = parts[2].to_string();
+        let schema_id = parts[3..7].join(":");
+        let tag = String::new();
+        return Some((None, did, signature_type, SchemaId(schema_id), tag));
+    }
+
+    if parts.len() == 8 {
+        // NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag
+        let did = parts[0].to_string();
+        let Ok(did) = Did::parse(did) else {return None};
+        let signature_type = parts[2].to_string();
+        let schema_id = parts[3..7].join(":");
+        let tag = parts[7].to_string();
+        return Some((None, did, signature_type, SchemaId(schema_id), tag));
+    }
+
+    if parts.len() == 9 {
+        // creddef:sov:did:sov:NcYxiDXkpYi6ov5FcYDi1e:3:CL:3:tag
+        let method = parts[1];
+        let did = parts[2..5].join(":");
+        let Ok(did) = Did::parse(did) else {return None};
+        let signature_type = parts[6].to_string();
+        let schema_id = parts[7].to_string();
+        let tag = parts[8].to_string();
+        return Some((Some(method), did, signature_type, SchemaId(schema_id), tag));
+    }
+
+    if parts.len() == 16 {
+        // creddef:sov:did:sov:NcYxiDXkpYi6ov5FcYDi1e:3:CL:schema:sov:did:sov:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag
+        let method = parts[1];
+        let did = parts[2..5].join(":");
+        let Ok(did) = Did::parse(did) else {return None};
+        let signature_type = parts[6].to_string();
+        let schema_id = parts[7..15].join(":");
+        let tag = parts[15].to_string();
+        return Some((Some(method), did, signature_type, SchemaId(schema_id), tag));
+    }
+
+    None
 }

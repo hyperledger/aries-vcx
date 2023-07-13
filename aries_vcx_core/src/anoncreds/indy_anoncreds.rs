@@ -155,6 +155,7 @@ impl BaseAnonCreds for IndySdkAnonCreds {
 
     async fn create_revocation_state(
         &self,
+        _issuer_did: &str,
         tails_dir: &str,
         rev_reg_def_json: &str,
         rev_reg_delta_json: &str,

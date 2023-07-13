@@ -158,11 +158,12 @@ pub async fn build_rev_states_json(
 
                 let rev_reg_def_json = ledger_read.get_rev_reg_def_json(rev_reg_id).await?;
 
-                let (rev_reg_id, rev_reg_delta_json, timestamp) =
+                let (rev_reg_id, issuer_did, rev_reg_delta_json, timestamp) =
                     ledger_read.get_rev_reg_delta_json(rev_reg_id, from, to).await?;
 
                 let rev_state_json = anoncreds
                     .create_revocation_state(
+                        &issuer_did,
                         tails_file,
                         &rev_reg_def_json,
                         &rev_reg_delta_json,

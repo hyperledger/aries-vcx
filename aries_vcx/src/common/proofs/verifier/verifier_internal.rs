@@ -201,9 +201,8 @@ pub async fn build_rev_reg_delta_json(
             // The `from` arg is `None` because I think this is how
             // we retrieve all the credentials issued/revoked up until timestamp `to`.
             // Which is what anoncreds uses.
-            let (id, issuer_id, rev_reg_delta_json, timestamp) = ledger
-                .get_rev_reg_delta_json(rev_reg_id, None, Some(timestamp))
-                .await?;
+            let (id, issuer_id, rev_reg_delta_json, timestamp) =
+                ledger.get_rev_reg_delta_json(rev_reg_id, None, Some(timestamp)).await?;
             let mut rev_reg_delta_json: Value =
                 serde_json::from_str(&rev_reg_delta_json).or(Err(AriesVcxError::from_msg(
                     AriesVcxErrorKind::InvalidJson,
