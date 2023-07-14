@@ -156,6 +156,17 @@ pub enum AnyInvitation {
     Oob(OobInvitation),
 }
 
+impl AnyInvitation {
+    pub fn get_id(&self) -> &str {
+        match self {
+            AnyInvitation::Con(Invitation::Public(msg)) => &msg.id,
+            AnyInvitation::Con(Invitation::Pairwise(msg)) => &msg.id,
+            AnyInvitation::Con(Invitation::PairwiseDID(msg)) => &msg.id,
+            AnyInvitation::Oob(msg) => &msg.id,
+        }
+    }
+}
+
 // todo: this is shared by multiple protocols to express different things - needs to be split
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum Status {

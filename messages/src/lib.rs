@@ -7,7 +7,7 @@
 #![deny(clippy::unwrap_used)]
 
 pub mod decorators;
-mod error;
+pub mod error;
 pub mod misc;
 pub mod msg_fields;
 pub mod msg_parts;
