@@ -25,6 +25,9 @@ inputs:
   branch-main:
     description: "Current branch name. This is used to optimize build if no image is resolved using 'branch-name' input"
     default: main
+  skip-build-optimization:
+    description: "If set to true, will not try to load image from cache"
+    default: false
 
 runs:
   using: "composite"
@@ -54,11 +57,15 @@ runs:
 
         LAST_BRANCH_BUILD="$REMOTE_DOCKER_REPOSITORY:${{ inputs.branch-name }}"
         if ! docker pull "$LAST_BRANCH_BUILD"; then
-          LAST_MASTER_BUILD="$REMOTE_DOCKER_REPOSITORY:${{ inputs.branch-main }}"
-          echo "Could not pull $LAST_MASTER_BUILD, will try last master build $LAST_MASTER_BUILD"
-          if ! docker pull "$LAST_MASTER_BUILD"; then
-            echo "Could not pull $LAST_MASTER_BUILD either ¯\_(ツ)_/¯. Will just have to build the image from scratch."
-          fi;
+          if [ "${{ inputs.skip-build-optimization }}" == "false" ]; then
+            LAST_MASTER_BUILD="$REMOTE_DOCKER_REPOSITORY:${{ inputs.branch-main }}"
+            echo "Could not pull $LAST_BRANCH_BUILD, will try last master build $LAST_MASTER_BUILD"
+            if ! docker pull "$LAST_MASTER_BUILD"; then
+              echo "Could not pull $LAST_MASTER_BUILD either ¯\_(ツ)_/¯. Will just have to build the image from scratch."
+            fi;
+          else
+            echo "Will just have to build the image from scratch."
+          fi
         fi;
     - name: "If NOT found in cache, build and cache image."
       if: steps.loadcachedimg.outputs.cache-hit != 'true'
