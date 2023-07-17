@@ -26,7 +26,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.56.0"
+version = "0.57.0"
 authors = ["Absa Group Limited", "Hyperledger Indy Contributors <hyperledger-indy@lists.hyperledger.org>"]
 description = "Absa's fork of HL LibVCX"
 license = "Apache-2.0"
