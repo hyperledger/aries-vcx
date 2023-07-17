@@ -55,17 +55,18 @@ runs:
         GITHUB_REPOSITORY_LOWERCASE=`echo $GITHUB_REPOSITORY | awk '{print tolower($0)}'`
         REMOTE_DOCKER_REPOSITORY="${URL_DOCKER_REGISTRY}/${GITHUB_REPOSITORY_LOWERCASE}/${{ inputs.docker-repo-local-name }}"
 
-        LAST_BRANCH_BUILD="$REMOTE_DOCKER_REPOSITORY:${{ inputs.branch-name }}"
-        if ! docker pull "$LAST_BRANCH_BUILD"; then
-          if [ "${{ inputs.skip-build-optimization }}" == "false" ]; then
+        if [ "${{ inputs.skip-build-optimization }}" == "false" ]; then
+          LAST_BRANCH_BUILD="$REMOTE_DOCKER_REPOSITORY:${{ inputs.branch-name }}"
+          if ! docker pull "$LAST_BRANCH_BUILD"; then
             LAST_MASTER_BUILD="$REMOTE_DOCKER_REPOSITORY:${{ inputs.branch-main }}"
             echo "Could not pull $LAST_BRANCH_BUILD, will try last master build $LAST_MASTER_BUILD"
             if ! docker pull "$LAST_MASTER_BUILD"; then
               echo "Could not pull $LAST_MASTER_BUILD either ¯\_(ツ)_/¯. Will just have to build the image from scratch."
             fi;
           else
-            echo "Will just have to build the image from scratch."
-          fi
+            echo "No cached image found, we will have to build image from scratch"
+          fi;
+          echo "Build optimization is disabled, will not attempt to reuse docker layers from previous cached images."
         fi;
     - name: "If NOT found in cache, build and cache image."
       if: steps.loadcachedimg.outputs.cache-hit != 'true'
