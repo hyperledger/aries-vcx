@@ -194,7 +194,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             serde_json::from_str(rev_reg_defs_json)?;
 
         // Thankfully the Registry can be deserialized form the Delta payload
-        let mut rev_regs: Option<HashMap<RevocationRegistryId, HashMap<u64, RevocationRegistry>>> =
+        let rev_regs: Option<HashMap<RevocationRegistryId, HashMap<u64, RevocationRegistry>>> =
             serde_json::from_str(rev_regs_deltas_json)?;
 
         let rev_regs: Option<HashMap<RevocationRegistryId, HashMap<u64, &RevocationRegistry>>> =
@@ -287,7 +287,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
     async fn issuer_create_and_store_credential_def(
         &self,
         issuer_did: &str,
-        schema_id: &str,
+        _schema_id: &str,
         schema_json: &str,
         tag: &str,
         sig_type: Option<&str>,
@@ -776,7 +776,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
 
     async fn create_revocation_state(
         &self,
-        issuer_did: &str,
+        _issuer_did: &str,
         tails_dir: &str,
         rev_reg_def_json: &str,
         rev_reg_delta_json: &str,
@@ -789,7 +789,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         };
 
         let mut tails_file_path = std::path::PathBuf::new();
-        tails_file_path.push(&tails_dir);
+        tails_file_path.push(tails_dir);
         tails_file_path.push(tails_file_hash);
 
         let tails_path = tails_file_path.to_str().ok_or_else(|| {
@@ -1172,7 +1172,7 @@ fn _format_attribute_as_marker_tag_name(attribute_name: &str) -> String {
 }
 
 // common transformation requirement in credx
-fn hashmap_as_ref<'a, T, U>(map: &'a HashMap<T, U>) -> HashMap<T, &'a U>
+fn hashmap_as_ref<T, U>(map: &HashMap<T, U>) -> HashMap<T, &U>
 where
     T: std::hash::Hash,
     T: std::cmp::Eq,
