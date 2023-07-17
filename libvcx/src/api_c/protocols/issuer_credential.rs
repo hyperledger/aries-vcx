@@ -872,11 +872,11 @@ pub extern "C" fn vcx_issuer_credential_get_thread_id(
 pub mod tests {
     extern crate serde_json;
 
+    use aries_vcx::aries_vcx_core::indy::ledger::pool::test_utils::get_temp_dir_path;
     use std::ffi::CString;
     use std::ptr;
 
     use aries_vcx::utils::devsetup::*;
-    use aries_vcx::utils::get_temp_dir_path;
     use aries_vcx::utils::mockdata::mockdata_credex::CREDENTIAL_ISSUER_SM_FINISHED;
     use libvcx_core::errors;
 
@@ -893,7 +893,7 @@ pub mod tests {
             "version": "1.0",
             "data": {
                 "cred_def_handle":1,
-                "tails_file": get_temp_dir_path("tails").to_str().unwrap(),
+                "tails_file": get_temp_dir_path().to_str().unwrap(),
                 "rev_reg_id": "123",
                 "cred_rev_id": "456",
                 "source_id": "standard_credential",

@@ -60,14 +60,14 @@ impl RevocationRegistryDelta {
 #[allow(clippy::unwrap_used)]
 pub mod integration_tests {
     use super::*;
-    use crate::{common::test_utils::create_and_store_credential_def, utils::devsetup::SetupProfile};
+    use crate::{common::test_utils::create_and_store_credential_def_and_rev_reg, utils::devsetup::SetupProfile};
 
     #[tokio::test]
     #[ignore]
     async fn test_pool_create_rev_reg_delta_from_ledger() {
         SetupProfile::run(|setup| async move {
             let attrs = r#"["address1","address2","city","state","zip"]"#;
-            let (_, _, _, _, rev_reg_id, _, _) = create_and_store_credential_def(
+            let (_, _, _, _, rev_reg_id, _, _, _) = create_and_store_credential_def_and_rev_reg(
                 &setup.profile.inject_anoncreds(),
                 &setup.profile.inject_anoncreds_ledger_read(),
                 &setup.profile.inject_anoncreds_ledger_write(),

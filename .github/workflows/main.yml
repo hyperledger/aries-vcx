@@ -277,6 +277,7 @@ jobs:
       - name: "Build and cache image"
         uses: ./.github/actions/build-image
         with:
+          skip-build-optimization: true # prevent pulling "main" branch image, because it's taking up lot of disk space.
           docker-img: ${{ env.DOCKER_IMG_CACHED }}
           dockerfile-path: "wrappers/java/ci/android.dockerfile"
           branch-name: ${{ env.BRANCH_NAME }}

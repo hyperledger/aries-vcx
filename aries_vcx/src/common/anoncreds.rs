@@ -4,11 +4,10 @@ pub mod integration_tests {
     use std::sync::Arc;
 
     use aries_vcx_core::errors::error::AriesVcxCoreErrorKind;
+    use aries_vcx_core::indy::ledger::pool::test_utils::get_temp_dir_path;
 
     use crate::common::test_utils::create_and_store_credential;
-    use crate::utils::constants::TAILS_DIR;
     use crate::utils::devsetup::SetupProfile;
-    use crate::utils::get_temp_dir_path;
 
     #[tokio::test]
     #[ignore]
@@ -85,11 +84,7 @@ pub mod integration_tests {
             let anoncreds = Arc::clone(&setup.profile).inject_anoncreds();
 
             anoncreds
-                .revoke_credential_local(
-                    get_temp_dir_path(TAILS_DIR).to_str().unwrap(),
-                    &rev_reg_id,
-                    &cred_rev_id,
-                )
+                .revoke_credential_local(get_temp_dir_path().to_str().unwrap(), &rev_reg_id, &cred_rev_id)
                 .await
                 .unwrap();
 

@@ -27,7 +27,7 @@ use uuid::Uuid;
 use agency_client::agency_client::AgencyClient;
 use agency_client::configuration::AgentProvisionConfig;
 use agency_client::testing::mocking::{enable_agency_mocks, AgencyMockDecrypted};
-use aries_vcx_core::indy::ledger::pool::test_utils::create_testpool_genesis_txn_file;
+use aries_vcx_core::indy::ledger::pool::test_utils::{create_testpool_genesis_txn_file, get_temp_file_path};
 use aries_vcx_core::indy::ledger::pool::{
     create_pool_ledger_config, indy_close_pool, indy_delete_pool, indy_open_pool,
 };
@@ -49,7 +49,6 @@ use crate::global::settings::{init_issuer_config, reset_config_values_ariesvcx};
 use crate::utils;
 use crate::utils::constants::POOL1_TXN;
 use crate::utils::file::write_file;
-use crate::utils::get_temp_dir_path;
 use crate::utils::provision::provision_cloud_agent;
 use crate::utils::test_logger::LibvcxDefaultLogger;
 
@@ -278,7 +277,7 @@ impl SetupProfile {
     {
         init_test_logging();
 
-        let genesis_file_path = get_temp_dir_path(POOL1_TXN).to_str().unwrap().to_string();
+        let genesis_file_path = get_temp_file_path(POOL1_TXN).to_str().unwrap().to_string();
         create_testpool_genesis_txn_file(&genesis_file_path);
 
         warn!("genesis_file_path: {}", genesis_file_path);
@@ -299,7 +298,7 @@ impl SetupPoolDirectory {
         debug!("SetupPool init >> going to setup agency environment");
         init_test_logging();
 
-        let genesis_file_path = get_temp_dir_path(POOL1_TXN).to_str().unwrap().to_string();
+        let genesis_file_path = get_temp_file_path(POOL1_TXN).to_str().unwrap().to_string();
         create_testpool_genesis_txn_file(&genesis_file_path);
 
         debug!("SetupPool init >> completed");
@@ -408,12 +407,12 @@ pub struct TempFile {
 
 impl TempFile {
     pub fn prepare_path(filename: &str) -> TempFile {
-        let file_path = get_temp_dir_path(filename).to_str().unwrap().to_string();
+        let file_path = get_temp_file_path(filename).to_str().unwrap().to_string();
         TempFile { path: file_path }
     }
 
     pub fn create(filename: &str) -> TempFile {
-        let file_path = get_temp_dir_path(filename).to_str().unwrap().to_string();
+        let file_path = get_temp_file_path(filename).to_str().unwrap().to_string();
         fs::File::create(&file_path).unwrap();
         TempFile { path: file_path }
     }

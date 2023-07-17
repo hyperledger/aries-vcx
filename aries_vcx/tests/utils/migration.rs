@@ -5,9 +5,8 @@ use uuid::Uuid;
 
 use aries_vcx::utils::devsetup::make_modular_profile;
 use aries_vcx::{
-    core::profile::modular_libs_profile::ModularLibsProfile,
-    global::settings::WALLET_KDF_RAW,
-    utils::{devsetup::SetupProfile, get_temp_dir_path},
+    core::profile::modular_libs_profile::ModularLibsProfile, global::settings::WALLET_KDF_RAW,
+    utils::devsetup::SetupProfile,
 };
 use aries_vcx_core::{
     indy::wallet::{create_and_open_wallet, WalletConfig},

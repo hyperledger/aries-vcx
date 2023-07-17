@@ -69,7 +69,11 @@ pub mod test_utils {
 
     use super::*;
 
-    pub fn get_temp_dir_path(filename: &str) -> PathBuf {
+    pub fn get_temp_dir_path() -> PathBuf {
+        env::temp_dir()
+    }
+
+    pub fn get_temp_file_path(filename: &str) -> PathBuf {
         let mut path = env::temp_dir();
         path.push(filename);
         path

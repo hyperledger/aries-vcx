@@ -20,9 +20,8 @@ mod integration_tests {
     use aries_vcx::handlers::util::AttachmentId;
     use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
     use aries_vcx::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
-    use aries_vcx::utils::constants::{DEFAULT_SCHEMA_ATTRS, TAILS_DIR};
+    use aries_vcx::utils::constants::DEFAULT_SCHEMA_ATTRS;
     use aries_vcx::utils::devsetup::SetupProfile;
-    use aries_vcx::utils::get_temp_dir_path;
     use messages::msg_fields::protocols::present_proof::request::{
         RequestPresentation, RequestPresentationContent, RequestPresentationDecorators,
     };
@@ -313,7 +312,7 @@ mod integration_tests {
     #[ignore]
     async fn test_agency_pool_generate_proof() {
         SetupProfile::run(|mut setup| async move {
-            create_and_store_credential(
+            let (_, _, _, _, _, _, _, _, _, _, tails_dir, _) = create_and_store_credential(
                 &setup.profile.inject_anoncreds(),
                 &setup.profile.inject_anoncreds(),
                 &setup.profile.inject_anoncreds_ledger_read(),
@@ -371,11 +370,11 @@ mod integration_tests {
                "attrs":{
                   "address1_1": {
                     "credential": all_creds.credentials_by_referent["address1_1"][0],
-                    "tails_file": get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string()
+                    "tails_dir": tails_dir.clone()
                   },
                   "zip_2": {
                     "credential": all_creds.credentials_by_referent["zip_2"][0],
-                    "tails_file": get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string()
+                    "tails_dir": tails_dir.clone()
                   },
                }
             });
@@ -402,7 +401,7 @@ mod integration_tests {
     #[ignore]
     async fn test_agency_pool_generate_proof_with_predicates() {
         SetupProfile::run(|mut setup| async move {
-            create_and_store_credential(
+            let (_, _, _, _, _, _, _, _, rev_reg_id, cred_rev_id, tails_dir, rev_reg) = create_and_store_credential(
                 &setup.profile.inject_anoncreds(),
                 &setup.profile.inject_anoncreds(),
                 &setup.profile.inject_anoncreds_ledger_read(),
@@ -462,15 +461,15 @@ mod integration_tests {
                "attrs":{
                   "address1_1": {
                     "credential": all_creds.credentials_by_referent["address1_1"][0],
-                    "tails_file": get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string()
+                    "tails_dir": tails_dir
                   },
                   "state_2": {
                     "credential": all_creds.credentials_by_referent["state_2"][0],
-                    "tails_file": get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string()
+                    "tails_dir": tails_dir
                   },
                   "zip_3": {
                     "credential": all_creds.credentials_by_referent["zip_3"][0],
-                    "tails_file": get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string()
+                    "tails_dir": tails_dir
                   },
                },
             });
@@ -582,8 +581,8 @@ mod tests {
     #[cfg(feature = "migration")]
     use crate::utils::migration::Migratable;
     use crate::utils::scenarios::test_utils::{
-        _create_address_schema, _exchange_credential, _exchange_credential_with_proposal, accept_cred_proposal,
-        accept_cred_proposal_1, accept_offer, accept_proof_proposal, attr_names,
+        _create_address_schema_creddef_revreg, _exchange_credential, _exchange_credential_with_proposal,
+        accept_cred_proposal, accept_cred_proposal_1, accept_offer, accept_proof_proposal, attr_names,
         create_and_send_nonrevocable_cred_offer, create_connected_connections, create_proof, decline_offer,
         generate_and_send_proof, issue_address_credential, prover_select_credentials,
         prover_select_credentials_and_fail_to_generate_proof, prover_select_credentials_and_send_proof,
@@ -806,7 +805,7 @@ mod tests {
             issuer.migrate().await;
 
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _rev_reg_id) =
-                _create_address_schema(&issuer.profile, &issuer.institution_did).await;
+                _create_address_schema_creddef_revreg(&issuer.profile, &issuer.institution_did).await;
             let (address1, address2, city, state, zip) = attr_names();
             let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
             let _credential_handle1 = _exchange_credential(
@@ -983,7 +982,7 @@ mod tests {
                 create_connected_connections(&mut consumer, &mut institution).await;
 
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _rev_reg_id) =
-                _create_address_schema(&institution.profile, &institution.institution_did).await;
+                _create_address_schema_creddef_revreg(&institution.profile, &institution.institution_did).await;
             let (address1, address, city, state, zip) = attr_names();
             let credential_data = json!({address1.clone(): "5th Avenue", address.clone(): "Suite 1234", city.clone(): "NYC", state.clone(): "NYS", zip.clone(): "84712"}).to_string();
             let _credential_handle = _exchange_credential(
@@ -1204,7 +1203,7 @@ mod tests {
             let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut issuer).await;
 
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _rev_reg_id) =
-                _create_address_schema(&issuer.profile, &issuer.institution_did).await;
+                _create_address_schema_creddef_revreg(&issuer.profile, &issuer.institution_did).await;
             let (address1, address2, city, state, zip) = attr_names();
             let (req1, req2) = (Some("request1"), Some("request2"));
             let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
@@ -1296,8 +1295,8 @@ mod tests {
             let (consumer_to_institution, institution_to_consumer) =
                 create_connected_connections(&mut consumer, &mut institution).await;
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, _cred_def, rev_reg, rev_reg_id) =
-                _create_address_schema(&institution.profile, &institution.institution_did).await;
-            let tails_file = rev_reg.get_tails_dir();
+                _create_address_schema_creddef_revreg(&institution.profile, &institution.institution_did).await;
+            let tails_dir = rev_reg.get_tails_dir();
 
             #[cfg(feature = "migration")]
             institution.migrate().await;
@@ -1310,7 +1309,7 @@ mod tests {
                 &schema_id,
                 &cred_def_id,
                 rev_reg_id,
-                Some(tails_file),
+                Some(tails_dir),
                 "comment",
             )
             .await;
@@ -1328,8 +1327,8 @@ mod tests {
             let (consumer_to_institution, institution_to_consumer) =
                 create_connected_connections(&mut consumer, &mut institution).await;
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, _cred_def, rev_reg, rev_reg_id) =
-                _create_address_schema(&institution.profile, &institution.institution_did).await;
-            let tails_file = rev_reg.get_tails_dir();
+                _create_address_schema_creddef_revreg(&institution.profile, &institution.institution_did).await;
+            let tails_dir = rev_reg.get_tails_dir();
 
             let mut holder = send_cred_proposal(
                 &mut consumer,
@@ -1344,7 +1343,7 @@ mod tests {
             institution.migrate().await;
 
             let mut issuer =
-                accept_cred_proposal(&mut institution, &institution_to_consumer, rev_reg_id, Some(tails_file)).await;
+                accept_cred_proposal(&mut institution, &institution_to_consumer, rev_reg_id, Some(tails_dir)).await;
             decline_offer(&mut consumer, &consumer_to_institution, &mut holder).await;
             assert_eq!(IssuerState::OfferSent, issuer.get_state());
             tokio::time::sleep(Duration::from_millis(1000)).await;
@@ -1372,8 +1371,8 @@ mod tests {
             let (consumer_to_institution, institution_to_consumer) =
                 create_connected_connections(&mut consumer, &mut institution).await;
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, _cred_def, rev_reg, rev_reg_id) =
-                _create_address_schema(&institution.profile, &institution.institution_did).await;
-            let tails_file = rev_reg.get_tails_dir();
+                _create_address_schema_creddef_revreg(&institution.profile, &institution.institution_did).await;
+            let tails_dir = rev_reg.get_tails_dir();
 
             #[cfg(feature = "migration")]
             institution.migrate().await;
@@ -1390,7 +1389,7 @@ mod tests {
                 &mut institution,
                 &institution_to_consumer,
                 rev_reg_id.clone(),
-                Some(tails_file.clone()),
+                Some(tails_dir.clone()),
             )
             .await;
 
@@ -1411,7 +1410,7 @@ mod tests {
                 &mut institution,
                 &institution_to_consumer,
                 rev_reg_id,
-                Some(tails_file),
+                Some(tails_dir),
             )
             .await;
             accept_offer(&mut consumer, &consumer_to_institution, &mut holder).await;
@@ -1440,8 +1439,8 @@ mod tests {
             let (consumer_to_institution, institution_to_consumer) =
                 create_connected_connections(&mut consumer, &mut institution).await;
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, _cred_def, rev_reg, rev_reg_id) =
-                _create_address_schema(&institution.profile, &institution.institution_did).await;
-            let tails_file = rev_reg.get_tails_dir();
+                _create_address_schema_creddef_revreg(&institution.profile, &institution.institution_did).await;
+            let tails_dir = rev_reg.get_tails_dir();
 
             #[cfg(feature = "migration")]
             institution.migrate().await;
@@ -1454,7 +1453,7 @@ mod tests {
                 &schema_id,
                 &cred_def_id,
                 rev_reg_id,
-                Some(tails_file),
+                Some(tails_dir),
                 "comment",
             )
             .await;
@@ -1489,8 +1488,8 @@ mod tests {
             let (consumer_to_institution, institution_to_consumer) =
                 create_connected_connections(&mut consumer, &mut institution).await;
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, _cred_def, rev_reg, rev_reg_id) =
-                _create_address_schema(&institution.profile, &institution.institution_did).await;
-            let tails_file = rev_reg.get_tails_dir();
+                _create_address_schema_creddef_revreg(&institution.profile, &institution.institution_did).await;
+            let tails_dir = rev_reg.get_tails_dir();
 
             #[cfg(feature = "migration")]
             institution.migrate().await;
@@ -1503,7 +1502,7 @@ mod tests {
                 &schema_id,
                 &cred_def_id,
                 rev_reg_id,
-                Some(tails_file),
+                Some(tails_dir),
                 "comment",
             )
             .await;
@@ -1524,8 +1523,8 @@ mod tests {
             let (consumer_to_institution, institution_to_consumer) =
                 create_connected_connections(&mut consumer, &mut institution).await;
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, _cred_def, rev_reg, rev_reg_id) =
-                _create_address_schema(&institution.profile, &institution.institution_did).await;
-            let tails_file = rev_reg.get_tails_dir();
+                _create_address_schema_creddef_revreg(&institution.profile, &institution.institution_did).await;
+            let tails_dir = rev_reg.get_tails_dir();
 
             #[cfg(feature = "migration")]
             institution.migrate().await;
@@ -1538,7 +1537,7 @@ mod tests {
                 &schema_id,
                 &cred_def_id,
                 rev_reg_id,
-                Some(tails_file),
+                Some(tails_dir),
                 "comment",
             )
             .await;

@@ -59,12 +59,6 @@ pub mod filters;
 pub mod serialization;
 pub mod validation;
 
-pub fn get_temp_dir_path(filename: &str) -> PathBuf {
-    let mut path = env::temp_dir();
-    path.push(filename);
-    path
-}
-
 pub async fn send_message(
     wallet: Arc<dyn BaseWallet>,
     sender_verkey: String,
