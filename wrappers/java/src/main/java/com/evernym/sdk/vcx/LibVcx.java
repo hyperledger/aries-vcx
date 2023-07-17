@@ -34,7 +34,6 @@ public abstract class LibVcx {
     /**
      * Helper API for testing purposes.
      */
-        public void vcx_set_next_agency_response(int msg);
         public void vcx_get_current_error(PointerByReference error);
 
     /**
