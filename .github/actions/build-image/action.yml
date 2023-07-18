@@ -64,10 +64,12 @@ runs:
               echo "Could not pull $LAST_MASTER_BUILD either ¯\_(ツ)_/¯. Will just have to build the image from scratch."
             fi;
           else
-            echo "No cached image found, we will have to build image from scratch"
+            echo "Pulled image from previous CI run on the branch. We'll try to reuse the layers from this image."
           fi;
+        else
           echo "Build optimization is disabled, will not attempt to reuse docker layers from previous cached images."
         fi;
+
     - name: "If NOT found in cache, build and cache image."
       if: steps.loadcachedimg.outputs.cache-hit != 'true'
       shell: bash
