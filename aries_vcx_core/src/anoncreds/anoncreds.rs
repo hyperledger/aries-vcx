@@ -356,9 +356,19 @@ impl BaseAnonCreds for Anoncreds {
         sig_type: Option<&str>,
         config_json: &str,
     ) -> VcxCoreResult<(String, String)> {
-        let schema = serde_json::from_str(schema_json)?;
+        let mut value: Value = serde_json::from_str(schema_json)?;
+        value
+            .as_object_mut()
+            .map(|v| v.insert("issuerId".to_owned(), json!(issuer_did)));
+
+        info!("schema with issuer_id: {value}");
+        let schema = serde_json::from_value(value)?;
+
+        info!("deserialized schema");
         let sig_type = sig_type.map(serde_json::from_str).unwrap_or(Ok(SignatureType::CL))?;
         let config = serde_json::from_str(config_json)?;
+
+        info!("deserialized cred def config");
 
         let cred_def_id = make_credential_definition_id(issuer_did, schema_id, tag, sig_type);
 

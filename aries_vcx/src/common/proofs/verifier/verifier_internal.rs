@@ -304,6 +304,7 @@ pub mod unit_tests {
     }
 
     #[tokio::test]
+    #[cfg(not(feature = "anoncreds"))]
     async fn test_build_rev_reg_json() {
         let _setup = SetupMocks::init();
 
