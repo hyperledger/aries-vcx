@@ -111,7 +111,12 @@ impl AnoncredsLedgerWrite for MockLedger {
         Ok(())
     }
 
-    async fn publish_rev_reg_def(&self, rev_reg_def: &str, submitter_did: &str) -> VcxCoreResult<()> {
+    async fn publish_rev_reg_def(
+        &self,
+        rev_reg_def_id: &str,
+        rev_reg_def: &str,
+        submitter_did: &str,
+    ) -> VcxCoreResult<()> {
         Ok(())
     }
 

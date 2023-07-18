@@ -1,18 +1,22 @@
+use anoncreds::data_types::cred_def::{CredentialDefinition, CredentialDefinitionData, CL_SIGNATURE_TYPE};
+use anoncreds::data_types::rev_reg_def::{RevocationRegistryDefinitionValue, CL_ACCUM};
+use anoncreds::data_types::schema::Schema;
+use anoncreds::types::{RegistryType, RevocationRegistryDefinition};
+use anoncreds::ursa::cl::RevocationRegistryDelta;
 pub use indy_ledger_response_parser::GetTxnAuthorAgreementData;
 use indy_ledger_response_parser::{ResponseParser, RevocationRegistryDeltaInfo, RevocationRegistryInfo};
 use indy_vdr as vdr;
+use serde::Serialize;
 use std::fmt::{Debug, Formatter};
 use std::sync::{Arc, RwLock};
 use time::OffsetDateTime;
-use vdr::ledger::requests::cred_def::CredentialDefinitionV1;
-use vdr::ledger::requests::rev_reg::{RevocationRegistryDelta, RevocationRegistryDeltaV1};
-use vdr::ledger::requests::rev_reg_def::{RegistryType, RevocationRegistryDefinition, RevocationRegistryDefinitionV1};
-use vdr::ledger::requests::schema::{Schema, SchemaV1};
+use vdr::ledger::constants::{CRED_DEF, REVOC_REG_DEF, REVOC_REG_ENTRY};
+use vdr::ledger::identifiers::{CredentialDefinitionId, RevocationRegistryId, SchemaId};
+use vdr::ledger::requests::schema::{SchemaOperation, SchemaOperationData};
+use vdr::ledger::requests::RequestType;
 
 use async_trait::async_trait;
 use serde_json::Value;
-use vdr::ledger::identifiers::{CredentialDefinitionId, RevocationRegistryId, SchemaId};
-use vdr::ledger::requests::cred_def::CredentialDefinition;
 use vdr::ledger::RequestBuilder;
 use vdr::pool::{LedgerType, PreparedRequest, ProtocolVersion as VdrProtocolVersion};
 use vdr::utils::did::DidValue;
@@ -30,7 +34,7 @@ use super::response_cacher::ResponseCacher;
 
 // TODO: Should implement builders for these configs...
 // Good first issue?
-pub struct IndyVdrLedgerReadConfig<T, V>
+pub struct AnoncredsLedgerReadConfig<T, V>
 where
     T: RequestSubmitter + Send + Sync,
     V: ResponseCacher + Send + Sync,
@@ -41,7 +45,7 @@ where
     pub protocol_version: ProtocolVersion,
 }
 
-pub struct IndyVdrLedgerWriteConfig<T, U>
+pub struct AnoncredsLedgerWriteConfig<T, U>
 where
     T: RequestSubmitter + Send + Sync,
     U: RequestSigner + Send + Sync,
@@ -52,7 +56,7 @@ where
     pub protocol_version: ProtocolVersion,
 }
 
-pub struct IndyVdrLedgerRead<T, V>
+pub struct AnoncredsRsLedgerRead<T, V>
 where
     T: RequestSubmitter + Send + Sync,
     V: ResponseCacher + Send + Sync,
@@ -63,7 +67,7 @@ where
     protocol_version: ProtocolVersion,
 }
 
-pub struct IndyVdrLedgerWrite<T, U>
+pub struct AnoncredsRsLedgerWrite<T, U>
 where
     T: RequestSubmitter + Send + Sync,
     U: RequestSigner + Send + Sync,
@@ -74,12 +78,12 @@ where
     protocol_version: ProtocolVersion,
 }
 
-impl<T, V> IndyVdrLedgerRead<T, V>
+impl<T, V> AnoncredsRsLedgerRead<T, V>
 where
     T: RequestSubmitter + Send + Sync,
     V: ResponseCacher + Send + Sync,
 {
-    pub fn new(config: IndyVdrLedgerReadConfig<T, V>) -> Self {
+    pub fn new(config: AnoncredsLedgerReadConfig<T, V>) -> Self {
         Self {
             request_submitter: config.request_submitter,
             response_parser: config.response_parser,
@@ -104,12 +108,12 @@ where
     }
 }
 
-impl<T, U> IndyVdrLedgerWrite<T, U>
+impl<T, U> AnoncredsRsLedgerWrite<T, U>
 where
     T: RequestSubmitter + Send + Sync,
     U: RequestSigner + Send + Sync,
 {
-    pub fn new(config: IndyVdrLedgerWriteConfig<T, U>) -> Self {
+    pub fn new(config: AnoncredsLedgerWriteConfig<T, U>) -> Self {
         Self {
             request_signer: config.request_signer,
             request_submitter: config.request_submitter,
@@ -130,7 +134,7 @@ where
     }
 }
 
-impl<T, U> TaaConfigurator for IndyVdrLedgerWrite<T, U>
+impl<T, U> TaaConfigurator for AnoncredsRsLedgerWrite<T, U>
 where
     T: RequestSubmitter + Send + Sync,
     U: RequestSigner + Send + Sync,
@@ -142,7 +146,7 @@ where
     }
 }
 
-impl<T, V> Debug for IndyVdrLedgerRead<T, V>
+impl<T, V> Debug for AnoncredsRsLedgerRead<T, V>
 where
     T: RequestSubmitter + Send + Sync,
     V: ResponseCacher + Send + Sync,
@@ -152,7 +156,7 @@ where
     }
 }
 
-impl<T, U> Debug for IndyVdrLedgerWrite<T, U>
+impl<T, U> Debug for AnoncredsRsLedgerWrite<T, U>
 where
     T: RequestSubmitter + Send + Sync,
     U: RequestSigner + Send + Sync,
@@ -163,7 +167,7 @@ where
 }
 
 #[async_trait]
-impl<T, V> IndyLedgerRead for IndyVdrLedgerRead<T, V>
+impl<T, V> IndyLedgerRead for AnoncredsRsLedgerRead<T, V>
 where
     T: RequestSubmitter + Send + Sync,
     V: ResponseCacher + Send + Sync,
@@ -201,7 +205,7 @@ where
     }
 }
 
-impl<T, U> IndyVdrLedgerWrite<T, U>
+impl<T, U> AnoncredsRsLedgerWrite<T, U>
 where
     T: RequestSubmitter + Send + Sync,
     U: RequestSigner + Send + Sync,
@@ -226,7 +230,7 @@ where
 }
 
 #[async_trait]
-impl<T, U> IndyLedgerWrite for IndyVdrLedgerWrite<T, U>
+impl<T, U> IndyLedgerWrite for AnoncredsRsLedgerWrite<T, U>
 where
     T: RequestSubmitter + Send + Sync,
     U: RequestSigner + Send + Sync,
@@ -284,7 +288,7 @@ where
 }
 
 #[async_trait]
-impl<T, V> AnoncredsLedgerRead for IndyVdrLedgerRead<T, V>
+impl<T, V> AnoncredsLedgerRead for AnoncredsRsLedgerRead<T, V>
 where
     T: RequestSubmitter + Send + Sync,
     V: ResponseCacher + Send + Sync,
@@ -374,7 +378,7 @@ where
 }
 
 #[async_trait]
-impl<T, U> AnoncredsLedgerWrite for IndyVdrLedgerWrite<T, U>
+impl<T, U> AnoncredsLedgerWrite for AnoncredsRsLedgerWrite<T, U>
 where
     T: RequestSubmitter + Send + Sync,
     U: RequestSigner + Send + Sync,
@@ -386,10 +390,13 @@ where
         endorser_did: Option<String>,
     ) -> VcxCoreResult<()> {
         let identifier = DidValue::from_str(submitter_did)?;
-        let schema_data: SchemaV1 = serde_json::from_str(schema_json)?;
+        let schema: Schema = serde_json::from_str(schema_json)?;
+        let schema_data =
+            SchemaOperationData::new(schema.name, schema.version, schema.attr_names.0.into_iter().collect());
+
         let mut request = self
             .request_builder()?
-            .build_schema_request(&identifier, Schema::SchemaV1(schema_data))?;
+            .build(SchemaOperation::new(schema_data), Some(&identifier))?;
         request = self.append_txn_author_agreement_to_request(request).await?;
         // if let Some(endorser_did) = endorser_did {
         //     request = PreparedRequest::from_request_json(
@@ -402,26 +409,24 @@ where
 
     async fn publish_cred_def(&self, cred_def_json: &str, submitter_did: &str) -> VcxCoreResult<()> {
         let identifier = DidValue::from_str(submitter_did)?;
-        let cred_def_data: CredentialDefinitionV1 = serde_json::from_str(cred_def_json)?;
-        let request = self
-            .request_builder()?
-            .build_cred_def_request(&identifier, CredentialDefinition::CredentialDefinitionV1(cred_def_data))?;
+        let cred_def: CredentialDefinition = serde_json::from_str(cred_def_json)?;
+        let cred_def_data = CredDefOperation::new(cred_def);
+        let request = self.request_builder()?.build(cred_def_data, Some(&identifier))?;
         let request = self.append_txn_author_agreement_to_request(request).await?;
         self.sign_and_submit_request(submitter_did, request).await.map(|_| ())
     }
 
     async fn publish_rev_reg_def(
         &self,
-        _rev_reg_def_id: &str,
+        rev_reg_def_id: &str,
         rev_reg_def: &str,
         submitter_did: &str,
     ) -> VcxCoreResult<()> {
         let identifier = DidValue::from_str(submitter_did)?;
-        let rev_reg_def_data: RevocationRegistryDefinitionV1 = serde_json::from_str(rev_reg_def)?;
-        let request = self.request_builder()?.build_revoc_reg_def_request(
-            &identifier,
-            RevocationRegistryDefinition::RevocationRegistryDefinitionV1(rev_reg_def_data),
-        )?;
+        let rev_reg_def: RevocationRegistryDefinition = serde_json::from_str(rev_reg_def)?;
+        let rev_reg_def_data = RevRegDefOperation::new(rev_reg_def_id.to_owned(), rev_reg_def);
+
+        let request = self.request_builder()?.build(rev_reg_def_data, Some(&identifier))?;
         let request = self.append_txn_author_agreement_to_request(request).await?;
         self.sign_and_submit_request(submitter_did, request).await.map(|_| ())
     }
@@ -433,13 +438,13 @@ where
         submitter_did: &str,
     ) -> VcxCoreResult<()> {
         let identifier = DidValue::from_str(submitter_did)?;
-        let rev_reg_delta_data: RevocationRegistryDeltaV1 = serde_json::from_str(rev_reg_entry_json)?;
-        let request = self.request_builder()?.build_revoc_reg_entry_request(
-            &identifier,
-            &RevocationRegistryId::from_str(rev_reg_id)?,
+        let delta: RevocationRegistryDelta = serde_json::from_str(rev_reg_entry_json)?;
+        let delta_data = RevRegEntryOperation::new(
             &RegistryType::CL_ACCUM,
-            RevocationRegistryDelta::RevocationRegistryDeltaV1(rev_reg_delta_data),
-        )?;
+            &RevocationRegistryId::from_str(rev_reg_id)?,
+            delta,
+        );
+        let request = self.request_builder()?.build(delta_data, Some(&identifier))?;
         let request = self.append_txn_author_agreement_to_request(request).await?;
         self.sign_and_submit_request(submitter_did, request).await.map(|_| ())
     }
@@ -461,5 +466,114 @@ impl ProtocolVersion {
 
     pub fn node_1_4() -> Self {
         ProtocolVersion(VdrProtocolVersion::Node1_4)
+    }
+}
+
+#[derive(Serialize, Debug)]
+pub struct CredDefOperation {
+    #[serde(rename = "ref")]
+    pub _ref: i32,
+    pub data: CredentialDefinitionData,
+    #[serde(rename = "type")]
+    pub _type: String,
+    pub signature_type: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tag: Option<String>,
+}
+
+impl CredDefOperation {
+    pub fn new(data: CredentialDefinition) -> CredDefOperation {
+        let sig = match data.signature_type {
+            anoncreds::types::SignatureType::CL => CL_SIGNATURE_TYPE,
+        };
+
+        CredDefOperation {
+            _ref: data.schema_id.0.parse::<i32>().unwrap_or(0),
+            signature_type: sig.to_owned(),
+            data: data.value,
+            tag: if data.tag.is_empty() {
+                None
+            } else {
+                Some(data.tag.clone())
+            },
+            _type: Self::get_txn_type().to_string(),
+        }
+    }
+}
+
+impl RequestType for CredDefOperation {
+    fn get_txn_type<'a>() -> &'a str {
+        CRED_DEF
+    }
+}
+
+#[derive(Serialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct RevRegDefOperation {
+    #[serde(rename = "type")]
+    pub _type: String,
+    pub id: RevocationRegistryId,
+    #[serde(rename = "revocDefType")]
+    pub type_: String,
+    pub tag: String,
+    pub cred_def_id: anoncreds::data_types::cred_def::CredentialDefinitionId,
+    pub value: RevocationRegistryDefinitionValue,
+}
+
+impl RevRegDefOperation {
+    pub fn new(id: String, rev_reg_def: RevocationRegistryDefinition) -> RevRegDefOperation {
+        let revoc_reg_type = match rev_reg_def.revoc_def_type {
+            anoncreds::types::RegistryType::CL_ACCUM => CL_ACCUM,
+        };
+
+        RevRegDefOperation {
+            _type: Self::get_txn_type().to_string(),
+            id: RevocationRegistryId(id),
+            type_: revoc_reg_type.to_owned(),
+            tag: rev_reg_def.tag,
+            cred_def_id: rev_reg_def.cred_def_id,
+            value: rev_reg_def.value,
+        }
+    }
+}
+
+impl RequestType for RevRegDefOperation {
+    fn get_txn_type<'a>() -> &'a str {
+        REVOC_REG_DEF
+    }
+}
+
+#[derive(Serialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct RevRegEntryOperation {
+    #[serde(rename = "type")]
+    pub _type: String,
+    pub revoc_reg_def_id: RevocationRegistryId,
+    pub revoc_def_type: String,
+    pub value: serde_json::Value,
+}
+
+impl RevRegEntryOperation {
+    pub fn new(
+        rev_def_type: &RegistryType,
+        revoc_reg_def_id: &RevocationRegistryId,
+        delta: RevocationRegistryDelta,
+    ) -> RevRegEntryOperation {
+        let rev_def_type = match rev_def_type {
+            RegistryType::CL_ACCUM => CL_ACCUM,
+        };
+
+        RevRegEntryOperation {
+            _type: Self::get_txn_type().to_string(),
+            revoc_def_type: rev_def_type.to_owned(),
+            revoc_reg_def_id: revoc_reg_def_id.clone(),
+            value: serde_json::to_value(delta).unwrap(),
+        }
+    }
+}
+
+impl RequestType for RevRegEntryOperation {
+    fn get_txn_type<'a>() -> &'a str {
+        REVOC_REG_ENTRY
     }
 }

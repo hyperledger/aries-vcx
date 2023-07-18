@@ -103,7 +103,7 @@ impl RevocationRegistry {
         );
         self.rev_reg_def.value.tails_location = String::from(tails_url);
         ledger
-            .publish_rev_reg_def(&json!(self.rev_reg_def).to_string(), issuer_did)
+            .publish_rev_reg_def(&self.rev_reg_id, &json!(self.rev_reg_def).to_string(), issuer_did)
             .await
             .map_err(|err| {
                 err.map(

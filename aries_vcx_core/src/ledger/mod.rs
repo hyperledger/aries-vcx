@@ -1,5 +1,7 @@
 use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind};
 
+#[cfg(feature = "anoncreds")]
+pub mod anoncreds_ledger;
 pub mod base_ledger;
 #[cfg(feature = "vdrtools")]
 pub mod indy_ledger;

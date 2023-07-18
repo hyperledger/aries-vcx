@@ -181,7 +181,12 @@ impl AnoncredsLedgerWrite for IndySdkLedgerWrite {
         .await
     }
 
-    async fn publish_rev_reg_def(&self, rev_reg_def: &str, submitter_did: &str) -> VcxCoreResult<()> {
+    async fn publish_rev_reg_def(
+        &self,
+        _rev_reg_def_id: &str,
+        rev_reg_def: &str,
+        submitter_did: &str,
+    ) -> VcxCoreResult<()> {
         indy::primitives::revocation_registry::publish_rev_reg_def(
             self.indy_wallet_handle,
             self.indy_pool_handle,

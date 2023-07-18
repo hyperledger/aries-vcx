@@ -50,7 +50,12 @@ pub trait AnoncredsLedgerWrite: Debug + Send + Sync {
         endorser_did: Option<String>,
     ) -> VcxCoreResult<()>;
     async fn publish_cred_def(&self, cred_def_json: &str, submitter_did: &str) -> VcxCoreResult<()>;
-    async fn publish_rev_reg_def(&self, rev_reg_def: &str, submitter_did: &str) -> VcxCoreResult<()>;
+    async fn publish_rev_reg_def(
+        &self,
+        rev_reg_def_id: &str,
+        rev_reg_def: &str,
+        submitter_did: &str,
+    ) -> VcxCoreResult<()>;
     async fn publish_rev_reg_delta(
         &self,
         rev_reg_id: &str,
