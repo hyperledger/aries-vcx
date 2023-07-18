@@ -3,11 +3,12 @@ use std::time::Duration;
 
 use aries_vcx_core::anoncreds::anoncreds::Anoncreds;
 use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
+use aries_vcx_core::ledger::anoncreds_ledger::{
+    AnoncredsLedgerReadConfig, AnoncredsLedgerWriteConfig, AnoncredsRsLedgerRead, AnoncredsRsLedgerWrite,
+    ProtocolVersion,
+};
 use aries_vcx_core::ledger::base_ledger::{
     AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite, TaaConfigurator, TxnAuthrAgrmtOptions,
-};
-use aries_vcx_core::ledger::indy_vdr_ledger::{
-    IndyVdrLedgerRead, IndyVdrLedgerReadConfig, IndyVdrLedgerWrite, IndyVdrLedgerWriteConfig, ProtocolVersion,
 };
 use aries_vcx_core::ledger::request_signer::base_wallet::BaseWalletRequestSigner;
 use aries_vcx_core::ledger::request_submitter::vdr_ledger::{IndyVdrLedgerPool, IndyVdrSubmitter, LedgerPoolConfig};
@@ -39,7 +40,7 @@ pub struct AnoncredsProfile {
 impl AnoncredsProfile {
     fn init_ledger_read(
         request_submitter: Arc<IndyVdrSubmitter>,
-    ) -> VcxResult<IndyVdrLedgerRead<IndyVdrSubmitter, InMemoryResponseCacher>> {
+    ) -> VcxResult<AnoncredsRsLedgerRead<IndyVdrSubmitter, InMemoryResponseCacher>> {
         let response_parser = Arc::new(ResponseParser::new());
         let cacher_config = InMemoryResponseCacherConfig::builder()
             .ttl(Duration::from_secs(60))
@@ -47,28 +48,28 @@ impl AnoncredsProfile {
             .build();
         let response_cacher = Arc::new(InMemoryResponseCacher::new(cacher_config));
 
-        let config_read = IndyVdrLedgerReadConfig {
+        let config_read = AnoncredsLedgerReadConfig {
             request_submitter,
             response_parser,
             response_cacher,
             protocol_version: ProtocolVersion::node_1_4(),
         };
-        Ok(IndyVdrLedgerRead::new(config_read))
+        Ok(AnoncredsRsLedgerRead::new(config_read))
     }
 
     fn init_ledger_write(
         wallet: Arc<dyn BaseWallet>,
         request_submitter: Arc<IndyVdrSubmitter>,
         taa_options: Option<TxnAuthrAgrmtOptions>,
-    ) -> IndyVdrLedgerWrite<IndyVdrSubmitter, BaseWalletRequestSigner> {
+    ) -> AnoncredsRsLedgerWrite<IndyVdrSubmitter, BaseWalletRequestSigner> {
         let request_signer = Arc::new(BaseWalletRequestSigner::new(wallet.clone()));
-        let config_write = IndyVdrLedgerWriteConfig {
+        let config_write = AnoncredsLedgerWriteConfig {
             request_signer,
             request_submitter,
             taa_options,
             protocol_version: ProtocolVersion::node_1_4(),
         };
-        IndyVdrLedgerWrite::new(config_write)
+        AnoncredsRsLedgerWrite::new(config_write)
     }
 
     pub fn init(wallet: Arc<dyn BaseWallet>, ledger_pool_config: LedgerPoolConfig) -> VcxResult<Self> {
