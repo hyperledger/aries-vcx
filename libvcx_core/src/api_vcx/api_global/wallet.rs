@@ -230,6 +230,7 @@ pub async fn wallet_import(config: &RestoreWalletConfigs) -> LibvcxResult<()> {
 pub async fn wallet_migrate(wallet_config: &WalletConfig) -> LibvcxResult<()> {
     let src_wallet_handle = get_main_wallet_handle()?;
     let dest_wallet_handle = create_and_open_wallet(wallet_config).await?;
+
     let migration_res = wallet_migrator::migrate_wallet(
         src_wallet_handle,
         dest_wallet_handle,
@@ -327,22 +328,7 @@ pub mod tests {
     use crate::errors::error::{LibvcxErrorKind, LibvcxResult};
 
     #[tokio::test]
-    async fn test_wallet_migration() {
-        let wallet_name = format!("test_create_wallet_{}", uuid::Uuid::new_v4().to_string());
-        let config: WalletConfig = serde_json::from_value(json!({
-            "wallet_name": wallet_name,
-            "wallet_key": DEFAULT_WALLET_KEY,
-            "wallet_key_derivation": WALLET_KDF_RAW
-        }))
-        .unwrap();
-
-        create_main_wallet(&config).await.unwrap();
-    }
-
-    #[tokio::test]
     async fn test_wallet_migrate() {
-        let _setup = SetupEmpty::init();
-
         let wallet_name = format!("test_create_wallet_{}", uuid::Uuid::new_v4());
         let config: WalletConfig = serde_json::from_value(json!({
             "wallet_name": wallet_name,
@@ -351,7 +337,7 @@ pub mod tests {
         }))
         .unwrap();
 
-        create_main_wallet(&config).await.unwrap();
+        create_and_open_as_main_wallet(&config).await.unwrap();
 
         let wallet_name = format!("test_migrate_wallet_{}", uuid::Uuid::new_v4());
         let new_config: WalletConfig = serde_json::from_value(json!({
@@ -362,6 +348,21 @@ pub mod tests {
         .unwrap();
 
         super::wallet_migrate(&new_config).await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn test_wallet_create() {
+        let _setup = SetupEmpty::init();
+
+        let wallet_name = format!("test_create_wallet_{}", uuid::Uuid::new_v4().to_string());
+        let config: WalletConfig = serde_json::from_value(json!({
+            "wallet_name": wallet_name,
+            "wallet_key": DEFAULT_WALLET_KEY,
+            "wallet_key_derivation": WALLET_KDF_RAW
+        }))
+        .unwrap();
+
+        create_main_wallet(&config).await.unwrap();
     }
 
     #[tokio::test]
