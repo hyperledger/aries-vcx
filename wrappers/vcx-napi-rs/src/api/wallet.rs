@@ -104,14 +104,19 @@ pub async fn wallet_export(path: String, backup_key: String) -> napi::Result<()>
 }
 
 #[napi]
-pub async fn wallet_migrate(src_wallet_handle: i32, dest_wallet_handle: i32) -> napi::Result<()> {
-    wallet_migrator::migrate_wallet(
-        src_wallet_handle.into(),
-        dest_wallet_handle.into(),
-        wallet_migrator::vdrtools2credx::migrate_any_record,
-    )
-    .await
-    .map_err(|e| napi::Error::from_reason(e.to_string()))
+pub async fn wallet_migrate(wallet_config: String) -> napi::Result<()> {
+    let wallet_config = serde_json::from_str(&wallet_config)
+        .map_err(|err| {
+            LibvcxError::from_msg(
+                LibvcxErrorKind::InvalidConfiguration,
+                format!("Serialization error: {:?}", err),
+            )
+        })
+        .map_err(to_napi_err)?;
+
+    wallet::wallet_migrate(&wallet_config)
+        .await
+        .map_err(|e| napi::Error::from_reason(e.to_string()))
 }
 
 #[napi]

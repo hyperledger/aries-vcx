@@ -279,6 +279,26 @@ pub async fn wallet_import(config: &RestoreWalletConfigs) -> LibvcxResult<()> {
     map_ariesvcx_core_result(import(config).await)
 }
 
+pub async fn wallet_migrate(wallet_config: &WalletConfig) -> LibvcxResult<()> {
+    let src_wallet_handle = get_main_wallet_handle()?;
+    let dest_wallet_handle = create_and_open_wallet(wallet_config).await?;
+    let migration_res = wallet_migrator::migrate_wallet(
+        src_wallet_handle,
+        dest_wallet_handle,
+        wallet_migrator::vdrtools2credx::migrate_any_record,
+    )
+    .await;
+
+    if let Err(e) = migration_res {
+        close_wallet(dest_wallet_handle).await.ok();
+        delete_wallet(wallet_config).await.ok();
+        Err(LibvcxError::from_msg(LibvcxErrorKind::WalletMigrationFailed, e))
+    } else {
+        Ok(())
+    }
+}
+
+#[allow(clippy::unwrap_used)]
 pub mod test_utils {
     use aries_vcx::{
         aries_vcx_core::wallet::indy::WalletConfig,
@@ -376,7 +396,20 @@ pub mod tests {
     };
 
     #[tokio::test]
-    async fn test_wallet_create() {
+    async fn test_wallet_migration() {
+        let wallet_name = format!("test_create_wallet_{}", uuid::Uuid::new_v4());
+        let config: WalletConfig = serde_json::from_value(json!({
+            "wallet_name": wallet_name,
+            "wallet_key": DEFAULT_WALLET_KEY,
+            "wallet_key_derivation": WALLET_KDF_RAW
+        }))
+        .unwrap();
+
+        create_main_wallet(&config).await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn test_wallet_migrate() {
         let _setup = SetupEmpty::init();
 
         let wallet_name = format!("test_create_wallet_{}", uuid::Uuid::new_v4());
@@ -388,6 +421,16 @@ pub mod tests {
         .unwrap();
 
         create_main_wallet(&config).await.unwrap();
+
+        let wallet_name = format!("test_migrate_wallet_{}", uuid::Uuid::new_v4());
+        let new_config: WalletConfig = serde_json::from_value(json!({
+            "wallet_name": wallet_name,
+            "wallet_key": DEFAULT_WALLET_KEY,
+            "wallet_key_derivation": WALLET_KDF_RAW
+        }))
+        .unwrap();
+
+        super::wallet_migrate(&new_config).await.unwrap();
     }
 
     #[tokio::test]
