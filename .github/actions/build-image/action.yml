@@ -62,9 +62,11 @@ runs:
             echo "Could not pull $LAST_BRANCH_BUILD, will try last master build $LAST_MASTER_BUILD"
             if ! docker pull "$LAST_MASTER_BUILD"; then
               echo "Could not pull $LAST_MASTER_BUILD either ¯\_(ツ)_/¯. Will just have to build the image from scratch."
+            else
+              echo "Pulled image from previous ${{ inputs.branch-main }} branch build. We'll try to reuse the layers from this image."
             fi;
           else
-            echo "Pulled image from previous CI run on the branch. We'll try to reuse the layers from this image."
+            echo "Pulled image from previous CI run on this branch. We'll try to reuse the layers from this image."
           fi;
         else
           echo "Build optimization is disabled, will not attempt to reuse docker layers from previous cached images."
