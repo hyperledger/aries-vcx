@@ -138,6 +138,8 @@ pub enum LibvcxErrorKind {
     DuplicationWallet,
     #[error("Wallet record not found")]
     WalletRecordNotFound,
+    #[error("Wallet migration failed")]
+    WalletMigrationFailed,
     #[error("Record already exists in the wallet")]
     DuplicationWalletRecord,
     #[error("Wallet not found")]
