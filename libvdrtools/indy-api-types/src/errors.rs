@@ -6,8 +6,9 @@ use std::{
     sync::Arc,
 };
 
-use failure::{Backtrace, Context, Fail};
 use log;
+use std::error::Error;
+use thiserror::Error as ThisError;
 
 #[cfg(feature = "casting_errors")]
 use sqlx;
@@ -26,136 +27,124 @@ pub mod prelude {
     };
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Debug, Fail)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug, ThisError)]
 pub enum IndyErrorKind {
     // Common errors
-    #[fail(display = "Invalid library state")]
+    #[error("Invalid library state")]
     InvalidState,
-    #[fail(display = "Invalid structure")]
+    #[error("Invalid structure")]
     InvalidStructure,
-    #[fail(display = "Invalid parameter {}", 0)]
+    #[error("Invalid parameter {0}")]
     InvalidParam(u32),
-    #[fail(display = "IO error")]
+    #[error("IO error")]
     IOError,
     // Anoncreds errors
-    #[fail(display = "Duplicated master secret")]
+    #[error("Duplicated master secret")]
     MasterSecretDuplicateName,
-    #[fail(display = "Proof rejected")]
+    #[error("Proof rejected")]
     ProofRejected,
-    #[fail(display = "Revocation registry is full")]
+    #[error("Revocation registry is full")]
     RevocationRegistryFull,
-    #[fail(display = "Invalid revocation id")]
+    #[error("Invalid revocation id")]
     InvalidUserRevocId,
-    #[fail(display = "Credential revoked")]
+    #[error("Credential revoked")]
     CredentialRevoked,
-    #[fail(display = "Credential definition already exists")]
+    #[error("Credential definition already exists")]
     CredDefAlreadyExists,
     // Ledger errors
-    #[fail(display = "No consensus")]
+    #[error("No consensus")]
     NoConsensus,
-    #[fail(display = "Invalid transaction")]
+    #[error("Invalid transaction")]
     InvalidTransaction,
-    #[fail(display = "Item not found on ledger")]
+    #[error("Item not found on ledger")]
     LedgerItemNotFound,
     // Pool errors
-    #[fail(display = "Pool not created")]
+    #[error("Pool not created")]
     PoolNotCreated,
-    #[fail(display = "Invalid pool handle")]
+    #[error("Invalid pool handle")]
     InvalidPoolHandle,
-    #[fail(display = "Pool work terminated")]
+    #[error("Pool work terminated")]
     PoolTerminated,
-    #[fail(display = "Pool timeout")]
+    #[error("Pool timeout")]
     PoolTimeout,
-    #[fail(display = "Pool ledger config already exists")]
+    #[error("Pool ledger config already exists")]
     PoolConfigAlreadyExists,
-    #[fail(display = "Pool Genesis Transactions are not compatible with Protocol version")]
+    #[error("Pool Genesis Transactions are not compatible with Protocol version")]
     PoolIncompatibleProtocolVersion,
     // Crypto errors
-    #[fail(display = "Unknown crypto")]
+    #[error("Unknown crypto")]
     UnknownCrypto,
     // Wallet errors
-    #[fail(display = "Invalid wallet handle was passed")]
+    #[error("Invalid wallet handle was passed")]
     InvalidWalletHandle,
-    #[fail(display = "Unknown wallet storage type")]
+    #[error("Unknown wallet storage type")]
     UnknownWalletStorageType,
-    #[fail(display = "Wallet storage type already registered")]
+    #[error("Wallet storage type already registered")]
     WalletStorageTypeAlreadyRegistered,
-    #[fail(display = "Wallet with this name already exists")]
+    #[error("Wallet with this name already exists")]
     WalletAlreadyExists,
-    #[fail(display = "Wallet not found")]
+    #[error("Wallet not found")]
     WalletNotFound,
-    #[fail(display = "Wallet already opened")]
+    #[error("Wallet already opened")]
     WalletAlreadyOpened,
-    #[fail(display = "Wallet security error")]
+    #[error("Wallet security error")]
     WalletAccessFailed,
-    #[fail(display = "Wallet encoding error")]
+    #[error("Wallet encoding error")]
     WalletEncodingError,
-    #[fail(display = "Wallet storage error occurred")]
+    #[error("Wallet storage error occurred")]
     WalletStorageError,
-    #[fail(display = "Wallet encryption error")]
+    #[error("Wallet encryption error")]
     WalletEncryptionError,
-    #[fail(display = "Wallet item not found")]
+    #[error("Wallet item not found")]
     WalletItemNotFound,
-    #[fail(display = "Wallet item already exists")]
+    #[error("Wallet item already exists")]
     WalletItemAlreadyExists,
-    #[fail(display = "Wallet query error")]
+    #[error("Wallet query error")]
     WalletQueryError,
     // DID errors
-    #[fail(display = "DID already exists")]
+    #[error("DID already exists")]
     DIDAlreadyExists,
     // Payments errors
-    #[fail(display = "Unknown payment method type")]
+    #[error("Unknown payment method type")]
     UnknownPaymentMethodType,
-    #[fail(display = "No method were scraped from inputs/outputs or more than one were scraped")]
+    #[error("No method were scraped from inputs/outputs or more than one were scraped")]
     IncompatiblePaymentMethods,
-    #[fail(display = "Payment insufficient funds on inputs")]
+    #[error("Payment insufficient funds on inputs")]
     PaymentInsufficientFunds,
-    #[fail(display = "Payment Source does not exist")]
+    #[error("Payment Source does not exist")]
     PaymentSourceDoesNotExist,
-    #[fail(display = "Payment operation not supported")]
+    #[error("Payment operation not supported")]
     PaymentOperationNotSupported,
-    #[fail(display = "Payment extra funds")]
+    #[error("Payment extra funds")]
     PaymentExtraFunds,
-    #[fail(display = "The transaction is not allowed to a requester")]
+    #[error("The transaction is not allowed to a requester")]
     TransactionNotAllowed,
-    #[fail(display = "Query account does not exist")]
+    #[error("Query account does not exist")]
     QueryAccountDoesNotExist,
 
-    #[fail(display = "Invalid VDR handle")]
+    #[error("Invalid VDR handle")]
     InvalidVDRHandle,
-    #[fail(display = "Failed to get ledger for VDR Namespace")]
+    #[error("Failed to get ledger for VDR Namespace")]
     InvalidVDRNamespace,
-    #[fail(display = "Registered Ledger type does not match to the network of id")]
+    #[error("Registered Ledger type does not match to the network of id")]
     IncompatibleLedger,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, ThisError)]
 pub struct IndyError {
     // FIXME: We have to use Arc as for now we clone messages in pool service
     // FIXME: In theory we can avoid sync by refactoring of pool service
-    inner: Arc<Context<IndyErrorKind>>,
-}
-
-impl Fail for IndyError {
-    fn cause(&self) -> Option<&dyn Fail> {
-        self.inner.cause()
-    }
-
-    fn backtrace(&self) -> Option<&Backtrace> {
-        self.inner.backtrace()
-    }
+    #[source]
+    kind: IndyErrorKind,
+    msg: Arc<String>,
 }
 
 impl fmt::Display for IndyError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let mut causes = <dyn Fail>::iter_chain(self.inner.as_ref());
+        writeln!(f, "Error: {}", self.kind())?;
 
-        if let Some(cause) = causes.next() {
-            writeln!(f, "Error: {}", cause)?;
-        }
-
-        for cause in causes {
-            writeln!(f, "  Caused by: {}", cause)?;
+        if let Some(src) = self.kind.source() {
+            writeln!(f, "  Caused by: {}", src)?;
         }
 
         Ok(())
@@ -165,35 +154,35 @@ impl fmt::Display for IndyError {
 impl IndyError {
     pub fn from_msg<D>(kind: IndyErrorKind, msg: D) -> IndyError
     where
-        D: fmt::Display + fmt::Debug + Send + Sync + 'static,
+        D: fmt::Display + Send + Sync + 'static,
     {
         IndyError {
-            inner: Arc::new(Context::new(msg).context(kind)),
+            kind,
+            msg: Arc::new(msg.to_string()),
         }
     }
 
     pub fn kind(&self) -> IndyErrorKind {
-        *self.inner.get_context()
+        self.kind
     }
 
     pub fn extend<D>(self, msg: D) -> IndyError
     where
         D: fmt::Display + fmt::Debug + Send + Sync + 'static,
     {
-        let kind = self.kind();
-        let inner = Arc::try_unwrap(self.inner).unwrap();
         IndyError {
-            inner: Arc::new(inner.map(|_| msg).context(kind)),
+            kind: self.kind,
+            msg: Arc::new(format!("{}\n  Caused by: {msg}", self.msg)),
         }
     }
 
     pub fn map<D>(self, kind: IndyErrorKind, msg: D) -> IndyError
     where
-        D: fmt::Display + fmt::Debug + Send + Sync + 'static,
+        D: fmt::Display + Send + Sync + 'static,
     {
-        let inner = Arc::try_unwrap(self.inner).unwrap();
         IndyError {
-            inner: Arc::new(inner.map(|_| msg).context(kind)),
+            kind,
+            msg: Arc::new(format!("{}\n  Caused by: {msg}", self.msg)),
         }
     }
 }
@@ -208,88 +197,92 @@ where
 impl From<IndyErrorKind> for IndyError {
     fn from(kind: IndyErrorKind) -> IndyError {
         IndyError {
-            inner: Arc::new(Context::new(kind)),
-        }
-    }
-}
-
-impl From<Context<IndyErrorKind>> for IndyError {
-    fn from(inner: Context<IndyErrorKind>) -> IndyError {
-        IndyError {
-            inner: Arc::new(inner),
+            kind,
+            msg: Arc::new(String::new()),
         }
     }
 }
 
 impl From<io::Error> for IndyError {
     fn from(err: io::Error) -> Self {
-        err.context(IndyErrorKind::IOError).into()
+        IndyError {
+            kind: IndyErrorKind::IOError,
+            msg: Arc::new(err.to_string()),
+        }
     }
 }
 
 #[cfg(feature = "casting_errors")]
 impl From<zmq::Error> for IndyError {
     fn from(err: zmq::Error) -> Self {
-        err.context(IndyErrorKind::IOError).into()
+        IndyError {
+            kind: IndyErrorKind::IOError,
+            msg: Arc::new(err.to_string()),
+        }
     }
 }
 
 impl From<cell::BorrowError> for IndyError {
     fn from(err: cell::BorrowError) -> Self {
-        err.context(IndyErrorKind::InvalidState).into()
+        IndyError {
+            kind: IndyErrorKind::InvalidState,
+            msg: Arc::new(err.to_string()),
+        }
     }
 }
 
 impl From<cell::BorrowMutError> for IndyError {
     fn from(err: cell::BorrowMutError) -> Self {
-        err.context(IndyErrorKind::InvalidState).into()
+        IndyError {
+            kind: IndyErrorKind::InvalidState,
+            msg: Arc::new(err.to_string()),
+        }
     }
 }
 
 impl From<futures::channel::oneshot::Canceled> for IndyError {
     fn from(err: futures::channel::oneshot::Canceled) -> Self {
-        err.context(IndyErrorKind::InvalidState).into()
+        IndyError {
+            kind: IndyErrorKind::InvalidState,
+            msg: Arc::new(err.to_string()),
+        }
     }
 }
 
 impl From<log::SetLoggerError> for IndyError {
     fn from(err: log::SetLoggerError) -> IndyError {
-        err.context(IndyErrorKind::InvalidState).into()
+        IndyError {
+            kind: IndyErrorKind::InvalidState,
+            msg: Arc::new(err.to_string()),
+        }
     }
 }
 
 #[cfg(feature = "casting_errors")]
 impl From<UrsaCryptoError> for IndyError {
     fn from(err: UrsaCryptoError) -> Self {
-        let message = format!(
-            "UrsaCryptoError: {}",
-            <dyn Fail>::iter_causes(&err)
-                .map(|e| e.to_string())
-                .collect::<String>()
-        );
-
         match err.kind() {
             UrsaCryptoErrorKind::InvalidState => {
-                IndyError::from_msg(IndyErrorKind::InvalidState, message)
+                IndyError::from_msg(IndyErrorKind::InvalidState, err)
             }
             UrsaCryptoErrorKind::InvalidStructure => {
-                IndyError::from_msg(IndyErrorKind::InvalidStructure, message)
+                IndyError::from_msg(IndyErrorKind::InvalidStructure, err)
             }
-            UrsaCryptoErrorKind::IOError => IndyError::from_msg(IndyErrorKind::IOError, message),
+            UrsaCryptoErrorKind::IOError => IndyError::from_msg(IndyErrorKind::IOError, err),
             UrsaCryptoErrorKind::InvalidRevocationAccumulatorIndex => {
-                IndyError::from_msg(IndyErrorKind::InvalidUserRevocId, message)
+                IndyError::from_msg(IndyErrorKind::InvalidUserRevocId, err)
             }
             UrsaCryptoErrorKind::RevocationAccumulatorIsFull => {
-                IndyError::from_msg(IndyErrorKind::RevocationRegistryFull, message)
+                IndyError::from_msg(IndyErrorKind::RevocationRegistryFull, err)
             }
             UrsaCryptoErrorKind::ProofRejected => {
-                IndyError::from_msg(IndyErrorKind::ProofRejected, message)
+                IndyError::from_msg(IndyErrorKind::ProofRejected, err)
             }
             UrsaCryptoErrorKind::CredentialRevoked => {
-                IndyError::from_msg(IndyErrorKind::CredentialRevoked, message)
+                IndyError::from_msg(IndyErrorKind::CredentialRevoked, err)
             }
             UrsaCryptoErrorKind::InvalidParam(_) => {
-                IndyError::from_msg(IndyErrorKind::InvalidStructure, message)
+                IndyError::from_msg(IndyErrorKind::InvalidStructure, err)
             }
         }
     }
@@ -580,13 +573,13 @@ pub trait IndyResultExt<T, E> {
 
 impl<T, E> IndyResultExt<T, E> for Result<T, E>
 where
-    E: Fail,
+    E: fmt::Display,
 {
     fn to_indy<D>(self, kind: IndyErrorKind, msg: D) -> IndyResult<T>
     where
         D: fmt::Display + Send + Sync + 'static,
     {
-        self.map_err(|err| err.context(msg).context(kind).into())
+        self.map_err(|err| err.to_indy(kind, msg))
     }
 }
 
@@ -599,13 +592,13 @@ pub trait IndyErrorExt {
 
 impl<E> IndyErrorExt for E
 where
-    E: Fail,
+    E: fmt::Display,
 {
     fn to_indy<D>(self, kind: IndyErrorKind, msg: D) -> IndyError
     where
         D: fmt::Display + Send + Sync + 'static,
     {
-        self.context(msg).context(kind).into()
+        IndyError::from_msg(kind, format!("{msg}\n  Caused by: {self}"))
     }
 }
 
@@ -618,7 +611,7 @@ pub fn set_current_error(err: &IndyError) {
         .try_with(|error| {
             let error_json = json!({
                 "message": err.to_string(),
-                "backtrace": err.backtrace().map(|bt| bt.to_string())
+                "backtrace": err.source().map(|bt| bt.to_string())
             })
             .to_string();
             error.replace(Some(string_to_cstring(error_json)));

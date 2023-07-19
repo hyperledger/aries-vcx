@@ -1,7 +1,6 @@
 extern crate sodiumoxide;
 
 use self::sodiumoxide::crypto::{secretbox, secretbox::xsalsa20poly1305};
-use failure::{err_msg, ResultExt};
 use indy_api_types::errors::prelude::*;
 
 pub const KEYBYTES: usize = xsalsa20poly1305::KEYBYTES;
@@ -25,10 +24,12 @@ pub fn encrypt(key: &Key, nonce: &Nonce, doc: &[u8]) -> Vec<u8> {
 }
 
 pub fn decrypt(key: &Key, nonce: &Nonce, doc: &[u8]) -> Result<Vec<u8>, IndyError> {
-    secretbox::open(doc, &nonce.0, &key.0)
-        .map_err(|_| err_msg("Unable to open sodium secretbox"))
-        .context(IndyErrorKind::InvalidStructure)
-        .map_err(|err| err.into())
+    secretbox::open(doc, &nonce.0, &key.0).map_err(|_| {
+        IndyError::from_msg(
+            IndyErrorKind::InvalidStructure,
+            "Unable to open sodium secretbox",
+        )
+    })
 }
 
 pub fn encrypt_detached(key: &Key, nonce: &Nonce, doc: &[u8]) -> (Vec<u8>, Tag) {
@@ -46,10 +47,8 @@ pub fn decrypt_detached(
 ) -> Result<Vec<u8>, IndyError> {
     let mut plain = doc.to_vec();
     secretbox::open_detached(plain.as_mut_slice(), &tag.0, &nonce.0, &key.0)
-        .map_err(|_| err_msg("Unable to decrypt data"))
-        .context(IndyErrorKind::InvalidStructure)
-        .map_err(|err| err.into())
-        .map(|()| plain)
+        .map_err(|_| IndyError::from_msg(IndyErrorKind::InvalidStructure, "Unable to decrypt data"))
+        .map(|_| plain)
 }
 
 #[cfg(test)]

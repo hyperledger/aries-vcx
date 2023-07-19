@@ -5,7 +5,6 @@ use aries_vcx_core::global::settings::{disable_indy_mocks, enable_indy_mocks};
 
 use crate::errors::error::prelude::*;
 
-pub static CONFIG_POOL_NAME: &str = "pool_name";
 pub static CONFIG_SDK_TO_REMOTE_ROLE: &str = "sdk_to_remote_role";
 pub static CONFIG_INSTITUTION_DID: &str = "institution_did";
 pub static CONFIG_INSTITUTION_VERKEY: &str = "institution_verkey";
@@ -16,7 +15,6 @@ pub static CONFIG_ENABLE_TEST_MODE: &str = "enable_test_mode";
 pub static CONFIG_GENESIS_PATH: &str = "genesis_path";
 pub static CONFIG_LOG_CONFIG: &str = "log_config";
 pub static CONFIG_EXPORTED_WALLET_PATH: &str = "exported_wallet_path";
-pub static CONFIG_WALLET_BACKUP_KEY: &str = "backup_key";
 pub static CONFIG_WALLET_KEY: &str = "wallet_key";
 pub static CONFIG_WALLET_NAME: &str = "wallet_name";
 pub static CONFIG_WALLET_TYPE: &str = "wallet_type";
@@ -99,30 +97,11 @@ pub fn set_config_value(key: &str, value: &str) -> VcxResult<()> {
     Ok(())
 }
 
-pub fn reset_config_values() -> VcxResult<()> {
+pub fn reset_config_values_ariesvcx() -> VcxResult<()> {
     trace!("reset_config_values >>>");
     let mut config = SETTINGS.write()?;
     config.clear();
     Ok(())
-}
-
-pub fn set_test_configs() -> String {
-    trace!("set_testing_defaults >>>");
-    let mut settings = SETTINGS
-        .write()
-        .expect("Unabled to access SETTINGS while setting test configs");
-    let institution_did = CONFIG_INSTITUTION_DID;
-    settings.insert(CONFIG_POOL_NAME.to_string(), DEFAULT_POOL_NAME.to_string());
-    settings.insert(institution_did.to_string(), DEFAULT_DID.to_string());
-    settings.insert(
-        CONFIG_PROTOCOL_VERSION.to_string(),
-        DEFAULT_PROTOCOL_VERSION.to_string(),
-    );
-    settings.insert(
-        CONFIG_WALLET_BACKUP_KEY.to_string(),
-        DEFAULT_WALLET_BACKUP_KEY.to_string(),
-    );
-    institution_did.to_string()
 }
 
 pub fn get_protocol_version() -> usize {

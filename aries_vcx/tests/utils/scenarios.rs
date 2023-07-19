@@ -4,7 +4,7 @@ pub mod test_utils {
     use std::thread;
     use std::time::Duration;
 
-    use aries_vcx::common::test_utils::create_and_store_credential_def;
+    use aries_vcx::common::test_utils::create_and_store_credential_def_and_rev_reg;
     use aries_vcx::core::profile::profile::Profile;
     use aries_vcx::errors::error::{AriesVcxError, AriesVcxErrorKind};
     use aries_vcx::handlers::proof_presentation::types::{
@@ -27,6 +27,8 @@ pub mod test_utils {
     use messages::AriesMessage;
     use serde_json::{json, Value};
 
+    use crate::utils::devsetup_alice::Alice;
+    use crate::utils::devsetup_faber::Faber;
     use aries_vcx::common::ledger::transactions::into_did_doc;
     use aries_vcx::common::primitives::credential_definition::CredentialDef;
     use aries_vcx::common::primitives::revocation_registry::RevocationRegistry;
@@ -47,11 +49,9 @@ pub mod test_utils {
     use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
     use aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;
     use aries_vcx::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
-    use aries_vcx::utils::constants::{DEFAULT_PROOF_NAME, TAILS_DIR, TEST_TAILS_URL};
+    use aries_vcx::utils::constants::{DEFAULT_PROOF_NAME, TEST_TAILS_URL};
     use aries_vcx::utils::filters::{filter_credential_offers_by_comment, filter_proof_requests_by_name};
-    use aries_vcx::utils::get_temp_dir_path;
-
-    use crate::utils::devsetup_agent::test_utils::{Alice, Faber};
+    use aries_vcx_core::indy::ledger::pool::test_utils::get_temp_dir_path;
 
     pub fn _send_message(sender: Sender<AriesMessage>) -> Option<SendClosureConnection> {
         Some(Box::new(
@@ -414,7 +414,7 @@ pub mod test_utils {
         faber: &mut Faber,
         connection: &MediatedConnection,
         rev_reg_id: Option<String>,
-        tails_file: Option<String>,
+        tails_dir: Option<String>,
     ) -> Issuer {
         let proposals: Vec<(String, ProposeCredential)> =
             get_credential_proposal_messages(&faber.agency_client, connection)
@@ -433,7 +433,7 @@ pub mod test_utils {
             credential_json: json!(proposal.content.credential_proposal.attributes).to_string(),
             cred_def_id: proposal.content.cred_def_id.clone(),
             rev_reg_id,
-            tails_file,
+            tails_file: tails_dir,
         };
         issuer
             .build_credential_offer_msg(&faber.profile.inject_anoncreds(), offer_info, Some("comment".into()))
@@ -458,7 +458,7 @@ pub mod test_utils {
         faber: &mut Faber,
         connection: &MediatedConnection,
         rev_reg_id: Option<String>,
-        tails_file: Option<String>,
+        tails_dir: Option<String>,
     ) {
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
         issuer
@@ -476,7 +476,7 @@ pub mod test_utils {
             credential_json: json!(proposal.content.credential_proposal.attributes).to_string(),
             cred_def_id: proposal.content.cred_def_id.clone(),
             rev_reg_id,
-            tails_file,
+            tails_file: tails_dir,
         };
         issuer
             .build_credential_offer_msg(&faber.profile.inject_anoncreds(), offer_info, Some("comment".into()))
@@ -561,7 +561,7 @@ pub mod test_utils {
         info!("send_credential >>> getting offers");
         let thread_id = issuer_credential.get_thread_id().unwrap();
         assert_eq!(IssuerState::OfferSent, issuer_credential.get_state());
-        assert_eq!(issuer_credential.is_revokable(), false);
+        assert!(!issuer_credential.is_revokable());
 
         issuer_credential
             .update_state(
@@ -573,7 +573,7 @@ pub mod test_utils {
             .await
             .unwrap();
         assert_eq!(IssuerState::RequestReceived, issuer_credential.get_state());
-        assert_eq!(issuer_credential.is_revokable(), false);
+        assert!(!issuer_credential.is_revokable());
         assert_eq!(thread_id, issuer_credential.get_thread_id().unwrap());
 
         info!("send_credential >>> sending credential");
@@ -705,7 +705,7 @@ pub mod test_utils {
             .attributes
             .into_iter()
             .map(|attr| AttrInfo {
-                name: Some(attr.name.clone()),
+                name: Some(attr.name),
                 ..AttrInfo::default()
             })
             .collect();
@@ -918,11 +918,12 @@ pub mod test_utils {
         rev_reg: &RevocationRegistry,
     ) {
         revoke_credential_local(faber, issuer_credential, &rev_reg.rev_reg_id).await;
+
         rev_reg
             .publish_local_revocations(
                 &faber.profile.inject_anoncreds(),
                 &faber.profile.inject_anoncreds_ledger_write(),
-                &faber.config_issuer.institution_did,
+                &faber.institution_did,
             )
             .await
             .unwrap();
@@ -930,16 +931,19 @@ pub mod test_utils {
 
     pub async fn revoke_credential_local(faber: &mut Faber, issuer_credential: &Issuer, rev_reg_id: &str) {
         let ledger = Arc::clone(&faber.profile).inject_anoncreds_ledger_read();
-        let (_, delta, timestamp) = ledger.get_rev_reg_delta_json(&rev_reg_id, None, None).await.unwrap();
+        let (_, delta, timestamp) = ledger.get_rev_reg_delta_json(rev_reg_id, None, None).await.unwrap();
         info!("revoking credential locally");
+
         issuer_credential
             .revoke_credential_local(&faber.profile.inject_anoncreds())
             .await
             .unwrap();
+
         let (_, delta_after_revoke, _) = ledger
             .get_rev_reg_delta_json(rev_reg_id, Some(timestamp + 1), None)
             .await
             .unwrap();
+
         assert_ne!(delta, delta_after_revoke); // They will not equal as we have saved the delta in cache
     }
 
@@ -950,7 +954,7 @@ pub mod test_utils {
     ) -> RevocationRegistry {
         let mut rev_reg_new = RevocationRegistry::create(
             &faber.profile.inject_anoncreds(),
-            &faber.config_issuer.institution_did,
+            &faber.institution_did,
             &credential_def.get_cred_def_id(),
             &rev_reg.get_tails_dir(),
             10,
@@ -970,13 +974,13 @@ pub mod test_utils {
             .publish_local_revocations(
                 &institution.profile.inject_anoncreds(),
                 &institution.profile.inject_anoncreds_ledger_write(),
-                &institution.config_issuer.institution_did,
+                &institution.institution_did,
             )
             .await
             .unwrap();
     }
 
-    pub async fn _create_address_schema(
+    pub async fn _create_address_schema_creddef_revreg(
         profile: &Arc<dyn Profile>,
         institution_did: &str,
     ) -> (
@@ -990,8 +994,8 @@ pub mod test_utils {
     ) {
         info!("_create_address_schema >>> ");
         let attrs_list = json!(["address1", "address2", "city", "state", "zip"]).to_string();
-        let (schema_id, schema_json, cred_def_id, cred_def_json, rev_reg_id, cred_def, rev_reg) =
-            create_and_store_credential_def(
+        let (schema_id, schema_json, cred_def_id, cred_def_json, rev_reg_id, tails_dir, cred_def, rev_reg) =
+            create_and_store_credential_def_and_rev_reg(
                 &profile.inject_anoncreds(),
                 &profile.inject_anoncreds_ledger_read(),
                 &profile.inject_anoncreds_ledger_write(),
@@ -1061,11 +1065,11 @@ pub mod test_utils {
         schema_id: &str,
         cred_def_id: &str,
         rev_reg_id: Option<String>,
-        tails_file: Option<String>,
+        tails_dir: Option<String>,
         comment: &str,
     ) -> (Holder, Issuer) {
         let mut holder = send_cred_proposal(consumer, consumer_to_issuer, schema_id, cred_def_id, comment).await;
-        let mut issuer = accept_cred_proposal(institution, issuer_to_consumer, rev_reg_id, tails_file).await;
+        let mut issuer = accept_cred_proposal(institution, issuer_to_consumer, rev_reg_id, tails_dir).await;
         accept_offer(consumer, consumer_to_issuer, &mut holder).await;
         tokio::time::sleep(Duration::from_millis(1000)).await;
         send_credential(
@@ -1095,7 +1099,7 @@ pub mod test_utils {
         Issuer,
     ) {
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, rev_reg_id) =
-            _create_address_schema(&institution.profile, &institution.config_issuer.institution_did).await;
+            _create_address_schema_creddef_revreg(&institution.profile, &institution.institution_did).await;
 
         info!("test_real_proof_with_revocation :: AS INSTITUTION SEND CREDENTIAL OFFER");
         let (address1, address2, city, state, zip) = attr_names();
@@ -1124,13 +1128,7 @@ pub mod test_utils {
         cred_def_id: &str,
         request_name: Option<&str>,
     ) -> Verifier {
-        let _requested_attrs = requested_attrs(
-            &institution.config_issuer.institution_did,
-            &schema_id,
-            &cred_def_id,
-            None,
-            None,
-        );
+        let _requested_attrs = requested_attrs(&institution.institution_did, &schema_id, &cred_def_id, None, None);
         let requested_attrs_string = serde_json::to_string(&_requested_attrs).unwrap();
         send_proof_request(
             institution,
@@ -1414,7 +1412,7 @@ pub mod test_utils {
         for (referent, cred_array) in retrieved_credentials.credentials_by_referent.iter() {
             if cred_array.len() > 0 {
                 let first_cred = cred_array[0].clone();
-                let tails_dir = with_tails.then_some(get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_owned());
+                let tails_dir = with_tails.then_some(get_temp_dir_path().to_str().unwrap().to_owned());
                 selected_credentials.select_credential_for_referent_from_retrieved(
                     referent.to_owned(),
                     first_cred,
@@ -1456,7 +1454,7 @@ pub mod test_utils {
                 })
                 .collect();
             let first_cred = filtered[0].clone();
-            let tails_dir = with_tails.then_some(get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_owned());
+            let tails_dir = with_tails.then_some(get_temp_dir_path().to_str().unwrap().to_owned());
             selected_credentials.select_credential_for_referent_from_retrieved(
                 referent.to_owned(),
                 first_cred,

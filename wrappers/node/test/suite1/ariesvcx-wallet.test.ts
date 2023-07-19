@@ -41,7 +41,7 @@ describe('Wallet:', () => {
         Wallet.export('/tmp/foobar.wallet', 'key_for_wallet'),
       );
       assert.equal(error.napiCode, 'GenericFailure');
-      assert.equal(error.vcxCode, VCXCode.INVALID_WALLET_HANDLE);
+      assert.equal(error.vcxCode, VCXCode.NOT_READY);
     });
   });
 });

@@ -17,7 +17,7 @@ use super::base_wallet::BaseWallet;
 
 #[derive(Debug)]
 pub struct IndySdkWallet {
-    wallet_handle: WalletHandle,
+    pub wallet_handle: WalletHandle,
 }
 
 impl IndySdkWallet {
@@ -66,11 +66,7 @@ impl BaseWallet for IndySdkWallet {
     }
 
     async fn get_wallet_record_value(&self, xtype: &str, id: &str) -> VcxCoreResult<String> {
-        let options = r#"{
-                "retrieve_type": false,
-                "retrieve_value": true,
-                "retrieve_tags": false
-            }"#;
+        let options = r#"{"retrieveType": false, "retrieveValue": true, "retrieveTags": false}"#;
 
         let str_record = self.get_wallet_record(xtype, id, options).await?;
         let wallet_record: WalletRecord = serde_json::from_str(&str_record)?;
@@ -135,6 +131,10 @@ impl BaseWallet for IndySdkWallet {
 
     async fn unpack_message(&self, msg: &[u8]) -> VcxCoreResult<Vec<u8>> {
         indy::signing::unpack_message(self.wallet_handle, msg).await
+    }
+
+    fn get_wallet_handle(&self) -> WalletHandle {
+        self.wallet_handle
     }
 }
 

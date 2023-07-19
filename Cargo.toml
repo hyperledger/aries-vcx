@@ -22,6 +22,7 @@ members = [
     "did_resolver_sov",
     "did_resolver_web",
     "indy_ledger_response_parser",
+    "wallet_migrator",
     "tools/simple_message_relay"
 ]
 

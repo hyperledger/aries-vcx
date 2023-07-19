@@ -10,7 +10,7 @@ use super::{Key, KeyType};
 pub fn get_verification_methods_by_key(
     key: &Key,
     did: &Did,
-    public_key_encoding: &PublicKeyEncoding,
+    public_key_encoding: PublicKeyEncoding,
 ) -> Result<Vec<VerificationMethod>, DidPeerError> {
     let id = to_did_url_reference(key)?;
     let vm_type = match key.key_type() {
@@ -59,7 +59,7 @@ fn build_verification_methods_from_type_and_key(
     key: &Key,
     id: DidUrl,
     did: Did,
-    public_key_encoding: &PublicKeyEncoding,
+    public_key_encoding: PublicKeyEncoding,
 ) -> Vec<VerificationMethod> {
     vec![add_public_key_to_builder(
         VerificationMethod::builder(id, did, vm_type),
@@ -72,7 +72,7 @@ fn build_verification_methods_from_bls_multikey(
     g1_key: &Key,
     g2_key: &Key,
     did: Did,
-    public_key_encoding: &PublicKeyEncoding,
+    public_key_encoding: PublicKeyEncoding,
 ) -> Vec<VerificationMethod> {
     let id1 = to_did_url_reference(g1_key).unwrap();
     let id2 = to_did_url_reference(g2_key).unwrap();
@@ -97,7 +97,7 @@ fn build_verification_methods_from_bls_multikey(
 fn add_public_key_to_builder(
     builder: IncompleteVerificationMethodBuilder,
     key: &Key,
-    public_key_encoding: &PublicKeyEncoding,
+    public_key_encoding: PublicKeyEncoding,
 ) -> VerificationMethod {
     match public_key_encoding {
         PublicKeyEncoding::Base58 => builder.add_public_key_base58(key.base58()).build(),
@@ -157,7 +157,7 @@ mod tests {
 
         // Multibase encoded keys are multicodec-prefixed by their encoding type ...
         fn test_get_verification_methods_by_key_multibase(key: &Key) {
-            let vms = get_verification_methods_by_key(key, &did(), &PublicKeyEncoding::Multibase).unwrap();
+            let vms = get_verification_methods_by_key(key, &did(), PublicKeyEncoding::Multibase).unwrap();
             assert_eq!(vms.len(), 1);
             assert_eq!(
                 vms[0].public_key().key_decoded().unwrap(),
@@ -168,7 +168,7 @@ mod tests {
 
         // ... and base58 encoded keys are not
         fn test_get_verification_methods_by_key_base58(key: &Key) {
-            let vms = get_verification_methods_by_key(key, &did(), &PublicKeyEncoding::Base58).unwrap();
+            let vms = get_verification_methods_by_key(key, &did(), PublicKeyEncoding::Base58).unwrap();
             assert_eq!(vms.len(), 1);
             assert_ne!(
                 vms[0].public_key().key_decoded().unwrap(),

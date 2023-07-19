@@ -192,6 +192,7 @@ jobs:
         run: |
           cd aries_vcx
           cargo check
+          cargo check --tests --all-features
           cargo check --no-default-features
           cargo check --features vdrtools --no-default-features
           cargo check --features modular_libs --no-default-features
@@ -276,6 +277,7 @@ jobs:
       - name: "Build and cache image"
         uses: ./.github/actions/build-image
         with:
+          skip-build-optimization: true # prevent pulling "main" branch image, because it's taking up lot of disk space.
           docker-img: ${{ env.DOCKER_IMG_CACHED }}
           dockerfile-path: "wrappers/java/ci/android.dockerfile"
           branch-name: ${{ env.BRANCH_NAME }}
@@ -372,8 +374,8 @@ jobs:
 
 #  ##########################################################################################
 #  ###############################    CODECOV    ###########################################
-#
-  code-coverage-aries-vcx-unit-tests:
+
+  code-coverage-aries-vcx-integration-modular-libs:
     needs: workflow-setup
     if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
     runs-on: ubuntu-20.04
@@ -382,70 +384,7 @@ jobs:
         uses: actions/checkout@v3
       - name: "Setup rust codecov environment"
         uses: ./.github/actions/setup-codecov-rust
-        with:
-          skip-docker-setup: true
-      - name: "Run workspace tests: general_test"
-        run: |
-          RUSTFLAGS='-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests' \
-          RUSTDOCFLAGS='-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests' \
-          RUST_TEST_THREADS=1 CARGO_INCREMENTAL=0 TEST_POOL_IP=127.0.0.1 cargo test --package aries-vcx;
-
-          mkdir -p /tmp/artifacts/coverage
-          grcov ./target/debug/ -s . -t lcov --llvm --branch --ignore-not-existing -o /tmp/artifacts/coverage/coverage.lcov
-      - name: "Upload coverage to Codecov"
-        uses: codecov/codecov-action@v2
-        with:
-          directory: /tmp/artifacts/coverage
-          flags: unittests-aries-vcx
-          name: codecov-unit-aries-vcx
-          fail_ci_if_error: true
-          path_to_write_report: /tmp/artifacts/coverage/codecov_report.gz
-      - uses: actions/upload-artifact@v3
-        with:
-          name: code-coverage-report-unit-aries-vcx
-          path: /tmp/artifacts/coverage
-
-  code-coverage-aries-vcx-integration-tests:
-    needs: workflow-setup
-    if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
-    runs-on: ubuntu-20.04
-    steps:
-      - name: "Git checkout"
-        uses: actions/checkout@v3
-      - name: "Setup rust codecov environment"
-        uses: ./.github/actions/setup-codecov-rust
-      - name: "Run workspace tests: pool_tests agency_pool_tests"
-        run: |
-          RUSTFLAGS='-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests' \
-          RUSTDOCFLAGS='-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests' \
-          RUST_TEST_THREADS=1 CARGO_INCREMENTAL=0 TEST_POOL_IP=127.0.0.1 cargo test --package aries-vcx -- --ignored;
-
-          mkdir -p /tmp/artifacts/coverage
-          grcov ./target/debug/ -s . -t lcov --llvm --branch --ignore-not-existing -o /tmp/artifacts/coverage/coverage.lcov
-      - name: "Upload coverage to Codecov"
-        uses: codecov/codecov-action@v2
-        with:
-          directory: /tmp/artifacts/coverage
-          flags: unittests-aries-vcx
-          name: codecov-unit-aries-vcx
-          fail_ci_if_error: true
-          path_to_write_report: /tmp/artifacts/coverage/codecov_report.gz
-      - uses: actions/upload-artifact@v3
-        with:
-          name: code-coverage-report-unit-aries-vcx
-          path: /tmp/artifacts/coverage
-
-  #TODO - can this be included within code-coverage-aries-vcx-integration-tests?
-  code-coverage-aries-vcx-modular-dependencies-integration-tests:
-    needs: workflow-setup
-    if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
-    runs-on: ubuntu-20.04
-    steps:
-      - name: "Git checkout"
-        uses: actions/checkout@v3
-      - name: "Setup rust codecov environment"
-        uses: ./.github/actions/setup-codecov-rust
-      - name: "Run workspace tests: modular_libs_tests pool_tests agency_pool_tests"
+      - name: "Run workspace tests: modular libs profile"
         run: |
           RUSTFLAGS='-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests' \
           RUSTDOCFLAGS='-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests' \
@@ -472,6 +411,12 @@ jobs:
   test-unit-workspace:
     needs: workflow-setup
     runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        features: [
+          "anoncreds_vdrtools",
+          "anoncreds_credx",
+        ]
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
@@ -479,19 +424,25 @@ jobs:
         uses: ./.github/actions/setup-testing-rust
         with:
           skip-docker-setup: true
-      - name: "Run workspace tests: general_test"
-        run: RUST_TEST_THREADS=1 cargo test --workspace --lib --exclude aries-vcx-agent --exclude libvdrtools
+      - name: "Run workspace unit tests"
+        run: RUST_TEST_THREADS=1 cargo test --workspace --lib --exclude aries-vcx-agent --exclude libvdrtools --exclude wallet_migrator --features ${{ matrix.features }}
 
   test-integration-aries-vcx:
     needs: workflow-setup
     runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        features: [
+          "vdrtools",
+          "modular_libs"
+        ]
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
       - name: "Setup rust testing environment"
         uses: ./.github/actions/setup-testing-rust
-      - name: "Run aries-vcx tests: pool_tests agency_pool_tests"
-        run: RUST_TEST_THREADS=1 cargo test --manifest-path="aries_vcx/Cargo.toml" -- --ignored;
+      - name: "Run aries-vcx integration tests"
+        run: RUST_LOG=trace RUST_TEST_THREADS=1 cargo test --manifest-path="aries_vcx/Cargo.toml" --features ${{ matrix.features }} -- --ignored;
 
   test-integration-aries-vcx-mysql:
     needs: workflow-setup
@@ -525,7 +476,7 @@ jobs:
         with:
           skip-vdrproxy-setup: false
       - name: "Run aries-vcx tests: vdrproxy_test"
-        run: cargo test --manifest-path="aries_vcx/Cargo.toml" -F vdr_proxy_ledger -- --ignored
+        run: RUST_TEST_THREADS=1 cargo test --manifest-path="aries_vcx/Cargo.toml" -F vdr_proxy_ledger -- --ignored
       - name: "Collect docker logs on failure"
         if: failure()
         uses: ./.github/actions/upload-docker-logs
@@ -540,22 +491,64 @@ jobs:
         uses: actions/checkout@v3
       - name: "Setup rust testing environment"
         uses: ./.github/actions/setup-testing-rust
-      - name: "Run aries-vcx tests: pool_tests agency_pool_tests"
+      - name: "Run aries-vcx integration tests"
         run: RUST_TEST_THREADS=1 cargo test --manifest-path="aries_vcx/Cargo.toml" -F mixed_breed -- --include-ignored;
 
-  test-integration-libvcx:
+  test-integration-aries-vcx-migration:
     needs: workflow-setup
-    if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
     runs-on: ubuntu-20.04
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
       - name: "Setup rust testing environment"
         uses: ./.github/actions/setup-testing-rust
-      - name: "Run libvcx tests: pool_tests"
+      - name: "Run aries-vcx tests: pool_tests agency_pool_tests"
         run: |
-          RUST_TEST_THREADS=1 cargo test --manifest-path="libvcx/Cargo.toml" -F "pool_tests";
-          RUST_TEST_THREADS=1 cargo test --manifest-path="libvcx_core/Cargo.toml" -F "pool_tests";
+          cargo test --manifest-path="wallet_migrator/Cargo.toml";
+          RUST_TEST_THREADS=1 CARGO_INCREMENTAL=0 TEST_POOL_IP=127.0.0.1 cargo test --manifest-path="aries_vcx/Cargo.toml" -F migration --test test_creds_proofs -- --include-ignored;
+          RUST_TEST_THREADS=1 CARGO_INCREMENTAL=0 TEST_POOL_IP=127.0.0.1 cargo test --manifest-path="aries_vcx/Cargo.toml" -F migration --test test_creds_proofs_revocations -- --include-ignored;
+
+  test-integration-libvcx:
+    needs: workflow-setup
+    if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        features: [
+          "ledger_vdrtools,anoncreds_vdrtools",
+          "ledger_vdrtools,anoncreds_credx",
+          "ledger_indyvdr,anoncreds_vdrtools",
+          "ledger_indyvdr,anoncreds_credx"
+        ]
+    steps:
+      - name: "Git checkout"
+        uses: actions/checkout@v3
+      - name: "Setup rust testing environment"
+        uses: ./.github/actions/setup-testing-rust
+      - name: "Run libvcx_core integration tests"
+        run: |
+          RUST_TEST_THREADS=1 cargo test --features ${{ matrix.features }} --manifest-path="libvcx_core/Cargo.toml" -- --include-ignored;
+
+  test-integration-libvcx-c:
+    needs: workflow-setup
+    if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        features: [
+          "ledger_vdrtools,anoncreds_vdrtools",
+          "ledger_vdrtools,anoncreds_credx",
+          "ledger_indyvdr,anoncreds_vdrtools",
+          "ledger_indyvdr,anoncreds_credx"
+        ]
+    steps:
+      - name: "Git checkout"
+        uses: actions/checkout@v3
+      - name: "Setup rust testing environment"
+        uses: ./.github/actions/setup-testing-rust
+      - name: "Run libvcx unit tests"
+        run: |
+          RUST_TEST_THREADS=1 cargo test --features ${{ matrix.features }} --manifest-path="libvcx/Cargo.toml";
 
   test-integration-resolver:
     needs: workflow-setup
@@ -858,7 +851,7 @@ jobs:
               set -e
               sudo apt-get update -y
               sudo apt-get install -y libssl-dev libzmq3-dev
-              npm run build:napi -- --target x86_64-unknown-linux-gnu
+              npm run build:napi
               strip *.node
           - host: ubuntu-20.04
             target: x86_64-unknown-linux-musl

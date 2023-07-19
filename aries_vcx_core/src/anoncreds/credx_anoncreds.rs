@@ -36,22 +36,22 @@ use uuid::Uuid;
 
 use super::base_anoncreds::BaseAnonCreds;
 
-const CATEGORY_LINK_SECRET: &str = "VCX_LINK_SECRET";
+pub const CATEGORY_LINK_SECRET: &str = "VCX_LINK_SECRET";
 
-const CATEGORY_CREDENTIAL: &str = "VCX_CREDENTIAL";
-const CATEGORY_CRED_DEF: &str = "VCX_CRED_DEF";
-const CATEGORY_CRED_KEY_CORRECTNESS_PROOF: &str = "VCX_CRED_KEY_CORRECTNESS_PROOF";
-const CATEGORY_CRED_DEF_PRIV: &str = "VCX_CRED_DEF_PRIV";
-const CATEGORY_CRED_SCHEMA: &str = "VCX_CRED_SCHEMA";
+pub const CATEGORY_CREDENTIAL: &str = "VCX_CREDENTIAL";
+pub const CATEGORY_CRED_DEF: &str = "VCX_CRED_DEF";
+pub const CATEGORY_CRED_KEY_CORRECTNESS_PROOF: &str = "VCX_CRED_KEY_CORRECTNESS_PROOF";
+pub const CATEGORY_CRED_DEF_PRIV: &str = "VCX_CRED_DEF_PRIV";
+pub const CATEGORY_CRED_SCHEMA: &str = "VCX_CRED_SCHEMA";
 
 // Category used for mapping a cred_def_id to a schema_id
-const CATEGORY_CRED_MAP_SCHEMA_ID: &str = "VCX_CRED_MAP_SCHEMA_ID";
+pub const CATEGORY_CRED_MAP_SCHEMA_ID: &str = "VCX_CRED_MAP_SCHEMA_ID";
 
-const CATEGORY_REV_REG: &str = "VCX_REV_REG";
-const CATEGORY_REV_REG_DELTA: &str = "VCX_REV_REG_DELTA";
-const CATEGORY_REV_REG_INFO: &str = "VCX_REV_REG_INFO";
-const CATEGORY_REV_REG_DEF: &str = "VCX_REV_REG_DEF";
-const CATEGORY_REV_REG_DEF_PRIV: &str = "VCX_REV_REG_DEF_PRIV";
+pub const CATEGORY_REV_REG: &str = "VCX_REV_REG";
+pub const CATEGORY_REV_REG_DELTA: &str = "VCX_REV_REG_DELTA";
+pub const CATEGORY_REV_REG_INFO: &str = "VCX_REV_REG_INFO";
+pub const CATEGORY_REV_REG_DEF: &str = "VCX_REV_REG_DEF";
+pub const CATEGORY_REV_REG_DEF_PRIV: &str = "VCX_REV_REG_DEF_PRIV";
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct RevocationRegistryInfo {
@@ -209,7 +209,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             &pres_req,
             &hashmap_as_ref(&schemas),
             &hashmap_as_ref(&cred_defs),
-            rev_reg_defs.as_ref().map(|regs| hashmap_as_ref(regs)).as_ref(),
+            rev_reg_defs.as_ref().map(hashmap_as_ref).as_ref(),
             rev_regs.as_ref(),
         )?)
     }
@@ -344,10 +344,8 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             warn!("Storing schema {schema_json} failed - {e}. It's possible it is already stored.")
         }
 
-        let str_schema_id = serde_json::to_string(schema.id())?;
-
         self.wallet
-            .add_wallet_record(CATEGORY_CRED_MAP_SCHEMA_ID, &cred_def_id.0, &str_schema_id, None)
+            .add_wallet_record(CATEGORY_CRED_MAP_SCHEMA_ID, &cred_def_id.0, &schema.id().0, None)
             .await?;
 
         // Return the ID and the cred def
@@ -362,8 +360,11 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             .await?;
 
         let schema_id = self
+            .wallet
             .get_wallet_record_value(CATEGORY_CRED_MAP_SCHEMA_ID, cred_def_id)
             .await?;
+
+        let schema_id = SchemaId(schema_id);
 
         // If cred_def contains schema ID, why take it as an argument here...?
         let offer = credx::issuer::create_credential_offer(&schema_id, &cred_def, &correctness_proof)?;
@@ -383,6 +384,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let cred_request = serde_json::from_str(cred_req_json)?;
         let cred_values = serde_json::from_str(cred_values_json)?;
 
+        // TODO: Might need to qualify with offer method or something - look into how vdrtools does it
         let cred_def_id = &cred_offer.cred_def_id.0;
 
         let cred_def = self.get_wallet_record_value(CATEGORY_CRED_DEF, cred_def_id).await?;
@@ -968,6 +970,34 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
 
         let rev_reg_def = self.get_wallet_record_value(CATEGORY_REV_REG_DEF, rev_reg_id).await?;
 
+        let mut rev_reg_info: RevocationRegistryInfo =
+            self.get_wallet_record_value(CATEGORY_REV_REG_INFO, rev_reg_id).await?;
+
+        let issuance_type = match &rev_reg_def {
+            RevocationRegistryDefinition::RevocationRegistryDefinitionV1(r) => r.value.issuance_type,
+        };
+
+        match issuance_type {
+            IssuanceType::ISSUANCE_ON_DEMAND => {
+                if !rev_reg_info.used_ids.remove(&cred_rev_id) {
+                    return Err(AriesVcxCoreError::from_msg(
+                        AriesVcxCoreErrorKind::InvalidInput,
+                        format!("Revocation id: {:?} not found in RevocationRegistry", cred_rev_id),
+                    ));
+                };
+            }
+            IssuanceType::ISSUANCE_BY_DEFAULT => {
+                if !rev_reg_info.used_ids.insert(cred_rev_id) {
+                    return Err(AriesVcxCoreError::from_msg(
+                        AriesVcxCoreErrorKind::InvalidInput,
+                        format!("Revocation id: {:?} not found in RevocationRegistry", cred_rev_id),
+                    ));
+                }
+            }
+        };
+
+        let str_rev_reg_info = serde_json::to_string(&rev_reg_info)?;
+
         let tails_file_hash = match &rev_reg_def {
             RevocationRegistryDefinition::RevocationRegistryDefinitionV1(r) => &r.value.tails_hash,
         };
@@ -995,6 +1025,10 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
 
         self.wallet
             .update_wallet_record_value(CATEGORY_REV_REG, rev_reg_id, &str_rev_reg)
+            .await?;
+
+        self.wallet
+            .update_wallet_record_value(CATEGORY_REV_REG_INFO, rev_reg_id, &str_rev_reg_info)
             .await?;
 
         match old_str_rev_reg_delta {

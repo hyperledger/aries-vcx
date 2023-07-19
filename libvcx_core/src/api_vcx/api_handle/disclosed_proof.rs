@@ -10,7 +10,7 @@ use aries_vcx::{
     global::settings::indy_mocks_enabled, utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION,
 };
 
-use crate::api_vcx::api_global::profile::{get_main_profile, get_main_profile_optional_pool};
+use crate::api_vcx::api_global::profile::{get_main_anoncreds, get_main_anoncreds_ledger_read, get_main_profile};
 use crate::api_vcx::api_handle::mediated_connection;
 use crate::api_vcx::api_handle::object_cache::ObjectCache;
 
@@ -71,7 +71,7 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
         return Ok(proof.get_state().into());
     }
     let send_message = mediated_connection::send_message_closure(connection_handle).await?;
-    let profile = get_main_profile()?;
+    let profile = get_main_profile();
 
     if let Some(message) = message {
         let message: AriesMessage = serde_json::from_str(message).map_err(|err| {
@@ -86,8 +86,8 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
         trace!("disclosed_proof::update_state >>> updating using message {:?}", message);
         proof
             .handle_message(
-                &profile.inject_anoncreds_ledger_read(),
-                &profile.inject_anoncreds(),
+                &get_main_anoncreds_ledger_read()?,
+                &get_main_anoncreds()?,
                 message.into(),
                 Some(send_message),
             )
@@ -98,8 +98,8 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
         if let Some((uid, message)) = proof.find_message_to_handle(messages) {
             proof
                 .handle_message(
-                    &profile.inject_anoncreds_ledger_read(),
-                    &profile.inject_anoncreds(),
+                    &get_main_anoncreds_ledger_read()?,
+                    &get_main_anoncreds()?,
                     message.into(),
                     Some(send_message),
                 )
@@ -186,11 +186,11 @@ pub async fn reject_proof(handle: u32, connection_handle: u32) -> LibvcxResult<(
 
 pub async fn generate_proof(handle: u32, credentials: &str, self_attested_attrs: &str) -> LibvcxResult<()> {
     let mut proof = HANDLE_MAP.get_cloned(handle)?;
-    let profile = get_main_profile()?;
+    let profile = get_main_profile();
     proof
         .generate_presentation(
-            &profile.inject_anoncreds_ledger_read(),
-            &profile.inject_anoncreds(),
+            &get_main_anoncreds_ledger_read()?,
+            &get_main_anoncreds()?,
             serde_json::from_str(credentials)?,
             serde_json::from_str(self_attested_attrs)?,
         )
@@ -218,8 +218,8 @@ pub async fn decline_presentation_request(
 
 pub async fn retrieve_credentials(handle: u32) -> LibvcxResult<String> {
     let proof = HANDLE_MAP.get_cloned(handle)?;
-    let profile = get_main_profile_optional_pool(); // do not throw if pool not open
-    let retrieved_creds = proof.retrieve_credentials(&profile.inject_anoncreds()).await?;
+    let profile = get_main_profile(); // do not throw if pool not open
+    let retrieved_creds = proof.retrieve_credentials(&get_main_anoncreds()?).await?;
 
     Ok(serde_json::to_string(&retrieved_creds)?)
 }
@@ -312,7 +312,7 @@ mod tests {
 
     use serde_json::Value;
 
-    #[cfg(feature = "test_utils")]
+    #[cfg(test)]
     use crate::api_vcx::api_handle::mediated_connection::test_utils::{
         build_test_connection_invitee_completed, build_test_connection_inviter_requested,
     };
@@ -338,7 +338,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_vcx_disclosed_proof_release() {
         let _setup = SetupMocks::init();
         let handle = create_with_proof_request("TEST_CREDENTIAL", ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
@@ -347,7 +346,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_create_proof() {
         let _setup = SetupMocks::init();
 
@@ -355,7 +353,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_create_fails() {
         let _setup = SetupMocks::init();
 
@@ -366,7 +363,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_proof_cycle() {
         let _setup = SetupMocks::init();
 
@@ -398,7 +394,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_proof_update_state_v2() {
         let _setup = SetupMocks::init();
 
@@ -434,7 +429,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_proof_reject_cycle() {
         let _setup = SetupMocks::init();
 
@@ -456,7 +450,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn get_state_test() {
         let _setup = SetupMocks::init();
 
@@ -468,7 +461,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn to_string_test() {
         let _setup = SetupMocks::init();
 
@@ -483,7 +475,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_deserialize_fails() {
         let _setup = SetupDefaults::init();
 
@@ -491,7 +482,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_get_proof_request() {
         let _setup = SetupMocks::init();
 
@@ -502,7 +492,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_deserialize_succeeds_with_self_attest_allowed() {
         let _setup = SetupDefaults::init();
 
@@ -513,7 +502,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_get_proof_request_attachment() {
         let _setup = SetupMocks::init();
 

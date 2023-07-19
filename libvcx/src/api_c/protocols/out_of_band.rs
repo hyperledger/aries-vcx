@@ -4,7 +4,6 @@ use futures::future::BoxFuture;
 use libc::c_char;
 
 use libvcx_core::api_vcx::api_handle::out_of_band;
-use libvcx_core::errors;
 use libvcx_core::errors::error::{LibvcxError, LibvcxErrorKind};
 
 use crate::api_c::cutils::cstring::CStringUtils;

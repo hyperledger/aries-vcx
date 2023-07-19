@@ -34,7 +34,6 @@ public abstract class LibVcx {
     /**
      * Helper API for testing purposes.
      */
-        public void vcx_set_next_agency_response(int msg);
         public void vcx_get_current_error(PointerByReference error);
 
     /**
@@ -554,9 +553,6 @@ public abstract class LibVcx {
 
         /** Close a search */
         public int vcx_wallet_close_search(int command_handle, int search_handle, Callback cb);
-
-        /** Set wallet handle manually */
-        public int vcx_wallet_set_handle(int handle);
 
         /**
          * message object

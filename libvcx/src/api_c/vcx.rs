@@ -13,8 +13,6 @@ use libvcx_core::api_vcx::api_global::pool::open_main_pool;
 use libvcx_core::api_vcx::api_global::settings::{enable_mocks, settings_init_issuer_config};
 use libvcx_core::api_vcx::api_global::state::state_vcx_shutdown;
 use libvcx_core::api_vcx::api_global::VERSION_STRING;
-use libvcx_core::api_vcx::utils::version_constants;
-use libvcx_core::errors;
 use libvcx_core::errors::error::{LibvcxError, LibvcxErrorKind};
 
 use crate::api_c::cutils::cstring::CStringUtils;
@@ -287,10 +285,9 @@ pub extern "C" fn vcx_version() -> *const c_char {
 /// #Returns
 /// Success
 #[no_mangle]
-pub extern "C" fn vcx_shutdown(delete: bool) -> u32 {
+pub extern "C" fn vcx_shutdown(_delete: bool) -> u32 {
     info!("vcx_shutdown >>>");
-    trace!("vcx_shutdown(delete: {})", delete);
-    state_vcx_shutdown(delete);
+    state_vcx_shutdown();
     SUCCESS_ERR_CODE
 }
 
@@ -473,7 +470,7 @@ pub extern "C" fn vcx_get_current_error(error_json_p: *mut *const c_char) {
     trace!("vcx_get_current_error: <<<");
 }
 
-#[cfg(feature = "test_utils")]
+#[cfg(test)]
 pub mod test_utils {
     use uuid;
 
@@ -595,36 +592,26 @@ pub mod test_utils {
 #[cfg(test)]
 #[allow(unused_imports)] // TODO: remove it
 mod tests {
-    #[cfg(feature = "general_test")]
+
     use std::ptr;
 
     use aries_vcx::aries_vcx_core::indy;
-    #[cfg(feature = "pool_tests")]
-    use aries_vcx::aries_vcx_core::indy::ledger::pool::{
-        test_utils::{create_tmp_genesis_txn_file, delete_named_test_pool, delete_test_pool},
-        PoolConfig,
-    };
     use aries_vcx::aries_vcx_core::indy::wallet::{import, RestoreWalletConfigs, WalletConfig};
     use aries_vcx::aries_vcx_core::INVALID_POOL_HANDLE;
     use aries_vcx::global::settings::{
-        set_config_value, set_test_configs, CONFIG_GENESIS_PATH, CONFIG_TXN_AUTHOR_AGREEMENT,
-        DEFAULT_WALLET_BACKUP_KEY, DEFAULT_WALLET_KEY, WALLET_KDF_RAW,
+        set_config_value, CONFIG_GENESIS_PATH, CONFIG_TXN_AUTHOR_AGREEMENT, DEFAULT_WALLET_BACKUP_KEY,
+        DEFAULT_WALLET_KEY, WALLET_KDF_RAW,
     };
-    use aries_vcx::utils::constants::GENESIS_PATH;
-    use aries_vcx::utils::devsetup::{
-        SetupDefaults, SetupEmpty, SetupMocks, SetupPoolConfig, TempFile, TestSetupCreateWallet,
-    };
+    use aries_vcx::utils::constants::POOL1_TXN;
+    use aries_vcx::utils::devsetup::{SetupDefaults, SetupEmpty, SetupMocks, TempFile};
     use aries_vcx::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER;
     use aries_vcx::utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION;
     use libvcx_core;
-    #[cfg(feature = "pool_tests")]
-    use libvcx_core::api_vcx::api_global::pool::get_main_pool_handle;
-    use libvcx_core::api_vcx::api_global::pool::reset_main_pool_handle;
     use libvcx_core::api_vcx::api_global::settings;
-    #[cfg(feature = "test_utils")]
+    use libvcx_core::api_vcx::api_global::wallet::close_main_wallet;
+    #[cfg(test)]
     use libvcx_core::api_vcx::api_global::wallet::test_utils::_create_main_wallet_and_its_backup;
     use libvcx_core::api_vcx::api_global::wallet::wallet_import;
-    use libvcx_core::api_vcx::api_global::wallet::{close_main_wallet, get_main_wallet_handle};
     use libvcx_core::api_vcx::api_handle::{
         credential, credential_def, disclosed_proof, issuer_credential, mediated_connection, proof, schema,
     };
@@ -636,7 +623,7 @@ mod tests {
     use crate::api_c::cutils::return_types_u32;
     use crate::api_c::cutils::timeout::TimeoutUtils;
     use crate::api_c::protocols::mediated_connection::vcx_connection_create;
-    #[cfg(feature = "test_utils")]
+    #[cfg(test)]
     use crate::api_c::vcx::test_utils::{
         _vcx_init_threadpool, _vcx_init_threadpool_c_closure, _vcx_open_main_pool_c_closure,
         _vcx_open_main_wallet_c_closure, _vcx_open_pool,
@@ -645,33 +632,7 @@ mod tests {
 
     use super::*;
 
-    #[cfg(feature = "pool_tests")]
-    #[tokio::test]
-    async fn test_vcx_init_called_twice_passes_after_shutdown() {
-        let _setup_defaults = SetupDefaults::init();
-        for _ in 0..2 {
-            TestSetupCreateWallet::run(|_| async {
-                let setup_pool = SetupPoolConfig::init().await;
-
-                _vcx_init_threadpool("{}").unwrap();
-                _vcx_open_pool(&json!(setup_pool.pool_config).to_string()).unwrap();
-
-                // Assert config values were set correctly
-                assert_ne!(get_main_pool_handle().unwrap(), INVALID_POOL_HANDLE);
-
-                // Verify shutdown was successful
-                vcx_shutdown(true);
-                let err = get_main_pool_handle().unwrap_err();
-                assert_eq!(err.kind, LibvcxErrorKind::NoPoolOpen);
-
-                return true; // skip_cleanup in TestSetupCreateWallet
-            })
-            .await;
-        }
-    }
-
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_error_c_message() {
         let _setup = SetupMocks::init();
 
@@ -695,7 +656,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_vcx_init_threadpool_fails_with_null_ptr_config() {
         let _setup = SetupEmpty::init();
         assert_eq!(
@@ -705,7 +665,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_shutdown_with_no_previous_config() {
         let _setup = SetupDefaults::init();
 
@@ -714,7 +673,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_vcx_version() {
         let _setup = SetupDefaults::init();
 
@@ -723,7 +681,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn get_current_error_works_for_no_error() {
         let _setup = SetupDefaults::init();
 
@@ -736,7 +693,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn get_current_error_works_for_sync_error() {
         let _setup = SetupDefaults::init();
 
@@ -749,7 +705,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn get_current_error_works_for_async_error() {
         let _setup = SetupDefaults::init();
 
@@ -765,7 +720,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_call_c_callable_api_without_threadpool() {
         let _setup = SetupMocks::init();
 
@@ -777,20 +731,5 @@ mod tests {
         );
 
         assert!(cb.receive(TimeoutUtils::some_medium()).unwrap() > 0);
-    }
-
-    #[cfg(feature = "pool_tests")]
-    #[tokio::test]
-    async fn test_full_init() {
-        let _setup_defaults = SetupDefaults::init();
-        let setup_pool = SetupPoolConfig::init().await;
-
-        _vcx_init_threadpool("{}").unwrap();
-        _vcx_open_pool(&json!(setup_pool.pool_config).to_string()).unwrap();
-
-        // Assert pool was initialized
-        assert_ne!(get_main_pool_handle().unwrap(), 0);
-        delete_test_pool(get_main_pool_handle().unwrap()).await;
-        reset_main_pool_handle();
     }
 }

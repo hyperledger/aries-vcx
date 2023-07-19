@@ -1,10 +1,8 @@
 #![cfg_attr(feature = "fatal_warnings", deny(warnings))]
+#![allow(clippy::all)]
 
 #[macro_use]
 extern crate log;
-
-#[macro_use]
-extern crate num_derive;
 
 extern crate num_traits;
 
@@ -25,7 +23,7 @@ mod utils;
 
 #[macro_use]
 mod controllers;
-mod domain;
+pub mod domain;
 mod services;
 
 use std::sync::Arc;
@@ -48,16 +46,24 @@ pub use controllers::CredentialDefinitionId;
 
 pub use domain::{
     anoncreds::{
-        credential::{Credential, CredentialValues},
-        credential_definition::CredentialDefinition,
+        credential::{AttributeValues, Credential, CredentialValues},
+        credential_definition::{
+            CredentialDefinition, CredentialDefinitionCorrectnessProof, CredentialDefinitionData,
+            CredentialDefinitionPrivateKey, CredentialDefinitionV1, SignatureType,
+        },
         credential_offer::CredentialOffer,
         credential_request::{CredentialRequest, CredentialRequestMetadata},
+        master_secret::MasterSecret,
+        revocation_registry::{RevocationRegistry, RevocationRegistryV1},
         revocation_registry_definition::{
-            IssuanceType, RevocationRegistryConfig, RevocationRegistryDefinition,
-            RevocationRegistryId,
+            IssuanceType, RegistryType, RevocationRegistryConfig, RevocationRegistryDefinition,
+            RevocationRegistryDefinitionPrivate, RevocationRegistryDefinitionV1,
+            RevocationRegistryDefinitionValue, RevocationRegistryDefinitionValuePublicKeys,
+            RevocationRegistryId, RevocationRegistryInfo,
         },
+        revocation_registry_delta::{RevocationRegistryDelta, RevocationRegistryDeltaV1},
         revocation_state::RevocationStates,
-        schema::{AttributeNames, Schema, SchemaId},
+        schema::{AttributeNames, Schema, SchemaId, SchemaV1},
     },
     crypto::{
         did::{DidMethod, DidValue, MyDidInfo},
@@ -68,10 +74,11 @@ pub use domain::{
 };
 
 pub use indy_api_types::{
-    CommandHandle, PoolHandle, SearchHandle, WalletHandle, INVALID_COMMAND_HANDLE,
+    CommandHandle, IndyError, PoolHandle, SearchHandle, WalletHandle, INVALID_COMMAND_HANDLE,
     INVALID_POOL_HANDLE, INVALID_SEARCH_HANDLE, INVALID_WALLET_HANDLE,
 };
 
+pub use indy_wallet::WalletRecord;
 pub use services::AnoncredsHelpers;
 
 // Global (lazy inited) instance of Locator

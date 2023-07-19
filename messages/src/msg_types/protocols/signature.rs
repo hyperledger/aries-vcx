@@ -1,7 +1,7 @@
 use derive_more::{From, TryInto};
 use messages_macros::MessageType;
 use strum_macros::{AsRefStr, EnumString};
-use transitive::TransitiveFrom;
+use transitive::Transitive;
 
 use super::Protocol;
 use crate::msg_types::MsgKindType;
@@ -12,7 +12,7 @@ pub enum SignatureType {
     V1(SignatureTypeV1),
 }
 
-#[derive(Copy, Clone, Debug, From, TryInto, PartialEq, TransitiveFrom, MessageType)]
+#[derive(Copy, Clone, Debug, From, TryInto, PartialEq, Transitive, MessageType)]
 #[transitive(into(SignatureType, Protocol))]
 #[msg_type(major = 1)]
 pub enum SignatureTypeV1 {

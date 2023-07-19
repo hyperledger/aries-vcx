@@ -5,12 +5,9 @@ use aries_vcx_core::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind};
 use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
 use serde_json::Value;
 
+use crate::common::proofs::{proof_request::ProofRequestData, proof_request_internal::NonRevokedInterval};
 use crate::errors::error::prelude::*;
 use crate::handlers::proof_presentation::types::SelectedCredentials;
-use crate::{
-    common::proofs::{proof_request::ProofRequestData, proof_request_internal::NonRevokedInterval},
-    core::profile::profile::Profile,
-};
 
 #[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct CredInfoProver {
@@ -248,11 +245,10 @@ pub fn build_requested_credentials_json(
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 pub mod pool_tests {
-
     use crate::common::proofs::prover::prover_internal::{build_rev_states_json, CredInfoProver};
-    use crate::utils::constants::{CRED_DEF_ID, CRED_REV_ID, LICENCE_CRED_ID, SCHEMA_ID, TAILS_DIR};
+    use crate::utils::constants::{CRED_DEF_ID, CRED_REV_ID, LICENCE_CRED_ID, SCHEMA_ID};
     use crate::utils::devsetup::SetupProfile;
-    use crate::utils::get_temp_dir_path;
+    use aries_vcx_core::indy::ledger::pool::test_utils::get_temp_dir_path;
 
     #[tokio::test]
     #[ignore]
@@ -278,7 +274,7 @@ pub mod pool_tests {
                 cred_def_id: CRED_DEF_ID.to_string(),
                 rev_reg_id: None,
                 cred_rev_id: Some(CRED_REV_ID.to_string()),
-                tails_file: Some(get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string()),
+                tails_file: Some(get_temp_dir_path().to_str().unwrap().to_string()),
                 revocation_interval: None,
                 timestamp: None,
                 revealed: None,
@@ -301,19 +297,17 @@ pub mod pool_tests {
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 pub mod unit_tests {
+    use aries_vcx_core::indy::ledger::pool::test_utils::get_temp_dir_path;
     use aries_vcx_core::INVALID_POOL_HANDLE;
 
     use crate::core::profile::vdrtools_profile::VdrtoolsProfile;
+    use crate::utils::constants::{
+        ADDRESS_CRED_DEF_ID, ADDRESS_CRED_ID, ADDRESS_CRED_REV_ID, ADDRESS_REV_REG_ID, ADDRESS_SCHEMA_ID, CRED_DEF_ID,
+        CRED_REV_ID, LICENCE_CRED_ID, REV_REG_ID, REV_STATE_JSON, SCHEMA_ID,
+    };
     use crate::utils::devsetup::*;
     use crate::utils::mockdata::profile::mock_anoncreds::MockAnoncreds;
     use crate::utils::mockdata::profile::mock_ledger::MockLedger;
-    use crate::utils::{
-        constants::{
-            ADDRESS_CRED_DEF_ID, ADDRESS_CRED_ID, ADDRESS_CRED_REV_ID, ADDRESS_REV_REG_ID, ADDRESS_SCHEMA_ID,
-            CRED_DEF_ID, CRED_REV_ID, LICENCE_CRED_ID, REV_REG_ID, REV_STATE_JSON, SCHEMA_ID, TAILS_DIR,
-        },
-        get_temp_dir_path,
-    };
 
     use super::*;
 
@@ -368,59 +362,6 @@ pub mod unit_tests {
         let credential_def = build_cred_defs_json_prover(&ledger_read, &creds).await.unwrap();
         assert!(credential_def.len() > 0);
         assert!(credential_def.contains(r#""id":"V4SGRU86Z58d6TV7PBUe6f:3:CL:47:tag1","schemaId":"47""#));
-    }
-
-    #[tokio::test]
-    async fn test_find_credential_def_fails() {
-        SetupLibraryWallet::run(|setup| async move {
-            let profile = Arc::new(VdrtoolsProfile::init(setup.wallet_handle, INVALID_POOL_HANDLE));
-            let credential_ids = vec![CredInfoProver {
-                referent: "1".to_string(),
-                credential_referent: "2".to_string(),
-                schema_id: "3".to_string(),
-                cred_def_id: "3".to_string(),
-                rev_reg_id: Some("4".to_string()),
-                cred_rev_id: Some("5".to_string()),
-                revocation_interval: None,
-                tails_file: None,
-                timestamp: None,
-                revealed: None,
-            }];
-            let err_kind = build_cred_defs_json_prover(&profile.inject_anoncreds_ledger_read(), &credential_ids)
-                .await
-                .unwrap_err()
-                .kind();
-            assert_eq!(err_kind, AriesVcxErrorKind::InvalidProofCredentialData);
-        })
-        .await;
-    }
-
-    #[tokio::test]
-    async fn test_find_schemas_fails() {
-        SetupLibraryWallet::run(|setup| async move {
-            let profile = Arc::new(VdrtoolsProfile::init(setup.wallet_handle, INVALID_POOL_HANDLE));
-            let credential_ids = vec![CredInfoProver {
-                referent: "1".to_string(),
-                credential_referent: "2".to_string(),
-                schema_id: "3".to_string(),
-                cred_def_id: "3".to_string(),
-                rev_reg_id: Some("4".to_string()),
-                cred_rev_id: Some("5".to_string()),
-                revocation_interval: None,
-                tails_file: None,
-                timestamp: None,
-                revealed: None,
-            }];
-
-            assert_eq!(
-                build_schemas_json_prover(&profile.inject_anoncreds_ledger_read(), &credential_ids)
-                    .await
-                    .unwrap_err()
-                    .kind(),
-                AriesVcxErrorKind::InvalidSchema
-            );
-        })
-        .await;
     }
 
     #[tokio::test]
@@ -480,7 +421,7 @@ pub mod unit_tests {
                 from: Some(123),
                 to: Some(456),
             }),
-            tails_file: Some(get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string()),
+            tails_file: Some(get_temp_dir_path().to_str().unwrap().to_string()),
             timestamp: None,
             revealed: None,
         };
@@ -518,7 +459,7 @@ pub mod unit_tests {
                     },
                     "interval":null
                 },
-                "tails_file": get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string(),
+                "tails_file": get_temp_dir_path().to_str().unwrap().to_string(),
               },
               "zip_2":{
                 "credential": {
@@ -601,7 +542,7 @@ pub mod unit_tests {
                     },
                     "interval":null
                 },
-                "tails_file": get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string(),
+                "tails_file": get_temp_dir_path().to_str().unwrap().to_string(),
               },
            }
         });
@@ -613,7 +554,7 @@ pub mod unit_tests {
             rev_reg_id: None,
             cred_rev_id: Some(CRED_REV_ID.to_string()),
             revocation_interval: None,
-            tails_file: Some(get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string()),
+            tails_file: Some(get_temp_dir_path().to_str().unwrap().to_string()),
             timestamp: None,
             revealed: None,
         }];
@@ -717,7 +658,7 @@ pub mod unit_tests {
             cred_def_id: CRED_DEF_ID.to_string(),
             rev_reg_id: Some(REV_REG_ID.to_string()),
             cred_rev_id: Some(CRED_REV_ID.to_string()),
-            tails_file: Some(get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string()),
+            tails_file: Some(get_temp_dir_path().to_str().unwrap().to_string()),
             revocation_interval: None,
             timestamp: None,
             revealed: None,

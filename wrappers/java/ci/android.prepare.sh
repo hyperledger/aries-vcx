@@ -7,5 +7,3 @@ source ${SCRIPT_DIR}/setup.android.env.sh
 
 download_sdk
 download_and_setup_toolchain
-
-prepare_dependencies "arm"

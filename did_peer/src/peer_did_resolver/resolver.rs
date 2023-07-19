@@ -9,11 +9,7 @@ use did_resolver::{
     },
 };
 
-use crate::{
-    error::DidPeerError,
-    numalgos::numalgo2::resolve_numalgo2,
-    peer_did::{Numalgo, PeerDid},
-};
+use crate::{error::DidPeerError, numalgos::numalgo2::resolve_numalgo2, peer_did::peer_did::generic::GenericPeerDid};
 
 use super::options::ExtraFieldsOptions;
 
@@ -35,9 +31,9 @@ impl DidResolvable for PeerDidResolver {
         did: &Did,
         options: &DidResolutionOptions<Self::ExtraFieldsOptions>,
     ) -> Result<DidResolutionOutput<Self::ExtraFieldsService>, GenericError> {
-        let peer_did = PeerDid::parse(did.to_owned())?;
-        match peer_did.numalgo() {
-            Numalgo::MultipleInceptionKeys => {
+        let peer_did = GenericPeerDid::parse(did.to_owned())?;
+        match peer_did {
+            GenericPeerDid::Numalgo2(peer_did) => {
                 let did_doc = resolve_numalgo2(&peer_did.did(), options.extra().public_key_encoding())?;
                 let resolution_metadata = DidResolutionMetadata::builder()
                     .content_type("application/did+json".to_string())
@@ -45,7 +41,7 @@ impl DidResolvable for PeerDidResolver {
                 let builder = DidResolutionOutput::builder(did_doc).did_resolution_metadata(resolution_metadata);
                 Ok(builder.build())
             }
-            n @ _ => Err(Box::new(DidPeerError::UnsupportedNumalgo(n.clone()))),
+            n @ _ => Err(Box::new(DidPeerError::UnsupportedNumalgo(n.numalgo()))),
         }
     }
 }

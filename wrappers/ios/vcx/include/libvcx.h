@@ -1104,8 +1104,6 @@ vcx_error_t vcx_delete_credential(
  * Used for exporting and importing and managing the wallet.
  */
 
-vcx_error_t vcx_wallet_set_handle(vcx_i32_t handle);
-
 /** Export the wallet as an encrypted file */
 vcx_error_t vcx_wallet_export(
         vcx_command_handle_t handle,
@@ -1284,9 +1282,6 @@ vcx_error_t vcx_set_active_txn_author_agreement_meta(
         const char *acc_mech_type,
         vcx_u64_t type_
 );
-
-/** For testing purposes only */
-void vcx_set_next_agency_response(int);
 
 #ifdef __cplusplus
 }

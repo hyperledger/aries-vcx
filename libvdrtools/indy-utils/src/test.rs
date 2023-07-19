@@ -1,9 +1,9 @@
 use super::environment;
 
-use std::{fs, fs::File, path::PathBuf};
+use std::{fs, fs::File, path::Path};
 
-pub fn cleanup_files(dir: &PathBuf, name: &str) {
-    let mut path = dir.clone();
+pub fn cleanup_files(dir: &Path, name: &str) {
+    let mut path = dir.to_path_buf();
     path.push(name);
     if path.exists() {
         if path.is_dir() {

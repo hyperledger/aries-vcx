@@ -9,11 +9,6 @@ use crate::{
     Keys, Metadata, WalletRecord,
 };
 
-#[cfg(test)]
-pub(super) fn gen_master_key_salt() -> IndyResult<pwhash_argon2i13::Salt> {
-    Ok(pwhash_argon2i13::gen_salt())
-}
-
 pub(super) fn master_key_salt_from_slice(slice: &[u8]) -> IndyResult<pwhash_argon2i13::Salt> {
     let salt = pwhash_argon2i13::Salt::from_slice(slice)
         .to_indy(IndyErrorKind::WalletAccessFailed, "Invalid master key salt")?;

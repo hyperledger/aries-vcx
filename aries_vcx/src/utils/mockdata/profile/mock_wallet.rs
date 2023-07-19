@@ -4,16 +4,23 @@ use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use async_trait::async_trait;
 
 use crate::utils::{self};
+#[cfg(feature = "vdrtools")]
+use aries_vcx_core::WalletHandle;
 use std::collections::HashMap;
 
 #[derive(Debug)]
-pub(crate) struct MockWallet;
+pub struct MockWallet;
 
 // NOTE : currently matches the expected results if did_mocks and indy_mocks are enabled
 /// Implementation of [BaseAnoncreds] which responds with mock data
 #[allow(unused)]
 #[async_trait]
 impl BaseWallet for MockWallet {
+    #[cfg(feature = "vdrtools")]
+    fn get_wallet_handle(&self) -> WalletHandle {
+        WalletHandle(1)
+    }
+
     async fn create_and_store_my_did(
         &self,
         seed: Option<&str>,

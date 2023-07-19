@@ -1,32 +1,5 @@
 #[macro_use]
-extern crate log;
-
-#[macro_use]
 extern crate serde_json;
-
-extern crate sqlx;
-
-mod test_utils {
-    use sqlx::{Connection, MySqlConnection};
-
-    pub async fn setup_mysql_walletdb() -> Result<String, sqlx::Error> {
-        debug!("Running query.");
-        let db_name = format!("mysqltest_{}", uuid::Uuid::new_v4().to_string()).replace("-", "_");
-        let url = "mysql://root:mysecretpassword@localhost:3306";
-        let mut connection = MySqlConnection::connect(url).await?;
-        let query = format!("CREATE DATABASE {};", db_name);
-        let query = sqlx::query(&query);
-        let res = query.execute(&mut connection).await;
-        debug!("Create database result: {:?}", res);
-        connection.close().await.unwrap();
-
-        let url = format!("mysql://root:mysecretpassword@localhost:3306/{}", db_name);
-        let mut connection = MySqlConnection::connect(&url).await?;
-        let res = sqlx::migrate!("./migrations").run(&mut connection).await;
-        debug!("Create tables result: {:?}", res);
-        Ok(db_name)
-    }
-}
 
 #[cfg(test)]
 mod dbtests {
@@ -45,19 +18,17 @@ mod dbtests {
     };
     use aries_vcx_core::wallet::indy_wallet::IndySdkWallet;
 
-    use crate::test_utils::setup_mysql_walletdb;
-
     #[tokio::test]
     #[ignore]
     async fn test_mysql_provision_cloud_agent_with_mysql_wallet() {
         LibvcxDefaultLogger::init_testing_logger();
-        let db_name = setup_mysql_walletdb().await.unwrap();
+        let db_name = format!("mysqltest_{}", uuid::Uuid::new_v4()).replace('-', "_");
         let storage_config = json!({
             "read_host": "localhost",
             "write_host": "localhost",
-            "port": 3306 as u32,
+            "port": 3306,
             "db_name": db_name,
-            "default_connection_limit": 50 as u32
+            "default_connection_limit": 50
         })
         .to_string();
         let storage_credentials = json!({
@@ -81,7 +52,7 @@ mod dbtests {
             agency_endpoint: AGENCY_ENDPOINT.parse().unwrap(),
             agent_seed: None,
         };
-        // create_main_wallet(&config_wallet).await.unwrap();
+
         create_wallet_with_master_secret(&config_wallet).await.unwrap();
         let wallet_handle = open_wallet(&config_wallet).await.unwrap();
         let profile = Arc::new(IndySdkWallet::new(wallet_handle));

@@ -2,7 +2,6 @@ use std::collections::HashMap;
 use std::fmt::Display;
 use std::sync::Arc;
 
-use crate::core::profile::profile::Profile;
 use crate::handlers::util::{
     get_attach_as_string, make_attach_from_str, matches_opt_thread_id, matches_thread_id, AttachmentId, OfferInfo,
     Status,

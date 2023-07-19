@@ -11,7 +11,7 @@ use crate::wallet::base_agency_client_wallet::{BaseAgencyClientWallet, StubAgenc
 
 #[derive(Clone, Debug)]
 pub struct AgencyClient {
-    wallet: Arc<dyn BaseAgencyClientWallet>,
+    pub wallet: Arc<dyn BaseAgencyClientWallet>,
     pub agency_url: Url,
     pub agency_did: String,
     pub agency_vk: String,

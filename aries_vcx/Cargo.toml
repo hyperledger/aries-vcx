@@ -21,6 +21,8 @@ vdr_proxy_ledger = ["aries_vcx_core/vdr_proxy_ledger", "vdrtools"]
 # Temporary feature used for testing the full credx anoncreds impl
 # using vdrtools ledger and wallet.
 mixed_breed = ["vdrtools", "modular_libs"]
+# Used for testing the migrator
+migration = ["vdrtools", "modular_libs"]
 
 [dependencies]
 agency_client = { path = "../agency_client" }
@@ -55,10 +57,6 @@ url = { version = "2.3", features = ["serde"] }
 android_logger = "0.5"
 
 [dev-dependencies]
+wallet_migrator = { path = "../wallet_migrator" }
 async-channel = "1.7.1"
 tokio = { version = "1.20", features = ["rt", "macros", "rt-multi-thread"] }
-sqlx = { version = "0.5", features = [
-    "migrate",
-    "mysql",
-    "runtime-tokio-rustls",
-] }

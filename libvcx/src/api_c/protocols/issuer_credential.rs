@@ -4,7 +4,6 @@ use futures::future::BoxFuture;
 use libc::c_char;
 
 use libvcx_core::api_vcx::api_handle::issuer_credential;
-use libvcx_core::errors;
 use libvcx_core::errors::error::{LibvcxError, LibvcxErrorKind};
 
 use crate::api_c::cutils::cstring::CStringUtils;
@@ -873,11 +872,11 @@ pub extern "C" fn vcx_issuer_credential_get_thread_id(
 pub mod tests {
     extern crate serde_json;
 
+    use aries_vcx::aries_vcx_core::indy::ledger::pool::test_utils::get_temp_dir_path;
     use std::ffi::CString;
     use std::ptr;
 
     use aries_vcx::utils::devsetup::*;
-    use aries_vcx::utils::get_temp_dir_path;
     use aries_vcx::utils::mockdata::mockdata_credex::CREDENTIAL_ISSUER_SM_FINISHED;
     use libvcx_core::errors;
 
@@ -894,7 +893,7 @@ pub mod tests {
             "version": "1.0",
             "data": {
                 "cred_def_handle":1,
-                "tails_file": get_temp_dir_path("tails").to_str().unwrap(),
+                "tails_file": get_temp_dir_path().to_str().unwrap(),
                 "rev_reg_id": "123",
                 "cred_rev_id": "456",
                 "source_id": "standard_credential",
@@ -968,7 +967,6 @@ pub mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_vcx_issuer_create_credential_success() {
         let _setup = SetupMocks::init();
 
@@ -977,7 +975,6 @@ pub mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_vcx_issuer_create_credential_fails() {
         let _setup = SetupMocks::init();
 
@@ -990,7 +987,6 @@ pub mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_vcx_issuer_credential_serialize_deserialize() {
         let _setup = SetupMocks::init();
 
@@ -1019,7 +1015,6 @@ pub mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_create_credential_arguments_correct() {
         let _setup = SetupMocks::init();
 
@@ -1034,7 +1029,6 @@ pub mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_vcx_issuer_credential_get_state() {
         let _setup = SetupMocks::init();
 
@@ -1050,7 +1044,7 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
+
     async fn test_vcx_issuer_revoke_credential_local() {
         let _setup = SetupMocks::init();
 

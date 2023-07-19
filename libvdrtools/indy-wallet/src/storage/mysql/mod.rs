@@ -61,7 +61,7 @@ impl StorageIterator for MySQLStorageIterator {
     }
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 struct Config {
     pub read_host: String,
     pub write_host: String,
@@ -75,7 +75,7 @@ fn default_connection_limit() -> u32 {
     100
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 pub struct Credentials {
     pub user: String,
     pub pass: String,
@@ -99,33 +99,12 @@ impl MySqlStorageType {
         }
     }
 
-    pub async fn _connect(
+    async fn _connect(
         &self,
         read_only: bool,
-        config: Option<&str>,
-        credentials: Option<&str>,
+        config: Config,
+        credentials: Credentials,
     ) -> IndyResult<MySqlPool> {
-        let config = config
-            .map(serde_json::from_str::<Config>)
-            .transpose()
-            .to_indy(IndyErrorKind::InvalidStructure, "Malformed config json")?
-            .ok_or(err_msg(
-                IndyErrorKind::InvalidStructure,
-                "Absent config json",
-            ))?;
-
-        let credentials = credentials
-            .map(serde_json::from_str::<Credentials>)
-            .transpose()
-            .to_indy(
-                IndyErrorKind::InvalidStructure,
-                "Malformed credentials json",
-            )?
-            .ok_or(err_msg(
-                IndyErrorKind::InvalidStructure,
-                "Absent credentials json",
-            ))?;
-
         let host_addr = if read_only {
             &config.read_host
         } else {
@@ -569,7 +548,6 @@ impl WalletStorage for MySqlStorage {
             SELECT type, name, value, tags
             FROM items
             WHERE wallet_id = ?
-            ORDER BY id
             "#,
         )
         .bind(self.wallet_id)
@@ -742,6 +720,27 @@ impl WalletStorageType for MySqlStorageType {
         config: Option<&str>,
         credentials: Option<&str>,
     ) -> IndyResult<()> {
+        let config = config
+            .map(serde_json::from_str::<Config>)
+            .transpose()
+            .to_indy(IndyErrorKind::InvalidStructure, "Malformed config json")?
+            .ok_or(err_msg(
+                IndyErrorKind::InvalidStructure,
+                "Absent config json",
+            ))?;
+
+        let credentials = credentials
+            .map(serde_json::from_str::<Credentials>)
+            .transpose()
+            .to_indy(
+                IndyErrorKind::InvalidStructure,
+                "Malformed credentials json",
+            )?
+            .ok_or(err_msg(
+                IndyErrorKind::InvalidStructure,
+                "Absent credentials json",
+            ))?;
+
         let mut tx = self
             ._connect(false, config, credentials)
             .await?
@@ -811,11 +810,85 @@ impl WalletStorageType for MySqlStorageType {
         credentials: Option<&str>,
         metadata: &[u8],
     ) -> IndyResult<()> {
-        let mut tx = self
-            ._connect(false, config, credentials)
-            .await?
-            .begin()
+        let mut config = config
+            .map(serde_json::from_str::<Config>)
+            .transpose()
+            .to_indy(IndyErrorKind::InvalidStructure, "Malformed config json")?
+            .ok_or(err_msg(
+                IndyErrorKind::InvalidStructure,
+                "Absent config json",
+            ))?;
+
+        let credentials = credentials
+            .map(serde_json::from_str::<Credentials>)
+            .transpose()
+            .to_indy(
+                IndyErrorKind::InvalidStructure,
+                "Malformed credentials json",
+            )?
+            .ok_or(err_msg(
+                IndyErrorKind::InvalidStructure,
+                "Absent credentials json",
+            ))?;
+
+        let mut my_sql_connect_options = MySqlConnectOptions::new()
+            .host(&config.write_host)
+            .username(&credentials.user)
+            .password(&credentials.pass);
+        my_sql_connect_options.log_statements(LevelFilter::Debug);
+
+        let mut pool = MySqlPoolOptions::default()
+            .max_connections(1)
+            .test_before_acquire(false)
+            .connect_with(my_sql_connect_options)
             .await?;
+
+        let mut con = pool.acquire().await?;
+
+        // Basic SQL injection prevention
+        // since we cannot bind the database identifier
+        config.db_name = config.db_name.replace('`', "``");
+
+        sqlx::query(&format!(
+            "CREATE DATABASE IF NOT EXISTS `{}`;",
+            config.db_name
+        ))
+        .execute(&mut con)
+        .await?;
+
+        // Replace the previous single use pool
+        // with the actual one, get a connection
+        // and create the required tables
+        pool = self._connect(false, config, credentials).await?;
+        con = pool.acquire().await?;
+
+        sqlx::query(
+            r#"
+            CREATE TABLE IF NOT EXISTS `items` (
+                `wallet_id` int NOT NULL,
+                `type` varchar(256) NOT NULL,
+                `name` varchar(256) NOT NULL,
+                `value` blob NOT NULL,
+                `tags` varchar(256) DEFAULT NULL,
+            PRIMARY KEY (`wallet_id`, `type`, `name`)
+            );"#,
+        )
+        .execute(&mut con)
+        .await?;
+
+        sqlx::query(
+            r#"
+            CREATE TABLE IF NOT EXISTS `wallets` (
+                `id` int NOT NULL AUTO_INCREMENT,
+                `name` varchar(64) NOT NULL,
+                `metadata` varchar(4096) DEFAULT NULL,
+            PRIMARY KEY (`id`)
+            );"#,
+        )
+        .execute(&mut con)
+        .await?;
+
+        let mut tx = pool.begin().await?;
 
         let res = sqlx::query(
             r#"
@@ -877,7 +950,30 @@ impl WalletStorageType for MySqlStorageType {
         config: Option<&str>,
         credentials: Option<&str>,
     ) -> IndyResult<Box<dyn WalletStorage>> {
-        let read_pool = self._connect(true, config, credentials).await?;
+        let config = config
+            .map(serde_json::from_str::<Config>)
+            .transpose()
+            .to_indy(IndyErrorKind::InvalidStructure, "Malformed config json")?
+            .ok_or(err_msg(
+                IndyErrorKind::InvalidStructure,
+                "Absent config json",
+            ))?;
+
+        let credentials = credentials
+            .map(serde_json::from_str::<Credentials>)
+            .transpose()
+            .to_indy(
+                IndyErrorKind::InvalidStructure,
+                "Malformed credentials json",
+            )?
+            .ok_or(err_msg(
+                IndyErrorKind::InvalidStructure,
+                "Absent credentials json",
+            ))?;
+
+        let read_pool = self
+            ._connect(true, config.clone(), credentials.clone())
+            .await?;
         let write_pool = self._connect(false, config, credentials).await?;
 
         let res = sqlx::query_as::<_, (i64,)>(
@@ -907,6 +1003,7 @@ impl WalletStorageType for MySqlStorageType {
 
 #[cfg(test)]
 mod tests {
+    #[allow(unused_imports)]
     use indy_utils::{assert_kind, environment};
 
     use super::{super::Tag, *};

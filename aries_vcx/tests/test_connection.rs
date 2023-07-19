@@ -1,6 +1,5 @@
 #[macro_use]
 extern crate log;
-
 #[macro_use]
 extern crate serde_json;
 
@@ -8,6 +7,8 @@ pub mod utils;
 
 #[cfg(test)]
 mod integration_tests {
+    use async_channel::bounded;
+
     use aries_vcx::agency_client::MessageStatusCode;
     use aries_vcx::common::ledger::transactions::into_did_doc;
     use aries_vcx::handlers::connection::mediated_connection::ConnectionState;
@@ -17,7 +18,6 @@ mod integration_tests {
     use aries_vcx::protocols::mediated_connection::invitee::state_machine::InviteeState;
     use aries_vcx::utils::devsetup::*;
     use aries_vcx::utils::mockdata::mockdata_proof::REQUESTED_ATTRIBUTES;
-    use async_channel::bounded;
     use messages::msg_fields::protocols::connection::Connection;
     use messages::msg_fields::protocols::out_of_band::invitation::OobService;
     use messages::msg_fields::protocols::out_of_band::{OobGoalCode, OutOfBand};
@@ -26,7 +26,8 @@ mod integration_tests {
     use messages::msg_types::Protocol;
     use messages::AriesMessage;
 
-    use crate::utils::devsetup_agent::test_utils::{create_test_alice_instance, Faber};
+    use crate::utils::devsetup_alice::create_alice;
+    use crate::utils::devsetup_faber::create_faber;
     use crate::utils::scenarios::test_utils::{
         _send_message, connect_using_request_sent_to_public_agent, create_connected_connections,
         create_connected_connections_via_public_invite, create_proof_request,
@@ -37,9 +38,9 @@ mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_establish_connection_via_public_invite() {
-        SetupPool::run(|setup| async move {
-            let mut institution = Faber::setup(setup.pool_handle).await;
-            let mut consumer = create_test_alice_instance(&setup).await;
+        SetupPoolDirectory::run(|setup| async move {
+            let mut institution = create_faber(setup.genesis_file_path.clone()).await;
+            let mut consumer = create_alice(setup.genesis_file_path).await;
 
             let (consumer_to_institution, institution_to_consumer) =
                 create_connected_connections_via_public_invite(&mut consumer, &mut institution).await;
@@ -61,14 +62,14 @@ mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_oob_connection_bootstrap() {
-        SetupPool::run(|setup| async move {
-            let mut institution = Faber::setup(setup.pool_handle).await;
-            let mut consumer = create_test_alice_instance(&setup).await;
+        SetupPoolDirectory::run(|setup| async move {
+            let mut institution = create_faber(setup.genesis_file_path.clone()).await;
+            let mut consumer = create_alice(setup.genesis_file_path).await;
             let (sender, receiver) = bounded::<AriesMessage>(1);
 
             let request_sender = create_proof_request(&mut institution, REQUESTED_ATTRIBUTES, "[]", "{}", None).await;
 
-            let did = institution.config_issuer.institution_did.clone();
+            let did = institution.institution_did.clone();
             let oob_sender = OutOfBandSender::create()
                 .set_label("test-label")
                 .set_goal_code(OobGoalCode::P2PMessaging)
@@ -185,14 +186,14 @@ mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_oob_connection_reuse() {
-        SetupPool::run(|setup| async move {
-            let mut institution = Faber::setup(setup.pool_handle).await;
-            let mut consumer = create_test_alice_instance(&setup).await;
+        SetupPoolDirectory::run(|setup| async move {
+            let mut institution = create_faber(setup.genesis_file_path.clone()).await;
+            let mut consumer = create_alice(setup.genesis_file_path).await;
 
             let (consumer_to_institution, institution_to_consumer) =
                 create_connected_connections_via_public_invite(&mut consumer, &mut institution).await;
 
-            let did = institution.config_issuer.institution_did.clone();
+            let did = institution.institution_did.clone();
             let oob_sender = OutOfBandSender::create()
                 .set_label("test-label")
                 .set_goal_code(OobGoalCode::P2PMessaging)
@@ -224,14 +225,14 @@ mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_oob_connection_handshake_reuse() {
-        SetupPool::run(|setup| async move {
-            let mut institution = Faber::setup(setup.pool_handle).await;
-            let mut consumer = create_test_alice_instance(&setup).await;
+        SetupPoolDirectory::run(|setup| async move {
+            let mut institution = create_faber(setup.genesis_file_path.clone()).await;
+            let mut consumer = create_alice(setup.genesis_file_path).await;
 
             let (mut consumer_to_institution, mut institution_to_consumer) =
                 create_connected_connections_via_public_invite(&mut consumer, &mut institution).await;
 
-            let did = institution.config_issuer.institution_did.clone();
+            let did = institution.institution_did.clone();
             let oob_sender = OutOfBandSender::create()
                 .set_label("test-label")
                 .set_goal_code(OobGoalCode::P2PMessaging)
@@ -330,9 +331,9 @@ mod integration_tests {
     #[tokio::test]
     #[ignore]
     pub async fn test_agency_pool_two_enterprise_connections() {
-        SetupPool::run(|setup| async move {
-            let mut institution = Faber::setup(setup.pool_handle).await;
-            let mut consumer1 = create_test_alice_instance(&setup).await;
+        SetupPoolDirectory::run(|setup| async move {
+            let mut institution = create_faber(setup.genesis_file_path.clone()).await;
+            let mut consumer1 = create_alice(setup.genesis_file_path).await;
 
             let (_faber, _alice) = create_connected_connections(&mut consumer1, &mut institution).await;
             let (_faber, _alice) = create_connected_connections(&mut consumer1, &mut institution).await;
@@ -343,9 +344,9 @@ mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_aries_demo_handle_connection_related_messages() {
-        SetupPool::run(|setup| async move {
-            let mut faber = Faber::setup(setup.pool_handle).await;
-            let mut alice = create_test_alice_instance(&setup).await;
+        SetupPoolDirectory::run(|setup| async move {
+            let mut faber = create_faber(setup.genesis_file_path.clone()).await;
+            let mut alice = create_alice(setup.genesis_file_path).await;
 
             // Connection
             let invite = faber.create_invite().await;

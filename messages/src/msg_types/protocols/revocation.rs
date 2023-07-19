@@ -1,7 +1,7 @@
 use derive_more::From;
 use messages_macros::MessageType;
 use strum_macros::{AsRefStr, EnumString};
-use transitive::TransitiveFrom;
+use transitive::Transitive;
 
 use super::Protocol;
 use crate::msg_types::{role::Role, MsgKindType};
@@ -12,7 +12,7 @@ pub enum RevocationType {
     V2(RevocationTypeV2),
 }
 
-#[derive(Copy, Clone, Debug, From, PartialEq, TransitiveFrom, MessageType)]
+#[derive(Copy, Clone, Debug, From, PartialEq, Transitive, MessageType)]
 #[transitive(into(RevocationType, Protocol))]
 #[msg_type(major = 2)]
 pub enum RevocationTypeV2 {

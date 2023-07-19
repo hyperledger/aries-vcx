@@ -4,7 +4,6 @@ use libvcx_core::aries_vcx::messages::msg_fields::protocols::basic_message::{
     BasicMessage, BasicMessageContent, BasicMessageDecorators,
 };
 use libvcx_core::aries_vcx::messages::AriesMessage;
-use napi::Error;
 use napi_derive::napi;
 
 use libvcx_core::api_vcx::api_handle::connection;

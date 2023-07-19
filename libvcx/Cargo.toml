@@ -12,10 +12,13 @@ crate-type = ["staticlib", "cdylib", "lib"]
 doctest = false
 
 [features]
-test_utils = [ "libvcx_core/test_utils" ]
-pool_tests = [ "test_utils" ]
-general_test = [ "test_utils" ]
 fatal_warnings = []
+
+ledger_indyvdr = ["libvcx_core/ledger_indyvdr"]
+ledger_vdrtools = ["libvcx_core/ledger_vdrtools"]
+
+anoncreds_credx = ["libvcx_core/anoncreds_credx"]
+anoncreds_vdrtools = ["libvcx_core/anoncreds_vdrtools"]
 
 [dependencies]
 num-traits = "0.2.0"

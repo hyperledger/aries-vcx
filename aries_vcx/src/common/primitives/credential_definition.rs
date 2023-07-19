@@ -5,7 +5,7 @@ use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use crate::utils::constants::{CRED_DEF_ID, CRED_DEF_JSON, DEFAULT_SERIALIZE_VERSION};
 use crate::utils::serialization::ObjectWithVersion;
 
-use crate::global::settings::{self, indy_mocks_enabled};
+use crate::global::settings::indy_mocks_enabled;
 use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
 use std::fmt;
 use std::sync::Arc;
@@ -286,14 +286,14 @@ pub async fn generate_cred_def(
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 pub mod integration_tests {
+    use aries_vcx_core::indy::ledger::pool::test_utils::get_temp_dir_path;
     use std::sync::Arc;
 
     use crate::common::primitives::credential_definition::generate_cred_def;
     use crate::common::primitives::revocation_registry::generate_rev_reg;
     use crate::common::test_utils::create_and_write_test_schema;
-    use crate::utils::constants::{DEFAULT_SCHEMA_ATTRS, TAILS_DIR};
+    use crate::utils::constants::DEFAULT_SCHEMA_ATTRS;
     use crate::utils::devsetup::SetupProfile;
-    use crate::utils::get_temp_dir_path;
 
     #[tokio::test]
     #[ignore]
@@ -370,8 +370,7 @@ pub mod integration_tests {
                 .await
                 .unwrap();
 
-            let path = get_temp_dir_path(TAILS_DIR);
-            std::fs::create_dir_all(&path).unwrap();
+            let path = get_temp_dir_path();
 
             let (rev_reg_def_id, rev_reg_def_json, rev_reg_entry_json) = generate_rev_reg(
                 &setup.profile.inject_anoncreds(),

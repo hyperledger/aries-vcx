@@ -3,7 +3,9 @@ use aries_vcx::common::primitives::credential_definition::CredentialDefConfigBui
 use aries_vcx::common::primitives::credential_definition::PublicEntityStateType;
 use aries_vcx::global::settings::CONFIG_INSTITUTION_DID;
 
-use crate::api_vcx::api_global::profile::get_main_profile;
+use crate::api_vcx::api_global::profile::{
+    get_main_anoncreds, get_main_anoncreds_ledger_read, get_main_anoncreds_ledger_write, get_main_profile,
+};
 use crate::api_vcx::api_global::settings::get_config_value;
 use crate::api_vcx::api_handle::object_cache::ObjectCache;
 use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
@@ -26,10 +28,9 @@ pub async fn create(source_id: String, schema_id: String, tag: String, support_r
                 format!("Failed build credential config using provided parameters: {:?}", err),
             )
         })?;
-    let profile = get_main_profile()?;
     let cred_def = CredentialDef::create(
-        &profile.inject_anoncreds_ledger_read(),
-        &profile.inject_anoncreds(),
+        &get_main_anoncreds_ledger_read()?,
+        &get_main_anoncreds()?,
         source_id,
         config,
         support_revocation,
@@ -42,12 +43,9 @@ pub async fn create(source_id: String, schema_id: String, tag: String, support_r
 pub async fn publish(handle: u32) -> LibvcxResult<()> {
     let mut cd = CREDENTIALDEF_MAP.get_cloned(handle)?;
     if !cd.was_published() {
-        let profile = get_main_profile()?;
+        let profile = get_main_profile();
         cd = cd
-            .publish_cred_def(
-                &profile.inject_anoncreds_ledger_read(),
-                &profile.inject_anoncreds_ledger_write(),
-            )
+            .publish_cred_def(&get_main_anoncreds_ledger_read()?, &get_main_anoncreds_ledger_write()?)
             .await?;
     } else {
         info!("publish >>> Credential definition was already published")
@@ -89,8 +87,8 @@ pub fn release_all() {
 
 pub async fn update_state(handle: u32) -> LibvcxResult<u32> {
     let mut cd = CREDENTIALDEF_MAP.get_cloned(handle)?;
-    let profile = get_main_profile()?;
-    let res = cd.update_state(&profile.inject_anoncreds_ledger_read()).await?;
+    let profile = get_main_profile();
+    let res = cd.update_state(&get_main_anoncreds_ledger_read()?).await?;
     CREDENTIALDEF_MAP.insert(handle, cd)?;
     Ok(res)
 }
@@ -105,33 +103,25 @@ pub fn check_is_published(handle: u32) -> LibvcxResult<bool> {
 
 #[cfg(test)]
 pub mod tests {
+    use aries_vcx::aries_vcx_core::indy::ledger::pool::test_utils::get_temp_dir_path;
     use std::{thread::sleep, time::Duration};
 
-    #[cfg(feature = "pool_tests")]
     use aries_vcx::common::primitives::credential_definition::RevocationDetailsBuilder;
-    #[cfg(feature = "pool_tests")]
     use aries_vcx::common::test_utils::create_and_write_test_schema;
     use aries_vcx::global::settings::CONFIG_INSTITUTION_DID;
-    #[cfg(feature = "pool_tests")]
     use aries_vcx::utils;
     use aries_vcx::utils::constants::SCHEMA_ID;
     use aries_vcx::utils::devsetup::SetupMocks;
-    #[cfg(feature = "pool_tests")]
-    use aries_vcx::utils::get_temp_dir_path;
 
     use crate::api_vcx::api_global::settings::get_config_value;
-    #[cfg(feature = "pool_tests")]
     use crate::api_vcx::api_handle::revocation_registry;
-    #[cfg(feature = "pool_tests")]
     use crate::api_vcx::api_handle::revocation_registry::RevocationRegistryConfig;
     use crate::api_vcx::api_handle::schema;
-    #[cfg(feature = "pool_tests")]
     use crate::api_vcx::utils::devsetup::SetupGlobalsWalletPoolAgency;
 
     use super::*;
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_vcx_credentialdef_release() {
         let _setup = SetupMocks::init();
         let schema_handle = schema::test_utils::create_schema_real().await;
@@ -149,7 +139,7 @@ pub mod tests {
         )
     }
 
-    #[cfg(feature = "test_utils")]
+    #[cfg(test)]
     pub async fn create_and_publish_nonrevocable_creddef() -> (u32, u32) {
         let schema_handle = schema::test_utils::create_schema_real().await;
         sleep(Duration::from_secs(1));
@@ -164,34 +154,27 @@ pub mod tests {
         (schema_handle, cred_def_handle)
     }
 
-    #[cfg(feature = "general_test")]
     #[tokio::test]
     async fn test_create_cred_def() {
         let _setup = SetupMocks::init();
         let (_, _) = create_and_publish_nonrevocable_creddef().await;
     }
 
-    #[cfg(feature = "pool_tests")]
     #[tokio::test]
+    #[ignore]
     async fn create_revocable_cred_def_and_check_tails_location() {
         SetupGlobalsWalletPoolAgency::run(|setup| async move {
-            let profile = get_main_profile().unwrap();
             let (schema_id, _) = create_and_write_test_schema(
-                &profile.inject_anoncreds(),
-                &profile.inject_anoncreds_ledger_write(),
-                &setup.setup.institution_did,
+                &get_main_anoncreds().unwrap(),
+                &get_main_anoncreds_ledger_write().unwrap(),
+                &setup.institution_did,
                 utils::constants::DEFAULT_SCHEMA_ATTRS,
             )
             .await;
             let issuer_did = get_config_value(CONFIG_INSTITUTION_DID).unwrap();
 
-            let revocation_details = RevocationDetailsBuilder::default()
-                .support_revocation(true)
-                .tails_dir(get_temp_dir_path("tails.txt").to_str().unwrap())
-                .max_creds(2 as u32)
-                .build()
-                .unwrap();
-            let _revocation_details = serde_json::to_string(&revocation_details).unwrap();
+            let path = get_temp_dir_path();
+
             let handle_cred_def = create("1".to_string(), schema_id, "tag1".to_string(), true)
                 .await
                 .unwrap();
@@ -201,7 +184,7 @@ pub mod tests {
                 issuer_did,
                 cred_def_id: get_cred_def_id(handle_cred_def).unwrap(),
                 tag: 1,
-                tails_dir: String::from(get_temp_dir_path("tails.txt").to_str().unwrap()),
+                tails_dir: String::from(path.to_str().unwrap()),
                 max_creds: 2,
             };
             let handle_rev_reg = revocation_registry::create(rev_reg_config).await.unwrap();
@@ -214,8 +197,8 @@ pub mod tests {
         .await;
     }
 
-    #[cfg(feature = "pool_tests")]
     #[tokio::test]
+    #[ignore]
     async fn test_create_credential_def_real() {
         SetupGlobalsWalletPoolAgency::run(|_setup| async move {
             let (_, handle) = create_and_publish_nonrevocable_creddef().await;
@@ -227,7 +210,6 @@ pub mod tests {
         .await;
     }
 
-    #[cfg(feature = "general_test")]
     #[tokio::test]
     async fn test_to_string_succeeds() {
         let _setup = SetupMocks::init();
@@ -239,7 +221,6 @@ pub mod tests {
         assert_eq!(credential_values["version"].clone(), "1.0");
     }
 
-    #[cfg(feature = "general_test")]
     #[tokio::test]
     async fn test_from_string_succeeds() {
         let _setup = SetupMocks::init();
@@ -260,7 +241,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_release_all() {
         let _setup = SetupMocks::init();
 

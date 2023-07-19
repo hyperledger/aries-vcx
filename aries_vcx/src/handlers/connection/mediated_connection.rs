@@ -28,7 +28,6 @@ use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use url::Url;
 use uuid::Uuid;
 
-use crate::core::profile::profile::Profile;
 use crate::errors::error::prelude::*;
 use crate::handlers::connection::cloud_agent::CloudAgentInfo;
 use crate::handlers::connection::legacy_agent_info::LegacyAgentInfo;

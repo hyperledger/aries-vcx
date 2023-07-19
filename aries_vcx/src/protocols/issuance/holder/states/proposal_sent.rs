@@ -3,7 +3,6 @@ use std::sync::Arc;
 
 use messages::msg_fields::protocols::cred_issuance::propose_credential::ProposeCredential;
 
-use crate::core::profile::profile::Profile;
 use crate::errors::error::prelude::*;
 use crate::protocols::issuance::is_cred_def_revokable;
 

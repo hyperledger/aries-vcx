@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use super::profile::Profile;
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
-use aries_vcx_core::ledger::base_ledger::{TaaConfigurator, TxnAuthrAgrmtOptions};
+use aries_vcx_core::ledger::base_ledger::TxnAuthrAgrmtOptions;
 use aries_vcx_core::{
     anoncreds::{base_anoncreds::BaseAnonCreds, indy_anoncreds::IndySdkAnonCreds},
     ledger::{
@@ -16,7 +16,7 @@ use async_trait::async_trait;
 
 #[derive(Debug)]
 pub struct VdrtoolsProfile {
-    wallet: Arc<dyn BaseWallet>,
+    wallet: Arc<IndySdkWallet>,
     anoncreds: Arc<dyn BaseAnonCreds>,
     anoncreds_ledger_read: Arc<dyn AnoncredsLedgerRead>,
     anoncreds_ledger_write: Arc<dyn AnoncredsLedgerWrite>,
@@ -25,11 +25,11 @@ pub struct VdrtoolsProfile {
 }
 
 impl VdrtoolsProfile {
-    pub fn init(indy_wallet_handle: WalletHandle, indy_pool_handle: PoolHandle) -> Self {
-        let wallet = Arc::new(IndySdkWallet::new(indy_wallet_handle));
-        let anoncreds = Arc::new(IndySdkAnonCreds::new(indy_wallet_handle));
-        let ledger_read = Arc::new(IndySdkLedgerRead::new(indy_wallet_handle, indy_pool_handle));
-        let ledger_write = Arc::new(IndySdkLedgerWrite::new(indy_wallet_handle, indy_pool_handle));
+    pub fn init(wallet_handle: WalletHandle, pool_handle: PoolHandle) -> Self {
+        let wallet = Arc::new(IndySdkWallet::new(wallet_handle));
+        let anoncreds = Arc::new(IndySdkAnonCreds::new(wallet_handle));
+        let ledger_read = Arc::new(IndySdkLedgerRead::new(wallet_handle, pool_handle));
+        let ledger_write = Arc::new(IndySdkLedgerWrite::new(wallet_handle, pool_handle));
         VdrtoolsProfile {
             wallet,
             anoncreds,
@@ -64,7 +64,12 @@ impl Profile for VdrtoolsProfile {
     }
 
     fn inject_wallet(&self) -> Arc<dyn BaseWallet> {
-        Arc::clone(&self.wallet)
+        self.wallet.clone()
+    }
+
+    #[cfg(feature = "migration")]
+    fn wallet_handle(&self) -> Option<WalletHandle> {
+        Some(self.wallet.wallet_handle)
     }
 
     fn update_taa_configuration(&self, _taa_options: TxnAuthrAgrmtOptions) -> VcxResult<()> {

@@ -27,8 +27,6 @@ pub mod sequence;
 pub mod test;
 pub mod wql;
 
-pub(crate) use indy_api_types::ErrorCode;
-
 use indy_api_types::{CommandHandle, PoolHandle, SearchHandle, VdrHandle, WalletHandle};
 
 pub fn next_wallet_handle() -> WalletHandle {

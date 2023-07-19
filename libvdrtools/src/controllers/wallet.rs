@@ -3,7 +3,7 @@ use std::sync::Arc;
 // use async_std::task::spawn_blocking;
 
 use indy_api_types::{
-    domain::wallet::{Config, Credentials, ExportConfig, KeyConfig},
+    domain::wallet::{Config, Credentials, ExportConfig, KeyConfig, Record},
     errors::prelude::*,
     WalletHandle,
 };
@@ -388,6 +388,20 @@ impl WalletController {
         trace!("import < {:?}", res);
 
         res
+    }
+
+    pub async fn migrate_records<E>(
+        &self,
+        old_wh: WalletHandle,
+        new_wh: WalletHandle,
+        migrate_fn: impl FnMut(Record) -> Result<Option<Record>, E>,
+    ) -> IndyResult<()>
+    where
+        E: std::fmt::Display,
+    {
+        self.wallet_service
+            .migrate_records(old_wh, new_wh, migrate_fn)
+            .await
     }
 
     /// Generate wallet master key.

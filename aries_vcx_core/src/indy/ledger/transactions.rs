@@ -3,7 +3,7 @@ use vdrtools::{DidValue, Locator};
 
 use crate::common::ledger::transactions::{verify_transaction_can_be_endorsed, Response};
 use crate::errors::error::prelude::*;
-use crate::global::author_agreement::get_txn_author_agreement;
+use crate::global::author_agreement::get_vdrtools_config_txn_author_agreement;
 use crate::global::settings;
 use crate::global::settings::get_sample_did;
 use crate::indy::utils::mocks::pool_mocks::PoolMocks;
@@ -140,7 +140,7 @@ pub async fn libindy_get_txn_author_agreement(pool_handle: PoolHandle) -> VcxCor
 pub async fn append_txn_author_agreement_to_request(request_json: &str) -> VcxCoreResult<String> {
     trace!("append_txn_author_agreement_to_request >>> request_json: ...");
 
-    if let Some(author_agreement) = get_txn_author_agreement()? {
+    if let Some(author_agreement) = get_vdrtools_config_txn_author_agreement()? {
         Locator::instance()
             .ledger_controller
             .append_txn_author_agreement_acceptance_to_request(
@@ -704,54 +704,3 @@ pub async fn get_cred_def_json(
 
     Ok((cred_def_id.to_string(), cred_def_json))
 }
-
-// #[cfg(test)]
-// mod test {
-//     use crate::utils::devsetup::*;
-
-//     use super::*;
-
-//     #[test]
-//     fn test_verify_transaction_can_be_endorsed() {
-//         let _setup = SetupDefaults::init();
-
-//         // success
-//         let transaction = r#"{"reqId":1, "identifier": "EbP4aYNeTHL6q385GuVpRV", "signature": "gkVDhwe2", "endorser": "NcYxiDXkpYi6ov5FcYDi1e"}"#;
-//         assert!(_verify_transaction_can_be_endorsed(transaction, "NcYxiDXkpYi6ov5FcYDi1e").is_ok());
-
-//         // no author signature
-//         let transaction =
-//             r#"{"reqId":1, "identifier": "EbP4aYNeTHL6q385GuVpRV", "endorser": "NcYxiDXkpYi6ov5FcYDi1e"}"#;
-//         assert!(_verify_transaction_can_be_endorsed(transaction, "NcYxiDXkpYi6ov5FcYDi1e").is_err());
-
-//         // different endorser did
-//         let transaction =
-//             r#"{"reqId":1, "identifier": "EbP4aYNeTHL6q385GuVpRV", "endorser": "NcYxiDXkpYi6ov5FcYDi1e"}"#;
-//         assert!(_verify_transaction_can_be_endorsed(transaction, "EbP4aYNeTHL6q385GuVpRV").is_err());
-//     }
-// }
-
-// #[cfg(test)]
-// pub mod integration_tests {
-//     use crate::indy::ledger::transactions::get_ledger_txn;
-//     use crate::utils::devsetup::SetupWalletPool;
-
-//     #[tokio::test]
-//     #[ignore]
-//     async fn test_pool_get_txn() {
-//         SetupWalletPool::run(|setup| async move {
-//             get_ledger_txn(setup.wallet_handle, setup.pool_handle, 0, None)
-//                 .await
-//                 .unwrap_err();
-//             let txn = get_ledger_txn(setup.wallet_handle, setup.pool_handle, 1, None).await;
-//             assert!(txn.is_ok());
-
-//             get_ledger_txn(setup.wallet_handle, setup.pool_handle, 0, Some(&setup.institution_did))
-//                 .await
-//                 .unwrap_err();
-//             let txn = get_ledger_txn(setup.wallet_handle, setup.pool_handle, 1, Some(&setup.institution_did)).await;
-//             assert!(txn.is_ok());
-//         })
-//         .await;
-//     }
-// }

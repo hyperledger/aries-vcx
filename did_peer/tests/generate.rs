@@ -2,7 +2,12 @@ mod fixtures;
 
 use did_doc::schema::did_doc::DidDocument;
 use did_doc_sov::extra_fields::ExtraFieldsSov;
-use did_peer::peer_did::PeerDid;
+use did_peer::peer_did::{
+    generate::{generate_numalgo2, generate_numalgo3},
+    numalgos::numalgo2::Numalgo2,
+    numalgos::numalgo3::Numalgo3,
+    peer_did::PeerDid,
+};
 
 use crate::fixtures::{
     basic::{DID_DOC_BASIC, PEER_DID_NUMALGO_2_BASIC, PEER_DID_NUMALGO_3_BASIC},
@@ -21,8 +26,8 @@ macro_rules! generate_test_numalgo2 {
         fn $test_name() {
             let did_document = serde_json::from_str::<DidDocument<ExtraFieldsSov>>($did_doc).unwrap();
             assert_eq!(
-                PeerDid::parse($peer_did.to_string()).unwrap(),
-                PeerDid::generate_numalgo2(did_document).unwrap()
+                PeerDid::<Numalgo2>::parse($peer_did.to_string()).unwrap(),
+                generate_numalgo2(did_document).unwrap()
             );
         }
     };
@@ -34,8 +39,8 @@ macro_rules! generate_test_numalgo3 {
         fn $test_name() {
             let did_document = serde_json::from_str::<DidDocument<ExtraFieldsSov>>($did_doc).unwrap();
             assert_eq!(
-                PeerDid::parse($peer_did.to_string()).unwrap(),
-                PeerDid::generate_numalgo3(did_document).unwrap()
+                PeerDid::<Numalgo3>::parse($peer_did.to_string()).unwrap(),
+                generate_numalgo3(did_document).unwrap()
             );
         }
     };

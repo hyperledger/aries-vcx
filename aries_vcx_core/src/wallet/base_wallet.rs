@@ -4,14 +4,18 @@ use crate::errors::error::VcxCoreResult;
 use crate::utils::async_fn_iterator::AsyncFnIterator;
 
 use std::collections::HashMap;
+#[cfg(feature = "vdrtools")]
+use vdrtools::WalletHandle;
 
 /// Trait defining standard 'wallet' related functionality. The APIs, including
 /// input and output types are loosely based off the indy Wallet API:
 /// see: <https://github.com/hyperledger/indy-sdk/blob/main/libindy/src/api/wallet.rs>
 #[async_trait]
 pub trait BaseWallet: std::fmt::Debug + Send + Sync {
-    // ----- DIDs
+    #[cfg(feature = "vdrtools")]
+    fn get_wallet_handle(&self) -> WalletHandle;
 
+    // ----- DIDs
     async fn create_and_store_my_did(
         &self,
         seed: Option<&str>,
