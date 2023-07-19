@@ -9,9 +9,9 @@ export async function createWallet(config: object): Promise<void> {
   }
 }
 
-export async function migrateWallet(srcWalletHandle: number, destWalletHandle: number): Promise<void> {
+export async function migrateWallet(config: object): Promise<void> {
   try {
-    return await ffi.walletMigrate(srcWalletHandle, destWalletHandle);
+    return await ffi.walletMigrate(JSON.stringify(config));
   } catch (err: any) {
     throw new VCXInternalError(err);
   }
