@@ -29,16 +29,36 @@ ngrok http 8420
 ```
 
 # Service Usage
+## Inform Peers
 To use the service as an aries agent, the agent should pick a unique ID (representing their user account) and encode it within their endpoint for the service:
 
 ```
-http://{base_url}/receive_user_message/{user_id}
+{base_url}/send_user_message/{user_id}
 
 // e.g.
 
-http://localhost:8420/receive_user_message/1234-1234-1234-1234
+http://localhost:8420/send_user_message/1234-1234-1234-1234
 ```
 
-this "user endpoint" can then be used as the agent's `service_endpoint` in connection protocols.
+this "user endpoint" can then be used as the agent's `service_endpoint` in connection protocols, such as providing it into aries_vcx `Connection<Invitee, Invited>::send_request(.., service_endpoint: Url, ...)` API. This will inform the peer that they should send messages to this address.
 
-TODO - aries_vcx example and example of fetching
+Peer agents can use this endpoint as if it was any other DIDComm http endpoint.
+
+## Collect Incoming Messages
+After a peer sends the agent a message to the endpoint, they can be collected by calling `GET` on the following endpoint for the user:
+
+```
+{base_url}/pop_user_message/{user_id}
+
+// e.g.
+
+http://localhost:8420/pop_user_message/1234-1234-1234-1234
+```
+
+The `user_id` should match the user_id selected in the [above section](#inform-peers).
+
+Calling this endpoint will return a body with the bytes of the oldest message in the relay message queue. Internally, the service will pop this message from the queue, such that the next call to the endpoint will return the next oldest message.
+
+If no message could be found, an empty body and a `NO CONTENT` status is returned.
+
+The bytes returned should be exactly as they were sent by the peer. As such, they should be able to be decrypted/unpacked and parsed as a DIDComm message, where they can then be passed into aries_vcx protocol handlers.

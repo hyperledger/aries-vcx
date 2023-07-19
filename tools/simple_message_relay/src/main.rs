@@ -34,8 +34,8 @@ async fn pop_user_message(path: web::Path<String>, data: web::Data<UserMessages>
     }
 }
 
-#[post("/receive_user_message/{user_id}")]
-async fn receive_user_message(path: web::Path<String>, body: Bytes, data: web::Data<UserMessages>) -> impl Responder {
+#[post("/send_user_message/{user_id}")]
+async fn send_user_message(path: web::Path<String>, body: Bytes, data: web::Data<UserMessages>) -> impl Responder {
     let user_id = path.into_inner();
 
     let body = body.to_vec();
@@ -66,10 +66,114 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .app_data(user_messages.clone())
             .service(pop_user_message)
-            .service(receive_user_message)
+            .service(send_user_message)
             .service(status)
     })
-    .bind(("127.0.0.1", 8420))?
+    .bind(("0.0.0.0", 8420))?
     .run()
     .await
+}
+
+#[cfg(test)]
+mod tests {
+    use actix_web::{
+        body,
+        http::StatusCode,
+        test::{self, TestRequest},
+        web, App,
+    };
+
+    use crate::{pop_user_message, send_user_message, UserMessages};
+
+    fn pop_message_request(user_id: &str) -> TestRequest {
+        test::TestRequest::get().uri(&format!("/pop_user_message/{user_id}"))
+    }
+
+    fn send_message_request(user_id: &str, msg: &'static str) -> TestRequest {
+        test::TestRequest::post()
+            .uri(&format!("/send_user_message/{user_id}"))
+            .set_payload(msg)
+    }
+
+    #[actix_web::test]
+    async fn test_standard_user_flow() {
+        // assemble service
+        let user_messages = web::Data::new(UserMessages::default());
+
+        let app = test::init_service(
+            App::new()
+                .app_data(user_messages)
+                .service(send_user_message)
+                .service(pop_user_message),
+        )
+        .await;
+
+        let user_id = "user1";
+
+        // pop for unknown user == NO CONTENT
+        let pop_response = test::call_service(&app, pop_message_request(user_id).to_request()).await;
+        assert_eq!(pop_response.status(), StatusCode::NO_CONTENT);
+        let body = pop_response.into_body();
+        assert!(body::to_bytes(body).await.unwrap().is_empty());
+
+        // post a message in
+        let message = "hello world";
+        let req = send_message_request(user_id, message).to_request();
+
+        let resp = test::call_service(&app, req).await;
+        assert!(resp.status().is_success());
+
+        // pop for known user == OK and body
+        let pop_response = test::call_service(&app, pop_message_request(user_id).to_request()).await;
+        assert_eq!(pop_response.status(), StatusCode::OK);
+        let body = pop_response.into_body();
+        assert_eq!(body::to_bytes(body).await.unwrap(), message.as_bytes());
+
+        // pop for no messages == NO CONTENT
+        let pop_response = test::call_service(&app, pop_message_request(user_id).to_request()).await;
+        assert_eq!(pop_response.status(), StatusCode::NO_CONTENT);
+        let body = pop_response.into_body();
+        assert!(body::to_bytes(body).await.unwrap().is_empty());
+    }
+
+    #[actix_web::test]
+    async fn test_multi_message_multi_user_flow() {
+        // assemble service
+        let user_messages = web::Data::new(UserMessages::default());
+
+        let app = test::init_service(
+            App::new()
+                .app_data(user_messages)
+                .service(send_user_message)
+                .service(pop_user_message),
+        )
+        .await;
+
+        let user_id1 = "user1";
+        let user_id2 = "user2";
+
+        let message1 = "message1";
+        let message2 = "message2";
+        let message3 = "message3";
+        let message4 = "message4";
+
+        // populate
+        test::call_service(&app, send_message_request(user_id1, message1).to_request()).await;
+        test::call_service(&app, send_message_request(user_id1, message2).to_request()).await;
+        test::call_service(&app, send_message_request(user_id2, message3).to_request()).await;
+        test::call_service(&app, send_message_request(user_id2, message4).to_request()).await;
+
+        // pop and check
+        let res = test::call_service(&app, pop_message_request(user_id1).to_request()).await;
+        assert_eq!(body::to_bytes(res.into_body()).await.unwrap(), message1.as_bytes());
+
+        let res = test::call_service(&app, pop_message_request(user_id2).to_request()).await;
+        assert_eq!(body::to_bytes(res.into_body()).await.unwrap(), message3.as_bytes());
+
+        let res = test::call_service(&app, pop_message_request(user_id1).to_request()).await;
+        assert_eq!(body::to_bytes(res.into_body()).await.unwrap(), message2.as_bytes());
+
+        let res = test::call_service(&app, pop_message_request(user_id2).to_request()).await;
+        assert_eq!(body::to_bytes(res.into_body()).await.unwrap(), message4.as_bytes());
+    }
 }
