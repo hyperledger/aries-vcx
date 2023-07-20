@@ -69,7 +69,6 @@ pub struct SelectedCredentialForReferent {
     /// file for the credential's revocation registry. Note that the files within this
     /// dir should be pre-downloaded and named by the tailsFileHash (base58), as
     /// specified in the revocation registry definition for the credential.
-    #[serde(rename = "tails_file")] // our APIs expect a directory, but the legacy API calls it tails_file
     pub tails_dir: Option<String>,
 }
 

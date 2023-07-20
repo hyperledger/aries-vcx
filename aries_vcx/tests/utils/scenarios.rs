@@ -220,15 +220,14 @@ pub mod test_utils {
         credential_json: &str,
         comment: Option<&str>,
     ) -> Issuer {
-        info!("create_and_send_cred_offer >> creating issuer credential");
         let offer_info = OfferInfo {
             credential_json: credential_json.to_string(),
             cred_def_id: cred_def.get_cred_def_id(),
             rev_reg_id: Some(rev_reg.get_rev_reg_id()),
             tails_file: Some(rev_reg.get_tails_dir()),
         };
+        info!("create_and_send_cred_offer :: sending credential offer, offer_info: {offer_info:?}");
         let mut issuer = Issuer::create("1").unwrap();
-        info!("create_and_send_cred_offer :: sending credential offer");
         issuer
             .build_credential_offer_msg(&faber.profile.inject_anoncreds(), offer_info, comment.map(String::from))
             .await

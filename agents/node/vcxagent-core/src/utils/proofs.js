@@ -23,7 +23,7 @@ module.exports.holderSelectCredentialsForProof = async function holderSelectCred
       }
       const revRegId = resolvedCreds.attrs[attrName][0].cred_info.rev_reg_id
       if (revRegId && mapRevRegIdToTailsFilePath) {
-        selectedCreds.attrs[attrName].tails_file = await mapRevRegIdToTailsFilePath(revRegId)
+        selectedCreds.attrs[attrName].tails_dir = await mapRevRegIdToTailsFilePath(revRegId)
       }
     } else {
       logger.info(`No credential was resolved for requested attribute key ${attrName}, will have to be supplied via self-attested attributes.`)

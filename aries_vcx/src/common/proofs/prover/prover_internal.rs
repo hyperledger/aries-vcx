@@ -18,7 +18,7 @@ pub struct CredInfoProver {
     pub rev_reg_id: Option<String>,
     pub cred_rev_id: Option<String>,
     pub revocation_interval: Option<NonRevokedInterval>,
-    pub tails_file: Option<String>,
+    pub tails_dir: Option<String>,
     pub timestamp: Option<u64>,
     pub revealed: Option<bool>,
 }
@@ -107,7 +107,7 @@ pub fn credential_def_identifiers(
             timestamp: None,
             rev_reg_id: cred_info.rev_reg_id.clone(),
             cred_rev_id: cred_info.cred_rev_id.clone(),
-            tails_file: selected_cred.tails_dir.clone(),
+            tails_dir: selected_cred.tails_dir.clone(),
             revealed: cred_info.revealed,
         });
     }
@@ -142,8 +142,8 @@ pub async fn build_rev_states_json(
     let mut timestamps: HashMap<String, u64> = HashMap::new();
 
     for cred_info in credentials_identifiers.iter_mut() {
-        if let (Some(rev_reg_id), Some(cred_rev_id), Some(tails_file)) =
-            (&cred_info.rev_reg_id, &cred_info.cred_rev_id, &cred_info.tails_file)
+        if let (Some(rev_reg_id), Some(cred_rev_id), Some(tails_dir)) =
+            (&cred_info.rev_reg_id, &cred_info.cred_rev_id, &cred_info.tails_dir)
         {
             if rtn.get(rev_reg_id).is_none() {
                 // Does this make sense in case cred_info's for same rev_reg_ids have different revocation intervals
@@ -160,7 +160,7 @@ pub async fn build_rev_states_json(
 
                 let rev_state_json = anoncreds
                     .create_revocation_state(
-                        tails_file,
+                        tails_dir,
                         &rev_reg_def_json,
                         &rev_reg_delta_json,
                         timestamp,
@@ -274,7 +274,7 @@ pub mod pool_tests {
                 cred_def_id: CRED_DEF_ID.to_string(),
                 rev_reg_id: None,
                 cred_rev_id: Some(CRED_REV_ID.to_string()),
-                tails_file: Some(get_temp_dir_path().to_str().unwrap().to_string()),
+                tails_dir: Some(get_temp_dir_path().to_str().unwrap().to_string()),
                 revocation_interval: None,
                 timestamp: None,
                 revealed: None,
@@ -340,7 +340,7 @@ pub mod unit_tests {
             rev_reg_id: Some(REV_REG_ID.to_string()),
             cred_rev_id: Some(CRED_REV_ID.to_string()),
             revocation_interval: None,
-            tails_file: None,
+            tails_dir: None,
             timestamp: None,
             revealed: None,
         };
@@ -352,7 +352,7 @@ pub mod unit_tests {
             rev_reg_id: Some(ADDRESS_REV_REG_ID.to_string()),
             cred_rev_id: Some(ADDRESS_CRED_REV_ID.to_string()),
             revocation_interval: None,
-            tails_file: None,
+            tails_dir: None,
             timestamp: None,
             revealed: None,
         };
@@ -382,7 +382,7 @@ pub mod unit_tests {
             rev_reg_id: Some(REV_REG_ID.to_string()),
             cred_rev_id: Some(CRED_REV_ID.to_string()),
             revocation_interval: None,
-            tails_file: None,
+            tails_dir: None,
             timestamp: None,
             revealed: None,
         };
@@ -394,7 +394,7 @@ pub mod unit_tests {
             rev_reg_id: Some(ADDRESS_REV_REG_ID.to_string()),
             cred_rev_id: Some(ADDRESS_CRED_REV_ID.to_string()),
             revocation_interval: None,
-            tails_file: None,
+            tails_dir: None,
             timestamp: None,
             revealed: None,
         };
@@ -421,7 +421,7 @@ pub mod unit_tests {
                 from: Some(123),
                 to: Some(456),
             }),
-            tails_file: Some(get_temp_dir_path().to_str().unwrap().to_string()),
+            tails_dir: Some(get_temp_dir_path().to_str().unwrap().to_string()),
             timestamp: None,
             revealed: None,
         };
@@ -436,7 +436,7 @@ pub mod unit_tests {
                 from: None,
                 to: Some(987),
             }),
-            tails_file: None,
+            tails_dir: None,
             timestamp: None,
             revealed: None,
         };
@@ -459,7 +459,7 @@ pub mod unit_tests {
                     },
                     "interval":null
                 },
-                "tails_file": get_temp_dir_path().to_str().unwrap().to_string(),
+                "tails_dir": get_temp_dir_path().to_str().unwrap().to_string(),
               },
               "zip_2":{
                 "credential": {
@@ -542,7 +542,7 @@ pub mod unit_tests {
                     },
                     "interval":null
                 },
-                "tails_file": get_temp_dir_path().to_str().unwrap().to_string(),
+                "tails_dir": get_temp_dir_path().to_str().unwrap().to_string(),
               },
            }
         });
@@ -554,7 +554,7 @@ pub mod unit_tests {
             rev_reg_id: None,
             cred_rev_id: Some(CRED_REV_ID.to_string()),
             revocation_interval: None,
-            tails_file: Some(get_temp_dir_path().to_str().unwrap().to_string()),
+            tails_dir: Some(get_temp_dir_path().to_str().unwrap().to_string()),
             timestamp: None,
             revealed: None,
         }];
@@ -591,7 +591,7 @@ pub mod unit_tests {
             rev_reg_id: Some(REV_REG_ID.to_string()),
             cred_rev_id: Some(CRED_REV_ID.to_string()),
             revocation_interval: None,
-            tails_file: None,
+            tails_dir: None,
             timestamp: Some(800),
             revealed: None,
         };
@@ -603,7 +603,7 @@ pub mod unit_tests {
             rev_reg_id: Some(ADDRESS_REV_REG_ID.to_string()),
             cred_rev_id: Some(ADDRESS_CRED_REV_ID.to_string()),
             revocation_interval: None,
-            tails_file: None,
+            tails_dir: None,
             timestamp: Some(800),
             revealed: Some(false),
         };
@@ -658,7 +658,7 @@ pub mod unit_tests {
             cred_def_id: CRED_DEF_ID.to_string(),
             rev_reg_id: Some(REV_REG_ID.to_string()),
             cred_rev_id: Some(CRED_REV_ID.to_string()),
-            tails_file: Some(get_temp_dir_path().to_str().unwrap().to_string()),
+            tails_dir: Some(get_temp_dir_path().to_str().unwrap().to_string()),
             revocation_interval: None,
             timestamp: None,
             revealed: None,
