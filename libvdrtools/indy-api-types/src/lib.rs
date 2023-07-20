@@ -16,6 +16,12 @@ pub type IndyHandle = i32;
 pub struct WalletHandle(pub i32);
 pub const INVALID_WALLET_HANDLE: WalletHandle = WalletHandle(0);
 
+impl From<i32> for WalletHandle {
+    fn from(value: i32) -> Self {
+        Self(value)
+    }
+}
+
 pub type CallbackHandle = i32;
 
 pub type CommandHandle = i32;
