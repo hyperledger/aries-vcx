@@ -96,6 +96,22 @@ pub async fn wallet_export(path: String, backup_key: String) -> napi::Result<()>
 }
 
 #[napi]
+pub async fn wallet_migrate(wallet_config: String) -> napi::Result<()> {
+    let wallet_config = serde_json::from_str(&wallet_config)
+        .map_err(|err| {
+            LibvcxError::from_msg(
+                LibvcxErrorKind::InvalidConfiguration,
+                format!("Serialization error: {:?}", err),
+            )
+        })
+        .map_err(to_napi_err)?;
+
+    wallet::wallet_migrate(&wallet_config)
+        .await
+        .map_err(|e| napi::Error::from_reason(e.to_string()))
+}
+
+#[napi]
 pub async fn get_verkey_from_wallet(did: String) -> napi::Result<String> {
     wallet::key_for_local_did(&did).await.map_err(to_napi_err)
 }
