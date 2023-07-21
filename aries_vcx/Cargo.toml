@@ -18,9 +18,6 @@ modular_libs = ["aries_vcx_core/modular_libs"]
 # TODO: Remove using "vdrtools" feature flag for vdr_proxy_ledger once IndyCredxAnonCreds
 # is fully implemented
 vdr_proxy_ledger = ["aries_vcx_core/vdr_proxy_ledger", "vdrtools"]
-# Temporary feature used for testing the full credx anoncreds impl
-# using vdrtools ledger and wallet.
-mixed_breed = ["vdrtools", "modular_libs"]
 # Used for testing the migrator
 migration = ["vdrtools", "modular_libs"]
 

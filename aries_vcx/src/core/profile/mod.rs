@@ -1,5 +1,3 @@
-#[cfg(feature = "mixed_breed")]
-pub mod mixed_breed_profile;
 #[cfg(feature = "modular_libs")]
 pub mod modular_libs_profile;
 pub mod profile;

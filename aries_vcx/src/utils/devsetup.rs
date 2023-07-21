@@ -32,8 +32,6 @@ use aries_vcx_core::indy::ledger::pool::{
     create_pool_ledger_config, indy_close_pool, indy_delete_pool, indy_open_pool,
 };
 
-#[cfg(feature = "mixed_breed")]
-use crate::core::profile::mixed_breed_profile::MixedBreedProfile;
 #[cfg(feature = "modular_libs")]
 use crate::core::profile::modular_libs_profile::ModularLibsProfile;
 #[cfg(feature = "modular_libs")]
@@ -138,12 +136,6 @@ impl SetupProfile {
             info!("SetupProfile >> using indy profile");
             SetupProfile::build_profile_vdrtools(genesis_file_path).await
         };
-        #[cfg(feature = "mixed_breed")]
-        return {
-            info!("SetupProfile >> using mixed breed profile");
-            SetupProfile::build_profile_mixed_breed(genesis_file_path).await
-        };
-
         #[cfg(feature = "modular_libs")]
         return {
             info!("SetupProfile >> using modular profile");
@@ -212,36 +204,6 @@ impl SetupProfile {
             institution_did,
             profile,
             teardown: Arc::new(move || Box::pin(modular_teardown())),
-        }
-    }
-
-    #[cfg(feature = "mixed_breed")]
-    async fn build_profile_mixed_breed(genesis_file_path: String) -> SetupProfile {
-        // todo: can remove?
-        let pool_name = Uuid::new_v4().to_string();
-        create_pool_ledger_config(&pool_name, &genesis_file_path).unwrap();
-        let pool_handle = indy_open_pool(&pool_name, None).await.unwrap();
-
-        let (institution_did, wallet_handle) = setup_issuer_wallet().await;
-
-        let profile: Arc<dyn Profile> = Arc::new(MixedBreedProfile::new(wallet_handle, pool_handle.clone()));
-
-        Arc::clone(&profile)
-            .inject_anoncreds()
-            .prover_create_link_secret(settings::DEFAULT_LINK_SECRET_ALIAS)
-            .await
-            .unwrap();
-
-        async fn indy_teardown(pool_handle: PoolHandle, pool_name: String) {
-            indy_close_pool(pool_handle.clone()).await.unwrap();
-            indy_delete_pool(&pool_name).await.unwrap();
-        }
-
-        SetupProfile {
-            genesis_file_path,
-            institution_did,
-            profile,
-            teardown: Arc::new(move || Box::pin(indy_teardown(pool_handle, pool_name.clone()))),
         }
     }
 
