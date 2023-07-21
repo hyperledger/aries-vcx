@@ -195,7 +195,6 @@ export function unpack(data: Buffer): Promise<string>
 export function createPairwiseInfo(): Promise<string>
 export function walletImport(config: string): Promise<void>
 export function walletExport(path: string, backupKey: string): Promise<void>
-export function walletMigrate(walletConfig: string): Promise<void>
 export function getVerkeyFromWallet(did: string): Promise<string>
 export function rotateVerkey(did: string): Promise<void>
 export function rotateVerkeyStart(did: string): Promise<string>
