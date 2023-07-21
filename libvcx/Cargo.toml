@@ -13,7 +13,7 @@ doctest = false
 
 [features]
 fatal_warnings = []
-default = ["ledger_vdrtools", "anoncreds_vdrtools"]
+default = ["ledger_indyvdr", "anoncreds_vdrtools"]
 
 ledger_indyvdr = ["libvcx_core/ledger_indyvdr"]
 ledger_vdrtools = ["libvcx_core/ledger_vdrtools"]
