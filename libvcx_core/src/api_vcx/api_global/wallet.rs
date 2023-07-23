@@ -55,7 +55,7 @@ fn build_component_anoncreds(base_wallet: Arc<dyn BaseWallet>) -> Arc<dyn BaseAn
     }
     #[cfg(not(any(feature = "anoncreds_vdrtools", feature = "anoncreds_credx")))]
     {
-        panic!("No anoncreds implementation enabled by feature flag upon build");
+        compile_error!("No anoncreds implementation enabled by feature flag upon build");
     }
 }
 
