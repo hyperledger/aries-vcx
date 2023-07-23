@@ -114,7 +114,7 @@ async fn build_components_ledger(
     }
     #[cfg(not(any(feature = "ledger_indyvdr", feature = "ledger_vdrtools")))]
     {
-        panic!("No ledger implementation has been selected by feature flag upon build");
+        compile_error!("No ledger implementation has been selected by feature flag upon build");
     }
 }
 
