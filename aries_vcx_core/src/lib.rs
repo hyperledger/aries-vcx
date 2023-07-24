@@ -29,6 +29,7 @@ extern crate derive_builder;
 pub mod anoncreds;
 pub mod errors;
 pub mod global;
+#[cfg(feature = "vdrtools")]
 pub mod indy;
 pub mod ledger;
 pub mod mocks;
