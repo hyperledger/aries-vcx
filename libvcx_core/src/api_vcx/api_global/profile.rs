@@ -11,7 +11,7 @@ use aries_vcx::aries_vcx_core::ledger::base_ledger::{
     AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite, TxnAuthrAgrmtOptions,
 };
 use aries_vcx::aries_vcx_core::{
-    wallet::{base_wallet::BaseWallet, indy_wallet::IndySdkWallet},
+    wallet::base_wallet::BaseWallet,
     WalletHandle,
 };
 use aries_vcx::core::profile::{profile::Profile, vdrtools_profile::VdrtoolsProfile};
@@ -20,6 +20,7 @@ use aries_vcx::utils::mockdata::profile::mock_anoncreds::MockAnoncreds;
 use aries_vcx::utils::mockdata::profile::mock_ledger::MockLedger;
 use aries_vcx::utils::mockdata::profile::mock_wallet::MockWallet;
 use aries_vcx::{global::settings::indy_mocks_enabled, utils::mockdata::profile::mock_profile::MockProfile};
+use aries_vcx::aries_vcx_core::wallet::indy::IndySdkWallet;
 
 pub trait ProfileV2: Send + Sync {
     fn inject_indy_ledger_read(&self) -> LibvcxResult<Arc<dyn IndyLedgerRead>>;

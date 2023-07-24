@@ -5,7 +5,7 @@ use libc::c_char;
 
 use aries_vcx::agency_client::configuration::AgencyClientConfig;
 use aries_vcx::aries_vcx_core::indy::ledger::pool::PoolConfig;
-use aries_vcx::aries_vcx_core::wallet::indy_wallet::IssuerConfig;
+use aries_vcx::aries_vcx_core::wallet::indy::IssuerConfig;
 use libvcx_core::api_vcx::api_global::agency_client::create_agency_client_for_main_wallet;
 use libvcx_core::api_vcx::api_global::agency_client::update_webhook_url;
 use libvcx_core::api_vcx::api_global::ledger::{ledger_get_txn_author_agreement, ledger_set_txn_author_agreement};
@@ -598,7 +598,7 @@ mod tests {
     use aries_vcx::aries_vcx_core::indy;
     use aries_vcx::aries_vcx_core::indy::wallet::import;
     use aries_vcx::aries_vcx_core::INVALID_POOL_HANDLE;
-    use aries_vcx::aries_vcx_core::wallet::indy_wallet::{RestoreWalletConfigs, WalletConfig};
+    use aries_vcx::aries_vcx_core::wallet::indy::{RestoreWalletConfigs, WalletConfig};
     use aries_vcx::global::settings::{
         CONFIG_GENESIS_PATH, CONFIG_TXN_AUTHOR_AGREEMENT, DEFAULT_WALLET_BACKUP_KEY, DEFAULT_WALLET_KEY,
         set_config_value, WALLET_KDF_RAW,

@@ -11,10 +11,11 @@ use aries_vcx::{
 use aries_vcx_core::{
     indy::wallet::create_and_open_wallet,
     ledger::request_submitter::vdr_ledger::LedgerPoolConfig,
-    wallet::{agency_client_wallet::ToBaseAgencyClientWallet, base_wallet::BaseWallet, indy_wallet::IndySdkWallet},
+    wallet::{agency_client_wallet::ToBaseAgencyClientWallet, base_wallet::BaseWallet},
     WalletHandle,
 };
-use aries_vcx_core::wallet::indy_wallet::WalletConfig;
+use aries_vcx_core::wallet::indy::IndySdkWallet;
+use aries_vcx_core::wallet::indy::WalletConfig;
 
 use crate::utils::devsetup_alice::Alice;
 use crate::utils::devsetup_faber::Faber;

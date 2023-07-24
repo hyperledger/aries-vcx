@@ -8,10 +8,10 @@ use aries_vcx::aries_vcx_core::anoncreds::credx_anoncreds::IndyCredxAnonCreds;
 use aries_vcx::aries_vcx_core::anoncreds::indy_anoncreds::IndySdkAnonCreds;
 use aries_vcx::aries_vcx_core::indy::wallet::import;
 use aries_vcx::aries_vcx_core::wallet::base_wallet::BaseWallet;
-use aries_vcx::aries_vcx_core::wallet::indy_wallet::{IndySdkWallet, IssuerConfig, RestoreWalletConfigs, WalletConfig};
 use aries_vcx::aries_vcx_core::{indy, SearchHandle};
 use aries_vcx::aries_vcx_core::{INVALID_WALLET_HANDLE, WalletHandle};
-use aries_vcx::aries_vcx_core::wallet::internal::{close_search_wallet, fetch_next_records_wallet, open_search_wallet};
+use aries_vcx::aries_vcx_core::wallet::indy::{IndySdkWallet, IssuerConfig, RestoreWalletConfigs, WalletConfig};
+use aries_vcx::aries_vcx_core::wallet::indy::internal::{close_search_wallet, fetch_next_records_wallet, open_search_wallet};
 use aries_vcx::common::signing::unpack_message_to_string;
 use aries_vcx::global::settings::DEFAULT_LINK_SECRET_ALIAS;
 use aries_vcx::protocols::mediated_connection::pairwise_info::PairwiseInfo;
@@ -224,7 +224,7 @@ pub async fn wallet_import(config: &RestoreWalletConfigs) -> LibvcxResult<()> {
 
 #[allow(clippy::unwrap_used)]
 pub mod test_utils {
-    use aries_vcx::aries_vcx_core::wallet::indy_wallet::WalletConfig;
+    use aries_vcx::aries_vcx_core::wallet::indy::WalletConfig;
     use aries_vcx::global::settings::{DEFAULT_WALLET_BACKUP_KEY, DEFAULT_WALLET_KEY, WALLET_KDF_RAW};
     use aries_vcx::utils::devsetup::TempFile;
 
@@ -290,7 +290,7 @@ pub mod test_utils {
 #[cfg(test)]
 pub mod tests {
     use aries_vcx::aries_vcx_core::indy::wallet::delete_wallet;
-    use aries_vcx::aries_vcx_core::wallet::indy_wallet::{RestoreWalletConfigs, WalletConfig, WalletRecord};
+    use aries_vcx::aries_vcx_core::wallet::indy::{RestoreWalletConfigs, WalletConfig, WalletRecord};
     use aries_vcx::global::settings::{DEFAULT_WALLET_BACKUP_KEY, DEFAULT_WALLET_KEY, WALLET_KDF_RAW};
     use aries_vcx::utils::devsetup::{SetupDefaults, SetupEmpty, TempFile};
 

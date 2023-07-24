@@ -3,8 +3,7 @@ use std::ptr::null;
 use aries_vcx::aries_vcx_core::{INVALID_SEARCH_HANDLE, SearchHandle, WalletHandle};
 use futures::future::BoxFuture;
 use libc::c_char;
-
-use aries_vcx::aries_vcx_core::wallet::indy_wallet::{RestoreWalletConfigs, WalletConfig};
+use aries_vcx::aries_vcx_core::wallet::indy::{RestoreWalletConfigs, WalletConfig};
 
 use libvcx_core;
 use libvcx_core::errors::error::{LibvcxError, LibvcxErrorKind};

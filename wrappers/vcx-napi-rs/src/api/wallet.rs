@@ -5,8 +5,7 @@ use libvcx_core::serde_json;
 use libvcx_core::serde_json::json;
 use napi::bindgen_prelude::Buffer;
 use napi_derive::napi;
-use libvcx_core::aries_vcx::aries_vcx_core::wallet::indy_wallet::{IssuerConfig, RestoreWalletConfigs, WalletConfig};
-
+use libvcx_core::aries_vcx::aries_vcx_core::wallet::indy::{IssuerConfig, RestoreWalletConfigs, WalletConfig};
 use crate::error::to_napi_err;
 
 #[napi]

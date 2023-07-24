@@ -6,7 +6,7 @@ use crate::api_vcx::api_global::wallet::close_main_wallet;
 use crate::errors::error::LibvcxResult;
 use aries_vcx::aries_vcx_core::indy::ledger::pool;
 use aries_vcx::aries_vcx_core::indy::wallet::delete_wallet;
-use aries_vcx::aries_vcx_core::wallet::indy_wallet::WalletConfig;
+use aries_vcx::aries_vcx_core::wallet::indy::WalletConfig;
 use aries_vcx::global::settings::{
     CONFIG_WALLET_KEY, CONFIG_WALLET_KEY_DERIVATION, CONFIG_WALLET_NAME, CONFIG_WALLET_TYPE,
     DEFAULT_POOL_NAME, DEFAULT_WALLET_NAME, reset_config_values_ariesvcx, UNINITIALIZED_WALLET_KEY, WALLET_KDF_DEFAULT,

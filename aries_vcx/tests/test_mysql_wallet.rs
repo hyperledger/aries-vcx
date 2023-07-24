@@ -16,7 +16,7 @@ mod dbtests {
         close_wallet, create_wallet_with_master_secret, open_wallet, wallet_configure_issuer,
         WalletConfigBuilder,
     };
-    use aries_vcx_core::wallet::indy_wallet::{IndySdkWallet, WalletConfig};
+    use aries_vcx_core::wallet::indy::{IndySdkWallet, WalletConfig};
 
     #[tokio::test]
     #[ignore]

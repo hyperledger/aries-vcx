@@ -56,7 +56,7 @@ pub mod test_setup {
     where
         F: std::future::Future<Output = ()>,
     {
-        let wallet_config = wallet::indy_wallet::WalletConfig {
+        let wallet_config = wallet::indy::WalletConfig {
             wallet_name: generate_random_name(),
             wallet_key: WALLET_KEY.into(),
             wallet_key_derivation: WALLET_KEY_DERIVATION.into(),

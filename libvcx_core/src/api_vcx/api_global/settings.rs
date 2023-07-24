@@ -1,5 +1,5 @@
 use aries_vcx::agency_client::testing::mocking::enable_agency_mocks;
-use aries_vcx::aries_vcx_core::wallet::indy_wallet::IssuerConfig;
+use aries_vcx::aries_vcx_core::wallet::indy::IssuerConfig;
 use aries_vcx::global::settings;
 use aries_vcx::global::settings::aries_vcx_enable_indy_mocks;
 use aries_vcx::global::settings::init_issuer_config;

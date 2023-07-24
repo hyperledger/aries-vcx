@@ -1,7 +1,7 @@
 use vdrtools::Locator;
-use crate::{SearchHandle, WalletHandle};
 use crate::errors::error::VcxCoreResult;
 use crate::global::settings;
+use crate::{SearchHandle, WalletHandle};
 
 pub(crate) async fn add_wallet_record(
     wallet_handle: WalletHandle,

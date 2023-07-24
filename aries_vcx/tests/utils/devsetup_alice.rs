@@ -31,8 +31,8 @@ use aries_vcx_core::indy::wallet::{create_wallet_with_master_secret, open_wallet
 #[cfg(feature = "modular_libs")]
 use aries_vcx_core::ledger::request_submitter::vdr_ledger::LedgerPoolConfig;
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
-use aries_vcx_core::wallet::indy_wallet::{IndySdkWallet, WalletConfig};
 use aries_vcx_core::{PoolHandle, WalletHandle};
+use aries_vcx_core::wallet::indy::{IndySdkWallet, WalletConfig};
 use messages::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
 use messages::msg_fields::protocols::cred_issuance::CredentialIssuance;
 use messages::msg_fields::protocols::present_proof::request::RequestPresentation;

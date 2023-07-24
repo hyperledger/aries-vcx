@@ -9,7 +9,7 @@ use crate::{
 use crate::{global::settings, WalletHandle};
 use crate::SearchHandle;
 use crate::indy::utils::mocks::did_mocks::{did_mocks_enabled, DidMocks};
-use crate::wallet::indy_wallet::{IssuerConfig, RestoreWalletConfigs, WalletConfig};
+use crate::wallet::indy::{IssuerConfig, RestoreWalletConfigs, WalletConfig};
 
 pub async fn open_wallet(wallet_config: &WalletConfig) -> VcxCoreResult<WalletHandle> {
     trace!("open_as_main_wallet >>> {}", &wallet_config.wallet_name);

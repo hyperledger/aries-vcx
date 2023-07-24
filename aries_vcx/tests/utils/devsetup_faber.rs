@@ -33,7 +33,7 @@ use aries_vcx_core::indy::wallet::{
 #[cfg(feature = "modular_libs")]
 use aries_vcx_core::ledger::request_submitter::vdr_ledger::LedgerPoolConfig;
 use aries_vcx_core::{PoolHandle, WalletHandle};
-use aries_vcx_core::wallet::indy_wallet::{IssuerConfig, WalletConfig};
+use aries_vcx_core::wallet::indy::{IssuerConfig, WalletConfig};
 use diddoc_legacy::aries::service::AriesService;
 use messages::decorators::please_ack::AckOn;
 use messages::msg_fields::protocols::connection::invitation::public::{PublicInvitation, PublicInvitationContent};

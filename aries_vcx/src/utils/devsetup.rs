@@ -17,7 +17,6 @@ use aries_vcx_core::indy::wallet::{
 #[cfg(feature = "modular_libs")]
 use aries_vcx_core::ledger::request_submitter::vdr_ledger::LedgerPoolConfig;
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
-use aries_vcx_core::wallet::indy_wallet::{IndySdkWallet, WalletConfig};
 use aries_vcx_core::{PoolHandle, WalletHandle};
 use chrono::{DateTime, Duration, Utc};
 
@@ -31,6 +30,7 @@ use aries_vcx_core::indy::ledger::pool::test_utils::{create_testpool_genesis_txn
 use aries_vcx_core::indy::ledger::pool::{
     create_pool_ledger_config, indy_close_pool, indy_delete_pool, indy_open_pool,
 };
+use aries_vcx_core::wallet::indy::{IndySdkWallet, WalletConfig};
 
 #[cfg(feature = "modular_libs")]
 use crate::core::profile::modular_libs_profile::ModularLibsProfile;

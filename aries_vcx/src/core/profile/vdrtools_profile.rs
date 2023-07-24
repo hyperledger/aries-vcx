@@ -9,10 +9,11 @@ use aries_vcx_core::{
         base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite},
         indy_ledger::{IndySdkLedgerRead, IndySdkLedgerWrite},
     },
-    wallet::{base_wallet::BaseWallet, indy_wallet::IndySdkWallet},
-    PoolHandle, WalletHandle,
+    PoolHandle,
+    wallet::base_wallet::BaseWallet, WalletHandle,
 };
 use async_trait::async_trait;
+use aries_vcx_core::wallet::indy::IndySdkWallet;
 
 #[derive(Debug)]
 pub struct VdrtoolsProfile {

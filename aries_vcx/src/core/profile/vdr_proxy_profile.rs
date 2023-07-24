@@ -13,10 +13,11 @@ use aries_vcx_core::{
         request_submitter::vdr_proxy::VdrProxySubmitter,
         response_cacher::in_memory::{InMemoryResponseCacher, InMemoryResponseCacherConfig},
     },
-    wallet::{base_wallet::BaseWallet, indy_wallet::IndySdkWallet},
-    ResponseParser, VdrProxyClient, WalletHandle,
+    ResponseParser,
+    VdrProxyClient, wallet::base_wallet::BaseWallet, WalletHandle,
 };
 use async_trait::async_trait;
+use aries_vcx_core::wallet::indy::IndySdkWallet;
 
 use super::{prepare_taa_options, profile::Profile};
 
