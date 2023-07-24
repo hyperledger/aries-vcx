@@ -7,10 +7,7 @@ use serde_json::Value;
 use serde::{Deserialize, Serialize};
 
 use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
-use crate::{
-    indy,
-    utils::{async_fn_iterator::AsyncFnIterator, json::TryGetIndex},
-};
+use crate::{indy, utils::{async_fn_iterator::AsyncFnIterator, json::TryGetIndex}, wallet};
 use crate::{SearchHandle, WalletHandle};
 
 use super::base_wallet::BaseWallet;
@@ -58,11 +55,11 @@ impl BaseWallet for IndySdkWallet {
     ) -> VcxCoreResult<()> {
         let res = tags.map(|x| serde_json::to_string(&x)).transpose()?.to_owned();
         let tags_json = res.as_deref();
-        indy::wallet::add_wallet_record(self.wallet_handle, xtype, id, value, tags_json).await
+        wallet::internal::add_wallet_record(self.wallet_handle, xtype, id, value, tags_json).await
     }
 
     async fn get_wallet_record(&self, xtype: &str, id: &str, options: &str) -> VcxCoreResult<String> {
-        indy::wallet::get_wallet_record(self.wallet_handle, xtype, id, options).await
+        wallet::internal::get_wallet_record(self.wallet_handle, xtype, id, options).await
     }
 
     async fn get_wallet_record_value(&self, xtype: &str, id: &str) -> VcxCoreResult<String> {
@@ -79,11 +76,11 @@ impl BaseWallet for IndySdkWallet {
     }
 
     async fn delete_wallet_record(&self, xtype: &str, id: &str) -> VcxCoreResult<()> {
-        indy::wallet::delete_wallet_record(self.wallet_handle, xtype, id).await
+        wallet::internal::delete_wallet_record(self.wallet_handle, xtype, id).await
     }
 
     async fn update_wallet_record_value(&self, xtype: &str, id: &str, value: &str) -> VcxCoreResult<()> {
-        indy::wallet::update_wallet_record_value(self.wallet_handle, xtype, id, value).await
+        wallet::internal::update_wallet_record_value(self.wallet_handle, xtype, id, value).await
     }
 
     async fn update_wallet_record_tags(
@@ -93,16 +90,16 @@ impl BaseWallet for IndySdkWallet {
         tags: HashMap<String, String>,
     ) -> VcxCoreResult<()> {
         let tags_json = serde_json::to_string(&tags)?;
-        indy::wallet::update_wallet_record_tags(self.wallet_handle, xtype, id, &tags_json).await
+        wallet::internal::update_wallet_record_tags(self.wallet_handle, xtype, id, &tags_json).await
     }
 
     async fn add_wallet_record_tags(&self, xtype: &str, id: &str, tags: HashMap<String, String>) -> VcxCoreResult<()> {
         let tags_json = serde_json::to_string(&tags)?;
-        indy::wallet::add_wallet_record_tags(self.wallet_handle, xtype, id, &tags_json).await
+        wallet::internal::add_wallet_record_tags(self.wallet_handle, xtype, id, &tags_json).await
     }
 
     async fn delete_wallet_record_tags(&self, xtype: &str, id: &str, tag_names: &str) -> VcxCoreResult<()> {
-        indy::wallet::delete_wallet_record_tags(self.wallet_handle, xtype, id, tag_names).await
+        wallet::internal::delete_wallet_record_tags(self.wallet_handle, xtype, id, tag_names).await
     }
 
     async fn iterate_wallet_records(
@@ -111,7 +108,7 @@ impl BaseWallet for IndySdkWallet {
         query: &str,
         options: &str,
     ) -> VcxCoreResult<Box<dyn AsyncFnIterator<Item = VcxCoreResult<String>>>> {
-        let search = indy::wallet::open_search_wallet(self.wallet_handle, xtype, query, options).await?;
+        let search = wallet::internal::open_search_wallet(self.wallet_handle, xtype, query, options).await?;
         let iter = IndyWalletRecordIterator::new(self.wallet_handle, search);
 
         Ok(Box::new(iter))
@@ -152,7 +149,7 @@ impl IndyWalletRecordIterator {
     }
 
     async fn fetch_next_records(&self) -> VcxCoreResult<Option<String>> {
-        let indy_res_json = indy::wallet::fetch_next_records_wallet(self.wallet_handle, self.search_handle, 1).await?;
+        let indy_res_json = wallet::internal::fetch_next_records_wallet(self.wallet_handle, self.search_handle, 1).await?;
 
         let indy_res: Value = serde_json::from_str(&indy_res_json)?;
 
@@ -185,7 +182,7 @@ impl Drop for IndyWalletRecordIterator {
 
         thread::spawn(move || {
             block_on(async {
-                indy::wallet::close_search_wallet(search_handle).await.ok();
+                wallet::internal::close_search_wallet(search_handle).await.ok();
             });
         });
     }
