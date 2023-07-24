@@ -9,7 +9,7 @@ use crate::global::settings::get_sample_did;
 use crate::indy::utils::parse_and_validate;
 use crate::ledger::common::verify_transaction_can_be_endorsed;
 use crate::ledger::indy;
-use crate::mocks::pool_mocks::PoolMocks;
+use crate::ledger::indy::pool_mocks::PoolMocks;
 use crate::utils::constants::{
     rev_def_json, CRED_DEF_ID, CRED_DEF_JSON, CRED_DEF_REQ, REVOC_REG_TYPE, REV_REG_DELTA_JSON, REV_REG_ID,
     REV_REG_JSON, SCHEMA_ID, SCHEMA_JSON, SCHEMA_TXN, SUBMIT_SCHEMA_RESPONSE,

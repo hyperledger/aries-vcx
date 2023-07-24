@@ -1,6 +1,10 @@
+use std::collections::HashSet;
 use std::sync::Mutex;
+use std::sync::RwLock;
 
-use crate::mocks::ENABLED_MOCKS;
+lazy_static! {
+    pub static ref ENABLED_MOCKS: RwLock<HashSet<String>> = RwLock::new(HashSet::new());
+}
 
 lazy_static! {
     static ref DID_MOCK_RESPONSES: Mutex<DidMocks> = Mutex::new(DidMocks::default());

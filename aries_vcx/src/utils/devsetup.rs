@@ -8,10 +8,9 @@ use aries_vcx_core::global::settings::{
     disable_indy_mocks as disable_indy_mocks_core, enable_indy_mocks as enable_indy_mocks_core,
     reset_config_values_ariesvcxcore,
 };
+use aries_vcx_core::ledger::indy::pool_mocks::PoolMocks;
 #[cfg(feature = "modular_libs")]
 use aries_vcx_core::ledger::request_submitter::vdr_ledger::LedgerPoolConfig;
-use aries_vcx_core::mocks::did_mocks::DidMocks;
-use aries_vcx_core::mocks::pool_mocks::PoolMocks;
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use aries_vcx_core::{PoolHandle, WalletHandle};
 use chrono::{DateTime, Duration, Utc};
@@ -26,6 +25,7 @@ use aries_vcx_core::ledger::indy::pool::test_utils::{create_testpool_genesis_txn
 use aries_vcx_core::ledger::indy::pool::{
     create_pool_ledger_config, indy_close_pool, indy_delete_pool, indy_open_pool,
 };
+use aries_vcx_core::wallet::indy::did_mocks::DidMocks;
 use aries_vcx_core::wallet::indy::wallet::{create_wallet_with_master_secret, open_wallet, wallet_configure_issuer};
 use aries_vcx_core::wallet::indy::{IndySdkWallet, WalletConfig};
 

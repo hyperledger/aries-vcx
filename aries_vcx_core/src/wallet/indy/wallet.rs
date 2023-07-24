@@ -6,7 +6,7 @@ use vdrtools::{
     DidMethod, DidValue, KeyInfo, Locator, MyDidInfo,
 };
 
-use crate::mocks::did_mocks::{did_mocks_enabled, DidMocks};
+use crate::wallet::indy::did_mocks::{did_mocks_enabled, DidMocks};
 use crate::wallet::indy::{IssuerConfig, RestoreWalletConfigs, WalletConfig};
 use crate::SearchHandle;
 use crate::{

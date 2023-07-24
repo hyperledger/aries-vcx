@@ -32,7 +32,6 @@ pub mod global;
 #[cfg(feature = "vdrtools")]
 pub mod indy;
 pub mod ledger;
-pub mod mocks;
 pub mod utils;
 pub mod wallet;
 

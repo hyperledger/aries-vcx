@@ -16,6 +16,7 @@ use crate::{SearchHandle, WalletHandle};
 use super::base_wallet::BaseWallet;
 
 pub mod agency_client_wallet;
+pub mod did_mocks;
 pub mod indy_wallet;
 pub mod internal;
 pub mod signing;

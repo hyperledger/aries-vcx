@@ -5,4 +5,5 @@ use crate::{PoolHandle, WalletHandle};
 use transactions::Response;
 
 pub mod pool;
+pub mod pool_mocks;
 pub mod transactions;
