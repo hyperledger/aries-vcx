@@ -53,7 +53,6 @@ mod dbtests {
         };
 
         let wallet_handle = create_and_open_wallet(&config_wallet).await.unwrap();
-        // todo: do we need to create link secret? I dont think so, only for prover
         let profile = Arc::new(IndySdkWallet::new(wallet_handle));
         let config_issuer = wallet_configure_issuer(wallet_handle, enterprise_seed).await.unwrap();
         init_issuer_config(&config_issuer.institution_did).unwrap();
