@@ -26,7 +26,7 @@ use aries_vcx_core::ledger::indy::pool::{
     create_pool_ledger_config, indy_close_pool, indy_delete_pool, indy_open_pool,
 };
 use aries_vcx_core::wallet::indy::did_mocks::DidMocks;
-use aries_vcx_core::wallet::indy::wallet::{create_wallet_with_master_secret, open_wallet, wallet_configure_issuer};
+use aries_vcx_core::wallet::indy::wallet::{create_and_open_wallet, open_wallet, wallet_configure_issuer};
 use aries_vcx_core::wallet::indy::{IndySdkWallet, WalletConfig};
 
 #[cfg(feature = "modular_libs")]
@@ -326,8 +326,7 @@ pub async fn setup_issuer_wallet_and_agency_client() -> (String, WalletHandle, A
         agency_endpoint: AGENCY_ENDPOINT.parse().expect("valid url"),
         agent_seed: None,
     };
-    create_wallet_with_master_secret(&config_wallet).await.unwrap();
-    let wallet_handle = open_wallet(&config_wallet).await.unwrap();
+    let wallet_handle = create_and_open_wallet(&config_wallet).await.unwrap();
     let config_issuer = wallet_configure_issuer(wallet_handle, enterprise_seed).await.unwrap();
     init_issuer_config(&config_issuer.institution_did).unwrap();
     let mut agency_client = AgencyClient::new();
@@ -353,8 +352,7 @@ pub async fn setup_issuer_wallet() -> (String, WalletHandle) {
         rekey: None,
         rekey_derivation_method: None,
     };
-    create_wallet_with_master_secret(&config_wallet).await.unwrap();
-    let wallet_handle = open_wallet(&config_wallet).await.unwrap();
+    let wallet_handle = create_and_open_wallet(&config_wallet).await.unwrap();
     let config_issuer = wallet_configure_issuer(wallet_handle, enterprise_seed).await.unwrap();
     init_issuer_config(&config_issuer.institution_did).unwrap();
     (config_issuer.institution_did, wallet_handle)

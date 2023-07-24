@@ -228,21 +228,6 @@ pub async fn wallet_configure_issuer(
     Ok(IssuerConfig { institution_did })
 }
 
-pub async fn create_wallet_with_master_secret(config: &WalletConfig) -> VcxCoreResult<()> {
-    let wallet_handle = create_and_open_wallet(config).await?;
-
-    trace!("Created wallet with handle {:?}", wallet_handle);
-
-    // If MS is already in wallet then just continue
-    holder::libindy_prover_create_master_secret(wallet_handle, settings::DEFAULT_LINK_SECRET_ALIAS)
-        .await
-        .ok();
-
-    Locator::instance().wallet_controller.close(wallet_handle).await?;
-
-    Ok(())
-}
-
 pub async fn export_wallet(wallet_handle: WalletHandle, path: &str, backup_key: &str) -> VcxCoreResult<()> {
     trace!(
         "export >>> wallet_handle: {:?}, path: {:?}, backup_key: ****",

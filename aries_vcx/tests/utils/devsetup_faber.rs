@@ -29,7 +29,7 @@ use aries_vcx::utils::devsetup::{SetupPoolDirectory, SetupProfile, AGENCY_DID, A
 use aries_vcx::utils::provision::provision_cloud_agent;
 #[cfg(feature = "modular_libs")]
 use aries_vcx_core::ledger::request_submitter::vdr_ledger::LedgerPoolConfig;
-use aries_vcx_core::wallet::indy::wallet::{create_wallet_with_master_secret, open_wallet, wallet_configure_issuer};
+use aries_vcx_core::wallet::indy::wallet::{open_wallet, wallet_configure_issuer};
 use aries_vcx_core::wallet::indy::{IssuerConfig, WalletConfig};
 use aries_vcx_core::{PoolHandle, WalletHandle};
 use diddoc_legacy::aries::service::AriesService;

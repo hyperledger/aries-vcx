@@ -13,7 +13,7 @@ mod dbtests {
     use aries_vcx::utils::provision::provision_cloud_agent;
     use aries_vcx::utils::test_logger::LibvcxDefaultLogger;
     use aries_vcx_core::wallet::indy::wallet::{
-        close_wallet, create_wallet_with_master_secret, open_wallet, wallet_configure_issuer,
+        close_wallet, create_and_open_wallet, open_wallet, wallet_configure_issuer,
     };
     use aries_vcx_core::wallet::indy::{IndySdkWallet, WalletConfig, WalletConfigBuilder};
 
@@ -52,8 +52,8 @@ mod dbtests {
             agent_seed: None,
         };
 
-        create_wallet_with_master_secret(&config_wallet).await.unwrap();
-        let wallet_handle = open_wallet(&config_wallet).await.unwrap();
+        let wallet_handle = create_and_open_wallet(&config_wallet).await?;
+        // todo: do we need to create link secret? I dont think so, only for prover
         let profile = Arc::new(IndySdkWallet::new(wallet_handle));
         let config_issuer = wallet_configure_issuer(wallet_handle, enterprise_seed).await.unwrap();
         init_issuer_config(&config_issuer.institution_did).unwrap();

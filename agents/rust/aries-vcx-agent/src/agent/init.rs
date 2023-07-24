@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use aries_vcx::global::settings::DEFAULT_LINK_SECRET_ALIAS;
 use aries_vcx::{
     agency_client::{agency_client::AgencyClient, configuration::AgentProvisionConfig},
     core::profile::{profile::Profile, vdrtools_profile::VdrtoolsProfile},
@@ -7,7 +8,7 @@ use aries_vcx::{
     utils::provision::provision_cloud_agent,
 };
 use aries_vcx_core::ledger::indy::pool::{create_pool_ledger_config, indy_open_pool, PoolConfigBuilder};
-use aries_vcx_core::wallet::indy::wallet::{create_wallet_with_master_secret, open_wallet, wallet_configure_issuer};
+use aries_vcx_core::wallet::indy::wallet::{create_and_open_wallet, open_wallet, wallet_configure_issuer};
 use aries_vcx_core::wallet::indy::WalletConfig;
 use url::Url;
 
@@ -65,8 +66,7 @@ impl Agent {
             rekey_derivation_method: None,
         };
 
-        create_wallet_with_master_secret(&config_wallet).await.unwrap();
-        let wallet_handle = open_wallet(&config_wallet).await.unwrap();
+        let wallet_handle = create_and_open_wallet(&config_wallet).await.unwrap();
 
         let config_issuer = wallet_configure_issuer(wallet_handle, &init_config.enterprise_seed)
             .await
@@ -89,6 +89,11 @@ impl Agent {
         let indy_profile = VdrtoolsProfile::init(wallet_handle, pool_handle);
         let profile: Arc<dyn Profile> = Arc::new(indy_profile);
         let wallet = profile.inject_wallet();
+        let anoncreds = profile.inject_anoncreds();
+        anoncreds
+            .prover_create_link_secret(DEFAULT_LINK_SECRET_ALIAS)
+            .await
+            .unwrap();
 
         let (mediated_connections, config_agency_client) = if let Some(agency_config) = init_config.agency_config {
             let config_provision_agent = AgentProvisionConfig {
