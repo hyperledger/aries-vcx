@@ -2,11 +2,11 @@ use std::collections::HashMap;
 
 use async_trait::async_trait;
 
-use crate::{indy, wallet, WalletHandle};
 use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
 use crate::utils::async_fn_iterator::AsyncFnIterator;
 use crate::wallet::base_wallet::BaseWallet;
-use crate::wallet::indy::{IndySdkWallet, IndyWalletRecordIterator, internal, WalletRecord};
+use crate::wallet::indy::{internal, IndySdkWallet, IndyWalletRecordIterator, WalletRecord};
+use crate::{indy, wallet, WalletHandle};
 
 #[allow(unused_variables)]
 #[async_trait]
@@ -92,7 +92,7 @@ impl BaseWallet for IndySdkWallet {
         xtype: &str,
         query: &str,
         options: &str,
-    ) -> VcxCoreResult<Box<dyn AsyncFnIterator<Item=VcxCoreResult<String>>>> {
+    ) -> VcxCoreResult<Box<dyn AsyncFnIterator<Item = VcxCoreResult<String>>>> {
         let search = internal::open_search_wallet(self.wallet_handle, xtype, query, options).await?;
         let iter = IndyWalletRecordIterator::new(self.wallet_handle, search);
 

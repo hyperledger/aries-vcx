@@ -6,12 +6,14 @@ use aries_vcx::aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
 #[cfg(all(feature = "anoncreds_credx"))]
 use aries_vcx::aries_vcx_core::anoncreds::credx_anoncreds::IndyCredxAnonCreds;
 use aries_vcx::aries_vcx_core::anoncreds::indy_anoncreds::IndySdkAnonCreds;
-use aries_vcx::aries_vcx_core::wallet::indy::wallet::import;
 use aries_vcx::aries_vcx_core::wallet::base_wallet::BaseWallet;
-use aries_vcx::aries_vcx_core::{indy, SearchHandle, wallet};
-use aries_vcx::aries_vcx_core::{INVALID_WALLET_HANDLE, WalletHandle};
+use aries_vcx::aries_vcx_core::wallet::indy::internal::{
+    close_search_wallet, fetch_next_records_wallet, open_search_wallet,
+};
+use aries_vcx::aries_vcx_core::wallet::indy::wallet::import;
 use aries_vcx::aries_vcx_core::wallet::indy::{IndySdkWallet, IssuerConfig, RestoreWalletConfigs, WalletConfig};
-use aries_vcx::aries_vcx_core::wallet::indy::internal::{close_search_wallet, fetch_next_records_wallet, open_search_wallet};
+use aries_vcx::aries_vcx_core::{indy, wallet, SearchHandle};
+use aries_vcx::aries_vcx_core::{WalletHandle, INVALID_WALLET_HANDLE};
 use aries_vcx::common::signing::unpack_message_to_string;
 use aries_vcx::global::settings::DEFAULT_LINK_SECRET_ALIAS;
 use aries_vcx::protocols::mediated_connection::pairwise_info::PairwiseInfo;

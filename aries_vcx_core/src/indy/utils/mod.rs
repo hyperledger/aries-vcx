@@ -1,5 +1,5 @@
 use std::sync::atomic::{AtomicUsize, Ordering};
-use vdrtools::{CommandHandle, types::validation::Validatable};
+use vdrtools::{types::validation::Validatable, CommandHandle};
 
 use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
 
@@ -83,6 +83,8 @@ pub mod test_setup {
     pub async fn create_key(wallet_handle: WalletHandle) -> String {
         let seed: String = generate_random_seed();
 
-        wallet::indy::signing::create_key(wallet_handle, Some(&seed)).await.unwrap()
+        wallet::indy::signing::create_key(wallet_handle, Some(&seed))
+            .await
+            .unwrap()
     }
 }

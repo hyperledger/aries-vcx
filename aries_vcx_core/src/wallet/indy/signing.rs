@@ -1,7 +1,7 @@
-use vdrtools::Locator;
 use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
 use crate::global::settings;
 use crate::WalletHandle;
+use vdrtools::Locator;
 
 pub async fn sign(wallet_handle: WalletHandle, my_vk: &str, msg: &[u8]) -> VcxCoreResult<Vec<u8>> {
     if settings::indy_mocks_enabled() {

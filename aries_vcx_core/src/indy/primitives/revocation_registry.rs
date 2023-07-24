@@ -7,8 +7,8 @@ use crate::indy::ledger::transactions::{
     build_rev_reg_delta_request, build_rev_reg_request, check_response, sign_and_submit_to_ledger,
 };
 use crate::indy::utils::parse_and_validate;
-use crate::{PoolHandle, WalletHandle};
 use crate::wallet::indy::wallet_non_secrets::{get_rev_reg_delta, set_rev_reg_delta};
+use crate::{PoolHandle, WalletHandle};
 
 pub const BLOB_STORAGE_TYPE: &str = "default";
 

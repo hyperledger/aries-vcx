@@ -21,13 +21,13 @@ use uuid::Uuid;
 
 use agency_client::agency_client::AgencyClient;
 use agency_client::configuration::AgentProvisionConfig;
-use agency_client::testing::mocking::{AgencyMockDecrypted, enable_agency_mocks};
+use agency_client::testing::mocking::{enable_agency_mocks, AgencyMockDecrypted};
 use aries_vcx_core::indy::ledger::pool::test_utils::{create_testpool_genesis_txn_file, get_temp_file_path};
 use aries_vcx_core::indy::ledger::pool::{
     create_pool_ledger_config, indy_close_pool, indy_delete_pool, indy_open_pool,
 };
-use aries_vcx_core::wallet::indy::{IndySdkWallet, WalletConfig};
 use aries_vcx_core::wallet::indy::wallet::{create_wallet_with_master_secret, open_wallet, wallet_configure_issuer};
+use aries_vcx_core::wallet::indy::{IndySdkWallet, WalletConfig};
 
 #[cfg(feature = "modular_libs")]
 use crate::core::profile::modular_libs_profile::ModularLibsProfile;
@@ -38,7 +38,7 @@ use crate::core::profile::profile::Profile;
 use crate::core::profile::vdrtools_profile::VdrtoolsProfile;
 use crate::global::settings;
 use crate::global::settings::{
-    aries_vcx_disable_indy_mocks, aries_vcx_enable_indy_mocks, CONFIG_INSTITUTION_DID, DEFAULT_DID, set_config_value,
+    aries_vcx_disable_indy_mocks, aries_vcx_enable_indy_mocks, set_config_value, CONFIG_INSTITUTION_DID, DEFAULT_DID,
 };
 use crate::global::settings::{init_issuer_config, reset_config_values_ariesvcx};
 use crate::utils;

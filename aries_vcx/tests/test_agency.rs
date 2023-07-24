@@ -17,8 +17,8 @@ mod integration_tests {
     use aries_vcx::global::settings;
     use aries_vcx::utils::devsetup::SetupPoolDirectory;
     use aries_vcx_core::wallet::indy::agency_client_wallet::ToBaseAgencyClientWallet;
-    use aries_vcx_core::wallet::indy::{IndySdkWallet, WalletConfig};
     use aries_vcx_core::wallet::indy::wallet::create_and_open_wallet;
+    use aries_vcx_core::wallet::indy::{IndySdkWallet, WalletConfig};
     use messages::msg_fields::protocols::cred_issuance::offer_credential::OfferCredentialDecorators;
     use messages::msg_fields::protocols::cred_issuance::{CredentialAttr, CredentialPreview};
     use messages::msg_fields::protocols::notification::Notification;
@@ -451,10 +451,7 @@ mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_update_agent_webhook() {
-        use aries_vcx_core::{
-            indy::wallet::{},
-            wallet::{base_wallet::BaseWallet},
-        };
+        use aries_vcx_core::wallet::base_wallet::BaseWallet;
 
         SetupPoolDirectory::run(|_setup| async move {
             let wallet_config = WalletConfig {

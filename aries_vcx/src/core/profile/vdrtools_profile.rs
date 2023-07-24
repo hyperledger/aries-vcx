@@ -3,17 +3,17 @@ use std::sync::Arc;
 use super::profile::Profile;
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use aries_vcx_core::ledger::base_ledger::TxnAuthrAgrmtOptions;
+use aries_vcx_core::wallet::indy::IndySdkWallet;
 use aries_vcx_core::{
     anoncreds::{base_anoncreds::BaseAnonCreds, indy_anoncreds::IndySdkAnonCreds},
     ledger::{
         base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite},
         indy_ledger::{IndySdkLedgerRead, IndySdkLedgerWrite},
     },
-    PoolHandle,
-    wallet::base_wallet::BaseWallet, WalletHandle,
+    wallet::base_wallet::BaseWallet,
+    PoolHandle, WalletHandle,
 };
 use async_trait::async_trait;
-use aries_vcx_core::wallet::indy::IndySdkWallet;
 
 #[derive(Debug)]
 pub struct VdrtoolsProfile {

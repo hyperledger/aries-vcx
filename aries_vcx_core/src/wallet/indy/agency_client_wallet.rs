@@ -90,7 +90,7 @@ impl BaseWallet for AgencyClientWallet {
         xtype: &str,
         query: &str,
         options: &str,
-    ) -> VcxCoreResult<Box<dyn AsyncFnIterator<Item=VcxCoreResult<String>>>> {
+    ) -> VcxCoreResult<Box<dyn AsyncFnIterator<Item = VcxCoreResult<String>>>> {
         Err(unimplemented_agency_client_wallet_method("iterate_wallet_records"))
     }
 

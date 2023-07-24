@@ -6,18 +6,21 @@ use futures::executor::block_on;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::{indy, utils::{async_fn_iterator::AsyncFnIterator, json::TryGetIndex}};
-use crate::{SearchHandle, WalletHandle};
 use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
+use crate::{
+    indy,
+    utils::{async_fn_iterator::AsyncFnIterator, json::TryGetIndex},
+};
+use crate::{SearchHandle, WalletHandle};
 
 use super::base_wallet::BaseWallet;
 
-pub mod internal;
-pub mod indy_wallet;
 pub mod agency_client_wallet;
-pub mod wallet_non_secrets;
-pub mod wallet;
+pub mod indy_wallet;
+pub mod internal;
 pub mod signing;
+pub mod wallet;
+pub mod wallet_non_secrets;
 
 #[derive(Debug)]
 pub struct IndySdkWallet {

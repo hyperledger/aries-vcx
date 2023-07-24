@@ -65,7 +65,7 @@ pub trait BaseWallet: std::fmt::Debug + Send + Sync {
         xtype: &str,
         query: &str,
         options: &str,
-    ) -> VcxCoreResult<Box<dyn AsyncFnIterator<Item=VcxCoreResult<String>>>>;
+    ) -> VcxCoreResult<Box<dyn AsyncFnIterator<Item = VcxCoreResult<String>>>>;
 
     // ---- crypto
 
@@ -86,7 +86,7 @@ pub trait AsyncFnIteratorCollect {
 }
 
 #[async_trait]
-impl AsyncFnIteratorCollect for Box<dyn AsyncFnIterator<Item=VcxCoreResult<String>>> {
+impl AsyncFnIteratorCollect for Box<dyn AsyncFnIterator<Item = VcxCoreResult<String>>> {
     type Item = String;
 
     async fn collect(&mut self) -> VcxCoreResult<Vec<Self::Item>> {

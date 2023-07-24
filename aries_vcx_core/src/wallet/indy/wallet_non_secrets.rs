@@ -1,7 +1,9 @@
 use serde_json;
 
 use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
-use crate::wallet::indy::internal::{add_wallet_record, delete_wallet_record, get_wallet_record, update_wallet_record_value};
+use crate::wallet::indy::internal::{
+    add_wallet_record, delete_wallet_record, get_wallet_record, update_wallet_record_value,
+};
 use crate::WalletHandle;
 
 static WALLET_RECORD_TYPE: &str = "cache";
@@ -29,7 +31,7 @@ pub async fn get_rev_reg_delta(wallet_handle: WalletHandle, rev_reg_id: &str) ->
         &wallet_id,
         &json!({"retrieveType": false, "retrieveValue": true, "retrieveTags": false}).to_string(),
     )
-        .await
+    .await
     {
         Ok(json) => match serde_json::from_str(&json).and_then(|x: serde_json::Value| {
             serde_json::from_str(

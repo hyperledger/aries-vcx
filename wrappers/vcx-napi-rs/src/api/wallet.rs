@@ -1,12 +1,12 @@
+use crate::error::to_napi_err;
 use libvcx_core::api_vcx::api_global::settings::settings_init_issuer_config;
 use libvcx_core::api_vcx::api_global::{ledger, wallet};
+use libvcx_core::aries_vcx::aries_vcx_core::wallet::indy::{IssuerConfig, RestoreWalletConfigs, WalletConfig};
 use libvcx_core::errors::error::{LibvcxError, LibvcxErrorKind};
 use libvcx_core::serde_json;
 use libvcx_core::serde_json::json;
 use napi::bindgen_prelude::Buffer;
 use napi_derive::napi;
-use libvcx_core::aries_vcx::aries_vcx_core::wallet::indy::{IssuerConfig, RestoreWalletConfigs, WalletConfig};
-use crate::error::to_napi_err;
 
 #[napi]
 pub async fn wallet_open_as_main(wallet_config: String) -> napi::Result<i32> {

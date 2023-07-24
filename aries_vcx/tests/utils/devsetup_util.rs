@@ -11,8 +11,8 @@ use aries_vcx_core::indy::ledger::pool::indy_open_pool;
 #[cfg(feature = "modular_libs")]
 use aries_vcx_core::ledger::request_submitter::vdr_ledger::LedgerPoolConfig;
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
-use aries_vcx_core::wallet::indy::{IndySdkWallet, WalletConfig};
 use aries_vcx_core::wallet::indy::wallet::{create_wallet_with_master_secret, open_wallet};
+use aries_vcx_core::wallet::indy::{IndySdkWallet, WalletConfig};
 use aries_vcx_core::WalletHandle;
 
 use crate::utils::devsetup_alice::Alice;
