@@ -1,8 +1,8 @@
 use async_trait::async_trait;
 
 use crate::errors::error::VcxCoreResult;
-use crate::indy::wallet_non_secrets::{clear_rev_reg_delta, get_rev_reg_delta};
 use crate::{indy, WalletHandle};
+use crate::wallet::indy::wallet_non_secrets::{clear_rev_reg_delta, get_rev_reg_delta};
 
 use super::base_anoncreds::BaseAnonCreds;
 

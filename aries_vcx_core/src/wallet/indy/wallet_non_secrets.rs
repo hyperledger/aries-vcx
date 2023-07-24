@@ -29,7 +29,7 @@ pub async fn get_rev_reg_delta(wallet_handle: WalletHandle, rev_reg_id: &str) ->
         &wallet_id,
         &json!({"retrieveType": false, "retrieveValue": true, "retrieveTags": false}).to_string(),
     )
-    .await
+        .await
     {
         Ok(json) => match serde_json::from_str(&json).and_then(|x: serde_json::Value| {
             serde_json::from_str(

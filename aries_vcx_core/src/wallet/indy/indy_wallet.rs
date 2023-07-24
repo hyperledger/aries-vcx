@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use async_trait::async_trait;
 
-use crate::{indy, WalletHandle};
+use crate::{indy, wallet, WalletHandle};
 use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
 use crate::utils::async_fn_iterator::AsyncFnIterator;
 use crate::wallet::base_wallet::BaseWallet;
@@ -16,19 +16,19 @@ impl BaseWallet for IndySdkWallet {
         seed: Option<&str>,
         method_name: Option<&str>,
     ) -> VcxCoreResult<(String, String)> {
-        indy::wallet::create_and_store_my_did(self.wallet_handle, seed, method_name).await
+        wallet::indy::wallet::create_and_store_my_did(self.wallet_handle, seed, method_name).await
     }
 
     async fn key_for_local_did(&self, did: &str) -> VcxCoreResult<String> {
-        indy::wallet::get_verkey_from_wallet(self.wallet_handle, did).await
+        wallet::indy::wallet::get_verkey_from_wallet(self.wallet_handle, did).await
     }
 
     async fn replace_did_keys_start(&self, target_did: &str) -> VcxCoreResult<String> {
-        indy::wallet::libindy_replace_keys_start(self.wallet_handle, target_did).await
+        wallet::indy::wallet::libindy_replace_keys_start(self.wallet_handle, target_did).await
     }
 
     async fn replace_did_keys_apply(&self, target_did: &str) -> VcxCoreResult<()> {
-        indy::wallet::libindy_replace_keys_apply(self.wallet_handle, target_did).await
+        wallet::indy::wallet::libindy_replace_keys_apply(self.wallet_handle, target_did).await
     }
 
     async fn add_wallet_record(
@@ -100,19 +100,19 @@ impl BaseWallet for IndySdkWallet {
     }
 
     async fn sign(&self, my_vk: &str, msg: &[u8]) -> VcxCoreResult<Vec<u8>> {
-        indy::signing::sign(self.wallet_handle, my_vk, msg).await
+        wallet::indy::signing::sign(self.wallet_handle, my_vk, msg).await
     }
 
     async fn verify(&self, vk: &str, msg: &[u8], signature: &[u8]) -> VcxCoreResult<bool> {
-        indy::signing::verify(vk, msg, signature).await
+        wallet::indy::signing::verify(vk, msg, signature).await
     }
 
     async fn pack_message(&self, sender_vk: Option<&str>, receiver_keys: &str, msg: &[u8]) -> VcxCoreResult<Vec<u8>> {
-        indy::signing::pack_message(self.wallet_handle, sender_vk, receiver_keys, msg).await
+        wallet::indy::signing::pack_message(self.wallet_handle, sender_vk, receiver_keys, msg).await
     }
 
     async fn unpack_message(&self, msg: &[u8]) -> VcxCoreResult<Vec<u8>> {
-        indy::signing::unpack_message(self.wallet_handle, msg).await
+        wallet::indy::signing::unpack_message(self.wallet_handle, msg).await
     }
 
     fn get_wallet_handle(&self) -> WalletHandle {

@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use aries_vcx::aries_vcx_core::indy::wallet::create_and_open_wallet;
+use aries_vcx::aries_vcx_core::wallet::indy::wallet::create_and_open_wallet;
 use aries_vcx::aries_vcx_core::wallet::indy::WalletConfig;
 use aries_vcx::core::profile::{profile::Profile, vdrtools_profile::VdrtoolsProfile};
 

@@ -10,10 +10,6 @@ use aries_vcx_core::global::settings::{
 };
 use aries_vcx_core::indy::utils::mocks::did_mocks::DidMocks;
 use aries_vcx_core::indy::utils::mocks::pool_mocks::PoolMocks;
-use aries_vcx_core::indy::wallet::{
-    create_wallet_with_master_secret, open_wallet, wallet_configure_issuer,
-};
-
 #[cfg(feature = "modular_libs")]
 use aries_vcx_core::ledger::request_submitter::vdr_ledger::LedgerPoolConfig;
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
@@ -31,6 +27,7 @@ use aries_vcx_core::indy::ledger::pool::{
     create_pool_ledger_config, indy_close_pool, indy_delete_pool, indy_open_pool,
 };
 use aries_vcx_core::wallet::indy::{IndySdkWallet, WalletConfig};
+use aries_vcx_core::wallet::indy::wallet::{create_wallet_with_master_secret, open_wallet, wallet_configure_issuer};
 
 #[cfg(feature = "modular_libs")]
 use crate::core::profile::modular_libs_profile::ModularLibsProfile;

@@ -1,14 +1,15 @@
-use crate::{secret, utils};
 use serde::{Deserialize, Serialize};
+
 use vdrtools::{DidMethod, DidValue, KeyInfo, Locator, MyDidInfo, types::domain::wallet::{default_key_derivation_method, KeyDerivationMethod}, types::errors::IndyErrorKind};
 
+use crate::{secret, utils};
 use crate::{
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
     indy::credentials::holder,
 };
 use crate::{global::settings, WalletHandle};
-use crate::SearchHandle;
 use crate::indy::utils::mocks::did_mocks::{did_mocks_enabled, DidMocks};
+use crate::SearchHandle;
 use crate::wallet::indy::{IssuerConfig, RestoreWalletConfigs, WalletConfig};
 
 pub async fn open_wallet(wallet_config: &WalletConfig) -> VcxCoreResult<WalletHandle> {
@@ -111,7 +112,7 @@ pub async fn create_indy_wallet(wallet_config: &WalletConfig) -> VcxCoreResult<(
 
         Err(err) => Err(AriesVcxCoreError::from_msg(
             AriesVcxCoreErrorKind::WalletCreate,
-            format!("could not create wallet {}: {}", wallet_config.wallet_name, err,),
+            format!("could not create wallet {}: {}", wallet_config.wallet_name, err, ),
         )),
     }
 }
@@ -165,7 +166,7 @@ pub async fn delete_wallet(wallet_config: &WalletConfig) -> VcxCoreResult<()> {
 
         Err(err) if err.kind() == IndyErrorKind::WalletNotFound => Err(AriesVcxCoreError::from_msg(
             AriesVcxCoreErrorKind::WalletNotFound,
-            format!("Wallet \"{}\" not found or unavailable", &wallet_config.wallet_name,),
+            format!("Wallet \"{}\" not found or unavailable", &wallet_config.wallet_name, ),
         )),
 
         Err(err) => Err(err.into()),

@@ -596,7 +596,7 @@ mod tests {
     use std::ptr;
 
     use aries_vcx::aries_vcx_core::indy;
-    use aries_vcx::aries_vcx_core::indy::wallet::import;
+    use aries_vcx::aries_vcx_core::wallet::indy::wallet::import;
     use aries_vcx::aries_vcx_core::INVALID_POOL_HANDLE;
     use aries_vcx::aries_vcx_core::wallet::indy::{RestoreWalletConfigs, WalletConfig};
     use aries_vcx::global::settings::{

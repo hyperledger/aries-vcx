@@ -5,7 +5,7 @@ use crate::api_vcx::api_global::settings::get_config_value;
 use crate::api_vcx::api_global::wallet::close_main_wallet;
 use crate::errors::error::LibvcxResult;
 use aries_vcx::aries_vcx_core::indy::ledger::pool;
-use aries_vcx::aries_vcx_core::indy::wallet::delete_wallet;
+use aries_vcx::aries_vcx_core::wallet::indy::wallet::delete_wallet;
 use aries_vcx::aries_vcx_core::wallet::indy::WalletConfig;
 use aries_vcx::global::settings::{
     CONFIG_WALLET_KEY, CONFIG_WALLET_KEY_DERIVATION, CONFIG_WALLET_NAME, CONFIG_WALLET_TYPE,

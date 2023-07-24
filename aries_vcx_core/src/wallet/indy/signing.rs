@@ -1,6 +1,5 @@
 use vdrtools::Locator;
-
-use crate::errors::error::prelude::*;
+use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
 use crate::global::settings;
 use crate::WalletHandle;
 
@@ -87,7 +86,7 @@ pub async fn unpack_message(wallet_handle: WalletHandle, msg: &[u8]) -> VcxCoreR
 }
 
 pub async fn create_key(wallet_handle: WalletHandle, seed: Option<&str>) -> VcxCoreResult<String> {
-    use vdrtools::KeyInfo;
+    use vdrtools::{KeyInfo, Locator};
 
     let res = Locator::instance()
         .crypto_controller

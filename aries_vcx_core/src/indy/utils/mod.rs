@@ -63,19 +63,19 @@ pub mod test_setup {
             ..Default::default()
         };
 
-        indy::wallet::create_indy_wallet(&wallet_config).await.unwrap();
+        wallet::indy::wallet::create_indy_wallet(&wallet_config).await.unwrap();
 
-        let wallet_handle = indy::wallet::open_wallet(&wallet_config).await.unwrap();
+        let wallet_handle = wallet::indy::wallet::open_wallet(&wallet_config).await.unwrap();
 
         f(wallet_handle).await;
 
-        indy::wallet::close_wallet(wallet_handle).await.unwrap();
+        wallet::indy::wallet::close_wallet(wallet_handle).await.unwrap();
 
-        indy::wallet::delete_wallet(&wallet_config).await.unwrap();
+        wallet::indy::wallet::delete_wallet(&wallet_config).await.unwrap();
     }
 
     pub async fn create_trustee_key(wallet_handle: WalletHandle) -> String {
-        indy::signing::create_key(wallet_handle, Some(TRUSTEE_SEED))
+        wallet::indy::signing::create_key(wallet_handle, Some(TRUSTEE_SEED))
             .await
             .unwrap()
     }
@@ -83,6 +83,6 @@ pub mod test_setup {
     pub async fn create_key(wallet_handle: WalletHandle) -> String {
         let seed: String = generate_random_seed();
 
-        indy::signing::create_key(wallet_handle, Some(&seed)).await.unwrap()
+        wallet::indy::signing::create_key(wallet_handle, Some(&seed)).await.unwrap()
     }
 }
