@@ -7,63 +7,9 @@ use crate::{
     indy::credentials::holder,
 };
 use crate::{global::settings, WalletHandle};
-use crate::{indy::keys, SearchHandle};
+use crate::{SearchHandle};
 use crate::indy::utils::mocks::did_mocks::{did_mocks_enabled, DidMocks};
-
-#[derive(Clone, Debug, Default, Builder, Serialize, Deserialize)]
-#[builder(setter(into, strip_option), default)]
-pub struct WalletConfig {
-    pub wallet_name: String,
-    pub wallet_key: String,
-    pub wallet_key_derivation: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub wallet_type: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub storage_config: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub storage_credentials: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub rekey: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub rekey_derivation_method: Option<String>,
-}
-
-#[derive(Clone, Debug, Default, Builder, Serialize, Deserialize)]
-#[builder(setter(into, strip_option), default)]
-pub struct IssuerConfig {
-    pub institution_did: String,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-struct WalletCredentials {
-    key: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    rekey: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    storage_credentials: Option<serde_json::Value>,
-    key_derivation_method: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    rekey_derivation_method: Option<String>,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct WalletRecord {
-    id: Option<String>,
-    #[serde(rename = "type")]
-    record_type: Option<String>,
-    pub value: Option<String>,
-    tags: Option<String>,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct RestoreWalletConfigs {
-    pub wallet_name: String,
-    pub wallet_key: String,
-    pub exported_wallet_path: String,
-    pub backup_key: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub wallet_key_derivation: Option<String>,
-}
+use crate::wallet::indy_wallet::{IssuerConfig, RestoreWalletConfigs, WalletConfig};
 
 pub async fn open_wallet(wallet_config: &WalletConfig) -> VcxCoreResult<WalletHandle> {
     trace!("open_as_main_wallet >>> {}", &wallet_config.wallet_name);

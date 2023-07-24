@@ -11,13 +11,13 @@ use aries_vcx_core::global::settings::{
 use aries_vcx_core::indy::utils::mocks::did_mocks::DidMocks;
 use aries_vcx_core::indy::utils::mocks::pool_mocks::PoolMocks;
 use aries_vcx_core::indy::wallet::{
-    create_wallet_with_master_secret, open_wallet, wallet_configure_issuer, WalletConfig,
+    create_wallet_with_master_secret, open_wallet, wallet_configure_issuer,
 };
 
 #[cfg(feature = "modular_libs")]
 use aries_vcx_core::ledger::request_submitter::vdr_ledger::LedgerPoolConfig;
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
-use aries_vcx_core::wallet::indy_wallet::IndySdkWallet;
+use aries_vcx_core::wallet::indy_wallet::{IndySdkWallet, WalletConfig};
 use aries_vcx_core::{PoolHandle, WalletHandle};
 use chrono::{DateTime, Duration, Utc};
 
@@ -26,7 +26,7 @@ use uuid::Uuid;
 
 use agency_client::agency_client::AgencyClient;
 use agency_client::configuration::AgentProvisionConfig;
-use agency_client::testing::mocking::{enable_agency_mocks, AgencyMockDecrypted};
+use agency_client::testing::mocking::{AgencyMockDecrypted, enable_agency_mocks};
 use aries_vcx_core::indy::ledger::pool::test_utils::{create_testpool_genesis_txn_file, get_temp_file_path};
 use aries_vcx_core::indy::ledger::pool::{
     create_pool_ledger_config, indy_close_pool, indy_delete_pool, indy_open_pool,
@@ -41,7 +41,7 @@ use crate::core::profile::profile::Profile;
 use crate::core::profile::vdrtools_profile::VdrtoolsProfile;
 use crate::global::settings;
 use crate::global::settings::{
-    aries_vcx_disable_indy_mocks, aries_vcx_enable_indy_mocks, set_config_value, CONFIG_INSTITUTION_DID, DEFAULT_DID,
+    aries_vcx_disable_indy_mocks, aries_vcx_enable_indy_mocks, CONFIG_INSTITUTION_DID, DEFAULT_DID, set_config_value,
 };
 use crate::global::settings::{init_issuer_config, reset_config_values_ariesvcx};
 use crate::utils;

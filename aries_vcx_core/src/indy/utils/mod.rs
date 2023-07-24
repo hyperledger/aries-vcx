@@ -1,5 +1,5 @@
 use std::sync::atomic::{AtomicUsize, Ordering};
-use vdrtools::{types::validation::Validatable, CommandHandle};
+use vdrtools::{CommandHandle, types::validation::Validatable};
 
 use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
 
@@ -46,7 +46,7 @@ pub mod test_setup {
             .collect::<String>()
     }
 
-    use crate::{indy, WalletHandle};
+    use crate::{indy, wallet, WalletHandle};
 
     const TRUSTEE_SEED: &str = "000000000000000000000000Trustee1";
     const WALLET_KEY: &str = "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY";
@@ -56,7 +56,7 @@ pub mod test_setup {
     where
         F: std::future::Future<Output = ()>,
     {
-        let wallet_config = indy::wallet::WalletConfig {
+        let wallet_config = wallet::indy_wallet::WalletConfig {
             wallet_name: generate_random_name(),
             wallet_key: WALLET_KEY.into(),
             wallet_key_derivation: WALLET_KEY_DERIVATION.into(),

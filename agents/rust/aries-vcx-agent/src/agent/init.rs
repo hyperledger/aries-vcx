@@ -8,9 +8,10 @@ use aries_vcx::{
 };
 use aries_vcx_core::indy::{
     ledger::pool::{create_pool_ledger_config, indy_open_pool, PoolConfigBuilder},
-    wallet::{create_wallet_with_master_secret, open_wallet, wallet_configure_issuer, WalletConfig},
+    wallet::{create_wallet_with_master_secret, open_wallet, wallet_configure_issuer},
 };
 use url::Url;
+use aries_vcx_core::wallet::indy_wallet::WalletConfig;
 
 use crate::{
     agent::{agent_config::AgentConfig, agent_struct::Agent},

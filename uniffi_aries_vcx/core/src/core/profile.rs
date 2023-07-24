@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
-use aries_vcx::aries_vcx_core::indy::wallet::{create_and_open_wallet, WalletConfig};
+use aries_vcx::aries_vcx_core::indy::wallet::create_and_open_wallet;
+use aries_vcx::aries_vcx_core::wallet::indy_wallet::WalletConfig;
 use aries_vcx::core::profile::{profile::Profile, vdrtools_profile::VdrtoolsProfile};
 
 use crate::{errors::error::VcxUniFFIResult, runtime::block_on};

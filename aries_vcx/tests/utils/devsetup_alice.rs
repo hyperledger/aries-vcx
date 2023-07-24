@@ -24,14 +24,14 @@ use aries_vcx::handlers::util::{AnyInvitation, Status};
 use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
 use aries_vcx::protocols::mediated_connection::invitee::state_machine::InviteeState;
 use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
-use aries_vcx::utils::devsetup::{SetupPoolDirectory, SetupProfile, AGENCY_DID, AGENCY_ENDPOINT, AGENCY_VERKEY};
+use aries_vcx::utils::devsetup::{AGENCY_DID, AGENCY_ENDPOINT, AGENCY_VERKEY, SetupPoolDirectory, SetupProfile};
 use aries_vcx::utils::provision::provision_cloud_agent;
 use aries_vcx_core::indy::ledger::pool::indy_open_pool;
-use aries_vcx_core::indy::wallet::{create_wallet_with_master_secret, open_wallet, WalletConfig};
+use aries_vcx_core::indy::wallet::{create_wallet_with_master_secret, open_wallet};
 #[cfg(feature = "modular_libs")]
 use aries_vcx_core::ledger::request_submitter::vdr_ledger::LedgerPoolConfig;
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
-use aries_vcx_core::wallet::indy_wallet::IndySdkWallet;
+use aries_vcx_core::wallet::indy_wallet::{IndySdkWallet, WalletConfig};
 use aries_vcx_core::{PoolHandle, WalletHandle};
 use messages::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
 use messages::msg_fields::protocols::cred_issuance::CredentialIssuance;
