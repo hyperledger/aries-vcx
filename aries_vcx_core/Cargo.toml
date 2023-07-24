@@ -9,7 +9,7 @@ edition = "2021"
 vdrtools = ["dep:libvdrtools"]
 # Feature flag to include the 'modular library' dependencies (vdrtools alternatives; indy-vdr, indy-credx)
 modular_libs = ["dep:indy-vdr", "dep:indy-credx", "dep:indy-ledger-response-parser", "dep:lru"]
-vdr_proxy_ledger = ["dep:indy-vdr", "dep:indy-credx", "dep:indy-vdr-proxy-client", "dep:indy-ledger-response-parser", "dep:lru"]
+vdr_proxy_ledger = ["modular_libs", "dep:indy-vdr-proxy-client"]
 
 [dependencies]
 agency_client = { path = "../agency_client" }

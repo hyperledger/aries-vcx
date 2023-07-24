@@ -15,7 +15,7 @@ mysql = []
 async-trait = "0.1.42"
 byteorder = "1.3.2"
 futures = { version = "0.3", default-features = false, features = [ "alloc" ] }
-indy-api-types = { path = "../indy-api-types"}
+indy-api-types = { path = "../indy-api-types", features = [ "casting_errors_wallet", "casting_errors_misc" ] }
 indy-utils = { path = "../indy-utils"}
 libc = "0.2.114"
 log = "0.4.8"

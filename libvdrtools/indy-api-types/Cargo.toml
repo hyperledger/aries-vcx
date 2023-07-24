@@ -7,8 +7,10 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-default = ["casting_errors"]
-casting_errors = [ "openssl", "rust-base58", "zmq", "ursa", "sqlx"]
+casting_errors_ledger = [ "zmq" ]
+casting_errors_wallet = [ "sqlx" ]
+casting_errors_misc = [ "openssl", "rust-base58", "ursa"]
+casting_errors = [ "casting_errors_ledger", "casting_errors_wallet", "casting_errors_misc"]
 rust-base58 = ["bs58"]
 
 [dependencies]
