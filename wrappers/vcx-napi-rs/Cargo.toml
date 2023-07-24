@@ -12,7 +12,7 @@ crate-type = ["cdylib"]
 doctest = false
 
 [features]
-default = ["ledger_indyvdr", "anoncreds_vdrtools"]
+default = ["ledger_indyvdr", "anoncreds_credx"]
 
 ledger_indyvdr = ["libvcx_core/ledger_indyvdr"]
 ledger_vdrtools = ["libvcx_core/ledger_vdrtools"]
