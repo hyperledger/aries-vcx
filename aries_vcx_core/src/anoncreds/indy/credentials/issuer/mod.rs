@@ -1,6 +1,5 @@
 use vdrtools::{CredentialOffer, CredentialRequest, CredentialValues, DidValue, Locator, RevocationRegistryId};
 
-use crate::{utils, WalletHandle};
 use crate::anoncreds::indy::general;
 use crate::anoncreds::indy::general::blob_storage_open_reader;
 use crate::errors::error::VcxCoreResult;
@@ -8,6 +7,7 @@ use crate::global::settings;
 use crate::indy::utils::parse_and_validate;
 use crate::utils::constants::LIBINDY_CRED_OFFER;
 use crate::wallet::indy::wallet_non_secrets::{get_rev_reg_delta, set_rev_reg_delta};
+use crate::{utils, WalletHandle};
 
 pub async fn libindy_issuer_create_credential_offer(
     wallet_handle: WalletHandle,

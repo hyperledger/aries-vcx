@@ -1,19 +1,82 @@
-use time::OffsetDateTime;
 use serde::Deserialize;
+use time::OffsetDateTime;
 use vdrtools::{DidValue, Locator};
 
-use crate::ledger::common::verify_transaction_can_be_endorsed;
 use crate::errors::error::prelude::*;
 use crate::global::author_agreement::get_vdrtools_config_txn_author_agreement;
 use crate::global::settings;
 use crate::global::settings::get_sample_did;
-use crate::indy::utils::mocks::pool_mocks::PoolMocks;
 use crate::indy::utils::parse_and_validate;
+use crate::ledger::common::verify_transaction_can_be_endorsed;
+use crate::ledger::indy;
+use crate::mocks::pool_mocks::PoolMocks;
 use crate::utils::constants::{
-    CRED_DEF_ID, CRED_DEF_JSON, CRED_DEF_REQ, rev_def_json, REV_REG_DELTA_JSON, REV_REG_ID, REV_REG_JSON,
-    REVOC_REG_TYPE, SCHEMA_ID, SCHEMA_JSON, SCHEMA_TXN, SUBMIT_SCHEMA_RESPONSE,
+    rev_def_json, CRED_DEF_ID, CRED_DEF_JSON, CRED_DEF_REQ, REVOC_REG_TYPE, REV_REG_DELTA_JSON, REV_REG_ID,
+    REV_REG_JSON, SCHEMA_ID, SCHEMA_JSON, SCHEMA_TXN, SUBMIT_SCHEMA_RESPONSE,
 };
-use crate::{PoolHandle, utils, WalletHandle};
+use crate::{utils, PoolHandle, WalletHandle};
+
+pub fn _check_schema_response(response: &str) -> VcxCoreResult<()> {
+    // TODO: saved backwardcampatibilyty but actually we can better handle response
+    match parse_response(response)? {
+        Response::Reply(_) => Ok(()),
+        Response::Reject(reject) => Err(AriesVcxCoreError::from_msg(
+            AriesVcxCoreErrorKind::DuplicationSchema,
+            format!("{reject:?}"),
+        )),
+        Response::ReqNACK(reqnack) => Err(AriesVcxCoreError::from_msg(
+            AriesVcxCoreErrorKind::UnknownSchemaRejection,
+            format!("{reqnack:?}"),
+        )),
+    }
+}
+
+pub fn check_response(response: &str) -> VcxCoreResult<()> {
+    if settings::indy_mocks_enabled() {
+        return Ok(());
+    }
+    match parse_response(response)? {
+        Response::Reply(_) => Ok(()),
+        Response::Reject(res) | Response::ReqNACK(res) => Err(AriesVcxCoreError::from_msg(
+            AriesVcxCoreErrorKind::InvalidLedgerResponse,
+            format!("{res:?}"),
+        )),
+    }
+}
+
+pub async fn endorse_transaction(
+    wallet_handle: WalletHandle,
+    pool_handle: PoolHandle,
+    endorser_did: &str,
+    transaction_json: &str,
+) -> VcxCoreResult<()> {
+    //TODO Potentially VCX should handle case when endorser would like to pay fee
+    if settings::indy_mocks_enabled() {
+        return Ok(());
+    }
+
+    verify_transaction_can_be_endorsed(transaction_json, endorser_did)?;
+
+    let transaction = multisign_request(wallet_handle, endorser_did, transaction_json).await?;
+    let response = libindy_submit_request(pool_handle, &transaction).await?;
+
+    match parse_response(&response)? {
+        Response::Reply(_) => Ok(()),
+        Response::Reject(res) | Response::ReqNACK(res) => Err(AriesVcxCoreError::from_msg(
+            AriesVcxCoreErrorKind::PostMessageFailed,
+            format!("{:?}", res.reason),
+        )),
+    }
+}
+
+fn parse_response(response: &str) -> VcxCoreResult<Response> {
+    serde_json::from_str::<Response>(response).map_err(|err| {
+        AriesVcxCoreError::from_msg(
+            AriesVcxCoreErrorKind::InvalidJson,
+            format!("Cannot deserialize object: {err}"),
+        )
+    })
+}
 
 pub async fn multisign_request(wallet_handle: WalletHandle, did: &str, request: &str) -> VcxCoreResult<String> {
     let res = Locator::instance()
@@ -220,15 +283,6 @@ pub async fn get_nym(pool_handle: PoolHandle, did: &str) -> VcxCoreResult<String
     libindy_submit_request(pool_handle, &get_nym_req).await
 }
 
-fn parse_response(response: &str) -> VcxCoreResult<Response> {
-    serde_json::from_str::<Response>(response).map_err(|err| {
-        AriesVcxCoreError::from_msg(
-            AriesVcxCoreErrorKind::InvalidJson,
-            format!("Cannot deserialize object: {err}"),
-        )
-    })
-}
-
 pub async fn libindy_get_schema(
     wallet_handle: WalletHandle,
     pool_handle: PoolHandle,
@@ -291,31 +345,6 @@ pub async fn set_endorser(
         .append_request_endorser(request.into(), endorser.into())?;
 
     multisign_request(wallet_handle, submitter_did, &request).await
-}
-
-pub async fn endorse_transaction(
-    wallet_handle: WalletHandle,
-    pool_handle: PoolHandle,
-    endorser_did: &str,
-    transaction_json: &str,
-) -> VcxCoreResult<()> {
-    //TODO Potentially VCX should handle case when endorser would like to pay fee
-    if settings::indy_mocks_enabled() {
-        return Ok(());
-    }
-
-    verify_transaction_can_be_endorsed(transaction_json, endorser_did)?;
-
-    let transaction = multisign_request(wallet_handle, endorser_did, transaction_json).await?;
-    let response = libindy_submit_request(pool_handle, &transaction).await?;
-
-    match parse_response(&response)? {
-        Response::Reply(_) => Ok(()),
-        Response::Reject(res) | Response::ReqNACK(res) => Err(AriesVcxCoreError::from_msg(
-            AriesVcxCoreErrorKind::PostMessageFailed,
-            format!("{:?}", res.reason),
-        )),
-    }
 }
 
 pub async fn build_attrib_request(
@@ -632,34 +661,6 @@ pub async fn get_ledger_txn(
     };
     check_response(&res)?;
     Ok(res)
-}
-
-pub fn _check_schema_response(response: &str) -> VcxCoreResult<()> {
-    // TODO: saved backwardcampatibilyty but actually we can better handle response
-    match parse_response(response)? {
-        Response::Reply(_) => Ok(()),
-        Response::Reject(reject) => Err(AriesVcxCoreError::from_msg(
-            AriesVcxCoreErrorKind::DuplicationSchema,
-            format!("{reject:?}"),
-        )),
-        Response::ReqNACK(reqnack) => Err(AriesVcxCoreError::from_msg(
-            AriesVcxCoreErrorKind::UnknownSchemaRejection,
-            format!("{reqnack:?}"),
-        )),
-    }
-}
-
-pub fn check_response(response: &str) -> VcxCoreResult<()> {
-    if settings::indy_mocks_enabled() {
-        return Ok(());
-    }
-    match parse_response(response)? {
-        Response::Reply(_) => Ok(()),
-        Response::Reject(res) | Response::ReqNACK(res) => Err(AriesVcxCoreError::from_msg(
-            AriesVcxCoreErrorKind::InvalidLedgerResponse,
-            format!("{res:?}"),
-        )),
-    }
 }
 
 pub async fn get_schema_json(

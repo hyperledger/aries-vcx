@@ -1,8 +1,8 @@
 use serde::{Deserialize, Serialize};
-use vdrtools::domain::pool::VdrtoolsPoolOpenConfig;
-use vdrtools::Locator;
 
+use vdrtools::domain::pool::VdrtoolsPoolOpenConfig;
 use vdrtools::types::errors::IndyErrorKind;
+use vdrtools::Locator;
 
 use crate::errors::error::prelude::*;
 use crate::global::settings;
@@ -66,8 +66,6 @@ pub mod test_utils {
     use std::fs;
     use std::io::Write;
     use std::{env, path::PathBuf};
-
-    use super::*;
 
     pub fn get_temp_dir_path() -> PathBuf {
         env::temp_dir()

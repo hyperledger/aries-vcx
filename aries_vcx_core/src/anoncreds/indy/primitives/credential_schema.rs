@@ -1,8 +1,8 @@
+use crate::errors::error::VcxCoreResult;
 use log::trace;
 use vdrtools::domain::anoncreds::schema::AttributeNames;
 use vdrtools::domain::crypto::did::DidValue;
 use vdrtools::Locator;
-use crate::errors::error::VcxCoreResult;
 
 // consider relocating out of primitive
 pub async fn libindy_issuer_create_schema(

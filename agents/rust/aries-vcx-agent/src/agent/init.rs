@@ -6,7 +6,7 @@ use aries_vcx::{
     global::settings::init_issuer_config,
     utils::provision::provision_cloud_agent,
 };
-use aries_vcx_core::indy::ledger::pool::{create_pool_ledger_config, indy_open_pool, PoolConfigBuilder};
+use aries_vcx_core::ledger::indy::pool::{create_pool_ledger_config, indy_open_pool, PoolConfigBuilder};
 use aries_vcx_core::wallet::indy::wallet::{create_wallet_with_master_secret, open_wallet, wallet_configure_issuer};
 use aries_vcx_core::wallet::indy::WalletConfig;
 use url::Url;

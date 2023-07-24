@@ -1,6 +1,3 @@
-use aries_vcx::aries_vcx_core::indy::ledger::pool::{
-    create_pool_ledger_config, indy_close_pool, indy_open_pool, PoolConfig,
-};
 use aries_vcx::aries_vcx_core::ledger::base_ledger::{
     AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite,
 };
@@ -11,6 +8,9 @@ use crate::api_vcx::api_global::profile::get_main_wallet;
 use crate::api_vcx::api_global::wallet::get_main_wallet_handle;
 use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 use aries_vcx::aries_vcx_core::errors::error::AriesVcxCoreError;
+use aries_vcx::aries_vcx_core::ledger::indy::pool::{
+    create_pool_ledger_config, indy_close_pool, indy_open_pool, PoolConfig,
+};
 use aries_vcx::aries_vcx_core::ledger::indy_ledger::{IndySdkLedgerRead, IndySdkLedgerWrite};
 #[cfg(feature = "ledger_indyvdr")]
 use aries_vcx::aries_vcx_core::ledger::request_submitter::vdr_ledger::{
@@ -189,10 +189,10 @@ pub mod tests {
     use crate::api_vcx::api_global::wallet::close_main_wallet;
     use crate::api_vcx::api_global::wallet::test_utils::_create_and_open_wallet;
     use crate::errors::error::LibvcxErrorKind;
-    use aries_vcx::aries_vcx_core::indy::ledger::pool::test_utils::{
+    use aries_vcx::aries_vcx_core::ledger::indy::pool::test_utils::{
         create_testpool_genesis_txn_file, get_temp_file_path,
     };
-    use aries_vcx::aries_vcx_core::indy::ledger::pool::{indy_delete_pool, PoolConfig};
+    use aries_vcx::aries_vcx_core::ledger::indy::pool::{indy_delete_pool, PoolConfig};
     use aries_vcx::aries_vcx_core::INVALID_POOL_HANDLE;
     use aries_vcx::core::profile::profile::Profile;
     use aries_vcx::global::settings::{set_config_value, CONFIG_GENESIS_PATH, DEFAULT_GENESIS_PATH};

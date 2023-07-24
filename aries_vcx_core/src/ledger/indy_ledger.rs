@@ -1,9 +1,12 @@
 use async_trait::async_trait;
 
 use crate::errors::error::VcxCoreResult;
-use crate::{indy, PoolHandle, WalletHandle};
 use crate::global::settings;
-use crate::indy::ledger::transactions::{_check_schema_response, build_cred_def_request, build_rev_reg_delta_request, build_rev_reg_request, build_schema_request, check_response, set_endorser, sign_and_submit_to_ledger};
+use crate::ledger::indy::transactions::{
+    _check_schema_response, build_cred_def_request, build_rev_reg_delta_request, build_rev_reg_request,
+    build_schema_request, check_response, set_endorser, sign_and_submit_to_ledger,
+};
+use crate::{indy, ledger, PoolHandle, WalletHandle};
 
 use super::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite};
 use super::map_error_not_found_to_none;
@@ -41,21 +44,21 @@ impl IndySdkLedgerWrite {
 #[async_trait]
 impl IndyLedgerRead for IndySdkLedgerRead {
     async fn get_attr(&self, target_did: &str, attr_name: &str) -> VcxCoreResult<String> {
-        indy::ledger::transactions::get_attr(self.indy_pool_handle, target_did, attr_name).await
+        ledger::indy::transactions::get_attr(self.indy_pool_handle, target_did, attr_name).await
     }
 
     async fn get_nym(&self, did: &str) -> VcxCoreResult<String> {
-        indy::ledger::transactions::get_nym(self.indy_pool_handle, did).await
+        ledger::indy::transactions::get_nym(self.indy_pool_handle, did).await
     }
 
     async fn get_txn_author_agreement(&self) -> VcxCoreResult<Option<String>> {
         map_error_not_found_to_none(
-            indy::ledger::transactions::libindy_get_txn_author_agreement(self.indy_pool_handle).await,
+            ledger::indy::transactions::libindy_get_txn_author_agreement(self.indy_pool_handle).await,
         )
     }
 
     async fn get_ledger_txn(&self, seq_no: i32, submitter_did: Option<&str>) -> VcxCoreResult<String> {
-        indy::ledger::transactions::get_ledger_txn(
+        ledger::indy::transactions::get_ledger_txn(
             self.indy_wallet_handle,
             self.indy_pool_handle,
             seq_no,
@@ -76,11 +79,11 @@ impl IndyLedgerWrite for IndySdkLedgerWrite {
         role: Option<&str>,
     ) -> VcxCoreResult<String> {
         let nym_request =
-            indy::ledger::transactions::libindy_build_nym_request(submitter_did, target_did, verkey, data, role)
+            ledger::indy::transactions::libindy_build_nym_request(submitter_did, target_did, verkey, data, role)
                 .await?;
-        let nym_request = indy::ledger::transactions::append_txn_author_agreement_to_request(&nym_request).await?;
+        let nym_request = ledger::indy::transactions::append_txn_author_agreement_to_request(&nym_request).await?;
 
-        indy::ledger::transactions::libindy_sign_and_submit_request(
+        ledger::indy::transactions::libindy_sign_and_submit_request(
             self.indy_wallet_handle,
             self.indy_pool_handle,
             submitter_did,
@@ -90,11 +93,11 @@ impl IndyLedgerWrite for IndySdkLedgerWrite {
     }
 
     async fn set_endorser(&self, submitter_did: &str, request: &str, endorser: &str) -> VcxCoreResult<String> {
-        indy::ledger::transactions::set_endorser(self.indy_wallet_handle, submitter_did, request, endorser).await
+        ledger::indy::transactions::set_endorser(self.indy_wallet_handle, submitter_did, request, endorser).await
     }
 
     async fn endorse_transaction(&self, endorser_did: &str, request_json: &str) -> VcxCoreResult<()> {
-        indy::ledger::transactions::endorse_transaction(
+        crate::ledger::indy::transactions::endorse_transaction(
             self.indy_wallet_handle,
             self.indy_pool_handle,
             endorser_did,
@@ -104,7 +107,7 @@ impl IndyLedgerWrite for IndySdkLedgerWrite {
     }
 
     async fn add_attr(&self, target_did: &str, attrib_json: &str) -> VcxCoreResult<String> {
-        indy::ledger::transactions::add_attr(self.indy_wallet_handle, self.indy_pool_handle, target_did, attrib_json)
+        ledger::indy::transactions::add_attr(self.indy_wallet_handle, self.indy_pool_handle, target_did, attrib_json)
             .await
     }
 }
@@ -114,7 +117,7 @@ impl AnoncredsLedgerRead for IndySdkLedgerRead {
     async fn get_schema(&self, schema_id: &str, submitter_did: Option<&str>) -> VcxCoreResult<String> {
         if let Some(submitter_did) = submitter_did {
             // with cache if possible
-            indy::ledger::transactions::libindy_get_schema(
+            ledger::indy::transactions::libindy_get_schema(
                 self.indy_wallet_handle,
                 self.indy_pool_handle,
                 submitter_did,
@@ -123,20 +126,20 @@ impl AnoncredsLedgerRead for IndySdkLedgerRead {
             .await
         } else {
             // no cache
-            indy::ledger::transactions::get_schema_json(self.indy_wallet_handle, self.indy_pool_handle, schema_id)
+            ledger::indy::transactions::get_schema_json(self.indy_wallet_handle, self.indy_pool_handle, schema_id)
                 .await
                 .map(|(_, json)| json)
         }
     }
 
     async fn get_cred_def(&self, cred_def_id: &str, _submitter_did: Option<&str>) -> VcxCoreResult<String> {
-        indy::ledger::transactions::get_cred_def_json(self.indy_wallet_handle, self.indy_pool_handle, cred_def_id)
+        ledger::indy::transactions::get_cred_def_json(self.indy_wallet_handle, self.indy_pool_handle, cred_def_id)
             .await
             .map(|(_id, json)| json)
     }
 
     async fn get_rev_reg_def_json(&self, rev_reg_id: &str) -> VcxCoreResult<String> {
-        indy::ledger::transactions::get_rev_reg_def_json(self.indy_pool_handle, rev_reg_id)
+        ledger::indy::transactions::get_rev_reg_def_json(self.indy_pool_handle, rev_reg_id)
             .await
             .map(|(_, json)| json)
     }
@@ -147,11 +150,11 @@ impl AnoncredsLedgerRead for IndySdkLedgerRead {
         from: Option<u64>,
         to: Option<u64>,
     ) -> VcxCoreResult<(String, String, u64)> {
-        indy::ledger::transactions::get_rev_reg_delta_json(self.indy_pool_handle, rev_reg_id, from, to).await
+        ledger::indy::transactions::get_rev_reg_delta_json(self.indy_pool_handle, rev_reg_id, from, to).await
     }
 
     async fn get_rev_reg(&self, rev_reg_id: &str, timestamp: u64) -> VcxCoreResult<(String, String, u64)> {
-        indy::ledger::transactions::get_rev_reg(self.indy_pool_handle, rev_reg_id, timestamp).await
+        ledger::indy::transactions::get_rev_reg(self.indy_pool_handle, rev_reg_id, timestamp).await
     }
 }
 
@@ -164,11 +167,11 @@ impl AnoncredsLedgerWrite for IndySdkLedgerWrite {
         endorser_did: Option<String>,
     ) -> VcxCoreResult<()> {
         trace!(
-        "publish_schema >>> submitter_did: {:?}, schema_json: {:?}, endorser_did: {:?}",
-        submitter_did,
-        schema_json,
-        endorser_did
-    );
+            "publish_schema >>> submitter_did: {:?}, schema_json: {:?}, endorser_did: {:?}",
+            submitter_did,
+            schema_json,
+            endorser_did
+        );
 
         if settings::indy_mocks_enabled() {
             debug!("publish_schema >>> mocked success");
@@ -179,7 +182,8 @@ impl AnoncredsLedgerWrite for IndySdkLedgerWrite {
         if let Some(endorser_did) = endorser_did {
             request = set_endorser(self.indy_wallet_handle, submitter_did, &request, &endorser_did).await?;
         }
-        let response = sign_and_submit_to_ledger(self.indy_wallet_handle, self.indy_pool_handle, submitter_did, &request).await?;
+        let response =
+            sign_and_submit_to_ledger(self.indy_wallet_handle, self.indy_pool_handle, submitter_did, &request).await?;
         _check_schema_response(&response)?;
 
         Ok(())
@@ -187,16 +191,22 @@ impl AnoncredsLedgerWrite for IndySdkLedgerWrite {
 
     async fn publish_cred_def(&self, cred_def_json: &str, issuer_did: &str) -> VcxCoreResult<()> {
         trace!(
-        "publish_cred_def >>> issuer_did: {}, cred_def_json: {}",
-        issuer_did,
-        cred_def_json
-    );
+            "publish_cred_def >>> issuer_did: {}, cred_def_json: {}",
+            issuer_did,
+            cred_def_json
+        );
         if settings::indy_mocks_enabled() {
             debug!("publish_cred_def >>> mocked success");
             return Ok(());
         }
         let cred_def_req = build_cred_def_request(issuer_did, cred_def_json).await?;
-        let response = sign_and_submit_to_ledger(self.indy_wallet_handle, self.indy_pool_handle, issuer_did, &cred_def_req).await?;
+        let response = sign_and_submit_to_ledger(
+            self.indy_wallet_handle,
+            self.indy_pool_handle,
+            issuer_did,
+            &cred_def_req,
+        )
+        .await?;
         check_response(&response)
     }
 
@@ -208,7 +218,13 @@ impl AnoncredsLedgerWrite for IndySdkLedgerWrite {
         }
 
         let rev_reg_def_req = build_rev_reg_request(issuer_did, rev_reg_def).await?;
-        let response = sign_and_submit_to_ledger(self.indy_wallet_handle, self.indy_pool_handle, issuer_did, &rev_reg_def_req).await?;
+        let response = sign_and_submit_to_ledger(
+            self.indy_wallet_handle,
+            self.indy_pool_handle,
+            issuer_did,
+            &rev_reg_def_req,
+        )
+        .await?;
         check_response(&response)
     }
 
@@ -219,14 +235,15 @@ impl AnoncredsLedgerWrite for IndySdkLedgerWrite {
         issuer_did: &str,
     ) -> VcxCoreResult<()> {
         trace!(
-        "publish_rev_reg_delta >>> issuer_did: {}, rev_reg_id: {}, revoc_reg_delta_json: {}",
-        issuer_did,
-        rev_reg_id,
-        revoc_reg_delta_json
-    );
+            "publish_rev_reg_delta >>> issuer_did: {}, rev_reg_id: {}, revoc_reg_delta_json: {}",
+            issuer_did,
+            rev_reg_id,
+            revoc_reg_delta_json
+        );
 
         let request = build_rev_reg_delta_request(issuer_did, rev_reg_id, revoc_reg_delta_json).await?;
-        let response = sign_and_submit_to_ledger(self.indy_wallet_handle, self.indy_pool_handle, issuer_did, &request).await?;
+        let response =
+            sign_and_submit_to_ledger(self.indy_wallet_handle, self.indy_pool_handle, issuer_did, &request).await?;
         check_response(&response)?;
 
         Ok(())

@@ -248,7 +248,7 @@ pub mod pool_tests {
     use crate::common::proofs::prover::prover_internal::{build_rev_states_json, CredInfoProver};
     use crate::utils::constants::{CRED_DEF_ID, CRED_REV_ID, LICENCE_CRED_ID, SCHEMA_ID};
     use crate::utils::devsetup::SetupProfile;
-    use aries_vcx_core::indy::ledger::pool::test_utils::get_temp_dir_path;
+    use aries_vcx_core::ledger::indy::pool::test_utils::get_temp_dir_path;
 
     #[tokio::test]
     #[ignore]
@@ -297,7 +297,7 @@ pub mod pool_tests {
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 pub mod unit_tests {
-    use aries_vcx_core::indy::ledger::pool::test_utils::get_temp_dir_path;
+    use aries_vcx_core::ledger::indy::pool::test_utils::get_temp_dir_path;
     use aries_vcx_core::INVALID_POOL_HANDLE;
 
     use crate::core::profile::vdrtools_profile::VdrtoolsProfile;

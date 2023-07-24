@@ -103,7 +103,7 @@ pub fn check_is_published(handle: u32) -> LibvcxResult<bool> {
 
 #[cfg(test)]
 pub mod tests {
-    use aries_vcx::aries_vcx_core::indy::ledger::pool::test_utils::get_temp_dir_path;
+    use aries_vcx::aries_vcx_core::ledger::indy::pool::test_utils::get_temp_dir_path;
     use std::{thread::sleep, time::Duration};
 
     use aries_vcx::common::primitives::credential_definition::RevocationDetailsBuilder;

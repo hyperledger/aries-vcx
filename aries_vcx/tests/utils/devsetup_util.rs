@@ -7,7 +7,7 @@ use aries_vcx::core::profile::modular_libs_profile::ModularLibsProfile;
 use aries_vcx::core::profile::profile::Profile;
 use aries_vcx::core::profile::vdrtools_profile::VdrtoolsProfile;
 use aries_vcx::global::settings;
-use aries_vcx_core::indy::ledger::pool::indy_open_pool;
+use aries_vcx_core::ledger::indy::pool::indy_open_pool;
 #[cfg(feature = "modular_libs")]
 use aries_vcx_core::ledger::request_submitter::vdr_ledger::LedgerPoolConfig;
 use aries_vcx_core::wallet::base_wallet::BaseWallet;

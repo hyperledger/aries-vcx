@@ -35,10 +35,10 @@ pub fn verify_transaction_can_be_endorsed(transaction_json: &str, submitter_did:
     let identifier = transaction.identifier.as_str();
     if transaction.signature.is_none()
         && !transaction
-        .signatures
-        .as_ref()
-        .map(|signatures| signatures.contains_key(identifier))
-        .unwrap_or(false)
+            .signatures
+            .as_ref()
+            .map(|signatures| signatures.contains_key(identifier))
+            .unwrap_or(false)
     {
         return Err(AriesVcxCoreError::from_msg(
             AriesVcxCoreErrorKind::InvalidJson,

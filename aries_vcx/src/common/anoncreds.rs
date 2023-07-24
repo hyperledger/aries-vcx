@@ -4,7 +4,7 @@ pub mod integration_tests {
     use std::sync::Arc;
 
     use aries_vcx_core::errors::error::AriesVcxCoreErrorKind;
-    use aries_vcx_core::indy::ledger::pool::test_utils::get_temp_dir_path;
+    use aries_vcx_core::ledger::indy::pool::test_utils::get_temp_dir_path;
 
     use crate::common::test_utils::create_and_store_credential;
     use crate::utils::devsetup::SetupProfile;

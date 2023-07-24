@@ -6,7 +6,7 @@ pub mod revocation_registry_delta;
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 pub mod integration_tests {
-    use aries_vcx_core::indy::ledger::pool::test_utils::get_temp_file_path;
+    use aries_vcx_core::ledger::indy::pool::test_utils::get_temp_file_path;
     use std::sync::Arc;
 
     use crate::common::primitives::revocation_registry::generate_rev_reg;

@@ -1,6 +1,6 @@
 use std::sync::Mutex;
 
-use crate::indy::utils::mocks::ENABLED_MOCKS;
+use crate::mocks::ENABLED_MOCKS;
 
 lazy_static! {
     static ref DID_MOCK_RESPONSES: Mutex<DidMocks> = Mutex::new(DidMocks::default());

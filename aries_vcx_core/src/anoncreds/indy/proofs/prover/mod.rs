@@ -1,7 +1,7 @@
 pub mod prover;
 
-use vdrtools::Locator;
 use crate::anoncreds::indy::general::blob_storage_open_reader;
+use vdrtools::Locator;
 
 use crate::errors::error::VcxCoreResult;
 use crate::global::settings;

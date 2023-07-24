@@ -26,7 +26,7 @@ use aries_vcx::protocols::mediated_connection::invitee::state_machine::InviteeSt
 use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
 use aries_vcx::utils::devsetup::{SetupPoolDirectory, SetupProfile, AGENCY_DID, AGENCY_ENDPOINT, AGENCY_VERKEY};
 use aries_vcx::utils::provision::provision_cloud_agent;
-use aries_vcx_core::indy::ledger::pool::indy_open_pool;
+use aries_vcx_core::ledger::indy::pool::indy_open_pool;
 #[cfg(feature = "modular_libs")]
 use aries_vcx_core::ledger::request_submitter::vdr_ledger::LedgerPoolConfig;
 use aries_vcx_core::wallet::base_wallet::BaseWallet;

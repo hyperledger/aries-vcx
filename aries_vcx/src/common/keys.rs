@@ -87,7 +87,7 @@ mod test {
     async fn test_pool_rotate_verkey_fails() {
         use super::*;
 
-        use aries_vcx_core::indy::utils::mocks::pool_mocks::{enable_pool_mocks, PoolMocks};
+        use aries_vcx_core::mocks::pool_mocks::{enable_pool_mocks, PoolMocks};
 
         use crate::utils::devsetup::*;
         use crate::utils::mockdata::mockdata_pool;

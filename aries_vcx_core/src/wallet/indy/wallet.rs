@@ -6,12 +6,12 @@ use vdrtools::{
     DidMethod, DidValue, KeyInfo, Locator, MyDidInfo,
 };
 
-use crate::indy::utils::mocks::did_mocks::{did_mocks_enabled, DidMocks};
+use crate::mocks::did_mocks::{did_mocks_enabled, DidMocks};
 use crate::wallet::indy::{IssuerConfig, RestoreWalletConfigs, WalletConfig};
 use crate::SearchHandle;
 use crate::{
-    errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
     anoncreds::indy::credentials::holder,
+    errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
 };
 use crate::{global::settings, WalletHandle};
 use crate::{secret, utils};

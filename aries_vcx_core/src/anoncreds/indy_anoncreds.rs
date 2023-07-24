@@ -1,11 +1,11 @@
 use async_trait::async_trait;
 use vdrtools::{DidValue, Locator};
 
+use crate::anoncreds::indy::primitives::credential_schema::libindy_issuer_create_schema;
 use crate::errors::error::VcxCoreResult;
+use crate::indy::utils::parse_and_validate;
 use crate::wallet::indy::wallet_non_secrets::{clear_rev_reg_delta, get_rev_reg_delta};
 use crate::{anoncreds, indy, WalletHandle};
-use crate::anoncreds::indy::primitives::credential_schema::libindy_issuer_create_schema;
-use crate::indy::utils::parse_and_validate;
 
 use super::base_anoncreds::BaseAnonCreds;
 
@@ -85,7 +85,11 @@ impl BaseAnonCreds for IndySdkAnonCreds {
     }
 
     async fn issuer_create_credential_offer(&self, cred_def_id: &str) -> VcxCoreResult<String> {
-        anoncreds::indy::credentials::issuer::libindy_issuer_create_credential_offer(self.indy_wallet_handle, cred_def_id).await
+        anoncreds::indy::credentials::issuer::libindy_issuer_create_credential_offer(
+            self.indy_wallet_handle,
+            cred_def_id,
+        )
+        .await
     }
 
     async fn issuer_create_credential(
@@ -133,12 +137,16 @@ impl BaseAnonCreds for IndySdkAnonCreds {
     }
 
     async fn prover_get_credentials(&self, filter_json: Option<&str>) -> VcxCoreResult<String> {
-        anoncreds::indy::proofs::prover::prover::libindy_prover_get_credentials(self.indy_wallet_handle, filter_json).await
+        anoncreds::indy::proofs::prover::prover::libindy_prover_get_credentials(self.indy_wallet_handle, filter_json)
+            .await
     }
 
     async fn prover_get_credentials_for_proof_req(&self, proof_req: &str) -> VcxCoreResult<String> {
-        anoncreds::indy::proofs::prover::prover::libindy_prover_get_credentials_for_proof_req(self.indy_wallet_handle, proof_req)
-            .await
+        anoncreds::indy::proofs::prover::prover::libindy_prover_get_credentials_for_proof_req(
+            self.indy_wallet_handle,
+            proof_req,
+        )
+        .await
     }
 
     async fn prover_create_credential_req(
@@ -200,7 +208,11 @@ impl BaseAnonCreds for IndySdkAnonCreds {
     }
 
     async fn prover_create_link_secret(&self, master_secret_id: &str) -> VcxCoreResult<String> {
-        anoncreds::indy::credentials::holder::libindy_prover_create_master_secret(self.indy_wallet_handle, master_secret_id).await
+        anoncreds::indy::credentials::holder::libindy_prover_create_master_secret(
+            self.indy_wallet_handle,
+            master_secret_id,
+        )
+        .await
     }
 
     async fn issuer_create_schema(

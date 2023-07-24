@@ -286,7 +286,7 @@ pub async fn generate_cred_def(
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 pub mod integration_tests {
-    use aries_vcx_core::indy::ledger::pool::test_utils::get_temp_dir_path;
+    use aries_vcx_core::ledger::indy::pool::test_utils::get_temp_dir_path;
     use std::sync::Arc;
 
     use crate::common::primitives::credential_definition::generate_cred_def;
