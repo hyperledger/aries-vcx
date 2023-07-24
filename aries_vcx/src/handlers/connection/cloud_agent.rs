@@ -12,7 +12,7 @@ use crate::agency_client::MessageStatusCode;
 use crate::errors::error::prelude::*;
 use crate::protocols::mediated_connection::pairwise_info::PairwiseInfo;
 use crate::utils::encryption_envelope::EncryptionEnvelope;
-use aries_vcx_core::wallet::agency_client_wallet::ToBaseWallet;
+use aries_vcx_core::wallet::indy::agency_client_wallet::ToBaseWallet;
 
 #[derive(Default, Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct CloudAgentInfo {

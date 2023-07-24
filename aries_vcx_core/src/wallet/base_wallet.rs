@@ -1,11 +1,12 @@
+use std::collections::HashMap;
+
 use async_trait::async_trait;
+
+#[cfg(feature = "vdrtools")]
+use vdrtools::WalletHandle;
 
 use crate::errors::error::VcxCoreResult;
 use crate::utils::async_fn_iterator::AsyncFnIterator;
-
-use std::collections::HashMap;
-#[cfg(feature = "vdrtools")]
-use vdrtools::WalletHandle;
 
 /// Trait defining standard 'wallet' related functionality. The APIs, including
 /// input and output types are loosely based off the indy Wallet API:
@@ -64,7 +65,7 @@ pub trait BaseWallet: std::fmt::Debug + Send + Sync {
         xtype: &str,
         query: &str,
         options: &str,
-    ) -> VcxCoreResult<Box<dyn AsyncFnIterator<Item = VcxCoreResult<String>>>>;
+    ) -> VcxCoreResult<Box<dyn AsyncFnIterator<Item=VcxCoreResult<String>>>>;
 
     // ---- crypto
 
@@ -85,7 +86,7 @@ pub trait AsyncFnIteratorCollect {
 }
 
 #[async_trait]
-impl AsyncFnIteratorCollect for Box<dyn AsyncFnIterator<Item = VcxCoreResult<String>>> {
+impl AsyncFnIteratorCollect for Box<dyn AsyncFnIterator<Item=VcxCoreResult<String>>> {
     type Item = String;
 
     async fn collect(&mut self) -> VcxCoreResult<Vec<Self::Item>> {

@@ -16,7 +16,7 @@ mod integration_tests {
     use agency_client::MessageStatusCode;
     use aries_vcx::global::settings;
     use aries_vcx::utils::devsetup::SetupPoolDirectory;
-    use aries_vcx_core::wallet::agency_client_wallet::ToBaseAgencyClientWallet;
+    use aries_vcx_core::wallet::indy::agency_client_wallet::ToBaseAgencyClientWallet;
     use aries_vcx_core::wallet::indy::{IndySdkWallet, WalletConfig};
     use messages::msg_fields::protocols::cred_issuance::offer_credential::OfferCredentialDecorators;
     use messages::msg_fields::protocols::cred_issuance::{CredentialAttr, CredentialPreview};

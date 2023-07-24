@@ -1,14 +1,16 @@
-use crate::utils::async_fn_iterator::AsyncFnIterator;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use super::base_wallet::BaseWallet;
-use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
+use async_trait::async_trait;
+
 use agency_client::errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 use agency_client::wallet::base_agency_client_wallet::BaseAgencyClientWallet;
-use async_trait::async_trait;
 #[cfg(feature = "vdrtools")]
 use vdrtools::WalletHandle;
+
+use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
+use crate::utils::async_fn_iterator::AsyncFnIterator;
+use crate::wallet::base_wallet::BaseWallet;
 
 #[derive(Debug)]
 pub(crate) struct AgencyClientWallet {
@@ -88,7 +90,7 @@ impl BaseWallet for AgencyClientWallet {
         xtype: &str,
         query: &str,
         options: &str,
-    ) -> VcxCoreResult<Box<dyn AsyncFnIterator<Item = VcxCoreResult<String>>>> {
+    ) -> VcxCoreResult<Box<dyn AsyncFnIterator<Item=VcxCoreResult<String>>>> {
         Err(unimplemented_agency_client_wallet_method("iterate_wallet_records"))
     }
 
@@ -133,8 +135,6 @@ fn unimplemented_agency_client_wallet_method(method_name: &str) -> AriesVcxCoreE
         format!("AgencyClientWallet::{method_name} is not intended to be used."),
     )
 }
-
-// --------------------------------------------
 
 #[derive(Debug)]
 pub(crate) struct BaseWalletAgencyClientWallet {

@@ -1,19 +1,20 @@
-pub mod internal;
-pub mod indy_wallet;
-
 use std::collections::HashMap;
 use std::thread;
 
 use async_trait::async_trait;
 use futures::executor::block_on;
-use serde_json::Value;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 
-use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
 use crate::{indy, utils::{async_fn_iterator::AsyncFnIterator, json::TryGetIndex}, wallet};
 use crate::{SearchHandle, WalletHandle};
+use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
 
 use super::base_wallet::BaseWallet;
+
+pub mod internal;
+pub mod indy_wallet;
+pub mod agency_client_wallet;
 
 #[derive(Debug)]
 pub struct IndySdkWallet {
