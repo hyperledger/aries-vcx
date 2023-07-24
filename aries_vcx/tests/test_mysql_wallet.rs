@@ -12,11 +12,10 @@ mod dbtests {
     use aries_vcx::utils::devsetup::{AGENCY_DID, AGENCY_ENDPOINT, AGENCY_VERKEY};
     use aries_vcx::utils::provision::provision_cloud_agent;
     use aries_vcx::utils::test_logger::LibvcxDefaultLogger;
-    use aries_vcx_core::indy::wallet::WalletConfigBuilder;
     use aries_vcx_core::wallet::indy::wallet::{
         close_wallet, create_wallet_with_master_secret, open_wallet, wallet_configure_issuer,
     };
-    use aries_vcx_core::wallet::indy::{IndySdkWallet, WalletConfig};
+    use aries_vcx_core::wallet::indy::{IndySdkWallet, WalletConfig, WalletConfigBuilder};
 
     #[tokio::test]
     #[ignore]
