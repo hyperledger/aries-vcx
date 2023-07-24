@@ -197,7 +197,6 @@ jobs:
           cargo check --features vdrtools --no-default-features
           cargo check --features modular_libs --no-default-features
           cargo check --features vdr_proxy_ledger --no-default-features
-          cargo check --features mixed_breed
 
   ##########################################################################################
   ##############################   DOCKER BUILD   ##########################################
@@ -482,17 +481,6 @@ jobs:
         uses: ./.github/actions/upload-docker-logs
         with:
           name: "docker-services-${{ github.job }}"
-
-  test-integration-aries-vcx-mixed-breed:
-    needs: workflow-setup
-    runs-on: ubuntu-20.04
-    steps:
-      - name: "Git checkout"
-        uses: actions/checkout@v3
-      - name: "Setup rust testing environment"
-        uses: ./.github/actions/setup-testing-rust
-      - name: "Run aries-vcx integration tests"
-        run: RUST_TEST_THREADS=1 cargo test --manifest-path="aries_vcx/Cargo.toml" -F mixed_breed -- --include-ignored;
 
   test-integration-aries-vcx-migration:
     needs: workflow-setup
