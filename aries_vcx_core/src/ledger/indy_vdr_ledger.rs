@@ -18,7 +18,7 @@ use vdr::pool::{LedgerType, PreparedRequest, ProtocolVersion as VdrProtocolVersi
 use vdr::utils::did::DidValue;
 use vdr::utils::Qualifiable;
 
-use crate::common::ledger::transactions::verify_transaction_can_be_endorsed;
+use crate::ledger::common::verify_transaction_can_be_endorsed;
 use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
 use crate::ledger::base_ledger::{TaaConfigurator, TxnAuthrAgrmtOptions};
 

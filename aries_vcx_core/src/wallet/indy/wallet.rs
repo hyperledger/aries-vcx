@@ -11,7 +11,7 @@ use crate::wallet::indy::{IssuerConfig, RestoreWalletConfigs, WalletConfig};
 use crate::SearchHandle;
 use crate::{
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
-    indy::credentials::holder,
+    anoncreds::indy::credentials::holder,
 };
 use crate::{global::settings, WalletHandle};
 use crate::{secret, utils};

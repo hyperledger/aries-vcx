@@ -11,6 +11,7 @@ pub mod request_signer;
 pub mod request_submitter;
 #[cfg(any(feature = "modular_libs", feature = "vdr_proxy_ledger"))]
 pub mod response_cacher;
+pub mod common;
 
 fn map_error_not_found_to_none<T, E>(res: Result<T, E>) -> Result<Option<T>, AriesVcxCoreError>
 where

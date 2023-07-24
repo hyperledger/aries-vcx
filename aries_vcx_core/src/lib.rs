@@ -27,7 +27,6 @@ extern crate log;
 extern crate derive_builder;
 
 pub mod anoncreds;
-mod common;
 pub mod errors;
 pub mod global;
 #[cfg(feature = "vdrtools")]

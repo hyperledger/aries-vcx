@@ -1,18 +1,64 @@
-use vdrtools::{DidValue, Locator};
+use vdrtools::{CredentialOffer, CredentialRequest, CredentialValues, DidValue, Locator, RevocationRegistryId};
 
+use crate::{utils, WalletHandle};
+use crate::anoncreds::indy::general;
+use crate::anoncreds::indy::general::blob_storage_open_reader;
 use crate::errors::error::VcxCoreResult;
 use crate::global::settings;
-use crate::indy::anoncreds;
-use crate::indy::ledger::transactions::{
-    build_rev_reg_delta_request, build_rev_reg_request, check_response, sign_and_submit_to_ledger,
-};
 use crate::indy::utils::parse_and_validate;
+use crate::utils::constants::LIBINDY_CRED_OFFER;
 use crate::wallet::indy::wallet_non_secrets::{get_rev_reg_delta, set_rev_reg_delta};
-use crate::{PoolHandle, WalletHandle};
+
+pub async fn libindy_issuer_create_credential_offer(
+    wallet_handle: WalletHandle,
+    cred_def_id: &str,
+) -> VcxCoreResult<String> {
+    if settings::indy_mocks_enabled() {
+        return Ok(LIBINDY_CRED_OFFER.to_string());
+    }
+
+    let res = Locator::instance()
+        .issuer_controller
+        .create_credential_offer(wallet_handle, vdrtools::CredentialDefinitionId(cred_def_id.into()))
+        .await?;
+
+    Ok(res)
+}
+
+pub async fn libindy_issuer_create_credential(
+    wallet_handle: WalletHandle,
+    cred_offer_json: &str,
+    cred_req_json: &str,
+    cred_values_json: &str,
+    rev_reg_id: Option<String>,
+    tails_file: Option<String>,
+) -> VcxCoreResult<(String, Option<String>, Option<String>)> {
+    if settings::indy_mocks_enabled() {
+        return Ok((utils::constants::CREDENTIAL_JSON.to_owned(), None, None));
+    }
+
+    let blob_handle = match tails_file {
+        Some(x) => Some(blob_storage_open_reader(&x).await?),
+        None => None,
+    };
+
+    let res = Locator::instance()
+        .issuer_controller
+        .new_credential(
+            wallet_handle,
+            parse_and_validate::<CredentialOffer>(cred_offer_json)?,
+            parse_and_validate::<CredentialRequest>(cred_req_json)?,
+            parse_and_validate::<CredentialValues>(cred_values_json)?,
+            rev_reg_id.map(RevocationRegistryId),
+            blob_handle,
+        )
+        .await?;
+
+    Ok(res)
+}
 
 pub const BLOB_STORAGE_TYPE: &str = "default";
 
-// consider relocating out of primitive
 pub async fn libindy_create_and_store_revoc_reg(
     wallet_handle: WalletHandle,
     issuer_did: &str,
@@ -49,14 +95,13 @@ pub async fn libindy_create_and_store_revoc_reg(
     Ok(res)
 }
 
-// consider relocating out of primitive
 pub async fn libindy_issuer_revoke_credential(
     wallet_handle: WalletHandle,
     tails_file: &str,
     rev_reg_id: &str,
     cred_rev_id: &str,
 ) -> VcxCoreResult<String> {
-    let blob_handle = anoncreds::blob_storage_open_reader(tails_file).await?;
+    let blob_handle = general::blob_storage_open_reader(tails_file).await?;
 
     let res = Locator::instance()
         .issuer_controller
@@ -71,7 +116,6 @@ pub async fn libindy_issuer_revoke_credential(
     Ok(res)
 }
 
-// consider relocating out of primitive
 pub async fn libindy_issuer_merge_revocation_registry_deltas(
     old_delta: &str,
     new_delta: &str,
@@ -83,49 +127,6 @@ pub async fn libindy_issuer_merge_revocation_registry_deltas(
     Ok(res)
 }
 
-pub async fn publish_rev_reg_def(
-    wallet_handle: WalletHandle,
-    pool_handle: PoolHandle,
-    issuer_did: &str,
-    rev_reg_def: &str,
-) -> VcxCoreResult<()> {
-    trace!("publish_rev_reg_def >>> issuer_did: {}, rev_reg_def: ...", issuer_did);
-    if settings::indy_mocks_enabled() {
-        debug!("publish_rev_reg_def >>> mocked success");
-        return Ok(());
-    }
-
-    let rev_reg_def_req = build_rev_reg_request(issuer_did, rev_reg_def).await?;
-
-    let response = sign_and_submit_to_ledger(wallet_handle, pool_handle, issuer_did, &rev_reg_def_req).await?;
-
-    check_response(&response)
-}
-
-pub async fn publish_rev_reg_delta(
-    wallet_handle: WalletHandle,
-    pool_handle: PoolHandle,
-    issuer_did: &str,
-    rev_reg_id: &str,
-    revoc_reg_delta_json: &str,
-) -> VcxCoreResult<String> {
-    trace!(
-        "publish_rev_reg_delta >>> issuer_did: {}, rev_reg_id: {}, revoc_reg_delta_json: {}",
-        issuer_did,
-        rev_reg_id,
-        revoc_reg_delta_json
-    );
-
-    let request = build_rev_reg_delta_request(issuer_did, rev_reg_id, revoc_reg_delta_json).await?;
-
-    let response = sign_and_submit_to_ledger(wallet_handle, pool_handle, issuer_did, &request).await?;
-
-    check_response(&response)?;
-
-    Ok(response)
-}
-
-// consider moving out of indy dir as this aggregates multiple calls
 pub async fn revoke_credential_local(
     wallet_handle: WalletHandle,
     tails_file: &str,

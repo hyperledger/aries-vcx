@@ -1,6 +1,7 @@
 pub mod prover;
 
 use vdrtools::Locator;
+use crate::anoncreds::indy::general::blob_storage_open_reader;
 
 use crate::errors::error::VcxCoreResult;
 use crate::global::settings;
@@ -19,7 +20,7 @@ pub async fn libindy_prover_create_revocation_state(
         return Ok(REV_STATE_JSON.to_string());
     }
 
-    let blob_handle = indy::anoncreds::blob_storage_open_reader(tails_file_path).await?;
+    let blob_handle = blob_storage_open_reader(tails_file_path).await?;
 
     let res = Locator::instance()
         .prover_controller

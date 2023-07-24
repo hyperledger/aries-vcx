@@ -1,7 +1,8 @@
 use time::OffsetDateTime;
+use serde::Deserialize;
 use vdrtools::{DidValue, Locator};
 
-use crate::common::ledger::transactions::{verify_transaction_can_be_endorsed, Response};
+use crate::ledger::common::verify_transaction_can_be_endorsed;
 use crate::errors::error::prelude::*;
 use crate::global::author_agreement::get_vdrtools_config_txn_author_agreement;
 use crate::global::settings;
@@ -9,10 +10,10 @@ use crate::global::settings::get_sample_did;
 use crate::indy::utils::mocks::pool_mocks::PoolMocks;
 use crate::indy::utils::parse_and_validate;
 use crate::utils::constants::{
-    rev_def_json, CRED_DEF_ID, CRED_DEF_JSON, CRED_DEF_REQ, REVOC_REG_TYPE, REV_REG_DELTA_JSON, REV_REG_ID,
-    REV_REG_JSON, SCHEMA_ID, SCHEMA_JSON, SCHEMA_TXN, SUBMIT_SCHEMA_RESPONSE,
+    CRED_DEF_ID, CRED_DEF_JSON, CRED_DEF_REQ, rev_def_json, REV_REG_DELTA_JSON, REV_REG_ID, REV_REG_JSON,
+    REVOC_REG_TYPE, SCHEMA_ID, SCHEMA_JSON, SCHEMA_TXN, SUBMIT_SCHEMA_RESPONSE,
 };
-use crate::{utils, PoolHandle, WalletHandle};
+use crate::{PoolHandle, utils, WalletHandle};
 
 pub async fn multisign_request(wallet_handle: WalletHandle, did: &str, request: &str) -> VcxCoreResult<String> {
     let res = Locator::instance()
@@ -648,7 +649,7 @@ pub fn _check_schema_response(response: &str) -> VcxCoreResult<()> {
     }
 }
 
-pub(in crate::indy) fn check_response(response: &str) -> VcxCoreResult<()> {
+pub fn check_response(response: &str) -> VcxCoreResult<()> {
     if settings::indy_mocks_enabled() {
         return Ok(());
     }
@@ -703,4 +704,43 @@ pub async fn get_cred_def_json(
     let cred_def_json = libindy_get_cred_def(wallet_handle, pool_handle, cred_def_id).await?;
 
     Ok((cred_def_id.to_string(), cred_def_json))
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(tag = "op")]
+pub enum Response {
+    #[serde(rename = "REQNACK")]
+    ReqNACK(Reject),
+    #[serde(rename = "REJECT")]
+    Reject(Reject),
+    #[serde(rename = "REPLY")]
+    Reply(Reply),
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct Reject {
+    pub reason: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+pub enum Reply {
+    ReplyV0(ReplyV0),
+    ReplyV1(ReplyV1),
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ReplyV0 {
+    pub result: serde_json::Value,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ReplyV1 {
+    pub data: ReplyDataV1,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ReplyDataV1 {
+    pub result: serde_json::Value,
 }

@@ -2,6 +2,8 @@ use async_trait::async_trait;
 
 use crate::errors::error::VcxCoreResult;
 use crate::{indy, PoolHandle, WalletHandle};
+use crate::global::settings;
+use crate::indy::ledger::transactions::{_check_schema_response, build_cred_def_request, build_rev_reg_delta_request, build_rev_reg_request, build_schema_request, check_response, set_endorser, sign_and_submit_to_ledger};
 
 use super::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite};
 use super::map_error_not_found_to_none;
@@ -161,50 +163,71 @@ impl AnoncredsLedgerWrite for IndySdkLedgerWrite {
         submitter_did: &str,
         endorser_did: Option<String>,
     ) -> VcxCoreResult<()> {
-        indy::primitives::credential_schema::publish_schema(
-            self.indy_wallet_handle,
-            self.indy_pool_handle,
-            submitter_did,
-            schema_json,
-            endorser_did,
-        )
-        .await
+        trace!(
+        "publish_schema >>> submitter_did: {:?}, schema_json: {:?}, endorser_did: {:?}",
+        submitter_did,
+        schema_json,
+        endorser_did
+    );
+
+        if settings::indy_mocks_enabled() {
+            debug!("publish_schema >>> mocked success");
+            return Ok(());
+        }
+
+        let mut request = build_schema_request(submitter_did, schema_json).await?;
+        if let Some(endorser_did) = endorser_did {
+            request = set_endorser(self.indy_wallet_handle, submitter_did, &request, &endorser_did).await?;
+        }
+        let response = sign_and_submit_to_ledger(self.indy_wallet_handle, self.indy_pool_handle, submitter_did, &request).await?;
+        _check_schema_response(&response)?;
+
+        Ok(())
     }
 
-    async fn publish_cred_def(&self, cred_def_json: &str, submitter_did: &str) -> VcxCoreResult<()> {
-        indy::primitives::credential_definition::publish_cred_def(
-            self.indy_wallet_handle,
-            self.indy_pool_handle,
-            submitter_did,
-            cred_def_json,
-        )
-        .await
+    async fn publish_cred_def(&self, cred_def_json: &str, issuer_did: &str) -> VcxCoreResult<()> {
+        trace!(
+        "publish_cred_def >>> issuer_did: {}, cred_def_json: {}",
+        issuer_did,
+        cred_def_json
+    );
+        if settings::indy_mocks_enabled() {
+            debug!("publish_cred_def >>> mocked success");
+            return Ok(());
+        }
+        let cred_def_req = build_cred_def_request(issuer_did, cred_def_json).await?;
+        let response = sign_and_submit_to_ledger(self.indy_wallet_handle, self.indy_pool_handle, issuer_did, &cred_def_req).await?;
+        check_response(&response)
     }
 
-    async fn publish_rev_reg_def(&self, rev_reg_def: &str, submitter_did: &str) -> VcxCoreResult<()> {
-        indy::primitives::revocation_registry::publish_rev_reg_def(
-            self.indy_wallet_handle,
-            self.indy_pool_handle,
-            submitter_did,
-            rev_reg_def,
-        )
-        .await
+    async fn publish_rev_reg_def(&self, rev_reg_def: &str, issuer_did: &str) -> VcxCoreResult<()> {
+        trace!("publish_rev_reg_def >>> issuer_did: {}, rev_reg_def: ...", issuer_did);
+        if settings::indy_mocks_enabled() {
+            debug!("publish_rev_reg_def >>> mocked success");
+            return Ok(());
+        }
+
+        let rev_reg_def_req = build_rev_reg_request(issuer_did, rev_reg_def).await?;
+        let response = sign_and_submit_to_ledger(self.indy_wallet_handle, self.indy_pool_handle, issuer_did, &rev_reg_def_req).await?;
+        check_response(&response)
     }
 
     async fn publish_rev_reg_delta(
         &self,
         rev_reg_id: &str,
-        rev_reg_entry_json: &str,
-        submitter_did: &str,
+        revoc_reg_delta_json: &str,
+        issuer_did: &str,
     ) -> VcxCoreResult<()> {
-        indy::primitives::revocation_registry::publish_rev_reg_delta(
-            self.indy_wallet_handle,
-            self.indy_pool_handle,
-            submitter_did,
-            rev_reg_id,
-            rev_reg_entry_json,
-        )
-        .await?;
+        trace!(
+        "publish_rev_reg_delta >>> issuer_did: {}, rev_reg_id: {}, revoc_reg_delta_json: {}",
+        issuer_did,
+        rev_reg_id,
+        revoc_reg_delta_json
+    );
+
+        let request = build_rev_reg_delta_request(issuer_did, rev_reg_id, revoc_reg_delta_json).await?;
+        let response = sign_and_submit_to_ledger(self.indy_wallet_handle, self.indy_pool_handle, issuer_did, &request).await?;
+        check_response(&response)?;
 
         Ok(())
     }

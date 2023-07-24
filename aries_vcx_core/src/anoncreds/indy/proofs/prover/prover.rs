@@ -4,10 +4,10 @@ use vdrtools::{Locator, SearchHandle};
 use crate::errors::error::prelude::*;
 use crate::global::mockdata::mock_settings::get_mock_creds_retrieved_for_proof_request;
 use crate::global::settings;
-use crate::indy::anoncreds::close_search_handle;
 use crate::indy::utils::parse_and_validate;
 use crate::utils::constants::{ATTRS, PROOF_REQUESTED_PREDICATES, REQUESTED_ATTRIBUTES};
 use crate::{utils, WalletHandle};
+use crate::anoncreds::indy::general::close_search_handle;
 
 pub async fn libindy_prover_create_proof(
     wallet_handle: WalletHandle,
