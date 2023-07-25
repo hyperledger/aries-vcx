@@ -78,51 +78,53 @@ pub async fn get_verkey_from_ledger(indy_ledger: &Arc<dyn IndyLedgerRead>, did: 
         .to_string())
 }
 
-#[cfg(test)]
-#[allow(clippy::unwrap_used)]
-mod test {
-    use aries_vcx_core::ledger::indy::pool_mocks::{enable_pool_mocks, PoolMocks};
-
-    #[tokio::test]
-    #[ignore]
-    #[cfg(all(not(feature = "vdr_proxy_ledger"), not(feature = "modular_libs"),))]
-    async fn test_pool_rotate_verkey_fails() {
-        use super::*;
-
-        use crate::utils::devsetup::*;
-        use crate::utils::mockdata::mockdata_pool;
-
-        SetupProfile::run(|setup| async move {
-            enable_pool_mocks();
-
-            PoolMocks::set_next_pool_response(mockdata_pool::RESPONSE_REQNACK);
-            PoolMocks::set_next_pool_response(mockdata_pool::NYM_REQUEST_VALID);
-
-            let local_verkey_1 = setup
-                .profile
-                .inject_wallet()
-                .key_for_local_did(&setup.institution_did)
-                .await
-                .unwrap();
-            assert_eq!(
-                rotate_verkey(
-                    &setup.profile.inject_wallet(),
-                    &setup.profile.inject_indy_ledger_write(),
-                    &setup.institution_did
-                )
-                .await
-                .unwrap_err()
-                .kind(),
-                AriesVcxErrorKind::InvalidLedgerResponse
-            );
-            let local_verkey_2 = setup
-                .profile
-                .inject_wallet()
-                .key_for_local_did(&setup.institution_did)
-                .await
-                .unwrap();
-            assert_eq!(local_verkey_1, local_verkey_2);
-        })
-        .await;
-    }
-}
+// todo: was originally written for vdrtool ledger implementation, ideally we should moc out
+//       ledger client completely
+// #[cfg(test)]
+// #[allow(clippy::unwrap_used)]
+// mod test {
+//     use aries_vcx_core::ledger::indy::pool_mocks::{enable_pool_mocks, PoolMocks};
+//
+//     #[tokio::test]
+//     #[ignore]
+//     #[cfg(all(not(feature = "vdr_proxy_ledger"), not(feature = "modular_libs"),))]
+//     async fn test_pool_rotate_verkey_fails() {
+//         use super::*;
+//
+//         use crate::utils::devsetup::*;
+//         use crate::utils::mockdata::mockdata_pool;
+//
+//         SetupProfile::run(|setup| async move {
+//             enable_pool_mocks();
+//
+//             PoolMocks::set_next_pool_response(mockdata_pool::RESPONSE_REQNACK);
+//             PoolMocks::set_next_pool_response(mockdata_pool::NYM_REQUEST_VALID);
+//
+//             let local_verkey_1 = setup
+//                 .profile
+//                 .inject_wallet()
+//                 .key_for_local_did(&setup.institution_did)
+//                 .await
+//                 .unwrap();
+//             assert_eq!(
+//                 rotate_verkey(
+//                     &setup.profile.inject_wallet(),
+//                     &setup.profile.inject_indy_ledger_write(),
+//                     &setup.institution_did
+//                 )
+//                 .await
+//                 .unwrap_err()
+//                 .kind(),
+//                 AriesVcxErrorKind::InvalidLedgerResponse
+//             );
+//             let local_verkey_2 = setup
+//                 .profile
+//                 .inject_wallet()
+//                 .key_for_local_did(&setup.institution_did)
+//                 .await
+//                 .unwrap();
+//             assert_eq!(local_verkey_1, local_verkey_2);
+//         })
+//         .await;
+//     }
+// }

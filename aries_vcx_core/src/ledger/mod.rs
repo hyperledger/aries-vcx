@@ -3,19 +3,11 @@ use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind};
 pub mod base_ledger;
 pub mod common;
 
-#[cfg(any(feature = "modular_libs", feature = "vdr_proxy_ledger"))]
-pub mod indy_vdr_ledger;
-#[cfg(any(feature = "modular_libs", feature = "vdr_proxy_ledger"))]
-pub mod request_signer;
-#[cfg(any(feature = "modular_libs", feature = "vdr_proxy_ledger"))]
-pub mod request_submitter;
-#[cfg(any(feature = "modular_libs", feature = "vdr_proxy_ledger"))]
-pub mod response_cacher;
-
-#[cfg(feature = "vdrtools_ledger")]
 pub mod indy;
-#[cfg(feature = "vdrtools_ledger")]
-pub mod indy_ledger;
+pub mod indy_vdr_ledger;
+pub mod request_signer;
+pub mod request_submitter;
+pub mod response_cacher;
 
 fn map_error_not_found_to_none<T, E>(res: Result<T, E>) -> Result<Option<T>, AriesVcxCoreError>
 where

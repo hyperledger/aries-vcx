@@ -66,10 +66,9 @@ async function createVcxAgent ({ agentName, genesisPath, agencyUrl, seed, wallet
   async function acceptTaa () {
     const taa = await getLedgerAuthorAgreement()
     const taaJson = JSON.parse(taa)
-    const utime = Math.floor(new Date() / 1000)
     const acceptanceMechanism = Object.keys(taaJson.aml)[0]
-    logger.info(`Accepting TAA using mechanism ${acceptanceMechanism} at time ${utime}`)
-    await setActiveTxnAuthorAgreementMeta(taaJson.text, taaJson.version, null, acceptanceMechanism, utime)
+    logger.info(`Accepting TAA using mechanism ${acceptanceMechanism}`)
+    await setActiveTxnAuthorAgreementMeta(taaJson.text, taaJson.version, acceptanceMechanism)
   }
 
   function getInstitutionDid () {

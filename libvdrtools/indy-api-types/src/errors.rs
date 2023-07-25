@@ -212,16 +212,6 @@ impl From<io::Error> for IndyError {
     }
 }
 
-#[cfg(feature = "casting_errors_ledger")]
-impl From<zmq::Error> for IndyError {
-    fn from(err: zmq::Error) -> Self {
-        IndyError {
-            kind: IndyErrorKind::IOError,
-            msg: Arc::new(err.to_string()),
-        }
-    }
-}
-
 impl From<cell::BorrowError> for IndyError {
     fn from(err: cell::BorrowError) -> Self {
         IndyError {

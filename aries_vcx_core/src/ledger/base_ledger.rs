@@ -1,6 +1,7 @@
 use std::fmt::Debug;
 
 use async_trait::async_trait;
+use serde::Serialize;
 
 use crate::errors::error::VcxCoreResult;
 
@@ -61,11 +62,12 @@ pub trait AnoncredsLedgerWrite: Debug + Send + Sync {
 
 pub trait TaaConfigurator: Debug + Send + Sync {
     fn set_txn_author_agreement_options(&self, taa_options: TxnAuthrAgrmtOptions) -> VcxCoreResult<()>;
+    fn get_txn_author_agreement_options(&self) -> VcxCoreResult<Option<TxnAuthrAgrmtOptions>>;
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize)]
 pub struct TxnAuthrAgrmtOptions {
     pub text: String,
     pub version: String,
-    pub aml_label: String,
+    pub mechanism: String,
 }

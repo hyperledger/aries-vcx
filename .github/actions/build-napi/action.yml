@@ -50,7 +50,7 @@ runs:
       if: ${{ inputs.docker }}
       with:
         image: ${{ inputs.docker }}
-        options: -v /home/runner/.cargo/git/db:/root/.cargo/git/db -v /home/runner/.cargo/registry/cache:/root/.cargo/registry/cache -v /home/runner/.cargo/registry/index:/root/.cargo/registry/index -v ${{ github.workspace }}:/build -w /build
+        options: -v ${{ github.workspace }}:/build -w /build
         run: ${{ inputs.build }}
     - name: Build
       run: ${{ inputs.build }}

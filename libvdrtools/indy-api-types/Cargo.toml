@@ -7,10 +7,9 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-casting_errors_ledger = [ "zmq" ]
 casting_errors_wallet = [ "sqlx" ]
 casting_errors_misc = [ "openssl", "rust-base58", "ursa"]
-casting_errors = [ "casting_errors_ledger", "casting_errors_wallet", "casting_errors_misc"]
+casting_errors = [ "casting_errors_wallet", "casting_errors_misc"]
 rust-base58 = ["bs58"]
 
 [dependencies]
@@ -25,6 +24,5 @@ serde_json = "1.0.40"
 serde_derive = "1.0.99"
 sqlx = { version = "0.5.8", git = "https://github.com/jovfer/sqlx", branch = "feature/json_no_preserve_order_v5", features = [ "sqlite", "json_no_preserve_order", "runtime-tokio-rustls" ], optional = true }
 zeroize = "~1.3.0"
-zmq = {version = "0.9.1", optional = true}
 ursa = { version = "0.3.7", optional = true}
 aes = "0.7.4"

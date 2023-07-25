@@ -1,6 +1,3 @@
-#[cfg(feature = "vdrtools")]
-pub mod indy_reader;
-#[cfg(feature = "modular_libs")]
 pub mod vdr_reader;
 
 use std::sync::Arc;

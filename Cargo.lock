@@ -2552,7 +2552,6 @@ dependencies = [
  "thiserror",
  "ursa",
  "zeroize",
- "zmq",
 ]
 
 [[package]]
@@ -3017,7 +3016,6 @@ dependencies = [
  "ursa",
  "uuid 0.8.2",
  "zeroize",
- "zmq",
 ]
 
 [[package]]

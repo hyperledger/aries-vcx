@@ -9,9 +9,6 @@ extern crate serde_derive;
 #[macro_use]
 extern crate serde_json;
 
-#[cfg(feature = "casting_errors_ledger")]
-extern crate zmq;
-
 pub type IndyHandle = i32;
 
 #[repr(transparent)]
@@ -20,9 +17,6 @@ pub struct WalletHandle(pub i32);
 pub const INVALID_WALLET_HANDLE: WalletHandle = WalletHandle(0);
 
 pub type CallbackHandle = i32;
-
-pub type PoolHandle = i32;
-pub const INVALID_POOL_HANDLE: PoolHandle = 0;
 
 pub type CommandHandle = i32;
 pub const INVALID_COMMAND_HANDLE: CommandHandle = 0;

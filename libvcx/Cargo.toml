@@ -13,10 +13,7 @@ doctest = false
 
 [features]
 fatal_warnings = []
-default = ["ledger_vdrtools", "anoncreds_vdrtools"]
-
-ledger_indyvdr = ["libvcx_core/ledger_indyvdr"]
-ledger_vdrtools = ["libvcx_core/ledger_vdrtools"]
+default = ["anoncreds_vdrtools"]
 
 anoncreds_credx = ["libvcx_core/anoncreds_credx"]
 anoncreds_vdrtools = ["libvcx_core/anoncreds_vdrtools"]
