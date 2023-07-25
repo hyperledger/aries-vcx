@@ -1630,6 +1630,7 @@ name = "did_doc_sov"
 version = "0.1.0"
 dependencies = [
  "did_doc",
+ "did_key",
  "serde",
  "serde_json",
  "thiserror",
