@@ -440,7 +440,7 @@ jobs:
       - name: "Setup rust testing environment"
         uses: ./.github/actions/setup-testing-rust
       - name: "Run aries-vcx integration tests"
-        run: RUST_LOG=trace RUST_TEST_THREADS=1 cargo test --manifest-path="aries_vcx/Cargo.toml" --features ${{ matrix.features }} -- --ignored;
+        run: RUST_TEST_THREADS=1 cargo test --manifest-path="aries_vcx/Cargo.toml" --features ${{ matrix.features }} -- --ignored;
 
   test-integration-aries-vcx-mysql:
     needs: workflow-setup
