@@ -4,30 +4,29 @@ use std::fs;
 use std::future::Future;
 use std::sync::{Arc, Once};
 
-use aries_vcx_core::global::settings::{
-    disable_indy_mocks as disable_indy_mocks_core, enable_indy_mocks as enable_indy_mocks_core,
-    reset_config_values_ariesvcxcore,
-};
-use aries_vcx_core::ledger::indy::pool_mocks::PoolMocks;
-#[cfg(feature = "modular_libs")]
-use aries_vcx_core::ledger::request_submitter::vdr_ledger::LedgerPoolConfig;
-use aries_vcx_core::wallet::base_wallet::BaseWallet;
-use aries_vcx_core::{PoolHandle, WalletHandle};
 use chrono::{DateTime, Duration, Utc};
-
 use futures::future::BoxFuture;
 use uuid::Uuid;
 
 use agency_client::agency_client::AgencyClient;
 use agency_client::configuration::AgentProvisionConfig;
 use agency_client::testing::mocking::{enable_agency_mocks, AgencyMockDecrypted};
+use aries_vcx_core::global::settings::{
+    disable_indy_mocks as disable_indy_mocks_core, enable_indy_mocks as enable_indy_mocks_core,
+    reset_config_values_ariesvcxcore,
+};
 use aries_vcx_core::ledger::indy::pool::test_utils::{create_testpool_genesis_txn_file, get_temp_file_path};
 use aries_vcx_core::ledger::indy::pool::{
     create_pool_ledger_config, indy_close_pool, indy_delete_pool, indy_open_pool,
 };
+use aries_vcx_core::ledger::indy::pool_mocks::PoolMocks;
+#[cfg(feature = "modular_libs")]
+use aries_vcx_core::ledger::request_submitter::vdr_ledger::LedgerPoolConfig;
+use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use aries_vcx_core::wallet::indy::did_mocks::DidMocks;
 use aries_vcx_core::wallet::indy::wallet::{create_and_open_wallet, open_wallet, wallet_configure_issuer};
 use aries_vcx_core::wallet::indy::{IndySdkWallet, WalletConfig};
+use aries_vcx_core::{PoolHandle, WalletHandle};
 
 #[cfg(feature = "modular_libs")]
 use crate::core::profile::modular_libs_profile::ModularLibsProfile;
@@ -126,7 +125,7 @@ pub fn make_modular_profile(wallet_handle: WalletHandle, genesis_file_path: Stri
 }
 
 impl SetupProfile {
-    pub async fn build_profile(genesis_file_path: String) -> SetupProfile {
+    pub async fn _build_setup_profile(genesis_file_path: String) -> SetupProfile {
         // In case of migration test setup, we are starting with vdrtools, then we migrate
         #[cfg(any(feature = "vdrtools", feature = "migration"))]
         return {
@@ -144,6 +143,17 @@ impl SetupProfile {
             info!("SetupProfile >> using vdr proxy profile");
             SetupProfile::build_profile_vdr_proxy_ledger(genesis_file_path).await
         };
+    }
+
+    pub async fn build_setup_profile(genesis_file_path: String) -> SetupProfile {
+        let setup = Self::_build_setup_profile(genesis_file_path).await;
+        setup
+            .profile
+            .inject_anoncreds()
+            .prover_create_link_secret(settings::DEFAULT_LINK_SECRET_ALIAS)
+            .await
+            .unwrap();
+        setup
     }
 
     #[cfg(feature = "vdrtools")]
@@ -184,13 +194,6 @@ impl SetupProfile {
             )
             .unwrap(),
         );
-
-        // todo: this setup should be extracted out, is shared between profiles
-        Arc::clone(&profile)
-            .inject_anoncreds()
-            .prover_create_link_secret(settings::DEFAULT_LINK_SECRET_ALIAS)
-            .await
-            .unwrap();
 
         async fn modular_teardown() {
             // nothing to do
@@ -240,11 +243,12 @@ impl SetupProfile {
         create_testpool_genesis_txn_file(&genesis_file_path);
 
         warn!("genesis_file_path: {}", genesis_file_path);
-        let init = Self::build_profile(genesis_file_path).await;
+        let setup = Self::build_setup_profile(genesis_file_path).await;
+        // todo: this setup should be extracted out, is shared between profiles
 
-        let teardown = Arc::clone(&init.teardown);
+        let teardown = Arc::clone(&setup.teardown);
 
-        f(init).await;
+        f(setup).await;
 
         (teardown)().await;
 
@@ -400,9 +404,11 @@ pub fn was_in_past(datetime_rfc3339: &str, threshold: Duration) -> chrono::Parse
 
 #[cfg(test)]
 pub mod unit_tests {
-    use super::*;
-    use chrono::SecondsFormat;
     use std::ops::Sub;
+
+    use chrono::SecondsFormat;
+
+    use super::*;
 
     #[test]
     fn test_is_past_timestamp() {

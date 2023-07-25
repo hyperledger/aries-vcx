@@ -56,7 +56,7 @@ pub struct Faber {
 }
 
 pub async fn create_faber(genesis_file_path: String) -> Faber {
-    let profile_setup = SetupProfile::build_profile(genesis_file_path).await;
+    let profile_setup = SetupProfile::build_setup_profile(genesis_file_path).await;
     let SetupProfile {
         genesis_file_path,
         institution_did,
