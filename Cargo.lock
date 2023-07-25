@@ -1655,6 +1655,7 @@ dependencies = [
  "did_resolver",
  "multibase",
  "once_cell",
+ "public_key",
  "regex",
  "serde",
  "serde_json",
@@ -3750,6 +3751,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7b368fba921b0dce7e60f5e04ec15e565b3303972b42bcfde1d0713b881959eb"
 dependencies = [
  "unicode-ident",
+]
+
+[[package]]
+name = "public_key"
+version = "0.1.0"
+dependencies = [
+ "base64 0.21.2",
+ "bs58 0.5.0",
+ "multibase",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "unsigned-varint",
 ]
 
 [[package]]

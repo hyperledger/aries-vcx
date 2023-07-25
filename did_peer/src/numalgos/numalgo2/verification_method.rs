@@ -2,10 +2,9 @@ use did_doc::schema::verification_method::{
     IncompleteVerificationMethodBuilder, VerificationMethod, VerificationMethodType,
 };
 use did_parser::{Did, DidUrl};
+use public_key::{Key, KeyType};
 
 use crate::{error::DidPeerError, peer_did_resolver::options::PublicKeyEncoding};
-
-use super::{Key, KeyType};
 
 pub fn get_verification_methods_by_key(
     key: &Key,
@@ -51,7 +50,7 @@ pub fn get_key_by_verification_method(vm: &VerificationMethod) -> Result<Key, Di
         }
         t @ _ => return Err(DidPeerError::UnsupportedVerificationMethodType(t.to_owned())),
     };
-    Key::new(vm.public_key().key_decoded()?, key_type)
+    Ok(Key::new(vm.public_key().key_decoded()?, key_type)?)
 }
 
 fn build_verification_methods_from_type_and_key(

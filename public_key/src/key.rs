@@ -1,4 +1,4 @@
-use crate::error::DidPeerError;
+use crate::error::PublicKeyError;
 
 use super::KeyType;
 
@@ -9,7 +9,7 @@ pub struct Key {
 }
 
 impl Key {
-    pub fn new(key: Vec<u8>, key_type: KeyType) -> Result<Self, DidPeerError> {
+    pub fn new(key: Vec<u8>, key_type: KeyType) -> Result<Self, PublicKeyError> {
         // If the key is a multibase key coming from a verification method, for some reason it is also
         // multicodec encoded, so we need to strip that. But should it be?
         let key = Self::strip_multicodec_prefix_if_present(key, &key_type);
@@ -49,7 +49,7 @@ impl Key {
         multibase::encode(multibase::Base::Base58Btc, &self.key)
     }
 
-    pub fn from_fingerprint(fingerprint: &str) -> Result<Self, DidPeerError> {
+    pub fn from_fingerprint(fingerprint: &str) -> Result<Self, PublicKeyError> {
         let (_base, decoded_bytes) = multibase::decode(fingerprint)?;
         let (code, remaining_bytes) = unsigned_varint::decode::u64(&decoded_bytes)?;
         Ok(Self {

@@ -6,8 +6,10 @@ use did_doc_sov::extra_fields::ExtraFieldsSov;
 
 use crate::{
     error::DidPeerError,
-    key::get_key_by_verification_method,
-    numalgos::numalgo2::{purpose::ElementPurpose, service_abbreviated::ServiceAbbreviated},
+    numalgos::numalgo2::{
+        purpose::ElementPurpose, service_abbreviated::ServiceAbbreviated,
+        verification_method::get_key_by_verification_method,
+    },
 };
 
 pub fn append_encoded_key_segments(
