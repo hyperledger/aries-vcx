@@ -6,61 +6,6 @@ use vdrtools::Locator;
 
 use crate::errors::error::prelude::*;
 use crate::global::settings;
-use crate::PoolHandle;
-
-pub fn create_pool_ledger_config(pool_name: &str, path: &str) -> VcxCoreResult<()> {
-    let res = Locator::instance().pool_controller.create(
-        pool_name.into(),
-        Some(vdrtools::PoolConfig {
-            genesis_txn: path.into(),
-        }),
-    );
-
-    match res {
-        Ok(_) => Ok(()),
-        Err(indy) if indy.kind() == IndyErrorKind::PoolConfigAlreadyExists => Ok(()),
-        Err(indy) if indy.kind() == IndyErrorKind::IOError => Err(AriesVcxCoreError::from_msg(
-            AriesVcxCoreErrorKind::InvalidGenesisTxnPath,
-            indy.to_string(),
-        )),
-        Err(indy) => Err(AriesVcxCoreError::from_msg(
-            AriesVcxCoreErrorKind::CreatePoolConfig,
-            indy.to_string(),
-        )),
-    }
-}
-
-pub async fn indy_open_pool(pool_name: &str, config: Option<VdrtoolsPoolOpenConfig>) -> VcxCoreResult<i32> {
-    Locator::instance()
-        .pool_controller
-        .set_protocol_version(settings::get_protocol_version())?;
-
-    let handle = Locator::instance().pool_controller.open(pool_name.into(), config).await;
-
-    match handle {
-        Ok(handle) => Ok(handle),
-        Err(err) => Err(AriesVcxCoreError::from_msg(
-            AriesVcxCoreErrorKind::PoolLedgerConnect,
-            err.to_string(),
-        )),
-    }
-}
-
-pub async fn indy_close_pool(handle: PoolHandle) -> VcxCoreResult<()> {
-    // TODO there was timeout here (before future-based Rust wrapper)
-
-    Locator::instance().pool_controller.close(handle).await?;
-
-    Ok(())
-}
-
-pub async fn indy_delete_pool(pool_name: &str) -> VcxCoreResult<()> {
-    trace!("delete >>> pool_name: {}", pool_name);
-
-    Locator::instance().pool_controller.delete(pool_name.into()).await?;
-
-    Ok(())
-}
 
 pub mod test_utils {
     use std::fs;

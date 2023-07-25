@@ -36,9 +36,7 @@ pub mod utils;
 pub mod wallet;
 
 #[cfg(feature = "vdrtools")]
-pub use vdrtools::{
-    PoolHandle, SearchHandle, WalletHandle, INVALID_POOL_HANDLE, INVALID_SEARCH_HANDLE, INVALID_WALLET_HANDLE,
-};
+pub use vdrtools::{SearchHandle, WalletHandle, INVALID_SEARCH_HANDLE, INVALID_WALLET_HANDLE};
 
 #[cfg(feature = "vdr_proxy_ledger")]
 pub use indy_vdr_proxy_client::VdrProxyClient;

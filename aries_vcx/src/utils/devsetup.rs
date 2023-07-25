@@ -4,33 +4,29 @@ use std::fs;
 use std::future::Future;
 use std::sync::{Arc, Once};
 
-use chrono::{DateTime, Duration, Utc};
-use futures::future::BoxFuture;
-use uuid::Uuid;
-
-use agency_client::agency_client::AgencyClient;
-use agency_client::configuration::AgentProvisionConfig;
-use agency_client::testing::mocking::{enable_agency_mocks, AgencyMockDecrypted};
 use aries_vcx_core::global::settings::{
     disable_indy_mocks as disable_indy_mocks_core, enable_indy_mocks as enable_indy_mocks_core,
     reset_config_values_ariesvcxcore,
 };
-use aries_vcx_core::ledger::indy::pool::test_utils::{create_testpool_genesis_txn_file, get_temp_file_path};
-use aries_vcx_core::ledger::indy::pool::{
-    create_pool_ledger_config, indy_close_pool, indy_delete_pool, indy_open_pool,
-};
-use aries_vcx_core::ledger::indy::pool_mocks::PoolMocks;
-#[cfg(feature = "modular_libs")]
-use aries_vcx_core::ledger::request_submitter::vdr_ledger::LedgerPoolConfig;
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
+use aries_vcx_core::WalletHandle;
+use chrono::{DateTime, Duration, Utc};
+use futures::future::BoxFuture;
+use uuid::Uuid;
+
+use crate::core::profile::ledger::build_ledger_components;
+use agency_client::agency_client::AgencyClient;
+use agency_client::configuration::AgentProvisionConfig;
+use agency_client::testing::mocking::{enable_agency_mocks, AgencyMockDecrypted};
+use aries_vcx_core::ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite};
+use aries_vcx_core::ledger::indy::pool::test_utils::{create_testpool_genesis_txn_file, get_temp_file_path};
+use aries_vcx_core::ledger::request_submitter::vdr_ledger::LedgerPoolConfig;
 use aries_vcx_core::wallet::indy::did_mocks::DidMocks;
 use aries_vcx_core::wallet::indy::wallet::{create_and_open_wallet, open_wallet, wallet_configure_issuer};
 use aries_vcx_core::wallet::indy::{IndySdkWallet, WalletConfig};
-use aries_vcx_core::{PoolHandle, WalletHandle};
 
 #[cfg(feature = "modular_libs")]
 use crate::core::profile::modular_libs_profile::ModularLibsProfile;
-#[cfg(feature = "modular_libs")]
 use crate::core::profile::prepare_taa_options;
 use crate::core::profile::profile::Profile;
 #[cfg(feature = "vdrtools")]
@@ -67,7 +63,6 @@ pub struct SetupPoolDirectory {
 pub fn reset_global_state() {
     warn!("reset_global_state >>");
     AgencyMockDecrypted::clear_mocks();
-    PoolMocks::clear_mocks();
     DidMocks::clear_mocks();
     aries_vcx_disable_indy_mocks().unwrap();
     disable_indy_mocks_core().unwrap();
@@ -158,24 +153,34 @@ impl SetupProfile {
 
     #[cfg(feature = "vdrtools")]
     async fn build_profile_vdrtools(genesis_file_path: String) -> SetupProfile {
-        let pool_name = Uuid::new_v4().to_string();
-        create_pool_ledger_config(&pool_name, &genesis_file_path).unwrap();
-        let pool_handle = indy_open_pool(&pool_name, None).await.unwrap();
-
         let (institution_did, wallet_handle) = setup_issuer_wallet().await;
+        let wallet = Arc::new(IndySdkWallet::new(wallet_handle));
+        let indy_vdr_pool_config = LedgerPoolConfig {
+            genesis_file_path: genesis_file_path.clone(),
+        };
 
-        let profile = Arc::new(VdrtoolsProfile::init(wallet_handle, pool_handle.clone()));
+        let (ledger_read, ledger_write) = build_ledger_components(wallet.clone(), indy_vdr_pool_config).unwrap();
+        let anoncreds_ledger_read: Arc<dyn AnoncredsLedgerRead> = ledger_read.clone();
+        let anoncreds_ledger_write: Arc<dyn AnoncredsLedgerWrite> = ledger_write.clone();
+        let indy_ledger_read: Arc<dyn IndyLedgerRead> = ledger_read.clone();
+        let indy_ledger_write: Arc<dyn IndyLedgerWrite> = ledger_write.clone();
+        let profile = Arc::new(VdrtoolsProfile::init(
+            wallet.clone(),
+            anoncreds_ledger_read,
+            anoncreds_ledger_write,
+            indy_ledger_read,
+            indy_ledger_write,
+        ));
 
-        async fn indy_teardown(pool_handle: PoolHandle, pool_name: String) {
-            indy_close_pool(pool_handle.clone()).await.unwrap();
-            indy_delete_pool(&pool_name).await.unwrap();
+        async fn modular_teardown() {
+            warn!("build_profile_vdrtools::modular_teardown")
         }
 
         SetupProfile {
             genesis_file_path,
             institution_did,
             profile,
-            teardown: Arc::new(move || Box::pin(indy_teardown(pool_handle, pool_name.clone()))),
+            teardown: Arc::new(move || Box::pin(modular_teardown())),
         }
     }
 
@@ -184,19 +189,14 @@ impl SetupProfile {
         let (institution_did, wallet_handle) = setup_issuer_wallet().await;
 
         let wallet = IndySdkWallet::new(wallet_handle);
+        let indy_vdr_pool_config = LedgerPoolConfig {
+            genesis_file_path: genesis_file_path.clone(),
+        };
 
-        let profile = Arc::new(
-            ModularLibsProfile::init(
-                Arc::new(wallet),
-                LedgerPoolConfig {
-                    genesis_file_path: genesis_file_path.clone(),
-                },
-            )
-            .unwrap(),
-        );
+        let profile = Arc::new(ModularLibsProfile::init(Arc::new(wallet), indy_vdr_pool_config).unwrap());
 
         async fn modular_teardown() {
-            // nothing to do
+            warn!("build_profile_modular::modular_teardown")
         }
 
         SetupProfile {

@@ -1,7 +1,7 @@
 use std::{collections::HashMap, sync::Arc};
 
 use crate::utils::crypto::base58::{FromBase58, ToBase58};
-use indy_api_types::{errors::prelude::*, PoolHandle, WalletHandle};
+use indy_api_types::{errors::prelude::*, WalletHandle};
 use indy_wallet::{RecordOptions, SearchOptions, WalletService};
 
 use crate::{
@@ -20,28 +20,22 @@ use crate::{
         },
         pairwise::Pairwise,
     },
-    services::{CryptoService, LedgerService, PoolService},
+    services::CryptoService,
 };
 
 pub struct DidController {
     wallet_service: Arc<WalletService>,
     crypto_service: Arc<CryptoService>,
-    ledger_service: Arc<LedgerService>,
-    pool_service: Arc<PoolService>,
 }
 
 impl DidController {
     pub(crate) fn new(
         wallet_service: Arc<WalletService>,
         crypto_service: Arc<CryptoService>,
-        ledger_service: Arc<LedgerService>,
-        pool_service: Arc<PoolService>,
     ) -> DidController {
         DidController {
             wallet_service,
             crypto_service,
-            ledger_service,
-            pool_service,
         }
     }
 
@@ -470,76 +464,6 @@ impl DidController {
 
     /// Returns ver key (key id) for the given DID.
     ///
-    /// "indy_key_for_did" call follow the idea that we resolve information about their DID from
-    /// the ledger with cache in the local wallet. The "indy_open_wallet" call has freshness parameter
-    /// that is used for checking the freshness of cached pool value.
-    ///
-    /// Note if you don't want to resolve their DID info from the ledger you can use
-    /// "indy_key_for_local_did" call instead that will look only to the local wallet and skip
-    /// freshness checking.
-    ///
-    /// Note that "indy_create_and_store_my_did" makes similar wallet record as "indy_create_key".
-    /// As result we can use returned ver key in all generic crypto and messaging functions.
-    ///
-    /// #Params
-
-    /// pool_handle:   Pool handle (created by open_pool).
-    /// wallet_handle: Wallet handle (created by open_wallet).
-    /// did - The DID to resolve key.
-    ///
-    /// #Returns
-    /// key - The DIDs ver key (key id).
-    ///
-    /// #Errors
-    /// Common*
-    /// Wallet*
-    /// Crypto*
-    pub async fn key_for_did(
-        &self,
-        pool_handle: PoolHandle,
-        wallet_handle: WalletHandle,
-        did: DidValue,
-    ) -> IndyResult<String> {
-        trace!(
-            "key_for_did > pool_handle {:?} wallet_handle {:?} did {:?}",
-            pool_handle,
-            wallet_handle,
-            did
-        );
-
-        self.crypto_service.validate_did(&did)?;
-
-        // Look to my did
-        let my_did = match self._wallet_get_my_did(wallet_handle, &did).await {
-            Ok(my_did) => Some(my_did),
-            Err(ref err) if err.kind() == IndyErrorKind::WalletItemNotFound => None,
-            Err(err) => Err(err)?,
-        };
-
-        if let Some(my_did) = my_did {
-            let res = Ok(my_did.verkey);
-            trace!("key_for_did < my key {:?}", res);
-            return res;
-        }
-
-        // look to their did
-        let their_did = match self._wallet_get_their_did(wallet_handle, &did).await {
-            Ok(did) => did,
-            // No their their_did present in the wallet. Defer this command until it is fetched from ledger.
-            Err(ref err) if err.kind() == IndyErrorKind::WalletItemNotFound => {
-                self._fetch_their_did_from_ledger(wallet_handle, pool_handle, &did)
-                    .await?
-            }
-            Err(err) => Err(err)?,
-        };
-
-        let res = Ok(their_did.verkey);
-        trace!("key_for_did < their did {:?}", res);
-        res
-    }
-
-    /// Returns ver key (key id) for the given DID.
-    ///
     /// "indy_key_for_local_did" call looks data stored in the local wallet only and skips freshness
     /// checking.
     ///
@@ -635,55 +559,6 @@ impl DidController {
 
         let res = Ok(());
         trace!("set_endpoint_for_did < {:?}", res);
-        res
-    }
-
-    /// Returns endpoint information for the given DID.
-    ///
-    /// #Params
-
-    /// wallet_handle: Wallet handle (created by open_wallet).
-    /// did - The DID to resolve endpoint.
-    ///
-    /// #Returns
-    /// endpoint - The DIDs endpoint.
-    /// transport_vk - The DIDs transport key (ver key, key id).
-    ///
-    /// #Errors
-    /// Common*
-    /// Wallet*
-    /// Crypto*
-    pub async fn get_endpoint_for_did(
-        &self,
-        wallet_handle: WalletHandle,
-        pool_handle: PoolHandle,
-        did: DidValue,
-    ) -> IndyResult<(String, Option<String>)> {
-        trace!(
-            "get_endpoint_for_did > wallet_handle {:?} \
-                pool_handle {:?} did {:?}",
-            wallet_handle,
-            pool_handle,
-            did
-        );
-
-        self.crypto_service.validate_did(&did)?;
-
-        let endpoint = match self
-            .wallet_service
-            .get_indy_object::<Endpoint>(wallet_handle, &did.0, &RecordOptions::id_value())
-            .await
-        {
-            Ok(endpoint) => endpoint,
-            Err(err) if err.kind() == IndyErrorKind::WalletItemNotFound => {
-                self._fetch_attrib_from_ledger(wallet_handle, pool_handle, &did)
-                    .await?
-            }
-            Err(err) => Err(err)?,
-        };
-
-        let res = Ok((endpoint.ha, endpoint.verkey));
-        trace!("get_endpoint_for_did < {:?}", res);
         res
     }
 
@@ -1042,55 +917,6 @@ impl DidController {
         );
 
         res
-    }
-
-    async fn _fetch_their_did_from_ledger(
-        &self,
-        wallet_handle: WalletHandle,
-        pool_handle: PoolHandle,
-        did: &DidValue,
-    ) -> IndyResult<TheirDid> {
-        // TODO we need passing of my_did as identifier
-        // TODO: FIXME: Remove this unwrap by sending GetNymAck with the error.
-        let get_nym_request = self
-            .ledger_service
-            .build_get_nym_request(None, did)
-            .unwrap();
-
-        let did = did.clone();
-
-        let get_nym_reply_result = self
-            .pool_service
-            .send_tx(pool_handle, &get_nym_request)
-            .await;
-
-        self.get_nym_ack_process_and_store_their_did(wallet_handle, did, get_nym_reply_result)
-            .await
-    }
-
-    async fn _fetch_attrib_from_ledger(
-        &self,
-        wallet_handle: WalletHandle,
-        pool_handle: PoolHandle,
-        did: &DidValue,
-    ) -> IndyResult<Endpoint> {
-        // TODO we need passing of my_did as identifier
-        // TODO: FIXME: Remove this unwrap by sending GetAttribAck with the error.
-        let get_attrib_request = self
-            .ledger_service
-            .build_get_attrib_request(None, did, Some("endpoint"), None, None)
-            .unwrap();
-
-        let get_attrib_reply_result = self
-            .pool_service
-            .send_tx(pool_handle, &get_attrib_request)
-            .await;
-
-        self._get_attrib_ack_process_store_endpoint_to_wallet(
-            wallet_handle,
-            get_attrib_reply_result,
-        )
-        .await
     }
 
     async fn _wallet_get_my_did(

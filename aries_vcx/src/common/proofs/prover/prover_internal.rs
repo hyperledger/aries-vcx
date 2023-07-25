@@ -298,7 +298,6 @@ pub mod pool_tests {
 #[allow(clippy::unwrap_used)]
 pub mod unit_tests {
     use aries_vcx_core::ledger::indy::pool::test_utils::get_temp_dir_path;
-    use aries_vcx_core::INVALID_POOL_HANDLE;
 
     use crate::core::profile::vdrtools_profile::VdrtoolsProfile;
     use crate::utils::constants::{

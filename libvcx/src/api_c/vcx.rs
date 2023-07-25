@@ -598,7 +598,6 @@ mod tests {
     use aries_vcx::aries_vcx_core::indy;
     use aries_vcx::aries_vcx_core::wallet::indy::wallet::import;
     use aries_vcx::aries_vcx_core::wallet::indy::{RestoreWalletConfigs, WalletConfig};
-    use aries_vcx::aries_vcx_core::INVALID_POOL_HANDLE;
     use aries_vcx::global::settings::{
         set_config_value, CONFIG_GENESIS_PATH, CONFIG_TXN_AUTHOR_AGREEMENT, DEFAULT_WALLET_BACKUP_KEY,
         DEFAULT_WALLET_KEY, WALLET_KDF_RAW,

@@ -27,14 +27,10 @@ pub mod sequence;
 pub mod test;
 pub mod wql;
 
-use indy_api_types::{CommandHandle, PoolHandle, SearchHandle, VdrHandle, WalletHandle};
+use indy_api_types::{CommandHandle, SearchHandle, VdrHandle, WalletHandle};
 
 pub fn next_wallet_handle() -> WalletHandle {
     WalletHandle(sequence::get_next_id())
-}
-
-pub fn next_pool_handle() -> PoolHandle {
-    sequence::get_next_id()
 }
 
 pub fn next_command_handle() -> CommandHandle {

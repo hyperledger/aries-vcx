@@ -31,7 +31,7 @@ use aries_vcx::utils::provision::provision_cloud_agent;
 use aries_vcx_core::ledger::request_submitter::vdr_ledger::LedgerPoolConfig;
 use aries_vcx_core::wallet::indy::wallet::{open_wallet, wallet_configure_issuer};
 use aries_vcx_core::wallet::indy::{IssuerConfig, WalletConfig};
-use aries_vcx_core::{PoolHandle, WalletHandle};
+use aries_vcx_core::WalletHandle;
 use diddoc_legacy::aries::service::AriesService;
 use messages::decorators::please_ack::AckOn;
 use messages::msg_fields::protocols::connection::invitation::public::{PublicInvitation, PublicInvitationContent};

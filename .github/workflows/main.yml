@@ -502,8 +502,6 @@ jobs:
     strategy:
       matrix:
         features: [
-          "ledger_vdrtools,anoncreds_vdrtools",
-          "ledger_vdrtools,anoncreds_credx",
           "ledger_indyvdr,anoncreds_vdrtools",
           "ledger_indyvdr,anoncreds_credx"
         ]
@@ -523,8 +521,6 @@ jobs:
     strategy:
       matrix:
         features: [
-          "ledger_vdrtools,anoncreds_vdrtools",
-          "ledger_vdrtools,anoncreds_credx",
           "ledger_indyvdr,anoncreds_vdrtools",
           "ledger_indyvdr,anoncreds_credx"
         ]

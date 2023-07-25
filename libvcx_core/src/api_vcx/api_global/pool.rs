@@ -1,57 +1,26 @@
 use aries_vcx::aries_vcx_core::ledger::base_ledger::{
     AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite,
 };
-use aries_vcx::aries_vcx_core::{PoolHandle, INVALID_POOL_HANDLE};
 use aries_vcx::global::settings::{indy_mocks_enabled, DEFAULT_POOL_NAME};
 
 use crate::api_vcx::api_global::profile::get_main_wallet;
 use crate::api_vcx::api_global::wallet::get_main_wallet_handle;
 use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 use aries_vcx::aries_vcx_core::errors::error::AriesVcxCoreError;
-use aries_vcx::aries_vcx_core::ledger::indy::pool::{
-    create_pool_ledger_config, indy_close_pool, indy_open_pool, PoolConfig,
-};
-use aries_vcx::aries_vcx_core::ledger::indy_ledger::{IndySdkLedgerRead, IndySdkLedgerWrite};
+use aries_vcx::aries_vcx_core::ledger::indy::pool::PoolConfig;
 #[cfg(feature = "ledger_indyvdr")]
 use aries_vcx::aries_vcx_core::ledger::request_submitter::vdr_ledger::{
     IndyVdrLedgerPool, IndyVdrSubmitter, LedgerPoolConfig,
 };
 use aries_vcx::aries_vcx_core::wallet::base_wallet::BaseWallet;
 #[cfg(feature = "ledger_indyvdr")]
-use aries_vcx::core::profile::modular_libs_profile::{indyvdr_build_ledger_read, indyvdr_build_ledger_write};
+use aries_vcx::core::profile::ledger::indyvdr_build_ledger_read;
+#[cfg(feature = "ledger_indyvdr")]
+use aries_vcx::core::profile::ledger::indyvdr_build_ledger_write;
 use aries_vcx::core::profile::profile::Profile;
 use aries_vcx::errors::error::{AriesVcxError, VcxResult};
 use std::sync::Arc;
 use std::sync::RwLock;
-
-lazy_static! {
-    static ref POOL_HANDLE: RwLock<Option<i32>> = RwLock::new(None);
-}
-
-#[cfg(feature = "ledger_vdrtools")]
-pub fn set_vdrtools_global_pool_handle(handle: Option<i32>) {
-    trace!("set_vdrtools_global_pool_handle >>> handle: {handle:?}");
-    let mut h = POOL_HANDLE.write().expect("Unable to access POOL_HANDLE");
-    *h = handle;
-}
-
-#[cfg(feature = "ledger_vdrtools")]
-pub fn get_vdrtools_global_pool_handle() -> LibvcxResult<i32> {
-    trace!("get_vdrtools_global_pool_handle >>>");
-    if indy_mocks_enabled() {
-        return Ok(INVALID_POOL_HANDLE);
-    }
-    POOL_HANDLE
-        .read()
-        .or(Err(LibvcxError::from_msg(
-            LibvcxErrorKind::NoPoolOpen,
-            "There is no pool opened",
-        )))?
-        .ok_or(LibvcxError::from_msg(
-            LibvcxErrorKind::NoPoolOpen,
-            "There is no pool opened",
-        ))
-}
 
 lazy_static! {
     pub static ref global_ledger_anoncreds_read: RwLock<Option<Arc<dyn AnoncredsLedgerRead>>> = RwLock::new(None);
@@ -92,36 +61,13 @@ async fn build_components_ledger(
         let indy_write: Arc<dyn IndyLedgerWrite> = ledger_write.clone();
         return Ok((anoncreds_read, anoncreds_write, indy_read, indy_write));
     }
-    #[cfg(feature = "ledger_vdrtools")]
-    {
-        create_pool_ledger_config(&pool_name, &config.genesis_path)
-            .map_err(|err| err.extend("Can not create Pool Ledger Config"))?;
-
-        let pool_handle = indy_open_pool(&pool_name, config.pool_config.clone())
-            .await
-            .map_err(|err| err.extend("Can not open Pool Ledger"))?;
-
-        set_vdrtools_global_pool_handle(Some(pool_handle));
-
-        let wallet_handle = base_wallet.get_wallet_handle();
-        let ledger_read = Arc::new(IndySdkLedgerRead::new(wallet_handle, pool_handle));
-        let ledger_write = Arc::new(IndySdkLedgerWrite::new(wallet_handle, pool_handle));
-        let anoncreds_read: Arc<dyn AnoncredsLedgerRead> = ledger_read.clone();
-        let anoncreds_write: Arc<dyn AnoncredsLedgerWrite> = ledger_write.clone();
-        let indy_read: Arc<dyn IndyLedgerRead> = ledger_read.clone();
-        let indy_write: Arc<dyn IndyLedgerWrite> = ledger_write.clone();
-        return Ok((anoncreds_read, anoncreds_write, indy_read, indy_write));
-    }
-    #[cfg(not(any(feature = "ledger_indyvdr", feature = "ledger_vdrtools")))]
+    #[cfg(not(any(feature = "ledger_indyvdr")))]
     {
         compile_error!("No ledger implementation has been selected by feature flag upon build");
     }
 }
 
 pub fn reset_ledger_components() -> LibvcxResult<()> {
-    #[cfg(feature = "ledger_vdrtools")]
-    set_vdrtools_global_pool_handle(None);
-
     let mut anoncreds_read = global_ledger_anoncreds_read.write()?;
     *anoncreds_read = None;
     let mut anoncreds_write = global_ledger_anoncreds_write.write()?;
@@ -148,6 +94,8 @@ pub async fn setup_ledger_components(pool_name: String, config: &PoolConfig) -> 
     Ok(())
 }
 
+// todo: seems like we need to bring back PoolConfig, which was input for libvcx, and we share that for
+//       indy-vdr implementation regardless currently
 pub async fn open_main_pool(config: &PoolConfig) -> LibvcxResult<()> {
     if is_main_pool_open() {
         error!("open_main_pool >> Pool connection is already open.");
@@ -175,9 +123,6 @@ pub async fn open_main_pool(config: &PoolConfig) -> LibvcxResult<()> {
 pub async fn close_main_pool() -> LibvcxResult<()> {
     info!("close_main_pool >> Closing main pool");
 
-    #[cfg(feature = "ledger_vdrtools")]
-    indy_close_pool(get_vdrtools_global_pool_handle()?).await?;
-
     reset_ledger_components()?;
     Ok(())
 }
@@ -192,8 +137,7 @@ pub mod tests {
     use aries_vcx::aries_vcx_core::ledger::indy::pool::test_utils::{
         create_testpool_genesis_txn_file, get_temp_file_path,
     };
-    use aries_vcx::aries_vcx_core::ledger::indy::pool::{indy_delete_pool, PoolConfig};
-    use aries_vcx::aries_vcx_core::INVALID_POOL_HANDLE;
+    use aries_vcx::aries_vcx_core::ledger::indy::pool::PoolConfig;
     use aries_vcx::core::profile::profile::Profile;
     use aries_vcx::global::settings::{set_config_value, CONFIG_GENESIS_PATH, DEFAULT_GENESIS_PATH};
     use aries_vcx::utils::constants::POOL1_TXN;
@@ -234,11 +178,6 @@ pub mod tests {
             pool_name: Some(pool_name.clone()),
             pool_config: None,
         };
-        #[cfg(feature = "ledger_vdrtools")]
-        assert_eq!(
-            open_main_pool(&pool_config).await.unwrap_err().kind(),
-            LibvcxErrorKind::PoolLedgerConnect
-        );
         // todo: indy-vdr panics if the file is invalid, see: indy-vdr-0.3.4/src/pool/runner.rs:44:22
         // #[cfg(feature = "ledger_indyvdr")]
         // assert_eq!(
@@ -250,8 +189,6 @@ pub mod tests {
             LibvcxErrorKind::NotReady
         );
 
-        #[cfg(feature = "ledger_vdrtools")]
-        indy_delete_pool(&pool_name).await.unwrap();
         close_main_wallet().await.unwrap();
         reset_ledger_components().unwrap();
     }
@@ -268,11 +205,6 @@ pub mod tests {
             pool_name: Some(pool_name.clone()),
             pool_config: None,
         };
-        #[cfg(feature = "ledger_vdrtools")]
-        assert_eq!(
-            open_main_pool(&pool_config).await.unwrap_err().kind(),
-            LibvcxErrorKind::InvalidGenesisTxnPath
-        );
         #[cfg(feature = "ledger_indyvdr")]
         assert_eq!(
             open_main_pool(&pool_config).await.unwrap_err().kind(),
