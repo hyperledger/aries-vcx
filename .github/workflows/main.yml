@@ -3,9 +3,6 @@ name: CI
 on:
   push:
     branches:
-      - main
-  pull_request:
-    branches:
       - "**"
 
 env:
@@ -839,9 +836,8 @@ jobs:
             docker: ghcr.io/hyperledger/aries-vcx/napi-rs-alpine
             build: |-
               set -e
-              cd wrappers/vcx-napi-rs
-              npm run build:napi
-              strip *.node
+              cd aries_vcx_core
+              cargo build
           - host: macos-latest
             target: x86_64-apple-darwin
             build: |
