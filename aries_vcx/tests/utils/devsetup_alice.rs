@@ -26,12 +26,12 @@ use aries_vcx::protocols::mediated_connection::invitee::state_machine::InviteeSt
 use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
 use aries_vcx::utils::devsetup::{SetupPoolDirectory, SetupProfile, AGENCY_DID, AGENCY_ENDPOINT, AGENCY_VERKEY};
 use aries_vcx::utils::provision::provision_cloud_agent;
-use aries_vcx_core::indy::ledger::pool::indy_open_pool;
-use aries_vcx_core::indy::wallet::{create_wallet_with_master_secret, open_wallet, WalletConfig};
+use aries_vcx_core::ledger::indy::pool::indy_open_pool;
 #[cfg(feature = "modular_libs")]
 use aries_vcx_core::ledger::request_submitter::vdr_ledger::LedgerPoolConfig;
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
-use aries_vcx_core::wallet::indy_wallet::IndySdkWallet;
+use aries_vcx_core::wallet::indy::wallet::open_wallet;
+use aries_vcx_core::wallet::indy::{IndySdkWallet, WalletConfig};
 use aries_vcx_core::{PoolHandle, WalletHandle};
 use messages::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
 use messages::msg_fields::protocols::cred_issuance::CredentialIssuance;
@@ -56,7 +56,7 @@ pub struct Alice {
 }
 
 pub async fn create_alice(genesis_file_path: String) -> Alice {
-    let profile_setup = SetupProfile::build_profile(genesis_file_path).await;
+    let profile_setup = SetupProfile::build_setup_profile(genesis_file_path).await;
     let SetupProfile {
         genesis_file_path,
         institution_did,

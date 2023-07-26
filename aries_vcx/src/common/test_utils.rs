@@ -1,8 +1,8 @@
 #![allow(clippy::unwrap_used)]
 
 use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
-use aries_vcx_core::indy::ledger::pool::test_utils::{get_temp_dir_path, get_temp_file_path};
 use aries_vcx_core::ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite};
+use aries_vcx_core::ledger::indy::pool::test_utils::{get_temp_dir_path, get_temp_file_path};
 use std::sync::Arc;
 use std::thread;
 use std::time::Duration;

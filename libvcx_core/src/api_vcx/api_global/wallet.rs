@@ -6,13 +6,13 @@ use aries_vcx::aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
 #[cfg(all(feature = "anoncreds_credx"))]
 use aries_vcx::aries_vcx_core::anoncreds::credx_anoncreds::IndyCredxAnonCreds;
 use aries_vcx::aries_vcx_core::anoncreds::indy_anoncreds::IndySdkAnonCreds;
-use aries_vcx::aries_vcx_core::indy::wallet::{
-    close_search_wallet, fetch_next_records_wallet, import, open_search_wallet, IssuerConfig, RestoreWalletConfigs,
-    WalletConfig,
-};
 use aries_vcx::aries_vcx_core::wallet::base_wallet::BaseWallet;
-use aries_vcx::aries_vcx_core::wallet::indy_wallet::IndySdkWallet;
-use aries_vcx::aries_vcx_core::{indy, SearchHandle};
+use aries_vcx::aries_vcx_core::wallet::indy::internal::{
+    close_search_wallet, fetch_next_records_wallet, open_search_wallet,
+};
+use aries_vcx::aries_vcx_core::wallet::indy::wallet::import;
+use aries_vcx::aries_vcx_core::wallet::indy::{IndySdkWallet, IssuerConfig, RestoreWalletConfigs, WalletConfig};
+use aries_vcx::aries_vcx_core::{indy, wallet, SearchHandle};
 use aries_vcx::aries_vcx_core::{WalletHandle, INVALID_WALLET_HANDLE};
 use aries_vcx::common::signing::unpack_message_to_string;
 use aries_vcx::global::settings::DEFAULT_LINK_SECRET_ALIAS;
@@ -36,7 +36,7 @@ pub fn get_main_wallet_handle() -> LibvcxResult<WalletHandle> {
 
 pub async fn export_main_wallet(path: &str, backup_key: &str) -> LibvcxResult<()> {
     let wallet_handle = get_main_wallet_handle()?;
-    map_ariesvcx_core_result(indy::wallet::export_wallet(wallet_handle, path, backup_key).await)
+    map_ariesvcx_core_result(wallet::indy::wallet::export_wallet(wallet_handle, path, backup_key).await)
 }
 
 fn build_component_base_wallet(wallet_handle: WalletHandle) -> Arc<dyn BaseWallet> {
@@ -76,13 +76,13 @@ pub fn setup_wallet(handle: WalletHandle) -> LibvcxResult<()> {
 }
 
 pub async fn open_as_main_wallet(wallet_config: &WalletConfig) -> LibvcxResult<WalletHandle> {
-    let handle = indy::wallet::open_wallet(wallet_config).await?;
+    let handle = wallet::indy::wallet::open_wallet(wallet_config).await?;
     setup_wallet(handle)?;
     Ok(handle)
 }
 
 pub async fn create_and_open_as_main_wallet(wallet_config: &WalletConfig) -> LibvcxResult<WalletHandle> {
-    let handle = indy::wallet::create_and_open_wallet(wallet_config).await?;
+    let handle = wallet::indy::wallet::create_and_open_wallet(wallet_config).await?;
     setup_wallet(handle)?;
     Ok(handle)
 }
@@ -94,7 +94,7 @@ pub async fn close_main_wallet() -> LibvcxResult<()> {
             warn!("Skipping wallet close, no global wallet component available.")
         }
         Some(wallet) => {
-            indy::wallet::close_wallet(wallet.get_wallet_handle()).await?;
+            wallet::indy::wallet::close_wallet(wallet.get_wallet_handle()).await?;
             let mut b_wallet = global_base_wallet.write()?;
             *b_wallet = None;
         }
@@ -156,7 +156,7 @@ pub async fn wallet_create_pairwise_did() -> LibvcxResult<PairwiseInfo> {
 pub async fn wallet_configure_issuer(enterprise_seed: &str) -> LibvcxResult<IssuerConfig> {
     // TODO - future - use profile wallet to stop indy dependency
     let wallet = get_main_wallet_handle()?;
-    map_ariesvcx_core_result(indy::wallet::wallet_configure_issuer(wallet, enterprise_seed).await)
+    map_ariesvcx_core_result(wallet::indy::wallet::wallet_configure_issuer(wallet, enterprise_seed).await)
 }
 
 pub async fn wallet_add_wallet_record(type_: &str, id: &str, value: &str, option: Option<&str>) -> LibvcxResult<()> {
@@ -226,7 +226,7 @@ pub async fn wallet_import(config: &RestoreWalletConfigs) -> LibvcxResult<()> {
 
 #[allow(clippy::unwrap_used)]
 pub mod test_utils {
-    use aries_vcx::aries_vcx_core::indy::wallet::WalletConfig;
+    use aries_vcx::aries_vcx_core::wallet::indy::WalletConfig;
     use aries_vcx::global::settings::{DEFAULT_WALLET_BACKUP_KEY, DEFAULT_WALLET_KEY, WALLET_KDF_RAW};
     use aries_vcx::utils::devsetup::TempFile;
 
@@ -291,7 +291,8 @@ pub mod test_utils {
 
 #[cfg(test)]
 pub mod tests {
-    use aries_vcx::aries_vcx_core::indy::wallet::{delete_wallet, RestoreWalletConfigs, WalletConfig, WalletRecord};
+    use aries_vcx::aries_vcx_core::wallet::indy::wallet::delete_wallet;
+    use aries_vcx::aries_vcx_core::wallet::indy::{RestoreWalletConfigs, WalletConfig, WalletRecord};
     use aries_vcx::global::settings::{DEFAULT_WALLET_BACKUP_KEY, DEFAULT_WALLET_KEY, WALLET_KDF_RAW};
     use aries_vcx::utils::devsetup::{SetupDefaults, SetupEmpty, TempFile};
 

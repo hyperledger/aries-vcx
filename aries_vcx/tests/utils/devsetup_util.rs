@@ -7,12 +7,12 @@ use aries_vcx::core::profile::modular_libs_profile::ModularLibsProfile;
 use aries_vcx::core::profile::profile::Profile;
 use aries_vcx::core::profile::vdrtools_profile::VdrtoolsProfile;
 use aries_vcx::global::settings;
-use aries_vcx_core::indy::ledger::pool::indy_open_pool;
-use aries_vcx_core::indy::wallet::{create_wallet_with_master_secret, open_wallet, WalletConfig};
+use aries_vcx_core::ledger::indy::pool::indy_open_pool;
 #[cfg(feature = "modular_libs")]
 use aries_vcx_core::ledger::request_submitter::vdr_ledger::LedgerPoolConfig;
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
-use aries_vcx_core::wallet::indy_wallet::IndySdkWallet;
+use aries_vcx_core::wallet::indy::wallet::open_wallet;
+use aries_vcx_core::wallet::indy::{IndySdkWallet, WalletConfig};
 use aries_vcx_core::WalletHandle;
 
 use crate::utils::devsetup_alice::Alice;
@@ -26,9 +26,10 @@ pub mod test_utils {
     #[cfg(feature = "modular_libs")]
     use aries_vcx::core::profile::modular_libs_profile::ModularLibsProfile;
     use aries_vcx::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
-    use aries_vcx_core::indy::wallet::{close_wallet, delete_wallet, WalletConfig};
     #[cfg(feature = "modular_libs")]
     use aries_vcx_core::ledger::request_submitter::vdr_ledger::LedgerPoolConfig;
+    use aries_vcx_core::wallet::indy::wallet::{close_wallet, delete_wallet};
+    use aries_vcx_core::wallet::indy::WalletConfig;
     use aries_vcx_core::WalletHandle;
     use messages::msg_fields::protocols::connection::Connection;
     use messages::msg_fields::protocols::cred_issuance::CredentialIssuance;

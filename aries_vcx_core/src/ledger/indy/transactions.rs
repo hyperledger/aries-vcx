@@ -1,18 +1,82 @@
+use serde::Deserialize;
 use time::OffsetDateTime;
 use vdrtools::{DidValue, Locator};
 
-use crate::common::ledger::transactions::{verify_transaction_can_be_endorsed, Response};
 use crate::errors::error::prelude::*;
 use crate::global::author_agreement::get_vdrtools_config_txn_author_agreement;
 use crate::global::settings;
 use crate::global::settings::get_sample_did;
-use crate::indy::utils::mocks::pool_mocks::PoolMocks;
 use crate::indy::utils::parse_and_validate;
+use crate::ledger::common::verify_transaction_can_be_endorsed;
+use crate::ledger::indy;
+use crate::ledger::indy::pool_mocks::PoolMocks;
 use crate::utils::constants::{
     rev_def_json, CRED_DEF_ID, CRED_DEF_JSON, CRED_DEF_REQ, REVOC_REG_TYPE, REV_REG_DELTA_JSON, REV_REG_ID,
     REV_REG_JSON, SCHEMA_ID, SCHEMA_JSON, SCHEMA_TXN, SUBMIT_SCHEMA_RESPONSE,
 };
 use crate::{utils, PoolHandle, WalletHandle};
+
+pub fn _check_schema_response(response: &str) -> VcxCoreResult<()> {
+    // TODO: saved backwardcampatibilyty but actually we can better handle response
+    match parse_response(response)? {
+        Response::Reply(_) => Ok(()),
+        Response::Reject(reject) => Err(AriesVcxCoreError::from_msg(
+            AriesVcxCoreErrorKind::DuplicationSchema,
+            format!("{reject:?}"),
+        )),
+        Response::ReqNACK(reqnack) => Err(AriesVcxCoreError::from_msg(
+            AriesVcxCoreErrorKind::UnknownSchemaRejection,
+            format!("{reqnack:?}"),
+        )),
+    }
+}
+
+pub fn check_response(response: &str) -> VcxCoreResult<()> {
+    if settings::indy_mocks_enabled() {
+        return Ok(());
+    }
+    match parse_response(response)? {
+        Response::Reply(_) => Ok(()),
+        Response::Reject(res) | Response::ReqNACK(res) => Err(AriesVcxCoreError::from_msg(
+            AriesVcxCoreErrorKind::InvalidLedgerResponse,
+            format!("{res:?}"),
+        )),
+    }
+}
+
+pub async fn endorse_transaction(
+    wallet_handle: WalletHandle,
+    pool_handle: PoolHandle,
+    endorser_did: &str,
+    transaction_json: &str,
+) -> VcxCoreResult<()> {
+    //TODO Potentially VCX should handle case when endorser would like to pay fee
+    if settings::indy_mocks_enabled() {
+        return Ok(());
+    }
+
+    verify_transaction_can_be_endorsed(transaction_json, endorser_did)?;
+
+    let transaction = multisign_request(wallet_handle, endorser_did, transaction_json).await?;
+    let response = libindy_submit_request(pool_handle, &transaction).await?;
+
+    match parse_response(&response)? {
+        Response::Reply(_) => Ok(()),
+        Response::Reject(res) | Response::ReqNACK(res) => Err(AriesVcxCoreError::from_msg(
+            AriesVcxCoreErrorKind::PostMessageFailed,
+            format!("{:?}", res.reason),
+        )),
+    }
+}
+
+fn parse_response(response: &str) -> VcxCoreResult<Response> {
+    serde_json::from_str::<Response>(response).map_err(|err| {
+        AriesVcxCoreError::from_msg(
+            AriesVcxCoreErrorKind::InvalidJson,
+            format!("Cannot deserialize object: {err}"),
+        )
+    })
+}
 
 pub async fn multisign_request(wallet_handle: WalletHandle, did: &str, request: &str) -> VcxCoreResult<String> {
     let res = Locator::instance()
@@ -219,15 +283,6 @@ pub async fn get_nym(pool_handle: PoolHandle, did: &str) -> VcxCoreResult<String
     libindy_submit_request(pool_handle, &get_nym_req).await
 }
 
-fn parse_response(response: &str) -> VcxCoreResult<Response> {
-    serde_json::from_str::<Response>(response).map_err(|err| {
-        AriesVcxCoreError::from_msg(
-            AriesVcxCoreErrorKind::InvalidJson,
-            format!("Cannot deserialize object: {err}"),
-        )
-    })
-}
-
 pub async fn libindy_get_schema(
     wallet_handle: WalletHandle,
     pool_handle: PoolHandle,
@@ -290,31 +345,6 @@ pub async fn set_endorser(
         .append_request_endorser(request.into(), endorser.into())?;
 
     multisign_request(wallet_handle, submitter_did, &request).await
-}
-
-pub async fn endorse_transaction(
-    wallet_handle: WalletHandle,
-    pool_handle: PoolHandle,
-    endorser_did: &str,
-    transaction_json: &str,
-) -> VcxCoreResult<()> {
-    //TODO Potentially VCX should handle case when endorser would like to pay fee
-    if settings::indy_mocks_enabled() {
-        return Ok(());
-    }
-
-    verify_transaction_can_be_endorsed(transaction_json, endorser_did)?;
-
-    let transaction = multisign_request(wallet_handle, endorser_did, transaction_json).await?;
-    let response = libindy_submit_request(pool_handle, &transaction).await?;
-
-    match parse_response(&response)? {
-        Response::Reply(_) => Ok(()),
-        Response::Reject(res) | Response::ReqNACK(res) => Err(AriesVcxCoreError::from_msg(
-            AriesVcxCoreErrorKind::PostMessageFailed,
-            format!("{:?}", res.reason),
-        )),
-    }
 }
 
 pub async fn build_attrib_request(
@@ -633,34 +663,6 @@ pub async fn get_ledger_txn(
     Ok(res)
 }
 
-pub fn _check_schema_response(response: &str) -> VcxCoreResult<()> {
-    // TODO: saved backwardcampatibilyty but actually we can better handle response
-    match parse_response(response)? {
-        Response::Reply(_) => Ok(()),
-        Response::Reject(reject) => Err(AriesVcxCoreError::from_msg(
-            AriesVcxCoreErrorKind::DuplicationSchema,
-            format!("{reject:?}"),
-        )),
-        Response::ReqNACK(reqnack) => Err(AriesVcxCoreError::from_msg(
-            AriesVcxCoreErrorKind::UnknownSchemaRejection,
-            format!("{reqnack:?}"),
-        )),
-    }
-}
-
-pub(in crate::indy) fn check_response(response: &str) -> VcxCoreResult<()> {
-    if settings::indy_mocks_enabled() {
-        return Ok(());
-    }
-    match parse_response(response)? {
-        Response::Reply(_) => Ok(()),
-        Response::Reject(res) | Response::ReqNACK(res) => Err(AriesVcxCoreError::from_msg(
-            AriesVcxCoreErrorKind::InvalidLedgerResponse,
-            format!("{res:?}"),
-        )),
-    }
-}
-
 pub async fn get_schema_json(
     wallet_handle: WalletHandle,
     pool_handle: PoolHandle,
@@ -703,4 +705,43 @@ pub async fn get_cred_def_json(
     let cred_def_json = libindy_get_cred_def(wallet_handle, pool_handle, cred_def_id).await?;
 
     Ok((cred_def_id.to_string(), cred_def_json))
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(tag = "op")]
+pub enum Response {
+    #[serde(rename = "REQNACK")]
+    ReqNACK(Reject),
+    #[serde(rename = "REJECT")]
+    Reject(Reject),
+    #[serde(rename = "REPLY")]
+    Reply(Reply),
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct Reject {
+    pub reason: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+pub enum Reply {
+    ReplyV0(ReplyV0),
+    ReplyV1(ReplyV1),
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ReplyV0 {
+    pub result: serde_json::Value,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ReplyV1 {
+    pub data: ReplyDataV1,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ReplyDataV1 {
+    pub result: serde_json::Value,
 }

@@ -1,8 +1,8 @@
-use vdrtools::{Locator, SearchHandle};
+use crate::errors::error::VcxCoreResult;
+use crate::SearchHandle;
+use vdrtools::Locator;
 
-use crate::errors::error::prelude::*;
-
-pub(super) async fn blob_storage_open_reader(base_dir: &str) -> VcxCoreResult<i32> {
+pub(crate) async fn blob_storage_open_reader(base_dir: &str) -> VcxCoreResult<i32> {
     let tails_config = json!(
         {
             "base_dir":    base_dir,
@@ -19,7 +19,7 @@ pub(super) async fn blob_storage_open_reader(base_dir: &str) -> VcxCoreResult<i3
     Ok(res)
 }
 
-pub(super) async fn close_search_handle(search_handle: SearchHandle) -> VcxCoreResult<()> {
+pub(crate) async fn close_search_handle(search_handle: SearchHandle) -> VcxCoreResult<()> {
     Locator::instance()
         .prover_controller
         .close_credentials_search_for_proof_req(search_handle)

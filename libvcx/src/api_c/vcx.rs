@@ -4,8 +4,8 @@ use futures::future::{BoxFuture, FutureExt};
 use libc::c_char;
 
 use aries_vcx::agency_client::configuration::AgencyClientConfig;
-use aries_vcx::aries_vcx_core::indy::ledger::pool::PoolConfig;
-use aries_vcx::aries_vcx_core::indy::wallet::IssuerConfig;
+use aries_vcx::aries_vcx_core::ledger::indy::pool::PoolConfig;
+use aries_vcx::aries_vcx_core::wallet::indy::IssuerConfig;
 use libvcx_core::api_vcx::api_global::agency_client::create_agency_client_for_main_wallet;
 use libvcx_core::api_vcx::api_global::agency_client::update_webhook_url;
 use libvcx_core::api_vcx::api_global::ledger::{ledger_get_txn_author_agreement, ledger_set_txn_author_agreement};
@@ -596,7 +596,8 @@ mod tests {
     use std::ptr;
 
     use aries_vcx::aries_vcx_core::indy;
-    use aries_vcx::aries_vcx_core::indy::wallet::{import, RestoreWalletConfigs, WalletConfig};
+    use aries_vcx::aries_vcx_core::wallet::indy::wallet::import;
+    use aries_vcx::aries_vcx_core::wallet::indy::{RestoreWalletConfigs, WalletConfig};
     use aries_vcx::aries_vcx_core::INVALID_POOL_HANDLE;
     use aries_vcx::global::settings::{
         set_config_value, CONFIG_GENESIS_PATH, CONFIG_TXN_AUTHOR_AGREEMENT, DEFAULT_WALLET_BACKUP_KEY,

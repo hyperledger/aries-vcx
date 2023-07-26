@@ -81,13 +81,13 @@ pub async fn get_verkey_from_ledger(indy_ledger: &Arc<dyn IndyLedgerRead>, did: 
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod test {
+    use aries_vcx_core::ledger::indy::pool_mocks::{enable_pool_mocks, PoolMocks};
+
     #[tokio::test]
     #[ignore]
     #[cfg(all(not(feature = "vdr_proxy_ledger"), not(feature = "modular_libs"),))]
     async fn test_pool_rotate_verkey_fails() {
         use super::*;
-
-        use aries_vcx_core::indy::utils::mocks::pool_mocks::{enable_pool_mocks, PoolMocks};
 
         use crate::utils::devsetup::*;
         use crate::utils::mockdata::mockdata_pool;

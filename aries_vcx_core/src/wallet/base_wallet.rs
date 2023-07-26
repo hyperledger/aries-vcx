@@ -1,11 +1,12 @@
+use std::collections::HashMap;
+
 use async_trait::async_trait;
+
+#[cfg(feature = "vdrtools")]
+use vdrtools::WalletHandle;
 
 use crate::errors::error::VcxCoreResult;
 use crate::utils::async_fn_iterator::AsyncFnIterator;
-
-use std::collections::HashMap;
-#[cfg(feature = "vdrtools")]
-use vdrtools::WalletHandle;
 
 /// Trait defining standard 'wallet' related functionality. The APIs, including
 /// input and output types are loosely based off the indy Wallet API:

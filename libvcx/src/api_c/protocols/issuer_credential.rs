@@ -872,7 +872,7 @@ pub extern "C" fn vcx_issuer_credential_get_thread_id(
 pub mod tests {
     extern crate serde_json;
 
-    use aries_vcx::aries_vcx_core::indy::ledger::pool::test_utils::get_temp_dir_path;
+    use aries_vcx::aries_vcx_core::ledger::indy::pool::test_utils::get_temp_dir_path;
     use std::ffi::CString;
     use std::ptr;
 

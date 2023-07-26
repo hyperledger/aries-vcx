@@ -10,10 +10,8 @@ use aries_vcx::aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
 use aries_vcx::aries_vcx_core::ledger::base_ledger::{
     AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite, TxnAuthrAgrmtOptions,
 };
-use aries_vcx::aries_vcx_core::{
-    wallet::{base_wallet::BaseWallet, indy_wallet::IndySdkWallet},
-    WalletHandle,
-};
+use aries_vcx::aries_vcx_core::wallet::indy::IndySdkWallet;
+use aries_vcx::aries_vcx_core::{wallet::base_wallet::BaseWallet, WalletHandle};
 use aries_vcx::core::profile::{profile::Profile, vdrtools_profile::VdrtoolsProfile};
 use aries_vcx::errors::error::VcxResult;
 use aries_vcx::utils::mockdata::profile::mock_anoncreds::MockAnoncreds;

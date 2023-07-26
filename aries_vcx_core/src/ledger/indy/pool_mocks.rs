@@ -1,9 +1,13 @@
+use std::collections::HashSet;
 use std::sync::Mutex;
-
-use crate::indy::utils::mocks::ENABLED_MOCKS;
+use std::sync::RwLock;
 
 lazy_static! {
     static ref POOL_MOCK_RESPONSES: Mutex<PoolMocks> = Mutex::new(PoolMocks::default());
+}
+
+lazy_static! {
+    pub static ref ENABLED_POOL_MOCKS: RwLock<HashSet<String>> = RwLock::new(HashSet::new());
 }
 
 pub const CONFIG_POOL_MOCKS: &str = "pool_mocks";
@@ -60,21 +64,21 @@ impl PoolMocks {
 }
 
 pub fn pool_mocks_enabled() -> bool {
-    ENABLED_MOCKS
+    ENABLED_POOL_MOCKS
         .read()
         .expect("Unable to access ENABLED_MOCKS")
         .contains(CONFIG_POOL_MOCKS)
 }
 
 pub fn enable_pool_mocks() {
-    ENABLED_MOCKS
+    ENABLED_POOL_MOCKS
         .write()
         .expect("Unable to access ENABLED_MOCKS")
         .insert(CONFIG_POOL_MOCKS.to_string());
 }
 
 pub fn disable_pool_mocks() {
-    ENABLED_MOCKS
+    ENABLED_POOL_MOCKS
         .write()
         .expect("Unable to access ENABLED_MOCKS")
         .remove(CONFIG_POOL_MOCKS);

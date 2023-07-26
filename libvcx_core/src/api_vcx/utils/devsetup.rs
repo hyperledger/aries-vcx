@@ -1,7 +1,7 @@
 use agency_client::agency_client::AgencyClient;
 use aries_vcx::aries_vcx_core::global::settings;
-use aries_vcx::aries_vcx_core::indy::ledger::pool::test_utils::{create_testpool_genesis_txn_file, get_temp_file_path};
-use aries_vcx::aries_vcx_core::indy::ledger::pool::{
+use aries_vcx::aries_vcx_core::ledger::indy::pool::test_utils::{create_testpool_genesis_txn_file, get_temp_file_path};
+use aries_vcx::aries_vcx_core::ledger::indy::pool::{
     create_pool_ledger_config, indy_close_pool, indy_open_pool, PoolConfig,
 };
 use aries_vcx::aries_vcx_core::{PoolHandle, WalletHandle};

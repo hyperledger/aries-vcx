@@ -1,8 +1,11 @@
 use async_trait::async_trait;
+use vdrtools::{DidValue, Locator};
 
+use crate::anoncreds::indy::primitives::credential_schema::libindy_issuer_create_schema;
 use crate::errors::error::VcxCoreResult;
-use crate::indy::wallet_non_secrets::{clear_rev_reg_delta, get_rev_reg_delta};
-use crate::{indy, WalletHandle};
+use crate::indy::utils::parse_and_validate;
+use crate::wallet::indy::wallet_non_secrets::{clear_rev_reg_delta, get_rev_reg_delta};
+use crate::{anoncreds, indy, WalletHandle};
 
 use super::base_anoncreds::BaseAnonCreds;
 
@@ -28,7 +31,7 @@ impl BaseAnonCreds for IndySdkAnonCreds {
         rev_reg_defs_json: &str,
         rev_regs_json: &str,
     ) -> VcxCoreResult<bool> {
-        indy::proofs::verifier::verifier::libindy_verifier_verify_proof(
+        anoncreds::indy::proofs::verifier::verifier::libindy_verifier_verify_proof(
             proof_req_json,
             proof_json,
             schemas_json,
@@ -47,7 +50,7 @@ impl BaseAnonCreds for IndySdkAnonCreds {
         max_creds: u32,
         tag: &str,
     ) -> VcxCoreResult<(String, String, String)> {
-        indy::primitives::revocation_registry::libindy_create_and_store_revoc_reg(
+        anoncreds::indy::credentials::issuer::libindy_create_and_store_revoc_reg(
             self.indy_wallet_handle,
             issuer_did,
             cred_def_id,
@@ -66,19 +69,27 @@ impl BaseAnonCreds for IndySdkAnonCreds {
         sig_type: Option<&str>,
         config_json: &str,
     ) -> VcxCoreResult<(String, String)> {
-        indy::primitives::credential_definition::libindy_create_and_store_credential_def(
-            self.indy_wallet_handle,
-            issuer_did,
-            schema_json,
-            tag,
-            sig_type,
-            config_json,
-        )
-        .await
+        let res = Locator::instance()
+            .issuer_controller
+            .create_and_store_credential_definition(
+                self.indy_wallet_handle,
+                DidValue(issuer_did.into()),
+                parse_and_validate(schema_json)?,
+                tag.into(),
+                sig_type.map(|s| s.into()),
+                Some(serde_json::from_str(config_json)?),
+            )
+            .await?;
+
+        Ok(res)
     }
 
     async fn issuer_create_credential_offer(&self, cred_def_id: &str) -> VcxCoreResult<String> {
-        indy::credentials::issuer::libindy_issuer_create_credential_offer(self.indy_wallet_handle, cred_def_id).await
+        anoncreds::indy::credentials::issuer::libindy_issuer_create_credential_offer(
+            self.indy_wallet_handle,
+            cred_def_id,
+        )
+        .await
     }
 
     async fn issuer_create_credential(
@@ -89,7 +100,7 @@ impl BaseAnonCreds for IndySdkAnonCreds {
         rev_reg_id: Option<String>,
         tails_dir: Option<String>,
     ) -> VcxCoreResult<(String, Option<String>, Option<String>)> {
-        indy::credentials::issuer::libindy_issuer_create_credential(
+        anoncreds::indy::credentials::issuer::libindy_issuer_create_credential(
             self.indy_wallet_handle,
             cred_offer_json,
             cred_req_json,
@@ -109,7 +120,7 @@ impl BaseAnonCreds for IndySdkAnonCreds {
         credential_defs_json: &str,
         revoc_states_json: Option<&str>,
     ) -> VcxCoreResult<String> {
-        indy::proofs::prover::prover::libindy_prover_create_proof(
+        anoncreds::indy::proofs::prover::prover::libindy_prover_create_proof(
             self.indy_wallet_handle,
             proof_req_json,
             requested_credentials_json,
@@ -122,16 +133,20 @@ impl BaseAnonCreds for IndySdkAnonCreds {
     }
 
     async fn prover_get_credential(&self, cred_id: &str) -> VcxCoreResult<String> {
-        indy::credentials::holder::libindy_prover_get_credential(self.indy_wallet_handle, cred_id).await
+        anoncreds::indy::credentials::holder::libindy_prover_get_credential(self.indy_wallet_handle, cred_id).await
     }
 
     async fn prover_get_credentials(&self, filter_json: Option<&str>) -> VcxCoreResult<String> {
-        indy::proofs::prover::prover::libindy_prover_get_credentials(self.indy_wallet_handle, filter_json).await
+        anoncreds::indy::proofs::prover::prover::libindy_prover_get_credentials(self.indy_wallet_handle, filter_json)
+            .await
     }
 
     async fn prover_get_credentials_for_proof_req(&self, proof_req: &str) -> VcxCoreResult<String> {
-        indy::proofs::prover::prover::libindy_prover_get_credentials_for_proof_req(self.indy_wallet_handle, proof_req)
-            .await
+        anoncreds::indy::proofs::prover::prover::libindy_prover_get_credentials_for_proof_req(
+            self.indy_wallet_handle,
+            proof_req,
+        )
+        .await
     }
 
     async fn prover_create_credential_req(
@@ -141,7 +156,7 @@ impl BaseAnonCreds for IndySdkAnonCreds {
         credential_def_json: &str,
         master_secret_id: &str,
     ) -> VcxCoreResult<(String, String)> {
-        indy::credentials::holder::libindy_prover_create_credential_req(
+        anoncreds::indy::credentials::holder::libindy_prover_create_credential_req(
             self.indy_wallet_handle,
             prover_did,
             credential_offer_json,
@@ -159,7 +174,7 @@ impl BaseAnonCreds for IndySdkAnonCreds {
         timestamp: u64,
         cred_rev_id: &str,
     ) -> VcxCoreResult<String> {
-        indy::proofs::prover::libindy_prover_create_revocation_state(
+        anoncreds::indy::proofs::prover::libindy_prover_create_revocation_state(
             tails_dir,
             rev_reg_def_json,
             rev_reg_delta_json,
@@ -177,7 +192,7 @@ impl BaseAnonCreds for IndySdkAnonCreds {
         cred_def_json: &str,
         rev_reg_def_json: Option<&str>,
     ) -> VcxCoreResult<String> {
-        indy::credentials::holder::libindy_prover_store_credential(
+        anoncreds::indy::credentials::holder::libindy_prover_store_credential(
             self.indy_wallet_handle,
             cred_id,
             cred_req_meta,
@@ -189,11 +204,15 @@ impl BaseAnonCreds for IndySdkAnonCreds {
     }
 
     async fn prover_delete_credential(&self, cred_id: &str) -> VcxCoreResult<()> {
-        indy::credentials::holder::libindy_prover_delete_credential(self.indy_wallet_handle, cred_id).await
+        anoncreds::indy::credentials::holder::libindy_prover_delete_credential(self.indy_wallet_handle, cred_id).await
     }
 
     async fn prover_create_link_secret(&self, master_secret_id: &str) -> VcxCoreResult<String> {
-        indy::credentials::holder::libindy_prover_create_master_secret(self.indy_wallet_handle, master_secret_id).await
+        anoncreds::indy::credentials::holder::libindy_prover_create_master_secret(
+            self.indy_wallet_handle,
+            master_secret_id,
+        )
+        .await
     }
 
     async fn issuer_create_schema(
@@ -203,11 +222,11 @@ impl BaseAnonCreds for IndySdkAnonCreds {
         version: &str,
         attrs: &str,
     ) -> VcxCoreResult<(String, String)> {
-        indy::primitives::credential_schema::libindy_issuer_create_schema(issuer_did, name, version, attrs).await
+        libindy_issuer_create_schema(issuer_did, name, version, attrs).await
     }
 
     async fn revoke_credential_local(&self, tails_dir: &str, rev_reg_id: &str, cred_rev_id: &str) -> VcxCoreResult<()> {
-        indy::primitives::revocation_registry::revoke_credential_local(
+        anoncreds::indy::credentials::issuer::revoke_credential_local(
             self.indy_wallet_handle,
             tails_dir,
             rev_reg_id,
@@ -226,6 +245,6 @@ impl BaseAnonCreds for IndySdkAnonCreds {
     }
 
     async fn generate_nonce(&self) -> VcxCoreResult<String> {
-        indy::anoncreds::generate_nonce().await
+        anoncreds::indy::general::generate_nonce().await
     }
 }

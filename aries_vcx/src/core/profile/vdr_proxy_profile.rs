@@ -2,6 +2,7 @@ use std::{sync::Arc, time::Duration};
 
 use crate::errors::error::VcxResult;
 use aries_vcx_core::ledger::base_ledger::{TaaConfigurator, TxnAuthrAgrmtOptions};
+use aries_vcx_core::wallet::indy::IndySdkWallet;
 use aries_vcx_core::{
     anoncreds::{base_anoncreds::BaseAnonCreds, indy_anoncreds::IndySdkAnonCreds},
     ledger::{
@@ -13,7 +14,7 @@ use aries_vcx_core::{
         request_submitter::vdr_proxy::VdrProxySubmitter,
         response_cacher::in_memory::{InMemoryResponseCacher, InMemoryResponseCacherConfig},
     },
-    wallet::{base_wallet::BaseWallet, indy_wallet::IndySdkWallet},
+    wallet::base_wallet::BaseWallet,
     ResponseParser, VdrProxyClient, WalletHandle,
 };
 use async_trait::async_trait;

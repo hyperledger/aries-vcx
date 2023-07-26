@@ -51,7 +51,7 @@ pub mod test_utils {
     use aries_vcx::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
     use aries_vcx::utils::constants::{DEFAULT_PROOF_NAME, TEST_TAILS_URL};
     use aries_vcx::utils::filters::{filter_credential_offers_by_comment, filter_proof_requests_by_name};
-    use aries_vcx_core::indy::ledger::pool::test_utils::get_temp_dir_path;
+    use aries_vcx_core::ledger::indy::pool::test_utils::get_temp_dir_path;
 
     pub fn _send_message(sender: Sender<AriesMessage>) -> Option<SendClosureConnection> {
         Some(Box::new(
