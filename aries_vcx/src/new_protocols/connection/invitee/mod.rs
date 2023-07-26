@@ -1,3 +1,4 @@
+pub mod handlers;
 pub mod state;
 
 use messages::{
