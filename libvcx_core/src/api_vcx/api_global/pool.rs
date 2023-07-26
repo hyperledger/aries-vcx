@@ -8,14 +8,11 @@ use crate::api_vcx::api_global::wallet::get_main_wallet_handle;
 use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 use aries_vcx::aries_vcx_core::errors::error::AriesVcxCoreError;
 use aries_vcx::aries_vcx_core::ledger::indy::pool::PoolConfig;
-#[cfg(feature = "ledger_indyvdr")]
 use aries_vcx::aries_vcx_core::ledger::request_submitter::vdr_ledger::{
     IndyVdrLedgerPool, IndyVdrSubmitter, LedgerPoolConfig,
 };
 use aries_vcx::aries_vcx_core::wallet::base_wallet::BaseWallet;
-#[cfg(feature = "ledger_indyvdr")]
 use aries_vcx::core::profile::ledger::indyvdr_build_ledger_read;
-#[cfg(feature = "ledger_indyvdr")]
 use aries_vcx::core::profile::ledger::indyvdr_build_ledger_write;
 use aries_vcx::core::profile::profile::Profile;
 use aries_vcx::errors::error::{AriesVcxError, VcxResult};
@@ -45,8 +42,6 @@ async fn build_components_ledger(
     Arc<dyn IndyLedgerRead>,
     Arc<dyn IndyLedgerWrite>,
 )> {
-    #[cfg(feature = "ledger_indyvdr")]
-    {
         let ledger_pool_config = LedgerPoolConfig {
             genesis_file_path: config.genesis_path.clone(),
         };
@@ -60,11 +55,6 @@ async fn build_components_ledger(
         let indy_read: Arc<dyn IndyLedgerRead> = ledger_read.clone();
         let indy_write: Arc<dyn IndyLedgerWrite> = ledger_write.clone();
         return Ok((anoncreds_read, anoncreds_write, indy_read, indy_write));
-    }
-    #[cfg(not(any(feature = "ledger_indyvdr")))]
-    {
-        compile_error!("No ledger implementation has been selected by feature flag upon build");
-    }
 }
 
 pub fn reset_ledger_components() -> LibvcxResult<()> {
@@ -179,11 +169,6 @@ pub mod tests {
             pool_config: None,
         };
         // todo: indy-vdr panics if the file is invalid, see: indy-vdr-0.3.4/src/pool/runner.rs:44:22
-        // #[cfg(feature = "ledger_indyvdr")]
-        // assert_eq!(
-        //     open_main_pool(&pool_config).await.unwrap_err().kind(),
-        //     LibvcxErrorKind::InvalidGenesisTxnPath
-        // );
         assert_eq!(
             get_main_anoncreds_ledger_read().unwrap_err().kind(),
             LibvcxErrorKind::NotReady
@@ -205,7 +190,6 @@ pub mod tests {
             pool_name: Some(pool_name.clone()),
             pool_config: None,
         };
-        #[cfg(feature = "ledger_indyvdr")]
         assert_eq!(
             open_main_pool(&pool_config).await.unwrap_err().kind(),
             LibvcxErrorKind::IOError

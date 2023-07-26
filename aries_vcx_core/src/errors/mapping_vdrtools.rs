@@ -4,14 +4,10 @@ use vdrtools::types::{
     ErrorCode,
 };
 
-#[cfg(all(
-    not(feature = "vdrtools"),
-    any(feature = "modular_libs", feature = "vdr_proxy_ledger")
-))]
-use indy_ledger_response_parser::{
-    errors::{IndyError, IndyErrorKind},
-    ErrorCode,
-};
+// use indy_ledger_response_parser::{
+//     errors::{IndyError, IndyErrorKind},
+//     ErrorCode,
+// };
 
 use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind};
 

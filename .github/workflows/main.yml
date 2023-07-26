@@ -502,8 +502,8 @@ jobs:
     strategy:
       matrix:
         features: [
-          "ledger_indyvdr,anoncreds_vdrtools",
-          "ledger_indyvdr,anoncreds_credx"
+          "anoncreds_vdrtools",
+          "anoncreds_credx"
         ]
     steps:
       - name: "Git checkout"
@@ -521,8 +521,8 @@ jobs:
     strategy:
       matrix:
         features: [
-          "ledger_indyvdr,anoncreds_vdrtools",
-          "ledger_indyvdr,anoncreds_credx"
+          "anoncreds_vdrtools",
+          "anoncreds_credx"
         ]
     steps:
       - name: "Git checkout"
