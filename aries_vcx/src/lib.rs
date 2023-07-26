@@ -41,6 +41,7 @@ pub mod handlers;
 
 pub mod global;
 pub mod protocols;
+pub mod new_protocols;
 
 pub mod common;
 pub mod core;
