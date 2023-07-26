@@ -451,7 +451,7 @@ dependencies = [
  "futures",
  "indy-credx",
  "indy-ledger-response-parser",
- "indy-vdr",
+ "indy-vdr 0.4.0-dev.16",
  "indy-vdr-proxy-client",
  "lazy_static",
  "libvdrtools",
@@ -1896,6 +1896,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "env_logger"
+version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "85cdab6a89accf66733ad5a1693a4dcced6aeff64602b634530dd73c1f3ee9f0"
+dependencies = [
+ "humantime 2.1.0",
+ "is-terminal",
+ "log",
+ "regex",
+ "termcolor",
+]
+
+[[package]]
 name = "errno"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2380,6 +2393,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
 
 [[package]]
+name = "hex-literal"
+version = "0.3.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7ebdb29d2ea9ed0083cd8cece49bbd968021bd99b0849edb4a9a7ee0fdf6a4e0"
+
+[[package]]
 name = "hkdf"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2609,7 +2628,7 @@ name = "indy-ledger-response-parser"
 version = "0.1.0"
 dependencies = [
  "indy-api-types",
- "indy-vdr",
+ "indy-vdr 0.3.4",
  "serde",
  "serde_json",
  "time 0.3.21",
@@ -2706,11 +2725,40 @@ dependencies = [
 ]
 
 [[package]]
+name = "indy-vdr"
+version = "0.4.0-dev.16"
+source = "git+https://github.com/hyperledger/indy-vdr?rev=v0.4.0-dev.16#33c5b4b9046443efef6dc1820b34c70f3893eb36"
+dependencies = [
+ "env_logger 0.10.0",
+ "etcommon-rlp",
+ "ffi-support",
+ "futures-channel",
+ "futures-executor",
+ "futures-util",
+ "hex",
+ "hex-literal",
+ "indy-data-types 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "indy-utils 0.5.0",
+ "log",
+ "once_cell",
+ "pin-utils",
+ "rand 0.8.5",
+ "regex",
+ "rmp-serde 1.1.1",
+ "serde",
+ "serde_json",
+ "sha3 0.10.8",
+ "thiserror",
+ "ursa",
+ "zmq",
+]
+
+[[package]]
 name = "indy-vdr-proxy-client"
 version = "0.1.0"
 source = "git+https://github.com/mirgee/indy-vdr.git?rev=fab0535#fab0535832d87f8194cf49acc897ac6b004c38c4"
 dependencies = [
- "indy-vdr",
+ "indy-vdr 0.3.4",
  "reqwest",
  "serde_json",
  "url",
@@ -2788,6 +2836,18 @@ name = "ipnet"
 version = "2.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "12b6ee2129af8d4fb011108c73d99a1b83a85977f23b82460c0ae2e25bb4b57f"
+
+[[package]]
+name = "is-terminal"
+version = "0.4.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "adcf93614601c8129ddf72e2d5633df827ba6551541c6d8c59520a371475be1f"
+dependencies = [
+ "hermit-abi 0.3.1",
+ "io-lifetimes",
+ "rustix",
+ "windows-sys 0.48.0",
+]
 
 [[package]]
 name = "isolang"
