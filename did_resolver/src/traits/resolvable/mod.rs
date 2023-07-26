@@ -12,7 +12,7 @@ use self::{resolution_options::DidResolutionOptions, resolution_output::DidResol
 #[async_trait]
 pub trait DidResolvable {
     type ExtraFieldsService: Default;
-    type ExtraFieldsOptions;
+    type ExtraFieldsOptions: Default;
 
     async fn resolve(
         &self,

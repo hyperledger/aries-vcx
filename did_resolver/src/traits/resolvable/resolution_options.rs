@@ -1,6 +1,8 @@
+use serde::Deserialize;
+
 use crate::shared_types::media_type::MediaType;
 
-#[derive(Debug, Clone, PartialEq, Default)]
+#[derive(Debug, Clone, PartialEq, Default, Deserialize)]
 pub struct DidResolutionOptions<E> {
     accept: Option<MediaType>,
     extra: E,
