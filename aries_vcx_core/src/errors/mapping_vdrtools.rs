@@ -1,4 +1,3 @@
-#[cfg(feature = "vdrtools")]
 use vdrtools::types::{
     errors::{IndyError, IndyErrorKind},
     ErrorCode,

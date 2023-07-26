@@ -42,19 +42,19 @@ async fn build_components_ledger(
     Arc<dyn IndyLedgerRead>,
     Arc<dyn IndyLedgerWrite>,
 )> {
-        let ledger_pool_config = LedgerPoolConfig {
-            genesis_file_path: config.genesis_path.clone(),
-        };
-        let ledger_pool = Arc::new(IndyVdrLedgerPool::new(ledger_pool_config)?);
-        let request_submitter = Arc::new(IndyVdrSubmitter::new(ledger_pool));
+    let ledger_pool_config = LedgerPoolConfig {
+        genesis_file_path: config.genesis_path.clone(),
+    };
+    let ledger_pool = Arc::new(IndyVdrLedgerPool::new(ledger_pool_config)?);
+    let request_submitter = Arc::new(IndyVdrSubmitter::new(ledger_pool));
 
-        let ledger_read = Arc::new(indyvdr_build_ledger_read(request_submitter.clone())?);
-        let ledger_write = Arc::new(indyvdr_build_ledger_write(base_wallet, request_submitter, None));
-        let anoncreds_read: Arc<dyn AnoncredsLedgerRead> = ledger_read.clone();
-        let anoncreds_write: Arc<dyn AnoncredsLedgerWrite> = ledger_write.clone();
-        let indy_read: Arc<dyn IndyLedgerRead> = ledger_read.clone();
-        let indy_write: Arc<dyn IndyLedgerWrite> = ledger_write.clone();
-        return Ok((anoncreds_read, anoncreds_write, indy_read, indy_write));
+    let ledger_read = Arc::new(indyvdr_build_ledger_read(request_submitter.clone())?);
+    let ledger_write = Arc::new(indyvdr_build_ledger_write(base_wallet, request_submitter, None));
+    let anoncreds_read: Arc<dyn AnoncredsLedgerRead> = ledger_read.clone();
+    let anoncreds_write: Arc<dyn AnoncredsLedgerWrite> = ledger_write.clone();
+    let indy_read: Arc<dyn IndyLedgerRead> = ledger_read.clone();
+    let indy_write: Arc<dyn IndyLedgerWrite> = ledger_write.clone();
+    return Ok((anoncreds_read, anoncreds_write, indy_read, indy_write));
 }
 
 pub fn reset_ledger_components() -> LibvcxResult<()> {
