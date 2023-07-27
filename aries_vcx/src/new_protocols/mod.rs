@@ -1,5 +1,4 @@
 use async_trait::async_trait;
-use messages::AriesMessage;
 
 use crate::errors::error::AriesVcxError;
 
@@ -8,6 +7,7 @@ use self::connection::ConnectionSM;
 pub mod connection;
 
 /// Enum that can represent any Aries state machine, in any of their states.
+#[derive(Clone, Debug)]
 pub enum AriesSM {
     Connection(ConnectionSM),
 }

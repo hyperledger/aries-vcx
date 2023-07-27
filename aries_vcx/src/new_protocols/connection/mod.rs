@@ -1,7 +1,8 @@
-use crate::protocols::connection::invitee::InviteeConnection;
-
 use self::{
-    invitee::state::{InviteeRequested, InviteeResponded},
+    invitee::{
+        state::{InviteeComplete, InviteeRequested, InviteeResponded},
+        InviteeConnection,
+    },
     inviter::{
         state::{InviterComplete, InviterRequested, InviterResponded},
         InviterConnection,

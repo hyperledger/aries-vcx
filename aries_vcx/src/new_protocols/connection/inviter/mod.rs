@@ -13,6 +13,7 @@ use uuid::Uuid;
 
 use self::state::{InviterComplete, InviterRequested, InviterResponded};
 
+#[derive(Clone, Debug)]
 pub struct InviterConnection<S> {
     state: S,
 }

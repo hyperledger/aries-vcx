@@ -15,6 +15,7 @@ use uuid::Uuid;
 
 use self::state::{InviteeComplete, InviteeRequested, InviteeResponded};
 
+#[derive(Clone, Debug)]
 pub struct InviteeConnection<S> {
     state: S,
 }
