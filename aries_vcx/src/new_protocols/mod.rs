@@ -18,20 +18,20 @@ pub trait StateMachineStorage {
     /// Type used for providing the necessary arguments from the environment
     /// to determine the [`Self::Id`] of the state machine that needs to be
     /// retrieved.
-    type ResolveIdParams;
+    type ResolveIdParams<'a>;
     /// Type is used for identifying a particular [`AriesSM`] instance.
     type Id;
 
     /// This method makes use of the parameters to provide a [`Self::Id`] that
     /// will then be used for retrieving and storing the state machine.
-    async fn resolve_id(&self, params: Self::ResolveIdParams) -> Result<Option<Self::Id>, AriesVcxError>;
+    async fn resolve_id(&self, params: Self::ResolveIdParams<'_>) -> Result<Option<Self::Id>, AriesVcxError>;
 
     /// Retrieves the state machine with the given id.
     /// This is intended to transfer the state machine's ownership, if possible.
     ///
     /// If, for instance, you (also) store your state machines in an
     /// in-memory cache, on a cache hit you should remove the instance
-    /// from the cache and return the owned state machine.
+    /// from the cache and return the owned state machine (not clone it).
     ///
     /// Also see [`StateMachineStorage::put_different_state`] and [`StateMachineStorage::put_same_state`].
     async fn get(&self, id: &Self::Id) -> Result<Option<AriesSM>, AriesVcxError>;
