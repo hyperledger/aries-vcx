@@ -2,8 +2,8 @@ use std::sync::Arc;
 
 use agency_client::agency_client::AgencyClient;
 use agency_client::configuration::{AgencyClientConfig, AgentProvisionConfig};
+use aries_vcx_core::wallet::agency_client_wallet::ToBaseAgencyClientWallet;
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
-use aries_vcx_core::wallet::indy::agency_client_wallet::ToBaseAgencyClientWallet;
 
 use crate::errors::error::prelude::*;
 

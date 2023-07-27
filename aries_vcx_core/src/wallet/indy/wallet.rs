@@ -3,17 +3,14 @@ use serde::{Deserialize, Serialize};
 use vdrtools::{
     types::domain::wallet::{default_key_derivation_method, KeyDerivationMethod},
     types::errors::IndyErrorKind,
-    DidMethod, DidValue, KeyInfo, Locator, MyDidInfo,
+    DidMethod, DidValue, KeyInfo, Locator, MyDidInfo, WalletHandle,
 };
 
+use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
+use crate::global::settings;
 use crate::wallet::indy::did_mocks::{did_mocks_enabled, DidMocks};
 use crate::wallet::indy::{IssuerConfig, RestoreWalletConfigs, WalletConfig};
 use crate::SearchHandle;
-use crate::{
-    anoncreds::indy::credentials::holder,
-    errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
-};
-use crate::{global::settings, WalletHandle};
 use crate::{secret, utils};
 
 pub async fn open_wallet(wallet_config: &WalletConfig) -> VcxCoreResult<WalletHandle> {

@@ -29,13 +29,13 @@ extern crate derive_builder;
 pub mod anoncreds;
 pub mod errors;
 pub mod global;
-#[cfg(feature = "vdrtools")]
+#[cfg(any(feature = "vdrtools_anoncreds", feature = "vdrtools_ledger"))]
 pub mod indy;
 pub mod ledger;
 pub mod utils;
 pub mod wallet;
 
-#[cfg(feature = "vdrtools")]
+#[cfg(any(feature = "vdrtools_anoncreds", feature = "vdrtools_ledger"))]
 pub use vdrtools::{
     PoolHandle, SearchHandle, WalletHandle, INVALID_POOL_HANDLE, INVALID_SEARCH_HANDLE, INVALID_WALLET_HANDLE,
 };

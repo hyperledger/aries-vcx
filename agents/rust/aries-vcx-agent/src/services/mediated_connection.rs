@@ -17,7 +17,7 @@ use aries_vcx::{
     agency_client::{agency_client::AgencyClient, configuration::AgencyClientConfig},
     handlers::connection::mediated_connection::{ConnectionState, MediatedConnection},
 };
-use aries_vcx_core::wallet::indy::agency_client_wallet::ToBaseAgencyClientWallet;
+use aries_vcx_core::wallet::agency_client_wallet::ToBaseAgencyClientWallet;
 
 pub struct ServiceMediatedConnections {
     profile: Arc<dyn Profile>,
