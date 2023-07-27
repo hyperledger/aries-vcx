@@ -1,6 +1,6 @@
 use self::{
     invitee::{
-        state::{InviteeComplete, InviteeRequested, InviteeResponded},
+        state::{InviteeComplete, InviteeRequested},
         InviteeConnection,
     },
     inviter::{
@@ -17,7 +17,6 @@ pub mod inviter;
 #[derive(Debug, Clone)]
 pub enum ConnectionSM {
     InviteeRequested(InviteeConnection<InviteeRequested>),
-    InviteeResponded(InviteeConnection<InviteeResponded>),
     InviteeComplete(InviteeConnection<InviteeComplete>),
     InviterRequested(InviterConnection<InviterRequested>),
     InviterResponded(InviterConnection<InviterResponded>),

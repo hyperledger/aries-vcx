@@ -1,83 +1,51 @@
 pub mod handlers;
 pub mod state;
 
-use messages::{
-    decorators::{thread::Thread, timing::Timing},
-    msg_fields::protocols::{
-        connection::{
-            request::{Request, RequestContent, RequestDecorators},
-            ConnectionData,
-        },
-        notification::ack::{Ack, AckContent, AckDecorators, AckStatus},
-    },
+use diddoc_legacy::aries::diddoc::AriesDidDoc;
+use messages::msg_fields::protocols::{
+    connection::{request::RequestContent, ConnectionData},
+    notification::ack::{AckContent, AckStatus},
 };
-use uuid::Uuid;
 
-use self::state::{InviteeComplete, InviteeRequested, InviteeResponded};
+use self::state::{BootstrapInfo, InviteeComplete, InviteeRequested};
 
 #[derive(Clone, Debug)]
 pub struct InviteeConnection<S> {
+    did: String,
+    verkey: String,
     state: S,
 }
 
 impl InviteeConnection<InviteeRequested> {
     pub fn new_invitee(
-        recipient_keys: Vec<String>,
+        did: String,
+        verkey: String,
         label: String,
+        bootstrap_info: BootstrapInfo,
         con_data: ConnectionData,
-        thread: Thread,
-        timing: Timing,
-    ) -> (Self, Request) {
-        let id = Uuid::new_v4().to_string();
+    ) -> (Self, RequestContent) {
         let content = RequestContent::new(label, con_data);
 
-        let decorators = RequestDecorators {
-            thread: Some(thread),
-            timing: Some(timing),
-        };
-
-        let request = Request::with_decorators(id, content, decorators);
-
         let sm = Self {
-            state: InviteeRequested { recipient_keys },
+            state: InviteeRequested { bootstrap_info },
+            did,
+            verkey,
         };
 
-        (sm, request)
+        (sm, content)
     }
 
-    pub fn into_responded(self, con_data: ConnectionData) -> InviteeConnection<InviteeResponded> {
-        InviteeConnection {
-            state: InviteeResponded { con_data },
-        }
-    }
-}
-
-impl InviteeConnection<InviteeResponded> {
-    pub fn into_complete(self) -> InviteeConnection<InviteeComplete> {
-        InviteeConnection {
-            state: InviteeComplete {
-                con_data: self.state.con_data,
-            },
-        }
-    }
-
-    pub fn into_complete_with_ack(self, thread: Thread, timing: Timing) -> (InviteeConnection<InviteeComplete>, Ack) {
+    pub fn into_complete(self, did_doc: AriesDidDoc) -> (InviteeConnection<InviteeComplete>, AckContent) {
         let sm = InviteeConnection {
+            did: self.did,
+            verkey: self.verkey,
             state: InviteeComplete {
-                con_data: self.state.con_data,
+                did_doc,
+                bootstrap_info: self.state.bootstrap_info,
             },
         };
 
-        let id = Uuid::new_v4().to_string();
         let content = AckContent::new(AckStatus::Ok);
-
-        let decorators = AckDecorators {
-            thread,
-            timing: Some(timing),
-        };
-
-        let ack = Ack::with_decorators(id, content, decorators);
-
-        (sm, ack)
+        (sm, content)
     }
 }

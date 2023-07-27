@@ -24,7 +24,7 @@ pub trait StateMachineStorage {
 
     /// This method makes use of the parameters to provide a [`Self::Id`] that
     /// will then be used for retrieving and storing the state machine.
-    async fn resolve_id(&self, params: Self::ResolveIdParams<'_>) -> Result<Option<Self::Id>, AriesVcxError>;
+    async fn resolve_id(&self, id_params: Self::ResolveIdParams<'_>) -> Result<Self::Id, AriesVcxError>;
 
     /// Retrieves the state machine with the given id.
     /// This is intended to transfer the state machine's ownership, if possible.

@@ -1,12 +1,10 @@
 pub mod handlers;
 pub mod state;
 
+use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use messages::{
     decorators::{thread::Thread, timing::Timing},
-    msg_fields::protocols::connection::{
-        response::{ConnectionSignature, Response, ResponseContent, ResponseDecorators},
-        ConnectionData,
-    },
+    msg_fields::protocols::connection::response::{ConnectionSignature, Response, ResponseContent, ResponseDecorators},
     AriesMessage,
 };
 use uuid::Uuid;
@@ -19,9 +17,9 @@ pub struct InviterConnection<S> {
 }
 
 impl InviterConnection<InviterRequested> {
-    pub fn new_inviter(self, con_data: ConnectionData) -> Self {
+    pub fn new_inviter(self, did_doc: AriesDidDoc) -> Self {
         InviterConnection {
-            state: InviterRequested { con_data },
+            state: InviterRequested { did_doc },
         }
     }
 }
@@ -43,7 +41,7 @@ impl InviterConnection<InviterRequested> {
 
         let sm = InviterConnection {
             state: InviterResponded {
-                con_data: self.state.con_data,
+                did_doc: self.state.did_doc,
             },
         };
 
@@ -55,7 +53,7 @@ impl InviterConnection<InviterResponded> {
     pub fn into_complete(self, _: &AriesMessage) -> InviterConnection<InviterComplete> {
         InviterConnection {
             state: InviterComplete {
-                con_data: self.state.con_data,
+                did_doc: self.state.did_doc,
             },
         }
     }
