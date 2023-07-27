@@ -5,17 +5,21 @@ use chrono::Utc;
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use messages::{
     decorators::{thread::Thread, timing::Timing},
-    msg_fields::protocols::connection::{
-        invitation::Invitation,
-        request::{Request, RequestDecorators},
-        ConnectionData,
+    msg_fields::protocols::{
+        connection::{
+            invitation::Invitation,
+            request::{Request, RequestDecorators},
+            response::Response,
+            ConnectionData,
+        },
+        notification::ack::{Ack, AckDecorators},
     },
 };
 use url::Url;
 use uuid::Uuid;
 
 use crate::{
-    common::ledger::transactions::get_service,
+    common::{ledger::transactions::get_service, signing::decode_signed_connection_response},
     errors::error::VcxResult,
     new_protocols::{connection::ConnectionSM, AriesSM, StateMachineStorage},
 };
@@ -148,4 +152,58 @@ where
     sm_storage.put_different_state(sm_id, sm).await?;
 
     Ok(request)
+}
+
+pub async fn handle_response<S, W>(
+    sm_storage: S,
+    id_params: S::ResolveIdParams<'_>,
+    response: Response,
+    wallet: &Arc<dyn BaseWallet>,
+) -> VcxResult<Ack>
+where
+    S: StateMachineStorage,
+{
+    // TODO: Check thread ID
+    let sm_id = sm_storage.resolve_id(id_params).await?;
+
+    let sm = match sm_storage.get(&sm_id).await? {
+        AriesSM::Connection(ConnectionSM::InviteeRequested(sm)) => sm,
+        _ => todo!("Add some error here in the event of unexpected state machine"),
+    };
+
+    let Some(verkey) = sm.state.bootstrap_info.recipient_keys.first() else {todo!("Add some error in case no recipient key is found")};
+
+    let did_doc = match decode_signed_connection_response(wallet, response.content, verkey).await {
+        Ok(con_data) => con_data.did_doc,
+        Err(err) => {
+            // TODO: Theres a ProblemReport being built here.
+            // Might be nice to either have a different type for the Err()
+            // variant or incorporate ProblemReports into AriesVcxError
+            let sm = AriesSM::Connection(ConnectionSM::InviteeRequested(sm));
+            sm_storage.put_same_state(sm_id, sm).await?;
+            error!("Request DidDoc validation failed! Sending ProblemReport...");
+            return Err(err);
+        }
+    };
+
+    let (sm, content) = sm.into_complete(did_doc);
+
+    let timing = Timing {
+        out_time: Some(Utc::now()),
+        ..Default::default()
+    };
+
+    // TODO: should probably construct a new thread instance
+    let decorators = AckDecorators {
+        thread: response.decorators.thread,
+        timing: Some(timing),
+    };
+
+    let msg_id = Uuid::new_v4().to_string();
+
+    let ack = Ack::with_decorators(msg_id, content, decorators);
+    let sm = AriesSM::Connection(ConnectionSM::InviteeComplete(sm));
+    sm_storage.put_different_state(sm_id, sm).await?;
+
+    Ok(ack)
 }

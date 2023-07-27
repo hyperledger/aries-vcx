@@ -11,9 +11,9 @@ use self::state::{BootstrapInfo, InviteeComplete, InviteeRequested};
 
 #[derive(Clone, Debug)]
 pub struct InviteeConnection<S> {
-    did: String,
-    verkey: String,
-    state: S,
+    pub(crate) did: String,
+    pub(crate) verkey: String,
+    pub(crate) state: S,
 }
 
 impl InviteeConnection<InviteeRequested> {

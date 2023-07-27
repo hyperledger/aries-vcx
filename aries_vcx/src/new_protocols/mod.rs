@@ -34,7 +34,7 @@ pub trait StateMachineStorage {
     /// from the cache and return the owned state machine (not clone it).
     ///
     /// Also see [`StateMachineStorage::put_different_state`] and [`StateMachineStorage::put_same_state`].
-    async fn get(&self, id: &Self::Id) -> Result<Option<AriesSM>, AriesVcxError>;
+    async fn get(&self, id: &Self::Id) -> Result<AriesSM, AriesVcxError>;
 
     /// Used for storing a state machine in the event that its state *DID* change.
     /// This should update ALL places where you store your state machines.
