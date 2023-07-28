@@ -20,7 +20,8 @@ use uuid::Uuid;
 
 use crate::{
     common::{ledger::transactions::get_service, signing::decode_signed_connection_response},
-    errors::error::VcxResult,
+    errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
+    handlers::util::matches_thread_id,
     new_protocols::{connection::ConnectionSM, AriesSM, StateMachineStorage},
 };
 
@@ -135,7 +136,8 @@ where
 
     let con_data = ConnectionData::new(did.clone(), did_doc);
 
-    let (sm, content) = InviteeConnection::new_invitee(did, verkey, label, bootstrap_info, con_data);
+    let (sm, content) =
+        InviteeConnection::new_invitee(did, verkey, label, bootstrap_info, con_data, thread.thid.clone());
 
     let timing = Timing {
         out_time: Some(Utc::now()),
@@ -163,13 +165,22 @@ pub async fn handle_response<S, W>(
 where
     S: StateMachineStorage,
 {
-    // TODO: Check thread ID
     let sm_id = sm_storage.resolve_id(id_params).await?;
 
     let sm = match sm_storage.get(&sm_id).await? {
         AriesSM::Connection(ConnectionSM::InviteeRequested(sm)) => sm,
         _ => todo!("Add some error here in the event of unexpected state machine"),
     };
+
+    if !matches_thread_id!(response, sm.thread_id.as_str()) {
+        return Err(AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidJson,
+            format!(
+                "Cannot handle message {:?}: thread id does not match, expected {:?}",
+                response, sm.thread_id
+            ),
+        ));
+    }
 
     let Some(verkey) = sm.state.bootstrap_info.recipient_keys.first() else {todo!("Add some error in case no recipient key is found")};
 
@@ -193,9 +204,9 @@ where
         ..Default::default()
     };
 
-    // TODO: should probably construct a new thread instance
+    let thread = Thread::new(response.decorators.thread.thid);
     let decorators = AckDecorators {
-        thread: response.decorators.thread,
+        thread,
         timing: Some(timing),
     };
 

@@ -13,6 +13,7 @@ use self::state::{BootstrapInfo, InviteeComplete, InviteeRequested};
 pub struct InviteeConnection<S> {
     pub(crate) did: String,
     pub(crate) verkey: String,
+    pub(crate) thread_id: String,
     pub(crate) state: S,
 }
 
@@ -23,13 +24,15 @@ impl InviteeConnection<InviteeRequested> {
         label: String,
         bootstrap_info: BootstrapInfo,
         con_data: ConnectionData,
+        thread_id: String,
     ) -> (Self, RequestContent) {
         let content = RequestContent::new(label, con_data);
 
         let sm = Self {
-            state: InviteeRequested { bootstrap_info },
             did,
             verkey,
+            thread_id,
+            state: InviteeRequested { bootstrap_info },
         };
 
         (sm, content)
@@ -39,6 +42,7 @@ impl InviteeConnection<InviteeRequested> {
         let sm = InviteeConnection {
             did: self.did,
             verkey: self.verkey,
+            thread_id: self.thread_id,
             state: InviteeComplete {
                 did_doc,
                 bootstrap_info: self.state.bootstrap_info,
