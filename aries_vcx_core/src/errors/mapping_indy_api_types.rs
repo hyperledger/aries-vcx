@@ -1,8 +1,3 @@
-// // todo: import this directly from indy-api-types
-// use indy_ledger_response_parser::{
-//     errors::{IndyError, IndyErrorKind},
-//     ErrorCode,
-// };
 pub use indy_api_types::{errors, ErrorCode};
 
 use indy_api_types::{
