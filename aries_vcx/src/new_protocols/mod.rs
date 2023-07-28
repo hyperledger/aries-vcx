@@ -43,7 +43,7 @@ pub trait StateMachineStorage {
     /// and an in-memory cache, this should update both.
     ///
     /// Also see [`StateMachineStorage::get`] and [`StateMachineStorage::put_same_state`].
-    async fn put_different_state(&self, id: Self::Id, sm: AriesSM) -> Result<(), AriesVcxError>;
+    async fn put_new_state(&self, id: Self::Id, sm: AriesSM) -> Result<(), AriesVcxError>;
 
     /// Used for storing a state machine in the event that its state *DID NOT* change.
     /// This is present to allow storage optimizations.

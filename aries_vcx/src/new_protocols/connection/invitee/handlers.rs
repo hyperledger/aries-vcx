@@ -151,7 +151,7 @@ where
 
     let request = Request::with_decorators(msg_id, content, decorators);
     let sm = AriesSM::Connection(ConnectionSM::InviteeRequested(sm));
-    sm_storage.put_different_state(sm_id, sm).await?;
+    sm_storage.put_new_state(sm_id, sm).await?;
 
     Ok(request)
 }
@@ -214,7 +214,7 @@ where
 
     let ack = Ack::with_decorators(msg_id, content, decorators);
     let sm = AriesSM::Connection(ConnectionSM::InviteeComplete(sm));
-    sm_storage.put_different_state(sm_id, sm).await?;
+    sm_storage.put_new_state(sm_id, sm).await?;
 
     Ok(ack)
 }
