@@ -11,15 +11,15 @@ path = "src/lib.rs"
 doctest = false
 
 [features]
-default = ["vdrtools_lib"]
-vdrtools_lib = ["aries_vcx_core/vdrtools_anoncreds", "aries_vcx_core/vdrtools_ledger", "aries_vcx_core/vdrtools_wallet"]
+default = ["vdrtools"]
+vdrtools = ["aries_vcx_core/vdrtools_anoncreds", "aries_vcx_core/vdrtools_ledger", "aries_vcx_core/vdrtools_wallet"]
 # Feature flag to include the 'modular library' dependencies (vdrtools alternatives; indy-vdr, indy-credx)
 modular_libs = ["aries_vcx_core/modular_libs"]
 # TODO: Remove using "vdrtools" feature flag for vdr_proxy_ledger once IndyCredxAnonCreds
 # is fully implemented
-vdr_proxy_ledger = ["aries_vcx_core/vdr_proxy_ledger", "vdrtools_lib"]
+vdr_proxy_ledger = ["aries_vcx_core/vdr_proxy_ledger", "vdrtools"]
 # Used for testing the migrator
-migration = ["vdrtools_lib", "modular_libs"]
+migration = ["vdrtools", "modular_libs"]
 
 [dependencies]
 agency_client = { path = "../agency_client" }

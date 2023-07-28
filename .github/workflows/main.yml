@@ -191,7 +191,7 @@ jobs:
           cd aries_vcx
           cargo check --no-default-features
           cargo check --tests --all-features
-          cargo check --features vdrtools_lib --no-default-features
+          cargo check --features vdrtools --no-default-features
           cargo check --features modular_libs --no-default-features
           cargo check --features vdr_proxy_ledger --no-default-features
 
@@ -429,7 +429,7 @@ jobs:
     strategy:
       matrix:
         features: [
-          "vdrtools_lib",
+          "vdrtools",
           "modular_libs"
         ]
     steps:

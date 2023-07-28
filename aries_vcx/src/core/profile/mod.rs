@@ -3,7 +3,7 @@ pub mod modular_libs_profile;
 pub mod profile;
 #[cfg(feature = "vdr_proxy_ledger")]
 pub mod vdr_proxy_profile;
-#[cfg(feature = "vdrtools_lib")]
+#[cfg(feature = "vdrtools")]
 pub mod vdrtools_profile;
 
 #[cfg(any(feature = "modular_libs", feature = "vdr_proxy_ledger"))]
