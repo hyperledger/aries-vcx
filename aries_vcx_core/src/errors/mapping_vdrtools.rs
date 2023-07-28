@@ -1,16 +1,14 @@
-use vdrtools::types::{
-    errors::{IndyError, IndyErrorKind},
-    ErrorCode,
-};
-
-// #[cfg(all(
-//     not(feature = "vdrtools"),
-//     any(feature = "modular_libs", feature = "vdr_proxy_ledger")
-// ))]
+// // todo: import this directly from indy-api-types
 // use indy_ledger_response_parser::{
 //     errors::{IndyError, IndyErrorKind},
 //     ErrorCode,
 // };
+pub use indy_api_types::{errors, ErrorCode};
+
+use indy_api_types::{
+    errors::{err_msg, IndyErrorKind, IndyResult, IndyResultExt},
+    IndyError,
+};
 
 use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind};
 

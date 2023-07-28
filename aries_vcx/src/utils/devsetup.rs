@@ -33,7 +33,7 @@ use crate::core::profile::modular_libs_profile::ModularLibsProfile;
 #[cfg(feature = "modular_libs")]
 use crate::core::profile::prepare_taa_options;
 use crate::core::profile::profile::Profile;
-#[cfg(feature = "vdrtools")]
+#[cfg(feature = "vdrtools_lib")]
 use crate::core::profile::vdrtools_profile::VdrtoolsProfile;
 use crate::global::settings;
 use crate::global::settings::{
@@ -127,7 +127,7 @@ pub fn make_modular_profile(wallet_handle: WalletHandle, genesis_file_path: Stri
 impl SetupProfile {
     pub async fn _build_setup_profile(genesis_file_path: String) -> SetupProfile {
         // In case of migration test setup, we are starting with vdrtools, then we migrate
-        #[cfg(any(feature = "vdrtools", feature = "migration"))]
+        #[cfg(any(feature = "vdrtools_lib", feature = "migration"))]
         return {
             info!("SetupProfile >> using indy profile");
             SetupProfile::build_profile_vdrtools(genesis_file_path).await
@@ -156,7 +156,7 @@ impl SetupProfile {
         setup
     }
 
-    #[cfg(feature = "vdrtools")]
+    #[cfg(feature = "vdrtools_lib")]
     async fn build_profile_vdrtools(genesis_file_path: String) -> SetupProfile {
         let pool_name = Uuid::new_v4().to_string();
         create_pool_ledger_config(&pool_name, &genesis_file_path).unwrap();

@@ -9,10 +9,10 @@ edition.workspace = true
 fatal_warnings = []
 
 ledger_indyvdr = ["aries-vcx/modular_libs"]
-ledger_vdrtools = ["aries-vcx/vdrtools"]
+ledger_vdrtools = ["aries-vcx/vdrtools_lib"]
 
 anoncreds_credx = ["aries-vcx/modular_libs"]
-anoncreds_vdrtools = ["aries-vcx/vdrtools"]
+anoncreds_vdrtools = ["aries-vcx/vdrtools_lib"]
 
 [dependencies]
 num-traits = "0.2.0"

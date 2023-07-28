@@ -171,8 +171,6 @@ jobs:
         run: |
           cd did_resolver_sov
           cargo check
-          cargo check --features vdrtools --no-default-features
-          cargo check --features modular_libs --no-default-features
 
   check-aries-vcx-feature-variants:
     runs-on: ubuntu-20.04
@@ -193,7 +191,7 @@ jobs:
           cd aries_vcx
           cargo check --no-default-features
           cargo check --tests --all-features
-          cargo check --features vdrtools --no-default-features
+          cargo check --features vdrtools_lib --no-default-features
           cargo check --features modular_libs --no-default-features
           cargo check --features vdr_proxy_ledger --no-default-features
 
@@ -431,7 +429,7 @@ jobs:
     strategy:
       matrix:
         features: [
-          "vdrtools",
+          "vdrtools_lib",
           "modular_libs"
         ]
     steps:

@@ -5,5 +5,5 @@ pub mod ledger;
 pub mod primitives;
 pub mod proofs;
 pub mod signing;
-#[cfg(feature = "vdrtools")]
+#[cfg(feature = "vdrtools_lib")]
 pub mod test_utils;

@@ -3,14 +3,9 @@ name = "did_resolver_sov"
 version = "0.1.0"
 edition = "2021"
 
-[features]
-default = []
-vdrtools = ["aries_vcx_core/vdrtools"]
-modular_libs = ["aries_vcx_core/modular_libs"]
-
 [dependencies]
 did_resolver = { path = "../did_resolver" }
-aries_vcx_core = { path = "../aries_vcx_core" }
+aries_vcx_core = { path = "../aries_vcx_core", features = ["modular_libs"] }
 did_doc_sov = { path = "../did_doc_sov" }
 async-trait = "0.1.68"
 mockall = "0.11.4"

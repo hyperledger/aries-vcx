@@ -5,9 +5,10 @@ use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds,
     ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite},
     wallet::base_wallet::BaseWallet,
+    wallet::mock_wallet::MockWallet,
 };
 
-use super::{mock_anoncreds::MockAnoncreds, mock_ledger::MockLedger, mock_wallet::MockWallet};
+use super::{mock_anoncreds::MockAnoncreds, mock_ledger::MockLedger};
 use crate::core::profile::profile::Profile;
 use crate::errors::error::VcxResult;
 use async_trait::async_trait;

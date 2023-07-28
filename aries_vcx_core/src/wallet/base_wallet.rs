@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use async_trait::async_trait;
 
 #[cfg(feature = "vdrtools_wallet")]
-use vdrtools::WalletHandle;
+use crate::WalletHandle;
 
 use crate::errors::error::VcxCoreResult;
 use crate::utils::async_fn_iterator::AsyncFnIterator;

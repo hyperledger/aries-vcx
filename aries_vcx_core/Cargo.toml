@@ -6,7 +6,6 @@ edition = "2021"
 [features]
 ########################## DEP FLAGS ################################
 # Feature flag to include the libvdrtools dependency
-vdrtools = ["vdrtools_anoncreds", "vdrtools_wallet", "vdrtools_ledger"]
 vdrtools_anoncreds = ["dep:libvdrtools"]
 vdrtools_wallet = ["dep:libvdrtools"]
 vdrtools_ledger = ["dep:libvdrtools"]
@@ -31,6 +30,7 @@ indy-vdr = { version = "0.3.4", default-features = false, features = ["ffi", "lo
 # - update libvdrtools to use =0.3.6 ursa
 indy-credx = { git = "https://github.com/anonyome/indy-shared-rs.git", rev = "7342bc624d23ece8845d1a701cd2cdc9cd401bb0", optional = true }
 libvdrtools = { path = "../libvdrtools", optional = true }
+indy-api-types = { path = "../libvdrtools/indy-api-types" }
 async-trait = "0.1.68"
 futures = { version = "0.3", default-features = false }
 serde_json = "1.0.95"
