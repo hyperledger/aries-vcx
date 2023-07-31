@@ -47,7 +47,7 @@ async fn build_response_content(
 
 pub async fn handle_request<S>(
     sm_storage: S,
-    id_params: S::ResolveIdParams<'_>,
+    sm_id: S::Id,
     wallet: &Arc<dyn BaseWallet>,
     request: Request,
     invitation_verkey: &str,
@@ -57,8 +57,6 @@ pub async fn handle_request<S>(
 where
     S: StateMachineStorage,
 {
-    let sm_id = sm_storage.resolve_id(id_params).await?;
-
     // If the request's DidDoc validation fails, we generate and send a ProblemReport.
     // We then return early with the provided error.
     if let Err(err) = request.content.connection.did_doc.validate() {

@@ -15,16 +15,8 @@ pub enum AriesSM {
 /// Interface for handling the storage and retrieval of [`AriesSM`].
 #[async_trait]
 pub trait StateMachineStorage {
-    /// Type used for providing the necessary arguments from the environment
-    /// to determine the [`Self::Id`] of the state machine that needs to be
-    /// retrieved.
-    type ResolveIdParams<'a>;
     /// Type is used for identifying a particular [`AriesSM`] instance.
     type Id;
-
-    /// This method makes use of the parameters to provide a [`Self::Id`] that
-    /// will then be used for retrieving and storing the state machine.
-    async fn resolve_id(&self, id_params: Self::ResolveIdParams<'_>) -> Result<Self::Id, AriesVcxError>;
 
     /// Retrieves the state machine with the given id.
     /// This is intended to transfer the state machine's ownership, if possible.

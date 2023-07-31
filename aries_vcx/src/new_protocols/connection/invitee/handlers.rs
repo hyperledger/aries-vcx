@@ -98,7 +98,7 @@ async fn did_doc_from_invitation(ledger: &Arc<dyn IndyLedgerRead>, invitation: I
 // and should process the invitation in a better way
 pub async fn accept_invitation<S, W>(
     sm_storage: S,
-    id_params: S::ResolveIdParams<'_>,
+    sm_id: S::Id,
     invitation: Invitation,
     service_endpoint: Url,
     routing_keys: Vec<String>,
@@ -110,7 +110,6 @@ where
     S: StateMachineStorage,
     W: BaseWallet,
 {
-    let sm_id = sm_storage.resolve_id(id_params).await?;
     let msg_id = Uuid::new_v4().to_string();
 
     let thread = match &invitation {
@@ -158,15 +157,13 @@ where
 
 pub async fn handle_response<S, W>(
     sm_storage: S,
-    id_params: S::ResolveIdParams<'_>,
+    sm_id: S::Id,
     response: Response,
     wallet: &Arc<dyn BaseWallet>,
 ) -> VcxResult<Ack>
 where
     S: StateMachineStorage,
 {
-    let sm_id = sm_storage.resolve_id(id_params).await?;
-
     let sm = match sm_storage.get(&sm_id).await? {
         AriesSM::Connection(ConnectionSM::InviteeRequested(sm)) => sm,
         _ => todo!("Add some error here in the event of unexpected state machine"),
