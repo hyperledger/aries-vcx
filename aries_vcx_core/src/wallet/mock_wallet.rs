@@ -1,12 +1,13 @@
-use aries_vcx_core::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
-use aries_vcx_core::utils::async_fn_iterator::AsyncFnIterator;
-use aries_vcx_core::wallet::base_wallet::BaseWallet;
+use std::collections::HashMap;
+
 use async_trait::async_trait;
 
+use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
+use crate::utils::async_fn_iterator::AsyncFnIterator;
 use crate::utils::{self};
-#[cfg(feature = "vdrtools")]
-use aries_vcx_core::WalletHandle;
-use std::collections::HashMap;
+use crate::wallet::base_wallet::BaseWallet;
+#[cfg(feature = "vdrtools_wallet")]
+use crate::WalletHandle;
 
 #[derive(Debug)]
 pub struct MockWallet;
@@ -16,7 +17,7 @@ pub struct MockWallet;
 #[allow(unused)]
 #[async_trait]
 impl BaseWallet for MockWallet {
-    #[cfg(feature = "vdrtools")]
+    #[cfg(feature = "vdrtools_wallet")]
     fn get_wallet_handle(&self) -> WalletHandle {
         WalletHandle(1)
     }

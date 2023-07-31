@@ -449,6 +449,7 @@ dependencies = [
  "async-trait",
  "derive_builder 0.12.0",
  "futures",
+ "indy-api-types",
  "indy-credx",
  "indy-ledger-response-parser",
  "indy-vdr",

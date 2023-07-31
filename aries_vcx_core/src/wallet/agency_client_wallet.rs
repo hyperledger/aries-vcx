@@ -5,7 +5,7 @@ use async_trait::async_trait;
 
 use agency_client::errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 use agency_client::wallet::base_agency_client_wallet::BaseAgencyClientWallet;
-#[cfg(feature = "vdrtools")]
+#[cfg(feature = "vdrtools_wallet")]
 use vdrtools::WalletHandle;
 
 use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
@@ -110,7 +110,7 @@ impl BaseWallet for AgencyClientWallet {
         Ok(self.inner.unpack_message(msg).await?)
     }
 
-    #[cfg(feature = "vdrtools")]
+    #[cfg(feature = "vdrtools_wallet")]
     fn get_wallet_handle(&self) -> WalletHandle {
         unimplemented!("AgencyClientWallet::get_wallet_handle - this was not expected to be called")
     }

@@ -47,6 +47,7 @@ pub mod constants;
 pub mod file;
 pub mod mockdata;
 pub mod openssl;
+#[cfg(feature = "vdrtools")]
 pub mod provision;
 pub mod qualifier;
 pub mod random;

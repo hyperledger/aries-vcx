@@ -7,7 +7,7 @@ use agency_client::agency_client::AgencyClient;
 use agency_client::api::downloaded_message::DownloadedMessageEncrypted;
 use agency_client::messages::update_message::UIDsByConn;
 use agency_client::wallet::base_agency_client_wallet::BaseAgencyClientWallet;
-use aries_vcx_core::wallet::indy::agency_client_wallet::ToBaseWallet;
+use aries_vcx_core::wallet::agency_client_wallet::ToBaseWallet;
 use messages::AriesMessage;
 
 use crate::agency_client::MessageStatusCode;

@@ -2,8 +2,8 @@ use std::collections::HashMap;
 
 use async_trait::async_trait;
 
-#[cfg(feature = "vdrtools")]
-use vdrtools::WalletHandle;
+#[cfg(feature = "vdrtools_wallet")]
+use crate::WalletHandle;
 
 use crate::errors::error::VcxCoreResult;
 use crate::utils::async_fn_iterator::AsyncFnIterator;
@@ -13,7 +13,7 @@ use crate::utils::async_fn_iterator::AsyncFnIterator;
 /// see: <https://github.com/hyperledger/indy-sdk/blob/main/libindy/src/api/wallet.rs>
 #[async_trait]
 pub trait BaseWallet: std::fmt::Debug + Send + Sync {
-    #[cfg(feature = "vdrtools")]
+    #[cfg(feature = "vdrtools_wallet")]
     fn get_wallet_handle(&self) -> WalletHandle;
 
     // ----- DIDs

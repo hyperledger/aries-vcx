@@ -12,9 +12,9 @@ pub mod request_submitter;
 #[cfg(any(feature = "modular_libs", feature = "vdr_proxy_ledger"))]
 pub mod response_cacher;
 
-#[cfg(feature = "vdrtools")]
+#[cfg(feature = "vdrtools_ledger")]
 pub mod indy;
-#[cfg(feature = "vdrtools")]
+#[cfg(feature = "vdrtools_ledger")]
 pub mod indy_ledger;
 
 fn map_error_not_found_to_none<T, E>(res: Result<T, E>) -> Result<Option<T>, AriesVcxCoreError>

@@ -229,8 +229,8 @@ mod connection_serde_tests {
     use crate::protocols::connection::{invitee::InviteeConnection, inviter::InviterConnection, Connection};
     use crate::utils::mockdata::profile::mock_ledger::MockLedger;
     use crate::utils::mockdata::profile::mock_profile::MockProfile;
-    use crate::utils::mockdata::profile::mock_wallet::MockWallet;
     use aries_vcx_core::ledger::base_ledger::IndyLedgerRead;
+    use aries_vcx_core::wallet::mock_wallet::MockWallet;
     use std::sync::Arc;
 
     impl<'a> From<RefInviteeState<'a>> for InviteeState {

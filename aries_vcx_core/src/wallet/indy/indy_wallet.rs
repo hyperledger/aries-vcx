@@ -115,6 +115,7 @@ impl BaseWallet for IndySdkWallet {
         wallet::indy::signing::unpack_message(self.wallet_handle, msg).await
     }
 
+    #[cfg(feature = "vdrtools_wallet")]
     fn get_wallet_handle(&self) -> WalletHandle {
         self.wallet_handle
     }
