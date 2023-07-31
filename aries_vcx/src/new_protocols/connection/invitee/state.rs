@@ -8,6 +8,7 @@ pub struct BootstrapInfo {
     #[serde(default)]
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub routing_keys: Vec<String>,
+    // Maybe use these for refreshing info above, if necessary?
     pub did: Option<String>,
     pub service_endpoint_did: Option<String>,
 }
