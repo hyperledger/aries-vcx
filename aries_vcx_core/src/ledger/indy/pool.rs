@@ -1,6 +1,5 @@
 use serde::{Deserialize, Serialize};
-
-use vdrtools::domain::pool::VdrtoolsPoolOpenConfig;
+use serde_json::Value;
 
 use crate::errors::error::prelude::*;
 use crate::global::settings;
@@ -234,5 +233,5 @@ pub mod test_utils {
 pub struct PoolConfig {
     pub genesis_path: String,
     pub pool_name: Option<String>,
-    pub pool_config: Option<VdrtoolsPoolOpenConfig>,
+    pub pool_config: Option<Value>,
 }

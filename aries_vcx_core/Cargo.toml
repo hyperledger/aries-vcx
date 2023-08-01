@@ -6,8 +6,8 @@ edition = "2021"
 [features]
 ########################## DEP FLAGS ################################
 # Feature flag to include the libvdrtools dependency
-vdrtools_anoncreds = []
-vdrtools_wallet = []
+vdrtools_anoncreds = ["dep:libvdrtools"]
+vdrtools_wallet = ["dep:libvdrtools"]
 # Feature flag to include the 'modular library' dependencies (vdrtools alternatives; indy-vdr, indy-credx)
 modular_libs = ["dep:indy-credx"]
 vdr_proxy_ledger = ["modular_libs", "dep:indy-vdr-proxy-client"]
@@ -28,7 +28,7 @@ indy-vdr = { version = "0.3.4", default-features = false, features = ["ffi", "lo
 # - monitor the issue for other fixes from the maintainers: https://github.com/hyperledger/indy-shared-rs/issues/20
 # - update libvdrtools to use =0.3.6 ursa
 indy-credx = { git = "https://github.com/anonyome/indy-shared-rs.git", rev = "7342bc624d23ece8845d1a701cd2cdc9cd401bb0", optional = true }
-libvdrtools = { path = "../libvdrtools" }
+libvdrtools = { path = "../libvdrtools", optional = true }
 indy-api-types = { path = "../libvdrtools/indy-api-types" }
 async-trait = "0.1.68"
 futures = { version = "0.3", default-features = false }
@@ -45,7 +45,7 @@ tokio = { version = "1.20" }
 # TODO: Point to the official repo if / when vdr-proxy-client PR is merged: https://github.com/hyperledger/indy-vdr/pull/184
 indy-vdr-proxy-client = { git = "https://github.com/mirgee/indy-vdr.git", rev = "fab0535", optional = true }
 indy-ledger-response-parser = { path = "../indy_ledger_response_parser" }
-lru = { version = "0.10.0" }
+lru = { version = "0.10.0"  }
 
 [dev-dependencies]
 tokio = { version = "1.20", features = ["rt", "macros", "rt-multi-thread"] }
