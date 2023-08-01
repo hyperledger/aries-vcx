@@ -400,7 +400,7 @@ mod connection_serde_tests {
 
         make_invitee_initial()
             .await
-            .accept_invitation(&indy_ledger, invitation)
+            .accept_invitation(indy_ledger.as_ref(), invitation)
             .await
             .unwrap()
     }
@@ -425,7 +425,7 @@ mod connection_serde_tests {
         con_data.did_doc.set_recipient_keys(vec![PW_KEY.to_owned()]);
         con_data.did_doc.set_routing_keys(Vec::new());
 
-        let sig_data = sign_connection_response(&wallet, PW_KEY, &con_data).await.unwrap();
+        let sig_data = sign_connection_response(wallet.as_ref(), PW_KEY, &con_data).await.unwrap();
 
         let content = ResponseContent::new(sig_data);
         let mut decorators = ResponseDecorators::new(Thread::new(con.thread_id().to_owned()));

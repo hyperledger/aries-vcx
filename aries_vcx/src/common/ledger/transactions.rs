@@ -66,7 +66,7 @@ pub struct ReplyDataV1 {
 const DID_KEY_PREFIX: &str = "did:key:";
 const ED25519_MULTIBASE_CODEC: [u8; 2] = [0xed, 0x01];
 
-pub async fn resolve_service(indy_ledger: &Arc<dyn IndyLedgerRead>, service: &OobService) -> VcxResult<AriesService> {
+pub async fn resolve_service(indy_ledger: &dyn IndyLedgerRead, service: &OobService) -> VcxResult<AriesService> {
     match service {
         OobService::AriesService(service) => Ok(service.clone()),
         OobService::Did(did) => get_service(indy_ledger, did).await,
@@ -89,7 +89,7 @@ pub async fn add_new_did(
     Ok((did, verkey))
 }
 
-pub async fn into_did_doc(indy_ledger: &Arc<dyn IndyLedgerRead>, invitation: &AnyInvitation) -> VcxResult<AriesDidDoc> {
+pub async fn into_did_doc(indy_ledger: &dyn IndyLedgerRead, invitation: &AnyInvitation) -> VcxResult<AriesDidDoc> {
     let mut did_doc: AriesDidDoc = AriesDidDoc::default();
     let (service_endpoint, recipient_keys, routing_keys) = match invitation {
         AnyInvitation::Con(Invitation::Public(invitation)) => {
@@ -185,7 +185,7 @@ fn normalize_keys_as_naked(keys_list: Vec<String>) -> VcxResult<Vec<String>> {
     Ok(result)
 }
 
-pub async fn get_service(ledger: &Arc<dyn IndyLedgerRead>, did: &String) -> VcxResult<AriesService> {
+pub async fn get_service(ledger: &dyn IndyLedgerRead, did: &String) -> VcxResult<AriesService> {
     let did_raw = did.to_string();
     let did_raw = match did_raw.rsplit_once(':') {
         None => did_raw,
@@ -206,10 +206,7 @@ pub async fn get_service(ledger: &Arc<dyn IndyLedgerRead>, did: &String) -> VcxR
     parse_legacy_endpoint_attrib(ledger, &did_raw).await
 }
 
-pub async fn parse_legacy_endpoint_attrib(
-    indy_ledger: &Arc<dyn IndyLedgerRead>,
-    did_raw: &str,
-) -> VcxResult<AriesService> {
+pub async fn parse_legacy_endpoint_attrib(indy_ledger: &dyn IndyLedgerRead, did_raw: &str) -> VcxResult<AriesService> {
     let attr_resp = indy_ledger.get_attr(did_raw, "service").await?;
     let data = get_data_from_response(&attr_resp)?;
     let ser_service = match data["service"].as_str() {

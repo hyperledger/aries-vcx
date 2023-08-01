@@ -48,7 +48,7 @@ impl OutOfBandReceiver {
 
     pub async fn connection_exists<'a>(
         &self,
-        indy_ledger: &Arc<dyn IndyLedgerRead>,
+        indy_ledger: &dyn IndyLedgerRead,
         connections: &'a Vec<&'a MediatedConnection>,
     ) -> VcxResult<Option<&'a MediatedConnection>> {
         trace!("OutOfBandReceiver::connection_exists >>>");
@@ -74,7 +74,7 @@ impl OutOfBandReceiver {
 
     pub async fn nonmediated_connection_exists<'a, I, T>(
         &self,
-        indy_ledger: &Arc<dyn IndyLedgerRead>,
+        indy_ledger: &dyn IndyLedgerRead,
         connections: I,
     ) -> Option<T>
     where
@@ -94,7 +94,7 @@ impl OutOfBandReceiver {
     }
 
     async fn connection_matches_service(
-        indy_ledger: &Arc<dyn IndyLedgerRead>,
+        indy_ledger: &dyn IndyLedgerRead,
         connection: &GenericConnection,
         service: &OobService,
     ) -> bool {
@@ -105,7 +105,7 @@ impl OutOfBandReceiver {
     }
 
     async fn did_doc_matches_service(
-        indy_ledger: &Arc<dyn IndyLedgerRead>,
+        indy_ledger: &dyn IndyLedgerRead,
         service: &OobService,
         did_doc: &AriesDidDoc,
     ) -> bool {
@@ -124,7 +124,7 @@ impl OutOfBandReceiver {
     }
 
     async fn did_doc_matches_resolved_service(
-        indy_ledger: &Arc<dyn IndyLedgerRead>,
+        indy_ledger: &dyn IndyLedgerRead,
         service: &OobService,
         did_doc: &AriesDidDoc,
     ) -> VcxResult<bool> {

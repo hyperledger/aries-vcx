@@ -67,7 +67,7 @@ mod integration_tests {
             tokio::time::sleep(Duration::from_millis(1000)).await;
             let local_verkey = setup.profile.inject_wallet().key_for_local_did(&did).await.unwrap();
 
-            let ledger_verkey = get_verkey_from_ledger(&setup.profile.inject_indy_ledger_read(), &did)
+            let ledger_verkey = get_verkey_from_ledger(setup.profile.inject_indy_ledger_read().as_ref(), &did)
                 .await
                 .unwrap();
             assert_ne!(verkey, ledger_verkey);
@@ -86,7 +86,7 @@ mod integration_tests {
                 .await
                 .unwrap();
             thread::sleep(Duration::from_millis(50));
-            let service = get_service(&setup.profile.inject_indy_ledger_read(), &did)
+            let service = get_service(setup.profile.inject_indy_ledger_read().as_ref(), &did)
                 .await
                 .unwrap();
             assert_eq!(expect_service, service);
@@ -115,11 +115,11 @@ mod integration_tests {
                 .await
                 .unwrap();
             thread::sleep(Duration::from_millis(50));
-            let service = get_service(&setup.profile.inject_indy_ledger_read(), &did)
+            let service = get_service(setup.profile.inject_indy_ledger_read().as_ref(), &did)
                 .await
                 .unwrap();
             let expect_recipient_key =
-                get_verkey_from_ledger(&setup.profile.inject_indy_ledger_read(), &setup.institution_did)
+                get_verkey_from_ledger(setup.profile.inject_indy_ledger_read().as_ref(), &setup.institution_did)
                     .await
                     .unwrap();
             let expect_service = AriesService::default()
@@ -152,11 +152,11 @@ mod integration_tests {
                 .await
                 .unwrap();
             thread::sleep(Duration::from_millis(50));
-            let service = get_service(&setup.profile.inject_indy_ledger_read(), &did)
+            let service = get_service(setup.profile.inject_indy_ledger_read().as_ref(), &did)
                 .await
                 .unwrap();
             let expect_recipient_key =
-                get_verkey_from_ledger(&setup.profile.inject_indy_ledger_read(), &setup.institution_did)
+                get_verkey_from_ledger(setup.profile.inject_indy_ledger_read().as_ref(), &setup.institution_did)
                     .await
                     .unwrap();
             let expect_service = AriesService::default()
@@ -193,7 +193,7 @@ mod integration_tests {
                 .unwrap();
 
             // Get service and verify it is in the old format
-            let service = get_service(&setup.profile.inject_indy_ledger_read(), &did)
+            let service = get_service(setup.profile.inject_indy_ledger_read().as_ref(), &did)
                 .await
                 .unwrap();
             assert_eq!(service_1, service);
@@ -211,11 +211,11 @@ mod integration_tests {
             thread::sleep(Duration::from_millis(50));
 
             // Get service and verify it is in the new format
-            let service = get_service(&setup.profile.inject_indy_ledger_read(), &did)
+            let service = get_service(setup.profile.inject_indy_ledger_read().as_ref(), &did)
                 .await
                 .unwrap();
             let expect_recipient_key =
-                get_verkey_from_ledger(&setup.profile.inject_indy_ledger_read(), &setup.institution_did)
+                get_verkey_from_ledger(setup.profile.inject_indy_ledger_read().as_ref(), &setup.institution_did)
                     .await
                     .unwrap();
             let expect_service = AriesService::default()
@@ -236,7 +236,7 @@ mod integration_tests {
             thread::sleep(Duration::from_millis(50));
 
             // Get service and verify it is in the old format
-            let service = get_service(&setup.profile.inject_indy_ledger_read(), &did)
+            let service = get_service(setup.profile.inject_indy_ledger_read().as_ref(), &did)
                 .await
                 .unwrap();
             assert_eq!(service_1, service);

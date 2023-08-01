@@ -82,7 +82,7 @@ mod integration_tests {
                 .append_a2a_message(AriesMessage::from(request_sender.clone()))
                 .unwrap();
             let invitation = AnyInvitation::Oob(oob_sender.oob.clone());
-            let ddo = into_did_doc(&consumer.profile.inject_indy_ledger_read(), &invitation)
+            let ddo = into_did_doc(consumer.profile.inject_indy_ledger_read().as_ref(), &invitation)
                 .await
                 .unwrap();
             let oob_msg = AriesMessage::from(oob_sender.oob.clone());
@@ -90,7 +90,7 @@ mod integration_tests {
             let oob_receiver = OutOfBandReceiver::create_from_a2a_msg(&oob_msg).unwrap();
             let conns = vec![];
             let conn = oob_receiver
-                .connection_exists(&consumer.profile.inject_indy_ledger_read(), &conns)
+                .connection_exists(consumer.profile.inject_indy_ledger_read().as_ref(), &conns)
                 .await
                 .unwrap();
             assert!(conn.is_none());
@@ -133,7 +133,7 @@ mod integration_tests {
 
             let conns = vec![&conn_receiver, &conn_receiver_pw1, &conn_receiver_pw2];
             let conn = oob_receiver
-                .connection_exists(&consumer.profile.inject_indy_ledger_read(), &conns)
+                .connection_exists(consumer.profile.inject_indy_ledger_read().as_ref(), &conns)
                 .await
                 .unwrap();
             assert!(conn.is_some());
@@ -141,7 +141,7 @@ mod integration_tests {
 
             let conns = vec![&conn_receiver_pw1, &conn_receiver_pw2];
             let conn = oob_receiver
-                .connection_exists(&consumer.profile.inject_indy_ledger_read(), &conns)
+                .connection_exists(consumer.profile.inject_indy_ledger_read().as_ref(), &conns)
                 .await
                 .unwrap();
             assert!(conn.is_none());
@@ -204,7 +204,7 @@ mod integration_tests {
             let oob_receiver = OutOfBandReceiver::create_from_a2a_msg(&oob_msg).unwrap();
             let conns = vec![&consumer_to_institution];
             let conn = oob_receiver
-                .connection_exists(&consumer.profile.inject_indy_ledger_read(), &conns)
+                .connection_exists(consumer.profile.inject_indy_ledger_read().as_ref(), &conns)
                 .await
                 .unwrap();
             assert!(conn.is_some());
@@ -244,7 +244,7 @@ mod integration_tests {
             let oob_receiver = OutOfBandReceiver::create_from_a2a_msg(&oob_msg).unwrap();
             let conns = vec![&consumer_to_institution];
             let conn = oob_receiver
-                .connection_exists(&consumer.profile.inject_indy_ledger_read(), &conns)
+                .connection_exists(consumer.profile.inject_indy_ledger_read().as_ref(), &conns)
                 .await
                 .unwrap();
             assert!(conn.is_some());

@@ -35,7 +35,7 @@ use super::{state::BootstrapInfo, InviteeConnection};
 /// should rebuild this from the ground up.
 //
 // TODO: Make this prettier
-async fn did_doc_from_invitation(ledger: &Arc<dyn IndyLedgerRead>, invitation: Invitation) -> VcxResult<BootstrapInfo> {
+async fn did_doc_from_invitation(ledger: &dyn IndyLedgerRead, invitation: Invitation) -> VcxResult<BootstrapInfo> {
     let (service_endpoint, recipient_keys, routing_keys, did, service_endpoint_did) = match invitation {
         Invitation::Public(invitation) => {
             let service = match get_service(ledger, &invitation.content.did).await {
@@ -103,7 +103,7 @@ pub async fn accept_invitation<S, W>(
     service_endpoint: Url,
     routing_keys: Vec<String>,
     label: String,
-    ledger: &Arc<dyn IndyLedgerRead>,
+    ledger: &dyn IndyLedgerRead,
     wallet: &W,
 ) -> VcxResult<Request>
 where
@@ -181,7 +181,7 @@ where
 
     let Some(verkey) = sm.state.bootstrap_info.recipient_keys.first() else {todo!("Add some error in case no recipient key is found")};
 
-    let did_doc = match decode_signed_connection_response(wallet, response.content, verkey).await {
+    let did_doc = match decode_signed_connection_response(wallet.as_ref(), response.content, verkey).await {
         Ok(con_data) => con_data.did_doc,
         Err(err) => {
             // TODO: Theres a ProblemReport being built here.

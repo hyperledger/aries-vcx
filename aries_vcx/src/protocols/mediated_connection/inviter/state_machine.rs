@@ -371,7 +371,7 @@ impl SmConnectionInviter {
 
                 let id = Uuid::new_v4().to_string();
 
-                let con_sig = sign_connection_response(wallet, &self.pairwise_info.pw_vk, &con_data).await?;
+                let con_sig = sign_connection_response(wallet.as_ref(), &self.pairwise_info.pw_vk, &con_data).await?;
 
                 let content = ResponseContent::new(con_sig);
 

@@ -48,7 +48,7 @@ pub async fn rotate_verkey(
     rotate_verkey_apply(wallet, indy_ledger_write, did, &trustee_temp_verkey).await
 }
 
-pub async fn get_verkey_from_ledger(indy_ledger: &Arc<dyn IndyLedgerRead>, did: &str) -> VcxResult<String> {
+pub async fn get_verkey_from_ledger(indy_ledger: &dyn IndyLedgerRead, did: &str) -> VcxResult<String> {
     let nym_response: String = indy_ledger.get_nym(did).await?;
     let nym_json: Value = serde_json::from_str(&nym_response).map_err(|err| {
         AriesVcxError::from_msg(

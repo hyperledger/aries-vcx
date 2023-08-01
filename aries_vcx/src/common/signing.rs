@@ -9,7 +9,7 @@ use time;
 use crate::errors::error::prelude::*;
 use crate::global::settings;
 
-async fn get_signature_data(wallet: &Arc<dyn BaseWallet>, data: String, key: &str) -> VcxResult<(Vec<u8>, Vec<u8>)> {
+async fn get_signature_data(wallet: &dyn BaseWallet, data: String, key: &str) -> VcxResult<(Vec<u8>, Vec<u8>)> {
     let now: u64 = time::OffsetDateTime::now_utc().unix_timestamp() as u64;
     let mut sig_data = now.to_be_bytes().to_vec();
     sig_data.extend(data.as_bytes());
@@ -20,7 +20,7 @@ async fn get_signature_data(wallet: &Arc<dyn BaseWallet>, data: String, key: &st
 }
 
 pub async fn sign_connection_response(
-    wallet: &Arc<dyn BaseWallet>,
+    wallet: &dyn BaseWallet,
     key: &str,
     con_data: &ConnectionData,
 ) -> VcxResult<ConnectionSignature> {
@@ -36,7 +36,7 @@ pub async fn sign_connection_response(
 }
 
 pub async fn decode_signed_connection_response(
-    wallet: &Arc<dyn BaseWallet>,
+    wallet: &dyn BaseWallet,
     response: ResponseContent,
     their_vk: &str,
 ) -> VcxResult<ConnectionData> {

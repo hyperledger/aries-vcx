@@ -35,7 +35,7 @@ pub async fn rotate_verkey(did: &str) -> LibvcxResult<()> {
 
 pub async fn get_verkey_from_ledger(did: &str) -> LibvcxResult<String> {
     let indy_ledger = get_main_indy_ledger_read()?;
-    map_ariesvcx_result(aries_vcx::common::keys::get_verkey_from_ledger(&indy_ledger, did).await)
+    map_ariesvcx_result(aries_vcx::common::keys::get_verkey_from_ledger(indy_ledger.as_ref(), did).await)
 }
 
 pub async fn ledger_write_endpoint_legacy(
@@ -76,7 +76,7 @@ pub async fn ledger_write_endpoint(
 
 pub async fn ledger_get_service(target_did: &str) -> LibvcxResult<AriesService> {
     let target_did = target_did.to_owned();
-    map_ariesvcx_result(get_service(&get_main_indy_ledger_read()?, &target_did).await)
+    map_ariesvcx_result(get_service(get_main_indy_ledger_read()?.as_ref(), &target_did).await)
 }
 
 pub async fn ledger_get_attr(target_did: &str, attr: &str) -> LibvcxResult<String> {

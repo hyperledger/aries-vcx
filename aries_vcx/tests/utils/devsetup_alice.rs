@@ -103,7 +103,7 @@ impl Alice {
 
     pub async fn accept_invite(&mut self, invite: &str) {
         let invite: AnyInvitation = serde_json::from_str(invite).unwrap();
-        let ddo = into_did_doc(&self.profile.inject_indy_ledger_read(), &invite)
+        let ddo = into_did_doc(self.profile.inject_indy_ledger_read().as_ref(), &invite)
             .await
             .unwrap();
         self.connection = MediatedConnection::create_with_invite(

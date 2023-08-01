@@ -1289,7 +1289,7 @@ pub mod test_utils {
         let (sender, receiver) = bounded::<AriesMessage>(1);
         let public_invite_json = institution.create_public_invite().unwrap();
         let public_invite: AnyInvitation = serde_json::from_str(&public_invite_json).unwrap();
-        let ddo = into_did_doc(&alice.profile.inject_indy_ledger_read(), &public_invite)
+        let ddo = into_did_doc(alice.profile.inject_indy_ledger_read().as_ref(), &public_invite)
             .await
             .unwrap();
 
@@ -1339,7 +1339,7 @@ pub mod test_utils {
         let details = institution_to_consumer.get_invite_details().unwrap();
 
         debug!("Consumer is going to accept connection invitation.");
-        let ddo = into_did_doc(&alice.profile.inject_indy_ledger_read(), &details)
+        let ddo = into_did_doc(alice.profile.inject_indy_ledger_read().as_ref(), &details)
             .await
             .unwrap();
         let mut consumer_to_institution = MediatedConnection::create_with_invite(

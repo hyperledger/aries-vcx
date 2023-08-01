@@ -39,7 +39,7 @@ async fn build_response_content(
     did_doc.set_recipient_keys(recipient_keys);
 
     let con_data = ConnectionData::new(did, did_doc);
-    let con_sig = sign_connection_response(wallet, verkey, &con_data).await?;
+    let con_sig = sign_connection_response(wallet.as_ref(), verkey, &con_data).await?;
     let content = ResponseContent::new(con_sig);
 
     Ok(content)

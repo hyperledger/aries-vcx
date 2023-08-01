@@ -6,6 +6,8 @@ use self::{
     inviter::{state::InviterComplete, InviterConnection},
 };
 
+use super::AriesSM;
+
 pub mod invitee;
 pub mod inviter;
 
@@ -16,4 +18,22 @@ pub enum ConnectionSM {
     InviteeRequested(InviteeConnection<InviteeRequested>),
     InviteeComplete(InviteeConnection<InviteeComplete>),
     InviterComplete(InviterConnection<InviterComplete>),
+}
+
+impl From<InviteeConnection<InviteeRequested>> for AriesSM {
+    fn from(value: InviteeConnection<InviteeRequested>) -> Self {
+        Self::Connection(ConnectionSM::InviteeRequested(value))
+    }
+}
+
+impl From<InviteeConnection<InviteeComplete>> for AriesSM {
+    fn from(value: InviteeConnection<InviteeComplete>) -> Self {
+        Self::Connection(ConnectionSM::InviteeComplete(value))
+    }
+}
+
+impl From<InviterConnection<InviterComplete>> for AriesSM {
+    fn from(value: InviterConnection<InviterComplete>) -> Self {
+        Self::Connection(ConnectionSM::InviterComplete(value))
+    }
 }

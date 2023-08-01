@@ -60,7 +60,7 @@ impl InviteeConnection<Initial> {
     /// Will error out if a DidDoc could not be resolved from the [`Invitation`].
     pub async fn accept_invitation(
         self,
-        indy_ledger: &Arc<dyn IndyLedgerRead>,
+        indy_ledger: &dyn IndyLedgerRead,
         invitation: AnyInvitation,
     ) -> VcxResult<InviteeConnection<Invited>> {
         trace!("Connection::accept_invitation >>> invitation: {:?}", &invitation);
@@ -191,7 +191,7 @@ impl InviteeConnection<Requested> {
             "Cannot handle response: remote verkey not found",
         ))?;
 
-        let did_doc = match decode_signed_connection_response(wallet, response.content, their_vk).await {
+        let did_doc = match decode_signed_connection_response(wallet.as_ref(), response.content, their_vk).await {
             Ok(con_data) => Ok(con_data.did_doc),
             Err(err) => {
                 error!("Request DidDoc validation failed! Sending ProblemReport...");

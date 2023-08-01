@@ -128,7 +128,7 @@ pub async fn create_connection(source_id: &str) -> LibvcxResult<u32> {
 pub async fn create_connection_with_invite(source_id: &str, details: &str) -> LibvcxResult<u32> {
     debug!("create connection {} with invite {}", source_id, details);
     if let Ok(invitation) = serde_json::from_str::<AnyInvitation>(details) {
-        let ddo = into_did_doc(&get_main_indy_ledger_read()?, &invitation).await?;
+        let ddo = into_did_doc(get_main_indy_ledger_read()?.as_ref(), &invitation).await?;
         let connection = MediatedConnection::create_with_invite(
             source_id,
             &get_main_wallet()?,

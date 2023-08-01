@@ -64,7 +64,7 @@ impl ServiceMediatedConnections {
     }
 
     pub async fn receive_invitation(&self, invite: AnyInvitation) -> AgentResult<String> {
-        let ddo = into_did_doc(&self.profile.inject_indy_ledger_read(), &invite).await?;
+        let ddo = into_did_doc(self.profile.inject_indy_ledger_read().as_ref(), &invite).await?;
         let connection = MediatedConnection::create_with_invite(
             "",
             &self.profile.inject_wallet(),
