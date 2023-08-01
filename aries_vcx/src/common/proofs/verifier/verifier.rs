@@ -35,12 +35,12 @@ pub async fn validate_indy_proof(
         .await
         .unwrap_or(json!({}).to_string());
 
-    debug!("*******\n{}\n********", credential_defs_json);
-    debug!("*******\n{}\n********", schemas_json);
-    debug!("*******\n{}\n********", proof_json);
-    debug!("*******\n{}\n********", proof_req_json);
-    debug!("*******\n{}\n********", rev_reg_defs_json);
-    debug!("*******\n{}\n********", rev_regs_json);
+    debug!("credential_defs_json: {credential_defs_json}");
+    debug!("schemas_json: {schemas_json}");
+    debug!("proof_json: {proof_json}");
+    debug!("proof_req_json: {proof_req_json}");
+    debug!("rev_reg_defs_json: {rev_reg_defs_json}");
+    debug!("rev_regs_json: {rev_regs_json}");
     anoncreds
         .verifier_verify_proof(
             proof_req_json,

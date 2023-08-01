@@ -181,7 +181,7 @@ pub async fn build_rev_reg_json(
     ledger: &Arc<dyn AnoncredsLedgerRead>,
     credential_data: &[CredInfoVerifier],
 ) -> VcxResult<String> {
-    debug!("building rev_reg_json for proof validation");
+    debug!("building rev_reg_json for proof validation from credential_data: {credential_data:?}");
 
     let mut rev_regs_json = json!({});
 

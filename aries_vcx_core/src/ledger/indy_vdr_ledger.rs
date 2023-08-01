@@ -341,7 +341,7 @@ where
         trace!("get_rev_reg_def_json >> rev_reg_id: {rev_reg_id}");
         let id = RevocationRegistryId::from_str(rev_reg_id)?;
         let request = self.request_builder()?.build_get_revoc_reg_def_request(None, &id)?;
-        let res = self.submit_request(None, request).await?;
+        let res = self.submit_request(Some(rev_reg_id), request).await?;
         let rev_reg_def = self.response_parser.parse_get_revoc_reg_def_response(&res)?;
         Ok(serde_json::to_string(&rev_reg_def)?)
     }
