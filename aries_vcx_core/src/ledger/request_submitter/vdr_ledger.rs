@@ -29,6 +29,7 @@ impl IndyVdrLedgerPool {
     }
 
     pub fn new(genesis_file_path: String, indy_vdr_config: PoolConfig) -> VcxCoreResult<Self> {
+        info!("IndyVdrLedgerPool::new >> genesis_file_path: {genesis_file_path}, indy_vdr_config: {indy_vdr_config:?}");
         let txns = PoolTransactions::from_json_file(genesis_file_path)?;
 
         let runner = PoolBuilder::from(indy_vdr_config).transactions(txns)?.into_runner()?;

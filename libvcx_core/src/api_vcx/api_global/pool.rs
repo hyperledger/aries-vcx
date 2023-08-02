@@ -66,13 +66,6 @@ async fn build_components_ledger(
     Arc<dyn IndyLedgerWrite>,
     Arc<dyn TaaConfigurator>,
 )> {
-    let cache_config = match &libvcx_pool_config.cache_config {
-        None => InMemoryResponseCacherConfig::builder()
-            .ttl(Duration::from_secs(60))
-            .capacity(1000)?
-            .build(),
-        Some(cfg) => cfg.clone().into(),
-    };
     let indy_vdr_config = match &libvcx_pool_config.pool_config {
         None => PoolConfig::default(),
         Some(cfg) => cfg.clone(),
@@ -83,6 +76,13 @@ async fn build_components_ledger(
     )?);
     let request_submitter = Arc::new(IndyVdrSubmitter::new(ledger_pool));
 
+    let cache_config = match &libvcx_pool_config.cache_config {
+        None => InMemoryResponseCacherConfig::builder()
+            .ttl(Duration::from_secs(60))
+            .capacity(1000)?
+            .build(),
+        Some(cfg) => cfg.clone().into(),
+    };
     let ledger_read = Arc::new(indyvdr_build_ledger_read(request_submitter.clone(), cache_config)?);
     let ledger_write = Arc::new(indyvdr_build_ledger_write(base_wallet, request_submitter, None));
     let taa_configurator: Arc<dyn TaaConfigurator> = ledger_write.clone();
@@ -155,6 +155,7 @@ pub async fn close_main_pool() -> LibvcxResult<()> {
 
 #[cfg(test)]
 pub mod tests {
+
     use crate::api_vcx::api_global::pool::{
         close_main_pool, open_main_pool, reset_ledger_components, LibvcxLedgerConfig,
     };
@@ -168,6 +169,51 @@ pub mod tests {
     use aries_vcx::global::settings::{set_config_value, CONFIG_GENESIS_PATH, DEFAULT_GENESIS_PATH};
     use aries_vcx::utils::constants::POOL1_TXN;
     use aries_vcx::utils::devsetup::{SetupDefaults, SetupEmpty, TempFile};
+
+    use serde_json;
+    use std::num::NonZeroUsize;
+    use std::time::Duration;
+
+    #[test]
+    fn test_deserialize_libvcx_ledger_config() {
+        let data = r#"
+        {
+            "genesis_path": "/tmp/genesis",
+            "pool_config": {
+                "protocol_version": "Node1_4",
+                "freshness_threshold": 300,
+                "ack_timeout": 20,
+                "reply_timeout": 60,
+                "conn_request_limit": 5,
+                "conn_active_timeout": 5,
+                "request_read_nodes": 2
+            },
+            "cache_config": {
+                "ttl_secs": 3600,
+                "capacity": 1000
+            }
+        }
+        "#;
+
+        let config: LibvcxLedgerConfig = serde_json::from_str(data).unwrap();
+
+        assert_eq!(config.genesis_path, "/tmp/genesis");
+        assert_eq!(config.pool_config.as_ref().unwrap().protocol_version, 2);
+        assert_eq!(config.pool_config.as_ref().unwrap().freshness_threshold, 300);
+        assert_eq!(config.pool_config.as_ref().unwrap().ack_timeout, 20);
+        assert_eq!(config.pool_config.as_ref().unwrap().reply_timeout, 60);
+        assert_eq!(config.pool_config.as_ref().unwrap().conn_request_limit, 5);
+        assert_eq!(config.pool_config.as_ref().unwrap().conn_active_timeout, 5);
+        assert_eq!(config.pool_config.as_ref().unwrap().request_read_nodes, 2);
+        assert_eq!(
+            config.cache_config.as_ref().unwrap().ttl_secs,
+            NonZeroUsize::new(3600).unwrap()
+        );
+        assert_eq!(
+            config.cache_config.as_ref().unwrap().capacity,
+            NonZeroUsize::new(1000).unwrap()
+        );
+    }
 
     #[tokio::test]
     #[ignore]
