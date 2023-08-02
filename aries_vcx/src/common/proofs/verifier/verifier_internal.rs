@@ -100,7 +100,7 @@ pub async fn build_cred_defs_json_verifier(
     ledger: &Arc<dyn AnoncredsLedgerRead>,
     credential_data: &[CredInfoVerifier],
 ) -> VcxResult<String> {
-    debug!("building credential_def_json for proof validation");
+    trace!("build_cred_defs_json_verifier >>");
     let mut credential_json = json!({});
 
     for cred_info in credential_data.iter() {
@@ -126,7 +126,7 @@ pub async fn build_schemas_json_verifier(
     ledger: &Arc<dyn AnoncredsLedgerRead>,
     credential_data: &[CredInfoVerifier],
 ) -> VcxResult<String> {
-    debug!("building schemas json for proof validation");
+    trace!("build_schemas_json_verifier >>");
 
     let mut schemas_json = json!({});
 
@@ -154,14 +154,17 @@ pub async fn build_rev_reg_defs_json(
     ledger: &Arc<dyn AnoncredsLedgerRead>,
     credential_data: &[CredInfoVerifier],
 ) -> VcxResult<String> {
-    debug!("building rev_reg_def_json for proof validation");
+    trace!("build_rev_reg_defs_json >>");
 
     let mut rev_reg_defs_json = json!({});
 
-    for cred_info in credential_data.iter() {
+    for cred_info in credential_data.iter().filter(|r| r.rev_reg_id.is_some()) {
         let rev_reg_id = cred_info.rev_reg_id.as_ref().ok_or(AriesVcxError::from_msg(
             AriesVcxErrorKind::InvalidRevocationDetails,
-            format!("Missing rev_reg_id in the record {:?}", cred_info),
+            format!(
+                "build_rev_reg_defs_json >> Missing rev_reg_id in the record {:?}",
+                cred_info
+            ),
         ))?;
 
         if rev_reg_defs_json.get(rev_reg_id).is_none() {
@@ -181,14 +184,14 @@ pub async fn build_rev_reg_json(
     ledger: &Arc<dyn AnoncredsLedgerRead>,
     credential_data: &[CredInfoVerifier],
 ) -> VcxResult<String> {
-    debug!("building rev_reg_json for proof validation from credential_data: {credential_data:?}");
+    trace!("build_rev_reg_json >>");
 
     let mut rev_regs_json = json!({});
 
-    for cred_info in credential_data.iter() {
+    for cred_info in credential_data.iter().filter(|r| r.rev_reg_id.is_some()) {
         let rev_reg_id = cred_info.rev_reg_id.as_ref().ok_or(AriesVcxError::from_msg(
             AriesVcxErrorKind::InvalidRevocationDetails,
-            format!("Missing rev_reg_id in the record {:?}", cred_info),
+            format!("build_rev_reg_json >> missing rev_reg_id in the record {:?}", cred_info),
         ))?;
 
         let timestamp = cred_info.timestamp.as_ref().ok_or(AriesVcxError::from_msg(
