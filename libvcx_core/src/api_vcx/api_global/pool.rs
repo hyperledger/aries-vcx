@@ -1,6 +1,7 @@
 use aries_vcx::aries_vcx_core::ledger::base_ledger::{
     AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite, TaaConfigurator,
 };
+use std::num::NonZeroUsize;
 
 use crate::api_vcx::api_global::profile::get_main_wallet;
 use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
@@ -30,11 +31,29 @@ pub fn is_main_pool_open() -> bool {
     // global_profile.inject_anoncreds_ledger_read()
 }
 
+// todo : enable opting out of caching completely be specifying 0 capacity
+#[derive(Clone, Debug, Deserialize)]
+// unlike internal config struct InMemoryResponseCacherConfig, this doesn't deal with Duration
+// but simply numeric seconds, making it easier to pass consumers of libvcx
+pub struct LibvcxInMemoryResponseCacherConfig {
+    ttl_secs: NonZeroUsize,
+    capacity: NonZeroUsize,
+}
+
 #[derive(Clone, Debug, Deserialize)]
 pub struct LibvcxLedgerConfig {
     pub genesis_path: String,
     pub pool_config: Option<PoolConfig>,
-    pub cache_config: Option<InMemoryResponseCacherConfig>,
+    pub cache_config: Option<LibvcxInMemoryResponseCacherConfig>,
+}
+
+impl From<LibvcxInMemoryResponseCacherConfig> for InMemoryResponseCacherConfig {
+    fn from(config: LibvcxInMemoryResponseCacherConfig) -> Self {
+        InMemoryResponseCacherConfig {
+            ttl: Duration::from_secs(config.ttl_secs.get() as u64),
+            capacity: config.capacity,
+        }
+    }
 }
 
 async fn build_components_ledger(
@@ -52,7 +71,7 @@ async fn build_components_ledger(
             .ttl(Duration::from_secs(60))
             .capacity(1000)?
             .build(),
-        Some(cfg) => cfg.clone(),
+        Some(cfg) => cfg.clone().into(),
     };
     let indy_vdr_config = match &libvcx_pool_config.pool_config {
         None => PoolConfig::default(),
