@@ -1,7 +1,9 @@
+use serde::Deserialize;
 use std::{num::NonZeroUsize, time::Duration};
 
 use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind};
 
+#[derive(Clone, Debug, Deserialize)]
 pub struct InMemoryResponseCacherConfig {
     ttl: Duration,
     capacity: NonZeroUsize,

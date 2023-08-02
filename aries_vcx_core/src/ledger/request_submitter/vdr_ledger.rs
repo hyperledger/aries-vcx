@@ -19,10 +19,6 @@ use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResu
 
 use super::RequestSubmitter;
 
-pub struct LedgerPoolConfig {
-    pub genesis_file_path: String,
-}
-
 pub struct IndyVdrLedgerPool {
     pub(self) runner: Option<PoolRunner>,
 }
@@ -32,11 +28,10 @@ impl IndyVdrLedgerPool {
         IndyVdrLedgerPool { runner: Some(runner) }
     }
 
-    pub fn new(config: LedgerPoolConfig) -> VcxCoreResult<Self> {
-        let vdr_config = PoolConfig::default();
-        let txns = PoolTransactions::from_json_file(config.genesis_file_path)?;
+    pub fn new(genesis_file_path: String, indy_vdr_config: PoolConfig) -> VcxCoreResult<Self> {
+        let txns = PoolTransactions::from_json_file(genesis_file_path)?;
 
-        let runner = PoolBuilder::from(vdr_config).transactions(txns)?.into_runner()?;
+        let runner = PoolBuilder::from(indy_vdr_config).transactions(txns)?.into_runner()?;
 
         Ok(IndyVdrLedgerPool { runner: Some(runner) })
     }

@@ -4,17 +4,12 @@ use async_trait::async_trait;
 use uuid::Uuid;
 
 use aries_vcx::utils::devsetup::make_modular_profile;
-use aries_vcx::{
-    core::profile::modular_libs_profile::ModularLibsProfile, global::settings::WALLET_KDF_RAW,
-    utils::devsetup::SetupProfile,
-};
+use aries_vcx::{global::settings::WALLET_KDF_RAW, utils::devsetup::SetupProfile};
 use aries_vcx_core::wallet::agency_client_wallet::ToBaseAgencyClientWallet;
 use aries_vcx_core::wallet::indy::wallet::create_and_open_wallet;
 use aries_vcx_core::wallet::indy::IndySdkWallet;
 use aries_vcx_core::wallet::indy::WalletConfig;
-use aries_vcx_core::{
-    ledger::request_submitter::vdr_ledger::LedgerPoolConfig, wallet::base_wallet::BaseWallet, WalletHandle,
-};
+use aries_vcx_core::{wallet::base_wallet::BaseWallet, WalletHandle};
 
 use crate::utils::devsetup_alice::Alice;
 use crate::utils::devsetup_faber::Faber;

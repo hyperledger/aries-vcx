@@ -118,14 +118,12 @@ pub mod tests {
     use crate::api_vcx::api_global::ledger::{
         get_taa_configuration, ledger_get_txn_author_agreement, set_taa_configuration,
     };
-    use crate::api_vcx::api_global::pool::open_main_pool;
-    use crate::api_vcx::api_global::settings::get_config_value;
+    use crate::api_vcx::api_global::pool::{open_main_pool, LibvcxLedgerConfig};
     use crate::api_vcx::api_global::wallet::test_utils::_create_and_open_wallet;
     use aries_vcx::aries_vcx_core::ledger::indy::pool::test_utils::{
         create_genesis_txn_file, create_testpool_genesis_txn_file, get_temp_file_path, get_txns_sovrin_testnet,
     };
-    use aries_vcx::aries_vcx_core::ledger::indy::pool::PoolConfig;
-    use aries_vcx::global::settings::{CONFIG_TXN_AUTHOR_AGREEMENT, DEFAULT_GENESIS_PATH};
+    use aries_vcx::global::settings::DEFAULT_GENESIS_PATH;
     use aries_vcx::utils::devsetup::{SetupEmpty, SetupMocks};
 
     #[tokio::test]
@@ -134,10 +132,10 @@ pub mod tests {
         _create_and_open_wallet().await.unwrap();
         let genesis_path = get_temp_file_path(DEFAULT_GENESIS_PATH).to_str().unwrap().to_string();
         create_genesis_txn_file(&genesis_path, Box::new(get_txns_sovrin_testnet));
-        let config = PoolConfig {
+        let config = LibvcxLedgerConfig {
             genesis_path,
-            pool_name: None,
             pool_config: None,
+            cache_config: None,
         };
         open_main_pool(&config).await.unwrap();
 
@@ -154,10 +152,10 @@ pub mod tests {
         _create_and_open_wallet().await.unwrap();
         let genesis_path = get_temp_file_path(DEFAULT_GENESIS_PATH).to_str().unwrap().to_string();
         create_testpool_genesis_txn_file(&genesis_path);
-        let config = PoolConfig {
+        let config = LibvcxLedgerConfig {
             genesis_path,
-            pool_name: None,
             pool_config: None,
+            cache_config: None,
         };
         open_main_pool(&config).await.unwrap();
 

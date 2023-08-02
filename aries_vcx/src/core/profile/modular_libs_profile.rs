@@ -1,23 +1,15 @@
 use std::sync::Arc;
-use std::time::Duration;
 
 use async_trait::async_trait;
 
-use crate::core::profile::ledger::build_ledger_components;
 use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
 use aries_vcx_core::anoncreds::credx_anoncreds::IndyCredxAnonCreds;
 use aries_vcx_core::ledger::base_ledger::{
     AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite, TaaConfigurator, TxnAuthrAgrmtOptions,
 };
-use aries_vcx_core::ledger::indy_vdr_ledger::{
-    IndyVdrLedgerRead, IndyVdrLedgerReadConfig, IndyVdrLedgerWrite, IndyVdrLedgerWriteConfig, ProtocolVersion,
-};
-use aries_vcx_core::ledger::request_signer::base_wallet::BaseWalletRequestSigner;
-use aries_vcx_core::ledger::request_submitter::vdr_ledger::{IndyVdrLedgerPool, IndyVdrSubmitter, LedgerPoolConfig};
-use aries_vcx_core::ledger::response_cacher::in_memory::{InMemoryResponseCacher, InMemoryResponseCacherConfig};
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
-use aries_vcx_core::ResponseParser;
 
+use crate::core::profile::ledger::{build_ledger_components, VcxPoolConfig};
 use crate::errors::error::VcxResult;
 
 use super::profile::Profile;
@@ -39,9 +31,9 @@ pub struct ModularLibsProfile {
 }
 
 impl ModularLibsProfile {
-    pub fn init(wallet: Arc<dyn BaseWallet>, ledger_pool_config: LedgerPoolConfig) -> VcxResult<Self> {
+    pub fn init(wallet: Arc<dyn BaseWallet>, vcx_pool_config: VcxPoolConfig) -> VcxResult<Self> {
         let anoncreds = Arc::new(IndyCredxAnonCreds::new(Arc::clone(&wallet)));
-        let (ledger_read, ledger_write) = build_ledger_components(wallet.clone(), ledger_pool_config)?;
+        let (ledger_read, ledger_write) = build_ledger_components(wallet.clone(), vcx_pool_config)?;
 
         Ok(ModularLibsProfile {
             wallet,

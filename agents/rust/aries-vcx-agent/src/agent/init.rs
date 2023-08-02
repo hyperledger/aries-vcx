@@ -1,6 +1,7 @@
 use std::sync::Arc;
+use std::time::Duration;
 
-use aries_vcx::core::profile::ledger::build_ledger_components;
+use aries_vcx::core::profile::ledger::{build_ledger_components, VcxPoolConfig};
 use aries_vcx::global::settings::DEFAULT_LINK_SECRET_ALIAS;
 use aries_vcx::{
     agency_client::{agency_client::AgencyClient, configuration::AgentProvisionConfig},
@@ -9,8 +10,7 @@ use aries_vcx::{
     utils::provision::provision_cloud_agent,
 };
 use aries_vcx_core::ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite};
-use aries_vcx_core::ledger::request_submitter::vdr_ledger::LedgerPoolConfig;
-use aries_vcx_core::wallet::indy::wallet::{create_and_open_wallet, open_wallet, wallet_configure_issuer};
+use aries_vcx_core::wallet::indy::wallet::{create_and_open_wallet, wallet_configure_issuer};
 use aries_vcx_core::wallet::indy::{IndySdkWallet, WalletConfig};
 use url::Url;
 
@@ -75,11 +75,12 @@ impl Agent {
         init_issuer_config(&config_issuer.institution_did).unwrap();
         let wallet = Arc::new(IndySdkWallet::new(wallet_handle));
 
-        let indy_vdr_pool_config = LedgerPoolConfig {
-            genesis_file_path: init_config.pool_config.genesis_path.clone(),
+        let pool_config = VcxPoolConfig {
+            genesis_file_path: init_config.pool_config.genesis_path,
+            indy_vdr_config: None,
+            response_cache_config: None,
         };
-
-        let (ledger_read, ledger_write) = build_ledger_components(wallet.clone(), indy_vdr_pool_config).unwrap();
+        let (ledger_read, ledger_write) = build_ledger_components(wallet.clone(), pool_config).unwrap();
         let anoncreds_ledger_read: Arc<dyn AnoncredsLedgerRead> = ledger_read.clone();
         let anoncreds_ledger_write: Arc<dyn AnoncredsLedgerWrite> = ledger_write.clone();
         let indy_ledger_read: Arc<dyn IndyLedgerRead> = ledger_read.clone();

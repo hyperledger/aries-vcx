@@ -4,12 +4,11 @@ use futures::future::{BoxFuture, FutureExt};
 use libc::c_char;
 
 use aries_vcx::agency_client::configuration::AgencyClientConfig;
-use aries_vcx::aries_vcx_core::ledger::indy::pool::PoolConfig;
 use aries_vcx::aries_vcx_core::wallet::indy::IssuerConfig;
 use libvcx_core::api_vcx::api_global::agency_client::create_agency_client_for_main_wallet;
 use libvcx_core::api_vcx::api_global::agency_client::update_webhook_url;
 use libvcx_core::api_vcx::api_global::ledger::ledger_get_txn_author_agreement;
-use libvcx_core::api_vcx::api_global::pool::open_main_pool;
+use libvcx_core::api_vcx::api_global::pool::{open_main_pool, LibvcxLedgerConfig};
 use libvcx_core::api_vcx::api_global::settings::{enable_mocks, settings_init_issuer_config};
 use libvcx_core::api_vcx::api_global::state::state_vcx_shutdown;
 use libvcx_core::api_vcx::api_global::VERSION_STRING;
@@ -238,7 +237,7 @@ pub extern "C" fn vcx_open_main_pool(
     info!("vcx_open_main_pool >>>");
     check_useful_c_str!(pool_config, LibvcxErrorKind::InvalidOption);
 
-    let pool_config = match serde_json::from_str::<PoolConfig>(&pool_config) {
+    let pool_config = match serde_json::from_str::<LibvcxLedgerConfig>(&pool_config) {
         Ok(pool_config) => pool_config,
         Err(err) => {
             set_current_error(&err);

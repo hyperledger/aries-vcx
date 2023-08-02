@@ -1,3 +1,4 @@
+use indy_vdr::config::PoolConfig;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -226,12 +227,4 @@ pub mod test_utils {
         f.flush().unwrap();
         f.sync_all().unwrap();
     }
-}
-
-#[derive(Clone, Debug, Default, Builder, Serialize, Deserialize)]
-#[builder(setter(into, strip_option), default)]
-pub struct PoolConfig {
-    pub genesis_path: String,
-    pub pool_name: Option<String>,
-    pub pool_config: Option<Value>,
 }
