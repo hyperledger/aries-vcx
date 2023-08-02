@@ -7,7 +7,7 @@ use std::{collections::HashMap, sync::Arc};
 
 use crate::common::ledger::service_didsov::EndpointDidSov;
 use crate::handlers::util::AnyInvitation;
-use aries_vcx_core::ledger::base_ledger::{IndyLedgerRead, IndyLedgerWrite};
+use aries_vcx_core::ledger::base_ledger::{IndyLedgerRead, IndyLedgerWrite, IndyRole};
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use serde_json::Value;
 
@@ -225,6 +225,20 @@ pub async fn parse_legacy_endpoint_attrib(
             format!("Failed to deserialize service read from the ledger: {:?}", err),
         )
     })
+}
+
+pub async fn write_endorser_did(
+    indy_ledger_write: &Arc<dyn IndyLedgerWrite>,
+    submitter_did: &str,
+    target_did: &str,
+    target_vk: &str,
+    alias: Option<String>,
+) -> VcxResult<String> {
+    let res = indy_ledger_write
+        .write_did(submitter_did, target_did, target_vk, IndyRole::Endorser, alias)
+        .await?;
+    check_response(&res)?;
+    Ok(res)
 }
 
 pub async fn write_endpoint_legacy(

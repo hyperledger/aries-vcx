@@ -3,7 +3,7 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use uuid::Uuid;
 
-use aries_vcx::utils::devsetup::make_modular_profile;
+use aries_vcx::utils::devsetup::dev_build_profile_modular;
 use aries_vcx::{global::settings::WALLET_KDF_RAW, utils::devsetup::SetupProfile};
 use aries_vcx_core::wallet::agency_client_wallet::ToBaseAgencyClientWallet;
 use aries_vcx_core::wallet::indy::wallet::create_and_open_wallet;
@@ -25,7 +25,8 @@ impl Migratable for SetupProfile {
         info!("SetupProfile::migrate >>>");
         let old_wh = self.profile.wallet_handle().unwrap();
         let new_wh = migrate_to_new_wallet(old_wh).await;
-        self.profile = make_modular_profile(new_wh, self.genesis_file_path.clone());
+        let wallet = Arc::new(IndySdkWallet::new(new_wh));
+        self.profile = dev_build_profile_modular(self.genesis_file_path.clone(), wallet);
     }
 }
 
@@ -35,8 +36,9 @@ impl Migratable for Alice {
         info!("Alice::migrate >>>");
         let old_wh = self.profile.wallet_handle().unwrap();
         let new_wh = migrate_to_new_wallet(old_wh).await;
-        self.profile = make_modular_profile(new_wh, self.genesis_file_path.clone());
-        let new_wallet: Arc<dyn BaseWallet> = Arc::new(IndySdkWallet::new(new_wh));
+        let wallet = Arc::new(IndySdkWallet::new(new_wh));
+        self.profile = dev_build_profile_modular(self.genesis_file_path.clone(), wallet.clone());
+        let new_wallet: Arc<dyn BaseWallet> = wallet;
         self.agency_client.wallet = new_wallet.to_base_agency_client_wallet();
     }
 }
@@ -47,8 +49,9 @@ impl Migratable for Faber {
         info!("Faber::migrate >>>");
         let old_wh = self.profile.wallet_handle().unwrap();
         let new_wh = migrate_to_new_wallet(old_wh).await;
-        self.profile = make_modular_profile(new_wh, self.genesis_file_path.clone());
-        let new_wallet: Arc<dyn BaseWallet> = Arc::new(IndySdkWallet::new(new_wh));
+        let wallet = Arc::new(IndySdkWallet::new(new_wh));
+        self.profile = dev_build_profile_modular(self.genesis_file_path.clone(), wallet.clone());
+        let new_wallet: Arc<dyn BaseWallet> = wallet;
         self.agency_client.wallet = new_wallet.to_base_agency_client_wallet();
     }
 }

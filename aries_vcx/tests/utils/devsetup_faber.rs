@@ -47,27 +47,20 @@ pub struct Faber {
     pub pairwise_info: PairwiseInfo,
     pub agency_client: AgencyClient,
     pub genesis_file_path: String,
-    pub(self) teardown: Arc<dyn Fn() -> BoxFuture<'static, ()> + Send + Sync>,
 }
 
 pub async fn create_faber(genesis_file_path: String) -> Faber {
-    let profile_setup = SetupProfile::build_setup_profile(genesis_file_path).await;
+    let profile_setup = SetupProfile::build_with_trustee_did(genesis_file_path).await;
     let SetupProfile {
         genesis_file_path,
         institution_did,
         profile,
-        teardown,
     } = profile_setup;
-    Faber::setup(profile, genesis_file_path, institution_did, teardown).await
+    Faber::setup(profile, genesis_file_path, institution_did).await
 }
 
 impl Faber {
-    pub async fn setup(
-        profile: Arc<dyn Profile>,
-        genesis_file_path: String,
-        institution_did: String,
-        teardown: Arc<dyn Fn() -> BoxFuture<'static, ()> + Send + Sync>,
-    ) -> Faber {
+    pub async fn setup(profile: Arc<dyn Profile>, genesis_file_path: String, institution_did: String) -> Faber {
         settings::reset_config_values_ariesvcx().unwrap();
 
         let config_provision_agent = AgentProvisionConfig {
@@ -111,7 +104,6 @@ impl Faber {
             verifier: Verifier::default(),
             rev_not_sender,
             pairwise_info,
-            teardown,
         };
         faber
     }
@@ -399,11 +391,5 @@ impl Faber {
             .handle_revocation_notification_ack(ack)
             .await
             .unwrap();
-    }
-}
-
-impl Drop for Faber {
-    fn drop(&mut self) {
-        futures::executor::block_on((self.teardown)());
     }
 }

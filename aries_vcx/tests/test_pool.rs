@@ -10,10 +10,13 @@ mod integration_tests {
     use std::thread;
     use std::time::Duration;
 
+    use crate::utils::devsetup_alice::create_alice;
+    use crate::utils::devsetup_faber::create_faber;
     use aries_vcx::common::keys::{get_verkey_from_ledger, rotate_verkey};
     use aries_vcx::common::ledger::service_didsov::EndpointDidSov;
     use aries_vcx::common::ledger::transactions::{
-        add_attr, add_new_did, clear_attr, get_attr, get_service, write_endpoint, write_endpoint_legacy,
+        add_attr, add_new_did, clear_attr, get_attr, get_service, write_endorser_did, write_endpoint,
+        write_endpoint_legacy,
     };
     use aries_vcx::common::test_utils::create_and_store_nonrevocable_credential_def;
     use aries_vcx::utils::constants::DEFAULT_SCHEMA_ATTRS;
@@ -102,6 +105,36 @@ mod integration_tests {
         })
         .await;
     }
+
+    // #[tokio::test]
+    // #[ignore]
+    // async fn test_pool_write_new_endorser_did() {
+    //     SetupProfile::run(|setup| async move {
+    //         let mut faber = create_faber(setup.genesis_file_path.clone()).await;
+    //         let mut alice = create_alice(setup.genesis_file_path.clone()).await;
+    //
+    //         let did = setup.institution_did.clone();
+    //         let expect_service = AriesService::default();
+    //         write_endorser_did(&setup.profile.inject_indy_ledger_write(), &did, &expect_service)
+    //             .await
+    //             .unwrap();
+    //         thread::sleep(Duration::from_millis(50));
+    //         let service = get_service(&setup.profile.inject_indy_ledger_read(), &did)
+    //             .await
+    //             .unwrap();
+    //         assert_eq!(expect_service, service);
+    //
+    //         // clean up written legacy service
+    //         clear_attr(
+    //             &setup.profile.inject_indy_ledger_write(),
+    //             &setup.institution_did,
+    //             "service",
+    //         )
+    //             .await
+    //             .unwrap();
+    //     })
+    //         .await;
+    // }
 
     #[tokio::test]
     #[ignore]

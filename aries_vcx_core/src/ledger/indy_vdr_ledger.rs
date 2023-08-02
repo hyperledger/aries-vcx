@@ -21,7 +21,7 @@ use vdr::utils::did::DidValue;
 use vdr::utils::Qualifiable;
 
 use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
-use crate::ledger::base_ledger::{TaaConfigurator, TxnAuthrAgrmtOptions};
+use crate::ledger::base_ledger::{IndyRole, TaaConfigurator, TxnAuthrAgrmtOptions};
 use crate::ledger::common::verify_transaction_can_be_endorsed;
 
 use super::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite};
@@ -316,6 +316,28 @@ where
             None,
             Some(&serde_json::from_str::<Value>(attrib_json)?),
             None,
+        )?;
+        let request = self.append_txn_author_agreement_to_request(request).await?;
+        self.sign_and_submit_request(target_did, request).await
+    }
+
+    async fn write_did(
+        &self,
+        submitter_did: &str,
+        target_did: &str,
+        target_vk: &str,
+        role: IndyRole,
+        alias: Option<String>,
+    ) -> VcxCoreResult<String> {
+        let identifier = DidValue::from_str(submitter_did)?;
+        let dest = DidValue::from_str(target_did)?;
+        // todo: update indy-vdr to accept enum as role argument rather than string
+        let request = self.request_builder()?.build_nym_request(
+            &identifier,
+            &dest,
+            Some(target_vk.into()),
+            alias,
+            Some(serde_json::to_string(&role)?),
         )?;
         let request = self.append_txn_author_agreement_to_request(request).await?;
         self.sign_and_submit_request(target_did, request).await
