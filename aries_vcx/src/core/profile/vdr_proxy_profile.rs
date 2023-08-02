@@ -37,9 +37,8 @@ pub struct VdrProxyProfile {
 }
 
 impl VdrProxyProfile {
-    pub async fn init(wallet_handle: WalletHandle, client: VdrProxyClient) -> VcxResult<Self> {
-        let wallet = Arc::new(IndySdkWallet::new(wallet_handle));
-        let anoncreds = Arc::new(IndySdkAnonCreds::new(wallet_handle));
+    pub async fn init(wallet: Arc<IndySdkWallet>, client: VdrProxyClient) -> VcxResult<Self> {
+        let anoncreds = Arc::new(IndySdkAnonCreds::new(wallet.wallet_handle));
         let request_signer = Arc::new(BaseWalletRequestSigner::new(wallet.clone()));
         let request_submitter = Arc::new(VdrProxySubmitter::new(Arc::new(client)));
         let response_parser = Arc::new(ResponseParser::new());

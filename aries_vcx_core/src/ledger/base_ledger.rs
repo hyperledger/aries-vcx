@@ -1,7 +1,7 @@
 use std::fmt::Debug;
 
 use async_trait::async_trait;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::errors::error::VcxCoreResult;
 
@@ -11,6 +11,18 @@ pub trait IndyLedgerRead: Debug + Send + Sync {
     async fn get_nym(&self, did: &str) -> VcxCoreResult<String>;
     async fn get_txn_author_agreement(&self) -> VcxCoreResult<Option<String>>;
     async fn get_ledger_txn(&self, seq_no: i32, submitter_did: Option<&str>) -> VcxCoreResult<String>;
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub enum IndyRole {
+    #[serde(rename = "STEWARD")]
+    Steward,
+    #[serde(rename = "TRUSTEE")]
+    Trustee,
+    #[serde(rename = "ENDORSER")]
+    Endorser,
+    #[serde(rename = "NETWORK_MONITOR")]
+    NetworkMonitor,
 }
 
 #[async_trait]
@@ -26,6 +38,14 @@ pub trait IndyLedgerWrite: Debug + Send + Sync {
     async fn set_endorser(&self, submitter_did: &str, request: &str, endorser: &str) -> VcxCoreResult<String>;
     async fn endorse_transaction(&self, endorser_did: &str, request_json: &str) -> VcxCoreResult<()>;
     async fn add_attr(&self, target_did: &str, attrib_json: &str) -> VcxCoreResult<String>;
+    async fn write_did(
+        &self,
+        submitter_did: &str,
+        target_did: &str,
+        target_vk: &str,
+        role: IndyRole,
+        alias: Option<String>,
+    ) -> VcxCoreResult<String>;
 }
 
 #[async_trait]
