@@ -10,7 +10,7 @@ use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 
 use self::{
-    invitation::Invitation,
+    invitation::{Invitation, InvitationContent, InvitationDecorators},
     problem_report::{ProblemReport, ProblemReportContent, ProblemReportDecorators},
     request::{Request, RequestContent, RequestDecorators},
     response::{Response, ResponseContent, ResponseDecorators},
@@ -80,6 +80,7 @@ impl ConnectionData {
     }
 }
 
+transit_to_aries_msg!(InvitationContent: InvitationDecorators, Connection);
 transit_to_aries_msg!(RequestContent: RequestDecorators, Connection);
 transit_to_aries_msg!(ResponseContent: ResponseDecorators, Connection);
 transit_to_aries_msg!(ProblemReportContent: ProblemReportDecorators, Connection);

@@ -10,7 +10,7 @@ use messages::{
     decorators::{thread::Thread, timing::Timing},
     msg_fields::protocols::{
         connection::{
-            invitation::Invitation,
+            invitation::InvitationContent,
             request::{Request, RequestContent, RequestDecorators},
             response::Response,
             ConnectionData,
@@ -127,16 +127,24 @@ impl InviteeConnection<Invited> {
         // In this case, we reuse the invitation ID (current thread ID) as the thread ID
         // in both the connection and the request.
         let (thread_id, thread) = match &self.state.invitation {
-            AnyInvitation::Con(Invitation::Public(_)) | AnyInvitation::Oob(_) => {
+            AnyInvitation::Oob(_) => {
                 let mut thread = Thread::new(id.clone());
                 thread.pthid = Some(self.state.thread_id().to_owned());
 
                 (id.clone(), thread)
             }
-            AnyInvitation::Con(Invitation::Pairwise(_)) | AnyInvitation::Con(Invitation::PairwiseDID(_)) => {
-                let thread = Thread::new(self.state.thread_id().to_owned());
-                (self.state.thread_id().to_owned(), thread)
-            }
+            AnyInvitation::Con(invite) => match invite.content {
+                InvitationContent::Public(_) => {
+                    let mut thread = Thread::new(id.clone());
+                    thread.pthid = Some(self.state.thread_id().to_owned());
+
+                    (id.clone(), thread)
+                }
+                InvitationContent::Pairwise(_) | InvitationContent::PairwiseDID(_) => {
+                    let thread = Thread::new(self.state.thread_id().to_owned());
+                    (self.state.thread_id().to_owned(), thread)
+                }
+            },
         };
 
         decorators.thread = Some(thread);

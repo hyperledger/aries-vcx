@@ -8,7 +8,7 @@ use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use messages::decorators::thread::Thread;
 use messages::decorators::timing::Timing;
 use messages::msg_fields::protocols::connection::invitation::{
-    Invitation, PairwiseInvitation, PairwiseInvitationContent, PwInvitationDecorators,
+    Invitation, InvitationContent, InvitationDecorators, PairwiseInvitationContent,
 };
 use messages::msg_fields::protocols::connection::request::Request;
 use messages::msg_fields::protocols::connection::response::{Response, ResponseContent, ResponseDecorators};
@@ -53,11 +53,11 @@ impl InviterConnection<Initial> {
             service_endpoint,
         );
 
-        let decorators = PwInvitationDecorators::default();
+        let decorators = InvitationDecorators::default();
 
-        let invite = PairwiseInvitation::with_decorators(id, content, decorators);
+        let invite = Invitation::with_decorators(id, InvitationContent::Pairwise(content), decorators);
 
-        let invitation = AnyInvitation::Con(Invitation::Pairwise(invite));
+        let invitation = AnyInvitation::Con(invite);
 
         Connection {
             source_id: self.source_id,
@@ -91,11 +91,11 @@ impl InviterConnection<Initial> {
             "https://dummy.dummy/dummy".parse().expect("url should be valid"),
         );
 
-        let decorators = PwInvitationDecorators::default();
+        let decorators = InvitationDecorators::default();
 
-        let invite = PairwiseInvitation::with_decorators(id, content, decorators);
+        let invite = Invitation::with_decorators(id, InvitationContent::Pairwise(content), decorators);
 
-        let invitation = AnyInvitation::Con(Invitation::Pairwise(invite));
+        let invitation = AnyInvitation::Con(invite);
 
         Connection {
             source_id: self.source_id,

@@ -17,7 +17,7 @@ use chrono::Utc;
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use messages::decorators::thread::Thread;
 use messages::decorators::timing::Timing;
-use messages::msg_fields::protocols::connection::invitation::Invitation;
+use messages::msg_fields::protocols::connection::invitation::InvitationContent;
 use messages::msg_fields::protocols::connection::problem_report::{
     ProblemReport, ProblemReportContent, ProblemReportDecorators,
 };
@@ -231,16 +231,18 @@ impl SmConnectionInvitee {
                 decorators.timing = Some(timing);
 
                 let (thread_id, thread) = match &state.invitation {
-                    AnyInvitation::Con(Invitation::Public(_)) => {
-                        let mut thread = Thread::new(id.clone());
-                        thread.pthid = Some(self.thread_id.clone());
+                    AnyInvitation::Con(invite) => match invite.content {
+                        InvitationContent::Public(_) => {
+                            let mut thread = Thread::new(id.clone());
+                            thread.pthid = Some(self.thread_id.clone());
 
-                        (id.clone(), thread)
-                    }
-                    AnyInvitation::Con(Invitation::Pairwise(_)) | AnyInvitation::Con(Invitation::PairwiseDID(_)) => {
-                        let thread = Thread::new(self.thread_id.clone());
-                        (self.thread_id.clone(), thread)
-                    }
+                            (id.clone(), thread)
+                        }
+                        InvitationContent::Pairwise(_) | InvitationContent::PairwiseDID(_) => {
+                            let thread = Thread::new(self.thread_id.clone());
+                            (self.thread_id.clone(), thread)
+                        }
+                    },
                     AnyInvitation::Oob(invite) => {
                         let mut thread = Thread::new(id.clone());
                         thread.pthid = Some(invite.id.clone());
@@ -283,9 +285,7 @@ impl SmConnectionInvitee {
         let Self { state, .. } = self;
 
         let thread_id = match &invitation {
-            AnyInvitation::Con(Invitation::Public(i)) => i.id.clone(),
-            AnyInvitation::Con(Invitation::Pairwise(i)) => i.id.clone(),
-            AnyInvitation::Con(Invitation::PairwiseDID(i)) => i.id.clone(),
+            AnyInvitation::Con(i) => i.id.clone(),
             AnyInvitation::Oob(i) => i.id.clone(),
         };
 

@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use futures::future::BoxFuture;
+use messages::msg_fields::protocols::connection::invitation::{Invitation, InvitationContent};
 use serde_json::json;
 
 use agency_client::agency_client::AgencyClient;
@@ -34,7 +35,7 @@ use aries_vcx_core::wallet::indy::{IssuerConfig, WalletConfig};
 use aries_vcx_core::{PoolHandle, WalletHandle};
 use diddoc_legacy::aries::service::AriesService;
 use messages::decorators::please_ack::AckOn;
-use messages::msg_fields::protocols::connection::invitation::public::{PublicInvitation, PublicInvitationContent};
+use messages::msg_fields::protocols::connection::invitation::public::PublicInvitationContent;
 use messages::msg_fields::protocols::revocation::ack::AckRevoke;
 use messages::AriesMessage;
 
@@ -205,7 +206,8 @@ impl Faber {
     pub fn create_public_invite(&mut self) -> VcxResult<String> {
         let id = "test_invite_id";
         let content = PublicInvitationContent::new("faber".to_owned(), self.institution_did.clone());
-        let public_invitation = PublicInvitation::new(id.to_owned(), content);
+        let public_invitation =
+            Invitation::with_decorators(id.to_owned(), InvitationContent::Public(content), Default::default());
         Ok(json!(AriesMessage::from(public_invitation)).to_string())
     }
 

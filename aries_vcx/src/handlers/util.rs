@@ -79,9 +79,7 @@ pub(crate) use matches_thread_id;
 pub fn verify_thread_id(thread_id: &str, message: &AriesMessage) -> VcxResult<()> {
     let is_match = match message {
         AriesMessage::BasicMessage(msg) => matches_opt_thread_id!(msg, thread_id),
-        AriesMessage::Connection(Connection::Invitation(Invitation::Public(msg))) => msg.id == thread_id,
-        AriesMessage::Connection(Connection::Invitation(Invitation::Pairwise(msg))) => msg.id == thread_id,
-        AriesMessage::Connection(Connection::Invitation(Invitation::PairwiseDID(msg))) => msg.id == thread_id,
+        AriesMessage::Connection(Connection::Invitation(msg)) => msg.id == thread_id,
         AriesMessage::Connection(Connection::ProblemReport(msg)) => matches_thread_id!(msg, thread_id),
         AriesMessage::Connection(Connection::Request(msg)) => matches_opt_thread_id!(msg, thread_id),
         AriesMessage::Connection(Connection::Response(msg)) => matches_thread_id!(msg, thread_id),

@@ -7,7 +7,7 @@ use messages::{
     decorators::{thread::Thread, timing::Timing},
     msg_fields::protocols::{
         connection::{
-            invitation::Invitation,
+            invitation::{Invitation, InvitationContent},
             request::{Request, RequestDecorators},
             response::Response,
             ConnectionData,
@@ -35,10 +35,13 @@ use super::{state::BootstrapInfo, InviteeConnection};
 /// should rebuild this from the ground up.
 //
 // TODO: Make this prettier
-async fn did_doc_from_invitation(ledger: &dyn IndyLedgerRead, invitation: Invitation) -> VcxResult<BootstrapInfo> {
+async fn did_doc_from_invitation(
+    ledger: &dyn IndyLedgerRead,
+    invitation: InvitationContent,
+) -> VcxResult<BootstrapInfo> {
     let (service_endpoint, recipient_keys, routing_keys, did, service_endpoint_did) = match invitation {
-        Invitation::Public(invitation) => {
-            let service = match get_service(ledger, &invitation.content.did).await {
+        InvitationContent::Public(invitation) => {
+            let service = match get_service(ledger, &invitation.did).await {
                 Ok(s) => s,
                 Err(err) => {
                     error!("Failed to obtain service definition from the ledger: {}", err);
@@ -50,19 +53,19 @@ async fn did_doc_from_invitation(ledger: &dyn IndyLedgerRead, invitation: Invita
                 service.service_endpoint,
                 service.recipient_keys,
                 service.routing_keys,
-                Some(invitation.content.did),
+                Some(invitation.did),
                 None,
             )
         }
-        Invitation::Pairwise(invitation) => (
-            invitation.content.service_endpoint,
-            invitation.content.recipient_keys,
-            invitation.content.routing_keys,
+        InvitationContent::Pairwise(invitation) => (
+            invitation.service_endpoint,
+            invitation.recipient_keys,
+            invitation.routing_keys,
             None,
             None,
         ),
-        Invitation::PairwiseDID(mut invitation) => {
-            let service = match get_service(ledger, &invitation.content.service_endpoint).await {
+        InvitationContent::PairwiseDID(mut invitation) => {
+            let service = match get_service(ledger, &invitation.service_endpoint).await {
                 Ok(s) => s,
                 Err(err) => {
                     error!("Failed to obtain service definition from the ledger: {}", err);
@@ -71,14 +74,14 @@ async fn did_doc_from_invitation(ledger: &dyn IndyLedgerRead, invitation: Invita
             };
 
             // See https://github.com/hyperledger/aries-rfcs/blob/main/features/0160-connection-protocol/README.md#agency-endpoint
-            invitation.content.routing_keys.extend(service.recipient_keys);
+            invitation.routing_keys.extend(service.recipient_keys);
 
             (
                 service.service_endpoint,
-                invitation.content.recipient_keys,
-                invitation.content.routing_keys,
+                invitation.recipient_keys,
+                invitation.routing_keys,
                 None,
-                Some(invitation.content.service_endpoint),
+                Some(invitation.service_endpoint),
             )
         }
     };
@@ -98,7 +101,7 @@ async fn did_doc_from_invitation(ledger: &dyn IndyLedgerRead, invitation: Invita
 // and should process the invitation in a better way
 pub async fn accept_invitation<S, W>(
     sm_storage: S,
-    sm_id: S::Id,
+    sm_id: S::SmInfo,
     invitation: Invitation,
     service_endpoint: Url,
     routing_keys: Vec<String>,
@@ -112,17 +115,17 @@ where
 {
     let msg_id = Uuid::new_v4().to_string();
 
-    let thread = match &invitation {
-        Invitation::Public(i) => {
+    let thread = match &invitation.content {
+        InvitationContent::Public(_) => {
             let mut thread = Thread::new(msg_id.clone());
-            thread.pthid = Some(i.id.clone());
+            thread.pthid = Some(invitation.id.clone());
             thread
         }
-        Invitation::Pairwise(i) => Thread::new(i.id.clone()),
-        Invitation::PairwiseDID(i) => Thread::new(i.id.clone()),
+        InvitationContent::Pairwise(_) => Thread::new(invitation.id.clone()),
+        InvitationContent::PairwiseDID(_) => Thread::new(invitation.id.clone()),
     };
 
-    let bootstrap_info = did_doc_from_invitation(ledger, invitation).await?;
+    let bootstrap_info = did_doc_from_invitation(ledger, invitation.content).await?;
     let (did, verkey) = wallet.create_and_store_my_did(None, None).await?;
 
     let recipient_keys = vec![verkey.clone()];
@@ -157,7 +160,7 @@ where
 
 pub async fn handle_response<S, W>(
     sm_storage: S,
-    sm_id: S::Id,
+    sm_id: S::SmInfo,
     response: Response,
     wallet: &Arc<dyn BaseWallet>,
 ) -> VcxResult<Ack>

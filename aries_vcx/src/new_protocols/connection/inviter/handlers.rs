@@ -47,7 +47,7 @@ async fn build_response_content(
 
 pub async fn handle_request<S>(
     sm_storage: S,
-    sm_id: S::Id,
+    sm_id: S::SmInfo,
     wallet: &Arc<dyn BaseWallet>,
     request: Request,
     invitation_verkey: &str,

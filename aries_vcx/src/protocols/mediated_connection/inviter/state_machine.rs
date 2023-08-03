@@ -8,7 +8,7 @@ use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use messages::decorators::thread::Thread;
 use messages::decorators::timing::Timing;
 use messages::msg_fields::protocols::connection::invitation::{
-    Invitation, PairwiseInvitation, PairwiseInvitationContent, PwInvitationDecorators,
+    Invitation, InvitationContent, InvitationDecorators, PairwiseInvitationContent,
 };
 use messages::msg_fields::protocols::connection::problem_report::{
     ProblemReport, ProblemReportContent, ProblemReportDecorators,
@@ -215,11 +215,11 @@ impl SmConnectionInviter {
                     service_endpoint,
                 );
 
-                let decorators = PwInvitationDecorators::default();
+                let decorators = InvitationDecorators::default();
 
-                let invite = PairwiseInvitation::with_decorators(id, content, decorators);
+                let invite = Invitation::with_decorators(id, InvitationContent::Pairwise(content), decorators);
 
-                let invitation = AnyInvitation::Con(Invitation::Pairwise(invite));
+                let invitation = AnyInvitation::Con(invite);
 
                 InviterFullState::Invited((state, invitation).into())
             }

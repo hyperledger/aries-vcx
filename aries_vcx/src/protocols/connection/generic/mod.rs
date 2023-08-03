@@ -212,7 +212,7 @@ mod connection_serde_tests {
     use messages::decorators::thread::Thread;
     use messages::decorators::timing::Timing;
     use messages::msg_fields::protocols::connection::invitation::{
-        Invitation, PairwiseInvitation, PairwiseInvitationContent, PwInvitationDecorators,
+        Invitation, InvitationContent, InvitationDecorators, PairwiseInvitationContent,
     };
     use messages::msg_fields::protocols::connection::request::{Request, RequestContent, RequestDecorators};
     use messages::msg_fields::protocols::connection::response::{Response, ResponseContent, ResponseDecorators};
@@ -223,12 +223,12 @@ mod connection_serde_tests {
 
     use super::*;
     use crate::common::signing::sign_connection_response;
-    use crate::core::profile::profile::Profile;
+
     use crate::handlers::util::AnyInvitation;
     use crate::protocols::connection::serializable::*;
     use crate::protocols::connection::{invitee::InviteeConnection, inviter::InviterConnection, Connection};
     use crate::utils::mockdata::profile::mock_ledger::MockLedger;
-    use crate::utils::mockdata::profile::mock_profile::MockProfile;
+
     use crate::utils::mockdata::profile::mock_wallet::MockWallet;
     use aries_vcx_core::ledger::base_ledger::IndyLedgerRead;
     use std::sync::Arc;
@@ -394,9 +394,13 @@ mod connection_serde_tests {
             SERVICE_ENDPOINT.parse().unwrap(),
         );
 
-        let decorators = PwInvitationDecorators::default();
-        let pw_invite = PairwiseInvitation::with_decorators(Uuid::new_v4().to_string(), content, decorators);
-        let invitation = AnyInvitation::Con(Invitation::Pairwise(pw_invite));
+        let decorators = InvitationDecorators::default();
+        let pw_invite = Invitation::with_decorators(
+            Uuid::new_v4().to_string(),
+            InvitationContent::Pairwise(content),
+            decorators,
+        );
+        let invitation = AnyInvitation::Con(pw_invite);
 
         make_invitee_initial()
             .await
@@ -425,7 +429,9 @@ mod connection_serde_tests {
         con_data.did_doc.set_recipient_keys(vec![PW_KEY.to_owned()]);
         con_data.did_doc.set_routing_keys(Vec::new());
 
-        let sig_data = sign_connection_response(wallet.as_ref(), PW_KEY, &con_data).await.unwrap();
+        let sig_data = sign_connection_response(wallet.as_ref(), PW_KEY, &con_data)
+            .await
+            .unwrap();
 
         let content = ResponseContent::new(sig_data);
         let mut decorators = ResponseDecorators::new(Thread::new(con.thread_id().to_owned()));

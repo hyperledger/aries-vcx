@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use aries_vcx::handlers::util::AnyInvitation;
 use aries_vcx::messages::msg_fields::protocols::connection::invitation::{
-    Invitation, PublicInvitation, PublicInvitationContent,
+    Invitation, InvitationContent, PublicInvitationContent,
 };
 use aries_vcx::messages::msg_fields::protocols::connection::request::Request;
 use aries_vcx::messages::AriesMessage;
@@ -35,7 +35,11 @@ pub fn generate_public_invitation(public_did: &str, label: &str) -> LibvcxResult
         label
     );
     let content = PublicInvitationContent::new(label.to_owned(), public_did.to_owned());
-    let invite = PublicInvitation::new(Uuid::new_v4().to_string(), content);
+    let invite = Invitation::with_decorators(
+        Uuid::new_v4().to_string(),
+        InvitationContent::Public(content),
+        Default::default(),
+    );
 
     let invitation = AriesMessage::from(invite);
     Ok(json!(invitation).to_string())
@@ -254,13 +258,7 @@ pub async fn connect(handle: u32) -> LibvcxResult<Option<String>> {
         .connect(&get_main_wallet()?, &get_main_agency_client()?, None)
         .await?;
     let invitation = connection.get_invite_details().map(|invitation| match invitation {
-        AnyInvitation::Con(Invitation::Pairwise(invitation)) => {
-            json!(AriesMessage::from(invitation.clone())).to_string()
-        }
-        AnyInvitation::Con(Invitation::PairwiseDID(invitation)) => {
-            json!(AriesMessage::from(invitation.clone())).to_string()
-        }
-        AnyInvitation::Con(Invitation::Public(invitation)) => json!(AriesMessage::from(invitation.clone())).to_string(),
+        AnyInvitation::Con(invitation) => json!(AriesMessage::from(invitation.clone())).to_string(),
         AnyInvitation::Oob(invitation) => json!(AriesMessage::from(invitation.clone())).to_string(),
     });
     CONNECTION_MAP.insert(handle, connection)?;
@@ -292,15 +290,7 @@ pub fn get_invite_details(handle: u32) -> LibvcxResult<String> {
             connection
                 .get_invite_details()
                 .map(|invitation| match invitation {
-                    AnyInvitation::Con(Invitation::Pairwise(invitation)) => {
-                        json!(AriesMessage::from(invitation.clone())).to_string()
-                    }
-                    AnyInvitation::Con(Invitation::PairwiseDID(invitation)) => {
-                        json!(AriesMessage::from(invitation.clone())).to_string()
-                    }
-                    AnyInvitation::Con(Invitation::Public(invitation)) => {
-                        json!(AriesMessage::from(invitation.clone())).to_string()
-                    }
+                    AnyInvitation::Con(invitation) => json!(AriesMessage::from(invitation.clone())).to_string(),
                     AnyInvitation::Oob(invitation) => json!(AriesMessage::from(invitation.clone())).to_string(),
                 })
                 .ok_or(LibvcxError::from_msg(
@@ -488,7 +478,7 @@ pub mod test_utils {
 #[cfg(test)]
 pub mod tests {
     use aries_vcx::messages::msg_fields::protocols::connection::invitation::{
-        PairwiseInvitation, PairwiseInvitationContent, PwInvitationDecorators,
+        InvitationContent, InvitationDecorators, PairwiseInvitationContent,
     };
     use serde_json::Value;
 
@@ -538,9 +528,13 @@ pub mod tests {
 
         let id = Uuid::new_v4().to_string();
         let content = PairwiseInvitationContent::new(_label(), _recipient_keys(), _routing_keys(), _service_endpoint());
-        let decorators = PwInvitationDecorators::default();
+        let decorators = InvitationDecorators::default();
 
-        let msg = AriesMessage::from(PairwiseInvitation::with_decorators(id, content, decorators));
+        let msg = AriesMessage::from(Invitation::with_decorators(
+            id,
+            InvitationContent::Pairwise(content),
+            decorators,
+        ));
 
         let connection_handle =
             mediated_connection::create_connection_with_invite(_source_id(), &serde_json::to_string(&msg).unwrap())
@@ -557,7 +551,11 @@ pub mod tests {
         let id = Uuid::new_v4().to_string();
         let content = PublicInvitationContent::new(_label(), _did());
 
-        let msg = AriesMessage::from(PublicInvitation::new(id, content));
+        let msg = AriesMessage::from(Invitation::with_decorators(
+            id,
+            InvitationContent::Public(content),
+            Default::default(),
+        ));
 
         let connection_handle =
             mediated_connection::create_connection_with_invite(_source_id(), &serde_json::to_string(&msg).unwrap())

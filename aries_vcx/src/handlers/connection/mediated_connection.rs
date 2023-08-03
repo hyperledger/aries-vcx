@@ -9,7 +9,7 @@ use futures::future::BoxFuture;
 use futures::stream::StreamExt;
 use messages::decorators::timing::Timing;
 use messages::msg_fields::protocols::basic_message::{BasicMessage, BasicMessageContent, BasicMessageDecorators};
-use messages::msg_fields::protocols::connection::invitation::Invitation;
+use messages::msg_fields::protocols::connection::invitation::{Invitation, InvitationContent};
 use messages::msg_fields::protocols::connection::request::Request;
 use messages::msg_fields::protocols::connection::Connection;
 use messages::msg_fields::protocols::discover_features::disclose::Disclose;
@@ -614,14 +614,16 @@ impl MediatedConnection {
             SmConnection::Invitee(sm_invitee) => {
                 let (sm_invitee, can_autohop) = match message {
                     Some(message) => match message {
-                        AriesMessage::Connection(Connection::Invitation(Invitation::Public(invitation))) => (
-                            sm_invitee.handle_invitation(AnyInvitation::Con(Invitation::Public(invitation)))?,
-                            false,
-                        ),
-                        AriesMessage::Connection(Connection::Invitation(Invitation::Pairwise(invitation))) => (
-                            sm_invitee.handle_invitation(AnyInvitation::Con(Invitation::Pairwise(invitation)))?,
-                            false,
-                        ),
+                        AriesMessage::Connection(Connection::Invitation(invitation))
+                            if matches!(invitation.content, InvitationContent::Public(_)) =>
+                        {
+                            (sm_invitee.handle_invitation(AnyInvitation::Con(invitation))?, false)
+                        }
+                        AriesMessage::Connection(Connection::Invitation(invitation))
+                            if matches!(invitation.content, InvitationContent::Pairwise(_)) =>
+                        {
+                            (sm_invitee.handle_invitation(AnyInvitation::Con(invitation))?, false)
+                        }
                         AriesMessage::Connection(Connection::Response(response)) => {
                             let send_message = self.send_message_closure_connection(Arc::clone(wallet));
                             (
