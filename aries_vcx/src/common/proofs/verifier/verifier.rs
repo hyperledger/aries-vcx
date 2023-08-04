@@ -24,8 +24,12 @@ pub async fn validate_indy_proof(
     debug!("validate_indy_proof >> credential_data: {credential_data:?}");
     let credential_defs_json = build_cred_defs_json_verifier(ledger, &credential_data).await?;
     let schemas_json = build_schemas_json_verifier(ledger, &credential_data).await?;
-    let rev_reg_defs_json = build_rev_reg_defs_json(ledger, &credential_data).await?;
-    let rev_regs_json = build_rev_reg_json(ledger, &credential_data).await?;
+    let rev_reg_defs_json = build_rev_reg_defs_json(ledger, &credential_data)
+        .await
+        .unwrap_or(json!({}).to_string());
+    let rev_regs_json = build_rev_reg_json(ledger, &credential_data)
+        .await
+        .unwrap_or(json!({}).to_string());
 
     debug!("validate_indy_proof >> credential_defs_json: {credential_defs_json}");
     debug!("validate_indy_proof >> schemas_json: {schemas_json}");
