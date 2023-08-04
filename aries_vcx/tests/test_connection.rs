@@ -27,7 +27,7 @@ mod integration_tests {
     use messages::AriesMessage;
 
     use crate::utils::devsetup_alice::create_alice;
-    use crate::utils::devsetup_faber::create_faber;
+    use crate::utils::devsetup_faber::create_faber_trustee;
     use crate::utils::scenarios::test_utils::{
         _send_message, connect_using_request_sent_to_public_agent, create_connected_connections,
         create_connected_connections_via_public_invite, create_proof_request,
@@ -39,7 +39,7 @@ mod integration_tests {
     #[ignore]
     async fn test_agency_pool_establish_connection_via_public_invite() {
         SetupPoolDirectory::run(|setup| async move {
-            let mut institution = create_faber(setup.genesis_file_path.clone()).await;
+            let mut institution = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut consumer = create_alice(setup.genesis_file_path).await;
 
             let (consumer_to_institution, institution_to_consumer) =
@@ -63,7 +63,7 @@ mod integration_tests {
     #[ignore]
     async fn test_agency_pool_oob_connection_bootstrap() {
         SetupPoolDirectory::run(|setup| async move {
-            let mut institution = create_faber(setup.genesis_file_path.clone()).await;
+            let mut institution = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut consumer = create_alice(setup.genesis_file_path).await;
             let (sender, receiver) = bounded::<AriesMessage>(1);
 
@@ -187,7 +187,7 @@ mod integration_tests {
     #[ignore]
     async fn test_agency_pool_oob_connection_reuse() {
         SetupPoolDirectory::run(|setup| async move {
-            let mut institution = create_faber(setup.genesis_file_path.clone()).await;
+            let mut institution = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut consumer = create_alice(setup.genesis_file_path).await;
 
             let (consumer_to_institution, institution_to_consumer) =
@@ -226,7 +226,7 @@ mod integration_tests {
     #[ignore]
     async fn test_agency_pool_oob_connection_handshake_reuse() {
         SetupPoolDirectory::run(|setup| async move {
-            let mut institution = create_faber(setup.genesis_file_path.clone()).await;
+            let mut institution = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut consumer = create_alice(setup.genesis_file_path).await;
 
             let (mut consumer_to_institution, mut institution_to_consumer) =
@@ -332,7 +332,7 @@ mod integration_tests {
     #[ignore]
     pub async fn test_agency_pool_two_enterprise_connections() {
         SetupPoolDirectory::run(|setup| async move {
-            let mut institution = create_faber(setup.genesis_file_path.clone()).await;
+            let mut institution = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut consumer1 = create_alice(setup.genesis_file_path).await;
 
             let (_faber, _alice) = create_connected_connections(&mut consumer1, &mut institution).await;
@@ -345,7 +345,7 @@ mod integration_tests {
     #[ignore]
     async fn test_agency_pool_aries_demo_handle_connection_related_messages() {
         SetupPoolDirectory::run(|setup| async move {
-            let mut faber = create_faber(setup.genesis_file_path.clone()).await;
+            let mut faber = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut alice = create_alice(setup.genesis_file_path).await;
 
             // Connection

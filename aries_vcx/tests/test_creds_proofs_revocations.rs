@@ -14,7 +14,7 @@ mod integration_tests {
     use aries_vcx::utils::devsetup::*;
 
     use crate::utils::devsetup_alice::create_alice;
-    use crate::utils::devsetup_faber::{create_faber, Faber};
+    use crate::utils::devsetup_faber::{create_faber_trustee, Faber};
     #[cfg(feature = "migration")]
     use crate::utils::migration::Migratable;
     use crate::utils::scenarios::test_utils::{
@@ -31,7 +31,7 @@ mod integration_tests {
     #[ignore]
     async fn test_agency_pool_basic_revocation() {
         SetupPoolDirectory::run(|setup| async move {
-            let mut institution = create_faber(setup.genesis_file_path.clone()).await;
+            let mut institution = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut consumer = create_alice(setup.genesis_file_path).await;
 
             let (consumer_to_institution, institution_to_consumer) =
@@ -119,7 +119,7 @@ mod integration_tests {
         use messages::decorators::please_ack::AckOn;
 
         SetupPoolDirectory::run(|setup| async move {
-            let mut institution = create_faber(setup.genesis_file_path.clone()).await;
+            let mut institution = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut consumer = create_alice(setup.genesis_file_path).await;
 
             let (consumer_to_institution, institution_to_consumer) =
@@ -189,7 +189,7 @@ mod integration_tests {
     #[ignore]
     async fn test_agency_pool_local_revocation() {
         SetupPoolDirectory::run(|setup| async move {
-            let mut institution = create_faber(setup.genesis_file_path.clone()).await;
+            let mut institution = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut consumer = create_alice(setup.genesis_file_path).await;
 
             let (consumer_to_institution, institution_to_consumer) =
@@ -288,7 +288,7 @@ mod integration_tests {
     #[ignore]
     async fn test_agency_batch_revocation() {
         SetupPoolDirectory::run(|setup| async move {
-            let mut institution = create_faber(setup.genesis_file_path.clone()).await;
+            let mut institution = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut consumer1 = create_alice(setup.genesis_file_path.clone()).await;
             let mut consumer2 = create_alice(setup.genesis_file_path.clone()).await;
             let mut consumer3 = create_alice(setup.genesis_file_path).await;
@@ -466,7 +466,7 @@ mod integration_tests {
     #[ignore]
     async fn test_agency_pool_revoked_credential_might_still_work() {
         SetupPoolDirectory::run(|setup| async move {
-            let mut institution = create_faber(setup.genesis_file_path.clone()).await;
+            let mut institution = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut consumer = create_alice(setup.genesis_file_path).await;
 
             let (consumer_to_institution, institution_to_consumer) = create_connected_connections(&mut consumer, &mut institution).await;
@@ -536,8 +536,8 @@ mod integration_tests {
     #[ignore]
     async fn test_agency_pool_two_creds_one_rev_reg_revoke_first() {
         SetupPoolDirectory::run(|setup| async move {
-            let mut issuer = create_faber(setup.genesis_file_path.clone()).await;
-            let mut verifier = create_faber(setup.genesis_file_path.clone()).await;
+            let mut issuer = create_faber_trustee(setup.genesis_file_path.clone()).await;
+            let mut verifier = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut consumer = create_alice(setup.genesis_file_path).await;
 
             let (consumer_to_verifier, verifier_to_consumer) = create_connected_connections(&mut consumer, &mut verifier).await;
@@ -628,8 +628,8 @@ mod integration_tests {
     #[ignore]
     async fn test_agency_pool_two_creds_one_rev_reg_revoke_second() {
         SetupPoolDirectory::run(|setup| async move {
-            let mut issuer = create_faber(setup.genesis_file_path.clone()).await;
-            let mut verifier = create_faber(setup.genesis_file_path.clone()).await;
+            let mut issuer = create_faber_trustee(setup.genesis_file_path.clone()).await;
+            let mut verifier = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut consumer = create_alice(setup.genesis_file_path).await;
 
             let (consumer_to_verifier, verifier_to_consumer) = create_connected_connections(&mut consumer, &mut verifier).await;
@@ -718,8 +718,8 @@ mod integration_tests {
     #[ignore]
     async fn test_agency_pool_two_creds_two_rev_reg_id() {
         SetupPoolDirectory::run(|setup| async move {
-            let mut issuer = create_faber(setup.genesis_file_path.clone()).await;
-            let mut verifier = create_faber(setup.genesis_file_path.clone()).await;
+            let mut issuer = create_faber_trustee(setup.genesis_file_path.clone()).await;
+            let mut verifier = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut consumer = create_alice(setup.genesis_file_path).await;
 
             let (consumer_to_verifier, verifier_to_consumer) = create_connected_connections(&mut consumer, &mut verifier).await;
@@ -804,8 +804,8 @@ mod integration_tests {
     #[ignore]
     async fn test_agency_pool_two_creds_two_rev_reg_id_revoke_first() {
         SetupPoolDirectory::run(|setup| async move {
-            let mut issuer = create_faber(setup.genesis_file_path.clone()).await;
-            let mut verifier = create_faber(setup.genesis_file_path.clone()).await;
+            let mut issuer = create_faber_trustee(setup.genesis_file_path.clone()).await;
+            let mut verifier = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut consumer = create_alice(setup.genesis_file_path).await;
 
             let (consumer_to_verifier, verifier_to_consumer) = create_connected_connections(&mut consumer, &mut verifier).await;
@@ -894,8 +894,8 @@ mod integration_tests {
     #[ignore]
     async fn test_agency_pool_two_creds_two_rev_reg_id_revoke_second() {
         SetupPoolDirectory::run(|setup| async move {
-            let mut issuer = create_faber(setup.genesis_file_path.clone()).await;
-            let mut verifier = create_faber(setup.genesis_file_path.clone()).await;
+            let mut issuer = create_faber_trustee(setup.genesis_file_path.clone()).await;
+            let mut verifier = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut consumer = create_alice(setup.genesis_file_path).await;
 
             let (consumer_to_verifier, verifier_to_consumer) = create_connected_connections(&mut consumer, &mut verifier).await;
@@ -986,7 +986,7 @@ mod integration_tests {
     #[ignore]
     async fn test_agency_pool_three_creds_one_rev_reg_revoke_all() {
         SetupPoolDirectory::run(|setup| async move {
-            let mut issuer = create_faber(setup.genesis_file_path.clone()).await;
+            let mut issuer = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut consumer = create_alice(setup.genesis_file_path.clone()).await;
 
             let (consumer_to_issuer, issuer_to_consumer) =

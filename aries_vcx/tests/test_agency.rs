@@ -24,14 +24,14 @@ mod integration_tests {
     use messages::msg_fields::protocols::notification::Notification;
 
     use crate::utils::devsetup_alice::create_alice;
-    use crate::utils::devsetup_faber::{create_faber, Faber};
+    use crate::utils::devsetup_faber::{create_faber_trustee, Faber};
     use crate::utils::scenarios::test_utils::create_connected_connections;
 
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_send_and_download_messages() {
         SetupPoolDirectory::run(|setup| async move {
-            let mut institution = create_faber(setup.genesis_file_path.clone()).await;
+            let mut institution = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut consumer = create_alice(setup.genesis_file_path).await;
 
             let (alice_to_faber, faber_to_alice) = create_connected_connections(&mut consumer, &mut institution).await;
@@ -127,7 +127,7 @@ mod integration_tests {
         };
 
         SetupPoolDirectory::run(|setup| async move {
-            let mut faber = create_faber(setup.genesis_file_path.clone()).await;
+            let mut faber = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut alice = create_alice(setup.genesis_file_path.clone()).await;
 
             let invite = faber.create_invite().await;
@@ -282,7 +282,7 @@ mod integration_tests {
     #[ignore]
     async fn test_agency_pool_download_messages() {
         SetupPoolDirectory::run(|setup| async move {
-            let mut institution = create_faber(setup.genesis_file_path.clone()).await;
+            let mut institution = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut consumer1 = create_alice(setup.genesis_file_path.clone()).await;
             let mut consumer2 = create_alice(setup.genesis_file_path).await;
 
@@ -339,7 +339,7 @@ mod integration_tests {
     #[ignore]
     async fn test_agency_pool_update_agency_messages() {
         SetupPoolDirectory::run(|setup| async move {
-            let mut faber = create_faber(setup.genesis_file_path.clone()).await;
+            let mut faber = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut alice = create_alice(setup.genesis_file_path).await;
 
             let (alice_to_faber, faber_to_alice) = create_connected_connections(&mut alice, &mut faber).await;
@@ -415,7 +415,7 @@ mod integration_tests {
     #[ignore]
     async fn test_agency_pool_download_messages_from_multiple_connections() {
         SetupPoolDirectory::run(|setup| async move {
-            let mut institution = create_faber(setup.genesis_file_path.clone()).await;
+            let mut institution = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut consumer1 = create_alice(setup.genesis_file_path.clone()).await;
             let mut consumer2 = create_alice(setup.genesis_file_path.clone()).await;
 

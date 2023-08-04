@@ -13,7 +13,7 @@ use aries_vcx::core::profile::profile::Profile;
 use aries_vcx::core::profile::vdrtools_profile::VdrtoolsProfile;
 use aries_vcx::errors::error::VcxResult;
 use aries_vcx::global::settings;
-use aries_vcx::global::settings::init_issuer_config;
+use aries_vcx::global::settings::{init_issuer_config, DEFAULT_LINK_SECRET_ALIAS};
 use aries_vcx::handlers::connection::mediated_connection::{ConnectionState, MediatedConnection};
 use aries_vcx::handlers::issuance::issuer::Issuer;
 use aries_vcx::handlers::proof_presentation::verifier::Verifier;
@@ -25,8 +25,15 @@ use aries_vcx::protocols::mediated_connection::inviter::state_machine::InviterSt
 use aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;
 use aries_vcx::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
 use aries_vcx::protocols::revocation_notification::sender::state_machine::SenderConfigBuilder;
-use aries_vcx::utils::devsetup::{SetupProfile, AGENCY_DID, AGENCY_ENDPOINT, AGENCY_VERKEY};
+use aries_vcx::utils::constants::TRUSTEE_SEED;
+use aries_vcx::utils::devsetup::{
+    dev_build_featured_profile, dev_setup_wallet_indy, SetupProfile, AGENCY_DID, AGENCY_ENDPOINT, AGENCY_VERKEY,
+};
 use aries_vcx::utils::provision::provision_cloud_agent;
+use aries_vcx::utils::random::generate_random_seed;
+use aries_vcx_core::errors::error::VcxCoreResult;
+use aries_vcx_core::wallet::indy::wallet::get_verkey_from_wallet;
+use aries_vcx_core::wallet::indy::IndySdkWallet;
 use diddoc_legacy::aries::service::AriesService;
 use messages::decorators::please_ack::AckOn;
 use messages::msg_fields::protocols::connection::invitation::public::{PublicInvitation, PublicInvitationContent};
@@ -44,19 +51,42 @@ pub struct Faber {
     pub cred_def: CredentialDef,
     pub issuer_credential: Issuer,
     pub verifier: Verifier,
+    // todo: get rid of this, if we need vkey somewhere, we can get it from wallet, we can instead store public_did
     pub pairwise_info: PairwiseInfo,
     pub agency_client: AgencyClient,
     pub genesis_file_path: String,
 }
 
+pub async fn create_faber_trustee(genesis_file_path: String) -> Faber {
+    let (public_did, wallet_handle) = dev_setup_wallet_indy(TRUSTEE_SEED).await;
+    let wallet = Arc::new(IndySdkWallet::new(wallet_handle));
+    let profile = dev_build_featured_profile(genesis_file_path.clone(), wallet).await;
+    profile
+        .inject_anoncreds()
+        .prover_create_link_secret(DEFAULT_LINK_SECRET_ALIAS)
+        .await
+        .unwrap();
+    let faber = Faber::setup(profile, genesis_file_path, public_did).await;
+
+    let service = AriesService::create()
+        .set_service_endpoint(faber.agency_client.get_agency_url_full().unwrap())
+        .set_recipient_keys(vec![faber.pairwise_info.pw_vk.clone()]);
+    write_endpoint_legacy(&faber.profile.inject_indy_ledger_write(), &faber.public_did(), &service)
+        .await
+        .unwrap();
+    faber
+}
+
 pub async fn create_faber(genesis_file_path: String) -> Faber {
-    let profile_setup = SetupProfile::build_with_trustee_did(genesis_file_path).await;
-    let SetupProfile {
-        genesis_file_path,
-        institution_did,
-        profile,
-    } = profile_setup;
-    Faber::setup(profile, genesis_file_path, institution_did).await
+    let (public_did, wallet_handle) = dev_setup_wallet_indy(&generate_random_seed()).await;
+    let wallet = Arc::new(IndySdkWallet::new(wallet_handle));
+    let profile = dev_build_featured_profile(genesis_file_path.clone(), wallet).await;
+    profile
+        .inject_anoncreds()
+        .prover_create_link_secret(DEFAULT_LINK_SECRET_ALIAS)
+        .await
+        .unwrap();
+    Faber::setup(profile, genesis_file_path, public_did).await
 }
 
 impl Faber {
@@ -81,12 +111,6 @@ impl Faber {
             .unwrap();
 
         let pairwise_info = PairwiseInfo::create(&profile.inject_wallet()).await.unwrap();
-        let service = AriesService::create()
-            .set_service_endpoint(agency_client.get_agency_url_full().unwrap())
-            .set_recipient_keys(vec![pairwise_info.pw_vk.clone()]);
-        write_endpoint_legacy(&profile.inject_indy_ledger_write(), &institution_did, &service)
-            .await
-            .unwrap();
 
         let rev_not_sender = RevocationNotificationSender::build();
 
@@ -108,7 +132,17 @@ impl Faber {
         faber
     }
 
-    pub async fn create_schema(&mut self) {
+    pub fn public_did(&self) -> &str {
+        &self.institution_did
+    }
+
+    pub async fn get_verkey_from_wallet(&self, did: &str) -> String {
+        get_verkey_from_wallet(self.profile.inject_wallet().get_wallet_handle(), did)
+            .await
+            .unwrap()
+    }
+
+    pub async fn create_schema(&mut self) -> VcxResult<()> {
         let data = vec!["name", "date", "degree", "empty_param"]
             .iter()
             .map(|s| s.to_string())
@@ -124,11 +158,10 @@ impl Faber {
             &version,
             &data,
         )
-        .await
-        .unwrap()
+        .await?
         .publish(&self.profile.inject_anoncreds_ledger_write(), None)
-        .await
-        .unwrap();
+        .await?;
+        Ok(())
     }
 
     pub async fn create_nonrevocable_credential_definition(&mut self) {

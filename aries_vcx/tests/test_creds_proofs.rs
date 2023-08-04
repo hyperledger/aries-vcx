@@ -576,7 +576,7 @@ mod tests {
     use messages::msg_fields::protocols::present_proof::request::RequestPresentation;
 
     use crate::utils::devsetup_alice::create_alice;
-    use crate::utils::devsetup_faber::create_faber;
+    use crate::utils::devsetup_faber::create_faber_trustee;
     use crate::utils::devsetup_util::test_utils::PayloadKinds;
     #[cfg(feature = "migration")]
     use crate::utils::migration::Migratable;
@@ -595,7 +595,7 @@ mod tests {
     #[ignore]
     async fn test_agency_pool_proof_should_be_validated() {
         SetupPoolDirectory::run(|setup| async move {
-            let mut institution = create_faber(setup.genesis_file_path.clone()).await;
+            let mut institution = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut consumer = create_alice(setup.genesis_file_path).await;
 
             let (consumer_to_institution, institution_to_consumer) =
@@ -665,7 +665,7 @@ mod tests {
     #[ignore]
     async fn test_agency_pool_proof_with_predicates_should_be_validated() {
         SetupPoolDirectory::run(|setup| async move {
-            let mut institution = create_faber(setup.genesis_file_path.clone()).await;
+            let mut institution = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut consumer = create_alice(setup.genesis_file_path).await;
 
             let (consumer_to_institution, institution_to_consumer) =
@@ -735,7 +735,7 @@ mod tests {
     #[ignore]
     async fn test_agency_pool_it_should_fail_to_select_credentials_for_predicate() {
         SetupPoolDirectory::run(|setup| async move {
-            let mut institution = create_faber(setup.genesis_file_path.clone()).await;
+            let mut institution = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut consumer = create_alice(setup.genesis_file_path).await;
 
             let (consumer_to_institution, institution_to_consumer) =
@@ -787,8 +787,8 @@ mod tests {
     #[ignore]
     async fn test_agency_pool_double_issuance_separate_issuer_and_consumers() {
         SetupPoolDirectory::run(|setup| async move {
-            let mut issuer = create_faber(setup.genesis_file_path.clone()).await;
-            let mut verifier = create_faber(setup.genesis_file_path.clone()).await;
+            let mut issuer = create_faber_trustee(setup.genesis_file_path.clone()).await;
+            let mut verifier = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut consumer1 = create_alice(setup.genesis_file_path.clone()).await;
             let mut consumer2 = create_alice(setup.genesis_file_path).await;
 
@@ -895,8 +895,8 @@ mod tests {
     #[ignore]
     async fn test_agency_pool_double_issuance_separate_issuer() {
         SetupPoolDirectory::run(|setup| async move {
-            let mut issuer = create_faber(setup.genesis_file_path.clone()).await;
-            let mut verifier = create_faber(setup.genesis_file_path.clone()).await;
+            let mut issuer = create_faber_trustee(setup.genesis_file_path.clone()).await;
+            let mut verifier = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut consumer = create_alice(setup.genesis_file_path).await;
 
             let (consumer_to_verifier, verifier_to_consumer) =
@@ -975,7 +975,7 @@ mod tests {
     #[ignore]
     async fn test_agency_pool_double_issuance_issuer_is_verifier() {
         SetupPoolDirectory::run(|setup| async move {
-            let mut institution = create_faber(setup.genesis_file_path.clone()).await;
+            let mut institution = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut consumer = create_alice(setup.genesis_file_path.clone()).await;
 
             let (consumer_to_institution, institution_to_consumer) =
@@ -1061,7 +1061,7 @@ mod tests {
     #[ignore]
     async fn test_agency_pool_real_proof() {
         SetupPoolDirectory::run(|setup| async move {
-            let mut institution = create_faber(setup.genesis_file_path.clone()).await;
+            let mut institution = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut consumer = create_alice(setup.genesis_file_path.clone()).await;
 
             let (consumer_to_issuer, issuer_to_consumer) =
@@ -1194,8 +1194,8 @@ mod tests {
     #[ignore]
     async fn test_agency_pool_two_creds_one_rev_reg() {
         SetupPoolDirectory::run(|setup| async move {
-            let mut issuer = create_faber(setup.genesis_file_path.clone()).await;
-            let mut verifier = create_faber(setup.genesis_file_path.clone()).await;
+            let mut issuer = create_faber_trustee(setup.genesis_file_path.clone()).await;
+            let mut verifier = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut consumer = create_alice(setup.genesis_file_path).await;
 
             let (consumer_to_verifier, verifier_to_consumer) =
@@ -1289,7 +1289,7 @@ mod tests {
     #[ignore]
     async fn test_agency_pool_credential_exchange_via_proposal() {
         SetupPoolDirectory::run(|setup| async move {
-            let mut institution = create_faber(setup.genesis_file_path.clone()).await;
+            let mut institution = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut consumer = create_alice(setup.genesis_file_path).await;
 
             let (consumer_to_institution, institution_to_consumer) =
@@ -1321,7 +1321,7 @@ mod tests {
     #[ignore]
     async fn test_agency_pool_credential_exchange_via_proposal_failed() {
         SetupPoolDirectory::run(|setup| async move {
-            let mut institution = create_faber(setup.genesis_file_path.clone()).await;
+            let mut institution = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut consumer = create_alice(setup.genesis_file_path.clone()).await;
 
             let (consumer_to_institution, institution_to_consumer) =
@@ -1365,7 +1365,7 @@ mod tests {
     #[ignore]
     async fn test_agency_pool_credential_exchange_via_proposal_with_negotiation() {
         SetupPoolDirectory::run(|setup| async move {
-            let mut institution = create_faber(setup.genesis_file_path.clone()).await;
+            let mut institution = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut consumer = create_alice(setup.genesis_file_path.clone()).await;
 
             let (consumer_to_institution, institution_to_consumer) =
@@ -1433,7 +1433,7 @@ mod tests {
     #[ignore]
     async fn test_agency_pool_presentation_via_proposal() {
         SetupPoolDirectory::run(|setup| async move {
-            let mut institution = create_faber(setup.genesis_file_path.clone()).await;
+            let mut institution = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut consumer = create_alice(setup.genesis_file_path.clone()).await;
 
             let (consumer_to_institution, institution_to_consumer) =
@@ -1482,7 +1482,7 @@ mod tests {
     #[ignore]
     async fn test_agency_pool_presentation_via_proposal_with_rejection() {
         SetupPoolDirectory::run(|setup| async move {
-            let mut institution = create_faber(setup.genesis_file_path.clone()).await;
+            let mut institution = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut consumer = create_alice(setup.genesis_file_path.clone()).await;
 
             let (consumer_to_institution, institution_to_consumer) =
@@ -1517,7 +1517,7 @@ mod tests {
     #[ignore]
     async fn test_agency_pool_presentation_via_proposal_with_negotiation() {
         SetupPoolDirectory::run(|setup| async move {
-            let mut institution = create_faber(setup.genesis_file_path.clone()).await;
+            let mut institution = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut consumer = create_alice(setup.genesis_file_path.clone()).await;
 
             let (consumer_to_institution, institution_to_consumer) =
@@ -1569,11 +1569,11 @@ mod tests {
     async fn test_agency_pool_aries_demo() {
         let _setup = SetupEmpty::init();
         SetupPoolDirectory::run(|setup| async move {
-            let mut faber = create_faber(setup.genesis_file_path.clone()).await;
+            let mut faber = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut alice = create_alice(setup.genesis_file_path.clone()).await;
 
             // Publish Schema and Credential Definition
-            faber.create_schema().await;
+            faber.create_schema().await.unwrap();
 
             std::thread::sleep(std::time::Duration::from_secs(2));
 
@@ -1613,11 +1613,11 @@ mod tests {
     async fn test_agency_pool_aries_demo_create_with_message_id_flow() {
         let _setup = SetupEmpty::init();
         SetupPoolDirectory::run(|setup| async move {
-            let mut faber = create_faber(setup.genesis_file_path.clone()).await;
+            let mut faber = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut alice = create_alice(setup.genesis_file_path.clone()).await;
 
             // Publish Schema and Credential Definition
-            faber.create_schema().await;
+            faber.create_schema().await.unwrap();
 
             std::thread::sleep(std::time::Duration::from_secs(2));
 
@@ -1718,11 +1718,11 @@ mod tests {
     async fn test_agency_pool_aries_demo_download_message_flow() {
         SetupEmpty::init();
         SetupPoolDirectory::run(|setup| async move {
-            let mut faber = create_faber(setup.genesis_file_path.clone()).await;
+            let mut faber = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut alice = create_alice(setup.genesis_file_path.clone()).await;
 
             // Publish Schema and Credential Definition
-            faber.create_schema().await;
+            faber.create_schema().await.unwrap();
 
             std::thread::sleep(std::time::Duration::from_secs(2));
 

@@ -13,16 +13,23 @@ pub trait IndyLedgerRead: Debug + Send + Sync {
     async fn get_ledger_txn(&self, seq_no: i32, submitter_did: Option<&str>) -> VcxCoreResult<String>;
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Debug)]
 pub enum IndyRole {
-    #[serde(rename = "STEWARD")]
     Steward,
-    #[serde(rename = "TRUSTEE")]
     Trustee,
-    #[serde(rename = "ENDORSER")]
     Endorser,
-    #[serde(rename = "NETWORK_MONITOR")]
     NetworkMonitor,
+}
+
+impl IndyRole {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            IndyRole::Steward => "STEWARD",
+            IndyRole::Trustee => "TRUSTEE",
+            IndyRole::Endorser => "ENDORSER",
+            IndyRole::NetworkMonitor => "NETWORK_MONITOR",
+        }
+    }
 }
 
 #[async_trait]
