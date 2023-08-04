@@ -17,7 +17,7 @@ use aries_vcx_core::ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWr
 use aries_vcx_core::ledger::indy::pool::test_utils::{create_testpool_genesis_txn_file, get_temp_file_path};
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use aries_vcx_core::wallet::indy::did_mocks::DidMocks;
-use aries_vcx_core::wallet::indy::wallet::{create_and_open_wallet, wallet_configure_issuer};
+use aries_vcx_core::wallet::indy::wallet::{create_and_open_wallet, create_and_store_my_did, wallet_configure_issuer};
 use aries_vcx_core::wallet::indy::{IndySdkWallet, WalletConfig};
 use aries_vcx_core::WalletHandle;
 
@@ -138,7 +138,7 @@ impl Drop for SetupMocks {
 }
 
 // todo: we move to libvcx?
-pub async fn setup_issuer_wallet_and_agency_client() -> (String, WalletHandle, AgencyClient) {
+pub async fn dev_setup_issuer_wallet_and_agency_client() -> (String, WalletHandle, AgencyClient) {
     let enterprise_seed = "000000000000000000000000Trustee1";
     let config_wallet = WalletConfig {
         wallet_name: format!("wallet_{}", uuid::Uuid::new_v4()),
@@ -170,7 +170,7 @@ pub async fn setup_issuer_wallet_and_agency_client() -> (String, WalletHandle, A
     (config_issuer.institution_did, wallet_handle, agency_client)
 }
 
-pub async fn setup_wallet_indy(key_seed: &str) -> (String, WalletHandle) {
+pub async fn dev_setup_wallet_indy(key_seed: &str) -> (String, WalletHandle) {
     let config_wallet = WalletConfig {
         wallet_name: format!("wallet_{}", uuid::Uuid::new_v4().to_string()),
         wallet_key: settings::DEFAULT_WALLET_KEY.into(),
@@ -182,11 +182,13 @@ pub async fn setup_wallet_indy(key_seed: &str) -> (String, WalletHandle) {
         rekey_derivation_method: None,
     };
     let wallet_handle = create_and_open_wallet(&config_wallet).await.unwrap();
-    // todo: can we just extract thiss away? not always we end up using it (alice test agent)
-    let config_issuer = wallet_configure_issuer(wallet_handle, key_seed).await.unwrap();
-    // todo: can we remove this completely?
-    init_issuer_config(&config_issuer.institution_did).unwrap();
-    (config_issuer.institution_did, wallet_handle)
+    // todo: can we just extract this away? not always we end up using it (alice test agent)
+    let (did, _vk) = create_and_store_my_did(wallet_handle, Some(key_seed), None)
+        .await
+        .unwrap();
+    // todo: can we remove following line completely?
+    init_issuer_config(&did).unwrap();
+    (did, wallet_handle)
 }
 
 #[cfg(feature = "vdrtools")]
@@ -233,7 +235,7 @@ pub async fn dev_build_profile_vdr_proxy_ledger(wallet: Arc<IndySdkWallet>) -> A
     Arc::new(VdrProxyProfile::init(wallet, client).await.unwrap())
 }
 
-async fn build_featured_profile(genesis_file_path: String, wallet: Arc<IndySdkWallet>) -> Arc<dyn Profile> {
+pub async fn dev_build_featured_profile(genesis_file_path: String, wallet: Arc<IndySdkWallet>) -> Arc<dyn Profile> {
     // In case of migration test setup, we are starting with vdrtools, then we migrate
     #[cfg(any(feature = "vdrtools", feature = "migration"))]
     return {
@@ -253,31 +255,6 @@ async fn build_featured_profile(genesis_file_path: String, wallet: Arc<IndySdkWa
 }
 
 impl SetupProfile {
-    async fn build(genesis_file_path: String, public_did: &str, wallet_handle: WalletHandle) -> SetupProfile {
-        let wallet = Arc::new(IndySdkWallet::new(wallet_handle));
-        let profile = build_featured_profile(genesis_file_path.clone(), wallet).await;
-        profile
-            .inject_anoncreds()
-            .prover_create_link_secret(settings::DEFAULT_LINK_SECRET_ALIAS)
-            .await
-            .unwrap();
-        SetupProfile {
-            institution_did: public_did.to_string(),
-            profile,
-            genesis_file_path,
-        }
-    }
-
-    pub async fn build_with_trustee_did(genesis_file_path: String) -> SetupProfile {
-        let (public_did, wh) = setup_wallet_indy(TRUSTEE_SEED).await;
-        Self::build(genesis_file_path, &public_did, wh).await
-    }
-
-    pub async fn build_with_random_did(genesis_file_path: String) -> SetupProfile {
-        let (public_did, wh) = setup_wallet_indy(&generate_random_seed()).await;
-        Self::build(genesis_file_path, &public_did, wh).await
-    }
-
     pub async fn run<F>(f: impl FnOnce(Self) -> F)
     where
         F: Future<Output = ()>,
@@ -287,9 +264,21 @@ impl SetupProfile {
         let genesis_file_path = get_temp_file_path(POOL1_TXN).to_str().unwrap().to_string();
         create_testpool_genesis_txn_file(&genesis_file_path);
 
+        let (public_did, wallet_handle) = dev_setup_wallet_indy(TRUSTEE_SEED).await;
+        let wallet = Arc::new(IndySdkWallet::new(wallet_handle));
+        let profile = dev_build_featured_profile(genesis_file_path.clone(), wallet).await;
+        profile
+            .inject_anoncreds()
+            .prover_create_link_secret(settings::DEFAULT_LINK_SECRET_ALIAS)
+            .await
+            .unwrap();
+
         warn!("genesis_file_path: {}", genesis_file_path);
-        let setup = Self::build_with_trustee_did(genesis_file_path).await;
-        // todo: this setup should be extracted out, is shared between profiles
+        let setup = SetupProfile {
+            institution_did: public_did.to_string(),
+            profile,
+            genesis_file_path,
+        };
 
         f(setup).await;
         reset_global_state();
@@ -298,13 +287,13 @@ impl SetupProfile {
 
 impl SetupPoolDirectory {
     async fn init() -> SetupPoolDirectory {
-        debug!("SetupPool init >> going to setup agency environment");
+        debug!("SetupPoolDirectory init >> going to setup agency environment");
         init_test_logging();
 
         let genesis_file_path = get_temp_file_path(POOL1_TXN).to_str().unwrap().to_string();
         create_testpool_genesis_txn_file(&genesis_file_path);
 
-        debug!("SetupPool init >> completed");
+        debug!("SetupPoolDirectory init >> completed");
         SetupPoolDirectory { genesis_file_path }
     }
 

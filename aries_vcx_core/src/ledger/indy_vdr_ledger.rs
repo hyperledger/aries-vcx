@@ -329,18 +329,21 @@ where
         role: IndyRole,
         alias: Option<String>,
     ) -> VcxCoreResult<String> {
+        debug!("write_did >> submitter_did: {submitter_did}, target_did: {target_did}, target_vk: {target_vk}, role: {role:?}, alias: {alias:?}");
         let identifier = DidValue::from_str(submitter_did)?;
         let dest = DidValue::from_str(target_did)?;
-        // todo: update indy-vdr to accept enum as role argument rather than string
         let request = self.request_builder()?.build_nym_request(
             &identifier,
             &dest,
             Some(target_vk.into()),
             alias,
-            Some(serde_json::to_string(&role)?),
+            // todo: this is ugly, but needs to be fixed on indy-vdr side - it should work with enums, not strings
+            Some(String::from(role.as_str())),
         )?;
         let request = self.append_txn_author_agreement_to_request(request).await?;
-        self.sign_and_submit_request(target_did, request).await
+        let response = self.sign_and_submit_request(submitter_did, request).await?;
+        debug!("write_did << response: {response}");
+        return Ok(response);
     }
 }
 

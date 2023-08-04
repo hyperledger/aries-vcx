@@ -9,6 +9,7 @@ use agency_client::MessageStatusCode;
 use aries_vcx::common::ledger::transactions::into_did_doc;
 use aries_vcx::core::profile::profile::Profile;
 use aries_vcx::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
+use aries_vcx::global::settings::DEFAULT_LINK_SECRET_ALIAS;
 use aries_vcx::handlers::connection::mediated_connection::{ConnectionState, MediatedConnection};
 use aries_vcx::handlers::issuance::holder::test_utils::get_credential_offer_messages;
 use aries_vcx::handlers::issuance::holder::Holder;
@@ -20,8 +21,12 @@ use aries_vcx::handlers::util::{AnyInvitation, Status};
 use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
 use aries_vcx::protocols::mediated_connection::invitee::state_machine::InviteeState;
 use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
-use aries_vcx::utils::devsetup::{SetupProfile, AGENCY_DID, AGENCY_ENDPOINT, AGENCY_VERKEY};
+use aries_vcx::utils::devsetup::{
+    dev_build_featured_profile, dev_setup_wallet_indy, SetupProfile, AGENCY_DID, AGENCY_ENDPOINT, AGENCY_VERKEY,
+};
 use aries_vcx::utils::provision::provision_cloud_agent;
+use aries_vcx::utils::random::generate_random_seed;
+use aries_vcx_core::wallet::indy::IndySdkWallet;
 use messages::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
 use messages::msg_fields::protocols::cred_issuance::CredentialIssuance;
 use messages::msg_fields::protocols::present_proof::request::RequestPresentation;
@@ -44,12 +49,14 @@ pub struct Alice {
 }
 
 pub async fn create_alice(genesis_file_path: String) -> Alice {
-    let profile_setup = SetupProfile::build_with_random_did(genesis_file_path).await;
-    let SetupProfile {
-        genesis_file_path,
-        institution_did,
-        profile,
-    } = profile_setup;
+    let (_public_did, wallet_handle) = dev_setup_wallet_indy(&generate_random_seed()).await;
+    let wallet = Arc::new(IndySdkWallet::new(wallet_handle));
+    let profile = dev_build_featured_profile(genesis_file_path.clone(), wallet).await;
+    profile
+        .inject_anoncreds()
+        .prover_create_link_secret(DEFAULT_LINK_SECRET_ALIAS)
+        .await
+        .unwrap();
     Alice::setup(profile, genesis_file_path).await
 }
 

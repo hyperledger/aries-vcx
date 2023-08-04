@@ -4,7 +4,7 @@ use agency_client::agency_client::AgencyClient;
 use aries_vcx::aries_vcx_core::ledger::indy::pool::test_utils::{create_testpool_genesis_txn_file, get_temp_file_path};
 use aries_vcx::aries_vcx_core::WalletHandle;
 use aries_vcx::global::settings::{set_config_value, CONFIG_INSTITUTION_DID, DEFAULT_DID, DEFAULT_GENESIS_PATH};
-use aries_vcx::utils::devsetup::{init_test_logging, reset_global_state, setup_issuer_wallet_and_agency_client};
+use aries_vcx::utils::devsetup::{dev_setup_issuer_wallet_and_agency_client, init_test_logging, reset_global_state};
 
 use crate::api_vcx::api_global::agency_client::{reset_main_agency_client, set_main_agency_client};
 use crate::api_vcx::api_global::pool::{close_main_pool, setup_ledger_components, LibvcxLedgerConfig};
@@ -21,7 +21,7 @@ impl SetupGlobalsWalletPoolAgency {
         reset_global_state();
         init_test_logging();
         set_config_value(CONFIG_INSTITUTION_DID, DEFAULT_DID).unwrap();
-        let (institution_did, wallet_handle, agency_client) = setup_issuer_wallet_and_agency_client().await;
+        let (institution_did, wallet_handle, agency_client) = dev_setup_issuer_wallet_and_agency_client().await;
         SetupGlobalsWalletPoolAgency {
             agency_client,
             institution_did,

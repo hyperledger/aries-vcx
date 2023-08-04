@@ -11,7 +11,7 @@ mod integration_tests {
     use std::time::Duration;
 
     use crate::utils::devsetup_alice::create_alice;
-    use crate::utils::devsetup_faber::create_faber;
+    use crate::utils::devsetup_faber::{create_faber, create_faber_trustee};
     use aries_vcx::common::keys::{get_verkey_from_ledger, rotate_verkey};
     use aries_vcx::common::ledger::service_didsov::EndpointDidSov;
     use aries_vcx::common::ledger::transactions::{
@@ -20,7 +20,7 @@ mod integration_tests {
     };
     use aries_vcx::common::test_utils::create_and_store_nonrevocable_credential_def;
     use aries_vcx::utils::constants::DEFAULT_SCHEMA_ATTRS;
-    use aries_vcx::utils::devsetup::SetupProfile;
+    use aries_vcx::utils::devsetup::{SetupPoolDirectory, SetupProfile};
     use diddoc_legacy::aries::service::AriesService;
 
     #[cfg(foobar)]
@@ -106,35 +106,36 @@ mod integration_tests {
         .await;
     }
 
-    // #[tokio::test]
-    // #[ignore]
-    // async fn test_pool_write_new_endorser_did() {
-    //     SetupProfile::run(|setup| async move {
-    //         let mut faber = create_faber(setup.genesis_file_path.clone()).await;
-    //         let mut alice = create_alice(setup.genesis_file_path.clone()).await;
-    //
-    //         let did = setup.institution_did.clone();
-    //         let expect_service = AriesService::default();
-    //         write_endorser_did(&setup.profile.inject_indy_ledger_write(), &did, &expect_service)
-    //             .await
-    //             .unwrap();
-    //         thread::sleep(Duration::from_millis(50));
-    //         let service = get_service(&setup.profile.inject_indy_ledger_read(), &did)
-    //             .await
-    //             .unwrap();
-    //         assert_eq!(expect_service, service);
-    //
-    //         // clean up written legacy service
-    //         clear_attr(
-    //             &setup.profile.inject_indy_ledger_write(),
-    //             &setup.institution_did,
-    //             "service",
-    //         )
-    //             .await
-    //             .unwrap();
-    //     })
-    //         .await;
-    // }
+    #[tokio::test]
+    #[ignore]
+    async fn test_pool_write_new_endorser_did() {
+        SetupPoolDirectory::run(|setup| async move {
+            let faber = create_faber_trustee(setup.genesis_file_path.clone()).await;
+            let mut acme = create_faber(setup.genesis_file_path.clone()).await;
+            let acme_vk = acme.get_verkey_from_wallet(acme.public_did()).await;
+            info!(
+                "test_pool_write_new_endorser_did >> Faber trustee did: {}, acme did: {}, acme vkey: {}",
+                faber.public_did(),
+                acme.public_did(),
+                acme_vk
+            );
+
+            assert!(acme.create_schema().await.is_err());
+            write_endorser_did(
+                &faber.profile.inject_indy_ledger_write(),
+                faber.public_did(),
+                acme.public_did(),
+                &acme_vk,
+                None,
+            )
+            .await
+            .unwrap();
+            info!("Wrote acme to the ledger");
+            thread::sleep(Duration::from_millis(50));
+            acme.create_schema().await.unwrap();
+        })
+        .await;
+    }
 
     #[tokio::test]
     #[ignore]
