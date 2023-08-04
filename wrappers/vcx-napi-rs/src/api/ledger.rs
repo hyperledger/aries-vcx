@@ -55,6 +55,18 @@ async fn clear_attr_from_ledger(did: String, attrib: String) -> napi::Result<Str
 }
 
 #[napi]
+async fn write_endorser_did(
+    submitter_did: String,
+    target_did: String,
+    target_vk: String,
+    alias: Option<String>,
+) -> napi::Result<String> {
+    ledger::ledger_write_endorser_did(&submitter_did, &target_did, &target_vk, alias)
+        .await
+        .map_err(to_napi_err)
+}
+
+#[napi]
 async fn get_verkey_from_ledger(did: String) -> napi::Result<String> {
     ledger::get_verkey_from_ledger(&did).await.map_err(to_napi_err)
 }

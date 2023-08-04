@@ -97,6 +97,7 @@ export function createServiceV2(targetDid: string, routingKeys: Array<string>, e
 export function getServiceFromLedger(targetDid: string): Promise<string>
 export function getAttrFromLedger(targetDid: string, attr: string): Promise<string>
 export function clearAttrFromLedger(did: string, attrib: string): Promise<string>
+export function writeEndorserDid(submitterDid: string, targetDid: string, targetVk: string, alias?: string | undefined | null): Promise<string>
 export function getVerkeyFromLedger(did: string): Promise<string>
 export function getLedgerTxn(seqNo: number, submitterDid?: string | undefined | null): Promise<string>
 export function initDefaultLogger(pattern?: string | undefined | null): void
