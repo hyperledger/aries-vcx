@@ -69,8 +69,10 @@ pub async fn unpack(data: Buffer) -> napi::Result<String> {
 }
 
 #[napi]
-pub async fn create_pairwise_info() -> napi::Result<String> {
-    let res = wallet::wallet_create_pairwise_did().await.map_err(to_napi_err)?;
+pub async fn create_and_store_did(seed: Option<String>) -> napi::Result<String> {
+    let res = wallet::wallet_create_and_store_did(seed.as_deref())
+        .await
+        .map_err(to_napi_err)?;
     Ok(json!(res).to_string())
 }
 

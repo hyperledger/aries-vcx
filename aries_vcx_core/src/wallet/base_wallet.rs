@@ -20,7 +20,7 @@ pub trait BaseWallet: std::fmt::Debug + Send + Sync {
     async fn create_and_store_my_did(
         &self,
         seed: Option<&str>,
-        method_name: Option<&str>,
+        kdf_method_name: Option<&str>,
     ) -> VcxCoreResult<(String, String)>;
 
     async fn key_for_local_did(&self, did: &str) -> VcxCoreResult<String>;

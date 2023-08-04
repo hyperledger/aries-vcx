@@ -34,7 +34,13 @@ function generateWalletConfig() {
   };
 }
 
-export async function initVcxTestMode(): Promise<void> {
+export async function initVcxTestMode(): Promise<string> {
+  const institution_did = await initVcx();
+  vcx.enableMocks();
+  return institution_did
+}
+
+export async function initVcx(): Promise<string> {
   const rustLogPattern = process.env.RUST_LOG || 'vcx=error';
   vcx.defaultLogger(rustLogPattern);
   const configWallet = generateWalletConfig();
@@ -47,6 +53,7 @@ export async function initVcxTestMode(): Promise<void> {
   await vcx.initIssuerConfig(issuerConfig);
   vcx.createAgencyClientForMainWallet(configAgency);
   vcx.enableMocks();
+  return institution_did
 }
 
 export const shouldThrow = (fn: () => any): Promise<any> =>
