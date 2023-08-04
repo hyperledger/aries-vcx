@@ -560,7 +560,7 @@ jobs:
           skip-docker-setup: true
           node-version: ${{ matrix.node-version }}
       - name: "Run tests"
-        run: cd wrappers/node && RUST_LOG=vcx=trace npm run test
+        run: cd wrappers/node && npm run test
 
   test-integration-node-wrapper:
     needs: workflow-setup
@@ -576,6 +576,8 @@ jobs:
         uses: ./.github/actions/setup-testing-nodejs
         with:
           node-version: ${{ matrix.node-version }}
+      - name: "Run wrapper integration tests"
+        run: (cd wrappers/node && npm run test:integration)
       - name: "Install vcxagent-core dependencies"
         run: (cd agents/node/vcxagent-core && npm install)
       - name: "Run demo"

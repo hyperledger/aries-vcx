@@ -146,9 +146,9 @@ export async function getLedgerTxn(did: string, seqNo: number): Promise<string> 
   }
 }
 
-export async function createPwInfo(): Promise<IPwInfo> {
+export async function createAndStoreDid(seed?: string | undefined | null): Promise<IPwInfo> {
   try {
-    return JSON.parse(await ffi.createPairwiseInfo());
+    return JSON.parse(await ffi.createAndStoreDid(seed));
   } catch (err: any) {
     throw new VCXInternalError(err);
   }
