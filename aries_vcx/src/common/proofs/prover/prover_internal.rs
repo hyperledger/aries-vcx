@@ -85,6 +85,14 @@ pub async fn build_cred_defs_json_prover(
     Ok(rtn.to_string())
 }
 
+// TODO - new name for method
+/// Given the `credentials` selected for a given `proof_req`, construct `CredInfoProver` structures
+/// which represent the details of how we should present a referent, including details of:
+/// * which credential to use (identified by credential_referent),
+/// * revocation interval to present,
+/// * revocation timestamp to use in NRP of this referent,
+/// * where the referent should be revealed (only relevant if attr presentation),
+/// * other credential details
 pub fn credential_def_identifiers(
     credentials: &SelectedCredentials,
     proof_req: &ProofRequestData,
@@ -103,8 +111,8 @@ pub fn credential_def_identifiers(
             credential_referent: cred_info.referent.clone(),
             schema_id: cred_info.schema_id.clone(),
             cred_def_id: cred_info.cred_def_id.clone(),
-            revocation_interval: _get_revocation_interval(&referent, proof_req)?,
-            timestamp: None,
+            revocation_interval: find_revocation_interval(&referent, proof_req)?,
+            timestamp: None, // populated later if required
             rev_reg_id: cred_info.rev_reg_id.clone(),
             cred_rev_id: cred_info.cred_rev_id.clone(),
             tails_dir: selected_cred.tails_dir.clone(),
@@ -115,16 +123,16 @@ pub fn credential_def_identifiers(
     Ok(rtn)
 }
 
-fn _get_revocation_interval(attr_name: &str, proof_req: &ProofRequestData) -> VcxResult<Option<NonRevokedInterval>> {
-    if let Some(attr) = proof_req.requested_attributes.get(attr_name) {
-        Ok(attr.non_revoked.clone().or(proof_req.non_revoked.clone().or(None)))
-    } else if let Some(attr) = proof_req.requested_predicates.get(attr_name) {
+fn find_revocation_interval(referent: &str, proof_req: &ProofRequestData) -> VcxResult<Option<NonRevokedInterval>> {
+    if let Some(attr_info) = proof_req.requested_attributes.get(referent) {
+        Ok(attr_info.non_revoked.clone().or(proof_req.non_revoked.clone().or(None)))
+    } else if let Some(pred_info) = proof_req.requested_predicates.get(referent) {
         // Handle case for predicates
-        Ok(attr.non_revoked.clone().or(proof_req.non_revoked.clone().or(None)))
+        Ok(pred_info.non_revoked.clone().or(proof_req.non_revoked.clone().or(None)))
     } else {
         Err(AriesVcxError::from_msg(
             AriesVcxErrorKind::InvalidProofCredentialData,
-            format!("Attribute not found for: {}", attr_name),
+            format!("Details of referent not found: {}", referent),
         ))
     }
 }
@@ -133,66 +141,71 @@ pub async fn build_rev_states_json(
     ledger_read: &Arc<dyn AnoncredsLedgerRead>,
     anoncreds: &Arc<dyn BaseAnonCreds>,
     credentials_identifiers: &mut Vec<CredInfoProver>,
-) -> VcxResult<String> {
+) -> VcxResult<HashMap<String, HashMap<String, Value>>> {
     trace!(
         "build_rev_states_json >> credentials_identifiers: {:?}",
         credentials_identifiers
     );
-    let mut rtn: Value = json!({});
-    let mut timestamps: HashMap<String, u64> = HashMap::new();
+    // TODO - confirm that timestamp is a string rather than num - not sure what consumers expect..
+    // TODO - ACCORDING TO INDY IMPL, IT ALSO UNDERSTANDS IT IF WE PROVIDE rev_states_by_timestamp_by_CRED_ID
+    // can we use this? - we would use this if it is the case that we cannot use the same rev_state for 2 diff creds from the same rev-reg-id
+    let mut rev_states_by_timestamp_by_rev_reg_id: HashMap<String, HashMap<String, Value>> = HashMap::new();
 
     for cred_info in credentials_identifiers.iter_mut() {
-        if let (Some(rev_reg_id), Some(cred_rev_id), Some(tails_dir)) =
-            (&cred_info.rev_reg_id, &cred_info.cred_rev_id, &cred_info.tails_dir)
-        {
-            if rtn.get(rev_reg_id).is_none() {
-                // Does this make sense in case cred_info's for same rev_reg_ids have different revocation intervals
-                let (from, to) = if let Some(ref interval) = cred_info.revocation_interval {
-                    (interval.from, interval.to)
-                } else {
-                    (None, None)
-                };
+        let interval = if let Some(inner) = &cred_info.revocation_interval {
+            inner
+        } else {
+            continue;
+        };
 
-                let rev_reg_def_json = ledger_read.get_rev_reg_def_json(rev_reg_id).await?;
+        let (rev_reg_id, cred_rev_id, tails_dir) =
+            match (&cred_info.rev_reg_id, &cred_info.cred_rev_id, &cred_info.tails_dir) {
+                (Some(rev_reg_id), Some(cred_rev_id), Some(tails_dir)) => (rev_reg_id, cred_rev_id, tails_dir),
+                (None, None, _) => {
+                    // interval requested, but choosen credential is non-revocable. Verifier should accept this cred without a NRP
+                    continue;
+                }
+                (Some(_), _, _) => {
+                    // TODO - warning or error? interval requested AND credential is revocable. I believe the verifier will fail in this case if no NRP is given
+                    todo!()
+                }
+                // TODO - other permutations, warning or error
+                _ => todo!(),
+            };
 
-                let (rev_reg_id, rev_reg_delta_json, timestamp) =
-                    ledger_read.get_rev_reg_delta_json(rev_reg_id, from, to).await?;
+        let rev_reg_def_json = ledger_read.get_rev_reg_def_json(rev_reg_id).await?;
 
-                let rev_state_json = anoncreds
-                    .create_revocation_state(
-                        tails_dir,
-                        &rev_reg_def_json,
-                        &rev_reg_delta_json,
-                        timestamp,
-                        cred_rev_id,
-                    )
-                    .await?;
+        // TODO - justify None for from
+        let (rev_reg_id, rev_reg_delta_json, timestamp) = ledger_read
+            .get_rev_reg_delta_json(rev_reg_id, None, interval.to)
+            .await?;
 
-                let rev_state_json: Value = serde_json::from_str(&rev_state_json).map_err(|err| {
-                    AriesVcxError::from_msg(
-                        AriesVcxErrorKind::InvalidJson,
-                        format!("Cannot deserialize RevocationState: {}", err),
-                    )
-                })?;
+        let rev_state_json = anoncreds
+            .create_revocation_state(
+                tails_dir,
+                &rev_reg_def_json,
+                &rev_reg_delta_json,
+                timestamp,
+                cred_rev_id,
+            )
+            .await?;
 
-                // TODO: proover should be able to create multiple states of same revocation policy for different timestamps
-                // see ticket IS-1108
-                rtn[rev_reg_id.to_string()] = json!({ timestamp.to_string(): rev_state_json });
-                cred_info.timestamp = Some(timestamp);
+        let rev_state_json: Value = serde_json::from_str(&rev_state_json).map_err(|err| {
+            AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidJson,
+                format!("Cannot deserialize RevocationState: {}", err),
+            )
+        })?;
 
-                // Cache timestamp for future attributes that have the same rev_reg_id
-                timestamps.insert(rev_reg_id.to_string(), timestamp);
-            }
-
-            // If the rev_reg_id is already in the map, timestamp may not be updated on cred_info
-            // All further credential info gets the same timestamp as the first one
-            if cred_info.timestamp.is_none() {
-                cred_info.timestamp = timestamps.get(rev_reg_id).cloned();
-            }
+        if let Some(rev_states_by_timestamp) = rev_states_by_timestamp_by_rev_reg_id.get_mut(&rev_reg_id) {
+            rev_states_by_timestamp.insert(timestamp.to_string(), rev_state_json);
+        } else {
+            let init_entry = (timestamp.to_string(), rev_state_json);
+            rev_states_by_timestamp_by_rev_reg_id.insert(rev_reg_id, HashMap::from([init_entry]));
         }
     }
 
-    Ok(rtn.to_string())
+    Ok(rev_states_by_timestamp_by_rev_reg_id)
 }
 
 pub fn build_requested_credentials_json(
@@ -245,6 +258,8 @@ pub fn build_requested_credentials_json(
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 pub mod pool_tests {
+    use std::collections::HashMap;
+
     use crate::common::proofs::prover::prover_internal::{build_rev_states_json, CredInfoProver};
     use crate::utils::constants::{CRED_DEF_ID, CRED_REV_ID, LICENCE_CRED_ID, SCHEMA_ID};
     use crate::utils::devsetup::SetupProfile;
@@ -263,7 +278,7 @@ pub mod pool_tests {
                 )
                 .await
                 .unwrap(),
-                "{}".to_string()
+                HashMap::new()
             );
 
             // no rev_reg_id
@@ -287,7 +302,7 @@ pub mod pool_tests {
                 )
                 .await
                 .unwrap(),
-                "{}".to_string()
+                HashMap::new()
             );
         })
         .await;
@@ -297,10 +312,6 @@ pub mod pool_tests {
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 pub mod unit_tests {
-    use aries_vcx_core::ledger::indy::pool::test_utils::get_temp_dir_path;
-    use aries_vcx_core::INVALID_POOL_HANDLE;
-
-    use crate::core::profile::vdrtools_profile::VdrtoolsProfile;
     use crate::utils::constants::{
         ADDRESS_CRED_DEF_ID, ADDRESS_CRED_ID, ADDRESS_CRED_REV_ID, ADDRESS_REV_REG_ID, ADDRESS_SCHEMA_ID, CRED_DEF_ID,
         CRED_REV_ID, LICENCE_CRED_ID, REV_REG_ID, REV_STATE_JSON, SCHEMA_ID,
@@ -308,6 +319,7 @@ pub mod unit_tests {
     use crate::utils::devsetup::*;
     use crate::utils::mockdata::profile::mock_anoncreds::MockAnoncreds;
     use crate::utils::mockdata::profile::mock_ledger::MockLedger;
+    use aries_vcx_core::ledger::indy::pool::test_utils::get_temp_dir_path;
 
     use super::*;
 
@@ -670,7 +682,7 @@ pub mod unit_tests {
             .await
             .unwrap();
         let rev_state_json: Value = serde_json::from_str(REV_STATE_JSON).unwrap();
-        let expected = json!({REV_REG_ID: {"1": rev_state_json}}).to_string();
+        let expected = serde_json::from_value(json!({REV_REG_ID: {"1": rev_state_json}})).unwrap();
         assert_eq!(states, expected);
         assert!(cred_info[0].timestamp.is_some());
     }
@@ -697,7 +709,7 @@ pub mod unit_tests {
 
         // Attribute not found in proof req
         assert_eq!(
-            _get_revocation_interval("not here", &proof_req).unwrap_err().kind(),
+            find_revocation_interval("not here", &proof_req).unwrap_err().kind(),
             AriesVcxErrorKind::InvalidProofCredentialData
         );
 
@@ -706,18 +718,18 @@ pub mod unit_tests {
             from: Some(123),
             to: Some(456),
         });
-        assert_eq!(_get_revocation_interval("address1_1", &proof_req).unwrap(), interval);
+        assert_eq!(find_revocation_interval("address1_1", &proof_req).unwrap(), interval);
 
         // when attribute interval is None, defaults to proof req interval
         let interval = Some(NonRevokedInterval {
             from: Some(098),
             to: Some(123),
         });
-        assert_eq!(_get_revocation_interval("zip_2", &proof_req).unwrap(), interval);
+        assert_eq!(find_revocation_interval("zip_2", &proof_req).unwrap(), interval);
 
         // No interval provided for attribute or proof req
         assert_eq!(
-            _get_revocation_interval("address1_1", &proof_req_no_interval()).unwrap(),
+            find_revocation_interval("address1_1", &proof_req_no_interval()).unwrap(),
             None
         );
     }
