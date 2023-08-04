@@ -3,7 +3,7 @@ use std::str::FromStr;
 use aries_vcx::aries_vcx_core::ledger::base_ledger::TxnAuthrAgrmtOptions;
 use aries_vcx::common::ledger::service_didsov::{DidSovServiceType, EndpointDidSov};
 use aries_vcx::common::ledger::transactions::{
-    clear_attr, get_attr, get_service, write_endpoint, write_endpoint_legacy,
+    clear_attr, get_attr, get_service, write_endorser_did, write_endpoint, write_endpoint_legacy,
 };
 use aries_vcx::global::settings::CONFIG_INSTITUTION_DID;
 use diddoc_legacy::aries::service::AriesService;
@@ -86,6 +86,24 @@ pub async fn ledger_get_attr(target_did: &str, attr: &str) -> LibvcxResult<Strin
 
 pub async fn ledger_clear_attr(target_did: &str, attr: &str) -> LibvcxResult<String> {
     map_ariesvcx_result(clear_attr(&get_main_indy_ledger_write()?, &target_did, attr).await)
+}
+
+pub async fn ledger_write_endorser_did(
+    submitter_did: &str,
+    target_did: &str,
+    target_vk: &str,
+    alias: Option<String>,
+) -> LibvcxResult<String> {
+    map_ariesvcx_result(
+        write_endorser_did(
+            &get_main_indy_ledger_write()?,
+            submitter_did,
+            target_did,
+            target_vk,
+            alias,
+        )
+        .await,
+    )
 }
 
 pub async fn ledger_get_txn_author_agreement() -> LibvcxResult<String> {

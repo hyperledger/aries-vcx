@@ -210,3 +210,11 @@ export async function unpack(data: Buffer): Promise<IMsgUnpacked> {
     throw new VCXInternalError(err);
   }
 }
+
+export async function writeEndorserDid(submitterDid: string, targetDid: string, targetVk: string, alias?: string | undefined | null): Promise<IMsgUnpacked> {
+  try {
+    return JSON.parse(await ffi.writeEndorserDid(submitterDid, targetDid, targetVk, alias));
+  } catch (err: any) {
+    throw new VCXInternalError(err);
+  }
+}
