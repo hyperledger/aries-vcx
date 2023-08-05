@@ -1,6 +1,6 @@
 import '../module-resolver-helper';
 import * as path from 'path';
-import { createAndStoreDid, openMainPool, writeEndorserDid } from 'src';
+import {createAndStoreDid, openMainPool, shutdownVcx, writeEndorserDid} from 'src';
 import { initVcx, initVcxTestMode } from '../helpers/utils';
 import { expect } from 'chai';
 
@@ -34,4 +34,6 @@ describe('wallet', () => {
     const pwInfo = await createAndStoreDid();
     await writeEndorserDid(publicDid, pwInfo.pw_did, pwInfo.pw_vk, 'acme');
   });
+
+  after(async () => await shutdownVcx(false));
 });

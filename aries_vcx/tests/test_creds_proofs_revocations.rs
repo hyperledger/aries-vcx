@@ -6,6 +6,7 @@ extern crate serde_json;
 pub mod utils;
 
 mod integration_tests {
+    use std::thread;
     use std::time::Duration;
 
     use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
@@ -1059,6 +1060,7 @@ mod integration_tests {
                 .await;
 
             revoke_credential_and_publish_accumulator(&mut issuer, &issuer_credential3, &rev_reg).await;
+            thread::sleep(Duration::from_millis(100));
 
             assert!(issuer_credential1
                 .is_revoked(&issuer.profile.inject_anoncreds_ledger_read())

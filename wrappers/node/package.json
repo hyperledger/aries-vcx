@@ -64,7 +64,6 @@
     "lint": "eslint '*/**/*.{js,ts,tsx}'",
     "lint-fix": "npm run lint -- --fix",
     "jslint:fix": "standard --fix",
-    "test:integration": "TS_NODE_PROJECT=./test/tsconfig.json NODE_ENV=test mocha --timeout 20000 --v8-use-strict --exit --require ts-node/register test/integration/ledger.test.ts",
     "test": "npm run test:connection && npm run test:nonmediatedConnection && npm run test:credentialDef && npm run test:credential && npm run test:disclosedProof && npm run test:issuerCredential && npm run test:proof && npm run test:oob && npm run test:schema && npm run test:utils && npm run test:wallet",
     "test:nonmediatedConnection": "      TS_NODE_PROJECT=./test/tsconfig.json NODE_ENV=test RUST_BACKTRACE=full mocha --timeout 5000 --v8-use-strict --exit --require ts-node/register test/suite1/ariesvcx-connection.test.ts",
     "test:connection": "      TS_NODE_PROJECT=./test/tsconfig.json NODE_ENV=test RUST_BACKTRACE=full mocha --timeout 5000 --v8-use-strict --exit --require ts-node/register test/suite1/ariesvcx-mediated-connection.test.ts",
@@ -76,7 +75,8 @@
     "test:schema": "          TS_NODE_PROJECT=./test/tsconfig.json NODE_ENV=test RUST_BACKTRACE=full mocha --timeout 5000 --v8-use-strict --exit --require ts-node/register ./test/suite1/ariesvcx-schema.test.ts",
     "test:utils": "           TS_NODE_PROJECT=./test/tsconfig.json NODE_ENV=test RUST_BACKTRACE=full mocha --timeout 5000 --v8-use-strict --exit --require ts-node/register ./test/suite1/ariesvcx-utils.test.ts",
     "test:oob": "             TS_NODE_PROJECT=./test/tsconfig.json NODE_ENV=test RUST_BACKTRACE=full mocha --timeout 5000 --v8-use-strict --exit --require ts-node/register ./test/suite1/ariesvcx-oob.test.ts",
-    "test:wallet": "          TS_NODE_PROJECT=./test/tsconfig.json NODE_ENV=test RUST_BACKTRACE=full mocha --timeout 5000 --v8-use-strict --exit --require ts-node/register ./test/suite1/ariesvcx-wallet.test.ts"
+    "test:wallet": "          TS_NODE_PROJECT=./test/tsconfig.json NODE_ENV=test RUST_BACKTRACE=full mocha --timeout 5000 --v8-use-strict --exit --require ts-node/register ./test/suite1/ariesvcx-wallet.test.ts",
+    "test:integration": "     TS_NODE_PROJECT=./test/tsconfig.json NODE_ENV=test RUST_BACKTRACE=full mocha --timeout 5000 --v8-use-strict --exit --require ts-node/register ./test/integration/ledger.test.ts"
   },
   "main": "dist/index.js",
   "typings": "dist/index.d.ts"
