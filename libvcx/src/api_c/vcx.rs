@@ -4,12 +4,11 @@ use futures::future::{BoxFuture, FutureExt};
 use libc::c_char;
 
 use aries_vcx::agency_client::configuration::AgencyClientConfig;
-use aries_vcx::aries_vcx_core::wallet::indy::IssuerConfig;
 use libvcx_core::api_vcx::api_global::agency_client::create_agency_client_for_main_wallet;
 use libvcx_core::api_vcx::api_global::agency_client::update_webhook_url;
 use libvcx_core::api_vcx::api_global::ledger::ledger_get_txn_author_agreement;
 use libvcx_core::api_vcx::api_global::pool::{open_main_pool, LibvcxLedgerConfig};
-use libvcx_core::api_vcx::api_global::settings::{enable_mocks, settings_init_issuer_config};
+use libvcx_core::api_vcx::api_global::settings::enable_mocks;
 use libvcx_core::api_vcx::api_global::state::state_vcx_shutdown;
 use libvcx_core::api_vcx::api_global::VERSION_STRING;
 use libvcx_core::errors::error::{LibvcxError, LibvcxErrorKind};
@@ -124,68 +123,6 @@ pub extern "C" fn vcx_create_agency_client_for_main_wallet(
                 set_current_error_vcx(&err);
                 error!(
                     "vcx_create_agency_client_for_main_wallet_cb >>> command_handle: {}, error {}",
-                    command_handle, err
-                );
-                cb(command_handle, err.into());
-                return Ok(());
-            }
-        }
-        Ok(())
-    });
-    SUCCESS_ERR_CODE
-}
-
-/// Stores institution did and verkey in memory.
-///
-/// #Params
-/// command_handle: command handle to map callback to user context.
-///
-/// issuer_config: Issuer configuration
-/// {
-///     "institution_did" (optional) - Institution did obtained on vcx_configure_issuer_wallet
-///     `institution_verkey` (optional) - Institution verkey obtained on vcx_configure_issuer_wallet
-///                         If NULL, then value set on vcx_configure_issuer_wallet will be used.
-/// }
-///
-/// cb: Callback that provides error status
-///
-/// #Returns
-/// Error code as a u32
-#[no_mangle]
-pub extern "C" fn vcx_init_issuer_config(
-    command_handle: CommandHandle,
-    config: *const c_char,
-    cb: Option<extern "C" fn(xcommand_handle: CommandHandle, err: u32)>,
-) -> u32 {
-    info!("vcx_init_issuer_config >>>");
-
-    check_useful_c_str!(config, LibvcxErrorKind::InvalidOption);
-    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
-
-    trace!("vcx_init_issuer_config >>> config: {}", config);
-
-    let issuer_config = match serde_json::from_str::<IssuerConfig>(&config) {
-        Ok(issuer_config) => issuer_config,
-        Err(err) => {
-            set_current_error(&err);
-            error!("vcx_init_issuer_config >>> invalid configuration, err: {:?}", err);
-            return LibvcxErrorKind::InvalidConfiguration.into();
-        }
-    };
-
-    execute(move || {
-        match settings_init_issuer_config(&issuer_config) {
-            Ok(()) => {
-                info!(
-                    "vcx_init_issuer_config_cb >>> command_handle: {}, rc: {}",
-                    command_handle, SUCCESS_ERR_CODE
-                );
-                cb(command_handle, SUCCESS_ERR_CODE)
-            }
-            Err(err) => {
-                set_current_error_vcx(&err);
-                error!(
-                    "vcx_init_issuer_config_cb >>> command_handle: {}, error {}",
                     command_handle, err
                 );
                 cb(command_handle, err.into());

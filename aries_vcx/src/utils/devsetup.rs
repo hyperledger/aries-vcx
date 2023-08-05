@@ -28,10 +28,10 @@ use crate::core::profile::profile::Profile;
 #[cfg(feature = "vdrtools")]
 use crate::core::profile::vdrtools_profile::VdrtoolsProfile;
 use crate::global::settings;
+use crate::global::settings::reset_config_values_ariesvcx;
 use crate::global::settings::{
     aries_vcx_disable_indy_mocks, aries_vcx_enable_indy_mocks, set_config_value, CONFIG_INSTITUTION_DID, DEFAULT_DID,
 };
-use crate::global::settings::{init_issuer_config, reset_config_values_ariesvcx};
 use crate::utils::constants::{POOL1_TXN, TRUSTEE_SEED};
 use crate::utils::file::write_file;
 use crate::utils::provision::provision_cloud_agent;
@@ -158,7 +158,6 @@ pub async fn dev_setup_issuer_wallet_and_agency_client() -> (String, WalletHandl
     };
     let wallet_handle = create_and_open_wallet(&config_wallet).await.unwrap();
     let config_issuer = wallet_configure_issuer(wallet_handle, enterprise_seed).await.unwrap();
-    init_issuer_config(&config_issuer.institution_did).unwrap();
     let mut agency_client = AgencyClient::new();
 
     let wallet: Arc<dyn BaseWallet> = Arc::new(IndySdkWallet::new(wallet_handle));
@@ -186,8 +185,6 @@ pub async fn dev_setup_wallet_indy(key_seed: &str) -> (String, WalletHandle) {
     let (did, _vk) = create_and_store_my_did(wallet_handle, Some(key_seed), None)
         .await
         .unwrap();
-    // todo: can we remove following line completely?
-    init_issuer_config(&did).unwrap();
     (did, wallet_handle)
 }
 

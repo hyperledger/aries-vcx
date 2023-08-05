@@ -47,10 +47,6 @@ export async function initVcx(): Promise<string> {
   await vcx.createWallet(configWallet);
   await vcx.openMainWallet(configWallet);
   const { institution_did } = JSON.parse(await vcx.configureIssuerWallet(issuerSeed));
-  const issuerConfig = {
-    institution_did,
-  };
-  await vcx.initIssuerConfig(issuerConfig);
   vcx.createAgencyClientForMainWallet(configAgency);
   vcx.enableMocks();
   return institution_did

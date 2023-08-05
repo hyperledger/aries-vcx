@@ -166,8 +166,3 @@ pub mod unit_tests {
         assert_eq!(get_config_value(&key).unwrap(), value1);
     }
 }
-
-pub fn init_issuer_config(institution_did: &str) -> VcxResult<()> {
-    set_config_value(CONFIG_INSTITUTION_DID, institution_did)?;
-    Ok(())
-}

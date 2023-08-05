@@ -1,7 +1,6 @@
 use crate::error::to_napi_err;
-use libvcx_core::api_vcx::api_global::settings::settings_init_issuer_config;
 use libvcx_core::api_vcx::api_global::{ledger, wallet};
-use libvcx_core::aries_vcx::aries_vcx_core::wallet::indy::{IssuerConfig, RestoreWalletConfigs, WalletConfig};
+use libvcx_core::aries_vcx::aries_vcx_core::wallet::indy::{RestoreWalletConfigs, WalletConfig};
 use libvcx_core::errors::error::{LibvcxError, LibvcxErrorKind};
 use libvcx_core::serde_json;
 use libvcx_core::serde_json::json;
@@ -38,19 +37,6 @@ pub async fn wallet_create_main(wallet_config: String) -> napi::Result<()> {
 #[napi]
 pub async fn wallet_close_main() -> napi::Result<()> {
     wallet::close_main_wallet().await.map_err(to_napi_err)
-}
-
-#[napi]
-pub async fn vcx_init_issuer_config(config: String) -> napi::Result<()> {
-    let config = serde_json::from_str::<IssuerConfig>(&config)
-        .map_err(|err| {
-            LibvcxError::from_msg(
-                LibvcxErrorKind::InvalidConfiguration,
-                format!("Serialization error: {:?}", err),
-            )
-        })
-        .map_err(to_napi_err)?;
-    settings_init_issuer_config(&config).map_err(to_napi_err)
 }
 
 #[napi]

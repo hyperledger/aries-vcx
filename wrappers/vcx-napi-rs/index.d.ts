@@ -190,7 +190,6 @@ export function getVersion(): string
 export function walletOpenAsMain(walletConfig: string): Promise<number>
 export function walletCreateMain(walletConfig: string): Promise<void>
 export function walletCloseMain(): Promise<void>
-export function vcxInitIssuerConfig(config: string): Promise<void>
 export function configureIssuerWallet(enterpriseSeed: string): Promise<string>
 export function unpack(data: Buffer): Promise<string>
 export function createAndStoreDid(seed?: string | undefined | null): Promise<string>

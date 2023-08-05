@@ -14,9 +14,6 @@
 
 @interface VcxAPI : NSObject
 
-- (void)vcxInitIssuerConfig:(NSString *)config
-                 completion:(void (^)(NSError *error))completion;
-
 - (vcx_error_t)vcxPoolSetHandle:(NSNumber *)handle
                      completion:(void (^)(NSError *error))completion;
 

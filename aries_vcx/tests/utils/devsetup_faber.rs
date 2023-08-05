@@ -13,7 +13,7 @@ use aries_vcx::core::profile::profile::Profile;
 use aries_vcx::core::profile::vdrtools_profile::VdrtoolsProfile;
 use aries_vcx::errors::error::VcxResult;
 use aries_vcx::global::settings;
-use aries_vcx::global::settings::{init_issuer_config, DEFAULT_LINK_SECRET_ALIAS};
+use aries_vcx::global::settings::DEFAULT_LINK_SECRET_ALIAS;
 use aries_vcx::handlers::connection::mediated_connection::{ConnectionState, MediatedConnection};
 use aries_vcx::handlers::issuance::issuer::Issuer;
 use aries_vcx::handlers::proof_presentation::verifier::Verifier;
@@ -100,8 +100,6 @@ impl Faber {
             agent_seed: None,
         };
 
-        // todo: can delete following?
-        init_issuer_config(&institution_did).unwrap();
         let mut agency_client = AgencyClient::new();
         let config_agency = provision_cloud_agent(&mut agency_client, profile.inject_wallet(), &config_provision_agent)
             .await

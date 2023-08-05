@@ -11,12 +11,6 @@ extern "C" {
  * Initialize the SDK
  */
 
-vcx_error_t vcx_init_issuer_config(
-        vcx_command_handle_t handle,
-        const char *config,
-        void (*cb)(vcx_command_handle_t command_handle, vcx_error_t err)
-);
-
 vcx_error_t vcx_pool_set_handle(vcx_i32_t handle);
 
 vcx_error_t vcx_endorse_transaction(

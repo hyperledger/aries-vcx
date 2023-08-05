@@ -15,7 +15,6 @@ const { createServiceLedgerRevocationRegistry } = require('./services/service-re
 const { provisionAgentInAgency } = require('./utils/vcx-workflows')
 const {
   createAgencyClientForMainWallet,
-  initIssuerConfig,
   openMainWallet,
   openMainPool,
   vcxUpdateWebhookUrl,
@@ -43,8 +42,6 @@ async function createVcxAgent ({ agentName, genesisPath, agencyUrl, seed, wallet
     logger.info(`Initializing ${agentName} vcx session.`)
 
     logger.silly(`Using following agent provision to initialize VCX settings ${JSON.stringify(agentProvision, null, 2)}`)
-    logger.silly('Initializing issuer config')
-    await initIssuerConfig(agentProvision.issuerConfig)
     logger.silly('Opening main wallet')
     await openMainWallet(agentProvision.walletConfig)
     logger.silly('Creating cloud agency config')

@@ -27,19 +27,6 @@ void checkErrorAndComplete(vcx_error_t ret, vcx_command_handle_t cmdHandle, void
 
 @implementation VcxAPI
 
-- (void)vcxInitIssuerConfig:(NSString *)config
-                 completion:(void (^)(NSError *))completion {
-
-    vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
-    const char *config_char = [config cStringUsingEncoding:NSUTF8StringEncoding];
-
-    vcx_error_t ret = vcx_init_issuer_config(handle, config_char, &VcxWrapperCbNoResponse);
-
-    checkErrorAndComplete(ret, handle, ^{
-        completion([NSError errorFromVcxError:ret]);
-    });
-}
-
 - (vcx_error_t)vcxPoolSetHandle:(NSNumber *)handle
                      completion:(void (^)(NSError *))completion {
     return vcx_pool_set_handle(handle.integerValue);
