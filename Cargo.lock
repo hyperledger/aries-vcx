@@ -452,7 +452,7 @@ dependencies = [
  "indy-api-types",
  "indy-credx",
  "indy-ledger-response-parser",
- "indy-vdr",
+ "indy-vdr 0.4.0",
  "indy-vdr-proxy-client",
  "lazy_static",
  "libvdrtools",
@@ -2381,6 +2381,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
 
 [[package]]
+name = "hex-literal"
+version = "0.3.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7ebdb29d2ea9ed0083cd8cece49bbd968021bd99b0849edb4a9a7ee0fdf6a4e0"
+
+[[package]]
 name = "hkdf"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2610,7 +2616,7 @@ name = "indy-ledger-response-parser"
 version = "0.1.0"
 dependencies = [
  "indy-api-types",
- "indy-vdr",
+ "indy-vdr 0.3.4",
  "serde",
  "serde_json",
  "time 0.3.21",
@@ -2707,11 +2713,40 @@ dependencies = [
 ]
 
 [[package]]
+name = "indy-vdr"
+version = "0.4.0"
+source = "git+https://github.com/Patrik-Stas/indy-vdr.git?rev=239627e4829005#239627e482900587a2a9efc6dfcff77aa8ffbdef"
+dependencies = [
+ "env_logger 0.9.3",
+ "etcommon-rlp",
+ "ffi-support",
+ "futures-channel",
+ "futures-executor",
+ "futures-util",
+ "hex",
+ "hex-literal",
+ "indy-data-types 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "indy-utils 0.5.0",
+ "log",
+ "once_cell",
+ "pin-utils",
+ "rand 0.8.5",
+ "regex",
+ "rmp-serde 1.1.1",
+ "serde",
+ "serde_json",
+ "sha3 0.10.8",
+ "thiserror",
+ "ursa",
+ "zmq",
+]
+
+[[package]]
 name = "indy-vdr-proxy-client"
 version = "0.1.0"
 source = "git+https://github.com/mirgee/indy-vdr.git?rev=fab0535#fab0535832d87f8194cf49acc897ac6b004c38c4"
 dependencies = [
- "indy-vdr",
+ "indy-vdr 0.3.4",
  "reqwest",
  "serde_json",
  "url",
