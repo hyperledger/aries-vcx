@@ -45,6 +45,7 @@ pub struct LibvcxLedgerConfig {
     pub genesis_path: String,
     pub pool_config: Option<PoolConfig>,
     pub cache_config: Option<LibvcxInMemoryResponseCacherConfig>,
+    pub exclude_nodes: Vec<String>,
 }
 
 impl From<LibvcxInMemoryResponseCacherConfig> for InMemoryResponseCacherConfig {
@@ -73,6 +74,7 @@ async fn build_components_ledger(
     let ledger_pool = Arc::new(IndyVdrLedgerPool::new(
         libvcx_pool_config.genesis_path.clone(),
         indy_vdr_config,
+        libvcx_pool_config.exclude_nodes.clone(),
     )?);
     let request_submitter = Arc::new(IndyVdrSubmitter::new(ledger_pool));
 
@@ -109,6 +111,7 @@ pub fn reset_ledger_components() -> LibvcxResult<()> {
 
 pub async fn setup_ledger_components(config: &LibvcxLedgerConfig) -> LibvcxResult<()> {
     let base_wallet = get_main_wallet()?;
+
     let (anoncreds_read, anoncreds_write, indy_read, indy_write, taa_configurator) =
         build_components_ledger(base_wallet, config).await?;
     let mut anoncreds_read_guard = global_ledger_anoncreds_read.write()?;

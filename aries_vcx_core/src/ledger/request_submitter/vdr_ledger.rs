@@ -28,11 +28,28 @@ impl IndyVdrLedgerPool {
         IndyVdrLedgerPool { runner: Some(runner) }
     }
 
-    pub fn new(genesis_file_path: String, indy_vdr_config: PoolConfig) -> VcxCoreResult<Self> {
+    fn generate_exclusion_weights(exclude_nodes: Vec<String>) -> HashMap<String, f32> {
+        let mut weights_map = HashMap::new();
+        for node in exclude_nodes {
+            weights_map.insert(node, 0.0f32);
+        }
+        weights_map
+    }
+
+    pub fn new(
+        genesis_file_path: String,
+        indy_vdr_config: PoolConfig,
+        exclude_nodes: Vec<String>,
+    ) -> VcxCoreResult<Self> {
         info!("IndyVdrLedgerPool::new >> genesis_file_path: {genesis_file_path}, indy_vdr_config: {indy_vdr_config:?}");
         let txns = PoolTransactions::from_json_file(genesis_file_path)?;
-
-        let runner = PoolBuilder::from(indy_vdr_config).transactions(txns)?.into_runner()?;
+        let runner = PoolBuilder::new(
+            indy_vdr_config,
+            None,
+            Some(Self::generate_exclusion_weights(exclude_nodes)),
+        )
+        .transactions(txns)?
+        .into_runner()?;
 
         Ok(IndyVdrLedgerPool { runner: Some(runner) })
     }

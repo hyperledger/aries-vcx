@@ -36,7 +36,11 @@ pub fn build_ledger_components(
         Some(cfg) => cfg,
     };
 
-    let ledger_pool = Arc::new(IndyVdrLedgerPool::new(pool_config.genesis_file_path, indy_vdr_config)?);
+    let ledger_pool = Arc::new(IndyVdrLedgerPool::new(
+        pool_config.genesis_file_path,
+        indy_vdr_config,
+        vec![],
+    )?);
     let request_submitter = Arc::new(IndyVdrSubmitter::new(ledger_pool));
 
     let ledger_read = indyvdr_build_ledger_read(request_submitter.clone(), cache_config)?;
