@@ -229,6 +229,7 @@ pub mod tests {
             genesis_path,
             pool_config: None,
             cache_config: None,
+            exclude_nodes: vec![],
         };
         open_main_pool(&config).await.unwrap();
         close_main_pool().await.unwrap();
@@ -249,6 +250,7 @@ pub mod tests {
             genesis_path: genesis_transactions.path.clone(),
             pool_config: None,
             cache_config: None,
+            exclude_nodes: vec![],
         };
         // todo: indy-vdr panics if the file is invalid, see: indy-vdr-0.3.4/src/pool/runner.rs:44:22
         assert_eq!(
@@ -271,6 +273,7 @@ pub mod tests {
             genesis_path: "invalid/txn/path".to_string(),
             pool_config: None,
             cache_config: None,
+            exclude_nodes: vec![],
         };
         assert_eq!(
             open_main_pool(&config).await.unwrap_err().kind(),

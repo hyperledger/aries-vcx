@@ -136,6 +136,7 @@ pub mod tests {
             genesis_path,
             pool_config: None,
             cache_config: None,
+            exclude_nodes: vec![],
         };
         open_main_pool(&config).await.unwrap();
 
@@ -156,6 +157,7 @@ pub mod tests {
             genesis_path,
             pool_config: None,
             cache_config: None,
+            exclude_nodes: vec![],
         };
         open_main_pool(&config).await.unwrap();
 
