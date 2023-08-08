@@ -2717,9 +2717,7 @@ name = "indy-vdr"
 version = "0.4.0"
 source = "git+https://github.com/Patrik-Stas/indy-vdr.git?rev=5213e342fa29#5213e342fa294d55f0a36572be062305f2ebbebd"
 dependencies = [
- "env_logger 0.9.3",
  "etcommon-rlp",
- "ffi-support",
  "futures-channel",
  "futures-executor",
  "futures-util",
