@@ -44,7 +44,7 @@ impl SetupGlobalsWalletPoolAgency {
             genesis_path,
             pool_config: None,
             cache_config: None,
-            exclude_nodes: vec![],
+            exclude_nodes: None,
         };
         setup_ledger_components(&config).await.unwrap();
 

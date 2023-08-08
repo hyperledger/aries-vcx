@@ -45,7 +45,7 @@ pub struct LibvcxLedgerConfig {
     pub genesis_path: String,
     pub pool_config: Option<PoolConfig>,
     pub cache_config: Option<LibvcxInMemoryResponseCacherConfig>,
-    pub exclude_nodes: Vec<String>,
+    pub exclude_nodes: Option<Vec<String>>,
 }
 
 impl From<LibvcxInMemoryResponseCacherConfig> for InMemoryResponseCacherConfig {
@@ -74,7 +74,7 @@ async fn build_components_ledger(
     let ledger_pool = Arc::new(IndyVdrLedgerPool::new(
         libvcx_pool_config.genesis_path.clone(),
         indy_vdr_config,
-        libvcx_pool_config.exclude_nodes.clone(),
+        libvcx_pool_config.exclude_nodes.clone().unwrap_or_default(),
     )?);
     let request_submitter = Arc::new(IndyVdrSubmitter::new(ledger_pool));
 
@@ -216,6 +216,7 @@ pub mod tests {
             config.cache_config.as_ref().unwrap().capacity,
             NonZeroUsize::new(1000).unwrap()
         );
+        assert!(config.exclude_nodes.is_none());
     }
 
     #[tokio::test]
@@ -229,7 +230,7 @@ pub mod tests {
             genesis_path,
             pool_config: None,
             cache_config: None,
-            exclude_nodes: vec![],
+            exclude_nodes: None,
         };
         open_main_pool(&config).await.unwrap();
         close_main_pool().await.unwrap();
@@ -250,7 +251,7 @@ pub mod tests {
             genesis_path: genesis_transactions.path.clone(),
             pool_config: None,
             cache_config: None,
-            exclude_nodes: vec![],
+            exclude_nodes: None,
         };
         // todo: indy-vdr panics if the file is invalid, see: indy-vdr-0.3.4/src/pool/runner.rs:44:22
         assert_eq!(
@@ -273,7 +274,7 @@ pub mod tests {
             genesis_path: "invalid/txn/path".to_string(),
             pool_config: None,
             cache_config: None,
-            exclude_nodes: vec![],
+            exclude_nodes: None,
         };
         assert_eq!(
             open_main_pool(&config).await.unwrap_err().kind(),
