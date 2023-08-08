@@ -14,7 +14,7 @@ vdr_proxy_ledger = ["modular_libs", "dep:indy-vdr-proxy-client"]
 
 [dependencies]
 agency_client = { path = "../agency_client" }
-indy-vdr = { git = "https://github.com/Patrik-Stas/indy-vdr.git", rev = "776d56ee0859", default-features = false, features = ["log"] }
+indy-vdr = { git = "https://github.com/hyperledger/indy-vdr.git", rev = "28874fa3a5242", default-features = false, features = ["log"] }
 # PATCH (TO MONITOR IN FUTURE): The following patch changes the `indy-data-types` (within indy-shared-rs) to depend on
 # `ursa "0.3.6"` rather than `ursa "=0.3.6"`. Currently, `libvdrtools` depends on `ursa "0.3.7"`, which causes a mismatch of
 # `indy-utils` versions, which causes some types within credx to fail. Details about the issue can be found here: https://github.com/hyperledger/indy-shared-rs/issues/20

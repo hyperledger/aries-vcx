@@ -452,7 +452,7 @@ dependencies = [
  "indy-api-types",
  "indy-credx",
  "indy-ledger-response-parser",
- "indy-vdr 0.4.0",
+ "indy-vdr 0.4.0-dev.16",
  "indy-vdr-proxy-client",
  "lazy_static",
  "libvdrtools",
@@ -2616,7 +2616,7 @@ name = "indy-ledger-response-parser"
 version = "0.1.0"
 dependencies = [
  "indy-api-types",
- "indy-vdr 0.4.0",
+ "indy-vdr 0.4.0-dev.16",
  "serde",
  "serde_json",
  "time 0.3.21",
@@ -2714,8 +2714,8 @@ dependencies = [
 
 [[package]]
 name = "indy-vdr"
-version = "0.4.0"
-source = "git+https://github.com/Patrik-Stas/indy-vdr.git?rev=776d56ee0859#776d56ee08597c377bae37b55bbafaafa83ab5d5"
+version = "0.4.0-dev.16"
+source = "git+https://github.com/hyperledger/indy-vdr.git?rev=28874fa3a5242#28874fa3a5242023176ea2c3a678efb1e11eecc6"
 dependencies = [
  "etcommon-rlp",
  "futures-channel",
