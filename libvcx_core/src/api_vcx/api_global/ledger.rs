@@ -136,7 +136,7 @@ pub mod tests {
             genesis_path,
             pool_config: None,
             cache_config: None,
-            exclude_nodes: None,
+            exclude_nodes: Some(vec!["NECValidator".into(), "Entrustient".into()]),
         };
         open_main_pool(&config).await.unwrap();
 
