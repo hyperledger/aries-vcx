@@ -193,7 +193,6 @@ jobs:
           cargo check --tests --all-features
           cargo check --features vdrtools --no-default-features
           cargo check --features modular_libs --no-default-features
-          cargo check --features vdr_proxy_ledger --no-default-features
 
   ##########################################################################################
   ##############################   DOCKER BUILD   ##########################################
@@ -451,33 +450,34 @@ jobs:
       - name: "Run aries-vcx tests: mysql_test"
         run: RUST_TEST_THREADS=1 cargo test --manifest-path="aries_vcx/Cargo.toml" test_mysql -- --include-ignored;
 
-  test-integration-aries-vcx-vdrproxy:
-    needs: [workflow-setup, build-docker-vdrproxy]
-    runs-on: ubuntu-20.04
-    env:
-      RUST_TEST_THREADS: 1
-      VDR_PROXY_CLIENT_URL: http://127.0.0.1:3030
-      DOCKER_IMAGE_VDRPROXY: ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_VDRPROXY }}
-      GENESIS_URL: https://raw.githubusercontent.com/AbsaOSS/sovrin-networks/master/genesis/127.0.0.1
-      VDR_PROXY_PORT: 3030
-    steps:
-      - name: "Git checkout"
-        uses: actions/checkout@v3
-      - name: "Load android image"
-        uses: ./.github/actions/load-image
-        with:
-          docker-img: ${{ env.DOCKER_IMAGE_VDRPROXY }}
-      - name: "Setup rust testing environment"
-        uses: ./.github/actions/setup-testing-rust
-        with:
-          skip-vdrproxy-setup: false
-      - name: "Run aries-vcx tests: vdrproxy_test"
-        run: RUST_TEST_THREADS=1 cargo test --manifest-path="aries_vcx/Cargo.toml" -F vdr_proxy_ledger -- --ignored
-      - name: "Collect docker logs on failure"
-        if: failure()
-        uses: ./.github/actions/upload-docker-logs
-        with:
-          name: "docker-services-${{ github.job }}"
+# TODO: restore after PRs are merged into indy-vdrproxy
+#  test-integration-aries-vcx-vdrproxy:
+#    needs: [workflow-setup, build-docker-vdrproxy]
+#    runs-on: ubuntu-20.04
+#    env:
+#      RUST_TEST_THREADS: 1
+#      VDR_PROXY_CLIENT_URL: http://127.0.0.1:3030
+#      DOCKER_IMAGE_VDRPROXY: ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_VDRPROXY }}
+#      GENESIS_URL: https://raw.githubusercontent.com/AbsaOSS/sovrin-networks/master/genesis/127.0.0.1
+#      VDR_PROXY_PORT: 3030
+#    steps:
+#      - name: "Git checkout"
+#        uses: actions/checkout@v3
+#      - name: "Load android image"
+#        uses: ./.github/actions/load-image
+#        with:
+#          docker-img: ${{ env.DOCKER_IMAGE_VDRPROXY }}
+#      - name: "Setup rust testing environment"
+#        uses: ./.github/actions/setup-testing-rust
+#        with:
+#          skip-vdrproxy-setup: false
+#      - name: "Run aries-vcx tests: vdrproxy_test"
+#        run: RUST_TEST_THREADS=1 cargo test --manifest-path="aries_vcx/Cargo.toml" -F vdr_proxy_ledger -- --ignored
+#      - name: "Collect docker logs on failure"
+#        if: failure()
+#        uses: ./.github/actions/upload-docker-logs
+#        with:
+#          name: "docker-services-${{ github.job }}"
 
   test-integration-aries-vcx-migration:
     needs: workflow-setup
