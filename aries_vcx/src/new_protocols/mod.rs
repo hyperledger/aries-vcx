@@ -8,81 +8,31 @@ use chrono::Utc;
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use messages::{
     decorators::{thread::Thread, timing::Timing},
-    msg_fields::protocols::{
-        connection::{
-            invitation::{
-                Invitation, InvitationContent, PairwiseDidInvitationContent, PairwiseInvitationContent,
-                PublicInvitationContent,
-            },
-            problem_report::ProblemReport,
-            request::{Request, RequestDecorators},
-            response::{Response, ResponseContent, ResponseDecorators},
-            ConnectionData,
+    msg_fields::protocols::connection::{
+        invitation::{
+            InvitationContent, PairwiseDidInvitationContent, PairwiseInvitationContent, PublicInvitationContent,
         },
-        notification::{
-            ack::{Ack, AckDecorators},
-            problem_report::NotificationProblemReport,
-        },
+        request::RequestContent,
+        response::ResponseContent,
+        ConnectionData,
     },
 };
 use url::Url;
-use uuid::Uuid;
 
 use crate::{
     common::{
         ledger::transactions::get_service,
         signing::{decode_signed_connection_response, sign_connection_response},
     },
-    errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
+    errors::error::VcxResult,
 };
 
-use self::connection::{
-    invitee::{state::BootstrapInfo, InviteeConnection},
-    inviter::InviterConnection,
-    ConnectionSM,
-};
-
-pub mod connection;
-
-/// Enum that can represent any Aries state machine, in any of their states.
-#[derive(Clone, Debug)]
-pub enum AriesSM {
-    Connection(ConnectionSM),
-}
-
-/// Interface for handling the storage and retrieval of [`AriesSM`].
-#[async_trait]
-pub trait StateMachineStorage: Send + Sync {
-    /// Type is used for identifying a particular [`AriesSM`] instance.
-    type SmInfo: Send + Sync;
-
-    /// Retrieves the state machine with the given information.
-    /// This is intended to transfer the state machine's ownership, if possible.
-    ///
-    /// If, for instance, you (also) store your state machines in an
-    /// in-memory cache, on a cache hit you should remove the instance
-    /// from the cache and return the owned state machine (not clone it).
-    ///
-    /// Also see [`StateMachineStorage::put_different_state`] and [`StateMachineStorage::put_same_state`].
-    async fn get(&self, sm_info: &Self::SmInfo) -> Result<AriesSM, AriesVcxError>;
-
-    /// Used for storing a state machine in the event that its state *DID* change.
-    /// This should update ALL places where you store your state machines.
-    ///
-    /// If, for instance, you store your state machines in a disk-based database
-    /// and an in-memory cache, this should update both.
-    ///
-    /// Also see [`StateMachineStorage::get`] and [`StateMachineStorage::put_same_state`].
-    async fn put_new_state(&self, sm_info: Self::SmInfo, sm: AriesSM) -> Result<(), AriesVcxError>;
-
-    /// Used for storing a state machine in the event that its state *DID NOT* change.
-    /// This is present to allow storage optimizations.
-    ///
-    /// If, for instance, you store your state machines in a disk-based database
-    /// and an in-memory cache, this should ONLY update the in-memory cache.
-    ///
-    /// Also see [`StateMachineStorage::get`] and [`StateMachineStorage::put_different_state`].
-    async fn put_same_state(&self, sm_info: Self::SmInfo, sm: AriesSM) -> Result<(), AriesVcxError>;
+pub struct BootstrapInfo {
+    service_endpoint: Url,
+    recipient_keys: Vec<String>,
+    routing_keys: Vec<String>,
+    did: Option<String>,
+    service_endpoint_did: Option<String>,
 }
 
 #[async_trait]
@@ -95,8 +45,6 @@ pub trait MessageHandler {
 
     type Anoncreds: BaseAnonCreds;
 
-    type StateMachineStorage: StateMachineStorage;
-
     fn wallet(&self) -> &Self::Wallet;
 
     fn ledger_read(&self) -> &Self::LedgerRead;
@@ -104,8 +52,6 @@ pub trait MessageHandler {
     fn ledger_write(&self) -> &Self::LedgerWrite;
 
     fn anoncreds(&self) -> &Self::Anoncreds;
-
-    fn sm_storage(&self) -> &Self::StateMachineStorage;
 
     async fn bootstrap_info_from_public_invitation(
         &self,
@@ -226,170 +172,38 @@ pub trait MessageHandler {
         }
     }
 
-    async fn process_connection_invitation(
-        &self,
-        sm_info: <Self::StateMachineStorage as StateMachineStorage>::SmInfo,
-        message: Invitation,
-        service_endpoint: Url,
-        routing_keys: Vec<String>,
-        label: String,
-    ) -> VcxResult<Request> {
-        let public_invite = matches!(message.content, InvitationContent::Public(_));
-
-        let bootstrap_info = self.bootstrap_info_from_invitation(message.content).await?;
-        let (did, verkey) = self.wallet().create_and_store_my_did(None, None).await?;
-
-        let recipient_keys = vec![verkey.clone()];
-
-        let mut did_doc = AriesDidDoc::default();
-        did_doc.id = did.clone();
-        did_doc.set_service_endpoint(service_endpoint);
-        did_doc.set_routing_keys(routing_keys);
-        did_doc.set_recipient_keys(recipient_keys);
-
-        let con_data = ConnectionData::new(did.clone(), did_doc);
-
-        let request_id = Uuid::new_v4().to_string();
-        let invitation_thread = Thread::new(message.id);
-        let thread = self.make_connection_request_thread(invitation_thread, request_id.clone(), public_invite);
-
-        let (sm, content) =
-            InviteeConnection::new_invitee(did, verkey, label, bootstrap_info, con_data, thread.thid.clone());
-
-        let decorators = RequestDecorators {
-            thread: Some(thread),
-            timing: Some(self.make_timing()),
-        };
-
-        let request = Request::with_decorators(request_id, content, decorators);
-        let sm = AriesSM::Connection(ConnectionSM::InviteeRequested(sm));
-        self.sm_storage().put_new_state(sm_info, sm).await?;
-
-        Ok(request)
+    async fn process_connection_invitation(&self, msg_content: InvitationContent) -> VcxResult<BootstrapInfo> {
+        //! This could arguably be a method on the invitation
+        self.bootstrap_info_from_invitation(msg_content).await
     }
 
-    async fn process_connection_request(
-        &self,
-        sm_info: <Self::StateMachineStorage as StateMachineStorage>::SmInfo,
-        message: Request,
-        invitation_verkey: &str,
-        service_endpoint: Url,
-        routing_keys: Vec<String>,
-    ) -> VcxResult<Response> {
+    async fn process_connection_request(&self, msg_content: RequestContent) -> VcxResult<AriesDidDoc> {
+        //! This could arguably be a method on the did doc
+
         // If the request's DidDoc validation fails, we generate and send a ProblemReport.
         // We then return early with the provided error.
-        if let Err(err) = message.content.connection.did_doc.validate() {
+        if let Err(err) = msg_content.connection.did_doc.validate() {
             error!("Request DidDoc validation failed! Sending ProblemReport...");
             // TODO: There is a problem report generated here
             Err(err)?;
         }
 
-        // Generate new pairwise info that will be used from this point on
-        // and incorporate that into the response.
-        let (did, verkey) = self.wallet().create_and_store_my_did(None, None).await?;
-        let thread = message.decorators.thread.unwrap_or_else(|| Thread::new(message.id));
-        let did_doc = message.content.connection.did_doc;
-
-        let content = self
-            .build_response_content(
-                invitation_verkey,
-                did.clone(),
-                vec![verkey.clone()],
-                service_endpoint,
-                routing_keys,
-            )
-            .await?;
-
-        let id = Uuid::new_v4().to_string();
-
-        let decorators = ResponseDecorators {
-            thread: self.make_reply_thread(thread),
-            please_ack: None,
-            timing: Some(self.make_timing()),
-        };
-
-        let response = Response::with_decorators(id, content, decorators);
-
-        let sm = InviterConnection::new_inviter(did, verkey, did_doc);
-        let sm = AriesSM::Connection(ConnectionSM::InviterComplete(sm));
-        self.sm_storage().put_new_state(sm_info, sm).await?;
-
-        Ok(response)
+        Ok(msg_content.connection.did_doc)
     }
 
-    async fn process_connection_response(
-        &self,
-        sm_info: <Self::StateMachineStorage as StateMachineStorage>::SmInfo,
-        message: Response,
-    ) -> VcxResult<Ack> {
-        let sm = match self.sm_storage().get(&sm_info).await? {
-            AriesSM::Connection(ConnectionSM::InviteeRequested(sm)) => sm,
-            _ => todo!("Add some error here in the event of unexpected state machine"),
-        };
+    async fn process_connection_response(&self, msg_content: ResponseContent, verkey: &str) -> VcxResult<AriesDidDoc> {
+        //! Let's pretend this function is inlined
 
-        match Self::thread_id_matches(&message.decorators.thread, &sm.thread_id) {
-            Ok(_) => (),
-            Err(e) => {
-                self.sm_storage().put_same_state(sm_info, sm.into()).await?;
-                return Err(e);
-            }
-        };
-
-        let Some(verkey) = sm.state.bootstrap_info.recipient_keys.first() else {
-            self.sm_storage().put_same_state(sm_info, sm.into()).await?;
-            todo!("Add some error in case no recipient key is found")
-        };
-
-        let did_doc = match decode_signed_connection_response(self.wallet(), message.content, verkey).await {
-            Ok(con_data) => con_data.did_doc,
+        match decode_signed_connection_response(self.wallet(), msg_content, verkey).await {
+            Ok(con_data) => Ok(con_data.did_doc),
             Err(err) => {
                 // TODO: Theres a ProblemReport being built here.
                 // Might be nice to either have a different type for the Err()
                 // variant or incorporate ProblemReports into AriesVcxError
-                self.sm_storage().put_same_state(sm_info, sm.into()).await?;
                 error!("Request DidDoc validation failed! Sending ProblemReport...");
-                return Err(err);
+                Err(err)
             }
-        };
-
-        let (sm, content) = sm.into_complete(did_doc);
-
-        let decorators = AckDecorators {
-            thread: self.make_reply_thread(message.decorators.thread),
-            timing: Some(self.make_timing()),
-        };
-
-        let msg_id = Uuid::new_v4().to_string();
-
-        let ack = Ack::with_decorators(msg_id, content, decorators);
-        let sm = AriesSM::Connection(ConnectionSM::InviteeComplete(sm));
-        self.sm_storage().put_new_state(sm_info, sm).await?;
-
-        Ok(ack)
-    }
-
-    async fn process_connection_problem_report(&self, message: ProblemReport) {
-        todo!()
-    }
-
-    async fn process_notification_ack(&self, message: Ack) {
-        todo!()
-    }
-
-    async fn process_notification_problem_report(&self, message: NotificationProblemReport) {
-        todo!()
-    }
-
-    fn thread_id_matches(thread: &Thread, thread_id: &str) -> VcxResult<()> {
-        if thread.thid == thread_id || thread.pthid.as_deref() == Some(thread_id) {
-            return Ok(());
         }
-
-        let msg = format!(
-            "Thread id does not match, expected {thread_id}, found thread ID: {}; parent thread ID: {:?}",
-            thread.thid, thread.pthid
-        );
-        Err(AriesVcxError::from_msg(AriesVcxErrorKind::InvalidJson, msg))
     }
 }
 
@@ -397,14 +211,13 @@ pub trait MessageHandler {
 #[cfg(feature = "vdrtools")]
 #[allow(clippy::unwrap_used)]
 mod tests {
-    use std::{collections::HashMap, sync::Arc};
-
     use aries_vcx_core::{
         anoncreds::indy_anoncreds::IndySdkAnonCreds,
         ledger::indy_ledger::{IndySdkLedgerRead, IndySdkLedgerWrite},
         wallet::indy::IndySdkWallet,
     };
-    use tokio::sync::Mutex;
+    use messages::msg_fields::protocols::connection::invitation::Invitation;
+    use uuid::Uuid;
 
     use crate::{global::settings, utils::devsetup::SetupPoolDirectory};
 
@@ -417,34 +230,11 @@ mod tests {
 
     use super::*;
 
-    struct SmStorage(Arc<Mutex<HashMap<String, AriesSM>>>);
-
-    #[async_trait]
-    impl StateMachineStorage for SmStorage {
-        type SmInfo = String;
-
-        async fn get(&self, sm_info: &Self::SmInfo) -> Result<AriesSM, AriesVcxError> {
-            self.0
-                .lock()
-                .await
-                .remove(sm_info)
-                .ok_or_else(|| AriesVcxError::from_msg(AriesVcxErrorKind::InvalidJson, "state machine not found"))
-        }
-        async fn put_new_state(&self, sm_info: Self::SmInfo, sm: AriesSM) -> Result<(), AriesVcxError> {
-            self.0.lock().await.insert(sm_info, sm);
-            Ok(())
-        }
-        async fn put_same_state(&self, sm_info: Self::SmInfo, sm: AriesSM) -> Result<(), AriesVcxError> {
-            self.put_new_state(sm_info, sm).await
-        }
-    }
-
     struct MsgHandler {
         ledger_read: IndySdkLedgerRead,
         ledger_write: IndySdkLedgerWrite,
         wallet: IndySdkWallet,
         anoncreds: IndySdkAnonCreds,
-        sm_storage: SmStorage,
     }
 
     #[async_trait]
@@ -456,8 +246,6 @@ mod tests {
         type Wallet = IndySdkWallet;
 
         type Anoncreds = IndySdkAnonCreds;
-
-        type StateMachineStorage = SmStorage;
 
         fn wallet(&self) -> &Self::Wallet {
             &self.wallet
@@ -473,10 +261,6 @@ mod tests {
 
         fn anoncreds(&self) -> &Self::Anoncreds {
             &self.anoncreds
-        }
-
-        fn sm_storage(&self) -> &Self::StateMachineStorage {
-            &self.sm_storage
         }
     }
 
@@ -507,7 +291,6 @@ mod tests {
             ledger_write,
             wallet,
             anoncreds,
-            sm_storage: SmStorage(Arc::new(Mutex::new(HashMap::new()))),
         };
 
         (did, msg_handler)
@@ -520,20 +303,13 @@ mod tests {
             let (alice_did, alice) = build_msg_handler(&setup.genesis_file_path).await;
 
             let invitation_content = PublicInvitationContent::new("faber".to_owned(), faber_did.clone());
-            let invitation_id = Uuid::new_v4().to_string();
             let invitation = Invitation::with_decorators(
                 Uuid::new_v4().to_string(),
                 InvitationContent::Public(invitation_content),
                 Default::default(),
             );
 
-            // let request = alice.process_connection_invitation(
-            //     sm_info,
-            //     invitation,
-            //     "https://dummy.dummy/dummy".parse().unwrap(),
-            //     Vec::new(),
-            //     "alice".to_owned(),
-            // );
+            let bootstrap_info = alice.process_connection_invitation(invitation.content).await.unwrap();
         })
         .await
     }
