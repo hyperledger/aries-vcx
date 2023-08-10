@@ -29,11 +29,7 @@ impl IndyVdrLedgerPool {
     }
 
     fn generate_exclusion_weights(exclude_nodes: Vec<String>) -> HashMap<String, f32> {
-        let mut weights_map = HashMap::new();
-        for node in exclude_nodes {
-            weights_map.insert(node, 0.0f32);
-        }
-        weights_map
+        exclude_nodes.into_iter().map(|node| (node, 0.0f32)).collect()
     }
 
     pub fn new(
