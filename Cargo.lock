@@ -390,6 +390,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "anoncreds-clsignatures"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f683463c4f5558a4eab7fe4625d94f08b7de9691453032bac43facf06fe46d2e"
+dependencies = [
+ "amcl",
+ "glass_pumpkin",
+ "log",
+ "num-bigint 0.4.3",
+ "num-integer",
+ "num-traits",
+ "once_cell",
+ "openssl",
+ "rand 0.8.5",
+ "serde",
+ "sha2 0.10.6",
+]
+
+[[package]]
 name = "anyhow"
 version = "1.0.72"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -456,7 +475,7 @@ dependencies = [
  "derive_builder 0.12.0",
  "futures",
  "indy-api-types",
- "indy-credx",
+ "indy-credx 1.0.1",
  "indy-ledger-response-parser",
  "indy-vdr",
  "indy-vdr-proxy-client",
@@ -1160,6 +1179,15 @@ name = "core-foundation-sys"
 version = "0.8.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e496a50fda8aacccc86d7529e2c1e0892dbd0f898a6b5645b5561b89c3210efa"
+
+[[package]]
+name = "core2"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b49ba7ef1ad6107f8824dbe97de947cbaac53c44e7f9756a1fba0d37c1eec505"
+dependencies = [
+ "memchr",
+]
 
 [[package]]
 name = "cpufeatures"
@@ -1908,6 +1936,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "env_logger"
+version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "85cdab6a89accf66733ad5a1693a4dcced6aeff64602b634530dd73c1f3ee9f0"
+dependencies = [
+ "humantime 2.1.0",
+ "is-terminal",
+ "log",
+ "regex",
+ "termcolor",
+]
+
+[[package]]
 name = "errno"
 version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2252,6 +2293,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b6c80984affa11d98d1b88b66ac8853f143217b399d3c74116778ff8fdb4ed2e"
 
 [[package]]
+name = "glass_pumpkin"
+version = "1.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b9e847fe780e2fd8aa993bef2124361c285349ff0e9315e8285f8126386b54a9"
+dependencies = [
+ "core2",
+ "num-bigint 0.4.3",
+ "num-integer",
+ "num-traits",
+ "once_cell",
+ "rand_core 0.6.4",
+]
+
+[[package]]
 name = "glob"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2584,6 +2639,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "indy-credx"
+version = "1.0.1"
+source = "git+https://github.com/hyperledger/indy-shared-rs?tag=v1.0.1#32a1943811e719540567769264e14f94e51c60ee"
+dependencies = [
+ "env_logger 0.10.0",
+ "ffi-support",
+ "indy-data-types 0.6.1",
+ "indy-utils 0.6.0",
+ "log",
+ "once_cell",
+ "rand 0.8.5",
+ "regex",
+ "serde",
+ "serde_json",
+ "sha2 0.10.6",
+ "thiserror",
+ "zeroize",
+]
+
+[[package]]
 name = "indy-data-types"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2610,6 +2685,22 @@ dependencies = [
  "serde",
  "serde_json",
  "ursa",
+ "zeroize",
+]
+
+[[package]]
+name = "indy-data-types"
+version = "0.6.1"
+source = "git+https://github.com/hyperledger/indy-shared-rs?tag=v1.0.1#32a1943811e719540567769264e14f94e51c60ee"
+dependencies = [
+ "anoncreds-clsignatures",
+ "hex",
+ "indy-utils 0.6.0",
+ "once_cell",
+ "regex",
+ "serde",
+ "serde_json",
+ "sha2 0.10.6",
  "zeroize",
 ]
 
@@ -2681,6 +2772,19 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2 0.10.7",
+ "thiserror",
+ "zeroize",
+]
+
+[[package]]
+name = "indy-utils"
+version = "0.6.0"
+source = "git+https://github.com/hyperledger/indy-shared-rs?tag=v1.0.1#32a1943811e719540567769264e14f94e51c60ee"
+dependencies = [
+ "bs58 0.5.0",
+ "once_cell",
+ "regex",
+ "serde",
  "thiserror",
  "zeroize",
 ]
@@ -2795,6 +2899,18 @@ name = "ipnet"
 version = "2.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "28b29a3cd74f0f4598934efe3aeba42bae0eb4680554128851ebbecb02af14e6"
+
+[[package]]
+name = "is-terminal"
+version = "0.4.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "adcf93614601c8129ddf72e2d5633df827ba6551541c6d8c59520a371475be1f"
+dependencies = [
+ "hermit-abi 0.3.1",
+ "io-lifetimes",
+ "rustix",
+ "windows-sys 0.48.0",
+]
 
 [[package]]
 name = "isolang"
@@ -3363,6 +3479,7 @@ dependencies = [
  "autocfg 1.1.0",
  "num-integer",
  "num-traits",
+ "rand 0.8.5",
 ]
 
 [[package]]
@@ -5376,7 +5493,7 @@ name = "wallet_migrator"
 version = "0.1.0"
 dependencies = [
  "aries_vcx_core",
- "indy-credx",
+ "indy-credx 0.3.1",
  "libvdrtools",
  "log",
  "serde_json",

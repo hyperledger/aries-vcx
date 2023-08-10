@@ -16,18 +16,17 @@ use crate::{
 
 use async_trait::async_trait;
 use credx::{
+    anoncreds_clsignatures::{bn::BigNumber, LinkSecret as ClLinkSecret},
+    types::{CredentialDefinition, CredentialOffer, LinkSecret},
+};
+use credx::{
     tails::{TailsFileReader, TailsFileWriter},
     types::{
         Credential as CredxCredential, CredentialDefinitionId, CredentialRequestMetadata, CredentialRevocationConfig,
-        CredentialRevocationState, DidValue, IssuanceType, MasterSecret, PresentCredentials, Presentation,
-        PresentationRequest, RegistryType, RevocationRegistry, RevocationRegistryDefinition, RevocationRegistryDelta,
-        RevocationRegistryId, Schema, SchemaId, SignatureType,
+        CredentialRevocationState, DidValue, IssuanceType, PresentCredentials, Presentation, PresentationRequest,
+        RegistryType, RevocationRegistry, RevocationRegistryDefinition, RevocationRegistryDelta, RevocationRegistryId,
+        Schema, SchemaId, SignatureType,
     },
-    ursa::bn::BigNumber,
-};
-use credx::{
-    types::{CredentialDefinition, CredentialOffer},
-    ursa::cl::MasterSecret as UrsaMasterSecret,
 };
 use indy_credx as credx;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
@@ -78,7 +77,7 @@ impl IndyCredxAnonCreds {
         serde_json::from_str(&str_record).map_err(From::from)
     }
 
-    async fn get_link_secret(&self, link_secret_id: &str) -> VcxCoreResult<MasterSecret> {
+    async fn get_link_secret(&self, link_secret_id: &str) -> VcxCoreResult<LinkSecret> {
         let record = self
             .wallet
             .get_wallet_record(CATEGORY_LINK_SECRET, link_secret_id, "{}")
@@ -91,12 +90,12 @@ impl IndyCredxAnonCreds {
         let ms_bn: BigNumber = BigNumber::from_dec(ms_decimal).map_err(|err| {
             AriesVcxCoreError::from_msg(
                 AriesVcxCoreErrorKind::UrsaError,
-                format!("Failed to create BigNumber, UrsaErrorKind: {}", err.kind()),
+                format!("Failed to create BigNumber, UrsaErrorKind: {:?}", err.kind()),
             )
         })?;
-        let ursa_ms: UrsaMasterSecret = serde_json::from_value(json!({ "ms": ms_bn }))?;
+        let ursa_ms: ClLinkSecret = serde_json::from_value(json!({ "ms": ms_bn }))?;
 
-        Ok(MasterSecret { value: ursa_ms })
+        Ok(LinkSecret { value: ursa_ms })
     }
 
     async fn _get_credential(&self, credential_id: &str) -> VcxCoreResult<CredxCredential> {
@@ -453,7 +452,6 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
                     registry: rev_reg,
                     registry_idx: rev_reg_info.curr_id,
                     registry_used: &rev_reg_info.used_ids,
-                    tails_reader,
                 };
 
                 Some(revocation_config)
@@ -905,7 +903,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             ));
         }
 
-        let secret = credx::prover::create_master_secret()?;
+        let secret = credx::prover::create_link_secret()?;
         let ms_decimal = secret
             .value
             .value()
@@ -913,7 +911,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
                 AriesVcxCoreError::from_msg(
                     AriesVcxCoreErrorKind::UrsaError,
                     format!(
-                        "failed to get BigNumber from master secret, UrsaErrorKind: {}",
+                        "failed to get BigNumber from master secret, UrsaErrorKind: {:?}",
                         err.kind()
                     ),
                 )
@@ -923,7 +921,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
                 AriesVcxCoreError::from_msg(
                     AriesVcxCoreErrorKind::UrsaError,
                     format!(
-                        "Failed convert BigNumber to decimal string, UrsaErrorKind: {}",
+                        "Failed convert BigNumber to decimal string, UrsaErrorKind: {:?}",
                         err.kind()
                     ),
                 )
@@ -970,12 +968,20 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
 
         let rev_reg_def = self.get_wallet_record_value(CATEGORY_REV_REG_DEF, rev_reg_id).await?;
 
+        let rev_reg_priv = self
+            .get_wallet_record_value(CATEGORY_REV_REG_DEF_PRIV, rev_reg_id)
+            .await?;
+
         let mut rev_reg_info: RevocationRegistryInfo =
             self.get_wallet_record_value(CATEGORY_REV_REG_INFO, rev_reg_id).await?;
 
-        let issuance_type = match &rev_reg_def {
-            RevocationRegistryDefinition::RevocationRegistryDefinitionV1(r) => r.value.issuance_type,
+        let (issuance_type, cred_def_id) = match &rev_reg_def {
+            RevocationRegistryDefinition::RevocationRegistryDefinitionV1(r) => {
+                (r.value.issuance_type, r.cred_def_id.0.as_str())
+            }
         };
+
+        let cred_def = self.get_wallet_record_value(CATEGORY_CRED_DEF, cred_def_id).await?;
 
         match issuance_type {
             IssuanceType::ISSUANCE_ON_DEMAND => {
@@ -1006,7 +1012,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let tails_reader = TailsFileReader::new(&tails_file_path);
 
         let (rev_reg, new_rev_reg_delta) =
-            credx::issuer::revoke_credential(&rev_reg_def, &rev_reg, cred_rev_id, &tails_reader)?;
+            credx::issuer::revoke_credential(&cred_def, &rev_reg_def, &rev_reg_priv, &rev_reg, cred_rev_id)?;
 
         let old_str_rev_reg_delta = self.get_rev_reg_delta(rev_reg_id).await?;
 

@@ -27,7 +27,7 @@ indy-vdr = { git = "https://github.com/Patrik-Stas/indy-vdr.git", rev = "3cd499a
 # - monitor anoncred-rs (which will replace indy-credx) as the fix will likely go in here,
 # - monitor the issue for other fixes from the maintainers: https://github.com/hyperledger/indy-shared-rs/issues/20
 # - update libvdrtools to use =0.3.6 ursa
-indy-credx = { git = "https://github.com/anonyome/indy-shared-rs.git", rev = "7342bc624d23ece8845d1a701cd2cdc9cd401bb0", optional = true }
+indy-credx = { git = "https://github.com/hyperledger/indy-shared-rs", tag = "v1.0.1", optional = true }
 libvdrtools = { path = "../libvdrtools", optional = true }
 indy-api-types = { path = "../libvdrtools/indy-api-types" }
 async-trait = "0.1.68"
