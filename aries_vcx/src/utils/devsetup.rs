@@ -273,7 +273,7 @@ impl SetupProfile {
             .await
             .unwrap();
 
-        warn!("genesis_file_path: {}", genesis_file_path);
+        debug!("genesis_file_path: {}", genesis_file_path);
         let setup = SetupProfile {
             institution_did: public_did.to_string(),
             profile,

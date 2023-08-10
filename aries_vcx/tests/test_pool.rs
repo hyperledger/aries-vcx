@@ -113,12 +113,6 @@ mod integration_tests {
             let faber = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut acme = create_faber(setup.genesis_file_path.clone()).await;
             let acme_vk = acme.get_verkey_from_wallet(acme.public_did()).await;
-            info!(
-                "test_pool_write_new_endorser_did >> Faber trustee did: {}, acme did: {}, acme vkey: {}",
-                faber.public_did(),
-                acme.public_did(),
-                acme_vk
-            );
 
             assert!(acme.create_schema().await.is_err());
             write_endorser_did(
@@ -130,7 +124,6 @@ mod integration_tests {
             )
             .await
             .unwrap();
-            info!("Wrote acme to the ledger");
             thread::sleep(Duration::from_millis(50));
             acme.create_schema().await.unwrap();
         })
