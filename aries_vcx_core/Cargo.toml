@@ -43,7 +43,7 @@ derive_builder = "0.12.0"
 uuid = { version = "1.3.0", default-features = false, features = ["v4"] }
 tokio = { version = "1.20" }
 # TODO: Point to the official repo if / when vdr-proxy-client PR is merged: https://github.com/hyperledger/indy-vdr/pull/184
-indy-vdr-proxy-client = { git = "https://github.com/Patrik-Stas/indy-vdr.git", rev = "776d56ee0859", optional = true }
+indy-vdr-proxy-client = { git = "https://github.com/mirgee/indy-vdr.git", rev = "fab0535", optional = true }
 indy-ledger-response-parser = { path = "../indy_ledger_response_parser" }
 lru = { version = "0.10.0"  }
 

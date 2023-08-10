@@ -6,7 +6,9 @@ use std::num::NonZeroUsize;
 use crate::api_vcx::api_global::profile::get_main_wallet;
 use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 use aries_vcx::aries_vcx_core::ledger::request_submitter::vdr_ledger::{IndyVdrLedgerPool, IndyVdrSubmitter};
-use aries_vcx::aries_vcx_core::ledger::response_cacher::in_memory::InMemoryResponseCacherConfig;
+use aries_vcx::aries_vcx_core::ledger::response_cacher::in_memory::{
+    InMemoryResponseCacherConfig, InMemoryResponseCacherConfigBuilder,
+};
 use aries_vcx::aries_vcx_core::wallet::base_wallet::BaseWallet;
 use aries_vcx::aries_vcx_core::PoolConfig;
 use aries_vcx::core::profile::ledger::indyvdr_build_ledger_read;
@@ -37,7 +39,7 @@ pub fn is_main_pool_open() -> bool {
 // but simply numeric seconds, making it easier to pass consumers of libvcx
 pub struct LibvcxInMemoryResponseCacherConfig {
     ttl_secs: NonZeroUsize,
-    capacity: NonZeroUsize,
+    capacity: usize,
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -48,19 +50,21 @@ pub struct LibvcxLedgerConfig {
     pub exclude_nodes: Option<Vec<String>>,
 }
 
-impl From<LibvcxInMemoryResponseCacherConfig> for InMemoryResponseCacherConfig {
-    fn from(config: LibvcxInMemoryResponseCacherConfig) -> Self {
-        InMemoryResponseCacherConfig {
-            ttl: Duration::from_secs(config.ttl_secs.get() as u64),
-            capacity: config.capacity,
-        }
+impl TryFrom<LibvcxInMemoryResponseCacherConfig> for InMemoryResponseCacherConfig {
+    type Error = LibvcxError;
+
+    fn try_from(config: LibvcxInMemoryResponseCacherConfig) -> LibvcxResult<InMemoryResponseCacherConfig> {
+        let m = InMemoryResponseCacherConfigBuilder::default()
+            .ttl(Duration::from_secs(config.ttl_secs.get() as u64))
+            .capacity(config.capacity)?;
+        Ok(m.build())
     }
 }
 
 async fn build_components_ledger(
     base_wallet: Arc<dyn BaseWallet>,
     libvcx_pool_config: &LibvcxLedgerConfig,
-) -> VcxResult<(
+) -> LibvcxResult<(
     Arc<dyn AnoncredsLedgerRead>,
     Arc<dyn AnoncredsLedgerWrite>,
     Arc<dyn IndyLedgerRead>,
@@ -83,7 +87,7 @@ async fn build_components_ledger(
             .ttl(Duration::from_secs(60))
             .capacity(1000)?
             .build(),
-        Some(cfg) => cfg.clone().into(),
+        Some(cfg) => cfg.clone().try_into()?,
     };
     let ledger_read = Arc::new(indyvdr_build_ledger_read(request_submitter.clone(), cache_config)?);
     let ledger_write = Arc::new(indyvdr_build_ledger_write(base_wallet, request_submitter, None));
@@ -212,10 +216,7 @@ pub mod tests {
             config.cache_config.as_ref().unwrap().ttl_secs,
             NonZeroUsize::new(3600).unwrap()
         );
-        assert_eq!(
-            config.cache_config.as_ref().unwrap().capacity,
-            NonZeroUsize::new(1000).unwrap()
-        );
+        assert_eq!(config.cache_config.as_ref().unwrap().capacity, 1000);
         assert!(config.exclude_nodes.is_none());
     }
 

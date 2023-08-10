@@ -5,8 +5,8 @@ use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind};
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct InMemoryResponseCacherConfig {
-    pub ttl: Duration,
-    pub capacity: NonZeroUsize,
+    ttl: Duration,
+    capacity: NonZeroUsize,
 }
 
 impl InMemoryResponseCacherConfig {

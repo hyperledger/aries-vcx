@@ -2742,7 +2742,7 @@ dependencies = [
 [[package]]
 name = "indy-vdr-proxy-client"
 version = "0.1.0"
-source = "git+https://github.com/Patrik-Stas/indy-vdr.git?rev=776d56ee0859#776d56ee08597c377bae37b55bbafaafa83ab5d5"
+source = "git+https://github.com/mirgee/indy-vdr.git?rev=fab0535#fab0535832d87f8194cf49acc897ac6b004c38c4"
 dependencies = [
  "indy-vdr 0.3.4",
  "reqwest",
