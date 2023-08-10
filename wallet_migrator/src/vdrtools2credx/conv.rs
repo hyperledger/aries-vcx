@@ -46,7 +46,9 @@ pub fn convert_cred_def_priv_key(mut record: Record) -> MigrationResult<Record> 
 pub fn convert_cred_def_correctness_proof(mut record: Record) -> MigrationResult<Record> {
     record.type_ = CATEGORY_CRED_KEY_CORRECTNESS_PROOF.to_owned();
     let old: vdrtools::CredentialDefinitionCorrectnessProof = serde_json::from_str(&record.value)?;
-    let new = credx::types::CredentialKeyCorrectnessProof { value: old.value };
+    let old_value = serde_json::to_string(&old.value)?;
+    let new_value = serde_json::from_str(&old_value)?;
+    let new = credx::types::CredentialKeyCorrectnessProof { value: new_value };
     record.value = serde_json::to_string(&new)?;
     Ok(record)
 }

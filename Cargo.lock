@@ -475,7 +475,7 @@ dependencies = [
  "derive_builder 0.12.0",
  "futures",
  "indy-api-types",
- "indy-credx 1.0.1",
+ "indy-credx",
  "indy-ledger-response-parser",
  "indy-vdr",
  "indy-vdr-proxy-client",
@@ -2615,27 +2615,7 @@ dependencies = [
  "thiserror",
  "ursa",
  "zeroize",
-]
-
-[[package]]
-name = "indy-credx"
-version = "0.3.1"
-source = "git+https://github.com/anonyome/indy-shared-rs.git?rev=7342bc624d23ece8845d1a701cd2cdc9cd401bb0#7342bc624d23ece8845d1a701cd2cdc9cd401bb0"
-dependencies = [
- "env_logger 0.7.1",
- "ffi-support",
- "indy-data-types 0.5.1 (git+https://github.com/anonyome/indy-shared-rs.git?rev=7342bc624d23ece8845d1a701cd2cdc9cd401bb0)",
- "indy-utils 0.5.1",
- "log",
- "once_cell",
- "rand 0.7.3",
- "regex",
- "serde",
- "serde_json",
- "sha2 0.9.9",
- "tempfile",
- "thiserror",
- "zeroize",
+ "zmq",
 ]
 
 [[package]]
@@ -2670,21 +2650,6 @@ dependencies = [
  "regex",
  "serde",
  "serde_json",
- "zeroize",
-]
-
-[[package]]
-name = "indy-data-types"
-version = "0.5.1"
-source = "git+https://github.com/anonyome/indy-shared-rs.git?rev=7342bc624d23ece8845d1a701cd2cdc9cd401bb0#7342bc624d23ece8845d1a701cd2cdc9cd401bb0"
-dependencies = [
- "hex",
- "indy-utils 0.5.1",
- "once_cell",
- "regex",
- "serde",
- "serde_json",
- "ursa",
  "zeroize",
 ]
 
@@ -2748,7 +2713,7 @@ dependencies = [
  "curve25519-dalek",
  "ed25519-dalek",
  "hex",
- "indy-wql 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "indy-wql",
  "once_cell",
  "rand 0.8.5",
  "regex",
@@ -2757,22 +2722,6 @@ dependencies = [
  "sha2 0.9.9",
  "thiserror",
  "x25519-dalek",
- "zeroize",
-]
-
-[[package]]
-name = "indy-utils"
-version = "0.5.1"
-source = "git+https://github.com/anonyome/indy-shared-rs.git?rev=7342bc624d23ece8845d1a701cd2cdc9cd401bb0#7342bc624d23ece8845d1a701cd2cdc9cd401bb0"
-dependencies = [
- "bs58 0.4.0",
- "indy-wql 0.4.0 (git+https://github.com/anonyome/indy-shared-rs.git?rev=7342bc624d23ece8845d1a701cd2cdc9cd401bb0)",
- "once_cell",
- "regex",
- "serde",
- "serde_json",
- "sha2 0.10.7",
- "thiserror",
  "zeroize",
 ]
 
@@ -2799,8 +2748,7 @@ dependencies = [
  "futures-executor",
  "futures-util",
  "hex",
- "hex-literal",
- "indy-data-types 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "indy-data-types 0.5.1",
  "indy-utils 0.5.0",
  "log",
  "once_cell",
@@ -2854,15 +2802,6 @@ name = "indy-wql"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f4aa37c6fbc387666de081f7e549e20aad2e165d545e7ba2cdb3c9a5a637c25a"
-dependencies = [
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "indy-wql"
-version = "0.4.0"
-source = "git+https://github.com/anonyome/indy-shared-rs.git?rev=7342bc624d23ece8845d1a701cd2cdc9cd401bb0#7342bc624d23ece8845d1a701cd2cdc9cd401bb0"
 dependencies = [
  "serde",
  "serde_json",
@@ -5493,7 +5432,7 @@ name = "wallet_migrator"
 version = "0.1.0"
 dependencies = [
  "aries_vcx_core",
- "indy-credx 0.3.1",
+ "indy-credx",
  "libvdrtools",
  "log",
  "serde_json",
