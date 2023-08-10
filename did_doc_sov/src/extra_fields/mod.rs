@@ -1,6 +1,7 @@
 use std::fmt::Display;
 
 use did_doc::did_parser::DidUrl;
+use did_key::DidKey;
 use serde::{Deserialize, Deserializer, Serialize};
 
 use crate::error::DidDocumentSovError;
@@ -66,6 +67,7 @@ impl Serialize for AcceptType {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(untagged)]
 pub enum KeyKind {
+    DidKey(DidKey),
     Reference(DidUrl),
     Value(String),
 }
@@ -75,6 +77,7 @@ impl Display for KeyKind {
         match self {
             KeyKind::Reference(did_url) => write!(f, "{}", did_url),
             KeyKind::Value(value) => write!(f, "{}", value),
+            KeyKind::DidKey(did_key) => write!(f, "{}", did_key),
         }
     }
 }
