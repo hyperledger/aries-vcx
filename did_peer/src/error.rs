@@ -25,45 +25,20 @@ pub enum DidPeerError {
     InvalidNumalgoCharacter(char),
     #[error("Unsupported purpose character: {0}")]
     UnsupportedPurpose(char),
-    #[error("Unsupported multicodec descriptor: {0}")]
-    UnsupportedMulticodecDescriptor(u64),
     #[error("Unsupported verification method type: {0}")]
     UnsupportedVerificationMethodType(VerificationMethodType),
     #[error("Base 64 decoding error")]
     Base64DecodingError(#[from] base64::DecodeError),
-    #[error("Multibase decoding error")]
-    MultibaseDecodingError(#[from] multibase::Error),
-    #[error("Varint decoding error")]
-    VarintDecodingError(#[from] VarintDecodingError),
     #[error("JSON error: {0}")]
     JsonError(#[from] serde_json::Error),
     #[error("Regex error: {0}")]
     RegexError(#[from] regex::Error),
+    #[error("Public key error: {0}")]
+    PublicKeyError(#[from] public_key::PublicKeyError),
 }
 
 impl From<Infallible> for DidPeerError {
     fn from(_: Infallible) -> Self {
         panic!("Attempted to convert an Infallible error")
-    }
-}
-
-#[derive(Debug, Error)]
-pub struct VarintDecodingError(unsigned_varint::decode::Error);
-
-impl std::fmt::Display for VarintDecodingError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Varint decoding error: {}", self.0)
-    }
-}
-
-impl From<unsigned_varint::decode::Error> for VarintDecodingError {
-    fn from(error: unsigned_varint::decode::Error) -> Self {
-        Self(error)
-    }
-}
-
-impl From<unsigned_varint::decode::Error> for DidPeerError {
-    fn from(error: unsigned_varint::decode::Error) -> Self {
-        Self::VarintDecodingError(error.into())
     }
 }

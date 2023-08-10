@@ -28,10 +28,7 @@ async fn test_resolve_numalgo_2_invalid_0() {
         .Ez6LSbysY2xFMRpGMhb7tFTLMpeuPRaqaWM1yECx2AtzE3KCc\
         .Vz6666YqQiSgvZQdnBytw86Qbs2ZWUkGv22od935YF4s8M7V\
         .SeyJ0IjoiZG0iLCJzIjoiaHR0cHM6Ly9leGFtcGxlLmNvbS9lbmRwb2ludCIsInIiOlsiZGlkOmV4YW1wbGU6c29tZW1lZGlhdG9yI3NvbWVrZXkiXX0";
-    assert!(matches!(
-        resolve_error(peer_did).await,
-        DidPeerError::UnsupportedMulticodecDescriptor(3)
-    ));
+    assert!(matches!(resolve_error(peer_did).await, DidPeerError::PublicKeyError(_)));
 }
 
 #[test]
@@ -40,10 +37,7 @@ async fn test_resolve_numalgo_2_invalid_1() {
         .Ez7777sY2xFMRpGMhb7tFTLMpeuPRaqaWM1yECx2AtzE3KCc\
         .Vz6MkqRYqQiSgvZQdnBytw86Qbs2ZWUkGv22od935YF4s8M7V\
         .SeyJ0IjoiZG0iLCJzIjoiaHR0cHM6Ly9leGFtcGxlLmNvbS9lbmRwb2ludCIsInIiOlsiZGlkOmV4YW1wbGU6c29tZW1lZGlhdG9yI3NvbWVrZXkiXX0";
-    assert!(matches!(
-        resolve_error(peer_did).await,
-        DidPeerError::UnsupportedMulticodecDescriptor(4)
-    ));
+    assert!(matches!(resolve_error(peer_did).await, DidPeerError::PublicKeyError(_)));
 }
 
 #[test]
@@ -77,10 +71,7 @@ async fn test_resolve_numalgo_2_invalid_4() {
         .Ez6LSbysY2xFMRpGMhb7tFTLMpeuPRaqaWM1yECx2AtzE3KCc\
         .Vz6MkqRYqQiS\
         .SeyJ0IjoiZG0iLCJzIjoiaHR0cHM6Ly9leGFtcGxlLmNvbS9lbmRwb2ludCIsInIiOlsiZGlkOmV4YW1wbGU6c29tZW1lZGlhdG9yI3NvbWVrZXkiXX0";
-    assert!(matches!(
-        resolve_error(peer_did).await,
-        DidPeerError::UnsupportedMulticodecDescriptor(12557)
-    ));
+    assert!(matches!(resolve_error(peer_did).await, DidPeerError::PublicKeyError(_)));
 }
 
 #[test]
@@ -90,10 +81,7 @@ async fn test_resolve_numalgo_2_invalid_5() {
         .Vz6MkqRYqQiSgvZQdnBytw86Qbs2ZWUkGv22od935YF4s8M7V\
         .Vz6MkgoLTnTypo3tDRwCkZXSccTPHRLhF4ZnjhueYAFpEX6vg\
         .SeyJ0IjoiZG0iLCJzIjoiaHR0cHM6Ly9leGFtcGxlLmNvbS9lbmRwb2ludCIsInIiOlsiZGlkOmV4YW1wbGU6c29tZW1lZGlhdG9yI3NvbWVrZXkiXX0";
-    assert!(matches!(
-        resolve_error(peer_did).await,
-        DidPeerError::UnsupportedMulticodecDescriptor(10)
-    ));
+    assert!(matches!(resolve_error(peer_did).await, DidPeerError::PublicKeyError(_)));
 }
 
 #[test]
@@ -103,10 +91,7 @@ async fn test_resolve_numalgo_2_invalid_6() {
         .Vz6MkqRYqQiSgvZQdnBytw86Qbs2ZWUkGv22od935YF4s8M7Vcccccccccc\
         .Vz6MkgoLTnTypo3tDRwCkZXSccTPHRLhF4ZnjhueYAFpEX6vg\
         .SeyJ0IjoiZG0iLCJzIjoiaHR0cHM6Ly9leGFtcGxlLmNvbS9lbmRwb2ludCIsInIiOlsiZGlkOmV4YW1wbGU6c29tZW1lZGlhdG9yI3NvbWVrZXkiXX0";
-    assert!(matches!(
-        resolve_error(peer_did).await,
-        DidPeerError::UnsupportedMulticodecDescriptor(5)
-    ));
+    assert!(matches!(resolve_error(peer_did).await, DidPeerError::PublicKeyError(_)));
 }
 
 #[test]
@@ -116,8 +101,5 @@ async fn test_resolve_numalgo_2_invalid_7() {
         .Vz6MkqRYqQiSgvZQdnBytw86Qbs2ZWUkGv22od935YF4s8M7V\
         .Vz6MkgoLTnTypo3tDRwCkZXSccTPHRLhF4ZnjhueYAFpEX6vg\
         .SeyJ0IjoiZG0iLCJzIjoiaHR0cHM6Ly9leGFtcGxlLmNvbS9lbmRwb2ludCIsInIiOlsiZGlkOmV4YW1wbGU6c29tZW1lZGlhdG9yI3NvbWVrZXkiXX0";
-    assert!(matches!(
-        resolve_error(peer_did).await,
-        DidPeerError::UnsupportedMulticodecDescriptor(1)
-    ));
+    assert!(matches!(resolve_error(peer_did).await, DidPeerError::PublicKeyError(_)));
 }
