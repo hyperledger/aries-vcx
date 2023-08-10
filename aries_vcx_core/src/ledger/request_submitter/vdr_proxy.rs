@@ -21,7 +21,6 @@ impl VdrProxySubmitter {
 #[async_trait]
 impl RequestSubmitter for VdrProxySubmitter {
     async fn submit(&self, request: PreparedRequest) -> VcxCoreResult<String> {
-        todo!("Restore below when vdr-proxy client feature is restored.")
-        // self.client.post(request).await.map_err(|e| e.into())
+        self.client.post(request).await.map_err(|e| e.into())
     }
 }
