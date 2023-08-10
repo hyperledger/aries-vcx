@@ -1,5 +1,3 @@
-pub mod vdr_reader;
-
 use std::sync::Arc;
 
 use aries_vcx_core::ledger::base_ledger::IndyLedgerRead;
