@@ -24,14 +24,6 @@ public class VcxUtilsTest {
         String agreement = TestHelper.getResultFromFuture(UtilsApi.getLedgerAuthorAgreement());
         assert (agreement.equals("{\"text\":\"Default indy agreement\", \"version\":\"1.0.0\", \"aml\": {\"acceptance mechanism label1\": \"description\"}}"));
     }
-
-    @Test
-    @DisplayName("set active txn author agreement meta")
-    void vcxSetActiveTxnAuthorAgreementMeta() throws VcxException {
-        UtilsApi.setActiveTxnAuthorAgreementMeta("indy agreement", "1.0.0", null,
-                "acceptance type 1", 123456789);
-    }
-
     @Test
     @DisplayName("endorse transaction")
     void vcxEndorseTransaction() throws VcxException, ExecutionException, InterruptedException {

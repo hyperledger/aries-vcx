@@ -2705,33 +2705,4 @@ withConnectionHandle:(NSNumber *)connection_handle
     });
 }
 
-
-/// Set some accepted agreement as active.
-///
-/// As result of succesfull call of this funciton appropriate metadata will be appended to each write request by `indy_append_txn_author_agreement_meta_to_request` libindy call.
-///
-/// #Params
-/// text and version - (optional) raw data about TAA from ledger.
-///     These parameters should be passed together.
-///     These parameters are required if hash parameter is ommited.
-/// hash - (optional) hash on text and version. This parameter is required if text and version parameters are ommited.
-/// acc_mech_type - mechanism how user has accepted the TAA
-/// time_of_acceptance - UTC timestamp when user has accepted the TAA
-///
-/// #Returns
-/// Error code as a u32
-- (vcx_error_t)activateTxnAuthorAgreement:(NSString *)text
-                              withVersion:(NSString *)version
-                                 withHash:(NSString *)hash
-                            withMechanism:(NSString *)mechanism
-                            withTimestamp:(long)timestamp {
-    return vcx_set_active_txn_author_agreement_meta(
-            [text UTF8String],
-            [version UTF8String],
-            [hash UTF8String],
-            [mechanism UTF8String],
-            timestamp
-    );
-}
-
 @end

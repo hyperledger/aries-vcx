@@ -404,18 +404,6 @@ pub extern "C" fn vcx_get_ledger_author_agreement(
     SUCCESS_ERR_CODE
 }
 
-// todo: remove from FFI and wrappers
-#[no_mangle]
-pub extern "C" fn vcx_set_active_txn_author_agreement_meta(
-    _text: *const c_char,
-    _version: *const c_char,
-    _hash: *const c_char,
-    _acc_mech_type: *const c_char,
-    _time_of_acceptance: u64,
-) -> u32 {
-    unimplemented!("Not expected to be called in mobile use-case")
-}
-
 /// Get details for last occurred error.
 ///
 /// This function should be called in two places to handle both cases of error occurrence:

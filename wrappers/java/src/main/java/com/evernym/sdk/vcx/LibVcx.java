@@ -442,8 +442,6 @@ public abstract class LibVcx {
 
         public int vcx_get_ledger_author_agreement(int command_handle, Callback cb);
 
-        public int vcx_set_active_txn_author_agreement_meta(String text, String version, String hash, String accMechType, long timeOfAcceptance);
-
         public int vcx_pool_set_handle(int handle);
 
         /** Endorse transaction to the ledger preserving an original author */
