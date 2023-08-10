@@ -8,6 +8,7 @@ const { IssuerStateType, HolderStateType, OutOfBandReceiver } = require('@hyperl
 const { initRustLogger } = require('../src')
 const { proofRequestDataStandard } = require('./utils/data')
 const path = require('path')
+const logger = require('../demo/logger')('out-of-band-test')
 
 beforeAll(async () => {
   jest.setTimeout(1000 * 60 * 4)
@@ -22,6 +23,7 @@ describe('test out of band communication', () => {
   it('Faber establishes connection with Alice via OOB message and they exchange messages', async () => {
     const { alice, faber } = await createPairedAliceAndFaberViaOobMsg()
 
+    logger.info('Alice sending a message')
     await alice.sendMessage('Hello Faber')
     const msgsFaber = await faber.downloadReceivedMessagesV2()
     expect(msgsFaber.length).toBe(1)
@@ -32,6 +34,7 @@ describe('test out of band communication', () => {
     expect(payloadFaber['@type']).toBeDefined()
     expect(payloadFaber.content).toBe('Hello Faber')
 
+    logger.info('Faber sending a message')
     await faber.sendMessage('Hello Alice')
     const msgsAlice = await alice.downloadReceivedMessagesV2()
     expect(msgsAlice.length).toBe(1)
