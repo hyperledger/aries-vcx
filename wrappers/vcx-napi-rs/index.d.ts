@@ -91,7 +91,7 @@ export function issuerCredentialGetOfferMsg(credentialHandle: number): string
 export function issuerCredentialRelease(credentialHandle: number): void
 export function issuerCredentialGetThreadId(credentialHandle: number): string
 export function getLedgerAuthorAgreement(): Promise<string>
-export function setActiveTxnAuthorAgreementMeta(text: string | undefined | null, version: string | undefined | null, hash: string | undefined | null, accMechType: string, timeOfAcceptance: number): void
+export function setActiveTxnAuthorAgreementMeta(text: string, version: string, accMechType: string): void
 export function createService(targetDid: string, recipientKeys: Array<string>, routingKeys: Array<string>, endpoint: string): Promise<string>
 export function createServiceV2(targetDid: string, routingKeys: Array<string>, endpoint: string): Promise<string>
 export function getServiceFromLedger(targetDid: string): Promise<string>

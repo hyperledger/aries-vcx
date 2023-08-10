@@ -19,10 +19,6 @@ use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResu
 
 use super::RequestSubmitter;
 
-pub struct LedgerPoolConfig {
-    pub genesis_file_path: String,
-}
-
 pub struct IndyVdrLedgerPool {
     pub(self) runner: Option<PoolRunner>,
 }
@@ -32,11 +28,24 @@ impl IndyVdrLedgerPool {
         IndyVdrLedgerPool { runner: Some(runner) }
     }
 
-    pub fn new(config: LedgerPoolConfig) -> VcxCoreResult<Self> {
-        let vdr_config = PoolConfig::default();
-        let txns = PoolTransactions::from_json_file(config.genesis_file_path)?;
+    fn generate_exclusion_weights(exclude_nodes: Vec<String>) -> HashMap<String, f32> {
+        exclude_nodes.into_iter().map(|node| (node, 0.0f32)).collect()
+    }
 
-        let runner = PoolBuilder::from(vdr_config).transactions(txns)?.into_runner()?;
+    pub fn new(
+        genesis_file_path: String,
+        indy_vdr_config: PoolConfig,
+        exclude_nodes: Vec<String>,
+    ) -> VcxCoreResult<Self> {
+        info!("IndyVdrLedgerPool::new >> genesis_file_path: {genesis_file_path}, indy_vdr_config: {indy_vdr_config:?}");
+        let txns = PoolTransactions::from_json_file(genesis_file_path)?;
+        let runner = PoolBuilder::new(
+            indy_vdr_config,
+            None,
+            Some(Self::generate_exclusion_weights(exclude_nodes)),
+        )
+        .transactions(txns)?
+        .into_runner()?;
 
         Ok(IndyVdrLedgerPool { runner: Some(runner) })
     }

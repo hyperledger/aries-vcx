@@ -92,15 +92,29 @@ where
         Ok(RequestBuilder::new(self.protocol_version.0))
     }
 
-    async fn submit_request_cached(&self, id: &str, request: PreparedRequest) -> VcxCoreResult<String> {
-        match self.response_cacher.get(id, None).await? {
-            Some(response) => Ok(response),
+    async fn submit_request(&self, cache_id: Option<&str>, request: PreparedRequest) -> VcxCoreResult<String> {
+        trace!("submit_request >> Submitting ledger request, cache_id: {cache_id:?}, request: {request:?}");
+        let (response, is_from_cache) = match cache_id {
+            Some(cache_id) => match self.response_cacher.get(cache_id, None).await? {
+                Some(response) => {
+                    trace!("submit_request << Returning cached response");
+                    (response, true)
+                }
+                None => {
+                    trace!("submit_request << cache miss, will make ledger request. Response will be cached.");
+                    let response = self.request_submitter.submit(request).await?;
+                    self.response_cacher.put(cache_id, response.clone()).await?;
+                    (response, false)
+                }
+            },
             None => {
+                trace!("submit_request << caching is disabled for this request");
                 let response = self.request_submitter.submit(request).await?;
-                self.response_cacher.put(id, response.clone()).await?;
-                Ok(response)
+                (response, false)
             }
-        }
+        };
+        trace!("submit_request << ledger response (is from cache: {is_from_cache}): {response}");
+        Ok(response)
     }
 }
 
@@ -140,6 +154,10 @@ where
         *m = Some(taa_options);
         Ok(())
     }
+
+    fn get_txn_author_agreement_options(&self) -> VcxCoreResult<Option<TxnAuthrAgrmtOptions>> {
+        Ok(self.taa_options.read()?.clone())
+    }
 }
 
 impl<T, V> Debug for IndyVdrLedgerRead<T, V>
@@ -169,35 +187,46 @@ where
     V: ResponseCacher + Send + Sync,
 {
     async fn get_attr(&self, target_did: &str, attr_name: &str) -> VcxCoreResult<String> {
+        debug!("get_attr >> target_did: {target_did}, attr_name: {attr_name}");
         let dest = DidValue::from_str(target_did)?;
         let request =
             self.request_builder()?
                 .build_get_attrib_request(None, &dest, Some(attr_name.to_string()), None, None)?;
-        self.request_submitter.submit(request).await
+        let response = self.submit_request(None, request).await?;
+        debug!("get_attr << response: {response}");
+        Ok(response)
     }
 
     async fn get_nym(&self, did: &str) -> VcxCoreResult<String> {
+        debug!("get_nym >> did: {did}");
         let dest = DidValue::from_str(did)?;
         let request = self.request_builder()?.build_get_nym_request(None, &dest)?;
-        self.submit_request_cached(did, request).await
+        let response = self.submit_request(None, request).await?;
+        debug!("get_nym << response: {response}");
+        Ok(response)
     }
 
     async fn get_txn_author_agreement(&self) -> VcxCoreResult<Option<String>> {
+        debug!("get_txn_author_agreement >>");
         let request = self
             .request_builder()?
             .build_get_txn_author_agreement_request(None, None)?;
-        let response = self.request_submitter.submit(request).await?;
+        let response = self.submit_request(None, request).await?;
+        debug!("get_txn_author_agreement << response: {response}");
         map_error_not_found_to_none(self.response_parser.parse_get_txn_author_agreement_response(&response))?
             .map(|taa| serde_json::to_string(&taa).map_err(Into::into))
             .transpose()
     }
 
     async fn get_ledger_txn(&self, seq_no: i32, submitter_did: Option<&str>) -> VcxCoreResult<String> {
+        debug!("get_ledger_txn >> seq_no: {seq_no}");
         let identifier = submitter_did.map(DidValue::from_str).transpose()?;
         let request =
             self.request_builder()?
                 .build_get_txn_request(identifier.as_ref(), LedgerType::DOMAIN.to_id(), seq_no)?;
-        self.request_submitter.submit(request).await
+        let response = self.submit_request(None, request).await?;
+        debug!("get_ledger_txn << response: {response}");
+        Ok(response)
     }
 }
 
@@ -214,7 +243,7 @@ where
                 Some(&taa_options.text),
                 Some(&taa_options.version),
                 None,
-                &taa_options.aml_label,
+                &taa_options.mechanism,
                 OffsetDateTime::now_utc().unix_timestamp() as u64,
             )?;
             request.set_txn_author_agreement_acceptance(&taa_data)?;
@@ -290,30 +319,42 @@ where
     V: ResponseCacher + Send + Sync,
 {
     async fn get_schema(&self, schema_id: &str, _submitter_did: Option<&str>) -> VcxCoreResult<String> {
+        debug!("get_schema >> schema_id: {schema_id}");
         let request = self
             .request_builder()?
             .build_get_schema_request(None, &SchemaId::from_str(schema_id)?)?;
-        let response = self.submit_request_cached(schema_id, request).await?;
+        let response = self.submit_request(None, request).await?;
+        debug!("get_schema << response: {response}");
         let schema = self.response_parser.parse_get_schema_response(&response, None)?;
         Ok(serde_json::to_string(&schema)?)
     }
 
     async fn get_cred_def(&self, cred_def_id: &str, submitter_did: Option<&str>) -> VcxCoreResult<String> {
+        debug!("get_cred_def >> cred_def_id: {cred_def_id}");
         let identifier = submitter_did.map(DidValue::from_str).transpose()?;
         let id = CredentialDefinitionId::from_str(cred_def_id)?;
         let request = self
             .request_builder()?
             .build_get_cred_def_request(identifier.as_ref(), &id)?;
-        let response = self.request_submitter.submit(request).await?;
+        // note: Before we try to create credential definition, we are checking if it already
+        //       doesn't exist on the ledger to prevent invalidating the old one.
+        //       When we make the first request, it typically doesn't exist, but we don't want to
+        //       cache such as result. So caching strategy should perhaps only store data in cache
+        //       if ledger response was found / the response is success.
+        //       Therefore parsing should happen prior to caching.
+        let response = self.submit_request(None, request).await?;
+        debug!("get_cred_def << response: {response}");
         let cred_def = self.response_parser.parse_get_cred_def_response(&response, None)?;
         Ok(serde_json::to_string(&cred_def)?)
     }
 
     async fn get_rev_reg_def_json(&self, rev_reg_id: &str) -> VcxCoreResult<String> {
+        debug!("get_rev_reg_def_json >> rev_reg_id: {rev_reg_id}");
         let id = RevocationRegistryId::from_str(rev_reg_id)?;
         let request = self.request_builder()?.build_get_revoc_reg_def_request(None, &id)?;
-        let res = self.submit_request_cached(rev_reg_id, request).await?;
-        let rev_reg_def = self.response_parser.parse_get_revoc_reg_def_response(&res)?;
+        let response = self.submit_request(Some(rev_reg_id), request).await?;
+        debug!("get_rev_reg_def_json << response: {response}");
+        let rev_reg_def = self.response_parser.parse_get_revoc_reg_def_response(&response)?;
         Ok(serde_json::to_string(&rev_reg_def)?)
     }
 
@@ -323,6 +364,7 @@ where
         from: Option<u64>,
         to: Option<u64>,
     ) -> VcxCoreResult<(String, String, u64)> {
+        debug!("get_rev_reg_delta_json >> rev_reg_id: {rev_reg_id}, from: {from:?}, to: {to:?}");
         let revoc_reg_def_id = RevocationRegistryId::from_str(rev_reg_id)?;
 
         let from = from.map(|x| x as i64);
@@ -332,14 +374,14 @@ where
         let request = self
             .request_builder()?
             .build_get_revoc_reg_delta_request(None, &revoc_reg_def_id, from, to)?;
-        let res = self.request_submitter.submit(request).await?;
+        let response = self.submit_request(None, request).await?;
+        debug!("get_rev_reg_delta_json << response: {response}");
 
         let RevocationRegistryDeltaInfo {
             revoc_reg_def_id,
             revoc_reg_delta,
             timestamp,
-        } = self.response_parser.parse_get_revoc_reg_delta_response(&res)?;
-
+        } = self.response_parser.parse_get_revoc_reg_delta_response(&response)?;
         Ok((
             revoc_reg_def_id.to_string(),
             serde_json::to_string(&revoc_reg_delta)?,
@@ -348,6 +390,7 @@ where
     }
 
     async fn get_rev_reg(&self, rev_reg_id: &str, timestamp: u64) -> VcxCoreResult<(String, String, u64)> {
+        debug!("get_rev_reg >> rev_reg_id: {rev_reg_id}, timestamp: {timestamp}");
         let revoc_reg_def_id = RevocationRegistryId::from_str(rev_reg_id)?;
 
         let request = self.request_builder()?.build_get_revoc_reg_request(
@@ -355,13 +398,14 @@ where
             &revoc_reg_def_id,
             timestamp.try_into().unwrap(),
         )?;
-        let res = self.request_submitter.submit(request).await?;
+        let response = self.submit_request(None, request).await?;
+        debug!("get_rev_reg << response: {response}");
 
         let RevocationRegistryInfo {
             revoc_reg_def_id,
             revoc_reg,
             timestamp,
-        } = self.response_parser.parse_get_revoc_reg_response(&res)?;
+        } = self.response_parser.parse_get_revoc_reg_response(&response)?;
 
         Ok((
             revoc_reg_def_id.to_string(),

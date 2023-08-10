@@ -102,17 +102,6 @@ pub fn try_parse_indy_rev_reg(
 }
 
 #[test]
-fn test_try_parse_valid_indy_creddefid_works_for_sub_ledger() {
-    let (did, schema_seq_no, tag) = try_parse_indy_creddef_id(
-        "did:indy:sovrin:5nDyJVP1NrcPAttP3xwMB9/anoncreds/v0/CLAIM_DEF/56495/npdb",
-    )
-    .unwrap();
-    assert_eq!(did, "did:indy:sovrin:5nDyJVP1NrcPAttP3xwMB9".to_owned());
-    assert_eq!(schema_seq_no, "56495".to_owned());
-    assert_eq!(tag, "npdb".to_owned());
-}
-
-#[test]
 fn test_try_parse_valid_indy_creddefid_works() {
     let (did, schema_seq_no, tag) =
         try_parse_indy_creddef_id("did:indy:NcYxiDXkpYi6ov5FcYDi1e/anoncreds/v0/CLAIM_DEF/1/tag")

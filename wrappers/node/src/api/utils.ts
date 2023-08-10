@@ -51,19 +51,15 @@ export async function getLedgerAuthorAgreement(): Promise<string> {
 }
 
 export function setActiveTxnAuthorAgreementMeta(
-  text: string | null | undefined,
-  version: string | null | undefined,
-  hash: string | null | undefined,
+  text: string,
+  version: string,
   acceptanceMechanismType: string,
-  timeOfAcceptance: number,
 ): void {
   try {
     ffi.setActiveTxnAuthorAgreementMeta(
       text,
       version,
-      hash,
       acceptanceMechanismType,
-      timeOfAcceptance,
     );
   } catch (err: any) {
     throw new VCXInternalError(err);

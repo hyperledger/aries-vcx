@@ -1,19 +1,19 @@
 use std::sync::Arc;
 
-use super::profile::Profile;
-use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
+use async_trait::async_trait;
+
 use aries_vcx_core::ledger::base_ledger::TxnAuthrAgrmtOptions;
 use aries_vcx_core::wallet::indy::IndySdkWallet;
 use aries_vcx_core::{
     anoncreds::{base_anoncreds::BaseAnonCreds, indy_anoncreds::IndySdkAnonCreds},
-    ledger::{
-        base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite},
-        indy_ledger::{IndySdkLedgerRead, IndySdkLedgerWrite},
-    },
+    ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite},
     wallet::base_wallet::BaseWallet,
-    PoolHandle, WalletHandle,
+    WalletHandle,
 };
-use async_trait::async_trait;
+
+use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
+
+use super::profile::Profile;
 
 #[derive(Debug)]
 pub struct VdrtoolsProfile {
@@ -26,18 +26,21 @@ pub struct VdrtoolsProfile {
 }
 
 impl VdrtoolsProfile {
-    pub fn init(wallet_handle: WalletHandle, pool_handle: PoolHandle) -> Self {
-        let wallet = Arc::new(IndySdkWallet::new(wallet_handle));
-        let anoncreds = Arc::new(IndySdkAnonCreds::new(wallet_handle));
-        let ledger_read = Arc::new(IndySdkLedgerRead::new(wallet_handle, pool_handle));
-        let ledger_write = Arc::new(IndySdkLedgerWrite::new(wallet_handle, pool_handle));
+    pub fn init(
+        wallet: Arc<IndySdkWallet>,
+        anoncreds_ledger_read: Arc<dyn AnoncredsLedgerRead>,
+        anoncreds_ledger_write: Arc<dyn AnoncredsLedgerWrite>,
+        indy_ledger_read: Arc<dyn IndyLedgerRead>,
+        indy_ledger_write: Arc<dyn IndyLedgerWrite>,
+    ) -> Self {
+        let anoncreds = Arc::new(IndySdkAnonCreds::new(wallet.wallet_handle));
         VdrtoolsProfile {
             wallet,
             anoncreds,
-            anoncreds_ledger_read: ledger_read.clone(),
-            anoncreds_ledger_write: ledger_write.clone(),
-            indy_ledger_read: ledger_read,
-            indy_ledger_write: ledger_write,
+            anoncreds_ledger_read,
+            anoncreds_ledger_write,
+            indy_ledger_read,
+            indy_ledger_write,
         }
     }
 }

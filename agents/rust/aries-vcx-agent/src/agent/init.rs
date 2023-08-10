@@ -1,5 +1,7 @@
 use std::sync::Arc;
+use std::time::Duration;
 
+use aries_vcx::core::profile::ledger::{build_ledger_components, VcxPoolConfig};
 use aries_vcx::global::settings::DEFAULT_LINK_SECRET_ALIAS;
 use aries_vcx::{
     agency_client::{agency_client::AgencyClient, configuration::AgentProvisionConfig},
@@ -7,9 +9,9 @@ use aries_vcx::{
     global::settings::init_issuer_config,
     utils::provision::provision_cloud_agent,
 };
-use aries_vcx_core::ledger::indy::pool::{create_pool_ledger_config, indy_open_pool, PoolConfigBuilder};
-use aries_vcx_core::wallet::indy::wallet::{create_and_open_wallet, open_wallet, wallet_configure_issuer};
-use aries_vcx_core::wallet::indy::WalletConfig;
+use aries_vcx_core::ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite};
+use aries_vcx_core::wallet::indy::wallet::{create_and_open_wallet, wallet_configure_issuer};
+use aries_vcx_core::wallet::indy::{IndySdkWallet, WalletConfig};
 use url::Url;
 
 use crate::{
@@ -67,26 +69,30 @@ impl Agent {
         };
 
         let wallet_handle = create_and_open_wallet(&config_wallet).await.unwrap();
-
         let config_issuer = wallet_configure_issuer(wallet_handle, &init_config.enterprise_seed)
             .await
             .unwrap();
         init_issuer_config(&config_issuer.institution_did).unwrap();
+        let wallet = Arc::new(IndySdkWallet::new(wallet_handle));
 
-        let pool_config = PoolConfigBuilder::default()
-            .genesis_path(&init_config.pool_config.genesis_path)
-            .build()
-            .expect("Failed to build pool config");
-        create_pool_ledger_config(
-            &init_config.pool_config.pool_name,
-            &init_config.pool_config.genesis_path,
-        )
-        .unwrap();
-        let pool_handle = indy_open_pool(&init_config.pool_config.pool_name, pool_config.pool_config)
-            .await
-            .unwrap();
+        let pool_config = VcxPoolConfig {
+            genesis_file_path: init_config.pool_config.genesis_path,
+            indy_vdr_config: None,
+            response_cache_config: None,
+        };
+        let (ledger_read, ledger_write) = build_ledger_components(wallet.clone(), pool_config).unwrap();
+        let anoncreds_ledger_read: Arc<dyn AnoncredsLedgerRead> = ledger_read.clone();
+        let anoncreds_ledger_write: Arc<dyn AnoncredsLedgerWrite> = ledger_write.clone();
+        let indy_ledger_read: Arc<dyn IndyLedgerRead> = ledger_read.clone();
+        let indy_ledger_write: Arc<dyn IndyLedgerWrite> = ledger_write.clone();
 
-        let indy_profile = VdrtoolsProfile::init(wallet_handle, pool_handle);
+        let indy_profile = VdrtoolsProfile::init(
+            wallet,
+            anoncreds_ledger_read,
+            anoncreds_ledger_write,
+            indy_ledger_read,
+            indy_ledger_write,
+        );
         let profile: Arc<dyn Profile> = Arc::new(indy_profile);
         let wallet = profile.inject_wallet();
         let anoncreds = profile.inject_anoncreds();

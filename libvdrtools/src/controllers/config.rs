@@ -1,6 +1,6 @@
 use std::env;
 
-use crate::{domain::IndyConfig, services::PoolService};
+use crate::domain::IndyConfig;
 
 pub struct ConfigController {}
 
@@ -33,10 +33,6 @@ impl ConfigController {
             Some(true) => env::set_var("RUST_BACKTRACE", "1"),
             Some(false) => env::set_var("RUST_BACKTRACE", "0"),
             _ => {}
-        }
-
-        if let Some(threshold) = config.freshness_threshold {
-            PoolService::set_freshness_threshold(threshold);
         }
 
         trace!("set_runtime_config <");

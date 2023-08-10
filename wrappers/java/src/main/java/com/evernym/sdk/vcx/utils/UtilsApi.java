@@ -133,16 +133,6 @@ public class UtilsApi extends VcxJava.API {
         checkResult(result);
         return future;
     }
-
-    public static void setActiveTxnAuthorAgreementMeta(String text, String version,
-                                                       String hash, String accMechType, long timeOfAcceptance) throws VcxException {
-        ParamGuard.notNull(accMechType, "accMechType");
-        logger.debug("vcxProvisionAgent() called with: text = [" + text + "], version = [" + version + "]," +
-                " hash = [" + hash + "], accMechType = [" + accMechType + "], timeOfAcceptance = [" + timeOfAcceptance + "]");
-        int result = LibVcx.api.vcx_set_active_txn_author_agreement_meta(text, version, hash, accMechType, timeOfAcceptance);
-        checkResult(result);
-    }
-
     public static void setPoolHandle(int handle) {
         LibVcx.api.vcx_pool_set_handle(handle);
     }
