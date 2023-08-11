@@ -203,14 +203,27 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
                 new_regs
             });
 
-        Ok(credx::verifier::verify_presentation(
+        let output = credx::verifier::verify_presentation(
             &presentation,
             &pres_req,
             &hashmap_as_ref(&schemas),
             &hashmap_as_ref(&cred_defs),
             rev_reg_defs.as_ref().map(hashmap_as_ref).as_ref(),
             rev_regs.as_ref(),
-        )?)
+        )?;
+
+        #[cfg(feature = "legacy_proof")]
+        let output = output
+            || credx::verifier::verify_presentation_legacy(
+                &presentation,
+                &pres_req,
+                &hashmap_as_ref(&schemas),
+                &hashmap_as_ref(&cred_defs),
+                rev_reg_defs.as_ref().map(hashmap_as_ref).as_ref(),
+                rev_regs.as_ref(),
+            )?;
+
+        Ok(output)
     }
 
     async fn issuer_create_and_store_revoc_reg(

@@ -11,10 +11,12 @@ vdrtools_wallet = ["dep:libvdrtools"]
 # Feature flag to include the 'modular library' dependencies (vdrtools alternatives; indy-vdr, indy-credx)
 modular_libs = ["dep:indy-credx"]
 vdr_proxy_ledger = ["modular_libs", "dep:indy-vdr-proxy-client"]
+# Feature flag to allow legacy proof verification
+legacy_proof = []
 
 [dependencies]
 agency_client = { path = "../agency_client" }
-indy-vdr = { version = "0.3.4", default-features = false, features = ["ffi", "log"], optional = true }
+indy-vdr = { git = "https://github.com/Patrik-Stas/indy-vdr.git", rev = "3cd499ad75", default-features = false, features = ["log"] }
 indy-credx = { git = "https://github.com/hyperledger/indy-shared-rs", tag = "v1.0.1", optional = true }
 libvdrtools = { path = "../libvdrtools", optional = true }
 indy-api-types = { path = "../libvdrtools/indy-api-types" }
