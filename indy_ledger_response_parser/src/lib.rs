@@ -238,7 +238,12 @@ impl ResponseParser {
     where
         T: DeserializeOwned + ReplyType + ::std::fmt::Debug,
     {
-        let message: Message<T> = serde_json::from_str(response)?;
+        // TODO: Distinguish between not found and unexpected response format
+        let message: Message<T> = serde_json::from_str(response).map_err(|_| {
+            LedgerResponseParserError::LedgerItemNotFound(
+                "Structure doesn't correspond to type. Most probably not found",
+            )
+        })?;
 
         match message {
             Message::Reject(response) | Message::ReqNACK(response) => {
