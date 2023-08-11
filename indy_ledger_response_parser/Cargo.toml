@@ -8,5 +8,5 @@ serde = { version = "1.0.163", features = ["derive"] }
 serde_json = "1.0.96"
 time = "=0.3.20"
 ursa = { version = "0.3.7" }
-indy-api-types = { path = "../libvdrtools/indy-api-types" }
 indy-vdr = { git = "https://github.com/Patrik-Stas/indy-vdr.git", rev = "3cd499ad75", default-features = false, features = ["log"] }
+thiserror = "1.0.44"

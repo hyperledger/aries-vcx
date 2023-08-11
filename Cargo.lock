@@ -2652,10 +2652,10 @@ dependencies = [
 name = "indy-ledger-response-parser"
 version = "0.1.0"
 dependencies = [
- "indy-api-types",
  "indy-vdr",
  "serde",
  "serde_json",
+ "thiserror",
  "time 0.3.20",
  "ursa",
 ]
