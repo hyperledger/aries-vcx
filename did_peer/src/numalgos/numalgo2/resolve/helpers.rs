@@ -211,7 +211,6 @@ mod tests {
         ) {
             Ok(_) => panic!("Expected Err, got Ok"),
             Err(e) => {
-                println!("{:?}", e);
                 assert!(matches!(e, DidPeerError::UnsupportedPurpose('X')));
             }
         }

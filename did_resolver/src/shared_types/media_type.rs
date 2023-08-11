@@ -1,6 +1,8 @@
 use std::fmt::{self, Display, Formatter};
 
-#[derive(Debug, Clone, PartialEq)]
+use serde::Deserialize;
+
+#[derive(Debug, Clone, PartialEq, Deserialize)]
 #[non_exhaustive]
 pub enum MediaType {
     DidJson,

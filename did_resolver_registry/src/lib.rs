@@ -2,7 +2,9 @@ pub mod error;
 
 use std::collections::HashMap;
 
+use async_trait::async_trait;
 use did_resolver::{
+    did_doc::schema::did_doc::DidDocument,
     did_parser::Did,
     error::GenericError,
     traits::resolvable::{
@@ -11,10 +13,65 @@ use did_resolver::{
     },
 };
 use error::DidResolverRegistryError;
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
+
+// TODO: Use serde_json::Map instead
+pub type GenericMap = HashMap<String, Value>;
+pub type GenericResolver = dyn DidResolvableAdaptorTrait + Send + Sync;
 
 pub struct ResolverRegistry {
-    resolvers:
-        HashMap<String, Box<dyn DidResolvable<ExtraFieldsService = (), ExtraFieldsOptions = ()>>>, // TODO: Use e.g. hashmap
+    resolvers: HashMap<String, Box<GenericResolver>>,
+}
+
+pub struct DidResolvableAdaptor<T: DidResolvable> {
+    inner: T,
+}
+
+#[async_trait]
+pub trait DidResolvableAdaptorTrait: Send + Sync {
+    async fn resolve(
+        &self,
+        did: &Did,
+        options: &DidResolutionOptions<HashMap<String, Value>>,
+    ) -> Result<DidResolutionOutput<HashMap<String, Value>>, GenericError>;
+}
+
+#[async_trait]
+impl<T: DidResolvable + Send + Sync> DidResolvableAdaptorTrait for DidResolvableAdaptor<T>
+where
+    T::ExtraFieldsService: Send + Sync + Serialize + for<'de> Deserialize<'de>,
+    T::ExtraFieldsOptions: Send + Sync + Serialize + for<'de> Deserialize<'de>,
+{
+    async fn resolve(
+        &self,
+        did: &Did,
+        options: &DidResolutionOptions<HashMap<String, Value>>,
+    ) -> Result<DidResolutionOutput<HashMap<String, Value>>, GenericError> {
+        let options_inner: T::ExtraFieldsOptions = if options.extra().is_empty() {
+            Default::default()
+        } else {
+            serde_json::from_value(Value::Object(options.extra().clone().into_iter().collect()))?
+        };
+        let result_inner = self
+            .inner
+            .resolve(did, &DidResolutionOptions::new(options_inner))
+            .await?;
+
+        let did_document_inner_hashmap = serde_json::to_value(result_inner.did_document())
+            .unwrap()
+            .as_object()
+            .unwrap()
+            .clone();
+
+        let did_document: DidDocument<HashMap<String, Value>> =
+            serde_json::from_value(Value::Object(did_document_inner_hashmap))?;
+
+        Ok(DidResolutionOutput::builder(did_document)
+            .did_resolution_metadata(result_inner.did_resolution_metadata().clone())
+            .did_document_metadata(result_inner.did_document_metadata().clone())
+            .build())
+    }
 }
 
 impl ResolverRegistry {
@@ -24,23 +81,29 @@ impl ResolverRegistry {
         }
     }
 
-    pub fn register_resolver(
-        &mut self,
-        method: String,
-        resolver: Box<dyn DidResolvable<ExtraFieldsService = (), ExtraFieldsOptions = ()>>,
-    ) {
-        self.resolvers.insert(method, resolver);
+    pub fn register_resolver<T>(mut self, method: String, resolver: T) -> Self
+    where
+        T: DidResolvable + 'static + Send + Sync,
+        for<'de> <T as DidResolvable>::ExtraFieldsService:
+            Send + Sync + Serialize + Deserialize<'de>,
+        for<'de> <T as DidResolvable>::ExtraFieldsOptions:
+            Send + Sync + Serialize + Deserialize<'de>,
+    {
+        let adaptor = DidResolvableAdaptor { inner: resolver };
+        self.resolvers.insert(method, Box::new(adaptor));
+        self
     }
 
-    pub fn unregister_resolver(&mut self, method: &str) {
+    pub fn unregister_resolver(mut self, method: &str) -> Self {
         self.resolvers.remove(method);
+        self
     }
 
     pub async fn resolve(
         &self,
         did: &Did,
-        options: &DidResolutionOptions<()>,
-    ) -> Result<DidResolutionOutput<()>, GenericError> {
+        options: &DidResolutionOptions<GenericMap>,
+    ) -> Result<DidResolutionOutput<GenericMap>, GenericError> {
         let method = did.method();
         match self.resolvers.get(method) {
             Some(resolver) => resolver.resolve(did, options).await,
@@ -105,8 +168,8 @@ mod tests {
                 Pin::from(Box::new(future))
             });
 
-        let mut registry = ResolverRegistry::new();
-        registry.register_resolver(method, Box::new(mock_resolver));
+        let registry = ResolverRegistry::new()
+            .register_resolver::<MockDummyDidResolver>(method, mock_resolver.into());
 
         let result = registry
             .resolve(&did, &DidResolutionOptions::default())
@@ -144,8 +207,8 @@ mod tests {
                 Pin::from(Box::new(future))
             });
 
-        let mut registry = ResolverRegistry::new();
-        registry.register_resolver(method, Box::new(mock_resolver));
+        let registry = ResolverRegistry::new()
+            .register_resolver::<MockDummyDidResolver>(method, mock_resolver.into());
 
         let result = registry
             .resolve(&parsed_did, &DidResolutionOptions::default())
@@ -161,11 +224,12 @@ mod tests {
         let mut registry = ResolverRegistry::new();
         assert_eq!(registry.resolvers.len(), 0);
 
-        registry.register_resolver(method.clone(), Box::new(mock_resolver));
+        registry = registry
+            .register_resolver::<MockDummyDidResolver>(method.clone(), mock_resolver.into());
         assert_eq!(registry.resolvers.len(), 1);
         assert!(registry.resolvers.contains_key(&method));
 
-        registry.unregister_resolver(&method);
+        registry = registry.unregister_resolver(&method);
         assert_eq!(registry.resolvers.len(), 0);
         assert!(!registry.resolvers.contains_key(&method));
     }
@@ -224,7 +288,7 @@ mod tests {
             assert!(false, "Error is not of type DidResolverRegistryError");
         }
 
-        registry.register_resolver(method, Box::new(mock_resolver));
+        registry = registry.register_resolver::<MockDummyDidResolver>(method, mock_resolver.into());
 
         let result_after = registry
             .resolve(&parsed_did, &DidResolutionOptions::default())
