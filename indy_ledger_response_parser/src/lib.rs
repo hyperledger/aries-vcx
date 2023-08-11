@@ -4,6 +4,7 @@ extern crate serde;
 extern crate serde_json;
 
 mod domain;
+pub mod error;
 
 pub use domain::author_agreement::GetTxnAuthorAgreementData;
 use domain::author_agreement::GetTxnAuthorAgreementResult;
