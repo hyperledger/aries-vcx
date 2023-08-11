@@ -1,7 +1,7 @@
 use super::constants::{GET_REVOC_REG, GET_REVOC_REG_DELTA};
 
+use anoncreds_clsignatures::RevocationRegistry;
 use indy_vdr::ledger::{identifiers::RevocationRegistryId, requests::rev_reg::RevocationRegistryV1};
-use ursa::cl::RevocationRegistry;
 
 use super::response::{GetReplyResultV1, ReplyType};
 

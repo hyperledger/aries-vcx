@@ -6,6 +6,7 @@ extern crate serde_json;
 mod domain;
 pub mod error;
 
+use anoncreds_clsignatures::RevocationRegistryDelta as ClRevocationRegistryDelta;
 pub use domain::author_agreement::GetTxnAuthorAgreementData;
 use domain::author_agreement::GetTxnAuthorAgreementResult;
 use error::LedgerResponseParserError;
@@ -22,8 +23,6 @@ use indy_vdr::{
     utils::did::DidValue,
 };
 use serde::de::DeserializeOwned;
-// TODO: Can we replace this to get rid of dependency on Ursa
-use ursa::cl::RevocationRegistryDelta as UrsaRevocationDelta;
 
 use crate::domain::{
     cred_def::GetCredDefReplyResult,
@@ -219,7 +218,7 @@ impl ResponseParser {
         };
 
         let revoc_reg_delta = RevocationRegistryDeltaV1 {
-            value: serde_json::to_value(UrsaRevocationDelta::from_parts(
+            value: serde_json::to_value(ClRevocationRegistryDelta::from_parts(
                 revoc_reg.value.accum_from.map(|accum| accum.value).as_ref(),
                 &revoc_reg.value.accum_to.value,
                 &revoc_reg.value.issued,
