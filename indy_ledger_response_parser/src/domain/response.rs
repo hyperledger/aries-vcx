@@ -1,4 +1,7 @@
-use crate::error::LedgerResponseParserError;
+use indy_api_types::{
+    errors::{err_msg, IndyErrorKind},
+    IndyError,
+};
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -104,16 +107,10 @@ impl<'a, T> TryFrom<ReplyV0<TypedReply<'a, T>>> for ReplyV0<T>
 where
     T: ReplyType,
 {
-    type Error = LedgerResponseParserError;
-
+    type Error = IndyError;
     fn try_from(value: ReplyV0<TypedReply<'a, T>>) -> Result<Self, Self::Error> {
-        let expected_type = T::get_type();
-        let actual_type = value.result.type_;
-        if expected_type != actual_type {
-            Err(LedgerResponseParserError::InvalidTransaction(format!(
-                "Unexpected response type:\nExpected: {}\nActual: {}",
-                expected_type, actual_type
-            )))
+        if value.result.type_ != T::get_type() {
+            Err(err_msg(IndyErrorKind::InvalidTransaction, "Invalid response type"))
         } else {
             Ok(ReplyV0 {
                 result: value.result.reply,
@@ -126,7 +123,7 @@ impl<'a, T> TryFrom<ReplyV1<TypedReply<'a, T>>> for ReplyV1<T>
 where
     T: ReplyType,
 {
-    type Error = LedgerResponseParserError;
+    type Error = IndyError;
 
     fn try_from(value: ReplyV1<TypedReply<'a, T>>) -> Result<Self, Self::Error> {
         let value = value
@@ -134,7 +131,7 @@ where
             .result
             .into_iter()
             .next()
-            .ok_or_else(|| LedgerResponseParserError::InvalidTransaction("Result field is empty".to_string()))?;
+            .ok_or_else(|| err_msg(IndyErrorKind::InvalidTransaction, "Invalid response type"))?;
         let data = ReplyDataV1 {
             result: [value.try_into()?],
         };
@@ -146,7 +143,7 @@ impl<'a, T> TryFrom<Reply<TypedReply<'a, T>>> for Reply<T>
 where
     T: ReplyType,
 {
-    type Error = LedgerResponseParserError;
+    type Error = IndyError;
 
     fn try_from(value: Reply<TypedReply<'a, T>>) -> Result<Self, Self::Error> {
         let reply = match value {
@@ -161,7 +158,7 @@ impl<'a, T> TryFrom<MessageWithTypedReply<'a, T>> for Message<T>
 where
     T: ReplyType,
 {
-    type Error = LedgerResponseParserError;
+    type Error = IndyError;
 
     fn try_from(value: MessageWithTypedReply<'a, T>) -> Result<Self, Self::Error> {
         match value {
