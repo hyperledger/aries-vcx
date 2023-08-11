@@ -22,7 +22,7 @@ pub enum IndyRole {
 }
 
 impl IndyRole {
-    pub fn as_str(&self) -> &'static str {
+    pub fn as_indyvdr_repr(&self) -> &'static str {
         match self {
             IndyRole::Steward => "STEWARD",
             IndyRole::Trustee => "TRUSTEE",

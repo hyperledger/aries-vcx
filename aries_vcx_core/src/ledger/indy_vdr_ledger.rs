@@ -338,7 +338,7 @@ where
             Some(target_vk.into()),
             alias,
             // todo: this is ugly, but needs to be fixed on indy-vdr side - it should work with enums, not strings
-            Some(String::from(role.as_str())),
+            Some(String::from(role.as_indyvdr_repr())),
         )?;
         let request = self.append_txn_author_agreement_to_request(request).await?;
         let response = self.sign_and_submit_request(submitter_did, request).await?;
