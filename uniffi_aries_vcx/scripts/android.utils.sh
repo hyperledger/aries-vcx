@@ -78,7 +78,8 @@ download_and_unzip_if_missed() {
 download_sdk() {
     mkdir -p ${ANDROID_SDK}
     pushd ${ANDROID_SDK}
-        download_and_unzip_if_missed "tools" "https://dl.google.com/android/repository/sdk-tools-linux-4333796.zip"
+        download_and_unzip_if_missed "tools" "https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip"
+        mv cmdline-tools tools
     popd
 }
 
@@ -91,7 +92,7 @@ generate_arch_flags() {
     download_and_setup_toolchain
 
     if [ $1 == "arm" ]; then
-        export TARGET_API="24"
+        export TARGET_API="30"
         export TRIPLET="arm-linux-androideabi"
         export ANDROID_TRIPLET=${TRIPLET}
         export ABI="armeabi-v7a"
@@ -100,7 +101,7 @@ generate_arch_flags() {
 
     if [ $1 == "armv7" ]; then
         export TARGET_ARCH="arm"
-        export TARGET_API="24"
+        export TARGET_API="30"
         export TRIPLET="armv7-linux-androideabi"
         export ANDROID_TRIPLET="arm-linux-androideabi"
         export ABI="armeabi-v7a"
@@ -108,7 +109,7 @@ generate_arch_flags() {
     fi
 
     if [ $1 == "arm64" ]; then
-        export TARGET_API="24"
+        export TARGET_API="30"
         export TRIPLET="aarch64-linux-android"
         export ANDROID_TRIPLET=${TRIPLET}
         export ABI="arm64-v8a"
@@ -116,7 +117,7 @@ generate_arch_flags() {
     fi
 
     if [ $1 == "x86" ]; then
-        export TARGET_API="24"
+        export TARGET_API="30"
         export TRIPLET="i686-linux-android"
         export ANDROID_TRIPLET=${TRIPLET}
         export ABI="x86"
@@ -124,7 +125,7 @@ generate_arch_flags() {
     fi
 
     if [ $1 == "x86_64" ]; then
-        export TARGET_API="24"
+        export TARGET_API="30"
         export TRIPLET="x86_64-linux-android"
         export ANDROID_TRIPLET=${TRIPLET}
         export ABI="x86_64"
@@ -137,7 +138,7 @@ generate_arch_flags() {
 
 prepare_dependencies() {
     if [ -z $1 ]; then
-        echo STDERR "${RED}Please provide the arch e.g arm, armv7, x86 or arm64${RESET}"
+        echo STDERR "${RED}Please provide the architecture e.g arm, armv7, x86, x86_64 or arm64.${RESET}"
         exit 1
     fi
     TARGET_ARCH="$1"

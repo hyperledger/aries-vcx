@@ -9,6 +9,6 @@ ANDROID_BUILD_DIR=~/android_build
 source ${SCRIPT_DIR}/android.utils.sh
 
 set_android_env
-download_sdk #sdk done
+download_sdk
 prepare_dependencies "arm"
 download_and_setup_toolchain
