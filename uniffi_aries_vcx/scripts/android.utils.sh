@@ -20,7 +20,6 @@ set_android_arch_env
 mkdir -p ${HOME}/.cargo
 cat << EOF > ${HOME}/.cargo/config
 [target.${TRIPLET}]
-ar = "$(realpath ${AR})"
 linker = "$(realpath ${CC})"
 EOF
 }
@@ -52,10 +51,10 @@ download_and_setup_toolchain() {
         mkdir -p ${TOOLCHAIN_PREFIX}
         pushd $TOOLCHAIN_PREFIX
         echo "${GREEN}Resolving NDK for Linux${RESET}"
-        download_and_unzip_if_missed "android-ndk-r20" "https://dl.google.com/android/repository/android-ndk-r20-linux-x86_64.zip"
+        download_and_unzip_if_missed "android-ndk-r25c" "https://dl.google.com/android/repository/android-ndk-r25c-linux.zip"
         popd
     fi
-    export ANDROID_NDK_ROOT=${TOOLCHAIN_PREFIX}/android-ndk-r20
+    export ANDROID_NDK_ROOT=${TOOLCHAIN_PREFIX}/android-ndk-r25c
     echo "${GREEN}NDK RESOLVED AT${RESET} ${ANDROID_NDK_ROOT}"
 }
 
@@ -154,8 +153,9 @@ prepare_dependencies() {
 }
 
 set_android_arch_env() {
+    echo $
     export CC=${TOOLCHAIN_DIR}/bin/${ANDROID_TRIPLET}-clang
-    export AR=${TOOLCHAIN_DIR}/bin/${ANDROID_TRIPLET}-ar
+    export AR=${TOOLCHAIN_DIR}/bin/llvm-ar
     export CXX=${TOOLCHAIN_DIR}/bin/${ANDROID_TRIPLET}-clang++
     export CXXLD=${TOOLCHAIN_DIR}/bin/${ANDROID_TRIPLET}-ld
     export RANLIB=${TOOLCHAIN_DIR}/bin/${ANDROID_TRIPLET}-ranlib
@@ -196,6 +196,13 @@ set_dependencies_env_vars() {
     export LIBZMQ_PREFIX=${LIBZMQ_DIR}
     export OPENSSL_LIB_DIR=${OPENSSL_DIR}/lib
     export OPENSSL_STATIC=1
+}
+
+fix_ndk() {
+    find $ANDROID_NDK_ROOT -name 'libunwind.a' | sed 's@libunwind.a$@libgcc.a@' | \
+    while read x; do
+        echo "INPUT(-lunwind)" > $x
+    done
 }
 
 build_uniffi() {

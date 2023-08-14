@@ -13,7 +13,7 @@ source ${SCRIPT_DIR}/android.utils.sh
 
 # set_android_env
 # download_and_setup_toolchain
-generate_arch_flags "arm"
+generate_arch_flags "arm64"
 set_dependencies_env_vars
-# set_android_arch_env
+set_android_arch_env
 build_uniffi

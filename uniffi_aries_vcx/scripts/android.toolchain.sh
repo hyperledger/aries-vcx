@@ -8,5 +8,5 @@ ANDROID_BUILD_DIR=~/android_build
 
 source ${SCRIPT_DIR}/android.utils.sh
 
-create_standalone_toolchain_and_rust_target "arm"
+create_standalone_toolchain_and_rust_target "arm64"
 create_cargo_config

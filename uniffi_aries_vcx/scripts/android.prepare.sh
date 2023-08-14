@@ -10,5 +10,5 @@ source ${SCRIPT_DIR}/android.utils.sh
 
 set_android_env
 download_sdk
-prepare_dependencies "arm"
+prepare_dependencies "arm64"
 download_and_setup_toolchain
