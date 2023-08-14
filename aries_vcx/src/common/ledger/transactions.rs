@@ -98,12 +98,10 @@ pub async fn into_did_doc(indy_ledger: &dyn IndyLedgerRead, invitation: &AnyInvi
             decorators,
         }) => {
             did_doc.set_id(content.did.to_string());
-            let service = get_service(indy_ledger, &content.did)
-                .await
-                .unwrap_or_else(|err| {
-                    error!("Failed to obtain service definition from the ledger: {}", err);
-                    AriesService::default()
-                });
+            let service = get_service(indy_ledger, &content.did).await.unwrap_or_else(|err| {
+                error!("Failed to obtain service definition from the ledger: {}", err);
+                AriesService::default()
+            });
             (service.service_endpoint, service.recipient_keys, service.routing_keys)
         }
         AnyInvitation::Con(Invitation {

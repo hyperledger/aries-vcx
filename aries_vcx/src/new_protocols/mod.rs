@@ -216,7 +216,14 @@ mod tests {
         ledger::indy_ledger::{IndySdkLedgerRead, IndySdkLedgerWrite},
         wallet::indy::IndySdkWallet,
     };
-    use messages::msg_fields::protocols::connection::invitation::Invitation;
+    use messages::msg_fields::protocols::{
+        connection::{
+            invitation::Invitation,
+            request::{Request, RequestDecorators},
+            response::{Response, ResponseDecorators},
+        },
+        notification::ack::{Ack, AckContent, AckDecorators, AckStatus},
+    };
     use uuid::Uuid;
 
     use crate::{global::settings, utils::devsetup::SetupPoolDirectory};
@@ -269,11 +276,7 @@ mod tests {
         indy_delete_pool(&pool_name).await.unwrap();
     }
 
-    async fn build_msg_handler(genesis_file_path: &str) -> (String, MsgHandler) {
-        let pool_name = Uuid::new_v4().to_string();
-        create_pool_ledger_config(&pool_name, genesis_file_path).unwrap();
-        let pool_handle = indy_open_pool(&pool_name, None).await.unwrap();
-
+    async fn build_msg_handler(pool_handle: i32) -> (String, MsgHandler) {
         let (did, wallet_handle) = setup_issuer_wallet().await;
 
         let wallet = IndySdkWallet::new(wallet_handle);
@@ -296,20 +299,126 @@ mod tests {
         (did, msg_handler)
     }
 
+    async fn _test_connection_handler(pool_handle: i32) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        let (_, faber) = build_msg_handler(pool_handle).await;
+        let (_, alice) = build_msg_handler(pool_handle).await;
+
+        let dummy_endpoint = Url::parse("https://dummy.dummy/dummy")?;
+        let (_, faber_invite_verkey) = faber.wallet().create_and_store_my_did(None, None).await?;
+
+        let invitation_content = PairwiseInvitationContent::new(
+            "faber".to_owned(),
+            vec![faber_invite_verkey.clone()],
+            vec![],
+            dummy_endpoint.clone(),
+        );
+        let invitation = Invitation::with_decorators(
+            Uuid::new_v4().to_string(),
+            InvitationContent::Pairwise(invitation_content),
+            Default::default(),
+        );
+
+        let request_id = Uuid::new_v4().to_string();
+
+        let thread = match &invitation.content {
+            InvitationContent::Public(_) => {
+                let mut thread = Thread::new(request_id.clone());
+                thread.pthid = Some(invitation.id.clone());
+                thread
+            }
+            InvitationContent::Pairwise(_) => Thread::new(invitation.id.clone()),
+            InvitationContent::PairwiseDID(_) => Thread::new(invitation.id.clone()),
+        };
+
+        // Extract info from invitation
+        let bootstrap_info = alice.process_connection_invitation(invitation.content).await?;
+
+        // Build request
+        let (alice_did, alice_verkey) = alice.wallet().create_and_store_my_did(None, None).await?;
+        let mut did_doc = AriesDidDoc {
+            id: alice_did.clone(),
+            ..Default::default()
+        };
+        did_doc.set_service_endpoint(bootstrap_info.service_endpoint);
+        did_doc.set_routing_keys(bootstrap_info.routing_keys);
+        did_doc.set_recipient_keys(bootstrap_info.recipient_keys);
+
+        let con_data = ConnectionData::new(alice_did, did_doc);
+
+        let request_content = RequestContent::new("my_request".to_owned(), con_data);
+        let timing = Timing {
+            out_time: Some(Utc::now()),
+            ..Default::default()
+        };
+
+        let request_decorators = RequestDecorators {
+            thread: Some(thread),
+            timing: Some(timing),
+        };
+
+        let request = Request::with_decorators(request_id, request_content, request_decorators);
+
+        // Process request
+        let alice_did_doc = faber.process_connection_request(request.content).await?;
+        let recipient_keys = alice_did_doc.recipient_keys()?;
+        let their_verkey = recipient_keys.first().ok_or("no recipient keys")?.as_str();
+
+        // Build response
+        let (faber_did, faber_verkey) = faber.wallet().create_and_store_my_did(None, None).await?;
+        let response_content = faber
+            .build_response_content(their_verkey, faber_did, vec![faber_verkey], dummy_endpoint, vec![])
+            .await?;
+
+        let timing = Timing {
+            out_time: Some(Utc::now()),
+            ..Default::default()
+        };
+
+        let response_decorators = ResponseDecorators {
+            thread: Thread::new(request.decorators.thread.map(|t| t.thid).unwrap_or(request.id)),
+            please_ack: None,
+            timing: Some(timing),
+        };
+
+        let response = Response::with_decorators(Uuid::new_v4().to_string(), response_content, response_decorators);
+
+        // Process response
+        let _faber_did_doc = alice
+            .process_connection_response(response.content, &alice_verkey)
+            .await?;
+
+        // Build ack
+        let ack_content = AckContent::new(AckStatus::Ok);
+
+        let timing = Timing {
+            out_time: Some(Utc::now()),
+            ..Default::default()
+        };
+
+        let ack_decorators = AckDecorators {
+            thread: Thread::new(response.decorators.thread.thid),
+            timing: Some(timing),
+        };
+
+        let ack = Ack::with_decorators(Uuid::new_v4().to_string(), ack_content, ack_decorators);
+
+        // Process ack
+        // The inviter merely needs to see this message (after decryption) to assess that
+        // the connection is now complete for them as well.
+        let _ = ack;
+
+        Ok(())
+    }
+
     #[tokio::test]
     async fn test_connection_handler() {
         SetupPoolDirectory::run(|setup| async move {
-            let (faber_did, faber) = build_msg_handler(&setup.genesis_file_path).await;
-            let (alice_did, alice) = build_msg_handler(&setup.genesis_file_path).await;
+            let pool_name = Uuid::new_v4().to_string();
+            create_pool_ledger_config(&pool_name, &setup.genesis_file_path).unwrap();
+            let pool_handle = indy_open_pool(&pool_name, None).await.unwrap();
 
-            let invitation_content = PublicInvitationContent::new("faber".to_owned(), faber_did.clone());
-            let invitation = Invitation::with_decorators(
-                Uuid::new_v4().to_string(),
-                InvitationContent::Public(invitation_content),
-                Default::default(),
-            );
-
-            let bootstrap_info = alice.process_connection_invitation(invitation.content).await.unwrap();
+            _test_connection_handler(pool_handle).await.ok();
+            indy_teardown(pool_handle, pool_name).await;
         })
         .await
     }
