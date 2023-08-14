@@ -60,7 +60,10 @@ mod tests {
         CATEGORY_REV_REG, CATEGORY_REV_REG_DEF, CATEGORY_REV_REG_DEF_PRIV, CATEGORY_REV_REG_DELTA,
         CATEGORY_REV_REG_INFO,
     };
-    use credx::ursa::bn::BigNumber;
+    use credx::{
+        anoncreds_clsignatures::{bn::BigNumber, LinkSecret as ClLinkSecret},
+        types::LinkSecret,
+    };
     use serde_json::json;
     use vdrtools::{
         types::domain::wallet::{Config, Credentials, KeyDerivationMethod},
@@ -345,8 +348,8 @@ mod tests {
         let ms_decimal = get_wallet_item_raw(wallet_handle, CATEGORY_LINK_SECRET).await;
         let ms_bn = BigNumber::from_dec(&ms_decimal).unwrap();
 
-        let ursa_ms: credx::ursa::cl::MasterSecret = serde_json::from_value(json!({ "ms": ms_bn })).unwrap();
-        let _ = credx::types::MasterSecret { value: ursa_ms };
+        let ursa_ms: ClLinkSecret = serde_json::from_value(json!({ "ms": ms_bn })).unwrap();
+        let _ = LinkSecret { value: ursa_ms };
     }
 
     fn make_dummy_master_secret() -> vdrtools::MasterSecret {

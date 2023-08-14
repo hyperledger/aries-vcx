@@ -390,6 +390,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "anoncreds-clsignatures"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f683463c4f5558a4eab7fe4625d94f08b7de9691453032bac43facf06fe46d2e"
+dependencies = [
+ "amcl",
+ "glass_pumpkin",
+ "log",
+ "num-bigint 0.4.3",
+ "num-integer",
+ "num-traits",
+ "once_cell",
+ "openssl",
+ "rand 0.8.5",
+ "serde",
+ "sha2 0.10.7",
+]
+
+[[package]]
 name = "anyhow"
 version = "1.0.72"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1162,6 +1181,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e496a50fda8aacccc86d7529e2c1e0892dbd0f898a6b5645b5561b89c3210efa"
 
 [[package]]
+name = "core2"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b49ba7ef1ad6107f8824dbe97de947cbaac53c44e7f9756a1fba0d37c1eec505"
+dependencies = [
+ "memchr",
+]
+
+[[package]]
 name = "cpufeatures"
 version = "0.2.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1694,6 +1722,8 @@ dependencies = [
  "async-trait",
  "did_resolver",
  "mockall",
+ "serde",
+ "serde_json",
  "tokio",
 ]
 
@@ -1883,12 +1913,12 @@ dependencies = [
 
 [[package]]
 name = "env_logger"
-version = "0.7.1"
+version = "0.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "44533bbbb3bb3c1fa17d9f2e4e38bbbaf8396ba82193c4cb1b6445d711445d36"
+checksum = "a12e6657c4c97ebab115a42dcee77225f7f482cdd841cf7088c657a42e9e00e7"
 dependencies = [
  "atty",
- "humantime 1.3.0",
+ "humantime",
  "log",
  "regex",
  "termcolor",
@@ -1896,12 +1926,12 @@ dependencies = [
 
 [[package]]
 name = "env_logger"
-version = "0.9.3"
+version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a12e6657c4c97ebab115a42dcee77225f7f482cdd841cf7088c657a42e9e00e7"
+checksum = "85cdab6a89accf66733ad5a1693a4dcced6aeff64602b634530dd73c1f3ee9f0"
 dependencies = [
- "atty",
- "humantime 2.1.0",
+ "humantime",
+ "is-terminal",
  "log",
  "regex",
  "termcolor",
@@ -2252,6 +2282,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b6c80984affa11d98d1b88b66ac8853f143217b399d3c74116778ff8fdb4ed2e"
 
 [[package]]
+name = "glass_pumpkin"
+version = "1.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b9e847fe780e2fd8aa993bef2124361c285349ff0e9315e8285f8126386b54a9"
+dependencies = [
+ "core2",
+ "num-bigint 0.4.3",
+ "num-integer",
+ "num-traits",
+ "once_cell",
+ "rand_core 0.6.4",
+]
+
+[[package]]
 name = "glob"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2444,15 +2488,6 @@ checksum = "c4a1e36c821dbe04574f602848a19f742f4fb3c98d40449f11bcad18d6b17421"
 
 [[package]]
 name = "humantime"
-version = "1.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "df004cfca50ef23c36850aaaa59ad52cc70d0e90243c3c7737a4dd32dc7a3c4f"
-dependencies = [
- "quick-error",
-]
-
-[[package]]
-name = "humantime"
 version = "2.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9a3a5bfb195931eeb336b2a7b4d761daec841b97f947d34394601737a7bba5e4"
@@ -2564,21 +2599,20 @@ dependencies = [
 
 [[package]]
 name = "indy-credx"
-version = "0.3.1"
-source = "git+https://github.com/anonyome/indy-shared-rs.git?rev=7342bc624d23ece8845d1a701cd2cdc9cd401bb0#7342bc624d23ece8845d1a701cd2cdc9cd401bb0"
+version = "1.0.1"
+source = "git+https://github.com/hyperledger/indy-shared-rs?tag=v1.0.1#32a1943811e719540567769264e14f94e51c60ee"
 dependencies = [
- "env_logger 0.7.1",
+ "env_logger 0.10.0",
  "ffi-support",
- "indy-data-types 0.5.1 (git+https://github.com/anonyome/indy-shared-rs.git?rev=7342bc624d23ece8845d1a701cd2cdc9cd401bb0)",
- "indy-utils 0.5.1",
+ "indy-data-types 0.6.1",
+ "indy-utils 0.6.0",
  "log",
  "once_cell",
- "rand 0.7.3",
+ "rand 0.8.5",
  "regex",
  "serde",
  "serde_json",
- "sha2 0.9.9",
- "tempfile",
+ "sha2 0.10.7",
  "thiserror",
  "zeroize",
 ]
@@ -2600,16 +2634,17 @@ dependencies = [
 
 [[package]]
 name = "indy-data-types"
-version = "0.5.1"
-source = "git+https://github.com/anonyome/indy-shared-rs.git?rev=7342bc624d23ece8845d1a701cd2cdc9cd401bb0#7342bc624d23ece8845d1a701cd2cdc9cd401bb0"
+version = "0.6.1"
+source = "git+https://github.com/hyperledger/indy-shared-rs?tag=v1.0.1#32a1943811e719540567769264e14f94e51c60ee"
 dependencies = [
+ "anoncreds-clsignatures",
  "hex",
- "indy-utils 0.5.1",
+ "indy-utils 0.6.0",
  "once_cell",
  "regex",
  "serde",
  "serde_json",
- "ursa",
+ "sha2 0.10.7",
  "zeroize",
 ]
 
@@ -2657,7 +2692,7 @@ dependencies = [
  "curve25519-dalek",
  "ed25519-dalek",
  "hex",
- "indy-wql 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "indy-wql",
  "once_cell",
  "rand 0.8.5",
  "regex",
@@ -2671,16 +2706,13 @@ dependencies = [
 
 [[package]]
 name = "indy-utils"
-version = "0.5.1"
-source = "git+https://github.com/anonyome/indy-shared-rs.git?rev=7342bc624d23ece8845d1a701cd2cdc9cd401bb0#7342bc624d23ece8845d1a701cd2cdc9cd401bb0"
+version = "0.6.0"
+source = "git+https://github.com/hyperledger/indy-shared-rs?tag=v1.0.1#32a1943811e719540567769264e14f94e51c60ee"
 dependencies = [
- "bs58 0.4.0",
- "indy-wql 0.4.0 (git+https://github.com/anonyome/indy-shared-rs.git?rev=7342bc624d23ece8845d1a701cd2cdc9cd401bb0)",
+ "bs58 0.5.0",
  "once_cell",
  "regex",
  "serde",
- "serde_json",
- "sha2 0.10.7",
  "thiserror",
  "zeroize",
 ]
@@ -2696,7 +2728,7 @@ dependencies = [
  "futures-util",
  "hex",
  "hex-literal",
- "indy-data-types 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "indy-data-types 0.5.1",
  "indy-utils 0.5.0",
  "log",
  "once_cell",
@@ -2756,15 +2788,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "indy-wql"
-version = "0.4.0"
-source = "git+https://github.com/anonyome/indy-shared-rs.git?rev=7342bc624d23ece8845d1a701cd2cdc9cd401bb0#7342bc624d23ece8845d1a701cd2cdc9cd401bb0"
-dependencies = [
- "serde",
- "serde_json",
-]
-
-[[package]]
 name = "instant"
 version = "0.1.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2795,6 +2818,18 @@ name = "ipnet"
 version = "2.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "28b29a3cd74f0f4598934efe3aeba42bae0eb4680554128851ebbecb02af14e6"
+
+[[package]]
+name = "is-terminal"
+version = "0.4.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "adcf93614601c8129ddf72e2d5633df827ba6551541c6d8c59520a371475be1f"
+dependencies = [
+ "hermit-abi 0.3.2",
+ "io-lifetimes",
+ "rustix",
+ "windows-sys 0.48.0",
+]
 
 [[package]]
 name = "isolang"
@@ -3363,6 +3398,7 @@ dependencies = [
  "autocfg 1.1.0",
  "num-integer",
  "num-traits",
+ "rand 0.8.5",
 ]
 
 [[package]]
@@ -3768,12 +3804,6 @@ dependencies = [
  "thiserror",
  "unsigned-varint",
 ]
-
-[[package]]
-name = "quick-error"
-version = "1.2.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a1d01941d82fa2ab50be1e79e6714289dd7cde78eba4c074bc5a4374f650dfe0"
 
 [[package]]
 name = "quote"
