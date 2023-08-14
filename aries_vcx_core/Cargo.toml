@@ -16,7 +16,7 @@ legacy_proof = []
 
 [dependencies]
 agency_client = { path = "../agency_client" }
-indy-vdr = { git = "https://github.com/Patrik-Stas/indy-vdr.git", rev = "3cd499ad75", default-features = false, features = ["log"] }
+indy-vdr = { git = "https://github.com/hyperledger/indy-vdr.git", rev = "879e29e", default-features = false, features = ["log"] }
 indy-credx = { git = "https://github.com/hyperledger/indy-shared-rs", tag = "v1.0.1", optional = true }
 libvdrtools = { path = "../libvdrtools", optional = true }
 indy-api-types = { path = "../libvdrtools/indy-api-types" }
@@ -32,7 +32,7 @@ lazy_static = "1.4.0"
 derive_builder = "0.12.0"
 uuid = { version = "1.3.0", default-features = false, features = ["v4"] }
 tokio = { version = "1.20" }
-indy-vdr-proxy-client = { git = "https://github.com/Patrik-Stas/indy-vdr.git", rev = "3cd499ad75", optional = true }
+indy-vdr-proxy-client = { git = "https://github.com/hyperledger/indy-vdr.git", rev = "879e29e", optional = true }
 indy-ledger-response-parser = { path = "../indy_ledger_response_parser" }
 lru = { version = "0.10.0"  }
 
