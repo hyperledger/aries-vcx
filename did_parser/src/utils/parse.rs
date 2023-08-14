@@ -97,11 +97,10 @@ fn parse_unqualified(did_url: &str) -> Result<(DidRange, Option<DidRange>, DidRa
         ));
     }
 
-    let id = did_url.split("#").next().unwrap_or(did_url);
-    shared_vcx::validation::did::validate_did(id)
+    shared_vcx::validation::did::validate_did(&did_url)
         .map_err(|_| ParseError::InvalidInput("Unqualified DID failed validation"))?;
 
-    let id_range = 0..id.len();
+    let id_range = 0..did_url.len();
 
     validate_did_url(did_url, id_range.clone())?;
 
