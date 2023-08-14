@@ -47,9 +47,12 @@ impl DidResolvable for DidSovResolver {
                 )));
             }
         }
-        if parsed_did.method() != "sov" {
+        let method = parsed_did.method().ok_or_else(|| {
+            DidSovError::InvalidDid("Attempted to resolve unqualified did".to_string())
+        })?;
+        if method != "sov" {
             return Err(Box::new(DidSovError::MethodNotSupported(
-                parsed_did.method().to_string(),
+                method.to_string(),
             )));
         }
         if !is_valid_sovrin_did_id(parsed_did.id()) {

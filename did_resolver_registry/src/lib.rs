@@ -104,7 +104,9 @@ impl ResolverRegistry {
         did: &Did,
         options: &DidResolutionOptions<GenericMap>,
     ) -> Result<DidResolutionOutput<GenericMap>, GenericError> {
-        let method = did.method();
+        let method = did
+            .method()
+            .ok_or(DidResolverRegistryError::UnsupportedMethod)?;
         match self.resolvers.get(method) {
             Some(resolver) => resolver.resolve(did, options).await,
             None => Err(Box::new(DidResolverRegistryError::UnsupportedMethod)),
@@ -154,7 +156,7 @@ mod tests {
     #[tokio::test]
     async fn test_resolve_error() {
         let did = Did::parse("did:example:1234".to_string()).unwrap();
-        let method = did.method().to_string();
+        let method = did.method().unwrap().to_string();
 
         let mut mock_resolver = MockDummyDidResolver::new();
         mock_resolver
@@ -188,7 +190,7 @@ mod tests {
     async fn test_resolve_success() {
         let did = "did:example:1234";
         let parsed_did = Did::parse(did.to_string()).unwrap();
-        let method = parsed_did.method().to_string();
+        let method = parsed_did.method().unwrap().to_string();
 
         let mut mock_resolver = MockDummyDidResolver::new();
         mock_resolver
@@ -256,7 +258,7 @@ mod tests {
     async fn test_resolve_after_registering_resolver() {
         let did = "did:example:1234";
         let parsed_did = Did::parse(did.to_string()).unwrap();
-        let method = parsed_did.method().to_string();
+        let method = parsed_did.method().unwrap().to_string();
 
         let mut mock_resolver = MockDummyDidResolver::new();
         mock_resolver

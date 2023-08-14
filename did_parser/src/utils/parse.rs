@@ -31,8 +31,7 @@ pub(crate) fn parse_key_value(
     Ok((key_start, value_start, next_pos))
 }
 
-// TODO: Support tunnel methods
-pub fn parse_did_method_id(did_url: &str) -> Result<(DidRange, DidRange, DidRange), ParseError> {
+fn find_method_start_and_end(did_url: &str) -> Result<(usize, usize), ParseError> {
     // DID = "did:" method ":" method-specific-id
     let method_start = did_url
         .find(':')
@@ -45,30 +44,78 @@ pub fn parse_did_method_id(did_url: &str) -> Result<(DidRange, DidRange, DidRang
         .map(|i| i + method_start + 1)
         .ok_or(ParseError::InvalidInput("Failed to find method end"))?;
 
+    Ok((method_start, method_end))
+}
+
+fn find_id_start_and_end(did_url: &str, method_end: usize) -> Result<(usize, usize), ParseError> {
     // method-specific-id = *( *idchar ":" ) 1*idchar
     let id_start = method_end + 1;
     let id_end = did_url[id_start..]
         .find(|c: char| c == ';' || c == '/' || c == '?' || c == '#' || c == '&')
         .map_or(did_url.len(), |i| i + id_start);
 
-    let did = 0..id_end;
-    let method = method_start + 1..method_end;
-    let id = id_start..id_end;
+    Ok((id_start, id_end))
+}
 
+fn validate_did_url(did_url: &str, id_range: DidRange) -> Result<(), ParseError> {
     // No method-specific-id is an error
-    if id.is_empty() {
+    if id_range.is_empty() {
         return Err(ParseError::InvalidInput("Empty method-specific-id"));
     }
 
-    // Disallowed characters are disallowed
-    if !did_url[id_start..id_end]
+    // idchar = ALPHA / DIGIT / "." / "-" / "_" / pct-encoded
+    if !did_url[id_range]
         .chars()
         .all(|c| c.is_ascii_alphanumeric() || ".-_%:".contains(c))
     {
-        return Err(ParseError::InvalidInput("Disallowed character"));
+        return Err(ParseError::InvalidInput(
+            "Invalid characters in method-specific-id",
+        ));
     }
 
-    Ok((did, method, id))
+    Ok(())
+}
+
+fn parse_qualified(did_url: &str) -> Result<(DidRange, Option<DidRange>, DidRange), ParseError> {
+    let (method_start, method_end) = find_method_start_and_end(did_url)?;
+    let (id_start, id_end) = find_id_start_and_end(did_url, method_end)?;
+
+    let did_range = 0..id_end;
+    let method_range = method_start + 1..method_end;
+    let id_range = id_start..id_end;
+
+    validate_did_url(did_url, id_range.clone())?;
+
+    Ok((did_range, Some(method_range), id_range))
+}
+
+// TODO: Remove as soon as migration to qualified DIDs is complete
+fn parse_unqualified(did_url: &str) -> Result<(DidRange, Option<DidRange>, DidRange), ParseError> {
+    if did_url.contains(':') {
+        return Err(ParseError::InvalidInput(
+            "Unqualified did cannot contain ':'",
+        ));
+    }
+
+    shared_vcx::validation::did::validate_did(&did_url)
+        .map_err(|_| ParseError::InvalidInput("Unqualified DID failed validation"))?;
+
+    let id_range = 0..did_url.len();
+
+    validate_did_url(did_url, id_range.clone())?;
+
+    Ok((id_range.clone(), None, id_range))
+}
+
+// TODO: Support tunnel methods
+pub fn parse_did_method_id(
+    did_url: &str,
+) -> Result<(DidRange, Option<DidRange>, DidRange), ParseError> {
+    if !did_url.starts_with("did:") {
+        parse_unqualified(did_url)
+    } else {
+        parse_qualified(did_url)
+    }
 }
 
 pub(crate) fn parse_path(did_url: &str, current_pos: usize) -> Result<DidRange, ParseError> {
@@ -111,7 +158,7 @@ mod tests {
         let result = parse_did_method_id(valid_did).unwrap();
 
         assert_eq!(0..valid_did.len(), result.0);
-        assert_eq!(4..11, result.1);
+        assert_eq!(Some(4..11), result.1);
         assert_eq!(12..valid_did.len(), result.2);
 
         let invalid_did = "did-example:123456789abcdefghi";

@@ -10,7 +10,7 @@ use crate::{error::ParseError, utils::parse::parse_did_method_id, DidRange};
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Did {
     did: String,
-    method: DidRange,
+    method: Option<DidRange>,
     id: DidRange,
 }
 
@@ -30,8 +30,8 @@ impl Did {
         self.did.as_ref()
     }
 
-    pub fn method(&self) -> &str {
-        self.did[self.method.clone()].as_ref()
+    pub fn method(&self) -> Option<&str> {
+        self.method.as_ref().map(|range| &self.did[range.clone()])
     }
 
     pub fn id(&self) -> &str {
@@ -39,7 +39,11 @@ impl Did {
     }
 
     pub(crate) fn from_parts(did: String, method: DidRange, id: DidRange) -> Self {
-        Self { did, method, id }
+        Self {
+            did,
+            method: Some(method),
+            id,
+        }
     }
 }
 
@@ -69,7 +73,7 @@ impl Default for Did {
     fn default() -> Self {
         Self {
             did: "did:example:123456789abcdefghi".to_string(),
-            method: 4..11,
+            method: Some(4..11),
             id: 12..30,
         }
     }
@@ -96,6 +100,11 @@ impl<'de> Deserialize<'de> for Did {
 
 impl From<Did> for DidUrl {
     fn from(did: Did) -> Self {
-        Self::from_did_parts(did.did().to_string(), 0..did.did.len(), did.method, did.id)
+        Self::from_did_parts(
+            did.did().to_string(),
+            0..did.did.len(),
+            did.method.unwrap(),
+            did.id,
+        )
     }
 }

@@ -30,7 +30,7 @@ impl DidUrl {
             (None, None, None)
         } else {
             let (did, method, id) = parse_did_method_id(&did_url)?;
-            (Some(did), Some(method), Some(id))
+            (Some(did), method, Some(id))
         };
 
         let mut path = None;

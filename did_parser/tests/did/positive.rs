@@ -20,11 +20,11 @@ test_cases_positive! {
     test_case1:
         "did:example:123456789abcdefghi",
         "did:example:123456789abcdefghi",
-        "example",
+        Some("example"),
         "123456789abcdefghi"
     test_case2:
         "did:web:w3c-ccg.github.io",
         "did:web:w3c-ccg.github.io",
-        "web",
+        Some("web"),
         "w3c-ccg.github.io"
 }
