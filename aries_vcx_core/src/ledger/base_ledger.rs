@@ -1,7 +1,8 @@
 use std::fmt::Debug;
 
 use async_trait::async_trait;
-use serde::{Deserialize, Serialize};
+use indy_vdr::ledger::constants::UpdateRole;
+use serde::Serialize;
 
 use crate::errors::error::VcxCoreResult;
 
@@ -11,25 +12,6 @@ pub trait IndyLedgerRead: Debug + Send + Sync {
     async fn get_nym(&self, did: &str) -> VcxCoreResult<String>;
     async fn get_txn_author_agreement(&self) -> VcxCoreResult<Option<String>>;
     async fn get_ledger_txn(&self, seq_no: i32, submitter_did: Option<&str>) -> VcxCoreResult<String>;
-}
-
-#[derive(Debug)]
-pub enum IndyRole {
-    Steward,
-    Trustee,
-    Endorser,
-    NetworkMonitor,
-}
-
-impl IndyRole {
-    pub fn as_indyvdr_repr(&self) -> &'static str {
-        match self {
-            IndyRole::Steward => "STEWARD",
-            IndyRole::Trustee => "TRUSTEE",
-            IndyRole::Endorser => "ENDORSER",
-            IndyRole::NetworkMonitor => "NETWORK_MONITOR",
-        }
-    }
 }
 
 #[async_trait]
@@ -50,7 +32,7 @@ pub trait IndyLedgerWrite: Debug + Send + Sync {
         submitter_did: &str,
         target_did: &str,
         target_vk: &str,
-        role: IndyRole,
+        role: Option<UpdateRole>,
         alias: Option<String>,
     ) -> VcxCoreResult<String>;
 }

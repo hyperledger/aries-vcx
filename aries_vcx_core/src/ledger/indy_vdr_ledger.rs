@@ -5,7 +5,7 @@ use std::fmt::{Debug, Formatter};
 use std::str::FromStr;
 use std::sync::{Arc, RwLock};
 use time::OffsetDateTime;
-use vdr::ledger::constants::UpdateRole;
+pub use vdr::ledger::constants::{LedgerRole, UpdateRole};
 use vdr::ledger::requests::cred_def::CredentialDefinitionV1;
 use vdr::ledger::requests::rev_reg::{RevocationRegistryDelta, RevocationRegistryDeltaV1};
 use vdr::ledger::requests::rev_reg_def::{RegistryType, RevocationRegistryDefinition, RevocationRegistryDefinitionV1};
@@ -21,7 +21,7 @@ use vdr::utils::did::DidValue;
 use vdr::utils::Qualifiable;
 
 use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
-use crate::ledger::base_ledger::{IndyRole, TaaConfigurator, TxnAuthrAgrmtOptions};
+use crate::ledger::base_ledger::{TaaConfigurator, TxnAuthrAgrmtOptions};
 use crate::ledger::common::verify_transaction_can_be_endorsed;
 
 use super::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite};
@@ -326,7 +326,7 @@ where
         submitter_did: &str,
         target_did: &str,
         target_vk: &str,
-        role: IndyRole,
+        role: Option<UpdateRole>,
         alias: Option<String>,
     ) -> VcxCoreResult<String> {
         debug!("write_did >> submitter_did: {submitter_did}, target_did: {target_did}, target_vk: {target_vk}, role: {role:?}, alias: {alias:?}");
@@ -337,8 +337,9 @@ where
             &dest,
             Some(target_vk.into()),
             alias,
-            // todo: this is ugly, but needs to be fixed on indy-vdr side - it should work with enums, not strings
-            Some(String::from(role.as_indyvdr_repr())),
+            role,
+            None,
+            None,
         )?;
         let request = self.append_txn_author_agreement_to_request(request).await?;
         let response = self.sign_and_submit_request(submitter_did, request).await?;

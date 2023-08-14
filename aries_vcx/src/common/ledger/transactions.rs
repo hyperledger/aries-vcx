@@ -7,7 +7,8 @@ use std::{collections::HashMap, sync::Arc};
 
 use crate::common::ledger::service_didsov::EndpointDidSov;
 use crate::handlers::util::AnyInvitation;
-use aries_vcx_core::ledger::base_ledger::{IndyLedgerRead, IndyLedgerWrite, IndyRole};
+use aries_vcx_core::ledger::base_ledger::{IndyLedgerRead, IndyLedgerWrite};
+use aries_vcx_core::ledger::indy_vdr_ledger::{LedgerRole, UpdateRole};
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use serde_json::Value;
 
@@ -235,7 +236,13 @@ pub async fn write_endorser_did(
     alias: Option<String>,
 ) -> VcxResult<String> {
     let res = indy_ledger_write
-        .write_did(submitter_did, target_did, target_vk, IndyRole::Endorser, alias)
+        .write_did(
+            submitter_did,
+            target_did,
+            target_vk,
+            Some(UpdateRole::Set(LedgerRole::Endorser)),
+            alias,
+        )
         .await?;
     check_response(&res)?;
     Ok(res)
