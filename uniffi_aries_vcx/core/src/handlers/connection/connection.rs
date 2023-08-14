@@ -149,9 +149,11 @@ impl Connection {
         let connection = VcxConnection::try_from(handler.clone())?;
 
         block_on(async {
-            let new_conn = connection
-                .send_response(&profile.inner.inject_wallet(), &HttpClient)
+            let response = connection.get_connection_response_msg();
+            connection
+                .send_message(&profile.inner.inject_wallet(), &response.into(), &HttpClient)
                 .await?;
+            let new_conn = connection.mark_response_sent()?;
 
             *handler = VcxGenericConnection::from(new_conn);
 

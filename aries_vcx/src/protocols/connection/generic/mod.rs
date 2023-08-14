@@ -483,13 +483,7 @@ mod connection_serde_tests {
     }
 
     async fn make_inviter_responded() -> InviterConnection<InviterResponded> {
-        let wallet: Arc<dyn BaseWallet> = Arc::new(MockWallet {});
-
-        make_inviter_requested()
-            .await
-            .send_response(&wallet, &MockTransport)
-            .await
-            .unwrap()
+        make_inviter_requested().await.mark_response_sent().unwrap()
     }
 
     async fn make_inviter_completed() -> InviterConnection<InviterCompleted> {

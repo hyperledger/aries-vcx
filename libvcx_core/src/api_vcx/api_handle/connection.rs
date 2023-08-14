@@ -330,8 +330,10 @@ pub async fn send_response(handle: u32) -> LibvcxResult<()> {
     trace!("send_response >>>");
 
     let con = get_cloned_connection(&handle)?;
-    let con = con.send_response(&get_main_wallet()?, &HttpClient).await?;
-
+    let response = con.get_connection_response_msg();
+    con.send_message(&get_main_wallet()?, &response.into(), &HttpClient)
+        .await?;
+    let con = con.mark_response_sent()?;
     insert_connection(handle, con)
 }
 

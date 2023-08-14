@@ -233,31 +233,23 @@ impl InviterConnection<Invited> {
 }
 
 impl InviterConnection<Requested> {
-    /// Sends a [`Response`] to the invitee and transitions to [`InviterConnection<Responded>`].
+    /// Returns pre-built [`Response`] message which shall be delivered to counterparty
     ///
     /// # Errors
     ///
     /// Will return an error if sending the response fails.
-    pub async fn send_response<T>(
-        self,
-        wallet: &Arc<dyn BaseWallet>,
-        transport: &T,
-    ) -> VcxResult<InviterConnection<Responded>>
-    where
-        T: Transport,
-    {
-        trace!(
-            "Connection::send_response >>> signed_response: {:?}",
-            &self.state.signed_response
-        );
+    pub fn get_connection_response_msg(&self) -> Response {
+        self.state.signed_response.clone()
+    }
 
+    /// Transitions to [`InviterConnection<Responded>`] under assumption the caller has assured delivery of [`Response`] message
+    ///
+    /// # Errors
+    ///
+    /// Will return an error if sending the response fails.
+    pub fn mark_response_sent(self) -> VcxResult<InviterConnection<Responded>> {
         let thread_id = self.state.signed_response.decorators.thread.thid.clone();
-
-        self.send_message(wallet, &self.state.signed_response.clone().into(), transport)
-            .await?;
-
         let state = Responded::new(self.state.did_doc, thread_id);
-
         Ok(Connection {
             state,
             source_id: self.source_id,

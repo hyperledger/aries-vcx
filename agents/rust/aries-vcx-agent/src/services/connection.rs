@@ -102,9 +102,11 @@ impl ServiceConnections {
 
     pub async fn send_response(&self, thread_id: &str) -> AgentResult<()> {
         let inviter: Connection<_, _> = self.connections.get(thread_id)?.try_into()?;
-        let inviter = inviter
-            .send_response(&self.profile.inject_wallet(), &HttpClient)
+        let response = inviter.get_connection_response_msg();
+        inviter
+            .send_message(&self.profile.inject_wallet(), &response.into(), &HttpClient)
             .await?;
+        let inviter = inviter.mark_response_sent()?;
 
         self.connections.insert(thread_id, inviter.into())?;
 
