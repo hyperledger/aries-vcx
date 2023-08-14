@@ -2,8 +2,10 @@ pub use indy_ledger_response_parser::GetTxnAuthorAgreementData;
 use indy_ledger_response_parser::{ResponseParser, RevocationRegistryDeltaInfo, RevocationRegistryInfo};
 use indy_vdr as vdr;
 use std::fmt::{Debug, Formatter};
+use std::str::FromStr;
 use std::sync::{Arc, RwLock};
 use time::OffsetDateTime;
+use vdr::ledger::constants::UpdateRole;
 use vdr::ledger::requests::cred_def::CredentialDefinitionV1;
 use vdr::ledger::requests::rev_reg::{RevocationRegistryDelta, RevocationRegistryDeltaV1};
 use vdr::ledger::requests::rev_reg_def::{RegistryType, RevocationRegistryDefinition, RevocationRegistryDefinitionV1};
@@ -189,9 +191,15 @@ where
     async fn get_attr(&self, target_did: &str, attr_name: &str) -> VcxCoreResult<String> {
         debug!("get_attr >> target_did: {target_did}, attr_name: {attr_name}");
         let dest = DidValue::from_str(target_did)?;
-        let request =
-            self.request_builder()?
-                .build_get_attrib_request(None, &dest, Some(attr_name.to_string()), None, None)?;
+        let request = self.request_builder()?.build_get_attrib_request(
+            None,
+            &dest,
+            Some(attr_name.to_string()),
+            None,
+            None,
+            None,
+            None,
+        )?;
         let response = self.submit_request(None, request).await?;
         debug!("get_attr << response: {response}");
         Ok(response)
@@ -200,7 +208,7 @@ where
     async fn get_nym(&self, did: &str) -> VcxCoreResult<String> {
         debug!("get_nym >> did: {did}");
         let dest = DidValue::from_str(did)?;
-        let request = self.request_builder()?.build_get_nym_request(None, &dest)?;
+        let request = self.request_builder()?.build_get_nym_request(None, &dest, None, None)?;
         let response = self.submit_request(None, request).await?;
         debug!("get_nym << response: {response}");
         Ok(response)
@@ -275,7 +283,9 @@ where
             &dest,
             verkey.map(String::from),
             data.map(String::from),
-            role.map(String::from),
+            role.map(UpdateRole::from_str).transpose()?,
+            None,
+            None,
         )?;
         let request = self.append_txn_author_agreement_to_request(request).await?;
         self.sign_and_submit_request(submitter_did, request).await
