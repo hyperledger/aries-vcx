@@ -13,8 +13,10 @@ use super::ServiceType;
 pub struct ServiceLegacy {
     #[serde(default)]
     id: Uri,
+    #[serde(rename = "type")]
     service_type: ServiceType,
     service_endpoint: Url,
+    #[serde(flatten)]
     extra: ExtraFieldsLegacy,
 }
 
@@ -33,7 +35,7 @@ impl ServiceLegacy {
     }
 
     pub fn service_type(&self) -> ServiceType {
-        self.service_type
+        ServiceType::Legacy
     }
 
     pub fn service_endpoint(&self) -> &Url {
@@ -57,5 +59,17 @@ impl TryFrom<Service<ExtraFieldsSov>> for ServiceLegacy {
                 service.service_type().to_string(),
             )),
         }
+    }
+}
+
+impl TryFrom<ServiceLegacy> for Service<ExtraFieldsSov> {
+    type Error = DidDocumentSovError;
+
+    fn try_from(service: ServiceLegacy) -> Result<Self, Self::Error> {
+        let extra = ExtraFieldsSov::Legacy(service.extra);
+        Ok(Service::builder(service.id, service.service_endpoint, extra)
+            .add_service_type(ServiceType::Legacy.to_string())
+            .unwrap()
+            .build())
     }
 }

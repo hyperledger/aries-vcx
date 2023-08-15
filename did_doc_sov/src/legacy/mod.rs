@@ -1,18 +1,22 @@
 pub mod wrapper;
 
-use serde::{Deserialize, Serialize};
+use serde::{de::IntoDeserializer, Deserialize, Deserializer, Serialize};
 
 use did_doc::{
     did_parser::{Did, DidUrl},
     schema::{
-        did_doc::ControllerAlias,
+        did_doc::{ControllerAlias, DidDocument},
         service::Service,
         utils::OneOrList,
         verification_method::{VerificationMethod, VerificationMethodKind, VerificationMethodType},
     },
 };
+use serde_json::Value;
 
-use crate::extra_fields::{legacy::ExtraFieldsLegacy, KeyKind};
+use crate::{
+    extra_fields::{legacy::ExtraFieldsLegacy, ExtraFieldsSov, KeyKind},
+    service::{legacy::ServiceLegacy, ServiceSov},
+};
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 pub struct LegacyDidDoc {
@@ -23,7 +27,7 @@ pub struct LegacyDidDoc {
     pub public_key: Vec<LegacyKeyAgreement>,
     #[serde(default)]
     pub authentication: Vec<LegacyAuthentication>,
-    pub service: Vec<Service<ExtraFieldsLegacy>>,
+    pub service: Vec<ServiceLegacy>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
@@ -44,58 +48,27 @@ pub struct LegacyAuthentication {
     pub public_key: String,
 }
 
-impl LegacyDidDoc {
-    pub fn id(&self) -> &str {
-        &self.id
-    }
+fn legacy_key_agreement_to_verification_method(value: &LegacyKeyAgreement) -> Result<VerificationMethod, String> {
+    let LegacyKeyAgreement {
+        id,
+        verification_method_type: _,
+        controller,
+        public_key_base_58,
+    } = value;
+    let id = DidUrl::parse(id.clone()).unwrap_or_default();
+    let controller = Did::parse(controller.clone()).unwrap_or_default();
+    let verification_method_type = VerificationMethodType::X25519KeyAgreementKey2019;
 
-    pub fn service(&self) -> &[Service<ExtraFieldsLegacy>] {
-        &self.service
-    }
-
-    pub fn controller(&self) -> Option<ControllerAlias> {
-        self.public_key
-            .first()
-            .map(|pk| OneOrList::One(pk.controller.parse().unwrap_or_default()))
-    }
-
-    pub fn verification_method(&self) -> Vec<VerificationMethod> {
-        self.public_key.iter().map(|pk| pk.try_into().unwrap()).collect()
-    }
-
-    pub fn authentication(&self) -> Vec<VerificationMethodKind> {
-        self.authentication
-            .iter()
-            .map(|pk| legacy_authentication_to_verification_method(pk, self.id.clone(), &self.public_key).unwrap())
-            .collect()
-    }
-}
-
-impl TryFrom<&LegacyKeyAgreement> for VerificationMethod {
-    type Error = String;
-
-    fn try_from(value: &LegacyKeyAgreement) -> Result<Self, Self::Error> {
-        let LegacyKeyAgreement {
-            id,
-            verification_method_type: _,
-            controller,
-            public_key_base_58,
-        } = value;
-        let id = DidUrl::parse(id.clone()).unwrap_or_default();
-        let controller = Did::parse(controller.clone()).unwrap_or_default();
-        let verification_method_type = VerificationMethodType::X25519KeyAgreementKey2019;
-
-        Ok(VerificationMethod::builder(id, controller, verification_method_type)
-            .add_public_key_base58(public_key_base_58.clone())
-            .build())
-    }
+    Ok(VerificationMethod::builder(id, controller, verification_method_type)
+        .add_public_key_base58(public_key_base_58.clone())
+        .build())
 }
 
 fn legacy_authentication_to_verification_method(
     legacy_authentication: &LegacyAuthentication,
     did: String,
     legacy_public_keys: &[LegacyKeyAgreement],
-) -> Result<VerificationMethodKind, String> {
+) -> Result<VerificationMethod, String> {
     let id = DidUrl::parse(did.clone()).unwrap_or_default();
     let controller = Did::parse(did).unwrap_or_default();
     let verification_method_type = VerificationMethodType::Ed25519VerificationKey2018;
@@ -108,9 +81,51 @@ fn legacy_authentication_to_verification_method(
         .public_key_base_58
         .clone();
 
-    Ok(VerificationMethodKind::Resolved(
-        VerificationMethod::builder(id, controller, verification_method_type)
-            .add_public_key_base58(public_key_base_58)
-            .build(),
-    ))
+    Ok(VerificationMethod::builder(id, controller, verification_method_type)
+        .add_public_key_base58(public_key_base_58)
+        .build())
+}
+
+fn convert_legacy_ddo_to_new(legacy_ddo: LegacyDidDoc) -> Result<DidDocument<ExtraFieldsSov>, String> {
+    let id = Did::parse(legacy_ddo.id.clone()).unwrap_or_default();
+    let controller = Did::parse(legacy_ddo.id.clone()).unwrap_or_default();
+
+    let mut builder = DidDocument::builder(id);
+
+    for vm in &legacy_ddo.public_key {
+        builder = builder.add_verification_method(legacy_key_agreement_to_verification_method(&vm)?);
+    }
+
+    for auth in &legacy_ddo.authentication {
+        builder = builder.add_authentication_method(
+            legacy_authentication_to_verification_method(&auth, legacy_ddo.id.clone(), &legacy_ddo.public_key).unwrap(),
+        );
+    }
+
+    for service in &legacy_ddo.service {
+        builder = builder.add_service(TryInto::<Service<ExtraFieldsSov>>::try_into(service.clone()).unwrap());
+    }
+
+    Ok(builder.build())
+}
+
+pub fn deserialize_legacy_or_new<'de, D>(deserializer: D) -> Result<DidDocument<ExtraFieldsSov>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    println!("deserialize_legacy_or_new");
+    let val = Value::deserialize(deserializer)?;
+    println!("deserialize_legacy_or_new: {:?}", val);
+
+    match serde_json::from_value::<LegacyDidDoc>(val.clone()) {
+        Ok(legacy_doc) => {
+            println!("deserialize_legacy_or_new: legacy_doc");
+            return Ok(convert_legacy_ddo_to_new(legacy_doc).unwrap());
+        }
+        Err(err) => {
+            println!("deserialize_legacy_or_new: not legacy did doc: {:?}", err);
+        }
+    }
+
+    serde_json::from_value::<DidDocument<ExtraFieldsSov>>(val).map_err(serde::de::Error::custom)
 }

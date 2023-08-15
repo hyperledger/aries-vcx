@@ -16,9 +16,13 @@ pub mod legacy;
 
 #[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq)]
 pub enum ServiceType {
+    #[serde(rename = "endpoint")]
     AIP1,
+    #[serde(rename = "did-communication")]
     DIDCommV1,
+    #[serde(rename = "DIDComm")]
     DIDCommV2,
+    #[serde(rename = "IndyAgent")]
     Legacy,
 }
 

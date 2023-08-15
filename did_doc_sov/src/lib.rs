@@ -22,7 +22,6 @@ use service::ServiceSov;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct DidDocumentSov {
-    // did_doc: LegacyOrNew,
     did_doc: DidDocument<ExtraFieldsSov>,
     services: Vec<ServiceSov>,
 }
@@ -133,6 +132,7 @@ impl<'de> Deserialize<'de> for DidDocumentSov {
         #[derive(Deserialize, Clone, Debug, PartialEq)]
         struct TempDidDocumentSov {
             #[serde(flatten)]
+            #[serde(deserialize_with = "legacy::deserialize_legacy_or_new")]
             did_doc: DidDocument<ExtraFieldsSov>,
         }
 

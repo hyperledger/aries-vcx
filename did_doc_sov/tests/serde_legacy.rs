@@ -40,16 +40,8 @@ const LEGACY_DID_DOC_JSON: &str = r##"
 
 #[test]
 fn test_deserialization_legacy() {
-    let did_doc = serde_json::from_str::<LegacyOrNew>(LEGACY_DID_DOC_JSON).unwrap();
+    let did_doc: DidDocumentSov = serde_json::from_str(LEGACY_DID_DOC_JSON).unwrap();
     println!("{:#?}", did_doc);
-    let legacy = match did_doc {
-        LegacyOrNew::Legacy(legacy) => legacy,
-        LegacyOrNew::New(_) => panic!("Expected legacy did doc"),
-    };
-    let authentication = legacy.authentication();
-    println!("{:#?}", authentication);
-    let verification = legacy.verification_method();
-    println!("{:#?}", verification);
 }
 
 #[test]
