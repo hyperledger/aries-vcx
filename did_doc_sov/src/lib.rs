@@ -1,5 +1,6 @@
 pub mod error;
 pub mod extra_fields;
+mod legacy;
 pub mod service;
 
 use std::collections::HashMap;
@@ -9,7 +10,6 @@ use did_doc::{
     schema::{
         did_doc::{ControllerAlias, DidDocument, DidDocumentBuilder},
         service::Service,
-        types::uri::Uri,
         utils::OneOrList,
         verification_method::{VerificationMethod, VerificationMethodKind},
     },
@@ -21,6 +21,7 @@ use service::ServiceSov;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct DidDocumentSov {
+    // did_doc: LegacyOrNew,
     did_doc: DidDocument<ExtraFieldsSov>,
     services: Vec<ServiceSov>,
 }
@@ -32,10 +33,6 @@ impl DidDocumentSov {
 
     pub fn id(&self) -> &Did {
         self.did_doc.id()
-    }
-
-    pub fn also_known_as(&self) -> &[Uri] {
-        self.did_doc.also_known_as()
     }
 
     pub fn controller(&self) -> Option<&ControllerAlias> {
