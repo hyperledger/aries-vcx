@@ -97,6 +97,7 @@ export function createServiceV2(targetDid: string, routingKeys: Array<string>, e
 export function getServiceFromLedger(targetDid: string): Promise<string>
 export function getAttrFromLedger(targetDid: string, attr: string): Promise<string>
 export function clearAttrFromLedger(did: string, attrib: string): Promise<string>
+export function writeEndorserDid(submitterDid: string, targetDid: string, targetVk: string, alias?: string | undefined | null): Promise<string>
 export function getVerkeyFromLedger(did: string): Promise<string>
 export function getLedgerTxn(seqNo: number, submitterDid?: string | undefined | null): Promise<string>
 export function initDefaultLogger(pattern?: string | undefined | null): void
@@ -192,7 +193,7 @@ export function walletCloseMain(): Promise<void>
 export function vcxInitIssuerConfig(config: string): Promise<void>
 export function configureIssuerWallet(enterpriseSeed: string): Promise<string>
 export function unpack(data: Buffer): Promise<string>
-export function createPairwiseInfo(): Promise<string>
+export function createAndStoreDid(seed?: string | undefined | null): Promise<string>
 export function walletImport(config: string): Promise<void>
 export function walletExport(path: string, backupKey: string): Promise<void>
 export function getVerkeyFromWallet(did: string): Promise<string>

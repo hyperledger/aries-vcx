@@ -23,7 +23,6 @@ pub static INDY_PROOF_REQ_JSON: &str = r#"{ "nonce":"123432421212", "name":"proo
 pub static DEFAULT_PROOF_NAME: &str = "PROOF_NAME";
 pub static POOL1_TXN: &str = "pool1.txn";
 pub static INSTITUTION_DID: &str = "2hoqvcwupRTUNkXn6ArYzs";
-
 pub static CRED_REV_ID: &str = "1";
 pub static SCHEMA_ID: &str = r#"2hoqvcwupRTUNkXn6ArYzs:2:test-licence:4.4.4"#;
 pub static SCHEMA_JSON: &str = r#"{"ver":"1.0","id":"2hoqvcwupRTUNkXn6ArYzs:2:test-licence:4.4.4","name":"test-licence","version":"4.4.4","attrNames":["height","name","sex","age"],"seqNo":2471}"#;

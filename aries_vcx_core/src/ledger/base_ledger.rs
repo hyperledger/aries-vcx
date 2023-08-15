@@ -1,6 +1,7 @@
 use std::fmt::Debug;
 
 use async_trait::async_trait;
+use indy_vdr::ledger::constants::UpdateRole;
 use serde::Serialize;
 
 use crate::errors::error::VcxCoreResult;
@@ -26,6 +27,14 @@ pub trait IndyLedgerWrite: Debug + Send + Sync {
     async fn set_endorser(&self, submitter_did: &str, request: &str, endorser: &str) -> VcxCoreResult<String>;
     async fn endorse_transaction(&self, endorser_did: &str, request_json: &str) -> VcxCoreResult<()>;
     async fn add_attr(&self, target_did: &str, attrib_json: &str) -> VcxCoreResult<String>;
+    async fn write_did(
+        &self,
+        submitter_did: &str,
+        target_did: &str,
+        target_vk: &str,
+        role: Option<UpdateRole>,
+        alias: Option<String>,
+    ) -> VcxCoreResult<String>;
 }
 
 #[async_trait]

@@ -2,7 +2,7 @@
 const { createVcxAgent, getSampleSchemaData } = require('../../src')
 const {
   ConnectionStateType, IssuerStateType, VerifierStateType, generatePublicInvite,
-  createPwInfo, createService, getServiceFromLedger, unpack
+  createService, getServiceFromLedger, unpack, createAndStoreDid
 } = require('@hyperledger/node-vcx-wrapper')
 const { getAliceSchemaAttrs, getFaberCredDefName } = require('./data')
 const sleep = require('sleep-promise')
@@ -67,7 +67,7 @@ module.exports.createFaber = async function createFaber (serviceEndpoint = 'http
     await vcxAgent.agentInitVcx()
 
     logger.info('Faber creating pairwise info')
-    const pwInfo = await createPwInfo()
+    const pwInfo = await createAndStoreDid(undefined, undefined)
     logger.info(`Faber creating service for endpoint ${endpoint} and recipient key ${pwInfo.pw_vk}`)
     await createService(institutionDid, endpoint, [pwInfo.pw_vk], [])
 

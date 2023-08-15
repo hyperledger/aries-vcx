@@ -5,7 +5,7 @@ use std::fmt::{Debug, Formatter};
 use std::str::FromStr;
 use std::sync::{Arc, RwLock};
 use time::OffsetDateTime;
-use vdr::ledger::constants::UpdateRole;
+pub use vdr::ledger::constants::{LedgerRole, UpdateRole};
 use vdr::ledger::requests::cred_def::CredentialDefinitionV1;
 use vdr::ledger::requests::rev_reg::{RevocationRegistryDelta, RevocationRegistryDeltaV1};
 use vdr::ledger::requests::rev_reg_def::{RegistryType, RevocationRegistryDefinition, RevocationRegistryDefinitionV1};
@@ -319,6 +319,32 @@ where
         )?;
         let request = self.append_txn_author_agreement_to_request(request).await?;
         self.sign_and_submit_request(target_did, request).await
+    }
+
+    async fn write_did(
+        &self,
+        submitter_did: &str,
+        target_did: &str,
+        target_vk: &str,
+        role: Option<UpdateRole>,
+        alias: Option<String>,
+    ) -> VcxCoreResult<String> {
+        debug!("write_did >> submitter_did: {submitter_did}, target_did: {target_did}, target_vk: {target_vk}, role: {role:?}, alias: {alias:?}");
+        let identifier = DidValue::from_str(submitter_did)?;
+        let dest = DidValue::from_str(target_did)?;
+        let request = self.request_builder()?.build_nym_request(
+            &identifier,
+            &dest,
+            Some(target_vk.into()),
+            alias,
+            role,
+            None,
+            None,
+        )?;
+        let request = self.append_txn_author_agreement_to_request(request).await?;
+        let response = self.sign_and_submit_request(submitter_did, request).await?;
+        debug!("write_did << response: {response}");
+        return Ok(response);
     }
 }
 

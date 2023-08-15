@@ -215,12 +215,8 @@ pub async fn import(restore_config: &RestoreWalletConfigs) -> VcxCoreResult<()> 
 }
 
 // TODO - FUTURE - can this be moved externally - move to a generic setup util?
-pub async fn wallet_configure_issuer(
-    wallet_handle: WalletHandle,
-    enterprise_seed: &str,
-) -> VcxCoreResult<IssuerConfig> {
-    let (institution_did, _institution_verkey) =
-        create_and_store_my_did(wallet_handle, Some(enterprise_seed), None).await?;
+pub async fn wallet_configure_issuer(wallet_handle: WalletHandle, key_seed: &str) -> VcxCoreResult<IssuerConfig> {
+    let (institution_did, _institution_verkey) = create_and_store_my_did(wallet_handle, Some(key_seed), None).await?;
 
     Ok(IssuerConfig { institution_did })
 }
