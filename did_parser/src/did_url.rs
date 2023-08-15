@@ -174,13 +174,13 @@ impl DidUrl {
     pub(crate) fn from_did_parts(
         did_url: String,
         did: DidRange,
-        method: DidRange,
+        method: Option<DidRange>,
         id: DidRange,
     ) -> Self {
         Self {
             did_url,
             did: Some(did),
-            method: Some(method),
+            method,
             id: Some(id),
             path: None,
             fragment: None,

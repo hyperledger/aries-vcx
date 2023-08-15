@@ -100,11 +100,6 @@ impl<'de> Deserialize<'de> for Did {
 
 impl From<Did> for DidUrl {
     fn from(did: Did) -> Self {
-        Self::from_did_parts(
-            did.did().to_string(),
-            0..did.did.len(),
-            did.method.unwrap(),
-            did.id,
-        )
+        Self::from_did_parts(did.did().to_string(), 0..did.did.len(), did.method, did.id)
     }
 }
