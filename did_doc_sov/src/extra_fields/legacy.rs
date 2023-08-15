@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use super::KeyKind;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
+#[serde(rename_all = "camelCase")]
 pub struct ExtraFieldsLegacy {
     #[serde(default)]
     priority: u32,

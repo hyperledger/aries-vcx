@@ -1,6 +1,7 @@
 pub mod error;
 pub mod extra_fields;
-mod legacy;
+// TODO: Make private
+pub mod legacy;
 pub mod service;
 
 use std::collections::HashMap;

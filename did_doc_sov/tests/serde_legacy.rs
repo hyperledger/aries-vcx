@@ -1,3 +1,10 @@
+use did_doc_sov::{
+    extra_fields::{AcceptType, KeyKind},
+    legacy::wrapper::LegacyOrNew,
+    service::ServiceType,
+    DidDocumentSov,
+};
+
 const LEGACY_DID_DOC_JSON: &str = r##"
 {
   "@context": "https://w3id.org/did/v1",
@@ -32,7 +39,18 @@ const LEGACY_DID_DOC_JSON: &str = r##"
 "##;
 
 #[test]
-fn test_deserialization() {}
+fn test_deserialization_legacy() {
+    let did_doc = serde_json::from_str::<LegacyOrNew>(LEGACY_DID_DOC_JSON).unwrap();
+    println!("{:#?}", did_doc);
+    let legacy = match did_doc {
+        LegacyOrNew::Legacy(legacy) => legacy,
+        LegacyOrNew::New(_) => panic!("Expected legacy did doc"),
+    };
+    let authentication = legacy.authentication();
+    println!("{:#?}", authentication);
+    let verification = legacy.verification_method();
+    println!("{:#?}", verification);
+}
 
 #[test]
-fn test_serialization() {}
+fn test_serialization_legacy() {}
