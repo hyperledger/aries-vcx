@@ -1,21 +1,16 @@
+#![allow(unused)]
+
 use aries_vcx_core::{
-    anoncreds::base_anoncreds::BaseAnonCreds,
-    ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite},
+    ledger::base_ledger::{AnoncredsLedgerRead, IndyLedgerRead},
     wallet::base_wallet::BaseWallet,
 };
-use async_trait::async_trait;
-use chrono::Utc;
+
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
-use messages::{
-    decorators::{thread::Thread, timing::Timing},
-    msg_fields::protocols::connection::{
-        invitation::{
-            InvitationContent, PairwiseDidInvitationContent, PairwiseInvitationContent, PublicInvitationContent,
-        },
-        request::RequestContent,
-        response::ResponseContent,
-        ConnectionData,
-    },
+use messages::msg_fields::protocols::connection::{
+    invitation::{InvitationContent, PairwiseDidInvitationContent, PairwiseInvitationContent, PublicInvitationContent},
+    request::RequestContent,
+    response::ResponseContent,
+    ConnectionData,
 };
 use url::Url;
 
@@ -35,174 +30,137 @@ pub struct BootstrapInfo {
     service_endpoint_did: Option<String>,
 }
 
-#[async_trait]
-pub trait MessageHandler {
-    type LedgerRead: IndyLedgerRead + AnoncredsLedgerRead;
-
-    type LedgerWrite: IndyLedgerWrite + AnoncredsLedgerWrite;
-
-    type Wallet: BaseWallet;
-
-    type Anoncreds: BaseAnonCreds;
-
-    fn wallet(&self) -> &Self::Wallet;
-
-    fn ledger_read(&self) -> &Self::LedgerRead;
-
-    fn ledger_write(&self) -> &Self::LedgerWrite;
-
-    fn anoncreds(&self) -> &Self::Anoncreds;
-
-    async fn bootstrap_info_from_public_invitation(
-        &self,
-        invitation: PublicInvitationContent,
-    ) -> VcxResult<BootstrapInfo> {
-        let service = match get_service(self.ledger_read(), &invitation.did).await {
-            Ok(s) => s,
-            Err(err) => {
-                error!("Failed to obtain service definition from the ledger: {}", err);
-                return Err(err);
-            }
-        };
-
-        let info = BootstrapInfo {
-            service_endpoint: service.service_endpoint,
-            recipient_keys: service.recipient_keys,
-            routing_keys: service.routing_keys,
-            did: Some(invitation.did),
-            service_endpoint_did: None,
-        };
-
-        Ok(info)
-    }
-
-    fn bootstrap_info_from_pw_invitation(&self, invitation: PairwiseInvitationContent) -> BootstrapInfo {
-        BootstrapInfo {
-            service_endpoint: invitation.service_endpoint,
-            recipient_keys: invitation.recipient_keys,
-            routing_keys: invitation.routing_keys,
-            did: None,
-            service_endpoint_did: None,
+async fn parse_public_invitation<T>(ledger_read: &T, invitation: PublicInvitationContent) -> VcxResult<BootstrapInfo>
+where
+    T: IndyLedgerRead + AnoncredsLedgerRead,
+{
+    let service = match get_service(ledger_read, &invitation.did).await {
+        Ok(s) => s,
+        Err(err) => {
+            error!("Failed to obtain service definition from the ledger: {}", err);
+            return Err(err);
         }
+    };
+
+    let info = BootstrapInfo {
+        service_endpoint: service.service_endpoint,
+        recipient_keys: service.recipient_keys,
+        routing_keys: service.routing_keys,
+        did: Some(invitation.did),
+        service_endpoint_did: None,
+    };
+
+    Ok(info)
+}
+
+fn parse_pw_invitation(invitation: PairwiseInvitationContent) -> BootstrapInfo {
+    BootstrapInfo {
+        service_endpoint: invitation.service_endpoint,
+        recipient_keys: invitation.recipient_keys,
+        routing_keys: invitation.routing_keys,
+        did: None,
+        service_endpoint_did: None,
     }
+}
 
-    async fn bootstrap_info_from_pw_did_invitation(
-        &self,
-        mut invitation: PairwiseDidInvitationContent,
-    ) -> VcxResult<BootstrapInfo> {
-        let service = match get_service(self.ledger_read(), &invitation.service_endpoint).await {
-            Ok(s) => s,
-            Err(err) => {
-                error!("Failed to obtain service definition from the ledger: {}", err);
-                return Err(err);
-            }
-        };
-
-        // See https://github.com/hyperledger/aries-rfcs/blob/main/features/0160-connection-protocol/README.md#agency-endpoint
-        invitation.routing_keys.extend(service.recipient_keys);
-
-        let info = BootstrapInfo {
-            service_endpoint: service.service_endpoint,
-            recipient_keys: invitation.recipient_keys,
-            routing_keys: invitation.routing_keys,
-            did: None,
-            service_endpoint_did: Some(invitation.service_endpoint),
-        };
-
-        Ok(info)
-    }
-
-    async fn bootstrap_info_from_invitation(&self, invitation: InvitationContent) -> VcxResult<BootstrapInfo> {
-        match invitation {
-            InvitationContent::Public(invitation) => self.bootstrap_info_from_public_invitation(invitation).await,
-            InvitationContent::Pairwise(invitation) => Ok(self.bootstrap_info_from_pw_invitation(invitation)),
-            InvitationContent::PairwiseDID(invitation) => self.bootstrap_info_from_pw_did_invitation(invitation).await,
+async fn parse_pw_did_invitation<T>(
+    ledger_read: &T,
+    mut invitation: PairwiseDidInvitationContent,
+) -> VcxResult<BootstrapInfo>
+where
+    T: IndyLedgerRead + AnoncredsLedgerRead,
+{
+    let service = match get_service(ledger_read, &invitation.service_endpoint).await {
+        Ok(s) => s,
+        Err(err) => {
+            error!("Failed to obtain service definition from the ledger: {}", err);
+            return Err(err);
         }
+    };
+
+    // See https://github.com/hyperledger/aries-rfcs/blob/main/features/0160-connection-protocol/README.md#agency-endpoint
+    invitation.routing_keys.extend(service.recipient_keys);
+
+    let info = BootstrapInfo {
+        service_endpoint: service.service_endpoint,
+        recipient_keys: invitation.recipient_keys,
+        routing_keys: invitation.routing_keys,
+        did: None,
+        service_endpoint_did: Some(invitation.service_endpoint),
+    };
+
+    Ok(info)
+}
+
+async fn build_response_content<T>(
+    wallet: &T,
+    verkey: &str,
+    did: String,
+    recipient_keys: Vec<String>,
+    new_service_endpoint: Url,
+    new_routing_keys: Vec<String>,
+) -> VcxResult<ResponseContent>
+where
+    T: BaseWallet,
+{
+    let mut did_doc = AriesDidDoc::default();
+
+    did_doc.set_id(did.clone());
+    did_doc.set_service_endpoint(new_service_endpoint);
+    did_doc.set_routing_keys(new_routing_keys);
+    did_doc.set_recipient_keys(recipient_keys);
+
+    let con_data = ConnectionData::new(did, did_doc);
+    let con_sig = sign_connection_response(wallet, verkey, &con_data).await?;
+    let content = ResponseContent::new(con_sig);
+
+    Ok(content)
+}
+
+async fn process_connection_invitation<T>(ledger_read: &T, msg_content: InvitationContent) -> VcxResult<BootstrapInfo>
+where
+    T: IndyLedgerRead + AnoncredsLedgerRead,
+{
+    //! This could arguably be a method on the invitation
+    match msg_content {
+        InvitationContent::Public(invitation) => parse_public_invitation(ledger_read, invitation).await,
+        InvitationContent::Pairwise(invitation) => Ok(parse_pw_invitation(invitation)),
+        InvitationContent::PairwiseDID(invitation) => parse_pw_did_invitation(ledger_read, invitation).await,
+    }
+}
+
+async fn process_connection_request(msg_content: RequestContent) -> VcxResult<AriesDidDoc> {
+    //! This could arguably be a method on the did doc
+
+    // If the request's DidDoc validation fails, we generate and send a ProblemReport.
+    // We then return early with the provided error.
+    if let Err(err) = msg_content.connection.did_doc.validate() {
+        error!("Request DidDoc validation failed! Sending ProblemReport...");
+        // TODO: There is a problem report generated here
+        Err(err)?;
     }
 
-    async fn build_response_content(
-        &self,
-        verkey: &str,
-        did: String,
-        recipient_keys: Vec<String>,
-        new_service_endpoint: Url,
-        new_routing_keys: Vec<String>,
-    ) -> VcxResult<ResponseContent> {
-        let mut did_doc = AriesDidDoc::default();
+    Ok(msg_content.connection.did_doc)
+}
 
-        did_doc.set_id(did.clone());
-        did_doc.set_service_endpoint(new_service_endpoint);
-        did_doc.set_routing_keys(new_routing_keys);
-        did_doc.set_recipient_keys(recipient_keys);
+async fn process_connection_response<T>(
+    wallet: &T,
+    msg_content: ResponseContent,
+    verkey: &str,
+) -> VcxResult<AriesDidDoc>
+where
+    T: BaseWallet,
+{
+    //! Let's pretend this function is inlined
 
-        let con_data = ConnectionData::new(did, did_doc);
-        let con_sig = sign_connection_response(self.wallet(), verkey, &con_data).await?;
-        let content = ResponseContent::new(con_sig);
-
-        Ok(content)
-    }
-
-    fn make_reply_thread(&self, thread: Thread) -> Thread {
-        Thread::new(thread.thid)
-    }
-
-    fn make_subthread(&self, thread: Thread, thread_id: String) -> Thread {
-        let mut subthread = Thread::new(thread_id);
-        subthread.pthid = Some(thread.thid);
-        subthread
-    }
-
-    fn make_connection_request_thread(
-        &self,
-        invitation_thread: Thread,
-        request_id: String,
-        public_invite: bool,
-    ) -> Thread {
-        if public_invite {
-            self.make_subthread(invitation_thread, request_id)
-        } else {
-            self.make_reply_thread(invitation_thread)
-        }
-    }
-
-    fn make_timing(&self) -> Timing {
-        Timing {
-            out_time: Some(Utc::now()),
-            ..Default::default()
-        }
-    }
-
-    async fn process_connection_invitation(&self, msg_content: InvitationContent) -> VcxResult<BootstrapInfo> {
-        //! This could arguably be a method on the invitation
-        self.bootstrap_info_from_invitation(msg_content).await
-    }
-
-    async fn process_connection_request(&self, msg_content: RequestContent) -> VcxResult<AriesDidDoc> {
-        //! This could arguably be a method on the did doc
-
-        // If the request's DidDoc validation fails, we generate and send a ProblemReport.
-        // We then return early with the provided error.
-        if let Err(err) = msg_content.connection.did_doc.validate() {
+    match decode_signed_connection_response(wallet, msg_content, verkey).await {
+        Ok(con_data) => Ok(con_data.did_doc),
+        Err(err) => {
+            // TODO: Theres a ProblemReport being built here.
+            // Might be nice to either have a different type for the Err()
+            // variant or incorporate ProblemReports into AriesVcxError
             error!("Request DidDoc validation failed! Sending ProblemReport...");
-            // TODO: There is a problem report generated here
-            Err(err)?;
-        }
-
-        Ok(msg_content.connection.did_doc)
-    }
-
-    async fn process_connection_response(&self, msg_content: ResponseContent, verkey: &str) -> VcxResult<AriesDidDoc> {
-        //! Let's pretend this function is inlined
-
-        match decode_signed_connection_response(self.wallet(), msg_content, verkey).await {
-            Ok(con_data) => Ok(con_data.did_doc),
-            Err(err) => {
-                // TODO: Theres a ProblemReport being built here.
-                // Might be nice to either have a different type for the Err()
-                // variant or incorporate ProblemReports into AriesVcxError
-                error!("Request DidDoc validation failed! Sending ProblemReport...");
-                Err(err)
-            }
+            Err(err)
         }
     }
 }
@@ -212,17 +170,16 @@ pub trait MessageHandler {
 #[allow(clippy::unwrap_used)]
 mod tests {
     use aries_vcx_core::{
-        anoncreds::indy_anoncreds::IndySdkAnonCreds,
-        ledger::indy_ledger::{IndySdkLedgerRead, IndySdkLedgerWrite},
+        anoncreds::{base_anoncreds::BaseAnonCreds, indy_anoncreds::IndySdkAnonCreds},
+        ledger::{
+            base_ledger::{AnoncredsLedgerWrite, IndyLedgerWrite},
+            indy_ledger::{IndySdkLedgerRead, IndySdkLedgerWrite},
+        },
         wallet::indy::IndySdkWallet,
     };
     use messages::msg_fields::protocols::{
-        connection::{
-            invitation::Invitation,
-            request::{Request, RequestDecorators},
-            response::{Response, ResponseDecorators},
-        },
-        notification::ack::{Ack, AckContent, AckDecorators, AckStatus},
+        connection::invitation::Invitation,
+        notification::ack::{AckContent, AckStatus},
     };
     use uuid::Uuid;
 
@@ -244,7 +201,24 @@ mod tests {
         anoncreds: IndySdkAnonCreds,
     }
 
-    #[async_trait]
+    pub trait MessageHandler {
+        type LedgerRead: IndyLedgerRead + AnoncredsLedgerRead;
+
+        type LedgerWrite: IndyLedgerWrite + AnoncredsLedgerWrite;
+
+        type Wallet: BaseWallet;
+
+        type Anoncreds: BaseAnonCreds;
+
+        fn wallet(&self) -> &Self::Wallet;
+
+        fn ledger_read(&self) -> &Self::LedgerRead;
+
+        fn ledger_write(&self) -> &Self::LedgerWrite;
+
+        fn anoncreds(&self) -> &Self::Anoncreds;
+    }
+
     impl MessageHandler for MsgHandler {
         type LedgerRead = IndySdkLedgerRead;
 
@@ -318,20 +292,8 @@ mod tests {
             Default::default(),
         );
 
-        let request_id = Uuid::new_v4().to_string();
-
-        let thread = match &invitation.content {
-            InvitationContent::Public(_) => {
-                let mut thread = Thread::new(request_id.clone());
-                thread.pthid = Some(invitation.id.clone());
-                thread
-            }
-            InvitationContent::Pairwise(_) => Thread::new(invitation.id.clone()),
-            InvitationContent::PairwiseDID(_) => Thread::new(invitation.id.clone()),
-        };
-
         // Extract info from invitation
-        let bootstrap_info = alice.process_connection_invitation(invitation.content).await?;
+        let bootstrap_info = process_connection_invitation(alice.ledger_read(), invitation.content).await?;
 
         // Build request
         let (alice_did, alice_verkey) = alice.wallet().create_and_store_my_did(None, None).await?;
@@ -344,68 +306,36 @@ mod tests {
         did_doc.set_recipient_keys(bootstrap_info.recipient_keys);
 
         let con_data = ConnectionData::new(alice_did, did_doc);
-
         let request_content = RequestContent::new("my_request".to_owned(), con_data);
-        let timing = Timing {
-            out_time: Some(Utc::now()),
-            ..Default::default()
-        };
-
-        let request_decorators = RequestDecorators {
-            thread: Some(thread),
-            timing: Some(timing),
-        };
-
-        let request = Request::with_decorators(request_id, request_content, request_decorators);
 
         // Process request
-        let alice_did_doc = faber.process_connection_request(request.content).await?;
+        let alice_did_doc = process_connection_request(request_content).await?;
         let recipient_keys = alice_did_doc.recipient_keys()?;
         let their_verkey = recipient_keys.first().ok_or("no recipient keys")?.as_str();
 
         // Build response
         let (faber_did, faber_verkey) = faber.wallet().create_and_store_my_did(None, None).await?;
-        let response_content = faber
-            .build_response_content(their_verkey, faber_did, vec![faber_verkey], dummy_endpoint, vec![])
-            .await?;
 
-        let timing = Timing {
-            out_time: Some(Utc::now()),
-            ..Default::default()
-        };
-
-        let response_decorators = ResponseDecorators {
-            thread: Thread::new(request.decorators.thread.map(|t| t.thid).unwrap_or(request.id)),
-            please_ack: None,
-            timing: Some(timing),
-        };
-
-        let response = Response::with_decorators(Uuid::new_v4().to_string(), response_content, response_decorators);
+        let response_content = build_response_content(
+            faber.wallet(),
+            their_verkey,
+            faber_did,
+            vec![faber_verkey],
+            dummy_endpoint,
+            vec![],
+        )
+        .await?;
 
         // Process response
-        let _faber_did_doc = alice
-            .process_connection_response(response.content, &alice_verkey)
-            .await?;
+        let _faber_did_doc = process_connection_response(alice.wallet(), response_content, &alice_verkey).await?;
 
         // Build ack
         let ack_content = AckContent::new(AckStatus::Ok);
 
-        let timing = Timing {
-            out_time: Some(Utc::now()),
-            ..Default::default()
-        };
-
-        let ack_decorators = AckDecorators {
-            thread: Thread::new(response.decorators.thread.thid),
-            timing: Some(timing),
-        };
-
-        let ack = Ack::with_decorators(Uuid::new_v4().to_string(), ack_content, ack_decorators);
-
         // Process ack
-        // The inviter merely needs to see this message (after decryption) to assess that
+        // The inviter merely needs to see this, or any other, message (after decryption) to assess that
         // the connection is now complete for them as well.
-        let _ = ack;
+        let _ = ack_content;
 
         Ok(())
     }
