@@ -1,7 +1,7 @@
 pub mod error;
 pub mod extra_fields;
-// TODO: Make private
-pub mod legacy;
+// TODO: Remove once migration is done
+mod legacy;
 pub mod service;
 
 use std::collections::HashMap;
@@ -132,6 +132,7 @@ impl<'de> Deserialize<'de> for DidDocumentSov {
         #[derive(Deserialize, Clone, Debug, PartialEq)]
         struct TempDidDocumentSov {
             #[serde(flatten)]
+            // TODO: Remove once the transition is done
             #[serde(deserialize_with = "legacy::deserialize_legacy_or_new")]
             did_doc: DidDocument<ExtraFieldsSov>,
         }
