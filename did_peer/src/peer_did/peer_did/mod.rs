@@ -89,6 +89,12 @@ impl<N: Numalgo> Display for PeerDid<N> {
     }
 }
 
+impl<N: Numalgo> From<PeerDid<N>> for Did {
+    fn from(peer_did: PeerDid<N>) -> Self {
+        peer_did.did
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::peer_did::numalgos::numalgo2::Numalgo2;

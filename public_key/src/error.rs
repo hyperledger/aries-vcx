@@ -4,6 +4,8 @@ use thiserror::Error;
 pub enum PublicKeyError {
     #[error("Base 64 decoding error")]
     Base64DecodingError(#[from] base64::DecodeError),
+    #[error("Base 58 decoding error")]
+    Base58DecodingError(#[from] bs58::decode::Error),
     #[error("Multibase decoding error")]
     MultibaseDecodingError(#[from] multibase::Error),
     #[error("Varint decoding error")]

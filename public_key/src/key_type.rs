@@ -1,6 +1,8 @@
+use serde::{Deserialize, Serialize};
+
 use crate::error::PublicKeyError;
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum KeyType {
     Ed25519,
     Bls12381g1g2,

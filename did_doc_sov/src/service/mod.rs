@@ -1,10 +1,11 @@
-use std::fmt::Display;
+use std::{collections::HashMap, fmt::Display};
 
 use did_doc::schema::{
     service::Service,
     types::{uri::Uri, url::Url},
 };
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 
 use crate::{error::DidDocumentSovError, extra_fields::ExtraFieldsSov};
 
@@ -79,6 +80,22 @@ impl TryFrom<Service<ExtraFieldsSov>> for ServiceSov {
             ExtraFieldsSov::AIP1(_extra) => Ok(ServiceSov::AIP1(service.try_into()?)),
             ExtraFieldsSov::DIDCommV1(_extra) => Ok(ServiceSov::DIDCommV1(service.try_into()?)),
             ExtraFieldsSov::DIDCommV2(_extra) => Ok(ServiceSov::DIDCommV2(service.try_into()?)),
+        }
+    }
+}
+
+impl TryFrom<Service<HashMap<String, Value>>> for ServiceSov {
+    type Error = DidDocumentSovError;
+
+    fn try_from(service: Service<HashMap<String, Value>>) -> Result<Self, Self::Error> {
+        match service.extra().get("type") {
+            Some(service_type) => match service_type.as_str() {
+                Some("AIP1") => Ok(ServiceSov::AIP1(service.try_into()?)),
+                Some("DIDCommV1") => Ok(ServiceSov::DIDCommV1(service.try_into()?)),
+                Some("DIDCommV2") => Ok(ServiceSov::DIDCommV2(service.try_into()?)),
+                _ => Err(DidDocumentSovError::UnexpectedServiceType(service_type.to_string())),
+            },
+            None => Ok(ServiceSov::AIP1(service.try_into()?)),
         }
     }
 }
