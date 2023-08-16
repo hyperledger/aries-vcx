@@ -164,7 +164,12 @@ impl Serialize for DidDocumentSov {
 
         for service_sov in &self.services {
             let service: Service<ExtraFieldsSov> = service_sov.clone().try_into().map_err(serde::ser::Error::custom)?;
-            builder = builder.add_service(service);
+            // Not very efficient, but
+            // * we don't expect many services
+            // * does not require allowing to remove services from existing DDO or builder
+            if !self.did_doc.service().iter().any(|s| s.id() == service.id()) {
+                builder = builder.add_service(service);
+            }
         }
 
         builder.build().serialize(serializer)
