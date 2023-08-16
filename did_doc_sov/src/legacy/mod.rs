@@ -91,6 +91,9 @@ fn legacy_authentication_to_verification_method(
 fn convert_legacy_ddo_to_new(legacy_ddo: LegacyDidDoc) -> Result<DidDocument<ExtraFieldsSov>, String> {
     let mut builder = DidDocument::builder(legacy_ddo.id.clone());
 
+    // TODO: We usually added just "recipient key", which was used both in publicKey and authentication.
+    // When constructing new DDO, we probably want to add just verification method for each recipient key,
+    // and then all other properties should contain reference to (each?) verification method.
     for vm in &legacy_ddo.public_key {
         builder = builder.add_key_agreement(legacy_public_key_to_verification_method(&vm)?);
     }
