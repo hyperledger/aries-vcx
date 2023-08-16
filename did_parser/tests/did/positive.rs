@@ -27,4 +27,9 @@ test_cases_positive! {
         "did:web:w3c-ccg.github.io",
         Some("web"),
         "w3c-ccg.github.io"
+    test_case3:
+        "2ZHFFhzA2XtTD6hJqzL7ux",
+        "2ZHFFhzA2XtTD6hJqzL7ux",
+        None,
+        "2ZHFFhzA2XtTD6hJqzL7ux"
 }
