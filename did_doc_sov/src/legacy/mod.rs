@@ -12,10 +12,7 @@ use did_doc::{
 };
 use serde_json::{json, Value};
 
-use crate::{
-    extra_fields::ExtraFieldsSov,
-    service::{legacy::ServiceLegacy, ServiceType},
-};
+use crate::{extra_fields::ExtraFieldsSov, service::legacy::ServiceLegacy};
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 pub struct LegacyDidDoc {
@@ -46,54 +43,6 @@ pub struct LegacyAuthentication {
     public_key: String,
 }
 
-fn legacy_public_key_to_verification_method(value: &LegacyKeyAgreement) -> Result<VerificationMethod, String> {
-    let LegacyKeyAgreement {
-        id,
-        verification_method_type: _,
-        controller,
-        public_key_base_58,
-    } = value;
-    // SAFETY: Not used for derefencing anyways + DDO contains did
-    let id = DidUrl::parse(id.clone()).unwrap_or_default();
-    // SAFETY: DDO contains did
-    let controller = Did::parse(controller.clone()).unwrap_or_default();
-    // TODO:
-    let verification_method_type = VerificationMethodType::X25519KeyAgreementKey2019;
-
-    Ok(VerificationMethod::builder(id, controller, verification_method_type)
-        .add_public_key_base58(public_key_base_58.clone())
-        .build())
-}
-
-fn legacy_authentication_to_verification_method(
-    legacy_authentication: &LegacyAuthentication,
-    did: Did,
-    legacy_public_keys: &[LegacyKeyAgreement],
-) -> Result<VerificationMethod, String> {
-    let verification_method_type = VerificationMethodType::Ed25519VerificationKey2018;
-
-    // If it's a reference, resolve it. We might want to just include reference, but this is easier
-    // to do safely.
-    let (public_key_base_58, did_url) = if let Some(fragment) = legacy_authentication.public_key.split('#').last() {
-        (
-            legacy_public_keys
-                .iter()
-                .find(|pk| pk.id.ends_with(fragment))
-                .ok_or_else(|| format!("Public key with id {} not found", fragment))?
-                .public_key_base_58
-                .clone(),
-            DidUrl::from_fragment(fragment.to_string()).unwrap(),
-        )
-    } else {
-        // TODO: Do some sanity checks
-        (legacy_authentication.public_key.clone(), did.clone().into())
-    };
-
-    Ok(VerificationMethod::builder(did_url, did, verification_method_type)
-        .add_public_key_base58(public_key_base_58)
-        .build())
-}
-
 fn resolve_legacy_authentication_key(
     legacy_authentication: &LegacyAuthentication,
     legacy_public_keys: &[LegacyKeyAgreement],
@@ -110,9 +59,7 @@ fn resolve_legacy_authentication_key(
     }
 }
 
-// https://github.com/TimoGlastra/legacy-did-transformation
-fn construct_peer_did(legacy_ddo: &LegacyDidDoc) -> Result<Did, String> {
-    let mut did = "did:peer:2".to_string();
+fn collect_authentication_fingerprints(legacy_ddo: &LegacyDidDoc) -> Result<Vec<String>, String> {
     let mut authentication_fingerprints = vec![];
 
     for auth in &legacy_ddo.authentication {
@@ -153,51 +100,59 @@ fn construct_peer_did(legacy_ddo: &LegacyDidDoc) -> Result<Did, String> {
         }
     }
 
+    Ok(authentication_fingerprints)
+}
+
+fn collect_encoded_services(legacy_ddo: &LegacyDidDoc) -> Vec<String> {
+    let mut encoded_services = vec![];
+    for service in &legacy_ddo.service {
+        let service = json!({
+            "priority": service.extra().priority(),
+            "r": service.extra().routing_keys(),
+            "recipientKeys": service.extra().recipient_keys(),
+            "s": service.service_endpoint(),
+            "t": service.service_type(),
+        });
+        let service_encoded = STANDARD_NO_PAD.encode(service.to_string().as_bytes());
+        encoded_services.push(service_encoded);
+    }
+    encoded_services
+}
+
+fn construct_peer_did(authentication_fingerprints: &[String], encoded_services: &[String]) -> Result<Did, String> {
+    let mut did = "did:peer:2".to_string();
+
     for fingerprint in authentication_fingerprints {
         did.push_str(&format!(".V{}", fingerprint));
     }
 
-    for s in &legacy_ddo.service {
-        if s.service_type() != ServiceType::Legacy {
-            continue;
-        }
-        let service = json!({
-            "priority": s.extra().priority(),
-            "r": s.extra().routing_keys(),
-            "recipientKeys": s.extra().recipient_keys(),
-            "s": s.service_endpoint(),
-            "t": s.service_type(),
-        });
-        let service_encoded = STANDARD_NO_PAD.encode(serde_json::to_vec(&service).map_err(|err| {
-            format!(
-                "Error encoding legacy service to base64: {:?}, error: {:?}",
-                service, err
-            )
-        })?);
-        did.push_str(&format!(".S{}", service_encoded));
+    for service in encoded_services {
+        did.push_str(&format!(".S{}", service));
     }
 
     Did::parse(did).map_err(|err| format!("Error parsing peer did, error: {:?}", err))
 }
 
+// https://github.com/TimoGlastra/legacy-did-transformation
 fn convert_legacy_ddo_to_new(legacy_ddo: LegacyDidDoc) -> Result<DidDocument<ExtraFieldsSov>, String> {
-    let did = construct_peer_did(&legacy_ddo)?;
+    let authentication_fingerprints = collect_authentication_fingerprints(&legacy_ddo)?;
+    let encoded_services = collect_encoded_services(&legacy_ddo);
 
-    let mut builder = DidDocument::builder(did);
+    let did = construct_peer_did(&authentication_fingerprints, &encoded_services)?;
 
-    // TODO: We usually added just "recipient key", which was used both in publicKey and authentication.
-    // When constructing new DDO, we probably want to add just verification method for each recipient key,
-    // and then all other properties should contain reference to (each?) verification method.
-    for vm in &legacy_ddo.public_key {
-        builder = builder.add_key_agreement(legacy_public_key_to_verification_method(&vm)?);
-    }
+    let mut builder = DidDocument::builder(did.clone());
 
-    for auth in &legacy_ddo.authentication {
-        builder = builder.add_verification_method(legacy_authentication_to_verification_method(
-            &auth,
-            legacy_ddo.id.clone(),
-            &legacy_ddo.public_key,
-        )?);
+    for (i, fingerprint) in authentication_fingerprints.iter().enumerate() {
+        let id = DidUrl::from_fragment(i.to_string()).unwrap();
+        builder = builder.add_verification_method(
+            VerificationMethod::builder(
+                id,
+                did.clone().into(),
+                VerificationMethodType::Ed25519VerificationKey2018,
+            )
+            .add_public_key_multibase(fingerprint.clone())
+            .build(),
+        );
     }
 
     for service in &legacy_ddo.service {
