@@ -10,4 +10,6 @@ pub enum DidDocumentSovError {
     UnexpectedServiceType(String),
     #[error("Index out of bounds: {0}")]
     IndexOutOfBounds(usize),
+    #[error("JSON error")]
+    JsonError(#[from] serde_json::Error),
 }

@@ -1,9 +1,12 @@
+use std::collections::HashMap;
+
 use did_doc::schema::{
     service::Service,
     types::{uri::Uri, url::Url},
     utils::OneOrList,
 };
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 
 use crate::{
     error::DidDocumentSovError,
@@ -56,6 +59,15 @@ impl TryFrom<Service<ExtraFieldsSov>> for ServiceDidCommV1 {
                 service.service_type().to_string(),
             )),
         }
+    }
+}
+
+impl TryFrom<Service<HashMap<String, Value>>> for ServiceDidCommV1 {
+    type Error = DidDocumentSovError;
+
+    fn try_from(service: Service<HashMap<String, Value>>) -> Result<Self, Self::Error> {
+        let extra = serde_json::from_value::<ExtraFieldsDidCommV1>(serde_json::to_value(service.extra())?)?;
+        Self::new(service.id().clone(), service.service_endpoint().clone(), extra)
     }
 }
 

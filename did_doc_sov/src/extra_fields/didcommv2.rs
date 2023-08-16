@@ -4,6 +4,7 @@ use super::{AcceptType, KeyKind};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 #[serde(rename_all = "camelCase")]
+#[serde(deny_unknown_fields)]
 pub struct ExtraFieldsDidCommV2 {
     routing_keys: Vec<KeyKind>,
     #[serde(default)]
