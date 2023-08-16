@@ -312,4 +312,14 @@ test_cases_positive! {
         None,
         HashMap::new(),
         HashMap::new()
+
+    test_case22:
+        "2ZHFFhzA2XtTD6hJqzL7ux#1",
+        Some("2ZHFFhzA2XtTD6hJqzL7ux"),
+        None,
+        Some("2ZHFFhzA2XtTD6hJqzL7ux"),
+        None,
+        Some("1"),
+        HashMap::new(),
+        HashMap::new()
 }

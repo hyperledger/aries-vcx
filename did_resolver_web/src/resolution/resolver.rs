@@ -73,8 +73,11 @@ where
         did: &Did,
         options: &DidResolutionOptions<Self::ExtraFieldsOptions>,
     ) -> Result<DidResolutionOutput<()>, GenericError> {
-        if did.method() != "web" {
-            return Err(Box::new(DidWebError::MethodNotSupported(did.method().to_string())));
+        let method = did
+            .method()
+            .ok_or_else(|| DidWebError::InvalidDid("Attempted to resolve unqualified did".to_string()))?;
+        if method != "web" {
+            return Err(Box::new(DidWebError::MethodNotSupported(method.to_string())));
         }
 
         if let Some(accept) = options.accept() {

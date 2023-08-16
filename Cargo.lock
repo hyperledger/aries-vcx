@@ -1676,6 +1676,7 @@ name = "did_parser"
 version = "0.1.0"
 dependencies = [
  "serde",
+ "shared_vcx",
 ]
 
 [[package]]
