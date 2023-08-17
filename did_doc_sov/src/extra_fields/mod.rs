@@ -88,8 +88,8 @@ impl Display for KeyKind {
 pub enum ExtraFieldsSov {
     DIDCommV1(didcommv1::ExtraFieldsDidCommV1),
     DIDCommV2(didcommv2::ExtraFieldsDidCommV2),
-    Legacy(legacy::ExtraFieldsLegacy),
     AIP1(aip1::ExtraFieldsAIP1),
+    Legacy(legacy::ExtraFieldsLegacy),
 }
 
 impl Default for ExtraFieldsSov {

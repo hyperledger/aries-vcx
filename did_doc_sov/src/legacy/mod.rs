@@ -83,7 +83,9 @@ fn collect_authentication_fingerprints(legacy_ddo: &LegacyDidDoc) -> Result<Vec<
     }
 
     for vm in &legacy_ddo.public_key {
-        if vm.verification_method_type != "Ed25519Signature2018" {
+        // Ed25519VerificationKey2018 check is used due to aries-vcx using this as key type in the
+        // legacy did doc
+        if !&["Ed25519Signature2018", "Ed25519VerificationKey2018"].contains(&vm.verification_method_type.as_str()) {
             continue;
         }
 
@@ -120,6 +122,7 @@ fn collect_encoded_services(legacy_ddo: &LegacyDidDoc) -> Vec<String> {
 }
 
 fn construct_peer_did(authentication_fingerprints: &[String], encoded_services: &[String]) -> Result<Did, String> {
+    // TODO: Perhaps proper ID is did:peer:3 with alsoKnowAs set to did:peer:2 (or vice versa?)
     let mut did = "did:peer:2".to_string();
 
     for fingerprint in authentication_fingerprints {
@@ -143,7 +146,12 @@ fn convert_legacy_ddo_to_new(legacy_ddo: LegacyDidDoc) -> Result<DidDocument<Ext
     let mut builder = DidDocument::builder(did.clone());
 
     for (i, fingerprint) in authentication_fingerprints.iter().enumerate() {
-        let id = DidUrl::from_fragment(i.to_string()).unwrap();
+        let id = DidUrl::from_fragment((i + 1).to_string()).map_err(|err| {
+            format!(
+                "Error converting legacy authentication key to new did url: {:?}, error: {:?}",
+                fingerprint, err
+            )
+        })?;
         builder = builder.add_verification_method(
             VerificationMethod::builder(
                 id,
@@ -177,9 +185,6 @@ where
 
     match serde_json::from_value::<LegacyDidDoc>(val.clone()) {
         Ok(legacy_doc) => Ok(convert_legacy_ddo_to_new(legacy_doc).map_err(serde::de::Error::custom)?),
-        Err(_err) => {
-            println!("Error deserializing legacy did doc: {:?}", _err);
-            serde_json::from_value::<DidDocument<ExtraFieldsSov>>(val).map_err(serde::de::Error::custom)
-        }
+        Err(_err) => serde_json::from_value::<DidDocument<ExtraFieldsSov>>(val).map_err(serde::de::Error::custom),
     }
 }

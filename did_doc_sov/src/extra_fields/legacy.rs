@@ -4,6 +4,7 @@ use super::KeyKind;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 #[serde(rename_all = "camelCase")]
+#[serde(deny_unknown_fields)]
 pub struct ExtraFieldsLegacy {
     #[serde(default)]
     priority: u32,
