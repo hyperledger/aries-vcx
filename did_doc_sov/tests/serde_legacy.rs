@@ -72,6 +72,3 @@ fn test_deserialization_legacy() {
     assert_eq!(service.extra().priority().unwrap(), 0);
     assert_eq!(service.extra().routing_keys().unwrap().len(), 2);
 }
-
-#[test]
-fn test_serialization_legacy() {}
