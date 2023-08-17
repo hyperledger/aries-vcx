@@ -1,6 +1,7 @@
 pub mod config;
 mod helpers;
 
+use did_doc_sov::DidDocumentSov;
 use did_parser::ParseError;
 use did_peer::peer_did_resolver::resolver::PeerDidResolver;
 use did_resolver::{error::GenericError, traits::resolvable::DidResolvable};
@@ -22,6 +23,7 @@ use crate::{
 };
 
 use helpers::{construct_complete_message, construct_request, did_doc_from_did, verify_handshake_protocol};
+use messages::msg_fields::protocols::did_exchange::complete::Complete;
 
 use self::config::{ConstructRequestConfig, PairwiseConstructRequestConfig, PublicConstructRequestConfig};
 
@@ -121,20 +123,65 @@ impl DidExchangeServiceRequester<RequestSent> {
         self,
         response: Response,
     ) -> Result<TransitionResult<DidExchangeServiceRequester<Completed>, CompleteMessage>, TransitionError<Self>> {
-        if response.decorators.thread.thid != self.state.request_id {
-            return Err(TransitionError {
-                error: AriesVcxError::from_msg(
-                    AriesVcxErrorKind::InvalidState,
-                    "Response thread ID does not match request ID",
-                ),
-                state: self,
-            });
-        }
+        // if response.decorators.thread.thid != self.state.request_id {
+        //     return Err(TransitionError {
+        //         error: AriesVcxError::from_msg(
+        //             AriesVcxErrorKind::InvalidState,
+        //             "Response thread ID does not match request ID",
+        //         ),
+        //         state: self,
+        //     });
+        // }
+        //
+        let processor = ConnectionResponseProcessor {};
+
+        let data = processor.process(
+            response,
+            self.state.invitation_id.clone(),
+            self.state.request_id.clone()
+        ).await.unwrap();
+        Ok(TransitionResult {
+            state: DidExchangeServiceRequester::from_parts(
+                Completed {
+                    invitation_id: self.state.invitation_id,
+                    request_id: self.state.request_id,
+                },
+                data.their_did_doc,
+                self.our_verkey,
+            ),
+            output: data.message,
+        })
+    }
+}
+
+
+pub struct ConnectionResponseProcessor {}
+
+struct ConnectionResponseProcessingOutput {
+    message: Complete,
+    their_did_doc: DidDocumentSov
+}
+
+impl ConnectionResponseProcessor {
+
+    pub async fn process(
+        &self,
+        response: Response,
+        invitation_id: String,
+        request_id: String
+    ) -> Result<ConnectionResponseProcessingOutput, String>  {
+        // This can be added via some extensible behaviour. State machines might want to keep doing this
+        // if response.decorators.thread.thid != self.state.request_id {
+        //     return Err(TransitionError {
+        //         error: AriesVcxError::from_msg(
+        //             AriesVcxErrorKind::InvalidState,
+        //             "Response thread ID does not match request ID",
+        //         ),
+        //         state: self,
+        //     });
+        // }
         let did_document = if let Some(ddo) = response.content.did_doc {
-            attach_to_ddo_sov(ddo).map_err(|error| TransitionError {
-                error,
-                state: self.clone(),
-            })?
+            attach_to_ddo_sov(ddo).map_err(|error| Err("attachment handling err"))?
         } else {
             PeerDidResolver::new()
                 .resolve(
@@ -142,33 +189,21 @@ impl DidExchangeServiceRequester<RequestSent> {
                         .content
                         .did
                         .parse()
-                        .map_err(|error: ParseError| TransitionError {
-                            error: error.into(),
-                            state: self.clone(),
-                        })?,
+                        .map_err(|error: ParseError| Err("parsing error"))?,
                     &Default::default(),
                 )
                 .await
-                .map_err(|error: GenericError| TransitionError {
-                    error: error.into(),
-                    state: self.clone(),
-                })?
+                .map_err(|error: GenericError| Err("resolver error"))?
                 .did_document()
                 .to_owned()
                 .into()
         };
         let complete_message =
-            construct_complete_message(self.state.invitation_id.clone(), self.state.request_id.clone());
-        Ok(TransitionResult {
-            state: DidExchangeServiceRequester::from_parts(
-                Completed {
-                    invitation_id: self.state.invitation_id,
-                    request_id: self.state.request_id,
-                },
-                did_document,
-                self.our_verkey,
-            ),
-            output: complete_message,
+            construct_complete_message(invitation_id.clone(), request_id.clone());
+        Ok(ConnectionResponseProcessingOutput {
+            message: complete_message,
+            their_did_doc: did_document,
+
         })
     }
 }
