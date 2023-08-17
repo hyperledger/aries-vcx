@@ -232,6 +232,7 @@ impl <V> ConnectionResponseProcessor<V> where V: InputMsgVerifier {
     }
 }
 
+// todo: could be perhaps even generalized to something like "InputMsgMiddleware with 'fn process' method"
 trait InputMsgVerifier {
     // todo: input_msg can be typed as decorator of an arbitrary aries message
     fn verify(&self, input_msg: &Response) -> bool;
