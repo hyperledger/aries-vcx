@@ -10,14 +10,17 @@ mod integration_tests {
     use std::thread;
     use std::time::Duration;
 
+    use crate::utils::devsetup_alice::create_alice;
+    use crate::utils::devsetup_faber::{create_faber, create_faber_trustee};
     use aries_vcx::common::keys::{get_verkey_from_ledger, rotate_verkey};
     use aries_vcx::common::ledger::service_didsov::EndpointDidSov;
     use aries_vcx::common::ledger::transactions::{
-        add_attr, add_new_did, clear_attr, get_attr, get_service, write_endpoint, write_endpoint_legacy,
+        add_attr, add_new_did, clear_attr, get_attr, get_service, write_endorser_did, write_endpoint,
+        write_endpoint_legacy,
     };
     use aries_vcx::common::test_utils::create_and_store_nonrevocable_credential_def;
     use aries_vcx::utils::constants::DEFAULT_SCHEMA_ATTRS;
-    use aries_vcx::utils::devsetup::SetupProfile;
+    use aries_vcx::utils::devsetup::{SetupPoolDirectory, SetupProfile};
     use diddoc_legacy::aries::service::AriesService;
 
     #[cfg(foobar)]
@@ -99,6 +102,30 @@ mod integration_tests {
             )
             .await
             .unwrap();
+        })
+        .await;
+    }
+
+    #[tokio::test]
+    #[ignore]
+    async fn test_pool_write_new_endorser_did() {
+        SetupPoolDirectory::run(|setup| async move {
+            let faber = create_faber_trustee(setup.genesis_file_path.clone()).await;
+            let mut acme = create_faber(setup.genesis_file_path.clone()).await;
+            let acme_vk = acme.get_verkey_from_wallet(acme.public_did()).await;
+
+            assert!(acme.create_schema().await.is_err());
+            write_endorser_did(
+                &faber.profile.inject_indy_ledger_write(),
+                faber.public_did(),
+                acme.public_did(),
+                &acme_vk,
+                None,
+            )
+            .await
+            .unwrap();
+            thread::sleep(Duration::from_millis(50));
+            acme.create_schema().await.unwrap();
         })
         .await;
     }

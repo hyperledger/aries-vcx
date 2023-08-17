@@ -75,7 +75,8 @@
     "test:schema": "          TS_NODE_PROJECT=./test/tsconfig.json NODE_ENV=test RUST_BACKTRACE=full mocha --timeout 5000 --v8-use-strict --exit --require ts-node/register ./test/suite1/ariesvcx-schema.test.ts",
     "test:utils": "           TS_NODE_PROJECT=./test/tsconfig.json NODE_ENV=test RUST_BACKTRACE=full mocha --timeout 5000 --v8-use-strict --exit --require ts-node/register ./test/suite1/ariesvcx-utils.test.ts",
     "test:oob": "             TS_NODE_PROJECT=./test/tsconfig.json NODE_ENV=test RUST_BACKTRACE=full mocha --timeout 5000 --v8-use-strict --exit --require ts-node/register ./test/suite1/ariesvcx-oob.test.ts",
-    "test:wallet": "          TS_NODE_PROJECT=./test/tsconfig.json NODE_ENV=test RUST_BACKTRACE=full mocha --timeout 5000 --v8-use-strict --exit --require ts-node/register ./test/suite1/ariesvcx-wallet.test.ts"
+    "test:wallet": "          TS_NODE_PROJECT=./test/tsconfig.json NODE_ENV=test RUST_BACKTRACE=full mocha --timeout 5000 --v8-use-strict --exit --require ts-node/register ./test/suite1/ariesvcx-wallet.test.ts",
+    "test:integration": "     TS_NODE_PROJECT=./test/tsconfig.json NODE_ENV=test RUST_BACKTRACE=full mocha --timeout 5000 --v8-use-strict --exit --require ts-node/register ./test/integration/ledger.test.ts"
   },
   "main": "dist/index.js",
   "typings": "dist/index.d.ts"

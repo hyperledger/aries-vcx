@@ -1,13 +1,19 @@
 use base64::{engine::general_purpose::STANDARD_NO_PAD, Engine};
 use did_doc::schema::{
-    did_doc::DidDocument, service::Service, utils::OneOrList, verification_method::VerificationMethodKind,
+    did_doc::DidDocument,
+    service::Service,
+    utils::OneOrList,
+    verification_method::{VerificationMethod, VerificationMethodKind},
 };
 use did_doc_sov::extra_fields::ExtraFieldsSov;
+use public_key::Key;
 
 use crate::{
     error::DidPeerError,
-    key::get_key_by_verification_method,
-    numalgos::numalgo2::{purpose::ElementPurpose, service_abbreviated::ServiceAbbreviated},
+    numalgos::numalgo2::{
+        purpose::ElementPurpose, service_abbreviated::ServiceAbbreviated,
+        verification_method::get_key_by_verification_method,
+    },
 };
 
 pub fn append_encoded_key_segments(
@@ -75,23 +81,32 @@ pub fn append_encoded_service_segment(
 }
 
 fn append_encoded_key_segment(
-    mut did: String,
+    did: String,
     did_document: &DidDocument<ExtraFieldsSov>,
     vm: &VerificationMethodKind,
     purpose: ElementPurpose,
 ) -> Result<String, DidPeerError> {
-    let vm = match vm {
-        VerificationMethodKind::Resolved(vm) => vm,
+    let vm = resolve_verification_method(did_document, vm)?;
+    let key = get_key_by_verification_method(vm)?;
+    Ok(append_key_to_did(did, key, purpose))
+}
+
+fn resolve_verification_method<'a>(
+    did_document: &'a DidDocument<ExtraFieldsSov>,
+    vm: &'a VerificationMethodKind,
+) -> Result<&'a VerificationMethod, DidPeerError> {
+    match vm {
+        VerificationMethodKind::Resolved(vm) => Ok(vm),
         VerificationMethodKind::Resolvable(did_url) => did_document
             .dereference_key(did_url)
-            .ok_or(DidPeerError::InvalidKeyReference(did_url.to_string()))?,
-    };
+            .ok_or(DidPeerError::InvalidKeyReference(did_url.to_string())),
+    }
+}
 
-    let key = get_key_by_verification_method(vm)?;
+fn append_key_to_did(mut did: String, key: Key, purpose: ElementPurpose) -> String {
     let encoded = format!(".{}{}", purpose, key.fingerprint());
     did.push_str(&encoded);
-
-    Ok(did)
+    did
 }
 
 fn abbreviate_service(service: &Service<ExtraFieldsSov>) -> Result<ServiceAbbreviated, DidPeerError> {

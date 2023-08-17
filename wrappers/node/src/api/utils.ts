@@ -51,19 +51,15 @@ export async function getLedgerAuthorAgreement(): Promise<string> {
 }
 
 export function setActiveTxnAuthorAgreementMeta(
-  text: string | null | undefined,
-  version: string | null | undefined,
-  hash: string | null | undefined,
+  text: string,
+  version: string,
   acceptanceMechanismType: string,
-  timeOfAcceptance: number,
 ): void {
   try {
     ffi.setActiveTxnAuthorAgreementMeta(
       text,
       version,
-      hash,
       acceptanceMechanismType,
-      timeOfAcceptance,
     );
   } catch (err: any) {
     throw new VCXInternalError(err);
@@ -150,9 +146,9 @@ export async function getLedgerTxn(did: string, seqNo: number): Promise<string> 
   }
 }
 
-export async function createPwInfo(): Promise<IPwInfo> {
+export async function createAndStoreDid(seed?: string | undefined | null): Promise<IPwInfo> {
   try {
-    return JSON.parse(await ffi.createPairwiseInfo());
+    return JSON.parse(await ffi.createAndStoreDid(seed));
   } catch (err: any) {
     throw new VCXInternalError(err);
   }
@@ -210,6 +206,14 @@ export async function clearAttrFromLedger(did: string, attr: string): Promise<vo
 export async function unpack(data: Buffer): Promise<IMsgUnpacked> {
   try {
     return JSON.parse(await ffi.unpack(data));
+  } catch (err: any) {
+    throw new VCXInternalError(err);
+  }
+}
+
+export async function writeEndorserDid(submitterDid: string, targetDid: string, targetVk: string, alias?: string | undefined | null): Promise<IMsgUnpacked> {
+  try {
+    return JSON.parse(await ffi.writeEndorserDid(submitterDid, targetDid, targetVk, alias));
   } catch (err: any) {
     throw new VCXInternalError(err);
   }

@@ -3,7 +3,6 @@ use indy_vdr::pool::PreparedRequest;
 
 use crate::errors::error::VcxCoreResult;
 
-#[cfg(feature = "modular_libs")]
 pub mod vdr_ledger;
 #[cfg(feature = "vdr_proxy_ledger")]
 pub mod vdr_proxy;

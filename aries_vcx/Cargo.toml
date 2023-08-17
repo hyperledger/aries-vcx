@@ -12,14 +12,18 @@ doctest = false
 
 [features]
 default = ["vdrtools"]
-vdrtools = ["aries_vcx_core/vdrtools_anoncreds", "aries_vcx_core/vdrtools_ledger", "aries_vcx_core/vdrtools_wallet"]
+vdrtools = ["aries_vcx_core/vdrtools_anoncreds", "aries_vcx_core/vdrtools_wallet"]
 # Feature flag to include the 'modular library' dependencies (vdrtools alternatives; indy-vdr, indy-credx)
 modular_libs = ["aries_vcx_core/modular_libs"]
 # TODO: Remove using "vdrtools" feature flag for vdr_proxy_ledger once IndyCredxAnonCreds
 # is fully implemented
 vdr_proxy_ledger = ["aries_vcx_core/vdr_proxy_ledger", "vdrtools"]
+
+# Feature for allowing legacy proof verification
+legacy_proof = ["aries_vcx_core/legacy_proof"]
+
 # Used for testing the migrator
-migration = ["vdrtools", "modular_libs"]
+migration = ["vdrtools", "modular_libs", "legacy_proof"]
 
 [dependencies]
 agency_client = { path = "../agency_client" }
@@ -32,7 +36,7 @@ async-trait = "0.1.53"
 env_logger = "0.9.0"
 log = "0.4.16"
 chrono = "0.4.23"
-time = "0.3.20"
+time = "=0.3.20"
 lazy_static = "1.3"
 rand = "0.7.3"
 serde = "1.0.97"

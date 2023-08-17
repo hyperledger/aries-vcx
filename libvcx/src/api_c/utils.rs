@@ -6,9 +6,7 @@ use serde_json;
 
 use aries_vcx::agency_client::configuration::AgentProvisionConfig;
 use aries_vcx::agency_client::messages::update_message::UIDsByConn;
-use aries_vcx::agency_client::testing::mocking::AgencyMock;
 use aries_vcx::agency_client::MessageStatusCode;
-use aries_vcx::utils::constants::*;
 use libvcx_core::api_vcx::api_global::agency_client::agency_update_messages;
 use libvcx_core::api_vcx::api_global::agency_client::provision_cloud_agent;
 use libvcx_core::api_vcx::api_global::ledger::{
@@ -16,7 +14,7 @@ use libvcx_core::api_vcx::api_global::ledger::{
     rotate_verkey,
 };
 use libvcx_core::api_vcx::api_global::wallet::{
-    key_for_local_did, replace_did_keys_start, rotate_verkey_apply, wallet_create_pairwise_did,
+    key_for_local_did, replace_did_keys_start, rotate_verkey_apply, wallet_create_and_store_did,
     wallet_unpack_message_to_string,
 };
 use libvcx_core::api_vcx::api_handle::mediated_connection;
@@ -726,7 +724,7 @@ pub extern "C" fn vcx_create_pairwise_info(
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(
         async move {
-            match wallet_create_pairwise_did().await {
+            match wallet_create_and_store_did(None).await {
                 Ok(pw_info) => {
                     trace!(
                         "vcx_create_pairwise_info(command_handle: {}, rc: {})",

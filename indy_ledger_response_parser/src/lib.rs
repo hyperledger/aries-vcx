@@ -4,14 +4,12 @@ extern crate serde;
 extern crate serde_json;
 
 mod domain;
+pub mod error;
 
+use anoncreds_clsignatures::RevocationRegistryDelta as ClRevocationRegistryDelta;
 pub use domain::author_agreement::GetTxnAuthorAgreementData;
 use domain::author_agreement::GetTxnAuthorAgreementResult;
-pub use indy_api_types::{errors, ErrorCode};
-use indy_api_types::{
-    errors::{err_msg, IndyErrorKind, IndyResult, IndyResultExt},
-    IndyError,
-};
+use error::LedgerResponseParserError;
 use indy_vdr::{
     ledger::{
         identifiers::{CredentialDefinitionId, RevocationRegistryId, SchemaId},
@@ -25,8 +23,6 @@ use indy_vdr::{
     utils::did::DidValue,
 };
 use serde::de::DeserializeOwned;
-// TODO: Can we replace this to get rid of dependency on Ursa
-use ursa::cl::RevocationRegistryDelta as UrsaRevocationDelta;
 
 use crate::domain::{
     cred_def::GetCredDefReplyResult,
@@ -56,22 +52,15 @@ impl ResponseParser {
         Self {}
     }
 
-    pub fn parse_get_nym_response(&self, get_nym_response: &str) -> IndyResult<NymData> {
+    pub fn parse_get_nym_response(&self, get_nym_response: &str) -> Result<NymData, LedgerResponseParserError> {
         let reply: Reply<GetNymReplyResult> = Self::parse_response(get_nym_response)?;
 
         let nym_data = match reply.result() {
             GetNymReplyResult::GetNymReplyResultV0(res) => {
                 let data: GetNymResultDataV0 = res
                     .data
-                    .ok_or_else(|| IndyError::from_msg(IndyErrorKind::LedgerItemNotFound, format!("Nym not found")))
-                    .and_then(|data| {
-                        serde_json::from_str(&data).map_err(|err| {
-                            IndyError::from_msg(
-                                IndyErrorKind::InvalidState,
-                                format!("Cannot parse GET_NYM response: {}", err),
-                            )
-                        })
-                    })?;
+                    .ok_or_else(|| LedgerResponseParserError::LedgerItemNotFound("NYM"))
+                    .and_then(|data| serde_json::from_str(&data).map_err(Into::into))?;
 
                 NymData {
                     did: data.dest,
@@ -93,7 +82,7 @@ impl ResponseParser {
         &self,
         get_schema_response: &str,
         method_name: Option<&str>,
-    ) -> IndyResult<Schema> {
+    ) -> Result<Schema, LedgerResponseParserError> {
         let reply: Reply<GetSchemaReplyResult> = Self::parse_response(get_schema_response)?;
 
         let schema = match reply.result() {
@@ -128,7 +117,7 @@ impl ResponseParser {
         &self,
         get_cred_def_response: &str,
         method_name: Option<&str>,
-    ) -> IndyResult<CredentialDefinition> {
+    ) -> Result<CredentialDefinition, LedgerResponseParserError> {
         let reply: Reply<GetCredDefReplyResult> = Self::parse_response(get_cred_def_response)?;
 
         let cred_def = match reply.result() {
@@ -159,7 +148,7 @@ impl ResponseParser {
     pub fn parse_get_revoc_reg_def_response(
         &self,
         get_revoc_reg_def_response: &str,
-    ) -> IndyResult<RevocationRegistryDefinition> {
+    ) -> Result<RevocationRegistryDefinition, LedgerResponseParserError> {
         let reply: Reply<GetRevocRegDefReplyResult> = Self::parse_response(get_revoc_reg_def_response)?;
 
         let revoc_reg_def = match reply.result() {
@@ -172,7 +161,10 @@ impl ResponseParser {
         ))
     }
 
-    pub fn parse_get_revoc_reg_response(&self, get_revoc_reg_response: &str) -> IndyResult<RevocationRegistryInfo> {
+    pub fn parse_get_revoc_reg_response(
+        &self,
+        get_revoc_reg_response: &str,
+    ) -> Result<RevocationRegistryInfo, LedgerResponseParserError> {
         let reply: Reply<GetRevocRegReplyResult> = Self::parse_response(get_revoc_reg_response)?;
 
         let (revoc_reg_def_id, revoc_reg, timestamp) = match reply.result() {
@@ -191,13 +183,16 @@ impl ResponseParser {
         })
     }
 
-    pub fn parse_get_txn_author_agreement_response(&self, taa_response: &str) -> IndyResult<GetTxnAuthorAgreementData> {
+    pub fn parse_get_txn_author_agreement_response(
+        &self,
+        taa_response: &str,
+    ) -> Result<GetTxnAuthorAgreementData, LedgerResponseParserError> {
         let reply: Reply<GetTxnAuthorAgreementResult> = Self::parse_response(taa_response)?;
 
         let data = match reply.result() {
             GetTxnAuthorAgreementResult::GetTxnAuthorAgreementResultV1(res) => res
                 .data
-                .ok_or_else(|| IndyError::from_msg(IndyErrorKind::LedgerItemNotFound, "TAA not found"))?,
+                .ok_or_else(|| LedgerResponseParserError::LedgerItemNotFound("TAA"))?,
         };
 
         Ok(GetTxnAuthorAgreementData {
@@ -212,7 +207,7 @@ impl ResponseParser {
     pub fn parse_get_revoc_reg_delta_response(
         &self,
         get_revoc_reg_delta_response: &str,
-    ) -> IndyResult<RevocationRegistryDeltaInfo> {
+    ) -> Result<RevocationRegistryDeltaInfo, LedgerResponseParserError> {
         let reply: Reply<GetRevocRegDeltaReplyResult> = Self::parse_response(get_revoc_reg_delta_response)?;
 
         let (revoc_reg_def_id, revoc_reg) = match reply.result() {
@@ -223,16 +218,12 @@ impl ResponseParser {
         };
 
         let revoc_reg_delta = RevocationRegistryDeltaV1 {
-            value: serde_json::to_value(UrsaRevocationDelta::from_parts(
+            value: serde_json::to_value(ClRevocationRegistryDelta::from_parts(
                 revoc_reg.value.accum_from.map(|accum| accum.value).as_ref(),
                 &revoc_reg.value.accum_to.value,
                 &revoc_reg.value.issued,
                 &revoc_reg.value.revoked,
-            ))
-            .to_indy(
-                IndyErrorKind::InvalidStructure,
-                "Cannot convert RevocationRegistryDelta to Value",
-            )?,
+            ))?,
         };
 
         Ok(RevocationRegistryDeltaInfo {
@@ -242,20 +233,21 @@ impl ResponseParser {
         })
     }
 
-    pub fn parse_response<T>(response: &str) -> IndyResult<Reply<T>>
+    pub fn parse_response<T>(response: &str) -> Result<Reply<T>, LedgerResponseParserError>
     where
         T: DeserializeOwned + ReplyType + ::std::fmt::Debug,
     {
-        let message: Message<T> = serde_json::from_str(response).to_indy(
-            IndyErrorKind::LedgerItemNotFound,
-            "Structure doesn't correspond to type. Most probably not found",
-        )?; // FIXME: Review how we handle not found
+        // TODO: Distinguish between not found and unexpected response format
+        let message: Message<T> = serde_json::from_str(response).map_err(|_| {
+            LedgerResponseParserError::LedgerItemNotFound(
+                "Structure doesn't correspond to type. Most probably not found",
+            )
+        })?;
 
         match message {
-            Message::Reject(response) | Message::ReqNACK(response) => Err(err_msg(
-                IndyErrorKind::InvalidTransaction,
-                format!("Transaction has been failed: {:?}", response.reason),
-            )),
+            Message::Reject(response) | Message::ReqNACK(response) => {
+                Err(LedgerResponseParserError::InvalidTransaction(response.reason))
+            }
             Message::Reply(reply) => Ok(reply),
         }
     }

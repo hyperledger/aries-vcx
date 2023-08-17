@@ -1,15 +1,17 @@
-use crate::error::DidPeerError;
+use serde::{Deserialize, Serialize};
+
+use crate::error::PublicKeyError;
 
 use super::KeyType;
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Key {
     key_type: KeyType,
     key: Vec<u8>,
 }
 
 impl Key {
-    pub fn new(key: Vec<u8>, key_type: KeyType) -> Result<Self, DidPeerError> {
+    pub fn new(key: Vec<u8>, key_type: KeyType) -> Result<Self, PublicKeyError> {
         // If the key is a multibase key coming from a verification method, for some reason it is also
         // multicodec encoded, so we need to strip that. But should it be?
         let key = Self::strip_multicodec_prefix_if_present(key, &key_type);
@@ -45,16 +47,26 @@ impl Key {
         bs58::encode(&self.key).into_string()
     }
 
+    // TODO: base64, ...
+
     pub fn multibase58(&self) -> String {
         multibase::encode(multibase::Base::Base58Btc, &self.key)
     }
 
-    pub fn from_fingerprint(fingerprint: &str) -> Result<Self, DidPeerError> {
+    pub fn from_fingerprint(fingerprint: &str) -> Result<Self, PublicKeyError> {
         let (_base, decoded_bytes) = multibase::decode(fingerprint)?;
         let (code, remaining_bytes) = unsigned_varint::decode::u64(&decoded_bytes)?;
         Ok(Self {
             key_type: code.try_into()?,
             key: remaining_bytes.to_vec(),
+        })
+    }
+
+    pub fn from_base58(base58: &str, key_type: KeyType) -> Result<Self, PublicKeyError> {
+        let decoded_bytes = bs58::decode(base58).into_vec()?;
+        Ok(Self {
+            key_type,
+            key: decoded_bytes,
         })
     }
 

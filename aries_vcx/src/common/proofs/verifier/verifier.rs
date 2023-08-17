@@ -21,13 +21,9 @@ pub async fn validate_indy_proof(
     validate_proof_revealed_attributes(proof_json)?;
 
     let credential_data = get_credential_info(proof_json)?;
-
-    let credential_defs_json = build_cred_defs_json_verifier(ledger, &credential_data)
-        .await
-        .unwrap_or(json!({}).to_string());
-    let schemas_json = build_schemas_json_verifier(ledger, &credential_data)
-        .await
-        .unwrap_or(json!({}).to_string());
+    debug!("validate_indy_proof >> credential_data: {credential_data:?}");
+    let credential_defs_json = build_cred_defs_json_verifier(ledger, &credential_data).await?;
+    let schemas_json = build_schemas_json_verifier(ledger, &credential_data).await?;
     let rev_reg_defs_json = build_rev_reg_defs_json(ledger, &credential_data)
         .await
         .unwrap_or(json!({}).to_string());
@@ -35,12 +31,12 @@ pub async fn validate_indy_proof(
         .await
         .unwrap_or(json!({}).to_string());
 
-    debug!("*******\n{}\n********", credential_defs_json);
-    debug!("*******\n{}\n********", schemas_json);
-    debug!("*******\n{}\n********", proof_json);
-    debug!("*******\n{}\n********", proof_req_json);
-    debug!("*******\n{}\n********", rev_reg_defs_json);
-    debug!("*******\n{}\n********", rev_regs_json);
+    debug!("validate_indy_proof >> credential_defs_json: {credential_defs_json}");
+    debug!("validate_indy_proof >> schemas_json: {schemas_json}");
+    trace!("validate_indy_proof >> proof_json: {proof_json}");
+    debug!("validate_indy_proof >> proof_req_json: {proof_req_json}");
+    debug!("validate_indy_proof >> rev_reg_defs_json: {rev_reg_defs_json}");
+    debug!("validate_indy_proof >> rev_regs_json: {rev_regs_json}");
     anoncreds
         .verifier_verify_proof(
             proof_req_json,

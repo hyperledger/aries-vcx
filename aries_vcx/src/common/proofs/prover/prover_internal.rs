@@ -312,6 +312,8 @@ pub mod pool_tests {
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 pub mod unit_tests {
+    use aries_vcx_core::ledger::indy::pool::test_utils::get_temp_dir_path;
+
     use crate::utils::constants::{
         ADDRESS_CRED_DEF_ID, ADDRESS_CRED_ID, ADDRESS_CRED_REV_ID, ADDRESS_REV_REG_ID, ADDRESS_SCHEMA_ID, CRED_DEF_ID,
         CRED_REV_ID, LICENCE_CRED_ID, REV_REG_ID, REV_STATE_JSON, SCHEMA_ID,
@@ -319,7 +321,6 @@ pub mod unit_tests {
     use crate::utils::devsetup::*;
     use crate::utils::mockdata::profile::mock_anoncreds::MockAnoncreds;
     use crate::utils::mockdata::profile::mock_ledger::MockLedger;
-    use aries_vcx_core::ledger::indy::pool::test_utils::get_temp_dir_path;
 
     use super::*;
 

@@ -1,36 +1,14 @@
-use std::sync::Arc;
-
-use futures::future::BoxFuture;
-
 #[cfg(feature = "modular_libs")]
 use aries_vcx::core::profile::modular_libs_profile::ModularLibsProfile;
 use aries_vcx::core::profile::profile::Profile;
-use aries_vcx::core::profile::vdrtools_profile::VdrtoolsProfile;
-use aries_vcx::global::settings;
-use aries_vcx_core::ledger::indy::pool::indy_open_pool;
-#[cfg(feature = "modular_libs")]
-use aries_vcx_core::ledger::request_submitter::vdr_ledger::LedgerPoolConfig;
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
-use aries_vcx_core::wallet::indy::wallet::open_wallet;
-use aries_vcx_core::wallet::indy::{IndySdkWallet, WalletConfig};
-use aries_vcx_core::WalletHandle;
-
-use crate::utils::devsetup_alice::Alice;
 
 #[cfg(test)]
 pub mod test_utils {
-    use std::collections::HashMap;
-    use std::sync::Arc;
-
     use agency_client::api::downloaded_message::DownloadedMessage;
     #[cfg(feature = "modular_libs")]
     use aries_vcx::core::profile::modular_libs_profile::ModularLibsProfile;
     use aries_vcx::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
-    #[cfg(feature = "modular_libs")]
-    use aries_vcx_core::ledger::request_submitter::vdr_ledger::LedgerPoolConfig;
-    use aries_vcx_core::wallet::indy::wallet::{close_wallet, delete_wallet};
-    use aries_vcx_core::wallet::indy::WalletConfig;
-    use aries_vcx_core::WalletHandle;
     use messages::msg_fields::protocols::connection::Connection;
     use messages::msg_fields::protocols::cred_issuance::CredentialIssuance;
     use messages::msg_fields::protocols::present_proof::PresentProof;

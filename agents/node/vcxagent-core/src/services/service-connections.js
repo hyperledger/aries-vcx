@@ -23,7 +23,7 @@ module.exports.createServiceConnections = function createServiceConnections ({ l
   }
 
   async function inviterConnectionCreateFromRequestV2 (connectionId, pwInfo, request) {
-    logger.info(`InviterConnectionSM creating connection ${connectionId} from received request ${request} and pw info ${pwInfo}`)
+    logger.info(`InviterConnectionSM creating connection ${connectionId} from received request ${request} and pw info ${JSON.stringify(pwInfo)}`)
     const connection = await Connection.createWithConnectionRequestV2({
       id: connectionId,
       pwInfo,

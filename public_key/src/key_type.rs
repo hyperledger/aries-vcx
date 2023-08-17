@@ -1,6 +1,8 @@
-use crate::error::DidPeerError;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+use crate::error::PublicKeyError;
+
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum KeyType {
     Ed25519,
     Bls12381g1g2,
@@ -40,7 +42,7 @@ impl From<&KeyType> for u64 {
 }
 
 impl TryFrom<u64> for KeyType {
-    type Error = DidPeerError;
+    type Error = PublicKeyError;
 
     fn try_from(value: u64) -> Result<Self, Self::Error> {
         match value {
@@ -52,7 +54,7 @@ impl TryFrom<u64> for KeyType {
             KeyType::C_P256 => Ok(KeyType::P256),
             KeyType::C_P384 => Ok(KeyType::P384),
             KeyType::C_P521 => Ok(KeyType::P521),
-            p @ _ => Err(DidPeerError::UnsupportedMulticodecDescriptor(p)),
+            p @ _ => Err(PublicKeyError::UnsupportedMulticodecDescriptor(p)),
         }
     }
 }

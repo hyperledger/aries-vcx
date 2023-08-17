@@ -4,12 +4,11 @@ use futures::future::{BoxFuture, FutureExt};
 use libc::c_char;
 
 use aries_vcx::agency_client::configuration::AgencyClientConfig;
-use aries_vcx::aries_vcx_core::ledger::indy::pool::PoolConfig;
 use aries_vcx::aries_vcx_core::wallet::indy::IssuerConfig;
 use libvcx_core::api_vcx::api_global::agency_client::create_agency_client_for_main_wallet;
 use libvcx_core::api_vcx::api_global::agency_client::update_webhook_url;
-use libvcx_core::api_vcx::api_global::ledger::{ledger_get_txn_author_agreement, ledger_set_txn_author_agreement};
-use libvcx_core::api_vcx::api_global::pool::open_main_pool;
+use libvcx_core::api_vcx::api_global::ledger::ledger_get_txn_author_agreement;
+use libvcx_core::api_vcx::api_global::pool::{open_main_pool, LibvcxLedgerConfig};
 use libvcx_core::api_vcx::api_global::settings::{enable_mocks, settings_init_issuer_config};
 use libvcx_core::api_vcx::api_global::state::state_vcx_shutdown;
 use libvcx_core::api_vcx::api_global::VERSION_STRING;
@@ -238,7 +237,7 @@ pub extern "C" fn vcx_open_main_pool(
     info!("vcx_open_main_pool >>>");
     check_useful_c_str!(pool_config, LibvcxErrorKind::InvalidOption);
 
-    let pool_config = match serde_json::from_str::<PoolConfig>(&pool_config) {
+    let pool_config = match serde_json::from_str::<LibvcxLedgerConfig>(&pool_config) {
         Ok(pool_config) => pool_config,
         Err(err) => {
             set_current_error(&err);
@@ -405,43 +404,6 @@ pub extern "C" fn vcx_get_ledger_author_agreement(
     SUCCESS_ERR_CODE
 }
 
-/// Set some accepted agreement as active.
-///
-/// As result of successful call of this function appropriate metadata will be appended to each write request.
-///
-/// #Params
-/// text and version - (optional) raw data about TAA from ledger.
-///     These parameters should be passed together.
-///     These parameters are required if hash parameter is ommited.
-/// hash - (optional) hash on text and version. This parameter is required if text and version parameters are ommited.
-/// acc_mech_type - mechanism how user has accepted the TAA
-/// time_of_acceptance - UTC timestamp when user has accepted the TAA
-///
-/// #Returns
-/// Error code as a u32
-#[no_mangle]
-pub extern "C" fn vcx_set_active_txn_author_agreement_meta(
-    text: *const c_char,
-    version: *const c_char,
-    hash: *const c_char,
-    acc_mech_type: *const c_char,
-    time_of_acceptance: u64,
-) -> u32 {
-    info!("vcx_set_active_txn_author_agreement_meta >>>");
-
-    check_useful_opt_c_str!(text, LibvcxErrorKind::InvalidOption);
-    check_useful_opt_c_str!(version, LibvcxErrorKind::InvalidOption);
-    check_useful_opt_c_str!(hash, LibvcxErrorKind::InvalidOption);
-    check_useful_c_str!(acc_mech_type, LibvcxErrorKind::InvalidOption);
-
-    trace!("vcx_set_active_txn_author_agreement_meta(text: {:?}, version: {:?}, hash: {:?}, acc_mech_type: {:?}, time_of_acceptance: {:?})", text, version, hash, acc_mech_type, time_of_acceptance);
-
-    match ledger_set_txn_author_agreement(text, version, hash, acc_mech_type, time_of_acceptance) {
-        Ok(()) => SUCCESS_ERR_CODE,
-        Err(err) => err.into(),
-    }
-}
-
 /// Get details for last occurred error.
 ///
 /// This function should be called in two places to handle both cases of error occurrence:
@@ -598,7 +560,6 @@ mod tests {
     use aries_vcx::aries_vcx_core::indy;
     use aries_vcx::aries_vcx_core::wallet::indy::wallet::import;
     use aries_vcx::aries_vcx_core::wallet::indy::{RestoreWalletConfigs, WalletConfig};
-    use aries_vcx::aries_vcx_core::INVALID_POOL_HANDLE;
     use aries_vcx::global::settings::{
         set_config_value, CONFIG_GENESIS_PATH, CONFIG_TXN_AUTHOR_AGREEMENT, DEFAULT_WALLET_BACKUP_KEY,
         DEFAULT_WALLET_KEY, WALLET_KDF_RAW,

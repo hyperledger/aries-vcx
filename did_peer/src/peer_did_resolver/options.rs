@@ -1,9 +1,12 @@
-#[derive(Clone, Copy, Debug, PartialEq)]
+use serde::{Deserialize, Serialize};
+
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
 pub enum PublicKeyEncoding {
     Multibase,
     Base58,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ExtraFieldsOptions {
     public_key_encoding: PublicKeyEncoding,
 }

@@ -11,18 +11,10 @@ async fn get_ledger_author_agreement() -> napi::Result<String> {
     Ok(res)
 }
 
-// todo: ideally time_of_acceptance is u64, but napi doesn't support u64
 #[napi]
-fn set_active_txn_author_agreement_meta(
-    text: Option<String>,
-    version: Option<String>,
-    hash: Option<String>,
-    acc_mech_type: String,
-    time_of_acceptance: u32,
-) -> napi::Result<()> {
+fn set_active_txn_author_agreement_meta(text: String, version: String, acc_mech_type: String) -> napi::Result<()> {
     info!("set_active_txn_author_agreement_meta >>>");
-    ledger::ledger_set_txn_author_agreement(text, version, hash, acc_mech_type, time_of_acceptance as u64)
-        .map_err(to_napi_err)
+    ledger::set_taa_configuration(text, version, acc_mech_type).map_err(to_napi_err)
 }
 
 #[napi]
@@ -60,6 +52,18 @@ async fn get_attr_from_ledger(target_did: String, attr: String) -> napi::Result<
 #[napi]
 async fn clear_attr_from_ledger(did: String, attrib: String) -> napi::Result<String> {
     ledger::ledger_clear_attr(&did, &attrib).await.map_err(to_napi_err)
+}
+
+#[napi]
+async fn write_endorser_did(
+    submitter_did: String,
+    target_did: String,
+    target_vk: String,
+    alias: Option<String>,
+) -> napi::Result<String> {
+    ledger::ledger_write_endorser_did(&submitter_did, &target_did, &target_vk, alias)
+        .await
+        .map_err(to_napi_err)
 }
 
 #[napi]

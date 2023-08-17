@@ -91,12 +91,13 @@ export function issuerCredentialGetOfferMsg(credentialHandle: number): string
 export function issuerCredentialRelease(credentialHandle: number): void
 export function issuerCredentialGetThreadId(credentialHandle: number): string
 export function getLedgerAuthorAgreement(): Promise<string>
-export function setActiveTxnAuthorAgreementMeta(text: string | undefined | null, version: string | undefined | null, hash: string | undefined | null, accMechType: string, timeOfAcceptance: number): void
+export function setActiveTxnAuthorAgreementMeta(text: string, version: string, accMechType: string): void
 export function createService(targetDid: string, recipientKeys: Array<string>, routingKeys: Array<string>, endpoint: string): Promise<string>
 export function createServiceV2(targetDid: string, routingKeys: Array<string>, endpoint: string): Promise<string>
 export function getServiceFromLedger(targetDid: string): Promise<string>
 export function getAttrFromLedger(targetDid: string, attr: string): Promise<string>
 export function clearAttrFromLedger(did: string, attrib: string): Promise<string>
+export function writeEndorserDid(submitterDid: string, targetDid: string, targetVk: string, alias?: string | undefined | null): Promise<string>
 export function getVerkeyFromLedger(did: string): Promise<string>
 export function getLedgerTxn(seqNo: number, submitterDid?: string | undefined | null): Promise<string>
 export function initDefaultLogger(pattern?: string | undefined | null): void
@@ -192,7 +193,7 @@ export function walletCloseMain(): Promise<void>
 export function vcxInitIssuerConfig(config: string): Promise<void>
 export function configureIssuerWallet(enterpriseSeed: string): Promise<string>
 export function unpack(data: Buffer): Promise<string>
-export function createPairwiseInfo(): Promise<string>
+export function createAndStoreDid(seed?: string | undefined | null): Promise<string>
 export function walletImport(config: string): Promise<void>
 export function walletExport(path: string, backupKey: string): Promise<void>
 export function getVerkeyFromWallet(did: string): Promise<string>

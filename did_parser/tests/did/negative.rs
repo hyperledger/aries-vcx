@@ -16,4 +16,5 @@ test_cases_negative! {
     test_failure_case1: ""
     test_failure_case2: "not-a-did"
     test_failure_case3: "did:example"
+    test_failure_case4: "2ZHFFhtTD6hJqzux"
 }

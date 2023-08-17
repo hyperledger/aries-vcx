@@ -7,12 +7,9 @@ use agency_client::agency_client::AgencyClient;
 use agency_client::configuration::{AgencyClientConfig, AgentProvisionConfig};
 use agency_client::MessageStatusCode;
 use aries_vcx::common::ledger::transactions::into_did_doc;
-#[cfg(feature = "modular_libs")]
-use aries_vcx::core::profile::modular_libs_profile::ModularLibsProfile;
 use aries_vcx::core::profile::profile::Profile;
-use aries_vcx::core::profile::vdrtools_profile::VdrtoolsProfile;
 use aries_vcx::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
-use aries_vcx::global::settings;
+use aries_vcx::global::settings::DEFAULT_LINK_SECRET_ALIAS;
 use aries_vcx::handlers::connection::mediated_connection::{ConnectionState, MediatedConnection};
 use aries_vcx::handlers::issuance::holder::test_utils::get_credential_offer_messages;
 use aries_vcx::handlers::issuance::holder::Holder;
@@ -24,15 +21,12 @@ use aries_vcx::handlers::util::{AnyInvitation, Status};
 use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
 use aries_vcx::protocols::mediated_connection::invitee::state_machine::InviteeState;
 use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
-use aries_vcx::utils::devsetup::{SetupPoolDirectory, SetupProfile, AGENCY_DID, AGENCY_ENDPOINT, AGENCY_VERKEY};
+use aries_vcx::utils::devsetup::{
+    dev_build_featured_profile, dev_setup_wallet_indy, SetupProfile, AGENCY_DID, AGENCY_ENDPOINT, AGENCY_VERKEY,
+};
 use aries_vcx::utils::provision::provision_cloud_agent;
-use aries_vcx_core::ledger::indy::pool::indy_open_pool;
-#[cfg(feature = "modular_libs")]
-use aries_vcx_core::ledger::request_submitter::vdr_ledger::LedgerPoolConfig;
-use aries_vcx_core::wallet::base_wallet::BaseWallet;
-use aries_vcx_core::wallet::indy::wallet::open_wallet;
-use aries_vcx_core::wallet::indy::{IndySdkWallet, WalletConfig};
-use aries_vcx_core::{PoolHandle, WalletHandle};
+use aries_vcx::utils::random::generate_random_seed;
+use aries_vcx_core::wallet::indy::IndySdkWallet;
 use messages::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
 use messages::msg_fields::protocols::cred_issuance::CredentialIssuance;
 use messages::msg_fields::protocols::present_proof::request::RequestPresentation;
@@ -52,27 +46,22 @@ pub struct Alice {
     pub prover: Prover,
     pub agency_client: AgencyClient,
     pub genesis_file_path: String,
-    pub(self) teardown: Arc<dyn Fn() -> BoxFuture<'static, ()> + Send + Sync>,
 }
 
 pub async fn create_alice(genesis_file_path: String) -> Alice {
-    let profile_setup = SetupProfile::build_setup_profile(genesis_file_path).await;
-    let SetupProfile {
-        genesis_file_path,
-        institution_did,
-        profile,
-        teardown,
-    } = profile_setup;
-    Alice::setup(profile, genesis_file_path, teardown).await
+    let (_public_did, wallet_handle) = dev_setup_wallet_indy(&generate_random_seed()).await;
+    let wallet = Arc::new(IndySdkWallet::new(wallet_handle));
+    let profile = dev_build_featured_profile(genesis_file_path.clone(), wallet).await;
+    profile
+        .inject_anoncreds()
+        .prover_create_link_secret(DEFAULT_LINK_SECRET_ALIAS)
+        .await
+        .unwrap();
+    Alice::setup(profile, genesis_file_path).await
 }
 
 impl Alice {
-    // todo: we could rather have Drop in Profile, why is Alice doing this ...
-    pub async fn setup(
-        profile: Arc<dyn Profile>,
-        genesis_file_path: String,
-        teardown: Arc<dyn Fn() -> BoxFuture<'static, ()> + Send + Sync>,
-    ) -> Alice {
+    pub async fn setup(profile: Arc<dyn Profile>, genesis_file_path: String) -> Alice {
         let config_provision_agent = AgentProvisionConfig {
             agency_did: AGENCY_DID.to_string(),
             agency_verkey: AGENCY_VERKEY.to_string(),
@@ -96,7 +85,6 @@ impl Alice {
             credential: Holder::create("test").unwrap(),
             prover: Prover::default(),
             rev_not_receiver: None,
-            teardown,
         };
         alice
     }
@@ -342,11 +330,5 @@ impl Alice {
             .await
             .unwrap();
         self.rev_not_receiver = Some(rev_not_receiver);
-    }
-}
-
-impl Drop for Alice {
-    fn drop(&mut self) {
-        futures::executor::block_on((self.teardown)());
     }
 }

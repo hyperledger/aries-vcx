@@ -68,7 +68,7 @@ const DID_DOC_DATA: &'static str = r#"
 "#;
 
 #[test]
-fn test_serde() {
+fn test_deserialization() {
     let did_doc = serde_json::from_str::<DidDocumentSov>(DID_DOC_DATA).unwrap();
     assert_eq!(did_doc.id().to_string(), "did:sov:HR6vs6GEZ8rHaVgjg2WodM");
     assert_eq!(did_doc.verification_method().len(), 2);
@@ -135,4 +135,12 @@ fn test_serde() {
     } else {
         panic!("Expected reference key kind");
     }
+}
+
+#[test]
+fn test_deserialization_and_serialization() {
+    let did_doc_1 = serde_json::from_str::<DidDocumentSov>(DID_DOC_DATA).unwrap();
+    let serialized = serde_json::to_string_pretty(&did_doc_1).unwrap();
+    let did_doc_2 = serde_json::from_str::<DidDocumentSov>(&serialized).unwrap();
+    assert_eq!(did_doc_1, did_doc_2);
 }

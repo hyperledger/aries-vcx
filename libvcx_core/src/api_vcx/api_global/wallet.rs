@@ -148,9 +148,10 @@ pub async fn wallet_unpack_message_to_string(payload: &[u8]) -> LibvcxResult<Str
     map_ariesvcx_result(unpack_message_to_string(&wallet, payload).await)
 }
 
-pub async fn wallet_create_pairwise_did() -> LibvcxResult<PairwiseInfo> {
+pub async fn wallet_create_and_store_did(seed: Option<&str>) -> LibvcxResult<PairwiseInfo> {
     let wallet = get_main_wallet()?;
-    map_ariesvcx_result(PairwiseInfo::create(&wallet).await)
+    let (pw_did, pw_vk) = wallet.create_and_store_my_did(seed, None).await?;
+    Ok(PairwiseInfo { pw_did, pw_vk })
 }
 
 pub async fn wallet_configure_issuer(enterprise_seed: &str) -> LibvcxResult<IssuerConfig> {

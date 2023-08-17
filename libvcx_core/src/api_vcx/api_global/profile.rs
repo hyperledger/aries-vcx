@@ -3,12 +3,13 @@ use std::sync::{Arc, RwLockReadGuard};
 
 use crate::api_vcx::api_global::pool::{
     global_ledger_anoncreds_read, global_ledger_anoncreds_write, global_ledger_indy_read, global_ledger_indy_write,
+    global_taa_configurator,
 };
 use crate::api_vcx::api_global::wallet::{global_base_anoncreds, global_base_wallet};
 use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 use aries_vcx::aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
 use aries_vcx::aries_vcx_core::ledger::base_ledger::{
-    AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite, TxnAuthrAgrmtOptions,
+    AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite, TaaConfigurator, TxnAuthrAgrmtOptions,
 };
 use aries_vcx::aries_vcx_core::wallet::indy::IndySdkWallet;
 use aries_vcx::aries_vcx_core::wallet::mock_wallet::MockWallet;
@@ -34,7 +35,9 @@ pub trait ProfileV2: Send + Sync {
 
     fn try_inject_wallet(&self) -> LibvcxResult<Option<Arc<dyn BaseWallet>>>;
 
-    fn update_taa_configuration(&self, taa_options: TxnAuthrAgrmtOptions) -> VcxResult<()>;
+    fn update_taa_configuration(&self, taa_options: TxnAuthrAgrmtOptions) -> LibvcxResult<()>;
+
+    fn get_taa_configuration(&self) -> LibvcxResult<Option<TxnAuthrAgrmtOptions>>;
 }
 
 #[derive(Clone)]
@@ -121,8 +124,30 @@ impl ProfileV2 for VcxGlobalsProfile {
             .ok_or_else(|| LibvcxError::from_msg(LibvcxErrorKind::NotReady, "Wallet is not initialized"))
     }
 
-    fn update_taa_configuration(&self, _taa_options: TxnAuthrAgrmtOptions) -> VcxResult<()> {
-        todo!()
+    fn update_taa_configuration(&self, taa_options: TxnAuthrAgrmtOptions) -> LibvcxResult<()> {
+        let configurator = global_taa_configurator.read()?;
+        match configurator.as_ref() {
+            None => Err(LibvcxError::from_msg(
+                LibvcxErrorKind::NotReady,
+                "Ledger is not initialized",
+            ))?,
+            Some(configurator) => configurator.as_ref().set_txn_author_agreement_options(taa_options)?,
+        };
+        Ok(())
+    }
+
+    fn get_taa_configuration(&self) -> LibvcxResult<Option<TxnAuthrAgrmtOptions>> {
+        let configurator = global_taa_configurator.read()?;
+        match configurator.as_ref() {
+            None => Err(LibvcxError::from_msg(
+                LibvcxErrorKind::NotReady,
+                "Ledger is not initialized",
+            ))?,
+            Some(configurator) => configurator
+                .as_ref()
+                .get_txn_author_agreement_options()
+                .map_err(|err| err.into()),
+        }
     }
 }
 
@@ -159,9 +184,16 @@ impl ProfileV2 for MockProfile {
         Ok(Some(Arc::new(MockWallet {})))
     }
 
-    fn update_taa_configuration(&self, _taa_options: TxnAuthrAgrmtOptions) -> VcxResult<()> {
-        error!("update_taa_configuration not implemented for MockProfile");
+    fn update_taa_configuration(&self, _taa_options: TxnAuthrAgrmtOptions) -> LibvcxResult<()> {
         Ok(())
+    }
+
+    fn get_taa_configuration(&self) -> LibvcxResult<Option<TxnAuthrAgrmtOptions>> {
+        Ok(Some(TxnAuthrAgrmtOptions {
+            text: "foo".to_string(),
+            version: "bar".to_string(),
+            mechanism: "baz".to_string(),
+        }))
     }
 }
 

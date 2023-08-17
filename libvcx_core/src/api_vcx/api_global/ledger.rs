@@ -1,8 +1,9 @@
 use std::str::FromStr;
 
+use aries_vcx::aries_vcx_core::ledger::base_ledger::TxnAuthrAgrmtOptions;
 use aries_vcx::common::ledger::service_didsov::{DidSovServiceType, EndpointDidSov};
 use aries_vcx::common::ledger::transactions::{
-    clear_attr, get_attr, get_service, write_endpoint, write_endpoint_legacy,
+    clear_attr, get_attr, get_service, write_endorser_did, write_endpoint, write_endpoint_legacy,
 };
 use aries_vcx::global::settings::CONFIG_INSTITUTION_DID;
 use diddoc_legacy::aries::service::AriesService;
@@ -87,6 +88,24 @@ pub async fn ledger_clear_attr(target_did: &str, attr: &str) -> LibvcxResult<Str
     map_ariesvcx_result(clear_attr(&get_main_indy_ledger_write()?, &target_did, attr).await)
 }
 
+pub async fn ledger_write_endorser_did(
+    submitter_did: &str,
+    target_did: &str,
+    target_vk: &str,
+    alias: Option<String>,
+) -> LibvcxResult<String> {
+    map_ariesvcx_result(
+        write_endorser_did(
+            &get_main_indy_ledger_write()?,
+            submitter_did,
+            target_did,
+            target_vk,
+            alias,
+        )
+        .await,
+    )
+}
+
 pub async fn ledger_get_txn_author_agreement() -> LibvcxResult<String> {
     get_main_indy_ledger_read()?
         .get_txn_author_agreement()
@@ -99,63 +118,83 @@ pub async fn ledger_get_txn_author_agreement() -> LibvcxResult<String> {
         })
 }
 
-pub fn ledger_set_txn_author_agreement(
-    text: Option<String>,
-    version: Option<String>,
-    hash: Option<String>,
-    acc_mech_type: String,
-    time_of_acceptance: u64,
-) -> LibvcxResult<()> {
-    map_ariesvcx_result(
-        aries_vcx::aries_vcx_core::global::author_agreement::set_vdrtools_config_txn_author_agreement(
-            text,
-            version,
-            hash,
-            acc_mech_type,
-            time_of_acceptance,
-        )
-        .map_err(|err| err.into()),
-    )
+pub fn set_taa_configuration(text: String, version: String, acceptance_mechanism: String) -> LibvcxResult<()> {
+    let taa_options = TxnAuthrAgrmtOptions {
+        text,
+        version,
+        mechanism: acceptance_mechanism,
+    };
+    get_main_profile().update_taa_configuration(taa_options)
+}
+
+pub fn get_taa_configuration() -> LibvcxResult<Option<TxnAuthrAgrmtOptions>> {
+    get_main_profile().get_taa_configuration()
 }
 
 #[cfg(test)]
 pub mod tests {
-    use crate::api_vcx::api_global::ledger::{ledger_get_txn_author_agreement, ledger_set_txn_author_agreement};
-    use crate::api_vcx::api_global::settings::get_config_value;
-    use aries_vcx::aries_vcx_core::global::author_agreement::get_vdrtools_config_txn_author_agreement;
-    use aries_vcx::global::settings::CONFIG_TXN_AUTHOR_AGREEMENT;
-    use aries_vcx::utils::devsetup::SetupMocks;
+    use crate::api_vcx::api_global::ledger::{
+        get_taa_configuration, ledger_get_txn_author_agreement, set_taa_configuration,
+    };
+    use crate::api_vcx::api_global::pool::{open_main_pool, LibvcxLedgerConfig};
+    use crate::api_vcx::api_global::wallet::test_utils::_create_and_open_wallet;
+    use aries_vcx::aries_vcx_core::ledger::indy::pool::test_utils::{
+        create_genesis_txn_file, create_testpool_genesis_txn_file, get_temp_file_path, get_txns_sovrin_testnet,
+    };
+    use aries_vcx::global::settings::DEFAULT_GENESIS_PATH;
+    use aries_vcx::utils::devsetup::{SetupEmpty, SetupMocks};
+
+    #[tokio::test]
+    async fn test_vcx_get_sovrin_taa() {
+        let _setup = SetupEmpty::init();
+        _create_and_open_wallet().await.unwrap();
+        let genesis_path = get_temp_file_path(DEFAULT_GENESIS_PATH).to_str().unwrap().to_string();
+        create_genesis_txn_file(&genesis_path, Box::new(get_txns_sovrin_testnet));
+        let config = LibvcxLedgerConfig {
+            genesis_path,
+            pool_config: None,
+            cache_config: None,
+            exclude_nodes: Some(vec!["NECValidator".into(), "Entrustient".into()]),
+        };
+        open_main_pool(&config).await.unwrap();
+
+        let taa = ledger_get_txn_author_agreement().await.unwrap();
+        let taa_parsed = serde_json::from_str::<serde_json::Value>(&taa).unwrap();
+        assert!(taa_parsed["text"].is_string());
+        assert!(taa_parsed["version"].is_string());
+        assert!(taa_parsed["digest"].is_string());
+    }
 
     #[tokio::test]
     async fn test_vcx_set_active_txn_author_agreement_meta() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupEmpty::init();
+        _create_and_open_wallet().await.unwrap();
+        let genesis_path = get_temp_file_path(DEFAULT_GENESIS_PATH).to_str().unwrap().to_string();
+        create_testpool_genesis_txn_file(&genesis_path);
+        let config = LibvcxLedgerConfig {
+            genesis_path,
+            pool_config: None,
+            cache_config: None,
+            exclude_nodes: None,
+        };
+        open_main_pool(&config).await.unwrap();
 
-        assert!(&get_vdrtools_config_txn_author_agreement().unwrap().is_none());
+        assert!(get_taa_configuration().unwrap().is_none());
 
         let text = "text";
         let version = "1.0.0";
         let acc_mech_type = "type 1";
-        let time_of_acceptance = 123456789;
 
-        ledger_set_txn_author_agreement(
-            Some(text.into()),
-            Some(version.into()),
-            None,
-            acc_mech_type.into(),
-            time_of_acceptance,
-        )
-        .unwrap();
-        let auth_agreement = get_vdrtools_config_txn_author_agreement().unwrap().unwrap();
+        set_taa_configuration(text.into(), version.into(), acc_mech_type.into()).unwrap();
+        let auth_agreement = get_taa_configuration().unwrap().unwrap();
 
         let expected = json!({
             "text": text,
             "version": version,
-            "acceptanceMechanismType": acc_mech_type,
-            "timeOfAcceptance": time_of_acceptance,
+            "mechanism": acc_mech_type
         });
 
         let auth_agreement = serde_json::to_value(&auth_agreement).unwrap();
-
         assert_eq!(expected, auth_agreement);
     }
 

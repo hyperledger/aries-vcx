@@ -2,11 +2,14 @@ use base64::{engine::general_purpose::STANDARD_NO_PAD, Engine};
 use did_doc::schema::{did_doc::DidDocumentBuilder, service::Service, types::uri::Uri, utils::OneOrList};
 use did_doc_sov::extra_fields::{aip1::ExtraFieldsAIP1, didcommv2::ExtraFieldsDidCommV2, ExtraFieldsSov};
 use did_parser::Did;
+use public_key::Key;
 
 use crate::{
     error::DidPeerError,
-    key::{get_verification_methods_by_key, Key},
-    numalgos::numalgo2::{purpose::ElementPurpose, service_abbreviated::ServiceAbbreviated},
+    numalgos::numalgo2::{
+        purpose::ElementPurpose, service_abbreviated::ServiceAbbreviated,
+        verification_method::get_verification_methods_by_key,
+    },
     peer_did_resolver::options::PublicKeyEncoding,
 };
 
@@ -208,7 +211,6 @@ mod tests {
         ) {
             Ok(_) => panic!("Expected Err, got Ok"),
             Err(e) => {
-                println!("{:?}", e);
                 assert!(matches!(e, DidPeerError::UnsupportedPurpose('X')));
             }
         }

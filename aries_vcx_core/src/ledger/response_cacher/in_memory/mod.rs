@@ -23,6 +23,7 @@ pub struct InMemoryResponseCacher {
 
 impl InMemoryResponseCacher {
     pub fn new(config: InMemoryResponseCacherConfig) -> Self {
+        info!("InMemoryResponseCacher::new >> config: {config:?}");
         Self {
             cache: Arc::new(Mutex::new(LruCache::new(config.capacity()))),
             config,

@@ -1,5 +1,6 @@
 use aries_vcx_core::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
 use aries_vcx_core::ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite};
+use aries_vcx_core::ledger::indy_vdr_ledger::UpdateRole;
 use async_trait::async_trait;
 
 use crate::utils;
@@ -55,6 +56,17 @@ impl IndyLedgerWrite for MockLedger {
     }
 
     async fn add_attr(&self, target_did: &str, attrib_json: &str) -> VcxCoreResult<String> {
+        Ok(r#"{"rc":"success"}"#.to_string())
+    }
+
+    async fn write_did(
+        &self,
+        submitter_did: &str,
+        target_did: &str,
+        target_vk: &str,
+        role: Option<UpdateRole>,
+        alias: Option<String>,
+    ) -> VcxCoreResult<String> {
         Ok(r#"{"rc":"success"}"#.to_string())
     }
 }

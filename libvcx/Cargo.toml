@@ -13,10 +13,7 @@ doctest = false
 
 [features]
 fatal_warnings = []
-default = ["ledger_vdrtools", "anoncreds_vdrtools"]
-
-ledger_indyvdr = ["libvcx_core/ledger_indyvdr"]
-ledger_vdrtools = ["libvcx_core/ledger_vdrtools"]
+default = ["anoncreds_vdrtools"]
 
 anoncreds_credx = ["libvcx_core/anoncreds_credx"]
 anoncreds_vdrtools = ["libvcx_core/anoncreds_vdrtools"]
@@ -28,7 +25,7 @@ cfg-if = { version = "1.0" }
 env_logger = "0.9.0"
 log = "0.4.16"
 chrono = "0.4.23"
-time = "0.3.20"
+time = "=0.3.20"
 lazy_static = "1.3"
 libc = "=0.2.139"
 rand = "0.7.3"

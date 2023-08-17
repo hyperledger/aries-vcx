@@ -19,6 +19,7 @@ impl From<VdrError> for AriesVcxCoreError {
             VdrErrorKind::PoolRequestFailed(_) => {
                 AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::InvalidLedgerResponse, err)
             }
+            VdrErrorKind::Resolver => AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::UnknownError, err),
             VdrErrorKind::PoolTimeout => AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::UnknownError, err),
         }
     }
