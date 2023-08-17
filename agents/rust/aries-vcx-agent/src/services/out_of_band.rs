@@ -15,7 +15,7 @@ use aries_vcx::{
         },
         AriesMessage,
     },
-    protocols::did_exchange::service::generate_keypair,
+    protocols::did_exchange::state_machine::generate_keypair,
 };
 use public_key::KeyType;
 use uuid::Uuid;

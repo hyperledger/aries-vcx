@@ -3,7 +3,7 @@ use messages::msg_fields::protocols::did_exchange::{complete::Complete, response
 use crate::{
     errors::error::{AriesVcxError, AriesVcxErrorKind},
     protocols::did_exchange::{
-        service::helpers::create_our_did_document,
+        state_machine::helpers::create_our_did_document,
         states::{completed::Completed, responder::response_sent::ResponseSent},
         transition::{transition_error::TransitionError, transition_result::TransitionResult},
     },
@@ -14,12 +14,12 @@ use self::{
     helpers::{construct_response, resolve_their_ddo},
 };
 
-use super::DidExchangeServiceResponder;
+use super::DidExchangeResponder;
 
 pub mod config;
 mod helpers;
 
-impl DidExchangeServiceResponder<ResponseSent> {
+impl DidExchangeResponder<ResponseSent> {
     pub async fn receive_request(
         ReceiveRequestConfig {
             wallet,
@@ -29,7 +29,7 @@ impl DidExchangeServiceResponder<ResponseSent> {
             routing_keys,
             invitation_id,
         }: ReceiveRequestConfig,
-    ) -> Result<TransitionResult<DidExchangeServiceResponder<ResponseSent>, Response>, AriesVcxError> {
+    ) -> Result<TransitionResult<DidExchangeResponder<ResponseSent>, Response>, AriesVcxError> {
         let their_ddo = resolve_their_ddo(&resolver_registry, &request).await?;
         let (our_ddo, enc_key) = create_our_did_document(&wallet, service_endpoint, routing_keys).await?;
 
@@ -43,7 +43,7 @@ impl DidExchangeServiceResponder<ResponseSent> {
         let response = construct_response(our_ddo, invitation_id.clone(), request.id.clone())?;
 
         Ok(TransitionResult {
-            state: DidExchangeServiceResponder::from_parts(
+            state: DidExchangeResponder::from_parts(
                 ResponseSent {
                     request_id: request.id,
                     invitation_id,
@@ -58,7 +58,7 @@ impl DidExchangeServiceResponder<ResponseSent> {
     pub fn receive_complete(
         self,
         complete: Complete,
-    ) -> Result<DidExchangeServiceResponder<Completed>, TransitionError<Self>> {
+    ) -> Result<DidExchangeResponder<Completed>, TransitionError<Self>> {
         if complete.decorators.thread.thid != self.state.request_id {
             return Err(TransitionError {
                 error: AriesVcxError::from_msg(
@@ -77,7 +77,7 @@ impl DidExchangeServiceResponder<ResponseSent> {
                 state: self,
             });
         }
-        Ok(DidExchangeServiceResponder::from_parts(
+        Ok(DidExchangeResponder::from_parts(
             Completed {
                 invitation_id: self.state.invitation_id,
                 request_id: self.state.request_id,

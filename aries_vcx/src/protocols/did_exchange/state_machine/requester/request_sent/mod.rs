@@ -14,7 +14,7 @@ use crate::{
     errors::error::{AriesVcxError, AriesVcxErrorKind},
     handlers::util::AnyInvitation,
     protocols::did_exchange::{
-        service::helpers::{attach_to_ddo_sov, create_our_did_document, ddo_sov_to_attach, jws_sign_attach},
+        state_machine::helpers::{attach_to_ddo_sov, create_our_did_document, ddo_sov_to_attach, jws_sign_attach},
         states::{completed::Completed, requester::request_sent::RequestSent},
         transition::{transition_error::TransitionError, transition_result::TransitionResult},
     },
@@ -25,9 +25,9 @@ use helpers::{construct_complete_message, construct_request, did_doc_from_did, v
 
 use self::config::{ConstructRequestConfig, PairwiseConstructRequestConfig, PublicConstructRequestConfig};
 
-use super::DidExchangeServiceRequester;
+use super::DidExchangeRequester;
 
-impl DidExchangeServiceRequester<RequestSent> {
+impl DidExchangeRequester<RequestSent> {
     async fn construct_request_pairwise(
         PairwiseConstructRequestConfig {
             ledger,
@@ -55,7 +55,7 @@ impl DidExchangeServiceRequester<RequestSent> {
         )?;
 
         Ok(TransitionResult {
-            state: DidExchangeServiceRequester::from_parts(
+            state: DidExchangeRequester::from_parts(
                 RequestSent {
                     invitation_id: invitation.id.clone(),
                     request_id: request.id.clone(),
@@ -92,7 +92,7 @@ impl DidExchangeServiceRequester<RequestSent> {
         let request = construct_request(invitation_id.clone(), our_did.to_string(), Some(signed_attach))?;
 
         Ok(TransitionResult {
-            state: DidExchangeServiceRequester::from_parts(
+            state: DidExchangeRequester::from_parts(
                 RequestSent {
                     request_id: request.id.clone(),
                     invitation_id,
@@ -120,7 +120,7 @@ impl DidExchangeServiceRequester<RequestSent> {
     pub async fn receive_response(
         self,
         response: Response,
-    ) -> Result<TransitionResult<DidExchangeServiceRequester<Completed>, CompleteMessage>, TransitionError<Self>> {
+    ) -> Result<TransitionResult<DidExchangeRequester<Completed>, CompleteMessage>, TransitionError<Self>> {
         if response.decorators.thread.thid != self.state.request_id {
             return Err(TransitionError {
                 error: AriesVcxError::from_msg(
@@ -160,7 +160,7 @@ impl DidExchangeServiceRequester<RequestSent> {
         let complete_message =
             construct_complete_message(self.state.invitation_id.clone(), self.state.request_id.clone());
         Ok(TransitionResult {
-            state: DidExchangeServiceRequester::from_parts(
+            state: DidExchangeRequester::from_parts(
                 Completed {
                     invitation_id: self.state.invitation_id,
                     request_id: self.state.request_id,

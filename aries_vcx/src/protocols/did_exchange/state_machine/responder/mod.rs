@@ -2,9 +2,9 @@ mod response_sent;
 
 pub use response_sent::config::ReceiveRequestConfig;
 
-use super::DidExchangeService;
+use super::DidExchange;
 
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq)]
 pub struct Responder;
 
-pub type DidExchangeServiceResponder<S> = DidExchangeService<Responder, S>;
+pub type DidExchangeResponder<S> = DidExchange<Responder, S>;

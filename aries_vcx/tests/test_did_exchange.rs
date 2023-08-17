@@ -3,10 +3,10 @@ extern crate log;
 mod fixtures;
 mod utils;
 
-use aries_vcx::protocols::did_exchange::service::requester::{
-    ConstructRequestConfig, DidExchangeServiceRequester, PairwiseConstructRequestConfig,
+use aries_vcx::protocols::did_exchange::state_machine::requester::{
+    ConstructRequestConfig, DidExchangeRequester, PairwiseConstructRequestConfig,
 };
-use aries_vcx::protocols::did_exchange::service::responder::{DidExchangeServiceResponder, ReceiveRequestConfig};
+use aries_vcx::protocols::did_exchange::state_machine::responder::{DidExchangeResponder, ReceiveRequestConfig};
 use aries_vcx::protocols::did_exchange::states::requester::request_sent::RequestSent;
 use aries_vcx::protocols::did_exchange::states::responder::response_sent::ResponseSent;
 use aries_vcx::protocols::did_exchange::transition::transition_result::TransitionResult;
@@ -34,7 +34,7 @@ async fn did_exchange_test() {
         let TransitionResult {
             state: requester,
             output: request,
-        } = DidExchangeServiceRequester::<RequestSent>::construct_request(ConstructRequestConfig::Pairwise(
+        } = DidExchangeRequester::<RequestSent>::construct_request(ConstructRequestConfig::Pairwise(
             PairwiseConstructRequestConfig {
                 ledger: consumer.profile.inject_indy_ledger_read(),
                 wallet: consumer.profile.inject_wallet(),
@@ -51,7 +51,7 @@ async fn did_exchange_test() {
         let TransitionResult {
             state: responder,
             output: response,
-        } = DidExchangeServiceResponder::<ResponseSent>::receive_request(ReceiveRequestConfig {
+        } = DidExchangeResponder::<ResponseSent>::receive_request(ReceiveRequestConfig {
             wallet: institution.profile.inject_wallet(),
             resolver_registry: todo!(),
             request,

@@ -12,7 +12,7 @@ use messages::{
 
 use crate::{
     errors::error::AriesVcxError,
-    protocols::did_exchange::service::helpers::{attach_to_ddo_sov, ddo_sov_to_attach},
+    protocols::did_exchange::state_machine::helpers::{attach_to_ddo_sov, ddo_sov_to_attach},
 };
 
 pub async fn resolve_their_ddo(

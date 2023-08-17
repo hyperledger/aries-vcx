@@ -14,8 +14,8 @@ use crate::{
 };
 
 use super::{
-    requester::{ConstructRequestConfig, DidExchangeServiceRequester},
-    responder::{DidExchangeServiceResponder, ReceiveRequestConfig},
+    requester::{ConstructRequestConfig, DidExchangeRequester},
+    responder::{DidExchangeResponder, ReceiveRequestConfig},
 };
 
 pub use thin_state::ThinState;
@@ -28,14 +28,14 @@ pub enum GenericDidExchange {
 
 #[derive(Debug, Clone)]
 pub enum RequesterState {
-    RequestSent(DidExchangeServiceRequester<RequestSent>),
-    Completed(DidExchangeServiceRequester<Completed>),
+    RequestSent(DidExchangeRequester<RequestSent>),
+    Completed(DidExchangeRequester<Completed>),
 }
 
 #[derive(Debug, Clone)]
 pub enum ResponderState {
-    ResponseSent(DidExchangeServiceResponder<ResponseSent>),
-    Completed(DidExchangeServiceResponder<Completed>),
+    ResponseSent(DidExchangeResponder<ResponseSent>),
+    Completed(DidExchangeResponder<Completed>),
 }
 
 impl GenericDidExchange {
@@ -66,8 +66,7 @@ impl GenericDidExchange {
     }
 
     pub async fn construct_request(config: ConstructRequestConfig) -> Result<(Self, Request), AriesVcxError> {
-        let TransitionResult { state, output } =
-            DidExchangeServiceRequester::<RequestSent>::construct_request(config).await?;
+        let TransitionResult { state, output } = DidExchangeRequester::<RequestSent>::construct_request(config).await?;
         Ok((
             GenericDidExchange::Requester(RequesterState::RequestSent(state)),
             output,
@@ -75,8 +74,7 @@ impl GenericDidExchange {
     }
 
     pub async fn handle_request(config: ReceiveRequestConfig) -> Result<(Self, Response), AriesVcxError> {
-        let TransitionResult { state, output } =
-            DidExchangeServiceResponder::<ResponseSent>::receive_request(config).await?;
+        let TransitionResult { state, output } = DidExchangeResponder::<ResponseSent>::receive_request(config).await?;
         Ok((
             GenericDidExchange::Responder(ResponderState::ResponseSent(state)),
             output,

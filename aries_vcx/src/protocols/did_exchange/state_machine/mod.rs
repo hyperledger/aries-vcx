@@ -24,7 +24,7 @@ use super::{
 };
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct DidExchangeService<I, S> {
+pub struct DidExchange<I, S> {
     state: S,
     initiation_type: PhantomData<I>,
     // TODO: Do we NEED to store our DDO or does it suffice to store the verkey?
@@ -32,7 +32,7 @@ pub struct DidExchangeService<I, S> {
     their_did_document: DidDocumentSov,
 }
 
-impl<I, S> DidExchangeService<I, S> {
+impl<I, S> DidExchange<I, S> {
     pub fn our_verkey(&self) -> &Key {
         &self.our_verkey
     }
@@ -42,7 +42,7 @@ impl<I, S> DidExchangeService<I, S> {
     }
 }
 
-impl<I, S: ThreadId> DidExchangeService<I, S> {
+impl<I, S: ThreadId> DidExchange<I, S> {
     pub fn get_thread_id(&self) -> &str {
         self.state.thread_id()
     }
@@ -51,7 +51,7 @@ impl<I, S: ThreadId> DidExchangeService<I, S> {
         self,
         reason: String,
         problem_code: Option<ProblemCode>,
-    ) -> TransitionResult<DidExchangeService<I, Abandoned>, ProblemReport>
+    ) -> TransitionResult<DidExchange<I, Abandoned>, ProblemReport>
     where
         S: ThreadId,
     {
@@ -70,7 +70,7 @@ impl<I, S: ThreadId> DidExchangeService<I, S> {
             ProblemReport::with_decorators(id, content, decorators)
         };
         TransitionResult {
-            state: DidExchangeService {
+            state: DidExchange {
                 state: Abandoned {
                     reason,
                     request_id: self.state.thread_id().to_string(),
@@ -84,7 +84,7 @@ impl<I, S: ThreadId> DidExchangeService<I, S> {
     }
 }
 
-impl<I, S> DidExchangeService<I, S> {
+impl<I, S> DidExchange<I, S> {
     pub fn from_parts(state: S, their_did_document: DidDocumentSov, our_verkey: Key) -> Self {
         Self {
             state,

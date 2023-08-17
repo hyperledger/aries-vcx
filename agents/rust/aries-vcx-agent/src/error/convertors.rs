@@ -4,7 +4,7 @@ use aries_vcx::{
     did_doc::error::DidDocumentBuilderError,
     did_doc_sov::error::DidDocumentSovError,
     errors::error::{AriesVcxError, AriesVcxErrorKind},
-    protocols::did_exchange::service::generic::GenericDidExchange,
+    protocols::did_exchange::state_machine::generic::GenericDidExchange,
 };
 use aries_vcx_core::errors::error::AriesVcxCoreError;
 
