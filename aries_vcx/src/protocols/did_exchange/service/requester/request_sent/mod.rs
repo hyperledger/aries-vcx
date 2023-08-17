@@ -125,18 +125,9 @@ impl DidExchangeServiceRequester<RequestSent> {
         self,
         response: Response,
     ) -> Result<TransitionResult<DidExchangeServiceRequester<Completed>, CompleteMessage>, TransitionError<Self>> {
-        // if response.decorators.thread.thid != self.state.request_id {
-        //     return Err(TransitionError {
-        //         error: AriesVcxError::from_msg(
-        //             AriesVcxErrorKind::InvalidState,
-        //             "Response thread ID does not match request ID",
-        //         ),
-        //         state: self,
-        //     });
-        // }
-        //
-        let processor = ConnectionResponseProcessor {};
-
+        // todo: note, the processor could be perhaps injected from top, and then modified by state machine contextual data if needed
+        let mut processor = ConnectionResponseProcessor::default();
+        processor.add_preprocessor(MsgThidVerifier { expected_thid: self.state.request_id.clone() } );
         let data = processor.process(
             response,
             self.state.invitation_id.clone(),
@@ -157,31 +148,42 @@ impl DidExchangeServiceRequester<RequestSent> {
 }
 
 
-pub struct ConnectionResponseProcessor {}
+#[derive(Default)]
+pub struct ConnectionResponseProcessor<V> where V: InputMsgVerifier {
+    input_msg_verifiers: Vec<V>
+}
 
 struct ConnectionResponseProcessingOutput {
     message: Complete,
     their_did_doc: DidDocumentSov
 }
 
-impl ConnectionResponseProcessor {
+impl <V> ConnectionResponseProcessor<V> where V: InputMsgVerifier {
 
+    pub fn add_preprocessor(&mut self, input_verifier: V) {
+        self.input_msg_verifiers.append(input_verifier);
+    }
+
+    pub fn input_msg_verification(&self, response: &Response) -> Result<(), String> {
+        for verifier in &self.input_msg_verifiers {
+            if !verifier.verify(response) {
+                return Err("Input verification failed".to_string());
+            }
+        }
+        Ok(())
+    }
+
+    // note: these require invitation_id, request_id - if you don't use state machines do guide you
+    //       it's up to you to remember data you need and inject them here correctly
+    //       In particular, invitation)id, request_id are needed to correct build thid, pthid decorators
+    //       which should be most likely responsibility of this function
     pub async fn process(
         &self,
         response: Response,
         invitation_id: String,
         request_id: String
     ) -> Result<ConnectionResponseProcessingOutput, String>  {
-        // This can be added via some extensible behaviour. State machines might want to keep doing this
-        // if response.decorators.thread.thid != self.state.request_id {
-        //     return Err(TransitionError {
-        //         error: AriesVcxError::from_msg(
-        //             AriesVcxErrorKind::InvalidState,
-        //             "Response thread ID does not match request ID",
-        //         ),
-        //         state: self,
-        //     });
-        // }
+        self.input_msg_verification(&response)?;
         let did_document = if let Some(ddo) = response.content.did_doc {
             attach_to_ddo_sov(ddo).map_err(|error| Err("attachment handling err"))?
         } else {
@@ -207,5 +209,20 @@ impl ConnectionResponseProcessor {
             their_did_doc: did_document,
 
         })
+    }
+}
+
+trait InputMsgVerifier {
+    // todo: input_msg can be typed as decorator of an arbitrary aries message
+    fn verify(&self, input_msg: &Response) -> bool;
+}
+
+struct MsgThidVerifier {
+    expected_thid: String
+}
+
+impl InputMsgVerifier for MsgThidVerifier {
+    fn verify(&self, input_msg: &Response) -> bool {
+        input_msg.decorators.thread.thid == self.expected_thid
     }
 }
