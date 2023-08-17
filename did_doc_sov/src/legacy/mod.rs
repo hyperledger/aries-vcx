@@ -14,6 +14,8 @@ use serde_json::{json, Value};
 
 use crate::{extra_fields::ExtraFieldsSov, service::legacy::ServiceLegacy};
 
+// TODO: Remove defaults if it turns out they are not needed. Preserved based on the original
+// legacy DDO implementation.
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 pub struct LegacyDidDoc {
     id: Did,
@@ -79,6 +81,7 @@ fn collect_authentication_fingerprints(legacy_ddo: &LegacyDidDoc) -> Result<Vec<
                 )
             })?
             .fingerprint();
+
         authentication_fingerprints.push(fingerprint);
     }
 
@@ -97,6 +100,7 @@ fn collect_authentication_fingerprints(legacy_ddo: &LegacyDidDoc) -> Result<Vec<
                 )
             })?
             .fingerprint();
+
         if !authentication_fingerprints.contains(&fingerprint) {
             authentication_fingerprints.push(fingerprint);
         }
@@ -136,22 +140,16 @@ fn construct_peer_did(authentication_fingerprints: &[String], encoded_services: 
     Did::parse(did).map_err(|err| format!("Error parsing peer did, error: {:?}", err))
 }
 
-// https://github.com/TimoGlastra/legacy-did-transformation
-fn convert_legacy_ddo_to_new(legacy_ddo: LegacyDidDoc) -> Result<DidDocument<ExtraFieldsSov>, String> {
-    let authentication_fingerprints = collect_authentication_fingerprints(&legacy_ddo)?;
-    let encoded_services = collect_encoded_services(&legacy_ddo);
-
-    let did = construct_peer_did(&authentication_fingerprints, &encoded_services)?;
-
+fn construct_new_did_document(
+    legacy_ddo: &LegacyDidDoc,
+    authentication_fingerprints: &[String],
+    did: Did,
+) -> Result<DidDocument<ExtraFieldsSov>, String> {
     let mut builder = DidDocument::builder(did.clone());
 
     for (i, fingerprint) in authentication_fingerprints.iter().enumerate() {
-        let id = DidUrl::from_fragment((i + 1).to_string()).map_err(|err| {
-            format!(
-                "Error converting legacy authentication key to new did url: {:?}, error: {:?}",
-                fingerprint, err
-            )
-        })?;
+        let id = DidUrl::from_fragment((i + 1).to_string())
+            .map_err(|err| format!("Error constructing did url from fragment, error: {:?}", err))?;
         builder = builder.add_verification_method(
             VerificationMethod::builder(
                 id,
@@ -175,6 +173,20 @@ fn convert_legacy_ddo_to_new(legacy_ddo: LegacyDidDoc) -> Result<DidDocument<Ext
     }
 
     Ok(builder.build())
+}
+
+// https://github.com/TimoGlastra/legacy-did-transformation
+fn convert_legacy_ddo_to_new(legacy_ddo: LegacyDidDoc) -> Result<DidDocument<ExtraFieldsSov>, String> {
+    let authentication_fingerprints = collect_authentication_fingerprints(&legacy_ddo)?;
+    let encoded_services = collect_encoded_services(&legacy_ddo);
+
+    let did = construct_peer_did(&authentication_fingerprints, &encoded_services)?;
+
+    Ok(construct_new_did_document(
+        &legacy_ddo,
+        &authentication_fingerprints,
+        did,
+    )?)
 }
 
 pub fn deserialize_legacy_or_new<'de, D>(deserializer: D) -> Result<DidDocument<ExtraFieldsSov>, D::Error>
