@@ -1,6 +1,8 @@
 pub mod config;
 mod helpers;
 
+use chrono::{DateTime, Utc};
+use time::Duration;
 use did_doc_sov::DidDocumentSov;
 use did_parser::ParseError;
 use did_peer::peer_did_resolver::resolver::PeerDidResolver;
@@ -23,6 +25,7 @@ use crate::{
 };
 
 use helpers::{construct_complete_message, construct_request, did_doc_from_did, verify_handshake_protocol};
+use messages::decorators::timing::Timing;
 use messages::msg_fields::protocols::did_exchange::complete::Complete;
 
 use self::config::{ConstructRequestConfig, PairwiseConstructRequestConfig, PublicConstructRequestConfig};
@@ -148,7 +151,8 @@ impl DidExchangeServiceRequester<RequestSent> {
 
 #[derive(Default)]
 pub struct ConnectionResponseProcessor<V> where V: InputMsgVerifier {
-    input_msg_verifiers: Vec<V>
+    input_msg_verifiers: Vec<V>,
+    output_msg_modifiers: Vec<V>
 }
 
 struct ConnectionResponseProcessingOutput {
@@ -162,13 +166,23 @@ impl <V> ConnectionResponseProcessor<V> where V: InputMsgVerifier {
         self.input_msg_verifiers.append(input_verifier);
     }
 
-    pub fn input_msg_verification(&self, response: &Response) -> Result<(), String> {
+    pub fn input_msg_verification(&self, input_msg: &Response) -> Result<(), String> {
         for verifier in &self.input_msg_verifiers {
-            if !verifier.verify(response) {
+            if !verifier.verify(input_msg) {
                 return Err("Input verification failed".to_string());
             }
         }
         Ok(())
+    }
+
+    pub fn add_output_modifier(&mut self, modifier: V) {
+        self.output_msg_modifiers.push(modifier);
+    }
+
+    pub fn apply_output_modifiers(&self, output_msg: &mut Complete) {
+        for modifier in &self.output_msg_modifiers {
+            modifier.modify(output_msg);
+        }
     }
 
     // note:  these require invitation_id, request_id - if you don't use state machines do guide you
@@ -181,7 +195,6 @@ impl <V> ConnectionResponseProcessor<V> where V: InputMsgVerifier {
     //                                             PeerDidResolver::new()
     //                                             construct_complete_message
     //        themselves.
-
     pub async fn process(
         &self,
         response: Response,
@@ -207,8 +220,8 @@ impl <V> ConnectionResponseProcessor<V> where V: InputMsgVerifier {
                 .to_owned()
                 .into()
         };
-        let complete_message =
-            construct_complete_message(invitation_id.clone(), request_id.clone());
+        let mut complete_message = construct_complete_message(invitation_id.clone(), request_id.clone());
+        self.apply_output_modifiers(&mut complete_message);
         Ok(ConnectionResponseProcessingOutput {
             message: complete_message,
             their_did_doc: did_document,
@@ -229,5 +242,29 @@ struct MsgThidVerifier {
 impl InputMsgVerifier for MsgThidVerifier {
     fn verify(&self, input_msg: &Response) -> bool {
         input_msg.decorators.thread.thid == self.expected_thid
+    }
+}
+
+
+trait OutputMsgModifier {
+    // todo: input_msg can be typed as decorator of an arbitrary aries message
+    fn modify(&self, output_msg: &mut Complete) -> bool;
+}
+
+struct OutpuMsgModiferSetTiming {
+    use_current_time: bool,
+    expiration_time: Duration
+}
+
+impl OutputMsgModifier for OutpuMsgModiferSetTiming {
+    fn modify(&self, output_msg: &mut Complete) {
+        output_msg.decorators.timing = Some(Timing {
+            in_time: None,
+            out_time: Some(Utc::now()),
+            stale_time: None,
+            expires_time: None,
+            delay_milli: None,
+            wait_until_time: None,
+        });
     }
 }
