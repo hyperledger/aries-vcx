@@ -68,8 +68,7 @@ impl TryFrom<ServiceLegacy> for Service<ExtraFieldsSov> {
     fn try_from(service: ServiceLegacy) -> Result<Self, Self::Error> {
         let extra = ExtraFieldsSov::Legacy(service.extra);
         Ok(Service::builder(service.id, service.service_endpoint, extra)
-            .add_service_type(ServiceType::Legacy.to_string())
-            .unwrap()
+            .add_service_type(ServiceType::Legacy.to_string())?
             .build())
     }
 }
