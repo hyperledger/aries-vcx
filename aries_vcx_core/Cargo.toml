@@ -6,8 +6,8 @@ edition = "2021"
 [features]
 ########################## DEP FLAGS ################################
 # Feature flag to include the libvdrtools dependency
-vdrtools_anoncreds = ["dep:libvdrtools"]
-vdrtools_wallet = ["dep:libvdrtools"]
+vdrtools_anoncreds = ["dep:libvdrtools", "dep:indy-api-types"]
+vdrtools_wallet = ["dep:libvdrtools", "dep:indy-api-types"]
 # Feature flag to include the 'modular library' dependencies (vdrtools alternatives; indy-vdr, indy-credx)
 modular_libs = ["dep:indy-credx"]
 vdr_proxy_ledger = ["modular_libs", "dep:indy-vdr-proxy-client"]
@@ -19,7 +19,7 @@ agency_client = { path = "../agency_client" }
 indy-vdr = { git = "https://github.com/hyperledger/indy-vdr.git", rev = "879e29e", default-features = false, features = ["log"] }
 indy-credx = { git = "https://github.com/hyperledger/indy-shared-rs", tag = "v1.0.1", optional = true }
 libvdrtools = { path = "../libvdrtools", optional = true }
-indy-api-types = { path = "../libvdrtools/indy-api-types" }
+indy-api-types = { path = "../libvdrtools/indy-api-types", optional = true }
 async-trait = "0.1.68"
 futures = { version = "0.3", default-features = false }
 serde_json = "1.0.95"
