@@ -50,7 +50,7 @@ pub fn get_key_by_verification_method(vm: &VerificationMethod) -> Result<Key, Di
         }
         t @ _ => return Err(DidPeerError::UnsupportedVerificationMethodType(t.to_owned())),
     };
-    Ok(Key::new(vm.public_key().key_decoded()?, key_type)?)
+    Ok(Key::new(vm.public_key_field().key_decoded()?, key_type)?)
 }
 
 fn build_verification_methods_from_type_and_key(
@@ -159,10 +159,10 @@ mod tests {
             let vms = get_verification_methods_by_key(key, &did(), PublicKeyEncoding::Multibase).unwrap();
             assert_eq!(vms.len(), 1);
             assert_eq!(
-                vms[0].public_key().key_decoded().unwrap(),
+                vms[0].public_key_field().key_decoded().unwrap(),
                 key.multicodec_prefixed_key()
             );
-            assert_ne!(vms[0].public_key().key_decoded().unwrap(), key.key());
+            assert_ne!(vms[0].public_key_field().key_decoded().unwrap(), key.key());
         }
 
         // ... and base58 encoded keys are not
@@ -170,10 +170,10 @@ mod tests {
             let vms = get_verification_methods_by_key(key, &did(), PublicKeyEncoding::Base58).unwrap();
             assert_eq!(vms.len(), 1);
             assert_ne!(
-                vms[0].public_key().key_decoded().unwrap(),
+                vms[0].public_key_field().key_decoded().unwrap(),
                 key.multicodec_prefixed_key()
             );
-            assert_eq!(vms[0].public_key().key_decoded().unwrap(), key.key());
+            assert_eq!(vms[0].public_key_field().key_decoded().unwrap(), key.key());
         }
 
         #[test]

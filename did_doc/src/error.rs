@@ -1,5 +1,7 @@
 use url::ParseError;
 
+use crate::schema::verification_method::VerificationMethodType;
+
 #[derive(Debug)]
 pub enum DidDocumentBuilderError {
     InvalidInput(String),
@@ -10,6 +12,8 @@ pub enum DidDocumentBuilderError {
     Base58DecodeError(bs58::decode::Error),
     Base64DecodeError(base64::DecodeError),
     HexDecodeError(hex::FromHexError),
+    UnsupportedVerificationMethodType(VerificationMethodType),
+    PublicKeyError(public_key::PublicKeyError),
 }
 
 impl std::fmt::Display for DidDocumentBuilderError {
@@ -39,6 +43,12 @@ impl std::fmt::Display for DidDocumentBuilderError {
             DidDocumentBuilderError::HexDecodeError(error) => {
                 write!(f, "Hex decode error: {}", error)
             }
+            DidDocumentBuilderError::UnsupportedVerificationMethodType(vm_type) => {
+                write!(f, "Unsupported verification method type: {}", vm_type)
+            }
+            DidDocumentBuilderError::PublicKeyError(error) => {
+                write!(f, "Public key error: {}", error)
+            }
         }
     }
 }
@@ -51,6 +61,7 @@ impl std::error::Error for DidDocumentBuilderError {
             DidDocumentBuilderError::Base58DecodeError(error) => Some(error),
             DidDocumentBuilderError::Base64DecodeError(error) => Some(error),
             DidDocumentBuilderError::HexDecodeError(error) => Some(error),
+            DidDocumentBuilderError::PublicKeyError(error) => Some(error),
             _ => None,
         }
     }
@@ -89,5 +100,11 @@ impl From<hex::FromHexError> for DidDocumentBuilderError {
 impl From<ParseError> for DidDocumentBuilderError {
     fn from(error: ParseError) -> Self {
         DidDocumentBuilderError::InvalidInput(error.to_string())
+    }
+}
+
+impl From<public_key::PublicKeyError> for DidDocumentBuilderError {
+    fn from(error: public_key::PublicKeyError) -> Self {
+        DidDocumentBuilderError::PublicKeyError(error)
     }
 }

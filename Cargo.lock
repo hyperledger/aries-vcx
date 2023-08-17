@@ -1643,6 +1643,7 @@ dependencies = [
  "hex",
  "multibase",
  "pem 2.0.1",
+ "public_key",
  "serde",
  "serde_json",
  "uniresid",
