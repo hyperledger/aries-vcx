@@ -171,10 +171,17 @@ impl <V> ConnectionResponseProcessor<V> where V: InputMsgVerifier {
         Ok(())
     }
 
-    // note: these require invitation_id, request_id - if you don't use state machines do guide you
-    //       it's up to you to remember data you need and inject them here correctly
-    //       In particular, invitation)id, request_id are needed to correct build thid, pthid decorators
-    //       which should be most likely responsibility of this function
+    // note:  these require invitation_id, request_id - if you don't use state machines do guide you
+    //        it's up to you to remember data you need and inject them here correctly
+    //        In particular, invitation)id, request_id are needed to correct build thid, pthid decorators
+    //        which should be most likely responsibility of this function
+    // note2: If anyone want's truly custom & curated behaviour, nothing stops them from using
+    //        Message crate, and utils such as:
+    //                                             attach_to_ddo_sov
+    //                                             PeerDidResolver::new()
+    //                                             construct_complete_message
+    //        themselves.
+
     pub async fn process(
         &self,
         response: Response,
