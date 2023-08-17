@@ -1,4 +1,3 @@
-use did_doc::schema::verification_method::VerificationMethodKind;
 use did_doc_sov::{extra_fields::KeyKind, DidDocumentSov};
 
 const LEGACY_DID_DOC_JSON: &str = r##"
