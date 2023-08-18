@@ -58,9 +58,9 @@ pub enum HolderState {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct HolderSM {
-    state: HolderFullState,
-    source_id: String,
-    thread_id: String,
+    pub(crate) state: HolderFullState,
+    pub(crate) source_id: String,
+    pub(crate) thread_id: String,
 }
 
 impl fmt::Display for HolderFullState {
