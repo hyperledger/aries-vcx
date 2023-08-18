@@ -290,17 +290,28 @@ impl Issuer {
         self.issuer_sm.is_revoked(ledger).await
     }
 
+    // todo: break this down into individual methods per "CredentialIssuanceAction" variant
     pub async fn step(
         &mut self,
         anoncreds: &Arc<dyn BaseAnonCreds>,
-        message: CredentialIssuanceAction,
+        action: CredentialIssuanceAction,
         send_message: Option<SendClosure>,
     ) -> VcxResult<()> {
-        self.issuer_sm = self
-            .issuer_sm
-            .clone()
-            .handle_message(anoncreds, message, send_message)
-            .await?;
+        let issuer_sm = match action {
+            CredentialIssuanceAction::CredentialProposal(proposal) => self.issuer_sm.clone().receive_proposal(proposal)?,
+            CredentialIssuanceAction::CredentialRequest(request) => self.issuer_sm.clone().receive_request(request)?,
+            CredentialIssuanceAction::CredentialSend() => {
+                let send_message = send_message.ok_or(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidState,
+                    "Attempted to call undefined send_message callback",
+                ))?;
+                self.issuer_sm.clone().send_credential(anoncreds, send_message).await?
+            }
+            CredentialIssuanceAction::CredentialAck(ack) => self.issuer_sm.clone().receive_ack(ack)?,
+            CredentialIssuanceAction::ProblemReport(problem_report) => self.issuer_sm.clone().receive_problem_report(problem_report)?,
+            _ => self.issuer_sm.clone(),
+        };
+        self.issuer_sm = issuer_sm;
         Ok(())
     }
 }

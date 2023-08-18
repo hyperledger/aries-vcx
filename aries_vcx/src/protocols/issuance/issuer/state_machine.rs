@@ -478,31 +478,6 @@ impl IssuerSM {
         Ok(Self { state, ..self })
     }
 
-    pub async fn handle_message(
-        self,
-        anoncreds: &Arc<dyn BaseAnonCreds>,
-        cim: CredentialIssuanceAction,
-        send_message: Option<SendClosure>,
-    ) -> VcxResult<Self> {
-        trace!("IssuerSM::handle_message >>> cim: {:?}, state: {:?}", cim, self.state);
-        verify_thread_id(&self.thread_id, &cim)?;
-        let issuer_sm = match cim {
-            CredentialIssuanceAction::CredentialProposal(proposal) => self.receive_proposal(proposal)?,
-            CredentialIssuanceAction::CredentialRequest(request) => self.receive_request(request)?,
-            CredentialIssuanceAction::CredentialSend() => {
-                let send_message = send_message.ok_or(AriesVcxError::from_msg(
-                    AriesVcxErrorKind::InvalidState,
-                    "Attempted to call undefined send_message callback",
-                ))?;
-                self.send_credential(anoncreds, send_message).await?
-            }
-            CredentialIssuanceAction::CredentialAck(ack) => self.receive_ack(ack)?,
-            CredentialIssuanceAction::ProblemReport(problem_report) => self.receive_problem_report(problem_report)?,
-            _ => self,
-        };
-        Ok(issuer_sm)
-    }
-
     pub fn credential_status(&self) -> u32 {
         trace!("Issuer::credential_status >>>");
 
