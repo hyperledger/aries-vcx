@@ -1,7 +1,6 @@
 [workspace]
 members = [
     "aries_vcx",
-    "libvcx",
     "libvcx_core",
     "agency_client",
     "libvdrtools",
