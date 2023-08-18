@@ -9,13 +9,12 @@ use messages::msg_fields::protocols::cred_issuance::{CredentialAttr, CredentialP
 use messages::AriesMessage;
 use std::sync::Arc;
 
-use agency_client::agency_client::AgencyClient;
 use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
 use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 
 use crate::errors::error::prelude::*;
-use crate::handlers::connection::mediated_connection::MediatedConnection;
+use crate::handlers::issuance::mediated_issuer::issuer_find_messages_to_handle;
 use crate::handlers::revocation_notification::sender::RevocationNotificationSender;
 use crate::handlers::util::OfferInfo;
 use crate::protocols::issuance::actions::CredentialIssuanceAction;
@@ -224,7 +223,7 @@ impl Issuer {
     }
 
     pub fn find_message_to_handle(&self, messages: HashMap<String, AriesMessage>) -> Option<(String, AriesMessage)> {
-        self.issuer_sm.find_message_to_handle(messages)
+        issuer_find_messages_to_handle(&self.issuer_sm, messages)
     }
 
     pub fn get_revocation_id(&self) -> VcxResult<String> {
@@ -303,26 +302,6 @@ impl Issuer {
             .handle_message(anoncreds, message, send_message)
             .await?;
         Ok(())
-    }
-
-    pub async fn update_state(
-        &mut self,
-        wallet: &Arc<dyn BaseWallet>,
-        anoncreds: &Arc<dyn BaseAnonCreds>,
-        agency_client: &AgencyClient,
-        connection: &MediatedConnection,
-    ) -> VcxResult<IssuerState> {
-        trace!("Issuer::update_state >>>");
-        if self.is_terminal_state() {
-            return Ok(self.get_state());
-        }
-        let send_message = connection.send_message_closure(Arc::clone(wallet)).await?;
-        let messages = connection.get_messages(agency_client).await?;
-        if let Some((uid, msg)) = self.find_message_to_handle(messages) {
-            self.step(anoncreds, msg.into(), Some(send_message)).await?;
-            connection.update_message_status(&uid, agency_client).await?;
-        }
-        Ok(self.get_state())
     }
 }
 

@@ -39,6 +39,7 @@ pub mod test_utils {
     use aries_vcx::handlers::issuance::holder::Holder;
     use aries_vcx::handlers::issuance::issuer::test_utils::get_credential_proposal_messages;
     use aries_vcx::handlers::issuance::issuer::Issuer;
+    use aries_vcx::handlers::issuance::mediated_issuer::issuer_update_with_mediator;
     use aries_vcx::handlers::proof_presentation::prover::test_utils::get_proof_request_messages;
     use aries_vcx::handlers::proof_presentation::prover::Prover;
     use aries_vcx::handlers::proof_presentation::verifier::Verifier;
@@ -460,8 +461,8 @@ pub mod test_utils {
         tails_dir: Option<String>,
     ) {
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
-        issuer
-            .update_state(
+        issuer_update_with_mediator(
+            issuer,
                 &faber.profile.inject_wallet(),
                 &faber.profile.inject_anoncreds(),
                 &faber.agency_client,
@@ -562,8 +563,8 @@ pub mod test_utils {
         assert_eq!(IssuerState::OfferSent, issuer_credential.get_state());
         assert!(!issuer_credential.is_revokable());
 
-        issuer_credential
-            .update_state(
+        issuer_update_with_mediator(
+            &mut faber.issuer_credential,
                 &faber.profile.inject_wallet(),
                 &faber.profile.inject_anoncreds(),
                 &faber.agency_client,

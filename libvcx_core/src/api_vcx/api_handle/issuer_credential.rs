@@ -30,7 +30,6 @@ pub fn issuer_credential_create(source_id: String) -> LibvcxResult<u32> {
     ISSUER_CREDENTIAL_MAP.add(Issuer::create(&source_id)?)
 }
 
-// todo: move connection_handle as second arg.
 pub async fn update_state(handle: u32, message: Option<&str>, connection_handle: u32) -> LibvcxResult<u32> {
     trace!("issuer_credential::update_state >>> ");
     let mut credential = ISSUER_CREDENTIAL_MAP.get_cloned(handle)?;
@@ -40,14 +39,14 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
     let send_message = mediated_connection::send_message_closure(connection_handle).await?;
 
     if let Some(message) = message {
-        let message: AriesMessage = serde_json::from_str(message).map_err(|err| {
+        let msg: AriesMessage = serde_json::from_str(message).map_err(|err| {
             LibvcxError::from_msg(
                 LibvcxErrorKind::InvalidOption,
                 format!("Cannot update state: Message deserialization failed: {:?}", err),
             )
         })?;
         credential
-            .step(&get_main_anoncreds()?, message.into(), Some(send_message))
+            .step(&get_main_anoncreds()?, msg.into(), Some(send_message))
             .await?;
     } else {
         let messages = mediated_connection::get_messages(connection_handle).await?;
