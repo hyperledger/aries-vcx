@@ -1,5 +1,7 @@
 pub mod error;
 pub mod extra_fields;
+// TODO: Remove once migration is done
+mod legacy;
 pub mod service;
 
 use std::collections::HashMap;
@@ -9,7 +11,6 @@ use did_doc::{
     schema::{
         did_doc::{ControllerAlias, DidDocument, DidDocumentBuilder},
         service::Service,
-        types::uri::Uri,
         utils::OneOrList,
         verification_method::{VerificationMethod, VerificationMethodKind},
     },
@@ -32,10 +33,6 @@ impl DidDocumentSov {
 
     pub fn id(&self) -> &Did {
         self.did_doc.id()
-    }
-
-    pub fn also_known_as(&self) -> &[Uri] {
-        self.did_doc.also_known_as()
     }
 
     pub fn controller(&self) -> Option<&ControllerAlias> {
@@ -135,6 +132,8 @@ impl<'de> Deserialize<'de> for DidDocumentSov {
         #[derive(Deserialize, Clone, Debug, PartialEq)]
         struct TempDidDocumentSov {
             #[serde(flatten)]
+            // TODO: Remove once the transition is done
+            #[serde(deserialize_with = "legacy::deserialize_legacy_or_new")]
             did_doc: DidDocument<ExtraFieldsSov>,
         }
 

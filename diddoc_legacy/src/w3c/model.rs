@@ -1,7 +1,7 @@
 use serde::{Serialize, Serializer};
 
 pub const CONTEXT: &str = "https://w3id.org/did/v1";
-pub const KEY_TYPE: &str = "Ed25519VerificationKey2018";
+pub const KEY_TYPE: &str = "Ed25519VerificationKey2018"; // TODO: Should be Ed25519Signature2018?
 pub const KEY_AUTHENTICATION_TYPE: &str = "Ed25519SignatureAuthentication2018";
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]

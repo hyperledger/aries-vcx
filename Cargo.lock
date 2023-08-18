@@ -1653,8 +1653,10 @@ dependencies = [
 name = "did_doc_sov"
 version = "0.1.0"
 dependencies = [
+ "base64 0.21.2",
  "did_doc",
  "did_key",
+ "public_key",
  "serde",
  "serde_json",
  "thiserror",

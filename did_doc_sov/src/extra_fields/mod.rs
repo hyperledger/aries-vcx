@@ -9,6 +9,7 @@ use crate::error::DidDocumentSovError;
 pub mod aip1;
 pub mod didcommv1;
 pub mod didcommv2;
+pub mod legacy;
 
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
 pub enum AcceptType {
@@ -88,6 +89,7 @@ pub enum ExtraFieldsSov {
     DIDCommV1(didcommv1::ExtraFieldsDidCommV1),
     DIDCommV2(didcommv2::ExtraFieldsDidCommV2),
     AIP1(aip1::ExtraFieldsAIP1),
+    Legacy(legacy::ExtraFieldsLegacy),
 }
 
 impl Default for ExtraFieldsSov {
@@ -100,6 +102,7 @@ impl ExtraFieldsSov {
     pub fn recipient_keys(&self) -> Result<&[KeyKind], DidDocumentSovError> {
         match self {
             ExtraFieldsSov::DIDCommV1(extra) => Ok(extra.recipient_keys()),
+            ExtraFieldsSov::Legacy(extra) => Ok(extra.recipient_keys()),
             ExtraFieldsSov::AIP1(_) | ExtraFieldsSov::DIDCommV2(_) => {
                 Err(DidDocumentSovError::EmptyCollection("recipient_keys"))
             }
@@ -110,6 +113,7 @@ impl ExtraFieldsSov {
         match self {
             ExtraFieldsSov::DIDCommV1(extra) => Ok(extra.routing_keys()),
             ExtraFieldsSov::DIDCommV2(extra) => Ok(extra.routing_keys()),
+            ExtraFieldsSov::Legacy(extra) => Ok(extra.routing_keys()),
             ExtraFieldsSov::AIP1(_) => Err(DidDocumentSovError::EmptyCollection("routing_keys")),
         }
     }
@@ -130,13 +134,14 @@ impl ExtraFieldsSov {
         match self {
             ExtraFieldsSov::DIDCommV1(extra) => Ok(extra.accept()),
             ExtraFieldsSov::DIDCommV2(extra) => Ok(extra.accept()),
-            ExtraFieldsSov::AIP1(_) => Err(DidDocumentSovError::EmptyCollection("accept")),
+            ExtraFieldsSov::AIP1(_) | ExtraFieldsSov::Legacy(_) => Err(DidDocumentSovError::EmptyCollection("accept")),
         }
     }
 
     pub fn priority(&self) -> Result<u32, DidDocumentSovError> {
         match self {
             ExtraFieldsSov::DIDCommV1(extra) => Ok(extra.priority()),
+            ExtraFieldsSov::Legacy(extra) => Ok(extra.priority()),
             _ => Err(DidDocumentSovError::EmptyCollection("priority")),
         }
     }
