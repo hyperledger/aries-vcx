@@ -1350,14 +1350,14 @@ mod tests {
             assert_eq!(IssuerState::OfferSent, issuer.get_state());
             tokio::time::sleep(Duration::from_millis(1000)).await;
             issuer_update_with_mediator(
-                    &mut issuer,
-                    &institution.profile.inject_wallet(),
-                    &institution.profile.inject_anoncreds(),
-                    &institution.agency_client,
-                    &institution_to_consumer,
-                )
-                .await
-                .unwrap();
+                &mut issuer,
+                &institution.profile.inject_wallet(),
+                &institution.profile.inject_anoncreds(),
+                &institution.agency_client,
+                &institution_to_consumer,
+            )
+            .await
+            .unwrap();
             assert_eq!(IssuerState::Failed, issuer.get_state());
         })
         .await;

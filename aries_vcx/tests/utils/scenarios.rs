@@ -38,7 +38,9 @@ pub mod test_utils {
     use aries_vcx::handlers::issuance::holder::Holder;
     use aries_vcx::handlers::issuance::issuer::Issuer;
     use aries_vcx::handlers::issuance::mediated_holder::get_credential_offer_messages;
-    use aries_vcx::handlers::issuance::mediated_issuer::{get_credential_proposal_messages, issuer_update_with_mediator};
+    use aries_vcx::handlers::issuance::mediated_issuer::{
+        get_credential_proposal_messages, issuer_update_with_mediator,
+    };
     use aries_vcx::handlers::proof_presentation::prover::test_utils::get_proof_request_messages;
     use aries_vcx::handlers::proof_presentation::prover::Prover;
     use aries_vcx::handlers::proof_presentation::verifier::Verifier;
@@ -462,13 +464,13 @@ pub mod test_utils {
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
         issuer_update_with_mediator(
             issuer,
-                &faber.profile.inject_wallet(),
-                &faber.profile.inject_anoncreds(),
-                &faber.agency_client,
-                connection,
-            )
-            .await
-            .unwrap();
+            &faber.profile.inject_wallet(),
+            &faber.profile.inject_anoncreds(),
+            &faber.agency_client,
+            connection,
+        )
+        .await
+        .unwrap();
         assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
         let proposal = issuer.get_proposal().unwrap();
         let offer_info = OfferInfo {
@@ -564,13 +566,13 @@ pub mod test_utils {
 
         issuer_update_with_mediator(
             &mut faber.issuer_credential,
-                &faber.profile.inject_wallet(),
-                &faber.profile.inject_anoncreds(),
-                &faber.agency_client,
-                issuer_to_consumer,
-            )
-            .await
-            .unwrap();
+            &faber.profile.inject_wallet(),
+            &faber.profile.inject_anoncreds(),
+            &faber.agency_client,
+            issuer_to_consumer,
+        )
+        .await
+        .unwrap();
         assert_eq!(IssuerState::RequestReceived, issuer_credential.get_state());
         assert!(!issuer_credential.is_revokable());
         assert_eq!(thread_id, issuer_credential.get_thread_id().unwrap());

@@ -43,15 +43,11 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
                 format!("Cannot update state: Message deserialization failed: {:?}", err),
             )
         })?;
-        credential
-            .process_aries_msg(msg.into())
-            .await?;
+        credential.process_aries_msg(msg.into()).await?;
     } else {
         let messages = mediated_connection::get_messages(connection_handle).await?;
         if let Some((uid, msg)) = credential.find_message_to_handle(messages) {
-            credential
-                .process_aries_msg(msg.into())
-                .await?;
+            credential.process_aries_msg(msg.into()).await?;
             mediated_connection::update_message_status(connection_handle, &uid).await?;
         }
     }
@@ -83,9 +79,7 @@ pub async fn update_state_with_message_nonmediated(
             format!("Cannot update state: Message deserialization failed: {:?}", err),
         )
     })?;
-    credential
-        .process_aries_msg(message.into())
-        .await?;
+    credential.process_aries_msg(message.into()).await?;
 
     let res: u32 = credential.get_state().into();
     ISSUER_CREDENTIAL_MAP.insert(handle, credential)?;

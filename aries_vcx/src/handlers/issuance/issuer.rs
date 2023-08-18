@@ -290,15 +290,16 @@ impl Issuer {
         self.issuer_sm.is_revoked(ledger).await
     }
 
-    pub async fn process_aries_msg(
-        &mut self,
-        action: CredentialIssuanceAction,
-    ) -> VcxResult<()> {
+    pub async fn process_aries_msg(&mut self, action: CredentialIssuanceAction) -> VcxResult<()> {
         let issuer_sm = match action {
-            CredentialIssuanceAction::CredentialProposal(proposal) => self.issuer_sm.clone().receive_proposal(proposal)?,
+            CredentialIssuanceAction::CredentialProposal(proposal) => {
+                self.issuer_sm.clone().receive_proposal(proposal)?
+            }
             CredentialIssuanceAction::CredentialRequest(request) => self.issuer_sm.clone().receive_request(request)?,
             CredentialIssuanceAction::CredentialAck(ack) => self.issuer_sm.clone().receive_ack(ack)?,
-            CredentialIssuanceAction::ProblemReport(problem_report) => self.issuer_sm.clone().receive_problem_report(problem_report)?,
+            CredentialIssuanceAction::ProblemReport(problem_report) => {
+                self.issuer_sm.clone().receive_problem_report(problem_report)?
+            }
             _ => self.issuer_sm.clone(),
         };
         self.issuer_sm = issuer_sm;

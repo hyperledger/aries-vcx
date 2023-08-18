@@ -1,19 +1,17 @@
-use std::sync::Arc;
-use agency_client::agency_client::AgencyClient;
-use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
-use aries_vcx_core::wallet::base_wallet::BaseWallet;
-use std::collections::HashMap;
-use messages::AriesMessage;
-use messages::msg_fields::protocols::cred_issuance::CredentialIssuance;
-use messages::msg_fields::protocols::cred_issuance::propose_credential::ProposeCredential;
-use messages::msg_fields::protocols::notification::Notification;
 use crate::errors::error::VcxResult;
 use crate::handlers::connection::mediated_connection::MediatedConnection;
 use crate::handlers::issuance::issuer::Issuer;
+use crate::handlers::util::{matches_opt_thread_id, matches_thread_id};
 use crate::protocols::issuance::issuer::state_machine::{IssuerFullState, IssuerSM, IssuerState};
-use crate::handlers::util::{
-   matches_opt_thread_id, matches_thread_id
-};
+use agency_client::agency_client::AgencyClient;
+use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
+use aries_vcx_core::wallet::base_wallet::BaseWallet;
+use messages::msg_fields::protocols::cred_issuance::propose_credential::ProposeCredential;
+use messages::msg_fields::protocols::cred_issuance::CredentialIssuance;
+use messages::msg_fields::protocols::notification::Notification;
+use messages::AriesMessage;
+use std::collections::HashMap;
+use std::sync::Arc;
 
 // todo: remove unused args
 pub async fn issuer_update_with_mediator(
@@ -26,19 +24,21 @@ pub async fn issuer_update_with_mediator(
     trace!("Issuer::update_state >>>");
     let messages = connection.get_messages(agency_client).await?;
     if let Some((uid, msg)) = sm.find_message_to_handle(messages) {
-        sm.process_aries_msg( msg.into()).await?;
+        sm.process_aries_msg(msg.into()).await?;
         connection.update_message_status(&uid, agency_client).await?;
     }
     Ok(sm.get_state())
 }
 
-
-pub fn issuer_find_messages_to_handle(sm: &IssuerSM, messages: HashMap<String, AriesMessage>) -> Option<(String, AriesMessage)> {
+pub fn issuer_find_messages_to_handle(
+    sm: &IssuerSM,
+    messages: HashMap<String, AriesMessage>,
+) -> Option<(String, AriesMessage)> {
     trace!(
-            "IssuerSM::find_message_to_handle >>> messages: {:?}, state: {:?}",
-            messages,
-            sm.state
-        );
+        "IssuerSM::find_message_to_handle >>> messages: {:?}, state: {:?}",
+        messages,
+        sm.state
+    );
 
     for (uid, message) in messages {
         match sm.state {
@@ -98,9 +98,7 @@ pub async fn get_credential_proposal_messages(
         .await?
         .into_iter()
         .filter_map(|(uid, message)| match message {
-            AriesMessage::CredentialIssuance(CredentialIssuance::ProposeCredential(proposal)) => {
-                Some((uid, proposal))
-            }
+            AriesMessage::CredentialIssuance(CredentialIssuance::ProposeCredential(proposal)) => Some((uid, proposal)),
             _ => None,
         })
         .collect();

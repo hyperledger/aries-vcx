@@ -1,8 +1,8 @@
-use std::collections::HashMap;
 use agency_client::agency_client::AgencyClient;
-use messages::AriesMessage;
 use messages::msg_fields::protocols::cred_issuance::CredentialIssuance;
 use messages::msg_fields::protocols::notification::Notification;
+use messages::AriesMessage;
+use std::collections::HashMap;
 
 use crate::errors::error::prelude::*;
 use crate::handlers::connection::mediated_connection::MediatedConnection;
@@ -26,12 +26,15 @@ pub async fn get_credential_offer_messages(
     Ok(json!(credential_offers).to_string())
 }
 
-pub fn holder_find_message_to_handle(sm: &HolderSM, messages: HashMap<String, AriesMessage>) -> Option<(String, AriesMessage)> {
+pub fn holder_find_message_to_handle(
+    sm: &HolderSM,
+    messages: HashMap<String, AriesMessage>,
+) -> Option<(String, AriesMessage)> {
     trace!(
-            "Holder::find_message_to_handle >>> messages: {:?}, state: {:?}",
-            messages,
-            sm.state
-        );
+        "Holder::find_message_to_handle >>> messages: {:?}, state: {:?}",
+        messages,
+        sm.state
+    );
     for (uid, message) in messages {
         match sm.state {
             HolderFullState::ProposalSent(_) => {

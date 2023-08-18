@@ -157,9 +157,9 @@ impl Faber {
             &version,
             &data,
         )
-            .await?
-            .publish(&self.profile.inject_anoncreds_ledger_write(), None)
-            .await?;
+        .await?
+        .publish(&self.profile.inject_anoncreds_ledger_write(), None)
+        .await?;
         Ok(())
     }
 
@@ -178,14 +178,14 @@ impl Faber {
             config,
             false,
         )
-            .await
-            .unwrap()
-            .publish_cred_def(
-                &self.profile.inject_anoncreds_ledger_read(),
-                &self.profile.inject_anoncreds_ledger_write(),
-            )
-            .await
-            .unwrap();
+        .await
+        .unwrap()
+        .publish_cred_def(
+            &self.profile.inject_anoncreds_ledger_read(),
+            &self.profile.inject_anoncreds_ledger_write(),
+        )
+        .await
+        .unwrap();
     }
 
     pub async fn create_presentation_request(&self) -> Verifier {
@@ -195,7 +195,7 @@ impl Faber {
             {"name": "degree"},
             {"name": "empty_param", "restrictions": {"attr::empty_param::value": ""}}
         ])
-            .to_string();
+        .to_string();
         let presentation_request_data = PresentationRequestData::create(&self.profile.inject_anoncreds(), "1")
             .await
             .unwrap()
@@ -277,7 +277,7 @@ impl Faber {
             "degree": "maths",
             "empty_param": ""
         })
-            .to_string();
+        .to_string();
 
         let offer_info = OfferInfo {
             credential_json,
@@ -306,8 +306,8 @@ impl Faber {
             &self.agency_client,
             &self.connection,
         )
-            .await
-            .unwrap();
+        .await
+        .unwrap();
         assert_eq!(IssuerState::OfferSent, self.issuer_credential.get_state());
     }
 
@@ -319,8 +319,8 @@ impl Faber {
             &self.agency_client,
             &self.connection,
         )
-            .await
-            .unwrap();
+        .await
+        .unwrap();
         assert_eq!(IssuerState::RequestReceived, self.issuer_credential.get_state());
 
         self.issuer_credential
@@ -335,13 +335,13 @@ impl Faber {
             .unwrap();
         issuer_update_with_mediator(
             &mut self.issuer_credential,
-                &self.profile.inject_wallet(),
-                &self.profile.inject_anoncreds(),
-                &self.agency_client,
-                &self.connection,
-            )
-            .await
-            .unwrap();
+            &self.profile.inject_wallet(),
+            &self.profile.inject_anoncreds(),
+            &self.agency_client,
+            &self.connection,
+        )
+        .await
+        .unwrap();
         assert_eq!(IssuerState::CredentialSent, self.issuer_credential.get_state());
     }
 

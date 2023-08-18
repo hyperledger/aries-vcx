@@ -22,9 +22,7 @@ use uuid::Uuid;
 use crate::common::credentials::{get_cred_rev_id, is_cred_revoked};
 use crate::errors::error::prelude::*;
 use crate::global::settings;
-use crate::handlers::util::{
-    get_attach_as_string, make_attach_from_str, AttachmentId, Status,
-};
+use crate::handlers::util::{get_attach_as_string, make_attach_from_str, AttachmentId, Status};
 use crate::protocols::common::build_problem_report_msg;
 use crate::protocols::issuance::actions::CredentialIssuanceAction;
 use crate::protocols::issuance::holder::states::finished::FinishedHolderState;
