@@ -1,8 +1,6 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use futures::future::BoxFuture;
-
 use agency_client::agency_client::AgencyClient;
 use agency_client::configuration::{AgencyClientConfig, AgentProvisionConfig};
 use agency_client::MessageStatusCode;
@@ -11,8 +9,8 @@ use aries_vcx::core::profile::profile::Profile;
 use aries_vcx::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use aries_vcx::global::settings::DEFAULT_LINK_SECRET_ALIAS;
 use aries_vcx::handlers::connection::mediated_connection::{ConnectionState, MediatedConnection};
-use aries_vcx::handlers::issuance::holder::test_utils::get_credential_offer_messages;
 use aries_vcx::handlers::issuance::holder::Holder;
+use aries_vcx::handlers::issuance::mediated_holder::get_credential_offer_messages;
 use aries_vcx::handlers::proof_presentation::prover::test_utils::get_proof_request_messages;
 use aries_vcx::handlers::proof_presentation::prover::Prover;
 use aries_vcx::handlers::proof_presentation::types::SelectedCredentials;
@@ -22,7 +20,7 @@ use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
 use aries_vcx::protocols::mediated_connection::invitee::state_machine::InviteeState;
 use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
 use aries_vcx::utils::devsetup::{
-    dev_build_featured_profile, dev_setup_wallet_indy, SetupProfile, AGENCY_DID, AGENCY_ENDPOINT, AGENCY_VERKEY,
+    dev_build_featured_profile, dev_setup_wallet_indy, AGENCY_DID, AGENCY_ENDPOINT, AGENCY_VERKEY,
 };
 use aries_vcx::utils::provision::provision_cloud_agent;
 use aries_vcx::utils::random::generate_random_seed;

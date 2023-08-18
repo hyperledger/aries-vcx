@@ -15,6 +15,7 @@ use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use crate::common::credentials::get_cred_rev_id;
 use crate::errors::error::prelude::*;
 use crate::handlers::connection::mediated_connection::MediatedConnection;
+use crate::handlers::issuance::mediated_holder::holder_find_message_to_handle;
 use crate::handlers::revocation_notification::receiver::RevocationNotificationReceiver;
 use crate::protocols::issuance::actions::CredentialIssuanceAction;
 use crate::protocols::issuance::holder::state_machine::{HolderSM, HolderState};
@@ -99,7 +100,7 @@ impl Holder {
     }
 
     pub fn find_message_to_handle(&self, messages: HashMap<String, AriesMessage>) -> Option<(String, AriesMessage)> {
-        self.holder_sm.find_message_to_handle(messages)
+        holder_find_message_to_handle(&self.holder_sm, messages)
     }
 
     pub fn get_state(&self) -> HolderState {
@@ -228,31 +229,5 @@ impl Holder {
             connection.update_message_status(&uid, agency_client).await?;
         }
         Ok(self.get_state())
-    }
-}
-
-pub mod test_utils {
-    use agency_client::agency_client::AgencyClient;
-    use messages::msg_fields::protocols::cred_issuance::CredentialIssuance;
-    use messages::AriesMessage;
-
-    use crate::errors::error::prelude::*;
-    use crate::handlers::connection::mediated_connection::MediatedConnection;
-
-    pub async fn get_credential_offer_messages(
-        agency_client: &AgencyClient,
-        connection: &MediatedConnection,
-    ) -> VcxResult<String> {
-        let credential_offers: Vec<AriesMessage> = connection
-            .get_messages(agency_client)
-            .await?
-            .into_iter()
-            .filter_map(|(_, a2a_message)| match a2a_message {
-                AriesMessage::CredentialIssuance(CredentialIssuance::OfferCredential(_)) => Some(a2a_message),
-                _ => None,
-            })
-            .collect();
-
-        Ok(json!(credential_offers).to_string())
     }
 }

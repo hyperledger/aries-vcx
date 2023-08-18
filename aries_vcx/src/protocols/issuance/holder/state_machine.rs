@@ -14,9 +14,7 @@ use messages::msg_fields::protocols::cred_issuance::propose_credential::ProposeC
 use messages::msg_fields::protocols::cred_issuance::request_credential::{
     RequestCredential, RequestCredentialContent, RequestCredentialDecorators,
 };
-use messages::msg_fields::protocols::cred_issuance::CredentialIssuance;
 use messages::msg_fields::protocols::notification::ack::{AckDecorators, AckStatus};
-use messages::msg_fields::protocols::notification::Notification;
 use messages::msg_fields::protocols::report_problem::ProblemReport;
 use messages::AriesMessage;
 use uuid::Uuid;
@@ -25,7 +23,7 @@ use crate::common::credentials::{get_cred_rev_id, is_cred_revoked};
 use crate::errors::error::prelude::*;
 use crate::global::settings;
 use crate::handlers::util::{
-    get_attach_as_string, make_attach_from_str, matches_opt_thread_id, matches_thread_id, AttachmentId, Status,
+    get_attach_as_string, make_attach_from_str, AttachmentId, Status,
 };
 use crate::protocols::common::build_problem_report_msg;
 use crate::protocols::issuance::actions::CredentialIssuanceAction;
@@ -150,50 +148,6 @@ impl HolderSM {
                 "Proposal not available in this state",
             )),
         }
-    }
-
-    pub fn find_message_to_handle(&self, messages: HashMap<String, AriesMessage>) -> Option<(String, AriesMessage)> {
-        trace!(
-            "Holder::find_message_to_handle >>> messages: {:?}, state: {:?}",
-            messages,
-            self.state
-        );
-        for (uid, message) in messages {
-            match self.state {
-                HolderFullState::ProposalSent(_) => {
-                    if let AriesMessage::CredentialIssuance(CredentialIssuance::OfferCredential(offer)) = &message {
-                        if matches_opt_thread_id!(offer, self.thread_id.as_str()) {
-                            return Some((uid, message));
-                        }
-                    }
-                }
-                HolderFullState::RequestSent(_) => match &message {
-                    AriesMessage::CredentialIssuance(CredentialIssuance::IssueCredential(credential)) => {
-                        if matches_thread_id!(credential, self.thread_id.as_str()) {
-                            return Some((uid, message));
-                        }
-                    }
-                    AriesMessage::CredentialIssuance(CredentialIssuance::ProblemReport(problem_report)) => {
-                        if matches_opt_thread_id!(problem_report, self.thread_id.as_str()) {
-                            return Some((uid, message));
-                        }
-                    }
-                    AriesMessage::ReportProblem(problem_report) => {
-                        if matches_opt_thread_id!(problem_report, self.thread_id.as_str()) {
-                            return Some((uid, message));
-                        }
-                    }
-                    AriesMessage::Notification(Notification::ProblemReport(msg)) => {
-                        if matches_opt_thread_id!(msg, self.thread_id.as_str()) {
-                            return Some((uid, message));
-                        }
-                    }
-                    _ => {}
-                },
-                _ => {}
-            };
-        }
-        None
     }
 
     pub async fn handle_message(
