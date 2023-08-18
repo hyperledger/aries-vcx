@@ -128,10 +128,17 @@ impl DidExchangeServiceRequester<RequestSent> {
         self,
         response: Response,
     ) -> Result<TransitionResult<DidExchangeServiceRequester<Completed>, CompleteMessage>, TransitionError<Self>> {
-        // todo: note, the processor could be perhaps injected from top, and then modified by state machine contextual data if needed
-        let mut processor = ConnectionResponseProcessor::default();
-        processor.add_preprocessor(MsgThidVerifier { expected_thid: self.state.request_id.clone() } );
-        let data = processor.process(
+        if response.decorators.thread.thid != self.state.request_id {
+            return Err(TransitionError {
+                error: AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidState,
+                    "Response thread ID does not match request ID",
+                ),
+                state: self,
+            });
+        }
+
+        let data = process_connection_response(
             response,
             self.state.invitation_id.clone(),
             self.state.request_id.clone()
@@ -150,124 +157,48 @@ impl DidExchangeServiceRequester<RequestSent> {
     }
 }
 
-
-#[derive(Default)]
-pub struct ConnectionResponseProcessor<V> where V: InputMsgVerifier {
-    input_msg_verifiers: Vec<V>,
-    output_msg_modifiers: Vec<V>
-}
-
 struct ConnectionResponseProcessingOutput {
     message: Complete,
     their_did_doc: DidDocumentSov
 }
 
-impl <V> ConnectionResponseProcessor<V> where V: InputMsgVerifier {
+// note:  these require invitation_id, request_id - if you don't use state machines do guide you
+//        it's up to you to remember data you need and inject them here correctly
+//        In particular, invitation)id, request_id are needed to correct build thid, pthid decorators
+//        which should be most likely responsibility of this function
+// note2: If anyone want's truly custom & curated behaviour, nothing stops them from using
+//        Message crate, and utils such as:
+//                                             attach_to_ddo_sov
+//                                             PeerDidResolver::new()
+//                                             construct_complete_message
+//        themselves.
+pub async fn process_connection_response(
+    response: Response,
+    invitation_id: String,
+    request_id: String
+) -> Result<ConnectionResponseProcessingOutput, String>  {
+    let did_document = if let Some(ddo) = response.content.did_doc {
+        attach_to_ddo_sov(ddo).map_err(|error| Err("attachment handling err".into()))?
+    } else {
+        PeerDidResolver::new()
+            .resolve(
+                &response
+                    .content
+                    .did
+                    .parse()
+                    .map_err(|error: ParseError| Err("parsing error".into()))?,
+                &Default::default(),
+            )
+            .await
+            .map_err(|error: GenericError| Err("resolver error".into()))?
+            .did_document()
+            .to_owned()
+            .into()
+    };
+    let mut complete_message = construct_complete_message(invitation_id.clone(), request_id.clone());
+    Ok(ConnectionResponseProcessingOutput {
+        message: complete_message,
+        their_did_doc: did_document,
 
-    pub fn add_preprocessor(&mut self, input_verifier: V) {
-        self.input_msg_verifiers.append(input_verifier);
-    }
-
-    pub fn input_msg_verification(&self, input_msg: &Response) -> Result<(), String> {
-        for verifier in &self.input_msg_verifiers {
-            if !verifier.verify(input_msg) {
-                return Err("Input verification failed".to_string());
-            }
-        }
-        Ok(())
-    }
-
-    pub fn add_output_modifier(&mut self, modifier: V) {
-        self.output_msg_modifiers.push(modifier);
-    }
-
-    pub fn apply_output_modifiers(&self, output_msg: &mut Complete) {
-        for modifier in &self.output_msg_modifiers {
-            modifier.modify(output_msg);
-        }
-    }
-
-    // note:  these require invitation_id, request_id - if you don't use state machines do guide you
-    //        it's up to you to remember data you need and inject them here correctly
-    //        In particular, invitation)id, request_id are needed to correct build thid, pthid decorators
-    //        which should be most likely responsibility of this function
-    // note2: If anyone want's truly custom & curated behaviour, nothing stops them from using
-    //        Message crate, and utils such as:
-    //                                             attach_to_ddo_sov
-    //                                             PeerDidResolver::new()
-    //                                             construct_complete_message
-    //        themselves.
-    pub async fn process(
-        &self,
-        response: Response,
-        invitation_id: String,
-        request_id: String
-    ) -> Result<ConnectionResponseProcessingOutput, String>  {
-        self.input_msg_verification(&response)?;
-        let did_document = if let Some(ddo) = response.content.did_doc {
-            attach_to_ddo_sov(ddo).map_err(|error| Err("attachment handling err"))?
-        } else {
-            PeerDidResolver::new()
-                .resolve(
-                    &response
-                        .content
-                        .did
-                        .parse()
-                        .map_err(|error: ParseError| Err("parsing error"))?,
-                    &Default::default(),
-                )
-                .await
-                .map_err(|error: GenericError| Err("resolver error"))?
-                .did_document()
-                .to_owned()
-                .into()
-        };
-        let mut complete_message = construct_complete_message(invitation_id.clone(), request_id.clone());
-        self.apply_output_modifiers(&mut complete_message);
-        Ok(ConnectionResponseProcessingOutput {
-            message: complete_message,
-            their_did_doc: did_document,
-
-        })
-    }
-}
-
-// todo: could be perhaps even generalized to something like "InputMsgMiddleware with 'fn process' method"
-trait InputMsgVerifier {
-    // todo: input_msg can be typed as decorator of an arbitrary aries message
-    fn verify(&self, input_msg: &Response) -> bool;
-}
-
-struct MsgThidVerifier {
-    expected_thid: String
-}
-
-impl InputMsgVerifier for MsgThidVerifier {
-    fn verify(&self, input_msg: &Response) -> bool {
-        input_msg.decorators.thread.thid == self.expected_thid
-    }
-}
-
-
-trait OutputMsgModifier {
-    // todo: input_msg can be typed as decorator of an arbitrary aries message
-    fn modify(&self, output_msg: &mut Complete) -> bool;
-}
-
-struct OutpuMsgModiferSetTiming {
-    use_current_time: bool,
-    expiration_time: Duration
-}
-
-impl OutputMsgModifier for OutpuMsgModiferSetTiming {
-    fn modify(&self, output_msg: &mut Complete) {
-        output_msg.decorators.timing = Some(Timing {
-            in_time: None,
-            out_time: Some(Utc::now()),
-            stale_time: None,
-            expires_time: None,
-            delay_milli: None,
-            wait_until_time: None,
-        });
-    }
+    })
 }
