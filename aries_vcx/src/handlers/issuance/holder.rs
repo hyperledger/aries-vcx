@@ -194,18 +194,31 @@ impl Holder {
         }
     }
 
-    pub async fn step(
+    pub async fn process_aries_msg(
         &mut self,
         ledger: &Arc<dyn AnoncredsLedgerRead>,
         anoncreds: &Arc<dyn BaseAnonCreds>,
-        message: CredentialIssuanceAction,
+        cim: CredentialIssuanceAction,
         send_message: Option<SendClosure>,
     ) -> VcxResult<()> {
-        self.holder_sm = self
-            .holder_sm
-            .clone()
-            .handle_message(ledger, anoncreds, message, send_message)
-            .await?;
+        let holder_sm = match cim {
+            CredentialIssuanceAction::CredentialOffer(offer) => self.holder_sm.clone().receive_offer(offer)?,
+            CredentialIssuanceAction::Credential(credential) => {
+                let send_message = send_message.ok_or(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidState,
+                    "Attempted to call undefined send_message callback",
+                ))?;
+                self.holder_sm
+                    .clone()
+                    .receive_credential(ledger, anoncreds, credential, send_message)
+                    .await?
+            }
+            CredentialIssuanceAction::ProblemReport(problem_report) => {
+                self.holder_sm.clone().receive_problem_report(problem_report)?
+            }
+            _ => self.holder_sm.clone(),
+        };
+        self.holder_sm = holder_sm;
         Ok(())
     }
 
@@ -225,7 +238,7 @@ impl Holder {
 
         let messages = connection.get_messages(agency_client).await?;
         if let Some((uid, msg)) = self.find_message_to_handle(messages) {
-            self.step(ledger, anoncreds, msg.into(), Some(send_message)).await?;
+            self.process_aries_msg(ledger, anoncreds, msg.into(), Some(send_message)).await?;
             connection.update_message_status(&uid, agency_client).await?;
         }
         Ok(self.get_state())

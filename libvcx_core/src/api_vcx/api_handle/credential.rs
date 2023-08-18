@@ -132,7 +132,7 @@ pub async fn update_state(credential_handle: u32, message: Option<&str>, connect
             )
         })?;
         credential
-            .step(
+            .process_aries_msg(
                 &get_main_anoncreds_ledger_read()?,
                 &get_main_anoncreds()?,
                 message.into(),
@@ -143,7 +143,7 @@ pub async fn update_state(credential_handle: u32, message: Option<&str>, connect
         let messages = mediated_connection::get_messages(connection_handle).await?;
         if let Some((uid, msg)) = credential.find_message_to_handle(messages) {
             credential
-                .step(
+                .process_aries_msg(
                     &get_main_anoncreds_ledger_read()?,
                     &get_main_anoncreds()?,
                     msg.into(),

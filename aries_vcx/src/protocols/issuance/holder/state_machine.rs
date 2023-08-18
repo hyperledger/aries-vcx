@@ -148,53 +148,6 @@ impl HolderSM {
         }
     }
 
-    pub async fn handle_message(
-        self,
-        ledger: &Arc<dyn AnoncredsLedgerRead>,
-        anoncreds: &Arc<dyn BaseAnonCreds>,
-        cim: CredentialIssuanceAction,
-        send_message: Option<SendClosure>,
-    ) -> VcxResult<HolderSM> {
-        trace!("Holder::handle_message >>> cim: {:?}, state: {:?}", cim, self.state);
-        let thread_id = self.get_thread_id()?;
-        verify_thread_id(&thread_id, &cim)?;
-        let holder_sm = match cim {
-            CredentialIssuanceAction::CredentialProposalSend(proposal_data) => {
-                let send_message = send_message.ok_or(AriesVcxError::from_msg(
-                    AriesVcxErrorKind::InvalidState,
-                    "Attempted to call undefined send_message callback",
-                ))?;
-                self.send_proposal(proposal_data, send_message).await?
-            }
-            CredentialIssuanceAction::CredentialOffer(offer) => self.receive_offer(offer)?,
-            CredentialIssuanceAction::CredentialRequestSend(my_pw_did) => {
-                let send_message = send_message.ok_or(AriesVcxError::from_msg(
-                    AriesVcxErrorKind::InvalidState,
-                    "Attempted to call undefined send_message callback",
-                ))?;
-                self.send_request(ledger, anoncreds, my_pw_did, send_message).await?
-            }
-            CredentialIssuanceAction::CredentialOfferReject(comment) => {
-                let send_message = send_message.ok_or(AriesVcxError::from_msg(
-                    AriesVcxErrorKind::InvalidState,
-                    "Attempted to call undefined send_message callback",
-                ))?;
-                self.decline_offer(comment, send_message).await?
-            }
-            CredentialIssuanceAction::Credential(credential) => {
-                let send_message = send_message.ok_or(AriesVcxError::from_msg(
-                    AriesVcxErrorKind::InvalidState,
-                    "Attempted to call undefined send_message callback",
-                ))?;
-                self.receive_credential(ledger, anoncreds, credential, send_message)
-                    .await?
-            }
-            CredentialIssuanceAction::ProblemReport(problem_report) => self.receive_problem_report(problem_report)?,
-            _ => self,
-        };
-        Ok(holder_sm)
-    }
-
     pub async fn send_proposal(self, proposal_data: ProposeCredential, send_message: SendClosure) -> VcxResult<Self> {
         verify_thread_id(
             &self.thread_id,
