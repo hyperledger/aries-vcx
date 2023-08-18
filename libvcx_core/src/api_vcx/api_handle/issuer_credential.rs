@@ -36,8 +36,6 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
     if credential.is_terminal_state() {
         return Ok(credential.get_state().into());
     }
-    let send_message = mediated_connection::send_message_closure(connection_handle).await?;
-
     if let Some(message) = message {
         let msg: AriesMessage = serde_json::from_str(message).map_err(|err| {
             LibvcxError::from_msg(
@@ -46,13 +44,13 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
             )
         })?;
         credential
-            .step(&get_main_anoncreds()?, msg.into(), Some(send_message))
+            .process_aries_msg(msg.into())
             .await?;
     } else {
         let messages = mediated_connection::get_messages(connection_handle).await?;
         if let Some((uid, msg)) = credential.find_message_to_handle(messages) {
             credential
-                .step(&get_main_anoncreds()?, msg.into(), Some(send_message))
+                .process_aries_msg(msg.into())
                 .await?;
             mediated_connection::update_message_status(connection_handle, &uid).await?;
         }
@@ -86,7 +84,7 @@ pub async fn update_state_with_message_nonmediated(
         )
     })?;
     credential
-        .step(&get_main_anoncreds()?, message.into(), Some(send_message))
+        .process_aries_msg(message.into())
         .await?;
 
     let res: u32 = credential.get_state().into();

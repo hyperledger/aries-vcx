@@ -15,18 +15,18 @@ use crate::handlers::util::{
    matches_opt_thread_id, matches_thread_id
 };
 
+// todo: remove unused args
 pub async fn issuer_update_with_mediator(
     sm: &mut Issuer,
-    wallet: &Arc<dyn BaseWallet>,
-    anoncreds: &Arc<dyn BaseAnonCreds>,
+    _wallet: &Arc<dyn BaseWallet>,
+    _anoncreds: &Arc<dyn BaseAnonCreds>,
     agency_client: &AgencyClient,
     connection: &MediatedConnection,
 ) -> VcxResult<IssuerState> {
     trace!("Issuer::update_state >>>");
-    let send_message = connection.send_message_closure(Arc::clone(wallet)).await?;
     let messages = connection.get_messages(agency_client).await?;
     if let Some((uid, msg)) = sm.find_message_to_handle(messages) {
-        sm.step(anoncreds, msg.into(), Some(send_message)).await?;
+        sm.process_aries_msg( msg.into()).await?;
         connection.update_message_status(&uid, agency_client).await?;
     }
     Ok(sm.get_state())
