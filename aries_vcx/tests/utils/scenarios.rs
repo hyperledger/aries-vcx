@@ -37,9 +37,8 @@ pub mod test_utils {
     use aries_vcx::handlers::connection::mediated_connection::{ConnectionState, MediatedConnection};
     use aries_vcx::handlers::issuance::holder::test_utils::get_credential_offer_messages;
     use aries_vcx::handlers::issuance::holder::Holder;
-    use aries_vcx::handlers::issuance::issuer::test_utils::get_credential_proposal_messages;
     use aries_vcx::handlers::issuance::issuer::Issuer;
-    use aries_vcx::handlers::issuance::mediated_issuer::issuer_update_with_mediator;
+    use aries_vcx::handlers::issuance::mediated_issuer::{get_credential_proposal_messages, issuer_update_with_mediator};
     use aries_vcx::handlers::proof_presentation::prover::test_utils::get_proof_request_messages;
     use aries_vcx::handlers::proof_presentation::prover::Prover;
     use aries_vcx::handlers::proof_presentation::verifier::Verifier;

@@ -304,32 +304,3 @@ impl Issuer {
         Ok(())
     }
 }
-
-pub mod test_utils {
-    use agency_client::agency_client::AgencyClient;
-    use messages::msg_fields::protocols::cred_issuance::propose_credential::ProposeCredential;
-    use messages::msg_fields::protocols::cred_issuance::CredentialIssuance;
-    use messages::AriesMessage;
-
-    use crate::errors::error::prelude::*;
-    use crate::handlers::connection::mediated_connection::MediatedConnection;
-
-    pub async fn get_credential_proposal_messages(
-        agency_client: &AgencyClient,
-        connection: &MediatedConnection,
-    ) -> VcxResult<Vec<(String, ProposeCredential)>> {
-        let credential_proposals: Vec<(String, ProposeCredential)> = connection
-            .get_messages(agency_client)
-            .await?
-            .into_iter()
-            .filter_map(|(uid, message)| match message {
-                AriesMessage::CredentialIssuance(CredentialIssuance::ProposeCredential(proposal)) => {
-                    Some((uid, proposal))
-                }
-                _ => None,
-            })
-            .collect();
-
-        Ok(credential_proposals)
-    }
-}

@@ -5,6 +5,7 @@ use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use std::collections::HashMap;
 use messages::AriesMessage;
 use messages::msg_fields::protocols::cred_issuance::CredentialIssuance;
+use messages::msg_fields::protocols::cred_issuance::propose_credential::ProposeCredential;
 use messages::msg_fields::protocols::notification::Notification;
 use crate::errors::error::VcxResult;
 use crate::handlers::connection::mediated_connection::MediatedConnection;
@@ -85,6 +86,24 @@ pub fn issuer_find_messages_to_handle(sm: &IssuerSM, messages: HashMap<String, A
             _ => {}
         };
     }
-
     None
+}
+
+pub async fn get_credential_proposal_messages(
+    agency_client: &AgencyClient,
+    connection: &MediatedConnection,
+) -> VcxResult<Vec<(String, ProposeCredential)>> {
+    let credential_proposals: Vec<(String, ProposeCredential)> = connection
+        .get_messages(agency_client)
+        .await?
+        .into_iter()
+        .filter_map(|(uid, message)| match message {
+            AriesMessage::CredentialIssuance(CredentialIssuance::ProposeCredential(proposal)) => {
+                Some((uid, proposal))
+            }
+            _ => None,
+        })
+        .collect();
+
+    Ok(credential_proposals)
 }
