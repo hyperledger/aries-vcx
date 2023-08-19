@@ -11,7 +11,6 @@ const {
 const sleep = require('sleep-promise')
 const { initRustLogger } = require('../src')
 const { proofRequestDataStandard, proofRequestDataSelfAttest } = require('./utils/data')
-const path = require('path')
 const mkdirp = require('mkdirp')
 
 const TAILS_DIR = '/tmp/faber/tails'
