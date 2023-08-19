@@ -37,7 +37,7 @@ pub mod test_utils {
     use aries_vcx::handlers::connection::mediated_connection::{ConnectionState, MediatedConnection};
     use aries_vcx::handlers::issuance::holder::Holder;
     use aries_vcx::handlers::issuance::issuer::Issuer;
-    use aries_vcx::handlers::issuance::mediated_holder::get_credential_offer_messages;
+    use aries_vcx::handlers::issuance::mediated_holder::{get_credential_offer_messages, holder_update_with_mediator};
     use aries_vcx::handlers::issuance::mediated_issuer::{
         get_credential_proposal_messages, issuer_update_with_mediator,
     };
@@ -354,16 +354,16 @@ pub mod test_utils {
         cred_def_id: &str,
         comment: &str,
     ) {
-        holder
-            .update_state(
-                &alice.profile.inject_anoncreds_ledger_read(),
-                &alice.profile.inject_anoncreds(),
-                &alice.profile.inject_wallet(),
-                &alice.agency_client,
-                connection,
-            )
-            .await
-            .unwrap();
+        holder_update_with_mediator(
+            holder,
+            &alice.profile.inject_anoncreds_ledger_read(),
+            &alice.profile.inject_anoncreds(),
+            &alice.profile.inject_wallet(),
+            &alice.agency_client,
+            connection,
+        )
+        .await
+        .unwrap();
         assert_eq!(HolderState::OfferReceived, holder.get_state());
         assert!(holder.get_offer().is_ok());
         let (address1, address2, city, state, zip) = attr_names();
@@ -497,16 +497,16 @@ pub mod test_utils {
     }
 
     pub async fn accept_offer(alice: &mut Alice, connection: &MediatedConnection, holder: &mut Holder) {
-        holder
-            .update_state(
-                &alice.profile.inject_anoncreds_ledger_read(),
-                &alice.profile.inject_anoncreds(),
-                &alice.profile.inject_wallet(),
-                &alice.agency_client,
-                connection,
-            )
-            .await
-            .unwrap();
+        holder_update_with_mediator(
+            holder,
+            &alice.profile.inject_anoncreds_ledger_read(),
+            &alice.profile.inject_anoncreds(),
+            &alice.profile.inject_wallet(),
+            &alice.agency_client,
+            connection,
+        )
+        .await
+        .unwrap();
         assert_eq!(HolderState::OfferReceived, holder.get_state());
         assert!(holder.get_offer().is_ok());
         let my_pw_did = connection.pairwise_info().pw_did.to_string();
@@ -526,16 +526,16 @@ pub mod test_utils {
     }
 
     pub async fn decline_offer(alice: &mut Alice, connection: &MediatedConnection, holder: &mut Holder) {
-        holder
-            .update_state(
-                &alice.profile.inject_anoncreds_ledger_read(),
-                &alice.profile.inject_anoncreds(),
-                &alice.profile.inject_wallet(),
-                &alice.agency_client,
-                connection,
-            )
-            .await
-            .unwrap();
+        holder_update_with_mediator(
+            holder,
+            &alice.profile.inject_anoncreds_ledger_read(),
+            &alice.profile.inject_anoncreds(),
+            &alice.profile.inject_wallet(),
+            &alice.agency_client,
+            connection,
+        )
+        .await
+        .unwrap();
         assert_eq!(HolderState::OfferReceived, holder.get_state());
         holder
             .decline_offer(
@@ -600,16 +600,16 @@ pub mod test_utils {
                 .unwrap(),
             revokable
         );
-        holder_credential
-            .update_state(
-                &alice.profile.inject_anoncreds_ledger_read(),
-                &alice.profile.inject_anoncreds(),
-                &alice.profile.inject_wallet(),
-                &alice.agency_client,
-                consumer_to_issuer,
-            )
-            .await
-            .unwrap();
+        holder_update_with_mediator(
+            holder_credential,
+            &alice.profile.inject_anoncreds_ledger_read(),
+            &alice.profile.inject_anoncreds(),
+            &alice.profile.inject_wallet(),
+            &alice.agency_client,
+            consumer_to_issuer,
+        )
+        .await
+        .unwrap();
         assert_eq!(HolderState::Finished, holder_credential.get_state());
         assert_eq!(
             holder_credential

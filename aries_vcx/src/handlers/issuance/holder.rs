@@ -99,10 +99,6 @@ impl Holder {
         self.holder_sm.is_terminal_state()
     }
 
-    pub fn find_message_to_handle(&self, messages: HashMap<String, AriesMessage>) -> Option<(String, AriesMessage)> {
-        holder_find_message_to_handle(&self.holder_sm, messages)
-    }
-
     pub fn get_state(&self) -> HolderState {
         self.holder_sm.get_state()
     }
@@ -220,27 +216,5 @@ impl Holder {
         };
         self.holder_sm = holder_sm;
         Ok(())
-    }
-
-    pub async fn update_state(
-        &mut self,
-        ledger: &Arc<dyn AnoncredsLedgerRead>,
-        anoncreds: &Arc<dyn BaseAnonCreds>,
-        wallet: &Arc<dyn BaseWallet>,
-        agency_client: &AgencyClient,
-        connection: &MediatedConnection,
-    ) -> VcxResult<HolderState> {
-        trace!("Holder::update_state >>>");
-        if self.is_terminal_state() {
-            return Ok(self.get_state());
-        }
-        let send_message = connection.send_message_closure(Arc::clone(wallet)).await?;
-
-        let messages = connection.get_messages(agency_client).await?;
-        if let Some((uid, msg)) = self.find_message_to_handle(messages) {
-            self.process_aries_msg(ledger, anoncreds, msg.into(), Some(send_message)).await?;
-            connection.update_message_status(&uid, agency_client).await?;
-        }
-        Ok(self.get_state())
     }
 }
