@@ -22,7 +22,7 @@ env:
 
 jobs:
   verify-code-formatting:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
@@ -35,7 +35,7 @@ jobs:
           cargo fmt --check
 
   workflow-setup:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     outputs:
       PUBLISH_VERSION: ${{ steps.run-info.outputs.publish-version }}
       RELEASE: ${{ steps.run-info.outputs.release }}
@@ -80,7 +80,7 @@ jobs:
           echo "DOCKER_IMG_CACHED_VDRPROXY=$DOCKER_REPO_LOCAL_VDRPROXY:$HASH_DOCKERFILE_VDRPROXY" >> $GITHUB_OUTPUT
 
   workflow-setup-check:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: workflow-setup
     steps:
       - name: "Print outputs"
@@ -95,7 +95,7 @@ jobs:
           echo "DOCKER_IMG_CACHED_VDRPROXY ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_VDRPROXY }}"
 
   clippy-aries-vcx:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
@@ -113,7 +113,7 @@ jobs:
           cd aries_vcx && cargo clippy
 
   check-did-resolver-feature-variants:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
@@ -131,7 +131,7 @@ jobs:
           cargo check
 
   check-aries-vcx-feature-variants:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
@@ -159,7 +159,7 @@ jobs:
   build-docker-vdrproxy:
     needs: [ workflow-setup ]
     if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     env:
       DOCKER_IMG_CACHED: ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_VDRPROXY }}
       BRANCH_NAME: ${{ needs.workflow-setup.outputs.BRANCH_NAME }}
@@ -188,7 +188,7 @@ jobs:
   ##############################   DOCKER PUBLISH   ########################################
 
   publish-docker-vdrproxy:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: [ workflow-setup, build-docker-vdrproxy ]
     if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
     env:
@@ -219,7 +219,7 @@ jobs:
   code-coverage-aries-vcx-integration-modular-libs:
     needs: workflow-setup
     if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
@@ -251,7 +251,7 @@ jobs:
 
   test-unit-workspace:
     needs: workflow-setup
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         features: [
@@ -270,7 +270,7 @@ jobs:
 
   test-integration-aries-vcx:
     needs: workflow-setup
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         features: [
@@ -287,7 +287,7 @@ jobs:
 
   test-integration-aries-vcx-mysql:
     needs: workflow-setup
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
@@ -298,7 +298,7 @@ jobs:
 
   test-integration-aries-vcx-vdrproxy:
     needs: [workflow-setup, build-docker-vdrproxy]
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     env:
       RUST_TEST_THREADS: 1
       VDR_PROXY_CLIENT_URL: http://127.0.0.1:3030
@@ -326,7 +326,7 @@ jobs:
 
   test-integration-aries-vcx-migration:
     needs: workflow-setup
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
@@ -341,7 +341,7 @@ jobs:
   test-integration-libvcx:
     needs: workflow-setup
     if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         features: [
@@ -360,7 +360,7 @@ jobs:
   test-integration-resolver:
     needs: workflow-setup
     if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
@@ -417,7 +417,7 @@ jobs:
   ############################   NPMJS PUBLISHING   #######################################
 
   publish-node-wrapper:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs:
       - workflow-setup
       - publish-napi
@@ -441,7 +441,7 @@ jobs:
           fi
 
   publish-agent-core:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs:
       - workflow-setup
       - publish-node-wrapper
@@ -473,7 +473,7 @@ jobs:
       fail-fast: false
       matrix:
         settings:
-          - host: ubuntu-20.04
+          - host: ubuntu-22.04
             target: x86_64-unknown-linux-gnu
             build: |-
               set -e
@@ -481,7 +481,7 @@ jobs:
               sudo apt-get install -y libssl-dev libzmq3-dev
               npm run build:napi
               strip *.node
-          - host: ubuntu-20.04
+          - host: ubuntu-22.04
             target: x86_64-unknown-linux-musl
             docker: ghcr.io/hyperledger/aries-vcx/napi-rs-alpine
             build: |-
@@ -536,7 +536,7 @@ jobs:
           rust-version: ${{ env.RUST_TOOLCHAIN_VERSON }}
 
   publish-napi:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs:
       - workflow-setup
       - test-unit-workspace
@@ -560,7 +560,7 @@ jobs:
   ##############################      RELEASE      #########################################
 
   make-release:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs:
       - workflow-setup
       - test-unit-workspace
