@@ -15,7 +15,6 @@ env:
   DOCKER_IMAGE_AGENCY: ghcr.io/absaoss/vcxagencynode/vcxagency-node:2.6.0
   DOCKER_IMAGE_POOL: ghcr.io/hyperledger/aries-vcx/indy_pool_localhost:1.15.0
 
-  DOCKER_REPO_LOCAL_LIBVCX: libvcx
   DOCKER_REPO_LOCAL_VDRPROXY: vdrproxy
 
   RUST_TOOLCHAIN_VERSON: 1.65.0

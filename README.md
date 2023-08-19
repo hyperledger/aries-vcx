@@ -10,21 +10,17 @@ The repository contains
 
 ## If you are Rust 🦀 developer
 You can build your Rust project on top of
-- [`aries-vcx`](aries_vcx) - ready to go Rust library to work with Aries protocols, both from
-issuer/verifier's side or as a credential holder/prover.
+- [`aries-vcx`](aries_vcx) - ready to go Rust library to work with Aries protocols for didcomm, VC issuance and verification.
 
 Additionally, `aries-vcx` is built on top of smaller Rust crates which are part of this repo:
+- [`aries_vcx_core`](aries_vcx_core) - foundational APIs to interact with ledger, wallet and anoncreds.
 - [`messages`](messages) - crate for building and parsing Aries messages
-- [`diddoc`](diddoc) - crate to work with DIDDocs
+- [`did_doc`](diddoc) - crate to work with DIDDocs 
 
 ## If you are mobile 📱 developer
-Aries-vcx can be used to build native mobile applications. There are 2 approaches:
-- **deprecated**: [`libvcx`](./libvcx) and its Java and Objective-C wrappers is complete, but deprecated
-- **encouraged**, but in stage of POC: [`uniffi_aries_vcx`](./uniffi_aries_vcx) is next generation approach 
-  to enable `aries-vcx` on mobile, providing Swift and Kotlin wrappers. However, this is yet in POC stage 
-  and new adopters of `aries-vcx` on mobile are highly encouraged to contribute to its development.
-
-Read more about `libvcx` deprecation and `unifii` benefits [here](./libvcx/README.md)
+Aries-vcx can be used to build native mobile applications. You can write part of your mobile backend in Rust on top of
+`aries-vcx` crate. Then expose FFI API for iOS/android environments.
+- There's POC in progress [`uniffi_aries_vcx`](./uniffi_aries_vcx) using UniFFI library to autogenerate Swift and Kotlin wrappers.
 
 # Reach out 👋
 - Ask a question on [discord](https://discord.com/channels/905194001349627914/955480822675308604)
@@ -35,6 +31,5 @@ Read more about `libvcx` deprecation and `unifii` benefits [here](./libvcx/READM
 ## Versioning & releases
 - All releases have currently major version `0` 
   - We bump minor version on releases containing new features, significant refactors or breaking changes. 
-  - We bump patch version if release only contains fixes or smaller refactoring. 
-- See more info on [releases](./docs/RELEASES.md)
+  - We bump patch version if release only contains fixes or smaller refactoring.
 - See [releases](https://github.com/hyperledger/aries-vcx/releases) page.
