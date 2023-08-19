@@ -4,12 +4,12 @@ use aries_vcx::messages::AriesMessage;
 use serde_json;
 
 use aries_vcx::agency_client::testing::mocking::AgencyMockDecrypted;
+use aries_vcx::handlers::proof_presentation::mediated_prover::prover_find_message_to_handle;
 use aries_vcx::handlers::proof_presentation::prover::Prover;
 use aries_vcx::utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
 use aries_vcx::{
     global::settings::indy_mocks_enabled, utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION,
 };
-use aries_vcx::handlers::proof_presentation::mediated_prover::prover_find_message_to_handle;
 
 use crate::api_vcx::api_global::profile::{get_main_anoncreds, get_main_anoncreds_ledger_read, get_main_profile};
 use crate::api_vcx::api_handle::mediated_connection;

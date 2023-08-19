@@ -4,11 +4,8 @@ use std::sync::Arc;
 
 use crate::errors::error::prelude::*;
 use crate::handlers::proof_presentation::types::SelectedCredentials;
-use crate::handlers::util::{
-    make_attach_from_str, matches_opt_thread_id, matches_thread_id, AttachmentId, PresentationProposalData, Status,
-};
+use crate::handlers::util::{make_attach_from_str, AttachmentId, PresentationProposalData, Status};
 use crate::protocols::common::build_problem_report_msg;
-use crate::protocols::proof_presentation::prover::messages::PresentationActions;
 use crate::protocols::proof_presentation::prover::states::finished::FinishedState;
 use crate::protocols::proof_presentation::prover::states::initial::InitialProverState;
 use crate::protocols::proof_presentation::prover::states::presentation_preparation_failed::PresentationPreparationFailedState;
@@ -16,7 +13,6 @@ use crate::protocols::proof_presentation::prover::states::presentation_prepared:
 use crate::protocols::proof_presentation::prover::states::presentation_proposal_sent::PresentationProposalSent;
 use crate::protocols::proof_presentation::prover::states::presentation_request_received::PresentationRequestReceived;
 use crate::protocols::proof_presentation::prover::states::presentation_sent::PresentationSentState;
-use crate::protocols::proof_presentation::prover::verify_thread_id;
 use crate::protocols::SendClosure;
 
 use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;

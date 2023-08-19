@@ -1,23 +1,11 @@
-use std::collections::HashMap;
 use std::fmt::Display;
 use std::sync::Arc;
 
-use crate::common::proofs::proof_request::PresentationRequestData;
-use crate::errors::error::prelude::*;
-use crate::handlers::util::{make_attach_from_str, matches_opt_thread_id, matches_thread_id, AttachmentId, Status};
-use crate::protocols::common::build_problem_report_msg;
-use crate::protocols::proof_presentation::verifier::messages::VerifierMessages;
-use crate::protocols::proof_presentation::verifier::states::finished::FinishedState;
-use crate::protocols::proof_presentation::verifier::states::initial::InitialVerifierState;
-use crate::protocols::proof_presentation::verifier::states::presentation_proposal_received::PresentationProposalReceivedState;
-use crate::protocols::proof_presentation::verifier::states::presentation_request_sent::PresentationRequestSentState;
-use crate::protocols::proof_presentation::verifier::states::presentation_request_set::PresentationRequestSetState;
-use crate::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
-use crate::protocols::proof_presentation::verifier::verify_thread_id;
-use crate::protocols::SendClosure;
+use chrono::Utc;
+use uuid::Uuid;
+
 use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
 use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
-use chrono::Utc;
 use messages::decorators::thread::Thread;
 use messages::decorators::timing::Timing;
 use messages::msg_fields::protocols::notification::ack::{AckDecorators, AckStatus};
@@ -28,12 +16,22 @@ use messages::msg_fields::protocols::present_proof::problem_report::{
 use messages::msg_fields::protocols::present_proof::request::{
     RequestPresentation, RequestPresentationContent, RequestPresentationDecorators,
 };
-
 use messages::msg_fields::protocols::present_proof::{present::Presentation, propose::ProposePresentation};
 use messages::msg_fields::protocols::report_problem::ProblemReport;
 use messages::msg_parts::MsgParts;
 use messages::AriesMessage;
-use uuid::Uuid;
+
+use crate::common::proofs::proof_request::PresentationRequestData;
+use crate::errors::error::prelude::*;
+use crate::handlers::util::{make_attach_from_str, AttachmentId, Status};
+use crate::protocols::common::build_problem_report_msg;
+use crate::protocols::proof_presentation::verifier::states::finished::FinishedState;
+use crate::protocols::proof_presentation::verifier::states::initial::InitialVerifierState;
+use crate::protocols::proof_presentation::verifier::states::presentation_proposal_received::PresentationProposalReceivedState;
+use crate::protocols::proof_presentation::verifier::states::presentation_request_sent::PresentationRequestSentState;
+use crate::protocols::proof_presentation::verifier::states::presentation_request_set::PresentationRequestSetState;
+use crate::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
+use crate::protocols::SendClosure;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct VerifierSM {
@@ -140,10 +138,10 @@ impl VerifierSM {
     }
 
     pub fn receive_presentation_proposal(self, proposal: ProposePresentation) -> VcxResult<Self> {
-        verify_thread_id(
-            &self.thread_id,
-            &VerifierMessages::PresentationProposalReceived(proposal.clone()),
-        )?;
+        // verify_thread_id(
+        //     &self.thread_id,
+        //     &VerifierMessages::PresentationProposalReceived(proposal.clone()),
+        // )?;
         let (state, thread_id) = match self.state {
             VerifierFullState::Initial(_) => {
                 let thread_id = match proposal.decorators.thread {
@@ -155,16 +153,10 @@ impl VerifierSM {
                     thread_id,
                 )
             }
-            VerifierFullState::PresentationRequestSent(_) => {
-                verify_thread_id(
-                    &self.thread_id,
-                    &VerifierMessages::PresentationProposalReceived(proposal.clone()),
-                )?;
-                (
-                    VerifierFullState::PresentationProposalReceived(PresentationProposalReceivedState::new(proposal)),
-                    self.thread_id.clone(),
-                )
-            }
+            VerifierFullState::PresentationRequestSent(_) => (
+                VerifierFullState::PresentationProposalReceived(PresentationProposalReceivedState::new(proposal)),
+                self.thread_id.clone(),
+            ),
             s => {
                 warn!("Unable to receive presentation proposal in state {}", s);
                 (s, self.thread_id.clone())
@@ -178,10 +170,10 @@ impl VerifierSM {
     }
 
     pub fn receive_presentation_request_reject(self, problem_report: ProblemReport) -> VcxResult<Self> {
-        verify_thread_id(
-            &self.thread_id,
-            &VerifierMessages::PresentationRejectReceived(problem_report.clone()),
-        )?;
+        // verify_thread_id(
+        //     &self.thread_id,
+        //     &VerifierMessages::PresentationRejectReceived(problem_report.clone()),
+        // )?;
         let state = match self.state {
             VerifierFullState::PresentationRequestSent(state) => {
                 VerifierFullState::Finished((state, problem_report).into())
@@ -227,10 +219,10 @@ impl VerifierSM {
         presentation: Presentation,
         send_message: SendClosure,
     ) -> VcxResult<Self> {
-        verify_thread_id(
-            &self.thread_id,
-            &VerifierMessages::VerifyPresentation(presentation.clone()),
-        )?;
+        // verify_thread_id(
+        //     &self.thread_id,
+        //     &VerifierMessages::VerifyPresentation(presentation.clone()),
+        // )?;
         let state = match self.state {
             VerifierFullState::PresentationRequestSent(state) => {
                 let verification_result = state
@@ -338,7 +330,7 @@ impl VerifierSM {
                 return Err(AriesVcxError::from_msg(
                     AriesVcxErrorKind::InvalidState,
                     "Can not mark_presentation_request_msg_sent in current state.",
-                ))
+                ));
             }
         };
         Ok(Self {

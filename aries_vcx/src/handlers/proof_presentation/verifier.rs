@@ -1,11 +1,7 @@
-use std::collections::HashMap;
-
 use std::sync::Arc;
 
-use agency_client::agency_client::AgencyClient;
 use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
 use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
-use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use messages::msg_fields::protocols::notification::Notification;
 use messages::msg_fields::protocols::present_proof::present::Presentation;
 use messages::msg_fields::protocols::present_proof::propose::ProposePresentation;
@@ -17,9 +13,7 @@ use messages::AriesMessage;
 
 use crate::common::proofs::proof_request::PresentationRequestData;
 use crate::errors::error::prelude::*;
-use crate::handlers::connection::mediated_connection::MediatedConnection;
 use crate::handlers::util::get_attach_as_string;
-use crate::protocols::proof_presentation::verifier::messages::VerifierMessages;
 use crate::protocols::proof_presentation::verifier::state_machine::{VerifierSM, VerifierState};
 use crate::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
 use crate::protocols::SendClosure;
