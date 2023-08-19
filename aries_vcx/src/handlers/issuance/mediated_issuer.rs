@@ -33,6 +33,7 @@ pub async fn issuer_update_with_mediator(
     Ok(sm.get_state())
 }
 
+#[allow(clippy::unwrap_used)]
 pub fn issuer_find_messages_to_handle(
     sm: &Issuer,
     messages: HashMap<String, AriesMessage>,

@@ -5,17 +5,19 @@ use messages::misc::MimeType;
 use messages::msg_fields::protocols::cred_issuance::ack::AckCredential;
 use messages::msg_fields::protocols::cred_issuance::propose_credential::ProposeCredential;
 use messages::msg_fields::protocols::cred_issuance::request_credential::RequestCredential;
-use messages::msg_fields::protocols::cred_issuance::{CredentialAttr, CredentialPreview};
+use messages::msg_fields::protocols::cred_issuance::{CredentialAttr, CredentialIssuance, CredentialPreview};
 use messages::AriesMessage;
 use std::sync::Arc;
 
 use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
 use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
+use messages::msg_fields::protocols::notification::Notification;
+use messages::msg_fields::protocols::report_problem::ProblemReport;
+use messages::msg_parts::MsgParts;
 
 use crate::errors::error::prelude::*;
 use crate::handlers::revocation_notification::sender::RevocationNotificationSender;
 use crate::handlers::util::OfferInfo;
-use crate::protocols::issuance::actions::CredentialIssuanceAction;
 use crate::protocols::issuance::issuer::state_machine::{IssuerSM, IssuerState, RevocationInfoV1};
 use crate::protocols::revocation_notification::sender::state_machine::SenderConfigBuilder;
 use crate::protocols::SendClosure;
@@ -284,15 +286,56 @@ impl Issuer {
         self.issuer_sm.is_revoked(ledger).await
     }
 
-    pub async fn process_aries_msg(&mut self, action: CredentialIssuanceAction) -> VcxResult<()> {
-        let issuer_sm = match action {
-            CredentialIssuanceAction::CredentialProposal(proposal) => {
+    pub async fn receive_proposal(&mut self, proposal: ProposeCredential) -> VcxResult<()> {
+        self.issuer_sm = self.issuer_sm.clone().receive_proposal(proposal)?;
+        Ok(())
+    }
+
+    pub async fn receive_request(&mut self, request: RequestCredential) -> VcxResult<()> {
+        self.issuer_sm = self.issuer_sm.clone().receive_request(request)?;
+        Ok(())
+    }
+
+    pub async fn receive_ack(&mut self, ack: AckCredential) -> VcxResult<()> {
+        self.issuer_sm = self.issuer_sm.clone().receive_ack(ack)?;
+        Ok(())
+    }
+
+    pub async fn receive_problem_report(&mut self, problem_report: ProblemReport) -> VcxResult<()> {
+        self.issuer_sm = self.issuer_sm.clone().receive_problem_report(problem_report)?;
+        Ok(())
+    }
+
+    // todo: will ultimately end up in generic SM layer
+    pub async fn process_aries_msg(&mut self, msg: AriesMessage) -> VcxResult<()> {
+        let issuer_sm = match msg {
+            AriesMessage::CredentialIssuance(CredentialIssuance::ProposeCredential(proposal)) => {
                 self.issuer_sm.clone().receive_proposal(proposal)?
             }
-            CredentialIssuanceAction::CredentialRequest(request) => self.issuer_sm.clone().receive_request(request)?,
-            CredentialIssuanceAction::CredentialAck(ack) => self.issuer_sm.clone().receive_ack(ack)?,
-            CredentialIssuanceAction::ProblemReport(problem_report) => {
-                self.issuer_sm.clone().receive_problem_report(problem_report)?
+            AriesMessage::CredentialIssuance(CredentialIssuance::RequestCredential(request)) => {
+                self.issuer_sm.clone().receive_request(request)?
+            }
+            AriesMessage::CredentialIssuance(CredentialIssuance::Ack(ack)) => {
+                self.issuer_sm.clone().receive_ack(ack)?
+            }
+            AriesMessage::ReportProblem(report) => self.issuer_sm.clone().receive_problem_report(report)?,
+            AriesMessage::Notification(Notification::ProblemReport(report)) => {
+                let MsgParts {
+                    id,
+                    content,
+                    decorators,
+                } = report;
+                let report = ProblemReport::with_decorators(id, content.0, decorators);
+                self.issuer_sm.clone().receive_problem_report(report)?
+            }
+            AriesMessage::CredentialIssuance(CredentialIssuance::ProblemReport(report)) => {
+                let MsgParts {
+                    id,
+                    content,
+                    decorators,
+                } = report;
+                let report = ProblemReport::with_decorators(id, content.0, decorators);
+                self.issuer_sm.clone().receive_problem_report(report)?
             }
             _ => self.issuer_sm.clone(),
         };

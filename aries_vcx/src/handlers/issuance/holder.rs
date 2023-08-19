@@ -1,21 +1,19 @@
-use std::collections::HashMap;
-
-use messages::msg_fields::protocols::cred_issuance::issue_credential::IssueCredential;
-use messages::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
-use messages::msg_fields::protocols::cred_issuance::propose_credential::ProposeCredential;
-use messages::msg_fields::protocols::revocation::revoke::Revoke;
-use messages::AriesMessage;
 use std::sync::Arc;
 
 use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
 use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
+use messages::msg_fields::protocols::cred_issuance::issue_credential::IssueCredential;
+use messages::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
+use messages::msg_fields::protocols::cred_issuance::propose_credential::ProposeCredential;
+use messages::msg_fields::protocols::cred_issuance::CredentialIssuance;
+use messages::msg_fields::protocols::revocation::revoke::Revoke;
+use messages::AriesMessage;
 
 use crate::common::credentials::get_cred_rev_id;
 use crate::errors::error::prelude::*;
 use crate::handlers::connection::mediated_connection::MediatedConnection;
 use crate::handlers::revocation_notification::receiver::RevocationNotificationReceiver;
-use crate::protocols::issuance::actions::CredentialIssuanceAction;
 use crate::protocols::issuance::holder::state_machine::{HolderSM, HolderState};
 use crate::protocols::SendClosure;
 
@@ -192,12 +190,14 @@ impl Holder {
         &mut self,
         ledger: &Arc<dyn AnoncredsLedgerRead>,
         anoncreds: &Arc<dyn BaseAnonCreds>,
-        cim: CredentialIssuanceAction,
+        message: AriesMessage,
         send_message: Option<SendClosure>,
     ) -> VcxResult<()> {
-        let holder_sm = match cim {
-            CredentialIssuanceAction::CredentialOffer(offer) => self.holder_sm.clone().receive_offer(offer)?,
-            CredentialIssuanceAction::Credential(credential) => {
+        let holder_sm = match message {
+            AriesMessage::CredentialIssuance(CredentialIssuance::OfferCredential(offer)) => {
+                self.holder_sm.clone().receive_offer(offer)?
+            }
+            AriesMessage::CredentialIssuance(CredentialIssuance::IssueCredential(credential)) => {
                 let send_message = send_message.ok_or(AriesVcxError::from_msg(
                     AriesVcxErrorKind::InvalidState,
                     "Attempted to call undefined send_message callback",
@@ -207,9 +207,7 @@ impl Holder {
                     .receive_credential(ledger, anoncreds, credential, send_message)
                     .await?
             }
-            CredentialIssuanceAction::ProblemReport(problem_report) => {
-                self.holder_sm.clone().receive_problem_report(problem_report)?
-            }
+            AriesMessage::ReportProblem(report) => self.holder_sm.clone().receive_problem_report(report)?,
             _ => self.holder_sm.clone(),
         };
         self.holder_sm = holder_sm;

@@ -24,13 +24,11 @@ use crate::errors::error::prelude::*;
 use crate::global::settings;
 use crate::handlers::util::{get_attach_as_string, make_attach_from_str, AttachmentId, Status};
 use crate::protocols::common::build_problem_report_msg;
-use crate::protocols::issuance::actions::CredentialIssuanceAction;
 use crate::protocols::issuance::holder::states::finished::FinishedHolderState;
 use crate::protocols::issuance::holder::states::initial::InitialHolderState;
 use crate::protocols::issuance::holder::states::offer_received::OfferReceivedState;
 use crate::protocols::issuance::holder::states::proposal_sent::ProposalSentState;
 use crate::protocols::issuance::holder::states::request_sent::RequestSentState;
-use crate::protocols::issuance::verify_thread_id;
 use crate::protocols::SendClosure;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -149,10 +147,10 @@ impl HolderSM {
     }
 
     pub async fn send_proposal(self, proposal_data: ProposeCredential, send_message: SendClosure) -> VcxResult<Self> {
-        verify_thread_id(
-            &self.thread_id,
-            &CredentialIssuanceAction::CredentialProposalSend(proposal_data.clone()),
-        )?;
+        // verify_thread_id(
+        //     &self.thread_id,
+        //     &CredentialIssuanceAction::CredentialProposalSend(proposal_data.clone()),
+        // )?;
         let state = match self.state {
             HolderFullState::Initial(_) => {
                 let mut proposal = proposal_data;
@@ -175,10 +173,10 @@ impl HolderSM {
     }
 
     pub fn receive_offer(self, offer: OfferCredential) -> VcxResult<Self> {
-        verify_thread_id(
-            &self.thread_id,
-            &CredentialIssuanceAction::CredentialOffer(offer.clone()),
-        )?;
+        // verify_thread_id(
+        //     &self.thread_id,
+        //     &CredentialIssuanceAction::CredentialOffer(offer.clone()),
+        // )?;
         let state = match self.state {
             HolderFullState::ProposalSent(_) => HolderFullState::OfferReceived(OfferReceivedState::new(offer)),
             s => {

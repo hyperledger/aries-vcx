@@ -27,7 +27,6 @@ use crate::common::credentials::encoding::encode_attributes;
 use crate::common::credentials::is_cred_revoked;
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use crate::protocols::common::build_problem_report_msg;
-use crate::protocols::issuance::actions::CredentialIssuanceAction;
 use crate::protocols::issuance::issuer::states::credential_sent::CredentialSentState;
 use crate::protocols::issuance::issuer::states::finished::FinishedState;
 use crate::protocols::issuance::issuer::states::initial::InitialIssuerState;
@@ -35,7 +34,6 @@ use crate::protocols::issuance::issuer::states::offer_sent::OfferSentState;
 use crate::protocols::issuance::issuer::states::offer_set::OfferSetState;
 use crate::protocols::issuance::issuer::states::proposal_received::ProposalReceivedState;
 use crate::protocols::issuance::issuer::states::requested_received::RequestReceivedState;
-use crate::protocols::issuance::verify_thread_id;
 use crate::protocols::SendClosure;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -348,10 +346,10 @@ impl IssuerSM {
     }
 
     pub fn receive_proposal(self, proposal: ProposeCredential) -> VcxResult<Self> {
-        verify_thread_id(
-            &self.thread_id,
-            &CredentialIssuanceAction::CredentialProposal(proposal.clone()),
-        )?;
+        // verify_thread_id(
+        //     &self.thread_id,
+        //     &CredentialIssuanceAction::CredentialProposal(proposal.clone()),
+        // )?;
         let (state, thread_id) = match self.state {
             IssuerFullState::Initial(_) => {
                 let thread_id = proposal.id.to_string();
@@ -359,10 +357,6 @@ impl IssuerSM {
                 (state, thread_id)
             }
             IssuerFullState::OfferSent(_) => {
-                verify_thread_id(
-                    &self.thread_id,
-                    &CredentialIssuanceAction::CredentialProposal(proposal.clone()),
-                )?;
                 let state = IssuerFullState::ProposalReceived(ProposalReceivedState::new(proposal, None));
                 (state, self.thread_id.clone())
             }
@@ -392,10 +386,10 @@ impl IssuerSM {
     }
 
     pub fn receive_request(self, request: RequestCredential) -> VcxResult<Self> {
-        verify_thread_id(
-            &self.thread_id,
-            &CredentialIssuanceAction::CredentialRequest(request.clone()),
-        )?;
+        // verify_thread_id(
+        //     &self.thread_id,
+        //     &CredentialIssuanceAction::CredentialRequest(request.clone()),
+        // )?;
         let state = match self.state {
             IssuerFullState::OfferSent(state_data) => IssuerFullState::RequestReceived((state_data, request).into()),
             s => {
@@ -450,7 +444,7 @@ impl IssuerSM {
     }
 
     pub fn receive_ack(self, ack: AckCredential) -> VcxResult<Self> {
-        verify_thread_id(&self.thread_id, &CredentialIssuanceAction::CredentialAck(ack))?;
+        // verify_thread_id(&self.thread_id, &CredentialIssuanceAction::CredentialAck(ack))?;
         let state = match self.state {
             IssuerFullState::CredentialSent(state_data) => IssuerFullState::Finished(state_data.into()),
             s => {
@@ -462,10 +456,10 @@ impl IssuerSM {
     }
 
     pub fn receive_problem_report(self, problem_report: ProblemReport) -> VcxResult<Self> {
-        verify_thread_id(
-            &self.thread_id,
-            &CredentialIssuanceAction::ProblemReport(problem_report.clone()),
-        )?;
+        // verify_thread_id(
+        //     &self.thread_id,
+        //     &CredentialIssuanceAction::ProblemReport(problem_report.clone()),
+        // )?;
         let state = match self.state {
             IssuerFullState::OfferSent(state_data) => IssuerFullState::Finished((state_data, problem_report).into()),
             IssuerFullState::CredentialSent(state_data) => IssuerFullState::Finished((state_data).into()),
