@@ -54,6 +54,7 @@ pub async fn get_credential_offer_messages(
     Ok(json!(credential_offers).to_string())
 }
 
+#[allow(clippy::unwrap_used)]
 pub fn holder_find_message_to_handle(
     sm: &Holder,
     messages: HashMap<String, AriesMessage>,
