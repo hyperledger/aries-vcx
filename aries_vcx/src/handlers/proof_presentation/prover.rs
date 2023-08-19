@@ -123,10 +123,6 @@ impl Prover {
         self.prover_sm.progressable_by_message()
     }
 
-    pub fn find_message_to_handle(&self, messages: HashMap<String, AriesMessage>) -> Option<(String, AriesMessage)> {
-        self.prover_sm.find_message_to_handle(messages)
-    }
-
     pub async fn handle_message(
         &mut self,
         ledger: &Arc<dyn AnoncredsLedgerRead>,

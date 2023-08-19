@@ -24,7 +24,6 @@ use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
 use chrono::Utc;
 use messages::decorators::thread::Thread;
 use messages::decorators::timing::Timing;
-use messages::msg_fields::protocols::notification::Notification;
 use messages::msg_fields::protocols::present_proof::ack::AckPresentation;
 use messages::msg_fields::protocols::present_proof::present::{
     Presentation, PresentationContent, PresentationDecorators,
@@ -33,9 +32,7 @@ use messages::msg_fields::protocols::present_proof::propose::{
     PresentationPreview, ProposePresentation, ProposePresentationContent, ProposePresentationDecorators,
 };
 use messages::msg_fields::protocols::present_proof::request::RequestPresentation;
-use messages::msg_fields::protocols::present_proof::PresentProof;
 use messages::msg_fields::protocols::report_problem::ProblemReport;
-use messages::AriesMessage;
 use uuid::Uuid;
 
 /// A state machine that tracks the evolution of states for a Prover during
@@ -282,62 +279,6 @@ impl ProverSM {
             }
         };
         Ok(Self { state, ..self })
-    }
-
-    pub fn find_message_to_handle(&self, messages: HashMap<String, AriesMessage>) -> Option<(String, AriesMessage)> {
-        trace!("Prover::find_message_to_handle >>> messages: {:?}", messages);
-        for (uid, message) in messages {
-            match self.state {
-                ProverFullState::PresentationProposalSent(_) => match &message {
-                    AriesMessage::ReportProblem(msg) => {
-                        if matches_opt_thread_id!(msg, self.thread_id.as_str()) {
-                            return Some((uid, message));
-                        }
-                    }
-                    AriesMessage::Notification(Notification::ProblemReport(msg)) => {
-                        if matches_opt_thread_id!(msg, self.thread_id.as_str()) {
-                            return Some((uid, message));
-                        }
-                    }
-                    AriesMessage::PresentProof(PresentProof::RequestPresentation(msg)) => {
-                        if matches_opt_thread_id!(msg, self.thread_id.as_str()) {
-                            return Some((uid, message));
-                        }
-                    }
-                    _ => {}
-                },
-                ProverFullState::PresentationSent(_) => match &message {
-                    AriesMessage::Notification(Notification::Ack(msg)) => {
-                        if matches_thread_id!(msg, self.thread_id.as_str()) {
-                            return Some((uid, message));
-                        }
-                    }
-                    AriesMessage::PresentProof(PresentProof::Ack(msg)) => {
-                        if matches_thread_id!(msg, self.thread_id.as_str()) {
-                            return Some((uid, message));
-                        }
-                    }
-                    AriesMessage::ReportProblem(msg) => {
-                        if matches_opt_thread_id!(msg, self.thread_id.as_str()) {
-                            return Some((uid, message));
-                        }
-                    }
-                    AriesMessage::Notification(Notification::ProblemReport(msg)) => {
-                        if matches_opt_thread_id!(msg, self.thread_id.as_str()) {
-                            return Some((uid, message));
-                        }
-                    }
-                    AriesMessage::PresentProof(PresentProof::ProblemReport(msg)) => {
-                        if matches_opt_thread_id!(msg, self.thread_id.as_str()) {
-                            return Some((uid, message));
-                        }
-                    }
-                    _ => {}
-                },
-                _ => {}
-            };
-        }
-        None
     }
 
     pub async fn step(
