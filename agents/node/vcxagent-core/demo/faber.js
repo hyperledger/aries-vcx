@@ -13,11 +13,13 @@ require('@hyperledger/node-vcx-wrapper')
 const { getStorageInfoMysql } = require('./wallet-common')
 const sleep = require('sleep-promise')
 const { testTailsUrl, initRustLogger } = require('../src')
+const mkdirp = require('mkdirp')
 
 const tailsDir = '/tmp/tails'
 
 async function runFaber (options) {
   logger.info(`Starting Faber. Revocation enabled=${options.revocation}`)
+  mkdirp.sync(tailsDir)
   initRustLogger(process.env.RUST_LOG || 'vcx=error')
 
   let faberServer

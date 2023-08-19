@@ -7,12 +7,15 @@ const { createPairedAliceAndFaberViaOobMsg, createAliceAndFaber, connectViaOobMe
 const { IssuerStateType, HolderStateType, OutOfBandReceiver } = require('@hyperledger/node-vcx-wrapper')
 const { initRustLogger } = require('../src')
 const { proofRequestDataStandard } = require('./utils/data')
-const path = require('path')
+const mkdirp = require('mkdirp')
 const logger = require('../demo/logger')('out-of-band-test')
+
+const TAILS_DIR = '/tmp/faber/tails'
 
 beforeAll(async () => {
   jest.setTimeout(1000 * 60 * 4)
   initRustLogger(process.env.RUST_LOG || 'vcx=error')
+  mkdirp(TAILS_DIR)
 })
 
 describe('test out of band communication', () => {
@@ -56,8 +59,7 @@ describe('test out of band communication', () => {
   it('Faber issues credential via OOB', async () => {
     try {
       const { alice, faber } = await createAliceAndFaber()
-      const tailsDir = path.join(__dirname, '/tmp/faber/tails')
-      await faber.buildLedgerPrimitives({ tailsDir, maxCreds: 5 })
+      await faber.buildLedgerPrimitives({ tailsDir: TAILS_DIR, maxCreds: 5 })
       const oobCredOfferMsg = await faber.createOobCredOffer()
 
       await connectViaOobMessage(alice, faber, oobCredOfferMsg)
@@ -75,8 +77,7 @@ describe('test out of band communication', () => {
   it('Faber requests proof via OOB', async () => {
     try {
       const { alice, faber } = await createPairedAliceAndFaber()
-      const tailsDir = path.join(__dirname, '/tmp/faber/tails')
-      await faber.buildLedgerPrimitives({ tailsDir, maxCreds: 5 })
+      await faber.buildLedgerPrimitives({ tailsDir: TAILS_DIR, maxCreds: 5 })
       await faber.sendCredentialOffer()
       await alice.acceptCredentialOffer()
       await faber.updateStateCredential(IssuerStateType.RequestReceived)
@@ -88,7 +89,7 @@ describe('test out of band communication', () => {
 
       const oobReceiver = await OutOfBandReceiver.createWithMessage(oobPresentationRequestMsg)
       const presentationRequest = oobReceiver.extractMessage()
-      await alice.sendHolderProof(presentationRequest, revRegId => tailsDir, { attr_nickname: 'Smith' })
+      await alice.sendHolderProof(presentationRequest, revRegId => TAILS_DIR, { attr_nickname: 'Smith' })
       await faber.updateStateVerifierProof(VerifierStateType.Finished)
     } catch (e) {
       console.error(e.stack)
