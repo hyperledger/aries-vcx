@@ -182,10 +182,6 @@ impl Verifier {
         self.verifier_sm.progressable_by_message()
     }
 
-    pub fn find_message_to_handle(&self, messages: HashMap<String, AriesMessage>) -> Option<(String, AriesMessage)> {
-        self.verifier_sm.find_message_to_handle(messages)
-    }
-
     pub async fn decline_presentation_proposal<'a>(
         &'a mut self,
         send_message: SendClosure,

@@ -28,7 +28,7 @@ use messages::msg_fields::protocols::present_proof::problem_report::{
 use messages::msg_fields::protocols::present_proof::request::{
     RequestPresentation, RequestPresentationContent, RequestPresentationDecorators,
 };
-use messages::msg_fields::protocols::present_proof::PresentProof;
+
 use messages::msg_fields::protocols::present_proof::{present::Presentation, propose::ProposePresentation};
 use messages::msg_fields::protocols::report_problem::ProblemReport;
 use messages::msg_parts::MsgParts;
@@ -294,43 +294,6 @@ impl VerifierSM {
             }
         };
         Ok(Self { state, ..self })
-    }
-
-    pub fn find_message_to_handle(&self, messages: HashMap<String, AriesMessage>) -> Option<(String, AriesMessage)> {
-        trace!("VerifierSM::find_message_to_handle >>> messages: {:?}", messages);
-        for (uid, message) in messages {
-            match &self.state {
-                VerifierFullState::Initial(_) => match &message {
-                    AriesMessage::PresentProof(PresentProof::ProposePresentation(_)) => {
-                        return Some((uid, message));
-                    }
-                    AriesMessage::PresentProof(PresentProof::RequestPresentation(_)) => {
-                        return Some((uid, message));
-                    }
-                    _ => {}
-                },
-                VerifierFullState::PresentationRequestSent(_) => match &message {
-                    AriesMessage::PresentProof(PresentProof::Presentation(presentation)) => {
-                        if matches_thread_id!(presentation, self.thread_id.as_str()) {
-                            return Some((uid, message));
-                        }
-                    }
-                    AriesMessage::PresentProof(PresentProof::ProposePresentation(proposal)) => {
-                        if matches_opt_thread_id!(proposal, self.thread_id.as_str()) {
-                            return Some((uid, message));
-                        }
-                    }
-                    AriesMessage::ReportProblem(problem_report) => {
-                        if matches_opt_thread_id!(problem_report, self.thread_id.as_str()) {
-                            return Some((uid, message));
-                        }
-                    }
-                    _ => {}
-                },
-                _ => {}
-            };
-        }
-        None
     }
 
     pub fn set_request(self, request_data: &PresentationRequestData, comment: Option<String>) -> VcxResult<Self> {
