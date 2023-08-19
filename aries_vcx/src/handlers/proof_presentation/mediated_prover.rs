@@ -32,11 +32,12 @@ pub async fn get_proof_request_messages(
     Ok(json!(presentation_requests).to_string())
 }
 
+// todo: remove unused args
 pub async fn prover_update_with_mediator(
     sm: &mut Prover,
-    ledger: &Arc<dyn AnoncredsLedgerRead>,
-    anoncreds: &Arc<dyn BaseAnonCreds>,
-    wallet: &Arc<dyn BaseWallet>,
+    _ledger: &Arc<dyn AnoncredsLedgerRead>,
+    _anoncreds: &Arc<dyn BaseAnonCreds>,
+    _wallet: &Arc<dyn BaseWallet>,
     agency_client: &AgencyClient,
     connection: &MediatedConnection,
 ) -> VcxResult<ProverState> {
@@ -44,11 +45,9 @@ pub async fn prover_update_with_mediator(
     if !sm.progressable_by_message() {
         return Ok(sm.get_state());
     }
-    let send_message = connection.send_message_closure(Arc::clone(wallet)).await?;
-
     let messages = connection.get_messages(agency_client).await?;
     if let Some((uid, msg)) = prover_find_message_to_handle(sm, messages) {
-        sm.step(ledger, anoncreds, msg.into(), Some(send_message)).await?;
+        sm.process_aries_msg(msg.into()).await?;
         connection.update_message_status(&uid, agency_client).await?;
     }
     Ok(sm.get_state())

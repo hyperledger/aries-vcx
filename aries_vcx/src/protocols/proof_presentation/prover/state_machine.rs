@@ -252,17 +252,6 @@ impl ProverSM {
         Ok(Self { state, ..self })
     }
 
-    pub fn receive_presentation_ack(self, ack: AckPresentation) -> VcxResult<Self> {
-        let state = match self.state {
-            ProverFullState::PresentationSent(state) => ProverFullState::Finished((state, ack).into()),
-            s => {
-                warn!("Unable to process presentation ack in state {}", s);
-                s
-            }
-        };
-        Ok(Self { state, ..self })
-    }
-
     pub async fn send_presentation(self, send_message: SendClosure) -> VcxResult<Self> {
         let state = match self.state {
             ProverFullState::PresentationPrepared(state) => {
@@ -281,142 +270,75 @@ impl ProverSM {
         Ok(Self { state, ..self })
     }
 
-    pub async fn step(
+    pub async fn send_proposal(
         self,
-        ledger: &Arc<dyn AnoncredsLedgerRead>,
-        anoncreds: &Arc<dyn BaseAnonCreds>,
-        message: PresentationActions,
+        proposal_data: PresentationProposalData,
         send_message: Option<SendClosure>,
     ) -> VcxResult<ProverSM> {
-        trace!("ProverSM::step >>> message: {:?}", message);
-        verify_thread_id(&self.thread_id, &message)?;
         let prover_sm = match &self.state {
-            ProverFullState::Initial(_) => match message {
-                PresentationActions::PresentationProposalSend(proposal_data) => {
-                    let send_message = send_message.ok_or(AriesVcxError::from_msg(
-                        AriesVcxErrorKind::InvalidState,
-                        "Attempted to call undefined send_message callback",
-                    ))?;
-                    self.send_presentation_proposal(proposal_data, send_message).await?
-                }
-                _ => {
-                    warn!("Unable to process received message in this state");
-                    self
-                }
-            },
-            ProverFullState::PresentationProposalSent(_) => {
-                match message {
-                    PresentationActions::PresentationRequestReceived(request) => {
-                        let state =
-                            ProverFullState::PresentationRequestReceived(PresentationRequestReceived::new(request));
-                        ProverSM { state, ..self }
-                    }
-                    // TODO: Perhaps use a different message type?
-                    PresentationActions::PresentationRejectReceived(problem_report) => {
-                        let state = ProverFullState::Finished(FinishedState::declined(problem_report));
-                        ProverSM { state, ..self }
-                    }
-                    _ => {
-                        warn!("Unable to process received message in this state");
-                        self
-                    }
-                }
+            ProverFullState::Initial(_) => {
+                let send_message = send_message.ok_or(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidState,
+                    "Attempted to call undefined send_message callback",
+                ))?;
+                self.send_presentation_proposal(proposal_data, send_message).await?
             }
-            ProverFullState::PresentationRequestReceived(_) => match message {
-                PresentationActions::PresentationProposalSend(proposal_data) => {
-                    let send_message = send_message.ok_or(AriesVcxError::from_msg(
-                        AriesVcxErrorKind::InvalidState,
-                        "Attempted to call undefined send_message callback",
-                    ))?;
-                    self.send_presentation_proposal(proposal_data, send_message).await?
-                }
-                PresentationActions::SetPresentation(presentation) => self.set_presentation(presentation)?,
-                PresentationActions::PreparePresentation((credentials, self_attested_attrs)) => {
-                    self.generate_presentation(ledger, anoncreds, credentials, self_attested_attrs)
-                        .await?
-                }
-                PresentationActions::RejectPresentationRequest(reason) => {
-                    let send_message = send_message.ok_or(AriesVcxError::from_msg(
-                        AriesVcxErrorKind::InvalidState,
-                        "Attempted to call undefined send_message callback",
-                    ))?;
-                    self.decline_presentation_request(reason, send_message).await?
-                }
-                PresentationActions::ProposePresentation(preview) => {
-                    let send_message = send_message.ok_or(AriesVcxError::from_msg(
-                        AriesVcxErrorKind::InvalidState,
-                        "Attempted to call undefined send_message callback",
-                    ))?;
-                    self.negotiate_presentation(preview, send_message).await?
-                }
-                _ => {
-                    warn!("Unable to process received message in this state");
-                    self
-                }
-            },
-            ProverFullState::PresentationPrepared(_) => match message {
-                PresentationActions::SendPresentation => {
-                    let send_message = send_message.ok_or(AriesVcxError::from_msg(
-                        AriesVcxErrorKind::InvalidState,
-                        "Attempted to call undefined send_message callback",
-                    ))?;
-                    self.send_presentation(send_message).await?
-                }
-                PresentationActions::RejectPresentationRequest(reason) => {
-                    let send_message = send_message.ok_or(AriesVcxError::from_msg(
-                        AriesVcxErrorKind::InvalidState,
-                        "Attempted to call undefined send_message callback",
-                    ))?;
-                    self.decline_presentation_request(reason, send_message).await?
-                }
-                PresentationActions::ProposePresentation(preview) => {
-                    let send_message = send_message.ok_or(AriesVcxError::from_msg(
-                        AriesVcxErrorKind::InvalidState,
-                        "Attempted to call undefined send_message callback",
-                    ))?;
-                    self.negotiate_presentation(preview, send_message).await?
-                }
-                _ => {
-                    warn!("Unable to process received message in this state");
-                    self
-                }
-            },
-            ProverFullState::PresentationPreparationFailed(_) => match message {
-                PresentationActions::SendPresentation => {
-                    let send_message = send_message.ok_or(AriesVcxError::from_msg(
-                        AriesVcxErrorKind::InvalidState,
-                        "Attempted to call undefined send_message callback",
-                    ))?;
-                    self.send_presentation(send_message).await?
-                }
-                _ => {
-                    warn!("Unable to process received message in this state");
-                    self
-                }
-            },
-            ProverFullState::PresentationSent(state) => match message {
-                PresentationActions::PresentationAckReceived(ack) => {
-                    let state = ProverFullState::Finished((state.clone(), ack).into());
-                    ProverSM { state, ..self }
-                }
-                PresentationActions::PresentationRejectReceived(problem_report) => {
-                    let state = ProverFullState::Finished((state.clone(), problem_report).into());
-                    ProverSM { state, ..self }
-                }
-                PresentationActions::RejectPresentationRequest(_) => {
-                    return Err(AriesVcxError::from_msg(
-                        AriesVcxErrorKind::ActionNotSupported,
-                        "Presentation is already sent",
-                    ));
-                }
-                _ => {
-                    warn!("Unable to process received message in this state");
-                    self
-                }
-            },
-            ProverFullState::Finished(_) => self,
+            ProverFullState::PresentationRequestReceived(_) => {
+                let send_message = send_message.ok_or(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidState,
+                    "Attempted to call undefined send_message callback",
+                ))?;
+                self.send_presentation_proposal(proposal_data, send_message).await?
+            }
+            _ => {
+                warn!("Not supported in this state");
+                self
+            }
         };
         Ok(prover_sm)
+    }
+
+    pub fn receive_presentation_request(self, request: RequestPresentation) -> VcxResult<ProverSM> {
+        let prover_sm = match &self.state {
+            ProverFullState::PresentationProposalSent(_) => {
+                let state = ProverFullState::PresentationRequestReceived(PresentationRequestReceived::new(request));
+                ProverSM { state, ..self }
+            }
+            _ => {
+                warn!("Not supported in this state");
+                self
+            }
+        };
+        Ok(prover_sm)
+    }
+
+    pub fn receive_presentation_reject(self, problem_report: ProblemReport) -> VcxResult<ProverSM> {
+        let prover_sm = match &self.state {
+            ProverFullState::PresentationProposalSent(_) => {
+                let state = ProverFullState::Finished(FinishedState::declined(problem_report));
+                ProverSM { state, ..self }
+            }
+            ProverFullState::PresentationSent(state) => {
+                let state = ProverFullState::Finished((state.clone(), problem_report).into());
+                ProverSM { state, ..self }
+            }
+            _ => {
+                warn!("Not supported in this state");
+                self
+            }
+        };
+        Ok(prover_sm)
+    }
+
+    pub fn receive_presentation_ack(self, ack: AckPresentation) -> VcxResult<Self> {
+        let state = match self.state {
+            ProverFullState::PresentationSent(state) => ProverFullState::Finished((state, ack).into()),
+            s => {
+                warn!("Unable to process presentation ack in state {}", s);
+                s
+            }
+        };
+        Ok(Self { state, ..self })
     }
 
     async fn _handle_reject_presentation_request<'a>(

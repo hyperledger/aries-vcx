@@ -84,26 +84,12 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
             )
         })?;
         trace!("disclosed_proof::update_state >>> updating using message {:?}", message);
-        proof
-            .handle_message(
-                &get_main_anoncreds_ledger_read()?,
-                &get_main_anoncreds()?,
-                message.into(),
-                Some(send_message),
-            )
-            .await?;
+        proof.process_aries_msg(message.into()).await?;
     } else {
         let messages = mediated_connection::get_messages(connection_handle).await?;
         trace!("disclosed_proof::update_state >>> found messages: {:?}", messages);
         if let Some((uid, message)) = proof.find_message_to_handle(messages) {
-            proof
-                .handle_message(
-                    &get_main_anoncreds_ledger_read()?,
-                    &get_main_anoncreds()?,
-                    message.into(),
-                    Some(send_message),
-                )
-                .await?;
+            proof.process_aries_msg(message).await?;
             mediated_connection::update_message_status(connection_handle, &uid).await?;
         };
     }
