@@ -15,7 +15,7 @@ use messages::AriesMessage;
 use crate::errors::error::prelude::*;
 use crate::handlers::connection::mediated_connection::MediatedConnection;
 use crate::handlers::util::{get_attach_as_string, PresentationProposalData};
-use crate::protocols::proof_presentation::prover::messages::ProverMessages;
+use crate::protocols::proof_presentation::prover::messages::PresentationActions;
 use crate::protocols::proof_presentation::prover::state_machine::{ProverSM, ProverState};
 use crate::protocols::SendClosure;
 
@@ -131,7 +131,7 @@ impl Prover {
         &mut self,
         ledger: &Arc<dyn AnoncredsLedgerRead>,
         anoncreds: &Arc<dyn BaseAnonCreds>,
-        message: ProverMessages,
+        message: PresentationActions,
         send_message: Option<SendClosure>,
     ) -> VcxResult<()> {
         trace!("Prover::handle_message >>> message: {:?}", message);
@@ -178,7 +178,7 @@ impl Prover {
         &mut self,
         ledger: &Arc<dyn AnoncredsLedgerRead>,
         anoncreds: &Arc<dyn BaseAnonCreds>,
-        message: ProverMessages,
+        message: PresentationActions,
         send_message: Option<SendClosure>,
     ) -> VcxResult<()> {
         self.prover_sm = self

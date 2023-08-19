@@ -8,7 +8,7 @@ use crate::handlers::util::{
     make_attach_from_str, matches_opt_thread_id, matches_thread_id, AttachmentId, PresentationProposalData, Status,
 };
 use crate::protocols::common::build_problem_report_msg;
-use crate::protocols::proof_presentation::prover::messages::ProverMessages;
+use crate::protocols::proof_presentation::prover::messages::PresentationActions;
 use crate::protocols::proof_presentation::prover::states::finished::FinishedState;
 use crate::protocols::proof_presentation::prover::states::initial::InitialProverState;
 use crate::protocols::proof_presentation::prover::states::presentation_preparation_failed::PresentationPreparationFailedState;
@@ -344,14 +344,14 @@ impl ProverSM {
         self,
         ledger: &Arc<dyn AnoncredsLedgerRead>,
         anoncreds: &Arc<dyn BaseAnonCreds>,
-        message: ProverMessages,
+        message: PresentationActions,
         send_message: Option<SendClosure>,
     ) -> VcxResult<ProverSM> {
         trace!("ProverSM::step >>> message: {:?}", message);
         verify_thread_id(&self.thread_id, &message)?;
         let prover_sm = match &self.state {
             ProverFullState::Initial(_) => match message {
-                ProverMessages::PresentationProposalSend(proposal_data) => {
+                PresentationActions::PresentationProposalSend(proposal_data) => {
                     let send_message = send_message.ok_or(AriesVcxError::from_msg(
                         AriesVcxErrorKind::InvalidState,
                         "Attempted to call undefined send_message callback",
@@ -365,13 +365,13 @@ impl ProverSM {
             },
             ProverFullState::PresentationProposalSent(_) => {
                 match message {
-                    ProverMessages::PresentationRequestReceived(request) => {
+                    PresentationActions::PresentationRequestReceived(request) => {
                         let state =
                             ProverFullState::PresentationRequestReceived(PresentationRequestReceived::new(request));
                         ProverSM { state, ..self }
                     }
                     // TODO: Perhaps use a different message type?
-                    ProverMessages::PresentationRejectReceived(problem_report) => {
+                    PresentationActions::PresentationRejectReceived(problem_report) => {
                         let state = ProverFullState::Finished(FinishedState::declined(problem_report));
                         ProverSM { state, ..self }
                     }
@@ -382,26 +382,26 @@ impl ProverSM {
                 }
             }
             ProverFullState::PresentationRequestReceived(_) => match message {
-                ProverMessages::PresentationProposalSend(proposal_data) => {
+                PresentationActions::PresentationProposalSend(proposal_data) => {
                     let send_message = send_message.ok_or(AriesVcxError::from_msg(
                         AriesVcxErrorKind::InvalidState,
                         "Attempted to call undefined send_message callback",
                     ))?;
                     self.send_presentation_proposal(proposal_data, send_message).await?
                 }
-                ProverMessages::SetPresentation(presentation) => self.set_presentation(presentation)?,
-                ProverMessages::PreparePresentation((credentials, self_attested_attrs)) => {
+                PresentationActions::SetPresentation(presentation) => self.set_presentation(presentation)?,
+                PresentationActions::PreparePresentation((credentials, self_attested_attrs)) => {
                     self.generate_presentation(ledger, anoncreds, credentials, self_attested_attrs)
                         .await?
                 }
-                ProverMessages::RejectPresentationRequest(reason) => {
+                PresentationActions::RejectPresentationRequest(reason) => {
                     let send_message = send_message.ok_or(AriesVcxError::from_msg(
                         AriesVcxErrorKind::InvalidState,
                         "Attempted to call undefined send_message callback",
                     ))?;
                     self.decline_presentation_request(reason, send_message).await?
                 }
-                ProverMessages::ProposePresentation(preview) => {
+                PresentationActions::ProposePresentation(preview) => {
                     let send_message = send_message.ok_or(AriesVcxError::from_msg(
                         AriesVcxErrorKind::InvalidState,
                         "Attempted to call undefined send_message callback",
@@ -414,21 +414,21 @@ impl ProverSM {
                 }
             },
             ProverFullState::PresentationPrepared(_) => match message {
-                ProverMessages::SendPresentation => {
+                PresentationActions::SendPresentation => {
                     let send_message = send_message.ok_or(AriesVcxError::from_msg(
                         AriesVcxErrorKind::InvalidState,
                         "Attempted to call undefined send_message callback",
                     ))?;
                     self.send_presentation(send_message).await?
                 }
-                ProverMessages::RejectPresentationRequest(reason) => {
+                PresentationActions::RejectPresentationRequest(reason) => {
                     let send_message = send_message.ok_or(AriesVcxError::from_msg(
                         AriesVcxErrorKind::InvalidState,
                         "Attempted to call undefined send_message callback",
                     ))?;
                     self.decline_presentation_request(reason, send_message).await?
                 }
-                ProverMessages::ProposePresentation(preview) => {
+                PresentationActions::ProposePresentation(preview) => {
                     let send_message = send_message.ok_or(AriesVcxError::from_msg(
                         AriesVcxErrorKind::InvalidState,
                         "Attempted to call undefined send_message callback",
@@ -441,7 +441,7 @@ impl ProverSM {
                 }
             },
             ProverFullState::PresentationPreparationFailed(_) => match message {
-                ProverMessages::SendPresentation => {
+                PresentationActions::SendPresentation => {
                     let send_message = send_message.ok_or(AriesVcxError::from_msg(
                         AriesVcxErrorKind::InvalidState,
                         "Attempted to call undefined send_message callback",
@@ -454,15 +454,15 @@ impl ProverSM {
                 }
             },
             ProverFullState::PresentationSent(state) => match message {
-                ProverMessages::PresentationAckReceived(ack) => {
+                PresentationActions::PresentationAckReceived(ack) => {
                     let state = ProverFullState::Finished((state.clone(), ack).into());
                     ProverSM { state, ..self }
                 }
-                ProverMessages::PresentationRejectReceived(problem_report) => {
+                PresentationActions::PresentationRejectReceived(problem_report) => {
                     let state = ProverFullState::Finished((state.clone(), problem_report).into());
                     ProverSM { state, ..self }
                 }
-                ProverMessages::RejectPresentationRequest(_) => {
+                PresentationActions::RejectPresentationRequest(_) => {
                     return Err(AriesVcxError::from_msg(
                         AriesVcxErrorKind::ActionNotSupported,
                         "Presentation is already sent",

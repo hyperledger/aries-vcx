@@ -22,7 +22,7 @@ use crate::handlers::{
 };
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
-pub enum ProverMessages {
+pub enum PresentationActions {
     PresentationProposalSend(PresentationProposalData),
     PresentationRequestReceived(RequestPresentation),
     RejectPresentationRequest(String),
@@ -35,7 +35,7 @@ pub enum ProverMessages {
     Unknown,
 }
 
-impl ProverMessages {
+impl PresentationActions {
     pub fn thread_id_matches(&self, thread_id: &str) -> bool {
         match self {
             Self::SetPresentation(msg) => matches_thread_id!(msg, thread_id),
@@ -46,7 +46,7 @@ impl ProverMessages {
     }
 }
 
-impl From<AriesMessage> for ProverMessages {
+impl From<AriesMessage> for PresentationActions {
     fn from(msg: AriesMessage) -> Self {
         match msg {
             AriesMessage::Notification(Notification::Ack(ack)) => {
@@ -56,13 +56,13 @@ impl From<AriesMessage> for ProverMessages {
                     decorators,
                 } = ack;
                 let ack = AckPresentation::with_decorators(id, AckPresentationContent(content), decorators);
-                ProverMessages::PresentationAckReceived(ack)
+                PresentationActions::PresentationAckReceived(ack)
             }
-            AriesMessage::PresentProof(PresentProof::Ack(ack)) => ProverMessages::PresentationAckReceived(ack),
+            AriesMessage::PresentProof(PresentProof::Ack(ack)) => PresentationActions::PresentationAckReceived(ack),
             AriesMessage::PresentProof(PresentProof::RequestPresentation(request)) => {
-                ProverMessages::PresentationRequestReceived(request)
+                PresentationActions::PresentationRequestReceived(request)
             }
-            AriesMessage::ReportProblem(report) => ProverMessages::PresentationRejectReceived(report),
+            AriesMessage::ReportProblem(report) => PresentationActions::PresentationRejectReceived(report),
             AriesMessage::Notification(Notification::ProblemReport(report)) => {
                 let MsgParts {
                     id,
@@ -70,7 +70,7 @@ impl From<AriesMessage> for ProverMessages {
                     decorators,
                 } = report;
                 let report = ProblemReport::with_decorators(id, content.0, decorators);
-                ProverMessages::PresentationRejectReceived(report)
+                PresentationActions::PresentationRejectReceived(report)
             }
             AriesMessage::PresentProof(PresentProof::ProblemReport(report)) => {
                 let MsgParts {
@@ -79,9 +79,9 @@ impl From<AriesMessage> for ProverMessages {
                     decorators,
                 } = report;
                 let report = ProblemReport::with_decorators(id, content.0, decorators);
-                ProverMessages::PresentationRejectReceived(report)
+                PresentationActions::PresentationRejectReceived(report)
             }
-            _ => ProverMessages::Unknown,
+            _ => PresentationActions::Unknown,
         }
     }
 }
