@@ -36,6 +36,7 @@ pub async fn verifier_update_with_mediator(
     Ok(sm.get_state())
 }
 
+#[allow(clippy::unwrap_used)]
 pub fn verifier_find_message_to_handle(
     sm: &Verifier,
     messages: HashMap<String, AriesMessage>,
