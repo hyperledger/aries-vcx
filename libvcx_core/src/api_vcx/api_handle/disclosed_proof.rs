@@ -9,6 +9,7 @@ use aries_vcx::utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
 use aries_vcx::{
     global::settings::indy_mocks_enabled, utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION,
 };
+use aries_vcx::handlers::proof_presentation::mediated_prover::prover_find_message_to_handle;
 
 use crate::api_vcx::api_global::profile::{get_main_anoncreds, get_main_anoncreds_ledger_read, get_main_profile};
 use crate::api_vcx::api_handle::mediated_connection;
@@ -88,7 +89,7 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
     } else {
         let messages = mediated_connection::get_messages(connection_handle).await?;
         trace!("disclosed_proof::update_state >>> found messages: {:?}", messages);
-        if let Some((uid, message)) = proof.find_message_to_handle(messages) {
+        if let Some((uid, message)) = prover_find_message_to_handle(&proof, messages) {
             proof.process_aries_msg(message).await?;
             mediated_connection::update_message_status(connection_handle, &uid).await?;
         };
