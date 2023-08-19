@@ -11,10 +11,8 @@ use std::sync::Arc;
 
 use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
 use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
-use aries_vcx_core::wallet::base_wallet::BaseWallet;
 
 use crate::errors::error::prelude::*;
-use crate::handlers::issuance::mediated_issuer::issuer_find_messages_to_handle;
 use crate::handlers::revocation_notification::sender::RevocationNotificationSender;
 use crate::handlers::util::OfferInfo;
 use crate::protocols::issuance::actions::CredentialIssuanceAction;
@@ -220,10 +218,6 @@ impl Issuer {
 
     pub fn is_terminal_state(&self) -> bool {
         self.issuer_sm.is_terminal_state()
-    }
-
-    pub fn find_message_to_handle(&self, messages: HashMap<String, AriesMessage>) -> Option<(String, AriesMessage)> {
-        issuer_find_messages_to_handle(&self.issuer_sm, messages)
     }
 
     pub fn get_revocation_id(&self) -> VcxResult<String> {

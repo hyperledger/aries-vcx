@@ -4,6 +4,7 @@ use aries_vcx::protocols::SendClosure;
 use serde_json;
 
 use aries_vcx::handlers::issuance::issuer::Issuer;
+use aries_vcx::handlers::issuance::mediated_issuer::issuer_find_messages_to_handle;
 
 use crate::api_vcx::api_global::profile::{get_main_anoncreds, get_main_wallet};
 use crate::api_vcx::api_handle::connection;
@@ -46,7 +47,8 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
         credential.process_aries_msg(msg.into()).await?;
     } else {
         let messages = mediated_connection::get_messages(connection_handle).await?;
-        if let Some((uid, msg)) = credential.find_message_to_handle(messages) {
+        // if let Some((uid, msg)) = credential.find_message_to_handle(messages) {
+        if let Some((uid, msg)) = issuer_find_messages_to_handle(&credential, messages) {
             credential.process_aries_msg(msg.into()).await?;
             mediated_connection::update_message_status(connection_handle, &uid).await?;
         }

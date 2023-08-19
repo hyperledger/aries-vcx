@@ -23,7 +23,7 @@ pub async fn issuer_update_with_mediator(
 ) -> VcxResult<IssuerState> {
     trace!("Issuer::update_state >>>");
     let messages = connection.get_messages(agency_client).await?;
-    if let Some((uid, msg)) = sm.find_message_to_handle(messages) {
+    if let Some((uid, msg)) = issuer_find_messages_to_handle(sm, messages) {
         trace!("Issuer::update_state >>> found msg to handle; uid: {uid}, msg: {msg:?}");
         sm.process_aries_msg(msg.into()).await?;
         connection.update_message_status(&uid, agency_client).await?;
@@ -34,53 +34,53 @@ pub async fn issuer_update_with_mediator(
 }
 
 pub fn issuer_find_messages_to_handle(
-    sm: &IssuerSM,
+    sm: &Issuer,
     messages: HashMap<String, AriesMessage>,
 ) -> Option<(String, AriesMessage)> {
     trace!(
         "IssuerSM::find_message_to_handle >>> messages: {:?}, state: {:?}",
         messages,
-        sm.state
+        sm
     );
 
     for (uid, message) in messages {
-        match sm.state {
-            IssuerFullState::Initial(_) => {
+        match sm.get_state() {
+            IssuerState::Initial => {
                 if let AriesMessage::CredentialIssuance(CredentialIssuance::ProposeCredential(_)) = &message {
                     return Some((uid, message));
                 }
             }
-            IssuerFullState::OfferSent(_) => match &message {
+            IssuerState::OfferSent => match &message {
                 AriesMessage::CredentialIssuance(CredentialIssuance::RequestCredential(msg)) => {
-                    if matches_opt_thread_id!(msg, sm.thread_id.as_str()) {
+                    if matches_opt_thread_id!(msg, sm.get_thread_id().unwrap().as_str()) {
                         return Some((uid, message));
                     }
                 }
                 AriesMessage::CredentialIssuance(CredentialIssuance::ProposeCredential(msg)) => {
-                    if matches_opt_thread_id!(msg, sm.thread_id.as_str()) {
+                    if matches_opt_thread_id!(msg, sm.get_thread_id().unwrap().as_str()) {
                         return Some((uid, message));
                     }
                 }
                 AriesMessage::ReportProblem(msg) => {
-                    if matches_opt_thread_id!(msg, sm.thread_id.as_str()) {
+                    if matches_opt_thread_id!(msg, sm.get_thread_id().unwrap().as_str()) {
                         return Some((uid, message));
                     }
                 }
                 _ => {}
             },
-            IssuerFullState::CredentialSent(_) => match &message {
+            IssuerState::CredentialSent => match &message {
                 AriesMessage::CredentialIssuance(CredentialIssuance::Ack(msg)) => {
-                    if matches_thread_id!(msg, sm.thread_id.as_str()) {
+                    if matches_thread_id!(msg, sm.get_thread_id().unwrap().as_str()) {
                         return Some((uid, message));
                     }
                 }
                 AriesMessage::Notification(Notification::Ack(msg)) => {
-                    if matches_thread_id!(msg, sm.thread_id.as_str()) {
+                    if matches_thread_id!(msg, sm.get_thread_id().unwrap().as_str()) {
                         return Some((uid, message));
                     }
                 }
                 AriesMessage::ReportProblem(msg) => {
-                    if matches_opt_thread_id!(msg, sm.thread_id.as_str()) {
+                    if matches_opt_thread_id!(msg, sm.get_thread_id().unwrap().as_str()) {
                         return Some((uid, message));
                     }
                 }

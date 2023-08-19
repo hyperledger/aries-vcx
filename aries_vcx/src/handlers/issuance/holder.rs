@@ -7,7 +7,6 @@ use messages::msg_fields::protocols::revocation::revoke::Revoke;
 use messages::AriesMessage;
 use std::sync::Arc;
 
-use agency_client::agency_client::AgencyClient;
 use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
 use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
@@ -15,7 +14,6 @@ use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use crate::common::credentials::get_cred_rev_id;
 use crate::errors::error::prelude::*;
 use crate::handlers::connection::mediated_connection::MediatedConnection;
-use crate::handlers::issuance::mediated_holder::holder_find_message_to_handle;
 use crate::handlers::revocation_notification::receiver::RevocationNotificationReceiver;
 use crate::protocols::issuance::actions::CredentialIssuanceAction;
 use crate::protocols::issuance::holder::state_machine::{HolderSM, HolderState};
