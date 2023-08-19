@@ -58,38 +58,33 @@ pub fn holder_find_message_to_handle(
     sm: &Holder,
     messages: HashMap<String, AriesMessage>,
 ) -> Option<(String, AriesMessage)> {
-    trace!(
-        "Holder::find_message_to_handle >>> messages: {:?}, state: {:?}",
-        messages,
-        sm.state
-    );
     for (uid, message) in messages {
         match sm.get_state() {
             HolderState::ProposalSent => {
                 if let AriesMessage::CredentialIssuance(CredentialIssuance::OfferCredential(offer)) = &message {
-                    if matches_opt_thread_id!(offer, sm.thread_id.as_str()) {
+                    if matches_opt_thread_id!(offer, sm.get_thread_id().unwrap().as_str()) {
                         return Some((uid, message));
                     }
                 }
             }
             HolderState::RequestSent => match &message {
                 AriesMessage::CredentialIssuance(CredentialIssuance::IssueCredential(credential)) => {
-                    if matches_thread_id!(credential, sm.thread_id.as_str()) {
+                    if matches_thread_id!(credential, sm.get_thread_id().unwrap().as_str()) {
                         return Some((uid, message));
                     }
                 }
                 AriesMessage::CredentialIssuance(CredentialIssuance::ProblemReport(problem_report)) => {
-                    if matches_opt_thread_id!(problem_report, sm.thread_id.as_str()) {
+                    if matches_opt_thread_id!(problem_report, sm.get_thread_id().unwrap().as_str()) {
                         return Some((uid, message));
                     }
                 }
                 AriesMessage::ReportProblem(problem_report) => {
-                    if matches_opt_thread_id!(problem_report, sm.thread_id.as_str()) {
+                    if matches_opt_thread_id!(problem_report, sm.get_thread_id().unwrap().as_str()) {
                         return Some((uid, message));
                     }
                 }
                 AriesMessage::Notification(Notification::ProblemReport(msg)) => {
-                    if matches_opt_thread_id!(msg, sm.thread_id.as_str()) {
+                    if matches_opt_thread_id!(msg, sm.get_thread_id().unwrap().as_str()) {
                         return Some((uid, message));
                     }
                 }

@@ -24,8 +24,11 @@ pub async fn issuer_update_with_mediator(
     trace!("Issuer::update_state >>>");
     let messages = connection.get_messages(agency_client).await?;
     if let Some((uid, msg)) = sm.find_message_to_handle(messages) {
+        trace!("Issuer::update_state >>> found msg to handle; uid: {uid}, msg: {msg:?}");
         sm.process_aries_msg(msg.into()).await?;
         connection.update_message_status(&uid, agency_client).await?;
+    } else {
+        trace!("Issuer::update_state >>> found no msg to handle");
     }
     Ok(sm.get_state())
 }

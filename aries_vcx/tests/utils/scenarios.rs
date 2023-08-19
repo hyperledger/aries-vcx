@@ -565,7 +565,7 @@ pub mod test_utils {
         assert!(!issuer_credential.is_revokable());
 
         issuer_update_with_mediator(
-            &mut faber.issuer_credential,
+            issuer_credential,
             &faber.profile.inject_wallet(),
             &faber.profile.inject_anoncreds(),
             &faber.agency_client,
