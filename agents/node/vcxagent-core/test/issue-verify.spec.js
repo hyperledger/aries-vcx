@@ -12,10 +12,14 @@ const sleep = require('sleep-promise')
 const { initRustLogger } = require('../src')
 const { proofRequestDataStandard, proofRequestDataSelfAttest } = require('./utils/data')
 const path = require('path')
+const mkdirp = require('mkdirp')
+
+const TAILS_DIR = '/tmp/faber/tails'
 
 beforeAll(async () => {
   jest.setTimeout(1000 * 60 * 4)
   initRustLogger(process.env.RUST_LOG || 'vcx=error')
+  mkdirp(TAILS_DIR)
 })
 
 afterAll(async () => {
@@ -26,9 +30,8 @@ describe('test update state', () => {
   it('Faber should issue credential, verify proof', async () => {
     const { alice, faber } = await createPairedAliceAndFaber()
     const issuerDid = faber.getFaberDid()
-    const tailsDir = path.join(__dirname, '/tmp/faber/tails')
-    await faber.buildLedgerPrimitives({ tailsDir, maxCreds: 5 })
-    await faber.rotateRevReg(tailsDir, 5)
+    await faber.buildLedgerPrimitives({ tailsDir: TAILS_DIR, maxCreds: 5 })
+    await faber.rotateRevReg(TAILS_DIR, 5)
     await faber.sendCredentialOffer()
     await alice.acceptCredentialOffer()
 
@@ -38,7 +41,7 @@ describe('test update state', () => {
     await faber.receiveCredentialAck()
 
     const request = await faber.requestProofFromAlice(proofRequestDataStandard(issuerDid))
-    await alice.sendHolderProof(JSON.parse(request), revRegId => tailsDir, { attr_nickname: 'Smith' })
+    await alice.sendHolderProof(JSON.parse(request), revRegId => TAILS_DIR, { attr_nickname: 'Smith' })
     await faber.updateStateVerifierProof(VerifierStateType.Finished)
     await alice.updateStateHolderProof(ProverStateType.Finished)
     const {
@@ -124,8 +127,7 @@ describe('test update state', () => {
   it('Faber should issue credential, revoke credential, verify proof', async () => {
     const { alice, faber } = await createPairedAliceAndFaber()
     const issuerDid = faber.getFaberDid()
-    const tailsDir = path.join(__dirname, '/tmp/faber/tails')
-    await faber.buildLedgerPrimitives({ tailsDir, maxCreds: 5 })
+    await faber.buildLedgerPrimitives({ tailsDir: TAILS_DIR, maxCreds: 5 })
     await faber.sendCredentialOffer()
     await alice.acceptCredentialOffer()
 
@@ -136,7 +138,7 @@ describe('test update state', () => {
     await faber.revokeCredential()
 
     const request = await faber.requestProofFromAlice(proofRequestDataStandard(issuerDid))
-    await alice.sendHolderProof(JSON.parse(request), revRegId => tailsDir, { attr_nickname: 'Smith' })
+    await alice.sendHolderProof(JSON.parse(request), revRegId => TAILS_DIR, { attr_nickname: 'Smith' })
     await faber.updateStateVerifierProof(VerifierStateType.Finished)
     await alice.updateStateHolderProof(ProverStateType.Failed)
     const {
