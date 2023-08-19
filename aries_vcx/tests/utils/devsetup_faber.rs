@@ -16,6 +16,7 @@ use aries_vcx::global::settings::{init_issuer_config, DEFAULT_LINK_SECRET_ALIAS}
 use aries_vcx::handlers::connection::mediated_connection::{ConnectionState, MediatedConnection};
 use aries_vcx::handlers::issuance::issuer::Issuer;
 use aries_vcx::handlers::issuance::mediated_issuer::issuer_update_with_mediator;
+use aries_vcx::handlers::proof_presentation::mediated_verifier::verifier_update_with_mediator;
 use aries_vcx::handlers::proof_presentation::verifier::Verifier;
 use aries_vcx::handlers::revocation_notification::sender::RevocationNotificationSender;
 use aries_vcx::handlers::util::OfferInfo;
@@ -358,16 +359,16 @@ impl Faber {
             )
             .await
             .unwrap();
-        self.verifier
-            .update_state(
-                &self.profile.inject_wallet(),
-                &self.profile.inject_anoncreds_ledger_read(),
-                &self.profile.inject_anoncreds(),
-                &self.agency_client,
-                &self.connection,
-            )
-            .await
-            .unwrap();
+        verifier_update_with_mediator(
+            &mut self.verifier,
+            &self.profile.inject_wallet(),
+            &self.profile.inject_anoncreds_ledger_read(),
+            &self.profile.inject_anoncreds(),
+            &self.agency_client,
+            &self.connection,
+        )
+        .await
+        .unwrap();
 
         assert_eq!(VerifierState::PresentationRequestSent, self.verifier.get_state());
     }
@@ -382,16 +383,16 @@ impl Faber {
         expected_state: VerifierState,
         expected_verification_status: PresentationVerificationStatus,
     ) {
-        self.verifier
-            .update_state(
-                &self.profile.inject_wallet(),
-                &self.profile.inject_anoncreds_ledger_read(),
-                &self.profile.inject_anoncreds(),
-                &self.agency_client,
-                &self.connection,
-            )
-            .await
-            .unwrap();
+        verifier_update_with_mediator(
+            &mut self.verifier,
+            &self.profile.inject_wallet(),
+            &self.profile.inject_anoncreds_ledger_read(),
+            &self.profile.inject_anoncreds(),
+            &self.agency_client,
+            &self.connection,
+        )
+        .await
+        .unwrap();
         assert_eq!(expected_state, self.verifier.get_state());
         assert_eq!(expected_verification_status, self.verifier.get_verification_status());
     }

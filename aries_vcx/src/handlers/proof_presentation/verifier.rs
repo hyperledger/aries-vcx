@@ -199,28 +199,6 @@ impl Verifier {
             .await?;
         Ok(())
     }
-
-    pub async fn update_state(
-        &mut self,
-        wallet: &Arc<dyn BaseWallet>,
-        ledger: &Arc<dyn AnoncredsLedgerRead>,
-        anoncreds: &Arc<dyn BaseAnonCreds>,
-        agency_client: &AgencyClient,
-        connection: &MediatedConnection,
-    ) -> VcxResult<VerifierState> {
-        trace!("Verifier::update_state >>> ");
-        if !self.progressable_by_message() {
-            return Ok(self.get_state());
-        }
-        let send_message = connection.send_message_closure(Arc::clone(wallet)).await?;
-
-        let messages = connection.get_messages(agency_client).await?;
-        if let Some((uid, msg)) = self.find_message_to_handle(messages) {
-            self.step(ledger, anoncreds, msg.into(), Some(send_message)).await?;
-            connection.update_message_status(&uid, agency_client).await?;
-        }
-        Ok(self.get_state())
-    }
 }
 
 // #[cfg(test)]

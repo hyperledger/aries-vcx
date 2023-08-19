@@ -93,6 +93,7 @@ pub fn issuer_find_messages_to_handle(
     None
 }
 
+// todo: returns specific type
 pub async fn get_credential_proposal_messages(
     agency_client: &AgencyClient,
     connection: &MediatedConnection,

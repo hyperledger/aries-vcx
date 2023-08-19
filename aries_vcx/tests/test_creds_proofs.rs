@@ -567,6 +567,7 @@ mod tests {
     use aries_vcx::handlers::issuance::holder::Holder;
     use aries_vcx::handlers::issuance::issuer::Issuer;
     use aries_vcx::handlers::issuance::mediated_issuer::issuer_update_with_mediator;
+    use aries_vcx::handlers::proof_presentation::mediated_verifier::verifier_update_with_mediator;
     use aries_vcx::handlers::proof_presentation::prover::Prover;
     use aries_vcx::handlers::proof_presentation::verifier::Verifier;
     use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
@@ -645,16 +646,16 @@ mod tests {
             prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_institution, None, None).await;
 
             info!("test_proof_should_be_validated :: verifier :: going to verify proof");
-            verifier
-                .update_state(
-                    &institution.profile.inject_wallet(),
-                    &institution.profile.inject_anoncreds_ledger_read(),
-                    &institution.profile.inject_anoncreds(),
-                    &institution.agency_client,
-                    &institution_to_consumer,
-                )
-                .await
-                .unwrap();
+            verifier_update_with_mediator(
+                &mut verifier,
+                &institution.profile.inject_wallet(),
+                &institution.profile.inject_anoncreds_ledger_read(),
+                &institution.profile.inject_anoncreds(),
+                &institution.agency_client,
+                &institution_to_consumer,
+            )
+            .await
+            .unwrap();
             assert_eq!(
                 verifier.get_verification_status(),
                 PresentationVerificationStatus::Valid
@@ -711,16 +712,16 @@ mod tests {
             prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_institution, None, None).await;
 
             info!("test_proof_with_predicates_should_be_validated :: verifier :: going to verify proof");
-            verifier
-                .update_state(
-                    &institution.profile.inject_wallet(),
-                    &institution.profile.inject_anoncreds_ledger_read(),
-                    &institution.profile.inject_anoncreds(),
-                    &institution.agency_client,
-                    &institution_to_consumer,
-                )
-                .await
-                .unwrap();
+            verifier_update_with_mediator(
+                &mut verifier,
+                &institution.profile.inject_wallet(),
+                &institution.profile.inject_anoncreds_ledger_read(),
+                &institution.profile.inject_anoncreds(),
+                &institution.agency_client,
+                &institution_to_consumer,
+            )
+            .await
+            .unwrap();
             assert_eq!(
                 verifier.get_verification_status(),
                 PresentationVerificationStatus::Valid
@@ -852,9 +853,14 @@ mod tests {
             consumer1.migrate().await;
 
             prover_select_credentials_and_send_proof(&mut consumer1, &consumer1_to_verifier, None, None).await;
-            proof_verifier
-                .update_state(
-                    &verifier.profile.inject_wallet(), &verifier.profile.inject_anoncreds_ledger_read(), &verifier.profile.inject_anoncreds(), &verifier.agency_client, &verifier_to_consumer1)
+                verifier_update_with_mediator(
+                    &mut proof_verifier,
+                    &verifier.profile.inject_wallet(),
+                    &verifier.profile.inject_anoncreds_ledger_read(),
+                    &verifier.profile.inject_anoncreds(),
+                    &verifier.agency_client,
+                    &verifier_to_consumer1
+                )
                 .await
                 .unwrap();
             assert_eq!(
@@ -876,8 +882,8 @@ mod tests {
             consumer2.migrate().await;
 
             prover_select_credentials_and_send_proof(&mut consumer2, &consumer2_to_verifier, None, None).await;
-            proof_verifier
-                .update_state(
+            verifier_update_with_mediator(
+                &mut proof_verifier,
                     &verifier.profile.inject_wallet(),
                     &verifier.profile.inject_anoncreds_ledger_read(),
                     &verifier.profile.inject_anoncreds(),
@@ -926,16 +932,16 @@ mod tests {
             verifier.migrate().await;
 
             prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, request_name1, None).await;
-            proof_verifier
-                .update_state(
-                    &verifier.profile.inject_wallet(),
-                    &verifier.profile.inject_anoncreds_ledger_read(),
-                    &verifier.profile.inject_anoncreds(),
-                    &verifier.agency_client,
-                    &verifier_to_consumer,
-                )
-                .await
-                .unwrap();
+            verifier_update_with_mediator(
+                &mut proof_verifier,
+                &verifier.profile.inject_wallet(),
+                &verifier.profile.inject_anoncreds_ledger_read(),
+                &verifier.profile.inject_anoncreds(),
+                &verifier.agency_client,
+                &verifier_to_consumer,
+            )
+            .await
+            .unwrap();
             assert_eq!(
                 proof_verifier.get_verification_status(),
                 PresentationVerificationStatus::Valid
@@ -955,16 +961,16 @@ mod tests {
             consumer.migrate().await;
 
             prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, request_name2, None).await;
-            proof_verifier
-                .update_state(
-                    &verifier.profile.inject_wallet(),
-                    &verifier.profile.inject_anoncreds_ledger_read(),
-                    &verifier.profile.inject_anoncreds(),
-                    &verifier.agency_client,
-                    &verifier_to_consumer,
-                )
-                .await
-                .unwrap();
+            verifier_update_with_mediator(
+                &mut proof_verifier,
+                &verifier.profile.inject_wallet(),
+                &verifier.profile.inject_anoncreds_ledger_read(),
+                &verifier.profile.inject_anoncreds(),
+                &verifier.agency_client,
+                &verifier_to_consumer,
+            )
+            .await
+            .unwrap();
             assert_eq!(
                 proof_verifier.get_verification_status(),
                 PresentationVerificationStatus::Valid
@@ -1013,8 +1019,8 @@ mod tests {
             institution.migrate().await;
 
             prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_institution, request_name1, None).await;
-            verifier
-                .update_state(
+            verifier_update_with_mediator(
+                &mut verifier,
                     &institution.profile.inject_wallet(),
                     &institution.profile.inject_anoncreds_ledger_read(),
                     &institution.profile.inject_anoncreds(),
@@ -1042,8 +1048,8 @@ mod tests {
             consumer.migrate().await;
 
             prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_institution, request_name2, None).await;
-            verifier
-                .update_state(
+            verifier_update_with_mediator(
+                &mut verifier,
                     &institution.profile.inject_wallet(),
                     &institution.profile.inject_anoncreds_ledger_read(),
                     &institution.profile.inject_anoncreds(),
@@ -1173,16 +1179,16 @@ mod tests {
             assert_eq!(presentation_thread_id, verifier.get_thread_id().unwrap());
 
             info!("test_real_proof :: AS INSTITUTION VALIDATE PROOF");
-            verifier
-                .update_state(
-                    &institution.profile.inject_wallet(),
-                    &institution.profile.inject_anoncreds_ledger_read(),
-                    &institution.profile.inject_anoncreds(),
-                    &institution.agency_client,
-                    &issuer_to_consumer,
-                )
-                .await
-                .unwrap();
+            verifier_update_with_mediator(
+                &mut verifier,
+                &institution.profile.inject_wallet(),
+                &institution.profile.inject_anoncreds_ledger_read(),
+                &institution.profile.inject_anoncreds(),
+                &institution.agency_client,
+                &issuer_to_consumer,
+            )
+            .await
+            .unwrap();
             assert_eq!(
                 verifier.get_verification_status(),
                 PresentationVerificationStatus::Valid
@@ -1250,9 +1256,14 @@ mod tests {
                 .await;
             prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1))
                 .await;
-            proof_verifier
-                .update_state(
-                    &verifier.profile.inject_wallet(), &verifier.profile.inject_anoncreds_ledger_read(), &verifier.profile.inject_anoncreds(), &verifier.agency_client, &verifier_to_consumer)
+                verifier_update_with_mediator(
+                    &mut proof_verifier,
+                    &verifier.profile.inject_wallet(),
+                    &verifier.profile.inject_anoncreds_ledger_read(),
+                    &verifier.profile.inject_anoncreds(),
+                    &verifier.agency_client,
+                    &verifier_to_consumer
+                )
                 .await
                 .unwrap();
             assert_eq!(
@@ -1275,9 +1286,14 @@ mod tests {
 
             prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2))
                 .await;
-            proof_verifier
-                .update_state(
-                    &verifier.profile.inject_wallet(), &verifier.profile.inject_anoncreds_ledger_read(), &verifier.profile.inject_anoncreds(), &verifier.agency_client, &verifier_to_consumer)
+            verifier_update_with_mediator(
+                &mut proof_verifier,
+                    &verifier.profile.inject_wallet(),
+                    &verifier.profile.inject_anoncreds_ledger_read(),
+                    &verifier.profile.inject_anoncreds(),
+                    &verifier.agency_client,
+                    &verifier_to_consumer
+                )
                 .await
                 .unwrap();
             assert_eq!(

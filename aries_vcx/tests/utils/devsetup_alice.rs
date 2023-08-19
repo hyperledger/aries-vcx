@@ -11,7 +11,9 @@ use aries_vcx::global::settings::DEFAULT_LINK_SECRET_ALIAS;
 use aries_vcx::handlers::connection::mediated_connection::{ConnectionState, MediatedConnection};
 use aries_vcx::handlers::issuance::holder::Holder;
 use aries_vcx::handlers::issuance::mediated_holder::{get_credential_offer_messages, holder_update_with_mediator};
-use aries_vcx::handlers::proof_presentation::prover::test_utils::get_proof_request_messages;
+use aries_vcx::handlers::proof_presentation::mediated_prover::{
+    get_proof_request_messages, prover_update_with_mediator,
+};
 use aries_vcx::handlers::proof_presentation::prover::Prover;
 use aries_vcx::handlers::proof_presentation::types::SelectedCredentials;
 use aries_vcx::handlers::revocation_notification::receiver::RevocationNotificationReceiver;
@@ -298,16 +300,16 @@ impl Alice {
     }
 
     pub async fn ensure_presentation_verified(&mut self) {
-        self.prover
-            .update_state(
-                &self.profile.inject_anoncreds_ledger_read(),
-                &self.profile.inject_anoncreds(),
-                &self.profile.inject_wallet(),
-                &self.agency_client,
-                &self.connection,
-            )
-            .await
-            .unwrap();
+        prover_update_with_mediator(
+            &mut self.prover,
+            &self.profile.inject_anoncreds_ledger_read(),
+            &self.profile.inject_anoncreds(),
+            &self.profile.inject_wallet(),
+            &self.agency_client,
+            &self.connection,
+        )
+        .await
+        .unwrap();
         assert_eq!(Status::Success.code(), self.prover.presentation_status());
     }
 

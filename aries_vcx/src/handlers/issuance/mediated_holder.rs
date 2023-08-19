@@ -37,6 +37,7 @@ pub async fn holder_update_with_mediator(
     Ok(sm.get_state())
 }
 
+// todo: returns specific type
 pub async fn get_credential_offer_messages(
     agency_client: &AgencyClient,
     connection: &MediatedConnection,
