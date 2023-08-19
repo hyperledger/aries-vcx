@@ -72,7 +72,7 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
         })?;
         trace!("proof::update_state >>> updating using message {:?}", message);
         proof
-            .handle_message(
+            .process_aries_msg(
                 &get_main_anoncreds_ledger_read()?,
                 &get_main_anoncreds()?,
                 message.into(),
@@ -84,7 +84,7 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
         trace!("proof::update_state >>> found messages: {:?}", messages);
         if let Some((uid, message)) = proof.find_message_to_handle(messages) {
             proof
-                .handle_message(
+                .process_aries_msg(
                     &get_main_anoncreds_ledger_read()?,
                     &get_main_anoncreds()?,
                     message.into(),
@@ -127,7 +127,7 @@ pub async fn update_state_nonmediated(handle: u32, connection_handle: u32, messa
         )
     })?;
     proof
-        .handle_message(
+        .process_aries_msg(
             &get_main_anoncreds_ledger_read()?,
             &get_main_anoncreds()?,
             message.into(),

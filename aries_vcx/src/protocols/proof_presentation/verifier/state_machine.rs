@@ -348,49 +348,6 @@ impl VerifierSM {
         })
     }
 
-    pub async fn step(
-        self,
-        ledger: &Arc<dyn AnoncredsLedgerRead>,
-        anoncreds: &Arc<dyn BaseAnonCreds>,
-        message: VerifierMessages,
-        send_message: Option<SendClosure>,
-    ) -> VcxResult<Self> {
-        trace!("VerifierSM::step >>> message: {:?}", message);
-        let verifier_sm = match message {
-            VerifierMessages::PresentationProposalReceived(proposal) => self.receive_presentation_proposal(proposal)?,
-            VerifierMessages::RejectPresentationProposal(reason) => {
-                let send_message = send_message.ok_or(AriesVcxError::from_msg(
-                    AriesVcxErrorKind::InvalidState,
-                    "Attempted to call undefined send_message callback",
-                ))?;
-                self.reject_presentation_proposal(reason, send_message).await?
-            }
-            VerifierMessages::VerifyPresentation(presentation) => {
-                let send_message = send_message.ok_or(AriesVcxError::from_msg(
-                    AriesVcxErrorKind::InvalidState,
-                    "Attempted to call undefined send_message callback",
-                ))?;
-                self.verify_presentation(ledger, anoncreds, presentation, send_message)
-                    .await?
-            }
-            VerifierMessages::SendPresentationAck() => {
-                let send_message = send_message.ok_or(AriesVcxError::from_msg(
-                    AriesVcxErrorKind::InvalidState,
-                    "Attempted to call undefined send_message callback",
-                ))?;
-                self.send_presentation_ack(send_message).await?
-            }
-            // TODO: Rename to PresentationRequestRejectReceived
-            VerifierMessages::PresentationRejectReceived(problem_report) => {
-                self.receive_presentation_request_reject(problem_report)?
-            }
-            // TODO: This code path is not used currently; would need to convert ProofRequest to
-            // ProofRequestData
-            VerifierMessages::SetPresentationRequest(_) | VerifierMessages::Unknown => self,
-        };
-        Ok(verifier_sm)
-    }
-
     pub fn source_id(&self) -> String {
         self.source_id.clone()
     }

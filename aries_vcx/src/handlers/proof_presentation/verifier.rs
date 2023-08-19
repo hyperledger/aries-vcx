@@ -6,9 +6,13 @@ use agency_client::agency_client::AgencyClient;
 use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
 use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
+use messages::msg_fields::protocols::notification::Notification;
 use messages::msg_fields::protocols::present_proof::present::Presentation;
 use messages::msg_fields::protocols::present_proof::propose::ProposePresentation;
 use messages::msg_fields::protocols::present_proof::request::RequestPresentation;
+use messages::msg_fields::protocols::present_proof::PresentProof;
+use messages::msg_fields::protocols::report_problem::ProblemReport;
+use messages::msg_parts::MsgParts;
 use messages::AriesMessage;
 
 use crate::common::proofs::proof_request::PresentationRequestData;
@@ -61,17 +65,6 @@ impl Verifier {
 
     pub fn get_state(&self) -> VerifierState {
         self.verifier_sm.get_state()
-    }
-
-    pub async fn handle_message(
-        &mut self,
-        ledger: &Arc<dyn AnoncredsLedgerRead>,
-        anoncreds: &Arc<dyn BaseAnonCreds>,
-        message: VerifierMessages,
-        send_message: Option<SendClosure>,
-    ) -> VcxResult<()> {
-        trace!("Verifier::handle_message >>> message: {:?}", message);
-        self.step(ledger, anoncreds, message, send_message).await
     }
 
     pub async fn send_presentation_request(&mut self, send_message: SendClosure) -> VcxResult<()> {
@@ -163,18 +156,51 @@ impl Verifier {
         Ok(self.verifier_sm.thread_id())
     }
 
-    pub async fn step(
+    pub async fn process_aries_msg(
         &mut self,
         ledger: &Arc<dyn AnoncredsLedgerRead>,
         anoncreds: &Arc<dyn BaseAnonCreds>,
-        message: VerifierMessages,
+        message: AriesMessage,
         send_message: Option<SendClosure>,
     ) -> VcxResult<()> {
-        self.verifier_sm = self
-            .verifier_sm
-            .clone()
-            .step(ledger, anoncreds, message, send_message)
-            .await?;
+        let verifier_sm = match message {
+            AriesMessage::PresentProof(PresentProof::ProposePresentation(proposal)) => {
+                self.verifier_sm.clone().receive_presentation_proposal(proposal)?
+            }
+            AriesMessage::PresentProof(PresentProof::Presentation(presentation)) => {
+                let send_message = send_message.ok_or(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidState,
+                    "Attempted to call undefined send_message callback",
+                ))?;
+                self.verifier_sm
+                    .clone()
+                    .verify_presentation(ledger, anoncreds, presentation, send_message)
+                    .await?
+            }
+            AriesMessage::ReportProblem(report) => {
+                self.verifier_sm.clone().receive_presentation_request_reject(report)?
+            }
+            AriesMessage::Notification(Notification::ProblemReport(report)) => {
+                let MsgParts {
+                    id,
+                    content,
+                    decorators,
+                } = report;
+                let report = ProblemReport::with_decorators(id, content.0, decorators);
+                self.verifier_sm.clone().receive_presentation_request_reject(report)?
+            }
+            AriesMessage::PresentProof(PresentProof::ProblemReport(report)) => {
+                let MsgParts {
+                    id,
+                    content,
+                    decorators,
+                } = report;
+                let report = ProblemReport::with_decorators(id, content.0, decorators);
+                self.verifier_sm.clone().receive_presentation_request_reject(report)?
+            }
+            _ => self.verifier_sm.clone(),
+        };
+        self.verifier_sm = verifier_sm;
         Ok(())
     }
 

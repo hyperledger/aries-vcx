@@ -29,7 +29,8 @@ pub async fn verifier_update_with_mediator(
 
     let messages = connection.get_messages(agency_client).await?;
     if let Some((uid, msg)) = verifier_find_message_to_handle(sm, messages) {
-        sm.step(ledger, anoncreds, msg.into(), Some(send_message)).await?;
+        sm.process_aries_msg(ledger, anoncreds, msg.into(), Some(send_message))
+            .await?;
         connection.update_message_status(&uid, agency_client).await?;
     }
     Ok(sm.get_state())
