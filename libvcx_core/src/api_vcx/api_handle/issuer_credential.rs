@@ -224,13 +224,12 @@ pub async fn send_credential_nonmediated(handle: u32, connection_handle: u32) ->
     let mut credential = ISSUER_CREDENTIAL_MAP.get_cloned(handle)?;
     let con = connection::get_cloned_generic_connection(&connection_handle)?;
     let wallet = get_main_wallet()?;
-
     let send_message: SendClosure =
         Box::new(|msg: AriesMessage| Box::pin(async move { con.send_message(&wallet, &msg, &HttpClient).await }));
-
     credential
-        .build_credential(&get_main_anoncreds()?, send_message)
+        .build_credential(&get_main_anoncreds()?)
         .await?;
+    credential.send_credential(send_message).await;
     let state: u32 = credential.get_state().into();
     ISSUER_CREDENTIAL_MAP.insert(handle, credential)?;
     Ok(state)
