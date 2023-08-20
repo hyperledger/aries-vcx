@@ -55,7 +55,6 @@ impl From<IssuerState> for u32 {
             IssuerState::Initial => 0,
             IssuerState::ProposalReceived => 1,
             IssuerState::OfferSet => 2,
-            IssuerState::OfferSent => 3,
             IssuerState::RequestReceived => 4,
             IssuerState::CredentialSent => 5,
             IssuerState::Finished => 6,

@@ -151,13 +151,9 @@ impl Issuer {
         Ok(offer.into())
     }
 
-    pub fn mark_credential_offer_msg_sent(&mut self) -> VcxResult<()> {
-        self.issuer_sm = self.issuer_sm.clone().mark_credential_offer_msg_sent()?;
-        Ok(())
-    }
-
+    #[deprecated]
     pub async fn send_credential_offer(&mut self, send_message: SendClosure) -> VcxResult<()> {
-        self.issuer_sm = self.issuer_sm.clone().send_credential_offer(send_message).await?;
+        self.issuer_sm.clone().send_credential_offer(send_message).await?;
         Ok(())
     }
 
@@ -176,7 +172,7 @@ impl Issuer {
         anoncreds: &Arc<dyn BaseAnonCreds>,
         send_message: SendClosure,
     ) -> VcxResult<()> {
-        self.issuer_sm = self.issuer_sm.clone().send_credential(anoncreds, send_message).await?;
+        self.issuer_sm = self.issuer_sm.clone().build_credential(anoncreds, send_message).await?;
         Ok(())
     }
 

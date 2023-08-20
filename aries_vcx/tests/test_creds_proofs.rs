@@ -1407,7 +1407,7 @@ mod tests {
             let mut issuer =
                 accept_cred_proposal(&mut institution, &institution_to_consumer, rev_reg_id, Some(tails_dir)).await;
             decline_offer(&mut consumer, &consumer_to_institution, &mut holder).await;
-            assert_eq!(IssuerState::OfferSent, issuer.get_state());
+            assert_eq!(IssuerState::OfferSet, issuer.get_state());
             tokio::time::sleep(Duration::from_millis(1000)).await;
             issuer_update_with_mediator(&mut issuer, &institution.agency_client, &institution_to_consumer)
                 .await

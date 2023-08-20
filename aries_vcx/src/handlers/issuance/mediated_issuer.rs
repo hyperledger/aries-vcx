@@ -26,7 +26,7 @@ pub fn issuer_find_message_to_handle(
                     return Some((uid, message));
                 }
             }
-            IssuerState::OfferSent => match &message {
+            IssuerState::OfferSet => match &message {
                 AriesMessage::CredentialIssuance(CredentialIssuance::RequestCredential(msg)) => {
                     if matches_opt_thread_id!(msg, sm.get_thread_id().unwrap().as_str()) {
                         return Some((uid, message));

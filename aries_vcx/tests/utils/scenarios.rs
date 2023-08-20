@@ -450,7 +450,7 @@ pub mod test_utils {
             )
             .await
             .unwrap();
-        assert_eq!(IssuerState::OfferSent, issuer.get_state());
+        assert_eq!(IssuerState::OfferSet, issuer.get_state());
         tokio::time::sleep(Duration::from_millis(1000)).await;
         issuer
     }
@@ -462,7 +462,7 @@ pub mod test_utils {
         rev_reg_id: Option<String>,
         tails_dir: Option<String>,
     ) {
-        assert_eq!(IssuerState::OfferSent, issuer.get_state());
+        assert_eq!(IssuerState::OfferSet, issuer.get_state());
         issuer_update_with_mediator(issuer, &faber.agency_client, connection)
             .await
             .unwrap();
@@ -487,7 +487,7 @@ pub mod test_utils {
             )
             .await
             .unwrap();
-        assert_eq!(IssuerState::OfferSent, issuer.get_state());
+        assert_eq!(IssuerState::OfferSet, issuer.get_state());
         tokio::time::sleep(Duration::from_millis(1000)).await;
     }
 
@@ -556,7 +556,7 @@ pub mod test_utils {
     ) {
         info!("send_credential >>> getting offers");
         let thread_id = issuer_credential.get_thread_id().unwrap();
-        assert_eq!(IssuerState::OfferSent, issuer_credential.get_state());
+        assert_eq!(IssuerState::OfferSet, issuer_credential.get_state());
         assert!(!issuer_credential.is_revokable());
 
         issuer_update_with_mediator(issuer_credential, &faber.agency_client, issuer_to_consumer)

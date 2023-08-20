@@ -303,7 +303,7 @@ impl Faber {
         issuer_update_with_mediator(&mut self.issuer_credential, &self.agency_client, &self.connection)
             .await
             .unwrap();
-        assert_eq!(IssuerState::OfferSent, self.issuer_credential.get_state());
+        assert_eq!(IssuerState::OfferSet, self.issuer_credential.get_state());
     }
 
     pub async fn send_credential(&mut self) {

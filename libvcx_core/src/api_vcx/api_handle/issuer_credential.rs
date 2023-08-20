@@ -183,12 +183,6 @@ pub async fn build_credential_offer_msg_v2(
     ISSUER_CREDENTIAL_MAP.insert(credential_handle, credential)
 }
 
-pub fn mark_credential_offer_msg_sent(handle: u32) -> LibvcxResult<()> {
-    let mut credential = ISSUER_CREDENTIAL_MAP.get_cloned(handle)?;
-    credential.mark_credential_offer_msg_sent()?;
-    ISSUER_CREDENTIAL_MAP.insert(handle, credential)
-}
-
 pub fn get_credential_offer_msg(handle: u32) -> LibvcxResult<AriesMessage> {
     ISSUER_CREDENTIAL_MAP.get(handle, |credential| Ok(credential.get_credential_offer_msg()?))
 }

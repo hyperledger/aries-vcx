@@ -29,7 +29,6 @@ use crate::protocols::common::build_problem_report_msg;
 use crate::protocols::issuance::issuer::states::credential_sent::CredentialSentState;
 use crate::protocols::issuance::issuer::states::finished::FinishedState;
 use crate::protocols::issuance::issuer::states::initial::InitialIssuerState;
-use crate::protocols::issuance::issuer::states::offer_sent::OfferSentState;
 use crate::protocols::issuance::issuer::states::offer_set::OfferSetState;
 use crate::protocols::issuance::issuer::states::proposal_received::ProposalReceivedState;
 use crate::protocols::issuance::issuer::states::requested_received::RequestReceivedState;
@@ -40,7 +39,6 @@ pub enum IssuerFullState {
     Initial(InitialIssuerState),
     OfferSet(OfferSetState),
     ProposalReceived(ProposalReceivedState),
-    OfferSent(OfferSentState),
     RequestReceived(RequestReceivedState),
     CredentialSent(CredentialSentState),
     Finished(FinishedState),
@@ -51,7 +49,6 @@ pub enum IssuerState {
     Initial,
     OfferSet,
     ProposalReceived,
-    OfferSent,
     RequestReceived,
     CredentialSent,
     Finished,
@@ -65,7 +62,6 @@ impl Display for IssuerFullState {
             IssuerFullState::Initial(_) => f.write_str("Initial"),
             IssuerFullState::OfferSet(_) => f.write_str("OfferSet"),
             IssuerFullState::ProposalReceived(_) => f.write_str("ProposalReceived"),
-            IssuerFullState::OfferSent(_) => f.write_str("OfferSent"),
             IssuerFullState::RequestReceived(_) => f.write_str("RequestReceived"),
             IssuerFullState::CredentialSent(_) => f.write_str("CredentialSent"),
             IssuerFullState::Finished(_) => f.write_str("Finished"),
@@ -200,7 +196,6 @@ impl IssuerSM {
                 Some(offer_info) => offer_info.rev_reg_id.clone(),
                 _ => None,
             },
-            IssuerFullState::OfferSent(state) => state.rev_reg_id.clone(),
             IssuerFullState::RequestReceived(state) => state.rev_reg_id.clone(),
             IssuerFullState::CredentialSent(state) => {
                 state
@@ -261,7 +256,6 @@ impl IssuerSM {
             IssuerFullState::Initial(_) => IssuerState::Initial,
             IssuerFullState::ProposalReceived(_) => IssuerState::ProposalReceived,
             IssuerFullState::OfferSet(_) => IssuerState::OfferSet,
-            IssuerFullState::OfferSent(_) => IssuerState::OfferSent,
             IssuerFullState::RequestReceived(_) => IssuerState::RequestReceived,
             IssuerFullState::CredentialSent(_) => IssuerState::CredentialSent,
             IssuerFullState::Finished(ref status) => match status.status {
@@ -317,31 +311,11 @@ impl IssuerSM {
     pub fn get_credential_offer_msg(&self) -> VcxResult<OfferCredential> {
         match &self.state {
             IssuerFullState::OfferSet(state) => Ok(state.offer.clone()),
-            IssuerFullState::OfferSent(state) => Ok(state.offer.clone()),
             _ => Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::InvalidState,
                 format!("Can not get_credential_offer in current state {}.", self.state),
             )),
         }
-    }
-
-    pub fn mark_credential_offer_msg_sent(self) -> VcxResult<Self> {
-        let Self {
-            state,
-            source_id,
-            thread_id,
-        } = self;
-        let state = match state {
-            IssuerFullState::OfferSet(state) => IssuerFullState::OfferSent(state.into()),
-            IssuerFullState::OfferSent(state) => IssuerFullState::OfferSent(state),
-            _ => {
-                return Err(AriesVcxError::from_msg(
-                    AriesVcxErrorKind::InvalidState,
-                    format!("Can not mark_as_offer_sent in current state {}.", state),
-                ))
-            }
-        };
-        Ok(Self::step(source_id, thread_id, state))
     }
 
     pub fn receive_proposal(self, proposal: ProposeCredential) -> VcxResult<Self> {
@@ -355,7 +329,7 @@ impl IssuerSM {
                 let state = IssuerFullState::ProposalReceived(ProposalReceivedState::new(proposal, None));
                 (state, thread_id)
             }
-            IssuerFullState::OfferSent(_) => {
+            IssuerFullState::OfferSet(_) => {
                 let state = IssuerFullState::ProposalReceived(ProposalReceivedState::new(proposal, None));
                 (state, self.thread_id.clone())
             }
@@ -371,17 +345,18 @@ impl IssuerSM {
         })
     }
 
-    pub async fn send_credential_offer(self, send_message: SendClosure) -> VcxResult<Self> {
-        Ok(match self.state {
+    #[deprecated]
+    pub async fn send_credential_offer(self, send_message: SendClosure) -> VcxResult<()> {
+        match self.state {
             IssuerFullState::OfferSet(ref state_data) => {
                 let cred_offer_msg = state_data.offer.clone().into();
                 send_message(cred_offer_msg).await?;
-                self.mark_credential_offer_msg_sent()?
             }
             _ => {
                 return Err(AriesVcxError::from_msg(AriesVcxErrorKind::NotReady, "Invalid action"));
             }
-        })
+        };
+        Ok(())
     }
 
     pub fn receive_request(self, request: RequestCredential) -> VcxResult<Self> {
@@ -390,7 +365,7 @@ impl IssuerSM {
             &AriesMessage::CredentialIssuance(CredentialIssuance::RequestCredential(request.clone())),
         )?;
         let state = match self.state {
-            IssuerFullState::OfferSent(state_data) => IssuerFullState::RequestReceived((state_data, request).into()),
+            IssuerFullState::OfferSet(state_data) => IssuerFullState::RequestReceived((state_data, request).into()),
             s => {
                 warn!("Unable to receive credential request in state {}", s);
                 s
@@ -399,7 +374,7 @@ impl IssuerSM {
         Ok(Self { state, ..self })
     }
 
-    pub async fn send_credential(
+    pub async fn build_credential(
         self,
         anoncreds: &Arc<dyn BaseAnonCreds>,
         send_message: SendClosure,
@@ -460,7 +435,7 @@ impl IssuerSM {
     pub fn receive_problem_report(self, problem_report: ProblemReport) -> VcxResult<Self> {
         verify_thread_id(&self.thread_id, &AriesMessage::ReportProblem(problem_report.clone()))?;
         let state = match self.state {
-            IssuerFullState::OfferSent(state_data) => IssuerFullState::Finished((state_data, problem_report).into()),
+            IssuerFullState::OfferSet(state_data) => IssuerFullState::Finished((state_data, problem_report).into()),
             IssuerFullState::CredentialSent(state_data) => IssuerFullState::Finished((state_data).into()),
             s => {
                 warn!("Unable to receive credential ack in state {}", s);
