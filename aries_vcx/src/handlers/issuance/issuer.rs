@@ -176,36 +176,6 @@ impl Issuer {
         Ok(())
     }
 
-    pub async fn send_revocation_notification(
-        &mut self,
-        ack_on: Vec<AckOn>,
-        comment: Option<String>,
-        send_message: SendClosure,
-    ) -> VcxResult<()> {
-        // TODO: Check if actually revoked
-        if self.issuer_sm.is_revokable() {
-            // TODO: Store to allow checking not. status (sent, acked)
-            let config = SenderConfigBuilder::default()
-                .rev_reg_id(self.get_rev_reg_id()?)
-                .cred_rev_id(self.get_rev_id()?)
-                .comment(comment)
-                .ack_on(ack_on)
-                .build()?;
-            RevocationNotificationSender::build()
-                .send_revocation_notification(config, send_message)
-                .await?;
-            Ok(())
-        } else {
-            Err(AriesVcxError::from_msg(
-                AriesVcxErrorKind::InvalidState,
-                format!(
-                    "Can't send revocation notification in state {:?}, credential is not revokable",
-                    self.issuer_sm.get_state()
-                ),
-            ))
-        }
-    }
-
     pub fn get_state(&self) -> IssuerState {
         self.issuer_sm.get_state()
     }
