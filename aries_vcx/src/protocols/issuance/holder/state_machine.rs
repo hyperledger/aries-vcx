@@ -561,6 +561,6 @@ async fn process_credential_offer(
     let (req, req_meta, _cred_def_id, cred_def_json) =
         create_anoncreds_credential_request(ledger, anoncreds, &cred_def_id, &my_pw_did, &cred_offer).await?;
     trace!("Created cred def json: {}", cred_def_json);
-    let credential_request_msg = build_credential_request_msg(req, &thread_id)?;
+    let credential_request_msg = build_credential_request_msg(req, &thread_id);
     Ok((credential_request_msg, req_meta, cred_def_json))
 }

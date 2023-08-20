@@ -422,12 +422,11 @@ impl IssuerSM {
     pub async fn send_credential(self, send_message: SendClosure) -> VcxResult<()> {
         match self.state {
             IssuerFullState::CredentialSet(ref state_data) => {
-                let cred_offer_msg = state_data.msg_issue_credential.clone().into();
-                // todo: update timing
-                // let mut timing = Timing::default();
-                // timing.out_time = Some(Utc::now());
-                // decorators.timing = Some(timing);
-                send_message(cred_offer_msg).await?;
+                let mut cred_offer_msg: IssueCredential = state_data.msg_issue_credential.clone().into();
+                let mut timing = Timing::default();
+                timing.out_time = Some(Utc::now());
+                cred_offer_msg.decorators.timing = Some(timing);
+                send_message(cred_offer_msg.into()).await?;
             }
             _ => {
                 return Err(AriesVcxError::from_msg(AriesVcxErrorKind::NotReady, "Invalid action"));
