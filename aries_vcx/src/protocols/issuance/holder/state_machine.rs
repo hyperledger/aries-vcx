@@ -14,6 +14,7 @@ use messages::msg_fields::protocols::cred_issuance::propose_credential::ProposeC
 use messages::msg_fields::protocols::cred_issuance::request_credential::{
     RequestCredential, RequestCredentialContent, RequestCredentialDecorators,
 };
+use messages::msg_fields::protocols::cred_issuance::CredentialIssuance;
 use messages::msg_fields::protocols::notification::ack::{AckDecorators, AckStatus};
 use messages::msg_fields::protocols::report_problem::ProblemReport;
 use messages::AriesMessage;
@@ -22,7 +23,7 @@ use uuid::Uuid;
 use crate::common::credentials::{get_cred_rev_id, is_cred_revoked};
 use crate::errors::error::prelude::*;
 use crate::global::settings;
-use crate::handlers::util::{get_attach_as_string, make_attach_from_str, AttachmentId, Status};
+use crate::handlers::util::{get_attach_as_string, make_attach_from_str, verify_thread_id, AttachmentId, Status};
 use crate::protocols::common::build_problem_report_msg;
 use crate::protocols::issuance::holder::states::finished::FinishedHolderState;
 use crate::protocols::issuance::holder::states::initial::InitialHolderState;
@@ -146,20 +147,20 @@ impl HolderSM {
         }
     }
 
-    pub async fn send_proposal(self, proposal_data: ProposeCredential, send_message: SendClosure) -> VcxResult<Self> {
-        // verify_thread_id(
-        //     &self.thread_id,
-        //     &CredentialIssuanceAction::CredentialProposalSend(proposal_data.clone()),
-        // )?;
+    pub async fn send_proposal(self, proposal: ProposeCredential, send_message: SendClosure) -> VcxResult<Self> {
+        verify_thread_id(
+            &self.thread_id,
+            &AriesMessage::CredentialIssuance(CredentialIssuance::ProposeCredential(proposal.clone())),
+        )?;
         let state = match self.state {
             HolderFullState::Initial(_) => {
-                let mut proposal = proposal_data;
+                let mut proposal = proposal;
                 proposal.id = self.thread_id.clone();
                 send_message(proposal.clone().into()).await?;
                 HolderFullState::ProposalSent(ProposalSentState::new(proposal))
             }
             HolderFullState::OfferReceived(_) => {
-                let mut proposal = proposal_data;
+                let mut proposal = proposal;
                 proposal.id = self.thread_id.clone();
                 send_message(proposal.clone().into()).await?;
                 HolderFullState::ProposalSent(ProposalSentState::new(proposal))
@@ -173,10 +174,10 @@ impl HolderSM {
     }
 
     pub fn receive_offer(self, offer: OfferCredential) -> VcxResult<Self> {
-        // verify_thread_id(
-        //     &self.thread_id,
-        //     &CredentialIssuanceAction::CredentialOffer(offer.clone()),
-        // )?;
+        verify_thread_id(
+            &self.thread_id,
+            &AriesMessage::CredentialIssuance(CredentialIssuance::OfferCredential(offer.clone())),
+        )?;
         let state = match self.state {
             HolderFullState::ProposalSent(_) => HolderFullState::OfferReceived(OfferReceivedState::new(offer)),
             s => {

@@ -16,14 +16,16 @@ use messages::msg_fields::protocols::present_proof::problem_report::{
 use messages::msg_fields::protocols::present_proof::request::{
     RequestPresentation, RequestPresentationContent, RequestPresentationDecorators,
 };
-use messages::msg_fields::protocols::present_proof::{present::Presentation, propose::ProposePresentation};
+use messages::msg_fields::protocols::present_proof::{
+    present::Presentation, propose::ProposePresentation, PresentProof,
+};
 use messages::msg_fields::protocols::report_problem::ProblemReport;
 use messages::msg_parts::MsgParts;
 use messages::AriesMessage;
 
 use crate::common::proofs::proof_request::PresentationRequestData;
 use crate::errors::error::prelude::*;
-use crate::handlers::util::{make_attach_from_str, AttachmentId, Status};
+use crate::handlers::util::{make_attach_from_str, verify_thread_id, AttachmentId, Status};
 use crate::protocols::common::build_problem_report_msg;
 use crate::protocols::proof_presentation::verifier::states::finished::FinishedState;
 use crate::protocols::proof_presentation::verifier::states::initial::InitialVerifierState;
@@ -138,10 +140,10 @@ impl VerifierSM {
     }
 
     pub fn receive_presentation_proposal(self, proposal: ProposePresentation) -> VcxResult<Self> {
-        // verify_thread_id(
-        //     &self.thread_id,
-        //     &VerifierMessages::PresentationProposalReceived(proposal.clone()),
-        // )?;
+        verify_thread_id(
+            &self.thread_id,
+            &AriesMessage::PresentProof(PresentProof::ProposePresentation(proposal.clone())),
+        )?;
         let (state, thread_id) = match self.state {
             VerifierFullState::Initial(_) => {
                 let thread_id = match proposal.decorators.thread {
@@ -170,10 +172,7 @@ impl VerifierSM {
     }
 
     pub fn receive_presentation_request_reject(self, problem_report: ProblemReport) -> VcxResult<Self> {
-        // verify_thread_id(
-        //     &self.thread_id,
-        //     &VerifierMessages::PresentationRejectReceived(problem_report.clone()),
-        // )?;
+        verify_thread_id(&self.thread_id, &AriesMessage::ReportProblem(problem_report.clone()))?;
         let state = match self.state {
             VerifierFullState::PresentationRequestSent(state) => {
                 VerifierFullState::Finished((state, problem_report).into())
@@ -219,10 +218,10 @@ impl VerifierSM {
         presentation: Presentation,
         send_message: SendClosure,
     ) -> VcxResult<Self> {
-        // verify_thread_id(
-        //     &self.thread_id,
-        //     &VerifierMessages::VerifyPresentation(presentation.clone()),
-        // )?;
+        verify_thread_id(
+            &self.thread_id,
+            &AriesMessage::PresentProof(PresentProof::Presentation(presentation.clone())),
+        )?;
         let state = match self.state {
             VerifierFullState::PresentationRequestSent(state) => {
                 let verification_result = state
