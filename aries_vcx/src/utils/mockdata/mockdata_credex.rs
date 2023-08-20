@@ -123,7 +123,6 @@ pub const ARIES_CREDENTIAL_OFFER_JSON_FORMAT: &str = r#"{
     ]
 }"#;
 
-
 // Alice sends credential request to Faber
 pub const ARIES_CREDENTIAL_REQUEST: &str = r#"
 {
