@@ -271,7 +271,6 @@ pub mod tests {
     #[cfg(test)]
     use crate::api_vcx::api_handle::mediated_connection::test_utils::build_test_connection_inviter_requested;
     use crate::aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
-    use crate::errors::error;
     use aries_vcx::utils::constants::V3_OBJECT_SERIALIZE_VERSION;
     use aries_vcx::utils::devsetup::SetupMocks;
     use aries_vcx::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_REQUEST;
@@ -327,7 +326,7 @@ pub mod tests {
         send_credential_offer_v2(credential_handle, connection_handle)
             .await
             .unwrap();
-        assert_eq!(get_state(credential_handle).unwrap(), u32::from(IssuerState::OfferSent));
+        assert_eq!(get_state(credential_handle).unwrap(), u32::from(IssuerState::OfferSet));
     }
 
     #[tokio::test]
@@ -362,7 +361,7 @@ pub mod tests {
         send_credential_offer_v2(credential_handle, connection_handle)
             .await
             .unwrap();
-        assert_eq!(get_state(credential_handle).unwrap(), u32::from(IssuerState::OfferSent));
+        assert_eq!(get_state(credential_handle).unwrap(), u32::from(IssuerState::OfferSet));
 
         update_state(credential_handle, Some(ARIES_CREDENTIAL_REQUEST), connection_handle)
             .await
@@ -384,12 +383,12 @@ pub mod tests {
             .await
             .unwrap();
         send_credential_offer_v2(handle_cred, handle_conn).await.unwrap();
-        assert_eq!(get_state(handle_cred).unwrap(), u32::from(IssuerState::OfferSent));
+        assert_eq!(get_state(handle_cred).unwrap(), u32::from(IssuerState::OfferSet));
 
         // try to update state with nonsense message
         let result = update_state(handle_cred, Some(ARIES_CONNECTION_ACK), handle_conn).await;
         assert!(result.is_ok()); // todo: maybe we should rather return error if update_state doesn't progress state
-        assert_eq!(get_state(handle_cred).unwrap(), u32::from(IssuerState::OfferSent));
+        assert_eq!(get_state(handle_cred).unwrap(), u32::from(IssuerState::OfferSet));
     }
 
     #[tokio::test]
