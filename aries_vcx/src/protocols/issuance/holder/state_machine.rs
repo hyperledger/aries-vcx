@@ -19,12 +19,13 @@ use messages::msg_fields::protocols::notification::ack::{AckDecorators, AckStatu
 use messages::msg_fields::protocols::report_problem::ProblemReport;
 use messages::AriesMessage;
 use uuid::Uuid;
-use messages::msg_fields::protocols::cred_issuance::CredentialIssuance;
 
 use crate::common::credentials::{get_cred_rev_id, is_cred_revoked};
 use crate::errors::error::prelude::*;
 use crate::global::settings;
-use crate::handlers::util::{get_attach_as_string, make_attach_from_str, verify_thread_id, AttachmentId, Status, verify_thread_id};
+use crate::handlers::util::{
+    get_attach_as_string, make_attach_from_str, verify_thread_id, AttachmentId, Status,
+};
 use crate::protocols::common::build_problem_report_msg;
 use crate::protocols::issuance::holder::states::finished::FinishedHolderState;
 use crate::protocols::issuance::holder::states::initial::InitialHolderState;
