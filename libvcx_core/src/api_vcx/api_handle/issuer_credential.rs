@@ -1,7 +1,7 @@
-use libc::send;
 use aries_vcx::handlers::util::OfferInfo;
 use aries_vcx::messages::AriesMessage;
 use aries_vcx::protocols::SendClosure;
+use libc::send;
 use serde_json;
 
 use aries_vcx::handlers::issuance::issuer::Issuer;
@@ -228,7 +228,9 @@ pub async fn send_credential_nonmediated(handle: u32, connection_handle: u32) ->
     let send_message: SendClosure =
         Box::new(|msg: AriesMessage| Box::pin(async move { con.send_message(&wallet, &msg, &HttpClient).await }));
 
-    credential.build_credential(&get_main_anoncreds()?, send_message).await?;
+    credential
+        .build_credential(&get_main_anoncreds()?, send_message)
+        .await?;
     let state: u32 = credential.get_state().into();
     ISSUER_CREDENTIAL_MAP.insert(handle, credential)?;
     Ok(state)

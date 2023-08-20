@@ -124,9 +124,7 @@ impl ServiceCredentialsIssuer {
             Box::pin(async move { connection.send_message(&wallet, &msg, &HttpClient).await })
         });
 
-        issuer
-            .build_credential(&self.profile.inject_anoncreds())
-            .await?;
+        issuer.build_credential(&self.profile.inject_anoncreds()).await?;
         issuer.send_credential(send_closure).await;
         self.creds_issuer
             .insert(&issuer.get_thread_id()?, IssuerWrapper::new(issuer, &connection_id))?;
