@@ -125,8 +125,9 @@ impl ServiceCredentialsIssuer {
         });
 
         issuer
-            .send_credential(&self.profile.inject_anoncreds(), send_closure)
+            .build_credential(&self.profile.inject_anoncreds())
             .await?;
+        issuer.send_credential(send_closure).await;
         self.creds_issuer
             .insert(&issuer.get_thread_id()?, IssuerWrapper::new(issuer, &connection_id))?;
         Ok(())

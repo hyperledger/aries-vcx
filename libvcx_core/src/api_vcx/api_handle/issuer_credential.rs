@@ -1,3 +1,4 @@
+use libc::send;
 use aries_vcx::handlers::util::OfferInfo;
 use aries_vcx::messages::AriesMessage;
 use aries_vcx::protocols::SendClosure;
@@ -211,12 +212,9 @@ pub async fn send_credential_offer_nonmediated(credential_handle: u32, connectio
 
 pub async fn send_credential(handle: u32, connection_handle: u32) -> LibvcxResult<u32> {
     let mut credential = ISSUER_CREDENTIAL_MAP.get_cloned(handle)?;
-    credential
-        .send_credential(
-            &get_main_anoncreds()?,
-            mediated_connection::send_message_closure(connection_handle).await?,
-        )
-        .await?;
+    credential.build_credential(&get_main_anoncreds()?).await?;
+    let send_closure = mediated_connection::send_message_closure(connection_handle).await?;
+    credential.send_credential(send_closure).await?;
     let state: u32 = credential.get_state().into();
     ISSUER_CREDENTIAL_MAP.insert(handle, credential)?;
     Ok(state)
@@ -230,7 +228,7 @@ pub async fn send_credential_nonmediated(handle: u32, connection_handle: u32) ->
     let send_message: SendClosure =
         Box::new(|msg: AriesMessage| Box::pin(async move { con.send_message(&wallet, &msg, &HttpClient).await }));
 
-    credential.send_credential(&get_main_anoncreds()?, send_message).await?;
+    credential.build_credential(&get_main_anoncreds()?, send_message).await?;
     let state: u32 = credential.get_state().into();
     ISSUER_CREDENTIAL_MAP.insert(handle, credential)?;
     Ok(state)

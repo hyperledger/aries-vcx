@@ -568,15 +568,14 @@ pub mod test_utils {
 
         info!("send_credential >>> sending credential");
         issuer_credential
-            .send_credential(
-                &faber.profile.inject_anoncreds(),
-                issuer_to_consumer
-                    .send_message_closure(faber.profile.inject_wallet())
-                    .await
-                    .unwrap(),
-            )
+            .build_credential(&faber.profile.inject_anoncreds())
             .await
             .unwrap();
+        let send_closure = issuer_to_consumer
+            .send_message_closure(faber.profile.inject_wallet())
+            .await
+            .unwrap();
+        issuer_credential.send_credential(send_closure).await;
         tokio::time::sleep(Duration::from_millis(1000)).await;
         assert_eq!(thread_id, issuer_credential.get_thread_id().unwrap());
 

@@ -313,19 +313,19 @@ impl Faber {
         assert_eq!(IssuerState::RequestReceived, self.issuer_credential.get_state());
 
         self.issuer_credential
-            .send_credential(
-                &self.profile.inject_anoncreds(),
-                self.connection
-                    .send_message_closure(self.profile.inject_wallet())
-                    .await
-                    .unwrap(),
-            )
+            .build_credential(&self.profile.inject_anoncreds())
             .await
             .unwrap();
+        let send_closure = self
+            .connection
+            .send_message_closure(self.profile.inject_wallet())
+            .await
+            .unwrap();
+        self.issuer_credential.send_credential(send_closure).await;
         issuer_update_with_mediator(&mut self.issuer_credential, &self.agency_client, &self.connection)
             .await
             .unwrap();
-        assert_eq!(IssuerState::CredentialSent, self.issuer_credential.get_state());
+        assert_eq!(IssuerState::CredentialSet, self.issuer_credential.get_state());
     }
 
     pub async fn request_presentation(&mut self) {

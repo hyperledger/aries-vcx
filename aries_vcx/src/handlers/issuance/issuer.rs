@@ -167,13 +167,14 @@ impl Issuer {
         Ok(())
     }
 
-    pub async fn send_credential(
-        &mut self,
-        anoncreds: &Arc<dyn BaseAnonCreds>,
-        send_message: SendClosure,
-    ) -> VcxResult<()> {
-        self.issuer_sm = self.issuer_sm.clone().build_credential(anoncreds, send_message).await?;
+    pub async fn build_credential(&mut self, anoncreds: &Arc<dyn BaseAnonCreds>) -> VcxResult<()> {
+        self.issuer_sm = self.issuer_sm.clone().build_credential(anoncreds).await?;
         Ok(())
+    }
+
+    #[deprecated]
+    pub async fn send_credential(&mut self, send_message: SendClosure) -> VcxResult<()> {
+        self.issuer_sm.clone().send_credential(send_message).await
     }
 
     pub fn get_state(&self) -> IssuerState {

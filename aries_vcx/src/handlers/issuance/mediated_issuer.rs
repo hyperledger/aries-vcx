@@ -44,7 +44,7 @@ pub fn issuer_find_message_to_handle(
                 }
                 _ => {}
             },
-            IssuerState::CredentialSent => match &message {
+            IssuerState::CredentialSet => match &message {
                 AriesMessage::CredentialIssuance(CredentialIssuance::Ack(msg)) => {
                     if matches_thread_id!(msg, sm.get_thread_id().unwrap().as_str()) {
                         return Some((uid, message));
