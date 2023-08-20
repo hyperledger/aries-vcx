@@ -70,7 +70,7 @@ impl fmt::Display for HolderFullState {
     }
 }
 
-fn build_credential_request_msg(credential_request_attach: String, thread_id: &str) -> VcxResult<RequestCredential> {
+fn build_credential_request_msg(credential_request_attach: String, thread_id: &str) -> RequestCredential {
     let content = RequestCredentialContent::new(vec![make_attach_from_str!(
         &credential_request_attach,
         AttachmentId::CredentialRequest.as_ref().to_string()
@@ -85,11 +85,7 @@ fn build_credential_request_msg(credential_request_attach: String, thread_id: &s
     decorators.thread = Some(thread);
     decorators.timing = Some(timing);
 
-    Ok(RequestCredential::with_decorators(
-        Uuid::new_v4().to_string(),
-        content,
-        decorators,
-    ))
+    RequestCredential::with_decorators(Uuid::new_v4().to_string(), content, decorators)
 }
 
 fn build_credential_ack(thread_id: &str) -> AckCredential {
@@ -197,7 +193,7 @@ impl HolderSM {
     ) -> VcxResult<Self> {
         let state = match self.state {
             HolderFullState::OfferReceived(state_data) => {
-                match _make_credential_request(ledger, anoncreds, self.thread_id.clone(), my_pw_did, &state_data.offer)
+                match process_credential_offer(ledger, anoncreds, self.thread_id.clone(), my_pw_did, &state_data.offer)
                     .await
                 {
                     Ok((cred_request, req_meta, cred_def_json)) => {
@@ -439,7 +435,10 @@ impl HolderSM {
                     AriesVcxErrorKind::InvalidState,
                     "Cannot get credential: credential id not found",
                 ))?;
-                _delete_credential(anoncreds, &cred_id).await
+                anoncreds
+                    .prover_delete_credential(&cred_id)
+                    .await
+                    .map_err(|err| err.into())
             }
             _ => Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::NotReady,
@@ -524,16 +523,7 @@ async fn _store_credential(
     Ok((cred_id, rev_reg_def_json))
 }
 
-async fn _delete_credential(anoncreds: &Arc<dyn BaseAnonCreds>, cred_id: &str) -> VcxResult<()> {
-    trace!("Holder::_delete_credential >>> cred_id: {}", cred_id);
-
-    anoncreds
-        .prover_delete_credential(cred_id)
-        .await
-        .map_err(|err| err.into())
-}
-
-pub async fn create_credential_request(
+pub async fn create_anoncreds_credential_request(
     ledger: &Arc<dyn AnoncredsLedgerRead>,
     anoncreds: &Arc<dyn BaseAnonCreds>,
     cred_def_id: &str,
@@ -551,7 +541,7 @@ pub async fn create_credential_request(
         .map_err(|err| err.into())
 }
 
-async fn _make_credential_request(
+async fn process_credential_offer(
     ledger: &Arc<dyn AnoncredsLedgerRead>,
     anoncreds: &Arc<dyn BaseAnonCreds>,
     thread_id: String,
@@ -569,7 +559,7 @@ async fn _make_credential_request(
     trace!("Parsed cred offer attachment: {}", cred_offer);
     let cred_def_id = parse_cred_def_id_from_cred_offer(&cred_offer)?;
     let (req, req_meta, _cred_def_id, cred_def_json) =
-        create_credential_request(ledger, anoncreds, &cred_def_id, &my_pw_did, &cred_offer).await?;
+        create_anoncreds_credential_request(ledger, anoncreds, &cred_def_id, &my_pw_did, &cred_offer).await?;
     trace!("Created cred def json: {}", cred_def_json);
     let credential_request_msg = build_credential_request_msg(req, &thread_id)?;
     Ok((credential_request_msg, req_meta, cred_def_json))
