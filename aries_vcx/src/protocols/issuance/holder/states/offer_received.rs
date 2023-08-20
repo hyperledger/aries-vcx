@@ -4,24 +4,13 @@ use std::sync::Arc;
 use crate::errors::error::prelude::*;
 use crate::handlers::util::get_attach_as_string;
 use crate::protocols::issuance::holder::state_machine::parse_cred_def_id_from_cred_offer;
-use crate::protocols::issuance::holder::states::request_sent::RequestSentState;
+use crate::protocols::issuance::holder::states::request_sent::RequestSetState;
 use crate::protocols::issuance::is_cred_def_revokable;
 use messages::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct OfferReceivedState {
     pub offer: OfferCredential,
-}
-
-impl From<(OfferReceivedState, String, String)> for RequestSentState {
-    fn from((_state, req_meta, cred_def_json): (OfferReceivedState, String, String)) -> Self {
-        trace!("SM is now in RequestSent state");
-        trace!("cred_def_json={:?}", cred_def_json);
-        RequestSentState {
-            req_meta,
-            cred_def_json,
-        }
-    }
 }
 
 impl OfferReceivedState {

@@ -276,18 +276,19 @@ pub mod test_utils {
         assert_eq!(HolderState::OfferReceived, holder.get_state());
         info!("send_cred_req :: sending credential request");
         let my_pw_did = connection.pairwise_info().pw_did.to_string();
+        let send_closure = connection
+            .send_message_closure(alice.profile.inject_wallet())
+            .await
+            .unwrap();
         holder
-            .send_request(
+            .build_credential_request(
                 &alice.profile.inject_anoncreds_ledger_read(),
                 &alice.profile.inject_anoncreds(),
                 my_pw_did,
-                connection
-                    .send_message_closure(alice.profile.inject_wallet())
-                    .await
-                    .unwrap(),
             )
             .await
             .unwrap();
+        holder.send_credential_request(send_closure).await.unwrap();
         tokio::time::sleep(Duration::from_millis(1000)).await;
         holder
     }
@@ -505,19 +506,20 @@ pub mod test_utils {
         assert_eq!(HolderState::OfferReceived, holder.get_state());
         assert!(holder.get_offer().is_ok());
         let my_pw_did = connection.pairwise_info().pw_did.to_string();
+        let send_closure = connection
+            .send_message_closure(alice.profile.inject_wallet())
+            .await
+            .unwrap();
         holder
-            .send_request(
+            .build_credential_request(
                 &alice.profile.inject_anoncreds_ledger_read(),
                 &alice.profile.inject_anoncreds(),
                 my_pw_did,
-                connection
-                    .send_message_closure(alice.profile.inject_wallet())
-                    .await
-                    .unwrap(),
             )
             .await
             .unwrap();
-        assert_eq!(HolderState::RequestSent, holder.get_state());
+        holder.send_credential_request(send_closure).await.unwrap();
+        assert_eq!(HolderState::RequestSet, holder.get_state());
     }
 
     pub async fn decline_offer(alice: &mut Alice, connection: &MediatedConnection, holder: &mut Holder) {

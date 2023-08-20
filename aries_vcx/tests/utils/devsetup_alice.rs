@@ -176,20 +176,23 @@ impl Alice {
         self.credential = Holder::create_from_offer("degree", cred_offer).unwrap();
         assert_eq!(HolderState::OfferReceived, self.credential.get_state());
 
+        let send_closure = self
+            .connection
+            .send_message_closure(self.profile.inject_wallet())
+            .await
+            .unwrap();
+
         let pw_did = self.connection.pairwise_info().pw_did.to_string();
         self.credential
-            .send_request(
+            .build_credential_request(
                 &self.profile.inject_anoncreds_ledger_read(),
                 &self.profile.inject_anoncreds(),
                 pw_did,
-                self.connection
-                    .send_message_closure(self.profile.inject_wallet())
-                    .await
-                    .unwrap(),
             )
             .await
             .unwrap();
-        assert_eq!(HolderState::RequestSent, self.credential.get_state());
+        self.credential.send_credential_request(send_closure).await.unwrap();
+        assert_eq!(HolderState::RequestSet, self.credential.get_state());
     }
 
     pub async fn accept_credential(&mut self) {

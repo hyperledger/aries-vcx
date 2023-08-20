@@ -1704,21 +1704,22 @@ mod tests {
                 alice.credential = Holder::create_from_offer("test", cred_offer).unwrap();
 
                 let pw_did = alice.connection.pairwise_info().pw_did.to_string();
+                let send_closure = alice
+                    .connection
+                    .send_message_closure(alice.profile.inject_wallet())
+                    .await
+                    .unwrap();
                 alice
                     .credential
-                    .send_request(
+                    .build_credential_request(
                         &alice.profile.inject_anoncreds_ledger_read(),
                         &alice.profile.inject_anoncreds(),
                         pw_did,
-                        alice
-                            .connection
-                            .send_message_closure(alice.profile.inject_wallet())
-                            .await
-                            .unwrap(),
                     )
                     .await
                     .unwrap();
-                assert_eq!(HolderState::RequestSent, alice.credential.get_state());
+                alice.credential.send_credential_request(send_closure).await.unwrap();
+                assert_eq!(HolderState::RequestSet, alice.credential.get_state());
             }
 
             #[cfg(feature = "migration")]
@@ -1811,22 +1812,23 @@ mod tests {
                     .await
                     .unwrap();
 
+                let send_closure = alice
+                    .connection
+                    .send_message_closure(alice.profile.inject_wallet())
+                    .await
+                    .unwrap();
                 let pw_did = alice.connection.pairwise_info().pw_did.to_string();
                 alice
                     .credential
-                    .send_request(
+                    .build_credential_request(
                         &alice.profile.inject_anoncreds_ledger_read(),
                         &alice.profile.inject_anoncreds(),
                         pw_did,
-                        alice
-                            .connection
-                            .send_message_closure(alice.profile.inject_wallet())
-                            .await
-                            .unwrap(),
                     )
                     .await
                     .unwrap();
-                assert_eq!(HolderState::RequestSent, alice.credential.get_state());
+                alice.credential.send_credential_request(send_closure).await.unwrap();
+                assert_eq!(HolderState::RequestSet, alice.credential.get_state());
             }
 
             faber.send_credential().await;

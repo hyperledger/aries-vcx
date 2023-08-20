@@ -232,13 +232,9 @@ pub async fn send_credential_request(handle: u32, connection_handle: u32) -> Lib
     let my_pw_did = mediated_connection::get_pw_did(connection_handle)?;
     let send_message = mediated_connection::send_message_closure(connection_handle).await?;
     credential
-        .send_request(
-            &get_main_anoncreds_ledger_read()?,
-            &get_main_anoncreds()?,
-            my_pw_did,
-            send_message,
-        )
+        .build_credential_request(&get_main_anoncreds_ledger_read()?, &get_main_anoncreds()?, my_pw_did)
         .await?;
+    credential.send_credential_request(send_message).await?;
     HANDLE_MAP.insert(handle, credential)
 }
 
@@ -473,7 +469,7 @@ pub mod tests {
 
         info!("full_credential_test:: going to send_credential_request");
         send_credential_request(handle_cred, handle_conn).await.unwrap();
-        assert_eq!(HolderState::RequestSent as u32, get_state(handle_cred).unwrap());
+        assert_eq!(HolderState::RequestSet as u32, get_state(handle_cred).unwrap());
 
         AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
         AgencyMockDecrypted::set_next_decrypted_message(ARIES_CREDENTIAL_RESPONSE);

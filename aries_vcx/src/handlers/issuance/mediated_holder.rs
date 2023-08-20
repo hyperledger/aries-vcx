@@ -23,7 +23,7 @@ pub fn holder_find_message_to_handle(
                     }
                 }
             }
-            HolderState::RequestSent => match &message {
+            HolderState::RequestSet => match &message {
                 AriesMessage::CredentialIssuance(CredentialIssuance::IssueCredential(credential)) => {
                     if matches_thread_id!(credential, sm.get_thread_id().unwrap().as_str()) {
                         return Some((uid, message));

@@ -52,19 +52,23 @@ impl Holder {
         Ok(())
     }
 
-    pub async fn send_request(
+    // todo: is the my_pw_did really necessary? is it used under the hood?
+    pub async fn build_credential_request(
         &mut self,
         ledger: &Arc<dyn AnoncredsLedgerRead>,
         anoncreds: &Arc<dyn BaseAnonCreds>,
         my_pw_did: String,
-        send_message: SendClosure,
     ) -> VcxResult<()> {
         self.holder_sm = self
             .holder_sm
             .clone()
-            .send_request(ledger, anoncreds, my_pw_did, send_message)
+            .build_credential_request(ledger, anoncreds, my_pw_did)
             .await?;
         Ok(())
+    }
+
+    pub async fn send_credential_request(&mut self, send_message: SendClosure) -> VcxResult<()> {
+        self.holder_sm.send_credential_request(send_message).await
     }
 
     pub async fn decline_offer<'a>(&'a mut self, comment: Option<&'a str>, send_message: SendClosure) -> VcxResult<()> {

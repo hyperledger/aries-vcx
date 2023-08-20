@@ -98,15 +98,14 @@ impl ServiceCredentialsHolder {
         let send_closure: SendClosure = Box::new(|msg: AriesMessage| {
             Box::pin(async move { connection.send_message(&wallet, &msg, &HttpClient).await })
         });
-
         holder
-            .send_request(
+            .build_credential_request(
                 &self.profile.inject_anoncreds_ledger_read(),
                 &self.profile.inject_anoncreds(),
                 pw_did,
-                send_closure,
             )
             .await?;
+        holder.send_credential_request(send_closure).await?;
         self.creds_holder
             .insert(&holder.get_thread_id()?, HolderWrapper::new(holder, &connection_id))
     }
