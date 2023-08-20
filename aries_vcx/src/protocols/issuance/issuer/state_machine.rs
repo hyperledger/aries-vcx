@@ -1,10 +1,7 @@
 use std::fmt::Display;
 use std::sync::Arc;
 
-use crate::handlers::util::{
-    get_attach_as_string, make_attach_from_str, matches_opt_thread_id, verify_thread_id, AttachmentId, OfferInfo,
-    Status,
-};
+use crate::handlers::util::{get_attach_as_string, make_attach_from_str, matches_opt_thread_id, verify_thread_id, AttachmentId, OfferInfo, Status};
 use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
 use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
 use chrono::Utc;

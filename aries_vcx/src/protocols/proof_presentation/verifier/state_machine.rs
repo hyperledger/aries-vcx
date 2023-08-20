@@ -25,7 +25,7 @@ use messages::AriesMessage;
 
 use crate::common::proofs::proof_request::PresentationRequestData;
 use crate::errors::error::prelude::*;
-use crate::handlers::util::{make_attach_from_str, verify_thread_id, AttachmentId, Status};
+use crate::handlers::util::{make_attach_from_str, AttachmentId, Status, verify_thread_id};
 use crate::protocols::common::build_problem_report_msg;
 use crate::protocols::proof_presentation::verifier::states::finished::FinishedState;
 use crate::protocols::proof_presentation::verifier::states::initial::InitialVerifierState;
