@@ -15,9 +15,6 @@ env:
   DOCKER_IMAGE_AGENCY: ghcr.io/absaoss/vcxagencynode/vcxagency-node:2.6.0
   DOCKER_IMAGE_POOL: ghcr.io/hyperledger/aries-vcx/indy_pool_localhost:1.15.0
 
-  DOCKER_REPO_LOCAL_ALPINE_CORE: alpine-core
-  DOCKER_REPO_LOCAL_LIBVCX: libvcx
-  DOCKER_REPO_LOCAL_ANDROID: android-test
   DOCKER_REPO_LOCAL_VDRPROXY: vdrproxy
 
   RUST_TOOLCHAIN_VERSON: 1.65.0
@@ -46,14 +43,9 @@ jobs:
       BRANCH_NAME: ${{ steps.run-info.outputs.branch-name }}
       IS_FORK: ${{ steps.run-info.outputs.is-fork }}
 
-      SKIP_IOS: ${{ steps.skip-info.outputs.skip-ios }}
-      SKIP_ANDROID: ${{ steps.skip-info.outputs.skip-android }}
       SKIP_NAPI_M1: ${{ steps.skip-info.outputs.skip-napi-m1 }}
       SKIP_CI: ${{ steps.skip-info.outputs.skip-ci }}
 
-      DOCKER_IMG_CACHED_ALPINE_CORE: ${{ steps.docker-imgs.outputs.DOCKER_IMG_CACHED_ALPINE_CORE }}
-      DOCKER_IMG_CACHED_LIBVCX: ${{ steps.docker-imgs.outputs.DOCKER_IMG_CACHED_LIBVCX }}
-      DOCKER_IMG_CACHED_ANDROID: ${{ steps.docker-imgs.outputs.DOCKER_IMG_CACHED_ANDROID }}
       DOCKER_IMG_CACHED_VDRPROXY: ${{ steps.docker-imgs.outputs.DOCKER_IMG_CACHED_VDRPROXY }}
     steps:
       - name: "Git checkout"
@@ -72,7 +64,6 @@ jobs:
         run: |
           set -x
 
-          HASH_DOCKERFILE_ALPINE_CORE=${{ hashFiles('ci/alpine_core.dockerfile')}}
           HASH_DOCKERFILE_LIBVCX=${{ hashFiles('ci/libvcx.dockerfile') }}
           HASH_DOCKERFILE_VDRPROXY=${{ hashFiles('ci/vdrproxy.dockerfile') }}
           HASH_SRC_LIBVDRTOOLS=${{ hashFiles('libvdrtools') }}
@@ -86,16 +77,6 @@ jobs:
 
           SEED_HASH_ARIESVCX=${HASH_SRC_LIBVDRTOOLS:0:11}-${HASH_SRC_ARIESVCX_CORE:0:11}-${HASH_SRC_ARIESVCX:0:11}-${HASH_SRC_AGENCYCLIENT:0:11}-${HASH_SRC_DIDDOC:0:11}-${HASH_SRC_MESSAGES:0:11}}
           HASH_ARIESVCX=$(echo -n "$SEED_HASH_ARIESVCX" | sha256sum | awk '{print $1}')
-
-          SEED_HASH_DOCKER_LIBVCX=${HASH_ARIESVCX:0:11}-${HASH_DOCKERFILE_LIBVCX:0:11}-${HASH_SRC_LIBVCX:0:11}
-          HASH_DOCKER_LIBVCX=$(echo -n "$SEED_HASH_DOCKER_LIBVCX" | sha256sum | awk '{print $1}')
-
-          SEED_HASH_DOCKER_ANDROID=${HASH_ARIESVCX:0:11}-${HASH_DOCKER_LIBVCX:0:11}-${HASH_SRC_WRAPPER_JAVA:0:11}
-          HASH_DOCKER_ANDROID=$(echo -n "$SEED_HASH_DOCKER_ANDROID" | sha256sum | awk '{print $1}')
-
-          echo "DOCKER_IMG_CACHED_ALPINE_CORE=$DOCKER_REPO_LOCAL_ALPINE_CORE:$HASH_DOCKERFILE_ALPINE_CORE" >> $GITHUB_OUTPUT
-          echo "DOCKER_IMG_CACHED_LIBVCX=$DOCKER_REPO_LOCAL_LIBVCX:$HASH_DOCKER_LIBVCX" >> $GITHUB_OUTPUT
-          echo "DOCKER_IMG_CACHED_ANDROID=$DOCKER_REPO_LOCAL_ANDROID:$HASH_DOCKER_ANDROID" >> $GITHUB_OUTPUT
           echo "DOCKER_IMG_CACHED_VDRPROXY=$DOCKER_REPO_LOCAL_VDRPROXY:$HASH_DOCKERFILE_VDRPROXY" >> $GITHUB_OUTPUT
 
   workflow-setup-check:
@@ -109,13 +90,8 @@ jobs:
           echo "PRERELEASE ${{ needs.workflow-setup.outputs.PRERELEASE }}"
           echo "BRANCH_NAME ${{ needs.workflow-setup.outputs.BRANCH_NAME }}"
           echo "IS_FORK ${{ needs.workflow-setup.outputs.IS_FORK }}"
-          echo "SKIP_IOS ${{ needs.workflow-setup.outputs.SKIP_IOS }}"
-          echo "SKIP_ANDROID ${{ needs.workflow-setup.outputs.SKIP_ANDROID }}"
           echo "SKIP_NAPI_M1 ${{ needs.workflow-setup.outputs.SKIP_NAPI_M1 }}"
           echo "SKIP_CI ${{ needs.workflow-setup.outputs.SKIP_CI }}"
-          echo "DOCKER_IMG_CACHED_ALPINE_CORE ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_ALPINE_CORE }}"
-          echo "DOCKER_IMG_CACHED_LIBVCX ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_LIBVCX }}"
-          echo "DOCKER_IMG_CACHED_ANDROID ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_ANDROID }}"
           echo "DOCKER_IMG_CACHED_VDRPROXY ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_VDRPROXY }}"
 
   clippy-aries-vcx:
@@ -135,24 +111,6 @@ jobs:
       - name: "Verify clippy warnings"
         run: |
           cd aries_vcx && cargo clippy
-
-  clippy-libvcx:
-    runs-on: ubuntu-20.04
-    steps:
-      - name: "Git checkout"
-        uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: 1.65.0
-          components: rustfmt, clippy
-      - name: "Install dependencies"
-        shell: bash
-        run: |
-          sudo apt-get update -y
-          sudo apt-get install -y libsodium-dev libssl-dev libzmq3-dev
-      - name: "Verify clippy warnings"
-        run: |
-          cd libvcx && cargo clippy
 
   check-did-resolver-feature-variants:
     runs-on: ubuntu-20.04
@@ -197,94 +155,12 @@ jobs:
   ##########################################################################################
   ##############################   DOCKER BUILD   ##########################################
 
-  build-docker-alpine-core:
-    needs: workflow-setup
-    runs-on: ubuntu-20.04
-    env:
-      DOCKER_IMG_CACHED: ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_ALPINE_CORE }}
-      BRANCH_NAME: ${{ needs.workflow-setup.outputs.BRANCH_NAME }}
-    steps:
-      - name: "Git checkout"
-        uses: actions/checkout@v3
-      - name: "Docker Login"
-        uses: azure/docker-login@v1
-        with:
-          login-server: ${{ env.URL_DOCKER_REGISTRY }}
-          username: $GITHUB_ACTOR
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: "Build and cache image"
-        uses: ./.github/actions/build-image
-        with:
-          docker-img: ${{ env.DOCKER_IMG_CACHED }}
-          build-arg: "USER_ID=$UID"
-          dockerfile-path: "ci/alpine_core.dockerfile"
-          branch-name: ${{ env.BRANCH_NAME }}
-          branch-main: ${{ env.MAIN_BRANCH }}
-          docker-repo-local-name: ${{ env.DOCKER_REPO_LOCAL_ALPINE_CORE }}
-
-  build-docker-libvcx:
-    needs: [ workflow-setup, build-docker-alpine-core ]
-    if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
-    runs-on: ubuntu-20.04
-    env:
-      DOCKER_IMG_CACHED: ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_LIBVCX }}
-      DOCKER_IMG_CACHED_ALPINE_CORE: ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_ALPINE_CORE }}
-      BRANCH_NAME: ${{ needs.workflow-setup.outputs.BRANCH_NAME }}
-    steps:
-      - name: "Git checkout"
-        uses: actions/checkout@v3
-      - name: "Docker Login"
-        uses: azure/docker-login@v1
-        with:
-          login-server: ${{ env.URL_DOCKER_REGISTRY }}
-          username: $GITHUB_ACTOR
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: "Load alpine core image"
-        uses: ./.github/actions/load-image
-        with:
-          docker-img: ${{ env.DOCKER_IMG_CACHED_ALPINE_CORE }}
-      - name: "Build and cache image"
-        uses: ./.github/actions/build-image
-        with:
-          docker-img: ${{ env.DOCKER_IMG_CACHED }}
-          build-arg: "ALPINE_CORE_IMAGE=$DOCKER_IMG_CACHED_ALPINE_CORE"
-          dockerfile-path: "ci/libvcx.dockerfile"
-          branch-name: ${{ env.BRANCH_NAME }}
-          branch-main: ${{ env.MAIN_BRANCH }}
-          docker-repo-local-name: ${{ env.DOCKER_REPO_LOCAL_LIBVCX }}
-
-  build-docker-android:
-    needs: workflow-setup
-    if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' && needs.workflow-setup.outputs.SKIP_ANDROID != 'true'}}
-    runs-on: ubuntu-20.04
-    env:
-      DOCKER_IMG_CACHED: ${{needs.workflow-setup.outputs.DOCKER_IMG_CACHED_ANDROID}}
-      BRANCH_NAME: ${{ needs.workflow-setup.outputs.BRANCH_NAME }}
-    steps:
-      - name: "Git checkout"
-        uses: actions/checkout@v3
-      - name: "Docker Login"
-        uses: azure/docker-login@v1
-        with:
-          login-server: ${{ env.URL_DOCKER_REGISTRY }}
-          username: $GITHUB_ACTOR
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: "Build and cache image"
-        uses: ./.github/actions/build-image
-        with:
-          skip-build-optimization: true # prevent pulling "main" branch image, because it's taking up lot of disk space.
-          docker-img: ${{ env.DOCKER_IMG_CACHED }}
-          dockerfile-path: "wrappers/java/ci/android.dockerfile"
-          branch-name: ${{ env.BRANCH_NAME }}
-          branch-main: ${{ env.MAIN_BRANCH }}
-          docker-repo-local-name: ${{ env.DOCKER_REPO_LOCAL_ANDROID }}
-
+  # todo: move to indy-vdr repo
   build-docker-vdrproxy:
-    needs: [ workflow-setup, build-docker-alpine-core ]
+    needs: [ workflow-setup ]
     if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
     runs-on: ubuntu-20.04
     env:
-      DOCKER_IMG_CACHED_ALPINE_CORE: ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_ALPINE_CORE }}
       DOCKER_IMG_CACHED: ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_VDRPROXY }}
       BRANCH_NAME: ${{ needs.workflow-setup.outputs.BRANCH_NAME }}
     outputs:
@@ -298,10 +174,6 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: "Load alpine core image"
-        uses: ./.github/actions/load-image
-        with:
-          docker-img: ${{ env.DOCKER_IMG_CACHED_ALPINE_CORE }}
       - name: "Build and cache image"
         uses: ./.github/actions/build-image
         with:
@@ -321,32 +193,6 @@ jobs:
     if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
     env:
       DOCKER_IMG_CACHED: ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_VDRPROXY }}
-      PUBLISH_VERSION: ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
-      BRANCH_NAME: ${{ needs.workflow-setup.outputs.BRANCH_NAME }}
-      IS_FORK: ${{ needs.workflow-setup.outputs.IS_FORK }}
-    steps:
-      - name: "Git checkout"
-        if: ${{ env.IS_FORK == 'false' }}
-        uses: actions/checkout@v3
-      - name: "Docker Login"
-        uses: azure/docker-login@v1
-        with:
-          login-server: ${{ env.URL_DOCKER_REGISTRY }}
-          username: $GITHUB_ACTOR
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: "Publish versioned image"
-        if: ${{ env.IS_FORK == 'false' }}
-        uses: ./.github/actions/publish-image
-        with:
-          docker-img: ${{ env.DOCKER_IMG_CACHED }}
-          publish-version: ${{ env.PUBLISH_VERSION }}
-
-  publish-docker-libvcx:
-    runs-on: ubuntu-20.04
-    needs: [ workflow-setup, build-docker-libvcx ]
-    if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
-    env:
-      DOCKER_IMG_CACHED: ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_LIBVCX }}
       PUBLISH_VERSION: ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
       BRANCH_NAME: ${{ needs.workflow-setup.outputs.BRANCH_NAME }}
       IS_FORK: ${{ needs.workflow-setup.outputs.IS_FORK }}
@@ -462,7 +308,7 @@ jobs:
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
-      - name: "Load android image"
+      - name: "Load image"
         uses: ./.github/actions/load-image
         with:
           docker-img: ${{ env.DOCKER_IMAGE_VDRPROXY }}
@@ -510,25 +356,6 @@ jobs:
       - name: "Run libvcx_core integration tests"
         run: |
           RUST_TEST_THREADS=1 cargo test --features ${{ matrix.features }} --manifest-path="libvcx_core/Cargo.toml" -- --include-ignored;
-
-  test-integration-libvcx-c:
-    needs: workflow-setup
-    if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
-    runs-on: ubuntu-20.04
-    strategy:
-      matrix:
-        features: [
-          "anoncreds_vdrtools",
-          "anoncreds_credx"
-        ]
-    steps:
-      - name: "Git checkout"
-        uses: actions/checkout@v3
-      - name: "Setup rust testing environment"
-        uses: ./.github/actions/setup-testing-rust
-      - name: "Run libvcx unit tests"
-        run: |
-          RUST_TEST_THREADS=1 cargo test --features ${{ matrix.features }} --manifest-path="libvcx/Cargo.toml";
 
   test-integration-resolver:
     needs: workflow-setup
@@ -585,175 +412,6 @@ jobs:
         run: (cd agents/node/vcxagent-core && AGENCY_URL=http://localhost:8080 npm run demo:revocation)
       - name: "Run integration tests"
         run: (cd agents/node/vcxagent-core && AGENCY_URL=http://localhost:8080 npm run test:integration)
-
-# Issue addressing the jobs below being commented out: https://github.com/hyperledger/aries-vcx/issues/916
-#  test-android-build:
-#    runs-on: ubuntu-20.04
-#    needs: [ workflow-setup, build-docker-android ]
-#    if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' && needs.workflow-setup.outputs.SKIP_ANDROID != 'true' }}
-#    env:
-#      DOCKER_IMG_CACHED_ANDROID: ${{needs.workflow-setup.outputs.DOCKER_IMG_CACHED_ANDROID}}
-#    steps:
-#      - name: "Git checkout"
-#        uses: actions/checkout@v3
-#      - name: "Docker Login"
-#        uses: azure/docker-login@v1
-#        with:
-#          login-server: ${{ env.URL_DOCKER_REGISTRY }}
-#          username: $GITHUB_ACTOR
-#          password: ${{ secrets.GITHUB_TOKEN }}
-#      - name: "Load android image"
-#        uses: ./.github/actions/load-image
-#        with:
-#          docker-img: ${{ env.DOCKER_IMG_CACHED_ANDROID }}
-#      - name: "Run android tests"
-#        run: |
-#          rm -rf /tmp/imgcache
-#          docker run --rm -i  $DOCKER_IMG_CACHED_ANDROID \
-#                              sh -c '(cd $HOME/aries-vcx && ./wrappers/java/ci/android.test.sh armv7)'
-
-#  build-and-publish-ios-wrapper:
-#    needs: workflow-setup
-#    if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' && needs.workflow-setup.outputs.SKIP_IOS != 'true' }}
-#    runs-on: macos-11
-#    env:
-#      LIBVCX_VERSION: ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
-#      PUBLISH_VERSION: ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
-#    steps:
-#      - name: "Git checkout"
-#        uses: actions/checkout@v2
-#      - name: Switch to xcode version 12.4
-#        run: |
-#          sudo xcode-select --switch /Applications/Xcode_12.4.app/Contents/Developer
-#          xcodebuild -version
-#      - name: "Build iOS wrapper"
-#        run: |
-#          ./wrappers/ios/ci/build.sh
-#      - uses: actions/upload-artifact@v3
-#        with:
-#          name: libvcx-ios-${{ env.PUBLISH_VERSION }}-device
-#          path: /tmp/artifacts/libvcx-ios-${{ env.PUBLISH_VERSION }}-device.zip
-#      - uses: actions/upload-artifact@v3
-#        with:
-#          name: libvcx-ios-${{ env.PUBLISH_VERSION }}-universal
-#          path: /tmp/artifacts/libvcx-ios-${{ env.PUBLISH_VERSION }}-universal.zip
-
-#  build-and-publish-android-device:
-#    runs-on: ubuntu-20.04
-#    needs: [ workflow-setup, build-docker-android ]
-#    if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' && needs.workflow-setup.outputs.SKIP_ANDROID != 'true' }}
-#    env:
-#      FULL_VERSION_NAME: libvcx-android-${{needs.workflow-setup.outputs.PUBLISH_VERSION}}-device
-#      DOCKER_IMG_CACHED_ANDROID: ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_ANDROID }}
-#    steps:
-#      - name: "Git checkout"
-#        uses: actions/checkout@v3
-#      - name: "Docker Login"
-#        uses: azure/docker-login@v1
-#        with:
-#          login-server: ${{ env.URL_DOCKER_REGISTRY }}
-#          username: $GITHUB_ACTOR
-#          password: ${{ secrets.GITHUB_TOKEN }}
-#      - name: "Load android image"
-#        uses: ./.github/actions/load-image
-#        with:
-#          docker-img: ${{ env.DOCKER_IMG_CACHED_ANDROID }}
-#      - name: "Build, run android wrapper tests, and publish artifacts"
-#        uses: ./.github/actions/publish-android
-#        with:
-#          abis: "arm arm64"
-#          docker-img-name: ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_ANDROID }}
-#          full-version-name: ${{ env.FULL_VERSION_NAME }}
-#      - name: "Publish aar artifact"
-#        uses: actions/upload-artifact@v3
-#        with:
-#          name: ${{ env.FULL_VERSION_NAME }}
-#          path: /tmp/artifacts/aar/${{ env.FULL_VERSION_NAME }}.aar
-#
-#  build-and-publish-android-emulator:
-#    runs-on: ubuntu-20.04
-#    needs: [ workflow-setup, build-docker-android ]
-#    if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' && needs.workflow-setup.outputs.SKIP_ANDROID != 'true' }}
-#    env:
-#      FULL_VERSION_NAME: libvcx-android-${{needs.workflow-setup.outputs.PUBLISH_VERSION}}-emulator
-#      DOCKER_IMG_CACHED_ANDROID: ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_ANDROID }}
-#    steps:
-#      - name: "Git checkout"
-#        uses: actions/checkout@v3
-#      - name: "Docker Login"
-#        uses: azure/docker-login@v1
-#        with:
-#          login-server: ${{ env.URL_DOCKER_REGISTRY }}
-#          username: $GITHUB_ACTOR
-#          password: ${{ secrets.GITHUB_TOKEN }}
-#      - name: "Load android image"
-#        uses: ./.github/actions/load-image
-#        with:
-#          docker-img: ${{ env.DOCKER_IMG_CACHED_ANDROID }}
-#      - name: "Build, run android wrapper tests, and publish artifacts"
-#        uses: ./.github/actions/publish-android
-#        with:
-#          abis: "x86 x86_64"
-#          docker-img-name: ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_ANDROID }}
-#          full-version-name: ${{ env.FULL_VERSION_NAME }}
-#      - uses: actions/upload-artifact@v3
-#        with:
-#          name: ${{ env.FULL_VERSION_NAME }}
-#          path: /tmp/artifacts/aar/${{ env.FULL_VERSION_NAME }}.aar
-
-  build-and-publish-ubuntu-lib:
-    needs: workflow-setup
-    if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
-    runs-on: ubuntu-20.04
-    steps:
-      - name: "Git checkout"
-        uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: 1.65.0
-      - uses: Swatinem/rust-cache@v2
-        with:
-          key: "11"
-      - name: "Install dependencies"
-        shell: bash
-        run: |
-          sudo apt-get update -y
-          sudo apt-get install -y libsodium-dev libssl-dev libzmq3-dev
-      - name: "Build libvcx.so"
-        run: cargo build --release
-      - name: "Publish artifact libvcx.so"
-        uses: actions/upload-artifact@v3
-        with:
-          name: libvcx.so
-          path: target/release/libvcx.so
-
-  build-and-publish-darwin-lib:
-    needs: workflow-setup
-    if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
-    runs-on: macos-11
-    steps:
-      - name: "Git checkout"
-        uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: 1.65.0
-      - uses: Swatinem/rust-cache@v2
-        with:
-          key: "11"
-      - name: "Install dependencies"
-        shell: bash
-        run: |
-          brew install openssl
-          brew install zeromq
-          brew install libsodium
-          brew install pkg-config
-      - name: "Build libvcx.dylib"
-        run: cargo build --release
-      - name: "Publish artifact libvcx.dylib"
-        uses: actions/upload-artifact@v3
-        with:
-          name: libvcx.dylib
-          path: target/release/libvcx.dylib
 
   ##########################################################################################
   ############################   NPMJS PUBLISHING   #######################################
@@ -905,14 +563,10 @@ jobs:
     runs-on: ubuntu-20.04
     needs:
       - workflow-setup
-#      - build-and-publish-ios-wrapper
-#      - build-and-publish-android-device
-#      - build-and-publish-android-emulator
       - test-unit-workspace
       - test-integration-libvcx
       - test-integration-aries-vcx
       - test-integration-aries-vcx-mysql
-#      - test-android-build
       - test-node-wrapper
       - test-integration-node-wrapper
     if: ${{ needs.workflow-setup.outputs.RELEASE == 'true' || needs.workflow-setup.outputs.PRERELEASE == 'true' }}
@@ -961,79 +615,3 @@ jobs:
           body_path: ./CHANGELOG.md
           draft: ${{ needs.workflow-setup.outputs.PRERELEASE == 'true' }}
           prerelease: ${{ needs.workflow-setup.outputs.PRERELEASE == 'true' }}
-
-#  release-android-device:
-#    runs-on: ubuntu-20.04
-#    needs: [ workflow-setup, make-release ]
-#    if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
-#    steps:
-#      - name: "Fetch android device build from artifacts"
-#        uses: actions/download-artifact@v2
-#        with:
-#          name: libvcx-android-${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}-device
-#      - name: "Upload release assets"
-#        uses: actions/upload-release-asset@v1
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#        with:
-#          upload_url: ${{ needs.make-release.outputs.RELEASE_UPLOAD_URL }}
-#          asset_path: ./libvcx-android-${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}-device.aar
-#          asset_name: libvcx-android-${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}-device.aar
-#          asset_content_type: application/aar
-#
-#  release-android-emulator:
-#    runs-on: ubuntu-20.04
-#    needs: [ workflow-setup, make-release ]
-#    if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
-#    steps:
-#      - name: "Fetch android emulator build from artifacts"
-#        uses: actions/download-artifact@v2
-#        with:
-#          name: libvcx-android-${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}-emulator
-#      - name: "Upload release assets"
-#        uses: actions/upload-release-asset@v1
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#        with:
-#          upload_url: ${{ needs.make-release.outputs.RELEASE_UPLOAD_URL }}
-#          asset_path: ./libvcx-android-${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}-emulator.aar
-#          asset_name: libvcx-android-${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}-emulator.aar
-#          asset_content_type: application/aar
-
-#  release-ios-device:
-#    runs-on: ubuntu-20.04
-#    needs: [ workflow-setup, make-release ]
-#    if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
-#    steps:
-#      - name: "Fetch iOS device build from artifacts"
-#        uses: actions/download-artifact@v2
-#        with:
-#          name: libvcx-ios-${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}-device
-#      - name: "Upload release assets"
-#        uses: actions/upload-release-asset@v1
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#        with:
-#          upload_url: ${{ needs.make-release.outputs.RELEASE_UPLOAD_URL }}
-#          asset_path: ./libvcx-ios-${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}-device.zip
-#          asset_name: libvcx-ios-${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}-device.zip
-#          asset_content_type: application/zip
-#
-#  release-ios-universal:
-#    runs-on: ubuntu-20.04
-#    needs: [ workflow-setup, make-release ]
-#    if: ${{ needs.workflow-setup.outputs.SKIP_CI != 'true' }}
-#    steps:
-#      - name: "Fetch iOS universal build from artifacts"
-#        uses: actions/download-artifact@v2
-#        with:
-#          name: libvcx-ios-${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}-universal
-#      - name: "Upload release assets"
-#        uses: actions/upload-release-asset@v1
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#        with:
-#          upload_url: ${{ needs.make-release.outputs.RELEASE_UPLOAD_URL }}
-#          asset_path: ./libvcx-ios-${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}-universal.zip
-#          asset_name: libvcx-ios-${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}-universal.zip
-#          asset_content_type: application/zip

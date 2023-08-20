@@ -33,7 +33,6 @@ It's also advisable to follow these [instructions](TUTORIAL.md) to check your en
 # Projects built with aries-vcx
 - [aries-vcx-agent](../agents/rust/aries-vcx-agent) - sample agent with local persistence. Used for cross-compatibility testing with other aries implementations.
 - [unifii_aries_vcx](../uniffi_aries_vcx) - wrapper around `aries-vcx` to generate Swift and Kotlin wrappers for mobile use-cases
-- [libcx](../libvcx) (**deprecated**) - wrapper around `aries-vcx` to build Java, Objective-C, NodeJS wrappers.
 
 ## Implemented Aries protocols
 * ✅ Connection Protocol 1.0: [`https://didcomm.org/connections/1.0/*`](https://github.com/hyperledger/aries-rfcs/tree/master/features/0160-connection-protocol)

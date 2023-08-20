@@ -2970,34 +2970,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "libvcx"
-version = "0.57.1"
-dependencies = [
- "agency_client",
- "android_logger",
- "aries-vcx",
- "async-trait",
- "cfg-if 1.0.0",
- "chrono",
- "env_logger 0.9.3",
- "futures",
- "lazy_static",
- "libc",
- "libvcx_core",
- "log",
- "num-traits",
- "once_cell",
- "rand 0.7.3",
- "serde",
- "serde_derive",
- "serde_json",
- "thiserror",
- "time 0.3.20",
- "tokio",
- "uuid 0.7.4",
-]
-
-[[package]]
 name = "libvcx_core"
 version = "0.57.1"
 dependencies = [
