@@ -58,8 +58,6 @@ impl PublicKeyField {
     pub fn base58(&self) -> Result<String, DidDocumentBuilderError> {
         Ok(bs58::encode(self.key_decoded()?).into_string())
     }
-
-    // TODO: This should expose a PublicKey getter
 }
 
 #[cfg(test)]
