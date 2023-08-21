@@ -106,7 +106,6 @@ impl ServiceConnections {
         inviter
             .send_message(&self.profile.inject_wallet(), &response.into(), &HttpClient)
             .await?;
-        let inviter = inviter.mark_response_sent()?;
 
         self.connections.insert(thread_id, inviter.into())?;
 

@@ -121,7 +121,6 @@ export enum ConnectionStateType {
   Initial = 0,
   Invited = 1,
   Requested = 2,
-  Responded = 3,
   Finished = 4,
 }
 

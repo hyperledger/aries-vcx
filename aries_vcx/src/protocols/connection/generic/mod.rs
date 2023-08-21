@@ -21,7 +21,6 @@ use crate::{
         inviter::states::{
             completed::Completed as InviterCompleted, initial::Initial as InviterInitial,
             invited::Invited as InviterInvited, requested::Requested as InviterRequested,
-            responded::Responded as InviterResponded,
         },
         pairwise_info::PairwiseInfo,
         trait_bounds::{TheirDidDoc, ThreadId},
@@ -88,7 +87,6 @@ pub enum InviterState {
     Initial(InviterInitial),
     Invited(InviterInvited),
     Requested(InviterRequested),
-    Responded(InviterResponded),
     Completed(InviterCompleted),
 }
 
@@ -119,7 +117,6 @@ impl GenericConnection {
             GenericState::Inviter(InviterState::Initial(_)) => None,
             GenericState::Inviter(InviterState::Invited(s)) => Some(s.thread_id()),
             GenericState::Inviter(InviterState::Requested(s)) => Some(s.thread_id()),
-            GenericState::Inviter(InviterState::Responded(s)) => Some(s.thread_id()),
             GenericState::Inviter(InviterState::Completed(s)) => Some(s.thread_id()),
         }
     }
@@ -138,7 +135,6 @@ impl GenericConnection {
             GenericState::Inviter(InviterState::Initial(_)) => None,
             GenericState::Inviter(InviterState::Invited(_)) => None,
             GenericState::Inviter(InviterState::Requested(s)) => Some(s.their_did_doc()),
-            GenericState::Inviter(InviterState::Responded(s)) => Some(s.their_did_doc()),
             GenericState::Inviter(InviterState::Completed(s)) => Some(s.their_did_doc()),
         }
     }
@@ -251,7 +247,6 @@ mod connection_serde_tests {
                 RefInviterState::Initial(s) => Self::Initial(s.to_owned()),
                 RefInviterState::Invited(s) => Self::Invited(s.to_owned()),
                 RefInviterState::Requested(s) => Self::Requested(s.to_owned()),
-                RefInviterState::Responded(s) => Self::Responded(s.to_owned()),
                 RefInviterState::Completed(s) => Self::Completed(s.to_owned()),
             }
         }
@@ -300,7 +295,6 @@ mod connection_serde_tests {
                 InviterState::Initial(s) => Self::Initial(s),
                 InviterState::Invited(s) => Self::Invited(s),
                 InviterState::Requested(s) => Self::Requested(s),
-                InviterState::Responded(s) => Self::Responded(s),
                 InviterState::Completed(s) => Self::Completed(s),
             }
         }
@@ -482,12 +476,8 @@ mod connection_serde_tests {
             .unwrap()
     }
 
-    async fn make_inviter_responded() -> InviterConnection<InviterResponded> {
-        make_inviter_requested().await.mark_response_sent().unwrap()
-    }
-
     async fn make_inviter_completed() -> InviterConnection<InviterCompleted> {
-        let con = make_inviter_responded().await;
+        let con = make_inviter_requested().await;
 
         let content = AckContent::new(AckStatus::Ok);
         let decorators = AckDecorators::new(Thread::new(con.thread_id().to_owned()));
@@ -515,6 +505,5 @@ mod connection_serde_tests {
     generate_test!(inviter_connection_initial, make_inviter_initial);
     generate_test!(inviter_connection_invited, make_inviter_invited);
     generate_test!(inviter_connection_requested, make_inviter_requested);
-    generate_test!(inviter_connection_responded, make_inviter_responded);
     generate_test!(inviter_connection_complete, make_inviter_completed);
 }

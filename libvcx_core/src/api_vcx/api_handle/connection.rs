@@ -333,7 +333,6 @@ pub async fn send_response(handle: u32) -> LibvcxResult<()> {
     let response = con.get_connection_response_msg();
     con.send_message(&get_main_wallet()?, &response.into(), &HttpClient)
         .await?;
-    let con = con.mark_response_sent()?;
     insert_connection(handle, con)
 }
 

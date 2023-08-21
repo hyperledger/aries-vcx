@@ -21,9 +21,7 @@ use crate::protocols::connection::trait_bounds::ThreadId;
 use crate::transport::Transport;
 use crate::{common::signing::sign_connection_response, errors::error::VcxResult};
 
-use self::states::{
-    completed::Completed, initial::Initial, invited::Invited, requested::Requested, responded::Responded,
-};
+use self::states::{completed::Completed, initial::Initial, invited::Invited, requested::Requested};
 use super::{initiation_type::Inviter, pairwise_info::PairwiseInfo, Connection};
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 
@@ -242,24 +240,6 @@ impl InviterConnection<Requested> {
         self.state.signed_response.clone()
     }
 
-    /// Transitions to [`InviterConnection<Responded>`] under assumption the caller has assured delivery of [`Response`] message
-    ///
-    /// # Errors
-    ///
-    /// Will return an error if sending the response fails.
-    pub fn mark_response_sent(self) -> VcxResult<InviterConnection<Responded>> {
-        let thread_id = self.state.signed_response.decorators.thread.thid.clone();
-        let state = Responded::new(self.state.did_doc, thread_id);
-        Ok(Connection {
-            state,
-            source_id: self.source_id,
-            pairwise_info: self.pairwise_info,
-            initiation_type: self.initiation_type,
-        })
-    }
-}
-
-impl InviterConnection<Responded> {
     /// Acknowledges an invitee's connection by processing their first message
     /// and transitions to [`InviterConnection<Completed>`].
     ///
@@ -269,7 +249,11 @@ impl InviterConnection<Responded> {
     /// the ID of the thread context used in this connection.
     pub fn acknowledge_connection(self, msg: &AriesMessage) -> VcxResult<InviterConnection<Completed>> {
         verify_thread_id(self.state.thread_id(), msg)?;
-        let state = Completed::new(self.state.did_doc, self.state.thread_id, None);
+        let state = Completed::new(
+            self.state.did_doc,
+            self.state.signed_response.decorators.thread.thid,
+            None,
+        );
 
         Ok(Connection {
             source_id: self.source_id,

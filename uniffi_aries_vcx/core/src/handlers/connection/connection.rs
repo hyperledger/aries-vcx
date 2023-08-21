@@ -153,9 +153,8 @@ impl Connection {
             connection
                 .send_message(&profile.inner.inject_wallet(), &response.into(), &HttpClient)
                 .await?;
-            let new_conn = connection.mark_response_sent()?;
 
-            *handler = VcxGenericConnection::from(new_conn);
+            *handler = VcxGenericConnection::from(connection);
 
             Ok(())
         })

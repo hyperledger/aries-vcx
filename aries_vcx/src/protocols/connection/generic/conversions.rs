@@ -11,7 +11,6 @@ use crate::{
         inviter::states::{
             completed::Completed as InviterCompleted, initial::Initial as InviterInitial,
             invited::Invited as InviterInvited, requested::Requested as InviterRequested,
-            responded::Responded as InviterResponded,
         },
         Connection,
     },
@@ -107,7 +106,6 @@ from_concrete_to_vague!(Invitee, InviteeState, Invitee, GenericState);
 from_concrete_to_vague!(InviterInitial, Initial, InviterState);
 from_concrete_to_vague!(InviterInvited, Invited, InviterState);
 from_concrete_to_vague!(InviterRequested, Requested, InviterState);
-from_concrete_to_vague!(InviterResponded, Responded, InviterState);
 from_concrete_to_vague!(InviterCompleted, Completed, InviterState);
 
 from_concrete_to_vague!(InviteeInitial, Initial, InviteeState);
@@ -136,7 +134,6 @@ try_from_vague_to_concrete!(InviteeState, Invitee, Inviter, Invitee);
 try_from_vague_to_concrete!(InviterState, Initial, InviterInitial);
 try_from_vague_to_concrete!(InviterState, Invited, InviterInvited);
 try_from_vague_to_concrete!(InviterState, Requested, InviterRequested);
-try_from_vague_to_concrete!(InviterState, Responded, InviterResponded);
 try_from_vague_to_concrete!(InviterState, Completed, InviterCompleted);
 
 try_from_vague_to_concrete!(InviteeState, Initial, InviteeInitial);
