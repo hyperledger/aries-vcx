@@ -203,7 +203,7 @@ mod tests {
             "application/did+json"
         );
         if let PublicKeyField::Base58 { public_key_base58 } =
-            ddo.verification_method()[0].public_key()
+            ddo.verification_method()[0].public_key_field()
         {
             assert_eq!(
                 public_key_base58,
