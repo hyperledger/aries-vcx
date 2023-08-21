@@ -39,15 +39,15 @@ pub enum ResponderState {
 }
 
 impl GenericDidExchange {
-    pub fn our_verkey(&self) -> &Key {
+    pub fn our_did_document(&self) -> &DidDocumentSov {
         match self {
             GenericDidExchange::Requester(requester_state) => match requester_state {
-                RequesterState::RequestSent(request_sent_state) => request_sent_state.our_verkey(),
-                RequesterState::Completed(completed_state) => completed_state.our_verkey(),
+                RequesterState::RequestSent(request_sent_state) => request_sent_state.our_did_doc(),
+                RequesterState::Completed(completed_state) => completed_state.our_did_doc(),
             },
             GenericDidExchange::Responder(responder_state) => match responder_state {
-                ResponderState::ResponseSent(response_sent_state) => response_sent_state.our_verkey(),
-                ResponderState::Completed(completed_state) => completed_state.our_verkey(),
+                ResponderState::ResponseSent(response_sent_state) => response_sent_state.our_did_doc(),
+                ResponderState::Completed(completed_state) => completed_state.our_did_doc(),
             },
         }
     }

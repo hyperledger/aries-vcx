@@ -1,13 +1,21 @@
 use bs58;
+use did_doc_sov::service::ServiceSov;
+use did_doc_sov::DidDocumentSov;
+use did_parser::Did;
+use did_peer::peer_did::peer_did::PeerDid;
+use did_peer::peer_did_resolver::resolver::PeerDidResolver;
+use did_resolver::traits::resolvable::resolution_output::DidResolutionOutput;
+use did_resolver::traits::resolvable::DidResolvable;
+use did_resolver_registry::ResolverRegistry;
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use diddoc_legacy::aries::service::AriesService;
 use messages::msg_fields::protocols::connection::invitation::Invitation;
-use messages::msg_fields::protocols::out_of_band::invitation::OobService;
+use messages::msg_fields::protocols::out_of_band::invitation::{Invitation as OobInvitation, OobService};
 use std::{collections::HashMap, sync::Arc};
 
 use crate::common::ledger::service_didsov::EndpointDidSov;
 use crate::handlers::util::AnyInvitation;
-use crate::utils::from_service_sov_to_legacy;
+use crate::utils::{from_legacy_service_to_service_sov, from_service_sov_to_legacy};
 use aries_vcx_core::ledger::base_ledger::{IndyLedgerRead, IndyLedgerWrite};
 use aries_vcx_core::ledger::indy_vdr_ledger::{LedgerRole, UpdateRole};
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
@@ -90,6 +98,62 @@ pub async fn add_new_did(
     check_response(&res)?;
 
     Ok((did, verkey))
+}
+
+pub async fn resolve_oob_invitation(
+    resolver_registry: &Arc<ResolverRegistry>,
+    invitation: OobInvitation,
+) -> VcxResult<DidDocumentSov> {
+    let mut builder = DidDocumentSov::builder(Default::default());
+
+    let mut resolved_services = vec![];
+    let mut resolved_vms = vec![];
+    let mut resolved_kas = vec![];
+    let mut resolved_dids = vec![];
+
+    for service in invitation.content.services {
+        match service {
+            OobService::SovService(service) => {
+                builder = builder.add_service(service.clone());
+            }
+            OobService::Did(did) => {
+                let parsed_did = Did::parse(did)?;
+                let DidResolutionOutput { did_document, .. } =
+                    resolver_registry.resolve(&parsed_did, &Default::default()).await?;
+                resolved_services.extend(
+                    did_document
+                        .service()
+                        .iter()
+                        .map(|s| ServiceSov::try_from(s.clone()))
+                        .collect::<Result<Vec<_>, _>>()?,
+                );
+                resolved_vms.extend_from_slice(did_document.verification_method());
+                resolved_kas.extend_from_slice(did_document.key_agreement());
+                resolved_dids.push(parsed_did);
+            }
+            OobService::AriesService(service) => {
+                resolved_services.push(from_legacy_service_to_service_sov(service.clone())?)
+            }
+        }
+    }
+
+    for service in resolved_services {
+        builder = builder.add_service(service);
+    }
+
+    for vm in resolved_vms {
+        builder = builder.add_verification_method(vm.clone());
+    }
+
+    for ka in resolved_kas {
+        builder = builder.add_key_agreement(ka.clone());
+    }
+
+    for did in resolved_dids {
+        builder = builder.add_controller(did);
+    }
+
+    Ok(builder.build())
 }
 
 pub async fn into_did_doc(indy_ledger: &Arc<dyn IndyLedgerRead>, invitation: &AnyInvitation) -> VcxResult<AriesDidDoc> {

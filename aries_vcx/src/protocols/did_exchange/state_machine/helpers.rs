@@ -91,7 +91,6 @@ pub fn did_doc_from_keys(did: Did, key_ver: Key, key_enc: Key, service: ServiceS
 
 pub fn ddo_sov_to_attach(ddo: DidDocumentSov) -> Result<Attachment, AriesVcxError> {
     // Interop note: acapy accepts unsigned when using peer dids?
-    println!("Going to attach did document: {}", serde_json::to_string(&ddo)?);
     Ok(Attachment::new(AttachmentData::new(AttachmentType::Base64(
         base64::encode_config(&serde_json::to_string(&ddo)?, base64::URL_SAFE_NO_PAD),
     ))))

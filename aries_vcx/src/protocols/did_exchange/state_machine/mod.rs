@@ -27,14 +27,13 @@ use super::{
 pub struct DidExchange<I, S> {
     state: S,
     initiation_type: PhantomData<I>,
-    // TODO: Do we NEED to store our DDO or does it suffice to store the verkey?
-    our_verkey: Key,
+    our_did_document: DidDocumentSov,
     their_did_document: DidDocumentSov,
 }
 
 impl<I, S> DidExchange<I, S> {
-    pub fn our_verkey(&self) -> &Key {
-        &self.our_verkey
+    pub fn our_did_doc(&self) -> &DidDocumentSov {
+        &self.our_did_document
     }
 
     pub fn their_did_doc(&self) -> &DidDocumentSov {
@@ -76,7 +75,7 @@ impl<I, S: ThreadId> DidExchange<I, S> {
                     request_id: self.state.thread_id().to_string(),
                 },
                 initiation_type: PhantomData,
-                our_verkey: self.our_verkey,
+                our_did_document: self.our_did_document,
                 their_did_document: self.their_did_document,
             },
             output: problem_report,
@@ -85,11 +84,11 @@ impl<I, S: ThreadId> DidExchange<I, S> {
 }
 
 impl<I, S> DidExchange<I, S> {
-    pub fn from_parts(state: S, their_did_document: DidDocumentSov, our_verkey: Key) -> Self {
+    pub fn from_parts(state: S, their_did_document: DidDocumentSov, our_did_document: DidDocumentSov) -> Self {
         Self {
             state,
             initiation_type: PhantomData,
-            our_verkey,
+            our_did_document,
             their_did_document,
         }
     }

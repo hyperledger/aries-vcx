@@ -10,7 +10,10 @@ use messages::msg_fields::protocols::did_exchange::{
 use public_key::{Key, KeyType};
 
 use crate::{
-    common::{keys::get_verkey_from_ledger, ledger::transactions::into_did_doc},
+    common::{
+        keys::get_verkey_from_ledger,
+        ledger::transactions::{into_did_doc, resolve_oob_invitation},
+    },
     errors::error::{AriesVcxError, AriesVcxErrorKind},
     handlers::util::AnyInvitation,
     protocols::did_exchange::{
@@ -35,12 +38,12 @@ impl DidExchangeRequester<RequestSent> {
             service_endpoint,
             routing_keys,
             invitation,
+            resolver_registry,
         }: PairwiseConstructRequestConfig,
     ) -> Result<TransitionResult<Self, Request>, AriesVcxError> {
         verify_handshake_protocol(invitation.clone())?;
         let (our_did_document, our_verkey) = create_our_did_document(&wallet, service_endpoint, routing_keys).await?;
-        let their_did_document =
-            from_legacy_did_doc_to_sov(into_did_doc(&ledger, &AnyInvitation::Oob(invitation.clone())).await?)?;
+        let their_did_document = resolve_oob_invitation(&resolver_registry, invitation.clone()).await?;
 
         let signed_attach = jws_sign_attach(
             ddo_sov_to_attach(our_did_document.clone())?,
@@ -61,7 +64,7 @@ impl DidExchangeRequester<RequestSent> {
                     request_id: request.id.clone(),
                 },
                 their_did_document,
-                our_verkey,
+                our_did_document,
             ),
             output: request,
         })
@@ -98,11 +101,11 @@ impl DidExchangeRequester<RequestSent> {
                     invitation_id,
                 },
                 their_did_document,
-                Key::from_base58(
-                    &wallet.key_for_local_did(&our_did.id().to_string()).await?,
-                    KeyType::X25519,
-                )?
-                .clone(),
+                our_did_document, // Key::from_base58(
+                                  //     &wallet.key_for_local_did(&our_did.id().to_string()).await?,
+                                  //     KeyType::X25519,
+                                  // )?
+                                  // .clone(),
             ),
             output: request,
         })
@@ -166,7 +169,7 @@ impl DidExchangeRequester<RequestSent> {
                     request_id: self.state.request_id,
                 },
                 did_document,
-                self.our_verkey,
+                self.our_did_document,
             ),
             output: complete_message,
         })

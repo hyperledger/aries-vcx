@@ -31,7 +31,7 @@ impl DidExchangeResponder<ResponseSent> {
         }: ReceiveRequestConfig,
     ) -> Result<TransitionResult<DidExchangeResponder<ResponseSent>, Response>, AriesVcxError> {
         let their_ddo = resolve_their_ddo(&resolver_registry, &request).await?;
-        let (our_ddo, enc_key) = create_our_did_document(&wallet, service_endpoint, routing_keys).await?;
+        let (our_did_document, enc_key) = create_our_did_document(&wallet, service_endpoint, routing_keys).await?;
 
         if request.decorators.thread.and_then(|t| t.pthid) != Some(invitation_id.clone()) {
             return Err(AriesVcxError::from_msg(
@@ -40,7 +40,7 @@ impl DidExchangeResponder<ResponseSent> {
             ));
         }
 
-        let response = construct_response(our_ddo, invitation_id.clone(), request.id.clone())?;
+        let response = construct_response(our_did_document.clone(), invitation_id.clone(), request.id.clone())?;
 
         Ok(TransitionResult {
             state: DidExchangeResponder::from_parts(
@@ -49,7 +49,7 @@ impl DidExchangeResponder<ResponseSent> {
                     invitation_id,
                 },
                 their_ddo,
-                enc_key,
+                our_did_document,
             ),
             output: response,
         })
@@ -83,7 +83,7 @@ impl DidExchangeResponder<ResponseSent> {
                 request_id: self.state.request_id,
             },
             self.their_did_document,
-            self.our_verkey,
+            self.our_did_document,
         ))
     }
 }
