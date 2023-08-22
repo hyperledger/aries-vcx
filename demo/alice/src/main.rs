@@ -19,12 +19,14 @@ use env_logger;
 use messages::msg_fields::protocols::basic_message::{BasicMessage, BasicMessageContent, BasicMessageDecorators};
 use messages::msg_fields::protocols::connection::request::Request;
 use messages::msg_fields::protocols::connection::response::Response;
+use messages::msg_fields::protocols::out_of_band::invitation::Invitation;
 use messages::msg_parts::MsgParts;
 use messages::AriesMessage;
 use serde::Deserialize;
-use simple_message_relay::build_msg_relay;
+use simple_message_relay::{build_msg_relay, UserMessage};
 use std::process::exit;
 use std::sync::Arc;
+use tokio::sync::mpsc::Receiver;
 use url::Url;
 
 #[macro_use]
@@ -66,31 +68,38 @@ fn build_basic_message(text_message: String) -> BasicMessage {
     MsgParts::with_decorators(uuid::Uuid::new_v4().to_string(), bm, bmd)
 }
 
-#[tokio::main]
-async fn main() {
-    let faber_url = Url::parse("http://localhost:5901/send_user_message/faber").unwrap();
-    let alice_url = Url::parse("http://localhost:5901/send_user_message/alice").unwrap();
-
-    env_logger::init();
-    let alice = DemoAgent::new().await;
-    let faber = DemoAgent::new().await;
-    info!("Created agents");
-    let (mediator_server, mut mediator_receiver) = build_msg_relay("127.0.0.1", 5901).unwrap();
-
-    tokio::task::spawn(async move { mediator_server.await });
-
-    let (faber_pw_did, faber_invite_key) = faber.wallet.create_and_store_my_did(None, None).await.unwrap();
+fn build_oob_invitation(recipient_key: String, url: Url) -> Invitation {
     let service = AriesService {
         id: uuid::Uuid::new_v4().to_string(),
         type_: "".to_string(),
         priority: 0,
-        recipient_keys: vec![faber_invite_key.clone()],
+        recipient_keys: vec![recipient_key],
         routing_keys: vec![],
-        service_endpoint: faber_url.clone(),
+        service_endpoint: url,
     };
     let sender = OutOfBandSender::create().append_service(&OobService::AriesService(service));
-    let oob_msg = sender.as_invitation_msg();
-    info!("Prepare invitation: {oob_msg:?}");
+    sender.as_invitation_msg()
+}
+
+async fn init() -> (DemoAgent, DemoAgent, Receiver<UserMessage>) {
+    env_logger::init();
+    let alice = DemoAgent::new(Url::parse("http://localhost:5901/send_user_message/alice").unwrap()).await;
+    let faber = DemoAgent::new(Url::parse("http://localhost:5901/send_user_message/faber").unwrap()).await;
+
+    let (mediator_server, mut mediator_receiver) = build_msg_relay("127.0.0.1", 5901).unwrap();
+
+    tokio::task::spawn(async move { mediator_server.await });
+
+    (alice, faber, mediator_receiver)
+}
+
+#[tokio::main]
+async fn main() {
+    let (alice, faber, mut mediator_receiver) = init().await;
+
+    let (faber_pw_did, faber_invite_key) = faber.wallet.create_and_store_my_did(None, None).await.unwrap();
+    let msg_oob_invitation = build_oob_invitation(faber_invite_key.clone(), faber.endpoint_url.clone());
+    info!("Prepare invitation: {msg_oob_invitation:?}");
 
     let (alice_pw_did, alice_pw_key) = alice.wallet.create_and_store_my_did(None, None).await.unwrap();
     let pw_info_alice = PairwiseInfo {
@@ -101,42 +110,42 @@ async fn main() {
     let mut invitee_initial = InviteeConnection::<Initial>::new_invitee("foo".into(), pw_info_alice);
     let mock_ledger: Arc<dyn IndyLedgerRead> = Arc::new(MockLedger {}); // cause we know we want call ledger *eew...*
     let mut invitee_inviter = invitee_initial
-        .accept_invitation(&mock_ledger, AnyInvitation::Oob(oob_msg.into()))
+        .accept_invitation(&mock_ledger, AnyInvitation::Oob(msg_oob_invitation.into()))
         .await
         .unwrap();
     let invitee_requested = invitee_inviter
-        .send_request(&alice.wallet, alice_url, vec![], &HttpClient)
+        .send_request(&alice.wallet, alice.endpoint_url, vec![], &HttpClient)
         .await
         .unwrap();
     {
         info!("Faber waiting for msg");
         let didcomm_msg = mediator_receiver.recv().await.unwrap();
         info!("Faber received a msg");
-        let (request, _key) = decrypt_as_msg::<Request>(faber.wallet.clone(), didcomm_msg.as_slice()).await;
-        info!("Faber received message {request:?}");
+        let (msg_request, _key) = decrypt_as_msg::<Request>(faber.wallet.clone(), didcomm_msg.as_slice()).await;
+        info!("Faber received message {msg_request:?}");
 
         let pw_info_faber = PairwiseInfo {
             pw_did: faber_pw_did,
             pw_vk: faber_invite_key,
         };
         let inviter = InviterConnection::new_inviter("".to_owned(), pw_info_faber).into_invited(
-            &request
+            &msg_request
                 .decorators
                 .thread
                 .as_ref()
                 .map(|t| t.thid.as_str())
-                .unwrap_or(request.id.as_str()),
+                .unwrap_or(msg_request.id.as_str()),
         );
         let (faber_pw_did, faber_pw_key) = faber.wallet.create_and_store_my_did(None, None).await.unwrap();
         // todo: noticed discrepancy, this is creating pw keys internally, but in the other cases we had to supply them
         let requested = inviter
-            .handle_request(&faber.wallet, request, faber_url, vec![], &HttpClient)
+            .handle_request(&faber.wallet, msg_request, faber.endpoint_url, vec![], &HttpClient)
             .await
             .unwrap();
         info!("inviter processed connection-request");
-        let request = requested.get_connection_response_msg();
+        let msg_response = requested.get_connection_response_msg();
         requested
-            .send_message(&faber.wallet, &request.into(), &HttpClient)
+            .send_message(&faber.wallet, &msg_response.into(), &HttpClient)
             .await
             .unwrap();
     }
@@ -150,17 +159,17 @@ async fn main() {
         .await
         .unwrap();
     info!("Alice processed response");
-    let basic_message = build_basic_message("Hello faber, this is alice.".into());
+    let msg_hello = build_basic_message("Hello faber, this is alice.".into());
     invitee_complete
-        .send_message(&alice.wallet, &AriesMessage::BasicMessage(basic_message), &HttpClient)
+        .send_message(&alice.wallet, &AriesMessage::BasicMessage(msg_hello), &HttpClient)
         .await
         .unwrap();
     {
         info!("Faber waiting for msg");
         let didcomm_msg = mediator_receiver.recv().await.unwrap();
         info!("Faber received a msg");
-        let (request, _key) = decrypt_as_msg::<AriesMessage>(faber.wallet.clone(), didcomm_msg.as_slice()).await;
-        info!("Faber received message {request:?}");
+        let (msg_any, _key) = decrypt_as_msg::<AriesMessage>(faber.wallet.clone(), didcomm_msg.as_slice()).await;
+        info!("Faber received message {msg_any:?}");
     }
     exit(0);
 }
