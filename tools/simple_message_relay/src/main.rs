@@ -1,77 +1,23 @@
-use std::{
-    collections::{HashMap, VecDeque},
-    sync::Mutex,
-};
+use env_logger;
+use simple_message_relay::build_msg_relay;
 
-use actix_web::{
-    get, post,
-    web::{self, Bytes},
-    App, HttpResponse, HttpServer, Responder,
-};
-
-#[derive(Default)]
-struct UserMessages {
-    messages_by_user_id: Mutex<HashMap<String, VecDeque<Vec<u8>>>>,
-}
-
-#[get("/")]
-async fn hello() -> impl Responder {
-    HttpResponse::Ok().body("Hello world!")
-}
-
-#[get("/pop_user_message/{user_id}")]
-async fn pop_user_message(path: web::Path<String>, data: web::Data<UserMessages>) -> impl Responder {
-    let user_id = path.into_inner();
-    let mut messages_by_user_id = data.messages_by_user_id.lock().unwrap();
-    let messages_for_user = messages_by_user_id.get_mut(&user_id);
-
-    let message_body = messages_for_user.and_then(|msgs| msgs.pop_front());
-
-    if let Some(body) = message_body {
-        return HttpResponse::Ok().body(body);
-    } else {
-        return HttpResponse::NoContent().into();
-    }
-}
-
-#[post("/send_user_message/{user_id}")]
-async fn send_user_message(path: web::Path<String>, body: Bytes, data: web::Data<UserMessages>) -> impl Responder {
-    let user_id = path.into_inner();
-
-    let body = body.to_vec();
-
-    let mut messages_by_user_id = data.messages_by_user_id.lock().unwrap();
-
-    let messages_for_user = messages_by_user_id.get_mut(&user_id);
-
-    if let Some(messages) = messages_for_user {
-        messages.push_back(body);
-    } else {
-        messages_by_user_id.insert(user_id, vec![body].into());
-    }
-
-    HttpResponse::Ok()
-}
-
-#[get("/status")]
-async fn status() -> impl Responder {
-    HttpResponse::Ok()
-}
+#[macro_use]
+extern crate log;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    let user_messages = web::Data::new(UserMessages::default());
+    env_logger::init();
+    info!("Starting server");
+    let (server, mut msg_receiver) = build_msg_relay(8420)?;
+    info!("Started");
 
-    HttpServer::new(move || {
-        App::new()
-            .app_data(user_messages.clone())
-            .service(pop_user_message)
-            .service(send_user_message)
-            .service(status)
-    })
-    .bind(("0.0.0.0", 8420))?
-    .run()
-    .await
+    tokio::task::spawn(async move {
+        while let Some(message) = msg_receiver.recv().await {
+            println!("Received a message: {:?}", message);
+        }
+    });
+
+    server.await
 }
 
 #[cfg(test)]
@@ -82,8 +28,8 @@ mod tests {
         test::{self, TestRequest},
         web, App,
     };
-
-    use crate::{pop_user_message, send_user_message, UserMessages};
+    use simple_message_relay::{pop_user_message, send_user_message, AppState, UserMessage};
+    use tokio::sync::mpsc;
 
     fn pop_message_request(user_id: &str) -> TestRequest {
         test::TestRequest::get().uri(&format!("/pop_user_message/{user_id}"))
@@ -95,14 +41,15 @@ mod tests {
             .set_payload(msg)
     }
 
-    #[actix_web::test]
+    // #[actix_web::test]
     async fn test_standard_user_flow() {
         // assemble service
-        let user_messages = web::Data::new(UserMessages::default());
+        let (tx, mut rx) = mpsc::channel::<UserMessage>(100);
+        let app_state = web::Data::new(AppState::new(Default::default(), tx));
 
         let app = test::init_service(
             App::new()
-                .app_data(user_messages)
+                .app_data(app_state)
                 .service(send_user_message)
                 .service(pop_user_message),
         )

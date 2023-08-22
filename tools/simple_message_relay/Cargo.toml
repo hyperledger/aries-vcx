@@ -3,7 +3,15 @@ name = "simple_message_relay"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "simple_message_relay"
+path = "src/main.rs"
 
 [dependencies]
 actix-web = "4"
+tokio = { version = "1.20", features = ["rt", "macros", "rt-multi-thread"] }
+env_logger = "0.9.1"
+log = "0.4.17"

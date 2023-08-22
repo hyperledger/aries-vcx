@@ -114,6 +114,10 @@ impl OutOfBandSender {
         self.oob.clone().into()
     }
 
+    pub fn as_invitation_msg(&self) -> Invitation {
+        self.oob.clone()
+    }
+
     pub fn to_string(&self) -> String {
         json!(AriesMessage::from(self.oob.clone())).to_string()
     }
