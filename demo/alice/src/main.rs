@@ -19,7 +19,9 @@ use simple_message_relay::build_msg_relay;
 use std::process::exit;
 use std::sync::Arc;
 use std::time::Duration;
+use serde::Deserialize;
 use url::Url;
+use aries_vcx_core::wallet::base_wallet::BaseWallet;
 
 #[macro_use]
 extern crate serde_derive;
@@ -35,6 +37,13 @@ pub struct MessageData {
     message: String,
     recipient_verkey: String,
     sender_verkey: String,
+}
+
+async fn decrypt_as_msg<'a, T>(wallet: Arc<dyn BaseWallet>, didcomm_msg: &[u8]) -> (T, String) where T: Deserialize<'a> {
+    let decrypted_msg = wallet.unpack_message(&didcomm_msg).await.unwrap();
+    let unpacked: MessageData = serde_json::from_slice(&decrypted_msg).unwrap();
+    let msg: T = serde_json::from_str(&unpacked.message).unwrap();
+    return (msg, unpacked.sender_verkey)
 }
 
 #[tokio::main]
@@ -83,10 +92,7 @@ async fn main() {
         info!("Faber waiting for msg");
         let didcomm_msg = mediator_receiver.recv().await.unwrap();
         info!("Faber received a msg");
-
-        let decrypted_msg = faber.wallet.unpack_message(&didcomm_msg).await.unwrap();
-        let unpacked: MessageData = serde_json::from_slice(&decrypted_msg).unwrap();
-        let request: Request = serde_json::from_str(&unpacked.message).unwrap();
+        let request: Request = decrypt_as_msg(faber.wallet.clone(), didcomm_msg.as_slice());
         info!("Faber received message {request:?}");
 
         let pw_info_faber = PairwiseInfo {
