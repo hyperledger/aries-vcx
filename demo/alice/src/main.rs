@@ -28,6 +28,10 @@ use std::process::exit;
 use std::sync::Arc;
 use tokio::sync::mpsc::Receiver;
 use url::Url;
+// todo: the fact that Invitee and Inviter states have same name can easily cause mis-matches in consumer's code
+//       where they attempt to build Inviter<T>, but T is invitee state, like: invitee::states::responded::Responded
+use aries_vcx::protocols::connection::invitee::states::responded::Responded;
+use aries_vcx::protocols::connection::inviter::states::requested::Requested;
 
 #[macro_use]
 extern crate serde_derive;
@@ -85,18 +89,28 @@ async fn init() -> (DemoAgent, DemoAgent, Receiver<UserMessage>) {
     env_logger::init();
     let alice = DemoAgent::new(Url::parse("http://localhost:5901/send_user_message/alice").unwrap()).await;
     let faber = DemoAgent::new(Url::parse("http://localhost:5901/send_user_message/faber").unwrap()).await;
+    let mediator_address = "127.0.0.1";
+    let mediator_port = 5901;
+    info!("Simple Alice & Faber agent abstractions created");
 
-    let (mediator_server, mut mediator_receiver) = build_msg_relay("127.0.0.1", 5901).unwrap();
+    let (mediator_server, mut mediator_receiver) = build_msg_relay(mediator_address, mediator_port).unwrap();
 
-    tokio::task::spawn(async move { mediator_server.await });
+    tokio::task::spawn(async move {
+        info!("Simple mediator relay service is listening on {mediator_address}:{mediator_port}");
+        mediator_server.await
+    });
 
     (alice, faber, mediator_receiver)
 }
 
-#[tokio::main]
-async fn main() {
-    let (alice, faber, mut mediator_receiver) = init().await;
-
+// todo: The return type is ugly - we don't care anymore about Connection protocol per se, we care that we have a didcomm channel
+//       established. We should perhaps introduce a "DidcommChannel" struct or a trait
+async fn workflow_alice_faber_connection(
+    alice: &DemoAgent,
+    faber: &DemoAgent,
+    mediator_receiver: &mut Receiver<UserMessage>,
+) -> (InviteeConnection<Responded>, InviterConnection<Requested>) {
+    info!("Starting Alice & Faber workflow to establish didcomm connection");
     let (faber_pw_did, faber_invite_key) = faber.wallet.create_and_store_my_did(None, None).await.unwrap();
     let msg_oob_invitation = build_oob_invitation(faber_invite_key.clone(), faber.endpoint_url.clone());
     info!("Prepare invitation: {msg_oob_invitation:?}");
@@ -107,48 +121,51 @@ async fn main() {
         pw_vk: alice_pw_key,
     };
     info!("Alice generated pairwise info {pw_info_alice:?}");
-    let mut invitee_initial = InviteeConnection::<Initial>::new_invitee("foo".into(), pw_info_alice);
     let mock_ledger: Arc<dyn IndyLedgerRead> = Arc::new(MockLedger {}); // cause we know we want call ledger *eew...*
-    let mut invitee_inviter = invitee_initial
+    let mut invitee_invited = InviteeConnection::<Initial>::new_invitee("foo".into(), pw_info_alice)
         .accept_invitation(&mock_ledger, AnyInvitation::Oob(msg_oob_invitation.into()))
         .await
         .unwrap();
-    let invitee_requested = invitee_inviter
-        .send_request(&alice.wallet, alice.endpoint_url, vec![], &HttpClient)
+
+    let invitee_requested = invitee_invited
+        .send_request(&alice.wallet, alice.endpoint_url.clone(), vec![], &HttpClient)
         .await
         .unwrap();
-    {
-        info!("Faber waiting for msg");
-        let didcomm_msg = mediator_receiver.recv().await.unwrap();
-        info!("Faber received a msg");
-        let (msg_request, _key) = decrypt_as_msg::<Request>(faber.wallet.clone(), didcomm_msg.as_slice()).await;
-        info!("Faber received message {msg_request:?}");
+    info!("Faber waiting for msg");
+    let didcomm_msg = mediator_receiver.recv().await.unwrap();
+    info!("Faber received a msg");
+    let (msg_request, _key) = decrypt_as_msg::<Request>(faber.wallet.clone(), didcomm_msg.as_slice()).await;
+    info!("Faber received message {msg_request:?}");
 
-        let pw_info_faber = PairwiseInfo {
-            pw_did: faber_pw_did,
-            pw_vk: faber_invite_key,
-        };
-        let inviter = InviterConnection::new_inviter("".to_owned(), pw_info_faber).into_invited(
-            &msg_request
-                .decorators
-                .thread
-                .as_ref()
-                .map(|t| t.thid.as_str())
-                .unwrap_or(msg_request.id.as_str()),
-        );
-        let (faber_pw_did, faber_pw_key) = faber.wallet.create_and_store_my_did(None, None).await.unwrap();
-        // todo: noticed discrepancy, this is creating pw keys internally, but in the other cases we had to supply them
-        let requested = inviter
-            .handle_request(&faber.wallet, msg_request, faber.endpoint_url, vec![], &HttpClient)
-            .await
-            .unwrap();
-        info!("inviter processed connection-request");
-        let msg_response = requested.get_connection_response_msg();
-        requested
-            .send_message(&faber.wallet, &msg_response.into(), &HttpClient)
-            .await
-            .unwrap();
-    }
+    let pw_info_faber = PairwiseInfo {
+        pw_did: faber_pw_did,
+        pw_vk: faber_invite_key,
+    };
+    let inviter_invited = InviterConnection::new_inviter("".to_owned(), pw_info_faber).into_invited(
+        &msg_request
+            .decorators
+            .thread
+            .as_ref()
+            .map(|t| t.thid.as_str())
+            .unwrap_or(msg_request.id.as_str()),
+    );
+    let inviter_requested = inviter_invited
+        .handle_request(
+            &faber.wallet,
+            msg_request,
+            faber.endpoint_url.clone(),
+            vec![],
+            &HttpClient,
+        )
+        .await
+        .unwrap();
+    info!("inviter processed connection-request");
+    let msg_response = inviter_requested.get_connection_response_msg();
+    inviter_requested
+        .send_message(&faber.wallet, &msg_response.into(), &HttpClient)
+        .await
+        .unwrap();
+
     info!("Alice waiting for msg");
     let didcomm_msg = mediator_receiver.recv().await.unwrap();
     info!("Alice received a msg");
@@ -158,9 +175,17 @@ async fn main() {
         .handle_response(&alice.wallet.clone(), response, &HttpClient)
         .await
         .unwrap();
+    (invitee_complete, inviter_requested)
+}
+
+#[tokio::main]
+async fn main() {
+    let (alice, faber, mut mediator_receiver) = init().await;
+    let (connection_alice, _connection_faber) =
+        workflow_alice_faber_connection(&alice, &faber, &mut mediator_receiver).await;
     info!("Alice processed response");
     let msg_hello = build_basic_message("Hello faber, this is alice.".into());
-    invitee_complete
+    connection_alice
         .send_message(&alice.wallet, &AriesMessage::BasicMessage(msg_hello), &HttpClient)
         .await
         .unwrap();
