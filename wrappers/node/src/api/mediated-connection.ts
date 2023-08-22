@@ -1,6 +1,6 @@
 import * as ffiNapi from '@hyperledger/vcx-napi-rs';
 import { VCXInternalError } from '../errors';
-import { ISerializedData, ConnectionStateType } from './common';
+import { ISerializedData, MediatedConnectionStateType } from './common';
 import { VcxBaseWithState } from './vcx-base-with-state';
 import { IPwInfo } from './utils';
 
@@ -14,7 +14,7 @@ export interface IConnectionData {
   endpoint: string;
   uuid: string;
   wallet: string;
-  state: ConnectionStateType;
+  state: MediatedConnectionStateType;
 }
 
 /**
@@ -122,7 +122,7 @@ export function generatePublicInvite(public_did: string, label: string): string 
   }
 }
 
-export class Connection extends VcxBaseWithState<IConnectionData, ConnectionStateType> {
+export class Connection extends VcxBaseWithState<IConnectionData, MediatedConnectionStateType> {
   public static async create({ id }: IConnectionCreateData): Promise<Connection> {
     try {
       const connection = new Connection();

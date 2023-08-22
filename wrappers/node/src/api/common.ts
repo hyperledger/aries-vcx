@@ -117,11 +117,19 @@ export enum VCXCode {
   UNIMPLEMENTED_FEATURE = 1117,
   LEDGER_ITEM_NOT_FOUND = 1118,
 }
-export enum ConnectionStateType {
+export enum MediatedConnectionStateType {
   Initial = 0,
   Invited = 1,
+  Responded = 3,
   Requested = 2,
   Finished = 4,
+}
+
+export enum ConnectionStateType {
+    Initial = 0,
+    Invited = 1,
+    Requested = 2,
+    Finished = 4,
 }
 
 export enum HolderStateType {
