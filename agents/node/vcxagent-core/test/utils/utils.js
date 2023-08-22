@@ -4,7 +4,7 @@ const express = require('express')
 const { createFaber } = require('./faber')
 const { createAlice } = require('./alice')
 const assert = require('assert')
-const { MediatedConnectionStateType } = require('@hyperledger/node-vcx-wrapper')
+const { MediatedConnectionStateType, ConnectionStateType } = require('@hyperledger/node-vcx-wrapper')
 const logger = require('../../demo/logger')('utils')
 
 module.exports.createAliceAndFaber = async function createAliceAndFaber ({ aliceEndpoint, faberEndpoint } = {}) {
@@ -70,7 +70,7 @@ module.exports.createPairedAliceAndFaberViaPublicInvite = async function createP
   const f2 = async (alice, faber, pwInfo, message) => {
     await faber.createConnectionFromReceivedRequestV2(pwInfo, message)
     await alice.updateConnection(MediatedConnectionStateType.Finished)
-    await faber.updateConnection(MediatedConnectionStateType.Finished)
+    await faber.updateConnection(ConnectionStateType.Finished)
     return { alice, faber }
   }
   return await executeFunctionWithServer(f1, f2)
@@ -83,13 +83,13 @@ module.exports.createPairedAliceAndFaberViaOobMsg = async function createPairedA
     const pwInfo = await faber.publishService(endpoint)
     const msg = await faber.createOobMessageWithDid()
     await alice.createConnectionUsingOobMessage(msg)
-    await alice.updateConnection(MediatedConnectionStateType.Requested)
+    await alice.updateConnection(MediatedConnectionStateType.Responded)
     return { alice, faber, pwInfo }
   }
   const f2 = async (alice, faber, pwInfo, message) => {
     await faber.createConnectionFromReceivedRequestV2(pwInfo, message)
     await alice.updateConnection(MediatedConnectionStateType.Finished)
-    await faber.updateConnection(MediatedConnectionStateType.Finished)
+    await faber.updateConnection(ConnectionStateType.Finished)
     return { alice, faber }
   }
   return await executeFunctionWithServer(f1, f2)

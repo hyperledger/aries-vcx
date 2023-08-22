@@ -1,7 +1,7 @@
 /* eslint-env jest */
 const { createVcxAgent, getSampleSchemaData } = require('../../src')
 const {
-  ConnectionStateType, IssuerStateType, VerifierStateType, generatePublicInvite,
+  MediatedConnectionStateType, ConnectionStateType, IssuerStateType, VerifierStateType, generatePublicInvite,
   createService, getServiceFromLedger, unpack, createAndStoreDid
 } = require('@hyperledger/node-vcx-wrapper')
 const { getAliceSchemaAttrs, getFaberCredDefName } = require('./data')
@@ -300,7 +300,7 @@ module.exports.createFaber = async function createFaber (serviceEndpoint = 'http
     await vcxAgent.agentInitVcx()
     expect(await vcxAgent.serviceNonmediatedConnections.getState(connectionId)).toBe(ConnectionStateType.Invited)
     await vcxAgent.serviceNonmediatedConnections.inviterConnectionProcessRequest(connectionId, request)
-    expect(await vcxAgent.serviceNonmediatedConnections.getState(connectionId)).toBe(ConnectionStateType.Responded)
+    expect(await vcxAgent.serviceNonmediatedConnections.getState(connectionId)).toBe(ConnectionStateType.Requested)
 
     await vcxAgent.agentShutdownVcx()
   }
@@ -310,7 +310,7 @@ module.exports.createFaber = async function createFaber (serviceEndpoint = 'http
 
     await vcxAgent.agentInitVcx()
     await vcxAgent.serviceNonmediatedConnections.inviterConnectionCreateFromRequest(connectionId, request, pwInfo)
-    expect(await vcxAgent.serviceNonmediatedConnections.getState(connectionId)).toBe(ConnectionStateType.Responded)
+    expect(await vcxAgent.serviceNonmediatedConnections.getState(connectionId)).toBe(ConnectionStateType.Requested)
 
     await vcxAgent.agentShutdownVcx()
   }
@@ -330,7 +330,7 @@ module.exports.createFaber = async function createFaber (serviceEndpoint = 'http
 
     await vcxAgent.agentInitVcx()
     await vcxAgent.serviceConnections.inviterConnectionCreateFromRequestV2(connectionId, pwInfo, request)
-    expect(await vcxAgent.serviceConnections.connectionUpdate(connectionId)).toBe(ConnectionStateType.Responded)
+    expect(await vcxAgent.serviceConnections.connectionUpdate(connectionId)).toBe(MediatedConnectionStateType.Responded)
 
     await vcxAgent.agentShutdownVcx()
   }
