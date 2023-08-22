@@ -565,7 +565,6 @@ mod tests {
 
     use aries_vcx::common::test_utils::create_and_store_nonrevocable_credential_def;
     use aries_vcx::handlers::issuance::holder::Holder;
-    use aries_vcx::handlers::issuance::issuer::Issuer;
     use aries_vcx::handlers::issuance::mediated_issuer::issuer_update_with_mediator;
     use aries_vcx::handlers::proof_presentation::mediated_verifier::verifier_update_with_mediator;
     use aries_vcx::handlers::proof_presentation::prover::Prover;
@@ -1365,15 +1364,9 @@ mod tests {
             decline_offer(&mut consumer, &consumer_to_institution, &mut holder).await;
             assert_eq!(IssuerState::OfferSent, issuer.get_state());
             tokio::time::sleep(Duration::from_millis(1000)).await;
-            issuer_update_with_mediator(
-                &mut issuer,
-                &institution.profile.inject_wallet(),
-                &institution.profile.inject_anoncreds(),
-                &institution.agency_client,
-                &institution_to_consumer,
-            )
-            .await
-            .unwrap();
+            issuer_update_with_mediator(&mut issuer, &institution.agency_client, &institution_to_consumer)
+                .await
+                .unwrap();
             assert_eq!(IssuerState::Failed, issuer.get_state());
         })
         .await;

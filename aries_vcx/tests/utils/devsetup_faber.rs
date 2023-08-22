@@ -300,28 +300,16 @@ impl Faber {
             )
             .await
             .unwrap();
-        issuer_update_with_mediator(
-            &mut self.issuer_credential,
-            &self.profile.inject_wallet(),
-            &self.profile.inject_anoncreds(),
-            &self.agency_client,
-            &self.connection,
-        )
-        .await
-        .unwrap();
+        issuer_update_with_mediator(&mut self.issuer_credential, &self.agency_client, &self.connection)
+            .await
+            .unwrap();
         assert_eq!(IssuerState::OfferSent, self.issuer_credential.get_state());
     }
 
     pub async fn send_credential(&mut self) {
-        issuer_update_with_mediator(
-            &mut self.issuer_credential,
-            &self.profile.inject_wallet(),
-            &self.profile.inject_anoncreds(),
-            &self.agency_client,
-            &self.connection,
-        )
-        .await
-        .unwrap();
+        issuer_update_with_mediator(&mut self.issuer_credential, &self.agency_client, &self.connection)
+            .await
+            .unwrap();
         assert_eq!(IssuerState::RequestReceived, self.issuer_credential.get_state());
 
         self.issuer_credential
@@ -334,15 +322,9 @@ impl Faber {
             )
             .await
             .unwrap();
-        issuer_update_with_mediator(
-            &mut self.issuer_credential,
-            &self.profile.inject_wallet(),
-            &self.profile.inject_anoncreds(),
-            &self.agency_client,
-            &self.connection,
-        )
-        .await
-        .unwrap();
+        issuer_update_with_mediator(&mut self.issuer_credential, &self.agency_client, &self.connection)
+            .await
+            .unwrap();
         assert_eq!(IssuerState::CredentialSent, self.issuer_credential.get_state());
     }
 

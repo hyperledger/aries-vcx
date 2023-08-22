@@ -11,13 +11,9 @@ use messages::msg_fields::protocols::cred_issuance::CredentialIssuance;
 use messages::msg_fields::protocols::notification::Notification;
 use messages::AriesMessage;
 use std::collections::HashMap;
-use std::sync::Arc;
 
-// todo: remove unused args
 pub async fn issuer_update_with_mediator(
     sm: &mut Issuer,
-    _wallet: &Arc<dyn BaseWallet>,
-    _anoncreds: &Arc<dyn BaseAnonCreds>,
     agency_client: &AgencyClient,
     connection: &MediatedConnection,
 ) -> VcxResult<IssuerState> {

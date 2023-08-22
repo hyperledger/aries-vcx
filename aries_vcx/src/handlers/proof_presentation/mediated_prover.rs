@@ -32,12 +32,8 @@ pub async fn get_proof_request_messages(
     Ok(json!(presentation_requests).to_string())
 }
 
-// todo: remove unused args
 pub async fn prover_update_with_mediator(
     sm: &mut Prover,
-    _ledger: &Arc<dyn AnoncredsLedgerRead>,
-    _anoncreds: &Arc<dyn BaseAnonCreds>,
-    _wallet: &Arc<dyn BaseWallet>,
     agency_client: &AgencyClient,
     connection: &MediatedConnection,
 ) -> VcxResult<ProverState> {

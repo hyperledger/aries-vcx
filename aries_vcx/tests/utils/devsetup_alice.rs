@@ -300,16 +300,9 @@ impl Alice {
     }
 
     pub async fn ensure_presentation_verified(&mut self) {
-        prover_update_with_mediator(
-            &mut self.prover,
-            &self.profile.inject_anoncreds_ledger_read(),
-            &self.profile.inject_anoncreds(),
-            &self.profile.inject_wallet(),
-            &self.agency_client,
-            &self.connection,
-        )
-        .await
-        .unwrap();
+        prover_update_with_mediator(&mut self.prover, &self.agency_client, &self.connection)
+            .await
+            .unwrap();
         assert_eq!(Status::Success.code(), self.prover.presentation_status());
     }
 
