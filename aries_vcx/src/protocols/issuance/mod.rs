@@ -6,20 +6,6 @@ use crate::errors::error::prelude::*;
 pub mod holder;
 pub mod issuer;
 
-// todo: restore, how to call this on arbitrary Aries message?
-// pub fn verify_thread_id(thread_id: &str, message: &CredentialIssuanceAction) -> VcxResult<()> {
-//     if !settings::indy_mocks_enabled() && !message.thread_id_matches(thread_id) {
-//         return Err(AriesVcxError::from_msg(
-//             AriesVcxErrorKind::InvalidJson,
-//             format!(
-//                 "Cannot handle message {:?}: thread id does not match, expected {:?}",
-//                 message, thread_id
-//             ),
-//         ));
-//     };
-//     Ok(())
-// }
-
 pub async fn is_cred_def_revokable(ledger: &Arc<dyn AnoncredsLedgerRead>, cred_def_id: &str) -> VcxResult<bool> {
     let cred_def_json = ledger.get_cred_def(cred_def_id, None).await.map_err(|err| {
         AriesVcxError::from_msg(
