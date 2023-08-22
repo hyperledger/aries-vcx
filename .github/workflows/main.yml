@@ -3,10 +3,10 @@ name: CI
 on:
   push:
     branches:
+      - main
+  pull_request:
+    branches:
       - "**"
-#  pull_request:
-#    branches:
-#      - "**"
 
 env:
   DOCKER_BUILDKIT: 1
