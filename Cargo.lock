@@ -1530,7 +1530,9 @@ dependencies = [
  "diddoc_legacy",
  "env_logger 0.9.3",
  "log",
+ "messages",
  "serde",
+ "serde_derive",
  "serde_json",
  "simple_message_relay",
  "thiserror",
@@ -4534,6 +4536,8 @@ dependencies = [
  "actix-web",
  "env_logger 0.9.3",
  "log",
+ "serde",
+ "serde_json",
  "tokio",
 ]
 

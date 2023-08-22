@@ -6,11 +6,12 @@ license.workspace = true
 edition.workspace = true
 
 [dependencies]
-serde = "1.0.145"
 aries-vcx = { path = "../../aries_vcx" }
 aries_vcx_core = { path = "../../aries_vcx_core" }
 async-trait = "0.1.64"
+serde = { version = "1.0.159", features = ["derive"] }
 serde_json = "1.0.85"
+serde_derive = "1.0.97"
 log = "0.4.17"
 tokio = { version = "1.20", features = ["rt", "macros" ] }
 uuid = "1.2.1"
@@ -20,3 +21,4 @@ env_logger = "0.9.1"
 simple_message_relay = { path = "../../tools/simple_message_relay" }
 diddoc_legacy = { path = "../../diddoc_legacy" }
 agency_client = { path = "../../agency_client" }
+messages = { path = "../../messages" }

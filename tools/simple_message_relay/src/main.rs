@@ -7,17 +7,20 @@ extern crate log;
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     env_logger::init();
-    info!("Starting server");
-    let (server, mut msg_receiver) = build_msg_relay(8420)?;
-    info!("Started");
+    let binding_address = "0.0.0.0";
+    let port = 8420;
+    let (server, mut msg_receiver) = build_msg_relay(binding_address, port)?;
 
     tokio::task::spawn(async move {
+        info!("Message receiver is active");
         while let Some(message) = msg_receiver.recv().await {
             println!("Received a message: {:?}", message);
         }
     });
 
+    info!("Message relay listening on {binding_address}:{port}");
     server.await
+
 }
 
 #[cfg(test)]
