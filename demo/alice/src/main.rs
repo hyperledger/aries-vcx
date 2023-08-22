@@ -39,6 +39,9 @@ pub struct MessageData {
 
 #[tokio::main]
 async fn main() {
+    let faber_url = Url::parse("http://localhost:5901/send_user_message/faber").unwrap();
+    let alice_url = Url::parse("http://localhost:5901/send_user_message/alice").unwrap();
+
     env_logger::init();
     let alice = DemoAgent::new().await;
     let faber = DemoAgent::new().await;
@@ -52,9 +55,9 @@ async fn main() {
         id: uuid::Uuid::new_v4().to_string(),
         type_: "".to_string(),
         priority: 0,
-        recipient_keys: vec![faber_invite_key],
+        recipient_keys: vec![faber_invite_key.clone()],
         routing_keys: vec![],
-        service_endpoint: Url::parse("http://localhost:5901/send_user_message/faber").unwrap(),
+        service_endpoint: faber_url.clone(),
     };
     let sender = OutOfBandSender::create().append_service(&OobService::AriesService(service));
     let oob_msg = sender.as_invitation_msg();
@@ -73,37 +76,43 @@ async fn main() {
         .await
         .unwrap();
     let invitee_requested = invitee_inviter
-        .send_request(
-            &Arc::new(alice.wallet),
-            Url::parse("http://localhost:5901/send_user_message/alice").unwrap(),
-            vec![],
-            &HttpClient,
-        )
+        .send_request(&Arc::new(alice.wallet), alice_url, vec![], &HttpClient)
         .await
         .unwrap();
-    info!("Faber waiting for msg");
-    let msg = mediator_receiver.recv().await.unwrap();
-    let decrypted_msg = faber.wallet.unpack_message(&msg).await.unwrap();
-    let decrypted_msg_str: String = String::from_utf8(decrypted_msg.clone()).unwrap();
-    let unpacked: MessageData = serde_json::from_slice(&decrypted_msg).unwrap();
-    let request: Request = serde_json::from_str(&unpacked.message).unwrap();
-    info!("Faber received message {request:?}");
+    {
+        info!("Faber waiting for msg");
+        let didcomm_msg = mediator_receiver.recv().await.unwrap();
+        info!("Faber received a msg");
 
-    // let mut invitee_initial = InviterConnection::<Initial>::new_invitee("foo".into(), pw_info);
+        let decrypted_msg = faber.wallet.unpack_message(&didcomm_msg).await.unwrap();
+        let unpacked: MessageData = serde_json::from_slice(&decrypted_msg).unwrap();
+        let request: Request = serde_json::from_str(&unpacked.message).unwrap();
+        info!("Faber received message {request:?}");
 
-    // let pw_info_faber = PairwiseInfo {
-    //     pw_did: faber_pw_did,
-    //     pw_vk: faber_invite_key,
-    // };
-    // let inviter = InviterConnection::new_inviter("".to_owned(), pw_info_faber);
-    // inviter.into_invited(
-    //     &request
-    //         .decorators
-    //         .thread
-    //         .as_ref()
-    //         .map(|t| t.thid.as_str())
-    //         .unwrap_or(request.id.as_str()),
-    // )
-
+        let pw_info_faber = PairwiseInfo {
+            pw_did: faber_pw_did,
+            pw_vk: faber_invite_key,
+        };
+        let inviter = InviterConnection::new_inviter("".to_owned(), pw_info_faber).into_invited(
+            &request
+                .decorators
+                .thread
+                .as_ref()
+                .map(|t| t.thid.as_str())
+                .unwrap_or(request.id.as_str()),
+        );
+        let (faber_pw_did, faber_pw_key) = faber.wallet.create_and_store_my_did(None, None).await.unwrap();
+        // todo: noticed discrepancy, this is creating pw keys internally, but in the other cases we had to supply them
+        inviter
+            .handle_request(&faber.wallet, request, faber_url, vec![], &HttpClient)
+            .await
+            .unwrap();
+        info!("inviter processed connection-request");
+    }
+    {
+        info!("Alice waiting for msg");
+        let didcomm_msg = mediator_receiver.recv().await.unwrap();
+        info!("Alice received a msg");
+    }
     exit(0);
 }

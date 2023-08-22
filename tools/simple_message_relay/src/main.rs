@@ -20,7 +20,6 @@ async fn main() -> std::io::Result<()> {
 
     info!("Message relay listening on {binding_address}:{port}");
     server.await
-
 }
 
 #[cfg(test)]
