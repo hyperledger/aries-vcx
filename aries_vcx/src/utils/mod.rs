@@ -127,6 +127,7 @@ fn vm_method_type_to_key_type(vm_type: &VerificationMethodType) -> VcxResult<Key
     }
 }
 
+// TODO: Get rid of this please!!!
 pub fn from_did_doc_sov_to_legacy(ddo: DidDocumentSov) -> VcxResult<AriesDidDoc> {
     let mut new_ddo = AriesDidDoc::default();
     new_ddo.id = ddo.id().to_string();
@@ -138,13 +139,25 @@ pub fn from_did_doc_sov_to_legacy(ddo: DidDocumentSov) -> VcxResult<AriesDidDoc>
             .clone()
             .into(),
     );
-    if let Some(vm) = ddo.verification_method().first() {
-        let key = Key::new(
-            vm.public_key().key_decoded()?,
-            vm_method_type_to_key_type(vm.verification_method_type())?,
-        )?;
-        new_ddo.set_recipient_keys(vec![key.base58()]);
+    let mut recipient_keys = vec![];
+    for ka in ddo.resolved_key_agreement() {
+        recipient_keys.push(ka.public_key()?.base58());
     }
+    for service in ddo.service() {
+        if let Ok(key_kinds) = service.extra().recipient_keys() {
+            for key_kind in key_kinds {
+                match key_kind {
+                    KeyKind::DidKey(key) => {
+                        recipient_keys.push(key.key().base58());
+                    }
+                    KeyKind::Reference(_) => {}
+                    KeyKind::Value(value) => todo!(),
+                }
+            }
+        }
+    }
+    new_ddo.set_recipient_keys(recipient_keys);
+    println!("Converted their ddo {ddo:?} to legacy ddo: {new_ddo:?}");
     Ok(new_ddo)
 }
 
@@ -233,5 +246,6 @@ pub fn from_service_sov_to_legacy(service: ServiceSov) -> AriesService {
                 ..Default::default()
             }
         }
+        ServiceSov::Legacy(_) => todo!(),
     }
 }

@@ -3,7 +3,7 @@ use messages::msg_fields::protocols::did_exchange::{complete::Complete, response
 use crate::{
     errors::error::{AriesVcxError, AriesVcxErrorKind},
     protocols::did_exchange::{
-        state_machine::helpers::create_our_did_document,
+        state_machine::helpers::{create_our_did_document, ddo_sov_to_attach, jws_sign_attach},
         states::{completed::Completed, responder::response_sent::ResponseSent},
         transition::{transition_error::TransitionError, transition_result::TransitionResult},
     },
@@ -28,6 +28,7 @@ impl DidExchangeResponder<ResponseSent> {
             service_endpoint,
             routing_keys,
             invitation_id,
+            invitation_key,
         }: ReceiveRequestConfig,
     ) -> Result<TransitionResult<DidExchangeResponder<ResponseSent>, Response>, AriesVcxError> {
         let their_ddo = resolve_their_ddo(&resolver_registry, &request).await?;
@@ -40,7 +41,15 @@ impl DidExchangeResponder<ResponseSent> {
             ));
         }
 
-        let response = construct_response(our_did_document.clone(), invitation_id.clone(), request.id.clone())?;
+        let signed_attach =
+            jws_sign_attach(ddo_sov_to_attach(our_did_document.clone())?, invitation_key, &wallet).await?;
+
+        let response = construct_response(
+            our_did_document.clone(),
+            invitation_id.clone(),
+            request.id.clone(),
+            Some(signed_attach),
+        )?;
 
         Ok(TransitionResult {
             state: DidExchangeResponder::from_parts(

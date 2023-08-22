@@ -70,6 +70,11 @@ impl Key {
         })
     }
 
+    // TODO: A better name?
+    pub fn short_prefixless_fingerprint(&self) -> String {
+        self.prefixless_fingerprint().chars().take(8).collect::<String>()
+    }
+
     fn strip_multicodec_prefix_if_present(key: Vec<u8>, key_type: &KeyType) -> Vec<u8> {
         if let Ok((value, remaining)) = unsigned_varint::decode::u64(&key) {
             if value == Into::<u64>::into(key_type) {

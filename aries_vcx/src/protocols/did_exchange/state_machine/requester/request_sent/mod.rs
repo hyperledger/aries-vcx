@@ -82,15 +82,7 @@ impl DidExchangeRequester<RequestSent> {
         let (our_did_document, _) = did_doc_from_did(&ledger, our_did.clone()).await?;
         let invitation_id = format!("{}#{}", their_did, service.id().to_string());
 
-        let key = Key::new(
-            our_did_document
-                .verification_method()
-                .first()
-                .unwrap()
-                .public_key()
-                .key_decoded()?,
-            KeyType::Ed25519,
-        )?;
+        let key = our_did_document.verification_method().first().unwrap().public_key()?;
         let signed_attach = jws_sign_attach(ddo_sov_to_attach(our_did_document.clone())?, key, &wallet).await?;
         let request = construct_request(invitation_id.clone(), our_did.to_string(), Some(signed_attach))?;
 
@@ -101,11 +93,7 @@ impl DidExchangeRequester<RequestSent> {
                     invitation_id,
                 },
                 their_did_document,
-                our_did_document, // Key::from_base58(
-                                  //     &wallet.key_for_local_did(&our_did.id().to_string()).await?,
-                                  //     KeyType::X25519,
-                                  // )?
-                                  // .clone(),
+                our_did_document,
             ),
             output: request,
         })

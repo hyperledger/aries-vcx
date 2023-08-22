@@ -105,7 +105,7 @@ fn add_public_key_to_builder(
 }
 
 fn to_did_url_reference(key: &Key) -> Result<DidUrl, DidPeerError> {
-    DidUrl::from_fragment(key.prefixless_fingerprint().chars().take(8).collect::<String>()).map_err(Into::into)
+    DidUrl::from_fragment(key.short_prefixless_fingerprint()).map_err(Into::into)
 }
 
 #[cfg(test)]

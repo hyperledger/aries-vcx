@@ -1,14 +1,17 @@
 use std::{collections::HashMap, sync::Arc};
 
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
-use did_doc::schema::verification_method::{VerificationMethod, VerificationMethodKind, VerificationMethodType};
+use did_doc::schema::{
+    types::uri::Uri,
+    verification_method::{VerificationMethod, VerificationMethodKind, VerificationMethodType},
+};
 use did_doc_sov::{
     extra_fields::{didcommv1::ExtraFieldsDidCommV1, KeyKind},
     service::{didcommv1::ServiceDidCommV1, ServiceSov},
     DidDocumentSov,
 };
 use did_key::DidKey;
-use did_parser::Did;
+use did_parser::{Did, DidUrl};
 use did_peer::peer_did::generate::generate_numalgo2;
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use messages::decorators::attachment::{Attachment, AttachmentData, AttachmentType};
@@ -36,11 +39,7 @@ pub fn construct_service(
         .set_routing_keys(routing_keys)
         .set_recipient_keys(recipient_keys)
         .build();
-    let service = ServiceSov::DIDCommV1(ServiceDidCommV1::new(
-        Default::default(),
-        service_endpoint.into(),
-        extra,
-    )?);
+    let service = ServiceSov::DIDCommV1(ServiceDidCommV1::new(Uri::new("#0")?, service_endpoint.into(), extra)?);
     Ok(service)
 }
 
@@ -58,35 +57,40 @@ pub async fn create_our_did_document(
     )?;
 
     // TODO: Make it easier to generate peer did from keys and service, and generate DDO from it
-    let did_document_temp = did_doc_from_keys(Default::default(), key_ver.clone(), key_enc.clone(), service.clone());
+    let did_document_temp = did_doc_from_keys(Default::default(), key_ver.clone(), key_enc.clone(), service.clone())?;
     let peer_did = generate_numalgo2(did_document_temp.into())?;
+    let vm_id = peer_did.to_numalgo3();
 
     Ok((
-        did_doc_from_keys(peer_did.clone().into(), key_ver, key_enc.clone(), service),
+        did_doc_from_keys(peer_did.clone().into(), key_ver, key_enc.clone(), service)?,
         key_enc,
     ))
 }
 
-pub fn did_doc_from_keys(did: Did, key_ver: Key, key_enc: Key, service: ServiceSov) -> DidDocumentSov {
+fn did_doc_from_keys(
+    did: Did,
+    key_ver: Key,
+    key_enc: Key,
+    service: ServiceSov,
+) -> Result<DidDocumentSov, AriesVcxError> {
+    let vm_ver_id = DidUrl::from_fragment(key_ver.short_prefixless_fingerprint())?;
+    let vm_ka_id = DidUrl::from_fragment(key_enc.short_prefixless_fingerprint())?;
     let vm_ver = VerificationMethod::builder(
-        did.clone().into(),
+        vm_ver_id,
         did.clone(),
         VerificationMethodType::Ed25519VerificationKey2020,
     )
     .add_public_key_base58(key_ver.base58())
     .build();
-    let vm_ka = VerificationMethod::builder(
-        did.clone().into(),
-        did.clone(),
-        VerificationMethodType::X25519KeyAgreementKey2020,
-    )
-    .add_public_key_base58(key_enc.base58())
-    .build();
-    DidDocumentSov::builder(did)
+    let vm_ka = VerificationMethod::builder(vm_ka_id, did.clone(), VerificationMethodType::X25519KeyAgreementKey2020)
+        .add_public_key_base58(key_enc.base58())
+        .build();
+    Ok(DidDocumentSov::builder(did)
         .add_service(service)
         .add_verification_method(vm_ver.clone())
+        // TODO: Include just reference
         .add_key_agreement(VerificationMethodKind::Resolved(vm_ka))
-        .build()
+        .build())
 }
 
 pub fn ddo_sov_to_attach(ddo: DidDocumentSov) -> Result<Attachment, AriesVcxError> {
@@ -154,16 +158,18 @@ pub fn attach_to_ddo_sov(attachment: Attachment) -> Result<DidDocumentSov, Aries
             })?;
             // TODO: Try to make DidDocumentSov support the legacy DDO if possible - would make
             // integration of DidDocument much easier
-            if let Ok(ddo) = serde_json::from_slice::<DidDocumentSov>(&bytes) {
-                Ok(ddo)
-            } else {
-                let res: AriesDidDoc = serde_json::from_slice(&bytes).map_err(|err| {
-                    AriesVcxError::from_msg(
-                        AriesVcxErrorKind::SerializationError,
-                        format!("Attachment is not base 64 encoded JSON: {attachment:?}, err: {err:?}"),
-                    )
-                })?;
-                from_legacy_did_doc_to_sov(res)
+            match serde_json::from_slice::<DidDocumentSov>(&bytes) {
+                Ok(ddo) => Ok(ddo),
+                Err(err) => {
+                    println!("Error deserializing to new DDO: {err}");
+                    let res: AriesDidDoc = serde_json::from_slice(&bytes).map_err(|err| {
+                        AriesVcxError::from_msg(
+                            AriesVcxErrorKind::SerializationError,
+                            format!("Attachment is not base 64 encoded JSON: {attachment:?}, err: {err:?}"),
+                        )
+                    })?;
+                    from_legacy_did_doc_to_sov(res)
+                }
             }
         }
         _ => Err(AriesVcxError::from_msg(

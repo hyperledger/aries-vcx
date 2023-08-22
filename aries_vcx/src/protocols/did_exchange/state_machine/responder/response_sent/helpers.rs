@@ -3,7 +3,7 @@ use std::sync::Arc;
 use did_doc_sov::DidDocumentSov;
 use did_resolver_registry::ResolverRegistry;
 use messages::{
-    decorators::thread::Thread,
+    decorators::{attachment::Attachment, thread::Thread},
     msg_fields::protocols::did_exchange::{
         request::Request,
         response::{Response, ResponseContent, ResponseDecorators},
@@ -40,10 +40,11 @@ pub fn construct_response(
     our_did_document: DidDocumentSov,
     invitation_id: String,
     request_id: String,
+    attachment: Option<Attachment>,
 ) -> Result<Response, AriesVcxError> {
     let content = ResponseContent {
         did: our_did_document.id().to_string(),
-        did_doc: Some(ddo_sov_to_attach(our_did_document.clone())?),
+        did_doc: attachment,
     };
     let thread = {
         let mut thread = Thread::new(request_id.clone());

@@ -2,13 +2,14 @@ use std::sync::Arc;
 
 use aries_vcx::{
     core::profile::profile::Profile,
+    did_doc_sov::extra_fields::KeyKind,
     messages::msg_fields::protocols::{
         did_exchange::{complete::Complete, request::Request, response::Response},
-        out_of_band::invitation::Invitation as OobInvitation,
+        out_of_band::invitation::{Invitation as OobInvitation, OobService},
     },
     protocols::{
         connection::wrap_and_send_msg,
-        did_exchange::service::{
+        did_exchange::state_machine::{
             generic::{GenericDidExchange, ThinState},
             requester::{ConstructRequestConfig, PairwiseConstructRequestConfig, PublicConstructRequestConfig},
             responder::ReceiveRequestConfig,
@@ -61,7 +62,13 @@ impl ServiceDidExchange {
         wrap_and_send_msg(
             &self.profile.inject_wallet(),
             &request.clone().into(),
-            &requester.our_verkey().base58(),
+            &requester
+                .our_did_document()
+                .resolved_key_agreement()
+                .next()
+                .unwrap()
+                .public_key()?
+                .base58(),
             &from_did_doc_sov_to_legacy(requester.their_did_doc().clone())?,
             &HttpClient,
         )
@@ -75,6 +82,7 @@ impl ServiceDidExchange {
             ledger: self.profile.inject_indy_ledger_read(),
             wallet: self.profile.inject_wallet(),
             invitation: invitation.clone(),
+            resolver_registry: self.resolver_registry.clone(),
             service_endpoint: self.service_endpoint.clone(),
             routing_keys: vec![],
         });
@@ -82,7 +90,13 @@ impl ServiceDidExchange {
         wrap_and_send_msg(
             &self.profile.inject_wallet(),
             &request.clone().into(),
-            &requester.our_verkey().base58(),
+            &requester
+                .our_did_document()
+                .resolved_key_agreement()
+                .next()
+                .unwrap()
+                .public_key()?
+                .base58(),
             &from_did_doc_sov_to_legacy(requester.their_did_doc().clone())?,
             &HttpClient,
         )
@@ -91,24 +105,42 @@ impl ServiceDidExchange {
         self.did_exchange.insert(&request_id, requester.clone().into())
     }
 
-    pub async fn send_response(&self, request: Request, invitation_id: String) -> AgentResult<String> {
+    pub async fn send_response(&self, request: Request, invitation: OobInvitation) -> AgentResult<String> {
         // TODO: We should fetch the out of band invite associated with the request.
         // We don't want to be sending response if we don't know if there is any invitation
         // associated with the request.
         let request_id = request.clone().decorators.thread.unwrap().thid;
+        let invitation_key = match invitation.content.services.get(0).unwrap() {
+            OobService::SovService(service) => match service.extra().first_recipient_key()? {
+                KeyKind::DidKey(did_key) => did_key.key().to_owned(),
+                KeyKind::Value(key_value) => todo!("Legacy - parse key value {key_value} as base58 encoded key"),
+                KeyKind::Reference(reference) => unimplemented!("Can't resolve reference without a DDO: {reference}"),
+            },
+            OobService::Did(did) => {
+                todo!("Resolve the thing and extract key from DDO");
+            }
+            OobService::AriesService(_) => todo!(),
+        };
         let (responder, response) = GenericDidExchange::handle_request(ReceiveRequestConfig {
             wallet: self.profile.inject_wallet(),
             resolver_registry: self.resolver_registry.clone(),
             request,
             service_endpoint: self.service_endpoint.clone(),
             routing_keys: vec![],
-            invitation_id,
+            invitation_id: invitation.id.clone(),
+            invitation_key,
         })
         .await?;
         wrap_and_send_msg(
             &self.profile.inject_wallet(),
             &response.clone().into(),
-            &responder.our_verkey().base58(),
+            &responder
+                .our_did_document()
+                .resolved_key_agreement()
+                .next()
+                .unwrap()
+                .public_key()?
+                .base58(),
             &from_did_doc_sov_to_legacy(responder.their_did_doc().clone())?,
             &HttpClient,
         )
@@ -121,7 +153,13 @@ impl ServiceDidExchange {
         wrap_and_send_msg(
             &self.profile.inject_wallet(),
             &complete.clone().into(),
-            &requester.our_verkey().base58(),
+            &requester
+                .our_did_document()
+                .resolved_key_agreement()
+                .next()
+                .unwrap()
+                .public_key()?
+                .base58(),
             &from_did_doc_sov_to_legacy(requester.their_did_doc().clone())?,
             &HttpClient,
         )
