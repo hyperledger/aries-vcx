@@ -83,7 +83,7 @@ module.exports.createPairedAliceAndFaberViaOobMsg = async function createPairedA
     const pwInfo = await faber.publishService(endpoint)
     const msg = await faber.createOobMessageWithDid()
     await alice.createConnectionUsingOobMessage(msg)
-    await alice.updateConnection(MediatedConnectionStateType.Responded)
+    await alice.updateConnection(MediatedConnectionStateType.Requested)
     return { alice, faber, pwInfo }
   }
   const f2 = async (alice, faber, pwInfo, message) => {
