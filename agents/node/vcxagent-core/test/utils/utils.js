@@ -4,7 +4,7 @@ const express = require('express')
 const { createFaber } = require('./faber')
 const { createAlice } = require('./alice')
 const assert = require('assert')
-const { MediatedConnectionStateType } = require('../../../../../wrappers/node/src')
+const { MediatedConnectionStateType } = require('@hyperledger/node-vcx-wrapper')
 const logger = require('../../demo/logger')('utils')
 
 module.exports.createAliceAndFaber = async function createAliceAndFaber ({ aliceEndpoint, faberEndpoint } = {}) {

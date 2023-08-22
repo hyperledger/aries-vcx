@@ -126,14 +126,14 @@ export enum MediatedConnectionStateType {
 }
 
 export enum ConnectionStateType {
-    Initial = 0,
-    Invited = 1,
-    Requested = 2,
-    Finished = 4,
+  Initial = 0,
+  Invited = 1,
+  Requested = 2,
+  Finished = 4,
 }
 
 export enum HolderStateType {
-  Initial= 0,
+  Initial = 0,
   ProposalSent = 1,
   OfferReceived = 2,
   RequestSent = 3,
@@ -169,7 +169,7 @@ export enum VerifierStateType {
   PresentationProposalReceived = 2,
   PresentationRequestSent = 3,
   Finished = 4,
-  Failed = 5
+  Failed = 5,
 }
 
 export interface ISerializedData<T> {
