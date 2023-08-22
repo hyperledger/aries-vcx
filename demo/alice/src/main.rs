@@ -1,13 +1,27 @@
-pub mod demo_agent;
-pub mod http_client;
+#[macro_use]
+extern crate log;
+#[macro_use]
+extern crate serde_derive;
+#[macro_use]
+extern crate serde_json;
 
-use crate::demo_agent::DemoAgent;
-use crate::http_client::HttpClient;
+use std::process::exit;
+use std::sync::Arc;
+
+use env_logger;
+use serde::Deserialize;
+use tokio::sync::mpsc::Receiver;
+use url::Url;
+
 use aries_vcx::handlers::out_of_band::sender::OutOfBandSender;
 use aries_vcx::handlers::util::AnyInvitation;
 use aries_vcx::messages::msg_fields::protocols::out_of_band::invitation::OobService;
 use aries_vcx::protocols::connection::invitee::states::initial::Initial;
 use aries_vcx::protocols::connection::invitee::InviteeConnection;
+// todo: the fact that Invitee and Inviter states have same name can easily cause mis-matches in consumer's code
+//       where they attempt to build Inviter<T>, but T is invitee state, like: invitee::states::responded::Responded
+use aries_vcx::protocols::connection::invitee::states::responded::Responded;
+use aries_vcx::protocols::connection::inviter::states::requested::Requested;
 use aries_vcx::protocols::connection::inviter::InviterConnection;
 use aries_vcx::protocols::connection::pairwise_info::PairwiseInfo;
 use aries_vcx::transport::Transport;
@@ -15,32 +29,19 @@ use aries_vcx::utils::mockdata::profile::mock_ledger::MockLedger;
 use aries_vcx_core::ledger::base_ledger::IndyLedgerRead;
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use diddoc_legacy::aries::service::AriesService;
-use env_logger;
 use messages::msg_fields::protocols::basic_message::{BasicMessage, BasicMessageContent, BasicMessageDecorators};
 use messages::msg_fields::protocols::connection::request::Request;
 use messages::msg_fields::protocols::connection::response::Response;
 use messages::msg_fields::protocols::out_of_band::invitation::Invitation;
 use messages::msg_parts::MsgParts;
 use messages::AriesMessage;
-use serde::Deserialize;
 use simple_message_relay::{build_msg_relay, UserMessage};
-use std::process::exit;
-use std::sync::Arc;
-use tokio::sync::mpsc::Receiver;
-use url::Url;
-// todo: the fact that Invitee and Inviter states have same name can easily cause mis-matches in consumer's code
-//       where they attempt to build Inviter<T>, but T is invitee state, like: invitee::states::responded::Responded
-use aries_vcx::protocols::connection::invitee::states::responded::Responded;
-use aries_vcx::protocols::connection::inviter::states::requested::Requested;
 
-#[macro_use]
-extern crate serde_derive;
+use crate::demo_agent::DemoAgent;
+use crate::http_client::HttpClient;
 
-#[macro_use]
-extern crate serde_json;
-
-#[macro_use]
-extern crate log;
+pub mod demo_agent;
+pub mod http_client;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct MessageData {
@@ -178,13 +179,14 @@ async fn workflow_alice_faber_connection(
     (invitee_complete, inviter_requested)
 }
 
-#[tokio::main]
-async fn main() {
-    let (alice, faber, mut mediator_receiver) = init().await;
-    let (connection_alice, _connection_faber) =
-        workflow_alice_faber_connection(&alice, &faber, &mut mediator_receiver).await;
-    info!("Alice processed response");
-    let msg_hello = build_basic_message("Hello faber, this is alice.".into());
+async fn workflow_alice_faber_talk(
+    connection_alice: &InviteeConnection<Responded>,
+    alice: &DemoAgent,
+    connection_faber: &InviterConnection<Requested>,
+    faber: &DemoAgent,
+    mediator_receiver: &mut Receiver<UserMessage>,
+) {
+    let msg_hello = build_basic_message("Hello Faber, this is Alice.".into());
     connection_alice
         .send_message(&alice.wallet, &AriesMessage::BasicMessage(msg_hello), &HttpClient)
         .await
@@ -196,5 +198,33 @@ async fn main() {
         let (msg_any, _key) = decrypt_as_msg::<AriesMessage>(faber.wallet.clone(), didcomm_msg.as_slice()).await;
         info!("Faber received message {msg_any:?}");
     }
+
+    let msg_hello = build_basic_message("Hello Alice, this is Faber.".into());
+    connection_faber
+        .send_message(&faber.wallet, &AriesMessage::BasicMessage(msg_hello), &HttpClient)
+        .await
+        .unwrap();
+    {
+        info!("Alice waiting for msg");
+        let didcomm_msg = mediator_receiver.recv().await.unwrap();
+        info!("Alice received a msg");
+        let (msg_any, _key) = decrypt_as_msg::<AriesMessage>(alice.wallet.clone(), didcomm_msg.as_slice()).await;
+        info!("Alice received message {msg_any:?}");
+    }
+}
+
+#[tokio::main]
+async fn main() {
+    let (alice, faber, mut mediator_receiver) = init().await;
+    let (connection_alice, connection_faber) =
+        workflow_alice_faber_connection(&alice, &faber, &mut mediator_receiver).await;
+    workflow_alice_faber_talk(
+        &connection_alice,
+        &alice,
+        &connection_faber,
+        &faber,
+        &mut mediator_receiver,
+    )
+    .await;
     exit(0);
 }
