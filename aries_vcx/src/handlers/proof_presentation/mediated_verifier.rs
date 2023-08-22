@@ -21,7 +21,7 @@ pub async fn verifier_update_with_mediator(
     agency_client: &AgencyClient,
     connection: &MediatedConnection,
 ) -> VcxResult<VerifierState> {
-    trace!("Verifier::update_state >>> ");
+    trace!("verifier_update_with_mediator >>> ");
     if !sm.progressable_by_message() {
         return Ok(sm.get_state());
     }
@@ -41,7 +41,7 @@ pub fn verifier_find_message_to_handle(
     sm: &Verifier,
     messages: HashMap<String, AriesMessage>,
 ) -> Option<(String, AriesMessage)> {
-    trace!("VerifierSM::find_message_to_handle >>> messages: {:?}", messages);
+    trace!("verifier_find_message_to_handle >>> messages: {:?}", messages);
     for (uid, message) in messages {
         match sm.get_state() {
             VerifierState::Initial => match &message {

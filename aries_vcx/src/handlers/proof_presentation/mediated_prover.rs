@@ -41,7 +41,7 @@ pub async fn prover_update_with_mediator(
     agency_client: &AgencyClient,
     connection: &MediatedConnection,
 ) -> VcxResult<ProverState> {
-    trace!("Prover::update_state >>> ");
+    trace!("prover_update_with_mediator >>> ");
     if !sm.progressable_by_message() {
         return Ok(sm.get_state());
     }
@@ -58,7 +58,7 @@ pub fn prover_find_message_to_handle(
     sm: &Prover,
     messages: HashMap<String, AriesMessage>,
 ) -> Option<(String, AriesMessage)> {
-    trace!("Prover::find_message_to_handle >>> messages: {:?}", messages);
+    trace!("prover_find_message_to_handle >>> messages: {:?}", messages);
     for (uid, message) in messages {
         match sm.get_state() {
             ProverState::PresentationProposalSent => match &message {

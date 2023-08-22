@@ -21,9 +21,9 @@ pub async fn issuer_update_with_mediator(
     agency_client: &AgencyClient,
     connection: &MediatedConnection,
 ) -> VcxResult<IssuerState> {
-    trace!("Issuer::update_state >>>");
+    trace!("issuer_update_with_mediator >>>");
     let messages = connection.get_messages(agency_client).await?;
-    if let Some((uid, msg)) = issuer_find_messages_to_handle(sm, messages) {
+    if let Some((uid, msg)) = issuer_find_message_to_handle(sm, messages) {
         trace!("Issuer::update_state >>> found msg to handle; uid: {uid}, msg: {msg:?}");
         sm.process_aries_msg(msg.into()).await?;
         connection.update_message_status(&uid, agency_client).await?;
@@ -34,12 +34,12 @@ pub async fn issuer_update_with_mediator(
 }
 
 #[allow(clippy::unwrap_used)]
-pub fn issuer_find_messages_to_handle(
+pub fn issuer_find_message_to_handle(
     sm: &Issuer,
     messages: HashMap<String, AriesMessage>,
 ) -> Option<(String, AriesMessage)> {
     trace!(
-        "IssuerSM::find_message_to_handle >>> messages: {:?}, state: {:?}",
+        "issuer_find_messages_to_handle >>> messages: {:?}, state: {:?}",
         messages,
         sm
     );

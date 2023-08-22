@@ -22,7 +22,7 @@ pub async fn holder_update_with_mediator(
     agency_client: &AgencyClient,
     connection: &MediatedConnection,
 ) -> VcxResult<HolderState> {
-    trace!("Holder::update_state >>>");
+    trace!("holder_update_with_mediator >>>");
     if sm.is_terminal_state() {
         return Ok(sm.get_state());
     }
@@ -60,6 +60,7 @@ pub fn holder_find_message_to_handle(
     sm: &Holder,
     messages: HashMap<String, AriesMessage>,
 ) -> Option<(String, AriesMessage)> {
+    trace!("holder_find_message_to_handle >>>");
     for (uid, message) in messages {
         match sm.get_state() {
             HolderState::ProposalSent => {
