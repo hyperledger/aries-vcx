@@ -214,7 +214,7 @@ impl HolderSM {
                             "Failed to create credential request, sending problem report: {:?}",
                             problem_report
                         );
-                        HolderFullState::Finished(problem_report.into())
+                        HolderFullState::Finished(FinishedHolderState::new(problem_report))
                     }
                 }
             }
@@ -248,7 +248,7 @@ impl HolderSM {
             HolderFullState::OfferReceived(_) => {
                 let problem_report = build_problem_report_msg(comment, &self.thread_id);
                 send_message(problem_report.clone().into()).await?;
-                HolderFullState::Finished(problem_report.into())
+                HolderFullState::Finished(FinishedHolderState::new(problem_report))
             }
             s => {
                 warn!("Unable to decline credential offer in state {}", s);
@@ -290,7 +290,7 @@ impl HolderSM {
                             problem_report
                         );
                         send_message(problem_report.clone().into()).await?;
-                        HolderFullState::Finished(problem_report.into())
+                        HolderFullState::Finished(FinishedHolderState::new(problem_report))
                     }
                 }
             }
@@ -305,7 +305,7 @@ impl HolderSM {
     pub fn receive_problem_report(self, problem_report: ProblemReport) -> VcxResult<Self> {
         let state = match self.state {
             HolderFullState::ProposalSent(_) | HolderFullState::RequestSet(_) => {
-                HolderFullState::Finished(problem_report.into())
+                HolderFullState::Finished(FinishedHolderState::new(problem_report))
             }
             s => {
                 warn!("Unable to receive problem report in state {}", s);

@@ -142,8 +142,8 @@ impl FinishedHolderState {
     }
 }
 
-impl From<ProblemReport> for FinishedHolderState {
-    fn from(problem_report: ProblemReport) -> Self {
+impl FinishedHolderState {
+    pub fn new(problem_report: ProblemReport) -> Self {
         trace!("SM is now in Finished state");
         FinishedHolderState {
             cred_id: None,
