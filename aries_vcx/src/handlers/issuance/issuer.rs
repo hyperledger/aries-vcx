@@ -1,6 +1,3 @@
-use std::collections::HashMap;
-
-use messages::decorators::please_ack::AckOn;
 use messages::misc::MimeType;
 use messages::msg_fields::protocols::cred_issuance::ack::AckCredential;
 use messages::msg_fields::protocols::cred_issuance::propose_credential::ProposeCredential;
@@ -16,10 +13,8 @@ use messages::msg_fields::protocols::report_problem::ProblemReport;
 use messages::msg_parts::MsgParts;
 
 use crate::errors::error::prelude::*;
-use crate::handlers::revocation_notification::sender::RevocationNotificationSender;
 use crate::handlers::util::OfferInfo;
 use crate::protocols::issuance::issuer::state_machine::{IssuerSM, IssuerState, RevocationInfoV1};
-use crate::protocols::revocation_notification::sender::state_machine::SenderConfigBuilder;
 use crate::protocols::SendClosure;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
