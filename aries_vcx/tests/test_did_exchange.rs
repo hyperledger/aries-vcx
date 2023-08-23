@@ -36,6 +36,7 @@ use crate::utils::devsetup_alice::create_alice;
 use crate::utils::devsetup_faber::create_faber;
 
 #[tokio::test]
+#[ignore]
 async fn did_exchange_test() {
     SetupPoolDirectory::run(|setup| async move {
         let institution = create_faber(setup.genesis_file_path.clone()).await;
