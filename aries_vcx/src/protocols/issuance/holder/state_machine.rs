@@ -29,7 +29,7 @@ use crate::protocols::issuance::holder::states::finished::FinishedHolderState;
 use crate::protocols::issuance::holder::states::initial::InitialHolderState;
 use crate::protocols::issuance::holder::states::offer_received::OfferReceivedState;
 use crate::protocols::issuance::holder::states::proposal_sent::ProposalSentState;
-use crate::protocols::issuance::holder::states::request_sent::RequestSetState;
+use crate::protocols::issuance::holder::states::request_set::RequestSetState;
 use crate::protocols::SendClosure;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
