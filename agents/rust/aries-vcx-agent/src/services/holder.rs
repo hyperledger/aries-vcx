@@ -64,7 +64,9 @@ impl ServiceCredentialsHolder {
 
         let mut holder = Holder::create("")?;
         holder.set_proposal(propose_credential)?;
-        connection.send_message(&wallet, &propose_credential.into(), &HttpClient).await?;
+        connection
+            .send_message(&wallet, &propose_credential.into(), &HttpClient)
+            .await?;
 
         self.creds_holder
             .insert(&holder.get_thread_id()?, HolderWrapper::new(holder, connection_id))

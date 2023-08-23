@@ -39,14 +39,8 @@ impl Holder {
         Ok(Holder { holder_sm })
     }
 
-    pub fn set_proposal(
-        &mut self,
-        credential_proposal: ProposeCredential,
-    ) -> VcxResult<()> {
-        self.holder_sm = self
-            .holder_sm
-            .clone()
-            .set_proposal(credential_proposal)?;
+    pub fn set_proposal(&mut self, credential_proposal: ProposeCredential) -> VcxResult<()> {
+        self.holder_sm = self.holder_sm.clone().set_proposal(credential_proposal)?;
         Ok(())
     }
 

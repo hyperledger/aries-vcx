@@ -335,7 +335,10 @@ pub mod test_utils {
         assert_eq!(HolderState::Initial, holder.get_state());
         holder.set_proposal(proposal.clone()).unwrap();
         assert_eq!(HolderState::ProposalSet, holder.get_state());
-        connection.send_a2a_message(&alice.profile.inject_wallet(), &proposal.into()).await.unwrap();
+        connection
+            .send_a2a_message(&alice.profile.inject_wallet(), &proposal.into())
+            .await
+            .unwrap();
         tokio::time::sleep(Duration::from_millis(1000)).await;
         holder
     }
@@ -393,7 +396,10 @@ pub mod test_utils {
         let proposal = ProposeCredential::with_decorators(id, content, decorators);
         holder.set_proposal(proposal.clone()).unwrap();
         assert_eq!(HolderState::ProposalSet, holder.get_state());
-        connection.send_a2a_message(&alice.profile.inject_wallet(), &proposal.into()).await.unwrap();
+        connection
+            .send_a2a_message(&alice.profile.inject_wallet(), &proposal.into())
+            .await
+            .unwrap();
         tokio::time::sleep(Duration::from_millis(1000)).await;
     }
 
