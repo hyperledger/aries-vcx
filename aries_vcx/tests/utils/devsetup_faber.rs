@@ -3,6 +3,8 @@ use std::sync::Arc;
 use futures::future::BoxFuture;
 use serde_json::json;
 
+use crate::utils::devsetup_util::issuer_update_with_mediator;
+use crate::utils::devsetup_util::verifier_update_with_mediator;
 use agency_client::agency_client::AgencyClient;
 use agency_client::configuration::{AgencyClientConfig, AgentProvisionConfig};
 use aries_vcx::common::ledger::transactions::write_endpoint_legacy;
@@ -15,8 +17,6 @@ use aries_vcx::global::settings;
 use aries_vcx::global::settings::{init_issuer_config, DEFAULT_LINK_SECRET_ALIAS};
 use aries_vcx::handlers::connection::mediated_connection::{ConnectionState, MediatedConnection};
 use aries_vcx::handlers::issuance::issuer::Issuer;
-use aries_vcx::handlers::issuance::mediated_issuer::issuer_update_with_mediator;
-use crate::utils::devsetup_util::verifier_update_with_mediator;
 use aries_vcx::handlers::proof_presentation::verifier::Verifier;
 use aries_vcx::handlers::revocation_notification::sender::RevocationNotificationSender;
 use aries_vcx::handlers::util::OfferInfo;

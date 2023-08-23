@@ -1,7 +1,9 @@
+use std::collections::HashMap;
+
 use messages::msg_fields::protocols::cred_issuance::CredentialIssuance;
 use messages::msg_fields::protocols::notification::Notification;
 use messages::AriesMessage;
-use std::collections::HashMap;
+
 use crate::handlers::issuance::holder::Holder;
 use crate::handlers::util::{matches_opt_thread_id, matches_thread_id};
 use crate::protocols::issuance::holder::state_machine::HolderState;

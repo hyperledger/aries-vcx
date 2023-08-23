@@ -1,33 +1,12 @@
-use crate::errors::error::VcxResult;
-use crate::handlers::connection::mediated_connection::MediatedConnection;
-use crate::handlers::issuance::issuer::Issuer;
-use crate::handlers::util::{matches_opt_thread_id, matches_thread_id};
-use crate::protocols::issuance::issuer::state_machine::{IssuerFullState, IssuerSM, IssuerState};
-use agency_client::agency_client::AgencyClient;
-use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
-use aries_vcx_core::wallet::base_wallet::BaseWallet;
-use messages::msg_fields::protocols::cred_issuance::propose_credential::ProposeCredential;
+use std::collections::HashMap;
+
 use messages::msg_fields::protocols::cred_issuance::CredentialIssuance;
 use messages::msg_fields::protocols::notification::Notification;
 use messages::AriesMessage;
-use std::collections::HashMap;
 
-pub async fn issuer_update_with_mediator(
-    sm: &mut Issuer,
-    agency_client: &AgencyClient,
-    connection: &MediatedConnection,
-) -> VcxResult<IssuerState> {
-    trace!("issuer_update_with_mediator >>>");
-    let messages = connection.get_messages(agency_client).await?;
-    if let Some((uid, msg)) = issuer_find_message_to_handle(sm, messages) {
-        trace!("Issuer::update_state >>> found msg to handle; uid: {uid}, msg: {msg:?}");
-        sm.process_aries_msg(msg.into()).await?;
-        connection.update_message_status(&uid, agency_client).await?;
-    } else {
-        trace!("Issuer::update_state >>> found no msg to handle");
-    }
-    Ok(sm.get_state())
-}
+use crate::handlers::issuance::issuer::Issuer;
+use crate::handlers::util::{matches_opt_thread_id, matches_thread_id};
+use crate::protocols::issuance::issuer::state_machine::IssuerState;
 
 #[allow(clippy::unwrap_used)]
 pub fn issuer_find_message_to_handle(
@@ -87,22 +66,4 @@ pub fn issuer_find_message_to_handle(
         };
     }
     None
-}
-
-// todo: returns specific type
-pub async fn get_credential_proposal_messages(
-    agency_client: &AgencyClient,
-    connection: &MediatedConnection,
-) -> VcxResult<Vec<(String, ProposeCredential)>> {
-    let credential_proposals: Vec<(String, ProposeCredential)> = connection
-        .get_messages(agency_client)
-        .await?
-        .into_iter()
-        .filter_map(|(uid, message)| match message {
-            AriesMessage::CredentialIssuance(CredentialIssuance::ProposeCredential(proposal)) => Some((uid, proposal)),
-            _ => None,
-        })
-        .collect();
-
-    Ok(credential_proposals)
 }

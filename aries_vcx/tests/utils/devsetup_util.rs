@@ -2,21 +2,24 @@ use agency_client::agency_client::AgencyClient;
 use aries_vcx::core::profile::profile::Profile;
 use aries_vcx::errors::error::VcxResult;
 use aries_vcx::handlers::connection::mediated_connection::MediatedConnection;
-use aries_vcx::handlers::proof_presentation::{mediated_prover, mediated_verifier};
+use aries_vcx::handlers::issuance::holder::Holder;
+use aries_vcx::handlers::issuance::issuer::Issuer;
+use aries_vcx::handlers::issuance::{mediated_holder, mediated_issuer};
 use aries_vcx::handlers::proof_presentation::prover::Prover;
 use aries_vcx::handlers::proof_presentation::verifier::Verifier;
-use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
-use aries_vcx_core::wallet::base_wallet::BaseWallet;
-use messages::msg_fields::protocols::present_proof::PresentProof;
-use messages::AriesMessage;
-use std::sync::Arc;
-use aries_vcx::handlers::issuance::holder::Holder;
-use aries_vcx::handlers::issuance::mediated_holder;
+use aries_vcx::handlers::proof_presentation::{mediated_prover, mediated_verifier};
 use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
+use aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
+use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
 use aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;
 use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
 use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
+use aries_vcx_core::wallet::base_wallet::BaseWallet;
+use messages::msg_fields::protocols::cred_issuance::propose_credential::ProposeCredential;
 use messages::msg_fields::protocols::cred_issuance::CredentialIssuance;
+use messages::msg_fields::protocols::present_proof::PresentProof;
+use messages::AriesMessage;
+use std::sync::Arc;
 
 #[cfg(test)]
 pub mod test_utils {
@@ -184,4 +187,39 @@ pub async fn get_credential_offer_messages(
         .collect();
 
     Ok(json!(credential_offers).to_string())
+}
+
+pub async fn issuer_update_with_mediator(
+    sm: &mut Issuer,
+    agency_client: &AgencyClient,
+    connection: &MediatedConnection,
+) -> VcxResult<IssuerState> {
+    trace!("issuer_update_with_mediator >>>");
+    let messages = connection.get_messages(agency_client).await?;
+    if let Some((uid, msg)) = mediated_issuer::issuer_find_message_to_handle(sm, messages) {
+        trace!("Issuer::update_state >>> found msg to handle; uid: {uid}, msg: {msg:?}");
+        sm.process_aries_msg(msg.into()).await?;
+        connection.update_message_status(&uid, agency_client).await?;
+    } else {
+        trace!("Issuer::update_state >>> found no msg to handle");
+    }
+    Ok(sm.get_state())
+}
+
+// todo: returns specific type
+pub async fn get_credential_proposal_messages(
+    agency_client: &AgencyClient,
+    connection: &MediatedConnection,
+) -> VcxResult<Vec<(String, ProposeCredential)>> {
+    let credential_proposals: Vec<(String, ProposeCredential)> = connection
+        .get_messages(agency_client)
+        .await?
+        .into_iter()
+        .filter_map(|(uid, message)| match message {
+            AriesMessage::CredentialIssuance(CredentialIssuance::ProposeCredential(proposal)) => Some((uid, proposal)),
+            _ => None,
+        })
+        .collect();
+
+    Ok(credential_proposals)
 }

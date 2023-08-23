@@ -1,6 +1,8 @@
+use std::collections::HashMap;
+
 use messages::msg_fields::protocols::present_proof::PresentProof;
 use messages::AriesMessage;
-use std::collections::HashMap;
+
 use crate::handlers::proof_presentation::verifier::Verifier;
 use crate::handlers::util::{matches_opt_thread_id, matches_thread_id};
 use crate::protocols::proof_presentation::verifier::state_machine::VerifierState;

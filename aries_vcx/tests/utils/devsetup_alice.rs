@@ -1,7 +1,9 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use crate::utils::devsetup_util::{get_credential_offer_messages, get_proof_request_messages, holder_update_with_mediator, prover_update_with_mediator};
+use crate::utils::devsetup_util::{
+    get_credential_offer_messages, get_proof_request_messages, holder_update_with_mediator, prover_update_with_mediator,
+};
 use agency_client::agency_client::AgencyClient;
 use agency_client::configuration::{AgencyClientConfig, AgentProvisionConfig};
 use agency_client::MessageStatusCode;
@@ -19,7 +21,7 @@ use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
 use aries_vcx::protocols::mediated_connection::invitee::state_machine::InviteeState;
 use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
 use aries_vcx::utils::devsetup::{
-    AGENCY_DID, AGENCY_ENDPOINT, AGENCY_VERKEY, dev_build_featured_profile, dev_setup_wallet_indy,
+    dev_build_featured_profile, dev_setup_wallet_indy, AGENCY_DID, AGENCY_ENDPOINT, AGENCY_VERKEY,
 };
 use aries_vcx::utils::provision::provision_cloud_agent;
 use aries_vcx::utils::random::generate_random_seed;
