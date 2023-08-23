@@ -107,7 +107,7 @@ pub async fn jws_sign_attach(
     wallet: &Arc<dyn BaseWallet>,
 ) -> Result<Attachment, AriesVcxError> {
     if let AttachmentType::Base64(attach_base64) = &attach.data.content {
-        let did_key: DidKey = verkey.clone().try_into().unwrap();
+        let did_key: DidKey = verkey.clone().try_into()?;
         let verkey_b64 = base64::encode_config(verkey.key(), base64::URL_SAFE_NO_PAD);
         let protected_header = json!({
             "alg": "EdDSA",

@@ -16,7 +16,12 @@ pub async fn resolve_key_from_invitation(
     invitation: &OobInvitation,
     resolver_registry: &Arc<ResolverRegistry>,
 ) -> Result<Key, AriesVcxError> {
-    match invitation.content.services.get(0).unwrap() {
+    match invitation.content.services.get(0).ok_or_else(|| {
+        AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidInput,
+            "Invitation does not contain any services",
+        )
+    })? {
         OobService::SovService(service) => match service.extra().first_recipient_key()? {
             KeyKind::DidKey(did_key) => Ok(did_key.key().to_owned()),
             KeyKind::Value(value) => Ok(Key::from_base58(value, KeyType::Ed25519)?),
@@ -32,10 +37,24 @@ pub async fn resolve_key_from_invitation(
                 .map_err(|err| {
                     AriesVcxError::from_msg(AriesVcxErrorKind::InvalidDid, format!("DID resolution failed: {err}"))
                 })?;
-            Ok(did_document.verification_method().first().unwrap().public_key()?)
+            Ok(did_document
+                .verification_method()
+                .first()
+                .ok_or_else(|| {
+                    AriesVcxError::from_msg(
+                        AriesVcxErrorKind::InvalidState,
+                        "No verification method found in resolved did document",
+                    )
+                })?
+                .public_key()?)
         }
         OobService::AriesService(service) => Ok(Key::from_base58(
-            service.recipient_keys.first().unwrap(),
+            service.recipient_keys.first().ok_or_else(|| {
+                AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidState,
+                    "No recipient key found in aries service",
+                )
+            })?,
             KeyType::Ed25519,
         )?),
     }

@@ -30,20 +30,24 @@ pub fn verify_handshake_protocol(invitation: OobInvitation) -> Result<(), AriesV
     invitation
         .content
         .handshake_protocols
-        .ok_or(AriesVcxError::from_msg(
-            AriesVcxErrorKind::InvalidState,
-            "Invitation does not contain handshake protpcols",
-        ))?
+        .ok_or_else(|| {
+            AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidState,
+                "Invitation does not contain handshake protpcols",
+            )
+        })?
         .iter()
         .find(|protocol| match protocol {
             // TODO: Improve this check
             MaybeKnown::Known(protocol) if protocol.to_string().contains("didexchange") => true,
             _ => false,
         })
-        .ok_or(AriesVcxError::from_msg(
-            AriesVcxErrorKind::InvalidState,
-            "Invitation does not contain didexchange handshake protocol",
-        ))?;
+        .ok_or_else(|| {
+            AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidState,
+                "Invitation does not contain didexchange handshake protocol",
+            )
+        })?;
     Ok(())
 }
 
@@ -59,10 +63,12 @@ pub async fn did_doc_from_did(
             service
                 .recipient_keys
                 .first()
-                .ok_or(AriesVcxError::from_msg(
-                    AriesVcxErrorKind::InvalidState,
-                    "No recipient keys found in resolved service",
-                ))?
+                .ok_or_else(|| {
+                    AriesVcxError::from_msg(
+                        AriesVcxErrorKind::InvalidState,
+                        "No recipient keys found in resolved service",
+                    )
+                })?
                 .clone(),
         )
         .build();

@@ -75,7 +75,14 @@ impl DidExchangeRequester<RequestSent> {
         let (our_did_document, _) = did_doc_from_did(&ledger, our_did.clone()).await?;
         let invitation_id = format!("{}#{}", their_did, service.id().to_string());
 
-        let key = our_did_document.verification_method().first().unwrap().public_key()?;
+        let key = our_did_document
+            .verification_method()
+            .first()
+            .ok_or(AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidState,
+                "No verification method in requester's did document",
+            ))?
+            .public_key()?;
         let signed_attach = jws_sign_attach(ddo_sov_to_attach(our_did_document.clone())?, key, &wallet).await?;
         let request = construct_request(invitation_id.clone(), our_did.to_string(), Some(signed_attach))?;
 

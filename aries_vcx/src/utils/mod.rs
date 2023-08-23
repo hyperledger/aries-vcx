@@ -151,10 +151,27 @@ pub fn from_legacy_did_doc_to_sov(ddo: AriesDidDoc) -> VcxResult<DidDocumentSov>
         did.clone(),
         VerificationMethodType::Ed25519VerificationKey2020,
     )
-    .add_public_key_base58(ddo.recipient_keys()?.first().unwrap().to_string())
+    .add_public_key_base58(
+        ddo.recipient_keys()?
+            .first()
+            .ok_or_else(|| {
+                AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidState,
+                    "No recipient in the DDO being converted",
+                )
+            })?
+            .to_string(),
+    )
     .build();
     let new_ddo = DidDocumentSov::builder(did.clone())
-        .add_service(from_legacy_service_to_service_sov(ddo.service.first().unwrap().clone()).unwrap())
+        .add_service(from_legacy_service_to_service_sov(
+            ddo.service
+                .first()
+                .ok_or_else(|| {
+                    AriesVcxError::from_msg(AriesVcxErrorKind::InvalidState, "No service in the DDO being converted")
+                })?
+                .clone(),
+        )?)
         .add_controller(did.clone())
         .add_verification_method(vm)
         .build();
