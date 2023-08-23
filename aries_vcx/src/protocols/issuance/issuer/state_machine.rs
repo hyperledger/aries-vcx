@@ -441,7 +441,7 @@ impl IssuerSM {
             &AriesMessage::CredentialIssuance(CredentialIssuance::Ack(ack.clone())),
         )?;
         let state = match self.state {
-            IssuerFullState::CredentialSet(state_data) => IssuerFullState::Finished(state_data.into()),
+            IssuerFullState::CredentialSet(state_data) => IssuerFullState::Finished(FinishedState::from_credential_set_state(state_data)),
             s => {
                 warn!("Unable to receive credential ack in state {}", s);
                 s
@@ -454,7 +454,7 @@ impl IssuerSM {
         verify_thread_id(&self.thread_id, &AriesMessage::ReportProblem(problem_report.clone()))?;
         let state = match self.state {
             IssuerFullState::OfferSet(state_data) => IssuerFullState::Finished((state_data, problem_report).into()),
-            IssuerFullState::CredentialSet(state_data) => IssuerFullState::Finished((state_data).into()),
+            IssuerFullState::CredentialSet(state_data) => IssuerFullState::Finished(FinishedState::from_credential_set_state(state_data)),
             s => {
                 warn!("Unable to receive credential ack in state {}", s);
                 s

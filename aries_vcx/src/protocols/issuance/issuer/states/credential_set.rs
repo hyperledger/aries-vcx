@@ -9,8 +9,8 @@ pub struct CredentialSetState {
     pub msg_issue_credential: IssueCredential,
 }
 
-impl From<CredentialSetState> for FinishedState {
-    fn from(state: CredentialSetState) -> Self {
+impl FinishedState {
+    pub fn from_credential_set_state(state: CredentialSetState) -> Self {
         trace!("SM is now in Finished state");
         FinishedState {
             cred_id: None,
