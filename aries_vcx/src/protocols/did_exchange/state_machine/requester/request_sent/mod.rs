@@ -7,21 +7,15 @@ use did_resolver::{error::GenericError, traits::resolvable::DidResolvable};
 use messages::msg_fields::protocols::did_exchange::{
     complete::Complete as CompleteMessage, request::Request, response::Response,
 };
-use public_key::{Key, KeyType};
 
 use crate::{
-    common::{
-        keys::get_verkey_from_ledger,
-        ledger::transactions::{into_did_doc, resolve_oob_invitation},
-    },
+    common::ledger::transactions::resolve_oob_invitation,
     errors::error::{AriesVcxError, AriesVcxErrorKind},
-    handlers::util::AnyInvitation,
     protocols::did_exchange::{
         state_machine::helpers::{attach_to_ddo_sov, create_our_did_document, ddo_sov_to_attach, jws_sign_attach},
         states::{completed::Completed, requester::request_sent::RequestSent},
         transition::{transition_error::TransitionError, transition_result::TransitionResult},
     },
-    utils::from_legacy_did_doc_to_sov,
 };
 
 use helpers::{construct_complete_message, construct_request, did_doc_from_did, verify_handshake_protocol};
@@ -33,7 +27,6 @@ use super::DidExchangeRequester;
 impl DidExchangeRequester<RequestSent> {
     async fn construct_request_pairwise(
         PairwiseConstructRequestConfig {
-            ledger,
             wallet,
             service_endpoint,
             routing_keys,

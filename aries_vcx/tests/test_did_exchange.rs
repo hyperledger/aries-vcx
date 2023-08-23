@@ -5,6 +5,7 @@ mod utils;
 
 use std::sync::Arc;
 
+use aries_vcx::protocols::did_exchange::resolve_key_from_invitation;
 use aries_vcx::protocols::did_exchange::state_machine::requester::{
     ConstructRequestConfig, DidExchangeRequester, PairwiseConstructRequestConfig,
 };
@@ -31,21 +32,24 @@ async fn did_exchange_test() {
         let institution = create_faber(setup.genesis_file_path.clone()).await;
         let consumer = create_alice(setup.genesis_file_path).await;
 
-        let url: Url = "http://dummyurl.org".parse().unwrap();
-        let invitation: Invitation = serde_json::from_str(fixtures::OOB_INVITE).unwrap();
-        let invitation_id = invitation.id.clone();
-
         let did_peer_resolver = PeerDidResolver::new();
         let resolver_registry = Arc::new(
             ResolverRegistry::new().register_resolver::<PeerDidResolver>("peer".into(), did_peer_resolver.into()),
         );
+
+        let url: Url = "http://dummyurl.org".parse().unwrap();
+        // TODO: Create invite manually
+        let invitation: Invitation = serde_json::from_str(fixtures::OOB_INVITE).unwrap();
+        let invitation_id = invitation.id.clone();
+        let invitation_key = resolve_key_from_invitation(&invitation, &resolver_registry)
+            .await
+            .unwrap();
 
         let TransitionResult {
             state: requester,
             output: request,
         } = DidExchangeRequester::<RequestSent>::construct_request(ConstructRequestConfig::Pairwise(
             PairwiseConstructRequestConfig {
-                ledger: consumer.profile.inject_indy_ledger_read(),
                 wallet: consumer.profile.inject_wallet(),
                 invitation,
                 service_endpoint: url.clone(),
@@ -69,6 +73,7 @@ async fn did_exchange_test() {
             service_endpoint: url.clone(),
             routing_keys: vec![],
             invitation_id,
+            invitation_key,
         })
         .await
         .unwrap();
@@ -86,8 +91,8 @@ async fn did_exchange_test() {
             .first()
             .unwrap()
             .public_key()
-            .base58()
-            .unwrap();
+            .unwrap()
+            .base58();
         assert_eq!(
             requester
                 .their_did_doc()
@@ -95,8 +100,8 @@ async fn did_exchange_test() {
                 .first()
                 .unwrap()
                 .public_key()
-                .base58()
-                .unwrap(),
+                .unwrap()
+                .base58(),
             responder_key
         );
 
@@ -106,8 +111,8 @@ async fn did_exchange_test() {
             .first()
             .unwrap()
             .public_key()
-            .base58()
-            .unwrap();
+            .unwrap()
+            .base58();
         assert_eq!(
             responder
                 .their_did_doc()
@@ -115,8 +120,8 @@ async fn did_exchange_test() {
                 .first()
                 .unwrap()
                 .public_key()
-                .base58()
-                .unwrap(),
+                .unwrap()
+                .base58(),
             requester_key
         );
     })

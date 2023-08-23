@@ -3,7 +3,6 @@ mod thin_state;
 
 use did_doc_sov::DidDocumentSov;
 use messages::msg_fields::protocols::did_exchange::{complete::Complete, request::Request, response::Response};
-use public_key::Key;
 
 use crate::{
     errors::error::{AriesVcxError, AriesVcxErrorKind},

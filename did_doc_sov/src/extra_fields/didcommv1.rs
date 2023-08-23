@@ -2,16 +2,12 @@ use serde::{Deserialize, Serialize};
 
 use super::{AcceptType, KeyKind};
 
-// TODO: Remove these crazy defaults!!!
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 #[serde(rename_all = "camelCase")]
 #[serde(deny_unknown_fields)]
 pub struct ExtraFieldsDidCommV1 {
-    #[serde(default)]
     priority: u32,
-    #[serde(default)]
     recipient_keys: Vec<KeyKind>,
-    #[serde(default)]
     routing_keys: Vec<KeyKind>,
     #[serde(default)]
     accept: Vec<AcceptType>,

@@ -2,17 +2,19 @@ use std::sync::Arc;
 
 use aries_vcx::{
     core::profile::profile::Profile,
-    did_doc_sov::extra_fields::KeyKind,
     messages::msg_fields::protocols::{
         did_exchange::{complete::Complete, request::Request, response::Response},
-        out_of_band::invitation::{Invitation as OobInvitation, OobService},
+        out_of_band::invitation::Invitation as OobInvitation,
     },
     protocols::{
         connection::wrap_and_send_msg,
-        did_exchange::state_machine::{
-            generic::{GenericDidExchange, ThinState},
-            requester::{ConstructRequestConfig, PairwiseConstructRequestConfig, PublicConstructRequestConfig},
-            responder::ReceiveRequestConfig,
+        did_exchange::{
+            resolve_key_from_invitation,
+            state_machine::{
+                generic::{GenericDidExchange, ThinState},
+                requester::{ConstructRequestConfig, PairwiseConstructRequestConfig, PublicConstructRequestConfig},
+                responder::ReceiveRequestConfig,
+            },
         },
     },
     utils::from_did_doc_sov_to_legacy,
@@ -79,7 +81,6 @@ impl ServiceDidExchange {
 
     pub async fn send_request_pairwise(&self, invitation: OobInvitation) -> AgentResult<String> {
         let config = ConstructRequestConfig::Pairwise(PairwiseConstructRequestConfig {
-            ledger: self.profile.inject_indy_ledger_read(),
             wallet: self.profile.inject_wallet(),
             invitation: invitation.clone(),
             resolver_registry: self.resolver_registry.clone(),
@@ -110,17 +111,7 @@ impl ServiceDidExchange {
         // We don't want to be sending response if we don't know if there is any invitation
         // associated with the request.
         let request_id = request.clone().decorators.thread.unwrap().thid;
-        let invitation_key = match invitation.content.services.get(0).unwrap() {
-            OobService::SovService(service) => match service.extra().first_recipient_key()? {
-                KeyKind::DidKey(did_key) => did_key.key().to_owned(),
-                KeyKind::Value(key_value) => todo!("Legacy - parse key value {key_value} as base58 encoded key"),
-                KeyKind::Reference(reference) => unimplemented!("Can't resolve reference without a DDO: {reference}"),
-            },
-            OobService::Did(did) => {
-                todo!("Resolve the thing and extract key from DDO");
-            }
-            OobService::AriesService(_) => todo!(),
-        };
+        let invitation_key = resolve_key_from_invitation(&invitation, &self.resolver_registry).await?;
         let (responder, response) = GenericDidExchange::handle_request(ReceiveRequestConfig {
             wallet: self.profile.inject_wallet(),
             resolver_registry: self.resolver_registry.clone(),

@@ -1,5 +1,4 @@
 use std::sync::Arc;
-use std::time::Duration;
 
 use aries_vcx::core::profile::ledger::{build_ledger_components, VcxPoolConfig};
 use aries_vcx::global::settings::DEFAULT_LINK_SECRET_ALIAS;

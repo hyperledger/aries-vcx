@@ -12,7 +12,6 @@ use did_key::DidKey;
 use did_parser::Did;
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use diddoc_legacy::aries::service::AriesService;
-use public_key::{Key, KeyType};
 
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use crate::utils::encryption_envelope::EncryptionEnvelope;
@@ -112,21 +111,6 @@ pub async fn send_message_anonymously(
     Ok(())
 }
 
-fn vm_method_type_to_key_type(vm_type: &VerificationMethodType) -> VcxResult<KeyType> {
-    match vm_type {
-        VerificationMethodType::Ed25519VerificationKey2018 | VerificationMethodType::Ed25519VerificationKey2020 => {
-            Ok(KeyType::Ed25519)
-        }
-        VerificationMethodType::X25519KeyAgreementKey2019 | VerificationMethodType::X25519KeyAgreementKey2020 => {
-            Ok(KeyType::X25519)
-        }
-        a @ _ => Err(AriesVcxError::from_msg(
-            AriesVcxErrorKind::InvalidState,
-            format!("Unable to convert ver. method type {a} to key type"),
-        )),
-    }
-}
-
 // TODO: Get rid of this please!!!
 pub fn from_did_doc_sov_to_legacy(ddo: DidDocumentSov) -> VcxResult<AriesDidDoc> {
     let mut new_ddo = AriesDidDoc::default();
@@ -151,13 +135,12 @@ pub fn from_did_doc_sov_to_legacy(ddo: DidDocumentSov) -> VcxResult<AriesDidDoc>
                         recipient_keys.push(key.key().base58());
                     }
                     KeyKind::Reference(_) => {}
-                    KeyKind::Value(value) => todo!(),
+                    KeyKind::Value(_) => {}
                 }
             }
         }
     }
     new_ddo.set_recipient_keys(recipient_keys);
-    println!("Converted their ddo {ddo:?} to legacy ddo: {new_ddo:?}");
     Ok(new_ddo)
 }
 

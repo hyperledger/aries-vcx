@@ -7,7 +7,6 @@ use messages::msg_fields::protocols::out_of_band::invitation::Invitation as OobI
 use url::Url;
 
 pub struct PairwiseConstructRequestConfig {
-    pub ledger: Arc<dyn IndyLedgerRead>,
     pub wallet: Arc<dyn BaseWallet>,
     pub invitation: OobInvitation,
     pub resolver_registry: Arc<ResolverRegistry>,

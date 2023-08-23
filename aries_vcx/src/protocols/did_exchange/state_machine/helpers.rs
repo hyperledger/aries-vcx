@@ -59,7 +59,6 @@ pub async fn create_our_did_document(
     // TODO: Make it easier to generate peer did from keys and service, and generate DDO from it
     let did_document_temp = did_doc_from_keys(Default::default(), key_ver.clone(), key_enc.clone(), service.clone())?;
     let peer_did = generate_numalgo2(did_document_temp.into())?;
-    let vm_id = peer_did.to_numalgo3();
 
     Ok((
         did_doc_from_keys(peer_did.clone().into(), key_ver, key_enc.clone(), service)?,
@@ -161,7 +160,7 @@ pub fn attach_to_ddo_sov(attachment: Attachment) -> Result<DidDocumentSov, Aries
             match serde_json::from_slice::<DidDocumentSov>(&bytes) {
                 Ok(ddo) => Ok(ddo),
                 Err(err) => {
-                    println!("Error deserializing to new DDO: {err}");
+                    error!("Error deserializing to new DDO: {err}");
                     let res: AriesDidDoc = serde_json::from_slice(&bytes).map_err(|err| {
                         AriesVcxError::from_msg(
                             AriesVcxErrorKind::SerializationError,

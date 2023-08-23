@@ -32,7 +32,7 @@ impl DidExchangeResponder<ResponseSent> {
         }: ReceiveRequestConfig,
     ) -> Result<TransitionResult<DidExchangeResponder<ResponseSent>, Response>, AriesVcxError> {
         let their_ddo = resolve_their_ddo(&resolver_registry, &request).await?;
-        let (our_did_document, enc_key) = create_our_did_document(&wallet, service_endpoint, routing_keys).await?;
+        let (our_did_document, _enc_key) = create_our_did_document(&wallet, service_endpoint, routing_keys).await?;
 
         if request.decorators.thread.and_then(|t| t.pthid) != Some(invitation_id.clone()) {
             return Err(AriesVcxError::from_msg(

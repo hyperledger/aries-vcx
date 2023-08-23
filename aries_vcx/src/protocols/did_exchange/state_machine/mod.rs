@@ -16,7 +16,6 @@ use uuid::Uuid;
 use std::marker::PhantomData;
 
 use did_doc_sov::DidDocumentSov;
-use public_key::Key;
 
 use super::{
     states::{abandoned::Abandoned, traits::ThreadId},
