@@ -24,7 +24,7 @@ use did_resolver_registry::ResolverRegistry;
 use crate::{
     http_client::HttpClient,
     storage::{object_cache::ObjectCache, Storage},
-    AgentResult,
+    AgentError, AgentErrorKind, AgentResult,
 };
 
 use super::connection::ServiceEndpoint;
@@ -68,14 +68,18 @@ impl ServiceDidExchange {
                 .our_did_document()
                 .resolved_key_agreement()
                 .next()
-                .unwrap()
+                .ok_or_else(|| AgentError::from_msg(AgentErrorKind::InvalidState, "No key agreement method found"))?
                 .public_key()?
                 .base58(),
             &from_did_doc_sov_to_legacy(requester.their_did_doc().clone())?,
             &HttpClient,
         )
         .await?;
-        let request_id = request.decorators.thread.unwrap().thid;
+        let request_id = request
+            .decorators
+            .thread
+            .ok_or_else(|| AgentError::from_msg(AgentErrorKind::InvalidState, "Request did not contain a thread id"))?
+            .thid;
         self.did_exchange.insert(&request_id, requester.clone().into())
     }
 
@@ -95,14 +99,18 @@ impl ServiceDidExchange {
                 .our_did_document()
                 .resolved_key_agreement()
                 .next()
-                .unwrap()
+                .ok_or_else(|| AgentError::from_msg(AgentErrorKind::InvalidState, "No key agreement method found"))?
                 .public_key()?
                 .base58(),
             &from_did_doc_sov_to_legacy(requester.their_did_doc().clone())?,
             &HttpClient,
         )
         .await?;
-        let request_id = request.decorators.thread.unwrap().thid;
+        let request_id = request
+            .decorators
+            .thread
+            .ok_or_else(|| AgentError::from_msg(AgentErrorKind::InvalidState, "Request did not contain a thread id"))?
+            .thid;
         self.did_exchange.insert(&request_id, requester.clone().into())
     }
 
@@ -110,7 +118,12 @@ impl ServiceDidExchange {
         // TODO: We should fetch the out of band invite associated with the request.
         // We don't want to be sending response if we don't know if there is any invitation
         // associated with the request.
-        let request_id = request.clone().decorators.thread.unwrap().thid;
+        let request_id = request
+            .clone()
+            .decorators
+            .thread
+            .ok_or_else(|| AgentError::from_msg(AgentErrorKind::InvalidState, "Request did not contain a thread id"))?
+            .thid;
         let invitation_key = resolve_key_from_invitation(&invitation, &self.resolver_registry).await?;
         let (responder, response) = GenericDidExchange::handle_request(ReceiveRequestConfig {
             wallet: self.profile.inject_wallet(),
@@ -129,7 +142,7 @@ impl ServiceDidExchange {
                 .our_did_document()
                 .resolved_key_agreement()
                 .next()
-                .unwrap()
+                .ok_or_else(|| AgentError::from_msg(AgentErrorKind::InvalidState, "No key agreement method found"))?
                 .public_key()?
                 .base58(),
             &from_did_doc_sov_to_legacy(responder.their_did_doc().clone())?,
@@ -148,7 +161,7 @@ impl ServiceDidExchange {
                 .our_did_document()
                 .resolved_key_agreement()
                 .next()
-                .unwrap()
+                .ok_or_else(|| AgentError::from_msg(AgentErrorKind::InvalidState, "No key agreement method found"))?
                 .public_key()?
                 .base58(),
             &from_did_doc_sov_to_legacy(requester.their_did_doc().clone())?,
