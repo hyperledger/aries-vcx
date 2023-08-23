@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
+use crate::utils::devsetup_util::{get_proof_request_messages, prover_update_with_mediator};
 use agency_client::agency_client::AgencyClient;
 use agency_client::configuration::{AgencyClientConfig, AgentProvisionConfig};
 use agency_client::MessageStatusCode;
@@ -11,9 +12,6 @@ use aries_vcx::global::settings::DEFAULT_LINK_SECRET_ALIAS;
 use aries_vcx::handlers::connection::mediated_connection::{ConnectionState, MediatedConnection};
 use aries_vcx::handlers::issuance::holder::Holder;
 use aries_vcx::handlers::issuance::mediated_holder::{get_credential_offer_messages, holder_update_with_mediator};
-use aries_vcx::handlers::proof_presentation::mediated_prover::{
-    get_proof_request_messages, prover_update_with_mediator,
-};
 use aries_vcx::handlers::proof_presentation::prover::Prover;
 use aries_vcx::handlers::proof_presentation::types::SelectedCredentials;
 use aries_vcx::handlers::revocation_notification::receiver::RevocationNotificationReceiver;

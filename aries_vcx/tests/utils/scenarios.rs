@@ -29,6 +29,7 @@ pub mod test_utils {
 
     use crate::utils::devsetup_alice::Alice;
     use crate::utils::devsetup_faber::Faber;
+    use crate::utils::devsetup_util::{get_proof_request_messages, prover_update_with_mediator};
     use aries_vcx::common::ledger::transactions::into_did_doc;
     use aries_vcx::common::primitives::credential_definition::CredentialDef;
     use aries_vcx::common::primitives::revocation_registry::RevocationRegistry;
@@ -40,9 +41,6 @@ pub mod test_utils {
     use aries_vcx::handlers::issuance::mediated_holder::{get_credential_offer_messages, holder_update_with_mediator};
     use aries_vcx::handlers::issuance::mediated_issuer::{
         get_credential_proposal_messages, issuer_update_with_mediator,
-    };
-    use aries_vcx::handlers::proof_presentation::mediated_prover::{
-        get_proof_request_messages, prover_update_with_mediator,
     };
     use aries_vcx::handlers::proof_presentation::mediated_verifier::verifier_update_with_mediator;
     use aries_vcx::handlers::proof_presentation::prover::Prover;
