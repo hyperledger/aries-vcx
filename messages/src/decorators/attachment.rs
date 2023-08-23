@@ -167,7 +167,7 @@ pub mod tests {
 
     #[test]
     fn test_extended_attach_data() {
-        let jws = "test_jws".to_owned();
+        let jws = json!({ "jws": "test_jws".to_owned()});
         let sha256 = "test_sha256".to_owned();
 
         let data = json!({
@@ -180,6 +180,8 @@ pub mod tests {
             "sha256": sha256
         });
 
+        let mut jws = HashMap::new();
+        jws.insert("jws".to_owned(), Value::String("test_jws".to_owned()));
         let content = AttachmentType::Json(data);
         let mut attach_data = AttachmentData::new(content);
         attach_data.jws = Some(jws);
