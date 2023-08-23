@@ -10,9 +10,13 @@ use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use messages::msg_fields::protocols::present_proof::PresentProof;
 use messages::AriesMessage;
 use std::sync::Arc;
+use aries_vcx::handlers::issuance::holder::Holder;
+use aries_vcx::handlers::issuance::mediated_holder;
+use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
 use aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;
 use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
 use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
+use messages::msg_fields::protocols::cred_issuance::CredentialIssuance;
 
 #[cfg(test)]
 pub mod test_utils {
@@ -139,4 +143,45 @@ pub async fn verifier_update_with_mediator(
         connection.update_message_status(&uid, agency_client).await?;
     }
     Ok(sm.get_state())
+}
+
+pub async fn holder_update_with_mediator(
+    sm: &mut Holder,
+    ledger: &Arc<dyn AnoncredsLedgerRead>,
+    anoncreds: &Arc<dyn BaseAnonCreds>,
+    wallet: &Arc<dyn BaseWallet>,
+    agency_client: &AgencyClient,
+    connection: &MediatedConnection,
+) -> VcxResult<HolderState> {
+    trace!("holder_update_with_mediator >>>");
+    if sm.is_terminal_state() {
+        return Ok(sm.get_state());
+    }
+    let send_message = connection.send_message_closure(Arc::clone(wallet)).await?;
+
+    let messages = connection.get_messages(agency_client).await?;
+    if let Some((uid, msg)) = mediated_holder::holder_find_message_to_handle(sm, messages) {
+        sm.process_aries_msg(ledger, anoncreds, msg.into(), Some(send_message))
+            .await?;
+        connection.update_message_status(&uid, agency_client).await?;
+    }
+    Ok(sm.get_state())
+}
+
+// todo: returns specific type
+pub async fn get_credential_offer_messages(
+    agency_client: &AgencyClient,
+    connection: &MediatedConnection,
+) -> VcxResult<String> {
+    let credential_offers: Vec<AriesMessage> = connection
+        .get_messages(agency_client)
+        .await?
+        .into_iter()
+        .filter_map(|(_, a2a_message)| match a2a_message {
+            AriesMessage::CredentialIssuance(CredentialIssuance::OfferCredential(_)) => Some(a2a_message),
+            _ => None,
+        })
+        .collect();
+
+    Ok(json!(credential_offers).to_string())
 }
