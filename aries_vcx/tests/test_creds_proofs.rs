@@ -566,7 +566,7 @@ mod tests {
     use aries_vcx::common::test_utils::create_and_store_nonrevocable_credential_def;
     use aries_vcx::handlers::issuance::holder::Holder;
     use aries_vcx::handlers::issuance::mediated_issuer::issuer_update_with_mediator;
-    use aries_vcx::handlers::proof_presentation::mediated_verifier::verifier_update_with_mediator;
+    use crate::utils::devsetup_util::verifier_update_with_mediator;
     use aries_vcx::handlers::proof_presentation::prover::Prover;
     use aries_vcx::handlers::proof_presentation::verifier::Verifier;
     use aries_vcx::protocols::issuance::holder::state_machine::HolderState;

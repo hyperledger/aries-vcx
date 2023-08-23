@@ -2,12 +2,17 @@ use agency_client::agency_client::AgencyClient;
 use aries_vcx::core::profile::profile::Profile;
 use aries_vcx::errors::error::VcxResult;
 use aries_vcx::handlers::connection::mediated_connection::MediatedConnection;
-use aries_vcx::handlers::proof_presentation::mediated_prover;
+use aries_vcx::handlers::proof_presentation::{mediated_prover, mediated_verifier};
 use aries_vcx::handlers::proof_presentation::prover::Prover;
+use aries_vcx::handlers::proof_presentation::verifier::Verifier;
 use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use messages::msg_fields::protocols::present_proof::PresentProof;
 use messages::AriesMessage;
+use std::sync::Arc;
+use aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;
+use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
+use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
 
 #[cfg(test)]
 pub mod test_utils {
@@ -108,6 +113,29 @@ pub async fn prover_update_with_mediator(
     let messages = connection.get_messages(agency_client).await?;
     if let Some((uid, msg)) = mediated_prover::prover_find_message_to_handle(sm, messages) {
         sm.process_aries_msg(msg.into()).await?;
+        connection.update_message_status(&uid, agency_client).await?;
+    }
+    Ok(sm.get_state())
+}
+
+pub async fn verifier_update_with_mediator(
+    sm: &mut Verifier,
+    wallet: &Arc<dyn BaseWallet>,
+    ledger: &Arc<dyn AnoncredsLedgerRead>,
+    anoncreds: &Arc<dyn BaseAnonCreds>,
+    agency_client: &AgencyClient,
+    connection: &MediatedConnection,
+) -> VcxResult<VerifierState> {
+    trace!("verifier_update_with_mediator >>> ");
+    if !sm.progressable_by_message() {
+        return Ok(sm.get_state());
+    }
+    let send_message = connection.send_message_closure(Arc::clone(wallet)).await?;
+
+    let messages = connection.get_messages(agency_client).await?;
+    if let Some((uid, msg)) = mediated_verifier::verifier_find_message_to_handle(sm, messages) {
+        sm.process_aries_msg(ledger, anoncreds, msg.into(), Some(send_message))
+            .await?;
         connection.update_message_status(&uid, agency_client).await?;
     }
     Ok(sm.get_state())

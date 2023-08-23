@@ -42,7 +42,7 @@ pub mod test_utils {
     use aries_vcx::handlers::issuance::mediated_issuer::{
         get_credential_proposal_messages, issuer_update_with_mediator,
     };
-    use aries_vcx::handlers::proof_presentation::mediated_verifier::verifier_update_with_mediator;
+    use crate::utils::devsetup_util::verifier_update_with_mediator;
     use aries_vcx::handlers::proof_presentation::prover::Prover;
     use aries_vcx::handlers::proof_presentation::verifier::Verifier;
     use aries_vcx::protocols::issuance::holder::state_machine::HolderState;

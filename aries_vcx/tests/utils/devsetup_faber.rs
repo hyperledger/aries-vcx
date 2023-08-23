@@ -16,7 +16,7 @@ use aries_vcx::global::settings::{init_issuer_config, DEFAULT_LINK_SECRET_ALIAS}
 use aries_vcx::handlers::connection::mediated_connection::{ConnectionState, MediatedConnection};
 use aries_vcx::handlers::issuance::issuer::Issuer;
 use aries_vcx::handlers::issuance::mediated_issuer::issuer_update_with_mediator;
-use aries_vcx::handlers::proof_presentation::mediated_verifier::verifier_update_with_mediator;
+use crate::utils::devsetup_util::verifier_update_with_mediator;
 use aries_vcx::handlers::proof_presentation::verifier::Verifier;
 use aries_vcx::handlers::revocation_notification::sender::RevocationNotificationSender;
 use aries_vcx::handlers::util::OfferInfo;

@@ -9,7 +9,7 @@ mod integration_tests {
     use std::thread;
     use std::time::Duration;
 
-    use aries_vcx::handlers::proof_presentation::mediated_verifier::verifier_update_with_mediator;
+    use crate::utils::devsetup_util::verifier_update_with_mediator;
     use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
     use aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;
     use aries_vcx::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
