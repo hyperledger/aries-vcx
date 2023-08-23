@@ -17,23 +17,8 @@ pub struct RequestReceivedState {
     pub request: RequestCredential,
 }
 
-impl From<(RequestReceivedState, Option<String>)> for FinishedState {
-    fn from((state, cred_rev_id): (RequestReceivedState, Option<String>)) -> Self {
-        trace!("SM is now in Finished state");
-        FinishedState {
-            cred_id: None,
-            revocation_info_v1: Some(RevocationInfoV1 {
-                cred_rev_id,
-                rev_reg_id: state.rev_reg_id,
-                tails_file: state.tails_file,
-            }),
-            status: Status::Success,
-        }
-    }
-}
-
-impl From<(RequestReceivedState, ProblemReport)> for FinishedState {
-    fn from((state, err): (RequestReceivedState, ProblemReport)) -> Self {
+impl FinishedState {
+    pub fn from_request_and_error(state: RequestReceivedState, err: ProblemReport) -> Self {
         trace!("SM is now in Finished state");
         FinishedState {
             cred_id: None,

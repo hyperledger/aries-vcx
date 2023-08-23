@@ -366,7 +366,9 @@ impl IssuerSM {
             &AriesMessage::CredentialIssuance(CredentialIssuance::RequestCredential(request.clone())),
         )?;
         let state = match self.state {
-            IssuerFullState::OfferSet(state_data) => IssuerFullState::RequestReceived((state_data, request).into()),
+            IssuerFullState::OfferSet(state_data) => {
+                IssuerFullState::RequestReceived(RequestReceivedState::from_offer_set_and_request(state_data, request))
+            }
             s => {
                 warn!("Unable to receive credential request in state {}", s);
                 s
@@ -407,7 +409,7 @@ impl IssuerSM {
                             "Failed to create credential, sending problem report {:?}",
                             problem_report
                         );
-                        IssuerFullState::Finished((state_data, problem_report).into())
+                        IssuerFullState::Finished(FinishedState::from_request_and_error(state_data, problem_report))
                     }
                 }
             }
@@ -441,7 +443,9 @@ impl IssuerSM {
             &AriesMessage::CredentialIssuance(CredentialIssuance::Ack(ack.clone())),
         )?;
         let state = match self.state {
-            IssuerFullState::CredentialSet(state_data) => IssuerFullState::Finished(FinishedState::from_credential_set_state(state_data)),
+            IssuerFullState::CredentialSet(state_data) => {
+                IssuerFullState::Finished(FinishedState::from_credential_set_state(state_data))
+            }
             s => {
                 warn!("Unable to receive credential ack in state {}", s);
                 s
@@ -453,8 +457,12 @@ impl IssuerSM {
     pub fn receive_problem_report(self, problem_report: ProblemReport) -> VcxResult<Self> {
         verify_thread_id(&self.thread_id, &AriesMessage::ReportProblem(problem_report.clone()))?;
         let state = match self.state {
-            IssuerFullState::OfferSet(state_data) => IssuerFullState::Finished((state_data, problem_report).into()),
-            IssuerFullState::CredentialSet(state_data) => IssuerFullState::Finished(FinishedState::from_credential_set_state(state_data)),
+            IssuerFullState::OfferSet(state_data) => {
+                IssuerFullState::Finished(FinishedState::from_offer_set_and_error(state_data, problem_report))
+            }
+            IssuerFullState::CredentialSet(state_data) => {
+                IssuerFullState::Finished(FinishedState::from_credential_set_state(state_data))
+            }
             s => {
                 warn!("Unable to receive credential ack in state {}", s);
                 s

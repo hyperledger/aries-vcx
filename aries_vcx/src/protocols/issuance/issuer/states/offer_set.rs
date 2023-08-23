@@ -34,23 +34,8 @@ impl OfferSetState {
     }
 }
 
-impl From<OfferSetState> for FinishedState {
-    fn from(state: OfferSetState) -> Self {
-        trace!("SM is now in Finished state");
-        FinishedState {
-            cred_id: None,
-            revocation_info_v1: Some(RevocationInfoV1 {
-                cred_rev_id: None,
-                rev_reg_id: state.rev_reg_id,
-                tails_file: state.tails_file,
-            }),
-            status: Status::Undefined,
-        }
-    }
-}
-
-impl From<(OfferSetState, RequestCredential)> for RequestReceivedState {
-    fn from((state, request): (OfferSetState, RequestCredential)) -> Self {
+impl RequestReceivedState {
+    pub fn from_offer_set_and_request(state: OfferSetState, request: RequestCredential) -> Self {
         trace!("SM is now in Request Received state");
         RequestReceivedState {
             offer: state.offer,
@@ -62,8 +47,8 @@ impl From<(OfferSetState, RequestCredential)> for RequestReceivedState {
     }
 }
 
-impl From<(OfferSetState, ProblemReport)> for FinishedState {
-    fn from((state, err): (OfferSetState, ProblemReport)) -> Self {
+impl FinishedState {
+    pub fn from_offer_set_and_error(state: OfferSetState, err: ProblemReport) -> Self {
         trace!("SM is now in Finished state");
         FinishedState {
             cred_id: None,
