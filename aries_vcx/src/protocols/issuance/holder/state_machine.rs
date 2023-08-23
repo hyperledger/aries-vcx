@@ -227,6 +227,8 @@ impl HolderSM {
     }
 
     #[deprecated]
+    // convenience function for sending the credential request. This will be removed in the future
+    // and some form of replacement will be provided instead outside of state machines.
     pub async fn send_credential_request(&self, send_message: SendClosure) -> VcxResult<()> {
         match self.state {
             HolderFullState::RequestSet(ref state) => {

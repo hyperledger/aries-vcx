@@ -347,6 +347,8 @@ impl IssuerSM {
     }
 
     #[deprecated]
+    // Convenience function for sending the credential offer. This will be removed in the future
+    // and some form of replacement will be provided instead outside of state machines.
     pub async fn send_credential_offer(self, send_message: SendClosure) -> VcxResult<()> {
         match self.state {
             IssuerFullState::OfferSet(ref state_data) => {
@@ -421,6 +423,8 @@ impl IssuerSM {
     }
 
     #[deprecated]
+    // Convenience function for sending the credential. This will be removed in the future
+    // and some form of replacement will be provided instead outside of state machines.
     pub async fn send_credential(self, send_message: SendClosure) -> VcxResult<()> {
         match self.state {
             IssuerFullState::CredentialSet(ref state_data) => {
