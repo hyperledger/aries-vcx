@@ -145,7 +145,6 @@ pub async fn jws_sign_attach(
 }
 
 pub fn attach_to_ddo_sov(attachment: Attachment) -> Result<DidDocumentSov, AriesVcxError> {
-    // TODO: Support more attachment types
     match attachment.data.content {
         AttachmentType::Json(value) => serde_json::from_value(value).map_err(Into::into),
         AttachmentType::Base64(ref value) => {
@@ -155,21 +154,7 @@ pub fn attach_to_ddo_sov(attachment: Attachment) -> Result<DidDocumentSov, Aries
                     format!("Attachment base 64 decoding failed; attach: {attachment:?}, err: {err}"),
                 )
             })?;
-            // TODO: Try to make DidDocumentSov support the legacy DDO if possible - would make
-            // integration of DidDocument much easier
-            match serde_json::from_slice::<DidDocumentSov>(&bytes) {
-                Ok(ddo) => Ok(ddo),
-                Err(err) => {
-                    error!("Error deserializing to new DDO: {err}");
-                    let res: AriesDidDoc = serde_json::from_slice(&bytes).map_err(|err| {
-                        AriesVcxError::from_msg(
-                            AriesVcxErrorKind::SerializationError,
-                            format!("Attachment is not base 64 encoded JSON: {attachment:?}, err: {err:?}"),
-                        )
-                    })?;
-                    from_legacy_did_doc_to_sov(res)
-                }
-            }
+            serde_json::from_slice::<DidDocumentSov>(&bytes).map_err(Into::into)
         }
         _ => Err(AriesVcxError::from_msg(
             AriesVcxErrorKind::InvalidJson,

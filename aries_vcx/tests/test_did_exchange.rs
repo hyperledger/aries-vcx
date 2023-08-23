@@ -5,7 +5,9 @@ mod utils;
 
 use std::sync::Arc;
 
+use aries_vcx::handlers::out_of_band::sender::OutOfBandSender;
 use aries_vcx::protocols::did_exchange::resolve_key_from_invitation;
+use aries_vcx::protocols::did_exchange::state_machine::generate_keypair;
 use aries_vcx::protocols::did_exchange::state_machine::requester::{
     ConstructRequestConfig, DidExchangeRequester, PairwiseConstructRequestConfig,
 };
@@ -15,13 +17,20 @@ use aries_vcx::protocols::did_exchange::states::responder::response_sent::Respon
 use aries_vcx::protocols::did_exchange::transition::transition_result::TransitionResult;
 use aries_vcx::utils::devsetup::SetupPoolDirectory;
 use did_doc::schema::verification_method::{PublicKeyField, VerificationMethodType};
+use did_doc_sov::extra_fields::didcommv1::ExtraFieldsDidCommV1;
 use did_doc_sov::extra_fields::didcommv2::ExtraFieldsDidCommV2;
+use did_doc_sov::extra_fields::KeyKind;
+use did_doc_sov::service::didcommv1::ServiceDidCommV1;
 use did_doc_sov::service::didcommv2::ServiceDidCommV2;
 use did_doc_sov::service::ServiceSov;
 use did_peer::peer_did_resolver::resolver::PeerDidResolver;
 use did_resolver_registry::ResolverRegistry;
-use messages::msg_fields::protocols::out_of_band::invitation::Invitation;
+use messages::msg_fields::protocols::out_of_band::invitation::{Invitation, OobService};
+use messages::msg_types::protocols::did_exchange::{DidExchangeType, DidExchangeTypeV1};
+use messages::msg_types::Protocol;
+use public_key::KeyType;
 use url::Url;
+use uuid::Uuid;
 
 use crate::utils::devsetup_alice::create_alice;
 use crate::utils::devsetup_faber::create_faber;
@@ -38,8 +47,32 @@ async fn did_exchange_test() {
         );
 
         let url: Url = "http://dummyurl.org".parse().unwrap();
-        // TODO: Create invite manually
-        let invitation: Invitation = serde_json::from_str(fixtures::OOB_INVITE).unwrap();
+
+        let public_key = generate_keypair(&institution.profile.inject_wallet(), KeyType::Ed25519)
+            .await
+            .unwrap();
+        let service = {
+            let service_id = Uuid::new_v4().to_string();
+            ServiceSov::DIDCommV1(
+                ServiceDidCommV1::new(
+                    service_id.parse().unwrap(),
+                    url.clone().into(),
+                    ExtraFieldsDidCommV1::builder()
+                        .set_recipient_keys(vec![KeyKind::DidKey(public_key.try_into().unwrap())])
+                        .build(),
+                )
+                .unwrap(),
+            )
+        };
+        let invitation = OutOfBandSender::create()
+            .append_service(&OobService::SovService(service))
+            .append_handshake_protocol(Protocol::DidExchangeType(DidExchangeType::V1(
+                DidExchangeTypeV1::new_v1_0(),
+            )))
+            .unwrap()
+            .oob
+            .clone();
+
         let invitation_id = invitation.id.clone();
         let invitation_key = resolve_key_from_invitation(&invitation, &resolver_registry)
             .await
