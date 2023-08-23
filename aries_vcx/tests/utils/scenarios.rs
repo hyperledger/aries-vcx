@@ -333,17 +333,9 @@ pub mod test_utils {
         let proposal = ProposeCredential::with_decorators(id, content, decorators);
         let mut holder = Holder::create("TEST_CREDENTIAL").unwrap();
         assert_eq!(HolderState::Initial, holder.get_state());
-        holder
-            .send_proposal(
-                proposal,
-                connection
-                    .send_message_closure(alice.profile.inject_wallet())
-                    .await
-                    .unwrap(),
-            )
-            .await
-            .unwrap();
-        assert_eq!(HolderState::ProposalSent, holder.get_state());
+        holder.set_proposal(proposal.clone()).unwrap();
+        assert_eq!(HolderState::ProposalSet, holder.get_state());
+        connection.send_a2a_message(&alice.profile.inject_wallet(), &proposal.into()).await.unwrap();
         tokio::time::sleep(Duration::from_millis(1000)).await;
         holder
     }
@@ -399,17 +391,9 @@ pub mod test_utils {
         let decorators = ProposeCredentialDecorators::default();
 
         let proposal = ProposeCredential::with_decorators(id, content, decorators);
-        holder
-            .send_proposal(
-                proposal,
-                connection
-                    .send_message_closure(alice.profile.inject_wallet())
-                    .await
-                    .unwrap(),
-            )
-            .await
-            .unwrap();
-        assert_eq!(HolderState::ProposalSent, holder.get_state());
+        holder.set_proposal(proposal.clone()).unwrap();
+        assert_eq!(HolderState::ProposalSet, holder.get_state());
+        connection.send_a2a_message(&alice.profile.inject_wallet(), &proposal.into()).await.unwrap();
         tokio::time::sleep(Duration::from_millis(1000)).await;
     }
 

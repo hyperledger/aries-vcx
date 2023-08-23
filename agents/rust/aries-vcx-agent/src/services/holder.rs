@@ -57,17 +57,14 @@ impl ServiceCredentialsHolder {
     pub async fn send_credential_proposal(
         &self,
         connection_id: &str,
-        proposal_data: ProposeCredential,
+        propose_credential: ProposeCredential,
     ) -> AgentResult<String> {
         let connection = self.service_connections.get_by_id(connection_id)?;
         let wallet = self.profile.inject_wallet();
 
-        let send_closure: SendClosure = Box::new(|msg: AriesMessage| {
-            Box::pin(async move { connection.send_message(&wallet, &msg, &HttpClient).await })
-        });
-
         let mut holder = Holder::create("")?;
-        holder.send_proposal(proposal_data, send_closure).await?;
+        holder.set_proposal(propose_credential)?;
+        connection.send_message(&wallet, &propose_credential.into(), &HttpClient).await?;
 
         self.creds_holder
             .insert(&holder.get_thread_id()?, HolderWrapper::new(holder, connection_id))

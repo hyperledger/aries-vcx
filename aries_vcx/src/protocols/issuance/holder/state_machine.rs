@@ -143,7 +143,7 @@ impl HolderSM {
         }
     }
 
-    pub async fn send_proposal(self, proposal: ProposeCredential, send_message: SendClosure) -> VcxResult<Self> {
+    pub fn set_proposal(self, proposal: ProposeCredential) -> VcxResult<Self> {
         verify_thread_id(
             &self.thread_id,
             &AriesMessage::CredentialIssuance(CredentialIssuance::ProposeCredential(proposal.clone())),
@@ -152,13 +152,11 @@ impl HolderSM {
             HolderFullState::Initial(_) => {
                 let mut proposal = proposal;
                 proposal.id = self.thread_id.clone();
-                send_message(proposal.clone().into()).await?;
                 HolderFullState::ProposalSet(ProposalSetState::new(proposal))
             }
             HolderFullState::OfferReceived(_) => {
                 let mut proposal = proposal;
                 proposal.id = self.thread_id.clone();
-                send_message(proposal.clone().into()).await?;
                 HolderFullState::ProposalSet(ProposalSetState::new(proposal))
             }
             s => {

@@ -16,7 +16,7 @@ pub fn holder_find_message_to_handle(
     trace!("holder_find_message_to_handle >>>");
     for (uid, message) in messages {
         match sm.get_state() {
-            HolderState::ProposalSent => {
+            HolderState::ProposalSet => {
                 if let AriesMessage::CredentialIssuance(CredentialIssuance::OfferCredential(offer)) = &message {
                     if matches_opt_thread_id!(offer, sm.get_thread_id().unwrap().as_str()) {
                         return Some((uid, message));

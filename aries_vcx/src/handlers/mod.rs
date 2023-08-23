@@ -40,7 +40,7 @@ impl From<HolderState> for u32 {
     fn from(state: HolderState) -> u32 {
         match state {
             HolderState::Initial => 0,
-            HolderState::ProposalSent => 1,
+            HolderState::ProposalSet => 1,
             HolderState::OfferReceived => 2,
             HolderState::RequestSet => 3,
             HolderState::Finished => 4,

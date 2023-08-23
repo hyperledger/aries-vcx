@@ -39,16 +39,14 @@ impl Holder {
         Ok(Holder { holder_sm })
     }
 
-    pub async fn send_proposal(
+    pub fn set_proposal(
         &mut self,
         credential_proposal: ProposeCredential,
-        send_message: SendClosure,
     ) -> VcxResult<()> {
         self.holder_sm = self
             .holder_sm
             .clone()
-            .send_proposal(credential_proposal, send_message)
-            .await?;
+            .set_proposal(credential_proposal)?;
         Ok(())
     }
 
