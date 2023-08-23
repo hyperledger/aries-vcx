@@ -28,14 +28,14 @@ use crate::protocols::common::build_problem_report_msg;
 use crate::protocols::issuance::holder::states::finished::FinishedHolderState;
 use crate::protocols::issuance::holder::states::initial::InitialHolderState;
 use crate::protocols::issuance::holder::states::offer_received::OfferReceivedState;
-use crate::protocols::issuance::holder::states::proposal_sent::ProposalSentState;
+use crate::protocols::issuance::holder::states::proposal_set::ProposalSetState;
 use crate::protocols::issuance::holder::states::request_set::RequestSetState;
 use crate::protocols::SendClosure;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum HolderFullState {
     Initial(InitialHolderState),
-    ProposalSent(ProposalSentState),
+    ProposalSet(ProposalSetState),
     OfferReceived(OfferReceivedState),
     RequestSet(RequestSetState),
     Finished(FinishedHolderState),
@@ -44,7 +44,7 @@ pub enum HolderFullState {
 #[derive(Debug, PartialEq, Eq)]
 pub enum HolderState {
     Initial,
-    ProposalSent,
+    ProposalSet,
     OfferReceived,
     RequestSet,
     Finished,
@@ -62,7 +62,7 @@ impl fmt::Display for HolderFullState {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         match *self {
             HolderFullState::Initial(_) => f.write_str("Initial"),
-            HolderFullState::ProposalSent(_) => f.write_str("ProposalSent"),
+            HolderFullState::ProposalSet(_) => f.write_str("ProposalSet"),
             HolderFullState::OfferReceived(_) => f.write_str("OfferReceived"),
             HolderFullState::RequestSet(_) => f.write_str("RequestSet"),
             HolderFullState::Finished(_) => f.write_str("Finished"),
@@ -122,7 +122,7 @@ impl HolderSM {
     pub fn get_state(&self) -> HolderState {
         match self.state {
             HolderFullState::Initial(_) => HolderState::Initial,
-            HolderFullState::ProposalSent(_) => HolderState::ProposalSent,
+            HolderFullState::ProposalSet(_) => HolderState::ProposalSet,
             HolderFullState::OfferReceived(_) => HolderState::OfferReceived,
             HolderFullState::RequestSet(_) => HolderState::RequestSet,
             HolderFullState::Finished(ref status) => match status.status {
@@ -135,7 +135,7 @@ impl HolderSM {
     #[allow(dead_code)]
     pub fn get_proposal(&self) -> VcxResult<ProposeCredential> {
         match &self.state {
-            HolderFullState::ProposalSent(state) => Ok(state.credential_proposal.clone()),
+            HolderFullState::ProposalSet(state) => Ok(state.credential_proposal.clone()),
             _ => Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::InvalidState,
                 "Proposal not available in this state",
@@ -153,13 +153,13 @@ impl HolderSM {
                 let mut proposal = proposal;
                 proposal.id = self.thread_id.clone();
                 send_message(proposal.clone().into()).await?;
-                HolderFullState::ProposalSent(ProposalSentState::new(proposal))
+                HolderFullState::ProposalSet(ProposalSetState::new(proposal))
             }
             HolderFullState::OfferReceived(_) => {
                 let mut proposal = proposal;
                 proposal.id = self.thread_id.clone();
                 send_message(proposal.clone().into()).await?;
-                HolderFullState::ProposalSent(ProposalSentState::new(proposal))
+                HolderFullState::ProposalSet(ProposalSetState::new(proposal))
             }
             s => {
                 warn!("Unable to send credential proposal in state {}", s);
@@ -175,7 +175,7 @@ impl HolderSM {
             &AriesMessage::CredentialIssuance(CredentialIssuance::OfferCredential(offer.clone())),
         )?;
         let state = match self.state {
-            HolderFullState::ProposalSent(_) => HolderFullState::OfferReceived(OfferReceivedState::new(offer)),
+            HolderFullState::ProposalSet(_) => HolderFullState::OfferReceived(OfferReceivedState::new(offer)),
             s => {
                 warn!("Unable to receive credential offer in state {}", s);
                 s
@@ -306,7 +306,7 @@ impl HolderSM {
 
     pub fn receive_problem_report(self, problem_report: ProblemReport) -> VcxResult<Self> {
         let state = match self.state {
-            HolderFullState::ProposalSent(_) | HolderFullState::RequestSet(_) => {
+            HolderFullState::ProposalSet(_) | HolderFullState::RequestSet(_) => {
                 HolderFullState::Finished(FinishedHolderState::new(problem_report))
             }
             s => {
@@ -427,7 +427,7 @@ impl HolderSM {
     pub async fn is_revokable(&self, ledger: &Arc<dyn AnoncredsLedgerRead>) -> VcxResult<bool> {
         match self.state {
             HolderFullState::Initial(ref state) => state.is_revokable(),
-            HolderFullState::ProposalSent(ref state) => state.is_revokable(ledger).await,
+            HolderFullState::ProposalSet(ref state) => state.is_revokable(ledger).await,
             HolderFullState::OfferReceived(ref state) => state.is_revokable(ledger).await,
             HolderFullState::RequestSet(ref state) => state.is_revokable(),
             HolderFullState::Finished(ref state) => state.is_revokable(),
