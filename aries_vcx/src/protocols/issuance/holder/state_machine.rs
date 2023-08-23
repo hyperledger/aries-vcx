@@ -64,7 +64,7 @@ impl fmt::Display for HolderFullState {
             HolderFullState::Initial(_) => f.write_str("Initial"),
             HolderFullState::ProposalSent(_) => f.write_str("ProposalSent"),
             HolderFullState::OfferReceived(_) => f.write_str("OfferReceived"),
-            HolderFullState::RequestSet(_) => f.write_str("RequestSent"),
+            HolderFullState::RequestSet(_) => f.write_str("RequestSet"),
             HolderFullState::Finished(_) => f.write_str("Finished"),
         }
     }
