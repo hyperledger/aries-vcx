@@ -206,14 +206,6 @@ fix_ndk() {
 }
 
 build_uniffi() {
-    echo "**************************************************"
-    echo "ARIES_VCX_ROOT is ${BOLD}${BLUE}${ARIES_VCX_ROOT}${RESET}"
-    echo "Building for ${BOLD}${YELLOW}${TARGET_ARCH}${RESET}"
-    echo "Toolchain path ${BOLD}${YELLOW}${TOOLCHAIN_DIR}${RESET}"
-    echo "OpenSSL path ${BOLD}${YELLOW}${OPENSSL_DIR}${RESET}"
-    echo "Sodium path ${BOLD}${YELLOW}${SODIUM_DIR}${RESET}"
-    echo "ZMQ path ${BOLD}${YELLOW}${LIBZMQ_DIR}${RESET}"
-    echo "**************************************************"
     export UNIFFI_ROOT="${ARIES_VCX_ROOT}/uniffi_aries_vcx"
     export ANDROID_DEMO_DIR="${UNIFFI_ROOT}/demo"
     export ABI_PATH=${ANDROID_DEMO_DIR}/app/src/main/jniLibs/${ABI}
@@ -222,7 +214,13 @@ build_uniffi() {
     pushd "${UNIFFI_ROOT}/core"
         cargo build --lib --target=${TRIPLET}
         cp "$(realpath ${ARIES_VCX_ROOT}/target/${TRIPLET}/debug/libuniffi_vcx.so)" "$(realpath ${ABI_PATH}/libuniffi_vcx.so)"
-        unset SODIUM_DIR OPENSSL_DIR LIBZMQ_DIR
+    popd
+}
+
+generate_bindings() {
+    export UNIFFI_ROOT="${ARIES_VCX_ROOT}/uniffi_aries_vcx"
+
+    pushd "${UNIFFI_ROOT}/core"
         cargo run --features=uniffi/cli --bin uniffi-bindgen generate src/vcx.udl --language ${LANGUAGE}
         cp -R "$(realpath ${UNIFFI_ROOT}/core/src/org/*)" "$(realpath ${ANDROID_DEMO_DIR}/app/src/main/java/org)"
         rm -R "$(realpath ${UNIFFI_ROOT}/core/src/org/)"

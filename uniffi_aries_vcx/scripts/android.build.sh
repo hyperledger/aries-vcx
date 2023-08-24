@@ -11,9 +11,8 @@ LANGUAGE="kotlin"
 
 source ${SCRIPT_DIR}/android.utils.sh
 
-# set_android_env
-# download_and_setup_toolchain
 generate_arch_flags "arm64"
+generate_bindings
 set_dependencies_env_vars
 set_android_arch_env
 build_uniffi
