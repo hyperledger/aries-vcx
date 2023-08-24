@@ -58,7 +58,6 @@ pub async fn did_doc_from_did(
     let service = resolve_service(ledger, &OobService::Did(did.id().to_string())).await?;
     let did_url: DidUrl = format!("{}#vm-0", did.to_string()).try_into()?;
     let vm = VerificationMethod::builder(did_url, did.clone(), VerificationMethodType::Ed25519VerificationKey2020)
-        // TODO: Make it easier to get the first key in base58 (regardless of initial kind) from ServiceSov
         .add_public_key_base58(
             service
                 .recipient_keys
@@ -82,11 +81,7 @@ pub async fn did_doc_from_did(
 }
 
 // TODO: Replace by a builder
-pub fn construct_request(
-    invitation_id: String,
-    our_did: String,
-    attachment: Option<Attachment>,
-) -> Result<Request, AriesVcxError> {
+pub fn construct_request(invitation_id: String, our_did: String) -> Result<Request, AriesVcxError> {
     let request_id = Uuid::new_v4().to_string();
     let thread = {
         let mut thread = Thread::new(request_id.clone());
@@ -107,7 +102,7 @@ pub fn construct_request(
         goal_code: Some(MaybeKnown::Known(ThreadGoalCode::AriesRelBuild)),
         // Interop note: Should not have to send both DID and DDO if did resolvable
         did: our_did,
-        did_doc: attachment,
+        did_doc: None,
     };
     Ok(Request::with_decorators(request_id.clone(), content, decorators))
 }

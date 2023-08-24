@@ -44,11 +44,7 @@ impl DidExchangeRequester<RequestSent> {
             &wallet,
         )
         .await?;
-        let request = construct_request(
-            invitation.id.clone(),
-            our_did_document.id().to_string(),
-            Some(signed_attach),
-        )?;
+        let request = construct_request(invitation.id.clone(), our_did_document.id().to_string())?;
 
         Ok(TransitionResult {
             state: DidExchangeRequester::from_parts(
@@ -84,7 +80,7 @@ impl DidExchangeRequester<RequestSent> {
             ))?
             .public_key()?;
         let signed_attach = jws_sign_attach(ddo_sov_to_attach(our_did_document.clone())?, key, &wallet).await?;
-        let request = construct_request(invitation_id.clone(), our_did.to_string(), Some(signed_attach))?;
+        let request = construct_request(invitation_id.clone(), our_did.to_string())?;
 
         Ok(TransitionResult {
             state: DidExchangeRequester::from_parts(
@@ -156,6 +152,7 @@ impl DidExchangeRequester<RequestSent> {
                     invitation_id: self.state.invitation_id,
                     request_id: self.state.request_id,
                 },
+                // TODO: Make sure to make the DDO identifier did:peer:3 for both
                 did_document,
                 self.our_did_document,
             ),
