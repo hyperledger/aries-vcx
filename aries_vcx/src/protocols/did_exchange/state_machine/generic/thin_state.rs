@@ -1,20 +1,13 @@
 use std::fmt::Display;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ThinState {
+    #[serde(rename = "RequestSent")]
     RequestSent,
+    #[serde(rename = "ResponseSent")]
     ResponseSent,
+    #[serde(rename = "Completed")]
     Completed,
+    #[serde(rename = "Abandoned")]
     Abandoned,
-}
-
-impl Display for ThinState {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            ThinState::RequestSent => write!(f, "RequestSent"),
-            ThinState::ResponseSent => write!(f, "ResponseSent"),
-            ThinState::Completed => write!(f, "Completed"),
-            ThinState::Abandoned => write!(f, "Abandoned"),
-        }
-    }
 }
