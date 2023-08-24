@@ -2,6 +2,7 @@ package org.hyperledger.ariesvcx
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.util.Size
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -30,7 +31,7 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
-
+import android.util.Base64
 @Composable
 fun ScanScreen() {
     var code by remember {
@@ -45,12 +46,16 @@ fun ScanScreen() {
     var showDialog by remember { mutableStateOf(false) }
 
     if (showDialog) {
+        val encoded = Uri.parse(code)?.getQueryParameter("c_i")
+        val decoded =  Base64.decode(encoded, Base64.DEFAULT).toString()
         AlertDialog(
             onDismissRequest = { showDialog = false },
             title = { Text("Accept this invitation?") },
-            text = { Text(code) },
+            text = { Text(decoded) },
             confirmButton = {
-                TextButton(onClick = {/* TODO */}) {
+                TextButton(onClick = {
+
+                }) {
                     Text("Accept")
                 }
             },

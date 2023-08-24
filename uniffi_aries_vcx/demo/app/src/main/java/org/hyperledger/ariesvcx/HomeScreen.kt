@@ -17,7 +17,9 @@ fun HomeScreen(navController: NavHostController) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Button(onClick = {navController.navigate(Destination.QRScan.route)}) {
+        Button(onClick = {
+            navController.navigate(Destination.QRScan.route)
+        }) {
             Text(text = "Scan QR Code")
         }
     }
