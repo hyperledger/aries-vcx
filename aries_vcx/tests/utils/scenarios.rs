@@ -29,17 +29,20 @@ pub mod test_utils {
 
     use crate::utils::devsetup_alice::Alice;
     use crate::utils::devsetup_faber::Faber;
+    use crate::utils::devsetup_util::get_credential_proposal_messages;
+    use crate::utils::devsetup_util::verifier_update_with_mediator;
+    use crate::utils::devsetup_util::{
+        get_credential_offer_messages, get_proof_request_messages, holder_update_with_mediator,
+        issuer_update_with_mediator, prover_update_with_mediator,
+    };
     use aries_vcx::common::ledger::transactions::into_did_doc;
     use aries_vcx::common::primitives::credential_definition::CredentialDef;
     use aries_vcx::common::primitives::revocation_registry::RevocationRegistry;
     use aries_vcx::common::proofs::proof_request::PresentationRequestData;
     use aries_vcx::common::proofs::proof_request_internal::AttrInfo;
     use aries_vcx::handlers::connection::mediated_connection::{ConnectionState, MediatedConnection};
-    use aries_vcx::handlers::issuance::holder::test_utils::get_credential_offer_messages;
     use aries_vcx::handlers::issuance::holder::Holder;
-    use aries_vcx::handlers::issuance::issuer::test_utils::get_credential_proposal_messages;
     use aries_vcx::handlers::issuance::issuer::Issuer;
-    use aries_vcx::handlers::proof_presentation::prover::test_utils::get_proof_request_messages;
     use aries_vcx::handlers::proof_presentation::prover::Prover;
     use aries_vcx::handlers::proof_presentation::verifier::Verifier;
     use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
@@ -352,16 +355,16 @@ pub mod test_utils {
         cred_def_id: &str,
         comment: &str,
     ) {
-        holder
-            .update_state(
-                &alice.profile.inject_anoncreds_ledger_read(),
-                &alice.profile.inject_anoncreds(),
-                &alice.profile.inject_wallet(),
-                &alice.agency_client,
-                connection,
-            )
-            .await
-            .unwrap();
+        holder_update_with_mediator(
+            holder,
+            &alice.profile.inject_anoncreds_ledger_read(),
+            &alice.profile.inject_anoncreds(),
+            &alice.profile.inject_wallet(),
+            &alice.agency_client,
+            connection,
+        )
+        .await
+        .unwrap();
         assert_eq!(HolderState::OfferReceived, holder.get_state());
         assert!(holder.get_offer().is_ok());
         let (address1, address2, city, state, zip) = attr_names();
@@ -460,13 +463,7 @@ pub mod test_utils {
         tails_dir: Option<String>,
     ) {
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
-        issuer
-            .update_state(
-                &faber.profile.inject_wallet(),
-                &faber.profile.inject_anoncreds(),
-                &faber.agency_client,
-                connection,
-            )
+        issuer_update_with_mediator(issuer, &faber.agency_client, connection)
             .await
             .unwrap();
         assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
@@ -495,16 +492,16 @@ pub mod test_utils {
     }
 
     pub async fn accept_offer(alice: &mut Alice, connection: &MediatedConnection, holder: &mut Holder) {
-        holder
-            .update_state(
-                &alice.profile.inject_anoncreds_ledger_read(),
-                &alice.profile.inject_anoncreds(),
-                &alice.profile.inject_wallet(),
-                &alice.agency_client,
-                connection,
-            )
-            .await
-            .unwrap();
+        holder_update_with_mediator(
+            holder,
+            &alice.profile.inject_anoncreds_ledger_read(),
+            &alice.profile.inject_anoncreds(),
+            &alice.profile.inject_wallet(),
+            &alice.agency_client,
+            connection,
+        )
+        .await
+        .unwrap();
         assert_eq!(HolderState::OfferReceived, holder.get_state());
         assert!(holder.get_offer().is_ok());
         let my_pw_did = connection.pairwise_info().pw_did.to_string();
@@ -524,16 +521,16 @@ pub mod test_utils {
     }
 
     pub async fn decline_offer(alice: &mut Alice, connection: &MediatedConnection, holder: &mut Holder) {
-        holder
-            .update_state(
-                &alice.profile.inject_anoncreds_ledger_read(),
-                &alice.profile.inject_anoncreds(),
-                &alice.profile.inject_wallet(),
-                &alice.agency_client,
-                connection,
-            )
-            .await
-            .unwrap();
+        holder_update_with_mediator(
+            holder,
+            &alice.profile.inject_anoncreds_ledger_read(),
+            &alice.profile.inject_anoncreds(),
+            &alice.profile.inject_wallet(),
+            &alice.agency_client,
+            connection,
+        )
+        .await
+        .unwrap();
         assert_eq!(HolderState::OfferReceived, holder.get_state());
         holder
             .decline_offer(
@@ -562,13 +559,7 @@ pub mod test_utils {
         assert_eq!(IssuerState::OfferSent, issuer_credential.get_state());
         assert!(!issuer_credential.is_revokable());
 
-        issuer_credential
-            .update_state(
-                &faber.profile.inject_wallet(),
-                &faber.profile.inject_anoncreds(),
-                &faber.agency_client,
-                issuer_to_consumer,
-            )
+        issuer_update_with_mediator(issuer_credential, &faber.agency_client, issuer_to_consumer)
             .await
             .unwrap();
         assert_eq!(IssuerState::RequestReceived, issuer_credential.get_state());
@@ -598,16 +589,16 @@ pub mod test_utils {
                 .unwrap(),
             revokable
         );
-        holder_credential
-            .update_state(
-                &alice.profile.inject_anoncreds_ledger_read(),
-                &alice.profile.inject_anoncreds(),
-                &alice.profile.inject_wallet(),
-                &alice.agency_client,
-                consumer_to_issuer,
-            )
-            .await
-            .unwrap();
+        holder_update_with_mediator(
+            holder_credential,
+            &alice.profile.inject_anoncreds_ledger_read(),
+            &alice.profile.inject_anoncreds(),
+            &alice.profile.inject_wallet(),
+            &alice.agency_client,
+            consumer_to_issuer,
+        )
+        .await
+        .unwrap();
         assert_eq!(HolderState::Finished, holder_credential.get_state());
         assert_eq!(
             holder_credential
@@ -655,14 +646,7 @@ pub mod test_utils {
         connection: &MediatedConnection,
         cred_def_id: &str,
     ) {
-        prover
-            .update_state(
-                &alice.profile.inject_anoncreds_ledger_read(),
-                &alice.profile.inject_anoncreds(),
-                &alice.profile.inject_wallet(),
-                &alice.agency_client,
-                connection,
-            )
+        prover_update_with_mediator(prover, &alice.agency_client, connection)
             .await
             .unwrap();
         assert_eq!(prover.get_state(), ProverState::PresentationRequestReceived);
@@ -686,16 +670,16 @@ pub mod test_utils {
     }
 
     pub async fn accept_proof_proposal(faber: &mut Faber, verifier: &mut Verifier, connection: &MediatedConnection) {
-        verifier
-            .update_state(
-                &faber.profile.inject_wallet(),
-                &faber.profile.inject_anoncreds_ledger_read(),
-                &faber.profile.inject_anoncreds(),
-                &faber.agency_client,
-                connection,
-            )
-            .await
-            .unwrap();
+        verifier_update_with_mediator(
+            verifier,
+            &faber.profile.inject_wallet(),
+            &faber.profile.inject_anoncreds_ledger_read(),
+            &faber.profile.inject_anoncreds(),
+            &faber.agency_client,
+            connection,
+        )
+        .await
+        .unwrap();
         assert_eq!(verifier.get_state(), VerifierState::PresentationProposalReceived);
         let proposal = verifier.get_presentation_proposal().unwrap();
         let attrs = proposal
@@ -727,16 +711,16 @@ pub mod test_utils {
 
     pub async fn reject_proof_proposal(faber: &mut Faber, connection: &MediatedConnection) -> Verifier {
         let mut verifier = Verifier::create("1").unwrap();
-        verifier
-            .update_state(
-                &faber.profile.inject_wallet(),
-                &faber.profile.inject_anoncreds_ledger_read(),
-                &faber.profile.inject_anoncreds(),
-                &faber.agency_client,
-                connection,
-            )
-            .await
-            .unwrap();
+        verifier_update_with_mediator(
+            &mut verifier,
+            &faber.profile.inject_wallet(),
+            &faber.profile.inject_anoncreds_ledger_read(),
+            &faber.profile.inject_anoncreds(),
+            &faber.agency_client,
+            connection,
+        )
+        .await
+        .unwrap();
         assert_eq!(verifier.get_state(), VerifierState::PresentationProposalReceived);
         verifier
             .decline_presentation_proposal(
@@ -758,14 +742,7 @@ pub mod test_utils {
         connection: &MediatedConnection,
     ) {
         assert_eq!(prover.get_state(), ProverState::PresentationProposalSent);
-        prover
-            .update_state(
-                &alice.profile.inject_anoncreds_ledger_read(),
-                &alice.profile.inject_anoncreds(),
-                &alice.profile.inject_wallet(),
-                &alice.agency_client,
-                connection,
-            )
+        prover_update_with_mediator(prover, &alice.agency_client, connection)
             .await
             .unwrap();
         assert_eq!(prover.get_state(), ProverState::Failed);
@@ -894,16 +871,16 @@ pub mod test_utils {
     }
 
     pub async fn verify_proof(faber: &mut Faber, verifier: &mut Verifier, connection: &MediatedConnection) {
-        verifier
-            .update_state(
-                &faber.profile.inject_wallet(),
-                &faber.profile.inject_anoncreds_ledger_read(),
-                &faber.profile.inject_anoncreds(),
-                &faber.agency_client,
-                &connection,
-            )
-            .await
-            .unwrap();
+        verifier_update_with_mediator(
+            verifier,
+            &faber.profile.inject_wallet(),
+            &faber.profile.inject_anoncreds_ledger_read(),
+            &faber.profile.inject_anoncreds(),
+            &faber.agency_client,
+            &connection,
+        )
+        .await
+        .unwrap();
         assert_eq!(verifier.get_state(), VerifierState::Finished);
         assert_eq!(
             verifier.get_verification_status(),
@@ -1146,14 +1123,7 @@ pub mod test_utils {
         connection: &MediatedConnection,
         requested_values: Option<&str>,
     ) -> SelectedCredentials {
-        prover
-            .update_state(
-                &alice.profile.inject_anoncreds_ledger_read(),
-                &alice.profile.inject_anoncreds(),
-                &alice.profile.inject_wallet(),
-                &alice.agency_client,
-                connection,
-            )
+        prover_update_with_mediator(prover, &alice.agency_client, connection)
             .await
             .unwrap();
         assert_eq!(prover.get_state(), ProverState::PresentationRequestReceived);

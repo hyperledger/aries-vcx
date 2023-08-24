@@ -1,21 +1,20 @@
 use std::collections::HashMap;
-
 use std::sync::Arc;
 
-use agency_client::agency_client::AgencyClient;
 use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
 use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
-use aries_vcx_core::wallet::base_wallet::BaseWallet;
+use messages::msg_fields::protocols::notification::Notification;
 use messages::msg_fields::protocols::present_proof::ack::AckPresentation;
 use messages::msg_fields::protocols::present_proof::present::Presentation;
 use messages::msg_fields::protocols::present_proof::propose::PresentationPreview;
 use messages::msg_fields::protocols::present_proof::request::RequestPresentation;
+use messages::msg_fields::protocols::present_proof::PresentProof;
+use messages::msg_fields::protocols::report_problem::ProblemReport;
+use messages::msg_parts::MsgParts;
 use messages::AriesMessage;
 
 use crate::errors::error::prelude::*;
-use crate::handlers::connection::mediated_connection::MediatedConnection;
 use crate::handlers::util::{get_attach_as_string, PresentationProposalData};
-use crate::protocols::proof_presentation::prover::messages::ProverMessages;
 use crate::protocols::proof_presentation::prover::state_machine::{ProverSM, ProverState};
 use crate::protocols::SendClosure;
 
@@ -123,21 +122,6 @@ impl Prover {
         self.prover_sm.progressable_by_message()
     }
 
-    pub fn find_message_to_handle(&self, messages: HashMap<String, AriesMessage>) -> Option<(String, AriesMessage)> {
-        self.prover_sm.find_message_to_handle(messages)
-    }
-
-    pub async fn handle_message(
-        &mut self,
-        ledger: &Arc<dyn AnoncredsLedgerRead>,
-        anoncreds: &Arc<dyn BaseAnonCreds>,
-        message: ProverMessages,
-        send_message: Option<SendClosure>,
-    ) -> VcxResult<()> {
-        trace!("Prover::handle_message >>> message: {:?}", message);
-        self.step(ledger, anoncreds, message, send_message).await
-    }
-
     pub fn presentation_request_data(&self) -> VcxResult<String> {
         Ok(get_attach_as_string!(
             &self
@@ -174,18 +158,36 @@ impl Prover {
         self.prover_sm.get_thread_id()
     }
 
-    pub async fn step(
-        &mut self,
-        ledger: &Arc<dyn AnoncredsLedgerRead>,
-        anoncreds: &Arc<dyn BaseAnonCreds>,
-        message: ProverMessages,
-        send_message: Option<SendClosure>,
-    ) -> VcxResult<()> {
-        self.prover_sm = self
-            .prover_sm
-            .clone()
-            .step(ledger, anoncreds, message, send_message)
-            .await?;
+    pub async fn process_aries_msg(&mut self, message: AriesMessage) -> VcxResult<()> {
+        let prover_sm = match message {
+            AriesMessage::PresentProof(PresentProof::RequestPresentation(request)) => {
+                self.prover_sm.clone().receive_presentation_request(request)?
+            }
+            AriesMessage::PresentProof(PresentProof::Ack(ack)) => {
+                self.prover_sm.clone().receive_presentation_ack(ack)?
+            }
+            AriesMessage::ReportProblem(report) => self.prover_sm.clone().receive_presentation_reject(report)?,
+            AriesMessage::Notification(Notification::ProblemReport(report)) => {
+                let MsgParts {
+                    id,
+                    content,
+                    decorators,
+                } = report;
+                let report = ProblemReport::with_decorators(id, content.0, decorators);
+                self.prover_sm.clone().receive_presentation_reject(report)?
+            }
+            AriesMessage::PresentProof(PresentProof::ProblemReport(report)) => {
+                let MsgParts {
+                    id,
+                    content,
+                    decorators,
+                } = report;
+                let report = ProblemReport::with_decorators(id, content.0, decorators);
+                self.prover_sm.clone().receive_presentation_reject(report)?
+            }
+            _ => self.prover_sm.clone(),
+        };
+        self.prover_sm = prover_sm;
         Ok(())
     }
 
@@ -233,53 +235,5 @@ impl Prover {
             }
         };
         Ok(())
-    }
-
-    pub async fn update_state(
-        &mut self,
-        ledger: &Arc<dyn AnoncredsLedgerRead>,
-        anoncreds: &Arc<dyn BaseAnonCreds>,
-        wallet: &Arc<dyn BaseWallet>,
-        agency_client: &AgencyClient,
-        connection: &MediatedConnection,
-    ) -> VcxResult<ProverState> {
-        trace!("Prover::update_state >>> ");
-        if !self.progressable_by_message() {
-            return Ok(self.get_state());
-        }
-        let send_message = connection.send_message_closure(Arc::clone(wallet)).await?;
-
-        let messages = connection.get_messages(agency_client).await?;
-        if let Some((uid, msg)) = self.find_message_to_handle(messages) {
-            self.step(ledger, anoncreds, msg.into(), Some(send_message)).await?;
-            connection.update_message_status(&uid, agency_client).await?;
-        }
-        Ok(self.get_state())
-    }
-}
-
-pub mod test_utils {
-    use agency_client::agency_client::AgencyClient;
-    use messages::msg_fields::protocols::present_proof::PresentProof;
-    use messages::AriesMessage;
-
-    use crate::errors::error::prelude::*;
-    use crate::handlers::connection::mediated_connection::MediatedConnection;
-
-    pub async fn get_proof_request_messages(
-        agency_client: &AgencyClient,
-        connection: &MediatedConnection,
-    ) -> VcxResult<String> {
-        let presentation_requests: Vec<AriesMessage> = connection
-            .get_messages(agency_client)
-            .await?
-            .into_iter()
-            .filter_map(|(_, message)| match message {
-                AriesMessage::PresentProof(PresentProof::RequestPresentation(_)) => Some(message),
-                _ => None,
-            })
-            .collect();
-
-        Ok(json!(presentation_requests).to_string())
     }
 }

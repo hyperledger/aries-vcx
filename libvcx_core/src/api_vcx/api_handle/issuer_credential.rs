@@ -4,6 +4,7 @@ use aries_vcx::protocols::SendClosure;
 use serde_json;
 
 use aries_vcx::handlers::issuance::issuer::Issuer;
+use aries_vcx::handlers::issuance::mediated_issuer::issuer_find_message_to_handle;
 
 use crate::api_vcx::api_global::profile::{get_main_anoncreds, get_main_wallet};
 use crate::api_vcx::api_handle::connection;
@@ -30,31 +31,24 @@ pub fn issuer_credential_create(source_id: String) -> LibvcxResult<u32> {
     ISSUER_CREDENTIAL_MAP.add(Issuer::create(&source_id)?)
 }
 
-// todo: move connection_handle as second arg.
 pub async fn update_state(handle: u32, message: Option<&str>, connection_handle: u32) -> LibvcxResult<u32> {
     trace!("issuer_credential::update_state >>> ");
     let mut credential = ISSUER_CREDENTIAL_MAP.get_cloned(handle)?;
     if credential.is_terminal_state() {
         return Ok(credential.get_state().into());
     }
-    let send_message = mediated_connection::send_message_closure(connection_handle).await?;
-
     if let Some(message) = message {
-        let message: AriesMessage = serde_json::from_str(message).map_err(|err| {
+        let msg: AriesMessage = serde_json::from_str(message).map_err(|err| {
             LibvcxError::from_msg(
                 LibvcxErrorKind::InvalidOption,
                 format!("Cannot update state: Message deserialization failed: {:?}", err),
             )
         })?;
-        credential
-            .step(&get_main_anoncreds()?, message.into(), Some(send_message))
-            .await?;
+        credential.process_aries_msg(msg.into()).await?;
     } else {
         let messages = mediated_connection::get_messages(connection_handle).await?;
-        if let Some((uid, msg)) = credential.find_message_to_handle(messages) {
-            credential
-                .step(&get_main_anoncreds()?, msg.into(), Some(send_message))
-                .await?;
+        if let Some((uid, msg)) = issuer_find_message_to_handle(&credential, messages) {
+            credential.process_aries_msg(msg.into()).await?;
             mediated_connection::update_message_status(connection_handle, &uid).await?;
         }
     }
@@ -86,9 +80,7 @@ pub async fn update_state_with_message_nonmediated(
             format!("Cannot update state: Message deserialization failed: {:?}", err),
         )
     })?;
-    credential
-        .step(&get_main_anoncreds()?, message.into(), Some(send_message))
-        .await?;
+    credential.process_aries_msg(message.into()).await?;
 
     let res: u32 = credential.get_state().into();
     ISSUER_CREDENTIAL_MAP.insert(handle, credential)?;
