@@ -56,6 +56,43 @@ pub mod integration_tests {
         .await;
     }
 
+    // #[cfg(feature = "modular_libs")]
+    #[tokio::test]
+    #[ignore]
+    async fn test_pool_proof_req_attribute_names() {
+        SetupProfile::run(|setup| async move {
+            let proof_req = json!({
+               "nonce":"123432421212",
+               "name":"proof_req_1",
+               "version":"0.1",
+               "requested_attributes": json!({
+                   "multiple_attrs": {
+                       "names": ["name_1", "name_2"]
+                   },
+                   "address1_1": json!({
+                       "name":"address1",
+                       "restrictions": [json!({ "issuer_did": "some_did" })]
+                   }),
+                   "self_attest_3": json!({
+                       "name":"self_attest",
+                   }),
+               }),
+               "requested_predicates": json!({
+                   "zip_3": {"name":"zip", "p_type":">=", "p_value":18}
+               }),
+            })
+            .to_string();
+
+            let anoncreds = Arc::clone(&setup.profile).inject_anoncreds();
+            let _result = anoncreds
+                .prover_get_credentials_for_proof_req(&proof_req)
+                .await
+                .unwrap();
+            println!("{_result}");
+        })
+        .await;
+    }
+
     #[tokio::test]
     #[ignore]
     async fn test_pool_revoke_credential() {
