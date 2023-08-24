@@ -25,8 +25,7 @@ members = [
     "indy_ledger_response_parser",
     "wallet_migrator",
     "tools/simple_message_relay",
-    "demo/alice",
-    "demo/faber",
+    "demo",
 ]
 
 [workspace.package]
