@@ -5,6 +5,7 @@ use serde_json;
 
 use aries_vcx::agency_client::testing::mocking::AgencyMockDecrypted;
 use aries_vcx::handlers::issuance::holder::Holder;
+use aries_vcx::handlers::issuance::mediated_holder::holder_find_message_to_handle;
 use aries_vcx::utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
 use aries_vcx::{global::settings::indy_mocks_enabled, utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER};
 
@@ -132,7 +133,7 @@ pub async fn update_state(credential_handle: u32, message: Option<&str>, connect
             )
         })?;
         credential
-            .step(
+            .process_aries_msg(
                 &get_main_anoncreds_ledger_read()?,
                 &get_main_anoncreds()?,
                 message.into(),
@@ -141,9 +142,9 @@ pub async fn update_state(credential_handle: u32, message: Option<&str>, connect
             .await?;
     } else {
         let messages = mediated_connection::get_messages(connection_handle).await?;
-        if let Some((uid, msg)) = credential.find_message_to_handle(messages) {
+        if let Some((uid, msg)) = holder_find_message_to_handle(&credential, messages) {
             credential
-                .step(
+                .process_aries_msg(
                     &get_main_anoncreds_ledger_read()?,
                     &get_main_anoncreds()?,
                     msg.into(),

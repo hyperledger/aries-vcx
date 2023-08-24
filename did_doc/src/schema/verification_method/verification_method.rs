@@ -1,7 +1,8 @@
 use did_parser::{Did, DidUrl};
+use public_key::Key;
 use serde::{Deserialize, Serialize};
 
-use crate::schema::types::jsonwebkey::JsonWebKey;
+use crate::{error::DidDocumentBuilderError, schema::types::jsonwebkey::JsonWebKey};
 
 use super::{public_key::PublicKeyField, VerificationMethodType};
 
@@ -37,8 +38,15 @@ impl VerificationMethod {
         &self.verification_method_type
     }
 
-    pub fn public_key(&self) -> &PublicKeyField {
+    pub fn public_key_field(&self) -> &PublicKeyField {
         &self.public_key
+    }
+
+    pub fn public_key(&self) -> Result<Key, DidDocumentBuilderError> {
+        Ok(Key::new(
+            self.public_key.key_decoded()?,
+            self.verification_method_type.try_into()?,
+        )?)
     }
 }
 
@@ -224,7 +232,7 @@ mod tests {
         assert_eq!(vm.id(), &id);
         assert_eq!(vm.controller(), &controller);
         assert_eq!(vm.verification_method_type(), &verification_method_type);
-        match vm.public_key() {
+        match vm.public_key_field() {
             PublicKeyField::Multibase {
                 public_key_multibase,
             } => {
@@ -252,7 +260,7 @@ mod tests {
         assert_eq!(vm.id(), &id);
         assert_eq!(vm.controller(), &controller);
         assert_eq!(vm.verification_method_type(), &verification_method_type);
-        match vm.public_key() {
+        match vm.public_key_field() {
             PublicKeyField::Multibase {
                 public_key_multibase,
             } => {
@@ -280,5 +288,36 @@ mod tests {
                 .as_str(),
         );
         assert!(vm.is_err());
+    }
+
+    #[test]
+    fn test_verification_method_public_key() {
+        let id = create_valid_did_url();
+        let controller = create_valid_did();
+        let verification_method_type = create_valid_verification_key_type();
+        let public_key_multibase_expected = create_valid_multibase();
+
+        let vm = VerificationMethod::builder(
+            id.clone(),
+            controller.clone(),
+            verification_method_type.clone(),
+        )
+        .add_public_key_multibase(public_key_multibase_expected.clone())
+        .build();
+
+        match vm.public_key_field() {
+            PublicKeyField::Multibase {
+                public_key_multibase,
+            } => {
+                assert_eq!(
+                    public_key_multibase.to_string(),
+                    public_key_multibase_expected
+                )
+            }
+            _ => panic!("Expected public key to be multibase"),
+        }
+
+        let public_key = vm.public_key().unwrap();
+        assert_eq!(public_key.multibase58(), public_key_multibase_expected);
     }
 }

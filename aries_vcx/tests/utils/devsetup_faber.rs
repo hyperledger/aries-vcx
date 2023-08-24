@@ -3,6 +3,8 @@ use std::sync::Arc;
 use futures::future::BoxFuture;
 use serde_json::json;
 
+use crate::utils::devsetup_util::issuer_update_with_mediator;
+use crate::utils::devsetup_util::verifier_update_with_mediator;
 use agency_client::agency_client::AgencyClient;
 use agency_client::configuration::{AgencyClientConfig, AgentProvisionConfig};
 use aries_vcx::common::ledger::transactions::write_endpoint_legacy;
@@ -10,7 +12,6 @@ use aries_vcx::common::primitives::credential_definition::{CredentialDef, Creden
 use aries_vcx::common::primitives::credential_schema::Schema;
 use aries_vcx::common::proofs::proof_request::PresentationRequestData;
 use aries_vcx::core::profile::profile::Profile;
-use aries_vcx::core::profile::vdrtools_profile::VdrtoolsProfile;
 use aries_vcx::errors::error::VcxResult;
 use aries_vcx::global::settings;
 use aries_vcx::global::settings::{init_issuer_config, DEFAULT_LINK_SECRET_ALIAS};
@@ -27,11 +28,10 @@ use aries_vcx::protocols::proof_presentation::verifier::verification_status::Pre
 use aries_vcx::protocols::revocation_notification::sender::state_machine::SenderConfigBuilder;
 use aries_vcx::utils::constants::TRUSTEE_SEED;
 use aries_vcx::utils::devsetup::{
-    dev_build_featured_profile, dev_setup_wallet_indy, SetupProfile, AGENCY_DID, AGENCY_ENDPOINT, AGENCY_VERKEY,
+    dev_build_featured_profile, dev_setup_wallet_indy, AGENCY_DID, AGENCY_ENDPOINT, AGENCY_VERKEY,
 };
 use aries_vcx::utils::provision::provision_cloud_agent;
 use aries_vcx::utils::random::generate_random_seed;
-use aries_vcx_core::errors::error::VcxCoreResult;
 use aries_vcx_core::wallet::indy::wallet::get_verkey_from_wallet;
 use aries_vcx_core::wallet::indy::IndySdkWallet;
 use diddoc_legacy::aries::service::AriesService;
@@ -300,26 +300,14 @@ impl Faber {
             )
             .await
             .unwrap();
-        self.issuer_credential
-            .update_state(
-                &self.profile.inject_wallet(),
-                &self.profile.inject_anoncreds(),
-                &self.agency_client,
-                &self.connection,
-            )
+        issuer_update_with_mediator(&mut self.issuer_credential, &self.agency_client, &self.connection)
             .await
             .unwrap();
         assert_eq!(IssuerState::OfferSent, self.issuer_credential.get_state());
     }
 
     pub async fn send_credential(&mut self) {
-        self.issuer_credential
-            .update_state(
-                &self.profile.inject_wallet(),
-                &self.profile.inject_anoncreds(),
-                &self.agency_client,
-                &self.connection,
-            )
+        issuer_update_with_mediator(&mut self.issuer_credential, &self.agency_client, &self.connection)
             .await
             .unwrap();
         assert_eq!(IssuerState::RequestReceived, self.issuer_credential.get_state());
@@ -334,13 +322,7 @@ impl Faber {
             )
             .await
             .unwrap();
-        self.issuer_credential
-            .update_state(
-                &self.profile.inject_wallet(),
-                &self.profile.inject_anoncreds(),
-                &self.agency_client,
-                &self.connection,
-            )
+        issuer_update_with_mediator(&mut self.issuer_credential, &self.agency_client, &self.connection)
             .await
             .unwrap();
         assert_eq!(IssuerState::CredentialSent, self.issuer_credential.get_state());
@@ -359,16 +341,16 @@ impl Faber {
             )
             .await
             .unwrap();
-        self.verifier
-            .update_state(
-                &self.profile.inject_wallet(),
-                &self.profile.inject_anoncreds_ledger_read(),
-                &self.profile.inject_anoncreds(),
-                &self.agency_client,
-                &self.connection,
-            )
-            .await
-            .unwrap();
+        verifier_update_with_mediator(
+            &mut self.verifier,
+            &self.profile.inject_wallet(),
+            &self.profile.inject_anoncreds_ledger_read(),
+            &self.profile.inject_anoncreds(),
+            &self.agency_client,
+            &self.connection,
+        )
+        .await
+        .unwrap();
 
         assert_eq!(VerifierState::PresentationRequestSent, self.verifier.get_state());
     }
@@ -383,16 +365,16 @@ impl Faber {
         expected_state: VerifierState,
         expected_verification_status: PresentationVerificationStatus,
     ) {
-        self.verifier
-            .update_state(
-                &self.profile.inject_wallet(),
-                &self.profile.inject_anoncreds_ledger_read(),
-                &self.profile.inject_anoncreds(),
-                &self.agency_client,
-                &self.connection,
-            )
-            .await
-            .unwrap();
+        verifier_update_with_mediator(
+            &mut self.verifier,
+            &self.profile.inject_wallet(),
+            &self.profile.inject_anoncreds_ledger_read(),
+            &self.profile.inject_anoncreds(),
+            &self.agency_client,
+            &self.connection,
+        )
+        .await
+        .unwrap();
         assert_eq!(expected_state, self.verifier.get_state());
         assert_eq!(expected_verification_status, self.verifier.get_verification_status());
     }

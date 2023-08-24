@@ -1,8 +1,11 @@
 use std::fmt::Display;
 
+use public_key::KeyType;
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+use crate::error::DidDocumentBuilderError;
+
+#[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq)]
 pub enum VerificationMethodType {
     JsonWebKey2020,
     EcdsaSecp256k1VerificationKey2019,
@@ -43,6 +46,24 @@ impl Display for VerificationMethodType {
             VerificationMethodType::EcdsaSecp256k1RecoveryMethod2020 => {
                 write!(f, "EcdsaSecp256k1RecoveryMethod2020")
             }
+        }
+    }
+}
+
+impl TryFrom<VerificationMethodType> for KeyType {
+    type Error = DidDocumentBuilderError;
+
+    fn try_from(value: VerificationMethodType) -> Result<Self, Self::Error> {
+        match value {
+            VerificationMethodType::Ed25519VerificationKey2018
+            | VerificationMethodType::Ed25519VerificationKey2020 => Ok(KeyType::Ed25519),
+            VerificationMethodType::Bls12381G1Key2020 => Ok(KeyType::Bls12381g1),
+            VerificationMethodType::Bls12381G2Key2020 => Ok(KeyType::Bls12381g2),
+            VerificationMethodType::X25519KeyAgreementKey2019
+            | VerificationMethodType::X25519KeyAgreementKey2020 => Ok(KeyType::X25519),
+            _ => Err(DidDocumentBuilderError::UnsupportedVerificationMethodType(
+                value,
+            )),
         }
     }
 }

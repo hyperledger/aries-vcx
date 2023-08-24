@@ -2,6 +2,7 @@ use aries_vcx::messages::AriesMessage;
 use serde_json;
 
 use aries_vcx::common::proofs::proof_request::PresentationRequestData;
+use aries_vcx::handlers::proof_presentation::mediated_verifier::verifier_find_message_to_handle;
 use aries_vcx::handlers::proof_presentation::verifier::Verifier;
 use aries_vcx::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
 use aries_vcx::protocols::SendClosure;
@@ -72,7 +73,7 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
         })?;
         trace!("proof::update_state >>> updating using message {:?}", message);
         proof
-            .handle_message(
+            .process_aries_msg(
                 &get_main_anoncreds_ledger_read()?,
                 &get_main_anoncreds()?,
                 message.into(),
@@ -82,9 +83,9 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
     } else {
         let messages = mediated_connection::get_messages(connection_handle).await?;
         trace!("proof::update_state >>> found messages: {:?}", messages);
-        if let Some((uid, message)) = proof.find_message_to_handle(messages) {
+        if let Some((uid, message)) = verifier_find_message_to_handle(&proof, messages) {
             proof
-                .handle_message(
+                .process_aries_msg(
                     &get_main_anoncreds_ledger_read()?,
                     &get_main_anoncreds()?,
                     message.into(),
@@ -127,7 +128,7 @@ pub async fn update_state_nonmediated(handle: u32, connection_handle: u32, messa
         )
     })?;
     proof
-        .handle_message(
+        .process_aries_msg(
             &get_main_anoncreds_ledger_read()?,
             &get_main_anoncreds()?,
             message.into(),
