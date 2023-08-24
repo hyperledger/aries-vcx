@@ -1,4 +1,5 @@
 use aries_vcx_core::errors::error::AriesVcxCoreErrorKind;
+use aries_vcx_core::ledger::base_ledger::{IndyLedgerRead, IndyLedgerWrite};
 
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use crate::utils::constants::{CRED_DEF_ID, CRED_DEF_JSON, DEFAULT_SERIALIZE_VERSION};
@@ -102,11 +103,10 @@ impl Default for PublicEntityStateType {
     }
 }
 
-async fn _try_get_cred_def_from_ledger(
-    ledger: &Arc<dyn AnoncredsLedgerRead>,
-    issuer_did: &str,
-    cred_def_id: &str,
-) -> VcxResult<Option<String>> {
+async fn _try_get_cred_def_from_ledger<T>(ledger: &T, issuer_did: &str, cred_def_id: &str) -> VcxResult<Option<String>>
+where
+    T: IndyLedgerRead,
+{
     if indy_mocks_enabled() {
         return Ok(None);
     }
@@ -123,13 +123,16 @@ async fn _try_get_cred_def_from_ledger(
     }
 }
 impl CredentialDef {
-    pub async fn create(
-        ledger_read: &Arc<dyn AnoncredsLedgerRead>,
+    pub async fn create<T>(
+        ledger_read: &T,
         anoncreds: &Arc<dyn BaseAnonCreds>,
         source_id: String,
         config: CredentialDefConfig,
         support_revocation: bool,
-    ) -> VcxResult<Self> {
+    ) -> VcxResult<Self>
+    where
+        T: IndyLedgerRead,
+    {
         trace!(
             "CredentialDef::create >>> source_id: {}, config: {:?}",
             source_id,
@@ -170,11 +173,11 @@ impl CredentialDef {
         self.support_revocation
     }
 
-    pub async fn publish_cred_def(
-        self,
-        ledger_read: &Arc<dyn AnoncredsLedgerRead>,
-        ledger_write: &Arc<dyn AnoncredsLedgerWrite>,
-    ) -> VcxResult<Self> {
+    pub async fn publish_cred_def<R, W>(self, ledger_read: &R, ledger_write: &W) -> VcxResult<Self>
+    where
+        R: IndyLedgerRead,
+        W: IndyLedgerWrite,
+    {
         trace!(
             "publish_cred_def >>> issuer_did: {}, cred_def_id: {}",
             self.issuer_did,
@@ -242,7 +245,10 @@ impl CredentialDef {
         self.source_id = source_id;
     }
 
-    pub async fn update_state(&mut self, ledger: &Arc<dyn AnoncredsLedgerRead>) -> VcxResult<u32> {
+    pub async fn update_state<T>(&mut self, ledger: &T) -> VcxResult<u32>
+    where
+        T: IndyLedgerRead,
+    {
         if (ledger.get_cred_def(&self.id, None).await).is_ok() {
             self.state = PublicEntityStateType::Published
         }

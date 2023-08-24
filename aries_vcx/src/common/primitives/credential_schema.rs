@@ -1,5 +1,4 @@
 use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
-use aries_vcx_core::ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite};
 use std::sync::Arc;
 
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
