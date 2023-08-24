@@ -34,7 +34,9 @@ impl DidResolvable for PeerDidResolver {
         let peer_did = GenericPeerDid::parse(did.to_owned())?;
         match peer_did {
             GenericPeerDid::Numalgo2(peer_did) => {
-                let did_doc = resolve_numalgo2(&peer_did.did(), options.extra().public_key_encoding())?;
+                let did_doc = resolve_numalgo2(&peer_did.did(), options.extra().public_key_encoding())?
+                    .add_also_known_as(peer_did.to_numalgo3()?.to_string().parse()?)
+                    .build();
                 let resolution_metadata = DidResolutionMetadata::builder()
                     .content_type("application/did+json".to_string())
                     .build();
