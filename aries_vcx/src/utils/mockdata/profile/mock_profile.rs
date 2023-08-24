@@ -3,7 +3,7 @@ use std::sync::Arc;
 use aries_vcx_core::ledger::base_ledger::TxnAuthrAgrmtOptions;
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds,
-    ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite},
+    ledger::base_ledger::{IndyLedgerRead, IndyLedgerWrite},
     wallet::base_wallet::BaseWallet,
     wallet::mock_wallet::MockWallet,
 };
@@ -30,14 +30,6 @@ impl Profile for MockProfile {
 
     fn inject_anoncreds(&self) -> Arc<dyn BaseAnonCreds> {
         Arc::new(MockAnoncreds {})
-    }
-
-    fn inject_anoncreds_ledger_read(&self) -> Arc<dyn AnoncredsLedgerRead> {
-        Arc::new(MockLedger {})
-    }
-
-    fn inject_anoncreds_ledger_write(&self) -> Arc<dyn AnoncredsLedgerWrite> {
-        Arc::new(MockLedger {})
     }
 
     fn inject_wallet(&self) -> Arc<dyn BaseWallet> {

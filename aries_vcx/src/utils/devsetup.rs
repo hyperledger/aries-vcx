@@ -13,7 +13,7 @@ use aries_vcx_core::global::settings::{
     disable_indy_mocks as disable_indy_mocks_core, enable_indy_mocks as enable_indy_mocks_core,
     reset_config_values_ariesvcxcore,
 };
-use aries_vcx_core::ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite};
+use aries_vcx_core::ledger::base_ledger::{IndyLedgerRead, IndyLedgerWrite};
 use aries_vcx_core::ledger::indy::pool::test_utils::{create_testpool_genesis_txn_file, get_temp_file_path};
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use aries_vcx_core::wallet::indy::did_mocks::DidMocks;
@@ -200,14 +200,10 @@ pub async fn dev_build_profile_vdrtools(genesis_file_path: String, wallet: Arc<I
     };
 
     let (ledger_read, ledger_write) = build_ledger_components(wallet.clone(), vcx_pool_config).unwrap();
-    let anoncreds_ledger_read: Arc<dyn AnoncredsLedgerRead> = ledger_read.clone();
-    let anoncreds_ledger_write: Arc<dyn AnoncredsLedgerWrite> = ledger_write.clone();
     let indy_ledger_read: Arc<dyn IndyLedgerRead> = ledger_read.clone();
     let indy_ledger_write: Arc<dyn IndyLedgerWrite> = ledger_write.clone();
     Arc::new(VdrtoolsProfile::init(
         wallet.clone(),
-        anoncreds_ledger_read,
-        anoncreds_ledger_write,
         indy_ledger_read,
         indy_ledger_write,
     ))

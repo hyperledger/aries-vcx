@@ -54,7 +54,7 @@ fn test_deserialization_legacy() {
     let verification_method = did_doc.verification_method().first().unwrap();
     assert_eq!(verification_method.id().to_string(), "#1");
     assert_eq!(verification_method.controller().to_string(), DID_PEER);
-    assert_eq!(verification_method.public_key().base58().unwrap(), VERKEY_BASE58);
+    assert_eq!(verification_method.public_key().unwrap().base58(), VERKEY_BASE58);
 
     let service = did_doc.service().first().unwrap();
     assert_eq!(service.id().to_string(), "did:example:123456789abcdefghi;indy");
@@ -64,7 +64,7 @@ fn test_deserialization_legacy() {
     );
 
     let recipient_key = match service.extra().first_recipient_key().unwrap() {
-        KeyKind::Reference(did_url) => did_doc.dereference_key(did_url).unwrap().public_key().base58().unwrap(),
+        KeyKind::Reference(did_url) => did_doc.dereference_key(did_url).unwrap().public_key().unwrap().base58(),
         KeyKind::Value(value) => value.clone(),
         KeyKind::DidKey(_) => panic!("Expected reference or value"),
     };

@@ -1,5 +1,5 @@
 use aries_vcx_core::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
-use aries_vcx_core::ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite};
+use aries_vcx_core::ledger::base_ledger::{IndyLedgerRead, IndyLedgerWrite};
 use aries_vcx_core::ledger::indy_vdr_ledger::UpdateRole;
 use async_trait::async_trait;
 
@@ -30,6 +30,31 @@ impl IndyLedgerRead for MockLedger {
 
     async fn get_ledger_txn(&self, seq_no: i32, submitter_did: Option<&str>) -> VcxCoreResult<String> {
         Ok(r#"{"rc":"success"}"#.to_string())
+    }
+
+    async fn get_schema(&self, schema_id: &str, submitter_did: Option<&str>) -> VcxCoreResult<String> {
+        Ok(SCHEMA_JSON.to_string())
+    }
+
+    async fn get_cred_def(&self, cred_def_id: &str, submitter_did: Option<&str>) -> VcxCoreResult<String> {
+        Ok(CRED_DEF_JSON.to_string())
+    }
+
+    async fn get_rev_reg_def_json(&self, rev_reg_id: &str) -> VcxCoreResult<String> {
+        Ok(rev_def_json())
+    }
+
+    async fn get_rev_reg_delta_json(
+        &self,
+        rev_reg_id: &str,
+        from: Option<u64>,
+        to: Option<u64>,
+    ) -> VcxCoreResult<(String, String, u64)> {
+        Ok((REV_REG_ID.to_string(), REV_REG_DELTA_JSON.to_string(), 1))
+    }
+
+    async fn get_rev_reg(&self, rev_reg_id: &str, timestamp: u64) -> VcxCoreResult<(String, String, u64)> {
+        Ok((REV_REG_ID.to_string(), REV_REG_JSON.to_string(), 1))
     }
 }
 
@@ -69,40 +94,7 @@ impl IndyLedgerWrite for MockLedger {
     ) -> VcxCoreResult<String> {
         Ok(r#"{"rc":"success"}"#.to_string())
     }
-}
 
-#[allow(unused)]
-#[async_trait]
-impl AnoncredsLedgerRead for MockLedger {
-    async fn get_schema(&self, schema_id: &str, submitter_did: Option<&str>) -> VcxCoreResult<String> {
-        Ok(SCHEMA_JSON.to_string())
-    }
-
-    async fn get_cred_def(&self, cred_def_id: &str, submitter_did: Option<&str>) -> VcxCoreResult<String> {
-        Ok(CRED_DEF_JSON.to_string())
-    }
-
-    async fn get_rev_reg_def_json(&self, rev_reg_id: &str) -> VcxCoreResult<String> {
-        Ok(rev_def_json())
-    }
-
-    async fn get_rev_reg_delta_json(
-        &self,
-        rev_reg_id: &str,
-        from: Option<u64>,
-        to: Option<u64>,
-    ) -> VcxCoreResult<(String, String, u64)> {
-        Ok((REV_REG_ID.to_string(), REV_REG_DELTA_JSON.to_string(), 1))
-    }
-
-    async fn get_rev_reg(&self, rev_reg_id: &str, timestamp: u64) -> VcxCoreResult<(String, String, u64)> {
-        Ok((REV_REG_ID.to_string(), REV_REG_JSON.to_string(), 1))
-    }
-}
-
-#[allow(unused)]
-#[async_trait]
-impl AnoncredsLedgerWrite for MockLedger {
     async fn publish_schema(
         &self,
         schema_json: &str,
