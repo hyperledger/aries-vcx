@@ -731,27 +731,59 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
                     format!("Unknown referent: {}", reft),
                 ))?;
 
-            let _attr_name = requested_val.try_get("name")?;
-            let _attr_name = _attr_name.try_as_str()?;
-            let attr_name = _normalize_attr_name(_attr_name);
+            if let Some(_attr_names) = requested_val.get("names").and_then(|v| v.as_array()) {
+                let _attr_names = requested_val.try_get("names")?.as_array().ok_or_else(|| {
+                    AriesVcxCoreError::from_msg(
+                        AriesVcxCoreErrorKind::InvalidAttributesStructure,
+                        "Invalid Json Parsing of Requested Attributes Retrieved From Libindy",
+                    )
+                })?;
 
-            let non_revoked = requested_val.get("non_revoked"); // note that aca-py askar fetches from proof_req json
-            let restrictions = requested_val.get("restrictions");
+                for _attr_name in _attr_names {
+                    let _attr_name = _attr_name.try_as_str()?;
+                    let attr_name = _normalize_attr_name(_attr_name);
 
-            let credx_creds = self
-                ._get_credentials_for_proof_req_for_attr_name(restrictions, &attr_name)
-                .await?;
+                    let non_revoked = requested_val.get("non_revoked"); // note that aca-py askar fetches from proof_req json
+                    let restrictions = requested_val.get("restrictions");
 
-            let mut credentials_json = vec![];
+                    let credx_creds = self
+                        ._get_credentials_for_proof_req_for_attr_name(restrictions, &attr_name)
+                        .await?;
 
-            for (cred_id, credx_cred) in credx_creds {
-                credentials_json.push(json!({
-                    "cred_info": _make_cred_info(&cred_id, &credx_cred)?,
-                    "interval": non_revoked
-                }))
+                    let mut credentials_json = vec![];
+
+                    for (cred_id, credx_cred) in credx_creds {
+                        credentials_json.push(json!({
+                            "cred_info": _make_cred_info(&cred_id, &credx_cred)?,
+                            "interval": non_revoked
+                        }))
+                    }
+
+                    cred_by_attr[ATTRS][reft.clone()] = Value::Array(credentials_json);
+                }
+            } else {
+                let _attr_name = requested_val.try_get("name")?;
+                let _attr_name = _attr_name.try_as_str()?;
+                let attr_name = _normalize_attr_name(_attr_name);
+
+                let non_revoked = requested_val.get("non_revoked"); // note that aca-py askar fetches from proof_req json
+                let restrictions = requested_val.get("restrictions");
+
+                let credx_creds = self
+                    ._get_credentials_for_proof_req_for_attr_name(restrictions, &attr_name)
+                    .await?;
+
+                let mut credentials_json = vec![];
+
+                for (cred_id, credx_cred) in credx_creds {
+                    credentials_json.push(json!({
+                        "cred_info": _make_cred_info(&cred_id, &credx_cred)?,
+                        "interval": non_revoked
+                    }))
+                }
+
+                cred_by_attr[ATTRS][reft] = Value::Array(credentials_json);
             }
-
-            cred_by_attr[ATTRS][reft] = Value::Array(credentials_json);
         }
 
         Ok(serde_json::to_string(&cred_by_attr)?)
