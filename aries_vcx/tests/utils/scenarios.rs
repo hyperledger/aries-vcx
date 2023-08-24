@@ -301,7 +301,6 @@ pub mod test_utils {
         comment: &str,
     ) -> Holder {
         let (address1, address2, city, state, zip) = attr_names();
-        let id = "test".to_owned();
         let mut attrs = Vec::new();
 
         let mut attr = CredentialAttr::new(address1, "123 Main Str".to_owned());
@@ -330,10 +329,9 @@ pub mod test_utils {
 
         let decorators = ProposeCredentialDecorators::default();
 
+        let id = "test".to_owned();
         let proposal = ProposeCredential::with_decorators(id, content, decorators);
-        let mut holder = Holder::create("TEST_CREDENTIAL").unwrap();
-        assert_eq!(HolderState::Initial, holder.get_state());
-        holder.set_proposal(proposal.clone()).unwrap();
+        let mut holder = Holder::create_with_proposal("TEST_CREDENTIAL", proposal.clone()).unwrap();
         assert_eq!(HolderState::ProposalSet, holder.get_state());
         connection
             .send_a2a_message(&alice.profile.inject_wallet(), &proposal.into())
@@ -420,6 +418,7 @@ pub mod test_utils {
             .await
             .unwrap();
         let mut issuer = Issuer::create_from_proposal("TEST_CREDENTIAL", proposal).unwrap();
+        assert_eq!(proposal.id, issuer.get_thread_id().unwrap());
         assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
         assert_eq!(proposal.clone(), issuer.get_proposal().unwrap());
         let offer_info = OfferInfo {

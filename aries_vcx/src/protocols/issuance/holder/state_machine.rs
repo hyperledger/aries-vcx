@@ -114,6 +114,14 @@ impl HolderSM {
         }
     }
 
+    pub fn with_proposal(propose_credential: ProposeCredential, source_id: String) -> Self {
+        HolderSM {
+            thread_id: propose_credential.id.clone(),
+            state: HolderFullState::ProposalSet(ProposalSetState::new(propose_credential)),
+            source_id,
+        }
+    }
+
     pub fn get_source_id(&self) -> String {
         self.source_id.clone()
     }
@@ -233,6 +241,7 @@ impl HolderSM {
                 let mut timing = Timing::default();
                 timing.out_time = Some(Utc::now());
                 msg.decorators.timing = Some(timing);
+                error!("Sending msg {msg:?}"); // TODO: it looks like received message has thread "test", but doesnt look like thats what we sending
                 send_message(msg.into()).await?;
             }
             _ => {

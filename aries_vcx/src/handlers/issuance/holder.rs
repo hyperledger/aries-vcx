@@ -29,6 +29,16 @@ impl Holder {
         Ok(Holder { holder_sm })
     }
 
+    pub fn create_with_proposal(source_id: &str, propose_credential: ProposeCredential) -> VcxResult<Holder> {
+        trace!(
+            "Holder::create_with_proposal >>> source_id: {:?}, propose_credential: {:?}",
+            source_id,
+            propose_credential
+        );
+        let holder_sm = HolderSM::with_proposal(propose_credential, source_id.to_string());
+        Ok(Holder { holder_sm })
+    }
+
     pub fn create_from_offer(source_id: &str, credential_offer: OfferCredential) -> VcxResult<Holder> {
         trace!(
             "Holder::create_from_offer >>> source_id: {:?}, credential_offer: {:?}",

@@ -288,6 +288,7 @@ impl IssuerSM {
             source_id,
             thread_id,
         } = self;
+        warn!("IssuerSM::build_credential_offer_msg >>> thread_id: {thread_id}");
         let state = match state {
             IssuerFullState::Initial(_) | IssuerFullState::OfferSet(_) | IssuerFullState::ProposalReceived(_) => {
                 let cred_offer_msg = build_credential_offer(&thread_id, credential_offer, credential_preview, comment)?;
