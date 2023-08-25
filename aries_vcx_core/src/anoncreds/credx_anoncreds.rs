@@ -740,6 +740,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
                 })?;
 
                 let mut credentials_json = vec![];
+                let mut all_found = true;
 
                 for _attr_name in _attr_names {
                     let _attr_name = _attr_name.try_as_str()?;
@@ -752,6 +753,10 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
                         ._get_credentials_for_proof_req_for_attr_name(restrictions, &attr_name)
                         .await?;
 
+                    if credx_creds.is_empty() {
+                        all_found = false;
+                    }
+
                     for (cred_id, credx_cred) in credx_creds {
                         credentials_json.push(json!({
                             "cred_info": _make_cred_info(&cred_id, &credx_cred)?,
@@ -760,7 +765,9 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
                     }
                 }
 
-                cred_by_attr[ATTRS][reft] = Value::Array(credentials_json);
+                if all_found {
+                    cred_by_attr[ATTRS][reft] = Value::Array(credentials_json);
+                }
             } else {
                 let _attr_name = requested_val.try_get("name")?;
                 let _attr_name = _attr_name.try_as_str()?;
