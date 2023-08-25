@@ -88,7 +88,6 @@ pub mod integration_tests {
                 .prover_get_credentials_for_proof_req(&proof_req)
                 .await
                 .unwrap();
-            println!("{_result}");
         })
         .await;
     }
