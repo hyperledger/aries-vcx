@@ -34,8 +34,8 @@ import androidx.core.content.ContextCompat
 import android.util.Base64
 @Composable
 fun ScanScreen() {
-    var code by remember {
-        mutableStateOf("")
+    var scannedQRCodeText by remember {
+        mutableStateOf<String?>("")
     }
 
     val context = LocalContext.current
@@ -43,24 +43,25 @@ fun ScanScreen() {
     val cameraProviderFuture = remember {
         ProcessCameraProvider.getInstance(context)
     }
-    var showDialog by remember { mutableStateOf(false) }
 
-    if (showDialog) {
-        val encoded = Uri.parse(code)?.getQueryParameter("c_i")
+    scannedQRCodeText.let {text ->
+        val encoded = Uri.parse(text)?.getQueryParameter("c_i")
         val decoded =  Base64.decode(encoded, Base64.DEFAULT).toString()
+
         AlertDialog(
-            onDismissRequest = { showDialog = false },
+            onDismissRequest = { scannedQRCodeText = null },
             title = { Text("Accept this invitation?") },
             text = { Text(decoded) },
             confirmButton = {
                 TextButton(onClick = {
-
+                    // So that it can be used here?
+                    Connection::acceptInvitation()
                 }) {
                     Text("Accept")
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDialog = false }) {
+                TextButton(onClick = { scannedQRCodeText = null }) {
                     Text("Cancel")
                 }
             },
@@ -110,8 +111,7 @@ fun ScanScreen() {
                     imageAnalysis.setAnalyzer(
                         ContextCompat.getMainExecutor(context),
                         QrCodeAnalyzer { result ->
-                            code = result
-                            showDialog = true
+                            scannedQRCodeText = result
                         }
                     )
                     try {

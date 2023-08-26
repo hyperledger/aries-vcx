@@ -255,7 +255,7 @@ internal interface _UniFFILib : Library {
     companion object {
         internal val INSTANCE: _UniFFILib by lazy {
             loadIndirect<_UniFFILib>(componentName = "vcx")
-            
+
         }
     }
 
@@ -327,7 +327,7 @@ internal interface _UniFFILib : Library {
     _uniffi_out_err: RustCallStatus
     ): RustBuffer.ByValue
 
-    
+
 }
 
 // Public interface members begin here.
@@ -543,31 +543,31 @@ abstract class FFIObject(
 }
 
 public interface ConnectionInterface {
-    
+
     @Throws(VcxUniFfiException::class)
     fun `getState`(): ConnectionState
-    
+
     @Throws(VcxUniFfiException::class)
     fun `pairwiseInfo`(): PairwiseInfo
-    
+
     @Throws(VcxUniFfiException::class)
     fun `acceptInvitation`(`profile`: ProfileHolder, `invitation`: String)
-    
+
     @Throws(VcxUniFfiException::class)
     fun `handleRequest`(`profile`: ProfileHolder, `request`: String, `serviceEndpoint`: String, `routingKeys`: List<String>)
-    
+
     @Throws(VcxUniFfiException::class)
     fun `handleResponse`(`profile`: ProfileHolder, `response`: String)
-    
+
     @Throws(VcxUniFfiException::class)
     fun `sendRequest`(`profile`: ProfileHolder, `serviceEndpoint`: String, `routingKeys`: List<String>)
-    
+
     @Throws(VcxUniFfiException::class)
     fun `sendResponse`(`profile`: ProfileHolder)
-    
+
     @Throws(VcxUniFfiException::class)
     fun `sendAck`(`profile`: ProfileHolder)
-    
+
 }
 
 class Connection(
@@ -588,7 +588,7 @@ class Connection(
         }
     }
 
-    
+
     @Throws(VcxUniFfiException::class)override fun `getState`(): ConnectionState =
         callWithPointer {
     rustCallWithError(VcxUniFfiException) { _status ->
@@ -597,7 +597,7 @@ class Connection(
         }.let {
             FfiConverterTypeConnectionState.lift(it)
         }
-    
+
     @Throws(VcxUniFfiException::class)override fun `pairwiseInfo`(): PairwiseInfo =
         callWithPointer {
     rustCallWithError(VcxUniFfiException) { _status ->
@@ -606,57 +606,57 @@ class Connection(
         }.let {
             FfiConverterTypePairwiseInfo.lift(it)
         }
-    
+
     @Throws(VcxUniFfiException::class)override fun `acceptInvitation`(`profile`: ProfileHolder, `invitation`: String) =
         callWithPointer {
     rustCallWithError(VcxUniFfiException) { _status ->
     _UniFFILib.INSTANCE.vcx_1f5f_Connection_accept_invitation(it, FfiConverterTypeProfileHolder.lower(`profile`), FfiConverterString.lower(`invitation`),  _status)
 }
         }
-    
-    
+
+
     @Throws(VcxUniFfiException::class)override fun `handleRequest`(`profile`: ProfileHolder, `request`: String, `serviceEndpoint`: String, `routingKeys`: List<String>) =
         callWithPointer {
     rustCallWithError(VcxUniFfiException) { _status ->
     _UniFFILib.INSTANCE.vcx_1f5f_Connection_handle_request(it, FfiConverterTypeProfileHolder.lower(`profile`), FfiConverterString.lower(`request`), FfiConverterString.lower(`serviceEndpoint`), FfiConverterSequenceString.lower(`routingKeys`),  _status)
 }
         }
-    
-    
+
+
     @Throws(VcxUniFfiException::class)override fun `handleResponse`(`profile`: ProfileHolder, `response`: String) =
         callWithPointer {
     rustCallWithError(VcxUniFfiException) { _status ->
     _UniFFILib.INSTANCE.vcx_1f5f_Connection_handle_response(it, FfiConverterTypeProfileHolder.lower(`profile`), FfiConverterString.lower(`response`),  _status)
 }
         }
-    
-    
+
+
     @Throws(VcxUniFfiException::class)override fun `sendRequest`(`profile`: ProfileHolder, `serviceEndpoint`: String, `routingKeys`: List<String>) =
         callWithPointer {
     rustCallWithError(VcxUniFfiException) { _status ->
     _UniFFILib.INSTANCE.vcx_1f5f_Connection_send_request(it, FfiConverterTypeProfileHolder.lower(`profile`), FfiConverterString.lower(`serviceEndpoint`), FfiConverterSequenceString.lower(`routingKeys`),  _status)
 }
         }
-    
-    
+
+
     @Throws(VcxUniFfiException::class)override fun `sendResponse`(`profile`: ProfileHolder) =
         callWithPointer {
     rustCallWithError(VcxUniFfiException) { _status ->
     _UniFFILib.INSTANCE.vcx_1f5f_Connection_send_response(it, FfiConverterTypeProfileHolder.lower(`profile`),  _status)
 }
         }
-    
-    
+
+
     @Throws(VcxUniFfiException::class)override fun `sendAck`(`profile`: ProfileHolder) =
         callWithPointer {
     rustCallWithError(VcxUniFfiException) { _status ->
     _UniFFILib.INSTANCE.vcx_1f5f_Connection_send_ack(it, FfiConverterTypeProfileHolder.lower(`profile`),  _status)
 }
         }
-    
-    
 
-    
+
+
+
 }
 
 public object FfiConverterTypeConnection: FfiConverter<Connection, Pointer> {
@@ -685,7 +685,7 @@ public object FfiConverterTypeConnection: FfiConverter<Connection, Pointer> {
 
 
 public interface ProfileHolderInterface {
-    
+
 }
 
 class ProfileHolder(
@@ -706,9 +706,9 @@ class ProfileHolder(
         }
     }
 
-    
 
-    
+
+
 }
 
 public object FfiConverterTypeProfileHolder: FfiConverter<ProfileHolder, Pointer> {
@@ -737,10 +737,10 @@ public object FfiConverterTypeProfileHolder: FfiConverter<ProfileHolder, Pointer
 
 
 data class ConnectionState (
-    var `role`: ConnectionRole, 
+    var `role`: ConnectionRole,
     var `protocolState`: ConnectionProtocolState
 ) {
-    
+
 }
 
 public object FfiConverterTypeConnectionState: FfiConverterRustBuffer<ConnectionState> {
@@ -766,10 +766,10 @@ public object FfiConverterTypeConnectionState: FfiConverterRustBuffer<Connection
 
 
 data class PairwiseInfo (
-    var `pwDid`: String, 
+    var `pwDid`: String,
     var `pwVk`: String
 ) {
-    
+
 }
 
 public object FfiConverterTypePairwiseInfo: FfiConverterRustBuffer<PairwiseInfo> {
@@ -795,16 +795,16 @@ public object FfiConverterTypePairwiseInfo: FfiConverterRustBuffer<PairwiseInfo>
 
 
 data class WalletConfig (
-    var `walletName`: String, 
-    var `walletKey`: String, 
-    var `walletKeyDerivation`: String, 
-    var `walletType`: String?, 
-    var `storageConfig`: String?, 
-    var `storageCredentials`: String?, 
-    var `rekey`: String?, 
+    var `walletName`: String,
+    var `walletKey`: String,
+    var `walletKeyDerivation`: String,
+    var `walletType`: String?,
+    var `storageConfig`: String?,
+    var `storageCredentials`: String?,
+    var `rekey`: String?,
     var `rekeyDerivationMethod`: String?
 ) {
-    
+
 }
 
 public object FfiConverterTypeWalletConfig: FfiConverterRustBuffer<WalletConfig> {
@@ -900,7 +900,7 @@ sealed class VcxUniFfiException(message: String): Exception(message) {
         class AriesVcxException(message: String) : VcxUniFfiException(message)
         class SerializationException(message: String) : VcxUniFfiException(message)
         class InternalException(message: String) : VcxUniFfiException(message)
-        
+
 
     companion object ErrorHandler : CallStatusErrorHandler<VcxUniFfiException> {
         override fun lift(error_buf: RustBuffer.ByValue): VcxUniFfiException = FfiConverterTypeVcxUniFfiError.lift(error_buf)
@@ -909,14 +909,14 @@ sealed class VcxUniFfiException(message: String): Exception(message) {
 
 public object FfiConverterTypeVcxUniFfiError : FfiConverterRustBuffer<VcxUniFfiException> {
     override fun read(buf: ByteBuffer): VcxUniFfiException {
-        
+
             return when(buf.getInt()) {
             1 -> VcxUniFfiException.AriesVcxException(FfiConverterString.read(buf))
             2 -> VcxUniFfiException.SerializationException(FfiConverterString.read(buf))
             3 -> VcxUniFfiException.InternalException(FfiConverterString.read(buf))
             else -> throw RuntimeException("invalid error enum value, something is very wrong!!")
         }
-        
+
     }
 
     override fun allocationSize(value: VcxUniFfiException): Int {
@@ -997,7 +997,7 @@ public object FfiConverterSequenceString: FfiConverterRustBuffer<List<String>> {
 }
 @Throws(VcxUniFfiException::class)
 
-fun `newIndyProfile`(`walletConfig`: WalletConfig): ProfileHolder {
+fun `newIndyProfile`(`walletConfig`: WalletConfig): Nothing? {
     return FfiConverterTypeProfileHolder.lift(
     rustCallWithError(VcxUniFfiException) { _status ->
     _UniFFILib.INSTANCE.vcx_1f5f_new_indy_profile(FfiConverterTypeWalletConfig.lower(`walletConfig`), _status)
