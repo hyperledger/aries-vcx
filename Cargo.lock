@@ -439,7 +439,7 @@ dependencies = [
  "serde",
  "serde_derive",
  "serde_json",
- "sha2 0.9.9",
+ "sha2 0.10.7",
  "shared_vcx",
  "strum 0.16.0",
  "strum_macros 0.16.0",
