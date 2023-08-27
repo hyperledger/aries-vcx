@@ -21,7 +21,9 @@ use url::Url;
 
 use crate::{
     errors::error::{AriesVcxError, AriesVcxErrorKind},
-    protocols::mediated_connection::pairwise_info::PairwiseInfo,
+    protocols::{
+        did_exchange::transition::transition_error::TransitionError, mediated_connection::pairwise_info::PairwiseInfo,
+    },
     utils::from_legacy_did_doc_to_sov,
 };
 
@@ -160,5 +162,15 @@ pub fn attach_to_ddo_sov(attachment: Attachment) -> Result<DidDocumentSov, Aries
             AriesVcxErrorKind::InvalidJson,
             "Attachment is not a JSON or Base64",
         )),
+    }
+}
+
+pub fn to_transition_error<S, T>(state: S) -> impl FnOnce(T) -> TransitionError<S>
+where
+    T: Into<AriesVcxError>,
+{
+    move |error| TransitionError {
+        error: error.into(),
+        state,
     }
 }

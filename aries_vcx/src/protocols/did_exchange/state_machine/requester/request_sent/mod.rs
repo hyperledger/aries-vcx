@@ -12,7 +12,9 @@ use crate::{
     common::ledger::transactions::resolve_oob_invitation,
     errors::error::{AriesVcxError, AriesVcxErrorKind},
     protocols::did_exchange::{
-        state_machine::helpers::{attach_to_ddo_sov, create_our_did_document, ddo_sov_to_attach, jws_sign_attach},
+        state_machine::helpers::{
+            attach_to_ddo_sov, create_our_did_document, ddo_sov_to_attach, jws_sign_attach, to_transition_error,
+        },
         states::{completed::Completed, requester::request_sent::RequestSent},
         transition::{transition_error::TransitionError, transition_result::TransitionResult},
     },
@@ -38,12 +40,6 @@ impl DidExchangeRequester<RequestSent> {
         let (our_did_document, our_verkey) = create_our_did_document(&wallet, service_endpoint, routing_keys).await?;
         let their_did_document = resolve_oob_invitation(&resolver_registry, invitation.clone()).await?;
 
-        let signed_attach = jws_sign_attach(
-            ddo_sov_to_attach(our_did_document.clone())?,
-            our_verkey.clone(),
-            &wallet,
-        )
-        .await?;
         let request = construct_request(invitation.id.clone(), our_did_document.id().to_string())?;
 
         Ok(TransitionResult {
@@ -79,7 +75,6 @@ impl DidExchangeRequester<RequestSent> {
                 "No verification method in requester's did document",
             ))?
             .public_key()?;
-        let signed_attach = jws_sign_attach(ddo_sov_to_attach(our_did_document.clone())?, key, &wallet).await?;
         let request = construct_request(invitation_id.clone(), our_did.to_string())?;
 
         Ok(TransitionResult {
@@ -118,10 +113,7 @@ impl DidExchangeRequester<RequestSent> {
             });
         }
         let did_document = if let Some(ddo) = response.content.did_doc {
-            attach_to_ddo_sov(ddo).map_err(|error| TransitionError {
-                error,
-                state: self.clone(),
-            })?
+            attach_to_ddo_sov(ddo).map_err(to_transition_error(self.clone()))?
         } else {
             PeerDidResolver::new()
                 .resolve(
@@ -129,17 +121,11 @@ impl DidExchangeRequester<RequestSent> {
                         .content
                         .did
                         .parse()
-                        .map_err(|error: ParseError| TransitionError {
-                            error: error.into(),
-                            state: self.clone(),
-                        })?,
+                        .map_err(to_transition_error(self.clone()))?,
                     &Default::default(),
                 )
                 .await
-                .map_err(|error: GenericError| TransitionError {
-                    error: error.into(),
-                    state: self.clone(),
-                })?
+                .map_err(to_transition_error(self.clone()))?
                 .did_document()
                 .to_owned()
                 .into()

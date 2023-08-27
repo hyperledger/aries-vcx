@@ -41,6 +41,7 @@ impl DidExchangeResponder<ResponseSent> {
             ));
         }
 
+        // TODO: Response should sign the new *did* with invitation_key only if key was rotated
         let signed_attach =
             jws_sign_attach(ddo_sov_to_attach(our_did_document.clone())?, invitation_key, &wallet).await?;
 

@@ -2,12 +2,17 @@ mod conversions;
 mod thin_state;
 
 use did_doc_sov::DidDocumentSov;
-use messages::msg_fields::protocols::did_exchange::{complete::Complete, request::Request, response::Response};
+use messages::msg_fields::protocols::did_exchange::{
+    complete::Complete, problem_report::ProblemReport, request::Request, response::Response,
+};
 
 use crate::{
     errors::error::{AriesVcxError, AriesVcxErrorKind},
     protocols::did_exchange::{
-        states::{completed::Completed, requester::request_sent::RequestSent, responder::response_sent::ResponseSent},
+        states::{
+            abandoned::Abandoned, completed::Completed, requester::request_sent::RequestSent,
+            responder::response_sent::ResponseSent,
+        },
         transition::{transition_error::TransitionError, transition_result::TransitionResult},
     },
 };
@@ -29,12 +34,14 @@ pub enum GenericDidExchange {
 pub enum RequesterState {
     RequestSent(DidExchangeRequester<RequestSent>),
     Completed(DidExchangeRequester<Completed>),
+    Abandoned(DidExchangeRequester<Abandoned>),
 }
 
 #[derive(Debug, Clone)]
 pub enum ResponderState {
     ResponseSent(DidExchangeResponder<ResponseSent>),
     Completed(DidExchangeResponder<Completed>),
+    Abandoned(DidExchangeResponder<Abandoned>),
 }
 
 impl GenericDidExchange {
@@ -43,10 +50,12 @@ impl GenericDidExchange {
             GenericDidExchange::Requester(requester_state) => match requester_state {
                 RequesterState::RequestSent(request_sent_state) => request_sent_state.our_did_doc(),
                 RequesterState::Completed(completed_state) => completed_state.our_did_doc(),
+                RequesterState::Abandoned(abandoned_state) => todo!(),
             },
             GenericDidExchange::Responder(responder_state) => match responder_state {
                 ResponderState::ResponseSent(response_sent_state) => response_sent_state.our_did_doc(),
                 ResponderState::Completed(completed_state) => completed_state.our_did_doc(),
+                ResponderState::Abandoned(abandoned_state) => todo!(),
             },
         }
     }
@@ -56,10 +65,27 @@ impl GenericDidExchange {
             GenericDidExchange::Requester(requester_state) => match requester_state {
                 RequesterState::RequestSent(request_sent_state) => request_sent_state.their_did_doc(),
                 RequesterState::Completed(completed_state) => completed_state.their_did_doc(),
+                RequesterState::Abandoned(abandoned_state) => todo!(),
             },
             GenericDidExchange::Responder(responder_state) => match responder_state {
                 ResponderState::ResponseSent(response_sent_state) => response_sent_state.their_did_doc(),
                 ResponderState::Completed(completed_state) => completed_state.their_did_doc(),
+                ResponderState::Abandoned(abandoned_state) => todo!(),
+            },
+        }
+    }
+
+    pub fn invitation_id(&self) -> &str {
+        match self {
+            GenericDidExchange::Requester(requester_state) => match requester_state {
+                RequesterState::RequestSent(request_sent_state) => request_sent_state.get_invitation_id(),
+                RequesterState::Completed(completed_state) => completed_state.get_invitation_id(),
+                RequesterState::Abandoned(_) => todo!(),
+            },
+            GenericDidExchange::Responder(responder_state) => match responder_state {
+                ResponderState::ResponseSent(response_sent_state) => response_sent_state.get_invitation_id(),
+                ResponderState::Completed(completed_state) => completed_state.get_invitation_id(),
+                ResponderState::Abandoned(abandoned_state) => todo!(),
             },
         }
     }
@@ -100,6 +126,13 @@ impl GenericDidExchange {
                         "Attempted to handle response in completed state",
                     ),
                 )),
+                RequesterState::Abandoned(abandoned_state) => Err((
+                    GenericDidExchange::Requester(RequesterState::Abandoned(abandoned_state)),
+                    AriesVcxError::from_msg(
+                        AriesVcxErrorKind::InvalidState,
+                        "Attempted to handle response in abandoned state",
+                    ),
+                )),
             },
             GenericDidExchange::Responder(responder) => Err((
                 GenericDidExchange::Responder(responder),
@@ -130,6 +163,13 @@ impl GenericDidExchange {
                         "Attempted to handle complete in completed state",
                     ),
                 )),
+                ResponderState::Abandoned(_) => Err((
+                    GenericDidExchange::Responder(responder_state),
+                    AriesVcxError::from_msg(
+                        AriesVcxErrorKind::InvalidState,
+                        "Attempted to handle complete in abandoned state",
+                    ),
+                )),
             },
             GenericDidExchange::Requester(requester_state) => Err((
                 GenericDidExchange::Requester(requester_state),
@@ -141,15 +181,52 @@ impl GenericDidExchange {
         }
     }
 
+    pub fn handle_problem_report(self, problem_report: ProblemReport) -> Result<Self, (Self, AriesVcxError)> {
+        match self {
+            GenericDidExchange::Requester(requester_state) => match requester_state {
+                RequesterState::RequestSent(request_sent_state) => Ok(GenericDidExchange::Requester(
+                    RequesterState::Abandoned(request_sent_state.receive_problem_report(problem_report)),
+                )),
+                RequesterState::Completed(completed_state) => Err((
+                    GenericDidExchange::Requester(RequesterState::Completed(completed_state)),
+                    AriesVcxError::from_msg(
+                        AriesVcxErrorKind::InvalidState,
+                        "Attempted to handle problem report in completed state",
+                    ),
+                )),
+                RequesterState::Abandoned(abandoned_state) => Ok(GenericDidExchange::Requester(
+                    RequesterState::Abandoned(abandoned_state),
+                )),
+            },
+            GenericDidExchange::Responder(responder_state) => match responder_state {
+                ResponderState::ResponseSent(response_sent_state) => Ok(GenericDidExchange::Responder(
+                    ResponderState::Abandoned(response_sent_state.receive_problem_report(problem_report)),
+                )),
+                ResponderState::Completed(completed_state) => Err((
+                    GenericDidExchange::Responder(ResponderState::Completed(completed_state)),
+                    AriesVcxError::from_msg(
+                        AriesVcxErrorKind::InvalidState,
+                        "Attempted to handle problem report in completed state",
+                    ),
+                )),
+                ResponderState::Abandoned(abandoned_state) => Ok(GenericDidExchange::Responder(
+                    ResponderState::Abandoned(abandoned_state),
+                )),
+            },
+        }
+    }
+
     pub fn get_state(&self) -> ThinState {
         match self {
             GenericDidExchange::Requester(requester_state) => match requester_state {
                 RequesterState::RequestSent(_) => ThinState::RequestSent,
                 RequesterState::Completed(_) => ThinState::Completed,
+                RequesterState::Abandoned(_) => ThinState::Abandoned,
             },
             GenericDidExchange::Responder(responder_state) => match responder_state {
                 ResponderState::ResponseSent(_) => ThinState::RequestSent,
                 ResponderState::Completed(_) => ThinState::Completed,
+                ResponderState::Abandoned(_) => ThinState::Abandoned,
             },
         }
     }

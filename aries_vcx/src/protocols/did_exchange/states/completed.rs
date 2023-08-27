@@ -1,6 +1,6 @@
 use std::clone::Clone;
 
-use super::traits::ThreadId;
+use super::traits::{InvitationId, ThreadId};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Completed {
@@ -11,5 +11,11 @@ pub struct Completed {
 impl ThreadId for Completed {
     fn thread_id(&self) -> &str {
         self.request_id.as_str()
+    }
+}
+
+impl InvitationId for Completed {
+    fn invitation_id(&self) -> &str {
+        self.invitation_id.as_str()
     }
 }

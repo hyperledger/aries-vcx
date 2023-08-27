@@ -3,7 +3,7 @@ use std::sync::Arc;
 use aries_vcx::{
     core::profile::profile::Profile,
     messages::msg_fields::protocols::{
-        did_exchange::{complete::Complete, request::Request, response::Response},
+        did_exchange::{complete::Complete, problem_report::ProblemReport, request::Request, response::Response},
         out_of_band::invitation::Invitation as OobInvitation,
     },
     protocols::{
@@ -152,8 +152,9 @@ impl ServiceDidExchange {
         self.did_exchange.insert(&request_id, responder.clone().into())
     }
 
-    pub async fn send_complete(&self, thread_id: &str, response: Response) -> AgentResult<String> {
-        let (requester, complete) = self.did_exchange.get(thread_id)?.handle_response(response).await?;
+    pub async fn send_complete(&self, response: Response) -> AgentResult<String> {
+        let thread_id = response.decorators.thread.thid.clone();
+        let (requester, complete) = self.did_exchange.get(&thread_id)?.handle_response(response).await?;
         wrap_and_send_msg(
             &self.profile.inject_wallet(),
             &complete.clone().into(),
@@ -168,16 +169,30 @@ impl ServiceDidExchange {
             &HttpClient,
         )
         .await?;
-        self.did_exchange.insert(thread_id, requester.clone().into())
+        self.did_exchange.insert(&thread_id, requester.clone().into())
     }
 
-    pub async fn receive_complete(&self, thread_id: &str, complete: Complete) -> AgentResult<String> {
-        let requester = self.did_exchange.get(thread_id)?.handle_complete(complete)?;
-        self.did_exchange.insert(thread_id, requester)
+    pub fn receive_complete(&self, complete: Complete) -> AgentResult<String> {
+        let thread_id = complete.decorators.thread.thid.clone();
+        let requester = self.did_exchange.get(&thread_id)?.handle_complete(complete)?;
+        self.did_exchange.insert(&thread_id, requester)
+    }
+
+    pub fn receive_problem_report(&self, thread_id: &str, problem_report: ProblemReport) -> AgentResult<String> {
+        let thread_id = problem_report.decorators.thread.thid.clone();
+        let requester = self
+            .did_exchange
+            .get(&thread_id)?
+            .handle_problem_report(problem_report)?;
+        self.did_exchange.insert(&thread_id, requester)
     }
 
     pub fn exists_by_id(&self, thread_id: &str) -> bool {
         self.did_exchange.contains_key(thread_id)
+    }
+
+    pub fn invitation_id(&self, thread_id: &str) -> AgentResult<String> {
+        Ok(self.did_exchange.get(thread_id)?.invitation_id().to_string())
     }
 
     pub fn public_did(&self) -> &str {

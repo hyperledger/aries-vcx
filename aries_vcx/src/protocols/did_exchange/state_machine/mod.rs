@@ -18,7 +18,10 @@ use std::marker::PhantomData;
 use did_doc_sov::DidDocumentSov;
 
 use super::{
-    states::{abandoned::Abandoned, traits::ThreadId},
+    states::{
+        abandoned::Abandoned,
+        traits::{InvitationId, ThreadId},
+    },
     transition::transition_result::TransitionResult,
 };
 
@@ -49,10 +52,7 @@ impl<I, S: ThreadId> DidExchange<I, S> {
         self,
         reason: String,
         problem_code: Option<ProblemCode>,
-    ) -> TransitionResult<DidExchange<I, Abandoned>, ProblemReport>
-    where
-        S: ThreadId,
-    {
+    ) -> TransitionResult<DidExchange<I, Abandoned>, ProblemReport> {
         let problem_report = {
             let id = Uuid::new_v4().to_string();
             let content = ProblemReportContent {
@@ -79,6 +79,24 @@ impl<I, S: ThreadId> DidExchange<I, S> {
             },
             output: problem_report,
         }
+    }
+
+    pub fn receive_problem_report(self, problem_report: ProblemReport) -> DidExchange<I, Abandoned> {
+        DidExchange {
+            state: Abandoned {
+                reason: problem_report.clone().content.explain.unwrap_or_default(),
+                request_id: self.state.thread_id().to_string(),
+            },
+            initiation_type: PhantomData,
+            our_did_document: self.our_did_document,
+            their_did_document: self.their_did_document,
+        }
+    }
+}
+
+impl<I, S: InvitationId> DidExchange<I, S> {
+    pub fn get_invitation_id(&self) -> &str {
+        self.state.invitation_id()
     }
 }
 
