@@ -21,6 +21,13 @@ sealed class Destination(val route: String) {
 }
 
 class MainActivity : ComponentActivity() {
+
+    private var profile: ProfileHolder? = null
+    private var connection: Connection? = null
+    private fun setProfileHolder(profileHolder: ProfileHolder) {
+        profile = profileHolder
+        connection = createInvitee(profileHolder, "")
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Os.setenv("EXTERNAL_STORAGE", this.filesDir.absolutePath, true);
@@ -31,8 +38,7 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     val navController = rememberNavController()
-                    NavigationAppHost(navController = navController)
-
+                    NavigationAppHost(navController = navController, setProfileHolder = { setProfileHolder(it) }, connection = connection!!, profileHolder = profile!!)
                 }
             }
         }
@@ -40,13 +46,13 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun NavigationAppHost(navController: NavHostController) {
+fun NavigationAppHost(navController: NavHostController, setProfileHolder: (ProfileHolder) -> Unit, connection: Connection, profileHolder: ProfileHolder) {
     NavHost(navController = navController, startDestination = "home") {
         composable(Destination.Home.route) {
-            HomeScreen(navController)
+            HomeScreen(navController = navController, setProfileHolder = setProfileHolder)
         }
         composable(Destination.QRScan.route) {
-            ScanScreen()
+            ScanScreen(connection = connection, profileHolder = profileHolder)
         }
     }
 }

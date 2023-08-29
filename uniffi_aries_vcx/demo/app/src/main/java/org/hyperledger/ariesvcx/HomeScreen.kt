@@ -9,13 +9,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 @Composable
-fun HomeScreen(navController: NavHostController) {
+fun HomeScreen(navController: NavHostController, setProfileHolder: (ProfileHolder) -> Unit) {
+
+    val scope = rememberCoroutineScope()
+
     var walletConfigState by remember {
         mutableStateOf(WalletConfig(
             walletName = "test_create_wallet_add_uuid_here",
@@ -36,7 +42,10 @@ fun HomeScreen(navController: NavHostController) {
     ) {
         Button(onClick = {
             // How to persist this in the app state?
-            newIndyProfile(walletConfigState)
+            scope.launch(Dispatchers.IO) {
+                val profile = newIndyProfile(walletConfigState)
+                setProfileHolder(profile)
+            }
         }) {
             Text(text = "New Indy Profile")
         }

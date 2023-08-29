@@ -32,11 +32,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import android.util.Base64
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+
 @Composable
-fun ScanScreen() {
+fun ScanScreen(connection: Connection, profileHolder: ProfileHolder) {
     var scannedQRCodeText by remember {
-        mutableStateOf<String?>("")
+        mutableStateOf<String?>(null)
     }
+    val scope = rememberCoroutineScope()
 
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -44,7 +49,7 @@ fun ScanScreen() {
         ProcessCameraProvider.getInstance(context)
     }
 
-    scannedQRCodeText.let {text ->
+    scannedQRCodeText?.let {text ->
         val encoded = Uri.parse(text)?.getQueryParameter("c_i")
         val decoded =  Base64.decode(encoded, Base64.DEFAULT).toString()
 
@@ -54,8 +59,13 @@ fun ScanScreen() {
             text = { Text(decoded) },
             confirmButton = {
                 TextButton(onClick = {
-                    // So that it can be used here?
-                    Connection::acceptInvitation()
+                    scope.launch(Dispatchers.IO) {
+                        connection.acceptInvitation(
+                            profile = profileHolder,
+                            invitation = decoded
+                        )
+                        connection.sendRequest(profileHolder, "http://google.com", emptyList())
+                    }
                 }) {
                     Text("Accept")
                 }
