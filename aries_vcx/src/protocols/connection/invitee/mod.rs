@@ -29,9 +29,7 @@ use crate::{
     transport::Transport,
 };
 
-use self::states::{
-    completed::Completed, initial::Initial, invited::Invited, requested::Requested, responded::Responded,
-};
+use self::states::{completed::Completed, initial::Initial, invited::Invited, requested::Requested};
 
 use super::{initiation_type::Invitee, pairwise_info::PairwiseInfo, trait_bounds::BootstrapDidDoc, Connection};
 use crate::{
@@ -84,16 +82,11 @@ impl InviteeConnection<Invited> {
     /// # Errors
     ///
     /// Will error out if sending the request fails.
-    pub async fn prepare_request<T>(
+    pub async fn prepare_request(
         self,
-        wallet: &Arc<dyn BaseWallet>,
         service_endpoint: Url,
         routing_keys: Vec<String>,
-        transport: &T,
-    ) -> VcxResult<InviteeConnection<Requested>>
-    where
-        T: Transport,
-    {
+    ) -> VcxResult<InviteeConnection<Requested>> {
         trace!("Connection::prepare_request");
 
         let recipient_keys = vec![self.pairwise_info.pw_vk.clone()];
@@ -143,10 +136,8 @@ impl InviteeConnection<Invited> {
 
         let request = Request::with_decorators(id, content, decorators);
 
-        self.send_message(wallet, &request.into(), transport).await?;
-
         Ok(Connection {
-            state: Requested::new(self.state.did_doc, thread_id),
+            state: Requested::new(self.state.did_doc, thread_id, request),
             source_id: self.source_id,
             pairwise_info: self.pairwise_info,
             initiation_type: Invitee,
@@ -168,7 +159,7 @@ impl InviteeConnection<Requested> {
         wallet: &Arc<dyn BaseWallet>,
         response: Response,
         transport: &T,
-    ) -> VcxResult<InviteeConnection<Responded>>
+    ) -> VcxResult<InviteeConnection<Completed>>
     where
         T: Transport,
     {
@@ -203,7 +194,7 @@ impl InviteeConnection<Requested> {
             }
         }?;
 
-        let state = Responded::new(did_doc, self.state.did_doc, self.state.thread_id);
+        let state = Completed::new(did_doc, self.state.did_doc, self.state.thread_id, None);
 
         Ok(Connection {
             state,
@@ -212,22 +203,19 @@ impl InviteeConnection<Requested> {
             initiation_type: Invitee,
         })
     }
+
+    pub fn get_request(&self) -> &Request {
+        &self.state.request
+    }
 }
 
-impl InviteeConnection<Responded> {
+impl InviteeConnection<Completed> {
     /// Sends an acknowledgement message to the inviter and transitions to [`InviteeConnection<Completed>`].
     ///
     /// # Errors
     ///
     /// Will error out if sending the message fails.
-    pub async fn send_ack<T>(
-        self,
-        wallet: &Arc<dyn BaseWallet>,
-        transport: &T,
-    ) -> VcxResult<InviteeConnection<Completed>>
-    where
-        T: Transport,
-    {
+    pub fn get_ack(&self) -> Ack {
         let id = Uuid::new_v4().to_string();
         let content = AckContent::new(AckStatus::Ok);
 
@@ -236,23 +224,7 @@ impl InviteeConnection<Responded> {
         timing.out_time = Some(Utc::now());
         decorators.timing = Some(timing);
 
-        let msg = Ack::with_decorators(id, content, decorators).into();
-
-        self.send_message(wallet, &msg, transport).await?;
-
-        let state = Completed::new(
-            self.state.did_doc,
-            self.state.bootstrap_did_doc,
-            self.state.thread_id,
-            None,
-        );
-
-        Ok(Connection {
-            state,
-            source_id: self.source_id,
-            pairwise_info: self.pairwise_info,
-            initiation_type: Invitee,
-        })
+        Ack::with_decorators(id, content, decorators)
     }
 }
 

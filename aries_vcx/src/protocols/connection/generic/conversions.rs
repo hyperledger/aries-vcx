@@ -6,7 +6,6 @@ use crate::{
         invitee::states::{
             completed::Completed as InviteeCompleted, initial::Initial as InviteeInitial,
             invited::Invited as InviteeInvited, requested::Requested as InviteeRequested,
-            responded::Responded as InviteeResponded,
         },
         inviter::states::{
             completed::Completed as InviterCompleted, initial::Initial as InviterInitial,
@@ -111,7 +110,6 @@ from_concrete_to_vague!(InviterCompleted, Completed, InviterState);
 from_concrete_to_vague!(InviteeInitial, Initial, InviteeState);
 from_concrete_to_vague!(InviteeInvited, Invited, InviteeState);
 from_concrete_to_vague!(InviteeRequested, Requested, InviteeState);
-from_concrete_to_vague!(InviteeResponded, Responded, InviteeState);
 from_concrete_to_vague!(InviteeCompleted, Completed, InviteeState);
 
 // ---------------------------- Try From Vague State to Concrete State implementations ----------------------------
@@ -139,5 +137,4 @@ try_from_vague_to_concrete!(InviterState, Completed, InviterCompleted);
 try_from_vague_to_concrete!(InviteeState, Initial, InviteeInitial);
 try_from_vague_to_concrete!(InviteeState, Invited, InviteeInvited);
 try_from_vague_to_concrete!(InviteeState, Requested, InviteeRequested);
-try_from_vague_to_concrete!(InviteeState, Responded, InviteeResponded);
 try_from_vague_to_concrete!(InviteeState, Completed, InviteeCompleted);

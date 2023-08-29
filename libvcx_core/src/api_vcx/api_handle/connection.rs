@@ -340,15 +340,10 @@ pub async fn send_request(handle: u32, service_endpoint: String, routing_keys: V
     trace!("send_request >>>");
 
     let con = get_cloned_connection(&handle)?;
-    let con = con
-        .prepare_request(
-            &get_main_wallet()?,
-            Url::from_str(&service_endpoint)
-                .map_err(|err| LibvcxError::from_msg(LibvcxErrorKind::InvalidUrl, err.to_string()))?,
-            routing_keys,
-            &HttpClient,
-        )
-        .await?;
+    let url = Url::from_str(&service_endpoint)
+        .map_err(|err| LibvcxError::from_msg(LibvcxErrorKind::InvalidUrl, err.to_string()))?;
+    let con = con.prepare_request(url, routing_keys).await?;
+    con.send_message(&get_main_wallet()?, con.get_request().into(), &HttpClient).await?;
 
     insert_connection(handle, con)
 }
@@ -357,9 +352,8 @@ pub async fn send_ack(handle: u32) -> LibvcxResult<()> {
     trace!("send_ack >>>");
 
     let con = get_cloned_connection(&handle)?;
-    let con = con.send_ack(&get_main_wallet()?, &HttpClient).await?;
-
-    insert_connection(handle, con)
+    con.send_message(&get_main_wallet()?, &con.get_ack().into(), &HttpClient).await?;
+    Ok(())
 }
 
 pub async fn send_generic_message(handle: u32, content: String) -> LibvcxResult<()> {

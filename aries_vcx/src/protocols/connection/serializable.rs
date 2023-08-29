@@ -5,7 +5,6 @@ use crate::protocols::connection::{
     invitee::states::{
         completed::Completed as InviteeCompleted, initial::Initial as InviteeInitial,
         invited::Invited as InviteeInvited, requested::Requested as InviteeRequested,
-        responded::Responded as InviteeResponded,
     },
     inviter::states::{
         completed::Completed as InviterCompleted, initial::Initial as InviterInitial,
@@ -71,7 +70,6 @@ pub enum RefInviteeState<'a> {
     Initial(&'a InviteeInitial),
     Invited(&'a InviteeInvited),
     Requested(&'a InviteeRequested),
-    Responded(&'a InviteeResponded),
     Completed(&'a InviteeCompleted),
 }
 
@@ -98,7 +96,6 @@ from_concrete_to_serializable!(InviterCompleted, Completed, RefInviterState);
 from_concrete_to_serializable!(InviteeInitial, Initial, RefInviteeState);
 from_concrete_to_serializable!(InviteeInvited, Invited, RefInviteeState);
 from_concrete_to_serializable!(InviteeRequested, Requested, RefInviteeState);
-from_concrete_to_serializable!(InviteeResponded, Responded, RefInviteeState);
 from_concrete_to_serializable!(InviteeCompleted, Completed, RefInviteeState);
 
 impl<'a> SerializableConnection<'a> {

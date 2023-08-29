@@ -56,14 +56,10 @@ impl ServiceConnections {
     pub async fn send_request(&self, thread_id: &str) -> AgentResult<()> {
         let invitee: Connection<_, _> = self.connections.get(thread_id)?.try_into()?;
         let invitee = invitee
-            .prepare_request(
-                &self.profile.inject_wallet(),
-                self.service_endpoint.clone(),
-                vec![],
-                &HttpClient,
-            )
+            .prepare_request(self.service_endpoint.clone(), vec![])
             .await?;
-
+        invitee.send_message(&self.profile.inject_wallet(), invitee.get_request().into(), &HttpClient)
+            .await?;
         self.connections.insert(thread_id, invitee.into())?;
         Ok(())
     }
@@ -125,7 +121,8 @@ impl ServiceConnections {
 
     pub async fn send_ack(&self, thread_id: &str) -> AgentResult<()> {
         let invitee: Connection<_, _> = self.connections.get(thread_id)?.try_into()?;
-        let invitee = invitee.send_ack(&self.profile.inject_wallet(), &HttpClient).await?;
+        invitee.send_message(&self.profile.inject_wallet(), &invitee.get_ack().into(),&HttpClient)
+            .await?;
 
         self.connections.insert(thread_id, invitee.into())?;
 

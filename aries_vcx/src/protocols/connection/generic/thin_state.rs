@@ -45,7 +45,6 @@ impl From<&InviteeState> for State {
             InviteeState::Initial(_) => Self::Initial,
             InviteeState::Invited(_) => Self::Invited,
             InviteeState::Requested(_) => Self::Requested,
-            InviteeState::Responded(_) => Self::Responded,
             InviteeState::Completed(_) => Self::Completed,
         }
     }
