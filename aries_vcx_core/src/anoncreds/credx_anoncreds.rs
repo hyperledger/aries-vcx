@@ -142,27 +142,36 @@ impl IndyCredxAnonCreds {
     async fn _get_credentials_for_proof_req_for_attr_name(
         &self,
         restrictions: Option<&Value>,
-        attr_name: &str,
+        attr_names: Vec<String>,
     ) -> VcxCoreResult<Vec<(String, CredxCredential)>> {
-        let attr_marker_tag_name = _format_attribute_as_marker_tag_name(attr_name);
+        let mut attrs = Vec::new();
 
-        let wql_attr_query = json!({
-            attr_marker_tag_name: "1"
-        });
+        for name in attr_names {
+            let attr_marker_tag_name = _format_attribute_as_marker_tag_name(&name);
+
+            let wql_attr_query = json!({
+                attr_marker_tag_name: "1"
+            });
+
+            attrs.push(wql_attr_query);
+        }
 
         let restrictions = restrictions.map(|x| x.to_owned());
 
         let wql_query = if let Some(restrictions) = restrictions {
             match restrictions {
                 Value::Array(mut arr) => {
-                    arr.push(wql_attr_query);
+                    arr.extend(attrs);
                     json!({ "$and": arr })
                 }
-                Value::Object(obj) => json!({ "$and": vec![wql_attr_query, Value::Object(obj)] }),
-                _ => wql_attr_query,
+                Value::Object(obj) => {
+                    attrs.push(Value::Object(obj));
+                    json!({ "$and": attrs })
+                }
+                _ => json!(attrs),
             }
         } else {
-            wql_attr_query
+            json!(attrs)
         };
 
         let wql_query = serde_json::to_string(&wql_query)?;
@@ -731,15 +740,26 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
                     format!("Unknown referent: {}", reft),
                 ))?;
 
-            let _attr_name = requested_val.try_get("name")?;
-            let _attr_name = _attr_name.try_as_str()?;
-            let attr_name = _normalize_attr_name(_attr_name);
+            let name = requested_val.get("name");
+            let names = requested_val.get("names").and_then(|v| v.as_array());
+
+            let attr_names = match (name, names) {
+                (Some(name), None) => vec![_normalize_attr_name(name.try_as_str()?)],
+                (None, Some(names)) => names
+                    .iter()
+                    .map(|v| v.try_as_str().map(_normalize_attr_name))
+                    .collect::<Result<_, _>>()?,
+                _ => Err(AriesVcxCoreError::from_msg(
+                    AriesVcxCoreErrorKind::InvalidAttributesStructure,
+                    "exactly one of 'name' or 'names' must be present",
+                ))?,
+            };
 
             let non_revoked = requested_val.get("non_revoked"); // note that aca-py askar fetches from proof_req json
             let restrictions = requested_val.get("restrictions");
 
             let credx_creds = self
-                ._get_credentials_for_proof_req_for_attr_name(restrictions, &attr_name)
+                ._get_credentials_for_proof_req_for_attr_name(restrictions, attr_names)
                 .await?;
 
             let mut credentials_json = vec![];
