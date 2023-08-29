@@ -256,7 +256,7 @@ pub async fn dev_build_featured_profile(genesis_file_path: String, wallet: Arc<I
         info!("SetupProfile >> using vdr proxy profile");
         dev_build_profile_vdr_proxy_ledger(wallet).await
     };
-    #[cfg(any(feature = "vdrtools", feature = "migration"))]
+    #[cfg(feature = "vdrtools")]
     return {
         info!("SetupProfile >> using indy profile");
         dev_build_profile_vdrtools(genesis_file_path, wallet).await
