@@ -1143,12 +1143,11 @@ pub mod test_utils {
         selected_credentials
     }
 
-    pub async fn prover_select_credentials_and_send_proof_and_assert(
+    pub async fn prover_select_credentials_and_send_proof(
         alice: &mut Alice,
         consumer_to_institution: &MediatedConnection,
         request_name: Option<&str>,
         preselected_credentials: Option<&str>,
-        expected_prover_state: ProverState,
     ) {
         let mut prover = create_proof(alice, consumer_to_institution, request_name).await;
         let selected_credentials =
@@ -1158,23 +1157,7 @@ pub mod test_utils {
             &selected_credentials
         );
         generate_and_send_proof(alice, &mut prover, consumer_to_institution, selected_credentials).await;
-        assert_eq!(expected_prover_state, prover.get_state());
-    }
-
-    pub async fn prover_select_credentials_and_send_proof(
-        consumer: &mut Alice,
-        consumer_to_institution: &MediatedConnection,
-        request_name: Option<&str>,
-        preselected_credentials: Option<&str>,
-    ) {
-        prover_select_credentials_and_send_proof_and_assert(
-            consumer,
-            consumer_to_institution,
-            request_name,
-            preselected_credentials,
-            ProverState::PresentationSent,
-        )
-        .await
+        assert_eq!(ProverState::PresentationSent, prover.get_state());
     }
 
     pub async fn connect_using_request_sent_to_public_agent(
