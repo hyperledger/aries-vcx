@@ -171,6 +171,7 @@ pub async fn dev_setup_issuer_wallet_and_agency_client() -> (String, WalletHandl
 }
 
 pub async fn dev_setup_wallet_indy(key_seed: &str) -> (String, WalletHandle) {
+    info!("dev_setup_wallet_indy >>");
     let config_wallet = WalletConfig {
         wallet_name: format!("wallet_{}", uuid::Uuid::new_v4().to_string()),
         wallet_key: settings::DEFAULT_WALLET_KEY.into(),
@@ -193,6 +194,7 @@ pub async fn dev_setup_wallet_indy(key_seed: &str) -> (String, WalletHandle) {
 
 #[cfg(feature = "vdrtools")]
 pub async fn dev_build_profile_vdrtools(genesis_file_path: String, wallet: Arc<IndySdkWallet>) -> Arc<dyn Profile> {
+    info!("dev_build_profile_vdrtools >>");
     let vcx_pool_config = VcxPoolConfig {
         genesis_file_path: genesis_file_path.clone(),
         indy_vdr_config: None,
@@ -215,6 +217,7 @@ pub async fn dev_build_profile_vdrtools(genesis_file_path: String, wallet: Arc<I
 
 #[cfg(feature = "modular_libs")]
 pub fn dev_build_profile_modular(genesis_file_path: String, wallet: Arc<IndySdkWallet>) -> Arc<dyn Profile> {
+    info!("dev_build_profile_modular >>");
     let vcx_pool_config = VcxPoolConfig {
         genesis_file_path: genesis_file_path.clone(),
         indy_vdr_config: None,
@@ -228,6 +231,7 @@ pub async fn dev_build_profile_vdr_proxy_ledger(wallet: Arc<IndySdkWallet>) -> A
     use crate::core::profile::vdr_proxy_profile::VdrProxyProfile;
     use aries_vcx_core::VdrProxyClient;
     use std::env;
+    info!("dev_build_profile_vdr_proxy_ledger >>");
 
     let client_url = env::var("VDR_PROXY_CLIENT_URL").unwrap_or_else(|_| "http://127.0.0.1:3030".to_string());
     let client = VdrProxyClient::new(&client_url).unwrap();
@@ -237,6 +241,11 @@ pub async fn dev_build_profile_vdr_proxy_ledger(wallet: Arc<IndySdkWallet>) -> A
 
 pub async fn dev_build_featured_profile(genesis_file_path: String, wallet: Arc<IndySdkWallet>) -> Arc<dyn Profile> {
     // In case of migration test setup, we are starting with vdrtools, then we migrate
+    #[cfg(feature = "migration")]
+    return {
+        info!("SetupProfile >> using indy profile");
+        dev_build_profile_vdrtools(genesis_file_path, wallet).await
+    };
     #[cfg(feature = "modular_libs")]
     return {
         info!("SetupProfile >> using modular profile");
