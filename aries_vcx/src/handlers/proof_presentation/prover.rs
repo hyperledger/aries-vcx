@@ -58,7 +58,7 @@ impl Prover {
         let json_retrieved_credentials = anoncreds
             .prover_get_credentials_for_proof_req(&presentation_request)
             .await?;
-
+        trace!("Prover::retrieve_credentials >>> presentation_request: {presentation_request}, json_retrieved_credentials: {json_retrieved_credentials}");
         Ok(serde_json::from_str(&json_retrieved_credentials)?)
     }
 
