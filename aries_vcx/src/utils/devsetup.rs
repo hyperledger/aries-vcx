@@ -237,11 +237,6 @@ pub async fn dev_build_profile_vdr_proxy_ledger(wallet: Arc<IndySdkWallet>) -> A
 
 pub async fn dev_build_featured_profile(genesis_file_path: String, wallet: Arc<IndySdkWallet>) -> Arc<dyn Profile> {
     // In case of migration test setup, we are starting with vdrtools, then we migrate
-    #[cfg(any(feature = "vdrtools", feature = "migration"))]
-    return {
-        info!("SetupProfile >> using indy profile");
-        dev_build_profile_vdrtools(genesis_file_path, wallet).await
-    };
     #[cfg(feature = "modular_libs")]
     return {
         info!("SetupProfile >> using modular profile");
@@ -251,6 +246,11 @@ pub async fn dev_build_featured_profile(genesis_file_path: String, wallet: Arc<I
     return {
         info!("SetupProfile >> using vdr proxy profile");
         dev_build_profile_vdr_proxy_ledger(wallet).await
+    };
+    #[cfg(any(feature = "vdrtools", feature = "migration"))]
+    return {
+        info!("SetupProfile >> using indy profile");
+        dev_build_profile_vdrtools(genesis_file_path, wallet).await
     };
 }
 
