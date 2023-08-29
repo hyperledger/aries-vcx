@@ -134,11 +134,12 @@ impl Connection {
             .map_err(|err| AriesVcxError::from_msg(AriesVcxErrorKind::InvalidUrl, err.to_string()))?;
 
         block_on(async {
-            let new_conn = connection.prepare_request(url, routing_keys)
+            let mut connection = connection.prepare_request(url, routing_keys)
                 .await?;
-            new_conn.send_message(&profile.inner.inject_wallet(), connection.get_request(), &HttpClient)
+            let request = connection.get_request().clone();
+            connection.send_message(&profile.inner.inject_wallet(), &request.into(), &HttpClient)
                 .await?;
-            *handler = VcxGenericConnection::from(new_conn);
+            *handler = VcxGenericConnection::from(connection);
             Ok(())
         })
     }

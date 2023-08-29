@@ -343,7 +343,8 @@ pub async fn send_request(handle: u32, service_endpoint: String, routing_keys: V
     let url = Url::from_str(&service_endpoint)
         .map_err(|err| LibvcxError::from_msg(LibvcxErrorKind::InvalidUrl, err.to_string()))?;
     let con = con.prepare_request(url, routing_keys).await?;
-    con.send_message(&get_main_wallet()?, con.get_request().into(), &HttpClient).await?;
+    let request = con.get_request().clone();
+    con.send_message(&get_main_wallet()?, &request.into(), &HttpClient).await?;
 
     insert_connection(handle, con)
 }
