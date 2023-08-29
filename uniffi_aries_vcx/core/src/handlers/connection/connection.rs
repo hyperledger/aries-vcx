@@ -135,7 +135,7 @@ impl Connection {
 
         block_on(async {
             let new_conn = connection
-                .send_request(&profile.inner.inject_wallet(), url, routing_keys, &HttpClient)
+                .prepare_request(&profile.inner.inject_wallet(), url, routing_keys, &HttpClient)
                 .await?;
             *handler = VcxGenericConnection::from(new_conn);
 

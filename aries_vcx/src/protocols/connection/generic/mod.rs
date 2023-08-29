@@ -406,7 +406,7 @@ mod connection_serde_tests {
 
         make_invitee_invited()
             .await
-            .send_request(&wallet, service_endpoint, routing_keys, &MockTransport)
+            .prepare_request(&wallet, service_endpoint, routing_keys, &MockTransport)
             .await
             .unwrap()
     }

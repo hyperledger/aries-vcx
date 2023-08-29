@@ -84,7 +84,7 @@ impl InviteeConnection<Invited> {
     /// # Errors
     ///
     /// Will error out if sending the request fails.
-    pub async fn send_request<T>(
+    pub async fn prepare_request<T>(
         self,
         wallet: &Arc<dyn BaseWallet>,
         service_endpoint: Url,
@@ -94,7 +94,7 @@ impl InviteeConnection<Invited> {
     where
         T: Transport,
     {
-        trace!("Connection::send_request");
+        trace!("Connection::prepare_request");
 
         let recipient_keys = vec![self.pairwise_info.pw_vk.clone()];
 
