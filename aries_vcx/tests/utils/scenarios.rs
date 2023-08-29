@@ -1177,22 +1177,6 @@ pub mod test_utils {
         .await
     }
 
-    pub async fn prover_select_credentials_and_fail_to_generate_proof(
-        consumer: &mut Alice,
-        consumer_to_institution: &MediatedConnection,
-        request_name: Option<&str>,
-        requested_values: Option<&str>,
-    ) {
-        prover_select_credentials_and_send_proof_and_assert(
-            consumer,
-            consumer_to_institution,
-            request_name,
-            requested_values,
-            ProverState::PresentationPreparationFailed,
-        )
-        .await
-    }
-
     pub async fn connect_using_request_sent_to_public_agent(
         alice: &mut Alice,
         faber: &mut Faber,

@@ -587,10 +587,10 @@ mod tests {
         accept_cred_proposal, accept_cred_proposal_1, accept_offer, accept_proof_proposal, attr_names,
         create_and_send_nonrevocable_cred_offer, create_connected_connections, create_proof, decline_offer,
         generate_and_send_proof, issue_address_credential, prover_select_credentials,
-        prover_select_credentials_and_fail_to_generate_proof, prover_select_credentials_and_send_proof,
-        receive_proof_proposal_rejection, reject_proof_proposal, retrieved_to_selected_credentials_simple,
-        send_cred_proposal, send_cred_proposal_1, send_cred_req, send_credential, send_proof_proposal,
-        send_proof_proposal_1, send_proof_request, verifier_create_proof_and_send_request, verify_proof,
+        prover_select_credentials_and_send_proof, receive_proof_proposal_rejection, reject_proof_proposal,
+        retrieved_to_selected_credentials_simple, send_cred_proposal, send_cred_proposal_1, send_cred_req,
+        send_credential, send_proof_proposal, send_proof_proposal_1, send_proof_request,
+        verifier_create_proof_and_send_request, verify_proof,
     };
 
     #[tokio::test]
@@ -852,8 +852,10 @@ mod tests {
             #[cfg(feature = "migration")]
             consumer.migrate().await;
 
-            prover_select_credentials_and_fail_to_generate_proof(&mut consumer, &consumer_to_institution, None, None)
-                .await;
+            let mut prover = create_proof(&mut consumer, &consumer_to_institution, None).await;
+            let selected_credentials =
+                prover_select_credentials(&mut prover, &mut consumer, &consumer_to_institution, None).await;
+            assert!(selected_credentials.credential_for_referent.is_empty());
         })
         .await;
     }
