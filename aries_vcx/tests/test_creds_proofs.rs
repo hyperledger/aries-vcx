@@ -733,6 +733,8 @@ mod tests {
         .await;
     }
 
+    // todo: credx implementation does not support checking credential value in respect to predicate
+    #[cfg(not(feature = "modular_libs"))]
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_it_should_fail_to_select_credentials_for_predicate() {
@@ -776,6 +778,7 @@ mod tests {
             let mut prover = create_proof(&mut consumer, &consumer_to_institution, None).await;
             let selected_credentials =
                 prover_select_credentials(&mut prover, &mut consumer, &consumer_to_institution, None).await;
+
             assert!(selected_credentials.credential_for_referent.is_empty());
         })
         .await;
