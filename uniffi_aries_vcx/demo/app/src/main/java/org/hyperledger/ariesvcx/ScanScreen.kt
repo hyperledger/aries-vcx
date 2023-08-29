@@ -37,7 +37,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @Composable
-fun ScanScreen(connection: Connection, profileHolder: ProfileHolder) {
+fun ScanScreen(connection: Connection?, profileHolder: ProfileHolder) {
     var scannedQRCodeText by remember {
         mutableStateOf<String?>(null)
     }
@@ -60,11 +60,11 @@ fun ScanScreen(connection: Connection, profileHolder: ProfileHolder) {
             confirmButton = {
                 TextButton(onClick = {
                     scope.launch(Dispatchers.IO) {
-                        connection.acceptInvitation(
+                        connection?.acceptInvitation(
                             profile = profileHolder,
                             invitation = decoded
                         )
-                        connection.sendRequest(profileHolder, "http://google.com", emptyList())
+                        connection?.sendRequest(profileHolder, "http://google.com", emptyList())
                     }
                 }) {
                     Text("Accept")

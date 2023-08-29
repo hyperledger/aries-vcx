@@ -30,7 +30,7 @@ class MainActivity : ComponentActivity() {
     }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Os.setenv("EXTERNAL_STORAGE", this.filesDir.absolutePath, true);
+        Os.setenv("EXTERNAL_STORAGE", this.filesDir.absolutePath, true)
         setContent {
             DemoTheme {
                 Surface (
@@ -38,7 +38,7 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     val navController = rememberNavController()
-                    NavigationAppHost(navController = navController, setProfileHolder = { setProfileHolder(it) }, connection = connection!!, profileHolder = profile!!)
+                    NavigationAppHost(navController = navController, setProfileHolder = { setProfileHolder(it) }, connection = connection, profileHolder = profile)
                 }
             }
         }
@@ -46,13 +46,15 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun NavigationAppHost(navController: NavHostController, setProfileHolder: (ProfileHolder) -> Unit, connection: Connection, profileHolder: ProfileHolder) {
+fun NavigationAppHost(navController: NavHostController, setProfileHolder: (ProfileHolder) -> Unit, connection: Connection?, profileHolder: ProfileHolder?) {
     NavHost(navController = navController, startDestination = "home") {
         composable(Destination.Home.route) {
             HomeScreen(navController = navController, setProfileHolder = setProfileHolder)
         }
         composable(Destination.QRScan.route) {
-            ScanScreen(connection = connection, profileHolder = profileHolder)
+            if (profileHolder != null) {
+                ScanScreen(connection = connection, profileHolder = profileHolder)
+            }
         }
     }
 }
