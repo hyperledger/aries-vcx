@@ -160,12 +160,13 @@ impl IndyCredxAnonCreds {
 
         let wql_query = if let Some(restrictions) = restrictions {
             match restrictions {
-                Value::Array(mut arr) => {
-                    arr.extend(attrs);
-                    json!({ "$and": arr })
+                Value::Array(restrictions) => {
+                    let restrictions_wql = json!({ "$or": restrictions });
+                    attrs.push(restrictions_wql);
+                    json!({ "$and": attrs })
                 }
-                Value::Object(obj) => {
-                    attrs.push(Value::Object(obj));
+                Value::Object(restriction) => {
+                    attrs.push(Value::Object(restriction));
                     json!({ "$and": attrs })
                 }
                 _ => json!(attrs),

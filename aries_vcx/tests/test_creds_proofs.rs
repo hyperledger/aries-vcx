@@ -781,7 +781,6 @@ mod tests {
         .await;
     }
 
-
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_it_should_select_credentials_for_satisfiable_restriction() {
@@ -797,10 +796,7 @@ mod tests {
                 &consumer_to_institution,
                 &institution_to_consumer,
             )
-                .await;
-
-            #[cfg(feature = "migration")]
-            institution.migrate().await;
+            .await;
 
             let requested_attrs_string = serde_json::to_string(&json!([
             {
@@ -812,7 +808,7 @@ mod tests {
                   "issuer_did": institution.institution_did,
                 }]
             }]))
-                .unwrap();
+            .unwrap();
 
             send_proof_request(
                 &mut institution,
@@ -822,17 +818,14 @@ mod tests {
                 "{}",
                 None,
             )
-                .await;
-
-            #[cfg(feature = "migration")]
-            consumer.migrate().await;
+            .await;
 
             let mut prover = create_proof(&mut consumer, &consumer_to_institution, None).await;
             let selected_credentials =
                 prover_select_credentials(&mut prover, &mut consumer, &consumer_to_institution, None).await;
             assert_eq!(selected_credentials.credential_for_referent.is_empty(), false);
         })
-            .await;
+        .await;
     }
 
     #[tokio::test]
