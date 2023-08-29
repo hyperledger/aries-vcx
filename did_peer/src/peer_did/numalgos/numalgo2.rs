@@ -27,7 +27,7 @@ impl ResolvableNumalgo for Numalgo2 {
         did: &Did,
         public_key_encoding: PublicKeyEncoding,
     ) -> Result<DidDocument<ExtraFieldsSov>, DidPeerError> {
-        resolve_numalgo2(did, public_key_encoding)
+        resolve_numalgo2(did, public_key_encoding).map(|builder| builder.build())
     }
 }
 

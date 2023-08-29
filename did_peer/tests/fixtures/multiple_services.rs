@@ -9,6 +9,7 @@ pub static PEER_DID_NUMALGO_3_MULTIPLE_SERVICES: &str =
 pub static DID_DOC_MULTIPLE_SERVICES: &str = r##"
     {
         "id": "did:peer:2.Ez6LSpSrLxbAhg2SHwKk7kwpsH7DM7QjFS5iK6qP87eViohud.Vz6MkqRYqQiSgvZQdnBytw86Qbs2ZWUkGv22od935YF4s8M7V.SW3sidCI6ImRtIiwicyI6Imh0dHBzOi8vZXhhbXBsZS5jb20vZW5kcG9pbnQiLCJyIjpbImRpZDpleGFtcGxlOnNvbWVtZWRpYXRvciNzb21la2V5Il19LHsidCI6ImV4YW1wbGUiLCJzIjoiaHR0cHM6Ly9leGFtcGxlLmNvbS9lbmRwb2ludDIiLCJyIjpbImRpZDpleGFtcGxlOnNvbWVtZWRpYXRvciNzb21la2V5MiJdLCJhIjpbImRpZGNvbW0vdjIiLCJkaWRjb21tL2FpcDI7ZW52PXJmYzU4NyJdfV0",
+        "alsoKnownAs": ["did:peer:3.345007dfdd2caa52be111e303342350e07233ee5f255f916f413ddafb098395a"],
         "verificationMethod": [
             {
                 "id": "#6MkqRYqQ",
