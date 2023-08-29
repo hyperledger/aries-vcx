@@ -42,7 +42,7 @@ open class RustBuffer : Structure() {
 
     companion object {
         internal fun alloc(size: Int = 0) = rustCall() { status ->
-            _UniFFILib.INSTANCE.ffi_vcx_1f5f_rustbuffer_alloc(size, status).also {
+            _UniFFILib.INSTANCE.ffi_vcx_abd2_rustbuffer_alloc(size, status).also {
                 if(it.data == null) {
                    throw RuntimeException("RustBuffer.alloc() returned null data pointer (size=${size})")
                }
@@ -50,7 +50,7 @@ open class RustBuffer : Structure() {
         }
 
         internal fun free(buf: RustBuffer.ByValue) = rustCall() { status ->
-            _UniFFILib.INSTANCE.ffi_vcx_1f5f_rustbuffer_free(buf, status)
+            _UniFFILib.INSTANCE.ffi_vcx_abd2_rustbuffer_free(buf, status)
         }
     }
 
@@ -259,71 +259,71 @@ internal interface _UniFFILib : Library {
         }
     }
 
-    fun ffi_vcx_1f5f_ProfileHolder_object_free(`ptr`: Pointer,
+    fun ffi_vcx_abd2_ProfileHolder_object_free(`ptr`: Pointer,
     _uniffi_out_err: RustCallStatus
     ): Unit
 
-    fun ffi_vcx_1f5f_Connection_object_free(`ptr`: Pointer,
+    fun ffi_vcx_abd2_Connection_object_free(`ptr`: Pointer,
     _uniffi_out_err: RustCallStatus
     ): Unit
 
-    fun vcx_1f5f_Connection_get_state(`ptr`: Pointer,
+    fun vcx_abd2_Connection_get_state(`ptr`: Pointer,
     _uniffi_out_err: RustCallStatus
     ): RustBuffer.ByValue
 
-    fun vcx_1f5f_Connection_pairwise_info(`ptr`: Pointer,
+    fun vcx_abd2_Connection_pairwise_info(`ptr`: Pointer,
     _uniffi_out_err: RustCallStatus
     ): RustBuffer.ByValue
 
-    fun vcx_1f5f_Connection_accept_invitation(`ptr`: Pointer,`profile`: Pointer,`invitation`: RustBuffer.ByValue,
+    fun vcx_abd2_Connection_accept_invitation(`ptr`: Pointer,`profile`: Pointer,`invitation`: RustBuffer.ByValue,
     _uniffi_out_err: RustCallStatus
     ): Unit
 
-    fun vcx_1f5f_Connection_handle_request(`ptr`: Pointer,`profile`: Pointer,`request`: RustBuffer.ByValue,`serviceEndpoint`: RustBuffer.ByValue,`routingKeys`: RustBuffer.ByValue,
+    fun vcx_abd2_Connection_handle_request(`ptr`: Pointer,`profile`: Pointer,`request`: RustBuffer.ByValue,`serviceEndpoint`: RustBuffer.ByValue,`routingKeys`: RustBuffer.ByValue,
     _uniffi_out_err: RustCallStatus
     ): Unit
 
-    fun vcx_1f5f_Connection_handle_response(`ptr`: Pointer,`profile`: Pointer,`response`: RustBuffer.ByValue,
+    fun vcx_abd2_Connection_handle_response(`ptr`: Pointer,`profile`: Pointer,`response`: RustBuffer.ByValue,
     _uniffi_out_err: RustCallStatus
     ): Unit
 
-    fun vcx_1f5f_Connection_send_request(`ptr`: Pointer,`profile`: Pointer,`serviceEndpoint`: RustBuffer.ByValue,`routingKeys`: RustBuffer.ByValue,
+    fun vcx_abd2_Connection_send_request(`ptr`: Pointer,`profile`: Pointer,`serviceEndpoint`: RustBuffer.ByValue,`routingKeys`: RustBuffer.ByValue,
     _uniffi_out_err: RustCallStatus
     ): Unit
 
-    fun vcx_1f5f_Connection_send_response(`ptr`: Pointer,`profile`: Pointer,
+    fun vcx_abd2_Connection_send_response(`ptr`: Pointer,`profile`: Pointer,
     _uniffi_out_err: RustCallStatus
     ): Unit
 
-    fun vcx_1f5f_Connection_send_ack(`ptr`: Pointer,`profile`: Pointer,
+    fun vcx_abd2_Connection_send_ack(`ptr`: Pointer,`profile`: Pointer,
     _uniffi_out_err: RustCallStatus
     ): Unit
 
-    fun vcx_1f5f_new_indy_profile(`walletConfig`: RustBuffer.ByValue,
+    fun vcx_abd2_new_indy_profile(`walletConfig`: RustBuffer.ByValue,
     _uniffi_out_err: RustCallStatus
     ): Pointer
 
-    fun vcx_1f5f_create_inviter(`profile`: Pointer,
+    fun vcx_abd2_create_inviter(`profile`: Pointer,
     _uniffi_out_err: RustCallStatus
     ): Pointer
 
-    fun vcx_1f5f_create_invitee(`profile`: Pointer,`didDoc`: RustBuffer.ByValue,
+    fun vcx_abd2_create_invitee(`profile`: Pointer,
     _uniffi_out_err: RustCallStatus
     ): Pointer
 
-    fun ffi_vcx_1f5f_rustbuffer_alloc(`size`: Int,
+    fun ffi_vcx_abd2_rustbuffer_alloc(`size`: Int,
     _uniffi_out_err: RustCallStatus
     ): RustBuffer.ByValue
 
-    fun ffi_vcx_1f5f_rustbuffer_from_bytes(`bytes`: ForeignBytes.ByValue,
+    fun ffi_vcx_abd2_rustbuffer_from_bytes(`bytes`: ForeignBytes.ByValue,
     _uniffi_out_err: RustCallStatus
     ): RustBuffer.ByValue
 
-    fun ffi_vcx_1f5f_rustbuffer_free(`buf`: RustBuffer.ByValue,
+    fun ffi_vcx_abd2_rustbuffer_free(`buf`: RustBuffer.ByValue,
     _uniffi_out_err: RustCallStatus
     ): Unit
 
-    fun ffi_vcx_1f5f_rustbuffer_reserve(`buf`: RustBuffer.ByValue,`additional`: Int,
+    fun ffi_vcx_abd2_rustbuffer_reserve(`buf`: RustBuffer.ByValue,`additional`: Int,
     _uniffi_out_err: RustCallStatus
     ): RustBuffer.ByValue
 
@@ -584,7 +584,7 @@ class Connection(
      */
     override protected fun freeRustArcPtr() {
         rustCall() { status ->
-            _UniFFILib.INSTANCE.ffi_vcx_1f5f_Connection_object_free(this.pointer, status)
+            _UniFFILib.INSTANCE.ffi_vcx_abd2_Connection_object_free(this.pointer, status)
         }
     }
 
@@ -592,7 +592,7 @@ class Connection(
     @Throws(VcxUniFfiException::class)override fun `getState`(): ConnectionState =
         callWithPointer {
     rustCallWithError(VcxUniFfiException) { _status ->
-    _UniFFILib.INSTANCE.vcx_1f5f_Connection_get_state(it,  _status)
+    _UniFFILib.INSTANCE.vcx_abd2_Connection_get_state(it,  _status)
 }
         }.let {
             FfiConverterTypeConnectionState.lift(it)
@@ -601,7 +601,7 @@ class Connection(
     @Throws(VcxUniFfiException::class)override fun `pairwiseInfo`(): PairwiseInfo =
         callWithPointer {
     rustCallWithError(VcxUniFfiException) { _status ->
-    _UniFFILib.INSTANCE.vcx_1f5f_Connection_pairwise_info(it,  _status)
+    _UniFFILib.INSTANCE.vcx_abd2_Connection_pairwise_info(it,  _status)
 }
         }.let {
             FfiConverterTypePairwiseInfo.lift(it)
@@ -610,7 +610,7 @@ class Connection(
     @Throws(VcxUniFfiException::class)override fun `acceptInvitation`(`profile`: ProfileHolder, `invitation`: String) =
         callWithPointer {
     rustCallWithError(VcxUniFfiException) { _status ->
-    _UniFFILib.INSTANCE.vcx_1f5f_Connection_accept_invitation(it, FfiConverterTypeProfileHolder.lower(`profile`), FfiConverterString.lower(`invitation`),  _status)
+    _UniFFILib.INSTANCE.vcx_abd2_Connection_accept_invitation(it, FfiConverterTypeProfileHolder.lower(`profile`), FfiConverterString.lower(`invitation`),  _status)
 }
         }
     
@@ -618,7 +618,7 @@ class Connection(
     @Throws(VcxUniFfiException::class)override fun `handleRequest`(`profile`: ProfileHolder, `request`: String, `serviceEndpoint`: String, `routingKeys`: List<String>) =
         callWithPointer {
     rustCallWithError(VcxUniFfiException) { _status ->
-    _UniFFILib.INSTANCE.vcx_1f5f_Connection_handle_request(it, FfiConverterTypeProfileHolder.lower(`profile`), FfiConverterString.lower(`request`), FfiConverterString.lower(`serviceEndpoint`), FfiConverterSequenceString.lower(`routingKeys`),  _status)
+    _UniFFILib.INSTANCE.vcx_abd2_Connection_handle_request(it, FfiConverterTypeProfileHolder.lower(`profile`), FfiConverterString.lower(`request`), FfiConverterString.lower(`serviceEndpoint`), FfiConverterSequenceString.lower(`routingKeys`),  _status)
 }
         }
     
@@ -626,7 +626,7 @@ class Connection(
     @Throws(VcxUniFfiException::class)override fun `handleResponse`(`profile`: ProfileHolder, `response`: String) =
         callWithPointer {
     rustCallWithError(VcxUniFfiException) { _status ->
-    _UniFFILib.INSTANCE.vcx_1f5f_Connection_handle_response(it, FfiConverterTypeProfileHolder.lower(`profile`), FfiConverterString.lower(`response`),  _status)
+    _UniFFILib.INSTANCE.vcx_abd2_Connection_handle_response(it, FfiConverterTypeProfileHolder.lower(`profile`), FfiConverterString.lower(`response`),  _status)
 }
         }
     
@@ -634,7 +634,7 @@ class Connection(
     @Throws(VcxUniFfiException::class)override fun `sendRequest`(`profile`: ProfileHolder, `serviceEndpoint`: String, `routingKeys`: List<String>) =
         callWithPointer {
     rustCallWithError(VcxUniFfiException) { _status ->
-    _UniFFILib.INSTANCE.vcx_1f5f_Connection_send_request(it, FfiConverterTypeProfileHolder.lower(`profile`), FfiConverterString.lower(`serviceEndpoint`), FfiConverterSequenceString.lower(`routingKeys`),  _status)
+    _UniFFILib.INSTANCE.vcx_abd2_Connection_send_request(it, FfiConverterTypeProfileHolder.lower(`profile`), FfiConverterString.lower(`serviceEndpoint`), FfiConverterSequenceString.lower(`routingKeys`),  _status)
 }
         }
     
@@ -642,7 +642,7 @@ class Connection(
     @Throws(VcxUniFfiException::class)override fun `sendResponse`(`profile`: ProfileHolder) =
         callWithPointer {
     rustCallWithError(VcxUniFfiException) { _status ->
-    _UniFFILib.INSTANCE.vcx_1f5f_Connection_send_response(it, FfiConverterTypeProfileHolder.lower(`profile`),  _status)
+    _UniFFILib.INSTANCE.vcx_abd2_Connection_send_response(it, FfiConverterTypeProfileHolder.lower(`profile`),  _status)
 }
         }
     
@@ -650,7 +650,7 @@ class Connection(
     @Throws(VcxUniFfiException::class)override fun `sendAck`(`profile`: ProfileHolder) =
         callWithPointer {
     rustCallWithError(VcxUniFfiException) { _status ->
-    _UniFFILib.INSTANCE.vcx_1f5f_Connection_send_ack(it, FfiConverterTypeProfileHolder.lower(`profile`),  _status)
+    _UniFFILib.INSTANCE.vcx_abd2_Connection_send_ack(it, FfiConverterTypeProfileHolder.lower(`profile`),  _status)
 }
         }
     
@@ -702,7 +702,7 @@ class ProfileHolder(
      */
     override protected fun freeRustArcPtr() {
         rustCall() { status ->
-            _UniFFILib.INSTANCE.ffi_vcx_1f5f_ProfileHolder_object_free(this.pointer, status)
+            _UniFFILib.INSTANCE.ffi_vcx_abd2_ProfileHolder_object_free(this.pointer, status)
         }
     }
 
@@ -1000,7 +1000,7 @@ public object FfiConverterSequenceString: FfiConverterRustBuffer<List<String>> {
 fun `newIndyProfile`(`walletConfig`: WalletConfig): ProfileHolder {
     return FfiConverterTypeProfileHolder.lift(
     rustCallWithError(VcxUniFfiException) { _status ->
-    _UniFFILib.INSTANCE.vcx_1f5f_new_indy_profile(FfiConverterTypeWalletConfig.lower(`walletConfig`), _status)
+    _UniFFILib.INSTANCE.vcx_abd2_new_indy_profile(FfiConverterTypeWalletConfig.lower(`walletConfig`), _status)
 })
 }
 
@@ -1010,17 +1010,17 @@ fun `newIndyProfile`(`walletConfig`: WalletConfig): ProfileHolder {
 fun `createInviter`(`profile`: ProfileHolder): Connection {
     return FfiConverterTypeConnection.lift(
     rustCallWithError(VcxUniFfiException) { _status ->
-    _UniFFILib.INSTANCE.vcx_1f5f_create_inviter(FfiConverterTypeProfileHolder.lower(`profile`), _status)
+    _UniFFILib.INSTANCE.vcx_abd2_create_inviter(FfiConverterTypeProfileHolder.lower(`profile`), _status)
 })
 }
 
 
 @Throws(VcxUniFfiException::class)
 
-fun `createInvitee`(`profile`: ProfileHolder, `didDoc`: String): Connection {
+fun `createInvitee`(`profile`: ProfileHolder): Connection {
     return FfiConverterTypeConnection.lift(
     rustCallWithError(VcxUniFfiException) { _status ->
-    _UniFFILib.INSTANCE.vcx_1f5f_create_invitee(FfiConverterTypeProfileHolder.lower(`profile`), FfiConverterString.lower(`didDoc`), _status)
+    _UniFFILib.INSTANCE.vcx_abd2_create_invitee(FfiConverterTypeProfileHolder.lower(`profile`), _status)
 })
 }
 

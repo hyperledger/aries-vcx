@@ -26,7 +26,7 @@ class MainActivity : ComponentActivity() {
     private var connection: Connection? = null
     private fun setProfileHolder(profileHolder: ProfileHolder) {
         profile = profileHolder
-        connection = createInvitee(profileHolder, "")
+        connection = createInvitee(profileHolder)
     }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

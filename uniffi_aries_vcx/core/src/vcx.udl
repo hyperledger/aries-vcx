@@ -78,5 +78,5 @@ namespace vcx {
     Connection create_inviter(ProfileHolder profile);
 
     [Throws=VcxUniFFIError]
-    Connection create_invitee(ProfileHolder profile, string did_doc);
+    Connection create_invitee(ProfileHolder profile);
 };
