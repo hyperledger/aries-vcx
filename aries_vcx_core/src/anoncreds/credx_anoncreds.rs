@@ -169,10 +169,13 @@ impl IndyCredxAnonCreds {
                     attrs.push(Value::Object(restriction));
                     json!({ "$and": attrs })
                 }
-                _ => json!(attrs),
+                _ => Err(AriesVcxCoreError::from_msg(
+                    AriesVcxCoreErrorKind::InvalidInput,
+                    "Invalid attribute restrictions (must be array or an object)",
+                ))?,
             }
         } else {
-            json!(attrs)
+            json!({ "$and": attrs })
         };
 
         let wql_query = serde_json::to_string(&wql_query)?;
@@ -751,7 +754,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
                     .map(|v| v.try_as_str().map(_normalize_attr_name))
                     .collect::<Result<_, _>>()?,
                 _ => Err(AriesVcxCoreError::from_msg(
-                    AriesVcxCoreErrorKind::InvalidAttributesStructure,
+                    AriesVcxCoreErrorKind::InvalidInput,
                     "exactly one of 'name' or 'names' must be present",
                 ))?,
             };
