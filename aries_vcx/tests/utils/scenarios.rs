@@ -1131,6 +1131,7 @@ pub mod test_utils {
             .retrieve_credentials(&alice.profile.inject_anoncreds())
             .await
             .unwrap();
+        info!("prover_select_credentials >> retrieved_credentials: {retrieved_credentials:?}");
         let selected_credentials = match requested_values {
             Some(requested_values) => {
                 let credential_data = prover.presentation_request_data().unwrap();
@@ -1373,7 +1374,7 @@ pub mod test_utils {
         with_tails: bool,
     ) -> SelectedCredentials {
         info!(
-            "test_real_proof >>> retrieved matching credentials {:?}",
+            "retrieved_to_selected_credentials_simple >>> retrieved matching credentials {:?}",
             retrieved_credentials
         );
         let mut selected_credentials = SelectedCredentials::default();
@@ -1399,7 +1400,7 @@ pub mod test_utils {
         with_tails: bool,
     ) -> SelectedCredentials {
         info!(
-            "test_real_proof >>> retrieved matching credentials {:?}",
+            "retrieved_to_selected_credentials_specific >>> retrieved matching credentials {:?}",
             retrieved_credentials
         );
         let credential_data: Value = serde_json::from_str(credential_data).unwrap();
