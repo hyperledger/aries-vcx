@@ -665,79 +665,6 @@ mod tests {
 
     #[tokio::test]
     #[ignore]
-    async fn test_agency_pool_proof_should_be_validated_even_if_at_least_one_of_restrictions_set_is_valid() {
-        SetupPoolDirectory::run(|setup| async move {
-            let mut institution = create_faber_trustee(setup.genesis_file_path.clone()).await;
-            let mut consumer = create_alice(setup.genesis_file_path).await;
-
-            let (consumer_to_institution, institution_to_consumer) =
-                create_connected_connections(&mut consumer, &mut institution).await;
-            let (schema_id, cred_def_id, _rev_reg_id, _cred_def, _rev_reg, _credential_handle) =
-                issue_address_credential(
-                    &mut consumer,
-                    &mut institution,
-                    &consumer_to_institution,
-                    &institution_to_consumer,
-                )
-                .await;
-
-            #[cfg(feature = "migration")]
-            institution.migrate().await;
-
-            let requested_attrs_string = serde_json::to_string(&json!([
-            {
-                "name": "address1",
-                "restrictions": [{
-                  "issuer_did": "abcdef0000000000000000"
-                },
-                {
-                  "issuer_did": institution.institution_did,
-                  "schema_id": schema_id,
-                }]
-            }
-            ]))
-            .unwrap();
-
-            info!(
-                "test_proof_should_be_validated :: Going to seng proof request with attributes {}",
-                &requested_attrs_string
-            );
-            let mut verifier = send_proof_request(
-                &mut institution,
-                &institution_to_consumer,
-                &requested_attrs_string,
-                "[]",
-                "{}",
-                None,
-            )
-            .await;
-
-            #[cfg(feature = "migration")]
-            consumer.migrate().await;
-
-            prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_institution, None, None).await;
-
-            info!("test_proof_should_be_validated :: verifier :: going to verify proof");
-            verifier_update_with_mediator(
-                &mut verifier,
-                &institution.profile.inject_wallet(),
-                &institution.profile.inject_anoncreds_ledger_read(),
-                &institution.profile.inject_anoncreds(),
-                &institution.agency_client,
-                &institution_to_consumer,
-            )
-            .await
-            .unwrap();
-            assert_eq!(
-                verifier.get_verification_status(),
-                PresentationVerificationStatus::Valid
-            );
-        })
-        .await;
-    }
-
-    #[tokio::test]
-    #[ignore]
     async fn test_agency_pool_proof_with_predicates_should_be_validated() {
         SetupPoolDirectory::run(|setup| async move {
             let mut institution = create_faber_trustee(setup.genesis_file_path.clone()).await;
@@ -826,18 +753,12 @@ mod tests {
             #[cfg(feature = "migration")]
             institution.migrate().await;
 
-            let requested_preds_string = serde_json::to_string(&json!([
-            {
+            let requested_preds_string = serde_json::to_string(&json!([{
                 "name": "zip",
                 "p_type": ">=",
                 "p_value": 85000
             }]))
             .unwrap();
-
-            info!(
-                "test_basic_proof :: Going to seng proof request with attributes {}",
-                &requested_preds_string
-            );
 
             send_proof_request(
                 &mut institution,
@@ -858,6 +779,60 @@ mod tests {
             assert!(selected_credentials.credential_for_referent.is_empty());
         })
         .await;
+    }
+
+
+    #[tokio::test]
+    #[ignore]
+    async fn test_agency_pool_it_should_select_credentials_for_satisfiable_restriction() {
+        SetupPoolDirectory::run(|setup| async move {
+            let mut institution = create_faber_trustee(setup.genesis_file_path.clone()).await;
+            let mut consumer = create_alice(setup.genesis_file_path).await;
+
+            let (consumer_to_institution, institution_to_consumer) =
+                create_connected_connections(&mut consumer, &mut institution).await;
+            issue_address_credential(
+                &mut consumer,
+                &mut institution,
+                &consumer_to_institution,
+                &institution_to_consumer,
+            )
+                .await;
+
+            #[cfg(feature = "migration")]
+            institution.migrate().await;
+
+            let requested_attrs_string = serde_json::to_string(&json!([
+            {
+                "name": "address1",
+                "restrictions": [{
+                  "issuer_did": "abcdef0000000000000000",
+                },
+                {
+                  "issuer_did": institution.institution_did,
+                }]
+            }]))
+                .unwrap();
+
+            send_proof_request(
+                &mut institution,
+                &institution_to_consumer,
+                &requested_attrs_string,
+                "[]",
+                "{}",
+                None,
+            )
+                .await;
+
+            #[cfg(feature = "migration")]
+            consumer.migrate().await;
+
+            let mut prover = create_proof(&mut consumer, &consumer_to_institution, None).await;
+            let selected_credentials =
+                prover_select_credentials(&mut prover, &mut consumer, &consumer_to_institution, None).await;
+            assert_eq!(selected_credentials.credential_for_referent.is_empty(), false);
+        })
+            .await;
     }
 
     #[tokio::test]
