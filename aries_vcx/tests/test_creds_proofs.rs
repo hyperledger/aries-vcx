@@ -679,7 +679,7 @@ mod tests {
                     &consumer_to_institution,
                     &institution_to_consumer,
                 )
-                    .await;
+                .await;
 
             #[cfg(feature = "migration")]
             institution.migrate().await;
@@ -696,7 +696,7 @@ mod tests {
                 }]
             }
             ]))
-                .unwrap();
+            .unwrap();
 
             info!(
                 "test_proof_should_be_validated :: Going to seng proof request with attributes {}",
@@ -710,7 +710,7 @@ mod tests {
                 "{}",
                 None,
             )
-                .await;
+            .await;
 
             #[cfg(feature = "migration")]
             consumer.migrate().await;
@@ -726,14 +726,14 @@ mod tests {
                 &institution.agency_client,
                 &institution_to_consumer,
             )
-                .await
-                .unwrap();
+            .await
+            .unwrap();
             assert_eq!(
                 verifier.get_verification_status(),
                 PresentationVerificationStatus::Valid
             );
         })
-            .await;
+        .await;
     }
 
     #[tokio::test]

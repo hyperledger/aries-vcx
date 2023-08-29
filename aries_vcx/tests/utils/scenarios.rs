@@ -1121,7 +1121,7 @@ pub mod test_utils {
         prover: &mut Prover,
         alice: &mut Alice,
         connection: &MediatedConnection,
-        requested_values: Option<&str>,
+        preselected_credentials: Option<&str>,
     ) -> SelectedCredentials {
         prover_update_with_mediator(prover, &alice.agency_client, connection)
             .await
@@ -1132,15 +1132,10 @@ pub mod test_utils {
             .await
             .unwrap();
         info!("prover_select_credentials >> retrieved_credentials: {retrieved_credentials:?}");
-        let selected_credentials = match requested_values {
-            Some(requested_values) => {
+        let selected_credentials = match preselected_credentials {
+            Some(preselected_credentials) => {
                 let credential_data = prover.presentation_request_data().unwrap();
-                retrieved_to_selected_credentials_specific(
-                    &retrieved_credentials,
-                    requested_values,
-                    &credential_data,
-                    true,
-                )
+                match_preselected_credentials(&retrieved_credentials, preselected_credentials, &credential_data, true)
             }
             _ => retrieved_to_selected_credentials_simple(&retrieved_credentials, true),
         };
@@ -1152,12 +1147,12 @@ pub mod test_utils {
         alice: &mut Alice,
         consumer_to_institution: &MediatedConnection,
         request_name: Option<&str>,
-        requested_values: Option<&str>,
+        preselected_credentials: Option<&str>,
         expected_prover_state: ProverState,
     ) {
         let mut prover = create_proof(alice, consumer_to_institution, request_name).await;
         let selected_credentials =
-            prover_select_credentials(&mut prover, alice, consumer_to_institution, requested_values).await;
+            prover_select_credentials(&mut prover, alice, consumer_to_institution, preselected_credentials).await;
         info!(
             "Prover :: Retrieved credential converted to selected: {:?}",
             &selected_credentials
@@ -1170,13 +1165,13 @@ pub mod test_utils {
         consumer: &mut Alice,
         consumer_to_institution: &MediatedConnection,
         request_name: Option<&str>,
-        requested_values: Option<&str>,
+        preselected_credentials: Option<&str>,
     ) {
         prover_select_credentials_and_send_proof_and_assert(
             consumer,
             consumer_to_institution,
             request_name,
-            requested_values,
+            preselected_credentials,
             ProverState::PresentationSent,
         )
         .await
@@ -1393,9 +1388,9 @@ pub mod test_utils {
         return selected_credentials;
     }
 
-    pub fn retrieved_to_selected_credentials_specific(
+    pub fn match_preselected_credentials(
         retrieved_credentials: &RetrievedCredentials,
-        requested_values: &str,
+        preselected_credentials: &str,
         credential_data: &str,
         with_tails: bool,
     ) -> SelectedCredentials {
@@ -1404,7 +1399,7 @@ pub mod test_utils {
             retrieved_credentials
         );
         let credential_data: Value = serde_json::from_str(credential_data).unwrap();
-        let requested_values: Value = serde_json::from_str(requested_values).unwrap();
+        let preselected_credentials: Value = serde_json::from_str(preselected_credentials).unwrap();
         let requested_attributes: &Value = &credential_data["requested_attributes"];
 
         let mut selected_credentials = SelectedCredentials::default();
@@ -1415,8 +1410,8 @@ pub mod test_utils {
                 .into_iter()
                 .filter_map(|cred| {
                     let attribute_name = requested_attributes[referent]["name"].as_str().unwrap();
-                    let requested_value = requested_values[attribute_name].as_str().unwrap();
-                    if cred.cred_info.attributes[attribute_name] == requested_value {
+                    let preselected_credential = preselected_credentials[attribute_name].as_str().unwrap();
+                    if cred.cred_info.attributes[attribute_name] == preselected_credential {
                         Some(cred)
                     } else {
                         None
