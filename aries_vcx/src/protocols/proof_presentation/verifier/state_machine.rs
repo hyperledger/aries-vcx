@@ -185,15 +185,13 @@ impl VerifierSM {
         Ok(Self { state, ..self })
     }
 
-    pub async fn reject_presentation_proposal(self, reason: String, send_message: SendClosure) -> VcxResult<Self> {
+    pub async fn reject_presentation_proposal(self, problem_report: ProblemReport) -> VcxResult<Self> {
         let (state, thread_id) = match self.state {
             VerifierFullState::PresentationProposalReceived(state) => {
                 let thread_id = match state.presentation_proposal.decorators.thread {
                     Some(thread) => thread.thid,
                     None => state.presentation_proposal.id,
                 };
-                let problem_report = build_problem_report_msg(Some(reason.to_string()), &thread_id);
-                send_message(problem_report.clone().into()).await?;
                 (
                     VerifierFullState::Finished(FinishedState::declined(problem_report)),
                     thread_id,
