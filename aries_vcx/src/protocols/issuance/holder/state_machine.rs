@@ -241,7 +241,6 @@ impl HolderSM {
                 let mut timing = Timing::default();
                 timing.out_time = Some(Utc::now());
                 msg.decorators.timing = Some(timing);
-                error!("Sending msg {msg:?}"); // TODO: it looks like received message has thread "test", but doesnt look like thats what we sending
                 send_message(msg.into()).await?;
             }
             _ => {
