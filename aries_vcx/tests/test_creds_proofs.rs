@@ -587,10 +587,10 @@ mod tests {
         accept_cred_proposal, accept_cred_proposal_1, accept_offer, accept_proof_proposal, attr_names,
         create_and_send_nonrevocable_cred_offer, create_connected_connections, create_proof, decline_offer,
         generate_and_send_proof, issue_address_credential, prover_select_credentials,
-        prover_select_credentials_and_fail_to_generate_proof, prover_select_credentials_and_send_proof,
-        receive_proof_proposal_rejection, reject_proof_proposal, retrieved_to_selected_credentials_simple,
-        send_cred_proposal, send_cred_proposal_1, send_cred_req, send_credential, send_proof_proposal,
-        send_proof_proposal_1, send_proof_request, verifier_create_proof_and_send_request, verify_proof,
+        prover_select_credentials_and_send_proof, receive_proof_proposal_rejection, reject_proof_proposal,
+        retrieved_to_selected_credentials_simple, send_cred_proposal, send_cred_proposal_1, send_cred_req,
+        send_credential, send_proof_proposal, send_proof_proposal_1, send_proof_request,
+        verifier_create_proof_and_send_request, verify_proof,
     };
 
     #[tokio::test]
@@ -733,6 +733,8 @@ mod tests {
         .await;
     }
 
+    // todo: credx implementation does not support checking credential value in respect to predicate
+    #[cfg(not(feature = "modular_libs"))]
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_it_should_fail_to_select_credentials_for_predicate() {
@@ -753,18 +755,12 @@ mod tests {
             #[cfg(feature = "migration")]
             institution.migrate().await;
 
-            let requested_preds_string = serde_json::to_string(&json!([
-            {
+            let requested_preds_string = serde_json::to_string(&json!([{
                 "name": "zip",
                 "p_type": ">=",
                 "p_value": 85000
             }]))
             .unwrap();
-
-            info!(
-                "test_basic_proof :: Going to seng proof request with attributes {}",
-                &requested_preds_string
-            );
 
             send_proof_request(
                 &mut institution,
@@ -779,8 +775,58 @@ mod tests {
             #[cfg(feature = "migration")]
             consumer.migrate().await;
 
-            prover_select_credentials_and_fail_to_generate_proof(&mut consumer, &consumer_to_institution, None, None)
-                .await;
+            let mut prover = create_proof(&mut consumer, &consumer_to_institution, None).await;
+            let selected_credentials =
+                prover_select_credentials(&mut prover, &mut consumer, &consumer_to_institution, None).await;
+
+            assert!(selected_credentials.credential_for_referent.is_empty());
+        })
+        .await;
+    }
+
+    #[tokio::test]
+    #[ignore]
+    async fn test_agency_pool_it_should_select_credentials_for_satisfiable_restriction() {
+        SetupPoolDirectory::run(|setup| async move {
+            let mut institution = create_faber_trustee(setup.genesis_file_path.clone()).await;
+            let mut consumer = create_alice(setup.genesis_file_path).await;
+
+            let (consumer_to_institution, institution_to_consumer) =
+                create_connected_connections(&mut consumer, &mut institution).await;
+            issue_address_credential(
+                &mut consumer,
+                &mut institution,
+                &consumer_to_institution,
+                &institution_to_consumer,
+            )
+            .await;
+
+            let requested_attrs_string = serde_json::to_string(&json!([
+            {
+                "name": "address1",
+                "restrictions": [{
+                  "issuer_did": "abcdef0000000000000000",
+                },
+                {
+                  "issuer_did": institution.institution_did,
+                }]
+            }]))
+            .unwrap();
+
+            send_proof_request(
+                &mut institution,
+                &institution_to_consumer,
+                &requested_attrs_string,
+                "[]",
+                "{}",
+                None,
+            )
+            .await;
+
+            let mut prover = create_proof(&mut consumer, &consumer_to_institution, None).await;
+            let selected_credentials =
+                prover_select_credentials(&mut prover, &mut consumer, &consumer_to_institution, None).await;
+            assert_eq!(selected_credentials.credential_for_referent.is_empty(), false);
         })
         .await;
     }
