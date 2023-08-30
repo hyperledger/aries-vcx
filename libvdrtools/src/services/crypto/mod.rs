@@ -530,13 +530,6 @@ impl CryptoService {
         res
     }
 
-    pub(crate) fn validate_opt_did(&self, did: Option<&DidValue>) -> IndyResult<()> {
-        match did {
-            Some(did) => Ok(self.validate_did(did)?),
-            None => Ok(()),
-        }
-    }
-
     pub(crate) fn encrypt_plaintext(
         &self,
         plaintext: Vec<u8>,

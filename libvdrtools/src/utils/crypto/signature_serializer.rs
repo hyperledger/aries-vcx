@@ -3,11 +3,6 @@ use indy_api_types::errors::prelude::*;
 use indy_utils::crypto::hash::Hash;
 use serde_json::Value;
 
-pub fn serialize_signature(v: Value) -> Result<String, IndyError> {
-    let _type = v["operation"]["type"].clone();
-    _serialize_signature(v, true, _type.as_str())
-}
-
 fn _serialize_signature(
     v: Value,
     is_top_level: bool,
@@ -72,6 +67,11 @@ fn _serialize_signature(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn serialize_signature(v: Value) -> Result<String, IndyError> {
+        let _type = v["operation"]["type"].clone();
+        _serialize_signature(v, true, _type.as_str())
+    }
 
     #[test]
     fn signature_serialize_works() {
