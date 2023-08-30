@@ -211,21 +211,6 @@ impl ProverSM {
         Ok(Self { state, ..self })
     }
 
-    pub fn set_presentation(self, mut presentation: Presentation) -> VcxResult<Self> {
-        let state = match self.state {
-            ProverFullState::PresentationRequestReceived(state) => {
-                presentation.decorators.thread.thid = self.thread_id.clone();
-
-                ProverFullState::PresentationPrepared((state, presentation).into())
-            }
-            s => {
-                warn!("Unable to send set presentation in state {}", s);
-                s
-            }
-        };
-        Ok(Self { state, ..self })
-    }
-
     #[deprecated]
     pub async fn send_presentation(self, send_message: SendClosure) -> VcxResult<Self> {
         let state = match self.state {

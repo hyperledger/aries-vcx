@@ -93,12 +93,6 @@ impl Prover {
         Ok(self.prover_sm.get_presentation_msg()?.to_owned())
     }
 
-    pub fn set_presentation(&mut self, presentation: Presentation) -> VcxResult<()> {
-        trace!("Prover::set_presentation >>>");
-        self.prover_sm = self.prover_sm.clone().set_presentation(presentation)?;
-        Ok(())
-    }
-
     pub async fn build_proposal(&mut self, proposal_data: PresentationProposalData) -> VcxResult<ProposePresentation> {
         trace!("Prover::build_proposal >>>");
         self.prover_sm = self
