@@ -13,7 +13,6 @@ use crate::protocols::proof_presentation::prover::states::presentation_prepared:
 use crate::protocols::proof_presentation::prover::states::presentation_proposal_sent::PresentationProposalSet;
 use crate::protocols::proof_presentation::prover::states::presentation_request_received::PresentationRequestReceived;
 use crate::protocols::proof_presentation::prover::states::presentation_sent::PresentationSentState;
-use crate::protocols::SendClosure;
 
 use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
 use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
@@ -211,23 +210,32 @@ impl ProverSM {
         Ok(Self { state, ..self })
     }
 
-    #[deprecated]
-    pub async fn set_presentation(self, send_message: SendClosure) -> VcxResult<Self> {
+    pub async fn set_presentation(self) -> VcxResult<Self> {
         let state = match self.state {
-            ProverFullState::PresentationPrepared(state) => {
-                send_message(state.presentation.clone().into()).await?;
-                ProverFullState::PresentationSet((state).into())
-            }
-            ProverFullState::PresentationPreparationFailed(state) => {
-                send_message(state.problem_report.clone().into()).await?;
-                ProverFullState::Finished((state).into())
-            }
+            ProverFullState::PresentationPrepared(state) => ProverFullState::PresentationSet((state).into()),
+            ProverFullState::PresentationPreparationFailed(state) => ProverFullState::Finished((state).into()),
             s => {
                 warn!("Unable to send send presentation in state {}", s);
                 s
             }
         };
         Ok(Self { state, ..self })
+    }
+
+    pub fn get_problem_report(&self) -> VcxResult<ProblemReport> {
+        match &self.state {
+            ProverFullState::Finished(state) => match &state.status {
+                Status::Failed(problem_report) | Status::Declined(problem_report) => Ok(problem_report.clone()),
+                _ => Err(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::NotReady,
+                    "Cannot get problem report",
+                )),
+            },
+            _ => Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::NotReady,
+                "Cannot get problem report",
+            )),
+        }
     }
 
     pub fn receive_presentation_request(self, request: RequestPresentation) -> VcxResult<ProverSM> {
