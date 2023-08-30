@@ -79,7 +79,7 @@ impl Default for VerifierFullState {
     }
 }
 
-fn build_verification_ack(thread_id: &str) -> AckPresentation {
+pub fn build_verification_ack(thread_id: &str) -> AckPresentation {
     let content = AckPresentationContent::new(AckStatus::Ok);
     let mut decorators = AckDecorators::new(Thread::new(thread_id.to_owned()));
     let mut timing = Timing::default();
@@ -266,21 +266,6 @@ impl VerifierSM {
             }
             s => {
                 warn!("Unable to verify presentation in state {}", s);
-                s
-            }
-        };
-        Ok(Self { state, ..self })
-    }
-
-    pub async fn send_presentation_ack(self, send_message: SendClosure) -> VcxResult<Self> {
-        let state = match self.state {
-            VerifierFullState::Finished(state) => {
-                let ack = build_verification_ack(&self.thread_id);
-                send_message(ack.into()).await?;
-                VerifierFullState::Finished(state)
-            }
-            s => {
-                warn!("Unable to send presentation ack in state {}", s);
                 s
             }
         };

@@ -14,7 +14,9 @@ use messages::AriesMessage;
 use crate::common::proofs::proof_request::PresentationRequestData;
 use crate::errors::error::prelude::*;
 use crate::handlers::util::get_attach_as_string;
-use crate::protocols::proof_presentation::verifier::state_machine::{VerifierSM, VerifierState};
+use crate::protocols::proof_presentation::verifier::state_machine::{
+    build_verification_ack, VerifierSM, VerifierState,
+};
 use crate::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
 use crate::protocols::SendClosure;
 
@@ -72,7 +74,14 @@ impl Verifier {
 
     pub async fn send_presentation_ack(&mut self, send_message: SendClosure) -> VcxResult<()> {
         trace!("Verifier::send_presentation_ack >>>");
-        self.verifier_sm = self.verifier_sm.clone().send_presentation_ack(send_message).await?;
+        let state = self.verifier_sm.get_state();
+        if state != VerifierState::Finished {
+            warn!("Unable to send presentation ack in state {:?}", state);
+            return Ok(());
+        }
+        let thread_id = self.verifier_sm.thread_id();
+        let ack = build_verification_ack(&thread_id);
+        send_message(ack.into()).await?;
         Ok(())
     }
 
