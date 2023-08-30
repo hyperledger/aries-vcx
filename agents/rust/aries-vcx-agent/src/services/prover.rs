@@ -98,8 +98,7 @@ impl ServiceProver {
             Box::pin(async move { connection.send_message(&wallet, &msg, &HttpClient).await })
         });
 
-        prover.build_proposal(proposal).await?;
-        let proposal = prover.get_proposal()?.to_owned();
+        let proposal = prover.build_proposal(proposal).await?;
         send_closure(proposal.into()).await?;
         self.provers
             .insert(&prover.get_thread_id()?, ProverWrapper::new(prover, connection_id))
