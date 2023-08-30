@@ -80,6 +80,7 @@ mod tests {
             public_key_multibase: PUBLIC_KEY_MULTIBASE.to_string(),
         };
         assert_eq!(public_key_field.key_decoded().unwrap(), PUBLIC_KEY_BYTES);
+        assert_eq!(public_key_field.base58().unwrap(), PUBLIC_KEY_BASE58);
     }
 
     #[test]
