@@ -3,19 +3,26 @@ use std::sync::Arc;
 
 use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
 use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
+use chrono::Utc;
+use messages::decorators::thread::Thread;
+use messages::decorators::timing::Timing;
 use messages::msg_fields::protocols::notification::Notification;
 use messages::msg_fields::protocols::present_proof::ack::AckPresentation;
 use messages::msg_fields::protocols::present_proof::present::Presentation;
-use messages::msg_fields::protocols::present_proof::propose::PresentationPreview;
+use messages::msg_fields::protocols::present_proof::propose::{
+    PresentationPreview, ProposePresentation, ProposePresentationContent, ProposePresentationDecorators,
+};
 use messages::msg_fields::protocols::present_proof::request::RequestPresentation;
 use messages::msg_fields::protocols::present_proof::PresentProof;
 use messages::msg_fields::protocols::report_problem::ProblemReport;
 use messages::msg_parts::MsgParts;
 use messages::AriesMessage;
+use uuid::Uuid;
 
 use crate::errors::error::prelude::*;
 use crate::handlers::util::{get_attach_as_string, PresentationProposalData};
-use crate::protocols::proof_presentation::prover::state_machine::{ProverSM, ProverState};
+use crate::protocols::common::build_problem_report_msg;
+use crate::protocols::proof_presentation::prover::state_machine::{ProverFullState, ProverSM, ProverState};
 use crate::protocols::SendClosure;
 
 use super::types::{RetrievedCredentials, SelectedCredentials};
@@ -92,18 +99,19 @@ impl Prover {
         Ok(())
     }
 
-    pub async fn send_proposal(
-        &mut self,
-        proposal_data: PresentationProposalData,
-        send_message: SendClosure,
-    ) -> VcxResult<()> {
+    pub async fn build_proposal(&mut self, proposal_data: PresentationProposalData) -> VcxResult<()> {
         trace!("Prover::send_proposal >>>");
         self.prover_sm = self
             .prover_sm
             .clone()
-            .send_presentation_proposal(proposal_data, send_message)
+            .build_presentation_proposal(proposal_data)
             .await?;
         Ok(())
+    }
+
+    pub async fn send_proposal(&mut self, send_message: SendClosure) -> VcxResult<()> {
+        trace!("Prover::send_proposal >>>");
+        self.prover_sm.clone().send_proposal(send_message).await
     }
 
     pub async fn send_presentation(&mut self, send_message: SendClosure) -> VcxResult<()> {
@@ -191,6 +199,7 @@ impl Prover {
         Ok(())
     }
 
+    // TODO: Can we delete this (please)?
     pub async fn decline_presentation_request(
         &mut self,
         send_message: SendClosure,
@@ -204,9 +213,12 @@ impl Prover {
         );
         self.prover_sm = match (reason, proposal) {
             (Some(reason), None) => {
+                let thread_id = self.prover_sm.get_thread_id()?;
+                let problem_report = build_problem_report_msg(Some(reason), &thread_id);
+                send_message(problem_report.clone().into()).await?;
                 self.prover_sm
                     .clone()
-                    .decline_presentation_request(reason, send_message)
+                    .decline_presentation_request(problem_report)
                     .await?
             }
             (None, Some(proposal)) => {
@@ -216,10 +228,19 @@ impl Prover {
                         format!("Cannot serialize Presentation Preview: {:?}", err),
                     )
                 })?;
-                self.prover_sm
-                    .clone()
-                    .negotiate_presentation(presentation_preview, send_message)
-                    .await?
+                let thread_id = self.prover_sm.get_thread_id()?;
+                let id = Uuid::new_v4().to_string();
+                let content = ProposePresentationContent::new(presentation_preview);
+                let mut decorators = ProposePresentationDecorators::default();
+                let thread = Thread::new(thread_id.to_owned());
+                let mut timing = Timing::default();
+                timing.out_time = Some(Utc::now());
+                decorators.thread = Some(thread);
+                decorators.timing = Some(timing);
+
+                let proposal = ProposePresentation::with_decorators(id, content, decorators);
+                send_message(proposal.into()).await?;
+                self.prover_sm.clone().negotiate_presentation().await?
             }
             (None, None) => {
                 return Err(AriesVcxError::from_msg(

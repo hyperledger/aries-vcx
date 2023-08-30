@@ -372,7 +372,7 @@ mod tests {
             .await
             .unwrap();
         send_proof(handle_proof, connection_h).await.unwrap();
-        assert_eq!(ProverState::PresentationSent as u32, get_state(handle_proof).unwrap());
+        assert_eq!(ProverState::PresentationSet as u32, get_state(handle_proof).unwrap());
 
         update_state(handle_proof, Some(ARIES_PROOF_PRESENTATION_ACK), connection_h)
             .await
@@ -403,7 +403,7 @@ mod tests {
         assert_eq!(ProverState::PresentationPrepared as u32, get_state(handle).unwrap());
 
         send_proof(handle, connection_handle).await.unwrap();
-        assert_eq!(ProverState::PresentationSent as u32, get_state(handle).unwrap());
+        assert_eq!(ProverState::PresentationSet as u32, get_state(handle).unwrap());
 
         mediated_connection::release(connection_handle).unwrap();
         let connection_handle = build_test_connection_inviter_requested().await;

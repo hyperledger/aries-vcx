@@ -295,7 +295,7 @@ impl Alice {
             )
             .await
             .unwrap();
-        assert_eq!(ProverState::PresentationSent, self.prover.get_state());
+        assert_eq!(ProverState::PresentationSet, self.prover.get_state());
     }
 
     pub async fn ensure_presentation_verified(&mut self) {

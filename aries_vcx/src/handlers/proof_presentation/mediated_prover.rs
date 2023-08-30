@@ -16,7 +16,7 @@ pub fn prover_find_message_to_handle(
     trace!("prover_find_message_to_handle >>> messages: {:?}", messages);
     for (uid, message) in messages {
         match sm.get_state() {
-            ProverState::PresentationProposalSent => match &message {
+            ProverState::PresentationProposalSet => match &message {
                 AriesMessage::ReportProblem(msg) => {
                     if matches_opt_thread_id!(msg, sm.get_thread_id().unwrap().as_str()) {
                         return Some((uid, message));
@@ -34,7 +34,7 @@ pub fn prover_find_message_to_handle(
                 }
                 _ => {}
             },
-            ProverState::PresentationSent => match &message {
+            ProverState::PresentationSet => match &message {
                 AriesMessage::Notification(Notification::Ack(msg)) => {
                     if matches_thread_id!(msg, sm.get_thread_id().unwrap().as_str()) {
                         return Some((uid, message));

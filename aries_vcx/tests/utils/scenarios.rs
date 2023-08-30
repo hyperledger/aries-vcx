@@ -625,9 +625,9 @@ pub mod test_utils {
             proposal_data.attributes.push(attr);
         }
         let mut prover = Prover::create("1").unwrap();
+        prover.build_proposal(proposal_data).await.unwrap();
         prover
             .send_proposal(
-                proposal_data,
                 connection
                     .send_message_closure(alice.profile.inject_wallet())
                     .await
@@ -635,7 +635,7 @@ pub mod test_utils {
             )
             .await
             .unwrap();
-        assert_eq!(prover.get_state(), ProverState::PresentationProposalSent);
+        assert_eq!(prover.get_state(), ProverState::PresentationProposalSet);
         tokio::time::sleep(Duration::from_millis(1000)).await;
         prover
     }
@@ -655,9 +655,9 @@ pub mod test_utils {
         for attr in attrs.into_iter() {
             proposal_data.attributes.push(attr);
         }
+        prover.build_proposal(proposal_data).await.unwrap();
         prover
             .send_proposal(
-                proposal_data,
                 connection
                     .send_message_closure(alice.profile.inject_wallet())
                     .await
@@ -665,7 +665,7 @@ pub mod test_utils {
             )
             .await
             .unwrap();
-        assert_eq!(prover.get_state(), ProverState::PresentationProposalSent);
+        assert_eq!(prover.get_state(), ProverState::PresentationProposalSet);
         tokio::time::sleep(Duration::from_millis(1000)).await;
     }
 
@@ -741,7 +741,7 @@ pub mod test_utils {
         prover: &mut Prover,
         connection: &MediatedConnection,
     ) {
-        assert_eq!(prover.get_state(), ProverState::PresentationProposalSent);
+        assert_eq!(prover.get_state(), ProverState::PresentationProposalSet);
         prover_update_with_mediator(prover, &alice.agency_client, connection)
             .await
             .unwrap();
@@ -1157,7 +1157,7 @@ pub mod test_utils {
             &selected_credentials
         );
         generate_and_send_proof(alice, &mut prover, consumer_to_institution, selected_credentials).await;
-        assert_eq!(ProverState::PresentationSent, prover.get_state());
+        assert_eq!(ProverState::PresentationSet, prover.get_state());
     }
 
     pub async fn connect_using_request_sent_to_public_agent(
