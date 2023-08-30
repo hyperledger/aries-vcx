@@ -105,7 +105,7 @@ impl Prover {
 
     pub async fn send_presentation(&mut self, send_message: SendClosure) -> VcxResult<()> {
         trace!("Prover::send_presentation >>>");
-        self.prover_sm = self.prover_sm.clone().send_presentation(send_message).await?;
+        self.prover_sm = self.prover_sm.clone().set_presentation(send_message).await?;
         Ok(())
     }
 

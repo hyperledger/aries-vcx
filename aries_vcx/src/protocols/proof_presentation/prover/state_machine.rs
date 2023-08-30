@@ -212,7 +212,7 @@ impl ProverSM {
     }
 
     #[deprecated]
-    pub async fn send_presentation(self, send_message: SendClosure) -> VcxResult<Self> {
+    pub async fn set_presentation(self, send_message: SendClosure) -> VcxResult<Self> {
         let state = match self.state {
             ProverFullState::PresentationPrepared(state) => {
                 send_message(state.presentation.clone().into()).await?;
