@@ -98,8 +98,10 @@ impl Verifier {
         self.verifier_sm = self
             .verifier_sm
             .clone()
-            .verify_presentation(ledger, anoncreds, presentation, send_message)
+            .verify_presentation(ledger, anoncreds, presentation)
             .await?;
+        let message = self.verifier_sm.get_final_message()?;
+        send_message(message).await?;
         Ok(())
     }
 
@@ -176,10 +178,13 @@ impl Verifier {
                     AriesVcxErrorKind::InvalidState,
                     "Attempted to call undefined send_message callback",
                 ))?;
-                self.verifier_sm
+                let sm = self
+                    .verifier_sm
                     .clone()
-                    .verify_presentation(ledger, anoncreds, presentation, send_message)
-                    .await?
+                    .verify_presentation(ledger, anoncreds, presentation)
+                    .await?;
+                send_message(sm.get_final_message()?).await?;
+                sm
             }
             AriesMessage::ReportProblem(report) => {
                 self.verifier_sm.clone().receive_presentation_request_reject(report)?
