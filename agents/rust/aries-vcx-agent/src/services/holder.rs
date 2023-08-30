@@ -63,7 +63,7 @@ impl ServiceCredentialsHolder {
         let wallet = self.profile.inject_wallet();
 
         let mut holder = Holder::create("")?;
-        holder.set_proposal(propose_credential)?;
+        holder.set_proposal(propose_credential.clone())?;
         connection
             .send_message(&wallet, &propose_credential.into(), &HttpClient)
             .await?;

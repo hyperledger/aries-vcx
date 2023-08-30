@@ -405,7 +405,8 @@ impl IssuerSM {
                             }),
                         })
                     }
-                    // todo: dont' transition, throw error, add to_failed transition() api which SM consumer can call
+                    // todo: 1. Don't transition, throw error, add to_failed transition() api which SM consumer can call
+                    //       2. Also create separate "Failed" state
                     Err(err) => {
                         let problem_report = build_problem_report_msg(Some(err.to_string()), &self.thread_id);
                         error!(
@@ -491,6 +492,23 @@ impl IssuerSM {
 
     pub fn thread_id(&self) -> VcxResult<String> {
         Ok(self.thread_id.clone())
+    }
+
+    pub fn get_problem_report(&self) -> VcxResult<ProblemReport> {
+        match self.state {
+            IssuerFullState::Finished(ref state) => match &state.status {
+                Status::Failed(problem_report) => Ok(problem_report.clone()),
+                Status::Declined(problem_report) => Ok(problem_report.clone()),
+                _ => Err(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::NotReady,
+                    "No problem report available in current state",
+                )),
+            },
+            _ => Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::NotReady,
+                "No problem report available in current state",
+            )),
+        }
     }
 }
 

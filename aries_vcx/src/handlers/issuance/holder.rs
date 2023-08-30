@@ -7,6 +7,7 @@ use messages::msg_fields::protocols::cred_issuance::issue_credential::IssueCrede
 use messages::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
 use messages::msg_fields::protocols::cred_issuance::propose_credential::ProposeCredential;
 use messages::msg_fields::protocols::cred_issuance::CredentialIssuance;
+use messages::msg_fields::protocols::report_problem::ProblemReport;
 use messages::msg_fields::protocols::revocation::revoke::Revoke;
 use messages::AriesMessage;
 
@@ -190,6 +191,10 @@ impl Holder {
                 "Unexpected revocation notification, credential is not revokable".to_string(),
             ))
         }
+    }
+
+    pub fn get_problem_report(&self) -> VcxResult<ProblemReport> {
+        self.holder_sm.get_problem_report()
     }
 
     pub async fn process_aries_msg(

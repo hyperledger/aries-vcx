@@ -268,6 +268,10 @@ impl Issuer {
         Ok(())
     }
 
+    pub fn get_problem_report(&self) -> VcxResult<ProblemReport> {
+        self.issuer_sm.get_problem_report()
+    }
+
     // todo: will ultimately end up in generic SM layer
     pub async fn process_aries_msg(&mut self, msg: AriesMessage) -> VcxResult<()> {
         let issuer_sm = match msg {

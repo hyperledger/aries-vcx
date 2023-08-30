@@ -477,6 +477,23 @@ impl HolderSM {
             )),
         }
     }
+
+    pub fn get_problem_report(&self) -> VcxResult<ProblemReport> {
+        match self.state {
+            HolderFullState::Finished(ref state) => match &state.status {
+                Status::Failed(problem_report) => Ok(problem_report.clone()),
+                Status::Declined(problem_report) => Ok(problem_report.clone()),
+                _ => Err(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::NotReady,
+                    "No problem report available in current state",
+                )),
+            },
+            _ => Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::NotReady,
+                "No problem report available in current state",
+            )),
+        }
+    }
 }
 
 pub fn parse_cred_def_id_from_cred_offer(cred_offer: &str) -> VcxResult<String> {
