@@ -245,19 +245,6 @@ impl ProverSM {
         Ok(Self { state, ..self })
     }
 
-    #[deprecated]
-    pub async fn send_proposal(self, send_message: SendClosure) -> VcxResult<()> {
-        match &self.state {
-            ProverFullState::PresentationProposalSet(state) => {
-                send_message(state.proposal.clone().into()).await?;
-            }
-            _ => {
-                warn!("Not supported in this state");
-            }
-        };
-        Ok(())
-    }
-
     pub fn receive_presentation_request(self, request: RequestPresentation) -> VcxResult<ProverSM> {
         let prover_sm = match &self.state {
             ProverFullState::PresentationProposalSet(_) => {
@@ -388,6 +375,16 @@ impl ProverSM {
                 AriesVcxErrorKind::NotReady,
                 "Presentation is not available in Finished state",
             ))?),
+        }
+    }
+
+    pub fn get_proposal(&self) -> VcxResult<ProposePresentation> {
+        match &self.state {
+            ProverFullState::PresentationProposalSet(state) => Ok(state.proposal.clone()),
+            _ => Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::NotReady,
+                "Cannot get proposal",
+            )),
         }
     }
 }

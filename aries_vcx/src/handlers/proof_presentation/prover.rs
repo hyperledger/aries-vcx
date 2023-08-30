@@ -100,7 +100,7 @@ impl Prover {
     }
 
     pub async fn build_proposal(&mut self, proposal_data: PresentationProposalData) -> VcxResult<()> {
-        trace!("Prover::send_proposal >>>");
+        trace!("Prover::build_proposal >>>");
         self.prover_sm = self
             .prover_sm
             .clone()
@@ -111,7 +111,8 @@ impl Prover {
 
     pub async fn send_proposal(&mut self, send_message: SendClosure) -> VcxResult<()> {
         trace!("Prover::send_proposal >>>");
-        self.prover_sm.clone().send_proposal(send_message).await
+        let proposal = self.prover_sm.get_proposal()?;
+        send_message(proposal.into()).await
     }
 
     pub async fn send_presentation(&mut self, send_message: SendClosure) -> VcxResult<()> {
