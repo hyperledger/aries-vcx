@@ -22,7 +22,7 @@ use uuid::Uuid;
 use crate::errors::error::prelude::*;
 use crate::handlers::util::{get_attach_as_string, PresentationProposalData};
 use crate::protocols::common::build_problem_report_msg;
-use crate::protocols::proof_presentation::prover::state_machine::{ProverFullState, ProverSM, ProverState};
+use crate::protocols::proof_presentation::prover::state_machine::{ProverSM, ProverState};
 use crate::protocols::SendClosure;
 
 use super::types::{RetrievedCredentials, SelectedCredentials};
@@ -109,10 +109,8 @@ impl Prover {
         Ok(())
     }
 
-    pub async fn send_proposal(&mut self, send_message: SendClosure) -> VcxResult<()> {
-        trace!("Prover::send_proposal >>>");
-        let proposal = self.prover_sm.get_proposal()?;
-        send_message(proposal.into()).await
+    pub fn get_proposal(&self) -> VcxResult<ProposePresentation> {
+        Ok(self.prover_sm.get_proposal()?.to_owned())
     }
 
     pub async fn send_presentation(&mut self, send_message: SendClosure) -> VcxResult<()> {

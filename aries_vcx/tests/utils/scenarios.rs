@@ -624,17 +624,14 @@ pub mod test_utils {
         for attr in attrs.into_iter() {
             proposal_data.attributes.push(attr);
         }
-        let mut prover = Prover::create("1").unwrap();
-        prover.build_proposal(proposal_data).await.unwrap();
-        prover
-            .send_proposal(
-                connection
-                    .send_message_closure(alice.profile.inject_wallet())
-                    .await
-                    .unwrap(),
-            )
+        let send_message = connection
+            .send_message_closure(alice.profile.inject_wallet())
             .await
             .unwrap();
+        let mut prover = Prover::create("1").unwrap();
+        prover.build_proposal(proposal_data).await.unwrap();
+        let proposal = prover.get_proposal().unwrap();
+        send_message(proposal.into()).await.unwrap();
         assert_eq!(prover.get_state(), ProverState::PresentationProposalSet);
         tokio::time::sleep(Duration::from_millis(1000)).await;
         prover
@@ -656,15 +653,12 @@ pub mod test_utils {
             proposal_data.attributes.push(attr);
         }
         prover.build_proposal(proposal_data).await.unwrap();
-        prover
-            .send_proposal(
-                connection
-                    .send_message_closure(alice.profile.inject_wallet())
-                    .await
-                    .unwrap(),
-            )
+        let proposal = prover.get_proposal().unwrap();
+        let send_message = connection
+            .send_message_closure(alice.profile.inject_wallet())
             .await
             .unwrap();
+        send_message(proposal.into()).await.unwrap();
         assert_eq!(prover.get_state(), ProverState::PresentationProposalSet);
         tokio::time::sleep(Duration::from_millis(1000)).await;
     }

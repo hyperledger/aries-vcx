@@ -99,7 +99,8 @@ impl ServiceProver {
         });
 
         prover.build_proposal(proposal).await?;
-        prover.send_proposal(send_closure).await?;
+        let proposal = prover.get_proposal()?.to_owned();
+        send_closure(proposal.into()).await?;
         self.provers
             .insert(&prover.get_thread_id()?, ProverWrapper::new(prover, connection_id))
     }
