@@ -21,7 +21,6 @@ pub mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_pool_rev_reg_def_fails_for_cred_def_created_without_revocation() {
-        // todo: does not need agency setup
         SetupProfile::run(|setup| async move {
             // Cred def is created with support_revocation=false,
             // revoc_reg_def will fail in libindy because cred_Def doesn't have revocation keys
@@ -44,6 +43,9 @@ pub mod integration_tests {
             )
             .await;
 
+            #[cfg(feature = "modular_libs")]
+            assert_eq!(rc.unwrap_err().kind(), AriesVcxErrorKind::InvalidState);
+            #[cfg(not(feature = "modular_libs"))]
             assert_eq!(rc.unwrap_err().kind(), AriesVcxErrorKind::InvalidInput);
         })
         .await;
