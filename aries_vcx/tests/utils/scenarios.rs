@@ -690,15 +690,12 @@ pub mod test_utils {
             .set_requested_attributes_as_vec(attrs)
             .unwrap();
         verifier.set_request(presentation_request_data, None).unwrap();
-        verifier
-            .send_presentation_request(
-                connection
-                    .send_message_closure(faber.profile.inject_wallet())
-                    .await
-                    .unwrap(),
-            )
+        let send_closure = connection
+            .send_message_closure(faber.profile.inject_wallet())
             .await
             .unwrap();
+        let message = verifier.set_presentation_request().await.unwrap();
+        send_closure(message).await.unwrap();
     }
 
     pub async fn reject_proof_proposal(faber: &mut Faber, connection: &MediatedConnection) -> Verifier {
@@ -759,15 +756,12 @@ pub mod test_utils {
                 .set_not_revoked_interval(revocation_interval.to_string())
                 .unwrap();
         let mut verifier = Verifier::create_from_request("1".to_string(), &presentation_request_data).unwrap();
-        verifier
-            .send_presentation_request(
-                connection
-                    .send_message_closure(faber.profile.inject_wallet())
-                    .await
-                    .unwrap(),
-            )
+        let send_closure = connection
+            .send_message_closure(faber.profile.inject_wallet())
             .await
             .unwrap();
+        let message = verifier.set_presentation_request().await.unwrap();
+        send_closure(message).await.unwrap();
         tokio::time::sleep(Duration::from_millis(1000)).await;
         verifier
     }

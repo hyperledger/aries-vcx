@@ -64,13 +64,17 @@ impl Verifier {
         self.verifier_sm.get_state()
     }
 
-    pub async fn send_presentation_request(&mut self, send_message: SendClosure) -> VcxResult<()> {
+    pub async fn set_presentation_request(&mut self) -> VcxResult<AriesMessage> {
         if self.verifier_sm.get_state() == VerifierState::PresentationRequestSet {
-            let offer = self.verifier_sm.presentation_request_msg()?.into();
-            send_message(offer).await?;
+            let offer = self.verifier_sm.presentation_request_msg()?;
             self.verifier_sm = self.verifier_sm.clone().mark_presentation_request_msg_sent()?;
+            Ok(offer.into())
+        } else {
+            Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::NotReady,
+                "Cannot send presentation request",
+            ))
         }
-        Ok(())
     }
 
     pub async fn send_presentation_ack(&mut self, send_message: SendClosure) -> VcxResult<()> {

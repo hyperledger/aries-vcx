@@ -196,6 +196,7 @@ impl Prover {
     }
 
     // TODO: Can we delete this (please)?
+    #[deprecated]
     pub async fn decline_presentation_request(
         &mut self,
         send_message: SendClosure,

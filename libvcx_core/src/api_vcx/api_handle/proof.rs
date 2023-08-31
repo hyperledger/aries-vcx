@@ -185,23 +185,24 @@ pub fn from_string(proof_data: &str) -> LibvcxResult<u32> {
 
 pub async fn send_proof_request(handle: u32, connection_handle: u32) -> LibvcxResult<()> {
     let mut proof = PROOF_MAP.get_cloned(handle)?;
-    proof
-        .send_presentation_request(mediated_connection::send_message_closure(connection_handle).await?)
-        .await?;
+    let send_closure = mediated_connection::send_message_closure(connection_handle).await?;
+    let message = proof.set_presentation_request().await?;
+    send_closure(message).await?;
     PROOF_MAP.insert(handle, proof)
 }
 
 pub async fn send_proof_request_nonmediated(handle: u32, connection_handle: u32) -> LibvcxResult<()> {
     let mut proof = PROOF_MAP.get_cloned(handle)?;
 
-    let profile = get_main_profile();
     let con = connection::get_cloned_generic_connection(&connection_handle)?;
     let wallet = get_main_wallet()?;
 
     let send_message: SendClosure =
         Box::new(|msg: AriesMessage| Box::pin(async move { con.send_message(&wallet, &msg, &HttpClient).await }));
 
-    proof.send_presentation_request(send_message).await?;
+    let message = proof.set_presentation_request().await?;
+    send_message(message).await?;
+
     PROOF_MAP.insert(handle, proof)
 }
 
