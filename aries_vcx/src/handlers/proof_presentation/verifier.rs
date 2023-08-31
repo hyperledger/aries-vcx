@@ -64,6 +64,7 @@ impl Verifier {
         self.verifier_sm.get_state()
     }
 
+    // TODO: Remove this?
     pub async fn set_presentation_request(&mut self) -> VcxResult<AriesMessage> {
         if self.verifier_sm.get_state() == VerifierState::PresentationRequestSet {
             let offer = self.verifier_sm.presentation_request_msg()?;
@@ -77,36 +78,20 @@ impl Verifier {
         }
     }
 
-    pub async fn send_presentation_ack(&mut self, send_message: SendClosure) -> VcxResult<()> {
-        trace!("Verifier::send_presentation_ack >>>");
-        let state = self.verifier_sm.get_state();
-        if state != VerifierState::Finished {
-            warn!("Unable to send presentation ack in state {:?}", state);
-            return Ok(());
-        }
-        let thread_id = self.verifier_sm.thread_id();
-        let ack = build_verification_ack(&thread_id);
-        send_message(ack.into()).await?;
-        Ok(())
-    }
-
     // todo: verification and sending ack should be separate apis
     pub async fn verify_presentation(
         &mut self,
         ledger: &Arc<dyn AnoncredsLedgerRead>,
         anoncreds: &Arc<dyn BaseAnonCreds>,
         presentation: Presentation,
-        send_message: SendClosure,
-    ) -> VcxResult<()> {
+    ) -> VcxResult<AriesMessage> {
         trace!("Verifier::verify_presentation >>>");
         self.verifier_sm = self
             .verifier_sm
             .clone()
             .verify_presentation(ledger, anoncreds, presentation)
             .await?;
-        let message = self.verifier_sm.get_final_message()?;
-        send_message(message).await?;
-        Ok(())
+        self.verifier_sm.get_final_message()
     }
 
     pub fn set_request(

@@ -543,7 +543,6 @@ mod integration_tests {
                     &setup.profile.inject_anoncreds_ledger_read(),
                     &setup.profile.inject_anoncreds(),
                     presentation,
-                    Box::new(|_: AriesMessage| Box::pin(async { Ok(()) })),
                 )
                 .await
                 .unwrap();

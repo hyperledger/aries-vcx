@@ -90,14 +90,14 @@ impl ServiceVerifier {
             Box::pin(async move { connection.send_message(&wallet, &msg, &HttpClient).await })
         });
 
-        verifier
+        let message = verifier
             .verify_presentation(
                 &self.profile.inject_anoncreds_ledger_read(),
                 &self.profile.inject_anoncreds(),
                 presentation,
-                send_closure,
             )
             .await?;
+        send_closure(message).await?;
         self.verifiers
             .insert(thread_id, VerifierWrapper::new(verifier, &connection_id))?;
         Ok(())
