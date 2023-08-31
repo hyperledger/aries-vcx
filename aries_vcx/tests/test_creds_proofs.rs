@@ -513,7 +513,7 @@ mod integration_tests {
             let pres_req_data: PresentationRequestData = serde_json::from_str(&indy_proof_req).unwrap();
             let mut verifier = Verifier::create_from_request("foo".into(), &pres_req_data).unwrap();
             let presentation_request = verifier.get_presentation_request_msg().unwrap();
-            verifier.mark_presentation_request_msg_sent().unwrap();
+            verifier.mark_presentation_request_sent().unwrap();
 
             #[cfg(feature = "migration")]
             setup.migrate().await;
@@ -1755,7 +1755,7 @@ mod tests {
                     .send_message_closure(alice.profile.inject_wallet())
                     .await
                     .unwrap();
-                let message = alice.prover.set_presentation().await.unwrap();
+                let message = alice.prover.mark_presentation_sent().await.unwrap();
                 send_closure(message).await.unwrap();
                 assert_eq!(ProverState::PresentationSent, alice.prover.get_state());
             }
@@ -1871,7 +1871,7 @@ mod tests {
                     .send_message_closure(alice.profile.inject_wallet())
                     .await
                     .unwrap();
-                let message = alice.prover.set_presentation().await.unwrap();
+                let message = alice.prover.mark_presentation_sent().await.unwrap();
                 send_closure(message).await.unwrap();
                 assert_eq!(ProverState::PresentationSent, alice.prover.get_state());
             }

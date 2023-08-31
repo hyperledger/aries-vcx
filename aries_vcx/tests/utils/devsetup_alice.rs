@@ -291,7 +291,7 @@ impl Alice {
             .send_message_closure(self.profile.inject_wallet())
             .await
             .unwrap();
-        let message = self.prover.set_presentation().await.unwrap();
+        let message = self.prover.mark_presentation_sent().await.unwrap();
         send_closure(message).await.unwrap();
         assert_eq!(ProverState::PresentationSent, self.prover.get_state());
     }

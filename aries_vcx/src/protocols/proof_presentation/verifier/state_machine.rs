@@ -125,7 +125,7 @@ impl VerifierSM {
             thread_id: Uuid::new_v4().to_string(),
             state: VerifierFullState::Initial(InitialVerifierState {}),
         };
-        sm.set_request(presentation_request_data, None)
+        sm.set_presentation_request(presentation_request_data, None)
     }
 
     pub fn from_proposal(source_id: &str, presentation_proposal: &ProposePresentation) -> Self {
@@ -284,7 +284,11 @@ impl VerifierSM {
         }
     }
 
-    pub fn set_request(self, request_data: &PresentationRequestData, comment: Option<String>) -> VcxResult<Self> {
+    pub fn set_presentation_request(
+        self,
+        request_data: &PresentationRequestData,
+        comment: Option<String>,
+    ) -> VcxResult<Self> {
         let Self {
             source_id,
             thread_id,
@@ -311,7 +315,7 @@ impl VerifierSM {
         })
     }
 
-    pub fn mark_presentation_request_msg_sent(self) -> VcxResult<Self> {
+    pub fn mark_presentation_request_sent(self) -> VcxResult<Self> {
         let Self {
             state,
             source_id,

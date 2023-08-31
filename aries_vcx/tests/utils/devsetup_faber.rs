@@ -337,7 +337,7 @@ impl Faber {
             .send_message_closure(self.profile.inject_wallet())
             .await
             .unwrap();
-        let message = self.verifier.set_presentation_request().await.unwrap();
+        let message = self.verifier.mark_presentation_request_sent().unwrap();
         send_closure(message).await.unwrap();
         verifier_update_with_mediator(
             &mut self.verifier,

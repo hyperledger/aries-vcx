@@ -65,7 +65,7 @@ impl ServiceVerifier {
             Box::pin(async move { connection.send_message(&wallet, &msg, &HttpClient).await })
         });
 
-        let message = verifier.set_presentation_request().await?;
+        let message = verifier.mark_presentation_request_sent()?;
         send_closure(message).await?;
         self.verifiers.insert(
             &verifier.get_thread_id()?,

@@ -61,12 +61,12 @@ impl Verifier {
         self.verifier_sm.get_state()
     }
 
-    // TODO: Remove this?
-    pub async fn set_presentation_request(&mut self) -> VcxResult<AriesMessage> {
+    // TODO: Find a better name for this method
+    pub fn mark_presentation_request_sent(&mut self) -> VcxResult<AriesMessage> {
         if self.verifier_sm.get_state() == VerifierState::PresentationRequestSet {
-            let offer = self.verifier_sm.presentation_request_msg()?;
-            self.verifier_sm = self.verifier_sm.clone().mark_presentation_request_msg_sent()?;
-            Ok(offer.into())
+            let request = self.verifier_sm.presentation_request_msg()?;
+            self.verifier_sm = self.verifier_sm.clone().mark_presentation_request_sent()?;
+            Ok(request.into())
         } else {
             Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::NotReady,
@@ -91,26 +91,20 @@ impl Verifier {
         self.verifier_sm.get_final_message()
     }
 
-    pub fn set_request(
+    pub fn set_presentation_request(
         &mut self,
         presentation_request_data: PresentationRequestData,
         comment: Option<String>,
     ) -> VcxResult<()> {
         trace!(
-            "Verifier::set_request >>> presentation_request_data: {:?}, comment: ${:?}",
+            "Verifier::set_presentation_request >>> presentation_request_data: {:?}, comment: ${:?}",
             presentation_request_data,
             comment
         );
         self.verifier_sm = self
             .verifier_sm
             .clone()
-            .set_request(&presentation_request_data, comment)?;
-        Ok(())
-    }
-
-    pub fn mark_presentation_request_msg_sent(&mut self) -> VcxResult<()> {
-        trace!("Verifier::mark_presentation_request_msg_sent >>>");
-        self.verifier_sm = self.verifier_sm.clone().mark_presentation_request_msg_sent()?;
+            .set_presentation_request(&presentation_request_data, comment)?;
         Ok(())
     }
 
@@ -121,10 +115,6 @@ impl Verifier {
     pub fn get_presentation_request_attachment(&self) -> VcxResult<String> {
         let pres_req = &self.verifier_sm.presentation_request_msg()?;
         Ok(get_attach_as_string!(pres_req.content.request_presentations_attach))
-    }
-
-    pub fn get_presentation_request(&self) -> VcxResult<RequestPresentation> {
-        self.verifier_sm.presentation_request_msg()
     }
 
     pub fn get_presentation_msg(&self) -> VcxResult<Presentation> {

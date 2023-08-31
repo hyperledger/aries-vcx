@@ -102,9 +102,9 @@ impl Prover {
         self.prover_sm.get_proposal()
     }
 
-    pub async fn set_presentation(&mut self) -> VcxResult<AriesMessage> {
-        trace!("Prover::send_presentation >>>");
-        self.prover_sm = self.prover_sm.clone().set_presentation().await?;
+    pub async fn mark_presentation_sent(&mut self) -> VcxResult<AriesMessage> {
+        trace!("Prover::mark_presentation_sent >>>");
+        self.prover_sm = self.prover_sm.clone().mark_presentation_sent().await?;
         match self.prover_sm.get_state() {
             ProverState::PresentationSent => self.prover_sm.get_presentation_msg().map(|p| p.clone().into()),
             ProverState::PresentationPreparationFailed => self.prover_sm.get_problem_report().map(Into::into),
