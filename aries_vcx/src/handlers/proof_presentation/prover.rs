@@ -23,7 +23,6 @@ use crate::errors::error::prelude::*;
 use crate::handlers::util::{get_attach_as_string, PresentationProposalData};
 use crate::protocols::common::build_problem_report_msg;
 use crate::protocols::proof_presentation::prover::state_machine::{ProverSM, ProverState};
-use crate::protocols::SendClosure;
 
 use super::types::{RetrievedCredentials, SelectedCredentials};
 
@@ -196,27 +195,27 @@ impl Prover {
     }
 
     // TODO: Can we delete this (please)?
-    #[deprecated]
     pub async fn decline_presentation_request(
         &mut self,
-        send_message: SendClosure,
         reason: Option<String>,
         proposal: Option<String>,
-    ) -> VcxResult<()> {
+    ) -> VcxResult<AriesMessage> {
         trace!(
             "Prover::decline_presentation_request >>> reason: {:?}, proposal: {:?}",
             reason,
             proposal
         );
-        self.prover_sm = match (reason, proposal) {
+        let (sm, message) = match (reason, proposal) {
             (Some(reason), None) => {
                 let thread_id = self.prover_sm.get_thread_id()?;
                 let problem_report = build_problem_report_msg(Some(reason), &thread_id);
-                send_message(problem_report.clone().into()).await?;
-                self.prover_sm
-                    .clone()
-                    .decline_presentation_request(problem_report)
-                    .await?
+                (
+                    self.prover_sm
+                        .clone()
+                        .decline_presentation_request(problem_report.clone())
+                        .await?,
+                    problem_report.into(),
+                )
             }
             (None, Some(proposal)) => {
                 let presentation_preview: PresentationPreview = serde_json::from_str(&proposal).map_err(|err| {
@@ -236,8 +235,7 @@ impl Prover {
                 decorators.timing = Some(timing);
 
                 let proposal = ProposePresentation::with_decorators(id, content, decorators);
-                send_message(proposal.into()).await?;
-                self.prover_sm.clone().negotiate_presentation().await?
+                (self.prover_sm.clone().negotiate_presentation().await?, proposal.into())
             }
             (None, None) => {
                 return Err(AriesVcxError::from_msg(
@@ -252,6 +250,7 @@ impl Prover {
                 ));
             }
         };
-        Ok(())
+        self.prover_sm = sm;
+        Ok(message)
     }
 }

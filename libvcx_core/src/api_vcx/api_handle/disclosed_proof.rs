@@ -162,19 +162,15 @@ pub async fn reject_proof(handle: u32, connection_handle: u32) -> LibvcxResult<(
     );
     let mut proof = HANDLE_MAP.get_cloned(handle)?;
     let send_message = mediated_connection::send_message_closure(connection_handle).await?;
-    proof
-        .decline_presentation_request(
-            send_message,
-            Some(String::from("Presentation Request was rejected")),
-            None,
-        )
+    let message = proof
+        .decline_presentation_request(Some(String::from("Presentation Request was rejected")), None)
         .await?;
+    send_message(message).await?;
     HANDLE_MAP.insert(handle, proof)
 }
 
 pub async fn generate_proof(handle: u32, credentials: &str, self_attested_attrs: &str) -> LibvcxResult<()> {
     let mut proof = HANDLE_MAP.get_cloned(handle)?;
-    let profile = get_main_profile();
     proof
         .generate_presentation(
             &get_main_anoncreds_ledger_read()?,
@@ -194,19 +190,15 @@ pub async fn decline_presentation_request(
 ) -> LibvcxResult<()> {
     let mut proof = HANDLE_MAP.get_cloned(handle)?;
     let send_message = mediated_connection::send_message_closure(connection_handle).await?;
-    proof
-        .decline_presentation_request(
-            send_message,
-            reason.map(|s| s.to_string()),
-            proposal.map(|s| s.to_string()),
-        )
+    let message = proof
+        .decline_presentation_request(reason.map(|s| s.to_string()), proposal.map(|s| s.to_string()))
         .await?;
+    send_message(message).await?;
     HANDLE_MAP.insert(handle, proof)
 }
 
 pub async fn retrieve_credentials(handle: u32) -> LibvcxResult<String> {
     let proof = HANDLE_MAP.get_cloned(handle)?;
-    let profile = get_main_profile(); // do not throw if pool not open
     let retrieved_creds = proof.retrieve_credentials(&get_main_anoncreds()?).await?;
 
     Ok(serde_json::to_string(&retrieved_creds)?)
