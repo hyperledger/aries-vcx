@@ -251,27 +251,31 @@ impl VerifierSM {
 
     pub fn get_final_message(&self) -> VcxResult<AriesMessage> {
         match self.state {
-            VerifierFullState::Finished(ref state) => match &state.status {
-                Status::Declined(problem_report) => {
-                    let MsgParts {
-                        id,
-                        content,
-                        decorators,
-                    } = problem_report.clone();
+            VerifierFullState::Finished(ref state) => match &state.verification_status {
+                PresentationVerificationStatus::Valid => Ok(build_verification_ack(&self.thread_id).into()),
+                PresentationVerificationStatus::Invalid | PresentationVerificationStatus::Unavailable => {
+                    match &state.status {
+                        Status::Undefined => Err(AriesVcxError::from_msg(
+                            AriesVcxErrorKind::InvalidState,
+                            "Cannot get final message in this state",
+                        )),
+                        Status::Success => Ok(build_problem_report_msg(None, &self.thread_id).into()),
+                        Status::Failed(problem_report) | Status::Declined(problem_report) => {
+                            let MsgParts {
+                                id,
+                                content,
+                                decorators,
+                            } = problem_report.clone();
 
-                    let problem_report = PresentProofProblemReport::with_decorators(
-                        id,
-                        PresentProofProblemReportContent(content),
-                        decorators,
-                    );
-
-                    Ok(problem_report.into())
+                            let problem_report = PresentProofProblemReport::with_decorators(
+                                id,
+                                PresentProofProblemReportContent(content),
+                                decorators,
+                            );
+                            Ok(problem_report.into())
+                        }
+                    }
                 }
-                Status::Success => Ok(build_verification_ack(&self.thread_id).into()),
-                _ => Err(AriesVcxError::from_msg(
-                    AriesVcxErrorKind::NotReady,
-                    "Cannot send message in current state",
-                )),
             },
             _ => Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::InvalidState,
