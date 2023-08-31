@@ -72,26 +72,30 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
             )
         })?;
         trace!("proof::update_state >>> updating using message {:?}", message);
-        proof
+        if let Some(message) = proof
             .process_aries_msg(
                 &get_main_anoncreds_ledger_read()?,
                 &get_main_anoncreds()?,
                 message.into(),
-                Some(send_message),
             )
-            .await?;
+            .await?
+        {
+            send_message(message).await?;
+        }
     } else {
         let messages = mediated_connection::get_messages(connection_handle).await?;
         trace!("proof::update_state >>> found messages: {:?}", messages);
         if let Some((uid, message)) = verifier_find_message_to_handle(&proof, messages) {
-            proof
+            if let Some(message) = proof
                 .process_aries_msg(
                     &get_main_anoncreds_ledger_read()?,
                     &get_main_anoncreds()?,
                     message.into(),
-                    Some(send_message),
                 )
-                .await?;
+                .await?
+            {
+                send_message(message).await?;
+            }
             mediated_connection::update_message_status(connection_handle, &uid).await?;
         };
     }
@@ -127,14 +131,16 @@ pub async fn update_state_nonmediated(handle: u32, connection_handle: u32, messa
             ),
         )
     })?;
-    proof
+    if let Some(message) = proof
         .process_aries_msg(
             &get_main_anoncreds_ledger_read()?,
             &get_main_anoncreds()?,
             message.into(),
-            Some(send_message),
         )
-        .await?;
+        .await?
+    {
+        send_message(message).await?;
+    }
 
     let state: u32 = proof.get_state().into();
     PROOF_MAP.insert(handle, proof)?;

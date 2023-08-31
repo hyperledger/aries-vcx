@@ -156,24 +156,18 @@ impl Verifier {
         ledger: &Arc<dyn AnoncredsLedgerRead>,
         anoncreds: &Arc<dyn BaseAnonCreds>,
         message: AriesMessage,
-        send_message: Option<SendClosure>,
-    ) -> VcxResult<()> {
+    ) -> VcxResult<Option<AriesMessage>> {
         let verifier_sm = match message {
             AriesMessage::PresentProof(PresentProof::ProposePresentation(proposal)) => {
                 self.verifier_sm.clone().receive_presentation_proposal(proposal)?
             }
             AriesMessage::PresentProof(PresentProof::Presentation(presentation)) => {
-                let send_message = send_message.ok_or(AriesVcxError::from_msg(
-                    AriesVcxErrorKind::InvalidState,
-                    "Attempted to call undefined send_message callback",
-                ))?;
                 let sm = self
                     .verifier_sm
                     .clone()
                     .verify_presentation(ledger, anoncreds, presentation)
                     .await?;
-                send_message(sm.get_final_message()?).await?;
-                sm
+                return Ok(Some(sm.get_final_message()?));
             }
             AriesMessage::ReportProblem(report) => {
                 self.verifier_sm.clone().receive_presentation_request_reject(report)?
@@ -199,7 +193,7 @@ impl Verifier {
             _ => self.verifier_sm.clone(),
         };
         self.verifier_sm = verifier_sm;
-        Ok(())
+        Ok(None)
     }
 
     pub fn progressable_by_message(&self) -> bool {
