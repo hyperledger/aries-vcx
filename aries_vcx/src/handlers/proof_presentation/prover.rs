@@ -106,7 +106,7 @@ impl Prover {
         trace!("Prover::send_presentation >>>");
         self.prover_sm = self.prover_sm.clone().set_presentation().await?;
         match self.prover_sm.get_state() {
-            ProverState::PresentationSet => self.prover_sm.get_presentation_msg().map(|p| p.clone().into()),
+            ProverState::PresentationSent => self.prover_sm.get_presentation_msg().map(|p| p.clone().into()),
             ProverState::PresentationPreparationFailed => self.prover_sm.get_problem_report().map(Into::into),
             _ => Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::NotReady,

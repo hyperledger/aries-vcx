@@ -68,11 +68,11 @@ impl From<ProverState> for u32 {
     fn from(state: ProverState) -> u32 {
         match state {
             ProverState::Initial => 0,
-            ProverState::PresentationProposalSet => 1,
+            ProverState::PresentationProposalSent => 1,
             ProverState::PresentationRequestReceived => 2,
             ProverState::PresentationPrepared => 3,
             ProverState::PresentationPreparationFailed => 4,
-            ProverState::PresentationSet => 5,
+            ProverState::PresentationSent => 5,
             ProverState::Finished => 6,
             ProverState::Failed => 7,
         }

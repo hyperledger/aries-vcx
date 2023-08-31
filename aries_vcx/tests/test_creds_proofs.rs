@@ -1218,7 +1218,7 @@ mod tests {
 
             info!("test_real_proof :: generating and sending proof");
             generate_and_send_proof(&mut consumer, &mut prover, &consumer_to_issuer, selected_credentials).await;
-            assert_eq!(ProverState::PresentationSet, prover.get_state());
+            assert_eq!(ProverState::PresentationSent, prover.get_state());
             assert_eq!(presentation_thread_id, prover.get_thread_id().unwrap());
             assert_eq!(presentation_thread_id, verifier.get_thread_id().unwrap());
 
@@ -1757,7 +1757,7 @@ mod tests {
                     .unwrap();
                 let message = alice.prover.set_presentation().await.unwrap();
                 send_closure(message).await.unwrap();
-                assert_eq!(ProverState::PresentationSet, alice.prover.get_state());
+                assert_eq!(ProverState::PresentationSent, alice.prover.get_state());
             }
 
             faber.verify_presentation().await;
@@ -1873,7 +1873,7 @@ mod tests {
                     .unwrap();
                 let message = alice.prover.set_presentation().await.unwrap();
                 send_closure(message).await.unwrap();
-                assert_eq!(ProverState::PresentationSet, alice.prover.get_state());
+                assert_eq!(ProverState::PresentationSent, alice.prover.get_state());
             }
 
             faber.verify_presentation().await;

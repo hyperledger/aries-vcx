@@ -4,11 +4,11 @@ use messages::msg_fields::protocols::present_proof::propose::{
 use uuid::Uuid;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub struct PresentationProposalSet {
+pub struct PresentationProposalSent {
     pub proposal: ProposePresentation,
 }
 
-impl Default for PresentationProposalSet {
+impl Default for PresentationProposalSent {
     fn default() -> Self {
         let id = Uuid::new_v4().to_string();
         let preview = PresentationPreview::new(Vec::new(), Vec::new());
@@ -21,7 +21,7 @@ impl Default for PresentationProposalSet {
     }
 }
 
-impl PresentationProposalSet {
+impl PresentationProposalSent {
     pub fn new(proposal: ProposePresentation) -> Self {
         Self { proposal }
     }

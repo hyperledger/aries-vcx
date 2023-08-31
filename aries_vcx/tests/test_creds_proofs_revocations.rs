@@ -515,7 +515,7 @@ mod integration_tests {
                 &selected_credentials
             );
             generate_and_send_proof(&mut consumer, &mut prover, &consumer_to_institution, selected_credentials).await;
-            assert_eq!(ProverState::PresentationSet, prover.get_state());
+            assert_eq!(ProverState::PresentationSent, prover.get_state());
 
             info!("test_revoked_credential_might_still_work :: verifier :: going to verify proof");
             verifier_update_with_mediator(
