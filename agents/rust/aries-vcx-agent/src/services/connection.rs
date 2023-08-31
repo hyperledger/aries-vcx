@@ -56,8 +56,9 @@ impl ServiceConnections {
     pub async fn send_request(&self, thread_id: &str) -> AgentResult<()> {
         let invitee: Connection<_, _> = self.connections.get(thread_id)?.try_into()?;
         let invitee = invitee.prepare_request(self.service_endpoint.clone(), vec![]).await?;
+        let request = invitee.get_request().clone();
         invitee
-            .send_message(&self.profile.inject_wallet(), invitee.get_request().into(), &HttpClient)
+            .send_message(&self.profile.inject_wallet(), &request.into(), &HttpClient)
             .await?;
         self.connections.insert(thread_id, invitee.into())?;
         Ok(())
