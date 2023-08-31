@@ -15,11 +15,8 @@ use crate::common::proofs::proof_request::PresentationRequestData;
 use crate::errors::error::prelude::*;
 use crate::handlers::util::get_attach_as_string;
 use crate::protocols::common::build_problem_report_msg;
-use crate::protocols::proof_presentation::verifier::state_machine::{
-    build_verification_ack, VerifierSM, VerifierState,
-};
+use crate::protocols::proof_presentation::verifier::state_machine::{VerifierSM, VerifierState};
 use crate::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
-use crate::protocols::SendClosure;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Default)]
 pub struct Verifier {
@@ -200,11 +197,7 @@ impl Verifier {
         self.verifier_sm.progressable_by_message()
     }
 
-    pub async fn decline_presentation_proposal<'a>(
-        &'a mut self,
-        send_message: SendClosure,
-        reason: &'a str,
-    ) -> VcxResult<()> {
+    pub async fn decline_presentation_proposal<'a>(&'a mut self, reason: &'a str) -> VcxResult<AriesMessage> {
         trace!("Verifier::decline_presentation_proposal >>> reason: {:?}", reason);
         let state = self.verifier_sm.get_state();
         if state == VerifierState::PresentationProposalReceived {
@@ -214,18 +207,17 @@ impl Verifier {
                 None => proposal.id,
             };
             let problem_report = build_problem_report_msg(Some(reason.to_string()), &thread_id);
-            send_message(problem_report.clone().into()).await?;
             self.verifier_sm = self
                 .verifier_sm
                 .clone()
-                .reject_presentation_proposal(problem_report)
+                .reject_presentation_proposal(problem_report.clone())
                 .await?;
+            Ok(problem_report.into())
         } else {
-            warn!(
-                "Unable to reject presentation proposal in state {:?}",
-                self.verifier_sm.get_state()
-            );
+            Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::NotReady,
+                format!("Unable to reject presentation proposal in state {:?}", state),
+            ))
         }
-        Ok(())
     }
 }

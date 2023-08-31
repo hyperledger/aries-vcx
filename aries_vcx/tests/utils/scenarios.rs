@@ -711,16 +711,15 @@ pub mod test_utils {
         .await
         .unwrap();
         assert_eq!(verifier.get_state(), VerifierState::PresentationProposalReceived);
-        verifier
-            .decline_presentation_proposal(
-                connection
-                    .send_message_closure(faber.profile.inject_wallet())
-                    .await
-                    .unwrap(),
-                "I don't like Alices",
-            )
+        let send_closure = connection
+            .send_message_closure(faber.profile.inject_wallet())
             .await
             .unwrap();
+        let message = verifier
+            .decline_presentation_proposal("I don't like Alices") // :(
+            .await
+            .unwrap();
+        send_closure(message).await.unwrap();
         assert_eq!(verifier.get_state(), VerifierState::Failed);
         verifier
     }
