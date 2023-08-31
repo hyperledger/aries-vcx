@@ -2,7 +2,7 @@ import '../module-resolver-helper';
 
 import { assert, expect } from 'chai';
 import { initVcxTestMode } from 'helpers/utils';
-import { ConnectionStateType } from 'src';
+import {ConnectionStateType } from 'src';
 import { NonmediatedConnection } from 'src';
 
 describe('Nonmediated connection:', () => {

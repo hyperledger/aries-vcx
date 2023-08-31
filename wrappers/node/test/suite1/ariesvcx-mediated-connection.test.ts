@@ -9,8 +9,8 @@ import {
   dataConnectionCreate,
 } from 'helpers/entities';
 import { initVcxTestMode, shouldThrow } from 'helpers/utils';
-import { Connection, ConnectionStateType, VCXCode } from 'src';
-import { ARIES_PING, ARIES_PING_RESPONSE, ARIES_UNKNOWN_TYPE } from '../helpers/mockdata';
+import { Connection, MediatedConnectionStateType, VCXCode } from 'src';
+import { ARIES_PING, ARIES_PING_RESPONSE } from '../helpers/mockdata';
 
 describe('Connection:', () => {
   before(() => initVcxTestMode());
@@ -123,15 +123,15 @@ describe('Connection:', () => {
       assert.isNotNull(caught_error);
     });
 
-    it(`returns ${ConnectionStateType.Initial}: not connected`, async () => {
+    it(`returns ${MediatedConnectionStateType.Initial}: not connected`, async () => {
       const connection = await connectionCreateInviterNull({ id: 'alice' });
       await connection.updateState();
-      assert.equal(await connection.getState(), ConnectionStateType.Initial);
+      assert.equal(await connection.getState(), MediatedConnectionStateType.Initial);
     });
 
-    it(`returns ${ConnectionStateType.Finished}: mocked accepted`, async () => {
+    it(`returns ${MediatedConnectionStateType.Finished}: mocked accepted`, async () => {
       const connection = await createConnectionInviterFinished();
-      assert.equal(await connection.getState(), ConnectionStateType.Finished);
+      assert.equal(await connection.getState(), MediatedConnectionStateType.Finished);
     });
   });
 

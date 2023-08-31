@@ -21,9 +21,7 @@ use crate::protocols::connection::trait_bounds::ThreadId;
 use crate::transport::Transport;
 use crate::{common::signing::sign_connection_response, errors::error::VcxResult};
 
-use self::states::{
-    completed::Completed, initial::Initial, invited::Invited, requested::Requested, responded::Responded,
-};
+use self::states::{completed::Completed, initial::Initial, invited::Invited, requested::Requested};
 use super::{initiation_type::Inviter, pairwise_info::PairwiseInfo, Connection};
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 
@@ -233,41 +231,15 @@ impl InviterConnection<Invited> {
 }
 
 impl InviterConnection<Requested> {
-    /// Sends a [`Response`] to the invitee and transitions to [`InviterConnection<Responded>`].
+    /// Returns pre-built [`Response`] message which shall be delivered to counterparty
     ///
     /// # Errors
     ///
     /// Will return an error if sending the response fails.
-    pub async fn send_response<T>(
-        self,
-        wallet: &Arc<dyn BaseWallet>,
-        transport: &T,
-    ) -> VcxResult<InviterConnection<Responded>>
-    where
-        T: Transport,
-    {
-        trace!(
-            "Connection::send_response >>> signed_response: {:?}",
-            &self.state.signed_response
-        );
-
-        let thread_id = self.state.signed_response.decorators.thread.thid.clone();
-
-        self.send_message(wallet, &self.state.signed_response.clone().into(), transport)
-            .await?;
-
-        let state = Responded::new(self.state.did_doc, thread_id);
-
-        Ok(Connection {
-            state,
-            source_id: self.source_id,
-            pairwise_info: self.pairwise_info,
-            initiation_type: self.initiation_type,
-        })
+    pub fn get_connection_response_msg(&self) -> Response {
+        self.state.signed_response.clone()
     }
-}
 
-impl InviterConnection<Responded> {
     /// Acknowledges an invitee's connection by processing their first message
     /// and transitions to [`InviterConnection<Completed>`].
     ///
@@ -277,7 +249,11 @@ impl InviterConnection<Responded> {
     /// the ID of the thread context used in this connection.
     pub fn acknowledge_connection(self, msg: &AriesMessage) -> VcxResult<InviterConnection<Completed>> {
         verify_thread_id(self.state.thread_id(), msg)?;
-        let state = Completed::new(self.state.did_doc, self.state.thread_id, None);
+        let state = Completed::new(
+            self.state.did_doc,
+            self.state.signed_response.decorators.thread.thid,
+            None,
+        );
 
         Ok(Connection {
             source_id: self.source_id,

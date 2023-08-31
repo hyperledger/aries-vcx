@@ -16,12 +16,10 @@ use crate::{
         invitee::states::{
             completed::Completed as InviteeCompleted, initial::Initial as InviteeInitial,
             invited::Invited as InviteeInvited, requested::Requested as InviteeRequested,
-            responded::Responded as InviteeResponded,
         },
         inviter::states::{
             completed::Completed as InviterCompleted, initial::Initial as InviterInitial,
             invited::Invited as InviterInvited, requested::Requested as InviterRequested,
-            responded::Responded as InviterResponded,
         },
         pairwise_info::PairwiseInfo,
         trait_bounds::{TheirDidDoc, ThreadId},
@@ -88,7 +86,6 @@ pub enum InviterState {
     Initial(InviterInitial),
     Invited(InviterInvited),
     Requested(InviterRequested),
-    Responded(InviterResponded),
     Completed(InviterCompleted),
 }
 
@@ -97,7 +94,6 @@ pub enum InviteeState {
     Initial(InviteeInitial),
     Invited(InviteeInvited),
     Requested(InviteeRequested),
-    Responded(InviteeResponded),
     Completed(InviteeCompleted),
 }
 
@@ -114,12 +110,10 @@ impl GenericConnection {
             GenericState::Invitee(InviteeState::Initial(_)) => None,
             GenericState::Invitee(InviteeState::Invited(s)) => Some(s.thread_id()),
             GenericState::Invitee(InviteeState::Requested(s)) => Some(s.thread_id()),
-            GenericState::Invitee(InviteeState::Responded(s)) => Some(s.thread_id()),
             GenericState::Invitee(InviteeState::Completed(s)) => Some(s.thread_id()),
             GenericState::Inviter(InviterState::Initial(_)) => None,
             GenericState::Inviter(InviterState::Invited(s)) => Some(s.thread_id()),
             GenericState::Inviter(InviterState::Requested(s)) => Some(s.thread_id()),
-            GenericState::Inviter(InviterState::Responded(s)) => Some(s.thread_id()),
             GenericState::Inviter(InviterState::Completed(s)) => Some(s.thread_id()),
         }
     }
@@ -133,12 +127,10 @@ impl GenericConnection {
             GenericState::Invitee(InviteeState::Initial(_)) => None,
             GenericState::Invitee(InviteeState::Invited(s)) => Some(s.their_did_doc()),
             GenericState::Invitee(InviteeState::Requested(s)) => Some(s.their_did_doc()),
-            GenericState::Invitee(InviteeState::Responded(s)) => Some(s.their_did_doc()),
             GenericState::Invitee(InviteeState::Completed(s)) => Some(s.their_did_doc()),
             GenericState::Inviter(InviterState::Initial(_)) => None,
             GenericState::Inviter(InviterState::Invited(_)) => None,
             GenericState::Inviter(InviterState::Requested(s)) => Some(s.their_did_doc()),
-            GenericState::Inviter(InviterState::Responded(s)) => Some(s.their_did_doc()),
             GenericState::Inviter(InviterState::Completed(s)) => Some(s.their_did_doc()),
         }
     }
@@ -149,7 +141,6 @@ impl GenericConnection {
             GenericState::Invitee(InviteeState::Initial(_)) => None,
             GenericState::Invitee(InviteeState::Invited(s)) => Some(s.bootstrap_did_doc()),
             GenericState::Invitee(InviteeState::Requested(s)) => Some(s.bootstrap_did_doc()),
-            GenericState::Invitee(InviteeState::Responded(s)) => Some(s.bootstrap_did_doc()),
             GenericState::Invitee(InviteeState::Completed(s)) => Some(s.bootstrap_did_doc()),
         }
     }
@@ -223,12 +214,10 @@ mod connection_serde_tests {
 
     use super::*;
     use crate::common::signing::sign_connection_response;
-    use crate::core::profile::profile::Profile;
     use crate::handlers::util::AnyInvitation;
     use crate::protocols::connection::serializable::*;
     use crate::protocols::connection::{invitee::InviteeConnection, inviter::InviterConnection, Connection};
     use crate::utils::mockdata::profile::mock_ledger::MockLedger;
-    use crate::utils::mockdata::profile::mock_profile::MockProfile;
     use aries_vcx_core::ledger::base_ledger::IndyLedgerRead;
     use aries_vcx_core::wallet::mock_wallet::MockWallet;
     use std::sync::Arc;
@@ -239,7 +228,6 @@ mod connection_serde_tests {
                 RefInviteeState::Initial(s) => Self::Initial(s.to_owned()),
                 RefInviteeState::Invited(s) => Self::Invited(s.to_owned()),
                 RefInviteeState::Requested(s) => Self::Requested(s.to_owned()),
-                RefInviteeState::Responded(s) => Self::Responded(s.to_owned()),
                 RefInviteeState::Completed(s) => Self::Completed(s.to_owned()),
             }
         }
@@ -251,7 +239,6 @@ mod connection_serde_tests {
                 RefInviterState::Initial(s) => Self::Initial(s.to_owned()),
                 RefInviterState::Invited(s) => Self::Invited(s.to_owned()),
                 RefInviterState::Requested(s) => Self::Requested(s.to_owned()),
-                RefInviterState::Responded(s) => Self::Responded(s.to_owned()),
                 RefInviterState::Completed(s) => Self::Completed(s.to_owned()),
             }
         }
@@ -288,7 +275,6 @@ mod connection_serde_tests {
                 InviteeState::Initial(s) => Self::Initial(s),
                 InviteeState::Invited(s) => Self::Invited(s),
                 InviteeState::Requested(s) => Self::Requested(s),
-                InviteeState::Responded(s) => Self::Responded(s),
                 InviteeState::Completed(s) => Self::Completed(s),
             }
         }
@@ -300,7 +286,6 @@ mod connection_serde_tests {
                 InviterState::Initial(s) => Self::Initial(s),
                 InviterState::Invited(s) => Self::Invited(s),
                 InviterState::Requested(s) => Self::Requested(s),
-                InviterState::Responded(s) => Self::Responded(s),
                 InviterState::Completed(s) => Self::Completed(s),
             }
         }
@@ -406,18 +391,17 @@ mod connection_serde_tests {
     }
 
     async fn make_invitee_requested() -> InviteeConnection<InviteeRequested> {
-        let wallet: Arc<dyn BaseWallet> = Arc::new(MockWallet {});
         let service_endpoint = SERVICE_ENDPOINT.parse().unwrap();
         let routing_keys = vec![];
 
         make_invitee_invited()
             .await
-            .send_request(&wallet, service_endpoint, routing_keys, &MockTransport)
+            .prepare_request(service_endpoint, routing_keys)
             .await
             .unwrap()
     }
 
-    async fn make_invitee_responded() -> InviteeConnection<InviteeResponded> {
+    async fn make_invitee_completed() -> InviteeConnection<InviteeCompleted> {
         let wallet: Arc<dyn BaseWallet> = Arc::new(MockWallet {});
         let con = make_invitee_requested().await;
         let mut con_data = ConnectionData::new(PW_KEY.to_owned(), AriesDidDoc::default());
@@ -435,17 +419,12 @@ mod connection_serde_tests {
 
         let response = Response::with_decorators(Uuid::new_v4().to_string(), content, decorators);
 
-        con.handle_response(&wallet, response, &MockTransport).await.unwrap()
-    }
+        let con = con.handle_response(&wallet, response, &MockTransport).await.unwrap();
 
-    async fn make_invitee_completed() -> InviteeConnection<InviteeCompleted> {
-        let wallet: Arc<dyn BaseWallet> = Arc::new(MockWallet {});
-
-        make_invitee_responded()
+        con.send_message(&wallet, &con.get_ack().into(), &MockTransport)
             .await
-            .send_ack(&wallet, &MockTransport)
-            .await
-            .unwrap()
+            .unwrap();
+        con
     }
 
     async fn make_inviter_initial() -> InviterConnection<InviterInitial> {
@@ -482,18 +461,8 @@ mod connection_serde_tests {
             .unwrap()
     }
 
-    async fn make_inviter_responded() -> InviterConnection<InviterResponded> {
-        let wallet: Arc<dyn BaseWallet> = Arc::new(MockWallet {});
-
-        make_inviter_requested()
-            .await
-            .send_response(&wallet, &MockTransport)
-            .await
-            .unwrap()
-    }
-
     async fn make_inviter_completed() -> InviterConnection<InviterCompleted> {
-        let con = make_inviter_responded().await;
+        let con = make_inviter_requested().await;
 
         let content = AckContent::new(AckStatus::Ok);
         let decorators = AckDecorators::new(Thread::new(con.thread_id().to_owned()));
@@ -515,12 +484,10 @@ mod connection_serde_tests {
     generate_test!(invitee_connection_initial, make_invitee_initial);
     generate_test!(invitee_connection_invited, make_invitee_invited);
     generate_test!(invitee_connection_requested, make_invitee_requested);
-    generate_test!(invitee_connection_responded, make_invitee_responded);
     generate_test!(invitee_connection_complete, make_invitee_completed);
 
     generate_test!(inviter_connection_initial, make_inviter_initial);
     generate_test!(inviter_connection_invited, make_inviter_invited);
     generate_test!(inviter_connection_requested, make_inviter_requested);
-    generate_test!(inviter_connection_responded, make_inviter_responded);
     generate_test!(inviter_connection_complete, make_inviter_completed);
 }
