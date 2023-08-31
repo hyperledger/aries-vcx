@@ -154,9 +154,9 @@ impl Verifier {
         anoncreds: &Arc<dyn BaseAnonCreds>,
         message: AriesMessage,
     ) -> VcxResult<Option<AriesMessage>> {
-        let verifier_sm = match message {
+        let (verifier_sm, message) = match message {
             AriesMessage::PresentProof(PresentProof::ProposePresentation(proposal)) => {
-                self.verifier_sm.clone().receive_presentation_proposal(proposal)?
+                (self.verifier_sm.clone().receive_presentation_proposal(proposal)?, None)
             }
             AriesMessage::PresentProof(PresentProof::Presentation(presentation)) => {
                 let sm = self
@@ -164,11 +164,12 @@ impl Verifier {
                     .clone()
                     .verify_presentation(ledger, anoncreds, presentation)
                     .await?;
-                return Ok(Some(sm.get_final_message()?));
+                (sm.clone(), Some(sm.get_final_message()?))
             }
-            AriesMessage::ReportProblem(report) => {
-                self.verifier_sm.clone().receive_presentation_request_reject(report)?
-            }
+            AriesMessage::ReportProblem(report) => (
+                self.verifier_sm.clone().receive_presentation_request_reject(report)?,
+                None,
+            ),
             AriesMessage::Notification(Notification::ProblemReport(report)) => {
                 let MsgParts {
                     id,
@@ -176,7 +177,10 @@ impl Verifier {
                     decorators,
                 } = report;
                 let report = ProblemReport::with_decorators(id, content.0, decorators);
-                self.verifier_sm.clone().receive_presentation_request_reject(report)?
+                (
+                    self.verifier_sm.clone().receive_presentation_request_reject(report)?,
+                    None,
+                )
             }
             AriesMessage::PresentProof(PresentProof::ProblemReport(report)) => {
                 let MsgParts {
@@ -185,12 +189,15 @@ impl Verifier {
                     decorators,
                 } = report;
                 let report = ProblemReport::with_decorators(id, content.0, decorators);
-                self.verifier_sm.clone().receive_presentation_request_reject(report)?
+                (
+                    self.verifier_sm.clone().receive_presentation_request_reject(report)?,
+                    None,
+                )
             }
-            _ => self.verifier_sm.clone(),
+            _ => (self.verifier_sm.clone(), None),
         };
         self.verifier_sm = verifier_sm;
-        Ok(None)
+        Ok(message)
     }
 
     pub fn progressable_by_message(&self) -> bool {
