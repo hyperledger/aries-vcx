@@ -286,15 +286,13 @@ impl Alice {
             .unwrap();
         assert_eq!(ProverState::PresentationPrepared, self.prover.get_state());
 
-        self.prover
-            .send_presentation(
-                self.connection
-                    .send_message_closure(self.profile.inject_wallet())
-                    .await
-                    .unwrap(),
-            )
+        let send_closure = self
+            .connection
+            .send_message_closure(self.profile.inject_wallet())
             .await
             .unwrap();
+        let message = self.prover.set_presentation().await.unwrap();
+        send_closure(message).await.unwrap();
         assert_eq!(ProverState::PresentationSet, self.prover.get_state());
     }
 

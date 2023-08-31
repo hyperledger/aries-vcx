@@ -1751,17 +1751,13 @@ mod tests {
                     .unwrap();
                 assert_eq!(ProverState::PresentationPrepared, alice.prover.get_state());
 
-                alice
-                    .prover
-                    .send_presentation(
-                        alice
-                            .connection
-                            .send_message_closure(alice.profile.inject_wallet())
-                            .await
-                            .unwrap(),
-                    )
+                let send_closure = alice
+                    .connection
+                    .send_message_closure(alice.profile.inject_wallet())
                     .await
                     .unwrap();
+                let message = alice.prover.set_presentation().await.unwrap();
+                send_closure(message).await.unwrap();
                 assert_eq!(ProverState::PresentationSet, alice.prover.get_state());
             }
 
@@ -1871,17 +1867,13 @@ mod tests {
                     .unwrap();
                 assert_eq!(ProverState::PresentationPrepared, alice.prover.get_state());
 
-                alice
-                    .prover
-                    .send_presentation(
-                        alice
-                            .connection
-                            .send_message_closure(alice.profile.inject_wallet())
-                            .await
-                            .unwrap(),
-                    )
+                let send_closure = alice
+                    .connection
+                    .send_message_closure(alice.profile.inject_wallet())
                     .await
                     .unwrap();
+                let message = alice.prover.set_presentation().await.unwrap();
+                send_closure(message).await.unwrap();
                 assert_eq!(ProverState::PresentationSet, alice.prover.get_state());
             }
 

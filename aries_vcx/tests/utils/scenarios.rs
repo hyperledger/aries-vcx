@@ -847,15 +847,12 @@ pub mod test_utils {
         assert_eq!(thread_id, prover.get_thread_id().unwrap());
         if ProverState::PresentationPrepared == prover.get_state() {
             info!("generate_and_send_proof :: proof generated, sending proof");
-            prover
-                .send_presentation(
-                    connection
-                        .send_message_closure(alice.profile.inject_wallet())
-                        .await
-                        .unwrap(),
-                )
+            let send_closure = connection
+                .send_message_closure(alice.profile.inject_wallet())
                 .await
                 .unwrap();
+            let message = prover.set_presentation().await.unwrap();
+            send_closure(message).await.unwrap();
             info!("generate_and_send_proof :: proof sent");
             assert_eq!(thread_id, prover.get_thread_id().unwrap());
             tokio::time::sleep(Duration::from_millis(1000)).await;
