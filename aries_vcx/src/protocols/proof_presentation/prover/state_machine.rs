@@ -371,7 +371,7 @@ impl ProverSM {
         }
     }
 
-    pub fn get_proposal(&self) -> VcxResult<ProposePresentation> {
+    pub fn get_presentation_proposal(&self) -> VcxResult<ProposePresentation> {
         match &self.state {
             ProverFullState::PresentationProposalSent(state) => Ok(state.proposal.clone()),
             _ => Err(AriesVcxError::from_msg(
