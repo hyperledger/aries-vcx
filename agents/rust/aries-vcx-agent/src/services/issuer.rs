@@ -125,7 +125,15 @@ impl ServiceCredentialsIssuer {
         });
 
         issuer.build_credential(&self.profile.inject_anoncreds()).await?;
-        issuer.send_credential(send_closure).await;
+        match issuer.get_state() {
+            IssuerState::Failed => {
+                let problem_report = issuer.get_problem_report()?;
+                send_closure(problem_report.into()).await?;
+            }
+            _ => {
+                issuer.send_credential(send_closure).await?;
+            }
+        }
         self.creds_issuer
             .insert(&issuer.get_thread_id()?, IssuerWrapper::new(issuer, &connection_id))?;
         Ok(())

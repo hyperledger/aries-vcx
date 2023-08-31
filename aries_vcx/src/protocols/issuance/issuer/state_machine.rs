@@ -410,7 +410,7 @@ impl IssuerSM {
                     Err(err) => {
                         let problem_report = build_problem_report_msg(Some(err.to_string()), &self.thread_id);
                         error!(
-                            "Failed to create credential, sending problem report {:?}",
+                            "Failed to create credential, generated problem report {:?}",
                             problem_report
                         );
                         IssuerFullState::Finished(FinishedState::from_request_and_error(state_data, problem_report))

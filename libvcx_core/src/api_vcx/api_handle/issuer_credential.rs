@@ -6,6 +6,7 @@ use serde_json;
 
 use aries_vcx::handlers::issuance::issuer::Issuer;
 use aries_vcx::handlers::issuance::mediated_issuer::issuer_find_message_to_handle;
+use aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
 
 use crate::api_vcx::api_global::profile::{get_main_anoncreds, get_main_wallet};
 use crate::api_vcx::api_handle::connection;
@@ -214,7 +215,15 @@ pub async fn send_credential(handle: u32, connection_handle: u32) -> LibvcxResul
     let mut credential = ISSUER_CREDENTIAL_MAP.get_cloned(handle)?;
     credential.build_credential(&get_main_anoncreds()?).await?;
     let send_closure = mediated_connection::send_message_closure(connection_handle).await?;
-    credential.send_credential(send_closure).await?;
+    match credential.get_state() {
+        IssuerState::Failed => {
+            let problem_report = credential.get_problem_report()?;
+            send_closure(problem_report.into()).await?;
+        }
+        _ => {
+            credential.send_credential(send_closure).await?;
+        }
+    }
     let state: u32 = credential.get_state().into();
     ISSUER_CREDENTIAL_MAP.insert(handle, credential)?;
     Ok(state)
@@ -224,10 +233,18 @@ pub async fn send_credential_nonmediated(handle: u32, connection_handle: u32) ->
     let mut credential = ISSUER_CREDENTIAL_MAP.get_cloned(handle)?;
     let con = connection::get_cloned_generic_connection(&connection_handle)?;
     let wallet = get_main_wallet()?;
-    let send_message: SendClosure =
+    let send_closure: SendClosure =
         Box::new(|msg: AriesMessage| Box::pin(async move { con.send_message(&wallet, &msg, &HttpClient).await }));
     credential.build_credential(&get_main_anoncreds()?).await?;
-    credential.send_credential(send_message).await;
+    match credential.get_state() {
+        IssuerState::Failed => {
+            let problem_report = credential.get_problem_report()?;
+            send_closure(problem_report.into()).await?;
+        }
+        _ => {
+            credential.send_credential(send_closure).await?;
+        }
+    }
     let state: u32 = credential.get_state().into();
     ISSUER_CREDENTIAL_MAP.insert(handle, credential)?;
     Ok(state)

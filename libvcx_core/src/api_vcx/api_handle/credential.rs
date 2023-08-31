@@ -6,6 +6,7 @@ use serde_json;
 use aries_vcx::agency_client::testing::mocking::AgencyMockDecrypted;
 use aries_vcx::handlers::issuance::holder::Holder;
 use aries_vcx::handlers::issuance::mediated_holder::holder_find_message_to_handle;
+use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
 use aries_vcx::utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
 use aries_vcx::{global::settings::indy_mocks_enabled, utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER};
 
@@ -234,7 +235,15 @@ pub async fn send_credential_request(handle: u32, connection_handle: u32) -> Lib
     credential
         .build_credential_request(&get_main_anoncreds_ledger_read()?, &get_main_anoncreds()?, my_pw_did)
         .await?;
-    credential.send_credential_request(send_message).await?;
+    match credential.get_state() {
+        HolderState::Failed => {
+            let problem_report = credential.get_problem_report()?;
+            send_message(problem_report.into()).await?;
+        }
+        _ => {
+            credential.send_credential_request(send_message).await?;
+        }
+    }
     HANDLE_MAP.insert(handle, credential)
 }
 

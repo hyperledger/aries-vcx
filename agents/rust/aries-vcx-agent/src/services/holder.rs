@@ -104,7 +104,15 @@ impl ServiceCredentialsHolder {
                 pw_did,
             )
             .await?;
-        holder.send_credential_request(send_closure).await?;
+        match holder.get_state() {
+            HolderState::Failed => {
+                let problem_report = holder.get_problem_report()?;
+                send_closure(problem_report.into()).await?;
+            }
+            _ => {
+                holder.send_credential_request(send_closure).await?;
+            }
+        }
         self.creds_holder
             .insert(&holder.get_thread_id()?, HolderWrapper::new(holder, &connection_id))
     }
