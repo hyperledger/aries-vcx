@@ -72,7 +72,6 @@ impl Holder {
         Ok(())
     }
 
-    // todo: is the my_pw_did really necessary? is it used under the hood?
     pub async fn prepare_credential_request(
         &mut self,
         ledger: &Arc<dyn AnoncredsLedgerRead>,
