@@ -11,6 +11,7 @@ use messages::msg_fields::protocols::cred_issuance::ack::{AckCredential, AckCred
 use messages::msg_fields::protocols::cred_issuance::issue_credential::IssueCredential;
 use messages::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
 use messages::msg_fields::protocols::cred_issuance::propose_credential::ProposeCredential;
+use messages::msg_fields::protocols::cred_issuance::request_credential::RequestCredential;
 use messages::msg_fields::protocols::cred_issuance::CredentialIssuance;
 use messages::msg_fields::protocols::notification::ack::{AckDecorators, AckStatus};
 use messages::msg_fields::protocols::report_problem::ProblemReport;
@@ -21,7 +22,7 @@ use crate::common::credentials::get_cred_rev_id;
 use crate::errors::error::prelude::*;
 use crate::handlers::connection::mediated_connection::MediatedConnection;
 use crate::handlers::revocation_notification::receiver::RevocationNotificationReceiver;
-use crate::protocols::issuance::holder::state_machine::{HolderSM, HolderState};
+use crate::protocols::issuance::holder::state_machine::{HolderFullState, HolderSM, HolderState};
 use crate::protocols::SendClosure;
 
 fn build_credential_ack(thread_id: &str) -> AckCredential {
@@ -72,7 +73,7 @@ impl Holder {
     }
 
     // todo: is the my_pw_did really necessary? is it used under the hood?
-    pub async fn build_credential_request(
+    pub async fn prepare_credential_request(
         &mut self,
         ledger: &Arc<dyn AnoncredsLedgerRead>,
         anoncreds: &Arc<dyn BaseAnonCreds>,
@@ -81,13 +82,23 @@ impl Holder {
         self.holder_sm = self
             .holder_sm
             .clone()
-            .build_credential_request(ledger, anoncreds, my_pw_did)
+            .prepare_credential_request(ledger, anoncreds, my_pw_did)
             .await?;
         Ok(())
     }
 
-    pub async fn send_credential_request(&mut self, send_message: SendClosure) -> VcxResult<()> {
-        self.holder_sm.send_credential_request(send_message).await
+    // ultimately this will be eliminated, as with state pattern, state transition will yield reply message
+    pub fn get_msg_credential_request(&mut self) -> VcxResult<RequestCredential> {
+        match self.holder_sm.state {
+            HolderFullState::RequestSet(ref state) => {
+                let mut msg: RequestCredential = state.msg_credential_request.clone().into();
+                let mut timing = Timing::default();
+                timing.out_time = Some(Utc::now());
+                msg.decorators.timing = Some(timing);
+                Ok(msg)
+            }
+            _ => Err(AriesVcxError::from_msg(AriesVcxErrorKind::NotReady, "Invalid action")),
+        }
     }
 
     pub async fn decline_offer<'a>(&'a mut self, comment: Option<&'a str>, send_message: SendClosure) -> VcxResult<()> {
@@ -99,7 +110,6 @@ impl Holder {
         Ok(())
     }
 
-    // todo 0109: send ack/problem-report in upper layer
     pub async fn process_credential(
         &mut self,
         ledger: &Arc<dyn AnoncredsLedgerRead>,

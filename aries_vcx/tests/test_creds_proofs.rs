@@ -1711,14 +1711,15 @@ mod tests {
                     .unwrap();
                 alice
                     .credential
-                    .build_credential_request(
+                    .prepare_credential_request(
                         &alice.profile.inject_anoncreds_ledger_read(),
                         &alice.profile.inject_anoncreds(),
                         pw_did,
                     )
                     .await
                     .unwrap();
-                alice.credential.send_credential_request(send_closure).await.unwrap();
+                let request = alice.credential.get_msg_credential_request().unwrap();
+                send_closure(request.into()).await.unwrap();
                 assert_eq!(HolderState::RequestSet, alice.credential.get_state());
             }
 
@@ -1820,14 +1821,15 @@ mod tests {
                 let pw_did = alice.connection.pairwise_info().pw_did.to_string();
                 alice
                     .credential
-                    .build_credential_request(
+                    .prepare_credential_request(
                         &alice.profile.inject_anoncreds_ledger_read(),
                         &alice.profile.inject_anoncreds(),
                         pw_did,
                     )
                     .await
                     .unwrap();
-                alice.credential.send_credential_request(send_closure).await.unwrap();
+                let request = alice.credential.get_msg_credential_request().unwrap();
+                send_closure(request.into()).await.unwrap();
                 assert_eq!(HolderState::RequestSet, alice.credential.get_state());
             }
 

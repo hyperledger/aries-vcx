@@ -281,14 +281,15 @@ pub mod test_utils {
             .await
             .unwrap();
         holder
-            .build_credential_request(
+            .prepare_credential_request(
                 &alice.profile.inject_anoncreds_ledger_read(),
                 &alice.profile.inject_anoncreds(),
                 my_pw_did,
             )
             .await
             .unwrap();
-        holder.send_credential_request(send_closure).await.unwrap();
+        let request = holder.get_msg_credential_request().unwrap();
+        send_closure(request.into()).await.unwrap();
         tokio::time::sleep(Duration::from_millis(1000)).await;
         holder
     }
@@ -500,14 +501,15 @@ pub mod test_utils {
             .await
             .unwrap();
         holder
-            .build_credential_request(
+            .prepare_credential_request(
                 &alice.profile.inject_anoncreds_ledger_read(),
                 &alice.profile.inject_anoncreds(),
                 my_pw_did,
             )
             .await
             .unwrap();
-        holder.send_credential_request(send_closure).await.unwrap();
+        let request = holder.get_msg_credential_request().unwrap();
+        send_closure(request.into()).await.unwrap();
         assert_eq!(HolderState::RequestSet, holder.get_state());
     }
 

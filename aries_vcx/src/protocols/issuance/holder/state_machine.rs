@@ -179,7 +179,7 @@ impl HolderSM {
         Ok(Self { state, ..self })
     }
 
-    pub async fn build_credential_request<'a>(
+    pub async fn prepare_credential_request<'a>(
         self,
         ledger: &'a Arc<dyn AnoncredsLedgerRead>,
         anoncreds: &'a Arc<dyn BaseAnonCreds>,
@@ -219,25 +219,6 @@ impl HolderSM {
             }
         };
         Ok(Self { state, ..self })
-    }
-
-    #[deprecated]
-    // convenience function for sending the credential request. This will be removed in the future
-    // and some form of replacement will be provided instead outside of state machines.
-    pub async fn send_credential_request(&self, send_message: SendClosure) -> VcxResult<()> {
-        match self.state {
-            HolderFullState::RequestSet(ref state) => {
-                let mut msg: RequestCredential = state.msg_credential_request.clone().into();
-                let mut timing = Timing::default();
-                timing.out_time = Some(Utc::now());
-                msg.decorators.timing = Some(timing);
-                send_message(msg.into()).await?;
-            }
-            _ => {
-                return Err(AriesVcxError::from_msg(AriesVcxErrorKind::NotReady, "Invalid action"));
-            }
-        };
-        Ok(())
     }
 
     pub async fn decline_offer(self, comment: Option<String>, send_message: SendClosure) -> VcxResult<Self> {

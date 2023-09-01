@@ -98,7 +98,7 @@ impl ServiceCredentialsHolder {
             Box::pin(async move { connection.send_message(&wallet, &msg, &HttpClient).await })
         });
         holder
-            .build_credential_request(
+            .prepare_credential_request(
                 &self.profile.inject_anoncreds_ledger_read(),
                 &self.profile.inject_anoncreds(),
                 pw_did,
@@ -110,7 +110,8 @@ impl ServiceCredentialsHolder {
                 send_closure(problem_report.into()).await?;
             }
             _ => {
-                holder.send_credential_request(send_closure).await?;
+                let credential_request = holder.get_msg_credential_request()?;
+                send_closure(credential_request.into()).await?;
             }
         }
         self.creds_holder
