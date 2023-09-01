@@ -256,9 +256,16 @@ impl HolderSM {
                 )
                 .await
                 {
-                    Ok((cred_id, rev_reg_def_json)) => {
-                        HolderFullState::Finished((state_data, cred_id, credential, rev_reg_def_json).into())
-                    }
+                    Ok((cred_id, rev_reg_def_json)) => HolderFullState::Finished(
+                        (
+                            state_data,
+                            cred_id,
+                            credential,
+                            rev_reg_def_json,
+                            credential.decorators.please_ack.is_some(),
+                        )
+                            .into(),
+                    ),
                     Err(err) => {
                         let problem_report = build_problem_report_msg(Some(err.to_string()), &self.thread_id);
                         error!("Failed to process or save received credential: {problem_report:?}");

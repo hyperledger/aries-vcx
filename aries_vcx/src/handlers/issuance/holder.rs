@@ -23,7 +23,6 @@ use crate::errors::error::prelude::*;
 use crate::handlers::connection::mediated_connection::MediatedConnection;
 use crate::handlers::revocation_notification::receiver::RevocationNotificationReceiver;
 use crate::protocols::issuance::holder::state_machine::{HolderFullState, HolderSM, HolderState};
-use crate::protocols::SendClosure;
 
 fn build_credential_ack(thread_id: &str) -> AckCredential {
     let content = AckCredentialContent::new(AckStatus::Ok);
@@ -251,61 +250,18 @@ impl Holder {
         Ok(())
     }
 
-    // While we have removed message sending logic from state machine layer, we still want to preserve
-    // the logic on the upper layers (vcx, rust-agent, ...)
-    // Instead of having to reimplement the message sending logic on upper layers, this provide shared
-    // reusable logic. Yet this is just helper function, and should not be used in tests or any new code.
-    //
-    // This function is mean to be called after processing a message. Currently the state machines
-    // mutate themselves and after processing the message, the state machine might be in subsequent state,
-    // or might be in Failed state.
-    // Based on what state is, different reply shall be sent to counterparty. This function handles these cases.
-    #[deprecated]
-    pub async fn try_reply(&self, send_message: SendClosure, last_message: Option<AriesMessage>) -> VcxResult<()> {
-        trace!("Holder::try_reply >>> trying to send reply to counterparty");
-        match self.get_state() {
-            HolderState::Failed => {
-                let problem_report = self.get_problem_report()?;
-                send_message(problem_report.into()).await?;
-            }
-            HolderState::Finished => match last_message {
-                // todo: add please_ack flag to state machine so we don't have to provide last_message arg to this function
-                None => {
-                    return Err(AriesVcxError::from_msg(
-                        AriesVcxErrorKind::InvalidState,
-                        "Holder::try_reply called, but expected to be provided last received message",
-                    ))
-                }
-                Some(last_message) => match last_message {
-                    AriesMessage::CredentialIssuance(message) => match message {
-                        CredentialIssuance::IssueCredential(message) => {
-                            trace!("Holder::try_reply >>> checking if counterparty requested credential ack");
-                            if message.decorators.please_ack.is_some() {
-                                let ack_msg = build_credential_ack(&self.get_thread_id()?);
-                                trace!("Holder::try_reply >>> sending credential ack");
-                                send_message(ack_msg.into()).await?;
-                            }
-                        }
-                        _ => {
-                            return Err(AriesVcxError::from_msg(
-                                AriesVcxErrorKind::InvalidState,
-                                "Holder::try_reply called, but unexpected last message type was supplied",
-                            ))
-                        }
-                    },
-                    _ => {
-                        return Err(AriesVcxError::from_msg(
-                            AriesVcxErrorKind::InvalidState,
-                            "Holder::try_reply called, but unexpected last message family was supplied",
-                        ))
+    pub fn get_final_message(&self) -> Option<AriesMessage> {
+        match &self.holder_sm.state {
+            HolderFullState::Finished(state) => {
+                if let Some(ack_requested) = state.ack_requested {
+                    if ack_requested {
+                        let ack_msg = build_credential_ack(&self.get_thread_id()?);
+                        return Some(ack_msg.into());
                     }
-                },
-            },
-            HolderState::Initial => {}
-            HolderState::ProposalSet => {}
-            HolderState::OfferReceived => {}
-            HolderState::RequestSet => {}
-        }
-        Ok(())
+                }
+            }
+            _ => {}
+        };
+        return None;
     }
 }

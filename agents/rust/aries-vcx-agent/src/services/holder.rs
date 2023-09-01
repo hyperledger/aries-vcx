@@ -119,10 +119,6 @@ impl ServiceCredentialsHolder {
         let connection = self.service_connections.get_by_id(&connection_id)?;
         let wallet = self.profile.inject_wallet();
 
-        let send_closure: SendClosure = Box::new(|msg: AriesMessage| {
-            Box::pin(async move { connection.send_message(&wallet, &msg, &HttpClient).await })
-        });
-
         holder
             .process_credential(
                 &self.profile.inject_anoncreds_ledger_read(),
@@ -130,9 +126,15 @@ impl ServiceCredentialsHolder {
                 msg_issue_credential.clone(),
             )
             .await?;
-        holder
-            .try_reply(send_closure, Some(msg_issue_credential.into()))
-            .await?;
+        match holder.get_final_message() {
+            None => {}
+            Some(msg_response) => {
+                let send_closure: SendClosure = Box::new(|msg: AriesMessage| {
+                    Box::pin(async move { connection.send_message(&wallet, &msg, &HttpClient).await })
+                });
+                send_closure(msg_response).await?;
+            }
+        }
         self.creds_holder
             .insert(&holder.get_thread_id()?, HolderWrapper::new(holder, &connection_id))
     }

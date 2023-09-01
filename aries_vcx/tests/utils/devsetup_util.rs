@@ -161,13 +161,17 @@ pub async fn holder_update_with_mediator(
     if sm.is_terminal_state() {
         return Ok(sm.get_state());
     }
-    let send_message = connection.send_message_closure(Arc::clone(wallet)).await?;
-
     let messages = connection.get_messages(agency_client).await?;
     if let Some((uid, msg)) = mediated_holder::holder_find_message_to_handle(sm, messages) {
         sm.process_aries_msg(ledger, anoncreds, msg.clone()).await?;
         connection.update_message_status(&uid, agency_client).await?;
-        sm.try_reply(send_message, Some(msg)).await?;
+        match sm.get_final_message() {
+            None => {}
+            Some(msg_response) => {
+                let send_message = connection.send_message_closure(Arc::clone(wallet)).await?;
+                send_message(msg_response).await?;
+            }
+        }
     }
     Ok(sm.get_state())
 }

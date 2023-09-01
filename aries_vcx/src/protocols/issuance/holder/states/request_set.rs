@@ -14,14 +14,20 @@ pub struct RequestSetState {
 
 impl From<(RequestSetState, String, IssueCredential, Option<String>)> for FinishedHolderState {
     fn from(
-        (_, cred_id, credential, rev_reg_def_json): (RequestSetState, String, IssueCredential, Option<String>),
+        (_, cred_id, credential, rev_reg_def_json, ack_requested): (
+            RequestSetState,
+            String,
+            IssueCredential,
+            Option<String>,
+            bool,
+        ),
     ) -> Self {
-        trace!("SM is now in Finished state");
         FinishedHolderState {
             cred_id: Some(cred_id),
             credential: Some(credential),
             status: Status::Success,
             rev_reg_def_json,
+            ack_requested: Some(ack_requested),
         }
     }
 }

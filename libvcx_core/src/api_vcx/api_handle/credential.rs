@@ -123,8 +123,6 @@ pub async fn update_state(credential_handle: u32, message: Option<&str>, connect
     if credential.is_terminal_state() {
         return Ok(credential.get_state().into());
     }
-    let send_message = mediated_connection::send_message_closure(connection_handle).await?;
-
     let (mediator_uid, aries_msg) = if let Some(message) = message {
         let message: AriesMessage = serde_json::from_str(message).map_err(|err| {
             LibvcxError::from_msg(
@@ -156,7 +154,13 @@ pub async fn update_state(credential_handle: u32, message: Option<&str>, connect
                 trace!("credential::update_state >>> updating messages status in mediator");
                 mediated_connection::update_message_status(connection_handle, &uid).await?;
             }
-            credential.try_reply(send_message, Some(aries_msg)).await?;
+            match credential.get_final_message() {
+                None => {}
+                Some(msg_response) => {
+                    let send_message = mediated_connection::send_message_closure(connection_handle).await?;
+                    send_message(msg_response).await?;
+                }
+            }
         }
     }
     let state = credential.get_state().into();
