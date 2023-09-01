@@ -525,16 +525,12 @@ pub mod test_utils {
         .await
         .unwrap();
         assert_eq!(HolderState::OfferReceived, holder.get_state());
-        holder
-            .decline_offer(
-                Some("Have a nice day"),
-                connection
-                    .send_message_closure(alice.profile.inject_wallet())
-                    .await
-                    .unwrap(),
-            )
+        let send_message = connection
+            .send_message_closure(alice.profile.inject_wallet())
             .await
             .unwrap();
+        let problem_report = holder.decline_offer(Some("Have a nice day")).unwrap();
+        send_message(problem_report.into()).await.unwrap();
         assert_eq!(HolderState::Failed, holder.get_state());
     }
 

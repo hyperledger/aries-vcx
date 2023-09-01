@@ -367,7 +367,8 @@ pub fn get_thread_id(handle: u32) -> LibvcxResult<String> {
 pub async fn decline_offer(handle: u32, connection_handle: u32, comment: Option<&str>) -> LibvcxResult<()> {
     let mut credential = HANDLE_MAP.get_cloned(handle)?;
     let send_message = mediated_connection::send_message_closure(connection_handle).await?;
-    credential.decline_offer(comment, send_message).await?;
+    let problem_report = credential.decline_offer(comment).await?;
+    send_message(problem_report.into()).await?;
     HANDLE_MAP.insert(handle, credential)
 }
 

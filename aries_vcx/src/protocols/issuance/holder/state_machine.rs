@@ -221,11 +221,10 @@ impl HolderSM {
         Ok(Self { state, ..self })
     }
 
-    pub async fn decline_offer(self, comment: Option<String>, send_message: SendClosure) -> VcxResult<Self> {
+    pub async fn decline_offer(self, comment: Option<String>) -> VcxResult<Self> {
         let state = match self.state {
             HolderFullState::OfferReceived(_) => {
                 let problem_report = build_problem_report_msg(comment, &self.thread_id);
-                send_message(problem_report.clone().into()).await?;
                 HolderFullState::Finished(FinishedHolderState::new(problem_report))
             }
             s => {

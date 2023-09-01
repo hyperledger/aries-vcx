@@ -101,13 +101,9 @@ impl Holder {
         }
     }
 
-    pub async fn decline_offer<'a>(&'a mut self, comment: Option<&'a str>, send_message: SendClosure) -> VcxResult<()> {
-        self.holder_sm = self
-            .holder_sm
-            .clone()
-            .decline_offer(comment.map(String::from), send_message)
-            .await?;
-        Ok(())
+    pub fn decline_offer<'a>(&'a mut self, comment: Option<&'a str>) -> VcxResult<ProblemReport> {
+        self.holder_sm = self.holder_sm.clone().decline_offer(comment.map(String::from))?;
+        self.get_problem_report()
     }
 
     pub async fn process_credential(
