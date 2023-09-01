@@ -21,7 +21,6 @@ sealed class Destination(val route: String) {
 }
 
 class MainActivity : ComponentActivity() {
-
     private var profile: ProfileHolder? = null
     private var connection: Connection? = null
     private fun setProfileHolder(profileHolder: ProfileHolder) {
@@ -51,10 +50,9 @@ fun NavigationAppHost(navController: NavHostController, setProfileHolder: (Profi
         composable(Destination.Home.route) {
             HomeScreen(navController = navController, setProfileHolder = setProfileHolder)
         }
+
         composable(Destination.QRScan.route) {
-            if (profileHolder != null) {
-                ScanScreen(connection = connection, profileHolder = profileHolder)
-            }
+            ScanScreen(connection = connection, profileHolder = profileHolder)
         }
     }
 }
