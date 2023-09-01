@@ -254,6 +254,7 @@ impl Holder {
     // Based on what state is, different reply shall be sent to counterparty. This function handles these cases.
     #[deprecated]
     pub async fn try_reply(&self, send_message: SendClosure, last_message: Option<AriesMessage>) -> VcxResult<()> {
+        trace!("Holder::try_reply >>> trying to send reply to counterparty");
         match self.get_state() {
             HolderState::Failed => {
                 let problem_report = self.get_problem_report()?;
@@ -270,13 +271,26 @@ impl Holder {
                 Some(last_message) => match last_message {
                     AriesMessage::CredentialIssuance(message) => match message {
                         CredentialIssuance::IssueCredential(message) => {
+                            trace!("Holder::try_reply >>> checking if counterparty requested credential ack");
                             if message.decorators.please_ack.is_some() {
-                                send_message(build_credential_ack(&self.get_thread_id()?).into());
+                                let ack_msg = build_credential_ack(&self.get_thread_id()?);
+                                trace!("Holder::try_reply >>> sending credential ack");
+                                send_message(ack_msg.into()).await?;
                             }
                         }
-                        _ => {}
+                        _ => {
+                            return Err(AriesVcxError::from_msg(
+                                AriesVcxErrorKind::InvalidState,
+                                "Holder::try_reply called, but unexpected last message type was supplied",
+                            ))
+                        }
                     },
-                    _ => {}
+                    _ => {
+                        return Err(AriesVcxError::from_msg(
+                            AriesVcxErrorKind::InvalidState,
+                            "Holder::try_reply called, but unexpected last message family was supplied",
+                        ))
+                    }
                 },
             },
             HolderState::Initial => {}

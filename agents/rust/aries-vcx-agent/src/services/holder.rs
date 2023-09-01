@@ -105,7 +105,7 @@ impl ServiceCredentialsHolder {
             )
             .await?;
 
-        holder.try_reply(send_closure, None).await;
+        holder.try_reply(send_closure, None).await?;
         self.creds_holder
             .insert(&holder.get_thread_id()?, HolderWrapper::new(holder, &connection_id))
     }

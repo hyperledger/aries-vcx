@@ -103,9 +103,11 @@ module.exports.createServiceCredIssuer = function createServiceCredIssuer ({ log
 
   async function _progressIssuerCredentialToState (issuerCredential, connection, credentialStateTarget, attemptsThreshold, timeoutMs) {
     async function progressToAcceptedState () {
-      if (await issuerCredential.updateStateV2(connection) !== credentialStateTarget) {
+      const currentState = await issuerCredential.updateStateV2(connection)
+      if (currentState !== credentialStateTarget) {
         return { result: undefined, isFinished: false }
       } else {
+        logger.debug(`Cred issuer: _progressIssuerCredentialToState, currentState: ${currentState}, credentialStateTarget: ${credentialStateTarget}`)
         return { result: null, isFinished: true }
       }
     }

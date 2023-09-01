@@ -354,6 +354,7 @@ impl IssuerSM {
         match self.state {
             IssuerFullState::OfferSet(ref state_data) => {
                 let cred_offer_msg = state_data.offer.clone().into();
+                trace!("IssuerSM::send_credential_offer >> sending credential offer message");
                 send_message(cred_offer_msg).await?;
             }
             _ => {

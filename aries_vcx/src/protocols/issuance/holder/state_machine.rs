@@ -141,6 +141,7 @@ impl HolderSM {
     }
 
     pub fn set_proposal(self, proposal: ProposeCredential) -> VcxResult<Self> {
+        trace!("HolderSM::set_proposal >>");
         verify_thread_id(
             &self.thread_id,
             &AriesMessage::CredentialIssuance(CredentialIssuance::ProposeCredential(proposal.clone())),
@@ -165,6 +166,7 @@ impl HolderSM {
     }
 
     pub fn receive_offer(self, offer: OfferCredential) -> VcxResult<Self> {
+        trace!("HolderSM::receive_offer >>");
         verify_thread_id(
             &self.thread_id,
             &AriesMessage::CredentialIssuance(CredentialIssuance::OfferCredential(offer.clone())),
@@ -185,6 +187,7 @@ impl HolderSM {
         anoncreds: &'a Arc<dyn BaseAnonCreds>,
         my_pw_did: String,
     ) -> VcxResult<Self> {
+        trace!("HolderSM::prepare_credential_request >>");
         let state = match self.state {
             HolderFullState::OfferReceived(state_data) => {
                 match build_credential_request_msg(
@@ -222,6 +225,7 @@ impl HolderSM {
     }
 
     pub fn decline_offer(self, comment: Option<String>) -> VcxResult<Self> {
+        trace!("HolderSM::decline_offer >>");
         let state = match self.state {
             HolderFullState::OfferReceived(_) => {
                 let problem_report = build_problem_report_msg(comment, &self.thread_id);
@@ -241,6 +245,7 @@ impl HolderSM {
         anoncreds: &'a Arc<dyn BaseAnonCreds>,
         credential: IssueCredential,
     ) -> VcxResult<Self> {
+        trace!("HolderSM::receive_credential >>");
         let state = match self.state {
             HolderFullState::RequestSet(state_data) => {
                 match _store_credential(
@@ -271,6 +276,7 @@ impl HolderSM {
     }
 
     pub fn receive_problem_report(self, problem_report: ProblemReport) -> VcxResult<Self> {
+        warn!("HolderSM::receive_problem_report >> problem_report: {problem_report:?}");
         let state = match self.state {
             HolderFullState::ProposalSet(_) | HolderFullState::RequestSet(_) => {
                 HolderFullState::Finished(FinishedHolderState::new(problem_report))

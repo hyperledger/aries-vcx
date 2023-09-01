@@ -41,7 +41,7 @@ async function getInvitationString (fetchInviteUrl) {
 }
 
 async function runAlice (options) {
-  logger.info('Starting.')
+  logger.info('Starting alice.')
 
   initRustLogger(process.env.RUST_LOG || 'vcx=error')
   const agentName = `alice-${uuid.v4()}`
