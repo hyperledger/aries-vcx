@@ -250,18 +250,18 @@ impl Holder {
         Ok(())
     }
 
-    pub fn get_final_message(&self) -> Option<AriesMessage> {
+    pub fn get_final_message(&self) -> VcxResult<Option<AriesMessage>> {
         match &self.holder_sm.state {
             HolderFullState::Finished(state) => {
                 if let Some(ack_requested) = state.ack_requested {
                     if ack_requested {
                         let ack_msg = build_credential_ack(&self.get_thread_id()?);
-                        return Some(ack_msg.into());
+                        return Ok(Some(ack_msg.into()));
                     }
                 }
             }
             _ => {}
         };
-        return None;
+        return Ok(None);
     }
 }

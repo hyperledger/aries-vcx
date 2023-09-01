@@ -165,7 +165,7 @@ pub async fn holder_update_with_mediator(
     if let Some((uid, msg)) = mediated_holder::holder_find_message_to_handle(sm, messages) {
         sm.process_aries_msg(ledger, anoncreds, msg.clone()).await?;
         connection.update_message_status(&uid, agency_client).await?;
-        match sm.get_final_message() {
+        match sm.get_final_message()? {
             None => {}
             Some(msg_response) => {
                 let send_message = connection.send_message_closure(Arc::clone(wallet)).await?;

@@ -126,7 +126,7 @@ impl ServiceCredentialsHolder {
                 msg_issue_credential.clone(),
             )
             .await?;
-        match holder.get_final_message() {
+        match holder.get_final_message()? {
             None => {}
             Some(msg_response) => {
                 let send_closure: SendClosure = Box::new(|msg: AriesMessage| {

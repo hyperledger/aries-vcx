@@ -14,14 +14,9 @@ pub struct RequestSetState {
 
 impl From<(RequestSetState, String, IssueCredential, Option<String>)> for FinishedHolderState {
     fn from(
-        (_, cred_id, credential, rev_reg_def_json, ack_requested): (
-            RequestSetState,
-            String,
-            IssueCredential,
-            Option<String>,
-            bool,
-        ),
+        (_, cred_id, credential, rev_reg_def_json): (RequestSetState, String, IssueCredential, Option<String>),
     ) -> Self {
+        let ack_requested = credential.decorators.please_ack.is_some();
         FinishedHolderState {
             cred_id: Some(cred_id),
             credential: Some(credential),

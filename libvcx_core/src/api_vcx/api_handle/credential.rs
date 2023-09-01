@@ -154,7 +154,7 @@ pub async fn update_state(credential_handle: u32, message: Option<&str>, connect
                 trace!("credential::update_state >>> updating messages status in mediator");
                 mediated_connection::update_message_status(connection_handle, &uid).await?;
             }
-            match credential.get_final_message() {
+            match credential.get_final_message()? {
                 None => {}
                 Some(msg_response) => {
                     let send_message = mediated_connection::send_message_closure(connection_handle).await?;
