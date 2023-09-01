@@ -21,6 +21,7 @@ use aries_vcx::protocols::connection::invitee::InviteeConnection;
 // todo: the fact that Invitee and Inviter states have same name can easily cause mis-matches in consumer's code
 //       where they attempt to build Inviter<T>, but T is invitee state, like: invitee::states::responded::Responded
 // use aries_vcx::protocols::connection::invitee::states::responded::Responded;
+use aries_vcx::protocols::connection::invitee::states::completed::Completed;
 use aries_vcx::protocols::connection::inviter::states::requested::Requested;
 use aries_vcx::protocols::connection::inviter::InviterConnection;
 use aries_vcx::protocols::connection::pairwise_info::PairwiseInfo;
@@ -110,7 +111,7 @@ async fn workflow_alice_faber_connection(
     alice: &DemoAgent,
     faber: &DemoAgent,
     mediator_receiver: &mut Receiver<UserMessage>,
-) -> (InviteeConnection<Responded>, InviterConnection<Requested>) {
+) -> (InviteeConnection<Completed>, InviterConnection<Requested>) {
     info!("Starting Alice & Faber workflow to establish didcomm connection");
     let (faber_pw_did, faber_invite_key) = faber.wallet.create_and_store_my_did(None, None).await.unwrap();
     let msg_oob_invitation = build_oob_invitation(faber_invite_key.clone(), faber.endpoint_url.clone());
@@ -133,7 +134,11 @@ async fn workflow_alice_faber_connection(
         .await
         .unwrap();
     invitee_requested
-        .send_message(&alice.wallet, invitee_requested.get_request().into(), &HttpClient)
+        .send_message(
+            &alice.wallet,
+            &invitee_requested.get_request().clone().into(),
+            &HttpClient,
+        )
         .await
         .unwrap();
     info!("Faber waiting for msg");
@@ -180,6 +185,7 @@ async fn workflow_alice_faber_connection(
         .handle_response(&alice.wallet.clone(), response, &HttpClient)
         .await
         .unwrap();
+
     (invitee_complete, inviter_requested)
 }
 
