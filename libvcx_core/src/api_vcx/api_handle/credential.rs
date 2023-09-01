@@ -236,19 +236,10 @@ pub async fn send_credential_request(handle: u32, connection_handle: u32) -> Lib
     let mut credential = HANDLE_MAP.get_cloned(handle)?;
     let my_pw_did = mediated_connection::get_pw_did(connection_handle)?;
     let send_message = mediated_connection::send_message_closure(connection_handle).await?;
-    credential
+    let msg_response = credential
         .prepare_credential_request(&get_main_anoncreds_ledger_read()?, &get_main_anoncreds()?, my_pw_did)
         .await?;
-    match credential.get_state() {
-        HolderState::Failed => {
-            let problem_report = credential.get_problem_report()?;
-            send_message(problem_report.into()).await?;
-        }
-        _ => {
-            let request = credential.get_msg_credential_request()?;
-            send_message(request.into()).await?;
-        }
-    }
+    send_message(msg_response).await?;
     HANDLE_MAP.insert(handle, credential)
 }
 

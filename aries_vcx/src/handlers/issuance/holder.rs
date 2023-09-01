@@ -77,16 +77,25 @@ impl Holder {
         ledger: &Arc<dyn AnoncredsLedgerRead>,
         anoncreds: &Arc<dyn BaseAnonCreds>,
         my_pw_did: String,
-    ) -> VcxResult<()> {
+    ) -> VcxResult<AriesMessage> {
         self.holder_sm = self
             .holder_sm
             .clone()
             .prepare_credential_request(ledger, anoncreds, my_pw_did)
             .await?;
-        Ok(())
+        match self.get_state() {
+            HolderState::Failed => {
+                Ok(self.get_problem_report()?.into())
+            }
+            HolderState::RequestSet => {
+                Ok(self.get_msg_credential_request()?.into())
+            }
+            _ => {
+                Err(AriesVcxError::from_msg(AriesVcxErrorKind::InvalidState, "Holder::prepare_credential_request >> reached unexpected state after calling prepare_credential_request"))
+            }
+        }
     }
 
-    // ultimately this will be eliminated, as with state pattern, state transition will yield reply message
     pub fn get_msg_credential_request(&self) -> VcxResult<RequestCredential> {
         match self.holder_sm.state {
             HolderFullState::RequestSet(ref state) => {
@@ -295,10 +304,7 @@ impl Holder {
             HolderState::Initial => {}
             HolderState::ProposalSet => {}
             HolderState::OfferReceived => {}
-            HolderState::RequestSet => {
-                let credential_request = self.get_msg_credential_request()?;
-                send_message(credential_request.into()).await?;
-            }
+            HolderState::RequestSet => {}
         }
         Ok(())
     }

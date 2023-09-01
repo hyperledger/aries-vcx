@@ -29,7 +29,6 @@ use crate::protocols::issuance::holder::states::initial::InitialHolderState;
 use crate::protocols::issuance::holder::states::offer_received::OfferReceivedState;
 use crate::protocols::issuance::holder::states::proposal_set::ProposalSetState;
 use crate::protocols::issuance::holder::states::request_set::RequestSetState;
-use crate::protocols::SendClosure;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum HolderFullState {
@@ -158,7 +157,7 @@ impl HolderSM {
                 HolderFullState::ProposalSet(ProposalSetState::new(proposal))
             }
             s => {
-                warn!("Unable to send credential proposal in state {}", s);
+                warn!("Unable to set credential proposal in state {}", s);
                 s
             }
         };
@@ -209,7 +208,7 @@ impl HolderSM {
                     Err(err) => {
                         let problem_report = build_problem_report_msg(Some(err.to_string()), &self.thread_id);
                         error!(
-                            "Failed to create credential request, sending problem report: {:?}",
+                            "Failed to create credential request, generating problem report: {:?}",
                             problem_report
                         );
                         HolderFullState::Finished(FinishedHolderState::new(problem_report))
@@ -217,7 +216,7 @@ impl HolderSM {
                 }
             }
             s => {
-                warn!("Unable to send credential request in state {}", s);
+                warn!("Unable to set credential request in state {}", s);
                 s
             }
         };

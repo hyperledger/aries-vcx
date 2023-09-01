@@ -183,7 +183,8 @@ impl Alice {
             .unwrap();
 
         let pw_did = self.connection.pairwise_info().pw_did.to_string();
-        self.credential
+        let msg_response = self
+            .credential
             .prepare_credential_request(
                 &self.profile.inject_anoncreds_ledger_read(),
                 &self.profile.inject_anoncreds(),
@@ -191,8 +192,7 @@ impl Alice {
             )
             .await
             .unwrap();
-        let request = self.credential.get_msg_credential_request().unwrap();
-        send_closure(request.into()).await.unwrap();
+        send_closure(msg_response).await.unwrap();
         assert_eq!(HolderState::RequestSet, self.credential.get_state());
     }
 

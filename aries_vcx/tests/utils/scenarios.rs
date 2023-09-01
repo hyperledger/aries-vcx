@@ -275,7 +275,7 @@ pub mod test_utils {
             .send_message_closure(alice.profile.inject_wallet())
             .await
             .unwrap();
-        holder
+        let msg_response = holder
             .prepare_credential_request(
                 &alice.profile.inject_anoncreds_ledger_read(),
                 &alice.profile.inject_anoncreds(),
@@ -283,8 +283,7 @@ pub mod test_utils {
             )
             .await
             .unwrap();
-        let request = holder.get_msg_credential_request().unwrap();
-        send_closure(request.into()).await.unwrap();
+        send_closure(msg_response).await.unwrap();
         tokio::time::sleep(Duration::from_millis(1000)).await;
         holder
     }
@@ -491,7 +490,7 @@ pub mod test_utils {
             .send_message_closure(alice.profile.inject_wallet())
             .await
             .unwrap();
-        holder
+        let msg_response = holder
             .prepare_credential_request(
                 &alice.profile.inject_anoncreds_ledger_read(),
                 &alice.profile.inject_anoncreds(),
@@ -499,8 +498,7 @@ pub mod test_utils {
             )
             .await
             .unwrap();
-        let request = holder.get_msg_credential_request().unwrap();
-        send_closure(request.into()).await.unwrap();
+        send_closure(msg_response).await.unwrap();
         assert_eq!(HolderState::RequestSet, holder.get_state());
     }
 

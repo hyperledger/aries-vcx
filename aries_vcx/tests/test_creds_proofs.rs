@@ -1709,7 +1709,7 @@ mod tests {
                     .send_message_closure(alice.profile.inject_wallet())
                     .await
                     .unwrap();
-                alice
+                let msg_response = alice
                     .credential
                     .prepare_credential_request(
                         &alice.profile.inject_anoncreds_ledger_read(),
@@ -1718,8 +1718,7 @@ mod tests {
                     )
                     .await
                     .unwrap();
-                let request = alice.credential.get_msg_credential_request().unwrap();
-                send_closure(request.into()).await.unwrap();
+                send_closure(msg_response).await.unwrap();
                 assert_eq!(HolderState::RequestSet, alice.credential.get_state());
             }
 
@@ -1819,7 +1818,7 @@ mod tests {
                     .await
                     .unwrap();
                 let pw_did = alice.connection.pairwise_info().pw_did.to_string();
-                alice
+                let msg_response = alice
                     .credential
                     .prepare_credential_request(
                         &alice.profile.inject_anoncreds_ledger_read(),
@@ -1828,8 +1827,7 @@ mod tests {
                     )
                     .await
                     .unwrap();
-                let request = alice.credential.get_msg_credential_request().unwrap();
-                send_closure(request.into()).await.unwrap();
+                send_closure(msg_response).await.unwrap();
                 assert_eq!(HolderState::RequestSet, alice.credential.get_state());
             }
 

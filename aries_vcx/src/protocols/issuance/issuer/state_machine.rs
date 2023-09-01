@@ -35,7 +35,6 @@ use crate::protocols::issuance::issuer::states::initial::InitialIssuerState;
 use crate::protocols::issuance::issuer::states::offer_set::OfferSetState;
 use crate::protocols::issuance::issuer::states::proposal_received::ProposalReceivedState;
 use crate::protocols::issuance::issuer::states::requested_received::RequestReceivedState;
-use crate::protocols::SendClosure;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum IssuerFullState {
@@ -393,10 +392,7 @@ impl IssuerSM {
                     //       2. Also create separate "Failed" state
                     Err(err) => {
                         let problem_report = build_problem_report_msg(Some(err.to_string()), &self.thread_id);
-                        error!(
-                            "Failed to create credential, generated problem report {:?}",
-                            problem_report
-                        );
+                        error!("Failed to create credential, generated problem report {problem_report:?}",);
                         IssuerFullState::Finished(FinishedState::from_request_and_error(state_data, problem_report))
                     }
                 }
