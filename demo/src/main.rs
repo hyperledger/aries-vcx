@@ -190,7 +190,7 @@ async fn workflow_alice_faber_connection(
 }
 
 async fn workflow_alice_faber_talk(
-    connection_alice: &InviteeConnection<Responded>,
+    connection_alice: &InviteeConnection<Completed>,
     alice: &DemoAgent,
     connection_faber: &InviterConnection<Requested>,
     faber: &DemoAgent,
