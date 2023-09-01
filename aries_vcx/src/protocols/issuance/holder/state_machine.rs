@@ -87,16 +87,6 @@ fn _build_credential_request_msg(credential_request_attach: String, thread_id: &
     RequestCredential::with_decorators(Uuid::new_v4().to_string(), content, decorators)
 }
 
-fn build_credential_ack(thread_id: &str) -> AckCredential {
-    let content = AckCredentialContent::new(AckStatus::Ok);
-    let mut decorators = AckDecorators::new(Thread::new(thread_id.to_owned()));
-    let mut timing = Timing::default();
-    timing.out_time = Some(Utc::now());
-    decorators.timing = Some(timing);
-
-    AckCredential::with_decorators(Uuid::new_v4().to_string(), content, decorators)
-}
-
 impl HolderSM {
     pub fn new(source_id: String) -> Self {
         HolderSM {
@@ -270,7 +260,6 @@ impl HolderSM {
         ledger: &'a Arc<dyn AnoncredsLedgerRead>,
         anoncreds: &'a Arc<dyn BaseAnonCreds>,
         credential: IssueCredential,
-        send_message: SendClosure,
     ) -> VcxResult<Self> {
         let state = match self.state {
             HolderFullState::RequestSet(state_data) => {
@@ -284,19 +273,11 @@ impl HolderSM {
                 .await
                 {
                     Ok((cred_id, rev_reg_def_json)) => {
-                        if credential.decorators.please_ack.is_some() {
-                            let ack = build_credential_ack(&self.thread_id);
-                            send_message(ack.into()).await?;
-                        }
                         HolderFullState::Finished((state_data, cred_id, credential, rev_reg_def_json).into())
                     }
                     Err(err) => {
                         let problem_report = build_problem_report_msg(Some(err.to_string()), &self.thread_id);
-                        error!(
-                            "Failed to process or save received credential, sending problem report: {:?}",
-                            problem_report
-                        );
-                        send_message(problem_report.clone().into()).await?;
+                        error!("Failed to process or save received credential: {problem_report:?}");
                         HolderFullState::Finished(FinishedHolderState::new(problem_report))
                     }
                 }

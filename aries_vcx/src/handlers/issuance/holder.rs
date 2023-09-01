@@ -1,12 +1,18 @@
+use chrono::Utc;
 use std::sync::Arc;
+use uuid::Uuid;
 
 use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
 use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
+use messages::decorators::thread::Thread;
+use messages::decorators::timing::Timing;
+use messages::msg_fields::protocols::cred_issuance::ack::{AckCredential, AckCredentialContent};
 use messages::msg_fields::protocols::cred_issuance::issue_credential::IssueCredential;
 use messages::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
 use messages::msg_fields::protocols::cred_issuance::propose_credential::ProposeCredential;
 use messages::msg_fields::protocols::cred_issuance::CredentialIssuance;
+use messages::msg_fields::protocols::notification::ack::{AckDecorators, AckStatus};
 use messages::msg_fields::protocols::report_problem::ProblemReport;
 use messages::msg_fields::protocols::revocation::revoke::Revoke;
 use messages::AriesMessage;
@@ -17,6 +23,16 @@ use crate::handlers::connection::mediated_connection::MediatedConnection;
 use crate::handlers::revocation_notification::receiver::RevocationNotificationReceiver;
 use crate::protocols::issuance::holder::state_machine::{HolderSM, HolderState};
 use crate::protocols::SendClosure;
+
+fn build_credential_ack(thread_id: &str) -> AckCredential {
+    let content = AckCredentialContent::new(AckStatus::Ok);
+    let mut decorators = AckDecorators::new(Thread::new(thread_id.to_owned()));
+    let mut timing = Timing::default();
+    timing.out_time = Some(Utc::now());
+    decorators.timing = Some(timing);
+
+    AckCredential::with_decorators(Uuid::new_v4().to_string(), content, decorators)
+}
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Holder {
@@ -83,17 +99,17 @@ impl Holder {
         Ok(())
     }
 
+    // todo 0109: send ack/problem-report in upper layer
     pub async fn process_credential(
         &mut self,
         ledger: &Arc<dyn AnoncredsLedgerRead>,
         anoncreds: &Arc<dyn BaseAnonCreds>,
         credential: IssueCredential,
-        send_message: SendClosure,
     ) -> VcxResult<()> {
         self.holder_sm = self
             .holder_sm
             .clone()
-            .receive_credential(ledger, anoncreds, credential, send_message)
+            .receive_credential(ledger, anoncreds, credential)
             .await?;
         Ok(())
     }
@@ -197,31 +213,59 @@ impl Holder {
         self.holder_sm.get_problem_report()
     }
 
+    // todo 0109: send ack/problem-report in upper layer
     pub async fn process_aries_msg(
         &mut self,
         ledger: &Arc<dyn AnoncredsLedgerRead>,
         anoncreds: &Arc<dyn BaseAnonCreds>,
         message: AriesMessage,
-        send_message: Option<SendClosure>,
     ) -> VcxResult<()> {
         let holder_sm = match message {
             AriesMessage::CredentialIssuance(CredentialIssuance::OfferCredential(offer)) => {
                 self.holder_sm.clone().receive_offer(offer)?
             }
             AriesMessage::CredentialIssuance(CredentialIssuance::IssueCredential(credential)) => {
-                let send_message = send_message.ok_or(AriesVcxError::from_msg(
-                    AriesVcxErrorKind::InvalidState,
-                    "Attempted to call undefined send_message callback",
-                ))?;
                 self.holder_sm
                     .clone()
-                    .receive_credential(ledger, anoncreds, credential, send_message)
+                    .receive_credential(ledger, anoncreds, credential)
                     .await?
             }
             AriesMessage::ReportProblem(report) => self.holder_sm.clone().receive_problem_report(report)?,
             _ => self.holder_sm.clone(),
         };
         self.holder_sm = holder_sm;
+        Ok(())
+    }
+
+    // While we have removed message sending logic from state machine layer, we still want to preserve
+    // the logic on the upper layers (vcx, rust-agent, ...)
+    // Instead of having to reimplement the message sending logic on upper layers, this provide shared
+    // reusable logic. Yet this is just helper function, and should not be used in tests or any new code.
+    //
+    // This function is mean to be called after processing a message. Currently the state machines
+    // mutate themselves and after processing the message, the state machine might be in subsequent state,
+    // or might be in Failed state.
+    // Based on what state is, different reply shall be sent to counterparty. This function handles these cases.
+    #[deprecated]
+    pub async fn try_reply(&mut self, send_message: SendClosure, last_message: AriesMessage) -> VcxResult<()> {
+        match self.get_state() {
+            HolderState::Failed => {
+                let problem_report = self.get_problem_report()?;
+                send_message(problem_report.into()).await?;
+            }
+            HolderState::Finished => match last_message {
+                AriesMessage::CredentialIssuance(message) => match message {
+                    CredentialIssuance::IssueCredential(message) => {
+                        if message.decorators.please_ack.is_some() {
+                            send_message(build_credential_ack(&self.get_thread_id()?).into());
+                        }
+                    }
+                    _ => {}
+                },
+                _ => {}
+            },
+            _ => {}
+        }
         Ok(())
     }
 }

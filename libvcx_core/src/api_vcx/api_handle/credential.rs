@@ -118,7 +118,6 @@ pub async fn credential_create_with_msgid(
 
 pub async fn update_state(credential_handle: u32, message: Option<&str>, connection_handle: u32) -> LibvcxResult<u32> {
     let mut credential = HANDLE_MAP.get_cloned(credential_handle)?;
-    let profile = get_main_profile();
 
     trace!("credential::update_state >>> ");
     if credential.is_terminal_state() {
@@ -126,33 +125,37 @@ pub async fn update_state(credential_handle: u32, message: Option<&str>, connect
     }
     let send_message = mediated_connection::send_message_closure(connection_handle).await?;
 
-    if let Some(message) = message {
+    let (mediator_uid, aries_msg) = if let Some(message) = message {
         let message: AriesMessage = serde_json::from_str(message).map_err(|err| {
             LibvcxError::from_msg(
                 LibvcxErrorKind::InvalidOption,
                 format!("Cannot update state: Message deserialization failed: {:?}", err),
             )
         })?;
-        credential
-            .process_aries_msg(
-                &get_main_anoncreds_ledger_read()?,
-                &get_main_anoncreds()?,
-                message.into(),
-                Some(send_message),
-            )
-            .await?;
+        (None, Some(message))
     } else {
         let messages = mediated_connection::get_messages(connection_handle).await?;
-        if let Some((uid, msg)) = holder_find_message_to_handle(&credential, messages) {
+        match holder_find_message_to_handle(&credential, messages) {
+            None => (None, None),
+            Some((uid, msg)) => (Some(uid), Some(msg)),
+        }
+    };
+    match aries_msg {
+        None => {
+            trace!("credential::update_state >>> no suitable messages found to progress the protocol");
+        }
+        Some(aries_msg) => {
             credential
                 .process_aries_msg(
                     &get_main_anoncreds_ledger_read()?,
                     &get_main_anoncreds()?,
-                    msg.into(),
-                    Some(send_message),
+                    aries_msg.clone(),
                 )
                 .await?;
-            mediated_connection::update_message_status(connection_handle, &uid).await?;
+            if let Some(uid) = mediator_uid {
+                mediated_connection::update_message_status(connection_handle, &uid).await?;
+            }
+            credential.try_reply(send_message, aries_msg).await?;
         }
     }
     let state = credential.get_state().into();

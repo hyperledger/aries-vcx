@@ -117,7 +117,11 @@ impl ServiceCredentialsHolder {
             .insert(&holder.get_thread_id()?, HolderWrapper::new(holder, &connection_id))
     }
 
-    pub async fn process_credential(&self, thread_id: &str, credential: IssueCredential) -> AgentResult<String> {
+    pub async fn process_credential(
+        &self,
+        thread_id: &str,
+        msg_issue_credential: IssueCredential,
+    ) -> AgentResult<String> {
         let mut holder = self.get_holder(thread_id)?;
         let connection_id = self.get_connection_id(thread_id)?;
         let connection = self.service_connections.get_by_id(&connection_id)?;
@@ -131,10 +135,10 @@ impl ServiceCredentialsHolder {
             .process_credential(
                 &self.profile.inject_anoncreds_ledger_read(),
                 &self.profile.inject_anoncreds(),
-                credential,
-                send_closure,
+                msg_issue_credential.clone(),
             )
             .await?;
+        holder.try_reply(send_closure, msg_issue_credential.into()).await?;
         self.creds_holder
             .insert(&holder.get_thread_id()?, HolderWrapper::new(holder, &connection_id))
     }
