@@ -30,7 +30,7 @@ mod tests {
         test::{self, TestRequest},
         web, App,
     };
-    use simple_message_relay::{pop_user_message, send_user_message, AppState, UserMessage};
+    use simple_message_relay::{pop_user_message, send_user_message, AppState, UserMessage, UserMessages};
     use tokio::sync::mpsc;
 
     fn pop_message_request(user_id: &str) -> TestRequest {
