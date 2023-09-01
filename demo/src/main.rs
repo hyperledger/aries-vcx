@@ -129,7 +129,7 @@ async fn workflow_alice_faber_connection(
         .unwrap();
 
     let invitee_requested = invitee_invited
-        .send_request(&alice.wallet, alice.endpoint_url.clone(), vec![], &HttpClient)
+        .prepare_request(alice.endpoint_url.clone(), vec![])
         .await
         .unwrap();
     info!("Faber waiting for msg");
