@@ -98,7 +98,8 @@ impl ServiceProver {
             Box::pin(async move { connection.send_message(&wallet, &msg, &HttpClient).await })
         });
 
-        prover.send_proposal(proposal, send_closure).await?;
+        let proposal = prover.build_presentation_proposal(proposal).await?;
+        send_closure(proposal.into()).await?;
         self.provers
             .insert(&prover.get_thread_id()?, ProverWrapper::new(prover, connection_id))
     }
@@ -132,7 +133,8 @@ impl ServiceProver {
             Box::pin(async move { connection.send_message(&wallet, &msg, &HttpClient).await })
         });
 
-        prover.send_presentation(send_closure).await?;
+        let message = prover.mark_presentation_sent()?;
+        send_closure(message).await?;
         self.provers
             .insert(&prover.get_thread_id()?, ProverWrapper::new(prover, &connection_id))?;
         Ok(())

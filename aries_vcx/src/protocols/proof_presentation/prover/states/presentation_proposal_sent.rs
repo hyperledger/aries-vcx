@@ -5,7 +5,7 @@ use uuid::Uuid;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct PresentationProposalSent {
-    proposal: ProposePresentation,
+    pub proposal: ProposePresentation,
 }
 
 impl Default for PresentationProposalSent {

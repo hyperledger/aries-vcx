@@ -624,17 +624,13 @@ pub mod test_utils {
         for attr in attrs.into_iter() {
             proposal_data.attributes.push(attr);
         }
-        let mut prover = Prover::create("1").unwrap();
-        prover
-            .send_proposal(
-                proposal_data,
-                connection
-                    .send_message_closure(alice.profile.inject_wallet())
-                    .await
-                    .unwrap(),
-            )
+        let send_message = connection
+            .send_message_closure(alice.profile.inject_wallet())
             .await
             .unwrap();
+        let mut prover = Prover::create("1").unwrap();
+        let proposal = prover.build_presentation_proposal(proposal_data).await.unwrap();
+        send_message(proposal.into()).await.unwrap();
         assert_eq!(prover.get_state(), ProverState::PresentationProposalSent);
         tokio::time::sleep(Duration::from_millis(1000)).await;
         prover
@@ -655,16 +651,12 @@ pub mod test_utils {
         for attr in attrs.into_iter() {
             proposal_data.attributes.push(attr);
         }
-        prover
-            .send_proposal(
-                proposal_data,
-                connection
-                    .send_message_closure(alice.profile.inject_wallet())
-                    .await
-                    .unwrap(),
-            )
+        let proposal = prover.build_presentation_proposal(proposal_data).await.unwrap();
+        let send_message = connection
+            .send_message_closure(alice.profile.inject_wallet())
             .await
             .unwrap();
+        send_message(proposal.into()).await.unwrap();
         assert_eq!(prover.get_state(), ProverState::PresentationProposalSent);
         tokio::time::sleep(Duration::from_millis(1000)).await;
     }
@@ -697,16 +689,15 @@ pub mod test_utils {
             .unwrap()
             .set_requested_attributes_as_vec(attrs)
             .unwrap();
-        verifier.set_request(presentation_request_data, None).unwrap();
         verifier
-            .send_presentation_request(
-                connection
-                    .send_message_closure(faber.profile.inject_wallet())
-                    .await
-                    .unwrap(),
-            )
+            .set_presentation_request(presentation_request_data, None)
+            .unwrap();
+        let send_closure = connection
+            .send_message_closure(faber.profile.inject_wallet())
             .await
             .unwrap();
+        let message = verifier.mark_presentation_request_sent().unwrap();
+        send_closure(message).await.unwrap();
     }
 
     pub async fn reject_proof_proposal(faber: &mut Faber, connection: &MediatedConnection) -> Verifier {
@@ -722,16 +713,15 @@ pub mod test_utils {
         .await
         .unwrap();
         assert_eq!(verifier.get_state(), VerifierState::PresentationProposalReceived);
-        verifier
-            .decline_presentation_proposal(
-                connection
-                    .send_message_closure(faber.profile.inject_wallet())
-                    .await
-                    .unwrap(),
-                "I don't like Alices",
-            )
+        let send_closure = connection
+            .send_message_closure(faber.profile.inject_wallet())
             .await
             .unwrap();
+        let message = verifier
+            .decline_presentation_proposal("I don't like Alices") // :(
+            .await
+            .unwrap();
+        send_closure(message).await.unwrap();
         assert_eq!(verifier.get_state(), VerifierState::Failed);
         verifier
     }
@@ -767,15 +757,12 @@ pub mod test_utils {
                 .set_not_revoked_interval(revocation_interval.to_string())
                 .unwrap();
         let mut verifier = Verifier::create_from_request("1".to_string(), &presentation_request_data).unwrap();
-        verifier
-            .send_presentation_request(
-                connection
-                    .send_message_closure(faber.profile.inject_wallet())
-                    .await
-                    .unwrap(),
-            )
+        let send_closure = connection
+            .send_message_closure(faber.profile.inject_wallet())
             .await
             .unwrap();
+        let message = verifier.mark_presentation_request_sent().unwrap();
+        send_closure(message).await.unwrap();
         tokio::time::sleep(Duration::from_millis(1000)).await;
         verifier
     }
@@ -798,7 +785,7 @@ pub mod test_utils {
                 .set_not_revoked_interval(revocation_interval.to_string())
                 .unwrap();
         let verifier = Verifier::create_from_request("1".to_string(), &presentation_request).unwrap();
-        verifier.get_presentation_request().unwrap()
+        verifier.get_presentation_request_msg().unwrap()
     }
 
     pub async fn create_proof(
@@ -855,15 +842,12 @@ pub mod test_utils {
         assert_eq!(thread_id, prover.get_thread_id().unwrap());
         if ProverState::PresentationPrepared == prover.get_state() {
             info!("generate_and_send_proof :: proof generated, sending proof");
-            prover
-                .send_presentation(
-                    connection
-                        .send_message_closure(alice.profile.inject_wallet())
-                        .await
-                        .unwrap(),
-                )
+            let send_closure = connection
+                .send_message_closure(alice.profile.inject_wallet())
                 .await
                 .unwrap();
+            let message = prover.mark_presentation_sent().unwrap();
+            send_closure(message).await.unwrap();
             info!("generate_and_send_proof :: proof sent");
             assert_eq!(thread_id, prover.get_thread_id().unwrap());
             tokio::time::sleep(Duration::from_millis(1000)).await;

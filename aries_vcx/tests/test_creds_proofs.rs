@@ -513,7 +513,7 @@ mod integration_tests {
             let pres_req_data: PresentationRequestData = serde_json::from_str(&indy_proof_req).unwrap();
             let mut verifier = Verifier::create_from_request("foo".into(), &pres_req_data).unwrap();
             let presentation_request = verifier.get_presentation_request_msg().unwrap();
-            verifier.mark_presentation_request_msg_sent().unwrap();
+            verifier.mark_presentation_request_sent().unwrap();
 
             #[cfg(feature = "migration")]
             setup.migrate().await;
@@ -543,7 +543,6 @@ mod integration_tests {
                     &setup.profile.inject_anoncreds_ledger_read(),
                     &setup.profile.inject_anoncreds(),
                     presentation,
-                    Box::new(|_: AriesMessage| Box::pin(async { Ok(()) })),
                 )
                 .await
                 .unwrap();
@@ -1751,17 +1750,13 @@ mod tests {
                     .unwrap();
                 assert_eq!(ProverState::PresentationPrepared, alice.prover.get_state());
 
-                alice
-                    .prover
-                    .send_presentation(
-                        alice
-                            .connection
-                            .send_message_closure(alice.profile.inject_wallet())
-                            .await
-                            .unwrap(),
-                    )
+                let send_closure = alice
+                    .connection
+                    .send_message_closure(alice.profile.inject_wallet())
                     .await
                     .unwrap();
+                let message = alice.prover.mark_presentation_sent().unwrap();
+                send_closure(message).await.unwrap();
                 assert_eq!(ProverState::PresentationSent, alice.prover.get_state());
             }
 
@@ -1871,17 +1866,13 @@ mod tests {
                     .unwrap();
                 assert_eq!(ProverState::PresentationPrepared, alice.prover.get_state());
 
-                alice
-                    .prover
-                    .send_presentation(
-                        alice
-                            .connection
-                            .send_message_closure(alice.profile.inject_wallet())
-                            .await
-                            .unwrap(),
-                    )
+                let send_closure = alice
+                    .connection
+                    .send_message_closure(alice.profile.inject_wallet())
                     .await
                     .unwrap();
+                let message = alice.prover.mark_presentation_sent().unwrap();
+                send_closure(message).await.unwrap();
                 assert_eq!(ProverState::PresentationSent, alice.prover.get_state());
             }
 

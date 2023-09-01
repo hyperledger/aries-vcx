@@ -332,15 +332,13 @@ impl Faber {
         self.verifier = self.create_presentation_request().await;
         assert_eq!(VerifierState::PresentationRequestSet, self.verifier.get_state());
 
-        self.verifier
-            .send_presentation_request(
-                self.connection
-                    .send_message_closure(self.profile.inject_wallet())
-                    .await
-                    .unwrap(),
-            )
+        let send_closure = self
+            .connection
+            .send_message_closure(self.profile.inject_wallet())
             .await
             .unwrap();
+        let message = self.verifier.mark_presentation_request_sent().unwrap();
+        send_closure(message).await.unwrap();
         verifier_update_with_mediator(
             &mut self.verifier,
             &self.profile.inject_wallet(),

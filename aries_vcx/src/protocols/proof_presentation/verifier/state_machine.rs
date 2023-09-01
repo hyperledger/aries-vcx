@@ -33,7 +33,6 @@ use crate::protocols::proof_presentation::verifier::states::presentation_proposa
 use crate::protocols::proof_presentation::verifier::states::presentation_request_sent::PresentationRequestSentState;
 use crate::protocols::proof_presentation::verifier::states::presentation_request_set::PresentationRequestSetState;
 use crate::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
-use crate::protocols::SendClosure;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct VerifierSM {
@@ -79,7 +78,7 @@ impl Default for VerifierFullState {
     }
 }
 
-fn build_verification_ack(thread_id: &str) -> AckPresentation {
+pub fn build_verification_ack(thread_id: &str) -> AckPresentation {
     let content = AckPresentationContent::new(AckStatus::Ok);
     let mut decorators = AckDecorators::new(Thread::new(thread_id.to_owned()));
     let mut timing = Timing::default();
@@ -126,7 +125,7 @@ impl VerifierSM {
             thread_id: Uuid::new_v4().to_string(),
             state: VerifierFullState::Initial(InitialVerifierState {}),
         };
-        sm.set_request(presentation_request_data, None)
+        sm.set_presentation_request(presentation_request_data, None)
     }
 
     pub fn from_proposal(source_id: &str, presentation_proposal: &ProposePresentation) -> Self {
@@ -185,15 +184,13 @@ impl VerifierSM {
         Ok(Self { state, ..self })
     }
 
-    pub async fn reject_presentation_proposal(self, reason: String, send_message: SendClosure) -> VcxResult<Self> {
+    pub async fn reject_presentation_proposal(self, problem_report: ProblemReport) -> VcxResult<Self> {
         let (state, thread_id) = match self.state {
             VerifierFullState::PresentationProposalReceived(state) => {
                 let thread_id = match state.presentation_proposal.decorators.thread {
                     Some(thread) => thread.thid,
                     None => state.presentation_proposal.id,
                 };
-                let problem_report = build_problem_report_msg(Some(reason.to_string()), &thread_id);
-                send_message(problem_report.clone().into()).await?;
                 (
                     VerifierFullState::Finished(FinishedState::declined(problem_report)),
                     thread_id,
@@ -216,7 +213,6 @@ impl VerifierSM {
         ledger: &'a Arc<dyn AnoncredsLedgerRead>,
         anoncreds: &'a Arc<dyn BaseAnonCreds>,
         presentation: Presentation,
-        send_message: SendClosure,
     ) -> VcxResult<Self> {
         verify_thread_id(
             &self.thread_id,
@@ -228,40 +224,21 @@ impl VerifierSM {
                     .verify_presentation(ledger, anoncreds, &presentation, &self.thread_id)
                     .await;
 
-                let (sm, message) = match verification_result {
+                let sm = match verification_result {
                     Ok(()) => {
-                        let sm = VerifierFullState::Finished(
-                            (state, presentation, PresentationVerificationStatus::Valid).into(),
-                        );
-                        let ack = build_verification_ack(&self.thread_id).into();
-                        (sm, ack)
+                        VerifierFullState::Finished((state, presentation, PresentationVerificationStatus::Valid).into())
                     }
                     Err(err) => {
                         let problem_report = build_problem_report_msg(Some(err.to_string()), &self.thread_id);
 
-                        let sm = match err.kind() {
+                        match err.kind() {
                             AriesVcxErrorKind::InvalidProof => VerifierFullState::Finished(
                                 (state, presentation, PresentationVerificationStatus::Invalid).into(),
                             ),
                             _ => VerifierFullState::Finished((state, problem_report.clone()).into()),
-                        };
-
-                        let MsgParts {
-                            id,
-                            content,
-                            decorators,
-                        } = problem_report;
-
-                        let problem_report = PresentProofProblemReport::with_decorators(
-                            id,
-                            PresentProofProblemReportContent(content),
-                            decorators,
-                        );
-
-                        (sm, AriesMessage::from(problem_report))
+                        }
                     }
                 };
-                send_message(message).await?;
                 sm
             }
             s => {
@@ -272,22 +249,46 @@ impl VerifierSM {
         Ok(Self { state, ..self })
     }
 
-    pub async fn send_presentation_ack(self, send_message: SendClosure) -> VcxResult<Self> {
-        let state = match self.state {
-            VerifierFullState::Finished(state) => {
-                let ack = build_verification_ack(&self.thread_id);
-                send_message(ack.into()).await?;
-                VerifierFullState::Finished(state)
-            }
-            s => {
-                warn!("Unable to send presentation ack in state {}", s);
-                s
-            }
-        };
-        Ok(Self { state, ..self })
+    pub fn get_final_message(&self) -> VcxResult<AriesMessage> {
+        match self.state {
+            VerifierFullState::Finished(ref state) => match &state.verification_status {
+                PresentationVerificationStatus::Valid => Ok(build_verification_ack(&self.thread_id).into()),
+                PresentationVerificationStatus::Invalid | PresentationVerificationStatus::Unavailable => {
+                    match &state.status {
+                        Status::Undefined => Err(AriesVcxError::from_msg(
+                            AriesVcxErrorKind::InvalidState,
+                            "Cannot get final message in this state",
+                        )),
+                        Status::Success => Ok(build_problem_report_msg(None, &self.thread_id).into()),
+                        Status::Failed(problem_report) | Status::Declined(problem_report) => {
+                            let MsgParts {
+                                id,
+                                content,
+                                decorators,
+                            } = problem_report.clone();
+
+                            let problem_report = PresentProofProblemReport::with_decorators(
+                                id,
+                                PresentProofProblemReportContent(content),
+                                decorators,
+                            );
+                            Ok(problem_report.into())
+                        }
+                    }
+                }
+            },
+            _ => Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidState,
+                "Cannot get final message in this state",
+            )),
+        }
     }
 
-    pub fn set_request(self, request_data: &PresentationRequestData, comment: Option<String>) -> VcxResult<Self> {
+    pub fn set_presentation_request(
+        self,
+        request_data: &PresentationRequestData,
+        comment: Option<String>,
+    ) -> VcxResult<Self> {
         let Self {
             source_id,
             thread_id,
@@ -314,7 +315,7 @@ impl VerifierSM {
         })
     }
 
-    pub fn mark_presentation_request_msg_sent(self) -> VcxResult<Self> {
+    pub fn mark_presentation_request_sent(self) -> VcxResult<Self> {
         let Self {
             state,
             source_id,

@@ -72,26 +72,30 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
             )
         })?;
         trace!("proof::update_state >>> updating using message {:?}", message);
-        proof
+        if let Some(message) = proof
             .process_aries_msg(
                 &get_main_anoncreds_ledger_read()?,
                 &get_main_anoncreds()?,
                 message.into(),
-                Some(send_message),
             )
-            .await?;
+            .await?
+        {
+            send_message(message).await?;
+        }
     } else {
         let messages = mediated_connection::get_messages(connection_handle).await?;
         trace!("proof::update_state >>> found messages: {:?}", messages);
         if let Some((uid, message)) = verifier_find_message_to_handle(&proof, messages) {
-            proof
+            if let Some(message) = proof
                 .process_aries_msg(
                     &get_main_anoncreds_ledger_read()?,
                     &get_main_anoncreds()?,
                     message.into(),
-                    Some(send_message),
                 )
-                .await?;
+                .await?
+            {
+                send_message(message).await?;
+            }
             mediated_connection::update_message_status(connection_handle, &uid).await?;
         };
     }
@@ -127,14 +131,16 @@ pub async fn update_state_nonmediated(handle: u32, connection_handle: u32, messa
             ),
         )
     })?;
-    proof
+    if let Some(message) = proof
         .process_aries_msg(
             &get_main_anoncreds_ledger_read()?,
             &get_main_anoncreds()?,
             message.into(),
-            Some(send_message),
         )
-        .await?;
+        .await?
+    {
+        send_message(message).await?;
+    }
 
     let state: u32 = proof.get_state().into();
     PROOF_MAP.insert(handle, proof)?;
@@ -185,30 +191,31 @@ pub fn from_string(proof_data: &str) -> LibvcxResult<u32> {
 
 pub async fn send_proof_request(handle: u32, connection_handle: u32) -> LibvcxResult<()> {
     let mut proof = PROOF_MAP.get_cloned(handle)?;
-    proof
-        .send_presentation_request(mediated_connection::send_message_closure(connection_handle).await?)
-        .await?;
+    let send_closure = mediated_connection::send_message_closure(connection_handle).await?;
+    let message = proof.mark_presentation_request_sent()?;
+    send_closure(message).await?;
     PROOF_MAP.insert(handle, proof)
 }
 
 pub async fn send_proof_request_nonmediated(handle: u32, connection_handle: u32) -> LibvcxResult<()> {
     let mut proof = PROOF_MAP.get_cloned(handle)?;
 
-    let profile = get_main_profile();
     let con = connection::get_cloned_generic_connection(&connection_handle)?;
     let wallet = get_main_wallet()?;
 
     let send_message: SendClosure =
         Box::new(|msg: AriesMessage| Box::pin(async move { con.send_message(&wallet, &msg, &HttpClient).await }));
 
-    proof.send_presentation_request(send_message).await?;
+    let message = proof.mark_presentation_request_sent()?;
+    send_message(message).await?;
+
     PROOF_MAP.insert(handle, proof)
 }
 
 // --- Presentation request ---
 pub fn mark_presentation_request_msg_sent(handle: u32) -> LibvcxResult<()> {
     let mut proof = PROOF_MAP.get_cloned(handle)?;
-    proof.mark_presentation_request_msg_sent()?;
+    proof.mark_presentation_request_sent()?;
     PROOF_MAP.insert(handle, proof)
 }
 
