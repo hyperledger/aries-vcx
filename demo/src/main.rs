@@ -20,7 +20,7 @@ use aries_vcx::protocols::connection::invitee::states::initial::Initial;
 use aries_vcx::protocols::connection::invitee::InviteeConnection;
 // todo: the fact that Invitee and Inviter states have same name can easily cause mis-matches in consumer's code
 //       where they attempt to build Inviter<T>, but T is invitee state, like: invitee::states::responded::Responded
-use aries_vcx::protocols::connection::invitee::states::responded::Responded;
+// use aries_vcx::protocols::connection::invitee::states::responded::Responded;
 use aries_vcx::protocols::connection::inviter::states::requested::Requested;
 use aries_vcx::protocols::connection::inviter::InviterConnection;
 use aries_vcx::protocols::connection::pairwise_info::PairwiseInfo;
@@ -130,6 +130,10 @@ async fn workflow_alice_faber_connection(
 
     let invitee_requested = invitee_invited
         .prepare_request(alice.endpoint_url.clone(), vec![])
+        .await
+        .unwrap();
+    invitee_requested
+        .send_message(&alice.wallet, invitee_requested.get_request().into(), &HttpClient)
         .await
         .unwrap();
     info!("Faber waiting for msg");
