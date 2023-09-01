@@ -846,7 +846,7 @@ pub mod test_utils {
                 .send_message_closure(alice.profile.inject_wallet())
                 .await
                 .unwrap();
-            let message = prover.mark_presentation_sent().await.unwrap();
+            let message = prover.mark_presentation_sent().unwrap();
             send_closure(message).await.unwrap();
             info!("generate_and_send_proof :: proof sent");
             assert_eq!(thread_id, prover.get_thread_id().unwrap());

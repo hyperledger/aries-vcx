@@ -133,7 +133,7 @@ impl ServiceProver {
             Box::pin(async move { connection.send_message(&wallet, &msg, &HttpClient).await })
         });
 
-        let message = prover.mark_presentation_sent().await?;
+        let message = prover.mark_presentation_sent()?;
         send_closure(message).await?;
         self.provers
             .insert(&prover.get_thread_id()?, ProverWrapper::new(prover, &connection_id))?;

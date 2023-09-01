@@ -210,7 +210,7 @@ impl ProverSM {
         Ok(Self { state, ..self })
     }
 
-    pub async fn mark_presentation_sent(self) -> VcxResult<Self> {
+    pub fn mark_presentation_sent(self) -> VcxResult<Self> {
         let state = match self.state {
             ProverFullState::PresentationPrepared(state) => ProverFullState::PresentationSent((state).into()),
             ProverFullState::PresentationPreparationFailed(state) => ProverFullState::Finished((state).into()),

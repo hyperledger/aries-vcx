@@ -1755,7 +1755,7 @@ mod tests {
                     .send_message_closure(alice.profile.inject_wallet())
                     .await
                     .unwrap();
-                let message = alice.prover.mark_presentation_sent().await.unwrap();
+                let message = alice.prover.mark_presentation_sent().unwrap();
                 send_closure(message).await.unwrap();
                 assert_eq!(ProverState::PresentationSent, alice.prover.get_state());
             }
@@ -1871,7 +1871,7 @@ mod tests {
                     .send_message_closure(alice.profile.inject_wallet())
                     .await
                     .unwrap();
-                let message = alice.prover.mark_presentation_sent().await.unwrap();
+                let message = alice.prover.mark_presentation_sent().unwrap();
                 send_closure(message).await.unwrap();
                 assert_eq!(ProverState::PresentationSent, alice.prover.get_state());
             }

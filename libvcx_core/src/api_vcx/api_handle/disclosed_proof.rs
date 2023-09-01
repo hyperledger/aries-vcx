@@ -143,7 +143,7 @@ pub fn get_presentation_msg(handle: u32) -> LibvcxResult<String> {
 pub async fn send_proof(handle: u32, connection_handle: u32) -> LibvcxResult<()> {
     let mut proof = HANDLE_MAP.get_cloned(handle)?;
     let send_message = mediated_connection::send_message_closure(connection_handle).await?;
-    let message = proof.mark_presentation_sent().await?;
+    let message = proof.mark_presentation_sent()?;
     send_message(message).await?;
     HANDLE_MAP.insert(handle, proof)
 }
