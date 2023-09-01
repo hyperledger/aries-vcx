@@ -155,7 +155,7 @@ pub async fn update_state(credential_handle: u32, message: Option<&str>, connect
             if let Some(uid) = mediator_uid {
                 mediated_connection::update_message_status(connection_handle, &uid).await?;
             }
-            credential.try_reply(send_message, aries_msg).await?;
+            credential.try_reply(send_message, Some(aries_msg)).await?;
         }
     }
     let state = credential.get_state().into();
@@ -367,7 +367,7 @@ pub fn get_thread_id(handle: u32) -> LibvcxResult<String> {
 pub async fn decline_offer(handle: u32, connection_handle: u32, comment: Option<&str>) -> LibvcxResult<()> {
     let mut credential = HANDLE_MAP.get_cloned(handle)?;
     let send_message = mediated_connection::send_message_closure(connection_handle).await?;
-    let problem_report = credential.decline_offer(comment).await?;
+    let problem_report = credential.decline_offer(comment)?;
     send_message(problem_report.into()).await?;
     HANDLE_MAP.insert(handle, credential)
 }

@@ -104,16 +104,8 @@ impl ServiceCredentialsHolder {
                 pw_did,
             )
             .await?;
-        match holder.get_state() {
-            HolderState::Failed => {
-                let problem_report = holder.get_problem_report()?;
-                send_closure(problem_report.into()).await?;
-            }
-            _ => {
-                let credential_request = holder.get_msg_credential_request()?;
-                send_closure(credential_request.into()).await?;
-            }
-        }
+
+        holder.try_reply(send_closure, None).await;
         self.creds_holder
             .insert(&holder.get_thread_id()?, HolderWrapper::new(holder, &connection_id))
     }
@@ -139,7 +131,9 @@ impl ServiceCredentialsHolder {
                 msg_issue_credential.clone(),
             )
             .await?;
-        holder.try_reply(send_closure, msg_issue_credential.into()).await?;
+        holder
+            .try_reply(send_closure, Some(msg_issue_credential.into()))
+            .await?;
         self.creds_holder
             .insert(&holder.get_thread_id()?, HolderWrapper::new(holder, &connection_id))
     }

@@ -165,9 +165,9 @@ pub async fn holder_update_with_mediator(
 
     let messages = connection.get_messages(agency_client).await?;
     if let Some((uid, msg)) = mediated_holder::holder_find_message_to_handle(sm, messages) {
-        sm.process_aries_msg(ledger, anoncreds, msg.into(), Some(send_message))
-            .await?;
+        sm.process_aries_msg(ledger, anoncreds, msg.clone()).await?;
         connection.update_message_status(&uid, agency_client).await?;
+        sm.try_reply(send_message, Some(msg)).await?;
     }
     Ok(sm.get_state())
 }

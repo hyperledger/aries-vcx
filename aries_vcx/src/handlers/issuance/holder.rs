@@ -88,7 +88,7 @@ impl Holder {
     }
 
     // ultimately this will be eliminated, as with state pattern, state transition will yield reply message
-    pub fn get_msg_credential_request(&mut self) -> VcxResult<RequestCredential> {
+    pub fn get_msg_credential_request(&self) -> VcxResult<RequestCredential> {
         match self.holder_sm.state {
             HolderFullState::RequestSet(ref state) => {
                 let mut msg: RequestCredential = state.msg_credential_request.clone().into();
@@ -253,24 +253,39 @@ impl Holder {
     // or might be in Failed state.
     // Based on what state is, different reply shall be sent to counterparty. This function handles these cases.
     #[deprecated]
-    pub async fn try_reply(&mut self, send_message: SendClosure, last_message: AriesMessage) -> VcxResult<()> {
+    pub async fn try_reply(&self, send_message: SendClosure, last_message: Option<AriesMessage>) -> VcxResult<()> {
         match self.get_state() {
             HolderState::Failed => {
                 let problem_report = self.get_problem_report()?;
                 send_message(problem_report.into()).await?;
             }
             HolderState::Finished => match last_message {
-                AriesMessage::CredentialIssuance(message) => match message {
-                    CredentialIssuance::IssueCredential(message) => {
-                        if message.decorators.please_ack.is_some() {
-                            send_message(build_credential_ack(&self.get_thread_id()?).into());
+                // todo: add please_ack flag to state machine so we don't have to provide last_message arg to this function
+                None => {
+                    return Err(AriesVcxError::from_msg(
+                        AriesVcxErrorKind::InvalidState,
+                        "Holder::try_reply called, but expected to be provided last received message",
+                    ))
+                }
+                Some(last_message) => match last_message {
+                    AriesMessage::CredentialIssuance(message) => match message {
+                        CredentialIssuance::IssueCredential(message) => {
+                            if message.decorators.please_ack.is_some() {
+                                send_message(build_credential_ack(&self.get_thread_id()?).into());
+                            }
                         }
-                    }
+                        _ => {}
+                    },
                     _ => {}
                 },
-                _ => {}
             },
-            _ => {}
+            HolderState::Initial => {}
+            HolderState::ProposalSet => {}
+            HolderState::OfferReceived => {}
+            HolderState::RequestSet => {
+                let credential_request = self.get_msg_credential_request()?;
+                send_message(credential_request.into()).await?;
+            }
         }
         Ok(())
     }
