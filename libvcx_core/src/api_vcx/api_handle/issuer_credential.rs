@@ -191,8 +191,9 @@ pub fn get_credential_offer_msg(handle: u32) -> LibvcxResult<AriesMessage> {
 
 pub async fn send_credential_offer_v2(credential_handle: u32, connection_handle: u32) -> LibvcxResult<()> {
     let mut credential = ISSUER_CREDENTIAL_MAP.get_cloned(credential_handle)?;
-    let send_message = mediated_connection::send_message_closure(connection_handle).await?;
-    credential.send_credential_offer(send_message).await?;
+    let send_closure = mediated_connection::send_message_closure(connection_handle).await?;
+    let credential_offer = credential.get_credential_offer_msg()?;
+    send_closure(credential_offer).await?;
     ISSUER_CREDENTIAL_MAP.insert(credential_handle, credential)?;
     Ok(())
 }
@@ -205,8 +206,9 @@ pub async fn send_credential_offer_nonmediated(credential_handle: u32, connectio
 
     let send_message: SendClosure =
         Box::new(|msg: AriesMessage| Box::pin(async move { con.send_message(&wallet, &msg, &HttpClient).await }));
+    let credential_offer = credential.get_credential_offer_msg()?;
+    send_message(credential_offer).await?;
 
-    credential.send_credential_offer(send_message).await?;
     ISSUER_CREDENTIAL_MAP.insert(credential_handle, credential)?;
     Ok(())
 }
@@ -221,7 +223,8 @@ pub async fn send_credential(handle: u32, connection_handle: u32) -> LibvcxResul
             send_closure(problem_report.into()).await?;
         }
         _ => {
-            credential.send_credential(send_closure).await?;
+            let msg_issue_credential = credential.get_msg_issue_credential()?;
+            send_closure(msg_issue_credential.into()).await?;
         }
     }
     let state: u32 = credential.get_state().into();
@@ -242,7 +245,8 @@ pub async fn send_credential_nonmediated(handle: u32, connection_handle: u32) ->
             send_closure(problem_report.into()).await?;
         }
         _ => {
-            credential.send_credential(send_closure).await?;
+            let msg_issue_credential = credential.get_msg_issue_credential()?;
+            send_closure(msg_issue_credential.into()).await?;
         }
     }
     let state: u32 = credential.get_state().into();

@@ -291,15 +291,13 @@ impl Faber {
             .build_credential_offer_msg(&self.profile.inject_anoncreds(), offer_info, None)
             .await
             .unwrap();
-        self.issuer_credential
-            .send_credential_offer(
-                self.connection
-                    .send_message_closure(self.profile.inject_wallet())
-                    .await
-                    .unwrap(),
-            )
+        let send_message = self
+            .connection
+            .send_message_closure(self.profile.inject_wallet())
             .await
             .unwrap();
+        let credential_offer = self.issuer_credential.get_credential_offer_msg().unwrap();
+        send_message(credential_offer).await.unwrap();
         issuer_update_with_mediator(&mut self.issuer_credential, &self.agency_client, &self.connection)
             .await
             .unwrap();
@@ -321,7 +319,8 @@ impl Faber {
             .send_message_closure(self.profile.inject_wallet())
             .await
             .unwrap();
-        self.issuer_credential.send_credential(send_closure).await;
+        let msg_issue_credential = self.issuer_credential.get_msg_issue_credential().unwrap();
+        send_closure(msg_issue_credential.into()).await.unwrap();
         issuer_update_with_mediator(&mut self.issuer_credential, &self.agency_client, &self.connection)
             .await
             .unwrap();

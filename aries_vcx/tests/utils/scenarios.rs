@@ -201,15 +201,13 @@ pub mod test_utils {
             .build_credential_offer_msg(&faber.profile.inject_anoncreds(), offer_info, comment.map(String::from))
             .await
             .unwrap();
-        issuer
-            .send_credential_offer(
-                connection
-                    .send_message_closure(faber.profile.inject_wallet())
-                    .await
-                    .unwrap(),
-            )
+        let send_closure = connection
+            .send_message_closure(faber.profile.inject_wallet())
             .await
             .unwrap();
+        let credential_offer = issuer.get_credential_offer_msg().unwrap();
+        send_closure(credential_offer).await.unwrap();
+
         info!("create_and_send_nonrevocable_cred_offer :: credential offer was sent");
         tokio::time::sleep(Duration::from_millis(1000)).await;
         issuer
@@ -235,15 +233,12 @@ pub mod test_utils {
             .build_credential_offer_msg(&faber.profile.inject_anoncreds(), offer_info, comment.map(String::from))
             .await
             .unwrap();
-        issuer
-            .send_credential_offer(
-                connection
-                    .send_message_closure(faber.profile.inject_wallet())
-                    .await
-                    .unwrap(),
-            )
+        let send_closure = connection
+            .send_message_closure(faber.profile.inject_wallet())
             .await
             .unwrap();
+        let credential_offer = issuer.get_credential_offer_msg().unwrap();
+        send_closure(credential_offer).await.unwrap();
         info!("create_and_send_cred_offer :: credential offer was sent");
         tokio::time::sleep(Duration::from_millis(1000)).await;
         issuer
@@ -432,15 +427,13 @@ pub mod test_utils {
             .build_credential_offer_msg(&faber.profile.inject_anoncreds(), offer_info, Some("comment".into()))
             .await
             .unwrap();
-        issuer
-            .send_credential_offer(
-                connection
-                    .send_message_closure(faber.profile.inject_wallet())
-                    .await
-                    .unwrap(),
-            )
+        let send_closure = connection
+            .send_message_closure(faber.profile.inject_wallet())
             .await
             .unwrap();
+        let credential_offer = issuer.get_credential_offer_msg().unwrap();
+        send_closure(credential_offer).await.unwrap();
+
         assert_eq!(IssuerState::OfferSet, issuer.get_state());
         tokio::time::sleep(Duration::from_millis(1000)).await;
         issuer
@@ -469,15 +462,13 @@ pub mod test_utils {
             .build_credential_offer_msg(&faber.profile.inject_anoncreds(), offer_info, Some("comment".into()))
             .await
             .unwrap();
-        issuer
-            .send_credential_offer(
-                connection
-                    .send_message_closure(faber.profile.inject_wallet())
-                    .await
-                    .unwrap(),
-            )
+        let send_closure = connection
+            .send_message_closure(faber.profile.inject_wallet())
             .await
             .unwrap();
+        let credential_offer = issuer.get_credential_offer_msg().unwrap();
+        send_closure(credential_offer).await.unwrap();
+
         assert_eq!(IssuerState::OfferSet, issuer.get_state());
         tokio::time::sleep(Duration::from_millis(1000)).await;
     }
@@ -564,7 +555,8 @@ pub mod test_utils {
             .send_message_closure(faber.profile.inject_wallet())
             .await
             .unwrap();
-        issuer_credential.send_credential(send_closure).await;
+        let msg_issue_credential = issuer_credential.get_msg_issue_credential().unwrap();
+        send_closure(msg_issue_credential.into()).await.unwrap();
         tokio::time::sleep(Duration::from_millis(1000)).await;
         assert_eq!(thread_id, issuer_credential.get_thread_id().unwrap());
 

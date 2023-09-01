@@ -8,6 +8,7 @@ use std::sync::Arc;
 
 use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
 use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
+use messages::msg_fields::protocols::cred_issuance::issue_credential::IssueCredential;
 use messages::msg_fields::protocols::notification::Notification;
 use messages::msg_fields::protocols::report_problem::ProblemReport;
 use messages::msg_parts::MsgParts;
@@ -15,7 +16,6 @@ use messages::msg_parts::MsgParts;
 use crate::errors::error::prelude::*;
 use crate::handlers::util::OfferInfo;
 use crate::protocols::issuance::issuer::state_machine::{IssuerSM, IssuerState, RevocationInfoV1};
-use crate::protocols::SendClosure;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Issuer {
@@ -146,12 +146,6 @@ impl Issuer {
         Ok(offer.into())
     }
 
-    #[deprecated]
-    pub async fn send_credential_offer(&mut self, send_message: SendClosure) -> VcxResult<()> {
-        self.issuer_sm.clone().send_credential_offer(send_message).await?;
-        Ok(())
-    }
-
     pub fn process_credential_request(&mut self, request: RequestCredential) -> VcxResult<()> {
         self.issuer_sm = self.issuer_sm.clone().receive_request(request)?;
         Ok(())
@@ -167,9 +161,8 @@ impl Issuer {
         Ok(())
     }
 
-    #[deprecated]
-    pub async fn send_credential(&mut self, send_message: SendClosure) -> VcxResult<()> {
-        self.issuer_sm.clone().send_credential(send_message).await
+    pub fn get_msg_issue_credential(&mut self) -> VcxResult<IssueCredential> {
+        self.issuer_sm.clone().get_msg_issue_credential()
     }
 
     pub fn get_state(&self) -> IssuerState {

@@ -347,23 +347,6 @@ impl IssuerSM {
         })
     }
 
-    #[deprecated]
-    // Convenience function for sending the credential offer. This will be removed in the future
-    // and some form of replacement will be provided instead outside of state machines.
-    pub async fn send_credential_offer(self, send_message: SendClosure) -> VcxResult<()> {
-        match self.state {
-            IssuerFullState::OfferSet(ref state_data) => {
-                let cred_offer_msg = state_data.offer.clone().into();
-                trace!("IssuerSM::send_credential_offer >> sending credential offer message");
-                send_message(cred_offer_msg).await?;
-            }
-            _ => {
-                return Err(AriesVcxError::from_msg(AriesVcxErrorKind::NotReady, "Invalid action"));
-            }
-        };
-        Ok(())
-    }
-
     pub fn receive_request(self, request: RequestCredential) -> VcxResult<Self> {
         verify_thread_id(
             &self.thread_id,
@@ -425,23 +408,17 @@ impl IssuerSM {
         Ok(Self { state, ..self })
     }
 
-    #[deprecated]
-    // Convenience function for sending the credential. This will be removed in the future
-    // and some form of replacement will be provided instead outside of state machines.
-    pub async fn send_credential(self, send_message: SendClosure) -> VcxResult<()> {
+    pub fn get_msg_issue_credential(self) -> VcxResult<IssueCredential> {
         match self.state {
             IssuerFullState::CredentialSet(ref state_data) => {
-                let mut cred_offer_msg: IssueCredential = state_data.msg_issue_credential.clone().into();
+                let mut msg_issue_credential: IssueCredential = state_data.msg_issue_credential.clone().into();
                 let mut timing = Timing::default();
                 timing.out_time = Some(Utc::now());
-                cred_offer_msg.decorators.timing = Some(timing);
-                send_message(cred_offer_msg.into()).await?;
+                msg_issue_credential.decorators.timing = Some(timing);
+                Ok(msg_issue_credential)
             }
-            _ => {
-                return Err(AriesVcxError::from_msg(AriesVcxErrorKind::NotReady, "Invalid action"));
-            }
-        };
-        Ok(())
+            _ => Err(AriesVcxError::from_msg(AriesVcxErrorKind::NotReady, "Invalid action")),
+        }
     }
 
     pub fn receive_ack(self, ack: AckCredential) -> VcxResult<Self> {
