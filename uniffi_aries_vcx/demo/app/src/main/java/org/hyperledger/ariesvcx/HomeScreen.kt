@@ -46,7 +46,6 @@ fun HomeScreen(navController: NavHostController, setProfileHolder: (ProfileHolde
         verticalArrangement = Arrangement.Center
     ) {
         Button(onClick = {
-            // How to persist this in the app state?
             scope.launch(Dispatchers.IO) {
                 val profile = newIndyProfile(walletConfigState)
                 setProfileHolder(profile)

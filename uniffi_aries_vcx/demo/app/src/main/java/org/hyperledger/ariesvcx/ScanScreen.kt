@@ -50,7 +50,7 @@ fun ScanScreen(connection: Connection?, profileHolder: ProfileHolder?) {
         ProcessCameraProvider.getInstance(context)
     }
 
-    scannedQRCodeText?.let {text ->
+    scannedQRCodeText?.let { text ->
         val encoded = Uri.parse(text)?.getQueryParameter("c_i")
         val decoded =  String(Base64.decode(encoded, Base64.DEFAULT))
         val map = jsonStringToMap(decoded)

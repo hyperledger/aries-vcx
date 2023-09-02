@@ -16,7 +16,6 @@ impl ProfileHolder {}
 pub fn new_indy_profile(wallet_config: WalletConfig) -> VcxUniFFIResult<Arc<ProfileHolder>> {
     block_on(async {
         let wh = create_and_open_wallet(&wallet_config).await?;
-        // let ph = 0;
 
         let wallet = IndySdkWallet::new(wh);
         let ledger = Arc::new(MockLedger);
