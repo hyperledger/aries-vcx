@@ -67,7 +67,11 @@ fun ScanScreen(connection: Connection?, profileHolder: ProfileHolder?) {
                                 profile = profileHolder,
                                 invitation = decoded
                             )
-                            connection?.sendRequest(profileHolder, map["serviceEndpoint"] as String, map["routingKeys"] as List<String>)
+                            connection?.sendRequest(
+                                profileHolder,
+                                "https://google.com",
+                                emptyList()
+                            )
                         }
                     }
                 }) {

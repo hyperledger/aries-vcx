@@ -20,9 +20,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
-fun HomeScreen(navController: NavHostController, setProfileHolder: (ProfileHolder) -> Unit) {
+fun HomeScreen(navController: NavHostController, setProfileHolder: (ProfileHolder) -> Unit, profileHolder: ProfileHolder?, connection: Connection?) {
 
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -45,18 +46,21 @@ fun HomeScreen(navController: NavHostController, setProfileHolder: (ProfileHolde
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Button(onClick = {
+        Button(
+            enabled = (connection == null),
+            onClick = {
             scope.launch(Dispatchers.IO) {
                 val profile = newIndyProfile(walletConfigState)
                 setProfileHolder(profile)
-                Handler(Looper.getMainLooper()).post {
+                withContext(Dispatchers.Main) {
                     Toast.makeText(context, profile.toString(), Toast.LENGTH_SHORT).show()
                 }
             }
         }) {
             Text(text = "New Indy Profile")
         }
-        Button(onClick = {
+        Button(enabled = (profileHolder != null && connection != null),
+            onClick = {
             navController.navigate(Destination.QRScan.route)
         }) {
             Text(text = "Scan QR Code")
