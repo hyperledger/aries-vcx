@@ -45,7 +45,7 @@ fun HomeScreen(navController: NavHostController, setProfileHolder: (ProfileHolde
                 val profile = newIndyProfile(walletConfigState)
                 setProfileHolder(profile)
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(context, profile.toString(), Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "New Profile Created: ${profile.toString()}", Toast.LENGTH_SHORT).show()
                 }
             }
         }) {
