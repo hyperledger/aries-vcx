@@ -2,13 +2,15 @@ package org.hyperledger.ariesvcx
 
 import android.os.Bundle
 import android.system.Os
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -22,8 +24,8 @@ sealed class Destination(val route: String) {
 }
 
 class MainActivity : ComponentActivity() {
-    private var profile: ProfileHolder? = null
-    private var connection: Connection? = null
+    private var profile by mutableStateOf<ProfileHolder?>(null)
+    private var connection by mutableStateOf<Connection?>(null)
 
     private fun setProfileHolder(profileHolder: ProfileHolder) {
         profile = profileHolder
@@ -40,7 +42,12 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     val navController = rememberNavController()
-                    NavigationAppHost(navController = navController, setProfileHolder = { setProfileHolder(it) }, connection = connection, profileHolder = profile)
+                    NavigationAppHost(
+                        navController = navController,
+                        setProfileHolder = { setProfileHolder(it) },
+                        connection = connection,
+                        profileHolder = profile
+                    )
                 }
             }
         }
@@ -48,14 +55,27 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun NavigationAppHost(navController: NavHostController, setProfileHolder: (ProfileHolder) -> Unit, connection: Connection?, profileHolder: ProfileHolder?) {
+fun NavigationAppHost(
+    navController: NavHostController,
+    setProfileHolder: (ProfileHolder) -> Unit,
+    connection: Connection?,
+    profileHolder: ProfileHolder?
+) {
     NavHost(navController = navController, startDestination = "home") {
         composable(Destination.Home.route) {
-            HomeScreen(navController = navController, setProfileHolder = setProfileHolder, profileHolder = profileHolder, connection = connection)
+            HomeScreen(
+                navController = navController,
+                setProfileHolder = setProfileHolder,
+                profileHolder = profileHolder,
+                connection = connection
+            )
         }
 
         composable(Destination.QRScan.route) {
-            ScanScreen(connection = connection, profileHolder = profileHolder)
+            ScanScreen(
+                connection = connection,
+                profileHolder = profileHolder
+            )
         }
     }
 }

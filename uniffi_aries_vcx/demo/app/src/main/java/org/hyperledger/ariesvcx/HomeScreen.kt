@@ -1,7 +1,5 @@
 package org.hyperledger.ariesvcx
 
-import android.os.Handler
-import android.os.Looper
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -9,11 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -28,18 +22,16 @@ fun HomeScreen(navController: NavHostController, setProfileHolder: (ProfileHolde
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
-    var walletConfigState by remember {
-        mutableStateOf(WalletConfig(
-            walletName = "test_create_wallet_add_uuid_here",
-            walletKey = "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY",
-            walletKeyDerivation = "RAW",
-            walletType = null,
-            storageConfig = null,
-            storageCredentials = null,
-            rekey = null,
-            rekeyDerivationMethod = null
-        ))
-    }
+    val walletConfigState = WalletConfig(
+        walletName = "test_create_wallet_add_uuid_here",
+        walletKey = "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY",
+        walletKeyDerivation = "RAW",
+        walletType = null,
+        storageConfig = null,
+        storageCredentials = null,
+        rekey = null,
+        rekeyDerivationMethod = null
+    )
 
     Column(
         modifier = Modifier.fillMaxSize(),
