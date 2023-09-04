@@ -73,8 +73,8 @@ fun NavigationAppHost(
 
         composable(Destination.QRScan.route) {
             ScanScreen(
-                connection = connection,
-                profileHolder = profileHolder
+                connection = connection!!,
+                profileHolder = profileHolder!!
             )
         }
     }

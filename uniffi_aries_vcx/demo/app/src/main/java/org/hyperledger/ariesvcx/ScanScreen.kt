@@ -35,10 +35,9 @@ import android.util.Base64
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import org.json.JSONObject
 
 @Composable
-fun ScanScreen(connection: Connection?, profileHolder: ProfileHolder?) {
+fun ScanScreen(connection: Connection, profileHolder: ProfileHolder) {
     var scannedQRCodeText by remember {
         mutableStateOf<String?>(null)
     }
@@ -53,7 +52,6 @@ fun ScanScreen(connection: Connection?, profileHolder: ProfileHolder?) {
     scannedQRCodeText?.let { text ->
         val encoded = Uri.parse(text)?.getQueryParameter("c_i")
         val decoded =  String(Base64.decode(encoded, Base64.DEFAULT))
-        val map = jsonStringToMap(decoded)
 
         AlertDialog(
             onDismissRequest = { scannedQRCodeText = null },
@@ -62,17 +60,15 @@ fun ScanScreen(connection: Connection?, profileHolder: ProfileHolder?) {
             confirmButton = {
                 TextButton(onClick = {
                     scope.launch(Dispatchers.IO) {
-                        if (profileHolder != null) {
-                            connection?.acceptInvitation(
-                                profile = profileHolder,
-                                invitation = decoded
-                            )
-                            connection?.sendRequest(
-                                profileHolder,
-                                "https://google.com",
-                                emptyList()
-                            )
-                        }
+                        connection.acceptInvitation(
+                            profile = profileHolder,
+                            invitation = decoded
+                        )
+                        connection.sendRequest(
+                            profileHolder,
+                            "https://google.com",
+                            emptyList()
+                        )
                     }
                 }) {
                     Text("Accept")
@@ -149,18 +145,4 @@ fun ScanScreen(connection: Connection?, profileHolder: ProfileHolder?) {
             )
         }
     }
-}
-
-fun jsonStringToMap(jsonString: String): Map<String, Any> {
-    val jsonObject = JSONObject(jsonString)
-    val map = mutableMapOf<String, Any>()
-
-    val keysIterator = jsonObject.keys()
-    while (keysIterator.hasNext()) {
-        val key = keysIterator.next()
-        val value = jsonObject.get(key)
-        map[key] = value
-    }
-
-    return map
 }
