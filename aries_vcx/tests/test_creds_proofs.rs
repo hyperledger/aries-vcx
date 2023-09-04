@@ -585,13 +585,15 @@ mod tests {
     use crate::utils::migration::Migratable;
     use crate::utils::scenarios::test_utils::{
         _create_address_schema_creddef_revreg, _exchange_credential, _exchange_credential_with_proposal,
-        accept_credential_proposal, accept_offer, accept_proof_proposal, attr_names, create_connected_connections,
-        create_credential_proposal, create_credential_request, create_holder_from_proposal,
-        create_issuer_from_proposal, create_nonrevocable_cred_offer, create_proof, decline_offer,
-        generate_and_send_proof, issue_address_credential, prover_select_credentials,
-        prover_select_credentials_and_send_proof, receive_proof_proposal_rejection, reject_proof_proposal,
-        retrieved_to_selected_credentials_simple, send_credential, send_proof_proposal, send_proof_proposal_1,
-        send_proof_request, verifier_create_proof_and_send_request, verify_proof,
+        accept_credential_proposal, accept_offer, accept_proof_proposal, accept_proof_proposal_new, attr_names,
+        create_connected_connections, create_credential_proposal, create_credential_request,
+        create_holder_from_proposal, create_issuer_from_proposal, create_nonrevocable_cred_offer, create_proof,
+        create_proof_proposal, create_proof_request, decline_offer, generate_and_send_proof,
+        generate_and_send_proof_new, issue_address_credential, prover_select_credentials,
+        prover_select_credentials_and_send_proof, prover_select_credentials_new, receive_proof_proposal_rejection,
+        reject_proof_proposal, retrieved_to_selected_credentials_simple, send_credential, send_proof_proposal,
+        send_proof_proposal_1, send_proof_request, verifier_create_proof_and_send_request, verify_proof,
+        verify_proof_new,
     };
 
     #[tokio::test]
@@ -1438,8 +1440,6 @@ mod tests {
             let mut institution = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut consumer = create_alice(setup.genesis_file_path.clone()).await;
 
-            let (consumer_to_institution, institution_to_consumer) =
-                create_connected_connections(&mut consumer, &mut institution).await;
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, _cred_def, rev_reg, rev_reg_id) =
                 _create_address_schema_creddef_revreg(&institution.profile, &institution.institution_did).await;
             let tails_dir = rev_reg.get_tails_dir();
@@ -1457,23 +1457,21 @@ mod tests {
                 "comment",
             )
             .await;
-            let mut prover = send_proof_proposal(&mut consumer, &consumer_to_institution, &cred_def_id).await;
+            let mut prover = Prover::create("1").unwrap();
             let mut verifier = Verifier::create("1").unwrap();
-            accept_proof_proposal(&mut institution, &mut verifier, &institution_to_consumer).await;
+            let presentation_proposal = create_proof_proposal(&mut consumer, &mut prover, &cred_def_id).await;
+            let presentation_request =
+                accept_proof_proposal_new(&mut institution, &mut verifier, presentation_proposal).await;
 
             #[cfg(feature = "migration")]
             consumer.migrate().await;
 
             let selected_credentials =
-                prover_select_credentials(&mut prover, &mut consumer, &consumer_to_institution, None).await;
-            generate_and_send_proof(
-                &mut consumer,
-                &mut prover,
-                &consumer_to_institution,
-                selected_credentials,
-            )
-            .await;
-            verify_proof(&mut institution, &mut verifier, &institution_to_consumer).await;
+                prover_select_credentials_new(&mut prover, &mut consumer, presentation_request, None).await;
+            let presentation = generate_and_send_proof_new(&mut consumer, &mut prover, selected_credentials)
+                .await
+                .unwrap();
+            verify_proof_new(&mut institution, &mut verifier, presentation).await;
         })
         .await;
     }

@@ -23,8 +23,10 @@ pub mod test_utils {
         ProposeCredential, ProposeCredentialContent, ProposeCredentialDecorators,
     };
     use messages::msg_fields::protocols::cred_issuance::{CredentialAttr, CredentialIssuance, CredentialPreview};
-    use messages::msg_fields::protocols::present_proof::propose::PresentationAttr;
+    use messages::msg_fields::protocols::present_proof::present::Presentation;
+    use messages::msg_fields::protocols::present_proof::propose::{PresentationAttr, ProposePresentation};
     use messages::msg_fields::protocols::present_proof::request::RequestPresentation;
+    use messages::msg_fields::protocols::present_proof::PresentProof;
     use messages::AriesMessage;
     use serde_json::{json, Value};
     use sha2::digest::typenum::private::IsNotEqualPrivate;
@@ -517,6 +519,17 @@ pub mod test_utils {
         (schema_id, cred_def_id, rev_reg_id, cred_def, rev_reg, credential_handle)
     }
 
+    pub async fn create_proof_proposal(alice: &mut Alice, prover: &mut Prover, cred_def_id: &str) -> AriesMessage {
+        let attrs = requested_attr_objects(cred_def_id);
+        let mut proposal_data = PresentationProposalData::default();
+        for attr in attrs.into_iter() {
+            proposal_data.attributes.push(attr);
+        }
+        let proposal = prover.build_presentation_proposal(proposal_data).await.unwrap();
+        assert_eq!(prover.get_state(), ProverState::PresentationProposalSent);
+        proposal.into()
+    }
+
     pub async fn send_proof_proposal(alice: &mut Alice, connection: &MediatedConnection, cred_def_id: &str) -> Prover {
         let attrs = requested_attr_objects(cred_def_id);
         let mut proposal_data = PresentationProposalData::default();
@@ -558,6 +571,48 @@ pub mod test_utils {
         send_message(proposal.into()).await.unwrap();
         assert_eq!(prover.get_state(), ProverState::PresentationProposalSent);
         tokio::time::sleep(Duration::from_millis(1000)).await;
+    }
+
+    pub async fn accept_proof_proposal_new(
+        faber: &mut Faber,
+        verifier: &mut Verifier,
+        presentation_proposal: AriesMessage,
+    ) -> AriesMessage {
+        verifier
+            .process_aries_msg(
+                &faber.profile.inject_anoncreds_ledger_read(),
+                &faber.profile.inject_anoncreds(),
+                presentation_proposal.clone(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(verifier.get_state(), VerifierState::PresentationProposalReceived);
+        let presentation_proposal = match presentation_proposal {
+            AriesMessage::PresentProof(PresentProof::ProposePresentation(presentation_proposal)) => {
+                presentation_proposal
+            }
+            _ => panic!("Unexpected message"),
+        };
+        let attrs = presentation_proposal
+            .content
+            .presentation_proposal
+            .attributes
+            .into_iter()
+            .map(|attr| AttrInfo {
+                name: Some(attr.name),
+                ..AttrInfo::default()
+            })
+            .collect();
+        let presentation_request_data = PresentationRequestData::create(&faber.profile.inject_anoncreds(), "request-1")
+            .await
+            .unwrap()
+            .set_requested_attributes_as_vec(attrs)
+            .unwrap();
+        verifier
+            .set_presentation_request(presentation_request_data, None)
+            .unwrap();
+        let message = verifier.mark_presentation_request_sent().unwrap();
+        message
     }
 
     pub async fn accept_proof_proposal(faber: &mut Faber, verifier: &mut Verifier, connection: &MediatedConnection) {
@@ -718,6 +773,37 @@ pub mod test_utils {
         Prover::create_from_request(DEFAULT_PROOF_NAME, presentation_request).unwrap()
     }
 
+    pub async fn generate_and_send_proof_new(
+        alice: &mut Alice,
+        prover: &mut Prover,
+        selected_credentials: SelectedCredentials,
+    ) -> Option<AriesMessage> {
+        let thread_id = prover.get_thread_id().unwrap();
+        info!(
+            "generate_and_send_proof >>> generating proof using selected credentials {:?}",
+            selected_credentials
+        );
+        prover
+            .generate_presentation(
+                &alice.profile.inject_anoncreds_ledger_read(),
+                &alice.profile.inject_anoncreds(),
+                selected_credentials,
+                HashMap::new(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(thread_id, prover.get_thread_id().unwrap());
+        if ProverState::PresentationPrepared == prover.get_state() {
+            info!("generate_and_send_proof :: proof generated, sending proof");
+            let message = prover.mark_presentation_sent().unwrap();
+            info!("generate_and_send_proof :: proof sent");
+            assert_eq!(thread_id, prover.get_thread_id().unwrap());
+            Some(message)
+        } else {
+            None
+        }
+    }
+
     pub async fn generate_and_send_proof(
         alice: &mut Alice,
         prover: &mut Prover,
@@ -751,6 +837,26 @@ pub mod test_utils {
             assert_eq!(thread_id, prover.get_thread_id().unwrap());
             tokio::time::sleep(Duration::from_millis(1000)).await;
         }
+    }
+
+    pub async fn verify_proof_new(faber: &mut Faber, verifier: &mut Verifier, presentation: AriesMessage) {
+        let presentation = match presentation {
+            AriesMessage::PresentProof(PresentProof::Presentation(presentation)) => presentation,
+            _ => panic!("Unexpected message type"),
+        };
+        let msg = verifier
+            .verify_presentation(
+                &faber.profile.inject_anoncreds_ledger_read(),
+                &faber.profile.inject_anoncreds(),
+                presentation,
+            )
+            .await
+            .unwrap();
+        assert_eq!(verifier.get_state(), VerifierState::Finished);
+        assert_eq!(
+            verifier.get_verification_status(),
+            PresentationVerificationStatus::Valid
+        );
     }
 
     pub async fn verify_proof(faber: &mut Faber, verifier: &mut Verifier, connection: &MediatedConnection) {
@@ -891,6 +997,30 @@ pub mod test_utils {
             request_name,
         )
         .await
+    }
+
+    pub async fn prover_select_credentials_new(
+        prover: &mut Prover,
+        alice: &mut Alice,
+        presentation_request: AriesMessage,
+        preselected_credentials: Option<&str>,
+    ) -> SelectedCredentials {
+        prover.process_aries_msg(presentation_request).await.unwrap();
+        assert_eq!(prover.get_state(), ProverState::PresentationRequestReceived);
+        let retrieved_credentials = prover
+            .retrieve_credentials(&alice.profile.inject_anoncreds())
+            .await
+            .unwrap();
+        info!("prover_select_credentials >> retrieved_credentials: {retrieved_credentials:?}");
+        let selected_credentials = match preselected_credentials {
+            Some(preselected_credentials) => {
+                let credential_data = prover.presentation_request_data().unwrap();
+                match_preselected_credentials(&retrieved_credentials, preselected_credentials, &credential_data, true)
+            }
+            _ => retrieved_to_selected_credentials_simple(&retrieved_credentials, true),
+        };
+
+        selected_credentials
     }
 
     pub async fn prover_select_credentials(
