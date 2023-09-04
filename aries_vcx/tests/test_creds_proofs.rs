@@ -602,13 +602,7 @@ mod tests {
             let (consumer_to_institution, institution_to_consumer) =
                 create_connected_connections(&mut consumer, &mut institution).await;
             let (schema_id, cred_def_id, _rev_reg_id, _cred_def, _rev_reg, _credential_handle) =
-                issue_address_credential(
-                    &mut consumer,
-                    &mut institution,
-                    &consumer_to_institution,
-                    &institution_to_consumer,
-                )
-                .await;
+                issue_address_credential(&mut consumer, &mut institution).await;
 
             #[cfg(feature = "migration")]
             institution.migrate().await;
@@ -671,13 +665,7 @@ mod tests {
 
             let (consumer_to_institution, institution_to_consumer) =
                 create_connected_connections(&mut consumer, &mut institution).await;
-            issue_address_credential(
-                &mut consumer,
-                &mut institution,
-                &consumer_to_institution,
-                &institution_to_consumer,
-            )
-            .await;
+            issue_address_credential(&mut consumer, &mut institution).await;
 
             #[cfg(feature = "migration")]
             institution.migrate().await;
@@ -743,13 +731,7 @@ mod tests {
 
             let (consumer_to_institution, institution_to_consumer) =
                 create_connected_connections(&mut consumer, &mut institution).await;
-            issue_address_credential(
-                &mut consumer,
-                &mut institution,
-                &consumer_to_institution,
-                &institution_to_consumer,
-            )
-            .await;
+            issue_address_credential(&mut consumer, &mut institution).await;
 
             #[cfg(feature = "migration")]
             institution.migrate().await;
@@ -792,13 +774,7 @@ mod tests {
 
             let (consumer_to_institution, institution_to_consumer) =
                 create_connected_connections(&mut consumer, &mut institution).await;
-            issue_address_credential(
-                &mut consumer,
-                &mut institution,
-                &consumer_to_institution,
-                &institution_to_consumer,
-            )
-            .await;
+            issue_address_credential(&mut consumer, &mut institution).await;
 
             let requested_attrs_string = serde_json::to_string(&json!([
             {
@@ -861,8 +837,6 @@ mod tests {
                 credential_data1,
                 &cred_def,
                 &rev_reg,
-                &consumer1_to_issuer,
-                &issuer_to_consumer1,
                 None,
             )
                 .await;
@@ -877,8 +851,6 @@ mod tests {
                 credential_data2,
                 &cred_def,
                 &rev_reg,
-                &consumer2_to_issuer,
-                &issuer_to_consumer2,
                 None,
             )
                 .await;
@@ -957,7 +929,7 @@ mod tests {
                 create_connected_connections(&mut consumer, &mut issuer).await;
 
             let (schema_id, cred_def_id, _rev_reg_id, _cred_def, _rev_reg, _credential_handle) =
-                issue_address_credential(&mut consumer, &mut issuer, &consumer_to_issuer, &issuer_to_consumer).await;
+                issue_address_credential(&mut consumer, &mut issuer).await;
 
             #[cfg(feature = "migration")]
             issuer.migrate().await;
@@ -1043,8 +1015,6 @@ mod tests {
                 credential_data,
                 &cred_def,
                 &rev_reg,
-                &consumer_to_institution,
-                &institution_to_consumer,
                 None,
             )
                 .await;
@@ -1258,8 +1228,6 @@ mod tests {
                 credential_data1.clone(),
                 &cred_def,
                 &rev_reg,
-                &consumer_to_issuer,
-                &issuer_to_consumer,
                 req1,
             )
                 .await;
@@ -1274,8 +1242,6 @@ mod tests {
                 credential_data2.clone(),
                 &cred_def,
                 &rev_reg,
-                &consumer_to_issuer,
-                &issuer_to_consumer,
                 req2,
             )
                 .await;
@@ -1359,8 +1325,6 @@ mod tests {
             _exchange_credential_with_proposal(
                 &mut consumer,
                 &mut institution,
-                &consumer_to_institution,
-                &institution_to_consumer,
                 &schema_id,
                 &cred_def_id,
                 rev_reg_id,
@@ -1497,8 +1461,6 @@ mod tests {
             _exchange_credential_with_proposal(
                 &mut consumer,
                 &mut institution,
-                &consumer_to_institution,
-                &institution_to_consumer,
                 &schema_id,
                 &cred_def_id,
                 rev_reg_id,
@@ -1546,8 +1508,6 @@ mod tests {
             _exchange_credential_with_proposal(
                 &mut consumer,
                 &mut institution,
-                &consumer_to_institution,
-                &institution_to_consumer,
                 &schema_id,
                 &cred_def_id,
                 rev_reg_id,
@@ -1581,8 +1541,6 @@ mod tests {
             _exchange_credential_with_proposal(
                 &mut consumer,
                 &mut institution,
-                &consumer_to_institution,
-                &institution_to_consumer,
                 &schema_id,
                 &cred_def_id,
                 rev_reg_id,

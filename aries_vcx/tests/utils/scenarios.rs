@@ -1118,8 +1118,6 @@ pub mod test_utils {
         credential_data: String,
         cred_def: &CredentialDef,
         rev_reg: &RevocationRegistry,
-        consumer_to_issuer: &MediatedConnection,
-        issuer_to_consumer: &MediatedConnection,
         comment: Option<&str>,
     ) -> Issuer {
         info!("Generated credential data: {}", credential_data);
@@ -1150,8 +1148,6 @@ pub mod test_utils {
     pub async fn _exchange_credential_with_proposal(
         consumer: &mut Alice,
         institution: &mut Faber,
-        consumer_to_issuer: &MediatedConnection,
-        issuer_to_consumer: &MediatedConnection,
         schema_id: &str,
         cred_def_id: &str,
         rev_reg_id: Option<String>,
@@ -1169,8 +1165,6 @@ pub mod test_utils {
     pub async fn issue_address_credential(
         consumer: &mut Alice,
         institution: &mut Faber,
-        consumer_to_institution: &MediatedConnection,
-        institution_to_consumer: &MediatedConnection,
     ) -> (
         String,
         String,
@@ -1188,17 +1182,8 @@ pub mod test_utils {
             json!({address1: "123 Main St", address2: "Suite 3", city: "Draper", state: "UT", zip: "84000"})
                 .to_string();
 
-        let credential_handle = _exchange_credential(
-            consumer,
-            institution,
-            credential_data,
-            &cred_def,
-            &rev_reg,
-            consumer_to_institution,
-            institution_to_consumer,
-            None,
-        )
-        .await;
+        let credential_handle =
+            _exchange_credential(consumer, institution, credential_data, &cred_def, &rev_reg, None).await;
         (schema_id, cred_def_id, rev_reg_id, cred_def, rev_reg, credential_handle)
     }
 

@@ -38,13 +38,8 @@ mod integration_tests {
 
             let (consumer_to_institution, institution_to_consumer) =
                 create_connected_connections(&mut consumer, &mut institution).await;
-            let (schema_id, cred_def_id, _, _cred_def, rev_reg, issuer_credential) = issue_address_credential(
-                &mut consumer,
-                &mut institution,
-                &consumer_to_institution,
-                &institution_to_consumer,
-            )
-            .await;
+            let (schema_id, cred_def_id, _, _cred_def, rev_reg, issuer_credential) =
+                issue_address_credential(&mut consumer, &mut institution).await;
 
             #[cfg(feature = "migration")]
             institution.migrate().await;
@@ -126,13 +121,8 @@ mod integration_tests {
 
             let (consumer_to_institution, institution_to_consumer) =
                 create_connected_connections(&mut consumer, &mut institution).await;
-            let (_, _, _, _cred_def, rev_reg, issuer_credential) = issue_address_credential(
-                &mut consumer,
-                &mut institution,
-                &consumer_to_institution,
-                &institution_to_consumer,
-            )
-            .await;
+            let (_, _, _, _cred_def, rev_reg, issuer_credential) =
+                issue_address_credential(&mut consumer, &mut institution).await;
 
             #[cfg(feature = "migration")]
             institution.migrate().await;
@@ -196,13 +186,8 @@ mod integration_tests {
 
             let (consumer_to_institution, institution_to_consumer) =
                 create_connected_connections(&mut consumer, &mut institution).await;
-            let (schema_id, cred_def_id, _, _cred_def, rev_reg, issuer_credential) = issue_address_credential(
-                &mut consumer,
-                &mut institution,
-                &consumer_to_institution,
-                &institution_to_consumer,
-            )
-            .await;
+            let (schema_id, cred_def_id, _, _cred_def, rev_reg, issuer_credential) =
+                issue_address_credential(&mut consumer, &mut institution).await;
 
             #[cfg(feature = "migration")]
             institution.migrate().await;
@@ -310,8 +295,6 @@ mod integration_tests {
                 credential_data1,
                 &cred_def,
                 &rev_reg,
-                &consumer_to_institution1,
-                &institution_to_consumer1,
                 None,
             )
                 .await;
@@ -327,8 +310,6 @@ mod integration_tests {
                 credential_data2,
                 &cred_def,
                 &rev_reg,
-                &consumer_to_institution2,
-                &institution_to_consumer2,
                 None,
             )
                 .await;
@@ -344,8 +325,6 @@ mod integration_tests {
                 credential_data3,
                 &cred_def,
                 &rev_reg,
-                &consumer_to_institution3,
-                &institution_to_consumer3,
                 None,
             )
                 .await;
@@ -473,7 +452,7 @@ mod integration_tests {
 
             let (consumer_to_institution, institution_to_consumer) = create_connected_connections(&mut consumer, &mut institution).await;
             let (schema_id, cred_def_id, _, _cred_def, rev_reg, issuer_credential) =
-                issue_address_credential(&mut consumer, &mut institution, &consumer_to_institution, &institution_to_consumer).await;
+                issue_address_credential(&mut consumer, &mut institution).await;
 
             assert!(!issuer_credential.is_revoked(&institution.profile.inject_anoncreds_ledger_read()).await.unwrap());
 
@@ -556,8 +535,6 @@ mod integration_tests {
                 credential_data1.clone(),
                 &cred_def,
                 &rev_reg,
-                &consumer_to_issuer,
-                &issuer_to_consumer,
                 req1,
             )
                 .await;
@@ -573,8 +550,6 @@ mod integration_tests {
                 credential_data2.clone(),
                 &cred_def,
                 &rev_reg,
-                &consumer_to_issuer,
-                &issuer_to_consumer,
                 req2,
             )
                 .await;
@@ -648,8 +623,6 @@ mod integration_tests {
                 credential_data1.clone(),
                 &cred_def,
                 &rev_reg,
-                &consumer_to_issuer,
-                &issuer_to_consumer,
                 req1,
             )
                 .await;
@@ -664,8 +637,6 @@ mod integration_tests {
                 credential_data2.clone(),
                 &cred_def,
                 &rev_reg,
-                &consumer_to_issuer,
-                &issuer_to_consumer,
                 req2,
             )
                 .await;
@@ -738,8 +709,6 @@ mod integration_tests {
                 credential_data1.clone(),
                 &cred_def,
                 &rev_reg,
-                &consumer_to_issuer,
-                &issuer_to_consumer,
                 req1,
             )
                 .await;
@@ -755,8 +724,6 @@ mod integration_tests {
                 credential_data2.clone(),
                 &cred_def,
                 &rev_reg_2,
-                &consumer_to_issuer,
-                &issuer_to_consumer,
                 req2,
             )
                 .await;
@@ -824,8 +791,6 @@ mod integration_tests {
                 credential_data1.clone(),
                 &cred_def,
                 &rev_reg,
-                &consumer_to_issuer,
-                &issuer_to_consumer,
                 req1,
             )
                 .await;
@@ -841,8 +806,6 @@ mod integration_tests {
                 credential_data2.clone(),
                 &cred_def,
                 &rev_reg_2,
-                &consumer_to_issuer,
-                &issuer_to_consumer,
                 req2,
             )
                 .await;
@@ -914,8 +877,6 @@ mod integration_tests {
                 credential_data1.clone(),
                 &cred_def,
                 &rev_reg,
-                &consumer_to_issuer,
-                &issuer_to_consumer,
                 req1,
             )
                 .await;
@@ -931,8 +892,6 @@ mod integration_tests {
                 credential_data2.clone(),
                 &cred_def,
                 &rev_reg_2,
-                &consumer_to_issuer,
-                &issuer_to_consumer,
                 req2,
             )
                 .await;
@@ -1007,8 +966,6 @@ mod integration_tests {
                 credential_data1.clone(),
                 &cred_def,
                 &rev_reg,
-                &consumer_to_issuer,
-                &issuer_to_consumer,
                 req1,
             )
                 .await;
@@ -1027,8 +984,6 @@ mod integration_tests {
                 credential_data2.clone(),
                 &cred_def,
                 &rev_reg,
-                &consumer_to_issuer,
-                &issuer_to_consumer,
                 req2,
             )
                 .await;
@@ -1054,8 +1009,6 @@ mod integration_tests {
                 credential_data3.clone(),
                 &cred_def,
                 &rev_reg,
-                &consumer_to_issuer,
-                &issuer_to_consumer,
                 req3,
             )
                 .await;
