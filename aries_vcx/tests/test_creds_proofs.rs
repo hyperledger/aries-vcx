@@ -586,8 +586,9 @@ mod tests {
     use crate::utils::scenarios::test_utils::{
         _create_address_schema_creddef_revreg, _exchange_credential, _exchange_credential_with_proposal,
         accept_cred_proposal, accept_cred_proposal_1, accept_cred_proposal_new, accept_offer, accept_proof_proposal,
-        attr_names, create_connected_connections, create_cred_proposal, create_nonrevocable_cred_offer, create_proof,
-        decline_offer, generate_and_send_proof, issue_address_credential, prover_select_credentials,
+        attr_names, create_connected_connections, create_cred_proposal, create_holder_from_proposal,
+        create_issuer_from_proposal, create_nonrevocable_cred_offer, create_proof, decline_offer,
+        generate_and_send_proof, issue_address_credential, prover_select_credentials,
         prover_select_credentials_and_send_proof, receive_proof_proposal_rejection, reject_proof_proposal,
         retrieved_to_selected_credentials_simple, send_cred_proposal, send_cred_proposal_1, send_cred_req,
         send_credential, send_credential_1, send_proof_proposal, send_proof_proposal_1, send_proof_request,
@@ -1351,14 +1352,21 @@ mod tests {
                 _create_address_schema_creddef_revreg(&institution.profile, &institution.institution_did).await;
             let tails_dir = rev_reg.get_tails_dir();
 
-            let (mut holder, cred_proposal) =
-                create_cred_proposal(&mut consumer, &schema_id, &cred_def_id, "comment").await;
+            let cred_proposal = create_cred_proposal(&mut consumer, &schema_id, &cred_def_id, "comment").await;
+            let mut holder = create_holder_from_proposal(cred_proposal.clone());
+            let mut issuer = create_issuer_from_proposal(cred_proposal.clone());
 
             #[cfg(feature = "migration")]
             institution.migrate().await;
 
-            let (mut issuer, cred_offer) =
-                accept_cred_proposal_new(&mut institution, cred_proposal, rev_reg_id, Some(tails_dir)).await;
+            let cred_offer = accept_cred_proposal_new(
+                &mut institution,
+                &mut issuer,
+                cred_proposal,
+                rev_reg_id,
+                Some(tails_dir),
+            )
+            .await;
             let problem_report = decline_offer(&mut consumer, cred_offer, &mut holder).await;
             assert_eq!(IssuerState::OfferSet, issuer.get_state());
             issuer.process_aries_msg(problem_report).await.unwrap();
@@ -1383,17 +1391,13 @@ mod tests {
             #[cfg(feature = "migration")]
             institution.migrate().await;
 
-            let mut holder = send_cred_proposal(
-                &mut consumer,
-                &consumer_to_institution,
-                &schema_id,
-                &cred_def_id,
-                "comment",
-            )
-            .await;
-            let mut issuer = accept_cred_proposal(
+            let cred_proposal = create_cred_proposal(&mut consumer, &schema_id, &cred_def_id, "comment").await;
+            let mut holder = create_holder_from_proposal(cred_proposal.clone());
+            let mut issuer = create_issuer_from_proposal(cred_proposal.clone());
+            let cred_offer = accept_cred_proposal_new(
                 &mut institution,
-                &institution_to_consumer,
+                &mut issuer,
+                cred_proposal,
                 rev_reg_id.clone(),
                 Some(tails_dir.clone()),
             )
@@ -1402,15 +1406,7 @@ mod tests {
             #[cfg(feature = "migration")]
             consumer.migrate().await;
 
-            send_cred_proposal_1(
-                &mut holder,
-                &mut consumer,
-                &consumer_to_institution,
-                &schema_id,
-                &cred_def_id,
-                "comment",
-            )
-            .await;
+            let cred_proposal_1 = create_cred_proposal(&mut consumer, &schema_id, &cred_def_id, "comment").await;
             accept_cred_proposal_1(
                 &mut issuer,
                 &mut institution,

@@ -260,7 +260,7 @@ pub mod test_utils {
         schema_id: &str,
         cred_def_id: &str,
         comment: &str,
-    ) -> (Holder, AriesMessage) {
+    ) -> ProposeCredential {
         let (address1, address2, city, state, zip) = attr_names();
         let mut attrs = Vec::new();
 
@@ -291,11 +291,13 @@ pub mod test_utils {
         let decorators = ProposeCredentialDecorators::default();
 
         let id = "test".to_owned();
-        let proposal = ProposeCredential::with_decorators(id, content, decorators);
-        let mut holder = Holder::create_with_proposal("TEST_CREDENTIAL", proposal.clone()).unwrap();
+        ProposeCredential::with_decorators(id, content, decorators)
+    }
+
+    pub fn create_holder_from_proposal(proposal: ProposeCredential) -> Holder {
+        let mut holder = Holder::create_with_proposal("TEST_CREDENTIAL", proposal).unwrap();
         assert_eq!(HolderState::ProposalSet, holder.get_state());
-        tokio::time::sleep(Duration::from_millis(1000)).await;
-        (holder, proposal.into())
+        holder
     }
 
     pub async fn send_cred_proposal(
@@ -406,23 +408,23 @@ pub mod test_utils {
         tokio::time::sleep(Duration::from_millis(1000)).await;
     }
 
-    pub async fn accept_cred_proposal_new(
-        faber: &mut Faber,
-        cred_proposal: AriesMessage,
-        rev_reg_id: Option<String>,
-        tails_dir: Option<String>,
-    ) -> (Issuer, AriesMessage) {
-        let proposal = match cred_proposal {
-            AriesMessage::CredentialIssuance(CredentialIssuance::ProposeCredential(proposal)) => proposal,
-            _ => panic!("Unexpected message"),
-        };
+    pub fn create_issuer_from_proposal(proposal: ProposeCredential) -> Issuer {
         let mut issuer = Issuer::create_from_proposal("TEST_CREDENTIAL", &proposal).unwrap();
-        assert_eq!(proposal.id, issuer.get_thread_id().unwrap());
         assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
         assert_eq!(proposal.clone(), issuer.get_proposal().unwrap());
+        issuer
+    }
+
+    pub async fn accept_cred_proposal_new(
+        faber: &mut Faber,
+        issuer: &mut Issuer,
+        cred_proposal: ProposeCredential,
+        rev_reg_id: Option<String>,
+        tails_dir: Option<String>,
+    ) -> AriesMessage {
         let offer_info = OfferInfo {
-            credential_json: json!(proposal.content.credential_proposal.attributes).to_string(),
-            cred_def_id: proposal.content.cred_def_id.clone(),
+            credential_json: json!(cred_proposal.content.credential_proposal.attributes).to_string(),
+            cred_def_id: cred_proposal.content.cred_def_id.clone(),
             rev_reg_id,
             tails_file: tails_dir,
         };
@@ -431,7 +433,7 @@ pub mod test_utils {
             .await
             .unwrap();
         let credential_offer = issuer.get_credential_offer_msg().unwrap();
-        (issuer, credential_offer)
+        credential_offer
     }
 
     pub async fn accept_cred_proposal(
@@ -1116,9 +1118,10 @@ pub mod test_utils {
         tails_dir: Option<String>,
         comment: &str,
     ) -> (Holder, Issuer) {
-        let (mut holder, cred_proposal) = create_cred_proposal(consumer, schema_id, cred_def_id, comment).await;
-        let (mut issuer, cred_offer) =
-            accept_cred_proposal_new(institution, cred_proposal, rev_reg_id, tails_dir).await;
+        let cred_proposal = create_cred_proposal(consumer, schema_id, cred_def_id, comment).await;
+        let mut holder = create_holder_from_proposal(cred_proposal.clone());
+        let mut issuer = create_issuer_from_proposal(cred_proposal.clone());
+        let cred_offer = accept_cred_proposal_new(institution, &mut issuer, cred_proposal, rev_reg_id, tails_dir).await;
         let cred_request = accept_offer_new(consumer, cred_offer, &mut holder).await;
         send_credential_1(consumer, institution, &mut issuer, &mut holder, cred_request, true).await;
         (holder, issuer)
