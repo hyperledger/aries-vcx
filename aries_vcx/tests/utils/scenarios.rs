@@ -207,38 +207,6 @@ pub mod test_utils {
         (issuer, credential_offer)
     }
 
-    pub async fn create_and_send_nonrevocable_cred_offer(
-        faber: &mut Faber,
-        cred_def: &CredentialDef,
-        connection: &MediatedConnection,
-        credential_json: &str,
-        comment: Option<&str>,
-    ) -> Issuer {
-        info!("create_and_send_nonrevocable_cred_offer >> creating issuer credential");
-        let offer_info = OfferInfo {
-            credential_json: credential_json.to_string(),
-            cred_def_id: cred_def.get_cred_def_id(),
-            rev_reg_id: None,
-            tails_file: None,
-        };
-        let mut issuer = Issuer::create("1").unwrap();
-        info!("create_and_send_nonrevocable_cred_offer :: sending credential offer");
-        issuer
-            .build_credential_offer_msg(&faber.profile.inject_anoncreds(), offer_info, comment.map(String::from))
-            .await
-            .unwrap();
-        let send_closure = connection
-            .send_message_closure(faber.profile.inject_wallet())
-            .await
-            .unwrap();
-        let credential_offer = issuer.get_credential_offer_msg().unwrap();
-        send_closure(credential_offer).await.unwrap();
-
-        info!("create_and_send_nonrevocable_cred_offer :: credential offer was sent");
-        tokio::time::sleep(Duration::from_millis(1000)).await;
-        issuer
-    }
-
     pub async fn create_credential_offer(
         faber: &mut Faber,
         cred_def: &CredentialDef,
@@ -595,25 +563,19 @@ pub mod test_utils {
         assert_eq!(HolderState::RequestSet, holder.get_state());
     }
 
-    pub async fn decline_offer(alice: &mut Alice, connection: &MediatedConnection, holder: &mut Holder) {
-        holder_update_with_mediator(
-            holder,
-            &alice.profile.inject_anoncreds_ledger_read(),
-            &alice.profile.inject_anoncreds(),
-            &alice.profile.inject_wallet(),
-            &alice.agency_client,
-            connection,
-        )
-        .await
-        .unwrap();
-        assert_eq!(HolderState::OfferReceived, holder.get_state());
-        let send_message = connection
-            .send_message_closure(alice.profile.inject_wallet())
+    pub async fn decline_offer(alice: &mut Alice, cred_offer: AriesMessage, holder: &mut Holder) -> AriesMessage {
+        holder
+            .process_aries_msg(
+                &alice.profile.inject_anoncreds_ledger_read(),
+                &alice.profile.inject_anoncreds(),
+                cred_offer,
+            )
             .await
             .unwrap();
+        assert_eq!(HolderState::OfferReceived, holder.get_state());
         let problem_report = holder.decline_offer(Some("Have a nice day")).unwrap();
-        send_message(problem_report.into()).await.unwrap();
         assert_eq!(HolderState::Failed, holder.get_state());
+        problem_report.into()
     }
 
     pub async fn send_credential_1(

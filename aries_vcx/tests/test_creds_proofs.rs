@@ -560,6 +560,8 @@ mod tests {
     use std::collections::HashMap;
     use std::time::Duration;
 
+    use messages::msg_fields::protocols::cred_issuance::CredentialIssuance;
+    use messages::AriesMessage;
     use serde_json::Value;
 
     use crate::utils::devsetup_util::issuer_update_with_mediator;
@@ -583,9 +585,9 @@ mod tests {
     use crate::utils::migration::Migratable;
     use crate::utils::scenarios::test_utils::{
         _create_address_schema_creddef_revreg, _exchange_credential, _exchange_credential_with_proposal,
-        accept_cred_proposal, accept_cred_proposal_1, accept_offer, accept_proof_proposal, attr_names,
-        create_and_send_nonrevocable_cred_offer, create_connected_connections, create_nonrevocable_cred_offer,
-        create_proof, decline_offer, generate_and_send_proof, issue_address_credential, prover_select_credentials,
+        accept_cred_proposal, accept_cred_proposal_1, accept_cred_proposal_new, accept_offer, accept_proof_proposal,
+        attr_names, create_connected_connections, create_cred_proposal, create_nonrevocable_cred_offer, create_proof,
+        decline_offer, generate_and_send_proof, issue_address_credential, prover_select_credentials,
         prover_select_credentials_and_send_proof, receive_proof_proposal_rejection, reject_proof_proposal,
         retrieved_to_selected_credentials_simple, send_cred_proposal, send_cred_proposal_1, send_cred_req,
         send_credential, send_credential_1, send_proof_proposal, send_proof_proposal_1, send_proof_request,
@@ -1349,26 +1351,17 @@ mod tests {
                 _create_address_schema_creddef_revreg(&institution.profile, &institution.institution_did).await;
             let tails_dir = rev_reg.get_tails_dir();
 
-            let mut holder = send_cred_proposal(
-                &mut consumer,
-                &consumer_to_institution,
-                &schema_id,
-                &cred_def_id,
-                "comment",
-            )
-            .await;
+            let (mut holder, cred_proposal) =
+                create_cred_proposal(&mut consumer, &schema_id, &cred_def_id, "comment").await;
 
             #[cfg(feature = "migration")]
             institution.migrate().await;
 
-            let mut issuer =
-                accept_cred_proposal(&mut institution, &institution_to_consumer, rev_reg_id, Some(tails_dir)).await;
-            decline_offer(&mut consumer, &consumer_to_institution, &mut holder).await;
+            let (mut issuer, cred_offer) =
+                accept_cred_proposal_new(&mut institution, cred_proposal, rev_reg_id, Some(tails_dir)).await;
+            let problem_report = decline_offer(&mut consumer, cred_offer, &mut holder).await;
             assert_eq!(IssuerState::OfferSet, issuer.get_state());
-            tokio::time::sleep(Duration::from_millis(1000)).await;
-            issuer_update_with_mediator(&mut issuer, &institution.agency_client, &institution_to_consumer)
-                .await
-                .unwrap();
+            issuer.process_aries_msg(problem_report).await.unwrap();
             assert_eq!(IssuerState::Failed, issuer.get_state());
         })
         .await;

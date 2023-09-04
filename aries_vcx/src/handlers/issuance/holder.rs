@@ -243,6 +243,7 @@ impl Holder {
                     .receive_credential(ledger, anoncreds, credential)
                     .await?
             }
+            // TODO: What about credential issuance problem report?
             AriesMessage::ReportProblem(report) => self.holder_sm.clone().receive_problem_report(report)?,
             _ => self.holder_sm.clone(),
         };
