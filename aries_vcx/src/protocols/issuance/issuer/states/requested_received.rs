@@ -1,7 +1,8 @@
 use crate::handlers::util::Status;
 use crate::protocols::issuance::issuer::state_machine::RevocationInfoV1;
-use crate::protocols::issuance::issuer::states::credential_sent::CredentialSentState;
+use crate::protocols::issuance::issuer::states::credential_set::CredentialSetState;
 use crate::protocols::issuance::issuer::states::finished::FinishedState;
+use messages::msg_fields::protocols::cred_issuance::issue_credential::IssueCredential;
 use messages::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
 use messages::msg_fields::protocols::cred_issuance::request_credential::RequestCredential;
 use messages::msg_fields::protocols::report_problem::ProblemReport;
@@ -16,36 +17,8 @@ pub struct RequestReceivedState {
     pub request: RequestCredential,
 }
 
-impl From<(RequestReceivedState, Option<String>)> for CredentialSentState {
-    fn from((state, cred_rev_id): (RequestReceivedState, Option<String>)) -> Self {
-        trace!("SM is now in CredentialSent state");
-        CredentialSentState {
-            revocation_info_v1: Some(RevocationInfoV1 {
-                cred_rev_id,
-                rev_reg_id: state.rev_reg_id,
-                tails_file: state.tails_file,
-            }),
-        }
-    }
-}
-
-impl From<(RequestReceivedState, Option<String>)> for FinishedState {
-    fn from((state, cred_rev_id): (RequestReceivedState, Option<String>)) -> Self {
-        trace!("SM is now in Finished state");
-        FinishedState {
-            cred_id: None,
-            revocation_info_v1: Some(RevocationInfoV1 {
-                cred_rev_id,
-                rev_reg_id: state.rev_reg_id,
-                tails_file: state.tails_file,
-            }),
-            status: Status::Success,
-        }
-    }
-}
-
-impl From<(RequestReceivedState, ProblemReport)> for FinishedState {
-    fn from((state, err): (RequestReceivedState, ProblemReport)) -> Self {
+impl FinishedState {
+    pub fn from_request_and_error(state: RequestReceivedState, err: ProblemReport) -> Self {
         trace!("SM is now in Finished state");
         FinishedState {
             cred_id: None,

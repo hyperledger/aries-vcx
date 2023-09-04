@@ -6,6 +6,7 @@ use serde_json;
 use aries_vcx::agency_client::testing::mocking::AgencyMockDecrypted;
 use aries_vcx::handlers::issuance::holder::Holder;
 use aries_vcx::handlers::issuance::mediated_holder::holder_find_message_to_handle;
+use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
 use aries_vcx::utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
 use aries_vcx::{global::settings::indy_mocks_enabled, utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER};
 
@@ -117,41 +118,49 @@ pub async fn credential_create_with_msgid(
 
 pub async fn update_state(credential_handle: u32, message: Option<&str>, connection_handle: u32) -> LibvcxResult<u32> {
     let mut credential = HANDLE_MAP.get_cloned(credential_handle)?;
-    let profile = get_main_profile();
 
     trace!("credential::update_state >>> ");
     if credential.is_terminal_state() {
         return Ok(credential.get_state().into());
     }
-    let send_message = mediated_connection::send_message_closure(connection_handle).await?;
-
-    if let Some(message) = message {
+    let (mediator_uid, aries_msg) = if let Some(message) = message {
         let message: AriesMessage = serde_json::from_str(message).map_err(|err| {
             LibvcxError::from_msg(
                 LibvcxErrorKind::InvalidOption,
                 format!("Cannot update state: Message deserialization failed: {:?}", err),
             )
         })?;
-        credential
-            .process_aries_msg(
-                &get_main_anoncreds_ledger_read()?,
-                &get_main_anoncreds()?,
-                message.into(),
-                Some(send_message),
-            )
-            .await?;
+        (None, Some(message))
     } else {
         let messages = mediated_connection::get_messages(connection_handle).await?;
-        if let Some((uid, msg)) = holder_find_message_to_handle(&credential, messages) {
+        match holder_find_message_to_handle(&credential, messages) {
+            None => (None, None),
+            Some((uid, msg)) => (Some(uid), Some(msg)),
+        }
+    };
+    match aries_msg {
+        None => {
+            trace!("credential::update_state >>> no suitable messages found to progress the protocol");
+        }
+        Some(aries_msg) => {
             credential
                 .process_aries_msg(
                     &get_main_anoncreds_ledger_read()?,
                     &get_main_anoncreds()?,
-                    msg.into(),
-                    Some(send_message),
+                    aries_msg.clone(),
                 )
                 .await?;
-            mediated_connection::update_message_status(connection_handle, &uid).await?;
+            if let Some(uid) = mediator_uid {
+                trace!("credential::update_state >>> updating messages status in mediator");
+                mediated_connection::update_message_status(connection_handle, &uid).await?;
+            }
+            match credential.get_final_message()? {
+                None => {}
+                Some(msg_response) => {
+                    let send_message = mediated_connection::send_message_closure(connection_handle).await?;
+                    send_message(msg_response).await?;
+                }
+            }
         }
     }
     let state = credential.get_state().into();
@@ -231,14 +240,10 @@ pub async fn send_credential_request(handle: u32, connection_handle: u32) -> Lib
     let mut credential = HANDLE_MAP.get_cloned(handle)?;
     let my_pw_did = mediated_connection::get_pw_did(connection_handle)?;
     let send_message = mediated_connection::send_message_closure(connection_handle).await?;
-    credential
-        .send_request(
-            &get_main_anoncreds_ledger_read()?,
-            &get_main_anoncreds()?,
-            my_pw_did,
-            send_message,
-        )
+    let msg_response = credential
+        .prepare_credential_request(&get_main_anoncreds_ledger_read()?, &get_main_anoncreds()?, my_pw_did)
         .await?;
+    send_message(msg_response).await?;
     HANDLE_MAP.insert(handle, credential)
 }
 
@@ -358,7 +363,8 @@ pub fn get_thread_id(handle: u32) -> LibvcxResult<String> {
 pub async fn decline_offer(handle: u32, connection_handle: u32, comment: Option<&str>) -> LibvcxResult<()> {
     let mut credential = HANDLE_MAP.get_cloned(handle)?;
     let send_message = mediated_connection::send_message_closure(connection_handle).await?;
-    credential.decline_offer(comment, send_message).await?;
+    let problem_report = credential.decline_offer(comment)?;
+    send_message(problem_report.into()).await?;
     HANDLE_MAP.insert(handle, credential)
 }
 
@@ -473,7 +479,7 @@ pub mod tests {
 
         info!("full_credential_test:: going to send_credential_request");
         send_credential_request(handle_cred, handle_conn).await.unwrap();
-        assert_eq!(HolderState::RequestSent as u32, get_state(handle_cred).unwrap());
+        assert_eq!(HolderState::RequestSet as u32, get_state(handle_cred).unwrap());
 
         AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
         AgencyMockDecrypted::set_next_decrypted_message(ARIES_CREDENTIAL_RESPONSE);

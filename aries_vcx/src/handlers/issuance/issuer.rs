@@ -1,6 +1,3 @@
-use std::collections::HashMap;
-
-use messages::decorators::please_ack::AckOn;
 use messages::misc::MimeType;
 use messages::msg_fields::protocols::cred_issuance::ack::AckCredential;
 use messages::msg_fields::protocols::cred_issuance::propose_credential::ProposeCredential;
@@ -11,16 +8,14 @@ use std::sync::Arc;
 
 use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
 use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
+use messages::msg_fields::protocols::cred_issuance::issue_credential::IssueCredential;
 use messages::msg_fields::protocols::notification::Notification;
 use messages::msg_fields::protocols::report_problem::ProblemReport;
 use messages::msg_parts::MsgParts;
 
 use crate::errors::error::prelude::*;
-use crate::handlers::revocation_notification::sender::RevocationNotificationSender;
 use crate::handlers::util::OfferInfo;
 use crate::protocols::issuance::issuer::state_machine::{IssuerSM, IssuerState, RevocationInfoV1};
-use crate::protocols::revocation_notification::sender::state_machine::SenderConfigBuilder;
-use crate::protocols::SendClosure;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Issuer {
@@ -151,16 +146,6 @@ impl Issuer {
         Ok(offer.into())
     }
 
-    pub fn mark_credential_offer_msg_sent(&mut self) -> VcxResult<()> {
-        self.issuer_sm = self.issuer_sm.clone().mark_credential_offer_msg_sent()?;
-        Ok(())
-    }
-
-    pub async fn send_credential_offer(&mut self, send_message: SendClosure) -> VcxResult<()> {
-        self.issuer_sm = self.issuer_sm.clone().send_credential_offer(send_message).await?;
-        Ok(())
-    }
-
     pub fn process_credential_request(&mut self, request: RequestCredential) -> VcxResult<()> {
         self.issuer_sm = self.issuer_sm.clone().receive_request(request)?;
         Ok(())
@@ -171,43 +156,13 @@ impl Issuer {
         Ok(())
     }
 
-    pub async fn send_credential(
-        &mut self,
-        anoncreds: &Arc<dyn BaseAnonCreds>,
-        send_message: SendClosure,
-    ) -> VcxResult<()> {
-        self.issuer_sm = self.issuer_sm.clone().send_credential(anoncreds, send_message).await?;
+    pub async fn build_credential(&mut self, anoncreds: &Arc<dyn BaseAnonCreds>) -> VcxResult<()> {
+        self.issuer_sm = self.issuer_sm.clone().build_credential(anoncreds).await?;
         Ok(())
     }
 
-    pub async fn send_revocation_notification(
-        &mut self,
-        ack_on: Vec<AckOn>,
-        comment: Option<String>,
-        send_message: SendClosure,
-    ) -> VcxResult<()> {
-        // TODO: Check if actually revoked
-        if self.issuer_sm.is_revokable() {
-            // TODO: Store to allow checking not. status (sent, acked)
-            let config = SenderConfigBuilder::default()
-                .rev_reg_id(self.get_rev_reg_id()?)
-                .cred_rev_id(self.get_rev_id()?)
-                .comment(comment)
-                .ack_on(ack_on)
-                .build()?;
-            RevocationNotificationSender::build()
-                .send_revocation_notification(config, send_message)
-                .await?;
-            Ok(())
-        } else {
-            Err(AriesVcxError::from_msg(
-                AriesVcxErrorKind::InvalidState,
-                format!(
-                    "Can't send revocation notification in state {:?}, credential is not revokable",
-                    self.issuer_sm.get_state()
-                ),
-            ))
-        }
+    pub fn get_msg_issue_credential(&mut self) -> VcxResult<IssueCredential> {
+        self.issuer_sm.clone().get_msg_issue_credential()
     }
 
     pub fn get_state(&self) -> IssuerState {
@@ -304,6 +259,10 @@ impl Issuer {
     pub async fn receive_problem_report(&mut self, problem_report: ProblemReport) -> VcxResult<()> {
         self.issuer_sm = self.issuer_sm.clone().receive_problem_report(problem_report)?;
         Ok(())
+    }
+
+    pub fn get_problem_report(&self) -> VcxResult<ProblemReport> {
+        self.issuer_sm.get_problem_report()
     }
 
     // todo: will ultimately end up in generic SM layer

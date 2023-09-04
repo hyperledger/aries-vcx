@@ -291,19 +291,17 @@ impl Faber {
             .build_credential_offer_msg(&self.profile.inject_anoncreds(), offer_info, None)
             .await
             .unwrap();
-        self.issuer_credential
-            .send_credential_offer(
-                self.connection
-                    .send_message_closure(self.profile.inject_wallet())
-                    .await
-                    .unwrap(),
-            )
+        let send_message = self
+            .connection
+            .send_message_closure(self.profile.inject_wallet())
             .await
             .unwrap();
+        let credential_offer = self.issuer_credential.get_credential_offer_msg().unwrap();
+        send_message(credential_offer).await.unwrap();
         issuer_update_with_mediator(&mut self.issuer_credential, &self.agency_client, &self.connection)
             .await
             .unwrap();
-        assert_eq!(IssuerState::OfferSent, self.issuer_credential.get_state());
+        assert_eq!(IssuerState::OfferSet, self.issuer_credential.get_state());
     }
 
     pub async fn send_credential(&mut self) {
@@ -313,19 +311,20 @@ impl Faber {
         assert_eq!(IssuerState::RequestReceived, self.issuer_credential.get_state());
 
         self.issuer_credential
-            .send_credential(
-                &self.profile.inject_anoncreds(),
-                self.connection
-                    .send_message_closure(self.profile.inject_wallet())
-                    .await
-                    .unwrap(),
-            )
+            .build_credential(&self.profile.inject_anoncreds())
             .await
             .unwrap();
+        let send_closure = self
+            .connection
+            .send_message_closure(self.profile.inject_wallet())
+            .await
+            .unwrap();
+        let msg_issue_credential = self.issuer_credential.get_msg_issue_credential().unwrap();
+        send_closure(msg_issue_credential.into()).await.unwrap();
         issuer_update_with_mediator(&mut self.issuer_credential, &self.agency_client, &self.connection)
             .await
             .unwrap();
-        assert_eq!(IssuerState::CredentialSent, self.issuer_credential.get_state());
+        assert_eq!(IssuerState::CredentialSet, self.issuer_credential.get_state());
     }
 
     pub async fn request_presentation(&mut self) {

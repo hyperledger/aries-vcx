@@ -10,6 +10,7 @@ pub struct FinishedHolderState {
     pub credential: Option<IssueCredential>,
     pub status: Status,
     pub rev_reg_def_json: Option<String>,
+    pub ack_requested: Option<bool>,
 }
 
 impl FinishedHolderState {
@@ -142,10 +143,11 @@ impl FinishedHolderState {
     }
 }
 
-impl From<ProblemReport> for FinishedHolderState {
-    fn from(problem_report: ProblemReport) -> Self {
+impl FinishedHolderState {
+    pub fn new(problem_report: ProblemReport) -> Self {
         trace!("SM is now in Finished state");
         FinishedHolderState {
+            ack_requested: None,
             cred_id: None,
             credential: None,
             status: Status::Failed(problem_report),

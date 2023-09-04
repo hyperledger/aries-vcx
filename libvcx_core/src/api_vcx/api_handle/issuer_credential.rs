@@ -1,10 +1,12 @@
 use aries_vcx::handlers::util::OfferInfo;
 use aries_vcx::messages::AriesMessage;
 use aries_vcx::protocols::SendClosure;
+use libc::send;
 use serde_json;
 
 use aries_vcx::handlers::issuance::issuer::Issuer;
 use aries_vcx::handlers::issuance::mediated_issuer::issuer_find_message_to_handle;
+use aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
 
 use crate::api_vcx::api_global::profile::{get_main_anoncreds, get_main_wallet};
 use crate::api_vcx::api_handle::connection;
@@ -183,20 +185,15 @@ pub async fn build_credential_offer_msg_v2(
     ISSUER_CREDENTIAL_MAP.insert(credential_handle, credential)
 }
 
-pub fn mark_credential_offer_msg_sent(handle: u32) -> LibvcxResult<()> {
-    let mut credential = ISSUER_CREDENTIAL_MAP.get_cloned(handle)?;
-    credential.mark_credential_offer_msg_sent()?;
-    ISSUER_CREDENTIAL_MAP.insert(handle, credential)
-}
-
 pub fn get_credential_offer_msg(handle: u32) -> LibvcxResult<AriesMessage> {
     ISSUER_CREDENTIAL_MAP.get(handle, |credential| Ok(credential.get_credential_offer_msg()?))
 }
 
 pub async fn send_credential_offer_v2(credential_handle: u32, connection_handle: u32) -> LibvcxResult<()> {
     let mut credential = ISSUER_CREDENTIAL_MAP.get_cloned(credential_handle)?;
-    let send_message = mediated_connection::send_message_closure(connection_handle).await?;
-    credential.send_credential_offer(send_message).await?;
+    let send_closure = mediated_connection::send_message_closure(connection_handle).await?;
+    let credential_offer = credential.get_credential_offer_msg()?;
+    send_closure(credential_offer).await?;
     ISSUER_CREDENTIAL_MAP.insert(credential_handle, credential)?;
     Ok(())
 }
@@ -209,20 +206,27 @@ pub async fn send_credential_offer_nonmediated(credential_handle: u32, connectio
 
     let send_message: SendClosure =
         Box::new(|msg: AriesMessage| Box::pin(async move { con.send_message(&wallet, &msg, &HttpClient).await }));
+    let credential_offer = credential.get_credential_offer_msg()?;
+    send_message(credential_offer).await?;
 
-    credential.send_credential_offer(send_message).await?;
     ISSUER_CREDENTIAL_MAP.insert(credential_handle, credential)?;
     Ok(())
 }
 
 pub async fn send_credential(handle: u32, connection_handle: u32) -> LibvcxResult<u32> {
     let mut credential = ISSUER_CREDENTIAL_MAP.get_cloned(handle)?;
-    credential
-        .send_credential(
-            &get_main_anoncreds()?,
-            mediated_connection::send_message_closure(connection_handle).await?,
-        )
-        .await?;
+    credential.build_credential(&get_main_anoncreds()?).await?;
+    let send_closure = mediated_connection::send_message_closure(connection_handle).await?;
+    match credential.get_state() {
+        IssuerState::Failed => {
+            let problem_report = credential.get_problem_report()?;
+            send_closure(problem_report.into()).await?;
+        }
+        _ => {
+            let msg_issue_credential = credential.get_msg_issue_credential()?;
+            send_closure(msg_issue_credential.into()).await?;
+        }
+    }
     let state: u32 = credential.get_state().into();
     ISSUER_CREDENTIAL_MAP.insert(handle, credential)?;
     Ok(state)
@@ -232,11 +236,19 @@ pub async fn send_credential_nonmediated(handle: u32, connection_handle: u32) ->
     let mut credential = ISSUER_CREDENTIAL_MAP.get_cloned(handle)?;
     let con = connection::get_cloned_generic_connection(&connection_handle)?;
     let wallet = get_main_wallet()?;
-
-    let send_message: SendClosure =
+    let send_closure: SendClosure =
         Box::new(|msg: AriesMessage| Box::pin(async move { con.send_message(&wallet, &msg, &HttpClient).await }));
-
-    credential.send_credential(&get_main_anoncreds()?, send_message).await?;
+    credential.build_credential(&get_main_anoncreds()?).await?;
+    match credential.get_state() {
+        IssuerState::Failed => {
+            let problem_report = credential.get_problem_report()?;
+            send_closure(problem_report.into()).await?;
+        }
+        _ => {
+            let msg_issue_credential = credential.get_msg_issue_credential()?;
+            send_closure(msg_issue_credential.into()).await?;
+        }
+    }
     let state: u32 = credential.get_state().into();
     ISSUER_CREDENTIAL_MAP.insert(handle, credential)?;
     Ok(state)
@@ -280,7 +292,6 @@ pub mod tests {
     #[cfg(test)]
     use crate::api_vcx::api_handle::mediated_connection::test_utils::build_test_connection_inviter_requested;
     use crate::aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
-    use crate::errors::error;
     use aries_vcx::utils::constants::V3_OBJECT_SERIALIZE_VERSION;
     use aries_vcx::utils::devsetup::SetupMocks;
     use aries_vcx::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_REQUEST;
@@ -336,7 +347,7 @@ pub mod tests {
         send_credential_offer_v2(credential_handle, connection_handle)
             .await
             .unwrap();
-        assert_eq!(get_state(credential_handle).unwrap(), u32::from(IssuerState::OfferSent));
+        assert_eq!(get_state(credential_handle).unwrap(), u32::from(IssuerState::OfferSet));
     }
 
     #[tokio::test]
@@ -371,7 +382,7 @@ pub mod tests {
         send_credential_offer_v2(credential_handle, connection_handle)
             .await
             .unwrap();
-        assert_eq!(get_state(credential_handle).unwrap(), u32::from(IssuerState::OfferSent));
+        assert_eq!(get_state(credential_handle).unwrap(), u32::from(IssuerState::OfferSet));
 
         update_state(credential_handle, Some(ARIES_CREDENTIAL_REQUEST), connection_handle)
             .await
@@ -393,12 +404,12 @@ pub mod tests {
             .await
             .unwrap();
         send_credential_offer_v2(handle_cred, handle_conn).await.unwrap();
-        assert_eq!(get_state(handle_cred).unwrap(), u32::from(IssuerState::OfferSent));
+        assert_eq!(get_state(handle_cred).unwrap(), u32::from(IssuerState::OfferSet));
 
         // try to update state with nonsense message
         let result = update_state(handle_cred, Some(ARIES_CONNECTION_ACK), handle_conn).await;
         assert!(result.is_ok()); // todo: maybe we should rather return error if update_state doesn't progress state
-        assert_eq!(get_state(handle_cred).unwrap(), u32::from(IssuerState::OfferSent));
+        assert_eq!(get_state(handle_cred).unwrap(), u32::from(IssuerState::OfferSet));
     }
 
     #[tokio::test]

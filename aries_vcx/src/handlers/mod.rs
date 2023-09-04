@@ -40,9 +40,9 @@ impl From<HolderState> for u32 {
     fn from(state: HolderState) -> u32 {
         match state {
             HolderState::Initial => 0,
-            HolderState::ProposalSent => 1,
+            HolderState::ProposalSet => 1,
             HolderState::OfferReceived => 2,
-            HolderState::RequestSent => 3,
+            HolderState::RequestSet => 3,
             HolderState::Finished => 4,
             HolderState::Failed => 5,
         }
@@ -55,9 +55,8 @@ impl From<IssuerState> for u32 {
             IssuerState::Initial => 0,
             IssuerState::ProposalReceived => 1,
             IssuerState::OfferSet => 2,
-            IssuerState::OfferSent => 3,
             IssuerState::RequestReceived => 4,
-            IssuerState::CredentialSent => 5,
+            IssuerState::CredentialSet => 5,
             IssuerState::Finished => 6,
             IssuerState::Failed => 7,
         }

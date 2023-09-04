@@ -57,17 +57,16 @@ impl ServiceCredentialsHolder {
     pub async fn send_credential_proposal(
         &self,
         connection_id: &str,
-        proposal_data: ProposeCredential,
+        propose_credential: ProposeCredential,
     ) -> AgentResult<String> {
         let connection = self.service_connections.get_by_id(connection_id)?;
         let wallet = self.profile.inject_wallet();
 
-        let send_closure: SendClosure = Box::new(|msg: AriesMessage| {
-            Box::pin(async move { connection.send_message(&wallet, &msg, &HttpClient).await })
-        });
-
         let mut holder = Holder::create("")?;
-        holder.send_proposal(proposal_data, send_closure).await?;
+        holder.set_proposal(propose_credential.clone())?;
+        connection
+            .send_message(&wallet, &propose_credential.into(), &HttpClient)
+            .await?;
 
         self.creds_holder
             .insert(&holder.get_thread_id()?, HolderWrapper::new(holder, connection_id))
@@ -98,37 +97,44 @@ impl ServiceCredentialsHolder {
         let send_closure: SendClosure = Box::new(|msg: AriesMessage| {
             Box::pin(async move { connection.send_message(&wallet, &msg, &HttpClient).await })
         });
-
-        holder
-            .send_request(
+        let msg_response = holder
+            .prepare_credential_request(
                 &self.profile.inject_anoncreds_ledger_read(),
                 &self.profile.inject_anoncreds(),
                 pw_did,
-                send_closure,
             )
             .await?;
+        send_closure(msg_response).await?;
         self.creds_holder
             .insert(&holder.get_thread_id()?, HolderWrapper::new(holder, &connection_id))
     }
 
-    pub async fn process_credential(&self, thread_id: &str, credential: IssueCredential) -> AgentResult<String> {
+    pub async fn process_credential(
+        &self,
+        thread_id: &str,
+        msg_issue_credential: IssueCredential,
+    ) -> AgentResult<String> {
         let mut holder = self.get_holder(thread_id)?;
         let connection_id = self.get_connection_id(thread_id)?;
         let connection = self.service_connections.get_by_id(&connection_id)?;
         let wallet = self.profile.inject_wallet();
 
-        let send_closure: SendClosure = Box::new(|msg: AriesMessage| {
-            Box::pin(async move { connection.send_message(&wallet, &msg, &HttpClient).await })
-        });
-
         holder
             .process_credential(
                 &self.profile.inject_anoncreds_ledger_read(),
                 &self.profile.inject_anoncreds(),
-                credential,
-                send_closure,
+                msg_issue_credential.clone(),
             )
             .await?;
+        match holder.get_final_message()? {
+            None => {}
+            Some(msg_response) => {
+                let send_closure: SendClosure = Box::new(|msg: AriesMessage| {
+                    Box::pin(async move { connection.send_message(&wallet, &msg, &HttpClient).await })
+                });
+                send_closure(msg_response).await?;
+            }
+        }
         self.creds_holder
             .insert(&holder.get_thread_id()?, HolderWrapper::new(holder, &connection_id))
     }

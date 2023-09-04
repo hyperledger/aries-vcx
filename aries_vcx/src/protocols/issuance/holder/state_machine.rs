@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::fmt;
 use std::sync::Arc;
 
@@ -28,25 +27,24 @@ use crate::protocols::common::build_problem_report_msg;
 use crate::protocols::issuance::holder::states::finished::FinishedHolderState;
 use crate::protocols::issuance::holder::states::initial::InitialHolderState;
 use crate::protocols::issuance::holder::states::offer_received::OfferReceivedState;
-use crate::protocols::issuance::holder::states::proposal_sent::ProposalSentState;
-use crate::protocols::issuance::holder::states::request_sent::RequestSentState;
-use crate::protocols::SendClosure;
+use crate::protocols::issuance::holder::states::proposal_set::ProposalSetState;
+use crate::protocols::issuance::holder::states::request_set::RequestSetState;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum HolderFullState {
     Initial(InitialHolderState),
-    ProposalSent(ProposalSentState),
+    ProposalSet(ProposalSetState),
     OfferReceived(OfferReceivedState),
-    RequestSent(RequestSentState),
+    RequestSet(RequestSetState),
     Finished(FinishedHolderState),
 }
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum HolderState {
     Initial,
-    ProposalSent,
+    ProposalSet,
     OfferReceived,
-    RequestSent,
+    RequestSet,
     Finished,
     Failed,
 }
@@ -62,15 +60,15 @@ impl fmt::Display for HolderFullState {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         match *self {
             HolderFullState::Initial(_) => f.write_str("Initial"),
-            HolderFullState::ProposalSent(_) => f.write_str("ProposalSent"),
+            HolderFullState::ProposalSet(_) => f.write_str("ProposalSet"),
             HolderFullState::OfferReceived(_) => f.write_str("OfferReceived"),
-            HolderFullState::RequestSent(_) => f.write_str("RequestSent"),
+            HolderFullState::RequestSet(_) => f.write_str("RequestSet"),
             HolderFullState::Finished(_) => f.write_str("Finished"),
         }
     }
 }
 
-fn build_credential_request_msg(credential_request_attach: String, thread_id: &str) -> VcxResult<RequestCredential> {
+fn _build_credential_request_msg(credential_request_attach: String, thread_id: &str) -> RequestCredential {
     let content = RequestCredentialContent::new(vec![make_attach_from_str!(
         &credential_request_attach,
         AttachmentId::CredentialRequest.as_ref().to_string()
@@ -85,21 +83,7 @@ fn build_credential_request_msg(credential_request_attach: String, thread_id: &s
     decorators.thread = Some(thread);
     decorators.timing = Some(timing);
 
-    Ok(RequestCredential::with_decorators(
-        Uuid::new_v4().to_string(),
-        content,
-        decorators,
-    ))
-}
-
-fn build_credential_ack(thread_id: &str) -> AckCredential {
-    let content = AckCredentialContent::new(AckStatus::Ok);
-    let mut decorators = AckDecorators::new(Thread::new(thread_id.to_owned()));
-    let mut timing = Timing::default();
-    timing.out_time = Some(Utc::now());
-    decorators.timing = Some(timing);
-
-    AckCredential::with_decorators(Uuid::new_v4().to_string(), content, decorators)
+    RequestCredential::with_decorators(Uuid::new_v4().to_string(), content, decorators)
 }
 
 impl HolderSM {
@@ -119,6 +103,14 @@ impl HolderSM {
         }
     }
 
+    pub fn with_proposal(propose_credential: ProposeCredential, source_id: String) -> Self {
+        HolderSM {
+            thread_id: propose_credential.id.clone(),
+            state: HolderFullState::ProposalSet(ProposalSetState::new(propose_credential)),
+            source_id,
+        }
+    }
+
     pub fn get_source_id(&self) -> String {
         self.source_id.clone()
     }
@@ -126,9 +118,9 @@ impl HolderSM {
     pub fn get_state(&self) -> HolderState {
         match self.state {
             HolderFullState::Initial(_) => HolderState::Initial,
-            HolderFullState::ProposalSent(_) => HolderState::ProposalSent,
+            HolderFullState::ProposalSet(_) => HolderState::ProposalSet,
             HolderFullState::OfferReceived(_) => HolderState::OfferReceived,
-            HolderFullState::RequestSent(_) => HolderState::RequestSent,
+            HolderFullState::RequestSet(_) => HolderState::RequestSet,
             HolderFullState::Finished(ref status) => match status.status {
                 Status::Success => HolderState::Finished,
                 _ => HolderState::Failed,
@@ -139,7 +131,7 @@ impl HolderSM {
     #[allow(dead_code)]
     pub fn get_proposal(&self) -> VcxResult<ProposeCredential> {
         match &self.state {
-            HolderFullState::ProposalSent(state) => Ok(state.credential_proposal.clone()),
+            HolderFullState::ProposalSet(state) => Ok(state.credential_proposal.clone()),
             _ => Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::InvalidState,
                 "Proposal not available in this state",
@@ -147,7 +139,8 @@ impl HolderSM {
         }
     }
 
-    pub async fn send_proposal(self, proposal: ProposeCredential, send_message: SendClosure) -> VcxResult<Self> {
+    pub fn set_proposal(self, proposal: ProposeCredential) -> VcxResult<Self> {
+        trace!("HolderSM::set_proposal >>");
         verify_thread_id(
             &self.thread_id,
             &AriesMessage::CredentialIssuance(CredentialIssuance::ProposeCredential(proposal.clone())),
@@ -156,17 +149,15 @@ impl HolderSM {
             HolderFullState::Initial(_) => {
                 let mut proposal = proposal;
                 proposal.id = self.thread_id.clone();
-                send_message(proposal.clone().into()).await?;
-                HolderFullState::ProposalSent(ProposalSentState::new(proposal))
+                HolderFullState::ProposalSet(ProposalSetState::new(proposal))
             }
             HolderFullState::OfferReceived(_) => {
                 let mut proposal = proposal;
                 proposal.id = self.thread_id.clone();
-                send_message(proposal.clone().into()).await?;
-                HolderFullState::ProposalSent(ProposalSentState::new(proposal))
+                HolderFullState::ProposalSet(ProposalSetState::new(proposal))
             }
             s => {
-                warn!("Unable to send credential proposal in state {}", s);
+                warn!("Unable to set credential proposal in state {}", s);
                 s
             }
         };
@@ -174,12 +165,13 @@ impl HolderSM {
     }
 
     pub fn receive_offer(self, offer: OfferCredential) -> VcxResult<Self> {
+        trace!("HolderSM::receive_offer >>");
         verify_thread_id(
             &self.thread_id,
             &AriesMessage::CredentialIssuance(CredentialIssuance::OfferCredential(offer.clone())),
         )?;
         let state = match self.state {
-            HolderFullState::ProposalSent(_) => HolderFullState::OfferReceived(OfferReceivedState::new(offer)),
+            HolderFullState::ProposalSet(_) => HolderFullState::OfferReceived(OfferReceivedState::new(offer)),
             s => {
                 warn!("Unable to receive credential offer in state {}", s);
                 s
@@ -188,47 +180,55 @@ impl HolderSM {
         Ok(Self { state, ..self })
     }
 
-    pub async fn send_request<'a>(
+    pub async fn prepare_credential_request<'a>(
         self,
         ledger: &'a Arc<dyn AnoncredsLedgerRead>,
         anoncreds: &'a Arc<dyn BaseAnonCreds>,
         my_pw_did: String,
-        send_message: SendClosure,
     ) -> VcxResult<Self> {
+        trace!("HolderSM::prepare_credential_request >>");
         let state = match self.state {
             HolderFullState::OfferReceived(state_data) => {
-                match _make_credential_request(ledger, anoncreds, self.thread_id.clone(), my_pw_did, &state_data.offer)
-                    .await
+                match build_credential_request_msg(
+                    ledger,
+                    anoncreds,
+                    self.thread_id.clone(),
+                    my_pw_did,
+                    &state_data.offer,
+                )
+                .await
                 {
-                    Ok((cred_request, req_meta, cred_def_json)) => {
-                        send_message(cred_request.into()).await?;
-                        HolderFullState::RequestSent((state_data, req_meta, cred_def_json).into())
+                    Ok((msg_credential_request, req_meta, cred_def_json)) => {
+                        HolderFullState::RequestSet(RequestSetState {
+                            msg_credential_request,
+                            req_meta,
+                            cred_def_json,
+                        })
                     }
                     Err(err) => {
                         let problem_report = build_problem_report_msg(Some(err.to_string()), &self.thread_id);
                         error!(
-                            "Failed to create credential request, sending problem report: {:?}",
+                            "Failed to create credential request, generating problem report: {:?}",
                             problem_report
                         );
-                        send_message(problem_report.clone().into()).await?;
-                        HolderFullState::Finished(problem_report.into())
+                        HolderFullState::Finished(FinishedHolderState::new(problem_report))
                     }
                 }
             }
             s => {
-                warn!("Unable to send credential request in state {}", s);
+                warn!("Unable to set credential request in state {}", s);
                 s
             }
         };
         Ok(Self { state, ..self })
     }
 
-    pub async fn decline_offer(self, comment: Option<String>, send_message: SendClosure) -> VcxResult<Self> {
+    pub fn decline_offer(self, comment: Option<String>) -> VcxResult<Self> {
+        trace!("HolderSM::decline_offer >>");
         let state = match self.state {
             HolderFullState::OfferReceived(_) => {
                 let problem_report = build_problem_report_msg(comment, &self.thread_id);
-                send_message(problem_report.clone().into()).await?;
-                HolderFullState::Finished(problem_report.into())
+                HolderFullState::Finished(FinishedHolderState::new(problem_report))
             }
             s => {
                 warn!("Unable to decline credential offer in state {}", s);
@@ -243,10 +243,10 @@ impl HolderSM {
         ledger: &'a Arc<dyn AnoncredsLedgerRead>,
         anoncreds: &'a Arc<dyn BaseAnonCreds>,
         credential: IssueCredential,
-        send_message: SendClosure,
     ) -> VcxResult<Self> {
+        trace!("HolderSM::receive_credential >>");
         let state = match self.state {
-            HolderFullState::RequestSent(state_data) => {
+            HolderFullState::RequestSet(state_data) => {
                 match _store_credential(
                     ledger,
                     anoncreds,
@@ -257,20 +257,12 @@ impl HolderSM {
                 .await
                 {
                     Ok((cred_id, rev_reg_def_json)) => {
-                        if credential.decorators.please_ack.is_some() {
-                            let ack = build_credential_ack(&self.thread_id);
-                            send_message(ack.into()).await?;
-                        }
                         HolderFullState::Finished((state_data, cred_id, credential, rev_reg_def_json).into())
                     }
                     Err(err) => {
                         let problem_report = build_problem_report_msg(Some(err.to_string()), &self.thread_id);
-                        error!(
-                            "Failed to process or save received credential, sending problem report: {:?}",
-                            problem_report
-                        );
-                        send_message(problem_report.clone().into()).await?;
-                        HolderFullState::Finished(problem_report.into())
+                        error!("Failed to process or save received credential: {problem_report:?}");
+                        HolderFullState::Finished(FinishedHolderState::new(problem_report))
                     }
                 }
             }
@@ -283,9 +275,10 @@ impl HolderSM {
     }
 
     pub fn receive_problem_report(self, problem_report: ProblemReport) -> VcxResult<Self> {
+        warn!("HolderSM::receive_problem_report >> problem_report: {problem_report:?}");
         let state = match self.state {
-            HolderFullState::ProposalSent(_) | HolderFullState::RequestSent(_) => {
-                HolderFullState::Finished(problem_report.into())
+            HolderFullState::ProposalSet(_) | HolderFullState::RequestSet(_) => {
+                HolderFullState::Finished(FinishedHolderState::new(problem_report))
             }
             s => {
                 warn!("Unable to receive problem report in state {}", s);
@@ -405,9 +398,9 @@ impl HolderSM {
     pub async fn is_revokable(&self, ledger: &Arc<dyn AnoncredsLedgerRead>) -> VcxResult<bool> {
         match self.state {
             HolderFullState::Initial(ref state) => state.is_revokable(),
-            HolderFullState::ProposalSent(ref state) => state.is_revokable(ledger).await,
+            HolderFullState::ProposalSet(ref state) => state.is_revokable(ledger).await,
             HolderFullState::OfferReceived(ref state) => state.is_revokable(ledger).await,
-            HolderFullState::RequestSent(ref state) => state.is_revokable(),
+            HolderFullState::RequestSet(ref state) => state.is_revokable(),
             HolderFullState::Finished(ref state) => state.is_revokable(),
         }
     }
@@ -439,11 +432,31 @@ impl HolderSM {
                     AriesVcxErrorKind::InvalidState,
                     "Cannot get credential: credential id not found",
                 ))?;
-                _delete_credential(anoncreds, &cred_id).await
+                anoncreds
+                    .prover_delete_credential(&cred_id)
+                    .await
+                    .map_err(|err| err.into())
             }
             _ => Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::NotReady,
                 "Cannot delete credential: credential issuance is not finished yet",
+            )),
+        }
+    }
+
+    pub fn get_problem_report(&self) -> VcxResult<ProblemReport> {
+        match self.state {
+            HolderFullState::Finished(ref state) => match &state.status {
+                Status::Failed(problem_report) => Ok(problem_report.clone()),
+                Status::Declined(problem_report) => Ok(problem_report.clone()),
+                _ => Err(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::NotReady,
+                    "No problem report available in current state",
+                )),
+            },
+            _ => Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::NotReady,
+                "No problem report available in current state",
             )),
         }
     }
@@ -524,16 +537,7 @@ async fn _store_credential(
     Ok((cred_id, rev_reg_def_json))
 }
 
-async fn _delete_credential(anoncreds: &Arc<dyn BaseAnonCreds>, cred_id: &str) -> VcxResult<()> {
-    trace!("Holder::_delete_credential >>> cred_id: {}", cred_id);
-
-    anoncreds
-        .prover_delete_credential(cred_id)
-        .await
-        .map_err(|err| err.into())
-}
-
-pub async fn create_credential_request(
+pub async fn create_anoncreds_credential_request(
     ledger: &Arc<dyn AnoncredsLedgerRead>,
     anoncreds: &Arc<dyn BaseAnonCreds>,
     cred_def_id: &str,
@@ -551,7 +555,7 @@ pub async fn create_credential_request(
         .map_err(|err| err.into())
 }
 
-async fn _make_credential_request(
+async fn build_credential_request_msg(
     ledger: &Arc<dyn AnoncredsLedgerRead>,
     anoncreds: &Arc<dyn BaseAnonCreds>,
     thread_id: String,
@@ -569,8 +573,8 @@ async fn _make_credential_request(
     trace!("Parsed cred offer attachment: {}", cred_offer);
     let cred_def_id = parse_cred_def_id_from_cred_offer(&cred_offer)?;
     let (req, req_meta, _cred_def_id, cred_def_json) =
-        create_credential_request(ledger, anoncreds, &cred_def_id, &my_pw_did, &cred_offer).await?;
+        create_anoncreds_credential_request(ledger, anoncreds, &cred_def_id, &my_pw_did, &cred_offer).await?;
     trace!("Created cred def json: {}", cred_def_json);
-    let credential_request_msg = build_credential_request_msg(req, &thread_id)?;
+    let credential_request_msg = _build_credential_request_msg(req, &thread_id);
     Ok((credential_request_msg, req_meta, cred_def_json))
 }

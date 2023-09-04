@@ -1,14 +1,16 @@
 use crate::handlers::util::Status;
 use crate::protocols::issuance::issuer::state_machine::RevocationInfoV1;
 use crate::protocols::issuance::issuer::states::finished::FinishedState;
+use messages::msg_fields::protocols::cred_issuance::issue_credential::IssueCredential;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct CredentialSentState {
+pub struct CredentialSetState {
     pub revocation_info_v1: Option<RevocationInfoV1>,
+    pub msg_issue_credential: IssueCredential,
 }
 
-impl From<CredentialSentState> for FinishedState {
-    fn from(state: CredentialSentState) -> Self {
+impl FinishedState {
+    pub fn from_credential_set_state(state: CredentialSetState) -> Self {
         trace!("SM is now in Finished state");
         FinishedState {
             cred_id: None,

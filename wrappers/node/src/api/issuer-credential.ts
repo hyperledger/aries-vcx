@@ -99,14 +99,6 @@ export class IssuerCredential extends VcxBaseWithState<IIssuerCredentialData, Is
     }
   }
 
-  public async markCredentialOfferMsgSent(): Promise<void> {
-    try {
-      return ffi.issuerCredentialMarkOfferMsgSent(this.handle);
-    } catch (err: any) {
-      throw new VCXInternalError(err);
-    }
-  }
-
   public async buildCredentialOfferMsgV2({
     credDef,
     attr,

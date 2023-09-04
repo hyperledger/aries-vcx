@@ -81,7 +81,6 @@ describe('IssuerCredential:', () => {
       assert.equal(await issuerCredential.getState(), IssuerStateType.OfferSet);
       const connection = await createConnectionInviterRequested();
       await issuerCredential.sendOfferV2(connection);
-      assert.equal(await issuerCredential.getState(), IssuerStateType.OfferSent);
     });
 
     it('build offer and mark as sent', async () => {
@@ -96,9 +95,6 @@ describe('IssuerCredential:', () => {
         offer.credential_preview['@type'],
         'https://didcomm.org/issue-credential/1.0/credential-preview',
       );
-
-      await issuerCredential.markCredentialOfferMsgSent();
-      assert.equal(await issuerCredential.getState(), IssuerStateType.OfferSent);
     });
 
     it('throws: not initialized', async () => {

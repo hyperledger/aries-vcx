@@ -1,12 +1,20 @@
+use chrono::Utc;
 use std::sync::Arc;
+use uuid::Uuid;
 
 use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
 use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
+use messages::decorators::thread::Thread;
+use messages::decorators::timing::Timing;
+use messages::msg_fields::protocols::cred_issuance::ack::{AckCredential, AckCredentialContent};
 use messages::msg_fields::protocols::cred_issuance::issue_credential::IssueCredential;
 use messages::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
 use messages::msg_fields::protocols::cred_issuance::propose_credential::ProposeCredential;
+use messages::msg_fields::protocols::cred_issuance::request_credential::RequestCredential;
 use messages::msg_fields::protocols::cred_issuance::CredentialIssuance;
+use messages::msg_fields::protocols::notification::ack::{AckDecorators, AckStatus};
+use messages::msg_fields::protocols::report_problem::ProblemReport;
 use messages::msg_fields::protocols::revocation::revoke::Revoke;
 use messages::AriesMessage;
 
@@ -14,8 +22,17 @@ use crate::common::credentials::get_cred_rev_id;
 use crate::errors::error::prelude::*;
 use crate::handlers::connection::mediated_connection::MediatedConnection;
 use crate::handlers::revocation_notification::receiver::RevocationNotificationReceiver;
-use crate::protocols::issuance::holder::state_machine::{HolderSM, HolderState};
-use crate::protocols::SendClosure;
+use crate::protocols::issuance::holder::state_machine::{HolderFullState, HolderSM, HolderState};
+
+fn build_credential_ack(thread_id: &str) -> AckCredential {
+    let content = AckCredentialContent::new(AckStatus::Ok);
+    let mut decorators = AckDecorators::new(Thread::new(thread_id.to_owned()));
+    let mut timing = Timing::default();
+    timing.out_time = Some(Utc::now());
+    decorators.timing = Some(timing);
+
+    AckCredential::with_decorators(Uuid::new_v4().to_string(), content, decorators)
+}
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Holder {
@@ -29,6 +46,16 @@ impl Holder {
         Ok(Holder { holder_sm })
     }
 
+    pub fn create_with_proposal(source_id: &str, propose_credential: ProposeCredential) -> VcxResult<Holder> {
+        trace!(
+            "Holder::create_with_proposal >>> source_id: {:?}, propose_credential: {:?}",
+            source_id,
+            propose_credential
+        );
+        let holder_sm = HolderSM::with_proposal(propose_credential, source_id.to_string());
+        Ok(Holder { holder_sm })
+    }
+
     pub fn create_from_offer(source_id: &str, credential_offer: OfferCredential) -> VcxResult<Holder> {
         trace!(
             "Holder::create_from_offer >>> source_id: {:?}, credential_offer: {:?}",
@@ -39,41 +66,51 @@ impl Holder {
         Ok(Holder { holder_sm })
     }
 
-    pub async fn send_proposal(
-        &mut self,
-        credential_proposal: ProposeCredential,
-        send_message: SendClosure,
-    ) -> VcxResult<()> {
-        self.holder_sm = self
-            .holder_sm
-            .clone()
-            .send_proposal(credential_proposal, send_message)
-            .await?;
+    pub fn set_proposal(&mut self, credential_proposal: ProposeCredential) -> VcxResult<()> {
+        self.holder_sm = self.holder_sm.clone().set_proposal(credential_proposal)?;
         Ok(())
     }
 
-    pub async fn send_request(
+    pub async fn prepare_credential_request(
         &mut self,
         ledger: &Arc<dyn AnoncredsLedgerRead>,
         anoncreds: &Arc<dyn BaseAnonCreds>,
         my_pw_did: String,
-        send_message: SendClosure,
-    ) -> VcxResult<()> {
+    ) -> VcxResult<AriesMessage> {
         self.holder_sm = self
             .holder_sm
             .clone()
-            .send_request(ledger, anoncreds, my_pw_did, send_message)
+            .prepare_credential_request(ledger, anoncreds, my_pw_did)
             .await?;
-        Ok(())
+        match self.get_state() {
+            HolderState::Failed => {
+                Ok(self.get_problem_report()?.into())
+            }
+            HolderState::RequestSet => {
+                Ok(self.get_msg_credential_request()?.into())
+            }
+            _ => {
+                Err(AriesVcxError::from_msg(AriesVcxErrorKind::InvalidState, "Holder::prepare_credential_request >> reached unexpected state after calling prepare_credential_request"))
+            }
+        }
     }
 
-    pub async fn decline_offer<'a>(&'a mut self, comment: Option<&'a str>, send_message: SendClosure) -> VcxResult<()> {
-        self.holder_sm = self
-            .holder_sm
-            .clone()
-            .decline_offer(comment.map(String::from), send_message)
-            .await?;
-        Ok(())
+    pub fn get_msg_credential_request(&self) -> VcxResult<RequestCredential> {
+        match self.holder_sm.state {
+            HolderFullState::RequestSet(ref state) => {
+                let mut msg: RequestCredential = state.msg_credential_request.clone().into();
+                let mut timing = Timing::default();
+                timing.out_time = Some(Utc::now());
+                msg.decorators.timing = Some(timing);
+                Ok(msg)
+            }
+            _ => Err(AriesVcxError::from_msg(AriesVcxErrorKind::NotReady, "Invalid action")),
+        }
+    }
+
+    pub fn decline_offer<'a>(&'a mut self, comment: Option<&'a str>) -> VcxResult<ProblemReport> {
+        self.holder_sm = self.holder_sm.clone().decline_offer(comment.map(String::from))?;
+        self.get_problem_report()
     }
 
     pub async fn process_credential(
@@ -81,12 +118,11 @@ impl Holder {
         ledger: &Arc<dyn AnoncredsLedgerRead>,
         anoncreds: &Arc<dyn BaseAnonCreds>,
         credential: IssueCredential,
-        send_message: SendClosure,
     ) -> VcxResult<()> {
         self.holder_sm = self
             .holder_sm
             .clone()
-            .receive_credential(ledger, anoncreds, credential, send_message)
+            .receive_credential(ledger, anoncreds, credential)
             .await?;
         Ok(())
     }
@@ -186,25 +222,25 @@ impl Holder {
         }
     }
 
+    pub fn get_problem_report(&self) -> VcxResult<ProblemReport> {
+        self.holder_sm.get_problem_report()
+    }
+
+    // todo 0109: send ack/problem-report in upper layer
     pub async fn process_aries_msg(
         &mut self,
         ledger: &Arc<dyn AnoncredsLedgerRead>,
         anoncreds: &Arc<dyn BaseAnonCreds>,
         message: AriesMessage,
-        send_message: Option<SendClosure>,
     ) -> VcxResult<()> {
         let holder_sm = match message {
             AriesMessage::CredentialIssuance(CredentialIssuance::OfferCredential(offer)) => {
                 self.holder_sm.clone().receive_offer(offer)?
             }
             AriesMessage::CredentialIssuance(CredentialIssuance::IssueCredential(credential)) => {
-                let send_message = send_message.ok_or(AriesVcxError::from_msg(
-                    AriesVcxErrorKind::InvalidState,
-                    "Attempted to call undefined send_message callback",
-                ))?;
                 self.holder_sm
                     .clone()
-                    .receive_credential(ledger, anoncreds, credential, send_message)
+                    .receive_credential(ledger, anoncreds, credential)
                     .await?
             }
             AriesMessage::ReportProblem(report) => self.holder_sm.clone().receive_problem_report(report)?,
@@ -212,5 +248,20 @@ impl Holder {
         };
         self.holder_sm = holder_sm;
         Ok(())
+    }
+
+    pub fn get_final_message(&self) -> VcxResult<Option<AriesMessage>> {
+        match &self.holder_sm.state {
+            HolderFullState::Finished(state) => {
+                if let Some(ack_requested) = state.ack_requested {
+                    if ack_requested {
+                        let ack_msg = build_credential_ack(&self.get_thread_id()?);
+                        return Ok(Some(ack_msg.into()));
+                    }
+                }
+            }
+            _ => {}
+        };
+        return Ok(None);
     }
 }

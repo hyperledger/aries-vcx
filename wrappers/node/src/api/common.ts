@@ -145,7 +145,6 @@ export enum IssuerStateType {
   Initial = 0,
   ProposalReceived = 1,
   OfferSet = 2,
-  OfferSent = 3,
   RequestReceived = 4,
   CredentialSent = 5,
   Finished = 6,

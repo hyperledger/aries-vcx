@@ -17,7 +17,7 @@ const { testTailsUrl, initRustLogger } = require('../src')
 const tailsDir = '/tmp/tails'
 
 async function runFaber (options) {
-  logger.info(`Starting. Revocation enabled=${options.revocation}`)
+  logger.info(`Starting Faber. Revocation enabled=${options.revocation}`)
   initRustLogger(process.env.RUST_LOG || 'vcx=error')
 
   let faberServer
@@ -84,7 +84,9 @@ async function runFaber (options) {
     const schemaAttrs = getAliceSchemaAttrs()
     await vcxAgent.serviceCredIssuer.sendOfferAndCredential(issuerCredId, revRegId, connectionId, credDefId, schemaAttrs)
     if (options.revocation === true) {
+      logger.info('Faber is revoking issued credential')
       await vcxAgent.serviceCredIssuer.revokeCredentialLocal(issuerCredId)
+      logger.info('Faber is publishing revocation')
       await revReg.publishRevocations()
     }
 

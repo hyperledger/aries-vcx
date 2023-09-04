@@ -1,5 +1,11 @@
-use crate::protocols::issuance::issuer::states::offer_sent::OfferSentState;
 use messages::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
+use messages::msg_fields::protocols::cred_issuance::request_credential::RequestCredential;
+use messages::msg_fields::protocols::report_problem::ProblemReport;
+
+use crate::handlers::util::Status;
+use crate::protocols::issuance::issuer::state_machine::RevocationInfoV1;
+use crate::protocols::issuance::issuer::states::finished::FinishedState;
+use crate::protocols::issuance::issuer::states::requested_received::RequestReceivedState;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct OfferSetState {
@@ -28,14 +34,30 @@ impl OfferSetState {
     }
 }
 
-impl From<OfferSetState> for OfferSentState {
-    fn from(state: OfferSetState) -> Self {
-        trace!("SM is now in OfferSent state");
-        OfferSentState {
+impl RequestReceivedState {
+    pub fn from_offer_set_and_request(state: OfferSetState, request: RequestCredential) -> Self {
+        trace!("SM is now in Request Received state");
+        RequestReceivedState {
             offer: state.offer,
             cred_data: state.credential_json,
             rev_reg_id: state.rev_reg_id,
             tails_file: state.tails_file,
+            request,
+        }
+    }
+}
+
+impl FinishedState {
+    pub fn from_offer_set_and_error(state: OfferSetState, err: ProblemReport) -> Self {
+        trace!("SM is now in Finished state");
+        FinishedState {
+            cred_id: None,
+            revocation_info_v1: Some(RevocationInfoV1 {
+                cred_rev_id: None,
+                rev_reg_id: state.rev_reg_id,
+                tails_file: state.tails_file,
+            }),
+            status: Status::Failed(err),
         }
     }
 }

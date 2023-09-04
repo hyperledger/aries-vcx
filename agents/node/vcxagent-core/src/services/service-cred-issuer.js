@@ -19,10 +19,7 @@ module.exports.createServiceCredIssuer = function createServiceCredIssuer ({ log
     })
     const state1 = await issuerCred.getState()
     assert.equal(state1, IssuerStateType.OfferSet)
-    const credOfferMsg = await issuerCred.getCredentialOfferMsg()
-    await issuerCred.markCredentialOfferMsgSent()
-    const state2 = await issuerCred.getState()
-    assert.equal(state2, IssuerStateType.OfferSent)
+    const credOfferMsg = issuerCred.getCredentialOfferMsg()
     await saveIssuerCredential(issuerCredId, issuerCred)
 
     return credOfferMsg
@@ -44,8 +41,6 @@ module.exports.createServiceCredIssuer = function createServiceCredIssuer ({ log
     const state1 = await issuerCred.getState()
     assert.equal(state1, IssuerStateType.OfferSet)
     await issuerCred.sendOfferV2(connection)
-    const state2 = await issuerCred.getState()
-    assert.equal(state2, IssuerStateType.OfferSent)
     await saveIssuerCredential(issuerCredId, issuerCred)
   }
 
@@ -108,9 +103,11 @@ module.exports.createServiceCredIssuer = function createServiceCredIssuer ({ log
 
   async function _progressIssuerCredentialToState (issuerCredential, connection, credentialStateTarget, attemptsThreshold, timeoutMs) {
     async function progressToAcceptedState () {
-      if (await issuerCredential.updateStateV2(connection) !== credentialStateTarget) {
+      const currentState = await issuerCredential.updateStateV2(connection)
+      if (currentState !== credentialStateTarget) {
         return { result: undefined, isFinished: false }
       } else {
+        logger.debug(`Cred issuer: _progressIssuerCredentialToState, currentState: ${currentState}, credentialStateTarget: ${credentialStateTarget}`)
         return { result: null, isFinished: true }
       }
     }
