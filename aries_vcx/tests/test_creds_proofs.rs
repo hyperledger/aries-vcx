@@ -588,12 +588,12 @@ mod tests {
         accept_credential_proposal, accept_offer, accept_proof_proposal, accept_proof_proposal_new, attr_names,
         create_connected_connections, create_credential_proposal, create_credential_request,
         create_holder_from_proposal, create_issuer_from_proposal, create_nonrevocable_cred_offer, create_proof,
-        create_proof_proposal, create_proof_request, decline_offer, generate_and_send_proof,
-        generate_and_send_proof_new, issue_address_credential, prover_select_credentials,
+        create_proof_proposal, create_proof_request, create_prover_from_request, decline_offer,
+        generate_and_send_proof, generate_and_send_proof_new, issue_address_credential, prover_select_credentials,
         prover_select_credentials_and_send_proof, prover_select_credentials_new, receive_proof_proposal_rejection,
         receive_proof_proposal_rejection_new, reject_proof_proposal, reject_proof_proposal_new,
         retrieved_to_selected_credentials_simple, send_credential, send_proof_proposal, send_proof_proposal_1,
-        send_proof_request, verifier_create_proof_and_send_request, verify_proof, verify_proof_new,
+        send_proof_request, verifier_create_proof_and_send_request, verify_proof_new,
     };
 
     #[tokio::test]
@@ -626,15 +626,8 @@ mod tests {
                 "test_proof_should_be_validated :: Going to seng proof request with attributes {}",
                 &requested_attrs_string
             );
-            let mut verifier = send_proof_request(
-                &mut institution,
-                &institution_to_consumer,
-                &requested_attrs_string,
-                "[]",
-                "{}",
-                None,
-            )
-            .await;
+            let mut verifier = Verifier::create("1").unwrap();
+            let proof_request = create_proof_request(&mut institution, &requested_attrs_string, "[]", "{}", None).await;
 
             #[cfg(feature = "migration")]
             consumer.migrate().await;
@@ -776,8 +769,6 @@ mod tests {
             let mut institution = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut consumer = create_alice(setup.genesis_file_path).await;
 
-            let (consumer_to_institution, institution_to_consumer) =
-                create_connected_connections(&mut consumer, &mut institution).await;
             issue_address_credential(&mut consumer, &mut institution).await;
 
             let requested_attrs_string = serde_json::to_string(&json!([
@@ -792,19 +783,12 @@ mod tests {
             }]))
             .unwrap();
 
-            send_proof_request(
-                &mut institution,
-                &institution_to_consumer,
-                &requested_attrs_string,
-                "[]",
-                "{}",
-                None,
-            )
-            .await;
+            let presentation_request =
+                create_proof_request(&mut institution, &requested_attrs_string, "[]", "{}", None).await;
 
-            let mut prover = create_proof(&mut consumer, &consumer_to_institution, None).await;
+            let mut prover = create_prover_from_request(presentation_request.clone()).await;
             let selected_credentials =
-                prover_select_credentials(&mut prover, &mut consumer, &consumer_to_institution, None).await;
+                prover_select_credentials_new(&mut prover, &mut consumer, presentation_request.into(), None).await;
             assert_eq!(selected_credentials.credential_for_referent.is_empty(), false);
         })
         .await;

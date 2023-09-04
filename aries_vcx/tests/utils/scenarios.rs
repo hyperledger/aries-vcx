@@ -763,6 +763,10 @@ pub mod test_utils {
         verifier.get_presentation_request_msg().unwrap()
     }
 
+    pub async fn create_prover_from_request(presentation_request: RequestPresentation) -> Prover {
+        Prover::create_from_request(DEFAULT_PROOF_NAME, presentation_request).unwrap()
+    }
+
     pub async fn create_proof(
         alice: &mut Alice,
         connection: &MediatedConnection,
