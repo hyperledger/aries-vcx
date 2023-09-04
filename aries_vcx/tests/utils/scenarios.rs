@@ -11,6 +11,7 @@ pub mod test_utils {
         RetrievedCredentialForReferent, RetrievedCredentials, SelectedCredentials,
     };
     use aries_vcx::handlers::util::{AnyInvitation, OfferInfo, PresentationProposalData};
+    use aries_vcx::protocols::mediated_connection::pairwise_info::PairwiseInfo;
     use aries_vcx::protocols::SendClosureConnection;
     use async_channel::{bounded, Sender};
     use diddoc_legacy::aries::diddoc::AriesDidDoc;
@@ -261,7 +262,10 @@ pub mod test_utils {
             .prepare_credential_request(
                 &alice.profile.inject_anoncreds_ledger_read(),
                 &alice.profile.inject_anoncreds(),
-                "test".to_string(),
+                PairwiseInfo::create(&alice.profile.inject_wallet())
+                    .await
+                    .unwrap()
+                    .pw_did,
             )
             .await
             .unwrap();
@@ -343,7 +347,10 @@ pub mod test_utils {
             .prepare_credential_request(
                 &alice.profile.inject_anoncreds_ledger_read(),
                 &alice.profile.inject_anoncreds(),
-                "test".to_string(),
+                PairwiseInfo::create(&alice.profile.inject_wallet())
+                    .await
+                    .unwrap()
+                    .pw_did,
             )
             .await
             .unwrap();
@@ -499,7 +506,7 @@ pub mod test_utils {
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, rev_reg_id) =
             _create_address_schema_creddef_revreg(&institution.profile, &institution.institution_did).await;
 
-        info!("test_real_proof_with_revocation :: AS INSTITUTION SEND CREDENTIAL OFFER");
+        info!("issue_address_credential");
         let (address1, address2, city, state, zip) = attr_names();
         let credential_data =
             json!({address1: "123 Main St", address2: "Suite 3", city: "Draper", state: "UT", zip: "84000"})
