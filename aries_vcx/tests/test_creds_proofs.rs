@@ -591,9 +591,9 @@ mod tests {
         create_proof_proposal, create_proof_request, decline_offer, generate_and_send_proof,
         generate_and_send_proof_new, issue_address_credential, prover_select_credentials,
         prover_select_credentials_and_send_proof, prover_select_credentials_new, receive_proof_proposal_rejection,
-        reject_proof_proposal, retrieved_to_selected_credentials_simple, send_credential, send_proof_proposal,
-        send_proof_proposal_1, send_proof_request, verifier_create_proof_and_send_request, verify_proof,
-        verify_proof_new,
+        receive_proof_proposal_rejection_new, reject_proof_proposal, reject_proof_proposal_new,
+        retrieved_to_selected_credentials_simple, send_credential, send_proof_proposal, send_proof_proposal_1,
+        send_proof_request, verifier_create_proof_and_send_request, verify_proof, verify_proof_new,
     };
 
     #[tokio::test]
@@ -1318,8 +1318,6 @@ mod tests {
             let mut institution = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut consumer = create_alice(setup.genesis_file_path).await;
 
-            let (consumer_to_institution, institution_to_consumer) =
-                create_connected_connections(&mut consumer, &mut institution).await;
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, _cred_def, rev_reg, rev_reg_id) =
                 _create_address_schema_creddef_revreg(&institution.profile, &institution.institution_did).await;
             let tails_dir = rev_reg.get_tails_dir();
@@ -1348,8 +1346,6 @@ mod tests {
             let mut institution = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut consumer = create_alice(setup.genesis_file_path.clone()).await;
 
-            let (consumer_to_institution, institution_to_consumer) =
-                create_connected_connections(&mut consumer, &mut institution).await;
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, _cred_def, rev_reg, rev_reg_id) =
                 _create_address_schema_creddef_revreg(&institution.profile, &institution.institution_did).await;
             let tails_dir = rev_reg.get_tails_dir();
@@ -1384,8 +1380,6 @@ mod tests {
             let mut institution = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut consumer = create_alice(setup.genesis_file_path.clone()).await;
 
-            let (consumer_to_institution, institution_to_consumer) =
-                create_connected_connections(&mut consumer, &mut institution).await;
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, _cred_def, rev_reg, rev_reg_id) =
                 _create_address_schema_creddef_revreg(&institution.profile, &institution.institution_did).await;
             let tails_dir = rev_reg.get_tails_dir();
@@ -1483,8 +1477,6 @@ mod tests {
             let mut institution = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut consumer = create_alice(setup.genesis_file_path.clone()).await;
 
-            let (consumer_to_institution, institution_to_consumer) =
-                create_connected_connections(&mut consumer, &mut institution).await;
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, _cred_def, rev_reg, rev_reg_id) =
                 _create_address_schema_creddef_revreg(&institution.profile, &institution.institution_did).await;
             let tails_dir = rev_reg.get_tails_dir();
@@ -1502,9 +1494,10 @@ mod tests {
                 "comment",
             )
             .await;
-            let mut prover = send_proof_proposal(&mut consumer, &consumer_to_institution, &cred_def_id).await;
-            reject_proof_proposal(&mut institution, &institution_to_consumer).await;
-            receive_proof_proposal_rejection(&mut consumer, &mut prover, &consumer_to_institution).await;
+            let mut prover = Prover::create("1").unwrap();
+            let presentation_proposal = create_proof_proposal(&mut consumer, &mut prover, &cred_def_id).await;
+            let rejection = reject_proof_proposal_new(&mut institution, &presentation_proposal).await;
+            receive_proof_proposal_rejection_new(&mut consumer, &mut prover, rejection).await;
         })
         .await;
     }

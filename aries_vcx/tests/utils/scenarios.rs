@@ -654,6 +654,21 @@ pub mod test_utils {
         send_closure(message).await.unwrap();
     }
 
+    pub async fn reject_proof_proposal_new(faber: &mut Faber, presentation_proposal: &AriesMessage) -> AriesMessage {
+        let presentation_proposal = match presentation_proposal {
+            AriesMessage::PresentProof(PresentProof::ProposePresentation(proposal)) => proposal,
+            _ => panic!("Unexpected message"),
+        };
+        let mut verifier = Verifier::create_from_proposal("1", presentation_proposal).unwrap();
+        assert_eq!(verifier.get_state(), VerifierState::PresentationProposalReceived);
+        let message = verifier
+            .decline_presentation_proposal("I don't like Alices") // :(
+            .await
+            .unwrap();
+        assert_eq!(verifier.get_state(), VerifierState::Failed);
+        message
+    }
+
     pub async fn reject_proof_proposal(faber: &mut Faber, connection: &MediatedConnection) -> Verifier {
         let mut verifier = Verifier::create("1").unwrap();
         verifier_update_with_mediator(
@@ -678,6 +693,12 @@ pub mod test_utils {
         send_closure(message).await.unwrap();
         assert_eq!(verifier.get_state(), VerifierState::Failed);
         verifier
+    }
+
+    pub async fn receive_proof_proposal_rejection_new(alice: &mut Alice, prover: &mut Prover, rejection: AriesMessage) {
+        assert_eq!(prover.get_state(), ProverState::PresentationProposalSent);
+        prover.process_aries_msg(rejection).await.unwrap();
+        assert_eq!(prover.get_state(), ProverState::Failed);
     }
 
     pub async fn receive_proof_proposal_rejection(
