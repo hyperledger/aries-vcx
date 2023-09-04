@@ -26,6 +26,7 @@ pub mod test_utils {
     use messages::msg_fields::protocols::present_proof::request::RequestPresentation;
     use messages::AriesMessage;
     use serde_json::{json, Value};
+    use sha2::digest::typenum::private::IsNotEqualPrivate;
 
     use crate::utils::devsetup_alice::Alice;
     use crate::utils::devsetup_faber::Faber;
@@ -286,6 +287,49 @@ pub mod test_utils {
         (holder, cred_request)
     }
 
+    pub async fn create_cred_proposal(
+        alice: &mut Alice,
+        schema_id: &str,
+        cred_def_id: &str,
+        comment: &str,
+    ) -> (Holder, AriesMessage) {
+        let (address1, address2, city, state, zip) = attr_names();
+        let mut attrs = Vec::new();
+
+        let mut attr = CredentialAttr::new(address1, "123 Main Str".to_owned());
+        attr.mime_type = Some(MimeType::Plain);
+        attrs.push(attr);
+
+        let mut attr = CredentialAttr::new(address2, "Suite 3".to_owned());
+        attr.mime_type = Some(MimeType::Plain);
+        attrs.push(attr);
+
+        let mut attr = CredentialAttr::new(city, "Draper".to_owned());
+        attr.mime_type = Some(MimeType::Plain);
+        attrs.push(attr);
+
+        let mut attr = CredentialAttr::new(state, "UT".to_owned());
+        attr.mime_type = Some(MimeType::Plain);
+        attrs.push(attr);
+
+        let mut attr = CredentialAttr::new(zip, "84000".to_owned());
+        attr.mime_type = Some(MimeType::Plain);
+        attrs.push(attr);
+
+        let preview = CredentialPreview::new(attrs);
+        let mut content = ProposeCredentialContent::new(preview, schema_id.to_owned(), cred_def_id.to_owned());
+        content.comment = Some(comment.to_owned());
+
+        let decorators = ProposeCredentialDecorators::default();
+
+        let id = "test".to_owned();
+        let proposal = ProposeCredential::with_decorators(id, content, decorators);
+        let mut holder = Holder::create_with_proposal("TEST_CREDENTIAL", proposal.clone()).unwrap();
+        assert_eq!(HolderState::ProposalSet, holder.get_state());
+        tokio::time::sleep(Duration::from_millis(1000)).await;
+        (holder, proposal.into())
+    }
+
     pub async fn send_cred_proposal(
         alice: &mut Alice,
         connection: &MediatedConnection,
@@ -394,6 +438,34 @@ pub mod test_utils {
         tokio::time::sleep(Duration::from_millis(1000)).await;
     }
 
+    pub async fn accept_cred_proposal_new(
+        faber: &mut Faber,
+        cred_proposal: AriesMessage,
+        rev_reg_id: Option<String>,
+        tails_dir: Option<String>,
+    ) -> (Issuer, AriesMessage) {
+        let proposal = match cred_proposal {
+            AriesMessage::CredentialIssuance(CredentialIssuance::ProposeCredential(proposal)) => proposal,
+            _ => panic!("Unexpected message"),
+        };
+        let mut issuer = Issuer::create_from_proposal("TEST_CREDENTIAL", &proposal).unwrap();
+        assert_eq!(proposal.id, issuer.get_thread_id().unwrap());
+        assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
+        assert_eq!(proposal.clone(), issuer.get_proposal().unwrap());
+        let offer_info = OfferInfo {
+            credential_json: json!(proposal.content.credential_proposal.attributes).to_string(),
+            cred_def_id: proposal.content.cred_def_id.clone(),
+            rev_reg_id,
+            tails_file: tails_dir,
+        };
+        issuer
+            .build_credential_offer_msg(&faber.profile.inject_anoncreds(), offer_info, Some("comment".into()))
+            .await
+            .unwrap();
+        let credential_offer = issuer.get_credential_offer_msg().unwrap();
+        (issuer, credential_offer)
+    }
+
     pub async fn accept_cred_proposal(
         faber: &mut Faber,
         connection: &MediatedConnection,
@@ -468,6 +540,29 @@ pub mod test_utils {
 
         assert_eq!(IssuerState::OfferSet, issuer.get_state());
         tokio::time::sleep(Duration::from_millis(1000)).await;
+    }
+
+    pub async fn accept_offer_new(alice: &mut Alice, cred_offer: AriesMessage, holder: &mut Holder) -> AriesMessage {
+        holder
+            .process_aries_msg(
+                &alice.profile.inject_anoncreds_ledger_read(),
+                &alice.profile.inject_anoncreds(),
+                cred_offer,
+            )
+            .await
+            .unwrap();
+        assert_eq!(HolderState::OfferReceived, holder.get_state());
+        assert!(holder.get_offer().is_ok());
+        let cred_request = holder
+            .prepare_credential_request(
+                &alice.profile.inject_anoncreds_ledger_read(),
+                &alice.profile.inject_anoncreds(),
+                "test".to_string(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(HolderState::RequestSet, holder.get_state());
+        cred_request
     }
 
     pub async fn accept_offer(alice: &mut Alice, connection: &MediatedConnection, holder: &mut Holder) {
@@ -1063,20 +1158,11 @@ pub mod test_utils {
         tails_dir: Option<String>,
         comment: &str,
     ) -> (Holder, Issuer) {
-        let mut holder = send_cred_proposal(consumer, consumer_to_issuer, schema_id, cred_def_id, comment).await;
-        let mut issuer = accept_cred_proposal(institution, issuer_to_consumer, rev_reg_id, tails_dir).await;
-        accept_offer(consumer, consumer_to_issuer, &mut holder).await;
-        tokio::time::sleep(Duration::from_millis(1000)).await;
-        send_credential(
-            consumer,
-            institution,
-            &mut issuer,
-            issuer_to_consumer,
-            consumer_to_issuer,
-            &mut holder,
-            true,
-        )
-        .await;
+        let (mut holder, cred_proposal) = create_cred_proposal(consumer, schema_id, cred_def_id, comment).await;
+        let (mut issuer, cred_offer) =
+            accept_cred_proposal_new(institution, cred_proposal, rev_reg_id, tails_dir).await;
+        let cred_request = accept_offer_new(consumer, cred_offer, &mut holder).await;
+        send_credential_1(consumer, institution, &mut issuer, &mut holder, cred_request, true).await;
         (holder, issuer)
     }
 
