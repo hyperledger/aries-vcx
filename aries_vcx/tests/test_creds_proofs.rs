@@ -584,11 +584,11 @@ mod tests {
     use crate::utils::scenarios::test_utils::{
         _create_address_schema_creddef_revreg, _exchange_credential, _exchange_credential_with_proposal,
         accept_cred_proposal, accept_cred_proposal_1, accept_offer, accept_proof_proposal, attr_names,
-        create_and_send_nonrevocable_cred_offer, create_connected_connections, create_proof, decline_offer,
-        generate_and_send_proof, issue_address_credential, prover_select_credentials,
+        create_and_send_nonrevocable_cred_offer, create_connected_connections, create_nonrevocable_cred_offer,
+        create_proof, decline_offer, generate_and_send_proof, issue_address_credential, prover_select_credentials,
         prover_select_credentials_and_send_proof, receive_proof_proposal_rejection, reject_proof_proposal,
         retrieved_to_selected_credentials_simple, send_cred_proposal, send_cred_proposal_1, send_cred_req,
-        send_credential, send_proof_proposal, send_proof_proposal_1, send_proof_request,
+        send_credential, send_credential_1, send_proof_proposal, send_proof_proposal_1, send_proof_request,
         verifier_create_proof_and_send_request, verify_proof,
     };
 
@@ -1148,30 +1148,23 @@ mod tests {
             info!("test_real_proof :: sending credential offer");
             let credential_data = credential_data.to_string();
             info!("test_real_proof :: generated credential data: {}", credential_data);
-            let mut issuer_credential = create_and_send_nonrevocable_cred_offer(
-                &mut institution,
-                &cred_def,
-                &issuer_to_consumer,
-                &credential_data,
-                None,
-            )
-            .await;
+            let (mut issuer_credential, cred_offer) =
+                create_nonrevocable_cred_offer(&mut institution, &cred_def, &credential_data, None).await;
             let issuance_thread_id = issuer_credential.get_thread_id().unwrap();
 
             info!("test_real_proof :: AS CONSUMER SEND CREDENTIAL REQUEST");
-            let mut holder_credential = send_cred_req(&mut consumer, &consumer_to_issuer, None).await;
+            let (mut holder_credential, cred_request) = send_cred_req(&mut consumer, cred_offer, None).await;
 
             #[cfg(feature = "migration")]
             consumer.migrate().await;
 
             info!("test_real_proof :: AS INSTITUTION SEND CREDENTIAL");
-            send_credential(
+            send_credential_1(
                 &mut consumer,
                 &mut institution,
                 &mut issuer_credential,
-                &issuer_to_consumer,
-                &consumer_to_issuer,
                 &mut holder_credential,
+                cred_request,
                 false,
             )
             .await;

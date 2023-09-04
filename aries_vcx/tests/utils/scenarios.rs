@@ -21,7 +21,7 @@ pub mod test_utils {
     use messages::msg_fields::protocols::cred_issuance::propose_credential::{
         ProposeCredential, ProposeCredentialContent, ProposeCredentialDecorators,
     };
-    use messages::msg_fields::protocols::cred_issuance::{CredentialAttr, CredentialPreview};
+    use messages::msg_fields::protocols::cred_issuance::{CredentialAttr, CredentialIssuance, CredentialPreview};
     use messages::msg_fields::protocols::present_proof::propose::PresentationAttr;
     use messages::msg_fields::protocols::present_proof::request::RequestPresentation;
     use messages::AriesMessage;
@@ -181,6 +181,31 @@ pub mod test_utils {
         vec![address1_attr, address2_attr, city_attr, state_attr, zip_attr]
     }
 
+    pub async fn create_nonrevocable_cred_offer(
+        faber: &mut Faber,
+        cred_def: &CredentialDef,
+        credential_json: &str,
+        comment: Option<&str>,
+    ) -> (Issuer, AriesMessage) {
+        info!("create_nonrevocable_cred_offer >> creating issuer credential");
+        let offer_info = OfferInfo {
+            credential_json: credential_json.to_string(),
+            cred_def_id: cred_def.get_cred_def_id(),
+            rev_reg_id: None,
+            tails_file: None,
+        };
+        let mut issuer = Issuer::create("1").unwrap();
+        info!("create_nonrevocable_cred_offer :: building credential offer");
+        issuer
+            .build_credential_offer_msg(&faber.profile.inject_anoncreds(), offer_info, comment.map(String::from))
+            .await
+            .unwrap();
+        let credential_offer = issuer.get_credential_offer_msg().unwrap();
+
+        info!("create_nonrevocable_cred_offer :: credential offer was built");
+        (issuer, credential_offer)
+    }
+
     pub async fn create_and_send_nonrevocable_cred_offer(
         faber: &mut Faber,
         cred_def: &CredentialDef,
@@ -213,14 +238,13 @@ pub mod test_utils {
         issuer
     }
 
-    pub async fn create_and_send_cred_offer(
+    pub async fn create_credential_offer(
         faber: &mut Faber,
         cred_def: &CredentialDef,
         rev_reg: &RevocationRegistry,
-        connection: &MediatedConnection,
         credential_json: &str,
         comment: Option<&str>,
-    ) -> Issuer {
+    ) -> (Issuer, AriesMessage) {
         let offer_info = OfferInfo {
             credential_json: credential_json.to_string(),
             cred_def_id: cred_def.get_cred_def_id(),
@@ -233,59 +257,33 @@ pub mod test_utils {
             .build_credential_offer_msg(&faber.profile.inject_anoncreds(), offer_info, comment.map(String::from))
             .await
             .unwrap();
-        let send_closure = connection
-            .send_message_closure(faber.profile.inject_wallet())
-            .await
-            .unwrap();
         let credential_offer = issuer.get_credential_offer_msg().unwrap();
-        send_closure(credential_offer).await.unwrap();
-        info!("create_and_send_cred_offer :: credential offer was sent");
-        tokio::time::sleep(Duration::from_millis(1000)).await;
-        issuer
+        info!("create_and_send_cred_offer :: credential offer was created");
+        (issuer, credential_offer)
     }
 
-    pub async fn send_cred_req(alice: &mut Alice, connection: &MediatedConnection, comment: Option<&str>) -> Holder {
-        info!("send_cred_req >>> switching to consumer");
-        info!("send_cred_req :: getting offers");
-        let credential_offers = get_credential_offer_messages(&alice.agency_client, connection)
-            .await
-            .unwrap();
-        let credential_offers = match comment {
-            Some(comment) => {
-                let filtered = filter_credential_offers_by_comment(&credential_offers, comment).unwrap();
-                info!(
-                    "send_cred_req :: credential offer  messages filtered by comment {}: {}",
-                    comment, filtered
-                );
-                filtered
-            }
-            _ => credential_offers.to_string(),
+    pub async fn send_cred_req(
+        alice: &mut Alice,
+        cred_offer: AriesMessage,
+        comment: Option<&str>,
+    ) -> (Holder, AriesMessage) {
+        info!("send_cred_req >>>");
+        let cred_offer: OfferCredential = match cred_offer {
+            AriesMessage::CredentialIssuance(CredentialIssuance::OfferCredential(cred_offer)) => cred_offer,
+            _ => panic!("Unexpected message type"),
         };
-        let offers: Value = serde_json::from_str(&credential_offers).unwrap();
-        let offers = offers.as_array().unwrap();
-        assert_eq!(offers.len(), 1);
-        let offer = serde_json::to_string(&offers[0]).unwrap();
-        info!("send_cred_req :: creating credential from offer");
-        let cred_offer: OfferCredential = serde_json::from_str(&offer).unwrap();
         let mut holder = Holder::create_from_offer("TEST_CREDENTIAL", cred_offer).unwrap();
         assert_eq!(HolderState::OfferReceived, holder.get_state());
         info!("send_cred_req :: sending credential request");
-        let my_pw_did = connection.pairwise_info().pw_did.to_string();
-        let send_closure = connection
-            .send_message_closure(alice.profile.inject_wallet())
-            .await
-            .unwrap();
-        let msg_response = holder
+        let cred_request = holder
             .prepare_credential_request(
                 &alice.profile.inject_anoncreds_ledger_read(),
                 &alice.profile.inject_anoncreds(),
-                my_pw_did,
+                "test".to_string(),
             )
             .await
             .unwrap();
-        send_closure(msg_response).await.unwrap();
-        tokio::time::sleep(Duration::from_millis(1000)).await;
-        holder
+        (holder, cred_request)
     }
 
     pub async fn send_cred_proposal(
@@ -521,6 +519,73 @@ pub mod test_utils {
         let problem_report = holder.decline_offer(Some("Have a nice day")).unwrap();
         send_message(problem_report.into()).await.unwrap();
         assert_eq!(HolderState::Failed, holder.get_state());
+    }
+
+    pub async fn send_credential_1(
+        alice: &mut Alice,
+        faber: &mut Faber,
+        issuer_credential: &mut Issuer,
+        holder_credential: &mut Holder,
+        cred_request: AriesMessage,
+        revokable: bool,
+    ) {
+        info!("send_credential >>> getting offers");
+        let thread_id = issuer_credential.get_thread_id().unwrap();
+        assert_eq!(IssuerState::OfferSet, issuer_credential.get_state());
+        assert!(!issuer_credential.is_revokable());
+
+        let cred_request = match cred_request {
+            AriesMessage::CredentialIssuance(CredentialIssuance::RequestCredential(request)) => request,
+            _ => panic!("Unexpected message type"),
+        };
+
+        issuer_credential.receive_request(cred_request).await.unwrap();
+        assert_eq!(IssuerState::RequestReceived, issuer_credential.get_state());
+        assert!(!issuer_credential.is_revokable());
+        assert_eq!(thread_id, issuer_credential.get_thread_id().unwrap());
+
+        info!("send_credential >>> sending credential");
+        issuer_credential
+            .build_credential(&faber.profile.inject_anoncreds())
+            .await
+            .unwrap();
+        let credential = issuer_credential.get_msg_issue_credential().unwrap();
+        assert_eq!(thread_id, issuer_credential.get_thread_id().unwrap());
+
+        info!("send_credential >>> storing credential");
+        assert_eq!(thread_id, holder_credential.get_thread_id().unwrap());
+        assert_eq!(
+            holder_credential
+                .is_revokable(&alice.profile.inject_anoncreds_ledger_read())
+                .await
+                .unwrap(),
+            revokable
+        );
+        holder_credential
+            .process_credential(
+                &alice.profile.inject_anoncreds_ledger_read(),
+                &alice.profile.inject_anoncreds(),
+                credential,
+            )
+            .await
+            .unwrap();
+        assert_eq!(HolderState::Finished, holder_credential.get_state());
+        assert_eq!(
+            holder_credential
+                .is_revokable(&alice.profile.inject_anoncreds_ledger_read())
+                .await
+                .unwrap(),
+            revokable
+        );
+        assert_eq!(thread_id, holder_credential.get_thread_id().unwrap());
+
+        if revokable {
+            thread::sleep(Duration::from_millis(500));
+            assert_eq!(
+                holder_credential.get_tails_location().unwrap(),
+                TEST_TAILS_URL.to_string()
+            );
+        }
     }
 
     pub async fn send_credential(
@@ -963,25 +1028,17 @@ pub mod test_utils {
         comment: Option<&str>,
     ) -> Issuer {
         info!("Generated credential data: {}", credential_data);
-        let mut issuer_credential = create_and_send_cred_offer(
-            institution,
-            cred_def,
-            rev_reg,
-            issuer_to_consumer,
-            &credential_data,
-            comment,
-        )
-        .await;
+        let (mut issuer_credential, cred_offer) =
+            create_credential_offer(institution, cred_def, rev_reg, &credential_data, comment).await;
         info!("AS CONSUMER SEND CREDENTIAL REQUEST");
-        let mut holder_credential = send_cred_req(consumer, consumer_to_issuer, comment).await;
+        let (mut holder_credential, cred_request) = send_cred_req(consumer, cred_offer, comment).await;
         info!("AS INSTITUTION SEND CREDENTIAL");
-        send_credential(
+        send_credential_1(
             consumer,
             institution,
             &mut issuer_credential,
-            issuer_to_consumer,
-            consumer_to_issuer,
             &mut holder_credential,
+            cred_request,
             true,
         )
         .await;
