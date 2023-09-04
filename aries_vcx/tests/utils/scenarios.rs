@@ -611,8 +611,8 @@ pub mod test_utils {
         verifier
             .set_presentation_request(presentation_request_data, None)
             .unwrap();
-        let message = verifier.mark_presentation_request_sent().unwrap();
-        message
+        let presentation_request = verifier.mark_presentation_request_sent().unwrap();
+        presentation_request
     }
 
     pub async fn accept_proof_proposal(faber: &mut Faber, verifier: &mut Verifier, connection: &MediatedConnection) {

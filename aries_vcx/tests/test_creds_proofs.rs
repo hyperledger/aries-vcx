@@ -1509,8 +1509,6 @@ mod tests {
             let mut institution = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut consumer = create_alice(setup.genesis_file_path.clone()).await;
 
-            let (consumer_to_institution, institution_to_consumer) =
-                create_connected_connections(&mut consumer, &mut institution).await;
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, _cred_def, rev_reg, rev_reg_id) =
                 _create_address_schema_creddef_revreg(&institution.profile, &institution.institution_did).await;
             let tails_dir = rev_reg.get_tails_dir();
@@ -1528,25 +1526,24 @@ mod tests {
                 "comment",
             )
             .await;
-            let mut prover = send_proof_proposal(&mut consumer, &consumer_to_institution, &cred_def_id).await;
+            let mut prover = Prover::create("1").unwrap();
             let mut verifier = Verifier::create("1").unwrap();
+            let presentation_proposal = create_proof_proposal(&mut consumer, &mut prover, &cred_def_id).await;
 
             #[cfg(feature = "migration")]
             consumer.migrate().await;
 
-            accept_proof_proposal(&mut institution, &mut verifier, &institution_to_consumer).await;
-            send_proof_proposal_1(&mut consumer, &mut prover, &consumer_to_institution, &cred_def_id).await;
-            accept_proof_proposal(&mut institution, &mut verifier, &institution_to_consumer).await;
+            let presentation_request =
+                accept_proof_proposal_new(&mut institution, &mut verifier, presentation_proposal).await;
+            let presentation_proposal = create_proof_proposal(&mut consumer, &mut prover, &cred_def_id).await;
+            let presentation_request =
+                accept_proof_proposal_new(&mut institution, &mut verifier, presentation_proposal).await;
             let selected_credentials =
-                prover_select_credentials(&mut prover, &mut consumer, &consumer_to_institution, None).await;
-            generate_and_send_proof(
-                &mut consumer,
-                &mut prover,
-                &consumer_to_institution,
-                selected_credentials,
-            )
-            .await;
-            verify_proof(&mut institution, &mut verifier, &institution_to_consumer).await;
+                prover_select_credentials_new(&mut prover, &mut consumer, presentation_request, None).await;
+            let presentation = generate_and_send_proof_new(&mut consumer, &mut prover, selected_credentials)
+                .await
+                .unwrap();
+            verify_proof_new(&mut institution, &mut verifier, presentation).await;
         })
         .await;
     }
