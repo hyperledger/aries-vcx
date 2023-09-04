@@ -585,13 +585,13 @@ mod tests {
     use crate::utils::migration::Migratable;
     use crate::utils::scenarios::test_utils::{
         _create_address_schema_creddef_revreg, _exchange_credential, _exchange_credential_with_proposal,
-        accept_cred_proposal_new, accept_offer, accept_offer_new, accept_proof_proposal, attr_names,
-        create_connected_connections, create_cred_proposal, create_holder_from_proposal, create_issuer_from_proposal,
-        create_nonrevocable_cred_offer, create_proof, decline_offer, generate_and_send_proof, issue_address_credential,
-        prover_select_credentials, prover_select_credentials_and_send_proof, receive_proof_proposal_rejection,
-        reject_proof_proposal, retrieved_to_selected_credentials_simple, send_cred_req, send_credential_1,
-        send_proof_proposal, send_proof_proposal_1, send_proof_request, verifier_create_proof_and_send_request,
-        verify_proof,
+        accept_credential_proposal, accept_offer, accept_proof_proposal, attr_names, create_connected_connections,
+        create_credential_proposal, create_credential_request, create_holder_from_proposal,
+        create_issuer_from_proposal, create_nonrevocable_cred_offer, create_proof, decline_offer,
+        generate_and_send_proof, issue_address_credential, prover_select_credentials,
+        prover_select_credentials_and_send_proof, receive_proof_proposal_rejection, reject_proof_proposal,
+        retrieved_to_selected_credentials_simple, send_credential, send_proof_proposal, send_proof_proposal_1,
+        send_proof_request, verifier_create_proof_and_send_request, verify_proof,
     };
 
     #[tokio::test]
@@ -1125,13 +1125,14 @@ mod tests {
             let issuance_thread_id = issuer_credential.get_thread_id().unwrap();
 
             info!("test_real_proof :: AS CONSUMER SEND CREDENTIAL REQUEST");
-            let (mut holder_credential, cred_request) = send_cred_req(&mut consumer, cred_offer, None).await;
+            let (mut holder_credential, cred_request) =
+                create_credential_request(&mut consumer, cred_offer, None).await;
 
             #[cfg(feature = "migration")]
             consumer.migrate().await;
 
             info!("test_real_proof :: AS INSTITUTION SEND CREDENTIAL");
-            send_credential_1(
+            send_credential(
                 &mut consumer,
                 &mut institution,
                 &mut issuer_credential,
@@ -1351,14 +1352,14 @@ mod tests {
                 _create_address_schema_creddef_revreg(&institution.profile, &institution.institution_did).await;
             let tails_dir = rev_reg.get_tails_dir();
 
-            let cred_proposal = create_cred_proposal(&mut consumer, &schema_id, &cred_def_id, "comment").await;
+            let cred_proposal = create_credential_proposal(&mut consumer, &schema_id, &cred_def_id, "comment").await;
             let mut holder = create_holder_from_proposal(cred_proposal.clone());
             let mut issuer = create_issuer_from_proposal(cred_proposal.clone());
 
             #[cfg(feature = "migration")]
             institution.migrate().await;
 
-            let cred_offer = accept_cred_proposal_new(
+            let cred_offer = accept_credential_proposal(
                 &mut institution,
                 &mut issuer,
                 cred_proposal,
@@ -1390,10 +1391,10 @@ mod tests {
             #[cfg(feature = "migration")]
             institution.migrate().await;
 
-            let cred_proposal = create_cred_proposal(&mut consumer, &schema_id, &cred_def_id, "comment").await;
+            let cred_proposal = create_credential_proposal(&mut consumer, &schema_id, &cred_def_id, "comment").await;
             let mut holder = create_holder_from_proposal(cred_proposal.clone());
             let mut issuer = create_issuer_from_proposal(cred_proposal.clone());
-            let cred_offer = accept_cred_proposal_new(
+            let cred_offer = accept_credential_proposal(
                 &mut institution,
                 &mut issuer,
                 cred_proposal,
@@ -1405,8 +1406,8 @@ mod tests {
             #[cfg(feature = "migration")]
             consumer.migrate().await;
 
-            let cred_proposal_1 = create_cred_proposal(&mut consumer, &schema_id, &cred_def_id, "comment").await;
-            let cred_offer_1 = accept_cred_proposal_new(
+            let cred_proposal_1 = create_credential_proposal(&mut consumer, &schema_id, &cred_def_id, "comment").await;
+            let cred_offer_1 = accept_credential_proposal(
                 &mut institution,
                 &mut issuer,
                 cred_proposal_1,
@@ -1415,9 +1416,9 @@ mod tests {
             )
             .await;
 
-            let cred_request = accept_offer_new(&mut consumer, cred_offer_1, &mut holder).await;
+            let cred_request = accept_offer(&mut consumer, cred_offer_1, &mut holder).await;
 
-            send_credential_1(
+            send_credential(
                 &mut consumer,
                 &mut institution,
                 &mut issuer,

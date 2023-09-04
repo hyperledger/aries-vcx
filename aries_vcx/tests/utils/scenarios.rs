@@ -182,6 +182,19 @@ pub mod test_utils {
         vec![address1_attr, address2_attr, city_attr, state_attr, zip_attr]
     }
 
+    pub fn create_holder_from_proposal(proposal: ProposeCredential) -> Holder {
+        let mut holder = Holder::create_with_proposal("TEST_CREDENTIAL", proposal).unwrap();
+        assert_eq!(HolderState::ProposalSet, holder.get_state());
+        holder
+    }
+
+    pub fn create_issuer_from_proposal(proposal: ProposeCredential) -> Issuer {
+        let mut issuer = Issuer::create_from_proposal("TEST_CREDENTIAL", &proposal).unwrap();
+        assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
+        assert_eq!(proposal.clone(), issuer.get_proposal().unwrap());
+        issuer
+    }
+
     pub async fn create_nonrevocable_cred_offer(
         faber: &mut Faber,
         cred_def: &CredentialDef,
@@ -231,19 +244,19 @@ pub mod test_utils {
         (issuer, credential_offer)
     }
 
-    pub async fn send_cred_req(
+    pub async fn create_credential_request(
         alice: &mut Alice,
         cred_offer: AriesMessage,
         comment: Option<&str>,
     ) -> (Holder, AriesMessage) {
-        info!("send_cred_req >>>");
+        info!("create_credential_request >>>");
         let cred_offer: OfferCredential = match cred_offer {
             AriesMessage::CredentialIssuance(CredentialIssuance::OfferCredential(cred_offer)) => cred_offer,
             _ => panic!("Unexpected message type"),
         };
         let mut holder = Holder::create_from_offer("TEST_CREDENTIAL", cred_offer).unwrap();
         assert_eq!(HolderState::OfferReceived, holder.get_state());
-        info!("send_cred_req :: sending credential request");
+        info!("create_credential_request :: sending credential request");
         let cred_request = holder
             .prepare_credential_request(
                 &alice.profile.inject_anoncreds_ledger_read(),
@@ -255,7 +268,7 @@ pub mod test_utils {
         (holder, cred_request)
     }
 
-    pub async fn create_cred_proposal(
+    pub async fn create_credential_proposal(
         alice: &mut Alice,
         schema_id: &str,
         cred_def_id: &str,
@@ -294,20 +307,7 @@ pub mod test_utils {
         ProposeCredential::with_decorators(id, content, decorators)
     }
 
-    pub fn create_holder_from_proposal(proposal: ProposeCredential) -> Holder {
-        let mut holder = Holder::create_with_proposal("TEST_CREDENTIAL", proposal).unwrap();
-        assert_eq!(HolderState::ProposalSet, holder.get_state());
-        holder
-    }
-
-    pub fn create_issuer_from_proposal(proposal: ProposeCredential) -> Issuer {
-        let mut issuer = Issuer::create_from_proposal("TEST_CREDENTIAL", &proposal).unwrap();
-        assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
-        assert_eq!(proposal.clone(), issuer.get_proposal().unwrap());
-        issuer
-    }
-
-    pub async fn accept_cred_proposal_new(
+    pub async fn accept_credential_proposal(
         faber: &mut Faber,
         issuer: &mut Issuer,
         cred_proposal: ProposeCredential,
@@ -328,7 +328,7 @@ pub mod test_utils {
         credential_offer
     }
 
-    pub async fn accept_offer_new(alice: &mut Alice, cred_offer: AriesMessage, holder: &mut Holder) -> AriesMessage {
+    pub async fn accept_offer(alice: &mut Alice, cred_offer: AriesMessage, holder: &mut Holder) -> AriesMessage {
         holder
             .process_aries_msg(
                 &alice.profile.inject_anoncreds_ledger_read(),
@@ -351,36 +351,6 @@ pub mod test_utils {
         cred_request
     }
 
-    pub async fn accept_offer(alice: &mut Alice, connection: &MediatedConnection, holder: &mut Holder) {
-        holder_update_with_mediator(
-            holder,
-            &alice.profile.inject_anoncreds_ledger_read(),
-            &alice.profile.inject_anoncreds(),
-            &alice.profile.inject_wallet(),
-            &alice.agency_client,
-            connection,
-        )
-        .await
-        .unwrap();
-        assert_eq!(HolderState::OfferReceived, holder.get_state());
-        assert!(holder.get_offer().is_ok());
-        let my_pw_did = connection.pairwise_info().pw_did.to_string();
-        let send_closure = connection
-            .send_message_closure(alice.profile.inject_wallet())
-            .await
-            .unwrap();
-        let msg_response = holder
-            .prepare_credential_request(
-                &alice.profile.inject_anoncreds_ledger_read(),
-                &alice.profile.inject_anoncreds(),
-                my_pw_did,
-            )
-            .await
-            .unwrap();
-        send_closure(msg_response).await.unwrap();
-        assert_eq!(HolderState::RequestSet, holder.get_state());
-    }
-
     pub async fn decline_offer(alice: &mut Alice, cred_offer: AriesMessage, holder: &mut Holder) -> AriesMessage {
         holder
             .process_aries_msg(
@@ -396,7 +366,7 @@ pub mod test_utils {
         problem_report.into()
     }
 
-    pub async fn send_credential_1(
+    pub async fn send_credential(
         alice: &mut Alice,
         faber: &mut Faber,
         issuer_credential: &mut Issuer,
@@ -461,6 +431,83 @@ pub mod test_utils {
                 TEST_TAILS_URL.to_string()
             );
         }
+    }
+
+    pub async fn _exchange_credential(
+        consumer: &mut Alice,
+        institution: &mut Faber,
+        credential_data: String,
+        cred_def: &CredentialDef,
+        rev_reg: &RevocationRegistry,
+        comment: Option<&str>,
+    ) -> Issuer {
+        info!("Generated credential data: {}", credential_data);
+        let (mut issuer_credential, cred_offer) =
+            create_credential_offer(institution, cred_def, rev_reg, &credential_data, comment).await;
+        info!("AS CONSUMER SEND CREDENTIAL REQUEST");
+        let (mut holder_credential, cred_request) = create_credential_request(consumer, cred_offer, comment).await;
+        info!("AS INSTITUTION SEND CREDENTIAL");
+        send_credential(
+            consumer,
+            institution,
+            &mut issuer_credential,
+            &mut holder_credential,
+            cred_request,
+            true,
+        )
+        .await;
+        assert!(!holder_credential
+            .is_revoked(
+                &consumer.profile.inject_anoncreds_ledger_read(),
+                &consumer.profile.inject_anoncreds(),
+            )
+            .await
+            .unwrap());
+        issuer_credential
+    }
+
+    pub async fn _exchange_credential_with_proposal(
+        consumer: &mut Alice,
+        institution: &mut Faber,
+        schema_id: &str,
+        cred_def_id: &str,
+        rev_reg_id: Option<String>,
+        tails_dir: Option<String>,
+        comment: &str,
+    ) -> (Holder, Issuer) {
+        let cred_proposal = create_credential_proposal(consumer, schema_id, cred_def_id, comment).await;
+        let mut holder = create_holder_from_proposal(cred_proposal.clone());
+        let mut issuer = create_issuer_from_proposal(cred_proposal.clone());
+        let cred_offer =
+            accept_credential_proposal(institution, &mut issuer, cred_proposal, rev_reg_id, tails_dir).await;
+        let cred_request = accept_offer(consumer, cred_offer, &mut holder).await;
+        send_credential(consumer, institution, &mut issuer, &mut holder, cred_request, true).await;
+        (holder, issuer)
+    }
+
+    pub async fn issue_address_credential(
+        consumer: &mut Alice,
+        institution: &mut Faber,
+    ) -> (
+        String,
+        String,
+        Option<String>,
+        CredentialDef,
+        RevocationRegistry,
+        Issuer,
+    ) {
+        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, rev_reg_id) =
+            _create_address_schema_creddef_revreg(&institution.profile, &institution.institution_did).await;
+
+        info!("test_real_proof_with_revocation :: AS INSTITUTION SEND CREDENTIAL OFFER");
+        let (address1, address2, city, state, zip) = attr_names();
+        let credential_data =
+            json!({address1: "123 Main St", address2: "Suite 3", city: "Draper", state: "UT", zip: "84000"})
+                .to_string();
+
+        let credential_handle =
+            _exchange_credential(consumer, institution, credential_data, &cred_def, &rev_reg, None).await;
+        (schema_id, cred_def_id, rev_reg_id, cred_def, rev_reg, credential_handle)
     }
 
     pub async fn send_proof_proposal(alice: &mut Alice, connection: &MediatedConnection, cred_def_id: &str) -> Prover {
@@ -817,82 +864,6 @@ pub mod test_utils {
             rev_reg,
             Some(rev_reg_id),
         )
-    }
-
-    pub async fn _exchange_credential(
-        consumer: &mut Alice,
-        institution: &mut Faber,
-        credential_data: String,
-        cred_def: &CredentialDef,
-        rev_reg: &RevocationRegistry,
-        comment: Option<&str>,
-    ) -> Issuer {
-        info!("Generated credential data: {}", credential_data);
-        let (mut issuer_credential, cred_offer) =
-            create_credential_offer(institution, cred_def, rev_reg, &credential_data, comment).await;
-        info!("AS CONSUMER SEND CREDENTIAL REQUEST");
-        let (mut holder_credential, cred_request) = send_cred_req(consumer, cred_offer, comment).await;
-        info!("AS INSTITUTION SEND CREDENTIAL");
-        send_credential_1(
-            consumer,
-            institution,
-            &mut issuer_credential,
-            &mut holder_credential,
-            cred_request,
-            true,
-        )
-        .await;
-        assert!(!holder_credential
-            .is_revoked(
-                &consumer.profile.inject_anoncreds_ledger_read(),
-                &consumer.profile.inject_anoncreds(),
-            )
-            .await
-            .unwrap());
-        issuer_credential
-    }
-
-    pub async fn _exchange_credential_with_proposal(
-        consumer: &mut Alice,
-        institution: &mut Faber,
-        schema_id: &str,
-        cred_def_id: &str,
-        rev_reg_id: Option<String>,
-        tails_dir: Option<String>,
-        comment: &str,
-    ) -> (Holder, Issuer) {
-        let cred_proposal = create_cred_proposal(consumer, schema_id, cred_def_id, comment).await;
-        let mut holder = create_holder_from_proposal(cred_proposal.clone());
-        let mut issuer = create_issuer_from_proposal(cred_proposal.clone());
-        let cred_offer = accept_cred_proposal_new(institution, &mut issuer, cred_proposal, rev_reg_id, tails_dir).await;
-        let cred_request = accept_offer_new(consumer, cred_offer, &mut holder).await;
-        send_credential_1(consumer, institution, &mut issuer, &mut holder, cred_request, true).await;
-        (holder, issuer)
-    }
-
-    pub async fn issue_address_credential(
-        consumer: &mut Alice,
-        institution: &mut Faber,
-    ) -> (
-        String,
-        String,
-        Option<String>,
-        CredentialDef,
-        RevocationRegistry,
-        Issuer,
-    ) {
-        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, rev_reg_id) =
-            _create_address_schema_creddef_revreg(&institution.profile, &institution.institution_did).await;
-
-        info!("test_real_proof_with_revocation :: AS INSTITUTION SEND CREDENTIAL OFFER");
-        let (address1, address2, city, state, zip) = attr_names();
-        let credential_data =
-            json!({address1: "123 Main St", address2: "Suite 3", city: "Draper", state: "UT", zip: "84000"})
-                .to_string();
-
-        let credential_handle =
-            _exchange_credential(consumer, institution, credential_data, &cred_def, &rev_reg, None).await;
-        (schema_id, cred_def_id, rev_reg_id, cred_def, rev_reg, credential_handle)
     }
 
     pub async fn verifier_create_proof_and_send_request(
