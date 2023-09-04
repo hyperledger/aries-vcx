@@ -585,14 +585,13 @@ mod tests {
     use crate::utils::migration::Migratable;
     use crate::utils::scenarios::test_utils::{
         _create_address_schema_creddef_revreg, _exchange_credential, _exchange_credential_with_proposal,
-        accept_cred_proposal, accept_cred_proposal_1, accept_cred_proposal_new, accept_offer, accept_proof_proposal,
-        attr_names, create_connected_connections, create_cred_proposal, create_holder_from_proposal,
-        create_issuer_from_proposal, create_nonrevocable_cred_offer, create_proof, decline_offer,
-        generate_and_send_proof, issue_address_credential, prover_select_credentials,
-        prover_select_credentials_and_send_proof, receive_proof_proposal_rejection, reject_proof_proposal,
-        retrieved_to_selected_credentials_simple, send_cred_proposal, send_cred_proposal_1, send_cred_req,
-        send_credential, send_credential_1, send_proof_proposal, send_proof_proposal_1, send_proof_request,
-        verifier_create_proof_and_send_request, verify_proof,
+        accept_cred_proposal_new, accept_offer, accept_offer_new, accept_proof_proposal, attr_names,
+        create_connected_connections, create_cred_proposal, create_holder_from_proposal, create_issuer_from_proposal,
+        create_nonrevocable_cred_offer, create_proof, decline_offer, generate_and_send_proof, issue_address_credential,
+        prover_select_credentials, prover_select_credentials_and_send_proof, receive_proof_proposal_rejection,
+        reject_proof_proposal, retrieved_to_selected_credentials_simple, send_cred_req, send_credential_1,
+        send_proof_proposal, send_proof_proposal_1, send_proof_request, verifier_create_proof_and_send_request,
+        verify_proof,
     };
 
     #[tokio::test]
@@ -1407,23 +1406,23 @@ mod tests {
             consumer.migrate().await;
 
             let cred_proposal_1 = create_cred_proposal(&mut consumer, &schema_id, &cred_def_id, "comment").await;
-            accept_cred_proposal_1(
-                &mut issuer,
+            let cred_offer_1 = accept_cred_proposal_new(
                 &mut institution,
-                &institution_to_consumer,
-                rev_reg_id,
-                Some(tails_dir),
+                &mut issuer,
+                cred_proposal_1,
+                rev_reg_id.clone(),
+                Some(tails_dir.clone()),
             )
             .await;
-            accept_offer(&mut consumer, &consumer_to_institution, &mut holder).await;
-            tokio::time::sleep(Duration::from_millis(1000)).await;
-            send_credential(
+
+            let cred_request = accept_offer_new(&mut consumer, cred_offer_1, &mut holder).await;
+
+            send_credential_1(
                 &mut consumer,
                 &mut institution,
                 &mut issuer,
-                &institution_to_consumer,
-                &consumer_to_institution,
                 &mut holder,
+                cred_request,
                 true,
             )
             .await;
