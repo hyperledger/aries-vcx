@@ -587,13 +587,11 @@ mod tests {
         _create_address_schema_creddef_revreg, _exchange_credential, _exchange_credential_with_proposal,
         accept_credential_proposal, accept_offer, accept_proof_proposal_new, attr_names, create_credential_proposal,
         create_credential_request, create_holder_from_proposal, create_issuer_from_proposal,
-        create_nonrevocable_cred_offer, create_proof, create_proof_proposal, create_proof_request_data,
-        create_prover_from_request, create_verifier_from_request_data, decline_offer, exchange_proof_and_verify,
-        generate_and_send_proof, generate_and_send_proof_new, issue_address_credential, prover_select_credentials,
-        prover_select_credentials_and_send_proof, prover_select_credentials_and_send_proof_new,
-        prover_select_credentials_new, receive_proof_proposal_rejection_new, reject_proof_proposal_new,
-        retrieved_to_selected_credentials_simple, send_credential, send_proof_request,
-        verifier_create_proof_and_send_request, verifier_create_proof_and_send_request_new, verify_proof_new,
+        create_nonrevocable_cred_offer, create_proof_proposal, create_proof_request_data, create_prover_from_request,
+        create_verifier_from_request_data, decline_offer, exchange_proof_and_verify, generate_and_send_proof_new,
+        issue_address_credential, prover_select_credentials_and_send_proof_new, prover_select_credentials_new,
+        receive_proof_proposal_rejection_new, reject_proof_proposal_new, retrieved_to_selected_credentials_simple,
+        send_credential, verifier_create_proof_and_send_request_new, verify_proof_new,
     };
 
     #[tokio::test]

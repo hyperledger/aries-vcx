@@ -593,35 +593,6 @@ pub mod test_utils {
         assert_eq!(prover.get_state(), ProverState::Failed);
     }
 
-    pub async fn send_proof_request(
-        faber: &mut Faber,
-        connection: &MediatedConnection,
-        requested_attrs: &str,
-        requested_preds: &str,
-        revocation_interval: &str,
-        request_name: Option<&str>,
-    ) -> Verifier {
-        let presentation_request_data =
-            PresentationRequestData::create(&faber.profile.inject_anoncreds(), request_name.unwrap_or("name"))
-                .await
-                .unwrap()
-                .set_requested_attributes_as_string(requested_attrs.to_string())
-                .unwrap()
-                .set_requested_predicates_as_string(requested_preds.to_string())
-                .unwrap()
-                .set_not_revoked_interval(revocation_interval.to_string())
-                .unwrap();
-        let mut verifier = Verifier::create_from_request("1".to_string(), &presentation_request_data).unwrap();
-        let send_closure = connection
-            .send_message_closure(faber.profile.inject_wallet())
-            .await
-            .unwrap();
-        let message = verifier.mark_presentation_request_sent().unwrap();
-        send_closure(message).await.unwrap();
-        tokio::time::sleep(Duration::from_millis(1000)).await;
-        verifier
-    }
-
     pub async fn create_proof_request_data(
         faber: &mut Faber,
         requested_attrs: &str,
@@ -648,37 +619,6 @@ pub mod test_utils {
         let mut verifier = Verifier::create_from_request("1".to_string(), &presentation_request_data).unwrap();
         verifier.mark_presentation_request_sent().unwrap();
         verifier
-    }
-
-    pub async fn create_proof(
-        alice: &mut Alice,
-        connection: &MediatedConnection,
-        request_name: Option<&str>,
-    ) -> Prover {
-        info!("create_proof >>> getting proof request messages");
-        let requests = {
-            let _requests = get_proof_request_messages(&alice.agency_client, connection)
-                .await
-                .unwrap();
-            info!("create_proof :: get proof request messages returned {}", _requests);
-            match request_name {
-                Some(request_name) => {
-                    let filtered = filter_proof_requests_by_name(&_requests, request_name).unwrap();
-                    info!(
-                        "create_proof :: proof request messages filtered by name {}: {}",
-                        request_name, filtered
-                    );
-                    filtered
-                }
-                _ => _requests.to_string(),
-            }
-        };
-        let requests: Value = serde_json::from_str(&requests).unwrap();
-        let requests = requests.as_array().unwrap();
-        assert_eq!(requests.len(), 1);
-        let request = serde_json::to_string(&requests[0]).unwrap();
-        let presentation_request: RequestPresentation = serde_json::from_str(&request).unwrap();
-        Prover::create_from_request(DEFAULT_PROOF_NAME, presentation_request).unwrap()
     }
 
     pub async fn generate_and_send_proof_new(
@@ -709,41 +649,6 @@ pub mod test_utils {
             Some(message)
         } else {
             None
-        }
-    }
-
-    pub async fn generate_and_send_proof(
-        alice: &mut Alice,
-        prover: &mut Prover,
-        connection: &MediatedConnection,
-        selected_credentials: SelectedCredentials,
-    ) {
-        let thread_id = prover.get_thread_id().unwrap();
-        info!(
-            "generate_and_send_proof >>> generating proof using selected credentials {:?}",
-            selected_credentials
-        );
-        prover
-            .generate_presentation(
-                &alice.profile.inject_anoncreds_ledger_read(),
-                &alice.profile.inject_anoncreds(),
-                selected_credentials,
-                HashMap::new(),
-            )
-            .await
-            .unwrap();
-        assert_eq!(thread_id, prover.get_thread_id().unwrap());
-        if ProverState::PresentationPrepared == prover.get_state() {
-            info!("generate_and_send_proof :: proof generated, sending proof");
-            let send_closure = connection
-                .send_message_closure(alice.profile.inject_wallet())
-                .await
-                .unwrap();
-            let message = prover.mark_presentation_sent().unwrap();
-            send_closure(message).await.unwrap();
-            info!("generate_and_send_proof :: proof sent");
-            assert_eq!(thread_id, prover.get_thread_id().unwrap());
-            tokio::time::sleep(Duration::from_millis(1000)).await;
         }
     }
 
@@ -882,26 +787,6 @@ pub mod test_utils {
         create_verifier_from_request_data(presentation_request_data).await
     }
 
-    pub async fn verifier_create_proof_and_send_request(
-        institution: &mut Faber,
-        institution_to_consumer: &MediatedConnection,
-        schema_id: &str,
-        cred_def_id: &str,
-        request_name: Option<&str>,
-    ) -> Verifier {
-        let requested_attrs = requested_attrs(&institution.institution_did, &schema_id, &cred_def_id, None, None);
-        let requested_attrs_string = serde_json::to_string(&requested_attrs).unwrap();
-        send_proof_request(
-            institution,
-            institution_to_consumer,
-            &requested_attrs_string,
-            "[]",
-            "{}",
-            request_name,
-        )
-        .await
-    }
-
     pub async fn prover_select_credentials_new(
         prover: &mut Prover,
         alice: &mut Alice,
@@ -909,32 +794,6 @@ pub mod test_utils {
         preselected_credentials: Option<&str>,
     ) -> SelectedCredentials {
         prover.process_aries_msg(presentation_request).await.unwrap();
-        assert_eq!(prover.get_state(), ProverState::PresentationRequestReceived);
-        let retrieved_credentials = prover
-            .retrieve_credentials(&alice.profile.inject_anoncreds())
-            .await
-            .unwrap();
-        info!("prover_select_credentials >> retrieved_credentials: {retrieved_credentials:?}");
-        let selected_credentials = match preselected_credentials {
-            Some(preselected_credentials) => {
-                let credential_data = prover.presentation_request_data().unwrap();
-                match_preselected_credentials(&retrieved_credentials, preselected_credentials, &credential_data, true)
-            }
-            _ => retrieved_to_selected_credentials_simple(&retrieved_credentials, true),
-        };
-
-        selected_credentials
-    }
-
-    pub async fn prover_select_credentials(
-        prover: &mut Prover,
-        alice: &mut Alice,
-        connection: &MediatedConnection,
-        preselected_credentials: Option<&str>,
-    ) -> SelectedCredentials {
-        prover_update_with_mediator(prover, &alice.agency_client, connection)
-            .await
-            .unwrap();
         assert_eq!(prover.get_state(), ProverState::PresentationRequestReceived);
         let retrieved_credentials = prover
             .retrieve_credentials(&alice.profile.inject_anoncreds())
@@ -975,23 +834,6 @@ pub mod test_utils {
         };
         assert_eq!(ProverState::PresentationSent, prover.get_state());
         presentation
-    }
-
-    pub async fn prover_select_credentials_and_send_proof(
-        alice: &mut Alice,
-        consumer_to_institution: &MediatedConnection,
-        request_name: Option<&str>,
-        preselected_credentials: Option<&str>,
-    ) {
-        let mut prover = create_proof(alice, consumer_to_institution, request_name).await;
-        let selected_credentials =
-            prover_select_credentials(&mut prover, alice, consumer_to_institution, preselected_credentials).await;
-        info!(
-            "Prover :: Retrieved credential converted to selected: {:?}",
-            &selected_credentials
-        );
-        generate_and_send_proof(alice, &mut prover, consumer_to_institution, selected_credentials).await;
-        assert_eq!(ProverState::PresentationSent, prover.get_state());
     }
 
     pub async fn connect_using_request_sent_to_public_agent(

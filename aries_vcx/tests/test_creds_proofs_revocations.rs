@@ -20,13 +20,11 @@ mod integration_tests {
     #[cfg(feature = "migration")]
     use crate::utils::migration::Migratable;
     use crate::utils::scenarios::test_utils::{
-        _create_address_schema_creddef_revreg, _exchange_credential, attr_names, create_proof,
-        create_proof_request_data, create_verifier_from_request_data, exchange_proof_and_verify,
-        exchange_proof_and_verify_invalid, generate_and_send_proof, issue_address_credential,
-        prover_select_credentials_and_send_proof, prover_select_credentials_and_send_proof_new, publish_revocation,
-        requested_attrs, retrieved_to_selected_credentials_simple, revoke_credential_and_publish_accumulator,
-        revoke_credential_local, rotate_rev_reg, send_proof_request, verifier_create_proof_and_send_request,
-        verifier_create_proof_and_send_request_new,
+        _create_address_schema_creddef_revreg, _exchange_credential, attr_names, create_proof_request_data,
+        create_verifier_from_request_data, exchange_proof_and_verify, exchange_proof_and_verify_invalid,
+        issue_address_credential, prover_select_credentials_and_send_proof_new, publish_revocation, requested_attrs,
+        retrieved_to_selected_credentials_simple, revoke_credential_and_publish_accumulator, revoke_credential_local,
+        rotate_rev_reg, verifier_create_proof_and_send_request_new,
     };
 
     use super::*;
