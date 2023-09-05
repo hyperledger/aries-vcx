@@ -585,16 +585,15 @@ mod tests {
     use crate::utils::migration::Migratable;
     use crate::utils::scenarios::test_utils::{
         _create_address_schema_creddef_revreg, _exchange_credential, _exchange_credential_with_proposal,
-        accept_credential_proposal, accept_offer, accept_proof_proposal_new, attr_names, create_connected_connections,
-        create_credential_proposal, create_credential_request, create_holder_from_proposal,
-        create_issuer_from_proposal, create_nonrevocable_cred_offer, create_proof, create_proof_proposal,
-        create_proof_request_data, create_prover_from_request, create_verifier_from_request_data, decline_offer,
-        exchange_proof_and_verify, generate_and_send_proof, generate_and_send_proof_new, issue_address_credential,
-        prover_select_credentials, prover_select_credentials_and_send_proof,
-        prover_select_credentials_and_send_proof_new, prover_select_credentials_new,
-        receive_proof_proposal_rejection_new, reject_proof_proposal_new, retrieved_to_selected_credentials_simple,
-        send_credential, send_proof_request, verifier_create_proof_and_send_request,
-        verifier_create_proof_and_send_request_new, verify_proof_new,
+        accept_credential_proposal, accept_offer, accept_proof_proposal_new, attr_names, create_credential_proposal,
+        create_credential_request, create_holder_from_proposal, create_issuer_from_proposal,
+        create_nonrevocable_cred_offer, create_proof, create_proof_proposal, create_proof_request_data,
+        create_prover_from_request, create_verifier_from_request_data, decline_offer, exchange_proof_and_verify,
+        generate_and_send_proof, generate_and_send_proof_new, issue_address_credential, prover_select_credentials,
+        prover_select_credentials_and_send_proof, prover_select_credentials_and_send_proof_new,
+        prover_select_credentials_new, receive_proof_proposal_rejection_new, reject_proof_proposal_new,
+        retrieved_to_selected_credentials_simple, send_credential, send_proof_request,
+        verifier_create_proof_and_send_request, verifier_create_proof_and_send_request_new, verify_proof_new,
     };
 
     #[tokio::test]
@@ -722,8 +721,6 @@ mod tests {
             let mut institution = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut consumer = create_alice(setup.genesis_file_path).await;
 
-            let (consumer_to_institution, institution_to_consumer) =
-                create_connected_connections(&mut consumer, &mut institution).await;
             issue_address_credential(&mut consumer, &mut institution).await;
 
             #[cfg(feature = "migration")]
@@ -736,22 +733,17 @@ mod tests {
             }]))
             .unwrap();
 
-            send_proof_request(
-                &mut institution,
-                &institution_to_consumer,
-                "[]",
-                &requested_preds_string,
-                "{}",
-                None,
-            )
-            .await;
+            let presentation_request_data =
+                create_proof_request_data(&mut institution, "[]", &requested_preds_string, "{}", None).await;
+            let mut verifier = create_verifier_from_request_data(presentation_request_data).await;
 
             #[cfg(feature = "migration")]
             consumer.migrate().await;
 
-            let mut prover = create_proof(&mut consumer, &consumer_to_institution, None).await;
+            let presentation_request = verifier.get_presentation_request_msg().unwrap();
+            let mut prover = create_prover_from_request(presentation_request.clone()).await;
             let selected_credentials =
-                prover_select_credentials(&mut prover, &mut consumer, &consumer_to_institution, None).await;
+                prover_select_credentials_new(&mut prover, &mut consumer, presentation_request.into(), None).await;
 
             assert!(selected_credentials.credential_for_referent.is_empty());
         })
