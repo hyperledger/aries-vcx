@@ -30,7 +30,7 @@ mod integration_tests {
     use crate::utils::devsetup_faber::create_faber_trustee;
     use crate::utils::scenarios::test_utils::{
         _send_message, connect_using_request_sent_to_public_agent, create_connected_connections,
-        create_connected_connections_via_public_invite, create_proof_request,
+        create_connected_connections_via_public_invite, create_proof_request_data, create_verifier_from_request_data,
     };
 
     use super::*;
@@ -67,7 +67,12 @@ mod integration_tests {
             let mut consumer = create_alice(setup.genesis_file_path).await;
             let (sender, receiver) = bounded::<AriesMessage>(1);
 
-            let request_sender = create_proof_request(&mut institution, REQUESTED_ATTRIBUTES, "[]", "{}", None).await;
+            let presentation_request_data =
+                create_proof_request_data(&mut institution, REQUESTED_ATTRIBUTES, "[]", "{}", None).await;
+            let request_sender = create_verifier_from_request_data(presentation_request_data)
+                .await
+                .get_presentation_request_msg()
+                .unwrap();
 
             let did = institution.institution_did.clone();
             let oob_sender = OutOfBandSender::create()

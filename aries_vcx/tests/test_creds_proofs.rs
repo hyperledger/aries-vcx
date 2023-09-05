@@ -589,11 +589,12 @@ mod tests {
         create_credential_proposal, create_credential_request, create_holder_from_proposal,
         create_issuer_from_proposal, create_nonrevocable_cred_offer, create_proof, create_proof_proposal,
         create_proof_request_data, create_prover_from_request, create_verifier_from_request_data, decline_offer,
-        generate_and_send_proof, generate_and_send_proof_new, issue_address_credential, prover_select_credentials,
-        prover_select_credentials_and_send_proof, prover_select_credentials_and_send_proof_new,
-        prover_select_credentials_new, receive_proof_proposal_rejection_new, reject_proof_proposal_new,
-        retrieved_to_selected_credentials_simple, send_credential, send_proof_request,
-        verifier_create_proof_and_send_request, verifier_create_proof_and_send_request_new, verify_proof_new,
+        exchange_proof_and_verify, generate_and_send_proof, generate_and_send_proof_new, issue_address_credential,
+        prover_select_credentials, prover_select_credentials_and_send_proof,
+        prover_select_credentials_and_send_proof_new, prover_select_credentials_new,
+        receive_proof_proposal_rejection_new, reject_proof_proposal_new, retrieved_to_selected_credentials_simple,
+        send_credential, send_proof_request, verifier_create_proof_and_send_request,
+        verifier_create_proof_and_send_request_new, verify_proof_new,
     };
 
     #[tokio::test]
@@ -831,58 +832,8 @@ mod tests {
             )
                 .await;
 
-            let request_name1 = Some("request1");
-            let mut proof_verifier_1 = verifier_create_proof_and_send_request_new(
-                &mut verifier,
-                &schema_id,
-                &cred_def_id,
-                request_name1,
-            )
-                .await;
-
-            #[cfg(feature = "migration")]
-            consumer1.migrate().await;
-
-            let presentation = prover_select_credentials_and_send_proof_new(&mut consumer1, proof_verifier_1.get_presentation_request_msg().unwrap(), None, None).await;
-            proof_verifier_1
-                .verify_presentation(
-                    &verifier.profile.inject_anoncreds_ledger_read(),
-                    &verifier.profile.inject_anoncreds(),
-                    presentation,
-                )
-                .await
-                .unwrap();
-            assert_eq!(
-                proof_verifier_1.get_verification_status(),
-                PresentationVerificationStatus::Valid
-            );
-
-            let request_name2 = Some("request2");
-            let mut proof_verifier_2 = verifier_create_proof_and_send_request_new(
-                &mut verifier,
-                &schema_id,
-                &cred_def_id,
-                request_name2,
-            )
-                .await;
-
-            #[cfg(feature = "migration")]
-            consumer2.migrate().await;
-
-            let presentation = prover_select_credentials_and_send_proof_new(&mut consumer2, proof_verifier_2.get_presentation_request_msg().unwrap(), None, None).await;
-            proof_verifier_2
-                .verify_presentation(
-                    &verifier.profile.inject_anoncreds_ledger_read(),
-                    &verifier.profile.inject_anoncreds(),
-                    presentation,
-                )
-                .await
-                .unwrap();
-            assert_eq!(
-                proof_verifier_2.get_verification_status(),
-                PresentationVerificationStatus::Valid
-            );
-
+            exchange_proof_and_verify(&mut verifier, &mut consumer1, &schema_id, &cred_def_id, Some("request1")).await;
+            exchange_proof_and_verify(&mut verifier, &mut consumer2, &schema_id, &cred_def_id, Some("request2")).await;
         }).await;
     }
 
