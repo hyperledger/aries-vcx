@@ -20,12 +20,13 @@ mod integration_tests {
     #[cfg(feature = "migration")]
     use crate::utils::migration::Migratable;
     use crate::utils::scenarios::test_utils::{
-        _create_address_schema_creddef_revreg, _exchange_credential, attr_names, create_connected_connections,
-        create_proof, create_proof_request_data, create_verifier_from_request_data, exchange_proof_and_verify,
+        _create_address_schema_creddef_revreg, _exchange_credential, attr_names, create_proof,
+        create_proof_request_data, create_verifier_from_request_data, exchange_proof_and_verify,
         exchange_proof_and_verify_invalid, generate_and_send_proof, issue_address_credential,
         prover_select_credentials_and_send_proof, prover_select_credentials_and_send_proof_new, publish_revocation,
         requested_attrs, retrieved_to_selected_credentials_simple, revoke_credential_and_publish_accumulator,
         revoke_credential_local, rotate_rev_reg, send_proof_request, verifier_create_proof_and_send_request,
+        verifier_create_proof_and_send_request_new,
     };
 
     use super::*;
@@ -106,6 +107,7 @@ mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_agency_pool_revocation_notification() {
+        use crate::utils::scenarios::test_utils::create_connected_connections;
         use messages::decorators::please_ack::AckOn;
 
         SetupPoolDirectory::run(|setup| async move {
@@ -231,10 +233,6 @@ mod integration_tests {
             let mut consumer2 = create_alice(setup.genesis_file_path.clone()).await;
             let mut consumer3 = create_alice(setup.genesis_file_path).await;
 
-            let (consumer_to_institution1, institution_to_consumer1) = create_connected_connections(&mut consumer1, &mut institution).await;
-            let (consumer_to_institution2, institution_to_consumer2) = create_connected_connections(&mut consumer2, &mut institution).await;
-            let (consumer_to_institution3, institution_to_consumer3) = create_connected_connections(&mut consumer3, &mut institution).await;
-
             // Issue and send three credentials of the same schema
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _rev_reg_id) =
                 _create_address_schema_creddef_revreg(&institution.profile, &institution.institution_did).await;
@@ -250,7 +248,6 @@ mod integration_tests {
             )
                 .await;
 
-
             #[cfg(feature = "migration")]
             institution.migrate().await;
 
@@ -264,7 +261,6 @@ mod integration_tests {
                 None,
             )
                 .await;
-
 
             #[cfg(feature = "migration")]
             consumer1.migrate().await;
@@ -287,54 +283,9 @@ mod integration_tests {
             assert!(!issuer_credential3.is_revoked(&institution.profile.inject_anoncreds_ledger_read()).await.unwrap());
 
             // Revoke two locally and verify their are all still valid
-            let request_name1 = Some("request1");
-            let mut verifier1 = verifier_create_proof_and_send_request(&mut institution, &institution_to_consumer1, &schema_id, &cred_def_id, request_name1).await;
-
-            #[cfg(feature = "migration")]
-            consumer2.migrate().await;
-
-            #[cfg(feature = "migration")]
-            consumer3.migrate().await;
-
-            prover_select_credentials_and_send_proof(&mut consumer1, &consumer_to_institution1, request_name1, None).await;
-            let mut verifier2 = verifier_create_proof_and_send_request(&mut institution, &institution_to_consumer2, &schema_id, &cred_def_id, request_name1).await;
-            prover_select_credentials_and_send_proof(&mut consumer2, &consumer_to_institution2, request_name1, None).await;
-            let mut verifier3 = verifier_create_proof_and_send_request(&mut institution, &institution_to_consumer3, &schema_id, &cred_def_id, request_name1).await;
-            prover_select_credentials_and_send_proof(&mut consumer3, &consumer_to_institution3, request_name1, None).await;
-
-            verifier_update_with_mediator(
-                &mut verifier1,
-                &institution.profile.inject_wallet(),
-                &institution.profile.inject_anoncreds_ledger_read(),
-                &institution.profile.inject_anoncreds(),
-                &institution.agency_client,
-                &institution_to_consumer1,
-            )
-                .await
-                .unwrap();
-            verifier_update_with_mediator(
-                &mut verifier2,
-                &institution.profile.inject_wallet(),
-                &institution.profile.inject_anoncreds_ledger_read(),
-                &institution.profile.inject_anoncreds(),
-                &institution.agency_client,
-                &institution_to_consumer2,
-            )
-                .await
-                .unwrap();
-            verifier_update_with_mediator(
-                &mut verifier3,
-                &institution.profile.inject_wallet(),
-                &institution.profile.inject_anoncreds_ledger_read(),
-                &institution.profile.inject_anoncreds(),
-                &institution.agency_client,
-                &institution_to_consumer3,
-            )
-                .await
-                .unwrap();
-            assert_eq!(verifier1.get_verification_status(), PresentationVerificationStatus::Valid);
-            assert_eq!(verifier2.get_verification_status(), PresentationVerificationStatus::Valid);
-            assert_eq!(verifier3.get_verification_status(), PresentationVerificationStatus::Valid);
+            exchange_proof_and_verify(&mut institution, &mut consumer1, &schema_id, &cred_def_id, Some("request1")).await;
+            exchange_proof_and_verify(&mut institution, &mut consumer2, &schema_id, &cred_def_id, Some("request2")).await;
+            exchange_proof_and_verify(&mut institution, &mut consumer3, &schema_id, &cred_def_id, Some("request3")).await;
 
             // Publish revocations and verify the two are invalid, third still valid
             publish_revocation(&mut institution, &rev_reg).await;
@@ -344,52 +295,9 @@ mod integration_tests {
             assert!(issuer_credential2.is_revoked(&institution.profile.inject_anoncreds_ledger_read()).await.unwrap());
             assert!(!issuer_credential3.is_revoked(&institution.profile.inject_anoncreds_ledger_read()).await.unwrap());
 
-            let request_name2 = Some("request2");
-            let mut verifier1 = verifier_create_proof_and_send_request(&mut institution, &institution_to_consumer1, &schema_id, &cred_def_id, request_name2).await;
-            prover_select_credentials_and_send_proof(&mut consumer1, &consumer_to_institution1, request_name2, None).await;
-            let mut verifier2 = verifier_create_proof_and_send_request(&mut institution, &institution_to_consumer2, &schema_id, &cred_def_id, request_name2).await;
-            prover_select_credentials_and_send_proof(&mut consumer2, &consumer_to_institution2, request_name2, None).await;
-            let mut verifier3 = verifier_create_proof_and_send_request(&mut institution, &institution_to_consumer3, &schema_id, &cred_def_id, request_name2).await;
-            prover_select_credentials_and_send_proof(&mut consumer3, &consumer_to_institution3, request_name2, None).await;
-            assert_ne!(verifier1, verifier2);
-            assert_ne!(verifier1, verifier3);
-            assert_ne!(verifier2, verifier3);
-
-            verifier_update_with_mediator(
-                &mut verifier1,
-                &institution.profile.inject_wallet(),
-                &institution.profile.inject_anoncreds_ledger_read(),
-                &institution.profile.inject_anoncreds(),
-                &institution.agency_client,
-                &institution_to_consumer1,
-            )
-                .await
-                .unwrap();
-            verifier_update_with_mediator(
-                &mut verifier2,
-                &institution.profile.inject_wallet(),
-                &institution.profile.inject_anoncreds_ledger_read(),
-                &institution.profile.inject_anoncreds(),
-                &institution.agency_client,
-                &institution_to_consumer2,
-            )
-                .await
-                .unwrap();
-            verifier_update_with_mediator(
-                &mut verifier3,
-                &institution.profile.inject_wallet(),
-                &institution.profile.inject_anoncreds_ledger_read(),
-                &institution.profile.inject_anoncreds(),
-                &institution.agency_client,
-                &institution_to_consumer3,
-            )
-                .await
-                .unwrap();
-            assert_eq!(verifier1.get_verification_status(), PresentationVerificationStatus::Invalid);
-
-            assert_eq!(verifier2.get_verification_status(), PresentationVerificationStatus::Invalid);
-
-            assert_eq!(verifier3.get_verification_status(), PresentationVerificationStatus::Valid);
+            exchange_proof_and_verify_invalid(&mut institution, &mut consumer1, &schema_id, &cred_def_id, Some("request1")).await;
+            exchange_proof_and_verify_invalid(&mut institution, &mut consumer2, &schema_id, &cred_def_id, Some("request2")).await;
+            exchange_proof_and_verify(&mut institution, &mut consumer3, &schema_id, &cred_def_id, Some("request3")).await;
         })
             .await;
     }
@@ -401,11 +309,13 @@ mod integration_tests {
             let mut institution = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut consumer = create_alice(setup.genesis_file_path).await;
 
-            let (consumer_to_institution, institution_to_consumer) = create_connected_connections(&mut consumer, &mut institution).await;
             let (schema_id, cred_def_id, _, _cred_def, rev_reg, issuer_credential) =
                 issue_address_credential(&mut consumer, &mut institution).await;
 
-            assert!(!issuer_credential.is_revoked(&institution.profile.inject_anoncreds_ledger_read()).await.unwrap());
+            assert!(!issuer_credential
+                .is_revoked(&institution.profile.inject_anoncreds_ledger_read())
+                .await
+                .unwrap());
 
             #[cfg(feature = "migration")]
             institution.migrate().await;
@@ -422,46 +332,40 @@ mod integration_tests {
 
             let from = time_before_revocation - 100;
             let to = time_before_revocation;
-            let _requested_attrs = requested_attrs(&institution.institution_did, &schema_id, &cred_def_id, Some(from), Some(to));
+            let _requested_attrs = requested_attrs(
+                &institution.institution_did,
+                &schema_id,
+                &cred_def_id,
+                Some(from),
+                Some(to),
+            );
             let interval = json!({"from": from, "to": to}).to_string();
             let requested_attrs_string = serde_json::to_string(&_requested_attrs).unwrap();
 
-            info!("test_revoked_credential_might_still_work :: Going to seng proof request with attributes {}", &requested_attrs_string);
-            let mut verifier = send_proof_request(&mut institution, &institution_to_consumer, &requested_attrs_string, "[]", &interval, None).await;
+            let presentation_request_data =
+                create_proof_request_data(&mut institution, &requested_attrs_string, "[]", &interval, None).await;
+            let mut verifier = create_verifier_from_request_data(presentation_request_data).await;
+            let presentation_request = verifier.get_presentation_request_msg().unwrap();
 
-            info!("test_revoked_credential_might_still_work :: Going to create proof");
-            let mut prover = create_proof(&mut consumer, &consumer_to_institution, None).await;
-            info!("test_revoked_credential_might_still_work :: retrieving matching credentials");
+            let presentation =
+                prover_select_credentials_and_send_proof_new(&mut consumer, presentation_request, None, None).await;
 
-            let retrieved_credentials = prover.retrieve_credentials(&consumer.profile.inject_anoncreds()).await.unwrap();
-            info!(
-                "test_revoked_credential_might_still_work :: prover :: based on proof, retrieved credentials: {:?}",
-                &retrieved_credentials
-            );
-
-            let selected_credentials = retrieved_to_selected_credentials_simple(&retrieved_credentials, true);
-            info!(
-                "test_revoked_credential_might_still_work :: prover :: retrieved credential converted to selected: {:?}",
-                &selected_credentials
-            );
-            generate_and_send_proof(&mut consumer, &mut prover, &consumer_to_institution, selected_credentials).await;
-            assert_eq!(ProverState::PresentationSent, prover.get_state());
-
-            info!("test_revoked_credential_might_still_work :: verifier :: going to verify proof");
-            verifier_update_with_mediator(
-                &mut verifier,
-                &institution.profile.inject_wallet(),
-                &institution.profile.inject_anoncreds_ledger_read(),
-                &institution.profile.inject_anoncreds(),
-                &institution.agency_client,
-                &institution_to_consumer,
-            )
+            info!("test_agency_pool_revoked_credential_might_still_work :: verifier :: going to verify proof");
+            verifier
+                .verify_presentation(
+                    &institution.profile.inject_anoncreds_ledger_read(),
+                    &institution.profile.inject_anoncreds(),
+                    presentation,
+                )
                 .await
                 .unwrap();
             assert_eq!(verifier.get_state(), VerifierState::Finished);
-            assert_eq!(verifier.get_verification_status(), PresentationVerificationStatus::Valid);
+            assert_eq!(
+                verifier.get_verification_status(),
+                PresentationVerificationStatus::Valid
+            );
         })
-            .await;
+        .await;
     }
 
     #[tokio::test]
@@ -471,9 +375,6 @@ mod integration_tests {
             let mut issuer = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut verifier = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut consumer = create_alice(setup.genesis_file_path).await;
-
-            let (consumer_to_verifier, verifier_to_consumer) = create_connected_connections(&mut consumer, &mut verifier).await;
-            let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut issuer).await;
 
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _rev_reg_id) =
                 _create_address_schema_creddef_revreg(&issuer.profile, &issuer.institution_did).await;
@@ -489,7 +390,6 @@ mod integration_tests {
                 req1,
             )
                 .await;
-
 
             #[cfg(feature = "migration")]
             issuer.migrate().await;
@@ -513,37 +413,21 @@ mod integration_tests {
 
             revoke_credential_and_publish_accumulator(&mut issuer, &issuer_credential1, &rev_reg).await;
 
-            let mut proof_verifier = verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id, req1).await;
-            prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1)).await;
-            verifier_update_with_mediator(
-                &mut proof_verifier,
-                &verifier.profile.inject_wallet(),
-                &verifier.profile.inject_anoncreds_ledger_read(),
-                &verifier.profile.inject_anoncreds(),
-                &verifier.agency_client,
-                &verifier_to_consumer,
-            )
-                .await
-                .unwrap();
+            let mut proof_verifier = verifier_create_proof_and_send_request_new(&mut verifier, &schema_id, &cred_def_id, req1).await;
+            let presentation_request = proof_verifier.get_presentation_request_msg().unwrap();
+            let presentation = prover_select_credentials_and_send_proof_new(&mut consumer, presentation_request, req1, Some(&credential_data1)).await;
+            proof_verifier.verify_presentation(&verifier.profile.inject_anoncreds_ledger_read(), &verifier.profile.inject_anoncreds(), presentation).await.unwrap();
             assert_eq!(proof_verifier.get_state(), VerifierState::Finished);
             assert_eq!(proof_verifier.get_verification_status(), PresentationVerificationStatus::Invalid);
 
-            let mut proof_verifier = verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id, req2).await;
-            prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2)).await;
+            let mut proof_verifier = verifier_create_proof_and_send_request_new(&mut verifier, &schema_id, &cred_def_id, req2).await;
+            let presentation_request = proof_verifier.get_presentation_request_msg().unwrap();
+            let presentation = prover_select_credentials_and_send_proof_new(&mut consumer, presentation_request, req2, Some(&credential_data2)).await;
 
             #[cfg(feature = "migration")]
             consumer.migrate().await;
 
-            verifier_update_with_mediator(
-                &mut proof_verifier,
-                &verifier.profile.inject_wallet(),
-                &verifier.profile.inject_anoncreds_ledger_read(),
-                &verifier.profile.inject_anoncreds(),
-                &verifier.agency_client,
-                &verifier_to_consumer,
-            )
-                .await
-                .unwrap();
+            proof_verifier.verify_presentation(&verifier.profile.inject_anoncreds_ledger_read(), &verifier.profile.inject_anoncreds(), presentation).await.unwrap();
             assert_eq!(proof_verifier.get_verification_status(), PresentationVerificationStatus::Valid);
 
             assert!(issuer_credential1.is_revoked(&issuer.profile.inject_anoncreds_ledger_read()).await.unwrap());
@@ -560,9 +444,6 @@ mod integration_tests {
             let mut verifier = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut consumer = create_alice(setup.genesis_file_path).await;
 
-            let (consumer_to_verifier, verifier_to_consumer) = create_connected_connections(&mut consumer, &mut verifier).await;
-            let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut issuer).await;
-
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _rev_reg_id) =
                 _create_address_schema_creddef_revreg(&issuer.profile, &issuer.institution_did).await;
             let (address1, address2, city, state, zip) = attr_names();
@@ -595,45 +476,29 @@ mod integration_tests {
             assert!(!issuer_credential1.is_revoked(&issuer.profile.inject_anoncreds_ledger_read()).await.unwrap());
             assert!(!issuer_credential2.is_revoked(&issuer.profile.inject_anoncreds_ledger_read()).await.unwrap());
 
-            revoke_credential_and_publish_accumulator(&mut issuer, &issuer_credential2, &rev_reg).await;
-
             #[cfg(feature = "migration")]
             verifier.migrate().await;
 
-            let mut proof_verifier = verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id, req1).await;
-            prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1)).await;
-            verifier_update_with_mediator(
-                &mut proof_verifier,
-                &verifier.profile.inject_wallet(),
-                &verifier.profile.inject_anoncreds_ledger_read(),
-                &verifier.profile.inject_anoncreds(),
-                &verifier.agency_client,
-                &verifier_to_consumer,
-            )
-                .await
-                .unwrap();
+            revoke_credential_and_publish_accumulator(&mut issuer, &issuer_credential2, &rev_reg).await;
+
+            let mut proof_verifier = verifier_create_proof_and_send_request_new(&mut verifier, &schema_id, &cred_def_id, req1).await;
+            let presentation = prover_select_credentials_and_send_proof_new(&mut consumer,  proof_verifier.get_presentation_request_msg().unwrap(), req1, Some(&credential_data1)).await;
+            proof_verifier.verify_presentation(&verifier.profile.inject_anoncreds_ledger_read(), &verifier.profile.inject_anoncreds(), presentation).await.unwrap();
+            assert_eq!(proof_verifier.get_state(), VerifierState::Finished);
             assert_eq!(proof_verifier.get_verification_status(), PresentationVerificationStatus::Valid);
 
-            let mut proof_verifier = verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id, req2).await;
+            let mut proof_verifier = verifier_create_proof_and_send_request_new(&mut verifier, &schema_id, &cred_def_id, req2).await;
+            let presentation = prover_select_credentials_and_send_proof_new(&mut consumer,  proof_verifier.get_presentation_request_msg().unwrap(), req2, Some(&credential_data2)).await;
 
             #[cfg(feature = "migration")]
             consumer.migrate().await;
 
-            prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2)).await;
-            verifier_update_with_mediator(
-                &mut proof_verifier,
-                &verifier.profile.inject_wallet(),
-                &verifier.profile.inject_anoncreds_ledger_read(),
-                &verifier.profile.inject_anoncreds(),
-                &verifier.agency_client,
-                &verifier_to_consumer,
-            )
-                .await
-                .unwrap();
+            proof_verifier.verify_presentation(&verifier.profile.inject_anoncreds_ledger_read(), &verifier.profile.inject_anoncreds(), presentation).await.unwrap();
             assert_eq!(proof_verifier.get_verification_status(), PresentationVerificationStatus::Invalid);
 
             assert!(!issuer_credential1.is_revoked(&issuer.profile.inject_anoncreds_ledger_read()).await.unwrap());
             assert!(issuer_credential2.is_revoked(&issuer.profile.inject_anoncreds_ledger_read()).await.unwrap());
+
         })
             .await;
     }
@@ -645,9 +510,6 @@ mod integration_tests {
             let mut issuer = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut verifier = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut consumer = create_alice(setup.genesis_file_path).await;
-
-            let (consumer_to_verifier, verifier_to_consumer) = create_connected_connections(&mut consumer, &mut verifier).await;
-            let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut issuer).await;
 
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _) =
                 _create_address_schema_creddef_revreg(&issuer.profile, &issuer.institution_did).await;
@@ -679,40 +541,25 @@ mod integration_tests {
             )
                 .await;
 
-            let mut proof_verifier = verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id, req1).await;
-            prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1)).await;
-            verifier_update_with_mediator(
-                &mut proof_verifier,
-                &verifier.profile.inject_wallet(),
-                &verifier.profile.inject_anoncreds_ledger_read(),
-                &verifier.profile.inject_anoncreds(),
-                &verifier.agency_client,
-                &verifier_to_consumer,
-            )
-                .await
-                .unwrap();
+            let mut proof_verifier = verifier_create_proof_and_send_request_new(&mut verifier, &schema_id, &cred_def_id, req1).await;
+            let presentation = prover_select_credentials_and_send_proof_new(&mut consumer,  proof_verifier.get_presentation_request_msg().unwrap(), req1, Some(&credential_data1)).await;
+            proof_verifier.verify_presentation(&verifier.profile.inject_anoncreds_ledger_read(), &verifier.profile.inject_anoncreds(), presentation).await.unwrap();
+            assert_eq!(proof_verifier.get_state(), VerifierState::Finished);
             assert_eq!(proof_verifier.get_verification_status(), PresentationVerificationStatus::Valid);
 
             #[cfg(feature = "migration")]
             verifier.migrate().await;
 
-            let mut proof_verifier = verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id, req2).await;
+            let mut proof_verifier = verifier_create_proof_and_send_request_new(&mut verifier, &schema_id, &cred_def_id, req2).await;
 
             #[cfg(feature = "migration")]
             consumer.migrate().await;
 
-            prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2)).await;
-            verifier_update_with_mediator(
-                &mut proof_verifier,
-                &verifier.profile.inject_wallet(),
-                &verifier.profile.inject_anoncreds_ledger_read(),
-                &verifier.profile.inject_anoncreds(),
-                &verifier.agency_client,
-                &verifier_to_consumer,
-            )
-                .await
-                .unwrap();
+            let presentation = prover_select_credentials_and_send_proof_new(&mut consumer,  proof_verifier.get_presentation_request_msg().unwrap(), req2, Some(&credential_data2)).await;
+            proof_verifier.verify_presentation(&verifier.profile.inject_anoncreds_ledger_read(), &verifier.profile.inject_anoncreds(), presentation).await.unwrap();
+            assert_eq!(proof_verifier.get_state(), VerifierState::Finished);
             assert_eq!(proof_verifier.get_verification_status(), PresentationVerificationStatus::Valid);
+
 
             assert!(!issuer_credential1.is_revoked(&issuer.profile.inject_anoncreds_ledger_read()).await.unwrap());
             assert!(!issuer_credential2.is_revoked(&issuer.profile.inject_anoncreds_ledger_read()).await.unwrap());
@@ -727,9 +574,6 @@ mod integration_tests {
             let mut issuer = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut verifier = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut consumer = create_alice(setup.genesis_file_path).await;
-
-            let (consumer_to_verifier, verifier_to_consumer) = create_connected_connections(&mut consumer, &mut verifier).await;
-            let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut issuer).await;
 
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _) =
                 _create_address_schema_creddef_revreg(&issuer.profile, &issuer.institution_did).await;
@@ -769,35 +613,19 @@ mod integration_tests {
             #[cfg(feature = "migration")]
             verifier.migrate().await;
 
-            let mut proof_verifier = verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id, req1).await;
-            prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1)).await;
-            verifier_update_with_mediator(
-                &mut proof_verifier,
-                &verifier.profile.inject_wallet(),
-                &verifier.profile.inject_anoncreds_ledger_read(),
-                &verifier.profile.inject_anoncreds(),
-                &verifier.agency_client,
-                &verifier_to_consumer,
-            )
-                .await
-                .unwrap();
+            let mut proof_verifier = verifier_create_proof_and_send_request_new(&mut verifier, &schema_id, &cred_def_id, req1).await;
+            let presentation = prover_select_credentials_and_send_proof_new(&mut consumer,  proof_verifier.get_presentation_request_msg().unwrap(), req1, Some(&credential_data1)).await;
+            proof_verifier.verify_presentation(&verifier.profile.inject_anoncreds_ledger_read(), &verifier.profile.inject_anoncreds(), presentation).await.unwrap();
+            assert_eq!(proof_verifier.get_state(), VerifierState::Finished);
             assert_eq!(proof_verifier.get_verification_status(), PresentationVerificationStatus::Invalid);
+
+            let mut proof_verifier = verifier_create_proof_and_send_request_new(&mut verifier, &schema_id, &cred_def_id, req2).await;
+            let presentation = prover_select_credentials_and_send_proof_new(&mut consumer,  proof_verifier.get_presentation_request_msg().unwrap(), req2, Some(&credential_data2)).await;
 
             #[cfg(feature = "migration")]
             consumer.migrate().await;
 
-            let mut proof_verifier = verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id, req2).await;
-            prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2)).await;
-            verifier_update_with_mediator(
-                &mut proof_verifier,
-                &verifier.profile.inject_wallet(),
-                &verifier.profile.inject_anoncreds_ledger_read(),
-                &verifier.profile.inject_anoncreds(),
-                &verifier.agency_client,
-                &verifier_to_consumer,
-            )
-                .await
-                .unwrap();
+            proof_verifier.verify_presentation(&verifier.profile.inject_anoncreds_ledger_read(), &verifier.profile.inject_anoncreds(), presentation).await.unwrap();
             assert_eq!(proof_verifier.get_verification_status(), PresentationVerificationStatus::Valid);
 
             assert!(issuer_credential1.is_revoked(&issuer.profile.inject_anoncreds_ledger_read()).await.unwrap());
@@ -813,9 +641,6 @@ mod integration_tests {
             let mut issuer = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut verifier = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut consumer = create_alice(setup.genesis_file_path).await;
-
-            let (consumer_to_verifier, verifier_to_consumer) = create_connected_connections(&mut consumer, &mut verifier).await;
-            let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut issuer).await;
 
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _) =
                 _create_address_schema_creddef_revreg(&issuer.profile, &issuer.institution_did).await;
@@ -852,40 +677,24 @@ mod integration_tests {
 
             revoke_credential_and_publish_accumulator(&mut issuer, &issuer_credential2, &rev_reg_2).await;
 
-            let mut proof_verifier = verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id, req1).await;
-            prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1)).await;
+            let mut proof_verifier = verifier_create_proof_and_send_request_new(&mut verifier, &schema_id, &cred_def_id, req1).await;
+            let presentation = prover_select_credentials_and_send_proof_new(&mut consumer,  proof_verifier.get_presentation_request_msg().unwrap(), req1, Some(&credential_data1)).await;
 
             #[cfg(feature = "migration")]
             verifier.migrate().await;
 
-            verifier_update_with_mediator(
-                &mut proof_verifier,
-                &verifier.profile.inject_wallet(),
-                &verifier.profile.inject_anoncreds_ledger_read(),
-                &verifier.profile.inject_anoncreds(),
-                &verifier.agency_client,
-                &verifier_to_consumer,
-            )
-                .await
-                .unwrap();
+            proof_verifier.verify_presentation(&verifier.profile.inject_anoncreds_ledger_read(), &verifier.profile.inject_anoncreds(), presentation).await.unwrap();
+            assert_eq!(proof_verifier.get_state(), VerifierState::Finished);
             assert_eq!(proof_verifier.get_verification_status(), PresentationVerificationStatus::Valid);
 
-            let mut proof_verifier = verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id, req2).await;
+            let mut proof_verifier = verifier_create_proof_and_send_request_new(&mut verifier, &schema_id, &cred_def_id, req2).await;
+            let presentation = prover_select_credentials_and_send_proof_new(&mut consumer,  proof_verifier.get_presentation_request_msg().unwrap(), req1, Some(&credential_data2)).await;
 
             #[cfg(feature = "migration")]
             consumer.migrate().await;
 
-            prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2)).await;
-            verifier_update_with_mediator(
-                &mut proof_verifier,
-                &verifier.profile.inject_wallet(),
-                &verifier.profile.inject_anoncreds_ledger_read(),
-                &verifier.profile.inject_anoncreds(),
-                &verifier.agency_client,
-                &verifier_to_consumer,
-            )
-                .await
-                .unwrap();
+            proof_verifier.verify_presentation(&verifier.profile.inject_anoncreds_ledger_read(), &verifier.profile.inject_anoncreds(), presentation).await.unwrap();
+            assert_eq!(proof_verifier.get_state(), VerifierState::Finished);
             assert_eq!(proof_verifier.get_verification_status(), PresentationVerificationStatus::Invalid);
 
             assert!(!issuer_credential1.is_revoked(&issuer.profile.inject_anoncreds_ledger_read()).await.unwrap());
@@ -900,9 +709,6 @@ mod integration_tests {
         SetupPoolDirectory::run(|setup| async move {
             let mut issuer = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut consumer = create_alice(setup.genesis_file_path.clone()).await;
-
-            let (consumer_to_issuer, issuer_to_consumer) =
-                create_connected_connections(&mut consumer, &mut issuer).await;
 
             let (_schema_id, _schema_json, _cred_def_id, _cred_def_json, cred_def, rev_reg, _rev_reg_id) =
                 _create_address_schema_creddef_revreg(&issuer.profile, &issuer.institution_did).await;
