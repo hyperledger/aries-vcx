@@ -21,10 +21,11 @@ mod integration_tests {
     use crate::utils::migration::Migratable;
     use crate::utils::scenarios::test_utils::{
         _create_address_schema_creddef_revreg, _exchange_credential, attr_names, create_connected_connections,
-        create_proof, generate_and_send_proof, issue_address_credential, prover_select_credentials_and_send_proof,
-        publish_revocation, requested_attrs, retrieved_to_selected_credentials_simple,
-        revoke_credential_and_publish_accumulator, revoke_credential_local, rotate_rev_reg, send_proof_request,
-        verifier_create_proof_and_send_request,
+        create_proof, create_proof_request_data, create_verifier_from_request_data, exchange_proof_and_verify,
+        generate_and_send_proof, issue_address_credential, prover_select_credentials_and_send_proof,
+        prover_select_credentials_and_send_proof_new, publish_revocation, requested_attrs,
+        retrieved_to_selected_credentials_simple, revoke_credential_and_publish_accumulator, revoke_credential_local,
+        rotate_rev_reg, send_proof_request, verifier_create_proof_and_send_request,
     };
 
     use super::*;
@@ -36,8 +37,6 @@ mod integration_tests {
             let mut institution = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut consumer = create_alice(setup.genesis_file_path).await;
 
-            let (consumer_to_institution, institution_to_consumer) =
-                create_connected_connections(&mut consumer, &mut institution).await;
             let (schema_id, cred_def_id, _, _cred_def, rev_reg, issuer_credential) =
                 issue_address_credential(&mut consumer, &mut institution).await;
 
@@ -78,29 +77,23 @@ mod integration_tests {
                 "test_basic_revocation :: Going to seng proof request with attributes {}",
                 &requested_attrs_string
             );
-            let mut verifier = send_proof_request(
-                &mut institution,
-                &institution_to_consumer,
-                &requested_attrs_string,
-                "[]",
-                &interval,
-                None,
-            )
-            .await;
+            let presentation_request_data =
+                create_proof_request_data(&mut institution, &requested_attrs_string, "[]", &interval, None).await;
+            let mut verifier = create_verifier_from_request_data(presentation_request_data).await;
+            let presentation_request = verifier.get_presentation_request_msg().unwrap();
 
-            prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_institution, None, None).await;
+            let presentation =
+                prover_select_credentials_and_send_proof_new(&mut consumer, presentation_request, None, None).await;
 
             info!("test_basic_revocation :: verifier :: going to verify proof");
-            verifier_update_with_mediator(
-                &mut verifier,
-                &institution.profile.inject_wallet(),
-                &institution.profile.inject_anoncreds_ledger_read(),
-                &institution.profile.inject_anoncreds(),
-                &institution.agency_client,
-                &institution_to_consumer,
-            )
-            .await
-            .unwrap();
+            verifier
+                .verify_presentation(
+                    &institution.profile.inject_anoncreds_ledger_read(),
+                    &institution.profile.inject_anoncreds(),
+                    presentation,
+                )
+                .await
+                .unwrap();
             assert_eq!(verifier.get_state(), VerifierState::Finished);
             assert_eq!(
                 verifier.get_verification_status(),
