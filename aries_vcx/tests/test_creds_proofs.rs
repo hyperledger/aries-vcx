@@ -890,9 +890,6 @@ mod tests {
             let mut institution = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut consumer = create_alice(setup.genesis_file_path.clone()).await;
 
-            let (consumer_to_issuer, issuer_to_consumer) =
-                create_connected_connections(&mut consumer, &mut institution).await;
-
             info!("test_real_proof >>>");
             let number_of_attributes = 10;
 
@@ -963,49 +960,14 @@ mod tests {
                 "test_real_proof :: Going to seng proof request with attributes {}",
                 requested_attrs
             );
-            let mut verifier = send_proof_request(
-                &mut institution,
-                &issuer_to_consumer,
-                &requested_attrs,
-                "[]",
-                "{}",
-                None,
-            )
-            .await;
+            let presentation_request_data =
+                create_proof_request_data(&mut institution, &requested_attrs, "[]", "{}", None).await;
+            let mut verifier = create_verifier_from_request_data(presentation_request_data).await;
+            let presentation_request = verifier.get_presentation_request_msg().unwrap();
             let presentation_thread_id = verifier.get_thread_id().unwrap();
 
             info!("test_real_proof :: Going to create proof");
-            let mut prover = create_proof(&mut consumer, &consumer_to_issuer, None).await;
-            info!("test_real_proof :: retrieving matching credentials");
-
-            let retrieved_credentials = prover
-                .retrieve_credentials(&consumer.profile.inject_anoncreds())
-                .await
-                .unwrap();
-            let selected_credentials = retrieved_to_selected_credentials_simple(&retrieved_credentials, false);
-
-            info!("test_real_proof :: generating and sending proof");
-            generate_and_send_proof(&mut consumer, &mut prover, &consumer_to_issuer, selected_credentials).await;
-            assert_eq!(ProverState::PresentationSent, prover.get_state());
-            assert_eq!(presentation_thread_id, prover.get_thread_id().unwrap());
-            assert_eq!(presentation_thread_id, verifier.get_thread_id().unwrap());
-
-            info!("test_real_proof :: AS INSTITUTION VALIDATE PROOF");
-            verifier_update_with_mediator(
-                &mut verifier,
-                &institution.profile.inject_wallet(),
-                &institution.profile.inject_anoncreds_ledger_read(),
-                &institution.profile.inject_anoncreds(),
-                &institution.agency_client,
-                &issuer_to_consumer,
-            )
-            .await
-            .unwrap();
-            assert_eq!(
-                verifier.get_verification_status(),
-                PresentationVerificationStatus::Valid
-            );
-            assert_eq!(presentation_thread_id, verifier.get_thread_id().unwrap());
+            prover_select_credentials_and_send_proof_new(&mut consumer, presentation_request, None, None);
         })
         .await;
     }
