@@ -26,7 +26,7 @@ use crate::protocols::issuance::holder::state_machine::{HolderFullState, HolderS
 
 fn build_credential_ack(thread_id: &str) -> AckCredential {
     let content = AckCredentialContent::new(AckStatus::Ok);
-    let mut decorators = AckDecorators::new(Thread::new(thread_id.to_owned()));
+    let mut decorators = AckDecorators::new(Thread::builder().thid(thread_id.to_owned()).build());
     let mut timing = Timing::default();
     timing.out_time = Some(Utc::now());
     decorators.timing = Some(timing);

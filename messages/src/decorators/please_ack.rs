@@ -1,7 +1,8 @@
 use serde::{Deserialize, Serialize};
+use typed_builder::TypedBuilder;
 
 /// Struct representing the `~please_ack` decorators from its [RFC](<https://github.com/hyperledger/aries-rfcs/blob/main/features/0317-please-ack/README.md>).
-#[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq, TypedBuilder)]
 pub struct PleaseAck {
     // This is wrong, but necessary for backwards compatibility.
     // Per the [RFC](<https://github.com/hyperledger/aries-rfcs/blob/main/features/0317-please-ack/README.md#on>)
@@ -15,12 +16,6 @@ pub struct PleaseAck {
     // so that processing happens in a specific order.
     #[serde(default)]
     pub on: Vec<AckOn>,
-}
-
-impl PleaseAck {
-    pub fn new(on: Vec<AckOn>) -> Self {
-        Self { on }
-    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -41,7 +36,7 @@ pub mod tests {
 
     pub fn make_minimal_please_ack() -> PleaseAck {
         let on = vec![AckOn::Receipt, AckOn::Outcome];
-        PleaseAck::new(on)
+        PleaseAck::builder().on(on).build()
     }
 
     #[test]

@@ -6,29 +6,36 @@ use serde::{
     Deserialize, Serialize, Serializer,
 };
 use shared_vcx::misc::utils::CowStr;
+use typed_builder::TypedBuilder;
 use url::Url;
 
 /// Struct representing the `~l10n` decorator, when it decorates the entire message, from its [RFC](<https://github.com/hyperledger/aries-rfcs/blob/main/features/0043-l10n/README.md>).
-#[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq, TypedBuilder)]
 pub struct MsgLocalization {
+    #[builder(default, setter(strip_option))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub catalogs: Option<Vec<Url>>,
     // Might just be obsolete, but appears in <https://github.com/hyperledger/aries-rfcs/blob/main/features/0043-l10n/README.md>
     // Is details and locales the same thing?
+    #[builder(default, setter(strip_option))]
     #[serde(alias = "details")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub locales: Option<HashMap<Locale, Vec<String>>>,
 }
 
 /// Struct representing the `~l10n` decorator, when it decorates a single field, from its [RFC](<https://github.com/hyperledger/aries-rfcs/blob/main/features/0043-l10n/README.md>).
-#[derive(Debug, Clone, Deserialize, Default, PartialEq)]
+#[derive(Debug, Clone, Deserialize, Default, PartialEq, TypedBuilder)]
 pub struct FieldLocalization {
+    #[builder(default, setter(strip_option))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub code: Option<String>,
+    #[builder(default, setter(strip_option))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub locale: Option<Locale>,
+    #[builder(default, setter(strip_option))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub catalogs: Option<Vec<Url>>,
+    #[builder(default)]
     #[serde(flatten)]
     #[serde(skip_serializing_if = "HashMap::is_empty")]
     pub translations: HashMap<Locale, String>,

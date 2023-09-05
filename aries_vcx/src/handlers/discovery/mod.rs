@@ -43,7 +43,7 @@ pub async fn respond_discovery_query(
 ) -> VcxResult<()> {
     let content = DiscloseContent::default();
 
-    let mut decorators = DiscloseDecorators::new(Thread::new(query.id));
+    let mut decorators = DiscloseDecorators::new(Thread::builder().thid(query.id).build());
     let mut timing = Timing::default();
     timing.out_time = Some(Utc::now());
     decorators.timing = Some(timing);

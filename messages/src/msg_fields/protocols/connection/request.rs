@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use typed_builder::TypedBuilder;
 
 use crate::{
     decorators::{thread::Thread, timing::Timing},
@@ -9,23 +10,19 @@ use super::ConnectionData;
 
 pub type Request = MsgParts<RequestContent, RequestDecorators>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder)]
 pub struct RequestContent {
     pub label: String,
     pub connection: ConnectionData,
 }
 
-impl RequestContent {
-    pub fn new(label: String, connection: ConnectionData) -> Self {
-        Self { label, connection }
-    }
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq, TypedBuilder)]
 pub struct RequestDecorators {
+    #[builder(default, setter(strip_option))]
     #[serde(rename = "~thread")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub thread: Option<Thread>,
+    #[builder(default, setter(strip_option))]
     #[serde(rename = "~timing")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<Timing>,
@@ -49,7 +46,10 @@ mod tests {
     fn test_minimal_conn_request() {
         let did_doc = AriesDidDoc::default(); // We really need to improve this creation.
         let conn_data = ConnectionData::new("test_did".to_owned(), did_doc);
-        let content = RequestContent::new("test_request_label".to_owned(), conn_data);
+        let content = RequestContent::builder()
+            .label("test_request_label".to_owned())
+            .connection(conn_data)
+            .build();
 
         let decorators = RequestDecorators::default();
 
@@ -65,7 +65,10 @@ mod tests {
     fn test_extended_conn_request() {
         let did_doc = AriesDidDoc::default(); // We really need to improve this creation.
         let conn_data = ConnectionData::new("test_did".to_owned(), did_doc);
-        let content = RequestContent::new("test_request_label".to_owned(), conn_data);
+        let content = RequestContent::builder()
+            .label("test_request_label".to_owned())
+            .connection(conn_data)
+            .build();
 
         let mut decorators = RequestDecorators::default();
         decorators.thread = Some(make_extended_thread());

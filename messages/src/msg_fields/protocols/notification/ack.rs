@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use typed_builder::TypedBuilder;
 
 use crate::{
     decorators::{thread::Thread, timing::Timing},
@@ -7,15 +8,9 @@ use crate::{
 
 pub type Ack = MsgParts<AckContent, AckDecorators>;
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TypedBuilder)]
 pub struct AckContent {
     pub status: AckStatus,
-}
-
-impl AckContent {
-    pub fn new(status: AckStatus) -> Self {
-        Self { status }
-    }
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
@@ -25,19 +20,14 @@ pub enum AckStatus {
     Pending,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TypedBuilder)]
 pub struct AckDecorators {
     #[serde(rename = "~thread")]
     pub thread: Thread,
+    #[builder(default, setter(strip_option))]
     #[serde(rename = "~timing")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<Timing>,
-}
-
-impl AckDecorators {
-    pub fn new(thread: Thread) -> Self {
-        Self { thread, timing: None }
-    }
 }
 
 #[cfg(test)]
@@ -55,9 +45,9 @@ mod tests {
 
     #[test]
     fn test_minimal_ack() {
-        let content = AckContent::new(AckStatus::Ok);
+        let content = AckContent::builder().status(AckStatus::Ok).build();
 
-        let decorators = AckDecorators::new(make_extended_thread());
+        let decorators = AckDecorators::builder().thread(make_extended_thread()).build();
 
         let expected = json!({
             "status": content.status,
@@ -69,9 +59,9 @@ mod tests {
 
     #[test]
     fn test_extended_ack() {
-        let content = AckContent::new(AckStatus::Ok);
+        let content = AckContent::builder().status(AckStatus::Ok).build();
 
-        let mut decorators = AckDecorators::new(make_extended_thread());
+        let mut decorators = AckDecorators::builder().thread(make_extended_thread()).build();
         decorators.timing = Some(make_extended_timing());
 
         let expected = json!({

@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use shared_vcx::misc::utils::CowStr;
+use typed_builder::TypedBuilder;
 
 use crate::{
     decorators::{please_ack::PleaseAck, thread::Thread, timing::Timing},
@@ -13,20 +14,15 @@ use crate::{
 
 pub type Response = MsgParts<ResponseContent, ResponseDecorators>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder)]
 pub struct ResponseContent {
     #[serde(rename = "connection~sig")]
     pub connection_sig: ConnectionSignature,
 }
 
-impl ResponseContent {
-    pub fn new(connection_sig: ConnectionSignature) -> Self {
-        Self { connection_sig }
-    }
-}
-
-#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, TypedBuilder)]
 pub struct ConnectionSignature {
+    #[builder(default, setter(skip))]
     #[serde(rename = "@type")]
     msg_type: SigEd25519Sha512Single,
     pub signature: String,
@@ -34,37 +30,18 @@ pub struct ConnectionSignature {
     pub signer: String,
 }
 
-impl ConnectionSignature {
-    pub fn new(signature: String, sig_data: String, signer: String) -> Self {
-        Self {
-            msg_type: SigEd25519Sha512Single,
-            signature,
-            sig_data,
-            signer,
-        }
-    }
-}
-
-#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, TypedBuilder)]
 pub struct ResponseDecorators {
     #[serde(rename = "~thread")]
     pub thread: Thread,
+    #[builder(default, setter(strip_option))]
     #[serde(rename = "~please_ack")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub please_ack: Option<PleaseAck>,
+    #[builder(default, setter(strip_option))]
     #[serde(rename = "~timing")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<Timing>,
-}
-
-impl ResponseDecorators {
-    pub fn new(thread: Thread) -> Self {
-        Self {
-            thread,
-            please_ack: None,
-            timing: None,
-        }
-    }
 }
 
 /// Non-standalone message type.
@@ -125,15 +102,15 @@ mod tests {
 
     #[test]
     fn test_minimal_conn_response() {
-        let conn_sig = ConnectionSignature::new(
-            "test_signature".to_owned(),
-            "test_sig_data".to_owned(),
-            "test_signer".to_owned(),
-        );
+        let conn_sig = ConnectionSignature::builder()
+            .signature("test_signature".to_owned())
+            .sig_data("test_sig_data".to_owned())
+            .signer("test_signer".to_owned())
+            .build();
 
-        let content = ResponseContent::new(conn_sig);
+        let content = ResponseContent::builder().connection_sig(conn_sig).build();
 
-        let decorators = ResponseDecorators::new(make_extended_thread());
+        let decorators = ResponseDecorators::builder().thread(make_extended_thread()).build();
 
         let expected = json!({
             "connection~sig": content.connection_sig,
@@ -145,15 +122,15 @@ mod tests {
 
     #[test]
     fn test_extended_conn_response() {
-        let conn_sig = ConnectionSignature::new(
-            "test_signature".to_owned(),
-            "test_sig_data".to_owned(),
-            "test_signer".to_owned(),
-        );
+        let conn_sig = ConnectionSignature::builder()
+            .signature("test_signature".to_owned())
+            .sig_data("test_sig_data".to_owned())
+            .signer("test_signer".to_owned())
+            .build();
 
-        let content = ResponseContent::new(conn_sig);
+        let content = ResponseContent::builder().connection_sig(conn_sig).build();
 
-        let mut decorators = ResponseDecorators::new(make_extended_thread());
+        let mut decorators = ResponseDecorators::builder().thread(make_extended_thread()).build();
         decorators.timing = Some(make_extended_timing());
         decorators.please_ack = Some(make_minimal_please_ack());
 

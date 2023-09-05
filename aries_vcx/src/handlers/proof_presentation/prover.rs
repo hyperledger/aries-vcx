@@ -231,7 +231,7 @@ impl Prover {
                 let id = Uuid::new_v4().to_string();
                 let content = ProposePresentationContent::new(presentation_preview);
                 let mut decorators = ProposePresentationDecorators::default();
-                let thread = Thread::new(thread_id.to_owned());
+                let thread = Thread::builder().thid(thread_id.to_owned()).build();
                 let mut timing = Timing::default();
                 timing.out_time = Some(Utc::now());
                 decorators.thread = Some(thread);

@@ -1,20 +1,17 @@
 use serde::{Deserialize, Serialize};
+use typed_builder::TypedBuilder;
 
 use crate::{
-    msg_fields::protocols::notification::ack::{AckContent, AckDecorators, AckStatus},
+    msg_fields::protocols::notification::ack::{AckContent, AckDecorators},
     msg_parts::MsgParts,
 };
 
 pub type AckCredential = MsgParts<AckCredentialContent, AckDecorators>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder)]
 #[serde(transparent)]
-pub struct AckCredentialContent(pub AckContent);
-
-impl AckCredentialContent {
-    pub fn new(status: AckStatus) -> Self {
-        Self(AckContent::new(status))
-    }
+pub struct AckCredentialContent {
+    pub inner: AckContent,
 }
 
 #[cfg(test)]
@@ -27,17 +24,20 @@ mod tests {
     use crate::{
         decorators::{thread::tests::make_extended_thread, timing::tests::make_extended_timing},
         misc::test_utils,
+        msg_fields::protocols::notification::ack::AckStatus,
         msg_types::cred_issuance::CredentialIssuanceTypeV1_0,
     };
 
     #[test]
     fn test_minimal_ack_cred() {
-        let content = AckCredentialContent::new(AckStatus::Ok);
+        let content = AckCredentialContent::builder()
+            .inner(AckContent::builder().status(AckStatus::Ok).build())
+            .build();
 
-        let decorators = AckDecorators::new(make_extended_thread());
+        let decorators = AckDecorators::builder().thread(make_extended_thread()).build();
 
         let expected = json!({
-            "status": content.0.status,
+            "status": content.inner.status,
             "~thread": decorators.thread
         });
 
@@ -46,13 +46,15 @@ mod tests {
 
     #[test]
     fn test_extended_ack_cred() {
-        let content = AckCredentialContent::new(AckStatus::Ok);
+        let content = AckCredentialContent::builder()
+            .inner(AckContent::builder().status(AckStatus::Ok).build())
+            .build();
 
-        let mut decorators = AckDecorators::new(make_extended_thread());
+        let mut decorators = AckDecorators::builder().thread(make_extended_thread()).build();
         decorators.timing = Some(make_extended_timing());
 
         let expected = json!({
-            "status": content.0.status,
+            "status": content.inner.status,
             "~thread": decorators.thread,
             "~timing": decorators.timing
         });

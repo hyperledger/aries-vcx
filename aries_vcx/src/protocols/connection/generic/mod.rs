@@ -426,7 +426,7 @@ mod connection_serde_tests {
         let sig_data = sign_connection_response(&wallet, PW_KEY, &con_data).await.unwrap();
 
         let content = ResponseContent::new(sig_data);
-        let mut decorators = ResponseDecorators::new(Thread::new(con.thread_id().to_owned()));
+        let mut decorators = ResponseDecorators::new(Thread::builder().thid(con.thread_id().to_owned()).build());
         let mut timing = Timing::default();
         timing.out_time = Some(Utc::now());
         decorators.timing = Some(timing);
