@@ -845,74 +845,14 @@ mod tests {
             let mut verifier = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut consumer = create_alice(setup.genesis_file_path).await;
 
-            let (consumer_to_verifier, verifier_to_consumer) =
-                create_connected_connections(&mut consumer, &mut verifier).await;
-            let (consumer_to_issuer, issuer_to_consumer) =
-                create_connected_connections(&mut consumer, &mut issuer).await;
-
             let (schema_id, cred_def_id, _rev_reg_id, _cred_def, _rev_reg, _credential_handle) =
                 issue_address_credential(&mut consumer, &mut issuer).await;
 
             #[cfg(feature = "migration")]
             issuer.migrate().await;
 
-            let request_name1 = Some("request1");
-            let mut proof_verifier = verifier_create_proof_and_send_request(
-                &mut verifier,
-                &verifier_to_consumer,
-                &schema_id,
-                &cred_def_id,
-                request_name1,
-            )
-            .await;
-
-            #[cfg(feature = "migration")]
-            verifier.migrate().await;
-
-            prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, request_name1, None).await;
-            verifier_update_with_mediator(
-                &mut proof_verifier,
-                &verifier.profile.inject_wallet(),
-                &verifier.profile.inject_anoncreds_ledger_read(),
-                &verifier.profile.inject_anoncreds(),
-                &verifier.agency_client,
-                &verifier_to_consumer,
-            )
-            .await
-            .unwrap();
-            assert_eq!(
-                proof_verifier.get_verification_status(),
-                PresentationVerificationStatus::Valid
-            );
-
-            let request_name2 = Some("request2");
-            let mut proof_verifier = verifier_create_proof_and_send_request(
-                &mut verifier,
-                &verifier_to_consumer,
-                &schema_id,
-                &cred_def_id,
-                request_name2,
-            )
-            .await;
-
-            #[cfg(feature = "migration")]
-            consumer.migrate().await;
-
-            prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, request_name2, None).await;
-            verifier_update_with_mediator(
-                &mut proof_verifier,
-                &verifier.profile.inject_wallet(),
-                &verifier.profile.inject_anoncreds_ledger_read(),
-                &verifier.profile.inject_anoncreds(),
-                &verifier.agency_client,
-                &verifier_to_consumer,
-            )
-            .await
-            .unwrap();
-            assert_eq!(
-                proof_verifier.get_verification_status(),
-                PresentationVerificationStatus::Valid
-            );
+            exchange_proof_and_verify(&mut verifier, &mut consumer, &schema_id, &cred_def_id, Some("request1")).await;
+            exchange_proof_and_verify(&mut verifier, &mut consumer, &schema_id, &cred_def_id, Some("request2")).await;
         })
         .await;
     }
@@ -923,9 +863,6 @@ mod tests {
         SetupPoolDirectory::run(|setup| async move {
             let mut institution = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut consumer = create_alice(setup.genesis_file_path.clone()).await;
-
-            let (consumer_to_institution, institution_to_consumer) =
-                create_connected_connections(&mut consumer, &mut institution).await;
 
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _rev_reg_id) =
                 _create_address_schema_creddef_revreg(&institution.profile, &institution.institution_did).await;
@@ -941,63 +878,8 @@ mod tests {
             )
                 .await;
 
-            let request_name1 = Some("request1");
-            let mut verifier = verifier_create_proof_and_send_request(
-                &mut institution,
-                &institution_to_consumer,
-                &schema_id,
-                &cred_def_id,
-                request_name1,
-            )
-                .await;
-
-            #[cfg(feature = "migration")]
-            institution.migrate().await;
-
-            prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_institution, request_name1, None).await;
-            verifier_update_with_mediator(
-                &mut verifier,
-                    &institution.profile.inject_wallet(),
-                    &institution.profile.inject_anoncreds_ledger_read(),
-                    &institution.profile.inject_anoncreds(),
-                    &institution.agency_client,
-                    &institution_to_consumer,
-                )
-                .await
-                .unwrap();
-            assert_eq!(
-                verifier.get_verification_status(),
-                PresentationVerificationStatus::Valid
-            );
-
-            let request_name2 = Some("request2");
-            let mut verifier = verifier_create_proof_and_send_request(
-                &mut institution,
-                &institution_to_consumer,
-                &schema_id,
-                &cred_def_id,
-                request_name2,
-            )
-                .await;
-
-            #[cfg(feature = "migration")]
-            consumer.migrate().await;
-
-            prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_institution, request_name2, None).await;
-            verifier_update_with_mediator(
-                &mut verifier,
-                    &institution.profile.inject_wallet(),
-                    &institution.profile.inject_anoncreds_ledger_read(),
-                    &institution.profile.inject_anoncreds(),
-                    &institution.agency_client,
-                    &institution_to_consumer,
-                )
-                .await
-                .unwrap();
-            assert_eq!(
-                verifier.get_verification_status(),
-                PresentationVerificationStatus::Valid
-            );
+            exchange_proof_and_verify(&mut institution, &mut consumer, &schema_id, &cred_def_id, Some("request1")).await;
+            exchange_proof_and_verify(&mut institution, &mut consumer, &schema_id, &cred_def_id, Some("request2")).await;
         }).await;
     }
 
@@ -1136,10 +1018,6 @@ mod tests {
             let mut verifier = create_faber_trustee(setup.genesis_file_path.clone()).await;
             let mut consumer = create_alice(setup.genesis_file_path).await;
 
-            let (consumer_to_verifier, verifier_to_consumer) =
-                create_connected_connections(&mut consumer, &mut verifier).await;
-            let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut issuer).await;
-
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _rev_reg_id) =
                 _create_address_schema_creddef_revreg(&issuer.profile, &issuer.institution_did).await;
             let (address1, address2, city, state, zip) = attr_names();
@@ -1172,60 +1050,8 @@ mod tests {
             #[cfg(feature = "migration")]
             verifier.migrate().await;
 
-            let mut proof_verifier = verifier_create_proof_and_send_request(
-                &mut verifier,
-                &verifier_to_consumer,
-                &schema_id,
-                &cred_def_id,
-                req1,
-            )
-                .await;
-            prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1))
-                .await;
-                verifier_update_with_mediator(
-                    &mut proof_verifier,
-                    &verifier.profile.inject_wallet(),
-                    &verifier.profile.inject_anoncreds_ledger_read(),
-                    &verifier.profile.inject_anoncreds(),
-                    &verifier.agency_client,
-                    &verifier_to_consumer
-                )
-                .await
-                .unwrap();
-            assert_eq!(
-                proof_verifier.get_verification_status(),
-                PresentationVerificationStatus::Valid
-            );
-
-            let mut proof_verifier = verifier_create_proof_and_send_request(
-                &mut verifier,
-                &verifier_to_consumer,
-                &schema_id,
-                &cred_def_id,
-                req2,
-            )
-                .await;
-
-
-            #[cfg(feature = "migration")]
-            consumer.migrate().await;
-
-            prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2))
-                .await;
-            verifier_update_with_mediator(
-                &mut proof_verifier,
-                    &verifier.profile.inject_wallet(),
-                    &verifier.profile.inject_anoncreds_ledger_read(),
-                    &verifier.profile.inject_anoncreds(),
-                    &verifier.agency_client,
-                    &verifier_to_consumer
-                )
-                .await
-                .unwrap();
-            assert_eq!(
-                proof_verifier.get_verification_status(),
-                PresentationVerificationStatus::Valid
-            );
+            exchange_proof_and_verify(&mut verifier, &mut consumer, &schema_id, &cred_def_id, req1).await;
+            exchange_proof_and_verify(&mut verifier, &mut consumer, &schema_id, &cred_def_id, req2).await;
         }).await;
     }
 
