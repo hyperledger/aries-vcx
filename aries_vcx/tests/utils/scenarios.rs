@@ -622,29 +622,32 @@ pub mod test_utils {
         verifier
     }
 
-    pub async fn create_proof_request(
-        _faber: &mut Faber,
+    pub async fn create_proof_request_data(
+        faber: &mut Faber,
         requested_attrs: &str,
         requested_preds: &str,
         revocation_interval: &str,
         request_name: Option<&str>,
-    ) -> RequestPresentation {
-        let presentation_request =
-            PresentationRequestData::create(&_faber.profile.inject_anoncreds(), request_name.unwrap_or("name"))
-                .await
-                .unwrap()
-                .set_requested_attributes_as_string(requested_attrs.to_string())
-                .unwrap()
-                .set_requested_predicates_as_string(requested_preds.to_string())
-                .unwrap()
-                .set_not_revoked_interval(revocation_interval.to_string())
-                .unwrap();
-        let verifier = Verifier::create_from_request("1".to_string(), &presentation_request).unwrap();
-        verifier.get_presentation_request_msg().unwrap()
+    ) -> PresentationRequestData {
+        PresentationRequestData::create(&faber.profile.inject_anoncreds(), request_name.unwrap_or("name"))
+            .await
+            .unwrap()
+            .set_requested_attributes_as_string(requested_attrs.to_string())
+            .unwrap()
+            .set_requested_predicates_as_string(requested_preds.to_string())
+            .unwrap()
+            .set_not_revoked_interval(revocation_interval.to_string())
+            .unwrap()
     }
 
     pub async fn create_prover_from_request(presentation_request: RequestPresentation) -> Prover {
         Prover::create_from_request(DEFAULT_PROOF_NAME, presentation_request).unwrap()
+    }
+
+    pub async fn create_verifier_from_request_data(presentation_request_data: PresentationRequestData) -> Verifier {
+        let mut verifier = Verifier::create_from_request("1".to_string(), &presentation_request_data).unwrap();
+        verifier.mark_presentation_request_sent().unwrap();
+        verifier
     }
 
     pub async fn create_proof(
@@ -866,6 +869,19 @@ pub mod test_utils {
         )
     }
 
+    pub async fn verifier_create_proof_and_send_request_new(
+        institution: &mut Faber,
+        schema_id: &str,
+        cred_def_id: &str,
+        request_name: Option<&str>,
+    ) -> Verifier {
+        let requested_attrs = requested_attrs(&institution.institution_did, &schema_id, &cred_def_id, None, None);
+        let requested_attrs_string = serde_json::to_string(&requested_attrs).unwrap();
+        let presentation_request_data =
+            create_proof_request_data(institution, &requested_attrs_string, "[]", "{}", request_name).await;
+        create_verifier_from_request_data(presentation_request_data).await
+    }
+
     pub async fn verifier_create_proof_and_send_request(
         institution: &mut Faber,
         institution_to_consumer: &MediatedConnection,
@@ -873,8 +889,8 @@ pub mod test_utils {
         cred_def_id: &str,
         request_name: Option<&str>,
     ) -> Verifier {
-        let _requested_attrs = requested_attrs(&institution.institution_did, &schema_id, &cred_def_id, None, None);
-        let requested_attrs_string = serde_json::to_string(&_requested_attrs).unwrap();
+        let requested_attrs = requested_attrs(&institution.institution_did, &schema_id, &cred_def_id, None, None);
+        let requested_attrs_string = serde_json::to_string(&requested_attrs).unwrap();
         send_proof_request(
             institution,
             institution_to_consumer,
@@ -934,6 +950,31 @@ pub mod test_utils {
         };
 
         selected_credentials
+    }
+
+    pub async fn prover_select_credentials_and_send_proof_new(
+        alice: &mut Alice,
+        presentation_request: RequestPresentation,
+        request_name: Option<&str>,
+        preselected_credentials: Option<&str>,
+    ) -> Presentation {
+        let mut prover = create_prover_from_request(presentation_request.clone()).await;
+        let selected_credentials =
+            prover_select_credentials_new(&mut prover, alice, presentation_request.into(), preselected_credentials)
+                .await;
+        info!(
+            "Prover :: Retrieved credential converted to selected: {:?}",
+            &selected_credentials
+        );
+        let presentation = generate_and_send_proof_new(alice, &mut prover, selected_credentials)
+            .await
+            .unwrap();
+        let presentation = match presentation {
+            AriesMessage::PresentProof(PresentProof::Presentation(presentation)) => presentation,
+            _ => panic!("Unexpected message type"),
+        };
+        assert_eq!(ProverState::PresentationSent, prover.get_state());
+        presentation
     }
 
     pub async fn prover_select_credentials_and_send_proof(

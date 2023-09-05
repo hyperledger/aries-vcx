@@ -88,7 +88,7 @@ pub fn build_verification_ack(thread_id: &str) -> AckPresentation {
     AckPresentation::with_decorators(Uuid::new_v4().to_string(), content, decorators)
 }
 
-fn build_starting_presentation_request(
+pub fn build_starting_presentation_request(
     thread_id: &str,
     request_data: &PresentationRequestData,
     comment: Option<String>,
@@ -250,14 +250,14 @@ impl VerifierSM {
     }
 
     pub fn get_final_message(&self) -> VcxResult<AriesMessage> {
-        match self.state {
+        match &self.state {
             VerifierFullState::Finished(ref state) => match &state.verification_status {
                 PresentationVerificationStatus::Valid => Ok(build_verification_ack(&self.thread_id).into()),
                 PresentationVerificationStatus::Invalid | PresentationVerificationStatus::Unavailable => {
                     match &state.status {
                         Status::Undefined => Err(AriesVcxError::from_msg(
                             AriesVcxErrorKind::InvalidState,
-                            "Cannot get final message in this state",
+                            "Cannot get final message in this state: finished, status undefined",
                         )),
                         Status::Success => Ok(build_problem_report_msg(None, &self.thread_id).into()),
                         Status::Failed(problem_report) | Status::Declined(problem_report) => {
@@ -277,9 +277,9 @@ impl VerifierSM {
                     }
                 }
             },
-            _ => Err(AriesVcxError::from_msg(
+            s @ _ => Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::InvalidState,
-                "Cannot get final message in this state",
+                format!("Cannot get final message in this state: {:?}", s),
             )),
         }
     }
