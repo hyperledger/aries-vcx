@@ -36,8 +36,8 @@ pub mod test_utils {
     use crate::utils::devsetup_util::get_credential_proposal_messages;
     use crate::utils::devsetup_util::verifier_update_with_mediator;
     use crate::utils::devsetup_util::{
-        get_credential_offer_messages, get_proof_request_messages, holder_update_with_mediator,
-        issuer_update_with_mediator, prover_update_with_mediator,
+        get_credential_offer_messages, get_proof_request_messages, issuer_update_with_mediator,
+        prover_update_with_mediator,
     };
     use aries_vcx::common::ledger::transactions::into_did_doc;
     use aries_vcx::common::primitives::credential_definition::CredentialDef;
@@ -530,49 +530,6 @@ pub mod test_utils {
         proposal.into()
     }
 
-    pub async fn send_proof_proposal(alice: &mut Alice, connection: &MediatedConnection, cred_def_id: &str) -> Prover {
-        let attrs = requested_attr_objects(cred_def_id);
-        let mut proposal_data = PresentationProposalData::default();
-        for attr in attrs.into_iter() {
-            proposal_data.attributes.push(attr);
-        }
-        let send_message = connection
-            .send_message_closure(alice.profile.inject_wallet())
-            .await
-            .unwrap();
-        let mut prover = Prover::create("1").unwrap();
-        let proposal = prover.build_presentation_proposal(proposal_data).await.unwrap();
-        send_message(proposal.into()).await.unwrap();
-        assert_eq!(prover.get_state(), ProverState::PresentationProposalSent);
-        tokio::time::sleep(Duration::from_millis(1000)).await;
-        prover
-    }
-
-    pub async fn send_proof_proposal_1(
-        alice: &mut Alice,
-        prover: &mut Prover,
-        connection: &MediatedConnection,
-        cred_def_id: &str,
-    ) {
-        prover_update_with_mediator(prover, &alice.agency_client, connection)
-            .await
-            .unwrap();
-        assert_eq!(prover.get_state(), ProverState::PresentationRequestReceived);
-        let attrs = requested_attr_objects_1(cred_def_id);
-        let mut proposal_data = PresentationProposalData::default();
-        for attr in attrs.into_iter() {
-            proposal_data.attributes.push(attr);
-        }
-        let proposal = prover.build_presentation_proposal(proposal_data).await.unwrap();
-        let send_message = connection
-            .send_message_closure(alice.profile.inject_wallet())
-            .await
-            .unwrap();
-        send_message(proposal.into()).await.unwrap();
-        assert_eq!(prover.get_state(), ProverState::PresentationProposalSent);
-        tokio::time::sleep(Duration::from_millis(1000)).await;
-    }
-
     pub async fn accept_proof_proposal_new(
         faber: &mut Faber,
         verifier: &mut Verifier,
@@ -615,45 +572,6 @@ pub mod test_utils {
         presentation_request
     }
 
-    pub async fn accept_proof_proposal(faber: &mut Faber, verifier: &mut Verifier, connection: &MediatedConnection) {
-        verifier_update_with_mediator(
-            verifier,
-            &faber.profile.inject_wallet(),
-            &faber.profile.inject_anoncreds_ledger_read(),
-            &faber.profile.inject_anoncreds(),
-            &faber.agency_client,
-            connection,
-        )
-        .await
-        .unwrap();
-        assert_eq!(verifier.get_state(), VerifierState::PresentationProposalReceived);
-        let proposal = verifier.get_presentation_proposal().unwrap();
-        let attrs = proposal
-            .content
-            .presentation_proposal
-            .attributes
-            .into_iter()
-            .map(|attr| AttrInfo {
-                name: Some(attr.name),
-                ..AttrInfo::default()
-            })
-            .collect();
-        let presentation_request_data = PresentationRequestData::create(&faber.profile.inject_anoncreds(), "request-1")
-            .await
-            .unwrap()
-            .set_requested_attributes_as_vec(attrs)
-            .unwrap();
-        verifier
-            .set_presentation_request(presentation_request_data, None)
-            .unwrap();
-        let send_closure = connection
-            .send_message_closure(faber.profile.inject_wallet())
-            .await
-            .unwrap();
-        let message = verifier.mark_presentation_request_sent().unwrap();
-        send_closure(message).await.unwrap();
-    }
-
     pub async fn reject_proof_proposal_new(faber: &mut Faber, presentation_proposal: &AriesMessage) -> AriesMessage {
         let presentation_proposal = match presentation_proposal {
             AriesMessage::PresentProof(PresentProof::ProposePresentation(proposal)) => proposal,
@@ -669,47 +587,9 @@ pub mod test_utils {
         message
     }
 
-    pub async fn reject_proof_proposal(faber: &mut Faber, connection: &MediatedConnection) -> Verifier {
-        let mut verifier = Verifier::create("1").unwrap();
-        verifier_update_with_mediator(
-            &mut verifier,
-            &faber.profile.inject_wallet(),
-            &faber.profile.inject_anoncreds_ledger_read(),
-            &faber.profile.inject_anoncreds(),
-            &faber.agency_client,
-            connection,
-        )
-        .await
-        .unwrap();
-        assert_eq!(verifier.get_state(), VerifierState::PresentationProposalReceived);
-        let send_closure = connection
-            .send_message_closure(faber.profile.inject_wallet())
-            .await
-            .unwrap();
-        let message = verifier
-            .decline_presentation_proposal("I don't like Alices") // :(
-            .await
-            .unwrap();
-        send_closure(message).await.unwrap();
-        assert_eq!(verifier.get_state(), VerifierState::Failed);
-        verifier
-    }
-
     pub async fn receive_proof_proposal_rejection_new(alice: &mut Alice, prover: &mut Prover, rejection: AriesMessage) {
         assert_eq!(prover.get_state(), ProverState::PresentationProposalSent);
         prover.process_aries_msg(rejection).await.unwrap();
-        assert_eq!(prover.get_state(), ProverState::Failed);
-    }
-
-    pub async fn receive_proof_proposal_rejection(
-        alice: &mut Alice,
-        prover: &mut Prover,
-        connection: &MediatedConnection,
-    ) {
-        assert_eq!(prover.get_state(), ProverState::PresentationProposalSent);
-        prover_update_with_mediator(prover, &alice.agency_client, connection)
-            .await
-            .unwrap();
         assert_eq!(prover.get_state(), ProverState::Failed);
     }
 
@@ -877,24 +757,6 @@ pub mod test_utils {
             )
             .await
             .unwrap();
-        assert_eq!(verifier.get_state(), VerifierState::Finished);
-        assert_eq!(
-            verifier.get_verification_status(),
-            PresentationVerificationStatus::Valid
-        );
-    }
-
-    pub async fn verify_proof(faber: &mut Faber, verifier: &mut Verifier, connection: &MediatedConnection) {
-        verifier_update_with_mediator(
-            verifier,
-            &faber.profile.inject_wallet(),
-            &faber.profile.inject_anoncreds_ledger_read(),
-            &faber.profile.inject_anoncreds(),
-            &faber.agency_client,
-            &connection,
-        )
-        .await
-        .unwrap();
         assert_eq!(verifier.get_state(), VerifierState::Finished);
         assert_eq!(
             verifier.get_verification_status(),
