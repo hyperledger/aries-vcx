@@ -1263,4 +1263,39 @@ pub mod test_utils {
             PresentationVerificationStatus::Valid
         );
     }
+
+    // TODO: Deduplicate
+    pub async fn exchange_proof_and_verify_invalid(
+        institution: &mut Faber,
+        consumer: &mut Alice,
+        schema_id: &str,
+        cred_def_id: &str,
+        request_name: Option<&str>,
+    ) {
+        let mut verifier =
+            verifier_create_proof_and_send_request_new(institution, &schema_id, &cred_def_id, request_name).await;
+
+        #[cfg(feature = "migration")]
+        consumer.migrate().await;
+
+        let presentation = prover_select_credentials_and_send_proof_new(
+            consumer,
+            verifier.get_presentation_request_msg().unwrap(),
+            None,
+            None,
+        )
+        .await;
+        verifier
+            .verify_presentation(
+                &institution.profile.inject_anoncreds_ledger_read(),
+                &institution.profile.inject_anoncreds(),
+                presentation,
+            )
+            .await
+            .unwrap();
+        assert_eq!(
+            verifier.get_verification_status(),
+            PresentationVerificationStatus::Invalid
+        );
+    }
 }
