@@ -579,12 +579,12 @@ mod tests {
     use crate::utils::migration::Migratable;
     use crate::utils::scenarios::test_utils::{
         _create_address_schema_creddef_revreg, _exchange_credential, _exchange_credential_with_proposal,
-        accept_credential_proposal, accept_offer, accept_proof_proposal_new, attr_names, create_credential_proposal,
+        accept_credential_proposal, accept_offer, accept_proof_proposal, attr_names, create_credential_proposal,
         create_credential_request, create_holder_from_proposal, create_issuer_from_proposal,
         create_nonrevocable_cred_offer, create_proof_proposal, create_proof_request_data, create_prover_from_request,
-        create_verifier_from_request_data, decline_offer, exchange_proof_and_verify, generate_and_send_proof_new,
-        issue_address_credential, prover_select_credentials_and_send_proof_new, prover_select_credentials_new,
-        receive_proof_proposal_rejection_new, reject_proof_proposal_new, send_credential, verify_proof_new,
+        create_verifier_from_request_data, decline_offer, exchange_proof_and_verify, generate_and_send_proof,
+        issue_address_credential, prover_select_credentials, prover_select_credentials_and_send_proof,
+        receive_proof_proposal_rejection, reject_proof_proposal, send_credential, verify_proof,
     };
 
     #[tokio::test]
@@ -622,7 +622,7 @@ mod tests {
             #[cfg(feature = "migration")]
             consumer.migrate().await;
 
-            let presentation = prover_select_credentials_and_send_proof_new(
+            let presentation = prover_select_credentials_and_send_proof(
                 &mut consumer,
                 verifier.get_presentation_request_msg().unwrap(),
                 None,
@@ -677,7 +677,7 @@ mod tests {
             #[cfg(feature = "migration")]
             consumer.migrate().await;
 
-            let presentation = prover_select_credentials_and_send_proof_new(
+            let presentation = prover_select_credentials_and_send_proof(
                 &mut consumer,
                 verifier.get_presentation_request_msg().unwrap(),
                 None,
@@ -732,7 +732,7 @@ mod tests {
             let presentation_request = verifier.get_presentation_request_msg().unwrap();
             let mut prover = create_prover_from_request(presentation_request.clone()).await;
             let selected_credentials =
-                prover_select_credentials_new(&mut prover, &mut consumer, presentation_request.into(), None).await;
+                prover_select_credentials(&mut prover, &mut consumer, presentation_request.into(), None).await;
 
             assert!(selected_credentials.credential_for_referent.is_empty());
         })
@@ -767,7 +767,7 @@ mod tests {
 
             let mut prover = create_prover_from_request(presentation_request.clone()).await;
             let selected_credentials =
-                prover_select_credentials_new(&mut prover, &mut consumer, presentation_request.into(), None).await;
+                prover_select_credentials(&mut prover, &mut consumer, presentation_request.into(), None).await;
             assert_eq!(selected_credentials.credential_for_referent.is_empty(), false);
         })
         .await;
@@ -942,12 +942,12 @@ mod tests {
             );
             let presentation_request_data =
                 create_proof_request_data(&mut institution, &requested_attrs, "[]", "{}", None).await;
-            let mut verifier = create_verifier_from_request_data(presentation_request_data).await;
+            let verifier = create_verifier_from_request_data(presentation_request_data).await;
             let presentation_request = verifier.get_presentation_request_msg().unwrap();
             let presentation_thread_id = verifier.get_thread_id().unwrap();
 
             info!("test_real_proof :: Going to create proof");
-            prover_select_credentials_and_send_proof_new(&mut consumer, presentation_request, None);
+            prover_select_credentials_and_send_proof(&mut consumer, presentation_request, None);
         })
         .await;
     }
@@ -1141,17 +1141,17 @@ mod tests {
             let mut verifier = Verifier::create("1").unwrap();
             let presentation_proposal = create_proof_proposal(&mut prover, &cred_def_id).await;
             let presentation_request =
-                accept_proof_proposal_new(&mut institution, &mut verifier, presentation_proposal).await;
+                accept_proof_proposal(&mut institution, &mut verifier, presentation_proposal).await;
 
             #[cfg(feature = "migration")]
             consumer.migrate().await;
 
             let selected_credentials =
-                prover_select_credentials_new(&mut prover, &mut consumer, presentation_request, None).await;
-            let presentation = generate_and_send_proof_new(&mut consumer, &mut prover, selected_credentials)
+                prover_select_credentials(&mut prover, &mut consumer, presentation_request, None).await;
+            let presentation = generate_and_send_proof(&mut consumer, &mut prover, selected_credentials)
                 .await
                 .unwrap();
-            verify_proof_new(&mut institution, &mut verifier, presentation).await;
+            verify_proof(&mut institution, &mut verifier, presentation).await;
         })
         .await;
     }
@@ -1182,8 +1182,8 @@ mod tests {
             .await;
             let mut prover = Prover::create("1").unwrap();
             let presentation_proposal = create_proof_proposal(&mut prover, &cred_def_id).await;
-            let rejection = reject_proof_proposal_new(&presentation_proposal).await;
-            receive_proof_proposal_rejection_new(&mut prover, rejection).await;
+            let rejection = reject_proof_proposal(&presentation_proposal).await;
+            receive_proof_proposal_rejection(&mut prover, rejection).await;
         })
         .await;
     }
@@ -1219,17 +1219,15 @@ mod tests {
             #[cfg(feature = "migration")]
             consumer.migrate().await;
 
-            let presentation_request =
-                accept_proof_proposal_new(&mut institution, &mut verifier, presentation_proposal).await;
             let presentation_proposal = create_proof_proposal(&mut prover, &cred_def_id).await;
             let presentation_request =
-                accept_proof_proposal_new(&mut institution, &mut verifier, presentation_proposal).await;
+                accept_proof_proposal(&mut institution, &mut verifier, presentation_proposal).await;
             let selected_credentials =
-                prover_select_credentials_new(&mut prover, &mut consumer, presentation_request, None).await;
-            let presentation = generate_and_send_proof_new(&mut consumer, &mut prover, selected_credentials)
+                prover_select_credentials(&mut prover, &mut consumer, presentation_request, None).await;
+            let presentation = generate_and_send_proof(&mut consumer, &mut prover, selected_credentials)
                 .await
                 .unwrap();
-            verify_proof_new(&mut institution, &mut verifier, presentation).await;
+            verify_proof(&mut institution, &mut verifier, presentation).await;
         })
         .await;
     }

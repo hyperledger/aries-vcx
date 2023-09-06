@@ -520,7 +520,7 @@ pub mod test_utils {
         proposal.into()
     }
 
-    pub async fn accept_proof_proposal_new(
+    pub async fn accept_proof_proposal(
         faber: &mut Faber,
         verifier: &mut Verifier,
         presentation_proposal: AriesMessage,
@@ -562,7 +562,7 @@ pub mod test_utils {
         presentation_request
     }
 
-    pub async fn reject_proof_proposal_new(presentation_proposal: &AriesMessage) -> AriesMessage {
+    pub async fn reject_proof_proposal(presentation_proposal: &AriesMessage) -> AriesMessage {
         let presentation_proposal = match presentation_proposal {
             AriesMessage::PresentProof(PresentProof::ProposePresentation(proposal)) => proposal,
             _ => panic!("Unexpected message"),
@@ -577,7 +577,7 @@ pub mod test_utils {
         message
     }
 
-    pub async fn receive_proof_proposal_rejection_new(prover: &mut Prover, rejection: AriesMessage) {
+    pub async fn receive_proof_proposal_rejection(prover: &mut Prover, rejection: AriesMessage) {
         assert_eq!(prover.get_state(), ProverState::PresentationProposalSent);
         prover.process_aries_msg(rejection).await.unwrap();
         assert_eq!(prover.get_state(), ProverState::Failed);
@@ -611,7 +611,7 @@ pub mod test_utils {
         verifier
     }
 
-    pub async fn generate_and_send_proof_new(
+    pub async fn generate_and_send_proof(
         alice: &mut Alice,
         prover: &mut Prover,
         selected_credentials: SelectedCredentials,
@@ -642,11 +642,7 @@ pub mod test_utils {
         }
     }
 
-    pub async fn verify_proof_new(
-        faber: &mut Faber,
-        verifier: &mut Verifier,
-        presentation: AriesMessage,
-    ) -> AriesMessage {
+    pub async fn verify_proof(faber: &mut Faber, verifier: &mut Verifier, presentation: AriesMessage) -> AriesMessage {
         let presentation = match presentation {
             AriesMessage::PresentProof(PresentProof::Presentation(presentation)) => presentation,
             _ => panic!("Unexpected message type"),
@@ -707,7 +703,7 @@ pub mod test_utils {
         credential_def: &CredentialDef,
         rev_reg: &RevocationRegistry,
     ) -> RevocationRegistry {
-        let mut rev_reg_new = RevocationRegistry::create(
+        let mut rev_reg = RevocationRegistry::create(
             &faber.profile.inject_anoncreds(),
             &faber.institution_did,
             &credential_def.get_cred_def_id(),
@@ -717,11 +713,11 @@ pub mod test_utils {
         )
         .await
         .unwrap();
-        rev_reg_new
+        rev_reg
             .publish_revocation_primitives(&faber.profile.inject_anoncreds_ledger_write(), TEST_TAILS_URL)
             .await
             .unwrap();
-        rev_reg_new
+        rev_reg
     }
 
     pub async fn publish_revocation(institution: &mut Faber, rev_reg: &RevocationRegistry) {
@@ -769,7 +765,7 @@ pub mod test_utils {
         )
     }
 
-    pub async fn verifier_create_proof_and_send_request_new(
+    pub async fn verifier_create_proof_and_send_request(
         institution: &mut Faber,
         schema_id: &str,
         cred_def_id: &str,
@@ -782,7 +778,7 @@ pub mod test_utils {
         create_verifier_from_request_data(presentation_request_data).await
     }
 
-    pub async fn prover_select_credentials_new(
+    pub async fn prover_select_credentials(
         prover: &mut Prover,
         alice: &mut Alice,
         presentation_request: AriesMessage,
@@ -806,20 +802,19 @@ pub mod test_utils {
         selected_credentials
     }
 
-    pub async fn prover_select_credentials_and_send_proof_new(
+    pub async fn prover_select_credentials_and_send_proof(
         alice: &mut Alice,
         presentation_request: RequestPresentation,
         preselected_credentials: Option<&str>,
     ) -> Presentation {
         let mut prover = create_prover_from_request(presentation_request.clone()).await;
         let selected_credentials =
-            prover_select_credentials_new(&mut prover, alice, presentation_request.into(), preselected_credentials)
-                .await;
+            prover_select_credentials(&mut prover, alice, presentation_request.into(), preselected_credentials).await;
         info!(
             "Prover :: Retrieved credential converted to selected: {:?}",
             &selected_credentials
         );
-        let presentation = generate_and_send_proof_new(alice, &mut prover, selected_credentials)
+        let presentation = generate_and_send_proof(alice, &mut prover, selected_credentials)
             .await
             .unwrap();
         let presentation = match presentation {
@@ -1074,17 +1069,14 @@ pub mod test_utils {
         request_name: Option<&str>,
     ) {
         let mut verifier =
-            verifier_create_proof_and_send_request_new(institution, &schema_id, &cred_def_id, request_name).await;
+            verifier_create_proof_and_send_request(institution, &schema_id, &cred_def_id, request_name).await;
 
         #[cfg(feature = "migration")]
         consumer.migrate().await;
 
-        let presentation = prover_select_credentials_and_send_proof_new(
-            consumer,
-            verifier.get_presentation_request_msg().unwrap(),
-            None,
-        )
-        .await;
+        let presentation =
+            prover_select_credentials_and_send_proof(consumer, verifier.get_presentation_request_msg().unwrap(), None)
+                .await;
         verifier
             .verify_presentation(
                 &institution.profile.inject_anoncreds_ledger_read(),
@@ -1108,17 +1100,14 @@ pub mod test_utils {
         request_name: Option<&str>,
     ) {
         let mut verifier =
-            verifier_create_proof_and_send_request_new(institution, &schema_id, &cred_def_id, request_name).await;
+            verifier_create_proof_and_send_request(institution, &schema_id, &cred_def_id, request_name).await;
 
         #[cfg(feature = "migration")]
         consumer.migrate().await;
 
-        let presentation = prover_select_credentials_and_send_proof_new(
-            consumer,
-            verifier.get_presentation_request_msg().unwrap(),
-            None,
-        )
-        .await;
+        let presentation =
+            prover_select_credentials_and_send_proof(consumer, verifier.get_presentation_request_msg().unwrap(), None)
+                .await;
         verifier
             .verify_presentation(
                 &institution.profile.inject_anoncreds_ledger_read(),
