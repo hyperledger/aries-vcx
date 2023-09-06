@@ -19,8 +19,8 @@ mod integration_tests {
     use crate::utils::migration::Migratable;
     use crate::utils::scenarios::test_utils::{
         _create_address_schema_creddef_revreg, _exchange_credential, attr_names, create_proof_request_data,
-        create_verifier_from_request_data, exchange_proof_and_verify, exchange_proof_and_verify_invalid,
-        issue_address_credential, prover_select_credentials_and_send_proof, publish_revocation, requested_attrs,
+        create_verifier_from_request_data, exchange_proof_and_verify, issue_address_credential,
+        prover_select_credentials_and_send_proof, publish_revocation, requested_attrs,
         revoke_credential_and_publish_accumulator, revoke_credential_local, rotate_rev_reg,
         verifier_create_proof_and_send_request,
     };
@@ -193,6 +193,7 @@ mod integration_tests {
                 &schema_id,
                 &cred_def_id,
                 Some("request1"),
+                PresentationVerificationStatus::Valid,
             )
             .await;
 
@@ -203,12 +204,13 @@ mod integration_tests {
 
             publish_revocation(&mut institution, &rev_reg).await;
 
-            exchange_proof_and_verify_invalid(
+            exchange_proof_and_verify(
                 &mut institution,
                 &mut consumer,
                 &schema_id,
                 &cred_def_id,
                 Some("request2"),
+                PresentationVerificationStatus::Invalid,
             )
             .await;
 
@@ -279,9 +281,9 @@ mod integration_tests {
             assert!(!issuer_credential3.is_revoked(&institution.profile.inject_anoncreds_ledger_read()).await.unwrap());
 
             // Revoke two locally and verify their are all still valid
-            exchange_proof_and_verify(&mut institution, &mut consumer1, &schema_id, &cred_def_id, Some("request1")).await;
-            exchange_proof_and_verify(&mut institution, &mut consumer2, &schema_id, &cred_def_id, Some("request2")).await;
-            exchange_proof_and_verify(&mut institution, &mut consumer3, &schema_id, &cred_def_id, Some("request3")).await;
+            exchange_proof_and_verify(&mut institution, &mut consumer1, &schema_id, &cred_def_id, Some("request1"), PresentationVerificationStatus::Valid).await;
+            exchange_proof_and_verify(&mut institution, &mut consumer2, &schema_id, &cred_def_id, Some("request2"), PresentationVerificationStatus::Valid).await;
+            exchange_proof_and_verify(&mut institution, &mut consumer3, &schema_id, &cred_def_id, Some("request3"), PresentationVerificationStatus::Valid).await;
 
             // Publish revocations and verify the two are invalid, third still valid
             publish_revocation(&mut institution, &rev_reg).await;
@@ -291,9 +293,9 @@ mod integration_tests {
             assert!(issuer_credential2.is_revoked(&institution.profile.inject_anoncreds_ledger_read()).await.unwrap());
             assert!(!issuer_credential3.is_revoked(&institution.profile.inject_anoncreds_ledger_read()).await.unwrap());
 
-            exchange_proof_and_verify_invalid(&mut institution, &mut consumer1, &schema_id, &cred_def_id, Some("request1")).await;
-            exchange_proof_and_verify_invalid(&mut institution, &mut consumer2, &schema_id, &cred_def_id, Some("request2")).await;
-            exchange_proof_and_verify(&mut institution, &mut consumer3, &schema_id, &cred_def_id, Some("request3")).await;
+            exchange_proof_and_verify(&mut institution, &mut consumer1, &schema_id, &cred_def_id, Some("request1"), PresentationVerificationStatus::Invalid).await;
+            exchange_proof_and_verify(&mut institution, &mut consumer2, &schema_id, &cred_def_id, Some("request2"), PresentationVerificationStatus::Invalid).await;
+            exchange_proof_and_verify(&mut institution, &mut consumer3, &schema_id, &cred_def_id, Some("request3"), PresentationVerificationStatus::Valid).await;
         })
             .await;
     }

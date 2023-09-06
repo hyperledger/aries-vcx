@@ -1067,38 +1067,19 @@ pub mod test_utils {
         schema_id: &str,
         cred_def_id: &str,
         request_name: Option<&str>,
+        expected_result: PresentationVerificationStatus,
     ) {
-        let mut verifier =
-            verifier_create_proof_and_send_request(institution, &schema_id, &cred_def_id, request_name).await;
-
-        #[cfg(feature = "migration")]
-        consumer.migrate().await;
-
-        let presentation =
-            prover_select_credentials_and_send_proof(consumer, verifier.get_presentation_request_msg().unwrap(), None)
-                .await;
-        verifier
-            .verify_presentation(
-                &institution.profile.inject_anoncreds_ledger_read(),
-                &institution.profile.inject_anoncreds(),
-                presentation,
-            )
-            .await
-            .unwrap();
-        assert_eq!(
-            verifier.get_verification_status(),
-            PresentationVerificationStatus::Valid
-        );
+        let verifier = exchange_proof(institution, consumer, schema_id, cred_def_id, request_name).await;
+        assert_eq!(verifier.get_verification_status(), expected_result);
     }
 
-    // TODO: Deduplicate
-    pub async fn exchange_proof_and_verify_invalid(
+    async fn exchange_proof(
         institution: &mut Faber,
         consumer: &mut Alice,
         schema_id: &str,
         cred_def_id: &str,
         request_name: Option<&str>,
-    ) {
+    ) -> Verifier {
         let mut verifier =
             verifier_create_proof_and_send_request(institution, &schema_id, &cred_def_id, request_name).await;
 
@@ -1116,9 +1097,6 @@ pub mod test_utils {
             )
             .await
             .unwrap();
-        assert_eq!(
-            verifier.get_verification_status(),
-            PresentationVerificationStatus::Invalid
-        );
+        verifier
     }
 }

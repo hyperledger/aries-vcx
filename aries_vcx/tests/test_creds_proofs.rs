@@ -813,8 +813,8 @@ mod tests {
             )
                 .await;
 
-            exchange_proof_and_verify(&mut verifier, &mut consumer1, &schema_id, &cred_def_id, Some("request1")).await;
-            exchange_proof_and_verify(&mut verifier, &mut consumer2, &schema_id, &cred_def_id, Some("request2")).await;
+            exchange_proof_and_verify(&mut verifier, &mut consumer1, &schema_id, &cred_def_id, Some("request1"), PresentationVerificationStatus::Valid).await;
+            exchange_proof_and_verify(&mut verifier, &mut consumer2, &schema_id, &cred_def_id, Some("request2"), PresentationVerificationStatus::Valid).await;
         }).await;
     }
 
@@ -832,8 +832,24 @@ mod tests {
             #[cfg(feature = "migration")]
             issuer.migrate().await;
 
-            exchange_proof_and_verify(&mut verifier, &mut consumer, &schema_id, &cred_def_id, Some("request1")).await;
-            exchange_proof_and_verify(&mut verifier, &mut consumer, &schema_id, &cred_def_id, Some("request2")).await;
+            exchange_proof_and_verify(
+                &mut verifier,
+                &mut consumer,
+                &schema_id,
+                &cred_def_id,
+                Some("request1"),
+                PresentationVerificationStatus::Valid,
+            )
+            .await;
+            exchange_proof_and_verify(
+                &mut verifier,
+                &mut consumer,
+                &schema_id,
+                &cred_def_id,
+                Some("request2"),
+                PresentationVerificationStatus::Valid,
+            )
+            .await;
         })
         .await;
     }
@@ -859,8 +875,8 @@ mod tests {
             )
                 .await;
 
-            exchange_proof_and_verify(&mut institution, &mut consumer, &schema_id, &cred_def_id, Some("request1")).await;
-            exchange_proof_and_verify(&mut institution, &mut consumer, &schema_id, &cred_def_id, Some("request2")).await;
+            exchange_proof_and_verify(&mut institution, &mut consumer, &schema_id, &cred_def_id, Some("request1"), PresentationVerificationStatus::Valid).await;
+            exchange_proof_and_verify(&mut institution, &mut consumer, &schema_id, &cred_def_id, Some("request2"), PresentationVerificationStatus::Valid).await;
         }).await;
     }
 
@@ -992,8 +1008,8 @@ mod tests {
             #[cfg(feature = "migration")]
             verifier.migrate().await;
 
-            exchange_proof_and_verify(&mut verifier, &mut consumer, &schema_id, &cred_def_id, req1).await;
-            exchange_proof_and_verify(&mut verifier, &mut consumer, &schema_id, &cred_def_id, req2).await;
+            exchange_proof_and_verify(&mut verifier, &mut consumer, &schema_id, &cred_def_id, req1, PresentationVerificationStatus::Valid).await;
+            exchange_proof_and_verify(&mut verifier, &mut consumer, &schema_id, &cred_def_id, req2, PresentationVerificationStatus::Valid).await;
         }).await;
     }
 
