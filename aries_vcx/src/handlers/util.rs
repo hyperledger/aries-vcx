@@ -165,7 +165,7 @@ pub enum AnyInvitation {
 impl AnyInvitation {
     pub fn id(&self) -> &str {
         match self {
-            AnyInvitation::Con(invitation) => &invitation.id(),
+            AnyInvitation::Con(invitation) => &invitation.id,
             AnyInvitation::Oob(invitation) => &invitation.id,
         }
     }
