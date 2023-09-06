@@ -9,8 +9,6 @@ mod integration_tests {
     use std::thread;
     use std::time::Duration;
 
-    use crate::utils::devsetup_util::verifier_update_with_mediator;
-    use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
     use aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;
     use aries_vcx::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
     use aries_vcx::utils::devsetup::*;
@@ -23,8 +21,8 @@ mod integration_tests {
         _create_address_schema_creddef_revreg, _exchange_credential, attr_names, create_proof_request_data,
         create_verifier_from_request_data, exchange_proof_and_verify, exchange_proof_and_verify_invalid,
         issue_address_credential, prover_select_credentials_and_send_proof_new, publish_revocation, requested_attrs,
-        retrieved_to_selected_credentials_simple, revoke_credential_and_publish_accumulator, revoke_credential_local,
-        rotate_rev_reg, verifier_create_proof_and_send_request_new,
+        revoke_credential_and_publish_accumulator, revoke_credential_local, rotate_rev_reg,
+        verifier_create_proof_and_send_request_new,
     };
 
     use super::*;
@@ -82,7 +80,7 @@ mod integration_tests {
             let presentation_request = verifier.get_presentation_request_msg().unwrap();
 
             let presentation =
-                prover_select_credentials_and_send_proof_new(&mut consumer, presentation_request, None, None).await;
+                prover_select_credentials_and_send_proof_new(&mut consumer, presentation_request, None).await;
 
             info!("test_basic_revocation :: verifier :: going to verify proof");
             verifier
@@ -346,7 +344,7 @@ mod integration_tests {
             let presentation_request = verifier.get_presentation_request_msg().unwrap();
 
             let presentation =
-                prover_select_credentials_and_send_proof_new(&mut consumer, presentation_request, None, None).await;
+                prover_select_credentials_and_send_proof_new(&mut consumer, presentation_request, None).await;
 
             info!("test_agency_pool_revoked_credential_might_still_work :: verifier :: going to verify proof");
             verifier
@@ -413,14 +411,14 @@ mod integration_tests {
 
             let mut proof_verifier = verifier_create_proof_and_send_request_new(&mut verifier, &schema_id, &cred_def_id, req1).await;
             let presentation_request = proof_verifier.get_presentation_request_msg().unwrap();
-            let presentation = prover_select_credentials_and_send_proof_new(&mut consumer, presentation_request, req1, Some(&credential_data1)).await;
+            let presentation = prover_select_credentials_and_send_proof_new(&mut consumer, presentation_request, Some(&credential_data1)).await;
             proof_verifier.verify_presentation(&verifier.profile.inject_anoncreds_ledger_read(), &verifier.profile.inject_anoncreds(), presentation).await.unwrap();
             assert_eq!(proof_verifier.get_state(), VerifierState::Finished);
             assert_eq!(proof_verifier.get_verification_status(), PresentationVerificationStatus::Invalid);
 
             let mut proof_verifier = verifier_create_proof_and_send_request_new(&mut verifier, &schema_id, &cred_def_id, req2).await;
             let presentation_request = proof_verifier.get_presentation_request_msg().unwrap();
-            let presentation = prover_select_credentials_and_send_proof_new(&mut consumer, presentation_request, req2, Some(&credential_data2)).await;
+            let presentation = prover_select_credentials_and_send_proof_new(&mut consumer, presentation_request, Some(&credential_data2)).await;
 
             #[cfg(feature = "migration")]
             consumer.migrate().await;
@@ -480,13 +478,13 @@ mod integration_tests {
             revoke_credential_and_publish_accumulator(&mut issuer, &issuer_credential2, &rev_reg).await;
 
             let mut proof_verifier = verifier_create_proof_and_send_request_new(&mut verifier, &schema_id, &cred_def_id, req1).await;
-            let presentation = prover_select_credentials_and_send_proof_new(&mut consumer,  proof_verifier.get_presentation_request_msg().unwrap(), req1, Some(&credential_data1)).await;
+            let presentation = prover_select_credentials_and_send_proof_new(&mut consumer,  proof_verifier.get_presentation_request_msg().unwrap(), Some(&credential_data1)).await;
             proof_verifier.verify_presentation(&verifier.profile.inject_anoncreds_ledger_read(), &verifier.profile.inject_anoncreds(), presentation).await.unwrap();
             assert_eq!(proof_verifier.get_state(), VerifierState::Finished);
             assert_eq!(proof_verifier.get_verification_status(), PresentationVerificationStatus::Valid);
 
             let mut proof_verifier = verifier_create_proof_and_send_request_new(&mut verifier, &schema_id, &cred_def_id, req2).await;
-            let presentation = prover_select_credentials_and_send_proof_new(&mut consumer,  proof_verifier.get_presentation_request_msg().unwrap(), req2, Some(&credential_data2)).await;
+            let presentation = prover_select_credentials_and_send_proof_new(&mut consumer,  proof_verifier.get_presentation_request_msg().unwrap(), Some(&credential_data2)).await;
 
             #[cfg(feature = "migration")]
             consumer.migrate().await;
@@ -540,7 +538,7 @@ mod integration_tests {
                 .await;
 
             let mut proof_verifier = verifier_create_proof_and_send_request_new(&mut verifier, &schema_id, &cred_def_id, req1).await;
-            let presentation = prover_select_credentials_and_send_proof_new(&mut consumer,  proof_verifier.get_presentation_request_msg().unwrap(), req1, Some(&credential_data1)).await;
+            let presentation = prover_select_credentials_and_send_proof_new(&mut consumer,  proof_verifier.get_presentation_request_msg().unwrap(), Some(&credential_data1)).await;
             proof_verifier.verify_presentation(&verifier.profile.inject_anoncreds_ledger_read(), &verifier.profile.inject_anoncreds(), presentation).await.unwrap();
             assert_eq!(proof_verifier.get_state(), VerifierState::Finished);
             assert_eq!(proof_verifier.get_verification_status(), PresentationVerificationStatus::Valid);
@@ -553,7 +551,7 @@ mod integration_tests {
             #[cfg(feature = "migration")]
             consumer.migrate().await;
 
-            let presentation = prover_select_credentials_and_send_proof_new(&mut consumer,  proof_verifier.get_presentation_request_msg().unwrap(), req2, Some(&credential_data2)).await;
+            let presentation = prover_select_credentials_and_send_proof_new(&mut consumer,  proof_verifier.get_presentation_request_msg().unwrap(), Some(&credential_data2)).await;
             proof_verifier.verify_presentation(&verifier.profile.inject_anoncreds_ledger_read(), &verifier.profile.inject_anoncreds(), presentation).await.unwrap();
             assert_eq!(proof_verifier.get_state(), VerifierState::Finished);
             assert_eq!(proof_verifier.get_verification_status(), PresentationVerificationStatus::Valid);
@@ -612,13 +610,13 @@ mod integration_tests {
             verifier.migrate().await;
 
             let mut proof_verifier = verifier_create_proof_and_send_request_new(&mut verifier, &schema_id, &cred_def_id, req1).await;
-            let presentation = prover_select_credentials_and_send_proof_new(&mut consumer,  proof_verifier.get_presentation_request_msg().unwrap(), req1, Some(&credential_data1)).await;
+            let presentation = prover_select_credentials_and_send_proof_new(&mut consumer,  proof_verifier.get_presentation_request_msg().unwrap(), Some(&credential_data1)).await;
             proof_verifier.verify_presentation(&verifier.profile.inject_anoncreds_ledger_read(), &verifier.profile.inject_anoncreds(), presentation).await.unwrap();
             assert_eq!(proof_verifier.get_state(), VerifierState::Finished);
             assert_eq!(proof_verifier.get_verification_status(), PresentationVerificationStatus::Invalid);
 
             let mut proof_verifier = verifier_create_proof_and_send_request_new(&mut verifier, &schema_id, &cred_def_id, req2).await;
-            let presentation = prover_select_credentials_and_send_proof_new(&mut consumer,  proof_verifier.get_presentation_request_msg().unwrap(), req2, Some(&credential_data2)).await;
+            let presentation = prover_select_credentials_and_send_proof_new(&mut consumer,  proof_verifier.get_presentation_request_msg().unwrap(), Some(&credential_data2)).await;
 
             #[cfg(feature = "migration")]
             consumer.migrate().await;
@@ -676,7 +674,7 @@ mod integration_tests {
             revoke_credential_and_publish_accumulator(&mut issuer, &issuer_credential2, &rev_reg_2).await;
 
             let mut proof_verifier = verifier_create_proof_and_send_request_new(&mut verifier, &schema_id, &cred_def_id, req1).await;
-            let presentation = prover_select_credentials_and_send_proof_new(&mut consumer,  proof_verifier.get_presentation_request_msg().unwrap(), req1, Some(&credential_data1)).await;
+            let presentation = prover_select_credentials_and_send_proof_new(&mut consumer,  proof_verifier.get_presentation_request_msg().unwrap(), Some(&credential_data1)).await;
 
             #[cfg(feature = "migration")]
             verifier.migrate().await;
@@ -686,7 +684,7 @@ mod integration_tests {
             assert_eq!(proof_verifier.get_verification_status(), PresentationVerificationStatus::Valid);
 
             let mut proof_verifier = verifier_create_proof_and_send_request_new(&mut verifier, &schema_id, &cred_def_id, req2).await;
-            let presentation = prover_select_credentials_and_send_proof_new(&mut consumer,  proof_verifier.get_presentation_request_msg().unwrap(), req1, Some(&credential_data2)).await;
+            let presentation = prover_select_credentials_and_send_proof_new(&mut consumer,  proof_verifier.get_presentation_request_msg().unwrap(), Some(&credential_data2)).await;
 
             #[cfg(feature = "migration")]
             consumer.migrate().await;

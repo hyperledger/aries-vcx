@@ -24,21 +24,14 @@ pub mod test_utils {
     };
     use messages::msg_fields::protocols::cred_issuance::{CredentialAttr, CredentialIssuance, CredentialPreview};
     use messages::msg_fields::protocols::present_proof::present::Presentation;
-    use messages::msg_fields::protocols::present_proof::propose::{PresentationAttr, ProposePresentation};
+    use messages::msg_fields::protocols::present_proof::propose::PresentationAttr;
     use messages::msg_fields::protocols::present_proof::request::RequestPresentation;
     use messages::msg_fields::protocols::present_proof::PresentProof;
     use messages::AriesMessage;
     use serde_json::{json, Value};
-    use sha2::digest::typenum::private::IsNotEqualPrivate;
 
     use crate::utils::devsetup_alice::Alice;
     use crate::utils::devsetup_faber::Faber;
-    use crate::utils::devsetup_util::get_credential_proposal_messages;
-    use crate::utils::devsetup_util::verifier_update_with_mediator;
-    use crate::utils::devsetup_util::{
-        get_credential_offer_messages, get_proof_request_messages, issuer_update_with_mediator,
-        prover_update_with_mediator,
-    };
     #[cfg(feature = "migration")]
     use crate::utils::migration::Migratable;
     use aries_vcx::common::ledger::transactions::into_did_doc;
@@ -59,7 +52,6 @@ pub mod test_utils {
     use aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;
     use aries_vcx::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
     use aries_vcx::utils::constants::{DEFAULT_PROOF_NAME, TEST_TAILS_URL};
-    use aries_vcx::utils::filters::{filter_credential_offers_by_comment, filter_proof_requests_by_name};
     use aries_vcx_core::ledger::indy::pool::test_utils::get_temp_dir_path;
 
     pub fn _send_message(sender: Sender<AriesMessage>) -> Option<SendClosureConnection> {
@@ -188,13 +180,13 @@ pub mod test_utils {
     }
 
     pub fn create_holder_from_proposal(proposal: ProposeCredential) -> Holder {
-        let mut holder = Holder::create_with_proposal("TEST_CREDENTIAL", proposal).unwrap();
+        let holder = Holder::create_with_proposal("TEST_CREDENTIAL", proposal).unwrap();
         assert_eq!(HolderState::ProposalSet, holder.get_state());
         holder
     }
 
     pub fn create_issuer_from_proposal(proposal: ProposeCredential) -> Issuer {
-        let mut issuer = Issuer::create_from_proposal("TEST_CREDENTIAL", &proposal).unwrap();
+        let issuer = Issuer::create_from_proposal("TEST_CREDENTIAL", &proposal).unwrap();
         assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
         assert_eq!(proposal.clone(), issuer.get_proposal().unwrap());
         issuer
@@ -249,11 +241,7 @@ pub mod test_utils {
         (issuer, credential_offer)
     }
 
-    pub async fn create_credential_request(
-        alice: &mut Alice,
-        cred_offer: AriesMessage,
-        comment: Option<&str>,
-    ) -> (Holder, AriesMessage) {
+    pub async fn create_credential_request(alice: &mut Alice, cred_offer: AriesMessage) -> (Holder, AriesMessage) {
         info!("create_credential_request >>>");
         let cred_offer: OfferCredential = match cred_offer {
             AriesMessage::CredentialIssuance(CredentialIssuance::OfferCredential(cred_offer)) => cred_offer,
@@ -456,7 +444,7 @@ pub mod test_utils {
         let (mut issuer_credential, cred_offer) =
             create_credential_offer(institution, cred_def, rev_reg, &credential_data, comment).await;
         info!("AS CONSUMER SEND CREDENTIAL REQUEST");
-        let (mut holder_credential, cred_request) = create_credential_request(consumer, cred_offer, comment).await;
+        let (mut holder_credential, cred_request) = create_credential_request(consumer, cred_offer).await;
         info!("AS INSTITUTION SEND CREDENTIAL");
         send_credential(
             consumer,
@@ -521,7 +509,7 @@ pub mod test_utils {
         (schema_id, cred_def_id, rev_reg_id, cred_def, rev_reg, credential_handle)
     }
 
-    pub async fn create_proof_proposal(alice: &mut Alice, prover: &mut Prover, cred_def_id: &str) -> AriesMessage {
+    pub async fn create_proof_proposal(prover: &mut Prover, cred_def_id: &str) -> AriesMessage {
         let attrs = requested_attr_objects(cred_def_id);
         let mut proposal_data = PresentationProposalData::default();
         for attr in attrs.into_iter() {
@@ -574,7 +562,7 @@ pub mod test_utils {
         presentation_request
     }
 
-    pub async fn reject_proof_proposal_new(faber: &mut Faber, presentation_proposal: &AriesMessage) -> AriesMessage {
+    pub async fn reject_proof_proposal_new(presentation_proposal: &AriesMessage) -> AriesMessage {
         let presentation_proposal = match presentation_proposal {
             AriesMessage::PresentProof(PresentProof::ProposePresentation(proposal)) => proposal,
             _ => panic!("Unexpected message"),
@@ -589,7 +577,7 @@ pub mod test_utils {
         message
     }
 
-    pub async fn receive_proof_proposal_rejection_new(alice: &mut Alice, prover: &mut Prover, rejection: AriesMessage) {
+    pub async fn receive_proof_proposal_rejection_new(prover: &mut Prover, rejection: AriesMessage) {
         assert_eq!(prover.get_state(), ProverState::PresentationProposalSent);
         prover.process_aries_msg(rejection).await.unwrap();
         assert_eq!(prover.get_state(), ProverState::Failed);
@@ -654,7 +642,11 @@ pub mod test_utils {
         }
     }
 
-    pub async fn verify_proof_new(faber: &mut Faber, verifier: &mut Verifier, presentation: AriesMessage) {
+    pub async fn verify_proof_new(
+        faber: &mut Faber,
+        verifier: &mut Verifier,
+        presentation: AriesMessage,
+    ) -> AriesMessage {
         let presentation = match presentation {
             AriesMessage::PresentProof(PresentProof::Presentation(presentation)) => presentation,
             _ => panic!("Unexpected message type"),
@@ -672,6 +664,7 @@ pub mod test_utils {
             verifier.get_verification_status(),
             PresentationVerificationStatus::Valid
         );
+        msg
     }
 
     pub async fn revoke_credential_and_publish_accumulator(
@@ -756,7 +749,7 @@ pub mod test_utils {
     ) {
         info!("_create_address_schema >>> ");
         let attrs_list = json!(["address1", "address2", "city", "state", "zip"]).to_string();
-        let (schema_id, schema_json, cred_def_id, cred_def_json, rev_reg_id, tails_dir, cred_def, rev_reg) =
+        let (schema_id, schema_json, cred_def_id, cred_def_json, rev_reg_id, _, cred_def, rev_reg) =
             create_and_store_credential_def_and_rev_reg(
                 &profile.inject_anoncreds(),
                 &profile.inject_anoncreds_ledger_read(),
@@ -816,7 +809,6 @@ pub mod test_utils {
     pub async fn prover_select_credentials_and_send_proof_new(
         alice: &mut Alice,
         presentation_request: RequestPresentation,
-        request_name: Option<&str>,
         preselected_credentials: Option<&str>,
     ) -> Presentation {
         let mut prover = create_prover_from_request(presentation_request.clone()).await;
@@ -1091,7 +1083,6 @@ pub mod test_utils {
             consumer,
             verifier.get_presentation_request_msg().unwrap(),
             None,
-            None,
         )
         .await;
         verifier
@@ -1125,7 +1116,6 @@ pub mod test_utils {
         let presentation = prover_select_credentials_and_send_proof_new(
             consumer,
             verifier.get_presentation_request_msg().unwrap(),
-            None,
             None,
         )
         .await;
