@@ -280,6 +280,12 @@ mod integration_tests {
             assert!(!issuer_credential2.is_revoked(&institution.profile.inject_anoncreds_ledger_read()).await.unwrap());
             assert!(!issuer_credential3.is_revoked(&institution.profile.inject_anoncreds_ledger_read()).await.unwrap());
 
+            #[cfg(feature = "migration")]
+            consumer2.migrate().await;
+
+            #[cfg(feature = "migration")]
+            consumer3.migrate().await;
+
             // Revoke two locally and verify their are all still valid
             exchange_proof_and_verify(&mut institution, &mut consumer1, &schema_id, &cred_def_id, Some("request1"), PresentationVerificationStatus::Valid).await;
             exchange_proof_and_verify(&mut institution, &mut consumer2, &schema_id, &cred_def_id, Some("request2"), PresentationVerificationStatus::Valid).await;

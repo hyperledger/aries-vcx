@@ -1082,13 +1082,10 @@ pub mod test_utils {
     ) -> Verifier {
         let mut verifier =
             verifier_create_proof_and_send_request(institution, &schema_id, &cred_def_id, request_name).await;
-
-        #[cfg(feature = "migration")]
-        consumer.migrate().await;
-
         let presentation =
             prover_select_credentials_and_send_proof(consumer, verifier.get_presentation_request_msg().unwrap(), None)
                 .await;
+
         verifier
             .verify_presentation(
                 &institution.profile.inject_anoncreds_ledger_read(),

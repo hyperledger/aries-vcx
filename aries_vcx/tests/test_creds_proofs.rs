@@ -400,7 +400,7 @@ mod integration_tests {
     #[ignore]
     async fn test_agency_pool_generate_proof_with_predicates() {
         SetupProfile::run(|mut setup| async move {
-            let (_, _, _, _, _, _, _, _, rev_reg_id, cred_rev_id, tails_dir, rev_reg) = create_and_store_credential(
+            let (_, _, _, _, _, _, _, _, rev_reg_id, cred_rev_id, tails_dir, _) = create_and_store_credential(
                 &setup.profile.inject_anoncreds(),
                 &setup.profile.inject_anoncreds(),
                 &setup.profile.inject_anoncreds_ledger_read(),
@@ -584,7 +584,8 @@ mod tests {
         create_nonrevocable_cred_offer, create_proof_proposal, create_proof_request_data, create_prover_from_request,
         create_verifier_from_request_data, decline_offer, exchange_proof_and_verify, generate_and_send_proof,
         issue_address_credential, prover_select_credentials, prover_select_credentials_and_send_proof,
-        receive_proof_proposal_rejection, reject_proof_proposal, send_credential, verify_proof,
+        receive_proof_proposal_rejection, reject_proof_proposal, send_credential,
+        verifier_create_proof_and_send_request, verify_proof,
     };
 
     #[tokio::test]
@@ -813,7 +814,14 @@ mod tests {
             )
                 .await;
 
+            #[cfg(feature = "migration")]
+            consumer1.migrate().await;
+
             exchange_proof_and_verify(&mut verifier, &mut consumer1, &schema_id, &cred_def_id, Some("request1"), PresentationVerificationStatus::Valid).await;
+
+            #[cfg(feature = "migration")]
+            consumer2.migrate().await;
+
             exchange_proof_and_verify(&mut verifier, &mut consumer2, &schema_id, &cred_def_id, Some("request2"), PresentationVerificationStatus::Valid).await;
         }).await;
     }
@@ -841,6 +849,10 @@ mod tests {
                 PresentationVerificationStatus::Valid,
             )
             .await;
+
+            #[cfg(feature = "migration")]
+            verifier.migrate().await;
+
             exchange_proof_and_verify(
                 &mut verifier,
                 &mut consumer,
@@ -875,7 +887,16 @@ mod tests {
             )
                 .await;
 
+            // NOTE: Credx-anoncreds-implementation-generated presentation is not compatible with vdrtools anoncreds implementation
+            // as the presentation fails to deserialize
+            // #[cfg(feature = "migration")]
+            // consumer.migrate().await;
+
             exchange_proof_and_verify(&mut institution, &mut consumer, &schema_id, &cred_def_id, Some("request1"), PresentationVerificationStatus::Valid).await;
+
+            #[cfg(feature = "migration")]
+            institution.migrate().await;
+
             exchange_proof_and_verify(&mut institution, &mut consumer, &schema_id, &cred_def_id, Some("request2"), PresentationVerificationStatus::Valid).await;
         }).await;
     }
@@ -963,7 +984,7 @@ mod tests {
             let presentation_thread_id = verifier.get_thread_id().unwrap();
 
             info!("test_real_proof :: Going to create proof");
-            prover_select_credentials_and_send_proof(&mut consumer, presentation_request, None);
+            prover_select_credentials_and_send_proof(&mut consumer, presentation_request, None).await;
         })
         .await;
     }
@@ -1009,6 +1030,10 @@ mod tests {
             verifier.migrate().await;
 
             exchange_proof_and_verify(&mut verifier, &mut consumer, &schema_id, &cred_def_id, req1, PresentationVerificationStatus::Valid).await;
+
+            #[cfg(feature = "migration")]
+            consumer.migrate().await;
+
             exchange_proof_and_verify(&mut verifier, &mut consumer, &schema_id, &cred_def_id, req2, PresentationVerificationStatus::Valid).await;
         }).await;
     }
