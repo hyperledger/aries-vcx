@@ -13,7 +13,7 @@ use messages::msg_fields::protocols::cred_issuance::offer_credential::OfferCrede
 use messages::msg_fields::protocols::cred_issuance::propose_credential::ProposeCredential;
 use messages::msg_fields::protocols::cred_issuance::request_credential::RequestCredential;
 use messages::msg_fields::protocols::cred_issuance::CredentialIssuance;
-use messages::msg_fields::protocols::notification::ack::{AckDecorators, AckStatus};
+use messages::msg_fields::protocols::notification::ack::{AckContent, AckDecorators, AckStatus};
 use messages::msg_fields::protocols::report_problem::ProblemReport;
 use messages::msg_fields::protocols::revocation::revoke::Revoke;
 use messages::AriesMessage;
@@ -25,11 +25,13 @@ use crate::handlers::revocation_notification::receiver::RevocationNotificationRe
 use crate::protocols::issuance::holder::state_machine::{HolderFullState, HolderSM, HolderState};
 
 fn build_credential_ack(thread_id: &str) -> AckCredential {
-    let content = AckCredentialContent::new(AckStatus::Ok);
-    let mut decorators = AckDecorators::new(Thread::builder().thid(thread_id.to_owned()).build());
-    let mut timing = Timing::default();
-    timing.out_time = Some(Utc::now());
-    decorators.timing = Some(timing);
+    let content = AckCredentialContent::builder()
+        .inner(AckContent::builder().status(AckStatus::Ok).build())
+        .build();
+    let decorators = AckDecorators::builder()
+        .thread(Thread::builder().thid(thread_id.to_owned()).build())
+        .timing(Timing::builder().out_time(Utc::now()).build())
+        .build();
 
     AckCredential::with_decorators(Uuid::new_v4().to_string(), content, decorators)
 }

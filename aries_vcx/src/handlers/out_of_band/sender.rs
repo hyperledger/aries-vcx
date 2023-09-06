@@ -26,7 +26,7 @@ pub struct OutOfBandSender {
 impl OutOfBandSender {
     pub fn create() -> Self {
         let id = Uuid::new_v4().to_string();
-        let content = InvitationContent::new(Vec::new());
+        let content = InvitationContent::builder().services(Vec::new()).build();
         let decorators = InvitationDecorators::default();
 
         Self {

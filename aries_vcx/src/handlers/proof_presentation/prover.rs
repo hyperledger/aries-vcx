@@ -179,7 +179,7 @@ impl Prover {
                     content,
                     decorators,
                 } = report;
-                let report = ProblemReport::with_decorators(id, content.0, decorators);
+                let report = ProblemReport::with_decorators(id, content.inner, decorators);
                 self.prover_sm.clone().receive_presentation_reject(report)?
             }
             AriesMessage::PresentProof(PresentProof::ProblemReport(report)) => {
@@ -188,7 +188,7 @@ impl Prover {
                     content,
                     decorators,
                 } = report;
-                let report = ProblemReport::with_decorators(id, content.0, decorators);
+                let report = ProblemReport::with_decorators(id, content.inner, decorators);
                 self.prover_sm.clone().receive_presentation_reject(report)?
             }
             _ => self.prover_sm.clone(),
@@ -229,7 +229,9 @@ impl Prover {
                 })?;
                 let thread_id = self.prover_sm.get_thread_id()?;
                 let id = Uuid::new_v4().to_string();
-                let content = ProposePresentationContent::new(presentation_preview);
+                let content = ProposePresentationContent::builder()
+                    .presentation_proposal(presentation_preview)
+                    .build();
                 let mut decorators = ProposePresentationDecorators::default();
                 let thread = Thread::builder().thid(thread_id.to_owned()).build();
                 let mut timing = Timing::default();

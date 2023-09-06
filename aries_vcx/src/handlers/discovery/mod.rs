@@ -21,8 +21,7 @@ pub async fn send_discovery_query(
     pw_vk: &str,
 ) -> VcxResult<()> {
     let query = query.unwrap_or("*".to_owned());
-    let mut content = QueryContent::new(query);
-    content.comment = comment;
+    let content = QueryContent::builder().query(query).comment(comment).build();
 
     let mut decorators = QueryDecorators::default();
     let mut timing = Timing::default();
@@ -43,10 +42,10 @@ pub async fn respond_discovery_query(
 ) -> VcxResult<()> {
     let content = DiscloseContent::default();
 
-    let mut decorators = DiscloseDecorators::new(Thread::builder().thid(query.id).build());
-    let mut timing = Timing::default();
-    timing.out_time = Some(Utc::now());
-    decorators.timing = Some(timing);
+    let decorators = DiscloseDecorators::builder()
+        .thread(Thread::builder().thid(query.id).build())
+        .timing(Timing::builder().out_time(Utc::now()).build())
+        .build();
 
     let disclose = Disclose::with_decorators(Uuid::new_v4().to_string(), content, decorators);
 

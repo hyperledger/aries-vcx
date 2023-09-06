@@ -84,7 +84,11 @@ pub mod test_utils {
         obj.insert("@id".to_owned(), json!(id));
         obj.insert("@type".to_owned(), json!(msg_type));
 
-        let msg = MsgParts::with_decorators(id, content, decorators);
+        let msg = MsgParts::<T, U>::builder()
+            .id(id)
+            .content(content)
+            .decorators(decorators)
+            .build();
         let msg = AriesMessage::from(msg);
 
         test_serde(msg, expected);
