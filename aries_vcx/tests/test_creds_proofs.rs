@@ -556,25 +556,18 @@ mod integration_tests {
 }
 
 mod tests {
-    use std::collections::HashMap;
 
     use serde_json::Value;
 
     use aries_vcx::common::test_utils::create_and_store_nonrevocable_credential_def;
-    use aries_vcx::handlers::issuance::holder::Holder;
     use aries_vcx::handlers::proof_presentation::prover::Prover;
     use aries_vcx::handlers::proof_presentation::verifier::Verifier;
-    use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
     use aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
-    use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
     use aries_vcx::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
     use aries_vcx::utils::devsetup::*;
-    use messages::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
-    use messages::msg_fields::protocols::present_proof::request::RequestPresentation;
 
     use crate::utils::devsetup_alice::create_alice;
     use crate::utils::devsetup_faber::create_faber_trustee;
-    use crate::utils::devsetup_util::test_utils::PayloadKinds;
     #[cfg(feature = "migration")]
     use crate::utils::migration::Migratable;
     use crate::utils::scenarios::test_utils::{
@@ -582,10 +575,9 @@ mod tests {
         accept_credential_proposal, accept_offer, accept_proof_proposal, attr_names, create_credential_proposal,
         create_credential_request, create_holder_from_proposal, create_issuer_from_proposal,
         create_nonrevocable_cred_offer, create_proof_proposal, create_proof_request_data, create_prover_from_request,
-        create_verifier_from_request_data, decline_offer, exchange_proof_and_verify, generate_and_send_proof,
+        create_verifier_from_request_data, decline_offer, exchange_proof, generate_and_send_proof,
         issue_address_credential, prover_select_credentials, prover_select_credentials_and_send_proof,
-        receive_proof_proposal_rejection, reject_proof_proposal, send_credential,
-        verifier_create_proof_and_send_request, verify_proof,
+        receive_proof_proposal_rejection, reject_proof_proposal, send_credential, verify_proof,
     };
 
     #[tokio::test]
@@ -763,7 +755,7 @@ mod tests {
 
             let presentation_request_data =
                 create_proof_request_data(&mut institution, &requested_attrs_string, "[]", "{}", None).await;
-            let mut verifier = create_verifier_from_request_data(presentation_request_data).await;
+            let verifier = create_verifier_from_request_data(presentation_request_data).await;
             let presentation_request = verifier.get_presentation_request_msg().unwrap();
 
             let mut prover = create_prover_from_request(presentation_request.clone()).await;
@@ -817,12 +809,14 @@ mod tests {
             #[cfg(feature = "migration")]
             consumer1.migrate().await;
 
-            exchange_proof_and_verify(&mut verifier, &mut consumer1, &schema_id, &cred_def_id, Some("request1"), PresentationVerificationStatus::Valid).await;
+            let verifier_handler = exchange_proof(&mut verifier, &mut consumer1, &schema_id, &cred_def_id, Some("request1")).await;
+            assert_eq!(verifier_handler.get_verification_status(), PresentationVerificationStatus::Valid);
 
             #[cfg(feature = "migration")]
             consumer2.migrate().await;
 
-            exchange_proof_and_verify(&mut verifier, &mut consumer2, &schema_id, &cred_def_id, Some("request2"), PresentationVerificationStatus::Valid).await;
+            let verifier_handler = exchange_proof(&mut verifier, &mut consumer2, &schema_id, &cred_def_id, Some("request2")).await;
+            assert_eq!(verifier_handler.get_verification_status(), PresentationVerificationStatus::Valid);
         }).await;
     }
 
@@ -840,28 +834,22 @@ mod tests {
             #[cfg(feature = "migration")]
             issuer.migrate().await;
 
-            exchange_proof_and_verify(
-                &mut verifier,
-                &mut consumer,
-                &schema_id,
-                &cred_def_id,
-                Some("request1"),
-                PresentationVerificationStatus::Valid,
-            )
-            .await;
+            let verifier_handler =
+                exchange_proof(&mut verifier, &mut consumer, &schema_id, &cred_def_id, Some("request1")).await;
+            assert_eq!(
+                verifier_handler.get_verification_status(),
+                PresentationVerificationStatus::Valid
+            );
 
             #[cfg(feature = "migration")]
             verifier.migrate().await;
 
-            exchange_proof_and_verify(
-                &mut verifier,
-                &mut consumer,
-                &schema_id,
-                &cred_def_id,
-                Some("request2"),
-                PresentationVerificationStatus::Valid,
-            )
-            .await;
+            let verifier_handler =
+                exchange_proof(&mut verifier, &mut consumer, &schema_id, &cred_def_id, Some("request2")).await;
+            assert_eq!(
+                verifier_handler.get_verification_status(),
+                PresentationVerificationStatus::Valid
+            );
         })
         .await;
     }
@@ -892,12 +880,23 @@ mod tests {
             // #[cfg(feature = "migration")]
             // consumer.migrate().await;
 
-            exchange_proof_and_verify(&mut institution, &mut consumer, &schema_id, &cred_def_id, Some("request1"), PresentationVerificationStatus::Valid).await;
+            let verifier_handler =
+                exchange_proof(&mut institution, &mut consumer, &schema_id, &cred_def_id, Some("request1")).await;
+            assert_eq!(
+                verifier_handler.get_verification_status(),
+                PresentationVerificationStatus::Valid
+            );
 
             #[cfg(feature = "migration")]
             institution.migrate().await;
 
-            exchange_proof_and_verify(&mut institution, &mut consumer, &schema_id, &cred_def_id, Some("request2"), PresentationVerificationStatus::Valid).await;
+            let verifier_handler =
+                exchange_proof(&mut institution, &mut consumer, &schema_id, &cred_def_id, Some("request2")).await;
+            assert_eq!(
+                verifier_handler.get_verification_status(),
+                PresentationVerificationStatus::Valid
+            );
+
         }).await;
     }
 
@@ -1029,12 +1028,23 @@ mod tests {
             #[cfg(feature = "migration")]
             verifier.migrate().await;
 
-            exchange_proof_and_verify(&mut verifier, &mut consumer, &schema_id, &cred_def_id, req1, PresentationVerificationStatus::Valid).await;
+            let verifier_handler =
+                exchange_proof(&mut verifier, &mut consumer, &schema_id, &cred_def_id, req1).await;
+            assert_eq!(
+                verifier_handler.get_verification_status(),
+                PresentationVerificationStatus::Valid
+            );
 
             #[cfg(feature = "migration")]
             consumer.migrate().await;
 
-            exchange_proof_and_verify(&mut verifier, &mut consumer, &schema_id, &cred_def_id, req2, PresentationVerificationStatus::Valid).await;
+            let verifier_handler =
+                exchange_proof(&mut verifier, &mut consumer, &schema_id, &cred_def_id, req2).await;
+            assert_eq!(
+                verifier_handler.get_verification_status(),
+                PresentationVerificationStatus::Valid
+            );
+
         }).await;
     }
 
@@ -1077,7 +1087,7 @@ mod tests {
                 _create_address_schema_creddef_revreg(&institution.profile, &institution.institution_did).await;
             let tails_dir = rev_reg.get_tails_dir();
 
-            let cred_proposal = create_credential_proposal(&mut consumer, &schema_id, &cred_def_id, "comment").await;
+            let cred_proposal = create_credential_proposal(&schema_id, &cred_def_id, "comment").await;
             let mut holder = create_holder_from_proposal(cred_proposal.clone());
             let mut issuer = create_issuer_from_proposal(cred_proposal.clone());
 
@@ -1114,7 +1124,7 @@ mod tests {
             #[cfg(feature = "migration")]
             institution.migrate().await;
 
-            let cred_proposal = create_credential_proposal(&mut consumer, &schema_id, &cred_def_id, "comment").await;
+            let cred_proposal = create_credential_proposal(&schema_id, &cred_def_id, "comment").await;
             let mut holder = create_holder_from_proposal(cred_proposal.clone());
             let mut issuer = create_issuer_from_proposal(cred_proposal.clone());
             let cred_offer = accept_credential_proposal(
@@ -1129,7 +1139,7 @@ mod tests {
             #[cfg(feature = "migration")]
             consumer.migrate().await;
 
-            let cred_proposal_1 = create_credential_proposal(&mut consumer, &schema_id, &cred_def_id, "comment").await;
+            let cred_proposal_1 = create_credential_proposal(&schema_id, &cred_def_id, "comment").await;
             let cred_offer_1 = accept_credential_proposal(
                 &mut institution,
                 &mut issuer,

@@ -262,12 +262,7 @@ pub mod test_utils {
         (holder, cred_request)
     }
 
-    pub async fn create_credential_proposal(
-        alice: &mut Alice,
-        schema_id: &str,
-        cred_def_id: &str,
-        comment: &str,
-    ) -> ProposeCredential {
+    pub async fn create_credential_proposal(schema_id: &str, cred_def_id: &str, comment: &str) -> ProposeCredential {
         let (address1, address2, city, state, zip) = attr_names();
         let mut attrs = Vec::new();
 
@@ -472,7 +467,7 @@ pub mod test_utils {
         tails_dir: Option<String>,
         comment: &str,
     ) -> (Holder, Issuer) {
-        let cred_proposal = create_credential_proposal(consumer, schema_id, cred_def_id, comment).await;
+        let cred_proposal = create_credential_proposal(schema_id, cred_def_id, comment).await;
         let mut holder = create_holder_from_proposal(cred_proposal.clone());
         let mut issuer = create_issuer_from_proposal(cred_proposal.clone());
         let cred_offer =
@@ -1059,19 +1054,7 @@ pub mod test_utils {
         return selected_credentials;
     }
 
-    pub async fn exchange_proof_and_verify(
-        institution: &mut Faber,
-        consumer: &mut Alice,
-        schema_id: &str,
-        cred_def_id: &str,
-        request_name: Option<&str>,
-        expected_result: PresentationVerificationStatus,
-    ) {
-        let verifier = exchange_proof(institution, consumer, schema_id, cred_def_id, request_name).await;
-        assert_eq!(verifier.get_verification_status(), expected_result);
-    }
-
-    async fn exchange_proof(
+    pub async fn exchange_proof(
         institution: &mut Faber,
         consumer: &mut Alice,
         schema_id: &str,

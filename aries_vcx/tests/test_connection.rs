@@ -69,7 +69,7 @@ mod integration_tests {
 
             let presentation_request_data =
                 create_proof_request_data(&mut institution, REQUESTED_ATTRIBUTES, "[]", "{}", None).await;
-            let request_sender = create_verifier_from_request_data(presentation_request_data)
+            let presentation_request = create_verifier_from_request_data(presentation_request_data)
                 .await
                 .get_presentation_request_msg()
                 .unwrap();
@@ -84,7 +84,7 @@ mod integration_tests {
                     ConnectionTypeV1::new_v1_0(),
                 )))
                 .unwrap()
-                .append_a2a_message(AriesMessage::from(request_sender.clone()))
+                .append_a2a_message(AriesMessage::from(presentation_request.clone()))
                 .unwrap();
             let invitation = AnyInvitation::Oob(oob_sender.oob.clone());
             let ddo = into_did_doc(&consumer.profile.inject_indy_ledger_read(), &invitation)
@@ -159,7 +159,7 @@ mod integration_tests {
             if let AriesMessage::PresentProof(PresentProof::RequestPresentation(request_receiver)) = a2a_msg {
                 assert_eq!(
                     request_receiver.content.request_presentations_attach,
-                    request_sender.content.request_presentations_attach
+                    presentation_request.content.request_presentations_attach
                 );
             }
 
