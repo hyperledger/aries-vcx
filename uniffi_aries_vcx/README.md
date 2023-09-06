@@ -16,7 +16,9 @@ This module is distributed in three directories.
 To set up the Android SDK, NDK and bootstrap the demo application, you can simply run the following scripts in the order:
 1. `android.prepare.sh`: This script will prepare the Android SDK and NDK for your system.
 2. `android.toolchain.sh`: This script will prepare the required android toolchain.
-3. `android.build.sh`: This script will build the UniFFI bindings and will also bootstrap and demo application for the target architecture.
+3. `android.build.sh`: This script will build the UniFFI bindings and bootstrap the demo application for the target architecture.
+
+NB: Before running the demo application you need to generate the language bindings.
 
 ## Support
-Currently the builds have been tested for `arm64 (aarch64)` on a physical device. In the future we plan to support most of the architectures.
+Currently the builds have been tested for android `arm64 (aarch64)` on a physical device. In the future we plan to support other architectures.

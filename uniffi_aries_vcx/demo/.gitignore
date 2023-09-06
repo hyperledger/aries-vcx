@@ -14,3 +14,4 @@
 .cxx
 local.properties
 *.so
+/app/src/main/java/org/hyperledger/ariesvcx/vcx.kt
