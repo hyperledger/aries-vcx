@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use typed_builder::TypedBuilder;
 
 use crate::{
     decorators::{thread::Thread, timing::Timing},
@@ -7,19 +8,22 @@ use crate::{
 
 pub type Ping = MsgParts<PingContent, PingDecorators>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq, TypedBuilder)]
 pub struct PingContent {
     #[serde(default)]
     pub response_requested: bool,
+    #[builder(default, setter(strip_option))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq, TypedBuilder)]
 pub struct PingDecorators {
+    #[builder(default, setter(strip_option))]
     #[serde(rename = "~thread")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub thread: Option<Thread>,
+    #[builder(default, setter(strip_option))]
     #[serde(rename = "~timing")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<Timing>,

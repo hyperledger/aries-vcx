@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use typed_builder::TypedBuilder;
 
 use crate::{
     decorators::{thread::Thread, timing::Timing},
@@ -7,25 +8,21 @@ use crate::{
 
 pub type PingResponse = MsgParts<PingResponseContent, PingResponseDecorators>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq, TypedBuilder)]
 pub struct PingResponseContent {
+    #[builder(default, setter(strip_option))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder)]
 pub struct PingResponseDecorators {
     #[serde(rename = "~thread")]
     pub thread: Thread,
+    #[builder(default, setter(strip_option))]
     #[serde(rename = "~timing")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<Timing>,
-}
-
-impl PingResponseDecorators {
-    pub fn new(thread: Thread) -> Self {
-        Self { thread, timing: None }
-    }
 }
 
 #[cfg(test)]
@@ -45,7 +42,7 @@ mod tests {
     fn test_minimal_ping_response() {
         let content = PingResponseContent::default();
 
-        let decorators = PingResponseDecorators::new(make_extended_thread());
+        let decorators = PingResponseDecorators::builder().thread(make_extended_thread()).build();
 
         let expected = json!({
             "~thread": decorators.thread
@@ -59,7 +56,7 @@ mod tests {
         let mut content = PingResponseContent::default();
         content.comment = Some("test_comment".to_owned());
 
-        let mut decorators = PingResponseDecorators::new(make_extended_thread());
+        let mut decorators = PingResponseDecorators::builder().thread(make_extended_thread()).build();
         decorators.timing = Some(make_extended_timing());
 
         let expected = json!({

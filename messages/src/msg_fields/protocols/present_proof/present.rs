@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use typed_builder::TypedBuilder;
 
 use crate::{
     decorators::{attachment::Attachment, please_ack::PleaseAck, thread::Thread, timing::Timing},
@@ -7,43 +8,27 @@ use crate::{
 
 pub type Presentation = MsgParts<PresentationContent, PresentationDecorators>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder)]
 pub struct PresentationContent {
+    #[builder(default, setter(strip_option))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,
     #[serde(rename = "presentations~attach")]
     pub presentations_attach: Vec<Attachment>,
 }
 
-impl PresentationContent {
-    pub fn new(presentations_attach: Vec<Attachment>) -> Self {
-        Self {
-            comment: None,
-            presentations_attach,
-        }
-    }
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder)]
 pub struct PresentationDecorators {
     #[serde(rename = "~thread")]
     pub thread: Thread,
+    #[builder(default, setter(strip_option))]
     #[serde(rename = "~please_ack")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub please_ack: Option<PleaseAck>,
+    #[builder(default, setter(strip_option))]
     #[serde(rename = "~timing")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<Timing>,
-}
-
-impl PresentationDecorators {
-    pub fn new(thread: Thread) -> Self {
-        Self {
-            thread,
-            please_ack: None,
-            timing: None,
-        }
-    }
 }
 
 #[cfg(test)]
@@ -64,9 +49,11 @@ mod tests {
 
     #[test]
     fn test_minimal_present_proof() {
-        let content = PresentationContent::new(vec![make_extended_attachment()]);
+        let content = PresentationContent::builder()
+            .presentations_attach(vec![make_extended_attachment()])
+            .build();
 
-        let decorators = PresentationDecorators::new(make_extended_thread());
+        let decorators = PresentationDecorators::builder().thread(make_extended_thread()).build();
 
         let expected = json!({
             "presentations~attach": content.presentations_attach,
@@ -78,10 +65,12 @@ mod tests {
 
     #[test]
     fn test_extended_present_proof() {
-        let mut content = PresentationContent::new(vec![make_extended_attachment()]);
+        let mut content = PresentationContent::builder()
+            .presentations_attach(vec![make_extended_attachment()])
+            .build();
         content.comment = Some("test_comment".to_owned());
 
-        let mut decorators = PresentationDecorators::new(make_extended_thread());
+        let mut decorators = PresentationDecorators::builder().thread(make_extended_thread()).build();
         decorators.timing = Some(make_extended_timing());
         decorators.please_ack = Some(make_minimal_please_ack());
 

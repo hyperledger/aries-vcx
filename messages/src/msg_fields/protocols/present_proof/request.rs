@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use typed_builder::TypedBuilder;
 
 use crate::{
     decorators::{attachment::Attachment, thread::Thread, timing::Timing},
@@ -7,28 +8,22 @@ use crate::{
 
 pub type RequestPresentation = MsgParts<RequestPresentationContent, RequestPresentationDecorators>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder)]
 pub struct RequestPresentationContent {
+    #[builder(default, setter(strip_option))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,
     #[serde(rename = "request_presentations~attach")]
     pub request_presentations_attach: Vec<Attachment>,
 }
 
-impl RequestPresentationContent {
-    pub fn new(request_presentations_attach: Vec<Attachment>) -> Self {
-        Self {
-            comment: None,
-            request_presentations_attach,
-        }
-    }
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq, TypedBuilder)]
 pub struct RequestPresentationDecorators {
+    #[builder(default, setter(strip_option))]
     #[serde(rename = "~thread")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub thread: Option<Thread>,
+    #[builder(default, setter(strip_option))]
     #[serde(rename = "~timing")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<Timing>,
@@ -52,7 +47,9 @@ mod tests {
 
     #[test]
     fn test_minimal_request_proof() {
-        let content = RequestPresentationContent::new(vec![make_extended_attachment()]);
+        let content = RequestPresentationContent::builder()
+            .request_presentations_attach(vec![make_extended_attachment()])
+            .build();
 
         let decorators = RequestPresentationDecorators::default();
 
@@ -65,7 +62,9 @@ mod tests {
 
     #[test]
     fn test_extended_request_proof() {
-        let mut content = RequestPresentationContent::new(vec![make_extended_attachment()]);
+        let mut content = RequestPresentationContent::builder()
+            .request_presentations_attach(vec![make_extended_attachment()])
+            .build();
         content.comment = Some("test_comment".to_owned());
 
         let mut decorators = RequestPresentationDecorators::default();

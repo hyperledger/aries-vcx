@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use typed_builder::TypedBuilder;
 
 use super::CredentialPreview;
 use crate::{
@@ -8,8 +9,9 @@ use crate::{
 
 pub type ProposeCredential = MsgParts<ProposeCredentialContent, ProposeCredentialDecorators>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder)]
 pub struct ProposeCredentialContent {
+    #[builder(default, setter(strip_option))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,
     pub credential_proposal: CredentialPreview,
@@ -17,22 +19,13 @@ pub struct ProposeCredentialContent {
     pub cred_def_id: String,
 }
 
-impl ProposeCredentialContent {
-    pub fn new(credential_proposal: CredentialPreview, schema_id: String, cred_def_id: String) -> Self {
-        Self {
-            comment: None,
-            credential_proposal,
-            schema_id,
-            cred_def_id,
-        }
-    }
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq, TypedBuilder)]
 pub struct ProposeCredentialDecorators {
+    #[builder(default, setter(strip_option))]
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "~thread")]
     pub thread: Option<Thread>,
+    #[builder(default, setter(strip_option))]
     #[serde(rename = "~timing")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<Timing>,
@@ -54,10 +47,16 @@ mod tests {
 
     #[test]
     fn test_minimal_propose_cred() {
-        let attribute = CredentialAttr::new("test_attribute_name".to_owned(), "test_attribute_value".to_owned());
-        let preview = CredentialPreview::new(vec![attribute]);
-        let content =
-            ProposeCredentialContent::new(preview, "test_schema_id".to_owned(), "test_cred_def_id".to_owned());
+        let attribute = CredentialAttr::builder()
+            .name("test_attribute_name".to_owned())
+            .value("test_attribute_value".to_owned())
+            .build();
+        let preview = CredentialPreview::builder().attributes(vec![attribute]).build();
+        let content = ProposeCredentialContent::builder()
+            .credential_proposal(preview)
+            .schema_id("test_schema_id".to_owned())
+            .cred_def_id("test_cred_def_id".to_owned())
+            .build();
 
         let decorators = ProposeCredentialDecorators::default();
 
@@ -77,10 +76,16 @@ mod tests {
 
     #[test]
     fn test_extended_propose_cred() {
-        let attribute = CredentialAttr::new("test_attribute_name".to_owned(), "test_attribute_value".to_owned());
-        let preview = CredentialPreview::new(vec![attribute]);
-        let mut content =
-            ProposeCredentialContent::new(preview, "test_schema_id".to_owned(), "test_cred_def_id".to_owned());
+        let attribute = CredentialAttr::builder()
+            .name("test_attribute_name".to_owned())
+            .value("test_attribute_value".to_owned())
+            .build();
+        let preview = CredentialPreview::builder().attributes(vec![attribute]).build();
+        let mut content = ProposeCredentialContent::builder()
+            .credential_proposal(preview)
+            .schema_id("test_schema_id".to_owned())
+            .cred_def_id("test_cred_def_id".to_owned())
+            .build();
 
         content.comment = Some("test_comment".to_owned());
 

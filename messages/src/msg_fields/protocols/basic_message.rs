@@ -3,6 +3,7 @@
 use chrono::{DateTime, Utc};
 
 use serde::{Deserialize, Serialize};
+use typed_builder::TypedBuilder;
 
 use crate::{
     decorators::{localization::MsgLocalization, thread::Thread, timing::Timing},
@@ -13,27 +14,24 @@ use crate::{
 
 pub type BasicMessage = MsgParts<BasicMessageContent, BasicMessageDecorators>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder)]
 pub struct BasicMessageContent {
     pub content: String,
     #[serde(serialize_with = "utils::serialize_datetime")]
     pub sent_time: DateTime<Utc>,
 }
 
-impl BasicMessageContent {
-    pub fn new(content: String, sent_time: DateTime<Utc>) -> Self {
-        Self { content, sent_time }
-    }
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq, TypedBuilder)]
 pub struct BasicMessageDecorators {
+    #[builder(default, setter(strip_option))]
     #[serde(rename = "~l10n")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub l10n: Option<MsgLocalization>,
+    #[builder(default, setter(strip_option))]
     #[serde(rename = "~thread")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub thread: Option<Thread>,
+    #[builder(default, setter(strip_option))]
     #[serde(rename = "~timing")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<Timing>,
@@ -55,7 +53,10 @@ mod tests {
 
     #[test]
     fn test_minimal_basic_message() {
-        let content = BasicMessageContent::new("test_content".to_owned(), DateTime::default());
+        let content = BasicMessageContent::builder()
+            .content("test_content".to_owned())
+            .sent_time(DateTime::default())
+            .build();
 
         let decorators = BasicMessageDecorators::default();
 
@@ -69,7 +70,10 @@ mod tests {
 
     #[test]
     fn test_extended_basic_message() {
-        let content = BasicMessageContent::new("test_content".to_owned(), DateTime::default());
+        let content = BasicMessageContent::builder()
+            .content("test_content".to_owned())
+            .sent_time(DateTime::default())
+            .build();
 
         let mut decorators = BasicMessageDecorators::default();
         decorators.thread = Some(make_extended_thread());

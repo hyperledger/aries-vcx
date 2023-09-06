@@ -7,6 +7,7 @@ use serde::{
 };
 use shared_vcx::misc::utils::CowStr;
 use strum_macros::{AsRefStr, EnumString};
+use typed_builder::TypedBuilder;
 use url::Url;
 
 use crate::{
@@ -22,80 +23,67 @@ use crate::{
 
 pub type ProblemReport = MsgParts<ProblemReportContent, ProblemReportDecorators>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder)]
 pub struct ProblemReportContent {
     pub description: Description,
+    #[builder(default, setter(strip_option))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub problem_items: Option<Vec<HashMap<String, String>>>,
+    #[builder(default, setter(strip_option))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub who_retries: Option<WhoRetries>,
+    #[builder(default, setter(strip_option))]
     #[serde(rename = "fix-hint")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub fix_hint: Option<String>,
+    #[builder(default, setter(strip_option))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub impact: Option<Impact>,
+    #[builder(default, setter(strip_option))]
     #[serde(rename = "where")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub location: Option<Where>,
+    #[builder(default, setter(strip_option))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub noticed_time: Option<String>,
     #[serde(rename = "tracking-uri")]
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
     pub tracking_uri: Option<Url>,
+    #[builder(default, setter(strip_option))]
     #[serde(rename = "escalation-uri")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub escalation_uri: Option<Url>,
 }
 
-impl ProblemReportContent {
-    pub fn new(code: String) -> Self {
-        Self {
-            description: Description::new(code),
-            problem_items: None,
-            who_retries: None,
-            fix_hint: None,
-            impact: None,
-            location: None,
-            noticed_time: None,
-            tracking_uri: None,
-            escalation_uri: None,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq, TypedBuilder)]
 pub struct ProblemReportDecorators {
+    #[builder(default, setter(strip_option))]
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "~thread")]
     pub thread: Option<Thread>,
+    #[builder(default, setter(strip_option))]
     #[serde(rename = "~timing")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<Timing>,
+    #[builder(default, setter(strip_option))]
     #[serde(rename = "description~l10n")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub description_locale: Option<FieldLocalization>,
+    #[builder(default, setter(strip_option))]
     #[serde(rename = "fix-hint~l10n")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub fix_hint_locale: Option<FieldLocalization>,
 }
 
-#[derive(Debug, Clone, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Deserialize, PartialEq, TypedBuilder)]
 pub struct Description {
+    #[builder(default)]
     #[serde(flatten)]
     #[serde(skip_serializing_if = "HashMap::is_empty")]
     pub translations: HashMap<Locale, String>,
     pub code: String,
 }
-
-impl Description {
-    pub fn new(code: String) -> Self {
-        Self {
-            translations: HashMap::new(),
-            code,
-        }
-    }
-}
-
 /// Manual implementation because `serde_json` does not support
 /// non-string map keys.
 impl Serialize for Description {
@@ -214,7 +202,10 @@ mod tests {
 
     #[test]
     fn test_minimal_problem_report() {
-        let content = ProblemReportContent::new("test_problem_report_code".to_owned());
+        let description = Description::builder()
+            .code("test_problem_report_code".to_owned())
+            .build();
+        let content = ProblemReportContent::builder().description(description).build();
         let decorators = ProblemReportDecorators::default();
 
         let expected = json!({
@@ -226,7 +217,10 @@ mod tests {
 
     #[test]
     fn test_extended_problem_report() {
-        let mut content = ProblemReportContent::new("test_problem_report_code".to_owned());
+        let description = Description::builder()
+            .code("test_problem_report_code".to_owned())
+            .build();
+        let mut content = ProblemReportContent::builder().description(description).build();
         content.who_retries = Some(WhoRetries::Me);
         content.fix_hint = Some("test_fix_hint".to_owned());
         content.impact = Some(Impact::Connection);

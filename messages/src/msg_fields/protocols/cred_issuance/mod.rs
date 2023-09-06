@@ -12,6 +12,7 @@ use std::str::FromStr;
 use derive_more::From;
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 use shared_vcx::misc::utils::CowStr;
+use typed_builder::TypedBuilder;
 
 use self::{
     ack::{AckCredential, AckCredentialContent},
@@ -91,26 +92,18 @@ impl DelayedSerde for CredentialIssuance {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, TypedBuilder)]
 pub struct CredentialPreview {
+    #[builder(default, setter(skip))]
     #[serde(rename = "@type")]
     msg_type: CredentialPreviewMsgType,
     pub attributes: Vec<CredentialAttr>,
 }
 
-impl CredentialPreview {
-    pub fn new(attributes: Vec<CredentialAttr>) -> Self {
-        Self {
-            msg_type: CredentialPreviewMsgType,
-            attributes,
-        }
-    }
-}
-
 /// Non-standalone message type.
 /// This is only encountered as part of an existent message.
 /// It is not a message on it's own.
-#[derive(Copy, Clone, Debug, Deserialize, PartialEq)]
+#[derive(Copy, Clone, Debug, Default, Deserialize, PartialEq)]
 #[serde(try_from = "CowStr")]
 struct CredentialPreviewMsgType;
 
@@ -150,24 +143,15 @@ impl Serialize for CredentialPreviewMsgType {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, TypedBuilder)]
 #[serde(rename_all = "kebab-case")]
 pub struct CredentialAttr {
     pub name: String,
     pub value: String,
+    #[builder(default, setter(strip_option))]
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "mime-type")]
     pub mime_type: Option<MimeType>,
-}
-
-impl CredentialAttr {
-    pub fn new(name: String, value: String) -> Self {
-        Self {
-            name,
-            value,
-            mime_type: None,
-        }
-    }
 }
 
 transit_to_aries_msg!(OfferCredentialContent: OfferCredentialDecorators, CredentialIssuance);
