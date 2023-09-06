@@ -345,43 +345,4 @@ mod integration_tests {
         })
         .await;
     }
-
-    #[tokio::test]
-    #[ignore]
-    async fn test_agency_pool_aries_demo_handle_connection_related_messages() {
-        SetupPoolDirectory::run(|setup| async move {
-            let mut faber = create_faber_trustee(setup.genesis_file_path.clone()).await;
-            let mut alice = create_alice(setup.genesis_file_path).await;
-
-            // Connection
-            let invite = faber.create_invite().await;
-            alice.accept_invite(&invite).await;
-
-            faber.update_state(3).await;
-            alice.update_state(4).await;
-            faber.update_state(4).await;
-
-            // Ping
-            faber.ping().await;
-
-            alice.handle_messages().await;
-
-            faber.handle_messages().await;
-
-            let faber_connection_info = faber.connection_info().await;
-            assert!(faber_connection_info["their"]["protocols"].as_array().is_none());
-
-            // Discovery Features
-            faber.discovery_features().await;
-
-            alice.handle_messages().await;
-
-            faber.handle_messages().await;
-
-            let faber_connection_info = faber.connection_info().await;
-            warn!("faber_connection_info: {}", faber_connection_info);
-            assert!(faber_connection_info["their"]["protocols"].as_array().unwrap().len() > 0);
-        })
-        .await;
-    }
 }

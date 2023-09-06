@@ -32,8 +32,6 @@ pub mod test_utils {
 
     use crate::utils::devsetup_alice::Alice;
     use crate::utils::devsetup_faber::Faber;
-    #[cfg(feature = "migration")]
-    use crate::utils::migration::Migratable;
     use aries_vcx::common::ledger::transactions::into_did_doc;
     use aries_vcx::common::primitives::credential_definition::CredentialDef;
     use aries_vcx::common::primitives::revocation_registry::RevocationRegistry;

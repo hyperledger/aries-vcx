@@ -1,5 +1,4 @@
 use agency_client::agency_client::AgencyClient;
-use aries_vcx::core::profile::profile::Profile;
 use aries_vcx::errors::error::VcxResult;
 use aries_vcx::handlers::connection::mediated_connection::MediatedConnection;
 use aries_vcx::handlers::issuance::holder::Holder;
