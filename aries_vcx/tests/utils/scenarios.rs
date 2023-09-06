@@ -39,6 +39,8 @@ pub mod test_utils {
         get_credential_offer_messages, get_proof_request_messages, issuer_update_with_mediator,
         prover_update_with_mediator,
     };
+    #[cfg(feature = "migration")]
+    use crate::utils::migration::Migratable;
     use aries_vcx::common::ledger::transactions::into_did_doc;
     use aries_vcx::common::primitives::credential_definition::CredentialDef;
     use aries_vcx::common::primitives::revocation_registry::RevocationRegistry;
