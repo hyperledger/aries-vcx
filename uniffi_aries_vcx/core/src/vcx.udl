@@ -31,7 +31,6 @@ enum ConnectionProtocolState {
     "Completed",
 };
 
-
 dictionary PairwiseInfo {
     string pw_did;
     string pw_vk;
@@ -79,4 +78,7 @@ namespace vcx {
 
     [Throws=VcxUniFFIError]
     Connection create_invitee(ProfileHolder profile);
+
+    [Throws=VcxUniFFIError]
+    sequence<u8> unpack_message(ProfileHolder profile, sequence<u8> packed_msg);
 };
