@@ -303,7 +303,7 @@ jobs:
       RUST_TEST_THREADS: 1
       VDR_PROXY_CLIENT_URL: http://127.0.0.1:3030
       DOCKER_IMAGE_VDRPROXY: ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_VDRPROXY }}
-      GENESIS_URL: https://raw.githubusercontent.com/AbsaOSS/sovrin-networks/master/genesis/127.0.0.1
+      GENESIS_URL: https://raw.githubusercontent.com/AbsaOSS/sovrin-networks/master/genesis/127.0.0.1.ndjson
       VDR_PROXY_PORT: 3030
     steps:
       - name: "Git checkout"
