@@ -10,7 +10,6 @@ mod integration_tests {
     use std::thread;
     use std::time::Duration;
 
-    use crate::utils::devsetup_alice::create_alice;
     use crate::utils::devsetup_faber::{create_faber, create_faber_trustee};
     use aries_vcx::common::keys::{get_verkey_from_ledger, rotate_verkey};
     use aries_vcx::common::ledger::service_didsov::EndpointDidSov;
@@ -18,8 +17,6 @@ mod integration_tests {
         add_attr, add_new_did, clear_attr, get_attr, get_service, write_endorser_did, write_endpoint,
         write_endpoint_legacy,
     };
-    use aries_vcx::common::test_utils::create_and_store_nonrevocable_credential_def;
-    use aries_vcx::utils::constants::DEFAULT_SCHEMA_ATTRS;
     use aries_vcx::utils::devsetup::{SetupPoolDirectory, SetupProfile};
     use diddoc_legacy::aries::service::AriesService;
 

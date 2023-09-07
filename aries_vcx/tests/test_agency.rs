@@ -24,7 +24,7 @@ mod integration_tests {
     use messages::msg_fields::protocols::notification::Notification;
 
     use crate::utils::devsetup_alice::create_alice;
-    use crate::utils::devsetup_faber::{create_faber_trustee, Faber};
+    use crate::utils::devsetup_faber::create_faber_trustee;
     use crate::utils::scenarios::test_utils::create_connected_connections;
 
     #[tokio::test]
