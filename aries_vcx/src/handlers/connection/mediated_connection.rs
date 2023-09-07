@@ -818,7 +818,11 @@ impl MediatedConnection {
                     .timing(Timing::builder().out_time(now).build())
                     .build();
 
-                BasicMessage::with_decorators(Uuid::new_v4().to_string(), content, decorators).into()
+                BasicMessage::builder()
+                    .id(Uuid::new_v4().to_string())
+                    .content(content)
+                    .decorators(decorators)
+                    .build()
             }
         }
     }

@@ -33,7 +33,11 @@ fn build_credential_ack(thread_id: &str) -> AckCredential {
         .timing(Timing::builder().out_time(Utc::now()).build())
         .build();
 
-    AckCredential::with_decorators(Uuid::new_v4().to_string(), content, decorators)
+    AckCredential::builder()
+        .id(Uuid::new_v4().to_string())
+        .content(content)
+        .decorators(decorators)
+        .build()
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

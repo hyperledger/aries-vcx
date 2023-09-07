@@ -7,9 +7,7 @@ use chrono::Utc;
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use messages::decorators::thread::Thread;
 use messages::decorators::timing::Timing;
-use messages::msg_fields::protocols::connection::invitation::{
-    Invitation, PairwiseInvitation, PairwiseInvitationContent, PwInvitationDecorators,
-};
+use messages::msg_fields::protocols::connection::invitation::{Invitation, InvitationContent};
 use messages::msg_fields::protocols::connection::request::Request;
 use messages::msg_fields::protocols::connection::response::{Response, ResponseContent, ResponseDecorators};
 use messages::msg_fields::protocols::connection::ConnectionData;
@@ -44,18 +42,16 @@ impl InviterConnection<Initial> {
     /// Generates a pairwise [`Invitation`] and transitions to [`InviterConnection<Invited>`].
     pub fn create_invitation(self, routing_keys: Vec<String>, service_endpoint: Url) -> InviterConnection<Invited> {
         let id = Uuid::new_v4().to_string();
-        let content = PairwiseInvitationContent::new(
-            self.source_id.clone(),
-            vec![self.pairwise_info.pw_vk.clone()],
-            routing_keys,
-            service_endpoint,
-        );
+        let content = InvitationContent::builder_pairwise()
+            .label(self.source_id.clone())
+            .recipient_keys(vec![self.pairwise_info.pw_vk.clone()])
+            .routing_keys(routing_keys)
+            .service_endpoint(service_endpoint)
+            .build();
 
-        let decorators = PwInvitationDecorators::default();
+        let invite = Invitation::builder().id(id).content(content).build();
 
-        let invite = PairwiseInvitation::with_decorators(id, content, decorators);
-
-        let invitation = AnyInvitation::Con(Invitation::Pairwise(invite));
+        let invitation = AnyInvitation::Con(invite);
 
         Connection {
             source_id: self.source_id,
@@ -82,18 +78,16 @@ impl InviterConnection<Initial> {
     // for backwards compatibility.
     pub fn into_invited(self, thread_id: &str) -> InviterConnection<Invited> {
         let id = thread_id.to_owned();
-        let content = PairwiseInvitationContent::new(
-            self.source_id.clone(),
-            vec![self.pairwise_info.pw_vk.clone()],
-            vec![],
-            "https://dummy.dummy/dummy".parse().expect("url should be valid"),
-        );
 
-        let decorators = PwInvitationDecorators::default();
+        let content = InvitationContent::builder_pairwise()
+            .label(self.source_id.clone())
+            .recipient_keys(vec![self.pairwise_info.pw_vk.clone()])
+            .service_endpoint("https://dummy.dummy/dummy".parse().expect("url should be valid"))
+            .build();
 
-        let invite = PairwiseInvitation::with_decorators(id, content, decorators);
+        let invite = Invitation::builder().id(id).content(content).build();
 
-        let invitation = AnyInvitation::Con(Invitation::Pairwise(invite));
+        let invitation = AnyInvitation::Con(invite);
 
         Connection {
             source_id: self.source_id,
@@ -130,14 +124,18 @@ impl InviterConnection<Invited> {
 
         let con_sig = sign_connection_response(wallet, &self.pairwise_info.pw_vk, &con_data).await?;
 
-        let content = ResponseContent::new(con_sig);
+        let content = ResponseContent::builder().connection_sig(con_sig).build();
 
-        let mut decorators = ResponseDecorators::new(Thread::new(thread_id));
-        let mut timing = Timing::default();
-        timing.out_time = Some(Utc::now());
-        decorators.timing = Some(timing);
+        let decorators = ResponseDecorators::builder()
+            .thread(Thread::builder().thid(thread_id).build())
+            .timing(Timing::builder().out_time(Utc::now()).build())
+            .build();
 
-        Ok(Response::with_decorators(id, content, decorators))
+        Ok(Response::builder()
+            .id(id)
+            .content(content)
+            .decorators(decorators)
+            .build())
     }
 
     /// Processes a [`Request`] and transitions to [`InviterConnection<Requested>`].

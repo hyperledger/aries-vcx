@@ -17,7 +17,7 @@ use chrono::Utc;
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use messages::decorators::thread::Thread;
 use messages::decorators::timing::Timing;
-use messages::msg_fields::protocols::connection::invitation::Invitation;
+use messages::msg_fields::protocols::connection::invitation::InvitationContent;
 use messages::msg_fields::protocols::connection::problem_report::{
     ProblemReport, ProblemReportContent, ProblemReportDecorators,
 };
@@ -159,7 +159,7 @@ impl SmConnectionInvitee {
     }
 
     pub fn get_protocols(&self) -> Vec<ProtocolDescriptor> {
-        let query = QueryContent::new("*".to_owned());
+        let query = QueryContent::builder().query("*".to_owned()).build();
         query.lookup()
     }
 
@@ -223,34 +223,39 @@ impl SmConnectionInvitee {
                 did_doc.set_id(self.pairwise_info.pw_did.clone());
 
                 let con_data = ConnectionData::new(self.pairwise_info.pw_did.to_string(), did_doc);
-                let content = RequestContent::new(self.source_id.to_string(), con_data);
+                let content = RequestContent::builder()
+                    .label(self.source_id.to_string())
+                    .connection(con_data)
+                    .build();
 
-                let mut decorators = RequestDecorators::default();
-                let mut timing = Timing::default();
-                timing.out_time = Some(Utc::now());
-                decorators.timing = Some(timing);
+                let decorators = RequestDecorators::builder().timing(Timing::builder().out_time(Utc::now()).build());
 
                 let (thread_id, thread) = match &state.invitation {
-                    AnyInvitation::Con(Invitation::Public(_)) => {
-                        let mut thread = Thread::new(id.clone());
-                        thread.pthid = Some(self.thread_id.clone());
+                    AnyInvitation::Oob(invite) => {
+                        let thread = Thread::builder().thid(id.clone()).pthid(invite.id.clone()).build();
 
                         (id.clone(), thread)
                     }
-                    AnyInvitation::Con(Invitation::Pairwise(_)) | AnyInvitation::Con(Invitation::PairwiseDID(_)) => {
-                        let thread = Thread::new(self.thread_id.clone());
-                        (self.thread_id.clone(), thread)
-                    }
-                    AnyInvitation::Oob(invite) => {
-                        let mut thread = Thread::new(id.clone());
-                        thread.pthid = Some(invite.id.clone());
-                        (id.clone(), thread)
-                    }
+                    AnyInvitation::Con(invite) => match invite.content {
+                        InvitationContent::Public(_) => {
+                            let thread = Thread::builder().thid(id.clone()).pthid(self.thread_id.clone()).build();
+
+                            (id.clone(), thread)
+                        }
+                        InvitationContent::Pairwise(_) | InvitationContent::PairwiseDID(_) => {
+                            let thread = Thread::builder().thid(self.thread_id.clone()).build();
+                            (self.thread_id.clone(), thread)
+                        }
+                    },
                 };
 
-                decorators.thread = Some(thread);
+                let decorators = decorators.thread(thread).build();
 
-                let request = Request::with_decorators(id, content, decorators);
+                let request = Request::builder()
+                    .id(id)
+                    .content(content)
+                    .decorators(decorators)
+                    .build();
 
                 Ok((request, thread_id))
             }
@@ -264,13 +269,17 @@ impl SmConnectionInvitee {
     fn build_connection_ack_msg(&self) -> VcxResult<Ack> {
         match &self.state {
             InviteeFullState::Responded(_) => {
-                let content = AckContent::new(AckStatus::Ok);
-                let mut decorators = AckDecorators::new(Thread::new(self.thread_id.to_owned()));
-                let mut timing = Timing::default();
-                timing.out_time = Some(Utc::now());
-                decorators.timing = Some(timing);
+                let content = AckContent::builder().status(AckStatus::Ok).build();
+                let decorators = AckDecorators::builder()
+                    .thread(Thread::builder().thid(self.thread_id.to_owned()).build())
+                    .timing(Timing::builder().out_time(Utc::now()).build())
+                    .build();
 
-                Ok(Ack::with_decorators(Uuid::new_v4().to_string(), content, decorators))
+                Ok(Ack::builder()
+                    .id(Uuid::new_v4().to_string())
+                    .content(content)
+                    .decorators(decorators)
+                    .build())
             }
             _ => Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::NotReady,
@@ -283,9 +292,7 @@ impl SmConnectionInvitee {
         let Self { state, .. } = self;
 
         let thread_id = match &invitation {
-            AnyInvitation::Con(Invitation::Public(i)) => i.id.clone(),
-            AnyInvitation::Con(Invitation::Pairwise(i)) => i.id.clone(),
-            AnyInvitation::Con(Invitation::PairwiseDID(i)) => i.id.clone(),
+            AnyInvitation::Con(i) => i.id.clone(),
             AnyInvitation::Oob(i) => i.id.clone(),
         };
 
@@ -383,16 +390,18 @@ impl SmConnectionInvitee {
                         InviteeFullState::Responded((state, con_data).into())
                     }
                     Err(err) => {
-                        let mut content = ProblemReportContent::default();
-                        content.explain = Some(err.to_string());
+                        let content = ProblemReportContent::builder().explain(err.to_string()).build();
 
-                        let mut decorators = ProblemReportDecorators::new(Thread::new(self.thread_id.to_owned()));
-                        let mut timing = Timing::default();
-                        timing.out_time = Some(Utc::now());
-                        decorators.timing = Some(timing);
+                        let decorators = ProblemReportDecorators::builder()
+                            .thread(Thread::builder().thid(self.thread_id.to_owned()).build())
+                            .timing(Timing::builder().out_time(Utc::now()).build())
+                            .build();
 
-                        let problem_report =
-                            ProblemReport::with_decorators(Uuid::new_v4().to_string(), content, decorators);
+                        let problem_report: ProblemReport = ProblemReport::builder()
+                            .id(Uuid::new_v4().to_string())
+                            .content(content)
+                            .decorators(decorators)
+                            .build();
 
                         send_message(
                             problem_report.clone().into(),

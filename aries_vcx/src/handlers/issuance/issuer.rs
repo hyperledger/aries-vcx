@@ -11,7 +11,6 @@ use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
 use messages::msg_fields::protocols::cred_issuance::issue_credential::IssueCredential;
 use messages::msg_fields::protocols::notification::Notification;
 use messages::msg_fields::protocols::report_problem::ProblemReport;
-use messages::msg_parts::MsgParts;
 
 use crate::errors::error::prelude::*;
 use crate::handlers::util::OfferInfo;
@@ -285,22 +284,10 @@ impl Issuer {
             }
             AriesMessage::ReportProblem(report) => self.issuer_sm.clone().receive_problem_report(report)?,
             AriesMessage::Notification(Notification::ProblemReport(report)) => {
-                let MsgParts {
-                    id,
-                    content,
-                    decorators,
-                } = report;
-                let report = ProblemReport::with_decorators(id, content.inner, decorators);
-                self.issuer_sm.clone().receive_problem_report(report)?
+                self.issuer_sm.clone().receive_problem_report(report.into())?
             }
             AriesMessage::CredentialIssuance(CredentialIssuance::ProblemReport(report)) => {
-                let MsgParts {
-                    id,
-                    content,
-                    decorators,
-                } = report;
-                let report = ProblemReport::with_decorators(id, content.inner, decorators);
-                self.issuer_sm.clone().receive_problem_report(report)?
+                self.issuer_sm.clone().receive_problem_report(report.into())?
             }
             _ => self.issuer_sm.clone(),
         };

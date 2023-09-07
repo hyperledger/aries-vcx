@@ -2,11 +2,15 @@ use serde::{Deserialize, Serialize};
 use typed_builder::TypedBuilder;
 use url::Url;
 
+use super::InvitationContent;
+
 pub type PairwiseInvitationContent = PwInvitationContent<Url>;
 pub type PairwiseDidInvitationContent = PwInvitationContent<String>;
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, TypedBuilder)]
 #[serde(rename_all = "camelCase")]
+#[builder(build_method(vis="", name=__build))]
+#[builder(builder_type(vis = "pub"))]
 pub struct PwInvitationContent<T> {
     pub label: String,
     pub recipient_keys: Vec<String>,
@@ -14,6 +18,18 @@ pub struct PwInvitationContent<T> {
     #[serde(default)]
     pub routing_keys: Vec<String>,
     pub service_endpoint: T,
+}
+
+#[allow(dead_code, non_camel_case_types, missing_docs)]
+impl<T, __routing_keys: ::typed_builder::Optional<Vec<String>>>
+    PwInvitationContentBuilder<T, ((String,), (Vec<String>,), __routing_keys, (T,))>
+where
+    PwInvitationContent<T>: Into<InvitationContent>,
+{
+    #[allow(clippy::default_trait_access)]
+    pub fn build(self) -> InvitationContent {
+        self.__build().into()
+    }
 }
 
 #[cfg(test)]
@@ -24,115 +40,109 @@ mod tests {
 
     use super::*;
     use crate::{
-        decorators::timing::tests::make_extended_timing,
-        misc::test_utils,
-        msg_fields::protocols::connection::invitation::{InvitationContent, InvitationDecorators},
-        msg_types::connection::ConnectionTypeV1_0,
+        decorators::timing::tests::make_extended_timing, misc::test_utils,
+        msg_fields::protocols::connection::invitation::InvitationDecorators, msg_types::connection::ConnectionTypeV1_0,
     };
 
     #[test]
     fn test_minimal_conn_invite_pw() {
+        let label = "test_pw_invite_label";
+        let recipient_keys = vec!["test_recipient_key".to_owned()];
+        let service_endpoint = Url::parse("https://dummy.dummy/dummy").unwrap();
+
         let content = PairwiseInvitationContent::builder()
-            .label("test_pw_invite_label".to_owned())
-            .recipient_keys(vec!["test_recipient_key".to_owned()])
-            .service_endpoint(Url::parse("https://dummy.dummy/dummy").unwrap())
+            .label(label.to_owned())
+            .recipient_keys(recipient_keys.clone())
+            .service_endpoint(service_endpoint.clone())
             .build();
 
         let decorators = InvitationDecorators::default();
 
         let expected = json!({
-            "label": content.label,
-            "recipientKeys": content.recipient_keys,
-            "routingKeys": content.routing_keys,
-            "serviceEndpoint": content.service_endpoint,
+            "label": label,
+            "recipientKeys": recipient_keys,
+            "routingKeys": [],
+            "serviceEndpoint": service_endpoint,
         });
 
-        test_utils::test_msg(
-            InvitationContent::Pairwise(content),
-            decorators,
-            ConnectionTypeV1_0::Invitation,
-            expected,
-        );
+        test_utils::test_msg(content, decorators, ConnectionTypeV1_0::Invitation, expected);
     }
 
     #[test]
     fn test_extended_conn_invite_pw() {
+        let label = "test_pw_invite_label";
+        let recipient_keys = vec!["test_recipient_key".to_owned()];
+        let routing_keys = vec!["test_routing_key".to_owned()];
+        let service_endpoint = Url::parse("https://dummy.dummy/dummy").unwrap();
+
         let content = PairwiseInvitationContent::builder()
-            .label("test_pw_invite_label".to_owned())
-            .recipient_keys(vec!["test_recipient_key".to_owned()])
-            .routing_keys(vec!["test_routing_key".to_owned()])
-            .service_endpoint(Url::parse("https://dummy.dummy/dummy").unwrap())
+            .label(label.to_owned())
+            .recipient_keys(recipient_keys.clone())
+            .routing_keys(routing_keys.clone())
+            .service_endpoint(service_endpoint.clone())
             .build();
 
-        let mut decorators = InvitationDecorators::default();
-        decorators.timing = Some(make_extended_timing());
+        let decorators = InvitationDecorators::builder().timing(make_extended_timing()).build();
 
         let expected = json!({
-            "label": content.label,
-            "recipientKeys": content.recipient_keys,
-            "routingKeys": content.routing_keys,
-            "serviceEndpoint": content.service_endpoint,
+            "label": label,
+            "recipientKeys": recipient_keys,
+            "routingKeys": routing_keys,
+            "serviceEndpoint": service_endpoint,
             "~timing": decorators.timing
         });
 
-        test_utils::test_msg(
-            InvitationContent::Pairwise(content),
-            decorators,
-            ConnectionTypeV1_0::Invitation,
-            expected,
-        );
+        test_utils::test_msg(content, decorators, ConnectionTypeV1_0::Invitation, expected);
     }
 
     #[test]
     fn test_minimal_conn_invite_pw_did() {
+        let label = "test_pw_invite_label";
+        let recipient_keys = vec!["test_recipient_key".to_owned()];
+        let service_endpoint = "https://dummy.dummy/dummy";
+
         let content = PairwiseDidInvitationContent::builder()
-            .label("test_pw_invite_label".to_owned())
-            .recipient_keys(vec!["test_recipient_key".to_owned()])
-            .service_endpoint("test_conn_invite_pw_did".to_owned())
+            .label(label.to_owned())
+            .recipient_keys(recipient_keys.clone())
+            .service_endpoint(service_endpoint.to_owned())
             .build();
 
         let decorators = InvitationDecorators::default();
 
         let expected = json!({
-            "label": content.label,
-            "recipientKeys": content.recipient_keys,
-            "routingKeys": content.routing_keys,
-            "serviceEndpoint": content.service_endpoint,
+            "label": label,
+            "recipientKeys": recipient_keys,
+            "routingKeys": [],
+            "serviceEndpoint": service_endpoint,
         });
 
-        test_utils::test_msg(
-            InvitationContent::PairwiseDID(content),
-            decorators,
-            ConnectionTypeV1_0::Invitation,
-            expected,
-        );
+        test_utils::test_msg(content, decorators, ConnectionTypeV1_0::Invitation, expected);
     }
 
     #[test]
     fn test_extended_conn_invite_pw_did() {
+        let label = "test_pw_invite_label";
+        let recipient_keys = vec!["test_recipient_key".to_owned()];
+        let routing_keys = vec!["test_routing_key".to_owned()];
+        let service_endpoint = "https://dummy.dummy/dummy";
+
         let content = PairwiseDidInvitationContent::builder()
-            .label("test_pw_invite_label".to_owned())
-            .recipient_keys(vec!["test_recipient_key".to_owned()])
-            .routing_keys(vec!["test_routing_key".to_owned()])
-            .service_endpoint("test_conn_invite_pw_did".to_owned())
+            .label(label.to_owned())
+            .recipient_keys(recipient_keys.clone())
+            .routing_keys(routing_keys.clone())
+            .service_endpoint(service_endpoint.to_owned())
             .build();
 
-        let mut decorators = InvitationDecorators::default();
-        decorators.timing = Some(make_extended_timing());
+        let decorators = InvitationDecorators::builder().timing(make_extended_timing()).build();
 
         let expected = json!({
-            "label": content.label,
-            "recipientKeys": content.recipient_keys,
-            "routingKeys": content.routing_keys,
-            "serviceEndpoint": content.service_endpoint,
+            "label": label,
+            "recipientKeys": recipient_keys,
+            "routingKeys": routing_keys,
+            "serviceEndpoint": service_endpoint,
             "~timing": decorators.timing
         });
 
-        test_utils::test_msg(
-            InvitationContent::PairwiseDID(content),
-            decorators,
-            ConnectionTypeV1_0::Invitation,
-            expected,
-        );
+        test_utils::test_msg(content, decorators, ConnectionTypeV1_0::Invitation, expected);
     }
 }

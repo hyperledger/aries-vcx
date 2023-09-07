@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use typed_builder::TypedBuilder;
 
 use crate::{
-    msg_fields::protocols::notification::ack::{AckContent, AckDecorators},
+    msg_fields::protocols::notification::ack::{Ack, AckContent, AckDecorators},
     msg_parts::MsgParts,
 };
 
@@ -12,6 +12,22 @@ pub type AckCredential = MsgParts<AckCredentialContent, AckDecorators>;
 #[serde(transparent)]
 pub struct AckCredentialContent {
     pub inner: AckContent,
+}
+
+impl From<AckContent> for AckCredentialContent {
+    fn from(value: AckContent) -> Self {
+        Self { inner: value }
+    }
+}
+
+impl From<AckCredential> for Ack {
+    fn from(value: AckCredential) -> Self {
+        Self::builder()
+            .id(value.id)
+            .content(value.content.inner)
+            .decorators(value.decorators)
+            .build()
+    }
 }
 
 #[cfg(test)]
@@ -30,9 +46,7 @@ mod tests {
 
     #[test]
     fn test_minimal_ack_cred() {
-        let content = AckCredentialContent::builder()
-            .inner(AckContent::builder().status(AckStatus::Ok).build())
-            .build();
+        let content: AckCredentialContent = AckContent::builder().status(AckStatus::Ok).build();
 
         let decorators = AckDecorators::builder().thread(make_extended_thread()).build();
 
@@ -46,9 +60,7 @@ mod tests {
 
     #[test]
     fn test_extended_ack_cred() {
-        let content = AckCredentialContent::builder()
-            .inner(AckContent::builder().status(AckStatus::Ok).build())
-            .build();
+        let content: AckCredentialContent = AckContent::builder().status(AckStatus::Ok).build();
 
         let mut decorators = AckDecorators::builder().thread(make_extended_thread()).build();
         decorators.timing = Some(make_extended_timing());

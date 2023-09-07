@@ -1,17 +1,26 @@
 use messages::{
     decorators::thread::Thread,
-    msg_fields::protocols::report_problem::{ProblemReport, ProblemReportContent, ProblemReportDecorators},
+    msg_fields::protocols::report_problem::{
+        Description, ProblemReport, ProblemReportContent, ProblemReportDecorators,
+    },
 };
 use uuid::Uuid;
 
 pub fn build_problem_report_msg(comment: Option<String>, thread_id: &str) -> ProblemReport {
     let id = Uuid::new_v4().to_string();
-    let content = ProblemReportContent::new(comment.unwrap_or_default());
+    let content = ProblemReportContent::builder()
+        .description(Description::builder().code(comment.unwrap_or_default()).build())
+        .build();
 
-    let mut decorators = ProblemReportDecorators::default();
-    decorators.thread = Some(Thread::new(thread_id.to_owned()));
+    let decorators = ProblemReportDecorators::builder()
+        .thread(Thread::builder().thid(thread_id.to_owned()).build())
+        .build();
 
-    ProblemReport::with_decorators(id, content, decorators)
+    ProblemReport::builder()
+        .id(id)
+        .content(content)
+        .decorators(decorators)
+        .build()
 }
 
 // #[cfg(test)]

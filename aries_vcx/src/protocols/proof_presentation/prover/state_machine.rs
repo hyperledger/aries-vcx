@@ -79,16 +79,23 @@ impl fmt::Display for ProverFullState {
 fn build_presentation_msg(thread_id: &str, presentation_attachment: String) -> VcxResult<Presentation> {
     let id = Uuid::new_v4().to_string();
 
-    let content = PresentationContent::new(vec![make_attach_from_str!(
-        &presentation_attachment,
-        AttachmentId::Presentation.as_ref().to_string()
-    )]);
-    let mut decorators = PresentationDecorators::new(Thread::new(thread_id.to_owned()));
-    let mut timing = Timing::default();
-    timing.out_time = Some(Utc::now());
-    decorators.timing = Some(timing);
+    let content = PresentationContent::builder()
+        .presentations_attach(vec![make_attach_from_str!(
+            &presentation_attachment,
+            AttachmentId::Presentation.as_ref().to_string()
+        )])
+        .build();
 
-    Ok(Presentation::with_decorators(id, content, decorators))
+    let decorators = PresentationDecorators::builder()
+        .thread(Thread::builder().thid(thread_id.to_owned()).build())
+        .timing(Timing::builder().out_time(Utc::now()).build())
+        .build();
+
+    Ok(Presentation::builder()
+        .id(id)
+        .content(content)
+        .decorators(decorators)
+        .build())
 }
 
 impl Default for ProverFullState {
@@ -118,25 +125,44 @@ impl ProverSM {
         let state = match self.state {
             ProverFullState::Initial(_) => {
                 let id = self.thread_id.clone();
-                let preview = PresentationPreview::new(proposal_data.attributes, proposal_data.predicates);
-                let mut content = ProposePresentationContent::new(preview);
-                content.comment = proposal_data.comment;
+                let preview = PresentationPreview::builder()
+                    .attributes(proposal_data.attributes)
+                    .predicates(proposal_data.predicates)
+                    .build();
+                let content = ProposePresentationContent::builder().presentation_proposal(preview);
 
-                let decorators = ProposePresentationDecorators::default();
+                let content = if let Some(comment) = proposal_data.comment {
+                    content.comment(comment).build()
+                } else {
+                    content.build()
+                };
 
-                let proposal = ProposePresentation::with_decorators(id, content, decorators);
+                let proposal = ProposePresentation::builder().id(id).content(content).build();
                 ProverFullState::PresentationProposalSent(PresentationProposalSent::new(proposal))
             }
             ProverFullState::PresentationRequestReceived(_) => {
                 let id = Uuid::new_v4().to_string();
-                let preview = PresentationPreview::new(proposal_data.attributes, proposal_data.predicates);
-                let mut content = ProposePresentationContent::new(preview);
-                content.comment = proposal_data.comment;
+                let preview = PresentationPreview::builder()
+                    .attributes(proposal_data.attributes)
+                    .predicates(proposal_data.predicates)
+                    .build();
 
-                let mut decorators = ProposePresentationDecorators::default();
-                decorators.thread = Some(Thread::new(self.thread_id.clone()));
+                let content = ProposePresentationContent::builder().presentation_proposal(preview);
+                let content = if let Some(comment) = proposal_data.comment {
+                    content.comment(comment).build()
+                } else {
+                    content.build()
+                };
 
-                let proposal = ProposePresentation::with_decorators(id, content, decorators);
+                let decorators = ProposePresentationDecorators::builder()
+                    .thread(Thread::builder().thid(self.thread_id.clone()).build())
+                    .build();
+
+                let proposal = ProposePresentation::builder()
+                    .id(id)
+                    .content(content)
+                    .decorators(decorators)
+                    .build();
                 ProverFullState::PresentationProposalSent(PresentationProposalSent::new(proposal))
             }
             s => {

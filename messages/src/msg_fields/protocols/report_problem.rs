@@ -24,6 +24,7 @@ use crate::{
 pub type ProblemReport = MsgParts<ProblemReportContent, ProblemReportDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder)]
+#[builder(build_method(into))]
 pub struct ProblemReportContent {
     pub description: Description,
     #[builder(default, setter(strip_option))]
@@ -205,7 +206,7 @@ mod tests {
         let description = Description::builder()
             .code("test_problem_report_code".to_owned())
             .build();
-        let content = ProblemReportContent::builder().description(description).build();
+        let content: ProblemReportContent = ProblemReportContent::builder().description(description).build();
         let decorators = ProblemReportDecorators::default();
 
         let expected = json!({
@@ -220,7 +221,7 @@ mod tests {
         let description = Description::builder()
             .code("test_problem_report_code".to_owned())
             .build();
-        let mut content = ProblemReportContent::builder().description(description).build();
+        let mut content: ProblemReportContent = ProblemReportContent::builder().description(description).build();
         content.who_retries = Some(WhoRetries::Me);
         content.fix_hint = Some("test_fix_hint".to_owned());
         content.impact = Some(Impact::Connection);

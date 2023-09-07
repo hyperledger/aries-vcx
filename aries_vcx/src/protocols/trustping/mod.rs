@@ -4,7 +4,7 @@ use messages::{
     decorators::{thread::Thread, timing::Timing},
     msg_fields::protocols::trust_ping::{
         ping::{Ping, PingContent, PingDecorators},
-        ping_response::{PingResponse, PingResponseContent, PingResponseDecorators},
+        ping_response::{PingResponse, PingResponseDecorators},
     },
     AriesMessage,
 };
@@ -19,7 +19,11 @@ pub fn build_ping(request_response: bool, comment: Option<String>) -> Ping {
     timing.out_time = Some(Utc::now());
     decorators.timing = Some(timing);
 
-    Ping::with_decorators(Uuid::new_v4().to_string(), content, decorators)
+    Ping::builder()
+        .id(Uuid::new_v4().to_string())
+        .content(content)
+        .decorators(decorators)
+        .build()
 }
 
 pub fn build_ping_response(ping: &Ping) -> PingResponse {
@@ -31,14 +35,15 @@ pub fn build_ping_response(ping: &Ping) -> PingResponse {
         .unwrap_or(ping.id.as_str())
         .to_owned();
 
-    let content = PingResponseContent::default();
-    let thread = Thread::new(thread_id);
-    let mut decorators = PingResponseDecorators::new(thread);
-    let mut timing = Timing::default();
-    timing.out_time = Some(Utc::now());
-    decorators.timing = Some(timing);
+    let decorators = PingResponseDecorators::builder()
+        .thread(Thread::builder().thid(thread_id).build())
+        .timing(Timing::builder().out_time(Utc::now()).build())
+        .build();
 
-    PingResponse::with_decorators(Uuid::new_v4().to_string(), content, decorators)
+    PingResponse::builder()
+        .id(Uuid::new_v4().to_string())
+        .decorators(decorators)
+        .build()
 }
 
 pub fn build_ping_response_msg(ping: &Ping) -> AriesMessage {

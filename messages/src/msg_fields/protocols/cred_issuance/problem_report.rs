@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use typed_builder::TypedBuilder;
 
 use crate::{
-    msg_fields::protocols::report_problem::{ProblemReportContent, ProblemReportDecorators},
+    msg_fields::protocols::report_problem::{ProblemReport, ProblemReportContent, ProblemReportDecorators},
     msg_parts::MsgParts,
 };
 
@@ -12,6 +12,22 @@ pub type CredIssuanceProblemReport = MsgParts<CredIssuanceProblemReportContent, 
 #[serde(transparent)]
 pub struct CredIssuanceProblemReportContent {
     pub inner: ProblemReportContent,
+}
+
+impl From<ProblemReportContent> for CredIssuanceProblemReportContent {
+    fn from(value: ProblemReportContent) -> Self {
+        Self { inner: value }
+    }
+}
+
+impl From<CredIssuanceProblemReport> for ProblemReport {
+    fn from(value: CredIssuanceProblemReport) -> Self {
+        Self::builder()
+            .id(value.id)
+            .content(value.content.inner)
+            .decorators(value.decorators)
+            .build()
+    }
 }
 
 #[cfg(test)]
@@ -38,14 +54,13 @@ mod tests {
         let description = Description::builder()
             .code("test_problem_report_code".to_owned())
             .build();
-        let content = ProblemReportContent::builder().description(description).build();
+        let content: CredIssuanceProblemReportContent =
+            ProblemReportContent::builder().description(description).build();
         let decorators = ProblemReportDecorators::default();
 
         let expected = json!({
-            "description": content.description
+            "description": content.inner.description
         });
-
-        let content = CredIssuanceProblemReportContent::builder().inner(content).build();
 
         test_utils::test_msg(content, decorators, CredentialIssuanceTypeV1_0::ProblemReport, expected);
     }
@@ -55,7 +70,7 @@ mod tests {
         let description = Description::builder()
             .code("test_problem_report_code".to_owned())
             .build();
-        let mut content = ProblemReportContent::builder().description(description).build();
+        let mut content: ProblemReportContent = ProblemReportContent::builder().description(description).build();
         content.who_retries = Some(WhoRetries::Me);
         content.fix_hint = Some("test_fix_hint".to_owned());
         content.impact = Some(Impact::Connection);

@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use typed_builder::TypedBuilder;
 
 use crate::{
-    msg_fields::protocols::notification::ack::{AckContent, AckDecorators},
+    msg_fields::protocols::notification::ack::{Ack, AckContent, AckDecorators},
     msg_parts::MsgParts,
 };
 
@@ -12,6 +12,22 @@ pub type AckPresentation = MsgParts<AckPresentationContent, AckDecorators>;
 #[serde(transparent)]
 pub struct AckPresentationContent {
     pub inner: AckContent,
+}
+
+impl From<AckContent> for AckPresentationContent {
+    fn from(value: AckContent) -> Self {
+        Self { inner: value }
+    }
+}
+
+impl From<AckPresentation> for Ack {
+    fn from(value: AckPresentation) -> Self {
+        Self::builder()
+            .id(value.id)
+            .content(value.content.inner)
+            .decorators(value.decorators)
+            .build()
+    }
 }
 
 #[cfg(test)]
@@ -30,9 +46,7 @@ mod tests {
 
     #[test]
     fn test_minimal_ack_proof() {
-        let content = AckPresentationContent::builder()
-            .inner(AckContent::builder().status(AckStatus::Ok).build())
-            .build();
+        let content: AckPresentationContent = AckContent::builder().status(AckStatus::Ok).build();
 
         let decorators = AckDecorators::builder().thread(make_extended_thread()).build();
 
@@ -46,9 +60,7 @@ mod tests {
 
     #[test]
     fn test_extended_ack_proof() {
-        let content = AckPresentationContent::builder()
-            .inner(AckContent::builder().status(AckStatus::Ok).build())
-            .build();
+        let content: AckPresentationContent = AckContent::builder().status(AckStatus::Ok).build();
 
         let mut decorators = AckDecorators::builder().thread(make_extended_thread()).build();
         decorators.timing = Some(make_extended_timing());

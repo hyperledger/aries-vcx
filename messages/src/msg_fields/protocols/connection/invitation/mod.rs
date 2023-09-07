@@ -4,7 +4,9 @@ pub mod public;
 use derive_more::From;
 use serde::{Deserialize, Serialize};
 use typed_builder::TypedBuilder;
+use url::Url;
 
+use self::{pairwise::PwInvitationContentBuilder, public::PublicInvitationContentBuilder};
 pub use self::{
     pairwise::{PairwiseDidInvitationContent, PairwiseInvitationContent},
     public::PublicInvitationContent,
@@ -23,6 +25,20 @@ pub enum InvitationContent {
     Public(PublicInvitationContent),
     Pairwise(PairwiseInvitationContent),
     PairwiseDID(PairwiseDidInvitationContent),
+}
+
+impl InvitationContent {
+    pub fn builder_public() -> PublicInvitationContentBuilder {
+        PublicInvitationContent::builder()
+    }
+
+    pub fn builder_pairwise() -> PwInvitationContentBuilder<Url> {
+        PairwiseInvitationContent::builder()
+    }
+
+    pub fn builder_pairwise_did() -> PwInvitationContentBuilder<String> {
+        PairwiseDidInvitationContent::builder()
+    }
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, Default, PartialEq, TypedBuilder)]

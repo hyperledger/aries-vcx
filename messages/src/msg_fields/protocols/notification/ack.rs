@@ -9,6 +9,7 @@ use crate::{
 pub type Ack = MsgParts<AckContent, AckDecorators>;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TypedBuilder)]
+#[builder(build_method(into))]
 pub struct AckContent {
     pub status: AckStatus,
 }
@@ -45,7 +46,7 @@ mod tests {
 
     #[test]
     fn test_minimal_ack() {
-        let content = AckContent::builder().status(AckStatus::Ok).build();
+        let content: AckContent = AckContent::builder().status(AckStatus::Ok).build();
 
         let decorators = AckDecorators::builder().thread(make_extended_thread()).build();
 
@@ -59,7 +60,7 @@ mod tests {
 
     #[test]
     fn test_extended_ack() {
-        let content = AckContent::builder().status(AckStatus::Ok).build();
+        let content: AckContent = AckContent::builder().status(AckStatus::Ok).build();
 
         let mut decorators = AckDecorators::builder().thread(make_extended_thread()).build();
         decorators.timing = Some(make_extended_timing());

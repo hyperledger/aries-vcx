@@ -14,8 +14,6 @@ use messages::msg_fields::protocols::present_proof::propose::{
 };
 use messages::msg_fields::protocols::present_proof::request::RequestPresentation;
 use messages::msg_fields::protocols::present_proof::PresentProof;
-use messages::msg_fields::protocols::report_problem::ProblemReport;
-use messages::msg_parts::MsgParts;
 use messages::AriesMessage;
 use uuid::Uuid;
 
@@ -174,22 +172,10 @@ impl Prover {
             }
             AriesMessage::ReportProblem(report) => self.prover_sm.clone().receive_presentation_reject(report)?,
             AriesMessage::Notification(Notification::ProblemReport(report)) => {
-                let MsgParts {
-                    id,
-                    content,
-                    decorators,
-                } = report;
-                let report = ProblemReport::with_decorators(id, content.inner, decorators);
-                self.prover_sm.clone().receive_presentation_reject(report)?
+                self.prover_sm.clone().receive_presentation_reject(report.into())?
             }
             AriesMessage::PresentProof(PresentProof::ProblemReport(report)) => {
-                let MsgParts {
-                    id,
-                    content,
-                    decorators,
-                } = report;
-                let report = ProblemReport::with_decorators(id, content.inner, decorators);
-                self.prover_sm.clone().receive_presentation_reject(report)?
+                self.prover_sm.clone().receive_presentation_reject(report.into())?
             }
             _ => self.prover_sm.clone(),
         };
@@ -229,18 +215,23 @@ impl Prover {
                 })?;
                 let thread_id = self.prover_sm.get_thread_id()?;
                 let id = Uuid::new_v4().to_string();
+
                 let content = ProposePresentationContent::builder()
                     .presentation_proposal(presentation_preview)
                     .build();
-                let mut decorators = ProposePresentationDecorators::default();
-                let thread = Thread::builder().thid(thread_id.to_owned()).build();
-                let mut timing = Timing::default();
-                timing.out_time = Some(Utc::now());
-                decorators.thread = Some(thread);
-                decorators.timing = Some(timing);
 
-                let proposal = ProposePresentation::with_decorators(id, content, decorators);
-                (self.prover_sm.clone().negotiate_presentation().await?, proposal.into())
+                let decorators = ProposePresentationDecorators::builder()
+                    .thread(Thread::builder().thid(thread_id.to_owned()).build())
+                    .timing(Timing::builder().out_time(Utc::now()).build())
+                    .build();
+
+                let proposal = ProposePresentation::builder()
+                    .id(id)
+                    .content(content)
+                    .decorators(decorators)
+                    .build();
+
+                (self.prover_sm.clone().negotiate_presentation().await?, proposal)
             }
             (None, None) => {
                 return Err(AriesVcxError::from_msg(

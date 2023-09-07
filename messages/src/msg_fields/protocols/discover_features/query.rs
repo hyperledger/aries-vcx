@@ -10,7 +10,7 @@ pub type Query = MsgParts<QueryContent, QueryDecorators>;
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder)]
 pub struct QueryContent {
     pub query: String,
-    #[builder(default)]
+    #[builder(default, setter(strip_option))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,
 }

@@ -30,7 +30,11 @@ impl OutOfBandSender {
         let decorators = InvitationDecorators::default();
 
         Self {
-            oob: Invitation::with_decorators(id, content, decorators),
+            oob: Invitation::builder()
+                .id(id)
+                .content(content)
+                .decorators(decorators)
+                .build(),
         }
     }
 

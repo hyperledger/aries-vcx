@@ -25,39 +25,23 @@ pub mod test_utils {
         String::from("12")
     }
 
-    pub fn _comment() -> Option<String> {
-        Some("Comment.".to_string())
+    pub fn _comment() -> String {
+        "Comment.".to_string()
     }
 
     pub fn _revocation_notification(ack_on: Vec<AckOn>) -> Revoke {
         let id = Uuid::new_v4().to_string();
 
-        let mut content = RevokeContent::new(
-            format!("{}::{}", _rev_reg_id(), _cred_rev_id()),
-            MaybeKnown::Known(RevocationFormat::IndyAnoncreds),
-        );
-        content.comment = _comment();
+        let content = RevokeContent::builder()
+            .credential_id(format!("{}::{}", _rev_reg_id(), _cred_rev_id()))
+            .revocation_format(MaybeKnown::Known(RevocationFormat::IndyAnoncreds))
+            .comment(_comment())
+            .build();
 
-        let mut decorators = RevokeDecorators::default();
-        let please_ack = PleaseAck::new(ack_on);
-        decorators.please_ack = Some(please_ack);
+        let decorators = RevokeDecorators::builder()
+            .please_ack(PleaseAck::builder().on(ack_on).build())
+            .build();
 
-        Revoke::with_decorators(id, content, decorators)
-    }
-
-    pub fn _revocation_notification_invalid_format() -> Revoke {
-        let id = Uuid::new_v4().to_string();
-
-        let mut content = RevokeContent::new(
-            format!("{}::{}", _rev_reg_id(), _cred_rev_id()),
-            MaybeKnown::Known(RevocationFormat::IndyAnoncreds),
-        );
-        content.comment = _comment();
-
-        let mut decorators = RevokeDecorators::default();
-        let please_ack = PleaseAck::new(vec![AckOn::Receipt]);
-        decorators.please_ack = Some(please_ack);
-
-        Revoke::with_decorators(id, content, decorators)
+        Revoke::builder().id(id).content(content).decorators(decorators).build()
     }
 }

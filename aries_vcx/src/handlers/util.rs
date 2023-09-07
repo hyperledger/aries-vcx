@@ -63,8 +63,12 @@ macro_rules! get_attach_as_string {
 macro_rules! make_attach_from_str {
     ($str_attach:expr, $id:expr) => {{
         let attach_type = messages::decorators::attachment::AttachmentType::Base64(base64::encode($str_attach));
-        let attach_data = messages::decorators::attachment::AttachmentData::new(attach_type);
-        let mut attach = messages::decorators::attachment::Attachment::new(attach_data);
+        let attach_data = messages::decorators::attachment::AttachmentData::builder()
+            .content(attach_type)
+            .build();
+        let mut attach = messages::decorators::attachment::Attachment::builder()
+            .data(attach_data)
+            .build();
         attach.id = Some($id);
         attach.mime_type = Some(messages::misc::MimeType::Json);
         attach
@@ -85,9 +89,7 @@ pub fn verify_thread_id(thread_id: &str, message: &AriesMessage) -> VcxResult<()
     }
     let is_match = match message {
         AriesMessage::BasicMessage(msg) => matches_opt_thread_id!(msg, thread_id),
-        AriesMessage::Connection(Connection::Invitation(Invitation::Public(msg))) => msg.id == thread_id,
-        AriesMessage::Connection(Connection::Invitation(Invitation::Pairwise(msg))) => msg.id == thread_id,
-        AriesMessage::Connection(Connection::Invitation(Invitation::PairwiseDID(msg))) => msg.id == thread_id,
+        AriesMessage::Connection(Connection::Invitation(msg)) => msg.id == thread_id,
         AriesMessage::Connection(Connection::ProblemReport(msg)) => matches_thread_id!(msg, thread_id),
         AriesMessage::Connection(Connection::Request(msg)) => matches_opt_thread_id!(msg, thread_id),
         AriesMessage::Connection(Connection::Response(msg)) => matches_thread_id!(msg, thread_id),
