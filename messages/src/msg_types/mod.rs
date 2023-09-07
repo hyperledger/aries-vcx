@@ -41,8 +41,8 @@ impl<'a> TryFrom<&'a str> for MessageType<'a> {
         // The first element will be the string repr of the protocol
         // while the second will be the message kind.
         let Some((protocol_str, kind)) = msg_type_str.rsplit_once('/') else {
-                return Err(format!("Invalid message type: {msg_type_str}"));
-            };
+            return Err(format!("Invalid message type: {msg_type_str}"));
+        };
 
         // Parse the Protocol instance
         let protocol = match Protocol::from_str(protocol_str) {

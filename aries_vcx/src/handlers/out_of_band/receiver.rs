@@ -146,11 +146,11 @@ impl OutOfBandReceiver {
             };
 
             let Ok(bytes) = base64::decode(encoded_attach) else {
-                    return Err(AriesVcxError::from_msg(
-                        AriesVcxErrorKind::SerializationError,
-                        format!("Attachment is not base 64 encoded JSON: {attach:?}"),
-                    ));
-                };
+                return Err(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::SerializationError,
+                    format!("Attachment is not base 64 encoded JSON: {attach:?}"),
+                ));
+            };
 
             let attach_json: Value = serde_json::from_slice(&bytes).map_err(|_| {
                 AriesVcxError::from_msg(
