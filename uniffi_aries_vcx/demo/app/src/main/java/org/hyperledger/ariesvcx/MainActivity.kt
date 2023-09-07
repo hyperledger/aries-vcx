@@ -16,28 +16,48 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import okhttp3.OkHttpClient
 import org.hyperledger.ariesvcx.ui.theme.DemoTheme
 
+
 sealed class Destination(val route: String) {
-    object Home: Destination("home")
-    object QRScan: Destination("scan")
+    object Home : Destination("home")
+    object QRScan : Destination("scan")
 }
 
 class MainActivity : ComponentActivity() {
     private var profile by mutableStateOf<ProfileHolder?>(null)
     private var connection by mutableStateOf<Connection?>(null)
+    private var requested by mutableStateOf<Boolean>(false)
+    private var httpClient = OkHttpClient()
+
+    private val walletConfig = WalletConfig(
+        walletName = "test_create_wallet_add_uuid_here",
+        walletKey = "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY",
+        walletKeyDerivation = "RAW",
+        walletType = null,
+        storageConfig = null,
+        storageCredentials = null,
+        rekey = null,
+        rekeyDerivationMethod = null
+    )
 
     private fun setProfileHolder(profileHolder: ProfileHolder) {
         profile = profileHolder
         connection = createInvitee(profileHolder)
     }
 
+    private fun setRequestedToTrue() {
+        requested = true
+    }
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Os.setenv("EXTERNAL_STORAGE", this.filesDir.absolutePath, true)
         setContent {
             DemoTheme {
-                Surface (
+                Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
@@ -46,7 +66,11 @@ class MainActivity : ComponentActivity() {
                         navController = navController,
                         setProfileHolder = { setProfileHolder(it) },
                         connection = connection,
-                        profileHolder = profile
+                        profileHolder = profile,
+                        walletConfig = walletConfig,
+                        requested = requested,
+                        setRequestedToTrue = { setRequestedToTrue() },
+                        httpClient = httpClient
                     )
                 }
             }
@@ -59,7 +83,11 @@ fun NavigationAppHost(
     navController: NavHostController,
     setProfileHolder: (ProfileHolder) -> Unit,
     connection: Connection?,
-    profileHolder: ProfileHolder?
+    profileHolder: ProfileHolder?,
+    walletConfig: WalletConfig,
+    requested: Boolean,
+    setRequestedToTrue: () -> Unit,
+    httpClient: OkHttpClient,
 ) {
     NavHost(navController = navController, startDestination = "home") {
         composable(Destination.Home.route) {
@@ -67,14 +95,20 @@ fun NavigationAppHost(
                 navController = navController,
                 setProfileHolder = setProfileHolder,
                 profileHolder = profileHolder,
-                connection = connection
+                connection = connection,
+                walletConfig = walletConfig,
+                requested = requested,
+                httpClient = httpClient
             )
         }
 
         composable(Destination.QRScan.route) {
             ScanScreen(
                 connection = connection!!,
-                profileHolder = profileHolder!!
+                profileHolder = profileHolder!!,
+                navController = navController,
+                walletConfig = walletConfig,
+                setRequestedToTrue = setRequestedToTrue
             )
         }
     }
