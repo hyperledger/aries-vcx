@@ -219,10 +219,12 @@ build_uniffi() {
 
 generate_bindings() {
     export UNIFFI_ROOT="${ARIES_VCX_ROOT}/uniffi_aries_vcx"
+    export ANDROID_DEMO_DIR="${UNIFFI_ROOT}/demo"
 
     pushd "${UNIFFI_ROOT}/core"
         cargo run --features=uniffi/cli --bin uniffi-bindgen generate src/vcx.udl --language ${LANGUAGE}
-        cp -R "$(realpath ${UNIFFI_ROOT}/core/src/org/*)" "$(realpath ${ANDROID_DEMO_DIR}/app/src/main/java/org)"
-        rm -R "$(realpath ${UNIFFI_ROOT}/core/src/org/)"
     popd
+
+    cp -R "$(realpath ${UNIFFI_ROOT}/core/src/org/hyperledger/ariesvcx/vcx.kt)" "$(realpath ${ANDROID_DEMO_DIR}/app/src/main/java/org/hyperledger/ariesvcx)"
+    rm -R "$(realpath ${UNIFFI_ROOT}/core/src/org)"
 }
