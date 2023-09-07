@@ -3,7 +3,7 @@ name: CI
 on:
   push:
     branches:
-      - main
+      - "**"
   pull_request:
     branches:
       - "**"
@@ -502,8 +502,8 @@ jobs:
             target: aarch64-apple-darwin
             skip: ${{ needs.workflow-setup.outputs.SKIP_NAPI_M1 }}
             build: |
-              wget https://github.com/macports/macports-base/releases/download/v2.8.0/MacPorts-2.8.0-12-Monterey.pkg
-              sudo installer -pkg ./MacPorts-2.8.0-12-Monterey.pkg -target /
+              wget https://github.com/macports/macports-base/releases/download/v2.8.1/MacPorts-2.8.1-10.12-Sierra.pkg
+              sudo installer -pkg ./MacPorts-2.8.1-10.12-Sierra.pkg -target /
               export PATH=/opt/local/bin:/opt/local/sbin:$PATH
 
               sudo port install openssl +universal zmq +universal
