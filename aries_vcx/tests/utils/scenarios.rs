@@ -152,31 +152,6 @@ pub mod test_utils {
         vec![address1_attr, address2_attr, city_attr, state_attr, zip_attr]
     }
 
-    pub fn requested_attr_objects_1(cred_def_id: &str) -> Vec<PresentationAttr> {
-        let (address1, address2, city, state, zip) = attr_names();
-        let mut address1_attr = PresentationAttr::new(address1);
-        address1_attr.cred_def_id = Some(cred_def_id.to_owned());
-        address1_attr.value = Some("456 Side St".to_owned());
-
-        let mut address2_attr = PresentationAttr::new(address2);
-        address2_attr.cred_def_id = Some(cred_def_id.to_owned());
-        address2_attr.value = Some("Suite 666".to_owned());
-
-        let mut city_attr = PresentationAttr::new(city);
-        city_attr.cred_def_id = Some(cred_def_id.to_owned());
-        city_attr.value = Some("Austin".to_owned());
-
-        let mut state_attr = PresentationAttr::new(state);
-        state_attr.cred_def_id = Some(cred_def_id.to_owned());
-        state_attr.value = Some("TC".to_owned());
-
-        let mut zip_attr = PresentationAttr::new(zip);
-        zip_attr.cred_def_id = Some(cred_def_id.to_owned());
-        zip_attr.value = Some("42000".to_owned());
-
-        vec![address1_attr, address2_attr, city_attr, state_attr, zip_attr]
-    }
-
     pub fn create_holder_from_proposal(proposal: ProposeCredential) -> Holder {
         let holder = Holder::create_with_proposal("TEST_CREDENTIAL", proposal).unwrap();
         assert_eq!(HolderState::ProposalSet, holder.get_state());

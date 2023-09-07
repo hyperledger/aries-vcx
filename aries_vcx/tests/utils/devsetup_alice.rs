@@ -6,9 +6,6 @@ use aries_vcx::common::ledger::transactions::into_did_doc;
 use aries_vcx::core::profile::profile::Profile;
 use aries_vcx::global::settings::DEFAULT_LINK_SECRET_ALIAS;
 use aries_vcx::handlers::connection::mediated_connection::{ConnectionState, MediatedConnection};
-use aries_vcx::handlers::issuance::holder::Holder;
-use aries_vcx::handlers::proof_presentation::prover::Prover;
-use aries_vcx::handlers::revocation_notification::receiver::RevocationNotificationReceiver;
 use aries_vcx::handlers::util::AnyInvitation;
 use aries_vcx::protocols::mediated_connection::invitee::state_machine::InviteeState;
 use aries_vcx::utils::devsetup::{
@@ -20,12 +17,8 @@ use aries_vcx_core::wallet::indy::IndySdkWallet;
 
 pub struct Alice {
     pub profile: Arc<dyn Profile>,
-    pub is_active: bool,
     pub config_agency: AgencyClientConfig,
     pub connection: MediatedConnection,
-    pub credential: Holder,
-    pub rev_not_receiver: Option<RevocationNotificationReceiver>,
-    pub prover: Prover,
     pub agency_client: AgencyClient,
     pub genesis_file_path: String,
 }
@@ -61,12 +54,8 @@ impl Alice {
             genesis_file_path,
             profile,
             agency_client,
-            is_active: false,
             config_agency,
             connection,
-            credential: Holder::create("test").unwrap(),
-            prover: Prover::default(),
-            rev_not_receiver: None,
         };
         alice
     }

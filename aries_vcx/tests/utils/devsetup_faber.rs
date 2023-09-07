@@ -5,16 +5,12 @@ use serde_json::json;
 use agency_client::agency_client::AgencyClient;
 use agency_client::configuration::{AgencyClientConfig, AgentProvisionConfig};
 use aries_vcx::common::ledger::transactions::write_endpoint_legacy;
-use aries_vcx::common::primitives::credential_definition::CredentialDef;
 use aries_vcx::common::primitives::credential_schema::Schema;
 use aries_vcx::core::profile::profile::Profile;
 use aries_vcx::errors::error::VcxResult;
 use aries_vcx::global::settings;
 use aries_vcx::global::settings::{init_issuer_config, DEFAULT_LINK_SECRET_ALIAS};
 use aries_vcx::handlers::connection::mediated_connection::{ConnectionState, MediatedConnection};
-use aries_vcx::handlers::issuance::issuer::Issuer;
-use aries_vcx::handlers::proof_presentation::verifier::Verifier;
-use aries_vcx::handlers::revocation_notification::sender::RevocationNotificationSender;
 use aries_vcx::protocols::connection::pairwise_info::PairwiseInfo;
 use aries_vcx::protocols::mediated_connection::inviter::state_machine::InviterState;
 use aries_vcx::utils::constants::TRUSTEE_SEED;
@@ -31,15 +27,10 @@ use messages::AriesMessage;
 
 pub struct Faber {
     pub profile: Arc<dyn Profile>,
-    pub is_active: bool,
     pub config_agency: AgencyClientConfig,
     pub institution_did: String,
-    pub rev_not_sender: RevocationNotificationSender,
     pub connection: MediatedConnection,
     pub schema: Schema,
-    pub cred_def: CredentialDef,
-    pub issuer_credential: Issuer,
-    pub verifier: Verifier,
     // todo: get rid of this, if we need vkey somewhere, we can get it from wallet, we can instead store public_did
     pub pairwise_info: PairwiseInfo,
     pub agency_client: AgencyClient,
@@ -101,21 +92,14 @@ impl Faber {
 
         let pairwise_info = PairwiseInfo::create(&profile.inject_wallet()).await.unwrap();
 
-        let rev_not_sender = RevocationNotificationSender::build();
-
         let faber = Faber {
             genesis_file_path,
             profile,
             agency_client,
-            is_active: false,
             config_agency,
             institution_did,
             schema: Schema::default(),
-            cred_def: CredentialDef::default(),
             connection,
-            issuer_credential: Issuer::default(),
-            verifier: Verifier::default(),
-            rev_not_sender,
             pairwise_info,
         };
         faber
