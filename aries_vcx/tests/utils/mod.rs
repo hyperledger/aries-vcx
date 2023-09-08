@@ -4,3 +4,4 @@ pub mod devsetup_faber;
 pub mod migration;
 pub mod scenarios;
 pub mod test_macros;
+pub mod transport_trait;

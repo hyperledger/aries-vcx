@@ -162,6 +162,15 @@ pub enum AnyInvitation {
     Oob(OobInvitation),
 }
 
+impl AnyInvitation {
+    pub fn id(&self) -> &str {
+        match self {
+            AnyInvitation::Con(invitation) => &invitation.id(),
+            AnyInvitation::Oob(invitation) => &invitation.id,
+        }
+    }
+}
+
 // todo: this is shared by multiple protocols to express different things - needs to be split
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum Status {

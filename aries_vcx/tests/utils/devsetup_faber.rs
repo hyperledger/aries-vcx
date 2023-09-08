@@ -1,7 +1,5 @@
 use std::sync::Arc;
 
-use serde_json::json;
-
 use agency_client::agency_client::AgencyClient;
 use agency_client::configuration::{AgencyClientConfig, AgentProvisionConfig};
 use aries_vcx::common::ledger::transactions::write_endpoint_legacy;
@@ -10,9 +8,7 @@ use aries_vcx::core::profile::profile::Profile;
 use aries_vcx::errors::error::VcxResult;
 use aries_vcx::global::settings;
 use aries_vcx::global::settings::{init_issuer_config, DEFAULT_LINK_SECRET_ALIAS};
-use aries_vcx::handlers::connection::mediated_connection::{ConnectionState, MediatedConnection};
 use aries_vcx::protocols::connection::pairwise_info::PairwiseInfo;
-use aries_vcx::protocols::mediated_connection::inviter::state_machine::InviterState;
 use aries_vcx::utils::constants::TRUSTEE_SEED;
 use aries_vcx::utils::devsetup::{
     dev_build_featured_profile, dev_setup_wallet_indy, AGENCY_DID, AGENCY_ENDPOINT, AGENCY_VERKEY,
@@ -22,14 +18,11 @@ use aries_vcx::utils::random::generate_random_seed;
 use aries_vcx_core::wallet::indy::wallet::get_verkey_from_wallet;
 use aries_vcx_core::wallet::indy::IndySdkWallet;
 use diddoc_legacy::aries::service::AriesService;
-use messages::msg_fields::protocols::connection::invitation::public::{PublicInvitation, PublicInvitationContent};
-use messages::AriesMessage;
 
 pub struct Faber {
     pub profile: Arc<dyn Profile>,
     pub config_agency: AgencyClientConfig,
     pub institution_did: String,
-    pub connection: MediatedConnection,
     pub schema: Schema,
     // todo: get rid of this, if we need vkey somewhere, we can get it from wallet, we can instead store public_did
     pub pairwise_info: PairwiseInfo,
@@ -86,9 +79,6 @@ impl Faber {
         let config_agency = provision_cloud_agent(&mut agency_client, profile.inject_wallet(), &config_provision_agent)
             .await
             .unwrap();
-        let connection = MediatedConnection::create("faber", &profile.inject_wallet(), &agency_client, true)
-            .await
-            .unwrap();
 
         let pairwise_info = PairwiseInfo::create(&profile.inject_wallet()).await.unwrap();
 
@@ -99,7 +89,6 @@ impl Faber {
             config_agency,
             institution_did,
             schema: Schema::default(),
-            connection,
             pairwise_info,
         };
         faber
@@ -135,37 +124,5 @@ impl Faber {
         .publish(&self.profile.inject_anoncreds_ledger_write(), None)
         .await?;
         Ok(())
-    }
-
-    pub async fn create_invite(&mut self) -> String {
-        self.connection
-            .connect(&self.profile.inject_wallet(), &self.agency_client, None)
-            .await
-            .unwrap();
-        self.connection
-            .find_message_and_update_state(&self.profile.inject_wallet(), &self.agency_client)
-            .await
-            .unwrap();
-        assert_eq!(
-            ConnectionState::Inviter(InviterState::Invited),
-            self.connection.get_state()
-        );
-
-        json!(self.connection.get_invite_details().unwrap()).to_string()
-    }
-
-    pub fn create_public_invite(&mut self) -> VcxResult<String> {
-        let id = "test_invite_id";
-        let content = PublicInvitationContent::new("faber".to_owned(), self.institution_did.clone());
-        let public_invitation = PublicInvitation::new(id.to_owned(), content);
-        Ok(json!(AriesMessage::from(public_invitation)).to_string())
-    }
-
-    pub async fn update_state(&mut self, expected_state: u32) {
-        self.connection
-            .find_message_and_update_state(&self.profile.inject_wallet(), &self.agency_client)
-            .await
-            .unwrap();
-        assert_eq!(expected_state, u32::from(self.connection.get_state()));
     }
 }

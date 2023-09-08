@@ -5,29 +5,35 @@ use std::time::Duration;
 
 use aries_vcx::common::test_utils::create_and_store_credential_def_and_rev_reg;
 use aries_vcx::core::profile::profile::Profile;
-use aries_vcx::errors::error::{AriesVcxError, AriesVcxErrorKind};
+use aries_vcx::errors::error::VcxResult;
+use aries_vcx::handlers::out_of_band::sender::OutOfBandSender;
 use aries_vcx::handlers::proof_presentation::types::{
     RetrievedCredentialForReferent, RetrievedCredentials, SelectedCredentials,
 };
 use aries_vcx::handlers::util::{AnyInvitation, OfferInfo, PresentationProposalData};
+use aries_vcx::protocols::connection::{Connection, GenericConnection};
 use aries_vcx::protocols::mediated_connection::pairwise_info::PairwiseInfo;
-use aries_vcx::protocols::SendClosureConnection;
-use async_channel::{bounded, Sender};
-use diddoc_legacy::aries::diddoc::AriesDidDoc;
+use aries_vcx::transport::Transport;
+use aries_vcx::utils::mockdata::mockdata_proof::REQUESTED_ATTRIBUTES;
+use async_trait::async_trait;
 use messages::misc::MimeType;
-use messages::msg_fields::protocols::connection::request::Request;
-use messages::msg_fields::protocols::connection::Connection;
+use messages::msg_fields::protocols::connection::invitation::{Invitation, PublicInvitation, PublicInvitationContent};
 use messages::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
 use messages::msg_fields::protocols::cred_issuance::propose_credential::{
     ProposeCredential, ProposeCredentialContent, ProposeCredentialDecorators,
 };
 use messages::msg_fields::protocols::cred_issuance::{CredentialAttr, CredentialIssuance, CredentialPreview};
+use messages::msg_fields::protocols::out_of_band::invitation::OobService;
+use messages::msg_fields::protocols::out_of_band::OobGoalCode;
 use messages::msg_fields::protocols::present_proof::present::Presentation;
 use messages::msg_fields::protocols::present_proof::propose::PresentationAttr;
 use messages::msg_fields::protocols::present_proof::request::RequestPresentation;
 use messages::msg_fields::protocols::present_proof::PresentProof;
+use messages::msg_types::connection::{ConnectionType, ConnectionTypeV1};
+use messages::msg_types::Protocol;
 use messages::AriesMessage;
 use serde_json::{json, Value};
+use url::Url;
 
 use crate::utils::devsetup_alice::Alice;
 use crate::utils::devsetup_faber::Faber;
@@ -36,15 +42,12 @@ use aries_vcx::common::primitives::credential_definition::CredentialDef;
 use aries_vcx::common::primitives::revocation_registry::RevocationRegistry;
 use aries_vcx::common::proofs::proof_request::PresentationRequestData;
 use aries_vcx::common::proofs::proof_request_internal::AttrInfo;
-use aries_vcx::handlers::connection::mediated_connection::{ConnectionState, MediatedConnection};
 use aries_vcx::handlers::issuance::holder::Holder;
 use aries_vcx::handlers::issuance::issuer::Issuer;
 use aries_vcx::handlers::proof_presentation::prover::Prover;
 use aries_vcx::handlers::proof_presentation::verifier::Verifier;
 use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
 use aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
-use aries_vcx::protocols::mediated_connection::invitee::state_machine::InviteeState;
-use aries_vcx::protocols::mediated_connection::inviter::state_machine::InviterState;
 use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
 use aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;
 use aries_vcx::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
@@ -871,185 +874,175 @@ pub async fn exchange_proof(
  *
  */
 
-pub fn _send_message(sender: Sender<AriesMessage>) -> Option<SendClosureConnection> {
-    Some(Box::new(
-        move |message: AriesMessage, _sender_vk: String, _did_doc: AriesDidDoc| {
-            Box::pin(async move {
-                sender.send(message).await.map_err(|err| {
-                    AriesVcxError::from_msg(AriesVcxErrorKind::IOError, format!("Failed to send message: {:?}", err))
-                })
-            })
-        },
-    ))
+// TODO: Temporary, delete
+struct DummyHttpClient;
+
+#[async_trait]
+impl Transport for DummyHttpClient {
+    async fn send_message(&self, msg: Vec<u8>, service_endpoint: Url) -> VcxResult<()> {
+        Ok(())
+    }
 }
 
-pub async fn connect_using_request_sent_to_public_agent(
+pub async fn create_connections_via_oob_invite(
     alice: &mut Alice,
     faber: &mut Faber,
-    consumer_to_institution: &mut MediatedConnection,
-    request: Request,
-) -> MediatedConnection {
-    tokio::time::sleep(Duration::from_millis(1000)).await;
-    let mut institution_to_consumer = MediatedConnection::create_with_request(
-        &faber.profile.inject_wallet(),
-        request,
-        faber.pairwise_info.clone(),
-        &faber.agency_client,
-    )
-    .await
-    .unwrap();
-    assert_eq!(
-        ConnectionState::Inviter(InviterState::Requested),
-        institution_to_consumer.get_state()
-    );
-    institution_to_consumer
-        .find_message_and_update_state(&faber.profile.inject_wallet(), &faber.agency_client)
+) -> (GenericConnection, GenericConnection) {
+    // TODO: Add OOB message outside
+    let presentation_request_data = create_proof_request_data(faber, REQUESTED_ATTRIBUTES, "[]", "{}", None).await;
+    let presentation_request = create_verifier_from_request_data(presentation_request_data)
         .await
+        .get_presentation_request_msg()
         .unwrap();
-    assert_eq!(
-        ConnectionState::Inviter(InviterState::Responded),
-        institution_to_consumer.get_state()
-    );
 
-    consumer_to_institution
-        .find_message_and_update_state(&alice.profile.inject_wallet(), &alice.agency_client)
-        .await
+    let did = faber.institution_did.clone();
+    let oob_sender = OutOfBandSender::create()
+        .set_label("test-label")
+        .set_goal_code(OobGoalCode::P2PMessaging)
+        .set_goal("To exchange message")
+        .append_service(&OobService::Did(did.clone()))
+        .append_handshake_protocol(Protocol::ConnectionType(ConnectionType::V1(
+            ConnectionTypeV1::new_v1_0(),
+        )))
+        .unwrap()
+        .append_a2a_message(AriesMessage::from(presentation_request.clone()))
         .unwrap();
-    assert_eq!(
-        ConnectionState::Invitee(InviteeState::Completed),
-        consumer_to_institution.get_state()
-    );
-
-    tokio::time::sleep(Duration::from_millis(1000)).await;
-    institution_to_consumer
-        .find_message_and_update_state(&faber.profile.inject_wallet(), &faber.agency_client)
-        .await
-        .unwrap();
-    assert_eq!(
-        ConnectionState::Inviter(InviterState::Completed),
-        institution_to_consumer.get_state()
-    );
-
-    assert_eq!(
-        institution_to_consumer.get_thread_id(),
-        consumer_to_institution.get_thread_id()
-    );
-
-    institution_to_consumer
-}
-
-pub async fn create_connected_connections_via_public_invite(
-    alice: &mut Alice,
-    institution: &mut Faber,
-) -> (MediatedConnection, MediatedConnection) {
-    let (sender, receiver) = bounded::<AriesMessage>(1);
-    let public_invite_json = institution.create_public_invite().unwrap();
-    let public_invite: AnyInvitation = serde_json::from_str(&public_invite_json).unwrap();
-    let ddo = into_did_doc(&alice.profile.inject_indy_ledger_read(), &public_invite)
+    let invitation = AnyInvitation::Oob(oob_sender.oob.clone());
+    let ddo = into_did_doc(&alice.profile.inject_indy_ledger_read(), &invitation)
         .await
         .unwrap();
 
-    let mut consumer_to_institution = MediatedConnection::create_with_invite(
-        "institution",
-        &alice.profile.inject_wallet(),
-        &alice.agency_client,
-        public_invite,
-        ddo,
-        true,
-    )
-    .await
-    .unwrap();
-    consumer_to_institution
-        .connect(
-            &alice.profile.inject_wallet(),
-            &alice.agency_client,
-            _send_message(sender),
+    // TODO: Extract to a separate function
+    let pairwise_info = PairwiseInfo::create(&alice.profile.inject_wallet()).await.unwrap();
+    let invitee = Connection::new_invitee("".to_owned(), pairwise_info)
+        .accept_invitation(&alice.profile.inject_indy_ledger_read(), invitation.clone())
+        .await
+        .unwrap()
+        .prepare_request("http://dummy.org".parse().unwrap(), vec![])
+        .await
+        .unwrap();
+    let request = invitee.get_request().clone();
+
+    let pairwise_info = PairwiseInfo {
+        pw_did: ddo.clone().id.clone(),
+        pw_vk: ddo.recipient_keys().unwrap().first().unwrap().to_string(),
+    };
+    let inviter = Connection::new_inviter("".to_owned(), pairwise_info)
+        .into_invited(invitation.id())
+        .handle_request(
+            &faber.profile.inject_wallet(),
+            request,
+            "http://dummy.org".parse().unwrap(),
+            vec![],
+            &DummyHttpClient,
         )
         .await
         .unwrap();
+    let response = inviter.get_connection_response_msg();
 
-    let request = if let AriesMessage::Connection(Connection::Request(request)) = receiver.recv().await.unwrap() {
-        request
-    } else {
-        panic!("Received invalid message type")
-    };
+    let invitee = invitee
+        .handle_response(&alice.profile.inject_wallet(), response, &DummyHttpClient)
+        .await
+        .unwrap();
+    let ack = invitee.get_ack();
 
-    let institution_to_consumer =
-        connect_using_request_sent_to_public_agent(alice, institution, &mut consumer_to_institution, request).await;
-    (consumer_to_institution, institution_to_consumer)
+    let inviter = inviter.acknowledge_connection(&ack.into()).unwrap();
+
+    (invitee.into(), inviter.into())
 }
 
-pub async fn create_connected_connections(
+pub async fn create_connections_via_public_invite(
     alice: &mut Alice,
     faber: &mut Faber,
-) -> (MediatedConnection, MediatedConnection) {
-    debug!("Institution is going to create connection.");
-    let mut institution_to_consumer =
-        MediatedConnection::create("consumer", &faber.profile.inject_wallet(), &faber.agency_client, true)
-            .await
-            .unwrap();
-    institution_to_consumer
-        .connect(&faber.profile.inject_wallet(), &faber.agency_client, None)
+) -> (GenericConnection, GenericConnection) {
+    let content = PublicInvitationContent::new("faber".to_owned(), faber.institution_did.clone());
+    let public_invite = AnyInvitation::Con(Invitation::Public(PublicInvitation::new(
+        "test_invite_id".to_owned(),
+        content,
+    )));
+    let ddo = into_did_doc(&alice.profile.inject_indy_ledger_read(), &public_invite)
         .await
         .unwrap();
-    let details = institution_to_consumer.get_invite_details().unwrap();
+    // TODO: Create a key and write on ledger instead
+    // TODO: Extract to a separate function
+    let pairwise_info = PairwiseInfo {
+        pw_did: ddo.clone().id.clone(),
+        pw_vk: ddo.recipient_keys().unwrap().first().unwrap().to_string(),
+    };
+    let inviter = Connection::new_inviter("".to_owned(), pairwise_info).into_invited(public_invite.id());
 
-    debug!("Consumer is going to accept connection invitation.");
-    let ddo = into_did_doc(&alice.profile.inject_indy_ledger_read(), &details)
+    let pairwise_info = PairwiseInfo::create(&alice.profile.inject_wallet()).await.unwrap();
+    let invitee = Connection::new_invitee("".to_owned(), pairwise_info)
+        .accept_invitation(&alice.profile.inject_indy_ledger_read(), public_invite)
+        .await
+        .unwrap()
+        .prepare_request("http://dummy.org".parse().unwrap(), vec![])
         .await
         .unwrap();
-    let mut consumer_to_institution = MediatedConnection::create_with_invite(
-        "institution",
-        &alice.profile.inject_wallet(),
-        &alice.agency_client,
-        details.clone(),
-        ddo,
-        true,
-    )
-    .await
-    .unwrap();
+    let request = invitee.get_request().clone();
 
-    consumer_to_institution
-        .connect(&alice.profile.inject_wallet(), &alice.agency_client, None)
+    let inviter = inviter
+        .handle_request(
+            &faber.profile.inject_wallet(),
+            request,
+            "http://dummy.org".parse().unwrap(),
+            vec![],
+            &DummyHttpClient,
+        )
         .await
         .unwrap();
+    let response = inviter.get_connection_response_msg();
 
-    let thread_id = consumer_to_institution.get_thread_id();
-
-    debug!("Institution is going to process connection request.");
-    tokio::time::sleep(Duration::from_millis(1000)).await;
-    institution_to_consumer
-        .find_message_and_update_state(&faber.profile.inject_wallet(), &faber.agency_client)
+    let invitee = invitee
+        .handle_response(&alice.profile.inject_wallet(), response, &DummyHttpClient)
         .await
         .unwrap();
-    assert_eq!(
-        ConnectionState::Inviter(InviterState::Responded),
-        institution_to_consumer.get_state()
-    );
-    assert_eq!(thread_id, institution_to_consumer.get_thread_id());
+    let ack = invitee.get_ack();
 
-    debug!("Consumer is going to complete the connection protocol.");
-    consumer_to_institution
-        .find_message_and_update_state(&alice.profile.inject_wallet(), &alice.agency_client)
+    let inviter = inviter.acknowledge_connection(&ack.into()).unwrap();
+
+    (invitee.into(), inviter.into())
+}
+
+pub async fn create_connections_via_pairwise_invite(
+    alice: &mut Alice,
+    faber: &mut Faber,
+) -> (GenericConnection, GenericConnection) {
+    // TODO: Extract to a separate function
+    let pw_info = PairwiseInfo::create(&faber.profile.inject_wallet()).await.unwrap();
+    let inviter = Connection::new_inviter("consumer".to_owned(), pw_info)
+        .create_invitation(vec![], "http://dummy.org".parse().unwrap());
+    let invite = inviter.get_invitation().clone();
+
+    let pairwise_info = PairwiseInfo::create(&alice.profile.inject_wallet()).await.unwrap();
+    let invitee = Connection::new_invitee("".to_owned(), pairwise_info)
+        .accept_invitation(&alice.profile.inject_indy_ledger_read(), invite)
+        .await
+        .unwrap()
+        .prepare_request("http://dummy.org".parse().unwrap(), vec![])
         .await
         .unwrap();
-    assert_eq!(
-        ConnectionState::Invitee(InviteeState::Completed),
-        consumer_to_institution.get_state()
-    );
-    assert_eq!(thread_id, consumer_to_institution.get_thread_id());
+    let request = invitee.get_request().clone();
 
-    debug!("Institution is going to complete the connection protocol.");
-    tokio::time::sleep(Duration::from_millis(1000)).await;
-    institution_to_consumer
-        .find_message_and_update_state(&faber.profile.inject_wallet(), &faber.agency_client)
+    let inviter = inviter
+        .handle_request(
+            &faber.profile.inject_wallet(),
+            request,
+            "http://dummy.org".parse().unwrap(),
+            vec![],
+            &DummyHttpClient,
+        )
         .await
         .unwrap();
-    assert_eq!(
-        ConnectionState::Inviter(InviterState::Completed),
-        institution_to_consumer.get_state()
-    );
-    assert_eq!(thread_id, consumer_to_institution.get_thread_id());
+    let response = inviter.get_connection_response_msg();
 
-    (consumer_to_institution, institution_to_consumer)
+    let invitee = invitee
+        .handle_response(&alice.profile.inject_wallet(), response, &DummyHttpClient)
+        .await
+        .unwrap();
+    let ack = invitee.get_ack();
+
+    let inviter = inviter.acknowledge_connection(&ack.into()).unwrap();
+
+    (invitee.into(), inviter.into())
 }

@@ -24,6 +24,16 @@ pub enum Invitation {
     PairwiseDID(PairwiseDidInvitation),
 }
 
+impl Invitation {
+    pub fn id(&self) -> &str {
+        match self {
+            Invitation::Public(invitation) => &invitation.id,
+            Invitation::Pairwise(invitation) => &invitation.id,
+            Invitation::PairwiseDID(invitation) => &invitation.id,
+        }
+    }
+}
+
 transit_to_aries_msg!(PublicInvitationContent, Invitation, Connection);
 transit_to_aries_msg!(PairwiseInvitationContent<Url>:PwInvitationDecorators, Invitation, Connection);
 transit_to_aries_msg!(PairwiseInvitationContent<String>:PwInvitationDecorators, Invitation, Connection);
