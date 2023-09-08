@@ -70,7 +70,7 @@ pub fn message_type_impl(input: DeriveInput) -> SynResult<TokenStream> {
 
 fn process_protocol(Protocol { ident, data, protocol }: Protocol) -> TokenStream {
     // The macro only accepts enums
-    let Data::Enum(variants) = data else {unreachable!()};
+    let Data::Enum(variants) = data else { unreachable!() };
 
     // Storage for the try_from_version_parts() function match arms
     let mut try_from_match_arms = Vec::new();
@@ -125,7 +125,7 @@ fn process_protocol(Protocol { ident, data, protocol }: Protocol) -> TokenStream
 
 fn process_version(Version { ident, data, major }: Version) -> SynResult<TokenStream> {
     // The macro only accepts enums
-    let Data::Enum(variants) = data else {unreachable!()};
+    let Data::Enum(variants) = data else { unreachable!() };
 
     // Storage for the try_resolve_version() function match arms
     let mut try_resolve_match_arms = Vec::new();
@@ -250,7 +250,9 @@ fn extract_field_target_type(field: Type) -> SynResult<TypePath> {
     let mut span = field.span();
 
     // `MsgKindType<_>` is a TypePath
-    let Type::Path(path) = field else { return Err(make_type_param_err(span)) };
+    let Type::Path(path) = field else {
+        return Err(make_type_param_err(span));
+    };
 
     // Getting the last, and most likely only, segment of the type path.
     let segment = last_path_segment(path)?;
@@ -258,7 +260,9 @@ fn extract_field_target_type(field: Type) -> SynResult<TypePath> {
 
     // Extract the generics from their angle bracketed container.
     // E.g: <T, U, V> -> an iter returning T, U and V
-    let PathArguments::AngleBracketed(args) = segment.arguments else { return Err(make_type_param_err(span)) };
+    let PathArguments::AngleBracketed(args) = segment.arguments else {
+        return Err(make_type_param_err(span));
+    };
     span = args.span();
 
     // This iterates over the generics provided.
@@ -267,7 +271,9 @@ fn extract_field_target_type(field: Type) -> SynResult<TypePath> {
     span = arg.span();
 
     // We expect the generic to be a type, particularly a TypePath.
-    let GenericArgument::Type(Type::Path(ty)) = arg else { return Err(make_type_param_err(span)); };
+    let GenericArgument::Type(Type::Path(ty)) = arg else {
+        return Err(make_type_param_err(span));
+    };
 
     // Return `T`
     Ok(ty)

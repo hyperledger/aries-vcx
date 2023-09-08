@@ -30,7 +30,7 @@ mod integration_tests {
     use crate::utils::devsetup_faber::create_faber_trustee;
     use crate::utils::scenarios::test_utils::{
         _send_message, connect_using_request_sent_to_public_agent, create_connected_connections,
-        create_connected_connections_via_public_invite, create_proof_request,
+        create_connected_connections_via_public_invite, create_proof_request_data, create_verifier_from_request_data,
     };
 
     use super::*;
@@ -67,7 +67,12 @@ mod integration_tests {
             let mut consumer = create_alice(setup.genesis_file_path).await;
             let (sender, receiver) = bounded::<AriesMessage>(1);
 
-            let request_sender = create_proof_request(&mut institution, REQUESTED_ATTRIBUTES, "[]", "{}", None).await;
+            let presentation_request_data =
+                create_proof_request_data(&mut institution, REQUESTED_ATTRIBUTES, "[]", "{}", None).await;
+            let presentation_request = create_verifier_from_request_data(presentation_request_data)
+                .await
+                .get_presentation_request_msg()
+                .unwrap();
 
             let did = institution.institution_did.clone();
             let oob_sender = OutOfBandSender::create()
@@ -79,7 +84,7 @@ mod integration_tests {
                     ConnectionTypeV1::new_v1_0(),
                 )))
                 .unwrap()
-                .append_a2a_message(AriesMessage::from(request_sender.clone()))
+                .append_a2a_message(AriesMessage::from(presentation_request.clone()))
                 .unwrap();
             let invitation = AnyInvitation::Oob(oob_sender.oob.clone());
             let ddo = into_did_doc(&consumer.profile.inject_indy_ledger_read(), &invitation)
@@ -154,7 +159,7 @@ mod integration_tests {
             if let AriesMessage::PresentProof(PresentProof::RequestPresentation(request_receiver)) = a2a_msg {
                 assert_eq!(
                     request_receiver.content.request_presentations_attach,
-                    request_sender.content.request_presentations_attach
+                    presentation_request.content.request_presentations_attach
                 );
             }
 
@@ -337,45 +342,6 @@ mod integration_tests {
 
             let (_faber, _alice) = create_connected_connections(&mut consumer1, &mut institution).await;
             let (_faber, _alice) = create_connected_connections(&mut consumer1, &mut institution).await;
-        })
-        .await;
-    }
-
-    #[tokio::test]
-    #[ignore]
-    async fn test_agency_pool_aries_demo_handle_connection_related_messages() {
-        SetupPoolDirectory::run(|setup| async move {
-            let mut faber = create_faber_trustee(setup.genesis_file_path.clone()).await;
-            let mut alice = create_alice(setup.genesis_file_path).await;
-
-            // Connection
-            let invite = faber.create_invite().await;
-            alice.accept_invite(&invite).await;
-
-            faber.update_state(3).await;
-            alice.update_state(4).await;
-            faber.update_state(4).await;
-
-            // Ping
-            faber.ping().await;
-
-            alice.handle_messages().await;
-
-            faber.handle_messages().await;
-
-            let faber_connection_info = faber.connection_info().await;
-            assert!(faber_connection_info["their"]["protocols"].as_array().is_none());
-
-            // Discovery Features
-            faber.discovery_features().await;
-
-            alice.handle_messages().await;
-
-            faber.handle_messages().await;
-
-            let faber_connection_info = faber.connection_info().await;
-            warn!("faber_connection_info: {}", faber_connection_info);
-            assert!(faber_connection_info["their"]["protocols"].as_array().unwrap().len() > 0);
         })
         .await;
     }

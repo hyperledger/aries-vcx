@@ -35,7 +35,6 @@ use crate::global::settings::{init_issuer_config, reset_config_values_ariesvcx};
 use crate::utils::constants::{POOL1_TXN, TRUSTEE_SEED};
 use crate::utils::file::write_file;
 use crate::utils::provision::provision_cloud_agent;
-use crate::utils::random::generate_random_seed;
 use crate::utils::test_logger::LibvcxDefaultLogger;
 
 #[macro_export]
