@@ -27,7 +27,7 @@ mod tests {
         let label = "test_label";
         let did = "test_did";
 
-        let content = PublicInvitationContent::builder()
+        let content = InvitationContent::builder_public()
             .label(label.to_owned())
             .did(did.to_owned())
             .build();
@@ -47,18 +47,18 @@ mod tests {
         let label = "test_label";
         let did = "test_did";
 
-        let content = PublicInvitationContent::builder()
+        let content = InvitationContent::builder_public()
             .label(label.to_owned())
             .did(did.to_owned())
             .build();
 
+        let decorators = InvitationDecorators::builder().timing(make_extended_timing()).build();
+
         let expected = json!({
             "label": label,
-            "did": did
+            "did": did,
+            "~timing": decorators.timing
         });
-
-        let mut decorators = InvitationDecorators::default();
-        decorators.timing = Some(make_extended_timing());
 
         test_utils::test_msg(content, decorators, ConnectionTypeV1_0::Invitation, expected);
     }

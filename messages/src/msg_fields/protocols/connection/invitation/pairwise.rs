@@ -50,7 +50,7 @@ mod tests {
         let recipient_keys = vec!["test_recipient_key".to_owned()];
         let service_endpoint = Url::parse("https://dummy.dummy/dummy").unwrap();
 
-        let content = PairwiseInvitationContent::builder()
+        let content = InvitationContent::builder_pairwise()
             .label(label.to_owned())
             .recipient_keys(recipient_keys.clone())
             .service_endpoint(service_endpoint.clone())
@@ -75,7 +75,7 @@ mod tests {
         let routing_keys = vec!["test_routing_key".to_owned()];
         let service_endpoint = Url::parse("https://dummy.dummy/dummy").unwrap();
 
-        let content = PairwiseInvitationContent::builder()
+        let content = InvitationContent::builder_pairwise()
             .label(label.to_owned())
             .recipient_keys(recipient_keys.clone())
             .routing_keys(routing_keys.clone())
@@ -99,9 +99,9 @@ mod tests {
     fn test_minimal_conn_invite_pw_did() {
         let label = "test_pw_invite_label";
         let recipient_keys = vec!["test_recipient_key".to_owned()];
-        let service_endpoint = "https://dummy.dummy/dummy";
+        let service_endpoint = "did:sov:123456789abcdefghi1234";
 
-        let content = PairwiseDidInvitationContent::builder()
+        let content = InvitationContent::builder_pairwise_did()
             .label(label.to_owned())
             .recipient_keys(recipient_keys.clone())
             .service_endpoint(service_endpoint.to_owned())
@@ -124,9 +124,9 @@ mod tests {
         let label = "test_pw_invite_label";
         let recipient_keys = vec!["test_recipient_key".to_owned()];
         let routing_keys = vec!["test_routing_key".to_owned()];
-        let service_endpoint = "https://dummy.dummy/dummy";
+        let service_endpoint = "did:sov:123456789abcdefghi1234";
 
-        let content = PairwiseDidInvitationContent::builder()
+        let content = InvitationContent::builder_pairwise_did()
             .label(label.to_owned())
             .recipient_keys(recipient_keys.clone())
             .routing_keys(routing_keys.clone())
