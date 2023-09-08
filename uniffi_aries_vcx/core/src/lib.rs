@@ -6,7 +6,7 @@ pub mod handlers;
 pub mod runtime;
 
 use crate::core::profile::*;
-use crate::core::utils::*;
+use crate::core::unpack_message::*;
 use crate::errors::error::*;
 use aries_vcx::aries_vcx_core::wallet::indy::WalletConfig;
 use aries_vcx::protocols::connection::pairwise_info::PairwiseInfo;

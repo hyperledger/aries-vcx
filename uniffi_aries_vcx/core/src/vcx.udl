@@ -81,4 +81,7 @@ namespace vcx {
 
     [Throws=VcxUniFFIError]
     sequence<u8> unpack_message(ProfileHolder profile, sequence<u8> packed_msg);
+
+    [Throws=VcxUniFFIError]
+    string unpack_message_and_return_message(ProfileHolder profile, string packed_msg);
 };

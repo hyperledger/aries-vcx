@@ -5135,6 +5135,7 @@ dependencies = [
  "aries-vcx",
  "async-trait",
  "diddoc_legacy",
+ "libvdrtools",
  "once_cell",
  "serde_json",
  "thiserror",

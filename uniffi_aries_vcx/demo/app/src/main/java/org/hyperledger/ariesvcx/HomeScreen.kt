@@ -17,6 +17,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.core.content.res.TypedArrayUtils
 import androidx.navigation.NavHostController
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -43,19 +45,16 @@ fun HomeScreen(
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val TAG = "HomeScreen"
-    var intercept = true
 
-    var message by remember {
-        mutableStateOf("")
+    var intercept by remember {
+        mutableStateOf(true)
     }
 
-    var unpackedMessage by remember {
-        mutableStateOf<String?>("")
-    }
-
+    val serviceEndpoint = stringResource(R.string.serviceEndpoint)
     val request = Request.Builder()
-        .url("https://03b7-27-57-116-96.ngrok-free.app/pop_user_message/${walletConfig.walletKey}")
+        .url("$serviceEndpoint/pop_user_message/${walletConfig.walletKey}")
         .build()
+
 
     LaunchedEffect(true) {
         while (intercept && requested) {
@@ -67,19 +66,16 @@ fun HomeScreen(
                 override fun onResponse(call: Call, response: Response) {
                     response.use {
                         if (response.code == 200) {
-                            message = response.body!!.string()
+                            val message = response.body!!.string()
 
-                            unpackedMessage = String(
-                                unpackMessage(
-                                    profileHolder!!,
-                                    message.toByteArray().map { byte -> byte.toUByte() }
-                                ).map { it.toByte() }.toByteArray()
+                            val unpackedMessage = unpackMessageAndReturnMessage(
+                                profileHolder!!,
+                                message
                             )
 
-//                                connection.handleResponse(profileHolder!!)
+                            connection?.handleResponse(profileHolder, unpackedMessage)
                             intercept = false
                         }
-                        Log.d(TAG, "onResponse: ${message}")
                     }
                 }
             })
