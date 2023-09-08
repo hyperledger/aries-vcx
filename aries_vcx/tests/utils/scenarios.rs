@@ -121,27 +121,37 @@ pub fn requested_attrs(did: &str, schema_id: &str, cred_def_id: &str, from: Opti
     ])
 }
 
-pub fn requested_attr_objects(cred_def_id: &str) -> Vec<PresentationAttr> {
-    let (address1, address2, city, state, zip) = attr_names();
-    let mut address1_attr = PresentationAttr::new(address1);
-    address1_attr.cred_def_id = Some(cred_def_id.to_owned());
-    address1_attr.value = Some("123 Main St".to_owned());
+    pub fn requested_attr_objects(cred_def_id: &str) -> Vec<PresentationAttr> {
+        let (address1, address2, city, state, zip) = attr_names();
+        let address1_attr = PresentationAttr::builder()
+            .name(address1)
+            .cred_def_id(cred_def_id.to_owned())
+            .value("123 Main St".to_owned())
+            .build();
 
-    let mut address2_attr = PresentationAttr::new(address2);
-    address2_attr.cred_def_id = Some(cred_def_id.to_owned());
-    address2_attr.value = Some("Suite 3".to_owned());
+        let address2_attr = PresentationAttr::builder()
+            .name(address2)
+            .cred_def_id(cred_def_id.to_owned())
+            .value("Suite 3".to_owned())
+            .build();
 
-    let mut city_attr = PresentationAttr::new(city);
-    city_attr.cred_def_id = Some(cred_def_id.to_owned());
-    city_attr.value = Some("Draper".to_owned());
+        let city_attr = PresentationAttr::builder()
+            .name(city)
+            .cred_def_id(cred_def_id.to_owned())
+            .value("Draper".to_owned())
+            .build();
 
-    let mut state_attr = PresentationAttr::new(state);
-    state_attr.cred_def_id = Some(cred_def_id.to_owned());
-    state_attr.value = Some("UT".to_owned());
+        let state_attr = PresentationAttr::builder()
+            .name(state)
+            .cred_def_id(cred_def_id.to_owned())
+            .value("UT".to_owned())
+            .build();
 
-    let mut zip_attr = PresentationAttr::new(zip);
-    zip_attr.cred_def_id = Some(cred_def_id.to_owned());
-    zip_attr.value = Some("84000".to_owned());
+        let zip_attr = PresentationAttr::builder()
+            .name(zip)
+            .cred_def_id(cred_def_id.to_owned())
+            .value("84000".to_owned())
+            .build();
 
     vec![address1_attr, address2_attr, city_attr, state_attr, zip_attr]
 }
@@ -256,35 +266,53 @@ pub async fn create_credential_proposal(schema_id: &str, cred_def_id: &str, comm
     let (address1, address2, city, state, zip) = attr_names();
     let mut attrs = Vec::new();
 
-    let mut attr = CredentialAttr::new(address1, "123 Main Str".to_owned());
-    attr.mime_type = Some(MimeType::Plain);
-    attrs.push(attr);
+        let attr = CredentialAttr::builder()
+            .name(address1)
+            .value("123 Main Str".to_owned())
+            .mime_type(MimeType::Plain)
+            .build();
 
-    let mut attr = CredentialAttr::new(address2, "Suite 3".to_owned());
-    attr.mime_type = Some(MimeType::Plain);
-    attrs.push(attr);
+        attrs.push(attr);
 
-    let mut attr = CredentialAttr::new(city, "Draper".to_owned());
-    attr.mime_type = Some(MimeType::Plain);
-    attrs.push(attr);
+        let attr = CredentialAttr::builder()
+            .name(address2)
+            .value("Suite 3".to_owned())
+            .mime_type(MimeType::Plain)
+            .build();
+        attrs.push(attr);
 
-    let mut attr = CredentialAttr::new(state, "UT".to_owned());
-    attr.mime_type = Some(MimeType::Plain);
-    attrs.push(attr);
+        let attr = CredentialAttr::builder()
+            .name(city)
+            .value("Draper".to_owned())
+            .mime_type(MimeType::Plain)
+            .build();
+        attrs.push(attr);
 
-    let mut attr = CredentialAttr::new(zip, "84000".to_owned());
-    attr.mime_type = Some(MimeType::Plain);
-    attrs.push(attr);
+        let attr = CredentialAttr::builder()
+            .name(state)
+            .value("UT".to_owned())
+            .mime_type(MimeType::Plain)
+            .build();
+        attrs.push(attr);
 
-    let preview = CredentialPreview::new(attrs);
-    let mut content = ProposeCredentialContent::new(preview, schema_id.to_owned(), cred_def_id.to_owned());
-    content.comment = Some(comment.to_owned());
+        let attr = CredentialAttr::builder()
+            .name(zip)
+            .value("84000".to_owned())
+            .mime_type(MimeType::Plain)
+            .build();
+        attrs.push(attr);
 
-    let decorators = ProposeCredentialDecorators::default();
+        let preview = CredentialPreview::builder().attributes(attrs).build();
+        let content = ProposeCredentialContent::builder()
+            .credential_proposal(preview)
+            .schema_id(schema_id.to_owned())
+            .cred_def_id(cred_def_id.to_owned())
+            .comment(comment.to_owned())
+            .build();
 
-    let id = "test".to_owned();
-    ProposeCredential::with_decorators(id, content, decorators)
-}
+        let id = "test".to_owned();
+        ProposeCredential::builder().id(id).content(content).build()
+    }
 
 pub async fn accept_credential_proposal(
     faber: &mut TestAgent,
