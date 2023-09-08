@@ -1,3 +1,4 @@
+use did_parser::Did;
 use serde::{Deserialize, Serialize};
 use typed_builder::TypedBuilder;
 use url::Url;
@@ -5,7 +6,7 @@ use url::Url;
 use super::InvitationContent;
 
 pub type PairwiseInvitationContent = PwInvitationContent<Url>;
-pub type PairwiseDidInvitationContent = PwInvitationContent<String>;
+pub type PairwiseDidInvitationContent = PwInvitationContent<Did>;
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, TypedBuilder)]
 #[serde(rename_all = "camelCase")]
@@ -48,12 +49,12 @@ mod tests {
     fn test_minimal_conn_invite_pw() {
         let label = "test_pw_invite_label";
         let recipient_keys = vec!["test_recipient_key".to_owned()];
-        let service_endpoint = Url::parse("https://dummy.dummy/dummy").unwrap();
+        let service_endpoint = "https://dummy.dummy/dummy";
 
         let content = InvitationContent::builder_pairwise()
             .label(label.to_owned())
             .recipient_keys(recipient_keys.clone())
-            .service_endpoint(service_endpoint.clone())
+            .service_endpoint(service_endpoint.parse().unwrap())
             .build();
 
         let decorators = InvitationDecorators::default();
@@ -73,13 +74,13 @@ mod tests {
         let label = "test_pw_invite_label";
         let recipient_keys = vec!["test_recipient_key".to_owned()];
         let routing_keys = vec!["test_routing_key".to_owned()];
-        let service_endpoint = Url::parse("https://dummy.dummy/dummy").unwrap();
+        let service_endpoint = "https://dummy.dummy/dummy";
 
         let content = InvitationContent::builder_pairwise()
             .label(label.to_owned())
             .recipient_keys(recipient_keys.clone())
             .routing_keys(routing_keys.clone())
-            .service_endpoint(service_endpoint.clone())
+            .service_endpoint(service_endpoint.parse().unwrap())
             .build();
 
         let decorators = InvitationDecorators::builder().timing(make_extended_timing()).build();
@@ -104,7 +105,7 @@ mod tests {
         let content = InvitationContent::builder_pairwise_did()
             .label(label.to_owned())
             .recipient_keys(recipient_keys.clone())
-            .service_endpoint(service_endpoint.to_owned())
+            .service_endpoint(service_endpoint.parse().unwrap())
             .build();
 
         let decorators = InvitationDecorators::default();
@@ -130,7 +131,7 @@ mod tests {
             .label(label.to_owned())
             .recipient_keys(recipient_keys.clone())
             .routing_keys(routing_keys.clone())
-            .service_endpoint(service_endpoint.to_owned())
+            .service_endpoint(service_endpoint.parse().unwrap())
             .build();
 
         let decorators = InvitationDecorators::builder().timing(make_extended_timing()).build();

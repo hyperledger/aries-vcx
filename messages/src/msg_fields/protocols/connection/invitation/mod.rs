@@ -2,6 +2,7 @@ pub mod pairwise;
 pub mod public;
 
 use derive_more::From;
+use did_parser::Did;
 use serde::{Deserialize, Serialize};
 use typed_builder::TypedBuilder;
 use url::Url;
@@ -36,7 +37,7 @@ impl InvitationContent {
         PairwiseInvitationContent::builder()
     }
 
-    pub fn builder_pairwise_did() -> PwInvitationContentBuilder<String> {
+    pub fn builder_pairwise_did() -> PwInvitationContentBuilder<Did> {
         PairwiseDidInvitationContent::builder()
     }
 }

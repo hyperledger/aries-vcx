@@ -3130,6 +3130,7 @@ version = "0.58.0"
 dependencies = [
  "chrono",
  "derive_more",
+ "did_parser",
  "diddoc_legacy",
  "isolang",
  "lazy_static",
