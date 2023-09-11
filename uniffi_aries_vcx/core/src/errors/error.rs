@@ -11,6 +11,8 @@ pub enum VcxUniFFIError {
         error_msg
     )]
     SerializationError { error_msg: String },
+    #[error("A string could not be parsed. More Info: {}", error_msg)]
+    StringParseError { error_msg: String },
     #[error("An unexpected internal error occured. More Info: {}", error_msg)]
     InternalError { error_msg: String },
 }

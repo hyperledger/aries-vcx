@@ -36,6 +36,12 @@ dictionary PairwiseInfo {
     string pw_vk;
 };
 
+dictionary UnpackMessage {
+    string message;
+    string recipient_verkey;
+    string? sender_verkey;
+};
+
 interface Connection {
     [Throws=VcxUniFFIError]
     ConnectionState get_state();
@@ -67,6 +73,7 @@ enum VcxUniFFIError {
     "AriesVcxError",
     "SerializationError",
     "InternalError",
+    "StringParseError"
 };
 
 namespace vcx {
@@ -80,8 +87,5 @@ namespace vcx {
     Connection create_invitee(ProfileHolder profile);
 
     [Throws=VcxUniFFIError]
-    sequence<u8> unpack_message(ProfileHolder profile, sequence<u8> packed_msg);
-
-    [Throws=VcxUniFFIError]
-    string unpack_message_and_return_message(ProfileHolder profile, string packed_msg);
+    UnpackMessage unpack_message(ProfileHolder profile, string packed_msg);
 };

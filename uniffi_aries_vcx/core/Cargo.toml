@@ -19,10 +19,10 @@ path = "uniffi-bindgen.rs"
 uniffi = "0.23.0"
 aries-vcx = { path = "../../aries_vcx" }
 tokio = { version = "1.24.1" }
-libvdrtools = { path = "../../libvdrtools", features=["default"] }
 once_cell = "1.17.0"
 thiserror = "1.0.38"
 serde_json = "1.0.91"
+serde = { version = "1.0.188", features = ["derive"] }
 async-trait = "0.1.64"
 diddoc_legacy = { path = "../../diddoc_legacy" }
 url = "2.3.1"
