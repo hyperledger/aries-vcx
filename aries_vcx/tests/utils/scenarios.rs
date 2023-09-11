@@ -17,7 +17,10 @@ use aries_vcx::transport::Transport;
 use aries_vcx::utils::mockdata::mockdata_proof::REQUESTED_ATTRIBUTES;
 use async_trait::async_trait;
 use messages::misc::MimeType;
-use messages::msg_fields::protocols::connection::invitation::{Invitation, PublicInvitation, PublicInvitationContent};
+use messages::msg_fields::protocols::connection::invitation::{
+    Invitation, PairwiseInvitation, PairwiseInvitationContent, PublicInvitation, PublicInvitationContent,
+    PwInvitationDecorators,
+};
 use messages::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
 use messages::msg_fields::protocols::cred_issuance::propose_credential::{
     ProposeCredential, ProposeCredentialContent, ProposeCredentialDecorators,
@@ -34,6 +37,7 @@ use messages::msg_types::Protocol;
 use messages::AriesMessage;
 use serde_json::{json, Value};
 use url::Url;
+use uuid::Uuid;
 
 use crate::utils::devsetup_alice::Alice;
 use crate::utils::devsetup_faber::Faber;
@@ -874,47 +878,24 @@ pub async fn exchange_proof(
  *
  */
 
-// TODO: Temporary, delete
-struct DummyHttpClient;
-
-#[async_trait]
-impl Transport for DummyHttpClient {
-    async fn send_message(&self, msg: Vec<u8>, service_endpoint: Url) -> VcxResult<()> {
-        Ok(())
-    }
-}
-
-pub async fn create_connections_via_oob_invite(
+async fn establish_connection_from_invite(
     alice: &mut Alice,
     faber: &mut Faber,
+    invitation: AnyInvitation,
+    inviter_pairwise_info: PairwiseInfo,
 ) -> (GenericConnection, GenericConnection) {
-    // TODO: Add OOB message outside
-    let presentation_request_data = create_proof_request_data(faber, REQUESTED_ATTRIBUTES, "[]", "{}", None).await;
-    let presentation_request = create_verifier_from_request_data(presentation_request_data)
-        .await
-        .get_presentation_request_msg()
-        .unwrap();
+    // TODO: Temporary, delete
+    struct DummyHttpClient;
 
-    let did = faber.institution_did.clone();
-    let oob_sender = OutOfBandSender::create()
-        .set_label("test-label")
-        .set_goal_code(OobGoalCode::P2PMessaging)
-        .set_goal("To exchange message")
-        .append_service(&OobService::Did(did.clone()))
-        .append_handshake_protocol(Protocol::ConnectionType(ConnectionType::V1(
-            ConnectionTypeV1::new_v1_0(),
-        )))
-        .unwrap()
-        .append_a2a_message(AriesMessage::from(presentation_request.clone()))
-        .unwrap();
-    let invitation = AnyInvitation::Oob(oob_sender.oob.clone());
-    let ddo = into_did_doc(&alice.profile.inject_indy_ledger_read(), &invitation)
-        .await
-        .unwrap();
+    #[async_trait]
+    impl Transport for DummyHttpClient {
+        async fn send_message(&self, _msg: Vec<u8>, _service_endpoint: Url) -> VcxResult<()> {
+            Ok(())
+        }
+    }
 
-    // TODO: Extract to a separate function
-    let pairwise_info = PairwiseInfo::create(&alice.profile.inject_wallet()).await.unwrap();
-    let invitee = Connection::new_invitee("".to_owned(), pairwise_info)
+    let invitee_pairwise_info = PairwiseInfo::create(&alice.profile.inject_wallet()).await.unwrap();
+    let invitee = Connection::new_invitee("".to_owned(), invitee_pairwise_info)
         .accept_invitation(&alice.profile.inject_indy_ledger_read(), invitation.clone())
         .await
         .unwrap()
@@ -923,11 +904,7 @@ pub async fn create_connections_via_oob_invite(
         .unwrap();
     let request = invitee.get_request().clone();
 
-    let pairwise_info = PairwiseInfo {
-        pw_did: ddo.clone().id.clone(),
-        pw_vk: ddo.recipient_keys().unwrap().first().unwrap().to_string(),
-    };
-    let inviter = Connection::new_inviter("".to_owned(), pairwise_info)
+    let inviter = Connection::new_inviter("".to_owned(), inviter_pairwise_info)
         .into_invited(invitation.id())
         .handle_request(
             &faber.profile.inject_wallet(),
@@ -951,6 +928,31 @@ pub async fn create_connections_via_oob_invite(
     (invitee.into(), inviter.into())
 }
 
+pub async fn create_connections_via_oob_invite(
+    alice: &mut Alice,
+    faber: &mut Faber,
+) -> (GenericConnection, GenericConnection) {
+    let oob_sender = OutOfBandSender::create()
+        .set_label("test-label")
+        .set_goal_code(OobGoalCode::P2PMessaging)
+        .set_goal("To exchange message")
+        .append_service(&OobService::Did(faber.institution_did.clone()))
+        .append_handshake_protocol(Protocol::ConnectionType(ConnectionType::V1(
+            ConnectionTypeV1::new_v1_0(),
+        )))
+        .unwrap();
+    let invitation = AnyInvitation::Oob(oob_sender.oob.clone());
+    let ddo = into_did_doc(&alice.profile.inject_indy_ledger_read(), &invitation)
+        .await
+        .unwrap();
+    // TODO: Create a key and write on ledger instead
+    let inviter_pairwise_info = PairwiseInfo {
+        pw_did: ddo.clone().id.clone(),
+        pw_vk: ddo.recipient_keys().unwrap().first().unwrap().to_string(),
+    };
+    establish_connection_from_invite(alice, faber, invitation, inviter_pairwise_info).await
+}
+
 pub async fn create_connections_via_public_invite(
     alice: &mut Alice,
     faber: &mut Faber,
@@ -964,85 +966,30 @@ pub async fn create_connections_via_public_invite(
         .await
         .unwrap();
     // TODO: Create a key and write on ledger instead
-    // TODO: Extract to a separate function
-    let pairwise_info = PairwiseInfo {
+    let inviter_pairwise_info = PairwiseInfo {
         pw_did: ddo.clone().id.clone(),
         pw_vk: ddo.recipient_keys().unwrap().first().unwrap().to_string(),
     };
-    let inviter = Connection::new_inviter("".to_owned(), pairwise_info).into_invited(public_invite.id());
-
-    let pairwise_info = PairwiseInfo::create(&alice.profile.inject_wallet()).await.unwrap();
-    let invitee = Connection::new_invitee("".to_owned(), pairwise_info)
-        .accept_invitation(&alice.profile.inject_indy_ledger_read(), public_invite)
-        .await
-        .unwrap()
-        .prepare_request("http://dummy.org".parse().unwrap(), vec![])
-        .await
-        .unwrap();
-    let request = invitee.get_request().clone();
-
-    let inviter = inviter
-        .handle_request(
-            &faber.profile.inject_wallet(),
-            request,
-            "http://dummy.org".parse().unwrap(),
-            vec![],
-            &DummyHttpClient,
-        )
-        .await
-        .unwrap();
-    let response = inviter.get_connection_response_msg();
-
-    let invitee = invitee
-        .handle_response(&alice.profile.inject_wallet(), response, &DummyHttpClient)
-        .await
-        .unwrap();
-    let ack = invitee.get_ack();
-
-    let inviter = inviter.acknowledge_connection(&ack.into()).unwrap();
-
-    (invitee.into(), inviter.into())
+    establish_connection_from_invite(alice, faber, public_invite.clone(), inviter_pairwise_info).await
 }
 
 pub async fn create_connections_via_pairwise_invite(
     alice: &mut Alice,
     faber: &mut Faber,
 ) -> (GenericConnection, GenericConnection) {
-    // TODO: Extract to a separate function
-    let pw_info = PairwiseInfo::create(&faber.profile.inject_wallet()).await.unwrap();
-    let inviter = Connection::new_inviter("consumer".to_owned(), pw_info)
-        .create_invitation(vec![], "http://dummy.org".parse().unwrap());
-    let invite = inviter.get_invitation().clone();
-
-    let pairwise_info = PairwiseInfo::create(&alice.profile.inject_wallet()).await.unwrap();
-    let invitee = Connection::new_invitee("".to_owned(), pairwise_info)
-        .accept_invitation(&alice.profile.inject_indy_ledger_read(), invite)
-        .await
-        .unwrap()
-        .prepare_request("http://dummy.org".parse().unwrap(), vec![])
-        .await
-        .unwrap();
-    let request = invitee.get_request().clone();
-
-    let inviter = inviter
-        .handle_request(
-            &faber.profile.inject_wallet(),
-            request,
-            "http://dummy.org".parse().unwrap(),
+    let inviter_pairwise_info = PairwiseInfo::create(&faber.profile.inject_wallet()).await.unwrap();
+    let invite = {
+        let id = Uuid::new_v4().to_string();
+        let content = PairwiseInvitationContent::new(
+            "".to_string(),
+            vec![inviter_pairwise_info.pw_vk.clone()],
             vec![],
-            &DummyHttpClient,
-        )
-        .await
-        .unwrap();
-    let response = inviter.get_connection_response_msg();
+            "http://dummy.org".parse().unwrap(),
+        );
+        let decorators = PwInvitationDecorators::default();
+        let invite = PairwiseInvitation::with_decorators(id, content, decorators);
+        AnyInvitation::Con(Invitation::Pairwise(invite))
+    };
 
-    let invitee = invitee
-        .handle_response(&alice.profile.inject_wallet(), response, &DummyHttpClient)
-        .await
-        .unwrap();
-    let ack = invitee.get_ack();
-
-    let inviter = inviter.acknowledge_connection(&ack.into()).unwrap();
-
-    (invitee.into(), inviter.into())
+    establish_connection_from_invite(alice, faber, invite, inviter_pairwise_info).await
 }
