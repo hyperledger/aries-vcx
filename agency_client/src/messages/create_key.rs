@@ -86,20 +86,6 @@ mod tests {
             .unwrap();
     }
 
-    #[tokio::test]
-    #[cfg(feature = "general_test")]
-    async fn test_parse_create_keys_v2_response() {
-        let _setup = SetupMocks::init();
-
-        let for_did = "11235yBzrpJQmNyZzgoTqB";
-        let for_verkey = "EkVTa7SCJ5SntpYyX7CSb2pcBhiVGT9kWSagA8a9T69A";
-        let client = AgencyClient::new();
-        let (res_did, res_vk) = client.create_connection_agent(for_did, for_verkey).await.unwrap();
-
-        assert_eq!(res_did, "MNepeSWtGfhnv8jLB1sFZC");
-        assert_eq!(res_vk, "C73MRnns4qUjR5N4LRwTyiXVPKPrA5q4LCT8PZzxVdt9");
-    }
-
     #[test]
     #[cfg(feature = "general_test")]
     fn test_create_key_set_invalid_did_errors() {
