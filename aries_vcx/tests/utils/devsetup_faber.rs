@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use aries_vcx::common::ledger::transactions::write_endpoint_legacy;
 use aries_vcx::common::primitives::credential_schema::Schema;
 use aries_vcx::core::profile::profile::Profile;
 use aries_vcx::errors::error::VcxResult;
@@ -10,6 +11,7 @@ use aries_vcx::utils::constants::TRUSTEE_SEED;
 use aries_vcx::utils::devsetup::{dev_build_featured_profile, dev_setup_wallet_indy};
 use aries_vcx_core::wallet::indy::wallet::get_verkey_from_wallet;
 use aries_vcx_core::wallet::indy::IndySdkWallet;
+use diddoc_legacy::aries::service::AriesService;
 
 pub struct Faber {
     pub profile: Arc<dyn Profile>,
@@ -29,7 +31,15 @@ pub async fn create_faber(genesis_file_path: String) -> Faber {
         .prover_create_link_secret(DEFAULT_LINK_SECRET_ALIAS)
         .await
         .unwrap();
-    Faber::setup(profile, genesis_file_path, public_did).await
+    let faber = Faber::setup(profile, genesis_file_path, public_did).await;
+    // TODO: Move out
+    let service = AriesService::create()
+        .set_service_endpoint("http://dummy.org".parse().unwrap())
+        .set_recipient_keys(vec![faber.pairwise_info.pw_vk.clone()]);
+    write_endpoint_legacy(&faber.profile.inject_indy_ledger_write(), &faber.public_did(), &service)
+        .await
+        .unwrap();
+    faber
 }
 
 impl Faber {
