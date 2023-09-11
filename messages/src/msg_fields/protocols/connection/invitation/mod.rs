@@ -24,8 +24,8 @@ pub type Invitation = MsgParts<InvitationContent, InvitationDecorators>;
 #[serde(untagged)]
 pub enum InvitationContent {
     Public(PublicInvitationContent),
-    Pairwise(PairwiseInvitationContent),
     PairwiseDID(PairwiseDidInvitationContent),
+    Pairwise(PairwiseInvitationContent),
 }
 
 impl InvitationContent {
