@@ -1,8 +1,5 @@
 use std::sync::Arc;
 
-use agency_client::agency_client::AgencyClient;
-use agency_client::configuration::{AgencyClientConfig, AgentProvisionConfig};
-use aries_vcx::common::ledger::transactions::write_endpoint_legacy;
 use aries_vcx::common::primitives::credential_schema::Schema;
 use aries_vcx::core::profile::profile::Profile;
 use aries_vcx::errors::error::VcxResult;
@@ -10,48 +7,21 @@ use aries_vcx::global::settings;
 use aries_vcx::global::settings::{init_issuer_config, DEFAULT_LINK_SECRET_ALIAS};
 use aries_vcx::protocols::connection::pairwise_info::PairwiseInfo;
 use aries_vcx::utils::constants::TRUSTEE_SEED;
-use aries_vcx::utils::devsetup::{
-    dev_build_featured_profile, dev_setup_wallet_indy, AGENCY_DID, AGENCY_ENDPOINT, AGENCY_VERKEY,
-};
-use aries_vcx::utils::provision::provision_cloud_agent;
-use aries_vcx::utils::random::generate_random_seed;
+use aries_vcx::utils::devsetup::{dev_build_featured_profile, dev_setup_wallet_indy};
 use aries_vcx_core::wallet::indy::wallet::get_verkey_from_wallet;
 use aries_vcx_core::wallet::indy::IndySdkWallet;
-use diddoc_legacy::aries::service::AriesService;
 
 pub struct Faber {
     pub profile: Arc<dyn Profile>,
-    pub config_agency: AgencyClientConfig,
     pub institution_did: String,
     pub schema: Schema,
     // todo: get rid of this, if we need vkey somewhere, we can get it from wallet, we can instead store public_did
     pub pairwise_info: PairwiseInfo,
-    pub agency_client: AgencyClient,
     pub genesis_file_path: String,
 }
 
-pub async fn create_faber_trustee(genesis_file_path: String) -> Faber {
-    let (public_did, wallet_handle) = dev_setup_wallet_indy(TRUSTEE_SEED).await;
-    let wallet = Arc::new(IndySdkWallet::new(wallet_handle));
-    let profile = dev_build_featured_profile(genesis_file_path.clone(), wallet).await;
-    profile
-        .inject_anoncreds()
-        .prover_create_link_secret(DEFAULT_LINK_SECRET_ALIAS)
-        .await
-        .unwrap();
-    let faber = Faber::setup(profile, genesis_file_path, public_did).await;
-
-    let service = AriesService::create()
-        .set_service_endpoint(faber.agency_client.get_agency_url_full().unwrap())
-        .set_recipient_keys(vec![faber.pairwise_info.pw_vk.clone()]);
-    write_endpoint_legacy(&faber.profile.inject_indy_ledger_write(), &faber.public_did(), &service)
-        .await
-        .unwrap();
-    faber
-}
-
 pub async fn create_faber(genesis_file_path: String) -> Faber {
-    let (public_did, wallet_handle) = dev_setup_wallet_indy(&generate_random_seed()).await;
+    let (public_did, wallet_handle) = dev_setup_wallet_indy(TRUSTEE_SEED).await;
     let wallet = Arc::new(IndySdkWallet::new(wallet_handle));
     let profile = dev_build_featured_profile(genesis_file_path.clone(), wallet).await;
     profile
@@ -66,27 +36,13 @@ impl Faber {
     pub async fn setup(profile: Arc<dyn Profile>, genesis_file_path: String, institution_did: String) -> Faber {
         settings::reset_config_values_ariesvcx().unwrap();
 
-        let config_provision_agent = AgentProvisionConfig {
-            agency_did: AGENCY_DID.to_string(),
-            agency_verkey: AGENCY_VERKEY.to_string(),
-            agency_endpoint: AGENCY_ENDPOINT.parse().unwrap(),
-            agent_seed: None,
-        };
-
         // todo: can delete following?
         init_issuer_config(&institution_did).unwrap();
-        let mut agency_client = AgencyClient::new();
-        let config_agency = provision_cloud_agent(&mut agency_client, profile.inject_wallet(), &config_provision_agent)
-            .await
-            .unwrap();
-
         let pairwise_info = PairwiseInfo::create(&profile.inject_wallet()).await.unwrap();
 
         let faber = Faber {
             genesis_file_path,
             profile,
-            agency_client,
-            config_agency,
             institution_did,
             schema: Schema::default(),
             pairwise_info,

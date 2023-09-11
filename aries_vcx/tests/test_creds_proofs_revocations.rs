@@ -13,7 +13,7 @@ use aries_vcx::protocols::proof_presentation::verifier::verification_status::Pre
 use aries_vcx::utils::devsetup::*;
 
 use crate::utils::devsetup_alice::create_alice;
-use crate::utils::devsetup_faber::create_faber_trustee;
+use crate::utils::devsetup_faber::create_faber;
 #[cfg(feature = "migration")]
 use crate::utils::migration::Migratable;
 use crate::utils::scenarios::{
@@ -28,7 +28,7 @@ use crate::utils::scenarios::{
 #[ignore]
 async fn test_agency_pool_basic_revocation() {
     SetupPoolDirectory::run(|setup| async move {
-        let mut institution = create_faber_trustee(setup.genesis_file_path.clone()).await;
+        let mut institution = create_faber(setup.genesis_file_path.clone()).await;
         let mut consumer = create_alice(setup.genesis_file_path).await;
 
         let (schema_id, cred_def_id, _, _cred_def, rev_reg, issuer_credential) =
@@ -100,7 +100,7 @@ async fn test_agency_pool_basic_revocation() {
 #[ignore]
 async fn test_agency_pool_local_revocation() {
     SetupPoolDirectory::run(|setup| async move {
-        let mut institution = create_faber_trustee(setup.genesis_file_path.clone()).await;
+        let mut institution = create_faber(setup.genesis_file_path.clone()).await;
         let mut consumer = create_alice(setup.genesis_file_path).await;
 
         let (schema_id, cred_def_id, _, _cred_def, rev_reg, issuer_credential) =
@@ -160,7 +160,7 @@ async fn test_agency_pool_local_revocation() {
 #[ignore]
 async fn test_agency_batch_revocation() {
     SetupPoolDirectory::run(|setup| async move {
-            let mut institution = create_faber_trustee(setup.genesis_file_path.clone()).await;
+            let mut institution = create_faber(setup.genesis_file_path.clone()).await;
             let mut consumer1 = create_alice(setup.genesis_file_path.clone()).await;
             let mut consumer2 = create_alice(setup.genesis_file_path.clone()).await;
             let mut consumer3 = create_alice(setup.genesis_file_path).await;
@@ -311,7 +311,7 @@ async fn test_agency_batch_revocation() {
 #[ignore]
 async fn test_agency_pool_revoked_credential_might_still_work() {
     SetupPoolDirectory::run(|setup| async move {
-        let mut institution = create_faber_trustee(setup.genesis_file_path.clone()).await;
+        let mut institution = create_faber(setup.genesis_file_path.clone()).await;
         let mut consumer = create_alice(setup.genesis_file_path).await;
 
         let (schema_id, cred_def_id, _, _cred_def, rev_reg, issuer_credential) =
@@ -376,8 +376,8 @@ async fn test_agency_pool_revoked_credential_might_still_work() {
 #[ignore]
 async fn test_agency_pool_two_creds_one_rev_reg_revoke_first() {
     SetupPoolDirectory::run(|setup| async move {
-            let mut issuer = create_faber_trustee(setup.genesis_file_path.clone()).await;
-            let mut verifier = create_faber_trustee(setup.genesis_file_path.clone()).await;
+            let mut issuer = create_faber(setup.genesis_file_path.clone()).await;
+            let mut verifier = create_faber(setup.genesis_file_path.clone()).await;
             let mut consumer = create_alice(setup.genesis_file_path).await;
 
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _rev_reg_id) =
@@ -444,8 +444,8 @@ async fn test_agency_pool_two_creds_one_rev_reg_revoke_first() {
 #[ignore]
 async fn test_agency_pool_two_creds_one_rev_reg_revoke_second() {
     SetupPoolDirectory::run(|setup| async move {
-            let mut issuer = create_faber_trustee(setup.genesis_file_path.clone()).await;
-            let mut verifier = create_faber_trustee(setup.genesis_file_path.clone()).await;
+            let mut issuer = create_faber(setup.genesis_file_path.clone()).await;
+            let mut verifier = create_faber(setup.genesis_file_path.clone()).await;
             let mut consumer = create_alice(setup.genesis_file_path).await;
 
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _rev_reg_id) =
@@ -511,8 +511,8 @@ async fn test_agency_pool_two_creds_one_rev_reg_revoke_second() {
 #[ignore]
 async fn test_agency_pool_two_creds_two_rev_reg_id() {
     SetupPoolDirectory::run(|setup| async move {
-            let mut issuer = create_faber_trustee(setup.genesis_file_path.clone()).await;
-            let mut verifier = create_faber_trustee(setup.genesis_file_path.clone()).await;
+            let mut issuer = create_faber(setup.genesis_file_path.clone()).await;
+            let mut verifier = create_faber(setup.genesis_file_path.clone()).await;
             let mut consumer = create_alice(setup.genesis_file_path).await;
 
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _) =
@@ -575,8 +575,8 @@ async fn test_agency_pool_two_creds_two_rev_reg_id() {
 #[ignore]
 async fn test_agency_pool_two_creds_two_rev_reg_id_revoke_first() {
     SetupPoolDirectory::run(|setup| async move {
-            let mut issuer = create_faber_trustee(setup.genesis_file_path.clone()).await;
-            let mut verifier = create_faber_trustee(setup.genesis_file_path.clone()).await;
+            let mut issuer = create_faber(setup.genesis_file_path.clone()).await;
+            let mut verifier = create_faber(setup.genesis_file_path.clone()).await;
             let mut consumer = create_alice(setup.genesis_file_path).await;
 
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _) =
@@ -642,8 +642,8 @@ async fn test_agency_pool_two_creds_two_rev_reg_id_revoke_first() {
 #[ignore]
 async fn test_agency_pool_two_creds_two_rev_reg_id_revoke_second() {
     SetupPoolDirectory::run(|setup| async move {
-            let mut issuer = create_faber_trustee(setup.genesis_file_path.clone()).await;
-            let mut verifier = create_faber_trustee(setup.genesis_file_path.clone()).await;
+            let mut issuer = create_faber(setup.genesis_file_path.clone()).await;
+            let mut verifier = create_faber(setup.genesis_file_path.clone()).await;
             let mut consumer = create_alice(setup.genesis_file_path).await;
 
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _) =
@@ -711,7 +711,7 @@ async fn test_agency_pool_two_creds_two_rev_reg_id_revoke_second() {
 #[ignore]
 async fn test_agency_pool_three_creds_one_rev_reg_revoke_all() {
     SetupPoolDirectory::run(|setup| async move {
-            let mut issuer = create_faber_trustee(setup.genesis_file_path.clone()).await;
+            let mut issuer = create_faber(setup.genesis_file_path.clone()).await;
             let mut consumer = create_alice(setup.genesis_file_path.clone()).await;
 
             let (_schema_id, _schema_json, _cred_def_id, _cred_def_json, cred_def, rev_reg, _rev_reg_id) =

@@ -8,7 +8,7 @@ pub mod utils;
 use std::thread;
 use std::time::Duration;
 
-use crate::utils::devsetup_faber::{create_faber, create_faber_trustee};
+use crate::utils::devsetup_faber::create_faber;
 use aries_vcx::common::keys::{get_verkey_from_ledger, rotate_verkey};
 use aries_vcx::common::ledger::service_didsov::EndpointDidSov;
 use aries_vcx::common::ledger::transactions::{
@@ -104,7 +104,7 @@ async fn test_pool_add_get_service() {
 #[ignore]
 async fn test_pool_write_new_endorser_did() {
     SetupPoolDirectory::run(|setup| async move {
-        let faber = create_faber_trustee(setup.genesis_file_path.clone()).await;
+        let faber = create_faber(setup.genesis_file_path.clone()).await;
         let mut acme = create_faber(setup.genesis_file_path.clone()).await;
         let acme_vk = acme.get_verkey_from_wallet(acme.public_did()).await;
 
