@@ -18,17 +18,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.core.content.res.TypedArrayUtils
 import androidx.navigation.NavHostController
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import okhttp3.Call
-import okhttp3.Callback
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import okhttp3.Response
-import java.io.IOException
+import org.hyperledger.ariesvcx.utils.await
 
 
 @Composable
@@ -38,15 +35,14 @@ fun HomeScreen(
     profileHolder: ProfileHolder?,
     connection: Connection?,
     walletConfig: WalletConfig,
-    requested: Boolean,
+    connectionRequestState: Boolean,
     httpClient: OkHttpClient
 ) {
 
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
-    val TAG = "HomeScreen"
 
-    var intercept by remember {
+    var flagKeepFetching by remember {
         mutableStateOf(true)
     }
 
@@ -57,28 +53,24 @@ fun HomeScreen(
 
 
     LaunchedEffect(true) {
-        while (intercept && requested) {
-            httpClient.newCall(request).enqueue(object : Callback {
-                override fun onFailure(call: Call, e: IOException) {
-                    Log.d(TAG, "onFailure: ${e.printStackTrace()}")
+        scope.launch(Dispatchers.IO) {
+            while (flagKeepFetching && connectionRequestState) {
+                delay(500)
+                val response = httpClient.newCall(request).await()
+                if (response.code == 200) {
+                    val message = response.body!!.string()
+
+                    val unpackedMessage = unpackMessage(
+                        profileHolder!!,
+                        message
+                    )
+
+                    Log.d("HOMESCREEN", "HomeScreen: ${unpackedMessage.message}")
+                    connection?.handleResponse(profileHolder, unpackedMessage.message)
+                    flagKeepFetching = false
+                    connection?.sendAck(profileHolder)
                 }
-
-                override fun onResponse(call: Call, response: Response) {
-                    response.use {
-                        if (response.code == 200) {
-                            val message = response.body!!.string()
-
-                            val unpackedMessage = unpackMessageAndReturnMessage(
-                                profileHolder!!,
-                                message
-                            )
-
-                            connection?.handleResponse(profileHolder, unpackedMessage)
-                            intercept = false
-                        }
-                    }
-                }
-            })
+            }
         }
     }
 

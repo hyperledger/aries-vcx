@@ -45,7 +45,7 @@ fun ScanScreen(
     profileHolder: ProfileHolder,
     navController: NavHostController,
     walletConfig: WalletConfig,
-    setRequestedToTrue: () -> Unit
+    setConnectionRequestState: () -> Unit
 ) {
     var scannedQRCodeText by remember {
         mutableStateOf<String?>(null)
@@ -81,7 +81,7 @@ fun ScanScreen(
                             emptyList()
                         )
                         withContext(Dispatchers.Main) {
-                            setRequestedToTrue()
+                            setConnectionRequestState()
                             navController.navigate("home")
                         }
                     }

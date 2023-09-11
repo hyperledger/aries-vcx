@@ -28,7 +28,7 @@ sealed class Destination(val route: String) {
 class MainActivity : ComponentActivity() {
     private var profile by mutableStateOf<ProfileHolder?>(null)
     private var connection by mutableStateOf<Connection?>(null)
-    private var requested by mutableStateOf<Boolean>(false)
+    private var connectionRequestState by mutableStateOf(false)
     private var httpClient = OkHttpClient()
 
     private val walletConfig = WalletConfig(
@@ -47,8 +47,8 @@ class MainActivity : ComponentActivity() {
         connection = createInvitee(profileHolder)
     }
 
-    private fun setRequestedToTrue() {
-        requested = true
+    private fun setConnectionRequestState() {
+        connectionRequestState = true
     }
 
 
@@ -68,8 +68,8 @@ class MainActivity : ComponentActivity() {
                         connection = connection,
                         profileHolder = profile,
                         walletConfig = walletConfig,
-                        requested = requested,
-                        setRequestedToTrue = { setRequestedToTrue() },
+                        connectionRequestState = connectionRequestState,
+                        setConnectionRequestState = { setConnectionRequestState() },
                         httpClient = httpClient
                     )
                 }
@@ -85,8 +85,8 @@ fun NavigationAppHost(
     connection: Connection?,
     profileHolder: ProfileHolder?,
     walletConfig: WalletConfig,
-    requested: Boolean,
-    setRequestedToTrue: () -> Unit,
+    connectionRequestState: Boolean,
+    setConnectionRequestState: () -> Unit,
     httpClient: OkHttpClient,
 ) {
     NavHost(navController = navController, startDestination = "home") {
@@ -97,7 +97,7 @@ fun NavigationAppHost(
                 profileHolder = profileHolder,
                 connection = connection,
                 walletConfig = walletConfig,
-                requested = requested,
+                connectionRequestState = connectionRequestState,
                 httpClient = httpClient
             )
         }
@@ -108,7 +108,7 @@ fun NavigationAppHost(
                 profileHolder = profileHolder!!,
                 navController = navController,
                 walletConfig = walletConfig,
-                setRequestedToTrue = setRequestedToTrue
+                setConnectionRequestState = setConnectionRequestState
             )
         }
     }
