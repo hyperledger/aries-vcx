@@ -3,7 +3,6 @@ use std::sync::Arc;
 use aries_vcx::common::ledger::transactions::write_endpoint_legacy;
 use aries_vcx::common::primitives::credential_schema::Schema;
 use aries_vcx::core::profile::profile::Profile;
-use aries_vcx::errors::error::VcxResult;
 use aries_vcx::global::settings;
 use aries_vcx::global::settings::{init_issuer_config, DEFAULT_LINK_SECRET_ALIAS};
 use aries_vcx::protocols::connection::pairwise_info::PairwiseInfo;
@@ -42,9 +41,13 @@ pub async fn create_faber_trustee(genesis_file_path: String) -> Faber {
     let service = AriesService::create()
         .set_service_endpoint("http://dummy.org".parse().unwrap())
         .set_recipient_keys(vec![faber.pairwise_info.pw_vk.clone()]);
-    write_endpoint_legacy(&faber.profile.inject_indy_ledger_write(), &faber.public_did(), &service)
-        .await
-        .unwrap();
+    write_endpoint_legacy(
+        &faber.profile.inject_indy_ledger_write(),
+        &faber.institution_did,
+        &service,
+    )
+    .await
+    .unwrap();
     faber
 }
 
@@ -69,37 +72,5 @@ impl Faber {
             pairwise_info,
         };
         faber
-    }
-
-    pub fn public_did(&self) -> &str {
-        &self.institution_did
-    }
-
-    pub async fn get_verkey_from_wallet(&self, did: &str) -> String {
-        get_verkey_from_wallet(self.profile.inject_wallet().get_wallet_handle(), did)
-            .await
-            .unwrap()
-    }
-
-    pub async fn create_schema(&mut self) -> VcxResult<()> {
-        let data = vec!["name", "date", "degree", "empty_param"]
-            .iter()
-            .map(|s| s.to_string())
-            .collect();
-        let name: String = aries_vcx::utils::random::generate_random_schema_name();
-        let version: String = String::from("1.0");
-
-        self.schema = Schema::create(
-            &self.profile.inject_anoncreds(),
-            "",
-            &self.institution_did,
-            &name,
-            &version,
-            &data,
-        )
-        .await?
-        .publish(&self.profile.inject_anoncreds_ledger_write(), None)
-        .await?;
-        Ok(())
     }
 }

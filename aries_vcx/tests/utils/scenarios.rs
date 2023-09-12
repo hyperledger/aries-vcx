@@ -3,6 +3,7 @@ use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
 
+use aries_vcx::common::primitives::credential_schema::Schema;
 use aries_vcx::common::test_utils::create_and_store_credential_def_and_rev_reg;
 use aries_vcx::core::profile::profile::Profile;
 use aries_vcx::errors::error::VcxResult;
@@ -14,7 +15,6 @@ use aries_vcx::handlers::util::{AnyInvitation, OfferInfo, PresentationProposalDa
 use aries_vcx::protocols::connection::{Connection, GenericConnection};
 use aries_vcx::protocols::mediated_connection::pairwise_info::PairwiseInfo;
 use aries_vcx::transport::Transport;
-use aries_vcx::utils::mockdata::mockdata_proof::REQUESTED_ATTRIBUTES;
 use async_trait::async_trait;
 use messages::misc::MimeType;
 use messages::msg_fields::protocols::connection::invitation::{
@@ -183,6 +183,27 @@ pub async fn create_nonrevocable_cred_offer(
 
     info!("create_nonrevocable_cred_offer :: credential offer was built");
     (issuer, credential_offer)
+}
+
+pub async fn create_schema(faber: &Faber) -> VcxResult<Schema> {
+    let data = vec!["name", "date", "degree", "empty_param"]
+        .iter()
+        .map(|s| s.to_string())
+        .collect();
+    let name: String = aries_vcx::utils::random::generate_random_schema_name();
+    let version: String = String::from("1.0");
+
+    Schema::create(
+        &faber.profile.inject_anoncreds(),
+        "",
+        &faber.institution_did,
+        &name,
+        &version,
+        &data,
+    )
+    .await?
+    .publish(&faber.profile.inject_anoncreds_ledger_write(), None)
+    .await
 }
 
 pub async fn create_credential_offer(
