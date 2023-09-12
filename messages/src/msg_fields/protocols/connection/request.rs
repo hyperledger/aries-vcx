@@ -70,9 +70,10 @@ mod tests {
             .connection(conn_data)
             .build();
 
-        let mut decorators = RequestDecorators::default();
-        decorators.thread = Some(make_extended_thread());
-        decorators.timing = Some(make_extended_timing());
+        let decorators = RequestDecorators::builder()
+            .thread(make_extended_thread())
+            .timing(make_extended_timing())
+            .build();
 
         let expected = json!({
             "label": content.label,

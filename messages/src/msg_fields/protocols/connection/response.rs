@@ -139,9 +139,11 @@ mod tests {
 
         let content = ResponseContent::builder().connection_sig(conn_sig).build();
 
-        let mut decorators = ResponseDecorators::builder().thread(make_extended_thread()).build();
-        decorators.timing = Some(make_extended_timing());
-        decorators.please_ack = Some(make_minimal_please_ack());
+        let decorators = ResponseDecorators::builder()
+            .thread(make_extended_thread())
+            .timing(make_extended_timing())
+            .please_ack(make_minimal_please_ack())
+            .build();
 
         let expected = json!({
             "connection~sig": content.connection_sig,

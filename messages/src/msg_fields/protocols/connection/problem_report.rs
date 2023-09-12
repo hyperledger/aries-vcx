@@ -75,15 +75,16 @@ mod tests {
 
     #[test]
     fn test_extended_conn_problem_report() {
-        let mut content = ProblemReportContent::default();
-        content.problem_code = Some(ProblemCode::RequestNotAccepted);
-        content.explain = Some("test_conn_problem_report_explain".to_owned());
-
-        let mut decorators = ProblemReportDecorators::builder()
-            .thread(make_extended_thread())
+        let content = ProblemReportContent::builder()
+            .problem_code(ProblemCode::RequestNotAccepted)
+            .explain("test_conn_problem_report_explain".to_owned())
             .build();
-        decorators.timing = Some(make_extended_timing());
-        decorators.localization = Some(make_extended_msg_localization());
+
+        let decorators = ProblemReportDecorators::builder()
+            .thread(make_extended_thread())
+            .timing(make_extended_timing())
+            .localization(make_extended_msg_localization())
+            .build();
 
         let expected = json!({
             "problem-code": content.problem_code,
