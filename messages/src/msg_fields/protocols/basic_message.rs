@@ -75,8 +75,7 @@ mod tests {
             .sent_time(DateTime::default())
             .build();
 
-        let mut decorators = BasicMessageDecorators::default();
-        decorators.thread = Some(make_extended_thread());
+        let decorators = BasicMessageDecorators::builder().thread(make_extended_thread()).build();
 
         let expected = json!({
             "sent_time": DateTimeRfc3339(&content.sent_time),
