@@ -71,24 +71,27 @@ mod tests {
         let description = Description::builder()
             .code("test_problem_report_code".to_owned())
             .build();
-        let mut content: ProblemReportContent = ProblemReportContent::builder().description(description).build();
-        content.who_retries = Some(WhoRetries::Me);
-        content.fix_hint = Some("test_fix_hint".to_owned());
-        content.impact = Some(Impact::Connection);
-        content.location = Some(Where::new(WhereParty::Me, "test_location".to_owned()));
-        content.noticed_time = Some("test_noticed_time".to_owned());
-        content.tracking_uri = Some("https://dummy.dummy/dummy".parse().unwrap());
-        content.escalation_uri = Some("https://dummy.dummy/dummy".parse().unwrap());
-        content.problem_items = Some(vec![HashMap::from([(
-            "test_prob_item_key".to_owned(),
-            "test_prob_item_value".to_owned(),
-        )])]);
+        let content: ProblemReportContent = ProblemReportContent::builder()
+            .description(description)
+            .who_retries(WhoRetries::Me)
+            .fix_hint("test_fix_hint".to_owned())
+            .impact(Impact::Connection)
+            .location(Where::new(WhereParty::Me, "test_location".to_owned()))
+            .noticed_time("test_noticed_time".to_owned())
+            .tracking_uri("https://dummy.dummy/dummy".parse().unwrap())
+            .escalation_uri("https://dummy.dummy/dummy".parse().unwrap())
+            .problem_items(vec![HashMap::from([(
+                "test_prob_item_key".to_owned(),
+                "test_prob_item_value".to_owned(),
+            )])])
+            .build();
 
-        let mut decorators = ProblemReportDecorators::default();
-        decorators.thread = Some(make_extended_thread());
-        decorators.timing = Some(make_extended_timing());
-        decorators.description_locale = Some(make_extended_field_localization());
-        decorators.fix_hint_locale = Some(make_extended_field_localization());
+        let decorators = ProblemReportDecorators::builder()
+            .thread(make_extended_thread())
+            .timing(make_extended_timing())
+            .description_locale(make_extended_field_localization())
+            .fix_hint_locale(make_extended_field_localization())
+            .build();
 
         let expected = json!({
             "description": content.description,

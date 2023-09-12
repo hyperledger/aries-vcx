@@ -192,14 +192,15 @@ mod tests {
             .threshold(1000)
             .build();
         let preview = PresentationPreview::new(vec![attribute], vec![predicate]);
-        let mut content = ProposePresentationContent::builder()
+        let content = ProposePresentationContent::builder()
             .presentation_proposal(preview)
+            .comment("test_comment".to_owned())
             .build();
-        content.comment = Some("test_comment".to_owned());
 
-        let mut decorators = ProposePresentationDecorators::default();
-        decorators.thread = Some(make_extended_thread());
-        decorators.timing = Some(make_extended_timing());
+        let decorators = ProposePresentationDecorators::builder()
+            .thread(make_extended_thread())
+            .timing(make_extended_timing())
+            .build();
 
         let expected = json!({
             "comment": content.comment,

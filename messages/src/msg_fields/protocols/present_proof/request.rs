@@ -62,14 +62,15 @@ mod tests {
 
     #[test]
     fn test_extended_request_proof() {
-        let mut content = RequestPresentationContent::builder()
+        let content = RequestPresentationContent::builder()
             .request_presentations_attach(vec![make_extended_attachment()])
+            .comment("test_comment".to_owned())
             .build();
-        content.comment = Some("test_comment".to_owned());
 
-        let mut decorators = RequestPresentationDecorators::default();
-        decorators.thread = Some(make_extended_thread());
-        decorators.timing = Some(make_extended_timing());
+        let decorators = RequestPresentationDecorators::builder()
+            .thread(make_extended_thread())
+            .timing(make_extended_timing())
+            .build();
 
         let expected = json!({
             "request_presentations~attach": content.request_presentations_attach,

@@ -65,14 +65,16 @@ mod tests {
 
     #[test]
     fn test_extended_present_proof() {
-        let mut content = PresentationContent::builder()
+        let content = PresentationContent::builder()
             .presentations_attach(vec![make_extended_attachment()])
+            .comment("test_comment".to_owned())
             .build();
-        content.comment = Some("test_comment".to_owned());
 
-        let mut decorators = PresentationDecorators::builder().thread(make_extended_thread()).build();
-        decorators.timing = Some(make_extended_timing());
-        decorators.please_ack = Some(make_minimal_please_ack());
+        let decorators = PresentationDecorators::builder()
+            .thread(make_extended_thread())
+            .timing(make_extended_timing())
+            .please_ack(make_minimal_please_ack())
+            .build();
 
         let expected = json!({
             "comment": content.comment,
