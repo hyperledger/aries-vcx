@@ -59,10 +59,10 @@ mod tests {
     fn test_extended_reuse_accepted() {
         let content = HandshakeReuseAcceptedContent::default();
 
-        let mut decorators = HandshakeReuseAcceptedDecorators::builder()
+        let decorators = HandshakeReuseAcceptedDecorators::builder()
             .thread(make_extended_thread())
+            .timing(make_extended_timing())
             .build();
-        decorators.timing = Some(make_extended_timing());
 
         let expected = json!({
             "~thread": decorators.thread,

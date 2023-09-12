@@ -83,19 +83,17 @@ mod tests {
 
     #[test]
     fn test_extended_oob_invitation() {
-        let mut content = InvitationContent::builder()
+        let content = InvitationContent::builder()
             .services(vec![OobService::Did("test_service_did".to_owned())])
+            .requests_attach(vec![make_extended_attachment()])
+            .label("test_label".to_owned())
+            .goal_code(MaybeKnown::Known(OobGoalCode::P2PMessaging))
+            .goal("test_oob_goal".to_owned())
+            .accept(vec![MimeType::Json, MimeType::Plain])
+            .handshake_protocols(vec![MaybeKnown::Known(ConnectionTypeV1::new_v1_0().into())])
             .build();
 
-        content.requests_attach = Some(vec![make_extended_attachment()]);
-        content.label = Some("test_label".to_owned());
-        content.goal_code = Some(MaybeKnown::Known(OobGoalCode::P2PMessaging));
-        content.goal = Some("test_oob_goal".to_owned());
-        content.accept = Some(vec![MimeType::Json, MimeType::Plain]);
-        content.handshake_protocols = Some(vec![MaybeKnown::Known(ConnectionTypeV1::new_v1_0().into())]);
-
-        let mut decorators = InvitationDecorators::default();
-        decorators.timing = Some(make_extended_timing());
+        let decorators = InvitationDecorators::builder().timing(make_extended_timing()).build();
 
         let expected = json!({
             "label": content.label,
