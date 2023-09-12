@@ -106,7 +106,7 @@ fn _build_credential_preview(credential_json: &str) -> VcxResult<CredentialPrevi
         _ => {}
     };
 
-    Ok(CredentialPreview::builder().attributes(attributes).build())
+    Ok(CredentialPreview::new(attributes))
 }
 
 impl Issuer {

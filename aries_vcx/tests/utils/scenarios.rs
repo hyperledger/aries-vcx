@@ -302,7 +302,7 @@ pub async fn create_credential_proposal(schema_id: &str, cred_def_id: &str, comm
             .build();
         attrs.push(attr);
 
-        let preview = CredentialPreview::builder().attributes(attrs).build();
+        let preview = CredentialPreview::new(attrs);
         let content = ProposeCredentialContent::builder()
             .credential_proposal(preview)
             .schema_id(schema_id.to_owned())

@@ -37,13 +37,21 @@ pub struct ProposePresentationDecorators {
     pub timing: Option<Timing>,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, TypedBuilder)]
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 pub struct PresentationPreview {
-    #[builder(default, setter(skip))]
-    #[serde(rename = "@type")]
     msg_type: PresentationPreviewMsgType,
     pub attributes: Vec<PresentationAttr>,
     pub predicates: Vec<Predicate>,
+}
+
+impl PresentationPreview {
+    pub fn new(attributes: Vec<PresentationAttr>, predicates: Vec<Predicate>) -> Self {
+        Self {
+            msg_type: PresentationPreviewMsgType,
+            attributes,
+            predicates,
+        }
+    }
 }
 
 /// Non-standalone message type.
@@ -159,10 +167,7 @@ mod tests {
             .predicate(PredicateOperator::GreaterOrEqual)
             .threshold(1000)
             .build();
-        let preview = PresentationPreview::builder()
-            .attributes(vec![attribute])
-            .predicates(vec![predicate])
-            .build();
+        let preview = PresentationPreview::new(vec![attribute], vec![predicate]);
         let content = ProposePresentationContent::builder()
             .presentation_proposal(preview)
             .build();
@@ -186,10 +191,7 @@ mod tests {
             .predicate(PredicateOperator::GreaterOrEqual)
             .threshold(1000)
             .build();
-        let preview = PresentationPreview::builder()
-            .attributes(vec![attribute])
-            .predicates(vec![predicate])
-            .build();
+        let preview = PresentationPreview::new(vec![attribute], vec![predicate]);
         let mut content = ProposePresentationContent::builder()
             .presentation_proposal(preview)
             .build();

@@ -51,7 +51,7 @@ mod tests {
             .name("test_attribute_name".to_owned())
             .value("test_attribute_value".to_owned())
             .build();
-        let preview = CredentialPreview::builder().attributes(vec![attribute]).build();
+        let preview = CredentialPreview::new(vec![attribute]);
         let content = ProposeCredentialContent::builder()
             .credential_proposal(preview)
             .schema_id("test_schema_id".to_owned())
@@ -80,7 +80,7 @@ mod tests {
             .name("test_attribute_name".to_owned())
             .value("test_attribute_value".to_owned())
             .build();
-        let preview = CredentialPreview::builder().attributes(vec![attribute]).build();
+        let preview = CredentialPreview::new(vec![attribute]);
         let mut content = ProposeCredentialContent::builder()
             .credential_proposal(preview)
             .schema_id("test_schema_id".to_owned())

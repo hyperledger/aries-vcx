@@ -11,10 +11,7 @@ pub struct PresentationProposalSent {
 impl Default for PresentationProposalSent {
     fn default() -> Self {
         let id = Uuid::new_v4().to_string();
-        let preview = PresentationPreview::builder()
-            .attributes(Vec::new())
-            .predicates(Vec::new())
-            .build();
+        let preview = PresentationPreview::new(Vec::new(), Vec::new());
 
         let content = ProposePresentationContent::builder()
             .presentation_proposal(preview)

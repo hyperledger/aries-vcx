@@ -125,10 +125,7 @@ impl ProverSM {
         let state = match self.state {
             ProverFullState::Initial(_) => {
                 let id = self.thread_id.clone();
-                let preview = PresentationPreview::builder()
-                    .attributes(proposal_data.attributes)
-                    .predicates(proposal_data.predicates)
-                    .build();
+                let preview = PresentationPreview::new(proposal_data.attributes, proposal_data.predicates);
                 let content = ProposePresentationContent::builder().presentation_proposal(preview);
 
                 let content = if let Some(comment) = proposal_data.comment {
@@ -142,10 +139,7 @@ impl ProverSM {
             }
             ProverFullState::PresentationRequestReceived(_) => {
                 let id = Uuid::new_v4().to_string();
-                let preview = PresentationPreview::builder()
-                    .attributes(proposal_data.attributes)
-                    .predicates(proposal_data.predicates)
-                    .build();
+                let preview = PresentationPreview::new(proposal_data.attributes, proposal_data.predicates);
 
                 let content = ProposePresentationContent::builder().presentation_proposal(preview);
                 let content = if let Some(comment) = proposal_data.comment {

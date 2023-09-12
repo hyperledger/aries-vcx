@@ -185,8 +185,10 @@ impl OutOfBandReceiver {
                         if let Some(thread) = &mut offer.decorators.thread {
                             thread.pthid = Some(self.oob.id.clone());
                         } else {
-                            let mut thread = Thread::builder().thid(offer.id.clone()).build();
-                            thread.pthid = Some(self.oob.id.clone());
+                            let thread = Thread::builder()
+                                .thid(offer.id.clone())
+                                .pthid(self.oob.id.clone())
+                                .build();
                             offer.decorators.thread = Some(thread);
                         }
 
@@ -205,8 +207,10 @@ impl OutOfBandReceiver {
                         if let Some(thread) = &mut request.decorators.thread {
                             thread.pthid = Some(self.oob.id.clone());
                         } else {
-                            let mut thread = Thread::builder().thid(request.id.clone()).build();
-                            thread.pthid = Some(self.oob.id.clone());
+                            let thread = Thread::builder()
+                                .thid(request.id.clone())
+                                .pthid(self.oob.id.clone())
+                                .build();
                             request.decorators.thread = Some(thread);
                         }
 

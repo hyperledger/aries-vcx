@@ -54,7 +54,7 @@ mod tests {
             .name("test_attribute_name".to_owned())
             .value("test_attribute_value".to_owned())
             .build();
-        let preview = CredentialPreview::builder().attributes(vec![attribute]).build();
+        let preview = CredentialPreview::new(vec![attribute]);
         let content = OfferCredentialContent::builder()
             .credential_preview(preview)
             .offers_attach(vec![make_extended_attachment()])
@@ -81,7 +81,7 @@ mod tests {
             .name("test_attribute_name".to_owned())
             .value("test_attribute_value".to_owned())
             .build();
-        let preview = CredentialPreview::builder().attributes(vec![attribute]).build();
+        let preview = CredentialPreview::new(vec![attribute]);
         let mut content = OfferCredentialContent::builder()
             .credential_preview(preview)
             .offers_attach(vec![make_extended_attachment()])

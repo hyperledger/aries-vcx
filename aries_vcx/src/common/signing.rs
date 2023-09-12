@@ -30,11 +30,7 @@ pub async fn sign_connection_response(
     let sig_data = base64::encode_config(&sig_data, base64::URL_SAFE);
     let signature = base64::encode_config(&signature, base64::URL_SAFE);
 
-    let connection_sig = ConnectionSignature::builder()
-        .signature(signature)
-        .sig_data(sig_data)
-        .signer(key.to_string())
-        .build();
+    let connection_sig = ConnectionSignature::new(signature, sig_data, key.to_string());
 
     Ok(connection_sig)
 }

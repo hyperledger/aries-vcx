@@ -92,12 +92,19 @@ impl DelayedSerde for CredentialIssuance {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, TypedBuilder)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct CredentialPreview {
-    #[builder(default, setter(skip))]
-    #[serde(rename = "@type")]
     msg_type: CredentialPreviewMsgType,
     pub attributes: Vec<CredentialAttr>,
+}
+
+impl CredentialPreview {
+    pub fn new(attributes: Vec<CredentialAttr>) -> Self {
+        Self {
+            msg_type: CredentialPreviewMsgType,
+            attributes,
+        }
+    }
 }
 
 /// Non-standalone message type.

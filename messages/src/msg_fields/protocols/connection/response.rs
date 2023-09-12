@@ -20,14 +20,23 @@ pub struct ResponseContent {
     pub connection_sig: ConnectionSignature,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, TypedBuilder)]
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 pub struct ConnectionSignature {
-    #[builder(default, setter(skip))]
-    #[serde(rename = "@type")]
     msg_type: SigEd25519Sha512Single,
     pub signature: String,
     pub sig_data: String,
     pub signer: String,
+}
+
+impl ConnectionSignature {
+    pub fn new(signature: String, sig_data: String, signer: String) -> Self {
+        Self {
+            msg_type: SigEd25519Sha512Single,
+            signature,
+            sig_data,
+            signer,
+        }
+    }
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, TypedBuilder)]
@@ -102,11 +111,11 @@ mod tests {
 
     #[test]
     fn test_minimal_conn_response() {
-        let conn_sig = ConnectionSignature::builder()
-            .signature("test_signature".to_owned())
-            .sig_data("test_sig_data".to_owned())
-            .signer("test_signer".to_owned())
-            .build();
+        let conn_sig = ConnectionSignature::new(
+            "test_signature".to_owned(),
+            "test_sig_data".to_owned(),
+            "test_signer".to_owned(),
+        );
 
         let content = ResponseContent::builder().connection_sig(conn_sig).build();
 
@@ -122,11 +131,11 @@ mod tests {
 
     #[test]
     fn test_extended_conn_response() {
-        let conn_sig = ConnectionSignature::builder()
-            .signature("test_signature".to_owned())
-            .sig_data("test_sig_data".to_owned())
-            .signer("test_signer".to_owned())
-            .build();
+        let conn_sig = ConnectionSignature::new(
+            "test_signature".to_owned(),
+            "test_sig_data".to_owned(),
+            "test_signer".to_owned(),
+        );
 
         let content = ResponseContent::builder().connection_sig(conn_sig).build();
 
