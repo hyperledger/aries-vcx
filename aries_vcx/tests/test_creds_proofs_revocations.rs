@@ -12,7 +12,6 @@ use aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierS
 use aries_vcx::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
 use aries_vcx::utils::devsetup::*;
 
-use crate::utils::devsetup_faber::{create_faber, create_faber_trustee};
 #[cfg(feature = "migration")]
 use crate::utils::migration::Migratable;
 use crate::utils::scenarios::{
@@ -22,13 +21,14 @@ use crate::utils::scenarios::{
     revoke_credential_and_publish_accumulator, revoke_credential_local, rotate_rev_reg,
     verifier_create_proof_and_send_request,
 };
+use crate::utils::test_agent::{create_test_agent, create_test_agent_trustee};
 
 #[tokio::test]
 #[ignore]
 async fn test_agency_pool_basic_revocation() {
     SetupPoolDirectory::run(|setup| async move {
-        let mut institution = create_faber_trustee(setup.genesis_file_path.clone()).await;
-        let mut consumer = create_faber(setup.genesis_file_path).await;
+        let mut institution = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
+        let mut consumer = create_test_agent(setup.genesis_file_path).await;
 
         let (schema_id, cred_def_id, _, _cred_def, rev_reg, issuer_credential) =
             issue_address_credential(&mut consumer, &mut institution).await;
@@ -99,8 +99,8 @@ async fn test_agency_pool_basic_revocation() {
 #[ignore]
 async fn test_agency_pool_local_revocation() {
     SetupPoolDirectory::run(|setup| async move {
-        let mut institution = create_faber_trustee(setup.genesis_file_path.clone()).await;
-        let mut consumer = create_faber(setup.genesis_file_path).await;
+        let mut institution = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
+        let mut consumer = create_test_agent(setup.genesis_file_path).await;
 
         let (schema_id, cred_def_id, _, _cred_def, rev_reg, issuer_credential) =
             issue_address_credential(&mut consumer, &mut institution).await;
@@ -159,10 +159,10 @@ async fn test_agency_pool_local_revocation() {
 #[ignore]
 async fn test_agency_batch_revocation() {
     SetupPoolDirectory::run(|setup| async move {
-            let mut institution = create_faber_trustee(setup.genesis_file_path.clone()).await;
-            let mut consumer1 = create_faber(setup.genesis_file_path.clone()).await;
-            let mut consumer2 = create_faber(setup.genesis_file_path.clone()).await;
-            let mut consumer3 = create_faber(setup.genesis_file_path).await;
+            let mut institution = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
+            let mut consumer1 = create_test_agent(setup.genesis_file_path.clone()).await;
+            let mut consumer2 = create_test_agent(setup.genesis_file_path.clone()).await;
+            let mut consumer3 = create_test_agent(setup.genesis_file_path).await;
 
             // Issue and send three credentials of the same schema
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _rev_reg_id) =
@@ -310,8 +310,8 @@ async fn test_agency_batch_revocation() {
 #[ignore]
 async fn test_agency_pool_revoked_credential_might_still_work() {
     SetupPoolDirectory::run(|setup| async move {
-        let mut institution = create_faber_trustee(setup.genesis_file_path.clone()).await;
-        let mut consumer = create_faber(setup.genesis_file_path).await;
+        let mut institution = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
+        let mut consumer = create_test_agent(setup.genesis_file_path).await;
 
         let (schema_id, cred_def_id, _, _cred_def, rev_reg, issuer_credential) =
             issue_address_credential(&mut consumer, &mut institution).await;
@@ -375,9 +375,9 @@ async fn test_agency_pool_revoked_credential_might_still_work() {
 #[ignore]
 async fn test_agency_pool_two_creds_one_rev_reg_revoke_first() {
     SetupPoolDirectory::run(|setup| async move {
-            let mut issuer = create_faber_trustee(setup.genesis_file_path.clone()).await;
-            let mut verifier = create_faber_trustee(setup.genesis_file_path.clone()).await;
-            let mut consumer = create_faber(setup.genesis_file_path).await;
+            let mut issuer = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
+            let mut verifier = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
+            let mut consumer = create_test_agent(setup.genesis_file_path).await;
 
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _rev_reg_id) =
                 _create_address_schema_creddef_revreg(&issuer.profile, &issuer.institution_did).await;
@@ -443,9 +443,9 @@ async fn test_agency_pool_two_creds_one_rev_reg_revoke_first() {
 #[ignore]
 async fn test_agency_pool_two_creds_one_rev_reg_revoke_second() {
     SetupPoolDirectory::run(|setup| async move {
-            let mut issuer = create_faber_trustee(setup.genesis_file_path.clone()).await;
-            let mut verifier = create_faber_trustee(setup.genesis_file_path.clone()).await;
-            let mut consumer = create_faber(setup.genesis_file_path).await;
+            let mut issuer = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
+            let mut verifier = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
+            let mut consumer = create_test_agent(setup.genesis_file_path).await;
 
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _rev_reg_id) =
                 _create_address_schema_creddef_revreg(&issuer.profile, &issuer.institution_did).await;
@@ -510,9 +510,9 @@ async fn test_agency_pool_two_creds_one_rev_reg_revoke_second() {
 #[ignore]
 async fn test_agency_pool_two_creds_two_rev_reg_id() {
     SetupPoolDirectory::run(|setup| async move {
-            let mut issuer = create_faber_trustee(setup.genesis_file_path.clone()).await;
-            let mut verifier = create_faber_trustee(setup.genesis_file_path.clone()).await;
-            let mut consumer = create_faber(setup.genesis_file_path).await;
+            let mut issuer = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
+            let mut verifier = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
+            let mut consumer = create_test_agent(setup.genesis_file_path).await;
 
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _) =
                 _create_address_schema_creddef_revreg(&issuer.profile, &issuer.institution_did).await;
@@ -574,9 +574,9 @@ async fn test_agency_pool_two_creds_two_rev_reg_id() {
 #[ignore]
 async fn test_agency_pool_two_creds_two_rev_reg_id_revoke_first() {
     SetupPoolDirectory::run(|setup| async move {
-            let mut issuer = create_faber_trustee(setup.genesis_file_path.clone()).await;
-            let mut verifier = create_faber_trustee(setup.genesis_file_path.clone()).await;
-            let mut consumer = create_faber(setup.genesis_file_path).await;
+            let mut issuer = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
+            let mut verifier = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
+            let mut consumer = create_test_agent(setup.genesis_file_path).await;
 
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _) =
                 _create_address_schema_creddef_revreg(&issuer.profile, &issuer.institution_did).await;
@@ -641,9 +641,9 @@ async fn test_agency_pool_two_creds_two_rev_reg_id_revoke_first() {
 #[ignore]
 async fn test_agency_pool_two_creds_two_rev_reg_id_revoke_second() {
     SetupPoolDirectory::run(|setup| async move {
-            let mut issuer = create_faber_trustee(setup.genesis_file_path.clone()).await;
-            let mut verifier = create_faber_trustee(setup.genesis_file_path.clone()).await;
-            let mut consumer = create_faber(setup.genesis_file_path).await;
+            let mut issuer = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
+            let mut verifier = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
+            let mut consumer = create_test_agent(setup.genesis_file_path).await;
 
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _) =
                 _create_address_schema_creddef_revreg(&issuer.profile, &issuer.institution_did).await;
@@ -710,8 +710,8 @@ async fn test_agency_pool_two_creds_two_rev_reg_id_revoke_second() {
 #[ignore]
 async fn test_agency_pool_three_creds_one_rev_reg_revoke_all() {
     SetupPoolDirectory::run(|setup| async move {
-            let mut issuer = create_faber_trustee(setup.genesis_file_path.clone()).await;
-            let mut consumer = create_faber(setup.genesis_file_path.clone()).await;
+            let mut issuer = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
+            let mut consumer = create_test_agent(setup.genesis_file_path.clone()).await;
 
             let (_schema_id, _schema_json, _cred_def_id, _cred_def_json, cred_def, rev_reg, _rev_reg_id) =
                 _create_address_schema_creddef_revreg(&issuer.profile, &issuer.institution_did).await;

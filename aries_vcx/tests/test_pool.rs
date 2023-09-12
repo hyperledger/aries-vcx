@@ -8,8 +8,8 @@ pub mod utils;
 use std::thread;
 use std::time::Duration;
 
-use crate::utils::devsetup_faber::{create_faber, create_faber_trustee};
 use crate::utils::scenarios::create_schema;
+use crate::utils::test_agent::{create_test_agent, create_test_agent_trustee};
 use aries_vcx::common::keys::{get_verkey_from_ledger, rotate_verkey};
 use aries_vcx::common::ledger::service_didsov::EndpointDidSov;
 use aries_vcx::common::ledger::transactions::{
@@ -106,8 +106,8 @@ async fn test_pool_add_get_service() {
 #[ignore]
 async fn test_pool_write_new_endorser_did() {
     SetupPoolDirectory::run(|setup| async move {
-        let faber = create_faber_trustee(setup.genesis_file_path.clone()).await;
-        let acme = create_faber(setup.genesis_file_path.clone()).await;
+        let faber = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
+        let acme = create_test_agent(setup.genesis_file_path.clone()).await;
         let acme_vk = get_verkey_from_wallet(acme.profile.inject_wallet().get_wallet_handle(), &acme.institution_did)
             .await
             .unwrap();

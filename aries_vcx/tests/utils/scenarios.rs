@@ -39,7 +39,7 @@ use serde_json::{json, Value};
 use url::Url;
 use uuid::Uuid;
 
-use crate::utils::devsetup_faber::Faber;
+use crate::utils::test_agent::TestAgent;
 use aries_vcx::common::ledger::transactions::into_did_doc;
 use aries_vcx::common::primitives::credential_definition::CredentialDef;
 use aries_vcx::common::primitives::revocation_registry::RevocationRegistry;
@@ -160,7 +160,7 @@ pub fn create_issuer_from_proposal(proposal: ProposeCredential) -> Issuer {
 }
 
 pub async fn create_nonrevocable_cred_offer(
-    faber: &mut Faber,
+    faber: &mut TestAgent,
     cred_def: &CredentialDef,
     credential_json: &str,
     comment: Option<&str>,
@@ -184,7 +184,7 @@ pub async fn create_nonrevocable_cred_offer(
     (issuer, credential_offer)
 }
 
-pub async fn create_schema(faber: &Faber) -> VcxResult<Schema> {
+pub async fn create_schema(faber: &TestAgent) -> VcxResult<Schema> {
     let data = vec!["name", "date", "degree", "empty_param"]
         .iter()
         .map(|s| s.to_string())
@@ -206,7 +206,7 @@ pub async fn create_schema(faber: &Faber) -> VcxResult<Schema> {
 }
 
 pub async fn create_credential_offer(
-    faber: &mut Faber,
+    faber: &mut TestAgent,
     cred_def: &CredentialDef,
     rev_reg: &RevocationRegistry,
     credential_json: &str,
@@ -229,7 +229,7 @@ pub async fn create_credential_offer(
     (issuer, credential_offer)
 }
 
-pub async fn create_credential_request(alice: &mut Faber, cred_offer: AriesMessage) -> (Holder, AriesMessage) {
+pub async fn create_credential_request(alice: &mut TestAgent, cred_offer: AriesMessage) -> (Holder, AriesMessage) {
     info!("create_credential_request >>>");
     let cred_offer: OfferCredential = match cred_offer {
         AriesMessage::CredentialIssuance(CredentialIssuance::OfferCredential(cred_offer)) => cred_offer,
@@ -287,7 +287,7 @@ pub async fn create_credential_proposal(schema_id: &str, cred_def_id: &str, comm
 }
 
 pub async fn accept_credential_proposal(
-    faber: &mut Faber,
+    faber: &mut TestAgent,
     issuer: &mut Issuer,
     cred_proposal: ProposeCredential,
     rev_reg_id: Option<String>,
@@ -307,7 +307,7 @@ pub async fn accept_credential_proposal(
     credential_offer
 }
 
-pub async fn accept_offer(alice: &mut Faber, cred_offer: AriesMessage, holder: &mut Holder) -> AriesMessage {
+pub async fn accept_offer(alice: &mut TestAgent, cred_offer: AriesMessage, holder: &mut Holder) -> AriesMessage {
     holder
         .process_aries_msg(
             &alice.profile.inject_anoncreds_ledger_read(),
@@ -333,7 +333,7 @@ pub async fn accept_offer(alice: &mut Faber, cred_offer: AriesMessage, holder: &
     cred_request
 }
 
-pub async fn decline_offer(alice: &mut Faber, cred_offer: AriesMessage, holder: &mut Holder) -> AriesMessage {
+pub async fn decline_offer(alice: &mut TestAgent, cred_offer: AriesMessage, holder: &mut Holder) -> AriesMessage {
     holder
         .process_aries_msg(
             &alice.profile.inject_anoncreds_ledger_read(),
@@ -349,8 +349,8 @@ pub async fn decline_offer(alice: &mut Faber, cred_offer: AriesMessage, holder: 
 }
 
 pub async fn send_credential(
-    alice: &mut Faber,
-    faber: &mut Faber,
+    alice: &mut TestAgent,
+    faber: &mut TestAgent,
     issuer_credential: &mut Issuer,
     holder_credential: &mut Holder,
     cred_request: AriesMessage,
@@ -416,8 +416,8 @@ pub async fn send_credential(
 }
 
 pub async fn _exchange_credential(
-    consumer: &mut Faber,
-    institution: &mut Faber,
+    consumer: &mut TestAgent,
+    institution: &mut TestAgent,
     credential_data: String,
     cred_def: &CredentialDef,
     rev_reg: &RevocationRegistry,
@@ -449,8 +449,8 @@ pub async fn _exchange_credential(
 }
 
 pub async fn _exchange_credential_with_proposal(
-    consumer: &mut Faber,
-    institution: &mut Faber,
+    consumer: &mut TestAgent,
+    institution: &mut TestAgent,
     schema_id: &str,
     cred_def_id: &str,
     rev_reg_id: Option<String>,
@@ -467,8 +467,8 @@ pub async fn _exchange_credential_with_proposal(
 }
 
 pub async fn issue_address_credential(
-    consumer: &mut Faber,
-    institution: &mut Faber,
+    consumer: &mut TestAgent,
+    institution: &mut TestAgent,
 ) -> (
     String,
     String,
@@ -506,7 +506,7 @@ pub async fn create_proof_proposal(prover: &mut Prover, cred_def_id: &str) -> Ar
 }
 
 pub async fn accept_proof_proposal(
-    faber: &mut Faber,
+    faber: &mut TestAgent,
     verifier: &mut Verifier,
     presentation_proposal: AriesMessage,
 ) -> AriesMessage {
@@ -567,7 +567,7 @@ pub async fn receive_proof_proposal_rejection(prover: &mut Prover, rejection: Ar
 }
 
 pub async fn create_proof_request_data(
-    faber: &mut Faber,
+    faber: &mut TestAgent,
     requested_attrs: &str,
     requested_preds: &str,
     revocation_interval: &str,
@@ -595,7 +595,7 @@ pub async fn create_verifier_from_request_data(presentation_request_data: Presen
 }
 
 pub async fn generate_and_send_proof(
-    alice: &mut Faber,
+    alice: &mut TestAgent,
     prover: &mut Prover,
     selected_credentials: SelectedCredentials,
 ) -> Option<AriesMessage> {
@@ -625,7 +625,7 @@ pub async fn generate_and_send_proof(
     }
 }
 
-pub async fn verify_proof(faber: &mut Faber, verifier: &mut Verifier, presentation: AriesMessage) -> AriesMessage {
+pub async fn verify_proof(faber: &mut TestAgent, verifier: &mut Verifier, presentation: AriesMessage) -> AriesMessage {
     let presentation = match presentation {
         AriesMessage::PresentProof(PresentProof::Presentation(presentation)) => presentation,
         _ => panic!("Unexpected message type"),
@@ -647,7 +647,7 @@ pub async fn verify_proof(faber: &mut Faber, verifier: &mut Verifier, presentati
 }
 
 pub async fn revoke_credential_and_publish_accumulator(
-    faber: &mut Faber,
+    faber: &mut TestAgent,
     issuer_credential: &Issuer,
     rev_reg: &RevocationRegistry,
 ) {
@@ -663,7 +663,7 @@ pub async fn revoke_credential_and_publish_accumulator(
         .unwrap();
 }
 
-pub async fn revoke_credential_local(faber: &mut Faber, issuer_credential: &Issuer, rev_reg_id: &str) {
+pub async fn revoke_credential_local(faber: &mut TestAgent, issuer_credential: &Issuer, rev_reg_id: &str) {
     let ledger = Arc::clone(&faber.profile).inject_anoncreds_ledger_read();
     let (_, delta, timestamp) = ledger.get_rev_reg_delta_json(rev_reg_id, None, None).await.unwrap();
     info!("revoking credential locally");
@@ -682,7 +682,7 @@ pub async fn revoke_credential_local(faber: &mut Faber, issuer_credential: &Issu
 }
 
 pub async fn rotate_rev_reg(
-    faber: &mut Faber,
+    faber: &mut TestAgent,
     credential_def: &CredentialDef,
     rev_reg: &RevocationRegistry,
 ) -> RevocationRegistry {
@@ -703,7 +703,7 @@ pub async fn rotate_rev_reg(
     rev_reg
 }
 
-pub async fn publish_revocation(institution: &mut Faber, rev_reg: &RevocationRegistry) {
+pub async fn publish_revocation(institution: &mut TestAgent, rev_reg: &RevocationRegistry) {
     rev_reg
         .publish_local_revocations(
             &institution.profile.inject_anoncreds(),
@@ -749,7 +749,7 @@ pub async fn _create_address_schema_creddef_revreg(
 }
 
 pub async fn verifier_create_proof_and_send_request(
-    institution: &mut Faber,
+    institution: &mut TestAgent,
     schema_id: &str,
     cred_def_id: &str,
     request_name: Option<&str>,
@@ -763,7 +763,7 @@ pub async fn verifier_create_proof_and_send_request(
 
 pub async fn prover_select_credentials(
     prover: &mut Prover,
-    alice: &mut Faber,
+    alice: &mut TestAgent,
     presentation_request: AriesMessage,
     preselected_credentials: Option<&str>,
 ) -> SelectedCredentials {
@@ -786,7 +786,7 @@ pub async fn prover_select_credentials(
 }
 
 pub async fn prover_select_credentials_and_send_proof(
-    alice: &mut Faber,
+    alice: &mut TestAgent,
     presentation_request: RequestPresentation,
     preselected_credentials: Option<&str>,
 ) -> Presentation {
@@ -870,8 +870,8 @@ pub fn match_preselected_credentials(
 }
 
 pub async fn exchange_proof(
-    institution: &mut Faber,
-    consumer: &mut Faber,
+    institution: &mut TestAgent,
+    consumer: &mut TestAgent,
     schema_id: &str,
     cred_def_id: &str,
     request_name: Option<&str>,
@@ -899,8 +899,8 @@ pub async fn exchange_proof(
  */
 
 async fn establish_connection_from_invite(
-    alice: &mut Faber,
-    faber: &mut Faber,
+    alice: &mut TestAgent,
+    faber: &mut TestAgent,
     invitation: AnyInvitation,
     inviter_pairwise_info: PairwiseInfo,
 ) -> (GenericConnection, GenericConnection) {
@@ -949,8 +949,8 @@ async fn establish_connection_from_invite(
 }
 
 pub async fn create_connections_via_oob_invite(
-    alice: &mut Faber,
-    faber: &mut Faber,
+    alice: &mut TestAgent,
+    faber: &mut TestAgent,
 ) -> (GenericConnection, GenericConnection) {
     let oob_sender = OutOfBandSender::create()
         .set_label("test-label")
@@ -974,8 +974,8 @@ pub async fn create_connections_via_oob_invite(
 }
 
 pub async fn create_connections_via_public_invite(
-    alice: &mut Faber,
-    faber: &mut Faber,
+    alice: &mut TestAgent,
+    faber: &mut TestAgent,
 ) -> (GenericConnection, GenericConnection) {
     let content = PublicInvitationContent::new("faber".to_owned(), faber.institution_did.clone());
     let public_invite = AnyInvitation::Con(Invitation::Public(PublicInvitation::new(
@@ -994,8 +994,8 @@ pub async fn create_connections_via_public_invite(
 }
 
 pub async fn create_connections_via_pairwise_invite(
-    alice: &mut Faber,
-    faber: &mut Faber,
+    alice: &mut TestAgent,
+    faber: &mut TestAgent,
 ) -> (GenericConnection, GenericConnection) {
     let inviter_pairwise_info = PairwiseInfo::create(&faber.profile.inject_wallet()).await.unwrap();
     let invite = {

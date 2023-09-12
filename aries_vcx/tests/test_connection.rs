@@ -16,13 +16,13 @@ use diddoc_legacy::aries::service::AriesService;
 use messages::decorators::timing::Timing;
 use messages::msg_fields::protocols::basic_message::{BasicMessage, BasicMessageContent, BasicMessageDecorators};
 use messages::AriesMessage;
-use utils::devsetup_faber::Faber;
+use utils::test_agent::TestAgent;
 use uuid::Uuid;
 
-use crate::utils::devsetup_faber::{create_faber, create_faber_trustee};
 use crate::utils::scenarios::{
     create_connections_via_oob_invite, create_connections_via_pairwise_invite, create_connections_via_public_invite,
 };
+use crate::utils::test_agent::{create_test_agent, create_test_agent_trustee};
 use crate::utils::transport_trait::TestTransport;
 
 fn build_basic_message(content: String) -> BasicMessage {
@@ -40,7 +40,7 @@ fn build_basic_message(content: String) -> BasicMessage {
 }
 
 async fn decrypt_message(
-    consumer: &Faber,
+    consumer: &TestAgent,
     received: Vec<u8>,
     consumer_to_institution: &GenericConnection,
 ) -> AriesMessage {
@@ -54,8 +54,8 @@ async fn decrypt_message(
 }
 
 async fn send_and_receive_message(
-    consumer: &Faber,
-    insitution: &Faber,
+    consumer: &TestAgent,
+    insitution: &TestAgent,
     institatuion_to_consumer: &GenericConnection,
     consumer_to_institution: &GenericConnection,
     message: &AriesMessage,
@@ -69,7 +69,7 @@ async fn send_and_receive_message(
     decrypt_message(consumer, received, consumer_to_institution).await
 }
 
-async fn create_service(faber: &Faber) {
+async fn create_service(faber: &TestAgent) {
     let pairwise_info = PairwiseInfo::create(&faber.profile.inject_wallet()).await.unwrap();
     let service = AriesService::create()
         .set_service_endpoint("http://dummy.org".parse().unwrap())
@@ -87,14 +87,14 @@ async fn create_service(faber: &Faber) {
 #[ignore]
 async fn test_agency_pool_establish_connection_via_public_invite() {
     SetupPoolDirectory::run(|setup| async move {
-        let mut institution = create_faber_trustee(setup.genesis_file_path.clone()).await;
-        let mut consumer = create_faber(setup.genesis_file_path).await;
+        let mut institution = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
+        let mut consumer = create_test_agent(setup.genesis_file_path).await;
         create_service(&institution).await;
 
         let (consumer_to_institution, institution_to_consumer) =
             create_connections_via_public_invite(&mut consumer, &mut institution).await;
 
-        let basic_message = build_basic_message("Hello Faber".to_string());
+        let basic_message = build_basic_message("Hello TestAgent".to_string());
         if let AriesMessage::BasicMessage(message) = send_and_receive_message(
             &consumer,
             &institution,
@@ -116,13 +116,13 @@ async fn test_agency_pool_establish_connection_via_public_invite() {
 #[ignore]
 async fn test_agency_pool_establish_connection_via_pairwise_invite() {
     SetupPoolDirectory::run(|setup| async move {
-        let mut institution = create_faber(setup.genesis_file_path.clone()).await;
-        let mut consumer = create_faber(setup.genesis_file_path).await;
+        let mut institution = create_test_agent(setup.genesis_file_path.clone()).await;
+        let mut consumer = create_test_agent(setup.genesis_file_path).await;
 
         let (consumer_to_institution, institution_to_consumer) =
             create_connections_via_pairwise_invite(&mut consumer, &mut institution).await;
 
-        let basic_message = build_basic_message("Hello Faber".to_string());
+        let basic_message = build_basic_message("Hello TestAgent".to_string());
         if let AriesMessage::BasicMessage(message) = send_and_receive_message(
             &consumer,
             &institution,
@@ -144,14 +144,14 @@ async fn test_agency_pool_establish_connection_via_pairwise_invite() {
 #[ignore]
 async fn test_agency_pool_establish_connection_via_out_of_band() {
     SetupPoolDirectory::run(|setup| async move {
-        let mut institution = create_faber_trustee(setup.genesis_file_path.clone()).await;
-        let mut consumer = create_faber(setup.genesis_file_path).await;
+        let mut institution = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
+        let mut consumer = create_test_agent(setup.genesis_file_path).await;
         create_service(&institution).await;
 
         let (consumer_to_institution, institution_to_consumer) =
             create_connections_via_oob_invite(&mut consumer, &mut institution).await;
 
-        let basic_message = build_basic_message("Hello Faber".to_string());
+        let basic_message = build_basic_message("Hello TestAgent".to_string());
         if let AriesMessage::BasicMessage(message) = send_and_receive_message(
             &consumer,
             &institution,
