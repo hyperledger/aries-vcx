@@ -71,14 +71,13 @@ mod tests {
 
     #[test]
     fn test_extended_revoke() {
-        let mut content = RevokeContent::builder()
+        let content = RevokeContent::builder()
             .credential_id("test_credential_id".to_owned())
             .revocation_format(MaybeKnown::Known(RevocationFormat::IndyAnoncreds))
+            .comment("test_comment".to_owned())
             .build();
-        content.comment = Some("test_comment".to_owned());
 
-        let mut decorators = RevokeDecorators::default();
-        decorators.thread = Some(make_extended_thread());
+        let decorators = RevokeDecorators::builder().thread(make_extended_thread()).build();
 
         let expected = json!({
             "credential_id": content.credential_id,
