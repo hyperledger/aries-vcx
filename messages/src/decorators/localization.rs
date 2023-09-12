@@ -134,13 +134,12 @@ pub mod tests {
         let catalogs = vec!["https://dummy.dummy/dummy".parse().unwrap()];
         let translations = HashMap::from([(Locale(Language::Fra), "test, but in french".to_owned())]);
 
-        let mut localization = FieldLocalization::default();
-        localization.code = Some(code);
-        localization.locale = Some(locale);
-        localization.catalogs = Some(catalogs);
-        localization.translations = translations;
-
-        localization
+        FieldLocalization::builder()
+            .code(code)
+            .locale(locale)
+            .catalogs(catalogs)
+            .translations(translations)
+            .build()
     }
 
     pub fn make_minimal_msg_localization() -> MsgLocalization {
@@ -151,11 +150,7 @@ pub mod tests {
         let catalogs = vec!["https://dummy.dummy/dummy".parse().unwrap()];
         let locales = HashMap::from([(Locale(Language::Fra), vec!["test, but in french".to_owned()])]);
 
-        let mut localization = MsgLocalization::default();
-        localization.catalogs = Some(catalogs);
-        localization.locales = Some(locales);
-
-        localization
+        MsgLocalization::builder().catalogs(catalogs).locales(locales).build()
     }
 
     #[test]
