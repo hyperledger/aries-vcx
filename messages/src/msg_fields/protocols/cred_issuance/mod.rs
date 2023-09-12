@@ -94,6 +94,7 @@ impl DelayedSerde for CredentialIssuance {
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct CredentialPreview {
+    #[serde(rename = "@type")]
     msg_type: CredentialPreviewMsgType,
     pub attributes: Vec<CredentialAttr>,
 }

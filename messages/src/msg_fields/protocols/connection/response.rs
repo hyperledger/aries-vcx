@@ -22,6 +22,7 @@ pub struct ResponseContent {
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 pub struct ConnectionSignature {
+    #[serde(rename = "@type")]
     msg_type: SigEd25519Sha512Single,
     pub signature: String,
     pub sig_data: String,

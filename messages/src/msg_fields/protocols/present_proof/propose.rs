@@ -39,6 +39,7 @@ pub struct ProposePresentationDecorators {
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 pub struct PresentationPreview {
+    #[serde(rename = "@type")]
     msg_type: PresentationPreviewMsgType,
     pub attributes: Vec<PresentationAttr>,
     pub predicates: Vec<Predicate>,
