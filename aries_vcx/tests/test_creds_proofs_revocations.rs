@@ -5,237 +5,164 @@ extern crate serde_json;
 
 pub mod utils;
 
-mod integration_tests {
-    use std::thread;
-    use std::time::Duration;
+use std::thread;
+use std::time::Duration;
 
-    use aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;
-    use aries_vcx::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
-    use aries_vcx::utils::devsetup::*;
+use aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;
+use aries_vcx::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
+use aries_vcx::utils::devsetup::*;
 
-    use crate::utils::devsetup_alice::create_alice;
-    use crate::utils::devsetup_faber::create_faber_trustee;
-    #[cfg(feature = "migration")]
-    use crate::utils::migration::Migratable;
-    use crate::utils::scenarios::test_utils::{
-        _create_address_schema_creddef_revreg, _exchange_credential, attr_names, create_proof_request_data,
-        create_verifier_from_request_data, exchange_proof, issue_address_credential,
-        prover_select_credentials_and_send_proof, publish_revocation, requested_attrs,
-        revoke_credential_and_publish_accumulator, revoke_credential_local, rotate_rev_reg,
-        verifier_create_proof_and_send_request,
-    };
+#[cfg(feature = "migration")]
+use crate::utils::migration::Migratable;
+use crate::utils::scenarios::{
+    _create_address_schema_creddef_revreg, _exchange_credential, attr_names, create_proof_request_data,
+    create_verifier_from_request_data, exchange_proof, issue_address_credential,
+    prover_select_credentials_and_send_proof, publish_revocation, requested_attrs,
+    revoke_credential_and_publish_accumulator, revoke_credential_local, rotate_rev_reg,
+    verifier_create_proof_and_send_request,
+};
+use crate::utils::test_agent::{create_test_agent, create_test_agent_trustee};
 
-    use super::*;
+#[tokio::test]
+#[ignore]
+async fn test_agency_pool_basic_revocation() {
+    SetupPoolDirectory::run(|setup| async move {
+        let mut institution = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
+        let mut consumer = create_test_agent(setup.genesis_file_path).await;
 
-    #[tokio::test]
-    #[ignore]
-    async fn test_agency_pool_basic_revocation() {
-        SetupPoolDirectory::run(|setup| async move {
-            let mut institution = create_faber_trustee(setup.genesis_file_path.clone()).await;
-            let mut consumer = create_alice(setup.genesis_file_path).await;
+        let (schema_id, cred_def_id, _, _cred_def, rev_reg, issuer_credential) =
+            issue_address_credential(&mut consumer, &mut institution).await;
 
-            let (schema_id, cred_def_id, _, _cred_def, rev_reg, issuer_credential) =
-                issue_address_credential(&mut consumer, &mut institution).await;
+        #[cfg(feature = "migration")]
+        institution.migrate().await;
 
-            #[cfg(feature = "migration")]
-            institution.migrate().await;
+        assert!(!issuer_credential
+            .is_revoked(&institution.profile.inject_anoncreds_ledger_read())
+            .await
+            .unwrap());
 
-            assert!(!issuer_credential
-                .is_revoked(&institution.profile.inject_anoncreds_ledger_read())
-                .await
-                .unwrap());
+        let time_before_revocation = time::OffsetDateTime::now_utc().unix_timestamp() as u64;
+        info!("test_basic_revocation :: verifier :: Going to revoke credential");
+        revoke_credential_and_publish_accumulator(&mut institution, &issuer_credential, &rev_reg).await;
 
-            let time_before_revocation = time::OffsetDateTime::now_utc().unix_timestamp() as u64;
-            info!("test_basic_revocation :: verifier :: Going to revoke credential");
-            revoke_credential_and_publish_accumulator(&mut institution, &issuer_credential, &rev_reg).await;
+        #[cfg(feature = "migration")]
+        consumer.migrate().await;
 
-            #[cfg(feature = "migration")]
-            consumer.migrate().await;
+        tokio::time::sleep(Duration::from_millis(1000)).await;
+        let time_after_revocation = time::OffsetDateTime::now_utc().unix_timestamp() as u64;
 
-            tokio::time::sleep(Duration::from_millis(1000)).await;
-            let time_after_revocation = time::OffsetDateTime::now_utc().unix_timestamp() as u64;
+        assert!(issuer_credential
+            .is_revoked(&institution.profile.inject_anoncreds_ledger_read())
+            .await
+            .unwrap());
 
-            assert!(issuer_credential
-                .is_revoked(&institution.profile.inject_anoncreds_ledger_read())
-                .await
-                .unwrap());
+        let _requested_attrs = requested_attrs(
+            &institution.institution_did,
+            &schema_id,
+            &cred_def_id,
+            None,
+            Some(time_after_revocation),
+        );
+        let interval = json!({"from": time_before_revocation - 100, "to": time_after_revocation}).to_string();
+        let requested_attrs_string = serde_json::to_string(&_requested_attrs).unwrap();
 
-            let _requested_attrs = requested_attrs(
-                &institution.institution_did,
-                &schema_id,
-                &cred_def_id,
-                None,
-                Some(time_after_revocation),
-            );
-            let interval = json!({"from": time_before_revocation - 100, "to": time_after_revocation}).to_string();
-            let requested_attrs_string = serde_json::to_string(&_requested_attrs).unwrap();
+        info!(
+            "test_basic_revocation :: Going to seng proof request with attributes {}",
+            &requested_attrs_string
+        );
+        let presentation_request_data =
+            create_proof_request_data(&mut institution, &requested_attrs_string, "[]", &interval, None).await;
+        let mut verifier = create_verifier_from_request_data(presentation_request_data).await;
+        let presentation_request = verifier.get_presentation_request_msg().unwrap();
 
-            info!(
-                "test_basic_revocation :: Going to seng proof request with attributes {}",
-                &requested_attrs_string
-            );
-            let presentation_request_data =
-                create_proof_request_data(&mut institution, &requested_attrs_string, "[]", &interval, None).await;
-            let mut verifier = create_verifier_from_request_data(presentation_request_data).await;
-            let presentation_request = verifier.get_presentation_request_msg().unwrap();
+        let presentation = prover_select_credentials_and_send_proof(&mut consumer, presentation_request, None).await;
 
-            let presentation =
-                prover_select_credentials_and_send_proof(&mut consumer, presentation_request, None).await;
-
-            info!("test_basic_revocation :: verifier :: going to verify proof");
-            verifier
-                .verify_presentation(
-                    &institution.profile.inject_anoncreds_ledger_read(),
-                    &institution.profile.inject_anoncreds(),
-                    presentation,
-                )
-                .await
-                .unwrap();
-            assert_eq!(verifier.get_state(), VerifierState::Finished);
-            assert_eq!(
-                verifier.get_verification_status(),
-                PresentationVerificationStatus::Invalid
-            );
-        })
-        .await;
-    }
-
-    #[tokio::test]
-    #[ignore]
-    async fn test_agency_pool_revocation_notification() {
-        use crate::utils::scenarios::test_utils::create_connected_connections;
-        use messages::decorators::please_ack::AckOn;
-
-        SetupPoolDirectory::run(|setup| async move {
-            let mut institution = create_faber_trustee(setup.genesis_file_path.clone()).await;
-            let mut consumer = create_alice(setup.genesis_file_path).await;
-
-            let (consumer_to_institution, institution_to_consumer) =
-                create_connected_connections(&mut consumer, &mut institution).await;
-            let (_, _, _, _cred_def, rev_reg, issuer_credential) =
-                issue_address_credential(&mut consumer, &mut institution).await;
-
-            #[cfg(feature = "migration")]
-            institution.migrate().await;
-
-            assert!(!issuer_credential
-                .is_revoked(&institution.profile.inject_anoncreds_ledger_read())
-                .await
-                .unwrap());
-
-            info!("test_revocation_notification :: verifier :: Going to revoke credential");
-            revoke_credential_and_publish_accumulator(&mut institution, &issuer_credential, &rev_reg).await;
-            tokio::time::sleep(Duration::from_millis(1000)).await;
-
-            #[cfg(feature = "migration")]
-            consumer.migrate().await;
-
-            assert!(issuer_credential
-                .is_revoked(&institution.profile.inject_anoncreds_ledger_read())
-                .await
-                .unwrap());
-            let config =
-                aries_vcx::protocols::revocation_notification::sender::state_machine::SenderConfigBuilder::default()
-                    .ack_on(vec![AckOn::Receipt])
-                    .rev_reg_id(issuer_credential.get_rev_reg_id().unwrap())
-                    .cred_rev_id(issuer_credential.get_rev_id().unwrap())
-                    .comment(None)
-                    .build()
-                    .unwrap();
-            let send_message = institution_to_consumer
-                .send_message_closure(institution.profile.inject_wallet())
-                .await
-                .unwrap();
-            aries_vcx::handlers::revocation_notification::sender::RevocationNotificationSender::build()
-                .clone()
-                .send_revocation_notification(config, send_message)
-                .await
-                .unwrap();
-
-            let rev_nots =
-                aries_vcx::handlers::revocation_notification::test_utils::get_revocation_notification_messages(
-                    &consumer.agency_client,
-                    &consumer_to_institution,
-                )
-                .await
-                .unwrap();
-            assert_eq!(rev_nots.len(), 1);
-
-            // consumer.receive_revocation_notification(rev_not).await;
-            // let ack = aries_vcx::handlers::revocation_notification::test_utils::get_revocation_notification_ack_messages(&institution.agency_client, &institution_to_consumer).await.unwrap().pop().unwrap();
-            // institution.handle_revocation_notification_ack(ack).await;
-        })
-        .await;
-    }
-
-    #[tokio::test]
-    #[ignore]
-    async fn test_agency_pool_local_revocation() {
-        SetupPoolDirectory::run(|setup| async move {
-            let mut institution = create_faber_trustee(setup.genesis_file_path.clone()).await;
-            let mut consumer = create_alice(setup.genesis_file_path).await;
-
-            let (schema_id, cred_def_id, _, _cred_def, rev_reg, issuer_credential) =
-                issue_address_credential(&mut consumer, &mut institution).await;
-
-            #[cfg(feature = "migration")]
-            institution.migrate().await;
-
-            revoke_credential_local(&mut institution, &issuer_credential, &rev_reg.rev_reg_id).await;
-            assert!(!issuer_credential
-                .is_revoked(&institution.profile.inject_anoncreds_ledger_read())
-                .await
-                .unwrap());
-
-            let verifier_handler = exchange_proof(
-                &mut institution,
-                &mut consumer,
-                &schema_id,
-                &cred_def_id,
-                Some("request1"),
+        info!("test_basic_revocation :: verifier :: going to verify proof");
+        verifier
+            .verify_presentation(
+                &institution.profile.inject_anoncreds_ledger_read(),
+                &institution.profile.inject_anoncreds(),
+                presentation,
             )
-            .await;
-            assert_eq!(
-                verifier_handler.get_verification_status(),
-                PresentationVerificationStatus::Valid
-            );
+            .await
+            .unwrap();
+        assert_eq!(verifier.get_state(), VerifierState::Finished);
+        assert_eq!(
+            verifier.get_verification_status(),
+            PresentationVerificationStatus::Invalid
+        );
+    })
+    .await;
+}
 
-            assert!(!issuer_credential
-                .is_revoked(&institution.profile.inject_anoncreds_ledger_read())
-                .await
-                .unwrap());
+#[tokio::test]
+#[ignore]
+async fn test_agency_pool_local_revocation() {
+    SetupPoolDirectory::run(|setup| async move {
+        let mut institution = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
+        let mut consumer = create_test_agent(setup.genesis_file_path).await;
 
-            publish_revocation(&mut institution, &rev_reg).await;
+        let (schema_id, cred_def_id, _, _cred_def, rev_reg, issuer_credential) =
+            issue_address_credential(&mut consumer, &mut institution).await;
 
-            let verifier_handler = exchange_proof(
-                &mut institution,
-                &mut consumer,
-                &schema_id,
-                &cred_def_id,
-                Some("request2"),
-            )
-            .await;
-            assert_eq!(
-                verifier_handler.get_verification_status(),
-                PresentationVerificationStatus::Invalid
-            );
+        #[cfg(feature = "migration")]
+        institution.migrate().await;
 
-            assert!(issuer_credential
-                .is_revoked(&institution.profile.inject_anoncreds_ledger_read())
-                .await
-                .unwrap());
-        })
+        revoke_credential_local(&mut institution, &issuer_credential, &rev_reg.rev_reg_id).await;
+        assert!(!issuer_credential
+            .is_revoked(&institution.profile.inject_anoncreds_ledger_read())
+            .await
+            .unwrap());
+
+        let verifier_handler = exchange_proof(
+            &mut institution,
+            &mut consumer,
+            &schema_id,
+            &cred_def_id,
+            Some("request1"),
+        )
         .await;
-    }
+        assert_eq!(
+            verifier_handler.get_verification_status(),
+            PresentationVerificationStatus::Valid
+        );
 
-    #[tokio::test]
-    #[ignore]
-    async fn test_agency_batch_revocation() {
-        SetupPoolDirectory::run(|setup| async move {
-            let mut institution = create_faber_trustee(setup.genesis_file_path.clone()).await;
-            let mut consumer1 = create_alice(setup.genesis_file_path.clone()).await;
-            let mut consumer2 = create_alice(setup.genesis_file_path.clone()).await;
-            let mut consumer3 = create_alice(setup.genesis_file_path).await;
+        assert!(!issuer_credential
+            .is_revoked(&institution.profile.inject_anoncreds_ledger_read())
+            .await
+            .unwrap());
+
+        publish_revocation(&mut institution, &rev_reg).await;
+
+        let verifier_handler = exchange_proof(
+            &mut institution,
+            &mut consumer,
+            &schema_id,
+            &cred_def_id,
+            Some("request2"),
+        )
+        .await;
+        assert_eq!(
+            verifier_handler.get_verification_status(),
+            PresentationVerificationStatus::Invalid
+        );
+
+        assert!(issuer_credential
+            .is_revoked(&institution.profile.inject_anoncreds_ledger_read())
+            .await
+            .unwrap());
+    })
+    .await;
+}
+
+#[tokio::test]
+#[ignore]
+async fn test_agency_batch_revocation() {
+    SetupPoolDirectory::run(|setup| async move {
+            let mut institution = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
+            let mut consumer1 = create_test_agent(setup.genesis_file_path.clone()).await;
+            let mut consumer2 = create_test_agent(setup.genesis_file_path.clone()).await;
+            let mut consumer3 = create_test_agent(setup.genesis_file_path).await;
 
             // Issue and send three credentials of the same schema
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _rev_reg_id) =
@@ -377,81 +304,80 @@ mod integration_tests {
 
         })
             .await;
-    }
+}
 
-    #[tokio::test]
-    #[ignore]
-    async fn test_agency_pool_revoked_credential_might_still_work() {
-        SetupPoolDirectory::run(|setup| async move {
-            let mut institution = create_faber_trustee(setup.genesis_file_path.clone()).await;
-            let mut consumer = create_alice(setup.genesis_file_path).await;
+#[tokio::test]
+#[ignore]
+async fn test_agency_pool_revoked_credential_might_still_work() {
+    SetupPoolDirectory::run(|setup| async move {
+        let mut institution = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
+        let mut consumer = create_test_agent(setup.genesis_file_path).await;
 
-            let (schema_id, cred_def_id, _, _cred_def, rev_reg, issuer_credential) =
-                issue_address_credential(&mut consumer, &mut institution).await;
+        let (schema_id, cred_def_id, _, _cred_def, rev_reg, issuer_credential) =
+            issue_address_credential(&mut consumer, &mut institution).await;
 
-            assert!(!issuer_credential
-                .is_revoked(&institution.profile.inject_anoncreds_ledger_read())
-                .await
-                .unwrap());
+        assert!(!issuer_credential
+            .is_revoked(&institution.profile.inject_anoncreds_ledger_read())
+            .await
+            .unwrap());
 
-            #[cfg(feature = "migration")]
-            institution.migrate().await;
+        #[cfg(feature = "migration")]
+        institution.migrate().await;
 
-            tokio::time::sleep(Duration::from_millis(1000)).await;
-            let time_before_revocation = time::OffsetDateTime::now_utc().unix_timestamp() as u64;
-            tokio::time::sleep(Duration::from_millis(1000)).await;
-            info!("test_revoked_credential_might_still_work :: verifier :: Going to revoke credential");
-            revoke_credential_and_publish_accumulator(&mut institution, &issuer_credential, &rev_reg).await;
-            tokio::time::sleep(Duration::from_millis(1000)).await;
+        tokio::time::sleep(Duration::from_millis(1000)).await;
+        let time_before_revocation = time::OffsetDateTime::now_utc().unix_timestamp() as u64;
+        tokio::time::sleep(Duration::from_millis(1000)).await;
+        info!("test_revoked_credential_might_still_work :: verifier :: Going to revoke credential");
+        revoke_credential_and_publish_accumulator(&mut institution, &issuer_credential, &rev_reg).await;
+        tokio::time::sleep(Duration::from_millis(1000)).await;
 
-            #[cfg(feature = "migration")]
-            consumer.migrate().await;
+        #[cfg(feature = "migration")]
+        consumer.migrate().await;
 
-            let from = time_before_revocation - 100;
-            let to = time_before_revocation;
-            let _requested_attrs = requested_attrs(
-                &institution.institution_did,
-                &schema_id,
-                &cred_def_id,
-                Some(from),
-                Some(to),
-            );
-            let interval = json!({"from": from, "to": to}).to_string();
-            let requested_attrs_string = serde_json::to_string(&_requested_attrs).unwrap();
+        let from = time_before_revocation - 100;
+        let to = time_before_revocation;
+        let _requested_attrs = requested_attrs(
+            &institution.institution_did,
+            &schema_id,
+            &cred_def_id,
+            Some(from),
+            Some(to),
+        );
+        let interval = json!({"from": from, "to": to}).to_string();
+        let requested_attrs_string = serde_json::to_string(&_requested_attrs).unwrap();
 
-            let presentation_request_data =
-                create_proof_request_data(&mut institution, &requested_attrs_string, "[]", &interval, None).await;
-            let mut verifier = create_verifier_from_request_data(presentation_request_data).await;
-            let presentation_request = verifier.get_presentation_request_msg().unwrap();
+        let presentation_request_data =
+            create_proof_request_data(&mut institution, &requested_attrs_string, "[]", &interval, None).await;
+        let mut verifier = create_verifier_from_request_data(presentation_request_data).await;
+        let presentation_request = verifier.get_presentation_request_msg().unwrap();
 
-            let presentation =
-                prover_select_credentials_and_send_proof(&mut consumer, presentation_request, None).await;
+        let presentation = prover_select_credentials_and_send_proof(&mut consumer, presentation_request, None).await;
 
-            info!("test_agency_pool_revoked_credential_might_still_work :: verifier :: going to verify proof");
-            verifier
-                .verify_presentation(
-                    &institution.profile.inject_anoncreds_ledger_read(),
-                    &institution.profile.inject_anoncreds(),
-                    presentation,
-                )
-                .await
-                .unwrap();
-            assert_eq!(verifier.get_state(), VerifierState::Finished);
-            assert_eq!(
-                verifier.get_verification_status(),
-                PresentationVerificationStatus::Valid
-            );
-        })
-        .await;
-    }
+        info!("test_agency_pool_revoked_credential_might_still_work :: verifier :: going to verify proof");
+        verifier
+            .verify_presentation(
+                &institution.profile.inject_anoncreds_ledger_read(),
+                &institution.profile.inject_anoncreds(),
+                presentation,
+            )
+            .await
+            .unwrap();
+        assert_eq!(verifier.get_state(), VerifierState::Finished);
+        assert_eq!(
+            verifier.get_verification_status(),
+            PresentationVerificationStatus::Valid
+        );
+    })
+    .await;
+}
 
-    #[tokio::test]
-    #[ignore]
-    async fn test_agency_pool_two_creds_one_rev_reg_revoke_first() {
-        SetupPoolDirectory::run(|setup| async move {
-            let mut issuer = create_faber_trustee(setup.genesis_file_path.clone()).await;
-            let mut verifier = create_faber_trustee(setup.genesis_file_path.clone()).await;
-            let mut consumer = create_alice(setup.genesis_file_path).await;
+#[tokio::test]
+#[ignore]
+async fn test_agency_pool_two_creds_one_rev_reg_revoke_first() {
+    SetupPoolDirectory::run(|setup| async move {
+            let mut issuer = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
+            let mut verifier = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
+            let mut consumer = create_test_agent(setup.genesis_file_path).await;
 
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _rev_reg_id) =
                 _create_address_schema_creddef_revreg(&issuer.profile, &issuer.institution_did).await;
@@ -511,15 +437,15 @@ mod integration_tests {
             assert!(!issuer_credential2.is_revoked(&issuer.profile.inject_anoncreds_ledger_read()).await.unwrap());
         })
             .await;
-    }
+}
 
-    #[tokio::test]
-    #[ignore]
-    async fn test_agency_pool_two_creds_one_rev_reg_revoke_second() {
-        SetupPoolDirectory::run(|setup| async move {
-            let mut issuer = create_faber_trustee(setup.genesis_file_path.clone()).await;
-            let mut verifier = create_faber_trustee(setup.genesis_file_path.clone()).await;
-            let mut consumer = create_alice(setup.genesis_file_path).await;
+#[tokio::test]
+#[ignore]
+async fn test_agency_pool_two_creds_one_rev_reg_revoke_second() {
+    SetupPoolDirectory::run(|setup| async move {
+            let mut issuer = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
+            let mut verifier = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
+            let mut consumer = create_test_agent(setup.genesis_file_path).await;
 
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _rev_reg_id) =
                 _create_address_schema_creddef_revreg(&issuer.profile, &issuer.institution_did).await;
@@ -578,15 +504,15 @@ mod integration_tests {
 
         })
             .await;
-    }
+}
 
-    #[tokio::test]
-    #[ignore]
-    async fn test_agency_pool_two_creds_two_rev_reg_id() {
-        SetupPoolDirectory::run(|setup| async move {
-            let mut issuer = create_faber_trustee(setup.genesis_file_path.clone()).await;
-            let mut verifier = create_faber_trustee(setup.genesis_file_path.clone()).await;
-            let mut consumer = create_alice(setup.genesis_file_path).await;
+#[tokio::test]
+#[ignore]
+async fn test_agency_pool_two_creds_two_rev_reg_id() {
+    SetupPoolDirectory::run(|setup| async move {
+            let mut issuer = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
+            let mut verifier = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
+            let mut consumer = create_test_agent(setup.genesis_file_path).await;
 
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _) =
                 _create_address_schema_creddef_revreg(&issuer.profile, &issuer.institution_did).await;
@@ -642,15 +568,15 @@ mod integration_tests {
             assert!(!issuer_credential2.is_revoked(&issuer.profile.inject_anoncreds_ledger_read()).await.unwrap());
         })
             .await;
-    }
+}
 
-    #[tokio::test]
-    #[ignore]
-    async fn test_agency_pool_two_creds_two_rev_reg_id_revoke_first() {
-        SetupPoolDirectory::run(|setup| async move {
-            let mut issuer = create_faber_trustee(setup.genesis_file_path.clone()).await;
-            let mut verifier = create_faber_trustee(setup.genesis_file_path.clone()).await;
-            let mut consumer = create_alice(setup.genesis_file_path).await;
+#[tokio::test]
+#[ignore]
+async fn test_agency_pool_two_creds_two_rev_reg_id_revoke_first() {
+    SetupPoolDirectory::run(|setup| async move {
+            let mut issuer = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
+            let mut verifier = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
+            let mut consumer = create_test_agent(setup.genesis_file_path).await;
 
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _) =
                 _create_address_schema_creddef_revreg(&issuer.profile, &issuer.institution_did).await;
@@ -709,15 +635,15 @@ mod integration_tests {
             assert!(!issuer_credential2.is_revoked(&issuer.profile.inject_anoncreds_ledger_read()).await.unwrap());
         })
             .await;
-    }
+}
 
-    #[tokio::test]
-    #[ignore]
-    async fn test_agency_pool_two_creds_two_rev_reg_id_revoke_second() {
-        SetupPoolDirectory::run(|setup| async move {
-            let mut issuer = create_faber_trustee(setup.genesis_file_path.clone()).await;
-            let mut verifier = create_faber_trustee(setup.genesis_file_path.clone()).await;
-            let mut consumer = create_alice(setup.genesis_file_path).await;
+#[tokio::test]
+#[ignore]
+async fn test_agency_pool_two_creds_two_rev_reg_id_revoke_second() {
+    SetupPoolDirectory::run(|setup| async move {
+            let mut issuer = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
+            let mut verifier = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
+            let mut consumer = create_test_agent(setup.genesis_file_path).await;
 
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _) =
                 _create_address_schema_creddef_revreg(&issuer.profile, &issuer.institution_did).await;
@@ -778,14 +704,14 @@ mod integration_tests {
             assert!(issuer_credential2.is_revoked(&issuer.profile.inject_anoncreds_ledger_read()).await.unwrap());
         })
             .await;
-    }
+}
 
-    #[tokio::test]
-    #[ignore]
-    async fn test_agency_pool_three_creds_one_rev_reg_revoke_all() {
-        SetupPoolDirectory::run(|setup| async move {
-            let mut issuer = create_faber_trustee(setup.genesis_file_path.clone()).await;
-            let mut consumer = create_alice(setup.genesis_file_path.clone()).await;
+#[tokio::test]
+#[ignore]
+async fn test_agency_pool_three_creds_one_rev_reg_revoke_all() {
+    SetupPoolDirectory::run(|setup| async move {
+            let mut issuer = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
+            let mut consumer = create_test_agent(setup.genesis_file_path.clone()).await;
 
             let (_schema_id, _schema_json, _cred_def_id, _cred_def_json, cred_def, rev_reg, _rev_reg_id) =
                 _create_address_schema_creddef_revreg(&issuer.profile, &issuer.institution_did).await;
@@ -863,5 +789,4 @@ mod integration_tests {
                 .await
                 .unwrap());
         }).await;
-    }
 }

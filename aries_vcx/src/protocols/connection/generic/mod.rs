@@ -25,6 +25,7 @@ use crate::{
         trait_bounds::{TheirDidDoc, ThreadId},
     },
     transport::Transport,
+    utils::encryption_envelope::EncryptionEnvelope,
 };
 
 use super::{trait_bounds::BootstrapDidDoc, wrap_and_send_msg};
@@ -171,6 +172,19 @@ impl GenericConnection {
             GenericState::Invitee(InviteeState::Invited(s)) => Some(&s.invitation),
             _ => None,
         }
+    }
+
+    pub async fn encrypt_message(
+        &self,
+        wallet: &Arc<dyn BaseWallet>,
+        message: &AriesMessage,
+    ) -> VcxResult<EncryptionEnvelope> {
+        let sender_verkey = &self.pairwise_info().pw_vk;
+        let did_doc = self.their_did_doc().ok_or(AriesVcxError::from_msg(
+            AriesVcxErrorKind::NotReady,
+            "No DidDoc present",
+        ))?;
+        EncryptionEnvelope::create(wallet, message, Some(sender_verkey), did_doc).await
     }
 
     pub async fn send_message<T>(

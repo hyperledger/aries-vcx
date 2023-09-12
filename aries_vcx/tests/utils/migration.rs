@@ -5,14 +5,12 @@ use uuid::Uuid;
 
 use aries_vcx::utils::devsetup::dev_build_profile_modular;
 use aries_vcx::{global::settings::WALLET_KDF_RAW, utils::devsetup::SetupProfile};
-use aries_vcx_core::wallet::agency_client_wallet::ToBaseAgencyClientWallet;
 use aries_vcx_core::wallet::indy::wallet::create_and_open_wallet;
 use aries_vcx_core::wallet::indy::IndySdkWallet;
 use aries_vcx_core::wallet::indy::WalletConfig;
-use aries_vcx_core::{wallet::base_wallet::BaseWallet, WalletHandle};
+use aries_vcx_core::WalletHandle;
 
-use crate::utils::devsetup_alice::Alice;
-use crate::utils::devsetup_faber::Faber;
+use crate::utils::test_agent::TestAgent;
 
 #[async_trait]
 pub trait Migratable {
@@ -31,28 +29,13 @@ impl Migratable for SetupProfile {
 }
 
 #[async_trait]
-impl Migratable for Alice {
-    async fn migrate(&mut self) {
-        info!("Alice::migrate >>>");
-        let old_wh = self.profile.wallet_handle().unwrap();
-        let new_wh = migrate_to_new_wallet(old_wh).await;
-        let wallet = Arc::new(IndySdkWallet::new(new_wh));
-        self.profile = dev_build_profile_modular(self.genesis_file_path.clone(), wallet.clone());
-        let new_wallet: Arc<dyn BaseWallet> = wallet;
-        self.agency_client.wallet = new_wallet.to_base_agency_client_wallet();
-    }
-}
-
-#[async_trait]
-impl Migratable for Faber {
+impl Migratable for TestAgent {
     async fn migrate(&mut self) {
         info!("Faber::migrate >>>");
         let old_wh = self.profile.wallet_handle().unwrap();
         let new_wh = migrate_to_new_wallet(old_wh).await;
         let wallet = Arc::new(IndySdkWallet::new(new_wh));
         self.profile = dev_build_profile_modular(self.genesis_file_path.clone(), wallet.clone());
-        let new_wallet: Arc<dyn BaseWallet> = wallet;
-        self.agency_client.wallet = new_wallet.to_base_agency_client_wallet();
     }
 }
 
