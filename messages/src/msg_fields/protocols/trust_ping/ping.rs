@@ -10,6 +10,7 @@ pub type Ping = MsgParts<PingContent, PingDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq, TypedBuilder)]
 pub struct PingContent {
+    #[builder(default)]
     #[serde(default)]
     pub response_requested: bool,
     #[builder(default, setter(strip_option))]
@@ -55,11 +56,9 @@ mod tests {
 
     #[test]
     fn test_extended_ping() {
-        let mut content = PingContent::default();
-        content.comment = Some("test_comment".to_owned());
+        let content = PingContent::builder().comment("test_comment".to_owned()).build();
 
-        let mut decorators = PingDecorators::default();
-        decorators.thread = Some(make_extended_thread());
+        let decorators = PingDecorators::builder().thread(make_extended_thread()).build();
 
         let expected = json!({
             "response_requested": false,

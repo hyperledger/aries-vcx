@@ -53,11 +53,14 @@ mod tests {
 
     #[test]
     fn test_extended_ping_response() {
-        let mut content = PingResponseContent::default();
-        content.comment = Some("test_comment".to_owned());
+        let content = PingResponseContent::builder()
+            .comment("test_comment".to_owned())
+            .build();
 
-        let mut decorators = PingResponseDecorators::builder().thread(make_extended_thread()).build();
-        decorators.timing = Some(make_extended_timing());
+        let decorators = PingResponseDecorators::builder()
+            .thread(make_extended_thread())
+            .timing(make_extended_timing())
+            .build();
 
         let expected = json!({
             "comment": content.comment,
