@@ -48,15 +48,14 @@ pub mod tests {
         let dt = DateTime::default();
         let delay_milli = 10;
 
-        let mut timing = Timing::default();
-        timing.in_time = Some(dt);
-        timing.out_time = Some(dt);
-        timing.stale_time = Some(dt);
-        timing.expires_time = Some(dt);
-        timing.delay_milli = Some(delay_milli);
-        timing.wait_until_time = Some(dt);
-
-        timing
+        Timing::builder()
+            .in_time(dt)
+            .out_time(dt)
+            .stale_time(dt)
+            .expires_time(dt)
+            .delay_milli(delay_milli)
+            .wait_until_time(dt)
+            .build()
     }
 
     #[test]
