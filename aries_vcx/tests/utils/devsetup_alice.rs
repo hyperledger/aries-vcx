@@ -20,14 +20,8 @@ pub async fn create_alice(genesis_file_path: String) -> Alice {
         .prover_create_link_secret(DEFAULT_LINK_SECRET_ALIAS)
         .await
         .unwrap();
-    Alice::setup(profile, genesis_file_path).await
-}
-
-impl Alice {
-    async fn setup(profile: Arc<dyn Profile>, genesis_file_path: String) -> Alice {
-        Alice {
-            genesis_file_path,
-            profile,
-        }
+    Alice {
+        genesis_file_path,
+        profile,
     }
 }
