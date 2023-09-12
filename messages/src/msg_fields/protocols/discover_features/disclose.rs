@@ -84,8 +84,10 @@ mod tests {
             .build();
         content.protocols.push(dummy_protocol_descriptor);
 
-        let mut decorators = DiscloseDecorators::builder().thread(make_extended_thread()).build();
-        decorators.timing = Some(make_extended_timing());
+        let decorators = DiscloseDecorators::builder()
+            .thread(make_extended_thread())
+            .timing(make_extended_timing())
+            .build();
 
         let expected = json!({
             "protocols": content.protocols,

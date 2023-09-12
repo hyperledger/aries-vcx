@@ -80,11 +80,12 @@ mod tests {
 
     #[test]
     fn test_extended_query() {
-        let mut content = QueryContent::builder().query("*".to_owned()).build();
-        content.comment = Some("test_comment".to_owned());
+        let content = QueryContent::builder()
+            .query("*".to_owned())
+            .comment("test_comment".to_owned())
+            .build();
 
-        let mut decorators = QueryDecorators::default();
-        decorators.timing = Some(make_extended_timing());
+        let decorators = QueryDecorators::builder().timing(make_extended_timing()).build();
 
         let expected = json!({
             "query": content.query,
