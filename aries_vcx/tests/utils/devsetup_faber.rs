@@ -9,6 +9,7 @@ use aries_vcx::global::settings::{init_issuer_config, DEFAULT_LINK_SECRET_ALIAS}
 use aries_vcx::protocols::connection::pairwise_info::PairwiseInfo;
 use aries_vcx::utils::constants::TRUSTEE_SEED;
 use aries_vcx::utils::devsetup::{dev_build_featured_profile, dev_setup_wallet_indy};
+use aries_vcx::utils::random::generate_random_seed;
 use aries_vcx_core::wallet::indy::wallet::get_verkey_from_wallet;
 use aries_vcx_core::wallet::indy::IndySdkWallet;
 use diddoc_legacy::aries::service::AriesService;
@@ -22,8 +23,8 @@ pub struct Faber {
     pub genesis_file_path: String,
 }
 
-pub async fn create_faber(genesis_file_path: String) -> Faber {
-    let (public_did, wallet_handle) = dev_setup_wallet_indy(TRUSTEE_SEED).await;
+async fn create_faber_from_seed(seed: &str, genesis_file_path: String) -> Faber {
+    let (public_did, wallet_handle) = dev_setup_wallet_indy(seed).await;
     let wallet = Arc::new(IndySdkWallet::new(wallet_handle));
     let profile = dev_build_featured_profile(genesis_file_path.clone(), wallet).await;
     profile
@@ -31,7 +32,12 @@ pub async fn create_faber(genesis_file_path: String) -> Faber {
         .prover_create_link_secret(DEFAULT_LINK_SECRET_ALIAS)
         .await
         .unwrap();
-    let faber = Faber::setup(profile, genesis_file_path, public_did).await;
+    Faber::setup(profile, genesis_file_path, public_did).await
+}
+
+pub async fn create_faber_trustee(genesis_file_path: String) -> Faber {
+    let faber = create_faber_from_seed(TRUSTEE_SEED, genesis_file_path).await;
+
     // TODO: Move out
     let service = AriesService::create()
         .set_service_endpoint("http://dummy.org".parse().unwrap())
@@ -42,12 +48,17 @@ pub async fn create_faber(genesis_file_path: String) -> Faber {
     faber
 }
 
+pub async fn create_faber(genesis_file_path: String) -> Faber {
+    create_faber_from_seed(&generate_random_seed(), genesis_file_path).await
+}
+
 impl Faber {
     pub async fn setup(profile: Arc<dyn Profile>, genesis_file_path: String, institution_did: String) -> Faber {
         settings::reset_config_values_ariesvcx().unwrap();
 
         // todo: can delete following?
         init_issuer_config(&institution_did).unwrap();
+
         let pairwise_info = PairwiseInfo::create(&profile.inject_wallet()).await.unwrap();
 
         let faber = Faber {

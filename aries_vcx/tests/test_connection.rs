@@ -18,7 +18,7 @@ use utils::devsetup_faber::Faber;
 use uuid::Uuid;
 
 use crate::utils::devsetup_alice::create_alice;
-use crate::utils::devsetup_faber::create_faber;
+use crate::utils::devsetup_faber::{create_faber, create_faber_trustee};
 use crate::utils::scenarios::{
     create_connections_via_oob_invite, create_connections_via_pairwise_invite, create_connections_via_public_invite,
 };
@@ -72,7 +72,7 @@ async fn send_and_receive_message(
 #[ignore]
 async fn test_agency_pool_establish_connection_via_public_invite() {
     SetupPoolDirectory::run(|setup| async move {
-        let mut institution = create_faber(setup.genesis_file_path.clone()).await;
+        let mut institution = create_faber_trustee(setup.genesis_file_path.clone()).await;
         let mut consumer = create_alice(setup.genesis_file_path).await;
 
         let (consumer_to_institution, institution_to_consumer) =
@@ -128,7 +128,7 @@ async fn test_agency_pool_establish_connection_via_pairwise_invite() {
 #[ignore]
 async fn test_agency_pool_establish_connection_via_out_of_band() {
     SetupPoolDirectory::run(|setup| async move {
-        let mut institution = create_faber(setup.genesis_file_path.clone()).await;
+        let mut institution = create_faber_trustee(setup.genesis_file_path.clone()).await;
         let mut consumer = create_alice(setup.genesis_file_path).await;
 
         let (consumer_to_institution, institution_to_consumer) =
