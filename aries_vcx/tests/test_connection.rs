@@ -4,20 +4,21 @@ extern crate serde_json;
 
 pub mod utils;
 
+use aries_vcx::common::ledger::transactions::write_endpoint_legacy;
 use aries_vcx::protocols::connection::GenericConnection;
+use aries_vcx::protocols::mediated_connection::pairwise_info::PairwiseInfo;
 use aries_vcx::utils::encryption_envelope::EncryptionEnvelope;
 use async_channel::bounded;
 
 use aries_vcx::utils::devsetup::*;
 use chrono::Utc;
+use diddoc_legacy::aries::service::AriesService;
 use messages::decorators::timing::Timing;
 use messages::msg_fields::protocols::basic_message::{BasicMessage, BasicMessageContent, BasicMessageDecorators};
 use messages::AriesMessage;
-use utils::devsetup_alice::Alice;
 use utils::devsetup_faber::Faber;
 use uuid::Uuid;
 
-use crate::utils::devsetup_alice::create_alice;
 use crate::utils::devsetup_faber::{create_faber, create_faber_trustee};
 use crate::utils::scenarios::{
     create_connections_via_oob_invite, create_connections_via_pairwise_invite, create_connections_via_public_invite,
@@ -39,7 +40,7 @@ fn build_basic_message(content: String) -> BasicMessage {
 }
 
 async fn decrypt_message(
-    consumer: &Alice,
+    consumer: &Faber,
     received: Vec<u8>,
     consumer_to_institution: &GenericConnection,
 ) -> AriesMessage {
@@ -53,7 +54,7 @@ async fn decrypt_message(
 }
 
 async fn send_and_receive_message(
-    consumer: &Alice,
+    consumer: &Faber,
     insitution: &Faber,
     institatuion_to_consumer: &GenericConnection,
     consumer_to_institution: &GenericConnection,
@@ -68,12 +69,27 @@ async fn send_and_receive_message(
     decrypt_message(consumer, received, consumer_to_institution).await
 }
 
+async fn create_service(faber: &Faber) {
+    let pairwise_info = PairwiseInfo::create(&faber.profile.inject_wallet()).await.unwrap();
+    let service = AriesService::create()
+        .set_service_endpoint("http://dummy.org".parse().unwrap())
+        .set_recipient_keys(vec![pairwise_info.pw_vk.clone()]);
+    write_endpoint_legacy(
+        &faber.profile.inject_indy_ledger_write(),
+        &faber.institution_did,
+        &service,
+    )
+    .await
+    .unwrap();
+}
+
 #[tokio::test]
 #[ignore]
 async fn test_agency_pool_establish_connection_via_public_invite() {
     SetupPoolDirectory::run(|setup| async move {
         let mut institution = create_faber_trustee(setup.genesis_file_path.clone()).await;
-        let mut consumer = create_alice(setup.genesis_file_path).await;
+        let mut consumer = create_faber(setup.genesis_file_path).await;
+        create_service(&institution).await;
 
         let (consumer_to_institution, institution_to_consumer) =
             create_connections_via_public_invite(&mut consumer, &mut institution).await;
@@ -101,7 +117,7 @@ async fn test_agency_pool_establish_connection_via_public_invite() {
 async fn test_agency_pool_establish_connection_via_pairwise_invite() {
     SetupPoolDirectory::run(|setup| async move {
         let mut institution = create_faber(setup.genesis_file_path.clone()).await;
-        let mut consumer = create_alice(setup.genesis_file_path).await;
+        let mut consumer = create_faber(setup.genesis_file_path).await;
 
         let (consumer_to_institution, institution_to_consumer) =
             create_connections_via_pairwise_invite(&mut consumer, &mut institution).await;
@@ -129,7 +145,8 @@ async fn test_agency_pool_establish_connection_via_pairwise_invite() {
 async fn test_agency_pool_establish_connection_via_out_of_band() {
     SetupPoolDirectory::run(|setup| async move {
         let mut institution = create_faber_trustee(setup.genesis_file_path.clone()).await;
-        let mut consumer = create_alice(setup.genesis_file_path).await;
+        let mut consumer = create_faber(setup.genesis_file_path).await;
+        create_service(&institution).await;
 
         let (consumer_to_institution, institution_to_consumer) =
             create_connections_via_oob_invite(&mut consumer, &mut institution).await;

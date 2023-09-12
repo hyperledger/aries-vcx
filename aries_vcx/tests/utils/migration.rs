@@ -10,7 +10,6 @@ use aries_vcx_core::wallet::indy::IndySdkWallet;
 use aries_vcx_core::wallet::indy::WalletConfig;
 use aries_vcx_core::WalletHandle;
 
-use crate::utils::devsetup_alice::Alice;
 use crate::utils::devsetup_faber::Faber;
 
 #[async_trait]
@@ -26,17 +25,6 @@ impl Migratable for SetupProfile {
         let new_wh = migrate_to_new_wallet(old_wh).await;
         let wallet = Arc::new(IndySdkWallet::new(new_wh));
         self.profile = dev_build_profile_modular(self.genesis_file_path.clone(), wallet);
-    }
-}
-
-#[async_trait]
-impl Migratable for Alice {
-    async fn migrate(&mut self) {
-        info!("Alice::migrate >>>");
-        let old_wh = self.profile.wallet_handle().unwrap();
-        let new_wh = migrate_to_new_wallet(old_wh).await;
-        let wallet = Arc::new(IndySdkWallet::new(new_wh));
-        self.profile = dev_build_profile_modular(self.genesis_file_path.clone(), wallet.clone());
     }
 }
 

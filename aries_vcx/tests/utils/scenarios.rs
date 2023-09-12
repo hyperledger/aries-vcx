@@ -39,7 +39,6 @@ use serde_json::{json, Value};
 use url::Url;
 use uuid::Uuid;
 
-use crate::utils::devsetup_alice::Alice;
 use crate::utils::devsetup_faber::Faber;
 use aries_vcx::common::ledger::transactions::into_did_doc;
 use aries_vcx::common::primitives::credential_definition::CredentialDef;
@@ -230,7 +229,7 @@ pub async fn create_credential_offer(
     (issuer, credential_offer)
 }
 
-pub async fn create_credential_request(alice: &mut Alice, cred_offer: AriesMessage) -> (Holder, AriesMessage) {
+pub async fn create_credential_request(alice: &mut Faber, cred_offer: AriesMessage) -> (Holder, AriesMessage) {
     info!("create_credential_request >>>");
     let cred_offer: OfferCredential = match cred_offer {
         AriesMessage::CredentialIssuance(CredentialIssuance::OfferCredential(cred_offer)) => cred_offer,
@@ -308,7 +307,7 @@ pub async fn accept_credential_proposal(
     credential_offer
 }
 
-pub async fn accept_offer(alice: &mut Alice, cred_offer: AriesMessage, holder: &mut Holder) -> AriesMessage {
+pub async fn accept_offer(alice: &mut Faber, cred_offer: AriesMessage, holder: &mut Holder) -> AriesMessage {
     holder
         .process_aries_msg(
             &alice.profile.inject_anoncreds_ledger_read(),
@@ -334,7 +333,7 @@ pub async fn accept_offer(alice: &mut Alice, cred_offer: AriesMessage, holder: &
     cred_request
 }
 
-pub async fn decline_offer(alice: &mut Alice, cred_offer: AriesMessage, holder: &mut Holder) -> AriesMessage {
+pub async fn decline_offer(alice: &mut Faber, cred_offer: AriesMessage, holder: &mut Holder) -> AriesMessage {
     holder
         .process_aries_msg(
             &alice.profile.inject_anoncreds_ledger_read(),
@@ -350,7 +349,7 @@ pub async fn decline_offer(alice: &mut Alice, cred_offer: AriesMessage, holder: 
 }
 
 pub async fn send_credential(
-    alice: &mut Alice,
+    alice: &mut Faber,
     faber: &mut Faber,
     issuer_credential: &mut Issuer,
     holder_credential: &mut Holder,
@@ -417,7 +416,7 @@ pub async fn send_credential(
 }
 
 pub async fn _exchange_credential(
-    consumer: &mut Alice,
+    consumer: &mut Faber,
     institution: &mut Faber,
     credential_data: String,
     cred_def: &CredentialDef,
@@ -450,7 +449,7 @@ pub async fn _exchange_credential(
 }
 
 pub async fn _exchange_credential_with_proposal(
-    consumer: &mut Alice,
+    consumer: &mut Faber,
     institution: &mut Faber,
     schema_id: &str,
     cred_def_id: &str,
@@ -468,7 +467,7 @@ pub async fn _exchange_credential_with_proposal(
 }
 
 pub async fn issue_address_credential(
-    consumer: &mut Alice,
+    consumer: &mut Faber,
     institution: &mut Faber,
 ) -> (
     String,
@@ -554,7 +553,7 @@ pub async fn reject_proof_proposal(presentation_proposal: &AriesMessage) -> Arie
     let mut verifier = Verifier::create_from_proposal("1", presentation_proposal).unwrap();
     assert_eq!(verifier.get_state(), VerifierState::PresentationProposalReceived);
     let message = verifier
-        .decline_presentation_proposal("I don't like Alices") // :(
+        .decline_presentation_proposal("I don't like Fabers") // :(
         .await
         .unwrap();
     assert_eq!(verifier.get_state(), VerifierState::Failed);
@@ -596,7 +595,7 @@ pub async fn create_verifier_from_request_data(presentation_request_data: Presen
 }
 
 pub async fn generate_and_send_proof(
-    alice: &mut Alice,
+    alice: &mut Faber,
     prover: &mut Prover,
     selected_credentials: SelectedCredentials,
 ) -> Option<AriesMessage> {
@@ -764,7 +763,7 @@ pub async fn verifier_create_proof_and_send_request(
 
 pub async fn prover_select_credentials(
     prover: &mut Prover,
-    alice: &mut Alice,
+    alice: &mut Faber,
     presentation_request: AriesMessage,
     preselected_credentials: Option<&str>,
 ) -> SelectedCredentials {
@@ -787,7 +786,7 @@ pub async fn prover_select_credentials(
 }
 
 pub async fn prover_select_credentials_and_send_proof(
-    alice: &mut Alice,
+    alice: &mut Faber,
     presentation_request: RequestPresentation,
     preselected_credentials: Option<&str>,
 ) -> Presentation {
@@ -872,7 +871,7 @@ pub fn match_preselected_credentials(
 
 pub async fn exchange_proof(
     institution: &mut Faber,
-    consumer: &mut Alice,
+    consumer: &mut Faber,
     schema_id: &str,
     cred_def_id: &str,
     request_name: Option<&str>,
@@ -900,7 +899,7 @@ pub async fn exchange_proof(
  */
 
 async fn establish_connection_from_invite(
-    alice: &mut Alice,
+    alice: &mut Faber,
     faber: &mut Faber,
     invitation: AnyInvitation,
     inviter_pairwise_info: PairwiseInfo,
@@ -950,7 +949,7 @@ async fn establish_connection_from_invite(
 }
 
 pub async fn create_connections_via_oob_invite(
-    alice: &mut Alice,
+    alice: &mut Faber,
     faber: &mut Faber,
 ) -> (GenericConnection, GenericConnection) {
     let oob_sender = OutOfBandSender::create()
@@ -975,7 +974,7 @@ pub async fn create_connections_via_oob_invite(
 }
 
 pub async fn create_connections_via_public_invite(
-    alice: &mut Alice,
+    alice: &mut Faber,
     faber: &mut Faber,
 ) -> (GenericConnection, GenericConnection) {
     let content = PublicInvitationContent::new("faber".to_owned(), faber.institution_did.clone());
@@ -995,7 +994,7 @@ pub async fn create_connections_via_public_invite(
 }
 
 pub async fn create_connections_via_pairwise_invite(
-    alice: &mut Alice,
+    alice: &mut Faber,
     faber: &mut Faber,
 ) -> (GenericConnection, GenericConnection) {
     let inviter_pairwise_info = PairwiseInfo::create(&faber.profile.inject_wallet()).await.unwrap();
