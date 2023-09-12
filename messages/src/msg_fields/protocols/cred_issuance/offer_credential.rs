@@ -54,6 +54,7 @@ mod tests {
             .name("test_attribute_name".to_owned())
             .value("test_attribute_value".to_owned())
             .build();
+
         let preview = CredentialPreview::new(vec![attribute]);
         let content = OfferCredentialContent::builder()
             .credential_preview(preview)
@@ -81,16 +82,18 @@ mod tests {
             .name("test_attribute_name".to_owned())
             .value("test_attribute_value".to_owned())
             .build();
+
         let preview = CredentialPreview::new(vec![attribute]);
-        let mut content = OfferCredentialContent::builder()
+        let content = OfferCredentialContent::builder()
             .credential_preview(preview)
             .offers_attach(vec![make_extended_attachment()])
+            .comment("test_comment".to_owned())
             .build();
-        content.comment = Some("test_comment".to_owned());
 
-        let mut decorators = OfferCredentialDecorators::default();
-        decorators.thread = Some(make_extended_thread());
-        decorators.timing = Some(make_extended_timing());
+        let decorators = OfferCredentialDecorators::builder()
+            .thread(make_extended_thread())
+            .timing(make_extended_timing())
+            .build();
 
         let expected = json!({
             "offers~attach": content.offers_attach,

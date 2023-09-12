@@ -64,13 +64,14 @@ mod tests {
 
     #[test]
     fn test_extended_request_cred() {
-        let mut content = RequestCredentialContent::builder()
+        let content = RequestCredentialContent::builder()
             .requests_attach(vec![make_extended_attachment()])
+            .comment("test_comment".to_owned())
             .build();
-        content.comment = Some("test_comment".to_owned());
 
-        let mut decorators = RequestCredentialDecorators::default();
-        decorators.thread = Some(make_extended_thread());
+        let decorators = RequestCredentialDecorators::builder()
+            .thread(make_extended_thread())
+            .build();
 
         let expected = json!({
             "requests~attach": content.requests_attach,

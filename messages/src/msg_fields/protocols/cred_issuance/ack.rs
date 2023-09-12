@@ -62,8 +62,10 @@ mod tests {
     fn test_extended_ack_cred() {
         let content: AckCredentialContent = AckContent::builder().status(AckStatus::Ok).build();
 
-        let mut decorators = AckDecorators::builder().thread(make_extended_thread()).build();
-        decorators.timing = Some(make_extended_timing());
+        let decorators = AckDecorators::builder()
+            .thread(make_extended_thread())
+            .timing(make_extended_timing())
+            .build();
 
         let expected = json!({
             "status": content.inner.status,

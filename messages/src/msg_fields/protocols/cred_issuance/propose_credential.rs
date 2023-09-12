@@ -81,17 +81,17 @@ mod tests {
             .value("test_attribute_value".to_owned())
             .build();
         let preview = CredentialPreview::new(vec![attribute]);
-        let mut content = ProposeCredentialContent::builder()
+        let content = ProposeCredentialContent::builder()
             .credential_proposal(preview)
             .schema_id("test_schema_id".to_owned())
             .cred_def_id("test_cred_def_id".to_owned())
+            .comment("test_comment".to_owned())
             .build();
 
-        content.comment = Some("test_comment".to_owned());
-
-        let mut decorators = ProposeCredentialDecorators::default();
-        decorators.thread = Some(make_extended_thread());
-        decorators.timing = Some(make_extended_timing());
+        let decorators = ProposeCredentialDecorators::builder()
+            .thread(make_extended_thread())
+            .timing(make_extended_timing())
+            .build();
 
         let expected = json!({
             "credential_proposal": content.credential_proposal,

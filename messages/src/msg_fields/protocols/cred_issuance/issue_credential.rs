@@ -72,16 +72,16 @@ mod tests {
 
     #[test]
     fn test_extended_issue_cred() {
-        let mut content = IssueCredentialContent::builder()
+        let content = IssueCredentialContent::builder()
             .credentials_attach(vec![make_extended_attachment()])
+            .comment("test_comment".to_owned())
             .build();
-        content.comment = Some("test_comment".to_owned());
 
-        let mut decorators = IssueCredentialDecorators::builder()
+        let decorators = IssueCredentialDecorators::builder()
             .thread(make_extended_thread())
+            .timing(make_extended_timing())
+            .please_ack(make_minimal_please_ack())
             .build();
-        decorators.timing = Some(make_extended_timing());
-        decorators.please_ack = Some(make_minimal_please_ack());
 
         let expected = json!({
             "credentials~attach": content.credentials_attach,
