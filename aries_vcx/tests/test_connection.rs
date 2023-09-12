@@ -8,7 +8,6 @@ use aries_vcx::common::ledger::transactions::write_endpoint_legacy;
 use aries_vcx::protocols::connection::GenericConnection;
 use aries_vcx::protocols::mediated_connection::pairwise_info::PairwiseInfo;
 use aries_vcx::utils::encryption_envelope::EncryptionEnvelope;
-use async_channel::bounded;
 
 use aries_vcx::utils::devsetup::*;
 use chrono::Utc;
@@ -23,7 +22,6 @@ use crate::utils::scenarios::{
     create_connections_via_oob_invite, create_connections_via_pairwise_invite, create_connections_via_public_invite,
 };
 use crate::utils::test_agent::{create_test_agent, create_test_agent_trustee};
-use crate::utils::transport_trait::TestTransport;
 
 fn build_basic_message(content: String) -> BasicMessage {
     let now = Utc::now();
@@ -56,17 +54,16 @@ async fn decrypt_message(
 async fn send_and_receive_message(
     consumer: &TestAgent,
     insitution: &TestAgent,
-    institatuion_to_consumer: &GenericConnection,
+    institution_to_consumer: &GenericConnection,
     consumer_to_institution: &GenericConnection,
     message: &AriesMessage,
 ) -> AriesMessage {
-    let (sender, receiver) = bounded::<Vec<u8>>(1);
-    institatuion_to_consumer
-        .send_message(&insitution.profile.inject_wallet(), message, &TestTransport { sender })
+    let encrypted_message = institution_to_consumer
+        .encrypt_message(&insitution.profile.inject_wallet(), message)
         .await
-        .unwrap();
-    let received = receiver.recv().await.unwrap();
-    decrypt_message(consumer, received, consumer_to_institution).await
+        .unwrap()
+        .0;
+    decrypt_message(consumer, encrypted_message, consumer_to_institution).await
 }
 
 async fn create_service(faber: &TestAgent) {
