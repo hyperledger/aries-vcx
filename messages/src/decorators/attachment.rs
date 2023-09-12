@@ -84,22 +84,15 @@ pub mod tests {
 
         let content = AttachmentType::Json(data);
         let attach_data = AttachmentData::builder().content(content).build();
-        let mut attachment = Attachment::builder().data(attach_data).build();
-        let id = "test_id".to_owned();
-        let description = "test_description".to_owned();
-        let filename = "test_filename".to_owned();
-        let mime_type = MimeType::Json;
-        let lastmod_time = DateTime::<Utc>::default();
-        let byte_count = 64;
-
-        attachment.id = Some(id);
-        attachment.description = Some(description);
-        attachment.filename = Some(filename);
-        attachment.mime_type = Some(mime_type);
-        attachment.lastmod_time = Some(lastmod_time);
-        attachment.byte_count = Some(byte_count);
-
-        attachment
+        Attachment::builder()
+            .data(attach_data)
+            .id("test_id".to_owned())
+            .description("test_description".to_owned())
+            .filename("test_filename".to_owned())
+            .mime_type(MimeType::Json)
+            .lastmod_time(DateTime::<Utc>::default())
+            .byte_count(64)
+            .build()
     }
 
     #[test]
@@ -164,9 +157,11 @@ pub mod tests {
         });
 
         let content = AttachmentType::Json(data);
-        let mut attach_data = AttachmentData::builder().content(content).build();
-        attach_data.jws = Some(jws);
-        attach_data.sha256 = Some(sha256);
+        let attach_data = AttachmentData::builder()
+            .content(content)
+            .jws(jws)
+            .sha256(sha256)
+            .build();
 
         test_utils::test_serde(attach_data, expected);
     }
