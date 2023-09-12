@@ -17,14 +17,9 @@ use aries_vcx::protocols::mediated_connection::pairwise_info::PairwiseInfo;
 use aries_vcx::transport::Transport;
 use async_trait::async_trait;
 use messages::misc::MimeType;
-use messages::msg_fields::protocols::connection::invitation::{
-    Invitation, PairwiseInvitation, PairwiseInvitationContent, PublicInvitation, PublicInvitationContent,
-    PwInvitationDecorators,
-};
+use messages::msg_fields::protocols::connection::invitation::{Invitation, InvitationContent};
 use messages::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
-use messages::msg_fields::protocols::cred_issuance::propose_credential::{
-    ProposeCredential, ProposeCredentialContent, ProposeCredentialDecorators,
-};
+use messages::msg_fields::protocols::cred_issuance::propose_credential::{ProposeCredential, ProposeCredentialContent};
 use messages::msg_fields::protocols::cred_issuance::{CredentialAttr, CredentialIssuance, CredentialPreview};
 use messages::msg_fields::protocols::out_of_band::invitation::OobService;
 use messages::msg_fields::protocols::out_of_band::OobGoalCode;
@@ -121,37 +116,37 @@ pub fn requested_attrs(did: &str, schema_id: &str, cred_def_id: &str, from: Opti
     ])
 }
 
-    pub fn requested_attr_objects(cred_def_id: &str) -> Vec<PresentationAttr> {
-        let (address1, address2, city, state, zip) = attr_names();
-        let address1_attr = PresentationAttr::builder()
-            .name(address1)
-            .cred_def_id(cred_def_id.to_owned())
-            .value("123 Main St".to_owned())
-            .build();
+pub fn requested_attr_objects(cred_def_id: &str) -> Vec<PresentationAttr> {
+    let (address1, address2, city, state, zip) = attr_names();
+    let address1_attr = PresentationAttr::builder()
+        .name(address1)
+        .cred_def_id(cred_def_id.to_owned())
+        .value("123 Main St".to_owned())
+        .build();
 
-        let address2_attr = PresentationAttr::builder()
-            .name(address2)
-            .cred_def_id(cred_def_id.to_owned())
-            .value("Suite 3".to_owned())
-            .build();
+    let address2_attr = PresentationAttr::builder()
+        .name(address2)
+        .cred_def_id(cred_def_id.to_owned())
+        .value("Suite 3".to_owned())
+        .build();
 
-        let city_attr = PresentationAttr::builder()
-            .name(city)
-            .cred_def_id(cred_def_id.to_owned())
-            .value("Draper".to_owned())
-            .build();
+    let city_attr = PresentationAttr::builder()
+        .name(city)
+        .cred_def_id(cred_def_id.to_owned())
+        .value("Draper".to_owned())
+        .build();
 
-        let state_attr = PresentationAttr::builder()
-            .name(state)
-            .cred_def_id(cred_def_id.to_owned())
-            .value("UT".to_owned())
-            .build();
+    let state_attr = PresentationAttr::builder()
+        .name(state)
+        .cred_def_id(cred_def_id.to_owned())
+        .value("UT".to_owned())
+        .build();
 
-        let zip_attr = PresentationAttr::builder()
-            .name(zip)
-            .cred_def_id(cred_def_id.to_owned())
-            .value("84000".to_owned())
-            .build();
+    let zip_attr = PresentationAttr::builder()
+        .name(zip)
+        .cred_def_id(cred_def_id.to_owned())
+        .value("84000".to_owned())
+        .build();
 
     vec![address1_attr, address2_attr, city_attr, state_attr, zip_attr]
 }
@@ -266,53 +261,53 @@ pub async fn create_credential_proposal(schema_id: &str, cred_def_id: &str, comm
     let (address1, address2, city, state, zip) = attr_names();
     let mut attrs = Vec::new();
 
-        let attr = CredentialAttr::builder()
-            .name(address1)
-            .value("123 Main Str".to_owned())
-            .mime_type(MimeType::Plain)
-            .build();
+    let attr = CredentialAttr::builder()
+        .name(address1)
+        .value("123 Main Str".to_owned())
+        .mime_type(MimeType::Plain)
+        .build();
 
-        attrs.push(attr);
+    attrs.push(attr);
 
-        let attr = CredentialAttr::builder()
-            .name(address2)
-            .value("Suite 3".to_owned())
-            .mime_type(MimeType::Plain)
-            .build();
-        attrs.push(attr);
+    let attr = CredentialAttr::builder()
+        .name(address2)
+        .value("Suite 3".to_owned())
+        .mime_type(MimeType::Plain)
+        .build();
+    attrs.push(attr);
 
-        let attr = CredentialAttr::builder()
-            .name(city)
-            .value("Draper".to_owned())
-            .mime_type(MimeType::Plain)
-            .build();
-        attrs.push(attr);
+    let attr = CredentialAttr::builder()
+        .name(city)
+        .value("Draper".to_owned())
+        .mime_type(MimeType::Plain)
+        .build();
+    attrs.push(attr);
 
-        let attr = CredentialAttr::builder()
-            .name(state)
-            .value("UT".to_owned())
-            .mime_type(MimeType::Plain)
-            .build();
-        attrs.push(attr);
+    let attr = CredentialAttr::builder()
+        .name(state)
+        .value("UT".to_owned())
+        .mime_type(MimeType::Plain)
+        .build();
+    attrs.push(attr);
 
-        let attr = CredentialAttr::builder()
-            .name(zip)
-            .value("84000".to_owned())
-            .mime_type(MimeType::Plain)
-            .build();
-        attrs.push(attr);
+    let attr = CredentialAttr::builder()
+        .name(zip)
+        .value("84000".to_owned())
+        .mime_type(MimeType::Plain)
+        .build();
+    attrs.push(attr);
 
-        let preview = CredentialPreview::new(attrs);
-        let content = ProposeCredentialContent::builder()
-            .credential_proposal(preview)
-            .schema_id(schema_id.to_owned())
-            .cred_def_id(cred_def_id.to_owned())
-            .comment(comment.to_owned())
-            .build();
+    let preview = CredentialPreview::new(attrs);
+    let content = ProposeCredentialContent::builder()
+        .credential_proposal(preview)
+        .schema_id(schema_id.to_owned())
+        .cred_def_id(cred_def_id.to_owned())
+        .comment(comment.to_owned())
+        .build();
 
-        let id = "test".to_owned();
-        ProposeCredential::builder().id(id).content(content).build()
-    }
+    let id = "test".to_owned();
+    ProposeCredential::builder().id(id).content(content).build()
+}
 
 pub async fn accept_credential_proposal(
     faber: &mut TestAgent,
@@ -1005,11 +1000,17 @@ pub async fn create_connections_via_public_invite(
     alice: &mut TestAgent,
     faber: &mut TestAgent,
 ) -> (GenericConnection, GenericConnection) {
-    let content = PublicInvitationContent::new("faber".to_owned(), faber.institution_did.clone());
-    let public_invite = AnyInvitation::Con(Invitation::Public(PublicInvitation::new(
-        "test_invite_id".to_owned(),
-        content,
-    )));
+    let content = InvitationContent::builder_public()
+        .label("faber".to_owned())
+        .did(faber.institution_did.clone())
+        .build();
+
+    let public_invite = AnyInvitation::Con(
+        Invitation::builder()
+            .id("test_invite_id".to_owned())
+            .content(content)
+            .build(),
+    );
     let ddo = into_did_doc(&alice.profile.inject_indy_ledger_read(), &public_invite)
         .await
         .unwrap();
@@ -1028,15 +1029,14 @@ pub async fn create_connections_via_pairwise_invite(
     let inviter_pairwise_info = PairwiseInfo::create(&faber.profile.inject_wallet()).await.unwrap();
     let invite = {
         let id = Uuid::new_v4().to_string();
-        let content = PairwiseInvitationContent::new(
-            "".to_string(),
-            vec![inviter_pairwise_info.pw_vk.clone()],
-            vec![],
-            "http://dummy.org".parse().unwrap(),
-        );
-        let decorators = PwInvitationDecorators::default();
-        let invite = PairwiseInvitation::with_decorators(id, content, decorators);
-        AnyInvitation::Con(Invitation::Pairwise(invite))
+        let content = InvitationContent::builder_pairwise()
+            .label("".to_string())
+            .recipient_keys(vec![inviter_pairwise_info.pw_vk.clone()])
+            .service_endpoint("http://dummy.org".parse().unwrap())
+            .build();
+
+        let invite = Invitation::builder().id(id).content(content).build();
+        AnyInvitation::Con(invite)
     };
 
     establish_connection_from_invite(alice, faber, invite, inviter_pairwise_info).await

@@ -26,15 +26,17 @@ use crate::utils::test_agent::{create_test_agent, create_test_agent_trustee};
 fn build_basic_message(content: String) -> BasicMessage {
     let now = Utc::now();
 
-    let content = BasicMessageContent::new(content, now);
+    let content = BasicMessageContent::builder().content(content).sent_time(now).build();
 
-    let mut decorators = BasicMessageDecorators::default();
-    let mut timing = Timing::default();
-    timing.out_time = Some(now);
+    let decorators = BasicMessageDecorators::builder()
+        .timing(Timing::builder().out_time(now).build())
+        .build();
 
-    decorators.timing = Some(timing);
-
-    BasicMessage::with_decorators(Uuid::new_v4().to_string(), content, decorators)
+    BasicMessage::builder()
+        .id(Uuid::new_v4().to_string())
+        .content(content)
+        .decorators(decorators)
+        .build()
 }
 
 async fn decrypt_message(
