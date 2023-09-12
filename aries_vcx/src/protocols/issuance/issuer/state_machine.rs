@@ -102,7 +102,7 @@ fn build_credential_message(libindy_credential: String, thread_id: String) -> Is
         .build();
 
     let decorators = IssueCredentialDecorators::builder()
-        .thread(Thread::builder().thid(id.clone()).build())
+        .thread(Thread::builder().thid(thread_id).build())
         .please_ack(PleaseAck::builder().on(vec![]).build())
         .build();
 
