@@ -2,6 +2,7 @@ use std::str::FromStr;
 
 use serde::{Deserialize, Serialize};
 use shared_vcx::misc::utils::CowStr;
+use typed_builder::TypedBuilder;
 
 use crate::{
     decorators::{thread::Thread, timing::Timing},
@@ -16,27 +17,21 @@ use crate::{
 
 pub type ProposePresentation = MsgParts<ProposePresentationContent, ProposePresentationDecorators>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder)]
 pub struct ProposePresentationContent {
+    #[builder(default, setter(strip_option))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,
     pub presentation_proposal: PresentationPreview,
 }
 
-impl ProposePresentationContent {
-    pub fn new(presentation_proposal: PresentationPreview) -> Self {
-        Self {
-            comment: None,
-            presentation_proposal,
-        }
-    }
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq, TypedBuilder)]
 pub struct ProposePresentationDecorators {
+    #[builder(default, setter(strip_option))]
     #[serde(rename = "~thread")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub thread: Option<Thread>,
+    #[builder(default, setter(strip_option))]
     #[serde(rename = "~timing")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<Timing>,
@@ -63,7 +58,7 @@ impl PresentationPreview {
 /// Non-standalone message type.
 /// This is only encountered as part of an existent message.
 /// It is not a message on it's own.
-#[derive(Copy, Clone, Debug, Deserialize, PartialEq)]
+#[derive(Copy, Clone, Debug, Default, Deserialize, PartialEq)]
 #[serde(try_from = "CowStr")]
 struct PresentationPreviewMsgType;
 
@@ -99,50 +94,32 @@ impl Serialize for PresentationPreviewMsgType {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, TypedBuilder)]
 pub struct PresentationAttr {
     pub name: String,
+    #[builder(default, setter(strip_option))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cred_def_id: Option<String>,
+    #[builder(default, setter(strip_option))]
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "mime-type")]
     pub mime_type: Option<MimeType>,
+    #[builder(default, setter(strip_option))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub value: Option<String>,
+    #[builder(default, setter(strip_option))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub referent: Option<String>,
 }
 
-impl PresentationAttr {
-    pub fn new(name: String) -> Self {
-        Self {
-            name,
-            cred_def_id: None,
-            mime_type: None,
-            value: None,
-            referent: None,
-        }
-    }
-}
-
-#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, TypedBuilder)]
 pub struct Predicate {
     pub name: String,
     pub predicate: PredicateOperator,
     pub threshold: i64,
+    #[builder(default, setter(strip_option))]
     #[serde(flatten)]
     pub referent: Option<Referent>,
-}
-
-impl Predicate {
-    pub fn new(name: String, predicate: PredicateOperator, threshold: i64) -> Self {
-        Self {
-            name,
-            predicate,
-            threshold,
-            referent: None,
-        }
-    }
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
@@ -183,14 +160,18 @@ mod tests {
 
     #[test]
     fn test_minimal_propose_proof() {
-        let attribute = PresentationAttr::new("test_attribute_name".to_owned());
-        let predicate = Predicate::new(
-            "test_predicate_name".to_owned(),
-            PredicateOperator::GreaterOrEqual,
-            1000,
-        );
+        let attribute = PresentationAttr::builder()
+            .name("test_attribute_name".to_owned())
+            .build();
+        let predicate = Predicate::builder()
+            .name("test_predicate_name".to_owned())
+            .predicate(PredicateOperator::GreaterOrEqual)
+            .threshold(1000)
+            .build();
         let preview = PresentationPreview::new(vec![attribute], vec![predicate]);
-        let content = ProposePresentationContent::new(preview);
+        let content = ProposePresentationContent::builder()
+            .presentation_proposal(preview)
+            .build();
 
         let decorators = ProposePresentationDecorators::default();
 
@@ -203,19 +184,24 @@ mod tests {
 
     #[test]
     fn test_extended_propose_proof() {
-        let attribute = PresentationAttr::new("test_attribute_name".to_owned());
-        let predicate = Predicate::new(
-            "test_predicate_name".to_owned(),
-            PredicateOperator::GreaterOrEqual,
-            1000,
-        );
+        let attribute = PresentationAttr::builder()
+            .name("test_attribute_name".to_owned())
+            .build();
+        let predicate = Predicate::builder()
+            .name("test_predicate_name".to_owned())
+            .predicate(PredicateOperator::GreaterOrEqual)
+            .threshold(1000)
+            .build();
         let preview = PresentationPreview::new(vec![attribute], vec![predicate]);
-        let mut content = ProposePresentationContent::new(preview);
-        content.comment = Some("test_comment".to_owned());
+        let content = ProposePresentationContent::builder()
+            .presentation_proposal(preview)
+            .comment("test_comment".to_owned())
+            .build();
 
-        let mut decorators = ProposePresentationDecorators::default();
-        decorators.thread = Some(make_extended_thread());
-        decorators.timing = Some(make_extended_timing());
+        let decorators = ProposePresentationDecorators::builder()
+            .thread(make_extended_thread())
+            .timing(make_extended_timing())
+            .build();
 
         let expected = json!({
             "comment": content.comment,

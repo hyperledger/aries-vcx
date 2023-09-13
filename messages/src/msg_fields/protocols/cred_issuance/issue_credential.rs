@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use typed_builder::TypedBuilder;
 
 use crate::{
     decorators::{attachment::Attachment, please_ack::PleaseAck, thread::Thread, timing::Timing},
@@ -7,43 +8,27 @@ use crate::{
 
 pub type IssueCredential = MsgParts<IssueCredentialContent, IssueCredentialDecorators>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder)]
 pub struct IssueCredentialContent {
+    #[builder(default, setter(strip_option))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,
     #[serde(rename = "credentials~attach")]
     pub credentials_attach: Vec<Attachment>,
 }
 
-impl IssueCredentialContent {
-    pub fn new(credentials_attach: Vec<Attachment>) -> Self {
-        Self {
-            comment: None,
-            credentials_attach,
-        }
-    }
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder)]
 pub struct IssueCredentialDecorators {
     #[serde(rename = "~thread")]
     pub thread: Thread,
+    #[builder(default, setter(strip_option))]
     #[serde(rename = "~please_ack")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub please_ack: Option<PleaseAck>,
+    #[builder(default, setter(strip_option))]
     #[serde(rename = "~timing")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<Timing>,
-}
-
-impl IssueCredentialDecorators {
-    pub fn new(thread: Thread) -> Self {
-        Self {
-            thread,
-            please_ack: None,
-            timing: None,
-        }
-    }
 }
 
 #[cfg(test)]
@@ -64,9 +49,13 @@ mod tests {
 
     #[test]
     fn test_minimal_issue_cred() {
-        let content = IssueCredentialContent::new(vec![make_extended_attachment()]);
+        let content = IssueCredentialContent::builder()
+            .credentials_attach(vec![make_extended_attachment()])
+            .build();
 
-        let decorators = IssueCredentialDecorators::new(make_extended_thread());
+        let decorators = IssueCredentialDecorators::builder()
+            .thread(make_extended_thread())
+            .build();
 
         let expected = json!({
             "credentials~attach": content.credentials_attach,
@@ -83,12 +72,16 @@ mod tests {
 
     #[test]
     fn test_extended_issue_cred() {
-        let mut content = IssueCredentialContent::new(vec![make_extended_attachment()]);
-        content.comment = Some("test_comment".to_owned());
+        let content = IssueCredentialContent::builder()
+            .credentials_attach(vec![make_extended_attachment()])
+            .comment("test_comment".to_owned())
+            .build();
 
-        let mut decorators = IssueCredentialDecorators::new(make_extended_thread());
-        decorators.timing = Some(make_extended_timing());
-        decorators.please_ack = Some(make_minimal_please_ack());
+        let decorators = IssueCredentialDecorators::builder()
+            .thread(make_extended_thread())
+            .timing(make_extended_timing())
+            .please_ack(make_minimal_please_ack())
+            .build();
 
         let expected = json!({
             "credentials~attach": content.credentials_attach,

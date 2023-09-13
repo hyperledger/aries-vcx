@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use shared_vcx::maybe_known::MaybeKnown;
+use typed_builder::TypedBuilder;
 
 use crate::{
     decorators::{please_ack::PleaseAck, thread::Thread, timing::Timing},
@@ -8,33 +9,27 @@ use crate::{
 
 pub type Revoke = MsgParts<RevokeContent, RevokeDecorators>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder)]
 
 pub struct RevokeContent {
     pub credential_id: String,
     pub revocation_format: MaybeKnown<RevocationFormat>,
+    #[builder(default, setter(strip_option))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,
 }
 
-impl RevokeContent {
-    pub fn new(credential_id: String, revocation_format: MaybeKnown<RevocationFormat>) -> Self {
-        Self {
-            credential_id,
-            revocation_format,
-            comment: None,
-        }
-    }
-}
-
-#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, TypedBuilder)]
 pub struct RevokeDecorators {
+    #[builder(default, setter(strip_option))]
     #[serde(rename = "~please_ack")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub please_ack: Option<PleaseAck>,
+    #[builder(default, setter(strip_option))]
     #[serde(rename = "~timing")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<Timing>,
+    #[builder(default, setter(strip_option))]
     #[serde(rename = "~thread")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub thread: Option<Thread>,
@@ -59,10 +54,10 @@ mod tests {
 
     #[test]
     fn test_minimal_revoke() {
-        let content = RevokeContent::new(
-            "test_credential_id".to_owned(),
-            MaybeKnown::Known(RevocationFormat::IndyAnoncreds),
-        );
+        let content = RevokeContent::builder()
+            .credential_id("test_credential_id".to_owned())
+            .revocation_format(MaybeKnown::Known(RevocationFormat::IndyAnoncreds))
+            .build();
 
         let decorators = RevokeDecorators::default();
 
@@ -76,14 +71,13 @@ mod tests {
 
     #[test]
     fn test_extended_revoke() {
-        let mut content = RevokeContent::new(
-            "test_credential_id".to_owned(),
-            MaybeKnown::Known(RevocationFormat::IndyAnoncreds),
-        );
-        content.comment = Some("test_comment".to_owned());
+        let content = RevokeContent::builder()
+            .credential_id("test_credential_id".to_owned())
+            .revocation_format(MaybeKnown::Known(RevocationFormat::IndyAnoncreds))
+            .comment("test_comment".to_owned())
+            .build();
 
-        let mut decorators = RevokeDecorators::default();
-        decorators.thread = Some(make_extended_thread());
+        let decorators = RevokeDecorators::builder().thread(make_extended_thread()).build();
 
         let expected = json!({
             "credential_id": content.credential_id,

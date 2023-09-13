@@ -8,11 +8,9 @@ use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
 use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
 use messages::decorators::thread::Thread;
 use messages::decorators::timing::Timing;
-use messages::msg_fields::protocols::notification::ack::{AckDecorators, AckStatus};
-use messages::msg_fields::protocols::present_proof::ack::{AckPresentation, AckPresentationContent};
-use messages::msg_fields::protocols::present_proof::problem_report::{
-    PresentProofProblemReport, PresentProofProblemReportContent,
-};
+use messages::msg_fields::protocols::notification::ack::{AckContent, AckDecorators, AckStatus};
+use messages::msg_fields::protocols::present_proof::ack::AckPresentation;
+use messages::msg_fields::protocols::present_proof::problem_report::PresentProofProblemReport;
 use messages::msg_fields::protocols::present_proof::request::{
     RequestPresentation, RequestPresentationContent, RequestPresentationDecorators,
 };
@@ -20,7 +18,6 @@ use messages::msg_fields::protocols::present_proof::{
     present::Presentation, propose::ProposePresentation, PresentProof,
 };
 use messages::msg_fields::protocols::report_problem::ProblemReport;
-use messages::msg_parts::MsgParts;
 use messages::AriesMessage;
 
 use crate::common::proofs::proof_request::PresentationRequestData;
@@ -79,13 +76,18 @@ impl Default for VerifierFullState {
 }
 
 pub fn build_verification_ack(thread_id: &str) -> AckPresentation {
-    let content = AckPresentationContent::new(AckStatus::Ok);
-    let mut decorators = AckDecorators::new(Thread::new(thread_id.to_owned()));
-    let mut timing = Timing::default();
-    timing.out_time = Some(Utc::now());
-    decorators.timing = Some(timing);
+    let content = AckContent::builder().status(AckStatus::Ok).build();
 
-    AckPresentation::with_decorators(Uuid::new_v4().to_string(), content, decorators)
+    let decorators = AckDecorators::builder()
+        .thread(Thread::builder().thid(thread_id.to_owned()).build())
+        .timing(Timing::builder().out_time(Utc::now()).build())
+        .build();
+
+    AckPresentation::builder()
+        .id(Uuid::new_v4().to_string())
+        .content(content)
+        .decorators(decorators)
+        .build()
 }
 
 pub fn build_starting_presentation_request(
@@ -95,18 +97,26 @@ pub fn build_starting_presentation_request(
 ) -> VcxResult<RequestPresentation> {
     let id = thread_id.to_owned();
 
-    let mut content = RequestPresentationContent::new(vec![make_attach_from_str!(
+    let content = RequestPresentationContent::builder().request_presentations_attach(vec![make_attach_from_str!(
         &json!(request_data).to_string(),
         AttachmentId::PresentationRequest.as_ref().to_string()
     )]);
-    content.comment = comment;
 
-    let mut decorators = RequestPresentationDecorators::default();
-    let mut timing = Timing::default();
-    timing.out_time = Some(Utc::now());
-    decorators.timing = Some(timing);
+    let content = if let Some(comment) = comment {
+        content.comment(comment).build()
+    } else {
+        content.build()
+    };
 
-    Ok(RequestPresentation::with_decorators(id, content, decorators))
+    let decorators = RequestPresentationDecorators::builder()
+        .timing(Timing::builder().out_time(Utc::now()).build())
+        .build();
+
+    Ok(RequestPresentation::builder()
+        .id(id)
+        .content(content)
+        .decorators(decorators)
+        .build())
 }
 
 impl VerifierSM {
@@ -261,18 +271,13 @@ impl VerifierSM {
                         )),
                         Status::Success => Ok(build_problem_report_msg(None, &self.thread_id).into()),
                         Status::Failed(problem_report) | Status::Declined(problem_report) => {
-                            let MsgParts {
-                                id,
-                                content,
-                                decorators,
-                            } = problem_report.clone();
+                            let problem_report = PresentProofProblemReport::builder()
+                                .id(problem_report.id.clone())
+                                .content(problem_report.content.clone().into())
+                                .decorators(problem_report.decorators.clone())
+                                .build();
 
-                            let problem_report = PresentProofProblemReport::with_decorators(
-                                id,
-                                PresentProofProblemReportContent(content),
-                                decorators,
-                            );
-                            Ok(problem_report.into())
+                            Ok(problem_report)
                         }
                     }
                 }

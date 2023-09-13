@@ -90,8 +90,15 @@ impl EncryptionEnvelope {
         to: &str,
         routing_key: &str,
     ) -> VcxResult<Vec<u8>> {
-        let content = ForwardContent::new(to.to_string(), serde_json::from_slice(&message)?);
-        let message = Forward::new(Uuid::new_v4().to_string(), content);
+        let content = ForwardContent::builder()
+            .to(to.to_string())
+            .msg(serde_json::from_slice(&message)?)
+            .build();
+
+        let message: Forward = Forward::builder()
+            .id(Uuid::new_v4().to_string())
+            .content(content)
+            .build();
 
         let message = json!(AriesMessage::from(message)).to_string();
         let receiver_keys = json!(vec![routing_key]).to_string();

@@ -74,7 +74,7 @@ impl<I, S> Connection<I, S> {
     }
 
     pub fn protocols(&self) -> Vec<ProtocolDescriptor> {
-        let query = QueryContent::new("*".to_owned());
+        let query = QueryContent::builder().query("*".to_owned()).build();
         query.lookup()
     }
 }
@@ -134,15 +134,18 @@ where
     where
         E: Error,
     {
-        let mut content = ProblemReportContent::default();
-        content.explain = Some(err.to_string());
+        let content = ProblemReportContent::builder().explain(err.to_string()).build();
 
-        let mut decorators = ProblemReportDecorators::new(Thread::new(thread_id.to_owned()));
-        let mut timing = Timing::default();
-        timing.out_time = Some(Utc::now());
-        decorators.timing = Some(timing);
+        let decorators = ProblemReportDecorators::builder()
+            .thread(Thread::builder().thid(thread_id.to_owned()).build())
+            .timing(Timing::builder().out_time(Utc::now()).build())
+            .build();
 
-        ProblemReport::with_decorators(Uuid::new_v4().to_string(), content, decorators)
+        ProblemReport::builder()
+            .id(Uuid::new_v4().to_string())
+            .content(content)
+            .decorators(decorators)
+            .build()
     }
 
     async fn send_problem_report<E, T>(

@@ -7,8 +7,6 @@ use messages::msg_fields::protocols::present_proof::present::Presentation;
 use messages::msg_fields::protocols::present_proof::propose::ProposePresentation;
 use messages::msg_fields::protocols::present_proof::request::RequestPresentation;
 use messages::msg_fields::protocols::present_proof::PresentProof;
-use messages::msg_fields::protocols::report_problem::ProblemReport;
-use messages::msg_parts::MsgParts;
 use messages::AriesMessage;
 
 use crate::common::proofs::proof_request::PresentationRequestData;
@@ -160,30 +158,18 @@ impl Verifier {
                 self.verifier_sm.clone().receive_presentation_request_reject(report)?,
                 None,
             ),
-            AriesMessage::Notification(Notification::ProblemReport(report)) => {
-                let MsgParts {
-                    id,
-                    content,
-                    decorators,
-                } = report;
-                let report = ProblemReport::with_decorators(id, content.0, decorators);
-                (
-                    self.verifier_sm.clone().receive_presentation_request_reject(report)?,
-                    None,
-                )
-            }
-            AriesMessage::PresentProof(PresentProof::ProblemReport(report)) => {
-                let MsgParts {
-                    id,
-                    content,
-                    decorators,
-                } = report;
-                let report = ProblemReport::with_decorators(id, content.0, decorators);
-                (
-                    self.verifier_sm.clone().receive_presentation_request_reject(report)?,
-                    None,
-                )
-            }
+            AriesMessage::Notification(Notification::ProblemReport(report)) => (
+                self.verifier_sm
+                    .clone()
+                    .receive_presentation_request_reject(report.into())?,
+                None,
+            ),
+            AriesMessage::PresentProof(PresentProof::ProblemReport(report)) => (
+                self.verifier_sm
+                    .clone()
+                    .receive_presentation_request_reject(report.into())?,
+                None,
+            ),
             _ => (self.verifier_sm.clone(), None),
         };
         self.verifier_sm = verifier_sm;

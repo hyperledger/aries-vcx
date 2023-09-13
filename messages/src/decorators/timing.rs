@@ -1,24 +1,31 @@
 use crate::misc::utils;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use typed_builder::TypedBuilder;
 
 /// Struct representing the `~timing` decorator from its [RFC](<https://github.com/hyperledger/aries-rfcs/blob/main/features/0032-message-timing/README.md>).
-#[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq)]
+#[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq, TypedBuilder)]
 pub struct Timing {
+    #[builder(default, setter(strip_option))]
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(serialize_with = "utils::serialize_opt_datetime")]
     pub in_time: Option<DateTime<Utc>>,
+    #[builder(default, setter(strip_option))]
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(serialize_with = "utils::serialize_opt_datetime")]
     pub out_time: Option<DateTime<Utc>>,
+    #[builder(default, setter(strip_option))]
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(serialize_with = "utils::serialize_opt_datetime")]
     pub stale_time: Option<DateTime<Utc>>,
+    #[builder(default, setter(strip_option))]
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(serialize_with = "utils::serialize_opt_datetime")]
     pub expires_time: Option<DateTime<Utc>>,
+    #[builder(default, setter(strip_option))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub delay_milli: Option<u32>,
+    #[builder(default, setter(strip_option))]
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(serialize_with = "utils::serialize_opt_datetime")]
     pub wait_until_time: Option<DateTime<Utc>>,
@@ -41,15 +48,14 @@ pub mod tests {
         let dt = DateTime::default();
         let delay_milli = 10;
 
-        let mut timing = Timing::default();
-        timing.in_time = Some(dt);
-        timing.out_time = Some(dt);
-        timing.stale_time = Some(dt);
-        timing.expires_time = Some(dt);
-        timing.delay_milli = Some(delay_milli);
-        timing.wait_until_time = Some(dt);
-
-        timing
+        Timing::builder()
+            .in_time(dt)
+            .out_time(dt)
+            .stale_time(dt)
+            .expires_time(dt)
+            .delay_milli(delay_milli)
+            .wait_until_time(dt)
+            .build()
     }
 
     #[test]

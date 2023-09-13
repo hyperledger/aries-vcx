@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
-// Bind `shared_vcx::misc::serde_ignored::SerdeIgnored` type as `NoDecorators`.
-use shared_vcx::misc::serde_ignored::SerdeIgnored as NoDecorators;
+use shared_vcx::misc::serde_ignored::SerdeIgnored;
+use typed_builder::TypedBuilder;
 
 use crate::{
     decorators::{thread::Thread, timing::Timing},
@@ -10,23 +10,21 @@ use crate::{
 
 pub type HandshakeReuseAccepted = MsgParts<HandshakeReuseAcceptedContent, HandshakeReuseAcceptedDecorators>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq, TypedBuilder)]
 #[serde(transparent)]
-pub struct HandshakeReuseAcceptedContent(NoDecorators);
+pub struct HandshakeReuseAcceptedContent {
+    #[builder(default, setter(skip))]
+    inner: SerdeIgnored,
+}
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder)]
 pub struct HandshakeReuseAcceptedDecorators {
     #[serde(rename = "~thread")]
     pub thread: Thread,
+    #[builder(default, setter(strip_option))]
     #[serde(rename = "~timing")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<Timing>,
-}
-
-impl HandshakeReuseAcceptedDecorators {
-    pub fn new(thread: Thread) -> Self {
-        Self { thread, timing: None }
-    }
 }
 
 #[cfg(test)]
@@ -46,7 +44,9 @@ mod tests {
     fn test_minimal_reuse_accepted() {
         let content = HandshakeReuseAcceptedContent::default();
 
-        let decorators = HandshakeReuseAcceptedDecorators::new(make_extended_thread());
+        let decorators = HandshakeReuseAcceptedDecorators::builder()
+            .thread(make_extended_thread())
+            .build();
 
         let expected = json!({
             "~thread": decorators.thread
@@ -59,8 +59,10 @@ mod tests {
     fn test_extended_reuse_accepted() {
         let content = HandshakeReuseAcceptedContent::default();
 
-        let mut decorators = HandshakeReuseAcceptedDecorators::new(make_extended_thread());
-        decorators.timing = Some(make_extended_timing());
+        let decorators = HandshakeReuseAcceptedDecorators::builder()
+            .thread(make_extended_thread())
+            .timing(make_extended_timing())
+            .build();
 
         let expected = json!({
             "~thread": decorators.thread,

@@ -4,9 +4,7 @@ use std::sync::Arc;
 use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
 use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
 use messages::msg_fields::protocols::present_proof::present::Presentation;
-use messages::msg_fields::protocols::present_proof::request::{
-    RequestPresentation, RequestPresentationContent, RequestPresentationDecorators,
-};
+use messages::msg_fields::protocols::present_proof::request::{RequestPresentation, RequestPresentationContent};
 use messages::msg_fields::protocols::report_problem::ProblemReport;
 use uuid::Uuid;
 
@@ -26,11 +24,12 @@ pub struct PresentationRequestReceived {
 impl Default for PresentationRequestReceived {
     fn default() -> Self {
         let id = Uuid::new_v4().to_string();
-        let content = RequestPresentationContent::new(Vec::new());
-        let decorators = RequestPresentationDecorators::default();
+        let content = RequestPresentationContent::builder()
+            .request_presentations_attach(Vec::new())
+            .build();
 
         Self {
-            presentation_request: RequestPresentation::with_decorators(id, content, decorators),
+            presentation_request: RequestPresentation::builder().id(id).content(content).build(),
         }
     }
 }

@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 
 // Bind `shared_vcx::misc::serde_ignored::SerdeIgnored` type as `NoDecorators`.
 use shared_vcx::misc::serde_ignored::SerdeIgnored as NoDecorators;
+use typed_builder::TypedBuilder;
 
 /// Struct representing a complete message (apart from the `@type` field) as defined in a protocol
 /// RFC. The purpose of this type is to allow decomposition of certain message parts so they can be
@@ -14,7 +15,8 @@ use shared_vcx::misc::serde_ignored::SerdeIgnored as NoDecorators;
 /// `~attach` used in some messages that are in fact part of the protocol itself and are
 /// instrumental to the message processing, not an appendix to the message (such as `~thread` or
 /// `~timing`).
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder)]
+#[builder(build_method(vis = "", name = __build))]
 pub struct MsgParts<C, D = NoDecorators> {
     /// All standalone messages have an `id` field.
     #[serde(rename = "@id")]
@@ -27,22 +29,40 @@ pub struct MsgParts<C, D = NoDecorators> {
     pub decorators: D,
 }
 
-impl<C> MsgParts<C> {
-    pub fn new(id: String, content: C) -> Self {
-        Self {
-            id,
-            content,
-            decorators: NoDecorators,
-        }
+/// Allows building message without decorators being specified.
+#[allow(dead_code, non_camel_case_types, missing_docs)]
+impl<C, D> MsgPartsBuilder<C, D, ((String,), (), (D,))>
+where
+    C: Default,
+{
+    pub fn build<T>(self) -> T
+    where
+        MsgParts<C, D>: Into<T>,
+    {
+        self.content(Default::default()).__build().into()
     }
 }
 
-impl<C, D> MsgParts<C, D> {
-    pub fn with_decorators(id: String, content: C, decorators: D) -> Self {
-        Self {
-            id,
-            content,
-            decorators,
-        }
+/// Allows building message without decorators being specified.
+#[allow(dead_code, non_camel_case_types, missing_docs)]
+impl<C, D> MsgPartsBuilder<C, D, ((String,), (C,), ())>
+where
+    D: Default,
+{
+    pub fn build<T>(self) -> T
+    where
+        MsgParts<C, D>: Into<T>,
+    {
+        self.decorators(Default::default()).__build().into()
+    }
+}
+
+#[allow(dead_code, non_camel_case_types, missing_docs)]
+impl<C, D> MsgPartsBuilder<C, D, ((String,), (C,), (D,))> {
+    pub fn build<T>(self) -> T
+    where
+        MsgParts<C, D>: Into<T>,
+    {
+        self.__build().into()
     }
 }

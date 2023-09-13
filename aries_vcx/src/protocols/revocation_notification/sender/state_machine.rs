@@ -72,26 +72,31 @@ impl RevocationNotificationSenderSM {
 
                 let id = Uuid::new_v4().to_string();
 
-                let mut content = RevokeContent::new(
-                    format!("{rev_reg_id}::{cred_rev_id}"),
-                    MaybeKnown::Known(RevocationFormat::IndyAnoncreds),
-                );
-                content.comment = comment;
+                let content = RevokeContent::builder()
+                    .credential_id(format!("{rev_reg_id}::{cred_rev_id}"))
+                    .revocation_format(MaybeKnown::Known(RevocationFormat::IndyAnoncreds));
 
-                let mut decorators = RevokeDecorators::default();
-                let please_ack = PleaseAck::new(ack_on);
-                decorators.please_ack = Some(please_ack);
+                let content = if let Some(comment) = comment {
+                    content.comment(comment).build()
+                } else {
+                    content.build()
+                };
 
-                let rev_msg = Revoke::with_decorators(id, content, decorators);
+                let decorators = RevokeDecorators::builder()
+                    .please_ack(PleaseAck::builder().on(ack_on).build())
+                    .build();
+
+                let rev_msg: Revoke = Revoke::builder().id(id).content(content).decorators(decorators).build();
                 send_message(rev_msg.clone().into()).await?;
 
-                if !rev_msg
+                let is_finished = !rev_msg
                     .decorators
                     .please_ack
                     .as_ref()
                     .map(|d| d.on.is_empty())
-                    .unwrap_or(false)
-                {
+                    .unwrap_or(false);
+
+                if is_finished {
                     SenderFullState::Finished(FinishedState::new(rev_msg, None))
                 } else {
                     SenderFullState::NotificationSent(NotificationSentState::new(rev_msg))
@@ -142,7 +147,7 @@ pub mod test_utils {
         SenderConfigBuilder::default()
             .rev_reg_id(_rev_reg_id())
             .cred_rev_id(_cred_rev_id())
-            .comment(_comment())
+            .comment(Some(_comment()))
             .ack_on(ack_on)
             .build()
             .unwrap()

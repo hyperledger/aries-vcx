@@ -2,8 +2,8 @@ use chrono::Utc;
 use messages::decorators::please_ack::AckOn;
 use messages::decorators::thread::Thread;
 use messages::decorators::timing::Timing;
-use messages::msg_fields::protocols::notification::ack::{AckDecorators, AckStatus};
-use messages::msg_fields::protocols::revocation::ack::{AckRevoke, AckRevokeContent};
+use messages::msg_fields::protocols::notification::ack::{AckContent, AckDecorators, AckStatus};
+use messages::msg_fields::protocols::revocation::ack::AckRevoke;
 use messages::msg_fields::protocols::revocation::revoke::{RevocationFormat, Revoke};
 use shared_vcx::maybe_known::MaybeKnown;
 use uuid::Uuid;
@@ -83,7 +83,7 @@ impl RevocationNotificationReceiverSM {
                     .unwrap_or(false)
                 {
                     let id = Uuid::new_v4().to_string();
-                    let content = AckRevokeContent::new(AckStatus::Ok);
+                    let content = AckContent::builder().status(AckStatus::Ok).build();
 
                     let thread_id = notification
                         .decorators
@@ -92,13 +92,18 @@ impl RevocationNotificationReceiverSM {
                         .map(|t| t.thid.clone())
                         .unwrap_or(notification.id.clone());
 
-                    let mut decorators = AckDecorators::new(Thread::new(thread_id));
-                    let mut timing = Timing::default();
-                    timing.out_time = Some(Utc::now());
-                    decorators.timing = Some(timing);
+                    let decorators = AckDecorators::builder()
+                        .thread(Thread::builder().thid(thread_id).build())
+                        .timing(Timing::builder().out_time(Utc::now()).build())
+                        .build();
 
-                    let ack = AckRevoke::with_decorators(id, content, decorators);
-                    send_message(ack.into()).await?;
+                    let ack = AckRevoke::builder()
+                        .id(id)
+                        .content(content)
+                        .decorators(decorators)
+                        .build();
+
+                    send_message(ack).await?;
                     ReceiverFullState::Finished(FinishedState::new(notification))
                 } else {
                     ReceiverFullState::NotificationReceived(NotificationReceivedState::new(notification))
@@ -130,7 +135,7 @@ impl RevocationNotificationReceiverSM {
                 }
 
                 let id = Uuid::new_v4().to_string();
-                let content = AckRevokeContent::new(AckStatus::Ok);
+                let content = AckContent::builder().status(AckStatus::Ok).build();
 
                 let thread_id = notification
                     .decorators
@@ -139,13 +144,18 @@ impl RevocationNotificationReceiverSM {
                     .map(|t| t.thid.clone())
                     .unwrap_or(notification.id.clone());
 
-                let mut decorators = AckDecorators::new(Thread::new(thread_id));
-                let mut timing = Timing::default();
-                timing.out_time = Some(Utc::now());
-                decorators.timing = Some(timing);
+                let decorators = AckDecorators::builder()
+                    .thread(Thread::builder().thid(thread_id).build())
+                    .timing(Timing::builder().out_time(Utc::now()).build())
+                    .build();
 
-                let ack = AckRevoke::with_decorators(id, content, decorators);
-                send_message(ack.into()).await?;
+                let ack = AckRevoke::builder()
+                    .id(id)
+                    .content(content)
+                    .decorators(decorators)
+                    .build();
+
+                send_message(ack).await?;
                 ReceiverFullState::Finished(FinishedState::new(notification))
             }
             _ => {

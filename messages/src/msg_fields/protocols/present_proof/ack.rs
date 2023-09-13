@@ -1,19 +1,32 @@
 use serde::{Deserialize, Serialize};
+use typed_builder::TypedBuilder;
 
 use crate::{
-    msg_fields::protocols::notification::ack::{AckContent, AckDecorators, AckStatus},
+    msg_fields::protocols::notification::ack::{Ack, AckContent, AckDecorators},
     msg_parts::MsgParts,
 };
 
 pub type AckPresentation = MsgParts<AckPresentationContent, AckDecorators>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder)]
 #[serde(transparent)]
-pub struct AckPresentationContent(pub AckContent);
+pub struct AckPresentationContent {
+    pub inner: AckContent,
+}
 
-impl AckPresentationContent {
-    pub fn new(status: AckStatus) -> Self {
-        Self(AckContent::new(status))
+impl From<AckContent> for AckPresentationContent {
+    fn from(value: AckContent) -> Self {
+        Self { inner: value }
+    }
+}
+
+impl From<AckPresentation> for Ack {
+    fn from(value: AckPresentation) -> Self {
+        Self::builder()
+            .id(value.id)
+            .content(value.content.inner)
+            .decorators(value.decorators)
+            .build()
     }
 }
 
@@ -27,17 +40,18 @@ mod tests {
     use crate::{
         decorators::{thread::tests::make_extended_thread, timing::tests::make_extended_timing},
         misc::test_utils,
+        msg_fields::protocols::notification::ack::AckStatus,
         msg_types::present_proof::PresentProofTypeV1_0,
     };
 
     #[test]
     fn test_minimal_ack_proof() {
-        let content = AckPresentationContent::new(AckStatus::Ok);
+        let content: AckPresentationContent = AckContent::builder().status(AckStatus::Ok).build();
 
-        let decorators = AckDecorators::new(make_extended_thread());
+        let decorators = AckDecorators::builder().thread(make_extended_thread()).build();
 
         let expected = json!({
-            "status": content.0.status,
+            "status": content.inner.status,
             "~thread": decorators.thread
         });
 
@@ -46,13 +60,15 @@ mod tests {
 
     #[test]
     fn test_extended_ack_proof() {
-        let content = AckPresentationContent::new(AckStatus::Ok);
+        let content: AckPresentationContent = AckContent::builder().status(AckStatus::Ok).build();
 
-        let mut decorators = AckDecorators::new(make_extended_thread());
-        decorators.timing = Some(make_extended_timing());
+        let decorators = AckDecorators::builder()
+            .thread(make_extended_thread())
+            .timing(make_extended_timing())
+            .build();
 
         let expected = json!({
-            "status": content.0.status,
+            "status": content.inner.status,
             "~thread": decorators.thread,
             "~timing": decorators.timing
         });

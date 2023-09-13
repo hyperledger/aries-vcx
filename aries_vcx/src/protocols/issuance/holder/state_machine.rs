@@ -6,7 +6,6 @@ use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
 use chrono::Utc;
 use messages::decorators::thread::Thread;
 use messages::decorators::timing::Timing;
-use messages::msg_fields::protocols::cred_issuance::ack::{AckCredential, AckCredentialContent};
 use messages::msg_fields::protocols::cred_issuance::issue_credential::IssueCredential;
 use messages::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
 use messages::msg_fields::protocols::cred_issuance::propose_credential::ProposeCredential;
@@ -14,7 +13,6 @@ use messages::msg_fields::protocols::cred_issuance::request_credential::{
     RequestCredential, RequestCredentialContent, RequestCredentialDecorators,
 };
 use messages::msg_fields::protocols::cred_issuance::CredentialIssuance;
-use messages::msg_fields::protocols::notification::ack::{AckDecorators, AckStatus};
 use messages::msg_fields::protocols::report_problem::ProblemReport;
 use messages::AriesMessage;
 use uuid::Uuid;
@@ -69,21 +67,23 @@ impl fmt::Display for HolderFullState {
 }
 
 fn _build_credential_request_msg(credential_request_attach: String, thread_id: &str) -> RequestCredential {
-    let content = RequestCredentialContent::new(vec![make_attach_from_str!(
-        &credential_request_attach,
-        AttachmentId::CredentialRequest.as_ref().to_string()
-    )]);
+    let content = RequestCredentialContent::builder()
+        .requests_attach(vec![make_attach_from_str!(
+            &credential_request_attach,
+            AttachmentId::CredentialRequest.as_ref().to_string()
+        )])
+        .build();
 
-    let mut decorators = RequestCredentialDecorators::default();
+    let decorators = RequestCredentialDecorators::builder()
+        .thread(Thread::builder().thid(thread_id.to_owned()).build())
+        .timing(Timing::builder().out_time(Utc::now()).build())
+        .build();
 
-    let thread = Thread::new(thread_id.to_owned());
-    let mut timing = Timing::default();
-    timing.out_time = Some(Utc::now());
-
-    decorators.thread = Some(thread);
-    decorators.timing = Some(timing);
-
-    RequestCredential::with_decorators(Uuid::new_v4().to_string(), content, decorators)
+    RequestCredential::builder()
+        .id(Uuid::new_v4().to_string())
+        .content(content)
+        .decorators(decorators)
+        .build()
 }
 
 impl HolderSM {

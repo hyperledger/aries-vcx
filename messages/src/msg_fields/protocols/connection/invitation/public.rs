@@ -1,19 +1,13 @@
 use serde::{Deserialize, Serialize};
+use typed_builder::TypedBuilder;
 
-use crate::msg_parts::MsgParts;
+use super::InvitationContent;
 
-pub type PublicInvitation = MsgParts<PublicInvitationContent>;
-
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, TypedBuilder)]
+#[builder(build_method(into = InvitationContent))]
 pub struct PublicInvitationContent {
     pub label: String,
     pub did: String,
-}
-
-impl PublicInvitationContent {
-    pub fn new(label: String, did: String) -> Self {
-        Self { label, did }
-    }
 }
 
 #[cfg(test)]
@@ -23,20 +17,49 @@ mod tests {
     use serde_json::json;
 
     use super::*;
-    use crate::{misc::test_utils, msg_types::connection::ConnectionTypeV1_0};
-
-    // Bind `shared_vcx::misc::serde_ignored::SerdeIgnored` type as `NoDecorators`.
-    use shared_vcx::misc::serde_ignored::SerdeIgnored as NoDecorators;
+    use crate::{
+        decorators::timing::tests::make_extended_timing, misc::test_utils,
+        msg_fields::protocols::connection::invitation::InvitationDecorators, msg_types::connection::ConnectionTypeV1_0,
+    };
 
     #[test]
     fn test_minimal_conn_invite_public() {
-        let content = PublicInvitationContent::new("test_label".to_owned(), "test_did".to_owned());
+        let label = "test_label";
+        let did = "test_did";
+
+        let content = InvitationContent::builder_public()
+            .label(label.to_owned())
+            .did(did.to_owned())
+            .build();
 
         let expected = json!({
-            "label": content.label,
-            "did": content.did
+            "label": label,
+            "did": did
         });
 
-        test_utils::test_msg(content, NoDecorators, ConnectionTypeV1_0::Invitation, expected);
+        let decorators = InvitationDecorators::default();
+
+        test_utils::test_msg(content, decorators, ConnectionTypeV1_0::Invitation, expected);
+    }
+
+    #[test]
+    fn test_extended_conn_invite_public() {
+        let label = "test_label";
+        let did = "test_did";
+
+        let content = InvitationContent::builder_public()
+            .label(label.to_owned())
+            .did(did.to_owned())
+            .build();
+
+        let decorators = InvitationDecorators::builder().timing(make_extended_timing()).build();
+
+        let expected = json!({
+            "label": label,
+            "did": did,
+            "~timing": decorators.timing
+        });
+
+        test_utils::test_msg(content, decorators, ConnectionTypeV1_0::Invitation, expected);
     }
 }

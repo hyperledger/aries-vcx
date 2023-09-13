@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use typed_builder::TypedBuilder;
 
 use crate::{
     decorators::{attachment::Attachment, thread::Thread, timing::Timing},
@@ -7,28 +8,22 @@ use crate::{
 
 pub type RequestCredential = MsgParts<RequestCredentialContent, RequestCredentialDecorators>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder)]
 pub struct RequestCredentialContent {
+    #[builder(default, setter(strip_option))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,
     #[serde(rename = "requests~attach")]
     pub requests_attach: Vec<Attachment>,
 }
 
-impl RequestCredentialContent {
-    pub fn new(requests_attach: Vec<Attachment>) -> Self {
-        Self {
-            comment: None,
-            requests_attach,
-        }
-    }
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq, TypedBuilder)]
 pub struct RequestCredentialDecorators {
+    #[builder(default, setter(strip_option))]
     #[serde(rename = "~thread")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub thread: Option<Thread>,
+    #[builder(default, setter(strip_option))]
     #[serde(rename = "~timing")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<Timing>,
@@ -49,7 +44,9 @@ mod tests {
 
     #[test]
     fn test_minimal_request_cred() {
-        let content = RequestCredentialContent::new(vec![make_extended_attachment()]);
+        let content = RequestCredentialContent::builder()
+            .requests_attach(vec![make_extended_attachment()])
+            .build();
 
         let decorators = RequestCredentialDecorators::default();
 
@@ -67,11 +64,14 @@ mod tests {
 
     #[test]
     fn test_extended_request_cred() {
-        let mut content = RequestCredentialContent::new(vec![make_extended_attachment()]);
-        content.comment = Some("test_comment".to_owned());
+        let content = RequestCredentialContent::builder()
+            .requests_attach(vec![make_extended_attachment()])
+            .comment("test_comment".to_owned())
+            .build();
 
-        let mut decorators = RequestCredentialDecorators::default();
-        decorators.thread = Some(make_extended_thread());
+        let decorators = RequestCredentialDecorators::builder()
+            .thread(make_extended_thread())
+            .build();
 
         let expected = json!({
             "requests~attach": content.requests_attach,

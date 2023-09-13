@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use shared_vcx::misc::utils::CowStr;
+use typed_builder::TypedBuilder;
 
 use crate::{
     decorators::{please_ack::PleaseAck, thread::Thread, timing::Timing},
@@ -13,16 +14,10 @@ use crate::{
 
 pub type Response = MsgParts<ResponseContent, ResponseDecorators>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder)]
 pub struct ResponseContent {
     #[serde(rename = "connection~sig")]
     pub connection_sig: ConnectionSignature,
-}
-
-impl ResponseContent {
-    pub fn new(connection_sig: ConnectionSignature) -> Self {
-        Self { connection_sig }
-    }
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
@@ -45,26 +40,18 @@ impl ConnectionSignature {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, TypedBuilder)]
 pub struct ResponseDecorators {
     #[serde(rename = "~thread")]
     pub thread: Thread,
+    #[builder(default, setter(strip_option))]
     #[serde(rename = "~please_ack")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub please_ack: Option<PleaseAck>,
+    #[builder(default, setter(strip_option))]
     #[serde(rename = "~timing")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<Timing>,
-}
-
-impl ResponseDecorators {
-    pub fn new(thread: Thread) -> Self {
-        Self {
-            thread,
-            please_ack: None,
-            timing: None,
-        }
-    }
 }
 
 /// Non-standalone message type.
@@ -131,9 +118,9 @@ mod tests {
             "test_signer".to_owned(),
         );
 
-        let content = ResponseContent::new(conn_sig);
+        let content = ResponseContent::builder().connection_sig(conn_sig).build();
 
-        let decorators = ResponseDecorators::new(make_extended_thread());
+        let decorators = ResponseDecorators::builder().thread(make_extended_thread()).build();
 
         let expected = json!({
             "connection~sig": content.connection_sig,
@@ -151,11 +138,13 @@ mod tests {
             "test_signer".to_owned(),
         );
 
-        let content = ResponseContent::new(conn_sig);
+        let content = ResponseContent::builder().connection_sig(conn_sig).build();
 
-        let mut decorators = ResponseDecorators::new(make_extended_thread());
-        decorators.timing = Some(make_extended_timing());
-        decorators.please_ack = Some(make_minimal_please_ack());
+        let decorators = ResponseDecorators::builder()
+            .thread(make_extended_thread())
+            .timing(make_extended_timing())
+            .please_ack(make_minimal_please_ack())
+            .build();
 
         let expected = json!({
             "connection~sig": content.connection_sig,

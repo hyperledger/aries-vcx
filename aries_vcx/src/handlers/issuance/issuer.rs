@@ -11,7 +11,6 @@ use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
 use messages::msg_fields::protocols::cred_issuance::issue_credential::IssueCredential;
 use messages::msg_fields::protocols::notification::Notification;
 use messages::msg_fields::protocols::report_problem::ProblemReport;
-use messages::msg_parts::MsgParts;
 
 use crate::errors::error::prelude::*;
 use crate::handlers::util::OfferInfo;
@@ -46,7 +45,7 @@ fn _build_credential_preview(credential_json: &str) -> VcxResult<CredentialPrevi
     })?;
 
     // todo: should throw err if cred_values is not serde_json::Value::Array or serde_json::Value::Object
-    let mut credential_preview = CredentialPreview::new(Vec::new());
+    let mut attributes = Vec::new();
 
     match cred_values {
         serde_json::Value::Array(cred_values) => {
@@ -60,48 +59,54 @@ fn _build_credential_preview(credential_json: &str) -> VcxResult<CredentialPrevi
                     format!("No 'value' field in cred_value: {:?}", cred_value),
                 ))?;
 
-                let mut attr = CredentialAttr::new(
-                    key.as_str()
-                        .ok_or(AriesVcxError::from_msg(
-                            AriesVcxErrorKind::InvalidOption,
-                            "Credential value names are currently only allowed to be strings",
-                        ))?
-                        .to_owned(),
-                    value
-                        .as_str()
-                        .ok_or(AriesVcxError::from_msg(
-                            AriesVcxErrorKind::InvalidOption,
-                            "Credential values are currently only allowed to be strings",
-                        ))?
-                        .to_owned(),
-                );
+                let name = key
+                    .as_str()
+                    .ok_or(AriesVcxError::from_msg(
+                        AriesVcxErrorKind::InvalidOption,
+                        "Credential value names are currently only allowed to be strings",
+                    ))?
+                    .to_owned();
 
-                attr.mime_type = Some(MimeType::Plain);
-                credential_preview.attributes.push(attr);
+                let value = value
+                    .as_str()
+                    .ok_or(AriesVcxError::from_msg(
+                        AriesVcxErrorKind::InvalidOption,
+                        "Credential values are currently only allowed to be strings",
+                    ))?
+                    .to_owned();
+
+                let attr = CredentialAttr::builder()
+                    .name(name)
+                    .value(value)
+                    .mime_type(MimeType::Plain)
+                    .build();
+
+                attributes.push(attr);
             }
         }
         serde_json::Value::Object(values_map) => {
             for item in values_map.iter() {
                 let (key, value) = item;
+                let value = value
+                    .as_str()
+                    .ok_or(AriesVcxError::from_msg(
+                        AriesVcxErrorKind::InvalidOption,
+                        "Credential values are currently only allowed to be strings",
+                    ))?
+                    .to_owned();
+                let attr = CredentialAttr::builder()
+                    .name(key.to_owned())
+                    .value(value)
+                    .mime_type(MimeType::Plain)
+                    .build();
 
-                let mut attr = CredentialAttr::new(
-                    key.to_owned(),
-                    value
-                        .as_str()
-                        .ok_or(AriesVcxError::from_msg(
-                            AriesVcxErrorKind::InvalidOption,
-                            "Credential values are currently only allowed to be strings",
-                        ))?
-                        .to_owned(),
-                );
-
-                attr.mime_type = Some(MimeType::Plain);
-                credential_preview.attributes.push(attr);
+                attributes.push(attr);
             }
         }
         _ => {}
     };
-    Ok(credential_preview)
+
+    Ok(CredentialPreview::new(attributes))
 }
 
 impl Issuer {
@@ -279,22 +284,10 @@ impl Issuer {
             }
             AriesMessage::ReportProblem(report) => self.issuer_sm.clone().receive_problem_report(report)?,
             AriesMessage::Notification(Notification::ProblemReport(report)) => {
-                let MsgParts {
-                    id,
-                    content,
-                    decorators,
-                } = report;
-                let report = ProblemReport::with_decorators(id, content.0, decorators);
-                self.issuer_sm.clone().receive_problem_report(report)?
+                self.issuer_sm.clone().receive_problem_report(report.into())?
             }
             AriesMessage::CredentialIssuance(CredentialIssuance::ProblemReport(report)) => {
-                let MsgParts {
-                    id,
-                    content,
-                    decorators,
-                } = report;
-                let report = ProblemReport::with_decorators(id, content.0, decorators);
-                self.issuer_sm.clone().receive_problem_report(report)?
+                self.issuer_sm.clone().receive_problem_report(report.into())?
             }
             _ => self.issuer_sm.clone(),
         };

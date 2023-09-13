@@ -94,15 +94,23 @@ pub struct IssuerSM {
 fn build_credential_message(libindy_credential: String, thread_id: String) -> IssueCredential {
     let id = Uuid::new_v4().to_string();
 
-    let content = IssueCredentialContent::new(vec![make_attach_from_str!(
-        &libindy_credential,
-        AttachmentId::Credential.as_ref().to_string()
-    )]);
+    let content = IssueCredentialContent::builder()
+        .credentials_attach(vec![make_attach_from_str!(
+            &libindy_credential,
+            AttachmentId::Credential.as_ref().to_string()
+        )])
+        .build();
 
-    let mut decorators = IssueCredentialDecorators::new(Thread::new(id.clone()));
-    decorators.thread.thid = thread_id.clone();
-    decorators.please_ack = Some(PleaseAck::new(vec![]));
-    IssueCredential::with_decorators(id, content, decorators)
+    let decorators = IssueCredentialDecorators::builder()
+        .thread(Thread::builder().thid(thread_id).build())
+        .please_ack(PleaseAck::builder().on(vec![]).build())
+        .build();
+
+    IssueCredential::builder()
+        .id(id)
+        .content(content)
+        .decorators(decorators)
+        .build()
 }
 
 fn build_credential_offer(
@@ -113,21 +121,28 @@ fn build_credential_offer(
 ) -> VcxResult<OfferCredential> {
     let id = thread_id.to_owned();
 
-    let mut content = OfferCredentialContent::new(
-        credential_preview,
-        vec![make_attach_from_str!(
+    let content = OfferCredentialContent::builder()
+        .credential_preview(credential_preview)
+        .offers_attach(vec![make_attach_from_str!(
             &credential_offer,
             AttachmentId::CredentialOffer.as_ref().to_string()
-        )],
-    );
-    content.comment = comment;
+        )]);
 
-    let mut decorators = OfferCredentialDecorators::default();
-    let mut timing = Timing::default();
-    timing.out_time = Some(Utc::now());
-    decorators.timing = Some(timing);
+    let content = if let Some(comment) = comment {
+        content.comment(comment).build()
+    } else {
+        content.build()
+    };
 
-    Ok(OfferCredential::with_decorators(id, content, decorators))
+    let decorators = OfferCredentialDecorators::builder()
+        .timing(Timing::builder().out_time(Utc::now()).build())
+        .build();
+
+    Ok(OfferCredential::builder()
+        .id(id)
+        .content(content)
+        .decorators(decorators)
+        .build())
 }
 
 impl IssuerSM {
@@ -377,7 +392,7 @@ impl IssuerSM {
                 )
                 .await
                 {
-                    Ok((mut msg_issue_credential, cred_rev_id)) => {
+                    Ok((msg_issue_credential, cred_rev_id)) => {
                         // todo: have constructor for this
                         IssuerFullState::CredentialSet(CredentialSetState {
                             msg_issue_credential,

@@ -1,6 +1,4 @@
-use messages::msg_fields::protocols::present_proof::request::{
-    RequestPresentation, RequestPresentationContent, RequestPresentationDecorators,
-};
+use messages::msg_fields::protocols::present_proof::request::{RequestPresentation, RequestPresentationContent};
 use uuid::Uuid;
 
 use crate::protocols::proof_presentation::verifier::states::presentation_request_sent::PresentationRequestSentState;
@@ -13,11 +11,12 @@ pub struct PresentationRequestSetState {
 impl Default for PresentationRequestSetState {
     fn default() -> Self {
         let id = Uuid::new_v4().to_string();
-        let content = RequestPresentationContent::new(Vec::new());
-        let decorators = RequestPresentationDecorators::default();
+        let content = RequestPresentationContent::builder()
+            .request_presentations_attach(Vec::new())
+            .build();
 
         Self {
-            presentation_request: RequestPresentation::with_decorators(id, content, decorators),
+            presentation_request: RequestPresentation::builder().id(id).content(content).build(),
         }
     }
 }

@@ -1,7 +1,7 @@
 use bs58;
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use diddoc_legacy::aries::service::AriesService;
-use messages::msg_fields::protocols::connection::invitation::Invitation;
+use messages::msg_fields::protocols::connection::invitation::{Invitation, InvitationContent};
 use messages::msg_fields::protocols::out_of_band::invitation::OobService;
 use std::{collections::HashMap, sync::Arc};
 
@@ -93,25 +93,35 @@ pub async fn add_new_did(
 pub async fn into_did_doc(indy_ledger: &Arc<dyn IndyLedgerRead>, invitation: &AnyInvitation) -> VcxResult<AriesDidDoc> {
     let mut did_doc: AriesDidDoc = AriesDidDoc::default();
     let (service_endpoint, recipient_keys, routing_keys) = match invitation {
-        AnyInvitation::Con(Invitation::Public(invitation)) => {
-            did_doc.set_id(invitation.content.did.to_string());
-            let service = get_service(indy_ledger, &invitation.content.did)
-                .await
-                .unwrap_or_else(|err| {
-                    error!("Failed to obtain service definition from the ledger: {}", err);
-                    AriesService::default()
-                });
+        AnyInvitation::Con(Invitation {
+            id,
+            content: InvitationContent::Public(content),
+            decorators,
+        }) => {
+            did_doc.set_id(content.did.to_string());
+            let service = get_service(indy_ledger, &content.did).await.unwrap_or_else(|err| {
+                error!("Failed to obtain service definition from the ledger: {}", err);
+                AriesService::default()
+            });
             (service.service_endpoint, service.recipient_keys, service.routing_keys)
         }
-        AnyInvitation::Con(Invitation::Pairwise(invitation)) => {
-            did_doc.set_id(invitation.id.clone());
+        AnyInvitation::Con(Invitation {
+            id,
+            content: InvitationContent::Pairwise(content),
+            decorators,
+        }) => {
+            did_doc.set_id(id.clone());
             (
-                invitation.content.service_endpoint.clone(),
-                invitation.content.recipient_keys.clone(),
-                invitation.content.routing_keys.clone(),
+                content.service_endpoint.clone(),
+                content.recipient_keys.clone(),
+                content.routing_keys.clone(),
             )
         }
-        AnyInvitation::Con(Invitation::PairwiseDID(_)) => {
+        AnyInvitation::Con(Invitation {
+            id,
+            content: InvitationContent::PairwiseDID(content),
+            decorators,
+        }) => {
             return Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::InvalidDid,
                 format!("PairwiseDID invitation not supported yet!"),

@@ -216,9 +216,7 @@ mod connection_serde_tests {
     use chrono::Utc;
     use messages::decorators::thread::Thread;
     use messages::decorators::timing::Timing;
-    use messages::msg_fields::protocols::connection::invitation::{
-        Invitation, PairwiseInvitation, PairwiseInvitationContent, PwInvitationDecorators,
-    };
+    use messages::msg_fields::protocols::connection::invitation::{Invitation, InvitationContent};
     use messages::msg_fields::protocols::connection::request::{Request, RequestContent, RequestDecorators};
     use messages::msg_fields::protocols::connection::response::{Response, ResponseContent, ResponseDecorators};
     use messages::msg_fields::protocols::connection::ConnectionData;
@@ -386,16 +384,18 @@ mod connection_serde_tests {
 
     async fn make_invitee_invited() -> InviteeConnection<InviteeInvited> {
         let indy_ledger: Arc<dyn IndyLedgerRead> = Arc::new(MockLedger {});
-        let content = PairwiseInvitationContent::new(
-            String::new(),
-            vec![PW_KEY.to_owned()],
-            Vec::new(),
-            SERVICE_ENDPOINT.parse().unwrap(),
-        );
+        let content = InvitationContent::builder_pairwise()
+            .label(String::new())
+            .recipient_keys(vec![PW_KEY.to_owned()])
+            .service_endpoint(SERVICE_ENDPOINT.parse().unwrap())
+            .build();
 
-        let decorators = PwInvitationDecorators::default();
-        let pw_invite = PairwiseInvitation::with_decorators(Uuid::new_v4().to_string(), content, decorators);
-        let invitation = AnyInvitation::Con(Invitation::Pairwise(pw_invite));
+        let pw_invite = Invitation::builder()
+            .id(Uuid::new_v4().to_string())
+            .content(content)
+            .build();
+
+        let invitation = AnyInvitation::Con(pw_invite);
 
         make_invitee_initial()
             .await
@@ -425,13 +425,17 @@ mod connection_serde_tests {
 
         let sig_data = sign_connection_response(&wallet, PW_KEY, &con_data).await.unwrap();
 
-        let content = ResponseContent::new(sig_data);
-        let mut decorators = ResponseDecorators::new(Thread::new(con.thread_id().to_owned()));
-        let mut timing = Timing::default();
-        timing.out_time = Some(Utc::now());
-        decorators.timing = Some(timing);
+        let content = ResponseContent::builder().connection_sig(sig_data).build();
+        let decorators = ResponseDecorators::builder()
+            .thread(Thread::builder().thid(con.thread_id().to_owned()).build())
+            .timing(Timing::builder().out_time(Utc::now()).build())
+            .build();
 
-        let response = Response::with_decorators(Uuid::new_v4().to_string(), content, decorators);
+        let response = Response::builder()
+            .id(Uuid::new_v4().to_string())
+            .content(content)
+            .decorators(decorators)
+            .build();
 
         let con = con.handle_response(&wallet, response, &MockTransport).await.unwrap();
 
@@ -461,14 +465,21 @@ mod connection_serde_tests {
         con_data.did_doc.set_recipient_keys(vec![PW_KEY.to_owned()]);
         con_data.did_doc.set_routing_keys(Vec::new());
 
-        let content = RequestContent::new(PW_KEY.to_owned(), con_data);
-        let mut decorators = RequestDecorators::default();
-        decorators.thread = Some(Thread::new(con.thread_id().to_owned()));
-        let mut timing = Timing::default();
-        timing.out_time = Some(Utc::now());
-        decorators.timing = Some(timing);
+        let content = RequestContent::builder()
+            .label(PW_KEY.to_owned())
+            .connection(con_data)
+            .build();
 
-        let request = Request::with_decorators(Uuid::new_v4().to_string(), content, decorators);
+        let decorators = RequestDecorators::builder()
+            .thread(Thread::builder().thid(con.thread_id().to_owned()).build())
+            .timing(Timing::builder().out_time(Utc::now()).build())
+            .build();
+
+        let request = Request::builder()
+            .id(Uuid::new_v4().to_string())
+            .content(content)
+            .decorators(decorators)
+            .build();
 
         con.handle_request(&wallet, request, new_service_endpoint, new_routing_keys, &MockTransport)
             .await
@@ -478,10 +489,17 @@ mod connection_serde_tests {
     async fn make_inviter_completed() -> InviterConnection<InviterCompleted> {
         let con = make_inviter_requested().await;
 
-        let content = AckContent::new(AckStatus::Ok);
-        let decorators = AckDecorators::new(Thread::new(con.thread_id().to_owned()));
+        let content = AckContent::builder().status(AckStatus::Ok).build();
+        let decorators = AckDecorators::builder()
+            .thread(Thread::builder().thid(con.thread_id().to_owned()).build())
+            .build();
 
-        let msg = Ack::with_decorators(Uuid::new_v4().to_string(), content, decorators).into();
+        let msg = Ack::builder()
+            .id(Uuid::new_v4().to_string())
+            .content(content)
+            .decorators(decorators)
+            .build();
+
         con.acknowledge_connection(&msg).unwrap()
     }
 

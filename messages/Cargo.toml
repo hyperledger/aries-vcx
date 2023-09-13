@@ -20,6 +20,8 @@ thiserror = "1.0.37"
 derive_more = "0.99.17"
 transitive = "0.5.0"
 isolang = { version = "2.2.0" }
+typed-builder = "0.16.0"
 messages_macros = { path = "../messages_macros" }
 diddoc_legacy = { path = "../diddoc_legacy" }
 shared_vcx = { path = "../shared_vcx" }
+did_parser = { path = "../did_parser" }

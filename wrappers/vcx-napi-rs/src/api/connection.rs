@@ -145,13 +145,21 @@ pub async fn connection_send_ack(handle: u32) -> napi::Result<()> {
 pub async fn connection_send_generic_message(handle: u32, content: String) -> napi::Result<()> {
     trace!("connection_send_generic_message >>> handle: {:?}", handle);
     let id = Uuid::new_v4().to_string();
-    let content = BasicMessageContent::new(content, Utc::now());
-    let mut decorators = BasicMessageDecorators::default();
-    let mut timing = Timing::default();
-    timing.out_time = Some(Utc::now());
-    decorators.timing = Some(timing);
+    let content = BasicMessageContent::builder()
+        .content(content)
+        .sent_time(Utc::now())
+        .build();
+    let decorators = BasicMessageDecorators::builder()
+        .timing(Timing::builder().out_time(Utc::now()).build())
+        .build();
 
-    let message = AriesMessage::from(BasicMessage::with_decorators(id, content, decorators));
+    let message: BasicMessage = BasicMessage::builder()
+        .id(id)
+        .content(content)
+        .decorators(decorators)
+        .build();
+
+    let message = AriesMessage::from(message);
 
     let basic_message = serde_json::to_string(&message)
         .map_err(From::from)

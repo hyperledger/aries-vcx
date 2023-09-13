@@ -1,5 +1,5 @@
 use messages::msg_fields::protocols::present_proof::propose::{
-    PresentationPreview, ProposePresentation, ProposePresentationContent, ProposePresentationDecorators,
+    PresentationPreview, ProposePresentation, ProposePresentationContent,
 };
 use uuid::Uuid;
 
@@ -12,11 +12,13 @@ impl Default for PresentationProposalSent {
     fn default() -> Self {
         let id = Uuid::new_v4().to_string();
         let preview = PresentationPreview::new(Vec::new(), Vec::new());
-        let content = ProposePresentationContent::new(preview);
-        let decorators = ProposePresentationDecorators::default();
+
+        let content = ProposePresentationContent::builder()
+            .presentation_proposal(preview)
+            .build();
 
         Self {
-            proposal: ProposePresentation::with_decorators(id, content, decorators),
+            proposal: ProposePresentation::builder().id(id).content(content).build(),
         }
     }
 }

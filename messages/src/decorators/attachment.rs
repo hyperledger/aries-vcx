@@ -1,65 +1,50 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use typed_builder::TypedBuilder;
 use url::Url;
 
 use crate::misc::MimeType;
 
 /// Struct representing the `~attach` decorator from its [RFC](<https://github.com/hyperledger/aries-rfcs/blob/main/concepts/0017-attachments/README.md>).
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TypedBuilder)]
 #[serde(rename_all = "snake_case")]
 pub struct Attachment {
+    #[builder(default, setter(strip_option))]
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "@id")]
     pub id: Option<String>,
+    #[builder(default, setter(strip_option))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
+    #[builder(default, setter(strip_option))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub filename: Option<String>,
+    #[builder(default, setter(strip_option))]
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "mime-type")]
     pub mime_type: Option<MimeType>,
+    #[builder(default, setter(strip_option))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub lastmod_time: Option<DateTime<Utc>>,
+    #[builder(default, setter(strip_option))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub byte_count: Option<u64>,
     pub data: AttachmentData,
 }
 
-impl Attachment {
-    pub fn new(data: AttachmentData) -> Self {
-        Self {
-            id: None,
-            description: None,
-            filename: None,
-            mime_type: None,
-            lastmod_time: None,
-            byte_count: None,
-            data,
-        }
-    }
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, TypedBuilder)]
 pub struct AttachmentData {
     // There probably is a better type for this???
+    #[builder(default, setter(strip_option))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub jws: Option<String>,
     // Better type for this as well?
+    #[builder(default, setter(strip_option))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub sha256: Option<String>,
     #[serde(flatten)]
     pub content: AttachmentType,
-}
-
-impl AttachmentData {
-    pub fn new(content: AttachmentType) -> Self {
-        Self {
-            jws: None,
-            sha256: None,
-            content,
-        }
-    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -88,8 +73,8 @@ pub mod tests {
         });
 
         let content = AttachmentType::Json(data);
-        let attach_data = AttachmentData::new(content);
-        Attachment::new(attach_data)
+        let attach_data = AttachmentData::builder().content(content).build();
+        Attachment::builder().data(attach_data).build()
     }
 
     pub fn make_extended_attachment() -> Attachment {
@@ -98,23 +83,16 @@ pub mod tests {
         });
 
         let content = AttachmentType::Json(data);
-        let attach_data = AttachmentData::new(content);
-        let mut attachment = Attachment::new(attach_data);
-        let id = "test_id".to_owned();
-        let description = "test_description".to_owned();
-        let filename = "test_filename".to_owned();
-        let mime_type = MimeType::Json;
-        let lastmod_time = DateTime::<Utc>::default();
-        let byte_count = 64;
-
-        attachment.id = Some(id);
-        attachment.description = Some(description);
-        attachment.filename = Some(filename);
-        attachment.mime_type = Some(mime_type);
-        attachment.lastmod_time = Some(lastmod_time);
-        attachment.byte_count = Some(byte_count);
-
-        attachment
+        let attach_data = AttachmentData::builder().content(content).build();
+        Attachment::builder()
+            .data(attach_data)
+            .id("test_id".to_owned())
+            .description("test_description".to_owned())
+            .filename("test_filename".to_owned())
+            .mime_type(MimeType::Json)
+            .lastmod_time(DateTime::<Utc>::default())
+            .byte_count(64)
+            .build()
     }
 
     #[test]
@@ -158,7 +136,7 @@ pub mod tests {
         let expected = json!({ "json": data });
 
         let content = AttachmentType::Json(data);
-        let attach_data = AttachmentData::new(content);
+        let attach_data = AttachmentData::builder().content(content).build();
 
         test_utils::test_serde(attach_data, expected);
     }
@@ -179,9 +157,11 @@ pub mod tests {
         });
 
         let content = AttachmentType::Json(data);
-        let mut attach_data = AttachmentData::new(content);
-        attach_data.jws = Some(jws);
-        attach_data.sha256 = Some(sha256);
+        let attach_data = AttachmentData::builder()
+            .content(content)
+            .jws(jws)
+            .sha256(sha256)
+            .build();
 
         test_utils::test_serde(attach_data, expected);
     }

@@ -7,9 +7,7 @@ use chrono::Utc;
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use messages::decorators::thread::Thread;
 use messages::decorators::timing::Timing;
-use messages::msg_fields::protocols::connection::invitation::{
-    Invitation, PairwiseInvitation, PairwiseInvitationContent, PwInvitationDecorators,
-};
+use messages::msg_fields::protocols::connection::invitation::{Invitation, PairwiseInvitationContent};
 use messages::msg_fields::protocols::connection::problem_report::{
     ProblemReport, ProblemReportContent, ProblemReportDecorators,
 };
@@ -144,7 +142,7 @@ impl SmConnectionInviter {
     }
 
     pub fn get_protocols(&self) -> Vec<ProtocolDescriptor> {
-        let query = QueryContent::new("*".to_owned());
+        let query = QueryContent::builder().query("*".to_owned()).build();
         query.lookup()
     }
 
@@ -208,18 +206,16 @@ impl SmConnectionInviter {
         let state = match self.state {
             InviterFullState::Initial(state) => {
                 let id = self.thread_id.clone();
-                let content = PairwiseInvitationContent::new(
-                    self.source_id.clone(),
-                    vec![self.pairwise_info.pw_vk.clone()],
-                    routing_keys,
-                    service_endpoint,
-                );
+                let content = PairwiseInvitationContent::builder()
+                    .label(self.source_id.clone())
+                    .recipient_keys(vec![self.pairwise_info.pw_vk.clone()])
+                    .routing_keys(routing_keys)
+                    .service_endpoint(service_endpoint)
+                    .build();
 
-                let decorators = PwInvitationDecorators::default();
+                let invite = Invitation::builder().id(id).content(content).build();
 
-                let invite = PairwiseInvitation::with_decorators(id, content, decorators);
-
-                let invitation = AnyInvitation::Con(Invitation::Pairwise(invite));
+                let invitation = AnyInvitation::Con(invite);
 
                 InviterFullState::Invited((state, invitation).into())
             }
@@ -244,16 +240,18 @@ impl SmConnectionInviter {
         let (state, thread_id) = match self.state {
             InviterFullState::Invited(_) | InviterFullState::Initial(_) => {
                 if let Err(err) = request.content.connection.did_doc.validate() {
-                    let mut content = ProblemReportContent::default();
-                    content.explain = Some(err.to_string());
+                    let content = ProblemReportContent::builder().explain(err.to_string()).build();
 
-                    let mut decorators = ProblemReportDecorators::new(Thread::new(self.thread_id.clone()));
-                    let mut timing = Timing::default();
-                    timing.out_time = Some(Utc::now());
-                    decorators.timing = Some(timing);
+                    let decorators = ProblemReportDecorators::builder()
+                        .thread(Thread::builder().thid(self.thread_id.clone()).build())
+                        .timing(Timing::builder().out_time(Utc::now()).build())
+                        .build();
 
-                    let problem_report =
-                        ProblemReport::with_decorators(Uuid::new_v4().to_string(), content, decorators);
+                    let problem_report: ProblemReport = ProblemReport::builder()
+                        .id(Uuid::new_v4().to_string())
+                        .content(content)
+                        .decorators(decorators)
+                        .build();
 
                     let sender_vk = self.pairwise_info().pw_vk.clone();
                     let did_doc = request.content.connection.did_doc.clone();
@@ -373,14 +371,18 @@ impl SmConnectionInviter {
 
                 let con_sig = sign_connection_response(wallet, &self.pairwise_info.pw_vk, &con_data).await?;
 
-                let content = ResponseContent::new(con_sig);
+                let content = ResponseContent::builder().connection_sig(con_sig).build();
 
-                let mut decorators = ResponseDecorators::new(Thread::new(thread_id));
-                let mut timing = Timing::default();
-                timing.out_time = Some(Utc::now());
-                decorators.timing = Some(timing);
+                let decorators = ResponseDecorators::builder()
+                    .thread(Thread::builder().thid(thread_id).build())
+                    .timing(Timing::builder().out_time(Utc::now()).build())
+                    .build();
 
-                Ok(Response::with_decorators(id, content, decorators))
+                Ok(Response::builder()
+                    .id(id)
+                    .content(content)
+                    .decorators(decorators)
+                    .build())
             }
             _ => Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::NotReady,

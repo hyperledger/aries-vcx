@@ -10,7 +10,7 @@ use messages::{
     decorators::{thread::Thread, timing::Timing},
     msg_fields::protocols::{
         connection::{
-            invitation::Invitation,
+            invitation::InvitationContent,
             request::{Request, RequestContent, RequestDecorators},
             response::Response,
             ConnectionData,
@@ -100,12 +100,12 @@ impl InviteeConnection<Invited> {
         did_doc.set_recipient_keys(recipient_keys);
 
         let con_data = ConnectionData::new(self.pairwise_info.pw_did.to_string(), did_doc);
-        let content = RequestContent::new(self.source_id.to_string(), con_data);
+        let content = RequestContent::builder()
+            .label(self.source_id.to_string())
+            .connection(con_data)
+            .build();
 
-        let mut decorators = RequestDecorators::default();
-        let mut timing = Timing::default();
-        timing.out_time = Some(Utc::now());
-        decorators.timing = Some(timing);
+        let decorators = RequestDecorators::builder().timing(Timing::builder().out_time(Utc::now()).build());
 
         // Depending on the invitation type, we set the connection's thread ID
         // and the request parent and thread ID differently.
@@ -119,22 +119,27 @@ impl InviteeConnection<Invited> {
         // When the invitation is Pairwise, it is designed to be sent to a single invitee.
         // In this case, we reuse the invitation ID (current thread ID) as the thread ID
         // in both the connection and the request.
-        let (thread_id, thread) = match &self.state.invitation {
-            AnyInvitation::Con(Invitation::Public(_)) | AnyInvitation::Oob(_) => {
-                let mut thread = Thread::new(id.clone());
-                thread.pthid = Some(self.state.thread_id().to_owned());
-
-                (id.clone(), thread)
-            }
-            AnyInvitation::Con(Invitation::Pairwise(_)) | AnyInvitation::Con(Invitation::PairwiseDID(_)) => {
-                let thread = Thread::new(self.state.thread_id().to_owned());
-                (self.state.thread_id().to_owned(), thread)
-            }
+        let thread = match &self.state.invitation {
+            AnyInvitation::Oob(invite) => Thread::builder().thid(id.clone()).pthid(invite.id.clone()).build(),
+            AnyInvitation::Con(invite) => match invite.content {
+                InvitationContent::Public(_) => Thread::builder()
+                    .thid(id.clone())
+                    .pthid(self.state.thread_id().to_owned())
+                    .build(),
+                InvitationContent::Pairwise(_) | InvitationContent::PairwiseDID(_) => {
+                    Thread::builder().thid(self.state.thread_id().to_owned()).build()
+                }
+            },
         };
 
-        decorators.thread = Some(thread);
+        let thread_id = thread.thid.clone();
+        let decorators = decorators.thread(thread).build();
 
-        let request = Request::with_decorators(id, content, decorators);
+        let request = Request::builder()
+            .id(id)
+            .content(content)
+            .decorators(decorators)
+            .build();
 
         Ok(Connection {
             state: Requested::new(self.state.did_doc, thread_id, request),
@@ -217,14 +222,14 @@ impl InviteeConnection<Completed> {
     /// Will error out if sending the message fails.
     pub fn get_ack(&self) -> Ack {
         let id = Uuid::new_v4().to_string();
-        let content = AckContent::new(AckStatus::Ok);
+        let content = AckContent::builder().status(AckStatus::Ok).build();
 
-        let mut decorators = AckDecorators::new(Thread::new(self.state.thread_id.clone()));
-        let mut timing = Timing::default();
-        timing.out_time = Some(Utc::now());
-        decorators.timing = Some(timing);
+        let decorators = AckDecorators::builder()
+            .thread(Thread::builder().thid(self.state.thread_id.clone()).build())
+            .timing(Timing::builder().out_time(Utc::now()).build())
+            .build();
 
-        Ack::with_decorators(id, content, decorators)
+        Ack::builder().id(id).content(content).decorators(decorators).build()
     }
 }
 
