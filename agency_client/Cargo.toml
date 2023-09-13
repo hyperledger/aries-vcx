@@ -26,9 +26,3 @@ url = { version = "2.3", features = ["serde"] }
 uuid = { version = "0.8", default-features = false, features = ["v4"]}
 thiserror = "1.0.37"
 shared_vcx = { path = "../shared_vcx" }
-
-[target.'cfg(target_os = "android")'.dependencies]
-android_logger = "0.5"
-
-[dev-dependencies]
-tokio = { version = "1.20", features = [ "rt", "macros" ] }
