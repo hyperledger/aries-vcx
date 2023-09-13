@@ -119,27 +119,20 @@ impl InviteeConnection<Invited> {
         // When the invitation is Pairwise, it is designed to be sent to a single invitee.
         // In this case, we reuse the invitation ID (current thread ID) as the thread ID
         // in both the connection and the request.
-        let (thread_id, thread) = match &self.state.invitation {
-            AnyInvitation::Oob(invite) => {
-                let thread = Thread::builder().thid(id.clone()).pthid(invite.id.clone()).build();
-                (id.clone(), thread)
-            }
+        let thread = match &self.state.invitation {
+            AnyInvitation::Oob(invite) => Thread::builder().thid(id.clone()).pthid(invite.id.clone()).build(),
             AnyInvitation::Con(invite) => match invite.content {
-                InvitationContent::Public(_) => {
-                    let thread = Thread::builder()
-                        .thid(id.clone())
-                        .pthid(self.state.thread_id().to_owned())
-                        .build();
-
-                    (id.clone(), thread)
-                }
+                InvitationContent::Public(_) => Thread::builder()
+                    .thid(id.clone())
+                    .pthid(self.state.thread_id().to_owned())
+                    .build(),
                 InvitationContent::Pairwise(_) | InvitationContent::PairwiseDID(_) => {
-                    let thread = Thread::builder().thid(self.state.thread_id().to_owned()).build();
-                    (self.state.thread_id().to_owned(), thread)
+                    Thread::builder().thid(self.state.thread_id().to_owned()).build()
                 }
             },
         };
 
+        let thread_id = thread.thid.clone();
         let decorators = decorators.thread(thread).build();
 
         let request = Request::builder()

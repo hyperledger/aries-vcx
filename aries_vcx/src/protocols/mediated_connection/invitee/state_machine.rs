@@ -230,25 +230,19 @@ impl SmConnectionInvitee {
 
                 let decorators = RequestDecorators::builder().timing(Timing::builder().out_time(Utc::now()).build());
 
-                let (thread_id, thread) = match &state.invitation {
-                    AnyInvitation::Oob(invite) => {
-                        let thread = Thread::builder().thid(id.clone()).pthid(invite.id.clone()).build();
-
-                        (id.clone(), thread)
-                    }
+                let thread = match &state.invitation {
+                    AnyInvitation::Oob(invite) => Thread::builder().thid(id.clone()).pthid(invite.id.clone()).build(),
                     AnyInvitation::Con(invite) => match invite.content {
                         InvitationContent::Public(_) => {
-                            let thread = Thread::builder().thid(id.clone()).pthid(self.thread_id.clone()).build();
-
-                            (id.clone(), thread)
+                            Thread::builder().thid(id.clone()).pthid(self.thread_id.clone()).build()
                         }
                         InvitationContent::Pairwise(_) | InvitationContent::PairwiseDID(_) => {
-                            let thread = Thread::builder().thid(self.thread_id.clone()).build();
-                            (self.thread_id.clone(), thread)
+                            Thread::builder().thid(self.thread_id.clone()).build()
                         }
                     },
                 };
 
+                let thread_id = thread.thid.clone();
                 let decorators = decorators.thread(thread).build();
 
                 let request = Request::builder()
