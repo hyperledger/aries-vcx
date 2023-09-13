@@ -9,6 +9,7 @@ use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
 
+#[cfg(feature = "migration")]
 use crate::utils::migration::Migratable;
 use crate::utils::scenarios::create_schema;
 use crate::utils::test_agent::{create_test_agent, create_test_agent_trustee};
@@ -22,31 +23,6 @@ use aries_vcx::utils::constants::DEFAULT_SCHEMA_ATTRS;
 use aries_vcx::utils::devsetup::{SetupPoolDirectory, SetupProfile};
 use aries_vcx_core::wallet::indy::wallet::get_verkey_from_wallet;
 use diddoc_legacy::aries::service::AriesService;
-
-#[cfg(foobar)]
-#[tokio::test]
-#[ignore]
-async fn test_pool_get_credential_def() {
-    SetupProfile::run(|setup| async move {
-        let (_, _, cred_def_id, cred_def_json, _) = create_and_store_nonrevocable_credential_def(
-            &setup.profile.inject_anoncreds(),
-            &setup.profile.inject_anoncreds_ledger_read(),
-            &setup.profile.inject_anoncreds_ledger_write(),
-            &setup.institution_did,
-            DEFAULT_SCHEMA_ATTRS,
-        )
-        .await;
-
-        let ledger = Arc::clone(&setup.profile).inject_anoncreds_ledger_read();
-
-        let r_cred_def_json = ledger.get_cred_def(&cred_def_id, None).await.unwrap();
-
-        let def1: serde_json::Value = serde_json::from_str(&cred_def_json).unwrap();
-        let def2: serde_json::Value = serde_json::from_str(&r_cred_def_json).unwrap();
-        assert_eq!(def1, def2);
-    })
-    .await;
-}
 
 #[tokio::test]
 #[ignore]
