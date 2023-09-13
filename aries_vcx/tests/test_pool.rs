@@ -5,9 +5,11 @@ extern crate serde_json;
 
 pub mod utils;
 
+use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
 
+use crate::utils::migration::Migratable;
 use crate::utils::scenarios::create_schema;
 use crate::utils::test_agent::{create_test_agent, create_test_agent_trustee};
 use aries_vcx::common::keys::{get_verkey_from_ledger, rotate_verkey};
@@ -15,6 +17,8 @@ use aries_vcx::common::ledger::service_didsov::EndpointDidSov;
 use aries_vcx::common::ledger::transactions::{
     add_attr, add_new_did, clear_attr, get_attr, get_service, write_endorser_did, write_endpoint, write_endpoint_legacy,
 };
+use aries_vcx::common::test_utils::create_and_store_nonrevocable_credential_def;
+use aries_vcx::utils::constants::DEFAULT_SCHEMA_ATTRS;
 use aries_vcx::utils::devsetup::{SetupPoolDirectory, SetupProfile};
 use aries_vcx_core::wallet::indy::wallet::get_verkey_from_wallet;
 use diddoc_legacy::aries::service::AriesService;
@@ -302,6 +306,32 @@ async fn test_pool_add_get_attr() {
             .await
             .unwrap();
         assert_eq!(attr, "");
+    })
+    .await;
+}
+
+#[tokio::test]
+#[ignore]
+async fn test_agency_pool_get_credential_def() {
+    SetupProfile::run(|mut setup| async move {
+        let (_, _, cred_def_id, cred_def_json, _) = create_and_store_nonrevocable_credential_def(
+            &setup.profile.inject_anoncreds(),
+            &setup.profile.inject_anoncreds_ledger_read(),
+            &setup.profile.inject_anoncreds_ledger_write(),
+            &setup.institution_did,
+            DEFAULT_SCHEMA_ATTRS,
+        )
+        .await;
+
+        #[cfg(feature = "migration")]
+        setup.migrate().await;
+
+        let ledger = Arc::clone(&setup.profile).inject_anoncreds_ledger_read();
+        let r_cred_def_json = ledger.get_cred_def(&cred_def_id, None).await.unwrap();
+
+        let def1: serde_json::Value = serde_json::from_str(&cred_def_json).unwrap();
+        let def2: serde_json::Value = serde_json::from_str(&r_cred_def_json).unwrap();
+        assert_eq!(def1, def2);
     })
     .await;
 }

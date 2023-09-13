@@ -164,31 +164,6 @@ pub fn create_issuer_from_proposal(proposal: ProposeCredential) -> Issuer {
     issuer
 }
 
-pub async fn create_nonrevocable_cred_offer(
-    faber: &mut TestAgent,
-    cred_def: &CredentialDef,
-    credential_json: &str,
-    comment: Option<&str>,
-) -> (Issuer, AriesMessage) {
-    info!("create_nonrevocable_cred_offer >> creating issuer credential");
-    let offer_info = OfferInfo {
-        credential_json: credential_json.to_string(),
-        cred_def_id: cred_def.get_cred_def_id(),
-        rev_reg_id: None,
-        tails_file: None,
-    };
-    let mut issuer = Issuer::create("1").unwrap();
-    info!("create_nonrevocable_cred_offer :: building credential offer");
-    issuer
-        .build_credential_offer_msg(&faber.profile.inject_anoncreds(), offer_info, comment.map(String::from))
-        .await
-        .unwrap();
-    let credential_offer = issuer.get_credential_offer_msg().unwrap();
-
-    info!("create_nonrevocable_cred_offer :: credential offer was built");
-    (issuer, credential_offer)
-}
-
 pub async fn create_schema(faber: &TestAgent) -> VcxResult<Schema> {
     let data = vec!["name", "date", "degree", "empty_param"]
         .iter()
@@ -234,7 +209,7 @@ pub async fn create_credential_offer(
     (issuer, credential_offer)
 }
 
-pub async fn create_credential_request(alice: &mut TestAgent, cred_offer: AriesMessage) -> (Holder, AriesMessage) {
+async fn create_credential_request(alice: &mut TestAgent, cred_offer: AriesMessage) -> (Holder, AriesMessage) {
     info!("create_credential_request >>>");
     let cred_offer: OfferCredential = match cred_offer {
         AriesMessage::CredentialIssuance(CredentialIssuance::OfferCredential(cred_offer)) => cred_offer,
