@@ -196,6 +196,7 @@ export function createAndStoreDid(seed?: string | undefined | null): Promise<str
 export function walletImport(config: string): Promise<void>
 export function walletExport(path: string, backupKey: string): Promise<void>
 export function walletMigrate(walletConfig: string): Promise<void>
+export function walletDelete(walletConfig: string): Promise<void>
 export function getVerkeyFromWallet(did: string): Promise<string>
 export function rotateVerkey(did: string): Promise<void>
 export function rotateVerkeyStart(did: string): Promise<string>

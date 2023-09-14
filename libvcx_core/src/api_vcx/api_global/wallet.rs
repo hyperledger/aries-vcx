@@ -295,6 +295,8 @@ pub async fn wallet_migrate(wallet_config: &WalletConfig) -> LibvcxResult<()> {
         delete_wallet(wallet_config).await.ok();
         Err(LibvcxError::from_msg(LibvcxErrorKind::WalletMigrationFailed, e))
     } else {
+        setup_wallet(dest_wallet_handle)?;
+        close_wallet(src_wallet_handle).await?;
         Ok(())
     }
 }
