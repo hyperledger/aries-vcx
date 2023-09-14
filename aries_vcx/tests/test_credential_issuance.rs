@@ -169,7 +169,7 @@ async fn test_agency_pool_credential_exchange_via_proposal_failed() {
             create_address_schema_creddef_revreg(&institution.profile, &institution.institution_did).await;
         let tails_dir = rev_reg.get_tails_dir();
 
-        let cred_proposal = create_credential_proposal(&schema_id, &cred_def_id, "comment").await;
+        let cred_proposal = create_credential_proposal(&schema_id, &cred_def_id, "comment");
         let mut holder = create_holder_from_proposal(cred_proposal.clone());
         let mut issuer = create_issuer_from_proposal(cred_proposal.clone());
 
@@ -206,14 +206,14 @@ async fn test_agency_pool_credential_exchange_via_proposal_with_negotiation() {
         #[cfg(feature = "migration")]
         institution.migrate().await;
 
-        let cred_proposal = create_credential_proposal(&schema_id, &cred_def_id, "comment").await;
+        let cred_proposal = create_credential_proposal(&schema_id, &cred_def_id, "comment");
         let mut holder = create_holder_from_proposal(cred_proposal.clone());
         let mut issuer = create_issuer_from_proposal(cred_proposal.clone());
 
         #[cfg(feature = "migration")]
         consumer.migrate().await;
 
-        let cred_proposal_1 = create_credential_proposal(&schema_id, &cred_def_id, "comment").await;
+        let cred_proposal_1 = create_credential_proposal(&schema_id, &cred_def_id, "comment");
         let cred_offer_1 = accept_credential_proposal(
             &mut institution,
             &mut issuer,

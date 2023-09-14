@@ -1,4 +1,13 @@
-use messages::msg_fields::protocols::present_proof::propose::PresentationAttr;
+use messages::{
+    misc::MimeType,
+    msg_fields::protocols::{
+        cred_issuance::{
+            propose_credential::{ProposeCredential, ProposeCredentialContent},
+            CredentialAttr, CredentialPreview,
+        },
+        present_proof::propose::PresentationAttr,
+    },
+};
 use serde_json::{json, Value};
 
 pub fn attr_names_address() -> (String, String, String, String, String) {
@@ -65,6 +74,29 @@ pub(super) fn requested_attr_objects(cred_def_id: &str) -> Vec<PresentationAttr>
         .build();
 
     vec![address1_attr, address2_attr, city_attr, state_attr, zip_attr]
+}
+
+pub fn create_credential_proposal(schema_id: &str, cred_def_id: &str, comment: &str) -> ProposeCredential {
+    let mut attrs = Vec::new();
+    for (key, value) in credential_data_address_1().as_object().unwrap() {
+        attrs.push(
+            CredentialAttr::builder()
+                .name(key.to_string())
+                .value(value.to_string())
+                .mime_type(MimeType::Plain)
+                .build(),
+        );
+    }
+    let content = ProposeCredentialContent::builder()
+        .credential_proposal(CredentialPreview::new(attrs))
+        .schema_id(schema_id.to_owned())
+        .cred_def_id(cred_def_id.to_owned())
+        .comment(comment.to_owned())
+        .build();
+    ProposeCredential::builder()
+        .id("test".to_owned())
+        .content(content)
+        .build()
 }
 
 pub fn credential_data_address_1() -> Value {

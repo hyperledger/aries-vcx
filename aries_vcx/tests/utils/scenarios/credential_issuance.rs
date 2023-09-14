@@ -6,10 +6,9 @@ use aries_vcx::common::test_utils::create_and_store_credential_def_and_rev_reg;
 use aries_vcx::core::profile::profile::Profile;
 use aries_vcx::handlers::util::OfferInfo;
 use aries_vcx::protocols::mediated_connection::pairwise_info::PairwiseInfo;
-use messages::misc::MimeType;
 use messages::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
-use messages::msg_fields::protocols::cred_issuance::propose_credential::{ProposeCredential, ProposeCredentialContent};
-use messages::msg_fields::protocols::cred_issuance::{CredentialAttr, CredentialIssuance, CredentialPreview};
+use messages::msg_fields::protocols::cred_issuance::propose_credential::ProposeCredential;
+use messages::msg_fields::protocols::cred_issuance::CredentialIssuance;
 use messages::AriesMessage;
 use serde_json::json;
 
@@ -22,7 +21,7 @@ use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
 use aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
 use aries_vcx::utils::constants::TEST_TAILS_URL;
 
-use super::{attr_names_address, attr_names_list, credential_data_address_1};
+use super::{attr_names_list, create_credential_proposal, credential_data_address_1};
 
 pub async fn create_address_schema_creddef_revreg(
     profile: &Arc<dyn Profile>,
@@ -111,59 +110,6 @@ async fn create_credential_request(alice: &mut TestAgent, cred_offer: AriesMessa
         .await
         .unwrap();
     (holder, cred_request)
-}
-
-// TODO: Maybe just deserialize this?
-pub async fn create_credential_proposal(schema_id: &str, cred_def_id: &str, comment: &str) -> ProposeCredential {
-    let (address1, address2, city, state, zip) = attr_names_address();
-    let mut attrs = Vec::new();
-
-    let attr = CredentialAttr::builder()
-        .name(address1)
-        .value("123 Main Str".to_owned())
-        .mime_type(MimeType::Plain)
-        .build();
-
-    attrs.push(attr);
-
-    let attr = CredentialAttr::builder()
-        .name(address2)
-        .value("Suite 3".to_owned())
-        .mime_type(MimeType::Plain)
-        .build();
-    attrs.push(attr);
-
-    let attr = CredentialAttr::builder()
-        .name(city)
-        .value("Draper".to_owned())
-        .mime_type(MimeType::Plain)
-        .build();
-    attrs.push(attr);
-
-    let attr = CredentialAttr::builder()
-        .name(state)
-        .value("UT".to_owned())
-        .mime_type(MimeType::Plain)
-        .build();
-    attrs.push(attr);
-
-    let attr = CredentialAttr::builder()
-        .name(zip)
-        .value("84000".to_owned())
-        .mime_type(MimeType::Plain)
-        .build();
-    attrs.push(attr);
-
-    let preview = CredentialPreview::new(attrs);
-    let content = ProposeCredentialContent::builder()
-        .credential_proposal(preview)
-        .schema_id(schema_id.to_owned())
-        .cred_def_id(cred_def_id.to_owned())
-        .comment(comment.to_owned())
-        .build();
-
-    let id = "test".to_owned();
-    ProposeCredential::builder().id(id).content(content).build()
 }
 
 pub async fn accept_credential_proposal(
@@ -368,7 +314,7 @@ pub async fn exchange_credential_with_proposal(
     tails_dir: Option<String>,
     comment: &str,
 ) -> (Holder, Issuer) {
-    let cred_proposal = create_credential_proposal(schema_id, cred_def_id, comment).await;
+    let cred_proposal = create_credential_proposal(schema_id, cred_def_id, comment);
     let mut holder = create_holder_from_proposal(cred_proposal.clone());
     let mut issuer = create_issuer_from_proposal(cred_proposal.clone());
     let cred_offer = accept_credential_proposal(institution, &mut issuer, cred_proposal, rev_reg_id, tails_dir).await;
