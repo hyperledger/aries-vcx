@@ -2,10 +2,8 @@ use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
 
-use aries_vcx::common::primitives::credential_schema::Schema;
 use aries_vcx::common::test_utils::create_and_store_credential_def_and_rev_reg;
 use aries_vcx::core::profile::profile::Profile;
-use aries_vcx::errors::error::VcxResult;
 use aries_vcx::handlers::util::OfferInfo;
 use aries_vcx::protocols::mediated_connection::pairwise_info::PairwiseInfo;
 use messages::misc::MimeType;
@@ -26,6 +24,40 @@ use aries_vcx::utils::constants::TEST_TAILS_URL;
 
 use super::attr_names;
 
+pub async fn create_address_schema_creddef_revreg(
+    profile: &Arc<dyn Profile>,
+    institution_did: &str,
+) -> (
+    String,
+    String,
+    String,
+    String,
+    CredentialDef,
+    RevocationRegistry,
+    Option<String>,
+) {
+    info!("_create_address_schema >>> ");
+    let attrs_list = json!(["address1", "address2", "city", "state", "zip"]).to_string();
+    let (schema_id, schema_json, cred_def_id, cred_def_json, rev_reg_id, _, cred_def, rev_reg) =
+        create_and_store_credential_def_and_rev_reg(
+            &profile.inject_anoncreds(),
+            &profile.inject_anoncreds_ledger_read(),
+            &profile.inject_anoncreds_ledger_write(),
+            &institution_did,
+            &attrs_list,
+        )
+        .await;
+    (
+        schema_id,
+        schema_json,
+        cred_def_id.to_string(),
+        cred_def_json,
+        cred_def,
+        rev_reg,
+        Some(rev_reg_id),
+    )
+}
+
 pub fn create_holder_from_proposal(proposal: ProposeCredential) -> Holder {
     let holder = Holder::create_with_proposal("TEST_CREDENTIAL", proposal).unwrap();
     assert_eq!(HolderState::ProposalSet, holder.get_state());
@@ -37,27 +69,6 @@ pub fn create_issuer_from_proposal(proposal: ProposeCredential) -> Issuer {
     assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
     assert_eq!(proposal.clone(), issuer.get_proposal().unwrap());
     issuer
-}
-
-pub async fn create_schema(faber: &TestAgent) -> VcxResult<Schema> {
-    let data = vec!["name", "date", "degree", "empty_param"]
-        .iter()
-        .map(|s| s.to_string())
-        .collect();
-    let name: String = aries_vcx::utils::random::generate_random_schema_name();
-    let version: String = String::from("1.0");
-
-    Schema::create(
-        &faber.profile.inject_anoncreds(),
-        "",
-        &faber.institution_did,
-        &name,
-        &version,
-        &data,
-    )
-    .await?
-    .publish(&faber.profile.inject_anoncreds_ledger_write(), None)
-    .await
 }
 
 pub async fn create_credential_offer(
@@ -288,7 +299,31 @@ pub async fn send_credential(
     }
 }
 
-pub async fn _exchange_credential(
+pub async fn issue_address_credential(
+    consumer: &mut TestAgent,
+    institution: &mut TestAgent,
+) -> (
+    String,
+    String,
+    Option<String>,
+    CredentialDef,
+    RevocationRegistry,
+    Issuer,
+) {
+    let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, rev_reg_id) =
+        create_address_schema_creddef_revreg(&institution.profile, &institution.institution_did).await;
+
+    info!("issue_address_credential");
+    let (address1, address2, city, state, zip) = attr_names();
+    let credential_data =
+        json!({address1: "123 Main St", address2: "Suite 3", city: "Draper", state: "UT", zip: "84000"}).to_string();
+
+    let credential_handle =
+        exchange_credential(consumer, institution, credential_data, &cred_def, &rev_reg, None).await;
+    (schema_id, cred_def_id, rev_reg_id, cred_def, rev_reg, credential_handle)
+}
+
+pub async fn exchange_credential(
     consumer: &mut TestAgent,
     institution: &mut TestAgent,
     credential_data: String,
@@ -321,7 +356,7 @@ pub async fn _exchange_credential(
     issuer_credential
 }
 
-pub async fn _exchange_credential_with_proposal(
+pub async fn exchange_credential_with_proposal(
     consumer: &mut TestAgent,
     institution: &mut TestAgent,
     schema_id: &str,
@@ -337,62 +372,4 @@ pub async fn _exchange_credential_with_proposal(
     let cred_request = accept_offer(consumer, cred_offer, &mut holder).await;
     send_credential(consumer, institution, &mut issuer, &mut holder, cred_request, true).await;
     (holder, issuer)
-}
-
-pub async fn issue_address_credential(
-    consumer: &mut TestAgent,
-    institution: &mut TestAgent,
-) -> (
-    String,
-    String,
-    Option<String>,
-    CredentialDef,
-    RevocationRegistry,
-    Issuer,
-) {
-    let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, rev_reg_id) =
-        _create_address_schema_creddef_revreg(&institution.profile, &institution.institution_did).await;
-
-    info!("issue_address_credential");
-    let (address1, address2, city, state, zip) = attr_names();
-    let credential_data =
-        json!({address1: "123 Main St", address2: "Suite 3", city: "Draper", state: "UT", zip: "84000"}).to_string();
-
-    let credential_handle =
-        _exchange_credential(consumer, institution, credential_data, &cred_def, &rev_reg, None).await;
-    (schema_id, cred_def_id, rev_reg_id, cred_def, rev_reg, credential_handle)
-}
-
-pub async fn _create_address_schema_creddef_revreg(
-    profile: &Arc<dyn Profile>,
-    institution_did: &str,
-) -> (
-    String,
-    String,
-    String,
-    String,
-    CredentialDef,
-    RevocationRegistry,
-    Option<String>,
-) {
-    info!("_create_address_schema >>> ");
-    let attrs_list = json!(["address1", "address2", "city", "state", "zip"]).to_string();
-    let (schema_id, schema_json, cred_def_id, cred_def_json, rev_reg_id, _, cred_def, rev_reg) =
-        create_and_store_credential_def_and_rev_reg(
-            &profile.inject_anoncreds(),
-            &profile.inject_anoncreds_ledger_read(),
-            &profile.inject_anoncreds_ledger_write(),
-            &institution_did,
-            &attrs_list,
-        )
-        .await;
-    (
-        schema_id,
-        schema_json,
-        cred_def_id.to_string(),
-        cred_def_json,
-        cred_def,
-        rev_reg,
-        Some(rev_reg_id),
-    )
 }

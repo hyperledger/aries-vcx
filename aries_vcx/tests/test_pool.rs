@@ -11,7 +11,6 @@ use std::time::Duration;
 
 #[cfg(feature = "migration")]
 use crate::utils::migration::Migratable;
-use crate::utils::scenarios::create_schema;
 use crate::utils::test_agent::{create_test_agent, create_test_agent_trustee};
 use aries_vcx::common::keys::{get_verkey_from_ledger, rotate_verkey};
 use aries_vcx::common::ledger::service_didsov::EndpointDidSov;
@@ -92,7 +91,14 @@ async fn test_pool_write_new_endorser_did() {
             .await
             .unwrap();
 
-        assert!(create_schema(&acme).await.is_err());
+        let attrib_json = json!({ "attrib_name": "foo"}).to_string();
+        assert!(add_attr(
+            &acme.profile.inject_indy_ledger_write(),
+            &acme.institution_did,
+            &attrib_json
+        )
+        .await
+        .is_err());
         write_endorser_did(
             &faber.profile.inject_indy_ledger_write(),
             &faber.institution_did,
@@ -103,7 +109,13 @@ async fn test_pool_write_new_endorser_did() {
         .await
         .unwrap();
         thread::sleep(Duration::from_millis(50));
-        create_schema(&acme).await.unwrap();
+        add_attr(
+            &acme.profile.inject_indy_ledger_write(),
+            &acme.institution_did,
+            &attrib_json,
+        )
+        .await
+        .unwrap();
     })
     .await;
 }

@@ -22,9 +22,9 @@ use messages::AriesMessage;
 #[cfg(feature = "migration")]
 use crate::utils::migration::Migratable;
 use crate::utils::scenarios::{
-    _create_address_schema_creddef_revreg, _exchange_credential_with_proposal, accept_proof_proposal,
-    create_proof_proposal, generate_and_send_proof, prover_select_credentials, receive_proof_proposal_rejection,
-    reject_proof_proposal, verify_proof,
+    accept_proof_proposal, create_address_schema_creddef_revreg, create_proof_proposal,
+    exchange_credential_with_proposal, generate_and_send_proof, prover_select_credentials,
+    receive_proof_proposal_rejection, reject_proof_proposal, verify_proof,
 };
 use crate::utils::test_agent::{create_test_agent, create_test_agent_trustee};
 
@@ -153,13 +153,13 @@ async fn test_agency_pool_presentation_via_proposal() {
         let mut consumer = create_test_agent(setup.genesis_file_path.clone()).await;
 
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, _cred_def, rev_reg, rev_reg_id) =
-            _create_address_schema_creddef_revreg(&institution.profile, &institution.institution_did).await;
+            create_address_schema_creddef_revreg(&institution.profile, &institution.institution_did).await;
         let tails_dir = rev_reg.get_tails_dir();
 
         #[cfg(feature = "migration")]
         institution.migrate().await;
 
-        _exchange_credential_with_proposal(
+        exchange_credential_with_proposal(
             &mut consumer,
             &mut institution,
             &schema_id,
@@ -195,13 +195,13 @@ async fn test_agency_pool_presentation_via_proposal_with_rejection() {
         let mut consumer = create_test_agent(setup.genesis_file_path.clone()).await;
 
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, _cred_def, rev_reg, rev_reg_id) =
-            _create_address_schema_creddef_revreg(&institution.profile, &institution.institution_did).await;
+            create_address_schema_creddef_revreg(&institution.profile, &institution.institution_did).await;
         let tails_dir = rev_reg.get_tails_dir();
 
         #[cfg(feature = "migration")]
         institution.migrate().await;
 
-        _exchange_credential_with_proposal(
+        exchange_credential_with_proposal(
             &mut consumer,
             &mut institution,
             &schema_id,
@@ -227,13 +227,13 @@ async fn test_agency_pool_presentation_via_proposal_with_negotiation() {
         let mut consumer = create_test_agent(setup.genesis_file_path.clone()).await;
 
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, _cred_def, rev_reg, rev_reg_id) =
-            _create_address_schema_creddef_revreg(&institution.profile, &institution.institution_did).await;
+            create_address_schema_creddef_revreg(&institution.profile, &institution.institution_did).await;
         let tails_dir = rev_reg.get_tails_dir();
 
         #[cfg(feature = "migration")]
         institution.migrate().await;
 
-        _exchange_credential_with_proposal(
+        exchange_credential_with_proposal(
             &mut consumer,
             &mut institution,
             &schema_id,

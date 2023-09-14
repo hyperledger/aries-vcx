@@ -15,11 +15,10 @@ use aries_vcx::utils::devsetup::*;
 #[cfg(feature = "migration")]
 use crate::utils::migration::Migratable;
 use crate::utils::scenarios::{
-    _create_address_schema_creddef_revreg, _exchange_credential, attr_names, create_proof_request_data,
-    create_verifier_from_request_data, exchange_proof, issue_address_credential,
-    prover_select_credentials_and_send_proof, publish_revocation, requested_attrs,
-    revoke_credential_and_publish_accumulator, revoke_credential_local, rotate_rev_reg,
-    verifier_create_proof_and_send_request,
+    attr_names, create_address_schema_creddef_revreg, create_proof_request_data, create_verifier_from_request_data,
+    exchange_credential, exchange_proof, issue_address_credential, prover_select_credentials_and_send_proof,
+    publish_revocation, requested_attrs, revoke_credential_and_publish_accumulator, revoke_credential_local,
+    rotate_rev_reg, verifier_create_proof_and_send_request,
 };
 use crate::utils::test_agent::{create_test_agent, create_test_agent_trustee};
 
@@ -166,10 +165,10 @@ async fn test_agency_batch_revocation() {
 
             // Issue and send three credentials of the same schema
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _rev_reg_id) =
-                _create_address_schema_creddef_revreg(&institution.profile, &institution.institution_did).await;
+                create_address_schema_creddef_revreg(&institution.profile, &institution.institution_did).await;
             let (address1, address2, city, state, zip) = attr_names();
             let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
-            let issuer_credential1 = _exchange_credential(
+            let issuer_credential1 = exchange_credential(
                 &mut consumer1,
                 &mut institution,
                 credential_data1,
@@ -183,7 +182,7 @@ async fn test_agency_batch_revocation() {
             institution.migrate().await;
 
             let credential_data2 = json!({address1.clone(): "101 Tela Lane", address2.clone(): "Suite 1", city.clone(): "SLC", state.clone(): "WA", zip.clone(): "8721"}).to_string();
-            let issuer_credential2 = _exchange_credential(
+            let issuer_credential2 = exchange_credential(
                 &mut consumer2,
                 &mut institution,
                 credential_data2,
@@ -197,7 +196,7 @@ async fn test_agency_batch_revocation() {
             consumer1.migrate().await;
 
             let credential_data3 = json!({address1.clone(): "5th Avenue", address2.clone(): "Suite 1234", city.clone(): "NYC", state.clone(): "NYS", zip.clone(): "84712"}).to_string();
-            let issuer_credential3 = _exchange_credential(
+            let issuer_credential3 = exchange_credential(
                 &mut consumer3,
                 &mut institution,
                 credential_data3,
@@ -380,11 +379,11 @@ async fn test_agency_pool_two_creds_one_rev_reg_revoke_first() {
             let mut consumer = create_test_agent(setup.genesis_file_path).await;
 
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _rev_reg_id) =
-                _create_address_schema_creddef_revreg(&issuer.profile, &issuer.institution_did).await;
+                create_address_schema_creddef_revreg(&issuer.profile, &issuer.institution_did).await;
             let (address1, address2, city, state, zip) = attr_names();
             let (req1, req2) = (Some("request1"), Some("request2"));
             let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
-            let issuer_credential1 = _exchange_credential(
+            let issuer_credential1 = exchange_credential(
                 &mut consumer,
                 &mut issuer,
                 credential_data1.clone(),
@@ -398,7 +397,7 @@ async fn test_agency_pool_two_creds_one_rev_reg_revoke_first() {
             issuer.migrate().await;
 
             let credential_data2 = json!({address1.clone(): "101 Tela Lane", address2.clone(): "Suite 1", city.clone(): "SLC", state.clone(): "WA", zip.clone(): "8721"}).to_string();
-            let issuer_credential2 = _exchange_credential(
+            let issuer_credential2 = exchange_credential(
                 &mut consumer,
                 &mut issuer,
                 credential_data2.clone(),
@@ -448,11 +447,11 @@ async fn test_agency_pool_two_creds_one_rev_reg_revoke_second() {
             let mut consumer = create_test_agent(setup.genesis_file_path).await;
 
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _rev_reg_id) =
-                _create_address_schema_creddef_revreg(&issuer.profile, &issuer.institution_did).await;
+                create_address_schema_creddef_revreg(&issuer.profile, &issuer.institution_did).await;
             let (address1, address2, city, state, zip) = attr_names();
             let (req1, req2) = (Some("request1"), Some("request2"));
             let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
-            let issuer_credential1 = _exchange_credential(
+            let issuer_credential1 = exchange_credential(
                 &mut consumer,
                 &mut issuer,
                 credential_data1.clone(),
@@ -466,7 +465,7 @@ async fn test_agency_pool_two_creds_one_rev_reg_revoke_second() {
             issuer.migrate().await;
 
             let credential_data2 = json!({address1.clone(): "101 Tela Lane", address2.clone(): "Suite 1", city.clone(): "SLC", state.clone(): "WA", zip.clone(): "8721"}).to_string();
-            let issuer_credential2 = _exchange_credential(
+            let issuer_credential2 = exchange_credential(
                 &mut consumer,
                 &mut issuer,
                 credential_data2.clone(),
@@ -515,11 +514,11 @@ async fn test_agency_pool_two_creds_two_rev_reg_id() {
             let mut consumer = create_test_agent(setup.genesis_file_path).await;
 
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _) =
-                _create_address_schema_creddef_revreg(&issuer.profile, &issuer.institution_did).await;
+                create_address_schema_creddef_revreg(&issuer.profile, &issuer.institution_did).await;
             let (address1, address2, city, state, zip) = attr_names();
             let (req1, req2) = (Some("request1"), Some("request2"));
             let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
-            let issuer_credential1 = _exchange_credential(
+            let issuer_credential1 = exchange_credential(
                 &mut consumer,
                 &mut issuer,
                 credential_data1.clone(),
@@ -534,7 +533,7 @@ async fn test_agency_pool_two_creds_two_rev_reg_id() {
 
             let rev_reg_2 = rotate_rev_reg(&mut issuer, &cred_def, &rev_reg).await;
             let credential_data2 = json!({address1.clone(): "101 Tela Lane", address2.clone(): "Suite 1", city.clone(): "SLC", state.clone(): "WA", zip.clone(): "8721"}).to_string();
-            let issuer_credential2 = _exchange_credential(
+            let issuer_credential2 = exchange_credential(
                 &mut consumer,
                 &mut issuer,
                 credential_data2.clone(),
@@ -579,11 +578,11 @@ async fn test_agency_pool_two_creds_two_rev_reg_id_revoke_first() {
             let mut consumer = create_test_agent(setup.genesis_file_path).await;
 
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _) =
-                _create_address_schema_creddef_revreg(&issuer.profile, &issuer.institution_did).await;
+                create_address_schema_creddef_revreg(&issuer.profile, &issuer.institution_did).await;
             let (address1, address2, city, state, zip) = attr_names();
             let (req1, req2) = (Some("request1"), Some("request2"));
             let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
-            let issuer_credential1 = _exchange_credential(
+            let issuer_credential1 = exchange_credential(
                 &mut consumer,
                 &mut issuer,
                 credential_data1.clone(),
@@ -598,7 +597,7 @@ async fn test_agency_pool_two_creds_two_rev_reg_id_revoke_first() {
 
             let rev_reg_2 = rotate_rev_reg(&mut issuer, &cred_def, &rev_reg).await;
             let credential_data2 = json!({address1.clone(): "101 Tela Lane", address2.clone(): "Suite 1", city.clone(): "SLC", state.clone(): "WA", zip.clone(): "8721"}).to_string();
-            let issuer_credential2 = _exchange_credential(
+            let issuer_credential2 = exchange_credential(
                 &mut consumer,
                 &mut issuer,
                 credential_data2.clone(),
@@ -646,11 +645,11 @@ async fn test_agency_pool_two_creds_two_rev_reg_id_revoke_second() {
             let mut consumer = create_test_agent(setup.genesis_file_path).await;
 
             let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _) =
-                _create_address_schema_creddef_revreg(&issuer.profile, &issuer.institution_did).await;
+                create_address_schema_creddef_revreg(&issuer.profile, &issuer.institution_did).await;
             let (address1, address2, city, state, zip) = attr_names();
             let (req1, req2) = (Some("request1"), Some("request2"));
             let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
-            let issuer_credential1 = _exchange_credential(
+            let issuer_credential1 = exchange_credential(
                 &mut consumer,
                 &mut issuer,
                 credential_data1.clone(),
@@ -665,7 +664,7 @@ async fn test_agency_pool_two_creds_two_rev_reg_id_revoke_second() {
 
             let rev_reg_2 = rotate_rev_reg(&mut issuer, &cred_def, &rev_reg).await;
             let credential_data2 = json!({address1.clone(): "101 Tela Lane", address2.clone(): "Suite 1", city.clone(): "SLC", state.clone(): "WA", zip.clone(): "8721"}).to_string();
-            let issuer_credential2 = _exchange_credential(
+            let issuer_credential2 = exchange_credential(
                 &mut consumer,
                 &mut issuer,
                 credential_data2.clone(),
@@ -714,13 +713,13 @@ async fn test_agency_pool_three_creds_one_rev_reg_revoke_all() {
             let mut consumer = create_test_agent(setup.genesis_file_path.clone()).await;
 
             let (_schema_id, _schema_json, _cred_def_id, _cred_def_json, cred_def, rev_reg, _rev_reg_id) =
-                _create_address_schema_creddef_revreg(&issuer.profile, &issuer.institution_did).await;
+                create_address_schema_creddef_revreg(&issuer.profile, &issuer.institution_did).await;
 
             let (address1, address2, city, state, zip) = attr_names();
             let (req1, req2, req3) = (Some("request1"), Some("request2"), Some("request3"));
 
             let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
-            let issuer_credential1 = _exchange_credential(
+            let issuer_credential1 = exchange_credential(
                 &mut consumer,
                 &mut issuer,
                 credential_data1.clone(),
@@ -738,7 +737,7 @@ async fn test_agency_pool_three_creds_one_rev_reg_revoke_all() {
 
             let credential_data2 = json!({address1.clone(): "101 Tela Lane", address2.clone(): "Suite 1", city.clone(): "SLC", state.clone(): "WA", zip.clone(): "8721"}).to_string();
 
-            let issuer_credential2 = _exchange_credential(
+            let issuer_credential2 = exchange_credential(
                 &mut consumer,
                 &mut issuer,
                 credential_data2.clone(),
@@ -763,7 +762,7 @@ async fn test_agency_pool_three_creds_one_rev_reg_revoke_all() {
 
             let credential_data3 = json!({address1.clone(): "221 Baker Street", address2.clone(): "Apt. B", city.clone(): "London", state.clone(): "N/A", zip.clone(): "NW1 6XE."}).to_string();
 
-            let issuer_credential3 = _exchange_credential(
+            let issuer_credential3 = exchange_credential(
                 &mut consumer,
                 &mut issuer,
                 credential_data3.clone(),
