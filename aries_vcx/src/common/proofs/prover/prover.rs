@@ -40,8 +40,10 @@ pub async fn generate_indy_proof(
         )
     })?;
 
+    // create objects representing the details of how to present each referent
     let mut credentials_identifiers = credential_def_identifiers(credentials, &proof_request)?;
 
+    // 
     let revoc_states_json = build_rev_states_json(ledger, anoncreds, &mut credentials_identifiers).await?;
     let requested_credentials =
         build_requested_credentials_json(&credentials_identifiers, self_attested_attrs, &proof_request)?;
@@ -56,7 +58,7 @@ pub async fn generate_indy_proof(
             settings::DEFAULT_LINK_SECRET_ALIAS,
             &schemas_json,
             &credential_defs_json,
-            Some(&revoc_states_json),
+            Some(&serde_json::to_string(&revoc_states_json)?), // TODO - can we use solid types now?!?
         )
         .await?;
     Ok(proof)
