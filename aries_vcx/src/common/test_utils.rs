@@ -37,6 +37,7 @@ pub async fn create_and_write_test_schema(
     (schema_id, schema_json)
 }
 
+// TODO: Deduplicate this with create_and_store_credential_def_and_rev_reg
 pub async fn create_and_store_nonrevocable_credential_def(
     anoncreds: &Arc<dyn BaseAnonCreds>,
     ledger_read: &Arc<dyn AnoncredsLedgerRead>,

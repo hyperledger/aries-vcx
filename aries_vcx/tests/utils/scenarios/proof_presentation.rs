@@ -26,7 +26,6 @@ use aries_vcx::protocols::proof_presentation::verifier::verification_status::Pre
 use aries_vcx::utils::constants::{DEFAULT_PROOF_NAME, TEST_TAILS_URL};
 use aries_vcx_core::ledger::indy::pool::test_utils::get_temp_dir_path;
 
-// TODO: Move to data
 use super::requested_attrs;
 
 pub async fn create_proof_proposal(prover: &mut Prover, cred_def_id: &str) -> AriesMessage {
@@ -201,7 +200,6 @@ pub async fn revoke_credential_and_publish_accumulator(
 pub async fn revoke_credential_local(faber: &mut TestAgent, issuer_credential: &Issuer, rev_reg_id: &str) {
     let ledger = Arc::clone(&faber.profile).inject_anoncreds_ledger_read();
     let (_, delta, timestamp) = ledger.get_rev_reg_delta_json(rev_reg_id, None, None).await.unwrap();
-    info!("revoking credential locally");
 
     issuer_credential
         .revoke_credential_local(&faber.profile.inject_anoncreds())

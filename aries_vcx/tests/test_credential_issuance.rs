@@ -1,7 +1,5 @@
 #[macro_use]
 extern crate log;
-#[macro_use]
-extern crate serde_json;
 
 pub mod utils;
 
@@ -12,8 +10,8 @@ use aries_vcx::utils::devsetup::*;
 #[cfg(feature = "migration")]
 use crate::utils::migration::Migratable;
 use crate::utils::scenarios::{
-    accept_credential_proposal, accept_offer, attr_names, create_address_schema_creddef_revreg,
-    create_credential_proposal, create_holder_from_proposal, create_issuer_from_proposal, decline_offer,
+    accept_credential_proposal, accept_offer, create_address_schema_creddef_revreg, create_credential_proposal,
+    create_holder_from_proposal, create_issuer_from_proposal, credential_data_address_1, decline_offer,
     exchange_credential, exchange_credential_with_proposal, exchange_proof, send_credential,
 };
 use crate::utils::test_agent::{create_test_agent, create_test_agent_trustee};
@@ -27,8 +25,7 @@ async fn test_agency_pool_double_issuance_issuer_is_verifier() {
 
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _rev_reg_id) =
             create_address_schema_creddef_revreg(&institution.profile, &institution.institution_did).await;
-        let (address1, address, city, state, zip) = attr_names();
-        let credential_data = json!({address1.clone(): "5th Avenue", address.clone(): "Suite 1234", city.clone(): "NYC", state.clone(): "NYS", zip.clone(): "84712"}).to_string();
+        let credential_data = credential_data_address_1().to_string();
         let _credential_handle = exchange_credential(
             &mut consumer,
             &mut institution,
@@ -37,15 +34,21 @@ async fn test_agency_pool_double_issuance_issuer_is_verifier() {
             &rev_reg,
             None,
         )
-            .await;
+        .await;
 
         // NOTE: Credx-anoncreds-implementation-generated presentation is not compatible with vdrtools anoncreds implementation
         // as the presentation fails to deserialize
         // #[cfg(feature = "migration")]
         // consumer.migrate().await;
 
-        let verifier_handler =
-            exchange_proof(&mut institution, &mut consumer, &schema_id, &cred_def_id, Some("request1")).await;
+        let verifier_handler = exchange_proof(
+            &mut institution,
+            &mut consumer,
+            &schema_id,
+            &cred_def_id,
+            Some("request1"),
+        )
+        .await;
         assert_eq!(
             verifier_handler.get_verification_status(),
             PresentationVerificationStatus::Valid
@@ -54,14 +57,20 @@ async fn test_agency_pool_double_issuance_issuer_is_verifier() {
         #[cfg(feature = "migration")]
         institution.migrate().await;
 
-        let verifier_handler =
-            exchange_proof(&mut institution, &mut consumer, &schema_id, &cred_def_id, Some("request2")).await;
+        let verifier_handler = exchange_proof(
+            &mut institution,
+            &mut consumer,
+            &schema_id,
+            &cred_def_id,
+            Some("request2"),
+        )
+        .await;
         assert_eq!(
             verifier_handler.get_verification_status(),
             PresentationVerificationStatus::Valid
         );
-
-    }).await;
+    })
+    .await;
 }
 
 #[tokio::test]
@@ -74,9 +83,8 @@ async fn test_agency_pool_two_creds_one_rev_reg() {
 
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _rev_reg_id) =
             create_address_schema_creddef_revreg(&issuer.profile, &issuer.institution_did).await;
-        let (address1, address2, city, state, zip) = attr_names();
         let (req1, req2) = (Some("request1"), Some("request2"));
-        let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
+        let credential_data1 = credential_data_address_1().to_string();
         let _credential_handle1 = exchange_credential(
             &mut consumer,
             &mut issuer,
@@ -85,12 +93,12 @@ async fn test_agency_pool_two_creds_one_rev_reg() {
             &rev_reg,
             req1,
         )
-            .await;
+        .await;
 
         #[cfg(feature = "migration")]
         issuer.migrate().await;
 
-        let credential_data2 = json!({address1.clone(): "101 Tela Lane", address2.clone(): "Suite 1", city.clone(): "SLC", state.clone(): "WA", zip.clone(): "8721"}).to_string();
+        let credential_data2 = credential_data_address_1().to_string();
         let _credential_handle2 = exchange_credential(
             &mut consumer,
             &mut issuer,
@@ -99,13 +107,12 @@ async fn test_agency_pool_two_creds_one_rev_reg() {
             &rev_reg,
             req2,
         )
-            .await;
+        .await;
 
         #[cfg(feature = "migration")]
         verifier.migrate().await;
 
-        let verifier_handler =
-            exchange_proof(&mut verifier, &mut consumer, &schema_id, &cred_def_id, req1).await;
+        let verifier_handler = exchange_proof(&mut verifier, &mut consumer, &schema_id, &cred_def_id, req1).await;
         assert_eq!(
             verifier_handler.get_verification_status(),
             PresentationVerificationStatus::Valid
@@ -114,14 +121,13 @@ async fn test_agency_pool_two_creds_one_rev_reg() {
         #[cfg(feature = "migration")]
         consumer.migrate().await;
 
-        let verifier_handler =
-            exchange_proof(&mut verifier, &mut consumer, &schema_id, &cred_def_id, req2).await;
+        let verifier_handler = exchange_proof(&mut verifier, &mut consumer, &schema_id, &cred_def_id, req2).await;
         assert_eq!(
             verifier_handler.get_verification_status(),
             PresentationVerificationStatus::Valid
         );
-
-    }).await;
+    })
+    .await;
 }
 
 #[tokio::test]
