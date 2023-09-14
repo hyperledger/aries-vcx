@@ -36,8 +36,8 @@ pub async fn create_address_schema_creddef_revreg(
     RevocationRegistry,
     Option<String>,
 ) {
-    info!("_create_address_schema >>> ");
     let attrs_list = json!(["address1", "address2", "city", "state", "zip"]).to_string();
+    // TODO: Do not use create_and_store_credential_def_and_rev_reg
     let (schema_id, schema_json, cred_def_id, cred_def_json, rev_reg_id, _, cred_def, rev_reg) =
         create_and_store_credential_def_and_rev_reg(
             &profile.inject_anoncreds(),
@@ -84,26 +84,22 @@ pub async fn create_credential_offer(
         rev_reg_id: Some(rev_reg.get_rev_reg_id()),
         tails_file: Some(rev_reg.get_tails_dir()),
     };
-    info!("create_and_send_cred_offer :: sending credential offer, offer_info: {offer_info:?}");
     let mut issuer = Issuer::create("1").unwrap();
     issuer
         .build_credential_offer_msg(&faber.profile.inject_anoncreds(), offer_info, comment.map(String::from))
         .await
         .unwrap();
     let credential_offer = issuer.get_credential_offer_msg().unwrap();
-    info!("create_and_send_cred_offer :: credential offer was created");
     (issuer, credential_offer)
 }
 
 async fn create_credential_request(alice: &mut TestAgent, cred_offer: AriesMessage) -> (Holder, AriesMessage) {
-    info!("create_credential_request >>>");
     let cred_offer: OfferCredential = match cred_offer {
         AriesMessage::CredentialIssuance(CredentialIssuance::OfferCredential(cred_offer)) => cred_offer,
         _ => panic!("Unexpected message type"),
     };
     let mut holder = Holder::create_from_offer("TEST_CREDENTIAL", cred_offer).unwrap();
     assert_eq!(HolderState::OfferReceived, holder.get_state());
-    info!("create_credential_request :: sending credential request");
     let cred_request = holder
         .prepare_credential_request(
             &alice.profile.inject_anoncreds_ledger_read(),
@@ -118,6 +114,7 @@ async fn create_credential_request(alice: &mut TestAgent, cred_offer: AriesMessa
     (holder, cred_request)
 }
 
+// TODO: Maybe just deserialize it?
 pub async fn create_credential_proposal(schema_id: &str, cred_def_id: &str, comment: &str) -> ProposeCredential {
     let (address1, address2, city, state, zip) = attr_names();
     let mut attrs = Vec::new();
@@ -192,6 +189,7 @@ pub async fn accept_credential_proposal(
 }
 
 pub async fn accept_offer(alice: &mut TestAgent, cred_offer: AriesMessage, holder: &mut Holder) -> AriesMessage {
+    // TODO: Replace with message-specific handler
     holder
         .process_aries_msg(
             &alice.profile.inject_anoncreds_ledger_read(),
@@ -218,6 +216,7 @@ pub async fn accept_offer(alice: &mut TestAgent, cred_offer: AriesMessage, holde
 }
 
 pub async fn decline_offer(alice: &mut TestAgent, cred_offer: AriesMessage, holder: &mut Holder) -> AriesMessage {
+    // TODO: Replace with message-specific handler
     holder
         .process_aries_msg(
             &alice.profile.inject_anoncreds_ledger_read(),
@@ -240,7 +239,6 @@ pub async fn send_credential(
     cred_request: AriesMessage,
     revokable: bool,
 ) {
-    info!("send_credential >>> getting offers");
     let thread_id = issuer_credential.get_thread_id().unwrap();
     assert_eq!(IssuerState::OfferSet, issuer_credential.get_state());
     assert!(!issuer_credential.is_revokable());
@@ -255,7 +253,6 @@ pub async fn send_credential(
     assert!(!issuer_credential.is_revokable());
     assert_eq!(thread_id, issuer_credential.get_thread_id().unwrap());
 
-    info!("send_credential >>> sending credential");
     issuer_credential
         .build_credential(&faber.profile.inject_anoncreds())
         .await
@@ -263,7 +260,6 @@ pub async fn send_credential(
     let credential = issuer_credential.get_msg_issue_credential().unwrap();
     assert_eq!(thread_id, issuer_credential.get_thread_id().unwrap());
 
-    info!("send_credential >>> storing credential");
     assert_eq!(thread_id, holder_credential.get_thread_id().unwrap());
     assert_eq!(
         holder_credential
@@ -313,7 +309,6 @@ pub async fn issue_address_credential(
     let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, rev_reg_id) =
         create_address_schema_creddef_revreg(&institution.profile, &institution.institution_did).await;
 
-    info!("issue_address_credential");
     let (address1, address2, city, state, zip) = attr_names();
     let credential_data =
         json!({address1: "123 Main St", address2: "Suite 3", city: "Draper", state: "UT", zip: "84000"}).to_string();
@@ -331,12 +326,9 @@ pub async fn exchange_credential(
     rev_reg: &RevocationRegistry,
     comment: Option<&str>,
 ) -> Issuer {
-    info!("Generated credential data: {}", credential_data);
     let (mut issuer_credential, cred_offer) =
         create_credential_offer(institution, cred_def, rev_reg, &credential_data, comment).await;
-    info!("AS CONSUMER SEND CREDENTIAL REQUEST");
     let (mut holder_credential, cred_request) = create_credential_request(consumer, cred_offer).await;
-    info!("AS INSTITUTION SEND CREDENTIAL");
     send_credential(
         consumer,
         institution,
