@@ -23,8 +23,7 @@ use aries_vcx::common::primitives::credential_schema::Schema;
 use aries_vcx::common::primitives::revocation_registry::{generate_rev_reg, RevocationRegistry};
 use aries_vcx::common::primitives::revocation_registry_delta::RevocationRegistryDelta;
 use aries_vcx::common::test_utils::{
-    create_and_write_test_cred_def, create_and_write_test_rev_reg, create_and_write_test_schema,
-    create_and_write_test_schema_1,
+    create_and_write_test_cred_def, create_and_write_test_rev_reg, create_and_write_test_schema_1,
 };
 use aries_vcx::errors::error::AriesVcxErrorKind;
 use aries_vcx::utils::constants::DEFAULT_SCHEMA_ATTRS;
@@ -485,7 +484,7 @@ async fn test_pool_get_rev_reg() {
 #[ignore]
 async fn test_pool_create_and_get_schema() {
     SetupProfile::run(|setup| async move {
-        let (schema_id, _schema_json) = create_and_write_test_schema(
+        let schema = create_and_write_test_schema_1(
             &setup.profile.inject_anoncreds(),
             &setup.profile.inject_anoncreds_ledger_write(),
             &setup.institution_did,
@@ -494,10 +493,10 @@ async fn test_pool_create_and_get_schema() {
         .await;
 
         let ledger = Arc::clone(&setup.profile).inject_anoncreds_ledger_read();
-        let rc = ledger.get_schema(&schema_id, None).await;
+        let rc = ledger.get_schema(&schema.schema_id, None).await;
 
         let retrieved_schema = rc.unwrap();
-        assert!(retrieved_schema.contains(&schema_id));
+        assert!(retrieved_schema.contains(&schema.schema_id));
     })
     .await;
 }

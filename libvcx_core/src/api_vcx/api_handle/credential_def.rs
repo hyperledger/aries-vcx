@@ -106,7 +106,7 @@ pub mod tests {
     use aries_vcx::aries_vcx_core::ledger::indy::pool::test_utils::get_temp_dir_path;
     use std::{thread::sleep, time::Duration};
 
-    use aries_vcx::common::test_utils::create_and_write_test_schema;
+    use aries_vcx::common::test_utils::create_and_write_test_schema_1;
     use aries_vcx::global::settings::CONFIG_INSTITUTION_DID;
     use aries_vcx::utils;
     use aries_vcx::utils::constants::SCHEMA_ID;
@@ -164,7 +164,7 @@ pub mod tests {
     #[ignore]
     async fn create_revocable_cred_def_and_check_tails_location() {
         SetupGlobalsWalletPoolAgency::run(|setup| async move {
-            let (schema_id, _) = create_and_write_test_schema(
+            let schema = create_and_write_test_schema_1(
                 &get_main_anoncreds().unwrap(),
                 &get_main_anoncreds_ledger_write().unwrap(),
                 &setup.institution_did,
@@ -175,7 +175,7 @@ pub mod tests {
 
             let path = get_temp_dir_path();
 
-            let handle_cred_def = create("1".to_string(), schema_id, "tag1".to_string(), true)
+            let handle_cred_def = create("1".to_string(), &schema.schema_id, "tag1".to_string(), true)
                 .await
                 .unwrap();
             publish(handle_cred_def).await.unwrap();

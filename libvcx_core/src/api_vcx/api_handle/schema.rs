@@ -171,7 +171,7 @@ pub mod test_utils {
 
 #[cfg(test)]
 pub mod tests {
-    use aries_vcx::common::test_utils::create_and_write_test_schema;
+    use aries_vcx::common::test_utils::create_and_write_test_schema_1;
     use aries_vcx::global::settings::{set_config_value, DEFAULT_DID};
     use aries_vcx::utils::constants;
     use aries_vcx::utils::constants::SCHEMA_ID;
@@ -230,7 +230,7 @@ pub mod tests {
     #[ignore]
     async fn test_get_schema_attrs_from_ledger() {
         SetupGlobalsWalletPoolAgency::run(|setup| async move {
-            let (schema_id, _) = create_and_write_test_schema(
+            let schema = create_and_write_test_schema_1(
                 &get_main_anoncreds().unwrap(),
                 &&get_main_anoncreds_ledger_write().unwrap(),
                 &setup.institution_did,
@@ -238,12 +238,14 @@ pub mod tests {
             )
             .await;
 
-            let (schema_handle, schema_attrs) = get_schema_attrs("id".to_string(), schema_id.clone()).await.unwrap();
+            let (schema_handle, schema_attrs) = get_schema_attrs("id".to_string(), schema.schema_id.clone())
+                .await
+                .unwrap();
 
             check_schema(
                 schema_handle,
                 &schema_attrs,
-                &schema_id,
+                &schema.schema_id,
                 constants::DEFAULT_SCHEMA_ATTRS,
             );
         })

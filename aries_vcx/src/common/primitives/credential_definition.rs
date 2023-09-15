@@ -291,7 +291,7 @@ pub mod integration_tests {
 
     use crate::common::primitives::credential_definition::generate_cred_def;
     use crate::common::primitives::revocation_registry::generate_rev_reg;
-    use crate::common::test_utils::create_and_write_test_schema;
+    use crate::common::test_utils::create_and_write_test_schema_1;
     use crate::utils::constants::DEFAULT_SCHEMA_ATTRS;
     use crate::utils::devsetup::SetupProfile;
 
@@ -299,7 +299,7 @@ pub mod integration_tests {
     #[ignore]
     async fn test_pool_create_cred_def_real() {
         SetupProfile::run(|setup| async move {
-            let (schema_id, _) = create_and_write_test_schema(
+            let schema = create_and_write_test_schema_1(
                 &setup.profile.inject_anoncreds(),
                 &setup.profile.inject_anoncreds_ledger_write(),
                 &setup.institution_did,
@@ -309,7 +309,7 @@ pub mod integration_tests {
 
             let ledger_read = Arc::clone(&setup.profile).inject_anoncreds_ledger_read();
             let ledger_write = Arc::clone(&setup.profile).inject_anoncreds_ledger_write();
-            let schema_json = ledger_read.get_schema(&schema_id, None).await.unwrap();
+            let schema_json = ledger_read.get_schema(&schema.schema_id, None).await.unwrap();
 
             let (cred_def_id, cred_def_json_local) = generate_cred_def(
                 &setup.profile.inject_anoncreds(),
@@ -344,7 +344,7 @@ pub mod integration_tests {
     #[ignore]
     async fn test_pool_create_rev_reg_def() {
         SetupProfile::run(|setup| async move {
-            let (schema_id, _) = create_and_write_test_schema(
+            let schema = create_and_write_test_schema_1(
                 &setup.profile.inject_anoncreds(),
                 &setup.profile.inject_anoncreds_ledger_write(),
                 &setup.institution_did,
@@ -353,7 +353,7 @@ pub mod integration_tests {
             .await;
             let ledger_read = Arc::clone(&setup.profile).inject_anoncreds_ledger_read();
             let ledger_write = Arc::clone(&setup.profile).inject_anoncreds_ledger_write();
-            let schema_json = ledger_read.get_schema(&schema_id, None).await.unwrap();
+            let schema_json = ledger_read.get_schema(&schema.schema_id, None).await.unwrap();
 
             let (cred_def_id, cred_def_json) = generate_cred_def(
                 &setup.profile.inject_anoncreds(),

@@ -16,31 +16,6 @@ use crate::utils::random::{generate_random_schema_name, generate_random_schema_v
 
 use super::primitives::credential_schema::Schema;
 
-// TODO: Replace with create_and_write_test_schema_1
-pub async fn create_and_write_test_schema(
-    anoncreds: &Arc<dyn BaseAnonCreds>,
-    ledger_write: &Arc<dyn AnoncredsLedgerWrite>,
-    submitter_did: &str,
-    attr_list: &str,
-) -> (String, String) {
-    let (schema_id, schema_json) = anoncreds
-        .issuer_create_schema(
-            &submitter_did,
-            &generate_random_schema_name(),
-            &generate_random_schema_version(),
-            attr_list,
-        )
-        .await
-        .unwrap();
-
-    let _response = ledger_write
-        .publish_schema(&schema_json, submitter_did, None)
-        .await
-        .unwrap();
-    tokio::time::sleep(Duration::from_millis(1000)).await;
-    (schema_id, schema_json)
-}
-
 pub async fn create_and_write_test_schema_1(
     anoncreds: &Arc<dyn BaseAnonCreds>,
     ledger_write: &Arc<dyn AnoncredsLedgerWrite>,
