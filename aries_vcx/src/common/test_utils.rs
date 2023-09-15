@@ -65,6 +65,7 @@ pub async fn create_and_store_nonrevocable_credential_def(
     (schema_id, schema_json, cred_def_id, cred_def_json, cred_def)
 }
 
+// TODO: Split into schema, cred def, and rev reg creation functions
 pub async fn create_and_store_credential_def_and_rev_reg(
     anoncreds: &Arc<dyn BaseAnonCreds>,
     ledger_read: &Arc<dyn AnoncredsLedgerRead>,

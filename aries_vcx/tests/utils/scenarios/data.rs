@@ -99,5 +99,5 @@ pub fn credential_data_address_2() -> Value {
 
 pub fn credential_data_address_3() -> Value {
     let (address1, address2, city, state, zip) = attr_names_address();
-    json!({address1: "007 Mock St", address2: "Yes", city: "None", state: "KO", zip: "00000"})
+    json!({address1: "007 Mock St", address2: "Yes", city: "None", state: "KO", zip: "11111"})
 }

@@ -254,9 +254,8 @@ pub async fn verifier_create_proof_and_send_request(
     request_name: Option<&str>,
 ) -> Verifier {
     let requested_attrs = requested_attrs_address(&institution.institution_did, &schema_id, &cred_def_id, None, None);
-    let requested_attrs_string = serde_json::to_string(&requested_attrs).unwrap();
     let presentation_request_data =
-        create_proof_request_data(institution, &requested_attrs_string, "[]", "{}", request_name).await;
+        create_proof_request_data(institution, &requested_attrs.to_string(), "[]", "{}", request_name).await;
     create_verifier_from_request_data(presentation_request_data).await
 }
 
