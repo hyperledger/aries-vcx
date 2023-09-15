@@ -58,13 +58,10 @@ Aries-VCX supports connection to [tools/simple_message_relay](/tools/simple_mess
 
 The demo app needs this endpoint to establish communication with the peer.
 
-Update [serviceEndpoint](./demo/app/src/main/res/values/strings.xml) to reflect the public IP.
+Update [BASE_RELAY_ENDPOINT](./demo/app/src/main/java/org/hyperledger/ariesvcx/Constants.kt) to reflect the public IP.
 
-```xml
-<resources>
-    ...
-    <string name="serviceEndpoint">{YOUR_PUBLIC_IP}</string>
-</resources>
+```kt
+const val BASE_RELAY_ENDPOINT = <your-public-ip-endpoint>;
 ```
 
 Now you are ready to start communicating. Use the QR scanner in the app to establish connection with the peer.

@@ -13,7 +13,10 @@ pub struct UnpackMessage {
     pub sender_verkey: Option<String>,
 }
 
-pub fn unpack_message(profile_holder: Arc<ProfileHolder>, packed_msg: String) -> VcxUniFFIResult<UnpackMessage> {
+pub fn unpack_message(
+    profile_holder: Arc<ProfileHolder>,
+    packed_msg: String,
+) -> VcxUniFFIResult<UnpackMessage> {
     block_on(async {
         let packed_bytes = packed_msg.as_bytes();
         let wallet = profile_holder.inner.inject_wallet();
