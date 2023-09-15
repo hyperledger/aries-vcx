@@ -16,6 +16,7 @@ use crate::utils::random::{generate_random_schema_name, generate_random_schema_v
 
 use super::primitives::credential_schema::Schema;
 
+// TODO: Replace with create_and_write_test_schema_1
 pub async fn create_and_write_test_schema(
     anoncreds: &Arc<dyn BaseAnonCreds>,
     ledger_write: &Arc<dyn AnoncredsLedgerWrite>,
@@ -105,94 +106,6 @@ pub async fn create_and_write_test_rev_reg(
         .await
         .unwrap();
     rev_reg
-}
-
-// todo: extract create_and_store_nonrevocable_credential_def into caller functions
-pub async fn create_and_store_nonrevocable_credential(
-    anoncreds_issuer: &Arc<dyn BaseAnonCreds>,
-    anoncreds_holder: &Arc<dyn BaseAnonCreds>,
-    ledger_read: &Arc<dyn AnoncredsLedgerRead>,
-    ledger_write: &Arc<dyn AnoncredsLedgerWrite>,
-    issuer_did: &str,
-    attr_list: &str,
-) -> (String, String, String, String, String, String, String, String) {
-    let (schema_id, schema_json) =
-        create_and_write_test_schema(anoncreds_issuer, ledger_write, issuer_did, attr_list).await;
-
-    let cred_def = CredentialDef::create(
-        ledger_read,
-        anoncreds_issuer,
-        "1".to_string(),
-        CredentialDefConfigBuilder::default()
-            .issuer_did(issuer_did)
-            .schema_id(&schema_id)
-            .tag("1")
-            .build()
-            .unwrap(),
-        false,
-    )
-    .await
-    .unwrap()
-    .publish_cred_def(ledger_read, ledger_write)
-    .await
-    .unwrap();
-
-    tokio::time::sleep(Duration::from_millis(1000)).await;
-
-    let cred_def_id = cred_def.get_cred_def_id();
-    let cred_def_json = ledger_read.get_cred_def(&cred_def_id, None).await.unwrap();
-
-    let (offer, req, req_meta) = create_credential_req(
-        anoncreds_issuer,
-        anoncreds_holder,
-        issuer_did,
-        &cred_def_id,
-        &cred_def_json,
-    )
-    .await;
-
-    /* create cred */
-    let credential_data = r#"{"address1": ["123 Main St"], "address2": ["Suite 3"], "city": ["Draper"], "state": ["UT"], "zip": ["84000"]}"#;
-    let encoded_attributes = encode_attributes(&credential_data).unwrap();
-
-    let (cred, _, _) = anoncreds_issuer
-        .issuer_create_credential(&offer, &req, &encoded_attributes, None, None)
-        .await
-        .unwrap();
-    /* store cred */
-    let cred_id = anoncreds_holder
-        .prover_store_credential(None, &req_meta, &cred, &cred_def_json, None)
-        .await
-        .unwrap();
-    (
-        schema_id,
-        schema_json,
-        cred_def_id,
-        cred_def_json,
-        offer,
-        req,
-        req_meta,
-        cred_id,
-    )
-}
-
-async fn create_credential_req(
-    anoncreds_issuer: &Arc<dyn BaseAnonCreds>,
-    anoncreds_holder: &Arc<dyn BaseAnonCreds>,
-    did: &str,
-    cred_def_id: &str,
-    cred_def_json: &str,
-) -> (String, String, String) {
-    let offer = anoncreds_issuer
-        .issuer_create_credential_offer(cred_def_id)
-        .await
-        .unwrap();
-    let master_secret_name = settings::DEFAULT_LINK_SECRET_ALIAS;
-    let (req, req_meta) = anoncreds_holder
-        .prover_create_credential_req(&did, &offer, cred_def_json, master_secret_name)
-        .await
-        .unwrap();
-    (offer, req, req_meta)
 }
 
 // todo: extract create_and_store_credential_def into caller functions
