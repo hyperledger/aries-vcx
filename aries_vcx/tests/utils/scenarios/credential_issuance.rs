@@ -2,7 +2,9 @@ use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
 
-use aries_vcx::common::test_utils::create_and_store_credential_def_and_rev_reg;
+use aries_vcx::common::test_utils::{
+    create_and_write_test_cred_def, create_and_write_test_rev_reg, create_and_write_test_schema_1,
+};
 use aries_vcx::core::profile::profile::Profile;
 use aries_vcx::handlers::util::OfferInfo;
 use aries_vcx::protocols::mediated_connection::pairwise_info::PairwiseInfo;
@@ -35,23 +37,39 @@ pub async fn create_address_schema_creddef_revreg(
     RevocationRegistry,
     Option<String>,
 ) {
-    let (schema_id, schema_json, cred_def_id, cred_def_json, rev_reg_id, _, cred_def, rev_reg) =
-        create_and_store_credential_def_and_rev_reg(
-            &profile.inject_anoncreds(),
-            &profile.inject_anoncreds_ledger_read(),
-            &profile.inject_anoncreds_ledger_write(),
-            &institution_did,
-            &json!(attr_names_address_list()).to_string(),
-        )
-        .await;
+    let ledger_read = profile.inject_anoncreds_ledger_read();
+    let ledger_write = profile.inject_anoncreds_ledger_write();
+    let anoncreds = profile.inject_anoncreds();
+
+    let schema = create_and_write_test_schema_1(
+        &anoncreds,
+        &ledger_write,
+        &institution_did,
+        &json!(attr_names_address_list()).to_string(),
+    )
+    .await;
+    let cred_def = create_and_write_test_cred_def(
+        &anoncreds,
+        &ledger_read,
+        &ledger_write,
+        &institution_did,
+        &schema.schema_id,
+    )
+    .await;
+    let rev_reg =
+        create_and_write_test_rev_reg(&anoncreds, &ledger_write, &institution_did, &cred_def.get_cred_def_id()).await;
+
+    tokio::time::sleep(Duration::from_millis(1000)).await;
+    let cred_def_id = cred_def.get_cred_def_id();
+    let cred_def_json = ledger_read.get_cred_def(&cred_def_id, None).await.unwrap();
     (
-        schema_id,
-        schema_json,
+        schema.schema_id,
+        schema.schema_json,
         cred_def_id.to_string(),
         cred_def_json,
         cred_def,
-        rev_reg,
-        Some(rev_reg_id),
+        rev_reg.clone(),
+        Some(rev_reg.rev_reg_id),
     )
 }
 
@@ -250,14 +268,8 @@ pub async fn issue_address_credential(
     RevocationRegistry,
     Issuer,
 ) {
-    let (schema_id, _, cred_def_id, _, rev_reg_id, _, cred_def, rev_reg) = create_and_store_credential_def_and_rev_reg(
-        &institution.profile.inject_anoncreds(),
-        &institution.profile.inject_anoncreds_ledger_read(),
-        &institution.profile.inject_anoncreds_ledger_write(),
-        &institution.institution_did,
-        &json!(attr_names_address_list()).to_string(),
-    )
-    .await;
+    let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, rev_reg_id) =
+        create_address_schema_creddef_revreg(&institution.profile, &institution.institution_did).await;
 
     let issuer = exchange_credential(
         consumer,
@@ -268,7 +280,7 @@ pub async fn issue_address_credential(
         None,
     )
     .await;
-    (schema_id, cred_def_id, Some(rev_reg_id), cred_def, rev_reg, issuer)
+    (schema_id, cred_def_id, rev_reg_id, cred_def, rev_reg, issuer)
 }
 
 pub async fn exchange_credential(

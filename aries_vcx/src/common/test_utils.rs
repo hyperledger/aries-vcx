@@ -107,43 +107,6 @@ pub async fn create_and_write_test_rev_reg(
     rev_reg
 }
 
-// TODO: Split into schema, cred def, and rev reg creation functions
-pub async fn create_and_store_credential_def_and_rev_reg(
-    anoncreds: &Arc<dyn BaseAnonCreds>,
-    ledger_read: &Arc<dyn AnoncredsLedgerRead>,
-    ledger_write: &Arc<dyn AnoncredsLedgerWrite>,
-    issuer_did: &str,
-    attr_list: &str,
-) -> (
-    String,
-    String,
-    String,
-    String,
-    String,
-    String,
-    CredentialDef,
-    RevocationRegistry,
-) {
-    let schema = create_and_write_test_schema_1(anoncreds, ledger_write, issuer_did, attr_list).await;
-    let cred_def =
-        create_and_write_test_cred_def(anoncreds, ledger_read, ledger_write, issuer_did, &schema.schema_id).await;
-    let rev_reg = create_and_write_test_rev_reg(anoncreds, ledger_write, issuer_did, &cred_def.get_cred_def_id()).await;
-
-    tokio::time::sleep(Duration::from_millis(1000)).await;
-    let cred_def_id = cred_def.get_cred_def_id();
-    let cred_def_json = ledger_read.get_cred_def(&cred_def_id, None).await.unwrap();
-    (
-        schema.schema_id,
-        schema.schema_json,
-        cred_def_id,
-        cred_def_json,
-        rev_reg.get_rev_reg_id(),
-        rev_reg.tails_dir.clone(),
-        cred_def,
-        rev_reg,
-    )
-}
-
 // todo: extract create_and_store_nonrevocable_credential_def into caller functions
 pub async fn create_and_store_nonrevocable_credential(
     anoncreds_issuer: &Arc<dyn BaseAnonCreds>,
@@ -254,15 +217,26 @@ pub async fn create_and_store_credential(
     String,
     RevocationRegistry,
 ) {
-    let (schema_id, schema_json, cred_def_id, cred_def_json, rev_reg_id, tails_dir, _, rev_reg) =
-        create_and_store_credential_def_and_rev_reg(
-            anoncreds_issuer,
-            ledger_read,
-            ledger_write,
-            institution_did,
-            attr_list,
-        )
-        .await;
+    let schema = create_and_write_test_schema_1(anoncreds_issuer, ledger_write, institution_did, attr_list).await;
+    let cred_def = create_and_write_test_cred_def(
+        anoncreds_issuer,
+        ledger_read,
+        ledger_write,
+        institution_did,
+        &schema.schema_id,
+    )
+    .await;
+    let rev_reg = create_and_write_test_rev_reg(
+        anoncreds_issuer,
+        ledger_write,
+        institution_did,
+        &cred_def.get_cred_def_id(),
+    )
+    .await;
+
+    tokio::time::sleep(Duration::from_millis(1000)).await;
+    let cred_def_id = cred_def.get_cred_def_id();
+    let cred_def_json = ledger_read.get_cred_def(&cred_def_id, None).await.unwrap();
 
     let offer = anoncreds_issuer
         .issuer_create_credential_offer(&cred_def_id)
@@ -277,15 +251,15 @@ pub async fn create_and_store_credential(
     /* create cred */
     let credential_data = r#"{"address1": ["123 Main St"], "address2": ["Suite 3"], "city": ["Draper"], "state": ["UT"], "zip": ["84000"]}"#;
     let encoded_attributes = encode_attributes(&credential_data).unwrap();
-    let rev_def_json = ledger_read.get_rev_reg_def_json(&rev_reg_id).await.unwrap();
+    let rev_def_json = ledger_read.get_rev_reg_def_json(&rev_reg.rev_reg_id).await.unwrap();
 
     let (cred, cred_rev_id, _) = anoncreds_issuer
         .issuer_create_credential(
             &offer,
             &req,
             &encoded_attributes,
-            Some(rev_reg_id.clone()),
-            Some(tails_dir.clone()),
+            Some(rev_reg.rev_reg_id.clone()),
+            Some(rev_reg.tails_dir.clone()),
         )
         .await
         .unwrap();
@@ -295,17 +269,17 @@ pub async fn create_and_store_credential(
         .await
         .unwrap();
     (
-        schema_id,
-        schema_json,
+        schema.schema_id,
+        schema.schema_json,
         cred_def_id,
         cred_def_json,
         offer,
         req,
         req_meta,
         cred_id,
-        rev_reg_id,
+        rev_reg.rev_reg_id.clone(),
         cred_rev_id.unwrap(),
-        tails_dir,
+        rev_reg.tails_dir.clone(),
         rev_reg,
     )
 }

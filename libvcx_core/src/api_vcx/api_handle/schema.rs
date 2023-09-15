@@ -63,7 +63,7 @@ pub async fn get_schema_attrs(source_id: String, schema_id: String) -> LibvcxRes
         schema_id
     );
     let schema_ledger_data_json = get_main_anoncreds_ledger_read()?.get_schema(&schema_id, None).await?;
-    let schema = Schema::create_from_ledger_json(&schema_json, &source_id, &schema_id)?;
+    let schema = Schema::create_from_ledger_json(&schema_ledger_data_json, &source_id, &schema_id)?;
     let schema_json = schema.to_string_versioned()?;
 
     let handle = SCHEMA_MAP

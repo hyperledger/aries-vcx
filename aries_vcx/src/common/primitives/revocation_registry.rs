@@ -17,7 +17,7 @@ pub struct RevocationRegistry {
     pub rev_reg_id: String,
     pub(in crate::common) rev_reg_def: RevocationRegistryDefinition,
     pub(in crate::common) rev_reg_entry: String,
-    pub(in crate::common) tails_dir: String,
+    pub tails_dir: String,
     pub(in crate::common) max_creds: u32,
     pub(in crate::common) tag: u32,
     rev_reg_def_state: PublicEntityStateType,
