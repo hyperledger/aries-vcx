@@ -17,11 +17,45 @@ use aries_vcx::common::ledger::service_didsov::EndpointDidSov;
 use aries_vcx::common::ledger::transactions::{
     add_attr, add_new_did, clear_attr, get_attr, get_service, write_endorser_did, write_endpoint, write_endpoint_legacy,
 };
-use aries_vcx::common::test_utils::create_and_store_nonrevocable_credential_def;
+use aries_vcx::common::primitives::credential_definition::{CredentialDef, CredentialDefConfigBuilder};
+use aries_vcx::common::primitives::revocation_registry::generate_rev_reg;
+use aries_vcx::common::test_utils::{create_and_store_credential_def_and_rev_reg, create_and_write_test_schema};
+use aries_vcx::errors::error::AriesVcxErrorKind;
 use aries_vcx::utils::constants::DEFAULT_SCHEMA_ATTRS;
 use aries_vcx::utils::devsetup::{SetupPoolDirectory, SetupProfile};
+use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
+use aries_vcx_core::ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite};
+use aries_vcx_core::ledger::indy::pool::test_utils::get_temp_file_path;
 use aries_vcx_core::wallet::indy::wallet::get_verkey_from_wallet;
 use diddoc_legacy::aries::service::AriesService;
+
+// TODO: Deduplicate this with create_and_store_credential_def_and_rev_reg
+async fn create_and_store_nonrevocable_credential_def(
+    anoncreds: &Arc<dyn BaseAnonCreds>,
+    ledger_read: &Arc<dyn AnoncredsLedgerRead>,
+    ledger_write: &Arc<dyn AnoncredsLedgerWrite>,
+    issuer_did: &str,
+    attr_list: &str,
+) -> (String, String, String, String, CredentialDef) {
+    let (schema_id, schema_json) = create_and_write_test_schema(anoncreds, ledger_write, issuer_did, attr_list).await;
+    let config = CredentialDefConfigBuilder::default()
+        .issuer_did(issuer_did)
+        .schema_id(&schema_id)
+        .tag("1")
+        .build()
+        .unwrap();
+    let cred_def = CredentialDef::create(ledger_read, anoncreds, "1".to_string(), config, false)
+        .await
+        .unwrap()
+        .publish_cred_def(ledger_read, ledger_write)
+        .await
+        .unwrap();
+    let cred_def_id = cred_def.get_cred_def_id();
+    tokio::time::sleep(Duration::from_millis(1000)).await;
+
+    let cred_def_json = ledger_read.get_cred_def(&cred_def_id, None).await.unwrap();
+    (schema_id, schema_json, cred_def_id, cred_def_json, cred_def)
+}
 
 #[tokio::test]
 #[ignore]
@@ -320,6 +354,127 @@ async fn test_agency_pool_get_credential_def() {
         let def1: serde_json::Value = serde_json::from_str(&cred_def_json).unwrap();
         let def2: serde_json::Value = serde_json::from_str(&r_cred_def_json).unwrap();
         assert_eq!(def1, def2);
+    })
+    .await;
+}
+
+#[tokio::test]
+#[ignore]
+async fn test_pool_rev_reg_def_fails_for_cred_def_created_without_revocation() {
+    SetupProfile::run(|setup| async move {
+        // Cred def is created with support_revocation=false,
+        // revoc_reg_def will fail in libindy because cred_Def doesn't have revocation keys
+        let (_, _, cred_def_id, _, _) = create_and_store_nonrevocable_credential_def(
+            &setup.profile.inject_anoncreds(),
+            &setup.profile.inject_anoncreds_ledger_read(),
+            &setup.profile.inject_anoncreds_ledger_write(),
+            &setup.institution_did,
+            DEFAULT_SCHEMA_ATTRS,
+        )
+        .await;
+
+        let rc = generate_rev_reg(
+            &setup.profile.inject_anoncreds(),
+            &setup.institution_did,
+            &cred_def_id,
+            get_temp_file_path("path.txt").to_str().unwrap(),
+            2,
+            "tag1",
+        )
+        .await;
+
+        #[cfg(feature = "modular_libs")]
+        assert_eq!(rc.unwrap_err().kind(), AriesVcxErrorKind::InvalidState);
+        #[cfg(not(feature = "modular_libs"))]
+        assert_eq!(rc.unwrap_err().kind(), AriesVcxErrorKind::InvalidInput);
+    })
+    .await;
+}
+
+#[tokio::test]
+#[ignore]
+async fn test_pool_get_rev_reg_def_json() {
+    SetupProfile::run(|setup| async move {
+        let attrs = r#"["address1","address2","city","state","zip"]"#;
+        let (_, _, _, _, rev_reg_id, _, _, _) = create_and_store_credential_def_and_rev_reg(
+            &setup.profile.inject_anoncreds(),
+            &setup.profile.inject_anoncreds_ledger_read(),
+            &setup.profile.inject_anoncreds_ledger_write(),
+            &setup.institution_did,
+            attrs,
+        )
+        .await;
+
+        let ledger = Arc::clone(&setup.profile).inject_anoncreds_ledger_read();
+        let _json = ledger.get_rev_reg_def_json(&rev_reg_id).await.unwrap();
+    })
+    .await;
+}
+
+#[tokio::test]
+#[ignore]
+async fn test_pool_get_rev_reg_delta_json() {
+    SetupProfile::run(|setup| async move {
+        let attrs = r#"["address1","address2","city","state","zip"]"#;
+        let (_, _, _, _, rev_reg_id, _, _, _) = create_and_store_credential_def_and_rev_reg(
+            &setup.profile.inject_anoncreds(),
+            &setup.profile.inject_anoncreds_ledger_read(),
+            &setup.profile.inject_anoncreds_ledger_write(),
+            &setup.institution_did,
+            attrs,
+        )
+        .await;
+
+        let ledger = Arc::clone(&setup.profile).inject_anoncreds_ledger_read();
+        let (id, _delta, _timestamp) = ledger.get_rev_reg_delta_json(&rev_reg_id, None, None).await.unwrap();
+
+        assert_eq!(id, rev_reg_id);
+    })
+    .await;
+}
+
+#[tokio::test]
+#[ignore]
+async fn test_pool_get_rev_reg() {
+    SetupProfile::run(|setup| async move {
+        let attrs = r#"["address1","address2","city","state","zip"]"#;
+        let (_, _, _, _, rev_reg_id, _, _, _) = create_and_store_credential_def_and_rev_reg(
+            &setup.profile.inject_anoncreds(),
+            &setup.profile.inject_anoncreds_ledger_read(),
+            &setup.profile.inject_anoncreds_ledger_write(),
+            &setup.institution_did,
+            attrs,
+        )
+        .await;
+
+        let ledger = Arc::clone(&setup.profile).inject_anoncreds_ledger_read();
+        let (id, _rev_reg, _timestamp) = ledger
+            .get_rev_reg(&rev_reg_id, time::OffsetDateTime::now_utc().unix_timestamp() as u64)
+            .await
+            .unwrap();
+
+        assert_eq!(id, rev_reg_id);
+    })
+    .await;
+}
+
+#[tokio::test]
+#[ignore]
+async fn test_pool_create_and_get_schema() {
+    SetupProfile::run(|setup| async move {
+        let (schema_id, _schema_json) = create_and_write_test_schema(
+            &setup.profile.inject_anoncreds(),
+            &setup.profile.inject_anoncreds_ledger_write(),
+            &setup.institution_did,
+            DEFAULT_SCHEMA_ATTRS,
+        )
+        .await;
+
+        let ledger = Arc::clone(&setup.profile).inject_anoncreds_ledger_read();
+        let rc = ledger.get_schema(&schema_id, None).await;
+
+        let retrieved_schema = rc.unwrap();
+        assert!(retrieved_schema.contains(&schema_id));
     })
     .await;
 }

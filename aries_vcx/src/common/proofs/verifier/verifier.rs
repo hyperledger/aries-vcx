@@ -354,8 +354,193 @@ pub mod unit_tests {
 pub mod integration_tests {
     use std::sync::Arc;
 
-    use crate::common::test_utils::{create_indy_proof, create_proof_with_predicate};
-    use crate::utils::devsetup::SetupProfile;
+    use aries_vcx_core::{
+        anoncreds::base_anoncreds::BaseAnonCreds,
+        ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite},
+    };
+
+    use crate::{
+        common::test_utils::create_and_store_nonrevocable_credential,
+        utils::{constants::DEFAULT_SCHEMA_ATTRS, devsetup::SetupProfile},
+    };
+
+    // FUTURE - issuer and holder seperation only needed whilst modular deps not fully implemented
+    async fn create_indy_proof(
+        anoncreds_issuer: &Arc<dyn BaseAnonCreds>,
+        anoncreds_holder: &Arc<dyn BaseAnonCreds>,
+        ledger_read: &Arc<dyn AnoncredsLedgerRead>,
+        ledger_write: &Arc<dyn AnoncredsLedgerWrite>,
+        did: &str,
+    ) -> (String, String, String, String) {
+        let (schema_id, schema_json, cred_def_id, cred_def_json, _offer, _req, _req_meta, cred_id) =
+            create_and_store_nonrevocable_credential(
+                anoncreds_issuer,
+                anoncreds_holder,
+                ledger_read,
+                ledger_write,
+                &did,
+                DEFAULT_SCHEMA_ATTRS,
+            )
+            .await;
+        let proof_req = json!({
+           "nonce":"123432421212",
+           "name":"proof_req_1",
+           "version":"0.1",
+           "requested_attributes": json!({
+               "address1_1": json!({
+                   "name":"address1",
+                   "restrictions": [json!({ "issuer_did": did })]
+               }),
+               "zip_2": json!({
+                   "name":"zip",
+                   "restrictions": [json!({ "issuer_did": did })]
+               }),
+               "self_attest_3": json!({
+                   "name":"self_attest",
+               }),
+           }),
+           "requested_predicates": json!({}),
+        })
+        .to_string();
+        let requested_credentials_json = json!({
+              "self_attested_attributes":{
+                 "self_attest_3": "my_self_attested_val"
+              },
+              "requested_attributes":{
+                 "address1_1": {"cred_id": cred_id, "revealed": true},
+                 "zip_2": {"cred_id": cred_id, "revealed": true}
+                },
+              "requested_predicates":{}
+        })
+        .to_string();
+
+        let schema_json: serde_json::Value = serde_json::from_str(&schema_json).unwrap();
+        let schemas = json!({
+            schema_id: schema_json,
+        })
+        .to_string();
+
+        let cred_def_json: serde_json::Value = serde_json::from_str(&cred_def_json).unwrap();
+        let cred_defs = json!({
+            cred_def_id: cred_def_json,
+        })
+        .to_string();
+
+        anoncreds_holder
+            .prover_get_credentials_for_proof_req(&proof_req)
+            .await
+            .unwrap();
+
+        let proof = anoncreds_holder
+            .prover_create_proof(
+                &proof_req,
+                &requested_credentials_json,
+                "main",
+                &schemas,
+                &cred_defs,
+                None,
+            )
+            .await
+            .unwrap();
+        (schemas, cred_defs, proof_req, proof)
+    }
+
+    async fn create_proof_with_predicate(
+        anoncreds_issuer: &Arc<dyn BaseAnonCreds>,
+        anoncreds_holder: &Arc<dyn BaseAnonCreds>,
+        ledger_read: &Arc<dyn AnoncredsLedgerRead>,
+        ledger_write: &Arc<dyn AnoncredsLedgerWrite>,
+        did: &str,
+        include_predicate_cred: bool,
+    ) -> (String, String, String, String) {
+        let (schema_id, schema_json, cred_def_id, cred_def_json, _offer, _req, _req_meta, cred_id) =
+            create_and_store_nonrevocable_credential(
+                anoncreds_issuer,
+                anoncreds_holder,
+                ledger_read,
+                ledger_write,
+                &did,
+                DEFAULT_SCHEMA_ATTRS,
+            )
+            .await;
+
+        let proof_req = json!({
+           "nonce":"123432421212",
+           "name":"proof_req_1",
+           "version":"0.1",
+           "requested_attributes": json!({
+               "address1_1": json!({
+                   "name":"address1",
+                   "restrictions": [json!({ "issuer_did": did })]
+               }),
+               "self_attest_3": json!({
+                   "name":"self_attest",
+               }),
+           }),
+           "requested_predicates": json!({
+               "zip_3": {"name":"zip", "p_type":">=", "p_value":18}
+           }),
+        })
+        .to_string();
+
+        let requested_credentials_json;
+        if include_predicate_cred {
+            requested_credentials_json = json!({
+              "self_attested_attributes":{
+                 "self_attest_3": "my_self_attested_val"
+              },
+              "requested_attributes":{
+                 "address1_1": {"cred_id": cred_id, "revealed": true}
+                },
+              "requested_predicates":{
+                  "zip_3": {"cred_id": cred_id}
+              }
+            })
+            .to_string();
+        } else {
+            requested_credentials_json = json!({
+              "self_attested_attributes":{
+                 "self_attest_3": "my_self_attested_val"
+              },
+              "requested_attributes":{
+                 "address1_1": {"cred_id": cred_id, "revealed": true}
+                },
+              "requested_predicates":{
+              }
+            })
+            .to_string();
+        }
+
+        let schema_json: serde_json::Value = serde_json::from_str(&schema_json).unwrap();
+        let schemas = json!({
+            schema_id: schema_json,
+        })
+        .to_string();
+
+        let cred_def_json: serde_json::Value = serde_json::from_str(&cred_def_json).unwrap();
+        let cred_defs = json!({
+            cred_def_id: cred_def_json,
+        })
+        .to_string();
+
+        anoncreds_holder
+            .prover_get_credentials_for_proof_req(&proof_req)
+            .await
+            .unwrap();
+
+        let proof = anoncreds_holder
+            .prover_create_proof(
+                &proof_req,
+                &requested_credentials_json,
+                "main",
+                &schemas,
+                &cred_defs,
+                None,
+            )
+            .await
+            .unwrap();
+        (schemas, cred_defs, proof_req, proof)
+    }
 
     #[tokio::test]
     #[ignore]

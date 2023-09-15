@@ -189,6 +189,7 @@ async fn test_agency_pool_credential_exchange_via_proposal_failed() {
     .await;
 }
 
+// TODO: Maybe duplicates test_agency_pool_credential_exchange_via_proposal
 #[tokio::test]
 #[ignore]
 async fn test_agency_pool_credential_exchange_via_proposal_with_negotiation() {
