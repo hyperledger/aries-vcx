@@ -35,9 +35,9 @@ pub async fn get_cred_rev_id(anoncreds: &Arc<dyn BaseAnonCreds>, cred_id: &str) 
 }
 
 pub async fn is_cred_revoked(ledger: &Arc<dyn AnoncredsLedgerRead>, rev_reg_id: &str, rev_id: &str) -> VcxResult<bool> {
-    let from = None;
     let to = Some(OffsetDateTime::now_utc().unix_timestamp() as u64 + 100);
-    let rev_reg_delta = RevocationRegistryDelta::create_from_ledger(ledger, rev_reg_id, from, to).await?;
+    let (_, rev_reg_delta_json, _) = ledger.get_rev_reg_delta_json(rev_reg_id, None, to).await?;
+    let rev_reg_delta = RevocationRegistryDelta::create_from_ledger(&rev_reg_delta_json).await?;
     Ok(rev_reg_delta.revoked().iter().any(|s| s.to_string().eq(rev_id)))
 }
 

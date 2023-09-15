@@ -19,7 +19,7 @@ pub fn attr_names_address() -> (String, String, String, String, String) {
     (address1, address2, city, state, zip)
 }
 
-pub(super) fn attr_names_address_list() -> Vec<String> {
+pub fn attr_names_address_list() -> Vec<String> {
     let (address1, address2, city, state, zip) = attr_names_address();
     vec![address1, address2, city, state, zip]
 }

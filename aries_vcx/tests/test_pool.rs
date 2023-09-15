@@ -11,6 +11,7 @@ use std::time::Duration;
 
 #[cfg(feature = "migration")]
 use crate::utils::migration::Migratable;
+use crate::utils::scenarios::attr_names_address_list;
 use crate::utils::test_agent::{create_test_agent, create_test_agent_trustee};
 use aries_vcx::common::keys::{get_verkey_from_ledger, rotate_verkey};
 use aries_vcx::common::ledger::service_didsov::EndpointDidSov;
@@ -19,7 +20,11 @@ use aries_vcx::common::ledger::transactions::{
 };
 use aries_vcx::common::primitives::credential_definition::{CredentialDef, CredentialDefConfigBuilder};
 use aries_vcx::common::primitives::revocation_registry::generate_rev_reg;
-use aries_vcx::common::test_utils::{create_and_store_credential_def_and_rev_reg, create_and_write_test_schema};
+use aries_vcx::common::primitives::revocation_registry_delta::RevocationRegistryDelta;
+use aries_vcx::common::test_utils::{
+    create_and_store_credential_def_and_rev_reg, create_and_write_test_cred_def, create_and_write_test_rev_reg,
+    create_and_write_test_schema, create_and_write_test_schema_1,
+};
 use aries_vcx::errors::error::AriesVcxErrorKind;
 use aries_vcx::utils::constants::DEFAULT_SCHEMA_ATTRS;
 use aries_vcx::utils::devsetup::{SetupPoolDirectory, SetupProfile};
@@ -50,9 +55,10 @@ async fn create_and_store_nonrevocable_credential_def(
         .publish_cred_def(ledger_read, ledger_write)
         .await
         .unwrap();
-    let cred_def_id = cred_def.get_cred_def_id();
+
     tokio::time::sleep(Duration::from_millis(1000)).await;
 
+    let cred_def_id = cred_def.get_cred_def_id();
     let cred_def_json = ledger_read.get_cred_def(&cred_def_id, None).await.unwrap();
     (schema_id, schema_json, cred_def_id, cred_def_json, cred_def)
 }
@@ -475,6 +481,48 @@ async fn test_pool_create_and_get_schema() {
 
         let retrieved_schema = rc.unwrap();
         assert!(retrieved_schema.contains(&schema_id));
+    })
+    .await;
+}
+
+#[tokio::test]
+#[ignore]
+async fn test_pool_create_rev_reg_delta_from_ledger() {
+    SetupProfile::run(|setup| async move {
+        let attrs = format!("{:?}", attr_names_address_list());
+
+        let schema = create_and_write_test_schema_1(
+            &setup.profile.inject_anoncreds(),
+            &setup.profile.inject_anoncreds_ledger_write(),
+            &setup.institution_did,
+            &attrs,
+        )
+        .await;
+        let cred_def = create_and_write_test_cred_def(
+            &setup.profile.inject_anoncreds(),
+            &setup.profile.inject_anoncreds_ledger_read(),
+            &setup.profile.inject_anoncreds_ledger_write(),
+            &setup.institution_did,
+            &schema.schema_id,
+        )
+        .await;
+        let rev_reg = create_and_write_test_rev_reg(
+            &setup.profile.inject_anoncreds(),
+            &setup.profile.inject_anoncreds_ledger_write(),
+            &setup.institution_did,
+            &cred_def.get_cred_def_id(),
+        )
+        .await;
+
+        let (_, rev_reg_delta_json, _) = setup
+            .profile
+            .inject_anoncreds_ledger_read()
+            .get_rev_reg_delta_json(&rev_reg.rev_reg_id, None, None)
+            .await
+            .unwrap();
+        assert!(RevocationRegistryDelta::create_from_ledger(&rev_reg_delta_json)
+            .await
+            .is_ok());
     })
     .await;
 }
