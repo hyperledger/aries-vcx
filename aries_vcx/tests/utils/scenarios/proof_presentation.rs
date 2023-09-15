@@ -26,7 +26,7 @@ use aries_vcx::protocols::proof_presentation::verifier::verification_status::Pre
 use aries_vcx::utils::constants::{DEFAULT_PROOF_NAME, TEST_TAILS_URL};
 use aries_vcx_core::ledger::indy::pool::test_utils::get_temp_dir_path;
 
-use super::requested_attrs;
+use super::requested_attrs_address;
 
 pub async fn create_proof_proposal(prover: &mut Prover, cred_def_id: &str) -> AriesMessage {
     let attrs = requested_attr_objects(cred_def_id);
@@ -253,7 +253,7 @@ pub async fn verifier_create_proof_and_send_request(
     cred_def_id: &str,
     request_name: Option<&str>,
 ) -> Verifier {
-    let requested_attrs = requested_attrs(&institution.institution_did, &schema_id, &cred_def_id, None, None);
+    let requested_attrs = requested_attrs_address(&institution.institution_did, &schema_id, &cred_def_id, None, None);
     let requested_attrs_string = serde_json::to_string(&requested_attrs).unwrap();
     let presentation_request_data =
         create_proof_request_data(institution, &requested_attrs_string, "[]", "{}", request_name).await;

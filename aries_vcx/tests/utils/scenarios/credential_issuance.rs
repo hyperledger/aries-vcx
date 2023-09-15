@@ -21,7 +21,7 @@ use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
 use aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
 use aries_vcx::utils::constants::TEST_TAILS_URL;
 
-use super::{attr_names_list, create_credential_proposal, credential_data_address_1};
+use super::{attr_names_address_list, create_credential_proposal, credential_data_address_1};
 
 pub async fn create_address_schema_creddef_revreg(
     profile: &Arc<dyn Profile>,
@@ -35,14 +35,13 @@ pub async fn create_address_schema_creddef_revreg(
     RevocationRegistry,
     Option<String>,
 ) {
-    let attrs_list = json!(attr_names_list()).to_string();
     let (schema_id, schema_json, cred_def_id, cred_def_json, rev_reg_id, _, cred_def, rev_reg) =
         create_and_store_credential_def_and_rev_reg(
             &profile.inject_anoncreds(),
             &profile.inject_anoncreds_ledger_read(),
             &profile.inject_anoncreds_ledger_write(),
             &institution_did,
-            &attrs_list,
+            &json!(attr_names_address_list()).to_string(),
         )
         .await;
     (
@@ -251,28 +250,25 @@ pub async fn issue_address_credential(
     RevocationRegistry,
     Issuer,
 ) {
-    let attrs_list = json!(attr_names_list()).to_string();
     let (schema_id, _, cred_def_id, _, rev_reg_id, _, cred_def, rev_reg) = create_and_store_credential_def_and_rev_reg(
         &institution.profile.inject_anoncreds(),
         &institution.profile.inject_anoncreds_ledger_read(),
         &institution.profile.inject_anoncreds_ledger_write(),
         &institution.institution_did,
-        &attrs_list,
+        &json!(attr_names_address_list()).to_string(),
     )
     .await;
 
-    let credential_data = credential_data_address_1().to_string();
-
-    let credential_handle =
-        exchange_credential(consumer, institution, credential_data, &cred_def, &rev_reg, None).await;
-    (
-        schema_id,
-        cred_def_id,
-        Some(rev_reg_id),
-        cred_def,
-        rev_reg,
-        credential_handle,
+    let issuer = exchange_credential(
+        consumer,
+        institution,
+        credential_data_address_1().to_string(),
+        &cred_def,
+        &rev_reg,
+        None,
     )
+    .await;
+    (schema_id, cred_def_id, Some(rev_reg_id), cred_def, rev_reg, issuer)
 }
 
 pub async fn exchange_credential(

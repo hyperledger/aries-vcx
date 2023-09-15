@@ -22,6 +22,8 @@ use messages::msg_fields::protocols::present_proof::request::{RequestPresentatio
 #[cfg(feature = "migration")]
 use crate::utils::migration::Migratable;
 
+// TODO: Move these tests into anoncreds tests in aries_vcx
+
 #[tokio::test]
 #[ignore]
 // TODO: This should be a unit test

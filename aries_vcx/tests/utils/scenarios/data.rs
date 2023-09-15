@@ -19,13 +19,19 @@ pub fn attr_names_address() -> (String, String, String, String, String) {
     (address1, address2, city, state, zip)
 }
 
-pub(super) fn attr_names_list() -> Vec<String> {
+pub(super) fn attr_names_address_list() -> Vec<String> {
     let (address1, address2, city, state, zip) = attr_names_address();
     vec![address1, address2, city, state, zip]
 }
 
-pub fn requested_attrs(did: &str, schema_id: &str, cred_def_id: &str, from: Option<u64>, to: Option<u64>) -> Value {
-    attr_names_list()
+pub fn requested_attrs_address(
+    did: &str,
+    schema_id: &str,
+    cred_def_id: &str,
+    from: Option<u64>,
+    to: Option<u64>,
+) -> Value {
+    attr_names_address_list()
         .iter()
         .map(|attr_name| {
             json!({
@@ -42,51 +48,33 @@ pub fn requested_attrs(did: &str, schema_id: &str, cred_def_id: &str, from: Opti
 }
 
 pub(super) fn requested_attr_objects(cred_def_id: &str) -> Vec<PresentationAttr> {
-    let (address1, address2, city, state, zip) = attr_names_address();
-    let address1_attr = PresentationAttr::builder()
-        .name(address1)
-        .cred_def_id(cred_def_id.to_owned())
-        .value("123 Main St".to_owned())
-        .build();
-
-    let address2_attr = PresentationAttr::builder()
-        .name(address2)
-        .cred_def_id(cred_def_id.to_owned())
-        .value("Suite 3".to_owned())
-        .build();
-
-    let city_attr = PresentationAttr::builder()
-        .name(city)
-        .cred_def_id(cred_def_id.to_owned())
-        .value("Draper".to_owned())
-        .build();
-
-    let state_attr = PresentationAttr::builder()
-        .name(state)
-        .cred_def_id(cred_def_id.to_owned())
-        .value("UT".to_owned())
-        .build();
-
-    let zip_attr = PresentationAttr::builder()
-        .name(zip)
-        .cred_def_id(cred_def_id.to_owned())
-        .value("84000".to_owned())
-        .build();
-
-    vec![address1_attr, address2_attr, city_attr, state_attr, zip_attr]
+    credential_data_address_1()
+        .as_object()
+        .unwrap()
+        .iter()
+        .map(|(key, value)| {
+            PresentationAttr::builder()
+                .name(key.to_string())
+                .cred_def_id(cred_def_id.to_owned())
+                .value(value.to_string())
+                .build()
+        })
+        .collect()
 }
 
 pub fn create_credential_proposal(schema_id: &str, cred_def_id: &str, comment: &str) -> ProposeCredential {
-    let mut attrs = Vec::new();
-    for (key, value) in credential_data_address_1().as_object().unwrap() {
-        attrs.push(
+    let attrs = credential_data_address_1()
+        .as_object()
+        .unwrap()
+        .iter()
+        .map(|(key, value)| {
             CredentialAttr::builder()
                 .name(key.to_string())
                 .value(value.to_string())
                 .mime_type(MimeType::Plain)
-                .build(),
-        );
-    }
+                .build()
+        })
+        .collect();
     let content = ProposeCredentialContent::builder()
         .credential_proposal(CredentialPreview::new(attrs))
         .schema_id(schema_id.to_owned())

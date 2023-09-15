@@ -58,7 +58,6 @@ pub async fn create_and_store_nonrevocable_credential_def(
         .publish_cred_def(ledger_read, ledger_write)
         .await
         .unwrap();
-    tokio::time::sleep(Duration::from_millis(1000)).await;
     let cred_def_id = cred_def.get_cred_def_id();
     tokio::time::sleep(Duration::from_millis(1000)).await;
 
@@ -83,7 +82,6 @@ pub async fn create_and_store_credential_def_and_rev_reg(
     RevocationRegistry,
 ) {
     let (schema_id, schema_json) = create_and_write_test_schema(anoncreds, ledger_write, issuer_did, attr_list).await;
-    thread::sleep(Duration::from_millis(500));
     let config = CredentialDefConfigBuilder::default()
         .issuer_did(issuer_did)
         .schema_id(&schema_id)
@@ -107,7 +105,6 @@ pub async fn create_and_store_credential_def_and_rev_reg(
         .await
         .unwrap();
 
-    tokio::time::sleep(Duration::from_millis(1000)).await;
     let cred_def_id = cred_def.get_cred_def_id();
     tokio::time::sleep(Duration::from_millis(1000)).await;
     let cred_def_json = ledger_read.get_cred_def(&cred_def_id, None).await.unwrap();
