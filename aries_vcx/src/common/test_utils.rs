@@ -7,29 +7,12 @@ use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
 
-use aries_vcx_core::wallet::base_wallet::BaseWallet;
-
 use crate::common::credentials::encoding::encode_attributes;
 use crate::common::primitives::credential_definition::CredentialDef;
 use crate::common::primitives::credential_definition::CredentialDefConfigBuilder;
 use crate::common::primitives::revocation_registry::RevocationRegistry;
 use crate::global::settings;
-use crate::utils::constants::{DEFAULT_SCHEMA_ATTRS, TEST_TAILS_URL, TRUSTEE_SEED};
-
-pub async fn create_schema(
-    anoncreds: &Arc<dyn BaseAnonCreds>,
-    attr_list: &str,
-    submitter_did: &str,
-) -> (String, String) {
-    let data = attr_list.to_string();
-    let schema_name: String = crate::utils::random::generate_random_schema_name();
-    let schema_version: String = crate::utils::random::generate_random_schema_version();
-
-    anoncreds
-        .issuer_create_schema(&submitter_did, &schema_name, &schema_version, &data)
-        .await
-        .unwrap()
-}
+use crate::utils::constants::{DEFAULT_SCHEMA_ATTRS, TEST_TAILS_URL};
 
 pub async fn create_and_write_test_schema(
     anoncreds: &Arc<dyn BaseAnonCreds>,
@@ -37,7 +20,15 @@ pub async fn create_and_write_test_schema(
     submitter_did: &str,
     attr_list: &str,
 ) -> (String, String) {
-    let (schema_id, schema_json) = create_schema(anoncreds, attr_list, submitter_did).await;
+    let data = attr_list.to_string();
+    let schema_name: String = crate::utils::random::generate_random_schema_name();
+    let schema_version: String = crate::utils::random::generate_random_schema_version();
+
+    let (schema_id, schema_json) = anoncreds
+        .issuer_create_schema(&submitter_did, &schema_name, &schema_version, &data)
+        .await
+        .unwrap();
+
     let _response = ledger_write
         .publish_schema(&schema_json, submitter_did, None)
         .await
@@ -46,6 +37,7 @@ pub async fn create_and_write_test_schema(
     (schema_id, schema_json)
 }
 
+// TODO: Deduplicate this with create_and_store_credential_def_and_rev_reg
 pub async fn create_and_store_nonrevocable_credential_def(
     anoncreds: &Arc<dyn BaseAnonCreds>,
     ledger_read: &Arc<dyn AnoncredsLedgerRead>,
@@ -66,7 +58,6 @@ pub async fn create_and_store_nonrevocable_credential_def(
         .publish_cred_def(ledger_read, ledger_write)
         .await
         .unwrap();
-    tokio::time::sleep(Duration::from_millis(1000)).await;
     let cred_def_id = cred_def.get_cred_def_id();
     tokio::time::sleep(Duration::from_millis(1000)).await;
 
@@ -74,6 +65,7 @@ pub async fn create_and_store_nonrevocable_credential_def(
     (schema_id, schema_json, cred_def_id, cred_def_json, cred_def)
 }
 
+// TODO: Split into schema, cred def, and rev reg creation functions
 pub async fn create_and_store_credential_def_and_rev_reg(
     anoncreds: &Arc<dyn BaseAnonCreds>,
     ledger_read: &Arc<dyn AnoncredsLedgerRead>,
@@ -91,7 +83,6 @@ pub async fn create_and_store_credential_def_and_rev_reg(
     RevocationRegistry,
 ) {
     let (schema_id, schema_json) = create_and_write_test_schema(anoncreds, ledger_write, issuer_did, attr_list).await;
-    thread::sleep(Duration::from_millis(500));
     let config = CredentialDefConfigBuilder::default()
         .issuer_did(issuer_did)
         .schema_id(&schema_id)
@@ -115,7 +106,6 @@ pub async fn create_and_store_credential_def_and_rev_reg(
         .await
         .unwrap();
 
-    tokio::time::sleep(Duration::from_millis(1000)).await;
     let cred_def_id = cred_def.get_cred_def_id();
     tokio::time::sleep(Duration::from_millis(1000)).await;
     let cred_def_json = ledger_read.get_cred_def(&cred_def_id, None).await.unwrap();
@@ -131,7 +121,7 @@ pub async fn create_and_store_credential_def_and_rev_reg(
     )
 }
 
-pub async fn create_credential_req(
+async fn create_credential_req(
     anoncreds_issuer: &Arc<dyn BaseAnonCreds>,
     anoncreds_holder: &Arc<dyn BaseAnonCreds>,
     did: &str,
@@ -182,14 +172,15 @@ pub async fn create_and_store_credential(
         )
         .await;
 
-    let (offer, req, req_meta) = create_credential_req(
-        anoncreds_issuer,
-        anoncreds_holder,
-        institution_did,
-        &cred_def_id,
-        &cred_def_json,
-    )
-    .await;
+    let offer = anoncreds_issuer
+        .issuer_create_credential_offer(&cred_def_id)
+        .await
+        .unwrap();
+    let master_secret_name = settings::DEFAULT_LINK_SECRET_ALIAS;
+    let (req, req_meta) = anoncreds_holder
+        .prover_create_credential_req(&institution_did, &offer, &cred_def_json, master_secret_name)
+        .await
+        .unwrap();
 
     /* create cred */
     let credential_data = r#"{"address1": ["123 Main St"], "address2": ["Suite 3"], "city": ["Draper"], "state": ["UT"], "zip": ["84000"]}"#;
@@ -455,12 +446,4 @@ pub async fn create_proof_with_predicate(
         .await
         .unwrap();
     (schemas, cred_defs, proof_req, proof)
-}
-
-pub async fn create_trustee_key(wallet: &Arc<dyn BaseWallet>) -> String {
-    wallet
-        .create_and_store_my_did(Some(TRUSTEE_SEED), None)
-        .await
-        .unwrap()
-        .1
 }

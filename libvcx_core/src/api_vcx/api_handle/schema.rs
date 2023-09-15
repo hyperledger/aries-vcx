@@ -136,6 +136,7 @@ pub mod test_utils {
         (did, schema_name, schema_version, data)
     }
 
+    // TODO: Reuse test utils code and data
     pub async fn create_schema_real() -> u32 {
         let (_did, schema_name, schema_version, data) = prepare_schema_data();
         create_and_publish_schema("id", schema_name, schema_version, data)

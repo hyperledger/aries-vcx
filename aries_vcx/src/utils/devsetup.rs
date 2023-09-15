@@ -192,7 +192,7 @@ pub async fn dev_setup_wallet_indy(key_seed: &str) -> (String, WalletHandle) {
 }
 
 #[cfg(feature = "vdrtools")]
-pub async fn dev_build_profile_vdrtools(genesis_file_path: String, wallet: Arc<IndySdkWallet>) -> Arc<dyn Profile> {
+pub fn dev_build_profile_vdrtools(genesis_file_path: String, wallet: Arc<IndySdkWallet>) -> Arc<dyn Profile> {
     info!("dev_build_profile_vdrtools >>");
     let vcx_pool_config = VcxPoolConfig {
         genesis_file_path: genesis_file_path.clone(),
@@ -243,7 +243,7 @@ pub async fn dev_build_featured_profile(genesis_file_path: String, wallet: Arc<I
     #[cfg(feature = "migration")]
     return {
         info!("SetupProfile >> using indy profile");
-        dev_build_profile_vdrtools(genesis_file_path, wallet).await
+        dev_build_profile_vdrtools(genesis_file_path, wallet)
     };
     #[cfg(feature = "modular_libs")]
     return {
@@ -258,7 +258,7 @@ pub async fn dev_build_featured_profile(genesis_file_path: String, wallet: Arc<I
     #[cfg(feature = "vdrtools")]
     return {
         info!("SetupProfile >> using indy profile");
-        dev_build_profile_vdrtools(genesis_file_path, wallet).await
+        dev_build_profile_vdrtools(genesis_file_path, wallet)
     };
 }
 

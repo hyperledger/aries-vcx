@@ -106,7 +106,6 @@ pub mod tests {
     use aries_vcx::aries_vcx_core::ledger::indy::pool::test_utils::get_temp_dir_path;
     use std::{thread::sleep, time::Duration};
 
-    use aries_vcx::common::primitives::credential_definition::RevocationDetailsBuilder;
     use aries_vcx::common::test_utils::create_and_write_test_schema;
     use aries_vcx::global::settings::CONFIG_INSTITUTION_DID;
     use aries_vcx::utils;
@@ -139,6 +138,7 @@ pub mod tests {
         )
     }
 
+    // TODO: Get rid of this
     #[cfg(test)]
     pub async fn create_and_publish_nonrevocable_creddef() -> (u32, u32) {
         let schema_handle = schema::test_utils::create_schema_real().await;
