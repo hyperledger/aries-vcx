@@ -28,10 +28,6 @@ use crate::utils::scenarios::{
 };
 use crate::utils::test_agent::{create_test_agent, create_test_agent_trustee};
 
-/*
- * PRESENTATION GENERATION
- */
-
 #[tokio::test]
 #[ignore]
 async fn test_agency_pool_generate_proof_with_predicates() {
@@ -140,10 +136,6 @@ async fn test_agency_pool_generate_proof_with_predicates() {
     })
     .await;
 }
-
-/*
- * PRESENTATION SCENARIOS
- */
 
 #[tokio::test]
 #[ignore]
