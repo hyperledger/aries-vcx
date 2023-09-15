@@ -8,7 +8,7 @@ pub mod utils;
 use std::collections::HashMap;
 
 use aries_vcx::common::proofs::proof_request::PresentationRequestData;
-use aries_vcx::common::test_utils::{create_and_write_test_cred_def, create_and_write_test_schema_1};
+use aries_vcx::common::test_utils::{create_and_write_test_cred_def, create_and_write_test_schema};
 use aries_vcx::handlers::proof_presentation::prover::Prover;
 use aries_vcx::handlers::proof_presentation::types::RetrievedCredentials;
 use aries_vcx::handlers::util::AttachmentId;
@@ -109,7 +109,7 @@ async fn test_agency_pool_retrieve_credentials_empty() {
 // TODO: This should be a unit test
 async fn test_agency_pool_case_for_proof_req_doesnt_matter_for_retrieve_creds() {
     SetupProfile::run(|mut setup| async move {
-        let schema = create_and_write_test_schema_1(
+        let schema = create_and_write_test_schema(
             &setup.profile.inject_anoncreds(),
             &setup.profile.inject_anoncreds_ledger_write(),
             &setup.institution_did,

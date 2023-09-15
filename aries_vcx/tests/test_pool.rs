@@ -23,7 +23,7 @@ use aries_vcx::common::primitives::credential_schema::Schema;
 use aries_vcx::common::primitives::revocation_registry::{generate_rev_reg, RevocationRegistry};
 use aries_vcx::common::primitives::revocation_registry_delta::RevocationRegistryDelta;
 use aries_vcx::common::test_utils::{
-    create_and_write_test_cred_def, create_and_write_test_rev_reg, create_and_write_test_schema_1,
+    create_and_write_test_cred_def, create_and_write_test_rev_reg, create_and_write_test_schema,
 };
 use aries_vcx::errors::error::AriesVcxErrorKind;
 use aries_vcx::utils::constants::DEFAULT_SCHEMA_ATTRS;
@@ -41,7 +41,7 @@ async fn create_and_store_nonrevocable_credential_def(
     issuer_did: &str,
     attr_list: &str,
 ) -> (String, String, String, String, CredentialDef) {
-    let schema = create_and_write_test_schema_1(anoncreds, ledger_write, issuer_did, attr_list).await;
+    let schema = create_and_write_test_schema(anoncreds, ledger_write, issuer_did, attr_list).await;
     let cred_def =
         create_and_write_test_cred_def(anoncreds, ledger_read, ledger_write, issuer_did, &schema.schema_id).await;
 
@@ -64,7 +64,7 @@ async fn create_and_store_revocable_credential_def(
     issuer_did: &str,
     attr_list: &str,
 ) -> (Schema, CredentialDef, RevocationRegistry) {
-    let schema = create_and_write_test_schema_1(anoncreds, ledger_write, issuer_did, attr_list).await;
+    let schema = create_and_write_test_schema(anoncreds, ledger_write, issuer_did, attr_list).await;
     let cred_def =
         create_and_write_test_cred_def(anoncreds, ledger_read, ledger_write, issuer_did, &schema.schema_id).await;
     let rev_reg = create_and_write_test_rev_reg(anoncreds, ledger_write, issuer_did, &cred_def.get_cred_def_id()).await;
@@ -484,7 +484,7 @@ async fn test_pool_get_rev_reg() {
 #[ignore]
 async fn test_pool_create_and_get_schema() {
     SetupProfile::run(|setup| async move {
-        let schema = create_and_write_test_schema_1(
+        let schema = create_and_write_test_schema(
             &setup.profile.inject_anoncreds(),
             &setup.profile.inject_anoncreds_ledger_write(),
             &setup.institution_did,

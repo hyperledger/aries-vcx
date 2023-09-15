@@ -16,7 +16,7 @@ use crate::utils::random::{generate_random_schema_name, generate_random_schema_v
 
 use super::primitives::credential_schema::Schema;
 
-pub async fn create_and_write_test_schema_1(
+pub async fn create_and_write_test_schema(
     anoncreds: &Arc<dyn BaseAnonCreds>,
     ledger_write: &Arc<dyn AnoncredsLedgerWrite>,
     submitter_did: &str,
@@ -105,7 +105,7 @@ pub async fn create_and_store_credential(
     String,
     RevocationRegistry,
 ) {
-    let schema = create_and_write_test_schema_1(anoncreds_issuer, ledger_write, institution_did, attr_list).await;
+    let schema = create_and_write_test_schema(anoncreds_issuer, ledger_write, institution_did, attr_list).await;
     let cred_def = create_and_write_test_cred_def(
         anoncreds_issuer,
         ledger_read,

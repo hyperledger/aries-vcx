@@ -3,7 +3,7 @@ use std::thread;
 use std::time::Duration;
 
 use aries_vcx::common::test_utils::{
-    create_and_write_test_cred_def, create_and_write_test_rev_reg, create_and_write_test_schema_1,
+    create_and_write_test_cred_def, create_and_write_test_rev_reg, create_and_write_test_schema,
 };
 use aries_vcx::core::profile::profile::Profile;
 use aries_vcx::handlers::util::OfferInfo;
@@ -41,7 +41,7 @@ pub async fn create_address_schema_creddef_revreg(
     let ledger_write = profile.inject_anoncreds_ledger_write();
     let anoncreds = profile.inject_anoncreds();
 
-    let schema = create_and_write_test_schema_1(
+    let schema = create_and_write_test_schema(
         &anoncreds,
         &ledger_write,
         &institution_did,

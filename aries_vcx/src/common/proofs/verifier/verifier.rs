@@ -66,7 +66,7 @@ pub mod integration_tests {
         common::{
             credentials::encoding::encode_attributes,
             proofs::proof_request::ProofRequestData,
-            test_utils::{create_and_write_test_cred_def, create_and_write_test_schema_1},
+            test_utils::{create_and_write_test_cred_def, create_and_write_test_schema},
         },
         errors::error::AriesVcxErrorKind,
         global::settings,
@@ -259,7 +259,7 @@ pub mod integration_tests {
         issuer_did: &str,
         attr_list: &str,
     ) -> (String, String, String, String, String, String, String, String) {
-        let schema = create_and_write_test_schema_1(anoncreds_issuer, ledger_write, issuer_did, attr_list).await;
+        let schema = create_and_write_test_schema(anoncreds_issuer, ledger_write, issuer_did, attr_list).await;
 
         let cred_def = create_and_write_test_cred_def(
             anoncreds_issuer,
