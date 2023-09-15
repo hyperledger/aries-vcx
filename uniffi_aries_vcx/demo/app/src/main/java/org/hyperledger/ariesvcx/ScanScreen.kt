@@ -33,7 +33,6 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import android.util.Base64
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavHostController
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -58,8 +57,6 @@ fun ScanScreen(
         ProcessCameraProvider.getInstance(context)
     }
 
-    val serviceEndpoint = stringResource(R.string.serviceEndpoint)
-
     scannedQRCodeText?.let { text ->
         val encoded = Uri.parse(text)?.getQueryParameter("c_i")
         val decoded = String(Base64.decode(encoded, Base64.DEFAULT))
@@ -77,7 +74,7 @@ fun ScanScreen(
                         )
                         connection.sendRequest(
                             profileHolder,
-                            "$serviceEndpoint/send_user_message/${walletConfig.walletKey}",
+                            "$BASE_RELAY_ENDPOINT/send_user_message/${walletConfig.walletKey}",
                             emptyList()
                         )
                         withContext(Dispatchers.Main) {
