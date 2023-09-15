@@ -102,6 +102,15 @@ where
         self.state.their_did_doc()
     }
 
+    pub async fn encrypt_message(
+        &self,
+        wallet: &Arc<dyn BaseWallet>,
+        message: &AriesMessage,
+    ) -> VcxResult<EncryptionEnvelope> {
+        let sender_verkey = &self.pairwise_info().pw_vk;
+        EncryptionEnvelope::create(wallet, message, Some(sender_verkey), &self.their_did_doc()).await
+    }
+
     pub fn remote_did(&self) -> &str {
         &self.their_did_doc().id
     }
