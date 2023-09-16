@@ -6,13 +6,15 @@ extern crate serde_json;
 pub mod utils;
 
 use aries_vcx::common::proofs::proof_request::PresentationRequestData;
-use aries_vcx::common::test_utils::create_and_store_credential;
+use aries_vcx::common::test_utils::{
+    create_and_write_credential, create_and_write_test_cred_def, create_and_write_test_rev_reg,
+    create_and_write_test_schema,
+};
 use aries_vcx::handlers::proof_presentation::prover::Prover;
 use aries_vcx::handlers::proof_presentation::verifier::Verifier;
 use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
 use aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;
 use aries_vcx::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
-use aries_vcx::utils::constants::DEFAULT_SCHEMA_ATTRS;
 use aries_vcx::utils::devsetup::SetupProfile;
 use aries_vcx::utils::devsetup::*;
 
@@ -32,15 +34,38 @@ use crate::utils::test_agent::{create_test_agent, create_test_agent_trustee};
 #[ignore]
 async fn test_agency_pool_generate_proof_with_predicates() {
     SetupProfile::run(|mut setup| async move {
-        let (schema_id, _, cred_def_id, _, _, _, _, _, _, _, tails_dir, _) = create_and_store_credential(
+        let schema = create_and_write_test_schema(
             &setup.profile.inject_anoncreds(),
+            &setup.profile.inject_anoncreds_ledger_write(),
+            &setup.institution_did,
+            aries_vcx::utils::constants::DEFAULT_SCHEMA_ATTRS,
+        )
+        .await;
+        let cred_def = create_and_write_test_cred_def(
             &setup.profile.inject_anoncreds(),
             &setup.profile.inject_anoncreds_ledger_read(),
             &setup.profile.inject_anoncreds_ledger_write(),
             &setup.institution_did,
-            DEFAULT_SCHEMA_ATTRS,
+            &schema.schema_id,
         )
         .await;
+        let rev_reg = create_and_write_test_rev_reg(
+            &setup.profile.inject_anoncreds(),
+            &setup.profile.inject_anoncreds_ledger_write(),
+            &setup.institution_did,
+            &cred_def.get_cred_def_id(),
+        )
+        .await;
+        let cred_id = create_and_write_credential(
+            &setup.profile.inject_anoncreds(),
+            &setup.profile.inject_anoncreds(),
+            &setup.profile.inject_anoncreds_ledger_read(),
+            &setup.institution_did,
+            &rev_reg,
+            &cred_def,
+        )
+        .await;
+
         let to = time::OffsetDateTime::now_utc().unix_timestamp() as u64;
         let indy_proof_req = json!({
             "nonce": "123432421212",

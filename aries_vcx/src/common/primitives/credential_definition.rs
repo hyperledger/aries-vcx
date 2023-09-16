@@ -171,6 +171,10 @@ impl CredentialDef {
         self.support_revocation
     }
 
+    pub fn get_cred_def_json(&self) -> &str {
+        &self.cred_def_json
+    }
+
     pub async fn publish_cred_def(
         self,
         ledger_read: &Arc<dyn AnoncredsLedgerRead>,

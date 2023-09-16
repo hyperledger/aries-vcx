@@ -83,65 +83,34 @@ pub async fn create_and_write_test_rev_reg(
     rev_reg
 }
 
-// todo: extract create_and_store_credential_def into caller functions
-pub async fn create_and_store_credential(
+pub async fn create_and_write_credential(
     anoncreds_issuer: &Arc<dyn BaseAnonCreds>,
     anoncreds_holder: &Arc<dyn BaseAnonCreds>,
     ledger_read: &Arc<dyn AnoncredsLedgerRead>,
-    ledger_write: &Arc<dyn AnoncredsLedgerWrite>,
     institution_did: &str,
-    attr_list: &str,
-) -> (
-    String,
-    String,
-    String,
-    String,
-    String,
-    String,
-    String,
-    String,
-    String,
-    String,
-    String,
-    RevocationRegistry,
-) {
-    let schema = create_and_write_test_schema(anoncreds_issuer, ledger_write, institution_did, attr_list).await;
-    let cred_def = create_and_write_test_cred_def(
-        anoncreds_issuer,
-        ledger_read,
-        ledger_write,
-        institution_did,
-        &schema.schema_id,
-    )
-    .await;
-    let rev_reg = create_and_write_test_rev_reg(
-        anoncreds_issuer,
-        ledger_write,
-        institution_did,
-        &cred_def.get_cred_def_id(),
-    )
-    .await;
-
-    tokio::time::sleep(Duration::from_millis(1000)).await;
-    let cred_def_id = cred_def.get_cred_def_id();
-    let cred_def_json = ledger_read.get_cred_def(&cred_def_id, None).await.unwrap();
-
-    let offer = anoncreds_issuer
-        .issuer_create_credential_offer(&cred_def_id)
-        .await
-        .unwrap();
-    let master_secret_name = settings::DEFAULT_LINK_SECRET_ALIAS;
-    let (req, req_meta) = anoncreds_holder
-        .prover_create_credential_req(&institution_did, &offer, &cred_def_json, master_secret_name)
-        .await
-        .unwrap();
-
-    /* create cred */
+    rev_reg: &RevocationRegistry,
+    cred_def: &CredentialDef,
+) -> String {
+    // TODO: Inject credential_data from caller
     let credential_data = r#"{"address1": ["123 Main St"], "address2": ["Suite 3"], "city": ["Draper"], "state": ["UT"], "zip": ["84000"]}"#;
     let encoded_attributes = encode_attributes(&credential_data).unwrap();
     let rev_def_json = ledger_read.get_rev_reg_def_json(&rev_reg.rev_reg_id).await.unwrap();
 
-    let (cred, cred_rev_id, _) = anoncreds_issuer
+    let offer = anoncreds_issuer
+        .issuer_create_credential_offer(&cred_def.get_cred_def_id())
+        .await
+        .unwrap();
+    let (req, req_meta) = anoncreds_holder
+        .prover_create_credential_req(
+            &institution_did,
+            &offer,
+            cred_def.get_cred_def_json(),
+            settings::DEFAULT_LINK_SECRET_ALIAS,
+        )
+        .await
+        .unwrap();
+
+    let (cred, _, _) = anoncreds_issuer
         .issuer_create_credential(
             &offer,
             &req,
@@ -151,23 +120,16 @@ pub async fn create_and_store_credential(
         )
         .await
         .unwrap();
-    /* store cred */
+
     let cred_id = anoncreds_holder
-        .prover_store_credential(None, &req_meta, &cred, &cred_def_json, Some(&rev_def_json))
+        .prover_store_credential(
+            None,
+            &req_meta,
+            &cred,
+            cred_def.get_cred_def_json(),
+            Some(&rev_def_json),
+        )
         .await
         .unwrap();
-    (
-        schema.schema_id,
-        schema.schema_json,
-        cred_def_id,
-        cred_def_json,
-        offer,
-        req,
-        req_meta,
-        cred_id,
-        rev_reg.rev_reg_id.clone(),
-        cred_rev_id.unwrap(),
-        rev_reg.tails_dir.clone(),
-        rev_reg,
-    )
+    cred_id
 }
