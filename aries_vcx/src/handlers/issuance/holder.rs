@@ -232,7 +232,6 @@ impl Holder {
         self.holder_sm.get_problem_report()
     }
 
-    // todo 0109: send ack/problem-report in upper layer
     pub async fn process_aries_msg(
         &mut self,
         ledger: &Arc<dyn AnoncredsLedgerRead>,

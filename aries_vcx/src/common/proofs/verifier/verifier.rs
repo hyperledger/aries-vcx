@@ -284,6 +284,7 @@ pub mod integration_tests {
             .unwrap();
 
         /* create cred */
+        // TODO: Reuse data in credential_data_address_1
         let credential_data = r#"{"address1": ["123 Main St"], "address2": ["Suite 3"], "city": ["Draper"], "state": ["UT"], "zip": ["84000"]}"#;
         let encoded_attributes = encode_attributes(&credential_data).unwrap();
 

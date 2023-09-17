@@ -34,6 +34,7 @@ use aries_vcx_core::ledger::indy::pool::test_utils::get_temp_file_path;
 use aries_vcx_core::wallet::indy::wallet::get_verkey_from_wallet;
 use diddoc_legacy::aries::service::AriesService;
 
+// TODO: Deduplicate with create_and_store_revocable_credential_def
 async fn create_and_store_nonrevocable_credential_def(
     anoncreds: &Arc<dyn BaseAnonCreds>,
     ledger_read: &Arc<dyn AnoncredsLedgerRead>,
@@ -57,6 +58,7 @@ async fn create_and_store_nonrevocable_credential_def(
     )
 }
 
+// TODO: Deduplicate with create_and_store_nonrevocable_credential_def
 async fn create_and_store_revocable_credential_def(
     anoncreds: &Arc<dyn BaseAnonCreds>,
     ledger_read: &Arc<dyn AnoncredsLedgerRead>,
