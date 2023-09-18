@@ -40,7 +40,6 @@ pub async fn create_and_write_test_schema(
     Schema::create_from_ledger_json(&schema_json, "", &schema_id).unwrap()
 }
 
-// TODO: Pass revokable flag as an argument
 pub async fn create_and_write_test_cred_def(
     anoncreds: &Arc<dyn BaseAnonCreds>,
     ledger_read: &Arc<dyn AnoncredsLedgerRead>,
