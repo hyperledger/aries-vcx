@@ -64,6 +64,7 @@ pub mod integration_tests {
 
     use crate::{
         common::{
+            primitives::{credential_definition::CredentialDef, credential_schema::Schema},
             proofs::proof_request::ProofRequestData,
             test_utils::{create_and_write_credential, create_and_write_test_cred_def, create_and_write_test_schema},
         },
@@ -79,7 +80,7 @@ pub mod integration_tests {
         ledger_write: &Arc<dyn AnoncredsLedgerWrite>,
         did: &str,
     ) -> (String, String, String, String) {
-        let (schema_id, schema_json, cred_def_id, cred_def_json, cred_id) = create_and_store_nonrevocable_credential(
+        let (schema, cred_def, cred_id) = create_and_store_nonrevocable_credential(
             anoncreds_issuer,
             anoncreds_holder,
             ledger_read,
@@ -120,15 +121,16 @@ pub mod integration_tests {
         })
         .to_string();
 
-        let schema_json: serde_json::Value = serde_json::from_str(&schema_json).unwrap();
+        let schema_id = schema.schema_id.clone();
+        let schema_json: serde_json::Value = serde_json::from_str(&schema.schema_json).unwrap();
         let schemas = json!({
             schema_id: schema_json,
         })
         .to_string();
 
-        let cred_def_json: serde_json::Value = serde_json::from_str(&cred_def_json).unwrap();
+        let cred_def_json: serde_json::Value = serde_json::from_str(&cred_def.get_cred_def_json()).unwrap();
         let cred_defs = json!({
-            cred_def_id: cred_def_json,
+            cred_def.get_cred_def_id(): cred_def_json,
         })
         .to_string();
 
@@ -159,7 +161,7 @@ pub mod integration_tests {
         did: &str,
         include_predicate_cred: bool,
     ) -> (String, String, String, String) {
-        let (schema_id, schema_json, cred_def_id, cred_def_json, cred_id) = create_and_store_nonrevocable_credential(
+        let (schema, cred_def, cred_id) = create_and_store_nonrevocable_credential(
             anoncreds_issuer,
             anoncreds_holder,
             ledger_read,
@@ -216,15 +218,15 @@ pub mod integration_tests {
             .to_string();
         }
 
-        let schema_json: serde_json::Value = serde_json::from_str(&schema_json).unwrap();
+        let schema_json: serde_json::Value = serde_json::from_str(&schema.schema_json).unwrap();
         let schemas = json!({
-            schema_id: schema_json,
+            schema.schema_id: schema_json,
         })
         .to_string();
 
-        let cred_def_json: serde_json::Value = serde_json::from_str(&cred_def_json).unwrap();
+        let cred_def_json: serde_json::Value = serde_json::from_str(cred_def.get_cred_def_json()).unwrap();
         let cred_defs = json!({
-            cred_def_id: cred_def_json,
+            cred_def.get_cred_def_id(): cred_def_json,
         })
         .to_string();
 
@@ -254,7 +256,7 @@ pub mod integration_tests {
         ledger_write: &Arc<dyn AnoncredsLedgerWrite>,
         issuer_did: &str,
         attr_list: &str,
-    ) -> (String, String, String, String, String) {
+    ) -> (Schema, CredentialDef, String) {
         let schema = create_and_write_test_schema(anoncreds_issuer, ledger_write, issuer_did, attr_list).await;
 
         let cred_def = create_and_write_test_cred_def(
@@ -277,13 +279,7 @@ pub mod integration_tests {
             None,
         )
         .await;
-        (
-            schema.schema_id,
-            schema.schema_json,
-            cred_def.get_cred_def_id(),
-            cred_def.get_cred_def_json().to_string(),
-            cred_id,
-        )
+        (schema, cred_def, cred_id)
     }
 
     #[tokio::test]
@@ -387,18 +383,17 @@ pub mod integration_tests {
 
             let proof_req_json = serde_json::to_string(&proof_req_json).unwrap();
 
-            let (schema_id, schema_json, cred_def_id, cred_def_json, cred_id) =
-                create_and_store_nonrevocable_credential(
-                    &setup.profile.inject_anoncreds(),
-                    &setup.profile.inject_anoncreds(),
-                    &setup.profile.inject_anoncreds_ledger_read(),
-                    &setup.profile.inject_anoncreds_ledger_write(),
-                    &setup.institution_did,
-                    utils::constants::DEFAULT_SCHEMA_ATTRS,
-                )
-                .await;
-            let cred_def_json: serde_json::Value = serde_json::from_str(&cred_def_json).unwrap();
-            let schema_json: serde_json::Value = serde_json::from_str(&schema_json).unwrap();
+            let (schema, cred_def, cred_id) = create_and_store_nonrevocable_credential(
+                &setup.profile.inject_anoncreds(),
+                &setup.profile.inject_anoncreds(),
+                &setup.profile.inject_anoncreds_ledger_read(),
+                &setup.profile.inject_anoncreds_ledger_write(),
+                &setup.institution_did,
+                utils::constants::DEFAULT_SCHEMA_ATTRS,
+            )
+            .await;
+            let cred_def_json: serde_json::Value = serde_json::from_str(cred_def.get_cred_def_json()).unwrap();
+            let schema_json: serde_json::Value = serde_json::from_str(&schema.schema_json).unwrap();
 
             let anoncreds = Arc::clone(&setup.profile).inject_anoncreds();
             let prover_proof_json = anoncreds
@@ -416,8 +411,8 @@ pub mod integration_tests {
                     })
                     .to_string(),
                     "main",
-                    &json!({ schema_id: schema_json }).to_string(),
-                    &json!({ cred_def_id: cred_def_json }).to_string(),
+                    &json!({ schema.schema_id: schema_json }).to_string(),
+                    &json!({ cred_def.get_cred_def_id(): cred_def_json }).to_string(),
                     None,
                 )
                 .await
@@ -487,18 +482,17 @@ pub mod integration_tests {
 
             let proof_req_json = serde_json::to_string(&proof_req_json).unwrap();
 
-            let (schema_id, schema_json, cred_def_id, cred_def_json, cred_id) =
-                create_and_store_nonrevocable_credential(
-                    &setup.profile.inject_anoncreds(),
-                    &setup.profile.inject_anoncreds(),
-                    &setup.profile.inject_anoncreds_ledger_read(),
-                    &setup.profile.inject_anoncreds_ledger_write(),
-                    &setup.institution_did,
-                    utils::constants::DEFAULT_SCHEMA_ATTRS,
-                )
-                .await;
-            let cred_def_json: serde_json::Value = serde_json::from_str(&cred_def_json).unwrap();
-            let schema_json: serde_json::Value = serde_json::from_str(&schema_json).unwrap();
+            let (schema, cred_def, cred_id) = create_and_store_nonrevocable_credential(
+                &setup.profile.inject_anoncreds(),
+                &setup.profile.inject_anoncreds(),
+                &setup.profile.inject_anoncreds_ledger_read(),
+                &setup.profile.inject_anoncreds_ledger_write(),
+                &setup.institution_did,
+                utils::constants::DEFAULT_SCHEMA_ATTRS,
+            )
+            .await;
+            let cred_def_json: serde_json::Value = serde_json::from_str(&cred_def.get_cred_def_json()).unwrap();
+            let schema_json: serde_json::Value = serde_json::from_str(&schema.schema_json).unwrap();
 
             let anoncreds = Arc::clone(&setup.profile).inject_anoncreds();
             let prover_proof_json = anoncreds
@@ -516,8 +510,8 @@ pub mod integration_tests {
                     })
                     .to_string(),
                     "main",
-                    &json!({ schema_id: schema_json }).to_string(),
-                    &json!({ cred_def_id: cred_def_json }).to_string(),
+                    &json!({ schema.schema_id: schema_json }).to_string(),
+                    &json!({ cred_def.get_cred_def_id(): cred_def_json }).to_string(),
                     None,
                 )
                 .await
