@@ -83,6 +83,7 @@ pub async fn create_and_write_test_rev_reg(
     rev_reg
 }
 
+// TODO: Make nonrevokable possible
 pub async fn create_and_write_credential(
     anoncreds_issuer: &Arc<dyn BaseAnonCreds>,
     anoncreds_holder: &Arc<dyn BaseAnonCreds>,

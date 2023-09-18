@@ -59,7 +59,7 @@ pub async fn create_address_schema_creddef_revreg(
     let rev_reg =
         create_and_write_test_rev_reg(&anoncreds, &ledger_write, &institution_did, &cred_def.get_cred_def_id()).await;
 
-    tokio::time::sleep(Duration::from_millis(1000)).await;
+    tokio::time::sleep(Duration::from_millis(500)).await;
     let cred_def_id = cred_def.get_cred_def_id();
     let cred_def_json = ledger_read.get_cred_def(&cred_def_id, None).await.unwrap();
     (

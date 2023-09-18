@@ -8,7 +8,10 @@ pub mod utils;
 use std::collections::HashMap;
 
 use aries_vcx::common::proofs::proof_request::PresentationRequestData;
-use aries_vcx::common::test_utils::{create_and_write_test_cred_def, create_and_write_test_schema};
+use aries_vcx::common::test_utils::{
+    create_and_write_credential, create_and_write_test_cred_def, create_and_write_test_rev_reg,
+    create_and_write_test_schema,
+};
 use aries_vcx::handlers::proof_presentation::prover::Prover;
 use aries_vcx::handlers::proof_presentation::types::RetrievedCredentials;
 use aries_vcx::handlers::util::AttachmentId;
@@ -116,12 +119,30 @@ async fn test_agency_pool_case_for_proof_req_doesnt_matter_for_retrieve_creds() 
             DEFAULT_SCHEMA_ATTRS,
         )
         .await;
-        create_and_write_test_cred_def(
+        let cred_def = create_and_write_test_cred_def(
             &setup.profile.inject_anoncreds(),
             &setup.profile.inject_anoncreds_ledger_read(),
             &setup.profile.inject_anoncreds_ledger_write(),
             &setup.institution_did,
             &schema.schema_id,
+        )
+        .await;
+        // TODO: Not necessary to create revokable credential for this test,
+        // but create_and_write_credential currently requires a rev reg
+        let rev_reg = create_and_write_test_rev_reg(
+            &setup.profile.inject_anoncreds(),
+            &setup.profile.inject_anoncreds_ledger_write(),
+            &setup.institution_did,
+            &cred_def.get_cred_def_id(),
+        )
+        .await;
+        create_and_write_credential(
+            &setup.profile.inject_anoncreds(),
+            &setup.profile.inject_anoncreds(),
+            &setup.profile.inject_anoncreds_ledger_read(),
+            &setup.institution_did,
+            &rev_reg,
+            &cred_def,
         )
         .await;
 
