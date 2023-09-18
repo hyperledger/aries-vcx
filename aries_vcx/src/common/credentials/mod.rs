@@ -11,7 +11,7 @@ use super::primitives::revocation_registry_delta::RevocationRegistryDelta;
 pub mod encoding;
 
 #[derive(Serialize, Deserialize)]
-pub struct ProverCredential {
+struct ProverCredential {
     referent: String,
     attrs: HashMap<String, String>,
     schema_id: String,
