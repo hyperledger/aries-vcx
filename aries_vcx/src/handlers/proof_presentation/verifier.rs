@@ -7,6 +7,7 @@ use messages::msg_fields::protocols::present_proof::present::Presentation;
 use messages::msg_fields::protocols::present_proof::propose::ProposePresentation;
 use messages::msg_fields::protocols::present_proof::request::RequestPresentation;
 use messages::msg_fields::protocols::present_proof::PresentProof;
+use messages::msg_fields::protocols::report_problem::ProblemReport;
 use messages::AriesMessage;
 
 use crate::common::proofs::proof_request::PresentationRequestData;
@@ -60,11 +61,11 @@ impl Verifier {
     }
 
     // TODO: Find a better name for this method
-    pub fn mark_presentation_request_sent(&mut self) -> VcxResult<AriesMessage> {
+    pub fn mark_presentation_request_sent(&mut self) -> VcxResult<RequestPresentation> {
         if self.verifier_sm.get_state() == VerifierState::PresentationRequestSet {
             let request = self.verifier_sm.presentation_request_msg()?;
             self.verifier_sm = self.verifier_sm.clone().mark_presentation_request_sent()?;
-            Ok(request.into())
+            Ok(request)
         } else {
             Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::NotReady,
@@ -180,7 +181,7 @@ impl Verifier {
         self.verifier_sm.progressable_by_message()
     }
 
-    pub async fn decline_presentation_proposal<'a>(&'a mut self, reason: &'a str) -> VcxResult<AriesMessage> {
+    pub async fn decline_presentation_proposal<'a>(&'a mut self, reason: &'a str) -> VcxResult<ProblemReport> {
         trace!("Verifier::decline_presentation_proposal >>> reason: {:?}", reason);
         let state = self.verifier_sm.get_state();
         if state == VerifierState::PresentationProposalReceived {
@@ -195,7 +196,7 @@ impl Verifier {
                 .clone()
                 .reject_presentation_proposal(problem_report.clone())
                 .await?;
-            Ok(problem_report.into())
+            Ok(problem_report)
         } else {
             Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::NotReady,
