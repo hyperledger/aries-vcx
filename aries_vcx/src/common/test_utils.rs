@@ -122,6 +122,7 @@ pub async fn create_and_write_credential(
     } else {
         (None, None, None)
     };
+    println!("rev_reg_def_json: {:?}", rev_reg_def_json);
     let (cred, _, _) = anoncreds_issuer
         .issuer_create_credential(&offer, &req, &encoded_attributes, rev_reg_id, tails_dir)
         .await

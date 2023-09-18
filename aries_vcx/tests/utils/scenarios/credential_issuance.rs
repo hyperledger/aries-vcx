@@ -2,6 +2,7 @@ use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
 
+use aries_vcx::common::primitives::credential_schema::Schema;
 use aries_vcx::common::test_utils::{
     create_and_write_test_cred_def, create_and_write_test_rev_reg, create_and_write_test_schema,
 };
@@ -28,15 +29,7 @@ use super::{attr_names_address_list, create_credential_proposal, credential_data
 pub async fn create_address_schema_creddef_revreg(
     profile: &Arc<dyn Profile>,
     institution_did: &str,
-) -> (
-    String,
-    String,
-    String,
-    String,
-    CredentialDef,
-    RevocationRegistry,
-    Option<String>,
-) {
+) -> (Schema, CredentialDef, RevocationRegistry) {
     let ledger_read = profile.inject_anoncreds_ledger_read();
     let ledger_write = profile.inject_anoncreds_ledger_write();
     let anoncreds = profile.inject_anoncreds();
@@ -59,19 +52,9 @@ pub async fn create_address_schema_creddef_revreg(
     .await;
     let rev_reg =
         create_and_write_test_rev_reg(&anoncreds, &ledger_write, &institution_did, &cred_def.get_cred_def_id()).await;
-
     tokio::time::sleep(Duration::from_millis(500)).await;
-    let cred_def_id = cred_def.get_cred_def_id();
-    let cred_def_json = ledger_read.get_cred_def(&cred_def_id, None).await.unwrap();
-    (
-        schema.schema_id,
-        schema.schema_json,
-        cred_def_id.to_string(),
-        cred_def_json,
-        cred_def,
-        rev_reg.clone(),
-        Some(rev_reg.rev_reg_id),
-    )
+
+    (schema, cred_def, rev_reg)
 }
 
 pub fn create_holder_from_proposal(proposal: ProposeCredential) -> Holder {
@@ -264,7 +247,7 @@ pub async fn issue_address_credential(
     RevocationRegistry,
     Issuer,
 ) {
-    let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, rev_reg_id) =
+    let (schema, cred_def, rev_reg) =
         create_address_schema_creddef_revreg(&institution.profile, &institution.institution_did).await;
 
     let issuer = exchange_credential(
@@ -276,7 +259,14 @@ pub async fn issue_address_credential(
         None,
     )
     .await;
-    (schema_id, cred_def_id, rev_reg_id, cred_def, rev_reg, issuer)
+    (
+        schema.schema_id,
+        cred_def.get_cred_def_id(),
+        Some(rev_reg.rev_reg_id.clone()),
+        cred_def,
+        rev_reg,
+        issuer,
+    )
 }
 
 pub async fn exchange_credential(
