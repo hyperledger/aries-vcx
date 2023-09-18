@@ -64,12 +64,10 @@ pub mod integration_tests {
 
     use crate::{
         common::{
-            credentials::encoding::encode_attributes,
             proofs::proof_request::ProofRequestData,
-            test_utils::{create_and_write_test_cred_def, create_and_write_test_schema},
+            test_utils::{create_and_write_credential, create_and_write_test_cred_def, create_and_write_test_schema},
         },
         errors::error::AriesVcxErrorKind,
-        global::settings,
         utils::{self, constants::DEFAULT_SCHEMA_ATTRS, devsetup::SetupProfile},
     };
 
@@ -81,16 +79,15 @@ pub mod integration_tests {
         ledger_write: &Arc<dyn AnoncredsLedgerWrite>,
         did: &str,
     ) -> (String, String, String, String) {
-        let (schema_id, schema_json, cred_def_id, cred_def_json, _offer, _req, _req_meta, cred_id) =
-            create_and_store_nonrevocable_credential(
-                anoncreds_issuer,
-                anoncreds_holder,
-                ledger_read,
-                ledger_write,
-                &did,
-                DEFAULT_SCHEMA_ATTRS,
-            )
-            .await;
+        let (schema_id, schema_json, cred_def_id, cred_def_json, cred_id) = create_and_store_nonrevocable_credential(
+            anoncreds_issuer,
+            anoncreds_holder,
+            ledger_read,
+            ledger_write,
+            &did,
+            DEFAULT_SCHEMA_ATTRS,
+        )
+        .await;
         let proof_req = json!({
            "nonce":"123432421212",
            "name":"proof_req_1",
@@ -162,16 +159,15 @@ pub mod integration_tests {
         did: &str,
         include_predicate_cred: bool,
     ) -> (String, String, String, String) {
-        let (schema_id, schema_json, cred_def_id, cred_def_json, _offer, _req, _req_meta, cred_id) =
-            create_and_store_nonrevocable_credential(
-                anoncreds_issuer,
-                anoncreds_holder,
-                ledger_read,
-                ledger_write,
-                &did,
-                DEFAULT_SCHEMA_ATTRS,
-            )
-            .await;
+        let (schema_id, schema_json, cred_def_id, cred_def_json, cred_id) = create_and_store_nonrevocable_credential(
+            anoncreds_issuer,
+            anoncreds_holder,
+            ledger_read,
+            ledger_write,
+            &did,
+            DEFAULT_SCHEMA_ATTRS,
+        )
+        .await;
 
         let proof_req = json!({
            "nonce":"123432421212",
@@ -251,7 +247,6 @@ pub mod integration_tests {
         (schemas, cred_defs, proof_req, proof)
     }
 
-    // TODO: Deduplicate with create_and_write_credential
     async fn create_and_store_nonrevocable_credential(
         anoncreds_issuer: &Arc<dyn BaseAnonCreds>,
         anoncreds_holder: &Arc<dyn BaseAnonCreds>,
@@ -259,7 +254,7 @@ pub mod integration_tests {
         ledger_write: &Arc<dyn AnoncredsLedgerWrite>,
         issuer_did: &str,
         attr_list: &str,
-    ) -> (String, String, String, String, String, String, String, String) {
+    ) -> (String, String, String, String, String) {
         let schema = create_and_write_test_schema(anoncreds_issuer, ledger_write, issuer_did, attr_list).await;
 
         let cred_def = create_and_write_test_cred_def(
@@ -271,42 +266,22 @@ pub mod integration_tests {
             false,
         )
         .await;
-
         tokio::time::sleep(Duration::from_millis(500)).await;
-        let cred_def_id = cred_def.get_cred_def_id();
-        let cred_def_json = ledger_read.get_cred_def(&cred_def_id, Some(issuer_did)).await.unwrap();
 
-        let offer = anoncreds_issuer
-            .issuer_create_credential_offer(&cred_def_id)
-            .await
-            .unwrap();
-        let (req, req_meta) = anoncreds_holder
-            .prover_create_credential_req(&issuer_did, &offer, &cred_def_json, settings::DEFAULT_LINK_SECRET_ALIAS)
-            .await
-            .unwrap();
-
-        /* create cred */
-        // TODO: Reuse data in credential_data_address_1
-        let credential_data = r#"{"address1": ["123 Main St"], "address2": ["Suite 3"], "city": ["Draper"], "state": ["UT"], "zip": ["84000"]}"#;
-        let encoded_attributes = encode_attributes(&credential_data).unwrap();
-
-        let (cred, _, _) = anoncreds_issuer
-            .issuer_create_credential(&offer, &req, &encoded_attributes, None, None)
-            .await
-            .unwrap();
-        /* store cred */
-        let cred_id = anoncreds_holder
-            .prover_store_credential(None, &req_meta, &cred, &cred_def_json, None)
-            .await
-            .unwrap();
+        let cred_id = create_and_write_credential(
+            anoncreds_issuer,
+            anoncreds_holder,
+            ledger_read,
+            issuer_did,
+            &cred_def,
+            None,
+        )
+        .await;
         (
             schema.schema_id,
             schema.schema_json,
-            cred_def_id,
-            cred_def_json,
-            offer,
-            req,
-            req_meta,
+            cred_def.get_cred_def_id(),
+            cred_def.get_cred_def_json().to_string(),
             cred_id,
         )
     }
@@ -412,7 +387,7 @@ pub mod integration_tests {
 
             let proof_req_json = serde_json::to_string(&proof_req_json).unwrap();
 
-            let (schema_id, schema_json, cred_def_id, cred_def_json, _offer, _req, _req_meta, cred_id) =
+            let (schema_id, schema_json, cred_def_id, cred_def_json, cred_id) =
                 create_and_store_nonrevocable_credential(
                     &setup.profile.inject_anoncreds(),
                     &setup.profile.inject_anoncreds(),
@@ -512,7 +487,7 @@ pub mod integration_tests {
 
             let proof_req_json = serde_json::to_string(&proof_req_json).unwrap();
 
-            let (schema_id, schema_json, cred_def_id, cred_def_json, _offer, _req, _req_meta, cred_id) =
+            let (schema_id, schema_json, cred_def_id, cred_def_json, cred_id) =
                 create_and_store_nonrevocable_credential(
                     &setup.profile.inject_anoncreds(),
                     &setup.profile.inject_anoncreds(),
