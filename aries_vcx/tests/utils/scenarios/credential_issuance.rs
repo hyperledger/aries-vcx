@@ -196,18 +196,10 @@ pub async fn send_credential(
     }
 }
 
-// TODO: Inline this?
 pub async fn issue_address_credential(
     consumer: &mut TestAgent,
     institution: &mut TestAgent,
-) -> (
-    String,
-    String,
-    Option<String>,
-    CredentialDef,
-    RevocationRegistry,
-    Issuer,
-) {
+) -> (Schema, CredentialDef, RevocationRegistry, Issuer) {
     let (schema, cred_def, rev_reg) =
         create_address_schema_creddef_revreg(&institution.profile, &institution.institution_did).await;
     let issuer = exchange_credential(
@@ -219,14 +211,7 @@ pub async fn issue_address_credential(
         None,
     )
     .await;
-    (
-        schema.schema_id,
-        cred_def.get_cred_def_id(),
-        Some(rev_reg.rev_reg_id.clone()),
-        cred_def,
-        rev_reg,
-        issuer,
-    )
+    (schema, cred_def, rev_reg, issuer)
 }
 
 pub async fn exchange_credential(

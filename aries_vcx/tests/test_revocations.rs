@@ -30,19 +30,18 @@ async fn test_agency_pool_basic_revocation() {
         let mut institution = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
         let mut consumer = create_test_agent(setup.genesis_file_path).await;
 
-        let (schema_id, cred_def_id, _, _cred_def, rev_reg, issuer_credential) =
-            issue_address_credential(&mut consumer, &mut institution).await;
+        let (schema, cred_def, rev_reg, issuer) = issue_address_credential(&mut consumer, &mut institution).await;
 
         #[cfg(feature = "migration")]
         institution.migrate().await;
 
-        assert!(!issuer_credential
+        assert!(!issuer
             .is_revoked(&institution.profile.inject_anoncreds_ledger_read())
             .await
             .unwrap());
 
         let time_before_revocation = time::OffsetDateTime::now_utc().unix_timestamp() as u64;
-        revoke_credential_and_publish_accumulator(&mut institution, &issuer_credential, &rev_reg).await;
+        revoke_credential_and_publish_accumulator(&mut institution, &issuer, &rev_reg).await;
 
         #[cfg(feature = "migration")]
         consumer.migrate().await;
@@ -50,15 +49,15 @@ async fn test_agency_pool_basic_revocation() {
         tokio::time::sleep(Duration::from_millis(1000)).await;
         let time_after_revocation = time::OffsetDateTime::now_utc().unix_timestamp() as u64;
 
-        assert!(issuer_credential
+        assert!(issuer
             .is_revoked(&institution.profile.inject_anoncreds_ledger_read())
             .await
             .unwrap());
 
         let requested_attrs = requested_attrs_address(
             &institution.institution_did,
-            &schema_id,
-            &cred_def_id,
+            &schema.schema_id,
+            &cred_def.get_cred_def_id(),
             None,
             Some(time_after_revocation),
         );
@@ -104,10 +103,9 @@ async fn test_agency_pool_revoked_credential_might_still_work() {
         let mut institution = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
         let mut consumer = create_test_agent(setup.genesis_file_path).await;
 
-        let (schema_id, cred_def_id, _, _cred_def, rev_reg, issuer_credential) =
-            issue_address_credential(&mut consumer, &mut institution).await;
+        let (schema, cred_def, rev_reg, issuer) = issue_address_credential(&mut consumer, &mut institution).await;
 
-        assert!(!issuer_credential
+        assert!(!issuer
             .is_revoked(&institution.profile.inject_anoncreds_ledger_read())
             .await
             .unwrap());
@@ -119,7 +117,7 @@ async fn test_agency_pool_revoked_credential_might_still_work() {
         let time_before_revocation = time::OffsetDateTime::now_utc().unix_timestamp() as u64;
         tokio::time::sleep(Duration::from_millis(1000)).await;
 
-        revoke_credential_and_publish_accumulator(&mut institution, &issuer_credential, &rev_reg).await;
+        revoke_credential_and_publish_accumulator(&mut institution, &issuer, &rev_reg).await;
         tokio::time::sleep(Duration::from_millis(1000)).await;
 
         #[cfg(feature = "migration")]
@@ -129,8 +127,8 @@ async fn test_agency_pool_revoked_credential_might_still_work() {
         let to = time_before_revocation;
         let requested_attrs = requested_attrs_address(
             &institution.institution_did,
-            &schema_id,
-            &cred_def_id,
+            &schema.schema_id,
+            &cred_def.get_cred_def_id(),
             Some(from),
             Some(to),
         );
@@ -176,14 +174,13 @@ async fn test_agency_pool_local_revocation() {
         let mut institution = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
         let mut consumer = create_test_agent(setup.genesis_file_path).await;
 
-        let (schema_id, cred_def_id, _, _cred_def, rev_reg, issuer_credential) =
-            issue_address_credential(&mut consumer, &mut institution).await;
+        let (schema, cred_def, rev_reg, issuer) = issue_address_credential(&mut consumer, &mut institution).await;
 
         #[cfg(feature = "migration")]
         institution.migrate().await;
 
-        revoke_credential_local(&mut institution, &issuer_credential, &rev_reg.rev_reg_id).await;
-        assert!(!issuer_credential
+        revoke_credential_local(&mut institution, &issuer, &rev_reg.rev_reg_id).await;
+        assert!(!issuer
             .is_revoked(&institution.profile.inject_anoncreds_ledger_read())
             .await
             .unwrap());
@@ -191,8 +188,8 @@ async fn test_agency_pool_local_revocation() {
         let verifier_handler = exchange_proof(
             &mut institution,
             &mut consumer,
-            &schema_id,
-            &cred_def_id,
+            &schema.schema_id,
+            &cred_def.get_cred_def_id(),
             Some("request1"),
         )
         .await;
@@ -201,7 +198,7 @@ async fn test_agency_pool_local_revocation() {
             PresentationVerificationStatus::Valid
         );
 
-        assert!(!issuer_credential
+        assert!(!issuer
             .is_revoked(&institution.profile.inject_anoncreds_ledger_read())
             .await
             .unwrap());
@@ -211,8 +208,8 @@ async fn test_agency_pool_local_revocation() {
         let verifier_handler = exchange_proof(
             &mut institution,
             &mut consumer,
-            &schema_id,
-            &cred_def_id,
+            &schema.schema_id,
+            &cred_def.get_cred_def_id(),
             Some("request2"),
         )
         .await;
@@ -221,7 +218,7 @@ async fn test_agency_pool_local_revocation() {
             PresentationVerificationStatus::Invalid
         );
 
-        assert!(issuer_credential
+        assert!(issuer
             .is_revoked(&institution.profile.inject_anoncreds_ledger_read())
             .await
             .unwrap());
@@ -982,7 +979,7 @@ async fn test_agency_pool_three_creds_one_rev_reg_revoke_all() {
         let mut issuer = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
         let mut consumer = create_test_agent(setup.genesis_file_path.clone()).await;
 
-        let (schema, cred_def, rev_reg) =
+        let (_schema, cred_def, rev_reg) =
             create_address_schema_creddef_revreg(&issuer.profile, &issuer.institution_did).await;
 
         let issuer_credential1 = exchange_credential(
