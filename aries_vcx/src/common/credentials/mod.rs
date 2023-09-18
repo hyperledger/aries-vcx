@@ -82,7 +82,6 @@ mod integration_tests {
             let cred_id = create_and_write_credential(
                 &setup.profile.inject_anoncreds(),
                 &setup.profile.inject_anoncreds(),
-                &setup.profile.inject_anoncreds_ledger_read(),
                 &setup.institution_did,
                 &cred_def,
                 Some(&rev_reg),
@@ -138,7 +137,6 @@ mod integration_tests {
             let cred_id = create_and_write_credential(
                 &setup.profile.inject_anoncreds(),
                 &setup.profile.inject_anoncreds(),
-                &setup.profile.inject_anoncreds_ledger_read(),
                 &setup.institution_did,
                 &cred_def,
                 Some(&rev_reg),

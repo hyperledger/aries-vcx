@@ -15,7 +15,7 @@ pub struct RevocationRegistry {
     cred_def_id: String,
     issuer_did: String,
     pub rev_reg_id: String,
-    pub(in crate::common) rev_reg_def: RevocationRegistryDefinition,
+    rev_reg_def: RevocationRegistryDefinition,
     pub(in crate::common) rev_reg_entry: String,
     pub tails_dir: String,
     pub(in crate::common) max_creds: u32,

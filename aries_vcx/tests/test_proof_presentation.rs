@@ -60,7 +60,6 @@ async fn test_agency_pool_generate_proof_with_predicates() {
         let _cred_id = create_and_write_credential(
             &setup.profile.inject_anoncreds(),
             &setup.profile.inject_anoncreds(),
-            &setup.profile.inject_anoncreds_ledger_read(),
             &setup.institution_did,
             &cred_def,
             Some(&rev_reg),

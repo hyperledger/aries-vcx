@@ -270,15 +270,8 @@ pub mod integration_tests {
         .await;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let cred_id = create_and_write_credential(
-            anoncreds_issuer,
-            anoncreds_holder,
-            ledger_read,
-            issuer_did,
-            &cred_def,
-            None,
-        )
-        .await;
+        let cred_id =
+            create_and_write_credential(anoncreds_issuer, anoncreds_holder, issuer_did, &cred_def, None).await;
         (schema, cred_def, cred_id)
     }
 

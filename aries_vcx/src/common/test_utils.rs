@@ -88,7 +88,6 @@ pub async fn create_and_write_test_rev_reg(
 pub async fn create_and_write_credential(
     anoncreds_issuer: &Arc<dyn BaseAnonCreds>,
     anoncreds_holder: &Arc<dyn BaseAnonCreds>,
-    ledger_read: &Arc<dyn AnoncredsLedgerRead>,
     institution_did: &str,
     cred_def: &CredentialDef,
     rev_reg: Option<&RevocationRegistry>,
@@ -112,10 +111,8 @@ pub async fn create_and_write_credential(
         .unwrap();
 
     let (rev_reg_def_json, rev_reg_id, tails_dir) = if let Some(rev_reg) = rev_reg {
-        // TODO: This ledger read should not be necessary. What is the difference between
-        // the result of get_rev_reg_def_json and rev_reg_def stored on RevocationRegistry?
         (
-            Some(ledger_read.get_rev_reg_def_json(&rev_reg.rev_reg_id).await.unwrap()),
+            Some(serde_json::to_string(&rev_reg.get_rev_reg_def()).unwrap()),
             Some(rev_reg.rev_reg_id.clone()),
             Some(rev_reg.tails_dir.clone()),
         )
