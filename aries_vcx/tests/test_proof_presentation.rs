@@ -81,8 +81,8 @@ async fn test_agency_pool_generate_proof_with_predicates() {
                     "name": "state",
                     "restrictions": {
                         "issuer_did": setup.institution_did,
-                        "schema_id": schema_id,
-                        "cred_def_id": cred_def_id,
+                        "schema_id": schema.schema_id,
+                        "cred_def_id": cred_def.get_cred_def_id(),
                     }
                 },
                 "zip_self_attested_3": {
@@ -114,15 +114,15 @@ async fn test_agency_pool_generate_proof_with_predicates() {
            "attrs":{
               "address1_1": {
                 "credential": all_creds.credentials_by_referent["address1_1"][0],
-                "tails_dir": tails_dir
+                "tails_dir": rev_reg.get_tails_dir()
               },
               "state_2": {
                 "credential": all_creds.credentials_by_referent["state_2"][0],
-                "tails_dir": tails_dir
+                "tails_dir": rev_reg.get_tails_dir()
               },
               "zip_3": {
                 "credential": all_creds.credentials_by_referent["zip_3"][0],
-                "tails_dir": tails_dir
+                "tails_dir": rev_reg.get_tails_dir()
               },
            },
         });
