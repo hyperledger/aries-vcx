@@ -10,8 +10,8 @@ use aries_vcx::handlers::util::OfferInfo;
 use aries_vcx::protocols::mediated_connection::pairwise_info::PairwiseInfo;
 use messages::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
 use messages::msg_fields::protocols::cred_issuance::propose_credential::ProposeCredential;
-use messages::msg_fields::protocols::cred_issuance::CredentialIssuance;
-use messages::AriesMessage;
+use messages::msg_fields::protocols::cred_issuance::request_credential::RequestCredential;
+use messages::msg_fields::protocols::report_problem::ProblemReport;
 use serde_json::json;
 
 use crate::utils::test_agent::TestAgent;
@@ -92,7 +92,7 @@ async fn create_credential_offer(
     rev_reg: &RevocationRegistry,
     credential_json: &str,
     comment: Option<&str>,
-) -> (Issuer, AriesMessage) {
+) -> (Issuer, OfferCredential) {
     let offer_info = OfferInfo {
         credential_json: credential_json.to_string(),
         cred_def_id: cred_def.get_cred_def_id(),
@@ -104,18 +104,14 @@ async fn create_credential_offer(
         .build_credential_offer_msg(&faber.profile.inject_anoncreds(), offer_info, comment.map(String::from))
         .await
         .unwrap();
-    let credential_offer = issuer.get_credential_offer_msg().unwrap();
+    let credential_offer = issuer.get_credential_offer().unwrap();
     (issuer, credential_offer)
 }
 
-async fn create_credential_request(alice: &mut TestAgent, cred_offer: AriesMessage) -> (Holder, AriesMessage) {
-    let cred_offer: OfferCredential = match cred_offer {
-        AriesMessage::CredentialIssuance(CredentialIssuance::OfferCredential(cred_offer)) => cred_offer,
-        _ => panic!("Unexpected message type"),
-    };
+async fn create_credential_request(alice: &mut TestAgent, cred_offer: OfferCredential) -> (Holder, RequestCredential) {
     let mut holder = Holder::create_from_offer("TEST_CREDENTIAL", cred_offer).unwrap();
     assert_eq!(HolderState::OfferReceived, holder.get_state());
-    let cred_request = holder
+    holder
         .prepare_credential_request(
             &alice.profile.inject_anoncreds_ledger_read(),
             &alice.profile.inject_anoncreds(),
@@ -126,6 +122,7 @@ async fn create_credential_request(alice: &mut TestAgent, cred_offer: AriesMessa
         )
         .await
         .unwrap();
+    let cred_request = holder.get_msg_credential_request().unwrap();
     (holder, cred_request)
 }
 
@@ -135,7 +132,7 @@ pub async fn accept_credential_proposal(
     cred_proposal: ProposeCredential,
     rev_reg_id: Option<String>,
     tails_dir: Option<String>,
-) -> AriesMessage {
+) -> OfferCredential {
     let offer_info = OfferInfo {
         credential_json: json!(cred_proposal.content.credential_proposal.attributes).to_string(),
         cred_def_id: cred_proposal.content.cred_def_id.clone(),
@@ -146,23 +143,26 @@ pub async fn accept_credential_proposal(
         .build_credential_offer_msg(&faber.profile.inject_anoncreds(), offer_info, Some("comment".into()))
         .await
         .unwrap();
-    let credential_offer = issuer.get_credential_offer_msg().unwrap();
-    credential_offer
+    issuer.get_credential_offer().unwrap()
 }
 
-pub async fn accept_offer(alice: &mut TestAgent, cred_offer: AriesMessage, holder: &mut Holder) -> AriesMessage {
+pub async fn accept_offer(
+    alice: &mut TestAgent,
+    cred_offer: OfferCredential,
+    holder: &mut Holder,
+) -> RequestCredential {
     // TODO: Replace with message-specific handler
     holder
         .process_aries_msg(
             &alice.profile.inject_anoncreds_ledger_read(),
             &alice.profile.inject_anoncreds(),
-            cred_offer,
+            cred_offer.into(),
         )
         .await
         .unwrap();
     assert_eq!(HolderState::OfferReceived, holder.get_state());
     assert!(holder.get_offer().is_ok());
-    let cred_request = holder
+    holder
         .prepare_credential_request(
             &alice.profile.inject_anoncreds_ledger_read(),
             &alice.profile.inject_anoncreds(),
@@ -174,23 +174,23 @@ pub async fn accept_offer(alice: &mut TestAgent, cred_offer: AriesMessage, holde
         .await
         .unwrap();
     assert_eq!(HolderState::RequestSet, holder.get_state());
-    cred_request
+    holder.get_msg_credential_request().unwrap()
 }
 
-pub async fn decline_offer(alice: &mut TestAgent, cred_offer: AriesMessage, holder: &mut Holder) -> AriesMessage {
+pub async fn decline_offer(alice: &mut TestAgent, cred_offer: OfferCredential, holder: &mut Holder) -> ProblemReport {
     // TODO: Replace with message-specific handler
     holder
         .process_aries_msg(
             &alice.profile.inject_anoncreds_ledger_read(),
             &alice.profile.inject_anoncreds(),
-            cred_offer,
+            cred_offer.into(),
         )
         .await
         .unwrap();
     assert_eq!(HolderState::OfferReceived, holder.get_state());
     let problem_report = holder.decline_offer(Some("Have a nice day")).unwrap();
     assert_eq!(HolderState::Failed, holder.get_state());
-    problem_report.into()
+    problem_report
 }
 
 pub async fn send_credential(
@@ -198,17 +198,12 @@ pub async fn send_credential(
     faber: &mut TestAgent,
     issuer_credential: &mut Issuer,
     holder_credential: &mut Holder,
-    cred_request: AriesMessage,
+    cred_request: RequestCredential,
     revokable: bool,
 ) {
     let thread_id = issuer_credential.get_thread_id().unwrap();
     assert_eq!(IssuerState::OfferSet, issuer_credential.get_state());
     assert!(!issuer_credential.is_revokable());
-
-    let cred_request = match cred_request {
-        AriesMessage::CredentialIssuance(CredentialIssuance::RequestCredential(request)) => request,
-        _ => panic!("Unexpected message type"),
-    };
 
     issuer_credential.receive_request(cred_request).await.unwrap();
     assert_eq!(IssuerState::RequestReceived, issuer_credential.get_state());

@@ -251,6 +251,7 @@ pub mod integration_tests {
         (schemas, cred_defs, proof_req, proof)
     }
 
+    // TODO: Deduplicate with create_and_write_credential
     async fn create_and_store_nonrevocable_credential(
         anoncreds_issuer: &Arc<dyn BaseAnonCreds>,
         anoncreds_holder: &Arc<dyn BaseAnonCreds>,

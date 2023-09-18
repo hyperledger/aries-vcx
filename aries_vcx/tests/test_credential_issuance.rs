@@ -183,7 +183,7 @@ async fn test_agency_pool_credential_exchange_via_proposal_failed() {
         .await;
         let problem_report = decline_offer(&mut consumer, cred_offer, &mut holder).await;
         assert_eq!(IssuerState::OfferSet, issuer.get_state());
-        issuer.process_aries_msg(problem_report).await.unwrap();
+        issuer.process_aries_msg(problem_report.into()).await.unwrap();
         assert_eq!(IssuerState::Failed, issuer.get_state());
     })
     .await;
