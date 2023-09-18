@@ -129,8 +129,8 @@ pub mod integration_tests {
                 &setup.profile.inject_anoncreds(),
                 &setup.profile.inject_anoncreds_ledger_read(),
                 &setup.institution_did,
-                &rev_reg,
                 &cred_def,
+                Some(&rev_reg),
             )
             .await;
             let cred_rev_id = get_cred_rev_id(&setup.profile.inject_anoncreds(), &cred_id)

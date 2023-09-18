@@ -85,19 +85,17 @@ pub async fn create_and_write_test_rev_reg(
     rev_reg
 }
 
-// TODO: Make nonrevokable possible
 pub async fn create_and_write_credential(
     anoncreds_issuer: &Arc<dyn BaseAnonCreds>,
     anoncreds_holder: &Arc<dyn BaseAnonCreds>,
     ledger_read: &Arc<dyn AnoncredsLedgerRead>,
     institution_did: &str,
-    rev_reg: &RevocationRegistry,
     cred_def: &CredentialDef,
+    rev_reg: Option<&RevocationRegistry>,
 ) -> String {
     // TODO: Inject credential_data from caller
     let credential_data = r#"{"address1": ["123 Main St"], "address2": ["Suite 3"], "city": ["Draper"], "state": ["UT"], "zip": ["84000"]}"#;
     let encoded_attributes = encode_attributes(&credential_data).unwrap();
-    let rev_def_json = ledger_read.get_rev_reg_def_json(&rev_reg.rev_reg_id).await.unwrap();
 
     let offer = anoncreds_issuer
         .issuer_create_credential_offer(&cred_def.get_cred_def_id())
@@ -113,14 +111,19 @@ pub async fn create_and_write_credential(
         .await
         .unwrap();
 
-    let (cred, _, _) = anoncreds_issuer
-        .issuer_create_credential(
-            &offer,
-            &req,
-            &encoded_attributes,
+    let (rev_reg_def_json, rev_reg_id, tails_dir) = if let Some(rev_reg) = rev_reg {
+        // TODO: This ledger read should not be necessary. What is the difference between
+        // the result of get_rev_reg_def_json and rev_reg_def stored on RevocationRegistry?
+        (
+            Some(ledger_read.get_rev_reg_def_json(&rev_reg.rev_reg_id).await.unwrap()),
             Some(rev_reg.rev_reg_id.clone()),
             Some(rev_reg.tails_dir.clone()),
         )
+    } else {
+        (None, None, None)
+    };
+    let (cred, _, _) = anoncreds_issuer
+        .issuer_create_credential(&offer, &req, &encoded_attributes, rev_reg_id, tails_dir)
         .await
         .unwrap();
 
@@ -130,7 +133,7 @@ pub async fn create_and_write_credential(
             &req_meta,
             &cred,
             cred_def.get_cred_def_json(),
-            Some(&rev_def_json),
+            rev_reg_def_json.as_deref(),
         )
         .await
         .unwrap();

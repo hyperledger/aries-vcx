@@ -62,8 +62,8 @@ async fn test_agency_pool_generate_proof_with_predicates() {
             &setup.profile.inject_anoncreds(),
             &setup.profile.inject_anoncreds_ledger_read(),
             &setup.institution_did,
-            &rev_reg,
             &cred_def,
+            Some(&rev_reg),
         )
         .await;
 

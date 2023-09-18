@@ -128,22 +128,13 @@ async fn test_agency_pool_case_for_proof_req_doesnt_matter_for_retrieve_creds() 
             true,
         )
         .await;
-        // TODO: Not necessary to create revokable credential for this test,
-        // but create_and_write_credential currently requires a rev reg
-        let rev_reg = create_and_write_test_rev_reg(
-            &setup.profile.inject_anoncreds(),
-            &setup.profile.inject_anoncreds_ledger_write(),
-            &setup.institution_did,
-            &cred_def.get_cred_def_id(),
-        )
-        .await;
         create_and_write_credential(
             &setup.profile.inject_anoncreds(),
             &setup.profile.inject_anoncreds(),
             &setup.profile.inject_anoncreds_ledger_read(),
             &setup.institution_did,
-            &rev_reg,
             &cred_def,
+            None,
         )
         .await;
 
