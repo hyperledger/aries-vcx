@@ -70,46 +70,6 @@ pub fn create_issuer_from_proposal(proposal: ProposeCredential) -> Issuer {
     issuer
 }
 
-async fn create_credential_offer(
-    faber: &mut TestAgent,
-    cred_def: &CredentialDef,
-    rev_reg: &RevocationRegistry,
-    credential_json: &str,
-    comment: Option<&str>,
-) -> (Issuer, OfferCredential) {
-    let offer_info = OfferInfo {
-        credential_json: credential_json.to_string(),
-        cred_def_id: cred_def.get_cred_def_id(),
-        rev_reg_id: Some(rev_reg.get_rev_reg_id()),
-        tails_file: Some(rev_reg.get_tails_dir()),
-    };
-    let mut issuer = Issuer::create("1").unwrap();
-    issuer
-        .build_credential_offer_msg(&faber.profile.inject_anoncreds(), offer_info, comment.map(String::from))
-        .await
-        .unwrap();
-    let credential_offer = issuer.get_credential_offer().unwrap();
-    (issuer, credential_offer)
-}
-
-async fn create_credential_request(alice: &mut TestAgent, cred_offer: OfferCredential) -> (Holder, RequestCredential) {
-    let mut holder = Holder::create_from_offer("TEST_CREDENTIAL", cred_offer).unwrap();
-    assert_eq!(HolderState::OfferReceived, holder.get_state());
-    holder
-        .prepare_credential_request(
-            &alice.profile.inject_anoncreds_ledger_read(),
-            &alice.profile.inject_anoncreds(),
-            PairwiseInfo::create(&alice.profile.inject_wallet())
-                .await
-                .unwrap()
-                .pw_did,
-        )
-        .await
-        .unwrap();
-    let cred_request = holder.get_msg_credential_request().unwrap();
-    (holder, cred_request)
-}
-
 pub async fn accept_credential_proposal(
     faber: &mut TestAgent,
     issuer: &mut Issuer,
@@ -236,6 +196,7 @@ pub async fn send_credential(
     }
 }
 
+// TODO: Inline this?
 pub async fn issue_address_credential(
     consumer: &mut TestAgent,
     institution: &mut TestAgent,
@@ -249,7 +210,6 @@ pub async fn issue_address_credential(
 ) {
     let (schema, cred_def, rev_reg) =
         create_address_schema_creddef_revreg(&institution.profile, &institution.institution_did).await;
-
     let issuer = exchange_credential(
         consumer,
         institution,
@@ -277,13 +237,13 @@ pub async fn exchange_credential(
     rev_reg: &RevocationRegistry,
     comment: Option<&str>,
 ) -> Issuer {
-    let (mut issuer_credential, cred_offer) =
-        create_credential_offer(institution, cred_def, rev_reg, &credential_data, comment).await;
-    let (mut holder_credential, cred_request) = create_credential_request(consumer, cred_offer).await;
+    let mut issuer = create_credential_offer(institution, cred_def, rev_reg, &credential_data, comment).await;
+    let mut holder_credential = create_credential_request(consumer, issuer.get_credential_offer().unwrap()).await;
+    let cred_request = holder_credential.get_msg_credential_request().unwrap();
     send_credential(
         consumer,
         institution,
-        &mut issuer_credential,
+        &mut issuer,
         &mut holder_credential,
         cred_request,
         true,
@@ -296,7 +256,7 @@ pub async fn exchange_credential(
         )
         .await
         .unwrap());
-    issuer_credential
+    issuer
 }
 
 pub async fn exchange_credential_with_proposal(
@@ -315,4 +275,42 @@ pub async fn exchange_credential_with_proposal(
     let cred_request = accept_offer(consumer, cred_offer, &mut holder).await;
     send_credential(consumer, institution, &mut issuer, &mut holder, cred_request, true).await;
     (holder, issuer)
+}
+
+async fn create_credential_offer(
+    faber: &mut TestAgent,
+    cred_def: &CredentialDef,
+    rev_reg: &RevocationRegistry,
+    credential_json: &str,
+    comment: Option<&str>,
+) -> Issuer {
+    let offer_info = OfferInfo {
+        credential_json: credential_json.to_string(),
+        cred_def_id: cred_def.get_cred_def_id(),
+        rev_reg_id: Some(rev_reg.get_rev_reg_id()),
+        tails_file: Some(rev_reg.get_tails_dir()),
+    };
+    let mut issuer = Issuer::create("1").unwrap();
+    issuer
+        .build_credential_offer_msg(&faber.profile.inject_anoncreds(), offer_info, comment.map(String::from))
+        .await
+        .unwrap();
+    issuer
+}
+
+async fn create_credential_request(alice: &mut TestAgent, cred_offer: OfferCredential) -> Holder {
+    let mut holder = Holder::create_from_offer("TEST_CREDENTIAL", cred_offer).unwrap();
+    assert_eq!(HolderState::OfferReceived, holder.get_state());
+    holder
+        .prepare_credential_request(
+            &alice.profile.inject_anoncreds_ledger_read(),
+            &alice.profile.inject_anoncreds(),
+            PairwiseInfo::create(&alice.profile.inject_wallet())
+                .await
+                .unwrap()
+                .pw_did,
+        )
+        .await
+        .unwrap();
+    holder
 }
