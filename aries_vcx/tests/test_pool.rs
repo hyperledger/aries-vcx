@@ -43,8 +43,15 @@ async fn create_and_store_nonrevocable_credential_def(
     attr_list: &str,
 ) -> (String, String, String, String, CredentialDef) {
     let schema = create_and_write_test_schema(anoncreds, ledger_write, issuer_did, attr_list).await;
-    let cred_def =
-        create_and_write_test_cred_def(anoncreds, ledger_read, ledger_write, issuer_did, &schema.schema_id).await;
+    let cred_def = create_and_write_test_cred_def(
+        anoncreds,
+        ledger_read,
+        ledger_write,
+        issuer_did,
+        &schema.schema_id,
+        false,
+    )
+    .await;
 
     tokio::time::sleep(Duration::from_millis(1000)).await;
     let cred_def_id = cred_def.get_cred_def_id();
@@ -67,8 +74,15 @@ async fn create_and_store_revocable_credential_def(
     attr_list: &str,
 ) -> (Schema, CredentialDef, RevocationRegistry) {
     let schema = create_and_write_test_schema(anoncreds, ledger_write, issuer_did, attr_list).await;
-    let cred_def =
-        create_and_write_test_cred_def(anoncreds, ledger_read, ledger_write, issuer_did, &schema.schema_id).await;
+    let cred_def = create_and_write_test_cred_def(
+        anoncreds,
+        ledger_read,
+        ledger_write,
+        issuer_did,
+        &schema.schema_id,
+        true,
+    )
+    .await;
     let rev_reg = create_and_write_test_rev_reg(anoncreds, ledger_write, issuer_did, &cred_def.get_cred_def_id()).await;
 
     tokio::time::sleep(Duration::from_millis(1000)).await;

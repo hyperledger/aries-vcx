@@ -54,6 +54,7 @@ pub async fn create_address_schema_creddef_revreg(
         &ledger_write,
         &institution_did,
         &schema.schema_id,
+        true,
     )
     .await;
     let rev_reg =

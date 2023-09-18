@@ -125,6 +125,7 @@ async fn test_agency_pool_case_for_proof_req_doesnt_matter_for_retrieve_creds() 
             &setup.profile.inject_anoncreds_ledger_write(),
             &setup.institution_did,
             &schema.schema_id,
+            true,
         )
         .await;
         // TODO: Not necessary to create revokable credential for this test,

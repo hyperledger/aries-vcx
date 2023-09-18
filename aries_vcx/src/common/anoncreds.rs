@@ -114,6 +114,7 @@ pub mod integration_tests {
                 &setup.profile.inject_anoncreds_ledger_write(),
                 &setup.institution_did,
                 &schema.schema_id,
+                true,
             )
             .await;
             let rev_reg = create_and_write_test_rev_reg(

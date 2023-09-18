@@ -268,6 +268,7 @@ pub mod integration_tests {
             ledger_write,
             issuer_did,
             &schema.schema_id,
+            false,
         )
         .await;
 

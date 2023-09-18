@@ -40,12 +40,14 @@ pub async fn create_and_write_test_schema(
     Schema::create_from_ledger_json(&schema_json, "", &schema_id).unwrap()
 }
 
+// TODO: Pass revokable flag as an argument
 pub async fn create_and_write_test_cred_def(
     anoncreds: &Arc<dyn BaseAnonCreds>,
     ledger_read: &Arc<dyn AnoncredsLedgerRead>,
     ledger_write: &Arc<dyn AnoncredsLedgerWrite>,
     issuer_did: &str,
     schema_id: &str,
+    revokable: bool,
 ) -> CredentialDef {
     CredentialDef::create(
         ledger_read,
@@ -57,7 +59,7 @@ pub async fn create_and_write_test_cred_def(
             .tag("1")
             .build()
             .unwrap(),
-        true,
+        revokable,
     )
     .await
     .unwrap()
