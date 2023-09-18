@@ -55,7 +55,7 @@ pub async fn validate_indy_proof(
 pub mod integration_tests {
     use super::*;
 
-    use std::sync::Arc;
+    use std::{sync::Arc, time::Duration};
 
     use aries_vcx_core::{
         anoncreds::base_anoncreds::BaseAnonCreds,
@@ -270,6 +270,7 @@ pub mod integration_tests {
         )
         .await;
 
+        tokio::time::sleep(Duration::from_millis(500)).await;
         let cred_def_id = cred_def.get_cred_def_id();
         let cred_def_json = ledger_read.get_cred_def(&cred_def_id, Some(issuer_did)).await.unwrap();
 
@@ -277,9 +278,8 @@ pub mod integration_tests {
             .issuer_create_credential_offer(&cred_def_id)
             .await
             .unwrap();
-        let master_secret_name = settings::DEFAULT_LINK_SECRET_ALIAS;
         let (req, req_meta) = anoncreds_holder
-            .prover_create_credential_req(&issuer_did, &offer, &cred_def_json, master_secret_name)
+            .prover_create_credential_req(&issuer_did, &offer, &cred_def_json, settings::DEFAULT_LINK_SECRET_ALIAS)
             .await
             .unwrap();
 
