@@ -3,7 +3,6 @@ package org.hyperledger.ariesvcx
 import android.Manifest
 import android.content.pm.PackageManager
 import android.net.Uri
-import android.util.Size
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
@@ -40,11 +39,8 @@ import kotlinx.coroutines.withContext
 
 @Composable
 fun ScanScreen(
-    connection: Connection,
-    profileHolder: ProfileHolder,
+    demoController: AppDemoController,
     navController: NavHostController,
-    walletConfig: WalletConfig,
-    setConnectionRequestState: () -> Unit
 ) {
     var scannedQRCodeText by remember {
         mutableStateOf<String?>(null)
@@ -67,18 +63,9 @@ fun ScanScreen(
             text = { Text(decoded) },
             confirmButton = {
                 TextButton(onClick = {
-                    scope.launch(Dispatchers.IO) {
-                        connection.acceptInvitation(
-                            profile = profileHolder,
-                            invitation = decoded
-                        )
-                        connection.sendRequest(
-                            profileHolder,
-                            "$BASE_RELAY_ENDPOINT/send_user_message/${walletConfig.walletKey}",
-                            emptyList()
-                        )
+                    scope.launch {
+                        demoController.acceptConnectionInvitation(decoded)
                         withContext(Dispatchers.Main) {
-                            setConnectionRequestState()
                             navController.navigate("home")
                         }
                     }
@@ -130,12 +117,6 @@ fun ScanScreen(
                         .build()
                     preview.setSurfaceProvider(previewView.surfaceProvider)
                     val imageAnalysis = ImageAnalysis.Builder()
-                        .setTargetResolution(
-                            Size(
-                                320,
-                                480
-                            )
-                        )
                         .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                         .build()
                     imageAnalysis.setAnalyzer(

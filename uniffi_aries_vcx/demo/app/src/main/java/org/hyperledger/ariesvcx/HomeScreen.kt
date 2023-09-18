@@ -9,6 +9,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -29,46 +30,22 @@ import org.hyperledger.ariesvcx.utils.await
 
 @Composable
 fun HomeScreen(
+    demoController: AppDemoController,
     navController: NavHostController,
-    setProfileHolder: (ProfileHolder) -> Unit,
-    profileHolder: ProfileHolder?,
-    connection: Connection?,
-    walletConfig: WalletConfig,
-    connectionRequestState: Boolean,
-    httpClient: OkHttpClient
 ) {
+
+    val demoState by demoController.states.collectAsState()
 
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
-    var flagKeepFetching by remember {
-        mutableStateOf(true)
-    }
-
-    val request = Request.Builder()
-        .url("$BASE_RELAY_ENDPOINT/pop_user_message/${walletConfig.walletKey}")
-        .build()
-
-
-    LaunchedEffect(true) {
-        scope.launch(Dispatchers.IO) {
-            while (flagKeepFetching && connectionRequestState) {
-                delay(500)
-                val response = httpClient.newCall(request).await()
-                if (response.code == 200) {
-                    val message = response.body!!.string()
-
-                    val unpackedMessage = unpackMessage(
-                        profileHolder!!,
-                        message
-                    )
-
-                    Log.d("HOMESCREEN", "HomeScreen: ${unpackedMessage.message}")
-                    connection?.handleResponse(profileHolder, unpackedMessage.message)
-                    flagKeepFetching = false
-                    connection?.sendAck(profileHolder)
-                }
-            }
+    demoController.subscribeToConnectionComplete { newConn ->
+        scope.launch(Dispatchers.Main) {
+            Toast.makeText(
+                context,
+                "New Connection Created",
+                Toast.LENGTH_SHORT
+            ).show()
         }
     }
 
@@ -78,15 +55,14 @@ fun HomeScreen(
         verticalArrangement = Arrangement.Center
     ) {
         Button(
-            enabled = (connection == null),
+            enabled = (!demoState.profileReady),
             onClick = {
-                scope.launch(Dispatchers.IO) {
-                    val profile = newIndyProfile(walletConfig)
-                    setProfileHolder(profile)
+                scope.launch {
+                    demoController.setupProfile()
                     withContext(Dispatchers.Main) {
                         Toast.makeText(
                             context,
-                            "New Profile Created: $profile",
+                            "New Profile Created",
                             Toast.LENGTH_SHORT
                         ).show()
                     }
@@ -94,11 +70,16 @@ fun HomeScreen(
             }) {
             Text(text = "New Indy Profile")
         }
-        Button(enabled = (profileHolder != null && connection != null),
+        Button(enabled = (demoState.profileReady && !demoState.connectionInvitationReceived),
             onClick = {
                 navController.navigate(Destination.QRScan.route)
             }) {
             Text(text = "Scan QR Code")
+        }
+        Button(enabled = (demoState.connectionCompleted),
+            onClick = {
+            }) {
+            Text(text = "Receive a credential")
         }
     }
 }
