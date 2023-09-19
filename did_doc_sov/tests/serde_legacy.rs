@@ -1,6 +1,6 @@
 use did_doc_sov::{extra_fields::KeyKind, DidDocumentSov};
 
-const LEGACY_DID_DOC_JSON: &str = r##"
+const LEGACY_DID_DOC_JSON: &str = r#"
 {
    "@context": "https://w3id.org/did/v1",
    "id": "2ZHFFhzA2XtTD6hJqzL7ux",
@@ -34,7 +34,7 @@ const LEGACY_DID_DOC_JSON: &str = r##"
        }
    ]
 }
-"##;
+"#;
 
 const VERKEY_BASE58: &str = "6MkfJTyeCL8MGvZntdpXzpitL6bM6uwCFz8xcYar18xQBh7";
 
