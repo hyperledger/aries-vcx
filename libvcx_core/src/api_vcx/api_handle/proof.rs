@@ -193,7 +193,7 @@ pub async fn send_proof_request(handle: u32, connection_handle: u32) -> LibvcxRe
     let mut proof = PROOF_MAP.get_cloned(handle)?;
     let send_closure = mediated_connection::send_message_closure(connection_handle).await?;
     let message = proof.mark_presentation_request_sent()?;
-    send_closure(message).await?;
+    send_closure(message.into()).await?;
     PROOF_MAP.insert(handle, proof)
 }
 
@@ -207,7 +207,7 @@ pub async fn send_proof_request_nonmediated(handle: u32, connection_handle: u32)
         Box::new(|msg: AriesMessage| Box::pin(async move { con.send_message(&wallet, &msg, &HttpClient).await }));
 
     let message = proof.mark_presentation_request_sent()?;
-    send_message(message).await?;
+    send_message(message.into()).await?;
 
     PROOF_MAP.insert(handle, proof)
 }

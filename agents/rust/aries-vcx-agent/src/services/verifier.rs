@@ -66,7 +66,7 @@ impl ServiceVerifier {
         });
 
         let message = verifier.mark_presentation_request_sent()?;
-        send_closure(message).await?;
+        send_closure(message.into()).await?;
         self.verifiers.insert(
             &verifier.get_thread_id()?,
             VerifierWrapper::new(verifier, connection_id),

@@ -11,17 +11,83 @@ use std::time::Duration;
 
 #[cfg(feature = "migration")]
 use crate::utils::migration::Migratable;
+use crate::utils::scenarios::attr_names_address_list;
 use crate::utils::test_agent::{create_test_agent, create_test_agent_trustee};
 use aries_vcx::common::keys::{get_verkey_from_ledger, rotate_verkey};
 use aries_vcx::common::ledger::service_didsov::EndpointDidSov;
 use aries_vcx::common::ledger::transactions::{
     add_attr, add_new_did, clear_attr, get_attr, get_service, write_endorser_did, write_endpoint, write_endpoint_legacy,
 };
-use aries_vcx::common::test_utils::create_and_store_nonrevocable_credential_def;
+use aries_vcx::common::primitives::credential_definition::CredentialDef;
+use aries_vcx::common::primitives::credential_schema::Schema;
+use aries_vcx::common::primitives::revocation_registry::{generate_rev_reg, RevocationRegistry};
+use aries_vcx::common::primitives::revocation_registry_delta::RevocationRegistryDelta;
+use aries_vcx::common::test_utils::{
+    create_and_write_test_cred_def, create_and_write_test_rev_reg, create_and_write_test_schema,
+};
+use aries_vcx::errors::error::AriesVcxErrorKind;
 use aries_vcx::utils::constants::DEFAULT_SCHEMA_ATTRS;
 use aries_vcx::utils::devsetup::{SetupPoolDirectory, SetupProfile};
+use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
+use aries_vcx_core::ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite};
+use aries_vcx_core::ledger::indy::pool::test_utils::get_temp_file_path;
 use aries_vcx_core::wallet::indy::wallet::get_verkey_from_wallet;
 use diddoc_legacy::aries::service::AriesService;
+
+// TODO: Deduplicate with create_and_store_revocable_credential_def
+async fn create_and_store_nonrevocable_credential_def(
+    anoncreds: &Arc<dyn BaseAnonCreds>,
+    ledger_read: &Arc<dyn AnoncredsLedgerRead>,
+    ledger_write: &Arc<dyn AnoncredsLedgerWrite>,
+    issuer_did: &str,
+    attr_list: &str,
+) -> (String, String, String, String, CredentialDef) {
+    let schema = create_and_write_test_schema(anoncreds, ledger_write, issuer_did, attr_list).await;
+    let cred_def = create_and_write_test_cred_def(
+        anoncreds,
+        ledger_read,
+        ledger_write,
+        issuer_did,
+        &schema.schema_id,
+        false,
+    )
+    .await;
+
+    tokio::time::sleep(Duration::from_millis(1000)).await;
+    let cred_def_id = cred_def.get_cred_def_id();
+    let cred_def_json = ledger_read.get_cred_def(&cred_def_id, None).await.unwrap();
+    (
+        schema.schema_id,
+        schema.schema_json,
+        cred_def_id,
+        cred_def_json,
+        cred_def,
+    )
+}
+
+// TODO: Deduplicate with create_and_store_nonrevocable_credential_def
+async fn create_and_store_revocable_credential_def(
+    anoncreds: &Arc<dyn BaseAnonCreds>,
+    ledger_read: &Arc<dyn AnoncredsLedgerRead>,
+    ledger_write: &Arc<dyn AnoncredsLedgerWrite>,
+    issuer_did: &str,
+    attr_list: &str,
+) -> (Schema, CredentialDef, RevocationRegistry) {
+    let schema = create_and_write_test_schema(anoncreds, ledger_write, issuer_did, attr_list).await;
+    let cred_def = create_and_write_test_cred_def(
+        anoncreds,
+        ledger_read,
+        ledger_write,
+        issuer_did,
+        &schema.schema_id,
+        true,
+    )
+    .await;
+    let rev_reg = create_and_write_test_rev_reg(anoncreds, ledger_write, issuer_did, &cred_def.get_cred_def_id()).await;
+
+    tokio::time::sleep(Duration::from_millis(1000)).await;
+    (schema, cred_def, rev_reg)
+}
 
 #[tokio::test]
 #[ignore]
@@ -320,6 +386,160 @@ async fn test_agency_pool_get_credential_def() {
         let def1: serde_json::Value = serde_json::from_str(&cred_def_json).unwrap();
         let def2: serde_json::Value = serde_json::from_str(&r_cred_def_json).unwrap();
         assert_eq!(def1, def2);
+    })
+    .await;
+}
+
+#[tokio::test]
+#[ignore]
+async fn test_pool_rev_reg_def_fails_for_cred_def_created_without_revocation() {
+    SetupProfile::run(|setup| async move {
+        // Cred def is created with support_revocation=false,
+        // revoc_reg_def will fail in libindy because cred_Def doesn't have revocation keys
+        let (_, _, cred_def_id, _, _) = create_and_store_nonrevocable_credential_def(
+            &setup.profile.inject_anoncreds(),
+            &setup.profile.inject_anoncreds_ledger_read(),
+            &setup.profile.inject_anoncreds_ledger_write(),
+            &setup.institution_did,
+            DEFAULT_SCHEMA_ATTRS,
+        )
+        .await;
+
+        let rc = generate_rev_reg(
+            &setup.profile.inject_anoncreds(),
+            &setup.institution_did,
+            &cred_def_id,
+            get_temp_file_path("path.txt").to_str().unwrap(),
+            2,
+            "tag1",
+        )
+        .await;
+
+        #[cfg(feature = "modular_libs")]
+        assert_eq!(rc.unwrap_err().kind(), AriesVcxErrorKind::InvalidState);
+        #[cfg(not(feature = "modular_libs"))]
+        assert_eq!(rc.unwrap_err().kind(), AriesVcxErrorKind::InvalidInput);
+    })
+    .await;
+}
+
+#[tokio::test]
+#[ignore]
+async fn test_pool_get_rev_reg_def_json() {
+    SetupProfile::run(|setup| async move {
+        let attrs = format!("{:?}", attr_names_address_list());
+        let (_, _, rev_reg) = create_and_store_revocable_credential_def(
+            &setup.profile.inject_anoncreds(),
+            &setup.profile.inject_anoncreds_ledger_read(),
+            &setup.profile.inject_anoncreds_ledger_write(),
+            &setup.institution_did,
+            &attrs,
+        )
+        .await;
+
+        let ledger = Arc::clone(&setup.profile).inject_anoncreds_ledger_read();
+        let _json = ledger.get_rev_reg_def_json(&rev_reg.rev_reg_id).await.unwrap();
+    })
+    .await;
+}
+
+#[tokio::test]
+#[ignore]
+async fn test_pool_get_rev_reg_delta_json() {
+    SetupProfile::run(|setup| async move {
+        let attrs = format!("{:?}", attr_names_address_list());
+        let (_, _, rev_reg) = create_and_store_revocable_credential_def(
+            &setup.profile.inject_anoncreds(),
+            &setup.profile.inject_anoncreds_ledger_read(),
+            &setup.profile.inject_anoncreds_ledger_write(),
+            &setup.institution_did,
+            &attrs,
+        )
+        .await;
+
+        let ledger = Arc::clone(&setup.profile).inject_anoncreds_ledger_read();
+        let (id, _delta, _timestamp) = ledger
+            .get_rev_reg_delta_json(&rev_reg.rev_reg_id, None, None)
+            .await
+            .unwrap();
+
+        assert_eq!(id, rev_reg.rev_reg_id);
+    })
+    .await;
+}
+
+#[tokio::test]
+#[ignore]
+async fn test_pool_get_rev_reg() {
+    SetupProfile::run(|setup| async move {
+        let attrs = format!("{:?}", attr_names_address_list());
+        let (_, _, rev_reg) = create_and_store_revocable_credential_def(
+            &setup.profile.inject_anoncreds(),
+            &setup.profile.inject_anoncreds_ledger_read(),
+            &setup.profile.inject_anoncreds_ledger_write(),
+            &setup.institution_did,
+            &attrs,
+        )
+        .await;
+
+        let ledger = Arc::clone(&setup.profile).inject_anoncreds_ledger_read();
+        let (id, _rev_reg, _timestamp) = ledger
+            .get_rev_reg(
+                &rev_reg.rev_reg_id,
+                time::OffsetDateTime::now_utc().unix_timestamp() as u64,
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(id, rev_reg.rev_reg_id);
+    })
+    .await;
+}
+
+#[tokio::test]
+#[ignore]
+async fn test_pool_create_and_get_schema() {
+    SetupProfile::run(|setup| async move {
+        let schema = create_and_write_test_schema(
+            &setup.profile.inject_anoncreds(),
+            &setup.profile.inject_anoncreds_ledger_write(),
+            &setup.institution_did,
+            DEFAULT_SCHEMA_ATTRS,
+        )
+        .await;
+
+        let ledger = Arc::clone(&setup.profile).inject_anoncreds_ledger_read();
+        let rc = ledger.get_schema(&schema.schema_id, None).await;
+
+        let retrieved_schema = rc.unwrap();
+        assert!(retrieved_schema.contains(&schema.schema_id));
+    })
+    .await;
+}
+
+#[tokio::test]
+#[ignore]
+async fn test_pool_create_rev_reg_delta_from_ledger() {
+    SetupProfile::run(|setup| async move {
+        let attrs = format!("{:?}", attr_names_address_list());
+        let (_, _, rev_reg) = create_and_store_revocable_credential_def(
+            &setup.profile.inject_anoncreds(),
+            &setup.profile.inject_anoncreds_ledger_read(),
+            &setup.profile.inject_anoncreds_ledger_write(),
+            &setup.institution_did,
+            &attrs,
+        )
+        .await;
+
+        let (_, rev_reg_delta_json, _) = setup
+            .profile
+            .inject_anoncreds_ledger_read()
+            .get_rev_reg_delta_json(&rev_reg.rev_reg_id, None, None)
+            .await
+            .unwrap();
+        assert!(RevocationRegistryDelta::create_from_ledger(&rev_reg_delta_json)
+            .await
+            .is_ok());
     })
     .await;
 }

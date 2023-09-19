@@ -8,7 +8,10 @@ pub mod utils;
 use std::collections::HashMap;
 
 use aries_vcx::common::proofs::proof_request::PresentationRequestData;
-use aries_vcx::common::test_utils::create_and_store_nonrevocable_credential;
+use aries_vcx::common::test_utils::{
+    create_and_write_credential, create_and_write_test_cred_def, create_and_write_test_rev_reg,
+    create_and_write_test_schema,
+};
 use aries_vcx::handlers::proof_presentation::prover::Prover;
 use aries_vcx::handlers::proof_presentation::types::RetrievedCredentials;
 use aries_vcx::handlers::util::AttachmentId;
@@ -21,8 +24,6 @@ use messages::msg_fields::protocols::present_proof::request::{RequestPresentatio
 
 #[cfg(feature = "migration")]
 use crate::utils::migration::Migratable;
-
-// TODO: Move these tests into anoncreds tests in aries_vcx
 
 #[tokio::test]
 #[ignore]
@@ -111,13 +112,28 @@ async fn test_agency_pool_retrieve_credentials_empty() {
 // TODO: This should be a unit test
 async fn test_agency_pool_case_for_proof_req_doesnt_matter_for_retrieve_creds() {
     SetupProfile::run(|mut setup| async move {
-        create_and_store_nonrevocable_credential(
+        let schema = create_and_write_test_schema(
             &setup.profile.inject_anoncreds(),
+            &setup.profile.inject_anoncreds_ledger_write(),
+            &setup.institution_did,
+            DEFAULT_SCHEMA_ATTRS,
+        )
+        .await;
+        let cred_def = create_and_write_test_cred_def(
             &setup.profile.inject_anoncreds(),
             &setup.profile.inject_anoncreds_ledger_read(),
             &setup.profile.inject_anoncreds_ledger_write(),
             &setup.institution_did,
-            DEFAULT_SCHEMA_ATTRS,
+            &schema.schema_id,
+            true,
+        )
+        .await;
+        create_and_write_credential(
+            &setup.profile.inject_anoncreds(),
+            &setup.profile.inject_anoncreds(),
+            &setup.institution_did,
+            &cred_def,
+            None,
         )
         .await;
 

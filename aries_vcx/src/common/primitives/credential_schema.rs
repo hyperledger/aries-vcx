@@ -29,7 +29,7 @@ pub struct Schema {
     #[serde(default)]
     pub state: PublicEntityStateType,
     #[serde(default)]
-    schema_json: String, // added in 0.45.0, #[serde(default)] use for backwards compatibility
+    pub schema_json: String, // added in 0.45.0, #[serde(default)] use for backwards compatibility
 }
 
 impl Schema {
@@ -85,13 +85,8 @@ impl Schema {
         })
     }
 
-    pub async fn create_from_ledger_json(
-        ledger: &Arc<dyn AnoncredsLedgerRead>,
-        source_id: &str,
-        schema_id: &str,
-    ) -> VcxResult<Self> {
-        let schema_json = ledger.get_schema(schema_id, None).await?;
-        let schema_data: SchemaData = serde_json::from_str(&schema_json).map_err(|err| {
+    pub fn create_from_ledger_json(schema_json: &str, source_id: &str, schema_id: &str) -> VcxResult<Self> {
+        let schema_data: SchemaData = serde_json::from_str(schema_json).map_err(|err| {
             AriesVcxError::from_msg(
                 AriesVcxErrorKind::InvalidJson,
                 format!("Cannot deserialize schema: {}", err),
@@ -101,7 +96,7 @@ impl Schema {
         Ok(Self {
             source_id: source_id.to_string(),
             schema_id: schema_id.to_string(),
-            schema_json,
+            schema_json: schema_json.to_string(),
             name: schema_data.name,
             version: schema_data.version,
             data: schema_data.attr_names,

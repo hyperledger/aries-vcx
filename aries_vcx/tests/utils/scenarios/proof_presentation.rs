@@ -5,9 +5,12 @@ use aries_vcx::handlers::proof_presentation::types::{
     RetrievedCredentialForReferent, RetrievedCredentials, SelectedCredentials,
 };
 use aries_vcx::handlers::util::PresentationProposalData;
+use messages::msg_fields::protocols::present_proof::ack::AckPresentation;
 use messages::msg_fields::protocols::present_proof::present::Presentation;
+use messages::msg_fields::protocols::present_proof::propose::ProposePresentation;
 use messages::msg_fields::protocols::present_proof::request::RequestPresentation;
 use messages::msg_fields::protocols::present_proof::PresentProof;
+use messages::msg_fields::protocols::report_problem::ProblemReport;
 use messages::AriesMessage;
 use serde_json::Value;
 
@@ -28,7 +31,7 @@ use aries_vcx_core::ledger::indy::pool::test_utils::get_temp_dir_path;
 
 use super::requested_attrs_address;
 
-pub async fn create_proof_proposal(prover: &mut Prover, cred_def_id: &str) -> AriesMessage {
+pub async fn create_proof_proposal(prover: &mut Prover, cred_def_id: &str) -> ProposePresentation {
     let attrs = requested_attr_objects(cred_def_id);
     let mut proposal_data = PresentationProposalData::default();
     for attr in attrs.into_iter() {
@@ -36,27 +39,23 @@ pub async fn create_proof_proposal(prover: &mut Prover, cred_def_id: &str) -> Ar
     }
     let proposal = prover.build_presentation_proposal(proposal_data).await.unwrap();
     assert_eq!(prover.get_state(), ProverState::PresentationProposalSent);
-    proposal.into()
+    proposal
 }
 
 pub async fn accept_proof_proposal(
     faber: &mut TestAgent,
     verifier: &mut Verifier,
-    presentation_proposal: AriesMessage,
-) -> AriesMessage {
+    presentation_proposal: ProposePresentation,
+) -> RequestPresentation {
     verifier
         .process_aries_msg(
             &faber.profile.inject_anoncreds_ledger_read(),
             &faber.profile.inject_anoncreds(),
-            presentation_proposal.clone(),
+            presentation_proposal.clone().into(),
         )
         .await
         .unwrap();
     assert_eq!(verifier.get_state(), VerifierState::PresentationProposalReceived);
-    let presentation_proposal = match presentation_proposal {
-        AriesMessage::PresentProof(PresentProof::ProposePresentation(presentation_proposal)) => presentation_proposal,
-        _ => panic!("Unexpected message"),
-    };
     let attrs = presentation_proposal
         .content
         .presentation_proposal
@@ -79,11 +78,7 @@ pub async fn accept_proof_proposal(
     presentation_request
 }
 
-pub async fn reject_proof_proposal(presentation_proposal: &AriesMessage) -> AriesMessage {
-    let presentation_proposal = match presentation_proposal {
-        AriesMessage::PresentProof(PresentProof::ProposePresentation(proposal)) => proposal,
-        _ => panic!("Unexpected message"),
-    };
+pub async fn reject_proof_proposal(presentation_proposal: &ProposePresentation) -> ProblemReport {
     let mut verifier = Verifier::create_from_proposal("1", presentation_proposal).unwrap();
     assert_eq!(verifier.get_state(), VerifierState::PresentationProposalReceived);
     let message = verifier
@@ -94,9 +89,9 @@ pub async fn reject_proof_proposal(presentation_proposal: &AriesMessage) -> Arie
     message
 }
 
-pub async fn receive_proof_proposal_rejection(prover: &mut Prover, rejection: AriesMessage) {
+pub async fn receive_proof_proposal_rejection(prover: &mut Prover, rejection: ProblemReport) {
     assert_eq!(prover.get_state(), ProverState::PresentationProposalSent);
-    prover.process_aries_msg(rejection).await.unwrap();
+    prover.process_aries_msg(rejection.into()).await.unwrap();
     assert_eq!(prover.get_state(), ProverState::Failed);
 }
 
@@ -132,7 +127,7 @@ pub async fn generate_and_send_proof(
     alice: &mut TestAgent,
     prover: &mut Prover,
     selected_credentials: SelectedCredentials,
-) -> Option<AriesMessage> {
+) -> Option<Presentation> {
     let thread_id = prover.get_thread_id().unwrap();
     info!(
         "generate_and_send_proof >>> generating proof using selected credentials {:?}",
@@ -153,17 +148,21 @@ pub async fn generate_and_send_proof(
         let message = prover.mark_presentation_sent().unwrap();
         info!("generate_and_send_proof :: proof sent");
         assert_eq!(thread_id, prover.get_thread_id().unwrap());
+        let message = match message {
+            AriesMessage::PresentProof(PresentProof::Presentation(presentation)) => presentation,
+            _ => panic!("Unexpected message type"),
+        };
         Some(message)
     } else {
         None
     }
 }
 
-pub async fn verify_proof(faber: &mut TestAgent, verifier: &mut Verifier, presentation: AriesMessage) -> AriesMessage {
-    let presentation = match presentation {
-        AriesMessage::PresentProof(PresentProof::Presentation(presentation)) => presentation,
-        _ => panic!("Unexpected message type"),
-    };
+pub async fn verify_proof(
+    faber: &mut TestAgent,
+    verifier: &mut Verifier,
+    presentation: Presentation,
+) -> AckPresentation {
     let msg = verifier
         .verify_presentation(
             &faber.profile.inject_anoncreds_ledger_read(),
@@ -172,6 +171,11 @@ pub async fn verify_proof(faber: &mut TestAgent, verifier: &mut Verifier, presen
         )
         .await
         .unwrap();
+    let msg = match msg {
+        AriesMessage::PresentProof(PresentProof::Ack(ack)) => ack,
+        _ => panic!("Unexpected message type"),
+    };
+    // TODO: Perhaps we should leave verification on the caller
     assert_eq!(verifier.get_state(), VerifierState::Finished);
     assert_eq!(
         verifier.get_verification_status(),
@@ -262,10 +266,10 @@ pub async fn verifier_create_proof_and_send_request(
 pub async fn prover_select_credentials(
     prover: &mut Prover,
     alice: &mut TestAgent,
-    presentation_request: AriesMessage,
+    presentation_request: RequestPresentation,
     preselected_credentials: Option<&str>,
 ) -> SelectedCredentials {
-    prover.process_aries_msg(presentation_request).await.unwrap();
+    prover.process_aries_msg(presentation_request.into()).await.unwrap();
     assert_eq!(prover.get_state(), ProverState::PresentationRequestReceived);
     let retrieved_credentials = prover
         .retrieve_credentials(&alice.profile.inject_anoncreds())
@@ -298,10 +302,6 @@ pub async fn prover_select_credentials_and_send_proof(
     let presentation = generate_and_send_proof(alice, &mut prover, selected_credentials)
         .await
         .unwrap();
-    let presentation = match presentation {
-        AriesMessage::PresentProof(PresentProof::Presentation(presentation)) => presentation,
-        _ => panic!("Unexpected message type"),
-    };
     assert_eq!(ProverState::PresentationSent, prover.get_state());
     presentation
 }

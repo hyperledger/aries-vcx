@@ -35,9 +35,9 @@ pub async fn get_cred_rev_id(anoncreds: &Arc<dyn BaseAnonCreds>, cred_id: &str) 
 }
 
 pub async fn is_cred_revoked(ledger: &Arc<dyn AnoncredsLedgerRead>, rev_reg_id: &str, rev_id: &str) -> VcxResult<bool> {
-    let from = None;
     let to = Some(OffsetDateTime::now_utc().unix_timestamp() as u64 + 100);
-    let rev_reg_delta = RevocationRegistryDelta::create_from_ledger(ledger, rev_reg_id, from, to).await?;
+    let (_, rev_reg_delta_json, _) = ledger.get_rev_reg_delta_json(rev_reg_id, None, to).await?;
+    let rev_reg_delta = RevocationRegistryDelta::create_from_ledger(&rev_reg_delta_json).await?;
     Ok(rev_reg_delta.revoked().iter().any(|s| s.to_string().eq(rev_id)))
 }
 
@@ -46,63 +46,63 @@ pub async fn is_cred_revoked(ledger: &Arc<dyn AnoncredsLedgerRead>, rev_reg_id: 
 mod integration_tests {
     use super::*;
 
-    use crate::common::test_utils::create_and_store_credential;
-    use crate::utils::constants::DEFAULT_SCHEMA_ATTRS;
+    use crate::common::test_utils::{
+        create_and_write_credential, create_and_write_test_cred_def, create_and_write_test_rev_reg,
+        create_and_write_test_schema,
+    };
     use crate::utils::devsetup::SetupProfile;
 
     #[tokio::test]
     #[ignore]
     async fn test_pool_prover_get_credential() {
         SetupProfile::run(|setup| async move {
-            let res = create_and_store_credential(
+            let schema = create_and_write_test_schema(
                 &setup.profile.inject_anoncreds(),
+                &setup.profile.inject_anoncreds_ledger_write(),
+                &setup.institution_did,
+                crate::utils::constants::DEFAULT_SCHEMA_ATTRS,
+            )
+            .await;
+            let cred_def = create_and_write_test_cred_def(
                 &setup.profile.inject_anoncreds(),
                 &setup.profile.inject_anoncreds_ledger_read(),
                 &setup.profile.inject_anoncreds_ledger_write(),
                 &setup.institution_did,
-                DEFAULT_SCHEMA_ATTRS,
+                &schema.schema_id,
+                true,
             )
             .await;
-            let schema_id = res.0;
-            let cred_def_id = res.2;
-            let cred_id = res.7;
-            let rev_reg_id = res.8;
-            let cred_rev_id = res.9;
-
-            let anoncreds = Arc::clone(&setup.profile).inject_anoncreds();
-
-            let cred_json = anoncreds.prover_get_credential(&cred_id).await.unwrap();
-            let prover_cred = serde_json::from_str::<ProverCredential>(&cred_json).unwrap();
-
-            assert_eq!(prover_cred.schema_id, schema_id);
-            assert_eq!(prover_cred.cred_def_id, cred_def_id);
-            assert_eq!(prover_cred.cred_rev_id.unwrap().to_string(), cred_rev_id);
-            assert_eq!(prover_cred.rev_reg_id.unwrap(), rev_reg_id);
-        })
-        .await;
-    }
-
-    #[tokio::test]
-    #[ignore]
-    async fn test_pool_get_cred_rev_id() {
-        SetupProfile::run(|setup| async move {
-            let res = create_and_store_credential(
+            let rev_reg = create_and_write_test_rev_reg(
                 &setup.profile.inject_anoncreds(),
-                &setup.profile.inject_anoncreds(),
-                &setup.profile.inject_anoncreds_ledger_read(),
                 &setup.profile.inject_anoncreds_ledger_write(),
                 &setup.institution_did,
-                DEFAULT_SCHEMA_ATTRS,
+                &cred_def.get_cred_def_id(),
             )
             .await;
-            let cred_id = res.7;
-            let cred_rev_id = res.9;
-
-            let cred_rev_id_ = get_cred_rev_id(&setup.profile.inject_anoncreds(), &cred_id)
+            let cred_id = create_and_write_credential(
+                &setup.profile.inject_anoncreds(),
+                &setup.profile.inject_anoncreds(),
+                &setup.institution_did,
+                &cred_def,
+                Some(&rev_reg),
+            )
+            .await;
+            let cred_rev_id = get_cred_rev_id(&setup.profile.inject_anoncreds(), &cred_id)
                 .await
                 .unwrap();
 
-            assert_eq!(cred_rev_id, cred_rev_id_.to_string());
+            let cred_json = setup
+                .profile
+                .inject_anoncreds()
+                .prover_get_credential(&cred_id)
+                .await
+                .unwrap();
+            let prover_cred = serde_json::from_str::<ProverCredential>(&cred_json).unwrap();
+
+            assert_eq!(prover_cred.schema_id, schema.schema_id);
+            assert_eq!(prover_cred.cred_def_id, cred_def.get_cred_def_id());
+            assert_eq!(prover_cred.cred_rev_id.unwrap().to_string(), cred_rev_id);
+            assert_eq!(prover_cred.rev_reg_id.unwrap(), rev_reg.rev_reg_id);
         })
         .await;
     }
@@ -111,30 +111,53 @@ mod integration_tests {
     #[ignore]
     async fn test_pool_is_cred_revoked() {
         SetupProfile::run(|setup| async move {
-            let res = create_and_store_credential(
+            let schema = create_and_write_test_schema(
                 &setup.profile.inject_anoncreds(),
+                &setup.profile.inject_anoncreds_ledger_write(),
+                &setup.institution_did,
+                crate::utils::constants::DEFAULT_SCHEMA_ATTRS,
+            )
+            .await;
+            let cred_def = create_and_write_test_cred_def(
                 &setup.profile.inject_anoncreds(),
                 &setup.profile.inject_anoncreds_ledger_read(),
                 &setup.profile.inject_anoncreds_ledger_write(),
                 &setup.institution_did,
-                DEFAULT_SCHEMA_ATTRS,
+                &schema.schema_id,
+                true,
             )
             .await;
-            let rev_reg_id = res.8;
-            let cred_rev_id = res.9;
-            let tails_dir = res.10;
-            let rev_reg = res.11;
+            let rev_reg = create_and_write_test_rev_reg(
+                &setup.profile.inject_anoncreds(),
+                &setup.profile.inject_anoncreds_ledger_write(),
+                &setup.institution_did,
+                &cred_def.get_cred_def_id(),
+            )
+            .await;
+            let cred_id = create_and_write_credential(
+                &setup.profile.inject_anoncreds(),
+                &setup.profile.inject_anoncreds(),
+                &setup.institution_did,
+                &cred_def,
+                Some(&rev_reg),
+            )
+            .await;
+            let cred_rev_id = get_cred_rev_id(&setup.profile.inject_anoncreds(), &cred_id)
+                .await
+                .unwrap();
 
-            assert!(
-                !is_cred_revoked(&setup.profile.inject_anoncreds_ledger_read(), &rev_reg_id, &cred_rev_id)
-                    .await
-                    .unwrap()
-            );
+            assert!(!is_cred_revoked(
+                &setup.profile.inject_anoncreds_ledger_read(),
+                &rev_reg.rev_reg_id,
+                &cred_rev_id
+            )
+            .await
+            .unwrap());
 
-            let anoncreds = Arc::clone(&setup.profile).inject_anoncreds();
-
-            anoncreds
-                .revoke_credential_local(&tails_dir, &rev_reg_id, &cred_rev_id)
+            setup
+                .profile
+                .inject_anoncreds()
+                .revoke_credential_local(&rev_reg.get_tails_dir(), &rev_reg.rev_reg_id, &cred_rev_id)
                 .await
                 .unwrap();
             rev_reg
@@ -148,11 +171,13 @@ mod integration_tests {
 
             std::thread::sleep(std::time::Duration::from_millis(500));
 
-            assert!(
-                is_cred_revoked(&setup.profile.inject_anoncreds_ledger_read(), &rev_reg_id, &cred_rev_id)
-                    .await
-                    .unwrap()
-            );
+            assert!(is_cred_revoked(
+                &setup.profile.inject_anoncreds_ledger_read(),
+                &rev_reg.rev_reg_id,
+                &cred_rev_id
+            )
+            .await
+            .unwrap());
         })
         .await;
     }

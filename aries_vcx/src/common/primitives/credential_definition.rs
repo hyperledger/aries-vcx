@@ -171,6 +171,10 @@ impl CredentialDef {
         self.support_revocation
     }
 
+    pub fn get_cred_def_json(&self) -> &str {
+        &self.cred_def_json
+    }
+
     pub async fn publish_cred_def(
         self,
         ledger_read: &Arc<dyn AnoncredsLedgerRead>,
@@ -299,7 +303,7 @@ pub mod integration_tests {
     #[ignore]
     async fn test_pool_create_cred_def_real() {
         SetupProfile::run(|setup| async move {
-            let (schema_id, _) = create_and_write_test_schema(
+            let schema = create_and_write_test_schema(
                 &setup.profile.inject_anoncreds(),
                 &setup.profile.inject_anoncreds_ledger_write(),
                 &setup.institution_did,
@@ -309,7 +313,7 @@ pub mod integration_tests {
 
             let ledger_read = Arc::clone(&setup.profile).inject_anoncreds_ledger_read();
             let ledger_write = Arc::clone(&setup.profile).inject_anoncreds_ledger_write();
-            let schema_json = ledger_read.get_schema(&schema_id, None).await.unwrap();
+            let schema_json = ledger_read.get_schema(&schema.schema_id, None).await.unwrap();
 
             let (cred_def_id, cred_def_json_local) = generate_cred_def(
                 &setup.profile.inject_anoncreds(),
@@ -344,7 +348,7 @@ pub mod integration_tests {
     #[ignore]
     async fn test_pool_create_rev_reg_def() {
         SetupProfile::run(|setup| async move {
-            let (schema_id, _) = create_and_write_test_schema(
+            let schema = create_and_write_test_schema(
                 &setup.profile.inject_anoncreds(),
                 &setup.profile.inject_anoncreds_ledger_write(),
                 &setup.institution_did,
@@ -353,7 +357,7 @@ pub mod integration_tests {
             .await;
             let ledger_read = Arc::clone(&setup.profile).inject_anoncreds_ledger_read();
             let ledger_write = Arc::clone(&setup.profile).inject_anoncreds_ledger_write();
-            let schema_json = ledger_read.get_schema(&schema_id, None).await.unwrap();
+            let schema_json = ledger_read.get_schema(&schema.schema_id, None).await.unwrap();
 
             let (cred_def_id, cred_def_json) = generate_cred_def(
                 &setup.profile.inject_anoncreds(),

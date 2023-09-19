@@ -164,7 +164,7 @@ pub mod tests {
     #[ignore]
     async fn create_revocable_cred_def_and_check_tails_location() {
         SetupGlobalsWalletPoolAgency::run(|setup| async move {
-            let (schema_id, _) = create_and_write_test_schema(
+            let schema = create_and_write_test_schema(
                 &get_main_anoncreds().unwrap(),
                 &get_main_anoncreds_ledger_write().unwrap(),
                 &setup.institution_did,
@@ -175,7 +175,7 @@ pub mod tests {
 
             let path = get_temp_dir_path();
 
-            let handle_cred_def = create("1".to_string(), schema_id, "tag1".to_string(), true)
+            let handle_cred_def = create("1".to_string(), schema.schema_id.clone(), "tag1".to_string(), true)
                 .await
                 .unwrap();
             publish(handle_cred_def).await.unwrap();

@@ -62,8 +62,8 @@ pub async fn get_schema_attrs(source_id: String, schema_id: String) -> LibvcxRes
         source_id,
         schema_id
     );
-    let profile = get_main_profile();
-    let schema = Schema::create_from_ledger_json(&get_main_anoncreds_ledger_read()?, &source_id, &schema_id).await?;
+    let schema_ledger_data_json = get_main_anoncreds_ledger_read()?.get_schema(&schema_id, None).await?;
+    let schema = Schema::create_from_ledger_json(&schema_ledger_data_json, &source_id, &schema_id)?;
     let schema_json = schema.to_string_versioned()?;
 
     let handle = SCHEMA_MAP
@@ -230,7 +230,7 @@ pub mod tests {
     #[ignore]
     async fn test_get_schema_attrs_from_ledger() {
         SetupGlobalsWalletPoolAgency::run(|setup| async move {
-            let (schema_id, _) = create_and_write_test_schema(
+            let schema = create_and_write_test_schema(
                 &get_main_anoncreds().unwrap(),
                 &&get_main_anoncreds_ledger_write().unwrap(),
                 &setup.institution_did,
@@ -238,12 +238,14 @@ pub mod tests {
             )
             .await;
 
-            let (schema_handle, schema_attrs) = get_schema_attrs("id".to_string(), schema_id.clone()).await.unwrap();
+            let (schema_handle, schema_attrs) = get_schema_attrs("id".to_string(), schema.schema_id.clone())
+                .await
+                .unwrap();
 
             check_schema(
                 schema_handle,
                 &schema_attrs,
-                &schema_id,
+                &schema.schema_id,
                 constants::DEFAULT_SCHEMA_ATTRS,
             );
         })

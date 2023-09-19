@@ -1,5 +1,6 @@
 use messages::misc::MimeType;
 use messages::msg_fields::protocols::cred_issuance::ack::AckCredential;
+use messages::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
 use messages::msg_fields::protocols::cred_issuance::propose_credential::ProposeCredential;
 use messages::msg_fields::protocols::cred_issuance::request_credential::RequestCredential;
 use messages::msg_fields::protocols::cred_issuance::{CredentialAttr, CredentialIssuance, CredentialPreview};
@@ -144,6 +145,10 @@ impl Issuer {
             &offer_info,
         )?;
         Ok(())
+    }
+
+    pub fn get_credential_offer(&self) -> VcxResult<OfferCredential> {
+        self.issuer_sm.get_credential_offer_msg()
     }
 
     pub fn get_credential_offer_msg(&self) -> VcxResult<AriesMessage> {
