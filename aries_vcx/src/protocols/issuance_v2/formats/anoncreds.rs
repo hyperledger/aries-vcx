@@ -13,9 +13,9 @@ use crate::{
     },
 };
 
-use super::CredentialIssuanceFormatHandler;
+use super::HolderCredentialIssuanceFormatHandler;
 
-pub struct AnoncredsCredentialIssuanceFormatHandler<'a> {
+pub struct AnoncredsHolderCredentialIssuanceFormatHandler<'a> {
     _data: &'a PhantomData<()>,
 }
 
@@ -36,11 +36,11 @@ pub struct AnoncredsStoreCredentialInput<'a> {
 }
 
 pub struct AnoncredsStoredCredentialMetadata {
-    credential_id: String,
+    pub credential_id: String,
 }
 
 #[async_trait]
-impl<'a> CredentialIssuanceFormatHandler for AnoncredsCredentialIssuanceFormatHandler<'a> {
+impl<'a> HolderCredentialIssuanceFormatHandler for AnoncredsHolderCredentialIssuanceFormatHandler<'a> {
     type CreateRequestInput = AnoncredsCreateRequestInput<'a>;
     type CreatedRequestMetadata = AnoncredsCreatedRequestMetadata;
 
@@ -77,8 +77,8 @@ impl<'a> CredentialIssuanceFormatHandler for AnoncredsCredentialIssuanceFormatHa
 
     async fn process_and_store_credential(
         issue_credential_message: &IssueCredentialV2,
-        request_metadata: AnoncredsCreatedRequestMetadata,
         user_input: &AnoncredsStoreCredentialInput,
+        request_metadata: AnoncredsCreatedRequestMetadata,
     ) -> VcxResult<AnoncredsStoredCredentialMetadata> {
         let credential_payload: String = String::from("TODO - extract from issue_credential_message");
 
