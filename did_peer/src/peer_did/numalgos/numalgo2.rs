@@ -5,7 +5,7 @@ use did_parser::Did;
 use crate::{
     error::DidPeerError,
     numalgos::{numalgo2::resolve_numalgo2, numalgo3::generate_numalgo3},
-    peer_did::peer_did::PeerDid,
+    peer_did::PeerDid,
     peer_did_resolver::options::PublicKeyEncoding,
 };
 
