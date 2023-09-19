@@ -1,5 +1,4 @@
 use std::sync::Arc;
-use std::time::Duration;
 
 use aries_vcx::core::profile::ledger::{build_ledger_components, VcxPoolConfig};
 use aries_vcx::global::settings::DEFAULT_LINK_SECRET_ALIAS;
@@ -22,19 +21,12 @@ use crate::{
         credential_definition::ServiceCredentialDefinitions,
         holder::ServiceCredentialsHolder,
         issuer::ServiceCredentialsIssuer,
-        mediated_connection::ServiceMediatedConnections,
         prover::ServiceProver,
         revocation_registry::ServiceRevocationRegistries,
         schema::ServiceSchemas,
         verifier::ServiceVerifier,
     },
 };
-
-pub struct AgencyInitConfig {
-    pub agency_endpoint: Url,
-    pub agency_did: String,
-    pub agency_verkey: String,
-}
 
 pub struct WalletInitConfig {
     pub wallet_name: String,
@@ -50,7 +42,6 @@ pub struct PoolInitConfig {
 pub struct InitConfig {
     pub enterprise_seed: String,
     pub pool_config: PoolInitConfig,
-    pub agency_config: Option<AgencyInitConfig>,
     pub wallet_config: WalletInitConfig,
     pub service_endpoint: ServiceEndpoint,
 }
@@ -101,28 +92,6 @@ impl Agent {
             .await
             .unwrap();
 
-        let (mediated_connections, config_agency_client) = if let Some(agency_config) = init_config.agency_config {
-            let config_provision_agent = AgentProvisionConfig {
-                agency_did: agency_config.agency_did,
-                agency_verkey: agency_config.agency_verkey,
-                agency_endpoint: agency_config.agency_endpoint,
-                agent_seed: None,
-            };
-            let mut agency_client = AgencyClient::new();
-            let config_agency_client = provision_cloud_agent(&mut agency_client, wallet, &config_provision_agent)
-                .await
-                .unwrap();
-            (
-                Some(Arc::new(ServiceMediatedConnections::new(
-                    Arc::clone(&profile),
-                    config_agency_client.clone(),
-                ))),
-                Some(config_agency_client),
-            )
-        } else {
-            (None, None)
-        };
-
         let connections = Arc::new(ServiceConnections::new(
             Arc::clone(&profile),
             init_config.service_endpoint,
@@ -144,7 +113,6 @@ impl Agent {
         Ok(Self {
             profile,
             connections,
-            mediated_connections,
             schemas,
             cred_defs,
             rev_regs,
@@ -155,7 +123,6 @@ impl Agent {
             config: AgentConfig {
                 config_wallet,
                 config_issuer,
-                config_agency_client,
             },
         })
     }
