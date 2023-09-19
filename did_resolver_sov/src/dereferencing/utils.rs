@@ -114,7 +114,7 @@ mod tests {
         let agent_service = Service::builder(
             "did:example:123456789abcdefghi#agent".parse().unwrap(),
             "https://agent.example.com/8377464".try_into().unwrap(),
-            Default::default(),
+            (),
         )
         .add_service_type("AgentService".to_string())
         .unwrap()
@@ -123,7 +123,7 @@ mod tests {
         let messaging_service = Service::builder(
             "did:example:123456789abcdefghi#messages".parse().unwrap(),
             "https://example.com/messages/8377464".try_into().unwrap(),
-            Default::default(),
+            (),
         )
         .add_service_type("MessagingService".to_string())
         .unwrap()
@@ -202,7 +202,7 @@ mod tests {
             let additional_service = Service::builder(
                 "did:example:123456789abcdefghi#keys-1".parse().unwrap(),
                 "https://example.com/duplicated/8377464".try_into().unwrap(),
-                Default::default(),
+                (),
             )
             .add_service_type("DuplicatedService".to_string())
             .unwrap()
