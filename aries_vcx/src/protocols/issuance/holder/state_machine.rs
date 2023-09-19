@@ -485,7 +485,7 @@ pub fn parse_cred_def_id_from_cred_offer(cred_offer: &str) -> VcxResult<String> 
     Ok(cred_def_id.to_string())
 }
 
-fn _parse_rev_reg_id_from_credential(credential: &str) -> VcxResult<Option<String>> {
+pub fn _parse_rev_reg_id_from_credential(credential: &str) -> VcxResult<Option<String>> {
     trace!("Holder::_parse_rev_reg_id_from_credential >>>");
 
     let parsed_credential: serde_json::Value = serde_json::from_str(credential).map_err(|err| {
