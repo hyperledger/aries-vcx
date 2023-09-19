@@ -1,17 +1,37 @@
 use std::future::Future;
 
-use agency_client::agency_client::AgencyClient;
 use aries_vcx::aries_vcx_core::ledger::indy::pool::test_utils::{create_testpool_genesis_txn_file, get_temp_file_path};
+use aries_vcx::aries_vcx_core::wallet::indy::wallet::{create_and_open_wallet, wallet_configure_issuer};
+use aries_vcx::aries_vcx_core::wallet::indy::WalletConfig;
 use aries_vcx::aries_vcx_core::WalletHandle;
-use aries_vcx::global::settings::{set_config_value, CONFIG_INSTITUTION_DID, DEFAULT_DID, DEFAULT_GENESIS_PATH};
-use aries_vcx::utils::devsetup::{dev_setup_issuer_wallet_and_agency_client, init_test_logging, reset_global_state};
+use aries_vcx::global::settings::{
+    self, init_issuer_config, set_config_value, CONFIG_INSTITUTION_DID, DEFAULT_DID, DEFAULT_GENESIS_PATH,
+};
+use aries_vcx::utils::devsetup::{init_test_logging, reset_global_state};
 
-use crate::api_vcx::api_global::agency_client::{reset_main_agency_client, set_main_agency_client};
 use crate::api_vcx::api_global::pool::{close_main_pool, setup_ledger_components, LibvcxLedgerConfig};
 use crate::api_vcx::api_global::wallet::{close_main_wallet, setup_wallet};
 
+async fn dev_setup_issuer_wallet_and_agency_client() -> (String, WalletHandle) {
+    let enterprise_seed = "000000000000000000000000Trustee1";
+    let config_wallet = WalletConfig {
+        wallet_name: format!("wallet_{}", uuid::Uuid::new_v4()),
+        wallet_key: settings::DEFAULT_WALLET_KEY.into(),
+        wallet_key_derivation: settings::WALLET_KDF_RAW.into(),
+        wallet_type: None,
+        storage_config: None,
+        storage_credentials: None,
+        rekey: None,
+        rekey_derivation_method: None,
+    };
+    let wallet_handle = create_and_open_wallet(&config_wallet).await.unwrap();
+    let config_issuer = wallet_configure_issuer(wallet_handle, enterprise_seed).await.unwrap();
+    init_issuer_config(&config_issuer.institution_did).unwrap();
+
+    (config_issuer.institution_did, wallet_handle)
+}
+
 pub struct SetupGlobalsWalletPoolAgency {
-    pub agency_client: AgencyClient,
     pub institution_did: String,
     pub wallet_handle: WalletHandle,
 }
@@ -21,9 +41,8 @@ impl SetupGlobalsWalletPoolAgency {
         reset_global_state();
         init_test_logging();
         set_config_value(CONFIG_INSTITUTION_DID, DEFAULT_DID).unwrap();
-        let (institution_did, wallet_handle, agency_client) = dev_setup_issuer_wallet_and_agency_client().await;
+        let (institution_did, wallet_handle) = dev_setup_issuer_wallet_and_agency_client().await;
         SetupGlobalsWalletPoolAgency {
-            agency_client,
             institution_did,
             wallet_handle,
         }
@@ -39,7 +58,6 @@ impl SetupGlobalsWalletPoolAgency {
         create_testpool_genesis_txn_file(&genesis_path);
 
         setup_wallet(init.wallet_handle).unwrap();
-        set_main_agency_client(init.agency_client.clone());
         let config = LibvcxLedgerConfig {
             genesis_path,
             pool_config: None,
@@ -50,9 +68,8 @@ impl SetupGlobalsWalletPoolAgency {
 
         f(init).await;
 
-        close_main_wallet();
-        reset_main_agency_client();
-        close_main_pool().await.unwrap();
+        close_main_wallet().await.ok();
+        close_main_pool().await.ok();
 
         reset_global_state();
     }
