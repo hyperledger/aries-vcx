@@ -8,15 +8,9 @@ use aries_vcx::{
     },
     global::settings::{init_issuer_config, DEFAULT_LINK_SECRET_ALIAS},
 };
-use aries_vcx_core::{
-    ledger::base_ledger::{
-        AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite,
-    },
-    wallet::indy::{
-        wallet::{create_and_open_wallet, wallet_configure_issuer},
-        IndySdkWallet, WalletConfig,
-    },
-};
+use aries_vcx_core::ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite};
+use aries_vcx_core::wallet::indy::wallet::{create_and_open_wallet, wallet_configure_issuer};
+use aries_vcx_core::wallet::indy::{IndySdkWallet, WalletConfig};
 
 use crate::{
     agent::{agent_config::AgentConfig, agent_struct::Agent},
