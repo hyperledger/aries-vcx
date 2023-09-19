@@ -5,8 +5,8 @@ use did_doc_sov::{
     DidDocumentSov,
 };
 
-const ID: &'static str = "did:sov:WRfXPg8dantKVubE3HX8pw";
-const SERVICE_ENDPOINT: &'static str = "https://example.com";
+const ID: & str = "did:sov:WRfXPg8dantKVubE3HX8pw";
+const SERVICE_ENDPOINT: & str = "https://example.com";
 
 #[test]
 fn test_service_build_aip1() {
