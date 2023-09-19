@@ -9,17 +9,13 @@ use did_resolver::{
     },
 };
 
-use crate::{error::DidPeerError, numalgos::numalgo2::resolve_numalgo2, peer_did::peer_did::generic::GenericPeerDid};
-
 use super::options::ExtraFieldsOptions;
+use crate::{
+    error::DidPeerError, numalgos::numalgo2::resolve_numalgo2,
+    peer_did::generic::GenericPeerDid,
+};
 
 pub struct PeerDidResolver;
-
-impl PeerDidResolver {
-    pub fn new() -> Self {
-        Self {}
-    }
-}
 
 #[async_trait]
 impl DidResolvable for PeerDidResolver {
@@ -34,16 +30,18 @@ impl DidResolvable for PeerDidResolver {
         let peer_did = GenericPeerDid::parse(did.to_owned())?;
         match peer_did {
             GenericPeerDid::Numalgo2(peer_did) => {
-                let did_doc = resolve_numalgo2(&peer_did.did(), options.extra().public_key_encoding())?
-                    .add_also_known_as(peer_did.to_numalgo3()?.to_string().parse()?)
-                    .build();
+                let did_doc =
+                    resolve_numalgo2(peer_did.did(), options.extra().public_key_encoding())?
+                        .add_also_known_as(peer_did.to_numalgo3()?.to_string().parse()?)
+                        .build();
                 let resolution_metadata = DidResolutionMetadata::builder()
                     .content_type("application/did+json".to_string())
                     .build();
-                let builder = DidResolutionOutput::builder(did_doc).did_resolution_metadata(resolution_metadata);
+                let builder = DidResolutionOutput::builder(did_doc)
+                    .did_resolution_metadata(resolution_metadata);
                 Ok(builder.build())
             }
-            n @ _ => Err(Box::new(DidPeerError::UnsupportedNumalgo(n.numalgo()))),
+            n => Err(Box::new(DidPeerError::UnsupportedNumalgo(n.numalgo()))),
         }
     }
 }

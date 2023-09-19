@@ -3,7 +3,7 @@ use sha256::digest;
 
 use crate::{
     error::DidPeerError,
-    peer_did::{numalgos::numalgo3::Numalgo3, peer_did::PeerDid},
+    peer_did::{numalgos::numalgo3::Numalgo3, PeerDid},
 };
 
 pub fn generate_numalgo3(did: &Did) -> Result<PeerDid<Numalgo3>, DidPeerError> {

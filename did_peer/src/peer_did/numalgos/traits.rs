@@ -4,7 +4,7 @@ use did_parser::Did;
 
 use crate::{
     error::DidPeerError,
-    peer_did::{peer_did::PeerDid, validate::validate},
+    peer_did::{PeerDid, validate::validate},
     peer_did_resolver::options::PublicKeyEncoding,
 };
 
