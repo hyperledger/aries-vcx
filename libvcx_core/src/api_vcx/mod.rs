@@ -1,65 +1,13 @@
-use std::fmt;
-
 #[macro_use]
 pub mod utils;
 pub mod api_global;
 pub mod api_handle;
 
-/// This macro allows the VcxStateType to be
-/// serialized within serde as an integer (represented as
-/// a string, because its still JSON).
-macro_rules! enum_number {
-    ($name:ident { $($variant:ident = $value:expr, )* }) => {
-        #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-        pub enum $name {
-            $($variant = $value,)*
-        }
-
-        impl ::serde::Serialize for $name {
-            fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-                where S: ::serde::Serializer
-            {
-                // Serialize the enum as a u64.
-                serializer.serialize_u64(*self as u64)
-            }
-        }
-
-        impl<'de> ::serde::Deserialize<'de> for $name {
-            fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-                where D: ::serde::Deserializer<'de>
-            {
-                struct Visitor;
-
-                impl<'de> ::serde::de::Visitor<'de> for Visitor {
-                    type Value = $name;
-
-                    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-                        formatter.write_str("positive integer")
-                    }
-
-                    fn visit_u64<E>(self, value: u64) -> Result<$name, E>
-                        where E: ::serde::de::Error
-                    {
-                        // Rust does not come with a simple way of converting a
-                        // number to an enum, so use a big `match`.
-                        match value {
-                            $( $value => Ok($name::$variant), )*
-                            _ => Err(E::custom(
-                                format!("unknown {} value: {}",
-                                stringify!($name), value))),
-                        }
-                    }
-                }
-
-                // Deserialize the enum from a u64.
-                deserializer.deserialize_u64(Visitor)
-            }
-        }
-    }
-}
-
-enum_number!(VcxStateType
-{
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Deserialize, Default)]
+#[serde(try_from = "u8")]
+#[repr(u8)]
+pub enum VcxStateType {
+    #[default]
     VcxStateNone = 0,
     VcxStateInitialized = 1,
     VcxStateOfferSent = 2,
@@ -70,20 +18,36 @@ enum_number!(VcxStateType
     VcxStateRevoked = 7,
     VcxStateRedirected = 8,
     VcxStateRejected = 9,
-});
+}
+impl serde::Serialize for VcxStateType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: ::serde::Serializer,
+    {
+        serializer.serialize_u8(*self as u8)
+    }
+}
 
-impl VcxStateType {
-    pub fn from_u32(state: u32) -> VcxStateType {
-        match state {
-            0 => VcxStateType::VcxStateNone,
-            1 => VcxStateType::VcxStateInitialized,
-            2 => VcxStateType::VcxStateOfferSent,
-            3 => VcxStateType::VcxStateRequestReceived,
-            4 => VcxStateType::VcxStateAccepted,
-            5 => VcxStateType::VcxStateUnfulfilled,
-            6 => VcxStateType::VcxStateExpired,
-            7 => VcxStateType::VcxStateRevoked,
-            _ => VcxStateType::VcxStateNone,
+impl TryFrom<u8> for VcxStateType {
+    type Error = String;
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(VcxStateType::VcxStateNone),
+            1 => Ok(VcxStateType::VcxStateInitialized),
+            2 => Ok(VcxStateType::VcxStateOfferSent),
+            3 => Ok(VcxStateType::VcxStateRequestReceived),
+            4 => Ok(VcxStateType::VcxStateAccepted),
+            5 => Ok(VcxStateType::VcxStateUnfulfilled),
+            6 => Ok(VcxStateType::VcxStateExpired),
+            7 => Ok(VcxStateType::VcxStateRevoked),
+            8 => Ok(VcxStateType::VcxStateRedirected),
+            9 => Ok(VcxStateType::VcxStateRejected),
+            _ => Err(format!(
+                "unknown {} value: {}",
+                stringify!(VcxStateType),
+                value
+            )),
         }
     }
 }
@@ -91,16 +55,37 @@ impl VcxStateType {
 // undefined is correlated with VcxStateNon -> Haven't received Proof
 // Validated is both validated by indy-sdk and by comparing proof-request
 // Invalid is that it failed one or both of validation processes
-enum_number!(ProofStateType
-{
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Deserialize)]
+#[serde(try_from = "u8")]
+#[repr(u8)]
+pub enum ProofStateType {
     ProofUndefined = 0,
     ProofValidated = 1,
     ProofInvalid = 2,
-});
+}
+impl ::serde::Serialize for ProofStateType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: ::serde::Serializer,
+    {
+        serializer.serialize_u8(*self as u8)
+    }
+}
 
-impl Default for VcxStateType {
-    fn default() -> Self {
-        VcxStateType::VcxStateNone
+impl TryFrom<u8> for ProofStateType {
+    type Error = String;
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(ProofStateType::ProofUndefined),
+            1 => Ok(ProofStateType::ProofValidated),
+            2 => Ok(ProofStateType::ProofInvalid),
+            _ => Err(format!(
+                "unknown {} value: {}",
+                stringify!(ProofStateType),
+                value
+            )),
+        }
     }
 }
 

@@ -23,12 +23,13 @@ fn main() {
             indy_dir.as_os_str().to_str().unwrap()
         );
 
-        let files = vec![
+        let files = [
             "libeay32md.dll",
             "libsodium.dll",
             "libzmq.dll",
             "ssleay32md.dll",
         ];
+
         for f in files.iter() {
             if fs::copy(&indy_dir.join(f), &dst.join(f)).is_ok() {
                 println!(
