@@ -4,7 +4,7 @@ use aries_vcx_core::{anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledg
 use async_trait::async_trait;
 
 use crate::{
-    errors::error::VcxResult,
+    errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
     protocols::{
         issuance::holder::state_machine::{
             _parse_rev_reg_id_from_credential, create_anoncreds_credential_request, parse_cred_def_id_from_cred_offer,
@@ -13,10 +13,30 @@ use crate::{
     },
 };
 
-use super::HolderCredentialIssuanceFormatHandler;
+use super::HolderCredentialIssuanceFormat;
 
-pub struct AnoncredsHolderCredentialIssuanceFormatHandler<'a> {
+pub struct AnoncredsHolderCredentialIssuanceFormat<'a> {
     _data: &'a PhantomData<()>,
+}
+
+pub struct AnoncredsCreateProposalInput {
+    pub cred_filter: AnoncredsCredentialFilter,
+}
+
+#[derive(Default, Serialize, Deserialize)]
+pub struct AnoncredsCredentialFilter {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub schema_issuer_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub schema_name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub schema_version: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub schema_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub issuer_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cred_def_id: Option<String>,
 }
 
 pub struct AnoncredsCreateRequestInput<'a> {
@@ -40,15 +60,31 @@ pub struct AnoncredsStoredCredentialMetadata {
 }
 
 #[async_trait]
-impl<'a> HolderCredentialIssuanceFormatHandler for AnoncredsHolderCredentialIssuanceFormatHandler<'a> {
+impl<'a> HolderCredentialIssuanceFormat for AnoncredsHolderCredentialIssuanceFormat<'a> {
+    type CreateProposalInput = AnoncredsCreateProposalInput;
+
     type CreateRequestInput = AnoncredsCreateRequestInput<'a>;
     type CreatedRequestMetadata = AnoncredsCreatedRequestMetadata;
 
     type StoreCredentialInput = AnoncredsStoreCredentialInput<'a>;
     type StoredCredentialMetadata = AnoncredsStoredCredentialMetadata;
 
+    fn supports_request_independent_of_offer() -> bool {
+        false
+    }
+
+    fn get_proposal_attachment_format() -> String {
+        String::from("anoncreds/credential-filter@v1.0")
+    }
+
     fn get_request_attachment_format() -> String {
         String::from("anoncreds/credential-request@v1.0")
+    }
+
+    async fn create_proposal_attachment_content(data: &AnoncredsCreateProposalInput) -> VcxResult<Vec<u8>> {
+        let filter_bytes = serde_json::to_vec(&data.cred_filter)?;
+
+        Ok(filter_bytes)
     }
 
     async fn create_request_attachment_content(
@@ -56,6 +92,7 @@ impl<'a> HolderCredentialIssuanceFormatHandler for AnoncredsHolderCredentialIssu
         data: &AnoncredsCreateRequestInput,
     ) -> VcxResult<(Vec<u8>, AnoncredsCreatedRequestMetadata)> {
         // extract first "anoncreds/credential-offer@v1.0" attachment from `offer_message`, or fail
+        _ = offer_message;
         let offer_payload: String = String::from("TODO - extract from offer_message");
 
         let cred_def_id = parse_cred_def_id_from_cred_offer(&offer_payload)?;
@@ -75,11 +112,21 @@ impl<'a> HolderCredentialIssuanceFormatHandler for AnoncredsHolderCredentialIssu
         ))
     }
 
+    async fn create_request_attachment_content_independent_of_offer(
+        _: &Self::CreateRequestInput,
+    ) -> VcxResult<(Vec<u8>, Self::CreatedRequestMetadata)> {
+        Err(AriesVcxError::from_msg(
+            AriesVcxErrorKind::ActionNotSupported,
+            "Anoncreds cannot create request payload independent of an offer",
+        ))
+    }
+
     async fn process_and_store_credential(
         issue_credential_message: &IssueCredentialV2,
         user_input: &AnoncredsStoreCredentialInput,
         request_metadata: AnoncredsCreatedRequestMetadata,
     ) -> VcxResult<AnoncredsStoredCredentialMetadata> {
+        _ = issue_credential_message;
         let credential_payload: String = String::from("TODO - extract from issue_credential_message");
 
         let ledger = user_input.ledger;
