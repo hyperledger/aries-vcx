@@ -41,6 +41,10 @@ impl<'a> IssuerCredentialIssuanceFormat for AnoncredsIssuerCredentialIssuanceFor
         false
     }
 
+    fn supports_multi_credential_issuance() -> bool {
+        false
+    }
+
     fn get_offer_attachment_format() -> String {
         String::from("anoncreds/credential-offer@v1.0")
     }

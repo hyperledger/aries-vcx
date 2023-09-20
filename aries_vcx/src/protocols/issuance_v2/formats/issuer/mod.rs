@@ -1,4 +1,5 @@
 pub mod anoncreds;
+pub mod ld_proof_vc;
 
 use async_trait::async_trait;
 
@@ -14,6 +15,7 @@ pub trait IssuerCredentialIssuanceFormat {
     type CreateCredentialInput;
 
     fn supports_request_independent_of_offer() -> bool;
+    fn supports_multi_credential_issuance() -> bool;
 
     fn get_offer_attachment_format() -> String;
     fn get_credential_attachment_format() -> String;

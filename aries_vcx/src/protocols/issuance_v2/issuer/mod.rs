@@ -9,7 +9,7 @@ use self::states::{Complete, CredentialPrepared, OfferPrepared, ProposalReceived
 
 use super::{
     formats::issuer::IssuerCredentialIssuanceFormat,
-    messages::{IssueCredentialV2, RequestCredentialV2},
+    messages::{IssueCredentialV2, ProposeCredentialV2, RequestCredentialV2},
     VcxSMTransitionResult,
 };
 
@@ -31,18 +31,38 @@ pub mod states {
 
     pub struct RequestReceived {
         pub offer: Option<OfferCredentialV2>,
-        pub credentials_remaining: Option<u32>,
         pub request: RequestCredentialV2,
+        pub credentials_remaining: Option<u32>,
+        pub please_ack: Option<bool>,
     }
 
     pub struct CredentialPrepared {
         pub credential: IssueCredentialV2,
         pub credentials_remaining: u32,
+        pub please_ack: bool,
     }
 
     pub struct Complete {
         pub ack: Option<Ack>,
     }
+}
+
+fn validate_number_credentials_avaliable<T: IssuerCredentialIssuanceFormat>(number: u32) -> VcxResult<()> {
+    if number != 1 && !T::supports_multi_credential_issuance() {
+        return Err(AriesVcxError::from_msg(
+            AriesVcxErrorKind::ActionNotSupported,
+            "Must issue exactly 1 credential at a time with this credential format",
+        ));
+    }
+
+    if number == 0 {
+        return Err(AriesVcxError::from_msg(
+            AriesVcxErrorKind::ActionNotSupported,
+            "Must issue atleast 1 credential at a time with this credential format",
+        ));
+    }
+
+    Ok(())
 }
 
 pub struct IssuerV2<S> {
@@ -51,9 +71,11 @@ pub struct IssuerV2<S> {
 }
 
 impl IssuerV2<ProposalReceived> {
-    pub fn receive_proposal(proposal: ProposalReceived) -> Self {
-        _ = proposal;
-        todo!()
+    pub fn from_proposal(proposal: ProposeCredentialV2) -> Self {
+        IssuerV2 {
+            state: ProposalReceived { proposal },
+            thread_id: String::new(), // .id
+        }
     }
 
     pub async fn prepare_offer<T: IssuerCredentialIssuanceFormat>(
@@ -62,6 +84,17 @@ impl IssuerV2<ProposalReceived> {
         number_of_credentials_available: Option<u32>, // defaults to 1 if None
         preview: Option<CredentialPreview>, // TODO - is this the right format? may not be versioned correctly...
     ) -> VcxSMTransitionResult<IssuerV2<OfferPrepared>, Self> {
+        let multi_available = number_of_credentials_available.unwrap_or(1);
+        match validate_number_credentials_avaliable::<T>(multi_available) {
+            Ok(_) => {}
+            Err(error) => {
+                return Err(RecoveredSMError {
+                    error,
+                    state_machine: self,
+                })
+            }
+        };
+
         let attachment_data = match T::create_offer_attachment_content(input_data).await {
             Ok(data) => data,
             Err(error) => {
@@ -76,8 +109,6 @@ impl IssuerV2<ProposalReceived> {
         // create offer msg with the attachment data and format
         _ = attachment_data;
         _ = preview;
-        let multi_available = number_of_credentials_available.unwrap_or(1);
-        _ = multi_available;
         let offer = OfferCredentialV2;
 
         let new_state = OfferPrepared {
@@ -100,14 +131,15 @@ impl IssuerV2<OfferPrepared> {
         number_of_credentials_available: Option<u32>, // defaults to 1 if None
         preview: Option<CredentialPreview>, // TODO - is this the right format? may not be versioned correctly...
     ) -> VcxResult<Self> {
+        let multi_available = number_of_credentials_available.unwrap_or(1);
+        validate_number_credentials_avaliable::<T>(multi_available)?;
+
         let attachment_data = T::create_offer_attachment_content(input_data).await?;
 
         let _offer_attachment_format = T::get_offer_attachment_format();
         // create offer msg with the attachment data and format
         _ = attachment_data;
         _ = preview;
-        let multi_available = number_of_credentials_available.unwrap_or(1);
-        _ = multi_available;
         let offer = OfferCredentialV2;
 
         let new_state = OfferPrepared {
@@ -125,11 +157,21 @@ impl IssuerV2<OfferPrepared> {
         &self.state.offer
     }
 
+    pub fn receive_proposal(self, proposal: ProposeCredentialV2) -> IssuerV2<ProposalReceived> {
+        let new_state = ProposalReceived { proposal };
+
+        IssuerV2 {
+            state: new_state,
+            thread_id: self.thread_id,
+        }
+    }
+
     pub fn receive_request(self, request: RequestCredentialV2) -> IssuerV2<RequestReceived> {
         let new_state = RequestReceived {
             offer: Some(self.state.offer),
-            credentials_remaining: Some(self.state.credentials_remaining),
             request,
+            credentials_remaining: Some(self.state.credentials_remaining),
+            please_ack: None,
         };
 
         IssuerV2 {
@@ -152,6 +194,7 @@ impl IssuerV2<RequestReceived> {
             offer: None,
             request,
             credentials_remaining: None,
+            please_ack: None,
         };
 
         Ok(Self {
@@ -164,7 +207,22 @@ impl IssuerV2<RequestReceived> {
         self,
         input_data: &T::CreateCredentialInput,
         more_credentials_available: Option<u32>, // defaults to the current state's (`credentials_remaining` - 1), else 0
+        please_ack: Option<bool>,                // defaults to the current state's `please_ack`, else false
     ) -> VcxSMTransitionResult<IssuerV2<CredentialPrepared>, Self> {
+        let more_available = more_credentials_available
+            .or(self.state.credentials_remaining.map(|x| x - 1))
+            .unwrap_or(0);
+
+        if more_available != 0 && !T::supports_multi_credential_issuance() {
+            return Err(RecoveredSMError {
+                error: AriesVcxError::from_msg(
+                    AriesVcxErrorKind::ActionNotSupported,
+                    "Must issue exactly 1 credential at a time with this credential format",
+                ),
+                state_machine: self,
+            });
+        }
+
         let request = &self.state.request;
 
         let res = match &self.state.offer {
@@ -185,14 +243,13 @@ impl IssuerV2<RequestReceived> {
         let _credential_attachment_format = T::get_credential_attachment_format();
         // create cred msg with the attachment data and format
         _ = attachment_data;
-        let more_available = more_credentials_available
-            .or(self.state.credentials_remaining.map(|x| x - 1))
-            .unwrap_or(0);
+        let please_ack = please_ack.or(self.state.please_ack).unwrap_or(false);
         let credential = IssueCredentialV2;
 
         let new_state = CredentialPrepared {
             credential,
             credentials_remaining: more_available,
+            please_ack,
         };
 
         Ok(IssuerV2 {
@@ -228,7 +285,8 @@ impl IssuerV2<CredentialPrepared> {
         let new_state = RequestReceived {
             offer: None,
             request,
-            credentials_remaining: Some(764),
+            credentials_remaining: Some(self.state.credentials_remaining),
+            please_ack: Some(self.state.please_ack),
         };
 
         Ok(IssuerV2 {
