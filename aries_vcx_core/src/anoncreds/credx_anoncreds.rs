@@ -504,6 +504,20 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             Some((rev_reg_def, rev_reg_def_priv, rev_reg, rev_reg_info)) => {
                 rev_reg_info.curr_id += 1;
 
+                let RevocationRegistryDefinition::RevocationRegistryDefinitionV1(rev_reg_def_v1) =
+                    rev_reg_def;
+
+                if rev_reg_info.curr_id > rev_reg_def_v1.value.max_cred_num {
+                    return Err(AriesVcxCoreError::from_msg(
+                        AriesVcxCoreErrorKind::ActionNotSupported,
+                        "The revocation registry is full",
+                    ));
+                }
+
+                if rev_reg_def_v1.value.issuance_type == IssuanceType::ISSUANCE_ON_DEMAND {
+                    rev_reg_info.used_ids.insert(rev_reg_info.curr_id);
+                }
+
                 let revocation_config = CredentialRevocationConfig {
                     reg_def: rev_reg_def,
                     reg_def_private: rev_reg_def_priv,
