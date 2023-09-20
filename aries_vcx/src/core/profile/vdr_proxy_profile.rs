@@ -43,7 +43,7 @@ impl VdrProxyProfile {
         let anoncreds = Arc::new(IndySdkAnonCreds::new(wallet.wallet_handle));
         let request_signer = Arc::new(BaseWalletRequestSigner::new(wallet.clone()));
         let request_submitter = Arc::new(VdrProxySubmitter::new(Arc::new(client)));
-        let response_parser = Arc::new(ResponseParser::new());
+        let response_parser = Arc::new(ResponseParser);
         let cacher_config = InMemoryResponseCacherConfig::builder()
             .ttl(Duration::from_secs(60))
             .capacity(1000)?
