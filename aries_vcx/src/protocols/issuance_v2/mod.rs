@@ -31,4 +31,4 @@ impl<T> std::fmt::Debug for RecoveredSMError<T> {
 
 // TODO - impl Error for RecoveredSMError?
 
-type VcxRecoverableSMResult<T, SM> = Result<T, RecoveredSMError<SM>>;
+type VcxSMTransitionResult<NEW, OLD> = Result<NEW, RecoveredSMError<OLD>>;

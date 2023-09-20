@@ -6,11 +6,11 @@ pub mod demo_test {
         core::profile::profile::Profile,
         protocols::issuance_v2::{
             formats::{
-                anoncreds::{
+                holder::anoncreds::{
                     AnoncredsCreateProposalInput, AnoncredsCreateRequestInput, AnoncredsCredentialFilter,
                     AnoncredsHolderCredentialIssuanceFormat, AnoncredsStoreCredentialInput,
                 },
-                ld_proof_vc::LdProofHolderCredentialIssuanceFormat,
+                holder::ld_proof_vc::LdProofHolderCredentialIssuanceFormat,
             },
             holder::{
                 states::{CredentialReceived, RequestPrepared},

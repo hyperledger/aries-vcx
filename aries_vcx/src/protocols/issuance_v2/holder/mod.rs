@@ -15,7 +15,8 @@ use self::{
 };
 
 use super::{
-    formats::HolderCredentialIssuanceFormat, messages::RequestCredentialV2, RecoveredSMError, VcxRecoverableSMResult,
+    formats::holder::HolderCredentialIssuanceFormat, messages::RequestCredentialV2, RecoveredSMError,
+    VcxSMTransitionResult,
 };
 
 pub mod states {
@@ -127,7 +128,7 @@ impl HolderV2<ProposalPrepared> {
     }
 
     // receive an offer in response to the proposal
-    pub fn receive_offer(self, _offer: OfferCredentialV2) -> VcxRecoverableSMResult<HolderV2<OfferReceived>, Self> {
+    pub fn receive_offer(self, _offer: OfferCredentialV2) -> VcxSMTransitionResult<HolderV2<OfferReceived>, Self> {
         // verify thread ID?
         todo!()
     }
@@ -142,14 +143,16 @@ impl HolderV2<OfferReceived> {
         }
     }
 
+    // TODO - helpers so that consumers can understand what offer they received?
+
     // TODO - helper function to give consumers a clue about what format is being used
 
     // respond to offer by preparing a proposal
-    pub async fn propose<T: HolderCredentialIssuanceFormat>(
+    pub async fn prepare_proposal<T: HolderCredentialIssuanceFormat>(
         self,
         input_data: &T::CreateProposalInput,
         preview: Option<CredentialPreview>, // TODO - is this the right format? may not be versioned correctly...
-    ) -> VcxRecoverableSMResult<HolderV2<ProposalPrepared>, Self> {
+    ) -> VcxSMTransitionResult<HolderV2<ProposalPrepared>, Self> {
         let attachment_data = match T::create_proposal_attachment_content(input_data).await {
             Ok(msg) => msg,
             Err(error) => {
@@ -172,7 +175,7 @@ impl HolderV2<OfferReceived> {
     pub async fn prepare_credential_request<T: HolderCredentialIssuanceFormat>(
         self,
         input_data: &T::CreateRequestInput,
-    ) -> VcxRecoverableSMResult<HolderV2<RequestPrepared<T>>, Self> {
+    ) -> VcxSMTransitionResult<HolderV2<RequestPrepared<T>>, Self> {
         let offer_message = &self.state.offer;
 
         let (attachment_data, output_metadata) =
@@ -256,7 +259,7 @@ impl<T: HolderCredentialIssuanceFormat> HolderV2<CredentialReceived<T>> {
     pub async fn prepare_request_for_next_credential(
         self,
         input_data: &T::CreateRequestInput,
-    ) -> VcxRecoverableSMResult<HolderV2<RequestPrepared<T>>, Self> {
+    ) -> VcxSMTransitionResult<HolderV2<RequestPrepared<T>>, Self> {
         if !self.is_more_credential_available() {
             return Err(RecoveredSMError {
                 error: AriesVcxError::from_msg(AriesVcxErrorKind::ActionNotSupported, "No more credentials to accept"),
