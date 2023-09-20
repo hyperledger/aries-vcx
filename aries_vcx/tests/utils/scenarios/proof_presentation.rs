@@ -90,8 +90,7 @@ pub async fn accept_proof_proposal(
     verifier
         .set_presentation_request(presentation_request_data, None)
         .unwrap();
-    let presentation_request = verifier.mark_presentation_request_sent().unwrap();
-    presentation_request
+    verifier.mark_presentation_request_sent().unwrap()
 }
 
 pub async fn reject_proof_proposal(presentation_proposal: &ProposePresentation) -> ProblemReport {
@@ -295,8 +294,8 @@ pub async fn verifier_create_proof_and_send_request(
 ) -> Verifier {
     let requested_attrs = requested_attrs_address(
         &institution.institution_did,
-        &schema_id,
-        &cred_def_id,
+        schema_id,
+        cred_def_id,
         None,
         None,
     );
@@ -327,7 +326,8 @@ pub async fn prover_select_credentials(
         .await
         .unwrap();
     info!("prover_select_credentials >> retrieved_credentials: {retrieved_credentials:?}");
-    let selected_credentials = match preselected_credentials {
+
+    match preselected_credentials {
         Some(preselected_credentials) => {
             let credential_data = prover.presentation_request_data().unwrap();
             match_preselected_credentials(
@@ -338,9 +338,7 @@ pub async fn prover_select_credentials(
             )
         }
         _ => retrieved_to_selected_credentials_simple(&retrieved_credentials, true),
-    };
-
-    selected_credentials
+    }
 }
 
 pub async fn prover_select_credentials_and_send_proof(
@@ -352,7 +350,7 @@ pub async fn prover_select_credentials_and_send_proof(
     let selected_credentials = prover_select_credentials(
         &mut prover,
         alice,
-        presentation_request.into(),
+        presentation_request,
         preselected_credentials,
     )
     .await;
@@ -378,7 +376,7 @@ pub fn retrieved_to_selected_credentials_simple(
     let mut selected_credentials = SelectedCredentials::default();
 
     for (referent, cred_array) in retrieved_credentials.credentials_by_referent.iter() {
-        if cred_array.len() > 0 {
+        if !cred_array.is_empty() {
             let first_cred = cred_array[0].clone();
             let tails_dir = with_tails.then_some(get_temp_dir_path().to_str().unwrap().to_owned());
             selected_credentials.select_credential_for_referent_from_retrieved(
@@ -388,7 +386,7 @@ pub fn retrieved_to_selected_credentials_simple(
             );
         }
     }
-    return selected_credentials;
+    selected_credentials
 }
 
 pub fn match_preselected_credentials(
@@ -430,7 +428,8 @@ pub fn match_preselected_credentials(
             tails_dir,
         );
     }
-    return selected_credentials;
+
+    selected_credentials
 }
 
 pub async fn exchange_proof(
@@ -441,7 +440,7 @@ pub async fn exchange_proof(
     request_name: Option<&str>,
 ) -> Verifier {
     let mut verifier =
-        verifier_create_proof_and_send_request(institution, &schema_id, &cred_def_id, request_name)
+        verifier_create_proof_and_send_request(institution, schema_id, cred_def_id, request_name)
             .await;
     let presentation = prover_select_credentials_and_send_proof(
         consumer,
