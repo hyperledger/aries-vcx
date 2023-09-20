@@ -69,7 +69,7 @@ impl OutOfBandReceiver {
                 match connection.bootstrap_did_doc() {
                     Some(did_doc) => {
                         if let OobService::Did(did) = service {
-                            if did.to_string() == did_doc.id {
+                            if did == &did_doc.id {
                                 return Ok(Some(connection));
                             }
                         };
@@ -130,7 +130,7 @@ impl OutOfBandReceiver {
 
     fn did_doc_matches_service_did(service: &OobService, did_doc: &AriesDidDoc) -> bool {
         match service {
-            OobService::Did(did) => did.to_string() == did_doc.id,
+            OobService::Did(did) => did == &did_doc.id,
             _ => false,
         }
     }
@@ -154,8 +154,7 @@ impl OutOfBandReceiver {
             .content
             .requests_attach
             .as_ref()
-            .map(|v| v.get(0))
-            .flatten()
+            .and_then(|v| v.get(0))
         {
             let AttachmentType::Base64(encoded_attach) = &attach.data.content else {
                 return Err(AriesVcxError::from_msg(
