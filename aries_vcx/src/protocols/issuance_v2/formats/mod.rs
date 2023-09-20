@@ -5,6 +5,7 @@ use crate::errors::error::VcxResult;
 use super::messages::{IssueCredentialV2, OfferCredentialV2};
 
 pub mod anoncreds;
+pub mod ld_proof_vc;
 
 #[async_trait]
 pub trait HolderCredentialIssuanceFormat {
@@ -17,7 +18,7 @@ pub trait HolderCredentialIssuanceFormat {
     type StoredCredentialMetadata;
     
     fn supports_request_independent_of_offer() -> bool;
-    
+
     fn get_proposal_attachment_format() -> String;
     fn get_request_attachment_format() -> String;
 

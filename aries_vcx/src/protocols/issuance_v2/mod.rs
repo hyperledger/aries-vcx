@@ -3,6 +3,7 @@ use crate::errors::error::AriesVcxError;
 pub mod formats;
 pub mod holder;
 pub mod issuer;
+mod demos;
 
 mod messages {
     #[derive(Clone)]

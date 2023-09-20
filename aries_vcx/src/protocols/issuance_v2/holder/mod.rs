@@ -18,7 +18,7 @@ use super::{
     formats::HolderCredentialIssuanceFormat, messages::RequestCredentialV2, RecoveredSMError, VcxRecoverableSMResult,
 };
 
-mod states {
+pub mod states {
     use messages::msg_fields::protocols::{notification::ack::Ack, report_problem::ProblemReport};
 
     use super::{
@@ -203,7 +203,7 @@ impl HolderV2<OfferReceived> {
 impl<T: HolderCredentialIssuanceFormat> HolderV2<RequestPrepared<T>> {
     // TODO - better name; this is "begin with request as a holder"
     // initiate by creating a request
-    pub async fn with_request(input_data: &T::CreateRequestInput) -> VcxResult<Self> {
+    pub async fn with_request(input_data: &T::CreateRequestInput) -> VcxResult<HolderV2<RequestPrepared<T>>> {
         let (attachment_data, output_metadata) =
             T::create_request_attachment_content_independent_of_offer(input_data).await?;
 
@@ -295,7 +295,7 @@ impl<T: HolderCredentialIssuanceFormat> HolderV2<CredentialReceived<T>> {
 
     // transition to complete and prepare an ack message if the issuer requires one
     // TODO - consider enum variants for (HolderV2<AckPrepared>, HoldverV2<Completed>)
-    pub fn prepare_ack_or_complete(self) -> HolderV2<Completed> {
+    pub fn prepare_ack_if_required(self) -> HolderV2<Completed> {
         // if more_available: error?? as they should either problem report, or get more
 
         // if please_ack: else None
@@ -319,96 +319,5 @@ impl HolderV2<Completed> {
     // get the prepared ack message (if the issuer indiciated they want an ack)
     pub fn get_ack(&self) -> Option<&Ack> {
         self.state.ack.as_ref()
-    }
-}
-
-#[cfg(test)]
-pub mod demo_test {
-    use messages::msg_fields::protocols::cred_issuance::{CredentialAttr, CredentialPreview};
-
-    use crate::{
-        core::profile::profile::Profile,
-        protocols::issuance_v2::{
-            formats::anoncreds::{
-                AnoncredsCreateProposalInput, AnoncredsCreateRequestInput, AnoncredsCredentialFilter,
-                AnoncredsHolderCredentialIssuanceFormat, AnoncredsStoreCredentialInput,
-            },
-            holder::HolderV2,
-            messages::{IssueCredentialV2, OfferCredentialV2},
-        },
-        utils::mockdata::profile::mock_profile::MockProfile,
-    };
-
-    #[tokio::test]
-    async fn classic_anoncreds_demo() {
-        let profile = MockProfile;
-        let anoncreds = profile.inject_anoncreds();
-        let ledger_read = profile.inject_anoncreds_ledger_read();
-
-        // ----- create proposal
-
-        let my_proposal_data = AnoncredsCreateProposalInput {
-            cred_filter: AnoncredsCredentialFilter {
-                issuer_id: Some(String::from("cool-issuer-1")),
-                ..Default::default()
-            },
-        };
-        let cred_preview = CredentialPreview::new(vec![CredentialAttr {
-            name: String::from("dob"),
-            value: String::from("19742110"),
-            mime_type: None,
-        }]);
-
-        let holder =
-            HolderV2::with_proposal::<AnoncredsHolderCredentialIssuanceFormat>(&my_proposal_data, Some(cred_preview))
-                .await
-                .unwrap();
-
-        let _proposal_message = holder.get_proposal().to_owned();
-        // send_msg(proposal_message.into());
-
-        // ------- receive back offer and make request
-
-        let offer_message = OfferCredentialV2;
-        let holder = holder.receive_offer(offer_message).unwrap();
-
-        let prep_request_data = AnoncredsCreateRequestInput {
-            entropy: String::from("blah-blah-blah"),
-            ledger: &ledger_read,
-            anoncreds: &anoncreds,
-        };
-        let holder = holder
-            .prepare_credential_request::<AnoncredsHolderCredentialIssuanceFormat>(&prep_request_data)
-            .await
-            .unwrap();
-
-        let _request_message = holder.get_request().to_owned();
-        // send_msg(request_message.into());
-
-        // ------- receive back issuance and finalize
-
-        let issue_message = IssueCredentialV2;
-
-        let receive_cred_data = AnoncredsStoreCredentialInput {
-            ledger: &ledger_read,
-            anoncreds: &anoncreds,
-        };
-        let holder = holder
-            .receive_credential(issue_message, &receive_cred_data)
-            .await
-            .unwrap();
-
-        // ------- finish and send ack if required
-
-        let holder = holder.prepare_ack_or_complete();
-
-        if let Some(_ack) = holder.get_ack() {
-            // send_msg(ack.into())
-        }
-    }
-
-    #[tokio::test]
-    async fn ld_proof_vc_demo() {
-        
     }
 }
