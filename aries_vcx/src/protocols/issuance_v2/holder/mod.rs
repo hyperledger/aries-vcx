@@ -143,7 +143,7 @@ impl HolderV2<OfferReceived> {
         }
     }
 
-    // TODO - helpers so that consumers can understand what offer they received?
+    // TODO - helpers so that consumers can understand what offer they received? (is cred preview garuanteed?)
 
     // TODO - helper function to give consumers a clue about what format is being used
 

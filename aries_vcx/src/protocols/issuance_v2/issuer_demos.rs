@@ -107,6 +107,10 @@ mod demo_test {
             .await
             .unwrap();
 
+        let meta = issuer.get_credential_creation_metadata();
+        // can extract anoncreds specific metadata
+        println!("{:?}", meta.credential_revocation_id);
+
         let _credential = issuer.get_credential();
         // send_msg(credential.into())
 
