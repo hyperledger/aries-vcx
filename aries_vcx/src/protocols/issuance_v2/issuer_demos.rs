@@ -78,7 +78,7 @@ mod demo_test {
         }]);
 
         let issuer = issuer
-            .prepare_offer::<AnoncredsIssuerCredentialIssuanceFormat>(&offer_data, None, Some(cred_preview))
+            .prepare_offer::<AnoncredsIssuerCredentialIssuanceFormat>(&offer_data, None, Some(cred_preview), None)
             .await
             .unwrap();
 
@@ -103,7 +103,7 @@ mod demo_test {
         };
 
         let issuer = issuer
-            .prepare_credential(&prep_cred_data, None, Some(true))
+            .prepare_credential(&prep_cred_data, None, Some(true), None)
             .await
             .unwrap();
 
@@ -127,7 +127,7 @@ mod demo_test {
         // ------ respond with offer
 
         let issuer = issuer
-            .prepare_offer::<LdProofIssuerCredentialIssuanceFormat>(&(), None, None)
+            .prepare_offer::<LdProofIssuerCredentialIssuanceFormat>(&(), None, None, None)
             .await
             .unwrap();
 
@@ -142,7 +142,7 @@ mod demo_test {
 
         // ------- respond with credential
 
-        let issuer = issuer.prepare_credential(&(), None, None).await.unwrap();
+        let issuer = issuer.prepare_credential(&(), None, None, None).await.unwrap();
 
         let _credential = issuer.get_credential();
         // send_msg(credential.into())
@@ -163,7 +163,7 @@ mod demo_test {
 
         // ------ respond with first cred, and show intent to issue `4` more creds
 
-        let mut issuer = issuer.prepare_credential(&(), Some(4), Some(true)).await.unwrap();
+        let mut issuer = issuer.prepare_credential(&(), Some(4), Some(true), None).await.unwrap();
 
         let _credential = issuer.get_credential();
         // send_msg(credential.into())
@@ -177,7 +177,10 @@ mod demo_test {
             let request = RequestCredentialV2;
 
             let requested_issuer = issuer.receive_request_for_more(request).unwrap();
-            let issuer = requested_issuer.prepare_credential(&(), None, None).await.unwrap();
+            let issuer = requested_issuer
+                .prepare_credential(&(), None, None, None)
+                .await
+                .unwrap();
 
             let _credential = issuer.get_credential();
             // send_msg(credential.into())

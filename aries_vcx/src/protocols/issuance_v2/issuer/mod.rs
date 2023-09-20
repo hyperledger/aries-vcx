@@ -87,6 +87,7 @@ impl IssuerV2<ProposalReceived> {
         input_data: &T::CreateOfferInput,
         number_of_credentials_available: Option<u32>, // defaults to 1 if None
         preview: Option<CredentialPreview>, // TODO - is this the right format? may not be versioned correctly...
+        replacement_id: Option<String>,
     ) -> VcxSMTransitionResult<IssuerV2<OfferPrepared<T>>, Self> {
         let multi_available = number_of_credentials_available.unwrap_or(1);
         match validate_number_credentials_avaliable::<T>(multi_available) {
@@ -113,6 +114,7 @@ impl IssuerV2<ProposalReceived> {
         // create offer msg with the attachment data and format
         _ = attachment_data;
         _ = preview;
+        _ = replacement_id;
         let offer = OfferCredentialV2;
 
         let new_state = OfferPrepared {
@@ -135,6 +137,7 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<OfferPrepared<T>> {
         input_data: &T::CreateOfferInput,
         number_of_credentials_available: Option<u32>, // defaults to 1 if None
         preview: Option<CredentialPreview>, // TODO - is this the right format? may not be versioned correctly...
+        replacement_id: Option<String>,
     ) -> VcxResult<Self> {
         let multi_available = number_of_credentials_available.unwrap_or(1);
         validate_number_credentials_avaliable::<T>(multi_available)?;
@@ -145,6 +148,7 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<OfferPrepared<T>> {
         // create offer msg with the attachment data and format
         _ = attachment_data;
         _ = preview;
+        _ = replacement_id;
         let offer = OfferCredentialV2;
 
         let new_state = OfferPrepared {
@@ -214,6 +218,7 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<RequestReceived<T>> {
         input_data: &T::CreateCredentialInput,
         more_credentials_available: Option<u32>, // defaults to the current state's (`credentials_remaining` - 1), else 0
         please_ack: Option<bool>,                // defaults to the current state's `please_ack`, else false
+        replacement_id: Option<String>,
     ) -> VcxSMTransitionResult<IssuerV2<CredentialPrepared<T>>, Self> {
         let more_available = more_credentials_available
             .or(self.state.credentials_remaining.map(|x| x - 1))
@@ -249,6 +254,7 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<RequestReceived<T>> {
         let _credential_attachment_format = T::get_credential_attachment_format();
         // create cred msg with the attachment data and format
         _ = attachment_data;
+        _ = replacement_id;
         let please_ack = please_ack.or(self.state.please_ack).unwrap_or(false);
         let credential = IssueCredentialV2;
 
