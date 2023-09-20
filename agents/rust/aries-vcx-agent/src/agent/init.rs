@@ -1,14 +1,12 @@
 use std::sync::Arc;
 
 use aries_vcx::{
-    agency_client::{agency_client::AgencyClient, configuration::AgentProvisionConfig},
     core::profile::{
         ledger::{build_ledger_components, VcxPoolConfig},
         profile::Profile,
         vdrtools_profile::VdrtoolsProfile,
     },
     global::settings::{init_issuer_config, DEFAULT_LINK_SECRET_ALIAS},
-    utils::provision::provision_cloud_agent,
 };
 use aries_vcx_core::{
     ledger::base_ledger::{
@@ -19,7 +17,6 @@ use aries_vcx_core::{
         IndySdkWallet, WalletConfig,
     },
 };
-use url::Url;
 
 use crate::{
     agent::{agent_config::AgentConfig, agent_struct::Agent},
@@ -94,7 +91,6 @@ impl Agent {
             indy_ledger_write,
         );
         let profile: Arc<dyn Profile> = Arc::new(indy_profile);
-        let wallet = profile.inject_wallet();
         let anoncreds = profile.inject_anoncreds();
         anoncreds
             .prover_create_link_secret(DEFAULT_LINK_SECRET_ALIAS)
