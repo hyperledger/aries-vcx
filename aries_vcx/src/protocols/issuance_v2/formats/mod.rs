@@ -16,12 +16,11 @@ pub trait HolderCredentialIssuanceFormat {
 
     type StoreCredentialInput;
     type StoredCredentialMetadata;
-    
+
     fn supports_request_independent_of_offer() -> bool;
 
     fn get_proposal_attachment_format() -> String;
     fn get_request_attachment_format() -> String;
-
 
     async fn create_proposal_attachment_content(data: &Self::CreateProposalInput) -> VcxResult<Vec<u8>>;
 
@@ -31,7 +30,7 @@ pub trait HolderCredentialIssuanceFormat {
     ) -> VcxResult<(Vec<u8>, Self::CreatedRequestMetadata)>;
 
     async fn create_request_attachment_content_independent_of_offer(
-        data: &Self::CreateRequestInput
+        data: &Self::CreateRequestInput,
     ) -> VcxResult<(Vec<u8>, Self::CreatedRequestMetadata)>;
 
     async fn process_and_store_credential(

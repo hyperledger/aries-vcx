@@ -1,9 +1,9 @@
 use crate::errors::error::AriesVcxError;
 
+mod demos;
 pub mod formats;
 pub mod holder;
 pub mod issuer;
-mod demos;
 
 mod messages {
     #[derive(Clone)]
@@ -20,7 +20,7 @@ mod messages {
 
 pub struct RecoveredSMError<T> {
     pub error: AriesVcxError,
-    pub state_machine: T
+    pub state_machine: T,
 }
 
 impl<T> std::fmt::Debug for RecoveredSMError<T> {
