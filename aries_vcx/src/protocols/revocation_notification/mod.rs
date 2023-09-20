@@ -2,16 +2,17 @@ pub mod receiver;
 pub mod sender;
 
 pub mod test_utils {
-    use messages::decorators::please_ack::{AckOn, PleaseAck};
-    use messages::msg_fields::protocols::revocation::revoke::{
-        RevocationFormat, Revoke, RevokeContent, RevokeDecorators,
+    use messages::{
+        decorators::please_ack::{AckOn, PleaseAck},
+        msg_fields::protocols::revocation::revoke::{
+            RevocationFormat, Revoke, RevokeContent, RevokeDecorators,
+        },
+        AriesMessage,
     };
-    use messages::AriesMessage;
     use shared_vcx::maybe_known::MaybeKnown;
     use uuid::Uuid;
 
-    use crate::errors::error::VcxResult;
-    use crate::{protocols::SendClosure, utils::constants::REV_REG_ID};
+    use crate::{errors::error::VcxResult, protocols::SendClosure, utils::constants::REV_REG_ID};
 
     pub fn _send_message() -> SendClosure {
         Box::new(|_: AriesMessage| Box::pin(async { VcxResult::Ok(()) }))
@@ -42,6 +43,10 @@ pub mod test_utils {
             .please_ack(PleaseAck::builder().on(ack_on).build())
             .build();
 
-        Revoke::builder().id(id).content(content).decorators(decorators).build()
+        Revoke::builder()
+            .id(id)
+            .content(content)
+            .decorators(decorators)
+            .build()
     }
 }

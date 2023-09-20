@@ -16,7 +16,8 @@ pub enum SignatureType {
 #[transitive(into(SignatureType, Protocol))]
 #[msg_type(major = 1)]
 pub enum SignatureTypeV1 {
-    #[msg_type(minor = 0, roles = "")] // This is for accommodating the Connection response, it has no roles.
+    #[msg_type(minor = 0, roles = "")]
+    // This is for accommodating the Connection response, it has no roles.
     V1_0(MsgKindType<SignatureTypeV1_0>),
 }
 
@@ -43,7 +44,10 @@ mod tests {
 
     #[test]
     fn test_version_resolution_signature() {
-        test_utils::test_msg_type_resolution("https://didcomm.org/signature/1.255", SignatureTypeV1::new_v1_0())
+        test_utils::test_msg_type_resolution(
+            "https://didcomm.org/signature/1.255",
+            SignatureTypeV1::new_v1_0(),
+        )
     }
 
     #[test]

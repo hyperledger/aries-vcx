@@ -1,7 +1,7 @@
+use libvcx_core::api_vcx::api_handle::credential_def;
 use napi_derive::napi;
 
 use crate::error::to_napi_err;
-use libvcx_core::api_vcx::api_handle::credential_def;
 
 #[napi]
 async fn credentialdef_create_v2_(
@@ -42,7 +42,9 @@ fn credentialdef_get_cred_def_id(handle: u32) -> napi::Result<String> {
 
 #[napi]
 async fn credentialdef_update_state(handle: u32) -> napi::Result<u32> {
-    credential_def::update_state(handle).await.map_err(to_napi_err)
+    credential_def::update_state(handle)
+        .await
+        .map_err(to_napi_err)
 }
 
 #[napi]

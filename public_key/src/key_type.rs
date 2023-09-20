@@ -54,7 +54,7 @@ impl TryFrom<u64> for KeyType {
             KeyType::C_P256 => Ok(KeyType::P256),
             KeyType::C_P384 => Ok(KeyType::P384),
             KeyType::C_P521 => Ok(KeyType::P521),
-            p  => Err(PublicKeyError::UnsupportedMulticodecDescriptor(p)),
+            p => Err(PublicKeyError::UnsupportedMulticodecDescriptor(p)),
         }
     }
 }

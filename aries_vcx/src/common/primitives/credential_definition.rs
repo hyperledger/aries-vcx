@@ -1,14 +1,19 @@
-use aries_vcx_core::errors::error::AriesVcxCoreErrorKind;
-use aries_vcx_core::ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite};
+use std::{fmt, sync::Arc};
 
-use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
-use crate::utils::constants::{CRED_DEF_ID, CRED_DEF_JSON, DEFAULT_SERIALIZE_VERSION};
-use crate::utils::serialization::ObjectWithVersion;
+use aries_vcx_core::{
+    anoncreds::base_anoncreds::BaseAnonCreds,
+    errors::error::AriesVcxCoreErrorKind,
+    ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite},
+};
 
-use crate::global::settings::indy_mocks_enabled;
-use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
-use std::fmt;
-use std::sync::Arc;
+use crate::{
+    errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
+    global::settings::indy_mocks_enabled,
+    utils::{
+        constants::{CRED_DEF_ID, CRED_DEF_JSON, DEFAULT_SERIALIZE_VERSION},
+        serialization::ObjectWithVersion,
+    },
+};
 
 macro_rules! enum_number {
     ($name:ident { $($variant:ident = $value:expr, )* }) => {
@@ -141,7 +146,9 @@ impl CredentialDef {
             schema_id,
             tag,
         } = config;
-        let schema_json = ledger_read.get_schema(&schema_id, Some(&issuer_did)).await?;
+        let schema_json = ledger_read
+            .get_schema(&schema_id, Some(&issuer_did))
+            .await?;
         let (cred_def_id, cred_def_json) = generate_cred_def(
             anoncreds,
             &issuer_did,
@@ -268,7 +275,8 @@ pub async fn generate_cred_def(
     support_revocation: Option<bool>,
 ) -> VcxResult<(String, String)> {
     trace!(
-        "generate_cred_def >>> issuer_did: {}, schema_json: {}, tag: {}, sig_type: {:?}, support_revocation: {:?}",
+        "generate_cred_def >>> issuer_did: {}, schema_json: {}, tag: {}, sig_type: {:?}, \
+         support_revocation: {:?}",
         issuer_did,
         schema_json,
         tag,
@@ -279,10 +287,17 @@ pub async fn generate_cred_def(
         return Ok((CRED_DEF_ID.to_string(), CRED_DEF_JSON.to_string()));
     }
 
-    let config_json = json!({"support_revocation": support_revocation.unwrap_or(false)}).to_string();
+    let config_json =
+        json!({"support_revocation": support_revocation.unwrap_or(false)}).to_string();
 
     anoncreds
-        .issuer_create_and_store_credential_def(issuer_did, schema_json, tag, sig_type, &config_json)
+        .issuer_create_and_store_credential_def(
+            issuer_did,
+            schema_json,
+            tag,
+            sig_type,
+            &config_json,
+        )
         .await
         .map_err(|err| err.into())
 }
@@ -290,14 +305,19 @@ pub async fn generate_cred_def(
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 pub mod integration_tests {
-    use aries_vcx_core::ledger::indy::pool::test_utils::get_temp_dir_path;
     use std::sync::Arc;
 
-    use crate::common::primitives::credential_definition::generate_cred_def;
-    use crate::common::primitives::revocation_registry::generate_rev_reg;
-    use crate::common::test_utils::create_and_write_test_schema;
-    use crate::utils::constants::DEFAULT_SCHEMA_ATTRS;
-    use crate::utils::devsetup::SetupProfile;
+    use aries_vcx_core::ledger::indy::pool::test_utils::get_temp_dir_path;
+
+    use crate::{
+        common::{
+            primitives::{
+                credential_definition::generate_cred_def, revocation_registry::generate_rev_reg,
+            },
+            test_utils::create_and_write_test_schema,
+        },
+        utils::{constants::DEFAULT_SCHEMA_ATTRS, devsetup::SetupProfile},
+    };
 
     #[tokio::test]
     #[ignore]
@@ -313,7 +333,10 @@ pub mod integration_tests {
 
             let ledger_read = Arc::clone(&setup.profile).inject_anoncreds_ledger_read();
             let ledger_write = Arc::clone(&setup.profile).inject_anoncreds_ledger_write();
-            let schema_json = ledger_read.get_schema(&schema.schema_id, None).await.unwrap();
+            let schema_json = ledger_read
+                .get_schema(&schema.schema_id, None)
+                .await
+                .unwrap();
 
             let (cred_def_id, cred_def_json_local) = generate_cred_def(
                 &setup.profile.inject_anoncreds(),
@@ -357,7 +380,10 @@ pub mod integration_tests {
             .await;
             let ledger_read = Arc::clone(&setup.profile).inject_anoncreds_ledger_read();
             let ledger_write = Arc::clone(&setup.profile).inject_anoncreds_ledger_write();
-            let schema_json = ledger_read.get_schema(&schema.schema_id, None).await.unwrap();
+            let schema_json = ledger_read
+                .get_schema(&schema.schema_id, None)
+                .await
+                .unwrap();
 
             let (cred_def_id, cred_def_json) = generate_cred_def(
                 &setup.profile.inject_anoncreds(),

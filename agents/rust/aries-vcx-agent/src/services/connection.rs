@@ -1,17 +1,23 @@
 use std::sync::{Arc, Mutex};
 
-use crate::error::*;
-use crate::http_client::HttpClient;
-use crate::storage::object_cache::ObjectCache;
-use crate::storage::Storage;
-use aries_vcx::core::profile::profile::Profile;
-use aries_vcx::handlers::util::AnyInvitation;
-use aries_vcx::messages::msg_fields::protocols::connection::request::Request;
-use aries_vcx::messages::msg_fields::protocols::connection::response::Response;
-use aries_vcx::messages::msg_fields::protocols::notification::ack::Ack;
-use aries_vcx::protocols::connection::pairwise_info::PairwiseInfo;
-use aries_vcx::protocols::connection::{Connection, GenericConnection, State, ThinState};
+use aries_vcx::{
+    core::profile::profile::Profile,
+    handlers::util::AnyInvitation,
+    messages::msg_fields::protocols::{
+        connection::{request::Request, response::Response},
+        notification::ack::Ack,
+    },
+    protocols::connection::{
+        pairwise_info::PairwiseInfo, Connection, GenericConnection, State, ThinState,
+    },
+};
 use url::Url;
+
+use crate::{
+    error::*,
+    http_client::HttpClient,
+    storage::{object_cache::ObjectCache, Storage},
+};
 
 pub type ServiceEndpoint = Url;
 
@@ -30,10 +36,13 @@ impl ServiceConnections {
         }
     }
 
-    pub async fn create_invitation(&self, pw_info: Option<PairwiseInfo>) -> AgentResult<AnyInvitation> {
+    pub async fn create_invitation(
+        &self,
+        pw_info: Option<PairwiseInfo>,
+    ) -> AgentResult<AnyInvitation> {
         let pw_info = pw_info.unwrap_or(PairwiseInfo::create(&self.profile.inject_wallet()).await?);
-        let inviter =
-            Connection::new_inviter("".to_owned(), pw_info).create_invitation(vec![], self.service_endpoint.clone());
+        let inviter = Connection::new_inviter("".to_owned(), pw_info)
+            .create_invitation(vec![], self.service_endpoint.clone());
         let invite = inviter.get_invitation().clone();
         let thread_id = inviter.thread_id().to_owned();
 
@@ -55,7 +64,9 @@ impl ServiceConnections {
 
     pub async fn send_request(&self, thread_id: &str) -> AgentResult<()> {
         let invitee: Connection<_, _> = self.connections.get(thread_id)?.try_into()?;
-        let invitee = invitee.prepare_request(self.service_endpoint.clone(), vec![]).await?;
+        let invitee = invitee
+            .prepare_request(self.service_endpoint.clone(), vec![])
+            .await?;
         let request = invitee.get_request().clone();
         invitee
             .send_message(&self.profile.inject_wallet(), &request.into(), &HttpClient)
@@ -122,7 +133,11 @@ impl ServiceConnections {
     pub async fn send_ack(&self, thread_id: &str) -> AgentResult<()> {
         let invitee: Connection<_, _> = self.connections.get(thread_id)?.try_into()?;
         invitee
-            .send_message(&self.profile.inject_wallet(), &invitee.get_ack().into(), &HttpClient)
+            .send_message(
+                &self.profile.inject_wallet(),
+                &invitee.get_ack().into(),
+                &HttpClient,
+            )
             .await?;
 
         self.connections.insert(thread_id, invitee.into())?;

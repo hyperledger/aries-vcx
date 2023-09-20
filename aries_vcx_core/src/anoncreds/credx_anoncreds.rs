@@ -4,28 +4,17 @@ use std::{
     sync::Arc,
 };
 
-use crate::utils::{
-    constants::ATTRS,
-    json::{AsTypeOrDeserializationError, TryGetIndex},
-};
-use crate::wallet::base_wallet::AsyncFnIteratorCollect;
-use crate::{
-    errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
-    wallet::base_wallet::BaseWallet,
-};
-
 use async_trait::async_trait;
 use credx::{
     anoncreds_clsignatures::{bn::BigNumber, LinkSecret as ClLinkSecret},
-    types::{CredentialDefinition, CredentialOffer, LinkSecret},
-};
-use credx::{
     tails::{TailsFileReader, TailsFileWriter},
     types::{
-        Credential as CredxCredential, CredentialDefinitionId, CredentialRequestMetadata, CredentialRevocationConfig,
-        CredentialRevocationState, DidValue, IssuanceType, PresentCredentials, Presentation, PresentationRequest,
-        RegistryType, RevocationRegistry, RevocationRegistryDefinition, RevocationRegistryDelta, RevocationRegistryId,
-        Schema, SchemaId, SignatureType,
+        Credential as CredxCredential, CredentialDefinition, CredentialDefinitionId,
+        CredentialOffer, CredentialRequestMetadata, CredentialRevocationConfig,
+        CredentialRevocationState, DidValue, IssuanceType, LinkSecret, PresentCredentials,
+        Presentation, PresentationRequest, RegistryType, RevocationRegistry,
+        RevocationRegistryDefinition, RevocationRegistryDelta, RevocationRegistryId, Schema,
+        SchemaId, SignatureType,
     },
 };
 use indy_credx as credx;
@@ -34,6 +23,14 @@ use serde_json::Value;
 use uuid::Uuid;
 
 use super::base_anoncreds::BaseAnonCreds;
+use crate::{
+    errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
+    utils::{
+        constants::ATTRS,
+        json::{AsTypeOrDeserializationError, TryGetIndex},
+    },
+    wallet::base_wallet::{AsyncFnIteratorCollect, BaseWallet},
+};
 
 pub const CATEGORY_LINK_SECRET: &str = "VCX_LINK_SECRET";
 
@@ -90,7 +87,10 @@ impl IndyCredxAnonCreds {
         let ms_bn: BigNumber = BigNumber::from_dec(ms_decimal).map_err(|err| {
             AriesVcxCoreError::from_msg(
                 AriesVcxCoreErrorKind::UrsaError,
-                format!("Failed to create BigNumber, UrsaErrorKind: {:?}", err.kind()),
+                format!(
+                    "Failed to create BigNumber, UrsaErrorKind: {:?}",
+                    err.kind()
+                ),
             )
         })?;
         let ursa_ms: ClLinkSecret = serde_json::from_value(json!({ "ms": ms_bn }))?;
@@ -209,7 +209,8 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             serde_json::from_str(rev_regs_json)?;
         let rev_regs: Option<HashMap<RevocationRegistryId, HashMap<u64, &RevocationRegistry>>> =
             rev_regs.as_ref().map(|regs| {
-                let mut new_regs: HashMap<RevocationRegistryId, HashMap<u64, &RevocationRegistry>> = HashMap::new();
+                let mut new_regs: HashMap<RevocationRegistryId, HashMap<u64, &RevocationRegistry>> =
+                    HashMap::new();
                 for (k, v) in regs {
                     new_regs.insert(k.clone(), hashmap_as_ref(v));
                 }
@@ -251,27 +252,38 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
 
         let mut tails_writer = TailsFileWriter::new(Some(tails_dir.to_owned()));
 
-        let cred_def = self.get_wallet_record_value(CATEGORY_CRED_DEF, cred_def_id).await?;
+        let cred_def = self
+            .get_wallet_record_value(CATEGORY_CRED_DEF, cred_def_id)
+            .await?;
 
-        let rev_reg_id =
-            credx::issuer::make_revocation_registry_id(&issuer_did, &cred_def, tag, RegistryType::CL_ACCUM)?;
+        let rev_reg_id = credx::issuer::make_revocation_registry_id(
+            &issuer_did,
+            &cred_def,
+            tag,
+            RegistryType::CL_ACCUM,
+        )?;
 
-        let res_rev_reg = self.get_wallet_record_value(CATEGORY_REV_REG, &rev_reg_id.0).await;
-        let res_rev_reg_def = self.get_wallet_record_value(CATEGORY_REV_REG_DEF, &rev_reg_id.0).await;
+        let res_rev_reg = self
+            .get_wallet_record_value(CATEGORY_REV_REG, &rev_reg_id.0)
+            .await;
+        let res_rev_reg_def = self
+            .get_wallet_record_value(CATEGORY_REV_REG_DEF, &rev_reg_id.0)
+            .await;
 
         if let (Ok(rev_reg), Ok(rev_reg_def)) = (res_rev_reg, res_rev_reg_def) {
             return Ok((rev_reg_id.0, rev_reg, rev_reg_def));
         }
 
-        let (rev_reg_def, rev_reg_def_priv, rev_reg, _rev_reg_delta) = credx::issuer::create_revocation_registry(
-            &issuer_did,
-            &cred_def,
-            tag,
-            RegistryType::CL_ACCUM,
-            IssuanceType::ISSUANCE_BY_DEFAULT,
-            max_creds,
-            &mut tails_writer,
-        )?;
+        let (rev_reg_def, rev_reg_def_priv, rev_reg, _rev_reg_delta) =
+            credx::issuer::create_revocation_registry(
+                &issuer_did,
+                &cred_def,
+                tag,
+                RegistryType::CL_ACCUM,
+                IssuanceType::ISSUANCE_BY_DEFAULT,
+                max_creds,
+                &mut tails_writer,
+            )?;
 
         // Store stuff in wallet
         let rev_reg_info = RevocationRegistryInfo {
@@ -283,7 +295,12 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let str_rev_reg_info = serde_json::to_string(&rev_reg_info)?;
 
         self.wallet
-            .add_wallet_record(CATEGORY_REV_REG_INFO, &rev_reg_id.0, &str_rev_reg_info, None)
+            .add_wallet_record(
+                CATEGORY_REV_REG_INFO,
+                &rev_reg_id.0,
+                &str_rev_reg_info,
+                None,
+            )
             .await?;
 
         let str_rev_reg_def = serde_json::to_string(&rev_reg_def)?;
@@ -295,7 +312,12 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let str_rev_reg_def_priv = serde_json::to_string(&rev_reg_def_priv)?;
 
         self.wallet
-            .add_wallet_record(CATEGORY_REV_REG_DEF_PRIV, &rev_reg_id.0, &str_rev_reg_def_priv, None)
+            .add_wallet_record(
+                CATEGORY_REV_REG_DEF_PRIV,
+                &rev_reg_id.0,
+                &str_rev_reg_def_priv,
+                None,
+            )
             .await?;
 
         let str_rev_reg = serde_json::to_string(&rev_reg)?;
@@ -317,24 +339,40 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
     ) -> VcxCoreResult<(String, String)> {
         let issuer_did = issuer_did.to_owned().into();
         let schema = serde_json::from_str(schema_json)?;
-        let sig_type = sig_type.map(serde_json::from_str).unwrap_or(Ok(SignatureType::CL))?;
+        let sig_type = sig_type
+            .map(serde_json::from_str)
+            .unwrap_or(Ok(SignatureType::CL))?;
         let config = serde_json::from_str(config_json)?;
 
         let schema_seq_no = match &schema {
             Schema::SchemaV1(s) => s.seq_no,
         };
 
-        let cred_def_id =
-            credx::issuer::make_credential_definition_id(&issuer_did, schema.id(), schema_seq_no, tag, sig_type)?;
+        let cred_def_id = credx::issuer::make_credential_definition_id(
+            &issuer_did,
+            schema.id(),
+            schema_seq_no,
+            tag,
+            sig_type,
+        )?;
 
         // If cred def already exists, return it
-        if let Ok(cred_def) = self.get_wallet_record_value(CATEGORY_CRED_DEF, &cred_def_id.0).await {
+        if let Ok(cred_def) = self
+            .get_wallet_record_value(CATEGORY_CRED_DEF, &cred_def_id.0)
+            .await
+        {
             return Ok((cred_def_id.0, cred_def));
         }
 
         // Otherwise, create cred def
         let (cred_def, cred_def_priv, cred_key_correctness_proof) =
-            credx::issuer::create_credential_definition(&issuer_did, &schema, tag, sig_type, config)?;
+            credx::issuer::create_credential_definition(
+                &issuer_did,
+                &schema,
+                tag,
+                sig_type,
+                config,
+            )?;
 
         let str_cred_def = serde_json::to_string(&cred_def)?;
 
@@ -346,7 +384,12 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let str_cred_def_priv = serde_json::to_string(&cred_def_priv)?;
 
         self.wallet
-            .add_wallet_record(CATEGORY_CRED_DEF_PRIV, &cred_def_id.0, &str_cred_def_priv, None)
+            .add_wallet_record(
+                CATEGORY_CRED_DEF_PRIV,
+                &cred_def_id.0,
+                &str_cred_def_priv,
+                None,
+            )
             .await?;
 
         let str_cred_key_proof = serde_json::to_string(&cred_key_correctness_proof)?;
@@ -370,7 +413,12 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         }
 
         self.wallet
-            .add_wallet_record(CATEGORY_CRED_MAP_SCHEMA_ID, &cred_def_id.0, &schema.id().0, None)
+            .add_wallet_record(
+                CATEGORY_CRED_MAP_SCHEMA_ID,
+                &cred_def_id.0,
+                &schema.id().0,
+                None,
+            )
             .await?;
 
         // Return the ID and the cred def
@@ -378,7 +426,9 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
     }
 
     async fn issuer_create_credential_offer(&self, cred_def_id: &str) -> VcxCoreResult<String> {
-        let cred_def = self.get_wallet_record_value(CATEGORY_CRED_DEF, cred_def_id).await?;
+        let cred_def = self
+            .get_wallet_record_value(CATEGORY_CRED_DEF, cred_def_id)
+            .await?;
 
         let correctness_proof = self
             .get_wallet_record_value(CATEGORY_CRED_KEY_CORRECTNESS_PROOF, cred_def_id)
@@ -392,7 +442,8 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let schema_id = SchemaId(schema_id);
 
         // If cred_def contains schema ID, why take it as an argument here...?
-        let offer = credx::issuer::create_credential_offer(&schema_id, &cred_def, &correctness_proof)?;
+        let offer =
+            credx::issuer::create_credential_offer(&schema_id, &cred_def, &correctness_proof)?;
 
         serde_json::to_string(&offer).map_err(From::from)
     }
@@ -409,10 +460,13 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let cred_request = serde_json::from_str(cred_req_json)?;
         let cred_values = serde_json::from_str(cred_values_json)?;
 
-        // TODO: Might need to qualify with offer method or something - look into how vdrtools does it
+        // TODO: Might need to qualify with offer method or something - look into how vdrtools does
+        // it
         let cred_def_id = &cred_offer.cred_def_id.0;
 
-        let cred_def = self.get_wallet_record_value(CATEGORY_CRED_DEF, cred_def_id).await?;
+        let cred_def = self
+            .get_wallet_record_value(CATEGORY_CRED_DEF, cred_def_id)
+            .await?;
 
         let cred_def_private = self
             .get_wallet_record_value(CATEGORY_CRED_DEF_PRIV, cred_def_id)
@@ -420,21 +474,35 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
 
         let mut revocation_config_parts = match (tails_dir, &rev_reg_id) {
             (Some(tails_dir), Some(rev_reg_id)) => {
-                let rev_reg_def = self.get_wallet_record_value(CATEGORY_REV_REG_DEF, rev_reg_id).await?;
+                let rev_reg_def = self
+                    .get_wallet_record_value(CATEGORY_REV_REG_DEF, rev_reg_id)
+                    .await?;
 
                 let rev_reg_def_priv = self
                     .get_wallet_record_value(CATEGORY_REV_REG_DEF_PRIV, rev_reg_id)
                     .await?;
 
-                let rev_reg = self.get_wallet_record_value(CATEGORY_REV_REG, rev_reg_id).await?;
-                let rev_reg_info: RevocationRegistryInfo =
-                    self.get_wallet_record_value(CATEGORY_REV_REG_INFO, rev_reg_id).await?;
+                let rev_reg = self
+                    .get_wallet_record_value(CATEGORY_REV_REG, rev_reg_id)
+                    .await?;
+                let rev_reg_info: RevocationRegistryInfo = self
+                    .get_wallet_record_value(CATEGORY_REV_REG_INFO, rev_reg_id)
+                    .await?;
 
-                Some((rev_reg_def, rev_reg_def_priv, rev_reg, rev_reg_info, tails_dir))
+                Some((
+                    rev_reg_def,
+                    rev_reg_def_priv,
+                    rev_reg,
+                    rev_reg_info,
+                    tails_dir,
+                ))
             }
             (None, None) => None,
             (tails_dir, rev_reg_id) => {
-                warn!("Missing revocation config params: tails_dir: {tails_dir:?} - {rev_reg_id:?}; Issuing non revokable credential");
+                warn!(
+                    "Missing revocation config params: tails_dir: {tails_dir:?} - {rev_reg_id:?}; \
+                     Issuing non revokable credential"
+                );
                 None
             }
         };
@@ -495,45 +563,47 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         )?;
 
         let str_rev_reg = rev_reg.as_ref().map(serde_json::to_string).transpose()?;
-        let str_rev_reg_delta = rev_reg_delta.as_ref().map(serde_json::to_string).transpose()?;
+        let str_rev_reg_delta = rev_reg_delta
+            .as_ref()
+            .map(serde_json::to_string)
+            .transpose()?;
 
-        let cred_rev_id = if let (Some(rev_reg_id), Some(str_rev_reg), Some((_, _, _, rev_reg_info, _))) =
-            (rev_reg_id, &str_rev_reg, revocation_config_parts)
-        {
-            let cred_rev_id = rev_reg_info.curr_id.to_string();
-            let str_rev_reg_info = serde_json::to_string(&rev_reg_info)?;
+        let cred_rev_id =
+            if let (Some(rev_reg_id), Some(str_rev_reg), Some((_, _, _, rev_reg_info, _))) =
+                (rev_reg_id, &str_rev_reg, revocation_config_parts)
+            {
+                let cred_rev_id = rev_reg_info.curr_id.to_string();
+                let str_rev_reg_info = serde_json::to_string(&rev_reg_info)?;
 
-            self.wallet
-                .update_wallet_record_value(CATEGORY_REV_REG, &rev_reg_id, str_rev_reg)
-                .await?;
+                self.wallet
+                    .update_wallet_record_value(CATEGORY_REV_REG, &rev_reg_id, str_rev_reg)
+                    .await?;
 
-            self.wallet
-                .update_wallet_record_value(CATEGORY_REV_REG_INFO, &rev_reg_id, &str_rev_reg_info)
-                .await?;
+                self.wallet
+                    .update_wallet_record_value(
+                        CATEGORY_REV_REG_INFO,
+                        &rev_reg_id,
+                        &str_rev_reg_info,
+                    )
+                    .await?;
 
-            Some(cred_rev_id)
-        } else {
-            None
-        };
+                Some(cred_rev_id)
+            } else {
+                None
+            };
 
         let str_cred = serde_json::to_string(&cred)?;
 
         Ok((str_cred, cred_rev_id, str_rev_reg_delta))
     }
 
-    /// * `requested_credentials_json`: either a credential or self-attested attribute for each requested attribute
-    ///     {
-    ///         "self_attested_attributes": {
-    ///             "self_attested_attribute_referent": string
-    ///         },
-    ///         "requested_attributes": {
-    ///             "requested_attribute_referent_1": {"cred_id": string, "timestamp": Optional<number>, revealed: <bool> }},
-    ///             "requested_attribute_referent_2": {"cred_id": string, "timestamp": Optional<number>, revealed: <bool> }}
-    ///         },
-    ///         "requested_predicates": {
-    ///             "requested_predicates_referent_1": {"cred_id": string, "timestamp": Optional<number> }},
-    ///         }
-    ///     }
+    /// * `requested_credentials_json`: either a credential or self-attested attribute for each
+    ///   requested attribute { "self_attested_attributes": { "self_attested_attribute_referent":
+    ///   string }, "requested_attributes": { "requested_attribute_referent_1": {"cred_id": string,
+    ///   "timestamp": Optional<number>, revealed: <bool> }}, "requested_attribute_referent_2":
+    ///   {"cred_id": string, "timestamp": Optional<number>, revealed: <bool> }} },
+    ///   "requested_predicates": { "requested_predicates_referent_1": {"cred_id": string,
+    ///   "timestamp": Optional<number> }}, } }
     async fn prover_create_proof(
         &self,
         proof_req_json: &str,
@@ -581,13 +651,16 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
 
             let revealed = detail.try_get("revealed")?.try_as_bool()?;
 
-            if let Some((_, _, _, req_attr_refts_revealed, _)) = proof_details_by_cred_id.get_mut(cred_id) {
+            if let Some((_, _, _, req_attr_refts_revealed, _)) =
+                proof_details_by_cred_id.get_mut(cred_id)
+            {
                 // mapping made for this credential already, add reft and its revealed status
                 req_attr_refts_revealed.push((reft.to_string(), revealed));
             } else {
                 let credential = self._get_credential(cred_id).await?;
 
-                let (timestamp, rev_state) = get_rev_state(cred_id, &credential, detail, rev_states.as_ref())?;
+                let (timestamp, rev_state) =
+                    get_rev_state(cred_id, &credential, detail, rev_states.as_ref())?;
 
                 proof_details_by_cred_id.insert(
                     cred_id.to_string(),
@@ -613,20 +686,31 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             } else {
                 let credential = self._get_credential(cred_id).await?;
 
-                let (timestamp, rev_state) = get_rev_state(cred_id, &credential, detail, rev_states.as_ref())?;
+                let (timestamp, rev_state) =
+                    get_rev_state(cred_id, &credential, detail, rev_states.as_ref())?;
 
                 proof_details_by_cred_id.insert(
                     cred_id.to_string(),
-                    (credential, timestamp, rev_state, vec![], vec![reft.to_string()]),
+                    (
+                        credential,
+                        timestamp,
+                        rev_state,
+                        vec![],
+                        vec![reft.to_string()],
+                    ),
                 );
             }
         }
 
-        // add all accumulated requested attributes and requested predicates to credx [PresentCredential] object
-        for (_cred_id, (credential, timestamp, rev_state, req_attr_refts_revealed, req_preds_refts)) in
-            proof_details_by_cred_id.iter()
+        // add all accumulated requested attributes and requested predicates to credx
+        // [PresentCredential] object
+        for (
+            _cred_id,
+            (credential, timestamp, rev_state, req_attr_refts_revealed, req_preds_refts),
+        ) in proof_details_by_cred_id.iter()
         {
-            let mut add_cred = present_credentials.add_credential(credential, *timestamp, rev_state.as_ref());
+            let mut add_cred =
+                present_credentials.add_credential(credential, *timestamp, rev_state.as_ref());
 
             for (referent, revealed) in req_attr_refts_revealed {
                 add_cred.add_requested_attribute(referent, *revealed);
@@ -695,8 +779,9 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
     }
 
     async fn prover_get_credentials_for_proof_req(&self, proof_req: &str) -> VcxCoreResult<String> {
-        let proof_req_v: Value = serde_json::from_str(proof_req)
-            .map_err(|e| AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::InvalidProofRequest, e))?;
+        let proof_req_v: Value = serde_json::from_str(proof_req).map_err(|e| {
+            AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::InvalidProofRequest, e)
+        })?;
 
         let requested_attributes = proof_req_v.get("requested_attributes");
         let requested_attributes = if let Some(requested_attributes) = requested_attributes {
@@ -711,7 +796,8 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             None
         };
 
-        // handle special case of "empty because json is bad" vs "empty because no attributes sepected"
+        // handle special case of "empty because json is bad" vs "empty because no attributes
+        // sepected"
         if requested_attributes.is_none() && requested_predicates.is_none() {
             return Err(AriesVcxCoreError::from_msg(
                 AriesVcxCoreErrorKind::InvalidAttributesStructure,
@@ -737,7 +823,11 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             let requested_val = requested_attributes
                 .as_ref()
                 .and_then(|req_attrs| req_attrs.get(&reft))
-                .or_else(|| requested_predicates.as_ref().and_then(|req_preds| req_preds.get(&reft)))
+                .or_else(|| {
+                    requested_predicates
+                        .as_ref()
+                        .and_then(|req_preds| req_preds.get(&reft))
+                })
                 .ok_or(AriesVcxCoreError::from_msg(
                     // should not happen
                     AriesVcxCoreErrorKind::InvalidState,
@@ -862,11 +952,12 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let link_secret_id = &cred_request_metadata.master_secret_name;
         let link_secret = self.get_link_secret(link_secret_id).await?;
         let cred_def: CredentialDefinition = serde_json::from_str(cred_def_json)?;
-        let rev_reg_def: Option<RevocationRegistryDefinition> = if let Some(rev_reg_def_json) = rev_reg_def_json {
-            serde_json::from_str(rev_reg_def_json)?
-        } else {
-            None
-        };
+        let rev_reg_def: Option<RevocationRegistryDefinition> =
+            if let Some(rev_reg_def_json) = rev_reg_def_json {
+                serde_json::from_str(rev_reg_def_json)?
+            } else {
+                None
+            };
 
         credx::prover::process_credential(
             &mut credential,
@@ -920,7 +1011,12 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let tags_json: HashMap<String, String> = serde_json::from_value(tags)?;
 
         self.wallet
-            .add_wallet_record(CATEGORY_CREDENTIAL, &credential_id, &record_value, Some(tags_json))
+            .add_wallet_record(
+                CATEGORY_CREDENTIAL,
+                &credential_id,
+                &record_value,
+                Some(tags_json),
+            )
             .await?;
 
         Ok(credential_id)
@@ -936,7 +1032,10 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         if existing_record.is_some() {
             return Err(AriesVcxCoreError::from_msg(
                 AriesVcxCoreErrorKind::DuplicationMasterSecret,
-                format!("Master secret id: {} already exists in wallet.", link_secret_id),
+                format!(
+                    "Master secret id: {} already exists in wallet.",
+                    link_secret_id
+                ),
             ));
         }
 
@@ -972,7 +1071,9 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
     }
 
     async fn prover_delete_credential(&self, cred_id: &str) -> VcxCoreResult<()> {
-        self.wallet.delete_wallet_record(CATEGORY_CREDENTIAL, cred_id).await
+        self.wallet
+            .delete_wallet_record(CATEGORY_CREDENTIAL, cred_id)
+            .await
     }
 
     async fn issuer_create_schema(
@@ -993,7 +1094,12 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         Ok((schema_id.to_string(), schema_json))
     }
 
-    async fn revoke_credential_local(&self, tails_dir: &str, rev_reg_id: &str, cred_rev_id: &str) -> VcxCoreResult<()> {
+    async fn revoke_credential_local(
+        &self,
+        tails_dir: &str,
+        rev_reg_id: &str,
+        cred_rev_id: &str,
+    ) -> VcxCoreResult<()> {
         let cred_rev_id = cred_rev_id.parse().map_err(|e| {
             AriesVcxCoreError::from_msg(
                 AriesVcxCoreErrorKind::InvalidInput,
@@ -1001,16 +1107,21 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             )
         })?;
 
-        let rev_reg = self.get_wallet_record_value(CATEGORY_REV_REG, rev_reg_id).await?;
+        let rev_reg = self
+            .get_wallet_record_value(CATEGORY_REV_REG, rev_reg_id)
+            .await?;
 
-        let rev_reg_def = self.get_wallet_record_value(CATEGORY_REV_REG_DEF, rev_reg_id).await?;
+        let rev_reg_def = self
+            .get_wallet_record_value(CATEGORY_REV_REG_DEF, rev_reg_id)
+            .await?;
 
         let rev_reg_priv = self
             .get_wallet_record_value(CATEGORY_REV_REG_DEF_PRIV, rev_reg_id)
             .await?;
 
-        let mut rev_reg_info: RevocationRegistryInfo =
-            self.get_wallet_record_value(CATEGORY_REV_REG_INFO, rev_reg_id).await?;
+        let mut rev_reg_info: RevocationRegistryInfo = self
+            .get_wallet_record_value(CATEGORY_REV_REG_INFO, rev_reg_id)
+            .await?;
 
         let (issuance_type, cred_def_id) = match &rev_reg_def {
             RevocationRegistryDefinition::RevocationRegistryDefinitionV1(r) => {
@@ -1018,14 +1129,19 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             }
         };
 
-        let cred_def = self.get_wallet_record_value(CATEGORY_CRED_DEF, cred_def_id).await?;
+        let cred_def = self
+            .get_wallet_record_value(CATEGORY_CRED_DEF, cred_def_id)
+            .await?;
 
         match issuance_type {
             IssuanceType::ISSUANCE_ON_DEMAND => {
                 if !rev_reg_info.used_ids.remove(&cred_rev_id) {
                     return Err(AriesVcxCoreError::from_msg(
                         AriesVcxCoreErrorKind::InvalidInput,
-                        format!("Revocation id: {:?} not found in RevocationRegistry", cred_rev_id),
+                        format!(
+                            "Revocation id: {:?} not found in RevocationRegistry",
+                            cred_rev_id
+                        ),
                     ));
                 };
             }
@@ -1033,7 +1149,10 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
                 if !rev_reg_info.used_ids.insert(cred_rev_id) {
                     return Err(AriesVcxCoreError::from_msg(
                         AriesVcxCoreErrorKind::InvalidInput,
-                        format!("Revocation id: {:?} not found in RevocationRegistry", cred_rev_id),
+                        format!(
+                            "Revocation id: {:?} not found in RevocationRegistry",
+                            cred_rev_id
+                        ),
                     ));
                 }
             }
@@ -1048,8 +1167,13 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let tails_file_path = format!("{tails_dir}/{tails_file_hash}");
         let tails_reader = TailsFileReader::new(&tails_file_path);
 
-        let (rev_reg, new_rev_reg_delta) =
-            credx::issuer::revoke_credential(&cred_def, &rev_reg_def, &rev_reg_priv, &rev_reg, cred_rev_id)?;
+        let (rev_reg, new_rev_reg_delta) = credx::issuer::revoke_credential(
+            &cred_def,
+            &rev_reg_def,
+            &rev_reg_priv,
+            &rev_reg,
+            cred_rev_id,
+        )?;
 
         let old_str_rev_reg_delta = self.get_rev_reg_delta(rev_reg_id).await?;
 
@@ -1059,7 +1183,9 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             .transpose()?;
 
         let rev_reg_delta = rev_reg_delta
-            .map(|rev_reg_delta| credx::issuer::merge_revocation_registry_deltas(&rev_reg_delta, &new_rev_reg_delta))
+            .map(|rev_reg_delta| {
+                credx::issuer::merge_revocation_registry_deltas(&rev_reg_delta, &new_rev_reg_delta)
+            })
             .transpose()?
             .unwrap_or(new_rev_reg_delta);
 
@@ -1077,7 +1203,11 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         match old_str_rev_reg_delta {
             Some(_) => {
                 self.wallet
-                    .update_wallet_record_value(CATEGORY_REV_REG_DELTA, rev_reg_id, &str_rev_reg_delta)
+                    .update_wallet_record_value(
+                        CATEGORY_REV_REG_DELTA,
+                        rev_reg_id,
+                        &str_rev_reg_delta,
+                    )
                     .await?
             }
             None => {
@@ -1097,16 +1227,22 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
 
         if let Err(err) = &res_rev_reg_delta {
             warn!(
-                "get_rev_reg_delta >> Unable to get rev_reg_delta cache for rev_reg_id: {}, error: {}",
+                "get_rev_reg_delta >> Unable to get rev_reg_delta cache for rev_reg_id: {}, \
+                 error: {}",
                 rev_reg_id, err
             );
         }
 
-        let res_rev_reg_delta = res_rev_reg_delta.ok().as_ref().map(serde_json::to_string).transpose();
+        let res_rev_reg_delta = res_rev_reg_delta
+            .ok()
+            .as_ref()
+            .map(serde_json::to_string)
+            .transpose();
 
         if let Err(err) = &res_rev_reg_delta {
             warn!(
-                "get_rev_reg_delta >> Unable to deserialize rev_reg_delta cache for rev_reg_id: {}, error: {}",
+                "get_rev_reg_delta >> Unable to deserialize rev_reg_delta cache for rev_reg_id: \
+                 {}, error: {}",
                 rev_reg_id, err
             );
         }
@@ -1136,7 +1272,9 @@ fn get_rev_state(
     detail: &Value,
     rev_states: Option<&Value>,
 ) -> VcxCoreResult<(Option<u64>, Option<CredentialRevocationState>)> {
-    let timestamp = detail.get("timestamp").and_then(|timestamp| timestamp.as_u64());
+    let timestamp = detail
+        .get("timestamp")
+        .and_then(|timestamp| timestamp.as_u64());
     let cred_rev_reg_id = credential.rev_reg_id.as_ref().map(|id| id.0.to_string());
     let rev_state = if let (Some(timestamp), Some(cred_rev_reg_id)) = (timestamp, cred_rev_reg_id) {
         let rev_state = rev_states
@@ -1150,13 +1288,16 @@ fn get_rev_state(
             ),
         ))?;
 
-        let rev_state = rev_state.get(timestamp.to_string()).ok_or(AriesVcxCoreError::from_msg(
-            AriesVcxCoreErrorKind::InvalidJson,
-            format!(
-                "No revocation states provided for credential '{}' with rev_reg_id '{}' at timestamp '{}'",
-                cred_id, cred_rev_reg_id, timestamp
-            ),
-        ))?;
+        let rev_state = rev_state
+            .get(timestamp.to_string())
+            .ok_or(AriesVcxCoreError::from_msg(
+                AriesVcxCoreErrorKind::InvalidJson,
+                format!(
+                    "No revocation states provided for credential '{}' with rev_reg_id '{}' at \
+                     timestamp '{}'",
+                    cred_id, cred_rev_reg_id, timestamp
+                ),
+            ))?;
 
         let rev_state: CredentialRevocationState = serde_json::from_value(rev_state.clone())?;
         Some(rev_state)

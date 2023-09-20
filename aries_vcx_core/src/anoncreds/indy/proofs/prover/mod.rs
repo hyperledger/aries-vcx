@@ -1,13 +1,11 @@
 pub mod prover;
 
-use crate::anoncreds::indy::general::blob_storage_open_reader;
 use vdrtools::Locator;
 
-use crate::errors::error::VcxCoreResult;
-use crate::global::settings;
-use crate::indy;
-use crate::indy::utils::parse_and_validate;
-use crate::utils::constants::REV_STATE_JSON;
+use crate::{
+    anoncreds::indy::general::blob_storage_open_reader, errors::error::VcxCoreResult,
+    global::settings, indy, indy::utils::parse_and_validate, utils::constants::REV_STATE_JSON,
+};
 
 pub async fn libindy_prover_create_revocation_state(
     tails_file_path: &str,

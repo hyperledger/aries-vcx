@@ -11,9 +11,9 @@ pub struct PleaseAck {
     // However, the entire field was previously NOT serialized if it was empty,
     // resulting in something like '"~please_ack": null' instead of '"~please_ack": {"on": []}'.
     //
-    // One could argue that the field could be treated even better, so that an empty array would be incorrect.
-    // Perhaps using an enum altogether (if the values become somewhat stable) or ordering the array might be of interest,
-    // so that processing happens in a specific order.
+    // One could argue that the field could be treated even better, so that an empty array would be
+    // incorrect. Perhaps using an enum altogether (if the values become somewhat stable) or
+    // ordering the array might be of interest, so that processing happens in a specific order.
     #[serde(default)]
     pub on: Vec<AckOn>,
 }

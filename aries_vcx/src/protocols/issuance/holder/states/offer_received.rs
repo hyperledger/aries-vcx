@@ -1,11 +1,15 @@
-use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
 use std::sync::Arc;
 
-use crate::errors::error::prelude::*;
-use crate::handlers::util::get_attach_as_string;
-use crate::protocols::issuance::holder::state_machine::parse_cred_def_id_from_cred_offer;
-use crate::protocols::issuance::is_cred_def_revokable;
+use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
 use messages::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
+
+use crate::{
+    errors::error::prelude::*,
+    handlers::util::get_attach_as_string,
+    protocols::issuance::{
+        holder::state_machine::parse_cred_def_id_from_cred_offer, is_cred_def_revokable,
+    },
+};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct OfferReceivedState {

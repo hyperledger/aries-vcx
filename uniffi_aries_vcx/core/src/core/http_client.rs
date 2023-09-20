@@ -1,4 +1,6 @@
-use aries_vcx::{agency_client::httpclient::post_message, errors::error::VcxResult, transport::Transport};
+use aries_vcx::{
+    agency_client::httpclient::post_message, errors::error::VcxResult, transport::Transport,
+};
 use async_trait::async_trait;
 use url::Url;
 

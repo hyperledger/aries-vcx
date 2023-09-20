@@ -5,8 +5,8 @@ use aries_vcx::{
     errors::error::{AriesVcxError, VcxResult},
     messages::msg_fields::protocols::connection::request::Request,
     protocols::connection::{
-        invitee::InviteeConnection, inviter::InviterConnection, pairwise_info::PairwiseInfo, Connection,
-        GenericConnection, State, ThinState,
+        invitee::InviteeConnection, inviter::InviterConnection, pairwise_info::PairwiseInfo,
+        Connection, GenericConnection, State, ThinState,
     },
     transport::Transport,
 };
@@ -14,9 +14,8 @@ use async_trait::async_trait;
 use rand::Rng;
 use url::Url;
 
-use crate::api_vcx::api_global::profile::{get_main_indy_ledger_read, get_main_wallet};
 use crate::{
-    api_vcx::api_global::profile::get_main_profile,
+    api_vcx::api_global::profile::{get_main_indy_ledger_read, get_main_profile, get_main_wallet},
     errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult},
 };
 
@@ -128,8 +127,12 @@ fn deserialize<T>(data: &str) -> LibvcxResult<T>
 where
     T: serde::de::DeserializeOwned,
 {
-    serde_json::from_str(data)
-        .map_err(|err| LibvcxError::from_msg(LibvcxErrorKind::InvalidJson, format!("Deserialization failed: {}", err)))
+    serde_json::from_str(data).map_err(|err| {
+        LibvcxError::from_msg(
+            LibvcxErrorKind::InvalidJson,
+            format!("Deserialization failed: {}", err),
+        )
+    })
 }
 
 // ----------------------------- CONSTRUCTORS ------------------------------------
@@ -152,12 +155,14 @@ pub fn get_thread_id(handle: u32) -> LibvcxResult<String> {
     trace!("get_thread_id >>> handle: {}", handle);
 
     let closure = |con: &GenericConnection| {
-        GenericConnection::thread_id(con).map(ToOwned::to_owned).ok_or_else(|| {
-            LibvcxError::from_msg(
-                LibvcxErrorKind::ObjectAccessError,
-                format!("No thread ID for connection with handle: {}", &handle),
-            )
-        })
+        GenericConnection::thread_id(con)
+            .map(ToOwned::to_owned)
+            .ok_or_else(|| {
+                LibvcxError::from_msg(
+                    LibvcxErrorKind::ObjectAccessError,
+                    format!("No thread ID for connection with handle: {}", &handle),
+                )
+            })
     };
 
     get_con_attribute_with_closure(&handle, closure)
@@ -253,16 +258,18 @@ pub async fn process_request(
     let request: Request = deserialize(request)?;
 
     let con = match con.state() {
-        ThinState::Inviter(State::Initial) => Connection::try_from(con).map_err(From::from).map(|c| {
-            c.into_invited(
-                &request
-                    .decorators
-                    .thread
-                    .as_ref()
-                    .map(|t| t.thid.as_str())
-                    .unwrap_or(request.id.as_str()),
-            )
-        }),
+        ThinState::Inviter(State::Initial) => {
+            Connection::try_from(con).map_err(From::from).map(|c| {
+                c.into_invited(
+                    &request
+                        .decorators
+                        .thread
+                        .as_ref()
+                        .map(|t| t.thid.as_str())
+                        .unwrap_or(request.id.as_str()),
+                )
+            })
+        }
         ThinState::Inviter(State::Invited) => Connection::try_from(con).map_err(From::from),
         s => Err(LibvcxError::from_msg(
             LibvcxErrorKind::ObjectAccessError,
@@ -277,8 +284,9 @@ pub async fn process_request(
         .handle_request(
             &wallet,
             request,
-            Url::from_str(&service_endpoint)
-                .map_err(|err| LibvcxError::from_msg(LibvcxErrorKind::InvalidUrl, err.to_string()))?,
+            Url::from_str(&service_endpoint).map_err(|err| {
+                LibvcxError::from_msg(LibvcxErrorKind::InvalidUrl, err.to_string())
+            })?,
             routing_keys,
             &HttpClient,
         )
@@ -292,7 +300,9 @@ pub async fn process_response(handle: u32, response: &str) -> LibvcxResult<()> {
 
     let con = get_cloned_connection(&handle)?;
     let response = deserialize(response)?;
-    let con = con.handle_response(&get_main_wallet()?, response, &HttpClient).await?;
+    let con = con
+        .handle_response(&get_main_wallet()?, response, &HttpClient)
+        .await?;
 
     insert_connection(handle, con)
 }
@@ -336,7 +346,11 @@ pub async fn send_response(handle: u32) -> LibvcxResult<()> {
     insert_connection(handle, con)
 }
 
-pub async fn send_request(handle: u32, service_endpoint: String, routing_keys: Vec<String>) -> LibvcxResult<()> {
+pub async fn send_request(
+    handle: u32,
+    service_endpoint: String,
+    routing_keys: Vec<String>,
+) -> LibvcxResult<()> {
     trace!("send_request >>>");
 
     let con = get_cloned_connection(&handle)?;
@@ -364,11 +378,16 @@ pub async fn send_generic_message(handle: u32, content: String) -> LibvcxResult<
 
     let message = serde_json::from_str(&content)?;
     let con = get_cloned_generic_connection(&handle)?;
-    con.send_message(&get_main_wallet()?, &message, &HttpClient).await?;
+    con.send_message(&get_main_wallet()?, &message, &HttpClient)
+        .await?;
     Ok(())
 }
 
-pub async fn create_invite(handle: u32, service_endpoint: String, routing_keys: Vec<String>) -> LibvcxResult<()> {
+pub async fn create_invite(
+    handle: u32,
+    service_endpoint: String,
+    routing_keys: Vec<String>,
+) -> LibvcxResult<()> {
     trace!("create_invite >>>");
 
     let con = get_cloned_connection(&handle)?;
@@ -391,7 +410,10 @@ pub fn to_string(handle: u32) -> LibvcxResult<String> {
         .ok_or_else(|| {
             LibvcxError::from_msg(
                 LibvcxErrorKind::InvalidHandle,
-                format!("[Connection Cache] get >> Object not found for handle: {}", handle),
+                format!(
+                    "[Connection Cache] get >> Object not found for handle: {}",
+                    handle
+                ),
             )
         })
         .and_then(serialize)
@@ -411,11 +433,17 @@ pub fn from_string(connection_data: &str) -> LibvcxResult<u32> {
 pub fn release(handle: u32) -> LibvcxResult<()> {
     trace!("release >>>");
 
-    CONNECTION_MAP.write().map(|mut map| map.remove(&handle)).ok();
+    CONNECTION_MAP
+        .write()
+        .map(|mut map| map.remove(&handle))
+        .ok();
     Ok(())
 }
 
 pub fn release_all() {
     trace!("release_all >>>");
-    CONNECTION_MAP.write().map(|mut map| map.drain().for_each(drop)).ok();
+    CONNECTION_MAP
+        .write()
+        .map(|mut map| map.drain().for_each(drop))
+        .ok();
 }

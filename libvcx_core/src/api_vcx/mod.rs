@@ -115,9 +115,8 @@ pub struct VcxStatus {
 mod tests {
     use serde_json;
 
-    use super::*;
-
     use self::VcxStateType::*;
+    use super::*;
 
     #[test]
     fn test_serialize_vcx_state_type() {

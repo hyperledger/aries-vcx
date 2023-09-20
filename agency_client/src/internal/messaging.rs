@@ -1,11 +1,14 @@
-use crate::agency_client::AgencyClient;
-use crate::errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
-use crate::httpclient;
-use crate::messages::a2a_message::Client2AgencyMessage;
-use crate::messages::forward::ForwardV2;
-use crate::testing::mocking::AgencyMockDecrypted;
 use core::u8;
+
 use serde_json::Value;
+
+use crate::{
+    agency_client::AgencyClient,
+    errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult},
+    httpclient,
+    messages::{a2a_message::Client2AgencyMessage, forward::ForwardV2},
+    testing::mocking::AgencyMockDecrypted,
+};
 
 impl AgencyClient {
     pub async fn post_to_agency(&self, body_content: Vec<u8>) -> AgencyClientResult<Vec<u8>> {
@@ -104,7 +107,10 @@ impl AgencyClient {
         } else {
             self.parse_message_from_response(response).await?
         };
-        trace!("parse_response_from_agency >> decrypted message: {}", message);
+        trace!(
+            "parse_response_from_agency >> decrypted message: {}",
+            message
+        );
         let message: Client2AgencyMessage = serde_json::from_str(&message).map_err(|err| {
             AgencyClientError::from_msg(
                 AgencyClientErrorKind::InvalidJson,
@@ -115,14 +121,21 @@ impl AgencyClient {
         Ok(vec![message])
     }
 
-    async fn prepare_forward_message(&self, message: Vec<u8>, did: &str) -> AgencyClientResult<Vec<u8>> {
+    async fn prepare_forward_message(
+        &self,
+        message: Vec<u8>,
+        did: &str,
+    ) -> AgencyClientResult<Vec<u8>> {
         trace!("prepare_forward_message >>>");
         let agency_vk = self.get_agency_vk();
 
         let message = Client2AgencyMessage::Forward(ForwardV2::new(did.to_string(), message)?);
 
         match message {
-            Client2AgencyMessage::Forward(msg) => self.prepare_forward_message_for_agency_v2(&msg, &agency_vk).await,
+            Client2AgencyMessage::Forward(msg) => {
+                self.prepare_forward_message_for_agency_v2(&msg, &agency_vk)
+                    .await
+            }
             _ => Err(AgencyClientError::from_msg(
                 AgencyClientErrorKind::InvalidState,
                 "Invalid message type",
@@ -197,7 +210,9 @@ impl AgencyClient {
         verkey: &str,
     ) -> AgencyClientResult<Vec<Client2AgencyMessage>> {
         trace!("send_message_to_agency >>> message: ..., did: {}", did);
-        let data = self.prepare_message_for_agency(message, did, verkey).await?;
+        let data = self
+            .prepare_message_for_agency(message, did, verkey)
+            .await?;
         let response = self.post_to_agency(data).await?;
         self.parse_response_from_agency(&response).await
     }

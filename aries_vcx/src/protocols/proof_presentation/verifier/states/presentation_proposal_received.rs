@@ -20,7 +20,10 @@ impl Default for PresentationProposalReceivedState {
             .build();
 
         Self {
-            presentation_proposal: ProposePresentation::builder().id(id).content(content).build(),
+            presentation_proposal: ProposePresentation::builder()
+                .id(id)
+                .content(content)
+                .build(),
             presentation_request: None,
         }
     }

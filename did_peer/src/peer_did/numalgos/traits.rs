@@ -2,13 +2,12 @@ use did_doc::schema::did_doc::DidDocument;
 use did_doc_sov::extra_fields::ExtraFieldsSov;
 use did_parser::Did;
 
+use super::numalgo3::Numalgo3;
 use crate::{
     error::DidPeerError,
-    peer_did::{PeerDid, validate::validate},
+    peer_did::{validate::validate, PeerDid},
     peer_did_resolver::options::PublicKeyEncoding,
 };
-
-use super::numalgo3::Numalgo3;
 
 pub trait Numalgo: Sized + Default {
     const NUMALGO_CHAR: char;

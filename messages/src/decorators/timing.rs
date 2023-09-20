@@ -1,7 +1,8 @@
-use crate::misc::utils;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use typed_builder::TypedBuilder;
+
+use crate::misc::utils;
 
 /// Struct representing the `~timing` decorator from its [RFC](<https://github.com/hyperledger/aries-rfcs/blob/main/features/0032-message-timing/README.md>).
 #[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq, TypedBuilder)]

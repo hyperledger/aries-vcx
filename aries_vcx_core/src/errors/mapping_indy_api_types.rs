@@ -1,5 +1,4 @@
 pub use indy_api_types::{errors, ErrorCode};
-
 use indy_api_types::{
     errors::{err_msg, IndyErrorKind, IndyResult, IndyResultExt},
     IndyError,

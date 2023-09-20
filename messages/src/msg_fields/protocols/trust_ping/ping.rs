@@ -38,7 +38,8 @@ mod tests {
 
     use super::*;
     use crate::{
-        decorators::thread::tests::make_extended_thread, misc::test_utils, msg_types::trust_ping::TrustPingTypeV1_0,
+        decorators::thread::tests::make_extended_thread, misc::test_utils,
+        msg_types::trust_ping::TrustPingTypeV1_0,
     };
 
     #[test]
@@ -56,9 +57,13 @@ mod tests {
 
     #[test]
     fn test_extended_ping() {
-        let content = PingContent::builder().comment("test_comment".to_owned()).build();
+        let content = PingContent::builder()
+            .comment("test_comment".to_owned())
+            .build();
 
-        let decorators = PingDecorators::builder().thread(make_extended_thread()).build();
+        let decorators = PingDecorators::builder()
+            .thread(make_extended_thread())
+            .build();
 
         let expected = json!({
             "response_requested": false,

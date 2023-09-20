@@ -13,7 +13,10 @@ pub struct Invited {
 
 impl Invited {
     pub fn new(did_doc: AriesDidDoc, invitation: AnyInvitation) -> Self {
-        Self { did_doc, invitation }
+        Self {
+            did_doc,
+            invitation,
+        }
     }
 }
 

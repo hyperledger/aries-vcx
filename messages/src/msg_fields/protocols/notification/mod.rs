@@ -10,6 +10,7 @@ use self::{
     ack::{Ack, AckContent, AckDecorators},
     problem_report::{NotificationProblemReport, NotificationProblemReportContent},
 };
+use super::report_problem::ProblemReportDecorators;
 use crate::{
     misc::utils::{into_msg_with_type, transit_to_aries_msg},
     msg_fields::traits::DelayedSerde,
@@ -18,8 +19,6 @@ use crate::{
         MsgWithType,
     },
 };
-
-use super::report_problem::ProblemReportDecorators;
 
 #[derive(Clone, Debug, From, PartialEq)]
 pub enum Notification {
@@ -30,7 +29,10 @@ pub enum Notification {
 impl DelayedSerde for Notification {
     type MsgType<'a> = (NotificationType, &'a str);
 
-    fn delayed_deserialize<'de, D>(msg_type: Self::MsgType<'de>, deserializer: D) -> Result<Self, D::Error>
+    fn delayed_deserialize<'de, D>(
+        msg_type: Self::MsgType<'de>,
+        deserializer: D,
+    ) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
@@ -42,7 +44,9 @@ impl DelayedSerde for Notification {
 
         match kind.map_err(D::Error::custom)? {
             NotificationTypeV1_0::Ack => Ack::deserialize(deserializer).map(From::from),
-            NotificationTypeV1_0::ProblemReport => NotificationProblemReport::deserialize(deserializer).map(From::from),
+            NotificationTypeV1_0::ProblemReport => {
+                NotificationProblemReport::deserialize(deserializer).map(From::from)
+            }
         }
     }
 
@@ -61,4 +65,8 @@ transit_to_aries_msg!(AckContent: AckDecorators, Notification);
 transit_to_aries_msg!(NotificationProblemReportContent: ProblemReportDecorators, Notification);
 
 into_msg_with_type!(Ack, NotificationTypeV1_0, Ack);
-into_msg_with_type!(NotificationProblemReport, NotificationTypeV1_0, ProblemReport);
+into_msg_with_type!(
+    NotificationProblemReport,
+    NotificationTypeV1_0,
+    ProblemReport
+);

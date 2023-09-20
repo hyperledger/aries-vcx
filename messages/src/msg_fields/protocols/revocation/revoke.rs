@@ -49,7 +49,8 @@ mod tests {
 
     use super::*;
     use crate::{
-        decorators::thread::tests::make_extended_thread, misc::test_utils, msg_types::revocation::RevocationTypeV2_0,
+        decorators::thread::tests::make_extended_thread, misc::test_utils,
+        msg_types::revocation::RevocationTypeV2_0,
     };
 
     #[test]
@@ -77,7 +78,9 @@ mod tests {
             .comment("test_comment".to_owned())
             .build();
 
-        let decorators = RevokeDecorators::builder().thread(make_extended_thread()).build();
+        let decorators = RevokeDecorators::builder()
+            .thread(make_extended_thread())
+            .build();
 
         let expected = json!({
             "credential_id": content.credential_id,

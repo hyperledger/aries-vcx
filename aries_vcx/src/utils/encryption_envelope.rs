@@ -1,17 +1,16 @@
 use std::sync::Arc;
 
+use agency_client::testing::mocking::AgencyMockDecrypted;
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use futures::TryFutureExt;
-
-use agency_client::testing::mocking::AgencyMockDecrypted;
-use messages::msg_fields::protocols::routing::{Forward, ForwardContent};
-use messages::AriesMessage;
+use messages::{
+    msg_fields::protocols::routing::{Forward, ForwardContent},
+    AriesMessage,
+};
 use uuid::Uuid;
 
-use crate::errors::error::prelude::*;
-use crate::global::settings;
-use crate::utils::constants;
+use crate::{errors::error::prelude::*, global::settings, utils::constants};
 
 #[derive(Debug)]
 pub struct EncryptionEnvelope(pub Vec<u8>);
@@ -71,13 +70,17 @@ impl EncryptionEnvelope {
         let recipient_keys = did_doc.recipient_keys()?;
         let routing_keys = did_doc.routing_keys();
 
-        let mut to = recipient_keys.get(0).map(String::from).ok_or(AriesVcxError::from_msg(
-            AriesVcxErrorKind::InvalidState,
-            format!("Recipient Key not found in DIDDoc: {:?}", did_doc),
-        ))?;
+        let mut to = recipient_keys
+            .get(0)
+            .map(String::from)
+            .ok_or(AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidState,
+                format!("Recipient Key not found in DIDDoc: {:?}", did_doc),
+            ))?;
 
         for routing_key in routing_keys.iter() {
-            message = EncryptionEnvelope::wrap_into_forward(wallet, message, &to, routing_key).await?;
+            message =
+                EncryptionEnvelope::wrap_into_forward(wallet, message, &to, routing_key).await?;
             to = routing_key.clone();
         }
 
@@ -120,12 +123,13 @@ impl EncryptionEnvelope {
 
         let unpacked_msg = wallet.unpack_message(&payload).await?;
 
-        let msg_value: serde_json::Value = serde_json::from_slice(unpacked_msg.as_slice()).map_err(|err| {
-            AriesVcxError::from_msg(
-                AriesVcxErrorKind::InvalidJson,
-                format!("Cannot deserialize message: {}", err),
-            )
-        })?;
+        let msg_value: serde_json::Value = serde_json::from_slice(unpacked_msg.as_slice())
+            .map_err(|err| {
+                AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidJson,
+                    format!("Cannot deserialize message: {}", err),
+                )
+            })?;
 
         let sender_vk = msg_value["sender_verkey"].as_str().map(String::from);
 
@@ -183,16 +187,28 @@ impl EncryptionEnvelope {
             AgencyMockDecrypted::get_next_decrypted_message()
         } else {
             let (a2a_message, sender_vk) = Self::_unpack_a2a_message(wallet, payload).await?;
-            trace!("anon_unpack >> a2a_msg: {:?}, sender_vk: {:?}", a2a_message, sender_vk);
+            trace!(
+                "anon_unpack >> a2a_msg: {:?}, sender_vk: {:?}",
+                a2a_message,
+                sender_vk
+            );
 
             match sender_vk {
                 Some(sender_vk) => {
                     if sender_vk != expected_vk {
                         error!(
-                            "auth_unpack  sender_vk != expected_vk.... sender_vk: {}, expected_vk: {}",
+                            "auth_unpack  sender_vk != expected_vk.... sender_vk: {}, \
+                             expected_vk: {}",
                             sender_vk, expected_vk
                         );
-                        return Err(AriesVcxError::from_msg(AriesVcxErrorKind::InvalidJson, format!("Message did not pass authentication check. Expected sender verkey was {}, but actually was {}", expected_vk, sender_vk)));
+                        return Err(AriesVcxError::from_msg(
+                            AriesVcxErrorKind::InvalidJson,
+                            format!(
+                                "Message did not pass authentication check. Expected sender \
+                                 verkey was {}, but actually was {}",
+                                expected_vk, sender_vk
+                            ),
+                        ));
                     }
                 }
                 None => {
@@ -292,8 +308,8 @@ impl EncryptionEnvelope {
 
 //             let ack = A2AMessage::Ack(_ack());
 
-//             let envelope = EncryptionEnvelope::create(&profile.inject_wallet(), &ack, Some(&trustee_key), &did_doc)
-//                 .await
+//             let envelope = EncryptionEnvelope::create(&profile.inject_wallet(), &ack,
+// Some(&trustee_key), &did_doc)                 .await
 //                 .unwrap();
 
 //             let message_1 = EncryptionEnvelope::anon_unpack(&profile.inject_wallet(), envelope.0)
@@ -338,8 +354,9 @@ impl EncryptionEnvelope {
 //         SetupEmpty::init();
 
 //         test_setup::with_wallet(|recipient_wallet| async move {
-//             let recipient_profile = indy_handles_to_profile(recipient_wallet, INVALID_POOL_HANDLE);
-//             let recipient_key = test_setup::create_key(recipient_wallet).await;
+//             let recipient_profile = indy_handles_to_profile(recipient_wallet,
+// INVALID_POOL_HANDLE);             let recipient_key =
+// test_setup::create_key(recipient_wallet).await;
 
 //             test_setup::with_wallet(|sender_wallet| async move {
 //                 let sender_profile = indy_handles_to_profile(sender_wallet, INVALID_POOL_HANDLE);
@@ -350,12 +367,12 @@ impl EncryptionEnvelope {
 
 //                 let ack = A2AMessage::Ack(_ack());
 //                 let envelope =
-//                     EncryptionEnvelope::create(&sender_profile.inject_wallet(), &ack, Some(&sender_key), &did_doc)
-//                         .await
+//                     EncryptionEnvelope::create(&sender_profile.inject_wallet(), &ack,
+// Some(&sender_key), &did_doc)                         .await
 //                         .unwrap();
 //                 let _message_1 =
-//                     EncryptionEnvelope::auth_unpack(&recipient_profile.inject_wallet(), envelope.0, &sender_key)
-//                         .await
+//                     EncryptionEnvelope::auth_unpack(&recipient_profile.inject_wallet(),
+// envelope.0, &sender_key)                         .await
 //                         .unwrap();
 //             })
 //             .await;
@@ -368,8 +385,9 @@ impl EncryptionEnvelope {
 //         let _setup = SetupEmpty::init();
 
 //         test_setup::with_wallet(|recipient_wallet| async move {
-//             let recipient_profile = indy_handles_to_profile(recipient_wallet, INVALID_POOL_HANDLE);
-//             let recipient_key = test_setup::create_key(recipient_wallet).await;
+//             let recipient_profile = indy_handles_to_profile(recipient_wallet,
+// INVALID_POOL_HANDLE);             let recipient_key =
+// test_setup::create_key(recipient_wallet).await;
 
 //             test_setup::with_wallet(|sender_wallet| async move {
 //                 let sender_profile = indy_handles_to_profile(sender_wallet, INVALID_POOL_HANDLE);
@@ -382,13 +400,13 @@ impl EncryptionEnvelope {
 
 //                 let ack = A2AMessage::Ack(_ack());
 //                 let envelope =
-//                     EncryptionEnvelope::create(&sender_profile.inject_wallet(), &ack, Some(&sender_key_2), &did_doc)
-//                         .await
+//                     EncryptionEnvelope::create(&sender_profile.inject_wallet(), &ack,
+// Some(&sender_key_2), &did_doc)                         .await
 //                         .unwrap();
 
 //                 let result =
-//                     EncryptionEnvelope::auth_unpack(&recipient_profile.inject_wallet(), envelope.0, &sender_key_1)
-//                         .await;
+//                     EncryptionEnvelope::auth_unpack(&recipient_profile.inject_wallet(),
+// envelope.0, &sender_key_1)                         .await;
 
 //                 assert!(result.is_err());
 //             })

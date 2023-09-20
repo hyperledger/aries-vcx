@@ -1,51 +1,52 @@
 use core::fmt;
-use std::clone::Clone;
-use std::collections::HashMap;
-use std::sync::Arc;
+use std::{clone::Clone, collections::HashMap, sync::Arc};
 
+use agency_client::{
+    agency_client::AgencyClient, api::downloaded_message::DownloadedMessage, MessageStatusCode,
+};
+use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use chrono::Utc;
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
-use futures::future::BoxFuture;
-use futures::stream::StreamExt;
-use messages::decorators::timing::Timing;
-use messages::msg_fields::protocols::basic_message::{BasicMessage, BasicMessageContent, BasicMessageDecorators};
-use messages::msg_fields::protocols::connection::invitation::InvitationContent;
-use messages::msg_fields::protocols::connection::request::Request;
-use messages::msg_fields::protocols::connection::Connection;
-use messages::msg_fields::protocols::discover_features::disclose::Disclose;
-use messages::msg_fields::protocols::discover_features::{DiscoverFeatures, ProtocolDescriptor};
-use messages::msg_fields::protocols::out_of_band::OutOfBand;
-use messages::msg_fields::protocols::trust_ping::TrustPing;
-use messages::AriesMessage;
-use serde::de::{Error, MapAccess, Visitor};
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use futures::{future::BoxFuture, stream::StreamExt};
+use messages::{
+    decorators::timing::Timing,
+    msg_fields::protocols::{
+        basic_message::{BasicMessage, BasicMessageContent, BasicMessageDecorators},
+        connection::{invitation::InvitationContent, request::Request, Connection},
+        discover_features::{disclose::Disclose, DiscoverFeatures, ProtocolDescriptor},
+        out_of_band::OutOfBand,
+        trust_ping::TrustPing,
+    },
+    AriesMessage,
+};
+use serde::{
+    de::{Error, MapAccess, Visitor},
+    Deserialize, Deserializer, Serialize, Serializer,
+};
 use serde_json::Value;
-
-use agency_client::agency_client::AgencyClient;
-use agency_client::api::downloaded_message::DownloadedMessage;
-use agency_client::MessageStatusCode;
-use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use url::Url;
 use uuid::Uuid;
 
-use crate::errors::error::prelude::*;
-use crate::handlers::connection::cloud_agent::CloudAgentInfo;
-use crate::handlers::connection::legacy_agent_info::LegacyAgentInfo;
-use crate::handlers::discovery::{respond_discovery_query, send_discovery_query};
-use crate::handlers::trust_ping::TrustPingSender;
-use crate::handlers::util::AnyInvitation;
-use crate::protocols::mediated_connection::invitee::state_machine::{
-    InviteeFullState, InviteeState, SmConnectionInvitee,
+use crate::{
+    errors::error::prelude::*,
+    handlers::{
+        connection::{cloud_agent::CloudAgentInfo, legacy_agent_info::LegacyAgentInfo},
+        discovery::{respond_discovery_query, send_discovery_query},
+        trust_ping::TrustPingSender,
+        util::AnyInvitation,
+    },
+    protocols::{
+        mediated_connection::{
+            invitee::state_machine::{InviteeFullState, InviteeState, SmConnectionInvitee},
+            inviter::state_machine::{InviterFullState, InviterState, SmConnectionInviter},
+            pairwise_info::PairwiseInfo,
+        },
+        oob::{build_handshake_reuse_accepted_msg, build_handshake_reuse_msg},
+        trustping::build_ping_response,
+        SendClosure, SendClosureConnection,
+    },
+    utils::{send_message, serialization::SerializableObjectWithState},
 };
-use crate::protocols::mediated_connection::inviter::state_machine::{
-    InviterFullState, InviterState, SmConnectionInviter,
-};
-use crate::protocols::mediated_connection::pairwise_info::PairwiseInfo;
-use crate::protocols::oob::{build_handshake_reuse_accepted_msg, build_handshake_reuse_msg};
-use crate::protocols::trustping::build_ping_response;
-use crate::protocols::{SendClosure, SendClosureConnection};
-use crate::utils::send_message;
-use crate::utils::serialization::SerializableObjectWithState;
 
 #[derive(Clone, PartialEq)]
 pub struct MediatedConnection {
@@ -107,7 +108,10 @@ impl MediatedConnection {
         let cloud_agent_info = Some(CloudAgentInfo::create(agency_client, &pairwise_info).await?);
         Ok(Self {
             cloud_agent_info,
-            connection_sm: SmConnection::Inviter(SmConnectionInviter::new(source_id, pairwise_info)),
+            connection_sm: SmConnection::Inviter(SmConnectionInviter::new(
+                source_id,
+                pairwise_info,
+            )),
             autohop_enabled,
         })
     }
@@ -129,7 +133,11 @@ impl MediatedConnection {
         let cloud_agent_info = Some(CloudAgentInfo::create(agency_client, &pairwise_info).await?);
         let mut connection = Self {
             cloud_agent_info,
-            connection_sm: SmConnection::Invitee(SmConnectionInvitee::new(source_id, pairwise_info, did_doc)),
+            connection_sm: SmConnection::Invitee(SmConnectionInvitee::new(
+                source_id,
+                pairwise_info,
+                did_doc,
+            )),
             autohop_enabled,
         };
         connection.process_invite(invitation)?;
@@ -149,10 +157,15 @@ impl MediatedConnection {
         );
         let mut connection = Self {
             cloud_agent_info: None,
-            connection_sm: SmConnection::Inviter(SmConnectionInviter::new(&request.id, pairwise_info)),
+            connection_sm: SmConnection::Inviter(SmConnectionInviter::new(
+                &request.id,
+                pairwise_info,
+            )),
             autohop_enabled: true,
         };
-        connection.process_request(wallet, agency_client, request).await?;
+        connection
+            .process_request(wallet, agency_client, request)
+            .await?;
         Ok(connection)
     }
 
@@ -237,8 +250,12 @@ impl MediatedConnection {
 
     pub fn state_object(&self) -> SmConnectionState {
         match &self.connection_sm {
-            SmConnection::Inviter(sm_inviter) => SmConnectionState::Inviter(sm_inviter.state_object().clone()),
-            SmConnection::Invitee(sm_invitee) => SmConnectionState::Invitee(sm_invitee.state_object().clone()),
+            SmConnection::Inviter(sm_inviter) => {
+                SmConnectionState::Inviter(sm_inviter.state_object().clone())
+            }
+            SmConnection::Invitee(sm_invitee) => {
+                SmConnectionState::Invitee(sm_invitee.state_object().clone())
+            }
         }
     }
 
@@ -273,7 +290,8 @@ impl MediatedConnection {
 
     pub fn bootstrap_did_doc(&self) -> Option<AriesDidDoc> {
         match &self.connection_sm {
-            SmConnection::Inviter(_sm_inviter) => None, // TODO: Inviter can remember bootstrap agent too, but we don't need it
+            SmConnection::Inviter(_sm_inviter) => None, /* TODO: Inviter can remember bootstrap
+                                                          * agent too, but we don't need it */
             SmConnection::Invitee(sm_invitee) => sm_invitee.bootstrap_did_doc(),
         }
     }
@@ -293,10 +311,16 @@ impl MediatedConnection {
     }
 
     pub fn process_invite(&mut self, invitation: AnyInvitation) -> VcxResult<()> {
-        trace!("MediatedConnection::process_invite >>> invitation: {:?}", invitation);
+        trace!(
+            "MediatedConnection::process_invite >>> invitation: {:?}",
+            invitation
+        );
         self.connection_sm = match &self.connection_sm {
             SmConnection::Inviter(_sm_inviter) => {
-                return Err(AriesVcxError::from_msg(AriesVcxErrorKind::NotReady, "Invalid action"));
+                return Err(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::NotReady,
+                    "Invalid action",
+                ));
             }
             SmConnection::Invitee(sm_invitee) => {
                 SmConnection::Invitee(sm_invitee.clone().handle_invitation(invitation)?)
@@ -311,12 +335,16 @@ impl MediatedConnection {
         agency_client: &AgencyClient,
         request: Request,
     ) -> VcxResult<()> {
-        trace!("MediatedConnection::process_request >>> request: {:?}", request);
+        trace!(
+            "MediatedConnection::process_request >>> request: {:?}",
+            request
+        );
         let (connection_sm, new_cloud_agent_info) = match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
                 let send_message = self.send_message_closure_connection(Arc::clone(wallet));
                 let new_pairwise_info = PairwiseInfo::create(wallet).await?;
-                let new_cloud_agent = CloudAgentInfo::create(agency_client, &new_pairwise_info).await?;
+                let new_cloud_agent =
+                    CloudAgentInfo::create(agency_client, &new_pairwise_info).await?;
                 let new_routing_keys = new_cloud_agent.routing_keys(agency_client)?;
                 let new_service_endpoint = agency_client.get_agency_url_full()?;
                 (
@@ -337,7 +365,10 @@ impl MediatedConnection {
                 )
             }
             SmConnection::Invitee(_) => {
-                return Err(AriesVcxError::from_msg(AriesVcxErrorKind::NotReady, "Invalid action"));
+                return Err(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::NotReady,
+                    "Invalid action",
+                ));
             }
         };
         self.connection_sm = connection_sm;
@@ -353,11 +384,17 @@ impl MediatedConnection {
                     let send_message = self.send_message_closure_connection(Arc::clone(wallet));
                     sm_inviter.handle_send_response(send_message).await?
                 } else {
-                    return Err(AriesVcxError::from_msg(AriesVcxErrorKind::NotReady, "Invalid action"));
+                    return Err(AriesVcxError::from_msg(
+                        AriesVcxErrorKind::NotReady,
+                        "Invalid action",
+                    ));
                 }
             }
             SmConnection::Invitee(_) => {
-                return Err(AriesVcxError::from_msg(AriesVcxErrorKind::NotReady, "Invalid action"));
+                return Err(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::NotReady,
+                    "Invalid action",
+                ));
             }
         };
         self.connection_sm = SmConnection::Inviter(connection_sm);
@@ -372,7 +409,10 @@ impl MediatedConnection {
         }
     }
 
-    fn find_message_to_update_state(&self, messages: HashMap<String, AriesMessage>) -> Option<(String, AriesMessage)> {
+    fn find_message_to_update_state(
+        &self,
+        messages: HashMap<String, AriesMessage>,
+    ) -> Option<(String, AriesMessage)> {
         match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => sm_inviter.find_message_to_update_state(messages),
             SmConnection::Invitee(sm_invitee) => sm_invitee.find_message_to_update_state(messages),
@@ -390,12 +430,15 @@ impl MediatedConnection {
     ) -> BoxFuture<'_, VcxResult<()>> {
         Box::pin(async move {
             let (new_connection_sm, can_autohop) = match &self.connection_sm {
-                SmConnection::Inviter(_) => self.step_inviter(&wallet, message, &agency_client).await?,
+                SmConnection::Inviter(_) => {
+                    self.step_inviter(&wallet, message, &agency_client).await?
+                }
                 SmConnection::Invitee(_) => self.step_invitee(&wallet, message).await?,
             };
             *self = new_connection_sm;
             if can_autohop && self.autohop_enabled {
-                self.update_state_with_message(wallet, agency_client, None).await
+                self.update_state_with_message(wallet, agency_client, None)
+                    .await
             } else {
                 Ok(())
             }
@@ -408,7 +451,10 @@ impl MediatedConnection {
         agency_client: &AgencyClient,
     ) -> VcxResult<()> {
         if !self.is_in_final_state() {
-            warn!("MediatedConnection::find_and_handle_message >> connection is not in final state, skipping");
+            warn!(
+                "MediatedConnection::find_and_handle_message >> connection is not in final state, \
+                 skipping"
+            );
             return Ok(());
         }
         let messages = self.get_messages_noauth(agency_client).await?;
@@ -419,7 +465,10 @@ impl MediatedConnection {
         Ok(())
     }
 
-    fn find_message_to_handle(&self, messages: HashMap<String, AriesMessage>) -> Option<(String, AriesMessage)> {
+    fn find_message_to_handle(
+        &self,
+        messages: HashMap<String, AriesMessage>,
+    ) -> Option<(String, AriesMessage)> {
         for (uid, message) in messages {
             match message {
                 AriesMessage::TrustPing(TrustPing::Ping(_))
@@ -427,17 +476,25 @@ impl MediatedConnection {
                 | AriesMessage::OutOfBand(OutOfBand::HandshakeReuse(_))
                 | AriesMessage::OutOfBand(OutOfBand::HandshakeReuseAccepted(_))
                 | AriesMessage::DiscoverFeatures(DiscoverFeatures::Query(_))
-                | AriesMessage::DiscoverFeatures(DiscoverFeatures::Disclose(_)) => return Some((uid, message)),
+                | AriesMessage::DiscoverFeatures(DiscoverFeatures::Disclose(_)) => {
+                    return Some((uid, message))
+                }
                 _ => {}
             }
         }
         None
     }
 
-    pub async fn handle_message(&mut self, message: AriesMessage, wallet: &Arc<dyn BaseWallet>) -> VcxResult<()> {
+    pub async fn handle_message(
+        &mut self,
+        message: AriesMessage,
+        wallet: &Arc<dyn BaseWallet>,
+    ) -> VcxResult<()> {
         let did_doc = self.their_did_doc().ok_or(AriesVcxError::from_msg(
             AriesVcxErrorKind::NotReady,
-            format!("Can't answer message {message:?} because counterparty did doc is not available"),
+            format!(
+                "Can't answer message {message:?} because counterparty did doc is not available"
+            ),
         ))?;
         let pw_vk = &self.pairwise_info().pw_vk;
         match message {
@@ -464,10 +521,19 @@ impl MediatedConnection {
             AriesMessage::OutOfBand(OutOfBand::HandshakeReuse(handshake_reuse)) => {
                 let thread_id = handshake_reuse.decorators.thread.thid.as_str();
 
-                info!("Answering OutOfBand::HandshakeReuse message, thread: {}", thread_id);
+                info!(
+                    "Answering OutOfBand::HandshakeReuse message, thread: {}",
+                    thread_id
+                );
 
                 let msg = build_handshake_reuse_accepted_msg(&handshake_reuse)?;
-                send_message(Arc::clone(wallet), pw_vk.to_string(), did_doc.clone(), msg.into()).await?;
+                send_message(
+                    Arc::clone(wallet),
+                    pw_vk.to_string(),
+                    did_doc.clone(),
+                    msg.into(),
+                )
+                .await?;
             }
             AriesMessage::DiscoverFeatures(DiscoverFeatures::Query(query)) => {
                 let supported_protocols = query.content.lookup();
@@ -477,7 +543,8 @@ impl MediatedConnection {
                     &query.id, &supported_protocols
                 );
 
-                respond_discovery_query(&wallet, query, &did_doc, pw_vk, supported_protocols).await?;
+                respond_discovery_query(&wallet, query, &did_doc, pw_vk, supported_protocols)
+                    .await?;
             }
             AriesMessage::DiscoverFeatures(DiscoverFeatures::Disclose(disclose)) => {
                 let thread_id = disclose.decorators.thread.thid.as_str();
@@ -486,8 +553,9 @@ impl MediatedConnection {
                 self.connection_sm = self.handle_disclose(disclose).await?;
             }
             _ => {
-                // todo: implement to_string for A2AMessage, printing only type of the message, not entire payload
-                // todo: attempt to print @id / thread_id of the message
+                // todo: implement to_string for A2AMessage, printing only type of the message, not
+                // entire payload todo: attempt to print @id / thread_id of the
+                // message
                 info!("Message of type {:?} will not be answered", message);
             }
         }
@@ -500,11 +568,17 @@ impl MediatedConnection {
         agency_client: &AgencyClient,
     ) -> VcxResult<()> {
         if self.is_in_null_state() {
-            warn!("MediatedConnection::update_state :: update state on connection in null state is ignored");
+            warn!(
+                "MediatedConnection::update_state :: update state on connection in null state is \
+                 ignored"
+            );
             return Ok(());
         }
         if self.is_in_final_state() {
-            warn!("MediatedConnection::update_state :: update state on connection in final state is ignored");
+            warn!(
+                "MediatedConnection::update_state :: update state on connection in final state is \
+                 ignored"
+            );
             return Ok(());
         }
         trace!(
@@ -513,13 +587,23 @@ impl MediatedConnection {
         );
 
         let messages = self.get_messages_noauth(agency_client).await?;
-        trace!("MediatedConnection::update_state >>> retrieved messages {:?}", messages);
+        trace!(
+            "MediatedConnection::update_state >>> retrieved messages {:?}",
+            messages
+        );
 
         match self.find_message_to_update_state(messages) {
             Some((uid, message)) => {
-                trace!("MediatedConnection::update_state >>> handling message uid: {:?}", uid);
-                self.update_state_with_message(Arc::clone(wallet), agency_client.clone(), Some(message))
-                    .await?;
+                trace!(
+                    "MediatedConnection::update_state >>> handling message uid: {:?}",
+                    uid
+                );
+                self.update_state_with_message(
+                    Arc::clone(wallet),
+                    agency_client.clone(),
+                    Some(message),
+                )
+                .await?;
                 self.cloud_agent_info()
                     .ok_or(AriesVcxError::from_msg(
                         AriesVcxErrorKind::NoAgentInformation,
@@ -529,7 +613,9 @@ impl MediatedConnection {
                     .await?;
             }
             None => {
-                trace!("MediatedConnection::update_state >>> trying to update state without message");
+                trace!(
+                    "MediatedConnection::update_state >>> trying to update state without message"
+                );
                 self.update_state_with_message(Arc::clone(wallet), agency_client.clone(), None)
                     .await?;
             }
@@ -553,11 +639,14 @@ impl MediatedConnection {
                 let (sm_inviter, new_cloud_agent_info, can_autohop) = match message {
                     Some(message) => match message {
                         AriesMessage::Connection(Connection::Request(request)) => {
-                            let send_message = self.send_message_closure_connection(Arc::clone(wallet));
+                            let send_message =
+                                self.send_message_closure_connection(Arc::clone(wallet));
                             let new_pairwise_info = PairwiseInfo::create(wallet).await?;
-                            let new_cloud_agent = CloudAgentInfo::create(agency_client, &new_pairwise_info).await?;
+                            let new_cloud_agent =
+                                CloudAgentInfo::create(agency_client, &new_pairwise_info).await?;
                             let new_routing_keys = new_cloud_agent.routing_keys(agency_client)?;
-                            let new_service_endpoint = new_cloud_agent.service_endpoint(agency_client)?;
+                            let new_service_endpoint =
+                                new_cloud_agent.service_endpoint(agency_client)?;
 
                             let sm_connection = sm_inviter
                                 .handle_connection_request(
@@ -571,18 +660,28 @@ impl MediatedConnection {
                                 .await?;
                             (sm_connection, Some(new_cloud_agent), true)
                         }
-                        msg @ AriesMessage::Notification(_) | msg @ AriesMessage::TrustPing(TrustPing::Ping(_)) => {
-                            (sm_inviter.handle_confirmation_message(&msg).await?, None, false)
-                        }
-                        AriesMessage::Connection(Connection::ProblemReport(problem_report)) => {
-                            (sm_inviter.handle_problem_report(problem_report)?, None, false)
-                        }
+                        msg @ AriesMessage::Notification(_)
+                        | msg @ AriesMessage::TrustPing(TrustPing::Ping(_)) => (
+                            sm_inviter.handle_confirmation_message(&msg).await?,
+                            None,
+                            false,
+                        ),
+                        AriesMessage::Connection(Connection::ProblemReport(problem_report)) => (
+                            sm_inviter.handle_problem_report(problem_report)?,
+                            None,
+                            false,
+                        ),
                         _ => (sm_inviter.clone(), None, false),
                     },
                     None => {
                         if let InviterFullState::Requested(_) = sm_inviter.state_object() {
-                            let send_message = self.send_message_closure_connection(Arc::clone(wallet));
-                            (sm_inviter.handle_send_response(send_message).await?, None, false)
+                            let send_message =
+                                self.send_message_closure_connection(Arc::clone(wallet));
+                            (
+                                sm_inviter.handle_send_response(send_message).await?,
+                                None,
+                                false,
+                            )
                         } else {
                             (sm_inviter.clone(), None, false)
                         }
@@ -599,8 +698,7 @@ impl MediatedConnection {
             }
             SmConnection::Invitee(_) => Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::NotReady,
-                "Invalid operation, called \
-                _step_inviter on Invitee connection.",
+                "Invalid operation, called _step_inviter on Invitee connection.",
             )),
         }
     }
@@ -617,15 +715,22 @@ impl MediatedConnection {
                         AriesMessage::Connection(Connection::Invitation(invitation))
                             if matches!(invitation.content, InvitationContent::Public(_)) =>
                         {
-                            (sm_invitee.handle_invitation(AnyInvitation::Con(invitation))?, false)
+                            (
+                                sm_invitee.handle_invitation(AnyInvitation::Con(invitation))?,
+                                false,
+                            )
                         }
                         AriesMessage::Connection(Connection::Invitation(invitation))
                             if matches!(invitation.content, InvitationContent::Pairwise(_)) =>
                         {
-                            (sm_invitee.handle_invitation(AnyInvitation::Con(invitation))?, false)
+                            (
+                                sm_invitee.handle_invitation(AnyInvitation::Con(invitation))?,
+                                false,
+                            )
                         }
                         AriesMessage::Connection(Connection::Response(response)) => {
-                            let send_message = self.send_message_closure_connection(Arc::clone(wallet));
+                            let send_message =
+                                self.send_message_closure_connection(Arc::clone(wallet));
                             (
                                 sm_invitee
                                     .handle_connection_response(wallet, response, send_message)
@@ -652,20 +757,19 @@ impl MediatedConnection {
             }
             SmConnection::Inviter(_) => Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::NotReady,
-                "Invalid operation, called \
-                _step_invitee on Inviter connection.",
+                "Invalid operation, called _step_invitee on Inviter connection.",
             )),
         }
     }
 
     async fn handle_disclose(&self, disclose: Disclose) -> VcxResult<SmConnection> {
         match &self.connection_sm {
-            SmConnection::Inviter(sm_inviter) => {
-                Ok(SmConnection::Inviter(sm_inviter.clone().handle_disclose(disclose)?))
-            }
-            SmConnection::Invitee(sm_invitee) => {
-                Ok(SmConnection::Invitee(sm_invitee.clone().handle_disclose(disclose)?))
-            }
+            SmConnection::Inviter(sm_inviter) => Ok(SmConnection::Inviter(
+                sm_inviter.clone().handle_disclose(disclose)?,
+            )),
+            SmConnection::Invitee(sm_invitee) => Ok(SmConnection::Invitee(
+                sm_invitee.clone().handle_disclose(disclose)?,
+            )),
         }
     }
 
@@ -675,18 +779,27 @@ impl MediatedConnection {
         agency_client: &AgencyClient,
         send_message: Option<SendClosureConnection>,
     ) -> VcxResult<()> {
-        trace!("MediatedConnection::connect >>> source_id: {}", self.source_id());
-        let cloud_agent_info = self.cloud_agent_info.clone().ok_or(AriesVcxError::from_msg(
-            AriesVcxErrorKind::NoAgentInformation,
-            "Missing cloud agent info",
-        ))?;
+        trace!(
+            "MediatedConnection::connect >>> source_id: {}",
+            self.source_id()
+        );
+        let cloud_agent_info = self
+            .cloud_agent_info
+            .clone()
+            .ok_or(AriesVcxError::from_msg(
+                AriesVcxErrorKind::NoAgentInformation,
+                "Missing cloud agent info",
+            ))?;
         self.connection_sm = match &self.connection_sm {
-            SmConnection::Inviter(sm_inviter) => SmConnection::Inviter(sm_inviter.clone().create_invitation(
-                cloud_agent_info.routing_keys(agency_client)?,
-                cloud_agent_info.service_endpoint(agency_client)?,
-            )?),
+            SmConnection::Inviter(sm_inviter) => {
+                SmConnection::Inviter(sm_inviter.clone().create_invitation(
+                    cloud_agent_info.routing_keys(agency_client)?,
+                    cloud_agent_info.service_endpoint(agency_client)?,
+                )?)
+            }
             SmConnection::Invitee(sm_invitee) => {
-                let send_message = send_message.unwrap_or(self.send_message_closure_connection(Arc::clone(wallet)));
+                let send_message = send_message
+                    .unwrap_or(self.send_message_closure_connection(Arc::clone(wallet)));
                 SmConnection::Invitee(
                     sm_invitee
                         .clone()
@@ -702,8 +815,15 @@ impl MediatedConnection {
         Ok(())
     }
 
-    pub async fn update_message_status(&self, uid: &str, agency_client: &AgencyClient) -> VcxResult<()> {
-        trace!("MediatedConnection::update_message_status >>> uid: {:?}", uid);
+    pub async fn update_message_status(
+        &self,
+        uid: &str,
+        agency_client: &AgencyClient,
+    ) -> VcxResult<()> {
+        trace!(
+            "MediatedConnection::update_message_status >>> uid: {:?}",
+            uid
+        );
         self.cloud_agent_info()
             .ok_or(AriesVcxError::from_msg(
                 AriesVcxErrorKind::NoAgentInformation,
@@ -713,7 +833,10 @@ impl MediatedConnection {
             .await
     }
 
-    pub async fn get_messages_noauth(&self, agency_client: &AgencyClient) -> VcxResult<HashMap<String, AriesMessage>> {
+    pub async fn get_messages_noauth(
+        &self,
+        agency_client: &AgencyClient,
+    ) -> VcxResult<HashMap<String, AriesMessage>> {
         match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
                 let messages = self
@@ -740,7 +863,10 @@ impl MediatedConnection {
         }
     }
 
-    pub async fn get_messages(&self, agency_client: &AgencyClient) -> VcxResult<HashMap<String, AriesMessage>> {
+    pub async fn get_messages(
+        &self,
+        agency_client: &AgencyClient,
+    ) -> VcxResult<HashMap<String, AriesMessage>> {
         let expected_sender_vk = self.get_expected_sender_vk().await?;
         match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => Ok(self
@@ -749,7 +875,11 @@ impl MediatedConnection {
                     AriesVcxErrorKind::NoAgentInformation,
                     "Missing cloud agent info",
                 ))?
-                .get_messages(agency_client, &expected_sender_vk, sm_inviter.pairwise_info())
+                .get_messages(
+                    agency_client,
+                    &expected_sender_vk,
+                    sm_inviter.pairwise_info(),
+                )
                 .await?),
             SmConnection::Invitee(sm_invitee) => Ok(self
                 .cloud_agent_info()
@@ -757,7 +887,11 @@ impl MediatedConnection {
                     AriesVcxErrorKind::NoAgentInformation,
                     "Missing cloud agent info",
                 ))?
-                .get_messages(agency_client, &expected_sender_vk, sm_invitee.pairwise_info())
+                .get_messages(
+                    agency_client,
+                    &expected_sender_vk,
+                    sm_invitee.pairwise_info(),
+                )
                 .await?),
         }
     }
@@ -766,25 +900,40 @@ impl MediatedConnection {
         self.remote_vk().map_err(|_err| {
             AriesVcxError::from_msg(
                 AriesVcxErrorKind::NotReady,
-                "Verkey of Connection counterparty \
-                is not known, hence it would be impossible to authenticate message downloaded by id.",
+                "Verkey of Connection counterparty is not known, hence it would be impossible to \
+                 authenticate message downloaded by id.",
             )
         })
     }
 
-    pub async fn get_message_by_id(&self, msg_id: &str, agency_client: &AgencyClient) -> VcxResult<AriesMessage> {
-        trace!("MediatedConnection: get_message_by_id >>> msg_id: {}", msg_id);
+    pub async fn get_message_by_id(
+        &self,
+        msg_id: &str,
+        agency_client: &AgencyClient,
+    ) -> VcxResult<AriesMessage> {
+        trace!(
+            "MediatedConnection: get_message_by_id >>> msg_id: {}",
+            msg_id
+        );
         let expected_sender_vk = self.get_expected_sender_vk().await?;
         self.cloud_agent_info()
             .ok_or(AriesVcxError::from_msg(
                 AriesVcxErrorKind::NoAgentInformation,
                 "Missing cloud agent info",
             ))?
-            .get_message_by_id(agency_client, msg_id, &expected_sender_vk, self.pairwise_info())
+            .get_message_by_id(
+                agency_client,
+                msg_id,
+                &expected_sender_vk,
+                self.pairwise_info(),
+            )
             .await
     }
 
-    pub async fn send_message_closure(&self, wallet: Arc<dyn BaseWallet>) -> VcxResult<SendClosure> {
+    pub async fn send_message_closure(
+        &self,
+        wallet: Arc<dyn BaseWallet>,
+    ) -> VcxResult<SendClosure> {
         trace!("send_message_closure >>>");
         let did_doc = self.their_did_doc().ok_or(AriesVcxError::from_msg(
             AriesVcxErrorKind::NotReady,
@@ -792,15 +941,25 @@ impl MediatedConnection {
         ))?;
         let sender_vk = self.pairwise_info().pw_vk.clone();
         Ok(Box::new(move |message: AriesMessage| {
-            Box::pin(send_message(wallet, sender_vk.clone(), did_doc.clone(), message))
+            Box::pin(send_message(
+                wallet,
+                sender_vk.clone(),
+                did_doc.clone(),
+                message,
+            ))
         }))
     }
 
-    fn send_message_closure_connection(&self, wallet: Arc<dyn BaseWallet>) -> SendClosureConnection {
+    fn send_message_closure_connection(
+        &self,
+        wallet: Arc<dyn BaseWallet>,
+    ) -> SendClosureConnection {
         trace!("send_message_closure_connection >>>");
-        Box::new(move |message: AriesMessage, sender_vk: String, did_doc: AriesDidDoc| {
-            Box::pin(send_message(wallet, sender_vk, did_doc, message))
-        })
+        Box::new(
+            move |message: AriesMessage, sender_vk: String, did_doc: AriesDidDoc| {
+                Box::pin(send_message(wallet, sender_vk, did_doc, message))
+            },
+        )
     }
 
     fn build_basic_message(message: &str) -> AriesMessage {
@@ -827,15 +986,29 @@ impl MediatedConnection {
         }
     }
 
-    pub async fn send_generic_message(&self, wallet: &Arc<dyn BaseWallet>, message: &str) -> VcxResult<String> {
-        trace!("MediatedConnection::send_generic_message >>> message: {:?}", message);
+    pub async fn send_generic_message(
+        &self,
+        wallet: &Arc<dyn BaseWallet>,
+        message: &str,
+    ) -> VcxResult<String> {
+        trace!(
+            "MediatedConnection::send_generic_message >>> message: {:?}",
+            message
+        );
         let message = Self::build_basic_message(message);
         let send_message = self.send_message_closure(Arc::clone(wallet)).await?;
         send_message(message).await.map(|_| String::new())
     }
 
-    pub async fn send_a2a_message(&self, wallet: &Arc<dyn BaseWallet>, message: &AriesMessage) -> VcxResult<String> {
-        trace!("MediatedConnection::send_a2a_message >>> message: {:?}", message);
+    pub async fn send_a2a_message(
+        &self,
+        wallet: &Arc<dyn BaseWallet>,
+        message: &AriesMessage,
+    ) -> VcxResult<String> {
+        trace!(
+            "MediatedConnection::send_a2a_message >>> message: {:?}",
+            message
+        );
         let send_message = self.send_message_closure(Arc::clone(wallet)).await?;
         send_message(message.clone()).await.map(|_| String::new())
     }
@@ -846,11 +1019,17 @@ impl MediatedConnection {
         comment: Option<String>,
     ) -> VcxResult<TrustPingSender> {
         let mut trust_ping = TrustPingSender::build(true, comment);
-        trust_ping.send_ping(self.send_message_closure(wallet).await?).await?;
+        trust_ping
+            .send_ping(self.send_message_closure(wallet).await?)
+            .await?;
         Ok(trust_ping)
     }
 
-    pub async fn send_handshake_reuse(&self, wallet: &Arc<dyn BaseWallet>, oob_msg: &str) -> VcxResult<()> {
+    pub async fn send_handshake_reuse(
+        &self,
+        wallet: &Arc<dyn BaseWallet>,
+        oob_msg: &str,
+    ) -> VcxResult<()> {
         trace!("MediatedConnection::send_handshake_reuse >>>");
         // todo: oob_msg argument should be typed OutOfBandInvitation, not string
         let oob = match serde_json::from_str::<AriesMessage>(oob_msg) {
@@ -898,9 +1077,18 @@ impl MediatedConnection {
         );
         let did_doc = self.their_did_doc().ok_or(AriesVcxError::from_msg(
             AriesVcxErrorKind::NotReady,
-            "Can't send handshake-reuse to the counterparty, because their did doc is not available".to_string(),
+            "Can't send handshake-reuse to the counterparty, because their did doc is not \
+             available"
+                .to_string(),
         ))?;
-        send_discovery_query(wallet, query, comment, &did_doc, &self.pairwise_info().pw_vk).await?;
+        send_discovery_query(
+            wallet,
+            query,
+            comment,
+            &did_doc,
+            &self.pairwise_info().pw_vk,
+        )
+        .await?;
         Ok(())
     }
 
@@ -927,9 +1115,9 @@ impl MediatedConnection {
                 did: did_doc.id.clone(),
                 recipient_keys: did_doc.recipient_keys()?,
                 routing_keys: did_doc.routing_keys(),
-                service_endpoint: did_doc
-                    .get_endpoint()
-                    .ok_or_else(|| AriesVcxError::from_msg(AriesVcxErrorKind::InvalidUrl, "No URL in DID Doc"))?,
+                service_endpoint: did_doc.get_endpoint().ok_or_else(|| {
+                    AriesVcxError::from_msg(AriesVcxErrorKind::InvalidUrl, "No URL in DID Doc")
+                })?,
                 protocols: self.get_remote_protocols(),
             }),
             None => None,
@@ -966,7 +1154,12 @@ impl MediatedConnection {
                             AriesVcxErrorKind::NoAgentInformation,
                             "Missing cloud agent info",
                         ))?
-                        .download_encrypted_messages(agency_client, uids, status_codes, self.pairwise_info())
+                        .download_encrypted_messages(
+                            agency_client,
+                            uids,
+                            status_codes,
+                            self.pairwise_info(),
+                        )
                         .await?,
                 )
                 .then(|msg| msg.decrypt_noauth(agency_client.get_wallet()))
@@ -983,7 +1176,12 @@ impl MediatedConnection {
                             AriesVcxErrorKind::NoAgentInformation,
                             "Missing cloud agent info",
                         ))?
-                        .download_encrypted_messages(agency_client, uids, status_codes, self.pairwise_info())
+                        .download_encrypted_messages(
+                            agency_client,
+                            uids,
+                            status_codes,
+                            self.pairwise_info(),
+                        )
                         .await?,
                 )
                 .then(|msg| msg.decrypt_auth(agency_client.get_wallet(), &expected_sender_vk))
@@ -1020,7 +1218,10 @@ impl Serialize for MediatedConnection {
         S: Serializer,
     {
         let (state, pairwise_info, cloud_agent_info, source_id, thread_id) = self.to_owned().into();
-        let CloudAgentInfo { agent_did, agent_vk } = cloud_agent_info.unwrap_or_default();
+        let CloudAgentInfo {
+            agent_did,
+            agent_vk,
+        } = cloud_agent_info.unwrap_or_default();
         let data = LegacyAgentInfo {
             pw_did: pairwise_info.pw_did,
             pw_vk: pairwise_info.pw_vk,
@@ -1074,7 +1275,14 @@ impl<'de> Visitor<'de> for ConnectionVisitor {
                     agent_did: data.agent_did,
                     agent_vk: data.agent_vk,
                 };
-                Ok((state, pairwise_info, Some(cloud_agent_info), source_id, thread_id).into())
+                Ok((
+                    state,
+                    pairwise_info,
+                    Some(cloud_agent_info),
+                    source_id,
+                    thread_id,
+                )
+                    .into())
             }
         }
     }
@@ -1089,8 +1297,24 @@ impl<'de> Deserialize<'de> for MediatedConnection {
     }
 }
 
-impl From<MediatedConnection> for (SmConnectionState, PairwiseInfo, Option<CloudAgentInfo>, String, String) {
-    fn from(s: MediatedConnection) -> (SmConnectionState, PairwiseInfo, Option<CloudAgentInfo>, String, String) {
+impl From<MediatedConnection>
+    for (
+        SmConnectionState,
+        PairwiseInfo,
+        Option<CloudAgentInfo>,
+        String,
+        String,
+    )
+{
+    fn from(
+        s: MediatedConnection,
+    ) -> (
+        SmConnectionState,
+        PairwiseInfo,
+        Option<CloudAgentInfo>,
+        String,
+        String,
+    ) {
         (
             s.state_object(),
             s.pairwise_info().to_owned(),
@@ -1101,7 +1325,15 @@ impl From<MediatedConnection> for (SmConnectionState, PairwiseInfo, Option<Cloud
     }
 }
 
-impl From<(SmConnectionState, PairwiseInfo, Option<CloudAgentInfo>, String, String)> for MediatedConnection {
+impl
+    From<(
+        SmConnectionState,
+        PairwiseInfo,
+        Option<CloudAgentInfo>,
+        String,
+        String,
+    )> for MediatedConnection
+{
     fn from(
         (state, pairwise_info, cloud_agent_info, source_id, thread_id): (
             SmConnectionState,
@@ -1111,6 +1343,13 @@ impl From<(SmConnectionState, PairwiseInfo, Option<CloudAgentInfo>, String, Stri
             String,
         ),
     ) -> MediatedConnection {
-        MediatedConnection::from_parts(source_id, thread_id, pairwise_info, cloud_agent_info, state, true)
+        MediatedConnection::from_parts(
+            source_id,
+            thread_id,
+            pairwise_info,
+            cloud_agent_info,
+            state,
+            true,
+        )
     }
 }

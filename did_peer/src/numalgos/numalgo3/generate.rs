@@ -25,7 +25,8 @@ mod tests {
             .SeyJ0IjoiZG0iLCJzIjoiaHR0cHM6Ly9leGFtcGxlLmNvbS9lbmRwb2ludCIsInIiOlsiZGlkOmV4YW1wbGU6c29tZW1lZGlhdG9yI3NvbWVrZXkiXSwiYSI6WyJkaWRjb21tL3YyIiwiZGlkY29tbS9haXAyO2Vudj1yZmM1ODciXX0".to_string()).unwrap();
         assert_eq!(
             PeerDid::<Numalgo3>::parse(
-                "did:peer:3.0e857e93798921e83cfc2ef8bee9cafc25f15f4c9c7bee5ed9a9c62b56a62cca".to_string()
+                "did:peer:3.0e857e93798921e83cfc2ef8bee9cafc25f15f4c9c7bee5ed9a9c62b56a62cca"
+                    .to_string()
             )
             .unwrap(),
             generate_numalgo3(&peer_did_2).unwrap()

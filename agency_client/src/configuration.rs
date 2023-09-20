@@ -13,7 +13,9 @@ impl Default for AgentProvisionConfig {
         Self {
             agency_did: Default::default(),
             agency_verkey: Default::default(),
-            agency_endpoint: "http://127.0.0.1:8080".parse().expect("should be valid url"),
+            agency_endpoint: "http://127.0.0.1:8080"
+                .parse()
+                .expect("should be valid url"),
             agent_seed: Default::default(),
         }
     }
@@ -34,7 +36,9 @@ impl Default for AgencyClientConfig {
     fn default() -> Self {
         Self {
             agency_did: Default::default(),
-            agency_endpoint: "http://127.0.0.1:8080".parse().expect("should be valid url"),
+            agency_endpoint: "http://127.0.0.1:8080"
+                .parse()
+                .expect("should be valid url"),
             agency_verkey: Default::default(),
             remote_to_sdk_did: Default::default(),
             remote_to_sdk_verkey: Default::default(),

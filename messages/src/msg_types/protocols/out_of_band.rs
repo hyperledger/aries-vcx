@@ -45,7 +45,10 @@ mod tests {
 
     #[test]
     fn test_version_resolution_out_of_band() {
-        test_utils::test_msg_type_resolution("https://didcomm.org/out-of-band/1.255", OutOfBandTypeV1::new_v1_1())
+        test_utils::test_msg_type_resolution(
+            "https://didcomm.org/out-of-band/1.255",
+            OutOfBandTypeV1::new_v1_1(),
+        )
     }
 
     #[test]

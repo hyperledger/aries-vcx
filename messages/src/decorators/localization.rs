@@ -132,7 +132,8 @@ pub mod tests {
         let code = "test_code".to_owned();
         let locale = Locale::default();
         let catalogs = vec!["https://dummy.dummy/dummy".parse().unwrap()];
-        let translations = HashMap::from([(Locale(Language::Fra), "test, but in french".to_owned())]);
+        let translations =
+            HashMap::from([(Locale(Language::Fra), "test, but in french".to_owned())]);
 
         FieldLocalization::builder()
             .code(code)
@@ -148,9 +149,15 @@ pub mod tests {
 
     pub fn make_extended_msg_localization() -> MsgLocalization {
         let catalogs = vec!["https://dummy.dummy/dummy".parse().unwrap()];
-        let locales = HashMap::from([(Locale(Language::Fra), vec!["test, but in french".to_owned()])]);
+        let locales = HashMap::from([(
+            Locale(Language::Fra),
+            vec!["test, but in french".to_owned()],
+        )]);
 
-        MsgLocalization::builder().catalogs(catalogs).locales(locales).build()
+        MsgLocalization::builder()
+            .catalogs(catalogs)
+            .locales(locales)
+            .build()
     }
 
     #[test]

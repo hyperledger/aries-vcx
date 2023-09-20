@@ -1,5 +1,6 @@
-use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 use aries_vcx::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
+
+use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 
 pub fn map_ariesvcx_result<T>(result: VcxResult<T>) -> LibvcxResult<T> {
     match result {
@@ -36,14 +37,22 @@ impl From<AriesVcxErrorKind> for LibvcxErrorKind {
             AriesVcxErrorKind::RevDeltaNotFound => LibvcxErrorKind::RevDeltaNotFound,
             AriesVcxErrorKind::RevDeltaFailedToClear => LibvcxErrorKind::RevDeltaFailedToClear,
             AriesVcxErrorKind::CreateRevRegDef => LibvcxErrorKind::CreateRevRegDef,
-            AriesVcxErrorKind::InvalidRevocationDetails => LibvcxErrorKind::InvalidRevocationDetails,
+            AriesVcxErrorKind::InvalidRevocationDetails => {
+                LibvcxErrorKind::InvalidRevocationDetails
+            }
             AriesVcxErrorKind::InvalidRevocationEntry => LibvcxErrorKind::InvalidRevocationEntry,
-            AriesVcxErrorKind::InvalidRevocationTimestamp => LibvcxErrorKind::InvalidRevocationTimestamp,
+            AriesVcxErrorKind::InvalidRevocationTimestamp => {
+                LibvcxErrorKind::InvalidRevocationTimestamp
+            }
             AriesVcxErrorKind::RevRegDefNotFound => LibvcxErrorKind::RevRegDefNotFound,
-            AriesVcxErrorKind::InvalidAttributesStructure => LibvcxErrorKind::InvalidAttributesStructure,
+            AriesVcxErrorKind::InvalidAttributesStructure => {
+                LibvcxErrorKind::InvalidAttributesStructure
+            }
             AriesVcxErrorKind::InvalidProof => LibvcxErrorKind::InvalidProof,
             AriesVcxErrorKind::InvalidSchema => LibvcxErrorKind::InvalidSchema,
-            AriesVcxErrorKind::InvalidProofCredentialData => LibvcxErrorKind::InvalidProofCredentialData,
+            AriesVcxErrorKind::InvalidProofCredentialData => {
+                LibvcxErrorKind::InvalidProofCredentialData
+            }
             AriesVcxErrorKind::InvalidProofRequest => LibvcxErrorKind::InvalidProofRequest,
             AriesVcxErrorKind::InvalidSchemaSeqNo => LibvcxErrorKind::InvalidSchemaSeqNo,
             AriesVcxErrorKind::DuplicationSchema => LibvcxErrorKind::DuplicationSchema,

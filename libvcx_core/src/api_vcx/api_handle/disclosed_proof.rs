@@ -1,24 +1,33 @@
-use aries_vcx::messages::msg_fields::protocols::present_proof::request::RequestPresentation;
-use aries_vcx::messages::msg_fields::protocols::present_proof::PresentProof;
-use aries_vcx::messages::AriesMessage;
+use aries_vcx::{
+    agency_client::testing::mocking::AgencyMockDecrypted,
+    global::settings::indy_mocks_enabled,
+    handlers::proof_presentation::{
+        mediated_prover::prover_find_message_to_handle, prover::Prover,
+    },
+    messages::{
+        msg_fields::protocols::present_proof::{request::RequestPresentation, PresentProof},
+        AriesMessage,
+    },
+    utils::{
+        constants::GET_MESSAGES_DECRYPTED_RESPONSE,
+        mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION,
+    },
+};
 use serde_json;
 
-use aries_vcx::agency_client::testing::mocking::AgencyMockDecrypted;
-use aries_vcx::handlers::proof_presentation::mediated_prover::prover_find_message_to_handle;
-use aries_vcx::handlers::proof_presentation::prover::Prover;
-use aries_vcx::utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
-use aries_vcx::{
-    global::settings::indy_mocks_enabled, utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION,
+use crate::{
+    api_vcx::{
+        api_global::profile::{
+            get_main_anoncreds, get_main_anoncreds_ledger_read, get_main_profile,
+        },
+        api_handle::{mediated_connection, object_cache::ObjectCache},
+    },
+    errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult},
 };
 
-use crate::api_vcx::api_global::profile::{get_main_anoncreds, get_main_anoncreds_ledger_read, get_main_profile};
-use crate::api_vcx::api_handle::mediated_connection;
-use crate::api_vcx::api_handle::object_cache::ObjectCache;
-
-use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
-
 lazy_static! {
-    static ref HANDLE_MAP: ObjectCache<Prover> = ObjectCache::<Prover>::new("disclosed-proofs-cache");
+    static ref HANDLE_MAP: ObjectCache<Prover> =
+        ObjectCache::<Prover>::new("disclosed-proofs-cache");
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -35,16 +44,40 @@ pub fn create_with_proof_request(source_id: &str, proof_req: &str) -> LibvcxResu
         proof_req
     );
 
-    let presentation_request: RequestPresentation = serde_json::from_str(proof_req).map_err(|err| LibvcxError::from_msg(LibvcxErrorKind::InvalidJson, format!("Strict `aries` protocol is enabled. Can not parse `aries` formatted Presentation Request: {}\nError: {}", proof_req, err)))?;
+    let presentation_request: RequestPresentation =
+        serde_json::from_str(proof_req).map_err(|err| {
+            LibvcxError::from_msg(
+                LibvcxErrorKind::InvalidJson,
+                format!(
+                    "Strict `aries` protocol is enabled. Can not parse `aries` formatted \
+                     Presentation Request: {}\nError: {}",
+                    proof_req, err
+                ),
+            )
+        })?;
 
     let proof = Prover::create_from_request(source_id, presentation_request)?;
     HANDLE_MAP.add(proof)
 }
 
-pub async fn create_with_msgid(source_id: &str, connection_handle: u32, msg_id: &str) -> LibvcxResult<(u32, String)> {
+pub async fn create_with_msgid(
+    source_id: &str,
+    connection_handle: u32,
+    msg_id: &str,
+) -> LibvcxResult<(u32, String)> {
     let proof_request = get_proof_request(connection_handle, msg_id).await?;
 
-    let presentation_request: RequestPresentation = serde_json::from_str(&proof_request).map_err(|err| LibvcxError::from_msg(LibvcxErrorKind::InvalidJson, format!("Strict `aries` protocol is enabled. Can not parse `aries` formatted Presentation Request: {}\nError: {}", proof_request, err)))?;
+    let presentation_request: RequestPresentation =
+        serde_json::from_str(&proof_request).map_err(|err| {
+            LibvcxError::from_msg(
+                LibvcxErrorKind::InvalidJson,
+                format!(
+                    "Strict `aries` protocol is enabled. Can not parse `aries` formatted \
+                     Presentation Request: {}\nError: {}",
+                    proof_request, err
+                ),
+            )
+        })?;
 
     let proof = Prover::create_from_request(source_id, presentation_request)?;
 
@@ -57,10 +90,16 @@ pub async fn create_with_msgid(source_id: &str, connection_handle: u32, msg_id: 
 pub fn get_state(handle: u32) -> LibvcxResult<u32> {
     HANDLE_MAP
         .get(handle, |proof| Ok(proof.get_state().into()))
-        .map_err(|e| LibvcxError::from_msg(LibvcxErrorKind::InvalidDisclosedProofHandle, e.to_string()))
+        .map_err(|e| {
+            LibvcxError::from_msg(LibvcxErrorKind::InvalidDisclosedProofHandle, e.to_string())
+        })
 }
 
-pub async fn update_state(handle: u32, message: Option<&str>, connection_handle: u32) -> LibvcxResult<u32> {
+pub async fn update_state(
+    handle: u32,
+    message: Option<&str>,
+    connection_handle: u32,
+) -> LibvcxResult<u32> {
     let mut proof = HANDLE_MAP.get_cloned(handle)?;
     trace!(
         "disclosed_proof::update_state >>> connection_handle: {:?}, message: {:?}",
@@ -84,11 +123,17 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
                 ),
             )
         })?;
-        trace!("disclosed_proof::update_state >>> updating using message {:?}", message);
+        trace!(
+            "disclosed_proof::update_state >>> updating using message {:?}",
+            message
+        );
         proof.process_aries_msg(message.into()).await?;
     } else {
         let messages = mediated_connection::get_messages(connection_handle).await?;
-        trace!("disclosed_proof::update_state >>> found messages: {:?}", messages);
+        trace!(
+            "disclosed_proof::update_state >>> found messages: {:?}",
+            messages
+        );
         if let Some((uid, message)) = prover_find_message_to_handle(&proof, messages) {
             proof.process_aries_msg(message).await?;
             mediated_connection::update_message_status(connection_handle, &uid).await?;
@@ -124,9 +169,9 @@ pub fn from_string(proof_data: &str) -> LibvcxResult<u32> {
 }
 
 pub fn release(handle: u32) -> LibvcxResult<()> {
-    HANDLE_MAP
-        .release(handle)
-        .map_err(|e| LibvcxError::from_msg(LibvcxErrorKind::InvalidDisclosedProofHandle, e.to_string()))
+    HANDLE_MAP.release(handle).map_err(|e| {
+        LibvcxError::from_msg(LibvcxErrorKind::InvalidDisclosedProofHandle, e.to_string())
+    })
 }
 
 pub fn release_all() {
@@ -163,13 +208,20 @@ pub async fn reject_proof(handle: u32, connection_handle: u32) -> LibvcxResult<(
     let mut proof = HANDLE_MAP.get_cloned(handle)?;
     let send_message = mediated_connection::send_message_closure(connection_handle).await?;
     let message = proof
-        .decline_presentation_request(Some(String::from("Presentation Request was rejected")), None)
+        .decline_presentation_request(
+            Some(String::from("Presentation Request was rejected")),
+            None,
+        )
         .await?;
     send_message(message).await?;
     HANDLE_MAP.insert(handle, proof)
 }
 
-pub async fn generate_proof(handle: u32, credentials: &str, self_attested_attrs: &str) -> LibvcxResult<()> {
+pub async fn generate_proof(
+    handle: u32,
+    credentials: &str,
+    self_attested_attrs: &str,
+) -> LibvcxResult<()> {
     let mut proof = HANDLE_MAP.get_cloned(handle)?;
     proof
         .generate_presentation(
@@ -191,7 +243,10 @@ pub async fn decline_presentation_request(
     let mut proof = HANDLE_MAP.get_cloned(handle)?;
     let send_message = mediated_connection::send_message_closure(connection_handle).await?;
     let message = proof
-        .decline_presentation_request(reason.map(|s| s.to_string()), proposal.map(|s| s.to_string()))
+        .decline_presentation_request(
+            reason.map(|s| s.to_string()),
+            proposal.map(|s| s.to_string()),
+        )
         .await?;
     send_message(message).await?;
     HANDLE_MAP.insert(handle, proof)
@@ -212,7 +267,9 @@ pub fn get_proof_request_data(handle: u32) -> LibvcxResult<String> {
 
 pub fn get_proof_request_attachment(handle: u32) -> LibvcxResult<String> {
     HANDLE_MAP.get(handle, |proof| {
-        proof.get_proof_request_attachment().map_err(|err| err.into())
+        proof
+            .get_proof_request_attachment()
+            .map_err(|err| err.into())
     })
 }
 
@@ -221,7 +278,9 @@ pub fn is_valid_handle(handle: u32) -> bool {
 }
 
 pub fn get_thread_id(handle: u32) -> LibvcxResult<String> {
-    HANDLE_MAP.get(handle, |proof| proof.get_thread_id().map_err(|err| err.into()))
+    HANDLE_MAP.get(handle, |proof| {
+        proof.get_thread_id().map_err(|err| err.into())
+    })
 }
 
 async fn get_proof_request(connection_handle: u32, msg_id: &str) -> LibvcxResult<String> {
@@ -240,7 +299,9 @@ async fn get_proof_request(connection_handle: u32, msg_id: &str) -> LibvcxResult
         let message = mediated_connection::get_message_by_id(connection_handle, msg_id).await?;
 
         match message {
-            AriesMessage::PresentProof(PresentProof::RequestPresentation(presentation_request)) => presentation_request,
+            AriesMessage::PresentProof(PresentProof::RequestPresentation(presentation_request)) => {
+                presentation_request
+            }
             msg => {
                 return Err(LibvcxError::from_msg(
                     LibvcxErrorKind::InvalidMessages,
@@ -263,14 +324,15 @@ pub async fn get_proof_request_messages(connection_handle: u32) -> LibvcxResult<
         connection_handle
     );
 
-    let presentation_requests: Vec<AriesMessage> = mediated_connection::get_messages(connection_handle)
-        .await?
-        .into_iter()
-        .filter_map(|(_, message)| match message {
-            AriesMessage::PresentProof(PresentProof::RequestPresentation(_)) => Some(message),
-            _ => None,
-        })
-        .collect();
+    let presentation_requests: Vec<AriesMessage> =
+        mediated_connection::get_messages(connection_handle)
+            .await?
+            .into_iter()
+            .filter_map(|(_, message)| match message {
+                AriesMessage::PresentProof(PresentProof::RequestPresentation(_)) => Some(message),
+                _ => None,
+            })
+            .collect();
 
     Ok(json!(presentation_requests).to_string())
 }
@@ -290,25 +352,32 @@ pub fn get_presentation_status(handle: u32) -> LibvcxResult<u32> {
 mod tests {
     extern crate serde_json;
 
+    use aries_vcx::{
+        utils,
+        utils::{
+            constants::{
+                ARIES_PROVER_CREDENTIALS, ARIES_PROVER_SELF_ATTESTED_ATTRS,
+                GET_MESSAGES_DECRYPTED_RESPONSE,
+            },
+            devsetup::{SetupDefaults, SetupMocks},
+            mockdata::{
+                mock_settings::MockBuilder,
+                mockdata_proof,
+                mockdata_proof::{ARIES_PROOF_PRESENTATION_ACK, ARIES_PROOF_REQUEST_PRESENTATION},
+            },
+        },
+    };
     use serde_json::Value;
 
+    use super::*;
     #[cfg(test)]
     use crate::api_vcx::api_handle::mediated_connection::test_utils::{
         build_test_connection_invitee_completed, build_test_connection_inviter_requested,
     };
-    use aries_vcx::utils;
-    use aries_vcx::utils::constants::{
-        ARIES_PROVER_CREDENTIALS, ARIES_PROVER_SELF_ATTESTED_ATTRS, GET_MESSAGES_DECRYPTED_RESPONSE,
+    use crate::aries_vcx::{
+        common::proofs::proof_request::PresentationRequestData,
+        protocols::proof_presentation::prover::state_machine::ProverState,
     };
-    use aries_vcx::utils::devsetup::{SetupDefaults, SetupMocks};
-    use aries_vcx::utils::mockdata::mock_settings::MockBuilder;
-    use aries_vcx::utils::mockdata::mockdata_proof;
-    use aries_vcx::utils::mockdata::mockdata_proof::{ARIES_PROOF_PRESENTATION_ACK, ARIES_PROOF_REQUEST_PRESENTATION};
-
-    use crate::aries_vcx::common::proofs::proof_request::PresentationRequestData;
-    use crate::aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
-
-    use super::*;
 
     async fn _get_proof_request_messages(connection_h: u32) -> String {
         let requests = get_proof_request_messages(connection_h).await.unwrap();
@@ -320,9 +389,13 @@ mod tests {
     #[tokio::test]
     async fn test_vcx_disclosed_proof_release() {
         let _setup = SetupMocks::init();
-        let handle = create_with_proof_request("TEST_CREDENTIAL", ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
+        let handle =
+            create_with_proof_request("TEST_CREDENTIAL", ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
         release(handle).unwrap();
-        assert_eq!(to_string(handle).unwrap_err().kind, LibvcxErrorKind::InvalidHandle)
+        assert_eq!(
+            to_string(handle).unwrap_err().kind,
+            LibvcxErrorKind::InvalidHandle
+        )
     }
 
     #[tokio::test]
@@ -359,18 +432,29 @@ mod tests {
             get_state(handle_proof).unwrap()
         );
 
-        let _mock_builder = MockBuilder::init().set_mock_generate_indy_proof("{\"selected\":\"credentials\"}");
+        let _mock_builder =
+            MockBuilder::init().set_mock_generate_indy_proof("{\"selected\":\"credentials\"}");
 
         generate_proof(handle_proof, "{\"selected\":\"credentials\"}", "{}")
             .await
             .unwrap();
         send_proof(handle_proof, connection_h).await.unwrap();
-        assert_eq!(ProverState::PresentationSent as u32, get_state(handle_proof).unwrap());
+        assert_eq!(
+            ProverState::PresentationSent as u32,
+            get_state(handle_proof).unwrap()
+        );
 
-        update_state(handle_proof, Some(ARIES_PROOF_PRESENTATION_ACK), connection_h)
-            .await
-            .unwrap();
-        assert_eq!(ProverState::Finished as u32, get_state(handle_proof).unwrap());
+        update_state(
+            handle_proof,
+            Some(ARIES_PROOF_PRESENTATION_ACK),
+            connection_h,
+        )
+        .await
+        .unwrap();
+        assert_eq!(
+            ProverState::Finished as u32,
+            get_state(handle_proof).unwrap()
+        );
     }
 
     #[tokio::test]
@@ -390,19 +474,31 @@ mod tests {
             get_state(handle).unwrap()
         );
 
-        generate_proof(handle, ARIES_PROVER_CREDENTIALS, ARIES_PROVER_SELF_ATTESTED_ATTRS)
-            .await
-            .unwrap();
-        assert_eq!(ProverState::PresentationPrepared as u32, get_state(handle).unwrap());
+        generate_proof(
+            handle,
+            ARIES_PROVER_CREDENTIALS,
+            ARIES_PROVER_SELF_ATTESTED_ATTRS,
+        )
+        .await
+        .unwrap();
+        assert_eq!(
+            ProverState::PresentationPrepared as u32,
+            get_state(handle).unwrap()
+        );
 
         send_proof(handle, connection_handle).await.unwrap();
-        assert_eq!(ProverState::PresentationSent as u32, get_state(handle).unwrap());
+        assert_eq!(
+            ProverState::PresentationSent as u32,
+            get_state(handle).unwrap()
+        );
 
         mediated_connection::release(connection_handle).unwrap();
         let connection_handle = build_test_connection_inviter_requested().await;
 
         AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
-        AgencyMockDecrypted::set_next_decrypted_message(mockdata_proof::ARIES_PROOF_PRESENTATION_ACK);
+        AgencyMockDecrypted::set_next_decrypted_message(
+            mockdata_proof::ARIES_PROOF_PRESENTATION_ACK,
+        );
 
         update_state(handle, None, connection_handle).await.unwrap();
         assert_eq!(ProverState::Finished as u32, get_state(handle).unwrap());
@@ -458,7 +554,10 @@ mod tests {
     async fn test_deserialize_fails() {
         let _setup = SetupDefaults::init();
 
-        assert_eq!(from_string("{}").unwrap_err().kind(), LibvcxErrorKind::InvalidJson);
+        assert_eq!(
+            from_string("{}").unwrap_err().kind(),
+            LibvcxErrorKind::InvalidJson
+        );
     }
 
     #[tokio::test]

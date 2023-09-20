@@ -2,11 +2,17 @@ use std::collections::HashMap;
 
 use async_trait::async_trait;
 
-use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
-use crate::utils::async_fn_iterator::AsyncFnIterator;
-use crate::wallet::base_wallet::BaseWallet;
-use crate::wallet::indy::{internal, IndySdkWallet, IndyWalletRecordIterator, WalletRecord};
-use crate::{indy, wallet, WalletHandle};
+use crate::{
+    errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
+    indy,
+    utils::async_fn_iterator::AsyncFnIterator,
+    wallet,
+    wallet::{
+        base_wallet::BaseWallet,
+        indy::{internal, IndySdkWallet, IndyWalletRecordIterator, WalletRecord},
+    },
+    WalletHandle,
+};
 
 #[allow(unused_variables)]
 #[async_trait]
@@ -38,12 +44,20 @@ impl BaseWallet for IndySdkWallet {
         value: &str,
         tags: Option<HashMap<String, String>>,
     ) -> VcxCoreResult<()> {
-        let res = tags.map(|x| serde_json::to_string(&x)).transpose()?.to_owned();
+        let res = tags
+            .map(|x| serde_json::to_string(&x))
+            .transpose()?
+            .to_owned();
         let tags_json = res.as_deref();
         internal::add_wallet_record(self.wallet_handle, xtype, id, value, tags_json).await
     }
 
-    async fn get_wallet_record(&self, xtype: &str, id: &str, options: &str) -> VcxCoreResult<String> {
+    async fn get_wallet_record(
+        &self,
+        xtype: &str,
+        id: &str,
+        options: &str,
+    ) -> VcxCoreResult<String> {
         internal::get_wallet_record(self.wallet_handle, xtype, id, options).await
     }
 
@@ -64,7 +78,12 @@ impl BaseWallet for IndySdkWallet {
         internal::delete_wallet_record(self.wallet_handle, xtype, id).await
     }
 
-    async fn update_wallet_record_value(&self, xtype: &str, id: &str, value: &str) -> VcxCoreResult<()> {
+    async fn update_wallet_record_value(
+        &self,
+        xtype: &str,
+        id: &str,
+        value: &str,
+    ) -> VcxCoreResult<()> {
         internal::update_wallet_record_value(self.wallet_handle, xtype, id, value).await
     }
 
@@ -78,12 +97,22 @@ impl BaseWallet for IndySdkWallet {
         internal::update_wallet_record_tags(self.wallet_handle, xtype, id, &tags_json).await
     }
 
-    async fn add_wallet_record_tags(&self, xtype: &str, id: &str, tags: HashMap<String, String>) -> VcxCoreResult<()> {
+    async fn add_wallet_record_tags(
+        &self,
+        xtype: &str,
+        id: &str,
+        tags: HashMap<String, String>,
+    ) -> VcxCoreResult<()> {
         let tags_json = serde_json::to_string(&tags)?;
         internal::add_wallet_record_tags(self.wallet_handle, xtype, id, &tags_json).await
     }
 
-    async fn delete_wallet_record_tags(&self, xtype: &str, id: &str, tag_names: &str) -> VcxCoreResult<()> {
+    async fn delete_wallet_record_tags(
+        &self,
+        xtype: &str,
+        id: &str,
+        tag_names: &str,
+    ) -> VcxCoreResult<()> {
         internal::delete_wallet_record_tags(self.wallet_handle, xtype, id, tag_names).await
     }
 
@@ -93,7 +122,8 @@ impl BaseWallet for IndySdkWallet {
         query: &str,
         options: &str,
     ) -> VcxCoreResult<Box<dyn AsyncFnIterator<Item = VcxCoreResult<String>>>> {
-        let search = internal::open_search_wallet(self.wallet_handle, xtype, query, options).await?;
+        let search =
+            internal::open_search_wallet(self.wallet_handle, xtype, query, options).await?;
         let iter = IndyWalletRecordIterator::new(self.wallet_handle, search);
 
         Ok(Box::new(iter))
@@ -107,7 +137,12 @@ impl BaseWallet for IndySdkWallet {
         wallet::indy::signing::verify(vk, msg, signature).await
     }
 
-    async fn pack_message(&self, sender_vk: Option<&str>, receiver_keys: &str, msg: &[u8]) -> VcxCoreResult<Vec<u8>> {
+    async fn pack_message(
+        &self,
+        sender_vk: Option<&str>,
+        receiver_keys: &str,
+        msg: &[u8],
+    ) -> VcxCoreResult<Vec<u8>> {
         wallet::indy::signing::pack_message(self.wallet_handle, sender_vk, receiver_keys, msg).await
     }
 

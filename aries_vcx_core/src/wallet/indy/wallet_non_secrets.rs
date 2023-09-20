@@ -1,10 +1,12 @@
 use serde_json;
 
-use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
-use crate::wallet::indy::internal::{
-    add_wallet_record, delete_wallet_record, get_wallet_record, update_wallet_record_value,
+use crate::{
+    errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
+    wallet::indy::internal::{
+        add_wallet_record, delete_wallet_record, get_wallet_record, update_wallet_record_value,
+    },
+    WalletHandle,
 };
-use crate::WalletHandle;
 
 static WALLET_RECORD_TYPE: &str = "cache";
 static RECORD_ID_PREFIX: &str = "rev_reg_delta:";
@@ -44,7 +46,8 @@ pub async fn get_rev_reg_delta(wallet_handle: WalletHandle, rev_reg_id: &str) ->
             Ok(cache) => cache,
             Err(err) => {
                 warn!(
-                    "get_rev_reg_delta >> Unable to convert rev_reg_delta cache for rev_reg_id: {}, json: {}, error: {}",
+                    "get_rev_reg_delta >> Unable to convert rev_reg_delta cache for rev_reg_id: \
+                     {}, json: {}, error: {}",
                     rev_reg_id, json, err
                 );
                 None
@@ -52,7 +55,8 @@ pub async fn get_rev_reg_delta(wallet_handle: WalletHandle, rev_reg_id: &str) ->
         },
         Err(err) => {
             warn!(
-                "get_rev_reg_delta >> Unable to get rev_reg_delta cache for rev_reg_id: {}, error: {}",
+                "get_rev_reg_delta >> Unable to get rev_reg_delta cache for rev_reg_id: {}, \
+                 error: {}",
                 rev_reg_id, err
             );
             None
@@ -65,10 +69,14 @@ pub async fn get_rev_reg_delta(wallet_handle: WalletHandle, rev_reg_id: &str) ->
 /// # Arguments
 /// `rev_reg_id`: revocation registry id.
 /// `cache`: Cache object.
-///
-pub async fn set_rev_reg_delta(wallet_handle: WalletHandle, rev_reg_id: &str, cache: &str) -> VcxCoreResult<()> {
+pub async fn set_rev_reg_delta(
+    wallet_handle: WalletHandle,
+    rev_reg_id: &str,
+    cache: &str,
+) -> VcxCoreResult<()> {
     debug!(
-        "set_rev_reg_delta >> Setting store revocation registry delta for revocation registry {} to new value: {}",
+        "set_rev_reg_delta >> Setting store revocation registry delta for revocation registry {} \
+         to new value: {}",
         rev_reg_id, cache
     );
     match serde_json::to_string(cache) {
@@ -76,8 +84,10 @@ pub async fn set_rev_reg_delta(wallet_handle: WalletHandle, rev_reg_id: &str, ca
             let wallet_id = format!("{RECORD_ID_PREFIX}{rev_reg_id}");
             match update_wallet_record_value(wallet_handle, WALLET_RECORD_TYPE, &wallet_id, &json)
                 .await
-                .or(add_wallet_record(wallet_handle, WALLET_RECORD_TYPE, &wallet_id, &json, None).await)
-            {
+                .or(
+                    add_wallet_record(wallet_handle, WALLET_RECORD_TYPE, &wallet_id, &json, None)
+                        .await,
+                ) {
                 Ok(_) => Ok(()),
                 Err(err) => Err(err),
             }
@@ -94,8 +104,10 @@ pub async fn set_rev_reg_delta(wallet_handle: WalletHandle, rev_reg_id: &str, ca
 /// # Arguments
 /// `rev_reg_id`: revocation registry id.
 /// `cache`: Cache object.
-///
-pub async fn clear_rev_reg_delta(wallet_handle: WalletHandle, rev_reg_id: &str) -> VcxCoreResult<String> {
+pub async fn clear_rev_reg_delta(
+    wallet_handle: WalletHandle,
+    rev_reg_id: &str,
+) -> VcxCoreResult<String> {
     debug!(
         "clear_rev_reg_delta >> Clear revocation registry delta for rev_reg_id {}",
         rev_reg_id
@@ -104,14 +116,18 @@ pub async fn clear_rev_reg_delta(wallet_handle: WalletHandle, rev_reg_id: &str) 
         let wallet_id = format!("{RECORD_ID_PREFIX}{rev_reg_id}");
         delete_wallet_record(wallet_handle, WALLET_RECORD_TYPE, &wallet_id).await?;
         info!(
-            "clear_rev_reg_delta >> Cleared stored revocation delta for revocation registry {}, wallet record: ${}",
+            "clear_rev_reg_delta >> Cleared stored revocation delta for revocation registry {}, \
+             wallet record: ${}",
             rev_reg_id, wallet_id
         );
         Ok(last_delta)
     } else {
         Err(AriesVcxCoreError::from_msg(
             AriesVcxCoreErrorKind::IOError,
-            format!("Couldn't fetch delta for rev_reg_id {rev_reg_id} before deletion, deletion skipped"),
+            format!(
+                "Couldn't fetch delta for rev_reg_id {rev_reg_id} before deletion, deletion \
+                 skipped"
+            ),
         ))
     }
 }

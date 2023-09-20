@@ -51,8 +51,8 @@ mod tests {
     use super::*;
     use crate::{
         decorators::{
-            localization::tests::make_extended_msg_localization, thread::tests::make_extended_thread,
-            timing::tests::make_extended_timing,
+            localization::tests::make_extended_msg_localization,
+            thread::tests::make_extended_thread, timing::tests::make_extended_timing,
         },
         misc::test_utils,
         msg_types::connection::ConnectionTypeV1_0,
@@ -70,7 +70,12 @@ mod tests {
             "~thread": decorators.thread
         });
 
-        test_utils::test_msg(content, decorators, ConnectionTypeV1_0::ProblemReport, expected);
+        test_utils::test_msg(
+            content,
+            decorators,
+            ConnectionTypeV1_0::ProblemReport,
+            expected,
+        );
     }
 
     #[test]
@@ -94,6 +99,11 @@ mod tests {
             "~l10n": decorators.localization
         });
 
-        test_utils::test_msg(content, decorators, ConnectionTypeV1_0::ProblemReport, expected);
+        test_utils::test_msg(
+            content,
+            decorators,
+            ConnectionTypeV1_0::ProblemReport,
+            expected,
+        );
     }
 }

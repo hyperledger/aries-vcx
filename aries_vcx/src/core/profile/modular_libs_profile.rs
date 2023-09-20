@@ -1,18 +1,20 @@
 use std::sync::Arc;
 
+use aries_vcx_core::{
+    anoncreds::{base_anoncreds::BaseAnonCreds, credx_anoncreds::IndyCredxAnonCreds},
+    ledger::base_ledger::{
+        AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite,
+        TaaConfigurator, TxnAuthrAgrmtOptions,
+    },
+    wallet::base_wallet::BaseWallet,
+};
 use async_trait::async_trait;
 
-use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
-use aries_vcx_core::anoncreds::credx_anoncreds::IndyCredxAnonCreds;
-use aries_vcx_core::ledger::base_ledger::{
-    AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite, TaaConfigurator, TxnAuthrAgrmtOptions,
-};
-use aries_vcx_core::wallet::base_wallet::BaseWallet;
-
-use crate::core::profile::ledger::{build_ledger_components, VcxPoolConfig};
-use crate::errors::error::VcxResult;
-
 use super::profile::Profile;
+use crate::{
+    core::profile::ledger::{build_ledger_components, VcxPoolConfig},
+    errors::error::VcxResult,
+};
 
 #[allow(dead_code)]
 #[derive(Debug)]

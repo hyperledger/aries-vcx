@@ -1,9 +1,12 @@
 use std::sync::Arc;
 
-use agency_client::agency_client::AgencyClient;
-use agency_client::configuration::{AgencyClientConfig, AgentProvisionConfig};
-use aries_vcx_core::wallet::agency_client_wallet::ToBaseAgencyClientWallet;
-use aries_vcx_core::wallet::base_wallet::BaseWallet;
+use agency_client::{
+    agency_client::AgencyClient,
+    configuration::{AgencyClientConfig, AgentProvisionConfig},
+};
+use aries_vcx_core::wallet::{
+    agency_client_wallet::ToBaseAgencyClientWallet, base_wallet::BaseWallet,
+};
 
 use crate::errors::error::prelude::*;
 

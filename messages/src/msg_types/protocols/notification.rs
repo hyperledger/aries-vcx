@@ -44,7 +44,10 @@ mod tests {
 
     #[test]
     fn test_version_resolution_discover_features() {
-        test_utils::test_msg_type_resolution("https://didcomm.org/notification/1.255", NotificationTypeV1::new_v1_0())
+        test_utils::test_msg_type_resolution(
+            "https://didcomm.org/notification/1.255",
+            NotificationTypeV1::new_v1_0(),
+        )
     }
 
     #[test]

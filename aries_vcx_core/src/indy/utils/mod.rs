@@ -1,4 +1,5 @@
 use std::sync::atomic::{AtomicUsize, Ordering};
+
 use vdrtools::{types::validation::Validatable, CommandHandle};
 
 use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};

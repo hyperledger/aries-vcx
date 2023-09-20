@@ -1,4 +1,7 @@
-use aries_vcx_core::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
+use aries_vcx_core::{
+    anoncreds::base_anoncreds::BaseAnonCreds,
+    errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
+};
 use async_trait::async_trait;
 
 use crate::{
@@ -9,7 +12,6 @@ use crate::{
         mockdata::mock_settings::get_mock_creds_retrieved_for_proof_request,
     },
 };
-use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
 
 #[derive(Debug)]
 pub struct MockAnoncreds;
@@ -106,7 +108,10 @@ impl BaseAnonCreds for MockAnoncreds {
         ))
     }
 
-    async fn prover_get_credentials_for_proof_req(&self, _proof_request_json: &str) -> VcxCoreResult<String> {
+    async fn prover_get_credentials_for_proof_req(
+        &self,
+        _proof_request_json: &str,
+    ) -> VcxCoreResult<String> {
         match get_mock_creds_retrieved_for_proof_request() {
             None => Err(AriesVcxCoreError::from_msg(
                 AriesVcxCoreErrorKind::UnimplementedFeature,
@@ -127,7 +132,10 @@ impl BaseAnonCreds for MockAnoncreds {
         _cred_def_json: &str,
         _master_secret_id: &str,
     ) -> VcxCoreResult<(String, String)> {
-        Ok((utils::constants::CREDENTIAL_REQ_STRING.to_owned(), String::new()))
+        Ok((
+            utils::constants::CREDENTIAL_REQ_STRING.to_owned(),
+            String::new(),
+        ))
     }
 
     async fn create_revocation_state(
@@ -204,23 +212,37 @@ impl BaseAnonCreds for MockAnoncreds {
 #[allow(clippy::unwrap_used)]
 mod unit_tests {
 
-    use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
-    use aries_vcx_core::errors::error::{AriesVcxCoreErrorKind, VcxCoreResult};
+    use aries_vcx_core::{
+        anoncreds::base_anoncreds::BaseAnonCreds,
+        errors::error::{AriesVcxCoreErrorKind, VcxCoreResult},
+    };
 
     use crate::utils::mockdata::profile::mock_anoncreds::MockAnoncreds;
 
     #[tokio::test]
     async fn test_unimplemented_methods() {
-        // test used to assert which methods are unimplemented currently, can be removed after all methods implemented
+        // test used to assert which methods are unimplemented currently, can be removed after all
+        // methods implemented
 
         fn assert_unimplemented<T: std::fmt::Debug>(result: VcxCoreResult<T>) {
-            assert_eq!(result.unwrap_err().kind(), AriesVcxCoreErrorKind::UnimplementedFeature)
+            assert_eq!(
+                result.unwrap_err().kind(),
+                AriesVcxCoreErrorKind::UnimplementedFeature
+            )
         }
 
         let anoncreds: Box<dyn BaseAnonCreds> = Box::new(MockAnoncreds);
 
-        assert_unimplemented(anoncreds.verifier_verify_proof("", "", "", "", "", "").await);
-        assert_unimplemented(anoncreds.issuer_create_and_store_revoc_reg("", "", "", 0, "").await);
+        assert_unimplemented(
+            anoncreds
+                .verifier_verify_proof("", "", "", "", "", "")
+                .await,
+        );
+        assert_unimplemented(
+            anoncreds
+                .issuer_create_and_store_revoc_reg("", "", "", 0, "")
+                .await,
+        );
         assert_unimplemented(
             anoncreds
                 .issuer_create_and_store_credential_def("", "", "", None, "")

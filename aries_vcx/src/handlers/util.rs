@@ -37,24 +37,35 @@ macro_rules! matches_opt_thread_id {
 macro_rules! get_attach_as_string {
     ($attachments:expr) => {{
         let __attach = $attachments.get(0).as_ref().map(|a| &a.data.content);
-        let Some(messages::decorators::attachment::AttachmentType::Base64(encoded_attach)) = __attach else {
-            return Err(AriesVcxError::from_msg(
-                AriesVcxErrorKind::SerializationError,
-                format!("Attachment is not base 64 encoded JSON: {:?}", $attachments.get(0)),
-            ));
-        };
+        let Some(messages::decorators::attachment::AttachmentType::Base64(encoded_attach)) =
+                __attach
+            else {
+                return Err(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::SerializationError,
+                    format!(
+                        "Attachment is not base 64 encoded JSON: {:?}",
+                        $attachments.get(0)
+                    ),
+                ));
+            };
         let Ok(bytes) = base64::decode(encoded_attach) else {
-            return Err(AriesVcxError::from_msg(
-                AriesVcxErrorKind::SerializationError,
-                format!("Attachment is not base 64 encoded JSON: {:?}", $attachments.get(0)),
-            ));
-        };
+                return Err(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::SerializationError,
+                    format!(
+                        "Attachment is not base 64 encoded JSON: {:?}",
+                        $attachments.get(0)
+                    ),
+                ));
+            };
         let Ok(attach_string) = String::from_utf8(bytes) else {
-            return Err(AriesVcxError::from_msg(
-                AriesVcxErrorKind::SerializationError,
-                format!("Attachment is not base 64 encoded JSON: {:?}", $attachments.get(0)),
-            ));
-        };
+                return Err(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::SerializationError,
+                    format!(
+                        "Attachment is not base 64 encoded JSON: {:?}",
+                        $attachments.get(0)
+                    ),
+                ));
+            };
 
         attach_string
     }};
@@ -62,7 +73,8 @@ macro_rules! get_attach_as_string {
 
 macro_rules! make_attach_from_str {
     ($str_attach:expr, $id:expr) => {{
-        let attach_type = messages::decorators::attachment::AttachmentType::Base64(base64::encode($str_attach));
+        let attach_type =
+            messages::decorators::attachment::AttachmentType::Base64(base64::encode($str_attach));
         let attach_data = messages::decorators::attachment::AttachmentData::builder()
             .content(attach_type)
             .build();
@@ -75,11 +87,12 @@ macro_rules! make_attach_from_str {
     }};
 }
 
-use crate::global::settings;
 pub(crate) use get_attach_as_string;
 pub(crate) use make_attach_from_str;
 pub(crate) use matches_opt_thread_id;
 pub(crate) use matches_thread_id;
+
+use crate::global::settings;
 
 pub fn verify_thread_id(thread_id: &str, message: &AriesMessage) -> VcxResult<()> {
     // todo: ultimately remove this - improve tests
@@ -90,10 +103,16 @@ pub fn verify_thread_id(thread_id: &str, message: &AriesMessage) -> VcxResult<()
     let is_match = match message {
         AriesMessage::BasicMessage(msg) => matches_opt_thread_id!(msg, thread_id),
         AriesMessage::Connection(Connection::Invitation(msg)) => msg.id == thread_id,
-        AriesMessage::Connection(Connection::ProblemReport(msg)) => matches_thread_id!(msg, thread_id),
-        AriesMessage::Connection(Connection::Request(msg)) => matches_opt_thread_id!(msg, thread_id),
+        AriesMessage::Connection(Connection::ProblemReport(msg)) => {
+            matches_thread_id!(msg, thread_id)
+        }
+        AriesMessage::Connection(Connection::Request(msg)) => {
+            matches_opt_thread_id!(msg, thread_id)
+        }
         AriesMessage::Connection(Connection::Response(msg)) => matches_thread_id!(msg, thread_id),
-        AriesMessage::CredentialIssuance(CredentialIssuance::Ack(msg)) => matches_thread_id!(msg, thread_id),
+        AriesMessage::CredentialIssuance(CredentialIssuance::Ack(msg)) => {
+            matches_thread_id!(msg, thread_id)
+        }
         AriesMessage::CredentialIssuance(CredentialIssuance::IssueCredential(msg)) => {
             matches_thread_id!(msg, thread_id)
         }
@@ -110,17 +129,33 @@ pub fn verify_thread_id(thread_id: &str, message: &AriesMessage) -> VcxResult<()
             matches_opt_thread_id!(msg, thread_id)
         }
         AriesMessage::DiscoverFeatures(DiscoverFeatures::Query(msg)) => msg.id == thread_id,
-        AriesMessage::DiscoverFeatures(DiscoverFeatures::Disclose(msg)) => matches_thread_id!(msg, thread_id),
+        AriesMessage::DiscoverFeatures(DiscoverFeatures::Disclose(msg)) => {
+            matches_thread_id!(msg, thread_id)
+        }
         AriesMessage::Notification(Notification::Ack(msg)) => matches_thread_id!(msg, thread_id),
-        AriesMessage::Notification(Notification::ProblemReport(msg)) => matches_opt_thread_id!(msg, thread_id),
+        AriesMessage::Notification(Notification::ProblemReport(msg)) => {
+            matches_opt_thread_id!(msg, thread_id)
+        }
         AriesMessage::OutOfBand(OutOfBand::Invitation(msg)) => msg.id == thread_id,
-        AriesMessage::OutOfBand(OutOfBand::HandshakeReuse(msg)) => matches_thread_id!(msg, thread_id),
-        AriesMessage::OutOfBand(OutOfBand::HandshakeReuseAccepted(msg)) => matches_thread_id!(msg, thread_id),
+        AriesMessage::OutOfBand(OutOfBand::HandshakeReuse(msg)) => {
+            matches_thread_id!(msg, thread_id)
+        }
+        AriesMessage::OutOfBand(OutOfBand::HandshakeReuseAccepted(msg)) => {
+            matches_thread_id!(msg, thread_id)
+        }
         AriesMessage::PresentProof(PresentProof::Ack(msg)) => matches_thread_id!(msg, thread_id),
-        AriesMessage::PresentProof(PresentProof::Presentation(msg)) => matches_thread_id!(msg, thread_id),
-        AriesMessage::PresentProof(PresentProof::ProposePresentation(msg)) => matches_opt_thread_id!(msg, thread_id),
-        AriesMessage::PresentProof(PresentProof::RequestPresentation(msg)) => matches_opt_thread_id!(msg, thread_id),
-        AriesMessage::PresentProof(PresentProof::ProblemReport(msg)) => matches_opt_thread_id!(msg, thread_id),
+        AriesMessage::PresentProof(PresentProof::Presentation(msg)) => {
+            matches_thread_id!(msg, thread_id)
+        }
+        AriesMessage::PresentProof(PresentProof::ProposePresentation(msg)) => {
+            matches_opt_thread_id!(msg, thread_id)
+        }
+        AriesMessage::PresentProof(PresentProof::RequestPresentation(msg)) => {
+            matches_opt_thread_id!(msg, thread_id)
+        }
+        AriesMessage::PresentProof(PresentProof::ProblemReport(msg)) => {
+            matches_opt_thread_id!(msg, thread_id)
+        }
         AriesMessage::ReportProblem(msg) => matches_opt_thread_id!(msg, thread_id),
         AriesMessage::Revocation(Revocation::Revoke(msg)) => matches_opt_thread_id!(msg, thread_id),
         AriesMessage::Revocation(Revocation::Ack(msg)) => matches_thread_id!(msg, thread_id),

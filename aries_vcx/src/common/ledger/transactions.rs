@@ -1,19 +1,26 @@
-use bs58;
-use diddoc_legacy::aries::diddoc::AriesDidDoc;
-use diddoc_legacy::aries::service::AriesService;
-use messages::msg_fields::protocols::connection::invitation::{Invitation, InvitationContent};
-use messages::msg_fields::protocols::out_of_band::invitation::OobService;
 use std::{collections::HashMap, sync::Arc};
 
-use crate::common::ledger::service_didsov::EndpointDidSov;
-use crate::handlers::util::AnyInvitation;
-use aries_vcx_core::ledger::base_ledger::{IndyLedgerRead, IndyLedgerWrite};
-use aries_vcx_core::ledger::indy_vdr_ledger::{LedgerRole, UpdateRole};
-use aries_vcx_core::wallet::base_wallet::BaseWallet;
+use aries_vcx_core::{
+    ledger::{
+        base_ledger::{IndyLedgerRead, IndyLedgerWrite},
+        indy_vdr_ledger::{LedgerRole, UpdateRole},
+    },
+    wallet::base_wallet::BaseWallet,
+};
+use bs58;
+use diddoc_legacy::aries::{diddoc::AriesDidDoc, service::AriesService};
+use messages::msg_fields::protocols::{
+    connection::invitation::{Invitation, InvitationContent},
+    out_of_band::invitation::OobService,
+};
 use serde_json::Value;
 
-use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
-use crate::{common::keys::get_verkey_from_ledger, global::settings};
+use crate::{
+    common::{keys::get_verkey_from_ledger, ledger::service_didsov::EndpointDidSov},
+    errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
+    global::settings,
+    handlers::util::AnyInvitation,
+};
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -67,7 +74,10 @@ pub struct ReplyDataV1 {
 const DID_KEY_PREFIX: &str = "did:key:";
 const ED25519_MULTIBASE_CODEC: [u8; 2] = [0xed, 0x01];
 
-pub async fn resolve_service(indy_ledger: &Arc<dyn IndyLedgerRead>, service: &OobService) -> VcxResult<AriesService> {
+pub async fn resolve_service(
+    indy_ledger: &Arc<dyn IndyLedgerRead>,
+    service: &OobService,
+) -> VcxResult<AriesService> {
     match service {
         OobService::AriesService(service) => Ok(service.clone()),
         OobService::Did(did) => get_service(indy_ledger, did).await,
@@ -90,7 +100,10 @@ pub async fn add_new_did(
     Ok((did, verkey))
 }
 
-pub async fn into_did_doc(indy_ledger: &Arc<dyn IndyLedgerRead>, invitation: &AnyInvitation) -> VcxResult<AriesDidDoc> {
+pub async fn into_did_doc(
+    indy_ledger: &Arc<dyn IndyLedgerRead>,
+    invitation: &AnyInvitation,
+) -> VcxResult<AriesDidDoc> {
     let mut did_doc: AriesDidDoc = AriesDidDoc::default();
     let (service_endpoint, recipient_keys, routing_keys) = match invitation {
         AnyInvitation::Con(Invitation {
@@ -99,11 +112,20 @@ pub async fn into_did_doc(indy_ledger: &Arc<dyn IndyLedgerRead>, invitation: &An
             decorators,
         }) => {
             did_doc.set_id(content.did.to_string());
-            let service = get_service(indy_ledger, &content.did).await.unwrap_or_else(|err| {
-                error!("Failed to obtain service definition from the ledger: {}", err);
-                AriesService::default()
-            });
-            (service.service_endpoint, service.recipient_keys, service.routing_keys)
+            let service = get_service(indy_ledger, &content.did)
+                .await
+                .unwrap_or_else(|err| {
+                    error!(
+                        "Failed to obtain service definition from the ledger: {}",
+                        err
+                    );
+                    AriesService::default()
+                });
+            (
+                service.service_endpoint,
+                service.recipient_keys,
+                service.routing_keys,
+            )
         }
         AnyInvitation::Con(Invitation {
             id,
@@ -132,14 +154,22 @@ pub async fn into_did_doc(indy_ledger: &Arc<dyn IndyLedgerRead>, invitation: &An
             let service = resolve_service(indy_ledger, &invitation.content.services[0])
                 .await
                 .unwrap_or_else(|err| {
-                    error!("Failed to obtain service definition from the ledger: {}", err);
+                    error!(
+                        "Failed to obtain service definition from the ledger: {}",
+                        err
+                    );
                     AriesService::default()
                 });
-            let recipient_keys = normalize_keys_as_naked(service.recipient_keys).unwrap_or_else(|err| {
-                error!("Is not did valid: {}", err);
-                Vec::new()
-            });
-            (service.service_endpoint, recipient_keys, service.routing_keys)
+            let recipient_keys =
+                normalize_keys_as_naked(service.recipient_keys).unwrap_or_else(|err| {
+                    error!("Is not did valid: {}", err);
+                    Vec::new()
+                });
+            (
+                service.service_endpoint,
+                recipient_keys,
+                service.routing_keys,
+            )
         }
     };
     did_doc.set_service_endpoint(service_endpoint);
@@ -152,7 +182,10 @@ fn _ed25519_public_key_to_did_key(public_key_base58: &str) -> VcxResult<String> 
     let public_key_bytes = bs58::decode(public_key_base58).into_vec().map_err(|_| {
         AriesVcxError::from_msg(
             AriesVcxErrorKind::InvalidDid,
-            format!("Could not base58 decode a did:key fingerprint: {}", public_key_base58),
+            format!(
+                "Could not base58 decode a did:key fingerprint: {}",
+                public_key_base58
+            ),
         )
     })?;
     let mut did_key_bytes = ED25519_MULTIBASE_CODEC.to_vec();
@@ -177,15 +210,23 @@ fn normalize_keys_as_naked(keys_list: Vec<String>) -> VcxResult<Vec<String>> {
             let decoded_value = bs58::decode(stripped).into_vec().map_err(|_| {
                 AriesVcxError::from_msg(
                     AriesVcxErrorKind::InvalidDid,
-                    format!("Could not decode base58: {} as portion of {}", stripped, key),
+                    format!(
+                        "Could not decode base58: {} as portion of {}",
+                        stripped, key
+                    ),
                 )
             })?;
-            let verkey = if let Some(public_key_bytes) = decoded_value.strip_prefix(&ED25519_MULTIBASE_CODEC) {
+            let verkey = if let Some(public_key_bytes) =
+                decoded_value.strip_prefix(&ED25519_MULTIBASE_CODEC)
+            {
                 Ok(bs58::encode(public_key_bytes).into_string())
             } else {
                 Err(AriesVcxError::from_msg(
                     AriesVcxErrorKind::InvalidDid,
-                    format!("Only Ed25519-based did:keys are currently supported, got key: {}", key),
+                    format!(
+                        "Only Ed25519-based did:keys are currently supported, got key: {}",
+                        key
+                    ),
                 ))
             }?;
             result.push(verkey);
@@ -196,7 +237,10 @@ fn normalize_keys_as_naked(keys_list: Vec<String>) -> VcxResult<Vec<String>> {
     Ok(result)
 }
 
-pub async fn get_service(ledger: &Arc<dyn IndyLedgerRead>, did: &String) -> VcxResult<AriesService> {
+pub async fn get_service(
+    ledger: &Arc<dyn IndyLedgerRead>,
+    did: &String,
+) -> VcxResult<AriesService> {
     let did_raw = did.to_string();
     let did_raw = match did_raw.rsplit_once(':') {
         None => did_raw,
@@ -226,14 +270,21 @@ pub async fn parse_legacy_endpoint_attrib(
     let ser_service = match data["service"].as_str() {
         Some(ser_service) => ser_service.to_string(),
         None => {
-            warn!("Failed converting service read from ledger {:?} to string, falling back to new single-serialized format", data["service"]);
+            warn!(
+                "Failed converting service read from ledger {:?} to string, falling back to new \
+                 single-serialized format",
+                data["service"]
+            );
             data["service"].to_string()
         }
     };
     serde_json::from_str(&ser_service).map_err(|err| {
         AriesVcxError::from_msg(
             AriesVcxErrorKind::SerializationError,
-            format!("Failed to deserialize service read from the ledger: {:?}", err),
+            format!(
+                "Failed to deserialize service read from the ledger: {:?}",
+                err
+            ),
         )
     })
 }
@@ -280,12 +331,20 @@ pub async fn write_endpoint(
     Ok(res)
 }
 
-pub async fn add_attr(indy_ledger_write: &Arc<dyn IndyLedgerWrite>, did: &str, attr: &str) -> VcxResult<()> {
+pub async fn add_attr(
+    indy_ledger_write: &Arc<dyn IndyLedgerWrite>,
+    did: &str,
+    attr: &str,
+) -> VcxResult<()> {
     let res = indy_ledger_write.add_attr(did, &attr).await?;
     check_response(&res)
 }
 
-pub async fn get_attr(ledger: &Arc<dyn IndyLedgerRead>, did: &str, attr_name: &str) -> VcxResult<String> {
+pub async fn get_attr(
+    ledger: &Arc<dyn IndyLedgerRead>,
+    did: &str,
+    attr_name: &str,
+) -> VcxResult<String> {
     let attr_resp = ledger.get_attr(did, attr_name).await?;
     let data = get_data_from_response(&attr_resp)?;
     match data.get(attr_name) {
@@ -295,7 +354,11 @@ pub async fn get_attr(ledger: &Arc<dyn IndyLedgerRead>, did: &str, attr_name: &s
     }
 }
 
-pub async fn clear_attr(indy_ledger_write: &Arc<dyn IndyLedgerWrite>, did: &str, attr_name: &str) -> VcxResult<String> {
+pub async fn clear_attr(
+    indy_ledger_write: &Arc<dyn IndyLedgerWrite>,
+    did: &str,
+    attr_name: &str,
+) -> VcxResult<String> {
     indy_ledger_write
         .add_attr(did, &json!({ attr_name: Value::Null }).to_string())
         .await
@@ -325,10 +388,18 @@ fn parse_response(response: &str) -> VcxResult<Response> {
 }
 
 fn get_data_from_response(resp: &str) -> VcxResult<serde_json::Value> {
-    let resp: serde_json::Value = serde_json::from_str(resp)
-        .map_err(|err| AriesVcxError::from_msg(AriesVcxErrorKind::InvalidLedgerResponse, format!("{:?}", err)))?;
-    serde_json::from_str(resp["result"]["data"].as_str().unwrap_or("{}"))
-        .map_err(|err| AriesVcxError::from_msg(AriesVcxErrorKind::InvalidLedgerResponse, format!("{:?}", err)))
+    let resp: serde_json::Value = serde_json::from_str(resp).map_err(|err| {
+        AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidLedgerResponse,
+            format!("{:?}", err),
+        )
+    })?;
+    serde_json::from_str(resp["result"]["data"].as_str().unwrap_or("{}")).map_err(|err| {
+        AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidLedgerResponse,
+            format!("{:?}", err),
+        )
+    })
 }
 
 // #[cfg(test)]
@@ -336,8 +407,8 @@ fn get_data_from_response(resp: &str) -> VcxResult<serde_json::Value> {
 //     use crate::common::test_utils::mock_profile;
 //     use messages::a2a::MessageId;
 //     use messages::diddoc::aries::diddoc::test_utils::{
-//         _key_1, _key_1_did_key, _key_2, _key_2_did_key, _recipient_keys, _routing_keys, _service_endpoint,
-//     };
+//         _key_1, _key_1_did_key, _key_2, _key_2_did_key, _recipient_keys, _routing_keys,
+// _service_endpoint,     };
 //     use messages::protocols::connection::invite::test_utils::_pairwise_invitation;
 //     use messages::protocols::out_of_band::invitation::OutOfBandInvitation;
 
@@ -421,35 +492,36 @@ fn get_data_from_response(resp: &str) -> VcxResult<serde_json::Value> {
 
 //     #[tokio::test]
 //     async fn test_public_key_to_did_naked_with_previously_known_keys_suggested() {
-//         let did_pub_with_key = "did:key:z6MkwHgArrRJq3tTdhQZKVAa1sdFgSAs5P5N1C4RJcD11Ycv".to_string();
-//         let did_pub = "HqR8GcAsVWPzXCZrdvCjAn5Frru1fVq1KB9VULEz6KqY".to_string();
-//         let did_raw = _ed25519_public_key_to_did_key(&did_pub).unwrap();
-//         let recipient_keys = vec![did_raw];
+//         let did_pub_with_key =
+// "did:key:z6MkwHgArrRJq3tTdhQZKVAa1sdFgSAs5P5N1C4RJcD11Ycv".to_string();         let did_pub =
+// "HqR8GcAsVWPzXCZrdvCjAn5Frru1fVq1KB9VULEz6KqY".to_string();         let did_raw =
+// _ed25519_public_key_to_did_key(&did_pub).unwrap();         let recipient_keys = vec![did_raw];
 //         let expected_output = vec![did_pub_with_key];
 //         assert_eq!(recipient_keys, expected_output);
 //     }
 
 //     #[tokio::test]
 //     async fn test_public_key_to_did_naked_with_previously_known_keys_rfc_0360() {
-//         let did_pub_with_key_rfc_0360 = "did:key:z6MkmjY8GnV5i9YTDtPETC2uUAW6ejw3nk5mXF5yci5ab7th".to_string();
-//         let did_pub_rfc_0360 = "8HH5gYEeNc3z7PYXmd54d4x6qAfCNrqQqEB3nS7Zfu7K".to_string();
-//         let did_raw = _ed25519_public_key_to_did_key(&did_pub_rfc_0360).unwrap();
-//         let recipient_keys = vec![did_raw];
-//         let expected_output = vec![did_pub_with_key_rfc_0360];
+//         let did_pub_with_key_rfc_0360 =
+// "did:key:z6MkmjY8GnV5i9YTDtPETC2uUAW6ejw3nk5mXF5yci5ab7th".to_string();         let
+// did_pub_rfc_0360 = "8HH5gYEeNc3z7PYXmd54d4x6qAfCNrqQqEB3nS7Zfu7K".to_string();         let
+// did_raw = _ed25519_public_key_to_did_key(&did_pub_rfc_0360).unwrap();         let recipient_keys
+// = vec![did_raw];         let expected_output = vec![did_pub_with_key_rfc_0360];
 //         assert_eq!(recipient_keys, expected_output);
 //     }
 
 //     #[tokio::test]
 //     async fn test_did_naked_with_previously_known_keys_suggested() {
-//         let did_pub_with_key = vec!["did:key:z6MkwHgArrRJq3tTdhQZKVAa1sdFgSAs5P5N1C4RJcD11Ycv".to_string()];
-//         let did_pub = vec!["HqR8GcAsVWPzXCZrdvCjAn5Frru1fVq1KB9VULEz6KqY".to_string()];
-//         assert_eq!(normalize_keys_as_naked(did_pub_with_key).unwrap(), did_pub);
-//     }
+//         let did_pub_with_key =
+// vec!["did:key:z6MkwHgArrRJq3tTdhQZKVAa1sdFgSAs5P5N1C4RJcD11Ycv".to_string()];         let did_pub
+// = vec!["HqR8GcAsVWPzXCZrdvCjAn5Frru1fVq1KB9VULEz6KqY".to_string()];         assert_eq!
+// (normalize_keys_as_naked(did_pub_with_key).unwrap(), did_pub);     }
 
 //     #[tokio::test]
 //     async fn test_did_naked_with_previously_known_keys_rfc_0360() {
-//         let did_pub_with_key_rfc_0360 = vec!["did:key:z6MkmjY8GnV5i9YTDtPETC2uUAW6ejw3nk5mXF5yci5ab7th".to_string()];
-//         let did_pub_rfc_0360 = vec!["8HH5gYEeNc3z7PYXmd54d4x6qAfCNrqQqEB3nS7Zfu7K".to_string()];
+//         let did_pub_with_key_rfc_0360 =
+// vec!["did:key:z6MkmjY8GnV5i9YTDtPETC2uUAW6ejw3nk5mXF5yci5ab7th".to_string()];         let
+// did_pub_rfc_0360 = vec!["8HH5gYEeNc3z7PYXmd54d4x6qAfCNrqQqEB3nS7Zfu7K".to_string()];
 //         assert_eq!(
 //             normalize_keys_as_naked(did_pub_with_key_rfc_0360).unwrap(),
 //             did_pub_rfc_0360

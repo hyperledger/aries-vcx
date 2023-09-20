@@ -3,7 +3,9 @@ use std::clone::Clone;
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use messages::msg_fields::protocols::discover_features::{disclose::Disclose, ProtocolDescriptor};
 
-use crate::protocols::connection::trait_bounds::{BootstrapDidDoc, CompletedState, TheirDidDoc, ThreadId};
+use crate::protocols::connection::trait_bounds::{
+    BootstrapDidDoc, CompletedState, TheirDidDoc, ThreadId,
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Completed {

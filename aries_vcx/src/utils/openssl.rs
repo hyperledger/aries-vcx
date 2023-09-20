@@ -45,7 +45,8 @@ mod test {
         // string
         {
             let value = "Cat";
-            let expected_value = "32770349619296211525721019403974704547883091481854305319049714074652726739013";
+            let expected_value =
+                "32770349619296211525721019403974704547883091481854305319049714074652726739013";
 
             let encoded_value = encode(value).unwrap();
             assert_eq!(expected_value, encoded_value);

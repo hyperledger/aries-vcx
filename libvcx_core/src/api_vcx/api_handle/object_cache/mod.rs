@@ -1,11 +1,13 @@
-use std::collections::HashMap;
-use std::ops::Deref;
-use std::ops::DerefMut;
-use std::sync::{Mutex, RwLock, RwLockReadGuard, RwLockWriteGuard};
+use std::{
+    collections::HashMap,
+    ops::{Deref, DerefMut},
+    sync::{Mutex, RwLock, RwLockReadGuard, RwLockWriteGuard},
+};
 
-use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 use futures::future::BoxFuture;
 use rand::Rng;
+
+use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 
 pub struct ObjectCache<T>
 where
@@ -70,7 +72,10 @@ where
                 Ok(obj) => closure(obj.deref()),
                 Err(_) => Err(LibvcxError::from_msg(
                     LibvcxErrorKind::ObjectAccessError,
-                    format!("[ObjectCache: {}] get >> Unable to lock Object Store", self.cache_name),
+                    format!(
+                        "[ObjectCache: {}] get >> Unable to lock Object Store",
+                        self.cache_name
+                    ),
                 )),
             },
             None => Err(LibvcxError::from_msg(
@@ -185,7 +190,10 @@ where
     }
 
     pub fn add(&self, obj: T) -> LibvcxResult<u32> {
-        trace!("[ObjectCache: {}] add >> Adding object to cache", self.cache_name);
+        trace!(
+            "[ObjectCache: {}] add >> Adding object to cache",
+            self.cache_name
+        );
         let mut store = self._lock_store_write()?;
 
         let mut new_handle = rand::thread_rng().gen::<u32>();
@@ -205,7 +213,8 @@ where
                 Err(LibvcxError::from_msg(
                     LibvcxErrorKind::InvalidHandle,
                     format!(
-                        "[ObjectCache: {}] add >> generated handle {} conflicts with existing handle, failed to store object",
+                        "[ObjectCache: {}] add >> generated handle {} conflicts with existing \
+                         handle, failed to store object",
                         self.cache_name, new_handle
                     ),
                 ))
@@ -244,7 +253,8 @@ where
             Some(_) => {}
             None => {
                 warn!(
-                    "[ObjectCache: {}] release >> Object not found for handle: {}. Perhaps already released?",
+                    "[ObjectCache: {}] release >> Object not found for handle: {}. Perhaps \
+                     already released?",
                     self.cache_name, handle
                 );
             }
@@ -253,7 +263,10 @@ where
     }
 
     pub fn drain(&self) -> LibvcxResult<()> {
-        warn!("[ObjectCache: {}] drain >> Draining object cache", self.cache_name);
+        warn!(
+            "[ObjectCache: {}] drain >> Draining object cache",
+            self.cache_name
+        );
         let mut store = self._lock_store_write()?;
         store.clear();
         Ok(())

@@ -1,10 +1,13 @@
-use messages::msg_fields::protocols::connection::problem_report::ProblemReport;
-use messages::msg_fields::protocols::connection::request::Request;
-use messages::msg_fields::protocols::connection::response::Response;
+use messages::msg_fields::protocols::connection::{
+    problem_report::ProblemReport, request::Request, response::Response,
+};
 
-use crate::handlers::util::AnyInvitation;
-use crate::protocols::mediated_connection::inviter::states::initial::InitialState;
-use crate::protocols::mediated_connection::inviter::states::requested::RequestedState;
+use crate::{
+    handlers::util::AnyInvitation,
+    protocols::mediated_connection::inviter::states::{
+        initial::InitialState, requested::RequestedState,
+    },
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct InvitedState {

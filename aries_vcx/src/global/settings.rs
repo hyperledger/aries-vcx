@@ -1,5 +1,4 @@
-use std::collections::HashMap;
-use std::sync::RwLock;
+use std::{collections::HashMap, sync::RwLock};
 
 use aries_vcx_core::global::settings::{disable_indy_mocks, enable_indy_mocks};
 
@@ -135,9 +134,8 @@ pub fn get_protocol_version() -> usize {
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 pub mod unit_tests {
-    use crate::utils::devsetup::SetupDefaults;
-
     use super::*;
+    use crate::utils::devsetup::SetupDefaults;
 
     fn _pool_config() -> String {
         r#"{"timeout":40}"#.to_string()

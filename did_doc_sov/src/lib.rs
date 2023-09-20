@@ -95,7 +95,9 @@ impl DidDocumentSovBuilder {
     }
 
     pub fn add_verification_method(mut self, verification_method: VerificationMethod) -> Self {
-        self.ddo_builder = self.ddo_builder.add_verification_method(verification_method);
+        self.ddo_builder = self
+            .ddo_builder
+            .add_verification_method(verification_method);
         self
     }
 
@@ -162,11 +164,19 @@ impl Serialize for DidDocumentSov {
         let mut builder: DidDocumentBuilder<ExtraFieldsSov> = self.did_doc.clone().into();
 
         for service_sov in &self.services {
-            let service: Service<ExtraFieldsSov> = service_sov.clone().try_into().map_err(serde::ser::Error::custom)?;
+            let service: Service<ExtraFieldsSov> = service_sov
+                .clone()
+                .try_into()
+                .map_err(serde::ser::Error::custom)?;
             // Not very efficient, but
             // * we don't expect many services
             // * does not require allowing to remove services from existing DDO or builder
-            if !self.did_doc.service().iter().any(|s| s.id() == service.id()) {
+            if !self
+                .did_doc
+                .service()
+                .iter()
+                .any(|s| s.id() == service.id())
+            {
                 builder = builder.add_service(service);
             }
         }

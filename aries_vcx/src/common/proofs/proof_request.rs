@@ -1,13 +1,10 @@
-use std::collections::HashMap;
-use std::sync::Arc;
-use std::vec::Vec;
+use std::{collections::HashMap, sync::Arc, vec::Vec};
 
 use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
 use serde_json;
 
-use crate::errors::error::prelude::*;
-
 use super::proof_request_internal::{AttrInfo, NonRevokedInterval, PredicateInfo};
+use crate::errors::error::prelude::*;
 
 #[derive(Serialize, Deserialize, Builder, Debug, PartialEq, Eq, Clone)]
 #[builder(setter(into), default)]
@@ -42,11 +39,17 @@ impl ProofRequestData {
     // Explicit referent format:
     // { 'attr_age': { 'name': 'age' }, 'attr_balance': { 'name': 'balance' } }
     // todo: move String parsing to libvcx_core
-    pub fn set_requested_attributes_as_string(mut self, requested_attributes: String) -> VcxResult<Self> {
+    pub fn set_requested_attributes_as_string(
+        mut self,
+        requested_attributes: String,
+    ) -> VcxResult<Self> {
         match serde_json::from_str::<HashMap<String, AttrInfo>>(&requested_attributes) {
             Ok(attrs) => self.requested_attributes = attrs,
             Err(_err) => {
-                warn!("Requested attributes are not in referent format. Trying to parse as array of attributes (deprecated).");
+                warn!(
+                    "Requested attributes are not in referent format. Trying to parse as array of \
+                     attributes (deprecated)."
+                );
                 let requested_attributes: Vec<AttrInfo> =
                     ::serde_json::from_str(&requested_attributes).map_err(|err| {
                         AriesVcxError::from_msg(
@@ -61,7 +64,8 @@ impl ProofRequestData {
                     if attribute.name.is_some() && attribute.names.is_some() {
                         return Err(AriesVcxError::from_msg(
                             AriesVcxErrorKind::InvalidProofRequest,
-                            "Requested attribute can contain either 'name' or 'names'. Not both.".to_string(),
+                            "Requested attribute can contain either 'name' or 'names'. Not both."
+                                .to_string(),
                         ));
                     };
                 }
@@ -77,11 +81,17 @@ impl ProofRequestData {
     // Explicit referent format:
     // { 'is_adult': { name: 'age', p_type: '>=', p_value: 18 } }
     // todo: move String parsing to libvcx_core
-    pub fn set_requested_predicates_as_string(mut self, requested_predicates: String) -> VcxResult<Self> {
+    pub fn set_requested_predicates_as_string(
+        mut self,
+        requested_predicates: String,
+    ) -> VcxResult<Self> {
         match serde_json::from_str::<HashMap<String, PredicateInfo>>(&requested_predicates) {
             Ok(predicates) => self.requested_predicates = predicates,
             Err(_err) => {
-                warn!("Requested predicates are not in referent format. Trying to parse as array of predicates (deprecated).");
+                warn!(
+                    "Requested predicates are not in referent format. Trying to parse as array of \
+                     predicates (deprecated)."
+                );
                 let requested_predicates: Vec<PredicateInfo> =
                     ::serde_json::from_str(&requested_predicates).map_err(|err| {
                         AriesVcxError::from_msg(
@@ -98,7 +108,10 @@ impl ProofRequestData {
         Ok(self)
     }
 
-    pub fn set_requested_attributes_as_vec(mut self, requested_attrs: Vec<AttrInfo>) -> VcxResult<Self> {
+    pub fn set_requested_attributes_as_vec(
+        mut self,
+        requested_attrs: Vec<AttrInfo>,
+    ) -> VcxResult<Self> {
         self.requested_attributes = requested_attrs
             .into_iter()
             .enumerate()
@@ -107,7 +120,10 @@ impl ProofRequestData {
         Ok(self)
     }
 
-    fn set_requested_predicates_as_vec(mut self, predicates: Vec<PredicateInfo>) -> VcxResult<Self> {
+    fn set_requested_predicates_as_vec(
+        mut self,
+        predicates: Vec<PredicateInfo>,
+    ) -> VcxResult<Self> {
         self.requested_predicates = predicates
             .into_iter()
             .enumerate()
@@ -117,12 +133,13 @@ impl ProofRequestData {
     }
 
     pub fn set_not_revoked_interval(mut self, non_revoc_interval: String) -> VcxResult<Self> {
-        let non_revoc_interval: NonRevokedInterval = ::serde_json::from_str(&non_revoc_interval).map_err(|_| {
-            AriesVcxError::from_msg(
-                AriesVcxErrorKind::InvalidJson,
-                format!("Invalid Revocation Interval: {:?}", non_revoc_interval),
-            )
-        })?;
+        let non_revoc_interval: NonRevokedInterval = ::serde_json::from_str(&non_revoc_interval)
+            .map_err(|_| {
+                AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidJson,
+                    format!("Invalid Revocation Interval: {:?}", non_revoc_interval),
+                )
+            })?;
 
         self.non_revoked = match (non_revoc_interval.from, non_revoc_interval.to) {
             (None, None) => None,
@@ -164,13 +181,15 @@ pub mod test_utils {
 mod unit_tests {
     use serde_json::Value;
 
-    use crate::utils;
-    use crate::utils::constants::{REQUESTED_ATTRS, REQUESTED_PREDICATES};
-    use crate::utils::devsetup::SetupDefaults;
-    use crate::utils::mockdata::mockdata_proof;
-    use crate::utils::mockdata::profile::mock_anoncreds::MockAnoncreds;
-
     use super::*;
+    use crate::{
+        utils,
+        utils::{
+            constants::{REQUESTED_ATTRS, REQUESTED_PREDICATES},
+            devsetup::SetupDefaults,
+            mockdata::{mockdata_proof, profile::mock_anoncreds::MockAnoncreds},
+        },
+    };
 
     fn _expected_req_attrs() -> HashMap<String, AttrInfo> {
         let mut check_req_attrs: HashMap<String, AttrInfo> = HashMap::new();
@@ -205,9 +224,18 @@ mod unit_tests {
         assert!(serialized_msg.contains(r#""name":"Test","version":"1.0""#));
         assert!(serialized_msg.contains(r#""non_revoked":{"from":1100000000,"to":1600000000}"#));
         let msg_as_value: Value = serde_json::from_str(&serialized_msg).unwrap();
-        assert_eq!(msg_as_value["requested_attributes"]["attribute_0"]["name"], "age");
-        assert_eq!(msg_as_value["requested_attributes"]["attribute_1"]["name"], "name");
-        assert_eq!(msg_as_value["requested_predicates"]["predicate_0"]["name"], "age");
+        assert_eq!(
+            msg_as_value["requested_attributes"]["attribute_0"]["name"],
+            "age"
+        );
+        assert_eq!(
+            msg_as_value["requested_attributes"]["attribute_1"]["name"],
+            "name"
+        );
+        assert_eq!(
+            msg_as_value["requested_predicates"]["predicate_0"]["name"],
+            "age"
+        );
     }
 
     #[tokio::test]
@@ -304,8 +332,14 @@ mod unit_tests {
             .unwrap();
 
         let mut expected_req_attrs: HashMap<String, AttrInfo> = HashMap::new();
-        expected_req_attrs.insert("attribute_0".to_string(), serde_json::from_value(attr_info).unwrap());
-        expected_req_attrs.insert("attribute_1".to_string(), serde_json::from_value(attr_info_2).unwrap());
+        expected_req_attrs.insert(
+            "attribute_0".to_string(),
+            serde_json::from_value(attr_info).unwrap(),
+        );
+        expected_req_attrs.insert(
+            "attribute_1".to_string(),
+            serde_json::from_value(attr_info_2).unwrap(),
+        );
         assert_eq!(request.requested_attributes, expected_req_attrs);
     }
 
@@ -335,6 +369,7 @@ mod unit_tests {
     fn test_indy_proof_req_parses_correctly() {
         let _setup = SetupDefaults::init();
 
-        let _proof_req: ProofRequestData = serde_json::from_str(utils::constants::INDY_PROOF_REQ_JSON).unwrap();
+        let _proof_req: ProofRequestData =
+            serde_json::from_str(utils::constants::INDY_PROOF_REQ_JSON).unwrap();
     }
 }

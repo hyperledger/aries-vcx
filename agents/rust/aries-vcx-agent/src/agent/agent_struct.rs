@@ -2,13 +2,14 @@ use std::sync::Arc;
 
 use aries_vcx::core::profile::profile::Profile;
 
-use crate::agent::agent_config::AgentConfig;
-
-use crate::services::connection::ServiceConnections;
-use crate::services::{
-    credential_definition::ServiceCredentialDefinitions, holder::ServiceCredentialsHolder,
-    issuer::ServiceCredentialsIssuer, prover::ServiceProver, revocation_registry::ServiceRevocationRegistries,
-    schema::ServiceSchemas, verifier::ServiceVerifier,
+use crate::{
+    agent::agent_config::AgentConfig,
+    services::{
+        connection::ServiceConnections, credential_definition::ServiceCredentialDefinitions,
+        holder::ServiceCredentialsHolder, issuer::ServiceCredentialsIssuer, prover::ServiceProver,
+        revocation_registry::ServiceRevocationRegistries, schema::ServiceSchemas,
+        verifier::ServiceVerifier,
+    },
 };
 
 #[derive(Clone)]

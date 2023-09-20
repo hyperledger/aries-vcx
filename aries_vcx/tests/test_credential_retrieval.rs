@@ -7,20 +7,27 @@ pub mod utils;
 
 use std::collections::HashMap;
 
-use aries_vcx::common::proofs::proof_request::PresentationRequestData;
-use aries_vcx::common::test_utils::{
-    create_and_write_credential, create_and_write_test_cred_def, create_and_write_test_rev_reg,
-    create_and_write_test_schema,
+use aries_vcx::{
+    common::{
+        proofs::proof_request::PresentationRequestData,
+        test_utils::{
+            create_and_write_credential, create_and_write_test_cred_def,
+            create_and_write_test_rev_reg, create_and_write_test_schema,
+        },
+    },
+    handlers::{
+        proof_presentation::{prover::Prover, types::RetrievedCredentials},
+        util::AttachmentId,
+    },
+    utils::{constants::DEFAULT_SCHEMA_ATTRS, devsetup::SetupProfile},
 };
-use aries_vcx::handlers::proof_presentation::prover::Prover;
-use aries_vcx::handlers::proof_presentation::types::RetrievedCredentials;
-use aries_vcx::handlers::util::AttachmentId;
-use aries_vcx::utils::constants::DEFAULT_SCHEMA_ATTRS;
-use aries_vcx::utils::devsetup::SetupProfile;
-
-use messages::decorators::attachment::{Attachment, AttachmentData, AttachmentType};
-use messages::misc::MimeType;
-use messages::msg_fields::protocols::present_proof::request::{RequestPresentation, RequestPresentationContent};
+use messages::{
+    decorators::attachment::{Attachment, AttachmentData, AttachmentType},
+    misc::MimeType,
+    msg_fields::protocols::present_proof::request::{
+        RequestPresentation, RequestPresentationContent,
+    },
+};
 
 #[cfg(feature = "migration")]
 use crate::utils::migration::Migratable;
@@ -39,7 +46,8 @@ async fn test_agency_pool_retrieve_credentials_empty() {
            "requested_predicates": json!({}),
         });
 
-        let pres_req_data: PresentationRequestData = serde_json::from_str(&req.to_string()).unwrap();
+        let pres_req_data: PresentationRequestData =
+            serde_json::from_str(&req.to_string()).unwrap();
 
         let attach_type = AttachmentType::Base64(base64::encode(&json!(pres_req_data).to_string()));
         let attach_data = AttachmentData::builder().content(attach_type).build();
@@ -55,7 +63,10 @@ async fn test_agency_pool_retrieve_credentials_empty() {
 
         // test retrieving credentials for empty proof request returns "{}"
         let id = "test_id".to_owned();
-        let proof_req = RequestPresentation::builder().id(id).content(content).build();
+        let proof_req = RequestPresentation::builder()
+            .id(id)
+            .content(content)
+            .build();
         let proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
 
         #[cfg(feature = "migration")]
@@ -65,12 +76,16 @@ async fn test_agency_pool_retrieve_credentials_empty() {
             .retrieve_credentials(&setup.profile.inject_anoncreds())
             .await
             .unwrap();
-        assert_eq!(serde_json::to_string(&retrieved_creds).unwrap(), "{}".to_string());
+        assert_eq!(
+            serde_json::to_string(&retrieved_creds).unwrap(),
+            "{}".to_string()
+        );
         assert!(retrieved_creds.credentials_by_referent.is_empty());
 
         // populate proof request with a single attribute referent request
         req["requested_attributes"]["address1_1"] = json!({"name": "address1"});
-        let pres_req_data: PresentationRequestData = serde_json::from_str(&req.to_string()).unwrap();
+        let pres_req_data: PresentationRequestData =
+            serde_json::from_str(&req.to_string()).unwrap();
 
         let attach_type = AttachmentType::Base64(base64::encode(&json!(pres_req_data).to_string()));
         let attach_data = AttachmentData::builder().content(attach_type).build();
@@ -84,9 +99,13 @@ async fn test_agency_pool_retrieve_credentials_empty() {
             .request_presentations_attach(vec![attach])
             .build();
 
-        // test retrieving credentials for the proof request returns the referent with no cred matches
+        // test retrieving credentials for the proof request returns the referent with no cred
+        // matches
         let id = "test_id".to_owned();
-        let proof_req = RequestPresentation::builder().id(id).content(content).build();
+        let proof_req = RequestPresentation::builder()
+            .id(id)
+            .content(content)
+            .build();
         let proof: Prover = Prover::create_from_request("2", proof_req).unwrap();
 
         let retrieved_creds = proof
@@ -150,7 +169,8 @@ async fn test_agency_pool_case_for_proof_req_doesnt_matter_for_retrieve_creds() 
            "requested_predicates": json!({}),
         });
 
-        let pres_req_data: PresentationRequestData = serde_json::from_str(&req.to_string()).unwrap();
+        let pres_req_data: PresentationRequestData =
+            serde_json::from_str(&req.to_string()).unwrap();
         let id = "test_id".to_owned();
 
         let attach_type = AttachmentType::Base64(base64::encode(&json!(pres_req_data).to_string()));
@@ -165,7 +185,10 @@ async fn test_agency_pool_case_for_proof_req_doesnt_matter_for_retrieve_creds() 
             .request_presentations_attach(vec![attach])
             .build();
 
-        let proof_req = RequestPresentation::builder().id(id).content(content).build();
+        let proof_req = RequestPresentation::builder()
+            .id(id)
+            .content(content)
+            .build();
         let proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
 
         // All lower case
@@ -174,13 +197,16 @@ async fn test_agency_pool_case_for_proof_req_doesnt_matter_for_retrieve_creds() 
             .await
             .unwrap();
         assert_eq!(
-            retrieved_creds.credentials_by_referent["zip_1"][0].cred_info.attributes["zip"],
+            retrieved_creds.credentials_by_referent["zip_1"][0]
+                .cred_info
+                .attributes["zip"],
             "84000"
         );
 
         // First letter upper
         req["requested_attributes"]["zip_1"]["name"] = json!("Zip");
-        let pres_req_data: PresentationRequestData = serde_json::from_str(&req.to_string()).unwrap();
+        let pres_req_data: PresentationRequestData =
+            serde_json::from_str(&req.to_string()).unwrap();
         let id = "test_id".to_owned();
 
         let attach_type = AttachmentType::Base64(base64::encode(&json!(pres_req_data).to_string()));
@@ -198,7 +224,10 @@ async fn test_agency_pool_case_for_proof_req_doesnt_matter_for_retrieve_creds() 
         #[cfg(feature = "migration")]
         setup.migrate().await;
 
-        let proof_req = RequestPresentation::builder().id(id).content(content).build();
+        let proof_req = RequestPresentation::builder()
+            .id(id)
+            .content(content)
+            .build();
         let proof: Prover = Prover::create_from_request("2", proof_req).unwrap();
         let retrieved_creds2 = proof
             .retrieve_credentials(&setup.profile.inject_anoncreds())
@@ -213,7 +242,8 @@ async fn test_agency_pool_case_for_proof_req_doesnt_matter_for_retrieve_creds() 
 
         // Entire word upper
         req["requested_attributes"]["zip_1"]["name"] = json!("ZIP");
-        let pres_req_data: PresentationRequestData = serde_json::from_str(&req.to_string()).unwrap();
+        let pres_req_data: PresentationRequestData =
+            serde_json::from_str(&req.to_string()).unwrap();
         let id = "test_id".to_owned();
 
         let attach_type = AttachmentType::Base64(base64::encode(&json!(pres_req_data).to_string()));
@@ -228,7 +258,10 @@ async fn test_agency_pool_case_for_proof_req_doesnt_matter_for_retrieve_creds() 
             .request_presentations_attach(vec![attach])
             .build();
 
-        let proof_req = RequestPresentation::builder().id(id).content(content).build();
+        let proof_req = RequestPresentation::builder()
+            .id(id)
+            .content(content)
+            .build();
         let proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
         let retrieved_creds3 = proof
             .retrieve_credentials(&setup.profile.inject_anoncreds())
@@ -277,7 +310,8 @@ async fn test_agency_pool_it_should_fail_to_select_credentials_for_predicate() {
         .unwrap();
 
         let presentation_request_data =
-            create_proof_request_data(&mut institution, "[]", &requested_preds_string, "{}", None).await;
+            create_proof_request_data(&mut institution, "[]", &requested_preds_string, "{}", None)
+                .await;
         let mut verifier = create_verifier_from_request_data(presentation_request_data).await;
 
         #[cfg(feature = "migration")]
@@ -285,8 +319,13 @@ async fn test_agency_pool_it_should_fail_to_select_credentials_for_predicate() {
 
         let presentation_request = verifier.get_presentation_request_msg().unwrap();
         let mut prover = create_prover_from_request(presentation_request.clone()).await;
-        let selected_credentials =
-            prover_select_credentials(&mut prover, &mut consumer, presentation_request.into(), None).await;
+        let selected_credentials = prover_select_credentials(
+            &mut prover,
+            &mut consumer,
+            presentation_request.into(),
+            None,
+        )
+        .await;
 
         assert!(selected_credentials.credential_for_referent.is_empty());
     })

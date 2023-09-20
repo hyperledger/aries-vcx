@@ -1,17 +1,19 @@
-use shared_vcx::maybe_known::MaybeKnown;
 use std::str::FromStr;
+
+use shared_vcx::maybe_known::MaybeKnown;
 
 use crate::{error::MsgTypeResult, msg_types::role::Role};
 
 /// Trait implemented on enums that represent the message kind of a protocol.
 /// They link upstream to the [`ProtocolVersion`] impl enum they are part of.
-/// The link downstream from the [`ProtocolVersion`] impl enum is done through the enum variant type binding.
+/// The link downstream from the [`ProtocolVersion`] impl enum is done through the enum variant type
+/// binding.
 ///
-/// E.g: `RoutingV1_0` would implement this, and its variants would look like `RoutingV1_0::Forward`.
-/// From a protocol string such as `https://didcomm.org/routing/1.0/forward`, the variant would correspond to `forward`.
+/// E.g: `RoutingV1_0` would implement this, and its variants would look like
+/// `RoutingV1_0::Forward`. From a protocol string such as `https://didcomm.org/routing/1.0/forward`, the variant would correspond to `forward`.
 ///
-/// This trait is typically implemented through deriving [`messages_macros::MessageType`] on the [`ProtocolVersion`] impl enum
-/// and annotating its variants.
+/// This trait is typically implemented through deriving [`messages_macros::MessageType`] on the
+/// [`ProtocolVersion`] impl enum and annotating its variants.
 pub trait MessageKind: FromStr + AsRef<str> {
     type Parent: ProtocolVersion;
 
@@ -23,8 +25,8 @@ pub trait MessageKind: FromStr + AsRef<str> {
 /// Trait implemented on enums that represent a major version of a protocol and where
 /// the variants represent the minor version.
 ///
-/// E.g: `RoutingTypeV1` would implement this, and its variants would look like `RoutingTypeV1::V1_0`.
-/// From a protocol string such as `https://didcomm.org/routing/1.0/forward`, these would correspond to
+/// E.g: `RoutingTypeV1` would implement this, and its variants would look like
+/// `RoutingTypeV1::V1_0`. From a protocol string such as `https://didcomm.org/routing/1.0/forward`, these would correspond to
 /// the `1` and `0`, respectively.
 ///
 /// This trait is typically implemented through deriving [`messages_macros::MessageType`].
@@ -63,7 +65,8 @@ pub trait ProtocolVersion: Sized {
 /// E.g: `RoutingType` would implement this, and its variants would look like `RoutingType::V1`.
 /// From a protocol string such as `https://didcomm.org/routing/1.0/forward`, the enum would correspond to `routing`.
 ///
-/// This trait is typically implemented through deriving [`messages_macros::MessageType`] on the protocol specific enum.
+/// This trait is typically implemented through deriving [`messages_macros::MessageType`] on the
+/// protocol specific enum.
 pub trait ProtocolName: Sized {
     const PROTOCOL: &'static str;
 

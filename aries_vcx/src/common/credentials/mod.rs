@@ -1,12 +1,12 @@
 use std::{collections::HashMap, sync::Arc};
 
-use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
-use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
+use aries_vcx_core::{
+    anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
+};
 use time::OffsetDateTime;
 
-use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
-
 use super::primitives::revocation_registry_delta::RevocationRegistryDelta;
+use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 
 pub mod encoding;
 
@@ -20,7 +20,10 @@ struct ProverCredential {
     cred_rev_id: Option<String>,
 }
 
-pub async fn get_cred_rev_id(anoncreds: &Arc<dyn BaseAnonCreds>, cred_id: &str) -> VcxResult<String> {
+pub async fn get_cred_rev_id(
+    anoncreds: &Arc<dyn BaseAnonCreds>,
+    cred_id: &str,
+) -> VcxResult<String> {
     let cred_json = anoncreds.prover_get_credential(cred_id).await?;
     let prover_cred = serde_json::from_str::<ProverCredential>(&cred_json).map_err(|err| {
         AriesVcxError::from_msg(
@@ -34,23 +37,31 @@ pub async fn get_cred_rev_id(anoncreds: &Arc<dyn BaseAnonCreds>, cred_id: &str) 
     ))
 }
 
-pub async fn is_cred_revoked(ledger: &Arc<dyn AnoncredsLedgerRead>, rev_reg_id: &str, rev_id: &str) -> VcxResult<bool> {
+pub async fn is_cred_revoked(
+    ledger: &Arc<dyn AnoncredsLedgerRead>,
+    rev_reg_id: &str,
+    rev_id: &str,
+) -> VcxResult<bool> {
     let to = Some(OffsetDateTime::now_utc().unix_timestamp() as u64 + 100);
     let (_, rev_reg_delta_json, _) = ledger.get_rev_reg_delta_json(rev_reg_id, None, to).await?;
     let rev_reg_delta = RevocationRegistryDelta::create_from_ledger(&rev_reg_delta_json).await?;
-    Ok(rev_reg_delta.revoked().iter().any(|s| s.to_string().eq(rev_id)))
+    Ok(rev_reg_delta
+        .revoked()
+        .iter()
+        .any(|s| s.to_string().eq(rev_id)))
 }
 
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod integration_tests {
     use super::*;
-
-    use crate::common::test_utils::{
-        create_and_write_credential, create_and_write_test_cred_def, create_and_write_test_rev_reg,
-        create_and_write_test_schema,
+    use crate::{
+        common::test_utils::{
+            create_and_write_credential, create_and_write_test_cred_def,
+            create_and_write_test_rev_reg, create_and_write_test_schema,
+        },
+        utils::devsetup::SetupProfile,
     };
-    use crate::utils::devsetup::SetupProfile;
 
     #[tokio::test]
     #[ignore]
@@ -157,7 +168,11 @@ mod integration_tests {
             setup
                 .profile
                 .inject_anoncreds()
-                .revoke_credential_local(&rev_reg.get_tails_dir(), &rev_reg.rev_reg_id, &cred_rev_id)
+                .revoke_credential_local(
+                    &rev_reg.get_tails_dir(),
+                    &rev_reg.rev_reg_id,
+                    &cred_rev_id,
+                )
                 .await
                 .unwrap();
             rev_reg
