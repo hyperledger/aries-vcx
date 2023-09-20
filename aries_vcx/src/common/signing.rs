@@ -166,7 +166,7 @@ pub async fn unpack_message_to_string(
 //                     .await
 //                     .unwrap();
 //             signed_response.connection_sig.signer =
-// String::from("AAAAAAAAAAAAAAAAXkaJdrQejfztN4XqdsiV4ct3LXKL");             
+// String::from("AAAAAAAAAAAAAAAAXkaJdrQejfztN4XqdsiV4ct3LXKL");
 // decode_signed_connection_response(&profile.inject_wallet(), signed_response, &trustee_key)
 //                 .await
 //                 .unwrap_err();

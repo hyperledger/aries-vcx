@@ -439,7 +439,7 @@ impl SmConnectionInviter {
 
 //         pub async fn inviter_sm() -> SmConnectionInviter {
 //             let pairwise_info =
-// PairwiseInfo::create(&mock_profile().inject_wallet()).await.unwrap();             
+// PairwiseInfo::create(&mock_profile().inject_wallet()).await.unwrap();
 // SmConnectionInviter::new(&source_id(), pairwise_info)         }
 
 //         impl SmConnectionInviter {
@@ -599,7 +599,7 @@ impl SmConnectionInviter {
 //                     .unwrap();
 //                 assert_match!(InviterFullState::Initial(_), did_exchange_sm.state);
 //                 did_exchange_sm =
-// did_exchange_sm.handle_problem_report(_problem_report()).unwrap();                 
+// did_exchange_sm.handle_problem_report(_problem_report()).unwrap();
 // assert_match!(InviterFullState::Initial(_), did_exchange_sm.state);             }
 
 //             #[tokio::test]
@@ -626,12 +626,12 @@ impl SmConnectionInviter {
 //                     .await
 //                     .unwrap();
 //                 did_exchange_sm =
-// did_exchange_sm.handle_send_response(_send_message()).await.unwrap();                 
+// did_exchange_sm.handle_send_response(_send_message()).await.unwrap();
 // assert_match!(InviterFullState::Responded(_), did_exchange_sm.state);             }
 
 //             #[tokio::test]
 //             async fn
-// test_did_exchange_handle_invalid_exchange_request_message_from_invited_state() {                 
+// test_did_exchange_handle_invalid_exchange_request_message_from_invited_state() {
 // let _setup = SetupIndyMocks::init();
 
 //                 let mut did_exchange_sm = inviter_sm().await.to_inviter_invited_state();
@@ -777,7 +777,7 @@ impl SmConnectionInviter {
 
 //                 // Problem Report
 //                 did_exchange_sm =
-// did_exchange_sm.handle_problem_report(_problem_report()).unwrap();                 
+// did_exchange_sm.handle_problem_report(_problem_report()).unwrap();
 // assert_match!(InviterFullState::Completed(_), did_exchange_sm.state);             }
 //         }
 
@@ -798,7 +798,7 @@ impl SmConnectionInviter {
 //                         "key_1".to_string() => A2AMessage::ConnectionRequest(_request()),
 //                         "key_2".to_string() =>
 // A2AMessage::ConnectionResponse(_signed_response()),                         "key_3".to_string()
-// => A2AMessage::ConnectionProblemReport(_problem_report()),                         
+// => A2AMessage::ConnectionProblemReport(_problem_report()),
 // "key_4".to_string() => A2AMessage::Ping(_ping()),                         "key_5".to_string() =>
 // A2AMessage::Ack(_ack())                     );
 
@@ -821,7 +821,7 @@ impl SmConnectionInviter {
 //                     );
 
 //                     let (uid, message) =
-// connection.find_message_to_update_state(messages).unwrap();                     
+// connection.find_message_to_update_state(messages).unwrap();
 // assert_eq!("key_2", uid);                     assert_match!(A2AMessage::ConnectionRequest(_),
 // message);                 }
 
@@ -834,8 +834,8 @@ impl SmConnectionInviter {
 // A2AMessage::ConnectionProblemReport(_problem_report())                     );
 
 //                     let (uid, message) =
-// connection.find_message_to_update_state(messages).unwrap();                     
-// assert_eq!("key_3", uid);                     
+// connection.find_message_to_update_state(messages).unwrap();
+// assert_eq!("key_3", uid);
 // assert_match!(A2AMessage::ConnectionProblemReport(_), message);                 }
 
 //                 // No messages
@@ -864,7 +864,7 @@ impl SmConnectionInviter {
 //                     );
 
 //                     let (uid, message) =
-// connection.find_message_to_update_state(messages).unwrap();                     
+// connection.find_message_to_update_state(messages).unwrap();
 // assert_eq!("key_1", uid);                     assert_match!(A2AMessage::Ping(_), message);
 //                 }
 
@@ -877,7 +877,7 @@ impl SmConnectionInviter {
 //                     );
 
 //                     let (uid, message) =
-// connection.find_message_to_update_state(messages).unwrap();                     
+// connection.find_message_to_update_state(messages).unwrap();
 // assert_eq!("key_2", uid);                     assert_match!(A2AMessage::Ack(_), message);
 //                 }
 
@@ -889,8 +889,8 @@ impl SmConnectionInviter {
 // A2AMessage::ConnectionProblemReport(_problem_report())                     );
 
 //                     let (uid, message) =
-// connection.find_message_to_update_state(messages).unwrap();                     
-// assert_eq!("key_2", uid);                     
+// connection.find_message_to_update_state(messages).unwrap();
+// assert_eq!("key_2", uid);
 // assert_match!(A2AMessage::ConnectionProblemReport(_), message);                 }
 
 //                 // No messages

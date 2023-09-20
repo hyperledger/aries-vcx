@@ -290,8 +290,8 @@ impl MediatedConnection {
 
     pub fn bootstrap_did_doc(&self) -> Option<AriesDidDoc> {
         match &self.connection_sm {
-            SmConnection::Inviter(_sm_inviter) => None, /* TODO: Inviter can remember bootstrap
-                                                          * agent too, but we don't need it */
+            SmConnection::Inviter(_sm_inviter) => None, /* TODO: Inviter can remember bootstrap */
+            // agent too, but we don't need it
             SmConnection::Invitee(sm_invitee) => sm_invitee.bootstrap_did_doc(),
         }
     }
