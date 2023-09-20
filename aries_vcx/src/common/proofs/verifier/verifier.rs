@@ -91,7 +91,7 @@ pub mod integration_tests {
             anoncreds_holder,
             ledger_read,
             ledger_write,
-            &did,
+            did,
             DEFAULT_SCHEMA_ATTRS,
         )
         .await;
@@ -135,7 +135,7 @@ pub mod integration_tests {
         .to_string();
 
         let cred_def_json: serde_json::Value =
-            serde_json::from_str(&cred_def.get_cred_def_json()).unwrap();
+            serde_json::from_str(cred_def.get_cred_def_json()).unwrap();
         let cred_defs = json!({
             cred_def.get_cred_def_id(): cred_def_json,
         })
@@ -173,7 +173,7 @@ pub mod integration_tests {
             anoncreds_holder,
             ledger_read,
             ledger_write,
-            &did,
+            did,
             DEFAULT_SCHEMA_ATTRS,
         )
         .await;
@@ -197,9 +197,8 @@ pub mod integration_tests {
         })
         .to_string();
 
-        let requested_credentials_json;
-        if include_predicate_cred {
-            requested_credentials_json = json!({
+        let requested_credentials_json = if include_predicate_cred {
+            json!({
               "self_attested_attributes":{
                  "self_attest_3": "my_self_attested_val"
               },
@@ -210,9 +209,9 @@ pub mod integration_tests {
                   "zip_3": {"cred_id": cred_id}
               }
             })
-            .to_string();
+            .to_string()
         } else {
-            requested_credentials_json = json!({
+            json!({
               "self_attested_attributes":{
                  "self_attest_3": "my_self_attested_val"
               },
@@ -222,8 +221,8 @@ pub mod integration_tests {
               "requested_predicates":{
               }
             })
-            .to_string();
-        }
+            .to_string()
+        };
 
         let schema_json: serde_json::Value = serde_json::from_str(&schema.schema_json).unwrap();
         let schemas = json!({
@@ -343,7 +342,7 @@ pub mod integration_tests {
                 .await
                 .unwrap();
 
-            assert_eq!(
+            assert!(
                 validate_indy_proof(
                     &setup.profile.inject_anoncreds_ledger_read(),
                     &setup.profile.inject_anoncreds(),
@@ -351,8 +350,7 @@ pub mod integration_tests {
                     &proof_req_json
                 )
                 .await
-                .unwrap(),
-                true
+                .unwrap()
             );
         })
         .await;
@@ -443,7 +441,7 @@ pub mod integration_tests {
             let mut proof_req_json: serde_json::Value =
                 serde_json::from_str(&proof_req_json).unwrap();
             proof_req_json["requested_attributes"]["attribute_0"]["restrictions"] = json!({});
-            assert_eq!(
+            assert!(
                 validate_indy_proof(
                     &setup.profile.inject_anoncreds_ledger_read(),
                     &setup.profile.inject_anoncreds(),
@@ -451,8 +449,7 @@ pub mod integration_tests {
                     &proof_req_json.to_string()
                 )
                 .await
-                .unwrap(),
-                true
+                .unwrap()
             );
         })
         .await;
@@ -503,7 +500,7 @@ pub mod integration_tests {
             )
             .await;
             let cred_def_json: serde_json::Value =
-                serde_json::from_str(&cred_def.get_cred_def_json()).unwrap();
+                serde_json::from_str(cred_def.get_cred_def_json()).unwrap();
             let schema_json: serde_json::Value = serde_json::from_str(&schema.schema_json).unwrap();
 
             let anoncreds = Arc::clone(&setup.profile).inject_anoncreds();
@@ -528,7 +525,7 @@ pub mod integration_tests {
                 )
                 .await
                 .unwrap();
-            assert_eq!(
+            assert!(
                 validate_indy_proof(
                     &setup.profile.inject_anoncreds_ledger_read(),
                     &setup.profile.inject_anoncreds(),
@@ -536,8 +533,7 @@ pub mod integration_tests {
                     &proof_req_json
                 )
                 .await
-                .unwrap(),
-                true
+                .unwrap()
             );
 
             let mut proof_obj: serde_json::Value =

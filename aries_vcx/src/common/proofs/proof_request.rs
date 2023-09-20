@@ -328,7 +328,7 @@ mod unit_tests {
         let request = ProofRequestData::create(&anoncreds, "")
             .await
             .unwrap()
-            .set_requested_attributes_as_string(requested_attrs.into())
+            .set_requested_attributes_as_string(requested_attrs)
             .unwrap();
 
         let mut expected_req_attrs: HashMap<String, AttrInfo> = HashMap::new();
@@ -359,7 +359,7 @@ mod unit_tests {
         let err = ProofRequestData::create(&anoncreds, "")
             .await
             .unwrap()
-            .set_requested_attributes_as_string(requested_attrs.into())
+            .set_requested_attributes_as_string(requested_attrs)
             .unwrap_err();
 
         assert_eq!(AriesVcxErrorKind::InvalidProofRequest, err.kind());

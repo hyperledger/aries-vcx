@@ -226,6 +226,7 @@ pub async fn dev_build_profile_vdr_proxy_ledger(wallet: Arc<IndySdkWallet>) -> A
     Arc::new(VdrProxyProfile::init(wallet, client).await.unwrap())
 }
 
+#[allow(unreachable_code)]
 pub async fn dev_build_featured_profile(
     genesis_file_path: String,
     wallet: Arc<IndySdkWallet>,

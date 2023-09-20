@@ -34,7 +34,7 @@ pub async fn create_and_write_test_schema(
 ) -> Schema {
     let (schema_id, schema_json) = anoncreds
         .issuer_create_schema(
-            &submitter_did,
+            submitter_did,
             &generate_random_schema_name(),
             &generate_random_schema_version(),
             attr_list,
@@ -42,7 +42,7 @@ pub async fn create_and_write_test_schema(
         .await
         .unwrap();
 
-    let _response = ledger_write
+    ledger_write
         .publish_schema(&schema_json, submitter_did, None)
         .await
         .unwrap();
@@ -104,7 +104,7 @@ pub async fn create_and_write_credential(
 ) -> String {
     // TODO: Inject credential_data from caller
     let credential_data = r#"{"address1": ["123 Main St"], "address2": ["Suite 3"], "city": ["Draper"], "state": ["UT"], "zip": ["84000"]}"#;
-    let encoded_attributes = encode_attributes(&credential_data).unwrap();
+    let encoded_attributes = encode_attributes(credential_data).unwrap();
 
     let offer = anoncreds_issuer
         .issuer_create_credential_offer(&cred_def.get_cred_def_id())
@@ -112,7 +112,7 @@ pub async fn create_and_write_credential(
         .unwrap();
     let (req, req_meta) = anoncreds_holder
         .prover_create_credential_req(
-            &institution_did,
+            institution_did,
             &offer,
             cred_def.get_cred_def_json(),
             settings::DEFAULT_LINK_SECRET_ALIAS,
@@ -135,7 +135,7 @@ pub async fn create_and_write_credential(
         .await
         .unwrap();
 
-    let cred_id = anoncreds_holder
+    anoncreds_holder
         .prover_store_credential(
             None,
             &req_meta,
@@ -144,6 +144,5 @@ pub async fn create_and_write_credential(
             rev_reg_def_json.as_deref(),
         )
         .await
-        .unwrap();
-    cred_id
+        .unwrap()
 }

@@ -70,7 +70,7 @@ impl Profile for VdrtoolsProfile {
     }
 
     #[cfg(feature = "migration")]
-    fn wallet_handle(&self) -> Option<WalletHandle> {
+    fn wallet_handle(&self) -> Option<aries_vcx_core::WalletHandle> {
         Some(self.wallet.wallet_handle)
     }
 
