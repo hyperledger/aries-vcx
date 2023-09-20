@@ -342,16 +342,14 @@ pub mod integration_tests {
                 .await
                 .unwrap();
 
-            assert!(
-                validate_indy_proof(
-                    &setup.profile.inject_anoncreds_ledger_read(),
-                    &setup.profile.inject_anoncreds(),
-                    &prover_proof_json,
-                    &proof_req_json
-                )
-                .await
-                .unwrap()
-            );
+            assert!(validate_indy_proof(
+                &setup.profile.inject_anoncreds_ledger_read(),
+                &setup.profile.inject_anoncreds(),
+                &prover_proof_json,
+                &proof_req_json
+            )
+            .await
+            .unwrap());
         })
         .await;
     }
@@ -441,16 +439,14 @@ pub mod integration_tests {
             let mut proof_req_json: serde_json::Value =
                 serde_json::from_str(&proof_req_json).unwrap();
             proof_req_json["requested_attributes"]["attribute_0"]["restrictions"] = json!({});
-            assert!(
-                validate_indy_proof(
-                    &setup.profile.inject_anoncreds_ledger_read(),
-                    &setup.profile.inject_anoncreds(),
-                    &prover_proof_json,
-                    &proof_req_json.to_string()
-                )
-                .await
-                .unwrap()
-            );
+            assert!(validate_indy_proof(
+                &setup.profile.inject_anoncreds_ledger_read(),
+                &setup.profile.inject_anoncreds(),
+                &prover_proof_json,
+                &proof_req_json.to_string()
+            )
+            .await
+            .unwrap());
         })
         .await;
     }
@@ -525,16 +521,14 @@ pub mod integration_tests {
                 )
                 .await
                 .unwrap();
-            assert!(
-                validate_indy_proof(
-                    &setup.profile.inject_anoncreds_ledger_read(),
-                    &setup.profile.inject_anoncreds(),
-                    &prover_proof_json,
-                    &proof_req_json
-                )
-                .await
-                .unwrap()
-            );
+            assert!(validate_indy_proof(
+                &setup.profile.inject_anoncreds_ledger_read(),
+                &setup.profile.inject_anoncreds(),
+                &prover_proof_json,
+                &proof_req_json
+            )
+            .await
+            .unwrap());
 
             let mut proof_obj: serde_json::Value =
                 serde_json::from_str(&prover_proof_json).unwrap();
