@@ -2,16 +2,19 @@ use std::sync::Arc;
 
 use url::Url;
 
-use crate::agency_client::AgencyClient;
-use crate::configuration::AgencyClientConfig;
-use crate::errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
-use crate::messages::a2a_message::Client2AgencyMessage;
-use crate::messages::connect::{Connect, ConnectResponse};
-use crate::messages::create_agent::{CreateAgent, CreateAgentResponse};
-use crate::messages::sign_up::{SignUp, SignUpResponse};
-use crate::testing::mocking::AgencyMockDecrypted;
-use crate::testing::test_constants;
-use crate::wallet::base_agency_client_wallet::BaseAgencyClientWallet;
+use crate::{
+    agency_client::AgencyClient,
+    configuration::AgencyClientConfig,
+    errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult},
+    messages::{
+        a2a_message::Client2AgencyMessage,
+        connect::{Connect, ConnectResponse},
+        create_agent::{CreateAgent, CreateAgentResponse},
+        sign_up::{SignUp, SignUpResponse},
+    },
+    testing::{mocking::AgencyMockDecrypted, test_constants},
+    wallet::base_agency_client_wallet::BaseAgencyClientWallet,
+};
 
 impl AgencyClient {
     async fn _connect(
@@ -29,7 +32,9 @@ impl AgencyClient {
         );
         let message = Client2AgencyMessage::Connect(Connect::build(my_did, my_vk));
 
-        let mut response = self.send_message_to_agency(&message, agency_did, agency_vk).await?;
+        let mut response = self
+            .send_message_to_agency(&message, agency_did, agency_vk)
+            .await?;
 
         let ConnectResponse {
             from_vk: agency_pw_vk,
@@ -56,7 +61,9 @@ impl AgencyClient {
     async fn _register(&self, agency_pw_did: &str, agency_pw_vk: &str) -> AgencyClientResult<()> {
         let message = Client2AgencyMessage::SignUp(SignUp::build());
 
-        AgencyMockDecrypted::set_next_decrypted_response(test_constants::REGISTER_RESPONSE_DECRYPTED);
+        AgencyMockDecrypted::set_next_decrypted_response(
+            test_constants::REGISTER_RESPONSE_DECRYPTED,
+        );
         let mut response = self
             .send_message_to_agency(&message, agency_pw_did, agency_pw_vk)
             .await?;
@@ -73,7 +80,11 @@ impl AgencyClient {
         Ok(())
     }
 
-    async fn _create_agent(&self, agency_pw_did: &str, agency_pw_vk: &str) -> AgencyClientResult<CreateAgentResponse> {
+    async fn _create_agent(
+        &self,
+        agency_pw_did: &str,
+        agency_pw_vk: &str,
+    ) -> AgencyClientResult<CreateAgentResponse> {
         let message = Client2AgencyMessage::CreateAgent(CreateAgent::build());
         AgencyMockDecrypted::set_next_decrypted_response(test_constants::AGENT_CREATED_DECRYPTED);
         let mut response = self
@@ -102,7 +113,8 @@ impl AgencyClient {
         agency_url: Url,
     ) -> AgencyClientResult<()> {
         info!(
-            "provision_cloud_agent >>> my_did: {}, my_vk: {}, agency_did: {}, agency_vk: {}, agency_url: {}",
+            "provision_cloud_agent >>> my_did: {}, my_vk: {}, agency_did: {}, agency_vk: {}, \
+             agency_url: {}",
             my_did, my_vk, agency_did, agency_vk, agency_url
         );
         self.set_wallet(wallet);
@@ -112,8 +124,11 @@ impl AgencyClient {
         self.set_my_pwdid(my_did);
         self.set_my_vk(my_vk);
 
-        AgencyMockDecrypted::set_next_decrypted_response(test_constants::CONNECTED_RESPONSE_DECRYPTED);
-        let (agency_pw_did, agency_pw_vk) = self._connect(my_did, my_vk, agency_did, agency_vk).await?;
+        AgencyMockDecrypted::set_next_decrypted_response(
+            test_constants::CONNECTED_RESPONSE_DECRYPTED,
+        );
+        let (agency_pw_did, agency_pw_vk) =
+            self._connect(my_did, my_vk, agency_did, agency_vk).await?;
         self._register(&agency_pw_did, &agency_pw_vk).await?;
         let create_agent_response = self._create_agent(&agency_pw_did, &agency_pw_vk).await?;
 

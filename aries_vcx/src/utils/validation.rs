@@ -1,8 +1,7 @@
-use crate::errors::error::prelude::*;
-use crate::utils::qualifier;
-
 use bs58;
 use messages::msg_types::Role;
+
+use crate::{errors::error::prelude::*, utils::qualifier};
 
 pub fn validate_did(did: &str) -> VcxResult<String> {
     if qualifier::is_fully_qualified(did) {
@@ -13,7 +12,10 @@ pub fn validate_did(did: &str) -> VcxResult<String> {
             Ok(ref x) if x.len() == 16 => Ok(check_did),
             Ok(x) => Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::InvalidDid,
-                format!("Invalid DID length, expected 16 bytes, decoded {} bytes", x.len()),
+                format!(
+                    "Invalid DID length, expected 16 bytes, decoded {} bytes",
+                    x.len()
+                ),
             )),
             Err(err) => Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::NotBase58,
@@ -30,15 +32,18 @@ pub fn validate_key_delegate(delegate: &str) -> VcxResult<String> {
 }
 
 pub fn validate_actors(actors: &str) -> VcxResult<Vec<Role>> {
-    ::serde_json::from_str(actors)
-        .map_err(|err| AriesVcxError::from_msg(AriesVcxErrorKind::InvalidOption, format!("Invalid actors: {:?}", err)))
+    ::serde_json::from_str(actors).map_err(|err| {
+        AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidOption,
+            format!("Invalid actors: {:?}", err),
+        )
+    })
 }
 
 #[cfg(test)]
 mod unit_tests {
-    use crate::utils::devsetup::SetupDefaults;
-
     use super::*;
+    use crate::utils::devsetup::SetupDefaults;
 
     #[test]
     fn test_did_is_b58_and_valid_length() {

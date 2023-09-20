@@ -1,30 +1,38 @@
-use std::sync::Arc;
-use std::thread;
-use std::time::Duration;
+use std::{sync::Arc, thread, time::Duration};
 
-use aries_vcx::common::primitives::credential_schema::Schema;
-use aries_vcx::common::test_utils::{
-    create_and_write_test_cred_def, create_and_write_test_rev_reg, create_and_write_test_schema,
+use aries_vcx::{
+    common::{
+        primitives::{
+            credential_definition::CredentialDef, credential_schema::Schema,
+            revocation_registry::RevocationRegistry,
+        },
+        test_utils::{
+            create_and_write_test_cred_def, create_and_write_test_rev_reg,
+            create_and_write_test_schema,
+        },
+    },
+    core::profile::profile::Profile,
+    handlers::{
+        issuance::{holder::Holder, issuer::Issuer},
+        util::OfferInfo,
+    },
+    protocols::{
+        issuance::{holder::state_machine::HolderState, issuer::state_machine::IssuerState},
+        mediated_connection::pairwise_info::PairwiseInfo,
+    },
+    utils::constants::TEST_TAILS_URL,
 };
-use aries_vcx::core::profile::profile::Profile;
-use aries_vcx::handlers::util::OfferInfo;
-use aries_vcx::protocols::mediated_connection::pairwise_info::PairwiseInfo;
-use messages::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
-use messages::msg_fields::protocols::cred_issuance::propose_credential::ProposeCredential;
-use messages::msg_fields::protocols::cred_issuance::request_credential::RequestCredential;
-use messages::msg_fields::protocols::report_problem::ProblemReport;
+use messages::msg_fields::protocols::{
+    cred_issuance::{
+        offer_credential::OfferCredential, propose_credential::ProposeCredential,
+        request_credential::RequestCredential,
+    },
+    report_problem::ProblemReport,
+};
 use serde_json::json;
 
-use crate::utils::test_agent::TestAgent;
-use aries_vcx::common::primitives::credential_definition::CredentialDef;
-use aries_vcx::common::primitives::revocation_registry::RevocationRegistry;
-use aries_vcx::handlers::issuance::holder::Holder;
-use aries_vcx::handlers::issuance::issuer::Issuer;
-use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
-use aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
-use aries_vcx::utils::constants::TEST_TAILS_URL;
-
 use super::{attr_names_address_list, create_credential_proposal, credential_data_address_1};
+use crate::utils::test_agent::TestAgent;
 
 pub async fn create_address_schema_creddef_revreg(
     profile: &Arc<dyn Profile>,
@@ -50,8 +58,13 @@ pub async fn create_address_schema_creddef_revreg(
         true,
     )
     .await;
-    let rev_reg =
-        create_and_write_test_rev_reg(&anoncreds, &ledger_write, &institution_did, &cred_def.get_cred_def_id()).await;
+    let rev_reg = create_and_write_test_rev_reg(
+        &anoncreds,
+        &ledger_write,
+        &institution_did,
+        &cred_def.get_cred_def_id(),
+    )
+    .await;
     tokio::time::sleep(Duration::from_millis(500)).await;
 
     (schema, cred_def, rev_reg)
@@ -84,7 +97,11 @@ pub async fn accept_credential_proposal(
         tails_file: tails_dir,
     };
     issuer
-        .build_credential_offer_msg(&faber.profile.inject_anoncreds(), offer_info, Some("comment".into()))
+        .build_credential_offer_msg(
+            &faber.profile.inject_anoncreds(),
+            offer_info,
+            Some("comment".into()),
+        )
         .await
         .unwrap();
     issuer.get_credential_offer().unwrap()
@@ -121,7 +138,11 @@ pub async fn accept_offer(
     holder.get_msg_credential_request().unwrap()
 }
 
-pub async fn decline_offer(alice: &mut TestAgent, cred_offer: OfferCredential, holder: &mut Holder) -> ProblemReport {
+pub async fn decline_offer(
+    alice: &mut TestAgent,
+    cred_offer: OfferCredential,
+    holder: &mut Holder,
+) -> ProblemReport {
     // TODO: Replace with message-specific handler
     holder
         .process_aries_msg(
@@ -149,7 +170,10 @@ pub async fn send_credential(
     assert_eq!(IssuerState::OfferSet, issuer_credential.get_state());
     assert!(!issuer_credential.is_revokable());
 
-    issuer_credential.receive_request(cred_request).await.unwrap();
+    issuer_credential
+        .receive_request(cred_request)
+        .await
+        .unwrap();
     assert_eq!(IssuerState::RequestReceived, issuer_credential.get_state());
     assert!(!issuer_credential.is_revokable());
     assert_eq!(thread_id, issuer_credential.get_thread_id().unwrap());
@@ -201,7 +225,8 @@ pub async fn issue_address_credential(
     institution: &mut TestAgent,
 ) -> (Schema, CredentialDef, RevocationRegistry, Issuer) {
     let (schema, cred_def, rev_reg) =
-        create_address_schema_creddef_revreg(&institution.profile, &institution.institution_did).await;
+        create_address_schema_creddef_revreg(&institution.profile, &institution.institution_did)
+            .await;
     let issuer = exchange_credential(
         consumer,
         institution,
@@ -222,8 +247,10 @@ pub async fn exchange_credential(
     rev_reg: &RevocationRegistry,
     comment: Option<&str>,
 ) -> Issuer {
-    let mut issuer = create_credential_offer(institution, cred_def, rev_reg, &credential_data, comment).await;
-    let mut holder_credential = create_credential_request(consumer, issuer.get_credential_offer().unwrap()).await;
+    let mut issuer =
+        create_credential_offer(institution, cred_def, rev_reg, &credential_data, comment).await;
+    let mut holder_credential =
+        create_credential_request(consumer, issuer.get_credential_offer().unwrap()).await;
     let cred_request = holder_credential.get_msg_credential_request().unwrap();
     send_credential(
         consumer,
@@ -256,9 +283,24 @@ pub async fn exchange_credential_with_proposal(
     let cred_proposal = create_credential_proposal(schema_id, cred_def_id, comment);
     let mut holder = create_holder_from_proposal(cred_proposal.clone());
     let mut issuer = create_issuer_from_proposal(cred_proposal.clone());
-    let cred_offer = accept_credential_proposal(institution, &mut issuer, cred_proposal, rev_reg_id, tails_dir).await;
+    let cred_offer = accept_credential_proposal(
+        institution,
+        &mut issuer,
+        cred_proposal,
+        rev_reg_id,
+        tails_dir,
+    )
+    .await;
     let cred_request = accept_offer(consumer, cred_offer, &mut holder).await;
-    send_credential(consumer, institution, &mut issuer, &mut holder, cred_request, true).await;
+    send_credential(
+        consumer,
+        institution,
+        &mut issuer,
+        &mut holder,
+        cred_request,
+        true,
+    )
+    .await;
     (holder, issuer)
 }
 
@@ -277,7 +319,11 @@ async fn create_credential_offer(
     };
     let mut issuer = Issuer::create("1").unwrap();
     issuer
-        .build_credential_offer_msg(&faber.profile.inject_anoncreds(), offer_info, comment.map(String::from))
+        .build_credential_offer_msg(
+            &faber.profile.inject_anoncreds(),
+            offer_info,
+            comment.map(String::from),
+        )
         .await
         .unwrap();
     issuer

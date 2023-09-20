@@ -1,20 +1,30 @@
-use std::collections::HashMap;
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
-use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
-use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
-use messages::msg_fields::protocols::present_proof::present::Presentation;
-use messages::msg_fields::protocols::present_proof::request::{RequestPresentation, RequestPresentationContent};
-use messages::msg_fields::protocols::report_problem::ProblemReport;
+use aries_vcx_core::{
+    anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
+};
+use messages::msg_fields::protocols::{
+    present_proof::{
+        present::Presentation,
+        request::{RequestPresentation, RequestPresentationContent},
+    },
+    report_problem::ProblemReport,
+};
 use uuid::Uuid;
 
-use crate::common::proofs::prover::prover::generate_indy_proof;
-use crate::errors::error::prelude::*;
-use crate::handlers::proof_presentation::types::SelectedCredentials;
-use crate::handlers::util::{get_attach_as_string, Status};
-use crate::protocols::proof_presentation::prover::states::finished::FinishedState;
-use crate::protocols::proof_presentation::prover::states::presentation_preparation_failed::PresentationPreparationFailedState;
-use crate::protocols::proof_presentation::prover::states::presentation_prepared::PresentationPreparedState;
+use crate::{
+    common::proofs::prover::prover::generate_indy_proof,
+    errors::error::prelude::*,
+    handlers::{
+        proof_presentation::types::SelectedCredentials,
+        util::{get_attach_as_string, Status},
+    },
+    protocols::proof_presentation::prover::states::{
+        finished::FinishedState,
+        presentation_preparation_failed::PresentationPreparationFailedState,
+        presentation_prepared::PresentationPreparedState,
+    },
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct PresentationRequestReceived {
@@ -29,14 +39,19 @@ impl Default for PresentationRequestReceived {
             .build();
 
         Self {
-            presentation_request: RequestPresentation::builder().id(id).content(content).build(),
+            presentation_request: RequestPresentation::builder()
+                .id(id)
+                .content(content)
+                .build(),
         }
     }
 }
 
 impl PresentationRequestReceived {
     pub fn new(presentation_request: RequestPresentation) -> Self {
-        Self { presentation_request }
+        Self {
+            presentation_request,
+        }
     }
 
     pub async fn build_presentation(
@@ -46,8 +61,12 @@ impl PresentationRequestReceived {
         credentials: &SelectedCredentials,
         self_attested_attrs: &HashMap<String, String>,
     ) -> VcxResult<String> {
-        let proof_req_data_json =
-            get_attach_as_string!(&self.presentation_request.content.request_presentations_attach);
+        let proof_req_data_json = get_attach_as_string!(
+            &self
+                .presentation_request
+                .content
+                .request_presentations_attach
+        );
 
         generate_indy_proof(
             ledger,
@@ -62,7 +81,9 @@ impl PresentationRequestReceived {
 
 impl From<(PresentationRequestReceived, ProblemReport)> for PresentationPreparationFailedState {
     fn from((state, problem_report): (PresentationRequestReceived, ProblemReport)) -> Self {
-        trace!("transit state from PresentationRequestReceived to PresentationPreparationFailedState");
+        trace!(
+            "transit state from PresentationRequestReceived to PresentationPreparationFailedState"
+        );
         PresentationPreparationFailedState {
             presentation_request: state.presentation_request,
             problem_report,

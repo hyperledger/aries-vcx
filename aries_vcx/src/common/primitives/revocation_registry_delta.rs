@@ -1,5 +1,6 @@
-use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
 use std::sync::Arc;
+
+use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
 
 use crate::errors::error::prelude::*;
 
@@ -36,7 +37,10 @@ impl RevocationRegistryDelta {
         serde_json::from_str(&rev_reg_delta_json).map_err(|err| {
             AriesVcxError::from_msg(
                 AriesVcxErrorKind::SerializationError,
-                format!("Failed to deserialize rev_reg_delta_json from ledger, err: {}", err),
+                format!(
+                    "Failed to deserialize rev_reg_delta_json from ledger, err: {}",
+                    err
+                ),
             )
         })
     }

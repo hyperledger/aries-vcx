@@ -1,24 +1,36 @@
-use std::fmt::{Debug, Formatter};
-use std::sync::{Arc, RwLockReadGuard};
+use std::{
+    fmt::{Debug, Formatter},
+    sync::{Arc, RwLockReadGuard},
+};
 
-use crate::api_vcx::api_global::pool::{
-    global_ledger_anoncreds_read, global_ledger_anoncreds_write, global_ledger_indy_read, global_ledger_indy_write,
-    global_taa_configurator,
+use aries_vcx::{
+    aries_vcx_core::{
+        anoncreds::base_anoncreds::BaseAnonCreds,
+        ledger::base_ledger::{
+            AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite,
+            TaaConfigurator, TxnAuthrAgrmtOptions,
+        },
+        wallet::{base_wallet::BaseWallet, indy::IndySdkWallet, mock_wallet::MockWallet},
+        WalletHandle,
+    },
+    core::profile::{profile::Profile, vdrtools_profile::VdrtoolsProfile},
+    errors::error::VcxResult,
+    global::settings::indy_mocks_enabled,
+    utils::mockdata::profile::{
+        mock_anoncreds::MockAnoncreds, mock_ledger::MockLedger, mock_profile::MockProfile,
+    },
 };
-use crate::api_vcx::api_global::wallet::{global_base_anoncreds, global_base_wallet};
-use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
-use aries_vcx::aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
-use aries_vcx::aries_vcx_core::ledger::base_ledger::{
-    AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite, TaaConfigurator, TxnAuthrAgrmtOptions,
+
+use crate::{
+    api_vcx::api_global::{
+        pool::{
+            global_ledger_anoncreds_read, global_ledger_anoncreds_write, global_ledger_indy_read,
+            global_ledger_indy_write, global_taa_configurator,
+        },
+        wallet::{global_base_anoncreds, global_base_wallet},
+    },
+    errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult},
 };
-use aries_vcx::aries_vcx_core::wallet::indy::IndySdkWallet;
-use aries_vcx::aries_vcx_core::wallet::mock_wallet::MockWallet;
-use aries_vcx::aries_vcx_core::{wallet::base_wallet::BaseWallet, WalletHandle};
-use aries_vcx::core::profile::{profile::Profile, vdrtools_profile::VdrtoolsProfile};
-use aries_vcx::errors::error::VcxResult;
-use aries_vcx::utils::mockdata::profile::mock_anoncreds::MockAnoncreds;
-use aries_vcx::utils::mockdata::profile::mock_ledger::MockLedger;
-use aries_vcx::{global::settings::indy_mocks_enabled, utils::mockdata::profile::mock_profile::MockProfile};
 
 pub trait ProfileV2: Send + Sync {
     fn inject_indy_ledger_read(&self) -> LibvcxResult<Arc<dyn IndyLedgerRead>>;
@@ -121,7 +133,9 @@ impl ProfileV2 for VcxGlobalsProfile {
         base_wallet
             .as_ref()
             .map(|w| Some(Arc::clone(w)))
-            .ok_or_else(|| LibvcxError::from_msg(LibvcxErrorKind::NotReady, "Wallet is not initialized"))
+            .ok_or_else(|| {
+                LibvcxError::from_msg(LibvcxErrorKind::NotReady, "Wallet is not initialized")
+            })
     }
 
     fn update_taa_configuration(&self, taa_options: TxnAuthrAgrmtOptions) -> LibvcxResult<()> {
@@ -131,7 +145,9 @@ impl ProfileV2 for VcxGlobalsProfile {
                 LibvcxErrorKind::NotReady,
                 "Ledger is not initialized",
             ))?,
-            Some(configurator) => configurator.as_ref().set_txn_author_agreement_options(taa_options)?,
+            Some(configurator) => configurator
+                .as_ref()
+                .set_txn_author_agreement_options(taa_options)?,
         };
         Ok(())
     }

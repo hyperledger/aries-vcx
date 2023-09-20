@@ -14,9 +14,13 @@ struct Request {
     pub endorser: Option<String>,
 }
 
-pub fn verify_transaction_can_be_endorsed(transaction_json: &str, submitter_did: &str) -> VcxCoreResult<()> {
-    let transaction: Request = serde_json::from_str(transaction_json)
-        .map_err(|err| AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::InvalidJson, format!("{err:?}")))?;
+pub fn verify_transaction_can_be_endorsed(
+    transaction_json: &str,
+    submitter_did: &str,
+) -> VcxCoreResult<()> {
+    let transaction: Request = serde_json::from_str(transaction_json).map_err(|err| {
+        AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::InvalidJson, format!("{err:?}"))
+    })?;
 
     let endorser_did = transaction.endorser.ok_or(AriesVcxCoreError::from_msg(
         AriesVcxCoreErrorKind::InvalidJson,
@@ -27,7 +31,8 @@ pub fn verify_transaction_can_be_endorsed(transaction_json: &str, submitter_did:
         return Err(AriesVcxCoreError::from_msg(
             AriesVcxCoreErrorKind::InvalidJson,
             format!(
-                "Transaction cannot be endorsed: transaction endorser DID `{endorser_did}` and sender DID `{submitter_did}` are different"
+                "Transaction cannot be endorsed: transaction endorser DID `{endorser_did}` and \
+                 sender DID `{submitter_did}` are different"
             ),
         ));
     }

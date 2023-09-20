@@ -22,9 +22,9 @@ use crate::{
     msg_fields::{
         protocols::{
             basic_message::BasicMessage, connection::Connection, cred_issuance::CredentialIssuance,
-            discover_features::DiscoverFeatures, notification::Notification, out_of_band::OutOfBand,
-            present_proof::PresentProof, report_problem::ProblemReport, revocation::Revocation, routing::Forward,
-            trust_ping::TrustPing,
+            discover_features::DiscoverFeatures, notification::Notification,
+            out_of_band::OutOfBand, present_proof::PresentProof, report_problem::ProblemReport,
+            revocation::Revocation, routing::Forward, trust_ping::TrustPing,
         },
         traits::DelayedSerde,
     },
@@ -71,7 +71,10 @@ impl DelayedSerde for AriesMessage {
     /// The second option is employed simply because some protocols only have one message
     /// and one version (at least right now) and there's no point in crowding the codebase
     /// with one variant enums or the like.
-    fn delayed_deserialize<'de, D>(msg_type: Self::MsgType<'de>, deserializer: D) -> Result<Self, D::Error>
+    fn delayed_deserialize<'de, D>(
+        msg_type: Self::MsgType<'de>,
+        deserializer: D,
+    ) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
@@ -98,40 +101,52 @@ impl DelayedSerde for AriesMessage {
                 Revocation::delayed_deserialize((msg_type, kind_str), deserializer).map(From::from)
             }
             Protocol::CredentialIssuanceType(msg_type) => {
-                CredentialIssuance::delayed_deserialize((msg_type, kind_str), deserializer).map(From::from)
+                CredentialIssuance::delayed_deserialize((msg_type, kind_str), deserializer)
+                    .map(From::from)
             }
             Protocol::ReportProblemType(msg_type) => {
                 let kind = match msg_type {
-                    ReportProblemType::V1(ReportProblemTypeV1::V1_0(kind)) => kind.kind_from_str(kind_str),
+                    ReportProblemType::V1(ReportProblemTypeV1::V1_0(kind)) => {
+                        kind.kind_from_str(kind_str)
+                    }
                 };
 
                 match kind.map_err(D::Error::custom)? {
-                    ReportProblemTypeV1_0::ProblemReport => ProblemReport::deserialize(deserializer).map(From::from),
+                    ReportProblemTypeV1_0::ProblemReport => {
+                        ProblemReport::deserialize(deserializer).map(From::from)
+                    }
                 }
             }
             Protocol::PresentProofType(msg_type) => {
-                PresentProof::delayed_deserialize((msg_type, kind_str), deserializer).map(From::from)
+                PresentProof::delayed_deserialize((msg_type, kind_str), deserializer)
+                    .map(From::from)
             }
             Protocol::TrustPingType(msg_type) => {
                 TrustPing::delayed_deserialize((msg_type, kind_str), deserializer).map(From::from)
             }
             Protocol::DiscoverFeaturesType(msg_type) => {
-                DiscoverFeatures::delayed_deserialize((msg_type, kind_str), deserializer).map(From::from)
+                DiscoverFeatures::delayed_deserialize((msg_type, kind_str), deserializer)
+                    .map(From::from)
             }
             Protocol::BasicMessageType(msg_type) => {
                 let kind = match msg_type {
-                    BasicMessageType::V1(BasicMessageTypeV1::V1_0(kind)) => kind.kind_from_str(kind_str),
+                    BasicMessageType::V1(BasicMessageTypeV1::V1_0(kind)) => {
+                        kind.kind_from_str(kind_str)
+                    }
                 };
 
                 match kind.map_err(D::Error::custom)? {
-                    BasicMessageTypeV1_0::Message => BasicMessage::deserialize(deserializer).map(From::from),
+                    BasicMessageTypeV1_0::Message => {
+                        BasicMessage::deserialize(deserializer).map(From::from)
+                    }
                 }
             }
             Protocol::OutOfBandType(msg_type) => {
                 OutOfBand::delayed_deserialize((msg_type, kind_str), deserializer).map(From::from)
             }
             Protocol::NotificationType(msg_type) => {
-                Notification::delayed_deserialize((msg_type, kind_str), deserializer).map(From::from)
+                Notification::delayed_deserialize((msg_type, kind_str), deserializer)
+                    .map(From::from)
             }
         }
     }
@@ -168,10 +183,10 @@ impl DelayedSerde for AriesMessage {
 //
 //  2) Without this, the implementation would either rely on something inefficient such as [`Value`]
 // as an intermediary, use some custom map which fails on duplicate entries as intermediary or
-// basically use [`serde_value`] which seems to be an old replica of [`Content`] and [`ContentDeserializer`].
-// Also, [`serde_value::Value`] seems to always allocate. Using something like `HashMap::<&str,
-// &RawValue>` wouldn't work either, as there are issues flattening `serde_json::RawValue`.
-// It would also require some custom deserialization afterwards.
+// basically use [`serde_value`] which seems to be an old replica of [`Content`] and
+// [`ContentDeserializer`]. Also, [`serde_value::Value`] seems to always allocate. Using something
+// like `HashMap::<&str, &RawValue>` wouldn't work either, as there are issues flattening
+// `serde_json::RawValue`. It would also require some custom deserialization afterwards.
 //
 //  3) Exposing these parts as public is in progress from serde. When that will happen is still
 // unknown. See: <https://github.com/serde-rs/serde/issues/741>. With [`serde_value`] lacking

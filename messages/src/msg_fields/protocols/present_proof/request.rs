@@ -57,7 +57,12 @@ mod tests {
             "request_presentations~attach": content.request_presentations_attach,
         });
 
-        test_utils::test_msg(content, decorators, PresentProofTypeV1_0::RequestPresentation, expected);
+        test_utils::test_msg(
+            content,
+            decorators,
+            PresentProofTypeV1_0::RequestPresentation,
+            expected,
+        );
     }
 
     #[test]
@@ -79,6 +84,11 @@ mod tests {
             "~timing": decorators.timing
         });
 
-        test_utils::test_msg(content, decorators, PresentProofTypeV1_0::RequestPresentation, expected);
+        test_utils::test_msg(
+            content,
+            decorators,
+            PresentProofTypeV1_0::RequestPresentation,
+            expected,
+        );
     }
 }

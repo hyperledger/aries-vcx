@@ -1,13 +1,17 @@
-use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
-use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
 use std::sync::Arc;
 
-use crate::common::proofs::verifier::verifier_internal::{
-    build_cred_defs_json_verifier, build_rev_reg_defs_json, build_rev_reg_json, build_schemas_json_verifier,
-    get_credential_info, validate_proof_revealed_attributes,
+use aries_vcx_core::{
+    anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
 };
-use crate::errors::error::prelude::*;
-use crate::utils::mockdata::mock_settings::get_mock_result_for_validate_indy_proof;
+
+use crate::{
+    common::proofs::verifier::verifier_internal::{
+        build_cred_defs_json_verifier, build_rev_reg_defs_json, build_rev_reg_json,
+        build_schemas_json_verifier, get_credential_info, validate_proof_revealed_attributes,
+    },
+    errors::error::prelude::*,
+    utils::mockdata::mock_settings::get_mock_result_for_validate_indy_proof,
+};
 
 pub async fn validate_indy_proof(
     ledger: &Arc<dyn AnoncredsLedgerRead>,
@@ -53,8 +57,6 @@ pub async fn validate_indy_proof(
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 pub mod integration_tests {
-    use super::*;
-
     use std::{sync::Arc, time::Duration};
 
     use aries_vcx_core::{
@@ -62,11 +64,15 @@ pub mod integration_tests {
         ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite},
     };
 
+    use super::*;
     use crate::{
         common::{
             primitives::{credential_definition::CredentialDef, credential_schema::Schema},
             proofs::proof_request::ProofRequestData,
-            test_utils::{create_and_write_credential, create_and_write_test_cred_def, create_and_write_test_schema},
+            test_utils::{
+                create_and_write_credential, create_and_write_test_cred_def,
+                create_and_write_test_schema,
+            },
         },
         errors::error::AriesVcxErrorKind,
         utils::{self, constants::DEFAULT_SCHEMA_ATTRS, devsetup::SetupProfile},
@@ -128,7 +134,8 @@ pub mod integration_tests {
         })
         .to_string();
 
-        let cred_def_json: serde_json::Value = serde_json::from_str(&cred_def.get_cred_def_json()).unwrap();
+        let cred_def_json: serde_json::Value =
+            serde_json::from_str(&cred_def.get_cred_def_json()).unwrap();
         let cred_defs = json!({
             cred_def.get_cred_def_id(): cred_def_json,
         })
@@ -224,7 +231,8 @@ pub mod integration_tests {
         })
         .to_string();
 
-        let cred_def_json: serde_json::Value = serde_json::from_str(cred_def.get_cred_def_json()).unwrap();
+        let cred_def_json: serde_json::Value =
+            serde_json::from_str(cred_def.get_cred_def_json()).unwrap();
         let cred_defs = json!({
             cred_def.get_cred_def_id(): cred_def_json,
         })
@@ -257,7 +265,9 @@ pub mod integration_tests {
         issuer_did: &str,
         attr_list: &str,
     ) -> (Schema, CredentialDef, String) {
-        let schema = create_and_write_test_schema(anoncreds_issuer, ledger_write, issuer_did, attr_list).await;
+        let schema =
+            create_and_write_test_schema(anoncreds_issuer, ledger_write, issuer_did, attr_list)
+                .await;
 
         let cred_def = create_and_write_test_cred_def(
             anoncreds_issuer,
@@ -270,8 +280,14 @@ pub mod integration_tests {
         .await;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let cred_id =
-            create_and_write_credential(anoncreds_issuer, anoncreds_holder, issuer_did, &cred_def, None).await;
+        let cred_id = create_and_write_credential(
+            anoncreds_issuer,
+            anoncreds_holder,
+            issuer_did,
+            &cred_def,
+            None,
+        )
+        .await;
         (schema, cred_def, cred_id)
     }
 
@@ -385,7 +401,8 @@ pub mod integration_tests {
                 utils::constants::DEFAULT_SCHEMA_ATTRS,
             )
             .await;
-            let cred_def_json: serde_json::Value = serde_json::from_str(cred_def.get_cred_def_json()).unwrap();
+            let cred_def_json: serde_json::Value =
+                serde_json::from_str(cred_def.get_cred_def_json()).unwrap();
             let schema_json: serde_json::Value = serde_json::from_str(&schema.schema_json).unwrap();
 
             let anoncreds = Arc::clone(&setup.profile).inject_anoncreds();
@@ -423,7 +440,8 @@ pub mod integration_tests {
                 AriesVcxErrorKind::ProofRejected
             );
 
-            let mut proof_req_json: serde_json::Value = serde_json::from_str(&proof_req_json).unwrap();
+            let mut proof_req_json: serde_json::Value =
+                serde_json::from_str(&proof_req_json).unwrap();
             proof_req_json["requested_attributes"]["attribute_0"]["restrictions"] = json!({});
             assert_eq!(
                 validate_indy_proof(
@@ -484,7 +502,8 @@ pub mod integration_tests {
                 utils::constants::DEFAULT_SCHEMA_ATTRS,
             )
             .await;
-            let cred_def_json: serde_json::Value = serde_json::from_str(&cred_def.get_cred_def_json()).unwrap();
+            let cred_def_json: serde_json::Value =
+                serde_json::from_str(&cred_def.get_cred_def_json()).unwrap();
             let schema_json: serde_json::Value = serde_json::from_str(&schema.schema_json).unwrap();
 
             let anoncreds = Arc::clone(&setup.profile).inject_anoncreds();
@@ -521,9 +540,11 @@ pub mod integration_tests {
                 true
             );
 
-            let mut proof_obj: serde_json::Value = serde_json::from_str(&prover_proof_json).unwrap();
+            let mut proof_obj: serde_json::Value =
+                serde_json::from_str(&prover_proof_json).unwrap();
             {
-                proof_obj["requested_proof"]["revealed_attrs"]["address1_1"]["raw"] = json!("Other Value");
+                proof_obj["requested_proof"]["revealed_attrs"]["address1_1"]["raw"] =
+                    json!("Other Value");
                 let prover_proof_json = serde_json::to_string(&proof_obj).unwrap();
 
                 assert_eq!(

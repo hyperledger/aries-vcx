@@ -73,8 +73,9 @@ pub struct SelectedCredentialForReferent {
 }
 
 // NOTE: the only reason this is in a nested data struct is for backwards compatible
-// serialization reasons. It is nested as originally it made mapping the [RetrievedCredentialForReferent]
-// JSON value into a [SelectedCredentialForReferentCredential] much more convenient.
+// serialization reasons. It is nested as originally it made mapping the
+// [RetrievedCredentialForReferent] JSON value into a [SelectedCredentialForReferentCredential] much
+// more convenient.
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct SelectedCredentialForReferentCredential {
     pub cred_info: SelectedCredentialInfo,
@@ -119,13 +120,14 @@ impl From<RetrievedCredentialForReferent> for SelectedCredentialForReferentCrede
 }
 
 impl SelectedCredentials {
-    /// Utility builder method for [SelectedCredentials] attribute creds, used to allow easy translation
-    /// from items of [RetrievedCredentials] into [SelectedCredentials] items.
+    /// Utility builder method for [SelectedCredentials] attribute creds, used to allow easy
+    /// translation from items of [RetrievedCredentials] into [SelectedCredentials] items.
     ///
     /// for the given `referent`, the `retrieved_cred` (from [RetrievedCredentials]) is selected for
-    /// presentation. `with_tails_dir` should be provided if the `retrieved_cred` should be presented
-    /// with a non-revocation proof. `with_tails_dir` should point to the absolute path of a directory
-    /// containing the relevant tails file for the credential's revocation registry.
+    /// presentation. `with_tails_dir` should be provided if the `retrieved_cred` should be
+    /// presented with a non-revocation proof. `with_tails_dir` should point to the absolute
+    /// path of a directory containing the relevant tails file for the credential's revocation
+    /// registry.
     pub fn select_credential_for_referent_from_retrieved(
         &mut self,
         referent: String,

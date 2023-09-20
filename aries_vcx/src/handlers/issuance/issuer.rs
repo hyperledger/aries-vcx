@@ -1,21 +1,28 @@
-use messages::misc::MimeType;
-use messages::msg_fields::protocols::cred_issuance::ack::AckCredential;
-use messages::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
-use messages::msg_fields::protocols::cred_issuance::propose_credential::ProposeCredential;
-use messages::msg_fields::protocols::cred_issuance::request_credential::RequestCredential;
-use messages::msg_fields::protocols::cred_issuance::{CredentialAttr, CredentialIssuance, CredentialPreview};
-use messages::AriesMessage;
 use std::sync::Arc;
 
-use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
-use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
-use messages::msg_fields::protocols::cred_issuance::issue_credential::IssueCredential;
-use messages::msg_fields::protocols::notification::Notification;
-use messages::msg_fields::protocols::report_problem::ProblemReport;
+use aries_vcx_core::{
+    anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
+};
+use messages::{
+    misc::MimeType,
+    msg_fields::protocols::{
+        cred_issuance::{
+            ack::AckCredential, issue_credential::IssueCredential,
+            offer_credential::OfferCredential, propose_credential::ProposeCredential,
+            request_credential::RequestCredential, CredentialAttr, CredentialIssuance,
+            CredentialPreview,
+        },
+        notification::Notification,
+        report_problem::ProblemReport,
+    },
+    AriesMessage,
+};
 
-use crate::errors::error::prelude::*;
-use crate::handlers::util::OfferInfo;
-use crate::protocols::issuance::issuer::state_machine::{IssuerSM, IssuerState, RevocationInfoV1};
+use crate::{
+    errors::error::prelude::*,
+    handlers::util::OfferInfo,
+    protocols::issuance::issuer::state_machine::{IssuerSM, IssuerState, RevocationInfoV1},
+};
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Issuer {
@@ -45,7 +52,8 @@ fn _build_credential_preview(credential_json: &str) -> VcxResult<CredentialPrevi
         )
     })?;
 
-    // todo: should throw err if cred_values is not serde_json::Value::Array or serde_json::Value::Object
+    // todo: should throw err if cred_values is not serde_json::Value::Array or
+    // serde_json::Value::Object
     let mut attributes = Vec::new();
 
     match cred_values {
@@ -117,7 +125,10 @@ impl Issuer {
         Ok(Issuer { issuer_sm })
     }
 
-    pub fn create_from_proposal(source_id: &str, credential_proposal: &ProposeCredential) -> VcxResult<Issuer> {
+    pub fn create_from_proposal(
+        source_id: &str,
+        credential_proposal: &ProposeCredential,
+    ) -> VcxResult<Issuer> {
         trace!(
             "Issuer::create_from_proposal >>> source_id: {:?}, credential_proposal: {:?}",
             source_id,
@@ -127,7 +138,8 @@ impl Issuer {
         Ok(Issuer { issuer_sm })
     }
 
-    // todo: "build_credential_offer_msg" should take optional revReg as parameter, build OfferInfo from that
+    // todo: "build_credential_offer_msg" should take optional revReg as parameter, build OfferInfo
+    // from that
     pub async fn build_credential_offer_msg(
         &mut self,
         anoncreds: &Arc<dyn BaseAnonCreds>,
@@ -201,11 +213,17 @@ impl Issuer {
             ))
     }
 
-    pub async fn revoke_credential_local(&self, anoncreds: &Arc<dyn BaseAnonCreds>) -> VcxResult<()> {
-        let revocation_info: RevocationInfoV1 = self.issuer_sm.get_revocation_info().ok_or(AriesVcxError::from_msg(
-            AriesVcxErrorKind::InvalidState,
-            "Credential is not revocable, no revocation info has been found.",
-        ))?;
+    pub async fn revoke_credential_local(
+        &self,
+        anoncreds: &Arc<dyn BaseAnonCreds>,
+    ) -> VcxResult<()> {
+        let revocation_info: RevocationInfoV1 =
+            self.issuer_sm
+                .get_revocation_info()
+                .ok_or(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidState,
+                    "Credential is not revocable, no revocation info has been found.",
+                ))?;
         if let (Some(cred_rev_id), Some(rev_reg_id), Some(tails_file)) = (
             revocation_info.cred_rev_id,
             revocation_info.rev_reg_id,
@@ -267,7 +285,10 @@ impl Issuer {
     }
 
     pub async fn receive_problem_report(&mut self, problem_report: ProblemReport) -> VcxResult<()> {
-        self.issuer_sm = self.issuer_sm.clone().receive_problem_report(problem_report)?;
+        self.issuer_sm = self
+            .issuer_sm
+            .clone()
+            .receive_problem_report(problem_report)?;
         Ok(())
     }
 
@@ -287,13 +308,17 @@ impl Issuer {
             AriesMessage::CredentialIssuance(CredentialIssuance::Ack(ack)) => {
                 self.issuer_sm.clone().receive_ack(ack)?
             }
-            AriesMessage::ReportProblem(report) => self.issuer_sm.clone().receive_problem_report(report)?,
-            AriesMessage::Notification(Notification::ProblemReport(report)) => {
-                self.issuer_sm.clone().receive_problem_report(report.into())?
+            AriesMessage::ReportProblem(report) => {
+                self.issuer_sm.clone().receive_problem_report(report)?
             }
-            AriesMessage::CredentialIssuance(CredentialIssuance::ProblemReport(report)) => {
-                self.issuer_sm.clone().receive_problem_report(report.into())?
-            }
+            AriesMessage::Notification(Notification::ProblemReport(report)) => self
+                .issuer_sm
+                .clone()
+                .receive_problem_report(report.into())?,
+            AriesMessage::CredentialIssuance(CredentialIssuance::ProblemReport(report)) => self
+                .issuer_sm
+                .clone()
+                .receive_problem_report(report.into())?,
             _ => self.issuer_sm.clone(),
         };
         self.issuer_sm = issuer_sm;

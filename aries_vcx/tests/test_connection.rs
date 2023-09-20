@@ -4,29 +4,38 @@ extern crate serde_json;
 
 pub mod utils;
 
-use aries_vcx::common::ledger::transactions::write_endpoint_legacy;
-use aries_vcx::protocols::connection::GenericConnection;
-use aries_vcx::protocols::mediated_connection::pairwise_info::PairwiseInfo;
-use aries_vcx::utils::encryption_envelope::EncryptionEnvelope;
-
-use aries_vcx::utils::devsetup::*;
+use aries_vcx::{
+    common::ledger::transactions::write_endpoint_legacy,
+    protocols::{connection::GenericConnection, mediated_connection::pairwise_info::PairwiseInfo},
+    utils::{devsetup::*, encryption_envelope::EncryptionEnvelope},
+};
 use chrono::Utc;
 use diddoc_legacy::aries::service::AriesService;
-use messages::decorators::timing::Timing;
-use messages::msg_fields::protocols::basic_message::{BasicMessage, BasicMessageContent, BasicMessageDecorators};
-use messages::AriesMessage;
+use messages::{
+    decorators::timing::Timing,
+    msg_fields::protocols::basic_message::{
+        BasicMessage, BasicMessageContent, BasicMessageDecorators,
+    },
+    AriesMessage,
+};
 use utils::test_agent::TestAgent;
 use uuid::Uuid;
 
-use crate::utils::scenarios::{
-    create_connections_via_oob_invite, create_connections_via_pairwise_invite, create_connections_via_public_invite,
+use crate::utils::{
+    scenarios::{
+        create_connections_via_oob_invite, create_connections_via_pairwise_invite,
+        create_connections_via_public_invite,
+    },
+    test_agent::{create_test_agent, create_test_agent_trustee},
 };
-use crate::utils::test_agent::{create_test_agent, create_test_agent_trustee};
 
 fn build_basic_message(content: String) -> BasicMessage {
     let now = Utc::now();
 
-    let content = BasicMessageContent::builder().content(content).sent_time(now).build();
+    let content = BasicMessageContent::builder()
+        .content(content)
+        .sent_time(now)
+        .build();
 
     let decorators = BasicMessageDecorators::builder()
         .timing(Timing::builder().out_time(now).build())
@@ -69,7 +78,9 @@ async fn send_and_receive_message(
 }
 
 async fn create_service(faber: &TestAgent) {
-    let pairwise_info = PairwiseInfo::create(&faber.profile.inject_wallet()).await.unwrap();
+    let pairwise_info = PairwiseInfo::create(&faber.profile.inject_wallet())
+        .await
+        .unwrap();
     let service = AriesService::create()
         .set_service_endpoint("http://dummy.org".parse().unwrap())
         .set_recipient_keys(vec![pairwise_info.pw_vk.clone()]);

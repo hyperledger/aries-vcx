@@ -1,6 +1,6 @@
-use libvcx_core::aries_vcx::errors::error::AriesVcxError;
-use libvcx_core::errors::error::LibvcxError;
-use libvcx_core::serde_json::json;
+use libvcx_core::{
+    aries_vcx::errors::error::AriesVcxError, errors::error::LibvcxError, serde_json::json,
+};
 
 pub fn to_napi_err(err: LibvcxError) -> napi::Error {
     let reason = json!({
@@ -9,7 +9,10 @@ pub fn to_napi_err(err: LibvcxError) -> napi::Error {
         "vcxErrMessage": err.msg,
     })
     .to_string();
-    napi::Error::new(napi::Status::GenericFailure, format!("vcx_err_json:{reason}"))
+    napi::Error::new(
+        napi::Status::GenericFailure,
+        format!("vcx_err_json:{reason}"),
+    )
 }
 
 pub fn ariesvcx_to_napi_err(err: AriesVcxError) -> napi::Error {

@@ -5,30 +5,35 @@ extern crate serde_json;
 
 pub mod utils;
 
-use aries_vcx::common::proofs::proof_request::PresentationRequestData;
-use aries_vcx::common::test_utils::{
-    create_and_write_credential, create_and_write_test_cred_def, create_and_write_test_rev_reg,
-    create_and_write_test_schema,
+use aries_vcx::{
+    common::{
+        proofs::proof_request::PresentationRequestData,
+        test_utils::{
+            create_and_write_credential, create_and_write_test_cred_def,
+            create_and_write_test_rev_reg, create_and_write_test_schema,
+        },
+    },
+    handlers::proof_presentation::{prover::Prover, verifier::Verifier},
+    protocols::proof_presentation::{
+        prover::state_machine::ProverState,
+        verifier::{
+            state_machine::VerifierState, verification_status::PresentationVerificationStatus,
+        },
+    },
+    utils::devsetup::{SetupProfile, *},
 };
-use aries_vcx::handlers::proof_presentation::prover::Prover;
-use aries_vcx::handlers::proof_presentation::verifier::Verifier;
-use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
-use aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;
-use aries_vcx::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
-use aries_vcx::utils::devsetup::SetupProfile;
-use aries_vcx::utils::devsetup::*;
-
-use messages::msg_fields::protocols::present_proof::PresentProof;
-use messages::AriesMessage;
+use messages::{msg_fields::protocols::present_proof::PresentProof, AriesMessage};
 
 #[cfg(feature = "migration")]
 use crate::utils::migration::Migratable;
-use crate::utils::scenarios::{
-    accept_proof_proposal, create_address_schema_creddef_revreg, create_proof_proposal,
-    exchange_credential_with_proposal, generate_and_send_proof, prover_select_credentials,
-    receive_proof_proposal_rejection, reject_proof_proposal, verify_proof,
+use crate::utils::{
+    scenarios::{
+        accept_proof_proposal, create_address_schema_creddef_revreg, create_proof_proposal,
+        exchange_credential_with_proposal, generate_and_send_proof, prover_select_credentials,
+        receive_proof_proposal_rejection, reject_proof_proposal, verify_proof,
+    },
+    test_agent::{create_test_agent, create_test_agent_trustee},
 };
-use crate::utils::test_agent::{create_test_agent, create_test_agent_trustee};
 
 #[tokio::test]
 #[ignore]
@@ -169,8 +174,11 @@ async fn test_agency_pool_presentation_via_proposal() {
         let mut institution = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
         let mut consumer = create_test_agent(setup.genesis_file_path.clone()).await;
 
-        let (schema, cred_def, rev_reg) =
-            create_address_schema_creddef_revreg(&institution.profile, &institution.institution_did).await;
+        let (schema, cred_def, rev_reg) = create_address_schema_creddef_revreg(
+            &institution.profile,
+            &institution.institution_did,
+        )
+        .await;
         let tails_dir = rev_reg.get_tails_dir();
 
         #[cfg(feature = "migration")]
@@ -188,17 +196,20 @@ async fn test_agency_pool_presentation_via_proposal() {
         .await;
         let mut prover = Prover::create("1").unwrap();
         let mut verifier = Verifier::create("1").unwrap();
-        let presentation_proposal = create_proof_proposal(&mut prover, &cred_def.get_cred_def_id()).await;
-        let presentation_request = accept_proof_proposal(&mut institution, &mut verifier, presentation_proposal).await;
+        let presentation_proposal =
+            create_proof_proposal(&mut prover, &cred_def.get_cred_def_id()).await;
+        let presentation_request =
+            accept_proof_proposal(&mut institution, &mut verifier, presentation_proposal).await;
 
         #[cfg(feature = "migration")]
         consumer.migrate().await;
 
         let selected_credentials =
             prover_select_credentials(&mut prover, &mut consumer, presentation_request, None).await;
-        let presentation = generate_and_send_proof(&mut consumer, &mut prover, selected_credentials)
-            .await
-            .unwrap();
+        let presentation =
+            generate_and_send_proof(&mut consumer, &mut prover, selected_credentials)
+                .await
+                .unwrap();
         verify_proof(&mut institution, &mut verifier, presentation).await;
     })
     .await;
@@ -211,8 +222,11 @@ async fn test_agency_pool_presentation_via_proposal_with_rejection() {
         let mut institution = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
         let mut consumer = create_test_agent(setup.genesis_file_path.clone()).await;
 
-        let (schema, cred_def, rev_reg) =
-            create_address_schema_creddef_revreg(&institution.profile, &institution.institution_did).await;
+        let (schema, cred_def, rev_reg) = create_address_schema_creddef_revreg(
+            &institution.profile,
+            &institution.institution_did,
+        )
+        .await;
         let tails_dir = rev_reg.get_tails_dir();
 
         #[cfg(feature = "migration")]
@@ -229,7 +243,8 @@ async fn test_agency_pool_presentation_via_proposal_with_rejection() {
         )
         .await;
         let mut prover = Prover::create("1").unwrap();
-        let presentation_proposal = create_proof_proposal(&mut prover, &cred_def.get_cred_def_id()).await;
+        let presentation_proposal =
+            create_proof_proposal(&mut prover, &cred_def.get_cred_def_id()).await;
         let rejection = reject_proof_proposal(&presentation_proposal).await;
         receive_proof_proposal_rejection(&mut prover, rejection).await;
     })
@@ -243,8 +258,11 @@ async fn test_agency_pool_presentation_via_proposal_with_negotiation() {
         let mut institution = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
         let mut consumer = create_test_agent(setup.genesis_file_path.clone()).await;
 
-        let (schema, cred_def, rev_reg) =
-            create_address_schema_creddef_revreg(&institution.profile, &institution.institution_did).await;
+        let (schema, cred_def, rev_reg) = create_address_schema_creddef_revreg(
+            &institution.profile,
+            &institution.institution_did,
+        )
+        .await;
         let tails_dir = rev_reg.get_tails_dir();
 
         #[cfg(feature = "migration")]
@@ -266,13 +284,16 @@ async fn test_agency_pool_presentation_via_proposal_with_negotiation() {
         #[cfg(feature = "migration")]
         consumer.migrate().await;
 
-        let presentation_proposal = create_proof_proposal(&mut prover, &cred_def.get_cred_def_id()).await;
-        let presentation_request = accept_proof_proposal(&mut institution, &mut verifier, presentation_proposal).await;
+        let presentation_proposal =
+            create_proof_proposal(&mut prover, &cred_def.get_cred_def_id()).await;
+        let presentation_request =
+            accept_proof_proposal(&mut institution, &mut verifier, presentation_proposal).await;
         let selected_credentials =
             prover_select_credentials(&mut prover, &mut consumer, presentation_request, None).await;
-        let presentation = generate_and_send_proof(&mut consumer, &mut prover, selected_credentials)
-            .await
-            .unwrap();
+        let presentation =
+            generate_and_send_proof(&mut consumer, &mut prover, selected_credentials)
+                .await
+                .unwrap();
         verify_proof(&mut institution, &mut verifier, presentation).await;
     })
     .await;

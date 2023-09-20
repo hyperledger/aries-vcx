@@ -1,19 +1,18 @@
 use std::sync::Arc;
 
-use async_trait::async_trait;
-
-use aries_vcx_core::ledger::base_ledger::TxnAuthrAgrmtOptions;
-use aries_vcx_core::wallet::indy::IndySdkWallet;
 use aries_vcx_core::{
     anoncreds::{base_anoncreds::BaseAnonCreds, indy_anoncreds::IndySdkAnonCreds},
-    ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite},
-    wallet::base_wallet::BaseWallet,
+    ledger::base_ledger::{
+        AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite,
+        TxnAuthrAgrmtOptions,
+    },
+    wallet::{base_wallet::BaseWallet, indy::IndySdkWallet},
     WalletHandle,
 };
-
-use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
+use async_trait::async_trait;
 
 use super::profile::Profile;
+use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 
 #[derive(Debug)]
 pub struct VdrtoolsProfile {

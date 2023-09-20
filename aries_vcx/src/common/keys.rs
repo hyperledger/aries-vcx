@@ -1,7 +1,9 @@
 use std::sync::Arc;
 
-use aries_vcx_core::ledger::base_ledger::{IndyLedgerRead, IndyLedgerWrite};
-use aries_vcx_core::wallet::base_wallet::BaseWallet;
+use aries_vcx_core::{
+    ledger::base_ledger::{IndyLedgerRead, IndyLedgerWrite},
+    wallet::base_wallet::BaseWallet,
+};
 use serde_json::Value;
 
 use crate::errors::error::prelude::*;
@@ -19,14 +21,20 @@ pub async fn rotate_verkey_apply(
     let nym_result_json: Value = serde_json::from_str(&nym_result).map_err(|err| {
         AriesVcxError::from_msg(
             AriesVcxErrorKind::SerializationError,
-            format!("Cannot deserialize {:?} into Value, err: {:?}", nym_result, err),
+            format!(
+                "Cannot deserialize {:?} into Value, err: {:?}",
+                nym_result, err
+            ),
         )
     })?;
     let response_type: String = nym_result_json["op"]
         .as_str()
         .ok_or(AriesVcxError::from_msg(
             AriesVcxErrorKind::SerializationError,
-            format!("Cannot failed to convert {:?} into str", nym_result_json["op"]),
+            format!(
+                "Cannot failed to convert {:?} into str",
+                nym_result_json["op"]
+            ),
         ))?
         .to_string();
     if response_type != "REPLY" {
@@ -36,7 +44,10 @@ pub async fn rotate_verkey_apply(
         ));
     }
 
-    wallet.replace_did_keys_apply(did).await.map_err(|err| err.into())
+    wallet
+        .replace_did_keys_apply(did)
+        .await
+        .map_err(|err| err.into())
 }
 
 pub async fn rotate_verkey(
@@ -48,25 +59,37 @@ pub async fn rotate_verkey(
     rotate_verkey_apply(wallet, indy_ledger_write, did, &trustee_temp_verkey).await
 }
 
-pub async fn get_verkey_from_ledger(indy_ledger: &Arc<dyn IndyLedgerRead>, did: &str) -> VcxResult<String> {
+pub async fn get_verkey_from_ledger(
+    indy_ledger: &Arc<dyn IndyLedgerRead>,
+    did: &str,
+) -> VcxResult<String> {
     let nym_response: String = indy_ledger.get_nym(did).await?;
     let nym_json: Value = serde_json::from_str(&nym_response).map_err(|err| {
         AriesVcxError::from_msg(
             AriesVcxErrorKind::SerializationError,
-            format!("Cannot deserialize {:?} into Value, err: {:?}", nym_response, err),
+            format!(
+                "Cannot deserialize {:?} into Value, err: {:?}",
+                nym_response, err
+            ),
         )
     })?;
     let nym_data: String = nym_json["result"]["data"]
         .as_str()
         .ok_or(AriesVcxError::from_msg(
             AriesVcxErrorKind::SerializationError,
-            format!("Cannot deserialize {:?} into String", nym_json["result"]["data"]),
+            format!(
+                "Cannot deserialize {:?} into String",
+                nym_json["result"]["data"]
+            ),
         ))?
         .to_string();
     let nym_data: Value = serde_json::from_str(&nym_data).map_err(|err| {
         AriesVcxError::from_msg(
             AriesVcxErrorKind::SerializationError,
-            format!("Cannot deserialize {:?} into Value, err: {:?}", nym_data, err),
+            format!(
+                "Cannot deserialize {:?} into Value, err: {:?}",
+                nym_data, err
+            ),
         )
     })?;
     Ok(nym_data["verkey"]

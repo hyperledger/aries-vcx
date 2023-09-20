@@ -115,7 +115,10 @@ impl<I, S> Serialize for Connection<I, S>
 where
     for<'a> SerializableConnection<'a>: From<&'a Connection<I, S>>,
 {
-    fn serialize<Serializer>(&self, serializer: Serializer) -> Result<Serializer::Ok, Serializer::Error>
+    fn serialize<Serializer>(
+        &self,
+        serializer: Serializer,
+    ) -> Result<Serializer::Ok, Serializer::Error>
     where
         Serializer: ::serde::Serializer,
     {

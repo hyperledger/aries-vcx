@@ -1,5 +1,4 @@
-use std::collections::HashMap;
-use std::sync::RwLock;
+use std::{collections::HashMap, sync::RwLock};
 
 use crate::errors::error::{AriesVcxError, VcxResult};
 
@@ -9,7 +8,8 @@ static MOCKED_VALIDATE_INDY_PROOF: &str = "mocked_validate_indy_proof";
 
 lazy_static! {
     static ref MOCK_SETTINGS: RwLock<HashMap<String, String>> = RwLock::new(HashMap::new());
-    static ref MOCK_SETTINGS_RESULT_BOOL: RwLock<HashMap<String, VcxResult<bool>>> = RwLock::new(HashMap::new());
+    static ref MOCK_SETTINGS_RESULT_BOOL: RwLock<HashMap<String, VcxResult<bool>>> =
+        RwLock::new(HashMap::new());
 }
 
 pub struct MockBuilder; // empty
@@ -24,7 +24,9 @@ impl MockBuilder {
             "MockBuilder::set_mock_generate_indy_proof >>> generated_proof: {}",
             generated_proof
         );
-        let mut settings = MOCK_SETTINGS.write().expect("Unable to access MOCK_SETTINGS");
+        let mut settings = MOCK_SETTINGS
+            .write()
+            .expect("Unable to access MOCK_SETTINGS");
         settings.insert(String::from(MOCKED_GENERATED_PROOF), generated_proof.into());
         self
     }
@@ -34,7 +36,9 @@ impl MockBuilder {
             "MockBuilder::set_mock_creds_retrieved_for_proof_request >>> retrieve_creds: {}",
             retrieve_creds
         );
-        let mut settings = MOCK_SETTINGS.write().expect("Unable to access MOCK_SETTINGS");
+        let mut settings = MOCK_SETTINGS
+            .write()
+            .expect("Unable to access MOCK_SETTINGS");
         settings.insert(String::from(MOCKED_RETRIEVED_CREDS), retrieve_creds.into());
         self
     }
@@ -53,7 +57,9 @@ impl MockBuilder {
 
     pub fn reset_mock_settings(&self) {
         warn!("MockBuilder::reset_mock_settings >>>");
-        let mut config = MOCK_SETTINGS.write().expect("Unable to access MOCK_SETTINGS");
+        let mut config = MOCK_SETTINGS
+            .write()
+            .expect("Unable to access MOCK_SETTINGS");
         config.clear();
     }
 }
@@ -66,12 +72,16 @@ impl Drop for MockBuilder {
 }
 
 pub fn get_mock_generate_indy_proof() -> Option<String> {
-    let config = MOCK_SETTINGS.read().expect("Unable to access MOCK_SETTINGS");
+    let config = MOCK_SETTINGS
+        .read()
+        .expect("Unable to access MOCK_SETTINGS");
     config.get(MOCKED_GENERATED_PROOF).map(String::from)
 }
 
 pub fn get_mock_creds_retrieved_for_proof_request() -> Option<String> {
-    let config = MOCK_SETTINGS.read().expect("Unable to access MOCK_SETTINGS");
+    let config = MOCK_SETTINGS
+        .read()
+        .expect("Unable to access MOCK_SETTINGS");
     config.get(MOCKED_RETRIEVED_CREDS).map(String::from)
 }
 
@@ -79,8 +89,10 @@ pub fn get_mock_result_for_validate_indy_proof() -> Option<VcxResult<bool>> {
     let config = MOCK_SETTINGS_RESULT_BOOL
         .read()
         .expect("Unable to access MOCK_SETTINGS_RESULT_BOOL");
-    config.get(MOCKED_VALIDATE_INDY_PROOF).map(|result| match result {
-        Ok(val) => Ok(*val),
-        Err(err) => Err(AriesVcxError::from_msg(err.kind(), err.to_string())),
-    })
+    config
+        .get(MOCKED_VALIDATE_INDY_PROOF)
+        .map(|result| match result {
+            Ok(val) => Ok(*val),
+            Err(err) => Err(AriesVcxError::from_msg(err.kind(), err.to_string())),
+        })
 }

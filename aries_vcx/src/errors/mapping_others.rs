@@ -2,8 +2,10 @@ use std::sync::PoisonError;
 
 use aries_vcx_core::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind};
 
-use crate::errors::error::{AriesVcxError, AriesVcxErrorKind};
-use crate::protocols::revocation_notification::sender::state_machine::SenderConfigBuilderError;
+use crate::{
+    errors::error::{AriesVcxError, AriesVcxErrorKind},
+    protocols::revocation_notification::sender::state_machine::SenderConfigBuilderError,
+};
 
 impl From<SenderConfigBuilderError> for AriesVcxError {
     fn from(err: SenderConfigBuilderError) -> AriesVcxError {
@@ -35,32 +37,54 @@ impl From<AriesVcxCoreError> for AriesVcxError {
             AriesVcxCoreErrorKind::InvalidMessagePack => AriesVcxErrorKind::InvalidMessagePack,
             AriesVcxCoreErrorKind::NotReady => AriesVcxErrorKind::NotReady,
             AriesVcxCoreErrorKind::IOError => AriesVcxErrorKind::IOError,
-            AriesVcxCoreErrorKind::LibindyInvalidStructure => AriesVcxErrorKind::LibindyInvalidStructure,
+            AriesVcxCoreErrorKind::LibindyInvalidStructure => {
+                AriesVcxErrorKind::LibindyInvalidStructure
+            }
             AriesVcxCoreErrorKind::InvalidLibindyParam => AriesVcxErrorKind::InvalidLibindyParam,
             AriesVcxCoreErrorKind::ActionNotSupported => AriesVcxErrorKind::ActionNotSupported,
             AriesVcxCoreErrorKind::InvalidInput => AriesVcxErrorKind::InvalidInput,
             AriesVcxCoreErrorKind::UnimplementedFeature => AriesVcxErrorKind::UnimplementedFeature,
-            AriesVcxCoreErrorKind::CredDefAlreadyCreated => AriesVcxErrorKind::CredDefAlreadyCreated,
+            AriesVcxCoreErrorKind::CredDefAlreadyCreated => {
+                AriesVcxErrorKind::CredDefAlreadyCreated
+            }
             AriesVcxCoreErrorKind::RevDeltaNotFound => AriesVcxErrorKind::RevDeltaNotFound,
-            AriesVcxCoreErrorKind::RevDeltaFailedToClear => AriesVcxErrorKind::RevDeltaFailedToClear,
+            AriesVcxCoreErrorKind::RevDeltaFailedToClear => {
+                AriesVcxErrorKind::RevDeltaFailedToClear
+            }
             AriesVcxCoreErrorKind::CreateRevRegDef => AriesVcxErrorKind::CreateRevRegDef,
-            AriesVcxCoreErrorKind::InvalidRevocationDetails => AriesVcxErrorKind::InvalidRevocationDetails,
-            AriesVcxCoreErrorKind::InvalidRevocationEntry => AriesVcxErrorKind::InvalidRevocationEntry,
-            AriesVcxCoreErrorKind::InvalidRevocationTimestamp => AriesVcxErrorKind::InvalidRevocationTimestamp,
+            AriesVcxCoreErrorKind::InvalidRevocationDetails => {
+                AriesVcxErrorKind::InvalidRevocationDetails
+            }
+            AriesVcxCoreErrorKind::InvalidRevocationEntry => {
+                AriesVcxErrorKind::InvalidRevocationEntry
+            }
+            AriesVcxCoreErrorKind::InvalidRevocationTimestamp => {
+                AriesVcxErrorKind::InvalidRevocationTimestamp
+            }
             AriesVcxCoreErrorKind::RevRegDefNotFound => AriesVcxErrorKind::RevRegDefNotFound,
-            AriesVcxCoreErrorKind::InvalidAttributesStructure => AriesVcxErrorKind::InvalidAttributesStructure,
+            AriesVcxCoreErrorKind::InvalidAttributesStructure => {
+                AriesVcxErrorKind::InvalidAttributesStructure
+            }
             AriesVcxCoreErrorKind::InvalidProof => AriesVcxErrorKind::InvalidProof,
             AriesVcxCoreErrorKind::InvalidSchema => AriesVcxErrorKind::InvalidSchema,
-            AriesVcxCoreErrorKind::InvalidProofCredentialData => AriesVcxErrorKind::InvalidProofCredentialData,
+            AriesVcxCoreErrorKind::InvalidProofCredentialData => {
+                AriesVcxErrorKind::InvalidProofCredentialData
+            }
             AriesVcxCoreErrorKind::InvalidProofRequest => AriesVcxErrorKind::InvalidProofRequest,
             AriesVcxCoreErrorKind::ProofRejected => AriesVcxErrorKind::ProofRejected,
             AriesVcxCoreErrorKind::InvalidSchemaSeqNo => AriesVcxErrorKind::InvalidSchemaSeqNo,
             AriesVcxCoreErrorKind::DuplicationSchema => AriesVcxErrorKind::DuplicationSchema,
-            AriesVcxCoreErrorKind::UnknownSchemaRejection => AriesVcxErrorKind::UnknownSchemaRejection,
-            AriesVcxCoreErrorKind::InvalidGenesisTxnPath => AriesVcxErrorKind::InvalidGenesisTxnPath,
+            AriesVcxCoreErrorKind::UnknownSchemaRejection => {
+                AriesVcxErrorKind::UnknownSchemaRejection
+            }
+            AriesVcxCoreErrorKind::InvalidGenesisTxnPath => {
+                AriesVcxErrorKind::InvalidGenesisTxnPath
+            }
             AriesVcxCoreErrorKind::CreatePoolConfig => AriesVcxErrorKind::CreatePoolConfig,
             AriesVcxCoreErrorKind::PoolLedgerConnect => AriesVcxErrorKind::PoolLedgerConnect,
-            AriesVcxCoreErrorKind::InvalidLedgerResponse => AriesVcxErrorKind::InvalidLedgerResponse,
+            AriesVcxCoreErrorKind::InvalidLedgerResponse => {
+                AriesVcxErrorKind::InvalidLedgerResponse
+            }
             AriesVcxCoreErrorKind::LedgerItemNotFound => AriesVcxErrorKind::LedgerItemNotFound,
             AriesVcxCoreErrorKind::NoPoolOpen => AriesVcxErrorKind::NoPoolOpen,
             AriesVcxCoreErrorKind::PostMessageFailed => AriesVcxErrorKind::PostMessageFailed,
@@ -69,10 +93,14 @@ impl From<AriesVcxCoreError> for AriesVcxError {
             AriesVcxCoreErrorKind::InvalidWalletHandle => AriesVcxErrorKind::InvalidWalletHandle,
             AriesVcxCoreErrorKind::DuplicationWallet => AriesVcxErrorKind::DuplicationWallet,
             AriesVcxCoreErrorKind::WalletRecordNotFound => AriesVcxErrorKind::WalletRecordNotFound,
-            AriesVcxCoreErrorKind::DuplicationWalletRecord => AriesVcxErrorKind::DuplicationWalletRecord,
+            AriesVcxCoreErrorKind::DuplicationWalletRecord => {
+                AriesVcxErrorKind::DuplicationWalletRecord
+            }
             AriesVcxCoreErrorKind::WalletNotFound => AriesVcxErrorKind::WalletNotFound,
             AriesVcxCoreErrorKind::WalletAlreadyOpen => AriesVcxErrorKind::WalletAlreadyOpen,
-            AriesVcxCoreErrorKind::DuplicationMasterSecret => AriesVcxErrorKind::DuplicationMasterSecret,
+            AriesVcxCoreErrorKind::DuplicationMasterSecret => {
+                AriesVcxErrorKind::DuplicationMasterSecret
+            }
             AriesVcxCoreErrorKind::DuplicationDid => AriesVcxErrorKind::DuplicationDid,
             AriesVcxCoreErrorKind::LoggingError => AriesVcxErrorKind::LoggingError,
             AriesVcxCoreErrorKind::EncodeError => AriesVcxErrorKind::EncodeError,
@@ -106,32 +134,54 @@ impl From<AriesVcxError> for AriesVcxCoreError {
             AriesVcxErrorKind::InvalidMessagePack => AriesVcxCoreErrorKind::InvalidMessagePack,
             AriesVcxErrorKind::NotReady => AriesVcxCoreErrorKind::NotReady,
             AriesVcxErrorKind::IOError => AriesVcxCoreErrorKind::IOError,
-            AriesVcxErrorKind::LibindyInvalidStructure => AriesVcxCoreErrorKind::LibindyInvalidStructure,
+            AriesVcxErrorKind::LibindyInvalidStructure => {
+                AriesVcxCoreErrorKind::LibindyInvalidStructure
+            }
             AriesVcxErrorKind::InvalidLibindyParam => AriesVcxCoreErrorKind::InvalidLibindyParam,
             AriesVcxErrorKind::ActionNotSupported => AriesVcxCoreErrorKind::ActionNotSupported,
             AriesVcxErrorKind::InvalidInput => AriesVcxCoreErrorKind::InvalidInput,
             AriesVcxErrorKind::UnimplementedFeature => AriesVcxCoreErrorKind::UnimplementedFeature,
-            AriesVcxErrorKind::CredDefAlreadyCreated => AriesVcxCoreErrorKind::CredDefAlreadyCreated,
+            AriesVcxErrorKind::CredDefAlreadyCreated => {
+                AriesVcxCoreErrorKind::CredDefAlreadyCreated
+            }
             AriesVcxErrorKind::RevDeltaNotFound => AriesVcxCoreErrorKind::RevDeltaNotFound,
-            AriesVcxErrorKind::RevDeltaFailedToClear => AriesVcxCoreErrorKind::RevDeltaFailedToClear,
+            AriesVcxErrorKind::RevDeltaFailedToClear => {
+                AriesVcxCoreErrorKind::RevDeltaFailedToClear
+            }
             AriesVcxErrorKind::CreateRevRegDef => AriesVcxCoreErrorKind::CreateRevRegDef,
-            AriesVcxErrorKind::InvalidRevocationDetails => AriesVcxCoreErrorKind::InvalidRevocationDetails,
-            AriesVcxErrorKind::InvalidRevocationEntry => AriesVcxCoreErrorKind::InvalidRevocationEntry,
-            AriesVcxErrorKind::InvalidRevocationTimestamp => AriesVcxCoreErrorKind::InvalidRevocationTimestamp,
+            AriesVcxErrorKind::InvalidRevocationDetails => {
+                AriesVcxCoreErrorKind::InvalidRevocationDetails
+            }
+            AriesVcxErrorKind::InvalidRevocationEntry => {
+                AriesVcxCoreErrorKind::InvalidRevocationEntry
+            }
+            AriesVcxErrorKind::InvalidRevocationTimestamp => {
+                AriesVcxCoreErrorKind::InvalidRevocationTimestamp
+            }
             AriesVcxErrorKind::RevRegDefNotFound => AriesVcxCoreErrorKind::RevRegDefNotFound,
-            AriesVcxErrorKind::InvalidAttributesStructure => AriesVcxCoreErrorKind::InvalidAttributesStructure,
+            AriesVcxErrorKind::InvalidAttributesStructure => {
+                AriesVcxCoreErrorKind::InvalidAttributesStructure
+            }
             AriesVcxErrorKind::InvalidProof => AriesVcxCoreErrorKind::InvalidProof,
             AriesVcxErrorKind::InvalidSchema => AriesVcxCoreErrorKind::InvalidSchema,
-            AriesVcxErrorKind::InvalidProofCredentialData => AriesVcxCoreErrorKind::InvalidProofCredentialData,
+            AriesVcxErrorKind::InvalidProofCredentialData => {
+                AriesVcxCoreErrorKind::InvalidProofCredentialData
+            }
             AriesVcxErrorKind::InvalidProofRequest => AriesVcxCoreErrorKind::InvalidProofRequest,
             AriesVcxErrorKind::ProofRejected => AriesVcxCoreErrorKind::ProofRejected,
             AriesVcxErrorKind::InvalidSchemaSeqNo => AriesVcxCoreErrorKind::InvalidSchemaSeqNo,
             AriesVcxErrorKind::DuplicationSchema => AriesVcxCoreErrorKind::DuplicationSchema,
-            AriesVcxErrorKind::UnknownSchemaRejection => AriesVcxCoreErrorKind::UnknownSchemaRejection,
-            AriesVcxErrorKind::InvalidGenesisTxnPath => AriesVcxCoreErrorKind::InvalidGenesisTxnPath,
+            AriesVcxErrorKind::UnknownSchemaRejection => {
+                AriesVcxCoreErrorKind::UnknownSchemaRejection
+            }
+            AriesVcxErrorKind::InvalidGenesisTxnPath => {
+                AriesVcxCoreErrorKind::InvalidGenesisTxnPath
+            }
             AriesVcxErrorKind::CreatePoolConfig => AriesVcxCoreErrorKind::CreatePoolConfig,
             AriesVcxErrorKind::PoolLedgerConnect => AriesVcxCoreErrorKind::PoolLedgerConnect,
-            AriesVcxErrorKind::InvalidLedgerResponse => AriesVcxCoreErrorKind::InvalidLedgerResponse,
+            AriesVcxErrorKind::InvalidLedgerResponse => {
+                AriesVcxCoreErrorKind::InvalidLedgerResponse
+            }
             AriesVcxErrorKind::LedgerItemNotFound => AriesVcxCoreErrorKind::LedgerItemNotFound,
             AriesVcxErrorKind::NoPoolOpen => AriesVcxCoreErrorKind::NoPoolOpen,
             AriesVcxErrorKind::PostMessageFailed => AriesVcxCoreErrorKind::PostMessageFailed,
@@ -140,10 +190,14 @@ impl From<AriesVcxError> for AriesVcxCoreError {
             AriesVcxErrorKind::InvalidWalletHandle => AriesVcxCoreErrorKind::InvalidWalletHandle,
             AriesVcxErrorKind::DuplicationWallet => AriesVcxCoreErrorKind::DuplicationWallet,
             AriesVcxErrorKind::WalletRecordNotFound => AriesVcxCoreErrorKind::WalletRecordNotFound,
-            AriesVcxErrorKind::DuplicationWalletRecord => AriesVcxCoreErrorKind::DuplicationWalletRecord,
+            AriesVcxErrorKind::DuplicationWalletRecord => {
+                AriesVcxCoreErrorKind::DuplicationWalletRecord
+            }
             AriesVcxErrorKind::WalletNotFound => AriesVcxCoreErrorKind::WalletNotFound,
             AriesVcxErrorKind::WalletAlreadyOpen => AriesVcxCoreErrorKind::WalletAlreadyOpen,
-            AriesVcxErrorKind::DuplicationMasterSecret => AriesVcxCoreErrorKind::DuplicationMasterSecret,
+            AriesVcxErrorKind::DuplicationMasterSecret => {
+                AriesVcxCoreErrorKind::DuplicationMasterSecret
+            }
             AriesVcxErrorKind::DuplicationDid => AriesVcxCoreErrorKind::DuplicationDid,
             AriesVcxErrorKind::LoggingError => AriesVcxCoreErrorKind::LoggingError,
             AriesVcxErrorKind::EncodeError => AriesVcxCoreErrorKind::EncodeError,

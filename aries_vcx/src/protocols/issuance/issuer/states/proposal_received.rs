@@ -1,5 +1,6 @@
-use crate::handlers::util::OfferInfo;
 use messages::msg_fields::protocols::cred_issuance::propose_credential::ProposeCredential;
+
+use crate::handlers::util::OfferInfo;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ProposalReceivedState {

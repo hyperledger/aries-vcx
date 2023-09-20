@@ -15,7 +15,10 @@ pub(crate) trait DelayedSerde: Sized {
     /// can be determined.
     type MsgType<'a>;
 
-    fn delayed_deserialize<'de, D>(msg_type: Self::MsgType<'de>, deserializer: D) -> Result<Self, D::Error>
+    fn delayed_deserialize<'de, D>(
+        msg_type: Self::MsgType<'de>,
+        deserializer: D,
+    ) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>;
 

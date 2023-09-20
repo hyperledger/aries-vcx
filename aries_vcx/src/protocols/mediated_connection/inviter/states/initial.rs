@@ -1,7 +1,9 @@
 use messages::msg_fields::protocols::connection::problem_report::ProblemReport;
 
-use crate::handlers::util::AnyInvitation;
-use crate::protocols::mediated_connection::inviter::states::invited::InvitedState;
+use crate::{
+    handlers::util::AnyInvitation,
+    protocols::mediated_connection::inviter::states::invited::InvitedState,
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct InitialState {

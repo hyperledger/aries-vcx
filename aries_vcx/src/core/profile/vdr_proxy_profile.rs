@@ -1,25 +1,27 @@
 use std::{sync::Arc, time::Duration};
 
-use crate::errors::error::VcxResult;
-use aries_vcx_core::ledger::base_ledger::{TaaConfigurator, TxnAuthrAgrmtOptions};
-use aries_vcx_core::wallet::indy::IndySdkWallet;
 use aries_vcx_core::{
     anoncreds::{base_anoncreds::BaseAnonCreds, indy_anoncreds::IndySdkAnonCreds},
     ledger::{
-        base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite},
+        base_ledger::{
+            AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite,
+            TaaConfigurator, TxnAuthrAgrmtOptions,
+        },
         indy_vdr_ledger::{
-            IndyVdrLedgerRead, IndyVdrLedgerReadConfig, IndyVdrLedgerWrite, IndyVdrLedgerWriteConfig, ProtocolVersion,
+            IndyVdrLedgerRead, IndyVdrLedgerReadConfig, IndyVdrLedgerWrite,
+            IndyVdrLedgerWriteConfig, ProtocolVersion,
         },
         request_signer::base_wallet::BaseWalletRequestSigner,
         request_submitter::vdr_proxy::VdrProxySubmitter,
         response_cacher::in_memory::{InMemoryResponseCacher, InMemoryResponseCacherConfig},
     },
-    wallet::base_wallet::BaseWallet,
+    wallet::{base_wallet::BaseWallet, indy::IndySdkWallet},
     ResponseParser, VdrProxyClient, WalletHandle,
 };
 use async_trait::async_trait;
 
 use super::{prepare_taa_options, profile::Profile};
+use crate::errors::error::VcxResult;
 
 #[derive(Debug)]
 pub struct VdrProxyProfile {

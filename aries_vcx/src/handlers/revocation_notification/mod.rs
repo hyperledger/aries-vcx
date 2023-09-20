@@ -1,9 +1,12 @@
-use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
-use crate::handlers::issuance::issuer::Issuer;
-use crate::handlers::revocation_notification::sender::RevocationNotificationSender;
-use crate::protocols::revocation_notification::sender::state_machine::SenderConfigBuilder;
-use crate::protocols::SendClosure;
 use messages::decorators::please_ack::AckOn;
+
+use crate::{
+    errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
+    handlers::{
+        issuance::issuer::Issuer, revocation_notification::sender::RevocationNotificationSender,
+    },
+    protocols::{revocation_notification::sender::state_machine::SenderConfigBuilder, SendClosure},
+};
 
 pub mod receiver;
 pub mod sender;
@@ -40,22 +43,30 @@ pub async fn send_revocation_notification(
 
 pub mod test_utils {
     use agency_client::agency_client::AgencyClient;
-    use messages::msg_fields::protocols::revocation::ack::AckRevoke;
-    use messages::msg_fields::protocols::revocation::revoke::Revoke;
-    use messages::msg_fields::protocols::revocation::Revocation;
-    use messages::AriesMessage;
+    use messages::{
+        msg_fields::protocols::revocation::{ack::AckRevoke, revoke::Revoke, Revocation},
+        AriesMessage,
+    };
 
-    use crate::errors::error::prelude::*;
-    use crate::handlers::connection::mediated_connection::MediatedConnection;
+    use crate::{
+        errors::error::prelude::*, handlers::connection::mediated_connection::MediatedConnection,
+    };
 
     pub async fn get_revocation_notification_messages(
         agency_client: &AgencyClient,
         connection: &MediatedConnection,
     ) -> VcxResult<Vec<Revoke>> {
         let mut messages = Vec::<Revoke>::new();
-        for (uid, message) in connection.get_messages_noauth(&agency_client).await?.into_iter() {
+        for (uid, message) in connection
+            .get_messages_noauth(&agency_client)
+            .await?
+            .into_iter()
+        {
             if let AriesMessage::Revocation(Revocation::Revoke(message)) = message {
-                connection.update_message_status(&uid, &agency_client).await.ok();
+                connection
+                    .update_message_status(&uid, &agency_client)
+                    .await
+                    .ok();
                 messages.push(message);
             }
         }
@@ -67,9 +78,16 @@ pub mod test_utils {
         connection: &MediatedConnection,
     ) -> VcxResult<Vec<AckRevoke>> {
         let mut messages = Vec::<AckRevoke>::new();
-        for (uid, message) in connection.get_messages_noauth(&agency_client).await?.into_iter() {
+        for (uid, message) in connection
+            .get_messages_noauth(&agency_client)
+            .await?
+            .into_iter()
+        {
             if let AriesMessage::Revocation(Revocation::Ack(message)) = message {
-                connection.update_message_status(&uid, &agency_client).await.ok();
+                connection
+                    .update_message_status(&uid, &agency_client)
+                    .await
+                    .ok();
                 messages.push(message);
             }
         }

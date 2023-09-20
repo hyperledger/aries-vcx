@@ -25,7 +25,8 @@ use syn::{parse_macro_input, DeriveInput, Error};
 /// - on major version representing enums:
 ///     - [`ProtocolVersion`] impl on the enum.
 ///     - [`MessageKind`] impls on each type bound in the variants.
-///     - `new_vX_Y()` shorthand methods on the enum, for easier creation of instances of a certain variant (version).
+///     - `new_vX_Y()` shorthand methods on the enum, for easier creation of instances of a certain
+///       variant (version).
 ///
 /// ``` ignore
 /// use messages_macros::MessageType;

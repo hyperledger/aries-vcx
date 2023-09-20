@@ -1,9 +1,8 @@
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 
-use crate::errors::error::VcxCoreResult;
-
 use super::ResponseCacher;
+use crate::errors::error::VcxCoreResult;
 
 pub struct NoopResponseCacher {}
 

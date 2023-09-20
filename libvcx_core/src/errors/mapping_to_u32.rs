@@ -95,7 +95,10 @@ impl From<LibvcxErrorKind> for u32 {
     fn from(kind: LibvcxErrorKind) -> u32 {
         match kind {
             LibvcxErrorKind::LibndyError(code) => code,
-            _ => match ERROR_KINDS.iter().find(|(mapping_kind, _)| *mapping_kind == kind) {
+            _ => match ERROR_KINDS
+                .iter()
+                .find(|(mapping_kind, _)| *mapping_kind == kind)
+            {
                 Some((_, mapping_code)) => *mapping_code,
                 None => UNKNOWN_ERROR_CODE,
             },
@@ -138,9 +141,15 @@ mod tests {
         assert_eq!(u32::from(LibvcxErrorKind::InvalidRevocationEntry), 1092);
         assert_eq!(u32::from(LibvcxErrorKind::CreateRevRegDef), 1095);
         assert_eq!(u32::from(LibvcxErrorKind::InvalidCredentialHandle), 1053);
-        assert_eq!(u32::from(LibvcxErrorKind::InvalidIssuerCredentialHandle), 1015);
+        assert_eq!(
+            u32::from(LibvcxErrorKind::InvalidIssuerCredentialHandle),
+            1015
+        );
         assert_eq!(u32::from(LibvcxErrorKind::InvalidProofHandle), 1017);
-        assert_eq!(u32::from(LibvcxErrorKind::InvalidDisclosedProofHandle), 1049);
+        assert_eq!(
+            u32::from(LibvcxErrorKind::InvalidDisclosedProofHandle),
+            1049
+        );
         assert_eq!(u32::from(LibvcxErrorKind::InvalidProof), 1023);
         assert_eq!(u32::from(LibvcxErrorKind::InvalidSchema), 1031);
         assert_eq!(u32::from(LibvcxErrorKind::InvalidProofCredentialData), 1027);
@@ -199,61 +208,163 @@ mod tests {
     #[test]
     fn it_should_map_error_codes_to_error_kinds() {
         assert_eq!(LibvcxErrorKind::from(1081), LibvcxErrorKind::InvalidState);
-        assert_eq!(LibvcxErrorKind::from(1004), LibvcxErrorKind::InvalidConfiguration);
+        assert_eq!(
+            LibvcxErrorKind::from(1004),
+            LibvcxErrorKind::InvalidConfiguration
+        );
         assert_eq!(LibvcxErrorKind::from(1048), LibvcxErrorKind::InvalidHandle);
         assert_eq!(LibvcxErrorKind::from(1016), LibvcxErrorKind::InvalidJson);
         assert_eq!(LibvcxErrorKind::from(1007), LibvcxErrorKind::InvalidOption);
-        assert_eq!(LibvcxErrorKind::from(1019), LibvcxErrorKind::InvalidMessagePack);
+        assert_eq!(
+            LibvcxErrorKind::from(1019),
+            LibvcxErrorKind::InvalidMessagePack
+        );
         assert_eq!(LibvcxErrorKind::from(1005), LibvcxErrorKind::NotReady);
-        assert_eq!(LibvcxErrorKind::from(1091), LibvcxErrorKind::InvalidRevocationDetails);
+        assert_eq!(
+            LibvcxErrorKind::from(1091),
+            LibvcxErrorKind::InvalidRevocationDetails
+        );
         assert_eq!(LibvcxErrorKind::from(1074), LibvcxErrorKind::IOError);
-        assert_eq!(LibvcxErrorKind::from(1080), LibvcxErrorKind::LibindyInvalidStructure);
-        assert_eq!(LibvcxErrorKind::from(1067), LibvcxErrorKind::InvalidLibindyParam);
-        assert_eq!(LibvcxErrorKind::from(1044), LibvcxErrorKind::AlreadyInitialized);
-        assert_eq!(LibvcxErrorKind::from(1061), LibvcxErrorKind::CreateConnection);
-        assert_eq!(LibvcxErrorKind::from(1003), LibvcxErrorKind::InvalidConnectionHandle);
+        assert_eq!(
+            LibvcxErrorKind::from(1080),
+            LibvcxErrorKind::LibindyInvalidStructure
+        );
+        assert_eq!(
+            LibvcxErrorKind::from(1067),
+            LibvcxErrorKind::InvalidLibindyParam
+        );
+        assert_eq!(
+            LibvcxErrorKind::from(1044),
+            LibvcxErrorKind::AlreadyInitialized
+        );
+        assert_eq!(
+            LibvcxErrorKind::from(1061),
+            LibvcxErrorKind::CreateConnection
+        );
+        assert_eq!(
+            LibvcxErrorKind::from(1003),
+            LibvcxErrorKind::InvalidConnectionHandle
+        );
         assert_eq!(LibvcxErrorKind::from(1034), LibvcxErrorKind::CreateCredDef);
-        assert_eq!(LibvcxErrorKind::from(1039), LibvcxErrorKind::CredDefAlreadyCreated);
-        assert_eq!(LibvcxErrorKind::from(1037), LibvcxErrorKind::InvalidCredDefHandle);
-        assert_eq!(LibvcxErrorKind::from(1092), LibvcxErrorKind::InvalidRevocationEntry);
-        assert_eq!(LibvcxErrorKind::from(1095), LibvcxErrorKind::CreateRevRegDef);
-        assert_eq!(LibvcxErrorKind::from(1053), LibvcxErrorKind::InvalidCredentialHandle);
+        assert_eq!(
+            LibvcxErrorKind::from(1039),
+            LibvcxErrorKind::CredDefAlreadyCreated
+        );
+        assert_eq!(
+            LibvcxErrorKind::from(1037),
+            LibvcxErrorKind::InvalidCredDefHandle
+        );
+        assert_eq!(
+            LibvcxErrorKind::from(1092),
+            LibvcxErrorKind::InvalidRevocationEntry
+        );
+        assert_eq!(
+            LibvcxErrorKind::from(1095),
+            LibvcxErrorKind::CreateRevRegDef
+        );
+        assert_eq!(
+            LibvcxErrorKind::from(1053),
+            LibvcxErrorKind::InvalidCredentialHandle
+        );
         assert_eq!(
             LibvcxErrorKind::from(1015),
             LibvcxErrorKind::InvalidIssuerCredentialHandle
         );
-        assert_eq!(LibvcxErrorKind::from(1017), LibvcxErrorKind::InvalidProofHandle);
+        assert_eq!(
+            LibvcxErrorKind::from(1017),
+            LibvcxErrorKind::InvalidProofHandle
+        );
         assert_eq!(
             LibvcxErrorKind::from(1049),
             LibvcxErrorKind::InvalidDisclosedProofHandle
         );
         assert_eq!(LibvcxErrorKind::from(1023), LibvcxErrorKind::InvalidProof);
         assert_eq!(LibvcxErrorKind::from(1031), LibvcxErrorKind::InvalidSchema);
-        assert_eq!(LibvcxErrorKind::from(1027), LibvcxErrorKind::InvalidProofCredentialData);
-        assert_eq!(LibvcxErrorKind::from(1093), LibvcxErrorKind::InvalidRevocationTimestamp);
+        assert_eq!(
+            LibvcxErrorKind::from(1027),
+            LibvcxErrorKind::InvalidProofCredentialData
+        );
+        assert_eq!(
+            LibvcxErrorKind::from(1093),
+            LibvcxErrorKind::InvalidRevocationTimestamp
+        );
         assert_eq!(LibvcxErrorKind::from(1041), LibvcxErrorKind::CreateSchema);
-        assert_eq!(LibvcxErrorKind::from(1042), LibvcxErrorKind::InvalidSchemaHandle);
-        assert_eq!(LibvcxErrorKind::from(1040), LibvcxErrorKind::InvalidSchemaSeqNo);
-        assert_eq!(LibvcxErrorKind::from(1088), LibvcxErrorKind::DuplicationSchema);
-        assert_eq!(LibvcxErrorKind::from(1094), LibvcxErrorKind::UnknownSchemaRejection);
+        assert_eq!(
+            LibvcxErrorKind::from(1042),
+            LibvcxErrorKind::InvalidSchemaHandle
+        );
+        assert_eq!(
+            LibvcxErrorKind::from(1040),
+            LibvcxErrorKind::InvalidSchemaSeqNo
+        );
+        assert_eq!(
+            LibvcxErrorKind::from(1088),
+            LibvcxErrorKind::DuplicationSchema
+        );
+        assert_eq!(
+            LibvcxErrorKind::from(1094),
+            LibvcxErrorKind::UnknownSchemaRejection
+        );
         assert_eq!(LibvcxErrorKind::from(1058), LibvcxErrorKind::WalletCreate);
-        assert_eq!(LibvcxErrorKind::from(1075), LibvcxErrorKind::WalletAccessFailed);
-        assert_eq!(LibvcxErrorKind::from(1057), LibvcxErrorKind::InvalidWalletHandle);
-        assert_eq!(LibvcxErrorKind::from(1051), LibvcxErrorKind::DuplicationWallet);
+        assert_eq!(
+            LibvcxErrorKind::from(1075),
+            LibvcxErrorKind::WalletAccessFailed
+        );
+        assert_eq!(
+            LibvcxErrorKind::from(1057),
+            LibvcxErrorKind::InvalidWalletHandle
+        );
+        assert_eq!(
+            LibvcxErrorKind::from(1051),
+            LibvcxErrorKind::DuplicationWallet
+        );
         assert_eq!(LibvcxErrorKind::from(1079), LibvcxErrorKind::WalletNotFound);
-        assert_eq!(LibvcxErrorKind::from(1073), LibvcxErrorKind::WalletRecordNotFound);
-        assert_eq!(LibvcxErrorKind::from(1025), LibvcxErrorKind::PoolLedgerConnect);
-        assert_eq!(LibvcxErrorKind::from(1024), LibvcxErrorKind::InvalidGenesisTxnPath);
-        assert_eq!(LibvcxErrorKind::from(1026), LibvcxErrorKind::CreatePoolConfig);
-        assert_eq!(LibvcxErrorKind::from(1072), LibvcxErrorKind::DuplicationWalletRecord);
-        assert_eq!(LibvcxErrorKind::from(1052), LibvcxErrorKind::WalletAlreadyOpen);
-        assert_eq!(LibvcxErrorKind::from(1084), LibvcxErrorKind::DuplicationMasterSecret);
+        assert_eq!(
+            LibvcxErrorKind::from(1073),
+            LibvcxErrorKind::WalletRecordNotFound
+        );
+        assert_eq!(
+            LibvcxErrorKind::from(1025),
+            LibvcxErrorKind::PoolLedgerConnect
+        );
+        assert_eq!(
+            LibvcxErrorKind::from(1024),
+            LibvcxErrorKind::InvalidGenesisTxnPath
+        );
+        assert_eq!(
+            LibvcxErrorKind::from(1026),
+            LibvcxErrorKind::CreatePoolConfig
+        );
+        assert_eq!(
+            LibvcxErrorKind::from(1072),
+            LibvcxErrorKind::DuplicationWalletRecord
+        );
+        assert_eq!(
+            LibvcxErrorKind::from(1052),
+            LibvcxErrorKind::WalletAlreadyOpen
+        );
+        assert_eq!(
+            LibvcxErrorKind::from(1084),
+            LibvcxErrorKind::DuplicationMasterSecret
+        );
         assert_eq!(LibvcxErrorKind::from(1083), LibvcxErrorKind::DuplicationDid);
-        assert_eq!(LibvcxErrorKind::from(1082), LibvcxErrorKind::InvalidLedgerResponse);
-        assert_eq!(LibvcxErrorKind::from(1021), LibvcxErrorKind::InvalidAttributesStructure);
-        assert_eq!(LibvcxErrorKind::from(1086), LibvcxErrorKind::InvalidProofRequest);
+        assert_eq!(
+            LibvcxErrorKind::from(1082),
+            LibvcxErrorKind::InvalidLedgerResponse
+        );
+        assert_eq!(
+            LibvcxErrorKind::from(1021),
+            LibvcxErrorKind::InvalidAttributesStructure
+        );
+        assert_eq!(
+            LibvcxErrorKind::from(1086),
+            LibvcxErrorKind::InvalidProofRequest
+        );
         assert_eq!(LibvcxErrorKind::from(1030), LibvcxErrorKind::NoPoolOpen);
-        assert_eq!(LibvcxErrorKind::from(1010), LibvcxErrorKind::PostMessageFailed);
+        assert_eq!(
+            LibvcxErrorKind::from(1010),
+            LibvcxErrorKind::PostMessageFailed
+        );
         assert_eq!(LibvcxErrorKind::from(1090), LibvcxErrorKind::LoggingError);
         assert_eq!(LibvcxErrorKind::from(1022), LibvcxErrorKind::EncodeError);
         assert_eq!(LibvcxErrorKind::from(1001), LibvcxErrorKind::UnknownError);
@@ -261,24 +372,66 @@ mod tests {
         assert_eq!(LibvcxErrorKind::from(1009), LibvcxErrorKind::InvalidVerkey);
         assert_eq!(LibvcxErrorKind::from(1011), LibvcxErrorKind::InvalidNonce);
         assert_eq!(LibvcxErrorKind::from(1013), LibvcxErrorKind::InvalidUrl);
-        assert_eq!(LibvcxErrorKind::from(1050), LibvcxErrorKind::SerializationError);
+        assert_eq!(
+            LibvcxErrorKind::from(1050),
+            LibvcxErrorKind::SerializationError
+        );
         assert_eq!(LibvcxErrorKind::from(1014), LibvcxErrorKind::NotBase58);
-        assert_eq!(LibvcxErrorKind::from(1033), LibvcxErrorKind::InvalidHttpResponse);
-        assert_eq!(LibvcxErrorKind::from(1020), LibvcxErrorKind::InvalidMessages);
-        assert_eq!(LibvcxErrorKind::from(1035), LibvcxErrorKind::UnknownLibndyError);
-        assert_eq!(LibvcxErrorKind::from(1103), LibvcxErrorKind::ActionNotSupported);
-        assert_eq!(LibvcxErrorKind::from(1106), LibvcxErrorKind::NoAgentInformation);
-        assert_eq!(LibvcxErrorKind::from(1107), LibvcxErrorKind::RevRegDefNotFound);
-        assert_eq!(LibvcxErrorKind::from(1108), LibvcxErrorKind::RevDeltaNotFound);
-        assert_eq!(LibvcxErrorKind::from(1114), LibvcxErrorKind::RevDeltaFailedToClear);
+        assert_eq!(
+            LibvcxErrorKind::from(1033),
+            LibvcxErrorKind::InvalidHttpResponse
+        );
+        assert_eq!(
+            LibvcxErrorKind::from(1020),
+            LibvcxErrorKind::InvalidMessages
+        );
+        assert_eq!(
+            LibvcxErrorKind::from(1035),
+            LibvcxErrorKind::UnknownLibndyError
+        );
+        assert_eq!(
+            LibvcxErrorKind::from(1103),
+            LibvcxErrorKind::ActionNotSupported
+        );
+        assert_eq!(
+            LibvcxErrorKind::from(1106),
+            LibvcxErrorKind::NoAgentInformation
+        );
+        assert_eq!(
+            LibvcxErrorKind::from(1107),
+            LibvcxErrorKind::RevRegDefNotFound
+        );
+        assert_eq!(
+            LibvcxErrorKind::from(1108),
+            LibvcxErrorKind::RevDeltaNotFound
+        );
+        assert_eq!(
+            LibvcxErrorKind::from(1114),
+            LibvcxErrorKind::RevDeltaFailedToClear
+        );
         assert_eq!(LibvcxErrorKind::from(1109), LibvcxErrorKind::PoisonedLock);
-        assert_eq!(LibvcxErrorKind::from(1110), LibvcxErrorKind::ObjectAccessError);
-        assert_eq!(LibvcxErrorKind::from(1111), LibvcxErrorKind::InvalidMessageFormat);
-        assert_eq!(LibvcxErrorKind::from(1112), LibvcxErrorKind::CreateOutOfBand);
+        assert_eq!(
+            LibvcxErrorKind::from(1110),
+            LibvcxErrorKind::ObjectAccessError
+        );
+        assert_eq!(
+            LibvcxErrorKind::from(1111),
+            LibvcxErrorKind::InvalidMessageFormat
+        );
+        assert_eq!(
+            LibvcxErrorKind::from(1112),
+            LibvcxErrorKind::CreateOutOfBand
+        );
         assert_eq!(LibvcxErrorKind::from(1115), LibvcxErrorKind::InvalidInput);
         assert_eq!(LibvcxErrorKind::from(1116), LibvcxErrorKind::ParsingError);
-        assert_eq!(LibvcxErrorKind::from(1117), LibvcxErrorKind::UnimplementedFeature);
-        assert_eq!(LibvcxErrorKind::from(1118), LibvcxErrorKind::LedgerItemNotFound);
+        assert_eq!(
+            LibvcxErrorKind::from(1117),
+            LibvcxErrorKind::UnimplementedFeature
+        );
+        assert_eq!(
+            LibvcxErrorKind::from(1118),
+            LibvcxErrorKind::LedgerItemNotFound
+        );
         assert_eq!(LibvcxErrorKind::from(9999), LibvcxErrorKind::UnknownError);
     }
 }

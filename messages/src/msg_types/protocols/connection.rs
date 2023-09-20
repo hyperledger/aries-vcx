@@ -46,7 +46,10 @@ mod tests {
 
     #[test]
     fn test_version_resolution_connections() {
-        test_utils::test_msg_type_resolution("https://didcomm.org/connections/1.255", ConnectionTypeV1::new_v1_0())
+        test_utils::test_msg_type_resolution(
+            "https://didcomm.org/connections/1.255",
+            ConnectionTypeV1::new_v1_0(),
+        )
     }
 
     #[test]

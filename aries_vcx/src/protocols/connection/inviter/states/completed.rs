@@ -13,7 +13,11 @@ pub struct Completed {
 }
 
 impl Completed {
-    pub fn new(did_doc: AriesDidDoc, thread_id: String, protocols: Option<Vec<ProtocolDescriptor>>) -> Self {
+    pub fn new(
+        did_doc: AriesDidDoc,
+        thread_id: String,
+        protocols: Option<Vec<ProtocolDescriptor>>,
+    ) -> Self {
         Self {
             did_doc,
             thread_id,

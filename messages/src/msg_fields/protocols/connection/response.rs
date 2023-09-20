@@ -73,7 +73,9 @@ impl<'a> TryFrom<CowStr<'a>> for SigEd25519Sha512Single {
     fn try_from(value: CowStr<'a>) -> Result<Self, Self::Error> {
         let value = MessageType::try_from(value.0.as_ref())?;
 
-        if let Protocol::SignatureType(SignatureType::V1(SignatureTypeV1::V1_0(kind))) = value.protocol {
+        if let Protocol::SignatureType(SignatureType::V1(SignatureTypeV1::V1_0(kind))) =
+            value.protocol
+        {
             if let Ok(SignatureTypeV1_0::Ed25519Sha512Single) = kind.kind_from_str(value.kind) {
                 return Ok(SigEd25519Sha512Single);
             }
@@ -120,7 +122,9 @@ mod tests {
 
         let content = ResponseContent::builder().connection_sig(conn_sig).build();
 
-        let decorators = ResponseDecorators::builder().thread(make_extended_thread()).build();
+        let decorators = ResponseDecorators::builder()
+            .thread(make_extended_thread())
+            .build();
 
         let expected = json!({
             "connection~sig": content.connection_sig,

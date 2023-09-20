@@ -3,12 +3,17 @@ extern crate serde_json;
 
 #[cfg(test)]
 mod dbtests {
-    use aries_vcx::global::settings;
-    use aries_vcx::global::settings::init_issuer_config;
-    use aries_vcx::utils::test_logger::LibvcxDefaultLogger;
-    use aries_vcx_core::wallet::base_wallet::BaseWallet;
-    use aries_vcx_core::wallet::indy::wallet::{close_wallet, create_and_open_wallet, wallet_configure_issuer};
-    use aries_vcx_core::wallet::indy::{IndySdkWallet, WalletConfig, WalletConfigBuilder};
+    use aries_vcx::{
+        global::{settings, settings::init_issuer_config},
+        utils::test_logger::LibvcxDefaultLogger,
+    };
+    use aries_vcx_core::wallet::{
+        base_wallet::BaseWallet,
+        indy::{
+            wallet::{close_wallet, create_and_open_wallet, wallet_configure_issuer},
+            IndySdkWallet, WalletConfig, WalletConfigBuilder,
+        },
+    };
 
     #[tokio::test]
     #[ignore]
@@ -40,7 +45,9 @@ mod dbtests {
             .unwrap();
 
         let wallet_handle = create_and_open_wallet(&config_wallet).await.unwrap();
-        let config_issuer = wallet_configure_issuer(wallet_handle, enterprise_seed).await.unwrap();
+        let config_issuer = wallet_configure_issuer(wallet_handle, enterprise_seed)
+            .await
+            .unwrap();
         init_issuer_config(&config_issuer.institution_did).unwrap();
         let (_, _) = IndySdkWallet::new(wallet_handle)
             .create_and_store_my_did(None, None)

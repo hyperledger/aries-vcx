@@ -1,22 +1,31 @@
-use aries_vcx::messages::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
-use aries_vcx::messages::msg_fields::protocols::cred_issuance::CredentialIssuance;
-use aries_vcx::messages::AriesMessage;
+use aries_vcx::{
+    agency_client::testing::mocking::AgencyMockDecrypted,
+    global::settings::indy_mocks_enabled,
+    handlers::issuance::{holder::Holder, mediated_holder::holder_find_message_to_handle},
+    messages::{
+        msg_fields::protocols::cred_issuance::{
+            offer_credential::OfferCredential, CredentialIssuance,
+        },
+        AriesMessage,
+    },
+    protocols::issuance::holder::state_machine::HolderState,
+    utils::{
+        constants::GET_MESSAGES_DECRYPTED_RESPONSE,
+        mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER,
+    },
+};
 use serde_json;
 
-use aries_vcx::agency_client::testing::mocking::AgencyMockDecrypted;
-use aries_vcx::handlers::issuance::holder::Holder;
-use aries_vcx::handlers::issuance::mediated_holder::holder_find_message_to_handle;
-use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
-use aries_vcx::utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
-use aries_vcx::{global::settings::indy_mocks_enabled, utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER};
-
-use crate::api_vcx::api_global::profile::{
-    get_main_anoncreds, get_main_anoncreds_ledger_read, get_main_indy_ledger_read, get_main_profile,
+use crate::{
+    api_vcx::{
+        api_global::profile::{
+            get_main_anoncreds, get_main_anoncreds_ledger_read, get_main_indy_ledger_read,
+            get_main_profile,
+        },
+        api_handle::{mediated_connection, object_cache::ObjectCache},
+    },
+    errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult},
 };
-use crate::api_vcx::api_handle::mediated_connection;
-use crate::api_vcx::api_handle::object_cache::ObjectCache;
-
-use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 
 lazy_static! {
     static ref HANDLE_MAP: ObjectCache<Holder> = ObjectCache::<Holder>::new("credentials-cache");
@@ -76,7 +85,8 @@ pub fn credential_create_with_offer(source_id: &str, offer: &str) -> LibvcxResul
         LibvcxError::from_msg(
             LibvcxErrorKind::InvalidJson,
             format!(
-                "Strict `aries` protocol is enabled. Can not parse `aries` formatted Credential Offer: {}",
+                "Strict `aries` protocol is enabled. Can not parse `aries` formatted Credential \
+                 Offer: {}",
                 err
             ),
         )
@@ -116,7 +126,11 @@ pub async fn credential_create_with_msgid(
     Ok((handle, offer))
 }
 
-pub async fn update_state(credential_handle: u32, message: Option<&str>, connection_handle: u32) -> LibvcxResult<u32> {
+pub async fn update_state(
+    credential_handle: u32,
+    message: Option<&str>,
+    connection_handle: u32,
+) -> LibvcxResult<u32> {
     let mut credential = HANDLE_MAP.get_cloned(credential_handle)?;
 
     trace!("credential::update_state >>> ");
@@ -127,7 +141,10 @@ pub async fn update_state(credential_handle: u32, message: Option<&str>, connect
         let message: AriesMessage = serde_json::from_str(message).map_err(|err| {
             LibvcxError::from_msg(
                 LibvcxErrorKind::InvalidOption,
-                format!("Cannot update state: Message deserialization failed: {:?}", err),
+                format!(
+                    "Cannot update state: Message deserialization failed: {:?}",
+                    err
+                ),
             )
         })?;
         (None, Some(message))
@@ -140,7 +157,9 @@ pub async fn update_state(credential_handle: u32, message: Option<&str>, connect
     };
     match aries_msg {
         None => {
-            trace!("credential::update_state >>> no suitable messages found to progress the protocol");
+            trace!(
+                "credential::update_state >>> no suitable messages found to progress the protocol"
+            );
         }
         Some(aries_msg) => {
             credential
@@ -157,7 +176,8 @@ pub async fn update_state(credential_handle: u32, message: Option<&str>, connect
             match credential.get_final_message()? {
                 None => {}
                 Some(msg_response) => {
-                    let send_message = mediated_connection::send_message_closure(connection_handle).await?;
+                    let send_message =
+                        mediated_connection::send_message_closure(connection_handle).await?;
                     send_message(msg_response).await?;
                 }
             }
@@ -213,7 +233,10 @@ pub async fn is_revokable(handle: u32) -> LibvcxResult<bool> {
 }
 
 pub async fn delete_credential(handle: u32) -> LibvcxResult<()> {
-    trace!("Credential::delete_credential >>> credential_handle: {}", handle);
+    trace!(
+        "Credential::delete_credential >>> credential_handle: {}",
+        handle
+    );
     let credential = HANDLE_MAP.get_cloned(handle)?;
     credential.delete_credential(&get_main_anoncreds()?).await?;
     HANDLE_MAP.release(handle)
@@ -223,7 +246,11 @@ pub fn get_state(handle: u32) -> LibvcxResult<u32> {
     HANDLE_MAP.get(handle, |credential| Ok(credential.get_state().into()))
 }
 
-pub fn generate_credential_request_msg(_handle: u32, _my_pw_did: &str, _their_pw_did: &str) -> LibvcxResult<String> {
+pub fn generate_credential_request_msg(
+    _handle: u32,
+    _my_pw_did: &str,
+    _their_pw_did: &str,
+) -> LibvcxResult<String> {
     Err(LibvcxError::from_msg(
         LibvcxErrorKind::ActionNotSupported,
         "This action is not implemented yet",
@@ -241,7 +268,11 @@ pub async fn send_credential_request(handle: u32, connection_handle: u32) -> Lib
     let my_pw_did = mediated_connection::get_pw_did(connection_handle)?;
     let send_message = mediated_connection::send_message_closure(connection_handle).await?;
     let msg_response = credential
-        .prepare_credential_request(&get_main_anoncreds_ledger_read()?, &get_main_anoncreds()?, my_pw_did)
+        .prepare_credential_request(
+            &get_main_anoncreds_ledger_read()?,
+            &get_main_anoncreds()?,
+            my_pw_did,
+        )
         .await?;
     send_message(msg_response).await?;
     HANDLE_MAP.insert(handle, credential)
@@ -258,7 +289,9 @@ async fn get_credential_offer_msg(connection_handle: u32, msg_id: &str) -> Libvc
         AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
         AgencyMockDecrypted::set_next_decrypted_message(ARIES_CREDENTIAL_OFFER);
     }
-    let credential_offer = match mediated_connection::get_message_by_id(connection_handle, msg_id).await {
+    let credential_offer = match mediated_connection::get_message_by_id(connection_handle, msg_id)
+        .await
+    {
         Ok(message) => match message {
             AriesMessage::CredentialIssuance(CredentialIssuance::OfferCredential(_)) => Ok(message),
             msg => {
@@ -279,7 +312,9 @@ async fn get_credential_offer_msg(connection_handle: u32, msg_id: &str) -> Libvc
     })
 }
 
-pub async fn get_credential_offer_messages_with_conn_handle(connection_handle: u32) -> LibvcxResult<String> {
+pub async fn get_credential_offer_messages_with_conn_handle(
+    connection_handle: u32,
+) -> LibvcxResult<String> {
     trace!(
         "Credential::get_credential_offer_messages_with_conn_handle >>> connection_handle: {}",
         connection_handle
@@ -292,7 +327,9 @@ pub async fn get_credential_offer_messages_with_conn_handle(connection_handle: u
         .await?
         .into_iter()
         .filter_map(|(_, a2a_message)| match a2a_message {
-            AriesMessage::CredentialIssuance(CredentialIssuance::OfferCredential(_)) => Some(a2a_message),
+            AriesMessage::CredentialIssuance(CredentialIssuance::OfferCredential(_)) => {
+                Some(a2a_message)
+            }
             _ => None,
         })
         .collect();
@@ -360,7 +397,11 @@ pub fn get_thread_id(handle: u32) -> LibvcxResult<String> {
     })
 }
 
-pub async fn decline_offer(handle: u32, connection_handle: u32, comment: Option<&str>) -> LibvcxResult<()> {
+pub async fn decline_offer(
+    handle: u32,
+    connection_handle: u32,
+    comment: Option<&str>,
+) -> LibvcxResult<()> {
     let mut credential = HANDLE_MAP.get_cloned(handle)?;
     let send_message = mediated_connection::send_message_closure(connection_handle).await?;
     let problem_report = credential.decline_offer(comment)?;
@@ -375,14 +416,22 @@ pub mod tests_utils {
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 pub mod tests {
-    use aries_vcx::messages::msg_fields::protocols::cred_issuance::issue_credential::IssueCredential;
-    use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
-    use aries_vcx::utils::devsetup::{SetupDefaults, SetupMocks};
-    use aries_vcx::utils::mockdata::mockdata_credex;
-    use aries_vcx::utils::mockdata::mockdata_credex::{
-        ARIES_CREDENTIAL_OFFER, ARIES_CREDENTIAL_OFFER_JSON_FORMAT, ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED,
+    use aries_vcx::{
+        messages::msg_fields::protocols::cred_issuance::issue_credential::IssueCredential,
+        protocols::issuance::holder::state_machine::HolderState,
+        utils::{
+            devsetup::{SetupDefaults, SetupMocks},
+            mockdata::{
+                mockdata_credex,
+                mockdata_credex::{
+                    ARIES_CREDENTIAL_OFFER, ARIES_CREDENTIAL_OFFER_JSON_FORMAT,
+                    ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED,
+                },
+            },
+        },
     };
 
+    use super::*;
     #[cfg(test)]
     use crate::api_vcx::api_handle::credential::tests_utils::BAD_CREDENTIAL_OFFER;
     use crate::api_vcx::api_handle::credential::{
@@ -393,10 +442,10 @@ pub mod tests {
         build_test_connection_invitee_completed, build_test_connection_inviter_requested,
     };
 
-    use super::*;
-
     async fn _get_offer(handle: u32) -> String {
-        let offers = get_credential_offer_messages_with_conn_handle(handle).await.unwrap();
+        let offers = get_credential_offer_messages_with_conn_handle(handle)
+            .await
+            .unwrap();
         let offers: serde_json::Value = serde_json::from_str(&offers).unwrap();
         let offer = serde_json::to_string(&offers[0]).unwrap();
         offer
@@ -405,16 +454,27 @@ pub mod tests {
     #[test]
     fn test_vcx_credential_release() {
         let _setup = SetupDefaults::init();
-        let handle = credential_create_with_offer("test_credential_create_with_offer", ARIES_CREDENTIAL_OFFER).unwrap();
+        let handle = credential_create_with_offer(
+            "test_credential_create_with_offer",
+            ARIES_CREDENTIAL_OFFER,
+        )
+        .unwrap();
         release(handle).unwrap();
-        assert_eq!(to_string(handle).unwrap_err().kind, LibvcxErrorKind::InvalidHandle);
+        assert_eq!(
+            to_string(handle).unwrap_err().kind,
+            LibvcxErrorKind::InvalidHandle
+        );
     }
 
     #[tokio::test]
     async fn test_credential_create_with_offer() {
         let _setup = SetupDefaults::init();
 
-        let handle = credential_create_with_offer("test_credential_create_with_offer", ARIES_CREDENTIAL_OFFER).unwrap();
+        let handle = credential_create_with_offer(
+            "test_credential_create_with_offer",
+            ARIES_CREDENTIAL_OFFER,
+        )
+        .unwrap();
         assert!(handle > 0);
     }
 
@@ -422,9 +482,11 @@ pub mod tests {
     async fn test_credential_create_with_offer_with_json_attach() {
         let _setup = SetupDefaults::init();
 
-        let handle =
-            credential_create_with_offer("test_credential_create_with_offer", ARIES_CREDENTIAL_OFFER_JSON_FORMAT)
-                .unwrap();
+        let handle = credential_create_with_offer(
+            "test_credential_create_with_offer",
+            ARIES_CREDENTIAL_OFFER_JSON_FORMAT,
+        )
+        .unwrap();
         assert!(handle > 0);
     }
 
@@ -432,8 +494,11 @@ pub mod tests {
     async fn test_credential_create_with_bad_offer() {
         let _setup = SetupDefaults::init();
 
-        let err =
-            credential_create_with_offer("test_credential_create_with_bad_offer", BAD_CREDENTIAL_OFFER).unwrap_err();
+        let err = credential_create_with_offer(
+            "test_credential_create_with_bad_offer",
+            BAD_CREDENTIAL_OFFER,
+        )
+        .unwrap_err();
         assert_eq!(err.kind(), LibvcxErrorKind::InvalidJson);
     }
 
@@ -441,8 +506,11 @@ pub mod tests {
     async fn test_credential_serialize_deserialize() {
         let _setup = SetupDefaults::init();
 
-        let handle1 =
-            credential_create_with_offer("test_credential_serialize_deserialize", ARIES_CREDENTIAL_OFFER).unwrap();
+        let handle1 = credential_create_with_offer(
+            "test_credential_serialize_deserialize",
+            ARIES_CREDENTIAL_OFFER,
+        )
+        .unwrap();
         let cred_original_state = get_state(handle1).unwrap();
         let cred_original_serialized = to_string(handle1).unwrap();
         release(handle1).unwrap();
@@ -467,26 +535,40 @@ pub mod tests {
 
         info!("full_credential_test:: going to credential_create_with_offer");
         let handle_cred = credential_create_with_offer("TEST_CREDENTIAL", &offer).unwrap();
-        assert_eq!(HolderState::OfferReceived as u32, get_state(handle_cred).unwrap());
+        assert_eq!(
+            HolderState::OfferReceived as u32,
+            get_state(handle_cred).unwrap()
+        );
 
         info!("full_credential_test:: going get offered attributes from offer received state");
         let offer_attrs: String = get_attributes(handle_cred).unwrap();
-        info!("full_credential_test:: obtained offered attributes: {}", offer_attrs);
+        info!(
+            "full_credential_test:: obtained offered attributes: {}",
+            offer_attrs
+        );
         let offer_attrs: serde_json::Value = serde_json::from_str(&offer_attrs).unwrap();
         let offer_attrs_expected: serde_json::Value =
             serde_json::from_str(mockdata_credex::OFFERED_ATTRIBUTES).unwrap();
         assert_eq!(offer_attrs, offer_attrs_expected);
 
         info!("full_credential_test:: going to send_credential_request");
-        send_credential_request(handle_cred, handle_conn).await.unwrap();
-        assert_eq!(HolderState::RequestSet as u32, get_state(handle_cred).unwrap());
+        send_credential_request(handle_cred, handle_conn)
+            .await
+            .unwrap();
+        assert_eq!(
+            HolderState::RequestSet as u32,
+            get_state(handle_cred).unwrap()
+        );
 
         AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
         AgencyMockDecrypted::set_next_decrypted_message(ARIES_CREDENTIAL_RESPONSE);
 
         info!("full_credential_test:: going to update_state, should receive credential");
         update_state(handle_cred, None, handle_conn).await.unwrap();
-        assert_eq!(get_state(handle_cred).unwrap(), HolderState::Finished as u32);
+        assert_eq!(
+            get_state(handle_cred).unwrap(),
+            HolderState::Finished as u32
+        );
 
         info!("full_credential_test:: going to get_credential");
         let msg = get_credential(handle_cred).unwrap();
@@ -497,11 +579,15 @@ pub mod tests {
             "full_credential_test:: going to deserialize credential: {:?}",
             msg_value
         );
-        let _credential_struct: IssueCredential = serde_json::from_str(msg_value.to_string().as_str()).unwrap();
+        let _credential_struct: IssueCredential =
+            serde_json::from_str(msg_value.to_string().as_str()).unwrap();
 
         info!("full_credential_test:: going get offered attributes from final state");
         let offer_attrs: String = get_attributes(handle_cred).unwrap();
-        info!("full_credential_test:: obtained offered attributes: {}", offer_attrs);
+        info!(
+            "full_credential_test:: obtained offered attributes: {}",
+            offer_attrs
+        );
         let offer_attrs: serde_json::Value = serde_json::from_str(&offer_attrs).unwrap();
         let offer_attrs_expected: serde_json::Value =
             serde_json::from_str(mockdata_credex::OFFERED_ATTRIBUTES).unwrap();
@@ -512,8 +598,13 @@ pub mod tests {
     async fn test_get_attributes_json_attach() {
         let _setup = SetupMocks::init();
 
-        let handle_cred = credential_create_with_offer("TEST_CREDENTIAL", ARIES_CREDENTIAL_OFFER_JSON_FORMAT).unwrap();
-        assert_eq!(HolderState::OfferReceived as u32, get_state(handle_cred).unwrap());
+        let handle_cred =
+            credential_create_with_offer("TEST_CREDENTIAL", ARIES_CREDENTIAL_OFFER_JSON_FORMAT)
+                .unwrap();
+        assert_eq!(
+            HolderState::OfferReceived as u32,
+            get_state(handle_cred).unwrap()
+        );
 
         let offer_attrs: String = get_attributes(handle_cred).unwrap();
         let offer_attrs: serde_json::Value = serde_json::from_str(&offer_attrs).unwrap();
@@ -543,6 +634,7 @@ pub mod tests {
         let handle = from_string(CREDENTIAL_SM_FINISHED).unwrap();
         let cred_string: String = get_credential(handle).unwrap();
         let cred_value: serde_json::Value = serde_json::from_str(&cred_string).unwrap();
-        let _credential_struct: IssueCredential = serde_json::from_str(cred_value.to_string().as_str()).unwrap();
+        let _credential_struct: IssueCredential =
+            serde_json::from_str(cred_value.to_string().as_str()).unwrap();
     }
 }

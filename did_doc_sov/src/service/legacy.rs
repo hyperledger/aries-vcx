@@ -1,12 +1,14 @@
-use did_doc::schema::types::url::Url;
-use did_doc::schema::{service::Service, types::uri::Uri};
+use did_doc::schema::{
+    service::Service,
+    types::{uri::Uri, url::Url},
+};
 use serde::{Deserialize, Serialize};
 
-use crate::error::DidDocumentSovError;
-use crate::extra_fields::legacy::ExtraFieldsLegacy;
-use crate::extra_fields::ExtraFieldsSov;
-
 use super::ServiceType;
+use crate::{
+    error::DidDocumentSovError,
+    extra_fields::{legacy::ExtraFieldsLegacy, ExtraFieldsSov},
+};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -21,7 +23,11 @@ pub struct ServiceLegacy {
 }
 
 impl ServiceLegacy {
-    pub fn new(id: Uri, service_endpoint: Url, extra: ExtraFieldsLegacy) -> Result<Self, DidDocumentSovError> {
+    pub fn new(
+        id: Uri,
+        service_endpoint: Url,
+        extra: ExtraFieldsLegacy,
+    ) -> Result<Self, DidDocumentSovError> {
         Ok(Self {
             id,
             service_type: ServiceType::Legacy,
@@ -52,9 +58,11 @@ impl TryFrom<Service<ExtraFieldsSov>> for ServiceLegacy {
 
     fn try_from(service: Service<ExtraFieldsSov>) -> Result<Self, Self::Error> {
         match service.extra() {
-            ExtraFieldsSov::Legacy(extra) => {
-                Self::new(service.id().clone(), service.service_endpoint().clone(), extra.clone())
-            }
+            ExtraFieldsSov::Legacy(extra) => Self::new(
+                service.id().clone(),
+                service.service_endpoint().clone(),
+                extra.clone(),
+            ),
             _ => Err(DidDocumentSovError::UnexpectedServiceType(
                 service.service_type().to_string(),
             )),
@@ -67,8 +75,10 @@ impl TryFrom<ServiceLegacy> for Service<ExtraFieldsSov> {
 
     fn try_from(service: ServiceLegacy) -> Result<Self, Self::Error> {
         let extra = ExtraFieldsSov::Legacy(service.extra);
-        Ok(Service::builder(service.id, service.service_endpoint, extra)
-            .add_service_type(ServiceType::Legacy.to_string())?
-            .build())
+        Ok(
+            Service::builder(service.id, service.service_endpoint, extra)
+                .add_service_type(ServiceType::Legacy.to_string())?
+                .build(),
+        )
     }
 }

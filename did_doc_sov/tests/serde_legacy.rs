@@ -55,12 +55,18 @@ fn test_deserialization_legacy() {
     assert_eq!(verification_method.id().to_string(), "#1");
     assert_eq!(verification_method.controller().to_string(), DID_PEER);
     assert_eq!(
-        verification_method.public_key().unwrap().prefixless_fingerprint(),
+        verification_method
+            .public_key()
+            .unwrap()
+            .prefixless_fingerprint(),
         VERKEY_BASE58
     );
 
     let service = did_doc.service().first().unwrap();
-    assert_eq!(service.id().to_string(), "did:example:123456789abcdefghi;indy");
+    assert_eq!(
+        service.id().to_string(),
+        "did:example:123456789abcdefghi;indy"
+    );
     assert_eq!(
         service.service_endpoint().to_string().as_str(),
         "http://localhost:8080/agency/msg"

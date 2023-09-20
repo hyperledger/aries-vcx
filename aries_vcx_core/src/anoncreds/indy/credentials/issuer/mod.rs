@@ -1,13 +1,17 @@
-use vdrtools::{CredentialOffer, CredentialRequest, CredentialValues, DidValue, Locator, RevocationRegistryId};
+use vdrtools::{
+    CredentialOffer, CredentialRequest, CredentialValues, DidValue, Locator, RevocationRegistryId,
+};
 
-use crate::anoncreds::indy::general;
-use crate::anoncreds::indy::general::blob_storage_open_reader;
-use crate::errors::error::VcxCoreResult;
-use crate::global::settings;
-use crate::indy::utils::parse_and_validate;
-use crate::utils::constants::LIBINDY_CRED_OFFER;
-use crate::wallet::indy::wallet_non_secrets::{get_rev_reg_delta, set_rev_reg_delta};
-use crate::{utils, WalletHandle};
+use crate::{
+    anoncreds::indy::{general, general::blob_storage_open_reader},
+    errors::error::VcxCoreResult,
+    global::settings,
+    indy::utils::parse_and_validate,
+    utils,
+    utils::constants::LIBINDY_CRED_OFFER,
+    wallet::indy::wallet_non_secrets::{get_rev_reg_delta, set_rev_reg_delta},
+    WalletHandle,
+};
 
 pub async fn libindy_issuer_create_credential_offer(
     wallet_handle: WalletHandle,
@@ -19,7 +23,10 @@ pub async fn libindy_issuer_create_credential_offer(
 
     let res = Locator::instance()
         .issuer_controller
-        .create_credential_offer(wallet_handle, vdrtools::CredentialDefinitionId(cred_def_id.into()))
+        .create_credential_offer(
+            wallet_handle,
+            vdrtools::CredentialDefinitionId(cred_def_id.into()),
+        )
         .await?;
 
     Ok(res)
@@ -67,7 +74,12 @@ pub async fn libindy_create_and_store_revoc_reg(
     max_creds: u32,
     tag: &str,
 ) -> VcxCoreResult<(String, String, String)> {
-    trace!("creating revocation: {}, {}, {}", cred_def_id, tails_dir, max_creds);
+    trace!(
+        "creating revocation: {}, {}, {}",
+        cred_def_id,
+        tails_dir,
+        max_creds
+    );
 
     let tails_config = json!({"base_dir": tails_dir,"uri_pattern": ""}).to_string();
 
@@ -122,7 +134,10 @@ pub async fn libindy_issuer_merge_revocation_registry_deltas(
 ) -> VcxCoreResult<String> {
     let res = Locator::instance()
         .issuer_controller
-        .merge_revocation_registry_deltas(parse_and_validate(old_delta)?, parse_and_validate(new_delta)?)?;
+        .merge_revocation_registry_deltas(
+            parse_and_validate(old_delta)?,
+            parse_and_validate(new_delta)?,
+        )?;
 
     Ok(res)
 }
@@ -138,15 +153,28 @@ pub async fn revoke_credential_local(
     }
 
     let mut new_delta_json =
-        libindy_issuer_revoke_credential(wallet_handle, tails_file, rev_reg_id, cred_rev_id).await?;
+        libindy_issuer_revoke_credential(wallet_handle, tails_file, rev_reg_id, cred_rev_id)
+            .await?;
 
-    debug!("revoke_credential_local >>> new_delta_json: {}", new_delta_json);
+    debug!(
+        "revoke_credential_local >>> new_delta_json: {}",
+        new_delta_json
+    );
 
     if let Some(old_delta_json) = get_rev_reg_delta(wallet_handle, rev_reg_id).await {
-        debug!("revoke_credential_local >>> old_delta_json: {}", old_delta_json);
-        new_delta_json =
-            libindy_issuer_merge_revocation_registry_deltas(old_delta_json.as_str(), new_delta_json.as_str()).await?;
-        debug!("revoke_credential_local >>> merged_delta_json: {}", new_delta_json);
+        debug!(
+            "revoke_credential_local >>> old_delta_json: {}",
+            old_delta_json
+        );
+        new_delta_json = libindy_issuer_merge_revocation_registry_deltas(
+            old_delta_json.as_str(),
+            new_delta_json.as_str(),
+        )
+        .await?;
+        debug!(
+            "revoke_credential_local >>> merged_delta_json: {}",
+            new_delta_json
+        );
     }
 
     set_rev_reg_delta(wallet_handle, rev_reg_id, &new_delta_json).await

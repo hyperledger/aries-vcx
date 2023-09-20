@@ -1,5 +1,4 @@
-use std::error::Error;
-use std::fmt;
+use std::{error::Error, fmt};
 
 use thiserror;
 
@@ -24,7 +23,9 @@ pub enum AriesVcxCoreErrorKind {
     NotReady,
     #[error("IO Error, possibly creating a backup wallet")]
     IOError,
-    #[error("Object (json, config, key, credential and etc...) passed to libindy has invalid structure")]
+    #[error(
+        "Object (json, config, key, credential and etc...) passed to libindy has invalid structure"
+    )]
     LibindyInvalidStructure,
     #[error("Parameter passed to libindy was invalid")]
     InvalidLibindyParam,
@@ -39,7 +40,8 @@ pub enum AriesVcxCoreErrorKind {
     #[error("Can't create, Credential Def already on ledger")]
     CredDefAlreadyCreated,
     #[error(
-        "No revocation delta found in storage for this revocation registry. Were any credentials locally revoked?"
+        "No revocation delta found in storage for this revocation registry. Were any credentials \
+         locally revoked?"
     )]
     RevDeltaNotFound,
     #[error("Failed to clean stored revocation delta")]
@@ -76,7 +78,10 @@ pub enum AriesVcxCoreErrorKind {
     // Schema
     #[error("No Schema for that schema sequence number")]
     InvalidSchemaSeqNo,
-    #[error("Duplicate Schema: Ledger Already Contains Schema For Given DID, Version, and Name Combination")]
+    #[error(
+        "Duplicate Schema: Ledger Already Contains Schema For Given DID, Version, and Name \
+         Combination"
+    )]
     DuplicationSchema,
     #[error("Unknown Rejection of Schema Creation, refer to libindy documentation")]
     UnknownSchemaRejection,

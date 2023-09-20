@@ -11,8 +11,7 @@ use did_resolver::{
 
 use super::options::ExtraFieldsOptions;
 use crate::{
-    error::DidPeerError, numalgos::numalgo2::resolve_numalgo2,
-    peer_did::generic::GenericPeerDid,
+    error::DidPeerError, numalgos::numalgo2::resolve_numalgo2, peer_did::generic::GenericPeerDid,
 };
 
 pub struct PeerDidResolver;

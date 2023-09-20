@@ -2,12 +2,16 @@ use std::collections::HashMap;
 
 use async_trait::async_trait;
 
-use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
-use crate::utils::async_fn_iterator::AsyncFnIterator;
-use crate::utils::{self};
-use crate::wallet::base_wallet::BaseWallet;
 #[cfg(feature = "vdrtools_wallet")]
 use crate::WalletHandle;
+use crate::{
+    errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
+    utils::{
+        async_fn_iterator::AsyncFnIterator,
+        {self},
+    },
+    wallet::base_wallet::BaseWallet,
+};
 
 #[derive(Debug)]
 pub struct MockWallet;
@@ -27,7 +31,10 @@ impl BaseWallet for MockWallet {
         seed: Option<&str>,
         method_name: Option<&str>,
     ) -> VcxCoreResult<(String, String)> {
-        Ok((utils::constants::DID.to_string(), utils::constants::VERKEY.to_string()))
+        Ok((
+            utils::constants::DID.to_string(),
+            utils::constants::VERKEY.to_string(),
+        ))
     }
 
     async fn key_for_local_did(&self, did: &str) -> VcxCoreResult<String> {
@@ -52,7 +59,12 @@ impl BaseWallet for MockWallet {
         Ok(())
     }
 
-    async fn get_wallet_record(&self, xtype: &str, id: &str, options: &str) -> VcxCoreResult<String> {
+    async fn get_wallet_record(
+        &self,
+        xtype: &str,
+        id: &str,
+        options: &str,
+    ) -> VcxCoreResult<String> {
         Ok(r#"{"id":"123","type":"record type","value":"record value","tags":null}"#.to_string())
     }
 
@@ -64,11 +76,21 @@ impl BaseWallet for MockWallet {
         Ok(())
     }
 
-    async fn update_wallet_record_value(&self, xtype: &str, id: &str, value: &str) -> VcxCoreResult<()> {
+    async fn update_wallet_record_value(
+        &self,
+        xtype: &str,
+        id: &str,
+        value: &str,
+    ) -> VcxCoreResult<()> {
         Ok(())
     }
 
-    async fn add_wallet_record_tags(&self, xtype: &str, id: &str, tags: HashMap<String, String>) -> VcxCoreResult<()> {
+    async fn add_wallet_record_tags(
+        &self,
+        xtype: &str,
+        id: &str,
+        tags: HashMap<String, String>,
+    ) -> VcxCoreResult<()> {
         Ok(())
     }
 
@@ -81,7 +103,12 @@ impl BaseWallet for MockWallet {
         Ok(())
     }
 
-    async fn delete_wallet_record_tags(&self, xtype: &str, id: &str, tag_names: &str) -> VcxCoreResult<()> {
+    async fn delete_wallet_record_tags(
+        &self,
+        xtype: &str,
+        id: &str,
+        tag_names: &str,
+    ) -> VcxCoreResult<()> {
         Ok(())
     }
 
@@ -106,7 +133,12 @@ impl BaseWallet for MockWallet {
         Ok(true)
     }
 
-    async fn pack_message(&self, sender_vk: Option<&str>, receiver_keys: &str, msg: &[u8]) -> VcxCoreResult<Vec<u8>> {
+    async fn pack_message(
+        &self,
+        sender_vk: Option<&str>,
+        receiver_keys: &str,
+        msg: &[u8],
+    ) -> VcxCoreResult<Vec<u8>> {
         Ok(msg.to_vec())
     }
 

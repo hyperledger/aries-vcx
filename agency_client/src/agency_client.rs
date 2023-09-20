@@ -1,13 +1,13 @@
 use std::sync::Arc;
 
+use shared_vcx::validation::{did::validate_did, verkey::validate_verkey};
 use url::Url;
 
-use shared_vcx::validation::did::validate_did;
-use shared_vcx::validation::verkey::validate_verkey;
-
-use crate::configuration::AgencyClientConfig;
-use crate::errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
-use crate::wallet::base_agency_client_wallet::{BaseAgencyClientWallet, StubAgencyClientWallet};
+use crate::{
+    configuration::AgencyClientConfig,
+    errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult},
+    wallet::base_agency_client_wallet::{BaseAgencyClientWallet, StubAgencyClientWallet},
+};
 
 #[derive(Clone, Debug)]
 pub struct AgencyClient {
@@ -113,7 +113,9 @@ impl AgencyClient {
 
         let default_did = "VsKV7grR1BUE29mG2Fm2kX";
         let default_verkey = "Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR";
-        let default_url = "http://127.0.0.1:8080".parse().expect("should be valid url");
+        let default_url = "http://127.0.0.1:8080"
+            .parse()
+            .expect("should be valid url");
 
         self.set_agency_url(default_url);
         self.set_agency_did(default_did);
@@ -127,7 +129,9 @@ impl AgencyClient {
     pub fn new() -> Self {
         AgencyClient {
             wallet: Arc::new(StubAgencyClientWallet {}),
-            agency_url: "http://127.0.0.1:8080".parse().expect("should be valid url"),
+            agency_url: "http://127.0.0.1:8080"
+                .parse()
+                .expect("should be valid url"),
             agency_did: "".to_string(),
             agency_vk: "".to_string(),
             agent_pwdid: "".to_string(),
@@ -138,8 +142,8 @@ impl AgencyClient {
     }
 
     // todo: use this in favor of `fn new()`
-    // pub fn new(config: &str, wallet_handle: WalletHandle, validate: bool) -> AgencyClientResult<Self> {
-    //     let mut agency_client = Self::default();
+    // pub fn new(config: &str, wallet_handle: WalletHandle, validate: bool) ->
+    // AgencyClientResult<Self> {     let mut agency_client = Self::default();
     //     agency_client.process_config_string(config, wallet_handle, validate)?;
     //     Ok(agency_client)
     // }

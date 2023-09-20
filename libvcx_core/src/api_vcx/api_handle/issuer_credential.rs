@@ -1,25 +1,28 @@
-use aries_vcx::handlers::util::OfferInfo;
-use aries_vcx::messages::AriesMessage;
-use aries_vcx::protocols::SendClosure;
+use aries_vcx::{
+    handlers::{
+        issuance::{issuer::Issuer, mediated_issuer::issuer_find_message_to_handle},
+        util::OfferInfo,
+    },
+    messages::AriesMessage,
+    protocols::{issuance::issuer::state_machine::IssuerState, SendClosure},
+};
 use libc::send;
 use serde_json;
 
-use aries_vcx::handlers::issuance::issuer::Issuer;
-use aries_vcx::handlers::issuance::mediated_issuer::issuer_find_message_to_handle;
-use aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
-
-use crate::api_vcx::api_global::profile::{get_main_anoncreds, get_main_wallet};
-use crate::api_vcx::api_handle::connection;
-use crate::api_vcx::api_handle::connection::HttpClient;
-use crate::api_vcx::api_handle::credential_def;
-use crate::api_vcx::api_handle::mediated_connection;
-use crate::api_vcx::api_handle::object_cache::ObjectCache;
-use crate::api_vcx::api_handle::revocation_registry::REV_REG_MAP;
-
-use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
+use crate::{
+    api_vcx::{
+        api_global::profile::{get_main_anoncreds, get_main_wallet},
+        api_handle::{
+            connection, connection::HttpClient, credential_def, mediated_connection,
+            object_cache::ObjectCache, revocation_registry::REV_REG_MAP,
+        },
+    },
+    errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult},
+};
 
 lazy_static! {
-    static ref ISSUER_CREDENTIAL_MAP: ObjectCache<Issuer> = ObjectCache::<Issuer>::new("issuer-credentials-cache");
+    static ref ISSUER_CREDENTIAL_MAP: ObjectCache<Issuer> =
+        ObjectCache::<Issuer>::new("issuer-credentials-cache");
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -33,7 +36,11 @@ pub fn issuer_credential_create(source_id: String) -> LibvcxResult<u32> {
     ISSUER_CREDENTIAL_MAP.add(Issuer::create(&source_id)?)
 }
 
-pub async fn update_state(handle: u32, message: Option<&str>, connection_handle: u32) -> LibvcxResult<u32> {
+pub async fn update_state(
+    handle: u32,
+    message: Option<&str>,
+    connection_handle: u32,
+) -> LibvcxResult<u32> {
     trace!("issuer_credential::update_state >>> ");
     let mut credential = ISSUER_CREDENTIAL_MAP.get_cloned(handle)?;
     if credential.is_terminal_state() {
@@ -43,7 +50,10 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
         let msg: AriesMessage = serde_json::from_str(message).map_err(|err| {
             LibvcxError::from_msg(
                 LibvcxErrorKind::InvalidOption,
-                format!("Cannot update state: Message deserialization failed: {:?}", err),
+                format!(
+                    "Cannot update state: Message deserialization failed: {:?}",
+                    err
+                ),
             )
         })?;
         credential.process_aries_msg(msg.into()).await?;
@@ -73,13 +83,17 @@ pub async fn update_state_with_message_nonmediated(
     let con = connection::get_cloned_generic_connection(&connection_handle)?;
     let wallet = get_main_wallet()?;
 
-    let send_message: SendClosure =
-        Box::new(|msg: AriesMessage| Box::pin(async move { con.send_message(&wallet, &msg, &HttpClient).await }));
+    let send_message: SendClosure = Box::new(|msg: AriesMessage| {
+        Box::pin(async move { con.send_message(&wallet, &msg, &HttpClient).await })
+    });
 
     let message: AriesMessage = serde_json::from_str(message).map_err(|err| {
         LibvcxError::from_msg(
             LibvcxErrorKind::InvalidOption,
-            format!("Cannot update state: Message deserialization failed: {:?}", err),
+            format!(
+                "Cannot update state: Message deserialization failed: {:?}",
+                err
+            ),
         )
     })?;
     credential.process_aries_msg(message.into()).await?;
@@ -106,9 +120,12 @@ pub fn get_revocation_id(handle: u32) -> LibvcxResult<String> {
 }
 
 pub fn release(handle: u32) -> LibvcxResult<()> {
-    ISSUER_CREDENTIAL_MAP
-        .release(handle)
-        .map_err(|e| LibvcxError::from_msg(LibvcxErrorKind::InvalidIssuerCredentialHandle, e.to_string()))
+    ISSUER_CREDENTIAL_MAP.release(handle).map_err(|e| {
+        LibvcxError::from_msg(
+            LibvcxErrorKind::InvalidIssuerCredentialHandle,
+            e.to_string(),
+        )
+    })
 }
 
 pub fn release_all() {
@@ -131,12 +148,13 @@ pub fn to_string(handle: u32) -> LibvcxResult<String> {
 }
 
 pub fn from_string(credential_data: &str) -> LibvcxResult<u32> {
-    let issuer_credential: IssuerCredentials = serde_json::from_str(credential_data).map_err(|err| {
-        LibvcxError::from_msg(
-            LibvcxErrorKind::InvalidJson,
-            format!("Cannot deserialize IssuerCredential: {:?}", err),
-        )
-    })?;
+    let issuer_credential: IssuerCredentials =
+        serde_json::from_str(credential_data).map_err(|err| {
+            LibvcxError::from_msg(
+                LibvcxErrorKind::InvalidJson,
+                format!("Cannot deserialize IssuerCredential: {:?}", err),
+            )
+        })?;
 
     match issuer_credential {
         IssuerCredentials::V3(credential) => ISSUER_CREDENTIAL_MAP.add(credential),
@@ -153,7 +171,8 @@ pub async fn build_credential_offer_msg_v2(
     if !credential_def::check_is_published(cred_def_handle)? {
         return Err(LibvcxError::from_msg(
             LibvcxErrorKind::InvalidJson,
-            "Cannot issue credential of specified credential definition has not been published on the ledger",
+            "Cannot issue credential of specified credential definition has not been published on \
+             the ledger",
         ));
     };
     // todo: add check if rev reg was published
@@ -186,10 +205,15 @@ pub async fn build_credential_offer_msg_v2(
 }
 
 pub fn get_credential_offer_msg(handle: u32) -> LibvcxResult<AriesMessage> {
-    ISSUER_CREDENTIAL_MAP.get(handle, |credential| Ok(credential.get_credential_offer_msg()?))
+    ISSUER_CREDENTIAL_MAP.get(handle, |credential| {
+        Ok(credential.get_credential_offer_msg()?)
+    })
 }
 
-pub async fn send_credential_offer_v2(credential_handle: u32, connection_handle: u32) -> LibvcxResult<()> {
+pub async fn send_credential_offer_v2(
+    credential_handle: u32,
+    connection_handle: u32,
+) -> LibvcxResult<()> {
     let mut credential = ISSUER_CREDENTIAL_MAP.get_cloned(credential_handle)?;
     let send_closure = mediated_connection::send_message_closure(connection_handle).await?;
     let credential_offer = credential.get_credential_offer_msg()?;
@@ -198,14 +222,18 @@ pub async fn send_credential_offer_v2(credential_handle: u32, connection_handle:
     Ok(())
 }
 
-pub async fn send_credential_offer_nonmediated(credential_handle: u32, connection_handle: u32) -> LibvcxResult<()> {
+pub async fn send_credential_offer_nonmediated(
+    credential_handle: u32,
+    connection_handle: u32,
+) -> LibvcxResult<()> {
     let mut credential = ISSUER_CREDENTIAL_MAP.get_cloned(credential_handle)?;
 
     let con = connection::get_cloned_generic_connection(&connection_handle)?;
     let wallet = get_main_wallet()?;
 
-    let send_message: SendClosure =
-        Box::new(|msg: AriesMessage| Box::pin(async move { con.send_message(&wallet, &msg, &HttpClient).await }));
+    let send_message: SendClosure = Box::new(|msg: AriesMessage| {
+        Box::pin(async move { con.send_message(&wallet, &msg, &HttpClient).await })
+    });
     let credential_offer = credential.get_credential_offer_msg()?;
     send_message(credential_offer).await?;
 
@@ -236,8 +264,9 @@ pub async fn send_credential_nonmediated(handle: u32, connection_handle: u32) ->
     let mut credential = ISSUER_CREDENTIAL_MAP.get_cloned(handle)?;
     let con = connection::get_cloned_generic_connection(&connection_handle)?;
     let wallet = get_main_wallet()?;
-    let send_closure: SendClosure =
-        Box::new(|msg: AriesMessage| Box::pin(async move { con.send_message(&wallet, &msg, &HttpClient).await }));
+    let send_closure: SendClosure = Box::new(|msg: AriesMessage| {
+        Box::pin(async move { con.send_message(&wallet, &msg, &HttpClient).await })
+    });
     credential.build_credential(&get_main_anoncreds()?).await?;
     match credential.get_state() {
         IssuerState::Failed => {
@@ -287,17 +316,21 @@ pub fn get_thread_id(handle: u32) -> LibvcxResult<String> {
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 pub mod tests {
+    use aries_vcx::utils::{
+        constants::V3_OBJECT_SERIALIZE_VERSION,
+        devsetup::SetupMocks,
+        mockdata::{
+            mockdata_credex::ARIES_CREDENTIAL_REQUEST,
+            mockdata_mediated_connection::ARIES_CONNECTION_ACK,
+        },
+    };
+
+    use super::*;
     #[cfg(test)]
     use crate::api_vcx::api_handle::credential_def::tests::create_and_publish_nonrevocable_creddef;
     #[cfg(test)]
     use crate::api_vcx::api_handle::mediated_connection::test_utils::build_test_connection_inviter_requested;
     use crate::aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
-    use aries_vcx::utils::constants::V3_OBJECT_SERIALIZE_VERSION;
-    use aries_vcx::utils::devsetup::SetupMocks;
-    use aries_vcx::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_REQUEST;
-    use aries_vcx::utils::mockdata::mockdata_mediated_connection::ARIES_CONNECTION_ACK;
-
-    use super::*;
 
     fn _issuer_credential_create() -> u32 {
         issuer_credential_create("1".to_string()).unwrap()
@@ -312,7 +345,10 @@ pub mod tests {
         let _setup = SetupMocks::init();
         let handle = _issuer_credential_create();
         release(handle).unwrap();
-        assert_eq!(to_string(handle).unwrap_err().kind, LibvcxErrorKind::InvalidHandle)
+        assert_eq!(
+            to_string(handle).unwrap_err().kind,
+            LibvcxErrorKind::InvalidHandle
+        )
     }
 
     #[tokio::test]
@@ -347,7 +383,10 @@ pub mod tests {
         send_credential_offer_v2(credential_handle, connection_handle)
             .await
             .unwrap();
-        assert_eq!(get_state(credential_handle).unwrap(), u32::from(IssuerState::OfferSet));
+        assert_eq!(
+            get_state(credential_handle).unwrap(),
+            u32::from(IssuerState::OfferSet)
+        );
     }
 
     #[tokio::test]
@@ -382,11 +421,18 @@ pub mod tests {
         send_credential_offer_v2(credential_handle, connection_handle)
             .await
             .unwrap();
-        assert_eq!(get_state(credential_handle).unwrap(), u32::from(IssuerState::OfferSet));
+        assert_eq!(
+            get_state(credential_handle).unwrap(),
+            u32::from(IssuerState::OfferSet)
+        );
 
-        update_state(credential_handle, Some(ARIES_CREDENTIAL_REQUEST), connection_handle)
-            .await
-            .unwrap();
+        update_state(
+            credential_handle,
+            Some(ARIES_CREDENTIAL_REQUEST),
+            connection_handle,
+        )
+        .await
+        .unwrap();
         assert_eq!(
             get_state(credential_handle).unwrap(),
             u32::from(IssuerState::RequestReceived)
@@ -403,13 +449,21 @@ pub mod tests {
         build_credential_offer_msg_v2(handle_cred, cred_def_handle, 1234, _cred_json(), None)
             .await
             .unwrap();
-        send_credential_offer_v2(handle_cred, handle_conn).await.unwrap();
-        assert_eq!(get_state(handle_cred).unwrap(), u32::from(IssuerState::OfferSet));
+        send_credential_offer_v2(handle_cred, handle_conn)
+            .await
+            .unwrap();
+        assert_eq!(
+            get_state(handle_cred).unwrap(),
+            u32::from(IssuerState::OfferSet)
+        );
 
         // try to update state with nonsense message
         let result = update_state(handle_cred, Some(ARIES_CONNECTION_ACK), handle_conn).await;
         assert!(result.is_ok()); // todo: maybe we should rather return error if update_state doesn't progress state
-        assert_eq!(get_state(handle_cred).unwrap(), u32::from(IssuerState::OfferSet));
+        assert_eq!(
+            get_state(handle_cred).unwrap(),
+            u32::from(IssuerState::OfferSet)
+        );
     }
 
     #[tokio::test]

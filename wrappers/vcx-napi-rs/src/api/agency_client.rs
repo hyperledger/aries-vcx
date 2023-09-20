@@ -1,12 +1,15 @@
-use libvcx_core::api_vcx::api_global::agency_client;
+use libvcx_core::{
+    api_vcx::api_global::agency_client,
+    aries_vcx::agency_client::{
+        configuration::{AgencyClientConfig, AgentProvisionConfig},
+        messages::update_message::UIDsByConn,
+        MessageStatusCode,
+    },
+    errors::error::{LibvcxError, LibvcxErrorKind},
+    serde_json,
+    serde_json::json,
+};
 use napi_derive::napi;
-
-use libvcx_core::aries_vcx::agency_client::configuration::{AgencyClientConfig, AgentProvisionConfig};
-use libvcx_core::aries_vcx::agency_client::messages::update_message::UIDsByConn;
-use libvcx_core::aries_vcx::agency_client::MessageStatusCode;
-use libvcx_core::errors::error::{LibvcxError, LibvcxErrorKind};
-use libvcx_core::serde_json;
-use libvcx_core::serde_json::json;
 
 use crate::error::to_napi_err;
 
@@ -49,7 +52,10 @@ pub async fn provision_cloud_agent(config: String) -> napi::Result<String> {
 
 // todo: can we accept Vec<String> instead of Stringified JSON in place of uids_by_conns?
 #[napi]
-pub async fn messages_update_status(status_code: String, uids_by_conns: String) -> napi::Result<()> {
+pub async fn messages_update_status(
+    status_code: String,
+    uids_by_conns: String,
+) -> napi::Result<()> {
     let status_code: MessageStatusCode = serde_json::from_str(&format!("\"{}\"", status_code))
         .map_err(|err| {
             LibvcxError::from_msg(

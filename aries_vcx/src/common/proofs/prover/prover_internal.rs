@@ -1,13 +1,17 @@
 use std::{collections::HashMap, sync::Arc};
 
-use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
-use aries_vcx_core::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind};
-use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
+use aries_vcx_core::{
+    anoncreds::base_anoncreds::BaseAnonCreds,
+    errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind},
+    ledger::base_ledger::AnoncredsLedgerRead,
+};
 use serde_json::Value;
 
-use crate::common::proofs::{proof_request::ProofRequestData, proof_request_internal::NonRevokedInterval};
-use crate::errors::error::prelude::*;
-use crate::handlers::proof_presentation::types::SelectedCredentials;
+use crate::{
+    common::proofs::{proof_request::ProofRequestData, proof_request_internal::NonRevokedInterval},
+    errors::error::prelude::*,
+    handlers::proof_presentation::types::SelectedCredentials,
+};
 
 #[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct CredInfoProver {
@@ -38,7 +42,9 @@ pub async fn build_schemas_json_prover(
             let schema_json = ledger
                 .get_schema(&cred_info.schema_id, None)
                 .await
-                .map_err(|err| err.map(AriesVcxCoreErrorKind::InvalidSchema, "Cannot get schema"))?;
+                .map_err(|err| {
+                    err.map(AriesVcxCoreErrorKind::InvalidSchema, "Cannot get schema")
+                })?;
 
             let schema_json = serde_json::from_str(&schema_json).map_err(|err| {
                 AriesVcxCoreError::from_msg(
@@ -65,12 +71,15 @@ pub async fn build_cred_defs_json_prover(
 
     for cred_info in credentials_identifiers {
         if rtn.get(&cred_info.cred_def_id).is_none() {
-            let credential_def = ledger.get_cred_def(&cred_info.cred_def_id, None).await.map_err(|err| {
-                err.map(
-                    AriesVcxCoreErrorKind::InvalidProofCredentialData,
-                    "Cannot get credential definition",
-                )
-            })?;
+            let credential_def = ledger
+                .get_cred_def(&cred_info.cred_def_id, None)
+                .await
+                .map_err(|err| {
+                    err.map(
+                        AriesVcxCoreErrorKind::InvalidProofCredentialData,
+                        "Cannot get credential definition",
+                    )
+                })?;
 
             let credential_def = serde_json::from_str(&credential_def).map_err(|err| {
                 AriesVcxError::from_msg(
@@ -115,12 +124,21 @@ pub fn credential_def_identifiers(
     Ok(rtn)
 }
 
-fn _get_revocation_interval(attr_name: &str, proof_req: &ProofRequestData) -> VcxResult<Option<NonRevokedInterval>> {
+fn _get_revocation_interval(
+    attr_name: &str,
+    proof_req: &ProofRequestData,
+) -> VcxResult<Option<NonRevokedInterval>> {
     if let Some(attr) = proof_req.requested_attributes.get(attr_name) {
-        Ok(attr.non_revoked.clone().or(proof_req.non_revoked.clone().or(None)))
+        Ok(attr
+            .non_revoked
+            .clone()
+            .or(proof_req.non_revoked.clone().or(None)))
     } else if let Some(attr) = proof_req.requested_predicates.get(attr_name) {
         // Handle case for predicates
-        Ok(attr.non_revoked.clone().or(proof_req.non_revoked.clone().or(None)))
+        Ok(attr
+            .non_revoked
+            .clone()
+            .or(proof_req.non_revoked.clone().or(None)))
     } else {
         Err(AriesVcxError::from_msg(
             AriesVcxErrorKind::InvalidProofCredentialData,
@@ -142,11 +160,14 @@ pub async fn build_rev_states_json(
     let mut timestamps: HashMap<String, u64> = HashMap::new();
 
     for cred_info in credentials_identifiers.iter_mut() {
-        if let (Some(rev_reg_id), Some(cred_rev_id), Some(tails_dir)) =
-            (&cred_info.rev_reg_id, &cred_info.cred_rev_id, &cred_info.tails_dir)
-        {
+        if let (Some(rev_reg_id), Some(cred_rev_id), Some(tails_dir)) = (
+            &cred_info.rev_reg_id,
+            &cred_info.cred_rev_id,
+            &cred_info.tails_dir,
+        ) {
             if rtn.get(rev_reg_id).is_none() {
-                // Does this make sense in case cred_info's for same rev_reg_ids have different revocation intervals
+                // Does this make sense in case cred_info's for same rev_reg_ids have different
+                // revocation intervals
                 let (from, to) = if let Some(ref interval) = cred_info.revocation_interval {
                     (interval.from, interval.to)
                 } else {
@@ -155,8 +176,9 @@ pub async fn build_rev_states_json(
 
                 let rev_reg_def_json = ledger_read.get_rev_reg_def_json(rev_reg_id).await?;
 
-                let (rev_reg_id, rev_reg_delta_json, timestamp) =
-                    ledger_read.get_rev_reg_delta_json(rev_reg_id, from, to).await?;
+                let (rev_reg_id, rev_reg_delta_json, timestamp) = ledger_read
+                    .get_rev_reg_delta_json(rev_reg_id, from, to)
+                    .await?;
 
                 let rev_state_json = anoncreds
                     .create_revocation_state(
@@ -168,15 +190,16 @@ pub async fn build_rev_states_json(
                     )
                     .await?;
 
-                let rev_state_json: Value = serde_json::from_str(&rev_state_json).map_err(|err| {
-                    AriesVcxError::from_msg(
-                        AriesVcxErrorKind::InvalidJson,
-                        format!("Cannot deserialize RevocationState: {}", err),
-                    )
-                })?;
+                let rev_state_json: Value =
+                    serde_json::from_str(&rev_state_json).map_err(|err| {
+                        AriesVcxError::from_msg(
+                            AriesVcxErrorKind::InvalidJson,
+                            format!("Cannot deserialize RevocationState: {}", err),
+                        )
+                    })?;
 
-                // TODO: proover should be able to create multiple states of same revocation policy for different timestamps
-                // see ticket IS-1108
+                // TODO: proover should be able to create multiple states of same revocation policy
+                // for different timestamps see ticket IS-1108
                 rtn[rev_reg_id.to_string()] = json!({ timestamp.to_string(): rev_state_json });
                 cred_info.timestamp = Some(timestamp);
 
@@ -201,7 +224,8 @@ pub fn build_requested_credentials_json(
     proof_req: &ProofRequestData,
 ) -> VcxResult<String> {
     trace!(
-        "build_requested_credentials_json >> credentials_identifiers: {:?}, self_attested_attrs: {:?}, proof_req: {:?}",
+        "build_requested_credentials_json >> credentials_identifiers: {:?}, self_attested_attrs: \
+         {:?}, proof_req: {:?}",
         credentials_identifiers,
         self_attested_attrs,
         proof_req
@@ -214,7 +238,11 @@ pub fn build_requested_credentials_json(
     // do same for predicates and self_attested
     if let Value::Object(ref mut map) = rtn["requested_attributes"] {
         for cred_info in credentials_identifiers {
-            if proof_req.requested_attributes.get(&cred_info.referent).is_some() {
+            if proof_req
+                .requested_attributes
+                .get(&cred_info.referent)
+                .is_some()
+            {
                 let insert_val = json!({"cred_id": cred_info.credential_referent, "revealed": cred_info.revealed.unwrap_or(true), "timestamp": cred_info.timestamp});
                 map.insert(cred_info.referent.to_owned(), insert_val);
             }
@@ -223,7 +251,11 @@ pub fn build_requested_credentials_json(
 
     if let Value::Object(ref mut map) = rtn["requested_predicates"] {
         for cred_info in credentials_identifiers {
-            if proof_req.requested_predicates.get(&cred_info.referent).is_some() {
+            if proof_req
+                .requested_predicates
+                .get(&cred_info.referent)
+                .is_some()
+            {
                 let insert_val = json!({"cred_id": cred_info.credential_referent, "timestamp": cred_info.timestamp});
                 map.insert(cred_info.referent.to_owned(), insert_val);
             }
@@ -245,10 +277,15 @@ pub fn build_requested_credentials_json(
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 pub mod pool_tests {
-    use crate::common::proofs::prover::prover_internal::{build_rev_states_json, CredInfoProver};
-    use crate::utils::constants::{CRED_DEF_ID, CRED_REV_ID, LICENCE_CRED_ID, SCHEMA_ID};
-    use crate::utils::devsetup::SetupProfile;
     use aries_vcx_core::ledger::indy::pool::test_utils::get_temp_dir_path;
+
+    use crate::{
+        common::proofs::prover::prover_internal::{build_rev_states_json, CredInfoProver},
+        utils::{
+            constants::{CRED_DEF_ID, CRED_REV_ID, LICENCE_CRED_ID, SCHEMA_ID},
+            devsetup::SetupProfile,
+        },
+    };
 
     #[tokio::test]
     #[ignore]
@@ -299,16 +336,19 @@ pub mod pool_tests {
 pub mod unit_tests {
     use aries_vcx_core::ledger::indy::pool::test_utils::get_temp_dir_path;
 
-    use crate::core::profile::vdrtools_profile::VdrtoolsProfile;
-    use crate::utils::constants::{
-        ADDRESS_CRED_DEF_ID, ADDRESS_CRED_ID, ADDRESS_CRED_REV_ID, ADDRESS_REV_REG_ID, ADDRESS_SCHEMA_ID, CRED_DEF_ID,
-        CRED_REV_ID, LICENCE_CRED_ID, REV_REG_ID, REV_STATE_JSON, SCHEMA_ID,
-    };
-    use crate::utils::devsetup::*;
-    use crate::utils::mockdata::profile::mock_anoncreds::MockAnoncreds;
-    use crate::utils::mockdata::profile::mock_ledger::MockLedger;
-
     use super::*;
+    use crate::{
+        core::profile::vdrtools_profile::VdrtoolsProfile,
+        utils::{
+            constants::{
+                ADDRESS_CRED_DEF_ID, ADDRESS_CRED_ID, ADDRESS_CRED_REV_ID, ADDRESS_REV_REG_ID,
+                ADDRESS_SCHEMA_ID, CRED_DEF_ID, CRED_REV_ID, LICENCE_CRED_ID, REV_REG_ID,
+                REV_STATE_JSON, SCHEMA_ID,
+            },
+            devsetup::*,
+            mockdata::profile::{mock_anoncreds::MockAnoncreds, mock_ledger::MockLedger},
+        },
+    };
 
     fn proof_req_no_interval() -> ProofRequestData {
         let proof_req = json!({
@@ -358,9 +398,12 @@ pub mod unit_tests {
         let creds = vec![cred1, cred2];
 
         let ledger_read: Arc<dyn AnoncredsLedgerRead> = Arc::new(MockLedger {});
-        let credential_def = build_cred_defs_json_prover(&ledger_read, &creds).await.unwrap();
+        let credential_def = build_cred_defs_json_prover(&ledger_read, &creds)
+            .await
+            .unwrap();
         assert!(credential_def.len() > 0);
-        assert!(credential_def.contains(r#""id":"V4SGRU86Z58d6TV7PBUe6f:3:CL:47:tag1","schemaId":"47""#));
+        assert!(credential_def
+            .contains(r#""id":"V4SGRU86Z58d6TV7PBUe6f:3:CL:47:tag1","schemaId":"47""#));
     }
 
     #[tokio::test]
@@ -369,7 +412,9 @@ pub mod unit_tests {
 
         let ledger_read: Arc<dyn AnoncredsLedgerRead> = Arc::new(MockLedger {});
         assert_eq!(
-            build_schemas_json_prover(&ledger_read, &Vec::new()).await.unwrap(),
+            build_schemas_json_prover(&ledger_read, &Vec::new())
+                .await
+                .unwrap(),
             "{}".to_string()
         );
 
@@ -400,9 +445,13 @@ pub mod unit_tests {
         let creds = vec![cred1, cred2];
 
         let ledger_read: Arc<dyn AnoncredsLedgerRead> = Arc::new(MockLedger {});
-        let schemas = build_schemas_json_prover(&ledger_read, &creds).await.unwrap();
+        let schemas = build_schemas_json_prover(&ledger_read, &creds)
+            .await
+            .unwrap();
         assert!(schemas.len() > 0);
-        assert!(schemas.contains(r#""id":"2hoqvcwupRTUNkXn6ArYzs:2:test-licence:4.4.4","name":"test-licence""#));
+        assert!(schemas.contains(
+            r#""id":"2hoqvcwupRTUNkXn6ArYzs:2:test-licence:4.4.4","name":"test-licence""#
+        ));
     }
 
     #[test]
@@ -510,7 +559,11 @@ pub mod unit_tests {
 
         // No Creds
         assert_eq!(
-            credential_def_identifiers(&serde_json::from_str("{}").unwrap(), &proof_req_no_interval()).unwrap(),
+            credential_def_identifiers(
+                &serde_json::from_str("{}").unwrap(),
+                &proof_req_no_interval()
+            )
+            .unwrap(),
             Vec::new()
         );
         assert_eq!(
@@ -567,7 +620,8 @@ pub mod unit_tests {
         );
 
         // rev_reg_id is null
-        selected_credentials["attrs"]["height_1"]["cred_info"]["rev_reg_id"] = serde_json::Value::Null;
+        selected_credentials["attrs"]["height_1"]["cred_info"]["rev_reg_id"] =
+            serde_json::Value::Null;
         assert_eq!(
             &credential_def_identifiers(
                 &serde_json::from_value(selected_credentials).unwrap(),
@@ -640,9 +694,12 @@ pub mod unit_tests {
             "non_revoked": {"from": 098, "to": 123}
         });
         let proof_req: ProofRequestData = serde_json::from_value(proof_req).unwrap();
-        let requested_credential =
-            build_requested_credentials_json(&creds, &serde_json::from_str(&self_attested_attrs).unwrap(), &proof_req)
-                .unwrap();
+        let requested_credential = build_requested_credentials_json(
+            &creds,
+            &serde_json::from_str(&self_attested_attrs).unwrap(),
+            &proof_req,
+        )
+        .unwrap();
         assert_eq!(test.to_string(), requested_credential);
     }
 
@@ -696,7 +753,9 @@ pub mod unit_tests {
 
         // Attribute not found in proof req
         assert_eq!(
-            _get_revocation_interval("not here", &proof_req).unwrap_err().kind(),
+            _get_revocation_interval("not here", &proof_req)
+                .unwrap_err()
+                .kind(),
             AriesVcxErrorKind::InvalidProofCredentialData
         );
 
@@ -705,14 +764,20 @@ pub mod unit_tests {
             from: Some(123),
             to: Some(456),
         });
-        assert_eq!(_get_revocation_interval("address1_1", &proof_req).unwrap(), interval);
+        assert_eq!(
+            _get_revocation_interval("address1_1", &proof_req).unwrap(),
+            interval
+        );
 
         // when attribute interval is None, defaults to proof req interval
         let interval = Some(NonRevokedInterval {
             from: Some(098),
             to: Some(123),
         });
-        assert_eq!(_get_revocation_interval("zip_2", &proof_req).unwrap(), interval);
+        assert_eq!(
+            _get_revocation_interval("zip_2", &proof_req).unwrap(),
+            interval
+        );
 
         // No interval provided for attribute or proof req
         assert_eq!(

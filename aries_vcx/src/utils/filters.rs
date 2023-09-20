@@ -1,7 +1,8 @@
 use messages::{
     decorators::attachment::Attachment,
     msg_fields::protocols::{
-        cred_issuance::offer_credential::OfferCredential, present_proof::request::RequestPresentation,
+        cred_issuance::offer_credential::OfferCredential,
+        present_proof::request::RequestPresentation,
     },
 };
 use serde_json;
@@ -12,20 +13,26 @@ fn __accommodate_macro(attachments: &Vec<Attachment>) -> VcxResult<String> {
     Ok(get_attach_as_string!(attachments))
 }
 
-fn _filter_proof_requests_by_name(requests: &str, match_name: &str) -> VcxResult<Vec<RequestPresentation>> {
-    let presentation_requests: Vec<RequestPresentation> = serde_json::from_str(requests).map_err(|err| {
-        AriesVcxError::from_msg(
-            AriesVcxErrorKind::InvalidJson,
-            format!(
-                "Failed to deserialize Vec<PresentationRequest>: {}\nObtained error: {:?}",
-                requests, err
-            ),
-        )
-    })?;
+fn _filter_proof_requests_by_name(
+    requests: &str,
+    match_name: &str,
+) -> VcxResult<Vec<RequestPresentation>> {
+    let presentation_requests: Vec<RequestPresentation> =
+        serde_json::from_str(requests).map_err(|err| {
+            AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidJson,
+                format!(
+                    "Failed to deserialize Vec<PresentationRequest>: {}\nObtained error: {:?}",
+                    requests, err
+                ),
+            )
+        })?;
     let filtered = presentation_requests
         .into_iter()
         .filter_map(|presentation_request| {
-            match __accommodate_macro(&presentation_request.content.request_presentations_attach).ok() {
+            match __accommodate_macro(&presentation_request.content.request_presentations_attach)
+                .ok()
+            {
                 Some(content) => {
                     match serde_json::from_str::<serde_json::Value>(&content) {
                         Ok(value) => match value.get("name") {
@@ -65,9 +72,11 @@ fn _filter_offers_by_comment(offers: &str, match_comment: &str) -> VcxResult<Vec
     Ok(filtered)
 }
 
-// todo: need not to return Result, can be modified to return String, never error - likely for other functions in this file as well
+// todo: need not to return Result, can be modified to return String, never error - likely for other
+// functions in this file as well
 pub fn filter_proof_requests_by_name(requests: &str, name: &str) -> VcxResult<String> {
-    let presentation_requests: Vec<RequestPresentation> = _filter_proof_requests_by_name(requests, name)?;
+    let presentation_requests: Vec<RequestPresentation> =
+        _filter_proof_requests_by_name(requests, name)?;
     let filtered: String = serde_json::to_string(&presentation_requests).map_err(|err| {
         AriesVcxError::from_msg(
             AriesVcxErrorKind::InvalidJson,
@@ -97,22 +106,32 @@ pub fn filter_credential_offers_by_comment(offers: &str, comment: &str) -> VcxRe
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 pub mod unit_tests {
-    use crate::utils::mockdata::mockdata_proof;
-
     use super::*;
+    use crate::utils::mockdata::mockdata_proof;
 
     #[test]
     fn test_filter_proof_requests_by_name() {
-        let filtered =
-            _filter_proof_requests_by_name(mockdata_proof::PRESENTATION_REQUEST_MESSAGE_ARRAY, "request1").unwrap();
+        let filtered = _filter_proof_requests_by_name(
+            mockdata_proof::PRESENTATION_REQUEST_MESSAGE_ARRAY,
+            "request1",
+        )
+        .unwrap();
         assert_eq!(filtered.len(), 1);
-        let filtered =
-            _filter_proof_requests_by_name(mockdata_proof::PRESENTATION_REQUEST_MESSAGE_ARRAY, "request2").unwrap();
+        let filtered = _filter_proof_requests_by_name(
+            mockdata_proof::PRESENTATION_REQUEST_MESSAGE_ARRAY,
+            "request2",
+        )
+        .unwrap();
         assert_eq!(filtered.len(), 1);
-        let filtered =
-            _filter_proof_requests_by_name(mockdata_proof::PRESENTATION_REQUEST_MESSAGE_ARRAY, "not there").unwrap();
+        let filtered = _filter_proof_requests_by_name(
+            mockdata_proof::PRESENTATION_REQUEST_MESSAGE_ARRAY,
+            "not there",
+        )
+        .unwrap();
         assert_eq!(filtered.len(), 0);
-        let filtered = _filter_proof_requests_by_name(mockdata_proof::PRESENTATION_REQUEST_MESSAGE_ARRAY, "").unwrap();
+        let filtered =
+            _filter_proof_requests_by_name(mockdata_proof::PRESENTATION_REQUEST_MESSAGE_ARRAY, "")
+                .unwrap();
         assert_eq!(filtered.len(), 0);
         let filtered = _filter_proof_requests_by_name(
             mockdata_proof::PRESENTATION_REQUEST_MESSAGE_ARRAY_EMPTY_ATTACH,
@@ -120,9 +139,11 @@ pub mod unit_tests {
         )
         .unwrap();
         assert_eq!(filtered.len(), 0);
-        let filtered =
-            _filter_proof_requests_by_name(mockdata_proof::PRESENTATION_REQUEST_MESSAGE_ARRAY_EMPTY_ATTACH, "")
-                .unwrap();
+        let filtered = _filter_proof_requests_by_name(
+            mockdata_proof::PRESENTATION_REQUEST_MESSAGE_ARRAY_EMPTY_ATTACH,
+            "",
+        )
+        .unwrap();
         assert_eq!(filtered.len(), 0);
     }
 }

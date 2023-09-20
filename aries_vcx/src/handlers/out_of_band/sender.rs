@@ -90,9 +90,10 @@ impl OutOfBandSender {
 
     pub fn append_a2a_message(mut self, msg: AriesMessage) -> VcxResult<Self> {
         let (attach_id, attach) = match msg {
-            a2a_msg @ AriesMessage::PresentProof(PresentProof::RequestPresentation(_)) => {
-                (AttachmentId::PresentationRequest, json!(&a2a_msg).to_string())
-            }
+            a2a_msg @ AriesMessage::PresentProof(PresentProof::RequestPresentation(_)) => (
+                AttachmentId::PresentationRequest,
+                json!(&a2a_msg).to_string(),
+            ),
             a2a_msg @ AriesMessage::CredentialIssuance(CredentialIssuance::OfferCredential(_)) => {
                 (AttachmentId::CredentialOffer, json!(&a2a_msg).to_string())
             }
@@ -109,7 +110,10 @@ impl OutOfBandSender {
             .content
             .requests_attach
             .get_or_insert(Vec::with_capacity(1))
-            .push(make_attach_from_str!(&attach, attach_id.as_ref().to_string()));
+            .push(make_attach_from_str!(
+                &attach,
+                attach_id.as_ref().to_string()
+            ));
 
         Ok(self)
     }

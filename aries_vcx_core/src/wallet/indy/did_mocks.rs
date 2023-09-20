@@ -1,6 +1,7 @@
-use std::collections::HashSet;
-use std::sync::Mutex;
-use std::sync::RwLock;
+use std::{
+    collections::HashSet,
+    sync::{Mutex, RwLock},
+};
 
 lazy_static! {
     pub static ref ENABLED_MOCKS: RwLock<HashSet<String>> = RwLock::new(HashSet::new());
@@ -41,7 +42,10 @@ impl DidMocks {
                 .pop()
                 .expect("No data on DID_MOCK_RESPONSES stack to pop")
         } else {
-            debug!("Attempting to obtain did response when none were set, but did messages available - returning empty response...");
+            debug!(
+                "Attempting to obtain did response when none were set, but did messages available \
+                 - returning empty response..."
+            );
             String::new()
         }
     }
