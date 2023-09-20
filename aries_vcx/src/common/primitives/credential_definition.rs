@@ -1,4 +1,4 @@
-use std::{fmt, sync::Arc};
+use std::sync::Arc;
 
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds,
@@ -15,61 +15,39 @@ use crate::{
     },
 };
 
-macro_rules! enum_number {
-    ($name:ident { $($variant:ident = $value:expr, )* }) => {
-        #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-        pub enum $name {
-            $($variant = $value,)*
-        }
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Deserialize, Default)]
+#[serde(try_from = "u8")]
+#[repr(u8)]
+pub enum PublicEntityStateType {
+    Built = 0,
+    #[default]
+    Published = 1,
+}
 
-        impl ::serde::Serialize for $name {
-            fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-                where S: ::serde::Serializer
-            {
-                // Serialize the enum as a u64.
-                serializer.serialize_u64(*self as u64)
-            }
-        }
-
-        impl<'de> ::serde::Deserialize<'de> for $name {
-            fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-                where D: ::serde::Deserializer<'de>
-            {
-                struct Visitor;
-
-                impl<'de> ::serde::de::Visitor<'de> for Visitor {
-                    type Value = $name;
-
-                    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-                        formatter.write_str("positive integer")
-                    }
-
-                    fn visit_u64<E>(self, value: u64) -> Result<$name, E>
-                        where E: ::serde::de::Error
-                    {
-                        // Rust does not come with a simple way of converting a
-                        // number to an enum, so use a big `match`.
-                        match value {
-                            $( $value => Ok($name::$variant), )*
-                            _ => Err(E::custom(
-                                format!("unknown {} value: {}",
-                                stringify!($name), value))),
-                        }
-                    }
-                }
-
-                // Deserialize the enum from a u64.
-                deserializer.deserialize_u64(Visitor)
-            }
-        }
+impl ::serde::Serialize for PublicEntityStateType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: ::serde::Serializer,
+    {
+        serializer.serialize_u8(*self as u8)
     }
 }
 
-enum_number!(PublicEntityStateType
-{
-    Built = 0,
-    Published = 1,
-});
+impl TryFrom<u8> for PublicEntityStateType {
+    type Error = String;
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(PublicEntityStateType::Built),
+            1 => Ok(PublicEntityStateType::Published),
+            _ => Err(format!(
+                "unknown {} value: {}",
+                stringify!(PublicEntityStateType),
+                value
+            )),
+        }
+    }
+}
 
 #[derive(Clone, Deserialize, Debug, Serialize, PartialEq, Eq, Default)]
 pub struct CredentialDef {
@@ -100,12 +78,6 @@ pub struct RevocationDetails {
     pub support_revocation: Option<bool>,
     pub tails_dir: Option<String>,
     pub max_creds: Option<u32>,
-}
-
-impl Default for PublicEntityStateType {
-    fn default() -> Self {
-        PublicEntityStateType::Published
-    }
 }
 
 async fn _try_get_cred_def_from_ledger(
@@ -193,7 +165,7 @@ impl CredentialDef {
             self.id
         );
         if let Some(ledger_cred_def_json) =
-            _try_get_cred_def_from_ledger(&ledger_read, &self.issuer_did, &self.id).await?
+            _try_get_cred_def_from_ledger(ledger_read, &self.issuer_did, &self.id).await?
         {
             return Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::CredDefAlreadyCreated,

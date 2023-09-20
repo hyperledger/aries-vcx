@@ -1,7 +1,3 @@
-use std::sync::Arc;
-
-use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
-
 use crate::errors::error::prelude::*;
 
 #[derive(Clone, Deserialize, Debug, Serialize, Default)]
@@ -34,7 +30,7 @@ impl RevocationRegistryDeltaValue {
 
 impl RevocationRegistryDelta {
     pub async fn create_from_ledger(rev_reg_delta_json: &str) -> VcxResult<Self> {
-        serde_json::from_str(&rev_reg_delta_json).map_err(|err| {
+        serde_json::from_str(rev_reg_delta_json).map_err(|err| {
             AriesVcxError::from_msg(
                 AriesVcxErrorKind::SerializationError,
                 format!(
