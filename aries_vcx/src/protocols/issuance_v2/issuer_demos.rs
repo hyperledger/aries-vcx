@@ -13,15 +13,30 @@ mod demo_test {
     use crate::{
         core::profile::profile::Profile,
         protocols::issuance_v2::{
-            formats::issuer::anoncreds::{
-                AnoncredsCreateCredentialInput, AnoncredsCreateCredentialRevocationInfoInput,
-                AnoncredsCreateOfferInput, AnoncredsIssuerCredentialIssuanceFormat,
+            formats::issuer::{
+                anoncreds::{
+                    AnoncredsCreateCredentialInput, AnoncredsCreateCredentialRevocationInfoInput,
+                    AnoncredsCreateOfferInput, AnoncredsIssuerCredentialIssuanceFormat,
+                },
+                ld_proof_vc::LdProofIssuerCredentialIssuanceFormat,
             },
-            issuer::IssuerV2,
+            issuer::{states::CredentialPrepared, IssuerV2},
             messages::{ProposeCredentialV2, RequestCredentialV2},
         },
         utils::mockdata::profile::mock_profile::MockProfile,
     };
+
+    fn dummy_ack() -> Ack {
+        Ack::builder()
+            .id(String::new())
+            .decorators(
+                AckDecorators::builder()
+                    .thread(Thread::builder().thid(String::from("thid")).build())
+                    .build(),
+            )
+            .content(AckContent::builder().status(AckStatus::Ok).build())
+            .build()
+    }
 
     #[tokio::test]
     async fn classic_anoncreds_demo() {
@@ -93,19 +108,97 @@ mod demo_test {
         // send_msg(credential.into())
 
         // ------ receive ack
-        let ack = Ack::builder()
-            .id(String::new())
-            .decorators(
-                AckDecorators::builder()
-                    .thread(Thread::builder().thid(String::from("thid")).build())
-                    .build(),
-            )
-            .content(AckContent::builder().status(AckStatus::Ok).build())
-            .build();
+        let ack = dummy_ack();
 
         let _issuer = issuer.complete_with_ack(ack);
     }
 
     #[tokio::test]
-    async fn ld_proof_vc_demo() {}
+    async fn ld_proof_vc_demo() {
+        // ------ receive incoming proposal
+
+        let proposal = ProposeCredentialV2;
+
+        let issuer = IssuerV2::from_proposal(proposal);
+
+        // ------ respond with offer
+
+        let issuer = issuer
+            .prepare_offer::<LdProofIssuerCredentialIssuanceFormat>(&(), None, None)
+            .await
+            .unwrap();
+
+        let _offer = issuer.get_offer();
+        // send_msg(offer.into())
+
+        // ------- receive request
+
+        let request = RequestCredentialV2;
+
+        let issuer = issuer.receive_request(request);
+
+        // ------- respond with credential
+
+        let issuer = issuer
+            .prepare_credential::<LdProofIssuerCredentialIssuanceFormat>(&(), None, None)
+            .await
+            .unwrap();
+
+        let _credential = issuer.get_credential();
+        // send_msg(credential.into())
+
+        // ------ receive ack
+        let ack = dummy_ack();
+
+        let _issuer = issuer.complete_with_ack(ack);
+    }
+
+    #[tokio::test]
+    async fn multi_cred_ld_proof_vc_from_request_demo() {
+        // ------ initialize with request received
+        let request = RequestCredentialV2;
+
+        let issuer = IssuerV2::from_request::<LdProofIssuerCredentialIssuanceFormat>(request).unwrap();
+
+        // ------ respond with first cred, and show intent to issue `4` more creds
+
+        let mut issuer = issuer
+            .prepare_credential::<LdProofIssuerCredentialIssuanceFormat>(&(), Some(4), Some(true))
+            .await
+            .unwrap();
+
+        let _credential = issuer.get_credential();
+        // send_msg(credential.into())
+
+        // ------- iterate until all creds are sent
+
+        async fn send_another_cred(issuer: IssuerV2<CredentialPrepared>) -> IssuerV2<CredentialPrepared> {
+            // receive request message
+            let request = RequestCredentialV2;
+
+            let requested_issuer = issuer.receive_request_for_more(request).unwrap();
+            let issuer = requested_issuer
+                .prepare_credential::<LdProofIssuerCredentialIssuanceFormat>(&(), None, None)
+                .await
+                .unwrap();
+
+            let _credential = issuer.get_credential();
+            // send_msg(credential.into())
+            issuer
+        }
+
+        loop {
+            if issuer.remaining_credentials_to_issue() == 0 {
+                break;
+            }
+
+            issuer = send_another_cred(issuer).await;
+        }
+
+        // ------- finish and receive ack
+
+        let ack = dummy_ack();
+
+        let _issuer = issuer.complete_with_ack(ack);
+    }
 }

@@ -182,7 +182,7 @@ impl IssuerV2<OfferPrepared> {
 }
 
 impl IssuerV2<RequestReceived> {
-    pub fn with_request<T: IssuerCredentialIssuanceFormat>(request: RequestCredentialV2) -> VcxResult<Self> {
+    pub fn from_request<T: IssuerCredentialIssuanceFormat>(request: RequestCredentialV2) -> VcxResult<Self> {
         if !T::supports_request_independent_of_offer() {
             return Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::ActionNotSupported,
