@@ -1,4 +1,5 @@
 use messages::{
+    decorators::attachment::Attachment,
     msg_fields::protocols::{
         connection::{invitation::Invitation, Connection},
         cred_issuance::CredentialIssuance,
@@ -34,38 +35,20 @@ macro_rules! matches_opt_thread_id {
     };
 }
 
+#[rustfmt::skip] // This macro results in some false positives and formatting makes it harder to read
 macro_rules! get_attach_as_string {
     ($attachments:expr) => {{
         let __attach = $attachments.get(0).as_ref().map(|a| &a.data.content);
-        let Some(messages::decorators::attachment::AttachmentType::Base64(encoded_attach)) =
-                        __attach
-                    else {
-                        return Err(AriesVcxError::from_msg(
-                            AriesVcxErrorKind::SerializationError,
-                            format!(
-                                "Attachment is not base 64 encoded JSON: {:?}",
-                                $attachments.get(0)
-                            ),
-                        ));
-                    };
-        let Ok(bytes) = base64::decode(encoded_attach) else {
-                        return Err(AriesVcxError::from_msg(
-                            AriesVcxErrorKind::SerializationError,
-                            format!(
-                                "Attachment is not base 64 encoded JSON: {:?}",
-                                $attachments.get(0)
-                            ),
-                        ));
-                    };
-        let Ok(attach_string) = String::from_utf8(bytes) else {
-                        return Err(AriesVcxError::from_msg(
-                            AriesVcxErrorKind::SerializationError,
-                            format!(
-                                "Attachment is not base 64 encoded JSON: {:?}",
-                                $attachments.get(0)
-                            ),
-                        ));
-                    };
+        let err_fn = |attach: Option<&messages::decorators::attachment::Attachment>| {
+            Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::SerializationError,
+                format!("Attachment is not base 64 encoded JSON: {:?}", attach),
+            ))
+        };
+
+        let Some(messages::decorators::attachment::AttachmentType::Base64(encoded_attach)) = __attach else { return err_fn($attachments.get(0)); };
+        let Ok(bytes) = base64::decode(encoded_attach) else { return err_fn($attachments.get(0)); };
+        let Ok(attach_string) = String::from_utf8(bytes) else { return err_fn($attachments.get(0)); };
 
         attach_string
     }};
