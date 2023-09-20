@@ -94,8 +94,10 @@ impl InviteeConnection<Invited> {
 
         let id = Uuid::new_v4().to_string();
 
-        let mut did_doc = AriesDidDoc::default();
-        did_doc.id = self.pairwise_info.pw_did.to_string();
+        let mut did_doc = AriesDidDoc {
+            id: self.pairwise_info.pw_did.to_string(),
+            ..Default::default()
+        };
         did_doc.set_service_endpoint(service_endpoint);
         did_doc.set_routing_keys(routing_keys);
         did_doc.set_recipient_keys(recipient_keys);

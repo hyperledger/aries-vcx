@@ -469,9 +469,9 @@ impl IssuerSM {
         match self.state {
             IssuerFullState::CredentialSet(ref state_data) => {
                 let mut msg_issue_credential: IssueCredential =
-                    state_data.msg_issue_credential.clone().into();
-                let mut timing = Timing::default();
-                timing.out_time = Some(Utc::now());
+                    state_data.msg_issue_credential.clone();
+                let timing = Timing::builder().out_time(Utc::now()).build();
+
                 msg_issue_credential.decorators.timing = Some(timing);
                 Ok(msg_issue_credential)
             }
@@ -578,7 +578,7 @@ async fn create_credential(
     if !matches_opt_thread_id!(request, thread_id.as_str()) {
         return Err(AriesVcxError::from_msg(
             AriesVcxErrorKind::InvalidJson,
-            format!("Cannot handle credential request: thread id does not match"),
+            "Cannot handle credential request: thread id does not match",
         ));
     };
 
