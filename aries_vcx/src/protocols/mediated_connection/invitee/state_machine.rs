@@ -521,7 +521,7 @@ impl SmConnectionInvitee {
 
 //         pub async fn invitee_sm() -> SmConnectionInvitee {
 //             let pairwise_info =
-// PairwiseInfo::create(&mock_profile().inject_wallet()).await.unwrap();             
+// PairwiseInfo::create(&mock_profile().inject_wallet()).await.unwrap();
 // SmConnectionInvitee::new(&source_id(), pairwise_info, _did_doc_inlined_recipient_keys())
 //         }
 
@@ -874,7 +874,7 @@ impl SmConnectionInvitee {
 
 //                 // Problem Report
 //                 did_exchange_sm =
-// did_exchange_sm.handle_problem_report(_problem_report()).unwrap();                 
+// did_exchange_sm.handle_problem_report(_problem_report()).unwrap();
 // assert_match!(InviteeFullState::Completed(_), did_exchange_sm.state);             }
 //         }
 
@@ -895,7 +895,7 @@ impl SmConnectionInvitee {
 //                         "key_1".to_string() => A2AMessage::ConnectionRequest(_request()),
 //                         "key_2".to_string() =>
 // A2AMessage::ConnectionResponse(_signed_response()),                         "key_3".to_string()
-// => A2AMessage::ConnectionProblemReport(_problem_report()),                         
+// => A2AMessage::ConnectionProblemReport(_problem_report()),
 // "key_4".to_string() => A2AMessage::Ping(_ping()),                         "key_5".to_string() =>
 // A2AMessage::Ack(_ack())                     );
 
@@ -918,7 +918,7 @@ impl SmConnectionInvitee {
 //                     );
 
 //                     let (uid, message) =
-// connection.find_message_to_update_state(messages).unwrap();                     
+// connection.find_message_to_update_state(messages).unwrap();
 // assert_eq!("key_3", uid);                     assert_match!(A2AMessage::ConnectionResponse(_),
 // message);                 }
 
@@ -931,8 +931,8 @@ impl SmConnectionInvitee {
 // A2AMessage::ConnectionProblemReport(_problem_report())                     );
 
 //                     let (uid, message) =
-// connection.find_message_to_update_state(messages).unwrap();                     
-// assert_eq!("key_3", uid);                     
+// connection.find_message_to_update_state(messages).unwrap();
+// assert_eq!("key_3", uid);
 // assert_match!(A2AMessage::ConnectionProblemReport(_), message);                 }
 
 //                 // No messages
