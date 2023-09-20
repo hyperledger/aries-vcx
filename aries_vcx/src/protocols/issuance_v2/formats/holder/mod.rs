@@ -36,7 +36,7 @@ pub trait HolderCredentialIssuanceFormat {
 
     async fn process_and_store_credential(
         issue_credential_message: &IssueCredentialV2,
-        user_input: &Self::StoreCredentialInput,
+        data: &Self::StoreCredentialInput,
         request_metadata: Self::CreatedRequestMetadata,
     ) -> VcxResult<Self::StoredCredentialMetadata>;
 }

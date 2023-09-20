@@ -20,7 +20,10 @@ mod demo_test {
                 },
                 ld_proof_vc::LdProofIssuerCredentialIssuanceFormat,
             },
-            issuer::{states::CredentialPrepared, IssuerV2},
+            issuer::{
+                states::{CredentialPrepared, RequestReceived},
+                IssuerV2,
+            },
             messages::{ProposeCredentialV2, RequestCredentialV2},
         },
         utils::mockdata::profile::mock_profile::MockProfile,
@@ -100,7 +103,7 @@ mod demo_test {
         };
 
         let issuer = issuer
-            .prepare_credential::<AnoncredsIssuerCredentialIssuanceFormat>(&prep_cred_data, None, Some(true))
+            .prepare_credential(&prep_cred_data, None, Some(true))
             .await
             .unwrap();
 
@@ -139,10 +142,7 @@ mod demo_test {
 
         // ------- respond with credential
 
-        let issuer = issuer
-            .prepare_credential::<LdProofIssuerCredentialIssuanceFormat>(&(), None, None)
-            .await
-            .unwrap();
+        let issuer = issuer.prepare_credential(&(), None, None).await.unwrap();
 
         let _credential = issuer.get_credential();
         // send_msg(credential.into())
@@ -158,29 +158,26 @@ mod demo_test {
         // ------ initialize with request received
         let request = RequestCredentialV2;
 
-        let issuer = IssuerV2::from_request::<LdProofIssuerCredentialIssuanceFormat>(request).unwrap();
+        let issuer: IssuerV2<RequestReceived<LdProofIssuerCredentialIssuanceFormat>> =
+            IssuerV2::from_request(request).unwrap();
 
         // ------ respond with first cred, and show intent to issue `4` more creds
 
-        let mut issuer = issuer
-            .prepare_credential::<LdProofIssuerCredentialIssuanceFormat>(&(), Some(4), Some(true))
-            .await
-            .unwrap();
+        let mut issuer = issuer.prepare_credential(&(), Some(4), Some(true)).await.unwrap();
 
         let _credential = issuer.get_credential();
         // send_msg(credential.into())
 
         // ------- iterate until all creds are sent
 
-        async fn send_another_cred(issuer: IssuerV2<CredentialPrepared>) -> IssuerV2<CredentialPrepared> {
+        async fn send_another_cred(
+            issuer: IssuerV2<CredentialPrepared<LdProofIssuerCredentialIssuanceFormat>>,
+        ) -> IssuerV2<CredentialPrepared<LdProofIssuerCredentialIssuanceFormat>> {
             // receive request message
             let request = RequestCredentialV2;
 
             let requested_issuer = issuer.receive_request_for_more(request).unwrap();
-            let issuer = requested_issuer
-                .prepare_credential::<LdProofIssuerCredentialIssuanceFormat>(&(), None, None)
-                .await
-                .unwrap();
+            let issuer = requested_issuer.prepare_credential(&(), None, None).await.unwrap();
 
             let _credential = issuer.get_credential();
             // send_msg(credential.into())

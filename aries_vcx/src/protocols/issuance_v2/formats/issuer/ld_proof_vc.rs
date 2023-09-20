@@ -2,10 +2,7 @@
 
 use async_trait::async_trait;
 
-use crate::{
-    errors::error::VcxResult,
-    protocols::issuance_v2::messages::{OfferCredentialV2, RequestCredentialV2},
-};
+use crate::{errors::error::VcxResult, protocols::issuance_v2::messages::RequestCredentialV2};
 
 use super::IssuerCredentialIssuanceFormat;
 
@@ -14,8 +11,10 @@ pub struct LdProofIssuerCredentialIssuanceFormat;
 #[async_trait]
 impl IssuerCredentialIssuanceFormat for LdProofIssuerCredentialIssuanceFormat {
     type CreateOfferInput = ();
+    type CreatedOfferMetadata = ();
 
     type CreateCredentialInput = ();
+    type CreatedCredentialMetadata = ();
 
     fn supports_request_independent_of_offer() -> bool {
         true
@@ -31,22 +30,22 @@ impl IssuerCredentialIssuanceFormat for LdProofIssuerCredentialIssuanceFormat {
         String::from("aries/ld-proof-vc@v1.0")
     }
 
-    async fn create_offer_attachment_content(_: &Self::CreateOfferInput) -> VcxResult<Vec<u8>> {
-        Ok("mock data".into())
+    async fn create_offer_attachment_content(_: &Self::CreateOfferInput) -> VcxResult<(Vec<u8>, ())> {
+        Ok(("mock data".into(), ()))
     }
 
     async fn create_credential_attachment_content(
-        _offer_message: &OfferCredentialV2,
+        _offer_metadata: &(),
         _request_message: &RequestCredentialV2,
         _data: &Self::CreateCredentialInput,
-    ) -> VcxResult<Vec<u8>> {
-        Ok("mock data".into())
+    ) -> VcxResult<(Vec<u8>, ())> {
+        Ok(("mock data".into(), ()))
     }
 
     async fn create_credential_attachment_content_independent_of_offer(
         _request_message: &RequestCredentialV2,
         _data: &Self::CreateCredentialInput,
-    ) -> VcxResult<Vec<u8>> {
-        Ok("mock data".into())
+    ) -> VcxResult<(Vec<u8>, ())> {
+        Ok(("mock data".into(), ()))
     }
 }

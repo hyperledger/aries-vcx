@@ -5,7 +5,7 @@ use async_trait::async_trait;
 
 use crate::{
     errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
-    protocols::issuance_v2::messages::{OfferCredentialV2, RequestCredentialV2},
+    protocols::issuance_v2::messages::RequestCredentialV2,
     utils::openssl::encode,
 };
 
@@ -20,6 +20,10 @@ pub struct AnoncredsCreateOfferInput<'a> {
     pub cred_def_id: String,
 }
 
+pub struct AnoncredsCreatedOfferMetadata {
+    pub offer_json: String,
+}
+
 pub struct AnoncredsCreateCredentialInput<'a> {
     pub anoncreds: &'a Arc<dyn BaseAnonCreds>,
     pub credential_attributes: HashMap<String, String>,
@@ -31,11 +35,17 @@ pub struct AnoncredsCreateCredentialRevocationInfoInput {
     pub tails_directory: String,
 }
 
+pub struct AnoncredsCreatedCredentialMetadata {
+    pub credential_revocation_id: Option<String>,
+}
+
 #[async_trait]
 impl<'a> IssuerCredentialIssuanceFormat for AnoncredsIssuerCredentialIssuanceFormat<'a> {
     type CreateOfferInput = AnoncredsCreateOfferInput<'a>;
+    type CreatedOfferMetadata = AnoncredsCreatedOfferMetadata;
 
     type CreateCredentialInput = AnoncredsCreateCredentialInput<'a>;
+    type CreatedCredentialMetadata = AnoncredsCreatedCredentialMetadata;
 
     fn supports_request_independent_of_offer() -> bool {
         false
@@ -53,20 +63,24 @@ impl<'a> IssuerCredentialIssuanceFormat for AnoncredsIssuerCredentialIssuanceFor
     }
 
     // https://github.com/hyperledger/aries-rfcs/blob/main/features/0771-anoncreds-attachments/README.md#credential-offer-format
-    async fn create_offer_attachment_content(data: &AnoncredsCreateOfferInput) -> VcxResult<Vec<u8>> {
+    async fn create_offer_attachment_content(
+        data: &AnoncredsCreateOfferInput,
+    ) -> VcxResult<(Vec<u8>, AnoncredsCreatedOfferMetadata)> {
         let cred_offer = data.anoncreds.issuer_create_credential_offer(&data.cred_def_id).await?;
 
-        Ok(cred_offer.into_bytes())
+        Ok((
+            cred_offer.clone().into_bytes(),
+            AnoncredsCreatedOfferMetadata { offer_json: cred_offer },
+        ))
     }
 
     // https://github.com/hyperledger/aries-rfcs/blob/main/features/0771-anoncreds-attachments/README.md#credential-format
     async fn create_credential_attachment_content(
-        offer_message: &OfferCredentialV2,
+        offer_metadata: &AnoncredsCreatedOfferMetadata,
         request_message: &RequestCredentialV2,
         data: &AnoncredsCreateCredentialInput,
-    ) -> VcxResult<Vec<u8>> {
-        _ = offer_message;
-        let offer = String::from("extract from msg");
+    ) -> VcxResult<(Vec<u8>, AnoncredsCreatedCredentialMetadata)> {
+        let offer = &offer_metadata.offer_json;
 
         _ = request_message;
         let request = String::from("extract from msg");
@@ -78,10 +92,10 @@ impl<'a> IssuerCredentialIssuanceFormat for AnoncredsIssuerCredentialIssuanceFor
             (Some(info.registry_id.to_owned()), Some(info.tails_directory.to_owned()))
         });
 
-        let (credential, _cred_rev_id, _) = data
+        let (credential, cred_rev_id, _) = data
             .anoncreds
             .issuer_create_credential(
-                &offer,
+                offer,
                 &request,
                 &encoded_credential_attributes_json,
                 rev_reg_id,
@@ -89,13 +103,17 @@ impl<'a> IssuerCredentialIssuanceFormat for AnoncredsIssuerCredentialIssuanceFor
             )
             .await?;
 
-        Ok(credential.into_bytes())
+        let metadata = AnoncredsCreatedCredentialMetadata {
+            credential_revocation_id: cred_rev_id,
+        };
+
+        Ok((credential.into_bytes(), metadata))
     }
 
     async fn create_credential_attachment_content_independent_of_offer(
         _: &RequestCredentialV2,
         _: &Self::CreateCredentialInput,
-    ) -> VcxResult<Vec<u8>> {
+    ) -> VcxResult<(Vec<u8>, AnoncredsCreatedCredentialMetadata)> {
         return Err(AriesVcxError::from_msg(
             AriesVcxErrorKind::ActionNotSupported,
             "Creating a credential independent of an offer is unsupported for this format",
