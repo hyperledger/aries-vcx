@@ -1,14 +1,12 @@
-use std::{collections::HashMap, thread};
+use std::thread;
 
 use async_trait::async_trait;
 use futures::executor::block_on;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use super::base_wallet::BaseWallet;
 use crate::{
-    errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
-    indy,
+    errors::error::{AriesVcxCoreError, VcxCoreResult},
     utils::{async_fn_iterator::AsyncFnIterator, json::TryGetIndex},
     SearchHandle, WalletHandle,
 };

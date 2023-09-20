@@ -2,14 +2,41 @@ use serde_json::{Map, Value};
 use vdrtools::{Locator, SearchHandle};
 
 use crate::{
-    anoncreds::indy::general::close_search_handle,
-    errors::error::prelude::*,
+    anoncreds::indy::general::{blob_storage_open_reader, close_search_handle},
+    errors::error::{prelude::*, VcxCoreResult},
     global::{mockdata::mock_settings::get_mock_creds_retrieved_for_proof_request, settings},
     indy::utils::parse_and_validate,
     utils,
-    utils::constants::{ATTRS, PROOF_REQUESTED_PREDICATES, REQUESTED_ATTRIBUTES},
+    utils::constants::{ATTRS, PROOF_REQUESTED_PREDICATES, REQUESTED_ATTRIBUTES, REV_STATE_JSON},
     WalletHandle,
 };
+
+pub async fn libindy_prover_create_revocation_state(
+    tails_file_path: &str,
+    rev_reg_def_json: &str,
+    rev_reg_delta_json: &str,
+    timestamp: u64,
+    cred_rev_id: &str,
+) -> VcxCoreResult<String> {
+    if settings::indy_mocks_enabled() {
+        return Ok(REV_STATE_JSON.to_string());
+    }
+
+    let blob_handle = blob_storage_open_reader(tails_file_path).await?;
+
+    let res = Locator::instance()
+        .prover_controller
+        .create_revocation_state(
+            blob_handle,
+            parse_and_validate(rev_reg_def_json)?,
+            parse_and_validate(rev_reg_delta_json)?,
+            timestamp,
+            cred_rev_id.into(),
+        )
+        .await?;
+
+    Ok(res)
+}
 
 pub async fn libindy_prover_create_proof(
     wallet_handle: WalletHandle,
