@@ -9,7 +9,7 @@ use serde_json;
 
 use crate::{errors::error::prelude::*, handlers::util::get_attach_as_string};
 
-fn __accommodate_macro(attachments: &Vec<Attachment>) -> VcxResult<String> {
+fn __accommodate_macro(attachments: &[Attachment]) -> VcxResult<String> {
     Ok(get_attach_as_string!(attachments))
 }
 

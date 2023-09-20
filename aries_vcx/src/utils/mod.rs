@@ -1,4 +1,4 @@
-use std::{env, path::PathBuf, sync::Arc};
+use std::sync::Arc;
 
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
@@ -28,19 +28,6 @@ macro_rules! secret {
         "_"
     }};
 }
-
-#[cfg(test)]
-macro_rules! map (
-    { $($key:expr => $value:expr),+ } => {
-        {
-            let mut m = std::collections::HashMap::new();
-            $(
-                m.insert($key, $value);
-            )+
-            m
-        }
-     };
-);
 
 #[rustfmt::skip]
 pub mod constants;

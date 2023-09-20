@@ -150,7 +150,7 @@ impl Drop for SetupMocks {
 pub async fn dev_setup_wallet_indy(key_seed: &str) -> (String, WalletHandle) {
     info!("dev_setup_wallet_indy >>");
     let config_wallet = WalletConfig {
-        wallet_name: format!("wallet_{}", uuid::Uuid::new_v4().to_string()),
+        wallet_name: format!("wallet_{}", uuid::Uuid::new_v4()),
         wallet_key: settings::DEFAULT_WALLET_KEY.into(),
         wallet_key_derivation: settings::WALLET_KDF_RAW.into(),
         wallet_type: None,

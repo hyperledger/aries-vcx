@@ -50,7 +50,7 @@ mod unit_tests {
         let _setup = SetupDefaults::init();
 
         let to_did = "8XFh8yBzrpJQmNyZzgoTqB";
-        match validate_did(&to_did) {
+        match validate_did(to_did) {
             Err(_) => panic!("Should be valid did"),
             Ok(x) => assert_eq!(x, to_did.to_string()),
         }
@@ -61,7 +61,7 @@ mod unit_tests {
         let _setup = SetupDefaults::init();
 
         let to_did = "8XFh8yBzrpJQmNyZzgoT";
-        match validate_did(&to_did) {
+        match validate_did(to_did) {
             Err(x) => assert_eq!(x.kind(), AriesVcxErrorKind::InvalidDid),
             Ok(_) => panic!("Should be invalid did"),
         }
@@ -72,7 +72,7 @@ mod unit_tests {
         let _setup = SetupDefaults::init();
 
         let to_did = "8*Fh8yBzrpJQmNyZzgoTqB";
-        match validate_did(&to_did) {
+        match validate_did(to_did) {
             Err(x) => assert_eq!(x.kind(), AriesVcxErrorKind::NotBase58),
             Ok(_) => panic!("Should be invalid did"),
         }
