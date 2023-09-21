@@ -20,7 +20,7 @@ use crate::{
     api_vcx::{
         api_global::{
             agency_client::get_main_agency_client,
-            profile::{get_main_indy_ledger_read, get_main_profile, get_main_wallet},
+            profile::{get_main_indy_ledger_read, get_main_wallet},
             wallet::{wallet_sign, wallet_verify},
         },
         api_handle::object_cache::ObjectCache,
@@ -178,7 +178,7 @@ pub async fn create_with_request_v2(request: &str, pw_info: PairwiseInfo) -> Lib
             format!("Cannot deserialize connection request: {:?}", err),
         )
     })?;
-    let profile = get_main_profile(); // do not throw if pool is not open
+
     let connection = MediatedConnection::create_with_request(
         &get_main_wallet()?,
         request,
@@ -191,7 +191,7 @@ pub async fn create_with_request_v2(request: &str, pw_info: PairwiseInfo) -> Lib
 
 pub async fn send_generic_message(handle: u32, msg: &str) -> LibvcxResult<String> {
     let connection = CONNECTION_MAP.get_cloned(handle)?;
-    let profile = get_main_profile(); // do not throw if pool is not open
+
     connection
         .send_generic_message(&get_main_wallet()?, msg)
         .await
@@ -200,7 +200,7 @@ pub async fn send_generic_message(handle: u32, msg: &str) -> LibvcxResult<String
 
 pub async fn send_handshake_reuse(handle: u32, oob_msg: &str) -> LibvcxResult<()> {
     let connection = CONNECTION_MAP.get_cloned(handle)?;
-    let profile = get_main_profile(); // do not throw if pool is not open
+
     connection
         .send_handshake_reuse(&get_main_wallet()?, oob_msg)
         .await
@@ -218,7 +218,7 @@ pub async fn update_state_with_message(handle: u32, message: &str) -> LibvcxResu
             ),
         )
     })?;
-    let profile = get_main_profile(); // do not throw if pool is not open
+
     connection
         .update_state_with_message(get_main_wallet()?, get_main_agency_client()?, Some(message))
         .await?;
@@ -238,7 +238,7 @@ pub async fn handle_message(handle: u32, message: &str) -> LibvcxResult<()> {
             ),
         )
     })?;
-    let profile = get_main_profile(); // do not throw if pool is not open
+
     connection
         .handle_message(message, &get_main_wallet()?)
         .await?;
@@ -253,7 +253,7 @@ pub async fn update_state(handle: u32) -> LibvcxResult<u32> {
              messages",
             handle
         );
-        let profile = get_main_profile(); // do not throw if pool is not open
+
         connection
             .find_and_handle_message(&get_main_wallet()?, &get_main_agency_client()?)
             .await?
@@ -263,7 +263,7 @@ pub async fn update_state(handle: u32) -> LibvcxResult<u32> {
              state",
             handle
         );
-        let profile = get_main_profile(); // do not throw if pool is not open
+
         connection
             .find_message_and_update_state(&get_main_wallet()?, &get_main_agency_client()?)
             .await?
@@ -281,7 +281,7 @@ pub async fn delete_connection(handle: u32) -> LibvcxResult<()> {
 
 pub async fn connect(handle: u32) -> LibvcxResult<Option<String>> {
     let mut connection = CONNECTION_MAP.get_cloned(handle)?;
-    let profile = get_main_profile(); // do not throw if pool is not open
+
     connection
         .connect(&get_main_wallet()?, &get_main_agency_client()?, None)
         .await?;
@@ -373,7 +373,7 @@ pub async fn send_message(handle: u32, message: AriesMessage) -> LibvcxResult<()
 
 pub async fn send_message_closure(handle: u32) -> LibvcxResult<SendClosure> {
     let connection = CONNECTION_MAP.get_cloned(handle)?;
-    let profile = get_main_profile(); // do not throw if pool is not open
+
     connection
         .send_message_closure(get_main_wallet()?)
         .await
@@ -382,7 +382,7 @@ pub async fn send_message_closure(handle: u32) -> LibvcxResult<SendClosure> {
 
 pub async fn send_ping(handle: u32, comment: Option<&str>) -> LibvcxResult<()> {
     let mut connection = CONNECTION_MAP.get_cloned(handle)?;
-    let profile = get_main_profile(); // do not throw if pool is not open
+
     connection
         .send_ping(get_main_wallet()?, comment.map(String::from))
         .await?;
@@ -395,7 +395,7 @@ pub async fn send_discovery_features(
     comment: Option<&str>,
 ) -> LibvcxResult<()> {
     let connection = CONNECTION_MAP.get_cloned(handle)?;
-    let profile = get_main_profile(); // do not throw if pool is not open
+
     connection
         .send_discovery_query(
             &get_main_wallet()?,
@@ -511,8 +511,7 @@ pub mod test_utils {
     }
 
     pub async fn build_test_connection_inviter_null() -> u32 {
-        let handle = create_connection("faber_to_alice").await.unwrap();
-        handle
+        create_connection("faber_to_alice").await.unwrap()
     }
 
     pub async fn build_test_connection_inviter_invited() -> u32 {
@@ -765,9 +764,9 @@ pub mod tests {
         let h2 = create_connection("rel2").await.unwrap();
         let h3 = create_connection("rel3").await.unwrap();
         release_all();
-        assert_eq!(is_valid_handle(h1), false);
-        assert_eq!(is_valid_handle(h2), false);
-        assert_eq!(is_valid_handle(h3), false);
+        assert!(!is_valid_handle(h1));
+        assert!(!is_valid_handle(h2));
+        assert!(!is_valid_handle(h3));
     }
 
     #[tokio::test]

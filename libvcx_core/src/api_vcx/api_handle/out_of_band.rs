@@ -17,7 +17,7 @@ use crate::{
     api_vcx::{
         api_global::{
             agency_client::get_main_agency_client,
-            profile::{get_main_indy_ledger_read, get_main_profile, get_main_wallet},
+            profile::{get_main_indy_ledger_read, get_main_wallet},
         },
         api_handle::{
             connection, mediated_connection::CONNECTION_MAP as MEDIATED_CONS_MAP,
@@ -179,7 +179,6 @@ pub async fn connection_exists(handle: u32, conn_handles: &Vec<u32>) -> LibvcxRe
         conn_map.insert(*conn_handle, connection);
     }
     let connections = conn_map.values().collect();
-    let profile = get_main_profile();
 
     if let Some(connection) = oob
         .connection_exists(&get_main_indy_ledger_read()?, &connections)

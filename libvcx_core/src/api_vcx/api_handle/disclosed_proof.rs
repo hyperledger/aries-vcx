@@ -17,9 +17,7 @@ use serde_json;
 
 use crate::{
     api_vcx::{
-        api_global::profile::{
-            get_main_anoncreds, get_main_anoncreds_ledger_read, get_main_profile,
-        },
+        api_global::profile::{get_main_anoncreds, get_main_anoncreds_ledger_read},
         api_handle::{mediated_connection, object_cache::ObjectCache},
     },
     errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult},
@@ -110,8 +108,6 @@ pub async fn update_state(
         trace!("disclosed_proof::update_state >> found no available transition");
         return Ok(proof.get_state().into());
     }
-    let send_message = mediated_connection::send_message_closure(connection_handle).await?;
-    let profile = get_main_profile();
 
     if let Some(message) = message {
         let message: AriesMessage = serde_json::from_str(message).map_err(|err| {
@@ -127,7 +123,7 @@ pub async fn update_state(
             "disclosed_proof::update_state >>> updating using message {:?}",
             message
         );
-        proof.process_aries_msg(message.into()).await?;
+        proof.process_aries_msg(message).await?;
     } else {
         let messages = mediated_connection::get_messages(connection_handle).await?;
         trace!(
@@ -382,8 +378,7 @@ mod tests {
     async fn _get_proof_request_messages(connection_h: u32) -> String {
         let requests = get_proof_request_messages(connection_h).await.unwrap();
         let requests: Value = serde_json::from_str(&requests).unwrap();
-        let requests = serde_json::to_string(&requests[0]).unwrap();
-        requests
+        serde_json::to_string(&requests[0]).unwrap()
     }
 
     #[tokio::test]

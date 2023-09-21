@@ -8,7 +8,6 @@ use aries_vcx::{
         },
         AriesMessage,
     },
-    protocols::issuance::holder::state_machine::HolderState,
     utils::{
         constants::GET_MESSAGES_DECRYPTED_RESPONSE,
         mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER,
@@ -18,10 +17,7 @@ use serde_json;
 
 use crate::{
     api_vcx::{
-        api_global::profile::{
-            get_main_anoncreds, get_main_anoncreds_ledger_read, get_main_indy_ledger_read,
-            get_main_profile,
-        },
+        api_global::profile::{get_main_anoncreds, get_main_anoncreds_ledger_read},
         api_handle::{mediated_connection, object_cache::ObjectCache},
     },
     errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult},
@@ -447,8 +443,7 @@ pub mod tests {
             .await
             .unwrap();
         let offers: serde_json::Value = serde_json::from_str(&offers).unwrap();
-        let offer = serde_json::to_string(&offers[0]).unwrap();
-        offer
+        serde_json::to_string(&offers[0]).unwrap()
     }
 
     #[test]

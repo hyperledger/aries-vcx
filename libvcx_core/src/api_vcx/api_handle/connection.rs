@@ -15,7 +15,7 @@ use rand::Rng;
 use url::Url;
 
 use crate::{
-    api_vcx::api_global::profile::{get_main_indy_ledger_read, get_main_profile, get_main_wallet},
+    api_vcx::api_global::profile::{get_main_indy_ledger_read, get_main_wallet},
     errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult},
 };
 
@@ -261,7 +261,7 @@ pub async fn process_request(
         ThinState::Inviter(State::Initial) => {
             Connection::try_from(con).map_err(From::from).map(|c| {
                 c.into_invited(
-                    &request
+                    request
                         .decorators
                         .thread
                         .as_ref()
