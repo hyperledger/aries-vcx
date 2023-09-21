@@ -48,83 +48,98 @@ pub enum OfferCredentialAttachmentFormatType {
     AriesLdProofVcDetail1_0,
 }
 
-// #[cfg(test)]
-// #[allow(clippy::unwrap_used)]
-// #[allow(clippy::field_reassign_with_default)]
-// mod tests {
-//     use serde_json::json;
+#[cfg(test)]
+#[allow(clippy::unwrap_used)]
+#[allow(clippy::field_reassign_with_default)]
+mod tests {
+    use serde_json::json;
+    use shared_vcx::maybe_known::MaybeKnown;
 
-//     use super::*;
-//     use crate::{
-//         decorators::{
-//             attachment::tests::make_extended_attachment, thread::tests::make_extended_thread,
-//             timing::tests::make_extended_timing,
-//         },
-//         misc::test_utils,
-//         msg_fields::protocols::cred_issuance::CredentialAttr,
-//         msg_types::cred_issuance::CredentialIssuanceTypeV1_0,
-//     };
+    use super::*;
+    use crate::{
+        decorators::{
+            attachment::tests::make_extended_attachment, thread::tests::make_extended_thread,
+            timing::tests::make_extended_timing,
+        },
+        misc::test_utils,
+        msg_fields::protocols::cred_issuance::CredentialAttr,
+        msg_types::cred_issuance::CredentialIssuanceTypeV2_0,
+    };
 
-//     #[test]
-//     fn test_minimal_offer_cred() {
-//         let attribute = CredentialAttr::builder()
-//             .name("test_attribute_name".to_owned())
-//             .value("test_attribute_value".to_owned())
-//             .build();
+    #[test]
+    fn test_minimal_offer_cred() {
+        let attribute = CredentialAttr::builder()
+            .name("test_attribute_name".to_owned())
+            .value("test_attribute_value".to_owned())
+            .build();
 
-//         let preview = CredentialPreview::new(vec![attribute]);
-//         let content = OfferCredentialContent::builder()
-//             .credential_preview(preview)
-//             .offers_attach(vec![make_extended_attachment()])
-//             .build();
+        let preview = CredentialPreviewV2::new(vec![attribute]);
+        let content = OfferCredentialV2Content::builder()
+            .credential_preview(preview)
+            .formats(vec![AttachmentFormatSpecifier {
+                attach_id: "1".to_owned(),
+                format: MaybeKnown::Known(OfferCredentialAttachmentFormatType::HyperledgerIndyCredentialAbstract2_0),
+            }])
+            .offers_attach(vec![make_extended_attachment()])
+            .build();
 
-//         let decorators = OfferCredentialDecorators::default();
+        let decorators = OfferCredentialV2Decorators::default();
 
-//         let expected = json!({
-//             "offers~attach": content.offers_attach,
-//             "credential_preview": content.credential_preview,
-//         });
+        let expected = json!({
+            "formats": content.formats,
+            "offers~attach": content.offers_attach,
+            "credential_preview": content.credential_preview,
+        });
 
-//         test_utils::test_msg(
-//             content,
-//             decorators,
-//             CredentialIssuanceTypeV1_0::OfferCredential,
-//             expected,
-//         );
-//     }
+        test_utils::test_msg(
+            content,
+            decorators,
+            CredentialIssuanceTypeV2_0::OfferCredential,
+            expected,
+        );
+    }
 
-//     #[test]
-//     fn test_extended_offer_cred() {
-//         let attribute = CredentialAttr::builder()
-//             .name("test_attribute_name".to_owned())
-//             .value("test_attribute_value".to_owned())
-//             .build();
+    #[test]
+    fn test_extended_offer_cred() {
+        let attribute = CredentialAttr::builder()
+            .name("test_attribute_name".to_owned())
+            .value("test_attribute_value".to_owned())
+            .build();
 
-//         let preview = CredentialPreview::new(vec![attribute]);
-//         let content = OfferCredentialContent::builder()
-//             .credential_preview(preview)
-//             .offers_attach(vec![make_extended_attachment()])
-//             .comment("test_comment".to_owned())
-//             .build();
+        let preview = CredentialPreviewV2::new(vec![attribute]);
+        let content = OfferCredentialV2Content::builder()
+            .credential_preview(preview)
+            .formats(vec![AttachmentFormatSpecifier {
+                attach_id: "1".to_owned(),
+                format: MaybeKnown::Known(OfferCredentialAttachmentFormatType::HyperledgerIndyCredentialAbstract2_0),
+            }])
+            .offers_attach(vec![make_extended_attachment()])
+            .comment("test_comment".to_owned())
+            .replacement_id("replacement_id".to_owned())
+            .goal_code("goal.goal".to_owned())
+            .build();
 
-//         let decorators = OfferCredentialDecorators::builder()
-//             .thread(make_extended_thread())
-//             .timing(make_extended_timing())
-//             .build();
+        let decorators = OfferCredentialV2Decorators::builder()
+            .thread(make_extended_thread())
+            .timing(make_extended_timing())
+            .build();
 
-//         let expected = json!({
-//             "offers~attach": content.offers_attach,
-//             "credential_preview": content.credential_preview,
-//             "comment": content.comment,
-//             "~thread": decorators.thread,
-//             "~timing": decorators.timing
-//         });
+        let expected = json!({
+            "formats": content.formats,
+            "offers~attach": content.offers_attach,
+            "credential_preview": content.credential_preview,
+            "comment": content.comment,
+            "goal_code": content.goal_code,
+            "replacement_id": content.replacement_id,
+            "~thread": decorators.thread,
+            "~timing": decorators.timing
+        });
 
-//         test_utils::test_msg(
-//             content,
-//             decorators,
-//             CredentialIssuanceTypeV1_0::OfferCredential,
-//             expected,
-//         );
-//     }
-// }
+        test_utils::test_msg(
+            content,
+            decorators,
+            CredentialIssuanceTypeV2_0::OfferCredential,
+            expected,
+        );
+    }
+}

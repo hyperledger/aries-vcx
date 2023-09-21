@@ -56,128 +56,78 @@ mod tests {
 
     use super::*;
     use crate::{
-        decorators::{thread::tests::make_extended_thread, timing::tests::make_extended_timing},
+        decorators::{
+            attachment::tests::make_extended_attachment, thread::tests::make_extended_thread,
+            timing::tests::make_extended_timing,
+        },
         misc::test_utils,
         msg_fields::protocols::cred_issuance::CredentialAttr,
-        msg_types::cred_issuance::CredentialIssuanceTypeV1_0,
+        msg_types::cred_issuance::CredentialIssuanceTypeV2_0,
     };
 
     #[test]
-    fn propose_attachment_type_serialization() {
-        let t: MaybeKnown<ProposeCredentialAttachmentFormatType, String> =
-            MaybeKnown::Known(ProposeCredentialAttachmentFormatType::AriesLdProofVcDetail1_0);
+    fn test_minimal_propose_cred() {
+        let content = ProposeCredentialV2Content::builder()
+            .formats(vec![AttachmentFormatSpecifier {
+                attach_id: String::from("1"),
+                format: MaybeKnown::Known(ProposeCredentialAttachmentFormatType::HyperledgerIndyCredentialFilter2_0),
+            }])
+            .filters_attach(vec![make_extended_attachment()])
+            .build();
 
-        let s = serde_json::to_string(&t).unwrap();
+        let decorators = ProposeCredentialV2Decorators::default();
 
-        println!("{s}");
+        let expected = json!({
+            "formats": content.formats,
+            "filters~attach": content.filters_attach,
+        });
 
-        let t: MaybeKnown<ProposeCredentialAttachmentFormatType> = serde_json::from_str(&s).unwrap();
-
-        println!("{t:?}")
+        test_utils::test_msg(
+            content,
+            decorators,
+            CredentialIssuanceTypeV2_0::ProposeCredential,
+            expected,
+        );
     }
 
     #[test]
-    fn propose_attachment_type_serializatio2n() {
-        let t: MaybeKnown<ProposeCredentialAttachmentFormatType> = MaybeKnown::Unknown(String::from("hello"));
+    fn test_extended_propose_cred() {
+        let attribute = CredentialAttr::builder()
+            .name("test_attribute_name".to_owned())
+            .value("test_attribute_value".to_owned())
+            .build();
+        let preview = CredentialPreviewV2::new(vec![attribute]);
+        let content = ProposeCredentialV2Content::builder()
+            .credential_preview(preview)
+            .formats(vec![AttachmentFormatSpecifier {
+                attach_id: String::from("1"),
+                format: MaybeKnown::Known(ProposeCredentialAttachmentFormatType::HyperledgerIndyCredentialFilter2_0),
+            }])
+            .filters_attach(vec![make_extended_attachment()])
+            .comment("test_comment".to_owned())
+            .goal_code("goal.goal".to_owned())
+            .build();
 
-        let s = serde_json::to_string(&t).unwrap();
+        let decorators = ProposeCredentialV2Decorators::builder()
+            .thread(make_extended_thread())
+            .timing(make_extended_timing())
+            .build();
 
-        println!("{s}");
+        let expected = json!({
+            "credential_preview": content.credential_preview,
+            "formats": content.formats,
+            "filters~attach": content.filters_attach,
+            "comment": content.comment,
+            "goal_code": content.goal_code,
+            "~thread": decorators.thread,
+            "~timing": decorators.timing
+        });
 
-        let t: MaybeKnown<ProposeCredentialAttachmentFormatType> = serde_json::from_str(&s).unwrap();
-
-        println!("{t:?}")
+        test_utils::test_msg(
+            content,
+            decorators,
+            CredentialIssuanceTypeV2_0::ProposeCredential,
+            expected,
+        );
     }
-
-    #[test]
-    fn testeeeeee() {
-        let val = json!([{
-            "attach_id": "1",
-            "format": "dif/credential-manifest@v1.0"
-        },
-        {
-            "attach_id": "2",
-            "format": "aries/ld-proof-vc-detail@v1.0"
-        },
-        {
-            "attach_id": "1",
-            "format": "hlindy/cred-filter@v2.0"
-        },
-        {
-            "attach_id": "1",
-            "format": "anoncreds/new-filters@v1.0"
-        },
-        ]);
-
-        let resolved: Vec<AttachmentFormatSpecifier<ProposeCredentialAttachmentFormatType>> =
-            serde_json::from_value(val).unwrap();
-
-        println!("{resolved:?}");
-
-        print!("{}", serde_json::to_string(&resolved).unwrap())
-    }
-
-    // #[test]
-    // fn test_minimal_propose_cred() {
-    //     let attribute = CredentialAttr::builder()
-    //         .name("test_attribute_name".to_owned())
-    //         .value("test_attribute_value".to_owned())
-    //         .build();
-    //     let preview = CredentialPreview::new(vec![attribute]);
-    //     let content = ProposeCredentialV2Content::builder()
-    //         .credential_proposal(preview)
-    //         .schema_id("test_schema_id".to_owned())
-    //         .cred_def_id("test_cred_def_id".to_owned())
-    //         .build();
-
-    //     let decorators = ProposeCredentialDecorators::default();
-
-    //     let expected = json!({
-    //         "credential_proposal": content.credential_proposal,
-    //         "schema_id": content.schema_id,
-    //         "cred_def_id": content.cred_def_id,
-    //     });
-
-    //     test_utils::test_msg(
-    //         content,
-    //         decorators,
-    //         CredentialIssuanceTypeV1_0::ProposeCredential,
-    //         expected,
-    //     );
-    // }
-
-    // #[test]
-    // fn test_extended_propose_cred() {
-    //     let attribute = CredentialAttr::builder()
-    //         .name("test_attribute_name".to_owned())
-    //         .value("test_attribute_value".to_owned())
-    //         .build();
-    //     let preview = CredentialPreview::new(vec![attribute]);
-    //     let content = ProposeCredentialV2Content::builder()
-    //         .credential_proposal(preview)
-    //         .comment("test_comment".to_owned())
-    //         .format(vec![])
-    //         .build();
-
-    //     let decorators = ProposeCredentialV2Decorators::builder()
-    //         .thread(make_extended_thread())
-    //         .timing(make_extended_timing())
-    //         .build();
-
-    //     let expected = json!({
-    //         "credential_proposal": content.credential_proposal,
-    //         "schema_id": content.schema_id,
-    //         "cred_def_id": content.cred_def_id,
-    //         "comment": content.comment,
-    //         "~thread": decorators.thread,
-    //         "~timing": decorators.timing
-    //     });
-
-    //     test_utils::test_msg(
-    //         content,
-    //         decorators,
-    //         CredentialIssuanceTypeV1_0::ProposeCredential,
-    //         expected,
-    //     );
-    // }
 }

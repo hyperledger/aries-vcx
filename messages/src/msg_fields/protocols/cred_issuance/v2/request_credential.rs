@@ -45,61 +45,74 @@ pub enum RequestCredentialAttachmentFormatType {
     AriesLdProofVcDetail1_0,
 }
 
-// #[cfg(test)]
-// #[allow(clippy::unwrap_used)]
-// #[allow(clippy::field_reassign_with_default)]
-// mod tests {
-//     use serde_json::json;
+#[cfg(test)]
+#[allow(clippy::unwrap_used)]
+#[allow(clippy::field_reassign_with_default)]
+mod tests {
+    use serde_json::json;
+    use shared_vcx::maybe_known::MaybeKnown;
 
-//     use super::*;
-//     use crate::{
-//         decorators::{attachment::tests::make_extended_attachment, thread::tests::make_extended_thread},
-//         misc::test_utils,
-//         msg_types::cred_issuance::CredentialIssuanceTypeV1_0,
-//     };
+    use super::*;
+    use crate::{
+        decorators::{attachment::tests::make_extended_attachment, thread::tests::make_extended_thread},
+        misc::test_utils,
+        msg_types::cred_issuance::CredentialIssuanceTypeV2_0,
+    };
 
-//     #[test]
-//     fn test_minimal_request_cred() {
-//         let content = RequestCredentialContent::builder()
-//             .requests_attach(vec![make_extended_attachment()])
-//             .build();
+    #[test]
+    fn test_minimal_request_cred() {
+        let content = RequestCredentialV2Content::builder()
+            .requests_attach(vec![make_extended_attachment()])
+            .formats(vec![AttachmentFormatSpecifier {
+                attach_id: "1".to_owned(),
+                format: MaybeKnown::Known(RequestCredentialAttachmentFormatType::HyperledgerIndyCredentialRequest2_0),
+            }])
+            .build();
 
-//         let decorators = RequestCredentialDecorators::default();
+        let decorators = RequestCredentialV2Decorators::default();
 
-//         let expected = json!({
-//             "requests~attach": content.requests_attach,
-//         });
+        let expected = json!({
+            "requests~attach": content.requests_attach,
+            "formats": content.formats
+        });
 
-//         test_utils::test_msg(
-//             content,
-//             decorators,
-//             CredentialIssuanceTypeV1_0::RequestCredential,
-//             expected,
-//         );
-//     }
+        test_utils::test_msg(
+            content,
+            decorators,
+            CredentialIssuanceTypeV2_0::RequestCredential,
+            expected,
+        );
+    }
 
-//     #[test]
-//     fn test_extended_request_cred() {
-//         let content = RequestCredentialContent::builder()
-//             .requests_attach(vec![make_extended_attachment()])
-//             .comment("test_comment".to_owned())
-//             .build();
+    #[test]
+    fn test_extended_request_cred() {
+        let content = RequestCredentialV2Content::builder()
+            .requests_attach(vec![make_extended_attachment()])
+            .formats(vec![AttachmentFormatSpecifier {
+                attach_id: "1".to_owned(),
+                format: MaybeKnown::Known(RequestCredentialAttachmentFormatType::HyperledgerIndyCredentialRequest2_0),
+            }])
+            .comment("test_comment".to_owned())
+            .goal_code("goal.goal".to_owned())
+            .build();
 
-//         let decorators = RequestCredentialDecorators::builder()
-//             .thread(make_extended_thread())
-//             .build();
+        let decorators = RequestCredentialV2Decorators::builder()
+            .thread(make_extended_thread())
+            .build();
 
-//         let expected = json!({
-//             "requests~attach": content.requests_attach,
-//             "comment": content.comment,
-//             "~thread": decorators.thread
-//         });
+        let expected = json!({
+            "requests~attach": content.requests_attach,
+            "formats": content.formats,
+            "comment": content.comment,
+            "goal_code": content.goal_code,
+            "~thread": decorators.thread
+        });
 
-//         test_utils::test_msg(
-//             content,
-//             decorators,
-//             CredentialIssuanceTypeV1_0::RequestCredential,
-//             expected,
-//         );
-//     }
-// }
+        test_utils::test_msg(
+            content,
+            decorators,
+            CredentialIssuanceTypeV2_0::RequestCredential,
+            expected,
+        );
+    }
+}

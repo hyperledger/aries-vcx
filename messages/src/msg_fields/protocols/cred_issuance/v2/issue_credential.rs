@@ -48,71 +48,88 @@ pub enum IssueCredentialAttachmentFormatType {
     HyperledgerIndyCredential2_0,
 }
 
-// #[cfg(test)]
-// #[allow(clippy::unwrap_used)]
-// #[allow(clippy::field_reassign_with_default)]
-// mod tests {
-//     use serde_json::json;
+#[cfg(test)]
+#[allow(clippy::unwrap_used)]
+#[allow(clippy::field_reassign_with_default)]
+mod tests {
+    use serde_json::json;
+    use shared_vcx::maybe_known::MaybeKnown;
 
-//     use super::*;
-//     use crate::{
-//         decorators::{
-//             attachment::tests::make_extended_attachment, please_ack::tests::make_minimal_please_ack,
-//             thread::tests::make_extended_thread, timing::tests::make_extended_timing,
-//         },
-//         misc::test_utils,
-//         msg_types::cred_issuance::CredentialIssuanceTypeV1_0,
-//     };
+    use super::*;
+    use crate::{
+        decorators::{
+            attachment::tests::make_extended_attachment, please_ack::tests::make_minimal_please_ack,
+            thread::tests::make_extended_thread, timing::tests::make_extended_timing,
+        },
+        misc::test_utils,
+        msg_types::cred_issuance::CredentialIssuanceTypeV2_0,
+    };
 
-//     #[test]
-//     fn test_minimal_issue_cred() {
-//         let content = IssueCredentialContent::builder()
-//             .credentials_attach(vec![make_extended_attachment()])
-//             .build();
+    #[test]
+    fn test_minimal_issue_cred() {
+        let content = IssueCredentialV2Content::builder()
+            .formats(vec![AttachmentFormatSpecifier {
+                attach_id: "1".to_owned(),
+                format: MaybeKnown::Known(IssueCredentialAttachmentFormatType::HyperledgerIndyCredential2_0),
+            }])
+            .credentials_attach(vec![make_extended_attachment()])
+            .build();
 
-//         let decorators = IssueCredentialDecorators::builder()
-//             .thread(make_extended_thread())
-//             .build();
+        let decorators = IssueCredentialV2Decorators::builder()
+            .thread(make_extended_thread())
+            .build();
 
-//         let expected = json!({
-//             "credentials~attach": content.credentials_attach,
-//             "~thread": decorators.thread
-//         });
+        let expected = json!({
+            "formats": content.formats,
+            "credentials~attach": content.credentials_attach,
+            "~thread": decorators.thread
+        });
 
-//         test_utils::test_msg(
-//             content,
-//             decorators,
-//             CredentialIssuanceTypeV1_0::IssueCredential,
-//             expected,
-//         );
-//     }
+        test_utils::test_msg(
+            content,
+            decorators,
+            CredentialIssuanceTypeV2_0::IssueCredential,
+            expected,
+        );
+    }
 
-//     #[test]
-//     fn test_extended_issue_cred() {
-//         let content = IssueCredentialContent::builder()
-//             .credentials_attach(vec![make_extended_attachment()])
-//             .comment("test_comment".to_owned())
-//             .build();
+    #[test]
+    fn test_extended_issue_cred() {
+        let content = IssueCredentialV2Content::builder()
+            .formats(vec![AttachmentFormatSpecifier {
+                attach_id: "1".to_owned(),
+                format: shared_vcx::maybe_known::MaybeKnown::Known(
+                    IssueCredentialAttachmentFormatType::HyperledgerIndyCredential2_0,
+                ),
+            }])
+            .credentials_attach(vec![make_extended_attachment()])
+            .goal_code("goal.goal".to_owned())
+            .replacement_id("replacement-123".to_owned())
+            .comment("test_comment".to_owned())
+            .build();
 
-//         let decorators = IssueCredentialDecorators::builder()
-//             .thread(make_extended_thread())
-//             .timing(make_extended_timing())
-//             .please_ack(make_minimal_please_ack())
-//             .build();
+        let decorators = IssueCredentialV2Decorators::builder()
+            .thread(make_extended_thread())
+            .timing(make_extended_timing())
+            .please_ack(make_minimal_please_ack())
+            .build();
 
-//         let expected = json!({
-//             "credentials~attach": content.credentials_attach,
-//             "comment": content.comment,
-//             "~thread": decorators.thread,
-//             "~timing": decorators.timing,
-//             "~please_ack": decorators.please_ack
-//         });
+        let expected = json!({
+            "formats": content.formats,
+            "credentials~attach": content.credentials_attach,
+            "goal_code": content.goal_code,
+            "replacement_id": content.replacement_id,
+            "comment": content.comment,
+            "~thread": decorators.thread,
+            "~timing": decorators.timing,
+            "~please_ack": decorators.please_ack
+        });
 
-//         test_utils::test_msg(
-//             content,
-//             decorators,
-//             CredentialIssuanceTypeV1_0::IssueCredential,
-//             expected,
-//         );
-//     }
-// }
+        test_utils::test_msg(
+            content,
+            decorators,
+            CredentialIssuanceTypeV2_0::IssueCredential,
+            expected,
+        );
+    }
+}

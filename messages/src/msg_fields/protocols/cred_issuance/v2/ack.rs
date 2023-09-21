@@ -30,49 +30,49 @@ impl From<AckCredentialV2> for Ack {
     }
 }
 
-// #[cfg(test)]
-// #[allow(clippy::unwrap_used)]
-// #[allow(clippy::field_reassign_with_default)]
-// mod tests {
-//     use serde_json::json;
+#[cfg(test)]
+#[allow(clippy::unwrap_used)]
+#[allow(clippy::field_reassign_with_default)]
+mod tests {
+    use serde_json::json;
 
-//     use super::*;
-//     use crate::{
-//         decorators::{thread::tests::make_extended_thread, timing::tests::make_extended_timing},
-//         misc::test_utils,
-//         msg_fields::protocols::notification::ack::AckStatus,
-//         msg_types::cred_issuance::CredentialIssuanceTypeV1_0,
-//     };
+    use super::*;
+    use crate::{
+        decorators::{thread::tests::make_extended_thread, timing::tests::make_extended_timing},
+        misc::test_utils,
+        msg_fields::protocols::{notification::ack::AckStatus, cred_issuance::ack::AckCredentialContent},
+        msg_types::cred_issuance::CredentialIssuanceTypeV1_0,
+    };
 
-//     #[test]
-//     fn test_minimal_ack_cred() {
-//         let content: AckCredentialContent = AckContent::builder().status(AckStatus::Ok).build();
+    #[test]
+    fn test_minimal_ack_cred() {
+        let content: AckCredentialContent = AckContent::builder().status(AckStatus::Ok).build();
 
-//         let decorators = AckDecorators::builder().thread(make_extended_thread()).build();
+        let decorators = AckDecorators::builder().thread(make_extended_thread()).build();
 
-//         let expected = json!({
-//             "status": content.inner.status,
-//             "~thread": decorators.thread
-//         });
+        let expected = json!({
+            "status": content.inner.status,
+            "~thread": decorators.thread
+        });
 
-//         test_utils::test_msg(content, decorators, CredentialIssuanceTypeV1_0::Ack, expected);
-//     }
+        test_utils::test_msg(content, decorators, CredentialIssuanceTypeV1_0::Ack, expected);
+    }
 
-//     #[test]
-//     fn test_extended_ack_cred() {
-//         let content: AckCredentialContent = AckContent::builder().status(AckStatus::Ok).build();
+    #[test]
+    fn test_extended_ack_cred() {
+        let content: AckCredentialContent = AckContent::builder().status(AckStatus::Ok).build();
 
-//         let decorators = AckDecorators::builder()
-//             .thread(make_extended_thread())
-//             .timing(make_extended_timing())
-//             .build();
+        let decorators = AckDecorators::builder()
+            .thread(make_extended_thread())
+            .timing(make_extended_timing())
+            .build();
 
-//         let expected = json!({
-//             "status": content.inner.status,
-//             "~thread": decorators.thread,
-//             "~timing": decorators.timing
-//         });
+        let expected = json!({
+            "status": content.inner.status,
+            "~thread": decorators.thread,
+            "~timing": decorators.timing
+        });
 
-//         test_utils::test_msg(content, decorators, CredentialIssuanceTypeV1_0::Ack, expected);
-//     }
-// }
+        test_utils::test_msg(content, decorators, CredentialIssuanceTypeV1_0::Ack, expected);
+    }
+}
