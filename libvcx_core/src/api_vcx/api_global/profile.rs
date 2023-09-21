@@ -21,8 +21,8 @@ use aries_vcx::{
 use crate::{
     api_vcx::api_global::{
         pool::{
-            global_ledger_anoncreds_read, global_ledger_anoncreds_write, global_ledger_indy_read,
-            global_ledger_indy_write, global_taa_configurator,
+            GLOBAL_LEDGER_ANONCREDS_READ, GLOBAL_LEDGER_ANONCREDS_WRITE, GLOBAL_LEDGER_INDY_READ,
+            GLOBAL_LEDGER_INDY_WRITE, GLOBAL_TAA_CONFIGURATOR,
         },
         wallet::{GLOBAL_BASE_ANONCREDS, GLOBAL_BASE_WALLET},
     },
@@ -60,7 +60,7 @@ impl Debug for VcxGlobalsProfile {
 
 impl ProfileV2 for VcxGlobalsProfile {
     fn inject_indy_ledger_read(&self) -> LibvcxResult<Arc<dyn IndyLedgerRead>> {
-        let ledger = global_ledger_indy_read.read()?;
+        let ledger = GLOBAL_LEDGER_INDY_READ.read()?;
         match ledger.as_ref() {
             None => Err(LibvcxError::from_msg(
                 LibvcxErrorKind::NotReady,
@@ -71,7 +71,7 @@ impl ProfileV2 for VcxGlobalsProfile {
     }
 
     fn inject_indy_ledger_write(&self) -> LibvcxResult<Arc<dyn IndyLedgerWrite>> {
-        let ledger = global_ledger_indy_write.read()?;
+        let ledger = GLOBAL_LEDGER_INDY_WRITE.read()?;
         match ledger.as_ref() {
             None => Err(LibvcxError::from_msg(
                 LibvcxErrorKind::NotReady,
@@ -93,7 +93,7 @@ impl ProfileV2 for VcxGlobalsProfile {
     }
 
     fn inject_anoncreds_ledger_read(&self) -> LibvcxResult<Arc<dyn AnoncredsLedgerRead>> {
-        let ledger = global_ledger_anoncreds_read.read()?;
+        let ledger = GLOBAL_LEDGER_ANONCREDS_READ.read()?;
         match ledger.as_ref() {
             None => Err(LibvcxError::from_msg(
                 LibvcxErrorKind::NotReady,
@@ -104,7 +104,7 @@ impl ProfileV2 for VcxGlobalsProfile {
     }
 
     fn inject_anoncreds_ledger_write(&self) -> LibvcxResult<Arc<dyn AnoncredsLedgerWrite>> {
-        let ledger = global_ledger_anoncreds_write.read()?;
+        let ledger = GLOBAL_LEDGER_ANONCREDS_WRITE.read()?;
         match ledger.as_ref() {
             None => Err(LibvcxError::from_msg(
                 LibvcxErrorKind::NotReady,
@@ -136,7 +136,7 @@ impl ProfileV2 for VcxGlobalsProfile {
     }
 
     fn update_taa_configuration(&self, taa_options: TxnAuthrAgrmtOptions) -> LibvcxResult<()> {
-        let configurator = global_taa_configurator.read()?;
+        let configurator = GLOBAL_TAA_CONFIGURATOR.read()?;
         match configurator.as_ref() {
             None => Err(LibvcxError::from_msg(
                 LibvcxErrorKind::NotReady,
@@ -150,7 +150,7 @@ impl ProfileV2 for VcxGlobalsProfile {
     }
 
     fn get_taa_configuration(&self) -> LibvcxResult<Option<TxnAuthrAgrmtOptions>> {
-        let configurator = global_taa_configurator.read()?;
+        let configurator = GLOBAL_TAA_CONFIGURATOR.read()?;
         match configurator.as_ref() {
             None => Err(LibvcxError::from_msg(
                 LibvcxErrorKind::NotReady,

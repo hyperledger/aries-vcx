@@ -19,11 +19,7 @@ use aries_vcx::{
         wallet::base_wallet::BaseWallet,
         PoolConfig,
     },
-    core::profile::{
-        ledger::{indyvdr_build_ledger_read, indyvdr_build_ledger_write},
-        profile::Profile,
-    },
-    errors::error::VcxResult,
+    core::profile::ledger::{indyvdr_build_ledger_read, indyvdr_build_ledger_write},
 };
 
 use crate::{
@@ -32,15 +28,15 @@ use crate::{
 };
 
 lazy_static! {
-    pub static ref global_ledger_anoncreds_read: RwLock<Option<Arc<dyn AnoncredsLedgerRead>>> =
+    pub static ref GLOBAL_LEDGER_ANONCREDS_READ: RwLock<Option<Arc<dyn AnoncredsLedgerRead>>> =
         RwLock::new(None);
-    pub static ref global_ledger_anoncreds_write: RwLock<Option<Arc<dyn AnoncredsLedgerWrite>>> =
+    pub static ref GLOBAL_LEDGER_ANONCREDS_WRITE: RwLock<Option<Arc<dyn AnoncredsLedgerWrite>>> =
         RwLock::new(None);
-    pub static ref global_ledger_indy_read: RwLock<Option<Arc<dyn IndyLedgerRead>>> =
+    pub static ref GLOBAL_LEDGER_INDY_READ: RwLock<Option<Arc<dyn IndyLedgerRead>>> =
         RwLock::new(None);
-    pub static ref global_ledger_indy_write: RwLock<Option<Arc<dyn IndyLedgerWrite>>> =
+    pub static ref GLOBAL_LEDGER_INDY_WRITE: RwLock<Option<Arc<dyn IndyLedgerWrite>>> =
         RwLock::new(None);
-    pub static ref global_taa_configurator: RwLock<Option<Arc<dyn TaaConfigurator>>> =
+    pub static ref GLOBAL_TAA_CONFIGURATOR: RwLock<Option<Arc<dyn TaaConfigurator>>> =
         RwLock::new(None);
 }
 
@@ -122,25 +118,25 @@ async fn build_components_ledger(
     let indy_write: Arc<dyn IndyLedgerWrite> = ledger_write.clone();
     let anoncreds_read: Arc<dyn AnoncredsLedgerRead> = ledger_read.clone();
     let indy_read: Arc<dyn IndyLedgerRead> = ledger_read.clone();
-    return Ok((
+    Ok((
         anoncreds_read,
         anoncreds_write,
         indy_read,
         indy_write,
         taa_configurator,
-    ));
+    ))
 }
 
 pub fn reset_ledger_components() -> LibvcxResult<()> {
-    let mut anoncreds_read = global_ledger_anoncreds_read.write()?;
+    let mut anoncreds_read = GLOBAL_LEDGER_ANONCREDS_READ.write()?;
     *anoncreds_read = None;
-    let mut anoncreds_write = global_ledger_anoncreds_write.write()?;
+    let mut anoncreds_write = GLOBAL_LEDGER_ANONCREDS_WRITE.write()?;
     *anoncreds_write = None;
-    let mut indy_read = global_ledger_indy_read.write()?;
+    let mut indy_read = GLOBAL_LEDGER_INDY_READ.write()?;
     *indy_read = None;
-    let mut indy_write = global_ledger_indy_write.write()?;
+    let mut indy_write = GLOBAL_LEDGER_INDY_WRITE.write()?;
     *indy_write = None;
-    let mut taa_configurator = global_taa_configurator.write()?;
+    let mut taa_configurator = GLOBAL_TAA_CONFIGURATOR.write()?;
     *taa_configurator = None;
     Ok(())
 }
@@ -150,15 +146,15 @@ pub async fn setup_ledger_components(config: &LibvcxLedgerConfig) -> LibvcxResul
 
     let (anoncreds_read, anoncreds_write, indy_read, indy_write, taa_configurator) =
         build_components_ledger(base_wallet, config).await?;
-    let mut anoncreds_read_guard = global_ledger_anoncreds_read.write()?;
+    let mut anoncreds_read_guard = GLOBAL_LEDGER_ANONCREDS_READ.write()?;
     *anoncreds_read_guard = Some(anoncreds_read.clone());
-    let mut anoncreds_write_guard = global_ledger_anoncreds_write.write()?;
+    let mut anoncreds_write_guard = GLOBAL_LEDGER_ANONCREDS_WRITE.write()?;
     *anoncreds_write_guard = Some(anoncreds_write.clone());
-    let mut indy_read_guard = global_ledger_indy_read.write()?;
+    let mut indy_read_guard = GLOBAL_LEDGER_INDY_READ.write()?;
     *indy_read_guard = Some(indy_read.clone());
-    let mut indy_write_guard = global_ledger_indy_write.write()?;
+    let mut indy_write_guard = GLOBAL_LEDGER_INDY_WRITE.write()?;
     *indy_write_guard = Some(indy_write.clone());
-    let mut indy_taa_configurator = global_taa_configurator.write()?;
+    let mut indy_taa_configurator = GLOBAL_TAA_CONFIGURATOR.write()?;
     *indy_taa_configurator = Some(taa_configurator.clone());
     Ok(())
 }
@@ -195,7 +191,7 @@ pub async fn close_main_pool() -> LibvcxResult<()> {
 #[cfg(test)]
 pub mod tests {
 
-    use std::{num::NonZeroUsize, time::Duration};
+    use std::num::NonZeroUsize;
 
     use aries_vcx::{
         aries_vcx_core::ledger::indy::pool::test_utils::{
@@ -287,17 +283,11 @@ pub mod tests {
     async fn test_open_pool_fails_if_genesis_file_is_invalid() {
         let _setup = SetupEmpty::init();
         _create_and_open_wallet().await.unwrap();
-        let pool_name = format!("invalidpool_{}", uuid::Uuid::new_v4().to_string());
 
         let genesis_transactions =
             TempFile::create_with_data(POOL1_TXN, "{ \"invalid\": \"genesis\" }");
         set_config_value(CONFIG_GENESIS_PATH, &genesis_transactions.path).unwrap();
-        let config = LibvcxLedgerConfig {
-            genesis_path: genesis_transactions.path.clone(),
-            pool_config: None,
-            cache_config: None,
-            exclude_nodes: None,
-        };
+
         // todo: indy-vdr panics if the file is invalid, see:
         // indy-vdr-0.3.4/src/pool/runner.rs:44:22
         assert_eq!(
@@ -314,7 +304,6 @@ pub mod tests {
     async fn test_open_pool_fails_if_genesis_path_is_invalid() {
         let _setup = SetupDefaults::init();
         _create_and_open_wallet().await.unwrap();
-        let pool_name = format!("invalidpool_{}", uuid::Uuid::new_v4().to_string());
 
         let config = LibvcxLedgerConfig {
             genesis_path: "invalid/txn/path".to_string(),
