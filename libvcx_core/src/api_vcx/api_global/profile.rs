@@ -1,6 +1,6 @@
 use std::{
     fmt::{Debug, Formatter},
-    sync::{Arc, RwLockReadGuard},
+    sync::Arc,
 };
 
 use aries_vcx::{
@@ -8,13 +8,10 @@ use aries_vcx::{
         anoncreds::base_anoncreds::BaseAnonCreds,
         ledger::base_ledger::{
             AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite,
-            TaaConfigurator, TxnAuthrAgrmtOptions,
+            TxnAuthrAgrmtOptions,
         },
-        wallet::{base_wallet::BaseWallet, indy::IndySdkWallet, mock_wallet::MockWallet},
-        WalletHandle,
+        wallet::{base_wallet::BaseWallet, mock_wallet::MockWallet},
     },
-    core::profile::{profile::Profile, vdrtools_profile::VdrtoolsProfile},
-    errors::error::VcxResult,
     global::settings::indy_mocks_enabled,
     utils::mockdata::profile::{
         mock_anoncreds::MockAnoncreds, mock_ledger::MockLedger, mock_profile::MockProfile,
@@ -168,7 +165,7 @@ impl ProfileV2 for VcxGlobalsProfile {
 }
 
 lazy_static! {
-    static ref global_profile: VcxGlobalsProfile = VcxGlobalsProfile {};
+    static ref GLOBAL_PROFILE: VcxGlobalsProfile = VcxGlobalsProfile {};
 }
 
 impl ProfileV2 for MockProfile {
@@ -217,7 +214,7 @@ pub fn get_main_profile() -> Arc<dyn ProfileV2> {
     if indy_mocks_enabled() {
         return Arc::new(MockProfile {});
     }
-    Arc::new(global_profile.clone())
+    Arc::new(GLOBAL_PROFILE.clone())
 }
 
 pub fn try_get_main_wallet() -> LibvcxResult<Option<Arc<dyn BaseWallet>>> {
