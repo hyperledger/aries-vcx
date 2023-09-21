@@ -58,13 +58,13 @@ pub mod test_utils {
     ) -> VcxResult<Vec<Revoke>> {
         let mut messages = Vec::<Revoke>::new();
         for (uid, message) in connection
-            .get_messages_noauth(&agency_client)
+            .get_messages_noauth(agency_client)
             .await?
             .into_iter()
         {
             if let AriesMessage::Revocation(Revocation::Revoke(message)) = message {
                 connection
-                    .update_message_status(&uid, &agency_client)
+                    .update_message_status(&uid, agency_client)
                     .await
                     .ok();
                 messages.push(message);
@@ -79,13 +79,13 @@ pub mod test_utils {
     ) -> VcxResult<Vec<AckRevoke>> {
         let mut messages = Vec::<AckRevoke>::new();
         for (uid, message) in connection
-            .get_messages_noauth(&agency_client)
+            .get_messages_noauth(agency_client)
             .await?
             .into_iter()
         {
             if let AriesMessage::Revocation(Revocation::Ack(message)) = message {
                 connection
-                    .update_message_status(&uid, &agency_client)
+                    .update_message_status(&uid, agency_client)
                     .await
                     .ok();
                 messages.push(message);

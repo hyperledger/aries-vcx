@@ -7,7 +7,6 @@ use aries_vcx_core::{
         TxnAuthrAgrmtOptions,
     },
     wallet::{base_wallet::BaseWallet, indy::IndySdkWallet},
-    WalletHandle,
 };
 use async_trait::async_trait;
 
@@ -71,14 +70,14 @@ impl Profile for VdrtoolsProfile {
     }
 
     #[cfg(feature = "migration")]
-    fn wallet_handle(&self) -> Option<WalletHandle> {
+    fn wallet_handle(&self) -> Option<aries_vcx_core::WalletHandle> {
         Some(self.wallet.wallet_handle)
     }
 
     fn update_taa_configuration(&self, _taa_options: TxnAuthrAgrmtOptions) -> VcxResult<()> {
         Err(AriesVcxError::from_msg(
             AriesVcxErrorKind::ActionNotSupported,
-            format!("update_taa_configuration no implemented for VdrtoolsProfile"),
+            "update_taa_configuration no implemented for VdrtoolsProfile",
         ))
     }
 }

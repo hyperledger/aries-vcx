@@ -543,7 +543,7 @@ impl MediatedConnection {
                     &query.id, &supported_protocols
                 );
 
-                respond_discovery_query(&wallet, query, &did_doc, pw_vk, supported_protocols)
+                respond_discovery_query(wallet, query, &did_doc, pw_vk, supported_protocols)
                     .await?;
             }
             AriesMessage::DiscoverFeatures(DiscoverFeatures::Disclose(disclose)) => {

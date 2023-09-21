@@ -118,9 +118,8 @@ impl Holder {
     pub fn get_msg_credential_request(&self) -> VcxResult<RequestCredential> {
         match self.holder_sm.state {
             HolderFullState::RequestSet(ref state) => {
-                let mut msg: RequestCredential = state.msg_credential_request.clone().into();
-                let mut timing = Timing::default();
-                timing.out_time = Some(Utc::now());
+                let mut msg: RequestCredential = state.msg_credential_request.clone();
+                let timing = Timing::builder().out_time(Utc::now()).build();
                 msg.decorators.timing = Some(timing);
                 Ok(msg)
             }
@@ -283,16 +282,11 @@ impl Holder {
 
     pub fn get_final_message(&self) -> VcxResult<Option<AriesMessage>> {
         match &self.holder_sm.state {
-            HolderFullState::Finished(state) => {
-                if let Some(ack_requested) = state.ack_requested {
-                    if ack_requested {
-                        let ack_msg = build_credential_ack(&self.get_thread_id()?);
-                        return Ok(Some(ack_msg.into()));
-                    }
-                }
+            HolderFullState::Finished(state) if Some(true) == state.ack_requested => {
+                let ack_msg = build_credential_ack(&self.get_thread_id()?);
+                Ok(Some(ack_msg.into()))
             }
-            _ => {}
-        };
-        return Ok(None);
+            _ => Ok(None),
+        }
     }
 }

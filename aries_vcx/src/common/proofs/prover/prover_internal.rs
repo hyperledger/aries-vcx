@@ -112,7 +112,7 @@ pub fn credential_def_identifiers(
             credential_referent: cred_info.referent.clone(),
             schema_id: cred_info.schema_id.clone(),
             cred_def_id: cred_info.cred_def_id.clone(),
-            revocation_interval: _get_revocation_interval(&referent, proof_req)?,
+            revocation_interval: _get_revocation_interval(referent, proof_req)?,
             timestamp: None,
             rev_reg_id: cred_info.rev_reg_id.clone(),
             cred_rev_id: cred_info.cred_rev_id.clone(),
@@ -337,17 +337,14 @@ pub mod unit_tests {
     use aries_vcx_core::ledger::indy::pool::test_utils::get_temp_dir_path;
 
     use super::*;
-    use crate::{
-        core::profile::vdrtools_profile::VdrtoolsProfile,
-        utils::{
-            constants::{
-                ADDRESS_CRED_DEF_ID, ADDRESS_CRED_ID, ADDRESS_CRED_REV_ID, ADDRESS_REV_REG_ID,
-                ADDRESS_SCHEMA_ID, CRED_DEF_ID, CRED_REV_ID, LICENCE_CRED_ID, REV_REG_ID,
-                REV_STATE_JSON, SCHEMA_ID,
-            },
-            devsetup::*,
-            mockdata::profile::{mock_anoncreds::MockAnoncreds, mock_ledger::MockLedger},
+    use crate::utils::{
+        constants::{
+            ADDRESS_CRED_DEF_ID, ADDRESS_CRED_ID, ADDRESS_CRED_REV_ID, ADDRESS_REV_REG_ID,
+            ADDRESS_SCHEMA_ID, CRED_DEF_ID, CRED_REV_ID, LICENCE_CRED_ID, REV_REG_ID,
+            REV_STATE_JSON, SCHEMA_ID,
         },
+        devsetup::*,
+        mockdata::profile::{mock_anoncreds::MockAnoncreds, mock_ledger::MockLedger},
     };
 
     fn proof_req_no_interval() -> ProofRequestData {
@@ -401,7 +398,7 @@ pub mod unit_tests {
         let credential_def = build_cred_defs_json_prover(&ledger_read, &creds)
             .await
             .unwrap();
-        assert!(credential_def.len() > 0);
+        assert!(!credential_def.is_empty());
         assert!(credential_def
             .contains(r#""id":"V4SGRU86Z58d6TV7PBUe6f:3:CL:47:tag1","schemaId":"47""#));
     }
@@ -448,7 +445,7 @@ pub mod unit_tests {
         let schemas = build_schemas_json_prover(&ledger_read, &creds)
             .await
             .unwrap();
-        assert!(schemas.len() > 0);
+        assert!(!schemas.is_empty());
         assert!(schemas.contains(
             r#""id":"2hoqvcwupRTUNkXn6ArYzs:2:test-licence:4.4.4","name":"test-licence""#
         ));
@@ -691,7 +688,7 @@ pub mod unit_tests {
                 "zip_2": { "name": "zip_2" }
             },
             "requested_predicates": {},
-            "non_revoked": {"from": 098, "to": 123}
+            "non_revoked": {"from": 98, "to": 123}
         });
         let proof_req: ProofRequestData = serde_json::from_value(proof_req).unwrap();
         let requested_credential = build_requested_credentials_json(
@@ -747,7 +744,7 @@ pub mod unit_tests {
                 "zip_2": { "name": "zip" }
             },
             "requested_predicates": {},
-            "non_revoked": {"from": 098, "to": 123}
+            "non_revoked": {"from": 98, "to": 123}
         });
         let proof_req: ProofRequestData = serde_json::from_value(proof_req).unwrap();
 
@@ -771,7 +768,7 @@ pub mod unit_tests {
 
         // when attribute interval is None, defaults to proof req interval
         let interval = Some(NonRevokedInterval {
-            from: Some(098),
+            from: Some(98),
             to: Some(123),
         });
         assert_eq!(

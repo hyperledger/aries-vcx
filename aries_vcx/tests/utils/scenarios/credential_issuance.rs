@@ -45,7 +45,7 @@ pub async fn create_address_schema_creddef_revreg(
     let schema = create_and_write_test_schema(
         &anoncreds,
         &ledger_write,
-        &institution_did,
+        institution_did,
         &json!(attr_names_address_list()).to_string(),
     )
     .await;
@@ -53,7 +53,7 @@ pub async fn create_address_schema_creddef_revreg(
         &anoncreds,
         &ledger_read,
         &ledger_write,
-        &institution_did,
+        institution_did,
         &schema.schema_id,
         true,
     )
@@ -61,7 +61,7 @@ pub async fn create_address_schema_creddef_revreg(
     let rev_reg = create_and_write_test_rev_reg(
         &anoncreds,
         &ledger_write,
-        &institution_did,
+        institution_did,
         &cred_def.get_cred_def_id(),
     )
     .await;

@@ -269,7 +269,7 @@ impl VerifierSM {
                     .verify_presentation(ledger, anoncreds, &presentation, &self.thread_id)
                     .await;
 
-                let sm = match verification_result {
+                match verification_result {
                     Ok(()) => VerifierFullState::Finished(
                         (state, presentation, PresentationVerificationStatus::Valid).into(),
                     ),
@@ -287,8 +287,7 @@ impl VerifierSM {
                             }
                         }
                     }
-                };
-                sm
+                }
             }
             s => {
                 warn!("Unable to verify presentation in state {}", s);
@@ -322,7 +321,7 @@ impl VerifierSM {
                     }
                 },
             },
-            s @ _ => Err(AriesVcxError::from_msg(
+            s => Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::InvalidState,
                 format!("Cannot get final message in this state: {:?}", s),
             )),

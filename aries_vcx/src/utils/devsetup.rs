@@ -150,7 +150,7 @@ impl Drop for SetupMocks {
 pub async fn dev_setup_wallet_indy(key_seed: &str) -> (String, WalletHandle) {
     info!("dev_setup_wallet_indy >>");
     let config_wallet = WalletConfig {
-        wallet_name: format!("wallet_{}", uuid::Uuid::new_v4().to_string()),
+        wallet_name: format!("wallet_{}", uuid::Uuid::new_v4()),
         wallet_key: settings::DEFAULT_WALLET_KEY.into(),
         wallet_key_derivation: settings::WALLET_KDF_RAW.into(),
         wallet_type: None,
@@ -226,6 +226,7 @@ pub async fn dev_build_profile_vdr_proxy_ledger(wallet: Arc<IndySdkWallet>) -> A
     Arc::new(VdrProxyProfile::init(wallet, client).await.unwrap())
 }
 
+#[allow(unreachable_code)]
 pub async fn dev_build_featured_profile(
     genesis_file_path: String,
     wallet: Arc<IndySdkWallet>,

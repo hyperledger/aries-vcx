@@ -119,7 +119,7 @@ impl From<AriesVcxCoreError> for AriesVcxError {
             AriesVcxCoreErrorKind::NoAgentInformation => AriesVcxErrorKind::NoAgentInformation,
             AriesVcxCoreErrorKind::InvalidMessageFormat => AriesVcxErrorKind::InvalidMessageFormat,
         };
-        AriesVcxError::from_msg(kind, format!("AriesVcxCoreError: {}", err.to_string()))
+        AriesVcxError::from_msg(kind, format!("AriesVcxCoreError: {}", err))
     }
 }
 
@@ -216,6 +216,6 @@ impl From<AriesVcxError> for AriesVcxCoreError {
             AriesVcxErrorKind::NoAgentInformation => AriesVcxCoreErrorKind::NoAgentInformation,
             AriesVcxErrorKind::InvalidMessageFormat => AriesVcxCoreErrorKind::InvalidMessageFormat,
         };
-        AriesVcxCoreError::from_msg(kind, format!("AriesVcxError: {}", err.to_string()))
+        AriesVcxCoreError::from_msg(kind, format!("AriesVcxError: {}", err))
     }
 }

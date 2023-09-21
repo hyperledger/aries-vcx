@@ -107,9 +107,8 @@ pub async fn into_did_doc(
     let mut did_doc: AriesDidDoc = AriesDidDoc::default();
     let (service_endpoint, recipient_keys, routing_keys) = match invitation {
         AnyInvitation::Con(Invitation {
-            id,
             content: InvitationContent::Public(content),
-            decorators,
+            ..
         }) => {
             did_doc.set_id(content.did.to_string());
             let service = get_service(indy_ledger, &content.did)
@@ -130,7 +129,7 @@ pub async fn into_did_doc(
         AnyInvitation::Con(Invitation {
             id,
             content: InvitationContent::Pairwise(content),
-            decorators,
+            ..
         }) => {
             did_doc.set_id(id.clone());
             (
@@ -140,13 +139,12 @@ pub async fn into_did_doc(
             )
         }
         AnyInvitation::Con(Invitation {
-            id,
-            content: InvitationContent::PairwiseDID(content),
-            decorators,
+            content: InvitationContent::PairwiseDID(_content),
+            ..
         }) => {
             return Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::InvalidDid,
-                format!("PairwiseDID invitation not supported yet!"),
+                "PairwiseDID invitation not supported yet!",
             ))
         }
         AnyInvitation::Oob(invitation) => {
@@ -336,7 +334,7 @@ pub async fn add_attr(
     did: &str,
     attr: &str,
 ) -> VcxResult<()> {
-    let res = indy_ledger_write.add_attr(did, &attr).await?;
+    let res = indy_ledger_write.add_attr(did, attr).await?;
     check_response(&res)
 }
 
@@ -365,7 +363,7 @@ pub async fn clear_attr(
         .map_err(|err| err.into())
 }
 
-pub(self) fn check_response(response: &str) -> VcxResult<()> {
+fn check_response(response: &str) -> VcxResult<()> {
     if settings::indy_mocks_enabled() {
         return Ok(());
     }

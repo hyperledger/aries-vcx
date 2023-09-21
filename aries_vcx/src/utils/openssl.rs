@@ -10,7 +10,7 @@ pub fn encode(s: &str) -> VcxResult<String> {
             let mut hasher = Sha256::new();
             hasher.update(s.as_bytes());
             let hash = hasher.finalize();
-            let bignum = BigUint::from_bytes_be(&hash.as_slice());
+            let bignum = BigUint::from_bytes_be(hash.as_slice());
             let encoded = bignum.to_str_radix(10);
             Ok(encoded)
         }

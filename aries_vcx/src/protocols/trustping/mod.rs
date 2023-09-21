@@ -10,14 +10,15 @@ use messages::{
 };
 
 pub fn build_ping(request_response: bool, comment: Option<String>) -> Ping {
-    let mut content = PingContent::default();
-    content.response_requested = request_response;
-    content.comment = comment;
+    let content = PingContent::builder().response_requested(request_response);
+    let content = match comment {
+        None => content.build(),
+        Some(comment) => content.comment(comment).build(),
+    };
 
-    let mut decorators = PingDecorators::default();
-    let mut timing = Timing::default();
-    timing.out_time = Some(Utc::now());
-    decorators.timing = Some(timing);
+    let decorators = PingDecorators::builder()
+        .timing(Timing::builder().out_time(Utc::now()).build())
+        .build();
 
     Ping::builder()
         .id(Uuid::new_v4().to_string())

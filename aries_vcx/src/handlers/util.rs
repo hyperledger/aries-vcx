@@ -1,5 +1,4 @@
 use messages::{
-    decorators::attachment::Attachment,
     msg_fields::protocols::{
         connection::{invitation::Invitation, Connection},
         cred_issuance::CredentialIssuance,

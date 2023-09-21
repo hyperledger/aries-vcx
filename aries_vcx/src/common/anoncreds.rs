@@ -26,7 +26,7 @@ pub mod integration_tests {
             let proof_req = "{";
             let anoncreds = Arc::clone(&setup.profile).inject_anoncreds();
             let result = anoncreds
-                .prover_get_credentials_for_proof_req(&proof_req)
+                .prover_get_credentials_for_proof_req(proof_req)
                 .await;
             assert_eq!(
                 result.unwrap_err().kind(),
