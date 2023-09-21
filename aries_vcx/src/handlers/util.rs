@@ -1,7 +1,7 @@
 use messages::{
     msg_fields::protocols::{
         connection::{invitation::Invitation, Connection},
-        cred_issuance::CredentialIssuance,
+        cred_issuance::{v2::CredentialIssuanceV2, CredentialIssuance},
         discover_features::DiscoverFeatures,
         notification::Notification,
         out_of_band::{invitation::Invitation as OobInvitation, OutOfBand},
@@ -107,6 +107,22 @@ pub fn verify_thread_id(thread_id: &str, message: &AriesMessage) -> VcxResult<()
             matches_opt_thread_id!(msg, thread_id)
         }
         AriesMessage::CredentialIssuance(CredentialIssuance::ProblemReport(msg)) => {
+            matches_opt_thread_id!(msg, thread_id)
+        }
+        AriesMessage::CredentialIssuanceV2(CredentialIssuanceV2::Ack(msg)) => matches_thread_id!(msg, thread_id),
+        AriesMessage::CredentialIssuanceV2(CredentialIssuanceV2::IssueCredential(msg)) => {
+            matches_thread_id!(msg, thread_id)
+        }
+        AriesMessage::CredentialIssuanceV2(CredentialIssuanceV2::OfferCredential(msg)) => {
+            matches_opt_thread_id!(msg, thread_id)
+        }
+        AriesMessage::CredentialIssuanceV2(CredentialIssuanceV2::ProposeCredential(msg)) => {
+            matches_opt_thread_id!(msg, thread_id)
+        }
+        AriesMessage::CredentialIssuanceV2(CredentialIssuanceV2::RequestCredential(msg)) => {
+            matches_opt_thread_id!(msg, thread_id)
+        }
+        AriesMessage::CredentialIssuanceV2(CredentialIssuanceV2::ProblemReport(msg)) => {
             matches_opt_thread_id!(msg, thread_id)
         }
         AriesMessage::DiscoverFeatures(DiscoverFeatures::Query(msg)) => msg.id == thread_id,

@@ -10,6 +10,7 @@ use crate::msg_types::{role::Role, MsgKindType};
 #[msg_type(protocol = "issue-credential")]
 pub enum CredentialIssuanceType {
     V1(CredentialIssuanceTypeV1),
+    V2(CredentialIssuanceTypeV2),
 }
 
 #[derive(Copy, Clone, Debug, From, TryInto, PartialEq, Transitive, MessageType)]
@@ -20,9 +21,29 @@ pub enum CredentialIssuanceTypeV1 {
     V1_0(MsgKindType<CredentialIssuanceTypeV1_0>),
 }
 
+#[derive(Copy, Clone, Debug, From, TryInto, PartialEq, Transitive, MessageType)]
+#[transitive(into(CredentialIssuanceType, Protocol))]
+#[msg_type(major = 2)]
+pub enum CredentialIssuanceTypeV2 {
+    #[msg_type(minor = 0, roles = "Role::Holder, Role::Issuer")]
+    V2_0(MsgKindType<CredentialIssuanceTypeV2_0>),
+}
+
 #[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq)]
 #[strum(serialize_all = "kebab-case")]
 pub enum CredentialIssuanceTypeV1_0 {
+    OfferCredential,
+    ProposeCredential,
+    RequestCredential,
+    IssueCredential,
+    CredentialPreview,
+    Ack,
+    ProblemReport,
+}
+
+#[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq)]
+#[strum(serialize_all = "kebab-case")]
+pub enum CredentialIssuanceTypeV2_0 {
     OfferCredential,
     ProposeCredential,
     RequestCredential,

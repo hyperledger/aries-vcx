@@ -6,6 +6,7 @@ pub mod offer_credential;
 pub mod problem_report;
 pub mod propose_credential;
 pub mod request_credential;
+pub mod v2;
 
 use std::str::FromStr;
 
@@ -58,6 +59,7 @@ impl DelayedSerde for CredentialIssuance {
         let (protocol, kind_str) = msg_type;
         let kind = match protocol {
             CredentialIssuanceKind::V1(CredentialIssuanceTypeV1::V1_0(kind)) => kind.kind_from_str(kind_str),
+            _ => panic!("TODO"),
         };
 
         match kind.map_err(D::Error::custom)? {

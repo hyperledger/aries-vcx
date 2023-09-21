@@ -15,7 +15,10 @@ pub mod msg_types;
 
 use derive_more::From;
 use misc::utils;
-use msg_types::{report_problem::ReportProblemTypeV1_0, routing::RoutingTypeV1_0, MsgWithType};
+use msg_fields::protocols::cred_issuance::v2::CredentialIssuanceV2;
+use msg_types::{
+    cred_issuance::CredentialIssuanceType, report_problem::ReportProblemTypeV1_0, routing::RoutingTypeV1_0, MsgWithType,
+};
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::{
@@ -52,6 +55,7 @@ pub enum AriesMessage {
     Connection(Connection),
     Revocation(Revocation),
     CredentialIssuance(CredentialIssuance),
+    CredentialIssuanceV2(CredentialIssuanceV2),
     ReportProblem(ProblemReport),
     PresentProof(PresentProof),
     TrustPing(TrustPing),
@@ -97,8 +101,16 @@ impl DelayedSerde for AriesMessage {
             Protocol::RevocationType(msg_type) => {
                 Revocation::delayed_deserialize((msg_type, kind_str), deserializer).map(From::from)
             }
-            Protocol::CredentialIssuanceType(msg_type) => {
-                CredentialIssuance::delayed_deserialize((msg_type, kind_str), deserializer).map(From::from)
+            Protocol::CredentialIssuanceType(CredentialIssuanceType::V1(msg_type)) => {
+                CredentialIssuance::delayed_deserialize((CredentialIssuanceType::V1(msg_type), kind_str), deserializer)
+                    .map(From::from)
+            }
+            Protocol::CredentialIssuanceType(CredentialIssuanceType::V2(msg_type)) => {
+                CredentialIssuanceV2::delayed_deserialize(
+                    (CredentialIssuanceType::V2(msg_type), kind_str),
+                    deserializer,
+                )
+                .map(From::from)
             }
             Protocol::ReportProblemType(msg_type) => {
                 let kind = match msg_type {
@@ -145,6 +157,7 @@ impl DelayedSerde for AriesMessage {
             Self::Connection(v) => v.delayed_serialize(serializer),
             Self::Revocation(v) => v.delayed_serialize(serializer),
             Self::CredentialIssuance(v) => v.delayed_serialize(serializer),
+            Self::CredentialIssuanceV2(v) => v.delayed_serialize(serializer),
             Self::ReportProblem(v) => MsgWithType::from(v).serialize(serializer),
             Self::PresentProof(v) => v.delayed_serialize(serializer),
             Self::TrustPing(v) => v.delayed_serialize(serializer),
