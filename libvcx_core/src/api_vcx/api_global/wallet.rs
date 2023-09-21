@@ -55,15 +55,17 @@ fn build_component_base_wallet(wallet_handle: WalletHandle) -> Arc<dyn BaseWalle
     Arc::new(IndySdkWallet::new(wallet_handle))
 }
 
+#[allow(unreachable_code)]
+#[allow(clippy::needless_return)]
 fn build_component_anoncreds(base_wallet: Arc<dyn BaseWallet>) -> Arc<dyn BaseAnonCreds> {
     #[cfg(feature = "anoncreds_vdrtools")]
     {
         let wallet_handle = base_wallet.get_wallet_handle();
-        Arc::new(IndySdkAnonCreds::new(wallet_handle))
+        return Arc::new(IndySdkAnonCreds::new(wallet_handle));
     }
     #[cfg(feature = "anoncreds_credx")]
     {
-        Arc::new(IndyCredxAnonCreds::new(Arc::clone(&base_wallet)))
+        return Arc::new(IndyCredxAnonCreds::new(Arc::clone(&base_wallet)));
     }
     #[cfg(not(any(feature = "anoncreds_vdrtools", feature = "anoncreds_credx")))]
     {

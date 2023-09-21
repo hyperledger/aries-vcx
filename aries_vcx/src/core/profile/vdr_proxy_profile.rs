@@ -16,7 +16,7 @@ use aries_vcx_core::{
         response_cacher::in_memory::{InMemoryResponseCacher, InMemoryResponseCacherConfig},
     },
     wallet::{base_wallet::BaseWallet, indy::IndySdkWallet},
-    ResponseParser, VdrProxyClient, WalletHandle,
+    ResponseParser, VdrProxyClient,
 };
 use async_trait::async_trait;
 
