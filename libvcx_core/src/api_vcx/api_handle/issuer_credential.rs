@@ -6,7 +6,6 @@ use aries_vcx::{
     messages::AriesMessage,
     protocols::{issuance::issuer::state_machine::IssuerState, SendClosure},
 };
-
 use serde_json;
 
 use crate::{

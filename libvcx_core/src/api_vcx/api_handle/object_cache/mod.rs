@@ -273,7 +273,7 @@ where
         store.clear();
         Ok(())
     }
-    
+
     #[allow(clippy::len_without_is_empty)]
     pub fn len(&self) -> LibvcxResult<usize> {
         let store = self._lock_store_read()?;
