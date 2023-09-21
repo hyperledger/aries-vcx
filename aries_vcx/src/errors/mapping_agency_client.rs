@@ -1,5 +1,6 @@
-use crate::errors::error::{AriesVcxError, AriesVcxErrorKind};
 use agency_client::errors::error::{AgencyClientError, AgencyClientErrorKind};
+
+use crate::errors::error::{AriesVcxError, AriesVcxErrorKind};
 
 impl From<AgencyClientError> for AriesVcxError {
     fn from(agency_err: AgencyClientError) -> AriesVcxError {

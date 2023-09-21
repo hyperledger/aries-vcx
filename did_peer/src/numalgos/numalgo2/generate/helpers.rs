@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+
 use base64::{engine::general_purpose::STANDARD_NO_PAD, Engine};
 use did_doc::schema::{
     did_doc::DidDocument,
@@ -21,32 +23,42 @@ pub fn append_encoded_key_segments(
     did_document: &DidDocument<ExtraFieldsSov>,
 ) -> Result<String, DidPeerError> {
     for am in did_document.assertion_method() {
-        did = append_encoded_key_segment(did, &did_document, am, ElementPurpose::Assertion)?;
+        did = append_encoded_key_segment(did, did_document, am, ElementPurpose::Assertion)?;
     }
 
     for ka in did_document.key_agreement() {
-        did = append_encoded_key_segment(did, &did_document, ka, ElementPurpose::Encryption)?;
+        did = append_encoded_key_segment(did, did_document, ka, ElementPurpose::Encryption)?;
     }
 
     for vm in did_document.verification_method() {
         did = append_encoded_key_segment(
             did,
-            &did_document,
+            did_document,
             &VerificationMethodKind::Resolved(vm.to_owned()),
             ElementPurpose::Verification,
         )?;
     }
 
     for a in did_document.authentication() {
-        did = append_encoded_key_segment(did, &did_document, a, ElementPurpose::Verification)?;
+        did = append_encoded_key_segment(did, did_document, a, ElementPurpose::Verification)?;
     }
 
     for ci in did_document.capability_invocation() {
-        did = append_encoded_key_segment(did, &did_document, ci, ElementPurpose::CapabilityInvocation)?;
+        did = append_encoded_key_segment(
+            did,
+            did_document,
+            ci,
+            ElementPurpose::CapabilityInvocation,
+        )?;
     }
 
     for cd in did_document.capability_delegation() {
-        did = append_encoded_key_segment(did, &did_document, cd, ElementPurpose::CapabilityDelegation)?;
+        did = append_encoded_key_segment(
+            did,
+            did_document,
+            cd,
+            ElementPurpose::CapabilityDelegation,
+        )?;
     }
 
     Ok(did)
@@ -62,14 +74,15 @@ pub fn append_encoded_service_segment(
         .map(abbreviate_service)
         .collect::<Result<Vec<ServiceAbbreviated>, _>>()?;
 
-    let service_encoded = if services_abbreviated.len() == 1 {
-        // SAFETY: We just checked that the length is 1
-        let service_abbreviated = services_abbreviated.first().unwrap();
-        Some(STANDARD_NO_PAD.encode(serde_json::to_vec(&service_abbreviated)?))
-    } else if services_abbreviated.len() > 1 {
-        Some(STANDARD_NO_PAD.encode(serde_json::to_vec(&services_abbreviated)?))
-    } else {
-        None
+    let service_encoded = match services_abbreviated.len().cmp(&1) {
+        Ordering::Less => None,
+        Ordering::Equal => {
+            let service_abbreviated = services_abbreviated.first().unwrap();
+            Some(STANDARD_NO_PAD.encode(serde_json::to_vec(&service_abbreviated)?))
+        }
+        Ordering::Greater => {
+            Some(STANDARD_NO_PAD.encode(serde_json::to_vec(&services_abbreviated)?))
+        }
     };
 
     if let Some(service_encoded) = service_encoded {
@@ -109,11 +122,17 @@ fn append_key_to_did(mut did: String, key: Key, purpose: ElementPurpose) -> Stri
     did
 }
 
-fn abbreviate_service(service: &Service<ExtraFieldsSov>) -> Result<ServiceAbbreviated, DidPeerError> {
+fn abbreviate_service(
+    service: &Service<ExtraFieldsSov>,
+) -> Result<ServiceAbbreviated, DidPeerError> {
     let service_endpoint = service.service_endpoint().clone();
     let (routing_keys, accept) = match service.extra() {
-        ExtraFieldsSov::DIDCommV2(extra) => (extra.routing_keys().to_vec(), extra.accept().to_vec()),
-        ExtraFieldsSov::DIDCommV1(extra) => (extra.routing_keys().to_vec(), extra.accept().to_vec()),
+        ExtraFieldsSov::DIDCommV2(extra) => {
+            (extra.routing_keys().to_vec(), extra.accept().to_vec())
+        }
+        ExtraFieldsSov::DIDCommV1(extra) => {
+            (extra.routing_keys().to_vec(), extra.accept().to_vec())
+        }
         _ => (vec![], vec![]),
     };
     let service_type = match service.service_type() {
@@ -157,9 +176,13 @@ mod tests {
         key: String,
         verification_type: VerificationMethodType,
     ) -> VerificationMethod {
-        VerificationMethod::builder(did_full.parse().unwrap(), did_full.parse().unwrap(), verification_type)
-            .add_public_key_multibase(key)
-            .build()
+        VerificationMethod::builder(
+            did_full.parse().unwrap(),
+            did_full.parse().unwrap(),
+            verification_type,
+        )
+        .add_public_key_multibase(key)
+        .build()
     }
 
     fn create_did_document_with_service(

@@ -3,18 +3,25 @@ extern crate log;
 
 pub mod utils;
 
-use aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
-use aries_vcx::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
-use aries_vcx::utils::devsetup::*;
+use aries_vcx::{
+    protocols::{
+        issuance::issuer::state_machine::IssuerState,
+        proof_presentation::verifier::verification_status::PresentationVerificationStatus,
+    },
+    utils::devsetup::*,
+};
 
 #[cfg(feature = "migration")]
 use crate::utils::migration::Migratable;
-use crate::utils::scenarios::{
-    accept_credential_proposal, accept_offer, create_address_schema_creddef_revreg, create_credential_proposal,
-    create_holder_from_proposal, create_issuer_from_proposal, credential_data_address_1, decline_offer,
-    exchange_credential, exchange_credential_with_proposal, exchange_proof, send_credential,
+use crate::utils::{
+    scenarios::{
+        accept_credential_proposal, accept_offer, create_address_schema_creddef_revreg,
+        create_credential_proposal, create_holder_from_proposal, create_issuer_from_proposal,
+        credential_data_address_1, decline_offer, exchange_credential,
+        exchange_credential_with_proposal, exchange_proof, send_credential,
+    },
+    test_agent::{create_test_agent, create_test_agent_trustee},
 };
-use crate::utils::test_agent::{create_test_agent, create_test_agent_trustee};
 
 #[tokio::test]
 #[ignore]
@@ -23,8 +30,11 @@ async fn test_agency_pool_double_issuance_issuer_is_verifier() {
         let mut institution = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
         let mut consumer = create_test_agent(setup.genesis_file_path.clone()).await;
 
-        let (schema, cred_def, rev_reg) =
-            create_address_schema_creddef_revreg(&institution.profile, &institution.institution_did).await;
+        let (schema, cred_def, rev_reg) = create_address_schema_creddef_revreg(
+            &institution.profile,
+            &institution.institution_did,
+        )
+        .await;
         let _credential_handle = exchange_credential(
             &mut consumer,
             &mut institution,
@@ -35,8 +45,8 @@ async fn test_agency_pool_double_issuance_issuer_is_verifier() {
         )
         .await;
 
-        // NOTE: Credx-anoncreds-implementation-generated presentation is not compatible with vdrtools anoncreds implementation
-        // as the presentation fails to deserialize
+        // NOTE: Credx-anoncreds-implementation-generated presentation is not compatible with
+        // vdrtools anoncreds implementation as the presentation fails to deserialize
         // #[cfg(feature = "migration")]
         // consumer.migrate().await;
 
@@ -148,8 +158,11 @@ async fn test_agency_pool_credential_exchange_via_proposal() {
         let mut institution = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
         let mut consumer = create_test_agent(setup.genesis_file_path).await;
 
-        let (schema, cred_def, rev_reg) =
-            create_address_schema_creddef_revreg(&institution.profile, &institution.institution_did).await;
+        let (schema, cred_def, rev_reg) = create_address_schema_creddef_revreg(
+            &institution.profile,
+            &institution.institution_did,
+        )
+        .await;
 
         #[cfg(feature = "migration")]
         institution.migrate().await;
@@ -175,10 +188,14 @@ async fn test_agency_pool_credential_exchange_via_proposal_failed() {
         let mut institution = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
         let mut consumer = create_test_agent(setup.genesis_file_path.clone()).await;
 
-        let (schema, cred_def, rev_reg) =
-            create_address_schema_creddef_revreg(&institution.profile, &institution.institution_did).await;
+        let (schema, cred_def, rev_reg) = create_address_schema_creddef_revreg(
+            &institution.profile,
+            &institution.institution_did,
+        )
+        .await;
 
-        let cred_proposal = create_credential_proposal(&schema.schema_id, &cred_def.get_cred_def_id(), "comment");
+        let cred_proposal =
+            create_credential_proposal(&schema.schema_id, &cred_def.get_cred_def_id(), "comment");
         let mut holder = create_holder_from_proposal(cred_proposal.clone());
         let mut issuer = create_issuer_from_proposal(cred_proposal.clone());
 
@@ -195,7 +212,10 @@ async fn test_agency_pool_credential_exchange_via_proposal_failed() {
         .await;
         let problem_report = decline_offer(&mut consumer, cred_offer, &mut holder).await;
         assert_eq!(IssuerState::OfferSet, issuer.get_state());
-        issuer.process_aries_msg(problem_report.into()).await.unwrap();
+        issuer
+            .process_aries_msg(problem_report.into())
+            .await
+            .unwrap();
         assert_eq!(IssuerState::Failed, issuer.get_state());
     })
     .await;
@@ -209,20 +229,25 @@ async fn test_agency_pool_credential_exchange_via_proposal_with_negotiation() {
         let mut institution = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
         let mut consumer = create_test_agent(setup.genesis_file_path.clone()).await;
 
-        let (schema, cred_def, rev_reg) =
-            create_address_schema_creddef_revreg(&institution.profile, &institution.institution_did).await;
+        let (schema, cred_def, rev_reg) = create_address_schema_creddef_revreg(
+            &institution.profile,
+            &institution.institution_did,
+        )
+        .await;
 
         #[cfg(feature = "migration")]
         institution.migrate().await;
 
-        let cred_proposal = create_credential_proposal(&schema.schema_id, &cred_def.get_cred_def_id(), "comment");
+        let cred_proposal =
+            create_credential_proposal(&schema.schema_id, &cred_def.get_cred_def_id(), "comment");
         let mut holder = create_holder_from_proposal(cred_proposal.clone());
         let mut issuer = create_issuer_from_proposal(cred_proposal.clone());
 
         #[cfg(feature = "migration")]
         consumer.migrate().await;
 
-        let cred_proposal_1 = create_credential_proposal(&schema.schema_id, &cred_def.get_cred_def_id(), "comment");
+        let cred_proposal_1 =
+            create_credential_proposal(&schema.schema_id, &cred_def.get_cred_def_id(), "comment");
         let cred_offer_1 = accept_credential_proposal(
             &mut institution,
             &mut issuer,

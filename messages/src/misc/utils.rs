@@ -18,10 +18,7 @@ pub(crate) fn serialize_datetime<S>(dt: &DateTime<Utc>, serializer: S) -> Result
 where
     S: serde::Serializer,
 {
-    use chrono::format::Fixed;
-    use chrono::format::Item;
-    use chrono::format::Numeric::*;
-    use chrono::format::Pad::Zero;
+    use chrono::format::{Fixed, Item, Numeric::*, Pad::Zero};
 
     const FMT_ITEMS: &[Item<'static>] = &[
         Item::Numeric(Year, Zero),
@@ -43,7 +40,10 @@ where
 }
 
 /// Used for serialization of an [`Option<DateTime<Utc>>`] to the RFC3339 standard.
-pub(crate) fn serialize_opt_datetime<S>(dt: &Option<DateTime<Utc>>, serializer: S) -> Result<S::Ok, S::Error>
+pub(crate) fn serialize_opt_datetime<S>(
+    dt: &Option<DateTime<Utc>>,
+    serializer: S,
+) -> Result<S::Ok, S::Error>
 where
     S: serde::Serializer,
 {
@@ -86,8 +86,9 @@ macro_rules! generate_from_stmt {
     };
 }
 
-/// Macro used for implementing [`From`] from a full message plus the given message kind and variant into
-/// [`crate::msg_types::MsgWithType`]. This then allows appending the `@type` field when serializing the message.
+/// Macro used for implementing [`From`] from a full message plus the given message kind and variant
+/// into [`crate::msg_types::MsgWithType`]. This then allows appending the `@type` field when
+/// serializing the message.
 macro_rules! into_msg_with_type {
     ($msg:ident, $kind:ident, $kind_var:ident) => {
         impl<'a> From<&'a $msg> for $crate::msg_types::MsgWithType<'a, $msg, $kind> {

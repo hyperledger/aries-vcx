@@ -45,7 +45,10 @@ mod tests {
 
     #[test]
     fn test_version_resolution_trust_ping() {
-        test_utils::test_msg_type_resolution("https://didcomm.org/trust_ping/1.255", TrustPingTypeV1::new_v1_0())
+        test_utils::test_msg_type_resolution(
+            "https://didcomm.org/trust_ping/1.255",
+            TrustPingTypeV1::new_v1_0(),
+        )
     }
 
     #[test]

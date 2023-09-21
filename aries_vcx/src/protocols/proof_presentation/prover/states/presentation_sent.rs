@@ -3,7 +3,9 @@ use messages::msg_fields::protocols::{
     report_problem::ProblemReport,
 };
 
-use crate::{handlers::util::Status, protocols::proof_presentation::prover::states::finished::FinishedState};
+use crate::{
+    handlers::util::Status, protocols::proof_presentation::prover::states::finished::FinishedState,
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct PresentationSentState {

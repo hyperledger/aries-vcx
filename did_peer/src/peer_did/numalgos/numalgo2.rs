@@ -2,16 +2,15 @@ use did_doc::schema::did_doc::DidDocument;
 use did_doc_sov::extra_fields::ExtraFieldsSov;
 use did_parser::Did;
 
-use crate::{
-    error::DidPeerError,
-    numalgos::{numalgo2::resolve_numalgo2, numalgo3::generate_numalgo3},
-    peer_did::peer_did::PeerDid,
-    peer_did_resolver::options::PublicKeyEncoding,
-};
-
 use super::{
     numalgo3::Numalgo3,
     traits::{Numalgo, ResolvableNumalgo, ToNumalgo3},
+};
+use crate::{
+    error::DidPeerError,
+    numalgos::{numalgo2::resolve_numalgo2, numalgo3::generate_numalgo3},
+    peer_did::PeerDid,
+    peer_did_resolver::options::PublicKeyEncoding,
 };
 
 #[derive(Clone, Copy, Default, Debug, PartialEq)]

@@ -1,6 +1,5 @@
-use napi_derive::napi;
-
 use libvcx_core::api_vcx::api_handle::proof;
+use napi_derive::napi;
 
 use crate::error::to_napi_err;
 
@@ -51,7 +50,10 @@ async fn proof_send_request(handle_proof: u32, handle_connection: u32) -> napi::
 }
 
 #[napi]
-async fn proof_send_request_nonmediated(handle_proof: u32, handle_connection: u32) -> napi::Result<()> {
+async fn proof_send_request_nonmediated(
+    handle_proof: u32,
+    handle_connection: u32,
+) -> napi::Result<()> {
     proof::send_proof_request_nonmediated(handle_proof, handle_connection)
         .await
         .map_err(to_napi_err)

@@ -49,6 +49,7 @@ pub struct DiscloseDecorators {
 #[allow(clippy::field_reassign_with_default)]
 mod tests {
     use serde_json::json;
+    use shared_vcx::maybe_known::MaybeKnown;
 
     use super::*;
     use crate::{
@@ -56,20 +57,26 @@ mod tests {
         misc::test_utils,
         msg_types::discover_features::DiscoverFeaturesTypeV1_0,
     };
-    use shared_vcx::maybe_known::MaybeKnown;
 
     #[test]
     fn test_minimal_disclose() {
         let content = DiscloseContent::default();
 
-        let decorators = DiscloseDecorators::builder().thread(make_extended_thread()).build();
+        let decorators = DiscloseDecorators::builder()
+            .thread(make_extended_thread())
+            .build();
 
         let expected = json!({
             "protocols": content.protocols,
             "~thread": decorators.thread
         });
 
-        test_utils::test_msg(content, decorators, DiscoverFeaturesTypeV1_0::Disclose, expected);
+        test_utils::test_msg(
+            content,
+            decorators,
+            DiscoverFeaturesTypeV1_0::Disclose,
+            expected,
+        );
     }
 
     #[test]
@@ -95,6 +102,11 @@ mod tests {
             "~timing": decorators.timing
         });
 
-        test_utils::test_msg(content, decorators, DiscoverFeaturesTypeV1_0::Disclose, expected);
+        test_utils::test_msg(
+            content,
+            decorators,
+            DiscoverFeaturesTypeV1_0::Disclose,
+            expected,
+        );
     }
 }

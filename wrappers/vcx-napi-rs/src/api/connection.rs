@@ -1,15 +1,20 @@
 use chrono::Utc;
-use libvcx_core::aries_vcx::messages::decorators::timing::Timing;
-use libvcx_core::aries_vcx::messages::msg_fields::protocols::basic_message::{
-    BasicMessage, BasicMessageContent, BasicMessageDecorators,
+use libvcx_core::{
+    api_vcx::api_handle::connection,
+    aries_vcx::{
+        messages::{
+            decorators::timing::Timing,
+            msg_fields::protocols::basic_message::{
+                BasicMessage, BasicMessageContent, BasicMessageDecorators,
+            },
+            AriesMessage,
+        },
+        protocols::connection::pairwise_info::PairwiseInfo,
+    },
+    errors::error::{LibvcxError, LibvcxErrorKind},
+    serde_json,
 };
-use libvcx_core::aries_vcx::messages::AriesMessage;
 use napi_derive::napi;
-
-use libvcx_core::api_vcx::api_handle::connection;
-use libvcx_core::aries_vcx::protocols::connection::pairwise_info::PairwiseInfo;
-use libvcx_core::errors::error::{LibvcxError, LibvcxErrorKind};
-use libvcx_core::serde_json;
 use uuid::Uuid;
 
 use crate::error::to_napi_err;
@@ -31,13 +36,17 @@ pub async fn connection_create_inviter(pw_info: Option<String>) -> napi::Result<
     } else {
         None
     };
-    connection::create_inviter(pw_info).await.map_err(to_napi_err)
+    connection::create_inviter(pw_info)
+        .await
+        .map_err(to_napi_err)
 }
 
 #[napi]
 pub async fn connection_create_invitee(invitation: String) -> napi::Result<u32> {
     trace!("connection_create_invitee >>> invitation: {:?}", invitation);
-    connection::create_invitee(&invitation).await.map_err(to_napi_err)
+    connection::create_invitee(&invitation)
+        .await
+        .map_err(to_napi_err)
 }
 
 #[napi]
@@ -108,7 +117,9 @@ pub async fn connection_process_response(handle: u32, response: String) -> napi:
 #[napi]
 pub async fn connection_process_ack(handle: u32, message: String) -> napi::Result<()> {
     trace!("connection_process_ack >>> handle: {:?}", handle);
-    connection::process_ack(handle, &message).await.map_err(to_napi_err)
+    connection::process_ack(handle, &message)
+        .await
+        .map_err(to_napi_err)
 }
 
 #[napi]

@@ -1,34 +1,44 @@
-use std::collections::HashMap;
-use std::fmt;
-use std::sync::Arc;
+use std::{collections::HashMap, fmt, sync::Arc};
 
-use crate::errors::error::prelude::*;
-use crate::handlers::proof_presentation::types::SelectedCredentials;
-use crate::handlers::util::{make_attach_from_str, AttachmentId, PresentationProposalData, Status};
-use crate::protocols::common::build_problem_report_msg;
-use crate::protocols::proof_presentation::prover::states::finished::FinishedState;
-use crate::protocols::proof_presentation::prover::states::initial::InitialProverState;
-use crate::protocols::proof_presentation::prover::states::presentation_preparation_failed::PresentationPreparationFailedState;
-use crate::protocols::proof_presentation::prover::states::presentation_prepared::PresentationPreparedState;
-use crate::protocols::proof_presentation::prover::states::presentation_proposal_sent::PresentationProposalSent;
-use crate::protocols::proof_presentation::prover::states::presentation_request_received::PresentationRequestReceived;
-use crate::protocols::proof_presentation::prover::states::presentation_sent::PresentationSentState;
-
-use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
-use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
+use aries_vcx_core::{
+    anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
+};
 use chrono::Utc;
-use messages::decorators::thread::Thread;
-use messages::decorators::timing::Timing;
-use messages::msg_fields::protocols::present_proof::ack::AckPresentation;
-use messages::msg_fields::protocols::present_proof::present::{
-    Presentation, PresentationContent, PresentationDecorators,
+use messages::{
+    decorators::{thread::Thread, timing::Timing},
+    msg_fields::protocols::{
+        present_proof::{
+            ack::AckPresentation,
+            present::{Presentation, PresentationContent, PresentationDecorators},
+            propose::{
+                PresentationPreview, ProposePresentation, ProposePresentationContent,
+                ProposePresentationDecorators,
+            },
+            request::RequestPresentation,
+        },
+        report_problem::ProblemReport,
+    },
 };
-use messages::msg_fields::protocols::present_proof::propose::{
-    PresentationPreview, ProposePresentation, ProposePresentationContent, ProposePresentationDecorators,
-};
-use messages::msg_fields::protocols::present_proof::request::RequestPresentation;
-use messages::msg_fields::protocols::report_problem::ProblemReport;
 use uuid::Uuid;
+
+use crate::{
+    errors::error::prelude::*,
+    handlers::{
+        proof_presentation::types::SelectedCredentials,
+        util::{make_attach_from_str, AttachmentId, PresentationProposalData, Status},
+    },
+    protocols::{
+        common::build_problem_report_msg,
+        proof_presentation::prover::states::{
+            finished::FinishedState, initial::InitialProverState,
+            presentation_preparation_failed::PresentationPreparationFailedState,
+            presentation_prepared::PresentationPreparedState,
+            presentation_proposal_sent::PresentationProposalSent,
+            presentation_request_received::PresentationRequestReceived,
+            presentation_sent::PresentationSentState,
+        },
+    },
+};
 
 /// A state machine that tracks the evolution of states for a Prover during
 /// the Present Proof protocol.
@@ -67,16 +77,23 @@ impl fmt::Display for ProverFullState {
         match *self {
             ProverFullState::Initial(_) => f.write_str("Initial"),
             ProverFullState::PresentationProposalSent(_) => f.write_str("PresentationProposalSent"),
-            ProverFullState::PresentationRequestReceived(_) => f.write_str("PresentationRequestReceived"),
+            ProverFullState::PresentationRequestReceived(_) => {
+                f.write_str("PresentationRequestReceived")
+            }
             ProverFullState::PresentationPrepared(_) => f.write_str("PresentationPrepared"),
-            ProverFullState::PresentationPreparationFailed(_) => f.write_str("PresentationPreparationFailed"),
+            ProverFullState::PresentationPreparationFailed(_) => {
+                f.write_str("PresentationPreparationFailed")
+            }
             ProverFullState::PresentationSent(_) => f.write_str("PresentationSent"),
             ProverFullState::Finished(_) => f.write_str("Finished"),
         }
     }
 }
 
-fn build_presentation_msg(thread_id: &str, presentation_attachment: String) -> VcxResult<Presentation> {
+fn build_presentation_msg(
+    thread_id: &str,
+    presentation_attachment: String,
+) -> VcxResult<Presentation> {
     let id = Uuid::new_v4().to_string();
 
     let content = PresentationContent::builder()
@@ -117,15 +134,21 @@ impl ProverSM {
         ProverSM {
             source_id,
             thread_id: presentation_request.id.clone(),
-            state: ProverFullState::PresentationRequestReceived(PresentationRequestReceived { presentation_request }),
+            state: ProverFullState::PresentationRequestReceived(PresentationRequestReceived {
+                presentation_request,
+            }),
         }
     }
 
-    pub async fn build_presentation_proposal(self, proposal_data: PresentationProposalData) -> VcxResult<Self> {
+    pub async fn build_presentation_proposal(
+        self,
+        proposal_data: PresentationProposalData,
+    ) -> VcxResult<Self> {
         let state = match self.state {
             ProverFullState::Initial(_) => {
                 let id = self.thread_id.clone();
-                let preview = PresentationPreview::new(proposal_data.attributes, proposal_data.predicates);
+                let preview =
+                    PresentationPreview::new(proposal_data.attributes, proposal_data.predicates);
                 let content = ProposePresentationContent::builder().presentation_proposal(preview);
 
                 let content = if let Some(comment) = proposal_data.comment {
@@ -134,12 +157,16 @@ impl ProverSM {
                     content.build()
                 };
 
-                let proposal = ProposePresentation::builder().id(id).content(content).build();
+                let proposal = ProposePresentation::builder()
+                    .id(id)
+                    .content(content)
+                    .build();
                 ProverFullState::PresentationProposalSent(PresentationProposalSent::new(proposal))
             }
             ProverFullState::PresentationRequestReceived(_) => {
                 let id = Uuid::new_v4().to_string();
-                let preview = PresentationPreview::new(proposal_data.attributes, proposal_data.predicates);
+                let preview =
+                    PresentationPreview::new(proposal_data.attributes, proposal_data.predicates);
 
                 let content = ProposePresentationContent::builder().presentation_proposal(preview);
                 let content = if let Some(comment) = proposal_data.comment {
@@ -167,7 +194,10 @@ impl ProverSM {
         Ok(Self { state, ..self })
     }
 
-    pub async fn decline_presentation_request(self, problem_report: ProblemReport) -> VcxResult<Self> {
+    pub async fn decline_presentation_request(
+        self,
+        problem_report: ProblemReport,
+    ) -> VcxResult<Self> {
         let state = match self.state {
             ProverFullState::PresentationRequestReceived(state) => {
                 ProverFullState::Finished((state, problem_report).into())
@@ -185,7 +215,9 @@ impl ProverSM {
 
     pub async fn negotiate_presentation(self) -> VcxResult<Self> {
         let state = match self.state {
-            ProverFullState::PresentationRequestReceived(state) => ProverFullState::Finished(state.into()),
+            ProverFullState::PresentationRequestReceived(state) => {
+                ProverFullState::Finished(state.into())
+            }
             ProverFullState::PresentationPrepared(state) => ProverFullState::Finished(state.into()),
             s => {
                 warn!("Unable to send handle presentation proposal in state {}", s);
@@ -213,12 +245,15 @@ impl ProverSM {
                         ProverFullState::PresentationPrepared((state, presentation).into())
                     }
                     Err(err) => {
-                        let problem_report = build_problem_report_msg(Some(err.to_string()), &self.thread_id);
+                        let problem_report =
+                            build_problem_report_msg(Some(err.to_string()), &self.thread_id);
                         error!(
                             "Failed bo build presentation, sending problem report: {:?}",
                             problem_report
                         );
-                        ProverFullState::PresentationPreparationFailed((state, problem_report).into())
+                        ProverFullState::PresentationPreparationFailed(
+                            (state, problem_report).into(),
+                        )
                     }
                 }
             }
@@ -232,8 +267,12 @@ impl ProverSM {
 
     pub fn mark_presentation_sent(self) -> VcxResult<Self> {
         let state = match self.state {
-            ProverFullState::PresentationPrepared(state) => ProverFullState::PresentationSent((state).into()),
-            ProverFullState::PresentationPreparationFailed(state) => ProverFullState::Finished((state).into()),
+            ProverFullState::PresentationPrepared(state) => {
+                ProverFullState::PresentationSent((state).into())
+            }
+            ProverFullState::PresentationPreparationFailed(state) => {
+                ProverFullState::Finished((state).into())
+            }
             s => {
                 warn!("Unable to send send presentation in state {}", s);
                 s
@@ -245,7 +284,9 @@ impl ProverSM {
     pub fn get_problem_report(&self) -> VcxResult<ProblemReport> {
         match &self.state {
             ProverFullState::Finished(state) => match &state.status {
-                Status::Failed(problem_report) | Status::Declined(problem_report) => Ok(problem_report.clone()),
+                Status::Failed(problem_report) | Status::Declined(problem_report) => {
+                    Ok(problem_report.clone())
+                }
                 _ => Err(AriesVcxError::from_msg(
                     AriesVcxErrorKind::NotReady,
                     "Cannot get problem report",
@@ -261,7 +302,9 @@ impl ProverSM {
     pub fn receive_presentation_request(self, request: RequestPresentation) -> VcxResult<ProverSM> {
         let prover_sm = match &self.state {
             ProverFullState::PresentationProposalSent(_) => {
-                let state = ProverFullState::PresentationRequestReceived(PresentationRequestReceived::new(request));
+                let state = ProverFullState::PresentationRequestReceived(
+                    PresentationRequestReceived::new(request),
+                );
                 ProverSM { state, ..self }
             }
             _ => {
@@ -292,7 +335,9 @@ impl ProverSM {
 
     pub fn receive_presentation_ack(self, ack: AckPresentation) -> VcxResult<Self> {
         let state = match self.state {
-            ProverFullState::PresentationSent(state) => ProverFullState::Finished((state, ack).into()),
+            ProverFullState::PresentationSent(state) => {
+                ProverFullState::Finished((state, ack).into())
+            }
             s => {
                 warn!("Unable to process presentation ack in state {}", s);
                 s
@@ -313,9 +358,13 @@ impl ProverSM {
         match self.state {
             ProverFullState::Initial(_) => ProverState::Initial,
             ProverFullState::PresentationProposalSent(_) => ProverState::PresentationProposalSent,
-            ProverFullState::PresentationRequestReceived(_) => ProverState::PresentationRequestReceived,
+            ProverFullState::PresentationRequestReceived(_) => {
+                ProverState::PresentationRequestReceived
+            }
             ProverFullState::PresentationPrepared(_) => ProverState::PresentationPrepared,
-            ProverFullState::PresentationPreparationFailed(_) => ProverState::PresentationPreparationFailed,
+            ProverFullState::PresentationPreparationFailed(_) => {
+                ProverState::PresentationPreparationFailed
+            }
             ProverFullState::PresentationSent(_) => ProverState::PresentationSent,
             ProverFullState::Finished(ref status) => match status.status {
                 Status::Success => ProverState::Finished,
@@ -325,7 +374,10 @@ impl ProverSM {
     }
 
     pub fn progressable_by_message(&self) -> bool {
-        trace!("Prover::states::progressable_by_message >> state: {:?}", self.state);
+        trace!(
+            "Prover::states::progressable_by_message >> state: {:?}",
+            self.state
+        );
         match self.state {
             ProverFullState::Initial(_) => false,
             ProverFullState::PresentationProposalSent(_) => true,
@@ -354,13 +406,23 @@ impl ProverSM {
                 AriesVcxErrorKind::NotReady,
                 "Presentation request is not available",
             )),
-            ProverFullState::PresentationRequestReceived(ref state) => Ok(&state.presentation_request),
+            ProverFullState::PresentationRequestReceived(ref state) => {
+                Ok(&state.presentation_request)
+            }
             ProverFullState::PresentationPrepared(ref state) => Ok(&state.presentation_request),
-            ProverFullState::PresentationPreparationFailed(ref state) => Ok(&state.presentation_request),
+            ProverFullState::PresentationPreparationFailed(ref state) => {
+                Ok(&state.presentation_request)
+            }
             ProverFullState::PresentationSent(ref state) => Ok(&state.presentation_request),
-            ProverFullState::Finished(ref state) => Ok(state.presentation_request.as_ref().ok_or(
-                AriesVcxError::from_msg(AriesVcxErrorKind::NotReady, "Presentation request is not available"),
-            )?),
+            ProverFullState::Finished(ref state) => {
+                Ok(state
+                    .presentation_request
+                    .as_ref()
+                    .ok_or(AriesVcxError::from_msg(
+                        AriesVcxErrorKind::NotReady,
+                        "Presentation request is not available",
+                    ))?)
+            }
         }
     }
 
@@ -384,10 +446,12 @@ impl ProverSM {
                 "Presentation is not created yet",
             )),
             ProverFullState::PresentationSent(ref state) => Ok(&state.presentation),
-            ProverFullState::Finished(ref state) => Ok(state.presentation.as_ref().ok_or(AriesVcxError::from_msg(
-                AriesVcxErrorKind::NotReady,
-                "Presentation is not available in Finished state",
-            ))?),
+            ProverFullState::Finished(ref state) => {
+                Ok(state.presentation.as_ref().ok_or(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::NotReady,
+                    "Presentation is not available in Finished state",
+                ))?)
+            }
         }
     }
 

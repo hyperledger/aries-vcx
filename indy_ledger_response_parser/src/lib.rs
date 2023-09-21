@@ -45,14 +45,13 @@ pub struct RevocationRegistryDeltaInfo {
     pub timestamp: u64,
 }
 
-pub struct ResponseParser {}
+pub struct ResponseParser;
 
 impl ResponseParser {
-    pub fn new() -> Self {
-        Self {}
-    }
-
-    pub fn parse_get_nym_response(&self, get_nym_response: &str) -> Result<NymData, LedgerResponseParserError> {
+    pub fn parse_get_nym_response(
+        &self,
+        get_nym_response: &str,
+    ) -> Result<NymData, LedgerResponseParserError> {
         let reply: Reply<GetNymReplyResult> = Self::parse_response(get_nym_response)?;
 
         let nym_data = match reply.result() {
@@ -129,7 +128,7 @@ impl ResponseParser {
                 id: CredentialDefinitionId::new(
                     &DidValue::new(&res.origin.0, method_name),
                     &SchemaId(res.ref_.to_string()),
-                    &res.signature_type.to_str(),
+                    res.signature_type.to_str(),
                     &res.tag.clone().unwrap_or_default(),
                 ),
             },
@@ -149,16 +148,15 @@ impl ResponseParser {
         &self,
         get_revoc_reg_def_response: &str,
     ) -> Result<RevocationRegistryDefinition, LedgerResponseParserError> {
-        let reply: Reply<GetRevocRegDefReplyResult> = Self::parse_response(get_revoc_reg_def_response)?;
+        let reply: Reply<GetRevocRegDefReplyResult> =
+            Self::parse_response(get_revoc_reg_def_response)?;
 
         let revoc_reg_def = match reply.result() {
             GetRevocRegDefReplyResult::GetRevocRegDefReplyResultV0(res) => res.data,
             GetRevocRegDefReplyResult::GetRevocRegDefReplyResultV1(res) => res.txn.data,
         };
 
-        Ok(RevocationRegistryDefinition::RevocationRegistryDefinitionV1(
-            revoc_reg_def,
-        ))
+        Ok(RevocationRegistryDefinition::RevocationRegistryDefinitionV1(revoc_reg_def))
     }
 
     pub fn parse_get_revoc_reg_response(
@@ -168,7 +166,9 @@ impl ResponseParser {
         let reply: Reply<GetRevocRegReplyResult> = Self::parse_response(get_revoc_reg_response)?;
 
         let (revoc_reg_def_id, revoc_reg, timestamp) = match reply.result() {
-            GetRevocRegReplyResult::GetRevocRegReplyResultV0(res) => (res.revoc_reg_def_id, res.data, res.txn_time),
+            GetRevocRegReplyResult::GetRevocRegReplyResultV0(res) => {
+                (res.revoc_reg_def_id, res.data, res.txn_time)
+            }
             GetRevocRegReplyResult::GetRevocRegReplyResultV1(res) => (
                 res.txn.data.revoc_reg_def_id,
                 res.txn.data.value,
@@ -208,10 +208,13 @@ impl ResponseParser {
         &self,
         get_revoc_reg_delta_response: &str,
     ) -> Result<RevocationRegistryDeltaInfo, LedgerResponseParserError> {
-        let reply: Reply<GetRevocRegDeltaReplyResult> = Self::parse_response(get_revoc_reg_delta_response)?;
+        let reply: Reply<GetRevocRegDeltaReplyResult> =
+            Self::parse_response(get_revoc_reg_delta_response)?;
 
         let (revoc_reg_def_id, revoc_reg) = match reply.result() {
-            GetRevocRegDeltaReplyResult::GetRevocRegDeltaReplyResultV0(res) => (res.revoc_reg_def_id, res.data),
+            GetRevocRegDeltaReplyResult::GetRevocRegDeltaReplyResultV0(res) => {
+                (res.revoc_reg_def_id, res.data)
+            }
             GetRevocRegDeltaReplyResult::GetRevocRegDeltaReplyResultV1(res) => {
                 (res.txn.data.revoc_reg_def_id, res.txn.data.value)
             }
@@ -245,9 +248,9 @@ impl ResponseParser {
         })?;
 
         match message {
-            Message::Reject(response) | Message::ReqNACK(response) => {
-                Err(LedgerResponseParserError::InvalidTransaction(response.reason))
-            }
+            Message::Reject(response) | Message::ReqNACK(response) => Err(
+                LedgerResponseParserError::InvalidTransaction(response.reason),
+            ),
             Message::Reply(reply) => Ok(reply),
         }
     }

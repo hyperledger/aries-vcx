@@ -1,11 +1,18 @@
-use aries_vcx::common::primitives::revocation_registry::RevocationRegistry;
-use aries_vcx::common::primitives::revocation_registry::RevocationRegistryDefinition;
-use aries_vcx::global::settings::CONFIG_INSTITUTION_DID;
+use aries_vcx::{
+    common::primitives::revocation_registry::{RevocationRegistry, RevocationRegistryDefinition},
+    global::settings::CONFIG_INSTITUTION_DID,
+};
 
-use crate::api_vcx::api_global::profile::{get_main_anoncreds, get_main_anoncreds_ledger_write, get_main_profile};
-use crate::api_vcx::api_global::settings::get_config_value;
-use crate::api_vcx::api_handle::object_cache::ObjectCache;
-use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
+use crate::{
+    api_vcx::{
+        api_global::{
+            profile::{get_main_anoncreds, get_main_anoncreds_ledger_write, get_main_profile},
+            settings::get_config_value,
+        },
+        api_handle::object_cache::ObjectCache,
+    },
+    errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult},
+};
 lazy_static! {
     pub static ref REV_REG_MAP: ObjectCache<RevocationRegistry> =
         ObjectCache::<RevocationRegistry>::new("revocation-registry-cache");
@@ -69,7 +76,9 @@ pub fn get_rev_reg_id(handle: u32) -> LibvcxResult<String> {
 }
 
 pub fn to_string(handle: u32) -> LibvcxResult<String> {
-    REV_REG_MAP.get(handle, |rev_reg| rev_reg.to_string().map_err(|err| err.into()))
+    REV_REG_MAP.get(handle, |rev_reg| {
+        rev_reg.to_string().map_err(|err| err.into())
+    })
 }
 
 pub fn from_string(rev_reg_data: &str) -> LibvcxResult<u32> {
@@ -84,7 +93,9 @@ pub fn release(handle: u32) -> LibvcxResult<()> {
 }
 
 pub fn get_tails_hash(handle: u32) -> LibvcxResult<String> {
-    REV_REG_MAP.get(handle, |rev_reg| Ok(rev_reg.get_rev_reg_def().value.tails_hash))
+    REV_REG_MAP.get(handle, |rev_reg| {
+        Ok(rev_reg.get_rev_reg_def().value.tails_hash)
+    })
 }
 
 pub fn get_rev_reg_def(handle: u32) -> LibvcxResult<RevocationRegistryDefinition> {

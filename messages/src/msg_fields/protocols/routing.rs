@@ -4,7 +4,10 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use typed_builder::TypedBuilder;
 
-use crate::{misc::utils::into_msg_with_type, msg_parts::MsgParts, msg_types::protocols::routing::RoutingTypeV1_0};
+use crate::{
+    misc::utils::into_msg_with_type, msg_parts::MsgParts,
+    msg_types::protocols::routing::RoutingTypeV1_0,
+};
 
 pub type Forward = MsgParts<ForwardContent>;
 
@@ -20,12 +23,11 @@ into_msg_with_type!(Forward, RoutingTypeV1_0, Forward);
 #[allow(clippy::unwrap_used)]
 mod tests {
     use serde_json::json;
+    // Bind `shared_vcx::misc::serde_ignored::SerdeIgnored` type as `NoDecorators`.
+    use shared_vcx::misc::serde_ignored::SerdeIgnored as NoDecorators;
 
     use super::*;
     use crate::misc::test_utils;
-
-    // Bind `shared_vcx::misc::serde_ignored::SerdeIgnored` type as `NoDecorators`.
-    use shared_vcx::misc::serde_ignored::SerdeIgnored as NoDecorators;
 
     #[test]
     fn test_minimal_forward() {

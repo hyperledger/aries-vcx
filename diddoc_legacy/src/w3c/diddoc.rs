@@ -1,5 +1,7 @@
-use crate::w3c::model::{Authentication, Ed25519PublicKey};
-use crate::w3c::service::DidDocService;
+use crate::w3c::{
+    model::{Authentication, Ed25519PublicKey},
+    service::DidDocService,
+};
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct W3cDidDoc {

@@ -129,12 +129,9 @@ where
     type Error = LedgerResponseParserError;
 
     fn try_from(value: ReplyV1<TypedReply<'a, T>>) -> Result<Self, Self::Error> {
-        let value = value
-            .data
-            .result
-            .into_iter()
-            .next()
-            .ok_or_else(|| LedgerResponseParserError::InvalidTransaction("Result field is empty".to_string()))?;
+        let value = value.data.result.into_iter().next().ok_or_else(|| {
+            LedgerResponseParserError::InvalidTransaction("Result field is empty".to_string())
+        })?;
         let data = ReplyDataV1 {
             result: [value.try_into()?],
         };

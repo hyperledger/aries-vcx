@@ -1,16 +1,18 @@
 use serde::{de, Deserialize, Deserializer};
 use serde_json::Value;
 
-use crate::messages::connect::{Connect, ConnectResponse};
-use crate::messages::create_agent::{CreateAgent, CreateAgentResponse};
-use crate::messages::create_key::{CreateKey, CreateKeyResponse};
-use crate::messages::forward::ForwardV2;
-use crate::messages::get_messages::{GetMessages, GetMessagesResponse};
-use crate::messages::message_type::{MessageFamilies, MessageType};
-use crate::messages::sign_up::{SignUp, SignUpResponse};
-use crate::messages::update_com_method::{ComMethodUpdated, UpdateComMethod};
-use crate::messages::update_connection::{UpdateConnection, UpdateConnectionResponse};
-use crate::messages::update_message::{UpdateMessageStatusByConnections, UpdateMessageStatusByConnectionsResponse};
+use crate::messages::{
+    connect::{Connect, ConnectResponse},
+    create_agent::{CreateAgent, CreateAgentResponse},
+    create_key::{CreateKey, CreateKeyResponse},
+    forward::ForwardV2,
+    get_messages::{GetMessages, GetMessagesResponse},
+    message_type::{MessageFamilies, MessageType},
+    sign_up::{SignUp, SignUpResponse},
+    update_com_method::{ComMethodUpdated, UpdateComMethod},
+    update_connection::{UpdateConnection, UpdateConnectionResponse},
+    update_message::{UpdateMessageStatusByConnections, UpdateMessageStatusByConnectionsResponse},
+};
 
 #[derive(Debug, Serialize, PartialEq)]
 #[serde(untagged)]
@@ -49,14 +51,18 @@ impl<'de> Deserialize<'de> for Client2AgencyMessage {
         D: Deserializer<'de>,
     {
         let value = Value::deserialize(deserializer).map_err(de::Error::custom)?;
-        let message_type: MessageType = serde_json::from_value(value["@type"].clone()).map_err(de::Error::custom)?;
+        let message_type: MessageType =
+            serde_json::from_value(value["@type"].clone()).map_err(de::Error::custom)?;
 
         if log::log_enabled!(log::Level::Trace) {
             let message_json = serde_json::ser::to_string(&value);
             let message_type_json = serde_json::ser::to_string(&value["@type"].clone());
 
             trace!("Deserializing A2AMessageV2 json: {:?}", &message_json);
-            trace!("Found A2AMessageV2 message type json {:?}", &message_type_json);
+            trace!(
+                "Found A2AMessageV2 message type json {:?}",
+                &message_type_json
+            );
             trace!("Found A2AMessageV2 message type {:?}", &message_type);
         };
 
@@ -103,9 +109,11 @@ impl<'de> Deserialize<'de> for Client2AgencyMessage {
             "UPDATE_MSG_STATUS_BY_CONNS" => UpdateMessageStatusByConnections::deserialize(value)
                 .map(Client2AgencyMessage::UpdateMessageStatusByConnections)
                 .map_err(de::Error::custom),
-            "MSG_STATUS_UPDATED_BY_CONNS" => UpdateMessageStatusByConnectionsResponse::deserialize(value)
-                .map(Client2AgencyMessage::UpdateMessageStatusByConnectionsResponse)
-                .map_err(de::Error::custom),
+            "MSG_STATUS_UPDATED_BY_CONNS" => {
+                UpdateMessageStatusByConnectionsResponse::deserialize(value)
+                    .map(Client2AgencyMessage::UpdateMessageStatusByConnectionsResponse)
+                    .map_err(de::Error::custom)
+            }
             "UPDATE_COM_METHOD" => UpdateComMethod::deserialize(value)
                 .map(Client2AgencyMessage::UpdateComMethod)
                 .map_err(de::Error::custom),
@@ -174,8 +182,12 @@ impl A2AMessageKinds {
             A2AMessageKinds::CreateKey => "CREATE_KEY".to_string(),
             A2AMessageKinds::KeyCreated => "KEY_CREATED".to_string(),
             A2AMessageKinds::GetMessages => "GET_MSGS".to_string(),
-            A2AMessageKinds::UpdateMessageStatusByConnections => "UPDATE_MSG_STATUS_BY_CONNS".to_string(),
-            A2AMessageKinds::MessageStatusUpdatedByConnections => "MSG_STATUS_UPDATED_BY_CONNS".to_string(),
+            A2AMessageKinds::UpdateMessageStatusByConnections => {
+                "UPDATE_MSG_STATUS_BY_CONNS".to_string()
+            }
+            A2AMessageKinds::MessageStatusUpdatedByConnections => {
+                "MSG_STATUS_UPDATED_BY_CONNS".to_string()
+            }
             A2AMessageKinds::Messages => "MSGS".to_string(),
             A2AMessageKinds::UpdateConnectionStatus => "UPDATE_CONN_STATUS".to_string(),
             A2AMessageKinds::UpdateComMethod => "UPDATE_COM_METHOD".to_string(),
@@ -187,10 +199,15 @@ impl A2AMessageKinds {
 #[cfg(feature = "general_test")]
 #[cfg(test)]
 mod test {
-    use crate::messages::a2a_message::{A2AMessageKinds, Client2AgencyMessage};
-    use crate::messages::get_messages::GetMessages;
-    use crate::testing::test_utils::SetupMocks;
     use serde_json::json;
+
+    use crate::{
+        messages::{
+            a2a_message::{A2AMessageKinds, Client2AgencyMessage},
+            get_messages::GetMessages,
+        },
+        testing::test_utils::SetupMocks,
+    };
 
     #[test]
     fn test_serialize_deserialize_agency_message() {

@@ -84,7 +84,8 @@ macro_rules! try_from_vague_to_concrete {
     };
 }
 
-// ---------------------------- From Concrete State to Vague State implementations ----------------------------
+// ---------------------------- From Concrete State to Vague State implementations
+// ----------------------------
 impl<I, S> From<Connection<I, S>> for GenericConnection
 where
     GenericState: From<(I, S)>,
@@ -112,7 +113,8 @@ from_concrete_to_vague!(InviteeInvited, Invited, InviteeState);
 from_concrete_to_vague!(InviteeRequested, Requested, InviteeState);
 from_concrete_to_vague!(InviteeCompleted, Completed, InviteeState);
 
-// ---------------------------- Try From Vague State to Concrete State implementations ----------------------------
+// ---------------------------- Try From Vague State to Concrete State implementations
+// ----------------------------
 impl<I, S> TryFrom<GenericConnection> for Connection<I, S>
 where
     (I, S): TryFrom<GenericState, Error = AriesVcxError>,
@@ -121,7 +123,8 @@ where
 
     fn try_from(value: GenericConnection) -> Result<Self, Self::Error> {
         let (initiation_type, state) = TryFrom::try_from(value.state)?;
-        let con = Connection::from_parts(value.source_id, value.pairwise_info, initiation_type, state);
+        let con =
+            Connection::from_parts(value.source_id, value.pairwise_info, initiation_type, state);
         Ok(con)
     }
 }

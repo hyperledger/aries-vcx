@@ -31,9 +31,7 @@ pub const TAA_RESPONSE: &str = r#"{
 
 #[test]
 fn test_parse_get_txn_author_agreement_response() {
-    let response_parser = ResponseParser::new();
-
-    let parsed_response = response_parser
+    let parsed_response = ResponseParser
         .parse_get_txn_author_agreement_response(TAA_RESPONSE)
         .unwrap();
 

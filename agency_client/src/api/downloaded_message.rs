@@ -1,9 +1,11 @@
 use std::sync::Arc;
 
-use crate::errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
-use crate::utils::encryption_envelope::EncryptionEnvelope;
-use crate::wallet::base_agency_client_wallet::BaseAgencyClientWallet;
-use crate::MessageStatusCode;
+use crate::{
+    errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult},
+    utils::encryption_envelope::EncryptionEnvelope,
+    wallet::base_agency_client_wallet::BaseAgencyClientWallet,
+    MessageStatusCode,
+};
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 #[serde(untagged)]
@@ -36,8 +38,9 @@ pub struct DownloadedMessage {
 impl DownloadedMessageEncrypted {
     pub fn payload(&self) -> AgencyClientResult<Vec<u8>> {
         match &self.payload {
-            MessagePayload::V2(payload) => serde_json::to_vec(payload)
-                .map_err(|err| AgencyClientError::from_msg(AgencyClientErrorKind::InvalidHttpResponse, err)),
+            MessagePayload::V2(payload) => serde_json::to_vec(payload).map_err(|err| {
+                AgencyClientError::from_msg(AgencyClientErrorKind::InvalidHttpResponse, err)
+            }),
         }
     }
 
@@ -58,7 +61,9 @@ impl DownloadedMessageEncrypted {
         wallet: Arc<dyn BaseAgencyClientWallet>,
         expected_sender_vk: &str,
     ) -> AgencyClientResult<DownloadedMessage> {
-        let decrypted_payload = self._auth_decrypt_v3_message(wallet, expected_sender_vk).await?;
+        let decrypted_payload = self
+            ._auth_decrypt_v3_message(wallet, expected_sender_vk)
+            .await?;
         Ok(DownloadedMessage {
             status_code: self.status_code.clone(),
             uid: self.uid.clone(),
@@ -66,7 +71,10 @@ impl DownloadedMessageEncrypted {
         })
     }
 
-    async fn _noauth_decrypt_v3_message(&self, wallet: Arc<dyn BaseAgencyClientWallet>) -> AgencyClientResult<String> {
+    async fn _noauth_decrypt_v3_message(
+        &self,
+        wallet: Arc<dyn BaseAgencyClientWallet>,
+    ) -> AgencyClientResult<String> {
         EncryptionEnvelope::anon_unpack(wallet, self.payload()?).await
     }
 

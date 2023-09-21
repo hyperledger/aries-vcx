@@ -200,5 +200,4 @@ pub const CREDENTIAL_SM_FINISHED: &str = r#"
     }
 }"#;
 
-pub const OFFERED_ATTRIBUTES: &str =
-    r#"{"sex":"female","date":"05-2018","last_name":"clark","degree":"maths","age":"25","name":"alice"}"#;
+pub const OFFERED_ATTRIBUTES: &str = r#"{"sex":"female","date":"05-2018","last_name":"clark","degree":"maths","age":"25","name":"alice"}"#;

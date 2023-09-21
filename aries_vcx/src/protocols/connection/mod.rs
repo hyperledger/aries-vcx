@@ -6,33 +6,34 @@ pub mod pairwise_info;
 mod serializable;
 mod trait_bounds;
 
+use std::{error::Error, sync::Arc};
+
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use chrono::Utc;
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use messages::{
     decorators::{thread::Thread, timing::Timing},
     msg_fields::protocols::{
-        connection::problem_report::{ProblemReport, ProblemReportContent, ProblemReportDecorators},
+        connection::problem_report::{
+            ProblemReport, ProblemReportContent, ProblemReportDecorators,
+        },
         discover_features::{disclose::Disclose, query::QueryContent, ProtocolDescriptor},
     },
     AriesMessage,
 };
-use std::{error::Error, sync::Arc};
 use uuid::Uuid;
 
-use crate::{
-    errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
-    transport::Transport,
-    utils::encryption_envelope::EncryptionEnvelope,
-};
-
+pub use self::generic::{GenericConnection, State, ThinState};
 use self::{
     generic::GenericState,
     pairwise_info::PairwiseInfo,
     trait_bounds::{CompletedState, HandleProblem, TheirDidDoc, ThreadId},
 };
-
-pub use self::generic::{GenericConnection, State, ThinState};
+use crate::{
+    errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
+    transport::Transport,
+    utils::encryption_envelope::EncryptionEnvelope,
+};
 
 /// A state machine for progressing through the [connection protocol](https://github.com/hyperledger/aries-rfcs/blob/main/features/0160-connection-protocol/README.md).
 #[derive(Clone, Deserialize)]
@@ -46,7 +47,12 @@ pub struct Connection<I, S> {
 }
 
 impl<I, S> Connection<I, S> {
-    pub fn from_parts(source_id: String, pairwise_info: PairwiseInfo, initiation_type: I, state: S) -> Self {
+    pub fn from_parts(
+        source_id: String,
+        pairwise_info: PairwiseInfo,
+        initiation_type: I,
+        state: S,
+    ) -> Self {
         Self {
             source_id,
             pairwise_info,
@@ -134,7 +140,9 @@ where
     where
         E: Error,
     {
-        let content = ProblemReportContent::builder().explain(err.to_string()).build();
+        let content = ProblemReportContent::builder()
+            .explain(err.to_string())
+            .build();
 
         let decorators = ProblemReportDecorators::builder()
             .thread(Thread::builder().thid(thread_id.to_owned()).build())
@@ -161,7 +169,14 @@ where
     {
         let sender_verkey = &self.pairwise_info().pw_vk;
         let problem_report = self.create_problem_report(err, thread_id);
-        let res = wrap_and_send_msg(wallet, &problem_report.into(), sender_verkey, did_doc, transport).await;
+        let res = wrap_and_send_msg(
+            wallet,
+            &problem_report.into(),
+            sender_verkey,
+            did_doc,
+            transport,
+        )
+        .await;
 
         if let Err(e) = res {
             trace!("Error encountered when sending ProblemReport: {}", e);
@@ -196,9 +211,9 @@ where
 {
     let env = EncryptionEnvelope::create(wallet, message, Some(sender_verkey), did_doc).await?;
     let msg = env.0;
-    let service_endpoint = did_doc
-        .get_endpoint()
-        .ok_or_else(|| AriesVcxError::from_msg(AriesVcxErrorKind::InvalidUrl, "No URL in DID Doc"))?; // This, like many other things, shouldn't clone...
+    let service_endpoint = did_doc.get_endpoint().ok_or_else(|| {
+        AriesVcxError::from_msg(AriesVcxErrorKind::InvalidUrl, "No URL in DID Doc")
+    })?; // This, like many other things, shouldn't clone...
 
     transport.send_message(msg, service_endpoint).await
 }

@@ -1,18 +1,26 @@
 use chrono::Utc;
-use messages::decorators::please_ack::AckOn;
-use messages::decorators::thread::Thread;
-use messages::decorators::timing::Timing;
-use messages::msg_fields::protocols::notification::ack::{AckContent, AckDecorators, AckStatus};
-use messages::msg_fields::protocols::revocation::ack::AckRevoke;
-use messages::msg_fields::protocols::revocation::revoke::{RevocationFormat, Revoke};
+use messages::{
+    decorators::{please_ack::AckOn, thread::Thread, timing::Timing},
+    msg_fields::protocols::{
+        notification::ack::{AckContent, AckDecorators, AckStatus},
+        revocation::{
+            ack::AckRevoke,
+            revoke::{RevocationFormat, Revoke},
+        },
+    },
+};
 use shared_vcx::maybe_known::MaybeKnown;
 use uuid::Uuid;
 
-use crate::errors::error::prelude::*;
-use crate::protocols::revocation_notification::receiver::states::finished::FinishedState;
-use crate::protocols::revocation_notification::receiver::states::initial::InitialState;
-use crate::protocols::revocation_notification::receiver::states::received::NotificationReceivedState;
-use crate::protocols::SendClosure;
+use crate::{
+    errors::error::prelude::*,
+    protocols::{
+        revocation_notification::receiver::states::{
+            finished::FinishedState, initial::InitialState, received::NotificationReceivedState,
+        },
+        SendClosure,
+    },
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct RevocationNotificationReceiverSM {
@@ -106,7 +114,9 @@ impl RevocationNotificationReceiverSM {
                     send_message(ack).await?;
                     ReceiverFullState::Finished(FinishedState::new(notification))
                 } else {
-                    ReceiverFullState::NotificationReceived(NotificationReceivedState::new(notification))
+                    ReceiverFullState::NotificationReceived(NotificationReceivedState::new(
+                        notification,
+                    ))
                 }
             }
             _ => {
@@ -131,7 +141,9 @@ impl RevocationNotificationReceiverSM {
                     .map(|d| d.on.contains(&AckOn::Outcome))
                     .unwrap_or(false)
                 {
-                    warn!("Revocation notification should have already been sent or not sent at all");
+                    warn!(
+                        "Revocation notification should have already been sent or not sent at all"
+                    );
                 }
 
                 let id = Uuid::new_v4().to_string();
@@ -170,10 +182,13 @@ impl RevocationNotificationReceiverSM {
 
     fn validate_revocation_notification(&self, notification: &Revoke) -> VcxResult<()> {
         let check_rev_format = || -> VcxResult<()> {
-            if notification.content.revocation_format != MaybeKnown::Known(RevocationFormat::IndyAnoncreds) {
+            if notification.content.revocation_format
+                != MaybeKnown::Known(RevocationFormat::IndyAnoncreds)
+            {
                 Err(AriesVcxError::from_msg(
                     AriesVcxErrorKind::InvalidRevocationDetails,
-                    "Received revocation notification with unsupported revocation format, only IndyAnoncreds supported",
+                    "Received revocation notification with unsupported revocation format, only \
+                     IndyAnoncreds supported",
                 ))
             } else {
                 Ok(())
@@ -185,7 +200,11 @@ impl RevocationNotificationReceiverSM {
         let check_rev_reg_id = |()| -> VcxResult<()> {
             if let Some(rev_reg_id) = parts.first() {
                 if *rev_reg_id != self.rev_reg_id {
-                    Err(AriesVcxError::from_msg(AriesVcxErrorKind::InvalidRevocationDetails, "Revocation registry ID in received notification does not match revocation registry ID of this credential"))
+                    Err(AriesVcxError::from_msg(
+                        AriesVcxErrorKind::InvalidRevocationDetails,
+                        "Revocation registry ID in received notification does not match \
+                         revocation registry ID of this credential",
+                    ))
                 } else {
                     Ok(())
                 }
@@ -199,7 +218,11 @@ impl RevocationNotificationReceiverSM {
         let check_cred_rev_id = |()| -> VcxResult<()> {
             if let Some(cred_rev_id) = parts.get(1) {
                 if *cred_rev_id != self.cred_rev_id {
-                    Err(AriesVcxError::from_msg(AriesVcxErrorKind::InvalidRevocationDetails, "Credential revocation ID in received notification does not match revocation ID of this credential"))
+                    Err(AriesVcxError::from_msg(
+                        AriesVcxErrorKind::InvalidRevocationDetails,
+                        "Credential revocation ID in received notification does not match \
+                         revocation ID of this credential",
+                    ))
                 } else {
                     Ok(())
                 }
@@ -220,9 +243,8 @@ impl RevocationNotificationReceiverSM {
 pub mod test_utils {
     use messages::AriesMessage;
 
-    use crate::protocols::revocation_notification::test_utils::{_cred_rev_id, _rev_reg_id};
-
     use super::*;
+    use crate::protocols::revocation_notification::test_utils::{_cred_rev_id, _rev_reg_id};
 
     pub fn _receiver() -> RevocationNotificationReceiverSM {
         RevocationNotificationReceiverSM::create(_rev_reg_id(), _cred_rev_id())
@@ -230,7 +252,12 @@ pub mod test_utils {
 
     pub fn _send_message_but_fail() -> SendClosure {
         Box::new(|_: AriesMessage| {
-            Box::pin(async { Err(AriesVcxError::from_msg(AriesVcxErrorKind::IOError, "Mocked error")) })
+            Box::pin(async {
+                Err(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::IOError,
+                    "Mocked error",
+                ))
+            })
         })
     }
 }
@@ -252,8 +279,8 @@ pub mod test_utils {
 
 //     async fn _to_revocation_notification_received_state() -> RevocationNotificationReceiverSM {
 //         let sm = _receiver()
-//             .handle_revocation_notification(_revocation_notification(vec![AckOn::Outcome]), _send_message())
-//             .await
+//             .handle_revocation_notification(_revocation_notification(vec![AckOn::Outcome]),
+// _send_message())             .await
 //             .unwrap();
 //         assert_match!(ReceiverFullState::NotificationReceived(_), sm.state);
 //         sm
@@ -261,8 +288,8 @@ pub mod test_utils {
 
 //     async fn _to_finished_state_via_ack() -> RevocationNotificationReceiverSM {
 //         let sm = _receiver()
-//             .handle_revocation_notification(_revocation_notification(vec![AckOn::Receipt]), _send_message())
-//             .await
+//             .handle_revocation_notification(_revocation_notification(vec![AckOn::Receipt]),
+// _send_message())             .await
 //             .unwrap();
 //         assert_match!(ReceiverFullState::Finished(_), sm.state);
 //         sm
@@ -297,8 +324,8 @@ pub mod test_utils {
 //             })
 //         });
 //         let sm = RevocationNotificationReceiverSM::create(_rev_reg_id(), _cred_rev_id())
-//             .handle_revocation_notification(_revocation_notification(vec![AckOn::Receipt]), send_message)
-//             .await
+//             .handle_revocation_notification(_revocation_notification(vec![AckOn::Receipt]),
+// send_message)             .await
 //             .unwrap();
 //         assert_match!(ReceiverFullState::Finished(_), sm.state);
 //         assert!(receiver.recv().unwrap());
@@ -307,8 +334,8 @@ pub mod test_utils {
 //     #[tokio::test]
 //     async fn test_handle_revocation_notification_doesnt_send_ack_when_not_requested() {
 //         let sm = RevocationNotificationReceiverSM::create(_rev_reg_id(), _cred_rev_id())
-//             .handle_revocation_notification(_revocation_notification(vec![]), _send_message_but_fail())
-//             .await
+//             .handle_revocation_notification(_revocation_notification(vec![]),
+// _send_message_but_fail())             .await
 //             .unwrap();
 //         assert_match!(ReceiverFullState::Finished(_), sm.state);
 //     }

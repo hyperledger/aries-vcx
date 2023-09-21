@@ -1,6 +1,5 @@
-use napi_derive::napi;
-
 use libvcx_core::aries_vcx::utils::test_logger::LibvcxDefaultLogger;
+use napi_derive::napi;
 
 use crate::error::ariesvcx_to_napi_err;
 

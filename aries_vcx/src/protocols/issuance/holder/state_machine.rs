@@ -1,32 +1,43 @@
-use std::fmt;
-use std::sync::Arc;
+use std::{fmt, sync::Arc};
 
-use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
-use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
-use chrono::Utc;
-use messages::decorators::thread::Thread;
-use messages::decorators::timing::Timing;
-use messages::msg_fields::protocols::cred_issuance::issue_credential::IssueCredential;
-use messages::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
-use messages::msg_fields::protocols::cred_issuance::propose_credential::ProposeCredential;
-use messages::msg_fields::protocols::cred_issuance::request_credential::{
-    RequestCredential, RequestCredentialContent, RequestCredentialDecorators,
+use aries_vcx_core::{
+    anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
 };
-use messages::msg_fields::protocols::cred_issuance::CredentialIssuance;
-use messages::msg_fields::protocols::report_problem::ProblemReport;
-use messages::AriesMessage;
+use chrono::Utc;
+use messages::{
+    decorators::{thread::Thread, timing::Timing},
+    msg_fields::protocols::{
+        cred_issuance::{
+            issue_credential::IssueCredential,
+            offer_credential::OfferCredential,
+            propose_credential::ProposeCredential,
+            request_credential::{
+                RequestCredential, RequestCredentialContent, RequestCredentialDecorators,
+            },
+            CredentialIssuance,
+        },
+        report_problem::ProblemReport,
+    },
+    AriesMessage,
+};
 use uuid::Uuid;
 
-use crate::common::credentials::{get_cred_rev_id, is_cred_revoked};
-use crate::errors::error::prelude::*;
-use crate::global::settings;
-use crate::handlers::util::{get_attach_as_string, make_attach_from_str, verify_thread_id, AttachmentId, Status};
-use crate::protocols::common::build_problem_report_msg;
-use crate::protocols::issuance::holder::states::finished::FinishedHolderState;
-use crate::protocols::issuance::holder::states::initial::InitialHolderState;
-use crate::protocols::issuance::holder::states::offer_received::OfferReceivedState;
-use crate::protocols::issuance::holder::states::proposal_set::ProposalSetState;
-use crate::protocols::issuance::holder::states::request_set::RequestSetState;
+use crate::{
+    common::credentials::{get_cred_rev_id, is_cred_revoked},
+    errors::error::prelude::*,
+    global::settings,
+    handlers::util::{
+        get_attach_as_string, make_attach_from_str, verify_thread_id, AttachmentId, Status,
+    },
+    protocols::{
+        common::build_problem_report_msg,
+        issuance::holder::states::{
+            finished::FinishedHolderState, initial::InitialHolderState,
+            offer_received::OfferReceivedState, proposal_set::ProposalSetState,
+            request_set::RequestSetState,
+        },
+    },
+};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum HolderFullState {
@@ -66,7 +77,10 @@ impl fmt::Display for HolderFullState {
     }
 }
 
-fn _build_credential_request_msg(credential_request_attach: String, thread_id: &str) -> RequestCredential {
+fn _build_credential_request_msg(
+    credential_request_attach: String,
+    thread_id: &str,
+) -> RequestCredential {
     let content = RequestCredentialContent::builder()
         .requests_attach(vec![make_attach_from_str!(
             &credential_request_attach,
@@ -143,7 +157,9 @@ impl HolderSM {
         trace!("HolderSM::set_proposal >>");
         verify_thread_id(
             &self.thread_id,
-            &AriesMessage::CredentialIssuance(CredentialIssuance::ProposeCredential(proposal.clone())),
+            &AriesMessage::CredentialIssuance(CredentialIssuance::ProposeCredential(
+                proposal.clone(),
+            )),
         )?;
         let state = match self.state {
             HolderFullState::Initial(_) => {
@@ -171,7 +187,9 @@ impl HolderSM {
             &AriesMessage::CredentialIssuance(CredentialIssuance::OfferCredential(offer.clone())),
         )?;
         let state = match self.state {
-            HolderFullState::ProposalSet(_) => HolderFullState::OfferReceived(OfferReceivedState::new(offer)),
+            HolderFullState::ProposalSet(_) => {
+                HolderFullState::OfferReceived(OfferReceivedState::new(offer))
+            }
             s => {
                 warn!("Unable to receive credential offer in state {}", s);
                 s
@@ -206,7 +224,8 @@ impl HolderSM {
                         })
                     }
                     Err(err) => {
-                        let problem_report = build_problem_report_msg(Some(err.to_string()), &self.thread_id);
+                        let problem_report =
+                            build_problem_report_msg(Some(err.to_string()), &self.thread_id);
                         error!(
                             "Failed to create credential request, generating problem report: {:?}",
                             problem_report
@@ -256,11 +275,12 @@ impl HolderSM {
                 )
                 .await
                 {
-                    Ok((cred_id, rev_reg_def_json)) => {
-                        HolderFullState::Finished((state_data, cred_id, credential, rev_reg_def_json).into())
-                    }
+                    Ok((cred_id, rev_reg_def_json)) => HolderFullState::Finished(
+                        (state_data, cred_id, credential, rev_reg_def_json).into(),
+                    ),
                     Err(err) => {
-                        let problem_report = build_problem_report_msg(Some(err.to_string()), &self.thread_id);
+                        let problem_report =
+                            build_problem_report_msg(Some(err.to_string()), &self.thread_id);
                         error!("Failed to process or save received credential: {problem_report:?}");
                         HolderFullState::Finished(FinishedHolderState::new(problem_report))
                     }
@@ -325,7 +345,8 @@ impl HolderSM {
             HolderFullState::OfferReceived(ref state) => state.get_attributes(),
             _ => Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::NotReady,
-                "Cannot get credential attributes: credential offer or credential must be receieved first",
+                "Cannot get credential attributes: credential offer or credential must be \
+                 receieved first",
             )),
         }
     }
@@ -336,7 +357,8 @@ impl HolderSM {
             HolderFullState::OfferReceived(ref state) => state.get_attachment(),
             _ => Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::NotReady,
-                "Cannot get credential attachment: credential offer or credential must be receieved first",
+                "Cannot get credential attachment: credential offer or credential must be \
+                 receieved first",
             )),
         }
     }
@@ -496,7 +518,10 @@ fn _parse_rev_reg_id_from_credential(credential: &str) -> VcxResult<Option<Strin
     })?;
 
     let rev_reg_id = parsed_credential["rev_reg_id"].as_str().map(String::from);
-    trace!("Holder::_parse_rev_reg_id_from_credential <<< {:?}", rev_reg_id);
+    trace!(
+        "Holder::_parse_rev_reg_id_from_credential <<< {:?}",
+        rev_reg_id
+    );
 
     Ok(rev_reg_id)
 }
@@ -572,8 +597,14 @@ async fn build_credential_request_msg(
 
     trace!("Parsed cred offer attachment: {}", cred_offer);
     let cred_def_id = parse_cred_def_id_from_cred_offer(&cred_offer)?;
-    let (req, req_meta, _cred_def_id, cred_def_json) =
-        create_anoncreds_credential_request(ledger, anoncreds, &cred_def_id, &my_pw_did, &cred_offer).await?;
+    let (req, req_meta, _cred_def_id, cred_def_json) = create_anoncreds_credential_request(
+        ledger,
+        anoncreds,
+        &cred_def_id,
+        &my_pw_did,
+        &cred_offer,
+    )
+    .await?;
     trace!("Created cred def json: {}", cred_def_json);
     let credential_request_msg = _build_credential_request_msg(req, &thread_id);
     Ok((credential_request_msg, req_meta, cred_def_json))

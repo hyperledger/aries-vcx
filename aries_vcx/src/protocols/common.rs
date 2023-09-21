@@ -9,7 +9,11 @@ use uuid::Uuid;
 pub fn build_problem_report_msg(comment: Option<String>, thread_id: &str) -> ProblemReport {
     let id = Uuid::new_v4().to_string();
     let content = ProblemReportContent::builder()
-        .description(Description::builder().code(comment.unwrap_or_default()).build())
+        .description(
+            Description::builder()
+                .code(comment.unwrap_or_default())
+                .build(),
+        )
         .build();
 
     let decorators = ProblemReportDecorators::builder()

@@ -4,9 +4,8 @@ use async_trait::async_trait;
 use indy_vdr::pool::PreparedRequest;
 use indy_vdr_proxy_client::VdrProxyClient;
 
-use crate::errors::error::VcxCoreResult;
-
 use super::RequestSubmitter;
+use crate::errors::error::VcxCoreResult;
 
 pub struct VdrProxySubmitter {
     client: Arc<VdrProxyClient>,

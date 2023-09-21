@@ -1,9 +1,9 @@
+use libvcx_core::{
+    api_vcx::api_global::{pool, pool::LibvcxLedgerConfig},
+    errors::error::{LibvcxError, LibvcxErrorKind},
+    serde_json,
+};
 use napi_derive::napi;
-
-use libvcx_core::api_vcx::api_global::pool;
-use libvcx_core::api_vcx::api_global::pool::LibvcxLedgerConfig;
-use libvcx_core::errors::error::{LibvcxError, LibvcxErrorKind};
-use libvcx_core::serde_json;
 
 use crate::error::to_napi_err;
 
@@ -12,9 +12,16 @@ use crate::error::to_napi_err;
 #[napi]
 async fn open_main_pool(pool_config: String) -> napi::Result<()> {
     let pool_config = serde_json::from_str::<LibvcxLedgerConfig>(&pool_config)
-        .map_err(|err| LibvcxError::from_msg(LibvcxErrorKind::InvalidJson, format!("Serialization error: {:?}", err)))
+        .map_err(|err| {
+            LibvcxError::from_msg(
+                LibvcxErrorKind::InvalidJson,
+                format!("Serialization error: {:?}", err),
+            )
+        })
         .map_err(to_napi_err)?;
-    pool::open_main_pool(&pool_config).await.map_err(to_napi_err)?;
+    pool::open_main_pool(&pool_config)
+        .await
+        .map_err(to_napi_err)?;
     Ok(())
 }
 

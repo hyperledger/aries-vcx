@@ -1,8 +1,7 @@
 use serde::{Deserialize, Serialize};
 
-use crate::error::PublicKeyError;
-
 use super::KeyType;
+use crate::error::PublicKeyError;
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Key {
@@ -12,8 +11,8 @@ pub struct Key {
 
 impl Key {
     pub fn new(key: Vec<u8>, key_type: KeyType) -> Result<Self, PublicKeyError> {
-        // If the key is a multibase key coming from a verification method, for some reason it is also
-        // multicodec encoded, so we need to strip that. But should it be?
+        // If the key is a multibase key coming from a verification method, for some reason it is
+        // also multicodec encoded, so we need to strip that. But should it be?
         let key = Self::strip_multicodec_prefix_if_present(key, &key_type);
         Ok(Self { key_type, key })
     }
@@ -36,7 +35,7 @@ impl Key {
     }
 
     pub fn fingerprint(&self) -> String {
-        multibase::encode(multibase::Base::Base58Btc, &self.multicodec_prefixed_key())
+        multibase::encode(multibase::Base::Base58Btc, self.multicodec_prefixed_key())
     }
 
     pub fn prefixless_fingerprint(&self) -> String {
@@ -88,7 +87,7 @@ mod tests {
     use super::*;
 
     fn new_key_test(key_bytes: Vec<u8>, key_type: KeyType) {
-        let key = Key::new(key_bytes.clone(), key_type.clone());
+        let key = Key::new(key_bytes.clone(), key_type);
         assert!(key.is_ok());
         let key = key.unwrap();
         assert_eq!(key.key_type(), &key_type);
@@ -144,10 +143,11 @@ mod tests {
         let (_, remaining_bytes) = unsigned_varint::decode::u64(&prefixed_key).unwrap();
         let manually_stripped_key = remaining_bytes.to_vec();
 
-        let function_stripped_key = Key::strip_multicodec_prefix_if_present(prefixed_key, &key_type);
+        let function_stripped_key = Key::strip_multicodec_prefix_if_present(prefixed_key, key_type);
         assert_eq!(function_stripped_key, manually_stripped_key);
 
-        let no_prefix_stripped_key = Key::strip_multicodec_prefix_if_present(key_bytes.clone(), &key_type);
+        let no_prefix_stripped_key =
+            Key::strip_multicodec_prefix_if_present(key_bytes.clone(), key_type);
         assert_eq!(no_prefix_stripped_key, key_bytes);
     }
 
@@ -168,7 +168,7 @@ mod tests {
         }
 
         fn encode_multibase(key_bytes: Vec<u8>) -> String {
-            multibase::encode(multibase::Base::Base58Btc, &key_bytes)
+            multibase::encode(multibase::Base::Base58Btc, key_bytes)
         }
 
         #[test]
@@ -218,7 +218,7 @@ mod tests {
         }
 
         fn encode_multibase(key_bytes: Vec<u8>) -> String {
-            multibase::encode(multibase::Base::Base58Btc, &key_bytes)
+            multibase::encode(multibase::Base::Base58Btc, key_bytes)
         }
 
         #[test]

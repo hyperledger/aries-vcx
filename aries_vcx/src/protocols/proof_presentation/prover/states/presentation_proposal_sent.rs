@@ -18,7 +18,10 @@ impl Default for PresentationProposalSent {
             .build();
 
         Self {
-            proposal: ProposePresentation::builder().id(id).content(content).build(),
+            proposal: ProposePresentation::builder()
+                .id(id)
+                .content(content)
+                .build(),
         }
     }
 }

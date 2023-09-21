@@ -1,19 +1,17 @@
 use std::sync::Arc;
 
-use async_trait::async_trait;
-
-use aries_vcx_core::ledger::base_ledger::TxnAuthrAgrmtOptions;
-use aries_vcx_core::wallet::indy::IndySdkWallet;
 use aries_vcx_core::{
     anoncreds::{base_anoncreds::BaseAnonCreds, indy_anoncreds::IndySdkAnonCreds},
-    ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite},
-    wallet::base_wallet::BaseWallet,
-    WalletHandle,
+    ledger::base_ledger::{
+        AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite,
+        TxnAuthrAgrmtOptions,
+    },
+    wallet::{base_wallet::BaseWallet, indy::IndySdkWallet},
 };
-
-use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
+use async_trait::async_trait;
 
 use super::profile::Profile;
+use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 
 #[derive(Debug)]
 pub struct VdrtoolsProfile {
@@ -72,14 +70,14 @@ impl Profile for VdrtoolsProfile {
     }
 
     #[cfg(feature = "migration")]
-    fn wallet_handle(&self) -> Option<WalletHandle> {
+    fn wallet_handle(&self) -> Option<aries_vcx_core::WalletHandle> {
         Some(self.wallet.wallet_handle)
     }
 
     fn update_taa_configuration(&self, _taa_options: TxnAuthrAgrmtOptions) -> VcxResult<()> {
         Err(AriesVcxError::from_msg(
             AriesVcxErrorKind::ActionNotSupported,
-            format!("update_taa_configuration no implemented for VdrtoolsProfile"),
+            "update_taa_configuration no implemented for VdrtoolsProfile",
         ))
     }
 }

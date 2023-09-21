@@ -5,23 +5,28 @@ extern crate serde_json;
 
 pub mod utils;
 
-use std::thread;
-use std::time::Duration;
+use std::{thread, time::Duration};
 
-use aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;
-use aries_vcx::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
-use aries_vcx::utils::devsetup::*;
+use aries_vcx::{
+    protocols::proof_presentation::verifier::{
+        state_machine::VerifierState, verification_status::PresentationVerificationStatus,
+    },
+    utils::devsetup::*,
+};
 
 #[cfg(feature = "migration")]
 use crate::utils::migration::Migratable;
-use crate::utils::scenarios::{
-    create_address_schema_creddef_revreg, create_proof_request_data, create_verifier_from_request_data,
-    credential_data_address_1, credential_data_address_2, credential_data_address_3, exchange_credential,
-    exchange_proof, issue_address_credential, prover_select_credentials_and_send_proof, publish_revocation,
-    requested_attrs_address, revoke_credential_and_publish_accumulator, revoke_credential_local, rotate_rev_reg,
-    verifier_create_proof_and_send_request,
+use crate::utils::{
+    scenarios::{
+        create_address_schema_creddef_revreg, create_proof_request_data,
+        create_verifier_from_request_data, credential_data_address_1, credential_data_address_2,
+        credential_data_address_3, exchange_credential, exchange_proof, issue_address_credential,
+        prover_select_credentials_and_send_proof, publish_revocation, requested_attrs_address,
+        revoke_credential_and_publish_accumulator, revoke_credential_local, rotate_rev_reg,
+        verifier_create_proof_and_send_request,
+    },
+    test_agent::{create_test_agent, create_test_agent_trustee},
 };
-use crate::utils::test_agent::{create_test_agent, create_test_agent_trustee};
 
 #[tokio::test]
 #[ignore]
@@ -30,7 +35,8 @@ async fn test_agency_pool_basic_revocation() {
         let mut institution = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
         let mut consumer = create_test_agent(setup.genesis_file_path).await;
 
-        let (schema, cred_def, rev_reg, issuer) = issue_address_credential(&mut consumer, &mut institution).await;
+        let (schema, cred_def, rev_reg, issuer) =
+            issue_address_credential(&mut consumer, &mut institution).await;
 
         #[cfg(feature = "migration")]
         institution.migrate().await;
@@ -103,7 +109,8 @@ async fn test_agency_pool_revoked_credential_might_still_work() {
         let mut institution = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
         let mut consumer = create_test_agent(setup.genesis_file_path).await;
 
-        let (schema, cred_def, rev_reg, issuer) = issue_address_credential(&mut consumer, &mut institution).await;
+        let (schema, cred_def, rev_reg, issuer) =
+            issue_address_credential(&mut consumer, &mut institution).await;
 
         assert!(!issuer
             .is_revoked(&institution.profile.inject_anoncreds_ledger_read())
@@ -174,7 +181,8 @@ async fn test_agency_pool_local_revocation() {
         let mut institution = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
         let mut consumer = create_test_agent(setup.genesis_file_path).await;
 
-        let (schema, cred_def, rev_reg, issuer) = issue_address_credential(&mut consumer, &mut institution).await;
+        let (schema, cred_def, rev_reg, issuer) =
+            issue_address_credential(&mut consumer, &mut institution).await;
 
         #[cfg(feature = "migration")]
         institution.migrate().await;
@@ -236,8 +244,11 @@ async fn test_agency_batch_revocation() {
         let mut consumer3 = create_test_agent(setup.genesis_file_path).await;
 
         // Issue and send three credentials of the same schema
-        let (schema, cred_def, rev_reg) =
-            create_address_schema_creddef_revreg(&institution.profile, &institution.institution_did).await;
+        let (schema, cred_def, rev_reg) = create_address_schema_creddef_revreg(
+            &institution.profile,
+            &institution.institution_did,
+        )
+        .await;
 
         let issuer_credential1 = exchange_credential(
             &mut consumer1,
@@ -448,9 +459,12 @@ async fn test_agency_pool_two_creds_one_rev_reg_revoke_first() {
         )
         .await;
         let presentation_request = proof_verifier.get_presentation_request_msg().unwrap();
-        let presentation =
-            prover_select_credentials_and_send_proof(&mut consumer, presentation_request, Some(&credential_data1))
-                .await;
+        let presentation = prover_select_credentials_and_send_proof(
+            &mut consumer,
+            presentation_request,
+            Some(&credential_data1),
+        )
+        .await;
         proof_verifier
             .verify_presentation(
                 &verifier.profile.inject_anoncreds_ledger_read(),
@@ -473,9 +487,12 @@ async fn test_agency_pool_two_creds_one_rev_reg_revoke_first() {
         )
         .await;
         let presentation_request = proof_verifier.get_presentation_request_msg().unwrap();
-        let presentation =
-            prover_select_credentials_and_send_proof(&mut consumer, presentation_request, Some(&credential_data2))
-                .await;
+        let presentation = prover_select_credentials_and_send_proof(
+            &mut consumer,
+            presentation_request,
+            Some(&credential_data2),
+        )
+        .await;
 
         #[cfg(feature = "migration")]
         consumer.migrate().await;
@@ -896,7 +913,8 @@ async fn test_agency_pool_two_creds_two_rev_reg_id_revoke_second() {
             .await
             .unwrap());
 
-        revoke_credential_and_publish_accumulator(&mut issuer, &issuer_credential2, &rev_reg_2).await;
+        revoke_credential_and_publish_accumulator(&mut issuer, &issuer_credential2, &rev_reg_2)
+            .await;
 
         let mut proof_verifier = verifier_create_proof_and_send_request(
             &mut verifier,

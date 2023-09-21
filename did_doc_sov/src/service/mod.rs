@@ -106,7 +106,9 @@ impl TryFrom<Service<HashMap<String, Value>>> for ServiceSov {
                 Some("AIP1") => Ok(ServiceSov::AIP1(service.try_into()?)),
                 Some("DIDCommV1") => Ok(ServiceSov::DIDCommV1(service.try_into()?)),
                 Some("DIDCommV2") => Ok(ServiceSov::DIDCommV2(service.try_into()?)),
-                _ => Err(DidDocumentSovError::UnexpectedServiceType(service_type.to_string())),
+                _ => Err(DidDocumentSovError::UnexpectedServiceType(
+                    service_type.to_string(),
+                )),
             },
             None => Ok(ServiceSov::AIP1(service.try_into()?)),
         }

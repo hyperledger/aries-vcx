@@ -56,7 +56,11 @@ pub mod tests {
         let thid = "test".to_owned();
         let pthid = "test_pthid".to_owned();
         let sender_order = 5;
-        let received_orders = HashMap::from([("a".to_owned(), 1), ("b".to_owned(), 2), ("c".to_owned(), 3)]);
+        let received_orders = HashMap::from([
+            ("a".to_owned(), 1),
+            ("b".to_owned(), 2),
+            ("c".to_owned(), 3),
+        ]);
         let goal_code = MaybeKnown::Known(ThreadGoalCode::AriesVcVerify);
 
         Thread::builder()

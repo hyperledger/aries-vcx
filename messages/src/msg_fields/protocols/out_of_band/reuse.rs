@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-
 use shared_vcx::misc::serde_ignored::SerdeIgnored;
 use typed_builder::TypedBuilder;
 
@@ -52,7 +51,12 @@ mod tests {
             "~thread": decorators.thread
         });
 
-        test_utils::test_msg(content, decorators, OutOfBandTypeV1_1::HandshakeReuse, expected);
+        test_utils::test_msg(
+            content,
+            decorators,
+            OutOfBandTypeV1_1::HandshakeReuse,
+            expected,
+        );
     }
 
     #[test]
@@ -69,6 +73,11 @@ mod tests {
             "~timing": decorators.timing
         });
 
-        test_utils::test_msg(content, decorators, OutOfBandTypeV1_1::HandshakeReuse, expected);
+        test_utils::test_msg(
+            content,
+            decorators,
+            OutOfBandTypeV1_1::HandshakeReuse,
+            expected,
+        );
     }
 }

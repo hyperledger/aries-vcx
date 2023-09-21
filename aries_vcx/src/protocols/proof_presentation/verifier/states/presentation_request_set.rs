@@ -1,4 +1,6 @@
-use messages::msg_fields::protocols::present_proof::request::{RequestPresentation, RequestPresentationContent};
+use messages::msg_fields::protocols::present_proof::request::{
+    RequestPresentation, RequestPresentationContent,
+};
 use uuid::Uuid;
 
 use crate::protocols::proof_presentation::verifier::states::presentation_request_sent::PresentationRequestSentState;
@@ -16,14 +18,19 @@ impl Default for PresentationRequestSetState {
             .build();
 
         Self {
-            presentation_request: RequestPresentation::builder().id(id).content(content).build(),
+            presentation_request: RequestPresentation::builder()
+                .id(id)
+                .content(content)
+                .build(),
         }
     }
 }
 
 impl PresentationRequestSetState {
     pub fn new(presentation_request: RequestPresentation) -> Self {
-        Self { presentation_request }
+        Self {
+            presentation_request,
+        }
     }
 }
 
