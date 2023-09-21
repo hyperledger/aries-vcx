@@ -3,12 +3,12 @@ use std::{
     sync::{Arc, RwLock},
 };
 
-#[cfg(all(feature = "anoncreds_credx"))]
+#[cfg(feature = "anoncreds_credx")]
 use aries_vcx::aries_vcx_core::anoncreds::credx_anoncreds::IndyCredxAnonCreds;
 use aries_vcx::{
     aries_vcx_core::{
         anoncreds::{base_anoncreds::BaseAnonCreds, indy_anoncreds::IndySdkAnonCreds},
-        indy, wallet,
+        wallet,
         wallet::{
             base_wallet::BaseWallet,
             indy::{
@@ -17,7 +17,7 @@ use aries_vcx::{
                 IndySdkWallet, IssuerConfig, RestoreWalletConfigs, WalletConfig,
             },
         },
-        SearchHandle, WalletHandle, INVALID_WALLET_HANDLE,
+        SearchHandle, WalletHandle,
     },
     common::signing::unpack_message_to_string,
     global::settings::DEFAULT_LINK_SECRET_ALIAS,
@@ -26,19 +26,17 @@ use aries_vcx::{
 
 use crate::{
     api_vcx::api_global::profile::{
-        get_main_anoncreds, get_main_indy_ledger_write, get_main_profile, get_main_wallet,
-        try_get_main_wallet,
+        get_main_anoncreds, get_main_indy_ledger_write, get_main_wallet, try_get_main_wallet,
     },
     errors::{
-        error::{LibvcxError, LibvcxErrorKind, LibvcxResult},
-        mapping_from_ariesvcx::map_ariesvcx_result,
+        error::LibvcxResult, mapping_from_ariesvcx::map_ariesvcx_result,
         mapping_from_ariesvcxcore::map_ariesvcx_core_result,
     },
 };
 
 lazy_static! {
-    pub static ref global_base_wallet: RwLock<Option<Arc<dyn BaseWallet>>> = RwLock::new(None);
-    pub static ref global_base_anoncreds: RwLock<Option<Arc<dyn BaseAnonCreds>>> =
+    pub static ref GLOBAL_BASE_WALLET: RwLock<Option<Arc<dyn BaseWallet>>> = RwLock::new(None);
+    pub static ref GLOBAL_BASE_ANONCREDS: RwLock<Option<Arc<dyn BaseAnonCreds>>> =
         RwLock::new(None);
 }
 
@@ -54,18 +52,18 @@ pub async fn export_main_wallet(path: &str, backup_key: &str) -> LibvcxResult<()
 }
 
 fn build_component_base_wallet(wallet_handle: WalletHandle) -> Arc<dyn BaseWallet> {
-    return Arc::new(IndySdkWallet::new(wallet_handle));
+    Arc::new(IndySdkWallet::new(wallet_handle))
 }
 
 fn build_component_anoncreds(base_wallet: Arc<dyn BaseWallet>) -> Arc<dyn BaseAnonCreds> {
-    #[cfg(all(feature = "anoncreds_vdrtools"))]
+    #[cfg(feature = "anoncreds_vdrtools")]
     {
         let wallet_handle = base_wallet.get_wallet_handle();
-        return Arc::new(IndySdkAnonCreds::new(wallet_handle));
+        Arc::new(IndySdkAnonCreds::new(wallet_handle))
     }
-    #[cfg(all(feature = "anoncreds_credx"))]
+    #[cfg(feature = "anoncreds_credx")]
     {
-        return Arc::new(IndyCredxAnonCreds::new(Arc::clone(&base_wallet)));
+        Arc::new(IndyCredxAnonCreds::new(Arc::clone(&base_wallet)))
     }
     #[cfg(not(any(feature = "anoncreds_vdrtools", feature = "anoncreds_credx")))]
     {
@@ -76,11 +74,11 @@ fn build_component_anoncreds(base_wallet: Arc<dyn BaseWallet>) -> Arc<dyn BaseAn
 fn setup_global_wallet(wallet_handle: WalletHandle) -> LibvcxResult<()> {
     // new way
     let base_wallet_impl = build_component_base_wallet(wallet_handle);
-    let mut b_wallet = global_base_wallet.write()?;
+    let mut b_wallet = GLOBAL_BASE_WALLET.write()?;
     *b_wallet = Some(base_wallet_impl.clone());
     // anoncreds
     let base_anoncreds_impl: Arc<dyn BaseAnonCreds> = build_component_anoncreds(base_wallet_impl);
-    let mut b_anoncreds = global_base_anoncreds.write()?;
+    let mut b_anoncreds = GLOBAL_BASE_ANONCREDS.write()?;
     *b_anoncreds = Some(base_anoncreds_impl);
     Ok(())
 }
@@ -111,7 +109,7 @@ pub async fn close_main_wallet() -> LibvcxResult<()> {
         }
         Some(wallet) => {
             wallet::indy::wallet::close_wallet(wallet.get_wallet_handle()).await?;
-            let mut b_wallet = global_base_wallet.write()?;
+            let mut b_wallet = GLOBAL_BASE_WALLET.write()?;
             *b_wallet = None;
         }
     }
@@ -190,8 +188,7 @@ pub async fn wallet_add_wallet_record(
     option: Option<&str>,
 ) -> LibvcxResult<()> {
     let wallet = get_main_wallet()?;
-    let tags: Option<HashMap<String, String>> =
-        option.map(|tags| serde_json::from_str(tags)).transpose()?;
+    let tags: Option<HashMap<String, String>> = option.map(serde_json::from_str).transpose()?;
     map_ariesvcx_core_result(wallet.add_wallet_record(type_, id, value, tags).await)
 }
 
@@ -278,7 +275,6 @@ pub async fn wallet_import(config: &RestoreWalletConfigs) -> LibvcxResult<()> {
     map_ariesvcx_core_result(import(config).await)
 }
 
-#[allow(clippy::unwrap_used)]
 pub mod test_utils {
     use aries_vcx::{
         aries_vcx_core::wallet::indy::WalletConfig,
@@ -289,7 +285,6 @@ pub mod test_utils {
     use crate::{
         api_vcx::api_global::{
             profile::get_main_wallet,
-            settings::get_config_value,
             wallet::{
                 close_main_wallet, create_and_open_as_main_wallet, create_main_wallet,
                 export_main_wallet, open_as_main_wallet,
@@ -327,7 +322,7 @@ pub mod test_utils {
             .add_wallet_record(type_, id, value, None)
             .await
             .unwrap();
-        export_main_wallet(&export_file.path, &DEFAULT_WALLET_BACKUP_KEY)
+        export_main_wallet(&export_file.path, DEFAULT_WALLET_BACKUP_KEY)
             .await
             .unwrap();
 
@@ -338,7 +333,7 @@ pub mod test_utils {
     }
 
     pub async fn _create_wallet() -> LibvcxResult<WalletConfig> {
-        let wallet_name = format!("test_create_wallet_{}", uuid::Uuid::new_v4().to_string());
+        let wallet_name = format!("test_create_wallet_{}", uuid::Uuid::new_v4());
         let config_wallet: WalletConfig = serde_json::from_value(json!({
             "wallet_name": wallet_name,
             "wallet_key": DEFAULT_WALLET_KEY,
@@ -366,15 +361,12 @@ pub mod tests {
     };
 
     use crate::{
-        api_vcx::api_global::{
-            settings::get_config_value,
-            wallet::{
-                close_main_wallet, create_and_open_as_main_wallet, create_main_wallet,
-                export_main_wallet, open_as_main_wallet,
-                test_utils::{_create_and_open_wallet, _create_main_wallet_and_its_backup},
-                wallet_add_wallet_record, wallet_delete_wallet_record, wallet_get_wallet_record,
-                wallet_import, wallet_update_wallet_record_value,
-            },
+        api_vcx::api_global::wallet::{
+            close_main_wallet, create_and_open_as_main_wallet, create_main_wallet,
+            export_main_wallet, open_as_main_wallet,
+            test_utils::{_create_and_open_wallet, _create_main_wallet_and_its_backup},
+            wallet_add_wallet_record, wallet_delete_wallet_record, wallet_get_wallet_record,
+            wallet_import, wallet_update_wallet_record_value,
         },
         errors::error::{LibvcxErrorKind, LibvcxResult},
     };
@@ -383,7 +375,7 @@ pub mod tests {
     async fn test_wallet_create() {
         let _setup = SetupEmpty::init();
 
-        let wallet_name = format!("test_create_wallet_{}", uuid::Uuid::new_v4().to_string());
+        let wallet_name = format!("test_create_wallet_{}", uuid::Uuid::new_v4());
         let config: WalletConfig = serde_json::from_value(json!({
             "wallet_name": wallet_name,
             "wallet_key": DEFAULT_WALLET_KEY,
@@ -507,7 +499,7 @@ pub mod tests {
         let wallet_name = uuid::Uuid::new_v4().to_string();
         let export_file = TempFile::prepare_path(&wallet_name);
         let wallet_config = WalletConfig {
-            wallet_name: wallet_name.into(),
+            wallet_name,
             wallet_key: DEFAULT_WALLET_KEY.into(),
             wallet_key_derivation: WALLET_KDF_RAW.into(),
             wallet_type: None,
@@ -543,7 +535,7 @@ pub mod tests {
         let wallet_name = uuid::Uuid::new_v4().to_string();
         let _export_file = TempFile::prepare_path(&wallet_name);
         let mut wallet_config = WalletConfig {
-            wallet_name: wallet_name.into(),
+            wallet_name,
             wallet_key: DEFAULT_WALLET_KEY.into(),
             wallet_key_derivation: WALLET_KDF_RAW.into(),
             wallet_type: None,
@@ -619,7 +611,7 @@ pub mod tests {
         open_as_main_wallet(&wallet_config).await.unwrap();
 
         let import_config = RestoreWalletConfigs {
-            wallet_name: wallet_name.into(),
+            wallet_name,
             wallet_key: DEFAULT_WALLET_KEY.into(),
             exported_wallet_path: export_wallet_path.path.clone(),
             backup_key: DEFAULT_WALLET_BACKUP_KEY.to_string(),

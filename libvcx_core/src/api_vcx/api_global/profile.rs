@@ -27,7 +27,7 @@ use crate::{
             global_ledger_anoncreds_read, global_ledger_anoncreds_write, global_ledger_indy_read,
             global_ledger_indy_write, global_taa_configurator,
         },
-        wallet::{global_base_anoncreds, global_base_wallet},
+        wallet::{GLOBAL_BASE_ANONCREDS, GLOBAL_BASE_WALLET},
     },
     errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult},
 };
@@ -85,7 +85,7 @@ impl ProfileV2 for VcxGlobalsProfile {
     }
 
     fn inject_anoncreds(&self) -> LibvcxResult<Arc<dyn BaseAnonCreds>> {
-        let anoncreds = global_base_anoncreds.read()?;
+        let anoncreds = GLOBAL_BASE_ANONCREDS.read()?;
         match anoncreds.as_ref() {
             None => Err(LibvcxError::from_msg(
                 LibvcxErrorKind::NotReady,
@@ -118,7 +118,7 @@ impl ProfileV2 for VcxGlobalsProfile {
     }
 
     fn inject_wallet(&self) -> LibvcxResult<Arc<dyn BaseWallet>> {
-        let base_wallet = global_base_wallet.read()?;
+        let base_wallet = GLOBAL_BASE_WALLET.read()?;
         match base_wallet.as_ref() {
             None => Err(LibvcxError::from_msg(
                 LibvcxErrorKind::NotReady,
@@ -129,7 +129,7 @@ impl ProfileV2 for VcxGlobalsProfile {
     }
 
     fn try_inject_wallet(&self) -> LibvcxResult<Option<Arc<dyn BaseWallet>>> {
-        let base_wallet = global_base_wallet.read()?;
+        let base_wallet = GLOBAL_BASE_WALLET.read()?;
         base_wallet
             .as_ref()
             .map(|w| Some(Arc::clone(w)))
