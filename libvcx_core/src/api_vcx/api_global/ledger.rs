@@ -102,11 +102,11 @@ pub async fn ledger_get_service(target_did: &str) -> LibvcxResult<AriesService> 
 }
 
 pub async fn ledger_get_attr(target_did: &str, attr: &str) -> LibvcxResult<String> {
-    map_ariesvcx_result(get_attr(&get_main_indy_ledger_read()?, &target_did, attr).await)
+    map_ariesvcx_result(get_attr(&get_main_indy_ledger_read()?, target_did, attr).await)
 }
 
 pub async fn ledger_clear_attr(target_did: &str, attr: &str) -> LibvcxResult<String> {
-    map_ariesvcx_result(clear_attr(&get_main_indy_ledger_write()?, &target_did, attr).await)
+    map_ariesvcx_result(clear_attr(&get_main_indy_ledger_write()?, target_did, attr).await)
 }
 
 pub async fn ledger_write_endorser_did(
@@ -229,7 +229,7 @@ pub mod tests {
             "mechanism": acc_mech_type
         });
 
-        let auth_agreement = serde_json::to_value(&auth_agreement).unwrap();
+        let auth_agreement = serde_json::to_value(auth_agreement).unwrap();
         assert_eq!(expected, auth_agreement);
     }
 
