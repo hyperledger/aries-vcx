@@ -8,11 +8,11 @@ impl From<LedgerResponseParserError> for AriesVcxCoreError {
             LedgerResponseParserError::JsonError(err) => {
                 AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::InvalidJson, err.to_string())
             }
-            LedgerResponseParserError::LedgerItemNotFound(item) => AriesVcxCoreError::from_msg(
+            LedgerResponseParserError::LedgerItemNotFound(_) => AriesVcxCoreError::from_msg(
                 AriesVcxCoreErrorKind::LedgerItemNotFound,
                 err.to_string(),
             ),
-            LedgerResponseParserError::InvalidTransaction(message) => AriesVcxCoreError::from_msg(
+            LedgerResponseParserError::InvalidTransaction(_) => AriesVcxCoreError::from_msg(
                 AriesVcxCoreErrorKind::InvalidLedgerResponse,
                 err.to_string(),
             ),

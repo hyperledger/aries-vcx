@@ -1,4 +1,3 @@
-use serde::{Deserialize, Serialize};
 use vdrtools::{
     types::{
         domain::wallet::{default_key_derivation_method, KeyDerivationMethod},
@@ -10,12 +9,11 @@ use vdrtools::{
 use crate::{
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
     global::settings,
-    secret, utils,
+    utils,
     wallet::indy::{
         did_mocks::{did_mocks_enabled, DidMocks},
         IssuerConfig, RestoreWalletConfigs, WalletConfig,
     },
-    SearchHandle,
 };
 
 pub async fn open_wallet(wallet_config: &WalletConfig) -> VcxCoreResult<WalletHandle> {

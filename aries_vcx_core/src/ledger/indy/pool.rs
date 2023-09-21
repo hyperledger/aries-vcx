@@ -216,7 +216,7 @@ pub mod test_utils {
     ) {
         let node_txns = get_txns();
         let txn_file_data = node_txns.join("\n");
-        let mut f = fs::File::create(&genesis_file_path).unwrap();
+        let mut f = fs::File::create(genesis_file_path).unwrap();
         f.write_all(txn_file_data.as_bytes()).unwrap();
         f.flush().unwrap();
         f.sync_all().unwrap();

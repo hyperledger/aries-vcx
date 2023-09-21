@@ -520,9 +520,6 @@ impl ProverController {
     /// If filter is NULL, then all credentials are returned.
     /// Credentials can be filtered by Issuer, credential_def and/or Schema.
     ///
-    /// NOTE: This method is deprecated because immediately returns all fetched credentials.
-    /// Use <indy_prover_search_credentials> to fetch records by small batches.
-    ///
     /// #Params
     /// wallet_handle: wallet handle (created by open_wallet).
     /// filter_json: filter for credentials
@@ -551,10 +548,6 @@ impl ProverController {
     /// Common*
     /// Wallet*
     #[no_mangle]
-    #[deprecated(
-        since = "1.6.1",
-        note = "Please use indy_prover_search_credentials instead!"
-    )]
     pub async fn get_credentials(
         &self,
         wallet_handle: WalletHandle,

@@ -7,6 +7,7 @@ use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResu
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 struct Request {
+    #[allow(dead_code)]
     pub req_id: u64,
     pub identifier: String,
     pub signature: Option<String>,

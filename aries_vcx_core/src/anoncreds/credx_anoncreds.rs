@@ -472,8 +472,8 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             .get_wallet_record_value(CATEGORY_CRED_DEF_PRIV, cred_def_id)
             .await?;
 
-        let mut revocation_config_parts = match (tails_dir, &rev_reg_id) {
-            (Some(tails_dir), Some(rev_reg_id)) => {
+        let mut revocation_config_parts = match &rev_reg_id {
+            Some(rev_reg_id) => {
                 let rev_reg_def = self
                     .get_wallet_record_value(CATEGORY_REV_REG_DEF, rev_reg_id)
                     .await?;
@@ -489,16 +489,9 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
                     .get_wallet_record_value(CATEGORY_REV_REG_INFO, rev_reg_id)
                     .await?;
 
-                Some((
-                    rev_reg_def,
-                    rev_reg_def_priv,
-                    rev_reg,
-                    rev_reg_info,
-                    tails_dir,
-                ))
+                Some((rev_reg_def, rev_reg_def_priv, rev_reg, rev_reg_info))
             }
-            (None, None) => None,
-            (tails_dir, rev_reg_id) => {
+            None => {
                 warn!(
                     "Missing revocation config params: tails_dir: {tails_dir:?} - {rev_reg_id:?}; \
                      Issuing non revokable credential"
@@ -508,37 +501,22 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         };
 
         let revocation_config = match &mut revocation_config_parts {
-            Some((rev_reg_def, rev_reg_def_priv, rev_reg, rev_reg_info, tails_dir)) => {
+            Some((rev_reg_def, rev_reg_def_priv, rev_reg, rev_reg_info)) => {
                 rev_reg_info.curr_id += 1;
 
-                let tails_file_hash = match rev_reg_def {
-                    RevocationRegistryDefinition::RevocationRegistryDefinitionV1(rev_reg_def) => {
-                        if rev_reg_info.curr_id > rev_reg_def.value.max_cred_num {
-                            return Err(AriesVcxCoreError::from_msg(
-                                AriesVcxCoreErrorKind::ActionNotSupported,
-                                "The revocation registry is full",
-                            ));
-                        }
+                let RevocationRegistryDefinition::RevocationRegistryDefinitionV1(rev_reg_def_v1) =
+                    rev_reg_def;
 
-                        if rev_reg_def.value.issuance_type == IssuanceType::ISSUANCE_ON_DEMAND {
-                            rev_reg_info.used_ids.insert(rev_reg_info.curr_id);
-                        }
+                if rev_reg_info.curr_id > rev_reg_def_v1.value.max_cred_num {
+                    return Err(AriesVcxCoreError::from_msg(
+                        AriesVcxCoreErrorKind::ActionNotSupported,
+                        "The revocation registry is full",
+                    ));
+                }
 
-                        &rev_reg_def.value.tails_hash
-                    }
-                };
-
-                let mut tails_file_path = std::path::PathBuf::new();
-                tails_file_path.push(&tails_dir);
-                tails_file_path.push(tails_file_hash);
-
-                let tails_path = tails_file_path.to_str().ok_or_else(|| {
-                    AriesVcxCoreError::from_msg(
-                        AriesVcxCoreErrorKind::InvalidOption,
-                        "tails file is not an unicode string",
-                    )
-                })?;
-                let tails_reader = TailsFileReader::new(tails_path);
+                if rev_reg_def_v1.value.issuance_type == IssuanceType::ISSUANCE_ON_DEMAND {
+                    rev_reg_info.used_ids.insert(rev_reg_info.curr_id);
+                }
 
                 let revocation_config = CredentialRevocationConfig {
                     reg_def: rev_reg_def,
@@ -569,7 +547,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             .transpose()?;
 
         let cred_rev_id =
-            if let (Some(rev_reg_id), Some(str_rev_reg), Some((_, _, _, rev_reg_info, _))) =
+            if let (Some(rev_reg_id), Some(str_rev_reg), Some((_, _, _, rev_reg_info))) =
                 (rev_reg_id, &str_rev_reg, revocation_config_parts)
             {
                 let cred_rev_id = rev_reg_info.curr_id.to_string();
@@ -911,7 +889,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         };
 
         let mut tails_file_path = std::path::PathBuf::new();
-        tails_file_path.push(&tails_dir);
+        tails_file_path.push(tails_dir);
         tails_file_path.push(tails_file_hash);
 
         let tails_path = tails_file_path.to_str().ok_or_else(|| {
@@ -1096,7 +1074,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
 
     async fn revoke_credential_local(
         &self,
-        tails_dir: &str,
+        _tails_dir: &str,
         rev_reg_id: &str,
         cred_rev_id: &str,
     ) -> VcxCoreResult<()> {
@@ -1159,13 +1137,6 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         };
 
         let str_rev_reg_info = serde_json::to_string(&rev_reg_info)?;
-
-        let tails_file_hash = match &rev_reg_def {
-            RevocationRegistryDefinition::RevocationRegistryDefinitionV1(r) => &r.value.tails_hash,
-        };
-
-        let tails_file_path = format!("{tails_dir}/{tails_file_hash}");
-        let tails_reader = TailsFileReader::new(&tails_file_path);
 
         let (rev_reg, new_rev_reg_delta) = credx::issuer::revoke_credential(
             &cred_def,
@@ -1353,7 +1324,7 @@ fn _format_attribute_as_marker_tag_name(attribute_name: &str) -> String {
 }
 
 // common transformation requirement in credx
-fn hashmap_as_ref<'a, T, U>(map: &'a HashMap<T, U>) -> HashMap<T, &'a U>
+fn hashmap_as_ref<T, U>(map: &HashMap<T, U>) -> HashMap<T, &U>
 where
     T: std::hash::Hash,
     T: std::cmp::Eq,

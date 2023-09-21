@@ -4,7 +4,6 @@ use async_trait::async_trait;
 
 use crate::{
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
-    indy,
     utils::async_fn_iterator::AsyncFnIterator,
     wallet,
     wallet::{

@@ -357,7 +357,7 @@ where
         endorser_did: &str,
         request_json: &str,
     ) -> VcxCoreResult<()> {
-        let mut request = PreparedRequest::from_request_json(&request_json)?;
+        let mut request = PreparedRequest::from_request_json(request_json)?;
         verify_transaction_can_be_endorsed(request_json, endorser_did)?;
         let signature_endorser = self.request_signer.sign(endorser_did, &request).await?;
         request.set_multi_signature(&DidValue::from_str(endorser_did)?, &signature_endorser)?;
@@ -480,7 +480,7 @@ where
         let revoc_reg_def_id = RevocationRegistryId::from_str(rev_reg_id)?;
 
         let from = from.map(|x| x as i64);
-        let current_time = OffsetDateTime::now_utc().unix_timestamp() as i64;
+        let current_time = OffsetDateTime::now_utc().unix_timestamp();
         let to = to.map_or(current_time, |x| x as i64);
 
         let request = self.request_builder()?.build_get_revoc_reg_delta_request(
@@ -548,7 +548,7 @@ where
         &self,
         schema_json: &str,
         submitter_did: &str,
-        endorser_did: Option<String>,
+        _endorser_did: Option<String>,
     ) -> VcxCoreResult<()> {
         let identifier = DidValue::from_str(submitter_did)?;
         let schema_data: SchemaV1 = serde_json::from_str(schema_json)?;
