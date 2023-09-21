@@ -1,8 +1,8 @@
 use crate::errors::error::AriesVcxError;
 
-mod holder_demos;
 pub mod formats;
 pub mod holder;
+mod holder_demos;
 pub mod issuer;
 mod issuer_demos;
 

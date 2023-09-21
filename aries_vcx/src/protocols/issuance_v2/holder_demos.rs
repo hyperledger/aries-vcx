@@ -13,7 +13,7 @@ pub mod demo_test {
                 holder::ld_proof_vc::LdProofHolderCredentialIssuanceFormat,
             },
             holder::{
-                states::{CredentialReceived, RequestPrepared},
+                states::{CredentialReceived, ProposalPrepared, RequestPrepared},
                 HolderV2,
             },
             messages::{IssueCredentialV2, OfferCredentialV2},
@@ -41,10 +41,12 @@ pub mod demo_test {
             mime_type: None,
         }]);
 
-        let holder =
-            HolderV2::with_proposal::<AnoncredsHolderCredentialIssuanceFormat>(&my_proposal_data, Some(cred_preview))
-                .await
-                .unwrap();
+        let holder = HolderV2::<ProposalPrepared<AnoncredsHolderCredentialIssuanceFormat>>::with_proposal(
+            &my_proposal_data,
+            Some(cred_preview),
+        )
+        .await
+        .unwrap();
 
         let _proposal_message = holder.get_proposal().to_owned();
         // send_msg(proposal_message.into());
@@ -59,10 +61,7 @@ pub mod demo_test {
             ledger: &ledger_read,
             anoncreds: &anoncreds,
         };
-        let holder = holder
-            .prepare_credential_request::<AnoncredsHolderCredentialIssuanceFormat>(&prep_request_data)
-            .await
-            .unwrap();
+        let holder = holder.prepare_credential_request(&prep_request_data).await.unwrap();
 
         let _request_message = holder.get_request().to_owned();
         // send_msg(request_message.into());
@@ -93,7 +92,7 @@ pub mod demo_test {
     async fn ld_proof_vc_demo() {
         // ----- create proposal
 
-        let holder = HolderV2::with_proposal::<LdProofHolderCredentialIssuanceFormat>(&(), None)
+        let holder = HolderV2::<ProposalPrepared<LdProofHolderCredentialIssuanceFormat>>::with_proposal(&(), None)
             .await
             .unwrap();
 
@@ -105,10 +104,7 @@ pub mod demo_test {
         let offer_message = OfferCredentialV2;
         let holder = holder.receive_offer(offer_message).unwrap();
 
-        let holder = holder
-            .prepare_credential_request::<LdProofHolderCredentialIssuanceFormat>(&())
-            .await
-            .unwrap();
+        let holder = holder.prepare_credential_request(&()).await.unwrap();
 
         let _request_message = holder.get_request().to_owned();
         // send_msg(request_message.into());
@@ -132,8 +128,9 @@ pub mod demo_test {
     async fn multi_cred_ld_proof_vc_from_request_demo() {
         // ----- initialize with request
 
-        let requested_holder: HolderV2<RequestPrepared<LdProofHolderCredentialIssuanceFormat>> =
-            HolderV2::with_request(&()).await.unwrap();
+        let requested_holder = HolderV2::<RequestPrepared<LdProofHolderCredentialIssuanceFormat>>::with_request(&())
+            .await
+            .unwrap();
 
         let _request_message = requested_holder.get_request().to_owned();
         // send_msg(request_message.into());

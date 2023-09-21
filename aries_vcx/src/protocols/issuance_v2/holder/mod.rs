@@ -1,3 +1,5 @@
+use std::marker::PhantomData;
+
 use ::messages::decorators::attachment::{Attachment, AttachmentData, AttachmentType};
 use messages::{
     decorators::thread::Thread,
@@ -20,6 +22,8 @@ use super::{
 };
 
 pub mod states {
+    use std::marker::PhantomData;
+
     use messages::msg_fields::protocols::{notification::ack::Ack, report_problem::ProblemReport};
 
     use super::{
@@ -27,12 +31,14 @@ pub mod states {
         HolderCredentialIssuanceFormat,
     };
 
-    pub struct ProposalPrepared {
+    pub struct ProposalPrepared<T: HolderCredentialIssuanceFormat> {
         pub proposal: ProposeCredentialV2,
+        pub _marker: PhantomData<T>,
     }
 
-    pub struct OfferReceived {
+    pub struct OfferReceived<T: HolderCredentialIssuanceFormat> {
         pub offer: OfferCredentialV2,
+        pub _marker: PhantomData<T>,
     }
 
     pub struct RequestPrepared<T: HolderCredentialIssuanceFormat> {
@@ -45,12 +51,14 @@ pub mod states {
         pub credential_received_metadata: T::StoredCredentialMetadata,
     }
 
-    pub struct Completed {
+    pub struct Complete<T: HolderCredentialIssuanceFormat> {
         pub ack: Option<Ack>,
+        pub _marker: PhantomData<T>,
     }
 
-    pub struct Failed {
+    pub struct Failed<T: HolderCredentialIssuanceFormat> {
         pub problem_report: ProblemReport,
+        pub _marker: PhantomData<T>,
     }
 }
 
@@ -107,9 +115,9 @@ pub struct HolderV2<S> {
     thread_id: String,
 }
 
-impl HolderV2<ProposalPrepared> {
+impl<T: HolderCredentialIssuanceFormat> HolderV2<ProposalPrepared<T>> {
     // initiate by creating a proposal message
-    pub async fn with_proposal<T: HolderCredentialIssuanceFormat>(
+    pub async fn with_proposal(
         input_data: &T::CreateProposalInput,
         preview: Option<CredentialPreview>, // TODO - is this the right format? may not be versioned correctly...
     ) -> VcxResult<Self> {
@@ -117,7 +125,10 @@ impl HolderV2<ProposalPrepared> {
         let proposal = create_proposal_message_from_attachment::<T>(attachment_data, preview, None);
 
         Ok(HolderV2 {
-            state: ProposalPrepared { proposal },
+            state: ProposalPrepared {
+                proposal,
+                _marker: PhantomData,
+            },
             thread_id: String::new(), // proposal.id
         })
     }
@@ -128,17 +139,20 @@ impl HolderV2<ProposalPrepared> {
     }
 
     // receive an offer in response to the proposal
-    pub fn receive_offer(self, _offer: OfferCredentialV2) -> VcxSMTransitionResult<HolderV2<OfferReceived>, Self> {
+    pub fn receive_offer(self, _offer: OfferCredentialV2) -> VcxSMTransitionResult<HolderV2<OfferReceived<T>>, Self> {
         // verify thread ID?
         todo!()
     }
 }
 
-impl HolderV2<OfferReceived> {
+impl<T: HolderCredentialIssuanceFormat> HolderV2<OfferReceived<T>> {
     // initiate by receiving an offer
     pub fn from_offer(offer: OfferCredentialV2) -> Self {
         Self {
-            state: OfferReceived { offer },
+            state: OfferReceived {
+                offer,
+                _marker: PhantomData,
+            },
             thread_id: String::new(), // offer.thid
         }
     }
@@ -148,11 +162,11 @@ impl HolderV2<OfferReceived> {
     // TODO - helper function to give consumers a clue about what format is being used
 
     // respond to offer by preparing a proposal
-    pub async fn prepare_proposal<T: HolderCredentialIssuanceFormat>(
+    pub async fn prepare_proposal(
         self,
         input_data: &T::CreateProposalInput,
         preview: Option<CredentialPreview>, // TODO - is this the right format? may not be versioned correctly...
-    ) -> VcxSMTransitionResult<HolderV2<ProposalPrepared>, Self> {
+    ) -> VcxSMTransitionResult<HolderV2<ProposalPrepared<T>>, Self> {
         let attachment_data = match T::create_proposal_attachment_content(input_data).await {
             Ok(msg) => msg,
             Err(error) => {
@@ -166,13 +180,16 @@ impl HolderV2<OfferReceived> {
             create_proposal_message_from_attachment::<T>(attachment_data, preview, Some(self.thread_id.clone()));
 
         Ok(HolderV2 {
-            state: ProposalPrepared { proposal },
+            state: ProposalPrepared {
+                proposal,
+                _marker: PhantomData,
+            },
             thread_id: self.thread_id,
         })
     }
 
     // respond to offer by preparing a request
-    pub async fn prepare_credential_request<T: HolderCredentialIssuanceFormat>(
+    pub async fn prepare_credential_request(
         self,
         input_data: &T::CreateRequestInput,
     ) -> VcxSMTransitionResult<HolderV2<RequestPrepared<T>>, Self> {
@@ -292,13 +309,13 @@ impl<T: HolderCredentialIssuanceFormat> HolderV2<CredentialReceived<T>> {
     }
 
     // prepare a problem report to refuse any more credentials and end the protocol
-    pub fn prepare_refusal_to_more_credentials(self) -> HolderV2<Failed> {
+    pub fn prepare_refusal_to_more_credentials(self) -> HolderV2<Failed<T>> {
         todo!()
     }
 
     // transition to complete and prepare an ack message if the issuer requires one
     // TODO - consider enum variants for (HolderV2<AckPrepared>, HoldverV2<Completed>)
-    pub fn prepare_ack_if_required(self) -> HolderV2<Completed> {
+    pub fn prepare_ack_if_required(self) -> HolderV2<Complete<T>> {
         // if more_available: error?? as they should either problem report, or get more
 
         // if please_ack: else None
@@ -312,13 +329,16 @@ impl<T: HolderCredentialIssuanceFormat> HolderV2<CredentialReceived<T>> {
             )
             .build();
         HolderV2 {
-            state: Completed { ack: Some(ack) },
+            state: Complete {
+                ack: Some(ack),
+                _marker: PhantomData,
+            },
             thread_id: self.thread_id,
         }
     }
 }
 
-impl HolderV2<Completed> {
+impl<T: HolderCredentialIssuanceFormat> HolderV2<Complete<T>> {
     // get the prepared ack message (if the issuer indiciated they want an ack)
     pub fn get_ack(&self) -> Option<&Ack> {
         self.state.ack.as_ref()

@@ -1,3 +1,5 @@
+use std::marker::PhantomData;
+
 use messages::msg_fields::protocols::{cred_issuance::CredentialPreview, notification::ack::Ack};
 
 use crate::{
@@ -14,6 +16,8 @@ use super::{
 };
 
 pub mod states {
+    use std::marker::PhantomData;
+
     use messages::msg_fields::protocols::notification::ack::Ack;
 
     use crate::protocols::issuance_v2::{
@@ -21,8 +25,9 @@ pub mod states {
         messages::{IssueCredentialV2, OfferCredentialV2, ProposeCredentialV2, RequestCredentialV2},
     };
 
-    pub struct ProposalReceived {
+    pub struct ProposalReceived<T: IssuerCredentialIssuanceFormat> {
         pub proposal: ProposeCredentialV2,
+        pub _marker: PhantomData<T>,
     }
 
     pub struct OfferPrepared<T: IssuerCredentialIssuanceFormat> {
@@ -46,8 +51,9 @@ pub mod states {
         pub please_ack: bool,
     }
 
-    pub struct Complete {
+    pub struct Complete<T: IssuerCredentialIssuanceFormat> {
         pub ack: Option<Ack>,
+        pub _marker: PhantomData<T>,
     }
 }
 
@@ -74,15 +80,18 @@ pub struct IssuerV2<S> {
     thread_id: String,
 }
 
-impl IssuerV2<ProposalReceived> {
+impl<T: IssuerCredentialIssuanceFormat> IssuerV2<ProposalReceived<T>> {
     pub fn from_proposal(proposal: ProposeCredentialV2) -> Self {
         IssuerV2 {
-            state: ProposalReceived { proposal },
+            state: ProposalReceived {
+                proposal,
+                _marker: PhantomData,
+            },
             thread_id: String::new(), // .id
         }
     }
 
-    pub async fn prepare_offer<T: IssuerCredentialIssuanceFormat>(
+    pub async fn prepare_offer(
         self,
         input_data: &T::CreateOfferInput,
         number_of_credentials_available: Option<u32>, // defaults to 1 if None
@@ -167,8 +176,11 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<OfferPrepared<T>> {
         &self.state.offer
     }
 
-    pub fn receive_proposal(self, proposal: ProposeCredentialV2) -> IssuerV2<ProposalReceived> {
-        let new_state = ProposalReceived { proposal };
+    pub fn receive_proposal(self, proposal: ProposeCredentialV2) -> IssuerV2<ProposalReceived<T>> {
+        let new_state = ProposalReceived {
+            proposal,
+            _marker: PhantomData,
+        };
 
         IssuerV2 {
             state: new_state,
@@ -329,7 +341,7 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<CredentialPrepared<T>> {
         true
     }
 
-    pub fn complete_without_ack(self) -> VcxSMTransitionResult<IssuerV2<Complete>, Self> {
+    pub fn complete_without_ack(self) -> VcxSMTransitionResult<IssuerV2<Complete<T>>, Self> {
         if self.is_expecting_ack() {
             return Err(RecoveredSMError {
                 error: AriesVcxError::from_msg(
@@ -340,7 +352,10 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<CredentialPrepared<T>> {
             });
         }
 
-        let new_state = Complete { ack: None };
+        let new_state = Complete {
+            ack: None,
+            _marker: PhantomData,
+        };
 
         Ok(IssuerV2 {
             state: new_state,
@@ -348,8 +363,11 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<CredentialPrepared<T>> {
         })
     }
 
-    pub fn complete_with_ack(self, ack: Ack) -> IssuerV2<Complete> {
-        let new_state = Complete { ack: Some(ack) };
+    pub fn complete_with_ack(self, ack: Ack) -> IssuerV2<Complete<T>> {
+        let new_state = Complete {
+            ack: Some(ack),
+            _marker: PhantomData,
+        };
 
         IssuerV2 {
             state: new_state,

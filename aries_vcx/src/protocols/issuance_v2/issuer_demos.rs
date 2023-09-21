@@ -21,7 +21,7 @@ mod demo_test {
                 ld_proof_vc::LdProofIssuerCredentialIssuanceFormat,
             },
             issuer::{
-                states::{CredentialPrepared, RequestReceived},
+                states::{CredentialPrepared, ProposalReceived, RequestReceived},
                 IssuerV2,
             },
             messages::{ProposeCredentialV2, RequestCredentialV2},
@@ -62,7 +62,7 @@ mod demo_test {
 
         let proposal = ProposeCredentialV2;
 
-        let issuer = IssuerV2::from_proposal(proposal);
+        let issuer = IssuerV2::<ProposalReceived<AnoncredsIssuerCredentialIssuanceFormat>>::from_proposal(proposal);
 
         // ------ respond with offer
 
@@ -78,7 +78,7 @@ mod demo_test {
         }]);
 
         let issuer = issuer
-            .prepare_offer::<AnoncredsIssuerCredentialIssuanceFormat>(&offer_data, None, Some(cred_preview), None)
+            .prepare_offer(&offer_data, None, Some(cred_preview), None)
             .await
             .unwrap();
 
@@ -126,14 +126,11 @@ mod demo_test {
 
         let proposal = ProposeCredentialV2;
 
-        let issuer = IssuerV2::from_proposal(proposal);
+        let issuer = IssuerV2::<ProposalReceived<LdProofIssuerCredentialIssuanceFormat>>::from_proposal(proposal);
 
         // ------ respond with offer
 
-        let issuer = issuer
-            .prepare_offer::<LdProofIssuerCredentialIssuanceFormat>(&(), None, None, None)
-            .await
-            .unwrap();
+        let issuer = issuer.prepare_offer(&(), None, None, None).await.unwrap();
 
         let _offer = issuer.get_offer();
         // send_msg(offer.into())
