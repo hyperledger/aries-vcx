@@ -1,20 +1,9 @@
-use aries_vcx::{
-    aries_vcx_core::wallet::indy::{wallet::delete_wallet, WalletConfig},
-    global::settings::{
-        reset_config_values_ariesvcx, CONFIG_WALLET_KEY, CONFIG_WALLET_KEY_DERIVATION,
-        CONFIG_WALLET_NAME, CONFIG_WALLET_TYPE, DEFAULT_POOL_NAME, DEFAULT_WALLET_NAME,
-        UNINITIALIZED_WALLET_KEY, WALLET_KDF_DEFAULT,
-    },
-};
+use aries_vcx::global::settings::reset_config_values_ariesvcx;
 
-use crate::{
-    api_vcx::api_global::{
-        agency_client::reset_main_agency_client,
-        pool::{close_main_pool, reset_ledger_components},
-        settings::get_config_value,
-        wallet::close_main_wallet,
-    },
-    errors::error::LibvcxResult,
+use crate::api_vcx::api_global::{
+    agency_client::reset_main_agency_client,
+    pool::{close_main_pool, reset_ledger_components},
+    wallet::close_main_wallet,
 };
 
 pub fn state_vcx_shutdown() {
@@ -43,14 +32,11 @@ pub fn state_vcx_shutdown() {
 
 #[cfg(test)]
 pub mod tests {
-    use aries_vcx::{
-        aries_vcx_core::INVALID_WALLET_HANDLE,
-        utils::{
-            devsetup::SetupMocks,
-            mockdata::{
-                mockdata_credex::ARIES_CREDENTIAL_OFFER,
-                mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION,
-            },
+    use aries_vcx::utils::{
+        devsetup::SetupMocks,
+        mockdata::{
+            mockdata_credex::ARIES_CREDENTIAL_OFFER,
+            mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION,
         },
     };
 
@@ -98,13 +84,13 @@ pub mod tests {
         let credential = credential_create_with_offer("name", ARIES_CREDENTIAL_OFFER).unwrap();
 
         state_vcx_shutdown();
-        assert_eq!(mediated_connection::is_valid_handle(connection), false);
-        assert_eq!(issuer_credential::is_valid_handle(issuer_credential), false);
-        assert_eq!(schema::is_valid_handle(schema), false);
-        assert_eq!(proof::is_valid_handle(proof), false);
-        assert_eq!(credential_def::is_valid_handle(credential_def), false);
-        assert_eq!(credential::is_valid_handle(credential), false);
-        assert_eq!(disclosed_proof::is_valid_handle(disclosed_proof), false);
+        assert!(!mediated_connection::is_valid_handle(connection));
+        assert!(!issuer_credential::is_valid_handle(issuer_credential));
+        assert!(!schema::is_valid_handle(schema));
+        assert!(!proof::is_valid_handle(proof));
+        assert!(!credential_def::is_valid_handle(credential_def));
+        assert!(!credential::is_valid_handle(credential));
+        assert!(!disclosed_proof::is_valid_handle(disclosed_proof));
         assert!(get_main_wallet().is_err());
     }
 }
