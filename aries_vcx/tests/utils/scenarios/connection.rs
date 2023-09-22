@@ -58,15 +58,14 @@ async fn establish_connection_from_invite(
             &faber.profile.inject_wallet(),
             request,
             "http://dummy.org".parse().unwrap(),
-            vec![],
-            &DummyHttpClient,
+            vec![]
         )
         .await
         .unwrap();
     let response = inviter.get_connection_response_msg();
 
     let invitee = invitee
-        .handle_response(&alice.profile.inject_wallet(), response, &DummyHttpClient)
+        .handle_response(&alice.profile.inject_wallet(), response)
         .await
         .unwrap();
     let ack = invitee.get_ack();

@@ -32,7 +32,6 @@ use crate::{
     errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
     handlers::util::{matches_thread_id, AnyInvitation},
     protocols::connection::trait_bounds::ThreadId,
-    transport::Transport,
 };
 
 /// Convenience alias
@@ -169,15 +168,11 @@ impl InviteeConnection<Requested> {
     ///     * the thread ID of the response does not match the connection thread ID
     ///     * no recipient verkeys are provided in the response.
     ///     * decoding the signed response fails
-    pub async fn handle_response<T>(
+    pub async fn handle_response(
         self,
         wallet: &Arc<dyn BaseWallet>,
         response: Response,
-        transport: &T,
-    ) -> VcxResult<InviteeConnection<Completed>>
-    where
-        T: Transport,
-    {
+    ) -> VcxResult<InviteeConnection<Completed>> {
         let is_match = matches_thread_id!(response, self.state.thread_id());
 
         if !is_match {
@@ -197,25 +192,11 @@ impl InviteeConnection<Requested> {
             "Cannot handle response: remote verkey not found",
         ))?;
 
-        let did_doc =
-            match decode_signed_connection_response(wallet, response.content, their_vk).await {
-                Ok(con_data) => Ok(con_data.did_doc),
-                Err(err) => {
-                    error!("Request DidDoc validation failed! Sending ProblemReport...");
-
-                    self.send_problem_report(
-                        wallet,
-                        &err,
-                        self.thread_id(),
-                        &self.state.did_doc,
-                        transport,
-                    )
-                    .await;
-
-                    Err(err)
-                }
-            }?;
-
+        // todo: if response decoding fails, we should return error which can be easily
+        //       distinguished by upper layer to possibly send problem report
+        let did_doc = decode_signed_connection_response(wallet, response.content, their_vk)
+            .await?
+            .did_doc;
         let state = Completed::new(did_doc, self.state.did_doc, self.state.thread_id, None);
 
         Ok(Connection {

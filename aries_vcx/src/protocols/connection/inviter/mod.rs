@@ -163,17 +163,13 @@ impl InviterConnection<Invited> {
     ///       invitation
     ///     * the [`Request`]'s DidDoc is not valid
     ///     * generating new [`PairwiseInfo`] fails
-    pub async fn handle_request<T>(
+    pub async fn handle_request(
         self,
         wallet: &Arc<dyn BaseWallet>,
         request: Request,
         new_service_endpoint: Url,
         new_routing_keys: Vec<String>,
-        transport: &T,
-    ) -> VcxResult<InviterConnection<Requested>>
-    where
-        T: Transport,
-    {
+    ) -> VcxResult<InviterConnection<Requested>> {
         trace!(
             "Connection::process_request >>> request: {:?}, service_endpoint: {}, routing_keys: \
              {:?}",
@@ -186,27 +182,11 @@ impl InviterConnection<Invited> {
         // Request
         verify_thread_id(self.thread_id(), &request.clone().into())?;
 
-        // If the request's DidDoc validation fails, we generate and send a ProblemReport.
-        // We then return early with the provided error.
-        if let Err(err) = request.content.connection.did_doc.validate() {
-            error!("Request DidDoc validation failed! Sending ProblemReport...");
-
-            self.send_problem_report(
-                wallet,
-                &err,
-                request
-                    .decorators
-                    .thread
-                    .as_ref()
-                    .map(|t| t.thid.as_str())
-                    .unwrap_or(request.id.as_str()),
-                &request.content.connection.did_doc,
-                transport,
-            )
-            .await;
-
-            Err(err)?;
-        }
+        // todo: if request validation fails, we should return error which can be easily
+        //       distinguished by upper layer to possibly send problem report
+        //       Although in this case, since the did_doc itself is invalid, it's questionable if
+        // it's       make any sense for caller to even try that.
+        request.content.connection.did_doc.validate()?;
 
         // Generate new pairwise info that will be used from this point on
         // and incorporate that into the response.
