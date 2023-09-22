@@ -145,10 +145,10 @@ impl BaseWallet for MockWallet {
     }
 
     async fn unpack_message(&self, msg: &[u8]) -> VcxCoreResult<UnpackMessageOutput> {
-        Ok(UnpackMessageOutput{
-            message: format!("{:?}", msg), 
-            recipient_verkey: "".to_owned(), 
-            sender_verkey: None
+        Ok(UnpackMessageOutput {
+            message: format!("{:?}", msg),
+            recipient_verkey: "".to_owned(),
+            sender_verkey: None,
         })
     }
 }

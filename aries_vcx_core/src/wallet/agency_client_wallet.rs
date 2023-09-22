@@ -166,9 +166,9 @@ impl BaseWallet for AgencyClientWallet {
 
     async fn unpack_message(&self, msg: &[u8]) -> VcxCoreResult<UnpackMessageOutput> {
         let unpack_json_bytes = self.inner.unpack_message(msg).await?;
-        serde_json::from_slice(&unpack_json_bytes[..])
-        .map_err(|err| AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::ParsingError, err.to_string()))
-        
+        serde_json::from_slice(&unpack_json_bytes[..]).map_err(|err| {
+            AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::ParsingError, err.to_string())
+        })
     }
 
     #[cfg(feature = "vdrtools_wallet")]
@@ -230,12 +230,12 @@ impl BaseAgencyClientWallet for BaseWalletAgencyClientWallet {
                 format!("A VCXError occured while calling unpack_message: {e:?}"),
             )
         })?;
-        serde_json::to_vec(&unpack)
-            .map_err(|err| AgencyClientError::from_msg(
+        serde_json::to_vec(&unpack).map_err(|err| {
+            AgencyClientError::from_msg(
                 AgencyClientErrorKind::UnknownError,
                 format!("A VCXError occured while calling unpack_message: {err:?}"),
-            ))
-
+            )
+        })
     }
 }
 

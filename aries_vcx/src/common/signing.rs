@@ -103,8 +103,7 @@ pub async fn unpack_message_to_string(
             "Failed to unpack message",
         )
     })?;
-    serde_json::to_string(&unpack_msg)
-    .map_err(|_| {
+    serde_json::to_string(&unpack_msg).map_err(|_| {
         AriesVcxError::from_msg(
             AriesVcxErrorKind::InvalidMessageFormat,
             "Failed to convert message to utf8 string",
