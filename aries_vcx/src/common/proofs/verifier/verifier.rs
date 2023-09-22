@@ -277,7 +277,7 @@ pub mod integration_tests {
             false,
         )
         .await;
-        tokio::time::sleep(Duration::from_millis(500)).await;
+        std::thread::sleep(Duration::from_millis(500));
 
         let cred_id = create_and_write_credential(
             anoncreds_issuer,

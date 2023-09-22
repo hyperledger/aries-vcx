@@ -46,7 +46,7 @@ pub async fn create_and_write_test_schema(
         .publish_schema(&schema_json, submitter_did, None)
         .await
         .unwrap();
-    tokio::time::sleep(Duration::from_millis(1000)).await;
+    std::thread::sleep(Duration::from_millis(500));
     Schema::create_from_ledger_json(&schema_json, "", &schema_id).unwrap()
 }
 
