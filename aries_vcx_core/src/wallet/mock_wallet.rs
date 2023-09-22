@@ -13,6 +13,8 @@ use crate::{
     wallet::base_wallet::BaseWallet,
 };
 
+use super::structs_io::UnpackMessageOutput;
+
 #[derive(Debug)]
 pub struct MockWallet;
 
@@ -142,7 +144,11 @@ impl BaseWallet for MockWallet {
         Ok(msg.to_vec())
     }
 
-    async fn unpack_message(&self, msg: &[u8]) -> VcxCoreResult<Vec<u8>> {
-        Ok(msg.to_vec())
+    async fn unpack_message(&self, msg: &[u8]) -> VcxCoreResult<UnpackMessageOutput> {
+        Ok(UnpackMessageOutput{
+            message: format!("{:?}", msg), 
+            recipient_verkey: "".to_owned(), 
+            sender_verkey: None
+        })
     }
 }
