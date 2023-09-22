@@ -127,7 +127,20 @@ impl AgencyClient {
     }
 
     pub fn new() -> Self {
-        AgencyClient {
+        Self::default()
+    }
+
+    // todo: use this in favor of `fn new()`
+    // pub fn new(config: &str, wallet_handle: WalletHandle, validate: bool) ->
+    // AgencyClientResult<Self> {     let mut agency_client = Self::default();
+    //     agency_client.process_config_string(config, wallet_handle, validate)?;
+    //     Ok(agency_client)
+    // }
+}
+
+impl Default for AgencyClient {
+    fn default() -> Self {
+        Self {
             wallet: Arc::new(StubAgencyClientWallet {}),
             agency_url: "http://127.0.0.1:8080"
                 .parse()
@@ -140,11 +153,4 @@ impl AgencyClient {
             my_vk: "".to_string(),
         }
     }
-
-    // todo: use this in favor of `fn new()`
-    // pub fn new(config: &str, wallet_handle: WalletHandle, validate: bool) ->
-    // AgencyClientResult<Self> {     let mut agency_client = Self::default();
-    //     agency_client.process_config_string(config, wallet_handle, validate)?;
-    //     Ok(agency_client)
-    // }
 }

@@ -5,9 +5,11 @@ use std::{
 
 #[cfg(feature = "anoncreds_credx")]
 use aries_vcx::aries_vcx_core::anoncreds::credx_anoncreds::IndyCredxAnonCreds;
+#[cfg(feature = "anoncreds_vdrtools")]
+use aries_vcx::aries_vcx_core::anoncreds::indy_anoncreds::IndySdkAnonCreds;
 use aries_vcx::{
     aries_vcx_core::{
-        anoncreds::{base_anoncreds::BaseAnonCreds, indy_anoncreds::IndySdkAnonCreds},
+        anoncreds::base_anoncreds::BaseAnonCreds,
         wallet,
         wallet::{
             base_wallet::BaseWallet,
