@@ -94,7 +94,7 @@ jobs:
           echo "SKIP_CI ${{ needs.workflow-setup.outputs.SKIP_CI }}"
           echo "DOCKER_IMG_CACHED_VDRPROXY ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_VDRPROXY }}"
 
-  clippy:
+  workspace_clippy:
     runs-on: ubuntu-20.04
     steps:
       - name: "Git checkout"
@@ -108,49 +108,103 @@ jobs:
         run: |
           sudo apt-get update -y
           sudo apt-get install -y libsodium-dev libssl-dev libzmq3-dev
-      - name: "Verify clippy warnings"
+      - name: "Verify clippy across the entire workspace with default features"
         run: |
-          cargo clippy
+          cargo clippy --tests --all-features
+        env:
+          RUSTFLAGS: -D warnings
 
-  check-did-resolver-feature-variants:
+  aries_vcx_clippy:
     runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        backend: ["vdrtools", "modular_libs", "vdr_proxy_ledger"]
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: ${{ env.RUST_TOOLCHAIN_VERSON }}
+          components: clippy
       - name: "Install dependencies"
         shell: bash
         run: |
           sudo apt-get update -y
           sudo apt-get install -y libsodium-dev libssl-dev libzmq3-dev
-      - name: "Verify aries_vcx compiles with different dependency feature variants"
+      - name: "Verify clippy across the entire workspace with default features"
         run: |
-          cd did_resolver_sov
-          cargo check
+          cargo clippy -p aries-vcx --features legacy_proof,migration --features ${{ matrix.backend }} --no-default-features
+        env:
+          RUSTFLAGS: -D warnings
 
-  check-aries-vcx-feature-variants:
+  aries_vcx_core_clippy:
     runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        backend: ["vdrtools_anoncreds", "modular_libs", "vdr_proxy_ledger"]
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: ${{ env.RUST_TOOLCHAIN_VERSON }}
-          components: rustfmt, clippy
+          components: clippy
       - name: "Install dependencies"
         shell: bash
         run: |
           sudo apt-get update -y
           sudo apt-get install -y libsodium-dev libssl-dev libzmq3-dev
-      - name: "Verify aries_vcx compiles with different dependency feature variants"
+      - name: "Verify clippy across the entire workspace with default features"
         run: |
-          cargo check --tests --all-features
-          cd aries_vcx
-          cargo check --no-default-features
-          cargo check --features vdrtools --no-default-features
-          cargo check --features modular_libs --no-default-features
+          cargo clippy -p aries_vcx_core --features legacy_proof,vdrtools_wallet --features ${{ matrix.backend }}
+        env:
+          RUSTFLAGS: -D warnings
+
+  libvcx_core_clippy:
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        backend: ["anoncreds_credx", "anoncreds_vdrtools"]
+    steps:
+      - name: "Git checkout"
+        uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ env.RUST_TOOLCHAIN_VERSON }}
+          components: clippy
+      - name: "Install dependencies"
+        shell: bash
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y libsodium-dev libssl-dev libzmq3-dev
+      - name: "Verify clippy across the entire workspace with default features"
+        run: |
+          cargo clippy -p libvcx_core --features ${{ matrix.backend }}
+        env:
+          RUSTFLAGS: -D warnings
+
+  node_wrapper_clippy:
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        backend: ["anoncreds_credx", "anoncreds_vdrtools"]
+    steps:
+      - name: "Git checkout"
+        uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ env.RUST_TOOLCHAIN_VERSON }}
+          components: clippy
+      - name: "Install dependencies"
+        shell: bash
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y libsodium-dev libssl-dev libzmq3-dev
+      - name: "Verify clippy across the entire workspace with default features"
+        run: |
+          cargo clippy -p vcx-napi-rs --features ${{ matrix.backend }}
+        env:
+          RUSTFLAGS: -D warnings
 
   ##########################################################################################
   ##############################   DOCKER BUILD   ##########################################

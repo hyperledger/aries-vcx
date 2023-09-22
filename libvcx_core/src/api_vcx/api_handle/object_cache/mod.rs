@@ -111,6 +111,7 @@ where
         }
     }
 
+    #[allow(clippy::await_holding_lock)]
     pub async fn get_async<'up, F: 'up, R>(&self, handle: u32, closure: F) -> LibvcxResult<R>
     where
         for<'r> F: Fn(&'r T, [&'r &'up (); 0]) -> BoxFuture<'r, LibvcxResult<R>>,
@@ -163,6 +164,7 @@ where
         }
     }
 
+    #[allow(clippy::await_holding_lock)]
     pub async fn get_mut_async<'up, F: 'up, R>(&self, handle: u32, closure: F) -> LibvcxResult<R>
     where
         for<'r> F: Fn(&'r mut T, [&'r &'up (); 0]) -> BoxFuture<'r, LibvcxResult<R>>,
@@ -272,6 +274,7 @@ where
         Ok(())
     }
 
+    #[allow(clippy::len_without_is_empty)]
     pub fn len(&self) -> LibvcxResult<usize> {
         let store = self._lock_store_read()?;
         Ok(store.len())
@@ -297,7 +300,7 @@ mod tests {
 
         let test: ObjectCache<u32> = ObjectCache::new("cache1-u32");
         let handle = test.add(2222).unwrap();
-        let rtn = test.get(handle, |obj| Ok(obj.clone()));
+        let rtn = test.get(handle, |obj| Ok(*obj));
         assert_eq!(2222, rtn.unwrap())
     }
 

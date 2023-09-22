@@ -69,10 +69,7 @@ impl CreateKeyBuilder {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{
-        agency_client::AgencyClient, errors::error::AgencyClientErrorKind,
-        testing::test_utils::SetupMocks,
-    };
+    use crate::errors::error::AgencyClientErrorKind;
 
     #[test]
     #[cfg(feature = "general_test")]

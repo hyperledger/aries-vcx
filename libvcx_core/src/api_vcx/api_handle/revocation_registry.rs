@@ -6,7 +6,7 @@ use aries_vcx::{
 use crate::{
     api_vcx::{
         api_global::{
-            profile::{get_main_anoncreds, get_main_anoncreds_ledger_write, get_main_profile},
+            profile::{get_main_anoncreds, get_main_anoncreds_ledger_write},
             settings::get_config_value,
         },
         api_handle::object_cache::ObjectCache,

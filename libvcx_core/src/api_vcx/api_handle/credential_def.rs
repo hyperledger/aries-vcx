@@ -9,8 +9,7 @@ use crate::{
     api_vcx::{
         api_global::{
             profile::{
-                get_main_anoncreds, get_main_anoncreds_ledger_read,
-                get_main_anoncreds_ledger_write, get_main_profile,
+                get_main_anoncreds, get_main_anoncreds_ledger_read, get_main_anoncreds_ledger_write,
             },
             settings::get_config_value,
         },
@@ -60,7 +59,6 @@ pub async fn create(
 pub async fn publish(handle: u32) -> LibvcxResult<()> {
     let mut cd = CREDENTIALDEF_MAP.get_cloned(handle)?;
     if !cd.was_published() {
-        let profile = get_main_profile();
         cd = cd
             .publish_cred_def(
                 &get_main_anoncreds_ledger_read()?,
@@ -107,7 +105,6 @@ pub fn release_all() {
 
 pub async fn update_state(handle: u32) -> LibvcxResult<u32> {
     let mut cd = CREDENTIALDEF_MAP.get_cloned(handle)?;
-    let profile = get_main_profile();
     let res = cd.update_state(&get_main_anoncreds_ledger_read()?).await?;
     CREDENTIALDEF_MAP.insert(handle, cd)?;
     Ok(res)
@@ -297,7 +294,7 @@ pub mod tests {
 
         release_all();
 
-        assert_eq!(is_valid_handle(h1), false);
-        assert_eq!(is_valid_handle(h2), false);
+        assert!(!is_valid_handle(h1));
+        assert!(!is_valid_handle(h2));
     }
 }

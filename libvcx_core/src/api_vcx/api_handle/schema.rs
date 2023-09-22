@@ -9,8 +9,7 @@ use crate::{
     api_vcx::{
         api_global::{
             profile::{
-                get_main_anoncreds, get_main_anoncreds_ledger_read,
-                get_main_anoncreds_ledger_write, get_main_indy_ledger_read, get_main_profile,
+                get_main_anoncreds, get_main_anoncreds_ledger_read, get_main_anoncreds_ledger_write,
             },
             settings::get_config_value,
         },
@@ -149,8 +148,8 @@ pub mod test_utils {
         let schema_name: String = aries_vcx::utils::random::generate_random_schema_name();
         let schema_version: String = format!(
             "{}.{}",
-            rand::thread_rng().gen::<u32>().to_string(),
-            rand::thread_rng().gen::<u32>().to_string()
+            rand::thread_rng().gen::<u32>(),
+            rand::thread_rng().gen::<u32>()
         );
         let did = get_config_value(CONFIG_INSTITUTION_DID).unwrap();
 
@@ -280,7 +279,7 @@ pub mod tests {
         SetupGlobalsWalletPoolAgency::run(|setup| async move {
             let schema = create_and_write_test_schema(
                 &get_main_anoncreds().unwrap(),
-                &&get_main_anoncreds_ledger_write().unwrap(),
+                &get_main_anoncreds_ledger_write().unwrap(),
                 &setup.institution_did,
                 constants::DEFAULT_SCHEMA_ATTRS,
             )
@@ -358,9 +357,9 @@ pub mod tests {
 
         release_all();
 
-        assert_eq!(is_valid_handle(h1), false);
-        assert_eq!(is_valid_handle(h2), false);
-        assert_eq!(is_valid_handle(h3), false);
+        assert!(!is_valid_handle(h1));
+        assert!(!is_valid_handle(h2));
+        assert!(!is_valid_handle(h3));
     }
 
     #[test]

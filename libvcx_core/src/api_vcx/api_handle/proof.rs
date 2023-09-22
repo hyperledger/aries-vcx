@@ -14,7 +14,7 @@ use serde_json;
 use crate::{
     api_vcx::{
         api_global::profile::{
-            get_main_anoncreds, get_main_anoncreds_ledger_read, get_main_profile, get_main_wallet,
+            get_main_anoncreds, get_main_anoncreds_ledger_read, get_main_wallet,
         },
         api_handle::{
             connection, connection::HttpClient, mediated_connection, object_cache::ObjectCache,
@@ -41,7 +41,6 @@ pub async fn create_proof(
     revocation_details: String,
     name: String,
 ) -> LibvcxResult<u32> {
-    let profile = get_main_profile();
     let presentation_request = PresentationRequestData::create(&get_main_anoncreds()?, &name)
         .await?
         .set_requested_attributes_as_string(requested_attrs)?
@@ -71,7 +70,6 @@ pub async fn update_state(
         return Ok(proof.get_state().into());
     }
     let send_message = mediated_connection::send_message_closure(connection_handle).await?;
-    let profile = get_main_profile();
 
     if let Some(message) = message {
         let message: AriesMessage = serde_json::from_str(message).map_err(|err| {
@@ -91,7 +89,7 @@ pub async fn update_state(
             .process_aries_msg(
                 &get_main_anoncreds_ledger_read()?,
                 &get_main_anoncreds()?,
-                message.into(),
+                message,
             )
             .await?
         {
@@ -105,7 +103,7 @@ pub async fn update_state(
                 .process_aries_msg(
                     &get_main_anoncreds_ledger_read()?,
                     &get_main_anoncreds()?,
-                    message.into(),
+                    message,
                 )
                 .await?
             {
@@ -155,7 +153,7 @@ pub async fn update_state_nonmediated(
         .process_aries_msg(
             &get_main_anoncreds_ledger_read()?,
             &get_main_anoncreds()?,
-            message.into(),
+            message,
         )
         .await?
     {
@@ -594,9 +592,7 @@ pub mod tests {
         let proof_str = get_presentation_msg(handle_proof).unwrap();
         assert_eq!(
             proof_str,
-            mockdata_proof::ARIES_PROOF_PRESENTATION
-                .replace("\n", "")
-                .replace(" ", "")
+            mockdata_proof::ARIES_PROOF_PRESENTATION.replace(['\n', ' '], "")
         );
     }
 
@@ -632,9 +628,9 @@ pub mod tests {
         .await
         .unwrap();
         release_all();
-        assert_eq!(is_valid_handle(h1), false);
-        assert_eq!(is_valid_handle(h2), false);
-        assert_eq!(is_valid_handle(h3), false);
+        assert!(!is_valid_handle(h1));
+        assert!(!is_valid_handle(h2));
+        assert!(!is_valid_handle(h3));
     }
 
     #[tokio::test]

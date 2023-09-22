@@ -6,7 +6,6 @@ use aries_vcx::{
     messages::AriesMessage,
     protocols::{issuance::issuer::state_machine::IssuerState, SendClosure},
 };
-use libc::send;
 use serde_json;
 
 use crate::{
@@ -56,11 +55,11 @@ pub async fn update_state(
                 ),
             )
         })?;
-        credential.process_aries_msg(msg.into()).await?;
+        credential.process_aries_msg(msg).await?;
     } else {
         let messages = mediated_connection::get_messages(connection_handle).await?;
         if let Some((uid, msg)) = issuer_find_message_to_handle(&credential, messages) {
-            credential.process_aries_msg(msg.into()).await?;
+            credential.process_aries_msg(msg).await?;
             mediated_connection::update_message_status(connection_handle, &uid).await?;
         }
     }
@@ -71,7 +70,7 @@ pub async fn update_state(
 
 pub async fn update_state_with_message_nonmediated(
     handle: u32,
-    connection_handle: u32,
+    _connection_handle: u32,
     message: &str,
 ) -> LibvcxResult<u32> {
     trace!("issuer_credential::update_state_nonmediated >>> ");
@@ -79,13 +78,6 @@ pub async fn update_state_with_message_nonmediated(
     if credential.is_terminal_state() {
         return Ok(credential.get_state().into());
     }
-
-    let con = connection::get_cloned_generic_connection(&connection_handle)?;
-    let wallet = get_main_wallet()?;
-
-    let send_message: SendClosure = Box::new(|msg: AriesMessage| {
-        Box::pin(async move { con.send_message(&wallet, &msg, &HttpClient).await })
-    });
 
     let message: AriesMessage = serde_json::from_str(message).map_err(|err| {
         LibvcxError::from_msg(
@@ -96,7 +88,7 @@ pub async fn update_state_with_message_nonmediated(
             ),
         )
     })?;
-    credential.process_aries_msg(message.into()).await?;
+    credential.process_aries_msg(message).await?;
 
     let res: u32 = credential.get_state().into();
     ISSUER_CREDENTIAL_MAP.insert(handle, credential)?;
@@ -214,7 +206,7 @@ pub async fn send_credential_offer_v2(
     credential_handle: u32,
     connection_handle: u32,
 ) -> LibvcxResult<()> {
-    let mut credential = ISSUER_CREDENTIAL_MAP.get_cloned(credential_handle)?;
+    let credential = ISSUER_CREDENTIAL_MAP.get_cloned(credential_handle)?;
     let send_closure = mediated_connection::send_message_closure(connection_handle).await?;
     let credential_offer = credential.get_credential_offer_msg()?;
     send_closure(credential_offer).await?;
@@ -226,7 +218,7 @@ pub async fn send_credential_offer_nonmediated(
     credential_handle: u32,
     connection_handle: u32,
 ) -> LibvcxResult<()> {
-    let mut credential = ISSUER_CREDENTIAL_MAP.get_cloned(credential_handle)?;
+    let credential = ISSUER_CREDENTIAL_MAP.get_cloned(credential_handle)?;
 
     let con = connection::get_cloned_generic_connection(&connection_handle)?;
     let wallet = get_main_wallet()?;
@@ -474,8 +466,8 @@ pub mod tests {
         let h2 = _issuer_credential_create();
         let h3 = _issuer_credential_create();
         release_all();
-        assert_eq!(is_valid_handle(h1), false);
-        assert_eq!(is_valid_handle(h2), false);
-        assert_eq!(is_valid_handle(h3), false);
+        assert!(!is_valid_handle(h1));
+        assert!(!is_valid_handle(h2));
+        assert!(!is_valid_handle(h3));
     }
 }
