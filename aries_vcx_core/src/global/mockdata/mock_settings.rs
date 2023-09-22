@@ -10,6 +10,7 @@ lazy_static! {
         RwLock::new(HashMap::new());
 }
 
+#[allow(dead_code)]
 pub fn get_mock_creds_retrieved_for_proof_request() -> Option<String> {
     let config = MOCK_SETTINGS
         .read()
