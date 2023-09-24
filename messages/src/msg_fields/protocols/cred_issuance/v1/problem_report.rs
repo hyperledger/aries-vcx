@@ -8,23 +8,23 @@ use crate::{
     msg_parts::MsgParts,
 };
 
-pub type CredIssuanceProblemReport =
-    MsgParts<CredIssuanceProblemReportContent, ProblemReportDecorators>;
+pub type CredIssuanceV1ProblemReport =
+    MsgParts<CredIssuanceV1ProblemReportContent, ProblemReportDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder)]
 #[serde(transparent)]
-pub struct CredIssuanceProblemReportContent {
+pub struct CredIssuanceV1ProblemReportContent {
     pub inner: ProblemReportContent,
 }
 
-impl From<ProblemReportContent> for CredIssuanceProblemReportContent {
+impl From<ProblemReportContent> for CredIssuanceV1ProblemReportContent {
     fn from(value: ProblemReportContent) -> Self {
         Self { inner: value }
     }
 }
 
-impl From<CredIssuanceProblemReport> for ProblemReport {
-    fn from(value: CredIssuanceProblemReport) -> Self {
+impl From<CredIssuanceV1ProblemReport> for ProblemReport {
+    fn from(value: CredIssuanceV1ProblemReport) -> Self {
         Self::builder()
             .id(value.id)
             .content(value.content.inner)
@@ -60,7 +60,7 @@ mod tests {
             .code("test_problem_report_code".to_owned())
             .build();
 
-        let content: CredIssuanceProblemReportContent = ProblemReportContent::builder()
+        let content: CredIssuanceV1ProblemReportContent = ProblemReportContent::builder()
             .description(description)
             .build();
         let decorators = ProblemReportDecorators::default();
@@ -121,7 +121,7 @@ mod tests {
             "fix-hint~l10n": decorators.fix_hint_locale
         });
 
-        let content = CredIssuanceProblemReportContent::builder()
+        let content = CredIssuanceV1ProblemReportContent::builder()
             .inner(content)
             .build();
 

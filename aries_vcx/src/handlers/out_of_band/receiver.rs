@@ -8,8 +8,8 @@ use messages::{
     msg_fields::protocols::{
         cred_issuance::{
             v1::{
-                issue_credential::IssueCredential, offer_credential::OfferCredential,
-                request_credential::RequestCredential, CredentialIssuanceV1,
+                issue_credential::IssueCredentialV1, offer_credential::OfferCredentialV1,
+                request_credential::RequestCredentialV1, CredentialIssuanceV1,
             },
             CredentialIssuance,
         },
@@ -197,7 +197,7 @@ impl OutOfBandReceiver {
                 Some(id) => match id {
                     AttachmentId::CredentialOffer => {
                         let mut offer =
-                            OfferCredential::deserialize(&attach_json).map_err(|_| {
+                            OfferCredentialV1::deserialize(&attach_json).map_err(|_| {
                                 AriesVcxError::from_msg(
                                     AriesVcxErrorKind::SerializationError,
                                     format!("Failed to deserialize attachment: {attach_json:?}"),
@@ -220,7 +220,7 @@ impl OutOfBandReceiver {
                     }
                     AttachmentId::CredentialRequest => {
                         let mut request =
-                            RequestCredential::deserialize(&attach_json).map_err(|_| {
+                            RequestCredentialV1::deserialize(&attach_json).map_err(|_| {
                                 AriesVcxError::from_msg(
                                     AriesVcxErrorKind::SerializationError,
                                     format!("Failed to deserialize attachment: {attach_json:?}"),
@@ -245,7 +245,7 @@ impl OutOfBandReceiver {
                     }
                     AttachmentId::Credential => {
                         let mut credential =
-                            IssueCredential::deserialize(&attach_json).map_err(|_| {
+                            IssueCredentialV1::deserialize(&attach_json).map_err(|_| {
                                 AriesVcxError::from_msg(
                                     AriesVcxErrorKind::SerializationError,
                                     format!("Failed to deserialize attachment: {attach_json:?}"),

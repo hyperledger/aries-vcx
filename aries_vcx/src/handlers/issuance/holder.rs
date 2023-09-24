@@ -10,11 +10,11 @@ use messages::{
     msg_fields::protocols::{
         cred_issuance::{
             v1::{
-                ack::{AckCredential, AckCredentialContent},
-                issue_credential::IssueCredential,
-                offer_credential::OfferCredential,
-                propose_credential::ProposeCredential,
-                request_credential::RequestCredential,
+                ack::{AckCredentialV1, AckCredentialV1Content},
+                issue_credential::IssueCredentialV1,
+                offer_credential::OfferCredentialV1,
+                propose_credential::ProposeCredentialV1,
+                request_credential::RequestCredentialV1,
                 CredentialIssuanceV1,
             },
             CredentialIssuance,
@@ -37,8 +37,8 @@ use crate::{
     protocols::issuance::holder::state_machine::{HolderFullState, HolderSM, HolderState},
 };
 
-fn build_credential_ack(thread_id: &str) -> AckCredential {
-    let content = AckCredentialContent::builder()
+fn build_credential_ack(thread_id: &str) -> AckCredentialV1 {
+    let content = AckCredentialV1Content::builder()
         .inner(AckContent::builder().status(AckStatus::Ok).build())
         .build();
     let decorators = AckDecorators::builder()
@@ -46,7 +46,7 @@ fn build_credential_ack(thread_id: &str) -> AckCredential {
         .timing(Timing::builder().out_time(Utc::now()).build())
         .build();
 
-    AckCredential::builder()
+    AckCredentialV1::builder()
         .id(Uuid::new_v4().to_string())
         .content(content)
         .decorators(decorators)
@@ -67,7 +67,7 @@ impl Holder {
 
     pub fn create_with_proposal(
         source_id: &str,
-        propose_credential: ProposeCredential,
+        propose_credential: ProposeCredentialV1,
     ) -> VcxResult<Holder> {
         trace!(
             "Holder::create_with_proposal >>> source_id: {:?}, propose_credential: {:?}",
@@ -80,7 +80,7 @@ impl Holder {
 
     pub fn create_from_offer(
         source_id: &str,
-        credential_offer: OfferCredential,
+        credential_offer: OfferCredentialV1,
     ) -> VcxResult<Holder> {
         trace!(
             "Holder::create_from_offer >>> source_id: {:?}, credential_offer: {:?}",
@@ -91,7 +91,7 @@ impl Holder {
         Ok(Holder { holder_sm })
     }
 
-    pub fn set_proposal(&mut self, credential_proposal: ProposeCredential) -> VcxResult<()> {
+    pub fn set_proposal(&mut self, credential_proposal: ProposeCredentialV1) -> VcxResult<()> {
         self.holder_sm = self.holder_sm.clone().set_proposal(credential_proposal)?;
         Ok(())
     }
@@ -118,10 +118,10 @@ impl Holder {
         }
     }
 
-    pub fn get_msg_credential_request(&self) -> VcxResult<RequestCredential> {
+    pub fn get_msg_credential_request(&self) -> VcxResult<RequestCredentialV1> {
         match self.holder_sm.state {
             HolderFullState::RequestSet(ref state) => {
-                let mut msg: RequestCredential = state.msg_credential_request.clone();
+                let mut msg: RequestCredentialV1 = state.msg_credential_request.clone();
                 let timing = Timing::builder().out_time(Utc::now()).build();
                 msg.decorators.timing = Some(timing);
                 Ok(msg)
@@ -145,7 +145,7 @@ impl Holder {
         &mut self,
         ledger: &Arc<dyn AnoncredsLedgerRead>,
         anoncreds: &Arc<dyn BaseAnonCreds>,
-        credential: IssueCredential,
+        credential: IssueCredentialV1,
     ) -> VcxResult<()> {
         self.holder_sm = self
             .holder_sm
@@ -179,7 +179,7 @@ impl Holder {
         self.holder_sm.get_attachment()
     }
 
-    pub fn get_offer(&self) -> VcxResult<OfferCredential> {
+    pub fn get_offer(&self) -> VcxResult<OfferCredentialV1> {
         self.holder_sm.get_offer()
     }
 

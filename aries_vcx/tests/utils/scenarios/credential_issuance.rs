@@ -24,8 +24,8 @@ use aries_vcx::{
 };
 use messages::msg_fields::protocols::{
     cred_issuance::v1::{
-        offer_credential::OfferCredential, propose_credential::ProposeCredential,
-        request_credential::RequestCredential,
+        offer_credential::OfferCredentialV1, propose_credential::ProposeCredentialV1,
+        request_credential::RequestCredentialV1,
     },
     report_problem::ProblemReport,
 };
@@ -70,13 +70,13 @@ pub async fn create_address_schema_creddef_revreg(
     (schema, cred_def, rev_reg)
 }
 
-pub fn create_holder_from_proposal(proposal: ProposeCredential) -> Holder {
+pub fn create_holder_from_proposal(proposal: ProposeCredentialV1) -> Holder {
     let holder = Holder::create_with_proposal("TEST_CREDENTIAL", proposal).unwrap();
     assert_eq!(HolderState::ProposalSet, holder.get_state());
     holder
 }
 
-pub fn create_issuer_from_proposal(proposal: ProposeCredential) -> Issuer {
+pub fn create_issuer_from_proposal(proposal: ProposeCredentialV1) -> Issuer {
     let issuer = Issuer::create_from_proposal("TEST_CREDENTIAL", &proposal).unwrap();
     assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
     assert_eq!(proposal.clone(), issuer.get_proposal().unwrap());
@@ -86,10 +86,10 @@ pub fn create_issuer_from_proposal(proposal: ProposeCredential) -> Issuer {
 pub async fn accept_credential_proposal(
     faber: &mut TestAgent,
     issuer: &mut Issuer,
-    cred_proposal: ProposeCredential,
+    cred_proposal: ProposeCredentialV1,
     rev_reg_id: Option<String>,
     tails_dir: Option<String>,
-) -> OfferCredential {
+) -> OfferCredentialV1 {
     let offer_info = OfferInfo {
         credential_json: json!(cred_proposal.content.credential_proposal.attributes).to_string(),
         cred_def_id: cred_proposal.content.cred_def_id.clone(),
@@ -109,9 +109,9 @@ pub async fn accept_credential_proposal(
 
 pub async fn accept_offer(
     alice: &mut TestAgent,
-    cred_offer: OfferCredential,
+    cred_offer: OfferCredentialV1,
     holder: &mut Holder,
-) -> RequestCredential {
+) -> RequestCredentialV1 {
     // TODO: Replace with message-specific handler
     holder
         .process_aries_msg(
@@ -140,7 +140,7 @@ pub async fn accept_offer(
 
 pub async fn decline_offer(
     alice: &mut TestAgent,
-    cred_offer: OfferCredential,
+    cred_offer: OfferCredentialV1,
     holder: &mut Holder,
 ) -> ProblemReport {
     // TODO: Replace with message-specific handler
@@ -163,7 +163,7 @@ pub async fn send_credential(
     faber: &mut TestAgent,
     issuer_credential: &mut Issuer,
     holder_credential: &mut Holder,
-    cred_request: RequestCredential,
+    cred_request: RequestCredentialV1,
     revokable: bool,
 ) {
     let thread_id = issuer_credential.get_thread_id().unwrap();
@@ -329,7 +329,7 @@ async fn create_credential_offer(
     issuer
 }
 
-async fn create_credential_request(alice: &mut TestAgent, cred_offer: OfferCredential) -> Holder {
+async fn create_credential_request(alice: &mut TestAgent, cred_offer: OfferCredentialV1) -> Holder {
     let mut holder = Holder::create_from_offer("TEST_CREDENTIAL", cred_offer).unwrap();
     assert_eq!(HolderState::OfferReceived, holder.get_state());
     holder

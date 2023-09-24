@@ -1,26 +1,26 @@
 use serde::{Deserialize, Serialize};
 use typed_builder::TypedBuilder;
 
-use super::CredentialPreview;
+use super::CredentialPreviewV1;
 use crate::{
     decorators::{attachment::Attachment, thread::Thread, timing::Timing},
     msg_parts::MsgParts,
 };
 
-pub type OfferCredential = MsgParts<OfferCredentialContent, OfferCredentialDecorators>;
+pub type OfferCredentialV1 = MsgParts<OfferCredentialV1Content, OfferCredentialV1Decorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder)]
-pub struct OfferCredentialContent {
+pub struct OfferCredentialV1Content {
     #[builder(default, setter(strip_option))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,
-    pub credential_preview: CredentialPreview,
+    pub credential_preview: CredentialPreviewV1,
     #[serde(rename = "offers~attach")]
     pub offers_attach: Vec<Attachment>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq, TypedBuilder)]
-pub struct OfferCredentialDecorators {
+pub struct OfferCredentialV1Decorators {
     #[builder(default, setter(strip_option))]
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "~thread")]
@@ -55,13 +55,13 @@ mod tests {
             .value("test_attribute_value".to_owned())
             .build();
 
-        let preview = CredentialPreview::new(vec![attribute]);
-        let content = OfferCredentialContent::builder()
+        let preview = CredentialPreviewV1::new(vec![attribute]);
+        let content = OfferCredentialV1Content::builder()
             .credential_preview(preview)
             .offers_attach(vec![make_extended_attachment()])
             .build();
 
-        let decorators = OfferCredentialDecorators::default();
+        let decorators = OfferCredentialV1Decorators::default();
 
         let expected = json!({
             "offers~attach": content.offers_attach,
@@ -83,14 +83,14 @@ mod tests {
             .value("test_attribute_value".to_owned())
             .build();
 
-        let preview = CredentialPreview::new(vec![attribute]);
-        let content = OfferCredentialContent::builder()
+        let preview = CredentialPreviewV1::new(vec![attribute]);
+        let content = OfferCredentialV1Content::builder()
             .credential_preview(preview)
             .offers_attach(vec![make_extended_attachment()])
             .comment("test_comment".to_owned())
             .build();
 
-        let decorators = OfferCredentialDecorators::builder()
+        let decorators = OfferCredentialV1Decorators::builder()
             .thread(make_extended_thread())
             .timing(make_extended_timing())
             .build();

@@ -1,4 +1,4 @@
-use messages::msg_fields::protocols::cred_issuance::v1::issue_credential::IssueCredential;
+use messages::msg_fields::protocols::cred_issuance::v1::issue_credential::IssueCredentialV1;
 
 use crate::{
     handlers::util::Status,
@@ -10,7 +10,7 @@ use crate::{
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CredentialSetState {
     pub revocation_info_v1: Option<RevocationInfoV1>,
-    pub msg_issue_credential: IssueCredential,
+    pub msg_issue_credential: IssueCredentialV1,
 }
 
 impl FinishedState {

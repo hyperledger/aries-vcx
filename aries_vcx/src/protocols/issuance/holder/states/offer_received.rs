@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
-use messages::msg_fields::protocols::cred_issuance::v1::offer_credential::OfferCredential;
+use messages::msg_fields::protocols::cred_issuance::v1::offer_credential::OfferCredentialV1;
 
 use crate::{
     errors::error::prelude::*,
@@ -13,11 +13,11 @@ use crate::{
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct OfferReceivedState {
-    pub offer: OfferCredential,
+    pub offer: OfferCredentialV1,
 }
 
 impl OfferReceivedState {
-    pub fn new(offer: OfferCredential) -> Self {
+    pub fn new(offer: OfferCredentialV1) -> Self {
         OfferReceivedState { offer }
     }
 

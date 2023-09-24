@@ -6,22 +6,22 @@ use crate::{
     msg_parts::MsgParts,
 };
 
-pub type AckCredential = MsgParts<AckCredentialContent, AckDecorators>;
+pub type AckCredentialV1 = MsgParts<AckCredentialV1Content, AckDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder)]
 #[serde(transparent)]
-pub struct AckCredentialContent {
+pub struct AckCredentialV1Content {
     pub inner: AckContent,
 }
 
-impl From<AckContent> for AckCredentialContent {
+impl From<AckContent> for AckCredentialV1Content {
     fn from(value: AckContent) -> Self {
         Self { inner: value }
     }
 }
 
-impl From<AckCredential> for Ack {
-    fn from(value: AckCredential) -> Self {
+impl From<AckCredentialV1> for Ack {
+    fn from(value: AckCredentialV1) -> Self {
         Self::builder()
             .id(value.id)
             .content(value.content.inner)
@@ -46,7 +46,7 @@ mod tests {
 
     #[test]
     fn test_minimal_ack_cred() {
-        let content: AckCredentialContent = AckContent::builder().status(AckStatus::Ok).build();
+        let content: AckCredentialV1Content = AckContent::builder().status(AckStatus::Ok).build();
 
         let decorators = AckDecorators::builder()
             .thread(make_extended_thread())
@@ -67,7 +67,7 @@ mod tests {
 
     #[test]
     fn test_extended_ack_cred() {
-        let content: AckCredentialContent = AckContent::builder().status(AckStatus::Ok).build();
+        let content: AckCredentialV1Content = AckContent::builder().status(AckStatus::Ok).build();
 
         let decorators = AckDecorators::builder()
             .thread(make_extended_thread())

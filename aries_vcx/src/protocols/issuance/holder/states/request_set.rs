@@ -1,5 +1,5 @@
 use messages::msg_fields::protocols::cred_issuance::v1::{
-    issue_credential::IssueCredential, request_credential::RequestCredential,
+    issue_credential::IssueCredentialV1, request_credential::RequestCredentialV1,
 };
 
 use crate::{
@@ -11,15 +11,15 @@ use crate::{
 pub struct RequestSetState {
     pub req_meta: String,
     pub cred_def_json: String,
-    pub msg_credential_request: RequestCredential,
+    pub msg_credential_request: RequestCredentialV1,
 }
 
-impl From<(RequestSetState, String, IssueCredential, Option<String>)> for FinishedHolderState {
+impl From<(RequestSetState, String, IssueCredentialV1, Option<String>)> for FinishedHolderState {
     fn from(
         (_, cred_id, credential, rev_reg_def_json): (
             RequestSetState,
             String,
-            IssueCredential,
+            IssueCredentialV1,
             Option<String>,
         ),
     ) -> Self {

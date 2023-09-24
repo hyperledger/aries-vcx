@@ -14,15 +14,15 @@ use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 use shared_vcx::misc::utils::CowStr;
 
 use self::{
-    ack::{AckCredential, AckCredentialContent},
-    issue_credential::{IssueCredential, IssueCredentialContent, IssueCredentialDecorators},
-    offer_credential::{OfferCredential, OfferCredentialContent, OfferCredentialDecorators},
-    problem_report::{CredIssuanceProblemReport, CredIssuanceProblemReportContent},
+    ack::{AckCredentialV1, AckCredentialV1Content},
+    issue_credential::{IssueCredentialV1, IssueCredentialV1Content, IssueCredentialV1Decorators},
+    offer_credential::{OfferCredentialV1, OfferCredentialV1Content, OfferCredentialV1Decorators},
+    problem_report::{CredIssuanceV1ProblemReport, CredIssuanceV1ProblemReportContent},
     propose_credential::{
-        ProposeCredential, ProposeCredentialContent, ProposeCredentialDecorators,
+        ProposeCredentialV1, ProposeCredentialV1Content, ProposeCredentialV1Decorators,
     },
     request_credential::{
-        RequestCredential, RequestCredentialContent, RequestCredentialDecorators,
+        RequestCredentialV1, RequestCredentialV1Content, RequestCredentialV1Decorators,
     },
 };
 use super::common::CredentialAttr;
@@ -44,12 +44,12 @@ use crate::{
 
 #[derive(Clone, Debug, From, PartialEq)]
 pub enum CredentialIssuanceV1 {
-    OfferCredential(OfferCredential),
-    ProposeCredential(ProposeCredential),
-    RequestCredential(RequestCredential),
-    IssueCredential(IssueCredential),
-    Ack(AckCredential),
-    ProblemReport(CredIssuanceProblemReport),
+    OfferCredential(OfferCredentialV1),
+    ProposeCredential(ProposeCredentialV1),
+    RequestCredential(RequestCredentialV1),
+    IssueCredential(IssueCredentialV1),
+    Ack(AckCredentialV1),
+    ProblemReport(CredIssuanceV1ProblemReport),
 }
 
 impl DelayedSerde for CredentialIssuanceV1 {
@@ -76,22 +76,22 @@ impl DelayedSerde for CredentialIssuanceV1 {
 
         match kind.map_err(D::Error::custom)? {
             CredentialIssuanceTypeV1_0::OfferCredential => {
-                OfferCredential::deserialize(deserializer).map(From::from)
+                OfferCredentialV1::deserialize(deserializer).map(From::from)
             }
             CredentialIssuanceTypeV1_0::ProposeCredential => {
-                ProposeCredential::deserialize(deserializer).map(From::from)
+                ProposeCredentialV1::deserialize(deserializer).map(From::from)
             }
             CredentialIssuanceTypeV1_0::RequestCredential => {
-                RequestCredential::deserialize(deserializer).map(From::from)
+                RequestCredentialV1::deserialize(deserializer).map(From::from)
             }
             CredentialIssuanceTypeV1_0::IssueCredential => {
-                IssueCredential::deserialize(deserializer).map(From::from)
+                IssueCredentialV1::deserialize(deserializer).map(From::from)
             }
             CredentialIssuanceTypeV1_0::Ack => {
-                AckCredential::deserialize(deserializer).map(From::from)
+                AckCredentialV1::deserialize(deserializer).map(From::from)
             }
             CredentialIssuanceTypeV1_0::ProblemReport => {
-                CredIssuanceProblemReport::deserialize(deserializer).map(From::from)
+                CredIssuanceV1ProblemReport::deserialize(deserializer).map(From::from)
             }
             CredentialIssuanceTypeV1_0::CredentialPreview => {
                 Err(utils::not_standalone_msg::<D>(kind_str))
@@ -115,16 +115,16 @@ impl DelayedSerde for CredentialIssuanceV1 {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
-pub struct CredentialPreview {
+pub struct CredentialPreviewV1 {
     #[serde(rename = "@type")]
-    msg_type: CredentialPreviewMsgType,
+    msg_type: CredentialPreviewV1MsgType,
     pub attributes: Vec<CredentialAttr>,
 }
 
-impl CredentialPreview {
+impl CredentialPreviewV1 {
     pub fn new(attributes: Vec<CredentialAttr>) -> Self {
         Self {
-            msg_type: CredentialPreviewMsgType,
+            msg_type: CredentialPreviewV1MsgType,
             attributes,
         }
     }
@@ -135,15 +135,15 @@ impl CredentialPreview {
 /// It is not a message on it's own.
 #[derive(Copy, Clone, Debug, Default, Deserialize, PartialEq)]
 #[serde(try_from = "CowStr")]
-struct CredentialPreviewMsgType;
+struct CredentialPreviewV1MsgType;
 
-impl<'a> From<&'a CredentialPreviewMsgType> for CredentialIssuanceTypeV1_0 {
-    fn from(_value: &'a CredentialPreviewMsgType) -> Self {
+impl<'a> From<&'a CredentialPreviewV1MsgType> for CredentialIssuanceTypeV1_0 {
+    fn from(_value: &'a CredentialPreviewV1MsgType) -> Self {
         CredentialIssuanceTypeV1_0::CredentialPreview
     }
 }
 
-impl<'a> TryFrom<CowStr<'a>> for CredentialPreviewMsgType {
+impl<'a> TryFrom<CowStr<'a>> for CredentialPreviewV1MsgType {
     type Error = String;
 
     fn try_from(value: CowStr) -> Result<Self, Self::Error> {
@@ -156,7 +156,7 @@ impl<'a> TryFrom<CowStr<'a>> for CredentialPreviewMsgType {
             if let Ok(CredentialIssuanceTypeV1_0::CredentialPreview) =
                 CredentialIssuanceTypeV1_0::from_str(value.kind)
             {
-                return Ok(CredentialPreviewMsgType);
+                return Ok(CredentialPreviewV1MsgType);
             }
         }
 
@@ -164,7 +164,7 @@ impl<'a> TryFrom<CowStr<'a>> for CredentialPreviewMsgType {
     }
 }
 
-impl Serialize for CredentialPreviewMsgType {
+impl Serialize for CredentialPreviewV1MsgType {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
@@ -176,42 +176,50 @@ impl Serialize for CredentialPreviewMsgType {
 }
 
 transit_to_aries_msg!(
-    OfferCredentialContent: OfferCredentialDecorators,
+    OfferCredentialV1Content: OfferCredentialV1Decorators,
     CredentialIssuanceV1
 );
 transit_to_aries_msg!(
-    ProposeCredentialContent: ProposeCredentialDecorators,
+    ProposeCredentialV1Content: ProposeCredentialV1Decorators,
     CredentialIssuanceV1
 );
 transit_to_aries_msg!(
-    RequestCredentialContent: RequestCredentialDecorators,
+    RequestCredentialV1Content: RequestCredentialV1Decorators,
     CredentialIssuanceV1
 );
 transit_to_aries_msg!(
-    IssueCredentialContent: IssueCredentialDecorators,
+    IssueCredentialV1Content: IssueCredentialV1Decorators,
     CredentialIssuanceV1
 );
-transit_to_aries_msg!(AckCredentialContent: AckDecorators, CredentialIssuanceV1);
+transit_to_aries_msg!(AckCredentialV1Content: AckDecorators, CredentialIssuanceV1);
 transit_to_aries_msg!(
-    CredIssuanceProblemReportContent: ProblemReportDecorators,
+    CredIssuanceV1ProblemReportContent: ProblemReportDecorators,
     CredentialIssuanceV1
 );
 
-into_msg_with_type!(OfferCredential, CredentialIssuanceTypeV1_0, OfferCredential);
 into_msg_with_type!(
-    ProposeCredential,
+    OfferCredentialV1,
+    CredentialIssuanceTypeV1_0,
+    OfferCredential
+);
+into_msg_with_type!(
+    ProposeCredentialV1,
     CredentialIssuanceTypeV1_0,
     ProposeCredential
 );
 into_msg_with_type!(
-    RequestCredential,
+    RequestCredentialV1,
     CredentialIssuanceTypeV1_0,
     RequestCredential
 );
-into_msg_with_type!(IssueCredential, CredentialIssuanceTypeV1_0, IssueCredential);
-into_msg_with_type!(AckCredential, CredentialIssuanceTypeV1_0, Ack);
 into_msg_with_type!(
-    CredIssuanceProblemReport,
+    IssueCredentialV1,
+    CredentialIssuanceTypeV1_0,
+    IssueCredential
+);
+into_msg_with_type!(AckCredentialV1, CredentialIssuanceTypeV1_0, Ack);
+into_msg_with_type!(
+    CredIssuanceV1ProblemReport,
     CredentialIssuanceTypeV1_0,
     ProblemReport
 );

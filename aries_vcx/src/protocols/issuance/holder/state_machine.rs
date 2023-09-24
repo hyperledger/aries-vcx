@@ -9,11 +9,11 @@ use messages::{
     msg_fields::protocols::{
         cred_issuance::{
             v1::{
-                issue_credential::IssueCredential,
-                offer_credential::OfferCredential,
-                propose_credential::ProposeCredential,
+                issue_credential::IssueCredentialV1,
+                offer_credential::OfferCredentialV1,
+                propose_credential::ProposeCredentialV1,
                 request_credential::{
-                    RequestCredential, RequestCredentialContent, RequestCredentialDecorators,
+                    RequestCredentialV1, RequestCredentialV1Content, RequestCredentialV1Decorators,
                 },
                 CredentialIssuanceV1,
             },
@@ -83,20 +83,20 @@ impl fmt::Display for HolderFullState {
 fn _build_credential_request_msg(
     credential_request_attach: String,
     thread_id: &str,
-) -> RequestCredential {
-    let content = RequestCredentialContent::builder()
+) -> RequestCredentialV1 {
+    let content = RequestCredentialV1Content::builder()
         .requests_attach(vec![make_attach_from_str!(
             &credential_request_attach,
             AttachmentId::CredentialRequest.as_ref().to_string()
         )])
         .build();
 
-    let decorators = RequestCredentialDecorators::builder()
+    let decorators = RequestCredentialV1Decorators::builder()
         .thread(Thread::builder().thid(thread_id.to_owned()).build())
         .timing(Timing::builder().out_time(Utc::now()).build())
         .build();
 
-    RequestCredential::builder()
+    RequestCredentialV1::builder()
         .id(Uuid::new_v4().to_string())
         .content(content)
         .decorators(decorators)
@@ -112,7 +112,7 @@ impl HolderSM {
         }
     }
 
-    pub fn from_offer(offer: OfferCredential, source_id: String) -> Self {
+    pub fn from_offer(offer: OfferCredentialV1, source_id: String) -> Self {
         HolderSM {
             thread_id: offer.id.clone(),
             state: HolderFullState::OfferReceived(OfferReceivedState::new(offer)),
@@ -120,7 +120,7 @@ impl HolderSM {
         }
     }
 
-    pub fn with_proposal(propose_credential: ProposeCredential, source_id: String) -> Self {
+    pub fn with_proposal(propose_credential: ProposeCredentialV1, source_id: String) -> Self {
         HolderSM {
             thread_id: propose_credential.id.clone(),
             state: HolderFullState::ProposalSet(ProposalSetState::new(propose_credential)),
@@ -146,7 +146,7 @@ impl HolderSM {
     }
 
     #[allow(dead_code)]
-    pub fn get_proposal(&self) -> VcxResult<ProposeCredential> {
+    pub fn get_proposal(&self) -> VcxResult<ProposeCredentialV1> {
         match &self.state {
             HolderFullState::ProposalSet(state) => Ok(state.credential_proposal.clone()),
             _ => Err(AriesVcxError::from_msg(
@@ -156,7 +156,7 @@ impl HolderSM {
         }
     }
 
-    pub fn set_proposal(self, proposal: ProposeCredential) -> VcxResult<Self> {
+    pub fn set_proposal(self, proposal: ProposeCredentialV1) -> VcxResult<Self> {
         trace!("HolderSM::set_proposal >>");
         verify_thread_id(
             &self.thread_id,
@@ -183,7 +183,7 @@ impl HolderSM {
         Ok(Self { state, ..self })
     }
 
-    pub fn receive_offer(self, offer: OfferCredential) -> VcxResult<Self> {
+    pub fn receive_offer(self, offer: OfferCredentialV1) -> VcxResult<Self> {
         trace!("HolderSM::receive_offer >>");
         verify_thread_id(
             &self.thread_id,
@@ -266,7 +266,7 @@ impl HolderSM {
         self,
         ledger: &'a Arc<dyn AnoncredsLedgerRead>,
         anoncreds: &'a Arc<dyn BaseAnonCreds>,
-        credential: IssueCredential,
+        credential: IssueCredentialV1,
     ) -> VcxResult<Self> {
         trace!("HolderSM::receive_credential >>");
         let state = match self.state {
@@ -408,7 +408,7 @@ impl HolderSM {
         }
     }
 
-    pub fn get_offer(&self) -> VcxResult<OfferCredential> {
+    pub fn get_offer(&self) -> VcxResult<OfferCredentialV1> {
         match self.state {
             HolderFullState::OfferReceived(ref state) => Ok(state.offer.clone()),
             _ => Err(AriesVcxError::from_msg(
@@ -534,7 +534,7 @@ fn _parse_rev_reg_id_from_credential(credential: &str) -> VcxResult<Option<Strin
 async fn _store_credential(
     ledger: &Arc<dyn AnoncredsLedgerRead>,
     anoncreds: &Arc<dyn BaseAnonCreds>,
-    credential: &IssueCredential,
+    credential: &IssueCredentialV1,
     req_meta: &str,
     cred_def_json: &str,
 ) -> VcxResult<(String, Option<String>)> {
@@ -590,8 +590,8 @@ async fn build_credential_request_msg(
     anoncreds: &Arc<dyn BaseAnonCreds>,
     thread_id: String,
     my_pw_did: String,
-    offer: &OfferCredential,
-) -> VcxResult<(RequestCredential, String, String)> {
+    offer: &OfferCredentialV1,
+) -> VcxResult<(RequestCredentialV1, String, String)> {
     trace!(
         "Holder::_make_credential_request >>> my_pw_did: {:?}, offer: {:?}",
         my_pw_did,
