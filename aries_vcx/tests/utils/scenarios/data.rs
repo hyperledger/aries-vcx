@@ -1,10 +1,10 @@
 use messages::{
     misc::MimeType,
     msg_fields::protocols::{
-        cred_issuance::{
+        cred_issuance::{v1::{
             propose_credential::{ProposeCredential, ProposeCredentialContent},
-            CredentialAttr, CredentialPreview,
-        },
+            CredentialPreview,
+        }, common::CredentialAttr},
         present_proof::propose::PresentationAttr,
     },
 };

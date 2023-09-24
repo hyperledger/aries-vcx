@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use messages::{
-    msg_fields::protocols::{cred_issuance::CredentialIssuance, notification::Notification},
+    msg_fields::protocols::{cred_issuance::v1::CredentialIssuance, notification::Notification},
     AriesMessage,
 };
 

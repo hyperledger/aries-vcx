@@ -6,12 +6,12 @@ use aries_vcx_core::{
 use messages::{
     misc::MimeType,
     msg_fields::protocols::{
-        cred_issuance::{
+        cred_issuance::{v1::{
             ack::AckCredential, issue_credential::IssueCredential,
             offer_credential::OfferCredential, propose_credential::ProposeCredential,
-            request_credential::RequestCredential, CredentialAttr, CredentialIssuance,
+            request_credential::RequestCredential, CredentialIssuance,
             CredentialPreview,
-        },
+        }, common::CredentialAttr},
         notification::Notification,
         report_problem::ProblemReport,
     },

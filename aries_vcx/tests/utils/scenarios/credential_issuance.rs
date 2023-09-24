@@ -23,7 +23,7 @@ use aries_vcx::{
     utils::constants::TEST_TAILS_URL,
 };
 use messages::msg_fields::protocols::{
-    cred_issuance::{
+    cred_issuance::v1::{
         offer_credential::OfferCredential, propose_credential::ProposeCredential,
         request_credential::RequestCredential,
     },

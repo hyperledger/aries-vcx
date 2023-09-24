@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
-use messages::msg_fields::protocols::cred_issuance::propose_credential::ProposeCredential;
+use messages::msg_fields::protocols::cred_issuance::v1::propose_credential::ProposeCredential;
 
 use crate::{errors::error::prelude::*, protocols::issuance::is_cred_def_revokable};
 

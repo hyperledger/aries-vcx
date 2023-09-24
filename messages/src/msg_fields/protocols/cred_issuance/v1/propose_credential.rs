@@ -3,24 +3,24 @@ use typed_builder::TypedBuilder;
 
 use super::CredentialPreview;
 use crate::{
-    decorators::{attachment::Attachment, thread::Thread, timing::Timing},
+    decorators::{thread::Thread, timing::Timing},
     msg_parts::MsgParts,
 };
 
-pub type OfferCredential = MsgParts<OfferCredentialContent, OfferCredentialDecorators>;
+pub type ProposeCredential = MsgParts<ProposeCredentialContent, ProposeCredentialDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder)]
-pub struct OfferCredentialContent {
+pub struct ProposeCredentialContent {
     #[builder(default, setter(strip_option))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,
-    pub credential_preview: CredentialPreview,
-    #[serde(rename = "offers~attach")]
-    pub offers_attach: Vec<Attachment>,
+    pub credential_proposal: CredentialPreview,
+    pub schema_id: String,
+    pub cred_def_id: String,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq, TypedBuilder)]
-pub struct OfferCredentialDecorators {
+pub struct ProposeCredentialDecorators {
     #[builder(default, setter(strip_option))]
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "~thread")]
@@ -39,65 +39,63 @@ mod tests {
 
     use super::*;
     use crate::{
-        decorators::{
-            attachment::tests::make_extended_attachment, thread::tests::make_extended_thread,
-            timing::tests::make_extended_timing,
-        },
+        decorators::{thread::tests::make_extended_thread, timing::tests::make_extended_timing},
         misc::test_utils,
-        msg_fields::protocols::cred_issuance::CredentialAttr,
-        msg_types::cred_issuance::CredentialIssuanceTypeV1_0,
+        msg_types::cred_issuance::CredentialIssuanceTypeV1_0, msg_fields::protocols::cred_issuance::v1::CredentialAttr,
     };
 
     #[test]
-    fn test_minimal_offer_cred() {
+    fn test_minimal_propose_cred() {
         let attribute = CredentialAttr::builder()
             .name("test_attribute_name".to_owned())
             .value("test_attribute_value".to_owned())
             .build();
-
         let preview = CredentialPreview::new(vec![attribute]);
-        let content = OfferCredentialContent::builder()
-            .credential_preview(preview)
-            .offers_attach(vec![make_extended_attachment()])
+        let content = ProposeCredentialContent::builder()
+            .credential_proposal(preview)
+            .schema_id("test_schema_id".to_owned())
+            .cred_def_id("test_cred_def_id".to_owned())
             .build();
 
-        let decorators = OfferCredentialDecorators::default();
+        let decorators = ProposeCredentialDecorators::default();
 
         let expected = json!({
-            "offers~attach": content.offers_attach,
-            "credential_preview": content.credential_preview,
+            "credential_proposal": content.credential_proposal,
+            "schema_id": content.schema_id,
+            "cred_def_id": content.cred_def_id,
         });
 
         test_utils::test_msg(
             content,
             decorators,
-            CredentialIssuanceTypeV1_0::OfferCredential,
+            CredentialIssuanceTypeV1_0::ProposeCredential,
             expected,
         );
     }
 
     #[test]
-    fn test_extended_offer_cred() {
+    fn test_extended_propose_cred() {
         let attribute = CredentialAttr::builder()
             .name("test_attribute_name".to_owned())
             .value("test_attribute_value".to_owned())
             .build();
-
         let preview = CredentialPreview::new(vec![attribute]);
-        let content = OfferCredentialContent::builder()
-            .credential_preview(preview)
-            .offers_attach(vec![make_extended_attachment()])
+        let content = ProposeCredentialContent::builder()
+            .credential_proposal(preview)
+            .schema_id("test_schema_id".to_owned())
+            .cred_def_id("test_cred_def_id".to_owned())
             .comment("test_comment".to_owned())
             .build();
 
-        let decorators = OfferCredentialDecorators::builder()
+        let decorators = ProposeCredentialDecorators::builder()
             .thread(make_extended_thread())
             .timing(make_extended_timing())
             .build();
 
         let expected = json!({
-            "offers~attach": content.offers_attach,
-            "credential_preview": content.credential_preview,
+            "credential_proposal": content.credential_proposal,
+            "schema_id": content.schema_id,
+            "cred_def_id": content.cred_def_id,
             "comment": content.comment,
             "~thread": decorators.thread,
             "~timing": decorators.timing
@@ -106,7 +104,7 @@ mod tests {
         test_utils::test_msg(
             content,
             decorators,
-            CredentialIssuanceTypeV1_0::OfferCredential,
+            CredentialIssuanceTypeV1_0::ProposeCredential,
             expected,
         );
     }

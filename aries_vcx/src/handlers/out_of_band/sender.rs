@@ -1,6 +1,6 @@
 use messages::{
     msg_fields::protocols::{
-        cred_issuance::CredentialIssuance,
+        cred_issuance::v1::CredentialIssuance,
         out_of_band::{
             invitation::{Invitation, InvitationContent, InvitationDecorators, OobService},
             OobGoalCode,

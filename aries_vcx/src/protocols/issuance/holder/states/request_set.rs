@@ -1,4 +1,4 @@
-use messages::msg_fields::protocols::cred_issuance::{
+use messages::msg_fields::protocols::cred_issuance::v1::{
     issue_credential::IssueCredential, request_credential::RequestCredential,
 };
 

@@ -1,5 +1,5 @@
 use messages::msg_fields::protocols::{
-    cred_issuance::{offer_credential::OfferCredential, request_credential::RequestCredential},
+    cred_issuance::v1::{offer_credential::OfferCredential, request_credential::RequestCredential},
     report_problem::ProblemReport,
 };
 

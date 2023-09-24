@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
-use messages::msg_fields::protocols::cred_issuance::offer_credential::OfferCredential;
+use messages::msg_fields::protocols::cred_issuance::v1::offer_credential::OfferCredential;
 
 use crate::{
     errors::error::prelude::*,

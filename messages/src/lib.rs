@@ -15,7 +15,7 @@ pub mod msg_types;
 
 use derive_more::From;
 use misc::utils;
-use msg_fields::protocols::cred_issuance::v2::CredentialIssuanceV2;
+use msg_fields::protocols::cred_issuance::{v2::CredentialIssuanceV2, v1::CredentialIssuance};
 use msg_types::{
     cred_issuance::CredentialIssuanceType, report_problem::ReportProblemTypeV1_0, routing::RoutingTypeV1_0, MsgWithType,
 };
@@ -24,7 +24,7 @@ use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 use crate::{
     msg_fields::{
         protocols::{
-            basic_message::BasicMessage, connection::Connection, cred_issuance::CredentialIssuance,
+            basic_message::BasicMessage, connection::Connection,
             discover_features::DiscoverFeatures, notification::Notification,
             out_of_band::OutOfBand, present_proof::PresentProof, report_problem::ProblemReport,
             revocation::Revocation, routing::Forward, trust_ping::TrustPing,

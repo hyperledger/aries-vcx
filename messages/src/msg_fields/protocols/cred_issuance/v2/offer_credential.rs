@@ -62,8 +62,7 @@ mod tests {
             timing::tests::make_extended_timing,
         },
         misc::test_utils,
-        msg_fields::protocols::cred_issuance::CredentialAttr,
-        msg_types::cred_issuance::CredentialIssuanceTypeV2_0,
+        msg_types::cred_issuance::CredentialIssuanceTypeV2_0, msg_fields::protocols::cred_issuance::common::CredentialAttr,
     };
 
     #[test]
@@ -78,7 +77,9 @@ mod tests {
             .credential_preview(preview)
             .formats(vec![AttachmentFormatSpecifier {
                 attach_id: "1".to_owned(),
-                format: MaybeKnown::Known(OfferCredentialAttachmentFormatType::HyperledgerIndyCredentialAbstract2_0),
+                format: MaybeKnown::Known(
+                    OfferCredentialAttachmentFormatType::HyperledgerIndyCredentialAbstract2_0,
+                ),
             }])
             .offers_attach(vec![make_extended_attachment()])
             .build();
@@ -111,7 +112,9 @@ mod tests {
             .credential_preview(preview)
             .formats(vec![AttachmentFormatSpecifier {
                 attach_id: "1".to_owned(),
-                format: MaybeKnown::Known(OfferCredentialAttachmentFormatType::HyperledgerIndyCredentialAbstract2_0),
+                format: MaybeKnown::Known(
+                    OfferCredentialAttachmentFormatType::HyperledgerIndyCredentialAbstract2_0,
+                ),
             }])
             .offers_attach(vec![make_extended_attachment()])
             .comment("test_comment".to_owned())

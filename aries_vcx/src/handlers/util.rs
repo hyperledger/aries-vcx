@@ -1,7 +1,7 @@
 use messages::{
     msg_fields::protocols::{
         connection::{invitation::Invitation, Connection},
-        cred_issuance::{v2::CredentialIssuanceV2, CredentialIssuance},
+        cred_issuance::{v2::CredentialIssuanceV2, v1::CredentialIssuance},
         discover_features::DiscoverFeatures,
         notification::Notification,
         out_of_band::{invitation::Invitation as OobInvitation, OutOfBand},
@@ -110,7 +110,9 @@ pub fn verify_thread_id(thread_id: &str, message: &AriesMessage) -> VcxResult<()
         AriesMessage::CredentialIssuance(CredentialIssuance::ProblemReport(msg)) => {
             matches_opt_thread_id!(msg, thread_id)
         }
-        AriesMessage::CredentialIssuanceV2(CredentialIssuanceV2::Ack(msg)) => matches_thread_id!(msg, thread_id),
+        AriesMessage::CredentialIssuanceV2(CredentialIssuanceV2::Ack(msg)) => {
+            matches_thread_id!(msg, thread_id)
+        }
         AriesMessage::CredentialIssuanceV2(CredentialIssuanceV2::IssueCredential(msg)) => {
             matches_thread_id!(msg, thread_id)
         }

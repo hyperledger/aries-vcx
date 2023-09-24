@@ -1,4 +1,4 @@
-use messages::msg_fields::protocols::cred_issuance::propose_credential::ProposeCredential;
+use messages::msg_fields::protocols::cred_issuance::v1::propose_credential::ProposeCredential;
 
 use crate::handlers::util::OfferInfo;
 

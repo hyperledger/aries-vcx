@@ -3,7 +3,7 @@ use aries_vcx::{
     global::settings::indy_mocks_enabled,
     handlers::issuance::{holder::Holder, mediated_holder::holder_find_message_to_handle},
     messages::{
-        msg_fields::protocols::cred_issuance::{
+        msg_fields::protocols::cred_issuance::v1::{
             offer_credential::OfferCredential, CredentialIssuance,
         },
         AriesMessage,
@@ -413,7 +413,7 @@ pub mod tests_utils {
 #[allow(clippy::unwrap_used)]
 pub mod tests {
     use aries_vcx::{
-        messages::msg_fields::protocols::cred_issuance::issue_credential::IssueCredential,
+        messages::msg_fields::protocols::cred_issuance::v1::issue_credential::IssueCredential,
         protocols::issuance::holder::state_machine::HolderState,
         utils::{
             devsetup::{SetupDefaults, SetupMocks},

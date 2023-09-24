@@ -1,7 +1,7 @@
 use messages::{
     decorators::attachment::Attachment,
     msg_fields::protocols::{
-        cred_issuance::offer_credential::OfferCredential,
+        cred_issuance::v1::offer_credential::OfferCredential,
         present_proof::request::RequestPresentation,
     },
 };

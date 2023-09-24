@@ -6,7 +6,7 @@ use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use messages::{
     decorators::{attachment::AttachmentType, thread::Thread},
     msg_fields::protocols::{
-        cred_issuance::{
+        cred_issuance::v1::{
             issue_credential::IssueCredential, offer_credential::OfferCredential,
             request_credential::RequestCredential, CredentialIssuance,
         },

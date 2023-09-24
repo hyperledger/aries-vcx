@@ -1,5 +1,5 @@
 use messages::msg_fields::protocols::{
-    cred_issuance::issue_credential::IssueCredential, report_problem::ProblemReport,
+    cred_issuance::v1::issue_credential::IssueCredential, report_problem::ProblemReport,
 };
 
 use crate::{

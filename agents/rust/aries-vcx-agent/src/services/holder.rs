@@ -4,7 +4,7 @@ use aries_vcx::{
     core::profile::profile::Profile,
     handlers::issuance::holder::Holder,
     messages::{
-        msg_fields::protocols::cred_issuance::{
+        msg_fields::protocols::cred_issuance::v1::{
             issue_credential::IssueCredential, offer_credential::OfferCredential,
             propose_credential::ProposeCredential,
         },

@@ -7,7 +7,7 @@ use chrono::Utc;
 use messages::{
     decorators::{please_ack::PleaseAck, thread::Thread, timing::Timing},
     msg_fields::protocols::{
-        cred_issuance::{
+        cred_issuance::v1::{
             ack::AckCredential,
             issue_credential::{
                 IssueCredential, IssueCredentialContent, IssueCredentialDecorators,
