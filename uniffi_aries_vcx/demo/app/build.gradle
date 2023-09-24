@@ -78,4 +78,7 @@ dependencies {
 
     // QR
     implementation 'com.google.zxing:core:3.5.2'
+
+    // HTTP requests
+    implementation("com.squareup.okhttp3:okhttp:4.11.0")
 }

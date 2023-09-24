@@ -52,6 +52,20 @@ sh uniffi_aries_vcx/scripts/android.build.cargo.ndk.sh
 
 NB: Before running the demo application you need to generate the language bindings.
 
+# Testing the simple message relay on Android
+
+Aries-VCX supports connection to [tools/simple_message_relay](/tools/simple_message_relay/) on android. You need to setup the agent with instructions [here](/tools/simple_message_relay/README.md#service-setup) and exposing a public endpoint as explained [here](/tools/simple_message_relay/README.md#public-endpoints).
+
+The demo app needs this endpoint to establish communication with the peer.
+
+Update [BASE_RELAY_ENDPOINT](./demo/app/src/main/java/org/hyperledger/ariesvcx/Constants.kt) to reflect the public IP.
+
+```kt
+const val BASE_RELAY_ENDPOINT = <your-public-ip-endpoint>;
+```
+
+Now you are ready to start communicating. Use the QR scanner in the app to establish connection with the peer.
+
 ## Support
 
 Currently the builds have been tested for android `arm64 (aarch64)` on a physical device. In the future we plan to support other architectures.
