@@ -1,6 +1,6 @@
 use messages::{
     msg_fields::protocols::{
-        cred_issuance::v1::CredentialIssuance,
+        cred_issuance::{v1::CredentialIssuanceV1, CredentialIssuance},
         out_of_band::{
             invitation::{Invitation, InvitationContent, InvitationDecorators, OobService},
             OobGoalCode,
@@ -94,9 +94,9 @@ impl OutOfBandSender {
                 AttachmentId::PresentationRequest,
                 json!(&a2a_msg).to_string(),
             ),
-            a2a_msg @ AriesMessage::CredentialIssuance(CredentialIssuance::OfferCredential(_)) => {
-                (AttachmentId::CredentialOffer, json!(&a2a_msg).to_string())
-            }
+            a2a_msg @ AriesMessage::CredentialIssuance(CredentialIssuance::V1(
+                CredentialIssuanceV1::OfferCredential(_),
+            )) => (AttachmentId::CredentialOffer, json!(&a2a_msg).to_string()),
             _ => {
                 error!("Appended message type {:?} is not allowed.", msg);
                 return Err(AriesVcxError::from_msg(

@@ -7,17 +7,20 @@ use chrono::Utc;
 use messages::{
     decorators::{please_ack::PleaseAck, thread::Thread, timing::Timing},
     msg_fields::protocols::{
-        cred_issuance::v1::{
-            ack::AckCredential,
-            issue_credential::{
-                IssueCredential, IssueCredentialContent, IssueCredentialDecorators,
+        cred_issuance::{
+            v1::{
+                ack::AckCredential,
+                issue_credential::{
+                    IssueCredential, IssueCredentialContent, IssueCredentialDecorators,
+                },
+                offer_credential::{
+                    OfferCredential, OfferCredentialContent, OfferCredentialDecorators,
+                },
+                propose_credential::ProposeCredential,
+                request_credential::RequestCredential,
+                CredentialIssuanceV1, CredentialPreview,
             },
-            offer_credential::{
-                OfferCredential, OfferCredentialContent, OfferCredentialDecorators,
-            },
-            propose_credential::ProposeCredential,
-            request_credential::RequestCredential,
-            CredentialIssuance, CredentialPreview,
+            CredentialIssuance,
         },
         report_problem::ProblemReport,
     },
@@ -366,8 +369,8 @@ impl IssuerSM {
     pub fn receive_proposal(self, proposal: ProposeCredential) -> VcxResult<Self> {
         verify_thread_id(
             &self.thread_id,
-            &AriesMessage::CredentialIssuance(CredentialIssuance::ProposeCredential(
-                proposal.clone(),
+            &AriesMessage::CredentialIssuance(CredentialIssuance::V1(
+                CredentialIssuanceV1::ProposeCredential(proposal.clone()),
             )),
         )?;
         let (state, thread_id) = match self.state {
@@ -397,8 +400,8 @@ impl IssuerSM {
     pub fn receive_request(self, request: RequestCredential) -> VcxResult<Self> {
         verify_thread_id(
             &self.thread_id,
-            &AriesMessage::CredentialIssuance(CredentialIssuance::RequestCredential(
-                request.clone(),
+            &AriesMessage::CredentialIssuance(CredentialIssuance::V1(
+                CredentialIssuanceV1::RequestCredential(request.clone()),
             )),
         )?;
         let state = match self.state {
@@ -485,7 +488,9 @@ impl IssuerSM {
     pub fn receive_ack(self, ack: AckCredential) -> VcxResult<Self> {
         verify_thread_id(
             &self.thread_id,
-            &AriesMessage::CredentialIssuance(CredentialIssuance::Ack(ack.clone())),
+            &AriesMessage::CredentialIssuance(CredentialIssuance::V1(CredentialIssuanceV1::Ack(
+                ack.clone(),
+            ))),
         )?;
         let state = match self.state {
             IssuerFullState::CredentialSet(state_data) => {

@@ -6,9 +6,12 @@ use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use messages::{
     decorators::{attachment::AttachmentType, thread::Thread},
     msg_fields::protocols::{
-        cred_issuance::v1::{
-            issue_credential::IssueCredential, offer_credential::OfferCredential,
-            request_credential::RequestCredential, CredentialIssuance,
+        cred_issuance::{
+            v1::{
+                issue_credential::IssueCredential, offer_credential::OfferCredential,
+                request_credential::RequestCredential, CredentialIssuanceV1,
+            },
+            CredentialIssuance,
         },
         out_of_band::{
             invitation::{Invitation, OobService},
@@ -212,7 +215,7 @@ impl OutOfBandReceiver {
                         }
 
                         return Ok(Some(AriesMessage::CredentialIssuance(
-                            CredentialIssuance::OfferCredential(offer),
+                            CredentialIssuance::V1(CredentialIssuanceV1::OfferCredential(offer)),
                         )));
                     }
                     AttachmentId::CredentialRequest => {
@@ -235,7 +238,9 @@ impl OutOfBandReceiver {
                         }
 
                         return Ok(Some(AriesMessage::CredentialIssuance(
-                            CredentialIssuance::RequestCredential(request),
+                            CredentialIssuance::V1(CredentialIssuanceV1::RequestCredential(
+                                request,
+                            )),
                         )));
                     }
                     AttachmentId::Credential => {
@@ -250,7 +255,9 @@ impl OutOfBandReceiver {
                         credential.decorators.thread.pthid = Some(self.oob.id.clone());
 
                         return Ok(Some(AriesMessage::CredentialIssuance(
-                            CredentialIssuance::IssueCredential(credential),
+                            CredentialIssuance::V1(CredentialIssuanceV1::IssueCredential(
+                                credential,
+                            )),
                         )));
                     }
                     AttachmentId::PresentationRequest => {

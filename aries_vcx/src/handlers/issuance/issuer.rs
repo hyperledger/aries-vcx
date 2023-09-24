@@ -11,8 +11,9 @@ use messages::{
             v1::{
                 ack::AckCredential, issue_credential::IssueCredential,
                 offer_credential::OfferCredential, propose_credential::ProposeCredential,
-                request_credential::RequestCredential, CredentialIssuance, CredentialPreview,
+                request_credential::RequestCredential, CredentialIssuanceV1, CredentialPreview,
             },
+            CredentialIssuance,
         },
         notification::Notification,
         report_problem::ProblemReport,
@@ -301,15 +302,15 @@ impl Issuer {
     // todo: will ultimately end up in generic SM layer
     pub async fn process_aries_msg(&mut self, msg: AriesMessage) -> VcxResult<()> {
         let issuer_sm = match msg {
-            AriesMessage::CredentialIssuance(CredentialIssuance::ProposeCredential(proposal)) => {
-                self.issuer_sm.clone().receive_proposal(proposal)?
-            }
-            AriesMessage::CredentialIssuance(CredentialIssuance::RequestCredential(request)) => {
-                self.issuer_sm.clone().receive_request(request)?
-            }
-            AriesMessage::CredentialIssuance(CredentialIssuance::Ack(ack)) => {
-                self.issuer_sm.clone().receive_ack(ack)?
-            }
+            AriesMessage::CredentialIssuance(CredentialIssuance::V1(
+                CredentialIssuanceV1::ProposeCredential(proposal),
+            )) => self.issuer_sm.clone().receive_proposal(proposal)?,
+            AriesMessage::CredentialIssuance(CredentialIssuance::V1(
+                CredentialIssuanceV1::RequestCredential(request),
+            )) => self.issuer_sm.clone().receive_request(request)?,
+            AriesMessage::CredentialIssuance(CredentialIssuance::V1(
+                CredentialIssuanceV1::Ack(ack),
+            )) => self.issuer_sm.clone().receive_ack(ack)?,
             AriesMessage::ReportProblem(report) => {
                 self.issuer_sm.clone().receive_problem_report(report)?
             }
@@ -317,7 +318,9 @@ impl Issuer {
                 .issuer_sm
                 .clone()
                 .receive_problem_report(report.into())?,
-            AriesMessage::CredentialIssuance(CredentialIssuance::ProblemReport(report)) => self
+            AriesMessage::CredentialIssuance(CredentialIssuance::V1(
+                CredentialIssuanceV1::ProblemReport(report),
+            )) => self
                 .issuer_sm
                 .clone()
                 .receive_problem_report(report.into())?,

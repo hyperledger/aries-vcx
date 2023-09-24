@@ -1,7 +1,10 @@
 use std::collections::HashMap;
 
 use messages::{
-    msg_fields::protocols::{cred_issuance::v1::CredentialIssuance, notification::Notification},
+    msg_fields::protocols::{
+        cred_issuance::{v1::CredentialIssuanceV1, CredentialIssuance},
+        notification::Notification,
+    },
     AriesMessage,
 };
 
@@ -27,8 +30,9 @@ pub fn issuer_find_message_to_handle(
     for (uid, message) in messages {
         match sm.get_state() {
             IssuerState::Initial => {
-                if let AriesMessage::CredentialIssuance(CredentialIssuance::ProposeCredential(_)) =
-                    &message
+                if let AriesMessage::CredentialIssuance(CredentialIssuance::V1(
+                    CredentialIssuanceV1::ProposeCredential(_),
+                )) = &message
                 {
                     info!(
                         "In state IssuerState::OfferSet, found matching message ProposeCredential"
@@ -37,7 +41,9 @@ pub fn issuer_find_message_to_handle(
                 }
             }
             IssuerState::OfferSet => match &message {
-                AriesMessage::CredentialIssuance(CredentialIssuance::RequestCredential(msg)) => {
+                AriesMessage::CredentialIssuance(CredentialIssuance::V1(
+                    CredentialIssuanceV1::RequestCredential(msg),
+                )) => {
                     info!(
                         "In state IssuerState::OfferSet, found potentially matching message \
                          RequestCredential"
@@ -48,7 +54,9 @@ pub fn issuer_find_message_to_handle(
                         return Some((uid, message));
                     }
                 }
-                AriesMessage::CredentialIssuance(CredentialIssuance::ProposeCredential(msg)) => {
+                AriesMessage::CredentialIssuance(CredentialIssuance::V1(
+                    CredentialIssuanceV1::ProposeCredential(msg),
+                )) => {
                     info!(
                         "In state IssuerState::OfferSet, found potentially matching message \
                          ProposeCredential"
@@ -66,7 +74,9 @@ pub fn issuer_find_message_to_handle(
                 _ => {}
             },
             IssuerState::CredentialSet => match &message {
-                AriesMessage::CredentialIssuance(CredentialIssuance::Ack(msg)) => {
+                AriesMessage::CredentialIssuance(CredentialIssuance::V1(
+                    CredentialIssuanceV1::Ack(msg),
+                )) => {
                     info!(
                         "In state IssuerState::CredentialSet, found matching message \
                          CredentialIssuance::Ack"

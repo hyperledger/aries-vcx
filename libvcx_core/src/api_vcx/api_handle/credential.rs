@@ -4,7 +4,7 @@ use aries_vcx::{
     handlers::issuance::{holder::Holder, mediated_holder::holder_find_message_to_handle},
     messages::{
         msg_fields::protocols::cred_issuance::v1::{
-            offer_credential::OfferCredential, CredentialIssuance,
+            offer_credential::OfferCredential, CredentialIssuanceV1,
         },
         AriesMessage,
     },
@@ -285,20 +285,21 @@ async fn get_credential_offer_msg(connection_handle: u32, msg_id: &str) -> Libvc
         AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
         AgencyMockDecrypted::set_next_decrypted_message(ARIES_CREDENTIAL_OFFER);
     }
-    let credential_offer = match mediated_connection::get_message_by_id(connection_handle, msg_id)
-        .await
-    {
-        Ok(message) => match message {
-            AriesMessage::CredentialIssuance(CredentialIssuance::OfferCredential(_)) => Ok(message),
-            msg => {
-                return Err(LibvcxError::from_msg(
-                    LibvcxErrorKind::InvalidMessages,
-                    format!("Message of different type was received: {:?}", msg),
-                ));
-            }
-        },
-        Err(err) => Err(err),
-    }?;
+    let credential_offer =
+        match mediated_connection::get_message_by_id(connection_handle, msg_id).await {
+            Ok(message) => match message {
+                AriesMessage::CredentialIssuance(CredentialIssuanceV1::OfferCredential(_)) => {
+                    Ok(message)
+                }
+                msg => {
+                    return Err(LibvcxError::from_msg(
+                        LibvcxErrorKind::InvalidMessages,
+                        format!("Message of different type was received: {:?}", msg),
+                    ));
+                }
+            },
+            Err(err) => Err(err),
+        }?;
 
     serde_json::to_string(&credential_offer).map_err(|err| {
         LibvcxError::from_msg(
@@ -323,7 +324,7 @@ pub async fn get_credential_offer_messages_with_conn_handle(
         .await?
         .into_iter()
         .filter_map(|(_, a2a_message)| match a2a_message {
-            AriesMessage::CredentialIssuance(CredentialIssuance::OfferCredential(_)) => {
+            AriesMessage::CredentialIssuance(CredentialIssuanceV1::OfferCredential(_)) => {
                 Some(a2a_message)
             }
             _ => None,

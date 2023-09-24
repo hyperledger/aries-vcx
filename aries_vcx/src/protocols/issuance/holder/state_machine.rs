@@ -7,12 +7,15 @@ use chrono::Utc;
 use messages::{
     decorators::{thread::Thread, timing::Timing},
     msg_fields::protocols::{
-        cred_issuance::v1::{
-            issue_credential::IssueCredential,
-            offer_credential::OfferCredential,
-            propose_credential::ProposeCredential,
-            request_credential::{
-                RequestCredential, RequestCredentialContent, RequestCredentialDecorators,
+        cred_issuance::{
+            v1::{
+                issue_credential::IssueCredential,
+                offer_credential::OfferCredential,
+                propose_credential::ProposeCredential,
+                request_credential::{
+                    RequestCredential, RequestCredentialContent, RequestCredentialDecorators,
+                },
+                CredentialIssuanceV1,
             },
             CredentialIssuance,
         },
@@ -157,8 +160,8 @@ impl HolderSM {
         trace!("HolderSM::set_proposal >>");
         verify_thread_id(
             &self.thread_id,
-            &AriesMessage::CredentialIssuance(CredentialIssuance::ProposeCredential(
-                proposal.clone(),
+            &AriesMessage::CredentialIssuance(CredentialIssuance::V1(
+                CredentialIssuanceV1::ProposeCredential(proposal.clone()),
             )),
         )?;
         let state = match self.state {
@@ -184,7 +187,9 @@ impl HolderSM {
         trace!("HolderSM::receive_offer >>");
         verify_thread_id(
             &self.thread_id,
-            &AriesMessage::CredentialIssuance(CredentialIssuance::OfferCredential(offer.clone())),
+            &AriesMessage::CredentialIssuance(CredentialIssuance::V1(
+                CredentialIssuanceV1::OfferCredential(offer.clone()),
+            )),
         )?;
         let state = match self.state {
             HolderFullState::ProposalSet(_) => {

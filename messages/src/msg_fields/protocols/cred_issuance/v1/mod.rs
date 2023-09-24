@@ -43,7 +43,7 @@ use crate::{
 };
 
 #[derive(Clone, Debug, From, PartialEq)]
-pub enum CredentialIssuance {
+pub enum CredentialIssuanceV1 {
     OfferCredential(OfferCredential),
     ProposeCredential(ProposeCredential),
     RequestCredential(RequestCredential),
@@ -52,7 +52,7 @@ pub enum CredentialIssuance {
     ProblemReport(CredIssuanceProblemReport),
 }
 
-impl DelayedSerde for CredentialIssuance {
+impl DelayedSerde for CredentialIssuanceV1 {
     type MsgType<'a> = (CredentialIssuanceKind, &'a str);
 
     fn delayed_deserialize<'de, D>(
@@ -177,24 +177,24 @@ impl Serialize for CredentialPreviewMsgType {
 
 transit_to_aries_msg!(
     OfferCredentialContent: OfferCredentialDecorators,
-    CredentialIssuance
+    CredentialIssuanceV1
 );
 transit_to_aries_msg!(
     ProposeCredentialContent: ProposeCredentialDecorators,
-    CredentialIssuance
+    CredentialIssuanceV1
 );
 transit_to_aries_msg!(
     RequestCredentialContent: RequestCredentialDecorators,
-    CredentialIssuance
+    CredentialIssuanceV1
 );
 transit_to_aries_msg!(
     IssueCredentialContent: IssueCredentialDecorators,
-    CredentialIssuance
+    CredentialIssuanceV1
 );
-transit_to_aries_msg!(AckCredentialContent: AckDecorators, CredentialIssuance);
+transit_to_aries_msg!(AckCredentialContent: AckDecorators, CredentialIssuanceV1);
 transit_to_aries_msg!(
     CredIssuanceProblemReportContent: ProblemReportDecorators,
-    CredentialIssuance
+    CredentialIssuanceV1
 );
 
 into_msg_with_type!(OfferCredential, CredentialIssuanceTypeV1_0, OfferCredential);

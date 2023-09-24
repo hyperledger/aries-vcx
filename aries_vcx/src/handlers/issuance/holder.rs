@@ -8,12 +8,15 @@ use chrono::Utc;
 use messages::{
     decorators::{thread::Thread, timing::Timing},
     msg_fields::protocols::{
-        cred_issuance::v1::{
-            ack::{AckCredential, AckCredentialContent},
-            issue_credential::IssueCredential,
-            offer_credential::OfferCredential,
-            propose_credential::ProposeCredential,
-            request_credential::RequestCredential,
+        cred_issuance::{
+            v1::{
+                ack::{AckCredential, AckCredentialContent},
+                issue_credential::IssueCredential,
+                offer_credential::OfferCredential,
+                propose_credential::ProposeCredential,
+                request_credential::RequestCredential,
+                CredentialIssuanceV1,
+            },
             CredentialIssuance,
         },
         notification::ack::{AckContent, AckDecorators, AckStatus},
@@ -261,10 +264,12 @@ impl Holder {
         message: AriesMessage,
     ) -> VcxResult<()> {
         let holder_sm = match message {
-            AriesMessage::CredentialIssuance(CredentialIssuance::OfferCredential(offer)) => {
-                self.holder_sm.clone().receive_offer(offer)?
-            }
-            AriesMessage::CredentialIssuance(CredentialIssuance::IssueCredential(credential)) => {
+            AriesMessage::CredentialIssuance(CredentialIssuance::V1(
+                CredentialIssuanceV1::OfferCredential(offer),
+            )) => self.holder_sm.clone().receive_offer(offer)?,
+            AriesMessage::CredentialIssuance(CredentialIssuance::V1(
+                CredentialIssuanceV1::IssueCredential(credential),
+            )) => {
                 self.holder_sm
                     .clone()
                     .receive_credential(ledger, anoncreds, credential)
