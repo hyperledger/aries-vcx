@@ -1,11 +1,14 @@
-use super::constants::{GET_REVOC_REG, GET_REVOC_REG_DELTA};
+use std::collections::HashSet;
 
 use anoncreds_clsignatures::RevocationRegistry;
-use indy_vdr::ledger::{identifiers::RevocationRegistryId, requests::rev_reg::RevocationRegistryV1};
+use indy_vdr::ledger::{
+    identifiers::RevocationRegistryId, requests::rev_reg::RevocationRegistryV1,
+};
 
-use super::response::{GetReplyResultV1, ReplyType};
-
-use std::collections::HashSet;
+use super::{
+    constants::{GET_REVOC_REG, GET_REVOC_REG_DELTA},
+    response::{GetReplyResultV1, ReplyType},
+};
 
 #[derive(Debug, Deserialize)]
 #[serde(untagged)]

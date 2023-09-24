@@ -1,19 +1,27 @@
-use aries_vcx::messages::AriesMessage;
+use aries_vcx::{
+    common::proofs::proof_request::PresentationRequestData,
+    handlers::proof_presentation::{
+        mediated_verifier::verifier_find_message_to_handle, verifier::Verifier,
+    },
+    messages::AriesMessage,
+    protocols::{
+        proof_presentation::verifier::verification_status::PresentationVerificationStatus,
+        SendClosure,
+    },
+};
 use serde_json;
 
-use aries_vcx::common::proofs::proof_request::PresentationRequestData;
-use aries_vcx::handlers::proof_presentation::mediated_verifier::verifier_find_message_to_handle;
-use aries_vcx::handlers::proof_presentation::verifier::Verifier;
-use aries_vcx::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
-use aries_vcx::protocols::SendClosure;
-
-use crate::api_vcx::api_global::profile::{
-    get_main_anoncreds, get_main_anoncreds_ledger_read, get_main_profile, get_main_wallet,
+use crate::{
+    api_vcx::{
+        api_global::profile::{
+            get_main_anoncreds, get_main_anoncreds_ledger_read, get_main_wallet,
+        },
+        api_handle::{
+            connection, connection::HttpClient, mediated_connection, object_cache::ObjectCache,
+        },
+    },
+    errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult},
 };
-use crate::api_vcx::api_handle::connection::HttpClient;
-use crate::api_vcx::api_handle::object_cache::ObjectCache;
-use crate::api_vcx::api_handle::{connection, mediated_connection};
-use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 
 lazy_static! {
     static ref PROOF_MAP: ObjectCache<Verifier> = ObjectCache::<Verifier>::new("proofs-cache");
@@ -33,7 +41,6 @@ pub async fn create_proof(
     revocation_details: String,
     name: String,
 ) -> LibvcxResult<u32> {
-    let profile = get_main_profile();
     let presentation_request = PresentationRequestData::create(&get_main_anoncreds()?, &name)
         .await?
         .set_requested_attributes_as_string(requested_attrs)?
@@ -47,7 +54,11 @@ pub fn is_valid_handle(handle: u32) -> bool {
     PROOF_MAP.has_handle(handle)
 }
 
-pub async fn update_state(handle: u32, message: Option<&str>, connection_handle: u32) -> LibvcxResult<u32> {
+pub async fn update_state(
+    handle: u32,
+    message: Option<&str>,
+    connection_handle: u32,
+) -> LibvcxResult<u32> {
     let mut proof = PROOF_MAP.get_cloned(handle)?;
     trace!(
         "proof::update_state >>> handle: {}, message: {:?}, connection_handle: {}",
@@ -59,7 +70,6 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
         return Ok(proof.get_state().into());
     }
     let send_message = mediated_connection::send_message_closure(connection_handle).await?;
-    let profile = get_main_profile();
 
     if let Some(message) = message {
         let message: AriesMessage = serde_json::from_str(message).map_err(|err| {
@@ -71,12 +81,15 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
                 ),
             )
         })?;
-        trace!("proof::update_state >>> updating using message {:?}", message);
+        trace!(
+            "proof::update_state >>> updating using message {:?}",
+            message
+        );
         if let Some(message) = proof
             .process_aries_msg(
                 &get_main_anoncreds_ledger_read()?,
                 &get_main_anoncreds()?,
-                message.into(),
+                message,
             )
             .await?
         {
@@ -90,7 +103,7 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
                 .process_aries_msg(
                     &get_main_anoncreds_ledger_read()?,
                     &get_main_anoncreds()?,
-                    message.into(),
+                    message,
                 )
                 .await?
             {
@@ -104,7 +117,11 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
     Ok(state)
 }
 
-pub async fn update_state_nonmediated(handle: u32, connection_handle: u32, message: &str) -> LibvcxResult<u32> {
+pub async fn update_state_nonmediated(
+    handle: u32,
+    connection_handle: u32,
+    message: &str,
+) -> LibvcxResult<u32> {
     let mut proof = PROOF_MAP.get_cloned(handle)?;
     trace!(
         "proof::update_state_nonmediated >>> handle: {}, message: {:?}, connection_handle: {}",
@@ -119,8 +136,9 @@ pub async fn update_state_nonmediated(handle: u32, connection_handle: u32, messa
     let con = connection::get_cloned_generic_connection(&connection_handle)?;
     let wallet = get_main_wallet()?;
 
-    let send_message: SendClosure =
-        Box::new(|msg: AriesMessage| Box::pin(async move { con.send_message(&wallet, &msg, &HttpClient).await }));
+    let send_message: SendClosure = Box::new(|msg: AriesMessage| {
+        Box::pin(async move { con.send_message(&wallet, &msg, &HttpClient).await })
+    });
 
     let message: AriesMessage = serde_json::from_str(message).map_err(|err| {
         LibvcxError::from_msg(
@@ -135,7 +153,7 @@ pub async fn update_state_nonmediated(handle: u32, connection_handle: u32, messa
         .process_aries_msg(
             &get_main_anoncreds_ledger_read()?,
             &get_main_anoncreds()?,
-            message.into(),
+            message,
         )
         .await?
     {
@@ -193,21 +211,25 @@ pub async fn send_proof_request(handle: u32, connection_handle: u32) -> LibvcxRe
     let mut proof = PROOF_MAP.get_cloned(handle)?;
     let send_closure = mediated_connection::send_message_closure(connection_handle).await?;
     let message = proof.mark_presentation_request_sent()?;
-    send_closure(message).await?;
+    send_closure(message.into()).await?;
     PROOF_MAP.insert(handle, proof)
 }
 
-pub async fn send_proof_request_nonmediated(handle: u32, connection_handle: u32) -> LibvcxResult<()> {
+pub async fn send_proof_request_nonmediated(
+    handle: u32,
+    connection_handle: u32,
+) -> LibvcxResult<()> {
     let mut proof = PROOF_MAP.get_cloned(handle)?;
 
     let con = connection::get_cloned_generic_connection(&connection_handle)?;
     let wallet = get_main_wallet()?;
 
-    let send_message: SendClosure =
-        Box::new(|msg: AriesMessage| Box::pin(async move { con.send_message(&wallet, &msg, &HttpClient).await }));
+    let send_message: SendClosure = Box::new(|msg: AriesMessage| {
+        Box::pin(async move { con.send_message(&wallet, &msg, &HttpClient).await })
+    });
 
     let message = proof.mark_presentation_request_sent()?;
-    send_message(message).await?;
+    send_message(message.into()).await?;
 
     PROOF_MAP.insert(handle, proof)
 }
@@ -221,7 +243,9 @@ pub fn mark_presentation_request_msg_sent(handle: u32) -> LibvcxResult<()> {
 
 pub fn get_presentation_request_attachment(handle: u32) -> LibvcxResult<String> {
     PROOF_MAP.get(handle, |proof| {
-        proof.get_presentation_request_attachment().map_err(|err| err.into())
+        proof
+            .get_presentation_request_attachment()
+            .map_err(|err| err.into())
     })
 }
 
@@ -242,7 +266,9 @@ pub fn get_presentation_msg(handle: u32) -> LibvcxResult<String> {
 
 pub fn get_presentation_attachment(handle: u32) -> LibvcxResult<String> {
     PROOF_MAP.get(handle, |proof| {
-        proof.get_presentation_attachment().map_err(|err| err.into())
+        proof
+            .get_presentation_attachment()
+            .map_err(|err| err.into())
     })
 }
 
@@ -272,35 +298,43 @@ impl From<PresentationVerificationStatus> for VcxPresentationVerificationStatus 
         match verification_status {
             PresentationVerificationStatus::Valid => VcxPresentationVerificationStatus::Valid,
             PresentationVerificationStatus::Invalid => VcxPresentationVerificationStatus::Invalid,
-            PresentationVerificationStatus::Unavailable => VcxPresentationVerificationStatus::Unavailable,
+            PresentationVerificationStatus::Unavailable => {
+                VcxPresentationVerificationStatus::Unavailable
+            }
         }
     }
 }
 
 // --- General ---
 pub fn get_thread_id(handle: u32) -> LibvcxResult<String> {
-    PROOF_MAP.get(handle, |proof| proof.get_thread_id().map_err(|err| err.into()))
+    PROOF_MAP.get(handle, |proof| {
+        proof.get_thread_id().map_err(|err| err.into())
+    })
 }
 
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 pub mod tests {
+    use aries_vcx::{
+        agency_client::testing::mocking::HttpClientMockResponse,
+        utils::{
+            constants::{
+                PROOF_REJECT_RESPONSE_STR_V2, REQUESTED_ATTRS, REQUESTED_PREDICATES,
+                V3_OBJECT_SERIALIZE_VERSION,
+            },
+            devsetup::SetupMocks,
+            mockdata::{mock_settings::MockBuilder, mockdata_proof},
+        },
+    };
     use serde_json::Value;
 
-    use aries_vcx::agency_client::testing::mocking::HttpClientMockResponse;
-    use aries_vcx::utils::constants::{
-        PROOF_REJECT_RESPONSE_STR_V2, REQUESTED_ATTRS, REQUESTED_PREDICATES, V3_OBJECT_SERIALIZE_VERSION,
-    };
-    use aries_vcx::utils::devsetup::SetupMocks;
-    use aries_vcx::utils::mockdata::mock_settings::MockBuilder;
-    use aries_vcx::utils::mockdata::mockdata_proof;
-
+    use super::*;
     #[cfg(test)]
     use crate::api_vcx::api_handle::mediated_connection::test_utils::build_test_connection_inviter_requested;
-    use crate::api_vcx::api_handle::proof;
-    use crate::aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;
-
-    use super::*;
+    use crate::{
+        api_vcx::api_handle::proof,
+        aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState,
+    };
 
     async fn create_default_proof() -> u32 {
         create_proof(
@@ -319,7 +353,10 @@ pub mod tests {
         let _setup = SetupMocks::init();
         let handle = create_default_proof().await;
         release(handle).unwrap();
-        assert_eq!(to_string(handle).unwrap_err().kind, LibvcxErrorKind::InvalidHandle)
+        assert_eq!(
+            to_string(handle).unwrap_err().kind,
+            LibvcxErrorKind::InvalidHandle
+        )
     }
 
     #[tokio::test]
@@ -430,7 +467,10 @@ pub mod tests {
         .await
         .unwrap();
 
-        assert_eq!(get_state(handle_proof).unwrap(), VerifierState::Finished as u32);
+        assert_eq!(
+            get_state(handle_proof).unwrap(),
+            VerifierState::Finished as u32
+        );
     }
 
     #[tokio::test]
@@ -454,7 +494,10 @@ pub mod tests {
         )
         .await
         .unwrap();
-        assert_eq!(get_state(handle_proof).unwrap(), VerifierState::Finished as u32);
+        assert_eq!(
+            get_state(handle_proof).unwrap(),
+            VerifierState::Finished as u32
+        );
     }
 
     #[tokio::test]
@@ -478,7 +521,10 @@ pub mod tests {
         )
         .await
         .unwrap();
-        assert_eq!(get_state(handle_proof).unwrap(), VerifierState::Finished as u32);
+        assert_eq!(
+            get_state(handle_proof).unwrap(),
+            VerifierState::Finished as u32
+        );
     }
 
     #[tokio::test]
@@ -490,10 +536,17 @@ pub mod tests {
 
         send_proof_request(handle_proof, handle_conn).await.unwrap();
 
-        update_state(handle_proof, Some(PROOF_REJECT_RESPONSE_STR_V2), handle_conn)
-            .await
-            .unwrap();
-        assert_eq!(get_state(handle_proof).unwrap(), VerifierState::Failed as u32);
+        update_state(
+            handle_proof,
+            Some(PROOF_REJECT_RESPONSE_STR_V2),
+            handle_conn,
+        )
+        .await
+        .unwrap();
+        assert_eq!(
+            get_state(handle_proof).unwrap(),
+            VerifierState::Failed as u32
+        );
     }
 
     #[tokio::test]
@@ -531,14 +584,15 @@ pub mod tests {
         )
         .await
         .unwrap();
-        assert_eq!(get_state(handle_proof).unwrap(), VerifierState::Finished as u32);
+        assert_eq!(
+            get_state(handle_proof).unwrap(),
+            VerifierState::Finished as u32
+        );
 
         let proof_str = get_presentation_msg(handle_proof).unwrap();
         assert_eq!(
             proof_str,
-            mockdata_proof::ARIES_PROOF_PRESENTATION
-                .replace("\n", "")
-                .replace(" ", "")
+            mockdata_proof::ARIES_PROOF_PRESENTATION.replace(['\n', ' '], "")
         );
     }
 
@@ -574,9 +628,9 @@ pub mod tests {
         .await
         .unwrap();
         release_all();
-        assert_eq!(is_valid_handle(h1), false);
-        assert_eq!(is_valid_handle(h2), false);
-        assert_eq!(is_valid_handle(h3), false);
+        assert!(!is_valid_handle(h1));
+        assert!(!is_valid_handle(h2));
+        assert!(!is_valid_handle(h3));
     }
 
     #[tokio::test]
@@ -589,14 +643,19 @@ pub mod tests {
         let _request = get_presentation_request_msg(handle_proof).unwrap();
         assert_eq!(get_state(handle_proof).unwrap(), 1);
 
-        HttpClientMockResponse::set_next_response(aries_vcx::agency_client::errors::error::AgencyClientResult::Err(
-            aries_vcx::agency_client::errors::error::AgencyClientError::from_msg(
-                aries_vcx::agency_client::errors::error::AgencyClientErrorKind::IOError,
-                "Sending message timeout.",
+        HttpClientMockResponse::set_next_response(
+            aries_vcx::agency_client::errors::error::AgencyClientResult::Err(
+                aries_vcx::agency_client::errors::error::AgencyClientError::from_msg(
+                    aries_vcx::agency_client::errors::error::AgencyClientErrorKind::IOError,
+                    "Sending message timeout.",
+                ),
             ),
-        ));
+        );
         assert_eq!(
-            send_proof_request(handle_proof, handle_conn).await.unwrap_err().kind(),
+            send_proof_request(handle_proof, handle_conn)
+                .await
+                .unwrap_err()
+                .kind(),
             LibvcxErrorKind::IOError
         );
         assert_eq!(get_state(handle_proof).unwrap(), 1);
@@ -626,7 +685,10 @@ pub mod tests {
         )
         .await
         .unwrap();
-        assert_eq!(proof::get_state(handle_proof).unwrap(), VerifierState::Finished as u32);
+        assert_eq!(
+            proof::get_state(handle_proof).unwrap(),
+            VerifierState::Finished as u32
+        );
     }
 
     #[tokio::test]
@@ -640,7 +702,10 @@ pub mod tests {
         let empty = r#""#;
 
         assert_eq!(
-            send_proof_request(bad_handle, handle_conn).await.unwrap_err().kind(),
+            send_proof_request(bad_handle, handle_conn)
+                .await
+                .unwrap_err()
+                .kind(),
             LibvcxErrorKind::InvalidHandle
         );
         assert_eq!(
@@ -668,6 +733,9 @@ pub mod tests {
             get_source_id(bad_handle).unwrap_err().kind(),
             LibvcxErrorKind::InvalidHandle
         );
-        assert_eq!(from_string(empty).unwrap_err().kind(), LibvcxErrorKind::InvalidJson);
+        assert_eq!(
+            from_string(empty).unwrap_err().kind(),
+            LibvcxErrorKind::InvalidJson
+        );
     }
 }

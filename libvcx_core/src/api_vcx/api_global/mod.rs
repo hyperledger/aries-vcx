@@ -9,5 +9,9 @@ pub mod wallet;
 use crate::api_vcx::utils::version_constants;
 
 lazy_static! {
-    pub static ref VERSION_STRING: String = format!("{}{}", version_constants::VERSION, version_constants::REVISION);
+    pub static ref VERSION_STRING: String = format!(
+        "{}{}",
+        version_constants::VERSION,
+        version_constants::REVISION
+    );
 }

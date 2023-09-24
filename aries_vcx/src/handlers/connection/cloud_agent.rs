@@ -1,19 +1,19 @@
-use std::collections::HashMap;
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
-use url::Url;
-
-use agency_client::agency_client::AgencyClient;
-use agency_client::api::downloaded_message::DownloadedMessageEncrypted;
-use agency_client::messages::update_message::UIDsByConn;
-use agency_client::wallet::base_agency_client_wallet::BaseAgencyClientWallet;
+use agency_client::{
+    agency_client::AgencyClient, api::downloaded_message::DownloadedMessageEncrypted,
+    messages::update_message::UIDsByConn,
+    wallet::base_agency_client_wallet::BaseAgencyClientWallet,
+};
 use aries_vcx_core::wallet::agency_client_wallet::ToBaseWallet;
 use messages::AriesMessage;
+use url::Url;
 
-use crate::agency_client::MessageStatusCode;
-use crate::errors::error::prelude::*;
-use crate::protocols::mediated_connection::pairwise_info::PairwiseInfo;
-use crate::utils::encryption_envelope::EncryptionEnvelope;
+use crate::{
+    agency_client::MessageStatusCode, errors::error::prelude::*,
+    protocols::mediated_connection::pairwise_info::PairwiseInfo,
+    utils::encryption_envelope::EncryptionEnvelope,
+};
 
 #[derive(Default, Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct CloudAgentInfo {
@@ -27,7 +27,10 @@ pub async fn create_agent_keys(
     pw_did: &str,
     pw_verkey: &str,
 ) -> VcxResult<(String, String)> {
-    debug!("creating pairwise keys on agent for connection {}", source_id);
+    debug!(
+        "creating pairwise keys on agent for connection {}",
+        source_id
+    );
     trace!(
         "create_agent_keys >>> source_id: {}, pw_did: {}, pw_verkey: {}",
         source_id,
@@ -35,7 +38,9 @@ pub async fn create_agent_keys(
         pw_verkey
     );
 
-    let (agent_did, agent_verkey) = agency_client.create_connection_agent(pw_did, pw_verkey).await?;
+    let (agent_did, agent_verkey) = agency_client
+        .create_connection_agent(pw_did, pw_verkey)
+        .await?;
 
     trace!(
         "create_agent_keys <<< agent_did: {}, agent_verkey: {}",
@@ -56,14 +61,32 @@ fn _log_messages_optionally(_a2a_messages: &HashMap<String, AriesMessage>) {
 }
 
 impl CloudAgentInfo {
-    pub async fn create(agency_client: &AgencyClient, pairwise_info: &PairwiseInfo) -> VcxResult<CloudAgentInfo> {
-        trace!("CloudAgentInfo::create >>> pairwise_info: {:?}", pairwise_info);
-        let (agent_did, agent_vk) =
-            create_agent_keys(agency_client, "", &pairwise_info.pw_did, &pairwise_info.pw_vk).await?;
-        Ok(CloudAgentInfo { agent_did, agent_vk })
+    pub async fn create(
+        agency_client: &AgencyClient,
+        pairwise_info: &PairwiseInfo,
+    ) -> VcxResult<CloudAgentInfo> {
+        trace!(
+            "CloudAgentInfo::create >>> pairwise_info: {:?}",
+            pairwise_info
+        );
+        let (agent_did, agent_vk) = create_agent_keys(
+            agency_client,
+            "",
+            &pairwise_info.pw_did,
+            &pairwise_info.pw_vk,
+        )
+        .await?;
+        Ok(CloudAgentInfo {
+            agent_did,
+            agent_vk,
+        })
     }
 
-    pub async fn destroy(&self, agency_client: &AgencyClient, pairwise_info: &PairwiseInfo) -> VcxResult<()> {
+    pub async fn destroy(
+        &self,
+        agency_client: &AgencyClient,
+        pairwise_info: &PairwiseInfo,
+    ) -> VcxResult<()> {
         trace!("CloudAgentInfo::delete >>>");
         agency_client
             .delete_connection_agent(
@@ -145,7 +168,10 @@ impl CloudAgentInfo {
                 pairwise_info,
             )
             .await?;
-        debug!("CloudAgentInfo::get_messages >>> obtained {} messages", messages.len());
+        debug!(
+            "CloudAgentInfo::get_messages >>> obtained {} messages",
+            messages.len()
+        );
         let a2a_messages = self
             .decrypt_decode_messages(&agency_client.get_wallet(), &messages, expect_sender_vk)
             .await?;
@@ -188,7 +214,12 @@ impl CloudAgentInfo {
     ) -> VcxResult<AriesMessage> {
         trace!("CloudAgentInfo::get_message_by_id >>> msg_id: {:?}", msg_id);
         let mut messages = self
-            .download_encrypted_messages(agency_client, Some(vec![msg_id.to_string()]), None, pairwise_info)
+            .download_encrypted_messages(
+                agency_client,
+                Some(vec![msg_id.to_string()]),
+                None,
+                pairwise_info,
+            )
             .await?;
         let message = messages.pop().ok_or(AriesVcxError::from_msg(
             AriesVcxErrorKind::InvalidMessages,
@@ -210,7 +241,8 @@ impl CloudAgentInfo {
         for message in messages {
             a2a_messages.insert(
                 message.uid.clone(),
-                self.decrypt_decode_message(wallet, message, expected_sender_vk).await?,
+                self.decrypt_decode_message(wallet, message, expected_sender_vk)
+                    .await?,
             );
         }
         Ok(a2a_messages)
@@ -237,7 +269,12 @@ impl CloudAgentInfo {
         message: &DownloadedMessageEncrypted,
         expected_sender_vk: &str,
     ) -> VcxResult<AriesMessage> {
-        EncryptionEnvelope::auth_unpack(&wallet.to_base_wallet(), message.payload()?, expected_sender_vk).await
+        EncryptionEnvelope::auth_unpack(
+            &wallet.to_base_wallet(),
+            message.payload()?,
+            expected_sender_vk,
+        )
+        .await
     }
 
     async fn decrypt_decode_message_noauth(

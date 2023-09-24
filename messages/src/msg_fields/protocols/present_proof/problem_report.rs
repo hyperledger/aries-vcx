@@ -2,11 +2,14 @@ use serde::{Deserialize, Serialize};
 use typed_builder::TypedBuilder;
 
 use crate::{
-    msg_fields::protocols::report_problem::{ProblemReport, ProblemReportContent, ProblemReportDecorators},
+    msg_fields::protocols::report_problem::{
+        ProblemReport, ProblemReportContent, ProblemReportDecorators,
+    },
     msg_parts::MsgParts,
 };
 
-pub type PresentProofProblemReport = MsgParts<PresentProofProblemReportContent, ProblemReportDecorators>;
+pub type PresentProofProblemReport =
+    MsgParts<PresentProofProblemReportContent, ProblemReportDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder)]
 #[serde(transparent)]
@@ -41,11 +44,13 @@ mod tests {
     use super::*;
     use crate::{
         decorators::{
-            localization::tests::make_extended_field_localization, thread::tests::make_extended_thread,
-            timing::tests::make_extended_timing,
+            localization::tests::make_extended_field_localization,
+            thread::tests::make_extended_thread, timing::tests::make_extended_timing,
         },
         misc::test_utils,
-        msg_fields::protocols::report_problem::{Description, Impact, Where, WhereParty, WhoRetries},
+        msg_fields::protocols::report_problem::{
+            Description, Impact, Where, WhereParty, WhoRetries,
+        },
         msg_types::present_proof::PresentProofTypeV1_0,
     };
 
@@ -54,16 +59,25 @@ mod tests {
         let description = Description::builder()
             .code("test_problem_report_code".to_owned())
             .build();
-        let content: ProblemReportContent = ProblemReportContent::builder().description(description).build();
+        let content: ProblemReportContent = ProblemReportContent::builder()
+            .description(description)
+            .build();
         let decorators = ProblemReportDecorators::default();
 
         let expected = json!({
             "description": content.description
         });
 
-        let content = PresentProofProblemReportContent::builder().inner(content).build();
+        let content = PresentProofProblemReportContent::builder()
+            .inner(content)
+            .build();
 
-        test_utils::test_msg(content, decorators, PresentProofTypeV1_0::ProblemReport, expected);
+        test_utils::test_msg(
+            content,
+            decorators,
+            PresentProofTypeV1_0::ProblemReport,
+            expected,
+        );
     }
 
     #[test]
@@ -109,8 +123,15 @@ mod tests {
             "fix-hint~l10n": decorators.fix_hint_locale
         });
 
-        let content = PresentProofProblemReportContent::builder().inner(content).build();
+        let content = PresentProofProblemReportContent::builder()
+            .inner(content)
+            .build();
 
-        test_utils::test_msg(content, decorators, PresentProofTypeV1_0::ProblemReport, expected);
+        test_utils::test_msg(
+            content,
+            decorators,
+            PresentProofTypeV1_0::ProblemReport,
+            expected,
+        );
     }
 }

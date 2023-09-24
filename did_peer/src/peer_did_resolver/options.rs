@@ -21,7 +21,9 @@ impl Default for ExtraFieldsOptions {
 
 impl ExtraFieldsOptions {
     pub fn new() -> Self {
-        Self { ..Default::default() }
+        Self {
+            ..Default::default()
+        }
     }
 
     pub fn set_public_key_encoding(mut self, public_key_encoding: PublicKeyEncoding) -> Self {

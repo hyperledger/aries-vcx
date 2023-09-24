@@ -1,6 +1,5 @@
-use napi_derive::napi;
-
 use libvcx_core::api_vcx::api_global::settings;
+use napi_derive::napi;
 
 use crate::error::to_napi_err;
 

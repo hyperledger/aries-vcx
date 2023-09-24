@@ -10,13 +10,17 @@ use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 use self::{
     invitation::{Invitation, InvitationContent, InvitationDecorators},
     reuse::{HandshakeReuse, HandshakeReuseContent, HandshakeReuseDecorators},
-    reuse_accepted::{HandshakeReuseAccepted, HandshakeReuseAcceptedContent, HandshakeReuseAcceptedDecorators},
+    reuse_accepted::{
+        HandshakeReuseAccepted, HandshakeReuseAcceptedContent, HandshakeReuseAcceptedDecorators,
+    },
 };
 use crate::{
     misc::utils::{into_msg_with_type, transit_to_aries_msg},
     msg_fields::traits::DelayedSerde,
     msg_types::{
-        protocols::out_of_band::{OutOfBandType as OutOfBandKind, OutOfBandTypeV1, OutOfBandTypeV1_1},
+        protocols::out_of_band::{
+            OutOfBandType as OutOfBandKind, OutOfBandTypeV1, OutOfBandTypeV1_1,
+        },
         MsgWithType,
     },
 };
@@ -31,7 +35,10 @@ pub enum OutOfBand {
 impl DelayedSerde for OutOfBand {
     type MsgType<'a> = (OutOfBandKind, &'a str);
 
-    fn delayed_deserialize<'de, D>(msg_type: Self::MsgType<'de>, deserializer: D) -> Result<Self, D::Error>
+    fn delayed_deserialize<'de, D>(
+        msg_type: Self::MsgType<'de>,
+        deserializer: D,
+    ) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
@@ -43,7 +50,9 @@ impl DelayedSerde for OutOfBand {
 
         match kind.map_err(D::Error::custom)? {
             OutOfBandTypeV1_1::Invitation => Invitation::deserialize(deserializer).map(From::from),
-            OutOfBandTypeV1_1::HandshakeReuse => HandshakeReuse::deserialize(deserializer).map(From::from),
+            OutOfBandTypeV1_1::HandshakeReuse => {
+                HandshakeReuse::deserialize(deserializer).map(From::from)
+            }
             OutOfBandTypeV1_1::HandshakeReuseAccepted => {
                 HandshakeReuseAccepted::deserialize(deserializer).map(From::from)
             }
@@ -83,4 +92,8 @@ transit_to_aries_msg!(
 
 into_msg_with_type!(Invitation, OutOfBandTypeV1_1, Invitation);
 into_msg_with_type!(HandshakeReuse, OutOfBandTypeV1_1, HandshakeReuse);
-into_msg_with_type!(HandshakeReuseAccepted, OutOfBandTypeV1_1, HandshakeReuseAccepted);
+into_msg_with_type!(
+    HandshakeReuseAccepted,
+    OutOfBandTypeV1_1,
+    HandshakeReuseAccepted
+);

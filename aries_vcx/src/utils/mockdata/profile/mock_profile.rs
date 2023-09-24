@@ -1,20 +1,20 @@
 use std::sync::Arc;
 
-use aries_vcx_core::ledger::base_ledger::TxnAuthrAgrmtOptions;
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds,
-    ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite},
-    wallet::base_wallet::BaseWallet,
-    wallet::mock_wallet::MockWallet,
+    ledger::base_ledger::{
+        AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite,
+        TxnAuthrAgrmtOptions,
+    },
+    wallet::{base_wallet::BaseWallet, mock_wallet::MockWallet},
 };
-
-use super::{mock_anoncreds::MockAnoncreds, mock_ledger::MockLedger};
-use crate::core::profile::profile::Profile;
-use crate::errors::error::VcxResult;
 use async_trait::async_trait;
 
-/// Implementation of a [Profile] which uses [MockLedger], [MockAnoncreds] and [MockWallet] to return
-/// mock data for all Profile methods. Only for unit testing purposes
+use super::{mock_anoncreds::MockAnoncreds, mock_ledger::MockLedger};
+use crate::{core::profile::profile::Profile, errors::error::VcxResult};
+
+/// Implementation of a [Profile] which uses [MockLedger], [MockAnoncreds] and [MockWallet] to
+/// return mock data for all Profile methods. Only for unit testing purposes
 #[derive(Debug)]
 pub struct MockProfile;
 

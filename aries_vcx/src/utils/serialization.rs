@@ -51,8 +51,9 @@ pub enum SerializableObjectWithState<T, P> {
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod tests {
-    use super::*;
     use serde_json;
+
+    use super::*;
 
     #[test]
     fn test_serialize() {
@@ -86,7 +87,7 @@ mod tests {
         }
         "#;
 
-        let result = serde_json::from_str(&serialized);
+        let result = serde_json::from_str(serialized);
         let ans: SerializableObjectWithState<Vec<String>, String> = result.unwrap();
 
         let (data, state, source_id, thread_id) = match ans {

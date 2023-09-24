@@ -48,7 +48,9 @@ mod tests {
     fn test_minimal_ack_proof() {
         let content: AckPresentationContent = AckContent::builder().status(AckStatus::Ok).build();
 
-        let decorators = AckDecorators::builder().thread(make_extended_thread()).build();
+        let decorators = AckDecorators::builder()
+            .thread(make_extended_thread())
+            .build();
 
         let expected = json!({
             "status": content.inner.status,

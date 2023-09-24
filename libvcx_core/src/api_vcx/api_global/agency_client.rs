@@ -1,15 +1,23 @@
-use std::ops::Deref;
-use std::sync::{RwLock, RwLockWriteGuard};
+use std::{
+    ops::Deref,
+    sync::{RwLock, RwLockWriteGuard},
+};
 
-use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
-use crate::errors::mapping_from_ariesvcx::map_ariesvcx_result;
-use aries_vcx::agency_client::agency_client::AgencyClient;
-use aries_vcx::agency_client::configuration::{AgencyClientConfig, AgentProvisionConfig};
-use aries_vcx::agency_client::messages::update_message::UIDsByConn;
-use aries_vcx::agency_client::MessageStatusCode;
-use aries_vcx::aries_vcx_core::wallet::agency_client_wallet::ToBaseAgencyClientWallet;
+use aries_vcx::{
+    agency_client::{
+        agency_client::AgencyClient,
+        configuration::{AgencyClientConfig, AgentProvisionConfig},
+        messages::update_message::UIDsByConn,
+        MessageStatusCode,
+    },
+    aries_vcx_core::wallet::agency_client_wallet::ToBaseAgencyClientWallet,
+};
 
 use super::profile::get_main_wallet;
+use crate::errors::{
+    error::{LibvcxError, LibvcxErrorKind, LibvcxResult},
+    mapping_from_ariesvcx::map_ariesvcx_result,
+};
 
 lazy_static! {
     pub static ref AGENCY_CLIENT: RwLock<AgencyClient> = RwLock::new(AgencyClient::new());
@@ -26,20 +34,25 @@ pub fn get_main_agency_client() -> LibvcxResult<AgencyClient> {
 }
 
 pub fn create_agency_client_for_main_wallet(config: &AgencyClientConfig) -> LibvcxResult<()> {
-    let client = get_main_agency_client()?.configure(get_main_wallet()?.to_base_agency_client_wallet(), config)?;
+    let client = get_main_agency_client()?
+        .configure(get_main_wallet()?.to_base_agency_client_wallet(), config)?;
     set_main_agency_client(client);
     Ok(())
 }
 
 pub fn reset_main_agency_client() {
     trace!("reset_agency_client >>>");
-    let mut agency_client = AGENCY_CLIENT.write().expect("Unable to access AGENCY_CLIENT");
+    let mut agency_client = AGENCY_CLIENT
+        .write()
+        .expect("Unable to access AGENCY_CLIENT");
     *agency_client = AgencyClient::new();
 }
 
 pub fn set_main_agency_client(new_agency_client: AgencyClient) {
     trace!("set_main_agency_client >>>");
-    let mut agency_client = AGENCY_CLIENT.write().expect("Unable to access AGENCY_CLIENT");
+    let mut agency_client = AGENCY_CLIENT
+        .write()
+        .expect("Unable to access AGENCY_CLIENT");
     *agency_client = new_agency_client;
 }
 
@@ -48,12 +61,15 @@ pub async fn agency_update_messages(
     uids_by_conns: Vec<UIDsByConn>,
 ) -> LibvcxResult<()> {
     let client = get_main_agency_client()?;
-    client.update_messages(status_code, uids_by_conns).await.map_err(|err| {
-        LibvcxError::from_msg(
-            LibvcxErrorKind::UnknownError,
-            format!("Error updating state of message in agency.\nError: {}", err),
-        )
-    })
+    client
+        .update_messages(status_code, uids_by_conns)
+        .await
+        .map_err(|err| {
+            LibvcxError::from_msg(
+                LibvcxErrorKind::UnknownError,
+                format!("Error updating state of message in agency.\nError: {}", err),
+            )
+        })
 }
 
 pub async fn update_webhook_url(webhook_url: &str) -> LibvcxResult<()> {
@@ -62,24 +78,30 @@ pub async fn update_webhook_url(webhook_url: &str) -> LibvcxResult<()> {
     Ok(())
 }
 
-pub async fn provision_cloud_agent(agency_config: &AgentProvisionConfig) -> LibvcxResult<AgencyClientConfig> {
+pub async fn provision_cloud_agent(
+    agency_config: &AgentProvisionConfig,
+) -> LibvcxResult<AgencyClientConfig> {
     let wallet = get_main_wallet()?;
     let mut client = get_main_agency_client()?;
-    let res = aries_vcx::utils::provision::provision_cloud_agent(&mut client, wallet, agency_config).await;
+    let res =
+        aries_vcx::utils::provision::provision_cloud_agent(&mut client, wallet, agency_config)
+            .await;
     map_ariesvcx_result(res)
 }
 
 #[cfg(test)]
 pub mod tests {
+    use aries_vcx::{
+        agency_client::{
+            configuration::AgentProvisionConfig, messages::update_message::UIDsByConn,
+            testing::mocking::AgencyMockDecrypted, MessageStatusCode,
+        },
+        utils::{constants, devsetup::SetupMocks},
+    };
+
     use crate::api_vcx::api_global::agency_client::{
         agency_update_messages, provision_cloud_agent, update_webhook_url,
     };
-    use aries_vcx::agency_client::configuration::AgentProvisionConfig;
-    use aries_vcx::agency_client::messages::update_message::UIDsByConn;
-    use aries_vcx::agency_client::testing::mocking::AgencyMockDecrypted;
-    use aries_vcx::agency_client::MessageStatusCode;
-    use aries_vcx::utils::constants;
-    use aries_vcx::utils::devsetup::SetupMocks;
 
     #[tokio::test]
     async fn test_update_institution_webhook() {
@@ -94,7 +116,9 @@ pub mod tests {
         let config = AgentProvisionConfig {
             agency_did: "Ab8TvZa3Q19VNkQVzAWVL7".into(),
             agency_verkey: "5LXaR43B1aQyeh94VBP8LG1Sgvjk7aNfqiksBCSjwqbf".into(),
-            agency_endpoint: "https://enym-eagency.pdev.evernym.com".parse().expect("valid url"),
+            agency_endpoint: "https://enym-eagency.pdev.evernym.com"
+                .parse()
+                .expect("valid url"),
             agent_seed: None,
         };
         provision_cloud_agent(&config).await.unwrap();
@@ -103,9 +127,12 @@ pub mod tests {
     #[tokio::test]
     async fn test_messages_update_status() {
         let _setup = SetupMocks::init();
-        AgencyMockDecrypted::set_next_decrypted_response(constants::GET_MESSAGES_DECRYPTED_RESPONSE);
+        AgencyMockDecrypted::set_next_decrypted_response(
+            constants::GET_MESSAGES_DECRYPTED_RESPONSE,
+        );
 
-        let uids_by_conns_str = String::from(r#"[{"pairwiseDID":"QSrw8hebcvQxiwBETmAaRs","uids":["mgrmngq"]}]"#);
+        let uids_by_conns_str =
+            String::from(r#"[{"pairwiseDID":"QSrw8hebcvQxiwBETmAaRs","uids":["mgrmngq"]}]"#);
         let uids_by_conns: Vec<UIDsByConn> = serde_json::from_str(&uids_by_conns_str).unwrap();
         agency_update_messages(MessageStatusCode::Received, uids_by_conns)
             .await

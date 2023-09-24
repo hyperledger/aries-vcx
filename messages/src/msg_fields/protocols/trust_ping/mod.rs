@@ -14,7 +14,9 @@ use crate::{
     misc::utils::{into_msg_with_type, transit_to_aries_msg},
     msg_fields::traits::DelayedSerde,
     msg_types::{
-        protocols::trust_ping::{TrustPingType as TrustPingKind, TrustPingTypeV1, TrustPingTypeV1_0},
+        protocols::trust_ping::{
+            TrustPingType as TrustPingKind, TrustPingTypeV1, TrustPingTypeV1_0,
+        },
         MsgWithType,
     },
 };
@@ -28,7 +30,10 @@ pub enum TrustPing {
 impl DelayedSerde for TrustPing {
     type MsgType<'a> = (TrustPingKind, &'a str);
 
-    fn delayed_deserialize<'de, D>(msg_type: Self::MsgType<'de>, deserializer: D) -> Result<Self, D::Error>
+    fn delayed_deserialize<'de, D>(
+        msg_type: Self::MsgType<'de>,
+        deserializer: D,
+    ) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
@@ -40,7 +45,9 @@ impl DelayedSerde for TrustPing {
 
         match kind.map_err(D::Error::custom)? {
             TrustPingTypeV1_0::Ping => Ping::deserialize(deserializer).map(From::from),
-            TrustPingTypeV1_0::PingResponse => PingResponse::deserialize(deserializer).map(From::from),
+            TrustPingTypeV1_0::PingResponse => {
+                PingResponse::deserialize(deserializer).map(From::from)
+            }
         }
     }
 

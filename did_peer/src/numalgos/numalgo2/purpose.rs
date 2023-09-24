@@ -30,7 +30,7 @@ impl TryFrom<char> for ElementPurpose {
             'I' => Ok(ElementPurpose::CapabilityInvocation),
             'D' => Ok(ElementPurpose::CapabilityDelegation),
             'S' => Ok(ElementPurpose::Service),
-            c @ _ => Err(DidPeerError::UnsupportedPurpose(c)),
+            c => Err(DidPeerError::UnsupportedPurpose(c)),
         }
     }
 }

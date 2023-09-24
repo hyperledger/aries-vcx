@@ -1,12 +1,14 @@
-use crate::error::to_napi_err;
-use libvcx_core::api_vcx::api_global::settings::settings_init_issuer_config;
-use libvcx_core::api_vcx::api_global::{ledger, wallet};
-use libvcx_core::aries_vcx::aries_vcx_core::wallet::indy::{IssuerConfig, RestoreWalletConfigs, WalletConfig};
-use libvcx_core::errors::error::{LibvcxError, LibvcxErrorKind};
-use libvcx_core::serde_json;
-use libvcx_core::serde_json::json;
+use libvcx_core::{
+    api_vcx::api_global::{ledger, settings::settings_init_issuer_config, wallet},
+    aries_vcx::aries_vcx_core::wallet::indy::{IssuerConfig, RestoreWalletConfigs, WalletConfig},
+    errors::error::{LibvcxError, LibvcxErrorKind},
+    serde_json,
+    serde_json::json,
+};
 use napi::bindgen_prelude::Buffer;
 use napi_derive::napi;
+
+use crate::error::to_napi_err;
 
 #[napi]
 pub async fn wallet_open_as_main(wallet_config: String) -> napi::Result<i32> {
@@ -18,7 +20,9 @@ pub async fn wallet_open_as_main(wallet_config: String) -> napi::Result<i32> {
             )
         })
         .map_err(to_napi_err)?;
-    let handle = wallet::open_as_main_wallet(&wallet_config).await.map_err(to_napi_err)?;
+    let handle = wallet::open_as_main_wallet(&wallet_config)
+        .await
+        .map_err(to_napi_err)?;
     Ok(handle.0)
 }
 
@@ -32,7 +36,9 @@ pub async fn wallet_create_main(wallet_config: String) -> napi::Result<()> {
             )
         })
         .map_err(to_napi_err)?;
-    wallet::create_main_wallet(&wallet_config).await.map_err(to_napi_err)
+    wallet::create_main_wallet(&wallet_config)
+        .await
+        .map_err(to_napi_err)
 }
 
 #[napi]
@@ -63,7 +69,8 @@ pub async fn configure_issuer_wallet(enterprise_seed: String) -> napi::Result<St
 
 #[napi]
 pub async fn unpack(data: Buffer) -> napi::Result<String> {
-    wallet::wallet_unpack_message_to_string(&data.to_vec())
+    let data = data.as_ref();
+    wallet::wallet_unpack_message_to_string(data)
         .await
         .map_err(to_napi_err)
 }
@@ -108,10 +115,14 @@ pub async fn rotate_verkey(did: String) -> napi::Result<()> {
 
 #[napi]
 pub async fn rotate_verkey_start(did: String) -> napi::Result<String> {
-    wallet::replace_did_keys_start(&did).await.map_err(to_napi_err)
+    wallet::replace_did_keys_start(&did)
+        .await
+        .map_err(to_napi_err)
 }
 
 #[napi]
 pub async fn rotate_verkey_apply(did: String, temp_vk: String) -> napi::Result<()> {
-    wallet::rotate_verkey_apply(&did, &temp_vk).await.map_err(to_napi_err)
+    wallet::rotate_verkey_apply(&did, &temp_vk)
+        .await
+        .map_err(to_napi_err)
 }

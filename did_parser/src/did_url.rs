@@ -150,7 +150,7 @@ impl DidUrl {
     // TODO: Ideally we would have a builder instead of purpose-specific constructors
     pub fn from_fragment(fragment: String) -> Result<Self, ParseError> {
         // TODO: Better validation
-        if fragment.contains("#") {
+        if fragment.contains('#') {
             return Err(ParseError::InvalidInput(
                 "Fragment cannot contain '#' character",
             ));

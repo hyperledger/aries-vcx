@@ -1,10 +1,13 @@
 use std::clone::Clone;
 
-use crate::protocols::mediated_connection::invitee::states::requested::RequestedState;
-use crate::protocols::mediated_connection::invitee::states::responded::RespondedState;
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
-use messages::msg_fields::protocols::connection::response::Response;
-use messages::msg_fields::protocols::discover_features::ProtocolDescriptor;
+use messages::msg_fields::protocols::{
+    connection::response::Response, discover_features::ProtocolDescriptor,
+};
+
+use crate::protocols::mediated_connection::invitee::states::{
+    requested::RequestedState, responded::RespondedState,
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct CompletedState {
@@ -25,7 +28,9 @@ impl From<(CompletedState, Vec<ProtocolDescriptor>)> for CompletedState {
 }
 
 impl From<(RequestedState, AriesDidDoc, Response)> for CompletedState {
-    fn from((state, did_doc, _response): (RequestedState, AriesDidDoc, Response)) -> CompletedState {
+    fn from(
+        (state, did_doc, _response): (RequestedState, AriesDidDoc, Response),
+    ) -> CompletedState {
         trace!("ConnectionInvitee: transit state from RequestedState to CompleteState");
         CompletedState {
             bootstrap_did_doc: state.did_doc,

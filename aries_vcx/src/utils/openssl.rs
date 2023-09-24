@@ -10,7 +10,7 @@ pub fn encode(s: &str) -> VcxResult<String> {
             let mut hasher = Sha256::new();
             hasher.update(s.as_bytes());
             let hash = hasher.finalize();
-            let bignum = BigUint::from_bytes_be(&hash.as_slice());
+            let bignum = BigUint::from_bytes_be(hash.as_slice());
             let encoded = bignum.to_str_radix(10);
             Ok(encoded)
         }
@@ -45,7 +45,8 @@ mod test {
         // string
         {
             let value = "Cat";
-            let expected_value = "32770349619296211525721019403974704547883091481854305319049714074652726739013";
+            let expected_value =
+                "32770349619296211525721019403974704547883091481854305319049714074652726739013";
 
             let encoded_value = encode(value).unwrap();
             assert_eq!(expected_value, encoded_value);

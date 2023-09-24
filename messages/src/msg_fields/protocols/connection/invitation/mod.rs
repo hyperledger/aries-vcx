@@ -12,7 +12,6 @@ pub use self::{
     pairwise::{PairwiseDidInvitationContent, PairwiseInvitationContent},
     public::PublicInvitationContent,
 };
-
 use crate::{decorators::timing::Timing, msg_parts::MsgParts};
 
 pub type Invitation = MsgParts<InvitationContent, InvitationDecorators>;

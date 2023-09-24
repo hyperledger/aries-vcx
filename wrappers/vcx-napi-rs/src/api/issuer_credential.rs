@@ -1,8 +1,9 @@
-use crate::error::to_napi_err;
-use libvcx_core::api_vcx::api_handle::issuer_credential;
-use libvcx_core::aries_vcx::messages::AriesMessage;
-use libvcx_core::serde_json::json;
+use libvcx_core::{
+    api_vcx::api_handle::issuer_credential, aries_vcx::messages::AriesMessage, serde_json::json,
+};
 use napi_derive::napi;
+
+use crate::error::to_napi_err;
 
 #[napi]
 fn issuer_credential_deserialize(credential_data: String) -> napi::Result<u32> {
@@ -15,7 +16,10 @@ fn issuer_credential_serialize(handle_credential: u32) -> napi::Result<String> {
 }
 
 #[napi]
-async fn issuer_credential_update_state_v2(handle_credential: u32, connection_handle: u32) -> napi::Result<u32> {
+async fn issuer_credential_update_state_v2(
+    handle_credential: u32,
+    connection_handle: u32,
+) -> napi::Result<u32> {
     issuer_credential::update_state(handle_credential, None, connection_handle)
         .await
         .map_err(to_napi_err)
@@ -38,9 +42,13 @@ async fn issuer_credential_update_state_with_message_nonmediated(
     connection_handle: u32,
     message: String,
 ) -> napi::Result<u32> {
-    issuer_credential::update_state_with_message_nonmediated(handle_credential, connection_handle, &message)
-        .await
-        .map_err(to_napi_err)
+    issuer_credential::update_state_with_message_nonmediated(
+        handle_credential,
+        connection_handle,
+        &message,
+    )
+    .await
+    .map_err(to_napi_err)
 }
 
 #[napi]
@@ -76,7 +84,10 @@ fn issuer_credential_get_revocation_id(handle_credential: u32) -> napi::Result<S
 }
 
 #[napi]
-async fn issuer_credential_send_credential(handle_credential: u32, handle_connection: u32) -> napi::Result<u32> {
+async fn issuer_credential_send_credential(
+    handle_credential: u32,
+    handle_connection: u32,
+) -> napi::Result<u32> {
     issuer_credential::send_credential(handle_credential, handle_connection)
         .await
         .map_err(to_napi_err)
@@ -93,7 +104,10 @@ async fn issuer_credential_send_credential_nonmediated(
 }
 
 #[napi]
-async fn issuer_credential_send_offer_v2(handle_credential: u32, handle_connection: u32) -> napi::Result<()> {
+async fn issuer_credential_send_offer_v2(
+    handle_credential: u32,
+    handle_connection: u32,
+) -> napi::Result<()> {
     issuer_credential::send_credential_offer_v2(handle_credential, handle_connection)
         .await
         .map_err(to_napi_err)?;
@@ -101,7 +115,10 @@ async fn issuer_credential_send_offer_v2(handle_credential: u32, handle_connecti
 }
 
 #[napi]
-async fn issuer_credential_send_offer_nonmediated(handle_credential: u32, handle_connection: u32) -> napi::Result<()> {
+async fn issuer_credential_send_offer_nonmediated(
+    handle_credential: u32,
+    handle_connection: u32,
+) -> napi::Result<()> {
     issuer_credential::send_credential_offer_nonmediated(handle_credential, handle_connection)
         .await
         .map_err(to_napi_err)?;
@@ -129,7 +146,8 @@ async fn issuer_credential_build_offer_msg_v2(
 
 #[napi]
 fn issuer_credential_get_offer_msg(credential_handle: u32) -> napi::Result<String> {
-    let res: AriesMessage = issuer_credential::get_credential_offer_msg(credential_handle).map_err(to_napi_err)?;
+    let res: AriesMessage =
+        issuer_credential::get_credential_offer_msg(credential_handle).map_err(to_napi_err)?;
     Ok(json!(res).to_string())
 }
 

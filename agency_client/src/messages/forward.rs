@@ -3,9 +3,10 @@ use core::u8;
 use serde_json::Value;
 use uuid::Uuid;
 
-use crate::errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
-use crate::messages::a2a_message::A2AMessageKinds;
-use crate::messages::message_type::MessageType;
+use crate::{
+    errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult},
+    messages::{a2a_message::A2AMessageKinds, message_type::MessageType},
+};
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
 pub struct ForwardV2 {

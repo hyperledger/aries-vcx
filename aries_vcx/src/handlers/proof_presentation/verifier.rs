@@ -1,20 +1,32 @@
 use std::sync::Arc;
 
-use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
-use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
-use messages::msg_fields::protocols::notification::Notification;
-use messages::msg_fields::protocols::present_proof::present::Presentation;
-use messages::msg_fields::protocols::present_proof::propose::ProposePresentation;
-use messages::msg_fields::protocols::present_proof::request::RequestPresentation;
-use messages::msg_fields::protocols::present_proof::PresentProof;
-use messages::AriesMessage;
+use aries_vcx_core::{
+    anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
+};
+use messages::{
+    msg_fields::protocols::{
+        notification::Notification,
+        present_proof::{
+            present::Presentation, propose::ProposePresentation, request::RequestPresentation,
+            PresentProof,
+        },
+        report_problem::ProblemReport,
+    },
+    AriesMessage,
+};
 
-use crate::common::proofs::proof_request::PresentationRequestData;
-use crate::errors::error::prelude::*;
-use crate::handlers::util::get_attach_as_string;
-use crate::protocols::common::build_problem_report_msg;
-use crate::protocols::proof_presentation::verifier::state_machine::{VerifierSM, VerifierState};
-use crate::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
+use crate::{
+    common::proofs::proof_request::PresentationRequestData,
+    errors::error::prelude::*,
+    handlers::util::get_attach_as_string,
+    protocols::{
+        common::build_problem_report_msg,
+        proof_presentation::verifier::{
+            state_machine::{VerifierSM, VerifierState},
+            verification_status::PresentationVerificationStatus,
+        },
+    },
+};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Default)]
 pub struct Verifier {
@@ -30,7 +42,10 @@ impl Verifier {
         })
     }
 
-    pub fn create_from_request(source_id: String, presentation_request: &PresentationRequestData) -> VcxResult<Self> {
+    pub fn create_from_request(
+        source_id: String,
+        presentation_request: &PresentationRequestData,
+    ) -> VcxResult<Self> {
         trace!(
             "Verifier::create_from_request >>> source_id: {:?}, presentation_request: {:?}",
             source_id,
@@ -40,7 +55,10 @@ impl Verifier {
         Ok(Self { verifier_sm })
     }
 
-    pub fn create_from_proposal(source_id: &str, presentation_proposal: &ProposePresentation) -> VcxResult<Self> {
+    pub fn create_from_proposal(
+        source_id: &str,
+        presentation_proposal: &ProposePresentation,
+    ) -> VcxResult<Self> {
         trace!(
             "Issuer::create_from_proposal >>> source_id: {:?}, presentation_proposal: {:?}",
             source_id,
@@ -60,11 +78,11 @@ impl Verifier {
     }
 
     // TODO: Find a better name for this method
-    pub fn mark_presentation_request_sent(&mut self) -> VcxResult<AriesMessage> {
+    pub fn mark_presentation_request_sent(&mut self) -> VcxResult<RequestPresentation> {
         if self.verifier_sm.get_state() == VerifierState::PresentationRequestSet {
             let request = self.verifier_sm.presentation_request_msg()?;
             self.verifier_sm = self.verifier_sm.clone().mark_presentation_request_sent()?;
-            Ok(request.into())
+            Ok(request)
         } else {
             Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::NotReady,
@@ -95,7 +113,8 @@ impl Verifier {
         comment: Option<String>,
     ) -> VcxResult<()> {
         trace!(
-            "Verifier::set_presentation_request >>> presentation_request_data: {:?}, comment: ${:?}",
+            "Verifier::set_presentation_request >>> presentation_request_data: {:?}, comment: \
+             ${:?}",
             presentation_request_data,
             comment
         );
@@ -112,7 +131,9 @@ impl Verifier {
 
     pub fn get_presentation_request_attachment(&self) -> VcxResult<String> {
         let pres_req = &self.verifier_sm.presentation_request_msg()?;
-        Ok(get_attach_as_string!(pres_req.content.request_presentations_attach))
+        Ok(get_attach_as_string!(
+            pres_req.content.request_presentations_attach
+        ))
     }
 
     pub fn get_presentation_msg(&self) -> VcxResult<Presentation> {
@@ -125,7 +146,9 @@ impl Verifier {
 
     pub fn get_presentation_attachment(&self) -> VcxResult<String> {
         let presentation = &self.verifier_sm.get_presentation_msg()?;
-        Ok(get_attach_as_string!(presentation.content.presentations_attach))
+        Ok(get_attach_as_string!(
+            presentation.content.presentations_attach
+        ))
     }
 
     pub fn get_presentation_proposal(&self) -> VcxResult<ProposePresentation> {
@@ -143,9 +166,12 @@ impl Verifier {
         message: AriesMessage,
     ) -> VcxResult<Option<AriesMessage>> {
         let (verifier_sm, message) = match message {
-            AriesMessage::PresentProof(PresentProof::ProposePresentation(proposal)) => {
-                (self.verifier_sm.clone().receive_presentation_proposal(proposal)?, None)
-            }
+            AriesMessage::PresentProof(PresentProof::ProposePresentation(proposal)) => (
+                self.verifier_sm
+                    .clone()
+                    .receive_presentation_proposal(proposal)?,
+                None,
+            ),
             AriesMessage::PresentProof(PresentProof::Presentation(presentation)) => {
                 let sm = self
                     .verifier_sm
@@ -155,7 +181,9 @@ impl Verifier {
                 (sm.clone(), Some(sm.get_final_message()?))
             }
             AriesMessage::ReportProblem(report) => (
-                self.verifier_sm.clone().receive_presentation_request_reject(report)?,
+                self.verifier_sm
+                    .clone()
+                    .receive_presentation_request_reject(report)?,
                 None,
             ),
             AriesMessage::Notification(Notification::ProblemReport(report)) => (
@@ -180,8 +208,14 @@ impl Verifier {
         self.verifier_sm.progressable_by_message()
     }
 
-    pub async fn decline_presentation_proposal<'a>(&'a mut self, reason: &'a str) -> VcxResult<AriesMessage> {
-        trace!("Verifier::decline_presentation_proposal >>> reason: {:?}", reason);
+    pub async fn decline_presentation_proposal<'a>(
+        &'a mut self,
+        reason: &'a str,
+    ) -> VcxResult<ProblemReport> {
+        trace!(
+            "Verifier::decline_presentation_proposal >>> reason: {:?}",
+            reason
+        );
         let state = self.verifier_sm.get_state();
         if state == VerifierState::PresentationProposalReceived {
             let proposal = self.verifier_sm.presentation_proposal()?;
@@ -195,11 +229,14 @@ impl Verifier {
                 .clone()
                 .reject_presentation_proposal(problem_report.clone())
                 .await?;
-            Ok(problem_report.into())
+            Ok(problem_report)
         } else {
             Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::NotReady,
-                format!("Unable to reject presentation proposal in state {:?}", state),
+                format!(
+                    "Unable to reject presentation proposal in state {:?}",
+                    state
+                ),
             ))
         }
     }

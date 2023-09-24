@@ -1,41 +1,52 @@
 #![allow(clippy::unwrap_used)]
 
-use std::fs;
-use std::future::Future;
-use std::sync::{Arc, Once};
+use std::{
+    fs,
+    future::Future,
+    sync::{Arc, Once},
+};
 
+use agency_client::testing::mocking::{enable_agency_mocks, AgencyMockDecrypted};
+use aries_vcx_core::{
+    global::settings::{
+        disable_indy_mocks as disable_indy_mocks_core, enable_indy_mocks as enable_indy_mocks_core,
+        reset_config_values_ariesvcxcore,
+    },
+    ledger::{
+        base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite},
+        indy::pool::test_utils::{create_testpool_genesis_txn_file, get_temp_file_path},
+    },
+    wallet::indy::{
+        did_mocks::DidMocks,
+        wallet::{create_and_open_wallet, create_and_store_my_did},
+        IndySdkWallet, WalletConfig,
+    },
+    WalletHandle,
+};
 use chrono::{DateTime, Duration, Utc};
 
-use agency_client::agency_client::AgencyClient;
-use agency_client::configuration::AgentProvisionConfig;
-use agency_client::testing::mocking::{enable_agency_mocks, AgencyMockDecrypted};
-use aries_vcx_core::global::settings::{
-    disable_indy_mocks as disable_indy_mocks_core, enable_indy_mocks as enable_indy_mocks_core,
-    reset_config_values_ariesvcxcore,
-};
-use aries_vcx_core::ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite};
-use aries_vcx_core::ledger::indy::pool::test_utils::{create_testpool_genesis_txn_file, get_temp_file_path};
-use aries_vcx_core::wallet::base_wallet::BaseWallet;
-use aries_vcx_core::wallet::indy::did_mocks::DidMocks;
-use aries_vcx_core::wallet::indy::wallet::{create_and_open_wallet, create_and_store_my_did, wallet_configure_issuer};
-use aries_vcx_core::wallet::indy::{IndySdkWallet, WalletConfig};
-use aries_vcx_core::WalletHandle;
-
-use crate::core::profile::ledger::{build_ledger_components, VcxPoolConfig};
 #[cfg(feature = "modular_libs")]
 use crate::core::profile::modular_libs_profile::ModularLibsProfile;
-use crate::core::profile::profile::Profile;
 #[cfg(feature = "vdrtools")]
 use crate::core::profile::vdrtools_profile::VdrtoolsProfile;
-use crate::global::settings;
-use crate::global::settings::{
-    aries_vcx_disable_indy_mocks, aries_vcx_enable_indy_mocks, set_config_value, CONFIG_INSTITUTION_DID, DEFAULT_DID,
+use crate::{
+    core::profile::{
+        ledger::{build_ledger_components, VcxPoolConfig},
+        profile::Profile,
+    },
+    global::{
+        settings,
+        settings::{
+            aries_vcx_disable_indy_mocks, aries_vcx_enable_indy_mocks, init_issuer_config,
+            reset_config_values_ariesvcx, set_config_value, CONFIG_INSTITUTION_DID, DEFAULT_DID,
+        },
+    },
+    utils::{
+        constants::{POOL1_TXN, TRUSTEE_SEED},
+        file::write_file,
+        test_logger::LibvcxDefaultLogger,
+    },
 };
-use crate::global::settings::{init_issuer_config, reset_config_values_ariesvcx};
-use crate::utils::constants::{POOL1_TXN, TRUSTEE_SEED};
-use crate::utils::file::write_file;
-use crate::utils::provision::provision_cloud_agent;
-use crate::utils::test_logger::LibvcxDefaultLogger;
 
 #[macro_export]
 macro_rules! assert_match {
@@ -136,43 +147,10 @@ impl Drop for SetupMocks {
     }
 }
 
-// todo: we move to libvcx?
-pub async fn dev_setup_issuer_wallet_and_agency_client() -> (String, WalletHandle, AgencyClient) {
-    let enterprise_seed = "000000000000000000000000Trustee1";
-    let config_wallet = WalletConfig {
-        wallet_name: format!("wallet_{}", uuid::Uuid::new_v4()),
-        wallet_key: settings::DEFAULT_WALLET_KEY.into(),
-        wallet_key_derivation: settings::WALLET_KDF_RAW.into(),
-        wallet_type: None,
-        storage_config: None,
-        storage_credentials: None,
-        rekey: None,
-        rekey_derivation_method: None,
-    };
-    let config_provision_agent = AgentProvisionConfig {
-        agency_did: AGENCY_DID.to_string(),
-        agency_verkey: AGENCY_VERKEY.to_string(),
-        agency_endpoint: AGENCY_ENDPOINT.parse().expect("valid url"),
-        agent_seed: None,
-    };
-    let wallet_handle = create_and_open_wallet(&config_wallet).await.unwrap();
-    let config_issuer = wallet_configure_issuer(wallet_handle, enterprise_seed).await.unwrap();
-    init_issuer_config(&config_issuer.institution_did).unwrap();
-    let mut agency_client = AgencyClient::new();
-
-    let wallet: Arc<dyn BaseWallet> = Arc::new(IndySdkWallet::new(wallet_handle));
-
-    provision_cloud_agent(&mut agency_client, wallet, &config_provision_agent)
-        .await
-        .unwrap();
-
-    (config_issuer.institution_did, wallet_handle, agency_client)
-}
-
 pub async fn dev_setup_wallet_indy(key_seed: &str) -> (String, WalletHandle) {
     info!("dev_setup_wallet_indy >>");
     let config_wallet = WalletConfig {
-        wallet_name: format!("wallet_{}", uuid::Uuid::new_v4().to_string()),
+        wallet_name: format!("wallet_{}", uuid::Uuid::new_v4()),
         wallet_key: settings::DEFAULT_WALLET_KEY.into(),
         wallet_key_derivation: settings::WALLET_KDF_RAW.into(),
         wallet_type: None,
@@ -192,7 +170,10 @@ pub async fn dev_setup_wallet_indy(key_seed: &str) -> (String, WalletHandle) {
 }
 
 #[cfg(feature = "vdrtools")]
-pub fn dev_build_profile_vdrtools(genesis_file_path: String, wallet: Arc<IndySdkWallet>) -> Arc<dyn Profile> {
+pub fn dev_build_profile_vdrtools(
+    genesis_file_path: String,
+    wallet: Arc<IndySdkWallet>,
+) -> Arc<dyn Profile> {
     info!("dev_build_profile_vdrtools >>");
     let vcx_pool_config = VcxPoolConfig {
         genesis_file_path: genesis_file_path.clone(),
@@ -200,7 +181,8 @@ pub fn dev_build_profile_vdrtools(genesis_file_path: String, wallet: Arc<IndySdk
         response_cache_config: None,
     };
 
-    let (ledger_read, ledger_write) = build_ledger_components(wallet.clone(), vcx_pool_config).unwrap();
+    let (ledger_read, ledger_write) =
+        build_ledger_components(wallet.clone(), vcx_pool_config).unwrap();
     let anoncreds_ledger_read: Arc<dyn AnoncredsLedgerRead> = ledger_read.clone();
     let anoncreds_ledger_write: Arc<dyn AnoncredsLedgerWrite> = ledger_write.clone();
     let indy_ledger_read: Arc<dyn IndyLedgerRead> = ledger_read.clone();
@@ -215,7 +197,10 @@ pub fn dev_build_profile_vdrtools(genesis_file_path: String, wallet: Arc<IndySdk
 }
 
 #[cfg(feature = "modular_libs")]
-pub fn dev_build_profile_modular(genesis_file_path: String, wallet: Arc<IndySdkWallet>) -> Arc<dyn Profile> {
+pub fn dev_build_profile_modular(
+    genesis_file_path: String,
+    wallet: Arc<IndySdkWallet>,
+) -> Arc<dyn Profile> {
     info!("dev_build_profile_modular >>");
     let vcx_pool_config = VcxPoolConfig {
         genesis_file_path: genesis_file_path.clone(),
@@ -227,18 +212,25 @@ pub fn dev_build_profile_modular(genesis_file_path: String, wallet: Arc<IndySdkW
 
 #[cfg(feature = "vdr_proxy_ledger")]
 pub async fn dev_build_profile_vdr_proxy_ledger(wallet: Arc<IndySdkWallet>) -> Arc<dyn Profile> {
-    use crate::core::profile::vdr_proxy_profile::VdrProxyProfile;
-    use aries_vcx_core::VdrProxyClient;
     use std::env;
+
+    use aries_vcx_core::VdrProxyClient;
+
+    use crate::core::profile::vdr_proxy_profile::VdrProxyProfile;
     info!("dev_build_profile_vdr_proxy_ledger >>");
 
-    let client_url = env::var("VDR_PROXY_CLIENT_URL").unwrap_or_else(|_| "http://127.0.0.1:3030".to_string());
+    let client_url =
+        env::var("VDR_PROXY_CLIENT_URL").unwrap_or_else(|_| "http://127.0.0.1:3030".to_string());
     let client = VdrProxyClient::new(&client_url).unwrap();
 
     Arc::new(VdrProxyProfile::init(wallet, client).await.unwrap())
 }
 
-pub async fn dev_build_featured_profile(genesis_file_path: String, wallet: Arc<IndySdkWallet>) -> Arc<dyn Profile> {
+#[allow(unreachable_code)]
+pub async fn dev_build_featured_profile(
+    genesis_file_path: String,
+    wallet: Arc<IndySdkWallet>,
+) -> Arc<dyn Profile> {
     // In case of migration test setup, we are starting with vdrtools, then we migrate
     #[cfg(feature = "migration")]
     return {

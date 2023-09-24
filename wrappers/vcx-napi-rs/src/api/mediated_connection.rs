@@ -1,16 +1,19 @@
-use libvcx_core::api_vcx::api_handle::mediated_connection;
-use libvcx_core::api_vcx::api_handle::mediated_connection::parse_status_codes;
+use libvcx_core::{
+    api_vcx::api_handle::{mediated_connection, mediated_connection::parse_status_codes},
+    aries_vcx::protocols::mediated_connection::pairwise_info::PairwiseInfo,
+    errors::error::{LibvcxError, LibvcxErrorKind},
+    serde_json,
+};
 use napi::bindgen_prelude::Buffer;
 use napi_derive::napi;
-
-use libvcx_core::aries_vcx::protocols::mediated_connection::pairwise_info::PairwiseInfo;
-use libvcx_core::errors::error::{LibvcxError, LibvcxErrorKind};
-use libvcx_core::serde_json;
 
 use crate::error::to_napi_err;
 
 #[napi]
-pub fn mediated_connection_generate_public_invite(public_did: String, label: String) -> napi::Result<String> {
+pub fn mediated_connection_generate_public_invite(
+    public_did: String,
+    label: String,
+) -> napi::Result<String> {
     trace!(
         "mediated_connection_generate_public_invite >>> public_did: {:?}, label: {:?}",
         public_did,
@@ -27,7 +30,10 @@ pub fn mediated_connection_get_pw_did(handle: u32) -> napi::Result<String> {
 
 #[napi]
 pub fn mediated_connection_get_their_pw_did(handle: u32) -> napi::Result<String> {
-    trace!("mediated_connection_get_their_pw_did >>> handle: {:?}", handle);
+    trace!(
+        "mediated_connection_get_their_pw_did >>> handle: {:?}",
+        handle
+    );
     mediated_connection::get_their_pw_did(handle).map_err(to_napi_err)
 }
 
@@ -58,7 +64,10 @@ pub async fn mediated_connection_create(source_id: String) -> napi::Result<u32> 
 }
 
 #[napi]
-pub async fn mediated_connection_create_with_invite(source_id: String, details: String) -> napi::Result<u32> {
+pub async fn mediated_connection_create_with_invite(
+    source_id: String,
+    details: String,
+) -> napi::Result<u32> {
     trace!(
         "mediated_connection_create_with_invite >>> source_id: {:?}, details: {:?}",
         source_id,
@@ -106,7 +115,10 @@ pub async fn mediated_connection_create_with_connection_request_v2(
 }
 
 #[napi]
-pub async fn mediated_connection_send_handshake_reuse(handle: u32, oob_msg: String) -> napi::Result<()> {
+pub async fn mediated_connection_send_handshake_reuse(
+    handle: u32,
+    oob_msg: String,
+) -> napi::Result<()> {
     trace!(
         "mediated_connection_send_handshake_reuse >>> handle: {:?}, oob_msg: {:?}",
         handle,
@@ -118,7 +130,10 @@ pub async fn mediated_connection_send_handshake_reuse(handle: u32, oob_msg: Stri
 }
 
 #[napi]
-pub async fn mediated_connection_update_state_with_message(handle: u32, message: String) -> napi::Result<u32> {
+pub async fn mediated_connection_update_state_with_message(
+    handle: u32,
+    message: String,
+) -> napi::Result<u32> {
     trace!(
         "mediated_connection_update_state_with_message >>> handle: {:?}, message: {:?}",
         handle,
@@ -144,12 +159,17 @@ pub async fn mediated_connection_handle_message(handle: u32, message: String) ->
 #[napi]
 pub async fn mediated_connection_update_state(handle: u32) -> napi::Result<u32> {
     trace!("mediated_connection_update_state >>> handle: {:?}", handle);
-    mediated_connection::update_state(handle).await.map_err(to_napi_err)
+    mediated_connection::update_state(handle)
+        .await
+        .map_err(to_napi_err)
 }
 
 #[napi]
 pub async fn mediated_connection_delete_connection(handle: u32) -> napi::Result<()> {
-    trace!("mediated_connection_delete_connection >>> handle: {:?}", handle);
+    trace!(
+        "mediated_connection_delete_connection >>> handle: {:?}",
+        handle
+    );
     mediated_connection::delete_connection(handle)
         .await
         .map_err(to_napi_err)
@@ -158,7 +178,9 @@ pub async fn mediated_connection_delete_connection(handle: u32) -> napi::Result<
 #[napi]
 pub async fn mediated_connection_connect(handle: u32) -> napi::Result<()> {
     trace!("mediated_connection_connect >>> handle: {:?}", handle);
-    mediated_connection::connect(handle).await.map_err(to_napi_err)?;
+    mediated_connection::connect(handle)
+        .await
+        .map_err(to_napi_err)?;
     Ok(())
 }
 
@@ -185,12 +207,18 @@ pub fn mediated_connection_release(handle: u32) -> napi::Result<()> {
 
 #[napi]
 pub fn mediated_connection_invite_details(handle: u32) -> napi::Result<String> {
-    trace!("mediated_connection_invite_details >>> handle: {:?}", handle);
+    trace!(
+        "mediated_connection_invite_details >>> handle: {:?}",
+        handle
+    );
     mediated_connection::get_invite_details(handle).map_err(to_napi_err)
 }
 
 #[napi]
-pub async fn mediated_connection_send_ping(handle: u32, comment: Option<String>) -> napi::Result<()> {
+pub async fn mediated_connection_send_ping(
+    handle: u32,
+    comment: Option<String>,
+) -> napi::Result<()> {
     trace!(
         "mediated_connection_send_ping >>> handle: {:?}, comment: {:?}",
         handle,
@@ -233,7 +261,8 @@ pub async fn mediated_connection_messages_download(
     uids: Option<String>,
 ) -> napi::Result<String> {
     trace!(
-        "mediated_connection_messages_download >>> conn_handles: {:?}, status_codes: {:?}, uids: {:?}",
+        "mediated_connection_messages_download >>> conn_handles: {:?}, status_codes: {:?}, uids: \
+         {:?}",
         conn_handles,
         status_codes,
         uids
@@ -265,16 +294,26 @@ pub async fn mediated_connection_messages_download(
 #[napi]
 pub async fn mediated_connection_sign_data(handle: u32, data: Buffer) -> napi::Result<Buffer> {
     trace!("mediated_connection_sign_data >>> handle: {:?}", handle);
-    let res = mediated_connection::sign_data(handle, &data.to_vec())
+    let data = data.as_ref();
+    let res = mediated_connection::sign_data(handle, data)
         .await
         .map_err(to_napi_err)?;
     Ok(Buffer::from(res))
 }
 
 #[napi]
-pub async fn mediated_connection_verify_signature(handle: u32, data: Buffer, signature: Buffer) -> napi::Result<bool> {
-    trace!("mediated_connection_verify_signature >>> handle: {:?}", handle);
-    mediated_connection::verify_signature(handle, &data.to_vec(), &signature.to_vec())
+pub async fn mediated_connection_verify_signature(
+    handle: u32,
+    data: Buffer,
+    signature: Buffer,
+) -> napi::Result<bool> {
+    trace!(
+        "mediated_connection_verify_signature >>> handle: {:?}",
+        handle
+    );
+    let data = data.as_ref();
+    let signature = signature.as_ref();
+    mediated_connection::verify_signature(handle, data, signature)
         .await
         .map_err(to_napi_err)
 }

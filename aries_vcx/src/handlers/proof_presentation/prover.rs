@@ -1,28 +1,37 @@
-use std::collections::HashMap;
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
-use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
-use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
-use chrono::Utc;
-use messages::decorators::thread::Thread;
-use messages::decorators::timing::Timing;
-use messages::msg_fields::protocols::notification::Notification;
-use messages::msg_fields::protocols::present_proof::ack::AckPresentation;
-use messages::msg_fields::protocols::present_proof::present::Presentation;
-use messages::msg_fields::protocols::present_proof::propose::{
-    PresentationPreview, ProposePresentation, ProposePresentationContent, ProposePresentationDecorators,
+use aries_vcx_core::{
+    anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
 };
-use messages::msg_fields::protocols::present_proof::request::RequestPresentation;
-use messages::msg_fields::protocols::present_proof::PresentProof;
-use messages::AriesMessage;
+use chrono::Utc;
+use messages::{
+    decorators::{thread::Thread, timing::Timing},
+    msg_fields::protocols::{
+        notification::Notification,
+        present_proof::{
+            ack::AckPresentation,
+            present::Presentation,
+            propose::{
+                PresentationPreview, ProposePresentation, ProposePresentationContent,
+                ProposePresentationDecorators,
+            },
+            request::RequestPresentation,
+            PresentProof,
+        },
+    },
+    AriesMessage,
+};
 use uuid::Uuid;
 
-use crate::errors::error::prelude::*;
-use crate::handlers::util::{get_attach_as_string, PresentationProposalData};
-use crate::protocols::common::build_problem_report_msg;
-use crate::protocols::proof_presentation::prover::state_machine::{ProverSM, ProverState};
-
 use super::types::{RetrievedCredentials, SelectedCredentials};
+use crate::{
+    errors::error::prelude::*,
+    handlers::util::{get_attach_as_string, PresentationProposalData},
+    protocols::{
+        common::build_problem_report_msg,
+        proof_presentation::prover::state_machine::{ProverSM, ProverState},
+    },
+};
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Prover {
@@ -37,7 +46,10 @@ impl Prover {
         })
     }
 
-    pub fn create_from_request(source_id: &str, presentation_request: RequestPresentation) -> VcxResult<Prover> {
+    pub fn create_from_request(
+        source_id: &str,
+        presentation_request: RequestPresentation,
+    ) -> VcxResult<Prover> {
         trace!(
             "Prover::create_from_request >>> source_id: {}, presentation_request: {:?}",
             source_id,
@@ -56,13 +68,19 @@ impl Prover {
         self.prover_sm.get_presentation_status()
     }
 
-    pub async fn retrieve_credentials(&self, anoncreds: &Arc<dyn BaseAnonCreds>) -> VcxResult<RetrievedCredentials> {
+    pub async fn retrieve_credentials(
+        &self,
+        anoncreds: &Arc<dyn BaseAnonCreds>,
+    ) -> VcxResult<RetrievedCredentials> {
         trace!("Prover::retrieve_credentials >>>");
         let presentation_request = self.presentation_request_data()?;
         let json_retrieved_credentials = anoncreds
             .prover_get_credentials_for_proof_req(&presentation_request)
             .await?;
-        trace!("Prover::retrieve_credentials >>> presentation_request: {presentation_request}, json_retrieved_credentials: {json_retrieved_credentials}");
+        trace!(
+            "Prover::retrieve_credentials >>> presentation_request: {presentation_request}, \
+             json_retrieved_credentials: {json_retrieved_credentials}"
+        );
         Ok(serde_json::from_str(&json_retrieved_credentials)?)
     }
 
@@ -107,7 +125,10 @@ impl Prover {
         trace!("Prover::mark_presentation_sent >>>");
         self.prover_sm = self.prover_sm.clone().mark_presentation_sent()?;
         match self.prover_sm.get_state() {
-            ProverState::PresentationSent => self.prover_sm.get_presentation_msg().map(|p| p.clone().into()),
+            ProverState::PresentationSent => self
+                .prover_sm
+                .get_presentation_msg()
+                .map(|p| p.clone().into()),
             ProverState::Finished => self.prover_sm.get_problem_report().map(Into::into),
             _ => Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::NotReady,
@@ -148,7 +169,10 @@ impl Prover {
         let proof_request_data: serde_json::Value = serde_json::from_str(&data).map_err(|err| {
             AriesVcxError::from_msg(
                 AriesVcxErrorKind::InvalidJson,
-                format!("Cannot deserialize {:?} into PresentationRequestData: {:?}", data, err),
+                format!(
+                    "Cannot deserialize {:?} into PresentationRequestData: {:?}",
+                    data, err
+                ),
             )
         })?;
         Ok(proof_request_data.to_string())
@@ -164,19 +188,24 @@ impl Prover {
 
     pub async fn process_aries_msg(&mut self, message: AriesMessage) -> VcxResult<()> {
         let prover_sm = match message {
-            AriesMessage::PresentProof(PresentProof::RequestPresentation(request)) => {
-                self.prover_sm.clone().receive_presentation_request(request)?
-            }
+            AriesMessage::PresentProof(PresentProof::RequestPresentation(request)) => self
+                .prover_sm
+                .clone()
+                .receive_presentation_request(request)?,
             AriesMessage::PresentProof(PresentProof::Ack(ack)) => {
                 self.prover_sm.clone().receive_presentation_ack(ack)?
             }
-            AriesMessage::ReportProblem(report) => self.prover_sm.clone().receive_presentation_reject(report)?,
-            AriesMessage::Notification(Notification::ProblemReport(report)) => {
-                self.prover_sm.clone().receive_presentation_reject(report.into())?
+            AriesMessage::ReportProblem(report) => {
+                self.prover_sm.clone().receive_presentation_reject(report)?
             }
-            AriesMessage::PresentProof(PresentProof::ProblemReport(report)) => {
-                self.prover_sm.clone().receive_presentation_reject(report.into())?
-            }
+            AriesMessage::Notification(Notification::ProblemReport(report)) => self
+                .prover_sm
+                .clone()
+                .receive_presentation_reject(report.into())?,
+            AriesMessage::PresentProof(PresentProof::ProblemReport(report)) => self
+                .prover_sm
+                .clone()
+                .receive_presentation_reject(report.into())?,
             _ => self.prover_sm.clone(),
         };
         self.prover_sm = prover_sm;
@@ -207,12 +236,13 @@ impl Prover {
                 )
             }
             (None, Some(proposal)) => {
-                let presentation_preview: PresentationPreview = serde_json::from_str(&proposal).map_err(|err| {
-                    AriesVcxError::from_msg(
-                        AriesVcxErrorKind::InvalidJson,
-                        format!("Cannot serialize Presentation Preview: {:?}", err),
-                    )
-                })?;
+                let presentation_preview: PresentationPreview = serde_json::from_str(&proposal)
+                    .map_err(|err| {
+                        AriesVcxError::from_msg(
+                            AriesVcxErrorKind::InvalidJson,
+                            format!("Cannot serialize Presentation Preview: {:?}", err),
+                        )
+                    })?;
                 let thread_id = self.prover_sm.get_thread_id()?;
                 let id = Uuid::new_v4().to_string();
 
@@ -231,7 +261,10 @@ impl Prover {
                     .decorators(decorators)
                     .build();
 
-                (self.prover_sm.clone().negotiate_presentation().await?, proposal)
+                (
+                    self.prover_sm.clone().negotiate_presentation().await?,
+                    proposal,
+                )
             }
             (None, None) => {
                 return Err(AriesVcxError::from_msg(

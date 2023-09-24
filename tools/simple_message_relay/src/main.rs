@@ -20,7 +20,10 @@ async fn hello() -> impl Responder {
 }
 
 #[get("/pop_user_message/{user_id}")]
-async fn pop_user_message(path: web::Path<String>, data: web::Data<UserMessages>) -> impl Responder {
+async fn pop_user_message(
+    path: web::Path<String>,
+    data: web::Data<UserMessages>,
+) -> impl Responder {
     let user_id = path.into_inner();
     let mut messages_by_user_id = data.messages_by_user_id.lock().unwrap();
     let messages_for_user = messages_by_user_id.get_mut(&user_id);
@@ -28,14 +31,18 @@ async fn pop_user_message(path: web::Path<String>, data: web::Data<UserMessages>
     let message_body = messages_for_user.and_then(|msgs| msgs.pop_front());
 
     if let Some(body) = message_body {
-        return HttpResponse::Ok().body(body);
+        HttpResponse::Ok().body(body)
     } else {
-        return HttpResponse::NoContent().into();
+        HttpResponse::NoContent().into()
     }
 }
 
 #[post("/send_user_message/{user_id}")]
-async fn send_user_message(path: web::Path<String>, body: Bytes, data: web::Data<UserMessages>) -> impl Responder {
+async fn send_user_message(
+    path: web::Path<String>,
+    body: Bytes,
+    data: web::Data<UserMessages>,
+) -> impl Responder {
     let user_id = path.into_inner();
 
     let body = body.to_vec();
@@ -111,7 +118,8 @@ mod tests {
         let user_id = "user1";
 
         // pop for unknown user == NO CONTENT
-        let pop_response = test::call_service(&app, pop_message_request(user_id).to_request()).await;
+        let pop_response =
+            test::call_service(&app, pop_message_request(user_id).to_request()).await;
         assert_eq!(pop_response.status(), StatusCode::NO_CONTENT);
         let body = pop_response.into_body();
         assert!(body::to_bytes(body).await.unwrap().is_empty());
@@ -124,13 +132,15 @@ mod tests {
         assert!(resp.status().is_success());
 
         // pop for known user == OK and body
-        let pop_response = test::call_service(&app, pop_message_request(user_id).to_request()).await;
+        let pop_response =
+            test::call_service(&app, pop_message_request(user_id).to_request()).await;
         assert_eq!(pop_response.status(), StatusCode::OK);
         let body = pop_response.into_body();
         assert_eq!(body::to_bytes(body).await.unwrap(), message.as_bytes());
 
         // pop for no messages == NO CONTENT
-        let pop_response = test::call_service(&app, pop_message_request(user_id).to_request()).await;
+        let pop_response =
+            test::call_service(&app, pop_message_request(user_id).to_request()).await;
         assert_eq!(pop_response.status(), StatusCode::NO_CONTENT);
         let body = pop_response.into_body();
         assert!(body::to_bytes(body).await.unwrap().is_empty());
@@ -165,15 +175,27 @@ mod tests {
 
         // pop and check
         let res = test::call_service(&app, pop_message_request(user_id1).to_request()).await;
-        assert_eq!(body::to_bytes(res.into_body()).await.unwrap(), message1.as_bytes());
+        assert_eq!(
+            body::to_bytes(res.into_body()).await.unwrap(),
+            message1.as_bytes()
+        );
 
         let res = test::call_service(&app, pop_message_request(user_id2).to_request()).await;
-        assert_eq!(body::to_bytes(res.into_body()).await.unwrap(), message3.as_bytes());
+        assert_eq!(
+            body::to_bytes(res.into_body()).await.unwrap(),
+            message3.as_bytes()
+        );
 
         let res = test::call_service(&app, pop_message_request(user_id1).to_request()).await;
-        assert_eq!(body::to_bytes(res.into_body()).await.unwrap(), message2.as_bytes());
+        assert_eq!(
+            body::to_bytes(res.into_body()).await.unwrap(),
+            message2.as_bytes()
+        );
 
         let res = test::call_service(&app, pop_message_request(user_id2).to_request()).await;
-        assert_eq!(body::to_bytes(res.into_body()).await.unwrap(), message4.as_bytes());
+        assert_eq!(
+            body::to_bytes(res.into_body()).await.unwrap(),
+            message4.as_bytes()
+        );
     }
 }

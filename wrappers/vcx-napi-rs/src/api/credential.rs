@@ -1,6 +1,5 @@
-use napi_derive::napi;
-
 use libvcx_core::api_vcx::api_handle::credential;
+use napi_derive::napi;
 
 use crate::error::to_napi_err;
 
@@ -22,7 +21,11 @@ async fn credential_send_request(handle: u32, handle_connection: u32) -> napi::R
 }
 
 #[napi]
-async fn credential_decline_offer(handle: u32, handle_connection: u32, comment: Option<String>) -> napi::Result<()> {
+async fn credential_decline_offer(
+    handle: u32,
+    handle_connection: u32,
+    comment: Option<String>,
+) -> napi::Result<()> {
     credential::decline_offer(handle, handle_connection, comment.as_deref())
         .await
         .map_err(to_napi_err)
@@ -51,7 +54,10 @@ async fn v2_credential_update_state_with_message(
 }
 
 #[napi]
-async fn v2_credential_update_state(handle_credential: u32, connection_handle: u32) -> napi::Result<u32> {
+async fn v2_credential_update_state(
+    handle_credential: u32,
+    connection_handle: u32,
+) -> napi::Result<u32> {
     credential::update_state(handle_credential, None, connection_handle)
         .await
         .map_err(to_napi_err)

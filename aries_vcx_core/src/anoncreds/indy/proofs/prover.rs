@@ -1,13 +1,42 @@
 use serde_json::{Map, Value};
 use vdrtools::{Locator, SearchHandle};
 
-use crate::anoncreds::indy::general::close_search_handle;
-use crate::errors::error::prelude::*;
-use crate::global::mockdata::mock_settings::get_mock_creds_retrieved_for_proof_request;
-use crate::global::settings;
-use crate::indy::utils::parse_and_validate;
-use crate::utils::constants::{ATTRS, PROOF_REQUESTED_PREDICATES, REQUESTED_ATTRIBUTES};
-use crate::{utils, WalletHandle};
+use crate::{
+    anoncreds::indy::general::{blob_storage_open_reader, close_search_handle},
+    errors::error::{prelude::*, VcxCoreResult},
+    global::{mockdata::mock_settings::get_mock_creds_retrieved_for_proof_request, settings},
+    indy::utils::parse_and_validate,
+    utils,
+    utils::constants::{ATTRS, PROOF_REQUESTED_PREDICATES, REQUESTED_ATTRIBUTES, REV_STATE_JSON},
+    WalletHandle,
+};
+
+pub async fn libindy_prover_create_revocation_state(
+    tails_file_path: &str,
+    rev_reg_def_json: &str,
+    rev_reg_delta_json: &str,
+    timestamp: u64,
+    cred_rev_id: &str,
+) -> VcxCoreResult<String> {
+    if settings::indy_mocks_enabled() {
+        return Ok(REV_STATE_JSON.to_string());
+    }
+
+    let blob_handle = blob_storage_open_reader(tails_file_path).await?;
+
+    let res = Locator::instance()
+        .prover_controller
+        .create_revocation_state(
+            blob_handle,
+            parse_and_validate(rev_reg_def_json)?,
+            parse_and_validate(rev_reg_delta_json)?,
+            timestamp,
+            cred_rev_id.into(),
+        )
+        .await?;
+
+    Ok(res)
+}
 
 pub async fn libindy_prover_create_proof(
     wallet_handle: WalletHandle,
@@ -53,10 +82,14 @@ async fn fetch_credentials(
                 .fetch_credential_for_proof_request(search_handle, item_referent.clone(), 100)
                 .await
                 .map_err(|_| {
-                    error!("Invalid Json Parsing of Object Returned from Libindy. Did Libindy change its structure?");
+                    error!(
+                        "Invalid Json Parsing of Object Returned from Libindy. Did Libindy change \
+                         its structure?"
+                    );
                     AriesVcxCoreError::from_msg(
                         AriesVcxCoreErrorKind::InvalidConfiguration,
-                        "Invalid Json Parsing of Object Returned from Libindy. Did Libindy change its structure?",
+                        "Invalid Json Parsing of Object Returned from Libindy. Did Libindy change \
+                         its structure?",
                     )
                 })?,
         )?
@@ -99,31 +132,42 @@ pub async fn libindy_prover_get_credentials_for_proof_req(
         }
     }
 
-    // this may be too redundant since Prover::search_credentials will validate the proof reqeuest already.
-    let proof_request_json: Map<String, Value> = serde_json::from_str(proof_req).map_err(|err| {
-        AriesVcxCoreError::from_msg(
-            AriesVcxCoreErrorKind::InvalidProofRequest,
-            format!("Cannot deserialize ProofRequest: {err:?}"),
-        )
-    })?;
+    // this may be too redundant since Prover::search_credentials will validate the proof reqeuest
+    // already.
+    let proof_request_json: Map<String, Value> =
+        serde_json::from_str(proof_req).map_err(|err| {
+            AriesVcxCoreError::from_msg(
+                AriesVcxCoreErrorKind::InvalidProofRequest,
+                format!("Cannot deserialize ProofRequest: {err:?}"),
+            )
+        })?;
 
-    // since the search_credentials_for_proof request validates that the proof_req is properly structured, this get()
-    // fn should never fail, unless libindy changes their formats.
-    let requested_attributes: Option<Map<String, Value>> = proof_request_json.get(REQUESTED_ATTRIBUTES).and_then(|v| {
-        serde_json::from_value(v.clone())
-            .map_err(|_| {
-                error!("Invalid Json Parsing of Requested Attributes Retrieved From Libindy. Did Libindy change its structure?");
-            })
-            .ok()
-    });
+    // since the search_credentials_for_proof request validates that the proof_req is properly
+    // structured, this get() fn should never fail, unless libindy changes their formats.
+    let requested_attributes: Option<Map<String, Value>> =
+        proof_request_json.get(REQUESTED_ATTRIBUTES).and_then(|v| {
+            serde_json::from_value(v.clone())
+                .map_err(|_| {
+                    error!(
+                        "Invalid Json Parsing of Requested Attributes Retrieved From Libindy. Did \
+                         Libindy change its structure?"
+                    );
+                })
+                .ok()
+        });
 
-    let requested_predicates: Option<Map<String, Value>> = proof_request_json.get(PROOF_REQUESTED_PREDICATES).and_then(|v| {
-        serde_json::from_value(v.clone())
-            .map_err(|_| {
-                error!("Invalid Json Parsing of Requested Predicates Retrieved From Libindy. Did Libindy change its structure?");
-            })
-            .ok()
-    });
+    let requested_predicates: Option<Map<String, Value>> = proof_request_json
+        .get(PROOF_REQUESTED_PREDICATES)
+        .and_then(|v| {
+            serde_json::from_value(v.clone())
+                .map_err(|_| {
+                    error!(
+                        "Invalid Json Parsing of Requested Predicates Retrieved From Libindy. Did \
+                         Libindy change its structure?"
+                    );
+                })
+                .ok()
+        });
 
     // handle special case of "empty because json is bad" vs "empty because no attributes sepected"
     if requested_attributes.is_none() && requested_predicates.is_none() {

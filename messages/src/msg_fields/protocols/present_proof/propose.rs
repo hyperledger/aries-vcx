@@ -74,8 +74,12 @@ impl<'a> TryFrom<CowStr<'a>> for PresentationPreviewMsgType {
     fn try_from(value: CowStr<'a>) -> Result<Self, Self::Error> {
         let value = MessageType::try_from(value.0.as_ref())?;
 
-        if let Protocol::PresentProofType(PresentProofType::V1(PresentProofTypeV1::V1_0(_))) = value.protocol {
-            if let Ok(PresentProofTypeV1_0::PresentationPreview) = PresentProofTypeV1_0::from_str(value.kind) {
+        if let Protocol::PresentProofType(PresentProofType::V1(PresentProofTypeV1::V1_0(_))) =
+            value.protocol
+        {
+            if let Ok(PresentProofTypeV1_0::PresentationPreview) =
+                PresentProofTypeV1_0::from_str(value.kind)
+            {
                 return Ok(PresentationPreviewMsgType);
             }
         }
@@ -130,7 +134,10 @@ pub struct Referent {
 
 impl Referent {
     pub fn new(cred_def_id: String, referent: String) -> Self {
-        Self { cred_def_id, referent }
+        Self {
+            cred_def_id,
+            referent,
+        }
     }
 }
 
@@ -179,7 +186,12 @@ mod tests {
             "presentation_proposal": content.presentation_proposal
         });
 
-        test_utils::test_msg(content, decorators, PresentProofTypeV1_0::ProposePresentation, expected);
+        test_utils::test_msg(
+            content,
+            decorators,
+            PresentProofTypeV1_0::ProposePresentation,
+            expected,
+        );
     }
 
     #[test]
@@ -210,6 +222,11 @@ mod tests {
             "~timing": decorators.timing
         });
 
-        test_utils::test_msg(content, decorators, PresentProofTypeV1_0::ProposePresentation, expected);
+        test_utils::test_msg(
+            content,
+            decorators,
+            PresentProofTypeV1_0::ProposePresentation,
+            expected,
+        );
     }
 }
