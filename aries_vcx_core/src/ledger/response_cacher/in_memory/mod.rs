@@ -1,20 +1,17 @@
 mod config;
 mod options;
 
-pub use config::*;
-pub use options::*;
-
-use std::sync::Arc;
-use std::time::Instant;
+use std::{sync::Arc, time::Instant};
 
 use async_trait::async_trait;
+pub use config::*;
 use lru::LruCache;
+pub use options::*;
 use serde::{Deserialize, Serialize};
 use tokio::sync::Mutex;
 
-use crate::errors::error::VcxCoreResult;
-
 use super::ResponseCacher;
+use crate::errors::error::VcxCoreResult;
 
 pub struct InMemoryResponseCacher {
     cache: Arc<Mutex<LruCache<String, (String, Instant)>>>,
@@ -79,9 +76,9 @@ impl ResponseCacher for InMemoryResponseCacher {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     use std::time::Duration;
+
+    use super::*;
 
     #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
     struct TestStruct {

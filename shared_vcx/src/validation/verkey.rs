@@ -1,5 +1,6 @@
-use crate::errors::error::{SharedVcxError, SharedVcxErrorKind, SharedVcxResult};
 use bs58;
+
+use crate::errors::error::{SharedVcxError, SharedVcxErrorKind, SharedVcxResult};
 
 pub fn validate_verkey(verkey: &str) -> SharedVcxResult<String> {
     let check_verkey = String::from(verkey);
@@ -7,7 +8,10 @@ pub fn validate_verkey(verkey: &str) -> SharedVcxResult<String> {
         Ok(ref x) if x.len() == 32 => Ok(check_verkey),
         Ok(x) => Err(SharedVcxError::from_msg(
             SharedVcxErrorKind::InvalidVerkey,
-            format!("Invalid verkey length, expected 32 bytes, decoded {} bytes", x.len()),
+            format!(
+                "Invalid verkey length, expected 32 bytes, decoded {} bytes",
+                x.len()
+            ),
         )),
         Err(err) => Err(SharedVcxError::from_msg(
             SharedVcxErrorKind::NotBase58,

@@ -33,7 +33,9 @@ pub fn migrate_any_record(record: Record) -> MigrationResult<Option<Record>> {
         INDY_CRED => Some(conv::convert_cred(record)).transpose(),
         INDY_CRED_DEF => Some(conv::convert_cred_def(record)).transpose(),
         INDY_CRED_DEF_PRIV => Some(conv::convert_cred_def_priv_key(record)).transpose(),
-        INDY_CRED_DEF_CR_PROOF => Some(conv::convert_cred_def_correctness_proof(record)).transpose(),
+        INDY_CRED_DEF_CR_PROOF => {
+            Some(conv::convert_cred_def_correctness_proof(record)).transpose()
+        }
         // Schema
         INDY_SCHEMA => Some(conv::convert_schema(record)).transpose(),
         INDY_SCHEMA_ID => Some(conv::convert_schema_id(record)).transpose(),
@@ -56,9 +58,9 @@ mod tests {
 
     use aries_vcx_core::anoncreds::credx_anoncreds::{
         RevocationRegistryInfo, CATEGORY_CREDENTIAL, CATEGORY_CRED_DEF, CATEGORY_CRED_DEF_PRIV,
-        CATEGORY_CRED_KEY_CORRECTNESS_PROOF, CATEGORY_CRED_MAP_SCHEMA_ID, CATEGORY_CRED_SCHEMA, CATEGORY_LINK_SECRET,
-        CATEGORY_REV_REG, CATEGORY_REV_REG_DEF, CATEGORY_REV_REG_DEF_PRIV, CATEGORY_REV_REG_DELTA,
-        CATEGORY_REV_REG_INFO,
+        CATEGORY_CRED_KEY_CORRECTNESS_PROOF, CATEGORY_CRED_MAP_SCHEMA_ID, CATEGORY_CRED_SCHEMA,
+        CATEGORY_LINK_SECRET, CATEGORY_REV_REG, CATEGORY_REV_REG_DEF, CATEGORY_REV_REG_DEF_PRIV,
+        CATEGORY_REV_REG_DELTA, CATEGORY_REV_REG_INFO,
     };
     use credx::{
         anoncreds_clsignatures::{bn::BigNumber, LinkSecret as ClLinkSecret},
@@ -70,9 +72,8 @@ mod tests {
         Locator, WalletHandle,
     };
 
-    use crate::migrate_wallet;
-
     use super::*;
+    use crate::migrate_wallet;
 
     const WALLET_KEY: &str = "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY";
 
@@ -182,12 +183,20 @@ mod tests {
         // ################# Ingestion start #################
 
         // Master secret
-        add_wallet_item!(src_wallet_handle, INDY_MASTER_SECRET, make_dummy_master_secret());
+        add_wallet_item!(
+            src_wallet_handle,
+            INDY_MASTER_SECRET,
+            make_dummy_master_secret()
+        );
 
         // Credential
         add_wallet_item!(src_wallet_handle, INDY_CRED, make_dummy_cred());
         add_wallet_item!(src_wallet_handle, INDY_CRED_DEF, make_dummy_cred_def());
-        add_wallet_item!(src_wallet_handle, INDY_CRED_DEF_PRIV, make_dummy_cred_def_priv_key());
+        add_wallet_item!(
+            src_wallet_handle,
+            INDY_CRED_DEF_PRIV,
+            make_dummy_cred_def_priv_key()
+        );
         add_wallet_item!(
             src_wallet_handle,
             INDY_CRED_DEF_CR_PROOF,
@@ -200,10 +209,26 @@ mod tests {
 
         // Revocation registry
         add_wallet_item!(src_wallet_handle, INDY_REV_REG, make_dummy_rev_reg());
-        add_wallet_item!(src_wallet_handle, INDY_REV_REG_DELTA, make_dummy_rev_reg_delta());
-        add_wallet_item!(src_wallet_handle, INDY_REV_REG_INFO, make_dummy_rev_reg_info());
-        add_wallet_item!(src_wallet_handle, INDY_REV_REG_DEF, make_dummy_rev_reg_def());
-        add_wallet_item!(src_wallet_handle, INDY_REV_REG_DEF_PRIV, make_dummy_rev_reg_def_priv());
+        add_wallet_item!(
+            src_wallet_handle,
+            INDY_REV_REG_DELTA,
+            make_dummy_rev_reg_delta()
+        );
+        add_wallet_item!(
+            src_wallet_handle,
+            INDY_REV_REG_INFO,
+            make_dummy_rev_reg_info()
+        );
+        add_wallet_item!(
+            src_wallet_handle,
+            INDY_REV_REG_DEF,
+            make_dummy_rev_reg_def()
+        );
+        add_wallet_item!(
+            src_wallet_handle,
+            INDY_REV_REG_DEF_PRIV,
+            make_dummy_rev_reg_def_priv()
+        );
 
         // ################# Ingestion end #################
 
@@ -250,7 +275,11 @@ mod tests {
         get_master_secret(dest_wallet_handle).await;
 
         // Credential
-        get_wallet_item!(dest_wallet_handle, CATEGORY_CREDENTIAL, credx::types::Credential);
+        get_wallet_item!(
+            dest_wallet_handle,
+            CATEGORY_CREDENTIAL,
+            credx::types::Credential
+        );
         get_wallet_item!(
             dest_wallet_handle,
             CATEGORY_CRED_DEF,
@@ -268,17 +297,33 @@ mod tests {
         );
 
         // Schema
-        get_wallet_item!(dest_wallet_handle, CATEGORY_CRED_SCHEMA, credx::types::Schema);
-        get_wallet_item!(dest_wallet_handle, CATEGORY_CRED_MAP_SCHEMA_ID, credx::types::SchemaId);
+        get_wallet_item!(
+            dest_wallet_handle,
+            CATEGORY_CRED_SCHEMA,
+            credx::types::Schema
+        );
+        get_wallet_item!(
+            dest_wallet_handle,
+            CATEGORY_CRED_MAP_SCHEMA_ID,
+            credx::types::SchemaId
+        );
 
         // Revocation registry
-        get_wallet_item!(dest_wallet_handle, CATEGORY_REV_REG, credx::types::RevocationRegistry);
+        get_wallet_item!(
+            dest_wallet_handle,
+            CATEGORY_REV_REG,
+            credx::types::RevocationRegistry
+        );
         get_wallet_item!(
             dest_wallet_handle,
             CATEGORY_REV_REG_DELTA,
             credx::types::RevocationRegistryDelta
         );
-        get_wallet_item!(dest_wallet_handle, CATEGORY_REV_REG_INFO, RevocationRegistryInfo);
+        get_wallet_item!(
+            dest_wallet_handle,
+            CATEGORY_REV_REG_INFO,
+            RevocationRegistryInfo
+        );
         get_wallet_item!(
             dest_wallet_handle,
             CATEGORY_REV_REG_DEF,
@@ -474,10 +519,11 @@ mod tests {
             "revoked": []
         }).to_string();
 
-        let rev_reg_delta =
-            vdrtools::RevocationRegistryDelta::RevocationRegistryDeltaV1(vdrtools::RevocationRegistryDeltaV1 {
+        let rev_reg_delta = vdrtools::RevocationRegistryDelta::RevocationRegistryDeltaV1(
+            vdrtools::RevocationRegistryDeltaV1 {
                 value: serde_json::from_str(&rev_reg).unwrap(),
-            });
+            },
+        );
 
         // Vdrtools serializes this to String.
         // Sad, I know...

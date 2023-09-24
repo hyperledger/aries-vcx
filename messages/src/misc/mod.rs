@@ -12,13 +12,12 @@ pub mod test_utils {
     use serde_json::{json, Value};
     use shared_vcx::misc::utils::CowStr;
 
+    use super::utils;
     use crate::{
         msg_parts::MsgParts,
         msg_types::{traits::MessageKind, MessageType, Protocol},
         AriesMessage,
     };
-
-    use super::utils;
 
     pub struct DateTimeRfc3339<'a>(pub &'a DateTime<Utc>);
 

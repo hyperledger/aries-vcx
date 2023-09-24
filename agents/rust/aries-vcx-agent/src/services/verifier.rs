@@ -1,20 +1,29 @@
 use std::sync::Arc;
 
-use crate::error::*;
-use crate::http_client::HttpClient;
-use crate::storage::object_cache::ObjectCache;
-use crate::storage::Storage;
-use aries_vcx::common::proofs::proof_request::PresentationRequestData;
-use aries_vcx::core::profile::profile::Profile;
-use aries_vcx::handlers::proof_presentation::verifier::Verifier;
-use aries_vcx::messages::msg_fields::protocols::present_proof::present::Presentation;
-use aries_vcx::messages::msg_fields::protocols::present_proof::propose::ProposePresentation;
-use aries_vcx::messages::AriesMessage;
-use aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;
-use aries_vcx::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
-use aries_vcx::protocols::SendClosure;
+use aries_vcx::{
+    common::proofs::proof_request::PresentationRequestData,
+    core::profile::profile::Profile,
+    handlers::proof_presentation::verifier::Verifier,
+    messages::{
+        msg_fields::protocols::present_proof::{
+            present::Presentation, propose::ProposePresentation,
+        },
+        AriesMessage,
+    },
+    protocols::{
+        proof_presentation::verifier::{
+            state_machine::VerifierState, verification_status::PresentationVerificationStatus,
+        },
+        SendClosure,
+    },
+};
 
 use super::connection::ServiceConnections;
+use crate::{
+    error::*,
+    http_client::HttpClient,
+    storage::{object_cache::ObjectCache, Storage},
+};
 
 #[derive(Clone)]
 struct VerifierWrapper {
@@ -73,12 +82,19 @@ impl ServiceVerifier {
         )
     }
 
-    pub fn get_presentation_status(&self, thread_id: &str) -> AgentResult<PresentationVerificationStatus> {
+    pub fn get_presentation_status(
+        &self,
+        thread_id: &str,
+    ) -> AgentResult<PresentationVerificationStatus> {
         let VerifierWrapper { verifier, .. } = self.verifiers.get(thread_id)?;
         Ok(verifier.get_verification_status())
     }
 
-    pub async fn verify_presentation(&self, thread_id: &str, presentation: Presentation) -> AgentResult<()> {
+    pub async fn verify_presentation(
+        &self,
+        thread_id: &str,
+        presentation: Presentation,
+    ) -> AgentResult<()> {
         let VerifierWrapper {
             mut verifier,
             connection_id,

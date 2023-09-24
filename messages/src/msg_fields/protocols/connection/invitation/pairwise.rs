@@ -42,7 +42,8 @@ mod tests {
     use super::*;
     use crate::{
         decorators::timing::tests::make_extended_timing, misc::test_utils,
-        msg_fields::protocols::connection::invitation::InvitationDecorators, msg_types::connection::ConnectionTypeV1_0,
+        msg_fields::protocols::connection::invitation::InvitationDecorators,
+        msg_types::connection::ConnectionTypeV1_0,
     };
 
     #[test]
@@ -66,7 +67,12 @@ mod tests {
             "serviceEndpoint": service_endpoint,
         });
 
-        test_utils::test_msg(content, decorators, ConnectionTypeV1_0::Invitation, expected);
+        test_utils::test_msg(
+            content,
+            decorators,
+            ConnectionTypeV1_0::Invitation,
+            expected,
+        );
     }
 
     #[test]
@@ -83,7 +89,9 @@ mod tests {
             .service_endpoint(service_endpoint.parse().unwrap())
             .build();
 
-        let decorators = InvitationDecorators::builder().timing(make_extended_timing()).build();
+        let decorators = InvitationDecorators::builder()
+            .timing(make_extended_timing())
+            .build();
 
         let expected = json!({
             "label": label,
@@ -93,7 +101,12 @@ mod tests {
             "~timing": decorators.timing
         });
 
-        test_utils::test_msg(content, decorators, ConnectionTypeV1_0::Invitation, expected);
+        test_utils::test_msg(
+            content,
+            decorators,
+            ConnectionTypeV1_0::Invitation,
+            expected,
+        );
     }
 
     #[test]
@@ -117,7 +130,12 @@ mod tests {
             "serviceEndpoint": service_endpoint,
         });
 
-        test_utils::test_msg(content, decorators, ConnectionTypeV1_0::Invitation, expected);
+        test_utils::test_msg(
+            content,
+            decorators,
+            ConnectionTypeV1_0::Invitation,
+            expected,
+        );
     }
 
     #[test]
@@ -134,7 +152,9 @@ mod tests {
             .service_endpoint(service_endpoint.parse().unwrap())
             .build();
 
-        let decorators = InvitationDecorators::builder().timing(make_extended_timing()).build();
+        let decorators = InvitationDecorators::builder()
+            .timing(make_extended_timing())
+            .build();
 
         let expected = json!({
             "label": label,
@@ -144,6 +164,11 @@ mod tests {
             "~timing": decorators.timing
         });
 
-        test_utils::test_msg(content, decorators, ConnectionTypeV1_0::Invitation, expected);
+        test_utils::test_msg(
+            content,
+            decorators,
+            ConnectionTypeV1_0::Invitation,
+            expected,
+        );
     }
 }

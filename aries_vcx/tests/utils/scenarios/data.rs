@@ -62,7 +62,11 @@ pub(super) fn requested_attr_objects(cred_def_id: &str) -> Vec<PresentationAttr>
         .collect()
 }
 
-pub fn create_credential_proposal(schema_id: &str, cred_def_id: &str, comment: &str) -> ProposeCredential {
+pub fn create_credential_proposal(
+    schema_id: &str,
+    cred_def_id: &str,
+    comment: &str,
+) -> ProposeCredential {
     let attrs = credential_data_address_1()
         .as_object()
         .unwrap()

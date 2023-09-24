@@ -1,12 +1,10 @@
-use messages::msg_fields::protocols::trust_ping::ping::Ping;
-use messages::msg_fields::protocols::trust_ping::ping_response::PingResponse;
-
-use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
-
-use crate::protocols::trustping::build_ping;
-use crate::protocols::SendClosure;
+use messages::msg_fields::protocols::trust_ping::{ping::Ping, ping_response::PingResponse};
 
 use super::util::matches_thread_id;
+use crate::{
+    errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
+    protocols::{trustping::build_ping, SendClosure},
+};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TrustPingSender {
@@ -74,11 +72,12 @@ impl TrustPingSender {
 mod unit_tests {
     use messages::AriesMessage;
 
-    use crate::errors::error::VcxResult;
-    use crate::handlers::trust_ping::TrustPingSender;
-    use crate::protocols::trustping::build_ping_response;
-    use crate::protocols::SendClosure;
-    use crate::utils::devsetup::SetupMocks;
+    use crate::{
+        errors::error::VcxResult,
+        handlers::trust_ping::TrustPingSender,
+        protocols::{trustping::build_ping_response, SendClosure},
+        utils::devsetup::SetupMocks,
+    };
 
     pub fn _send_message() -> SendClosure {
         Box::new(|_: AriesMessage| Box::pin(async { VcxResult::Ok(()) }))
@@ -116,6 +115,9 @@ mod unit_tests {
     fn test_should_build_ping_with_comment() {
         let _setup = SetupMocks::init();
         let sender1 = TrustPingSender::build(false, Some("hello".to_string()));
-        assert_eq!(sender1.get_ping().content.comment, Some("hello".to_string()))
+        assert_eq!(
+            sender1.get_ping().content.comment,
+            Some("hello".to_string())
+        )
     }
 }

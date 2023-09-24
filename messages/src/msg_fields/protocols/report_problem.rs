@@ -3,7 +3,9 @@
 use std::{collections::HashMap, fmt::Display};
 
 use serde::{
-    de::Error as DeError, ser::Error as SerError, ser::SerializeMap, Deserialize, Deserializer, Serialize, Serializer,
+    de::Error as DeError,
+    ser::{Error as SerError, SerializeMap},
+    Deserialize, Deserializer, Serialize, Serializer,
 };
 use shared_vcx::misc::utils::CowStr;
 use strum_macros::{AsRefStr, EnumString};
@@ -170,7 +172,10 @@ impl<'de> Deserialize<'de> for Where {
             .try_into()
             .map_err(D::Error::custom)?;
 
-        let location = iter.next().ok_or_else(|| err_closure(where_str))?.to_owned();
+        let location = iter
+            .next()
+            .ok_or_else(|| err_closure(where_str))?
+            .to_owned();
 
         Ok(Where { party, location })
     }
@@ -195,8 +200,8 @@ mod tests {
     use super::*;
     use crate::{
         decorators::{
-            localization::tests::make_extended_field_localization, thread::tests::make_extended_thread,
-            timing::tests::make_extended_timing,
+            localization::tests::make_extended_field_localization,
+            thread::tests::make_extended_thread, timing::tests::make_extended_timing,
         },
         misc::test_utils,
     };
@@ -206,14 +211,21 @@ mod tests {
         let description = Description::builder()
             .code("test_problem_report_code".to_owned())
             .build();
-        let content: ProblemReportContent = ProblemReportContent::builder().description(description).build();
+        let content: ProblemReportContent = ProblemReportContent::builder()
+            .description(description)
+            .build();
         let decorators = ProblemReportDecorators::default();
 
         let expected = json!({
             "description": content.description
         });
 
-        test_utils::test_msg(content, decorators, ReportProblemTypeV1_0::ProblemReport, expected);
+        test_utils::test_msg(
+            content,
+            decorators,
+            ReportProblemTypeV1_0::ProblemReport,
+            expected,
+        );
     }
 
     #[test]
@@ -259,6 +271,11 @@ mod tests {
             "fix-hint~l10n": decorators.fix_hint_locale
         });
 
-        test_utils::test_msg(content, decorators, ReportProblemTypeV1_0::ProblemReport, expected);
+        test_utils::test_msg(
+            content,
+            decorators,
+            ReportProblemTypeV1_0::ProblemReport,
+            expected,
+        );
     }
 }

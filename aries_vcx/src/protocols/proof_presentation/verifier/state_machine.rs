@@ -1,35 +1,46 @@
-use std::fmt::Display;
-use std::sync::Arc;
+use std::{fmt::Display, sync::Arc};
 
+use aries_vcx_core::{
+    anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
+};
 use chrono::Utc;
+use messages::{
+    decorators::{thread::Thread, timing::Timing},
+    msg_fields::protocols::{
+        notification::ack::{AckContent, AckDecorators, AckStatus},
+        present_proof::{
+            ack::AckPresentation,
+            present::Presentation,
+            problem_report::PresentProofProblemReport,
+            propose::ProposePresentation,
+            request::{
+                RequestPresentation, RequestPresentationContent, RequestPresentationDecorators,
+            },
+            PresentProof,
+        },
+        report_problem::ProblemReport,
+    },
+    AriesMessage,
+};
 use uuid::Uuid;
 
-use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
-use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
-use messages::decorators::thread::Thread;
-use messages::decorators::timing::Timing;
-use messages::msg_fields::protocols::notification::ack::{AckContent, AckDecorators, AckStatus};
-use messages::msg_fields::protocols::present_proof::ack::AckPresentation;
-use messages::msg_fields::protocols::present_proof::problem_report::PresentProofProblemReport;
-use messages::msg_fields::protocols::present_proof::request::{
-    RequestPresentation, RequestPresentationContent, RequestPresentationDecorators,
+use crate::{
+    common::proofs::proof_request::PresentationRequestData,
+    errors::error::prelude::*,
+    handlers::util::{make_attach_from_str, verify_thread_id, AttachmentId, Status},
+    protocols::{
+        common::build_problem_report_msg,
+        proof_presentation::verifier::{
+            states::{
+                finished::FinishedState, initial::InitialVerifierState,
+                presentation_proposal_received::PresentationProposalReceivedState,
+                presentation_request_sent::PresentationRequestSentState,
+                presentation_request_set::PresentationRequestSetState,
+            },
+            verification_status::PresentationVerificationStatus,
+        },
+    },
 };
-use messages::msg_fields::protocols::present_proof::{
-    present::Presentation, propose::ProposePresentation, PresentProof,
-};
-use messages::msg_fields::protocols::report_problem::ProblemReport;
-use messages::AriesMessage;
-
-use crate::common::proofs::proof_request::PresentationRequestData;
-use crate::errors::error::prelude::*;
-use crate::handlers::util::{make_attach_from_str, verify_thread_id, AttachmentId, Status};
-use crate::protocols::common::build_problem_report_msg;
-use crate::protocols::proof_presentation::verifier::states::finished::FinishedState;
-use crate::protocols::proof_presentation::verifier::states::initial::InitialVerifierState;
-use crate::protocols::proof_presentation::verifier::states::presentation_proposal_received::PresentationProposalReceivedState;
-use crate::protocols::proof_presentation::verifier::states::presentation_request_sent::PresentationRequestSentState;
-use crate::protocols::proof_presentation::verifier::states::presentation_request_set::PresentationRequestSetState;
-use crate::protocols::proof_presentation::verifier::verification_status::PresentationVerificationStatus;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct VerifierSM {
@@ -62,7 +73,9 @@ impl Display for VerifierFullState {
         match *self {
             VerifierFullState::Initial(_) => f.write_str("Initial"),
             VerifierFullState::PresentationRequestSet(_) => f.write_str("PresentationRequestSet"),
-            VerifierFullState::PresentationProposalReceived(_) => f.write_str("PresentationProposalReceived"),
+            VerifierFullState::PresentationProposalReceived(_) => {
+                f.write_str("PresentationProposalReceived")
+            }
             VerifierFullState::PresentationRequestSent(_) => f.write_str("PresentationRequestSent"),
             VerifierFullState::Finished(_) => f.write_str("Finished"),
         }
@@ -97,10 +110,12 @@ pub fn build_starting_presentation_request(
 ) -> VcxResult<RequestPresentation> {
     let id = thread_id.to_owned();
 
-    let content = RequestPresentationContent::builder().request_presentations_attach(vec![make_attach_from_str!(
-        &json!(request_data).to_string(),
-        AttachmentId::PresentationRequest.as_ref().to_string()
-    )]);
+    let content = RequestPresentationContent::builder().request_presentations_attach(vec![
+        make_attach_from_str!(
+            &json!(request_data).to_string(),
+            AttachmentId::PresentationRequest.as_ref().to_string()
+        ),
+    ]);
 
     let content = if let Some(comment) = comment {
         content.comment(comment).build()
@@ -128,8 +143,12 @@ impl VerifierSM {
         }
     }
 
-    // todo: eliminate VcxResult (follow set_request err chain and eliminate possibility of err at the bottom)
-    pub fn from_request(source_id: &str, presentation_request_data: &PresentationRequestData) -> VcxResult<Self> {
+    // todo: eliminate VcxResult (follow set_request err chain and eliminate possibility of err at
+    // the bottom)
+    pub fn from_request(
+        source_id: &str,
+        presentation_request_data: &PresentationRequestData,
+    ) -> VcxResult<Self> {
         let sm = Self {
             source_id: source_id.to_string(),
             thread_id: Uuid::new_v4().to_string(),
@@ -142,9 +161,9 @@ impl VerifierSM {
         Self {
             source_id: source_id.to_string(),
             thread_id: presentation_proposal.id.clone(),
-            state: VerifierFullState::PresentationProposalReceived(PresentationProposalReceivedState::new(
-                presentation_proposal.clone(),
-            )),
+            state: VerifierFullState::PresentationProposalReceived(
+                PresentationProposalReceivedState::new(presentation_proposal.clone()),
+            ),
         }
     }
 
@@ -160,12 +179,16 @@ impl VerifierSM {
                     None => proposal.id.clone(),
                 };
                 (
-                    VerifierFullState::PresentationProposalReceived(PresentationProposalReceivedState::new(proposal)),
+                    VerifierFullState::PresentationProposalReceived(
+                        PresentationProposalReceivedState::new(proposal),
+                    ),
                     thread_id,
                 )
             }
             VerifierFullState::PresentationRequestSent(_) => (
-                VerifierFullState::PresentationProposalReceived(PresentationProposalReceivedState::new(proposal)),
+                VerifierFullState::PresentationProposalReceived(
+                    PresentationProposalReceivedState::new(proposal),
+                ),
                 self.thread_id.clone(),
             ),
             s => {
@@ -180,21 +203,33 @@ impl VerifierSM {
         })
     }
 
-    pub fn receive_presentation_request_reject(self, problem_report: ProblemReport) -> VcxResult<Self> {
-        verify_thread_id(&self.thread_id, &AriesMessage::ReportProblem(problem_report.clone()))?;
+    pub fn receive_presentation_request_reject(
+        self,
+        problem_report: ProblemReport,
+    ) -> VcxResult<Self> {
+        verify_thread_id(
+            &self.thread_id,
+            &AriesMessage::ReportProblem(problem_report.clone()),
+        )?;
         let state = match self.state {
             VerifierFullState::PresentationRequestSent(state) => {
                 VerifierFullState::Finished((state, problem_report).into())
             }
             s => {
-                warn!("Unable to receive presentation request reject in state {}", s);
+                warn!(
+                    "Unable to receive presentation request reject in state {}",
+                    s
+                );
                 s
             }
         };
         Ok(Self { state, ..self })
     }
 
-    pub async fn reject_presentation_proposal(self, problem_report: ProblemReport) -> VcxResult<Self> {
+    pub async fn reject_presentation_proposal(
+        self,
+        problem_report: ProblemReport,
+    ) -> VcxResult<Self> {
         let (state, thread_id) = match self.state {
             VerifierFullState::PresentationProposalReceived(state) => {
                 let thread_id = match state.presentation_proposal.decorators.thread {
@@ -234,22 +269,25 @@ impl VerifierSM {
                     .verify_presentation(ledger, anoncreds, &presentation, &self.thread_id)
                     .await;
 
-                let sm = match verification_result {
-                    Ok(()) => {
-                        VerifierFullState::Finished((state, presentation, PresentationVerificationStatus::Valid).into())
-                    }
+                match verification_result {
+                    Ok(()) => VerifierFullState::Finished(
+                        (state, presentation, PresentationVerificationStatus::Valid).into(),
+                    ),
                     Err(err) => {
-                        let problem_report = build_problem_report_msg(Some(err.to_string()), &self.thread_id);
+                        let problem_report =
+                            build_problem_report_msg(Some(err.to_string()), &self.thread_id);
 
                         match err.kind() {
                             AriesVcxErrorKind::InvalidProof => VerifierFullState::Finished(
-                                (state, presentation, PresentationVerificationStatus::Invalid).into(),
+                                (state, presentation, PresentationVerificationStatus::Invalid)
+                                    .into(),
                             ),
-                            _ => VerifierFullState::Finished((state, problem_report.clone()).into()),
+                            _ => {
+                                VerifierFullState::Finished((state, problem_report.clone()).into())
+                            }
                         }
                     }
-                };
-                sm
+                }
             }
             s => {
                 warn!("Unable to verify presentation in state {}", s);
@@ -262,27 +300,28 @@ impl VerifierSM {
     pub fn get_final_message(&self) -> VcxResult<AriesMessage> {
         match &self.state {
             VerifierFullState::Finished(ref state) => match &state.verification_status {
-                PresentationVerificationStatus::Valid => Ok(build_verification_ack(&self.thread_id).into()),
-                PresentationVerificationStatus::Invalid | PresentationVerificationStatus::Unavailable => {
-                    match &state.status {
-                        Status::Undefined => Err(AriesVcxError::from_msg(
-                            AriesVcxErrorKind::InvalidState,
-                            "Cannot get final message in this state: finished, status undefined",
-                        )),
-                        Status::Success => Ok(build_problem_report_msg(None, &self.thread_id).into()),
-                        Status::Failed(problem_report) | Status::Declined(problem_report) => {
-                            let problem_report = PresentProofProblemReport::builder()
-                                .id(problem_report.id.clone())
-                                .content(problem_report.content.clone().into())
-                                .decorators(problem_report.decorators.clone())
-                                .build();
-
-                            Ok(problem_report)
-                        }
-                    }
+                PresentationVerificationStatus::Valid => {
+                    Ok(build_verification_ack(&self.thread_id).into())
                 }
+                PresentationVerificationStatus::Invalid
+                | PresentationVerificationStatus::Unavailable => match &state.status {
+                    Status::Undefined => Err(AriesVcxError::from_msg(
+                        AriesVcxErrorKind::InvalidState,
+                        "Cannot get final message in this state: finished, status undefined",
+                    )),
+                    Status::Success => Ok(build_problem_report_msg(None, &self.thread_id).into()),
+                    Status::Failed(problem_report) | Status::Declined(problem_report) => {
+                        let problem_report = PresentProofProblemReport::builder()
+                            .id(problem_report.id.clone())
+                            .content(problem_report.content.clone().into())
+                            .decorators(problem_report.decorators.clone())
+                            .build();
+
+                        Ok(problem_report)
+                    }
+                },
             },
-            s @ _ => Err(AriesVcxError::from_msg(
+            s => Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::InvalidState,
                 format!("Cannot get final message in this state: {:?}", s),
             )),
@@ -303,8 +342,11 @@ impl VerifierSM {
             VerifierFullState::Initial(_)
             | VerifierFullState::PresentationRequestSet(_)
             | VerifierFullState::PresentationProposalReceived(_) => {
-                let presentation_request = build_starting_presentation_request(&thread_id, request_data, comment)?;
-                VerifierFullState::PresentationRequestSet(PresentationRequestSetState::new(presentation_request))
+                let presentation_request =
+                    build_starting_presentation_request(&thread_id, request_data, comment)?;
+                VerifierFullState::PresentationRequestSet(PresentationRequestSetState::new(
+                    presentation_request,
+                ))
             }
             _ => {
                 return Err(AriesVcxError::from_msg(
@@ -330,7 +372,9 @@ impl VerifierSM {
             VerifierFullState::PresentationRequestSet(state) => {
                 VerifierFullState::PresentationRequestSent(state.into())
             }
-            VerifierFullState::PresentationRequestSent(state) => VerifierFullState::PresentationRequestSent(state),
+            VerifierFullState::PresentationRequestSent(state) => {
+                VerifierFullState::PresentationRequestSent(state)
+            }
             _ => {
                 return Err(AriesVcxError::from_msg(
                     AriesVcxErrorKind::InvalidState,
@@ -357,7 +401,9 @@ impl VerifierSM {
         match self.state {
             VerifierFullState::Initial(_) => VerifierState::Initial,
             VerifierFullState::PresentationRequestSet(_) => VerifierState::PresentationRequestSet,
-            VerifierFullState::PresentationProposalReceived(_) => VerifierState::PresentationProposalReceived,
+            VerifierFullState::PresentationProposalReceived(_) => {
+                VerifierState::PresentationProposalReceived
+            }
             VerifierFullState::PresentationRequestSent(_) => VerifierState::PresentationRequestSent,
             VerifierFullState::Finished(ref status) => match status.status {
                 Status::Success => VerifierState::Finished,
@@ -389,11 +435,19 @@ impl VerifierSM {
                 AriesVcxErrorKind::InvalidState,
                 "Presentation request not set yet",
             )),
-            VerifierFullState::PresentationRequestSet(ref state) => Ok(state.presentation_request.clone()),
-            VerifierFullState::PresentationProposalReceived(ref state) => state.presentation_request.clone().ok_or(
-                AriesVcxError::from_msg(AriesVcxErrorKind::InvalidState, "No presentation request set"),
-            ),
-            VerifierFullState::PresentationRequestSent(ref state) => Ok(state.presentation_request.clone()),
+            VerifierFullState::PresentationRequestSet(ref state) => {
+                Ok(state.presentation_request.clone())
+            }
+            VerifierFullState::PresentationProposalReceived(ref state) => state
+                .presentation_request
+                .clone()
+                .ok_or(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidState,
+                    "No presentation request set",
+                )),
+            VerifierFullState::PresentationRequestSent(ref state) => {
+                Ok(state.presentation_request.clone())
+            }
             VerifierFullState::Finished(ref state) => Ok(state
                 .presentation_request
                 .as_ref()
@@ -407,10 +461,12 @@ impl VerifierSM {
 
     pub fn get_presentation_msg(&self) -> VcxResult<Presentation> {
         match self.state {
-            VerifierFullState::Finished(ref state) => state.presentation.clone().ok_or(AriesVcxError::from_msg(
-                AriesVcxErrorKind::InvalidState,
-                "State machine is final state, but presentation is not available".to_string(),
-            )),
+            VerifierFullState::Finished(ref state) => {
+                state.presentation.clone().ok_or(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidState,
+                    "State machine is final state, but presentation is not available".to_string(),
+                ))
+            }
             _ => Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::InvalidState,
                 "Presentation not received yet",
@@ -420,7 +476,9 @@ impl VerifierSM {
 
     pub fn presentation_proposal(&self) -> VcxResult<ProposePresentation> {
         match self.state {
-            VerifierFullState::PresentationProposalReceived(ref state) => Ok(state.presentation_proposal.clone()),
+            VerifierFullState::PresentationProposalReceived(ref state) => {
+                Ok(state.presentation_proposal.clone())
+            }
             _ => Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::InvalidState,
                 "Presentation proposal not received yet",

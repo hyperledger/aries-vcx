@@ -1,21 +1,34 @@
-use aries_vcx::common::primitives::credential_definition::CredentialDef;
-use aries_vcx::common::primitives::credential_definition::CredentialDefConfigBuilder;
-use aries_vcx::common::primitives::credential_definition::PublicEntityStateType;
-use aries_vcx::global::settings::CONFIG_INSTITUTION_DID;
-
-use crate::api_vcx::api_global::profile::{
-    get_main_anoncreds, get_main_anoncreds_ledger_read, get_main_anoncreds_ledger_write, get_main_profile,
+use aries_vcx::{
+    common::primitives::credential_definition::{
+        CredentialDef, CredentialDefConfigBuilder, PublicEntityStateType,
+    },
+    global::settings::CONFIG_INSTITUTION_DID,
 };
-use crate::api_vcx::api_global::settings::get_config_value;
-use crate::api_vcx::api_handle::object_cache::ObjectCache;
-use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
+
+use crate::{
+    api_vcx::{
+        api_global::{
+            profile::{
+                get_main_anoncreds, get_main_anoncreds_ledger_read, get_main_anoncreds_ledger_write,
+            },
+            settings::get_config_value,
+        },
+        api_handle::object_cache::ObjectCache,
+    },
+    errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult},
+};
 
 lazy_static! {
     pub static ref CREDENTIALDEF_MAP: ObjectCache<CredentialDef> =
         ObjectCache::<CredentialDef>::new("credential-defs-cache");
 }
 
-pub async fn create(source_id: String, schema_id: String, tag: String, support_revocation: bool) -> LibvcxResult<u32> {
+pub async fn create(
+    source_id: String,
+    schema_id: String,
+    tag: String,
+    support_revocation: bool,
+) -> LibvcxResult<u32> {
     let issuer_did = get_config_value(CONFIG_INSTITUTION_DID)?;
     let config = CredentialDefConfigBuilder::default()
         .issuer_did(issuer_did)
@@ -25,7 +38,10 @@ pub async fn create(source_id: String, schema_id: String, tag: String, support_r
         .map_err(|err| {
             LibvcxError::from_msg(
                 LibvcxErrorKind::InvalidConfiguration,
-                format!("Failed build credential config using provided parameters: {:?}", err),
+                format!(
+                    "Failed build credential config using provided parameters: {:?}",
+                    err
+                ),
             )
         })?;
     let cred_def = CredentialDef::create(
@@ -43,9 +59,11 @@ pub async fn create(source_id: String, schema_id: String, tag: String, support_r
 pub async fn publish(handle: u32) -> LibvcxResult<()> {
     let mut cd = CREDENTIALDEF_MAP.get_cloned(handle)?;
     if !cd.was_published() {
-        let profile = get_main_profile();
         cd = cd
-            .publish_cred_def(&get_main_anoncreds_ledger_read()?, &get_main_anoncreds_ledger_write()?)
+            .publish_cred_def(
+                &get_main_anoncreds_ledger_read()?,
+                &get_main_anoncreds_ledger_write()?,
+            )
             .await?;
     } else {
         info!("publish >>> Credential definition was already published")
@@ -87,7 +105,6 @@ pub fn release_all() {
 
 pub async fn update_state(handle: u32) -> LibvcxResult<u32> {
     let mut cd = CREDENTIALDEF_MAP.get_cloned(handle)?;
-    let profile = get_main_profile();
     let res = cd.update_state(&get_main_anoncreds_ledger_read()?).await?;
     CREDENTIALDEF_MAP.insert(handle, cd)?;
     Ok(res)
@@ -103,22 +120,22 @@ pub fn check_is_published(handle: u32) -> LibvcxResult<bool> {
 
 #[cfg(test)]
 pub mod tests {
-    use aries_vcx::aries_vcx_core::ledger::indy::pool::test_utils::get_temp_dir_path;
     use std::{thread::sleep, time::Duration};
 
-    use aries_vcx::common::test_utils::create_and_write_test_schema;
-    use aries_vcx::global::settings::CONFIG_INSTITUTION_DID;
-    use aries_vcx::utils;
-    use aries_vcx::utils::constants::SCHEMA_ID;
-    use aries_vcx::utils::devsetup::SetupMocks;
-
-    use crate::api_vcx::api_global::settings::get_config_value;
-    use crate::api_vcx::api_handle::revocation_registry;
-    use crate::api_vcx::api_handle::revocation_registry::RevocationRegistryConfig;
-    use crate::api_vcx::api_handle::schema;
-    use crate::api_vcx::utils::devsetup::SetupGlobalsWalletPoolAgency;
+    use aries_vcx::{
+        aries_vcx_core::ledger::indy::pool::test_utils::get_temp_dir_path,
+        common::test_utils::create_and_write_test_schema,
+        global::settings::CONFIG_INSTITUTION_DID,
+        utils,
+        utils::{constants::SCHEMA_ID, devsetup::SetupMocks},
+    };
 
     use super::*;
+    use crate::api_vcx::{
+        api_global::settings::get_config_value,
+        api_handle::{revocation_registry, revocation_registry::RevocationRegistryConfig, schema},
+        utils::devsetup::SetupGlobalsWalletPoolAgency,
+    };
 
     #[tokio::test]
     async fn test_vcx_credentialdef_release() {
@@ -175,9 +192,14 @@ pub mod tests {
 
             let path = get_temp_dir_path();
 
-            let handle_cred_def = create("1".to_string(), schema.schema_id.clone(), "tag1".to_string(), true)
-                .await
-                .unwrap();
+            let handle_cred_def = create(
+                "1".to_string(),
+                schema.schema_id.clone(),
+                "tag1".to_string(),
+                true,
+            )
+            .await
+            .unwrap();
             publish(handle_cred_def).await.unwrap();
 
             let rev_reg_config = RevocationRegistryConfig {
@@ -190,7 +212,9 @@ pub mod tests {
             let handle_rev_reg = revocation_registry::create(rev_reg_config).await.unwrap();
             let tails_url = utils::constants::TEST_TAILS_URL;
 
-            revocation_registry::publish(handle_rev_reg, tails_url).await.unwrap();
+            revocation_registry::publish(handle_rev_reg, tails_url)
+                .await
+                .unwrap();
             let rev_reg_def = revocation_registry::get_rev_reg_def(handle_rev_reg).unwrap();
             assert_eq!(rev_reg_def.value.tails_location, tails_url);
         })
@@ -217,7 +241,8 @@ pub mod tests {
         let (_, cred_def_handle) = create_and_publish_nonrevocable_creddef().await;
 
         let credential_string = to_string(cred_def_handle).unwrap();
-        let credential_values: serde_json::Value = serde_json::from_str(&credential_string).unwrap();
+        let credential_values: serde_json::Value =
+            serde_json::from_str(&credential_string).unwrap();
         assert_eq!(credential_values["version"].clone(), "1.0");
     }
 
@@ -233,11 +258,16 @@ pub mod tests {
         let new_handle = from_string(&credentialdef_data).unwrap();
         let new_credentialdef_data = to_string(new_handle).unwrap();
 
-        let credentialdef1: CredentialDef = CredentialDef::from_string(&credentialdef_data).unwrap();
-        let credentialdef2: CredentialDef = CredentialDef::from_string(&new_credentialdef_data).unwrap();
+        let credentialdef1: CredentialDef =
+            CredentialDef::from_string(&credentialdef_data).unwrap();
+        let credentialdef2: CredentialDef =
+            CredentialDef::from_string(&new_credentialdef_data).unwrap();
 
         assert_eq!(credentialdef1, credentialdef2);
-        assert_eq!(from_string("{}").unwrap_err().kind(), LibvcxErrorKind::CreateCredDef);
+        assert_eq!(
+            from_string("{}").unwrap_err().kind(),
+            LibvcxErrorKind::CreateCredDef
+        );
     }
 
     #[tokio::test]
@@ -245,16 +275,26 @@ pub mod tests {
         let _setup = SetupMocks::init();
 
         let _issuer_did = String::from("4fUDR9R7fjwELRvH9JT6HH");
-        let h1 = create("SourceId".to_string(), SCHEMA_ID.to_string(), "tag".to_string(), false)
-            .await
-            .unwrap();
-        let h2 = create("SourceId".to_string(), SCHEMA_ID.to_string(), "tag".to_string(), false)
-            .await
-            .unwrap();
+        let h1 = create(
+            "SourceId".to_string(),
+            SCHEMA_ID.to_string(),
+            "tag".to_string(),
+            false,
+        )
+        .await
+        .unwrap();
+        let h2 = create(
+            "SourceId".to_string(),
+            SCHEMA_ID.to_string(),
+            "tag".to_string(),
+            false,
+        )
+        .await
+        .unwrap();
 
         release_all();
 
-        assert_eq!(is_valid_handle(h1), false);
-        assert_eq!(is_valid_handle(h2), false);
+        assert!(!is_valid_handle(h1));
+        assert!(!is_valid_handle(h2));
     }
 }

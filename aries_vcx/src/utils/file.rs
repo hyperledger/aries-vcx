@@ -1,6 +1,8 @@
-use std::fs::{DirBuilder, OpenOptions};
-use std::io::Write;
-use std::path::{Path, PathBuf};
+use std::{
+    fs::{DirBuilder, OpenOptions},
+    io::Write,
+    path::{Path, PathBuf},
+};
 
 use crate::errors::error::prelude::*;
 
@@ -11,12 +13,15 @@ where
     let path = PathBuf::from(&file);
 
     if let Some(parent_path) = path.parent() {
-        DirBuilder::new().recursive(true).create(parent_path).map_err(|err| {
-            AriesVcxError::from_msg(
-                AriesVcxErrorKind::UnknownError,
-                format!("Can't create the file: {}", err),
-            )
-        })?;
+        DirBuilder::new()
+            .recursive(true)
+            .create(parent_path)
+            .map_err(|err| {
+                AriesVcxError::from_msg(
+                    AriesVcxErrorKind::UnknownError,
+                    format!("Can't create the file: {}", err),
+                )
+            })?;
     }
 
     let mut file = OpenOptions::new()
@@ -25,7 +30,10 @@ where
         .create(true)
         .open(path)
         .map_err(|err| {
-            AriesVcxError::from_msg(AriesVcxErrorKind::UnknownError, format!("Can't open the file: {}", err))
+            AriesVcxError::from_msg(
+                AriesVcxErrorKind::UnknownError,
+                format!("Can't open the file: {}", err),
+            )
         })?;
 
     file.write_all(content.as_bytes()).map_err(|err| {

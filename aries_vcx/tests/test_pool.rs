@@ -5,34 +5,51 @@ extern crate serde_json;
 
 pub mod utils;
 
-use std::sync::Arc;
-use std::thread;
-use std::time::Duration;
+use std::{sync::Arc, thread, time::Duration};
+
+use aries_vcx::{
+    common::{
+        keys::{get_verkey_from_ledger, rotate_verkey},
+        ledger::{
+            service_didsov::EndpointDidSov,
+            transactions::{
+                add_attr, add_new_did, clear_attr, get_attr, get_service, write_endorser_did,
+                write_endpoint, write_endpoint_legacy,
+            },
+        },
+        primitives::{
+            credential_definition::CredentialDef,
+            credential_schema::Schema,
+            revocation_registry::{generate_rev_reg, RevocationRegistry},
+            revocation_registry_delta::RevocationRegistryDelta,
+        },
+        test_utils::{
+            create_and_write_test_cred_def, create_and_write_test_rev_reg,
+            create_and_write_test_schema,
+        },
+    },
+    errors::error::AriesVcxErrorKind,
+    utils::{
+        constants::DEFAULT_SCHEMA_ATTRS,
+        devsetup::{SetupPoolDirectory, SetupProfile},
+    },
+};
+use aries_vcx_core::{
+    anoncreds::base_anoncreds::BaseAnonCreds,
+    ledger::{
+        base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite},
+        indy::pool::test_utils::get_temp_file_path,
+    },
+    wallet::indy::wallet::get_verkey_from_wallet,
+};
+use diddoc_legacy::aries::service::AriesService;
 
 #[cfg(feature = "migration")]
 use crate::utils::migration::Migratable;
-use crate::utils::scenarios::attr_names_address_list;
-use crate::utils::test_agent::{create_test_agent, create_test_agent_trustee};
-use aries_vcx::common::keys::{get_verkey_from_ledger, rotate_verkey};
-use aries_vcx::common::ledger::service_didsov::EndpointDidSov;
-use aries_vcx::common::ledger::transactions::{
-    add_attr, add_new_did, clear_attr, get_attr, get_service, write_endorser_did, write_endpoint, write_endpoint_legacy,
+use crate::utils::{
+    scenarios::attr_names_address_list,
+    test_agent::{create_test_agent, create_test_agent_trustee},
 };
-use aries_vcx::common::primitives::credential_definition::CredentialDef;
-use aries_vcx::common::primitives::credential_schema::Schema;
-use aries_vcx::common::primitives::revocation_registry::{generate_rev_reg, RevocationRegistry};
-use aries_vcx::common::primitives::revocation_registry_delta::RevocationRegistryDelta;
-use aries_vcx::common::test_utils::{
-    create_and_write_test_cred_def, create_and_write_test_rev_reg, create_and_write_test_schema,
-};
-use aries_vcx::errors::error::AriesVcxErrorKind;
-use aries_vcx::utils::constants::DEFAULT_SCHEMA_ATTRS;
-use aries_vcx::utils::devsetup::{SetupPoolDirectory, SetupProfile};
-use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
-use aries_vcx_core::ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite};
-use aries_vcx_core::ledger::indy::pool::test_utils::get_temp_file_path;
-use aries_vcx_core::wallet::indy::wallet::get_verkey_from_wallet;
-use diddoc_legacy::aries::service::AriesService;
 
 // TODO: Deduplicate with create_and_store_revocable_credential_def
 async fn create_and_store_nonrevocable_credential_def(
@@ -83,7 +100,13 @@ async fn create_and_store_revocable_credential_def(
         true,
     )
     .await;
-    let rev_reg = create_and_write_test_rev_reg(anoncreds, ledger_write, issuer_did, &cred_def.get_cred_def_id()).await;
+    let rev_reg = create_and_write_test_rev_reg(
+        anoncreds,
+        ledger_write,
+        issuer_did,
+        &cred_def.get_cred_def_id(),
+    )
+    .await;
 
     tokio::time::sleep(Duration::from_millis(1000)).await;
     (schema, cred_def, rev_reg)
@@ -109,7 +132,12 @@ async fn test_pool_rotate_verkey() {
         .await
         .unwrap();
         tokio::time::sleep(Duration::from_millis(1000)).await;
-        let local_verkey = setup.profile.inject_wallet().key_for_local_did(&did).await.unwrap();
+        let local_verkey = setup
+            .profile
+            .inject_wallet()
+            .key_for_local_did(&did)
+            .await
+            .unwrap();
 
         let ledger_verkey = get_verkey_from_ledger(&setup.profile.inject_indy_ledger_read(), &did)
             .await
@@ -126,9 +154,13 @@ async fn test_pool_add_get_service() {
     SetupProfile::run(|setup| async move {
         let did = setup.institution_did.clone();
         let expect_service = AriesService::default();
-        write_endpoint_legacy(&setup.profile.inject_indy_ledger_write(), &did, &expect_service)
-            .await
-            .unwrap();
+        write_endpoint_legacy(
+            &setup.profile.inject_indy_ledger_write(),
+            &did,
+            &expect_service,
+        )
+        .await
+        .unwrap();
         thread::sleep(Duration::from_millis(50));
         let service = get_service(&setup.profile.inject_indy_ledger_read(), &did)
             .await
@@ -153,9 +185,12 @@ async fn test_pool_write_new_endorser_did() {
     SetupPoolDirectory::run(|setup| async move {
         let faber = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
         let acme = create_test_agent(setup.genesis_file_path.clone()).await;
-        let acme_vk = get_verkey_from_wallet(acme.profile.inject_wallet().get_wallet_handle(), &acme.institution_did)
-            .await
-            .unwrap();
+        let acme_vk = get_verkey_from_wallet(
+            acme.profile.inject_wallet().get_wallet_handle(),
+            &acme.institution_did,
+        )
+        .await
+        .unwrap();
 
         let attrib_json = json!({ "attrib_name": "foo"}).to_string();
         assert!(add_attr(
@@ -194,17 +229,23 @@ async fn test_pool_add_get_service_public() {
         let create_service = EndpointDidSov::create()
             .set_service_endpoint("https://example.org".parse().unwrap())
             .set_routing_keys(Some(vec!["did:sov:456".into()]));
-        write_endpoint(&setup.profile.inject_indy_ledger_write(), &did, &create_service)
-            .await
-            .unwrap();
+        write_endpoint(
+            &setup.profile.inject_indy_ledger_write(),
+            &did,
+            &create_service,
+        )
+        .await
+        .unwrap();
         thread::sleep(Duration::from_millis(50));
         let service = get_service(&setup.profile.inject_indy_ledger_read(), &did)
             .await
             .unwrap();
-        let expect_recipient_key =
-            get_verkey_from_ledger(&setup.profile.inject_indy_ledger_read(), &setup.institution_did)
-                .await
-                .unwrap();
+        let expect_recipient_key = get_verkey_from_ledger(
+            &setup.profile.inject_indy_ledger_read(),
+            &setup.institution_did,
+        )
+        .await
+        .unwrap();
         let expect_service = AriesService::default()
             .set_service_endpoint("https://example.org".parse().unwrap())
             .set_recipient_keys(vec![expect_recipient_key])
@@ -231,17 +272,23 @@ async fn test_pool_add_get_service_public_none_routing_keys() {
         let create_service = EndpointDidSov::create()
             .set_service_endpoint("https://example.org".parse().unwrap())
             .set_routing_keys(None);
-        write_endpoint(&setup.profile.inject_indy_ledger_write(), &did, &create_service)
-            .await
-            .unwrap();
+        write_endpoint(
+            &setup.profile.inject_indy_ledger_write(),
+            &did,
+            &create_service,
+        )
+        .await
+        .unwrap();
         thread::sleep(Duration::from_millis(50));
         let service = get_service(&setup.profile.inject_indy_ledger_read(), &did)
             .await
             .unwrap();
-        let expect_recipient_key =
-            get_verkey_from_ledger(&setup.profile.inject_indy_ledger_read(), &setup.institution_did)
-                .await
-                .unwrap();
+        let expect_recipient_key = get_verkey_from_ledger(
+            &setup.profile.inject_indy_ledger_read(),
+            &setup.institution_did,
+        )
+        .await
+        .unwrap();
         let expect_service = AriesService::default()
             .set_service_endpoint("https://example.org".parse().unwrap())
             .set_recipient_keys(vec![expect_recipient_key])
@@ -297,10 +344,12 @@ async fn test_pool_multiple_service_formats() {
         let service = get_service(&setup.profile.inject_indy_ledger_read(), &did)
             .await
             .unwrap();
-        let expect_recipient_key =
-            get_verkey_from_ledger(&setup.profile.inject_indy_ledger_read(), &setup.institution_did)
-                .await
-                .unwrap();
+        let expect_recipient_key = get_verkey_from_ledger(
+            &setup.profile.inject_indy_ledger_read(),
+            &setup.institution_did,
+        )
+        .await
+        .unwrap();
         let expect_service = AriesService::default()
             .set_service_endpoint(endpoint_url_2.parse().unwrap())
             .set_recipient_keys(vec![expect_recipient_key])
@@ -338,9 +387,13 @@ async fn test_pool_add_get_attr() {
                 "attr_key_2": "attr_value_2",
             }
         });
-        add_attr(&setup.profile.inject_indy_ledger_write(), &did, &attr_json.to_string())
-            .await
-            .unwrap();
+        add_attr(
+            &setup.profile.inject_indy_ledger_write(),
+            &did,
+            &attr_json.to_string(),
+        )
+        .await
+        .unwrap();
         thread::sleep(Duration::from_millis(50));
         let attr = get_attr(&setup.profile.inject_indy_ledger_read(), &did, "attr_json")
             .await
@@ -356,9 +409,13 @@ async fn test_pool_add_get_attr() {
             .unwrap();
         assert_eq!(attr, "");
 
-        let attr = get_attr(&setup.profile.inject_indy_ledger_read(), &did, "nonexistent")
-            .await
-            .unwrap();
+        let attr = get_attr(
+            &setup.profile.inject_indy_ledger_read(),
+            &did,
+            "nonexistent",
+        )
+        .await
+        .unwrap();
         assert_eq!(attr, "");
     })
     .await;
@@ -438,7 +495,10 @@ async fn test_pool_get_rev_reg_def_json() {
         .await;
 
         let ledger = Arc::clone(&setup.profile).inject_anoncreds_ledger_read();
-        let _json = ledger.get_rev_reg_def_json(&rev_reg.rev_reg_id).await.unwrap();
+        let _json = ledger
+            .get_rev_reg_def_json(&rev_reg.rev_reg_id)
+            .await
+            .unwrap();
     })
     .await;
 }
@@ -537,9 +597,11 @@ async fn test_pool_create_rev_reg_delta_from_ledger() {
             .get_rev_reg_delta_json(&rev_reg.rev_reg_id, None, None)
             .await
             .unwrap();
-        assert!(RevocationRegistryDelta::create_from_ledger(&rev_reg_delta_json)
-            .await
-            .is_ok());
+        assert!(
+            RevocationRegistryDelta::create_from_ledger(&rev_reg_delta_json)
+                .await
+                .is_ok()
+        );
     })
     .await;
 }

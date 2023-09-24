@@ -1,16 +1,18 @@
-use did_resolver::did_doc::schema::did_doc::DidDocument;
-use did_resolver::did_parser::Did;
-use did_resolver::traits::resolvable::{resolution_options::DidResolutionOptions, DidResolvable};
+use std::{convert::Infallible, net::SocketAddr};
+
+use did_resolver::{
+    did_doc::schema::did_doc::DidDocument,
+    did_parser::Did,
+    traits::resolvable::{resolution_options::DidResolutionOptions, DidResolvable},
+};
 use did_resolver_web::resolution::resolver::DidWebResolver;
 use hyper::{
     service::{make_service_fn, service_fn},
     Body, Request, Response, Server,
 };
-use std::convert::Infallible;
-use std::net::SocketAddr;
 use tokio_test::assert_ok;
 
-const DID_DOCUMENT: &'static str = r##"
+const DID_DOCUMENT: &str = r#"
 {
   "@context": [
     "https://www.w3.org/ns/did/v1",
@@ -62,19 +64,23 @@ const DID_DOCUMENT: &'static str = r##"
     "did:web:example.com#key-1",
     "did:web:example.com#key-2"
   ]
-}"##;
+}"#;
 
 async fn mock_server_handler(req: Request<Body>) -> Result<Response<Body>, Infallible> {
     let response = match req.uri().path() {
         "/.well-known/did.json" | "/user/alice/did.json" => Response::new(Body::from(DID_DOCUMENT)),
-        _ => Response::builder().status(404).body(Body::from("Not Found")).unwrap(),
+        _ => Response::builder()
+            .status(404)
+            .body(Body::from("Not Found"))
+            .unwrap(),
     };
 
     Ok(response)
 }
 
 async fn create_mock_server(port: u16) -> String {
-    let make_svc = make_service_fn(|_conn| async { Ok::<_, Infallible>(service_fn(mock_server_handler)) });
+    let make_svc =
+        make_service_fn(|_conn| async { Ok::<_, Infallible>(service_fn(mock_server_handler)) });
 
     let addr = SocketAddr::from(([127, 0, 0, 1], port));
     let server = Server::bind(&addr).serve(make_svc);
@@ -89,7 +95,10 @@ async fn create_mock_server(port: u16) -> String {
 #[tokio::test]
 async fn test_did_web_resolver() {
     fn verify_did_document(did_document: &DidDocument<()>) {
-        assert_eq!(did_document.id().to_string(), "did:web:example.com".to_string());
+        assert_eq!(
+            did_document.id().to_string(),
+            "did:web:example.com".to_string()
+        );
         assert_eq!(did_document.verification_method().len(), 3);
         assert_eq!(did_document.authentication().len(), 2);
         assert_eq!(did_document.assertion_method().len(), 2);

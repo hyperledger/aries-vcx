@@ -3,7 +3,9 @@ use shared_vcx::maybe_known::MaybeKnown;
 use typed_builder::TypedBuilder;
 
 use super::ProtocolDescriptor;
-use crate::{decorators::timing::Timing, msg_parts::MsgParts, msg_types::registry::PROTOCOL_REGISTRY};
+use crate::{
+    decorators::timing::Timing, msg_parts::MsgParts, msg_types::registry::PROTOCOL_REGISTRY,
+};
 
 pub type Query = MsgParts<QueryContent, QueryDecorators>;
 
@@ -16,7 +18,8 @@ pub struct QueryContent {
 }
 
 impl QueryContent {
-    /// Looks up into the [`PROTOCOL_REGISTRY`] and returns a [`Vec<ProtocolDescriptor`] matching the inner query.
+    /// Looks up into the [`PROTOCOL_REGISTRY`] and returns a [`Vec<ProtocolDescriptor`] matching
+    /// the inner query.
     pub fn lookup(&self) -> Vec<ProtocolDescriptor> {
         let mut protocols = Vec::new();
         let query = self
@@ -75,7 +78,12 @@ mod tests {
             "query": content.query
         });
 
-        test_utils::test_msg(content, decorators, DiscoverFeaturesTypeV1_0::Query, expected);
+        test_utils::test_msg(
+            content,
+            decorators,
+            DiscoverFeaturesTypeV1_0::Query,
+            expected,
+        );
     }
 
     #[test]
@@ -85,7 +93,9 @@ mod tests {
             .comment("test_comment".to_owned())
             .build();
 
-        let decorators = QueryDecorators::builder().timing(make_extended_timing()).build();
+        let decorators = QueryDecorators::builder()
+            .timing(make_extended_timing())
+            .build();
 
         let expected = json!({
             "query": content.query,
@@ -93,12 +103,20 @@ mod tests {
             "~timing": decorators.timing
         });
 
-        test_utils::test_msg(content, decorators, DiscoverFeaturesTypeV1_0::Query, expected);
+        test_utils::test_msg(
+            content,
+            decorators,
+            DiscoverFeaturesTypeV1_0::Query,
+            expected,
+        );
     }
 
     #[test]
     fn test_lookup_match_all() {
-        let matched_all = QueryContent::builder().query("*".to_owned()).build().lookup();
+        let matched_all = QueryContent::builder()
+            .query("*".to_owned())
+            .build()
+            .lookup();
 
         let mut protocols = Vec::new();
 

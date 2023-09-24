@@ -2,8 +2,10 @@ use regex::{Match, Regex};
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 
-use crate::errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
-use crate::messages::a2a_message::A2AMessageKinds;
+use crate::{
+    errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult},
+    messages::a2a_message::A2AMessageKinds,
+};
 
 const DID: &str = "did:sov:123456789abcdefghi1234";
 
@@ -71,7 +73,9 @@ impl ::std::string::ToString for MessageFamilies {
     }
 }
 
-pub(crate) fn parse_message_type(message_type: &str) -> AgencyClientResult<(String, String, String, String)> {
+pub(crate) fn parse_message_type(
+    message_type: &str,
+) -> AgencyClientResult<(String, String, String, String)> {
     lazy_static! {
         static ref RE: Regex = Regex::new(
             r"(?x)
@@ -116,7 +120,8 @@ impl<'de> Deserialize<'de> for MessageType {
 
         match value.as_str() {
             Some(type_) => {
-                let (did, family, version, type_) = parse_message_type(type_).map_err(de::Error::custom)?;
+                let (did, family, version, type_) =
+                    parse_message_type(type_).map_err(de::Error::custom)?;
                 Ok(MessageType {
                     did,
                     family: MessageFamilies::from(family),

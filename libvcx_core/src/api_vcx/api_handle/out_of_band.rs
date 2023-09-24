@@ -1,20 +1,31 @@
 use std::collections::HashMap;
 
-use aries_vcx::common::ledger::transactions::into_did_doc;
-use aries_vcx::handlers::out_of_band::receiver::OutOfBandReceiver;
-use aries_vcx::handlers::out_of_band::sender::OutOfBandSender;
-use aries_vcx::handlers::util::AnyInvitation;
-use aries_vcx::messages::msg_fields::protocols::out_of_band::invitation::OobService;
-use aries_vcx::messages::msg_fields::protocols::out_of_band::OobGoalCode;
-use aries_vcx::messages::msg_types::Protocol;
-use aries_vcx::messages::AriesMessage;
+use aries_vcx::{
+    common::ledger::transactions::into_did_doc,
+    handlers::{
+        out_of_band::{receiver::OutOfBandReceiver, sender::OutOfBandSender},
+        util::AnyInvitation,
+    },
+    messages::{
+        msg_fields::protocols::out_of_band::{invitation::OobService, OobGoalCode},
+        msg_types::Protocol,
+        AriesMessage,
+    },
+};
 
-use crate::api_vcx::api_global::agency_client::get_main_agency_client;
-use crate::api_vcx::api_global::profile::{get_main_indy_ledger_read, get_main_profile, get_main_wallet};
-use crate::api_vcx::api_handle::connection;
-use crate::api_vcx::api_handle::mediated_connection::CONNECTION_MAP as MEDIATED_CONS_MAP;
-use crate::api_vcx::api_handle::object_cache::ObjectCache;
-use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
+use crate::{
+    api_vcx::{
+        api_global::{
+            agency_client::get_main_agency_client,
+            profile::{get_main_indy_ledger_read, get_main_wallet},
+        },
+        api_handle::{
+            connection, mediated_connection::CONNECTION_MAP as MEDIATED_CONS_MAP,
+            object_cache::ObjectCache,
+        },
+    },
+    errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult},
+};
 
 lazy_static! {
     pub static ref OUT_OF_BAND_SENDER_MAP: ObjectCache<OutOfBandSender> =
@@ -93,7 +104,11 @@ pub fn append_message(handle: u32, msg: &str) -> LibvcxResult<()> {
 }
 
 pub fn append_service(handle: u32, service: &str) -> LibvcxResult<()> {
-    trace!("append_service >>> handle: {}, service: {}", handle, service);
+    trace!(
+        "append_service >>> handle: {}, service: {}",
+        handle,
+        service
+    );
     let mut oob = OUT_OF_BAND_SENDER_MAP.get_cloned(handle)?;
     let service = serde_json::from_str(service).map_err(|err| {
         LibvcxError::from_msg(
@@ -101,14 +116,18 @@ pub fn append_service(handle: u32, service: &str) -> LibvcxResult<()> {
             format!("Cannot deserialize supplied message: {:?}", err),
         )
     })?;
-    oob = oob.clone().append_service(&OobService::AriesService(service));
+    oob = oob
+        .clone()
+        .append_service(&OobService::AriesService(service));
     OUT_OF_BAND_SENDER_MAP.insert(handle, oob)
 }
 
 pub fn append_service_did(handle: u32, did: &str) -> LibvcxResult<()> {
     trace!("append_service_did >>> handle: {}, did: {}", handle, did);
     let mut oob = OUT_OF_BAND_SENDER_MAP.get_cloned(handle)?;
-    oob = oob.clone().append_service(&OobService::Did(did.to_string()));
+    oob = oob
+        .clone()
+        .append_service(&OobService::Did(did.to_string()));
     OUT_OF_BAND_SENDER_MAP.insert(handle, oob)
 }
 
@@ -160,7 +179,6 @@ pub async fn connection_exists(handle: u32, conn_handles: &Vec<u32>) -> LibvcxRe
         conn_map.insert(*conn_handle, connection);
     }
     let connections = conn_map.values().collect();
-    let profile = get_main_profile();
 
     if let Some(connection) = oob
         .connection_exists(&get_main_indy_ledger_read()?, &connections)
@@ -171,7 +189,8 @@ pub async fn connection_exists(handle: u32, conn_handles: &Vec<u32>) -> LibvcxRe
         } else {
             Err(LibvcxError::from_msg(
                 LibvcxErrorKind::UnknownError,
-                "Can't find handel for found connection. Instance was probably released in the meantime.",
+                "Can't find handel for found connection. Instance was probably released in the \
+                 meantime.",
             ))
         }
     } else {
@@ -180,7 +199,10 @@ pub async fn connection_exists(handle: u32, conn_handles: &Vec<u32>) -> LibvcxRe
 }
 
 // todo: remove this
-pub async fn nonmediated_connection_exists(handle: u32, conn_handles: &[u32]) -> LibvcxResult<(u32, bool)> {
+pub async fn nonmediated_connection_exists(
+    handle: u32,
+    conn_handles: &[u32],
+) -> LibvcxResult<(u32, bool)> {
     trace!(
         "nonmediated_connection_exists >>> handle: {}, conn_handles: {:?}",
         handle,
@@ -189,7 +211,11 @@ pub async fn nonmediated_connection_exists(handle: u32, conn_handles: &[u32]) ->
     let indy_ledger = get_main_indy_ledger_read()?;
     let oob = OUT_OF_BAND_RECEIVER_MAP.get_cloned(handle)?;
 
-    let filter_closure = |h: &u32| connection::get_cloned_generic_connection(h).ok().map(|c| (*h, c));
+    let filter_closure = |h: &u32| {
+        connection::get_cloned_generic_connection(h)
+            .ok()
+            .map(|c| (*h, c))
+    };
     let connections: HashMap<_, _> = conn_handles.iter().filter_map(filter_closure).collect();
 
     match oob
@@ -295,7 +321,9 @@ pub mod tests {
 
     #[test]
     fn test_serde_oob_config_handshake_protocols() {
-        let config_str = json!({ "handshake_protocols": vec!["https://didcomm.org/connections/1.0"] }).to_string();
+        let config_str =
+            json!({ "handshake_protocols": vec!["https://didcomm.org/connections/1.0"] })
+                .to_string();
         let config_actual: OOBConfig = serde_json::from_str(&config_str).unwrap();
         assert_eq!(
             config_actual.handshake_protocols,

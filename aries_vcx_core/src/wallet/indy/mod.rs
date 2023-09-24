@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::thread;
 
 use async_trait::async_trait;
@@ -6,14 +5,11 @@ use futures::executor::block_on;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult};
 use crate::{
-    indy,
+    errors::error::{AriesVcxCoreError, VcxCoreResult},
     utils::{async_fn_iterator::AsyncFnIterator, json::TryGetIndex},
+    SearchHandle, WalletHandle,
 };
-use crate::{SearchHandle, WalletHandle};
-
-use super::base_wallet::BaseWallet;
 
 pub mod did_mocks;
 pub mod indy_wallet;
@@ -47,7 +43,8 @@ impl IndyWalletRecordIterator {
     }
 
     async fn fetch_next_records(&self) -> VcxCoreResult<Option<String>> {
-        let indy_res_json = internal::fetch_next_records_wallet(self.wallet_handle, self.search_handle, 1).await?;
+        let indy_res_json =
+            internal::fetch_next_records_wallet(self.wallet_handle, self.search_handle, 1).await?;
 
         let indy_res: Value = serde_json::from_str(&indy_res_json)?;
 
@@ -62,8 +59,8 @@ impl IndyWalletRecordIterator {
     }
 }
 
-/// Implementation of a generic [AsyncFnIterator] iterator for indy/vdrtools wallet record iteration.
-/// Wraps over the vdrtools record [SearchHandle] functionality
+/// Implementation of a generic [AsyncFnIterator] iterator for indy/vdrtools wallet record
+/// iteration. Wraps over the vdrtools record [SearchHandle] functionality
 #[async_trait]
 impl AsyncFnIterator for IndyWalletRecordIterator {
     type Item = VcxCoreResult<String>;

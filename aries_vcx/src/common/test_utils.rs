@@ -1,20 +1,30 @@
 #![allow(clippy::unwrap_used)]
 
-use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
-use aries_vcx_core::ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite};
-use aries_vcx_core::ledger::indy::pool::test_utils::get_temp_dir_path;
-use std::sync::Arc;
-use std::time::Duration;
+use std::{sync::Arc, time::Duration};
 
-use crate::common::credentials::encoding::encode_attributes;
-use crate::common::primitives::credential_definition::CredentialDef;
-use crate::common::primitives::credential_definition::CredentialDefConfigBuilder;
-use crate::common::primitives::revocation_registry::RevocationRegistry;
-use crate::global::settings;
-use crate::utils::constants::TEST_TAILS_URL;
-use crate::utils::random::{generate_random_schema_name, generate_random_schema_version};
+use aries_vcx_core::{
+    anoncreds::base_anoncreds::BaseAnonCreds,
+    ledger::{
+        base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite},
+        indy::pool::test_utils::get_temp_dir_path,
+    },
+};
 
 use super::primitives::credential_schema::Schema;
+use crate::{
+    common::{
+        credentials::encoding::encode_attributes,
+        primitives::{
+            credential_definition::{CredentialDef, CredentialDefConfigBuilder},
+            revocation_registry::RevocationRegistry,
+        },
+    },
+    global::settings,
+    utils::{
+        constants::TEST_TAILS_URL,
+        random::{generate_random_schema_name, generate_random_schema_version},
+    },
+};
 
 pub async fn create_and_write_test_schema(
     anoncreds: &Arc<dyn BaseAnonCreds>,
@@ -24,7 +34,7 @@ pub async fn create_and_write_test_schema(
 ) -> Schema {
     let (schema_id, schema_json) = anoncreds
         .issuer_create_schema(
-            &submitter_did,
+            submitter_did,
             &generate_random_schema_name(),
             &generate_random_schema_version(),
             attr_list,
@@ -32,7 +42,7 @@ pub async fn create_and_write_test_schema(
         .await
         .unwrap();
 
-    let _response = ledger_write
+    ledger_write
         .publish_schema(&schema_json, submitter_did, None)
         .await
         .unwrap();
@@ -74,9 +84,10 @@ pub async fn create_and_write_test_rev_reg(
     cred_def_id: &str,
 ) -> RevocationRegistry {
     let tails_dir = get_temp_dir_path().as_path().to_str().unwrap().to_string();
-    let mut rev_reg = RevocationRegistry::create(anoncreds, issuer_did, cred_def_id, &tails_dir, 10, 1)
-        .await
-        .unwrap();
+    let mut rev_reg =
+        RevocationRegistry::create(anoncreds, issuer_did, cred_def_id, &tails_dir, 10, 1)
+            .await
+            .unwrap();
     rev_reg
         .publish_revocation_primitives(ledger_write, TEST_TAILS_URL)
         .await
@@ -93,7 +104,7 @@ pub async fn create_and_write_credential(
 ) -> String {
     // TODO: Inject credential_data from caller
     let credential_data = r#"{"address1": ["123 Main St"], "address2": ["Suite 3"], "city": ["Draper"], "state": ["UT"], "zip": ["84000"]}"#;
-    let encoded_attributes = encode_attributes(&credential_data).unwrap();
+    let encoded_attributes = encode_attributes(credential_data).unwrap();
 
     let offer = anoncreds_issuer
         .issuer_create_credential_offer(&cred_def.get_cred_def_id())
@@ -101,7 +112,7 @@ pub async fn create_and_write_credential(
         .unwrap();
     let (req, req_meta) = anoncreds_holder
         .prover_create_credential_req(
-            &institution_did,
+            institution_did,
             &offer,
             cred_def.get_cred_def_json(),
             settings::DEFAULT_LINK_SECRET_ALIAS,
@@ -124,7 +135,7 @@ pub async fn create_and_write_credential(
         .await
         .unwrap();
 
-    let cred_id = anoncreds_holder
+    anoncreds_holder
         .prover_store_credential(
             None,
             &req_meta,
@@ -133,6 +144,5 @@ pub async fn create_and_write_credential(
             rev_reg_def_json.as_deref(),
         )
         .await
-        .unwrap();
-    cred_id
+        .unwrap()
 }

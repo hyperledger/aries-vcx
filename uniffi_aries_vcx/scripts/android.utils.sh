@@ -214,7 +214,7 @@ build_uniffi() {
     pushd "${UNIFFI_ROOT}/core"
         cargo build --lib --target=${TRIPLET}
         cp "$(realpath ${ARIES_VCX_ROOT}/target/${TRIPLET}/debug/libuniffi_vcx.so)" "$(realpath ${ABI_PATH}/libuniffi_vcx.so)"
-        cp "$(realpath ${LIBZMQ_LIB_DIR}/libzmq.so})" "$(realpath ${ABI_PATH}/libzmq.so)"
+        cp "$(realpath ${LIBZMQ_LIB_DIR}/libzmq.so)" "$(realpath ${ABI_PATH}/libzmq.so)"
     popd
 }
 

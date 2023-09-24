@@ -1,15 +1,23 @@
-use messages::decorators::please_ack::{AckOn, PleaseAck};
-use messages::msg_fields::protocols::revocation::ack::AckRevoke;
-use messages::msg_fields::protocols::revocation::revoke::{RevocationFormat, Revoke, RevokeContent, RevokeDecorators};
+use messages::{
+    decorators::please_ack::{AckOn, PleaseAck},
+    msg_fields::protocols::revocation::{
+        ack::AckRevoke,
+        revoke::{RevocationFormat, Revoke, RevokeContent, RevokeDecorators},
+    },
+};
 use shared_vcx::maybe_known::MaybeKnown;
 use uuid::Uuid;
 
-use crate::errors::error::prelude::*;
-use crate::handlers::util::verify_thread_id;
-use crate::protocols::revocation_notification::sender::states::finished::FinishedState;
-use crate::protocols::revocation_notification::sender::states::initial::InitialState;
-use crate::protocols::revocation_notification::sender::states::sent::NotificationSentState;
-use crate::protocols::SendClosure;
+use crate::{
+    errors::error::prelude::*,
+    handlers::util::verify_thread_id,
+    protocols::{
+        revocation_notification::sender::states::{
+            finished::FinishedState, initial::InitialState, sent::NotificationSentState,
+        },
+        SendClosure,
+    },
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct RevocationNotificationSenderSM {
@@ -86,7 +94,11 @@ impl RevocationNotificationSenderSM {
                     .please_ack(PleaseAck::builder().on(ack_on).build())
                     .build();
 
-                let rev_msg: Revoke = Revoke::builder().id(id).content(content).decorators(decorators).build();
+                let rev_msg: Revoke = Revoke::builder()
+                    .id(id)
+                    .content(content)
+                    .decorators(decorators)
+                    .build();
                 send_message(rev_msg.clone().into()).await?;
 
                 let is_finished = !rev_msg
@@ -139,9 +151,10 @@ impl RevocationNotificationSenderSM {
 
 #[allow(clippy::unwrap_used)]
 pub mod test_utils {
-    use crate::protocols::revocation_notification::test_utils::{_comment, _cred_rev_id, _rev_reg_id};
-
     use super::*;
+    use crate::protocols::revocation_notification::test_utils::{
+        _comment, _cred_rev_id, _rev_reg_id,
+    };
 
     pub fn _sender_config(ack_on: Vec<AckOn>) -> SenderConfig {
         SenderConfigBuilder::default()

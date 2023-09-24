@@ -40,15 +40,17 @@ pub fn get_verification_methods_by_key(
 
 pub fn get_key_by_verification_method(vm: &VerificationMethod) -> Result<Key, DidPeerError> {
     let key_type = match vm.verification_method_type() {
-        VerificationMethodType::Ed25519VerificationKey2018 | VerificationMethodType::Ed25519VerificationKey2020 => {
-            KeyType::Ed25519
-        }
+        VerificationMethodType::Ed25519VerificationKey2018
+        | VerificationMethodType::Ed25519VerificationKey2020 => KeyType::Ed25519,
         VerificationMethodType::Bls12381G1Key2020 => KeyType::Bls12381g1,
         VerificationMethodType::Bls12381G2Key2020 => KeyType::Bls12381g2,
-        VerificationMethodType::X25519KeyAgreementKey2019 | VerificationMethodType::X25519KeyAgreementKey2020 => {
-            KeyType::X25519
+        VerificationMethodType::X25519KeyAgreementKey2019
+        | VerificationMethodType::X25519KeyAgreementKey2020 => KeyType::X25519,
+        t => {
+            return Err(DidPeerError::UnsupportedVerificationMethodType(
+                t.to_owned(),
+            ))
         }
-        t @ _ => return Err(DidPeerError::UnsupportedVerificationMethodType(t.to_owned())),
     };
     Ok(Key::new(vm.public_key_field().key_decoded()?, key_type)?)
 }
@@ -105,7 +107,13 @@ fn add_public_key_to_builder(
 }
 
 fn to_did_url_reference(key: &Key) -> Result<DidUrl, DidPeerError> {
-    DidUrl::from_fragment(key.prefixless_fingerprint().chars().take(8).collect::<String>()).map_err(Into::into)
+    DidUrl::from_fragment(
+        key.prefixless_fingerprint()
+            .chars()
+            .take(8)
+            .collect::<String>(),
+    )
+    .map_err(Into::into)
 }
 
 #[cfg(test)]
@@ -113,10 +121,9 @@ mod tests {
     use super::*;
 
     fn did() -> Did {
-        "did:peer:2\
-        .Ez6LSbysY2xFMRpGMhb7tFTLMpeuPRaqaWM1yECx2AtzE3KCc\
-        .Vz6MkqRYqQiSgvZQdnBytw86Qbs2ZWUkGv22od935YF4s8M7V\
-        .Vz6MkgoLTnTypo3tDRwCkZXSccTPHRLhF4ZnjhueYAFpEX6vg"
+        "did:peer:2.Ez6LSbysY2xFMRpGMhb7tFTLMpeuPRaqaWM1yECx2AtzE3KCc.\
+         Vz6MkqRYqQiSgvZQdnBytw86Qbs2ZWUkGv22od935YF4s8M7V.\
+         Vz6MkgoLTnTypo3tDRwCkZXSccTPHRLhF4ZnjhueYAFpEX6vg"
             .parse()
             .unwrap()
     }
@@ -134,21 +141,33 @@ mod tests {
     }
 
     fn verification_method_0() -> VerificationMethod {
-        VerificationMethod::builder(did().into(), did(), VerificationMethodType::X25519KeyAgreementKey2020)
-            .add_public_key_multibase(key_0().fingerprint())
-            .build()
+        VerificationMethod::builder(
+            did().into(),
+            did(),
+            VerificationMethodType::X25519KeyAgreementKey2020,
+        )
+        .add_public_key_multibase(key_0().fingerprint())
+        .build()
     }
 
     fn verification_method_1() -> VerificationMethod {
-        VerificationMethod::builder(did().into(), did(), VerificationMethodType::Ed25519VerificationKey2020)
-            .add_public_key_multibase(key_1().fingerprint())
-            .build()
+        VerificationMethod::builder(
+            did().into(),
+            did(),
+            VerificationMethodType::Ed25519VerificationKey2020,
+        )
+        .add_public_key_multibase(key_1().fingerprint())
+        .build()
     }
 
     fn verification_method_2() -> VerificationMethod {
-        VerificationMethod::builder(did().into(), did(), VerificationMethodType::Ed25519VerificationKey2020)
-            .add_public_key_multibase(key_2().fingerprint())
-            .build()
+        VerificationMethod::builder(
+            did().into(),
+            did(),
+            VerificationMethodType::Ed25519VerificationKey2020,
+        )
+        .add_public_key_multibase(key_2().fingerprint())
+        .build()
     }
 
     mod get_verification_methods_by_key {
@@ -156,7 +175,8 @@ mod tests {
 
         // Multibase encoded keys are multicodec-prefixed by their encoding type ...
         fn test_get_verification_methods_by_key_multibase(key: &Key) {
-            let vms = get_verification_methods_by_key(key, &did(), PublicKeyEncoding::Multibase).unwrap();
+            let vms =
+                get_verification_methods_by_key(key, &did(), PublicKeyEncoding::Multibase).unwrap();
             assert_eq!(vms.len(), 1);
             assert_eq!(
                 vms[0].public_key_field().key_decoded().unwrap(),
@@ -167,7 +187,8 @@ mod tests {
 
         // ... and base58 encoded keys are not
         fn test_get_verification_methods_by_key_base58(key: &Key) {
-            let vms = get_verification_methods_by_key(key, &did(), PublicKeyEncoding::Base58).unwrap();
+            let vms =
+                get_verification_methods_by_key(key, &did(), PublicKeyEncoding::Base58).unwrap();
             assert_eq!(vms.len(), 1);
             assert_ne!(
                 vms[0].public_key_field().key_decoded().unwrap(),

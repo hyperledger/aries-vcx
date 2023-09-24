@@ -1,6 +1,5 @@
-use napi_derive::napi;
-
 use libvcx_core::api_vcx::api_handle::disclosed_proof;
+use napi_derive::napi;
 
 use crate::error::to_napi_err;
 
@@ -76,7 +75,9 @@ async fn disclosed_proof_get_requests(handle_connection: u32) -> napi::Result<St
 
 #[napi]
 async fn disclosed_proof_retrieve_credentials(handle: u32) -> napi::Result<String> {
-    disclosed_proof::retrieve_credentials(handle).await.map_err(to_napi_err)
+    disclosed_proof::retrieve_credentials(handle)
+        .await
+        .map_err(to_napi_err)
 }
 
 #[napi]
@@ -102,9 +103,14 @@ async fn disclosed_proof_decline_presentation_request(
     reason: Option<String>,
     proposal: Option<String>,
 ) -> napi::Result<()> {
-    disclosed_proof::decline_presentation_request(handle, connection_handle, reason.as_deref(), proposal.as_deref())
-        .await
-        .map_err(to_napi_err)
+    disclosed_proof::decline_presentation_request(
+        handle,
+        connection_handle,
+        reason.as_deref(),
+        proposal.as_deref(),
+    )
+    .await
+    .map_err(to_napi_err)
 }
 
 #[napi]

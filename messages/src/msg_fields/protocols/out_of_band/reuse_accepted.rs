@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-
 use shared_vcx::misc::serde_ignored::SerdeIgnored;
 use typed_builder::TypedBuilder;
 
@@ -8,7 +7,8 @@ use crate::{
     msg_parts::MsgParts,
 };
 
-pub type HandshakeReuseAccepted = MsgParts<HandshakeReuseAcceptedContent, HandshakeReuseAcceptedDecorators>;
+pub type HandshakeReuseAccepted =
+    MsgParts<HandshakeReuseAcceptedContent, HandshakeReuseAcceptedDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq, TypedBuilder)]
 #[serde(transparent)]
@@ -52,7 +52,12 @@ mod tests {
             "~thread": decorators.thread
         });
 
-        test_utils::test_msg(content, decorators, OutOfBandTypeV1_1::HandshakeReuseAccepted, expected);
+        test_utils::test_msg(
+            content,
+            decorators,
+            OutOfBandTypeV1_1::HandshakeReuseAccepted,
+            expected,
+        );
     }
 
     #[test]
@@ -69,6 +74,11 @@ mod tests {
             "~timing": decorators.timing
         });
 
-        test_utils::test_msg(content, decorators, OutOfBandTypeV1_1::HandshakeReuseAccepted, expected);
+        test_utils::test_msg(
+            content,
+            decorators,
+            OutOfBandTypeV1_1::HandshakeReuseAccepted,
+            expected,
+        );
     }
 }

@@ -1,7 +1,8 @@
-use crate::errors::error::AgencyClientResult;
-use crate::messages::a2a_message::A2AMessageKinds;
-use crate::messages::message_type::MessageType;
-use crate::MessageStatusCode;
+use crate::{
+    errors::error::AgencyClientResult,
+    messages::{a2a_message::A2AMessageKinds, message_type::MessageType},
+    MessageStatusCode,
+};
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -43,7 +44,10 @@ impl UpdateMessageStatusByConnectionsBuilder {
         }
     }
 
-    pub fn uids_by_conns(&mut self, uids_by_conns: Vec<UIDsByConn>) -> AgencyClientResult<&mut Self> {
+    pub fn uids_by_conns(
+        &mut self,
+        uids_by_conns: Vec<UIDsByConn>,
+    ) -> AgencyClientResult<&mut Self> {
         self.uids_by_conns = uids_by_conns;
         Ok(self)
     }

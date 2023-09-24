@@ -20,10 +20,12 @@ macro_rules! resolve_positive_test {
     ($test_name:ident, $did_doc:expr, $peer_did:expr, $encoding:expr) => {
         #[test]
         async fn $test_name() {
-            let resolver = PeerDidResolver::new();
-            let options = DidResolutionOptions::new(ExtraFieldsOptions::new().set_public_key_encoding($encoding));
-            let did_document_expected = serde_json::from_str::<DidDocument<ExtraFieldsSov>>($did_doc).unwrap();
-            let ddo = resolver
+            let options = DidResolutionOptions::new(
+                ExtraFieldsOptions::new().set_public_key_encoding($encoding),
+            );
+            let did_document_expected =
+                serde_json::from_str::<DidDocument<ExtraFieldsSov>>($did_doc).unwrap();
+            let ddo = PeerDidResolver
                 .resolve(&$peer_did.parse().unwrap(), &options)
                 .await
                 .unwrap();

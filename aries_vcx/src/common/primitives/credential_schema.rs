@@ -1,13 +1,19 @@
-use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
-use aries_vcx_core::ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite};
 use std::sync::Arc;
 
-use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
-use crate::global::settings;
-use crate::utils::constants::{DEFAULT_SERIALIZE_VERSION, SCHEMA_ID, SCHEMA_JSON};
-use crate::utils::serialization::ObjectWithVersion;
+use aries_vcx_core::{
+    anoncreds::base_anoncreds::BaseAnonCreds,
+    ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite},
+};
 
 use super::credential_definition::PublicEntityStateType;
+use crate::{
+    errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
+    global::settings,
+    utils::{
+        constants::{DEFAULT_SERIALIZE_VERSION, SCHEMA_ID, SCHEMA_JSON},
+        serialization::ObjectWithVersion,
+    },
+};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct SchemaData {
@@ -85,7 +91,11 @@ impl Schema {
         })
     }
 
-    pub fn create_from_ledger_json(schema_json: &str, source_id: &str, schema_id: &str) -> VcxResult<Self> {
+    pub fn create_from_ledger_json(
+        schema_json: &str,
+        source_id: &str,
+        schema_id: &str,
+    ) -> VcxResult<Self> {
         let schema_data: SchemaData = serde_json::from_str(schema_json).map_err(|err| {
             AriesVcxError::from_msg(
                 AriesVcxErrorKind::InvalidJson,
@@ -156,7 +166,10 @@ impl Schema {
         Ok(self.state as u32)
     }
 
-    pub async fn get_schema_json(&self, ledger: &Arc<dyn AnoncredsLedgerRead>) -> VcxResult<String> {
+    pub async fn get_schema_json(
+        &self,
+        ledger: &Arc<dyn AnoncredsLedgerRead>,
+    ) -> VcxResult<String> {
         if !self.schema_json.is_empty() {
             Ok(self.schema_json.clone())
         } else {

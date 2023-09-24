@@ -43,10 +43,19 @@ macro_rules! extract_parts {
     }};
 }
 
-fn map_insert(map: &mut RegistryMap, parts: (&'static str, u8, u8, Vec<MaybeKnown<Role>>, Protocol)) {
+fn map_insert(
+    map: &mut RegistryMap,
+    parts: (&'static str, u8, u8, Vec<MaybeKnown<Role>>, Protocol),
+) {
     let (protocol_name, major, minor, roles, protocol) = parts;
 
-    let str_pid = format!("{}/{}/{}.{}", Protocol::DID_COM_ORG_PREFIX, protocol_name, major, minor);
+    let str_pid = format!(
+        "{}/{}/{}.{}",
+        Protocol::DID_COM_ORG_PREFIX,
+        protocol_name,
+        major,
+        minor
+    );
     let entry = RegistryEntry {
         protocol,
         minor,
@@ -54,7 +63,9 @@ fn map_insert(map: &mut RegistryMap, parts: (&'static str, u8, u8, Vec<MaybeKnow
         roles,
     };
 
-    map.entry((protocol_name, major)).or_insert(Vec::new()).push(entry);
+    map.entry((protocol_name, major))
+        .or_insert(Vec::new())
+        .push(entry);
 }
 
 lazy_static! {

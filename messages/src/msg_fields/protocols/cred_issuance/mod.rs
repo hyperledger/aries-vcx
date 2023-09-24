@@ -20,8 +20,12 @@ use self::{
     issue_credential::{IssueCredential, IssueCredentialContent, IssueCredentialDecorators},
     offer_credential::{OfferCredential, OfferCredentialContent, OfferCredentialDecorators},
     problem_report::{CredIssuanceProblemReport, CredIssuanceProblemReportContent},
-    propose_credential::{ProposeCredential, ProposeCredentialContent, ProposeCredentialDecorators},
-    request_credential::{RequestCredential, RequestCredentialContent, RequestCredentialDecorators},
+    propose_credential::{
+        ProposeCredential, ProposeCredentialContent, ProposeCredentialDecorators,
+    },
+    request_credential::{
+        RequestCredential, RequestCredentialContent, RequestCredentialDecorators,
+    },
 };
 use super::{notification::ack::AckDecorators, report_problem::ProblemReportDecorators};
 use crate::{
@@ -32,7 +36,8 @@ use crate::{
     msg_fields::traits::DelayedSerde,
     msg_types::{
         protocols::cred_issuance::{
-            CredentialIssuanceType as CredentialIssuanceKind, CredentialIssuanceTypeV1, CredentialIssuanceTypeV1_0,
+            CredentialIssuanceType as CredentialIssuanceKind, CredentialIssuanceTypeV1,
+            CredentialIssuanceTypeV1_0,
         },
         traits::MessageKind,
         MessageType, MsgWithType, Protocol,
@@ -52,7 +57,10 @@ pub enum CredentialIssuance {
 impl DelayedSerde for CredentialIssuance {
     type MsgType<'a> = (CredentialIssuanceKind, &'a str);
 
-    fn delayed_deserialize<'de, D>(msg_type: Self::MsgType<'de>, deserializer: D) -> Result<Self, D::Error>
+    fn delayed_deserialize<'de, D>(
+        msg_type: Self::MsgType<'de>,
+        deserializer: D,
+    ) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
@@ -67,19 +75,27 @@ impl DelayedSerde for CredentialIssuance {
         };
 
         match kind.map_err(D::Error::custom)? {
-            CredentialIssuanceTypeV1_0::OfferCredential => OfferCredential::deserialize(deserializer).map(From::from),
+            CredentialIssuanceTypeV1_0::OfferCredential => {
+                OfferCredential::deserialize(deserializer).map(From::from)
+            }
             CredentialIssuanceTypeV1_0::ProposeCredential => {
                 ProposeCredential::deserialize(deserializer).map(From::from)
             }
             CredentialIssuanceTypeV1_0::RequestCredential => {
                 RequestCredential::deserialize(deserializer).map(From::from)
             }
-            CredentialIssuanceTypeV1_0::IssueCredential => IssueCredential::deserialize(deserializer).map(From::from),
-            CredentialIssuanceTypeV1_0::Ack => AckCredential::deserialize(deserializer).map(From::from),
+            CredentialIssuanceTypeV1_0::IssueCredential => {
+                IssueCredential::deserialize(deserializer).map(From::from)
+            }
+            CredentialIssuanceTypeV1_0::Ack => {
+                AckCredential::deserialize(deserializer).map(From::from)
+            }
             CredentialIssuanceTypeV1_0::ProblemReport => {
                 CredIssuanceProblemReport::deserialize(deserializer).map(From::from)
             }
-            CredentialIssuanceTypeV1_0::CredentialPreview => Err(utils::not_standalone_msg::<D>(kind_str)),
+            CredentialIssuanceTypeV1_0::CredentialPreview => {
+                Err(utils::not_standalone_msg::<D>(kind_str))
+            }
         }
     }
 
@@ -133,10 +149,12 @@ impl<'a> TryFrom<CowStr<'a>> for CredentialPreviewMsgType {
     fn try_from(value: CowStr) -> Result<Self, Self::Error> {
         let value = MessageType::try_from(value.0.as_ref())?;
 
-        if let Protocol::CredentialIssuanceType(CredentialIssuanceKind::V1(CredentialIssuanceTypeV1::V1_0(_))) =
-            value.protocol
+        if let Protocol::CredentialIssuanceType(CredentialIssuanceKind::V1(
+            CredentialIssuanceTypeV1::V1_0(_),
+        )) = value.protocol
         {
-            if let Ok(CredentialIssuanceTypeV1_0::CredentialPreview) = CredentialIssuanceTypeV1_0::from_str(value.kind)
+            if let Ok(CredentialIssuanceTypeV1_0::CredentialPreview) =
+                CredentialIssuanceTypeV1_0::from_str(value.kind)
             {
                 return Ok(CredentialPreviewMsgType);
             }
@@ -185,8 +203,20 @@ transit_to_aries_msg!(
 );
 
 into_msg_with_type!(OfferCredential, CredentialIssuanceTypeV1_0, OfferCredential);
-into_msg_with_type!(ProposeCredential, CredentialIssuanceTypeV1_0, ProposeCredential);
-into_msg_with_type!(RequestCredential, CredentialIssuanceTypeV1_0, RequestCredential);
+into_msg_with_type!(
+    ProposeCredential,
+    CredentialIssuanceTypeV1_0,
+    ProposeCredential
+);
+into_msg_with_type!(
+    RequestCredential,
+    CredentialIssuanceTypeV1_0,
+    RequestCredential
+);
 into_msg_with_type!(IssueCredential, CredentialIssuanceTypeV1_0, IssueCredential);
 into_msg_with_type!(AckCredential, CredentialIssuanceTypeV1_0, Ack);
-into_msg_with_type!(CredIssuanceProblemReport, CredentialIssuanceTypeV1_0, ProblemReport);
+into_msg_with_type!(
+    CredIssuanceProblemReport,
+    CredentialIssuanceTypeV1_0,
+    ProblemReport
+);

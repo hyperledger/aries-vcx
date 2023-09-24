@@ -20,6 +20,7 @@ use serde_json::Value;
 pub type GenericMap = HashMap<String, Value>;
 pub type GenericResolver = dyn DidResolvableAdaptorTrait + Send + Sync;
 
+#[derive(Default)]
 pub struct ResolverRegistry {
     resolvers: HashMap<String, Box<GenericResolver>>,
 }
@@ -76,9 +77,7 @@ where
 
 impl ResolverRegistry {
     pub fn new() -> Self {
-        ResolverRegistry {
-            resolvers: HashMap::new(),
-        }
+        Self::default()
     }
 
     pub fn register_resolver<T>(mut self, method: String, resolver: T) -> Self
@@ -171,7 +170,7 @@ mod tests {
             });
 
         let registry = ResolverRegistry::new()
-            .register_resolver::<MockDummyDidResolver>(method, mock_resolver.into());
+            .register_resolver::<MockDummyDidResolver>(method, mock_resolver);
 
         let result = registry
             .resolve(&did, &DidResolutionOptions::default())
@@ -179,11 +178,10 @@ mod tests {
         assert!(result.is_err());
 
         let error = result.unwrap_err();
-        if let Some(_) = error.downcast_ref::<DummyResolverError>() {
-            assert!(true);
-        } else {
-            assert!(false, "Error is not of type DummyResolverError");
-        }
+        assert!(
+            error.downcast_ref::<DummyResolverError>().is_some(),
+            "Error is not of type DummyResolverError"
+        )
     }
 
     #[tokio::test]
@@ -210,7 +208,7 @@ mod tests {
             });
 
         let registry = ResolverRegistry::new()
-            .register_resolver::<MockDummyDidResolver>(method, mock_resolver.into());
+            .register_resolver::<MockDummyDidResolver>(method, mock_resolver);
 
         let result = registry
             .resolve(&parsed_did, &DidResolutionOptions::default())
@@ -226,8 +224,8 @@ mod tests {
         let mut registry = ResolverRegistry::new();
         assert_eq!(registry.resolvers.len(), 0);
 
-        registry = registry
-            .register_resolver::<MockDummyDidResolver>(method.clone(), mock_resolver.into());
+        registry =
+            registry.register_resolver::<MockDummyDidResolver>(method.clone(), mock_resolver);
         assert_eq!(registry.resolvers.len(), 1);
         assert!(registry.resolvers.contains_key(&method));
 
@@ -247,11 +245,13 @@ mod tests {
 
         assert!(result.is_err());
         let error = result.unwrap_err();
-        if let Some(err) = error.downcast_ref::<DidResolverRegistryError>() {
-            assert!(matches!(err, DidResolverRegistryError::UnsupportedMethod));
-        } else {
-            assert!(false, "Error is not of type DidResolverRegistryError");
-        }
+        assert!(
+            matches!(
+                error.downcast_ref::<DidResolverRegistryError>(),
+                Some(DidResolverRegistryError::UnsupportedMethod)
+            ),
+            "Error is not of type DidResolverRegistryError"
+        );
     }
 
     #[tokio::test]
@@ -284,13 +284,15 @@ mod tests {
             .await;
         assert!(result_before.is_err());
         let error_before = result_before.unwrap_err();
-        if let Some(err) = error_before.downcast_ref::<DidResolverRegistryError>() {
-            assert!(matches!(err, DidResolverRegistryError::UnsupportedMethod));
-        } else {
-            assert!(false, "Error is not of type DidResolverRegistryError");
-        }
+        assert!(
+            matches!(
+                error_before.downcast_ref::<DidResolverRegistryError>(),
+                Some(DidResolverRegistryError::UnsupportedMethod)
+            ),
+            "Error is not of type DidResolverRegistryError"
+        );
 
-        registry = registry.register_resolver::<MockDummyDidResolver>(method, mock_resolver.into());
+        registry = registry.register_resolver::<MockDummyDidResolver>(method, mock_resolver);
 
         let result_after = registry
             .resolve(&parsed_did, &DidResolutionOptions::default())

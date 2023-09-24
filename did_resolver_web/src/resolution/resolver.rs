@@ -73,16 +73,20 @@ where
         did: &Did,
         options: &DidResolutionOptions<Self::ExtraFieldsOptions>,
     ) -> Result<DidResolutionOutput<()>, GenericError> {
-        let method = did
-            .method()
-            .ok_or_else(|| DidWebError::InvalidDid("Attempted to resolve unqualified did".to_string()))?;
+        let method = did.method().ok_or_else(|| {
+            DidWebError::InvalidDid("Attempted to resolve unqualified did".to_string())
+        })?;
         if method != "web" {
-            return Err(Box::new(DidWebError::MethodNotSupported(method.to_string())));
+            return Err(Box::new(DidWebError::MethodNotSupported(
+                method.to_string(),
+            )));
         }
 
         if let Some(accept) = options.accept() {
             if accept != &MediaType::DidJson {
-                return Err(Box::new(DidWebError::RepresentationNotSupported(accept.to_string())));
+                return Err(Box::new(DidWebError::RepresentationNotSupported(
+                    accept.to_string(),
+                )));
             }
         }
 

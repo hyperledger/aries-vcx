@@ -1043,7 +1043,7 @@ mod tests {
             })
             .collect();
 
-        let res = join_all(waiters).await;
+        join_all(waiters).await;
         println!("------------> 1 {:?}", SystemTime::now());
 
         let waiters: Vec<_> = (0..count)
@@ -1070,7 +1070,7 @@ mod tests {
             })
             .collect();
 
-        let res = join_all(waiters).await;
+        join_all(waiters).await;
 
         println!("------------> 3 {:?}", SystemTime::now());
 
@@ -1097,7 +1097,7 @@ mod tests {
             })
             .collect();
 
-        let res = join_all(waiters).await;
+        join_all(waiters).await;
 
         println!("------------> 5 {:?}", SystemTime::now());
     }

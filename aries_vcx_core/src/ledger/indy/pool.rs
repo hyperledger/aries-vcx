@@ -1,7 +1,5 @@
 pub mod test_utils {
-    use std::fs;
-    use std::io::Write;
-    use std::{env, path::PathBuf};
+    use std::{env, fs, io::Write, path::PathBuf};
 
     pub fn get_temp_dir_path() -> PathBuf {
         env::temp_dir()
@@ -212,10 +210,13 @@ pub mod test_utils {
         create_genesis_txn_file(genesis_file_path, Box::new(get_txns))
     }
 
-    pub fn create_genesis_txn_file(genesis_file_path: &str, get_txns: Box<dyn FnOnce() -> Vec<String>>) {
+    pub fn create_genesis_txn_file(
+        genesis_file_path: &str,
+        get_txns: Box<dyn FnOnce() -> Vec<String>>,
+    ) {
         let node_txns = get_txns();
         let txn_file_data = node_txns.join("\n");
-        let mut f = fs::File::create(&genesis_file_path).unwrap();
+        let mut f = fs::File::create(genesis_file_path).unwrap();
         f.write_all(txn_file_data.as_bytes()).unwrap();
         f.flush().unwrap();
         f.sync_all().unwrap();

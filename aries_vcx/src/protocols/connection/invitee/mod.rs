@@ -2,8 +2,7 @@ pub mod states;
 
 use std::sync::Arc;
 
-use aries_vcx_core::ledger::base_ledger::IndyLedgerRead;
-use aries_vcx_core::wallet::base_wallet::BaseWallet;
+use aries_vcx_core::{ledger::base_ledger::IndyLedgerRead, wallet::base_wallet::BaseWallet};
 use chrono::Utc;
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use messages::{
@@ -21,20 +20,19 @@ use messages::{
 use url::Url;
 use uuid::Uuid;
 
+use self::states::{
+    completed::Completed, initial::Initial, invited::Invited, requested::Requested,
+};
+use super::{
+    initiation_type::Invitee, pairwise_info::PairwiseInfo, trait_bounds::BootstrapDidDoc,
+    Connection,
+};
 use crate::{
-    common::ledger::transactions::into_did_doc,
-    errors::error::VcxResult,
+    common::{ledger::transactions::into_did_doc, signing::decode_signed_connection_response},
+    errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
     handlers::util::{matches_thread_id, AnyInvitation},
     protocols::connection::trait_bounds::ThreadId,
     transport::Transport,
-};
-
-use self::states::{completed::Completed, initial::Initial, invited::Invited, requested::Requested};
-
-use super::{initiation_type::Invitee, pairwise_info::PairwiseInfo, trait_bounds::BootstrapDidDoc, Connection};
-use crate::{
-    common::signing::decode_signed_connection_response,
-    errors::error::{AriesVcxError, AriesVcxErrorKind},
 };
 
 /// Convenience alias
@@ -61,7 +59,10 @@ impl InviteeConnection<Initial> {
         indy_ledger: &Arc<dyn IndyLedgerRead>,
         invitation: AnyInvitation,
     ) -> VcxResult<InviteeConnection<Invited>> {
-        trace!("Connection::accept_invitation >>> invitation: {:?}", &invitation);
+        trace!(
+            "Connection::accept_invitation >>> invitation: {:?}",
+            &invitation
+        );
 
         let did_doc = into_did_doc(indy_ledger, &invitation).await?;
         let state = Invited::new(did_doc, invitation);
@@ -93,8 +94,10 @@ impl InviteeConnection<Invited> {
 
         let id = Uuid::new_v4().to_string();
 
-        let mut did_doc = AriesDidDoc::default();
-        did_doc.id = self.pairwise_info.pw_did.to_string();
+        let mut did_doc = AriesDidDoc {
+            id: self.pairwise_info.pw_did.to_string(),
+            ..Default::default()
+        };
         did_doc.set_service_endpoint(service_endpoint);
         did_doc.set_routing_keys(routing_keys);
         did_doc.set_recipient_keys(recipient_keys);
@@ -105,7 +108,8 @@ impl InviteeConnection<Invited> {
             .connection(con_data)
             .build();
 
-        let decorators = RequestDecorators::builder().timing(Timing::builder().out_time(Utc::now()).build());
+        let decorators =
+            RequestDecorators::builder().timing(Timing::builder().out_time(Utc::now()).build());
 
         // Depending on the invitation type, we set the connection's thread ID
         // and the request parent and thread ID differently.
@@ -120,14 +124,19 @@ impl InviteeConnection<Invited> {
         // In this case, we reuse the invitation ID (current thread ID) as the thread ID
         // in both the connection and the request.
         let thread = match &self.state.invitation {
-            AnyInvitation::Oob(invite) => Thread::builder().thid(id.clone()).pthid(invite.id.clone()).build(),
+            AnyInvitation::Oob(invite) => Thread::builder()
+                .thid(id.clone())
+                .pthid(invite.id.clone())
+                .build(),
             AnyInvitation::Con(invite) => match invite.content {
                 InvitationContent::Public(_) => Thread::builder()
                     .thid(id.clone())
                     .pthid(self.state.thread_id().to_owned())
                     .build(),
                 InvitationContent::Pairwise(_) | InvitationContent::PairwiseDID(_) => {
-                    Thread::builder().thid(self.state.thread_id().to_owned()).build()
+                    Thread::builder()
+                        .thid(self.state.thread_id().to_owned())
+                        .build()
                 }
             },
         };
@@ -151,7 +160,8 @@ impl InviteeConnection<Invited> {
 }
 
 impl InviteeConnection<Requested> {
-    /// Processes a [`SignedResponse`] from the inviter and transitions to [`InviteeConnection<Responded>`].
+    /// Processes a [`SignedResponse`] from the inviter and transitions to
+    /// [`InviteeConnection<Responded>`].
     ///
     /// # Errors
     ///
@@ -187,17 +197,24 @@ impl InviteeConnection<Requested> {
             "Cannot handle response: remote verkey not found",
         ))?;
 
-        let did_doc = match decode_signed_connection_response(wallet, response.content, their_vk).await {
-            Ok(con_data) => Ok(con_data.did_doc),
-            Err(err) => {
-                error!("Request DidDoc validation failed! Sending ProblemReport...");
+        let did_doc =
+            match decode_signed_connection_response(wallet, response.content, their_vk).await {
+                Ok(con_data) => Ok(con_data.did_doc),
+                Err(err) => {
+                    error!("Request DidDoc validation failed! Sending ProblemReport...");
 
-                self.send_problem_report(wallet, &err, self.thread_id(), &self.state.did_doc, transport)
+                    self.send_problem_report(
+                        wallet,
+                        &err,
+                        self.thread_id(),
+                        &self.state.did_doc,
+                        transport,
+                    )
                     .await;
 
-                Err(err)
-            }
-        }?;
+                    Err(err)
+                }
+            }?;
 
         let state = Completed::new(did_doc, self.state.did_doc, self.state.thread_id, None);
 
@@ -215,7 +232,8 @@ impl InviteeConnection<Requested> {
 }
 
 impl InviteeConnection<Completed> {
-    /// Sends an acknowledgement message to the inviter and transitions to [`InviteeConnection<Completed>`].
+    /// Sends an acknowledgement message to the inviter and transitions to
+    /// [`InviteeConnection<Completed>`].
     ///
     /// # Errors
     ///
@@ -229,7 +247,11 @@ impl InviteeConnection<Completed> {
             .timing(Timing::builder().out_time(Utc::now()).build())
             .build();
 
-        Ack::builder().id(id).content(content).decorators(decorators).build()
+        Ack::builder()
+            .id(id)
+            .content(content)
+            .decorators(decorators)
+            .build()
     }
 }
 

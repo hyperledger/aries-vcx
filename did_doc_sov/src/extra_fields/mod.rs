@@ -134,7 +134,9 @@ impl ExtraFieldsSov {
         match self {
             ExtraFieldsSov::DIDCommV1(extra) => Ok(extra.accept()),
             ExtraFieldsSov::DIDCommV2(extra) => Ok(extra.accept()),
-            ExtraFieldsSov::AIP1(_) | ExtraFieldsSov::Legacy(_) => Err(DidDocumentSovError::EmptyCollection("accept")),
+            ExtraFieldsSov::AIP1(_) | ExtraFieldsSov::Legacy(_) => {
+                Err(DidDocumentSovError::EmptyCollection("accept"))
+            }
         }
     }
 

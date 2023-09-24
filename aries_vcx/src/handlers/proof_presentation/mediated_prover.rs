@@ -1,12 +1,17 @@
 use std::collections::HashMap;
 
-use messages::msg_fields::protocols::notification::Notification;
-use messages::msg_fields::protocols::present_proof::PresentProof;
-use messages::AriesMessage;
+use messages::{
+    msg_fields::protocols::{notification::Notification, present_proof::PresentProof},
+    AriesMessage,
+};
 
-use crate::handlers::proof_presentation::prover::Prover;
-use crate::handlers::util::{matches_opt_thread_id, matches_thread_id};
-use crate::protocols::proof_presentation::prover::state_machine::ProverState;
+use crate::{
+    handlers::{
+        proof_presentation::prover::Prover,
+        util::{matches_opt_thread_id, matches_thread_id},
+    },
+    protocols::proof_presentation::prover::state_machine::ProverState,
+};
 
 #[allow(clippy::unwrap_used)]
 pub fn prover_find_message_to_handle(

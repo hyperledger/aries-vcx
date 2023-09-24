@@ -1,17 +1,22 @@
 use std::sync::Arc;
 
-use aries_vcx::core::profile::ledger::{build_ledger_components, VcxPoolConfig};
-use aries_vcx::global::settings::DEFAULT_LINK_SECRET_ALIAS;
 use aries_vcx::{
-    agency_client::{agency_client::AgencyClient, configuration::AgentProvisionConfig},
-    core::profile::{profile::Profile, vdrtools_profile::VdrtoolsProfile},
-    global::settings::init_issuer_config,
-    utils::provision::provision_cloud_agent,
+    core::profile::{
+        ledger::{build_ledger_components, VcxPoolConfig},
+        profile::Profile,
+        vdrtools_profile::VdrtoolsProfile,
+    },
+    global::settings::{init_issuer_config, DEFAULT_LINK_SECRET_ALIAS},
 };
-use aries_vcx_core::ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite};
-use aries_vcx_core::wallet::indy::wallet::{create_and_open_wallet, wallet_configure_issuer};
-use aries_vcx_core::wallet::indy::{IndySdkWallet, WalletConfig};
-use url::Url;
+use aries_vcx_core::{
+    ledger::base_ledger::{
+        AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite,
+    },
+    wallet::indy::{
+        wallet::{create_and_open_wallet, wallet_configure_issuer},
+        IndySdkWallet, WalletConfig,
+    },
+};
 
 use crate::{
     agent::{agent_config::AgentConfig, agent_struct::Agent},
@@ -71,7 +76,8 @@ impl Agent {
             indy_vdr_config: None,
             response_cache_config: None,
         };
-        let (ledger_read, ledger_write) = build_ledger_components(wallet.clone(), pool_config).unwrap();
+        let (ledger_read, ledger_write) =
+            build_ledger_components(wallet.clone(), pool_config).unwrap();
         let anoncreds_ledger_read: Arc<dyn AnoncredsLedgerRead> = ledger_read.clone();
         let anoncreds_ledger_write: Arc<dyn AnoncredsLedgerWrite> = ledger_write.clone();
         let indy_ledger_read: Arc<dyn IndyLedgerRead> = ledger_read.clone();
@@ -85,7 +91,6 @@ impl Agent {
             indy_ledger_write,
         );
         let profile: Arc<dyn Profile> = Arc::new(indy_profile);
-        let wallet = profile.inject_wallet();
         let anoncreds = profile.inject_anoncreds();
         anoncreds
             .prover_create_link_secret(DEFAULT_LINK_SECRET_ALIAS)
@@ -105,10 +110,22 @@ impl Agent {
             Arc::clone(&profile),
             config_issuer.institution_did.clone(),
         ));
-        let issuer = Arc::new(ServiceCredentialsIssuer::new(Arc::clone(&profile), connections.clone()));
-        let holder = Arc::new(ServiceCredentialsHolder::new(Arc::clone(&profile), connections.clone()));
-        let verifier = Arc::new(ServiceVerifier::new(Arc::clone(&profile), connections.clone()));
-        let prover = Arc::new(ServiceProver::new(Arc::clone(&profile), connections.clone()));
+        let issuer = Arc::new(ServiceCredentialsIssuer::new(
+            Arc::clone(&profile),
+            connections.clone(),
+        ));
+        let holder = Arc::new(ServiceCredentialsHolder::new(
+            Arc::clone(&profile),
+            connections.clone(),
+        ));
+        let verifier = Arc::new(ServiceVerifier::new(
+            Arc::clone(&profile),
+            connections.clone(),
+        ));
+        let prover = Arc::new(ServiceProver::new(
+            Arc::clone(&profile),
+            connections.clone(),
+        ));
 
         Ok(Self {
             profile,

@@ -1,16 +1,25 @@
 use std::future::Future;
 
-use aries_vcx::aries_vcx_core::ledger::indy::pool::test_utils::{create_testpool_genesis_txn_file, get_temp_file_path};
-use aries_vcx::aries_vcx_core::wallet::indy::wallet::{create_and_open_wallet, wallet_configure_issuer};
-use aries_vcx::aries_vcx_core::wallet::indy::WalletConfig;
-use aries_vcx::aries_vcx_core::WalletHandle;
-use aries_vcx::global::settings::{
-    self, init_issuer_config, set_config_value, CONFIG_INSTITUTION_DID, DEFAULT_DID, DEFAULT_GENESIS_PATH,
+use aries_vcx::{
+    aries_vcx_core::{
+        ledger::indy::pool::test_utils::{create_testpool_genesis_txn_file, get_temp_file_path},
+        wallet::indy::{
+            wallet::{create_and_open_wallet, wallet_configure_issuer},
+            WalletConfig,
+        },
+        WalletHandle,
+    },
+    global::settings::{
+        self, init_issuer_config, set_config_value, CONFIG_INSTITUTION_DID, DEFAULT_DID,
+        DEFAULT_GENESIS_PATH,
+    },
+    utils::devsetup::{init_test_logging, reset_global_state},
 };
-use aries_vcx::utils::devsetup::{init_test_logging, reset_global_state};
 
-use crate::api_vcx::api_global::pool::{close_main_pool, setup_ledger_components, LibvcxLedgerConfig};
-use crate::api_vcx::api_global::wallet::{close_main_wallet, setup_wallet};
+use crate::api_vcx::api_global::{
+    pool::{close_main_pool, setup_ledger_components, LibvcxLedgerConfig},
+    wallet::{close_main_wallet, setup_wallet},
+};
 
 async fn dev_setup_issuer_wallet_and_agency_client() -> (String, WalletHandle) {
     let enterprise_seed = "000000000000000000000000Trustee1";
@@ -25,7 +34,9 @@ async fn dev_setup_issuer_wallet_and_agency_client() -> (String, WalletHandle) {
         rekey_derivation_method: None,
     };
     let wallet_handle = create_and_open_wallet(&config_wallet).await.unwrap();
-    let config_issuer = wallet_configure_issuer(wallet_handle, enterprise_seed).await.unwrap();
+    let config_issuer = wallet_configure_issuer(wallet_handle, enterprise_seed)
+        .await
+        .unwrap();
     init_issuer_config(&config_issuer.institution_did).unwrap();
 
     (config_issuer.institution_did, wallet_handle)
@@ -54,7 +65,10 @@ impl SetupGlobalsWalletPoolAgency {
     {
         let init = Self::init().await;
 
-        let genesis_path = get_temp_file_path(DEFAULT_GENESIS_PATH).to_str().unwrap().to_string();
+        let genesis_path = get_temp_file_path(DEFAULT_GENESIS_PATH)
+            .to_str()
+            .unwrap()
+            .to_string();
         create_testpool_genesis_txn_file(&genesis_path);
 
         setup_wallet(init.wallet_handle).unwrap();

@@ -1,5 +1,4 @@
 use diddoc_legacy::aries::service::AriesService;
-
 use serde::{Deserialize, Serialize};
 use shared_vcx::maybe_known::MaybeKnown;
 use typed_builder::TypedBuilder;
@@ -61,7 +60,9 @@ mod tests {
 
     use super::*;
     use crate::{
-        decorators::{attachment::tests::make_extended_attachment, timing::tests::make_extended_timing},
+        decorators::{
+            attachment::tests::make_extended_attachment, timing::tests::make_extended_timing,
+        },
         misc::test_utils,
         msg_types::{out_of_band::OutOfBandTypeV1_1, protocols::connection::ConnectionTypeV1},
     };
@@ -93,7 +94,9 @@ mod tests {
             .handshake_protocols(vec![MaybeKnown::Known(ConnectionTypeV1::new_v1_0().into())])
             .build();
 
-        let decorators = InvitationDecorators::builder().timing(make_extended_timing()).build();
+        let decorators = InvitationDecorators::builder()
+            .timing(make_extended_timing())
+            .build();
 
         let expected = json!({
             "label": content.label,

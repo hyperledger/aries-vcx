@@ -1,10 +1,14 @@
-use crate::aries::service::AriesService;
-use crate::errors::error::{DiddocError, DiddocErrorKind, DiddocResult};
-use crate::w3c::model::{
-    Authentication, DdoKeyReference, Ed25519PublicKey, CONTEXT, KEY_AUTHENTICATION_TYPE, KEY_TYPE,
-};
 use shared_vcx::validation::verkey::validate_verkey;
 use url::Url;
+
+use crate::{
+    aries::service::AriesService,
+    errors::error::{DiddocError, DiddocErrorKind, DiddocResult},
+    w3c::model::{
+        Authentication, DdoKeyReference, Ed25519PublicKey, CONTEXT, KEY_AUTHENTICATION_TYPE,
+        KEY_TYPE,
+    },
+};
 
 #[derive(Debug, Deserialize, Serialize, PartialEq, Clone)]
 pub struct AriesDidDoc {
@@ -73,8 +77,8 @@ impl AriesDidDoc {
 
     pub fn set_routing_keys(&mut self, routing_keys: Vec<String>) {
         routing_keys.iter().for_each(|key| {
-            // Note: comment lines 123 - 134 and append key instead key_reference to be compatible with Streetcred
-            //                id += 1;
+            // Note: comment lines 123 - 134 and append key instead key_reference to be compatible
+            // with Streetcred                id += 1;
             //
             //                let key_id = id.to_string();
             //                let key_reference = DidDoc::_build_key_reference(&self.id, &key_id);
@@ -113,20 +117,27 @@ impl AriesDidDoc {
         }
 
         for service in self.service.iter() {
-            service.recipient_keys.iter().try_for_each(|recipient_key_entry| {
-                let public_key = self.get_key(recipient_key_entry)?;
-                self.is_authentication_key(&public_key.id)?;
-                Ok::<_, DiddocError>(())
-            })?;
+            service
+                .recipient_keys
+                .iter()
+                .try_for_each(|recipient_key_entry| {
+                    let public_key = self.get_key(recipient_key_entry)?;
+                    self.is_authentication_key(&public_key.id)?;
+                    Ok::<_, DiddocError>(())
+                })?;
 
-            service.routing_keys.iter().try_for_each(|routing_key_entry| {
-                // todo: use same approach as for recipient keys above, but for that we need to
-                // first update implementation of set_routing_keys() to include routing keys in
-                // 'authentication' verification method of the DDO
-                // That represents assumption that 'routing_key_entry' is always key value and not key reference
-                validate_verkey(routing_key_entry)?;
-                Ok::<_, DiddocError>(())
-            })?;
+            service
+                .routing_keys
+                .iter()
+                .try_for_each(|routing_key_entry| {
+                    // todo: use same approach as for recipient keys above, but for that we need to
+                    // first update implementation of set_routing_keys() to include routing keys in
+                    // 'authentication' verification method of the DDO
+                    // That represents assumption that 'routing_key_entry' is always key value and
+                    // not key reference
+                    validate_verkey(routing_key_entry)?;
+                    Ok::<_, DiddocError>(())
+                })?;
         }
 
         Ok(())
@@ -140,7 +151,10 @@ impl AriesDidDoc {
         let recipient_keys = service
             .recipient_keys
             .iter()
-            .map(|key_entry| self.get_key(key_entry).map(|key_record| key_record.public_key_base_58))
+            .map(|key_entry| {
+                self.get_key(key_entry)
+                    .map(|key_record| key_record.public_key_base_58)
+            })
             .collect();
         recipient_keys
     }
@@ -203,7 +217,10 @@ impl AriesDidDoc {
             .iter()
             .find(|ddo_keys| match &key_ref.did {
                 None => ddo_keys.id == key_ref.key_id,
-                Some(did) => ddo_keys.id == key_ref.key_id || ddo_keys.id == format!("{}#{}", did, key_ref.key_id),
+                Some(did) => {
+                    ddo_keys.id == key_ref.key_id
+                        || ddo_keys.id == format!("{}#{}", did, key_ref.key_id)
+                }
             })
             .ok_or(DiddocError::from_msg(
                 DiddocErrorKind::InvalidJson,
@@ -246,7 +263,9 @@ impl AriesDidDoc {
                 format!("DIDDoc validation failed: Cannot find Authentication record key: {key:?}"),
             ))?;
 
-        if authentication_key.type_ != KEY_AUTHENTICATION_TYPE && authentication_key.type_ != KEY_TYPE {
+        if authentication_key.type_ != KEY_AUTHENTICATION_TYPE
+            && authentication_key.type_ != KEY_TYPE
+        {
             return Err(DiddocError::from_msg(
                 DiddocErrorKind::InvalidJson,
                 format!(
@@ -287,12 +306,15 @@ impl AriesDidDoc {
 }
 
 pub mod test_utils {
-    use crate::aries::diddoc::AriesDidDoc;
-    use crate::aries::service::AriesService;
-    use crate::w3c::model::{
-        Authentication, DdoKeyReference, Ed25519PublicKey, CONTEXT, KEY_AUTHENTICATION_TYPE, KEY_TYPE,
-    };
     use url::Url;
+
+    use crate::{
+        aries::{diddoc::AriesDidDoc, service::AriesService},
+        w3c::model::{
+            Authentication, DdoKeyReference, Ed25519PublicKey, CONTEXT, KEY_AUTHENTICATION_TYPE,
+            KEY_TYPE,
+        },
+    };
 
     pub fn _key_1() -> String {
         String::from("GJ1SzoWzavQYfNL9XkaJdrQejfztN4XqdsiV4ct3LXKL")
@@ -467,9 +489,9 @@ pub mod test_utils {
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod unit_tests {
-    use crate::aries::diddoc::test_utils::*;
-    use crate::aries::diddoc::AriesDidDoc;
     use serde_json::json;
+
+    use crate::aries::diddoc::{test_utils::*, AriesDidDoc};
 
     #[test]
     fn test_did_doc_build_works() {
@@ -493,7 +515,9 @@ mod unit_tests {
     #[test]
     fn test_did_doc_key_for_reference_works() {
         let ddo = _did_doc_vcx_legacy();
-        let key_resolved = ddo.find_key_by_reference(&_key_reference_full_1_typed()).unwrap();
+        let key_resolved = ddo
+            .find_key_by_reference(&_key_reference_full_1_typed())
+            .unwrap();
         assert_eq!(_key_1(), key_resolved.public_key_base_58);
     }
 
@@ -596,7 +620,10 @@ mod unit_tests {
 
     #[test]
     fn test_did_doc_build_key_reference_works() {
-        assert_eq!(_key_reference_1(), AriesDidDoc::build_key_reference(&_did(), "1"));
+        assert_eq!(
+            _key_reference_1(),
+            AriesDidDoc::build_key_reference(&_did(), "1")
+        );
     }
 
     #[test]

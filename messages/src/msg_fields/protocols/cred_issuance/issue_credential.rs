@@ -40,8 +40,9 @@ mod tests {
     use super::*;
     use crate::{
         decorators::{
-            attachment::tests::make_extended_attachment, please_ack::tests::make_minimal_please_ack,
-            thread::tests::make_extended_thread, timing::tests::make_extended_timing,
+            attachment::tests::make_extended_attachment,
+            please_ack::tests::make_minimal_please_ack, thread::tests::make_extended_thread,
+            timing::tests::make_extended_timing,
         },
         misc::test_utils,
         msg_types::cred_issuance::CredentialIssuanceTypeV1_0,

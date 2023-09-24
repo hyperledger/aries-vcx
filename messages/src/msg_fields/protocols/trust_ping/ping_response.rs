@@ -42,13 +42,20 @@ mod tests {
     fn test_minimal_ping_response() {
         let content = PingResponseContent::default();
 
-        let decorators = PingResponseDecorators::builder().thread(make_extended_thread()).build();
+        let decorators = PingResponseDecorators::builder()
+            .thread(make_extended_thread())
+            .build();
 
         let expected = json!({
             "~thread": decorators.thread
         });
 
-        test_utils::test_msg(content, decorators, TrustPingTypeV1_0::PingResponse, expected);
+        test_utils::test_msg(
+            content,
+            decorators,
+            TrustPingTypeV1_0::PingResponse,
+            expected,
+        );
     }
 
     #[test]
@@ -68,6 +75,11 @@ mod tests {
             "~timing": decorators.timing
         });
 
-        test_utils::test_msg(content, decorators, TrustPingTypeV1_0::PingResponse, expected);
+        test_utils::test_msg(
+            content,
+            decorators,
+            TrustPingTypeV1_0::PingResponse,
+            expected,
+        );
     }
 }

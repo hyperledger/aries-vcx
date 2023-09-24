@@ -1,7 +1,7 @@
+use bs58;
 use regex::Regex;
 
 use crate::errors::error::{SharedVcxError, SharedVcxErrorKind, SharedVcxResult};
-use bs58;
 
 lazy_static! {
     pub static ref REGEX: Regex =
@@ -21,7 +21,10 @@ pub fn validate_did(did: &str) -> SharedVcxResult<String> {
             Ok(ref x) if x.len() == 16 => Ok(check_did),
             Ok(x) => Err(SharedVcxError::from_msg(
                 SharedVcxErrorKind::InvalidDid,
-                format!("Invalid DID length, expected 16 bytes, decoded {} bytes", x.len()),
+                format!(
+                    "Invalid DID length, expected 16 bytes, decoded {} bytes",
+                    x.len()
+                ),
             )),
             Err(err) => Err(SharedVcxError::from_msg(
                 SharedVcxErrorKind::NotBase58,

@@ -1,17 +1,10 @@
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 
+use super::ResponseCacher;
 use crate::errors::error::VcxCoreResult;
 
-use super::ResponseCacher;
-
-pub struct NoopResponseCacher {}
-
-impl NoopResponseCacher {
-    pub fn new() -> Self {
-        Self {}
-    }
-}
+pub struct NoopResponseCacher;
 
 #[async_trait]
 impl ResponseCacher for NoopResponseCacher {

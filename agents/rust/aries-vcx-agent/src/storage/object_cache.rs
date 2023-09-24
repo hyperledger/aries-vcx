@@ -1,10 +1,11 @@
-use std::collections::HashMap;
-use std::ops::Deref;
-use std::sync::{Mutex, RwLock, RwLockReadGuard, RwLockWriteGuard};
-
-use crate::error::*;
+use std::{
+    collections::HashMap,
+    ops::Deref,
+    sync::{Mutex, RwLock, RwLockReadGuard, RwLockWriteGuard},
+};
 
 use super::Storage;
+use crate::error::*;
 
 pub struct ObjectCache<T>
 where
@@ -71,12 +72,18 @@ where
                 Ok(obj) => Ok((*obj.deref()).clone()),
                 Err(_) => Err(AgentError::from_msg(
                     AgentErrorKind::LockError,
-                    &format!("[ObjectCache: {}] Unable to lock Object Store", self.cache_name),
+                    &format!(
+                        "[ObjectCache: {}] Unable to lock Object Store",
+                        self.cache_name
+                    ),
                 )), //TODO better error
             },
             None => Err(AgentError::from_msg(
                 AgentErrorKind::NotFound,
-                &format!("[ObjectCache: {}] Object not found for id: {}", self.cache_name, id),
+                &format!(
+                    "[ObjectCache: {}] Object not found for id: {}",
+                    self.cache_name, id
+                ),
             )),
         }
     }
