@@ -41,7 +41,8 @@ mod tests {
     use crate::{
         decorators::{thread::tests::make_extended_thread, timing::tests::make_extended_timing},
         misc::test_utils,
-        msg_types::cred_issuance::CredentialIssuanceTypeV1_0, msg_fields::protocols::cred_issuance::v1::CredentialAttr,
+        msg_fields::protocols::cred_issuance::v1::CredentialAttr,
+        msg_types::cred_issuance::CredentialIssuanceTypeV1_0,
     };
 
     #[test]

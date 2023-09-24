@@ -1,7 +1,7 @@
 use messages::{
     msg_fields::protocols::{
         connection::{invitation::Invitation, Connection},
-        cred_issuance::{v2::CredentialIssuanceV2, v1::CredentialIssuance},
+        cred_issuance::{v1::CredentialIssuance, v2::CredentialIssuanceV2},
         discover_features::DiscoverFeatures,
         notification::Notification,
         out_of_band::{invitation::Invitation as OobInvitation, OutOfBand},

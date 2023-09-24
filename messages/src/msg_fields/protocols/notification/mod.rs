@@ -62,7 +62,10 @@ impl DelayedSerde for Notification {
 }
 
 transit_to_aries_msg!(AckContent: AckDecorators, Notification);
-transit_to_aries_msg!(NotificationProblemReportContent: ProblemReportDecorators, Notification);
+transit_to_aries_msg!(
+    NotificationProblemReportContent: ProblemReportDecorators,
+    Notification
+);
 
 into_msg_with_type!(Ack, NotificationTypeV1_0, Ack);
 into_msg_with_type!(

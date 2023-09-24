@@ -62,7 +62,8 @@ mod tests {
             timing::tests::make_extended_timing,
         },
         misc::test_utils,
-        msg_types::cred_issuance::CredentialIssuanceTypeV2_0, msg_fields::protocols::cred_issuance::common::CredentialAttr,
+        msg_fields::protocols::cred_issuance::common::CredentialAttr,
+        msg_types::cred_issuance::CredentialIssuanceTypeV2_0,
     };
 
     #[test]

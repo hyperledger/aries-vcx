@@ -1,12 +1,11 @@
 use serde::{Deserialize, Serialize};
 use typed_builder::TypedBuilder;
 
+use super::AttachmentFormatSpecifier;
 use crate::{
     decorators::{attachment::Attachment, please_ack::PleaseAck, thread::Thread, timing::Timing},
     msg_parts::MsgParts,
 };
-
-use super::AttachmentFormatSpecifier;
 
 pub type IssueCredentialV2 = MsgParts<IssueCredentialV2Content, IssueCredentialV2Decorators>;
 
@@ -58,8 +57,9 @@ mod tests {
     use super::*;
     use crate::{
         decorators::{
-            attachment::tests::make_extended_attachment, please_ack::tests::make_minimal_please_ack,
-            thread::tests::make_extended_thread, timing::tests::make_extended_timing,
+            attachment::tests::make_extended_attachment,
+            please_ack::tests::make_minimal_please_ack, thread::tests::make_extended_thread,
+            timing::tests::make_extended_timing,
         },
         misc::test_utils,
         msg_types::cred_issuance::CredentialIssuanceTypeV2_0,
@@ -70,7 +70,9 @@ mod tests {
         let content = IssueCredentialV2Content::builder()
             .formats(vec![AttachmentFormatSpecifier {
                 attach_id: "1".to_owned(),
-                format: MaybeKnown::Known(IssueCredentialAttachmentFormatType::HyperledgerIndyCredential2_0),
+                format: MaybeKnown::Known(
+                    IssueCredentialAttachmentFormatType::HyperledgerIndyCredential2_0,
+                ),
             }])
             .credentials_attach(vec![make_extended_attachment()])
             .build();

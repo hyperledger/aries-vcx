@@ -1,9 +1,9 @@
 use std::sync::Arc;
 
+use serde::{Deserialize, Serialize};
+
 use super::profile::ProfileHolder;
 use crate::{errors::error::VcxUniFFIResult, runtime::block_on};
-use aries_vcx::errors::error::AriesVcxError;
-use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
 pub struct UnpackMessage {

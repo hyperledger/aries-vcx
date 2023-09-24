@@ -15,9 +15,10 @@ pub mod msg_types;
 
 use derive_more::From;
 use misc::utils;
-use msg_fields::protocols::cred_issuance::{v2::CredentialIssuanceV2, v1::CredentialIssuance};
+use msg_fields::protocols::cred_issuance::{v1::CredentialIssuance, v2::CredentialIssuanceV2};
 use msg_types::{
-    cred_issuance::CredentialIssuanceType, report_problem::ReportProblemTypeV1_0, routing::RoutingTypeV1_0, MsgWithType,
+    cred_issuance::CredentialIssuanceType, report_problem::ReportProblemTypeV1_0,
+    routing::RoutingTypeV1_0, MsgWithType,
 };
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 
@@ -105,8 +106,11 @@ impl DelayedSerde for AriesMessage {
                 Revocation::delayed_deserialize((msg_type, kind_str), deserializer).map(From::from)
             }
             Protocol::CredentialIssuanceType(CredentialIssuanceType::V1(msg_type)) => {
-                CredentialIssuance::delayed_deserialize((CredentialIssuanceType::V1(msg_type), kind_str), deserializer)
-                    .map(From::from)
+                CredentialIssuance::delayed_deserialize(
+                    (CredentialIssuanceType::V1(msg_type), kind_str),
+                    deserializer,
+                )
+                .map(From::from)
             }
             Protocol::CredentialIssuanceType(CredentialIssuanceType::V2(msg_type)) => {
                 CredentialIssuanceV2::delayed_deserialize(

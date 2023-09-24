@@ -26,7 +26,10 @@ use self::{
         RequestCredentialV2, RequestCredentialV2Content, RequestCredentialV2Decorators,
     },
 };
-use super::{super::{notification::ack::AckDecorators, report_problem::ProblemReportDecorators}, common::CredentialAttr};
+use super::{
+    super::{notification::ack::AckDecorators, report_problem::ProblemReportDecorators},
+    common::CredentialAttr,
+};
 use crate::{
     misc::utils::{self, into_msg_with_type, transit_to_aries_msg},
     msg_fields::traits::DelayedSerde,
@@ -59,15 +62,16 @@ impl DelayedSerde for CredentialIssuanceV2 {
         D: Deserializer<'de>,
     {
         let (protocol, kind_str) = msg_type;
-        let kind =
-            match protocol {
-                CredentialIssuanceKind::V2(CredentialIssuanceTypeV2::V2_0(kind)) => {
-                    kind.kind_from_str(kind_str)
-                }
-                CredentialIssuanceKind::V1(_) => return Err(D::Error::custom(
+        let kind = match protocol {
+            CredentialIssuanceKind::V2(CredentialIssuanceTypeV2::V2_0(kind)) => {
+                kind.kind_from_str(kind_str)
+            }
+            CredentialIssuanceKind::V1(_) => {
+                return Err(D::Error::custom(
                     "Cannot deserialize issue-credential-v1 message type into issue-credential-v2",
-                )),
-            };
+                ))
+            }
+        };
 
         match kind.map_err(D::Error::custom)? {
             CredentialIssuanceTypeV2_0::OfferCredential => {

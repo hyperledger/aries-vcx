@@ -85,11 +85,20 @@ impl DelayedSerde for PresentProof {
     }
 }
 
-transit_to_aries_msg!(ProposePresentationContent: ProposePresentationDecorators, PresentProof);
-transit_to_aries_msg!(RequestPresentationContent: RequestPresentationDecorators, PresentProof);
+transit_to_aries_msg!(
+    ProposePresentationContent: ProposePresentationDecorators,
+    PresentProof
+);
+transit_to_aries_msg!(
+    RequestPresentationContent: RequestPresentationDecorators,
+    PresentProof
+);
 transit_to_aries_msg!(PresentationContent: PresentationDecorators, PresentProof);
 transit_to_aries_msg!(AckPresentationContent: AckDecorators, PresentProof);
-transit_to_aries_msg!(PresentProofProblemReportContent: ProblemReportDecorators, PresentProof);
+transit_to_aries_msg!(
+    PresentProofProblemReportContent: ProblemReportDecorators,
+    PresentProof
+);
 
 into_msg_with_type!(
     ProposePresentation,

@@ -1,12 +1,11 @@
 use serde::{Deserialize, Serialize};
 use typed_builder::TypedBuilder;
 
+use super::AttachmentFormatSpecifier;
 use crate::{
     decorators::{attachment::Attachment, thread::Thread, timing::Timing},
     msg_parts::MsgParts,
 };
-
-use super::AttachmentFormatSpecifier;
 
 pub type RequestCredentialV2 = MsgParts<RequestCredentialV2Content, RequestCredentialV2Decorators>;
 
@@ -54,7 +53,9 @@ mod tests {
 
     use super::*;
     use crate::{
-        decorators::{attachment::tests::make_extended_attachment, thread::tests::make_extended_thread},
+        decorators::{
+            attachment::tests::make_extended_attachment, thread::tests::make_extended_thread,
+        },
         misc::test_utils,
         msg_types::cred_issuance::CredentialIssuanceTypeV2_0,
     };
@@ -65,7 +66,9 @@ mod tests {
             .requests_attach(vec![make_extended_attachment()])
             .formats(vec![AttachmentFormatSpecifier {
                 attach_id: "1".to_owned(),
-                format: MaybeKnown::Known(RequestCredentialAttachmentFormatType::HyperledgerIndyCredentialRequest2_0),
+                format: MaybeKnown::Known(
+                    RequestCredentialAttachmentFormatType::HyperledgerIndyCredentialRequest2_0,
+                ),
             }])
             .build();
 
@@ -90,7 +93,9 @@ mod tests {
             .requests_attach(vec![make_extended_attachment()])
             .formats(vec![AttachmentFormatSpecifier {
                 attach_id: "1".to_owned(),
-                format: MaybeKnown::Known(RequestCredentialAttachmentFormatType::HyperledgerIndyCredentialRequest2_0),
+                format: MaybeKnown::Known(
+                    RequestCredentialAttachmentFormatType::HyperledgerIndyCredentialRequest2_0,
+                ),
             }])
             .comment("test_comment".to_owned())
             .goal_code("goal.goal".to_owned())
