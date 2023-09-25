@@ -318,6 +318,7 @@ jobs:
       - name: "Setup rust testing environment"
         uses: ./.github/actions/setup-testing-rust
         with:
+          rust-toolchain-version: ${{ env.RUST_TOOLCHAIN_VERSON }}
           skip-docker-setup: true
       - name: "Run workspace unit tests"
         run: RUST_TEST_THREADS=1 cargo test --workspace --lib --exclude aries-vcx-agent --exclude libvdrtools --exclude wallet_migrator --features ${{ matrix.features }}
@@ -336,6 +337,8 @@ jobs:
         uses: actions/checkout@v3
       - name: "Setup rust testing environment"
         uses: ./.github/actions/setup-testing-rust
+        with:
+          rust-toolchain-version: ${{ env.RUST_TOOLCHAIN_VERSON }}
       - name: "Run aries-vcx integration tests"
         run: RUST_TEST_THREADS=1 cargo test --manifest-path="aries_vcx/Cargo.toml" --features ${{ matrix.features }} -- --ignored;
 
@@ -347,6 +350,8 @@ jobs:
         uses: actions/checkout@v3
       - name: "Setup rust testing environment"
         uses: ./.github/actions/setup-testing-rust
+        with:
+          rust-toolchain-version: ${{ env.RUST_TOOLCHAIN_VERSON }}
       - name: "Run aries-vcx tests: mysql_test"
         run: RUST_TEST_THREADS=1 cargo test --manifest-path="aries_vcx/Cargo.toml" test_mysql -- --include-ignored;
 
@@ -369,6 +374,7 @@ jobs:
       - name: "Setup rust testing environment"
         uses: ./.github/actions/setup-testing-rust
         with:
+          rust-toolchain-version: ${{ env.RUST_TOOLCHAIN_VERSON }}
           skip-vdrproxy-setup: false
       - name: "Run aries-vcx tests: vdrproxy_test"
         run: RUST_TEST_THREADS=1 cargo test --manifest-path="aries_vcx/Cargo.toml" -F vdr_proxy_ledger -- --ignored
@@ -386,6 +392,8 @@ jobs:
         uses: actions/checkout@v3
       - name: "Setup rust testing environment"
         uses: ./.github/actions/setup-testing-rust
+        with:
+          rust-toolchain-version: ${{ env.RUST_TOOLCHAIN_VERSON }}
       - name: "Run aries-vcx tests: pool_tests agency_pool_tests"
         run: |
           cargo test --manifest-path="wallet_migrator/Cargo.toml";
@@ -409,6 +417,8 @@ jobs:
         uses: actions/checkout@v3
       - name: "Setup rust testing environment"
         uses: ./.github/actions/setup-testing-rust
+        with:
+          rust-toolchain-version: ${{ env.RUST_TOOLCHAIN_VERSON }}
       - name: "Run libvcx_core integration tests"
         run: |
           RUST_TEST_THREADS=1 cargo test --features ${{ matrix.features }} --manifest-path="libvcx_core/Cargo.toml" -- --include-ignored;
@@ -422,6 +432,8 @@ jobs:
         uses: actions/checkout@v3
       - name: "Setup rust testing environment"
         uses: ./.github/actions/setup-testing-rust
+        with:
+          rust-toolchain-version: ${{ env.RUST_TOOLCHAIN_VERSON }}
       - name: "Run resolver tests"
         run: |
           RUST_TEST_THREADS=1 cargo test -p did_doc -p did_parser -p did_resolver -p did_resolver_registry -p did_resolver_sov -p did_resolver_web -p did_doc_sov -p did_key -p did_peer --test "*"
@@ -439,6 +451,7 @@ jobs:
       - name: "Setup NodeJS libvcx testing environment"
         uses: ./.github/actions/setup-testing-nodejs
         with:
+          rust-toolchain-version: ${{ env.RUST_TOOLCHAIN_VERSON }}
           skip-docker-setup: true
           node-version: ${{ matrix.node-version }}
       - name: "Run tests"
@@ -457,6 +470,7 @@ jobs:
       - name: "Setup NodeJS libvcx testing environment"
         uses: ./.github/actions/setup-testing-nodejs
         with:
+          rust-toolchain-version: ${{ env.RUST_TOOLCHAIN_VERSON }}
           node-version: ${{ matrix.node-version }}
       - name: "Run wrapper integration tests"
         run: (cd wrappers/node && npm run test:integration)
