@@ -1,14 +1,18 @@
 use async_trait::async_trait;
 use messages::msg_fields::protocols::cred_issuance::v2::{
-    issue_credential::IssueCredentialV2, offer_credential::OfferCredentialV2,
+    issue_credential::{IssueCredentialAttachmentFormatType, IssueCredentialV2},
+    offer_credential::{OfferCredentialAttachmentFormatType, OfferCredentialV2},
     propose_credential::ProposeCredentialAttachmentFormatType,
     request_credential::RequestCredentialAttachmentFormatType,
 };
 use shared_vcx::maybe_known::MaybeKnown;
 
-use crate::errors::error::VcxResult;
+use crate::{
+    errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
+    handlers::util::{extract_attachment_as_base64, get_attachment_with_id},
+};
 
-pub mod anoncreds;
+pub mod hyperledger_indy;
 pub mod ld_proof_vc;
 
 #[async_trait]
@@ -24,11 +28,32 @@ pub trait HolderCredentialIssuanceFormat {
     fn supports_request_independent_of_offer() -> bool;
 
     fn get_proposal_attachment_format() -> MaybeKnown<ProposeCredentialAttachmentFormatType>;
+    fn get_offer_attachment_format() -> MaybeKnown<OfferCredentialAttachmentFormatType>;
     fn get_request_attachment_format() -> MaybeKnown<RequestCredentialAttachmentFormatType>;
+    fn get_credential_attachment_format() -> MaybeKnown<IssueCredentialAttachmentFormatType>;
 
     async fn create_proposal_attachment_content(
         data: &Self::CreateProposalInput,
     ) -> VcxResult<Vec<u8>>;
+
+    fn extract_offer_attachment_content(offer_message: &OfferCredentialV2) -> VcxResult<Vec<u8>> {
+        let attachment_id = offer_message
+            .content
+            .formats
+            .iter()
+            .find_map(|format| {
+                (format.format == Self::get_offer_attachment_format()).then_some(&format.attach_id)
+            })
+            .ok_or(AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidMessageFormat,
+                "Message does not containing an attachment with the expected format.",
+            ))?;
+
+        let attachment =
+            get_attachment_with_id(&offer_message.content.offers_attach, attachment_id)?;
+
+        extract_attachment_as_base64(attachment)
+    }
 
     async fn create_request_attachment_content(
         offer_message: &OfferCredentialV2,
@@ -38,6 +63,30 @@ pub trait HolderCredentialIssuanceFormat {
     async fn create_request_attachment_content_independent_of_offer(
         data: &Self::CreateRequestInput,
     ) -> VcxResult<(Vec<u8>, Self::CreatedRequestMetadata)>;
+
+    fn extract_credential_attachment_content(
+        issue_credential_message: &IssueCredentialV2,
+    ) -> VcxResult<Vec<u8>> {
+        let attachment_id = issue_credential_message
+            .content
+            .formats
+            .iter()
+            .find_map(|format| {
+                (format.format == Self::get_credential_attachment_format())
+                    .then_some(&format.attach_id)
+            })
+            .ok_or(AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidMessageFormat,
+                "Message does not containing an attachment with the expected format.",
+            ))?;
+
+        let attachment = get_attachment_with_id(
+            &issue_credential_message.content.credentials_attach,
+            attachment_id,
+        )?;
+
+        extract_attachment_as_base64(attachment)
+    }
 
     async fn process_and_store_credential(
         issue_credential_message: &IssueCredentialV2,

@@ -5,7 +5,8 @@ use aries_vcx_core::{
 };
 use async_trait::async_trait;
 use messages::msg_fields::protocols::cred_issuance::v2::{
-    issue_credential::IssueCredentialV2, offer_credential::OfferCredentialV2,
+    issue_credential::{IssueCredentialAttachmentFormatType, IssueCredentialV2},
+    offer_credential::{OfferCredentialAttachmentFormatType, OfferCredentialV2},
     propose_credential::ProposeCredentialAttachmentFormatType,
     request_credential::RequestCredentialAttachmentFormatType,
 };
@@ -20,20 +21,19 @@ use crate::{
     },
 };
 
-// TODO - rebrand this all to "hyperledger" handler
-pub struct AnoncredsHolderCredentialIssuanceFormat<'a> {
+// https://github.com/hyperledger/aries-rfcs/blob/b3a3942ef052039e73cd23d847f42947f8287da2/features/0592-indy-attachments/README.md#cred-filter-format
+pub struct HyperledgerIndyHolderCredentialIssuanceFormat<'a> {
     _data: &'a PhantomData<()>,
 }
 
-pub struct AnoncredsCreateProposalInput {
-    pub cred_filter: AnoncredsCredentialFilter,
+pub struct HyperledgerIndyCreateProposalInput {
+    pub cred_filter: HyperledgerIndyCredentialFilter,
 }
 
-// TODO - rebrand this all to "hyperledger" handler
 #[derive(Default, Serialize, Deserialize)]
-pub struct AnoncredsCredentialFilter {
+pub struct HyperledgerIndyCredentialFilter {
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub schema_issuer_id: Option<String>,
+    pub schema_issuer_did: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub schema_name: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -41,40 +41,40 @@ pub struct AnoncredsCredentialFilter {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub schema_id: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub issuer_id: Option<String>,
+    pub issuer_did: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cred_def_id: Option<String>,
 }
 
-pub struct AnoncredsCreateRequestInput<'a> {
+pub struct HyperledgerIndyCreateRequestInput<'a> {
     pub entropy: String,
     pub ledger: &'a Arc<dyn AnoncredsLedgerRead>,
     pub anoncreds: &'a Arc<dyn BaseAnonCreds>,
 }
 
-pub struct AnoncredsCreatedRequestMetadata {
+pub struct HyperledgerIndyCreatedRequestMetadata {
     credential_request_metadata: String,
     credential_def_json: String,
 }
 
-pub struct AnoncredsStoreCredentialInput<'a> {
+pub struct HyperledgerIndyStoreCredentialInput<'a> {
     pub ledger: &'a Arc<dyn AnoncredsLedgerRead>,
     pub anoncreds: &'a Arc<dyn BaseAnonCreds>,
 }
 
-pub struct AnoncredsStoredCredentialMetadata {
+pub struct HyperledgerIndyStoredCredentialMetadata {
     pub credential_id: String,
 }
 
 #[async_trait]
-impl<'a> HolderCredentialIssuanceFormat for AnoncredsHolderCredentialIssuanceFormat<'a> {
-    type CreateProposalInput = AnoncredsCreateProposalInput;
+impl<'a> HolderCredentialIssuanceFormat for HyperledgerIndyHolderCredentialIssuanceFormat<'a> {
+    type CreateProposalInput = HyperledgerIndyCreateProposalInput;
 
-    type CreateRequestInput = AnoncredsCreateRequestInput<'a>;
-    type CreatedRequestMetadata = AnoncredsCreatedRequestMetadata;
+    type CreateRequestInput = HyperledgerIndyCreateRequestInput<'a>;
+    type CreatedRequestMetadata = HyperledgerIndyCreatedRequestMetadata;
 
-    type StoreCredentialInput = AnoncredsStoreCredentialInput<'a>;
-    type StoredCredentialMetadata = AnoncredsStoredCredentialMetadata;
+    type StoreCredentialInput = HyperledgerIndyStoreCredentialInput<'a>;
+    type StoredCredentialMetadata = HyperledgerIndyStoredCredentialMetadata;
 
     fn supports_request_independent_of_offer() -> bool {
         false
@@ -83,15 +83,20 @@ impl<'a> HolderCredentialIssuanceFormat for AnoncredsHolderCredentialIssuanceFor
     fn get_proposal_attachment_format() -> MaybeKnown<ProposeCredentialAttachmentFormatType> {
         MaybeKnown::Known(ProposeCredentialAttachmentFormatType::HyperledgerIndyCredentialFilter2_0)
     }
-
     fn get_request_attachment_format() -> MaybeKnown<RequestCredentialAttachmentFormatType> {
         MaybeKnown::Known(
             RequestCredentialAttachmentFormatType::HyperledgerIndyCredentialRequest2_0,
         )
     }
+    fn get_offer_attachment_format() -> MaybeKnown<OfferCredentialAttachmentFormatType> {
+        MaybeKnown::Known(OfferCredentialAttachmentFormatType::HyperledgerIndyCredentialAbstract2_0)
+    }
+    fn get_credential_attachment_format() -> MaybeKnown<IssueCredentialAttachmentFormatType> {
+        MaybeKnown::Known(IssueCredentialAttachmentFormatType::HyperledgerIndyCredential2_0)
+    }
 
     async fn create_proposal_attachment_content(
-        data: &AnoncredsCreateProposalInput,
+        data: &HyperledgerIndyCreateProposalInput,
     ) -> VcxResult<Vec<u8>> {
         let filter_bytes = serde_json::to_vec(&data.cred_filter)?;
 
@@ -100,11 +105,15 @@ impl<'a> HolderCredentialIssuanceFormat for AnoncredsHolderCredentialIssuanceFor
 
     async fn create_request_attachment_content(
         offer_message: &OfferCredentialV2,
-        data: &AnoncredsCreateRequestInput,
-    ) -> VcxResult<(Vec<u8>, AnoncredsCreatedRequestMetadata)> {
-        // extract first "anoncreds/credential-offer@v1.0" attachment from `offer_message`, or fail
-        _ = offer_message;
-        let offer_payload: String = String::from("TODO - extract from offer_message");
+        data: &HyperledgerIndyCreateRequestInput,
+    ) -> VcxResult<(Vec<u8>, HyperledgerIndyCreatedRequestMetadata)> {
+        let offer_bytes = Self::extract_offer_attachment_content(&offer_message)?;
+        let offer_payload = String::from_utf8(offer_bytes).map_err(|_| {
+            AriesVcxError::from_msg(
+                AriesVcxErrorKind::EncodeError,
+                "Expected payload to be a utf8 string",
+            )
+        })?;
 
         let cred_def_id = parse_cred_def_id_from_cred_offer(&offer_payload)?;
         let entropy = &data.entropy;
@@ -123,7 +132,7 @@ impl<'a> HolderCredentialIssuanceFormat for AnoncredsHolderCredentialIssuanceFor
 
         Ok((
             credential_request.into(),
-            AnoncredsCreatedRequestMetadata {
+            HyperledgerIndyCreatedRequestMetadata {
                 credential_request_metadata,
                 credential_def_json,
             },
@@ -141,12 +150,16 @@ impl<'a> HolderCredentialIssuanceFormat for AnoncredsHolderCredentialIssuanceFor
 
     async fn process_and_store_credential(
         issue_credential_message: &IssueCredentialV2,
-        user_input: &AnoncredsStoreCredentialInput,
-        request_metadata: AnoncredsCreatedRequestMetadata,
-    ) -> VcxResult<AnoncredsStoredCredentialMetadata> {
-        _ = issue_credential_message;
-        let credential_payload: String =
-            String::from("TODO - extract from issue_credential_message");
+        user_input: &HyperledgerIndyStoreCredentialInput,
+        request_metadata: HyperledgerIndyCreatedRequestMetadata,
+    ) -> VcxResult<HyperledgerIndyStoredCredentialMetadata> {
+        let cred_bytes = Self::extract_credential_attachment_content(&issue_credential_message)?;
+        let credential_payload = String::from_utf8(cred_bytes).map_err(|_| {
+            AriesVcxError::from_msg(
+                AriesVcxErrorKind::EncodeError,
+                "Expected payload to be a utf8 string",
+            )
+        })?;
 
         let ledger = user_input.ledger;
         let anoncreds = user_input.anoncreds;
@@ -169,7 +182,7 @@ impl<'a> HolderCredentialIssuanceFormat for AnoncredsHolderCredentialIssuanceFor
             )
             .await?;
 
-        Ok(AnoncredsStoredCredentialMetadata {
+        Ok(HyperledgerIndyStoredCredentialMetadata {
             credential_id: cred_id,
         })
     }

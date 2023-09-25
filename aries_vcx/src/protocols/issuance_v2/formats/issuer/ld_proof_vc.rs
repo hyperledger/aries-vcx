@@ -3,7 +3,9 @@
 use async_trait::async_trait;
 use messages::msg_fields::protocols::cred_issuance::v2::{
     issue_credential::IssueCredentialAttachmentFormatType,
-    offer_credential::OfferCredentialAttachmentFormatType, request_credential::RequestCredentialV2,
+    offer_credential::OfferCredentialAttachmentFormatType,
+    propose_credential::ProposeCredentialAttachmentFormatType,
+    request_credential::{RequestCredentialAttachmentFormatType, RequestCredentialV2},
 };
 use shared_vcx::maybe_known::MaybeKnown;
 
@@ -23,10 +25,13 @@ impl IssuerCredentialIssuanceFormat for LdProofIssuerCredentialIssuanceFormat {
     fn supports_request_independent_of_offer() -> bool {
         true
     }
-    fn supports_multi_credential_issuance() -> bool {
-        true
-    }
 
+    fn get_proposal_attachment_format() -> MaybeKnown<ProposeCredentialAttachmentFormatType> {
+        MaybeKnown::Known(ProposeCredentialAttachmentFormatType::AriesLdProofVcDetail1_0)
+    }
+    fn get_request_attachment_format() -> MaybeKnown<RequestCredentialAttachmentFormatType> {
+        MaybeKnown::Known(RequestCredentialAttachmentFormatType::AriesLdProofVcDetail1_0)
+    }
     fn get_offer_attachment_format() -> MaybeKnown<OfferCredentialAttachmentFormatType> {
         MaybeKnown::Known(OfferCredentialAttachmentFormatType::AriesLdProofVcDetail1_0)
     }

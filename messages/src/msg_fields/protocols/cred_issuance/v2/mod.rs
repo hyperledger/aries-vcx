@@ -177,8 +177,8 @@ impl Serialize for CredentialPreviewV2MsgType {
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, TypedBuilder)]
 #[serde(rename_all = "snake_case")]
 pub struct AttachmentFormatSpecifier<F> {
-    attach_id: String,
-    format: MaybeKnown<F>,
+    pub attach_id: String,
+    pub format: MaybeKnown<F>,
 }
 
 transit_to_aries_msg!(

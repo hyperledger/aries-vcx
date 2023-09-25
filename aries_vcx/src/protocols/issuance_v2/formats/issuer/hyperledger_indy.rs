@@ -4,7 +4,9 @@ use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
 use async_trait::async_trait;
 use messages::msg_fields::protocols::cred_issuance::v2::{
     issue_credential::IssueCredentialAttachmentFormatType,
-    offer_credential::OfferCredentialAttachmentFormatType, request_credential::RequestCredentialV2,
+    offer_credential::OfferCredentialAttachmentFormatType,
+    propose_credential::ProposeCredentialAttachmentFormatType,
+    request_credential::{RequestCredentialAttachmentFormatType, RequestCredentialV2},
 };
 use shared_vcx::maybe_known::MaybeKnown;
 
@@ -14,51 +16,57 @@ use crate::{
     utils::openssl::encode,
 };
 
-// TODO - rebrand all to hyperledger
-pub struct AnoncredsIssuerCredentialIssuanceFormat<'a> {
+// https://github.com/hyperledger/aries-rfcs/blob/b3a3942ef052039e73cd23d847f42947f8287da2/features/0592-indy-attachments/README.md#cred-filter-format
+
+pub struct HyperledgerIndyIssuerCredentialIssuanceFormat<'a> {
     _marker: &'a PhantomData<()>,
 }
 
-pub struct AnoncredsCreateOfferInput<'a> {
+pub struct HyperledgerIndyCreateOfferInput<'a> {
     pub anoncreds: &'a Arc<dyn BaseAnonCreds>,
     pub cred_def_id: String,
 }
 
-pub struct AnoncredsCreatedOfferMetadata {
+pub struct HyperledgerIndyCreatedOfferMetadata {
     pub offer_json: String,
 }
 
-pub struct AnoncredsCreateCredentialInput<'a> {
+pub struct HyperledgerIndyCreateCredentialInput<'a> {
     pub anoncreds: &'a Arc<dyn BaseAnonCreds>,
     pub credential_attributes: HashMap<String, String>,
-    pub revocation_info: Option<AnoncredsCreateCredentialRevocationInfoInput>,
+    pub revocation_info: Option<HyperledgerIndyCreateCredentialRevocationInfoInput>,
 }
 
-pub struct AnoncredsCreateCredentialRevocationInfoInput {
+pub struct HyperledgerIndyCreateCredentialRevocationInfoInput {
     pub registry_id: String,
     pub tails_directory: String,
 }
 
-pub struct AnoncredsCreatedCredentialMetadata {
+pub struct HyperledgerIndyCreatedCredentialMetadata {
     pub credential_revocation_id: Option<String>,
 }
 
 #[async_trait]
-impl<'a> IssuerCredentialIssuanceFormat for AnoncredsIssuerCredentialIssuanceFormat<'a> {
-    type CreateOfferInput = AnoncredsCreateOfferInput<'a>;
-    type CreatedOfferMetadata = AnoncredsCreatedOfferMetadata;
+impl<'a> IssuerCredentialIssuanceFormat for HyperledgerIndyIssuerCredentialIssuanceFormat<'a> {
+    type CreateOfferInput = HyperledgerIndyCreateOfferInput<'a>;
+    type CreatedOfferMetadata = HyperledgerIndyCreatedOfferMetadata;
 
-    type CreateCredentialInput = AnoncredsCreateCredentialInput<'a>;
-    type CreatedCredentialMetadata = AnoncredsCreatedCredentialMetadata;
+    type CreateCredentialInput = HyperledgerIndyCreateCredentialInput<'a>;
+    type CreatedCredentialMetadata = HyperledgerIndyCreatedCredentialMetadata;
 
     fn supports_request_independent_of_offer() -> bool {
         false
     }
 
-    fn supports_multi_credential_issuance() -> bool {
-        false
+    fn get_proposal_attachment_format() -> MaybeKnown<ProposeCredentialAttachmentFormatType> {
+        MaybeKnown::Known(ProposeCredentialAttachmentFormatType::HyperledgerIndyCredentialFilter2_0)
     }
 
+    fn get_request_attachment_format() -> MaybeKnown<RequestCredentialAttachmentFormatType> {
+        MaybeKnown::Known(
+            RequestCredentialAttachmentFormatType::HyperledgerIndyCredentialRequest2_0,
+        )
+    }
     fn get_offer_attachment_format() -> MaybeKnown<OfferCredentialAttachmentFormatType> {
         MaybeKnown::Known(OfferCredentialAttachmentFormatType::HyperledgerIndyCredentialAbstract2_0)
     }
@@ -66,10 +74,9 @@ impl<'a> IssuerCredentialIssuanceFormat for AnoncredsIssuerCredentialIssuanceFor
         MaybeKnown::Known(IssueCredentialAttachmentFormatType::HyperledgerIndyCredential2_0)
     }
 
-    // https://github.com/hyperledger/aries-rfcs/blob/main/features/0771-anoncreds-attachments/README.md#credential-offer-format
     async fn create_offer_attachment_content(
-        data: &AnoncredsCreateOfferInput,
-    ) -> VcxResult<(Vec<u8>, AnoncredsCreatedOfferMetadata)> {
+        data: &HyperledgerIndyCreateOfferInput,
+    ) -> VcxResult<(Vec<u8>, HyperledgerIndyCreatedOfferMetadata)> {
         let cred_offer = data
             .anoncreds
             .issuer_create_credential_offer(&data.cred_def_id)
@@ -77,22 +84,26 @@ impl<'a> IssuerCredentialIssuanceFormat for AnoncredsIssuerCredentialIssuanceFor
 
         Ok((
             cred_offer.clone().into_bytes(),
-            AnoncredsCreatedOfferMetadata {
+            HyperledgerIndyCreatedOfferMetadata {
                 offer_json: cred_offer,
             },
         ))
     }
 
-    // https://github.com/hyperledger/aries-rfcs/blob/main/features/0771-anoncreds-attachments/README.md#credential-format
     async fn create_credential_attachment_content(
-        offer_metadata: &AnoncredsCreatedOfferMetadata,
+        offer_metadata: &HyperledgerIndyCreatedOfferMetadata,
         request_message: &RequestCredentialV2,
-        data: &AnoncredsCreateCredentialInput,
-    ) -> VcxResult<(Vec<u8>, AnoncredsCreatedCredentialMetadata)> {
+        data: &HyperledgerIndyCreateCredentialInput,
+    ) -> VcxResult<(Vec<u8>, HyperledgerIndyCreatedCredentialMetadata)> {
         let offer = &offer_metadata.offer_json;
 
-        _ = request_message;
-        let request = String::from("extract from msg");
+        let request_bytes = Self::extract_request_attachment_content(&request_message)?;
+        let request_payload = String::from_utf8(request_bytes).map_err(|_| {
+            AriesVcxError::from_msg(
+                AriesVcxErrorKind::EncodeError,
+                "Expected payload to be a utf8 string",
+            )
+        })?;
 
         let encoded_credential_attributes = encode_attributes(&data.credential_attributes)?;
         let encoded_credential_attributes_json =
@@ -109,14 +120,14 @@ impl<'a> IssuerCredentialIssuanceFormat for AnoncredsIssuerCredentialIssuanceFor
             .anoncreds
             .issuer_create_credential(
                 offer,
-                &request,
+                &request_payload,
                 &encoded_credential_attributes_json,
                 rev_reg_id,
                 tails_dir,
             )
             .await?;
 
-        let metadata = AnoncredsCreatedCredentialMetadata {
+        let metadata = HyperledgerIndyCreatedCredentialMetadata {
             credential_revocation_id: cred_rev_id,
         };
 
@@ -126,7 +137,7 @@ impl<'a> IssuerCredentialIssuanceFormat for AnoncredsIssuerCredentialIssuanceFor
     async fn create_credential_attachment_content_independent_of_offer(
         _: &RequestCredentialV2,
         _: &Self::CreateCredentialInput,
-    ) -> VcxResult<(Vec<u8>, AnoncredsCreatedCredentialMetadata)> {
+    ) -> VcxResult<(Vec<u8>, HyperledgerIndyCreatedCredentialMetadata)> {
         return Err(AriesVcxError::from_msg(
             AriesVcxErrorKind::ActionNotSupported,
             "Creating a credential independent of an offer is unsupported for this format",

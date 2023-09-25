@@ -1,6 +1,7 @@
 use async_trait::async_trait;
 use messages::msg_fields::protocols::cred_issuance::v2::{
-    issue_credential::IssueCredentialV2, offer_credential::OfferCredentialV2,
+    issue_credential::{IssueCredentialAttachmentFormatType, IssueCredentialV2},
+    offer_credential::{OfferCredentialAttachmentFormatType, OfferCredentialV2},
     propose_credential::ProposeCredentialAttachmentFormatType,
     request_credential::RequestCredentialAttachmentFormatType,
 };
@@ -31,6 +32,12 @@ impl HolderCredentialIssuanceFormat for LdProofHolderCredentialIssuanceFormat {
     }
     fn get_request_attachment_format() -> MaybeKnown<RequestCredentialAttachmentFormatType> {
         MaybeKnown::Known(RequestCredentialAttachmentFormatType::AriesLdProofVcDetail1_0)
+    }
+    fn get_offer_attachment_format() -> MaybeKnown<OfferCredentialAttachmentFormatType> {
+        MaybeKnown::Known(OfferCredentialAttachmentFormatType::AriesLdProofVcDetail1_0)
+    }
+    fn get_credential_attachment_format() -> MaybeKnown<IssueCredentialAttachmentFormatType> {
+        MaybeKnown::Known(IssueCredentialAttachmentFormatType::AriesLdProofVcDetail1_0)
     }
 
     async fn create_proposal_attachment_content(

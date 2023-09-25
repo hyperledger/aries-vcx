@@ -1,4 +1,5 @@
 use messages::{
+    decorators::attachment::{Attachment, AttachmentType},
     msg_fields::protocols::{
         connection::{invitation::Invitation, Connection},
         cred_issuance::{v1::CredentialIssuanceV1, v2::CredentialIssuanceV2, CredentialIssuance},
@@ -85,6 +86,35 @@ pub(crate) use matches_opt_thread_id;
 pub(crate) use matches_thread_id;
 
 use crate::global::settings;
+
+pub fn extract_attachment_as_base64(attachment: &Attachment) -> VcxResult<Vec<u8>> {
+    let AttachmentType::Base64(encoded_attach) = &attachment.data.content else {
+        return Err(AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidMessageFormat,
+            format!("Message attachment is not base64 as expected: {attachment:?}"),
+        ));
+    };
+
+    base64::decode_config(encoded_attach, base64::URL_SAFE).map_err(|_| {
+        AriesVcxError::from_msg(
+            AriesVcxErrorKind::EncodeError,
+            format!("Message attachment is not base64 as expected: {attachment:?}"),
+        )
+    })
+}
+
+pub fn get_attachment_with_id<'a>(
+    attachments: &'a Vec<Attachment>,
+    id: &String,
+) -> VcxResult<&'a Attachment> {
+    attachments
+        .iter()
+        .find(|attachment| attachment.id.as_ref() == Some(id))
+        .ok_or(AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidMessageFormat,
+            format!("Message is missing an attachment with the expected ID : {id}."),
+        ))
+}
 
 pub fn verify_thread_id(thread_id: &str, message: &AriesMessage) -> VcxResult<()> {
     // todo: ultimately remove this - improve tests
