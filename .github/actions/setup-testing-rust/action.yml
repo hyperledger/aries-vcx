@@ -2,6 +2,9 @@ name: "setup-testing-rust"
 description: 'Setup host environment to run rust tests'
 
 inputs:
+  rust-toolchain-version:
+    description: 'The Rust toolchain version to use'
+    required: true
   skip-docker-setup:
     description: 'If true, skip spinning up docker containers'
     required: false
@@ -16,7 +19,7 @@ runs:
   steps:
     - uses: actions-rs/toolchain@v1
       with:
-        toolchain: 1.65.0
+        toolchain: ${{ inputs.rust-toolchain-version }}
     - uses: Swatinem/rust-cache@v2
     - name: "Install dependencies"
       shell: bash
@@ -30,7 +33,10 @@ runs:
         docker run -d --name mysql     --network host -e MYSQL_ROOT_PASSWORD=mysecretpassword mysql:5.7.35
         docker run -d --name indypool  --network host ${{ env.DOCKER_IMAGE_POOL }}
     - name: "Start vdrproxy"
+      timeout: 5
       if: ${{ inputs.skip-vdrproxy-setup != 'true' }}
       shell: bash
       run: |
         docker run -d --name vdrproxy --network host ${{ env.DOCKER_IMAGE_VDRPROXY }} -p ${{ env.VDR_PROXY_PORT }} -g ${{ env.GENESIS_URL }}
+        while [[ `nc -z localhost ${{ env.VDR_PROXY_PORT }}; echo $?` -ne 0 ]]; do sleep 5; done
+
