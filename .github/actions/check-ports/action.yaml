@@ -8,7 +8,7 @@ inputs:
   tries:
     description: 'The max number of times to check whether each port is open'
     required: false
-    default: 20
+    default: 100
   interval:
     description: 'The interval to wait in between tries'
     required: false

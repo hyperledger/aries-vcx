@@ -50,4 +50,3 @@ runs:
       uses: ./.github/actions/check-ports
       with:
         ports: "3030"
-        tries: 10
