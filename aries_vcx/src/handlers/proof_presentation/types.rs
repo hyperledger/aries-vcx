@@ -135,7 +135,7 @@ impl SelectedCredentials {
         with_tails_dir: Option<String>,
     ) {
         self.credential_for_referent.insert(
-            referent.to_string(),
+            referent,
             SelectedCredentialForReferent {
                 credential: SelectedCredentialForReferentCredential::from(retrieved_cred),
                 tails_dir: with_tails_dir,

@@ -96,7 +96,7 @@ pub(super) async fn ledger_response_to_ddo<E: Default>(
         did.to_string().try_into()?,
         VerificationMethodType::Ed25519VerificationKey2018,
     )
-    .add_public_key_base58(verkey.to_string())
+    .add_public_key_base58(verkey)
     .build();
 
     let ddo = DidDocument::builder(ddo_id)

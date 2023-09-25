@@ -192,8 +192,6 @@ impl InviteeConnection<Requested> {
             "Cannot handle response: remote verkey not found",
         ))?;
 
-        // todo: if response decoding fails, we should return error which can be easily
-        //       distinguished by upper layer to possibly send problem report
         let did_doc = decode_signed_connection_response(wallet, response.content, their_vk)
             .await?
             .did_doc;

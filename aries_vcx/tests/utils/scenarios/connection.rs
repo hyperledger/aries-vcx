@@ -58,7 +58,7 @@ async fn establish_connection_from_invite(
             &faber.profile.inject_wallet(),
             request,
             "http://dummy.org".parse().unwrap(),
-            vec![]
+            vec![],
         )
         .await
         .unwrap();
@@ -94,7 +94,7 @@ pub async fn create_connections_via_oob_invite(
         .unwrap();
     // TODO: Create a key and write on ledger instead
     let inviter_pairwise_info = PairwiseInfo {
-        pw_did: ddo.clone().id.clone(),
+        pw_did: ddo.clone().id,
         pw_vk: ddo.recipient_keys().unwrap().first().unwrap().to_string(),
     };
     establish_connection_from_invite(alice, faber, invitation, inviter_pairwise_info).await
@@ -120,7 +120,7 @@ pub async fn create_connections_via_public_invite(
         .unwrap();
     // TODO: Create a key and write on ledger instead
     let inviter_pairwise_info = PairwiseInfo {
-        pw_did: ddo.clone().id.clone(),
+        pw_did: ddo.clone().id,
         pw_vk: ddo.recipient_keys().unwrap().first().unwrap().to_string(),
     };
     establish_connection_from_invite(alice, faber, public_invite.clone(), inviter_pairwise_info)

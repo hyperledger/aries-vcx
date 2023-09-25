@@ -65,7 +65,7 @@ pub fn indyvdr_build_ledger_read(
     let response_cacher = Arc::new(InMemoryResponseCacher::new(cache_config));
 
     let config_read = IndyVdrLedgerReadConfig {
-        request_submitter: request_submitter.clone(),
+        request_submitter,
         response_parser,
         response_cacher,
         protocol_version: ProtocolVersion::node_1_4(),

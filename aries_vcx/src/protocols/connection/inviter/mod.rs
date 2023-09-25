@@ -27,7 +27,6 @@ use crate::{
     errors::error::VcxResult,
     handlers::util::{verify_thread_id, AnyInvitation},
     protocols::connection::trait_bounds::ThreadId,
-    transport::Transport,
 };
 
 pub type InviterConnection<S> = Connection<Inviter, S>;
@@ -181,11 +180,6 @@ impl InviterConnection<Invited> {
         // There must be some other way to validate the thread ID other than cloning the entire
         // Request
         verify_thread_id(self.thread_id(), &request.clone().into())?;
-
-        // todo: if request validation fails, we should return error which can be easily
-        //       distinguished by upper layer to possibly send problem report
-        //       Although in this case, since the did_doc itself is invalid, it's questionable if
-        // it's       make any sense for caller to even try that.
         request.content.connection.did_doc.validate()?;
 
         // Generate new pairwise info that will be used from this point on

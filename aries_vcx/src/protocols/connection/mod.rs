@@ -6,28 +6,22 @@ pub mod pairwise_info;
 mod serializable;
 mod trait_bounds;
 
-use std::{error::Error, sync::Arc};
+use std::sync::Arc;
 
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
-use chrono::Utc;
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use messages::{
-    decorators::{thread::Thread, timing::Timing},
-    msg_fields::protocols::{
-        connection::problem_report::{
-            ProblemReport, ProblemReportContent, ProblemReportDecorators,
-        },
-        discover_features::{disclose::Disclose, query::QueryContent, ProtocolDescriptor},
+    msg_fields::protocols::discover_features::{
+        disclose::Disclose, query::QueryContent, ProtocolDescriptor,
     },
     AriesMessage,
 };
-use uuid::Uuid;
 
 pub use self::generic::{GenericConnection, State, ThinState};
 use self::{
     generic::GenericState,
     pairwise_info::PairwiseInfo,
-    trait_bounds::{CompletedState, HandleProblem, TheirDidDoc, ThreadId},
+    trait_bounds::{CompletedState, TheirDidDoc, ThreadId},
 };
 use crate::{
     errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
@@ -108,8 +102,7 @@ where
         message: &AriesMessage,
     ) -> VcxResult<EncryptionEnvelope> {
         let sender_verkey = &self.pairwise_info().pw_vk;
-        EncryptionEnvelope::create(wallet, message, Some(sender_verkey), &self.their_did_doc())
-            .await
+        EncryptionEnvelope::create(wallet, message, Some(sender_verkey), self.their_did_doc()).await
     }
 
     pub fn remote_did(&self) -> &str {
