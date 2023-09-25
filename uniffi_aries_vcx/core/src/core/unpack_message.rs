@@ -20,7 +20,7 @@ pub fn unpack_message(
     block_on(async {
         let packed_bytes = packed_msg.as_bytes();
         let wallet = profile_holder.inner.inject_wallet();
-        let unpacked_bytes = wallet.unpack_message(&packed_bytes).await?;
+        let unpacked_bytes = wallet.unpack_message(packed_bytes).await?;
         let unpacked_string = String::from_utf8(unpacked_bytes)?;
         let unpacked_message = serde_json::from_str::<UnpackMessage>(&unpacked_string)?;
         Ok(unpacked_message)
