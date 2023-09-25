@@ -4,7 +4,7 @@ use ::messages::decorators::attachment::{Attachment, AttachmentData, AttachmentT
 use messages::{
     decorators::thread::Thread,
     msg_fields::protocols::{
-        cred_issuance::CredentialPreview,
+        cred_issuance::v2::CredentialPreviewV2,
         notification::ack::{Ack, AckContent, AckDecorators, AckStatus},
     },
 };
@@ -64,7 +64,7 @@ pub mod states {
 
 fn create_proposal_message_from_attachment<T: HolderCredentialIssuanceFormat>(
     attachment_data: Vec<u8>,
-    preview: Option<CredentialPreview>,
+    preview: Option<CredentialPreviewV2>,
     thread_id: Option<String>,
 ) -> ProposeCredentialV2 {
     let attachment_content = AttachmentType::Base64(base64::encode(&attachment_data));
@@ -127,8 +127,7 @@ impl<T: HolderCredentialIssuanceFormat> HolderV2<ProposalPrepared<T>> {
     // initiate by creating a proposal message
     pub async fn with_proposal(
         input_data: &T::CreateProposalInput,
-        preview: Option<CredentialPreview>, /* TODO - is this the right format? may not be
-                                             * versioned correctly... */
+        preview: Option<CredentialPreviewV2>,
     ) -> VcxResult<Self> {
         let attachment_data = T::create_proposal_attachment_content(input_data).await?;
         let proposal = create_proposal_message_from_attachment::<T>(attachment_data, preview, None);
@@ -178,8 +177,7 @@ impl<T: HolderCredentialIssuanceFormat> HolderV2<OfferReceived<T>> {
     pub async fn prepare_proposal(
         self,
         input_data: &T::CreateProposalInput,
-        preview: Option<CredentialPreview>, /* TODO - is this the right format? may not be
-                                             * versioned correctly... */
+        preview: Option<CredentialPreviewV2>,
     ) -> VcxSMTransitionResult<HolderV2<ProposalPrepared<T>>, Self> {
         let attachment_data = match T::create_proposal_attachment_content(input_data).await {
             Ok(msg) => msg,

@@ -1,6 +1,8 @@
 use std::marker::PhantomData;
 
-use messages::msg_fields::protocols::{cred_issuance::CredentialPreview, notification::ack::Ack};
+use messages::msg_fields::protocols::{
+    cred_issuance::v2::CredentialPreviewV2, notification::ack::Ack,
+};
 
 use self::states::{
     Complete, CredentialPrepared, OfferPrepared, ProposalReceived, RequestReceived,
@@ -99,8 +101,7 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<ProposalReceived<T>> {
         self,
         input_data: &T::CreateOfferInput,
         number_of_credentials_available: Option<u32>, // defaults to 1 if None
-        preview: Option<CredentialPreview>,           /* TODO - is this the right format? may
-                                                       * not be versioned correctly... */
+        preview: Option<CredentialPreviewV2>,
         replacement_id: Option<String>,
     ) -> VcxSMTransitionResult<IssuerV2<OfferPrepared<T>>, Self> {
         let multi_available = number_of_credentials_available.unwrap_or(1);
@@ -151,8 +152,7 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<OfferPrepared<T>> {
     pub async fn with_offer(
         input_data: &T::CreateOfferInput,
         number_of_credentials_available: Option<u32>, // defaults to 1 if None
-        preview: Option<CredentialPreview>,           /* TODO - is this the right format? may
-                                                       * not be versioned correctly... */
+        preview: Option<CredentialPreviewV2>,
         replacement_id: Option<String>,
     ) -> VcxResult<Self> {
         let multi_available = number_of_credentials_available.unwrap_or(1);

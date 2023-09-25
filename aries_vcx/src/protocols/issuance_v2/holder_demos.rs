@@ -1,6 +1,8 @@
 #[cfg(test)]
 pub mod demo_test {
-    use messages::msg_fields::protocols::cred_issuance::{CredentialAttr, CredentialPreview};
+    use messages::msg_fields::protocols::cred_issuance::{
+        common::CredentialAttr, v2::CredentialPreviewV2,
+    };
 
     use crate::{
         core::profile::profile::Profile,
@@ -36,7 +38,7 @@ pub mod demo_test {
                 ..Default::default()
             },
         };
-        let cred_preview = CredentialPreview::new(vec![CredentialAttr {
+        let cred_preview = CredentialPreviewV2::new(vec![CredentialAttr {
             name: String::from("dob"),
             value: String::from("19742110"),
             mime_type: None,
