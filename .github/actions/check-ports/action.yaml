@@ -1,0 +1,35 @@
+name: "check-ports"
+description: 'Checks whether a space separated list of local ports is reachable'
+
+inputs:
+  ports:
+    description: 'The local ports to check'
+    required: true
+  tries:
+    description: 'The max number of times to check whether each port is open'
+    required: false
+    default: 100
+  interval:
+    description: 'The interval to wait in between tries'
+    required: false
+    default: 5
+
+runs:
+  using: "composite"
+  steps:
+    - name: "Check ports"
+      shell: bash
+      run: |
+        for p in ${{ inputs.ports }}; do
+          counter=0
+
+          while [[ `nc -z localhost $p; echo $?` -ne 0 && $counter -ne ${{ inputs.tries }} ]]; do 
+            sleep ${{ inputs.interval }}
+            counter=$(( $counter + 1 ))
+          done
+
+          if [[ $counter -eq ${{ inputs.tries }} ]]; then
+            echo "Port $p is unreachable!"
+            exit 1;
+          fi
+        done

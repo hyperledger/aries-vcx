@@ -2,6 +2,9 @@ name: "setup-testing-rust"
 description: 'Setup host environment to run rust tests'
 
 inputs:
+  rust-toolchain-version:
+    description: 'The Rust toolchain version to use'
+    required: true
   skip-docker-setup:
     description: 'If true, skip spinning up docker containers'
     required: false
@@ -16,21 +19,36 @@ runs:
   steps:
     - uses: actions-rs/toolchain@v1
       with:
-        toolchain: 1.65.0
+        toolchain: ${{ inputs.rust-toolchain-version }}
+
     - uses: Swatinem/rust-cache@v2
     - name: "Install dependencies"
       shell: bash
       run: |
         sudo apt-get update -y
         sudo apt-get install -y libsodium-dev libssl-dev libzmq3-dev
+
     - name: "Start indypool, mysql, agency"
       if: ${{ inputs.skip-docker-setup != 'true' }}
       shell: bash
       run: |
         docker run -d --name mysql     --network host -e MYSQL_ROOT_PASSWORD=mysecretpassword mysql:5.7.35
         docker run -d --name indypool  --network host ${{ env.DOCKER_IMAGE_POOL }}
+
+    - name: "Check indy ports"
+      if: ${{ inputs.skip-docker-setup != 'true' }}
+      uses: ./.github/actions/check-ports
+      with:
+        ports: "9701 9702 9703 9704 9705 9706 9707 9708"
+
     - name: "Start vdrproxy"
       if: ${{ inputs.skip-vdrproxy-setup != 'true' }}
       shell: bash
       run: |
         docker run -d --name vdrproxy --network host ${{ env.DOCKER_IMAGE_VDRPROXY }} -p ${{ env.VDR_PROXY_PORT }} -g ${{ env.GENESIS_URL }}
+
+    - name: "Check vdrproxy port"
+      if: ${{ inputs.skip-vdrproxy-setup != 'true' }}
+      uses: ./.github/actions/check-ports
+      with:
+        ports: "3030"
