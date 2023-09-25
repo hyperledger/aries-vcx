@@ -8,16 +8,19 @@ use messages::{
     decorators::{please_ack::PleaseAck, thread::Thread, timing::Timing},
     msg_fields::protocols::{
         cred_issuance::{
-            ack::AckCredential,
-            issue_credential::{
-                IssueCredential, IssueCredentialContent, IssueCredentialDecorators,
+            v1::{
+                ack::AckCredentialV1,
+                issue_credential::{
+                    IssueCredentialV1, IssueCredentialV1Content, IssueCredentialV1Decorators,
+                },
+                offer_credential::{
+                    OfferCredentialV1, OfferCredentialV1Content, OfferCredentialV1Decorators,
+                },
+                propose_credential::ProposeCredentialV1,
+                request_credential::RequestCredentialV1,
+                CredentialIssuanceV1, CredentialPreviewV1,
             },
-            offer_credential::{
-                OfferCredential, OfferCredentialContent, OfferCredentialDecorators,
-            },
-            propose_credential::ProposeCredential,
-            request_credential::RequestCredential,
-            CredentialIssuance, CredentialPreview,
+            CredentialIssuance,
         },
         report_problem::ProblemReport,
     },
@@ -97,22 +100,22 @@ pub struct IssuerSM {
     pub(crate) state: IssuerFullState,
 }
 
-fn build_credential_message(libindy_credential: String, thread_id: String) -> IssueCredential {
+fn build_credential_message(libindy_credential: String, thread_id: String) -> IssueCredentialV1 {
     let id = Uuid::new_v4().to_string();
 
-    let content = IssueCredentialContent::builder()
+    let content = IssueCredentialV1Content::builder()
         .credentials_attach(vec![make_attach_from_str!(
             &libindy_credential,
             AttachmentId::Credential.as_ref().to_string()
         )])
         .build();
 
-    let decorators = IssueCredentialDecorators::builder()
+    let decorators = IssueCredentialV1Decorators::builder()
         .thread(Thread::builder().thid(thread_id).build())
         .please_ack(PleaseAck::builder().on(vec![]).build())
         .build();
 
-    IssueCredential::builder()
+    IssueCredentialV1::builder()
         .id(id)
         .content(content)
         .decorators(decorators)
@@ -122,12 +125,12 @@ fn build_credential_message(libindy_credential: String, thread_id: String) -> Is
 fn build_credential_offer(
     thread_id: &str,
     credential_offer: &str,
-    credential_preview: CredentialPreview,
+    credential_preview: CredentialPreviewV1,
     comment: Option<String>,
-) -> VcxResult<OfferCredential> {
+) -> VcxResult<OfferCredentialV1> {
     let id = thread_id.to_owned();
 
-    let content = OfferCredentialContent::builder()
+    let content = OfferCredentialV1Content::builder()
         .credential_preview(credential_preview)
         .offers_attach(vec![make_attach_from_str!(
             &credential_offer,
@@ -140,11 +143,11 @@ fn build_credential_offer(
         content.build()
     };
 
-    let decorators = OfferCredentialDecorators::builder()
+    let decorators = OfferCredentialV1Decorators::builder()
         .timing(Timing::builder().out_time(Utc::now()).build())
         .build();
 
-    Ok(OfferCredential::builder()
+    Ok(OfferCredentialV1::builder()
         .id(id)
         .content(content)
         .decorators(decorators)
@@ -160,7 +163,7 @@ impl IssuerSM {
         }
     }
 
-    pub fn from_proposal(source_id: &str, credential_proposal: &ProposeCredential) -> Self {
+    pub fn from_proposal(source_id: &str, credential_proposal: &ProposeCredentialV1) -> Self {
         Self {
             thread_id: credential_proposal.id.clone(),
             source_id: source_id.to_string(),
@@ -299,7 +302,7 @@ impl IssuerSM {
         }
     }
 
-    pub fn get_proposal(&self) -> VcxResult<ProposeCredential> {
+    pub fn get_proposal(&self) -> VcxResult<ProposeCredentialV1> {
         match &self.state {
             IssuerFullState::ProposalReceived(state) => Ok(state.credential_proposal.clone()),
             _ => Err(AriesVcxError::from_msg(
@@ -312,7 +315,7 @@ impl IssuerSM {
     pub fn build_credential_offer_msg(
         self,
         credential_offer: &str,
-        credential_preview: CredentialPreview,
+        credential_preview: CredentialPreviewV1,
         comment: Option<String>,
         offer_info: &OfferInfo,
     ) -> VcxResult<Self> {
@@ -350,7 +353,7 @@ impl IssuerSM {
         Ok(Self::step(source_id, thread_id, state))
     }
 
-    pub fn get_credential_offer_msg(&self) -> VcxResult<OfferCredential> {
+    pub fn get_credential_offer_msg(&self) -> VcxResult<OfferCredentialV1> {
         match &self.state {
             IssuerFullState::OfferSet(state) => Ok(state.offer.clone()),
             _ => Err(AriesVcxError::from_msg(
@@ -363,11 +366,11 @@ impl IssuerSM {
         }
     }
 
-    pub fn receive_proposal(self, proposal: ProposeCredential) -> VcxResult<Self> {
+    pub fn receive_proposal(self, proposal: ProposeCredentialV1) -> VcxResult<Self> {
         verify_thread_id(
             &self.thread_id,
-            &AriesMessage::CredentialIssuance(CredentialIssuance::ProposeCredential(
-                proposal.clone(),
+            &AriesMessage::CredentialIssuance(CredentialIssuance::V1(
+                CredentialIssuanceV1::ProposeCredential(proposal.clone()),
             )),
         )?;
         let (state, thread_id) = match self.state {
@@ -394,11 +397,11 @@ impl IssuerSM {
         })
     }
 
-    pub fn receive_request(self, request: RequestCredential) -> VcxResult<Self> {
+    pub fn receive_request(self, request: RequestCredentialV1) -> VcxResult<Self> {
         verify_thread_id(
             &self.thread_id,
-            &AriesMessage::CredentialIssuance(CredentialIssuance::RequestCredential(
-                request.clone(),
+            &AriesMessage::CredentialIssuance(CredentialIssuance::V1(
+                CredentialIssuanceV1::RequestCredential(request.clone()),
             )),
         )?;
         let state = match self.state {
@@ -465,10 +468,10 @@ impl IssuerSM {
         Ok(Self { state, ..self })
     }
 
-    pub fn get_msg_issue_credential(self) -> VcxResult<IssueCredential> {
+    pub fn get_msg_issue_credential(self) -> VcxResult<IssueCredentialV1> {
         match self.state {
             IssuerFullState::CredentialSet(ref state_data) => {
-                let mut msg_issue_credential: IssueCredential =
+                let mut msg_issue_credential: IssueCredentialV1 =
                     state_data.msg_issue_credential.clone();
                 let timing = Timing::builder().out_time(Utc::now()).build();
 
@@ -482,10 +485,12 @@ impl IssuerSM {
         }
     }
 
-    pub fn receive_ack(self, ack: AckCredential) -> VcxResult<Self> {
+    pub fn receive_ack(self, ack: AckCredentialV1) -> VcxResult<Self> {
         verify_thread_id(
             &self.thread_id,
-            &AriesMessage::CredentialIssuance(CredentialIssuance::Ack(ack.clone())),
+            &AriesMessage::CredentialIssuance(CredentialIssuance::V1(CredentialIssuanceV1::Ack(
+                ack.clone(),
+            ))),
         )?;
         let state = match self.state {
             IssuerFullState::CredentialSet(state_data) => {
@@ -556,13 +561,13 @@ impl IssuerSM {
 
 async fn create_credential(
     anoncreds: &Arc<dyn BaseAnonCreds>,
-    request: &RequestCredential,
+    request: &RequestCredentialV1,
     rev_reg_id: &Option<String>,
     tails_file: &Option<String>,
-    offer: &OfferCredential,
+    offer: &OfferCredentialV1,
     cred_data: &str,
     thread_id: String,
-) -> VcxResult<(IssueCredential, Option<String>)> {
+) -> VcxResult<(IssueCredentialV1, Option<String>)> {
     let offer = get_attach_as_string!(&offer.content.offers_attach);
 
     trace!(

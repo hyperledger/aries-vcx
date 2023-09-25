@@ -1,26 +1,33 @@
 use serde::{Deserialize, Serialize};
 use typed_builder::TypedBuilder;
 
-use super::CredentialPreview;
+use super::{AttachmentFormatSpecifier, CredentialPreviewV2};
 use crate::{
     decorators::{attachment::Attachment, thread::Thread, timing::Timing},
     msg_parts::MsgParts,
 };
 
-pub type OfferCredential = MsgParts<OfferCredentialContent, OfferCredentialDecorators>;
+pub type OfferCredentialV2 = MsgParts<OfferCredentialV2Content, OfferCredentialV2Decorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder)]
-pub struct OfferCredentialContent {
+pub struct OfferCredentialV2Content {
+    #[builder(default, setter(strip_option))]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub goal_code: Option<String>,
+    #[builder(default, setter(strip_option))]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub replacement_id: Option<String>,
     #[builder(default, setter(strip_option))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,
-    pub credential_preview: CredentialPreview,
+    pub credential_preview: CredentialPreviewV2,
+    pub formats: Vec<AttachmentFormatSpecifier<OfferCredentialAttachmentFormatType>>,
     #[serde(rename = "offers~attach")]
     pub offers_attach: Vec<Attachment>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq, TypedBuilder)]
-pub struct OfferCredentialDecorators {
+pub struct OfferCredentialV2Decorators {
     #[builder(default, setter(strip_option))]
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "~thread")]
@@ -31,11 +38,22 @@ pub struct OfferCredentialDecorators {
     pub timing: Option<Timing>,
 }
 
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+pub enum OfferCredentialAttachmentFormatType {
+    #[serde(rename = "dif/credential-manifest@v1.0")]
+    DifCredentialManifest1_0,
+    #[serde(rename = "hlindy/cred-abstract@v2.0")]
+    HyperledgerIndyCredentialAbstract2_0,
+    #[serde(rename = "aries/ld-proof-vc-detail@v1.0")]
+    AriesLdProofVcDetail1_0,
+}
+
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 #[allow(clippy::field_reassign_with_default)]
 mod tests {
     use serde_json::json;
+    use shared_vcx::maybe_known::MaybeKnown;
 
     use super::*;
     use crate::{
@@ -44,8 +62,8 @@ mod tests {
             timing::tests::make_extended_timing,
         },
         misc::test_utils,
-        msg_fields::protocols::cred_issuance::CredentialAttr,
-        msg_types::cred_issuance::CredentialIssuanceTypeV1_0,
+        msg_fields::protocols::cred_issuance::common::CredentialAttr,
+        msg_types::cred_issuance::CredentialIssuanceTypeV2_0,
     };
 
     #[test]
@@ -55,15 +73,22 @@ mod tests {
             .value("test_attribute_value".to_owned())
             .build();
 
-        let preview = CredentialPreview::new(vec![attribute]);
-        let content = OfferCredentialContent::builder()
+        let preview = CredentialPreviewV2::new(vec![attribute]);
+        let content = OfferCredentialV2Content::builder()
             .credential_preview(preview)
+            .formats(vec![AttachmentFormatSpecifier {
+                attach_id: "1".to_owned(),
+                format: MaybeKnown::Known(
+                    OfferCredentialAttachmentFormatType::HyperledgerIndyCredentialAbstract2_0,
+                ),
+            }])
             .offers_attach(vec![make_extended_attachment()])
             .build();
 
-        let decorators = OfferCredentialDecorators::default();
+        let decorators = OfferCredentialV2Decorators::default();
 
         let expected = json!({
+            "formats": content.formats,
             "offers~attach": content.offers_attach,
             "credential_preview": content.credential_preview,
         });
@@ -71,7 +96,7 @@ mod tests {
         test_utils::test_msg(
             content,
             decorators,
-            CredentialIssuanceTypeV1_0::OfferCredential,
+            CredentialIssuanceTypeV2_0::OfferCredential,
             expected,
         );
     }
@@ -83,22 +108,33 @@ mod tests {
             .value("test_attribute_value".to_owned())
             .build();
 
-        let preview = CredentialPreview::new(vec![attribute]);
-        let content = OfferCredentialContent::builder()
+        let preview = CredentialPreviewV2::new(vec![attribute]);
+        let content = OfferCredentialV2Content::builder()
             .credential_preview(preview)
+            .formats(vec![AttachmentFormatSpecifier {
+                attach_id: "1".to_owned(),
+                format: MaybeKnown::Known(
+                    OfferCredentialAttachmentFormatType::HyperledgerIndyCredentialAbstract2_0,
+                ),
+            }])
             .offers_attach(vec![make_extended_attachment()])
             .comment("test_comment".to_owned())
+            .replacement_id("replacement_id".to_owned())
+            .goal_code("goal.goal".to_owned())
             .build();
 
-        let decorators = OfferCredentialDecorators::builder()
+        let decorators = OfferCredentialV2Decorators::builder()
             .thread(make_extended_thread())
             .timing(make_extended_timing())
             .build();
 
         let expected = json!({
+            "formats": content.formats,
             "offers~attach": content.offers_attach,
             "credential_preview": content.credential_preview,
             "comment": content.comment,
+            "goal_code": content.goal_code,
+            "replacement_id": content.replacement_id,
             "~thread": decorators.thread,
             "~timing": decorators.timing
         });
@@ -106,7 +142,7 @@ mod tests {
         test_utils::test_msg(
             content,
             decorators,
-            CredentialIssuanceTypeV1_0::OfferCredential,
+            CredentialIssuanceTypeV2_0::OfferCredential,
             expected,
         );
     }

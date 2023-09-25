@@ -2,8 +2,11 @@ use messages::{
     misc::MimeType,
     msg_fields::protocols::{
         cred_issuance::{
-            propose_credential::{ProposeCredential, ProposeCredentialContent},
-            CredentialAttr, CredentialPreview,
+            common::CredentialAttr,
+            v1::{
+                propose_credential::{ProposeCredentialV1, ProposeCredentialV1Content},
+                CredentialPreviewV1,
+            },
         },
         present_proof::propose::PresentationAttr,
     },
@@ -66,7 +69,7 @@ pub fn create_credential_proposal(
     schema_id: &str,
     cred_def_id: &str,
     comment: &str,
-) -> ProposeCredential {
+) -> ProposeCredentialV1 {
     let attrs = credential_data_address_1()
         .as_object()
         .unwrap()
@@ -79,13 +82,13 @@ pub fn create_credential_proposal(
                 .build()
         })
         .collect();
-    let content = ProposeCredentialContent::builder()
-        .credential_proposal(CredentialPreview::new(attrs))
+    let content = ProposeCredentialV1Content::builder()
+        .credential_proposal(CredentialPreviewV1::new(attrs))
         .schema_id(schema_id.to_owned())
         .cred_def_id(cred_def_id.to_owned())
         .comment(comment.to_owned())
         .build();
-    ProposeCredential::builder()
+    ProposeCredentialV1::builder()
         .id("test".to_owned())
         .content(content)
         .build()

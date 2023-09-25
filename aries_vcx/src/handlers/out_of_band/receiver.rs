@@ -7,8 +7,11 @@ use messages::{
     decorators::{attachment::AttachmentType, thread::Thread},
     msg_fields::protocols::{
         cred_issuance::{
-            issue_credential::IssueCredential, offer_credential::OfferCredential,
-            request_credential::RequestCredential, CredentialIssuance,
+            v1::{
+                issue_credential::IssueCredentialV1, offer_credential::OfferCredentialV1,
+                request_credential::RequestCredentialV1, CredentialIssuanceV1,
+            },
+            CredentialIssuance,
         },
         out_of_band::{
             invitation::{Invitation, OobService},
@@ -194,7 +197,7 @@ impl OutOfBandReceiver {
                 Some(id) => match id {
                     AttachmentId::CredentialOffer => {
                         let mut offer =
-                            OfferCredential::deserialize(&attach_json).map_err(|_| {
+                            OfferCredentialV1::deserialize(&attach_json).map_err(|_| {
                                 AriesVcxError::from_msg(
                                     AriesVcxErrorKind::SerializationError,
                                     format!("Failed to deserialize attachment: {attach_json:?}"),
@@ -212,12 +215,12 @@ impl OutOfBandReceiver {
                         }
 
                         return Ok(Some(AriesMessage::CredentialIssuance(
-                            CredentialIssuance::OfferCredential(offer),
+                            CredentialIssuance::V1(CredentialIssuanceV1::OfferCredential(offer)),
                         )));
                     }
                     AttachmentId::CredentialRequest => {
                         let mut request =
-                            RequestCredential::deserialize(&attach_json).map_err(|_| {
+                            RequestCredentialV1::deserialize(&attach_json).map_err(|_| {
                                 AriesVcxError::from_msg(
                                     AriesVcxErrorKind::SerializationError,
                                     format!("Failed to deserialize attachment: {attach_json:?}"),
@@ -235,12 +238,14 @@ impl OutOfBandReceiver {
                         }
 
                         return Ok(Some(AriesMessage::CredentialIssuance(
-                            CredentialIssuance::RequestCredential(request),
+                            CredentialIssuance::V1(CredentialIssuanceV1::RequestCredential(
+                                request,
+                            )),
                         )));
                     }
                     AttachmentId::Credential => {
                         let mut credential =
-                            IssueCredential::deserialize(&attach_json).map_err(|_| {
+                            IssueCredentialV1::deserialize(&attach_json).map_err(|_| {
                                 AriesVcxError::from_msg(
                                     AriesVcxErrorKind::SerializationError,
                                     format!("Failed to deserialize attachment: {attach_json:?}"),
@@ -250,7 +255,9 @@ impl OutOfBandReceiver {
                         credential.decorators.thread.pthid = Some(self.oob.id.clone());
 
                         return Ok(Some(AriesMessage::CredentialIssuance(
-                            CredentialIssuance::IssueCredential(credential),
+                            CredentialIssuance::V1(CredentialIssuanceV1::IssueCredential(
+                                credential,
+                            )),
                         )));
                     }
                     AttachmentId::PresentationRequest => {

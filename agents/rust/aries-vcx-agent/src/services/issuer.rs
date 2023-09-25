@@ -4,9 +4,9 @@ use aries_vcx::{
     core::profile::profile::Profile,
     handlers::{issuance::issuer::Issuer, util::OfferInfo},
     messages::{
-        msg_fields::protocols::cred_issuance::{
-            ack::AckCredential, propose_credential::ProposeCredential,
-            request_credential::RequestCredential,
+        msg_fields::protocols::cred_issuance::v1::{
+            ack::AckCredentialV1, propose_credential::ProposeCredentialV1,
+            request_credential::RequestCredentialV1,
         },
         AriesMessage,
     },
@@ -63,7 +63,7 @@ impl ServiceCredentialsIssuer {
     pub async fn accept_proposal(
         &self,
         connection_id: &str,
-        proposal: &ProposeCredential,
+        proposal: &ProposeCredentialV1,
     ) -> AgentResult<String> {
         let issuer = Issuer::create_from_proposal("", proposal)?;
         self.creds_issuer.insert(
@@ -106,7 +106,7 @@ impl ServiceCredentialsIssuer {
     pub fn process_credential_request(
         &self,
         thread_id: &str,
-        request: RequestCredential,
+        request: RequestCredentialV1,
     ) -> AgentResult<()> {
         let IssuerWrapper {
             mut issuer,
@@ -120,7 +120,7 @@ impl ServiceCredentialsIssuer {
         Ok(())
     }
 
-    pub fn process_credential_ack(&self, thread_id: &str, ack: AckCredential) -> AgentResult<()> {
+    pub fn process_credential_ack(&self, thread_id: &str, ack: AckCredentialV1) -> AgentResult<()> {
         let IssuerWrapper {
             mut issuer,
             connection_id,
@@ -180,7 +180,7 @@ impl ServiceCredentialsIssuer {
         issuer.get_rev_id().map_err(|err| err.into())
     }
 
-    pub fn get_proposal(&self, thread_id: &str) -> AgentResult<ProposeCredential> {
+    pub fn get_proposal(&self, thread_id: &str) -> AgentResult<ProposeCredentialV1> {
         let issuer = self.get_issuer(thread_id)?;
         issuer.get_proposal().map_err(|err| err.into())
     }

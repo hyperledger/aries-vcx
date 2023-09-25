@@ -1,24 +1,32 @@
 use serde::{Deserialize, Serialize};
 use typed_builder::TypedBuilder;
 
+use super::AttachmentFormatSpecifier;
 use crate::{
     decorators::{attachment::Attachment, please_ack::PleaseAck, thread::Thread, timing::Timing},
     msg_parts::MsgParts,
 };
 
-pub type IssueCredential = MsgParts<IssueCredentialContent, IssueCredentialDecorators>;
+pub type IssueCredentialV2 = MsgParts<IssueCredentialV2Content, IssueCredentialV2Decorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder)]
-pub struct IssueCredentialContent {
+pub struct IssueCredentialV2Content {
+    #[builder(default, setter(strip_option))]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub goal_code: Option<String>,
+    #[builder(default, setter(strip_option))]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub replacement_id: Option<String>,
     #[builder(default, setter(strip_option))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,
+    pub formats: Vec<AttachmentFormatSpecifier<IssueCredentialAttachmentFormatType>>,
     #[serde(rename = "credentials~attach")]
     pub credentials_attach: Vec<Attachment>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder)]
-pub struct IssueCredentialDecorators {
+pub struct IssueCredentialV2Decorators {
     #[serde(rename = "~thread")]
     pub thread: Thread,
     #[builder(default, setter(strip_option))]
@@ -31,11 +39,20 @@ pub struct IssueCredentialDecorators {
     pub timing: Option<Timing>,
 }
 
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+pub enum IssueCredentialAttachmentFormatType {
+    #[serde(rename = "aries/ld-proof-vc@v1.0")]
+    AriesLdProofVcDetail1_0,
+    #[serde(rename = "hlindy/cred@v2.0")]
+    HyperledgerIndyCredential2_0,
+}
+
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 #[allow(clippy::field_reassign_with_default)]
 mod tests {
     use serde_json::json;
+    use shared_vcx::maybe_known::MaybeKnown;
 
     use super::*;
     use crate::{
@@ -45,20 +62,27 @@ mod tests {
             timing::tests::make_extended_timing,
         },
         misc::test_utils,
-        msg_types::cred_issuance::CredentialIssuanceTypeV1_0,
+        msg_types::cred_issuance::CredentialIssuanceTypeV2_0,
     };
 
     #[test]
     fn test_minimal_issue_cred() {
-        let content = IssueCredentialContent::builder()
+        let content = IssueCredentialV2Content::builder()
+            .formats(vec![AttachmentFormatSpecifier {
+                attach_id: "1".to_owned(),
+                format: MaybeKnown::Known(
+                    IssueCredentialAttachmentFormatType::HyperledgerIndyCredential2_0,
+                ),
+            }])
             .credentials_attach(vec![make_extended_attachment()])
             .build();
 
-        let decorators = IssueCredentialDecorators::builder()
+        let decorators = IssueCredentialV2Decorators::builder()
             .thread(make_extended_thread())
             .build();
 
         let expected = json!({
+            "formats": content.formats,
             "credentials~attach": content.credentials_attach,
             "~thread": decorators.thread
         });
@@ -66,26 +90,37 @@ mod tests {
         test_utils::test_msg(
             content,
             decorators,
-            CredentialIssuanceTypeV1_0::IssueCredential,
+            CredentialIssuanceTypeV2_0::IssueCredential,
             expected,
         );
     }
 
     #[test]
     fn test_extended_issue_cred() {
-        let content = IssueCredentialContent::builder()
+        let content = IssueCredentialV2Content::builder()
+            .formats(vec![AttachmentFormatSpecifier {
+                attach_id: "1".to_owned(),
+                format: shared_vcx::maybe_known::MaybeKnown::Known(
+                    IssueCredentialAttachmentFormatType::HyperledgerIndyCredential2_0,
+                ),
+            }])
             .credentials_attach(vec![make_extended_attachment()])
+            .goal_code("goal.goal".to_owned())
+            .replacement_id("replacement-123".to_owned())
             .comment("test_comment".to_owned())
             .build();
 
-        let decorators = IssueCredentialDecorators::builder()
+        let decorators = IssueCredentialV2Decorators::builder()
             .thread(make_extended_thread())
             .timing(make_extended_timing())
             .please_ack(make_minimal_please_ack())
             .build();
 
         let expected = json!({
+            "formats": content.formats,
             "credentials~attach": content.credentials_attach,
+            "goal_code": content.goal_code,
+            "replacement_id": content.replacement_id,
             "comment": content.comment,
             "~thread": decorators.thread,
             "~timing": decorators.timing,
@@ -95,7 +130,7 @@ mod tests {
         test_utils::test_msg(
             content,
             decorators,
-            CredentialIssuanceTypeV1_0::IssueCredential,
+            CredentialIssuanceTypeV2_0::IssueCredential,
             expected,
         );
     }

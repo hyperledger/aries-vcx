@@ -8,23 +8,23 @@ use crate::{
     msg_parts::MsgParts,
 };
 
-pub type CredIssuanceProblemReport =
-    MsgParts<CredIssuanceProblemReportContent, ProblemReportDecorators>;
+pub type CredIssuanceProblemReportV2 =
+    MsgParts<CredIssuanceV2ProblemReportContent, ProblemReportDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder)]
 #[serde(transparent)]
-pub struct CredIssuanceProblemReportContent {
+pub struct CredIssuanceV2ProblemReportContent {
     pub inner: ProblemReportContent,
 }
 
-impl From<ProblemReportContent> for CredIssuanceProblemReportContent {
+impl From<ProblemReportContent> for CredIssuanceV2ProblemReportContent {
     fn from(value: ProblemReportContent) -> Self {
         Self { inner: value }
     }
 }
 
-impl From<CredIssuanceProblemReport> for ProblemReport {
-    fn from(value: CredIssuanceProblemReport) -> Self {
+impl From<CredIssuanceProblemReportV2> for ProblemReport {
+    fn from(value: CredIssuanceProblemReportV2) -> Self {
         Self::builder()
             .id(value.id)
             .content(value.content.inner)
@@ -51,7 +51,7 @@ mod tests {
         msg_fields::protocols::report_problem::{
             Description, Impact, Where, WhereParty, WhoRetries,
         },
-        msg_types::cred_issuance::CredentialIssuanceTypeV1_0,
+        msg_types::cred_issuance::CredentialIssuanceTypeV2_0,
     };
 
     #[test]
@@ -60,7 +60,7 @@ mod tests {
             .code("test_problem_report_code".to_owned())
             .build();
 
-        let content: CredIssuanceProblemReportContent = ProblemReportContent::builder()
+        let content: CredIssuanceV2ProblemReportContent = ProblemReportContent::builder()
             .description(description)
             .build();
         let decorators = ProblemReportDecorators::default();
@@ -72,7 +72,7 @@ mod tests {
         test_utils::test_msg(
             content,
             decorators,
-            CredentialIssuanceTypeV1_0::ProblemReport,
+            CredentialIssuanceTypeV2_0::ProblemReport,
             expected,
         );
     }
@@ -121,14 +121,14 @@ mod tests {
             "fix-hint~l10n": decorators.fix_hint_locale
         });
 
-        let content = CredIssuanceProblemReportContent::builder()
+        let content = CredIssuanceV2ProblemReportContent::builder()
             .inner(content)
             .build();
 
         test_utils::test_msg(
             content,
             decorators,
-            CredentialIssuanceTypeV1_0::ProblemReport,
+            CredentialIssuanceTypeV2_0::ProblemReport,
             expected,
         );
     }

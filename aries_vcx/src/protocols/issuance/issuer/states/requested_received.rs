@@ -1,5 +1,7 @@
 use messages::msg_fields::protocols::{
-    cred_issuance::{offer_credential::OfferCredential, request_credential::RequestCredential},
+    cred_issuance::v1::{
+        offer_credential::OfferCredentialV1, request_credential::RequestCredentialV1,
+    },
     report_problem::ProblemReport,
 };
 
@@ -13,11 +15,11 @@ use crate::{
 // TODO: Use OfferInfo instead of ind. fields
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RequestReceivedState {
-    pub offer: OfferCredential,
+    pub offer: OfferCredentialV1,
     pub cred_data: String,
     pub rev_reg_id: Option<String>,
     pub tails_file: Option<String>,
-    pub request: RequestCredential,
+    pub request: RequestCredentialV1,
 }
 
 impl FinishedState {
