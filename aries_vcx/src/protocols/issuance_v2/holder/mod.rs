@@ -4,32 +4,41 @@ use ::messages::decorators::attachment::{Attachment, AttachmentData, AttachmentT
 use messages::{
     decorators::thread::Thread,
     msg_fields::protocols::{
-        cred_issuance::v2::CredentialPreviewV2,
+        cred_issuance::v2::{
+            issue_credential::IssueCredentialV2,
+            offer_credential::OfferCredentialV2,
+            propose_credential::{
+                ProposeCredentialV2, ProposeCredentialV2Content, ProposeCredentialV2Decorators,
+            },
+            request_credential::{
+                RequestCredentialV2, RequestCredentialV2Content, RequestCredentialV2Decorators,
+            },
+            AttachmentFormatSpecifier, CredentialPreviewV2,
+        },
         notification::ack::{Ack, AckContent, AckDecorators, AckStatus},
     },
 };
+use uuid::Uuid;
 
-use self::{
-    super::messages::{IssueCredentialV2, OfferCredentialV2, ProposeCredentialV2},
-    states::*,
-};
+use self::states::*;
 use super::{
-    formats::holder::HolderCredentialIssuanceFormat, messages::RequestCredentialV2,
-    RecoveredSMError, VcxSMTransitionResult,
+    formats::holder::HolderCredentialIssuanceFormat, RecoveredSMError, VcxSMTransitionResult,
 };
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 
 pub mod states {
     use std::marker::PhantomData;
 
-    use messages::msg_fields::protocols::{notification::ack::Ack, report_problem::ProblemReport};
-
-    use super::{
-        super::messages::{
-            IssueCredentialV2, OfferCredentialV2, ProposeCredentialV2, RequestCredentialV2,
+    use messages::msg_fields::protocols::{
+        cred_issuance::v2::{
+            issue_credential::IssueCredentialV2, offer_credential::OfferCredentialV2,
+            propose_credential::ProposeCredentialV2, request_credential::RequestCredentialV2,
         },
-        HolderCredentialIssuanceFormat,
+        notification::ack::Ack,
+        report_problem::ProblemReport,
     };
+
+    use super::HolderCredentialIssuanceFormat;
 
     pub struct ProposalPrepared<T: HolderCredentialIssuanceFormat> {
         pub proposal: ProposeCredentialV2,
@@ -68,9 +77,9 @@ fn create_proposal_message_from_attachment<T: HolderCredentialIssuanceFormat>(
     thread_id: Option<String>,
 ) -> ProposeCredentialV2 {
     let attachment_content = AttachmentType::Base64(base64::encode(&attachment_data));
-    let attachment_id = uuid::Uuid::new_v4().to_string();
+    let attach_id = Uuid::new_v4().to_string();
     let attachment = Attachment::builder()
-        .id(attachment_id.clone())
+        .id(attach_id.clone())
         .mime_type(::messages::misc::MimeType::Json)
         .data(
             AttachmentData::builder()
@@ -79,16 +88,32 @@ fn create_proposal_message_from_attachment<T: HolderCredentialIssuanceFormat>(
         )
         .build();
 
-    let proposal_attachment_format = T::get_proposal_attachment_format();
-    let _formats = json!([{ "attach_id": attachment_id, "format": proposal_attachment_format }]);
-    let _attachments = vec![attachment];
+    let content = ProposeCredentialV2Content::builder()
+        .formats(vec![AttachmentFormatSpecifier::builder()
+            .attach_id(attach_id)
+            .format(T::get_proposal_attachment_format())
+            .build()])
+        .filters_attach(vec![attachment]);
 
-    // TODO - create proposal message, and append preview if desired, append thid
-    let _ = preview;
-    _ = thread_id;
-    let proposal = ProposeCredentialV2;
+    let content = if let Some(preview) = preview {
+        content.credential_preview(preview).build()
+    } else {
+        content.build()
+    };
 
-    proposal
+    let decorators = if let Some(id) = thread_id {
+        ProposeCredentialV2Decorators::builder()
+            .thread(Thread::builder().thid(id).build())
+            .build()
+    } else {
+        ProposeCredentialV2Decorators::builder().build()
+    };
+
+    ProposeCredentialV2::builder()
+        .id(Uuid::new_v4().to_string())
+        .content(content)
+        .decorators(decorators)
+        .build()
 }
 
 fn create_request_message_from_attachment<T: HolderCredentialIssuanceFormat>(
@@ -96,9 +121,9 @@ fn create_request_message_from_attachment<T: HolderCredentialIssuanceFormat>(
     thread_id: Option<String>,
 ) -> RequestCredentialV2 {
     let attachment_content = AttachmentType::Base64(base64::encode(&attachment_data));
-    let attachment_id = uuid::Uuid::new_v4().to_string();
+    let attach_id = uuid::Uuid::new_v4().to_string();
     let attachment = Attachment::builder()
-        .id(attachment_id.clone())
+        .id(attach_id.clone())
         .mime_type(::messages::misc::MimeType::Json)
         .data(
             AttachmentData::builder()
@@ -107,15 +132,26 @@ fn create_request_message_from_attachment<T: HolderCredentialIssuanceFormat>(
         )
         .build();
 
-    let request_attachment_format = T::get_request_attachment_format();
-    let _formats = json!([{ "attach_id": attachment_id, "format": request_attachment_format }]);
-    let _attachments = vec![attachment];
-    _ = thread_id;
+    let content = RequestCredentialV2Content::builder()
+        .formats(vec![AttachmentFormatSpecifier::builder()
+            .attach_id(attach_id)
+            .format(T::get_request_attachment_format())
+            .build()])
+        .requests_attach(vec![attachment])
+        .build();
 
-    // TODO - create request message
-    let request = RequestCredentialV2;
-
-    request
+    let decorators = if let Some(id) = thread_id {
+        RequestCredentialV2Decorators::builder()
+            .thread(Thread::builder().thid(id).build())
+            .build()
+    } else {
+        RequestCredentialV2Decorators::builder().build()
+    };
+    RequestCredentialV2::builder()
+        .id(Uuid::new_v4().to_string())
+        .content(content)
+        .decorators(decorators)
+        .build()
 }
 
 pub struct HolderV2<S> {

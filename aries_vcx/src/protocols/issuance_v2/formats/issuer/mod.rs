@@ -2,8 +2,13 @@ pub mod anoncreds;
 pub mod ld_proof_vc;
 
 use async_trait::async_trait;
+use messages::msg_fields::protocols::cred_issuance::v2::{
+    issue_credential::IssueCredentialAttachmentFormatType,
+    offer_credential::OfferCredentialAttachmentFormatType, request_credential::RequestCredentialV2,
+};
+use shared_vcx::maybe_known::MaybeKnown;
 
-use crate::{errors::error::VcxResult, protocols::issuance_v2::messages::RequestCredentialV2};
+use crate::errors::error::VcxResult;
 
 #[async_trait]
 pub trait IssuerCredentialIssuanceFormat {
@@ -16,8 +21,8 @@ pub trait IssuerCredentialIssuanceFormat {
     fn supports_request_independent_of_offer() -> bool;
     fn supports_multi_credential_issuance() -> bool;
 
-    fn get_offer_attachment_format() -> String;
-    fn get_credential_attachment_format() -> String;
+    fn get_offer_attachment_format() -> MaybeKnown<OfferCredentialAttachmentFormatType>;
+    fn get_credential_attachment_format() -> MaybeKnown<IssueCredentialAttachmentFormatType>;
 
     async fn create_offer_attachment_content(
         data: &Self::CreateOfferInput,

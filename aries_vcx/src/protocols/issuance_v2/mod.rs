@@ -6,17 +6,6 @@ mod holder_demos;
 pub mod issuer;
 mod issuer_demos;
 
-mod messages {
-    #[derive(Clone)]
-    pub struct ProposeCredentialV2;
-    #[derive(Clone)]
-    pub struct OfferCredentialV2;
-    #[derive(Clone)]
-    pub struct RequestCredentialV2;
-    #[derive(Clone)]
-    pub struct IssueCredentialV2;
-}
-
 // TODO - better name?
 
 pub struct RecoveredSMError<T> {

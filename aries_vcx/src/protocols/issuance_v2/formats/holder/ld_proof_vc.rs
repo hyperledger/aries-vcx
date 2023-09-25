@@ -1,10 +1,13 @@
 use async_trait::async_trait;
+use messages::msg_fields::protocols::cred_issuance::v2::{
+    issue_credential::IssueCredentialV2, offer_credential::OfferCredentialV2,
+    propose_credential::ProposeCredentialAttachmentFormatType,
+    request_credential::RequestCredentialAttachmentFormatType,
+};
+use shared_vcx::maybe_known::MaybeKnown;
 
 use super::HolderCredentialIssuanceFormat;
-use crate::{
-    errors::error::VcxResult,
-    protocols::issuance_v2::messages::{IssueCredentialV2, OfferCredentialV2},
-};
+use crate::errors::error::VcxResult;
 
 // TODO - delete, this is just a mock
 pub struct LdProofHolderCredentialIssuanceFormat;
@@ -23,11 +26,11 @@ impl HolderCredentialIssuanceFormat for LdProofHolderCredentialIssuanceFormat {
         true
     }
 
-    fn get_proposal_attachment_format() -> String {
-        String::from("aries/ld-proof-vc-detail@v1.0")
+    fn get_proposal_attachment_format() -> MaybeKnown<ProposeCredentialAttachmentFormatType> {
+        MaybeKnown::Known(ProposeCredentialAttachmentFormatType::AriesLdProofVcDetail1_0)
     }
-    fn get_request_attachment_format() -> String {
-        String::from("aries/ld-proof-vc-detail@v1.0")
+    fn get_request_attachment_format() -> MaybeKnown<RequestCredentialAttachmentFormatType> {
+        MaybeKnown::Known(RequestCredentialAttachmentFormatType::AriesLdProofVcDetail1_0)
     }
 
     async fn create_proposal_attachment_content(

@@ -2,14 +2,19 @@ use std::{collections::HashMap, marker::PhantomData, sync::Arc};
 
 use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
 use async_trait::async_trait;
+use messages::msg_fields::protocols::cred_issuance::v2::{
+    issue_credential::IssueCredentialAttachmentFormatType,
+    offer_credential::OfferCredentialAttachmentFormatType, request_credential::RequestCredentialV2,
+};
+use shared_vcx::maybe_known::MaybeKnown;
 
 use super::IssuerCredentialIssuanceFormat;
 use crate::{
     errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
-    protocols::issuance_v2::messages::RequestCredentialV2,
     utils::openssl::encode,
 };
 
+// TODO - rebrand all to hyperledger
 pub struct AnoncredsIssuerCredentialIssuanceFormat<'a> {
     _marker: &'a PhantomData<()>,
 }
@@ -54,11 +59,11 @@ impl<'a> IssuerCredentialIssuanceFormat for AnoncredsIssuerCredentialIssuanceFor
         false
     }
 
-    fn get_offer_attachment_format() -> String {
-        String::from("anoncreds/credential-offer@v1.0")
+    fn get_offer_attachment_format() -> MaybeKnown<OfferCredentialAttachmentFormatType> {
+        MaybeKnown::Known(OfferCredentialAttachmentFormatType::HyperledgerIndyCredentialAbstract2_0)
     }
-    fn get_credential_attachment_format() -> String {
-        String::from("anoncreds/credential@v1.0")
+    fn get_credential_attachment_format() -> MaybeKnown<IssueCredentialAttachmentFormatType> {
+        MaybeKnown::Known(IssueCredentialAttachmentFormatType::HyperledgerIndyCredential2_0)
     }
 
     // https://github.com/hyperledger/aries-rfcs/blob/main/features/0771-anoncreds-attachments/README.md#credential-offer-format

@@ -4,19 +4,23 @@ use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
 };
 use async_trait::async_trait;
+use messages::msg_fields::protocols::cred_issuance::v2::{
+    issue_credential::IssueCredentialV2, offer_credential::OfferCredentialV2,
+    propose_credential::ProposeCredentialAttachmentFormatType,
+    request_credential::RequestCredentialAttachmentFormatType,
+};
+use shared_vcx::maybe_known::MaybeKnown;
 
 use super::HolderCredentialIssuanceFormat;
 use crate::{
     errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
-    protocols::{
-        issuance::holder::state_machine::{
-            _parse_rev_reg_id_from_credential, create_anoncreds_credential_request,
-            parse_cred_def_id_from_cred_offer,
-        },
-        issuance_v2::messages::{IssueCredentialV2, OfferCredentialV2},
+    protocols::issuance::holder::state_machine::{
+        _parse_rev_reg_id_from_credential, create_anoncreds_credential_request,
+        parse_cred_def_id_from_cred_offer,
     },
 };
 
+// TODO - rebrand this all to "hyperledger" handler
 pub struct AnoncredsHolderCredentialIssuanceFormat<'a> {
     _data: &'a PhantomData<()>,
 }
@@ -25,6 +29,7 @@ pub struct AnoncredsCreateProposalInput {
     pub cred_filter: AnoncredsCredentialFilter,
 }
 
+// TODO - rebrand this all to "hyperledger" handler
 #[derive(Default, Serialize, Deserialize)]
 pub struct AnoncredsCredentialFilter {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -75,12 +80,14 @@ impl<'a> HolderCredentialIssuanceFormat for AnoncredsHolderCredentialIssuanceFor
         false
     }
 
-    fn get_proposal_attachment_format() -> String {
-        String::from("anoncreds/credential-filter@v1.0")
+    fn get_proposal_attachment_format() -> MaybeKnown<ProposeCredentialAttachmentFormatType> {
+        MaybeKnown::Known(ProposeCredentialAttachmentFormatType::HyperledgerIndyCredentialFilter2_0)
     }
 
-    fn get_request_attachment_format() -> String {
-        String::from("anoncreds/credential-request@v1.0")
+    fn get_request_attachment_format() -> MaybeKnown<RequestCredentialAttachmentFormatType> {
+        MaybeKnown::Known(
+            RequestCredentialAttachmentFormatType::HyperledgerIndyCredentialRequest2_0,
+        )
     }
 
     async fn create_proposal_attachment_content(
