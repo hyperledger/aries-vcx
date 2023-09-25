@@ -1,6 +1,8 @@
 use libvcx_core::{
     api_vcx::api_global::{ledger, settings::settings_init_issuer_config, wallet},
-    aries_vcx::aries_vcx_core::wallet::indy::{IssuerConfig, RestoreWalletConfigs, WalletConfig},
+    aries_vcx::aries_vcx_core::wallet::indy::{
+        wallet::delete_wallet, IssuerConfig, RestoreWalletConfigs, WalletConfig,
+    },
     errors::error::{LibvcxError, LibvcxErrorKind},
     serde_json,
     serde_json::json,
@@ -130,7 +132,7 @@ pub async fn wallet_delete(wallet_config: String) -> napi::Result<()> {
         })
         .map_err(to_napi_err)?;
 
-    wallet::delete_wallet(&wallet_config)
+    delete_wallet(&wallet_config)
         .await
         .map_err(|e| napi::Error::from_reason(e.to_string()))
 }

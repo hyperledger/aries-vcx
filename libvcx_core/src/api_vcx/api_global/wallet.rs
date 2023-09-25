@@ -15,7 +15,7 @@ use aries_vcx::{
             base_wallet::BaseWallet,
             indy::{
                 internal::{close_search_wallet, fetch_next_records_wallet, open_search_wallet},
-                wallet::import,
+                wallet::{close_wallet, create_and_open_wallet, delete_wallet, import},
                 IndySdkWallet, IssuerConfig, RestoreWalletConfigs, WalletConfig,
             },
         },
@@ -31,7 +31,8 @@ use crate::{
         get_main_anoncreds, get_main_indy_ledger_write, get_main_wallet, try_get_main_wallet,
     },
     errors::{
-        error::LibvcxResult, mapping_from_ariesvcx::map_ariesvcx_result,
+        error::{LibvcxError, LibvcxErrorKind, LibvcxResult},
+        mapping_from_ariesvcx::map_ariesvcx_result,
         mapping_from_ariesvcxcore::map_ariesvcx_core_result,
     },
 };
@@ -293,7 +294,10 @@ pub async fn wallet_migrate(wallet_config: &WalletConfig) -> LibvcxResult<()> {
     if let Err(e) = migration_res {
         close_wallet(dest_wallet_handle).await.ok();
         delete_wallet(wallet_config).await.ok();
-        Err(LibvcxError::from_msg(LibvcxErrorKind::WalletMigrationFailed, e))
+        Err(LibvcxError::from_msg(
+            LibvcxErrorKind::WalletMigrationFailed,
+            e,
+        ))
     } else {
         setup_wallet(dest_wallet_handle)?;
         close_wallet(src_wallet_handle).await?;
@@ -425,7 +429,7 @@ pub mod tests {
     async fn test_wallet_create() {
         let _setup = SetupEmpty::init();
 
-        let wallet_name = format!("test_create_wallet_{}", uuid::Uuid::new_v4().to_string());
+        let wallet_name = format!("test_create_wallet_{}", uuid::Uuid::new_v4());
         let config: WalletConfig = serde_json::from_value(json!({
             "wallet_name": wallet_name,
             "wallet_key": DEFAULT_WALLET_KEY,
