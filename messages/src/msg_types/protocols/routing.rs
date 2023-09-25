@@ -43,7 +43,10 @@ mod tests {
 
     #[test]
     fn test_version_resolution_routing() {
-        test_utils::test_msg_type_resolution("https://didcomm.org/routing/1.255", RoutingTypeV1::new_v1_0())
+        test_utils::test_msg_type_resolution(
+            "https://didcomm.org/routing/1.255",
+            RoutingTypeV1::new_v1_0(),
+        )
     }
 
     #[test]
@@ -57,6 +60,10 @@ mod tests {
 
     #[test]
     fn test_msg_type_forward() {
-        test_utils::test_msg_type("https://didcomm.org/routing/1.0", "forward", RoutingTypeV1::new_v1_0())
+        test_utils::test_msg_type(
+            "https://didcomm.org/routing/1.0",
+            "forward",
+            RoutingTypeV1::new_v1_0(),
+        )
     }
 }

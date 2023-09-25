@@ -60,7 +60,10 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
 
     async fn prover_get_credentials(&self, filter_json: Option<&str>) -> VcxCoreResult<String>;
 
-    async fn prover_get_credentials_for_proof_req(&self, proof_request_json: &str) -> VcxCoreResult<String>;
+    async fn prover_get_credentials_for_proof_req(
+        &self,
+        proof_request_json: &str,
+    ) -> VcxCoreResult<String>;
 
     async fn prover_create_credential_req(
         &self,
@@ -100,8 +103,14 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         attrs: &str,
     ) -> VcxCoreResult<(String, String)>;
 
-    // TODO - FUTURE - think about moving this to somewhere else, as it aggregates other calls (not PURE Anoncreds)
-    async fn revoke_credential_local(&self, tails_dir: &str, rev_reg_id: &str, cred_rev_id: &str) -> VcxCoreResult<()>;
+    // TODO - FUTURE - think about moving this to somewhere else, as it aggregates other calls (not
+    // PURE Anoncreds)
+    async fn revoke_credential_local(
+        &self,
+        tails_dir: &str,
+        rev_reg_id: &str,
+        cred_rev_id: &str,
+    ) -> VcxCoreResult<()>;
 
     async fn get_rev_reg_delta(&self, rev_reg_id: &str) -> VcxCoreResult<Option<String>>;
 

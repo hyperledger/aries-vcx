@@ -5,10 +5,11 @@ use serde::{Deserialize, Serialize};
 use shared_vcx::misc::utils::CowStr;
 
 use self::{
-    basic_message::BasicMessageType, connection::ConnectionType, cred_issuance::CredentialIssuanceType,
-    discover_features::DiscoverFeaturesType, notification::NotificationType, out_of_band::OutOfBandType,
-    present_proof::PresentProofType, report_problem::ReportProblemType, revocation::RevocationType,
-    routing::RoutingType, signature::SignatureType, trust_ping::TrustPingType,
+    basic_message::BasicMessageType, connection::ConnectionType,
+    cred_issuance::CredentialIssuanceType, discover_features::DiscoverFeaturesType,
+    notification::NotificationType, out_of_band::OutOfBandType, present_proof::PresentProofType,
+    report_problem::ReportProblemType, revocation::RevocationType, routing::RoutingType,
+    signature::SignatureType, trust_ping::TrustPingType,
 };
 use crate::{
     error::{MsgTypeError, MsgTypeResult},

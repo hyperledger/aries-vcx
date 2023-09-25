@@ -1,10 +1,14 @@
 use std::sync::Arc;
 
-use aries_vcx::core::profile::profile::Profile;
-use aries_vcx::global::settings::DEFAULT_LINK_SECRET_ALIAS;
-use aries_vcx::utils::constants::TRUSTEE_SEED;
-use aries_vcx::utils::devsetup::{dev_build_featured_profile, dev_setup_wallet_indy};
-use aries_vcx::utils::random::generate_random_seed;
+use aries_vcx::{
+    core::profile::profile::Profile,
+    global::settings::DEFAULT_LINK_SECRET_ALIAS,
+    utils::{
+        constants::TRUSTEE_SEED,
+        devsetup::{dev_build_featured_profile, dev_setup_wallet_indy},
+        random::generate_random_seed,
+    },
+};
 use aries_vcx_core::wallet::indy::IndySdkWallet;
 
 pub struct TestAgent {

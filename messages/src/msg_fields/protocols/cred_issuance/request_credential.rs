@@ -37,7 +37,9 @@ mod tests {
 
     use super::*;
     use crate::{
-        decorators::{attachment::tests::make_extended_attachment, thread::tests::make_extended_thread},
+        decorators::{
+            attachment::tests::make_extended_attachment, thread::tests::make_extended_thread,
+        },
         misc::test_utils,
         msg_types::cred_issuance::CredentialIssuanceTypeV1_0,
     };

@@ -5,10 +5,12 @@ use shared_vcx::maybe_known::MaybeKnown;
 
 use super::{role::Role, Protocol};
 use crate::msg_types::protocols::{
-    basic_message::BasicMessageTypeV1, connection::ConnectionTypeV1, cred_issuance::CredentialIssuanceTypeV1,
-    discover_features::DiscoverFeaturesTypeV1, notification::NotificationTypeV1, out_of_band::OutOfBandTypeV1,
-    present_proof::PresentProofTypeV1, report_problem::ReportProblemTypeV1, revocation::RevocationTypeV2,
-    routing::RoutingTypeV1, signature::SignatureTypeV1, trust_ping::TrustPingTypeV1,
+    basic_message::BasicMessageTypeV1, connection::ConnectionTypeV1,
+    cred_issuance::CredentialIssuanceTypeV1, discover_features::DiscoverFeaturesTypeV1,
+    notification::NotificationTypeV1, out_of_band::OutOfBandTypeV1,
+    present_proof::PresentProofTypeV1, report_problem::ReportProblemTypeV1,
+    revocation::RevocationTypeV2, routing::RoutingTypeV1, signature::SignatureTypeV1,
+    trust_ping::TrustPingTypeV1,
 };
 type RegistryMap = HashMap<(&'static str, u8), Vec<RegistryEntry>>;
 
@@ -35,10 +37,19 @@ macro_rules! extract_parts {
     }};
 }
 
-fn map_insert(map: &mut RegistryMap, parts: (&'static str, u8, u8, Vec<MaybeKnown<Role>>, Protocol)) {
+fn map_insert(
+    map: &mut RegistryMap,
+    parts: (&'static str, u8, u8, Vec<MaybeKnown<Role>>, Protocol),
+) {
     let (protocol_name, major, minor, roles, protocol) = parts;
 
-    let str_pid = format!("{}/{}/{}.{}", Protocol::DID_COM_ORG_PREFIX, protocol_name, major, minor);
+    let str_pid = format!(
+        "{}/{}/{}.{}",
+        Protocol::DID_COM_ORG_PREFIX,
+        protocol_name,
+        major,
+        minor
+    );
     let entry = RegistryEntry {
         protocol,
         minor,
@@ -46,7 +57,9 @@ fn map_insert(map: &mut RegistryMap, parts: (&'static str, u8, u8, Vec<MaybeKnow
         roles,
     };
 
-    map.entry((protocol_name, major)).or_insert(Vec::new()).push(entry);
+    map.entry((protocol_name, major))
+        .or_insert(Vec::new())
+        .push(entry);
 }
 
 lazy_static! {

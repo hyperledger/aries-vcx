@@ -1,11 +1,13 @@
 use std::sync::{Arc, Mutex};
 
-use crate::error::*;
-use crate::storage::object_cache::ObjectCache;
-use crate::storage::Storage;
 use aries_vcx::{
     common::primitives::credential_definition::{CredentialDef, CredentialDefConfig},
     core::profile::profile::Profile,
+};
+
+use crate::{
+    error::*,
+    storage::{object_cache::ObjectCache, Storage},
 };
 
 pub struct ServiceCredentialDefinitions {
@@ -46,7 +48,10 @@ impl ServiceCredentialDefinitions {
     }
 
     pub fn cred_def_json(&self, thread_id: &str) -> AgentResult<String> {
-        self.cred_defs.get(thread_id)?.get_data_json().map_err(|err| err.into())
+        self.cred_defs
+            .get(thread_id)?
+            .get_data_json()
+            .map_err(|err| err.into())
     }
 
     pub fn find_by_schema_id(&self, schema_id: &str) -> AgentResult<Vec<String>> {

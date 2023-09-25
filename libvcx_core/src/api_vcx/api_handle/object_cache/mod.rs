@@ -1,11 +1,13 @@
-use std::collections::HashMap;
-use std::ops::Deref;
-use std::ops::DerefMut;
-use std::sync::{Mutex, RwLock, RwLockReadGuard, RwLockWriteGuard};
+use std::{
+    collections::HashMap,
+    ops::{Deref, DerefMut},
+    sync::{Mutex, RwLock, RwLockReadGuard, RwLockWriteGuard},
+};
 
-use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 use futures::future::BoxFuture;
 use rand::Rng;
+
+use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 
 pub struct ObjectCache<T>
 where
@@ -70,7 +72,10 @@ where
                 Ok(obj) => closure(obj.deref()),
                 Err(_) => Err(LibvcxError::from_msg(
                     LibvcxErrorKind::ObjectAccessError,
-                    format!("[ObjectCache: {}] get >> Unable to lock Object Store", self.cache_name),
+                    format!(
+                        "[ObjectCache: {}] get >> Unable to lock Object Store",
+                        self.cache_name
+                    ),
                 )),
             },
             None => Err(LibvcxError::from_msg(
@@ -106,6 +111,7 @@ where
         }
     }
 
+    #[allow(clippy::await_holding_lock)]
     pub async fn get_async<'up, F: 'up, R>(&self, handle: u32, closure: F) -> LibvcxResult<R>
     where
         for<'r> F: Fn(&'r T, [&'r &'up (); 0]) -> BoxFuture<'r, LibvcxResult<R>>,
@@ -158,6 +164,7 @@ where
         }
     }
 
+    #[allow(clippy::await_holding_lock)]
     pub async fn get_mut_async<'up, F: 'up, R>(&self, handle: u32, closure: F) -> LibvcxResult<R>
     where
         for<'r> F: Fn(&'r mut T, [&'r &'up (); 0]) -> BoxFuture<'r, LibvcxResult<R>>,
@@ -185,7 +192,10 @@ where
     }
 
     pub fn add(&self, obj: T) -> LibvcxResult<u32> {
-        trace!("[ObjectCache: {}] add >> Adding object to cache", self.cache_name);
+        trace!(
+            "[ObjectCache: {}] add >> Adding object to cache",
+            self.cache_name
+        );
         let mut store = self._lock_store_write()?;
 
         let mut new_handle = rand::thread_rng().gen::<u32>();
@@ -205,7 +215,8 @@ where
                 Err(LibvcxError::from_msg(
                     LibvcxErrorKind::InvalidHandle,
                     format!(
-                        "[ObjectCache: {}] add >> generated handle {} conflicts with existing handle, failed to store object",
+                        "[ObjectCache: {}] add >> generated handle {} conflicts with existing \
+                         handle, failed to store object",
                         self.cache_name, new_handle
                     ),
                 ))
@@ -244,7 +255,8 @@ where
             Some(_) => {}
             None => {
                 warn!(
-                    "[ObjectCache: {}] release >> Object not found for handle: {}. Perhaps already released?",
+                    "[ObjectCache: {}] release >> Object not found for handle: {}. Perhaps \
+                     already released?",
                     self.cache_name, handle
                 );
             }
@@ -253,12 +265,16 @@ where
     }
 
     pub fn drain(&self) -> LibvcxResult<()> {
-        warn!("[ObjectCache: {}] drain >> Draining object cache", self.cache_name);
+        warn!(
+            "[ObjectCache: {}] drain >> Draining object cache",
+            self.cache_name
+        );
         let mut store = self._lock_store_write()?;
         store.clear();
         Ok(())
     }
 
+    #[allow(clippy::len_without_is_empty)]
     pub fn len(&self) -> LibvcxResult<usize> {
         let store = self._lock_store_read()?;
         Ok(store.len())
@@ -284,7 +300,7 @@ mod tests {
 
         let test: ObjectCache<u32> = ObjectCache::new("cache1-u32");
         let handle = test.add(2222).unwrap();
-        let rtn = test.get(handle, |obj| Ok(obj.clone()));
+        let rtn = test.get(handle, |obj| Ok(*obj));
         assert_eq!(2222, rtn.unwrap())
     }
 

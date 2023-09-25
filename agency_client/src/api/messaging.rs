@@ -1,12 +1,15 @@
-use crate::agency_client::AgencyClient;
-use crate::api::downloaded_message::DownloadedMessageEncrypted;
-use crate::errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
-use crate::messages::a2a_message::Client2AgencyMessage;
-use crate::messages::get_messages::GetMessagesBuilder;
-use crate::messages::update_message::{UIDsByConn, UpdateMessageStatusByConnectionsBuilder};
-use crate::testing::mocking::AgencyMock;
-use crate::testing::{mocking, test_constants};
-use crate::MessageStatusCode;
+use crate::{
+    agency_client::AgencyClient,
+    api::downloaded_message::DownloadedMessageEncrypted,
+    errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult},
+    messages::{
+        a2a_message::Client2AgencyMessage,
+        get_messages::GetMessagesBuilder,
+        update_message::{UIDsByConn, UpdateMessageStatusByConnectionsBuilder},
+    },
+    testing::{mocking, mocking::AgencyMock, test_constants},
+    MessageStatusCode,
+};
 
 impl AgencyClient {
     pub async fn update_messages(

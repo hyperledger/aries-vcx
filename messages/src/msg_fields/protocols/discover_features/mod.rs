@@ -17,7 +17,8 @@ use crate::{
     msg_fields::traits::DelayedSerde,
     msg_types::{
         protocols::discover_features::{
-            DiscoverFeaturesType as DiscoverFeaturesKind, DiscoverFeaturesTypeV1, DiscoverFeaturesTypeV1_0,
+            DiscoverFeaturesType as DiscoverFeaturesKind, DiscoverFeaturesTypeV1,
+            DiscoverFeaturesTypeV1_0,
         },
         MsgWithType, Protocol, Role,
     },
@@ -32,19 +33,26 @@ pub enum DiscoverFeatures {
 impl DelayedSerde for DiscoverFeatures {
     type MsgType<'a> = (DiscoverFeaturesKind, &'a str);
 
-    fn delayed_deserialize<'de, D>(msg_type: Self::MsgType<'de>, deserializer: D) -> Result<Self, D::Error>
+    fn delayed_deserialize<'de, D>(
+        msg_type: Self::MsgType<'de>,
+        deserializer: D,
+    ) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
         let (protocol, kind_str) = msg_type;
 
         let kind = match protocol {
-            DiscoverFeaturesKind::V1(DiscoverFeaturesTypeV1::V1_0(kind)) => kind.kind_from_str(kind_str),
+            DiscoverFeaturesKind::V1(DiscoverFeaturesTypeV1::V1_0(kind)) => {
+                kind.kind_from_str(kind_str)
+            }
         };
 
         match kind.map_err(D::Error::custom)? {
             DiscoverFeaturesTypeV1_0::Query => Query::deserialize(deserializer).map(From::from),
-            DiscoverFeaturesTypeV1_0::Disclose => Disclose::deserialize(deserializer).map(From::from),
+            DiscoverFeaturesTypeV1_0::Disclose => {
+                Disclose::deserialize(deserializer).map(From::from)
+            }
         }
     }
 

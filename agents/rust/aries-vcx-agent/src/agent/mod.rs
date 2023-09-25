@@ -4,4 +4,4 @@ mod init;
 
 pub use agent_config::AgentConfig;
 pub use agent_struct::Agent;
-pub use init::{AgencyInitConfig, InitConfig, PoolInitConfig, WalletInitConfig};
+pub use init::{InitConfig, PoolInitConfig, WalletInitConfig};

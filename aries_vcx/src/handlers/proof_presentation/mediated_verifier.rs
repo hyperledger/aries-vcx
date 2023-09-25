@@ -1,18 +1,24 @@
 use std::collections::HashMap;
 
-use messages::msg_fields::protocols::present_proof::PresentProof;
-use messages::AriesMessage;
+use messages::{msg_fields::protocols::present_proof::PresentProof, AriesMessage};
 
-use crate::handlers::proof_presentation::verifier::Verifier;
-use crate::handlers::util::{matches_opt_thread_id, matches_thread_id};
-use crate::protocols::proof_presentation::verifier::state_machine::VerifierState;
+use crate::{
+    handlers::{
+        proof_presentation::verifier::Verifier,
+        util::{matches_opt_thread_id, matches_thread_id},
+    },
+    protocols::proof_presentation::verifier::state_machine::VerifierState,
+};
 
 #[allow(clippy::unwrap_used)]
 pub fn verifier_find_message_to_handle(
     sm: &Verifier,
     messages: HashMap<String, AriesMessage>,
 ) -> Option<(String, AriesMessage)> {
-    trace!("verifier_find_message_to_handle >>> messages: {:?}", messages);
+    trace!(
+        "verifier_find_message_to_handle >>> messages: {:?}",
+        messages
+    );
     for (uid, message) in messages {
         match sm.get_state() {
             VerifierState::Initial => match &message {
@@ -36,7 +42,8 @@ pub fn verifier_find_message_to_handle(
                     }
                 }
                 AriesMessage::ReportProblem(problem_report) => {
-                    if matches_opt_thread_id!(problem_report, sm.get_thread_id().unwrap().as_str()) {
+                    if matches_opt_thread_id!(problem_report, sm.get_thread_id().unwrap().as_str())
+                    {
                         return Some((uid, message));
                     }
                 }

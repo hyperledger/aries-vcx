@@ -1,8 +1,9 @@
-//! Module that handles operations related solely to the protocol of a message, instead of it's content.
-//! The main type, [`Protocol`], represents a protocol name along with its (both major and minor) version.
+//! Module that handles operations related solely to the protocol of a message, instead of it's
+//! content. The main type, [`Protocol`], represents a protocol name along with its (both major and
+//! minor) version.
 //!
-//! The module contains other types that work adjacently to the [`Protocol`] to represent a message kind,
-//! and along the protocol they make up the `@type` field of a message.
+//! The module contains other types that work adjacently to the [`Protocol`] to represent a message
+//! kind, and along the protocol they make up the `@type` field of a message.
 
 pub mod protocols;
 pub mod registry;
@@ -11,13 +12,12 @@ pub mod traits;
 
 use std::{marker::PhantomData, str::FromStr};
 
-use serde::Serialize;
-
 pub use protocols::{
-    basic_message, connection, cred_issuance, discover_features, notification, out_of_band, present_proof,
-    report_problem, revocation, routing, trust_ping, Protocol,
+    basic_message, connection, cred_issuance, discover_features, notification, out_of_band,
+    present_proof, report_problem, revocation, routing, trust_ping, Protocol,
 };
 pub use role::Role;
+use serde::Serialize;
 
 use self::traits::MessageKind;
 
@@ -100,12 +100,13 @@ where
 /// Type used for binding an impl of [`MessageKind`] to a variant of an enum implementing
 /// [`crate::msg_types::traits::ProtocolVersion`].
 ///
-/// The main reasons for abstracting over [`PhantomData`] is to make the generic type easier on the eyes
-/// and, more importantly, to be able to define a method to convert from a `&str` to the bound type [`T`].
+/// The main reasons for abstracting over [`PhantomData`] is to make the generic type easier on the
+/// eyes and, more importantly, to be able to define a method to convert from a `&str` to the bound
+/// type [`T`].
 ///
-/// Technically, a trait implemented on [`PhantomData`] would've achieved the same thing, but would require
-/// an import wherever it was used. A simple function accepting the [`PhantomData`] argument along with the `&str`
-/// would've also worked, but it would be less ergonomic.
+/// Technically, a trait implemented on [`PhantomData`] would've achieved the same thing, but would
+/// require an import wherever it was used. A simple function accepting the [`PhantomData`] argument
+/// along with the `&str` would've also worked, but it would be less ergonomic.
 ///
 /// As per why the generic type is `fn() -> T` and not just `T`, the short story is *ownership*.
 ///

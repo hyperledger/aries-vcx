@@ -1,14 +1,15 @@
 use std::sync::Arc;
 
+use aries_vcx::{
+    global::settings::WALLET_KDF_RAW,
+    utils::devsetup::{dev_build_profile_modular, SetupProfile},
+};
+use aries_vcx_core::{
+    wallet::indy::{wallet::create_and_open_wallet, IndySdkWallet, WalletConfig},
+    WalletHandle,
+};
 use async_trait::async_trait;
 use uuid::Uuid;
-
-use aries_vcx::utils::devsetup::dev_build_profile_modular;
-use aries_vcx::{global::settings::WALLET_KDF_RAW, utils::devsetup::SetupProfile};
-use aries_vcx_core::wallet::indy::wallet::create_and_open_wallet;
-use aries_vcx_core::wallet::indy::IndySdkWallet;
-use aries_vcx_core::wallet::indy::WalletConfig;
-use aries_vcx_core::WalletHandle;
 
 use crate::utils::test_agent::TestAgent;
 

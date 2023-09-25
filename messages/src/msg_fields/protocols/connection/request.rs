@@ -1,12 +1,11 @@
 use serde::{Deserialize, Serialize};
 use typed_builder::TypedBuilder;
 
+use super::ConnectionData;
 use crate::{
     decorators::{thread::Thread, timing::Timing},
     msg_parts::MsgParts,
 };
-
-use super::ConnectionData;
 
 pub type Request = MsgParts<RequestContent, RequestDecorators>;
 

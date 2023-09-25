@@ -1,5 +1,7 @@
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
-use messages::msg_fields::protocols::connection::{problem_report::ProblemReport, request::Request, ConnectionData};
+use messages::msg_fields::protocols::connection::{
+    problem_report::ProblemReport, request::Request, ConnectionData,
+};
 
 use crate::protocols::mediated_connection::invitee::states::initial::InitialState;
 
@@ -50,7 +52,8 @@ pub struct RespondedState {
 impl From<(RespondedState, ProblemReport)> for InitialState {
     fn from((_state, problem_report): (RespondedState, ProblemReport)) -> InitialState {
         trace!(
-            "ConnectionInvitee: transit state from RespondedState to InitialState, problem_report: {:?}",
+            "ConnectionInvitee: transit state from RespondedState to InitialState, \
+             problem_report: {:?}",
             problem_report
         );
         InitialState::new(Some(problem_report), None)

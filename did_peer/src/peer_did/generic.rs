@@ -1,3 +1,7 @@
+use did_parser::Did;
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
+
+use super::PeerDid;
 use crate::{
     error::DidPeerError,
     peer_did::{
@@ -6,10 +10,6 @@ use crate::{
         validate::validate,
     },
 };
-use did_parser::Did;
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
-
-use super::PeerDid;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum GenericPeerDid {
@@ -27,15 +27,22 @@ impl GenericPeerDid {
         let numalgo = parse_numalgo(&did)?;
         validate(&did)?;
         let parsed = match numalgo {
-            NumalgoKind::MultipleInceptionKeys(numalgo) => GenericPeerDid::Numalgo2(PeerDid { did, numalgo }),
-            _ => GenericPeerDid::Numalgo3(PeerDid { did, numalgo: Numalgo3 }),
+            NumalgoKind::MultipleInceptionKeys(numalgo) => {
+                GenericPeerDid::Numalgo2(PeerDid { did, numalgo })
+            }
+            _ => GenericPeerDid::Numalgo3(PeerDid {
+                did,
+                numalgo: Numalgo3,
+            }),
         };
         Ok(parsed)
     }
 
     pub fn numalgo(&self) -> NumalgoKind {
         match self {
-            GenericPeerDid::Numalgo2(peer_did) => NumalgoKind::MultipleInceptionKeys(peer_did.numalgo),
+            GenericPeerDid::Numalgo2(peer_did) => {
+                NumalgoKind::MultipleInceptionKeys(peer_did.numalgo)
+            }
             GenericPeerDid::Numalgo3(peer_did) => NumalgoKind::DidShortening(peer_did.numalgo),
         }
     }
@@ -75,7 +82,8 @@ mod tests {
     const INVALID_PEER_DID_NUMALGO2: &str = "did:peer:2\
        .SeyJ0IjoiZG0iLCJzIjoiaHR0cHM6Ly9leGFtcGxlLmNvbS9lbmRwb2ludCIsInIiOlsiZGlkOmV4YW1wbGU6c29tZW1lZGlhdG9yI3NvbWVrZXkiXSwiYSI6WyJkaWRjb21tL3YyIiwiZGlkY29tbS9haXAyO2Vudj1yZmM1ODciXX1";
 
-    const VALID_PEER_DID_NUMALGO3: &str = "did:peer:3.d8da5079c166b183cf815ee27747f34e116977103d8b23c96dcba9a9d9429688";
+    const VALID_PEER_DID_NUMALGO3: &str =
+        "did:peer:3.d8da5079c166b183cf815ee27747f34e116977103d8b23c96dcba9a9d9429688";
 
     const INVALID_PEER_DID_NUMALGO3: &str =
         "did:peer:3.d8da5079c166b183cfz15ee27747f34e116977103d8b23c96dcba9a9d9429689";

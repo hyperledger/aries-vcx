@@ -1,7 +1,4 @@
 use base64::{engine::general_purpose::STANDARD_NO_PAD, Engine};
-use public_key::{Key, KeyType};
-use serde::{Deserialize, Deserializer, Serialize};
-
 use did_doc::{
     did_parser::{Did, DidUrl},
     schema::{
@@ -10,6 +7,8 @@ use did_doc::{
         verification_method::{VerificationMethod, VerificationMethodType},
     },
 };
+use public_key::{Key, KeyType};
+use serde::{Deserialize, Deserializer, Serialize};
 use serde_json::{json, Value};
 
 use crate::{extra_fields::ExtraFieldsSov, service::legacy::ServiceLegacy};
@@ -66,7 +65,9 @@ fn collect_authentication_fingerprints(legacy_ddo: &LegacyDidDoc) -> Result<Vec<
 
     for auth in &legacy_ddo.authentication {
         let resolved_legacy_authentication_key = match auth.verification_method_type.as_str() {
-            "Ed25519SignatureAuthentication2018" => resolve_legacy_authentication_key(auth, &legacy_ddo.public_key)?,
+            "Ed25519SignatureAuthentication2018" => {
+                resolve_legacy_authentication_key(auth, &legacy_ddo.public_key)?
+            }
             "Ed25519Signature2018" => auth.public_key.clone(),
             _ => {
                 continue;
@@ -88,7 +89,9 @@ fn collect_authentication_fingerprints(legacy_ddo: &LegacyDidDoc) -> Result<Vec<
     for vm in &legacy_ddo.public_key {
         // Ed25519VerificationKey2018 check is used due to aries-vcx using this as key type in the
         // legacy did doc
-        if !&["Ed25519Signature2018", "Ed25519VerificationKey2018"].contains(&vm.verification_method_type.as_str()) {
+        if !&["Ed25519Signature2018", "Ed25519VerificationKey2018"]
+            .contains(&vm.verification_method_type.as_str())
+        {
             continue;
         }
 
@@ -125,7 +128,10 @@ fn collect_encoded_services(legacy_ddo: &LegacyDidDoc) -> Vec<String> {
     encoded_services
 }
 
-fn construct_peer_did(authentication_fingerprints: &[String], encoded_services: &[String]) -> Result<Did, String> {
+fn construct_peer_did(
+    authentication_fingerprints: &[String],
+    encoded_services: &[String],
+) -> Result<Did, String> {
     // TODO: Perhaps proper ID is did:peer:3 with alsoKnowAs set to did:peer:2 (or vice versa?)
     let mut did = "did:peer:2".to_string();
 
@@ -153,7 +159,7 @@ fn construct_new_did_document(
         builder = builder.add_verification_method(
             VerificationMethod::builder(
                 id,
-                did.clone().into(),
+                did.clone(),
                 VerificationMethodType::Ed25519VerificationKey2018,
             )
             .add_public_key_multibase(fingerprint.clone())
@@ -162,41 +168,44 @@ fn construct_new_did_document(
     }
 
     for service in &legacy_ddo.service {
-        builder = builder.add_service(TryInto::<Service<ExtraFieldsSov>>::try_into(service.clone()).map_err(
-            |err| {
+        builder = builder.add_service(
+            TryInto::<Service<ExtraFieldsSov>>::try_into(service.clone()).map_err(|err| {
                 format!(
                     "Error converting legacy service to new service: {:?}, error: {:?}",
                     service, err
                 )
-            },
-        )?);
+            })?,
+        );
     }
 
     Ok(builder.build())
 }
 
 // https://github.com/TimoGlastra/legacy-did-transformation
-fn convert_legacy_ddo_to_new(legacy_ddo: LegacyDidDoc) -> Result<DidDocument<ExtraFieldsSov>, String> {
+fn convert_legacy_ddo_to_new(
+    legacy_ddo: LegacyDidDoc,
+) -> Result<DidDocument<ExtraFieldsSov>, String> {
     let authentication_fingerprints = collect_authentication_fingerprints(&legacy_ddo)?;
     let encoded_services = collect_encoded_services(&legacy_ddo);
 
     let did = construct_peer_did(&authentication_fingerprints, &encoded_services)?;
 
-    Ok(construct_new_did_document(
-        &legacy_ddo,
-        &authentication_fingerprints,
-        did,
-    )?)
+    construct_new_did_document(&legacy_ddo, &authentication_fingerprints, did)
 }
 
-pub fn deserialize_legacy_or_new<'de, D>(deserializer: D) -> Result<DidDocument<ExtraFieldsSov>, D::Error>
+pub fn deserialize_legacy_or_new<'de, D>(
+    deserializer: D,
+) -> Result<DidDocument<ExtraFieldsSov>, D::Error>
 where
     D: Deserializer<'de>,
 {
     let val = Value::deserialize(deserializer)?;
 
     match serde_json::from_value::<LegacyDidDoc>(val.clone()) {
-        Ok(legacy_doc) => Ok(convert_legacy_ddo_to_new(legacy_doc).map_err(serde::de::Error::custom)?),
-        Err(_err) => serde_json::from_value::<DidDocument<ExtraFieldsSov>>(val).map_err(serde::de::Error::custom),
+        Ok(legacy_doc) => {
+            Ok(convert_legacy_ddo_to_new(legacy_doc).map_err(serde::de::Error::custom)?)
+        }
+        Err(_err) => serde_json::from_value::<DidDocument<ExtraFieldsSov>>(val)
+            .map_err(serde::de::Error::custom),
     }
 }

@@ -2,11 +2,14 @@ use serde::{Deserialize, Serialize};
 use typed_builder::TypedBuilder;
 
 use crate::{
-    msg_fields::protocols::report_problem::{ProblemReport, ProblemReportContent, ProblemReportDecorators},
+    msg_fields::protocols::report_problem::{
+        ProblemReport, ProblemReportContent, ProblemReportDecorators,
+    },
     msg_parts::MsgParts,
 };
 
-pub type NotificationProblemReport = MsgParts<NotificationProblemReportContent, ProblemReportDecorators>;
+pub type NotificationProblemReport =
+    MsgParts<NotificationProblemReportContent, ProblemReportDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder)]
 #[serde(transparent)]
@@ -41,11 +44,13 @@ mod tests {
     use super::*;
     use crate::{
         decorators::{
-            localization::tests::make_extended_field_localization, thread::tests::make_extended_thread,
-            timing::tests::make_extended_timing,
+            localization::tests::make_extended_field_localization,
+            thread::tests::make_extended_thread, timing::tests::make_extended_timing,
         },
         misc::test_utils,
-        msg_fields::protocols::report_problem::{Description, Impact, Where, WhereParty, WhoRetries},
+        msg_fields::protocols::report_problem::{
+            Description, Impact, Where, WhereParty, WhoRetries,
+        },
         msg_types::notification::NotificationTypeV1_0,
     };
 
@@ -54,15 +59,21 @@ mod tests {
         let description = Description::builder()
             .code("test_problem_report_code".to_owned())
             .build();
-        let content: NotificationProblemReportContent =
-            ProblemReportContent::builder().description(description).build();
+        let content: NotificationProblemReportContent = ProblemReportContent::builder()
+            .description(description)
+            .build();
         let decorators = ProblemReportDecorators::default();
 
         let expected = json!({
             "description": content.inner.description
         });
 
-        test_utils::test_msg(content, decorators, NotificationTypeV1_0::ProblemReport, expected);
+        test_utils::test_msg(
+            content,
+            decorators,
+            NotificationTypeV1_0::ProblemReport,
+            expected,
+        );
     }
 
     #[test]
@@ -108,8 +119,15 @@ mod tests {
             "fix-hint~l10n": decorators.fix_hint_locale
         });
 
-        let content = NotificationProblemReportContent::builder().inner(content).build();
+        let content = NotificationProblemReportContent::builder()
+            .inner(content)
+            .build();
 
-        test_utils::test_msg(content, decorators, NotificationTypeV1_0::ProblemReport, expected);
+        test_utils::test_msg(
+            content,
+            decorators,
+            NotificationTypeV1_0::ProblemReport,
+            expected,
+        );
     }
 }

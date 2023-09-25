@@ -19,7 +19,7 @@ pub fn attr_names_address() -> (String, String, String, String, String) {
     (address1, address2, city, state, zip)
 }
 
-pub(super) fn attr_names_address_list() -> Vec<String> {
+pub fn attr_names_address_list() -> Vec<String> {
     let (address1, address2, city, state, zip) = attr_names_address();
     vec![address1, address2, city, state, zip]
 }
@@ -62,7 +62,11 @@ pub(super) fn requested_attr_objects(cred_def_id: &str) -> Vec<PresentationAttr>
         .collect()
 }
 
-pub fn create_credential_proposal(schema_id: &str, cred_def_id: &str, comment: &str) -> ProposeCredential {
+pub fn create_credential_proposal(
+    schema_id: &str,
+    cred_def_id: &str,
+    comment: &str,
+) -> ProposeCredential {
     let attrs = credential_data_address_1()
         .as_object()
         .unwrap()

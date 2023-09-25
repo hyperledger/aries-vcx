@@ -1,5 +1,4 @@
-use std::collections::HashMap;
-use std::sync::RwLock;
+use std::{collections::HashMap, sync::RwLock};
 
 use crate::errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 
@@ -26,7 +25,10 @@ pub fn disable_agency_test_mode() {
 fn _set_test_config(key: &str, value: &str) {
     trace!("set_config_value >>> key: {}, value: {}", key, value);
     if !VALID_AGENCY_CONFIG_KEYS.contains(&key) {
-        warn!("Agency settings do not recognize setting key {}. Will be ignored.", key);
+        warn!(
+            "Agency settings do not recognize setting key {}. Will be ignored.",
+            key
+        );
     } else {
         AGENCY_SETTINGS
             .write()

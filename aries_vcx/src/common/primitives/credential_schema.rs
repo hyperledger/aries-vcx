@@ -1,13 +1,19 @@
-use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
-use aries_vcx_core::ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite};
 use std::sync::Arc;
 
-use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
-use crate::global::settings;
-use crate::utils::constants::{DEFAULT_SERIALIZE_VERSION, SCHEMA_ID, SCHEMA_JSON};
-use crate::utils::serialization::ObjectWithVersion;
+use aries_vcx_core::{
+    anoncreds::base_anoncreds::BaseAnonCreds,
+    ledger::base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite},
+};
 
 use super::credential_definition::PublicEntityStateType;
+use crate::{
+    errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
+    global::settings,
+    utils::{
+        constants::{DEFAULT_SERIALIZE_VERSION, SCHEMA_ID, SCHEMA_JSON},
+        serialization::ObjectWithVersion,
+    },
+};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct SchemaData {
@@ -29,7 +35,7 @@ pub struct Schema {
     #[serde(default)]
     pub state: PublicEntityStateType,
     #[serde(default)]
-    schema_json: String, // added in 0.45.0, #[serde(default)] use for backwards compatibility
+    pub schema_json: String, // added in 0.45.0, #[serde(default)] use for backwards compatibility
 }
 
 impl Schema {
@@ -85,13 +91,12 @@ impl Schema {
         })
     }
 
-    pub async fn create_from_ledger_json(
-        ledger: &Arc<dyn AnoncredsLedgerRead>,
+    pub fn create_from_ledger_json(
+        schema_json: &str,
         source_id: &str,
         schema_id: &str,
     ) -> VcxResult<Self> {
-        let schema_json = ledger.get_schema(schema_id, None).await?;
-        let schema_data: SchemaData = serde_json::from_str(&schema_json).map_err(|err| {
+        let schema_data: SchemaData = serde_json::from_str(schema_json).map_err(|err| {
             AriesVcxError::from_msg(
                 AriesVcxErrorKind::InvalidJson,
                 format!("Cannot deserialize schema: {}", err),
@@ -101,7 +106,7 @@ impl Schema {
         Ok(Self {
             source_id: source_id.to_string(),
             schema_id: schema_id.to_string(),
-            schema_json,
+            schema_json: schema_json.to_string(),
             name: schema_data.name,
             version: schema_data.version,
             data: schema_data.attr_names,
@@ -161,7 +166,10 @@ impl Schema {
         Ok(self.state as u32)
     }
 
-    pub async fn get_schema_json(&self, ledger: &Arc<dyn AnoncredsLedgerRead>) -> VcxResult<String> {
+    pub async fn get_schema_json(
+        &self,
+        ledger: &Arc<dyn AnoncredsLedgerRead>,
+    ) -> VcxResult<String> {
         if !self.schema_json.is_empty() {
             Ok(self.schema_json.clone())
         } else {

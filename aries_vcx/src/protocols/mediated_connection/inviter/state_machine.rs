@@ -1,37 +1,41 @@
-use std::clone::Clone;
-use std::collections::HashMap;
-use std::sync::Arc;
+use std::{clone::Clone, collections::HashMap, sync::Arc};
 
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use chrono::Utc;
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
-use messages::decorators::thread::Thread;
-use messages::decorators::timing::Timing;
-use messages::msg_fields::protocols::connection::invitation::{Invitation, PairwiseInvitationContent};
-use messages::msg_fields::protocols::connection::problem_report::{
-    ProblemReport, ProblemReportContent, ProblemReportDecorators,
+use messages::{
+    decorators::{thread::Thread, timing::Timing},
+    msg_fields::protocols::{
+        connection::{
+            invitation::{Invitation, PairwiseInvitationContent},
+            problem_report::{ProblemReport, ProblemReportContent, ProblemReportDecorators},
+            request::Request,
+            response::{Response, ResponseContent, ResponseDecorators},
+            Connection, ConnectionData,
+        },
+        discover_features::{disclose::Disclose, query::QueryContent, ProtocolDescriptor},
+        trust_ping::TrustPing,
+    },
+    AriesMessage,
 };
-use messages::msg_fields::protocols::connection::request::Request;
-use messages::msg_fields::protocols::connection::response::{Response, ResponseContent, ResponseDecorators};
-use messages::msg_fields::protocols::connection::{Connection, ConnectionData};
-use messages::msg_fields::protocols::discover_features::disclose::Disclose;
-use messages::msg_fields::protocols::discover_features::query::QueryContent;
-use messages::msg_fields::protocols::discover_features::ProtocolDescriptor;
-use messages::msg_fields::protocols::trust_ping::TrustPing;
-use messages::AriesMessage;
 use url::Url;
 use uuid::Uuid;
 
-use crate::common::signing::sign_connection_response;
-use crate::errors::error::prelude::*;
-use crate::handlers::util::{verify_thread_id, AnyInvitation};
-use crate::protocols::mediated_connection::inviter::states::completed::CompletedState;
-use crate::protocols::mediated_connection::inviter::states::initial::InitialState;
-use crate::protocols::mediated_connection::inviter::states::invited::InvitedState;
-use crate::protocols::mediated_connection::inviter::states::requested::RequestedState;
-use crate::protocols::mediated_connection::inviter::states::responded::RespondedState;
-use crate::protocols::mediated_connection::pairwise_info::PairwiseInfo;
-use crate::protocols::SendClosureConnection;
+use crate::{
+    common::signing::sign_connection_response,
+    errors::error::prelude::*,
+    handlers::util::{verify_thread_id, AnyInvitation},
+    protocols::{
+        mediated_connection::{
+            inviter::states::{
+                completed::CompletedState, initial::InitialState, invited::InvitedState,
+                requested::RequestedState, responded::RespondedState,
+            },
+            pairwise_info::PairwiseInfo,
+        },
+        SendClosureConnection,
+    },
+};
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct SmConnectionInviter {
@@ -61,7 +65,9 @@ pub enum InviterState {
 
 impl PartialEq for SmConnectionInviter {
     fn eq(&self, other: &Self) -> bool {
-        self.source_id == other.source_id && self.pairwise_info == other.pairwise_info && self.state == other.state
+        self.source_id == other.source_id
+            && self.pairwise_info == other.pairwise_info
+            && self.state == other.state
     }
 }
 
@@ -87,7 +93,12 @@ impl SmConnectionInviter {
         }
     }
 
-    pub fn from(source_id: String, thread_id: String, pairwise_info: PairwiseInfo, state: InviterFullState) -> Self {
+    pub fn from(
+        source_id: String,
+        thread_id: String,
+        pairwise_info: PairwiseInfo,
+        state: InviterFullState,
+    ) -> Self {
         Self {
             source_id,
             thread_id,
@@ -202,7 +213,11 @@ impl SmConnectionInviter {
         }
     }
 
-    pub fn create_invitation(self, routing_keys: Vec<String>, service_endpoint: Url) -> VcxResult<Self> {
+    pub fn create_invitation(
+        self,
+        routing_keys: Vec<String>,
+        service_endpoint: Url,
+    ) -> VcxResult<Self> {
         let state = match self.state {
             InviterFullState::Initial(state) => {
                 let id = self.thread_id.clone();
@@ -240,7 +255,9 @@ impl SmConnectionInviter {
         let (state, thread_id) = match self.state {
             InviterFullState::Invited(_) | InviterFullState::Initial(_) => {
                 if let Err(err) = request.content.connection.did_doc.validate() {
-                    let content = ProblemReportContent::builder().explain(err.to_string()).build();
+                    let content = ProblemReportContent::builder()
+                        .explain(err.to_string())
+                        .build();
 
                     let decorators = ProblemReportDecorators::builder()
                         .thread(Thread::builder().thid(self.thread_id.clone()).build())
@@ -305,7 +322,10 @@ impl SmConnectionInviter {
         Ok(Self { state, ..self })
     }
 
-    pub async fn handle_send_response(self, send_message: SendClosureConnection) -> VcxResult<Self> {
+    pub async fn handle_send_response(
+        self,
+        send_message: SendClosureConnection,
+    ) -> VcxResult<Self> {
         let state = match self.state {
             InviterFullState::Requested(state) => {
                 send_message(
@@ -369,7 +389,8 @@ impl SmConnectionInviter {
 
                 let id = Uuid::new_v4().to_string();
 
-                let con_sig = sign_connection_response(wallet, &self.pairwise_info.pw_vk, &con_data).await?;
+                let con_sig =
+                    sign_connection_response(wallet, &self.pairwise_info.pw_vk, &con_data).await?;
 
                 let content = ResponseContent::builder().connection_sig(con_sig).build();
 
@@ -413,13 +434,13 @@ impl SmConnectionInviter {
 //         use super::*;
 
 //         fn _send_message() -> SendClosureConnection {
-//             Box::new(|_: A2AMessage, _: String, _: AriesDidDoc| Box::pin(async { VcxResult::Ok(()) }))
-//         }
+//             Box::new(|_: A2AMessage, _: String, _: AriesDidDoc| Box::pin(async {
+// VcxResult::Ok(()) }))         }
 
 //         pub async fn inviter_sm() -> SmConnectionInviter {
-//             let pairwise_info = PairwiseInfo::create(&mock_profile().inject_wallet()).await.unwrap();
-//             SmConnectionInviter::new(&source_id(), pairwise_info)
-//         }
+//             let pairwise_info =
+// PairwiseInfo::create(&mock_profile().inject_wallet()).await.unwrap();
+// SmConnectionInviter::new(&source_id(), pairwise_info)         }
 
 //         impl SmConnectionInviter {
 //             fn to_inviter_invited_state(mut self) -> SmConnectionInviter {
@@ -431,9 +452,9 @@ impl SmConnectionInviter {
 
 //             async fn to_inviter_requested_state(mut self) -> SmConnectionInviter {
 //                 self = self.to_inviter_invited_state();
-//                 let new_pairwise_info = PairwiseInfo::create(&mock_profile().inject_wallet()).await.unwrap();
-//                 let new_routing_keys: Vec<String> = vec!["verkey456".into()];
-//                 let new_service_endpoint = String::from("https://example.org/agent");
+//                 let new_pairwise_info =
+// PairwiseInfo::create(&mock_profile().inject_wallet()).await.unwrap();                 let
+// new_routing_keys: Vec<String> = vec!["verkey456".into()];                 let new_service_endpoint = String::from("https://example.org/agent");
 //                 self = self
 //                     .handle_connection_request(
 //                         mock_profile().inject_wallet(),
@@ -577,9 +598,9 @@ impl SmConnectionInviter {
 //                     .await
 //                     .unwrap();
 //                 assert_match!(InviterFullState::Initial(_), did_exchange_sm.state);
-//                 did_exchange_sm = did_exchange_sm.handle_problem_report(_problem_report()).unwrap();
-//                 assert_match!(InviterFullState::Initial(_), did_exchange_sm.state);
-//             }
+//                 did_exchange_sm =
+// did_exchange_sm.handle_problem_report(_problem_report()).unwrap();
+// assert_match!(InviterFullState::Initial(_), did_exchange_sm.state);             }
 
 //             #[tokio::test]
 //             async fn test_did_exchange_handle_exchange_request_message_from_invited_state() {
@@ -604,13 +625,14 @@ impl SmConnectionInviter {
 //                     )
 //                     .await
 //                     .unwrap();
-//                 did_exchange_sm = did_exchange_sm.handle_send_response(_send_message()).await.unwrap();
-//                 assert_match!(InviterFullState::Responded(_), did_exchange_sm.state);
-//             }
+//                 did_exchange_sm =
+// did_exchange_sm.handle_send_response(_send_message()).await.unwrap();
+// assert_match!(InviterFullState::Responded(_), did_exchange_sm.state);             }
 
 //             #[tokio::test]
-//             async fn test_did_exchange_handle_invalid_exchange_request_message_from_invited_state() {
-//                 let _setup = SetupIndyMocks::init();
+//             async fn
+// test_did_exchange_handle_invalid_exchange_request_message_from_invited_state() {
+// let _setup = SetupIndyMocks::init();
 
 //                 let mut did_exchange_sm = inviter_sm().await.to_inviter_invited_state();
 
@@ -644,7 +666,8 @@ impl SmConnectionInviter {
 
 //                 let mut did_exchange_sm = inviter_sm().await.to_inviter_invited_state();
 
-//                 did_exchange_sm = did_exchange_sm.handle_problem_report(_problem_report()).unwrap();
+//                 did_exchange_sm =
+// did_exchange_sm.handle_problem_report(_problem_report()).unwrap();
 
 //                 assert_match!(InviterFullState::Initial(_), did_exchange_sm.state);
 //             }
@@ -703,7 +726,8 @@ impl SmConnectionInviter {
 
 //                 let mut did_exchange_sm = inviter_sm().await.to_inviter_responded_state().await;
 
-//                 did_exchange_sm = did_exchange_sm.handle_problem_report(_problem_report()).unwrap();
+//                 did_exchange_sm =
+// did_exchange_sm.handle_problem_report(_problem_report()).unwrap();
 
 //                 assert_match!(InviterFullState::Initial(_), did_exchange_sm.state);
 //             }
@@ -752,9 +776,9 @@ impl SmConnectionInviter {
 //                 assert!(did_exchange_sm.get_remote_protocols().is_some());
 
 //                 // Problem Report
-//                 did_exchange_sm = did_exchange_sm.handle_problem_report(_problem_report()).unwrap();
-//                 assert_match!(InviterFullState::Completed(_), did_exchange_sm.state);
-//             }
+//                 did_exchange_sm =
+// did_exchange_sm.handle_problem_report(_problem_report()).unwrap();
+// assert_match!(InviterFullState::Completed(_), did_exchange_sm.state);             }
 //         }
 
 //         mod find_message_to_handle {
@@ -772,11 +796,11 @@ impl SmConnectionInviter {
 //                 {
 //                     let messages = map!(
 //                         "key_1".to_string() => A2AMessage::ConnectionRequest(_request()),
-//                         "key_2".to_string() => A2AMessage::ConnectionResponse(_signed_response()),
-//                         "key_3".to_string() => A2AMessage::ConnectionProblemReport(_problem_report()),
-//                         "key_4".to_string() => A2AMessage::Ping(_ping()),
-//                         "key_5".to_string() => A2AMessage::Ack(_ack())
-//                     );
+//                         "key_2".to_string() =>
+// A2AMessage::ConnectionResponse(_signed_response()),                         "key_3".to_string()
+// => A2AMessage::ConnectionProblemReport(_problem_report()),
+// "key_4".to_string() => A2AMessage::Ping(_ping()),                         "key_5".to_string() =>
+// A2AMessage::Ack(_ack())                     );
 
 //                     assert!(connection.find_message_to_update_state(messages).is_none());
 //                 }
@@ -796,23 +820,23 @@ impl SmConnectionInviter {
 //                         "key_3".to_string() => A2AMessage::ConnectionResponse(_signed_response())
 //                     );
 
-//                     let (uid, message) = connection.find_message_to_update_state(messages).unwrap();
-//                     assert_eq!("key_2", uid);
-//                     assert_match!(A2AMessage::ConnectionRequest(_), message);
-//                 }
+//                     let (uid, message) =
+// connection.find_message_to_update_state(messages).unwrap();
+// assert_eq!("key_2", uid);                     assert_match!(A2AMessage::ConnectionRequest(_),
+// message);                 }
 
 //                 // Connection Problem Report
 //                 {
 //                     let messages = map!(
 //                         "key_1".to_string() => A2AMessage::Ping(_ping()),
 //                         "key_2".to_string() => A2AMessage::Ack(_ack()),
-//                         "key_3".to_string() => A2AMessage::ConnectionProblemReport(_problem_report())
-//                     );
+//                         "key_3".to_string() =>
+// A2AMessage::ConnectionProblemReport(_problem_report())                     );
 
-//                     let (uid, message) = connection.find_message_to_update_state(messages).unwrap();
-//                     assert_eq!("key_3", uid);
-//                     assert_match!(A2AMessage::ConnectionProblemReport(_), message);
-//                 }
+//                     let (uid, message) =
+// connection.find_message_to_update_state(messages).unwrap();
+// assert_eq!("key_3", uid);
+// assert_match!(A2AMessage::ConnectionProblemReport(_), message);                 }
 
 //                 // No messages
 //                 {
@@ -839,9 +863,9 @@ impl SmConnectionInviter {
 //                         "key_3".to_string() => A2AMessage::ConnectionResponse(_signed_response())
 //                     );
 
-//                     let (uid, message) = connection.find_message_to_update_state(messages).unwrap();
-//                     assert_eq!("key_1", uid);
-//                     assert_match!(A2AMessage::Ping(_), message);
+//                     let (uid, message) =
+// connection.find_message_to_update_state(messages).unwrap();
+// assert_eq!("key_1", uid);                     assert_match!(A2AMessage::Ping(_), message);
 //                 }
 
 //                 // Ack
@@ -852,22 +876,22 @@ impl SmConnectionInviter {
 //                         "key_3".to_string() => A2AMessage::ConnectionResponse(_signed_response())
 //                     );
 
-//                     let (uid, message) = connection.find_message_to_update_state(messages).unwrap();
-//                     assert_eq!("key_2", uid);
-//                     assert_match!(A2AMessage::Ack(_), message);
+//                     let (uid, message) =
+// connection.find_message_to_update_state(messages).unwrap();
+// assert_eq!("key_2", uid);                     assert_match!(A2AMessage::Ack(_), message);
 //                 }
 
 //                 // Connection Problem Report
 //                 {
 //                     let messages = map!(
 //                         "key_1".to_string() => A2AMessage::ConnectionRequest(_request()),
-//                         "key_2".to_string() => A2AMessage::ConnectionProblemReport(_problem_report())
-//                     );
+//                         "key_2".to_string() =>
+// A2AMessage::ConnectionProblemReport(_problem_report())                     );
 
-//                     let (uid, message) = connection.find_message_to_update_state(messages).unwrap();
-//                     assert_eq!("key_2", uid);
-//                     assert_match!(A2AMessage::ConnectionProblemReport(_), message);
-//                 }
+//                     let (uid, message) =
+// connection.find_message_to_update_state(messages).unwrap();
+// assert_eq!("key_2", uid);
+// assert_match!(A2AMessage::ConnectionProblemReport(_), message);                 }
 
 //                 // No messages
 //                 {
@@ -887,12 +911,12 @@ impl SmConnectionInviter {
 //                 {
 //                     let messages = map!(
 //                         "key_1".to_string() => A2AMessage::ConnectionRequest(_request()),
-//                         "key_2".to_string() => A2AMessage::ConnectionResponse(_signed_response()),
-//                         "key_3".to_string() => A2AMessage::Query(_query()),
-//                         "key_3".to_string() => A2AMessage::Ping(_ping()),
-//                         "key_3".to_string() => A2AMessage::Ack(_ack()),
-//                         "key_3".to_string() => A2AMessage::Disclose(_disclose())
-//                     );
+//                         "key_2".to_string() =>
+// A2AMessage::ConnectionResponse(_signed_response()),                         "key_3".to_string()
+// => A2AMessage::Query(_query()),                         "key_3".to_string() =>
+// A2AMessage::Ping(_ping()),                         "key_3".to_string() =>
+// A2AMessage::Ack(_ack()),                         "key_3".to_string() =>
+// A2AMessage::Disclose(_disclose())                     );
 
 //                     assert!(connection.find_message_to_update_state(messages).is_none())
 //                 }

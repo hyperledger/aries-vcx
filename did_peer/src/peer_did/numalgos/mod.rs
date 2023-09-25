@@ -12,9 +12,8 @@ use numalgo1::Numalgo1;
 use numalgo2::Numalgo2;
 use numalgo3::Numalgo3;
 
-use crate::error::DidPeerError;
-
 use self::traits::Numalgo;
+use crate::error::DidPeerError;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum NumalgoKind {
@@ -44,7 +43,7 @@ impl TryFrom<char> for NumalgoKind {
             Numalgo1::NUMALGO_CHAR => Ok(NumalgoKind::GenesisDoc(Numalgo1)),
             Numalgo2::NUMALGO_CHAR => Ok(NumalgoKind::MultipleInceptionKeys(Numalgo2)),
             Numalgo3::NUMALGO_CHAR => Ok(NumalgoKind::DidShortening(Numalgo3)),
-            c @ _ => Err(DidPeerError::InvalidNumalgoCharacter(c)),
+            c => Err(DidPeerError::InvalidNumalgoCharacter(c)),
         }
     }
 }

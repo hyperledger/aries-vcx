@@ -1,4 +1,4 @@
-use std::sync::PoisonError;
+use std::{string::FromUtf8Error, sync::PoisonError};
 
 use super::error::VcxUniFFIError;
 
@@ -13,6 +13,14 @@ impl<T> From<PoisonError<T>> for VcxUniFFIError {
 impl From<serde_json::Error> for VcxUniFFIError {
     fn from(e: serde_json::Error) -> Self {
         VcxUniFFIError::SerializationError {
+            error_msg: e.to_string(),
+        }
+    }
+}
+
+impl From<FromUtf8Error> for VcxUniFFIError {
+    fn from(e: FromUtf8Error) -> Self {
+        VcxUniFFIError::StringParseError {
             error_msg: e.to_string(),
         }
     }

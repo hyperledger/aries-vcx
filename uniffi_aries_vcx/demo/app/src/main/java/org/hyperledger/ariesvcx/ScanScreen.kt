@@ -33,11 +33,19 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import android.util.Base64
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.navigation.NavHostController
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
-fun ScanScreen(connection: Connection, profileHolder: ProfileHolder) {
+fun ScanScreen(
+    connection: Connection,
+    profileHolder: ProfileHolder,
+    navController: NavHostController,
+    walletConfig: WalletConfig,
+    setConnectionRequestState: () -> Unit
+) {
     var scannedQRCodeText by remember {
         mutableStateOf<String?>(null)
     }
@@ -51,7 +59,7 @@ fun ScanScreen(connection: Connection, profileHolder: ProfileHolder) {
 
     scannedQRCodeText?.let { text ->
         val encoded = Uri.parse(text)?.getQueryParameter("c_i")
-        val decoded =  String(Base64.decode(encoded, Base64.DEFAULT))
+        val decoded = String(Base64.decode(encoded, Base64.DEFAULT))
 
         AlertDialog(
             onDismissRequest = { scannedQRCodeText = null },
@@ -66,9 +74,13 @@ fun ScanScreen(connection: Connection, profileHolder: ProfileHolder) {
                         )
                         connection.sendRequest(
                             profileHolder,
-                            "https://google.com",
+                            "$BASE_RELAY_ENDPOINT/send_user_message/$RELAY_USER_ID",
                             emptyList()
                         )
+                        withContext(Dispatchers.Main) {
+                            setConnectionRequestState()
+                            navController.navigate("home")
+                        }
                     }
                 }) {
                     Text("Accept")
@@ -90,12 +102,14 @@ fun ScanScreen(connection: Connection, profileHolder: ProfileHolder) {
             ) == PackageManager.PERMISSION_GRANTED
         )
     }
+
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
         onResult = { granted ->
             hasCamPermission = granted
         }
     )
+
     LaunchedEffect(key1 = true) {
         launcher.launch(Manifest.permission.CAMERA)
     }

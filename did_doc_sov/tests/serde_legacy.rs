@@ -1,6 +1,6 @@
 use did_doc_sov::{extra_fields::KeyKind, DidDocumentSov};
 
-const LEGACY_DID_DOC_JSON: &str = r##"
+const LEGACY_DID_DOC_JSON: &str = r#"
 {
    "@context": "https://w3id.org/did/v1",
    "id": "2ZHFFhzA2XtTD6hJqzL7ux",
@@ -34,7 +34,7 @@ const LEGACY_DID_DOC_JSON: &str = r##"
        }
    ]
 }
-"##;
+"#;
 
 const VERKEY_BASE58: &str = "6MkfJTyeCL8MGvZntdpXzpitL6bM6uwCFz8xcYar18xQBh7";
 
@@ -55,12 +55,18 @@ fn test_deserialization_legacy() {
     assert_eq!(verification_method.id().to_string(), "#1");
     assert_eq!(verification_method.controller().to_string(), DID_PEER);
     assert_eq!(
-        verification_method.public_key().unwrap().prefixless_fingerprint(),
+        verification_method
+            .public_key()
+            .unwrap()
+            .prefixless_fingerprint(),
         VERKEY_BASE58
     );
 
     let service = did_doc.service().first().unwrap();
-    assert_eq!(service.id().to_string(), "did:example:123456789abcdefghi;indy");
+    assert_eq!(
+        service.id().to_string(),
+        "did:example:123456789abcdefghi;indy"
+    );
     assert_eq!(
         service.service_endpoint().to_string().as_str(),
         "http://localhost:8080/agency/msg"

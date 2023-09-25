@@ -1,12 +1,17 @@
 use std::collections::HashMap;
 
-use messages::msg_fields::protocols::cred_issuance::CredentialIssuance;
-use messages::msg_fields::protocols::notification::Notification;
-use messages::AriesMessage;
+use messages::{
+    msg_fields::protocols::{cred_issuance::CredentialIssuance, notification::Notification},
+    AriesMessage,
+};
 
-use crate::handlers::issuance::issuer::Issuer;
-use crate::handlers::util::{matches_opt_thread_id, matches_thread_id};
-use crate::protocols::issuance::issuer::state_machine::IssuerState;
+use crate::{
+    handlers::{
+        issuance::issuer::Issuer,
+        util::{matches_opt_thread_id, matches_thread_id},
+    },
+    protocols::issuance::issuer::state_machine::IssuerState,
+};
 
 #[allow(clippy::unwrap_used)]
 pub fn issuer_find_message_to_handle(
@@ -22,14 +27,21 @@ pub fn issuer_find_message_to_handle(
     for (uid, message) in messages {
         match sm.get_state() {
             IssuerState::Initial => {
-                if let AriesMessage::CredentialIssuance(CredentialIssuance::ProposeCredential(_)) = &message {
-                    info!("In state IssuerState::OfferSet, found matching message ProposeCredential");
+                if let AriesMessage::CredentialIssuance(CredentialIssuance::ProposeCredential(_)) =
+                    &message
+                {
+                    info!(
+                        "In state IssuerState::OfferSet, found matching message ProposeCredential"
+                    );
                     return Some((uid, message));
                 }
             }
             IssuerState::OfferSet => match &message {
                 AriesMessage::CredentialIssuance(CredentialIssuance::RequestCredential(msg)) => {
-                    info!("In state IssuerState::OfferSet, found potentially matching message RequestCredential");
+                    info!(
+                        "In state IssuerState::OfferSet, found potentially matching message \
+                         RequestCredential"
+                    );
                     warn!("Matching for {}", sm.get_thread_id().unwrap().as_str()); // todo: the state machine has "test" thid, and doesnt match msg
                     warn!("Msg: {msg:?}");
                     if matches_opt_thread_id!(msg, sm.get_thread_id().unwrap().as_str()) {
@@ -37,7 +49,10 @@ pub fn issuer_find_message_to_handle(
                     }
                 }
                 AriesMessage::CredentialIssuance(CredentialIssuance::ProposeCredential(msg)) => {
-                    info!("In state IssuerState::OfferSet, found potentially matching message ProposeCredential");
+                    info!(
+                        "In state IssuerState::OfferSet, found potentially matching message \
+                         ProposeCredential"
+                    );
                     if matches_opt_thread_id!(msg, sm.get_thread_id().unwrap().as_str()) {
                         return Some((uid, message));
                     }
@@ -52,19 +67,27 @@ pub fn issuer_find_message_to_handle(
             },
             IssuerState::CredentialSet => match &message {
                 AriesMessage::CredentialIssuance(CredentialIssuance::Ack(msg)) => {
-                    info!("In state IssuerState::CredentialSet, found matching message CredentialIssuance::Ack");
+                    info!(
+                        "In state IssuerState::CredentialSet, found matching message \
+                         CredentialIssuance::Ack"
+                    );
                     if matches_thread_id!(msg, sm.get_thread_id().unwrap().as_str()) {
                         return Some((uid, message));
                     }
                 }
                 AriesMessage::Notification(Notification::Ack(msg)) => {
-                    info!("In state IssuerState::CredentialSet, found matching message Notification::Ack");
+                    info!(
+                        "In state IssuerState::CredentialSet, found matching message \
+                         Notification::Ack"
+                    );
                     if matches_thread_id!(msg, sm.get_thread_id().unwrap().as_str()) {
                         return Some((uid, message));
                     }
                 }
                 AriesMessage::ReportProblem(msg) => {
-                    info!("In state IssuerState::CredentialSet, found matching message ReportProblem");
+                    info!(
+                        "In state IssuerState::CredentialSet, found matching message ReportProblem"
+                    );
                     if matches_opt_thread_id!(msg, sm.get_thread_id().unwrap().as_str()) {
                         return Some((uid, message));
                     }

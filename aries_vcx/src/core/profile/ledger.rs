@@ -1,15 +1,23 @@
-use crate::errors::error::VcxResult;
-use aries_vcx_core::ledger::base_ledger::TxnAuthrAgrmtOptions;
-use aries_vcx_core::ledger::indy_vdr_ledger::{
-    IndyVdrLedgerRead, IndyVdrLedgerReadConfig, IndyVdrLedgerWrite, IndyVdrLedgerWriteConfig, ProtocolVersion,
+use std::{sync::Arc, time::Duration};
+
+use aries_vcx_core::{
+    ledger::{
+        base_ledger::TxnAuthrAgrmtOptions,
+        indy_vdr_ledger::{
+            IndyVdrLedgerRead, IndyVdrLedgerReadConfig, IndyVdrLedgerWrite,
+            IndyVdrLedgerWriteConfig, ProtocolVersion,
+        },
+        request_signer::base_wallet::BaseWalletRequestSigner,
+        request_submitter::vdr_ledger::{IndyVdrLedgerPool, IndyVdrSubmitter},
+        response_cacher::in_memory::{InMemoryResponseCacher, InMemoryResponseCacherConfig},
+    },
+    wallet::base_wallet::BaseWallet,
+    PoolConfig, ResponseParser,
 };
-use aries_vcx_core::ledger::request_signer::base_wallet::BaseWalletRequestSigner;
-use aries_vcx_core::ledger::request_submitter::vdr_ledger::{IndyVdrLedgerPool, IndyVdrSubmitter};
-use aries_vcx_core::ledger::response_cacher::in_memory::{InMemoryResponseCacher, InMemoryResponseCacherConfig};
-use aries_vcx_core::wallet::base_wallet::BaseWallet;
-use aries_vcx_core::{PoolConfig, ResponseParser};
-use std::sync::Arc;
-use std::time::Duration;
+
+use crate::errors::error::VcxResult;
+type ArcIndyVdrLedgerRead = Arc<IndyVdrLedgerRead<IndyVdrSubmitter, InMemoryResponseCacher>>;
+type ArcIndyVdrLedgerWrite = Arc<IndyVdrLedgerWrite<IndyVdrSubmitter, BaseWalletRequestSigner>>;
 
 pub struct VcxPoolConfig {
     pub genesis_file_path: String,
@@ -20,10 +28,7 @@ pub struct VcxPoolConfig {
 pub fn build_ledger_components(
     wallet: Arc<dyn BaseWallet>,
     pool_config: VcxPoolConfig,
-) -> VcxResult<(
-    Arc<IndyVdrLedgerRead<IndyVdrSubmitter, InMemoryResponseCacher>>,
-    Arc<IndyVdrLedgerWrite<IndyVdrSubmitter, BaseWalletRequestSigner>>,
-)> {
+) -> VcxResult<(ArcIndyVdrLedgerRead, ArcIndyVdrLedgerWrite)> {
     let indy_vdr_config = match pool_config.indy_vdr_config {
         None => PoolConfig::default(),
         Some(cfg) => cfg,
@@ -49,14 +54,14 @@ pub fn build_ledger_components(
     let ledger_read = Arc::new(ledger_read);
     let ledger_write = Arc::new(ledger_write);
 
-    return Ok((ledger_read, ledger_write));
+    Ok((ledger_read, ledger_write))
 }
 
 pub fn indyvdr_build_ledger_read(
     request_submitter: Arc<IndyVdrSubmitter>,
     cache_config: InMemoryResponseCacherConfig,
 ) -> VcxResult<IndyVdrLedgerRead<IndyVdrSubmitter, InMemoryResponseCacher>> {
-    let response_parser = Arc::new(ResponseParser::new());
+    let response_parser = Arc::new(ResponseParser);
     let response_cacher = Arc::new(InMemoryResponseCacher::new(cache_config));
 
     let config_read = IndyVdrLedgerReadConfig {

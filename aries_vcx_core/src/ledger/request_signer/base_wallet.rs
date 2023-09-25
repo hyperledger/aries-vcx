@@ -3,9 +3,8 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use indy_vdr::pool::PreparedRequest;
 
-use crate::{errors::error::VcxCoreResult, wallet::base_wallet::BaseWallet};
-
 use super::RequestSigner;
+use crate::{errors::error::VcxCoreResult, wallet::base_wallet::BaseWallet};
 
 pub struct BaseWalletRequestSigner {
     wallet: Arc<dyn BaseWallet>,

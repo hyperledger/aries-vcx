@@ -19,7 +19,9 @@ use crate::{
     misc::utils::{into_msg_with_type, transit_to_aries_msg},
     msg_fields::traits::DelayedSerde,
     msg_types::{
-        protocols::connection::{ConnectionType as ConnectionKind, ConnectionTypeV1, ConnectionTypeV1_0},
+        protocols::connection::{
+            ConnectionType as ConnectionKind, ConnectionTypeV1, ConnectionTypeV1_0,
+        },
         MsgWithType,
     },
 };
@@ -35,7 +37,10 @@ pub enum Connection {
 impl DelayedSerde for Connection {
     type MsgType<'a> = (ConnectionKind, &'a str);
 
-    fn delayed_deserialize<'de, D>(msg_type: Self::MsgType<'de>, deserializer: D) -> Result<Self, D::Error>
+    fn delayed_deserialize<'de, D>(
+        msg_type: Self::MsgType<'de>,
+        deserializer: D,
+    ) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
@@ -49,7 +54,9 @@ impl DelayedSerde for Connection {
             ConnectionTypeV1_0::Invitation => Invitation::deserialize(deserializer).map(From::from),
             ConnectionTypeV1_0::Request => Request::deserialize(deserializer).map(From::from),
             ConnectionTypeV1_0::Response => Response::deserialize(deserializer).map(From::from),
-            ConnectionTypeV1_0::ProblemReport => ProblemReport::deserialize(deserializer).map(From::from),
+            ConnectionTypeV1_0::ProblemReport => {
+                ProblemReport::deserialize(deserializer).map(From::from)
+            }
         }
     }
 

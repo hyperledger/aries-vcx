@@ -1,11 +1,11 @@
-use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use std::sync::{Arc, Mutex};
 
 use aries_vcx::{
     errors::error::{AriesVcxError, AriesVcxErrorKind},
-    protocols::connection::pairwise_info::PairwiseInfo,
-    protocols::connection::Connection as VcxConnection,
-    protocols::connection::GenericConnection as VcxGenericConnection,
+    protocols::connection::{
+        pairwise_info::PairwiseInfo, Connection as VcxConnection,
+        GenericConnection as VcxGenericConnection, ThinState,
+    },
 };
 use url::Url;
 
@@ -15,7 +15,58 @@ use crate::{
     runtime::block_on,
 };
 
-use super::ConnectionState;
+/// Wraps [ThinState], as uniffi cannot process enums with un-named fields
+pub struct ConnectionState {
+    pub role: ConnectionRole,
+    pub protocol_state: ConnectionProtocolState,
+}
+
+pub enum ConnectionRole {
+    Invitee,
+    Inviter,
+}
+
+pub enum ConnectionProtocolState {
+    Initial,
+    Invited,
+    Requested,
+    Responded,
+    Completed,
+}
+
+impl From<ThinState> for ConnectionState {
+    fn from(x: ThinState) -> Self {
+        match x {
+            ThinState::Inviter(state) => ConnectionState {
+                role: ConnectionRole::Inviter,
+                protocol_state: ConnectionProtocolState::from(state),
+            },
+            ThinState::Invitee(state) => ConnectionState {
+                role: ConnectionRole::Invitee,
+                protocol_state: ConnectionProtocolState::from(state),
+            },
+        }
+    }
+}
+
+impl From<aries_vcx::protocols::connection::State> for ConnectionProtocolState {
+    fn from(value: aries_vcx::protocols::connection::State) -> Self {
+        match value {
+            aries_vcx::protocols::connection::State::Initial => ConnectionProtocolState::Initial,
+            aries_vcx::protocols::connection::State::Invited => ConnectionProtocolState::Invited,
+            aries_vcx::protocols::connection::State::Requested => {
+                ConnectionProtocolState::Requested
+            }
+            aries_vcx::protocols::connection::State::Responded => {
+                ConnectionProtocolState::Responded
+            }
+            aries_vcx::protocols::connection::State::Completed => {
+                ConnectionProtocolState::Completed
+            }
+        }
+    }
+}
+
 pub struct Connection {
     handler: Mutex<VcxGenericConnection>,
 }
@@ -56,7 +107,11 @@ impl Connection {
     // but UniFFI does not support structs with unnamed fields. So we'd have to
     // wrap these types
     // here invitation -> aries_vcx::Invitation
-    pub fn accept_invitation(&self, profile: Arc<ProfileHolder>, invitation: String) -> VcxUniFFIResult<()> {
+    pub fn accept_invitation(
+        &self,
+        profile: Arc<ProfileHolder>,
+        invitation: String,
+    ) -> VcxUniFFIResult<()> {
         let mut handler = self.handler.lock()?;
         let invitation = serde_json::from_str(&invitation)?;
 
@@ -86,12 +141,19 @@ impl Connection {
         let request = serde_json::from_str(&request)?;
 
         let connection = VcxConnection::try_from(handler.clone())?;
-        let url = Url::parse(&service_endpoint)
-            .map_err(|err| AriesVcxError::from_msg(AriesVcxErrorKind::InvalidUrl, err.to_string()))?;
+        let url = Url::parse(&service_endpoint).map_err(|err| {
+            AriesVcxError::from_msg(AriesVcxErrorKind::InvalidUrl, err.to_string())
+        })?;
 
         block_on(async {
             let new_conn = connection
-                .handle_request(&profile.inner.inject_wallet(), request, url, routing_keys, &HttpClient)
+                .handle_request(
+                    &profile.inner.inject_wallet(),
+                    request,
+                    url,
+                    routing_keys,
+                    &HttpClient,
+                )
                 .await?;
 
             *handler = VcxGenericConnection::from(new_conn);
@@ -104,7 +166,11 @@ impl Connection {
     // but UniFFI does not support structs with unnamed fields. So we'd have to
     // wrap these types
     // here request -> aries_vcx::Request
-    pub fn handle_response(&self, profile: Arc<ProfileHolder>, response: String) -> VcxUniFFIResult<()> {
+    pub fn handle_response(
+        &self,
+        profile: Arc<ProfileHolder>,
+        response: String,
+    ) -> VcxUniFFIResult<()> {
         let mut handler = self.handler.lock()?;
         let response = serde_json::from_str(&response)?;
 
@@ -129,11 +195,12 @@ impl Connection {
         let mut handler = self.handler.lock()?;
 
         let connection = VcxConnection::try_from(handler.clone())?;
-        let url = Url::parse(&service_endpoint)
-            .map_err(|err| AriesVcxError::from_msg(AriesVcxErrorKind::InvalidUrl, err.to_string()))?;
+        let url = Url::parse(&service_endpoint).map_err(|err| {
+            AriesVcxError::from_msg(AriesVcxErrorKind::InvalidUrl, err.to_string())
+        })?;
 
         block_on(async {
-            let mut connection = connection.prepare_request(url, routing_keys).await?;
+            let connection = connection.prepare_request(url, routing_keys).await?;
             let request = connection.get_request().clone();
             connection
                 .send_message(&profile.inner.inject_wallet(), &request.into(), &HttpClient)
@@ -151,7 +218,11 @@ impl Connection {
         block_on(async {
             let response = connection.get_connection_response_msg();
             connection
-                .send_message(&profile.inner.inject_wallet(), &response.into(), &HttpClient)
+                .send_message(
+                    &profile.inner.inject_wallet(),
+                    &response.into(),
+                    &HttpClient,
+                )
                 .await?;
 
             *handler = VcxGenericConnection::from(connection);
@@ -161,7 +232,7 @@ impl Connection {
     }
 
     pub fn send_ack(&self, profile: Arc<ProfileHolder>) -> VcxUniFFIResult<()> {
-        let mut handler = self.handler.lock()?;
+        let handler = self.handler.lock()?;
 
         let connection = VcxConnection::try_from(handler.clone())?;
 

@@ -8,7 +8,7 @@ use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use messages::AriesMessage;
 
 pub use self::thin_state::{State, ThinState};
-
+use super::{trait_bounds::BootstrapDidDoc, wrap_and_send_msg};
 use crate::{
     errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
     handlers::util::AnyInvitation,
@@ -28,8 +28,6 @@ use crate::{
     utils::encryption_envelope::EncryptionEnvelope,
 };
 
-use super::{trait_bounds::BootstrapDidDoc, wrap_and_send_msg};
-
 /// A type that can encapsulate a [`super::Connection`] of any state.
 /// While mainly used for deserialization, it exposes some methods for retrieving
 /// connection information.
@@ -39,13 +37,13 @@ use super::{trait_bounds::BootstrapDidDoc, wrap_and_send_msg};
 /// and not an [`Option<AriesDidDoc>`] (which is what [`GenericConnection`] provides).
 ///
 /// [`GenericConnection`] implements [`From`] for all [`super::Connection`] states and
-/// [`super::Connection`] implements [`TryFrom`] from [`GenericConnection`], with the conversion failing
-/// if the [`GenericConnection`] is in a different state than the requested one.
+/// [`super::Connection`] implements [`TryFrom`] from [`GenericConnection`], with the conversion
+/// failing if the [`GenericConnection`] is in a different state than the requested one.
 /// This is also the mechanism used for direct deserialization of a [`super::Connection`].
 ///
-/// Because a [`TryFrom`] conversion is fallible and consumes the [`GenericConnection`], a [`ThinState`]
-/// can be retrieved through [`GenericConnection::state`] method at runtime. In that case, a more dynamic conversion
-/// could be done this way:
+/// Because a [`TryFrom`] conversion is fallible and consumes the [`GenericConnection`], a
+/// [`ThinState`] can be retrieved through [`GenericConnection::state`] method at runtime. In that
+/// case, a more dynamic conversion could be done this way:
 ///
 /// ```
 /// # use aries_vcx::protocols::connection::invitee::states::{complete::Complete, initial::Initial};
@@ -212,27 +210,35 @@ impl GenericConnection {
 mod connection_serde_tests {
     #![allow(clippy::unwrap_used)]
 
+    use std::sync::Arc;
+
+    use aries_vcx_core::{ledger::base_ledger::IndyLedgerRead, wallet::mock_wallet::MockWallet};
     use async_trait::async_trait;
     use chrono::Utc;
-    use messages::decorators::thread::Thread;
-    use messages::decorators::timing::Timing;
-    use messages::msg_fields::protocols::connection::invitation::{Invitation, InvitationContent};
-    use messages::msg_fields::protocols::connection::request::{Request, RequestContent, RequestDecorators};
-    use messages::msg_fields::protocols::connection::response::{Response, ResponseContent, ResponseDecorators};
-    use messages::msg_fields::protocols::connection::ConnectionData;
-    use messages::msg_fields::protocols::notification::ack::{Ack, AckContent, AckDecorators, AckStatus};
+    use messages::{
+        decorators::{thread::Thread, timing::Timing},
+        msg_fields::protocols::{
+            connection::{
+                invitation::{Invitation, InvitationContent},
+                request::{Request, RequestContent, RequestDecorators},
+                response::{Response, ResponseContent, ResponseDecorators},
+                ConnectionData,
+            },
+            notification::ack::{Ack, AckContent, AckDecorators, AckStatus},
+        },
+    };
     use url::Url;
     use uuid::Uuid;
 
     use super::*;
-    use crate::common::signing::sign_connection_response;
-    use crate::handlers::util::AnyInvitation;
-    use crate::protocols::connection::serializable::*;
-    use crate::protocols::connection::{invitee::InviteeConnection, inviter::InviterConnection, Connection};
-    use crate::utils::mockdata::profile::mock_ledger::MockLedger;
-    use aries_vcx_core::ledger::base_ledger::IndyLedgerRead;
-    use aries_vcx_core::wallet::mock_wallet::MockWallet;
-    use std::sync::Arc;
+    use crate::{
+        common::signing::sign_connection_response,
+        handlers::util::AnyInvitation,
+        protocols::connection::{
+            invitee::InviteeConnection, inviter::InviterConnection, serializable::*, Connection,
+        },
+        utils::mockdata::profile::mock_ledger::MockLedger,
+    };
 
     impl<'a> From<RefInviteeState<'a>> for InviteeState {
         fn from(value: RefInviteeState<'a>) -> Self {
@@ -423,7 +429,9 @@ mod connection_serde_tests {
         con_data.did_doc.set_recipient_keys(vec![PW_KEY.to_owned()]);
         con_data.did_doc.set_routing_keys(Vec::new());
 
-        let sig_data = sign_connection_response(&wallet, PW_KEY, &con_data).await.unwrap();
+        let sig_data = sign_connection_response(&wallet, PW_KEY, &con_data)
+            .await
+            .unwrap();
 
         let content = ResponseContent::builder().connection_sig(sig_data).build();
         let decorators = ResponseDecorators::builder()
@@ -437,7 +445,10 @@ mod connection_serde_tests {
             .decorators(decorators)
             .build();
 
-        let con = con.handle_response(&wallet, response, &MockTransport).await.unwrap();
+        let con = con
+            .handle_response(&wallet, response, &MockTransport)
+            .await
+            .unwrap();
 
         con.send_message(&wallet, &con.get_ack().into(), &MockTransport)
             .await
@@ -451,13 +462,18 @@ mod connection_serde_tests {
     }
 
     async fn make_inviter_invited() -> InviterConnection<InviterInvited> {
-        make_inviter_initial().await.into_invited(&String::default())
+        make_inviter_initial()
+            .await
+            .into_invited(&String::default())
     }
 
     async fn make_inviter_requested() -> InviterConnection<InviterRequested> {
         let wallet: Arc<dyn BaseWallet> = Arc::new(MockWallet {});
         let con = make_inviter_invited().await;
-        let new_service_endpoint = SERVICE_ENDPOINT.to_owned().parse().expect("url should be valid");
+        let new_service_endpoint = SERVICE_ENDPOINT
+            .to_owned()
+            .parse()
+            .expect("url should be valid");
         let new_routing_keys = vec![];
 
         let mut con_data = ConnectionData::new(PW_KEY.to_owned(), AriesDidDoc::default());
@@ -481,9 +497,15 @@ mod connection_serde_tests {
             .decorators(decorators)
             .build();
 
-        con.handle_request(&wallet, request, new_service_endpoint, new_routing_keys, &MockTransport)
-            .await
-            .unwrap()
+        con.handle_request(
+            &wallet,
+            request,
+            new_service_endpoint,
+            new_routing_keys,
+            &MockTransport,
+        )
+        .await
+        .unwrap()
     }
 
     async fn make_inviter_completed() -> InviterConnection<InviterCompleted> {

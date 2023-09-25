@@ -1,13 +1,18 @@
-use std::env;
-use std::time::Duration;
+use std::{env, time::Duration};
 
-use reqwest::header::{CONTENT_TYPE, USER_AGENT};
-use reqwest::Client;
-use reqwest::{self, Url};
+use reqwest::{
+    self,
+    header::{CONTENT_TYPE, USER_AGENT},
+    Client, Url,
+};
 
-use crate::errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
-use crate::testing::mocking;
-use crate::testing::mocking::{AgencyMock, AgencyMockDecrypted, HttpClientMockResponse};
+use crate::{
+    errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult},
+    testing::{
+        mocking,
+        mocking::{AgencyMock, AgencyMockDecrypted, HttpClientMockResponse},
+    },
+};
 
 lazy_static! {
     static ref HTTP_CLIENT: Client = {
@@ -29,7 +34,10 @@ pub async fn post_message(body_content: Vec<u8>, url: Url) -> AgencyClientResult
             return HttpClientMockResponse::get_response();
         }
         if AgencyMockDecrypted::has_decrypted_mock_responses() {
-            warn!("post_message >> will use mocked decrypted response for POST {}", &url);
+            warn!(
+                "post_message >> will use mocked decrypted response for POST {}",
+                &url
+            );
             return Ok(vec![]);
         }
         let mocked_response = AgencyMock::get_response();
@@ -84,7 +92,7 @@ pub async fn post_message(body_content: Vec<u8>, url: Url) -> AgencyClientResult
             AgencyClientErrorKind::PostMessageFailed,
             format!(
                 "POST failed because response could not be decoded as utf-8, HTTP status: {}, \
-                     content-length header: {:?}, error: {:?}",
+                 content-length header: {:?}, error: {:?}",
                 response_status, content_length, error
             ),
         )),
@@ -94,8 +102,8 @@ pub async fn post_message(body_content: Vec<u8>, url: Url) -> AgencyClientResult
 fn set_ssl_cert_location() {
     let ssl_cert_file = "SSL_CERT_FILE";
 
-    let external_storage =
-        env::var("EXTERNAL_STORAGE").expect("the evironment variable 'EXTERNAL_STORAGE' has not been set correctly");
+    let external_storage = env::var("EXTERNAL_STORAGE")
+        .expect("the evironment variable 'EXTERNAL_STORAGE' has not been set correctly");
 
     // TODO: CHANGE ME, HARDCODING FOR TESTING ONLY
     env::set_var(ssl_cert_file, external_storage + "/cacert.pem");

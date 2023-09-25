@@ -1,7 +1,9 @@
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use messages::msg_fields::protocols::connection::request::Request;
 
-use crate::protocols::connection::trait_bounds::{BootstrapDidDoc, HandleProblem, TheirDidDoc, ThreadId};
+use crate::protocols::connection::trait_bounds::{
+    BootstrapDidDoc, HandleProblem, TheirDidDoc, ThreadId,
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Requested {

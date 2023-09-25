@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 pub mod basic;
 pub mod multiple_services;
 pub mod no_routing_keys;

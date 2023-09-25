@@ -1,15 +1,3 @@
-#![allow(clippy::or_fun_call)]
-#![allow(clippy::module_inception)]
-#![allow(clippy::derive_partial_eq_without_eq)]
-#![allow(clippy::new_without_default)]
-#![allow(clippy::inherent_to_string)]
-#![allow(clippy::large_enum_variant)]
-#![allow(clippy::missing_safety_doc)]
-#![allow(clippy::type_complexity)]
-#![allow(clippy::await_holding_lock)]
-#![allow(clippy::len_without_is_empty)]
-#![allow(clippy::not_unsafe_ptr_arg_deref)]
-#![deny(clippy::unwrap_used)]
 // todo: is this recursion_limit still needed and justified?
 //this is needed for some large json macro invocations
 #![recursion_limit = "128"]

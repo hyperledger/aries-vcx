@@ -1,11 +1,11 @@
+use std::collections::HashSet;
+
 use indy_vdr::{ledger::identifiers::SchemaId, utils::did::ShortDidValue};
 
 use super::{
     constants::GET_SCHEMA,
     response::{GetReplyResultV1, ReplyType},
 };
-
-use std::collections::HashSet;
 
 #[derive(Serialize, PartialEq, Debug, Deserialize)]
 pub struct SchemaOperationData {

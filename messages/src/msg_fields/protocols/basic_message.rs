@@ -1,7 +1,6 @@
 //! Module containing the `basic message` protocol messages, as defined in the [RFC](<https://github.com/hyperledger/aries-rfcs/blob/main/features/0095-basic-message/README.md>).
 
 use chrono::{DateTime, Utc};
-
 use serde::{Deserialize, Serialize};
 use typed_builder::TypedBuilder;
 
@@ -75,7 +74,9 @@ mod tests {
             .sent_time(DateTime::default())
             .build();
 
-        let decorators = BasicMessageDecorators::builder().thread(make_extended_thread()).build();
+        let decorators = BasicMessageDecorators::builder()
+            .thread(make_extended_thread())
+            .build();
 
         let expected = json!({
             "sent_time": DateTimeRfc3339(&content.sent_time),

@@ -1,11 +1,18 @@
-use crate::agency_client::AgencyClient;
-use crate::errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
-use crate::messages::a2a_message::Client2AgencyMessage;
-use crate::messages::create_key::CreateKeyBuilder;
-use crate::messages::update_com_method::{ComMethodType, UpdateComMethod};
-use crate::messages::update_connection::DeleteConnectionBuilder;
-use crate::testing::mocking::{agency_mocks_enabled, AgencyMock};
-use crate::testing::{mocking, test_constants};
+use crate::{
+    agency_client::AgencyClient,
+    errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult},
+    messages::{
+        a2a_message::Client2AgencyMessage,
+        create_key::CreateKeyBuilder,
+        update_com_method::{ComMethodType, UpdateComMethod},
+        update_connection::DeleteConnectionBuilder,
+    },
+    testing::{
+        mocking,
+        mocking::{agency_mocks_enabled, AgencyMock},
+        test_constants,
+    },
+};
 
 impl AgencyClient {
     pub async fn delete_connection_agent(
@@ -38,11 +45,22 @@ impl AgencyClient {
         }
     }
 
-    pub async fn create_connection_agent(&self, pw_did: &str, pw_verkey: &str) -> AgencyClientResult<(String, String)> {
-        trace!("create_keys >>> pw_did: {}, pw_verkey: {}", pw_did, pw_verkey);
+    pub async fn create_connection_agent(
+        &self,
+        pw_did: &str,
+        pw_verkey: &str,
+    ) -> AgencyClientResult<(String, String)> {
+        trace!(
+            "create_keys >>> pw_did: {}, pw_verkey: {}",
+            pw_did,
+            pw_verkey
+        );
 
         if mocking::agency_mocks_enabled() {
-            warn!("CreateKeyBuilder::send_secure >>> agency mocks enabled, setting next mocked response");
+            warn!(
+                "CreateKeyBuilder::send_secure >>> agency mocks enabled, setting next mocked \
+                 response"
+            );
             AgencyMock::set_next_response(test_constants::CREATE_KEYS_V2_RESPONSE.to_vec());
         }
 
@@ -63,7 +81,10 @@ impl AgencyClient {
             Client2AgencyMessage::CreateKeyResponse(res) => Ok((res.for_did, res.for_verkey)),
             res => Err(AgencyClientError::from_msg(
                 AgencyClientErrorKind::InvalidHttpResponse,
-                format!("Expected to response of Client2AgencyMessage::CreateKeyResponse, but received: {res:?}"),
+                format!(
+                    "Expected to response of Client2AgencyMessage::CreateKeyResponse, but \
+                     received: {res:?}"
+                ),
             )),
         }
     }

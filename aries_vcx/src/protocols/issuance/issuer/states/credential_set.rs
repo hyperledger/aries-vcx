@@ -1,7 +1,11 @@
-use crate::handlers::util::Status;
-use crate::protocols::issuance::issuer::state_machine::RevocationInfoV1;
-use crate::protocols::issuance::issuer::states::finished::FinishedState;
 use messages::msg_fields::protocols::cred_issuance::issue_credential::IssueCredential;
+
+use crate::{
+    handlers::util::Status,
+    protocols::issuance::issuer::{
+        state_machine::RevocationInfoV1, states::finished::FinishedState,
+    },
+};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CredentialSetState {

@@ -116,7 +116,10 @@ mod tests {
 
     #[test]
     fn test_parse() {
-        assert_eq!(_valid_did_key(), DidKey::parse(_valid_did_key_string()).unwrap(),);
+        assert_eq!(
+            _valid_did_key(),
+            DidKey::parse(_valid_did_key_string()).unwrap(),
+        );
     }
 
     #[test]
@@ -128,7 +131,8 @@ mod tests {
     fn test_try_from_key() {
         assert_eq!(
             _valid_did_key(),
-            DidKey::try_from(Key::from_fingerprint(&_valid_key_base58_fingerprint()).unwrap()).unwrap(),
+            DidKey::try_from(Key::from_fingerprint(&_valid_key_base58_fingerprint()).unwrap())
+                .unwrap(),
         );
     }
 }

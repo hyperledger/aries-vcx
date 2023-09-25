@@ -20,7 +20,7 @@ pub struct ServiceAbbreviated {
 
 impl ServiceAbbreviated {
     pub fn builder() -> ServiceAbbreviatedTypeBuilder {
-        ServiceAbbreviatedTypeBuilder::default()
+        ServiceAbbreviatedTypeBuilder
     }
 
     pub fn service_type(&self) -> &str {
@@ -87,12 +87,18 @@ impl ServiceAbbreviatedEndpointBuilder {
 }
 
 impl ServiceAbbreviatedCompleteBuilder {
-    pub fn set_routing_keys(&mut self, routing_keys: Vec<KeyKind>) -> &mut ServiceAbbreviatedCompleteBuilder {
+    pub fn set_routing_keys(
+        &mut self,
+        routing_keys: Vec<KeyKind>,
+    ) -> &mut ServiceAbbreviatedCompleteBuilder {
         self.routing_keys = routing_keys;
         self
     }
 
-    pub fn set_accept_types(&mut self, accept: Vec<AcceptType>) -> &mut ServiceAbbreviatedCompleteBuilder {
+    pub fn set_accept_types(
+        &mut self,
+        accept: Vec<AcceptType>,
+    ) -> &mut ServiceAbbreviatedCompleteBuilder {
         self.accept = accept;
         self
     }

@@ -40,8 +40,9 @@ mod tests {
     use super::*;
     use crate::{
         decorators::{
-            attachment::tests::make_extended_attachment, please_ack::tests::make_minimal_please_ack,
-            thread::tests::make_extended_thread, timing::tests::make_extended_timing,
+            attachment::tests::make_extended_attachment,
+            please_ack::tests::make_minimal_please_ack, thread::tests::make_extended_thread,
+            timing::tests::make_extended_timing,
         },
         misc::test_utils,
         msg_types::present_proof::PresentProofTypeV1_0,
@@ -53,14 +54,21 @@ mod tests {
             .presentations_attach(vec![make_extended_attachment()])
             .build();
 
-        let decorators = PresentationDecorators::builder().thread(make_extended_thread()).build();
+        let decorators = PresentationDecorators::builder()
+            .thread(make_extended_thread())
+            .build();
 
         let expected = json!({
             "presentations~attach": content.presentations_attach,
             "~thread": decorators.thread
         });
 
-        test_utils::test_msg(content, decorators, PresentProofTypeV1_0::Presentation, expected);
+        test_utils::test_msg(
+            content,
+            decorators,
+            PresentProofTypeV1_0::Presentation,
+            expected,
+        );
     }
 
     #[test]
@@ -84,6 +92,11 @@ mod tests {
             "~please_ack": decorators.please_ack
         });
 
-        test_utils::test_msg(content, decorators, PresentProofTypeV1_0::Presentation, expected);
+        test_utils::test_msg(
+            content,
+            decorators,
+            PresentProofTypeV1_0::Presentation,
+            expected,
+        );
     }
 }
