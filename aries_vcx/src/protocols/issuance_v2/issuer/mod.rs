@@ -30,6 +30,7 @@ use self::states::{
 use super::{formats::issuer::IssuerCredentialIssuanceFormat, VcxSMTransitionResult};
 use crate::{
     errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
+    handlers::util::get_thread_id_or_message_id,
     protocols::issuance_v2::RecoveredSMError,
 };
 
@@ -200,11 +201,11 @@ pub struct IssuerV2<S> {
 impl<T: IssuerCredentialIssuanceFormat> IssuerV2<ProposalReceived<T>> {
     pub fn from_proposal(proposal: ProposeCredentialV2) -> Self {
         IssuerV2 {
+            thread_id: get_thread_id_or_message_id!(proposal),
             state: ProposalReceived {
                 proposal,
                 _marker: PhantomData,
             },
-            thread_id: String::new(), // .id
         }
     }
 
@@ -253,7 +254,7 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<ProposalReceived<T>> {
 
         Ok(IssuerV2 {
             state: new_state,
-            thread_id: String::new(),
+            thread_id: self.thread_id,
         })
     }
 
@@ -280,6 +281,8 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<OfferPrepared<T>> {
             None,
         );
 
+        let thread_id = get_thread_id_or_message_id!(offer);
+
         let new_state = OfferPrepared {
             offer_metadata,
             offer,
@@ -288,7 +291,7 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<OfferPrepared<T>> {
 
         Ok(IssuerV2 {
             state: new_state,
-            thread_id: String::new(),
+            thread_id,
         })
     }
 
@@ -332,6 +335,8 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<RequestReceived<T>> {
             ));
         }
 
+        let thread_id = get_thread_id_or_message_id!(request);
+
         let new_state = RequestReceived {
             from_offer_metadata: None,
             request,
@@ -341,7 +346,7 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<RequestReceived<T>> {
 
         Ok(Self {
             state: new_state,
-            thread_id: String::new(), // request.id/thid
+            thread_id,
         })
     }
 
@@ -407,7 +412,7 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<RequestReceived<T>> {
 
         Ok(IssuerV2 {
             state: new_state,
-            thread_id: String::new(),
+            thread_id: self.thread_id,
         })
     }
 }

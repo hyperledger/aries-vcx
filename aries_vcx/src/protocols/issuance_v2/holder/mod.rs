@@ -3,6 +3,7 @@ use std::marker::PhantomData;
 use ::messages::decorators::attachment::{Attachment, AttachmentData, AttachmentType};
 use messages::{
     decorators::thread::Thread,
+    misc::MimeType,
     msg_fields::protocols::{
         cred_issuance::v2::{
             issue_credential::IssueCredentialV2,
@@ -24,7 +25,10 @@ use self::states::*;
 use super::{
     formats::holder::HolderCredentialIssuanceFormat, RecoveredSMError, VcxSMTransitionResult,
 };
-use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
+use crate::{
+    errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
+    handlers::util::get_thread_id_or_message_id,
+};
 
 pub mod states {
     use std::marker::PhantomData;
@@ -80,7 +84,7 @@ fn create_proposal_message_from_attachment<T: HolderCredentialIssuanceFormat>(
     let attach_id = Uuid::new_v4().to_string();
     let attachment = Attachment::builder()
         .id(attach_id.clone())
-        .mime_type(::messages::misc::MimeType::Json)
+        .mime_type(MimeType::Json)
         .data(
             AttachmentData::builder()
                 .content(attachment_content)
@@ -124,7 +128,7 @@ fn create_request_message_from_attachment<T: HolderCredentialIssuanceFormat>(
     let attach_id = uuid::Uuid::new_v4().to_string();
     let attachment = Attachment::builder()
         .id(attach_id.clone())
-        .mime_type(::messages::misc::MimeType::Json)
+        .mime_type(MimeType::Json)
         .data(
             AttachmentData::builder()
                 .content(attachment_content)
@@ -169,11 +173,11 @@ impl<T: HolderCredentialIssuanceFormat> HolderV2<ProposalPrepared<T>> {
         let proposal = create_proposal_message_from_attachment::<T>(attachment_data, preview, None);
 
         Ok(HolderV2 {
+            thread_id: get_thread_id_or_message_id!(proposal),
             state: ProposalPrepared {
                 proposal,
                 _marker: PhantomData,
             },
-            thread_id: String::new(), // proposal.id
         })
     }
 
@@ -185,10 +189,20 @@ impl<T: HolderCredentialIssuanceFormat> HolderV2<ProposalPrepared<T>> {
     // receive an offer in response to the proposal
     pub fn receive_offer(
         self,
-        _offer: OfferCredentialV2,
+        offer: OfferCredentialV2,
     ) -> VcxSMTransitionResult<HolderV2<OfferReceived<T>>, Self> {
-        // verify thread ID?
-        todo!()
+        // TODO - verify thread ID?
+        // verify_thread_id(&self.thread_id, offer.into())
+
+        let new_state = OfferReceived {
+            offer,
+            _marker: PhantomData,
+        };
+
+        Ok(HolderV2 {
+            state: new_state,
+            thread_id: self.thread_id,
+        })
     }
 }
 
@@ -196,11 +210,11 @@ impl<T: HolderCredentialIssuanceFormat> HolderV2<OfferReceived<T>> {
     // initiate by receiving an offer
     pub fn from_offer(offer: OfferCredentialV2) -> Self {
         Self {
+            thread_id: get_thread_id_or_message_id!(offer),
             state: OfferReceived {
                 offer,
                 _marker: PhantomData,
             },
-            thread_id: String::new(), // offer.thid
         }
     }
 
@@ -285,14 +299,16 @@ impl<T: HolderCredentialIssuanceFormat> HolderV2<RequestPrepared<T>> {
 
         let request = create_request_message_from_attachment::<T>(attachment_data, None);
 
+        let thread_id = get_thread_id_or_message_id!(request);
+
         let new_state = RequestPrepared {
             request_preparation_metadata: output_metadata,
             request,
         };
 
         Ok(HolderV2 {
+            thread_id,
             state: new_state,
-            thread_id: String::new(), // request.id
         })
     }
 

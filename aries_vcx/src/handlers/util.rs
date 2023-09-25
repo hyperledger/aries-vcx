@@ -19,6 +19,15 @@ use strum_macros::{AsRefStr, EnumString};
 
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 
+macro_rules! get_thread_id_or_message_id {
+    ($msg:expr) => {
+        $msg.decorators
+            .thread
+            .as_ref()
+            .map_or($msg.id.clone(), |t| t.thid.clone())
+    };
+}
+
 macro_rules! matches_thread_id {
     ($msg:expr, $id:expr) => {
         $msg.decorators.thread.thid == $id || $msg.decorators.thread.pthid.as_deref() == Some($id)
@@ -70,6 +79,7 @@ macro_rules! make_attach_from_str {
 }
 
 pub(crate) use get_attach_as_string;
+pub(crate) use get_thread_id_or_message_id;
 pub(crate) use make_attach_from_str;
 pub(crate) use matches_opt_thread_id;
 pub(crate) use matches_thread_id;
