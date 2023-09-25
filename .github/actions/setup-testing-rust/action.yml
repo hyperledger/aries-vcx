@@ -36,6 +36,7 @@ runs:
         docker run -d --name indypool  --network host ${{ env.DOCKER_IMAGE_POOL }}
 
     - name: "Check indy ports"
+      if: ${{ inputs.skip-docker-setup != 'true' }}
       uses: ./.github/actions/check-ports
       with:
         ports: "9701 9702 9703 9704 9705 9706 9707 9708"
@@ -47,6 +48,7 @@ runs:
         docker run -d --name vdrproxy --network host ${{ env.DOCKER_IMAGE_VDRPROXY }} -p ${{ env.VDR_PROXY_PORT }} -g ${{ env.GENESIS_URL }}
 
     - name: "Check vdrproxy port"
+      if: ${{ inputs.skip-vdrproxy-setup != 'true' }}
       uses: ./.github/actions/check-ports
       with:
         ports: "3030"
