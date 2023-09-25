@@ -20,7 +20,7 @@ runs:
     - name: "Check ports"
       shell: bash
       run: |
-        ports=${{ inputs.ports }}
+        ports="${{ inputs.ports }}"
         for p in ${ports[@]}; do
           counter=0
 
