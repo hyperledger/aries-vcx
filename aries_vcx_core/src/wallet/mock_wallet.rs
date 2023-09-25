@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use async_trait::async_trait;
 
+use super::structs_io::UnpackMessageOutput;
 #[cfg(feature = "vdrtools_wallet")]
 use crate::WalletHandle;
 use crate::{
@@ -12,8 +13,6 @@ use crate::{
     },
     wallet::base_wallet::BaseWallet,
 };
-
-use super::structs_io::UnpackMessageOutput;
 
 #[derive(Debug)]
 pub struct MockWallet;

@@ -8,13 +8,12 @@ use async_trait::async_trait;
 #[cfg(feature = "vdrtools_wallet")]
 use vdrtools::WalletHandle;
 
+use super::structs_io::UnpackMessageOutput;
 use crate::{
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
     utils::async_fn_iterator::AsyncFnIterator,
     wallet::base_wallet::BaseWallet,
 };
-
-use super::structs_io::UnpackMessageOutput;
 
 #[derive(Debug)]
 pub(crate) struct AgencyClientWallet {
