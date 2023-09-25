@@ -26,32 +26,6 @@ sealed class Destination(val route: String) {
 }
 
 class MainActivity : ComponentActivity() {
-    private var profile by mutableStateOf<ProfileHolder?>(null)
-    private var connection by mutableStateOf<Connection?>(null)
-    private var connectionRequestState by mutableStateOf(false)
-    private var httpClient = OkHttpClient()
-
-    private val walletConfig = WalletConfig(
-        walletName = "test_create_wallet_add_uuid_here",
-        walletKey = "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY",
-        walletKeyDerivation = "RAW",
-        walletType = null,
-        storageConfig = null,
-        storageCredentials = null,
-        rekey = null,
-        rekeyDerivationMethod = null
-    )
-
-    private fun setProfileHolder(profileHolder: ProfileHolder) {
-        profile = profileHolder
-        connection = createInvitee(profileHolder)
-    }
-
-    private fun setConnectionRequestState() {
-        connectionRequestState = true
-    }
-
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Os.setenv("EXTERNAL_STORAGE", this.filesDir.absolutePath, true)
@@ -63,14 +37,8 @@ class MainActivity : ComponentActivity() {
                 ) {
                     val navController = rememberNavController()
                     NavigationAppHost(
+                        demoController = AppDemoController(),
                         navController = navController,
-                        setProfileHolder = { setProfileHolder(it) },
-                        connection = connection,
-                        profileHolder = profile,
-                        walletConfig = walletConfig,
-                        connectionRequestState = connectionRequestState,
-                        setConnectionRequestState = { setConnectionRequestState() },
-                        httpClient = httpClient
                     )
                 }
             }
@@ -80,35 +48,21 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun NavigationAppHost(
+    demoController: AppDemoController,
     navController: NavHostController,
-    setProfileHolder: (ProfileHolder) -> Unit,
-    connection: Connection?,
-    profileHolder: ProfileHolder?,
-    walletConfig: WalletConfig,
-    connectionRequestState: Boolean,
-    setConnectionRequestState: () -> Unit,
-    httpClient: OkHttpClient,
 ) {
     NavHost(navController = navController, startDestination = "home") {
         composable(Destination.Home.route) {
             HomeScreen(
+                demoController = demoController,
                 navController = navController,
-                setProfileHolder = setProfileHolder,
-                profileHolder = profileHolder,
-                connection = connection,
-                walletConfig = walletConfig,
-                connectionRequestState = connectionRequestState,
-                httpClient = httpClient
             )
         }
 
         composable(Destination.QRScan.route) {
             ScanScreen(
-                connection = connection!!,
-                profileHolder = profileHolder!!,
+                demoController = demoController,
                 navController = navController,
-                walletConfig = walletConfig,
-                setConnectionRequestState = setConnectionRequestState
             )
         }
     }

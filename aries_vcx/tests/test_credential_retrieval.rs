@@ -319,13 +319,8 @@ async fn test_agency_pool_it_should_fail_to_select_credentials_for_predicate() {
 
         let presentation_request = verifier.get_presentation_request_msg().unwrap();
         let mut prover = create_prover_from_request(presentation_request.clone()).await;
-        let selected_credentials = prover_select_credentials(
-            &mut prover,
-            &mut consumer,
-            presentation_request.into(),
-            None,
-        )
-        .await;
+        let selected_credentials =
+            prover_select_credentials(&mut prover, &mut consumer, presentation_request, None).await;
 
         assert!(selected_credentials.credential_for_referent.is_empty());
     })
