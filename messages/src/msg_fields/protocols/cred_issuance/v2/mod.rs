@@ -29,6 +29,7 @@ use self::{
 use super::{
     super::{notification::ack::AckDecorators, report_problem::ProblemReportDecorators},
     common::CredentialAttr,
+    CredentialIssuance,
 };
 use crate::{
     misc::utils::{self, into_msg_with_type, transit_to_aries_msg},
@@ -183,24 +184,24 @@ pub struct AttachmentFormatSpecifier<F> {
 
 transit_to_aries_msg!(
     OfferCredentialV2Content: OfferCredentialV2Decorators,
-    CredentialIssuanceV2
+    CredentialIssuanceV2, CredentialIssuance
 );
 transit_to_aries_msg!(
     ProposeCredentialV2Content: ProposeCredentialV2Decorators,
-    CredentialIssuanceV2
+    CredentialIssuanceV2, CredentialIssuance
 );
 transit_to_aries_msg!(
     RequestCredentialV2Content: RequestCredentialV2Decorators,
-    CredentialIssuanceV2
+    CredentialIssuanceV2, CredentialIssuance
 );
 transit_to_aries_msg!(
     IssueCredentialV2Content: IssueCredentialV2Decorators,
-    CredentialIssuanceV2
+    CredentialIssuanceV2, CredentialIssuance
 );
-transit_to_aries_msg!(AckCredentialV2Content: AckDecorators, CredentialIssuanceV2);
+transit_to_aries_msg!(AckCredentialV2Content: AckDecorators, CredentialIssuanceV2, CredentialIssuance);
 transit_to_aries_msg!(
     CredIssuanceV2ProblemReportContent: ProblemReportDecorators,
-    CredentialIssuanceV2
+    CredentialIssuanceV2, CredentialIssuance
 );
 
 into_msg_with_type!(

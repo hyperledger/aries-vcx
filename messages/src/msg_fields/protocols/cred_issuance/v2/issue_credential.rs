@@ -42,7 +42,7 @@ pub struct IssueCredentialV2Decorators {
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub enum IssueCredentialAttachmentFormatType {
     #[serde(rename = "aries/ld-proof-vc@v1.0")]
-    AriesLdProofVcDetail1_0,
+    AriesLdProofVc1_0,
     #[serde(rename = "hlindy/cred@v2.0")]
     HyperledgerIndyCredential2_0,
 }
