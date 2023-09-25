@@ -86,7 +86,7 @@ such as ```pub type IssueCredential = MsgParts<IssueCredentialContent, IssueCred
 The relevant submodule then contains the actual definitions of the `content` and `decorators` data structure (such as `IssueCredentialContent` and `IssueCredentialDecorators`).
 
 ### The `decorators` module
-Contains data structure for decorators. 
+Contains data structures for decorators. 
 
 Unlike messages and their `@type` field, decorators get their version associated within their name `~thread/1`. Since only major versions are used, swapping a decorators version in a message represents a breaking change and would have to be explicitly defined in the message's content/decorators data structure. No resolution is required.
 
