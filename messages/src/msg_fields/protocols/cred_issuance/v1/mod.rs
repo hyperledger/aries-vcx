@@ -25,7 +25,7 @@ use self::{
         RequestCredentialV1, RequestCredentialV1Content, RequestCredentialV1Decorators,
     },
 };
-use super::common::CredentialAttr;
+use super::{common::CredentialAttr, CredentialIssuance};
 use crate::{
     misc::utils::{self, into_msg_with_type, transit_to_aries_msg},
     msg_fields::{
@@ -177,24 +177,24 @@ impl Serialize for CredentialPreviewV1MsgType {
 
 transit_to_aries_msg!(
     OfferCredentialV1Content: OfferCredentialV1Decorators,
-    CredentialIssuanceV1
+    CredentialIssuanceV1, CredentialIssuance
 );
 transit_to_aries_msg!(
     ProposeCredentialV1Content: ProposeCredentialV1Decorators,
-    CredentialIssuanceV1
+    CredentialIssuanceV1, CredentialIssuance
 );
 transit_to_aries_msg!(
     RequestCredentialV1Content: RequestCredentialV1Decorators,
-    CredentialIssuanceV1
+    CredentialIssuanceV1, CredentialIssuance
 );
 transit_to_aries_msg!(
     IssueCredentialV1Content: IssueCredentialV1Decorators,
-    CredentialIssuanceV1
+    CredentialIssuanceV1, CredentialIssuance
 );
-transit_to_aries_msg!(AckCredentialV1Content: AckDecorators, CredentialIssuanceV1);
+transit_to_aries_msg!(AckCredentialV1Content: AckDecorators, CredentialIssuanceV1, CredentialIssuance);
 transit_to_aries_msg!(
     CredIssuanceV1ProblemReportContent: ProblemReportDecorators,
-    CredentialIssuanceV1
+    CredentialIssuanceV1, CredentialIssuance
 );
 
 into_msg_with_type!(
