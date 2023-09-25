@@ -1,11 +1,12 @@
 use self::{v1::CredentialIssuanceV1, v2::CredentialIssuanceV2};
 use crate::AriesMessage;
+use derive_more::From;
 
 pub mod common;
 pub mod v1;
 pub mod v2;
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, From, PartialEq)]
 pub enum CredentialIssuance {
     V1(CredentialIssuanceV1),
     V2(CredentialIssuanceV2),
