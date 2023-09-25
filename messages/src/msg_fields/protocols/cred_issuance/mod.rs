@@ -1,6 +1,7 @@
+use derive_more::From;
+
 use self::{v1::CredentialIssuanceV1, v2::CredentialIssuanceV2};
 use crate::AriesMessage;
-use derive_more::From;
 
 pub mod common;
 pub mod v1;
