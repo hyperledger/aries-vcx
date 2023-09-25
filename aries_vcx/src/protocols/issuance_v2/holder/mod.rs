@@ -25,10 +25,7 @@ use self::states::*;
 use super::{
     formats::holder::HolderCredentialIssuanceFormat, RecoveredSMError, VcxSMTransitionResult,
 };
-use crate::{
-    errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
-    handlers::util::get_thread_id_or_message_id,
-};
+use crate::{errors::error::VcxResult, handlers::util::get_thread_id_or_message_id};
 
 pub mod states {
     use std::marker::PhantomData;
@@ -342,59 +339,6 @@ impl<T: HolderCredentialIssuanceFormat> HolderV2<RequestPrepared<T>> {
 }
 
 impl<T: HolderCredentialIssuanceFormat> HolderV2<CredentialReceived<T>> {
-    // indiciates if the issuer intends to issue more credentials
-    pub fn is_more_credential_available(&self) -> bool {
-        // check more_available > 0
-        true
-    }
-
-    // prepare a request for the next credential if the issuer indicated there is more
-    pub async fn prepare_request_for_next_credential(
-        self,
-        input_data: &T::CreateRequestInput,
-    ) -> VcxSMTransitionResult<HolderV2<RequestPrepared<T>>, Self> {
-        if !self.is_more_credential_available() {
-            return Err(RecoveredSMError {
-                error: AriesVcxError::from_msg(
-                    AriesVcxErrorKind::ActionNotSupported,
-                    "No more credentials to accept",
-                ),
-                state_machine: self,
-            });
-        }
-
-        let (attachment_data, output_metadata) =
-            match T::create_request_attachment_content_independent_of_offer(input_data).await {
-                Ok((data, meta)) => (data, meta),
-                Err(error) => {
-                    return Err(RecoveredSMError {
-                        error,
-                        state_machine: self,
-                    })
-                }
-            };
-
-        let request = create_request_message_from_attachment::<T>(
-            attachment_data,
-            Some(self.thread_id.clone()),
-        );
-
-        let new_state = RequestPrepared {
-            request_preparation_metadata: output_metadata,
-            request,
-        };
-
-        Ok(HolderV2 {
-            state: new_state,
-            thread_id: self.thread_id,
-        })
-    }
-
-    // prepare a problem report to refuse any more credentials and end the protocol
-    pub fn prepare_refusal_to_more_credentials(self) -> HolderV2<Failed<T>> {
-        todo!()
-    }
-
     // transition to complete and prepare an ack message if the issuer requires one
     // TODO - consider enum variants for (HolderV2<AckPrepared>, HoldverV2<Completed>)
     pub fn prepare_ack_if_required(self) -> HolderV2<Complete<T>> {
