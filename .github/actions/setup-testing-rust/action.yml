@@ -33,10 +33,10 @@ runs:
         docker run -d --name mysql     --network host -e MYSQL_ROOT_PASSWORD=mysecretpassword mysql:5.7.35
         docker run -d --name indypool  --network host ${{ env.DOCKER_IMAGE_POOL }}
     - name: "Start vdrproxy"
-      timeout-minutes: 5
       if: ${{ inputs.skip-vdrproxy-setup != 'true' }}
       shell: bash
       run: |
         docker run -d --name vdrproxy --network host ${{ env.DOCKER_IMAGE_VDRPROXY }} -p ${{ env.VDR_PROXY_PORT }} -g ${{ env.GENESIS_URL }}
-        while [[ `nc -z localhost ${{ env.VDR_PROXY_PORT }}; echo $?` -ne 0 ]]; do sleep 5; done
+        counter=0
+        while [[ `nc -z localhost ${{ env.VDR_PROXY_PORT }}; echo $?` -ne 0 && $counter -ne 60 ]]; do sleep 5; counter=$(( $counter + 1 )); done
 
