@@ -20,7 +20,8 @@ runs:
     - name: "Check ports"
       shell: bash
       run: |
-        for p in ${{ inputs.ports }}; do
+        ports=${{ inputs.ports }}
+        for p in ${ports[@]}; do
           counter=0
 
           while [[ `nc -z localhost $p; echo $?` -ne 0 && $counter -ne ${{ inputs.tries }} ]]; do 
