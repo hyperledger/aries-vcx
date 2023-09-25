@@ -1,7 +1,7 @@
 # messages
 The `messages` crate provides data structures representing the various messages used in Aries protocols. This `README` explores the architecture behind the crate and module organization, making implementing new messages/protocols easier.
 
-### Message strucutre
+### Message structure
 All messages, from all protocols and all versions, are part of the parent `AriesMessage` enum. The individual messages from a specific version of a specific protocol are then implemented in a cascade:
 
 - AriesMessage
@@ -37,7 +37,7 @@ Each individual message is then ultimately an alias to the `MsgParts` generic st
     - `content`: a structure containing the protocol specific fields
     - `decorators`: a structure of decorator fields processable irrespective of the protocol this message is part of
 
-**NOTE:** Decorators fields are not exclusive to the `decorators` strucutre. Protocol specifications often use fields like the `~attach` decorator which is vital
+**NOTE:** Decorators fields are not exclusive to the `decorators` structure. Protocol specifications often use fields like the `~attach` decorator which is vital
 for the protocol implementation and is therefore part of the `content` struct. The `decorators` structure is meant for decorator fields that can be processed irrespective of the protocol being used, such as `~thread`, `~timing`, etc.
 
 ### The `@type` field
