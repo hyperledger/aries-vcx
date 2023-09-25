@@ -1,11 +1,10 @@
 use async_trait::async_trait;
 
+use super::HolderCredentialIssuanceFormat;
 use crate::{
     errors::error::VcxResult,
     protocols::issuance_v2::messages::{IssueCredentialV2, OfferCredentialV2},
 };
-
-use super::HolderCredentialIssuanceFormat;
 
 // TODO - delete, this is just a mock
 pub struct LdProofHolderCredentialIssuanceFormat;
@@ -31,7 +30,9 @@ impl HolderCredentialIssuanceFormat for LdProofHolderCredentialIssuanceFormat {
         String::from("aries/ld-proof-vc-detail@v1.0")
     }
 
-    async fn create_proposal_attachment_content(_data: &Self::CreateProposalInput) -> VcxResult<Vec<u8>> {
+    async fn create_proposal_attachment_content(
+        _data: &Self::CreateProposalInput,
+    ) -> VcxResult<Vec<u8>> {
         Ok("mock".to_owned().into())
     }
 

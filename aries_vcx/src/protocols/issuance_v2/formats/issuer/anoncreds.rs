@@ -3,13 +3,12 @@ use std::{collections::HashMap, marker::PhantomData, sync::Arc};
 use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
 use async_trait::async_trait;
 
+use super::IssuerCredentialIssuanceFormat;
 use crate::{
     errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
     protocols::issuance_v2::messages::RequestCredentialV2,
     utils::openssl::encode,
 };
-
-use super::IssuerCredentialIssuanceFormat;
 
 pub struct AnoncredsIssuerCredentialIssuanceFormat<'a> {
     _marker: &'a PhantomData<()>,
@@ -66,11 +65,16 @@ impl<'a> IssuerCredentialIssuanceFormat for AnoncredsIssuerCredentialIssuanceFor
     async fn create_offer_attachment_content(
         data: &AnoncredsCreateOfferInput,
     ) -> VcxResult<(Vec<u8>, AnoncredsCreatedOfferMetadata)> {
-        let cred_offer = data.anoncreds.issuer_create_credential_offer(&data.cred_def_id).await?;
+        let cred_offer = data
+            .anoncreds
+            .issuer_create_credential_offer(&data.cred_def_id)
+            .await?;
 
         Ok((
             cred_offer.clone().into_bytes(),
-            AnoncredsCreatedOfferMetadata { offer_json: cred_offer },
+            AnoncredsCreatedOfferMetadata {
+                offer_json: cred_offer,
+            },
         ))
     }
 
@@ -86,10 +90,14 @@ impl<'a> IssuerCredentialIssuanceFormat for AnoncredsIssuerCredentialIssuanceFor
         let request = String::from("extract from msg");
 
         let encoded_credential_attributes = encode_attributes(&data.credential_attributes)?;
-        let encoded_credential_attributes_json = serde_json::to_string(&encoded_credential_attributes)?;
+        let encoded_credential_attributes_json =
+            serde_json::to_string(&encoded_credential_attributes)?;
 
         let (rev_reg_id, tails_dir) = data.revocation_info.as_ref().map_or((None, None), |info| {
-            (Some(info.registry_id.to_owned()), Some(info.tails_directory.to_owned()))
+            (
+                Some(info.registry_id.to_owned()),
+                Some(info.tails_directory.to_owned()),
+            )
         });
 
         let (credential, cred_rev_id, _) = data
@@ -121,7 +129,9 @@ impl<'a> IssuerCredentialIssuanceFormat for AnoncredsIssuerCredentialIssuanceFor
     }
 }
 
-fn encode_attributes(attributes: &HashMap<String, String>) -> VcxResult<HashMap<String, RawAndEncoded>> {
+fn encode_attributes(
+    attributes: &HashMap<String, String>,
+) -> VcxResult<HashMap<String, RawAndEncoded>> {
     let mut encoded = HashMap::<String, RawAndEncoded>::new();
     for (k, v) in attributes.into_iter() {
         encoded.insert(

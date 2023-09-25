@@ -2,17 +2,17 @@ use std::marker::PhantomData;
 
 use messages::msg_fields::protocols::{cred_issuance::CredentialPreview, notification::ack::Ack};
 
-use crate::{
-    errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
-    protocols::issuance_v2::{messages::OfferCredentialV2, RecoveredSMError},
+use self::states::{
+    Complete, CredentialPrepared, OfferPrepared, ProposalReceived, RequestReceived,
 };
-
-use self::states::{Complete, CredentialPrepared, OfferPrepared, ProposalReceived, RequestReceived};
-
 use super::{
     formats::issuer::IssuerCredentialIssuanceFormat,
     messages::{IssueCredentialV2, ProposeCredentialV2, RequestCredentialV2},
     VcxSMTransitionResult,
+};
+use crate::{
+    errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
+    protocols::issuance_v2::{messages::OfferCredentialV2, RecoveredSMError},
 };
 
 pub mod states {
@@ -22,7 +22,9 @@ pub mod states {
 
     use crate::protocols::issuance_v2::{
         formats::issuer::IssuerCredentialIssuanceFormat,
-        messages::{IssueCredentialV2, OfferCredentialV2, ProposeCredentialV2, RequestCredentialV2},
+        messages::{
+            IssueCredentialV2, OfferCredentialV2, ProposeCredentialV2, RequestCredentialV2,
+        },
     };
 
     pub struct ProposalReceived<T: IssuerCredentialIssuanceFormat> {
@@ -57,7 +59,9 @@ pub mod states {
     }
 }
 
-fn validate_number_credentials_avaliable<T: IssuerCredentialIssuanceFormat>(number: u32) -> VcxResult<()> {
+fn validate_number_credentials_avaliable<T: IssuerCredentialIssuanceFormat>(
+    number: u32,
+) -> VcxResult<()> {
     if number != 1 && !T::supports_multi_credential_issuance() {
         return Err(AriesVcxError::from_msg(
             AriesVcxErrorKind::ActionNotSupported,
@@ -95,7 +99,8 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<ProposalReceived<T>> {
         self,
         input_data: &T::CreateOfferInput,
         number_of_credentials_available: Option<u32>, // defaults to 1 if None
-        preview: Option<CredentialPreview>, // TODO - is this the right format? may not be versioned correctly...
+        preview: Option<CredentialPreview>,           /* TODO - is this the right format? may
+                                                       * not be versioned correctly... */
         replacement_id: Option<String>,
     ) -> VcxSMTransitionResult<IssuerV2<OfferPrepared<T>>, Self> {
         let multi_available = number_of_credentials_available.unwrap_or(1);
@@ -109,15 +114,16 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<ProposalReceived<T>> {
             }
         };
 
-        let (attachment_data, offer_metadata) = match T::create_offer_attachment_content(input_data).await {
-            Ok(data) => data,
-            Err(error) => {
-                return Err(RecoveredSMError {
-                    error,
-                    state_machine: self,
-                })
-            }
-        };
+        let (attachment_data, offer_metadata) =
+            match T::create_offer_attachment_content(input_data).await {
+                Ok(data) => data,
+                Err(error) => {
+                    return Err(RecoveredSMError {
+                        error,
+                        state_machine: self,
+                    })
+                }
+            };
 
         let _offer_attachment_format = T::get_offer_attachment_format();
         // create offer msg with the attachment data and format
@@ -145,13 +151,15 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<OfferPrepared<T>> {
     pub async fn with_offer(
         input_data: &T::CreateOfferInput,
         number_of_credentials_available: Option<u32>, // defaults to 1 if None
-        preview: Option<CredentialPreview>, // TODO - is this the right format? may not be versioned correctly...
+        preview: Option<CredentialPreview>,           /* TODO - is this the right format? may
+                                                       * not be versioned correctly... */
         replacement_id: Option<String>,
     ) -> VcxResult<Self> {
         let multi_available = number_of_credentials_available.unwrap_or(1);
         validate_number_credentials_avaliable::<T>(multi_available)?;
 
-        let (attachment_data, offer_metadata) = T::create_offer_attachment_content(input_data).await?;
+        let (attachment_data, offer_metadata) =
+            T::create_offer_attachment_content(input_data).await?;
 
         let _offer_attachment_format = T::get_offer_attachment_format();
         // create offer msg with the attachment data and format
@@ -228,8 +236,9 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<RequestReceived<T>> {
     pub async fn prepare_credential(
         self,
         input_data: &T::CreateCredentialInput,
-        more_credentials_available: Option<u32>, // defaults to the current state's (`credentials_remaining` - 1), else 0
-        please_ack: Option<bool>,                // defaults to the current state's `please_ack`, else false
+        more_credentials_available: Option<u32>, /* defaults to the current state's
+                                                  * (`credentials_remaining` - 1), else 0 */
+        please_ack: Option<bool>, // defaults to the current state's `please_ack`, else false
         replacement_id: Option<String>,
     ) -> VcxSMTransitionResult<IssuerV2<CredentialPrepared<T>>, Self> {
         let more_available = more_credentials_available
@@ -249,8 +258,13 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<RequestReceived<T>> {
         let request = &self.state.request;
 
         let res = match &self.state.from_offer_metadata {
-            Some(offer) => T::create_credential_attachment_content(offer, request, input_data).await,
-            None => T::create_credential_attachment_content_independent_of_offer(request, input_data).await,
+            Some(offer) => {
+                T::create_credential_attachment_content(offer, request, input_data).await
+            }
+            None => {
+                T::create_credential_attachment_content_independent_of_offer(request, input_data)
+                    .await
+            }
         };
 
         let (attachment_data, cred_metadata) = match res {

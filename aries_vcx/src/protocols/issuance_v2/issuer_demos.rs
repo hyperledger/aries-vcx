@@ -48,7 +48,13 @@ mod demo_test {
         let anoncreds = profile.inject_anoncreds();
 
         let (cred_def_id, _) = anoncreds
-            .issuer_create_and_store_credential_def("issuer_did", "schema_json", "tag", None, "config_json")
+            .issuer_create_and_store_credential_def(
+                "issuer_did",
+                "schema_json",
+                "tag",
+                None,
+                "config_json",
+            )
             .await
             .unwrap();
 
@@ -62,7 +68,10 @@ mod demo_test {
 
         let proposal = ProposeCredentialV2;
 
-        let issuer = IssuerV2::<ProposalReceived<AnoncredsIssuerCredentialIssuanceFormat>>::from_proposal(proposal);
+        let issuer =
+            IssuerV2::<ProposalReceived<AnoncredsIssuerCredentialIssuanceFormat>>::from_proposal(
+                proposal,
+            );
 
         // ------ respond with offer
 
@@ -126,7 +135,10 @@ mod demo_test {
 
         let proposal = ProposeCredentialV2;
 
-        let issuer = IssuerV2::<ProposalReceived<LdProofIssuerCredentialIssuanceFormat>>::from_proposal(proposal);
+        let issuer =
+            IssuerV2::<ProposalReceived<LdProofIssuerCredentialIssuanceFormat>>::from_proposal(
+                proposal,
+            );
 
         // ------ respond with offer
 
@@ -143,7 +155,10 @@ mod demo_test {
 
         // ------- respond with credential
 
-        let issuer = issuer.prepare_credential(&(), None, None, None).await.unwrap();
+        let issuer = issuer
+            .prepare_credential(&(), None, None, None)
+            .await
+            .unwrap();
 
         let _credential = issuer.get_credential();
         // send_msg(credential.into())
@@ -164,7 +179,10 @@ mod demo_test {
 
         // ------ respond with first cred, and show intent to issue `4` more creds
 
-        let mut issuer = issuer.prepare_credential(&(), Some(4), Some(true), None).await.unwrap();
+        let mut issuer = issuer
+            .prepare_credential(&(), Some(4), Some(true), None)
+            .await
+            .unwrap();
 
         let _credential = issuer.get_credential();
         // send_msg(credential.into())

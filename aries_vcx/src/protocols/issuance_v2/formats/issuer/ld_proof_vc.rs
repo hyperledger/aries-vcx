@@ -2,9 +2,8 @@
 
 use async_trait::async_trait;
 
-use crate::{errors::error::VcxResult, protocols::issuance_v2::messages::RequestCredentialV2};
-
 use super::IssuerCredentialIssuanceFormat;
+use crate::{errors::error::VcxResult, protocols::issuance_v2::messages::RequestCredentialV2};
 
 pub struct LdProofIssuerCredentialIssuanceFormat;
 
@@ -30,7 +29,9 @@ impl IssuerCredentialIssuanceFormat for LdProofIssuerCredentialIssuanceFormat {
         String::from("aries/ld-proof-vc@v1.0")
     }
 
-    async fn create_offer_attachment_content(_: &Self::CreateOfferInput) -> VcxResult<(Vec<u8>, ())> {
+    async fn create_offer_attachment_content(
+        _: &Self::CreateOfferInput,
+    ) -> VcxResult<(Vec<u8>, ())> {
         Ok(("mock data".into(), ()))
     }
 

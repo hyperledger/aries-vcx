@@ -9,17 +9,15 @@ use messages::{
     },
 };
 
-use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
-
 use self::{
     super::messages::{IssueCredentialV2, OfferCredentialV2, ProposeCredentialV2},
     states::*,
 };
-
 use super::{
-    formats::holder::HolderCredentialIssuanceFormat, messages::RequestCredentialV2, RecoveredSMError,
-    VcxSMTransitionResult,
+    formats::holder::HolderCredentialIssuanceFormat, messages::RequestCredentialV2,
+    RecoveredSMError, VcxSMTransitionResult,
 };
+use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 
 pub mod states {
     use std::marker::PhantomData;
@@ -27,7 +25,9 @@ pub mod states {
     use messages::msg_fields::protocols::{notification::ack::Ack, report_problem::ProblemReport};
 
     use super::{
-        super::messages::{IssueCredentialV2, OfferCredentialV2, ProposeCredentialV2, RequestCredentialV2},
+        super::messages::{
+            IssueCredentialV2, OfferCredentialV2, ProposeCredentialV2, RequestCredentialV2,
+        },
         HolderCredentialIssuanceFormat,
     };
 
@@ -72,7 +72,11 @@ fn create_proposal_message_from_attachment<T: HolderCredentialIssuanceFormat>(
     let attachment = Attachment::builder()
         .id(attachment_id.clone())
         .mime_type(::messages::misc::MimeType::Json)
-        .data(AttachmentData::builder().content(attachment_content).build())
+        .data(
+            AttachmentData::builder()
+                .content(attachment_content)
+                .build(),
+        )
         .build();
 
     let proposal_attachment_format = T::get_proposal_attachment_format();
@@ -96,7 +100,11 @@ fn create_request_message_from_attachment<T: HolderCredentialIssuanceFormat>(
     let attachment = Attachment::builder()
         .id(attachment_id.clone())
         .mime_type(::messages::misc::MimeType::Json)
-        .data(AttachmentData::builder().content(attachment_content).build())
+        .data(
+            AttachmentData::builder()
+                .content(attachment_content)
+                .build(),
+        )
         .build();
 
     let request_attachment_format = T::get_request_attachment_format();
@@ -119,7 +127,8 @@ impl<T: HolderCredentialIssuanceFormat> HolderV2<ProposalPrepared<T>> {
     // initiate by creating a proposal message
     pub async fn with_proposal(
         input_data: &T::CreateProposalInput,
-        preview: Option<CredentialPreview>, // TODO - is this the right format? may not be versioned correctly...
+        preview: Option<CredentialPreview>, /* TODO - is this the right format? may not be
+                                             * versioned correctly... */
     ) -> VcxResult<Self> {
         let attachment_data = T::create_proposal_attachment_content(input_data).await?;
         let proposal = create_proposal_message_from_attachment::<T>(attachment_data, preview, None);
@@ -139,7 +148,10 @@ impl<T: HolderCredentialIssuanceFormat> HolderV2<ProposalPrepared<T>> {
     }
 
     // receive an offer in response to the proposal
-    pub fn receive_offer(self, _offer: OfferCredentialV2) -> VcxSMTransitionResult<HolderV2<OfferReceived<T>>, Self> {
+    pub fn receive_offer(
+        self,
+        _offer: OfferCredentialV2,
+    ) -> VcxSMTransitionResult<HolderV2<OfferReceived<T>>, Self> {
         // verify thread ID?
         todo!()
     }
@@ -157,7 +169,8 @@ impl<T: HolderCredentialIssuanceFormat> HolderV2<OfferReceived<T>> {
         }
     }
 
-    // TODO - helpers so that consumers can understand what offer they received? (is cred preview garuanteed?)
+    // TODO - helpers so that consumers can understand what offer they received? (is cred preview
+    // garuanteed?)
 
     // TODO - helper function to give consumers a clue about what format is being used
 
@@ -165,7 +178,8 @@ impl<T: HolderCredentialIssuanceFormat> HolderV2<OfferReceived<T>> {
     pub async fn prepare_proposal(
         self,
         input_data: &T::CreateProposalInput,
-        preview: Option<CredentialPreview>, // TODO - is this the right format? may not be versioned correctly...
+        preview: Option<CredentialPreview>, /* TODO - is this the right format? may not be
+                                             * versioned correctly... */
     ) -> VcxSMTransitionResult<HolderV2<ProposalPrepared<T>>, Self> {
         let attachment_data = match T::create_proposal_attachment_content(input_data).await {
             Ok(msg) => msg,
@@ -176,8 +190,11 @@ impl<T: HolderCredentialIssuanceFormat> HolderV2<OfferReceived<T>> {
                 })
             }
         };
-        let proposal =
-            create_proposal_message_from_attachment::<T>(attachment_data, preview, Some(self.thread_id.clone()));
+        let proposal = create_proposal_message_from_attachment::<T>(
+            attachment_data,
+            preview,
+            Some(self.thread_id.clone()),
+        );
 
         Ok(HolderV2 {
             state: ProposalPrepared {
@@ -206,7 +223,10 @@ impl<T: HolderCredentialIssuanceFormat> HolderV2<OfferReceived<T>> {
                 }
             };
 
-        let request = create_request_message_from_attachment::<T>(attachment_data, Some(self.thread_id.clone()));
+        let request = create_request_message_from_attachment::<T>(
+            attachment_data,
+            Some(self.thread_id.clone()),
+        );
 
         let new_state = RequestPrepared {
             request_preparation_metadata: output_metadata,
@@ -223,7 +243,9 @@ impl<T: HolderCredentialIssuanceFormat> HolderV2<OfferReceived<T>> {
 impl<T: HolderCredentialIssuanceFormat> HolderV2<RequestPrepared<T>> {
     // TODO - better name; this is "begin with request as a holder"
     // initiate by creating a request
-    pub async fn with_request(input_data: &T::CreateRequestInput) -> VcxResult<HolderV2<RequestPrepared<T>>> {
+    pub async fn with_request(
+        input_data: &T::CreateRequestInput,
+    ) -> VcxResult<HolderV2<RequestPrepared<T>>> {
         let (attachment_data, output_metadata) =
             T::create_request_attachment_content_independent_of_offer(input_data).await?;
 
@@ -251,8 +273,12 @@ impl<T: HolderCredentialIssuanceFormat> HolderV2<RequestPrepared<T>> {
         credential: IssueCredentialV2,
         input_data: &T::StoreCredentialInput,
     ) -> VcxResult<HolderV2<CredentialReceived<T>>> {
-        let credential_received_metadata =
-            T::process_and_store_credential(&credential, input_data, self.state.request_preparation_metadata).await?;
+        let credential_received_metadata = T::process_and_store_credential(
+            &credential,
+            input_data,
+            self.state.request_preparation_metadata,
+        )
+        .await?;
 
         let new_state = CredentialReceived {
             credential,
@@ -279,7 +305,10 @@ impl<T: HolderCredentialIssuanceFormat> HolderV2<CredentialReceived<T>> {
     ) -> VcxSMTransitionResult<HolderV2<RequestPrepared<T>>, Self> {
         if !self.is_more_credential_available() {
             return Err(RecoveredSMError {
-                error: AriesVcxError::from_msg(AriesVcxErrorKind::ActionNotSupported, "No more credentials to accept"),
+                error: AriesVcxError::from_msg(
+                    AriesVcxErrorKind::ActionNotSupported,
+                    "No more credentials to accept",
+                ),
                 state_machine: self,
             });
         }
@@ -295,7 +324,10 @@ impl<T: HolderCredentialIssuanceFormat> HolderV2<CredentialReceived<T>> {
                 }
             };
 
-        let request = create_request_message_from_attachment::<T>(attachment_data, Some(self.thread_id.clone()));
+        let request = create_request_message_from_attachment::<T>(
+            attachment_data,
+            Some(self.thread_id.clone()),
+        );
 
         let new_state = RequestPrepared {
             request_preparation_metadata: output_metadata,

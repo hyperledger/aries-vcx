@@ -26,7 +26,9 @@ pub struct RecoveredSMError<T> {
 
 impl<T> std::fmt::Debug for RecoveredSMError<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("RecoveredSMError").field("error", &self.error).finish()
+        f.debug_struct("RecoveredSMError")
+            .field("error", &self.error)
+            .finish()
     }
 }
 

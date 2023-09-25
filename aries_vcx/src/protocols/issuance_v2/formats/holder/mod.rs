@@ -23,7 +23,9 @@ pub trait HolderCredentialIssuanceFormat {
     fn get_proposal_attachment_format() -> String;
     fn get_request_attachment_format() -> String;
 
-    async fn create_proposal_attachment_content(data: &Self::CreateProposalInput) -> VcxResult<Vec<u8>>;
+    async fn create_proposal_attachment_content(
+        data: &Self::CreateProposalInput,
+    ) -> VcxResult<Vec<u8>>;
 
     async fn create_request_attachment_content(
         offer_message: &OfferCredentialV2,

@@ -1,19 +1,21 @@
 use std::{marker::PhantomData, sync::Arc};
 
-use aries_vcx_core::{anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead};
+use aries_vcx_core::{
+    anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
+};
 use async_trait::async_trait;
 
+use super::HolderCredentialIssuanceFormat;
 use crate::{
     errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
     protocols::{
         issuance::holder::state_machine::{
-            _parse_rev_reg_id_from_credential, create_anoncreds_credential_request, parse_cred_def_id_from_cred_offer,
+            _parse_rev_reg_id_from_credential, create_anoncreds_credential_request,
+            parse_cred_def_id_from_cred_offer,
         },
         issuance_v2::messages::{IssueCredentialV2, OfferCredentialV2},
     },
 };
-
-use super::HolderCredentialIssuanceFormat;
 
 pub struct AnoncredsHolderCredentialIssuanceFormat<'a> {
     _data: &'a PhantomData<()>,
@@ -81,7 +83,9 @@ impl<'a> HolderCredentialIssuanceFormat for AnoncredsHolderCredentialIssuanceFor
         String::from("anoncreds/credential-request@v1.0")
     }
 
-    async fn create_proposal_attachment_content(data: &AnoncredsCreateProposalInput) -> VcxResult<Vec<u8>> {
+    async fn create_proposal_attachment_content(
+        data: &AnoncredsCreateProposalInput,
+    ) -> VcxResult<Vec<u8>> {
         let filter_bytes = serde_json::to_vec(&data.cred_filter)?;
 
         Ok(filter_bytes)
@@ -101,7 +105,14 @@ impl<'a> HolderCredentialIssuanceFormat for AnoncredsHolderCredentialIssuanceFor
         let anoncreds = data.anoncreds;
 
         let (credential_request, credential_request_metadata, _, credential_def_json) =
-            create_anoncreds_credential_request(ledger, anoncreds, &cred_def_id, &entropy, &offer_payload).await?;
+            create_anoncreds_credential_request(
+                ledger,
+                anoncreds,
+                &cred_def_id,
+                &entropy,
+                &offer_payload,
+            )
+            .await?;
 
         Ok((
             credential_request.into(),
@@ -127,7 +138,8 @@ impl<'a> HolderCredentialIssuanceFormat for AnoncredsHolderCredentialIssuanceFor
         request_metadata: AnoncredsCreatedRequestMetadata,
     ) -> VcxResult<AnoncredsStoredCredentialMetadata> {
         _ = issue_credential_message;
-        let credential_payload: String = String::from("TODO - extract from issue_credential_message");
+        let credential_payload: String =
+            String::from("TODO - extract from issue_credential_message");
 
         let ledger = user_input.ledger;
         let anoncreds = user_input.anoncreds;
@@ -150,6 +162,8 @@ impl<'a> HolderCredentialIssuanceFormat for AnoncredsHolderCredentialIssuanceFor
             )
             .await?;
 
-        Ok(AnoncredsStoredCredentialMetadata { credential_id: cred_id })
+        Ok(AnoncredsStoredCredentialMetadata {
+            credential_id: cred_id,
+        })
     }
 }
