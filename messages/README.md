@@ -93,16 +93,15 @@ Unlike messages and their `@type` field, decorators get their version associated
 ### Extending the crate
 Adding new messages to the crate should be fairly easy to do, even without understanding all the inner workings. The main concepts needed are:  
 - the `AriesMessage` enum encapsulates all messages
-- messages are serialized/deserialized conditionally based on their `@type` field.
-- the `@type` field gets deserialized using the `Protocol` enum, through which all
-supported protocols can be resolved.
+- messages are serialized/deserialized conditionally based on their `@type` field
+- the `@type` field gets deserialized using the `Protocol` enum, through which all supported protocols can be resolved
 - the `PROTOCOL_REGISTRY` contains entries for all supported protocol versions, which is how minor version resolution is handled
 
 With that in mind, a crude list of steps for extending the crate would be:
-- changes in the `msg_types` module
+- changes in the `msg_types` module:
     - adding/extending data types to represent the new protocol / protocol version
     - if adding the first version of a new protocol, extend the `Protocol` enum
     - add an entry to the `PROTOCOL_REGISTRY`
-- changes in the `msg_fields` module
+- changes in the `msg_fields` module:
     - adding/extending data types to represent the message content and message decorators
 - if adding the first version of a new protocol, extend the `AriesMessage` enum
