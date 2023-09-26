@@ -431,6 +431,7 @@ dependencies = [
  "lazy_static",
  "log",
  "messages",
+ "mockall",
  "num-bigint 0.4.3",
  "rand 0.7.3",
  "regex",

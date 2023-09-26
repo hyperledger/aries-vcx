@@ -94,3 +94,59 @@ pub trait HolderCredentialIssuanceFormat {
         request_metadata: Self::CreatedRequestMetadata,
     ) -> VcxResult<Self::StoredCredentialMetadata>;
 }
+
+#[cfg(test)]
+pub(crate) mod mocks {
+    use async_trait::async_trait;
+    use messages::msg_fields::protocols::cred_issuance::v2::{
+        issue_credential::{IssueCredentialAttachmentFormatType, IssueCredentialV2},
+        offer_credential::{OfferCredentialAttachmentFormatType, OfferCredentialV2},
+        propose_credential::ProposeCredentialAttachmentFormatType,
+        request_credential::RequestCredentialAttachmentFormatType,
+    };
+    use mockall::mock;
+    use shared_vcx::maybe_known::MaybeKnown;
+
+    use super::HolderCredentialIssuanceFormat;
+    use crate::errors::error::VcxResult;
+
+    mock! {
+        pub HolderCredentialIssuanceFormat {}
+        #[async_trait]
+        impl HolderCredentialIssuanceFormat for HolderCredentialIssuanceFormat {
+            type CreateProposalInput = String;
+
+            type CreateRequestInput = String;
+            type CreatedRequestMetadata = String;
+
+            type StoreCredentialInput = String;
+            type StoredCredentialMetadata = String;
+
+            fn supports_request_independent_of_offer() -> bool;
+
+            fn get_proposal_attachment_format() -> MaybeKnown<ProposeCredentialAttachmentFormatType>;
+            fn get_offer_attachment_format() -> MaybeKnown<OfferCredentialAttachmentFormatType>;
+            fn get_request_attachment_format() -> MaybeKnown<RequestCredentialAttachmentFormatType>;
+            fn get_credential_attachment_format() -> MaybeKnown<IssueCredentialAttachmentFormatType>;
+
+            async fn create_proposal_attachment_content(
+                data: &String,
+            ) -> VcxResult<Vec<u8>>;
+
+            async fn create_request_attachment_content(
+                offer_message: &OfferCredentialV2,
+                data: &String,
+            ) -> VcxResult<(Vec<u8>, String)>;
+
+            async fn create_request_attachment_content_independent_of_offer(
+                data: &String,
+            ) -> VcxResult<(Vec<u8>, String)>;
+
+            async fn process_and_store_credential(
+                issue_credential_message: &IssueCredentialV2,
+                data: &String,
+                request_metadata: String,
+            ) -> VcxResult<String>;
+        }
+    }
+}

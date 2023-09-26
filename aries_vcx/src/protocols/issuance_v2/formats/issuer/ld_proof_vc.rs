@@ -36,7 +36,7 @@ impl IssuerCredentialIssuanceFormat for LdProofIssuerCredentialIssuanceFormat {
         MaybeKnown::Known(OfferCredentialAttachmentFormatType::AriesLdProofVcDetail1_0)
     }
     fn get_credential_attachment_format() -> MaybeKnown<IssueCredentialAttachmentFormatType> {
-        MaybeKnown::Known(IssueCredentialAttachmentFormatType::AriesLdProofVcDetail1_0)
+        MaybeKnown::Known(IssueCredentialAttachmentFormatType::AriesLdProofVc1_0)
     }
 
     async fn create_offer_attachment_content(

@@ -370,3 +370,60 @@ impl<T: HolderCredentialIssuanceFormat> HolderV2<Complete<T>> {
         self.state.ack.as_ref()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use messages::decorators::attachment::AttachmentType;
+    use shared_vcx::maybe_known::MaybeKnown;
+
+    use crate::protocols::issuance_v2::{
+        formats::holder::mocks::MockHolderCredentialIssuanceFormat,
+        holder::{states::ProposalPrepared, HolderV2},
+    };
+
+    #[tokio::test]
+    async fn test_with_proposal_creates_message_with_attachments() {
+        // note synchronization issues. might need to just set this once globally and use constant
+        // data
+        let ctx = MockHolderCredentialIssuanceFormat::create_proposal_attachment_content_context();
+
+        ctx.expect()
+            .returning(|_| Ok(String::from("data").into_bytes()));
+
+        let ctx2 = MockHolderCredentialIssuanceFormat::get_proposal_attachment_format_context();
+        ctx2.expect()
+            .returning(|| MaybeKnown::Unknown(String::from("format")));
+
+        let holder =
+            HolderV2::<ProposalPrepared<MockHolderCredentialIssuanceFormat>>::with_proposal(
+                &String::from("in"),
+                None,
+            )
+            .await
+            .unwrap();
+
+        let proposal = holder.get_proposal();
+
+        let formats = proposal.content.formats.clone();
+        let attachments = proposal.content.filters_attach.clone();
+
+        assert_eq!(formats.len(), 1);
+        assert_eq!(attachments.len(), 1);
+
+        assert_eq!(formats[0].attach_id, attachments[0].id.clone().unwrap());
+        assert_eq!(
+            formats[0].format,
+            MaybeKnown::Unknown(String::from("format"))
+        );
+
+        let AttachmentType::Base64(b64_content) = attachments[0].data.content.clone() else {
+            panic!("wrong attachment type")
+        };
+
+        let decoded = base64::decode_config(&b64_content, base64::URL_SAFE).unwrap();
+
+        assert_eq!(String::from_utf8(decoded).unwrap(), String::from("data"));
+    }
+
+    // TODO - unit test all when we're happy with the layout
+}
