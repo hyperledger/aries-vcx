@@ -9,6 +9,7 @@ use crate::{
     wallet::{
         base_wallet::BaseWallet,
         indy::{internal, IndySdkWallet, IndyWalletRecordIterator, WalletRecord},
+        structs_io::UnpackMessageOutput,
     },
     WalletHandle,
 };
@@ -145,8 +146,12 @@ impl BaseWallet for IndySdkWallet {
         wallet::indy::signing::pack_message(self.wallet_handle, sender_vk, receiver_keys, msg).await
     }
 
-    async fn unpack_message(&self, msg: &[u8]) -> VcxCoreResult<Vec<u8>> {
-        wallet::indy::signing::unpack_message(self.wallet_handle, msg).await
+    async fn unpack_message(&self, msg: &[u8]) -> VcxCoreResult<UnpackMessageOutput> {
+        let unpack_json_bytes =
+            wallet::indy::signing::unpack_message(self.wallet_handle, msg).await?;
+        serde_json::from_slice(&unpack_json_bytes[..]).map_err(|err| {
+            AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::ParsingError, err.to_string())
+        })
     }
 
     #[cfg(feature = "vdrtools_wallet")]

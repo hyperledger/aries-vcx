@@ -123,23 +123,9 @@ impl EncryptionEnvelope {
 
         let unpacked_msg = wallet.unpack_message(&payload).await?;
 
-        let msg_value: serde_json::Value = serde_json::from_slice(unpacked_msg.as_slice())
-            .map_err(|err| {
-                AriesVcxError::from_msg(
-                    AriesVcxErrorKind::InvalidJson,
-                    format!("Cannot deserialize message: {}", err),
-                )
-            })?;
+        let sender_vk = unpacked_msg.sender_verkey;
 
-        let sender_vk = msg_value["sender_verkey"].as_str().map(String::from);
-
-        let msg_string = msg_value["message"]
-            .as_str()
-            .ok_or(AriesVcxError::from_msg(
-                AriesVcxErrorKind::InvalidJson,
-                "Cannot find `message` field",
-            ))?
-            .to_string();
+        let msg_string = unpacked_msg.message;
 
         Ok((msg_string, sender_vk))
     }

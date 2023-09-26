@@ -97,14 +97,13 @@ pub async fn unpack_message_to_string(
     if settings::indy_mocks_enabled() {
         return Ok(String::new());
     }
-
-    String::from_utf8(wallet.unpack_message(msg).await.map_err(|_| {
+    let unpack_msg = wallet.unpack_message(msg).await.map_err(|_| {
         AriesVcxError::from_msg(
             AriesVcxErrorKind::InvalidMessagePack,
             "Failed to unpack message",
         )
-    })?)
-    .map_err(|_| {
+    })?;
+    serde_json::to_string(&unpack_msg).map_err(|_| {
         AriesVcxError::from_msg(
             AriesVcxErrorKind::InvalidMessageFormat,
             "Failed to convert message to utf8 string",

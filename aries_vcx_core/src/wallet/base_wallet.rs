@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use async_trait::async_trait;
 
+use super::structs_io::UnpackMessageOutput;
 #[cfg(feature = "vdrtools_wallet")]
 use crate::WalletHandle;
 use crate::{errors::error::VcxCoreResult, utils::async_fn_iterator::AsyncFnIterator};
@@ -99,7 +100,7 @@ pub trait BaseWallet: std::fmt::Debug + Send + Sync {
         msg: &[u8],
     ) -> VcxCoreResult<Vec<u8>>;
 
-    async fn unpack_message(&self, msg: &[u8]) -> VcxCoreResult<Vec<u8>>;
+    async fn unpack_message(&self, msg: &[u8]) -> VcxCoreResult<UnpackMessageOutput>;
 }
 
 #[async_trait]

@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use async_trait::async_trait;
 
+use super::structs_io::UnpackMessageOutput;
 #[cfg(feature = "vdrtools_wallet")]
 use crate::WalletHandle;
 use crate::{
@@ -142,7 +143,11 @@ impl BaseWallet for MockWallet {
         Ok(msg.to_vec())
     }
 
-    async fn unpack_message(&self, msg: &[u8]) -> VcxCoreResult<Vec<u8>> {
-        Ok(msg.to_vec())
+    async fn unpack_message(&self, msg: &[u8]) -> VcxCoreResult<UnpackMessageOutput> {
+        Ok(UnpackMessageOutput {
+            message: format!("{:?}", msg),
+            recipient_verkey: "".to_owned(),
+            sender_verkey: None,
+        })
     }
 }
