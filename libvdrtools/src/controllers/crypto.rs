@@ -40,10 +40,10 @@ impl CryptoController {
     /// wallet_handle: Wallet handle (created by open_wallet).
     /// key_json: Key information as json. Example:
     /// {
-    ///     "seed": string, (optional) Seed that allows deterministic key creation (if not set random one will be created).
-    ///                                Can be UTF-8, base64 or hex string.
-    ///     "crypto_type": string, // Optional (if not set then ed25519 curve is used); Currently only 'ed25519' value is supported for this field.
-    /// }
+    ///     "seed": string, (optional) Seed that allows deterministic key creation (if not set
+    /// random one will be created).                                Can be UTF-8, base64 or hex
+    /// string.     "crypto_type": string, // Optional (if not set then ed25519 curve is used);
+    /// Currently only 'ed25519' value is supported for this field. }
     ///
     /// #Returns
     /// verkey: Ver key of generated key pair, also used as key identifier
@@ -82,9 +82,9 @@ impl CryptoController {
     /// #Params
 
     /// wallet_handle: wallet handler (created by open_wallet).
-    /// signer_vk: id (verkey) of message signer. The key must be created by calling indy_create_key or indy_create_and_store_my_did
-    /// message_raw: a pointer to first byte of message to be signed
-    /// message_len: a message length
+    /// signer_vk: id (verkey) of message signer. The key must be created by calling indy_create_key
+    /// or indy_create_and_store_my_did message_raw: a pointer to first byte of message to be
+    /// signed message_len: a message length
     ///
     /// #Returns
     /// a signature string
@@ -163,7 +163,8 @@ impl CryptoController {
         Ok(res)
     }
 
-    /// Packs a message by encrypting the message and serializes it in a JWE-like format (Experimental)
+    /// Packs a message by encrypting the message and serializes it in a JWE-like format
+    /// (Experimental)
     ///
     /// Note to use DID keys with this function you can call indy_key_for_did to get key id (verkey)
     /// for specific DID.
@@ -173,11 +174,12 @@ impl CryptoController {
     /// wallet_handle: wallet handle (created by open_wallet).
     /// message: a pointer to the first byte of the message to be packed
     /// message_len: the length of the message
-    /// receivers: a string in the format of a json list which will contain the list of receiver's keys
-    ///                the message is being encrypted for.
+    /// receivers: a string in the format of a json list which will contain the list of receiver's
+    /// keys                the message is being encrypted for.
     ///                Example:
     ///                "[<receiver edge_agent_1 verkey>, <receiver edge_agent_2 verkey>]"
-    /// sender: the sender's verkey as a string When null pointer is used in this parameter, anoncrypt is used
+    /// sender: the sender's verkey as a string When null pointer is used in this parameter,
+    /// anoncrypt is used
     ///
     /// #Returns
     /// a JWE using authcrypt alg is defined below:
@@ -188,18 +190,18 @@ impl CryptoController {
     ///        "alg": "Authcrypt",
     ///        "recipients": [
     ///            {
-    ///                "encrypted_key": base64URLencode(libsodium.crypto_box(my_key, their_vk, cek, cek_iv))
-    ///                "header": {
+    ///                "encrypted_key": base64URLencode(libsodium.crypto_box(my_key, their_vk, cek,
+    /// cek_iv))                "header": {
     ///                     "kid": "base58encode(recipient_verkey)",
-    ///                     "sender" : base64URLencode(libsodium.crypto_box_seal(their_vk, base58encode(sender_vk)),
-    ///                     "iv" : base64URLencode(cek_iv)
+    ///                     "sender" : base64URLencode(libsodium.crypto_box_seal(their_vk,
+    /// base58encode(sender_vk)),                     "iv" : base64URLencode(cek_iv)
     ///                }
     ///            },
     ///        ],
     ///     })",
     ///     "iv": <b64URLencode(iv)>,
-    ///     "ciphertext": b64URLencode(encrypt_detached({'@type'...}, protected_value_encoded, iv, cek),
-    ///     "tag": <b64URLencode(tag)>
+    ///     "ciphertext": b64URLencode(encrypt_detached({'@type'...}, protected_value_encoded, iv,
+    /// cek),     "tag": <b64URLencode(tag)>
     /// }
     ///
     /// Alternative example in using anoncrypt alg is defined below:
@@ -218,8 +220,8 @@ impl CryptoController {
     ///        ],
     ///     })",
     ///     "iv": b64URLencode(iv),
-    ///     "ciphertext": b64URLencode(encrypt_detached({'@type'...}, protected_value_encoded, iv, cek),
-    ///     "tag": b64URLencode(tag)
+    ///     "ciphertext": b64URLencode(encrypt_detached({'@type'...}, protected_value_encoded, iv,
+    /// cek),     "tag": b64URLencode(tag)
     /// }
     ///
     ///

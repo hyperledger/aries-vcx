@@ -1,6 +1,5 @@
 use std::{collections::HashMap, sync::Arc};
 
-use crate::utils::crypto::base58::{FromBase58, ToBase58};
 use indy_api_types::{errors::prelude::*, WalletHandle};
 use indy_wallet::{RecordOptions, SearchOptions, WalletService};
 
@@ -21,6 +20,7 @@ use crate::{
         pairwise::Pairwise,
     },
     services::CryptoService,
+    utils::crypto::base58::{FromBase58, ToBase58},
 };
 
 pub struct DidController {
@@ -52,14 +52,14 @@ impl DidController {
     /// Example:
     /// {
     ///     "did": string, (optional;
-    ///             if not provided and cid param is false then the first 16 bit of the verkey will be used as a new DID;
-    ///             if not provided and cid is true then the full verkey will be used as a new DID;
-    ///             if provided, then keys will be replaced - key rotation use case)
-    ///     "seed": string, (optional) Seed that allows deterministic did creation (if not set random one will be created).
-    ///                                Can be UTF-8, base64 or hex string.
-    ///     "crypto_type": string, (optional; if not set then ed25519 curve is used;
-    ///               currently only 'ed25519' value is supported for this field)
-    ///     "cid": bool, (optional; if not set then false is used;)
+    ///             if not provided and cid param is false then the first 16 bit of the verkey will
+    /// be used as a new DID;             if not provided and cid is true then the full verkey
+    /// will be used as a new DID;             if provided, then keys will be replaced - key
+    /// rotation use case)     "seed": string, (optional) Seed that allows deterministic did
+    /// creation (if not set random one will be created).                                Can be
+    /// UTF-8, base64 or hex string.     "crypto_type": string, (optional; if not set then
+    /// ed25519 curve is used;               currently only 'ed25519' value is supported for
+    /// this field)     "cid": bool, (optional; if not set then false is used;)
     ///     "ledger_type": string, (optional) type of the ledger to create fully qualified did.
     ///     "method_name": string, (optional) method name to create fully qualified did.
     /// }
@@ -94,8 +94,8 @@ impl DidController {
                 Err(err_msg(
                     IndyErrorKind::DIDAlreadyExists,
                     format!(
-                        "DID \"{}\" already exists but with different Verkey. \
-                                            You should specify Seed used for initial generation",
+                        "DID \"{}\" already exists but with different Verkey. You should specify \
+                         Seed used for initial generation",
                         did.did.0
                     ),
                 ))?;
@@ -126,9 +126,9 @@ impl DidController {
     /// did: target did to rotate keys.
     /// key_info: key information as json. Example:
     /// {
-    ///     "seed": string, (optional) Seed that allows deterministic key creation (if not set random one will be created).
-    ///                                Can be UTF-8, base64 or hex string.
-    ///     "crypto_type": string, (optional; if not set then ed25519 curve is used;
+    ///     "seed": string, (optional) Seed that allows deterministic key creation (if not set
+    /// random one will be created).                                Can be UTF-8, base64 or hex
+    /// string.     "crypto_type": string, (optional; if not set then ed25519 curve is used;
     ///               currently only 'ed25519' value is supported for this field)
     /// }
     ///
@@ -292,9 +292,9 @@ impl DidController {
     /// did_with_meta: {
     ///   "did": string - DID stored in the wallet,
     ///   "verkey": string - The DIDs transport key (ver key, key id),
-    ///   "tempVerkey": string - Temporary DIDs transport key (ver key, key id), exist only during the rotation of the keys.
-    ///                          After rotation is done, it becomes a new verkey.
-    ///   "metadata": string - The meta information stored with the DID
+    ///   "tempVerkey": string - Temporary DIDs transport key (ver key, key id), exist only during
+    /// the rotation of the keys.                          After rotation is done, it becomes a
+    /// new verkey.   "metadata": string - The meta information stored with the DID
     /// }
     ///
     /// #Errors
@@ -525,8 +525,8 @@ impl DidController {
 
     /// wallet_handle: Wallet handle (created by open_wallet).
     /// did - The DID to resolve endpoint.
-    /// address -  The DIDs endpoint address. indy-node and indy-plenum restrict this to ip_address:port
-    /// transport_key - The DIDs transport key (ver key, key id).
+    /// address -  The DIDs endpoint address. indy-node and indy-plenum restrict this to
+    /// ip_address:port transport_key - The DIDs transport key (ver key, key id).
     ///
     /// #Returns
     ///
@@ -610,7 +610,8 @@ impl DidController {
     /// did - The DID to retrieve metadata.
     ///
     /// #Returns
-    /// metadata - The meta information stored with the DID; Can be null if no metadata was saved for this DID.
+    /// metadata - The meta information stored with the DID; Can be null if no metadata was saved
+    /// for this DID.
     ///
     /// #Errors
     /// Common*
@@ -799,8 +800,8 @@ impl DidController {
         get_nym_reply_result: IndyResult<String>,
     ) -> IndyResult<TheirDid> {
         trace!(
-            "get_nym_ack_process_and_store_their_did > \
-                wallet_handle {:?} get_nym_reply_result {:?}",
+            "get_nym_ack_process_and_store_their_did > wallet_handle {:?} get_nym_reply_result \
+             {:?}",
             wallet_handle,
             get_nym_reply_result
         );
@@ -881,8 +882,8 @@ impl DidController {
         get_attrib_reply_result: IndyResult<String>,
     ) -> IndyResult<Endpoint> {
         trace!(
-            "_get_attrib_ack_process_store_endpoint_to_wallet > \
-                wallet_handle {:?} get_attrib_reply_result {:?}",
+            "_get_attrib_ack_process_store_endpoint_to_wallet > wallet_handle {:?} \
+             get_attrib_reply_result {:?}",
             wallet_handle,
             get_attrib_reply_result
         );

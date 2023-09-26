@@ -3,16 +3,15 @@ use std::{
     fs,
 };
 
+use async_trait::async_trait;
 use indy_api_types::errors::prelude::*;
 use indy_utils::environment;
+use log::LevelFilter;
 use serde::Deserialize;
 use sqlx::{
     sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions},
     ConnectOptions, SqlitePool,
 };
-
-use async_trait::async_trait;
-use log::LevelFilter;
 
 use crate::{
     language,
@@ -117,7 +116,6 @@ impl WalletStorage for SQLiteStorage {
     ///  * `IndyError::Closed` - Storage is closed
     ///  * `IndyError::ItemNotFound` - Item is not found in database
     ///  * `IOError("IO error during storage operation:...")` - Failed connection or SQL query
-    ///
     async fn get(&self, type_: &[u8], id: &[u8], options: &str) -> IndyResult<StorageRecord> {
         let options: RecordOptions = serde_json::from_str(options).to_indy(
             IndyErrorKind::InvalidStructure,
@@ -206,7 +204,6 @@ impl WalletStorage for SQLiteStorage {
     ///  * `IndyError::Closed` - Storage is closed
     ///  * `IndyError::ItemAlreadyExists` - Item is already present in database
     ///  * `IOError("IO error during storage operation:...")` - Failed connection or SQL query
-    ///
     async fn add(
         &self,
         type_: &[u8],
@@ -297,7 +294,8 @@ impl WalletStorage for SQLiteStorage {
             match *tag {
                 Tag::Encrypted(ref tag_name, ref tag_data) => {
                     sqlx::query(
-                        "INSERT OR REPLACE INTO tags_encrypted (item_id, name, value) VALUES (?1, ?2, ?3)",
+                        "INSERT OR REPLACE INTO tags_encrypted (item_id, name, value) VALUES (?1, \
+                         ?2, ?3)",
                     )
                     .bind(item_id)
                     .bind(tag_name)
@@ -307,7 +305,8 @@ impl WalletStorage for SQLiteStorage {
                 }
                 Tag::PlainText(ref tag_name, ref tag_data) => {
                     sqlx::query(
-                        "INSERT OR REPLACE INTO tags_plaintext (item_id, name, value) VALUES (?1, ?2, ?3)",
+                        "INSERT OR REPLACE INTO tags_plaintext (item_id, name, value) VALUES (?1, \
+                         ?2, ?3)",
                     )
                     .bind(item_id)
                     .bind(tag_name)
@@ -430,7 +429,6 @@ impl WalletStorage for SQLiteStorage {
     ///  * `IndyError::Closed` - Storage is closed
     ///  * `IndyError::ItemNotFound` - Item is not found in database
     ///  * `IOError("IO error during storage operation:...")` - Failed connection or SQL query
-    ///
     async fn delete(&self, type_: &[u8], id: &[u8]) -> IndyResult<()> {
         let mut tx = self.pool.begin().await?;
 
@@ -712,7 +710,6 @@ impl WalletStorageType for SQLiteStorageType {
     ///
     ///  * `IndyError::NotFound` - File with the provided id not found
     ///  * `IOError(..)` - Deletion of the file form the file-system failed
-    ///
     async fn delete_storage(
         &self,
         id: &str,
@@ -764,7 +761,6 @@ impl WalletStorageType for SQLiteStorageType {
     ///  * `IOError("Error occurred while creating wallet file:..)"` - Creation of schema failed
     ///  * `IOError("Error occurred while inserting the keys...")` - Insertion of keys failed
     ///  * `IOError(..)` - Deletion of the file form the file-system failed
-    ///
     async fn create_storage(
         &self,
         id: &str,
@@ -906,7 +902,6 @@ impl WalletStorageType for SQLiteStorageType {
     ///
     ///  * `IndyError::NotFound` - File with the provided id not found
     ///  * `IOError("IO error during storage operation:...")` - Failed connection or SQL query
-    ///
     async fn open_storage(
         &self,
         id: &str,

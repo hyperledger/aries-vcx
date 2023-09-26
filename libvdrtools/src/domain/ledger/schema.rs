@@ -1,10 +1,10 @@
+use std::collections::HashSet;
+
 use super::{
     super::{anoncreds::schema::SchemaId, crypto::did::ShortDidValue},
     constants::{GET_SCHEMA, SCHEMA},
     response::{GetReplyResultV1, ReplyType},
 };
-
-use std::collections::HashSet;
 
 #[derive(Serialize, PartialEq, Debug)]
 pub struct SchemaOperation {

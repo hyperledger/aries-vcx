@@ -1,5 +1,4 @@
 use indy_api_types::errors::prelude::*;
-
 use ursa::cl::{
     issuer::Issuer as UrsaIssuer, CredentialKeyCorrectnessProof, CredentialPrivateKey,
     CredentialPublicKey, CredentialSignature, Nonce, RevocationKeyPrivate, RevocationRegistry,
@@ -84,8 +83,8 @@ impl IssuerService {
         RevocationTailsGenerator,
     )> {
         trace!(
-            "new_revocation_registry > pub_key {:?} \
-                max_cred_num {:?} issuance_by_default {:?} issuer_did {:?}",
+            "new_revocation_registry > pub_key {:?} max_cred_num {:?} issuance_by_default {:?} \
+             issuer_did {:?}",
             cred_def,
             max_cred_num,
             issuance_by_default,
@@ -140,10 +139,9 @@ impl IssuerService {
         RTA: RevocationTailsAccessor,
     {
         trace!(
-            "new_credential > cred_def {:?} cred_priv_key {:?} \
-                cred_issuance_blinding_nonce {:?} cred_request {:?} \
-                cred_values {:?} rev_idx {:?} rev_reg_def {:?} \
-                rev_reg {:?} rev_key_priv {:?}",
+            "new_credential > cred_def {:?} cred_priv_key {:?} cred_issuance_blinding_nonce {:?} \
+             cred_request {:?} cred_values {:?} rev_idx {:?} rev_reg_def {:?} rev_reg {:?} \
+             rev_key_priv {:?}",
             cred_def,
             secret!(&cred_priv_key),
             secret!(&cred_issuance_blinding_nonce),

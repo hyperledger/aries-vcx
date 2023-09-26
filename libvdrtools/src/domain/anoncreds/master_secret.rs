@@ -1,6 +1,5 @@
-use ursa::cl::MasterSecret as CryptoMasterSecret;
-
 use indy_api_types::validation::Validatable;
+use ursa::cl::MasterSecret as CryptoMasterSecret;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct MasterSecret {
