@@ -1,3 +1,5 @@
+pub mod states;
+
 use std::marker::PhantomData;
 
 use ::messages::decorators::attachment::{Attachment, AttachmentData, AttachmentType};
@@ -6,6 +8,7 @@ use messages::{
     misc::MimeType,
     msg_fields::protocols::{
         cred_issuance::v2::{
+            ack::AckCredentialV2,
             issue_credential::IssueCredentialV2,
             offer_credential::OfferCredentialV2,
             propose_credential::{
@@ -16,12 +19,15 @@ use messages::{
             },
             AttachmentFormatSpecifier, CredentialPreviewV2,
         },
-        notification::ack::{Ack, AckContent, AckDecorators, AckStatus},
+        notification::ack::{AckContent, AckDecorators, AckStatus},
     },
 };
 use uuid::Uuid;
 
-use self::states::*;
+use self::states::{
+    complete::Complete, credential_received::CredentialReceived, offer_received::OfferReceived,
+    proposal_prepared::ProposalPrepared, request_prepared::RequestPrepared,
+};
 use super::{
     formats::holder::HolderCredentialIssuanceFormat, unmatched_thread_id_error, RecoveredSMError,
     VcxSMTransitionResult,
@@ -30,51 +36,6 @@ use crate::{
     errors::error::VcxResult,
     handlers::util::{get_thread_id_or_message_id, matches_thread_id},
 };
-
-pub mod states {
-    use std::marker::PhantomData;
-
-    use messages::msg_fields::protocols::{
-        cred_issuance::v2::{
-            issue_credential::IssueCredentialV2, offer_credential::OfferCredentialV2,
-            propose_credential::ProposeCredentialV2, request_credential::RequestCredentialV2,
-        },
-        notification::ack::Ack,
-        report_problem::ProblemReport,
-    };
-
-    use super::HolderCredentialIssuanceFormat;
-
-    pub struct ProposalPrepared<T: HolderCredentialIssuanceFormat> {
-        pub proposal: ProposeCredentialV2,
-        pub _marker: PhantomData<T>,
-    }
-
-    pub struct OfferReceived<T: HolderCredentialIssuanceFormat> {
-        pub offer: OfferCredentialV2,
-        pub _marker: PhantomData<T>,
-    }
-
-    pub struct RequestPrepared<T: HolderCredentialIssuanceFormat> {
-        pub request: RequestCredentialV2,
-        pub request_preparation_metadata: T::CreatedRequestMetadata,
-    }
-
-    pub struct CredentialReceived<T: HolderCredentialIssuanceFormat> {
-        pub credential: IssueCredentialV2,
-        pub stored_credential_metadata: T::StoredCredentialMetadata,
-    }
-
-    pub struct Complete<T: HolderCredentialIssuanceFormat> {
-        pub ack: Option<Ack>,
-        pub _marker: PhantomData<T>,
-    }
-
-    pub struct Failed<T: HolderCredentialIssuanceFormat> {
-        pub problem_report: ProblemReport,
-        pub _marker: PhantomData<T>,
-    }
-}
 
 fn create_proposal_message_from_attachment<T: HolderCredentialIssuanceFormat>(
     attachment_data: Vec<u8>,
@@ -378,7 +339,7 @@ impl<T: HolderCredentialIssuanceFormat> HolderV2<CredentialReceived<T>> {
         // if more_available: error?? as they should either problem report, or get more
 
         // if please_ack: else None
-        let ack = Ack::builder()
+        let ack = AckCredentialV2::builder()
             .id(uuid::Uuid::new_v4().to_string())
             .content(AckContent::builder().status(AckStatus::Ok).build())
             .decorators(
@@ -399,7 +360,7 @@ impl<T: HolderCredentialIssuanceFormat> HolderV2<CredentialReceived<T>> {
 
 impl<T: HolderCredentialIssuanceFormat> HolderV2<Complete<T>> {
     // get the prepared ack message (if the issuer indiciated they want an ack)
-    pub fn get_ack(&self) -> Option<&Ack> {
+    pub fn get_ack(&self) -> Option<&AckCredentialV2> {
         self.state.ack.as_ref()
     }
 }
@@ -411,7 +372,7 @@ mod tests {
 
     use crate::protocols::issuance_v2::{
         formats::holder::mocks::MockHolderCredentialIssuanceFormat,
-        holder::{states::ProposalPrepared, HolderV2},
+        holder::{states::proposal_prepared::ProposalPrepared, HolderV2},
     };
 
     #[tokio::test]

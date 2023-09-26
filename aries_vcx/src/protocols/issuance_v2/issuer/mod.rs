@@ -1,3 +1,5 @@
+pub mod states;
+
 use std::marker::PhantomData;
 
 use messages::{
@@ -7,25 +9,24 @@ use messages::{
         thread::Thread,
     },
     misc::MimeType,
-    msg_fields::protocols::{
-        cred_issuance::v2::{
-            issue_credential::{
-                IssueCredentialV2, IssueCredentialV2Content, IssueCredentialV2Decorators,
-            },
-            offer_credential::{
-                OfferCredentialV2, OfferCredentialV2Content, OfferCredentialV2Decorators,
-            },
-            propose_credential::ProposeCredentialV2,
-            request_credential::RequestCredentialV2,
-            AttachmentFormatSpecifier, CredentialPreviewV2,
+    msg_fields::protocols::cred_issuance::v2::{
+        ack::AckCredentialV2,
+        issue_credential::{
+            IssueCredentialV2, IssueCredentialV2Content, IssueCredentialV2Decorators,
         },
-        notification::ack::Ack,
+        offer_credential::{
+            OfferCredentialV2, OfferCredentialV2Content, OfferCredentialV2Decorators,
+        },
+        propose_credential::ProposeCredentialV2,
+        request_credential::RequestCredentialV2,
+        AttachmentFormatSpecifier, CredentialPreviewV2,
     },
 };
 use uuid::Uuid;
 
 use self::states::{
-    Complete, CredentialPrepared, OfferPrepared, ProposalReceived, RequestReceived,
+    complete::Complete, credential_prepared::CredentialPrepared, offer_prepared::OfferPrepared,
+    proposal_received::ProposalReceived, request_received::RequestReceived,
 };
 use super::{
     formats::issuer::IssuerCredentialIssuanceFormat, unmatched_thread_id_error,
@@ -36,47 +37,6 @@ use crate::{
     handlers::util::{get_thread_id_or_message_id, matches_thread_id},
     protocols::issuance_v2::RecoveredSMError,
 };
-
-pub mod states {
-    use std::marker::PhantomData;
-
-    use messages::msg_fields::protocols::{
-        cred_issuance::v2::{
-            issue_credential::IssueCredentialV2, offer_credential::OfferCredentialV2,
-            propose_credential::ProposeCredentialV2, request_credential::RequestCredentialV2,
-        },
-        notification::ack::Ack,
-    };
-
-    use crate::protocols::issuance_v2::formats::issuer::IssuerCredentialIssuanceFormat;
-
-    pub struct ProposalReceived<T: IssuerCredentialIssuanceFormat> {
-        pub proposal: ProposeCredentialV2,
-        pub _marker: PhantomData<T>,
-    }
-
-    pub struct OfferPrepared<T: IssuerCredentialIssuanceFormat> {
-        pub offer_metadata: T::CreatedOfferMetadata,
-        pub offer: OfferCredentialV2,
-    }
-
-    pub struct RequestReceived<T: IssuerCredentialIssuanceFormat> {
-        pub from_offer_metadata: Option<T::CreatedOfferMetadata>,
-        pub request: RequestCredentialV2,
-    }
-
-    pub struct CredentialPrepared<T: IssuerCredentialIssuanceFormat> {
-        pub from_offer_metadata: Option<T::CreatedOfferMetadata>,
-        pub credential_metadata: T::CreatedCredentialMetadata,
-        pub credential: IssueCredentialV2,
-        pub please_ack: bool,
-    }
-
-    pub struct Complete<T: IssuerCredentialIssuanceFormat> {
-        pub ack: Option<Ack>,
-        pub _marker: PhantomData<T>,
-    }
-}
 
 fn create_offer_message_from_attachment<T: IssuerCredentialIssuanceFormat>(
     attachment_data: Vec<u8>,
@@ -428,7 +388,10 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<CredentialPrepared<T>> {
         })
     }
 
-    pub fn complete_with_ack(self, ack: Ack) -> VcxSMTransitionResult<IssuerV2<Complete<T>>, Self> {
+    pub fn complete_with_ack(
+        self,
+        ack: AckCredentialV2,
+    ) -> VcxSMTransitionResult<IssuerV2<Complete<T>>, Self> {
         let is_match = matches_thread_id!(ack, self.thread_id.as_str());
         if !is_match {
             return Err(RecoveredSMError {
