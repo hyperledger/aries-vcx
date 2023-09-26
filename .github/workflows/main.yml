@@ -33,7 +33,7 @@ jobs:
           override: true
       - name: "Verify code formatting"
         run: |
-          cargo +nightly fmt --check
+          cargo +nightly-2023-05-08 fmt --check
 
   workflow-setup:
     runs-on: ubuntu-20.04
