@@ -127,7 +127,7 @@ module.exports.createAlice = async function createAlice (serviceEndpoint = 'http
     logger.debug(`acceptOobCredentialOffer >>> attached message: ${credOffer}`)
     await vcxAgent.serviceCredHolder.createCredentialFromOfferAndSendRequest(connectionId, holderCredentialId, credOffer)
     const state = await vcxAgent.serviceCredHolder.getState(holderCredentialId)
-    expect(state).toBe(HolderStateType.RequestSent)
+    expect(state).toBe(HolderStateType.RequestSet)
 
     await vcxAgent.agentShutdownVcx()
   }
