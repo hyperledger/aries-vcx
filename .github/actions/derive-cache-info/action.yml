@@ -23,7 +23,7 @@ runs:
     - id: main
       shell: bash
       run: |
-        source ./ci/util.sh
+        source ./.github/ci/util.sh
         DOCKER_IMG=${{ inputs.docker-img }}
         CACHE_KEY=`as_docker_cache_key $DOCKER_IMG`
         CACHE_DIR="/tmp/cachedir-$CACHE_KEY"
