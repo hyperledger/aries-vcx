@@ -134,9 +134,9 @@ export enum ConnectionStateType {
 
 export enum HolderStateType {
   Initial = 0,
-  ProposalSent = 1,
+  ProposalSet = 1,
   OfferReceived = 2,
-  RequestSent = 3,
+  RequestSet = 3,
   Finished = 4,
   Failed = 5,
 }
@@ -146,7 +146,7 @@ export enum IssuerStateType {
   ProposalReceived = 1,
   OfferSet = 2,
   RequestReceived = 4,
-  CredentialSent = 5,
+  CredentialSet = 5,
   Finished = 6,
   Failed = 7,
 }
