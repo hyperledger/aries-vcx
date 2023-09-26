@@ -219,6 +219,16 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<ProposalReceived<T>> {
         Ok((details, preview))
     }
 
+    /// Respond to a proposal by preparing a new offer. This API can be used repeatedly to negotiate
+    /// the offer with the holder until an agreement is reached.
+    ///
+    /// An offer is prepared in the format of [IssuerCredentialIssuanceFormat], using the provided
+    /// input data to create it. Additionally, a [CredentialPreviewV2] is attached to give further
+    /// details to the holder about the offer.
+    ///
+    /// In the event of failure, an error is returned which contains the reason for failure
+    /// and the state machine before any transitions. Consumers should decide whether the failure
+    /// is terminal, in which case they should prepare a problem report.
     pub async fn prepare_offer(
         self,
         input_data: &T::CreateOfferInput,
@@ -256,6 +266,11 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<ProposalReceived<T>> {
 }
 
 impl<T: IssuerCredentialIssuanceFormat> IssuerV2<OfferPrepared<T>> {
+    /// Initiate a new [IssuerV2] by preparing a offer message from the provided input for
+    /// creating a offer with the choosen [IssuerCredentialIssuanceFormat].
+    ///
+    /// Additionally, a [CredentialPreviewV2] is provided to attach more credential information
+    /// in the offer message payload.
     pub async fn with_offer(
         input_data: &T::CreateOfferInput,
         preview: CredentialPreviewV2,
@@ -284,10 +299,20 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<OfferPrepared<T>> {
         })
     }
 
+    /// Get the prepared offer message which should be sent to the holder.
     pub fn get_offer(&self) -> &OfferCredentialV2 {
         &self.state.offer
     }
 
+    /// Receive an incoming [ProposeCredentialV2] message for this protocol. On success, the
+    /// [IssuerV2] transitions into the [ProposalReceived] state.
+    ///
+    /// This API should only be used for proposals which are in response to an ongoing [IssuerV2]
+    /// protocol thread. New proposals should be received via [IssuerV2::from_proposal].
+    ///
+    /// In the event of failure, an error is returned which contains the reason for failure
+    /// and the state machine before any transitions. Consumers should decide whether the failure
+    /// is terminal, in which case they should prepare a problem report.
     pub fn receive_proposal(
         self,
         proposal: ProposeCredentialV2,
@@ -315,6 +340,15 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<OfferPrepared<T>> {
         })
     }
 
+    /// Receive a request in response to an offer that was sent to the holder.
+    ///
+    /// This API should only be used for requests that are in response to an ongoing [IssuerV2]
+    /// protocol thread. To receive new standalone requests, [IssuerV2::from_request] should be
+    /// used.
+    ///
+    /// In the event of failure, an error is returned which contains the reason for failure
+    /// and the state machine before any transitions. Consumers should decide whether the failure
+    /// is terminal, in which case they should prepare a problem report.
     pub fn receive_request(
         self,
         request: RequestCredentialV2,
@@ -344,6 +378,16 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<OfferPrepared<T>> {
 }
 
 impl<T: IssuerCredentialIssuanceFormat> IssuerV2<RequestReceived<T>> {
+    /// Initialize an [IssuerV2] by receiving a standalone request message from a holder. This API
+    /// should only be used for standalone requests not in response to an ongoing protocol thread.
+    ///
+    /// To receive a request in response to an ongoing protocol thread, the
+    /// [IssuerV2::receive_request] method should be used.
+    ///
+    /// The request should contain an attachment in the suitable [IssuerCredentialIssuanceFormat]
+    /// format, and the [IssuerCredentialIssuanceFormat] MUST support receiving standalone requests
+    /// for this function to succeed. Some formats (such as hlindy or anoncreds) do not
+    /// support this.
     pub fn from_request(request: RequestCredentialV2) -> VcxResult<Self> {
         if !T::supports_request_independent_of_offer() {
             return Err(AriesVcxError::from_msg(
@@ -365,6 +409,19 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<RequestReceived<T>> {
         })
     }
 
+    /// Prepare a credential message in response to a received request. The prepared credential will
+    /// be in the [IssuerCredentialIssuanceFormat] format, and will be created using the associated
+    /// input data.
+    ///
+    /// Additionally other flags can be attached to the prepared message for the holder. Notably:
+    /// * `please_ack` - whether the holder should acknowledge that they receive the credential
+    /// * `replacement_id` - a unique ID which can be used across credential issuances to indicate
+    ///   that this credential should effectively 'replace' the last credential that this issuer
+    ///   issued to them with the same `replacement_id`.
+    ///
+    /// In the event of failure, an error is returned which contains the reason for failure
+    /// and the state machine before any transitions. Consumers should decide whether the failure
+    /// is terminal, in which case they should prepare a problem report.
     pub async fn prepare_credential(
         self,
         input_data: &T::CreateCredentialInput,
@@ -416,18 +473,29 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<RequestReceived<T>> {
 }
 
 impl<T: IssuerCredentialIssuanceFormat> IssuerV2<CredentialPrepared<T>> {
+    /// Get the prepared credential message which should be sent to the holder.
     pub fn get_credential(&self) -> &IssueCredentialV2 {
         &self.state.credential
     }
 
+    /// Get details about the credential that was prepared.
+    /// The details are specific to the [IssuerCredentialIssuanceFormat] being used.
     pub fn get_credential_creation_metadata(&self) -> &T::CreatedCredentialMetadata {
         &self.state.credential_metadata
     }
 
+    /// Whether or not this [IssuerV2] is expecting an Ack message to complete.
     pub fn is_expecting_ack(&self) -> bool {
         self.state.please_ack
     }
 
+    /// Transition into a completed state without receiving an ack message from the holder.
+    ///
+    /// In the case where the [IssuerV2] was expecting an ack, this method will fail.
+    ///
+    /// In the event of failure, an error is returned which contains the reason for failure
+    /// and the state machine before any transitions. Consumers should decide whether the failure
+    /// is terminal, in which case they should prepare a problem report.
     pub fn complete_without_ack(self) -> VcxSMTransitionResult<IssuerV2<Complete<T>>, Self> {
         if self.is_expecting_ack() {
             return Err(RecoveredSMError {
@@ -450,6 +518,11 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<CredentialPrepared<T>> {
         })
     }
 
+    /// Transition into a completed state by receiving an incoming ack message from the holder.
+    ///
+    /// In the event of failure, an error is returned which contains the reason for failure
+    /// and the state machine before any transitions. Consumers should decide whether the failure
+    /// is terminal, in which case they should prepare a problem report.
     pub fn complete_with_ack(
         self,
         ack: AckCredentialV2,
@@ -475,12 +548,15 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<CredentialPrepared<T>> {
 }
 
 impl IssuerV2<Failed> {
+    /// Get the prepared [CredIssuanceProblemReportV2] to be sent to the holder to report a failure.
     pub fn get_problem_report(&self) -> &CredIssuanceProblemReportV2 {
         &self.state.problem_report
     }
 }
 
 impl<S> IssuerV2<S> {
+    /// Transition into the [Failed] state by preparing a problem report message for the holder.
+    /// The problem report message is generated by using details from the provided [Error].
     pub fn prepare_problem_report_with_error<E>(self, err: &E) -> IssuerV2<Failed>
     where
         E: Error,

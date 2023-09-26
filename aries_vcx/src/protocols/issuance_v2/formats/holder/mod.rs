@@ -15,6 +15,8 @@ use crate::{
 pub mod hyperledger_indy;
 pub mod ld_proof_vc;
 
+/// Trait representing some issue-credential-v2 format family, containing methods required by an
+/// holder of this format to create attachments of this format.
 #[async_trait]
 pub trait HolderCredentialIssuanceFormat {
     type CreateProposalInput;

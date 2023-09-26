@@ -15,6 +15,8 @@ use crate::{
     handlers::util::{extract_attachment_as_base64, get_attachment_with_id},
 };
 
+/// Trait representing some issue-credential-v2 format family, containing methods required by an
+/// issuer of this format to create attachments of this format.
 #[async_trait]
 pub trait IssuerCredentialIssuanceFormat {
     type ProposalDetails;

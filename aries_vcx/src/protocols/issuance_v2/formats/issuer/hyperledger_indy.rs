@@ -17,7 +17,18 @@ use crate::{
     utils::openssl::encode,
 };
 
-// https://github.com/hyperledger/aries-rfcs/blob/b3a3942ef052039e73cd23d847f42947f8287da2/features/0592-indy-attachments/README.md#cred-filter-format
+/// Structure which implements [IssuerCredentialIssuanceFormat] functionality for the `hlindy/...`
+/// family of issue-credential-v2 attachment formats.
+///
+/// This implementation expects and creates attachments of the following types:
+/// * [ProposeCredentialAttachmentFormatType::HyperledgerIndyCredentialFilter2_0]
+/// * [RequestCredentialAttachmentFormatType::HyperledgerIndyCredentialRequest2_0]
+/// * [OfferCredentialAttachmentFormatType::HyperledgerIndyCredentialAbstract2_0]
+/// * [IssueCredentialAttachmentFormatType::HyperledgerIndyCredential2_0]
+///
+/// This is done in accordance to the Aries RFC 0592 Spec:
+///
+/// https://github.com/hyperledger/aries-rfcs/blob/b3a3942ef052039e73cd23d847f42947f8287da2/features/0592-indy-attachments/README.md
 
 pub struct HyperledgerIndyIssuerCredentialIssuanceFormat<'a> {
     _marker: &'a PhantomData<()>,
