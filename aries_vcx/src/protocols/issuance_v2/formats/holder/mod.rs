@@ -19,6 +19,8 @@ pub mod ld_proof_vc;
 pub trait HolderCredentialIssuanceFormat {
     type CreateProposalInput;
 
+    type OfferDetails;
+
     type CreateRequestInput;
     type CreatedRequestMetadata;
 
@@ -54,6 +56,10 @@ pub trait HolderCredentialIssuanceFormat {
 
         extract_attachment_as_base64(attachment)
     }
+
+    fn extract_offer_details(
+        offer_message: &OfferCredentialV2,
+    ) -> VcxResult<Self::OfferDetails>;
 
     async fn create_request_attachment_content(
         offer_message: &OfferCredentialV2,
@@ -116,6 +122,8 @@ pub(crate) mod mocks {
         impl HolderCredentialIssuanceFormat for HolderCredentialIssuanceFormat {
             type CreateProposalInput = String;
 
+            type OfferDetails = String;
+
             type CreateRequestInput = String;
             type CreatedRequestMetadata = String;
 
@@ -132,6 +140,10 @@ pub(crate) mod mocks {
             async fn create_proposal_attachment_content(
                 data: &String,
             ) -> VcxResult<Vec<u8>>;
+
+            fn extract_offer_details(
+                offer_message: &OfferCredentialV2,
+            ) -> VcxResult<String>;
 
             async fn create_request_attachment_content(
                 offer_message: &OfferCredentialV2,

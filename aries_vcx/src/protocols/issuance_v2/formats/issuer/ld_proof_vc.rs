@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use messages::msg_fields::protocols::cred_issuance::v2::{
     issue_credential::IssueCredentialAttachmentFormatType,
     offer_credential::OfferCredentialAttachmentFormatType,
-    propose_credential::ProposeCredentialAttachmentFormatType,
+    propose_credential::{ProposeCredentialAttachmentFormatType, ProposeCredentialV2},
     request_credential::{RequestCredentialAttachmentFormatType, RequestCredentialV2},
 };
 use shared_vcx::maybe_known::MaybeKnown;
@@ -16,6 +16,8 @@ pub struct LdProofIssuerCredentialIssuanceFormat;
 
 #[async_trait]
 impl IssuerCredentialIssuanceFormat for LdProofIssuerCredentialIssuanceFormat {
+    type ProposalDetails = ();
+
     type CreateOfferInput = ();
     type CreatedOfferMetadata = ();
 
@@ -37,6 +39,12 @@ impl IssuerCredentialIssuanceFormat for LdProofIssuerCredentialIssuanceFormat {
     }
     fn get_credential_attachment_format() -> MaybeKnown<IssueCredentialAttachmentFormatType> {
         MaybeKnown::Known(IssueCredentialAttachmentFormatType::AriesLdProofVc1_0)
+    }
+
+    fn extract_proposal_details(
+        _: &ProposeCredentialV2,
+    ) -> VcxResult<Self::ProposalDetails> {
+        Ok(())
     }
 
     async fn create_offer_attachment_content(

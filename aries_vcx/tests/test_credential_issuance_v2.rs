@@ -57,7 +57,7 @@ async fn test_hlindy_non_revocable_credential_issuance_v2_from_proposal() {
             vec![CredentialAttr::builder().name(String::from("address")).value(String::from("123 Main St")).build()]
         );
         let holder = HolderV2::<ProposalPrepared<HyperledgerIndyHolderCredentialIssuanceFormat>>::with_proposal(
-            &proposal_input, Some(proposal_preview)
+            &proposal_input, Some(proposal_preview.clone())
         ).await.unwrap();
 
         let proposal_msg = holder.get_proposal().clone();
@@ -65,7 +65,10 @@ async fn test_hlindy_non_revocable_credential_issuance_v2_from_proposal() {
 
         let issuer = IssuerV2::<ProposalReceived<HyperledgerIndyIssuerCredentialIssuanceFormat>>::from_proposal(proposal_msg);
 
-        // TODO - would be good if issuer had an easy way to view what was proposed
+        // issuer checks details of the proposal
+        let (received_filter, received_proposal_preview) = issuer.get_proposal_details().unwrap();
+        assert_eq!(received_filter, proposal_input.cred_filter);
+        assert_eq!(received_proposal_preview.unwrap(), &proposal_preview);
 
         let offer_data = HyperledgerIndyCreateOfferInput { anoncreds: &anoncreds, cred_def_id: cred_def.get_cred_def_id() };
         let offer_preview = CredentialPreviewV2::new(
@@ -77,12 +80,18 @@ async fn test_hlindy_non_revocable_credential_issuance_v2_from_proposal() {
                 CredentialAttr::builder().name(String::from("zip")).value(String::from("84000")).build(),
             ]
         );
-        let issuer = issuer.prepare_offer(&offer_data, offer_preview, None).await.unwrap();
+        let issuer = issuer.prepare_offer(&offer_data, offer_preview.clone(), None).await.unwrap();
 
         let offer_msg = issuer.get_offer().clone();
 
 
         let holder = holder.receive_offer(offer_msg).unwrap();
+
+        // holder checks details of the offer
+        let (received_offer_details, received_offer_preview) = holder.get_offer_details().unwrap();
+        assert_eq!(received_offer_details.cred_def_id, cred_def.get_cred_def_id());
+        assert_eq!(received_offer_details.schema_id, cred_def.get_schema_id());
+        assert_eq!(received_offer_preview, &offer_preview);
 
         // usually this would be the DID from the connection, but does not really matter
         let pw = PairwiseInfo::create(&setup.profile.inject_wallet()).await.unwrap();

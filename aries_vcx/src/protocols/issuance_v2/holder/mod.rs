@@ -215,10 +215,12 @@ impl<T: HolderCredentialIssuanceFormat> HolderV2<OfferReceived<T>> {
         }
     }
 
-    // TODO - helpers so that consumers can understand what offer they received? (is cred preview
-    // garuanteed?)
+    pub fn get_offer_details(&self) -> VcxResult<(T::OfferDetails, &CredentialPreviewV2)> {
+        let details = T::extract_offer_details(&self.state.offer)?;
+        let preview = &self.state.offer.content.credential_preview;
 
-    // TODO - helper function to give consumers a clue about what format is being used
+        Ok((details, preview))
+    }
 
     // respond to offer by preparing a proposal
     pub async fn prepare_proposal(

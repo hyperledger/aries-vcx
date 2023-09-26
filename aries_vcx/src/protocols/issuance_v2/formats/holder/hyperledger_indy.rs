@@ -30,7 +30,7 @@ pub struct HyperledgerIndyCreateProposalInput {
     pub cred_filter: HyperledgerIndyCredentialFilter,
 }
 
-#[derive(Default, Clone, Serialize, Deserialize, Builder)]
+#[derive(Default, Clone, PartialEq, Debug, Serialize, Deserialize, Builder)]
 #[builder(setter(into, strip_option), default)]
 pub struct HyperledgerIndyCredentialFilter {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -45,6 +45,14 @@ pub struct HyperledgerIndyCredentialFilter {
     pub issuer_did: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cred_def_id: Option<String>,
+}
+
+// Simplified cred abstract, for purpose of easy viewing for consumer
+// https://github.com/hyperledger/aries-rfcs/blob/main/features/0592-indy-attachments/README.md#cred-abstract-format
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct HyperledgerIndyOfferDetails {
+    pub schema_id: String,
+    pub cred_def_id: String,
 }
 
 pub struct HyperledgerIndyCreateRequestInput<'a> {
@@ -72,6 +80,8 @@ pub struct HyperledgerIndyStoredCredentialMetadata {
 #[async_trait]
 impl<'a> HolderCredentialIssuanceFormat for HyperledgerIndyHolderCredentialIssuanceFormat<'a> {
     type CreateProposalInput = HyperledgerIndyCreateProposalInput;
+
+    type OfferDetails = HyperledgerIndyOfferDetails;
 
     type CreateRequestInput = HyperledgerIndyCreateRequestInput<'a>;
     type CreatedRequestMetadata = HyperledgerIndyCreatedRequestMetadata;
@@ -104,6 +114,14 @@ impl<'a> HolderCredentialIssuanceFormat for HyperledgerIndyHolderCredentialIssua
         let filter_bytes = serde_json::to_vec(&data.cred_filter)?;
 
         Ok(filter_bytes)
+    }
+
+    fn extract_offer_details(
+        offer_message: &OfferCredentialV2,
+    ) -> VcxResult<HyperledgerIndyOfferDetails> {
+        let attachment = Self::extract_offer_attachment_content(offer_message)?;
+
+        Ok(serde_json::from_slice(&attachment)?)
     }
 
     async fn create_request_attachment_content(

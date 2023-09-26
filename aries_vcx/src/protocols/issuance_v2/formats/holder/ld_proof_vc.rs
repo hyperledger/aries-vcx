@@ -17,6 +17,8 @@ pub struct LdProofHolderCredentialIssuanceFormat;
 impl HolderCredentialIssuanceFormat for LdProofHolderCredentialIssuanceFormat {
     type CreateProposalInput = ();
 
+    type OfferDetails = ();
+
     type CreateRequestInput = ();
     type CreatedRequestMetadata = ();
 
@@ -44,6 +46,12 @@ impl HolderCredentialIssuanceFormat for LdProofHolderCredentialIssuanceFormat {
         _data: &Self::CreateProposalInput,
     ) -> VcxResult<Vec<u8>> {
         Ok("mock".to_owned().into())
+    }
+
+    fn extract_offer_details(
+        _: &OfferCredentialV2,
+    ) -> VcxResult<Self::OfferDetails> {
+        Ok(())
     }
 
     async fn create_request_attachment_content(

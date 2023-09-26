@@ -185,6 +185,15 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<ProposalReceived<T>> {
         }
     }
 
+    pub fn get_proposal_details(
+        &self,
+    ) -> VcxResult<(T::ProposalDetails, Option<&CredentialPreviewV2>)> {
+        let details = T::extract_proposal_details(&self.state.proposal)?;
+        let preview = self.state.proposal.content.credential_preview.as_ref();
+
+        Ok((details, preview))
+    }
+
     pub async fn prepare_offer(
         self,
         input_data: &T::CreateOfferInput,

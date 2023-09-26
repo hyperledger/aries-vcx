@@ -5,7 +5,7 @@ use async_trait::async_trait;
 use messages::msg_fields::protocols::cred_issuance::v2::{
     issue_credential::IssueCredentialAttachmentFormatType,
     offer_credential::OfferCredentialAttachmentFormatType,
-    propose_credential::ProposeCredentialAttachmentFormatType,
+    propose_credential::{ProposeCredentialAttachmentFormatType, ProposeCredentialV2},
     request_credential::{RequestCredentialAttachmentFormatType, RequestCredentialV2},
 };
 use shared_vcx::maybe_known::MaybeKnown;
@@ -13,6 +13,7 @@ use shared_vcx::maybe_known::MaybeKnown;
 use super::IssuerCredentialIssuanceFormat;
 use crate::{
     errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
+    protocols::issuance_v2::formats::holder::hyperledger_indy::HyperledgerIndyCredentialFilter,
     utils::openssl::encode,
 };
 
@@ -51,6 +52,8 @@ pub struct HyperledgerIndyCreatedCredentialMetadata {
 
 #[async_trait]
 impl<'a> IssuerCredentialIssuanceFormat for HyperledgerIndyIssuerCredentialIssuanceFormat<'a> {
+    type ProposalDetails = HyperledgerIndyCredentialFilter;
+
     type CreateOfferInput = HyperledgerIndyCreateOfferInput<'a>;
     type CreatedOfferMetadata = HyperledgerIndyCreatedOfferMetadata;
 
@@ -75,6 +78,14 @@ impl<'a> IssuerCredentialIssuanceFormat for HyperledgerIndyIssuerCredentialIssua
     }
     fn get_credential_attachment_format() -> MaybeKnown<IssueCredentialAttachmentFormatType> {
         MaybeKnown::Known(IssueCredentialAttachmentFormatType::HyperledgerIndyCredential2_0)
+    }
+
+    fn extract_proposal_details(
+        proposal_message: &ProposeCredentialV2,
+    ) -> VcxResult<HyperledgerIndyCredentialFilter> {
+        let attachment = Self::extract_proposal_attachment_content(proposal_message)?;
+
+        Ok(serde_json::from_slice(&attachment)?)
     }
 
     async fn create_offer_attachment_content(

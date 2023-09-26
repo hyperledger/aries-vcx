@@ -17,6 +17,8 @@ use crate::{
 
 #[async_trait]
 pub trait IssuerCredentialIssuanceFormat {
+    type ProposalDetails;
+
     type CreateOfferInput;
     type CreatedOfferMetadata;
 
@@ -51,6 +53,10 @@ pub trait IssuerCredentialIssuanceFormat {
 
         extract_attachment_as_base64(attachment)
     }
+
+    fn extract_proposal_details(
+        proposal_message: &ProposeCredentialV2,
+    ) -> VcxResult<Self::ProposalDetails>;
 
     async fn create_offer_attachment_content(
         data: &Self::CreateOfferInput,

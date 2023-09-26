@@ -2,12 +2,9 @@ use crate::errors::error::AriesVcxError;
 
 pub mod formats;
 pub mod holder;
-mod holder_demos;
 pub mod issuer;
-mod issuer_demos;
 
 // TODO - better name?
-
 pub struct RecoveredSMError<T> {
     pub error: AriesVcxError,
     pub state_machine: T,
