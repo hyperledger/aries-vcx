@@ -65,8 +65,8 @@ jobs:
         run: |
           set -x
 
-          HASH_DOCKERFILE_LIBVCX=${{ hashFiles('ci/libvcx.dockerfile') }}
-          HASH_DOCKERFILE_VDRPROXY=${{ hashFiles('ci/vdrproxy.dockerfile') }}
+          HASH_DOCKERFILE_LIBVCX=${{ hashFiles('.github/ci/libvcx.dockerfile') }}
+          HASH_DOCKERFILE_VDRPROXY=${{ hashFiles('.github/ci/vdrproxy.dockerfile') }}
           HASH_SRC_LIBVDRTOOLS=${{ hashFiles('libvdrtools') }}
           HASH_SRC_LIBVCX=${{ hashFiles('libvcx') }}
           HASH_SRC_ARIESVCX=${{ hashFiles('aries_vcx') }}
@@ -233,7 +233,7 @@ jobs:
         uses: ./.github/actions/build-image
         with:
           docker-img: ${{ env.DOCKER_IMG_CACHED }}
-          dockerfile-path: "ci/vdrproxy.dockerfile"
+          dockerfile-path: ".github/ci/vdrproxy.dockerfile"
           build-arg: "ALPINE_CORE_IMAGE=$DOCKER_IMG_CACHED_ALPINE_CORE"
           branch-name: ${{ env.BRANCH_NAME }}
           branch-main: ${{ env.MAIN_BRANCH }}
