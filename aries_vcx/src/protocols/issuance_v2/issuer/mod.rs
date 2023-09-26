@@ -1,6 +1,6 @@
 pub mod states;
 
-use std::marker::PhantomData;
+use std::{error::Error, marker::PhantomData};
 
 use messages::{
     decorators::{
@@ -9,24 +9,29 @@ use messages::{
         thread::Thread,
     },
     misc::MimeType,
-    msg_fields::protocols::cred_issuance::v2::{
-        ack::AckCredentialV2,
-        issue_credential::{
-            IssueCredentialV2, IssueCredentialV2Content, IssueCredentialV2Decorators,
+    msg_fields::protocols::{
+        cred_issuance::v2::{
+            ack::AckCredentialV2,
+            issue_credential::{
+                IssueCredentialV2, IssueCredentialV2Content, IssueCredentialV2Decorators,
+            },
+            offer_credential::{
+                OfferCredentialV2, OfferCredentialV2Content, OfferCredentialV2Decorators,
+            },
+            problem_report::CredIssuanceProblemReportV2,
+            propose_credential::ProposeCredentialV2,
+            request_credential::RequestCredentialV2,
+            AttachmentFormatSpecifier, CredentialPreviewV2,
         },
-        offer_credential::{
-            OfferCredentialV2, OfferCredentialV2Content, OfferCredentialV2Decorators,
-        },
-        propose_credential::ProposeCredentialV2,
-        request_credential::RequestCredentialV2,
-        AttachmentFormatSpecifier, CredentialPreviewV2,
+        report_problem::{Description, ProblemReportContent, ProblemReportDecorators},
     },
 };
 use uuid::Uuid;
 
 use self::states::{
-    complete::Complete, credential_prepared::CredentialPrepared, offer_prepared::OfferPrepared,
-    proposal_received::ProposalReceived, request_received::RequestReceived,
+    complete::Complete, credential_prepared::CredentialPrepared, failed::Failed,
+    offer_prepared::OfferPrepared, proposal_received::ProposalReceived,
+    request_received::RequestReceived,
 };
 use super::{
     formats::issuer::IssuerCredentialIssuanceFormat, unmatched_thread_id_error,
@@ -409,5 +414,41 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<CredentialPrepared<T>> {
             state: new_state,
             thread_id: self.thread_id,
         })
+    }
+}
+
+impl IssuerV2<Failed> {
+    pub fn get_problem_report(&self) -> &CredIssuanceProblemReportV2 {
+        &self.state.problem_report
+    }
+}
+
+impl<S> IssuerV2<S> {
+    pub fn prepare_problem_report_with_error<E>(self, err: &E) -> IssuerV2<Failed>
+    where
+        E: Error,
+    {
+        let content = ProblemReportContent::builder()
+            .description(Description::builder().code(err.to_string()).build())
+            .build();
+
+        let decorators = ProblemReportDecorators::builder()
+            .thread(Thread::builder().thid(self.thread_id.clone()).build())
+            .build();
+
+        let report = CredIssuanceProblemReportV2::builder()
+            .id(Uuid::new_v4().to_string())
+            .content(content)
+            .decorators(decorators)
+            .build();
+
+        let new_state = Failed {
+            problem_report: report,
+        };
+
+        IssuerV2 {
+            state: new_state,
+            thread_id: self.thread_id,
+        }
     }
 }

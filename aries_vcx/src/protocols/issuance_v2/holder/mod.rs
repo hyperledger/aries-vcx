@@ -1,6 +1,6 @@
 pub mod states;
 
-use std::marker::PhantomData;
+use std::{error::Error, marker::PhantomData};
 
 use ::messages::decorators::attachment::{Attachment, AttachmentData, AttachmentType};
 use messages::{
@@ -11,6 +11,7 @@ use messages::{
             ack::AckCredentialV2,
             issue_credential::IssueCredentialV2,
             offer_credential::OfferCredentialV2,
+            problem_report::CredIssuanceProblemReportV2,
             propose_credential::{
                 ProposeCredentialV2, ProposeCredentialV2Content, ProposeCredentialV2Decorators,
             },
@@ -20,13 +21,15 @@ use messages::{
             AttachmentFormatSpecifier, CredentialPreviewV2,
         },
         notification::ack::{AckContent, AckDecorators, AckStatus},
+        report_problem::{Description, ProblemReportContent, ProblemReportDecorators},
     },
 };
 use uuid::Uuid;
 
 use self::states::{
-    complete::Complete, credential_received::CredentialReceived, offer_received::OfferReceived,
-    proposal_prepared::ProposalPrepared, request_prepared::RequestPrepared,
+    complete::Complete, credential_received::CredentialReceived, failed::Failed,
+    offer_received::OfferReceived, proposal_prepared::ProposalPrepared,
+    request_prepared::RequestPrepared,
 };
 use super::{
     formats::holder::HolderCredentialIssuanceFormat, unmatched_thread_id_error, RecoveredSMError,
@@ -362,6 +365,42 @@ impl<T: HolderCredentialIssuanceFormat> HolderV2<Complete<T>> {
     // get the prepared ack message (if the issuer indiciated they want an ack)
     pub fn get_ack(&self) -> Option<&AckCredentialV2> {
         self.state.ack.as_ref()
+    }
+}
+
+impl HolderV2<Failed> {
+    pub fn get_problem_report(&self) -> &CredIssuanceProblemReportV2 {
+        &self.state.problem_report
+    }
+}
+
+impl<S> HolderV2<S> {
+    pub fn prepare_problem_report_with_error<E>(self, err: &E) -> HolderV2<Failed>
+    where
+        E: Error,
+    {
+        let content = ProblemReportContent::builder()
+            .description(Description::builder().code(err.to_string()).build())
+            .build();
+
+        let decorators = ProblemReportDecorators::builder()
+            .thread(Thread::builder().thid(self.thread_id.clone()).build())
+            .build();
+
+        let report = CredIssuanceProblemReportV2::builder()
+            .id(Uuid::new_v4().to_string())
+            .content(content)
+            .decorators(decorators)
+            .build();
+
+        let new_state = Failed {
+            problem_report: report,
+        };
+
+        HolderV2 {
+            state: new_state,
+            thread_id: self.thread_id,
+        }
     }
 }
 
