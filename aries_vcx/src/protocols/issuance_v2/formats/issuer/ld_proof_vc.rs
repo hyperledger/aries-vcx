@@ -41,9 +41,7 @@ impl IssuerCredentialIssuanceFormat for LdProofIssuerCredentialIssuanceFormat {
         MaybeKnown::Known(IssueCredentialAttachmentFormatType::AriesLdProofVc1_0)
     }
 
-    fn extract_proposal_details(
-        _: &ProposeCredentialV2,
-    ) -> VcxResult<Self::ProposalDetails> {
+    fn extract_proposal_details(_: &ProposeCredentialV2) -> VcxResult<Self::ProposalDetails> {
         Ok(())
     }
 

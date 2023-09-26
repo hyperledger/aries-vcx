@@ -102,7 +102,7 @@ async fn test_hlindy_non_revocable_credential_issuance_v2_from_proposal() {
         let request_msg = holder.get_request().clone();
 
 
-        let issuer = issuer.receive_request(request_msg);
+        let issuer = issuer.receive_request(request_msg).unwrap();
 
         let cred_data = HyperledgerIndyCreateCredentialInput { anoncreds: &anoncreds, credential_attributes: HashMap::from([
             (String::from("address1"), String::from("123 Main St")),

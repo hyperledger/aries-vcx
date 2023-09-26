@@ -57,9 +57,7 @@ pub trait HolderCredentialIssuanceFormat {
         extract_attachment_as_base64(attachment)
     }
 
-    fn extract_offer_details(
-        offer_message: &OfferCredentialV2,
-    ) -> VcxResult<Self::OfferDetails>;
+    fn extract_offer_details(offer_message: &OfferCredentialV2) -> VcxResult<Self::OfferDetails>;
 
     async fn create_request_attachment_content(
         offer_message: &OfferCredentialV2,
@@ -97,7 +95,7 @@ pub trait HolderCredentialIssuanceFormat {
     async fn process_and_store_credential(
         issue_credential_message: &IssueCredentialV2,
         data: &Self::StoreCredentialInput,
-        request_metadata: Self::CreatedRequestMetadata,
+        request_metadata: &Self::CreatedRequestMetadata,
     ) -> VcxResult<Self::StoredCredentialMetadata>;
 }
 
@@ -157,7 +155,7 @@ pub(crate) mod mocks {
             async fn process_and_store_credential(
                 issue_credential_message: &IssueCredentialV2,
                 data: &String,
-                request_metadata: String,
+                request_metadata: &String,
             ) -> VcxResult<String>;
         }
     }

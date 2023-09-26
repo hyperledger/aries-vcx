@@ -27,10 +27,13 @@ use uuid::Uuid;
 use self::states::{
     Complete, CredentialPrepared, OfferPrepared, ProposalReceived, RequestReceived,
 };
-use super::{formats::issuer::IssuerCredentialIssuanceFormat, VcxSMTransitionResult};
+use super::{
+    formats::issuer::IssuerCredentialIssuanceFormat, unmatched_thread_id_error,
+    VcxSMTransitionResult,
+};
 use crate::{
     errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
-    handlers::util::get_thread_id_or_message_id,
+    handlers::util::{get_thread_id_or_message_id, matches_thread_id},
     protocols::issuance_v2::RecoveredSMError,
 };
 
@@ -228,8 +231,6 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<ProposalReceived<T>> {
             thread_id: self.thread_id,
         })
     }
-
-    // TODO - helpers so that consumers can understand what proposal they received?
 }
 
 impl<T: IssuerCredentialIssuanceFormat> IssuerV2<OfferPrepared<T>> {
@@ -265,28 +266,58 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<OfferPrepared<T>> {
         &self.state.offer
     }
 
-    pub fn receive_proposal(self, proposal: ProposeCredentialV2) -> IssuerV2<ProposalReceived<T>> {
+    pub fn receive_proposal(
+        self,
+        proposal: ProposeCredentialV2,
+    ) -> VcxSMTransitionResult<IssuerV2<ProposalReceived<T>>, Self> {
+        let is_match = proposal
+            .decorators
+            .thread
+            .as_ref()
+            .map_or(false, |t| t.thid == self.thread_id);
+        if !is_match {
+            return Err(RecoveredSMError {
+                error: unmatched_thread_id_error(proposal.into(), &self.thread_id),
+                state_machine: self,
+            });
+        }
+
         let new_state = ProposalReceived {
             proposal,
             _marker: PhantomData,
         };
 
-        IssuerV2 {
+        Ok(IssuerV2 {
             state: new_state,
             thread_id: self.thread_id,
-        }
+        })
     }
 
-    pub fn receive_request(self, request: RequestCredentialV2) -> IssuerV2<RequestReceived<T>> {
+    pub fn receive_request(
+        self,
+        request: RequestCredentialV2,
+    ) -> VcxSMTransitionResult<IssuerV2<RequestReceived<T>>, Self> {
+        let is_match = request
+            .decorators
+            .thread
+            .as_ref()
+            .map_or(false, |t| t.thid == self.thread_id);
+        if !is_match {
+            return Err(RecoveredSMError {
+                error: unmatched_thread_id_error(request.into(), &self.thread_id),
+                state_machine: self,
+            });
+        }
+
         let new_state = RequestReceived {
             from_offer_metadata: Some(self.state.offer_metadata),
             request,
         };
 
-        IssuerV2 {
+        Ok(IssuerV2 {
             state: new_state,
             thread_id: self.thread_id,
-        }
+        })
     }
 }
 
@@ -397,15 +428,23 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<CredentialPrepared<T>> {
         })
     }
 
-    pub fn complete_with_ack(self, ack: Ack) -> IssuerV2<Complete<T>> {
+    pub fn complete_with_ack(self, ack: Ack) -> VcxSMTransitionResult<IssuerV2<Complete<T>>, Self> {
+        let is_match = matches_thread_id!(ack, self.thread_id.as_str());
+        if !is_match {
+            return Err(RecoveredSMError {
+                error: unmatched_thread_id_error(ack.into(), &self.thread_id),
+                state_machine: self,
+            });
+        }
+
         let new_state = Complete {
             ack: Some(ack),
             _marker: PhantomData,
         };
 
-        IssuerV2 {
+        Ok(IssuerV2 {
             state: new_state,
             thread_id: self.thread_id,
-        }
+        })
     }
 }

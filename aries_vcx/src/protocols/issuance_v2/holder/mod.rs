@@ -23,9 +23,13 @@ use uuid::Uuid;
 
 use self::states::*;
 use super::{
-    formats::holder::HolderCredentialIssuanceFormat, RecoveredSMError, VcxSMTransitionResult,
+    formats::holder::HolderCredentialIssuanceFormat, unmatched_thread_id_error, RecoveredSMError,
+    VcxSMTransitionResult,
 };
-use crate::{errors::error::VcxResult, handlers::util::get_thread_id_or_message_id};
+use crate::{
+    errors::error::VcxResult,
+    handlers::util::{get_thread_id_or_message_id, matches_thread_id},
+};
 
 pub mod states {
     use std::marker::PhantomData;
@@ -188,8 +192,17 @@ impl<T: HolderCredentialIssuanceFormat> HolderV2<ProposalPrepared<T>> {
         self,
         offer: OfferCredentialV2,
     ) -> VcxSMTransitionResult<HolderV2<OfferReceived<T>>, Self> {
-        // TODO - verify thread ID?
-        // verify_thread_id(&self.thread_id, offer.into())
+        let is_match = offer
+            .decorators
+            .thread
+            .as_ref()
+            .map_or(false, |t| t.thid == self.thread_id);
+        if !is_match {
+            return Err(RecoveredSMError {
+                error: unmatched_thread_id_error(offer.into(), &self.thread_id),
+                state_machine: self,
+            });
+        }
 
         let new_state = OfferReceived {
             offer,
@@ -288,8 +301,6 @@ impl<T: HolderCredentialIssuanceFormat> HolderV2<OfferReceived<T>> {
 }
 
 impl<T: HolderCredentialIssuanceFormat> HolderV2<RequestPrepared<T>> {
-    // TODO - better name; this is "begin with request as a holder"
-    // initiate by creating a request
     pub async fn with_request(
         input_data: &T::CreateRequestInput,
     ) -> VcxResult<HolderV2<RequestPrepared<T>>> {
@@ -321,13 +332,29 @@ impl<T: HolderCredentialIssuanceFormat> HolderV2<RequestPrepared<T>> {
         self,
         credential: IssueCredentialV2,
         input_data: &T::StoreCredentialInput,
-    ) -> VcxResult<HolderV2<CredentialReceived<T>>> {
-        let credential_received_metadata = T::process_and_store_credential(
+    ) -> VcxSMTransitionResult<HolderV2<CredentialReceived<T>>, Self> {
+        let is_match = matches_thread_id!(credential, self.thread_id.as_str());
+        if !is_match {
+            return Err(RecoveredSMError {
+                error: unmatched_thread_id_error(credential.into(), &self.thread_id),
+                state_machine: self,
+            });
+        }
+        let credential_received_metadata = match T::process_and_store_credential(
             &credential,
             input_data,
-            self.state.request_preparation_metadata,
+            &self.state.request_preparation_metadata,
         )
-        .await?;
+        .await
+        {
+            Ok(data) => data,
+            Err(error) => {
+                return Err(RecoveredSMError {
+                    error,
+                    state_machine: self,
+                })
+            }
+        };
 
         let new_state = CredentialReceived {
             credential,

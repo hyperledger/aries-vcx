@@ -48,9 +48,7 @@ impl HolderCredentialIssuanceFormat for LdProofHolderCredentialIssuanceFormat {
         Ok("mock".to_owned().into())
     }
 
-    fn extract_offer_details(
-        _: &OfferCredentialV2,
-    ) -> VcxResult<Self::OfferDetails> {
+    fn extract_offer_details(_: &OfferCredentialV2) -> VcxResult<Self::OfferDetails> {
         Ok(())
     }
 
@@ -70,7 +68,7 @@ impl HolderCredentialIssuanceFormat for LdProofHolderCredentialIssuanceFormat {
     async fn process_and_store_credential(
         _issue_credential_message: &IssueCredentialV2,
         _user_input: &Self::StoreCredentialInput,
-        _request_metadata: Self::CreatedRequestMetadata,
+        _request_metadata: &Self::CreatedRequestMetadata,
     ) -> VcxResult<Self::StoredCredentialMetadata> {
         Ok(())
     }

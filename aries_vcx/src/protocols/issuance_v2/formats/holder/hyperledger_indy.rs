@@ -172,7 +172,7 @@ impl<'a> HolderCredentialIssuanceFormat for HyperledgerIndyHolderCredentialIssua
     async fn process_and_store_credential(
         issue_credential_message: &IssueCredentialV2,
         user_input: &HyperledgerIndyStoreCredentialInput,
-        request_metadata: HyperledgerIndyCreatedRequestMetadata,
+        request_metadata: &HyperledgerIndyCreatedRequestMetadata,
     ) -> VcxResult<HyperledgerIndyStoredCredentialMetadata> {
         let cred_bytes = Self::extract_credential_attachment_content(&issue_credential_message)?;
         let credential_payload = String::from_utf8(cred_bytes).map_err(|_| {
