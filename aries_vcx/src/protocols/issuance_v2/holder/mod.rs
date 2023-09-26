@@ -58,7 +58,7 @@ pub mod states {
 
     pub struct CredentialReceived<T: HolderCredentialIssuanceFormat> {
         pub credential: IssueCredentialV2,
-        pub credential_received_metadata: T::StoredCredentialMetadata,
+        pub stored_credential_metadata: T::StoredCredentialMetadata,
     }
 
     pub struct Complete<T: HolderCredentialIssuanceFormat> {
@@ -329,7 +329,7 @@ impl<T: HolderCredentialIssuanceFormat> HolderV2<RequestPrepared<T>> {
 
         let new_state = CredentialReceived {
             credential,
-            credential_received_metadata,
+            stored_credential_metadata: credential_received_metadata,
         };
         Ok(HolderV2 {
             state: new_state,
@@ -339,6 +339,10 @@ impl<T: HolderCredentialIssuanceFormat> HolderV2<RequestPrepared<T>> {
 }
 
 impl<T: HolderCredentialIssuanceFormat> HolderV2<CredentialReceived<T>> {
+    pub fn get_stored_credential_metadata(&self) -> &T::StoredCredentialMetadata {
+        &self.state.stored_credential_metadata
+    }
+
     // transition to complete and prepare an ack message if the issuer requires one
     // TODO - consider enum variants for (HolderV2<AckPrepared>, HoldverV2<Completed>)
     pub fn prepare_ack_if_required(self) -> HolderV2<Complete<T>> {

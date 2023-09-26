@@ -30,7 +30,8 @@ pub struct HyperledgerIndyCreateProposalInput {
     pub cred_filter: HyperledgerIndyCredentialFilter,
 }
 
-#[derive(Default, Serialize, Deserialize)]
+#[derive(Default, Clone, Serialize, Deserialize, Builder)]
+#[builder(setter(into, strip_option), default)]
 pub struct HyperledgerIndyCredentialFilter {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub schema_issuer_did: Option<String>,
@@ -47,11 +48,12 @@ pub struct HyperledgerIndyCredentialFilter {
 }
 
 pub struct HyperledgerIndyCreateRequestInput<'a> {
-    pub entropy: String,
+    pub my_pairwise_did: String,
     pub ledger: &'a Arc<dyn AnoncredsLedgerRead>,
     pub anoncreds: &'a Arc<dyn BaseAnonCreds>,
 }
 
+#[derive(Clone)]
 pub struct HyperledgerIndyCreatedRequestMetadata {
     credential_request_metadata: String,
     credential_def_json: String,
@@ -62,6 +64,7 @@ pub struct HyperledgerIndyStoreCredentialInput<'a> {
     pub anoncreds: &'a Arc<dyn BaseAnonCreds>,
 }
 
+#[derive(Clone)]
 pub struct HyperledgerIndyStoredCredentialMetadata {
     pub credential_id: String,
 }
@@ -116,7 +119,7 @@ impl<'a> HolderCredentialIssuanceFormat for HyperledgerIndyHolderCredentialIssua
         })?;
 
         let cred_def_id = parse_cred_def_id_from_cred_offer(&offer_payload)?;
-        let entropy = &data.entropy;
+        let entropy = &data.my_pairwise_did;
         let ledger = data.ledger;
         let anoncreds = data.anoncreds;
 

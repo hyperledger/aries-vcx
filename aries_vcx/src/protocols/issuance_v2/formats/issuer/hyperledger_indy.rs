@@ -27,6 +27,7 @@ pub struct HyperledgerIndyCreateOfferInput<'a> {
     pub cred_def_id: String,
 }
 
+#[derive(Clone)]
 pub struct HyperledgerIndyCreatedOfferMetadata {
     pub offer_json: String,
 }
@@ -37,11 +38,13 @@ pub struct HyperledgerIndyCreateCredentialInput<'a> {
     pub revocation_info: Option<HyperledgerIndyCreateCredentialRevocationInfoInput>,
 }
 
+#[derive(Clone)]
 pub struct HyperledgerIndyCreateCredentialRevocationInfoInput {
     pub registry_id: String,
     pub tails_directory: String,
 }
 
+#[derive(Clone)]
 pub struct HyperledgerIndyCreatedCredentialMetadata {
     pub credential_revocation_id: Option<String>,
 }
