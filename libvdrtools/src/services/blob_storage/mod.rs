@@ -7,7 +7,6 @@ use async_trait::async_trait;
 use futures::lock::Mutex;
 use indy_api_types::errors::prelude::*;
 use indy_utils::sequence;
-
 use sha2::{
     digest::{FixedOutput, Update},
     Sha256,

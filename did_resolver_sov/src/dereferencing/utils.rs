@@ -91,13 +91,16 @@ pub(crate) fn dereference_did_document<E: Default + Serialize>(
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
-    use did_resolver::did_doc::schema::did_doc::DidDocumentBuilder;
-    use did_resolver::did_doc::schema::verification_method::VerificationMethodType;
-    use did_resolver::did_parser::DidUrl;
-    use did_resolver::traits::resolvable::resolution_output::DidResolutionOutput;
+    use did_resolver::{
+        did_doc::schema::{
+            did_doc::DidDocumentBuilder, verification_method::VerificationMethodType,
+        },
+        did_parser::DidUrl,
+        traits::resolvable::resolution_output::DidResolutionOutput,
+    };
     use serde_json::Value;
+
+    use super::*;
 
     fn example_did_document_builder() -> DidDocumentBuilder<()> {
         let verification_method = VerificationMethod::builder(

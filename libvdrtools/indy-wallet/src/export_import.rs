@@ -1,26 +1,23 @@
 use std::{
     io,
     io::{BufReader, BufWriter, Read, Write},
+    sync::Arc,
     time::{SystemTime, UNIX_EPOCH},
 };
 
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
-
 use indy_api_types::{
     domain::wallet::{KeyDerivationMethod, Record},
     errors::prelude::*,
 };
-
 use indy_utils::crypto::{
     chacha20poly1305_ietf,
     hash::{hash, HASHBYTES},
     pwhash_argon2i13,
 };
-
 use serde::{Deserialize, Serialize};
 
 use crate::{encryption::KeyDerivationData, Wallet, WalletRecord};
-use std::sync::Arc;
 
 const CHUNK_SIZE: usize = 1024;
 
@@ -30,7 +27,8 @@ pub enum EncryptionMethod {
     ChaCha20Poly1305IETF {
         // pwhash_argon2i13::Salt as bytes. Random salt used for deriving of key from passphrase
         salt: Vec<u8>,
-        // chacha20poly1305_ietf::Nonce as bytes. Random start nonce. We increment nonce for each chunk to be sure in export file consistency
+        // chacha20poly1305_ietf::Nonce as bytes. Random start nonce. We increment nonce for each
+        // chunk to be sure in export file consistency
         nonce: Vec<u8>,
         // size of encrypted chunk
         chunk_size: usize,
@@ -39,14 +37,16 @@ pub enum EncryptionMethod {
     ChaCha20Poly1305IETFInteractive {
         // pwhash_argon2i13::Salt as bytes. Random salt used for deriving of key from passphrase
         salt: Vec<u8>,
-        // chacha20poly1305_ietf::Nonce as bytes. Random start nonce. We increment nonce for each chunk to be sure in export file consistency
+        // chacha20poly1305_ietf::Nonce as bytes. Random start nonce. We increment nonce for each
+        // chunk to be sure in export file consistency
         nonce: Vec<u8>,
         // size of encrypted chunk
         chunk_size: usize,
     },
     // **ChaCha20-Poly1305-IETF raw key** cypher in blocks per chunk_size bytes
     ChaCha20Poly1305IETFRaw {
-        // chacha20poly1305_ietf::Nonce as bytes. Random start nonce. We increment nonce for each chunk to be sure in export file consistency
+        // chacha20poly1305_ietf::Nonce as bytes. Random start nonce. We increment nonce for each
+        // chunk to be sure in export file consistency
         nonce: Vec<u8>,
         // size of encrypted chunk
         chunk_size: usize,

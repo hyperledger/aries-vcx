@@ -1,8 +1,9 @@
+use indy_api_types::errors::prelude::*;
+
 use crate::{
     services::CryptoService,
     utils::crypto::base58::{FromBase58, ToBase58},
 };
-use indy_api_types::errors::prelude::*;
 
 pub fn build_full_verkey(dest: &str, verkey: Option<&str>) -> Result<String, IndyError> {
     if let Some(verkey) = verkey {

@@ -1,7 +1,7 @@
-use crate::shared_types::did_document_metadata::DidDocumentMetadata;
 use std::io::Read;
 
 use super::dereferencing_metadata::DidDereferencingMetadata;
+use crate::shared_types::did_document_metadata::DidDocumentMetadata;
 
 pub struct DidDereferencingOutput<R: Read + Send + Sync> {
     dereferencing_metadata: DidDereferencingMetadata,

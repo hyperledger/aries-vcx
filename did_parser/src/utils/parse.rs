@@ -1,5 +1,4 @@
-use crate::error::ParseError;
-use crate::DidRange;
+use crate::{error::ParseError, DidRange};
 
 pub(crate) fn parse_key_value(
     did_url: &str,

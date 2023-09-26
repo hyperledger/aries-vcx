@@ -1,5 +1,6 @@
-use did_parser::DidUrl;
 use std::collections::HashMap;
+
+use did_parser::DidUrl;
 
 macro_rules! test_cases_positive {
     ($($name:ident: $input:expr, $expected_did:expr, $expected_method:expr, $expected_id:expr, $expected_path:expr, $expected_fragment:expr, $expected_queries:expr, $expected_params:expr)*) => {

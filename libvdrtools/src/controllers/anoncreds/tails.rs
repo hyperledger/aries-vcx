@@ -2,17 +2,15 @@ use std::sync::Arc;
 
 use indy_api_types::errors::prelude::*;
 use log::trace;
-
 use ursa::{
     cl::{RevocationTailsAccessor, RevocationTailsGenerator, Tail},
     errors::prelude::{UrsaCryptoError, UrsaCryptoErrorKind},
 };
 
-use crate::utils::crypto::base58::{FromBase58, ToBase58};
-
 use crate::{
     domain::anoncreds::revocation_registry_definition::RevocationRegistryDefinitionV1,
     services::BlobStorageService,
+    utils::crypto::base58::{FromBase58, ToBase58},
 };
 
 const TAILS_BLOB_TAG_SZ: u8 = 2;

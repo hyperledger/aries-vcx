@@ -124,9 +124,10 @@ pub(super) async fn ledger_response_to_ddo<E: Default>(
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use chrono::TimeZone;
     use did_resolver::did_doc::schema::verification_method::PublicKeyField;
+
+    use super::*;
 
     #[test]
     fn test_prepare_ids() {

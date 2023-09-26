@@ -1,12 +1,11 @@
 use std::{collections::HashMap, sync::Arc};
 
+use futures::future::join;
 use indy_api_types::errors::prelude::*;
-
 use indy_utils::{
     crypto::{chacha20poly1305_ietf, hmacsha256},
     wql::Query,
 };
-
 use serde::{Deserialize, Serialize};
 use zeroize::Zeroize;
 
@@ -19,7 +18,6 @@ use crate::{
     storage::StorageRecord,
     RecordOptions, WalletRecord,
 };
-use futures::future::join;
 
 #[derive(Serialize, Deserialize)]
 pub(super) struct Keys {
@@ -121,7 +119,8 @@ impl EncryptedValue {
 
     #[allow(dead_code)]
     pub fn from_bytes(joined_data: &[u8]) -> IndyResult<Self> {
-        // value_key is stored as NONCE || CYPHERTEXT. Lenth of CYPHERTHEXT is length of DATA + length of TAG.
+        // value_key is stored as NONCE || CYPHERTEXT. Lenth of CYPHERTHEXT is length of DATA +
+        // length of TAG.
         if joined_data.len() < ENCRYPTED_KEY_LEN {
             return Err(err_msg(
                 IndyErrorKind::InvalidStructure,

@@ -4,13 +4,13 @@ use std::{
     path::PathBuf,
 };
 
-use crate::utils::crypto::base58::ToBase58;
 use async_trait::async_trait;
 use indy_api_types::errors::prelude::*;
 use indy_utils::crypto::hash::Hash;
 use serde_json;
 
 use super::{ReadableBlob, Reader, ReaderType};
+use crate::utils::crypto::base58::ToBase58;
 
 pub(crate) struct DefaultReader {
     file: SyncFile,

@@ -1,7 +1,6 @@
 use std::collections::{hash_map::Entry, HashMap};
 
 use indy_api_types::errors::prelude::*;
-
 use ursa::cl::{
     issuer::Issuer as UrsaIssuer, prover::Prover as UrsaProver, verifier::Verifier as UrsaVerifier,
     BlindedCredentialSecrets, BlindedCredentialSecretsCorrectnessProof, CredentialPublicKey,
@@ -103,8 +102,8 @@ impl ProverService {
         rev_reg_def: Option<&RevocationRegistryDefinitionV1>,
     ) -> IndyResult<()> {
         trace!(
-            "process_credential > credential {:?} cred_request_metadata {:?} \
-                    master_secret {:?} cred_def {:?} rev_reg_def {:?}",
+            "process_credential > credential {:?} cred_request_metadata {:?} master_secret {:?} \
+             cred_def {:?} rev_reg_def {:?}",
             credential,
             cred_request_metadata,
             secret!(&master_secret),
@@ -150,9 +149,8 @@ impl ProverService {
         rev_states: &HashMap<String, HashMap<u64, RevocationState>>,
     ) -> IndyResult<Proof> {
         trace!(
-            "create_proof > credentials {:?} proof_req {:?} \
-                    requested_credentials {:?} master_secret {:?} \
-                    schemas {:?} cred_defs {:?} rev_states {:?}",
+            "create_proof > credentials {:?} proof_req {:?} requested_credentials {:?} \
+             master_secret {:?} schemas {:?} cred_defs {:?} rev_states {:?}",
             credentials,
             proof_req,
             requested_credentials,
@@ -611,8 +609,8 @@ impl ProverService {
     ) -> IndyResult<()> {
         trace!(
             "_update_requested_proof > req_attrs_for_credential {:?} \
-                    req_predicates_for_credential {:?} proof_req {:?} credential {:?} \
-                sub_proof_index {:?} requested_proof {:?}",
+             req_predicates_for_credential {:?} proof_req {:?} credential {:?} sub_proof_index \
+             {:?} requested_proof {:?}",
             req_attrs_for_credential,
             req_predicates_for_credential,
             proof_req,
@@ -702,7 +700,7 @@ impl ProverService {
     ) -> IndyResult<SubProofRequest> {
         trace!(
             "_build_sub_proof_request > req_attrs_for_credential {:?} \
-                    req_predicates_for_credential {:?}",
+             req_predicates_for_credential {:?}",
             req_attrs_for_credential,
             req_predicates_for_credential
         );
@@ -752,9 +750,8 @@ impl ProverService {
         extra_query: &Option<&ProofRequestExtraQuery>,
     ) -> IndyResult<Query> {
         trace!(
-            "process_proof_request_restrictions > version {:?} \
-                    name {:?} names {:?} referent {:?} \
-                    restrictions {:?} extra_query {:?}",
+            "process_proof_request_restrictions > version {:?} name {:?} names {:?} referent {:?} \
+             restrictions {:?} extra_query {:?}",
             version,
             name,
             names,
@@ -935,7 +932,8 @@ mod tests {
     const SCHEMA_VERSION: &str = "1.0";
     const ISSUER_DID: &str = "NcYxiDXkpYi6ov5FcYDi1e";
     const CRED_DEF_ID: &str = "NcYxiDXkpYi6ov5FcYDi1e:3:CL:1:tag";
-    const REV_REG_ID: &str = "NcYxiDXkpYi6ov5FcYDi1e:4:NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag:CL_ACCUM:TAG_1";
+    const REV_REG_ID: &str = "NcYxiDXkpYi6ov5FcYDi1e:4:NcYxiDXkpYi6ov5FcYDi1e:3:CL:\
+                              NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag:CL_ACCUM:TAG_1";
     const NO_REV_REG_ID: &str = "None";
 
     macro_rules! hashmap {
@@ -955,8 +953,9 @@ mod tests {
         use crate::domain::anoncreds::revocation_registry_definition::RevocationRegistryId;
 
         fn _credential() -> Credential {
-            // note that encoding is not standardized by Indy except that 32-bit integers are encoded as themselves. IS-786
-            // so Alex -> 12345 is an application choice while 25 -> 25 is not
+            // note that encoding is not standardized by Indy except that 32-bit integers are
+            // encoded as themselves. IS-786 so Alex -> 12345 is an application choice
+            // while 25 -> 25 is not
             let mut attr_values: HashMap<String, AttributeValues> = HashMap::new();
             attr_values.insert(
                 "name".to_string(),
@@ -1064,7 +1063,8 @@ mod tests {
             let schema_id = "did:indy:NcYxiDXkpYi6ov5FcYDi1e/anoncreds/v0/SCHEMA/gvt/1.0";
             let issuer_did = "did:indy:NcYxiDXkpYi6ov5FcYDi1e";
             let cred_def_id = "did:indy:NcYxiDXkpYi6ov5FcYDi1e/anoncreds/v0/CLAIM_DEF/1/tag";
-            let rev_reg_id = "did:indy:NcYxiDXkpYi6ov5FcYDi1e/anoncreds/v0/REV_REG_DEF/did:indy:NcYxiDXkpYi6ov5FcYDi1e/anoncreds/v0/SCHEMA/gvt/1.0/tag/TAG_1";
+            let rev_reg_id = "did:indy:NcYxiDXkpYi6ov5FcYDi1e/anoncreds/v0/REV_REG_DEF/did:indy:\
+                              NcYxiDXkpYi6ov5FcYDi1e/anoncreds/v0/SCHEMA/gvt/1.0/tag/TAG_1";
 
             let mut credential = _credential();
             credential.schema_id = SchemaId(schema_id.to_string());
@@ -1136,12 +1136,11 @@ mod tests {
     }
 
     mod prepare_credentials_for_proving {
+        use super::*;
         use crate::domain::anoncreds::{
             proof_request::{AttributeInfo, PredicateInfo},
             requested_credential::RequestedAttribute,
         };
-
-        use super::*;
 
         const CRED_ID: &str = "8591bcac-ee7d-4bef-ba7e-984696440b30";
         const ATTRIBUTE_REFERENT: &str = "attribute_referent";

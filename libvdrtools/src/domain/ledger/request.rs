@@ -1,13 +1,12 @@
-use serde;
-use serde_json;
-use time;
-
 use std::{
     collections::HashMap,
     sync::atomic::{AtomicUsize, Ordering},
 };
 
 use lazy_static::lazy_static;
+use serde;
+use serde_json;
+use time;
 
 use super::super::crypto::did::{DidValue, ShortDidValue};
 

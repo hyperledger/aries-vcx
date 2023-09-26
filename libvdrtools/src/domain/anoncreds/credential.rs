@@ -1,8 +1,7 @@
 use std::collections::HashMap;
 
-use ursa::cl::{CredentialSignature, RevocationRegistry, SignatureCorrectnessProof, Witness};
-
 use indy_api_types::validation::Validatable;
+use ursa::cl::{CredentialSignature, RevocationRegistry, SignatureCorrectnessProof, Witness};
 
 use super::{
     credential_definition::CredentialDefinitionId,
@@ -76,7 +75,10 @@ impl Validatable for Credential {
         self.values.validate()?;
 
         if self.rev_reg_id.is_some() && (self.witness.is_none() || self.rev_reg.is_none()) {
-            return Err(String::from("Credential validation failed: `witness` and `rev_reg` must be passed for revocable Credential"));
+            return Err(String::from(
+                "Credential validation failed: `witness` and `rev_reg` must be passed for \
+                 revocable Credential",
+            ));
         }
 
         if self.values.0.is_empty() {

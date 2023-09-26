@@ -2,15 +2,13 @@ mod public_key;
 mod verification_method_kind;
 mod verification_method_type;
 
-pub use self::public_key::PublicKeyField;
-
 use ::public_key::Key;
+use did_parser::{Did, DidUrl};
+use serde::{Deserialize, Serialize};
 pub use verification_method_kind::VerificationMethodKind;
 pub use verification_method_type::VerificationMethodType;
 
-use did_parser::{Did, DidUrl};
-use serde::{Deserialize, Serialize};
-
+pub use self::public_key::PublicKeyField;
 use crate::{error::DidDocumentBuilderError, schema::types::jsonwebkey::JsonWebKey};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -160,15 +158,17 @@ impl CompleteVerificationMethodBuilder {
             id: self.id,
             controller: self.controller,
             verification_method_type: self.verification_method_type,
-            public_key: self.public_key.unwrap(), // SAFETY: The builder will always set the public key
+            public_key: self.public_key.unwrap(), /* SAFETY: The builder will always set the
+                                                   * public key */
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use serde_json::Value;
+
+    use super::*;
 
     fn create_valid_did() -> Did {
         Did::parse("did:example:123456789abcdefghi".to_string()).unwrap()

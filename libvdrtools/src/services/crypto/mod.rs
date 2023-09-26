@@ -3,25 +3,24 @@ mod ed25519;
 use std::{collections::HashMap, str};
 
 use async_std::sync::RwLock;
+use ed25519::ED25519CryptoType;
 use hex::FromHex;
 use indy_api_types::errors::prelude::*;
-
 use indy_utils::crypto::{
     base64, chacha20poly1305_ietf, chacha20poly1305_ietf::gen_nonce_and_encrypt_detached,
     ed25519_box, ed25519_sign,
 };
-
-use crate::utils::crypto::base58::{FromBase58, ToBase58};
 
 use crate::{
     domain::crypto::{
         did::{Did, DidValue, MyDidInfo, TheirDid, TheirDidInfo},
         key::{Key, KeyInfo},
     },
-    utils::crypto::verkey_builder::{build_full_verkey, split_verkey, verkey_get_cryptoname},
+    utils::crypto::{
+        base58::{FromBase58, ToBase58},
+        verkey_builder::{build_full_verkey, split_verkey, verkey_get_cryptoname},
+    },
 };
-
-use ed25519::ED25519CryptoType;
 
 const DEFAULT_CRYPTO_TYPE: &str = "ed25519";
 
@@ -463,8 +462,8 @@ impl CryptoService {
                 return Err(err_msg(
                     IndyErrorKind::InvalidStructure,
                     format!(
-                        "Trying to use invalid base64 encoded `seed`. \
-                                   The number of bytes must be {} ",
+                        "Trying to use invalid base64 encoded `seed`. The number of bytes must be \
+                         {} ",
                         ed25519_sign::SEEDBYTES
                     ),
                 ));
@@ -476,8 +475,8 @@ impl CryptoService {
             return Err(err_msg(
                 IndyErrorKind::InvalidStructure,
                 format!(
-                    "Trying to use invalid `seed`. It can be either \
-                               {} bytes string or base64 string or {} bytes HEX string",
+                    "Trying to use invalid `seed`. It can be either {} bytes string or base64 \
+                     string or {} bytes HEX string",
                     ed25519_sign::SEEDBYTES,
                     ed25519_sign::SEEDBYTES * 2
                 ),
@@ -548,7 +547,7 @@ impl CryptoService {
         (ciphertext_encoded, iv_encoded, tag_encoded)
     }
 
-    /* ciphertext helper functions*/
+    /* ciphertext helper functions */
     pub(crate) fn decrypt_ciphertext(
         &self,
         ciphertext: &str,
@@ -626,10 +625,10 @@ impl CryptoService {
 
 #[cfg(test)]
 mod tests {
-    use crate::domain::crypto::did::MyDidInfo;
     use indy_utils::crypto::chacha20poly1305_ietf::gen_key;
 
     use super::*;
+    use crate::domain::crypto::did::MyDidInfo;
 
     #[async_std::test]
     async fn create_my_did_with_works_for_empty_info() {
@@ -1051,8 +1050,8 @@ mod tests {
     async fn test_encrypt_plaintext_and_decrypt_ciphertext_works() {
         let service: CryptoService = CryptoService::new();
         let plaintext = "Hello World".as_bytes().to_vec();
-        // AAD allows the sender to tie extra (protocol) data to the encryption. Example JWE enc and alg
-        // Which the receiver MUST then check before decryption
+        // AAD allows the sender to tie extra (protocol) data to the encryption. Example JWE enc and
+        // alg Which the receiver MUST then check before decryption
         let aad = "some protocol data input to the encryption";
         let cek = gen_key();
 
@@ -1070,8 +1069,8 @@ mod tests {
     async fn test_encrypt_plaintext_decrypt_ciphertext_empty_string_works() {
         let service: CryptoService = CryptoService::new();
         let plaintext = "".as_bytes().to_vec();
-        // AAD allows the sender to tie extra (protocol) data to the encryption. Example JWE enc and alg
-        // Which the receiver MUST then check before decryption
+        // AAD allows the sender to tie extra (protocol) data to the encryption. Example JWE enc and
+        // alg Which the receiver MUST then check before decryption
         let aad = "some protocol data input to the encryption";
         let cek = gen_key();
 
@@ -1089,8 +1088,8 @@ mod tests {
     async fn test_encrypt_plaintext_decrypt_ciphertext_bad_iv_fails() {
         let service: CryptoService = CryptoService::new();
         let plaintext = "Hello World".as_bytes().to_vec();
-        // AAD allows the sender to tie extra (protocol) data to the encryption. Example JWE enc and alg
-        // Which the receiver MUST then check before decryption
+        // AAD allows the sender to tie extra (protocol) data to the encryption. Example JWE enc and
+        // alg Which the receiver MUST then check before decryption
         let aad = "some protocol data input to the encryption";
         let cek = gen_key();
 
@@ -1109,8 +1108,8 @@ mod tests {
     async fn test_encrypt_plaintext_decrypt_ciphertext_bad_ciphertext_fails() {
         let service: CryptoService = CryptoService::new();
         let plaintext = "Hello World".as_bytes().to_vec();
-        // AAD allows the sender to tie extra (protocol) data to the encryption. Example JWE enc and alg
-        // Which the receiver MUST then check before decryption
+        // AAD allows the sender to tie extra (protocol) data to the encryption. Example JWE enc and
+        // alg Which the receiver MUST then check before decryption
         let aad = "some protocol data input to the encryption";
         let cek = gen_key();
 
@@ -1128,8 +1127,8 @@ mod tests {
     async fn test_encrypt_plaintext_and_decrypt_ciphertext_wrong_cek_fails() {
         let service: CryptoService = CryptoService::new();
         let plaintext = "Hello World".as_bytes().to_vec();
-        // AAD allows the sender to tie extra (protocol) data to the encryption. Example JWE enc and alg
-        // Which the receiver MUST then check before decryption
+        // AAD allows the sender to tie extra (protocol) data to the encryption. Example JWE enc and
+        // alg Which the receiver MUST then check before decryption
         let aad = "some protocol data input to the encryption";
         let cek = chacha20poly1305_ietf::gen_key();
 
@@ -1148,8 +1147,8 @@ mod tests {
     async fn test_encrypt_plaintext_and_decrypt_ciphertext_bad_tag_fails() {
         let service: CryptoService = CryptoService::new();
         let plaintext = "Hello World".as_bytes().to_vec();
-        // AAD allows the sender to tie extra (protocol) data to the encryption. Example JWE enc and alg
-        // Which the receiver MUST then check before decryption
+        // AAD allows the sender to tie extra (protocol) data to the encryption. Example JWE enc and
+        // alg Which the receiver MUST then check before decryption
         let aad = "some protocol data input to the encryption";
         let cek = gen_key();
 
@@ -1166,8 +1165,8 @@ mod tests {
     async fn test_encrypt_plaintext_and_decrypt_ciphertext_bad_aad_fails() {
         let service: CryptoService = CryptoService::new();
         let plaintext = "Hello World".as_bytes().to_vec();
-        // AAD allows the sender to tie extra (protocol) data to the encryption. Example JWE enc and alg
-        // Which the receiver MUST then check before decryption
+        // AAD allows the sender to tie extra (protocol) data to the encryption. Example JWE enc and
+        // alg Which the receiver MUST then check before decryption
         let aad = "some protocol data input to the encryption";
         let cek = gen_key();
 

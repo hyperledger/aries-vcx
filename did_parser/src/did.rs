@@ -1,11 +1,12 @@
-use std::convert::TryFrom;
-use std::fmt::{Display, Formatter};
-use std::str::FromStr;
+use std::{
+    convert::TryFrom,
+    fmt::{Display, Formatter},
+    str::FromStr,
+};
 
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-use crate::DidUrl;
-use crate::{error::ParseError, utils::parse::parse_did_method_id, DidRange};
+use crate::{error::ParseError, utils::parse::parse_did_method_id, DidRange, DidUrl};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Did {

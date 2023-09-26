@@ -29,8 +29,9 @@ impl VerifierController {
     /// Verifies a proof (of multiple credential).
     /// All required schemas, public keys and revocation registries must be provided.
     ///
-    /// IMPORTANT: You must use *_id's (`schema_id`, `cred_def_id`, `rev_reg_id`) listed in `proof[identifiers]`
-    /// as the keys for corresponding `schemas_json`, `credential_defs_json`, `rev_reg_defs_json`, `rev_regs_json` objects.
+    /// IMPORTANT: You must use *_id's (`schema_id`, `cred_def_id`, `rev_reg_id`) listed in
+    /// `proof[identifiers]` as the keys for corresponding `schemas_json`,
+    /// `credential_defs_json`, `rev_reg_defs_json`, `rev_regs_json` objects.
     ///
     /// #Params
     /// wallet_handle: wallet handle (created by open_wallet).
@@ -39,10 +40,10 @@ impl VerifierController {
     ///     {
     ///         "name": string,
     ///         "version": string,
-    ///         "nonce": string, - a decimal number represented as a string (use `indy_generate_nonce` function to generate 80-bit number)
-    ///         "requested_attributes": { // set of requested attributes
-    ///              "<attr_referent>": <attr_info>, // see below
-    ///              ...,
+    ///         "nonce": string, - a decimal number represented as a string (use
+    /// `indy_generate_nonce` function to generate 80-bit number)         "requested_attributes"
+    /// : { // set of requested attributes              "<attr_referent>": <attr_info>, // see
+    /// below              ...,
     ///         },
     ///         "requested_predicates": { // set of requested predicates
     ///              "<predicate_referent>": <predicate_info>, // see below
@@ -60,10 +61,11 @@ impl VerifierController {
     ///     {
     ///         "requested_proof": {
     ///             "revealed_attrs": {
-    ///                 "requested_attr1_id": {sub_proof_index: number, raw: string, encoded: string}, // NOTE: check that `encoded` value match to `raw` value on application level
-    ///                 "requested_attr4_id": {sub_proof_index: number: string, encoded: string}, // NOTE: check that `encoded` value match to `raw` value on application level
-    ///             },
-    ///             "revealed_attr_groups": {
+    ///                 "requested_attr1_id": {sub_proof_index: number, raw: string, encoded:
+    /// string}, // NOTE: check that `encoded` value match to `raw` value on application level
+    ///                 "requested_attr4_id": {sub_proof_index: number: string, encoded: string}, //
+    /// NOTE: check that `encoded` value match to `raw` value on application level             
+    /// },             "revealed_attr_groups": {
     ///                 "requested_attr5_id": {
     ///                     "sub_proof_index": number,
     ///                     "values": {
@@ -71,8 +73,8 @@ impl VerifierController {
     ///                             "raw": string,
     ///                             "encoded": string
     ///                         }
-    ///                     }, // NOTE: check that `encoded` value match to `raw` value on application level
-    ///                 }
+    ///                     }, // NOTE: check that `encoded` value match to `raw` value on
+    /// application level                 }
     ///             },
     ///             "unrevealed_attrs": {
     ///                 "requested_attr3_id": {sub_proof_index: number}
@@ -127,9 +129,10 @@ impl VerifierController {
     /// attr_info: Describes requested attribute
     ///     {
     ///         "name": Optional<string>, // attribute name, (case insensitive and ignore spaces)
-    ///         "names": Optional<[string, string]>, // attribute names, (case insensitive and ignore spaces)
-    ///                                              // NOTE: should either be "name" or "names", not both and not none of them.
-    ///                                              // Use "names" to specify several attributes that have to match a single credential.
+    ///         "names": Optional<[string, string]>, // attribute names, (case insensitive and
+    /// ignore spaces)                                              // NOTE: should either be
+    /// "name" or "names", not both and not none of them.                                       
+    /// // Use "names" to specify several attributes that have to match a single credential.
     ///         "restrictions": Optional<wql query>, // see below
     ///         "non_revoked": Optional<<non_revoc_interval>>, // see below,
     ///                        // If specified prover must proof non-revocation
@@ -161,10 +164,11 @@ impl VerifierController {
     ///         "schema_version": <credential schema version>,
     ///         "issuer_did": <credential issuer did>,
     ///         "cred_def_id": <credential definition id>,
-    ///         "rev_reg_id": <credential revocation registry id>, // "None" as string if not present
-    ///         // the following keys can be used for every `attribute name` in credential.
-    ///         "attr::<attribute name>::marker": "1", - to filter based on existence of a specific attribute
-    ///         "attr::<attribute name>::value": <attribute raw value>, - to filter based on value of a specific attribute
+    ///         "rev_reg_id": <credential revocation registry id>, // "None" as string if not
+    /// present         // the following keys can be used for every `attribute name` in
+    /// credential.         "attr::<attribute name>::marker": "1", - to filter based on
+    /// existence of a specific attribute         "attr::<attribute name>::value": <attribute
+    /// raw value>, - to filter based on value of a specific attribute
     ///
     ///
     /// #Returns
@@ -184,9 +188,8 @@ impl VerifierController {
         rev_regs: RevocationRegistries,
     ) -> IndyResult<bool> {
         trace!(
-            "verify_proof > proof_req {:?} \
-                proof {:?} schemas {:?} cred_defs {:?} \
-                rev_reg_defs {:?} rev_regs {:?}",
+            "verify_proof > proof_req {:?} proof {:?} schemas {:?} cred_defs {:?} rev_reg_defs \
+             {:?} rev_regs {:?}",
             proof_req,
             proof,
             schemas,
@@ -221,7 +224,6 @@ impl VerifierController {
     ///
     /// #Returns
     /// nonce: generated number as a string
-    ///
     pub fn generate_nonce(&self) -> IndyResult<String> {
         trace!("generate_nonce >");
 

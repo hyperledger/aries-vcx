@@ -1,19 +1,18 @@
-use std::sync::Arc;
-use std::thread;
-use std::time::Duration;
+use std::{sync::Arc, thread, time::Duration};
 
-use aries_vcx::core::profile::profile::Profile;
 use aries_vcx::{
     common::ledger::{
         service_didsov::{DidSovServiceType, EndpointDidSov},
         transactions::write_endpoint,
     },
+    core::profile::profile::Profile,
     utils::devsetup::SetupProfile,
 };
-use did_resolver::did_parser::Did;
-use did_resolver::traits::resolvable::{resolution_options::DidResolutionOptions, DidResolvable};
-use did_resolver_sov::reader::ConcreteAttrReader;
-use did_resolver_sov::resolution::DidSovResolver;
+use did_resolver::{
+    did_parser::Did,
+    traits::resolvable::{resolution_options::DidResolutionOptions, DidResolvable},
+};
+use did_resolver_sov::{reader::ConcreteAttrReader, resolution::DidSovResolver};
 
 async fn write_test_endpoint(profile: &Arc<dyn Profile>, did: &str) {
     let endpoint = EndpointDidSov::create()
