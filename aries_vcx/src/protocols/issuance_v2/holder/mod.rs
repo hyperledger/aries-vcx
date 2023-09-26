@@ -128,6 +128,24 @@ pub struct HolderV2<S> {
     thread_id: String,
 }
 
+impl<S> HolderV2<S> {
+    pub fn from_parts(thread_id: String, state: S) -> Self {
+        Self { state, thread_id }
+    }
+
+    pub fn into_parts(self) -> (String, S) {
+        (self.thread_id, self.state)
+    }
+
+    pub fn get_thread_id(&self) -> &str {
+        &self.thread_id
+    }
+
+    pub fn get_state(&self) -> &S {
+        &self.state
+    }
+}
+
 impl<T: HolderCredentialIssuanceFormat> HolderV2<ProposalPrepared<T>> {
     // initiate by creating a proposal message
     pub async fn with_proposal(
