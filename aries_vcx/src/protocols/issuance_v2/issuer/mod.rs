@@ -137,6 +137,31 @@ fn create_credential_message_from_attachment<T: IssuerCredentialIssuanceFormat>(
         .build()
 }
 
+/// Represents a type-state machine which walks through issue-credential-v2 from the Issuer
+/// perspective. https://github.com/hyperledger/aries-rfcs/blob/main/features/0453-issue-credential-v2/README.md
+///
+/// States in the [IssuerV2] APIs require knowledge of the credential format being used. As such,
+/// this API only supports usage of a single credential format being used throughout a single
+/// protocol flow.
+///
+/// To indicate which credential format should be used by [IssuerV2], an implementation of
+/// [IssuerCredentialIssuanceFormat] should be used as the generic argument when required.
+///
+/// For instance, the following will bootstrap a [IssuerV2] into the [ProposalPrepared] state,
+/// with the `HyperledgerIndyIssuerCredentialIssuanceFormat` format.
+///
+/// ```no_run
+/// let issuer =
+///     IssuerV2::<OfferPrepared<HyperledgerIndyIssuerCredentialIssuanceFormat>>::with_offer(
+///         &offer_data,
+///         offer_preview,
+///         None,
+///     )
+///     .await
+///     .unwrap();
+/// ```
+///
+/// For more information about formats, see [IssuerCredentialIssuanceFormat] documentation.
 pub struct IssuerV2<S> {
     state: S,
     thread_id: String,
@@ -151,6 +176,7 @@ impl<S> IssuerV2<S> {
         (self.thread_id, self.state)
     }
 
+    /// Get the thread ID that is being used for this protocol instance.
     pub fn get_thread_id(&self) -> &str {
         &self.thread_id
     }
@@ -161,6 +187,16 @@ impl<S> IssuerV2<S> {
 }
 
 impl<T: IssuerCredentialIssuanceFormat> IssuerV2<ProposalReceived<T>> {
+    /// Initialize a new [IssuerV2] by receiving an incoming [ProposeCredentialV2] message from a
+    /// holder.
+    ///
+    /// The [IssuerCredentialIssuanceFormat] used during initialization should be suitable
+    /// for the attachments within the [ProposeCredentialV2] message, or else the [IssuerV2] will
+    /// not be able to transition forward without failure.
+    ///
+    /// This API should only be used for standalone proposals that aren't apart of an existing
+    /// protocol thread. Proposals in response to an ongoing thread should be handled via
+    /// [HolderV2::receive_proposal].
     pub fn from_proposal(proposal: ProposeCredentialV2) -> Self {
         IssuerV2 {
             thread_id: get_thread_id_or_message_id!(proposal),
@@ -171,6 +207,9 @@ impl<T: IssuerCredentialIssuanceFormat> IssuerV2<ProposalReceived<T>> {
         }
     }
 
+    /// Get the details and credential preview (if any) of the proposal that was received. The
+    /// returned [IssuerCredentialIssuanceFormat::ProposalDetails] data will contain data
+    /// specific to the format being used.
     pub fn get_proposal_details(
         &self,
     ) -> VcxResult<(T::ProposalDetails, Option<&CredentialPreviewV2>)> {
