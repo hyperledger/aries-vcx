@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use aries_vcx_core::wallet::indy::IndySdkWallet;
 use axum::extract::State;
 use axum::Json;
@@ -17,8 +18,7 @@ use messages::msg_fields::protocols::out_of_band::invitation::Invitation as OOBI
 use crate::agent::Agent;
 use crate::routes::client::handle_register;
 
-pub async fn init_tui() {
-    let agent = Agent::new_demo_agent().await.unwrap();
+pub async fn init_tui(agent: Agent<impl BaseWallet + 'static>) {
     let mut cursive = Cursive::new();
     cursive.add_global_callback(Key::Esc, |s| s.quit());
     cursive.set_user_data(Arc::new(agent));

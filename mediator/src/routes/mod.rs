@@ -3,14 +3,11 @@ use std::sync::Arc;
 
 use aries_vcx::utils::encryption_envelope::EncryptionEnvelope;
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
-use aries_vcx_core::wallet::indy::IndySdkWallet;
 use axum::body::Bytes;
 use axum::extract::State;
 use axum::response::Html;
 use axum::routing::{get, post};
 use axum::{Json, Router};
-use axum_macros::debug_handler;
-use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use log::info;
 use messages::msg_fields::protocols::connection::Connection;
 use messages::AriesMessage;
@@ -35,7 +32,7 @@ pub async fn handle_aries_connection<T: BaseWallet>(
     }
 }
 pub async fn handle_aries(
-    State(agent): State<ArcAgent<IndySdkWallet>>,
+    State(agent): State<ArcAgent<impl BaseWallet + 'static>>,
     didcomm_msg: Bytes,
 ) -> Result<Json<Value>, String> {
     info!("processing message {:?}", &didcomm_msg);
@@ -51,8 +48,7 @@ pub async fn handle_aries(
     let packed_json = serde_json::from_slice(&packed_message_bytes[..]).unwrap();
     Ok(Json(packed_json))
 }
-#[debug_handler]
-pub async fn oob_invite_qr(State(agent): State<ArcAgent<IndySdkWallet>>) -> Html<String> {
+pub async fn oob_invite_qr(State(agent): State<ArcAgent<impl BaseWallet + 'static>>) -> Html<String> {
     let oob = agent.get_oob_invite().unwrap();
     let oob_string = serde_json::to_string_pretty(&oob).unwrap();
     let qr = fast_qr::QRBuilder::new(oob_string.clone()).build().unwrap();
@@ -73,12 +69,7 @@ pub async fn readme() -> Html<String> {
     Html("<p>Please refer to the API section of <a>readme</a> for usage. Thanks. </p>".into())
 }
 
-pub async fn build_router(endpoint_root: &str) -> Router {
-    let mut agent = Agent::new_demo_agent().await.unwrap();
-    agent
-        .init_service(vec![], format!("http://{endpoint_root}/aries").parse().unwrap())
-        .await
-        .unwrap();
+pub async fn build_router(agent: Agent<impl BaseWallet + 'static>) -> Router {
     Router::default()
         .route("/", get(readme))
         .route("/register", get(oob_invite_qr))

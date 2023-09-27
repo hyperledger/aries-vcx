@@ -5,9 +5,8 @@ use futures::TryFutureExt;
 use messages::msg_fields::protocols::out_of_band::invitation::Invitation as OOBInvitation;
 use serde_json::json;
 
-#[debug_handler]
-pub async fn handle_register(
-    State(agent): State<ArcAgent<IndySdkWallet>>,
+pub async fn handle_register<T: BaseWallet>(
+    State(agent): State<ArcAgent<T>>,
     Json(oob_invite): Json<OOBInvitation>,
 ) -> Result<Json<Value>, String> {
     let (state, EncryptionEnvelope(packed_aries_msg_bytes)) = agent.gen_client_connect_req(oob_invite.clone()).await?;
@@ -51,8 +50,7 @@ pub async fn handle_register(
     })))
 }
 
-pub async fn build_client_router() -> Router {
-    let agent = Agent::new_demo_agent().await.unwrap();
+pub async fn build_client_router(agent: Agent<impl BaseWallet + 'static>) -> Router {
     Router::default()
         .route("/client/register", post(handle_register))
         .layer(tower_http::catch_panic::CatchPanicLayer::new())
