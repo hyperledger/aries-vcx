@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use aries_vcx_core::wallet::indy::IndySdkWallet;
 use axum::extract::State;
+use axum::response::Html;
 use axum::routing::{get, post};
 use axum::Router;
 use axum_macros::debug_handler;
@@ -9,12 +10,12 @@ use axum_macros::debug_handler;
 use crate::agent::Agent;
 
 #[debug_handler]
-pub async fn oob_invite_qr(State(agent): State<Arc<Agent<IndySdkWallet>>>) -> axum::response::Html<String> {
+pub async fn oob_invite_qr(State(agent): State<Arc<Agent<IndySdkWallet>>>) -> Html<String> {
     let oob = agent.get_oob_invite().unwrap();
     let oob_string = serde_json::to_string_pretty(&oob).unwrap();
     let qr = fast_qr::QRBuilder::new(oob_string.clone()).build().unwrap();
     let oob_qr_svg = fast_qr::convert::svg::SvgBuilder::default().to_str(&qr);
-    axum::response::Html(format!(
+    Html(format!(
         "<style>
             svg {{
                 width: 50%;
@@ -34,5 +35,6 @@ pub async fn build_router() -> Router {
         .unwrap();
     Router::default()
         .route("/register", get(oob_invite_qr))
+        .layer(tower_http::catch_panic::CatchPanicLayer::new())
         .with_state(Arc::new(agent))
 }
