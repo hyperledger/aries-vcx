@@ -10,6 +10,7 @@ use aries_vcx_core::{
     wallet::{
         base_wallet::BaseWallet,
         indy::{wallet::create_and_open_wallet, IndySdkWallet, WalletConfig},
+        structs_io::UnpackMessageOutput,
     },
     WalletHandle,
 };
@@ -22,7 +23,7 @@ use messages::{
     AriesMessage,
 };
 
-use crate::utils::{prelude::*, structs::UnpackMessage};
+use crate::utils::prelude::*;
 
 pub mod utils;
 // #[cfg(test)]
@@ -110,13 +111,12 @@ where
             Err("No service to create invite for".to_owned())
         }
     }
-    pub async fn unpack_didcomm(&self, didcomm_msg: &[u8]) -> Result<UnpackMessage, String> {
-        let decrypted_msg = self
+    pub async fn unpack_didcomm(&self, didcomm_msg: &[u8]) -> Result<UnpackMessageOutput, String> {
+        let unpacked = self
             .wallet
             .unpack_message(didcomm_msg)
             .await
             .expect("Valid didcomm?");
-        let unpacked: UnpackMessage = serde_json::from_slice(&decrypted_msg).unwrap();
         info!("{:#?}", unpacked);
         Ok(unpacked)
     }
