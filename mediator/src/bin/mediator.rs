@@ -10,7 +10,10 @@ async fn main() {
     info!("Mediator endpoint root address {}", endpoint_root);
     let mut agent = Agent::new_demo_agent().await.unwrap();
     agent
-        .init_service(vec![], format!("http://{endpoint_root}/aries").parse().unwrap())
+        .init_service(
+            vec![],
+            format!("http://{endpoint_root}/aries").parse().unwrap(),
+        )
         .await
         .unwrap();
     let app_router = mediator::routes::build_router(agent).await;

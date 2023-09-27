@@ -1,22 +1,28 @@
 use std::sync::Arc;
 
-use crate::utils::prelude::*;
-use crate::utils::structs::UnpackMessage;
-use aries_vcx::handlers::out_of_band::sender::OutOfBandSender;
-use aries_vcx::messages::msg_fields::protocols::out_of_band::invitation::OobService;
-use aries_vcx::utils::encryption_envelope::EncryptionEnvelope;
-use aries_vcx_core::errors::error::AriesVcxCoreError;
-use aries_vcx_core::wallet::base_wallet::BaseWallet;
-use aries_vcx_core::wallet::indy::wallet::create_and_open_wallet;
-use aries_vcx_core::wallet::indy::{IndySdkWallet, WalletConfig};
-use aries_vcx_core::WalletHandle;
+use aries_vcx::{
+    handlers::out_of_band::sender::OutOfBandSender,
+    messages::msg_fields::protocols::out_of_band::invitation::OobService,
+    utils::encryption_envelope::EncryptionEnvelope,
+};
+use aries_vcx_core::{
+    errors::error::AriesVcxCoreError,
+    wallet::{
+        base_wallet::BaseWallet,
+        indy::{wallet::create_and_open_wallet, IndySdkWallet, WalletConfig},
+    },
+    WalletHandle,
+};
 use diddoc_legacy::aries::service::AriesService;
-use messages::msg_fields::protocols::connection::request::Request;
-use messages::msg_fields::protocols::connection::response::Response;
-use messages::msg_fields::protocols::connection::Connection;
+use messages::{
+    msg_fields::protocols::{
+        connection::{request::Request, response::Response, Connection},
+        out_of_band::invitation::Invitation as OOBInvitation,
+    },
+    AriesMessage,
+};
 
-use messages::msg_fields::protocols::out_of_band::invitation::Invitation as OOBInvitation;
-use messages::AriesMessage;
+use crate::utils::{prelude::*, structs::UnpackMessage};
 
 pub mod utils;
 // #[cfg(test)]
@@ -105,20 +111,31 @@ where
         }
     }
     pub async fn unpack_didcomm(&self, didcomm_msg: &[u8]) -> Result<UnpackMessage, String> {
-        let decrypted_msg = self.wallet.unpack_message(didcomm_msg).await.expect("Valid didcomm?");
+        let decrypted_msg = self
+            .wallet
+            .unpack_message(didcomm_msg)
+            .await
+            .expect("Valid didcomm?");
         let unpacked: UnpackMessage = serde_json::from_slice(&decrypted_msg).unwrap();
         info!("{:#?}", unpacked);
         Ok(unpacked)
     }
-    // pub async fn pack_message(&self, message: AriesMessage, recipient_vk: VeriKey, sender_vk: VeriKey) -> Value {
-    //     todo!()
+    // pub async fn pack_message(&self, message: AriesMessage, recipient_vk: VeriKey, sender_vk:
+    // VeriKey) -> Value {     todo!()
     // }
-    pub async fn handle_connection_req(&self, request: Request) -> Result<EncryptionEnvelope, String> {
+    pub async fn handle_connection_req(
+        &self,
+        request: Request,
+    ) -> Result<EncryptionEnvelope, String> {
         if let Err(err) = request.content.connection.did_doc.validate() {
             return Err(format!("Request DidDoc validation failed! {:?}", err));
         }
 
-        let thread_id = request.decorators.thread.map(|t| t.thid).unwrap_or(request.id);
+        let thread_id = request
+            .decorators
+            .thread
+            .map(|t| t.thid)
+            .unwrap_or(request.id);
         let (did, vk) = self
             .wallet
             .create_and_store_my_did(None, None)
@@ -146,10 +163,14 @@ where
         .map_err(|e| e.to_string())?;
         let aries_response = AriesMessage::Connection(Connection::Response(response));
         let their_diddoc = request.content.connection.did_doc;
-        let packed_response_envelope =
-            EncryptionEnvelope::create(&self.get_wallet_ref(), &aries_response, Some(&old_vk), &their_diddoc)
-                .await
-                .map_err(|e| e.to_string())?;
+        let packed_response_envelope = EncryptionEnvelope::create(
+            &self.get_wallet_ref(),
+            &aries_response,
+            Some(&old_vk),
+            &their_diddoc,
+        )
+        .await
+        .map_err(|e| e.to_string())?;
         Ok(packed_response_envelope)
     }
 }

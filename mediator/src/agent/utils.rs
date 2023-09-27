@@ -1,6 +1,8 @@
 use std::sync::Arc;
 
-use aries_vcx::{common::signing::sign_connection_response, errors::error::VcxResult, transport::Transport};
+use aries_vcx::{
+    common::signing::sign_connection_response, errors::error::VcxResult, transport::Transport,
+};
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use axum::async_trait;
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
@@ -57,7 +59,12 @@ pub async fn build_response_content(
 pub fn oob2did(oob: OOBInvitation) -> AriesDidDoc {
     let mut did_doc: AriesDidDoc = AriesDidDoc::default();
     did_doc.set_id(oob.id.clone());
-    let oob_service = oob.content.services.first().expect("OOB needs a service").clone();
+    let oob_service = oob
+        .content
+        .services
+        .first()
+        .expect("OOB needs a service")
+        .clone();
 
     match oob_service {
         OobService::AriesService(service) => {

@@ -1,16 +1,16 @@
-use std::fmt::Debug;
-use std::sync::Arc;
+use std::{fmt::Debug, sync::Arc};
 
 use aries_vcx::utils::encryption_envelope::EncryptionEnvelope;
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
-use axum::body::Bytes;
-use axum::extract::State;
-use axum::response::Html;
-use axum::routing::{get, post};
-use axum::{Json, Router};
+use axum::{
+    body::Bytes,
+    extract::State,
+    response::Html,
+    routing::{get, post},
+    Json, Router,
+};
 use log::info;
-use messages::msg_fields::protocols::connection::Connection;
-use messages::AriesMessage;
+use messages::{msg_fields::protocols::connection::Connection, AriesMessage};
 use serde_json::Value;
 
 use crate::agent::Agent;
@@ -26,8 +26,12 @@ pub async fn handle_aries_connection<T: BaseWallet>(
     connection: Connection,
 ) -> Result<EncryptionEnvelope, String> {
     match connection {
-        Connection::Invitation(_invite) => Err("Mediator does not handle random invites. Sorry.".to_owned()),
-        Connection::Request(register_request) => agent.handle_connection_req(register_request).await,
+        Connection::Invitation(_invite) => {
+            Err("Mediator does not handle random invites. Sorry.".to_owned())
+        }
+        Connection::Request(register_request) => {
+            agent.handle_connection_req(register_request).await
+        }
         _ => Err(unhandled_aries(connection)),
     }
 }
@@ -48,7 +52,9 @@ pub async fn handle_aries(
     let packed_json = serde_json::from_slice(&packed_message_bytes[..]).unwrap();
     Ok(Json(packed_json))
 }
-pub async fn oob_invite_qr(State(agent): State<ArcAgent<impl BaseWallet + 'static>>) -> Html<String> {
+pub async fn oob_invite_qr(
+    State(agent): State<ArcAgent<impl BaseWallet + 'static>>,
+) -> Html<String> {
     let oob = agent.get_oob_invite().unwrap();
     let oob_string = serde_json::to_string_pretty(&oob).unwrap();
     let qr = fast_qr::QRBuilder::new(oob_string.clone()).build().unwrap();

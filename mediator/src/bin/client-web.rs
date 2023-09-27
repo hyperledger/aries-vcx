@@ -1,5 +1,4 @@
 /// Client-side focused api accessible Aries Agent
-///
 use log::info;
 use mediator::{agent::Agent, routes::client::build_client_router};
 

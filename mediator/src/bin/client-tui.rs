@@ -1,5 +1,4 @@
 /// Aries Agent TUI
-///
 use mediator::{agent::Agent, tui};
 
 #[tokio::main]

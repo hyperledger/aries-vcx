@@ -1,42 +1,54 @@
 use std::sync::Arc;
 
-use aries_vcx::handlers::util::AnyInvitation;
 // use aries_vcx::protocols::connection::initiation_type::Invitee;
 use aries_vcx::protocols::connection::invitee::states::initial::Initial as ClientInit;
 // use aries_vcx::protocols::connection::invitee::states::invited::Invited;
 use aries_vcx::protocols::connection::invitee::states::requested::Requested as ClientRequestSent;
-use aries_vcx::protocols::connection::invitee::InviteeConnection;
-
-use aries_vcx::protocols::connection::invitee::states::completed::Completed;
-use aries_vcx::protocols::mediated_connection::pairwise_info::PairwiseInfo;
-use aries_vcx::utils::encryption_envelope::EncryptionEnvelope;
 // use aries_vcx::protocols::oob;
 use aries_vcx::utils::mockdata::profile::mock_ledger::MockLedger;
-use aries_vcx_core::ledger::base_ledger::IndyLedgerRead;
-use aries_vcx_core::wallet::base_wallet::BaseWallet;
+use aries_vcx::{
+    handlers::util::AnyInvitation,
+    protocols::{
+        connection::invitee::{states::completed::Completed, InviteeConnection},
+        mediated_connection::pairwise_info::PairwiseInfo,
+    },
+    utils::encryption_envelope::EncryptionEnvelope,
+};
+use aries_vcx_core::{ledger::base_ledger::IndyLedgerRead, wallet::base_wallet::BaseWallet};
+use messages::{
+    msg_fields::protocols::{
+        connection::{response::Response, Connection},
+        out_of_band::invitation::Invitation as OOBInvitation,
+    },
+    AriesMessage,
+};
 
-use messages::msg_fields::protocols::connection::response::Response;
-use messages::msg_fields::protocols::connection::Connection;
-use messages::AriesMessage;
 // use diddoc_legacy::aries::service::AriesService;
 use super::utils::MockTransport;
 use super::Agent;
 use crate::utils::prelude::*;
-use messages::msg_fields::protocols::out_of_band::invitation::Invitation as OOBInvitation;
 // client role utilities
 impl<T: BaseWallet> Agent<T> {
-    /// Starts a new connection object and tries to create request to the specified OOB invite endpoint
+    /// Starts a new connection object and tries to create request to the specified OOB invite
+    /// endpoint
     pub async fn gen_client_connect_req(
         &self,
         oob_invite: OOBInvitation,
     ) -> Result<(InviteeConnection<ClientRequestSent>, EncryptionEnvelope), String> {
-        let (pw_did, pw_vk) = self.wallet.create_and_store_my_did(None, None).await.unwrap();
-
-        let mock_ledger: Arc<dyn IndyLedgerRead> = Arc::new(MockLedger {}); // not good. will be dealt later. (can see brutish attempt above)
-        let client_conn = InviteeConnection::<ClientInit>::new_invitee("foo".into(), PairwiseInfo { pw_did, pw_vk })
-            .accept_invitation(&mock_ledger, AnyInvitation::Oob(oob_invite.clone()))
+        let (pw_did, pw_vk) = self
+            .wallet
+            .create_and_store_my_did(None, None)
             .await
             .unwrap();
+
+        let mock_ledger: Arc<dyn IndyLedgerRead> = Arc::new(MockLedger {}); // not good. will be dealt later. (can see brutish attempt above)
+        let client_conn = InviteeConnection::<ClientInit>::new_invitee(
+            "foo".into(),
+            PairwiseInfo { pw_did, pw_vk },
+        )
+        .accept_invitation(&mock_ledger, AnyInvitation::Oob(oob_invite.clone()))
+        .await
+        .unwrap();
 
         let client_conn = client_conn
             .prepare_request("http://response.http.alt".parse().unwrap(), vec![])
