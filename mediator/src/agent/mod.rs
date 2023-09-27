@@ -22,7 +22,7 @@ use messages::AriesMessage;
 
 use serde_json::Value;
 
-mod utils;
+pub mod utils;
 // #[cfg(test)]
 pub mod client;
 

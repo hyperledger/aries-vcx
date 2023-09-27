@@ -34,19 +34,18 @@ pub async fn handle_aries_connection<T: BaseWallet>(
         _ => Err(unhandled_aries(connection)),
     }
 }
-pub async fn handle_didcomm(
+pub async fn handle_aries(
     State(agent): State<ArcAgent<IndySdkWallet>>,
     didcomm_msg: Bytes,
 ) -> Result<Json<Value>, String> {
     info!("processing message {:?}", &didcomm_msg);
     let unpacked = agent.unpack_didcomm(&didcomm_msg).await.unwrap();
-    let my_key = unpacked.recipient_verkey;
     let aries_message: AriesMessage =
         serde_json::from_str(&unpacked.message).expect("Decoding unpacked message as AriesMessage");
 
     let packed_response = match aries_message {
         AriesMessage::Connection(conn) => handle_aries_connection(agent.clone(), conn).await?,
-        _ => return Err(unhandled_aries(aries_message)),
+        _ => Err(unhandled_aries(aries_message))?,
     };
     let EncryptionEnvelope(packed_message_bytes) = packed_response;
     let packed_json = serde_json::from_slice(&packed_message_bytes[..]).unwrap();
@@ -83,7 +82,7 @@ pub async fn build_router(endpoint_root: &str) -> Router {
     Router::default()
         .route("/", get(readme))
         .route("/register", get(oob_invite_qr))
-        .route("/aries", get(handle_didcomm).post(handle_didcomm))
+        .route("/aries", get(handle_aries).post(handle_aries))
         .layer(tower_http::catch_panic::CatchPanicLayer::new())
         .with_state(Arc::new(agent))
 }

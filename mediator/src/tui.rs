@@ -15,7 +15,7 @@ use log::info;
 use messages::msg_fields::protocols::out_of_band::invitation::Invitation as OOBInvitation;
 
 use crate::agent::Agent;
-use crate::routes::client::connection_request;
+use crate::routes::client::handle_register;
 
 pub async fn init_tui() {
     let agent = Agent::new_demo_agent().await.unwrap();
@@ -88,7 +88,7 @@ pub fn client_register_connect_cb(s: &mut Cursive) {
     info!("{:#?}", oob_invite);
     s.with_user_data(|arc_agent: &mut Arc<Agent<IndySdkWallet>>| {
         output.set_content(format!("{:#?}", oob_invite));
-        match block_on(connection_request(State(arc_agent.to_owned()), Json(oob_invite))) {
+        match block_on(handle_register(State(arc_agent.to_owned()), Json(oob_invite))) {
             Ok(Json(res_json)) => output.set_content(serde_json::to_string_pretty(&res_json).unwrap()),
             Err(err) => output.set_content(err),
         };
