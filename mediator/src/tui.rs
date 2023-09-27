@@ -65,7 +65,7 @@ pub fn client_register_ui() -> Panel<LinearLayout> {
         SizeConstraint::Free,
         TextView::new("").with_name("client_register_result"),
     ));
-    let output = Panel::new(output).title("Response");
+    let output = Panel::new(output).title("Result");
 
     let ui = LinearLayout::horizontal().child(input).child(output);
 

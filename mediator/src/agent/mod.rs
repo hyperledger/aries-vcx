@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use aries_vcx::handlers::out_of_band::sender::OutOfBandSender;
 use aries_vcx::messages::msg_fields::protocols::out_of_band::invitation::OobService;
 use aries_vcx_core::errors::error::AriesVcxCoreError;
@@ -40,6 +42,10 @@ impl Agent<IndySdkWallet> {
         };
         Self::new_from_wallet_config(config).await
     }
+    pub fn get_wallet_ref(&self) -> Arc<dyn BaseWallet> {
+        let wallet_handle = self.wallet.get_wallet_handle();
+        Arc::new(IndySdkWallet::new(wallet_handle))
+    }
 }
 
 // Utils
@@ -47,6 +53,11 @@ impl<T> Agent<T>
 where
     T: BaseWallet,
 {
+    // pub fn get_wallet_ref(&self) -> Arc<dyn BaseWallet> {
+    //     let wallet_handle = self.wallet.get_wallet_handle();
+    //     Arc::new(self.wallet.clone())
+    // }
+
     pub async fn reset_service(
         &mut self,
         routing_keys: Vec<String>,
@@ -83,4 +94,26 @@ where
             Err("No service to create invite for".to_owned())
         }
     }
+    // pub async fn unpack_didcomm(&self, didcomm_msg: &[u8]) -> Result<(), String> {
+    //     // #[derive(Debug, Serialize, Deserialize)]
+    //     pub struct MessageData {
+    //         message: String,
+    //         recipient_verkey: String,
+    //         sender_verkey: String,
+    //     }
+    //     let decrypted_msg = self.wallet.unpack_message(&didcomm_msg).await.expect("Valid didcomm?");
+    //     // let msg_json: Value = serde_json::from_slice(&decrypted_msg).unwrap();
+    //     // info!("{:#?}", msg_json);
+
+    //     //         async fn decrypt_as_msg<T>(wallet: Arc<dyn BaseWallet>, didcomm_msg: &[u8]) -> (T, String)
+    //     // where
+    //     //             // T: for<'de> Deserialize<'de>,
+    //     //         {
+    //     //             let decrypted_msg = wallet.unpack_message(&didcomm_msg).await.unwrap();
+    //     //             let unpacked: MessageData = serde_json::from_slice(&decrypted_msg).unwrap();
+    //     //             let msg: T = serde_json::from_str(&unpacked.message).unwrap();
+    //     //             return (msg, unpacked.sender_verkey);
+    //     //         }
+    //     Ok(())
+    // }
 }

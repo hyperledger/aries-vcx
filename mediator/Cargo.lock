@@ -87,7 +87,6 @@ dependencies = [
 name = "agency_client"
 version = "0.58.0"
 dependencies = [
- "android_logger",
  "async-trait",
  "env_logger 0.9.3",
  "lazy_static",
@@ -1238,6 +1237,14 @@ dependencies = [
  "quote",
  "rustc_version",
  "syn 1.0.109",
+]
+
+[[package]]
+name = "did_parser"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "shared_vcx",
 ]
 
 [[package]]
@@ -2507,6 +2514,7 @@ version = "0.58.0"
 dependencies = [
  "chrono",
  "derive_more",
+ "did_parser",
  "diddoc_legacy",
  "isolang",
  "lazy_static",
@@ -2518,6 +2526,7 @@ dependencies = [
  "strum_macros 0.24.3",
  "thiserror",
  "transitive",
+ "typed-builder",
  "url",
 ]
 
@@ -4287,6 +4296,26 @@ name = "try-lock"
 version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3528ecfd12c466c6f163363caf2d02a71161dd5e1cc6ae7b34207ea2d42d81ed"
+
+[[package]]
+name = "typed-builder"
+version = "0.16.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6605aaa56cce0947127ffa0675a8a1b181f87773364390174de60a86ab9085f1"
+dependencies = [
+ "typed-builder-macro",
+]
+
+[[package]]
+name = "typed-builder-macro"
+version = "0.16.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2a6a6884f6a890a012adcc20ce498f30ebdc70fb1ea242c333cc5f435b0b3871"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.32",
+]
 
 [[package]]
 name = "typenum"
