@@ -72,7 +72,7 @@ pub struct HyperledgerIndyCreateRequestInput<'a> {
     pub anoncreds: &'a Arc<dyn BaseAnonCreds>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct HyperledgerIndyCreatedRequestMetadata {
     credential_request_metadata: String,
     credential_def_json: String,
@@ -83,7 +83,7 @@ pub struct HyperledgerIndyStoreCredentialInput<'a> {
     pub anoncreds: &'a Arc<dyn BaseAnonCreds>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct HyperledgerIndyStoredCredentialMetadata {
     pub credential_id: String,
 }
