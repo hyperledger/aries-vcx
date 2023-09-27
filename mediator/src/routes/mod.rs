@@ -1,11 +1,19 @@
+use std::fmt::Debug;
 use std::sync::Arc;
 
+use aries_vcx::utils::encryption_envelope::EncryptionEnvelope;
+use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use aries_vcx_core::wallet::indy::IndySdkWallet;
+use axum::body::Bytes;
 use axum::extract::State;
 use axum::response::Html;
 use axum::routing::{get, post};
 use axum::{Json, Router};
 use axum_macros::debug_handler;
+use diddoc_legacy::aries::diddoc::AriesDidDoc;
+use log::info;
+use messages::msg_fields::protocols::connection::Connection;
+use messages::AriesMessage;
 use serde_json::Value;
 
 use crate::agent::Agent;
@@ -13,6 +21,46 @@ type ArcAgent<T> = Arc<Agent<T>>;
 
 pub mod client;
 
+pub fn unhandled_aries(message: impl Debug) -> String {
+    format!("Don't know how to handle this message type {:#?}", message)
+}
+pub async fn handle_aries_connection<T: BaseWallet>(
+    agent: ArcAgent<T>,
+    connection: Connection,
+) -> Result<(Connection, AriesDidDoc), String> {
+    match connection {
+        Connection::Invitation(_invite) => return Err("Mediator does not handle random invites. Sorry.".to_owned()),
+        Connection::Request(register_request) => {
+            let (register_response, their_diddoc) = agent.response_for_connection_req(register_request).await?;
+            Ok((Connection::Response(register_response), their_diddoc))
+        }
+        _ => return Err(unhandled_aries(connection)),
+    }
+}
+pub async fn handle_didcomm(
+    State(agent): State<ArcAgent<IndySdkWallet>>,
+    didcomm_msg: Bytes,
+) -> Result<Json<Value>, String> {
+    info!("processing message {:?}", &didcomm_msg);
+    let unpacked = agent.unpack_didcomm(&didcomm_msg).await.unwrap();
+    let my_key = unpacked.recipient_verkey;
+    let aries_message: AriesMessage =
+        serde_json::from_str(&unpacked.message).expect("Decoding unpacked message as AriesMessage");
+
+    let (aries_response, their_diddoc) = match aries_message {
+        AriesMessage::Connection(conn) => {
+            let (conn_response, their_diddoc) = handle_aries_connection(agent.clone(), conn).await?;
+            (AriesMessage::Connection(conn_response), their_diddoc)
+        }
+        _ => return Err(unhandled_aries(aries_message)),
+    };
+    let EncryptionEnvelope(packed_message_bytes) =
+        EncryptionEnvelope::create(&agent.get_wallet_ref(), &aries_response, Some(&my_key), &their_diddoc)
+            .await
+            .map_err(|e| e.to_string())?;
+    let packed_json = serde_json::from_slice(&packed_message_bytes[..]).unwrap();
+    Ok(Json(packed_json))
+}
 #[debug_handler]
 pub async fn oob_invite_qr(State(agent): State<ArcAgent<IndySdkWallet>>) -> Html<String> {
     let oob = agent.get_oob_invite().unwrap();
@@ -44,6 +92,7 @@ pub async fn build_router(endpoint_root: &str) -> Router {
     Router::default()
         .route("/", get(readme))
         .route("/register", get(oob_invite_qr))
+        .route("/aries", get(handle_didcomm).post(handle_didcomm))
         .layer(tower_http::catch_panic::CatchPanicLayer::new())
         .with_state(Arc::new(agent))
 }
