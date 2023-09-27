@@ -30,3 +30,11 @@ pub async fn connection_request(
     info!("Received response: {},", serde_json::to_string_pretty(&res).unwrap());
     Json(res)
 }
+
+pub async fn build_client_router() -> Router {
+    let agent = Agent::new_demo_agent().await.unwrap();
+    Router::default()
+        .route("/client/register", post(connection_request))
+        .layer(tower_http::catch_panic::CatchPanicLayer::new())
+        .with_state(Arc::new(agent))
+}
