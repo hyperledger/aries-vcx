@@ -1,6 +1,6 @@
 pub use prelude::*;
 
-mod prelude;
+pub mod prelude;
 
 /// Utility function for mapping any error into a `500 Internal Server Error`
 /// response.
