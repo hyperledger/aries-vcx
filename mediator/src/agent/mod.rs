@@ -5,6 +5,7 @@ use crate::utils::prelude::*;
 use crate::utils::structs::{UnpackMessage, VeriKey};
 use aries_vcx::handlers::out_of_band::sender::OutOfBandSender;
 use aries_vcx::messages::msg_fields::protocols::out_of_band::invitation::OobService;
+use aries_vcx::utils::encryption_envelope::EncryptionEnvelope;
 use aries_vcx_core::errors::error::AriesVcxCoreError;
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use aries_vcx_core::wallet::indy::wallet::create_and_open_wallet;
@@ -14,7 +15,10 @@ use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use diddoc_legacy::aries::service::AriesService;
 use messages::msg_fields::protocols::connection::request::Request;
 use messages::msg_fields::protocols::connection::response::Response;
+use messages::msg_fields::protocols::connection::Connection;
+
 use messages::msg_fields::protocols::out_of_band::invitation::Invitation as OOBInvitation;
+use messages::AriesMessage;
 
 use serde_json::Value;
 
@@ -113,29 +117,30 @@ where
     // pub async fn pack_message(&self, message: AriesMessage, recipient_vk: VeriKey, sender_vk: VeriKey) -> Value {
     //     todo!()
     // }
-    pub async fn response_for_connection_req(&self, request: Request) -> Result<(Response, AriesDidDoc), String> {
+    pub async fn handle_connection_req(&self, request: Request) -> Result<EncryptionEnvelope, String> {
         if let Err(err) = request.content.connection.did_doc.validate() {
             return Err(format!("Request DidDoc validation failed! {:?}", err));
         }
 
         let thread_id = request.decorators.thread.map(|t| t.thid).unwrap_or(request.id);
-        let did_doc = request.content.connection.did_doc;
         let (did, vk) = self
             .wallet
             .create_and_store_my_did(None, None)
             .await
             .map_err(|e| e.to_string())?;
+        let old_vk = self
+            .service
+            .as_ref()
+            .unwrap()
+            .recipient_keys
+            .first()
+            .unwrap()
+            .to_owned();
 
         let response: Response = utils::build_response_content(
             &self.wallet_ref,
             thread_id,
-            self.service
-                .as_ref()
-                .unwrap()
-                .recipient_keys
-                .first()
-                .unwrap()
-                .to_owned(),
+            old_vk.clone(),
             did,
             vk,
             self.service.as_ref().unwrap().service_endpoint.clone(),
@@ -143,7 +148,12 @@ where
         )
         .await
         .map_err(|e| e.to_string())?;
-        Ok((response, did_doc))
-        // Ok(response)
+        let aries_response = AriesMessage::Connection(Connection::Response(response));
+        let their_diddoc = request.content.connection.did_doc;
+        let packed_response_envelope =
+            EncryptionEnvelope::create(&self.get_wallet_ref(), &aries_response, Some(&old_vk), &their_diddoc)
+                .await
+                .map_err(|e| e.to_string())?;
+        Ok(packed_response_envelope)
     }
 }

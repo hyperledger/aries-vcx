@@ -27,14 +27,11 @@ pub fn unhandled_aries(message: impl Debug) -> String {
 pub async fn handle_aries_connection<T: BaseWallet>(
     agent: ArcAgent<T>,
     connection: Connection,
-) -> Result<(Connection, AriesDidDoc), String> {
+) -> Result<EncryptionEnvelope, String> {
     match connection {
-        Connection::Invitation(_invite) => return Err("Mediator does not handle random invites. Sorry.".to_owned()),
-        Connection::Request(register_request) => {
-            let (register_response, their_diddoc) = agent.response_for_connection_req(register_request).await?;
-            Ok((Connection::Response(register_response), their_diddoc))
-        }
-        _ => return Err(unhandled_aries(connection)),
+        Connection::Invitation(_invite) => Err("Mediator does not handle random invites. Sorry.".to_owned()),
+        Connection::Request(register_request) => agent.handle_connection_req(register_request).await,
+        _ => Err(unhandled_aries(connection)),
     }
 }
 pub async fn handle_didcomm(
@@ -47,17 +44,11 @@ pub async fn handle_didcomm(
     let aries_message: AriesMessage =
         serde_json::from_str(&unpacked.message).expect("Decoding unpacked message as AriesMessage");
 
-    let (aries_response, their_diddoc) = match aries_message {
-        AriesMessage::Connection(conn) => {
-            let (conn_response, their_diddoc) = handle_aries_connection(agent.clone(), conn).await?;
-            (AriesMessage::Connection(conn_response), their_diddoc)
-        }
+    let packed_response = match aries_message {
+        AriesMessage::Connection(conn) => handle_aries_connection(agent.clone(), conn).await?,
         _ => return Err(unhandled_aries(aries_message)),
     };
-    let EncryptionEnvelope(packed_message_bytes) =
-        EncryptionEnvelope::create(&agent.get_wallet_ref(), &aries_response, Some(&my_key), &their_diddoc)
-            .await
-            .map_err(|e| e.to_string())?;
+    let EncryptionEnvelope(packed_message_bytes) = packed_response;
     let packed_json = serde_json::from_slice(&packed_message_bytes[..]).unwrap();
     Ok(Json(packed_json))
 }
