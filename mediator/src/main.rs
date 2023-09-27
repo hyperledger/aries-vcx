@@ -5,7 +5,7 @@ async fn main() {
     println!("Hello, world!");
     load_dot_env();
     setup_logging();
-    let endpoint_root = std::env::var("ENDPOINT_ROOT").unwrap_or("0.0.0.0:8005".into());
+    let endpoint_root = std::env::var("ENDPOINT_ROOT").unwrap_or("127.0.0.1:8005".into());
     info!("Endpoint root address {}", endpoint_root);
     let app_router = mediator::routes::build_router(&endpoint_root).await;
     axum::Server::bind(
