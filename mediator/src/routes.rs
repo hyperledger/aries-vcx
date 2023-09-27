@@ -27,10 +27,10 @@ pub async fn oob_invite_qr(State(agent): State<Arc<Agent<IndySdkWallet>>>) -> Ht
     ))
 }
 
-pub async fn build_router() -> Router {
+pub async fn build_router(endpoint_root: &str) -> Router {
     let mut agent = Agent::new_demo_agent().await.unwrap();
     agent
-        .init_service(vec![], "http://localhost:8005".parse().unwrap())
+        .init_service(vec![], format!("http://{endpoint_root}").parse().unwrap())
         .await
         .unwrap();
     Router::default()
