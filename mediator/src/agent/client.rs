@@ -14,22 +14,17 @@ use aries_vcx::utils::encryption_envelope::EncryptionEnvelope;
 use aries_vcx::utils::mockdata::profile::mock_ledger::MockLedger;
 use aries_vcx_core::ledger::base_ledger::IndyLedgerRead;
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
-use aries_vcx_core::wallet::indy::IndySdkWallet;
-use diddoc_legacy::aries::diddoc::AriesDidDoc;
+
 use messages::msg_fields::protocols::connection::response::Response;
 use messages::msg_fields::protocols::connection::Connection;
 use messages::AriesMessage;
 // use diddoc_legacy::aries::service::AriesService;
-use messages::msg_fields::protocols::out_of_band::invitation::Invitation as OOBInvitation;
-use messages::msg_fields::protocols::out_of_band::invitation::OobService;
-use serde_json::Value;
-
 use super::utils::MockTransport;
 use super::Agent;
 use crate::utils::prelude::*;
-
+use messages::msg_fields::protocols::out_of_band::invitation::Invitation as OOBInvitation;
 // client role utilities
-impl Agent<IndySdkWallet> {
+impl<T: BaseWallet> Agent<T> {
     /// Starts a new connection object and tries to create request to the specified OOB invite endpoint
     pub async fn gen_client_connect_req(
         &self,
@@ -72,10 +67,9 @@ impl Agent<IndySdkWallet> {
         state: InviteeConnection<ClientRequestSent>,
         response: Response,
     ) -> Result<InviteeConnection<Completed>, String> {
-        let state = state
+        state
             .handle_response(&self.get_wallet_ref(), response, &MockTransport)
             .await
-            .map_err(|err| err.to_string());
-        state
+            .map_err(|err| err.to_string())
     }
 }

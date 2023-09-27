@@ -1,7 +1,6 @@
 use super::*;
 use crate::agent::utils::oob2did;
 use crate::utils::prelude::*;
-use futures::TryFutureExt;
 use messages::msg_fields::protocols::out_of_band::invitation::Invitation as OOBInvitation;
 use serde_json::json;
 
@@ -43,7 +42,6 @@ pub async fn handle_register<T: BaseWallet>(
         return Err(format!("Expected connection response, got {:?}", res_aries));
     };
     let state = agent.handle_response(state, response).await?;
-    let state_json = serde_json::to_string_pretty(&state).map_err(|err| err.to_string())?;
     Ok(Json(json!({
         "status": "success",
         "state": state

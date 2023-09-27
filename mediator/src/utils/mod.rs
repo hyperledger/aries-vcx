@@ -1,4 +1,4 @@
-use aries_vcx_core::errors::error::AriesVcxCoreError;
+
 pub use prelude::*;
 
 pub mod prelude;

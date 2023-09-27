@@ -5,7 +5,7 @@ use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use axum::async_trait;
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use messages::{
-    decorators::{thread::Thread, timing::Timing},
+    decorators::thread::Thread,
     msg_fields::protocols::{
         connection::{
             response::{Response, ResponseContent, ResponseDecorators},

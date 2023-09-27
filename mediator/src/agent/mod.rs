@@ -1,8 +1,7 @@
-use std::fmt::format;
 use std::sync::Arc;
 
 use crate::utils::prelude::*;
-use crate::utils::structs::{UnpackMessage, VeriKey};
+use crate::utils::structs::UnpackMessage;
 use aries_vcx::handlers::out_of_band::sender::OutOfBandSender;
 use aries_vcx::messages::msg_fields::protocols::out_of_band::invitation::OobService;
 use aries_vcx::utils::encryption_envelope::EncryptionEnvelope;
@@ -11,7 +10,6 @@ use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use aries_vcx_core::wallet::indy::wallet::create_and_open_wallet;
 use aries_vcx_core::wallet::indy::{IndySdkWallet, WalletConfig};
 use aries_vcx_core::WalletHandle;
-use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use diddoc_legacy::aries::service::AriesService;
 use messages::msg_fields::protocols::connection::request::Request;
 use messages::msg_fields::protocols::connection::response::Response;
@@ -19,8 +17,6 @@ use messages::msg_fields::protocols::connection::Connection;
 
 use messages::msg_fields::protocols::out_of_band::invitation::Invitation as OOBInvitation;
 use messages::AriesMessage;
-
-use serde_json::Value;
 
 pub mod utils;
 // #[cfg(test)]
