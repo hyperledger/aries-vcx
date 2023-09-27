@@ -5,7 +5,7 @@ use agency_client::{
     messages::update_message::UIDsByConn,
     wallet::base_agency_client_wallet::BaseAgencyClientWallet,
 };
-use aries_vcx_core::wallet::agency_client_wallet::ToBaseWallet;
+use aries_vcx_core::wallet::{agency_client_wallet::ToBaseWallet, base_wallet::BaseWallet};
 use messages::AriesMessage;
 use url::Url;
 
@@ -80,23 +80,6 @@ impl CloudAgentInfo {
             agent_did,
             agent_vk,
         })
-    }
-
-    pub async fn destroy(
-        &self,
-        agency_client: &AgencyClient,
-        pairwise_info: &PairwiseInfo,
-    ) -> VcxResult<()> {
-        trace!("CloudAgentInfo::delete >>>");
-        agency_client
-            .delete_connection_agent(
-                &pairwise_info.pw_did,
-                &pairwise_info.pw_vk,
-                &self.agent_did,
-                &self.agent_vk,
-            )
-            .await
-            .map_err(|err| err.into())
     }
 
     // todo: eliminate this function

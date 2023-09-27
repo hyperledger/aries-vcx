@@ -1053,15 +1053,27 @@ impl MediatedConnection {
         send_message(build_handshake_reuse_msg(&oob).into()).await
     }
 
-    pub async fn delete(&self, agency_client: &AgencyClient) -> VcxResult<()> {
-        trace!("Connection: delete >>> {:?}", self.source_id());
-        self.cloud_agent_info()
-            .ok_or(AriesVcxError::from_msg(
-                AriesVcxErrorKind::NoAgentInformation,
-                "Missing cloud agent info",
-            ))?
-            .destroy(agency_client, self.pairwise_info())
-            .await
+    pub async fn delete(&self, wallet: &Arc<dyn BaseWallet>) -> VcxResult<()> {
+        let indy_did: &str = "Indy::Did";
+        let indy_key: &str = "Indy::Key";
+        wallet
+            .delete_wallet_record(indy_did, &self.pairwise_info().pw_did)
+            .await?;
+        wallet
+            .delete_wallet_record(indy_key, &self.pairwise_info().pw_vk)
+            .await?;
+        match self.cloud_agent_info() {
+            None => {}
+            Some(cloud_agent_info) => {
+                wallet
+                    .delete_wallet_record(indy_did, &cloud_agent_info.agent_did)
+                    .await?;
+                wallet
+                    .delete_wallet_record(indy_key, &cloud_agent_info.agent_vk)
+                    .await?;
+            }
+        };
+        Ok(())
     }
 
     pub async fn send_discovery_query(

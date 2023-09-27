@@ -5,7 +5,6 @@ use crate::{
         a2a_message::Client2AgencyMessage,
         create_key::CreateKeyBuilder,
         update_com_method::{ComMethodType, UpdateComMethod},
-        update_connection::DeleteConnectionBuilder,
     },
     testing::{
         mocking,
@@ -15,36 +14,6 @@ use crate::{
 };
 
 impl AgencyClient {
-    pub async fn delete_connection_agent(
-        &self,
-        _pw_did: &str,
-        to_pw_vk: &str,
-        agent_did: &str,
-        agent_vk: &str,
-    ) -> AgencyClientResult<()> {
-        trace!("send_delete_connection_message >>>");
-        let message = DeleteConnectionBuilder::create().build();
-
-        let data = self
-            .prepare_message_for_connection_agent(
-                vec![Client2AgencyMessage::UpdateConnection(message)],
-                to_pw_vk,
-                agent_did,
-                agent_vk,
-            )
-            .await?;
-        let response = self.post_to_agency(data).await?;
-        let mut response = self.parse_response_from_agency(&response).await?;
-
-        match response.remove(0) {
-            Client2AgencyMessage::UpdateConnectionResponse(_) => Ok(()),
-            _ => Err(AgencyClientError::from_msg(
-                AgencyClientErrorKind::InvalidHttpResponse,
-                "Message does not match any variant of UpdateConnectionResponse",
-            )),
-        }
-    }
-
     pub async fn create_connection_agent(
         &self,
         pw_did: &str,

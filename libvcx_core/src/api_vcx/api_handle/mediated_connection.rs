@@ -275,7 +275,7 @@ pub async fn update_state(handle: u32) -> LibvcxResult<u32> {
 
 pub async fn delete_connection(handle: u32) -> LibvcxResult<()> {
     let connection = CONNECTION_MAP.get_cloned(handle)?;
-    connection.delete(&get_main_agency_client()?).await?;
+    connection.delete(&get_main_wallet()?).await?;
     release(handle)
 }
 

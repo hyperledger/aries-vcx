@@ -29,7 +29,7 @@ impl Serialize for ConnectionStatus {
             ConnectionStatus::NotConnected => "CS-102",
             ConnectionStatus::Deleted => "CS-103",
         };
-        serde_json::Value::String(value.to_string()).serialize(serializer)
+        Value::String(value.to_string()).serialize(serializer)
     }
 }
 
@@ -54,26 +54,4 @@ pub struct UpdateConnectionResponse {
     msg_type: MessageType,
     #[serde(rename = "statusCode")]
     pub status_code: ConnectionStatus,
-}
-
-#[derive(Debug)]
-pub struct DeleteConnectionBuilder {
-    status_code: ConnectionStatus,
-}
-
-impl DeleteConnectionBuilder {
-    pub fn create() -> DeleteConnectionBuilder {
-        trace!("DeleteConnection::create_message >>>");
-
-        DeleteConnectionBuilder {
-            status_code: ConnectionStatus::Deleted,
-        }
-    }
-
-    pub fn build(&self) -> UpdateConnection {
-        UpdateConnection {
-            msg_type: MessageType::build_v2(A2AMessageKinds::UpdateConnectionStatus),
-            status_code: self.status_code.clone(),
-        }
-    }
 }
