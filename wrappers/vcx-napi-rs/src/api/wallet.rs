@@ -72,9 +72,10 @@ pub async fn configure_issuer_wallet(enterprise_seed: String) -> napi::Result<St
 #[napi]
 pub async fn unpack(data: Buffer) -> napi::Result<String> {
     let data = data.as_ref();
-    wallet::wallet_unpack_message_to_string(data)
+    let unpacked = wallet::wallet_unpack_message(data)
         .await
-        .map_err(to_napi_err)
+        .map_err(to_napi_err)?;
+    serde_json::to_string(&unpacked).map_err(|err| napi::Error::from_reason(err.to_string()))
 }
 
 #[napi]
