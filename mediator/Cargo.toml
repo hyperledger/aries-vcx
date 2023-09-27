@@ -12,10 +12,12 @@ aries-vcx = { version = "0.58.0", path = "../aries_vcx" }
 aries_vcx_core = { version = "0.1.0", path = "../aries_vcx_core", features = ["vdrtools_wallet", "vdrtools_anoncreds"] }
 axum = "0.6"
 axum-macros = "0.3.8"
+cursive = { version = "0.20.0", features = ["crossterm-backend"] }
 diddoc_legacy = { version = "0.58.0", path = "../diddoc_legacy" }
 dotenvy = "0.15"
 env_logger = "0.10.0"
 fast_qr = { version = "0.10.2", features = ["svg"] }
+futures = "0.3.28"
 log = "0.4.20"
 messages = { version = "0.58.0", path = "../messages" }
 reqwest = { version = "0.11.20", features = ["json"] }

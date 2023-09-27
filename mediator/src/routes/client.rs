@@ -7,7 +7,7 @@ use messages::msg_fields::protocols::out_of_band::invitation::Invitation as OOBI
 pub async fn connection_request(
     State(agent): State<ArcAgent<IndySdkWallet>>,
     Json(oob_invite): Json<OOBInvitation>,
-) -> Json<Value> {
+) -> Result<Json<Value>, String> {
     let state = agent.client_connect_req(oob_invite.clone()).await;
     let req_msg = serde_json::to_value(state.get_request()).unwrap();
     info!(
@@ -21,14 +21,22 @@ pub async fn connection_request(
         .json(&req_msg)
         .send()
         .await
-        .expect("Something went wrong")
-        .error_for_status()
-        .expect("Unexpected response")
+        .expect("Something went wrong");
+    info!("Received response {:#?}", res);
+
+    let res = match res.error_for_status() {
+        Ok(res) => res,
+        Err(err) => return Err(format!("{:#?}", err)),
+    };
+    let res_json = res
         .json::<Value>()
         .await
-        .expect("Decoding should mostly succeed");
-    info!("Received response: {},", serde_json::to_string_pretty(&res).unwrap());
-    Json(res)
+        .expect("Decoding response should mostly succeed");
+    info!(
+        "Received response json: {},",
+        serde_json::to_string_pretty(&res_json).unwrap()
+    );
+    Ok(Json(res_json))
 }
 
 pub async fn build_client_router() -> Router {

@@ -7,7 +7,6 @@ use aries_vcx::protocols::connection::invitee::states::initial::Initial as Clien
 use aries_vcx::protocols::connection::invitee::states::requested::Requested as ClientRequestSent;
 use aries_vcx::protocols::connection::invitee::InviteeConnection;
 
-use aries_vcx::protocols::connection::Connection;
 use aries_vcx::protocols::mediated_connection::pairwise_info::PairwiseInfo;
 // use aries_vcx::protocols::oob;
 use aries_vcx::utils::mockdata::profile::mock_ledger::MockLedger;
@@ -66,11 +65,10 @@ impl Agent<IndySdkWallet> {
         let (pw_did, pw_vk) = self.wallet.create_and_store_my_did(None, None).await.unwrap();
 
         let mock_ledger: Arc<dyn IndyLedgerRead> = Arc::new(MockLedger {}); // not good. will be dealt later. (can see brutish attempt above)
-        let mut client_conn =
-            InviteeConnection::<ClientInit>::new_invitee("foo".into(), PairwiseInfo { pw_did, pw_vk })
-                .accept_invitation(&mock_ledger, AnyInvitation::Oob(oob_invite))
-                .await
-                .unwrap();
+        let client_conn = InviteeConnection::<ClientInit>::new_invitee("foo".into(), PairwiseInfo { pw_did, pw_vk })
+            .accept_invitation(&mock_ledger, AnyInvitation::Oob(oob_invite))
+            .await
+            .unwrap();
 
         let client_conn = client_conn
             .prepare_request("http://response.http.alt".parse().unwrap(), vec![])
