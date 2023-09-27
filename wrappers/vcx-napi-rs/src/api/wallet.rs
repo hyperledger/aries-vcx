@@ -1,6 +1,8 @@
 use libvcx_core::{
     api_vcx::api_global::{ledger, settings::settings_init_issuer_config, wallet},
-    aries_vcx::aries_vcx_core::wallet::indy::{IssuerConfig, RestoreWalletConfigs, WalletConfig},
+    aries_vcx::aries_vcx_core::wallet::indy::{
+        wallet::delete_wallet, IssuerConfig, RestoreWalletConfigs, WalletConfig,
+    },
     errors::error::{LibvcxError, LibvcxErrorKind},
     serde_json,
     serde_json::json,
@@ -101,6 +103,38 @@ pub async fn wallet_export(path: String, backup_key: String) -> napi::Result<()>
     wallet::export_main_wallet(&path, &backup_key)
         .await
         .map_err(to_napi_err)
+}
+
+#[napi]
+pub async fn wallet_migrate(wallet_config: String) -> napi::Result<()> {
+    let wallet_config = serde_json::from_str(&wallet_config)
+        .map_err(|err| {
+            LibvcxError::from_msg(
+                LibvcxErrorKind::InvalidConfiguration,
+                format!("Serialization error: {:?}", err),
+            )
+        })
+        .map_err(to_napi_err)?;
+
+    wallet::wallet_migrate(&wallet_config)
+        .await
+        .map_err(|e| napi::Error::from_reason(e.to_string()))
+}
+
+#[napi]
+pub async fn wallet_delete(wallet_config: String) -> napi::Result<()> {
+    let wallet_config = serde_json::from_str(&wallet_config)
+        .map_err(|err| {
+            LibvcxError::from_msg(
+                LibvcxErrorKind::InvalidConfiguration,
+                format!("Serialization error: {:?}", err),
+            )
+        })
+        .map_err(to_napi_err)?;
+
+    delete_wallet(&wallet_config)
+        .await
+        .map_err(|e| napi::Error::from_reason(e.to_string()))
 }
 
 #[napi]

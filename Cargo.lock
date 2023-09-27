@@ -2995,6 +2995,7 @@ dependencies = [
  "tokio",
  "url",
  "uuid 0.7.4",
+ "wallet_migrator",
 ]
 
 [[package]]
@@ -5384,6 +5385,7 @@ dependencies = [
  "napi-build",
  "napi-derive",
  "uuid 0.8.2",
+ "wallet_migrator",
 ]
 
 [[package]]
