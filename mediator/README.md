@@ -19,10 +19,15 @@ cargo build
 
 ## Usage
 
-You can run and test the produced binary using cargo.
+You can run and test the produced binaries using cargo.
 
 ```bash
-cargo run
+cargo run --bin mediator
+```
+
+```bash
+#For testing / demo purposes
+cargo run --bin client
 ```
 
 ### Configurable Options
@@ -43,4 +48,13 @@ Currently exposed endpoints.
 ```yaml
 `/register`:
 - **Description** : Shows an Aries Out Of Band (OOB) invitation which can be used to connect to the mediator using a conformant Aries Agent.
+```
+
+### Client API
+
+```yaml
+`/client/register`:
+- **Input**: Json body containing OOB invite to connect to.
+- **Description** : Attempts to connect to the Aries service defined in the OOB invite using DIDCOMM channel. 
+
 ```
