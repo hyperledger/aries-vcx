@@ -3,7 +3,7 @@ use std::sync::Arc;
 use aries_vcx_core::wallet::indy::IndySdkWallet;
 use axum::extract::State;
 use axum::response::Html;
-use axum::routing::{get, post};
+use axum::routing::get;
 use axum::Router;
 use axum_macros::debug_handler;
 
@@ -27,6 +27,10 @@ pub async fn oob_invite_qr(State(agent): State<Arc<Agent<IndySdkWallet>>>) -> Ht
     ))
 }
 
+pub async fn readme() -> Html<String> {
+    Html("<p>Please refer to the API section of <a>readme</a> for usage. Thanks. </p>".into())
+}
+
 pub async fn build_router(endpoint_root: &str) -> Router {
     let mut agent = Agent::new_demo_agent().await.unwrap();
     agent
@@ -34,6 +38,7 @@ pub async fn build_router(endpoint_root: &str) -> Router {
         .await
         .unwrap();
     Router::default()
+        .route("/", get(readme))
         .route("/register", get(oob_invite_qr))
         .layer(tower_http::catch_panic::CatchPanicLayer::new())
         .with_state(Arc::new(agent))
