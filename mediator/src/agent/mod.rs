@@ -22,6 +22,7 @@ use messages::{
     },
     AriesMessage,
 };
+use xum_test_server::storage::{get_persistence, MediatorPersistence};
 
 use crate::utils::prelude::*;
 
@@ -29,13 +30,14 @@ pub mod utils;
 // #[cfg(test)]
 pub mod client;
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct Agent<T>
 where
     T: BaseWallet,
 {
     wallet: T,
     wallet_ref: Arc<dyn BaseWallet>,
+    persistence: Arc<dyn MediatorPersistence>,
     service: Option<AriesService>,
 }
 
@@ -45,9 +47,11 @@ impl Agent<IndySdkWallet> {
         let wallet_handle: WalletHandle = create_and_open_wallet(&config).await?;
         let wallet = IndySdkWallet::new(wallet_handle);
         let wallet_ref = Arc::new(IndySdkWallet::new(wallet_handle));
+        let persistence = Arc::new(get_persistence().await);
         Ok(Self {
             wallet,
             wallet_ref,
+            persistence,
             service: None,
         })
     }
