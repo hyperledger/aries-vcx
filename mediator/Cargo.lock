@@ -2361,6 +2361,7 @@ dependencies = [
  "fast_qr",
  "log",
  "messages",
+ "reqwest",
  "serde_json",
  "tokio",
  "tower-http",

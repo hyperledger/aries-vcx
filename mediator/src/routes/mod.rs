@@ -3,14 +3,18 @@ use std::sync::Arc;
 use aries_vcx_core::wallet::indy::IndySdkWallet;
 use axum::extract::State;
 use axum::response::Html;
-use axum::routing::get;
-use axum::Router;
+use axum::routing::{get, post};
+use axum::{Json, Router};
 use axum_macros::debug_handler;
+use serde_json::Value;
 
 use crate::agent::Agent;
+type ArcAgent<T> = Arc<Agent<T>>;
+
+pub mod client;
 
 #[debug_handler]
-pub async fn oob_invite_qr(State(agent): State<Arc<Agent<IndySdkWallet>>>) -> Html<String> {
+pub async fn oob_invite_qr(State(agent): State<ArcAgent<IndySdkWallet>>) -> Html<String> {
     let oob = agent.get_oob_invite().unwrap();
     let oob_string = serde_json::to_string_pretty(&oob).unwrap();
     let qr = fast_qr::QRBuilder::new(oob_string.clone()).build().unwrap();
@@ -34,7 +38,7 @@ pub async fn readme() -> Html<String> {
 pub async fn build_router(endpoint_root: &str) -> Router {
     let mut agent = Agent::new_demo_agent().await.unwrap();
     agent
-        .init_service(vec![], format!("http://{endpoint_root}").parse().unwrap())
+        .init_service(vec![], format!("http://{endpoint_root}/aries").parse().unwrap())
         .await
         .unwrap();
     Router::default()

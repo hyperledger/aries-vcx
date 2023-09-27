@@ -10,6 +10,8 @@ use diddoc_legacy::aries::service::AriesService;
 use messages::msg_fields::protocols::out_of_band::invitation::Invitation as OOBInvitation;
 
 use crate::utils::Result_;
+// #[cfg(test)]
+pub mod client;
 
 #[derive(Debug, Clone)]
 pub struct Agent<T>
@@ -41,6 +43,7 @@ impl Agent<IndySdkWallet> {
         Self::new_from_wallet_config(config).await
     }
 }
+
 // Utils
 impl<T> Agent<T>
 where
