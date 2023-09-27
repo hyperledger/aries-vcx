@@ -26,8 +26,11 @@ cargo run --bin mediator
 ```
 
 ```bash
-#For testing / demo purposes
-cargo run --bin client
+# For testing / demo purposes
+cargo run --bin client-tui
+
+# To also see panic and debug info produced by tui
+cargo run --bin client-tui 2> err || cat  err
 ```
 
 ### Configurable Options
