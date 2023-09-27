@@ -6,7 +6,7 @@ pub mod pairwise_info;
 mod serializable;
 mod trait_bounds;
 
-use std::sync::Arc;
+use std::error::Error;
 
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
@@ -122,7 +122,7 @@ where
 
     pub async fn send_message<T>(
         &self,
-        wallet: &Arc<dyn BaseWallet>,
+        wallet: &impl BaseWallet,
         message: &AriesMessage,
         transport: &T,
     ) -> VcxResult<()>

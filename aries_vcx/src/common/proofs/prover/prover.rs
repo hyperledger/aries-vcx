@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::Arc};
+use std::collections::HashMap;
 
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
@@ -19,8 +19,8 @@ use crate::{
 };
 
 pub async fn generate_indy_proof(
-    ledger: &Arc<dyn AnoncredsLedgerRead>,
-    anoncreds: &Arc<dyn BaseAnonCreds>,
+    ledger: &impl AnoncredsLedgerRead,
+    anoncreds: &impl BaseAnonCreds,
     credentials: &SelectedCredentials,
     self_attested_attrs: &HashMap<String, String>,
     proof_req_data_json: &str,

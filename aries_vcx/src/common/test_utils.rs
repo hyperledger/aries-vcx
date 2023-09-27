@@ -1,6 +1,6 @@
 #![allow(clippy::unwrap_used)]
 
-use std::{sync::Arc, time::Duration};
+use std::time::Duration;
 
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds,
@@ -27,8 +27,8 @@ use crate::{
 };
 
 pub async fn create_and_write_test_schema(
-    anoncreds: &Arc<dyn BaseAnonCreds>,
-    ledger_write: &Arc<dyn AnoncredsLedgerWrite>,
+    anoncreds: &impl BaseAnonCreds,
+    ledger_write: &impl AnoncredsLedgerWrite,
     submitter_did: &str,
     attr_list: &str,
 ) -> Schema {
@@ -51,9 +51,9 @@ pub async fn create_and_write_test_schema(
 }
 
 pub async fn create_and_write_test_cred_def(
-    anoncreds: &Arc<dyn BaseAnonCreds>,
-    ledger_read: &Arc<dyn AnoncredsLedgerRead>,
-    ledger_write: &Arc<dyn AnoncredsLedgerWrite>,
+    anoncreds: &impl BaseAnonCreds,
+    ledger_read: &impl AnoncredsLedgerRead,
+    ledger_write: &impl AnoncredsLedgerWrite,
     issuer_did: &str,
     schema_id: &str,
     revokable: bool,
@@ -78,8 +78,8 @@ pub async fn create_and_write_test_cred_def(
 }
 
 pub async fn create_and_write_test_rev_reg(
-    anoncreds: &Arc<dyn BaseAnonCreds>,
-    ledger_write: &Arc<dyn AnoncredsLedgerWrite>,
+    anoncreds: &impl BaseAnonCreds,
+    ledger_write: &impl AnoncredsLedgerWrite,
     issuer_did: &str,
     cred_def_id: &str,
 ) -> RevocationRegistry {
@@ -96,8 +96,8 @@ pub async fn create_and_write_test_rev_reg(
 }
 
 pub async fn create_and_write_credential(
-    anoncreds_issuer: &Arc<dyn BaseAnonCreds>,
-    anoncreds_holder: &Arc<dyn BaseAnonCreds>,
+    anoncreds_issuer: &impl BaseAnonCreds,
+    anoncreds_holder: &impl BaseAnonCreds,
     institution_did: &str,
     cred_def: &CredentialDef,
     rev_reg: Option<&RevocationRegistry>,

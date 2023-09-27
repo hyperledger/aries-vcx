@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 #[cfg(feature = "migration")]
 use aries_vcx_core::WalletHandle;
 use aries_vcx_core::{
@@ -16,17 +14,18 @@ use crate::errors::error::VcxResult;
 
 #[async_trait]
 pub trait Profile: std::fmt::Debug + Send + Sync {
-    fn inject_indy_ledger_read(&self) -> Arc<dyn IndyLedgerRead>;
+    type LedgerRead: IndyLedgerRead + AnoncredsLedgerRead;
+    type LedgerWrite: IndyLedgerWrite + AnoncredsLedgerWrite;
+    type Anoncreds: BaseAnonCreds;
+    type Wallet: BaseWallet;
 
-    fn inject_indy_ledger_write(&self) -> Arc<dyn IndyLedgerWrite>;
+    fn ledger_read(&self) -> &Self::LedgerRead;
 
-    fn inject_anoncreds(&self) -> Arc<dyn BaseAnonCreds>;
+    fn ledger_write(&self) -> &Self::LedgerWrite;
 
-    fn inject_anoncreds_ledger_read(&self) -> Arc<dyn AnoncredsLedgerRead>;
+    fn anoncreds(&self) -> &Self::Anoncreds;
 
-    fn inject_anoncreds_ledger_write(&self) -> Arc<dyn AnoncredsLedgerWrite>;
-
-    fn inject_wallet(&self) -> Arc<dyn BaseWallet>;
+    fn wallet(&self) -> &Self::Wallet;
 
     #[cfg(feature = "migration")]
     fn wallet_handle(&self) -> Option<WalletHandle> {

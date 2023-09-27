@@ -1,4 +1,4 @@
-use std::{clone::Clone, collections::HashMap, sync::Arc};
+use std::{clone::Clone, collections::HashMap};
 
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use chrono::Utc;
@@ -241,12 +241,12 @@ impl SmConnectionInviter {
 
     pub async fn handle_connection_request<'a>(
         self,
-        wallet: &'a Arc<dyn BaseWallet>,
+        wallet: &'a impl BaseWallet,
         request: Request,
         new_pairwise_info: &'a PairwiseInfo,
         new_routing_keys: Vec<String>,
         new_service_endpoint: Url,
-        send_message: SendClosureConnection,
+        send_message: SendClosureConnection<'_>,
     ) -> VcxResult<Self> {
         if !matches!(self.state, InviterFullState::Initial(_)) {
             verify_thread_id(&self.get_thread_id(), &request.clone().into())?;
@@ -324,7 +324,7 @@ impl SmConnectionInviter {
 
     pub async fn handle_send_response(
         self,
-        send_message: SendClosureConnection,
+        send_message: SendClosureConnection<'_>,
     ) -> VcxResult<Self> {
         let state = match self.state {
             InviterFullState::Requested(state) => {
@@ -368,7 +368,7 @@ impl SmConnectionInviter {
 
     async fn build_response(
         &self,
-        wallet: &Arc<dyn BaseWallet>,
+        wallet: &impl BaseWallet,
         thread_id: String,
         new_pairwise_info: &PairwiseInfo,
         new_routing_keys: Vec<String>,

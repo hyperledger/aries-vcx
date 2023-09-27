@@ -4,6 +4,7 @@
 #![allow(clippy::new_without_default)]
 #![allow(clippy::inherent_to_string)]
 #![allow(clippy::large_enum_variant)]
+#![allow(clippy::diverging_sub_expression)]
 #![deny(clippy::unwrap_used)]
 #![cfg_attr(feature = "fatal_warnings", deny(warnings))]
 #![crate_name = "aries_vcx"]

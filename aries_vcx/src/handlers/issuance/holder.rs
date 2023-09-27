@@ -98,8 +98,8 @@ impl Holder {
 
     pub async fn prepare_credential_request(
         &mut self,
-        ledger: &Arc<dyn AnoncredsLedgerRead>,
-        anoncreds: &Arc<dyn BaseAnonCreds>,
+        ledger: &impl AnoncredsLedgerRead,
+        anoncreds: &impl BaseAnonCreds,
         my_pw_did: String,
     ) -> VcxResult<AriesMessage> {
         self.holder_sm = self
@@ -143,9 +143,9 @@ impl Holder {
 
     pub async fn process_credential(
         &mut self,
-        ledger: &Arc<dyn AnoncredsLedgerRead>,
-        anoncreds: &Arc<dyn BaseAnonCreds>,
-        credential: IssueCredentialV1,
+        ledger: &impl AnoncredsLedgerRead,
+        anoncreds: &impl BaseAnonCreds,
+        credential: IssueCredential,
     ) -> VcxResult<()> {
         self.holder_sm = self
             .holder_sm
@@ -203,14 +203,14 @@ impl Holder {
         self.holder_sm.get_thread_id()
     }
 
-    pub async fn is_revokable(&self, ledger: &Arc<dyn AnoncredsLedgerRead>) -> VcxResult<bool> {
+    pub async fn is_revokable(&self, ledger: &impl AnoncredsLedgerRead) -> VcxResult<bool> {
         self.holder_sm.is_revokable(ledger).await
     }
 
     pub async fn is_revoked(
         &self,
-        ledger: &Arc<dyn AnoncredsLedgerRead>,
-        anoncreds: &Arc<dyn BaseAnonCreds>,
+        ledger: &impl AnoncredsLedgerRead,
+        anoncreds: &impl BaseAnonCreds,
     ) -> VcxResult<bool> {
         self.holder_sm.is_revoked(ledger, anoncreds).await
     }
@@ -223,20 +223,20 @@ impl Holder {
         Ok(self.holder_sm.credential_status())
     }
 
-    pub async fn get_cred_rev_id(&self, anoncreds: &Arc<dyn BaseAnonCreds>) -> VcxResult<String> {
+    pub async fn get_cred_rev_id(&self, anoncreds: &impl BaseAnonCreds) -> VcxResult<String> {
         get_cred_rev_id(anoncreds, &self.get_cred_id()?).await
     }
 
     pub async fn handle_revocation_notification(
         &self,
-        ledger: &Arc<dyn AnoncredsLedgerRead>,
-        anoncreds: &Arc<dyn BaseAnonCreds>,
-        wallet: &Arc<dyn BaseWallet>,
+        ledger: &impl AnoncredsLedgerRead,
+        anoncreds: &impl BaseAnonCreds,
+        wallet: &impl BaseWallet,
         connection: &MediatedConnection,
         notification: Revoke,
     ) -> VcxResult<()> {
         if self.holder_sm.is_revokable(ledger).await? {
-            let send_message = connection.send_message_closure(Arc::clone(wallet)).await?;
+            let send_message = connection.send_message_closure(wallet).await?;
             // TODO: Store to remember notification was received along with details
             RevocationNotificationReceiver::build(
                 self.get_rev_reg_id()?,
@@ -259,8 +259,8 @@ impl Holder {
 
     pub async fn process_aries_msg(
         &mut self,
-        ledger: &Arc<dyn AnoncredsLedgerRead>,
-        anoncreds: &Arc<dyn BaseAnonCreds>,
+        ledger: &impl AnoncredsLedgerRead,
+        anoncreds: &impl BaseAnonCreds,
         message: AriesMessage,
     ) -> VcxResult<()> {
         let holder_sm = match message {

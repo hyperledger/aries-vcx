@@ -6,6 +6,7 @@ pub mod utils;
 
 use aries_vcx::{
     common::ledger::transactions::write_endpoint_legacy,
+    core::profile::profile::Profile,
     protocols::{connection::GenericConnection, mediated_connection::pairwise_info::PairwiseInfo},
     utils::{devsetup::*, encryption_envelope::EncryptionEnvelope},
 };
@@ -48,13 +49,13 @@ fn build_basic_message(content: String) -> BasicMessage {
         .build()
 }
 
-async fn decrypt_message(
-    consumer: &TestAgent,
+async fn decrypt_message<P: Profile>(
+    consumer: &TestAgent<P>,
     received: Vec<u8>,
     consumer_to_institution: &GenericConnection,
 ) -> AriesMessage {
     EncryptionEnvelope::auth_unpack(
-        &consumer.profile.inject_wallet(),
+        consumer.profile.wallet(),
         received,
         &consumer_to_institution.remote_vk().unwrap(),
     )
@@ -62,30 +63,28 @@ async fn decrypt_message(
     .unwrap()
 }
 
-async fn send_and_receive_message(
-    consumer: &TestAgent,
-    insitution: &TestAgent,
+async fn send_and_receive_message<P1: Profile, P2: Profile>(
+    consumer: &TestAgent<P1>,
+    insitution: &TestAgent<P2>,
     institution_to_consumer: &GenericConnection,
     consumer_to_institution: &GenericConnection,
     message: &AriesMessage,
 ) -> AriesMessage {
     let encrypted_message = institution_to_consumer
-        .encrypt_message(&insitution.profile.inject_wallet(), message)
+        .encrypt_message(insitution.profile.wallet(), message)
         .await
         .unwrap()
         .0;
     decrypt_message(consumer, encrypted_message, consumer_to_institution).await
 }
 
-async fn create_service(faber: &TestAgent) {
-    let pairwise_info = PairwiseInfo::create(&faber.profile.inject_wallet())
-        .await
-        .unwrap();
+async fn create_service<P: Profile>(faber: &TestAgent<P>) {
+    let pairwise_info = PairwiseInfo::create(faber.profile.wallet()).await.unwrap();
     let service = AriesService::create()
         .set_service_endpoint("http://dummy.org".parse().unwrap())
         .set_recipient_keys(vec![pairwise_info.pw_vk.clone()]);
     write_endpoint_legacy(
-        &faber.profile.inject_indy_ledger_write(),
+        faber.profile.ledger_write(),
         &faber.institution_did,
         &service,
     )

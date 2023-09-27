@@ -13,10 +13,11 @@ pub mod proof_presentation;
 pub mod revocation_notification;
 pub mod trustping;
 
-pub type SendClosure =
-    Box<dyn FnOnce(AriesMessage) -> BoxFuture<'static, VcxResult<()>> + Send + Sync>;
-pub type SendClosureConnection = Box<
-    dyn FnOnce(AriesMessage, String, AriesDidDoc) -> BoxFuture<'static, VcxResult<()>>
+pub type SendClosure<'a> =
+    Box<dyn FnOnce(AriesMessage) -> BoxFuture<'a, VcxResult<()>> + Send + Sync + 'a>;
+pub type SendClosureConnection<'a> = Box<
+    dyn FnOnce(AriesMessage, String, AriesDidDoc) -> BoxFuture<'a, VcxResult<()>>
         + Send
-        + Sync,
+        + Sync
+        + 'a,
 >;

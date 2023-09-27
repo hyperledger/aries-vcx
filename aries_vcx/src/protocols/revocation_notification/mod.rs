@@ -14,7 +14,7 @@ pub mod test_utils {
 
     use crate::{errors::error::VcxResult, protocols::SendClosure, utils::constants::REV_REG_ID};
 
-    pub fn _send_message() -> SendClosure {
+    pub fn _send_message() -> SendClosure<'static> {
         Box::new(|_: AriesMessage| Box::pin(async { VcxResult::Ok(()) }))
     }
 

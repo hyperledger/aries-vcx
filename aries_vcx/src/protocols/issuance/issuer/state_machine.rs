@@ -1,4 +1,4 @@
-use std::{fmt::Display, sync::Arc};
+use std::fmt::Display;
 
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
@@ -275,7 +275,7 @@ impl IssuerSM {
         }
     }
 
-    pub async fn is_revoked(&self, ledger: &Arc<dyn AnoncredsLedgerRead>) -> VcxResult<bool> {
+    pub async fn is_revoked(&self, ledger: &impl AnoncredsLedgerRead) -> VcxResult<bool> {
         if self.is_revokable() {
             let rev_reg_id = self.get_rev_reg_id()?;
             let rev_id = self.get_rev_id()?;
@@ -416,7 +416,7 @@ impl IssuerSM {
         Ok(Self { state, ..self })
     }
 
-    pub async fn build_credential(self, anoncreds: &Arc<dyn BaseAnonCreds>) -> VcxResult<Self> {
+    pub async fn build_credential(self, anoncreds: &impl BaseAnonCreds) -> VcxResult<Self> {
         let state = match self.state {
             IssuerFullState::RequestReceived(state_data) => {
                 match create_credential(
@@ -560,8 +560,8 @@ impl IssuerSM {
 }
 
 async fn create_credential(
-    anoncreds: &Arc<dyn BaseAnonCreds>,
-    request: &RequestCredentialV1,
+    anoncreds: &impl BaseAnonCreds,
+    request: &RequestCredential,
     rev_reg_id: &Option<String>,
     tails_file: &Option<String>,
     offer: &OfferCredentialV1,

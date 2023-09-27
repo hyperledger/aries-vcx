@@ -1,4 +1,4 @@
-use std::{fmt::Display, sync::Arc};
+use std::fmt::Display;
 
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
@@ -255,8 +255,8 @@ impl VerifierSM {
 
     pub async fn verify_presentation<'a>(
         self,
-        ledger: &'a Arc<dyn AnoncredsLedgerRead>,
-        anoncreds: &'a Arc<dyn BaseAnonCreds>,
+        ledger: &'a impl AnoncredsLedgerRead,
+        anoncreds: &'a impl BaseAnonCreds,
         presentation: Presentation,
     ) -> VcxResult<Self> {
         verify_thread_id(

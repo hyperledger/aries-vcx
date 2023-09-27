@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
 };
@@ -94,8 +92,8 @@ impl Verifier {
     // todo: verification and sending ack should be separate apis
     pub async fn verify_presentation(
         &mut self,
-        ledger: &Arc<dyn AnoncredsLedgerRead>,
-        anoncreds: &Arc<dyn BaseAnonCreds>,
+        ledger: &impl AnoncredsLedgerRead,
+        anoncreds: &impl BaseAnonCreds,
         presentation: Presentation,
     ) -> VcxResult<AriesMessage> {
         trace!("Verifier::verify_presentation >>>");
@@ -161,8 +159,8 @@ impl Verifier {
 
     pub async fn process_aries_msg(
         &mut self,
-        ledger: &Arc<dyn AnoncredsLedgerRead>,
-        anoncreds: &Arc<dyn BaseAnonCreds>,
+        ledger: &impl AnoncredsLedgerRead,
+        anoncreds: &impl BaseAnonCreds,
         message: AriesMessage,
     ) -> VcxResult<Option<AriesMessage>> {
         let (verifier_sm, message) = match message {

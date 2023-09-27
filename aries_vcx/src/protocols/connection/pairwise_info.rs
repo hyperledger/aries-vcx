@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 
 use crate::errors::error::VcxResult;
@@ -11,7 +9,7 @@ pub struct PairwiseInfo {
 }
 
 impl PairwiseInfo {
-    pub async fn create(wallet: &Arc<dyn BaseWallet>) -> VcxResult<PairwiseInfo> {
+    pub async fn create(wallet: &impl BaseWallet) -> VcxResult<PairwiseInfo> {
         let (pw_did, pw_vk) = wallet.create_and_store_my_did(None, None).await?;
         Ok(PairwiseInfo { pw_did, pw_vk })
     }

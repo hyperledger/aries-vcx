@@ -11,7 +11,7 @@ use time;
 use crate::errors::error::prelude::*;
 
 async fn get_signature_data(
-    wallet: &Arc<dyn BaseWallet>,
+    wallet: &impl BaseWallet,
     data: String,
     key: &str,
 ) -> VcxResult<(Vec<u8>, Vec<u8>)> {
@@ -25,7 +25,7 @@ async fn get_signature_data(
 }
 
 pub async fn sign_connection_response(
-    wallet: &Arc<dyn BaseWallet>,
+    wallet: &impl BaseWallet,
     key: &str,
     con_data: &ConnectionData,
 ) -> VcxResult<ConnectionSignature> {
@@ -41,7 +41,7 @@ pub async fn sign_connection_response(
 }
 
 pub async fn decode_signed_connection_response(
-    wallet: &Arc<dyn BaseWallet>,
+    wallet: &impl BaseWallet,
     response: ResponseContent,
     their_vk: &str,
 ) -> VcxResult<ConnectionData> {

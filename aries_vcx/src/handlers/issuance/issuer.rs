@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
 };
@@ -145,7 +143,7 @@ impl Issuer {
     // from that
     pub async fn build_credential_offer_msg(
         &mut self,
-        anoncreds: &Arc<dyn BaseAnonCreds>,
+        anoncreds: &impl BaseAnonCreds,
         offer_info: OfferInfo,
         comment: Option<String>,
     ) -> VcxResult<()> {
@@ -181,7 +179,7 @@ impl Issuer {
         Ok(())
     }
 
-    pub async fn build_credential(&mut self, anoncreds: &Arc<dyn BaseAnonCreds>) -> VcxResult<()> {
+    pub async fn build_credential(&mut self, anoncreds: &impl BaseAnonCreds) -> VcxResult<()> {
         self.issuer_sm = self.issuer_sm.clone().build_credential(anoncreds).await?;
         Ok(())
     }
@@ -216,10 +214,7 @@ impl Issuer {
             ))
     }
 
-    pub async fn revoke_credential_local(
-        &self,
-        anoncreds: &Arc<dyn BaseAnonCreds>,
-    ) -> VcxResult<()> {
+    pub async fn revoke_credential_local(&self, anoncreds: &impl BaseAnonCreds) -> VcxResult<()> {
         let revocation_info: RevocationInfoV1 =
             self.issuer_sm
                 .get_revocation_info()
@@ -268,7 +263,7 @@ impl Issuer {
         self.issuer_sm.is_revokable()
     }
 
-    pub async fn is_revoked(&self, ledger: &Arc<dyn AnoncredsLedgerRead>) -> VcxResult<bool> {
+    pub async fn is_revoked(&self, ledger: &impl AnoncredsLedgerRead) -> VcxResult<bool> {
         self.issuer_sm.is_revoked(ledger).await
     }
 

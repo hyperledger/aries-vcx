@@ -16,7 +16,7 @@ use crate::{
 };
 
 #[derive(Debug)]
-pub(crate) struct AgencyClientWallet {
+pub struct AgencyClientWallet {
     inner: Arc<dyn BaseAgencyClientWallet>,
 }
 
@@ -177,14 +177,14 @@ impl BaseWallet for AgencyClientWallet {
 }
 
 pub trait ToBaseWallet {
-    fn to_base_wallet(&self) -> Arc<dyn BaseWallet>;
+    fn to_base_wallet(&self) -> AgencyClientWallet;
 }
 
 impl ToBaseWallet for Arc<dyn BaseAgencyClientWallet> {
-    fn to_base_wallet(&self) -> Arc<dyn BaseWallet> {
-        Arc::new(AgencyClientWallet {
+    fn to_base_wallet(&self) -> AgencyClientWallet {
+        AgencyClientWallet {
             inner: Arc::clone(self),
-        })
+        }
     }
 }
 
