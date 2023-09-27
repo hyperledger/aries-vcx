@@ -4,8 +4,8 @@ use serde_json::json;
 use super::*;
 use crate::{agent::utils::oob2did, utils::prelude::*};
 
-pub async fn handle_register<T: BaseWallet>(
-    State(agent): State<ArcAgent<T>>,
+pub async fn handle_register(
+    State(agent): State<ArcAgent>,
     Json(oob_invite): Json<OOBInvitation>,
 ) -> Result<Json<Value>, String> {
     let (state, EncryptionEnvelope(packed_aries_msg_bytes)) =
@@ -56,7 +56,7 @@ pub async fn handle_register<T: BaseWallet>(
     })))
 }
 
-pub async fn build_client_router(agent: Agent<impl BaseWallet + 'static>) -> Router {
+pub async fn build_client_router(agent: Agent) -> Router {
     Router::default()
         .route("/client/register", post(handle_register))
         .layer(tower_http::catch_panic::CatchPanicLayer::new())

@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{marker::PhantomData, sync::Arc};
 
 use aries_vcx::{
     handlers::out_of_band::sender::OutOfBandSender,
@@ -31,31 +31,28 @@ pub mod utils;
 pub mod client;
 
 #[derive(Clone)]
-pub struct Agent<T>
-where
-    T: BaseWallet,
-{
-    wallet: T,
-    wallet_ref: Arc<dyn BaseWallet>,
+pub struct Agent {
+    wallet: Arc<dyn BaseWallet>,
     persistence: Arc<dyn MediatorPersistence>,
     service: Option<AriesService>,
 }
 
+pub struct AgentMaker<T: BaseWallet> {
+    _type_wallet: PhantomData<T>,
+}
 /// Constructors
-impl Agent<IndySdkWallet> {
-    pub async fn new_from_wallet_config(config: WalletConfig) -> Result<Self, AriesVcxCoreError> {
+impl AgentMaker<IndySdkWallet> {
+    pub async fn new_from_wallet_config(config: WalletConfig) -> Result<Agent, AriesVcxCoreError> {
         let wallet_handle: WalletHandle = create_and_open_wallet(&config).await?;
-        let wallet = IndySdkWallet::new(wallet_handle);
-        let wallet_ref = Arc::new(IndySdkWallet::new(wallet_handle));
+        let wallet = Arc::new(IndySdkWallet::new(wallet_handle));
         let persistence = Arc::new(get_persistence().await);
-        Ok(Self {
+        Ok(Agent {
             wallet,
-            wallet_ref,
             persistence,
             service: None,
         })
     }
-    pub async fn new_demo_agent() -> Result<Self, AriesVcxCoreError> {
+    pub async fn new_demo_agent() -> Result<Agent, AriesVcxCoreError> {
         let config = WalletConfig {
             wallet_name: uuid::Uuid::new_v4().to_string(),
             wallet_key: "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY".into(),
@@ -71,12 +68,9 @@ impl Agent<IndySdkWallet> {
 }
 
 // Utils
-impl<T> Agent<T>
-where
-    T: BaseWallet,
-{
+impl Agent {
     pub fn get_wallet_ref(&self) -> Arc<dyn BaseWallet> {
-        self.wallet_ref.clone()
+        self.wallet.clone()
     }
 
     pub async fn reset_service(
@@ -155,7 +149,7 @@ where
             .to_owned();
 
         let response: Response = utils::build_response_content(
-            &self.wallet_ref,
+            &self.wallet,
             thread_id,
             old_vk.clone(),
             did,

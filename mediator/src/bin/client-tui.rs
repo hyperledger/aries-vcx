@@ -1,12 +1,15 @@
 /// Aries Agent TUI
-use mediator::{agent::Agent, tui};
+use mediator::{
+    agent::AgentMaker,
+    tui,
+};
 
 #[tokio::main]
 async fn main() {
     println!("Hello, world!");
     load_dot_env();
     setup_logging();
-    let agent = Agent::new_demo_agent().await.unwrap();
+    let agent = AgentMaker::new_demo_agent().await.unwrap();
     tui::init_tui(agent).await;
 }
 

@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use aries_vcx_core::wallet::{base_wallet::BaseWallet, indy::IndySdkWallet};
+
 use axum::{extract::State, Json};
 use cursive::{
     direction::Orientation,
@@ -18,7 +18,7 @@ use messages::msg_fields::protocols::out_of_band::invitation::Invitation as OOBI
 
 use crate::{agent::Agent, routes::client::handle_register};
 
-pub async fn init_tui(agent: Agent<impl BaseWallet + 'static>) {
+pub async fn init_tui(agent: Agent) {
     let mut cursive = Cursive::new();
     cursive.add_global_callback(Key::Esc, |s| s.quit());
     cursive.set_user_data(Arc::new(agent));
@@ -94,7 +94,7 @@ pub fn client_register_connect_cb(s: &mut Cursive) {
         }
     };
     info!("{:#?}", oob_invite);
-    s.with_user_data(|arc_agent: &mut Arc<Agent<IndySdkWallet>>| {
+    s.with_user_data(|arc_agent: &mut Arc<Agent>| {
         output.set_content(format!("{:#?}", oob_invite));
         match block_on(handle_register(
             State(arc_agent.to_owned()),

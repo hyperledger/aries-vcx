@@ -14,7 +14,7 @@ use aries_vcx::{
     },
     utils::encryption_envelope::EncryptionEnvelope,
 };
-use aries_vcx_core::{ledger::base_ledger::IndyLedgerRead, wallet::base_wallet::BaseWallet};
+use aries_vcx_core::ledger::base_ledger::IndyLedgerRead;
 use messages::{
     msg_fields::protocols::{
         connection::{response::Response, Connection},
@@ -28,7 +28,7 @@ use super::utils::MockTransport;
 use super::Agent;
 use crate::utils::prelude::*;
 // client role utilities
-impl<T: BaseWallet> Agent<T> {
+impl Agent {
     /// Starts a new connection object and tries to create request to the specified OOB invite
     /// endpoint
     pub async fn gen_client_connect_req(
@@ -65,7 +65,7 @@ impl<T: BaseWallet> Agent<T> {
         // encrypt/pack connection request
         let EncryptionEnvelope(packed_aries_msg_bytes) = client_conn
             .encrypt_message(
-                &self.wallet_ref,
+                &self.wallet,
                 &AriesMessage::Connection(Connection::Request(req_msg.clone())),
             )
             .await
