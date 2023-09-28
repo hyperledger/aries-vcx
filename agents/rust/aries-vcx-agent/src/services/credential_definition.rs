@@ -2,7 +2,7 @@ use std::sync::{Arc, Mutex};
 
 use aries_vcx::{
     common::primitives::credential_definition::{CredentialDef, CredentialDefConfig},
-    core::profile::profile::Profile,
+    core::profile::{profile::Profile, vdrtools_profile::VdrtoolsProfile},
 };
 
 use crate::{
@@ -11,12 +11,12 @@ use crate::{
 };
 
 pub struct ServiceCredentialDefinitions {
-    profile: Arc<dyn Profile>,
+    profile: Arc<VdrtoolsProfile>,
     cred_defs: ObjectCache<CredentialDef>,
 }
 
 impl ServiceCredentialDefinitions {
-    pub fn new(profile: Arc<dyn Profile>) -> Self {
+    pub fn new(profile: Arc<VdrtoolsProfile>) -> Self {
         Self {
             profile,
             cred_defs: ObjectCache::new("cred-defs"),
@@ -25,8 +25,8 @@ impl ServiceCredentialDefinitions {
 
     pub async fn create_cred_def(&self, config: CredentialDefConfig) -> AgentResult<String> {
         let cd = CredentialDef::create(
-            &self.profile.inject_anoncreds_ledger_read(),
-            &self.profile.inject_anoncreds(),
+            self.profile.ledger_read(),
+            self.profile.anoncreds(),
             "".to_string(),
             config,
             true,
@@ -38,10 +38,7 @@ impl ServiceCredentialDefinitions {
     pub async fn publish_cred_def(&self, thread_id: &str) -> AgentResult<()> {
         let cred_def = self.cred_defs.get(thread_id)?;
         let cred_def = cred_def
-            .publish_cred_def(
-                &self.profile.inject_anoncreds_ledger_read(),
-                &self.profile.inject_anoncreds_ledger_write(),
-            )
+            .publish_cred_def(self.profile.ledger_read(), self.profile.ledger_write())
             .await?;
         self.cred_defs.insert(thread_id, cred_def)?;
         Ok(())

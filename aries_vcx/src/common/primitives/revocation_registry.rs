@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds, errors::error::AriesVcxCoreErrorKind,
     ledger::base_ledger::AnoncredsLedgerWrite,
@@ -212,7 +210,7 @@ impl RevocationRegistry {
 
     pub async fn revoke_credential_local(
         &self,
-        anoncreds: &Arc<dyn BaseAnonCreds>,
+        anoncreds: &impl BaseAnonCreds,
         cred_rev_id: &str,
     ) -> VcxResult<()> {
         anoncreds
