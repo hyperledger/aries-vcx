@@ -109,7 +109,7 @@ pub async fn accept_credential_proposal<P: Profile>(
 
 pub async fn accept_offer<P: Profile>(
     alice: &mut TestAgent<P>,
-    cred_offer: OfferCredential,
+    cred_offer: OfferCredentialV1,
     holder: &mut Holder,
 ) -> RequestCredentialV1 {
     // TODO: Replace with message-specific handler
@@ -140,7 +140,7 @@ pub async fn accept_offer<P: Profile>(
 
 pub async fn decline_offer<P: Profile>(
     alice: &mut TestAgent<P>,
-    cred_offer: OfferCredential,
+    cred_offer: OfferCredentialV1,
     holder: &mut Holder,
 ) -> ProblemReport {
     // TODO: Replace with message-specific handler
@@ -328,7 +328,7 @@ async fn create_credential_offer<P: Profile>(
 
 async fn create_credential_request<P: Profile>(
     alice: &mut TestAgent<P>,
-    cred_offer: OfferCredential,
+    cred_offer: OfferCredentialV1,
 ) -> Holder {
     let mut holder = Holder::create_from_offer("TEST_CREDENTIAL", cred_offer).unwrap();
     assert_eq!(HolderState::OfferReceived, holder.get_state());

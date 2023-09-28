@@ -145,7 +145,7 @@ impl Holder {
         &mut self,
         ledger: &impl AnoncredsLedgerRead,
         anoncreds: &impl BaseAnonCreds,
-        credential: IssueCredential,
+        credential: IssueCredentialV1,
     ) -> VcxResult<()> {
         self.holder_sm = self
             .holder_sm

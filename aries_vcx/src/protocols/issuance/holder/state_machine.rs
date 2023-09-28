@@ -266,7 +266,7 @@ impl HolderSM {
         self,
         ledger: &'a impl AnoncredsLedgerRead,
         anoncreds: &'a impl BaseAnonCreds,
-        credential: IssueCredential,
+        credential: IssueCredentialV1,
     ) -> VcxResult<Self> {
         trace!("HolderSM::receive_credential >>");
         let state = match self.state {
@@ -534,7 +534,7 @@ fn _parse_rev_reg_id_from_credential(credential: &str) -> VcxResult<Option<Strin
 async fn _store_credential(
     ledger: &impl AnoncredsLedgerRead,
     anoncreds: &impl BaseAnonCreds,
-    credential: &IssueCredential,
+    credential: &IssueCredentialV1,
     req_meta: &str,
     cred_def_json: &str,
 ) -> VcxResult<(String, Option<String>)> {

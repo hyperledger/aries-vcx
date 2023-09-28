@@ -1,13 +1,12 @@
 use std::{sync::Arc, thread, time::Duration};
 
-use aries_vcx::core::profile::profile::Profile;
-use aries_vcx::run_setup;
 use aries_vcx::{
     common::ledger::{
         service_didsov::{DidSovServiceType, EndpointDidSov},
         transactions::write_endpoint,
     },
     core::profile::profile::Profile,
+    run_setup,
     utils::devsetup::SetupProfile,
 };
 use did_resolver::{

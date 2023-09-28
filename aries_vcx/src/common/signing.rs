@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use base64;
 use messages::msg_fields::protocols::connection::{

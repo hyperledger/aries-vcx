@@ -561,7 +561,7 @@ impl IssuerSM {
 
 async fn create_credential(
     anoncreds: &impl BaseAnonCreds,
-    request: &RequestCredential,
+    request: &RequestCredentialV1,
     rev_reg_id: &Option<String>,
     tails_file: &Option<String>,
     offer: &OfferCredentialV1,
