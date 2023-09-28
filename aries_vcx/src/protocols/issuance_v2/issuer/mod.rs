@@ -67,21 +67,13 @@ fn create_offer_message_from_attachment<T: IssuerCredentialIssuanceFormat>(
             .attach_id(attach_id)
             .format(T::get_offer_attachment_format())
             .build()])
-        .offers_attach(vec![attachment]);
+        .offers_attach(vec![attachment])
+        .replacement_id(replacement_id)
+        .build();
 
-    let content = if let Some(id) = replacement_id {
-        content.replacement_id(id).build()
-    } else {
-        content.build()
-    };
-
-    let decorators = if let Some(id) = thread_id {
-        OfferCredentialV2Decorators::builder()
-            .thread(Thread::builder().thid(id).build())
-            .build()
-    } else {
-        OfferCredentialV2Decorators::builder().build()
-    };
+    let decorators = OfferCredentialV2Decorators::builder()
+        .thread(thread_id.map(|id| Thread::builder().thid(id).build()))
+        .build();
 
     OfferCredentialV2::builder()
         .id(Uuid::new_v4().to_string())
@@ -113,22 +105,14 @@ fn create_credential_message_from_attachment<T: IssuerCredentialIssuanceFormat>(
             .attach_id(attach_id)
             .format(T::get_credential_attachment_format())
             .build()])
-        .credentials_attach(vec![attachment]);
+        .credentials_attach(vec![attachment])
+        .replacement_id(replacement_id)
+        .build();
 
-    let content = if let Some(id) = replacement_id {
-        content.replacement_id(id).build()
-    } else {
-        content.build()
-    };
-
-    let decorators =
-        IssueCredentialV2Decorators::builder().thread(Thread::builder().thid(thread_id).build());
-    let decorators = match please_ack {
-        true => decorators
-            .please_ack(PleaseAck::builder().on(vec![AckOn::Outcome]).build())
-            .build(),
-        false => decorators.build(),
-    };
+    let decorators = IssueCredentialV2Decorators::builder()
+        .thread(Thread::builder().thid(thread_id).build())
+        .please_ack(please_ack.then_some(PleaseAck::builder().on(vec![AckOn::Outcome]).build()))
+        .build();
 
     IssueCredentialV2::builder()
         .id(Uuid::new_v4().to_string())

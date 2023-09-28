@@ -426,7 +426,8 @@ pub(super) fn decrypt_storage_record(
 
 //     #[test]
 //     fn test_encrypt_decrypt_tags() {
-//         let tags = serde_json::from_str(r#"{"tag1":"value1", "tag2":"value2", "~tag3":"value3"}"#).unwrap();
+//         let tags = serde_json::from_str(r#"{"tag1":"value1", "tag2":"value2",
+// "~tag3":"value3"}"#).unwrap();
 
 //         let tag_name_key = chacha20poly1305_ietf::gen_key();
 //         let tag_value_key = chacha20poly1305_ietf::gen_key();
@@ -453,12 +454,13 @@ pub(super) fn decrypt_storage_record(
 //         let value = "test_value";
 //         let encrypted_value = EncryptedValue::encrypt(value, &keys.value_key);
 //         let type_ = "test_type";
-//         let encrypted_name = encrypt_as_searchable(name.as_bytes(), &keys.name_key, &keys.item_hmac_key);
-//         let encrypted_type = encrypt_as_searchable(type_.as_bytes(), &keys.type_key, &keys.item_hmac_key);
-//         let mut tags = HashMap::new();
+//         let encrypted_name = encrypt_as_searchable(name.as_bytes(), &keys.name_key,
+// &keys.item_hmac_key);         let encrypted_type = encrypt_as_searchable(type_.as_bytes(),
+// &keys.type_key, &keys.item_hmac_key);         let mut tags = HashMap::new();
 //         tags.insert("tag_name_1".to_string(), "tag_value_1".to_string());
 //         tags.insert("~tag_name_2".to_string(), "tag_value_2".to_string());
-//         let encrypted_tags = encrypt_tags(&tags, &keys.tag_name_key, &keys.tag_value_key, &keys.tags_hmac_key);
+//         let encrypted_tags = encrypt_tags(&tags, &keys.tag_name_key, &keys.tag_value_key,
+// &keys.tags_hmac_key);
 
 //         let storage_record = StorageRecord {
 //             id: encrypted_name,
@@ -482,12 +484,13 @@ pub(super) fn decrypt_storage_record(
 //         let value = "test_value";
 //         let encrypted_value = EncryptedValue::encrypt(value, &keys.value_key);
 //         let type_ = "test_type";
-//         let encrypted_name = encrypt_as_searchable(name.as_bytes(), &keys.name_key, &keys.item_hmac_key);
-//         let encrypted_type = encrypt_as_searchable(type_.as_bytes(), &keys.type_key, &keys.item_hmac_key);
-//         let mut tags = HashMap::new();
+//         let encrypted_name = encrypt_as_searchable(name.as_bytes(), &keys.name_key,
+// &keys.item_hmac_key);         let encrypted_type = encrypt_as_searchable(type_.as_bytes(),
+// &keys.type_key, &keys.item_hmac_key);         let mut tags = HashMap::new();
 //         tags.insert("tag_name_1".to_string(), "tag_value_1".to_string());
 //         tags.insert("~tag_name_2".to_string(), "tag_value_2".to_string());
-//         let encrypted_tags = encrypt_tags(&tags, &keys.tag_name_key, &keys.tag_value_key, &keys.tags_hmac_key);
+//         let encrypted_tags = encrypt_tags(&tags, &keys.tag_name_key, &keys.tag_value_key,
+// &keys.tags_hmac_key);
 
 //         let storage_record = StorageRecord {
 //             id: encrypted_name,

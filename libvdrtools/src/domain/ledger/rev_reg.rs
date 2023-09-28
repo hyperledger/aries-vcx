@@ -1,4 +1,4 @@
-use super::constants::{GET_REVOC_REG, GET_REVOC_REG_DELTA, REVOC_REG_ENTRY};
+use std::collections::HashSet;
 
 use ursa::cl::{RevocationRegistry, RevocationRegistryDelta};
 
@@ -8,10 +8,9 @@ use super::{
         revocation_registry_definition::RevocationRegistryId,
         revocation_registry_delta::RevocationRegistryDeltaV1,
     },
+    constants::{GET_REVOC_REG, GET_REVOC_REG_DELTA, REVOC_REG_ENTRY},
     response::{GetReplyResultV1, ReplyType},
 };
-
-use std::collections::HashSet;
 
 #[derive(Serialize, Debug)]
 #[serde(rename_all = "camelCase")]

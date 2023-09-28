@@ -115,11 +115,13 @@ impl ResolverRegistry {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use std::{error::Error, pin::Pin};
+
     use async_trait::async_trait;
     use did_resolver::did_doc::schema::did_doc::DidDocumentBuilder;
     use mockall::{automock, predicate::eq};
-    use std::{error::Error, pin::Pin};
+
+    use super::*;
 
     struct DummyDidResolver;
 

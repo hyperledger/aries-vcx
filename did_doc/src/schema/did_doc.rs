@@ -4,14 +4,13 @@ use did_parser::{Did, DidUrl};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::error::DidDocumentBuilderError;
-
 use super::{
     service::Service,
     types::uri::Uri,
     utils::OneOrList,
     verification_method::{VerificationMethod, VerificationMethodKind},
 };
+use crate::error::DidDocumentBuilderError;
 
 pub type ControllerAlias = OneOrList<Did>;
 

@@ -1,5 +1,4 @@
 use indy_api_types::errors::prelude::*;
-
 use libc::c_int;
 use sodiumoxide::crypto::{box_, sign};
 

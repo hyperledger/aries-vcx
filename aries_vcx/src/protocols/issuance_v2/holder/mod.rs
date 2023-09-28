@@ -62,21 +62,13 @@ fn create_proposal_message_from_attachment<T: HolderCredentialIssuanceFormat>(
             .attach_id(attach_id)
             .format(T::get_proposal_attachment_format())
             .build()])
-        .filters_attach(vec![attachment]);
+        .filters_attach(vec![attachment])
+        .credential_preview(preview)
+        .build();
 
-    let content = if let Some(preview) = preview {
-        content.credential_preview(preview).build()
-    } else {
-        content.build()
-    };
-
-    let decorators = if let Some(id) = thread_id {
-        ProposeCredentialV2Decorators::builder()
-            .thread(Thread::builder().thid(id).build())
-            .build()
-    } else {
-        ProposeCredentialV2Decorators::builder().build()
-    };
+    let decorators = ProposeCredentialV2Decorators::builder()
+        .thread(thread_id.map(|id| Thread::builder().thid(id).build()))
+        .build();
 
     ProposeCredentialV2::builder()
         .id(Uuid::new_v4().to_string())
@@ -109,13 +101,10 @@ fn create_request_message_from_attachment<T: HolderCredentialIssuanceFormat>(
         .requests_attach(vec![attachment])
         .build();
 
-    let decorators = if let Some(id) = thread_id {
-        RequestCredentialV2Decorators::builder()
-            .thread(Thread::builder().thid(id).build())
-            .build()
-    } else {
-        RequestCredentialV2Decorators::builder().build()
-    };
+    let decorators = RequestCredentialV2Decorators::builder()
+        .thread(thread_id.map(|id| Thread::builder().thid(id).build()))
+        .build();
+
     RequestCredentialV2::builder()
         .id(Uuid::new_v4().to_string())
         .content(content)

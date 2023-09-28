@@ -46,8 +46,7 @@ impl NonSecretsController {
         tags: Option<Tags>,
     ) -> IndyResult<()> {
         trace!(
-            "add_record > wallet_handle {:?} type_ {:?} \
-                id {:?} value {:?} tags {:?}",
+            "add_record > wallet_handle {:?} type_ {:?} id {:?} value {:?} tags {:?}",
             wallet_handle,
             type_,
             id,
@@ -88,8 +87,7 @@ impl NonSecretsController {
         value: String,
     ) -> IndyResult<()> {
         trace!(
-            "update_record_value > wallet_handle {:?} type_ {:?} \
-                id {:?} value {:?}",
+            "update_record_value > wallet_handle {:?} type_ {:?} id {:?} value {:?}",
             wallet_handle,
             type_,
             id,
@@ -132,8 +130,7 @@ impl NonSecretsController {
         tags: Tags,
     ) -> IndyResult<()> {
         trace!(
-            "update_record_tags > wallet_handle {:?} type_ {:?} \
-                id {:?} tags {:?}",
+            "update_record_tags > wallet_handle {:?} type_ {:?} id {:?} tags {:?}",
             wallet_handle,
             type_,
             id,
@@ -178,8 +175,7 @@ impl NonSecretsController {
         tags: Tags,
     ) -> IndyResult<()> {
         trace!(
-            "add_record_tags > wallet_handle {:?} type_ {:?} \
-                id {:?} tags {:?}",
+            "add_record_tags > wallet_handle {:?} type_ {:?} id {:?} tags {:?}",
             wallet_handle,
             type_,
             id,
@@ -214,8 +210,7 @@ impl NonSecretsController {
         tag_names_json: String,
     ) -> IndyResult<()> {
         trace!(
-            "delete_record_tags > wallet_handle {:?} type_ {:?} \
-                id {:?} tag_names_json {:?}",
+            "delete_record_tags > wallet_handle {:?} type_ {:?} id {:?} tag_names_json {:?}",
             wallet_handle,
             type_,
             id,
@@ -298,8 +293,7 @@ impl NonSecretsController {
         options_json: String,
     ) -> IndyResult<String> {
         trace!(
-            "get_record > wallet_handle {:?} type_ {:?} \
-                id {:?} options_json {:?}",
+            "get_record > wallet_handle {:?} type_ {:?} id {:?} options_json {:?}",
             wallet_handle,
             type_,
             id,
@@ -364,8 +358,7 @@ impl NonSecretsController {
         options_json: String,
     ) -> IndyResult<SearchHandle> {
         trace!(
-            "open_search > wallet_handle {:?} type_ {:?} \
-                query_json {:?} options_json {:?}",
+            "open_search > wallet_handle {:?} type_ {:?} query_json {:?} options_json {:?}",
             wallet_handle,
             type_,
             query_json,

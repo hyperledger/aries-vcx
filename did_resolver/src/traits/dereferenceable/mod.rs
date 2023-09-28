@@ -5,13 +5,13 @@ pub mod dereferencing_output;
 
 use std::io::Read;
 
-use crate::{error::GenericError, traits::resolvable::DidResolvable};
 use async_trait::async_trait;
 use did_parser::DidUrl;
 
 use self::{
     dereferencing_options::DidDereferencingOptions, dereferencing_output::DidDereferencingOutput,
 };
+use crate::{error::GenericError, traits::resolvable::DidResolvable};
 
 #[async_trait]
 pub trait DidDereferenceable: DidResolvable {

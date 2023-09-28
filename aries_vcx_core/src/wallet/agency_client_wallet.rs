@@ -8,6 +8,7 @@ use async_trait::async_trait;
 #[cfg(feature = "vdrtools_wallet")]
 use vdrtools::WalletHandle;
 
+use super::structs_io::UnpackMessageOutput;
 use crate::{
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
     utils::async_fn_iterator::AsyncFnIterator,
@@ -162,8 +163,11 @@ impl BaseWallet for AgencyClientWallet {
             .await?)
     }
 
-    async fn unpack_message(&self, msg: &[u8]) -> VcxCoreResult<Vec<u8>> {
-        Ok(self.inner.unpack_message(msg).await?)
+    async fn unpack_message(&self, msg: &[u8]) -> VcxCoreResult<UnpackMessageOutput> {
+        let unpack_json_bytes = self.inner.unpack_message(msg).await?;
+        serde_json::from_slice(&unpack_json_bytes[..]).map_err(|err| {
+            AriesVcxCoreError::from_msg(AriesVcxCoreErrorKind::ParsingError, err.to_string())
+        })
     }
 
     #[cfg(feature = "vdrtools_wallet")]
@@ -219,10 +223,16 @@ impl BaseAgencyClientWallet for BaseWalletAgencyClientWallet {
     }
 
     async fn unpack_message(&self, msg: &[u8]) -> AgencyClientResult<Vec<u8>> {
-        self.inner.unpack_message(msg).await.map_err(|e| {
+        let unpack = self.inner.unpack_message(msg).await.map_err(|e| {
             AgencyClientError::from_msg(
                 AgencyClientErrorKind::UnknownError,
                 format!("A VCXError occured while calling unpack_message: {e:?}"),
+            )
+        })?;
+        serde_json::to_vec(&unpack).map_err(|err| {
+            AgencyClientError::from_msg(
+                AgencyClientErrorKind::UnknownError,
+                format!("A VCXError occured while calling unpack_message: {err:?}"),
             )
         })
     }

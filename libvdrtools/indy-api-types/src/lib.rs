@@ -16,6 +16,12 @@ pub type IndyHandle = i32;
 pub struct WalletHandle(pub i32);
 pub const INVALID_WALLET_HANDLE: WalletHandle = WalletHandle(0);
 
+impl From<i32> for WalletHandle {
+    fn from(value: i32) -> Self {
+        Self(value)
+    }
+}
+
 pub type CallbackHandle = i32;
 
 pub type CommandHandle = i32;
@@ -89,7 +95,8 @@ pub enum ErrorCode {
     // Invalid library state was detected in runtime. It signals library bug
     CommonInvalidState = 112,
 
-    // Object (json, config, key, credential and etc...) passed by library caller has invalid structure
+    // Object (json, config, key, credential and etc...) passed by library caller has invalid
+    // structure
     CommonInvalidStructure = 113,
 
     // IO Error
@@ -211,8 +218,8 @@ pub enum ErrorCode {
     // Timeout for action
     PoolLedgerTimeout = 307,
 
-    // Attempt to open Pool for witch Genesis Transactions are not compatible with set Protocol version.
-    // Call pool.indy_set_protocol_version to set correct Protocol version.
+    // Attempt to open Pool for witch Genesis Transactions are not compatible with set Protocol
+    // version. Call pool.indy_set_protocol_version to set correct Protocol version.
     PoolIncompatibleProtocolVersion = 308,
 
     // Item not found on ledger.

@@ -1,18 +1,16 @@
 use std::{collections::HashMap, fmt};
-use ursa::cl::Nonce;
 
 use indy_api_types::validation::Validatable;
-
-use crate::utils::wql::Query;
 use serde::{de, ser, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
+use ursa::cl::Nonce;
 
 use super::{
     super::crypto::did::DidValue, credential::Credential,
     credential_definition::CredentialDefinitionId,
     revocation_registry_definition::RevocationRegistryId, schema::SchemaId,
 };
-use crate::utils::qualifier;
+use crate::utils::{qualifier, wql::Query};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ProofRequestPayload {
@@ -206,7 +204,10 @@ impl Validatable for ProofRequest {
         let version = self.version();
 
         if value.requested_attributes.is_empty() && value.requested_predicates.is_empty() {
-            return Err(String::from("Proof Request validation failed: both `requested_attributes` and `requested_predicates` are empty"));
+            return Err(String::from(
+                "Proof Request validation failed: both `requested_attributes` and \
+                 `requested_predicates` are empty",
+            ));
         }
 
         for (_, requested_attribute) in value.requested_attributes.iter() {
@@ -228,7 +229,11 @@ impl Validatable for ProofRequest {
             }
 
             if has_name && has_names {
-                return Err(format!("Proof request validation failed: there is a requested attribute with both name and names: {:?}", requested_attribute));
+                return Err(format!(
+                    "Proof request validation failed: there is a requested attribute with both \
+                     name and names: {:?}",
+                    requested_attribute
+                ));
             }
 
             if let Some(ref restrictions) = requested_attribute.restrictions {
@@ -372,8 +377,12 @@ fn _check_restriction(
         && Credential::QUALIFIABLE_TAGS.contains(&tag_name)
         && qualifier::is_fully_qualified(tag_value)
     {
-        return Err("Proof Request validation failed: fully qualified identifiers can not be used for Proof Request of the first version. \
-                    Please, set \"ver\":\"2.0\" to use fully qualified identifiers.".to_string());
+        return Err(
+            "Proof Request validation failed: fully qualified identifiers can not be used for \
+             Proof Request of the first version. Please, set \"ver\":\"2.0\" to use fully \
+             qualified identifiers."
+                .to_string(),
+        );
     }
     Ok(())
 }
@@ -431,8 +440,12 @@ mod tests {
         const CRED_DEF_ID_QUALIFIED: &str =
             "did:indy:NcYxiDXkpYi6ov5FcYDi1e/anoncreds/v0/CLAIM_DEF/1/tag";
         const CRED_DEF_ID_UNQUALIFIED: &str = "NcYxiDXkpYi6ov5FcYDi1e:3:CL:1:tag";
-        const REV_REG_ID_QUALIFIED: &str = "did:indy:NcYxiDXkpYi6ov5FcYDi1e/anoncreds/v0/REV_REG_DEF/did:indy:NcYxiDXkpYi6ov5FcYDi1e/anoncreds/v0/SCHEMA/gvt/1.0/tag/TAG_1";
-        const REV_REG_ID_UNQUALIFIED: &str = "NcYxiDXkpYi6ov5FcYDi1e:4:NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag:CL_ACCUM:TAG_1";
+        const REV_REG_ID_QUALIFIED: &str = "did:indy:NcYxiDXkpYi6ov5FcYDi1e/anoncreds/v0/\
+                                            REV_REG_DEF/did:indy:NcYxiDXkpYi6ov5FcYDi1e/anoncreds/\
+                                            v0/SCHEMA/gvt/1.0/tag/TAG_1";
+        const REV_REG_ID_UNQUALIFIED: &str = "NcYxiDXkpYi6ov5FcYDi1e:4:NcYxiDXkpYi6ov5FcYDi1e:3:\
+                                              CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag:CL_ACCUM:\
+                                              TAG_1";
 
         #[test]
         fn proof_request_to_unqualified() {

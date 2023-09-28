@@ -1,6 +1,6 @@
-use super::environment;
-
 use std::{fs, fs::File, path::Path};
+
+use super::environment;
 
 pub fn cleanup_files(dir: &Path, name: &str) {
     let mut path = dir.to_path_buf();
@@ -88,7 +88,14 @@ macro_rules! assert_match {
             _ => false,
         })
     };
-    ($pattern:pat, $var:expr, $val_in_pattern1:ident, $exp_value1:expr, $val_in_pattern2:ident, $exp_value2:expr) => {
+    (
+        $pattern:pat,
+        $var:expr,
+        $val_in_pattern1:ident,
+        $exp_value1:expr,
+        $val_in_pattern2:ident,
+        $exp_value2:expr
+    ) => {
         assert!(match $var {
             $pattern => $val_in_pattern1 == $exp_value1 && $val_in_pattern2 == $exp_value2,
             _ => false,

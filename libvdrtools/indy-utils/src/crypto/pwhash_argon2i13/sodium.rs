@@ -1,9 +1,10 @@
 extern crate serde;
 extern crate sodiumoxide;
 
-use self::sodiumoxide::crypto::pwhash;
 use indy_api_types::{domain::wallet::KeyDerivationMethod, errors::prelude::*};
 use libc::{c_int, c_ulonglong, size_t};
+
+use self::sodiumoxide::crypto::pwhash;
 
 pub const SALTBYTES: usize = pwhash::SALTBYTES;
 
@@ -84,8 +85,9 @@ extern "C" {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use rmp_serde;
+
+    use super::*;
 
     #[test]
     fn get_salt_works() {
