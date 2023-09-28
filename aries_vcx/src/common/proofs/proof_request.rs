@@ -300,7 +300,7 @@ mod unit_tests {
         .unwrap();
         check_predicates.insert("predicate_0".to_string(), attr_info1);
 
-        let anoncreds= MockAnoncreds;
+        let anoncreds = MockAnoncreds;
         let request = ProofRequestData::create(&anoncreds, "")
             .await
             .unwrap()
