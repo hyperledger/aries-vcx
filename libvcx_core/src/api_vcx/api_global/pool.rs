@@ -115,9 +115,9 @@ async fn build_components_ledger(
     ));
     let taa_configurator: Arc<dyn TaaConfigurator> = ledger_write.clone();
     let anoncreds_write: Arc<dyn AnoncredsLedgerWrite> = ledger_write.clone();
-    let indy_write: Arc<dyn IndyLedgerWrite> = ledger_write.clone();
+    let indy_write: Arc<dyn IndyLedgerWrite> = ledger_write;
     let anoncreds_read: Arc<dyn AnoncredsLedgerRead> = ledger_read.clone();
-    let indy_read: Arc<dyn IndyLedgerRead> = ledger_read.clone();
+    let indy_read: Arc<dyn IndyLedgerRead> = ledger_read;
     Ok((
         anoncreds_read,
         anoncreds_write,

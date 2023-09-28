@@ -8,7 +8,7 @@ use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use messages::AriesMessage;
 
 pub use self::thin_state::{State, ThinState};
-use super::{trait_bounds::BootstrapDidDoc, wrap_and_send_msg};
+use super::trait_bounds::BootstrapDidDoc;
 use crate::{
     errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
     handlers::util::AnyInvitation,
@@ -194,13 +194,16 @@ impl GenericConnection {
     where
         T: Transport,
     {
-        let sender_verkey = &self.pairwise_info().pw_vk;
         let did_doc = self.their_did_doc().ok_or(AriesVcxError::from_msg(
             AriesVcxErrorKind::NotReady,
             "No DidDoc present",
         ))?;
 
-        wrap_and_send_msg(wallet, message, sender_verkey, did_doc, transport).await
+        let msg = self.encrypt_message(wallet, message).await?.0;
+        let service_endpoint = did_doc.get_endpoint().ok_or_else(|| {
+            AriesVcxError::from_msg(AriesVcxErrorKind::InvalidUrl, "No URL in DID Doc")
+        })?;
+        transport.send_message(msg, service_endpoint).await
     }
 }
 
@@ -445,10 +448,7 @@ mod connection_serde_tests {
             .decorators(decorators)
             .build();
 
-        let con = con
-            .handle_response(&wallet, response, &MockTransport)
-            .await
-            .unwrap();
+        let con = con.handle_response(&wallet, response).await.unwrap();
 
         con.send_message(&wallet, &con.get_ack().into(), &MockTransport)
             .await
@@ -497,15 +497,9 @@ mod connection_serde_tests {
             .decorators(decorators)
             .build();
 
-        con.handle_request(
-            &wallet,
-            request,
-            new_service_endpoint,
-            new_routing_keys,
-            &MockTransport,
-        )
-        .await
-        .unwrap()
+        con.handle_request(&wallet, request, new_service_endpoint, new_routing_keys)
+            .await
+            .unwrap()
     }
 
     async fn make_inviter_completed() -> InviterConnection<InviterCompleted> {

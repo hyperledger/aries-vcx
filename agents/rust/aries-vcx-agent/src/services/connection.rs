@@ -98,7 +98,6 @@ impl ServiceConnections {
                 request,
                 self.service_endpoint.clone(),
                 vec![],
-                &HttpClient,
             )
             .await?;
 
@@ -122,7 +121,7 @@ impl ServiceConnections {
     pub async fn accept_response(&self, thread_id: &str, response: Response) -> AgentResult<()> {
         let invitee: Connection<_, _> = self.connections.get(thread_id)?.try_into()?;
         let invitee = invitee
-            .handle_response(&self.profile.inject_wallet(), response, &HttpClient)
+            .handle_response(&self.profile.inject_wallet(), response)
             .await?;
 
         self.connections.insert(thread_id, invitee.into())?;
