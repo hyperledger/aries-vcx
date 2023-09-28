@@ -405,10 +405,11 @@ async fn test_agency_batch_revocation() {
 
 #[tokio::test]
 #[ignore]
+#[allow(unused_mut)]
 async fn test_agency_pool_two_creds_one_rev_reg_revoke_first() {
     SetupPoolDirectory::run(|setup| async move {
         let mut issuer = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
-        let verifier = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
+        let mut verifier = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
         let mut consumer = create_test_agent(setup.genesis_file_path).await;
 
         let (schema, cred_def, rev_reg) =
@@ -525,10 +526,11 @@ async fn test_agency_pool_two_creds_one_rev_reg_revoke_first() {
 
 #[tokio::test]
 #[ignore]
+#[allow(unused_mut)]
 async fn test_agency_pool_two_creds_one_rev_reg_revoke_second() {
     SetupPoolDirectory::run(|setup| async move {
         let mut issuer = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
-        let verifier = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
+        let mut verifier = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
         let mut consumer = create_test_agent(setup.genesis_file_path).await;
 
         let (schema, cred_def, rev_reg) =
@@ -752,10 +754,11 @@ async fn test_agency_pool_two_creds_two_rev_reg_id() {
 
 #[tokio::test]
 #[ignore]
+#[allow(unused_mut)]
 async fn test_agency_pool_two_creds_two_rev_reg_id_revoke_first() {
     SetupPoolDirectory::run(|setup| async move {
         let mut issuer = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
-        let verifier = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
+        let mut verifier = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
         let mut consumer = create_test_agent(setup.genesis_file_path).await;
 
         let (schema, cred_def, rev_reg) =

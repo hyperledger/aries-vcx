@@ -205,6 +205,7 @@ pub async fn dev_build_profile_vdr_proxy_ledger(wallet: Arc<IndySdkWallet>) -> V
 }
 
 #[allow(unreachable_code)]
+#[allow(unused_variables)]
 pub async fn dev_build_featured_profile(
     genesis_file_path: String,
     wallet: Arc<IndySdkWallet>,
@@ -258,7 +259,9 @@ macro_rules! run_setup {
         let wallet = std::sync::Arc::new(aries_vcx_core::wallet::indy::IndySdkWallet::new(
             wallet_handle,
         ));
-        let profile = $crate::utils::devsetup::dev_build_featured_profile(genesis_file_path.clone(), wallet).await;
+        let profile =
+            $crate::utils::devsetup::dev_build_featured_profile(genesis_file_path.clone(), wallet)
+                .await;
         profile
             .anoncreds()
             .prover_create_link_secret(aries_vcx_core::global::settings::DEFAULT_LINK_SECRET_ALIAS)

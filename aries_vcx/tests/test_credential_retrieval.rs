@@ -284,6 +284,7 @@ async fn test_agency_pool_case_for_proof_req_doesnt_matter_for_retrieve_creds() 
 #[cfg(not(feature = "modular_libs"))]
 #[tokio::test]
 #[ignore]
+#[allow(unused_mut)]
 async fn test_agency_pool_it_should_fail_to_select_credentials_for_predicate() {
     use aries_vcx::utils::devsetup::SetupPoolDirectory;
     use utils::{

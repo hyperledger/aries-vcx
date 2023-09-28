@@ -84,10 +84,11 @@ async fn test_agency_pool_double_issuance_issuer_is_verifier() {
 
 #[tokio::test]
 #[ignore]
+#[allow(unused_mut)]
 async fn test_agency_pool_two_creds_one_rev_reg() {
     SetupPoolDirectory::run(|setup| async move {
         let mut issuer = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
-        let verifier = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
+        let mut verifier = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
         let mut consumer = create_test_agent(setup.genesis_file_path).await;
 
         let (schema, cred_def, rev_reg) =
@@ -153,9 +154,10 @@ async fn test_agency_pool_two_creds_one_rev_reg() {
 
 #[tokio::test]
 #[ignore]
+#[allow(unused_mut)]
 async fn test_agency_pool_credential_exchange_via_proposal() {
     SetupPoolDirectory::run(|setup| async move {
-        let institution = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
+        let mut institution = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
         let mut consumer = create_test_agent(setup.genesis_file_path).await;
 
         let (schema, cred_def, rev_reg) = create_address_schema_creddef_revreg(
@@ -183,9 +185,10 @@ async fn test_agency_pool_credential_exchange_via_proposal() {
 
 #[tokio::test]
 #[ignore]
+#[allow(unused_mut)]
 async fn test_agency_pool_credential_exchange_via_proposal_failed() {
     SetupPoolDirectory::run(|setup| async move {
-        let institution = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
+        let mut institution = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
         let mut consumer = create_test_agent(setup.genesis_file_path.clone()).await;
 
         let (schema, cred_def, rev_reg) = create_address_schema_creddef_revreg(
@@ -224,10 +227,11 @@ async fn test_agency_pool_credential_exchange_via_proposal_failed() {
 // TODO: Maybe duplicates test_agency_pool_credential_exchange_via_proposal
 #[tokio::test]
 #[ignore]
+#[allow(unused_mut)]
 async fn test_agency_pool_credential_exchange_via_proposal_with_negotiation() {
     SetupPoolDirectory::run(|setup| async move {
-        let institution = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
-        let consumer = create_test_agent(setup.genesis_file_path.clone()).await;
+        let mut institution = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
+        let mut consumer = create_test_agent(setup.genesis_file_path.clone()).await;
 
         let (schema, cred_def, rev_reg) = create_address_schema_creddef_revreg(
             &institution.profile,
