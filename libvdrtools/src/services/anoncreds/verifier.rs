@@ -3,7 +3,6 @@ use std::collections::{HashMap, HashSet};
 use indy_api_types::errors::prelude::*;
 use lazy_static::lazy_static;
 use regex::Regex;
-
 use ursa::{
     bn::BigNumber,
     cl::{new_nonce, verifier::Verifier as CryptoVerifier, CredentialPublicKey, Nonce},
@@ -54,8 +53,16 @@ impl VerifierService {
         rev_reg_defs: &HashMap<RevocationRegistryId, RevocationRegistryDefinitionV1>,
         rev_regs: &HashMap<RevocationRegistryId, HashMap<u64, RevocationRegistryV1>>,
     ) -> IndyResult<bool> {
-        trace!("verify >>> full_proof: {:?}, proof_req: {:?}, schemas: {:?}, cred_defs: {:?}, rev_reg_defs: {:?} rev_regs: {:?}",
-               full_proof, proof_req, schemas, cred_defs, rev_reg_defs, rev_regs);
+        trace!(
+            "verify >>> full_proof: {:?}, proof_req: {:?}, schemas: {:?}, cred_defs: {:?}, \
+             rev_reg_defs: {:?} rev_regs: {:?}",
+            full_proof,
+            proof_req,
+            schemas,
+            cred_defs,
+            rev_reg_defs,
+            rev_regs
+        );
 
         let received_revealed_attrs: HashMap<String, Identifier> =
             VerifierService::_received_revealed_attrs(&full_proof)?;
@@ -215,8 +222,13 @@ impl VerifierService {
         requested_proof: &RequestedProof,
         proof_req: &ProofRequestPayload,
     ) -> IndyResult<Vec<AttributeInfo>> {
-        trace!("_get_revealed_attributes_for_credential >>> sub_proof_index: {:?}, requested_credentials: {:?}, proof_req: {:?}",
-               sub_proof_index, requested_proof, proof_req);
+        trace!(
+            "_get_revealed_attributes_for_credential >>> sub_proof_index: {:?}, \
+             requested_credentials: {:?}, proof_req: {:?}",
+            sub_proof_index,
+            requested_proof,
+            proof_req
+        );
 
         let mut revealed_attrs_for_credential = requested_proof
             .revealed_attrs
@@ -253,8 +265,13 @@ impl VerifierService {
         requested_proof: &RequestedProof,
         proof_req: &ProofRequestPayload,
     ) -> IndyResult<Vec<PredicateInfo>> {
-        trace!("_get_predicates_for_credential >>> sub_proof_index: {:?}, requested_credentials: {:?}, proof_req: {:?}",
-               sub_proof_index, requested_proof, proof_req);
+        trace!(
+            "_get_predicates_for_credential >>> sub_proof_index: {:?}, requested_credentials: \
+             {:?}, proof_req: {:?}",
+            sub_proof_index,
+            requested_proof,
+            proof_req
+        );
 
         let predicates_for_credential = requested_proof
             .predicates
@@ -511,7 +528,11 @@ impl VerifierService {
                     ),
                 ))?;
             if attr_infos.values.len() != attr_names.len() {
-                error!("Proof Revealed Attr Group does not match Proof Request Attribute Group, proof request attrs: {:?}, referent: {:?}, attr_infos: {:?}", proof_req.requested_attributes, attr_referent, attr_infos);
+                error!(
+                    "Proof Revealed Attr Group does not match Proof Request Attribute Group, \
+                     proof request attrs: {:?}, referent: {:?}, attr_infos: {:?}",
+                    proof_req.requested_attributes, attr_referent, attr_infos
+                );
                 return Err(IndyError::from_msg(
                     IndyErrorKind::InvalidStructure,
                     "Proof Revealed Attr Group does not match Proof Request Attribute Group",
@@ -569,8 +590,14 @@ impl VerifierService {
 
         if BigNumber::from_dec(reveal_attr_encoded)? != BigNumber::from_dec(&crypto_proof_encoded)?
         {
-            return Err(IndyError::from_msg(IndyErrorKind::ProofRejected,
-                                           format!("Encoded Values for \"{}\" are different in RequestedProof \"{}\" and CryptoProof \"{}\"", attr_name, reveal_attr_encoded, crypto_proof_encoded)));
+            return Err(IndyError::from_msg(
+                IndyErrorKind::ProofRejected,
+                format!(
+                    "Encoded Values for \"{}\" are different in RequestedProof \"{}\" and \
+                     CryptoProof \"{}\"",
+                    attr_name, reveal_attr_encoded, crypto_proof_encoded
+                ),
+            ));
         }
 
         Ok(())
@@ -657,7 +684,8 @@ impl VerifierService {
                 let mut attr_value_map = HashMap::new();
                 attr_value_map.insert(info.name.to_string(), None);
 
-                // include any revealed attributes for the same credential (based on sub_proof_index)
+                // include any revealed attributes for the same credential (based on
+                // sub_proof_index)
                 let pred_sub_proof_index = requested_proof
                     .predicates
                     .get(referent)
@@ -698,7 +726,8 @@ impl VerifierService {
 
                 // old style :-/ which fails for attribute restrictions on predicates
                 //VerifierService::_process_operator(&info.name, &query, &filter, None)
-                //    .map_err(|err| err.extend(format!("Requested restriction validation failed for \"{}\" predicate", &info.name)))?;
+                //    .map_err(|err| err.extend(format!("Requested restriction validation failed for
+                // \"{}\" predicate", &info.name)))?;
             }
         }
 
@@ -792,8 +821,14 @@ impl VerifierService {
                 {
                     Ok(())
                 } else {
-                    Err(IndyError::from_msg(IndyErrorKind::ProofRejected,
-                                            format!("$neq operator validation failed for tag: \"{}\", value: \"{}\". Condition was passed.", tag_name, tag_value)))
+                    Err(IndyError::from_msg(
+                        IndyErrorKind::ProofRejected,
+                        format!(
+                            "$neq operator validation failed for tag: \"{}\", value: \"{}\". \
+                             Condition was passed.",
+                            tag_name, tag_value
+                        ),
+                    ))
                 }
             }
             Query::In(ref tag_name, ref tag_values) => {
@@ -976,8 +1011,14 @@ impl VerifierService {
                 ));
             }
         } else {
-            return Err(IndyError::from_msg(IndyErrorKind::ProofRejected,
-                                           format!("Revealed value hasn't been find by key: expected key: \"{}\", attr_value_map: \"{:?}\"", key, attr_value_map)));
+            return Err(IndyError::from_msg(
+                IndyErrorKind::ProofRejected,
+                format!(
+                    "Revealed value hasn't been find by key: expected key: \"{}\", \
+                     attr_value_map: \"{:?}\"",
+                    key, attr_value_map
+                ),
+            ));
         }
         Ok(())
     }

@@ -1,5 +1,4 @@
-use std::collections::HashSet;
-use std::fmt::Display;
+use std::{collections::HashSet, fmt::Display};
 
 use serde::{Deserialize, Deserializer};
 use url::Url;
@@ -66,9 +65,11 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use serde_json::from_str;
     use std::iter::FromIterator;
+
+    use serde_json::from_str;
+
+    use super::*;
 
     #[test]
     fn test_deserialize_endpoint_did_sov() {

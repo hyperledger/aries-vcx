@@ -19,7 +19,7 @@ pub trait Numalgo: Sized + Default {
     {
         let did: Did = did.try_into().map_err(Into::into)?;
 
-        let numalgo_char = did.id().chars().nth(0).ok_or_else(|| {
+        let numalgo_char = did.id().chars().next().ok_or_else(|| {
             DidPeerError::DidValidationError(format!(
                 "Invalid did: unable to read numalgo character in did {}",
                 did.did()

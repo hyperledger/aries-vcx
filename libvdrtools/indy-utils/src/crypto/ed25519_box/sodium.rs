@@ -1,7 +1,8 @@
 extern crate sodiumoxide;
 
-use self::sodiumoxide::crypto::box_;
 use indy_api_types::errors::prelude::*;
+
+use self::sodiumoxide::crypto::box_;
 
 pub const NONCEBYTES: usize = box_::curve25519xsalsa20poly1305::NONCEBYTES;
 pub const PUBLICKEYBYTES: usize = box_::curve25519xsalsa20poly1305::PUBLICKEYBYTES;

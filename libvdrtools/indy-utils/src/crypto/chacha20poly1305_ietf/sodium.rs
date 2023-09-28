@@ -1,12 +1,14 @@
 extern crate sodiumoxide;
 
-use self::sodiumoxide::{crypto::aead::chacha20poly1305_ietf, utils};
-use super::pwhash_argon2i13;
-use indy_api_types::{domain::wallet::KeyDerivationMethod, errors::prelude::*};
 use std::{
     cmp, io,
     io::{Read, Write},
 };
+
+use indy_api_types::{domain::wallet::KeyDerivationMethod, errors::prelude::*};
+
+use self::sodiumoxide::{crypto::aead::chacha20poly1305_ietf, utils};
+use super::pwhash_argon2i13;
 
 pub const KEYBYTES: usize = chacha20poly1305_ietf::KEYBYTES;
 pub const NONCEBYTES: usize = chacha20poly1305_ietf::NONCEBYTES;
@@ -303,8 +305,8 @@ mod tests {
     pub fn gen_nonce_and_encrypt_detached_decrypt_detached_works() {
         let data = randombytes(100);
         let key = gen_key();
-        // AAD allows the sender to tie extra (protocol) data to the encryption. Example JWE enc and alg
-        // Which the receiver MUST then check before decryption
+        // AAD allows the sender to tie extra (protocol) data to the encryption. Example JWE enc and
+        // alg Which the receiver MUST then check before decryption
         let aad = b"some protocol data input to the encryption";
 
         let (c, nonce, tag) = gen_nonce_and_encrypt_detached(&data, aad, &key);

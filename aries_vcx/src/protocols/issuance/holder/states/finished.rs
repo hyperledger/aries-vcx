@@ -1,5 +1,5 @@
 use messages::msg_fields::protocols::{
-    cred_issuance::issue_credential::IssueCredential, report_problem::ProblemReport,
+    cred_issuance::v1::issue_credential::IssueCredentialV1, report_problem::ProblemReport,
 };
 
 use crate::{
@@ -10,7 +10,7 @@ use crate::{
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct FinishedHolderState {
     pub cred_id: Option<String>,
-    pub credential: Option<IssueCredential>,
+    pub credential: Option<IssueCredentialV1>,
     pub status: Status,
     pub rev_reg_def_json: Option<String>,
     pub ack_requested: Option<bool>,

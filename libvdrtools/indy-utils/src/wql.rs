@@ -267,8 +267,9 @@ fn parse_single_operator(
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use rand::{distributions::Alphanumeric, thread_rng, Rng};
+
+    use super::*;
 
     fn _random_string(len: usize) -> String {
         thread_rng()

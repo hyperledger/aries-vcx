@@ -288,7 +288,6 @@ pub async fn process_request(
                 LibvcxError::from_msg(LibvcxErrorKind::InvalidUrl, err.to_string())
             })?,
             routing_keys,
-            &HttpClient,
         )
         .await?;
 
@@ -300,9 +299,7 @@ pub async fn process_response(handle: u32, response: &str) -> LibvcxResult<()> {
 
     let con = get_cloned_connection(&handle)?;
     let response = deserialize(response)?;
-    let con = con
-        .handle_response(&get_main_wallet()?, response, &HttpClient)
-        .await?;
+    let con = con.handle_response(&get_main_wallet()?, response).await?;
 
     insert_connection(handle, con)
 }

@@ -4,9 +4,9 @@ use aries_vcx::{
     core::profile::profile::Profile,
     handlers::issuance::holder::Holder,
     messages::{
-        msg_fields::protocols::cred_issuance::{
-            issue_credential::IssueCredential, offer_credential::OfferCredential,
-            propose_credential::ProposeCredential,
+        msg_fields::protocols::cred_issuance::v1::{
+            issue_credential::IssueCredentialV1, offer_credential::OfferCredentialV1,
+            propose_credential::ProposeCredentialV1,
         },
         AriesMessage,
     },
@@ -63,7 +63,7 @@ impl ServiceCredentialsHolder {
     pub async fn send_credential_proposal(
         &self,
         connection_id: &str,
-        propose_credential: ProposeCredential,
+        propose_credential: ProposeCredentialV1,
     ) -> AgentResult<String> {
         let connection = self.service_connections.get_by_id(connection_id)?;
         let wallet = self.profile.inject_wallet();
@@ -83,7 +83,7 @@ impl ServiceCredentialsHolder {
     pub fn create_from_offer(
         &self,
         connection_id: &str,
-        offer: OfferCredential,
+        offer: OfferCredentialV1,
     ) -> AgentResult<String> {
         self.service_connections.get_by_id(connection_id)?;
         let holder = Holder::create_from_offer("", offer)?;
@@ -128,7 +128,7 @@ impl ServiceCredentialsHolder {
     pub async fn process_credential(
         &self,
         thread_id: &str,
-        msg_issue_credential: IssueCredential,
+        msg_issue_credential: IssueCredentialV1,
     ) -> AgentResult<String> {
         let mut holder = self.get_holder(thread_id)?;
         let connection_id = self.get_connection_id(thread_id)?;

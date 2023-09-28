@@ -282,9 +282,7 @@ impl VerifierSM {
                                 (state, presentation, PresentationVerificationStatus::Invalid)
                                     .into(),
                             ),
-                            _ => {
-                                VerifierFullState::Finished((state, problem_report.clone()).into())
-                            }
+                            _ => VerifierFullState::Finished((state, problem_report).into()),
                         }
                     }
                 }

@@ -8,7 +8,7 @@ use messages::msg_fields::protocols::connection::{
 };
 use time;
 
-use crate::{errors::error::prelude::*, global::settings};
+use crate::errors::error::prelude::*;
 
 async fn get_signature_data(
     wallet: &Arc<dyn BaseWallet>,
@@ -88,27 +88,6 @@ pub async fn decode_signed_connection_response(
         .map_err(|err| AriesVcxError::from_msg(AriesVcxErrorKind::InvalidJson, err.to_string()))?;
 
     Ok(connection)
-}
-
-pub async fn unpack_message_to_string(
-    wallet: &Arc<dyn BaseWallet>,
-    msg: &[u8],
-) -> VcxResult<String> {
-    if settings::indy_mocks_enabled() {
-        return Ok(String::new());
-    }
-    let unpack_msg = wallet.unpack_message(msg).await.map_err(|_| {
-        AriesVcxError::from_msg(
-            AriesVcxErrorKind::InvalidMessagePack,
-            "Failed to unpack message",
-        )
-    })?;
-    serde_json::to_string(&unpack_msg).map_err(|_| {
-        AriesVcxError::from_msg(
-            AriesVcxErrorKind::InvalidMessageFormat,
-            "Failed to convert message to utf8 string",
-        )
-    })
 }
 
 // #[cfg(test)]

@@ -75,8 +75,7 @@ impl PairwiseController {
         metadata: Option<String>,
     ) -> IndyResult<()> {
         trace!(
-            "create_pairwise > wallet_handle {:?} \
-                their_did {:?} my_did {:?} metadata {:?}",
+            "create_pairwise > wallet_handle {:?} their_did {:?} my_did {:?} metadata {:?}",
             wallet_handle,
             their_did,
             my_did,

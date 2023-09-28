@@ -7,10 +7,13 @@ use messages::{
     misc::MimeType,
     msg_fields::protocols::{
         cred_issuance::{
-            ack::AckCredential, issue_credential::IssueCredential,
-            offer_credential::OfferCredential, propose_credential::ProposeCredential,
-            request_credential::RequestCredential, CredentialAttr, CredentialIssuance,
-            CredentialPreview,
+            common::CredentialAttr,
+            v1::{
+                ack::AckCredentialV1, issue_credential::IssueCredentialV1,
+                offer_credential::OfferCredentialV1, propose_credential::ProposeCredentialV1,
+                request_credential::RequestCredentialV1, CredentialIssuanceV1, CredentialPreviewV1,
+            },
+            CredentialIssuance,
         },
         notification::Notification,
         report_problem::ProblemReport,
@@ -36,7 +39,7 @@ pub struct IssuerConfig {
     pub tails_file: Option<String>,
 }
 
-fn _build_credential_preview(credential_json: &str) -> VcxResult<CredentialPreview> {
+fn _build_credential_preview(credential_json: &str) -> VcxResult<CredentialPreviewV1> {
     trace!(
         "Issuer::_build_credential_preview >>> credential_json: {:?}",
         secret!(credential_json)
@@ -115,7 +118,7 @@ fn _build_credential_preview(credential_json: &str) -> VcxResult<CredentialPrevi
         _ => {}
     };
 
-    Ok(CredentialPreview::new(attributes))
+    Ok(CredentialPreviewV1::new(attributes))
 }
 
 impl Issuer {
@@ -127,7 +130,7 @@ impl Issuer {
 
     pub fn create_from_proposal(
         source_id: &str,
-        credential_proposal: &ProposeCredential,
+        credential_proposal: &ProposeCredentialV1,
     ) -> VcxResult<Issuer> {
         trace!(
             "Issuer::create_from_proposal >>> source_id: {:?}, credential_proposal: {:?}",
@@ -159,7 +162,7 @@ impl Issuer {
         Ok(())
     }
 
-    pub fn get_credential_offer(&self) -> VcxResult<OfferCredential> {
+    pub fn get_credential_offer(&self) -> VcxResult<OfferCredentialV1> {
         self.issuer_sm.get_credential_offer_msg()
     }
 
@@ -168,12 +171,12 @@ impl Issuer {
         Ok(offer.into())
     }
 
-    pub fn process_credential_request(&mut self, request: RequestCredential) -> VcxResult<()> {
+    pub fn process_credential_request(&mut self, request: RequestCredentialV1) -> VcxResult<()> {
         self.issuer_sm = self.issuer_sm.clone().receive_request(request)?;
         Ok(())
     }
 
-    pub fn process_credential_ack(&mut self, ack: AckCredential) -> VcxResult<()> {
+    pub fn process_credential_ack(&mut self, ack: AckCredentialV1) -> VcxResult<()> {
         self.issuer_sm = self.issuer_sm.clone().receive_ack(ack)?;
         Ok(())
     }
@@ -183,7 +186,7 @@ impl Issuer {
         Ok(())
     }
 
-    pub fn get_msg_issue_credential(&mut self) -> VcxResult<IssueCredential> {
+    pub fn get_msg_issue_credential(&mut self) -> VcxResult<IssueCredentialV1> {
         self.issuer_sm.clone().get_msg_issue_credential()
     }
 
@@ -253,7 +256,7 @@ impl Issuer {
         self.issuer_sm.thread_id()
     }
 
-    pub fn get_proposal(&self) -> VcxResult<ProposeCredential> {
+    pub fn get_proposal(&self) -> VcxResult<ProposeCredentialV1> {
         self.issuer_sm.get_proposal()
     }
 
@@ -269,17 +272,17 @@ impl Issuer {
         self.issuer_sm.is_revoked(ledger).await
     }
 
-    pub async fn receive_proposal(&mut self, proposal: ProposeCredential) -> VcxResult<()> {
+    pub async fn receive_proposal(&mut self, proposal: ProposeCredentialV1) -> VcxResult<()> {
         self.issuer_sm = self.issuer_sm.clone().receive_proposal(proposal)?;
         Ok(())
     }
 
-    pub async fn receive_request(&mut self, request: RequestCredential) -> VcxResult<()> {
+    pub async fn receive_request(&mut self, request: RequestCredentialV1) -> VcxResult<()> {
         self.issuer_sm = self.issuer_sm.clone().receive_request(request)?;
         Ok(())
     }
 
-    pub async fn receive_ack(&mut self, ack: AckCredential) -> VcxResult<()> {
+    pub async fn receive_ack(&mut self, ack: AckCredentialV1) -> VcxResult<()> {
         self.issuer_sm = self.issuer_sm.clone().receive_ack(ack)?;
         Ok(())
     }
@@ -299,15 +302,15 @@ impl Issuer {
     // todo: will ultimately end up in generic SM layer
     pub async fn process_aries_msg(&mut self, msg: AriesMessage) -> VcxResult<()> {
         let issuer_sm = match msg {
-            AriesMessage::CredentialIssuance(CredentialIssuance::ProposeCredential(proposal)) => {
-                self.issuer_sm.clone().receive_proposal(proposal)?
-            }
-            AriesMessage::CredentialIssuance(CredentialIssuance::RequestCredential(request)) => {
-                self.issuer_sm.clone().receive_request(request)?
-            }
-            AriesMessage::CredentialIssuance(CredentialIssuance::Ack(ack)) => {
-                self.issuer_sm.clone().receive_ack(ack)?
-            }
+            AriesMessage::CredentialIssuance(CredentialIssuance::V1(
+                CredentialIssuanceV1::ProposeCredential(proposal),
+            )) => self.issuer_sm.clone().receive_proposal(proposal)?,
+            AriesMessage::CredentialIssuance(CredentialIssuance::V1(
+                CredentialIssuanceV1::RequestCredential(request),
+            )) => self.issuer_sm.clone().receive_request(request)?,
+            AriesMessage::CredentialIssuance(CredentialIssuance::V1(
+                CredentialIssuanceV1::Ack(ack),
+            )) => self.issuer_sm.clone().receive_ack(ack)?,
             AriesMessage::ReportProblem(report) => {
                 self.issuer_sm.clone().receive_problem_report(report)?
             }
@@ -315,7 +318,9 @@ impl Issuer {
                 .issuer_sm
                 .clone()
                 .receive_problem_report(report.into())?,
-            AriesMessage::CredentialIssuance(CredentialIssuance::ProblemReport(report)) => self
+            AriesMessage::CredentialIssuance(CredentialIssuance::V1(
+                CredentialIssuanceV1::ProblemReport(report),
+            )) => self
                 .issuer_sm
                 .clone()
                 .receive_problem_report(report.into())?,

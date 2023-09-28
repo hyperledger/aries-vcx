@@ -40,7 +40,7 @@ runs:
         docker run --rm -d --name mysql     --network host -e MYSQL_ROOT_PASSWORD=mysecretpassword mysql:5.7.35
         docker run --rm -d --name indypool  --network host ${{ env.DOCKER_IMAGE_POOL }}
         sleep 5
-        docker-compose -f ./ci/agency/docker-compose.yml up -d
+        docker-compose -f ./.github/ci/agency/docker-compose.yml up -d
     - name: "Build binding module"
       shell: bash
       run: (cd wrappers/vcx-napi-rs && npm install && npm run build:napi:debug)

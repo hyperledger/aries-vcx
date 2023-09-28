@@ -6,10 +6,10 @@ use crate::{
     msg_parts::MsgParts,
 };
 
-pub type IssueCredential = MsgParts<IssueCredentialContent, IssueCredentialDecorators>;
+pub type IssueCredentialV1 = MsgParts<IssueCredentialV1Content, IssueCredentialV1Decorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder)]
-pub struct IssueCredentialContent {
+pub struct IssueCredentialV1Content {
     #[builder(default, setter(strip_option))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,
@@ -18,7 +18,7 @@ pub struct IssueCredentialContent {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder)]
-pub struct IssueCredentialDecorators {
+pub struct IssueCredentialV1Decorators {
     #[serde(rename = "~thread")]
     pub thread: Thread,
     #[builder(default, setter(strip_option))]
@@ -50,11 +50,11 @@ mod tests {
 
     #[test]
     fn test_minimal_issue_cred() {
-        let content = IssueCredentialContent::builder()
+        let content = IssueCredentialV1Content::builder()
             .credentials_attach(vec![make_extended_attachment()])
             .build();
 
-        let decorators = IssueCredentialDecorators::builder()
+        let decorators = IssueCredentialV1Decorators::builder()
             .thread(make_extended_thread())
             .build();
 
@@ -73,12 +73,12 @@ mod tests {
 
     #[test]
     fn test_extended_issue_cred() {
-        let content = IssueCredentialContent::builder()
+        let content = IssueCredentialV1Content::builder()
             .credentials_attach(vec![make_extended_attachment()])
             .comment("test_comment".to_owned())
             .build();
 
-        let decorators = IssueCredentialDecorators::builder()
+        let decorators = IssueCredentialV1Decorators::builder()
             .thread(make_extended_thread())
             .timing(make_extended_timing())
             .please_ack(make_minimal_please_ack())

@@ -176,7 +176,7 @@ pub fn dev_build_profile_vdrtools(
 ) -> Arc<dyn Profile> {
     info!("dev_build_profile_vdrtools >>");
     let vcx_pool_config = VcxPoolConfig {
-        genesis_file_path: genesis_file_path.clone(),
+        genesis_file_path,
         indy_vdr_config: None,
         response_cache_config: None,
     };
@@ -185,10 +185,10 @@ pub fn dev_build_profile_vdrtools(
         build_ledger_components(wallet.clone(), vcx_pool_config).unwrap();
     let anoncreds_ledger_read: Arc<dyn AnoncredsLedgerRead> = ledger_read.clone();
     let anoncreds_ledger_write: Arc<dyn AnoncredsLedgerWrite> = ledger_write.clone();
-    let indy_ledger_read: Arc<dyn IndyLedgerRead> = ledger_read.clone();
-    let indy_ledger_write: Arc<dyn IndyLedgerWrite> = ledger_write.clone();
+    let indy_ledger_read: Arc<dyn IndyLedgerRead> = ledger_read;
+    let indy_ledger_write: Arc<dyn IndyLedgerWrite> = ledger_write;
     Arc::new(VdrtoolsProfile::init(
-        wallet.clone(),
+        wallet,
         anoncreds_ledger_read,
         anoncreds_ledger_write,
         indy_ledger_read,
@@ -203,7 +203,7 @@ pub fn dev_build_profile_modular(
 ) -> Arc<dyn Profile> {
     info!("dev_build_profile_modular >>");
     let vcx_pool_config = VcxPoolConfig {
-        genesis_file_path: genesis_file_path.clone(),
+        genesis_file_path,
         indy_vdr_config: None,
         response_cache_config: None,
     };

@@ -13,12 +13,11 @@ use did_resolver::{
 };
 use serde_json::Value;
 
+use super::utils::{is_valid_sovrin_did_id, ledger_response_to_ddo};
 use crate::{
     error::{parsing::ParsingErrorSource, DidSovError},
     reader::AttrReader,
 };
-
-use super::utils::{is_valid_sovrin_did_id, ledger_response_to_ddo};
 
 pub struct DidSovResolver {
     ledger: Arc<dyn AttrReader>,

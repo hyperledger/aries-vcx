@@ -169,7 +169,7 @@ pub mod test_utils {
         info!("schema: {:?}", schema);
         assert_eq!(schema.schema_id, schema_id.to_string());
 
-        let mut schema_data = schema.data.clone();
+        let mut schema_data = schema.data;
         schema_data.sort();
         let mut vec_data: Vec<String> = serde_json::from_str(data).unwrap();
         vec_data.sort();

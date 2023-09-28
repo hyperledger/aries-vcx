@@ -5,12 +5,12 @@ use std::{
     fs,
     io::BufReader,
     path::PathBuf,
-    sync::Arc,
+    sync::{Arc, Mutex},
     unimplemented,
 };
 
 use indy_api_types::{
-    domain::wallet::{Config, Credentials, ExportConfig, Record, Tags},
+    domain::wallet::{CacheConfig, Config, Credentials, ExportConfig, Record, Tags},
     errors::prelude::*,
     WalletHandle,
 };
@@ -21,7 +21,6 @@ use indy_utils::{
 use log::{debug, trace};
 use serde::{Deserialize, Serialize};
 use serde_json::Value as SValue;
-use std::sync::Mutex;
 
 pub use crate::encryption::KeyDerivationData;
 use crate::{
@@ -32,7 +31,6 @@ use crate::{
     },
     wallet::{Keys, Wallet},
 };
-use indy_api_types::domain::wallet::CacheConfig;
 
 mod encryption;
 mod iterator;

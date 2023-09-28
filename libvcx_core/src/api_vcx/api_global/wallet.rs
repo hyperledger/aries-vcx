@@ -18,10 +18,10 @@ use aries_vcx::{
                 wallet::{close_wallet, create_and_open_wallet, delete_wallet, import},
                 IndySdkWallet, IssuerConfig, RestoreWalletConfigs, WalletConfig,
             },
+            structs_io::UnpackMessageOutput,
         },
         SearchHandle, WalletHandle,
     },
-    common::signing::unpack_message_to_string,
     global::settings::DEFAULT_LINK_SECRET_ALIAS,
     protocols::mediated_connection::pairwise_info::PairwiseInfo,
 };
@@ -167,9 +167,9 @@ pub async fn rotate_verkey_apply(did: &str, temp_vk: &str) -> LibvcxResult<()> {
     )
 }
 
-pub async fn wallet_unpack_message_to_string(payload: &[u8]) -> LibvcxResult<String> {
+pub async fn wallet_unpack_message(payload: &[u8]) -> LibvcxResult<UnpackMessageOutput> {
     let wallet = get_main_wallet()?;
-    map_ariesvcx_result(unpack_message_to_string(&wallet, payload).await)
+    map_ariesvcx_core_result(wallet.unpack_message(payload).await)
 }
 
 pub async fn wallet_create_and_store_did(seed: Option<&str>) -> LibvcxResult<PairwiseInfo> {
