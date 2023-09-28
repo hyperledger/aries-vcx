@@ -234,38 +234,6 @@ pub async fn dev_build_featured_profile(
     };
 }
 
-/// See: <https://blog.rust-lang.org/2022/11/03/Rust-1.65.0.html#break-from-labeled-blocks>
-#[macro_export]
-macro_rules! dev_featured_profile {
-    ($genesis_file_path:expr, $wallet:expr) => {
-        'block: {
-            // In case of migration test setup, we are starting with vdrtools, then we migrate
-            #[cfg(all(feature = "modular_libs", not(feature = "migration")))]
-            break 'block ({
-                info!("SetupProfile >> using modular profile");
-                $crate::utils::devsetup::dev_build_profile_modular($genesis_file_path, $wallet)
-            });
-            #[cfg(all(feature = "vdr_proxy_ledger", not(feature = "migration")))]
-            break 'block ({
-                info!("SetupProfile >> using vdr proxy profile");
-                $crate::utils::devsetup::dev_build_profile_vdr_proxy_ledger($wallet).await
-            });
-            #[cfg(any(
-                all(
-                    feature = "vdrtools",
-                    not(feature = "vdr_proxy_ledger"),
-                    not(feature = "modular_libs")
-                ),
-                feature = "migration"
-            ))]
-            break 'block ({
-                info!("SetupProfile >> using indy profile");
-                $crate::utils::devsetup::dev_build_profile_vdrtools($genesis_file_path, $wallet)
-            });
-        }
-    };
-}
-
 #[macro_export]
 macro_rules! run_setup {
     ($func:expr) => {{
@@ -290,7 +258,7 @@ macro_rules! run_setup {
         let wallet = std::sync::Arc::new(aries_vcx_core::wallet::indy::IndySdkWallet::new(
             wallet_handle,
         ));
-        let profile = $crate::dev_featured_profile!(genesis_file_path.clone(), wallet);
+        let profile = $crate::utils::devsetup::dev_build_featured_profile(genesis_file_path.clone(), wallet).await;
         profile
             .anoncreds()
             .prover_create_link_secret(aries_vcx_core::global::settings::DEFAULT_LINK_SECRET_ALIAS)

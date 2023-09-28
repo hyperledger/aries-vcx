@@ -4,10 +4,11 @@ use std::sync::Arc;
 
 use aries_vcx::{
     core::profile::profile::Profile,
-    dev_featured_profile,
     global::settings::DEFAULT_LINK_SECRET_ALIAS,
     utils::{
-        constants::TRUSTEE_SEED, devsetup::dev_setup_wallet_indy, random::generate_random_seed,
+        constants::TRUSTEE_SEED,
+        devsetup::{dev_build_featured_profile, dev_setup_wallet_indy},
+        random::generate_random_seed,
     },
 };
 use aries_vcx_core::{anoncreds::base_anoncreds::BaseAnonCreds, wallet::indy::IndySdkWallet};
@@ -24,7 +25,7 @@ async fn create_test_agent_from_seed(
 ) -> TestAgent<impl Profile> {
     let (institution_did, wallet_handle) = dev_setup_wallet_indy(seed).await;
     let wallet = Arc::new(IndySdkWallet::new(wallet_handle));
-    let profile = dev_featured_profile!(genesis_file_path.clone(), wallet);
+    let profile = dev_build_featured_profile(genesis_file_path.clone(), wallet).await;
     profile
         .anoncreds()
         .prover_create_link_secret(DEFAULT_LINK_SECRET_ALIAS)
