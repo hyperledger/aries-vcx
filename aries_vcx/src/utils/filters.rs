@@ -1,7 +1,7 @@
 use messages::{
     decorators::attachment::Attachment,
     msg_fields::protocols::{
-        cred_issuance::offer_credential::OfferCredential,
+        cred_issuance::v1::offer_credential::OfferCredentialV1,
         present_proof::request::RequestPresentation,
     },
 };
@@ -52,16 +52,20 @@ fn _filter_proof_requests_by_name(
     Ok(filtered)
 }
 
-fn _filter_offers_by_comment(offers: &str, match_comment: &str) -> VcxResult<Vec<OfferCredential>> {
-    let credential_offers: Vec<OfferCredential> = serde_json::from_str(offers).map_err(|err| {
-        AriesVcxError::from_msg(
-            AriesVcxErrorKind::InvalidJson,
-            format!(
-                "Failed to deserialize Vec<CredentialOffer>: {}\nObtained error: {:?}",
-                offers, err
-            ),
-        )
-    })?;
+fn _filter_offers_by_comment(
+    offers: &str,
+    match_comment: &str,
+) -> VcxResult<Vec<OfferCredentialV1>> {
+    let credential_offers: Vec<OfferCredentialV1> =
+        serde_json::from_str(offers).map_err(|err| {
+            AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidJson,
+                format!(
+                    "Failed to deserialize Vec<CredentialOffer>: {}\nObtained error: {:?}",
+                    offers, err
+                ),
+            )
+        })?;
     let filtered = credential_offers
         .into_iter()
         .filter_map(|credential_offer| match &credential_offer.content.comment {
@@ -90,7 +94,7 @@ pub fn filter_proof_requests_by_name(requests: &str, name: &str) -> VcxResult<St
 }
 
 pub fn filter_credential_offers_by_comment(offers: &str, comment: &str) -> VcxResult<String> {
-    let credential_offers: Vec<OfferCredential> = _filter_offers_by_comment(offers, comment)?;
+    let credential_offers: Vec<OfferCredentialV1> = _filter_offers_by_comment(offers, comment)?;
     let filtered: String = serde_json::to_string(&credential_offers).map_err(|err| {
         AriesVcxError::from_msg(
             AriesVcxErrorKind::InvalidJson,

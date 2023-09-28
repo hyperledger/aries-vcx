@@ -6,10 +6,10 @@ use crate::{
     msg_parts::MsgParts,
 };
 
-pub type RequestCredential = MsgParts<RequestCredentialContent, RequestCredentialDecorators>;
+pub type RequestCredentialV1 = MsgParts<RequestCredentialV1Content, RequestCredentialV1Decorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder)]
-pub struct RequestCredentialContent {
+pub struct RequestCredentialV1Content {
     #[builder(default, setter(strip_option))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,
@@ -18,7 +18,7 @@ pub struct RequestCredentialContent {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq, TypedBuilder)]
-pub struct RequestCredentialDecorators {
+pub struct RequestCredentialV1Decorators {
     #[builder(default, setter(strip_option))]
     #[serde(rename = "~thread")]
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -46,11 +46,11 @@ mod tests {
 
     #[test]
     fn test_minimal_request_cred() {
-        let content = RequestCredentialContent::builder()
+        let content = RequestCredentialV1Content::builder()
             .requests_attach(vec![make_extended_attachment()])
             .build();
 
-        let decorators = RequestCredentialDecorators::default();
+        let decorators = RequestCredentialV1Decorators::default();
 
         let expected = json!({
             "requests~attach": content.requests_attach,
@@ -66,12 +66,12 @@ mod tests {
 
     #[test]
     fn test_extended_request_cred() {
-        let content = RequestCredentialContent::builder()
+        let content = RequestCredentialV1Content::builder()
             .requests_attach(vec![make_extended_attachment()])
             .comment("test_comment".to_owned())
             .build();
 
-        let decorators = RequestCredentialDecorators::builder()
+        let decorators = RequestCredentialV1Decorators::builder()
             .thread(make_extended_thread())
             .build();
 

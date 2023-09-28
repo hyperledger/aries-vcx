@@ -1,5 +1,7 @@
 use messages::msg_fields::protocols::{
-    cred_issuance::{offer_credential::OfferCredential, request_credential::RequestCredential},
+    cred_issuance::v1::{
+        offer_credential::OfferCredentialV1, request_credential::RequestCredentialV1,
+    },
     report_problem::ProblemReport,
 };
 
@@ -13,7 +15,7 @@ use crate::{
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct OfferSetState {
-    pub offer: OfferCredential,
+    pub offer: OfferCredentialV1,
     pub credential_json: String,
     pub cred_def_id: String,
     pub rev_reg_id: Option<String>,
@@ -22,7 +24,7 @@ pub struct OfferSetState {
 
 impl OfferSetState {
     pub fn new(
-        cred_offer_msg: OfferCredential,
+        cred_offer_msg: OfferCredentialV1,
         credential_json: &str,
         cred_def_id: &str,
         rev_reg_id: Option<String>,
@@ -39,7 +41,7 @@ impl OfferSetState {
 }
 
 impl RequestReceivedState {
-    pub fn from_offer_set_and_request(state: OfferSetState, request: RequestCredential) -> Self {
+    pub fn from_offer_set_and_request(state: OfferSetState, request: RequestCredentialV1) -> Self {
         trace!("SM is now in Request Received state");
         RequestReceivedState {
             offer: state.offer,

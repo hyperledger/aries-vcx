@@ -1,7 +1,10 @@
 use std::collections::HashMap;
 
 use messages::{
-    msg_fields::protocols::{cred_issuance::CredentialIssuance, notification::Notification},
+    msg_fields::protocols::{
+        cred_issuance::{v1::CredentialIssuanceV1, CredentialIssuance},
+        notification::Notification,
+    },
     AriesMessage,
 };
 
@@ -22,8 +25,8 @@ pub fn holder_find_message_to_handle(
     for (uid, message) in messages {
         match sm.get_state() {
             HolderState::ProposalSet => {
-                if let AriesMessage::CredentialIssuance(CredentialIssuance::OfferCredential(
-                    offer,
+                if let AriesMessage::CredentialIssuance(CredentialIssuance::V1(
+                    CredentialIssuanceV1::OfferCredential(offer),
                 )) = &message
                 {
                     if matches_opt_thread_id!(offer, sm.get_thread_id().unwrap().as_str()) {
@@ -32,15 +35,15 @@ pub fn holder_find_message_to_handle(
                 }
             }
             HolderState::RequestSet => match &message {
-                AriesMessage::CredentialIssuance(CredentialIssuance::IssueCredential(
-                    credential,
+                AriesMessage::CredentialIssuance(CredentialIssuance::V1(
+                    CredentialIssuanceV1::IssueCredential(credential),
                 )) => {
                     if matches_thread_id!(credential, sm.get_thread_id().unwrap().as_str()) {
                         return Some((uid, message));
                     }
                 }
-                AriesMessage::CredentialIssuance(CredentialIssuance::ProblemReport(
-                    problem_report,
+                AriesMessage::CredentialIssuance(CredentialIssuance::V1(
+                    CredentialIssuanceV1::ProblemReport(problem_report),
                 )) => {
                     if matches_opt_thread_id!(problem_report, sm.get_thread_id().unwrap().as_str())
                     {

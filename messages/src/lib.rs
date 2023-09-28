@@ -15,13 +15,19 @@ pub mod msg_types;
 
 use derive_more::From;
 use misc::utils;
-use msg_types::{report_problem::ReportProblemTypeV1_0, routing::RoutingTypeV1_0, MsgWithType};
+use msg_fields::protocols::cred_issuance::{
+    v1::CredentialIssuanceV1, v2::CredentialIssuanceV2, CredentialIssuance,
+};
+use msg_types::{
+    cred_issuance::CredentialIssuanceType, report_problem::ReportProblemTypeV1_0,
+    routing::RoutingTypeV1_0, MsgWithType,
+};
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::{
     msg_fields::{
         protocols::{
-            basic_message::BasicMessage, connection::Connection, cred_issuance::CredentialIssuance,
+            basic_message::BasicMessage, connection::Connection,
             discover_features::DiscoverFeatures, notification::Notification,
             out_of_band::OutOfBand, present_proof::PresentProof, report_problem::ProblemReport,
             revocation::Revocation, routing::Forward, trust_ping::TrustPing,
@@ -100,9 +106,19 @@ impl DelayedSerde for AriesMessage {
             Protocol::RevocationType(msg_type) => {
                 Revocation::delayed_deserialize((msg_type, kind_str), deserializer).map(From::from)
             }
-            Protocol::CredentialIssuanceType(msg_type) => {
-                CredentialIssuance::delayed_deserialize((msg_type, kind_str), deserializer)
-                    .map(From::from)
+            Protocol::CredentialIssuanceType(CredentialIssuanceType::V1(msg_type)) => {
+                CredentialIssuanceV1::delayed_deserialize(
+                    (CredentialIssuanceType::V1(msg_type), kind_str),
+                    deserializer,
+                )
+                .map(|x| AriesMessage::from(CredentialIssuance::V1(x)))
+            }
+            Protocol::CredentialIssuanceType(CredentialIssuanceType::V2(msg_type)) => {
+                CredentialIssuanceV2::delayed_deserialize(
+                    (CredentialIssuanceType::V2(msg_type), kind_str),
+                    deserializer,
+                )
+                .map(|x| AriesMessage::from(CredentialIssuance::V2(x)))
             }
             Protocol::ReportProblemType(msg_type) => {
                 let kind = match msg_type {
@@ -159,7 +175,8 @@ impl DelayedSerde for AriesMessage {
             Self::Routing(v) => MsgWithType::from(v).serialize(serializer),
             Self::Connection(v) => v.delayed_serialize(serializer),
             Self::Revocation(v) => v.delayed_serialize(serializer),
-            Self::CredentialIssuance(v) => v.delayed_serialize(serializer),
+            Self::CredentialIssuance(CredentialIssuance::V1(v)) => v.delayed_serialize(serializer),
+            Self::CredentialIssuance(CredentialIssuance::V2(v)) => v.delayed_serialize(serializer),
             Self::ReportProblem(v) => MsgWithType::from(v).serialize(serializer),
             Self::PresentProof(v) => v.delayed_serialize(serializer),
             Self::TrustPing(v) => v.delayed_serialize(serializer),
