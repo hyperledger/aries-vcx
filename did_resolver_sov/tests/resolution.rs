@@ -1,5 +1,7 @@
 use std::{sync::Arc, thread, time::Duration};
 
+use aries_vcx::core::profile::profile::Profile;
+use aries_vcx::run_setup;
 use aries_vcx::{
     common::ledger::{
         service_didsov::{DidSovServiceType, EndpointDidSov},
@@ -14,12 +16,12 @@ use did_resolver::{
 };
 use did_resolver_sov::{reader::ConcreteAttrReader, resolution::DidSovResolver};
 
-async fn write_test_endpoint(profile: &Arc<dyn Profile>, did: &str) {
+async fn write_test_endpoint(profile: &impl Profile, did: &str) {
     let endpoint = EndpointDidSov::create()
         .set_service_endpoint("http://localhost:8080".parse().unwrap())
         .set_routing_keys(Some(vec!["key1".to_string(), "key2".to_string()]))
         .set_types(Some(vec![DidSovServiceType::Endpoint]));
-    write_endpoint(&profile.inject_indy_ledger_write(), did, &endpoint)
+    write_endpoint(profile.ledger_write(), did, &endpoint)
         .await
         .unwrap();
     thread::sleep(Duration::from_millis(50));
@@ -27,11 +29,11 @@ async fn write_test_endpoint(profile: &Arc<dyn Profile>, did: &str) {
 
 #[tokio::test]
 async fn write_service_on_ledger_and_resolve_did_doc() {
-    SetupProfile::run(|init| async move {
+    run_setup!(|init| async move {
         let did = format!("did:sov:{}", init.institution_did);
         write_test_endpoint(&init.profile, &init.institution_did).await;
         let resolver = DidSovResolver::new(Arc::<ConcreteAttrReader>::new(
-            init.profile.inject_indy_ledger_read().into(),
+            init.profile.ledger_read().into(),
         ));
         let did_doc = resolver
             .resolve(
@@ -47,11 +49,11 @@ async fn write_service_on_ledger_and_resolve_did_doc() {
 
 #[tokio::test]
 async fn test_error_handling_during_resolution() {
-    SetupProfile::run(|init| async move {
+    run_setup!(|init| async move {
         let did = format!("did:unknownmethod:{}", init.institution_did);
 
         let resolver = DidSovResolver::new(Arc::<ConcreteAttrReader>::new(
-            init.profile.inject_indy_ledger_read().into(),
+            init.profile.ledger_read().into(),
         ));
 
         let result = resolver

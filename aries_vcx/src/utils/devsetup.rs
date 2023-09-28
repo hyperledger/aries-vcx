@@ -297,7 +297,6 @@ macro_rules! run_setup {
             .await
             .unwrap();
 
-        debug!("genesis_file_path: {}", genesis_file_path);
         SetupProfile::new(public_did.to_string(), profile, genesis_file_path)
             .await
             .run($func)
@@ -309,6 +308,7 @@ where
     P: Profile,
 {
     pub async fn new(institution_did: String, profile: P, genesis_file_path: String) -> Self {
+        debug!("genesis_file_path: {}", genesis_file_path);
         SetupProfile {
             institution_did,
             profile,
