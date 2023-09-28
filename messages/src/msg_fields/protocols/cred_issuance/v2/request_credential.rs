@@ -11,10 +11,10 @@ pub type RequestCredentialV2 = MsgParts<RequestCredentialV2Content, RequestCrede
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder)]
 pub struct RequestCredentialV2Content {
-    #[builder(default, setter(strip_option))]
+    #[builder(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub goal_code: Option<String>,
-    #[builder(default, setter(strip_option))]
+    #[builder(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,
     pub formats: Vec<AttachmentFormatSpecifier<RequestCredentialAttachmentFormatType>>,
@@ -24,11 +24,11 @@ pub struct RequestCredentialV2Content {
 
 #[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq, TypedBuilder)]
 pub struct RequestCredentialV2Decorators {
-    #[builder(default, setter(strip_option))]
+    #[builder(default)]
     #[serde(rename = "~thread")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub thread: Option<Thread>,
-    #[builder(default, setter(strip_option))]
+    #[builder(default)]
     #[serde(rename = "~timing")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<Timing>,
@@ -97,12 +97,12 @@ mod tests {
                     RequestCredentialAttachmentFormatType::HyperledgerIndyCredentialRequest2_0,
                 ),
             }])
-            .comment("test_comment".to_owned())
-            .goal_code("goal.goal".to_owned())
+            .comment(Some("test_comment".to_owned()))
+            .goal_code(Some("goal.goal".to_owned()))
             .build();
 
         let decorators = RequestCredentialV2Decorators::builder()
-            .thread(make_extended_thread())
+            .thread(Some(make_extended_thread()))
             .build();
 
         let expected = json!({

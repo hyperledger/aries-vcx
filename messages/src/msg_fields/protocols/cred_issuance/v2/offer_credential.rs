@@ -11,13 +11,13 @@ pub type OfferCredentialV2 = MsgParts<OfferCredentialV2Content, OfferCredentialV
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder)]
 pub struct OfferCredentialV2Content {
-    #[builder(default, setter(strip_option))]
+    #[builder(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub goal_code: Option<String>,
-    #[builder(default, setter(strip_option))]
+    #[builder(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub replacement_id: Option<String>,
-    #[builder(default, setter(strip_option))]
+    #[builder(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,
     pub credential_preview: CredentialPreviewV2,
@@ -28,11 +28,11 @@ pub struct OfferCredentialV2Content {
 
 #[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq, TypedBuilder)]
 pub struct OfferCredentialV2Decorators {
-    #[builder(default, setter(strip_option))]
+    #[builder(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "~thread")]
     pub thread: Option<Thread>,
-    #[builder(default, setter(strip_option))]
+    #[builder(default)]
     #[serde(rename = "~timing")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<Timing>,
@@ -118,14 +118,14 @@ mod tests {
                 ),
             }])
             .offers_attach(vec![make_extended_attachment()])
-            .comment("test_comment".to_owned())
-            .replacement_id("replacement_id".to_owned())
-            .goal_code("goal.goal".to_owned())
+            .comment(Some("test_comment".to_owned()))
+            .replacement_id(Some("replacement_id".to_owned()))
+            .goal_code(Some("goal.goal".to_owned()))
             .build();
 
         let decorators = OfferCredentialV2Decorators::builder()
-            .thread(make_extended_thread())
-            .timing(make_extended_timing())
+            .thread(Some(make_extended_thread()))
+            .timing(Some(make_extended_timing()))
             .build();
 
         let expected = json!({

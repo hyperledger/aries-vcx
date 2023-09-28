@@ -11,13 +11,13 @@ pub type IssueCredentialV2 = MsgParts<IssueCredentialV2Content, IssueCredentialV
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder)]
 pub struct IssueCredentialV2Content {
-    #[builder(default, setter(strip_option))]
+    #[builder(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub goal_code: Option<String>,
-    #[builder(default, setter(strip_option))]
+    #[builder(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub replacement_id: Option<String>,
-    #[builder(default, setter(strip_option))]
+    #[builder(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,
     pub formats: Vec<AttachmentFormatSpecifier<IssueCredentialAttachmentFormatType>>,
@@ -29,11 +29,11 @@ pub struct IssueCredentialV2Content {
 pub struct IssueCredentialV2Decorators {
     #[serde(rename = "~thread")]
     pub thread: Thread,
-    #[builder(default, setter(strip_option))]
+    #[builder(default)]
     #[serde(rename = "~please_ack")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub please_ack: Option<PleaseAck>,
-    #[builder(default, setter(strip_option))]
+    #[builder(default)]
     #[serde(rename = "~timing")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<Timing>,
@@ -105,15 +105,15 @@ mod tests {
                 ),
             }])
             .credentials_attach(vec![make_extended_attachment()])
-            .goal_code("goal.goal".to_owned())
-            .replacement_id("replacement-123".to_owned())
-            .comment("test_comment".to_owned())
+            .goal_code(Some("goal.goal".to_owned()))
+            .replacement_id(Some("replacement-123".to_owned()))
+            .comment(Some("test_comment".to_owned()))
             .build();
 
         let decorators = IssueCredentialV2Decorators::builder()
             .thread(make_extended_thread())
-            .timing(make_extended_timing())
-            .please_ack(make_minimal_please_ack())
+            .timing(Some(make_extended_timing()))
+            .please_ack(Some(make_minimal_please_ack()))
             .build();
 
         let expected = json!({

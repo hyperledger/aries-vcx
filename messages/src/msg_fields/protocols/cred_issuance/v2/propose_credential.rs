@@ -11,13 +11,13 @@ pub type ProposeCredentialV2 = MsgParts<ProposeCredentialV2Content, ProposeCrede
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, TypedBuilder)]
 pub struct ProposeCredentialV2Content {
-    #[builder(default, setter(strip_option))]
+    #[builder(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub goal_code: Option<String>, // TODO - spec does not specify what goal codes to use..
-    #[builder(default, setter(strip_option))]
+    #[builder(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,
-    #[builder(default, setter(strip_option))]
+    #[builder(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub credential_preview: Option<CredentialPreviewV2>,
     pub formats: Vec<AttachmentFormatSpecifier<ProposeCredentialAttachmentFormatType>>,
@@ -27,11 +27,11 @@ pub struct ProposeCredentialV2Content {
 
 #[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq, TypedBuilder)]
 pub struct ProposeCredentialV2Decorators {
-    #[builder(default, setter(strip_option))]
+    #[builder(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "~thread")]
     pub thread: Option<Thread>,
-    #[builder(default, setter(strip_option))]
+    #[builder(default)]
     #[serde(rename = "~timing")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<Timing>,
@@ -100,7 +100,7 @@ mod tests {
             .build();
         let preview = CredentialPreviewV2::new(vec![attribute]);
         let content = ProposeCredentialV2Content::builder()
-            .credential_preview(preview)
+            .credential_preview(Some(preview))
             .formats(vec![AttachmentFormatSpecifier {
                 attach_id: String::from("1"),
                 format: MaybeKnown::Known(
@@ -108,13 +108,13 @@ mod tests {
                 ),
             }])
             .filters_attach(vec![make_extended_attachment()])
-            .comment("test_comment".to_owned())
-            .goal_code("goal.goal".to_owned())
+            .comment(Some("test_comment".to_owned()))
+            .goal_code(Some("goal.goal".to_owned()))
             .build();
 
         let decorators = ProposeCredentialV2Decorators::builder()
-            .thread(make_extended_thread())
-            .timing(make_extended_timing())
+            .thread(Some(make_extended_thread()))
+            .timing(Some(make_extended_timing()))
             .build();
 
         let expected = json!({
