@@ -24,7 +24,7 @@ use messages::{
 };
 use xum_test_server::storage::{get_persistence, MediatorPersistence};
 
-use crate::utils::prelude::*;
+use crate::utils::{prelude::*, structs::VeriKey};
 
 pub mod utils;
 // #[cfg(test)]
@@ -45,6 +45,7 @@ impl AgentMaker<IndySdkWallet> {
     pub async fn new_from_wallet_config(config: WalletConfig) -> Result<Agent, AriesVcxCoreError> {
         let wallet_handle: WalletHandle = create_and_open_wallet(&config).await?;
         let wallet = Arc::new(IndySdkWallet::new(wallet_handle));
+        info!("Connecting to persistence layer");
         let persistence = Arc::new(get_persistence().await);
         Ok(Agent {
             wallet,
@@ -153,7 +154,7 @@ impl Agent {
             thread_id,
             old_vk.clone(),
             did,
-            vk,
+            vk.clone(),
             self.service.as_ref().unwrap().service_endpoint.clone(),
             self.service.as_ref().unwrap().routing_keys.clone(),
         )
@@ -169,6 +170,16 @@ impl Agent {
         )
         .await
         .map_err(|e| e.to_string())?;
+        let their_keys = their_diddoc.recipient_keys().map_err(|e| e.to_string())?;
+        let auth_pubkey = their_keys
+            .first()
+            .ok_or("No recipient key for client :/ ?".to_owned())?;
+        self.create_account(vk, auth_pubkey.to_owned()).await?;
         Ok(packed_response_envelope)
+    }
+
+    pub async fn create_account(&self, _self_vk: VeriKey, their_vk: VeriKey) -> Result<(), String> {
+        self.persistence.create_account(&their_vk).await?;
+        Ok(())
     }
 }
