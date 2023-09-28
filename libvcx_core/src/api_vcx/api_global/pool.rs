@@ -90,11 +90,11 @@ async fn build_components_ledger(
         None => PoolConfig::default(),
         Some(cfg) => cfg.clone(),
     };
-    let ledger_pool = Arc::new(IndyVdrLedgerPool::new(
+    let ledger_pool = IndyVdrLedgerPool::new(
         libvcx_pool_config.genesis_path.clone(),
         indy_vdr_config,
         libvcx_pool_config.exclude_nodes.clone().unwrap_or_default(),
-    )?);
+    )?;
     let request_submitter = Arc::new(IndyVdrSubmitter::new(ledger_pool));
 
     let cache_config = match &libvcx_pool_config.cache_config {

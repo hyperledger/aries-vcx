@@ -19,7 +19,10 @@ use serde_json;
 use crate::{
     api_vcx::{
         api_global::profile::{get_main_anoncreds, get_main_anoncreds_ledger_read},
-        api_handle::{mediated_connection, object_cache::ObjectCache},
+        api_handle::{
+            mediated_connection::{self, send_message},
+            object_cache::ObjectCache,
+        },
     },
     errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult},
 };
@@ -173,9 +176,7 @@ pub async fn update_state(
             match credential.get_final_message()? {
                 None => {}
                 Some(msg_response) => {
-                    let send_message =
-                        mediated_connection::send_message_closure(connection_handle).await?;
-                    send_message(msg_response).await?;
+                    send_message(connection_handle, msg_response).await?;
                 }
             }
         }
@@ -263,7 +264,6 @@ pub async fn send_credential_request(handle: u32, connection_handle: u32) -> Lib
     );
     let mut credential = HANDLE_MAP.get_cloned(handle)?;
     let my_pw_did = mediated_connection::get_pw_did(connection_handle)?;
-    let send_message = mediated_connection::send_message_closure(connection_handle).await?;
     let msg_response = credential
         .prepare_credential_request(
             &get_main_anoncreds_ledger_read()?,
@@ -271,7 +271,7 @@ pub async fn send_credential_request(handle: u32, connection_handle: u32) -> Lib
             my_pw_did,
         )
         .await?;
-    send_message(msg_response).await?;
+    send_message(connection_handle, msg_response).await?;
     HANDLE_MAP.insert(handle, credential)
 }
 
@@ -401,9 +401,8 @@ pub async fn decline_offer(
     comment: Option<&str>,
 ) -> LibvcxResult<()> {
     let mut credential = HANDLE_MAP.get_cloned(handle)?;
-    let send_message = mediated_connection::send_message_closure(connection_handle).await?;
     let problem_report = credential.decline_offer(comment)?;
-    send_message(problem_report.into()).await?;
+    send_message(connection_handle, problem_report.into()).await?;
     HANDLE_MAP.insert(handle, credential)
 }
 
