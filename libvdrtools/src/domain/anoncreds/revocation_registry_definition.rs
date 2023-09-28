@@ -1,7 +1,9 @@
-use indy_api_types::errors::{err_msg, IndyErrorKind, IndyResult};
 use std::collections::{HashMap, HashSet};
 
-use indy_api_types::validation::Validatable;
+use indy_api_types::{
+    errors::{err_msg, IndyErrorKind, IndyResult},
+    validation::Validatable,
+};
 use lazy_static::lazy_static;
 use regex::Regex;
 use ursa::cl::{RevocationKeyPrivate, RevocationKeyPublic};
@@ -10,14 +12,17 @@ use super::{
     super::crypto::did::DidValue, credential_definition::CredentialDefinitionId, indy_identifiers,
     DELIMITER,
 };
-
 use crate::utils::qualifier;
 
 pub const CL_ACCUM: &str = "CL_ACCUM";
 pub const REV_REG_DEG_MARKER: &str = "4";
 
 lazy_static! {
-    static ref QUALIFIED_REV_REG_ID: Regex = Regex::new("(^revreg:(?P<method>[a-z0-9]+):)?(?P<did>.+):4:(?P<cred_def_id>.+):(?P<rev_reg_type>.+):(?P<tag>.+)$").unwrap();
+    static ref QUALIFIED_REV_REG_ID: Regex = Regex::new(
+        "(^revreg:(?P<method>[a-z0-9]+):)?(?P<did>.+):4:(?P<cred_def_id>.+):(?P<rev_reg_type>.+):\
+         (?P<tag>.+)$"
+    )
+    .unwrap();
 }
 
 #[derive(Deserialize, Debug, Serialize)]
@@ -231,7 +236,10 @@ impl Validatable for RevocationRegistryConfig {
     fn validate(&self) -> Result<(), String> {
         if let Some(num_) = self.max_cred_num {
             if num_ == 0 {
-                return Err(String::from("RevocationRegistryConfig validation failed: `max_cred_num` must be greater than 0"));
+                return Err(String::from(
+                    "RevocationRegistryConfig validation failed: `max_cred_num` must be greater \
+                     than 0",
+                ));
             }
         }
         Ok(())
@@ -286,15 +294,28 @@ mod tests {
     }
 
     fn _cred_def_id_qualified() -> CredentialDefinitionId {
-        CredentialDefinitionId("creddef:sov:did:sov:NcYxiDXkpYi6ov5FcYDi1e:3:CL:schema:sov:did:sov:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag".to_string())
+        CredentialDefinitionId(
+            "creddef:sov:did:sov:NcYxiDXkpYi6ov5FcYDi1e:3:CL:schema:sov:did:sov:\
+             NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag"
+                .to_string(),
+        )
     }
 
     fn _rev_reg_id_unqualified() -> RevocationRegistryId {
-        RevocationRegistryId("NcYxiDXkpYi6ov5FcYDi1e:4:NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag:CL_ACCUM:TAG_1".to_string())
+        RevocationRegistryId(
+            "NcYxiDXkpYi6ov5FcYDi1e:4:NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.\
+             0:tag:CL_ACCUM:TAG_1"
+                .to_string(),
+        )
     }
 
     fn _rev_reg_id_qualified() -> RevocationRegistryId {
-        RevocationRegistryId("revreg:sov:did:sov:NcYxiDXkpYi6ov5FcYDi1e:4:creddef:sov:did:sov:NcYxiDXkpYi6ov5FcYDi1e:3:CL:schema:sov:did:sov:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag:CL_ACCUM:TAG_1".to_string())
+        RevocationRegistryId(
+            "revreg:sov:did:sov:NcYxiDXkpYi6ov5FcYDi1e:4:creddef:sov:did:sov:\
+             NcYxiDXkpYi6ov5FcYDi1e:3:CL:schema:sov:did:sov:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag:\
+             CL_ACCUM:TAG_1"
+                .to_string(),
+        )
     }
 
     mod to_unqualified {

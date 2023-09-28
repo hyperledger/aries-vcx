@@ -2,12 +2,11 @@ use std::collections::HashSet;
 
 use serde::{Deserialize, Serialize};
 
-use crate::error::DidDocumentBuilderError;
-
 use super::{
     types::{uri::Uri, url::Url},
     utils::OneOrList,
 };
+use crate::error::DidDocumentBuilderError;
 
 pub type ServiceTypeAlias = OneOrList<String>;
 

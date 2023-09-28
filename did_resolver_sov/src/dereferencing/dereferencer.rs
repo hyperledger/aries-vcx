@@ -13,9 +13,8 @@ use did_resolver::{
     },
 };
 
-use crate::resolution::DidSovResolver;
-
 use super::utils::dereference_did_document;
+use crate::resolution::DidSovResolver;
 
 #[async_trait]
 impl DidDereferenceable for DidSovResolver {

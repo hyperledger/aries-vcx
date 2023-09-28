@@ -28,22 +28,7 @@ mod services;
 
 use std::sync::Arc;
 
-use lazy_static::lazy_static;
-
-use crate::{
-    controllers::{
-        BlobStorageController, ConfigController, CryptoController, DidController, IssuerController,
-        NonSecretsController, PairwiseController, ProverController, VerifierController,
-        WalletController,
-    },
-    services::{
-        BlobStorageService, CryptoService, IssuerService, ProverService, VerifierService,
-        WalletService,
-    },
-};
-
 pub use controllers::CredentialDefinitionId;
-
 pub use domain::{
     anoncreds::{
         credential::{AttributeValues, Credential, CredentialValues},
@@ -71,14 +56,25 @@ pub use domain::{
         pack::JWE,
     },
 };
-
 pub use indy_api_types::{
     CommandHandle, IndyError, SearchHandle, WalletHandle, INVALID_COMMAND_HANDLE,
     INVALID_SEARCH_HANDLE, INVALID_WALLET_HANDLE,
 };
-
 pub use indy_wallet::WalletRecord;
+use lazy_static::lazy_static;
 pub use services::AnoncredsHelpers;
+
+use crate::{
+    controllers::{
+        BlobStorageController, ConfigController, CryptoController, DidController, IssuerController,
+        NonSecretsController, PairwiseController, ProverController, VerifierController,
+        WalletController,
+    },
+    services::{
+        BlobStorageService, CryptoService, IssuerService, ProverService, VerifierService,
+        WalletService,
+    },
+};
 
 // Global (lazy inited) instance of Locator
 lazy_static! {

@@ -65,8 +65,8 @@ jobs:
         run: |
           set -x
 
-          HASH_DOCKERFILE_LIBVCX=${{ hashFiles('ci/libvcx.dockerfile') }}
-          HASH_DOCKERFILE_VDRPROXY=${{ hashFiles('ci/vdrproxy.dockerfile') }}
+          HASH_DOCKERFILE_LIBVCX=${{ hashFiles('.github/ci/libvcx.dockerfile') }}
+          HASH_DOCKERFILE_VDRPROXY=${{ hashFiles('.github/ci/vdrproxy.dockerfile') }}
           HASH_SRC_LIBVDRTOOLS=${{ hashFiles('libvdrtools') }}
           HASH_SRC_LIBVCX=${{ hashFiles('libvcx') }}
           HASH_SRC_ARIESVCX=${{ hashFiles('aries_vcx') }}
@@ -74,7 +74,6 @@ jobs:
           HASH_SRC_AGENCYCLIENT=${{ hashFiles('agency_client') }}
           HASH_SRC_DIDDOC=${{ hashFiles('diddoc') }}
           HASH_SRC_MESSAGES=${{ hashFiles('messages') }}
-          HASH_SRC_WRAPPER_JAVA=${{ hashFiles('wrappers/java') }}
 
           SEED_HASH_ARIESVCX=${HASH_SRC_LIBVDRTOOLS:0:11}-${HASH_SRC_ARIESVCX_CORE:0:11}-${HASH_SRC_ARIESVCX:0:11}-${HASH_SRC_AGENCYCLIENT:0:11}-${HASH_SRC_DIDDOC:0:11}-${HASH_SRC_MESSAGES:0:11}}
           HASH_ARIESVCX=$(echo -n "$SEED_HASH_ARIESVCX" | sha256sum | awk '{print $1}')
@@ -233,7 +232,7 @@ jobs:
         uses: ./.github/actions/build-image
         with:
           docker-img: ${{ env.DOCKER_IMG_CACHED }}
-          dockerfile-path: "ci/vdrproxy.dockerfile"
+          dockerfile-path: ".github/ci/vdrproxy.dockerfile"
           build-arg: "ALPINE_CORE_IMAGE=$DOCKER_IMG_CACHED_ALPINE_CORE"
           branch-name: ${{ env.BRANCH_NAME }}
           branch-main: ${{ env.MAIN_BRANCH }}

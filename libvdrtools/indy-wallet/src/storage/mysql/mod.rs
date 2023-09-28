@@ -169,7 +169,6 @@ impl WalletStorage for MySqlStorage {
     ///  * `IndyError::Closed` - Storage is closed
     ///  * `IndyError::ItemNotFound` - Item is not found in database
     ///  * `IOError("IO error during storage operation:...")` - Failed connection or SQL query
-    ///
     async fn get(&self, type_: &[u8], id: &[u8], options: &str) -> IndyResult<StorageRecord> {
         let options: RecordOptions = serde_json::from_str(options).to_indy(
             IndyErrorKind::InvalidStructure,
@@ -253,7 +252,6 @@ impl WalletStorage for MySqlStorage {
     ///  * `IndyError::Closed` - Storage is closed
     ///  * `IndyError::ItemAlreadyExists` - Item is already present in database
     ///  * `IOError("IO error during storage operation:...")` - Failed connection or SQL query
-    ///
     async fn add(
         &self,
         type_: &[u8],
@@ -472,7 +470,6 @@ impl WalletStorage for MySqlStorage {
     ///  * `IndyError::Closed` - Storage is closed
     ///  * `IndyError::ItemNotFound` - Item is not found in database
     ///  * `IOError("IO error during storage operation:...")` - Failed connection or SQL query
-    ///
     async fn delete(&self, type_: &[u8], id: &[u8]) -> IndyResult<()> {
         let mut tx = self.write_pool.begin().await?;
 
@@ -713,7 +710,6 @@ impl WalletStorageType for MySqlStorageType {
     ///
     ///  * `IndyError::NotFound` - File with the provided id not found
     ///  * `IOError(..)` - Deletion of the file form the file-system failed
-    ///
     async fn delete_storage(
         &self,
         id: &str,
@@ -802,7 +798,6 @@ impl WalletStorageType for MySqlStorageType {
     ///  * `IOError("Error occurred while creating wallet file:..)"` - Creation of schema failed
     ///  * `IOError("Error occurred while inserting the keys...")` - Insertion of keys failed
     ///  * `IOError(..)` - Deletion of the file form the file-system failed
-    ///
     async fn create_storage(
         &self,
         id: &str,
@@ -943,7 +938,6 @@ impl WalletStorageType for MySqlStorageType {
     ///
     ///  * `IndyError::NotFound` - File with the provided id not found
     ///  * `IOError("IO error during storage operation:...")` - Failed connection or SQL query
-    ///
     async fn open_storage(
         &self,
         id: &str,
@@ -1013,8 +1007,9 @@ mod tests {
     #[async_std::test]
     #[cfg(feature = "benchmark")]
     async fn mysql_storage_sync_send() {
-        use futures::{channel::oneshot, executor::ThreadPool, future::join_all};
         use std::{sync::Arc, time::SystemTime};
+
+        use futures::{channel::oneshot, executor::ThreadPool, future::join_all};
 
         let count = 1000;
         let executor = ThreadPool::new().expect("Failed to new ThreadPool");

@@ -1,14 +1,12 @@
 use std::path::PathBuf;
 
-use crate::utils::crypto::base58::ToBase58;
 use async_std::{fs, fs::File, prelude::*};
 use async_trait::async_trait;
 use indy_api_types::errors::prelude::*;
 use serde_json;
 
-use crate::utils::environment;
-
 use super::{WritableBlob, Writer, WriterType};
+use crate::utils::{crypto::base58::ToBase58, environment};
 
 #[allow(dead_code)]
 pub(crate) struct DefaultWriter {

@@ -1,24 +1,24 @@
-use indy_api_types::{
-    errors::{IndyErrorKind, IndyResult},
-    IndyError,
-};
 use std::collections::HashMap;
 
-use indy_api_types::validation::Validatable;
-
-use super::indy_identifiers;
+use indy_api_types::{
+    errors::{IndyErrorKind, IndyResult},
+    validation::Validatable,
+    IndyError,
+};
 use ursa::cl::{
     CredentialKeyCorrectnessProof, CredentialPrimaryPublicKey, CredentialPrivateKey,
     CredentialRevocationPublicKey,
 };
 
-use crate::utils::qualifier;
-
-use super::super::{
-    anoncreds::{schema::SchemaId, DELIMITER},
-    crypto::did::DidValue,
-    ledger::request::ProtocolVersion,
+use super::{
+    super::{
+        anoncreds::{schema::SchemaId, DELIMITER},
+        crypto::did::DidValue,
+        ledger::request::ProtocolVersion,
+    },
+    indy_identifiers,
 };
+use crate::utils::qualifier;
 
 pub const CL_SIGNATURE_TYPE: &str = "CL";
 
@@ -260,7 +260,8 @@ impl CredentialDefinitionId {
         }
 
         if parts.len() == 16 {
-            // creddef:sov:did:sov:NcYxiDXkpYi6ov5FcYDi1e:3:CL:schema:sov:did:sov:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag
+            // creddef:sov:did:sov:NcYxiDXkpYi6ov5FcYDi1e:3:CL:schema:sov:did:sov:
+            // NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag
             warn!("Deprecated format of FQ CredDef ID is used (creddef: suffix)");
             let did = parts[2..5].join(DELIMITER);
             let signature_type = parts[6].to_string();

@@ -1,3 +1,14 @@
+use std::{
+    collections::{HashMap, HashSet},
+    iter::FromIterator,
+    sync::{
+        atomic::{AtomicUsize, Ordering},
+        Mutex, RwLock,
+    },
+};
+
+use indy_api_types::domain::wallet::{CacheConfig, CachingAlgorithm};
+
 use crate::{
     cache::{cache::Cache, lru::LruCache},
     storage::{
@@ -8,15 +19,6 @@ use crate::{
     },
     wallet::EncryptedValue,
     RecordOptions,
-};
-use indy_api_types::domain::wallet::{CacheConfig, CachingAlgorithm};
-use std::{
-    collections::{HashMap, HashSet},
-    iter::FromIterator,
-    sync::{
-        atomic::{AtomicUsize, Ordering},
-        Mutex, RwLock,
-    },
 };
 
 #[derive(PartialEq, Eq, Hash)]

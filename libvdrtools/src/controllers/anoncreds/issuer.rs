@@ -6,12 +6,12 @@ use std::{
 // use async_std::task::spawn_blocking;
 use indy_api_types::{domain::wallet::Tags, errors::prelude::*, WalletHandle};
 use indy_wallet::{RecordOptions, WalletService};
-
 use ursa::cl::{
     new_nonce, CredentialKeyCorrectnessProof, CredentialPrivateKey,
     RevocationRegistryDelta as CryptoRevocationRegistryDelta, Witness,
 };
 
+use super::tails::{store_tails_from_generator, SDKTailsAccessor};
 pub use crate::{
     domain::{
         anoncreds::{
@@ -37,8 +37,6 @@ pub use crate::{
     },
     services::{AnoncredsHelpers, BlobStorageService, CryptoService, IssuerService},
 };
-
-use super::tails::{store_tails_from_generator, SDKTailsAccessor};
 
 pub struct IssuerController {
     pub issuer_service: Arc<IssuerService>,
@@ -70,23 +68,24 @@ impl IssuerController {
     https://github.com/hyperledger/indy-hipe/blob/c761c583b1e01c1e9d3ceda2b03b35336fdc8cc1/text/anoncreds-protocol/README.md
     */
 
-    /// Create credential schema entity that describes credential attributes list and allows credentials
-    /// interoperability.
+    /// Create credential schema entity that describes credential attributes list and allows
+    /// credentials interoperability.
     ///
-    /// Schema is public and intended to be shared with all anoncreds workflow actors usually by publishing SCHEMA transaction
-    /// to Indy distributed ledger.
+    /// Schema is public and intended to be shared with all anoncreds workflow actors usually by
+    /// publishing SCHEMA transaction to Indy distributed ledger.
     ///
     /// It is IMPORTANT for current version POST Schema in Ledger and after that GET it from Ledger
     /// with correct seq_no to save compatibility with Ledger.
-    /// After that can call indy_issuer_create_and_store_credential_def to build corresponding Credential Definition.
+    /// After that can call indy_issuer_create_and_store_credential_def to build corresponding
+    /// Credential Definition.
     ///
     /// #Params
 
     /// issuer_did: DID of schema issuer
     /// name: a name the schema
     /// version: a version of the schema
-    /// attrs: a list of schema attributes descriptions (the number of attributes should be less or equal than 125)
-    ///     `["attr1", "attr2"]`
+    /// attrs: a list of schema attributes descriptions (the number of attributes should be less or
+    /// equal than 125)     `["attr1", "attr2"]`
     ///
     /// #Returns
     /// schema_id: identifier of created schema
@@ -137,17 +136,21 @@ impl IssuerController {
         res
     }
 
-    /// Create credential definition entity that encapsulates credentials issuer DID, credential schema, secrets used for signing credentials
-    /// and secrets used for credentials revocation.
+    /// Create credential definition entity that encapsulates credentials issuer DID, credential
+    /// schema, secrets used for signing credentials and secrets used for credentials
+    /// revocation.
     ///
-    /// Credential definition entity contains private and public parts. Private part will be stored in the wallet. Public part
-    /// will be returned as json intended to be shared with all anoncreds workflow actors usually by publishing CRED_DEF transaction
-    /// to Indy distributed ledger.
+    /// Credential definition entity contains private and public parts. Private part will be stored
+    /// in the wallet. Public part will be returned as json intended to be shared with all
+    /// anoncreds workflow actors usually by publishing CRED_DEF transaction to Indy distributed
+    /// ledger.
     ///
-    /// It is IMPORTANT for current version GET Schema from Ledger with correct seq_no to save compatibility with Ledger.
+    /// It is IMPORTANT for current version GET Schema from Ledger with correct seq_no to save
+    /// compatibility with Ledger.
     ///
-    /// Note: Use combination of `indy_issuer_rotate_credential_def_start` and `indy_issuer_rotate_credential_def_apply` functions
-    /// to generate new keys for an existing credential definition.
+    /// Note: Use combination of `indy_issuer_rotate_credential_def_start` and
+    /// `indy_issuer_rotate_credential_def_apply` functions to generate new keys for an existing
+    /// credential definition.
     ///
     /// #Params
 
@@ -161,18 +164,15 @@ impl IssuerController {
     ///     seqNo: (Optional) schema's sequence number on the ledger,
     ///     ver: version of the Schema json
     /// }
-    /// tag: any string that allows to distinguish between credential definitions for the same issuer and schema
-    /// signature_type: credential definition type (optional, 'CL' by default) that defines credentials signature and revocation math.
-    /// Supported signature types:
-    /// - 'CL': Camenisch-Lysyanskaya credential signature type that is implemented according to the algorithm in this paper:
-    ///             https://github.com/hyperledger/ursa/blob/master/libursa/docs/AnonCred.pdf
-    ///         And is documented in this HIPE:
-    ///             https://github.com/hyperledger/indy-hipe/blob/c761c583b1e01c1e9d3ceda2b03b35336fdc8cc1/text/anoncreds-protocol/README.md
+    /// tag: any string that allows to distinguish between credential definitions for the same
+    /// issuer and schema signature_type: credential definition type (optional, 'CL' by default)
+    /// that defines credentials signature and revocation math. Supported signature types:
+    /// - 'CL': Camenisch-Lysyanskaya credential signature type that is implemented according to the
+    ///   algorithm in this paper: https://github.com/hyperledger/ursa/blob/master/libursa/docs/AnonCred.pdf
+    ///   And is documented in this HIPE: https://github.com/hyperledger/indy-hipe/blob/c761c583b1e01c1e9d3ceda2b03b35336fdc8cc1/text/anoncreds-protocol/README.md
     /// config_json: (optional) type-specific configuration of credential definition as json:
-    /// - 'CL':
-    ///     {
-    ///         "support_revocation" - bool (optional, default false) whether to request non-revocation credential
-    ///     }
+    /// - 'CL': { "support_revocation" - bool (optional, default false) whether to request
+    ///   non-revocation credential }
     ///
     /// #Returns
     /// cred_def_id: identifier of created credential definition
@@ -181,16 +181,17 @@ impl IssuerController {
     ///     id: string - identifier of credential definition
     ///     schemaId: string - identifier of stored in ledger schema
     ///     type: string - type of the credential definition. CL is the only supported type now.
-    ///     tag: string - allows to distinct between credential definitions for the same issuer and schema
-    ///     value: Dictionary with Credential Definition's data is depended on the signature type: {
-    ///         primary: primary credential public key,
+    ///     tag: string - allows to distinct between credential definitions for the same issuer and
+    /// schema     value: Dictionary with Credential Definition's data is depended on the
+    /// signature type: {         primary: primary credential public key,
     ///         Optional<revocation>: revocation credential public key
     ///     },
     ///     ver: Version of the CredDef json
     /// }
     ///
-    /// Note: `primary` and `revocation` fields of credential definition are complex opaque types that contain data structures internal to Ursa.
-    /// They should not be parsed and are likely to change in future versions.
+    /// Note: `primary` and `revocation` fields of credential definition are complex opaque types
+    /// that contain data structures internal to Ursa. They should not be parsed and are likely
+    /// to change in future versions.
     ///
     /// #Errors
     /// Common*
@@ -206,9 +207,8 @@ impl IssuerController {
         config: Option<CredentialDefinitionConfig>,
     ) -> IndyResult<(String, String)> {
         trace!(
-            "create_and_store_credential_definition > wallet_handle {:?} \
-                    issuer_did {:?} schema {:?} tag {:?} \
-                    type_ {:?}, config {:?}",
+            "create_and_store_credential_definition > wallet_handle {:?} issuer_did {:?} schema \
+             {:?} tag {:?} type_ {:?}, config {:?}",
             wallet_handle,
             issuer_did,
             schema,
@@ -355,21 +355,22 @@ impl IssuerController {
         // Ok(res)
     }
 
-    /// Generate temporary credential definitional keys for an existing one (owned by the caller of the library).
+    /// Generate temporary credential definitional keys for an existing one (owned by the caller of
+    /// the library).
     ///
-    /// Use `indy_issuer_rotate_credential_def_apply` function to set generated temporary keys as the main.
+    /// Use `indy_issuer_rotate_credential_def_apply` function to set generated temporary keys as
+    /// the main.
     ///
-    /// WARNING: Rotating the credential definitional keys will result in making all credentials issued under the previous keys unverifiable.
+    /// WARNING: Rotating the credential definitional keys will result in making all credentials
+    /// issued under the previous keys unverifiable.
     ///
     /// #Params
 
     /// wallet_handle: wallet handle (created by open_wallet).
     /// cred_def_id: an identifier of created credential definition stored in the wallet
     /// config_json: (optional) type-specific configuration of credential definition as json:
-    /// - 'CL':
-    ///     {
-    ///         "support_revocation" - bool (optional, default false) whether to request non-revocation credential
-    ///     }
+    /// - 'CL': { "support_revocation" - bool (optional, default false) whether to request
+    ///   non-revocation credential }
     ///
     /// #Returns
     /// cred_def_json: public part of temporary created credential definition
@@ -377,16 +378,17 @@ impl IssuerController {
     ///     id: string - identifier of credential definition
     ///     schemaId: string - identifier of stored in ledger schema
     ///     type: string - type of the credential definition. CL is the only supported type now.
-    ///     tag: string - allows to distinct between credential definitions for the same issuer and schema
-    ///     value: Dictionary with Credential Definition's data is depended on the signature type: {
-    ///         primary: primary credential public key,
+    ///     tag: string - allows to distinct between credential definitions for the same issuer and
+    /// schema     value: Dictionary with Credential Definition's data is depended on the
+    /// signature type: {         primary: primary credential public key,
     ///         Optional<revocation>: revocation credential public key
     ///     }, - only this field differs from the original credential definition
     ///     ver: Version of the CredDef json
     /// }
     ///
-    /// Note: `primary` and `revocation` fields of credential definition are complex opaque types that contain data structures internal to Ursa.
-    /// They should not be parsed and are likely to change in future versions.
+    /// Note: `primary` and `revocation` fields of credential definition are complex opaque types
+    /// that contain data structures internal to Ursa. They should not be parsed and are likely
+    /// to change in future versions.
     ///
     /// #Errors
     /// Common*
@@ -399,8 +401,8 @@ impl IssuerController {
         cred_def_config: Option<CredentialDefinitionConfig>,
     ) -> IndyResult<String> {
         trace!(
-            "rotate_credential_definition_start > \
-                    wallet_handle {:?} cred_def_id {:?} cred_def_config {:?}",
+            "rotate_credential_definition_start > wallet_handle {:?} cred_def_id {:?} \
+             cred_def_config {:?}",
             wallet_handle,
             cred_def_id,
             cred_def_config
@@ -502,9 +504,11 @@ impl IssuerController {
         res
     }
 
-    ///  Apply temporary keys as main for an existing Credential Definition (owned by the caller of the library).
+    ///  Apply temporary keys as main for an existing Credential Definition (owned by the caller of
+    /// the library).
     ///
-    /// WARNING: Rotating the credential definitional keys will result in making all credentials issued under the previous keys unverifiable.
+    /// WARNING: Rotating the credential definitional keys will result in making all credentials
+    /// issued under the previous keys unverifiable.
     ///
     /// #Params
 
@@ -567,67 +571,75 @@ impl IssuerController {
     }
 
     /// Create a new revocation registry for the given credential definition as tuple of entities
-    /// - Revocation registry definition that encapsulates credentials definition reference, revocation type specific configuration and
-    ///   secrets used for credentials revocation
-    /// - Revocation registry state that stores the information about revoked entities in a non-disclosing way. The state can be
-    ///   represented as ordered list of revocation registry entries were each entry represents the list of revocation or issuance operations.
+    /// - Revocation registry definition that encapsulates credentials definition reference,
+    ///   revocation type specific configuration and secrets used for credentials revocation
+    /// - Revocation registry state that stores the information about revoked entities in a
+    ///   non-disclosing way. The state can be represented as ordered list of revocation registry
+    ///   entries were each entry represents the list of revocation or issuance operations.
     ///
-    /// Revocation registry definition entity contains private and public parts. Private part will be stored in the wallet. Public part
-    /// will be returned as json intended to be shared with all anoncreds workflow actors usually by publishing REVOC_REG_DEF transaction
+    /// Revocation registry definition entity contains private and public parts. Private part will
+    /// be stored in the wallet. Public part will be returned as json intended to be shared with
+    /// all anoncreds workflow actors usually by publishing REVOC_REG_DEF transaction
     /// to Indy distributed ledger.
     ///
-    /// Revocation registry state is stored on the wallet and also intended to be shared as the ordered list of REVOC_REG_ENTRY transactions.
-    /// This call initializes the state in the wallet and returns the initial entry.
+    /// Revocation registry state is stored on the wallet and also intended to be shared as the
+    /// ordered list of REVOC_REG_ENTRY transactions. This call initializes the state in the
+    /// wallet and returns the initial entry.
     ///
-    /// Some revocation registry types (for example, 'CL_ACCUM') can require generation of binary blob called tails used to hide information about revoked credentials in public
-    /// revocation registry and intended to be distributed out of leger (REVOC_REG_DEF transaction will still contain uri and hash of tails).
-    /// This call requires access to pre-configured blob storage writer instance handle that will allow to write generated tails.
+    /// Some revocation registry types (for example, 'CL_ACCUM') can require generation of binary
+    /// blob called tails used to hide information about revoked credentials in public
+    /// revocation registry and intended to be distributed out of leger (REVOC_REG_DEF transaction
+    /// will still contain uri and hash of tails). This call requires access to pre-configured
+    /// blob storage writer instance handle that will allow to write generated tails.
     ///
     /// #Params
 
     /// wallet_handle: wallet handle (created by open_wallet).
     /// issuer_did: a DID of the issuer
-    /// revoc_def_type: revocation registry type (optional, default value depends on credential definition type). Supported types are:
+    /// revoc_def_type: revocation registry type (optional, default value depends on credential
+    /// definition type). Supported types are:
     /// - 'CL_ACCUM': Type-3 pairing based accumulator implemented according to the algorithm in this paper:
     ///                   https://github.com/hyperledger/ursa/blob/master/libursa/docs/AnonCred.pdf
     ///               This type is default for 'CL' credential definition type.
-    /// tag: any string that allows to distinct between revocation registries for the same issuer and credential definition
-    /// cred_def_id: id of stored in ledger credential definition
+    /// tag: any string that allows to distinct between revocation registries for the same issuer
+    /// and credential definition cred_def_id: id of stored in ledger credential definition
     /// config_json: type-specific configuration of revocation registry as json:
-    /// - 'CL_ACCUM': {
-    ///     "issuance_type": (optional) type of issuance. Currently supported:
-    ///         1) ISSUANCE_BY_DEFAULT: all indices are assumed to be issued and initial accumulator is calculated over all indices;
-    ///            Revocation Registry is updated only during revocation.
-    ///         2) ISSUANCE_ON_DEMAND: nothing is issued initially accumulator is 1 (used by default);
-    ///     "max_cred_num": maximum number of credentials the new registry can process (optional, default 100000)
+    /// - 'CL_ACCUM': { "issuance_type": (optional) type of issuance. Currently supported: 1)
+    ///   ISSUANCE_BY_DEFAULT: all indices are assumed to be issued and initial accumulator is
+    ///   calculated over all indices; Revocation Registry is updated only during revocation. 2)
+    ///   ISSUANCE_ON_DEMAND: nothing is issued initially accumulator is 1 (used by default);
+    ///   "max_cred_num": maximum number of credentials the new registry can process (optional,
+    ///   default 100000)
     /// }
-    /// tails_writer_handle: handle of blob storage to store tails (returned by `indy_open_blob_storage_writer`).
+    /// tails_writer_handle: handle of blob storage to store tails (returned by
+    /// `indy_open_blob_storage_writer`).
     ///
     /// NOTE:
-    ///     Recursive creation of folder for Default Tails Writer (correspondent to `tails_writer_handle`)
-    ///     in the system-wide temporary directory may fail in some setup due to permissions: `IO error: Permission denied`.
-    ///     In this case use `TMPDIR` environment variable to define temporary directory specific for an application.
+    ///     Recursive creation of folder for Default Tails Writer (correspondent to
+    /// `tails_writer_handle`)     in the system-wide temporary directory may fail in some setup
+    /// due to permissions: `IO error: Permission denied`.     In this case use `TMPDIR`
+    /// environment variable to define temporary directory specific for an application.
     ///
     /// #Returns
     /// revoc_reg_id: identifier of created revocation registry definition
     /// revoc_reg_def_json: public part of revocation registry definition
     ///     {
     ///         "id": string - ID of the Revocation Registry,
-    ///         "revocDefType": string - Revocation Registry type (only CL_ACCUM is supported for now),
-    ///         "tag": string - Unique descriptive ID of the Registry,
+    ///         "revocDefType": string - Revocation Registry type (only CL_ACCUM is supported for
+    /// now),         "tag": string - Unique descriptive ID of the Registry,
     ///         "credDefId": string - ID of the corresponding CredentialDefinition,
     ///         "value": Registry-specific data {
-    ///             "issuanceType": string - Type of Issuance(ISSUANCE_BY_DEFAULT or ISSUANCE_ON_DEMAND),
-    ///             "maxCredNum": number - Maximum number of credentials the Registry can serve.
-    ///             "tailsHash": string - Hash of tails.
+    ///             "issuanceType": string - Type of Issuance(ISSUANCE_BY_DEFAULT or
+    /// ISSUANCE_ON_DEMAND),             "maxCredNum": number - Maximum number of credentials
+    /// the Registry can serve.             "tailsHash": string - Hash of tails.
     ///             "tailsLocation": string - Location of tails file.
-    ///             "publicKeys": <public_keys> - Registry's public key (opaque type that contains data structures internal to Ursa.
-    ///                                                                  It should not be parsed and are likely to change in future versions).
-    ///         },
+    ///             "publicKeys": <public_keys> - Registry's public key (opaque type that contains
+    /// data structures internal to Ursa.                                                       
+    /// It should not be parsed and are likely to change in future versions).         },
     ///         "ver": string - version of revocation registry definition json.
     ///     }
-    /// revoc_reg_entry_json: revocation registry entry that defines initial state of revocation registry
-    /// {
+    /// revoc_reg_entry_json: revocation registry entry that defines initial state of revocation
+    /// registry {
     ///     value: {
     ///         prevAccum: string - previous accumulator value.
     ///         accum: string - current accumulator value.
@@ -652,9 +664,8 @@ impl IssuerController {
         tails_writer_handle: i32,
     ) -> IndyResult<(String, String, String)> {
         trace!(
-            "create_and_store_revocation_registry > wallet_handle {:?} \
-                    issuer_did {:?} type_ {:?} tag: {:?} cred_def_id {:?} \
-                    config: {:?} tails_handle {:?}",
+            "create_and_store_revocation_registry > wallet_handle {:?} issuer_did {:?} type_ {:?} \
+             tag: {:?} cred_def_id {:?} config: {:?} tails_handle {:?}",
             wallet_handle,
             issuer_did,
             type_,
@@ -826,10 +837,10 @@ impl IssuerController {
     ///         "cred_def_id": string, - identifier of credential definition
     ///         // Fields below can depend on Credential Definition type
     ///         "nonce": string,
-    ///         "key_correctness_proof" : key correctness proof for credential definition correspondent to cred_def_id
-    ///                                   (opaque type that contains data structures internal to Ursa.
-    ///                                   It should not be parsed and are likely to change in future versions).
-    ///     }
+    ///         "key_correctness_proof" : key correctness proof for credential definition
+    /// correspondent to cred_def_id                                   (opaque type that
+    /// contains data structures internal to Ursa.                                   It should
+    /// not be parsed and are likely to change in future versions).     }
     ///
     /// #Errors
     /// Common*
@@ -877,29 +888,31 @@ impl IssuerController {
 
     /// Check Cred Request for the given Cred Offer and issue Credential for the given Cred Request.
     ///
-    /// Cred Request must match Cred Offer. The credential definition and revocation registry definition
-    /// referenced in Cred Offer and Cred Request must be already created and stored into the wallet.
+    /// Cred Request must match Cred Offer. The credential definition and revocation registry
+    /// definition referenced in Cred Offer and Cred Request must be already created and stored
+    /// into the wallet.
     ///
-    /// Information for this credential revocation will be store in the wallet as part of revocation registry under
-    /// generated cred_revoc_id local for this wallet.
+    /// Information for this credential revocation will be store in the wallet as part of revocation
+    /// registry under generated cred_revoc_id local for this wallet.
     ///
-    /// This call returns revoc registry delta as json file intended to be shared as REVOC_REG_ENTRY transaction.
-    /// Note that it is possible to accumulate deltas to reduce ledger load.
+    /// This call returns revoc registry delta as json file intended to be shared as REVOC_REG_ENTRY
+    /// transaction. Note that it is possible to accumulate deltas to reduce ledger load.
     ///
     /// #Params
 
     /// wallet_handle: wallet handle (created by open_wallet).
     /// cred_offer_json: a cred offer created by indy_issuer_create_credential_offer
     /// cred_req_json: a credential request created by indy_prover_create_credential_req
-    /// cred_values_json: a credential containing attribute values for each of requested attribute names.
-    ///     Example:
+    /// cred_values_json: a credential containing attribute values for each of requested attribute
+    /// names.     Example:
     ///     {
     ///      "attr1" : {"raw": "value1", "encoded": "value1_as_int" },
     ///      "attr2" : {"raw": "value1", "encoded": "value1_as_int" }
     ///     }
-    ///   If you want to use empty value for some credential field, you should set "raw" to "" and "encoded" should not be empty
-    /// rev_reg_id: id of revocation registry stored in the wallet
-    /// blob_storage_reader_handle: configuration of blob storage reader handle that will allow to read revocation tails (returned by `indy_open_blob_storage_reader`)
+    ///   If you want to use empty value for some credential field, you should set "raw" to "" and
+    /// "encoded" should not be empty rev_reg_id: id of revocation registry stored in the wallet
+    /// blob_storage_reader_handle: configuration of blob storage reader handle that will allow to
+    /// read revocation tails (returned by `indy_open_blob_storage_reader`)
     ///
     /// #Returns
     /// cred_json: Credential json containing signed credential values
@@ -939,9 +952,8 @@ impl IssuerController {
         blob_storage_reader_handle: Option<i32>,
     ) -> IndyResult<(String, Option<String>, Option<String>)> {
         trace!(
-            "new_credential > wallet_handle {:?} cred_offer {:?} \
-                    cred_request {:?} cred_values {:?} rev_reg_id {:?} \
-                    blob_storage_reader_handle {:?}",
+            "new_credential > wallet_handle {:?} cred_offer {:?} cred_request {:?} cred_values \
+             {:?} rev_reg_id {:?} blob_storage_reader_handle {:?}",
             wallet_handle,
             secret!(&cred_offer),
             secret!(&cred_request),
@@ -1130,20 +1142,22 @@ impl IssuerController {
         res
     }
 
-    /// Revoke a credential identified by a cred_revoc_id (returned by indy_issuer_create_credential).
+    /// Revoke a credential identified by a cred_revoc_id (returned by
+    /// indy_issuer_create_credential).
     ///
     /// The corresponding credential definition and revocation registry must be already
     /// created an stored into the wallet.
     ///
-    /// This call returns revoc registry delta as json file intended to be shared as REVOC_REG_ENTRY transaction.
-    /// Note that it is possible to accumulate deltas to reduce ledger load.
+    /// This call returns revoc registry delta as json file intended to be shared as REVOC_REG_ENTRY
+    /// transaction. Note that it is possible to accumulate deltas to reduce ledger load.
     ///
     /// #Params
 
     /// wallet_handle: wallet handle (created by open_wallet).
-    /// blob_storage_reader_cfg_handle: configuration of blob storage reader handle that will allow to read revocation tails (returned by `indy_open_blob_storage_reader`).
-    /// rev_reg_id: id of revocation registry stored in wallet
-    /// cred_revoc_id: local id for revocation info related to issued credential
+    /// blob_storage_reader_cfg_handle: configuration of blob storage reader handle that will allow
+    /// to read revocation tails (returned by `indy_open_blob_storage_reader`). rev_reg_id: id
+    /// of revocation registry stored in wallet cred_revoc_id: local id for revocation info
+    /// related to issued credential
     ///
     /// #Returns
     /// revoc_reg_delta_json: Revocation registry delta json with a revoked credential
@@ -1168,9 +1182,8 @@ impl IssuerController {
         cred_revoc_id: String,
     ) -> IndyResult<String> {
         trace!(
-            "revoke_credential > wallet_handle {:?} \
-                    blob_storage_reader_handle {:?} \
-                    rev_reg_id {:?} cred_revoc_id {:?}",
+            "revoke_credential > wallet_handle {:?} blob_storage_reader_handle {:?} rev_reg_id \
+             {:?} cred_revoc_id {:?}",
             wallet_handle,
             blob_storage_reader_handle,
             rev_reg_id,
@@ -1273,8 +1286,14 @@ impl IssuerController {
         rev_reg_id: &RevocationRegistryId,
         cred_revoc_id: &str,
     ) -> IndyResult<String> {
-        trace!("recovery_credential >>> wallet_handle: {:?}, blob_storage_reader_handle: {:?}, rev_reg_id: {:?}, cred_revoc_id: {:?}",
-               wallet_handle, blob_storage_reader_handle, rev_reg_id, secret!(cred_revoc_id));
+        trace!(
+            "recovery_credential >>> wallet_handle: {:?}, blob_storage_reader_handle: {:?}, \
+             rev_reg_id: {:?}, cred_revoc_id: {:?}",
+            wallet_handle,
+            blob_storage_reader_handle,
+            rev_reg_id,
+            secret!(cred_revoc_id)
+        );
 
         let cred_revoc_id = AnoncredsHelpers::parse_cred_rev_id(cred_revoc_id)?;
 
@@ -1365,8 +1384,9 @@ impl IssuerController {
         res
     }
 
-    /// Merge two revocation registry deltas (returned by indy_issuer_create_credential or indy_issuer_revoke_credential) to accumulate common delta.
-    /// Send common delta to ledger to reduce the load.
+    /// Merge two revocation registry deltas (returned by indy_issuer_create_credential or
+    /// indy_issuer_revoke_credential) to accumulate common delta. Send common delta to ledger
+    /// to reduce the load.
     ///
     /// #Params
 
@@ -1381,7 +1401,8 @@ impl IssuerController {
     ///     ver: string - version revocation registry delta json
     /// }
     ///
-    /// other_rev_reg_delta_json: revocation registry delta for which PrevAccum value is equal to value of accum field of rev_reg_delta_json parameter.
+    /// other_rev_reg_delta_json: revocation registry delta for which PrevAccum value is equal to
+    /// value of accum field of rev_reg_delta_json parameter.
     ///
     /// #Returns
     /// merged_rev_reg_delta: Merged revocation registry delta

@@ -1,16 +1,13 @@
-use super::DELIMITER;
-
-use super::super::crypto::did::DidValue;
+use std::collections::{HashMap, HashSet};
 
 use indy_api_types::{
     errors::{IndyErrorKind, IndyResult},
+    validation::Validatable,
     IndyError,
 };
-use std::collections::{HashMap, HashSet};
 
-use super::indy_identifiers;
+use super::{super::crypto::did::DidValue, indy_identifiers, DELIMITER};
 use crate::utils::qualifier;
-use indy_api_types::validation::Validatable;
 
 pub const MAX_ATTRIBUTES_COUNT: usize = 125;
 

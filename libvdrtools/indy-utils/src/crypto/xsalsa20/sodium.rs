@@ -1,7 +1,8 @@
 extern crate sodiumoxide;
 
-use self::sodiumoxide::crypto::{secretbox, secretbox::xsalsa20poly1305};
 use indy_api_types::errors::prelude::*;
+
+use self::sodiumoxide::crypto::{secretbox, secretbox::xsalsa20poly1305};
 
 pub const KEYBYTES: usize = xsalsa20poly1305::KEYBYTES;
 pub const NONCEBYTES: usize = xsalsa20poly1305::NONCEBYTES;
