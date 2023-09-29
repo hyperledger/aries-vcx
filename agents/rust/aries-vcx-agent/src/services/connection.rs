@@ -121,7 +121,7 @@ impl ServiceConnections {
     pub async fn accept_response(&self, thread_id: &str, response: Response) -> AgentResult<()> {
         let invitee: Connection<_, _> = self.connections.get(thread_id)?.try_into()?;
         let invitee = invitee
-            .handle_response(&self.profile.wallet(), response)
+            .handle_response(self.profile.wallet(), response)
             .await?;
 
         self.connections.insert(thread_id, invitee.into())?;

@@ -148,7 +148,7 @@ impl Connection {
 
         block_on(async {
             let new_conn = connection
-                .handle_request(&profile.inner.wallet(), request, url, routing_keys)
+                .handle_request(profile.inner.wallet(), request, url, routing_keys)
                 .await?;
 
             *handler = VcxGenericConnection::from(new_conn);
@@ -173,7 +173,7 @@ impl Connection {
 
         block_on(async {
             let new_conn = connection
-                .handle_response(&profile.inner.wallet(), response)
+                .handle_response(profile.inner.wallet(), response)
                 .await?;
             *handler = VcxGenericConnection::from(new_conn);
 

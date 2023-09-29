@@ -64,7 +64,7 @@ async fn establish_connection_from_invite<P1: Profile, P2: Profile>(
     let response = inviter.get_connection_response_msg();
 
     let invitee = invitee
-        .handle_response(&alice.profile.wallet(), response)
+        .handle_response(alice.profile.wallet(), response)
         .await
         .unwrap();
     let ack = invitee.get_ack();
