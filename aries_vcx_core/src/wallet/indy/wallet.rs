@@ -8,8 +8,6 @@ use vdrtools::{
 
 use crate::{
     errors::error::{AriesVcxCoreError, AriesVcxCoreErrorKind, VcxCoreResult},
-    global::settings,
-    utils,
     wallet::indy::{
         did_mocks::{did_mocks_enabled, DidMocks},
         IssuerConfig, RestoreWalletConfigs, WalletConfig,
@@ -271,11 +269,6 @@ pub async fn export_wallet(
 }
 
 pub async fn create_and_open_wallet(wallet_config: &WalletConfig) -> VcxCoreResult<WalletHandle> {
-    if settings::indy_mocks_enabled() {
-        warn!("create_and_open_wallet ::: Indy mocks enabled, skipping opening main wallet.");
-        return Ok(WalletHandle(0));
-    }
-
     create_indy_wallet(wallet_config).await?;
 
     let handle = open_wallet(wallet_config).await?;
@@ -285,11 +278,6 @@ pub async fn create_and_open_wallet(wallet_config: &WalletConfig) -> VcxCoreResu
 
 pub async fn close_wallet(wallet_handle: WalletHandle) -> VcxCoreResult<()> {
     trace!("close_wallet >>>");
-
-    if settings::indy_mocks_enabled() {
-        warn!("close_wallet >>> Indy mocks enabled, skipping closing wallet");
-        return Ok(());
-    }
 
     Locator::instance()
         .wallet_controller
@@ -309,13 +297,6 @@ pub async fn create_and_store_my_did(
         seed,
         method_name
     );
-
-    if settings::indy_mocks_enabled() {
-        return Ok((
-            utils::constants::DID.to_string(),
-            utils::constants::VERKEY.to_string(),
-        ));
-    }
 
     let res = Locator::instance()
         .did_controller

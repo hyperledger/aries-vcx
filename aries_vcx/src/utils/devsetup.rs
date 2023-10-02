@@ -8,10 +8,6 @@ use std::{
 
 use agency_client::testing::mocking::{enable_agency_mocks, AgencyMockDecrypted};
 use aries_vcx_core::{
-    global::settings::{
-        disable_indy_mocks as disable_indy_mocks_core, enable_indy_mocks as enable_indy_mocks_core,
-        reset_config_values_ariesvcxcore,
-    },
     ledger::indy::pool::test_utils::{create_testpool_genesis_txn_file, get_temp_file_path},
     wallet::indy::{
         did_mocks::DidMocks,
@@ -91,9 +87,7 @@ pub fn reset_global_state() {
     AgencyMockDecrypted::clear_mocks();
     DidMocks::clear_mocks();
     aries_vcx_disable_indy_mocks().unwrap();
-    disable_indy_mocks_core().unwrap();
     reset_config_values_ariesvcx().unwrap();
-    reset_config_values_ariesvcxcore().unwrap()
 }
 
 impl SetupEmpty {
@@ -127,7 +121,6 @@ impl SetupMocks {
         init_test_logging();
         enable_agency_mocks();
         aries_vcx_enable_indy_mocks().unwrap();
-        enable_indy_mocks_core().unwrap();
         set_config_value(CONFIG_INSTITUTION_DID, DEFAULT_DID).unwrap();
         SetupMocks {}
     }

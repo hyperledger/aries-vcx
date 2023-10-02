@@ -1,7 +1,5 @@
 use std::{collections::HashMap, sync::RwLock};
 
-use aries_vcx_core::global::settings::{disable_indy_mocks, enable_indy_mocks};
-
 use crate::errors::error::prelude::*;
 
 pub static CONFIG_SDK_TO_REMOTE_ROLE: &str = "sdk_to_remote_role";
@@ -45,13 +43,11 @@ lazy_static! {
 
 pub fn aries_vcx_enable_indy_mocks() -> VcxResult<()> {
     debug!("enable_indy_mocks >>>");
-    enable_indy_mocks()?;
     set_config_value(CONFIG_ENABLE_TEST_MODE, "true")
 }
 
 pub fn aries_vcx_disable_indy_mocks() -> VcxResult<()> {
     debug!("disable_indy_mocks >>>");
-    disable_indy_mocks()?;
     set_config_value(CONFIG_ENABLE_TEST_MODE, "false")
 }
 
