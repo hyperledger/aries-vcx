@@ -22,7 +22,7 @@ pub async fn migrate_wallet<E>(
 where
     E: Display,
 {
-    info!("Starting wallet migration...");
+    info!("Starting wallet migration");
 
     if src_wallet_handle == dest_wallet_handle {
         error!("Equal wallet handles: {src_wallet_handle:?} {dest_wallet_handle:?}");

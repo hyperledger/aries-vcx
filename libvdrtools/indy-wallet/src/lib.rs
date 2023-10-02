@@ -18,7 +18,7 @@ use indy_utils::{
     crypto::chacha20poly1305_ietf::{self, Key as MasterKey},
     secret,
 };
-use log::{debug, trace};
+use log::{info, trace};
 use serde::{Deserialize, Serialize};
 use serde_json::Value as SValue;
 
@@ -714,6 +714,8 @@ impl WalletService {
         let new_wallet = self.get_wallet(new_wh).await?;
 
         let mut records = old_wallet.get_all().await?;
+        let total = records.get_total_count()?;
+        info!("Migrating {total:?} records");
         let mut num_records = 0;
 
         while let Some(WalletRecord {
@@ -724,6 +726,9 @@ impl WalletService {
         }) = records.next().await?
         {
             num_records += 1;
+            if num_records % 1000 == 1 {
+                info!("Migrating wallet record number {num_records} / {total:?}");
+            }
             let record = Record {
                 type_: type_.ok_or_else(|| {
                     err_msg(
@@ -755,7 +760,7 @@ impl WalletService {
             }
         }
 
-        debug!("{num_records} records have been migrated!");
+        info!("{num_records} / {total:?} records have been migrated!");
 
         Ok(())
     }
