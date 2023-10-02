@@ -1,8 +1,6 @@
 mod conversions;
 mod thin_state;
 
-use std::sync::Arc;
-
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use messages::AriesMessage;
@@ -174,7 +172,7 @@ impl GenericConnection {
 
     pub async fn encrypt_message(
         &self,
-        wallet: &Arc<dyn BaseWallet>,
+        wallet: &impl BaseWallet,
         message: &AriesMessage,
     ) -> VcxResult<EncryptionEnvelope> {
         let sender_verkey = &self.pairwise_info().pw_vk;
@@ -187,7 +185,7 @@ impl GenericConnection {
 
     pub async fn send_message<T>(
         &self,
-        wallet: &Arc<dyn BaseWallet>,
+        wallet: &impl BaseWallet,
         message: &AriesMessage,
         transport: &T,
     ) -> VcxResult<()>
@@ -213,9 +211,7 @@ impl GenericConnection {
 mod connection_serde_tests {
     #![allow(clippy::unwrap_used)]
 
-    use std::sync::Arc;
-
-    use aries_vcx_core::{ledger::base_ledger::IndyLedgerRead, wallet::mock_wallet::MockWallet};
+    use aries_vcx_core::wallet::mock_wallet::MockWallet;
     use async_trait::async_trait;
     use chrono::Utc;
     use messages::{
@@ -380,7 +376,7 @@ mod connection_serde_tests {
 
     async fn make_initial_parts() -> (String, PairwiseInfo) {
         let source_id = SOURCE_ID.to_owned();
-        let wallet: Arc<dyn BaseWallet> = Arc::new(MockWallet {});
+        let wallet = MockWallet;
         let pairwise_info = PairwiseInfo::create(&wallet).await.unwrap();
 
         (source_id, pairwise_info)
@@ -392,7 +388,7 @@ mod connection_serde_tests {
     }
 
     async fn make_invitee_invited() -> InviteeConnection<InviteeInvited> {
-        let indy_ledger: Arc<dyn IndyLedgerRead> = Arc::new(MockLedger {});
+        let indy_ledger = MockLedger;
         let content = InvitationContent::builder_pairwise()
             .label(String::new())
             .recipient_keys(vec![PW_KEY.to_owned()])
@@ -425,7 +421,7 @@ mod connection_serde_tests {
     }
 
     async fn make_invitee_completed() -> InviteeConnection<InviteeCompleted> {
-        let wallet: Arc<dyn BaseWallet> = Arc::new(MockWallet {});
+        let wallet = MockWallet;
         let con = make_invitee_requested().await;
         let mut con_data = ConnectionData::new(PW_KEY.to_owned(), AriesDidDoc::default());
         con_data.did_doc.id = PW_KEY.to_owned();
@@ -468,7 +464,7 @@ mod connection_serde_tests {
     }
 
     async fn make_inviter_requested() -> InviterConnection<InviterRequested> {
-        let wallet: Arc<dyn BaseWallet> = Arc::new(MockWallet {});
+        let wallet = MockWallet;
         let con = make_inviter_invited().await;
         let new_service_endpoint = SERVICE_ENDPOINT
             .to_owned()

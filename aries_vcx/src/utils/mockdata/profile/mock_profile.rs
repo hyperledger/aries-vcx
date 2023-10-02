@@ -1,13 +1,4 @@
-use std::sync::Arc;
-
-use aries_vcx_core::{
-    anoncreds::base_anoncreds::BaseAnonCreds,
-    ledger::base_ledger::{
-        AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite,
-        TxnAuthrAgrmtOptions,
-    },
-    wallet::{base_wallet::BaseWallet, mock_wallet::MockWallet},
-};
+use aries_vcx_core::{ledger::base_ledger::TxnAuthrAgrmtOptions, wallet::mock_wallet::MockWallet};
 use async_trait::async_trait;
 
 use super::{mock_anoncreds::MockAnoncreds, mock_ledger::MockLedger};
@@ -20,28 +11,25 @@ pub struct MockProfile;
 
 #[async_trait]
 impl Profile for MockProfile {
-    fn inject_indy_ledger_read(&self) -> Arc<dyn IndyLedgerRead> {
-        Arc::new(MockLedger {})
+    type LedgerRead = MockLedger;
+    type LedgerWrite = MockLedger;
+    type Anoncreds = MockAnoncreds;
+    type Wallet = MockWallet;
+
+    fn ledger_read(&self) -> &Self::LedgerRead {
+        &MockLedger
     }
 
-    fn inject_indy_ledger_write(&self) -> Arc<dyn IndyLedgerWrite> {
-        Arc::new(MockLedger {})
+    fn ledger_write(&self) -> &Self::LedgerWrite {
+        &MockLedger
     }
 
-    fn inject_anoncreds(&self) -> Arc<dyn BaseAnonCreds> {
-        Arc::new(MockAnoncreds {})
+    fn anoncreds(&self) -> &Self::Anoncreds {
+        &MockAnoncreds
     }
 
-    fn inject_anoncreds_ledger_read(&self) -> Arc<dyn AnoncredsLedgerRead> {
-        Arc::new(MockLedger {})
-    }
-
-    fn inject_anoncreds_ledger_write(&self) -> Arc<dyn AnoncredsLedgerWrite> {
-        Arc::new(MockLedger {})
-    }
-
-    fn inject_wallet(&self) -> Arc<dyn BaseWallet> {
-        Arc::new(MockWallet {})
+    fn wallet(&self) -> &Self::Wallet {
+        &MockWallet
     }
 
     fn update_taa_configuration(&self, _taa_options: TxnAuthrAgrmtOptions) -> VcxResult<()> {

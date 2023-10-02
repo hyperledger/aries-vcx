@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use agency_client::testing::mocking::AgencyMockDecrypted;
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
@@ -17,7 +15,7 @@ pub struct EncryptionEnvelope(pub Vec<u8>);
 
 impl EncryptionEnvelope {
     pub async fn create(
-        wallet: &Arc<dyn BaseWallet>,
+        wallet: &impl BaseWallet,
         message: &AriesMessage,
         pw_verkey: Option<&str>,
         did_doc: &AriesDidDoc,
@@ -42,7 +40,7 @@ impl EncryptionEnvelope {
     }
 
     async fn encrypt_for_pairwise(
-        wallet: &Arc<dyn BaseWallet>,
+        wallet: &impl BaseWallet,
         message: &AriesMessage,
         pw_verkey: Option<&str>,
         did_doc: &AriesDidDoc,
@@ -63,7 +61,7 @@ impl EncryptionEnvelope {
     }
 
     async fn wrap_into_forward_messages(
-        wallet: &Arc<dyn BaseWallet>,
+        wallet: &impl BaseWallet,
         mut message: Vec<u8>,
         did_doc: &AriesDidDoc,
     ) -> VcxResult<Vec<u8>> {
@@ -88,7 +86,7 @@ impl EncryptionEnvelope {
     }
 
     async fn wrap_into_forward(
-        wallet: &Arc<dyn BaseWallet>,
+        wallet: &impl BaseWallet,
         message: Vec<u8>,
         to: &str,
         routing_key: &str,
@@ -113,7 +111,7 @@ impl EncryptionEnvelope {
     }
 
     async fn _unpack_a2a_message(
-        wallet: &Arc<dyn BaseWallet>,
+        wallet: &impl BaseWallet,
         payload: Vec<u8>,
     ) -> VcxResult<(String, Option<String>)> {
         trace!(
@@ -132,7 +130,7 @@ impl EncryptionEnvelope {
 
     // todo: we should use auth_unpack wherever possible
     pub async fn anon_unpack(
-        wallet: &Arc<dyn BaseWallet>,
+        wallet: &impl BaseWallet,
         payload: Vec<u8>,
     ) -> VcxResult<(AriesMessage, Option<String>)> {
         trace!(
@@ -158,7 +156,7 @@ impl EncryptionEnvelope {
     }
 
     pub async fn auth_unpack(
-        wallet: &Arc<dyn BaseWallet>,
+        wallet: &impl BaseWallet,
         payload: Vec<u8>,
         expected_vk: &str,
     ) -> VcxResult<AriesMessage> {

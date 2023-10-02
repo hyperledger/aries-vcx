@@ -48,7 +48,7 @@ async fn test_agency_pool_double_issuance_issuer_is_verifier() {
         // NOTE: Credx-anoncreds-implementation-generated presentation is not compatible with
         // vdrtools anoncreds implementation as the presentation fails to deserialize
         // #[cfg(feature = "migration")]
-        // consumer.migrate().await;
+        // let mut consumer = consumer.migrate().await;
 
         let verifier = exchange_proof(
             &mut institution,
@@ -64,7 +64,7 @@ async fn test_agency_pool_double_issuance_issuer_is_verifier() {
         );
 
         #[cfg(feature = "migration")]
-        institution.migrate().await;
+        let mut institution = institution.migrate().await;
 
         let verifier = exchange_proof(
             &mut institution,
@@ -84,6 +84,7 @@ async fn test_agency_pool_double_issuance_issuer_is_verifier() {
 
 #[tokio::test]
 #[ignore]
+#[allow(unused_mut)]
 async fn test_agency_pool_two_creds_one_rev_reg() {
     SetupPoolDirectory::run(|setup| async move {
         let mut issuer = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
@@ -104,7 +105,7 @@ async fn test_agency_pool_two_creds_one_rev_reg() {
         .await;
 
         #[cfg(feature = "migration")]
-        issuer.migrate().await;
+        let mut issuer = issuer.migrate().await;
 
         let _credential_handle2 = exchange_credential(
             &mut consumer,
@@ -117,7 +118,7 @@ async fn test_agency_pool_two_creds_one_rev_reg() {
         .await;
 
         #[cfg(feature = "migration")]
-        verifier.migrate().await;
+        let mut verifier = verifier.migrate().await;
 
         let verifier_handler = exchange_proof(
             &mut verifier,
@@ -133,7 +134,7 @@ async fn test_agency_pool_two_creds_one_rev_reg() {
         );
 
         #[cfg(feature = "migration")]
-        consumer.migrate().await;
+        let mut consumer = consumer.migrate().await;
 
         let verifier_handler = exchange_proof(
             &mut verifier,
@@ -153,6 +154,7 @@ async fn test_agency_pool_two_creds_one_rev_reg() {
 
 #[tokio::test]
 #[ignore]
+#[allow(unused_mut)]
 async fn test_agency_pool_credential_exchange_via_proposal() {
     SetupPoolDirectory::run(|setup| async move {
         let mut institution = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
@@ -165,7 +167,7 @@ async fn test_agency_pool_credential_exchange_via_proposal() {
         .await;
 
         #[cfg(feature = "migration")]
-        institution.migrate().await;
+        let mut institution = institution.migrate().await;
 
         exchange_credential_with_proposal(
             &mut consumer,
@@ -183,6 +185,7 @@ async fn test_agency_pool_credential_exchange_via_proposal() {
 
 #[tokio::test]
 #[ignore]
+#[allow(unused_mut)]
 async fn test_agency_pool_credential_exchange_via_proposal_failed() {
     SetupPoolDirectory::run(|setup| async move {
         let mut institution = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
@@ -200,7 +203,7 @@ async fn test_agency_pool_credential_exchange_via_proposal_failed() {
         let mut issuer = create_issuer_from_proposal(cred_proposal.clone());
 
         #[cfg(feature = "migration")]
-        institution.migrate().await;
+        let mut institution = institution.migrate().await;
 
         let cred_offer = accept_credential_proposal(
             &mut institution,
@@ -224,6 +227,7 @@ async fn test_agency_pool_credential_exchange_via_proposal_failed() {
 // TODO: Maybe duplicates test_agency_pool_credential_exchange_via_proposal
 #[tokio::test]
 #[ignore]
+#[allow(unused_mut)]
 async fn test_agency_pool_credential_exchange_via_proposal_with_negotiation() {
     SetupPoolDirectory::run(|setup| async move {
         let mut institution = create_test_agent_trustee(setup.genesis_file_path.clone()).await;
@@ -236,7 +240,7 @@ async fn test_agency_pool_credential_exchange_via_proposal_with_negotiation() {
         .await;
 
         #[cfg(feature = "migration")]
-        institution.migrate().await;
+        let mut institution = institution.migrate().await;
 
         let cred_proposal =
             create_credential_proposal(&schema.schema_id, &cred_def.get_cred_def_id(), "comment");
@@ -244,7 +248,7 @@ async fn test_agency_pool_credential_exchange_via_proposal_with_negotiation() {
         let mut issuer = create_issuer_from_proposal(cred_proposal.clone());
 
         #[cfg(feature = "migration")]
-        consumer.migrate().await;
+        let mut consumer = consumer.migrate().await;
 
         let cred_proposal_1 =
             create_credential_proposal(&schema.schema_id, &cred_def.get_cred_def_id(), "comment");

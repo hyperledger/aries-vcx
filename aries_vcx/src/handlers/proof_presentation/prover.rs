@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::Arc};
+use std::collections::HashMap;
 
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
@@ -70,7 +70,7 @@ impl Prover {
 
     pub async fn retrieve_credentials(
         &self,
-        anoncreds: &Arc<dyn BaseAnonCreds>,
+        anoncreds: &impl BaseAnonCreds,
     ) -> VcxResult<RetrievedCredentials> {
         trace!("Prover::retrieve_credentials >>>");
         let presentation_request = self.presentation_request_data()?;
@@ -86,8 +86,8 @@ impl Prover {
 
     pub async fn generate_presentation(
         &mut self,
-        ledger: &Arc<dyn AnoncredsLedgerRead>,
-        anoncreds: &Arc<dyn BaseAnonCreds>,
+        ledger: &impl AnoncredsLedgerRead,
+        anoncreds: &impl BaseAnonCreds,
         credentials: SelectedCredentials,
         self_attested_attrs: HashMap<String, String>,
     ) -> VcxResult<()> {

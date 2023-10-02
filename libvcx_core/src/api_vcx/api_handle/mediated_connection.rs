@@ -11,7 +11,7 @@ use aries_vcx::{
         },
         AriesMessage,
     },
-    protocols::{mediated_connection::pairwise_info::PairwiseInfo, SendClosure},
+    protocols::mediated_connection::pairwise_info::PairwiseInfo,
 };
 use serde_json;
 use uuid::Uuid;
@@ -220,7 +220,11 @@ pub async fn update_state_with_message(handle: u32, message: &str) -> LibvcxResu
     })?;
 
     connection
-        .update_state_with_message(get_main_wallet()?, get_main_agency_client()?, Some(message))
+        .update_state_with_message(
+            &get_main_wallet()?,
+            get_main_agency_client()?,
+            Some(message),
+        )
         .await?;
     let state: u32 = connection.get_state().into();
     CONNECTION_MAP.insert(handle, connection)?;
@@ -367,24 +371,17 @@ pub async fn get_message_by_id(handle: u32, msg_id: &str) -> LibvcxResult<AriesM
 
 pub async fn send_message(handle: u32, message: AriesMessage) -> LibvcxResult<()> {
     trace!("connection::send_message >>>");
-    let send_message = send_message_closure(handle).await?;
-    send_message(message).await.map_err(|err| err.into())
-}
-
-pub async fn send_message_closure(handle: u32) -> LibvcxResult<SendClosure> {
     let connection = CONNECTION_MAP.get_cloned(handle)?;
-
-    connection
-        .send_message_closure(get_main_wallet()?)
-        .await
-        .map_err(|err| err.into())
+    let wallet = get_main_wallet()?;
+    let send_message = connection.send_message_closure(&wallet).await?;
+    send_message(message).await.map_err(|err| err.into())
 }
 
 pub async fn send_ping(handle: u32, comment: Option<&str>) -> LibvcxResult<()> {
     let mut connection = CONNECTION_MAP.get_cloned(handle)?;
 
     connection
-        .send_ping(get_main_wallet()?, comment.map(String::from))
+        .send_ping(&get_main_wallet()?, comment.map(String::from))
         .await?;
     CONNECTION_MAP.insert(handle, connection)
 }

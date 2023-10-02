@@ -1,6 +1,7 @@
 use std::sync::{Arc, Mutex};
 
 use aries_vcx::{
+    core::profile::profile::Profile,
     errors::error::{AriesVcxError, AriesVcxErrorKind},
     protocols::connection::{
         pairwise_info::PairwiseInfo, Connection as VcxConnection,
@@ -74,7 +75,7 @@ pub struct Connection {
 // seperate function since uniffi can't handle constructors with results
 pub fn create_inviter(profile: Arc<ProfileHolder>) -> VcxUniFFIResult<Arc<Connection>> {
     block_on(async {
-        let pairwise_info = PairwiseInfo::create(&profile.inner.inject_wallet()).await?;
+        let pairwise_info = PairwiseInfo::create(profile.inner.wallet()).await?;
         let connection = VcxConnection::new_inviter(String::new(), pairwise_info);
         let handler = Mutex::new(VcxGenericConnection::from(connection));
         Ok(Arc::new(Connection { handler }))
@@ -84,7 +85,7 @@ pub fn create_inviter(profile: Arc<ProfileHolder>) -> VcxUniFFIResult<Arc<Connec
 // seperate function since uniffi can't handle constructors with results
 pub fn create_invitee(profile: Arc<ProfileHolder>) -> VcxUniFFIResult<Arc<Connection>> {
     block_on(async {
-        let pairwise_info = PairwiseInfo::create(&profile.inner.inject_wallet()).await?;
+        let pairwise_info = PairwiseInfo::create(profile.inner.wallet()).await?;
         let connection = VcxConnection::new_invitee(String::new(), pairwise_info);
         let handler = Mutex::new(VcxGenericConnection::from(connection));
 
@@ -119,7 +120,7 @@ impl Connection {
 
         block_on(async {
             let new_conn = connection
-                .accept_invitation(&profile.inner.inject_indy_ledger_read(), invitation)
+                .accept_invitation(profile.inner.ledger_read(), invitation)
                 .await?;
             *handler = VcxGenericConnection::from(new_conn);
             Ok(())
@@ -147,7 +148,7 @@ impl Connection {
 
         block_on(async {
             let new_conn = connection
-                .handle_request(&profile.inner.inject_wallet(), request, url, routing_keys)
+                .handle_request(profile.inner.wallet(), request, url, routing_keys)
                 .await?;
 
             *handler = VcxGenericConnection::from(new_conn);
@@ -172,7 +173,7 @@ impl Connection {
 
         block_on(async {
             let new_conn = connection
-                .handle_response(&profile.inner.inject_wallet(), response)
+                .handle_response(profile.inner.wallet(), response)
                 .await?;
             *handler = VcxGenericConnection::from(new_conn);
 
@@ -197,7 +198,7 @@ impl Connection {
             let connection = connection.prepare_request(url, routing_keys).await?;
             let request = connection.get_request().clone();
             connection
-                .send_message(&profile.inner.inject_wallet(), &request.into(), &HttpClient)
+                .send_message(profile.inner.wallet(), &request.into(), &HttpClient)
                 .await?;
             *handler = VcxGenericConnection::from(connection);
             Ok(())
@@ -212,11 +213,7 @@ impl Connection {
         block_on(async {
             let response = connection.get_connection_response_msg();
             connection
-                .send_message(
-                    &profile.inner.inject_wallet(),
-                    &response.into(),
-                    &HttpClient,
-                )
+                .send_message(profile.inner.wallet(), &response.into(), &HttpClient)
                 .await?;
 
             *handler = VcxGenericConnection::from(connection);
@@ -233,7 +230,7 @@ impl Connection {
         block_on(async {
             connection
                 .send_message(
-                    &profile.inner.inject_wallet(),
+                    profile.inner.wallet(),
                     &connection.get_ack().into(),
                     &HttpClient,
                 )

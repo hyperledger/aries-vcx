@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use aries_vcx::{
-    core::profile::profile::Profile,
+    core::profile::{profile::Profile, vdrtools_profile::VdrtoolsProfile},
     handlers::{issuance::issuer::Issuer, util::OfferInfo},
     messages::{
         msg_fields::protocols::cred_issuance::v1::{
@@ -36,13 +36,16 @@ impl IssuerWrapper {
 }
 
 pub struct ServiceCredentialsIssuer {
-    profile: Arc<dyn Profile>,
+    profile: Arc<VdrtoolsProfile>,
     creds_issuer: ObjectCache<IssuerWrapper>,
     service_connections: Arc<ServiceConnections>,
 }
 
 impl ServiceCredentialsIssuer {
-    pub fn new(profile: Arc<dyn Profile>, service_connections: Arc<ServiceConnections>) -> Self {
+    pub fn new(
+        profile: Arc<VdrtoolsProfile>,
+        service_connections: Arc<ServiceConnections>,
+    ) -> Self {
         Self {
             profile,
             service_connections,
@@ -86,13 +89,13 @@ impl ServiceCredentialsIssuer {
         };
         let connection = self.service_connections.get_by_id(&connection_id)?;
         issuer
-            .build_credential_offer_msg(&self.profile.inject_anoncreds(), offer_info, None)
+            .build_credential_offer_msg(self.profile.anoncreds(), offer_info, None)
             .await?;
 
-        let wallet = self.profile.inject_wallet();
+        let wallet = self.profile.wallet();
 
         let send_closure: SendClosure = Box::new(|msg: AriesMessage| {
-            Box::pin(async move { connection.send_message(&wallet, &msg, &HttpClient).await })
+            Box::pin(async move { connection.send_message(wallet, &msg, &HttpClient).await })
         });
 
         let credential_offer = issuer.get_credential_offer_msg()?;
@@ -140,15 +143,13 @@ impl ServiceCredentialsIssuer {
         } = self.creds_issuer.get(thread_id)?;
         let connection = self.service_connections.get_by_id(&connection_id)?;
 
-        let wallet = self.profile.inject_wallet();
+        let wallet = self.profile.wallet();
 
         let send_closure: SendClosure = Box::new(|msg: AriesMessage| {
-            Box::pin(async move { connection.send_message(&wallet, &msg, &HttpClient).await })
+            Box::pin(async move { connection.send_message(wallet, &msg, &HttpClient).await })
         });
 
-        issuer
-            .build_credential(&self.profile.inject_anoncreds())
-            .await?;
+        issuer.build_credential(self.profile.anoncreds()).await?;
         match issuer.get_state() {
             IssuerState::Failed => {
                 let problem_report = issuer.get_problem_report()?;

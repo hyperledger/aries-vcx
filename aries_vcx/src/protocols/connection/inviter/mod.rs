@@ -1,7 +1,5 @@
 pub mod states;
 
-use std::sync::Arc;
-
 use ::uuid::Uuid;
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use chrono::Utc;
@@ -117,7 +115,7 @@ impl InviterConnection<Invited> {
     // but was placed here to retro-fit the previous API.
     async fn build_response_content(
         &self,
-        wallet: &Arc<dyn BaseWallet>,
+        wallet: &impl BaseWallet,
         thread_id: String,
         new_pairwise_info: &PairwiseInfo,
         new_service_endpoint: Url,
@@ -164,7 +162,7 @@ impl InviterConnection<Invited> {
     ///     * generating new [`PairwiseInfo`] fails
     pub async fn handle_request(
         self,
-        wallet: &Arc<dyn BaseWallet>,
+        wallet: &impl BaseWallet,
         request: Request,
         new_service_endpoint: Url,
         new_routing_keys: Vec<String>,

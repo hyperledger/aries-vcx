@@ -46,7 +46,7 @@ macro_rules! get_attach_as_string {
         };
 
         let Some(messages::decorators::attachment::AttachmentType::Base64(encoded_attach)) = __attach else { return err_fn($attachments.get(0)); };
-        let Ok(bytes) = base64::decode(encoded_attach) else { return err_fn($attachments.get(0)); };
+        let Ok(bytes) = base64::decode(&encoded_attach) else { return err_fn($attachments.get(0)); };
         let Ok(attach_string) = String::from_utf8(bytes) else { return err_fn($attachments.get(0)); };
 
         attach_string

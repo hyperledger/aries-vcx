@@ -15,7 +15,7 @@ pub async fn send_revocation_notification(
     issuer: &Issuer,
     ack_on: Vec<AckOn>,
     comment: Option<String>,
-    send_message: SendClosure,
+    send_message: SendClosure<'_>,
 ) -> VcxResult<()> {
     // TODO: Check if actually revoked
     if issuer.is_revokable() {

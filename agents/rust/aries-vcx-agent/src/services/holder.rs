@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use aries_vcx::{
-    core::profile::profile::Profile,
+    core::profile::{profile::Profile, vdrtools_profile::VdrtoolsProfile},
     handlers::issuance::holder::Holder,
     messages::{
         msg_fields::protocols::cred_issuance::v1::{
@@ -36,13 +36,16 @@ impl HolderWrapper {
 }
 
 pub struct ServiceCredentialsHolder {
-    profile: Arc<dyn Profile>,
+    profile: Arc<VdrtoolsProfile>,
     creds_holder: ObjectCache<HolderWrapper>,
     service_connections: Arc<ServiceConnections>,
 }
 
 impl ServiceCredentialsHolder {
-    pub fn new(profile: Arc<dyn Profile>, service_connections: Arc<ServiceConnections>) -> Self {
+    pub fn new(
+        profile: Arc<VdrtoolsProfile>,
+        service_connections: Arc<ServiceConnections>,
+    ) -> Self {
         Self {
             profile,
             service_connections,
@@ -66,12 +69,12 @@ impl ServiceCredentialsHolder {
         propose_credential: ProposeCredentialV1,
     ) -> AgentResult<String> {
         let connection = self.service_connections.get_by_id(connection_id)?;
-        let wallet = self.profile.inject_wallet();
+        let wallet = self.profile.wallet();
 
         let mut holder = Holder::create("")?;
         holder.set_proposal(propose_credential.clone())?;
         connection
-            .send_message(&wallet, &propose_credential.into(), &HttpClient)
+            .send_message(wallet, &propose_credential.into(), &HttpClient)
             .await?;
 
         self.creds_holder.insert(
@@ -105,16 +108,16 @@ impl ServiceCredentialsHolder {
             (None, None) => return Err(AgentError::from_kind(AgentErrorKind::InvalidArguments)),
         };
         let connection = self.service_connections.get_by_id(&connection_id)?;
-        let wallet = self.profile.inject_wallet();
+        let wallet = self.profile.wallet();
         let pw_did = connection.pairwise_info().pw_did.to_string();
 
         let send_closure: SendClosure = Box::new(|msg: AriesMessage| {
-            Box::pin(async move { connection.send_message(&wallet, &msg, &HttpClient).await })
+            Box::pin(async move { connection.send_message(wallet, &msg, &HttpClient).await })
         });
         let msg_response = holder
             .prepare_credential_request(
-                &self.profile.inject_anoncreds_ledger_read(),
-                &self.profile.inject_anoncreds(),
+                self.profile.ledger_read(),
+                self.profile.anoncreds(),
                 pw_did,
             )
             .await?;
@@ -133,12 +136,12 @@ impl ServiceCredentialsHolder {
         let mut holder = self.get_holder(thread_id)?;
         let connection_id = self.get_connection_id(thread_id)?;
         let connection = self.service_connections.get_by_id(&connection_id)?;
-        let wallet = self.profile.inject_wallet();
+        let wallet = self.profile.wallet();
 
         holder
             .process_credential(
-                &self.profile.inject_anoncreds_ledger_read(),
-                &self.profile.inject_anoncreds(),
+                self.profile.ledger_read(),
+                self.profile.anoncreds(),
                 msg_issue_credential.clone(),
             )
             .await?;
@@ -147,7 +150,7 @@ impl ServiceCredentialsHolder {
             Some(msg_response) => {
                 let send_closure: SendClosure = Box::new(|msg: AriesMessage| {
                     Box::pin(
-                        async move { connection.send_message(&wallet, &msg, &HttpClient).await },
+                        async move { connection.send_message(wallet, &msg, &HttpClient).await },
                     )
                 });
                 send_closure(msg_response).await?;
@@ -165,7 +168,7 @@ impl ServiceCredentialsHolder {
 
     pub async fn is_revokable(&self, thread_id: &str) -> AgentResult<bool> {
         self.get_holder(thread_id)?
-            .is_revokable(&self.profile.inject_anoncreds_ledger_read())
+            .is_revokable(self.profile.ledger_read())
             .await
             .map_err(|err| err.into())
     }

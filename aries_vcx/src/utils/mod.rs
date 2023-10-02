@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use messages::AriesMessage;
@@ -48,7 +46,7 @@ pub mod serialization;
 pub mod validation;
 
 pub async fn send_message(
-    wallet: Arc<dyn BaseWallet>,
+    wallet: &impl BaseWallet,
     sender_verkey: String,
     did_doc: AriesDidDoc,
     message: AriesMessage,
@@ -59,7 +57,7 @@ pub async fn send_message(
         &did_doc
     );
     let EncryptionEnvelope(envelope) =
-        EncryptionEnvelope::create(&wallet, &message, Some(&sender_verkey), &did_doc).await?;
+        EncryptionEnvelope::create(wallet, &message, Some(&sender_verkey), &did_doc).await?;
 
     // TODO: Extract from agency client
     agency_client::httpclient::post_message(
@@ -73,7 +71,7 @@ pub async fn send_message(
 }
 
 pub async fn send_message_anonymously(
-    wallet: Arc<dyn BaseWallet>,
+    wallet: &impl BaseWallet,
     did_doc: &AriesDidDoc,
     message: &AriesMessage,
 ) -> VcxResult<()> {
@@ -83,7 +81,7 @@ pub async fn send_message_anonymously(
         &did_doc
     );
     let EncryptionEnvelope(envelope) =
-        EncryptionEnvelope::create(&wallet, message, None, did_doc).await?;
+        EncryptionEnvelope::create(wallet, message, None, did_doc).await?;
 
     agency_client::httpclient::post_message(
         envelope,

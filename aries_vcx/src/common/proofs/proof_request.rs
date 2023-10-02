@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::Arc, vec::Vec};
+use std::{collections::HashMap, vec::Vec};
 
 use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
 use serde_json;
@@ -24,7 +24,7 @@ pub struct ProofRequestData {
 impl ProofRequestData {
     const DEFAULT_VERSION: &'static str = "1.0";
 
-    pub async fn create(anoncreds: &Arc<dyn BaseAnonCreds>, name: &str) -> VcxResult<Self> {
+    pub async fn create(anoncreds: &impl BaseAnonCreds, name: &str) -> VcxResult<Self> {
         let nonce = anoncreds.generate_nonce().await?;
         Ok(Self {
             name: name.to_string(),
@@ -207,7 +207,7 @@ mod unit_tests {
     async fn test_proof_request_msg() {
         let _setup = SetupDefaults::init();
 
-        let anoncreds: Arc<dyn BaseAnonCreds> = Arc::new(MockAnoncreds {});
+        let anoncreds = MockAnoncreds;
         let request = ProofRequestData::create(&anoncreds, "Test")
             .await
             .unwrap()
@@ -242,7 +242,7 @@ mod unit_tests {
     async fn test_requested_attrs_constructed_correctly() {
         let _setup = SetupDefaults::init();
 
-        let anoncreds: Arc<dyn BaseAnonCreds> = Arc::new(MockAnoncreds {});
+        let anoncreds = MockAnoncreds;
         let request = ProofRequestData::create(&anoncreds, "")
             .await
             .unwrap()
@@ -258,7 +258,7 @@ mod unit_tests {
         let expected_req_attrs = _expected_req_attrs();
         let req_attrs_string = serde_json::to_string(&expected_req_attrs).unwrap();
 
-        let anoncreds: Arc<dyn BaseAnonCreds> = Arc::new(MockAnoncreds {});
+        let anoncreds = MockAnoncreds;
         let request = ProofRequestData::create(&anoncreds, "")
             .await
             .unwrap()
@@ -300,7 +300,7 @@ mod unit_tests {
         .unwrap();
         check_predicates.insert("predicate_0".to_string(), attr_info1);
 
-        let anoncreds: Arc<dyn BaseAnonCreds> = Arc::new(MockAnoncreds {});
+        let anoncreds = MockAnoncreds;
         let request = ProofRequestData::create(&anoncreds, "")
             .await
             .unwrap()
@@ -324,7 +324,7 @@ mod unit_tests {
 
         let requested_attrs = json!([attr_info, attr_info_2]).to_string();
 
-        let anoncreds: Arc<dyn BaseAnonCreds> = Arc::new(MockAnoncreds {});
+        let anoncreds = MockAnoncreds;
         let request = ProofRequestData::create(&anoncreds, "")
             .await
             .unwrap()
@@ -355,7 +355,7 @@ mod unit_tests {
 
         let requested_attrs = json!([attr_info]).to_string();
 
-        let anoncreds: Arc<dyn BaseAnonCreds> = Arc::new(MockAnoncreds {});
+        let anoncreds = MockAnoncreds;
         let err = ProofRequestData::create(&anoncreds, "")
             .await
             .unwrap()

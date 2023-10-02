@@ -6,8 +6,6 @@ pub mod pairwise_info;
 mod serializable;
 mod trait_bounds;
 
-use std::sync::Arc;
-
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
 use messages::{
@@ -98,7 +96,7 @@ where
 
     pub async fn encrypt_message(
         &self,
-        wallet: &Arc<dyn BaseWallet>,
+        wallet: &impl BaseWallet,
         message: &AriesMessage,
     ) -> VcxResult<EncryptionEnvelope> {
         let sender_verkey = &self.pairwise_info().pw_vk;
@@ -122,7 +120,7 @@ where
 
     pub async fn send_message<T>(
         &self,
-        wallet: &Arc<dyn BaseWallet>,
+        wallet: &impl BaseWallet,
         message: &AriesMessage,
         transport: &T,
     ) -> VcxResult<()>

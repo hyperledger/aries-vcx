@@ -27,7 +27,7 @@ impl RevocationNotificationReceiver {
     pub async fn handle_revocation_notification(
         self,
         notification: Revoke,
-        send_message: SendClosure,
+        send_message: SendClosure<'_>,
     ) -> VcxResult<Self> {
         let receiver_sm = self
             .receiver_sm
@@ -36,7 +36,7 @@ impl RevocationNotificationReceiver {
         Ok(Self { receiver_sm })
     }
 
-    pub async fn send_ack(self, send_message: SendClosure) -> VcxResult<Self> {
+    pub async fn send_ack(self, send_message: SendClosure<'_>) -> VcxResult<Self> {
         let receiver_sm = self.receiver_sm.send_ack(send_message).await?;
         Ok(Self { receiver_sm })
     }

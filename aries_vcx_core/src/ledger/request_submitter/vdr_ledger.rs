@@ -1,7 +1,6 @@
 use std::{
     collections::{hash_map::RandomState, HashMap},
     fmt::{Debug, Formatter},
-    sync::Arc,
 };
 
 use async_trait::async_trait;
@@ -66,11 +65,11 @@ impl Debug for IndyVdrLedgerPool {
 }
 
 pub struct IndyVdrSubmitter {
-    pool: Arc<IndyVdrLedgerPool>,
+    pool: IndyVdrLedgerPool,
 }
 
 impl IndyVdrSubmitter {
-    pub fn new(pool: Arc<IndyVdrLedgerPool>) -> Self {
+    pub fn new(pool: IndyVdrLedgerPool) -> Self {
         Self { pool }
     }
 }

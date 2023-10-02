@@ -1,6 +1,10 @@
 use std::sync::{Arc, Mutex};
 
-use aries_vcx::{common::primitives::credential_schema::Schema, core::profile::profile::Profile};
+use aries_vcx::{
+    common::primitives::credential_schema::Schema,
+    core::profile::{profile::Profile, vdrtools_profile::VdrtoolsProfile},
+};
+use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
 
 use crate::{
     error::*,
@@ -8,13 +12,13 @@ use crate::{
 };
 
 pub struct ServiceSchemas {
-    profile: Arc<dyn Profile>,
+    profile: Arc<VdrtoolsProfile>,
     issuer_did: String,
     schemas: ObjectCache<Schema>,
 }
 
 impl ServiceSchemas {
-    pub fn new(profile: Arc<dyn Profile>, issuer_did: String) -> Self {
+    pub fn new(profile: Arc<VdrtoolsProfile>, issuer_did: String) -> Self {
         Self {
             profile,
             issuer_did,
@@ -29,7 +33,7 @@ impl ServiceSchemas {
         attributes: &Vec<String>,
     ) -> AgentResult<String> {
         let schema = Schema::create(
-            &self.profile.inject_anoncreds(),
+            self.profile.anoncreds(),
             "",
             &self.issuer_did,
             name,
@@ -42,15 +46,13 @@ impl ServiceSchemas {
 
     pub async fn publish_schema(&self, thread_id: &str) -> AgentResult<()> {
         let schema = self.schemas.get(thread_id)?;
-        let schema = schema
-            .publish(&self.profile.inject_anoncreds_ledger_write(), None)
-            .await?;
+        let schema = schema.publish(self.profile.ledger_write(), None).await?;
         self.schemas.insert(thread_id, schema)?;
         Ok(())
     }
 
     pub async fn schema_json(&self, thread_id: &str) -> AgentResult<String> {
-        let ledger = Arc::clone(&self.profile).inject_anoncreds_ledger_read();
+        let ledger = self.profile.ledger_read();
         Ok(ledger.get_schema(thread_id, None).await?)
     }
 

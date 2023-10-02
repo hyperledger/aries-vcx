@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
 use messages::msg_fields::protocols::cred_issuance::v1::offer_credential::OfferCredentialV1;
 
@@ -37,7 +35,7 @@ impl OfferReceivedState {
         Ok(serde_json::Value::Object(new_map).to_string())
     }
 
-    pub async fn is_revokable(&self, ledger: &Arc<dyn AnoncredsLedgerRead>) -> VcxResult<bool> {
+    pub async fn is_revokable(&self, ledger: &impl AnoncredsLedgerRead) -> VcxResult<bool> {
         let offer = self.get_attachment()?;
 
         let cred_def_id = parse_cred_def_id_from_cred_offer(&offer).map_err(|err| {
