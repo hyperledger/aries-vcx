@@ -1,17 +1,12 @@
 use std::string::ToString;
 
-use aries_vcx::{
-    common::primitives::credential_schema::Schema, global::settings::CONFIG_INSTITUTION_DID,
-};
+use aries_vcx::common::primitives::credential_schema::Schema;
 use serde_json;
 
 use crate::{
     api_vcx::{
-        api_global::{
-            profile::{
-                get_main_anoncreds, get_main_anoncreds_ledger_read, get_main_anoncreds_ledger_write,
-            },
-            settings::get_config_value,
+        api_global::profile::{
+            get_main_anoncreds, get_main_anoncreds_ledger_read, get_main_anoncreds_ledger_write,
         },
         api_handle::object_cache::ObjectCache,
     },
@@ -23,13 +18,12 @@ lazy_static! {
 }
 
 pub async fn create_and_publish_schema(
+    issuer_did: &str,
     source_id: &str,
     name: String,
     version: String,
     data: String,
 ) -> LibvcxResult<u32> {
-    let issuer_did = get_config_value(CONFIG_INSTITUTION_DID)?;
-
     trace!(
         "create_new_schema >>> source_id: {}, issuer_did: {}, name: {}, version: {}, data: {}",
         source_id,
@@ -52,7 +46,7 @@ pub async fn create_and_publish_schema(
     let schema = Schema::create(
         &get_main_anoncreds()?,
         source_id,
-        &issuer_did,
+        issuer_did,
         &name,
         &version,
         &data,
@@ -119,10 +113,10 @@ pub fn get_state(handle: u32) -> LibvcxResult<u32> {
 
 #[allow(clippy::unwrap_used)]
 pub mod test_utils {
+    use aries_vcx::global::settings::DEFAULT_DID;
     use rand::Rng;
 
     use super::*;
-    use crate::api_vcx::api_global::settings::get_config_value;
 
     pub fn prepare_schema_data() -> (String, String, String, String) {
         let data = json!(data()).to_string();
@@ -132,7 +126,7 @@ pub mod test_utils {
             rand::thread_rng().gen::<u32>(),
             rand::thread_rng().gen::<u32>()
         );
-        let did = get_config_value(CONFIG_INSTITUTION_DID).unwrap();
+        let did = DEFAULT_DID.to_owned();
 
         (did, schema_name, schema_version, data)
     }
@@ -140,7 +134,7 @@ pub mod test_utils {
     // TODO: Reuse test utils code and data
     pub async fn create_schema_real() -> u32 {
         let (_did, schema_name, schema_version, data) = prepare_schema_data();
-        create_and_publish_schema("id", schema_name, schema_version, data)
+        create_and_publish_schema(DEFAULT_DID, "id", schema_name, schema_version, data)
             .await
             .unwrap()
     }
@@ -173,7 +167,7 @@ pub mod test_utils {
 #[cfg(test)]
 pub mod tests {
     use aries_vcx::{
-        global::settings::{set_config_value, DEFAULT_DID},
+        global::settings::DEFAULT_DID,
         utils::devsetup::{SetupDefaults, SetupEmpty, SetupMocks},
     };
 
@@ -192,6 +186,7 @@ pub mod tests {
 
         let (_did, schema_name, schema_version, data) = prepare_schema_data();
         let handle = create_and_publish_schema(
+            DEFAULT_DID,
             "test_create_schema_success",
             schema_name,
             schema_version,
@@ -212,6 +207,7 @@ pub mod tests {
 
         let (_did, schema_name, schema_version, data) = prepare_schema_data();
         create_and_publish_schema(
+            DEFAULT_DID,
             "test_create_schema_success",
             schema_name,
             schema_version,
@@ -224,11 +220,16 @@ pub mod tests {
     #[tokio::test]
     async fn test_create_schema_fails() {
         let _setup = SetupDefaults::init();
-        set_config_value(CONFIG_INSTITUTION_DID, DEFAULT_DID).unwrap();
-        let err =
-            create_and_publish_schema("1", "name".to_string(), "1.0".to_string(), "".to_string())
-                .await
-                .unwrap_err();
+
+        let err = create_and_publish_schema(
+            DEFAULT_DID,
+            "1",
+            "name".to_string(),
+            "1.0".to_string(),
+            "".to_string(),
+        )
+        .await
+        .unwrap_err();
         assert_eq!(err.kind(), LibvcxErrorKind::SerializationError)
     }
 
@@ -252,6 +253,7 @@ pub mod tests {
             let (_did, schema_name, schema_version, data) = prepare_schema_data();
 
             create_and_publish_schema(
+                DEFAULT_DID,
                 "id",
                 schema_name.clone(),
                 schema_version.clone(),
@@ -260,9 +262,10 @@ pub mod tests {
             .await
             .unwrap();
 
-            let err = create_and_publish_schema("id_2", schema_name, schema_version, data)
-                .await
-                .unwrap_err();
+            let err =
+                create_and_publish_schema(DEFAULT_DID, "id_2", schema_name, schema_version, data)
+                    .await
+                    .unwrap_err();
             error!("err: {:?}", err);
             // .unwrap_err();
 
@@ -277,15 +280,33 @@ pub mod tests {
 
         let (_did, schema_name, version, data) = prepare_schema_data();
 
-        let h1 = create_and_publish_schema("1", schema_name.clone(), version.clone(), data.clone())
-            .await
-            .unwrap();
-        let h2 = create_and_publish_schema("2", schema_name.clone(), version.clone(), data.clone())
-            .await
-            .unwrap();
-        let h3 = create_and_publish_schema("3", schema_name.clone(), version.clone(), data.clone())
-            .await
-            .unwrap();
+        let h1 = create_and_publish_schema(
+            DEFAULT_DID,
+            "1",
+            schema_name.clone(),
+            version.clone(),
+            data.clone(),
+        )
+        .await
+        .unwrap();
+        let h2 = create_and_publish_schema(
+            DEFAULT_DID,
+            "2",
+            schema_name.clone(),
+            version.clone(),
+            data.clone(),
+        )
+        .await
+        .unwrap();
+        let h3 = create_and_publish_schema(
+            DEFAULT_DID,
+            "3",
+            schema_name.clone(),
+            version.clone(),
+            data.clone(),
+        )
+        .await
+        .unwrap();
 
         release_all();
 
@@ -320,6 +341,7 @@ pub mod tests {
         SetupGlobalsWalletPoolAgency::run(|_setup| async move {
             let (_issuer_did, schema_name, schema_version, schema_data) = prepare_schema_data();
             let _schema_handle = schema::create_and_publish_schema(
+                DEFAULT_DID,
                 "source_id",
                 schema_name,
                 schema_version,
@@ -337,6 +359,7 @@ pub mod tests {
         SetupGlobalsWalletPoolAgency::run(|_setup| async move {
             let (_issuer_did, schema_name, schema_version, schema_data) = prepare_schema_data();
             let schema_handle = schema::create_and_publish_schema(
+                DEFAULT_DID,
                 "source_id",
                 schema_name,
                 schema_version,

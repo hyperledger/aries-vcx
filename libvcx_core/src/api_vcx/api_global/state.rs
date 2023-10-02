@@ -32,11 +32,14 @@ pub fn state_vcx_shutdown() {
 
 #[cfg(test)]
 pub mod tests {
-    use aries_vcx::utils::{
-        devsetup::SetupMocks,
-        mockdata::{
-            mockdata_credex::ARIES_CREDENTIAL_OFFER,
-            mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION,
+    use aries_vcx::{
+        global::settings::DEFAULT_DID,
+        utils::{
+            devsetup::SetupMocks,
+            mockdata::{
+                mockdata_credex::ARIES_CREDENTIAL_OFFER,
+                mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION,
+            },
         },
     };
 
@@ -57,6 +60,7 @@ pub mod tests {
         let connection =
             mediated_connection::test_utils::build_test_connection_inviter_invited().await;
         let credential_def = credential_def::create(
+            DEFAULT_DID.to_owned(),
             "SID".to_string(),
             "id".to_string(),
             "tag".to_string(),
@@ -75,10 +79,15 @@ pub mod tests {
         )
         .await
         .unwrap();
-        let schema =
-            create_and_publish_schema("5", "name".to_string(), "0.1".to_string(), data.to_string())
-                .await
-                .unwrap();
+        let schema = create_and_publish_schema(
+            DEFAULT_DID,
+            "5",
+            "name".to_string(),
+            "0.1".to_string(),
+            data.to_string(),
+        )
+        .await
+        .unwrap();
         let disclosed_proof =
             create_with_proof_request("id", ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
         let credential = credential_create_with_offer("name", ARIES_CREDENTIAL_OFFER).unwrap();

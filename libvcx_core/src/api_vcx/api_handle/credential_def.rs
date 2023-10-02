@@ -1,17 +1,11 @@
-use aries_vcx::{
-    common::primitives::credential_definition::{
-        CredentialDef, CredentialDefConfigBuilder, PublicEntityStateType,
-    },
-    global::settings::CONFIG_INSTITUTION_DID,
+use aries_vcx::common::primitives::credential_definition::{
+    CredentialDef, CredentialDefConfigBuilder, PublicEntityStateType,
 };
 
 use crate::{
     api_vcx::{
-        api_global::{
-            profile::{
-                get_main_anoncreds, get_main_anoncreds_ledger_read, get_main_anoncreds_ledger_write,
-            },
-            settings::get_config_value,
+        api_global::profile::{
+            get_main_anoncreds, get_main_anoncreds_ledger_read, get_main_anoncreds_ledger_write,
         },
         api_handle::object_cache::ObjectCache,
     },
@@ -24,12 +18,12 @@ lazy_static! {
 }
 
 pub async fn create(
+    issuer_did: String,
     source_id: String,
     schema_id: String,
     tag: String,
     support_revocation: bool,
 ) -> LibvcxResult<u32> {
-    let issuer_did = get_config_value(CONFIG_INSTITUTION_DID)?;
     let config = CredentialDefConfigBuilder::default()
         .issuer_did(issuer_did)
         .schema_id(schema_id)
@@ -123,13 +117,16 @@ pub mod tests {
     use std::{thread::sleep, time::Duration};
 
     use aries_vcx::{
-        global::settings::CONFIG_INSTITUTION_DID,
+        aries_vcx_core::ledger::indy::pool::test_utils::get_temp_dir_path,
+        common::test_utils::create_and_write_test_schema,
+        global::settings::DEFAULT_DID,
+        utils,
         utils::{constants::SCHEMA_ID, devsetup::SetupMocks},
     };
 
     use super::*;
     use crate::api_vcx::{
-        api_global::settings::get_config_value, api_handle::schema,
+        api_handle::{revocation_registry, revocation_registry::RevocationRegistryConfig, schema},
         utils::devsetup::SetupGlobalsWalletPoolAgency,
     };
 
@@ -140,10 +137,16 @@ pub mod tests {
         sleep(Duration::from_secs(1));
 
         let schema_id = schema::get_schema_id(schema_handle).unwrap();
-        let _issuer_did = get_config_value(CONFIG_INSTITUTION_DID).unwrap();
-        let cred_def_handle = create("1".to_string(), schema_id, "tag_1".to_string(), false)
-            .await
-            .unwrap();
+
+        let cred_def_handle = create(
+            DEFAULT_DID.to_owned(),
+            "1".to_string(),
+            schema_id,
+            "tag_1".to_string(),
+            false,
+        )
+        .await
+        .unwrap();
         release(cred_def_handle).unwrap();
         assert_eq!(
             to_string(cred_def_handle).unwrap_err().kind,
@@ -151,17 +154,20 @@ pub mod tests {
         )
     }
 
-    // TODO: Get rid of this
-    #[cfg(test)]
     pub async fn create_and_publish_nonrevocable_creddef() -> (u32, u32) {
         let schema_handle = schema::test_utils::create_schema_real().await;
         sleep(Duration::from_secs(1));
 
         let schema_id = schema::get_schema_id(schema_handle).unwrap();
-        let _issuer_did = get_config_value(CONFIG_INSTITUTION_DID).unwrap();
-        let cred_def_handle = create("1".to_string(), schema_id, "tag_1".to_string(), false)
-            .await
-            .unwrap();
+        let cred_def_handle = create(
+            DEFAULT_DID.to_owned(),
+            "1".to_string(),
+            schema_id,
+            "tag_1".to_string(),
+            false,
+        )
+        .await
+        .unwrap();
 
         publish(cred_def_handle).await.unwrap();
         (schema_handle, cred_def_handle)
@@ -226,8 +232,9 @@ pub mod tests {
     async fn test_release_all() {
         let _setup = SetupMocks::init();
 
-        let _issuer_did = String::from("4fUDR9R7fjwELRvH9JT6HH");
+        let issuer_did = String::from("4fUDR9R7fjwELRvH9JT6HH");
         let h1 = create(
+            issuer_did.clone(),
             "SourceId".to_string(),
             SCHEMA_ID.to_string(),
             "tag".to_string(),
@@ -235,7 +242,9 @@ pub mod tests {
         )
         .await
         .unwrap();
+
         let h2 = create(
+            issuer_did,
             "SourceId".to_string(),
             SCHEMA_ID.to_string(),
             "tag".to_string(),

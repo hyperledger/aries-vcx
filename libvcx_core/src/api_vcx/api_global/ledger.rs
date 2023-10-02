@@ -9,18 +9,13 @@ use aries_vcx::{
             write_endpoint_legacy,
         },
     },
-    global::settings::CONFIG_INSTITUTION_DID,
 };
 use diddoc_legacy::aries::service::AriesService;
 use url::Url;
 
 use crate::{
-    api_vcx::api_global::{
-        profile::{
-            get_main_indy_ledger_read, get_main_indy_ledger_write, get_main_profile,
-            get_main_wallet,
-        },
-        settings::get_config_value,
+    api_vcx::api_global::profile::{
+        get_main_indy_ledger_read, get_main_indy_ledger_write, get_main_profile, get_main_wallet,
     },
     errors::{
         error::{LibvcxError, LibvcxErrorKind, LibvcxResult},
@@ -29,11 +24,9 @@ use crate::{
     },
 };
 
-pub async fn endorse_transaction(transaction: &str) -> LibvcxResult<()> {
-    let endorser_did = get_config_value(CONFIG_INSTITUTION_DID)?;
-
+pub async fn endorse_transaction(transaction: &str, endorser_did: &str) -> LibvcxResult<()> {
     let ledger = get_main_indy_ledger_write()?;
-    map_ariesvcx_core_result(ledger.endorse_transaction(&endorser_did, transaction).await)
+    map_ariesvcx_core_result(ledger.endorse_transaction(endorser_did, transaction).await)
 }
 
 pub async fn get_ledger_txn(seq_no: i32, submitter_did: Option<String>) -> LibvcxResult<String> {

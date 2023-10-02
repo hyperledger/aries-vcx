@@ -1,14 +1,10 @@
-use aries_vcx::{
-    common::primitives::revocation_registry::{RevocationRegistry, RevocationRegistryDefinition},
-    global::settings::CONFIG_INSTITUTION_DID,
+use aries_vcx::common::primitives::revocation_registry::{
+    RevocationRegistry, RevocationRegistryDefinition,
 };
 
 use crate::{
     api_vcx::{
-        api_global::{
-            profile::{get_main_anoncreds, get_main_anoncreds_ledger_write},
-            settings::get_config_value,
-        },
+        api_global::profile::{get_main_anoncreds, get_main_anoncreds_ledger_write},
         api_handle::object_cache::ObjectCache,
     },
     errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult},
@@ -57,14 +53,13 @@ pub async fn publish(handle: u32, tails_url: &str) -> LibvcxResult<u32> {
     Ok(handle)
 }
 
-pub async fn publish_revocations(handle: u32) -> LibvcxResult<()> {
-    let submitter_did = get_config_value(CONFIG_INSTITUTION_DID)?;
+pub async fn publish_revocations(handle: u32, submitter_did: &str) -> LibvcxResult<()> {
     let rev_reg = REV_REG_MAP.get_cloned(handle)?;
     rev_reg
         .publish_local_revocations(
             &get_main_anoncreds()?,
             &get_main_anoncreds_ledger_write()?,
-            &submitter_did,
+            submitter_did,
         )
         .await?;
 
