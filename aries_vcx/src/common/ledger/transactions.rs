@@ -18,7 +18,6 @@ use serde_json::Value;
 use crate::{
     common::{keys::get_verkey_from_ledger, ledger::service_didsov::EndpointDidSov},
     errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
-    global::settings,
     handlers::util::AnyInvitation,
 };
 
@@ -361,9 +360,6 @@ pub async fn clear_attr(
 }
 
 fn check_response(response: &str) -> VcxResult<()> {
-    if settings::indy_mocks_enabled() {
-        return Ok(());
-    }
     match parse_response(response)? {
         Response::Reply(_) => Ok(()),
         Response::Reject(res) | Response::ReqNACK(res) => Err(AriesVcxError::from_msg(

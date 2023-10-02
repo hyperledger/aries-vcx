@@ -197,7 +197,7 @@ pub mod tests {
         aries_vcx_core::ledger::indy::pool::test_utils::{
             create_testpool_genesis_txn_file, get_temp_file_path,
         },
-        global::settings::{set_config_value, CONFIG_GENESIS_PATH, DEFAULT_GENESIS_PATH},
+        global::settings::DEFAULT_GENESIS_PATH,
         utils::{
             constants::POOL1_TXN,
             devsetup::{SetupDefaults, SetupEmpty, TempFile},
@@ -284,9 +284,8 @@ pub mod tests {
         let _setup = SetupEmpty::init();
         _create_and_open_wallet().await.unwrap();
 
-        let genesis_transactions =
+        let _genesis_transactions =
             TempFile::create_with_data(POOL1_TXN, "{ \"invalid\": \"genesis\" }");
-        set_config_value(CONFIG_GENESIS_PATH, &genesis_transactions.path).unwrap();
 
         // todo: indy-vdr panics if the file is invalid, see:
         // indy-vdr-0.3.4/src/pool/runner.rs:44:22

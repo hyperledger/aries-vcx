@@ -3,7 +3,7 @@ use aries_vcx_core::{
 };
 use serde_json::{self, Value};
 
-use crate::{errors::error::prelude::*, global::settings, utils::openssl::encode};
+use crate::{errors::error::prelude::*, utils::openssl::encode};
 
 #[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct CredInfoVerifier {
@@ -51,10 +51,6 @@ pub fn get_credential_info(proof: &str) -> VcxResult<Vec<CredInfoVerifier>> {
 }
 
 pub fn validate_proof_revealed_attributes(proof_json: &str) -> VcxResult<()> {
-    if settings::indy_mocks_enabled() {
-        return Ok(());
-    }
-
     let proof: Value = serde_json::from_str(proof_json).map_err(|err| {
         AriesVcxError::from_msg(
             AriesVcxErrorKind::InvalidJson,

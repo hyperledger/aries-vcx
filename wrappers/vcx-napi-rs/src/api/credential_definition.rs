@@ -5,12 +5,13 @@ use crate::error::to_napi_err;
 
 #[napi]
 async fn credentialdef_create_v2_(
+    issuer_did: String,
     source_id: String,
     schema_id: String,
     tag: String,
     support_revocation: bool,
 ) -> napi::Result<u32> {
-    credential_def::create(source_id, schema_id, tag, support_revocation)
+    credential_def::create(issuer_did, source_id, schema_id, tag, support_revocation)
         .await
         .map_err(to_napi_err)
 }

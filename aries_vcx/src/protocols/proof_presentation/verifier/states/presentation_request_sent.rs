@@ -9,7 +9,6 @@ use messages::msg_fields::protocols::{
 use crate::{
     common::proofs::verifier::validate_indy_proof,
     errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
-    global::settings,
     handlers::util::{get_attach_as_string, matches_thread_id, Status},
     protocols::proof_presentation::verifier::{
         states::finished::FinishedState, verification_status::PresentationVerificationStatus,
@@ -29,7 +28,7 @@ impl PresentationRequestSentState {
         presentation: &Presentation,
         thread_id: &str,
     ) -> VcxResult<()> {
-        if !settings::indy_mocks_enabled() && !matches_thread_id!(presentation, thread_id) {
+        if !matches_thread_id!(presentation, thread_id) {
             return Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::InvalidJson,
                 format!(

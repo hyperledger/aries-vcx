@@ -1,6 +1,5 @@
 use aries_vcx::{
     agency_client::testing::mocking::AgencyMockDecrypted,
-    global::settings::indy_mocks_enabled,
     handlers::issuance::{holder::Holder, mediated_holder::holder_find_message_to_handle},
     messages::{
         msg_fields::protocols::cred_issuance::{
@@ -282,10 +281,6 @@ async fn get_credential_offer_msg(connection_handle: u32, msg_id: &str) -> Libvc
         msg_id
     );
 
-    if indy_mocks_enabled() {
-        AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
-        AgencyMockDecrypted::set_next_decrypted_message(ARIES_CREDENTIAL_OFFER);
-    }
     let credential_offer =
         match mediated_connection::get_message_by_id(connection_handle, msg_id).await {
             Ok(message) => match message {

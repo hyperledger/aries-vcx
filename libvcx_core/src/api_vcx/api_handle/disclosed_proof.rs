@@ -1,16 +1,10 @@
 use aries_vcx::{
-    agency_client::testing::mocking::AgencyMockDecrypted,
-    global::settings::indy_mocks_enabled,
     handlers::proof_presentation::{
         mediated_prover::prover_find_message_to_handle, prover::Prover,
     },
     messages::{
         msg_fields::protocols::present_proof::{request::RequestPresentation, PresentProof},
         AriesMessage,
-    },
-    utils::{
-        constants::GET_MESSAGES_DECRYPTED_RESPONSE,
-        mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION,
     },
 };
 use serde_json;
@@ -278,11 +272,6 @@ pub fn get_thread_id(handle: u32) -> LibvcxResult<String> {
 }
 
 async fn get_proof_request(connection_handle: u32, msg_id: &str) -> LibvcxResult<String> {
-    if indy_mocks_enabled() {
-        AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
-        AgencyMockDecrypted::set_next_decrypted_message(ARIES_PROOF_REQUEST_PRESENTATION);
-    }
-
     let presentation_request = {
         trace!(
             "Prover::get_presentation_request >>> connection_handle: {:?}, msg_id: {:?}",
@@ -346,6 +335,7 @@ pub fn get_presentation_status(handle: u32) -> LibvcxResult<u32> {
 mod tests {
     extern crate serde_json;
 
+    use agency_client::testing::mocking::AgencyMockDecrypted;
     use aries_vcx::{
         utils,
         utils::{

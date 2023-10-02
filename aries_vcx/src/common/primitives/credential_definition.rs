@@ -8,11 +8,7 @@ use aries_vcx_core::{
 
 use crate::{
     errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
-    global::settings::indy_mocks_enabled,
-    utils::{
-        constants::{CRED_DEF_ID, CRED_DEF_JSON, DEFAULT_SERIALIZE_VERSION},
-        serialization::ObjectWithVersion,
-    },
+    utils::{constants::DEFAULT_SERIALIZE_VERSION, serialization::ObjectWithVersion},
 };
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Deserialize, Default)]
@@ -85,9 +81,6 @@ async fn _try_get_cred_def_from_ledger(
     issuer_did: &str,
     cred_def_id: &str,
 ) -> VcxResult<Option<String>> {
-    if indy_mocks_enabled() {
-        return Ok(None);
-    }
     match ledger.get_cred_def(cred_def_id, Some(issuer_did)).await {
         Ok(cred_def) => Ok(Some(cred_def)),
         Err(err) if err.kind() == AriesVcxCoreErrorKind::LedgerItemNotFound => Ok(None),
@@ -255,9 +248,6 @@ pub async fn generate_cred_def(
         sig_type,
         support_revocation
     );
-    if indy_mocks_enabled() {
-        return Ok((CRED_DEF_ID.to_string(), CRED_DEF_JSON.to_string()));
-    }
 
     let config_json =
         json!({"support_revocation": support_revocation.unwrap_or(false)}).to_string();

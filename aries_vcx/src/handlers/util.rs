@@ -74,14 +74,7 @@ pub(crate) use make_attach_from_str;
 pub(crate) use matches_opt_thread_id;
 pub(crate) use matches_thread_id;
 
-use crate::global::settings;
-
 pub fn verify_thread_id(thread_id: &str, message: &AriesMessage) -> VcxResult<()> {
-    // todo: ultimately remove this - improve tests
-    // libvcx_core unit tests are passing in hardcoded message which have mismatching thid
-    if settings::indy_mocks_enabled() {
-        return Ok(());
-    }
     let is_match = match message {
         AriesMessage::BasicMessage(msg) => matches_opt_thread_id!(msg, thread_id),
         AriesMessage::Connection(Connection::Invitation(msg)) => msg.id == thread_id,

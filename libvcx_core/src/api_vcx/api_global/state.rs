@@ -1,5 +1,3 @@
-use aries_vcx::global::settings::reset_config_values_ariesvcx;
-
 use crate::api_vcx::api_global::{
     agency_client::reset_main_agency_client,
     pool::{close_main_pool, reset_ledger_components},
@@ -20,7 +18,6 @@ pub fn state_vcx_shutdown() {
     crate::api_vcx::api_handle::disclosed_proof::release_all();
     crate::api_vcx::api_handle::credential::release_all();
 
-    let _ = reset_config_values_ariesvcx();
     reset_main_agency_client();
     match reset_ledger_components() {
         Ok(_) => {}

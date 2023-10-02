@@ -4,11 +4,7 @@ use aries_vcx_core::{
 };
 
 use super::credential_definition::PublicEntityStateType;
-use crate::{
-    errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
-    global::settings,
-    utils::constants::REV_REG_ID,
-};
+use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 
 #[derive(Clone, Deserialize, Debug, Serialize, PartialEq, Eq)]
 pub struct RevocationRegistry {
@@ -302,14 +298,6 @@ pub async fn generate_rev_reg(
         max_creds,
         tag
     );
-    if settings::indy_mocks_enabled() {
-        debug!("generate_rev_reg >>> returning mocked value");
-        return Ok((
-            REV_REG_ID.to_string(),
-            RevocationRegistryDefinition::default(),
-            "".to_string(),
-        ));
-    }
 
     let (rev_reg_id, rev_reg_def_json, rev_reg_entry_json) = anoncreds
         .issuer_create_and_store_revoc_reg(issuer_did, cred_def_id, tails_dir, max_creds, tag)

@@ -26,13 +26,7 @@ use crate::core::profile::vdr_proxy_profile::VdrProxyProfile;
 use crate::core::profile::vdrtools_profile::VdrtoolsProfile;
 use crate::{
     core::profile::{ledger::VcxPoolConfig, Profile},
-    global::{
-        settings,
-        settings::{
-            aries_vcx_disable_indy_mocks, aries_vcx_enable_indy_mocks, init_issuer_config,
-            reset_config_values_ariesvcx, set_config_value, CONFIG_INSTITUTION_DID, DEFAULT_DID,
-        },
-    },
+    global::settings,
     utils::{constants::POOL1_TXN, file::write_file, test_logger::LibvcxDefaultLogger},
 };
 
@@ -86,8 +80,6 @@ pub fn reset_global_state() {
     warn!("reset_global_state >>");
     AgencyMockDecrypted::clear_mocks();
     DidMocks::clear_mocks();
-    aries_vcx_disable_indy_mocks().unwrap();
-    reset_config_values_ariesvcx().unwrap();
 }
 
 impl SetupEmpty {
@@ -120,8 +112,6 @@ impl SetupMocks {
     pub fn init() -> SetupMocks {
         init_test_logging();
         enable_agency_mocks();
-        aries_vcx_enable_indy_mocks().unwrap();
-        set_config_value(CONFIG_INSTITUTION_DID, DEFAULT_DID).unwrap();
         SetupMocks {}
     }
 }
@@ -149,8 +139,7 @@ pub async fn dev_setup_wallet_indy(key_seed: &str) -> (String, WalletHandle) {
     let (did, _vk) = create_and_store_my_did(wallet_handle, Some(key_seed), None)
         .await
         .unwrap();
-    // todo: can we remove following line completely?
-    init_issuer_config(&did).unwrap();
+
     (did, wallet_handle)
 }
 

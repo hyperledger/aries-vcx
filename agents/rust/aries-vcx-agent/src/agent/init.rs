@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use aries_vcx::{
     core::profile::{ledger::VcxPoolConfig, vdrtools_profile::VdrtoolsProfile, Profile},
-    global::settings::{init_issuer_config, DEFAULT_LINK_SECRET_ALIAS},
+    global::settings::DEFAULT_LINK_SECRET_ALIAS,
 };
 use aries_vcx_core::{
     self,
@@ -63,7 +63,7 @@ impl Agent {
         let config_issuer = wallet_configure_issuer(wallet_handle, &init_config.enterprise_seed)
             .await
             .unwrap();
-        init_issuer_config(&config_issuer.institution_did).unwrap();
+
         let wallet = Arc::new(IndySdkWallet::new(wallet_handle));
 
         let pool_config = VcxPoolConfig {
