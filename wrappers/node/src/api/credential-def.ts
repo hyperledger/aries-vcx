@@ -4,6 +4,7 @@ import { VcxBase } from './vcx-base';
 import { VCXInternalError } from '../errors';
 
 export interface ICredentialDefCreateDataV2 {
+  issuerDid: string;
   sourceId: string;
   schemaId: string;
   supportRevocation: boolean;
@@ -44,6 +45,7 @@ export enum CredentialDefState {
 
 export class CredentialDef extends VcxBase<ICredentialDefData> {
   public static async create({
+    issuerDid,
     supportRevocation,
     schemaId,
     sourceId,
@@ -51,7 +53,7 @@ export class CredentialDef extends VcxBase<ICredentialDefData> {
   }: ICredentialDefCreateDataV2): Promise<CredentialDef> {
     try {
       const credentialDef = new CredentialDef({ schemaId });
-      const handle = await ffi.credentialdefCreateV2(sourceId, schemaId, tag, supportRevocation);
+      const handle = await ffi.credentialdefCreateV2(issuerDid, sourceId, schemaId, tag, supportRevocation);
       credentialDef._setHandle(handle);
       return credentialDef;
     } catch (err: any) {
