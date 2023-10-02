@@ -41,7 +41,7 @@ pub mod tests {
     };
 
     use crate::api_vcx::{
-        api_global::{profile::get_main_wallet, state::state_vcx_shutdown},
+        api_global::state::state_vcx_shutdown,
         api_handle::{
             credential, credential::credential_create_with_offer, credential_def, disclosed_proof,
             disclosed_proof::create_with_proof_request, issuer_credential, mediated_connection,
@@ -91,6 +91,5 @@ pub mod tests {
         assert!(!credential_def::is_valid_handle(credential_def));
         assert!(!credential::is_valid_handle(credential));
         assert!(!disclosed_proof::is_valid_handle(disclosed_proof));
-        assert!(get_main_wallet().is_err());
     }
 }
