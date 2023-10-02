@@ -1,7 +1,7 @@
 use std::{collections::HashMap, sync::Arc};
 
 use aries_vcx::{
-    core::profile::{profile::Profile, vdrtools_profile::VdrtoolsProfile},
+    core::profile::{vdrtools_profile::VdrtoolsProfile, Profile},
     handlers::{
         proof_presentation::{prover::Prover, types::SelectedCredentials},
         util::PresentationProposalData,

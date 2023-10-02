@@ -5,7 +5,7 @@ use aries_vcx::{
         service_didsov::{DidSovServiceType, EndpointDidSov},
         transactions::write_endpoint,
     },
-    core::profile::profile::Profile,
+    core::profile::Profile,
     run_setup,
     utils::devsetup::SetupProfile,
 };

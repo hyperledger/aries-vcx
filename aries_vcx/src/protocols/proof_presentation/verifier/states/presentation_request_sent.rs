@@ -7,7 +7,7 @@ use messages::msg_fields::protocols::{
 };
 
 use crate::{
-    common::proofs::verifier::verifier::validate_indy_proof,
+    common::proofs::verifier::validate_indy_proof,
     errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
     global::settings,
     handlers::util::{get_attach_as_string, matches_thread_id, Status},

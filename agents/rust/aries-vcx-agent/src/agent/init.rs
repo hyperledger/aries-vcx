@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use aries_vcx::{
-    core::profile::{ledger::VcxPoolConfig, profile::Profile, vdrtools_profile::VdrtoolsProfile},
+    core::profile::{ledger::VcxPoolConfig, vdrtools_profile::VdrtoolsProfile, Profile},
     global::settings::{init_issuer_config, DEFAULT_LINK_SECRET_ALIAS},
 };
 use aries_vcx_core::{

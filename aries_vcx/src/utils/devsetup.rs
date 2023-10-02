@@ -29,7 +29,7 @@ use crate::core::profile::vdr_proxy_profile::VdrProxyProfile;
 #[cfg(feature = "vdrtools")]
 use crate::core::profile::vdrtools_profile::VdrtoolsProfile;
 use crate::{
-    core::profile::{ledger::VcxPoolConfig, profile::Profile},
+    core::profile::{ledger::VcxPoolConfig, Profile},
     global::{
         settings,
         settings::{
@@ -239,7 +239,7 @@ pub async fn dev_build_featured_profile(
 macro_rules! run_setup {
     ($func:expr) => {{
         use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
-        use $crate::core::profile::profile::Profile;
+        use $crate::core::profile::Profile;
 
         $crate::utils::devsetup::init_test_logging();
 

@@ -2,7 +2,7 @@ use std::sync::{Arc, Mutex};
 
 use aries_vcx::{
     common::primitives::credential_schema::Schema,
-    core::profile::{profile::Profile, vdrtools_profile::VdrtoolsProfile},
+    core::profile::{vdrtools_profile::VdrtoolsProfile, Profile},
 };
 use aries_vcx_core::ledger::base_ledger::AnoncredsLedgerRead;
 

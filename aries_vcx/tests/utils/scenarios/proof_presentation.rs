@@ -7,7 +7,7 @@ use aries_vcx::{
         },
         proofs::{proof_request::PresentationRequestData, proof_request_internal::AttrInfo},
     },
-    core::profile::profile::Profile,
+    core::profile::Profile,
     handlers::{
         issuance::issuer::Issuer,
         proof_presentation::{

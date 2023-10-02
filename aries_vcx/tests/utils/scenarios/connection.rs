@@ -1,6 +1,6 @@
 use aries_vcx::{
     common::ledger::transactions::into_did_doc,
-    core::profile::profile::Profile,
+    core::profile::Profile,
     errors::error::VcxResult,
     handlers::{out_of_band::sender::OutOfBandSender, util::AnyInvitation},
     protocols::{

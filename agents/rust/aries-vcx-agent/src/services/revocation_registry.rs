@@ -5,7 +5,7 @@ use std::{
 
 use aries_vcx::{
     common::primitives::revocation_registry::RevocationRegistry,
-    core::profile::{profile::Profile, vdrtools_profile::VdrtoolsProfile},
+    core::profile::{vdrtools_profile::VdrtoolsProfile, Profile},
 };
 
 use crate::{

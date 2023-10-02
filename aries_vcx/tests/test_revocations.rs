@@ -8,7 +8,7 @@ pub mod utils;
 use std::{thread, time::Duration};
 
 use aries_vcx::{
-    core::profile::profile::Profile,
+    core::profile::Profile,
     protocols::proof_presentation::verifier::{
         state_machine::VerifierState, verification_status::PresentationVerificationStatus,
     },

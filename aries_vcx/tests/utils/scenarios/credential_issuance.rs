@@ -11,7 +11,7 @@ use aries_vcx::{
             create_and_write_test_schema,
         },
     },
-    core::profile::profile::Profile,
+    core::profile::Profile,
     handlers::{
         issuance::{holder::Holder, issuer::Issuer},
         util::OfferInfo,
