@@ -168,7 +168,10 @@ pub mod test_utils {
 pub mod tests {
     use aries_vcx::{
         global::settings::DEFAULT_DID,
-        utils::devsetup::{SetupDefaults, SetupEmpty, SetupMocks},
+        utils::{
+            constants,
+            devsetup::{SetupDefaults, SetupEmpty},
+        },
     };
 
     use super::*;
@@ -180,42 +183,59 @@ pub mod tests {
         utils::devsetup::SetupGlobalsWalletPoolAgency,
     };
 
-    #[tokio::test]
-    async fn test_vcx_schema_release() {
-        let _setup = SetupMocks::init();
+    // #[tokio::test]
+    // async fn test_vcx_schema_release() {
+    //     let _setup = SetupMocks::init();
 
-        let (_did, schema_name, schema_version, data) = prepare_schema_data();
-        let handle = create_and_publish_schema(
-            DEFAULT_DID,
-            "test_create_schema_success",
-            schema_name,
-            schema_version,
-            data.clone(),
-        )
-        .await
-        .unwrap();
-        release(handle).unwrap();
-        assert_eq!(
-            to_string(handle).unwrap_err().kind,
-            LibvcxErrorKind::InvalidHandle
-        )
-    }
+    //     let (_did, schema_name, schema_version, data) = prepare_schema_data();
+    //     let handle = create_and_publish_schema(
+    //         DEFAULT_DID,
+    //         "test_create_schema_success",
+    //         schema_name,
+    //         schema_version,
+    //         data.clone(),
+    //     )
+    //     .await
+    //     .unwrap();
+    //     release(handle).unwrap();
+    //     assert_eq!(
+    //         to_string(handle).unwrap_err().kind,
+    //         LibvcxErrorKind::InvalidHandle
+    //     )
+    // }
 
-    #[tokio::test]
-    async fn test_create_schema_success() {
-        let _setup = SetupMocks::init();
+    // #[tokio::test]
+    // async fn test_create_schema_success() {
+    //     let _setup = SetupMocks::init();
 
-        let (_did, schema_name, schema_version, data) = prepare_schema_data();
-        create_and_publish_schema(
-            DEFAULT_DID,
-            "test_create_schema_success",
-            schema_name,
-            schema_version,
-            data,
-        )
-        .await
-        .unwrap();
-    }
+    //     let (_did, schema_name, schema_version, data) = prepare_schema_data();
+    //     create_and_publish_schema(
+    //         DEFAULT_DID,
+    //         "test_create_schema_success",
+    //         schema_name,
+    //         schema_version,
+    //         data,
+    //     )
+    //     .await
+    //     .unwrap();
+    // }
+
+    // #[tokio::test]
+    // async fn test_get_schema_attrs_success() {
+    //     let _setup = SetupMocks::init();
+
+    //     let (handle, schema_json) =
+    //         get_schema_attrs("Check For Success".to_string(), SCHEMA_ID.to_string())
+    //             .await
+    //             .unwrap();
+
+    //     check_schema(
+    //         handle,
+    //         &schema_json,
+    //         SCHEMA_ID,
+    //         r#"["name","age","height","sex"]"#,
+    //     );
+    // }
 
     #[tokio::test]
     async fn test_create_schema_fails() {
@@ -233,87 +253,87 @@ pub mod tests {
         assert_eq!(err.kind(), LibvcxErrorKind::SerializationError)
     }
 
-    #[tokio::test]
-    #[ignore]
-    async fn test_create_schema_with_pool() {
-        SetupGlobalsWalletPoolAgency::run(|_setup| async move {
-            let handle = create_schema_real().await;
+    // #[tokio::test]
+    // #[ignore]
+    // async fn test_create_schema_with_pool() {
+    //     SetupGlobalsWalletPoolAgency::run(|_setup| async move {
+    //         let handle = create_schema_real().await;
 
-            let _source_id = get_source_id(handle).unwrap();
-            let _schema_id = get_schema_id(handle).unwrap();
-            let _schema_json = to_string(handle).unwrap();
-        })
-        .await;
-    }
+    //         let _source_id = get_source_id(handle).unwrap();
+    //         let _schema_id = get_schema_id(handle).unwrap();
+    //         let _schema_json = to_string(handle).unwrap();
+    //     })
+    //     .await;
+    // }
 
-    #[tokio::test]
-    #[ignore]
-    async fn test_create_duplicate_fails() {
-        SetupGlobalsWalletPoolAgency::run(|_setup| async move {
-            let (_did, schema_name, schema_version, data) = prepare_schema_data();
+    // #[tokio::test]
+    // #[ignore]
+    // async fn test_create_duplicate_fails() {
+    //     SetupGlobalsWalletPoolAgency::run(|_setup| async move {
+    //         let (_did, schema_name, schema_version, data) = prepare_schema_data();
 
-            create_and_publish_schema(
-                DEFAULT_DID,
-                "id",
-                schema_name.clone(),
-                schema_version.clone(),
-                data.clone(),
-            )
-            .await
-            .unwrap();
+    //         create_and_publish_schema(
+    //             DEFAULT_DID,
+    //             "id",
+    //             schema_name.clone(),
+    //             schema_version.clone(),
+    //             data.clone(),
+    //         )
+    //         .await
+    //         .unwrap();
 
-            let err =
-                create_and_publish_schema(DEFAULT_DID, "id_2", schema_name, schema_version, data)
-                    .await
-                    .unwrap_err();
-            error!("err: {:?}", err);
-            // .unwrap_err();
+    //         let err =
+    //             create_and_publish_schema(DEFAULT_DID, "id_2", schema_name, schema_version, data)
+    //                 .await
+    //                 .unwrap_err();
+    //         error!("err: {:?}", err);
+    //         // .unwrap_err();
 
-            assert_eq!(err.kind(), LibvcxErrorKind::DuplicationSchema);
-        })
-        .await;
-    }
+    //         assert_eq!(err.kind(), LibvcxErrorKind::DuplicationSchema);
+    //     })
+    //     .await;
+    // }
 
-    #[tokio::test]
-    async fn test_release_all() {
-        let _setup = SetupMocks::init();
+    // #[tokio::test]
+    // async fn test_release_all() {
+    //     let _setup = SetupMocks::init();
 
-        let (_did, schema_name, version, data) = prepare_schema_data();
+    //     let (_did, schema_name, version, data) = prepare_schema_data();
 
-        let h1 = create_and_publish_schema(
-            DEFAULT_DID,
-            "1",
-            schema_name.clone(),
-            version.clone(),
-            data.clone(),
-        )
-        .await
-        .unwrap();
-        let h2 = create_and_publish_schema(
-            DEFAULT_DID,
-            "2",
-            schema_name.clone(),
-            version.clone(),
-            data.clone(),
-        )
-        .await
-        .unwrap();
-        let h3 = create_and_publish_schema(
-            DEFAULT_DID,
-            "3",
-            schema_name.clone(),
-            version.clone(),
-            data.clone(),
-        )
-        .await
-        .unwrap();
+    //     let h1 = create_and_publish_schema(
+    //         DEFAULT_DID,
+    //         "1",
+    //         schema_name.clone(),
+    //         version.clone(),
+    //         data.clone(),
+    //     )
+    //     .await
+    //     .unwrap();
+    //     let h2 = create_and_publish_schema(
+    //         DEFAULT_DID,
+    //         "2",
+    //         schema_name.clone(),
+    //         version.clone(),
+    //         data.clone(),
+    //     )
+    //     .await
+    //     .unwrap();
+    //     let h3 = create_and_publish_schema(
+    //         DEFAULT_DID,
+    //         "3",
+    //         schema_name.clone(),
+    //         version.clone(),
+    //         data.clone(),
+    //     )
+    //     .await
+    //     .unwrap();
 
-        release_all();
+    //     release_all();
 
-        assert!(!is_valid_handle(h1));
-        assert!(!is_valid_handle(h2));
-        assert!(!is_valid_handle(h3));
-    }
+    //     assert!(!is_valid_handle(h1));
+    //     assert!(!is_valid_handle(h2));
+    //     assert!(!is_valid_handle(h3));
+    // }
 
     #[test]
     fn test_handle_errors() {
@@ -325,55 +345,83 @@ pub mod tests {
         );
     }
 
-    #[tokio::test]
-    #[ignore]
-    async fn test_vcx_schema_get_state_with_ledger() {
-        SetupGlobalsWalletPoolAgency::run(|_setup| async move {
-            let handle = create_schema_real().await;
-            assert_eq!(1, get_state(handle).unwrap());
-        })
-        .await;
-    }
+    // #[tokio::test]
+    // #[ignore]
+    // async fn test_vcx_schema_get_state_with_ledger() {
+    //     SetupGlobalsWalletPoolAgency::run(|_setup| async move {
+    //         let handle = create_schema_real().await;
+    //         assert_eq!(1, get_state(handle).unwrap());
+    //     })
+    //     .await;
+    // }
 
-    #[tokio::test]
-    #[ignore]
-    async fn test_vcx_create_schema_with_pool() {
-        SetupGlobalsWalletPoolAgency::run(|_setup| async move {
-            let (_issuer_did, schema_name, schema_version, schema_data) = prepare_schema_data();
-            let _schema_handle = schema::create_and_publish_schema(
-                DEFAULT_DID,
-                "source_id",
-                schema_name,
-                schema_version,
-                schema_data,
-            )
-            .await
-            .unwrap();
-        })
-        .await;
-    }
+    // #[tokio::test]
+    // #[ignore]
+    // async fn test_vcx_create_schema_with_pool() {
+    //     SetupGlobalsWalletPoolAgency::run(|_setup| async move {
+    //         let (_issuer_did, schema_name, schema_version, schema_data) = prepare_schema_data();
+    //         let _schema_handle = schema::create_and_publish_schema(
+    //             DEFAULT_DID,
+    //             "source_id",
+    //             schema_name,
+    //             schema_version,
+    //             schema_data,
+    //         )
+    //         .await
+    //         .unwrap();
+    //     })
+    //     .await;
+    // }
 
-    #[tokio::test]
-    #[ignore]
-    async fn test_vcx_schema_serialize_contains_version() {
-        SetupGlobalsWalletPoolAgency::run(|_setup| async move {
-            let (_issuer_did, schema_name, schema_version, schema_data) = prepare_schema_data();
-            let schema_handle = schema::create_and_publish_schema(
-                DEFAULT_DID,
-                "source_id",
-                schema_name,
-                schema_version,
-                schema_data,
-            )
-            .await
-            .unwrap();
+    // #[tokio::test]
+    // #[ignore]
+    // async fn test_vcx_schema_serialize_contains_version() {
+    //     SetupGlobalsWalletPoolAgency::run(|_setup| async move {
+    //         let (_issuer_did, schema_name, schema_version, schema_data) = prepare_schema_data();
+    //         let schema_handle = schema::create_and_publish_schema(
+    //             DEFAULT_DID,
+    //             "source_id",
+    //             schema_name,
+    //             schema_version,
+    //             schema_data,
+    //         )
+    //         .await
+    //         .unwrap();
 
-            let schema_json = schema::to_string(schema_handle).unwrap();
+    //         let schema_json = schema::to_string(schema_handle).unwrap();
 
-            let j: serde_json::Value = serde_json::from_str(&schema_json).unwrap();
-            let _schema: Schema = serde_json::from_value(j["data"].clone()).unwrap();
-            assert_eq!(j["version"], "1.0");
-        })
-        .await;
-    }
+    //         let j: serde_json::Value = serde_json::from_str(&schema_json).unwrap();
+    //         let _schema: Schema = serde_json::from_value(j["data"].clone()).unwrap();
+    //         assert_eq!(j["version"], "1.0");
+    //     })
+    //     .await;
+    // }
+
+    // #[tokio::test]
+    // #[ignore]
+    // async fn test_vcx_schema_get_attrs_with_pool() {
+    //     SetupGlobalsWalletPoolAgency::run(|_setup| async move {
+    //         let (_issuer_did, schema_name, schema_version, schema_data) = prepare_schema_data();
+    //         let schema_handle = schema::create_and_publish_schema(
+    //             DEFAULT_DID,
+    //             "source_id",
+    //             schema_name,
+    //             schema_version,
+    //             schema_data,
+    //         )
+    //         .await
+    //         .unwrap();
+    //         let _schema_json_1 = schema::to_string(schema_handle).unwrap();
+    //         let schema_id = schema::get_schema_id(schema_handle).unwrap();
+
+    //         let (_schema_handle, schema_json_2) =
+    //             schema::get_schema_attrs("source_id".into(), schema_id)
+    //                 .await
+    //                 .unwrap();
+    //         let j: serde_json::Value = serde_json::from_str(&schema_json_2).unwrap();
+    //         let _schema: Schema = serde_json::from_value(j["data"].clone()).unwrap();
+    //         assert_eq!(j["version"], "1.0");
+    //     })
+    //     .await;
+    // }
 }

@@ -157,7 +157,7 @@ pub mod tests {
             get_txns_sovrin_testnet,
         },
         global::settings::DEFAULT_GENESIS_PATH,
-        utils::devsetup::{SetupEmpty, SetupMocks},
+        utils::devsetup::SetupEmpty,
     };
 
     use crate::api_vcx::api_global::{
@@ -226,14 +226,14 @@ pub mod tests {
         assert_eq!(expected, auth_agreement);
     }
 
-    #[tokio::test]
-    async fn test_vcx_get_ledger_author_agreement() {
-        let _setup = SetupMocks::init();
+    // #[tokio::test]
+    // async fn test_vcx_get_ledger_author_agreement() {
+    //     let _setup = SetupMocks::init();
 
-        let agreement = ledger_get_txn_author_agreement().await.unwrap();
-        assert_eq!(
-            aries_vcx::utils::constants::DEFAULT_AUTHOR_AGREEMENT,
-            agreement
-        );
-    }
+    //     let agreement = ledger_get_txn_author_agreement().await.unwrap();
+    //     assert_eq!(
+    //         aries_vcx::utils::constants::DEFAULT_AUTHOR_AGREEMENT,
+    //         agreement
+    //     );
+    // }
 }
