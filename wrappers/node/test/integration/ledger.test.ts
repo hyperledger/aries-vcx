@@ -1,7 +1,7 @@
 import '../module-resolver-helper';
 import * as path from 'path';
-import {createAndStoreDid, openMainPool, shutdownVcx, writeEndorserDid} from 'src';
-import { initVcx, initVcxTestMode } from '../helpers/utils';
+import { createAndStoreDid, openMainPool, shutdownVcx, writeEndorserDid } from 'src';
+import { initVcx } from '../helpers/utils';
 import { expect } from 'chai';
 
 const seed = '1234567890123456789012';
