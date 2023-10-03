@@ -170,6 +170,9 @@ impl GenericConnection {
         }
     }
 
+    // todo: GenericConnection deals with States - but we have bunch of useful methods implemented
+    //       on Connection<I, S>, like in thies case, method "encrypt_message" - but we are unable
+    //       to reuse that here and end up reimplementing the same logic. Think about how to solve that.
     pub async fn encrypt_message(
         &self,
         wallet: &impl BaseWallet,

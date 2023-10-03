@@ -126,6 +126,14 @@ impl OutOfBandSender {
         self.oob.clone().into()
     }
 
+    pub fn as_invitation_msg(&self) -> Invitation {
+        self.oob.clone()
+    }
+
+    pub fn to_string(&self) -> String {
+        json!(AriesMessage::from(self.oob.clone())).to_string()
+    }
+
     pub fn from_string(oob_data: &str) -> VcxResult<Self> {
         Ok(Self {
             oob: serde_json::from_str(oob_data)?,

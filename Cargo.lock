@@ -1342,6 +1342,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "demo"
+version = "0.59.0"
+dependencies = [
+ "aries-vcx",
+ "aries_vcx_core",
+ "async-trait",
+ "diddoc_legacy",
+ "env_logger 0.9.3",
+ "log",
+ "messages",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "simple_message_relay",
+ "thiserror",
+ "tokio",
+ "url",
+ "uuid 1.4.1",
+]
+
+[[package]]
 name = "der"
 version = "0.7.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4174,6 +4195,11 @@ name = "simple_message_relay"
 version = "0.1.0"
 dependencies = [
  "actix-web",
+ "env_logger 0.9.3",
+ "log",
+ "serde",
+ "serde_json",
+ "tokio",
 ]
 
 [[package]]

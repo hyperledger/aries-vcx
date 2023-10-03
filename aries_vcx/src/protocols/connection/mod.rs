@@ -4,7 +4,7 @@ pub mod invitee;
 pub mod inviter;
 pub mod pairwise_info;
 mod serializable;
-mod trait_bounds;
+pub mod trait_bounds;
 
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use diddoc_legacy::aries::diddoc::AriesDidDoc;

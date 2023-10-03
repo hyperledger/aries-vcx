@@ -75,7 +75,8 @@ impl InviteeConnection<Initial> {
 }
 
 impl InviteeConnection<Invited> {
-    /// Sends a [`Request`] to the inviter and transitions to [`InviteeConnection<Requested>`].
+    /// Prepares a [`Request`] for the inviter and transitions to [`InviteeConnection<Requested>`].
+    /// The prepared request may be sent using `.send_message` method
     ///
     /// # Errors
     ///
