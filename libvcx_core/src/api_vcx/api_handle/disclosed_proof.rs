@@ -15,6 +15,7 @@ use aries_vcx::{
 };
 use serde_json;
 
+use super::mediated_connection::send_message;
 use crate::{
     api_vcx::{
         api_global::profile::{get_main_anoncreds, get_main_anoncreds_ledger_read},
@@ -183,9 +184,8 @@ pub fn get_presentation_msg(handle: u32) -> LibvcxResult<String> {
 
 pub async fn send_proof(handle: u32, connection_handle: u32) -> LibvcxResult<()> {
     let mut proof = HANDLE_MAP.get_cloned(handle)?;
-    let send_message = mediated_connection::send_message_closure(connection_handle).await?;
     let message = proof.mark_presentation_sent()?;
-    send_message(message).await?;
+    send_message(connection_handle, message).await?;
     HANDLE_MAP.insert(handle, proof)
 }
 
@@ -202,14 +202,13 @@ pub async fn reject_proof(handle: u32, connection_handle: u32) -> LibvcxResult<(
         handle, connection_handle
     );
     let mut proof = HANDLE_MAP.get_cloned(handle)?;
-    let send_message = mediated_connection::send_message_closure(connection_handle).await?;
     let message = proof
         .decline_presentation_request(
             Some(String::from("Presentation Request was rejected")),
             None,
         )
         .await?;
-    send_message(message).await?;
+    send_message(connection_handle, message).await?;
     HANDLE_MAP.insert(handle, proof)
 }
 
@@ -237,14 +236,13 @@ pub async fn decline_presentation_request(
     proposal: Option<&str>,
 ) -> LibvcxResult<()> {
     let mut proof = HANDLE_MAP.get_cloned(handle)?;
-    let send_message = mediated_connection::send_message_closure(connection_handle).await?;
     let message = proof
         .decline_presentation_request(
             reason.map(|s| s.to_string()),
             proposal.map(|s| s.to_string()),
         )
         .await?;
-    send_message(message).await?;
+    send_message(connection_handle, message).await?;
     HANDLE_MAP.insert(handle, proof)
 }
 

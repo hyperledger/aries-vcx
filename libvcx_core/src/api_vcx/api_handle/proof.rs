@@ -17,7 +17,10 @@ use crate::{
             get_main_anoncreds, get_main_anoncreds_ledger_read, get_main_wallet,
         },
         api_handle::{
-            connection, connection::HttpClient, mediated_connection, object_cache::ObjectCache,
+            connection,
+            connection::HttpClient,
+            mediated_connection::{self, send_message},
+            object_cache::ObjectCache,
         },
     },
     errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult},
@@ -69,7 +72,6 @@ pub async fn update_state(
     if !proof.progressable_by_message() {
         return Ok(proof.get_state().into());
     }
-    let send_message = mediated_connection::send_message_closure(connection_handle).await?;
 
     if let Some(message) = message {
         let message: AriesMessage = serde_json::from_str(message).map_err(|err| {
@@ -93,7 +95,7 @@ pub async fn update_state(
             )
             .await?
         {
-            send_message(message).await?;
+            send_message(connection_handle, message).await?;
         }
     } else {
         let messages = mediated_connection::get_messages(connection_handle).await?;
@@ -107,7 +109,7 @@ pub async fn update_state(
                 )
                 .await?
             {
-                send_message(message).await?;
+                send_message(connection_handle, message).await?;
             }
             mediated_connection::update_message_status(connection_handle, &uid).await?;
         };
@@ -209,9 +211,8 @@ pub fn from_string(proof_data: &str) -> LibvcxResult<u32> {
 
 pub async fn send_proof_request(handle: u32, connection_handle: u32) -> LibvcxResult<()> {
     let mut proof = PROOF_MAP.get_cloned(handle)?;
-    let send_closure = mediated_connection::send_message_closure(connection_handle).await?;
     let message = proof.mark_presentation_request_sent()?;
-    send_closure(message.into()).await?;
+    send_message(connection_handle, message.into()).await?;
     PROOF_MAP.insert(handle, proof)
 }
 

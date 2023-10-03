@@ -68,7 +68,11 @@ impl RevocationNotificationSenderSM {
         }
     }
 
-    pub async fn send(self, config: SenderConfig, send_message: SendClosure) -> VcxResult<Self> {
+    pub async fn send(
+        self,
+        config: SenderConfig,
+        send_message: SendClosure<'_>,
+    ) -> VcxResult<Self> {
         let state = match self.state {
             SenderFullState::Initial(_) | SenderFullState::NotificationSent(_) => {
                 let SenderConfig {

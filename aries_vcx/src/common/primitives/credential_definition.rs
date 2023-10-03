@@ -81,7 +81,7 @@ pub struct RevocationDetails {
 }
 
 async fn _try_get_cred_def_from_ledger(
-    ledger: &Arc<dyn AnoncredsLedgerRead>,
+    ledger: &impl AnoncredsLedgerRead,
     issuer_did: &str,
     cred_def_id: &str,
 ) -> VcxResult<Option<String>> {
@@ -102,8 +102,8 @@ async fn _try_get_cred_def_from_ledger(
 }
 impl CredentialDef {
     pub async fn create(
-        ledger_read: &Arc<dyn AnoncredsLedgerRead>,
-        anoncreds: &Arc<dyn BaseAnonCreds>,
+        ledger_read: &impl AnoncredsLedgerRead,
+        anoncreds: &impl BaseAnonCreds,
         source_id: String,
         config: CredentialDefConfig,
         support_revocation: bool,
@@ -156,8 +156,8 @@ impl CredentialDef {
 
     pub async fn publish_cred_def(
         self,
-        ledger_read: &Arc<dyn AnoncredsLedgerRead>,
-        ledger_write: &Arc<dyn AnoncredsLedgerWrite>,
+        ledger_read: &impl AnoncredsLedgerRead,
+        ledger_write: &impl AnoncredsLedgerWrite,
     ) -> VcxResult<Self> {
         trace!(
             "publish_cred_def >>> issuer_did: {}, cred_def_id: {}",
@@ -239,7 +239,7 @@ impl CredentialDef {
 }
 
 pub async fn generate_cred_def(
-    anoncreds: &Arc<dyn BaseAnonCreds>,
+    anoncreds: &impl BaseAnonCreds,
     issuer_did: &str,
     schema_json: &str,
     tag: &str,
@@ -277,9 +277,10 @@ pub async fn generate_cred_def(
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 pub mod integration_tests {
-    use std::sync::Arc;
-
-    use aries_vcx_core::ledger::indy::pool::test_utils::get_temp_dir_path;
+    use aries_vcx_core::ledger::{
+        base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite},
+        indy::pool::test_utils::get_temp_dir_path,
+    };
 
     use crate::{
         common::{
@@ -294,24 +295,24 @@ pub mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_pool_create_cred_def_real() {
-        SetupProfile::run(|setup| async move {
+        run_setup!(|setup| async move {
             let schema = create_and_write_test_schema(
-                &setup.profile.inject_anoncreds(),
-                &setup.profile.inject_anoncreds_ledger_write(),
+                setup.profile.anoncreds(),
+                setup.profile.ledger_write(),
                 &setup.institution_did,
                 DEFAULT_SCHEMA_ATTRS,
             )
             .await;
 
-            let ledger_read = Arc::clone(&setup.profile).inject_anoncreds_ledger_read();
-            let ledger_write = Arc::clone(&setup.profile).inject_anoncreds_ledger_write();
+            let ledger_read = setup.profile.ledger_read();
+            let ledger_write = setup.profile.ledger_write();
             let schema_json = ledger_read
                 .get_schema(&schema.schema_id, None)
                 .await
                 .unwrap();
 
             let (cred_def_id, cred_def_json_local) = generate_cred_def(
-                &setup.profile.inject_anoncreds(),
+                setup.profile.anoncreds(),
                 &setup.institution_did,
                 &schema_json,
                 "tag_1",
@@ -342,23 +343,23 @@ pub mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_pool_create_rev_reg_def() {
-        SetupProfile::run(|setup| async move {
+        run_setup!(|setup| async move {
             let schema = create_and_write_test_schema(
-                &setup.profile.inject_anoncreds(),
-                &setup.profile.inject_anoncreds_ledger_write(),
+                setup.profile.anoncreds(),
+                setup.profile.ledger_write(),
                 &setup.institution_did,
                 DEFAULT_SCHEMA_ATTRS,
             )
             .await;
-            let ledger_read = Arc::clone(&setup.profile).inject_anoncreds_ledger_read();
-            let ledger_write = Arc::clone(&setup.profile).inject_anoncreds_ledger_write();
+            let ledger_read = setup.profile.ledger_read();
+            let ledger_write = setup.profile.ledger_write();
             let schema_json = ledger_read
                 .get_schema(&schema.schema_id, None)
                 .await
                 .unwrap();
 
             let (cred_def_id, cred_def_json) = generate_cred_def(
-                &setup.profile.inject_anoncreds(),
+                setup.profile.anoncreds(),
                 &setup.institution_did,
                 &schema_json,
                 "tag_1",
@@ -375,7 +376,7 @@ pub mod integration_tests {
             let path = get_temp_dir_path();
 
             let (rev_reg_def_id, rev_reg_def_json, rev_reg_entry_json) = generate_rev_reg(
-                &setup.profile.inject_anoncreds(),
+                setup.profile.anoncreds(),
                 &setup.institution_did,
                 &cred_def_id,
                 path.to_str().unwrap(),

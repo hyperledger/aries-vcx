@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use aries_vcx_core::{
     errors::error::AriesVcxCoreErrorKind, ledger::base_ledger::AnoncredsLedgerRead,
 };
@@ -99,7 +97,7 @@ pub fn validate_proof_revealed_attributes(proof_json: &str) -> VcxResult<()> {
 }
 
 pub async fn build_cred_defs_json_verifier(
-    ledger: &Arc<dyn AnoncredsLedgerRead>,
+    ledger: &impl AnoncredsLedgerRead,
     credential_data: &[CredInfoVerifier],
 ) -> VcxResult<String> {
     trace!("build_cred_defs_json_verifier >>");
@@ -125,7 +123,7 @@ pub async fn build_cred_defs_json_verifier(
 }
 
 pub async fn build_schemas_json_verifier(
-    ledger: &Arc<dyn AnoncredsLedgerRead>,
+    ledger: &impl AnoncredsLedgerRead,
     credential_data: &[CredInfoVerifier],
 ) -> VcxResult<String> {
     trace!("build_schemas_json_verifier >>");
@@ -152,7 +150,7 @@ pub async fn build_schemas_json_verifier(
 }
 
 pub async fn build_rev_reg_defs_json(
-    ledger: &Arc<dyn AnoncredsLedgerRead>,
+    ledger: &impl AnoncredsLedgerRead,
     credential_data: &[CredInfoVerifier],
 ) -> VcxResult<String> {
     trace!("build_rev_reg_defs_json >>");
@@ -185,7 +183,7 @@ pub async fn build_rev_reg_defs_json(
 }
 
 pub async fn build_rev_reg_json(
-    ledger: &Arc<dyn AnoncredsLedgerRead>,
+    ledger: &impl AnoncredsLedgerRead,
     credential_data: &[CredInfoVerifier],
 ) -> VcxResult<String> {
     trace!("build_rev_reg_json >>");
@@ -248,7 +246,7 @@ pub mod unit_tests {
             timestamp: None,
         };
         let credentials = vec![cred1, cred2];
-        let ledger_read: Arc<dyn AnoncredsLedgerRead> = Arc::new(MockLedger {});
+        let ledger_read = MockLedger;
         let credential_json = build_cred_defs_json_verifier(&ledger_read, &credentials)
             .await
             .unwrap();
@@ -274,7 +272,7 @@ pub mod unit_tests {
             rev_reg_id: None,
             timestamp: None,
         };
-        let ledger_read: Arc<dyn AnoncredsLedgerRead> = Arc::new(MockLedger {});
+        let ledger_read = MockLedger;
         let credentials = vec![cred1, cred2];
         let schema_json = build_schemas_json_verifier(&ledger_read, &credentials)
             .await
@@ -301,7 +299,7 @@ pub mod unit_tests {
             rev_reg_id: Some(REV_REG_ID.to_string()),
             timestamp: None,
         };
-        let ledger_read: Arc<dyn AnoncredsLedgerRead> = Arc::new(MockLedger {});
+        let ledger_read = MockLedger;
         let credentials = vec![cred1, cred2];
         let rev_reg_defs_json = build_rev_reg_defs_json(&ledger_read, &credentials)
             .await
@@ -328,7 +326,7 @@ pub mod unit_tests {
             rev_reg_id: Some("id2".to_string()),
             timestamp: Some(2),
         };
-        let ledger_read: Arc<dyn AnoncredsLedgerRead> = Arc::new(MockLedger {});
+        let ledger_read = MockLedger;
         let credentials = vec![cred1, cred2];
         let rev_reg_json = build_rev_reg_json(&ledger_read, &credentials)
             .await

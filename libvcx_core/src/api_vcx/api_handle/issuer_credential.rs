@@ -8,6 +8,7 @@ use aries_vcx::{
 };
 use serde_json;
 
+use super::mediated_connection::send_message;
 use crate::{
     api_vcx::{
         api_global::profile::{get_main_anoncreds, get_main_wallet},
@@ -207,9 +208,8 @@ pub async fn send_credential_offer_v2(
     connection_handle: u32,
 ) -> LibvcxResult<()> {
     let credential = ISSUER_CREDENTIAL_MAP.get_cloned(credential_handle)?;
-    let send_closure = mediated_connection::send_message_closure(connection_handle).await?;
     let credential_offer = credential.get_credential_offer_msg()?;
-    send_closure(credential_offer).await?;
+    send_message(connection_handle, credential_offer).await?;
     ISSUER_CREDENTIAL_MAP.insert(credential_handle, credential)?;
     Ok(())
 }
@@ -236,15 +236,14 @@ pub async fn send_credential_offer_nonmediated(
 pub async fn send_credential(handle: u32, connection_handle: u32) -> LibvcxResult<u32> {
     let mut credential = ISSUER_CREDENTIAL_MAP.get_cloned(handle)?;
     credential.build_credential(&get_main_anoncreds()?).await?;
-    let send_closure = mediated_connection::send_message_closure(connection_handle).await?;
     match credential.get_state() {
         IssuerState::Failed => {
             let problem_report = credential.get_problem_report()?;
-            send_closure(problem_report.into()).await?;
+            send_message(connection_handle, problem_report.into()).await?;
         }
         _ => {
             let msg_issue_credential = credential.get_msg_issue_credential()?;
-            send_closure(msg_issue_credential.into()).await?;
+            send_message(connection_handle, msg_issue_credential.into()).await?;
         }
     }
     let state: u32 = credential.get_state().into();

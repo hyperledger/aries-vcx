@@ -1,3 +1,5 @@
+#![allow(clippy::diverging_sub_expression)]
+
 #[macro_use]
 extern crate log;
 #[macro_use]
@@ -19,6 +21,7 @@ use aries_vcx::{
         proof_presentation::{prover::Prover, types::RetrievedCredentials},
         util::AttachmentId,
     },
+    run_setup,
     utils::{constants::DEFAULT_SCHEMA_ATTRS, devsetup::SetupProfile},
 };
 use messages::{
@@ -36,7 +39,7 @@ use crate::utils::migration::Migratable;
 #[ignore]
 // TODO: This should be a unit test
 async fn test_agency_pool_retrieve_credentials_empty() {
-    SetupProfile::run(|mut setup| async move {
+    run_setup!(|setup| async move {
         // create skeleton proof request attachment data
         let mut req = json!({
            "nonce":"123432421212",
@@ -70,10 +73,10 @@ async fn test_agency_pool_retrieve_credentials_empty() {
         let proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
 
         #[cfg(feature = "migration")]
-        setup.migrate().await;
+        let setup = setup.migrate().await;
 
         let retrieved_creds = proof
-            .retrieve_credentials(&setup.profile.inject_anoncreds())
+            .retrieve_credentials(setup.profile.anoncreds())
             .await
             .unwrap();
         assert_eq!(
@@ -109,7 +112,7 @@ async fn test_agency_pool_retrieve_credentials_empty() {
         let proof: Prover = Prover::create_from_request("2", proof_req).unwrap();
 
         let retrieved_creds = proof
-            .retrieve_credentials(&setup.profile.inject_anoncreds())
+            .retrieve_credentials(setup.profile.anoncreds())
             .await
             .unwrap();
         assert_eq!(
@@ -130,26 +133,26 @@ async fn test_agency_pool_retrieve_credentials_empty() {
 #[ignore]
 // TODO: This should be a unit test
 async fn test_agency_pool_case_for_proof_req_doesnt_matter_for_retrieve_creds() {
-    SetupProfile::run(|mut setup| async move {
+    run_setup!(|setup| async move {
         let schema = create_and_write_test_schema(
-            &setup.profile.inject_anoncreds(),
-            &setup.profile.inject_anoncreds_ledger_write(),
+            setup.profile.anoncreds(),
+            setup.profile.ledger_write(),
             &setup.institution_did,
             DEFAULT_SCHEMA_ATTRS,
         )
         .await;
         let cred_def = create_and_write_test_cred_def(
-            &setup.profile.inject_anoncreds(),
-            &setup.profile.inject_anoncreds_ledger_read(),
-            &setup.profile.inject_anoncreds_ledger_write(),
+            setup.profile.anoncreds(),
+            setup.profile.ledger_read(),
+            setup.profile.ledger_write(),
             &setup.institution_did,
             &schema.schema_id,
             true,
         )
         .await;
         create_and_write_credential(
-            &setup.profile.inject_anoncreds(),
-            &setup.profile.inject_anoncreds(),
+            setup.profile.anoncreds(),
+            setup.profile.anoncreds(),
             &setup.institution_did,
             &cred_def,
             None,
@@ -193,7 +196,7 @@ async fn test_agency_pool_case_for_proof_req_doesnt_matter_for_retrieve_creds() 
 
         // All lower case
         let retrieved_creds = proof
-            .retrieve_credentials(&setup.profile.inject_anoncreds())
+            .retrieve_credentials(setup.profile.anoncreds())
             .await
             .unwrap();
         assert_eq!(
@@ -222,7 +225,7 @@ async fn test_agency_pool_case_for_proof_req_doesnt_matter_for_retrieve_creds() 
             .build();
 
         #[cfg(feature = "migration")]
-        setup.migrate().await;
+        let setup = setup.migrate().await;
 
         let proof_req = RequestPresentation::builder()
             .id(id)
@@ -230,7 +233,7 @@ async fn test_agency_pool_case_for_proof_req_doesnt_matter_for_retrieve_creds() 
             .build();
         let proof: Prover = Prover::create_from_request("2", proof_req).unwrap();
         let retrieved_creds2 = proof
-            .retrieve_credentials(&setup.profile.inject_anoncreds())
+            .retrieve_credentials(setup.profile.anoncreds())
             .await
             .unwrap();
         assert_eq!(
@@ -264,7 +267,7 @@ async fn test_agency_pool_case_for_proof_req_doesnt_matter_for_retrieve_creds() 
             .build();
         let proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
         let retrieved_creds3 = proof
-            .retrieve_credentials(&setup.profile.inject_anoncreds())
+            .retrieve_credentials(setup.profile.anoncreds())
             .await
             .unwrap();
         assert_eq!(
@@ -281,6 +284,7 @@ async fn test_agency_pool_case_for_proof_req_doesnt_matter_for_retrieve_creds() 
 #[cfg(not(feature = "modular_libs"))]
 #[tokio::test]
 #[ignore]
+#[allow(unused_mut)]
 async fn test_agency_pool_it_should_fail_to_select_credentials_for_predicate() {
     use aries_vcx::utils::devsetup::SetupPoolDirectory;
     use utils::{
@@ -300,7 +304,7 @@ async fn test_agency_pool_it_should_fail_to_select_credentials_for_predicate() {
         issue_address_credential(&mut consumer, &mut institution).await;
 
         #[cfg(feature = "migration")]
-        institution.migrate().await;
+        let mut institution = institution.migrate().await;
 
         let requested_preds_string = serde_json::to_string(&json!([{
             "name": "zip",
@@ -315,7 +319,7 @@ async fn test_agency_pool_it_should_fail_to_select_credentials_for_predicate() {
         let mut verifier = create_verifier_from_request_data(presentation_request_data).await;
 
         #[cfg(feature = "migration")]
-        consumer.migrate().await;
+        let mut consumer = consumer.migrate().await;
 
         let presentation_request = verifier.get_presentation_request_msg().unwrap();
         let mut prover = create_prover_from_request(presentation_request.clone()).await;

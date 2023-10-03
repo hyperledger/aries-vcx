@@ -40,7 +40,7 @@ pub struct Schema {
 
 impl Schema {
     pub async fn create(
-        anoncreds: &Arc<dyn BaseAnonCreds>,
+        anoncreds: &impl BaseAnonCreds,
         source_id: &str,
         submitter_did: &str,
         name: &str,
@@ -117,7 +117,7 @@ impl Schema {
 
     pub async fn publish(
         self,
-        ledger: &Arc<dyn AnoncredsLedgerWrite>,
+        ledger: &impl AnoncredsLedgerWrite,
         endorser_did: Option<String>,
     ) -> VcxResult<Self> {
         trace!("Schema::publish >>>");

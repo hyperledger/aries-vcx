@@ -12,10 +12,7 @@ use aries_vcx_core::{
         disable_indy_mocks as disable_indy_mocks_core, enable_indy_mocks as enable_indy_mocks_core,
         reset_config_values_ariesvcxcore,
     },
-    ledger::{
-        base_ledger::{AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite},
-        indy::pool::test_utils::{create_testpool_genesis_txn_file, get_temp_file_path},
-    },
+    ledger::indy::pool::test_utils::{create_testpool_genesis_txn_file, get_temp_file_path},
     wallet::indy::{
         did_mocks::DidMocks,
         wallet::{create_and_open_wallet, create_and_store_my_did},
@@ -27,13 +24,12 @@ use chrono::{DateTime, Duration, Utc};
 
 #[cfg(feature = "modular_libs")]
 use crate::core::profile::modular_libs_profile::ModularLibsProfile;
+#[cfg(feature = "vdr_proxy_ledger")]
+use crate::core::profile::vdr_proxy_profile::VdrProxyProfile;
 #[cfg(feature = "vdrtools")]
 use crate::core::profile::vdrtools_profile::VdrtoolsProfile;
 use crate::{
-    core::profile::{
-        ledger::{build_ledger_components, VcxPoolConfig},
-        profile::Profile,
-    },
+    core::profile::{ledger::VcxPoolConfig, profile::Profile},
     global::{
         settings,
         settings::{
@@ -41,11 +37,7 @@ use crate::{
             reset_config_values_ariesvcx, set_config_value, CONFIG_INSTITUTION_DID, DEFAULT_DID,
         },
     },
-    utils::{
-        constants::{POOL1_TXN, TRUSTEE_SEED},
-        file::write_file,
-        test_logger::LibvcxDefaultLogger,
-    },
+    utils::{constants::POOL1_TXN, file::write_file, test_logger::LibvcxDefaultLogger},
 };
 
 #[macro_export]
@@ -84,9 +76,9 @@ pub const AGENCY_DID: &str = "VsKV7grR1BUE29mG2Fm2kX";
 pub const AGENCY_VERKEY: &str = "Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR";
 
 #[derive(Clone)]
-pub struct SetupProfile {
+pub struct SetupProfile<P: Profile> {
     pub institution_did: String,
-    pub profile: Arc<dyn Profile>,
+    pub profile: P,
     pub genesis_file_path: String,
 }
 
@@ -173,114 +165,133 @@ pub async fn dev_setup_wallet_indy(key_seed: &str) -> (String, WalletHandle) {
 pub fn dev_build_profile_vdrtools(
     genesis_file_path: String,
     wallet: Arc<IndySdkWallet>,
-) -> Arc<dyn Profile> {
+) -> VdrtoolsProfile {
     info!("dev_build_profile_vdrtools >>");
     let vcx_pool_config = VcxPoolConfig {
         genesis_file_path,
         indy_vdr_config: None,
         response_cache_config: None,
     };
-
-    let (ledger_read, ledger_write) =
-        build_ledger_components(wallet.clone(), vcx_pool_config).unwrap();
-    let anoncreds_ledger_read: Arc<dyn AnoncredsLedgerRead> = ledger_read.clone();
-    let anoncreds_ledger_write: Arc<dyn AnoncredsLedgerWrite> = ledger_write.clone();
-    let indy_ledger_read: Arc<dyn IndyLedgerRead> = ledger_read;
-    let indy_ledger_write: Arc<dyn IndyLedgerWrite> = ledger_write;
-    Arc::new(VdrtoolsProfile::init(
-        wallet,
-        anoncreds_ledger_read,
-        anoncreds_ledger_write,
-        indy_ledger_read,
-        indy_ledger_write,
-    ))
+    VdrtoolsProfile::init(wallet, vcx_pool_config).unwrap()
 }
 
 #[cfg(feature = "modular_libs")]
 pub fn dev_build_profile_modular(
     genesis_file_path: String,
     wallet: Arc<IndySdkWallet>,
-) -> Arc<dyn Profile> {
+) -> ModularLibsProfile {
     info!("dev_build_profile_modular >>");
     let vcx_pool_config = VcxPoolConfig {
         genesis_file_path,
         indy_vdr_config: None,
         response_cache_config: None,
     };
-    Arc::new(ModularLibsProfile::init(wallet, vcx_pool_config).unwrap())
+    ModularLibsProfile::init(wallet, vcx_pool_config).unwrap()
 }
 
 #[cfg(feature = "vdr_proxy_ledger")]
-pub async fn dev_build_profile_vdr_proxy_ledger(wallet: Arc<IndySdkWallet>) -> Arc<dyn Profile> {
+pub async fn dev_build_profile_vdr_proxy_ledger(wallet: Arc<IndySdkWallet>) -> VdrProxyProfile {
     use std::env;
 
     use aries_vcx_core::VdrProxyClient;
 
-    use crate::core::profile::vdr_proxy_profile::VdrProxyProfile;
     info!("dev_build_profile_vdr_proxy_ledger >>");
 
     let client_url =
         env::var("VDR_PROXY_CLIENT_URL").unwrap_or_else(|_| "http://127.0.0.1:3030".to_string());
     let client = VdrProxyClient::new(&client_url).unwrap();
 
-    Arc::new(VdrProxyProfile::init(wallet, client).await.unwrap())
+    VdrProxyProfile::init(wallet, client).await.unwrap()
 }
 
 #[allow(unreachable_code)]
+#[allow(unused_variables)]
 pub async fn dev_build_featured_profile(
     genesis_file_path: String,
     wallet: Arc<IndySdkWallet>,
-) -> Arc<dyn Profile> {
+) -> impl Profile {
     // In case of migration test setup, we are starting with vdrtools, then we migrate
-    #[cfg(feature = "migration")]
-    return {
-        info!("SetupProfile >> using indy profile");
-        dev_build_profile_vdrtools(genesis_file_path, wallet)
-    };
-    #[cfg(feature = "modular_libs")]
+    #[cfg(all(feature = "modular_libs", not(feature = "migration")))]
     return {
         info!("SetupProfile >> using modular profile");
         dev_build_profile_modular(genesis_file_path, wallet)
     };
-    #[cfg(feature = "vdr_proxy_ledger")]
+    #[cfg(all(feature = "vdr_proxy_ledger", not(feature = "migration")))]
     return {
         info!("SetupProfile >> using vdr proxy profile");
         dev_build_profile_vdr_proxy_ledger(wallet).await
     };
-    #[cfg(feature = "vdrtools")]
+    #[cfg(any(
+        all(
+            feature = "vdrtools",
+            not(feature = "vdr_proxy_ledger"),
+            not(feature = "modular_libs")
+        ),
+        feature = "migration"
+    ))]
     return {
         info!("SetupProfile >> using indy profile");
         dev_build_profile_vdrtools(genesis_file_path, wallet)
     };
 }
 
-impl SetupProfile {
-    pub async fn run<F>(f: impl FnOnce(Self) -> F)
-    where
-        F: Future<Output = ()>,
-    {
-        init_test_logging();
+#[macro_export]
+macro_rules! run_setup {
+    ($func:expr) => {{
+        use aries_vcx_core::anoncreds::base_anoncreds::BaseAnonCreds;
+        use $crate::core::profile::profile::Profile;
 
-        let genesis_file_path = get_temp_file_path(POOL1_TXN).to_str().unwrap().to_string();
-        create_testpool_genesis_txn_file(&genesis_file_path);
+        $crate::utils::devsetup::init_test_logging();
 
-        let (public_did, wallet_handle) = dev_setup_wallet_indy(TRUSTEE_SEED).await;
-        let wallet = Arc::new(IndySdkWallet::new(wallet_handle));
-        let profile = dev_build_featured_profile(genesis_file_path.clone(), wallet).await;
+        let genesis_file_path = aries_vcx_core::ledger::indy::pool::test_utils::get_temp_file_path(
+            $crate::utils::constants::POOL1_TXN,
+        )
+        .to_str()
+        .unwrap()
+        .to_string();
+        aries_vcx_core::ledger::indy::pool::test_utils::create_testpool_genesis_txn_file(
+            &genesis_file_path,
+        );
+
+        let (public_did, wallet_handle) =
+            $crate::utils::devsetup::dev_setup_wallet_indy($crate::utils::constants::TRUSTEE_SEED)
+                .await;
+        let wallet = std::sync::Arc::new(aries_vcx_core::wallet::indy::IndySdkWallet::new(
+            wallet_handle,
+        ));
+        let profile =
+            $crate::utils::devsetup::dev_build_featured_profile(genesis_file_path.clone(), wallet)
+                .await;
         profile
-            .inject_anoncreds()
-            .prover_create_link_secret(settings::DEFAULT_LINK_SECRET_ALIAS)
+            .anoncreds()
+            .prover_create_link_secret(aries_vcx_core::global::settings::DEFAULT_LINK_SECRET_ALIAS)
             .await
             .unwrap();
 
+        SetupProfile::new(public_did.to_string(), profile, genesis_file_path)
+            .await
+            .run($func)
+    }};
+}
+
+impl<P> SetupProfile<P>
+where
+    P: Profile,
+{
+    pub async fn new(institution_did: String, profile: P, genesis_file_path: String) -> Self {
         debug!("genesis_file_path: {}", genesis_file_path);
-        let setup = SetupProfile {
-            institution_did: public_did.to_string(),
+        SetupProfile {
+            institution_did,
             profile,
             genesis_file_path,
-        };
+        }
+    }
 
-        f(setup).await;
+    pub async fn run<F>(self, f: impl FnOnce(Self) -> F)
+    where
+        F: Future<Output = ()>,
+    {
+        f(self).await;
         reset_global_state();
     }
 }

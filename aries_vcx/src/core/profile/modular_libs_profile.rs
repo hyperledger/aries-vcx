@@ -1,16 +1,16 @@
 use std::sync::Arc;
 
 use aries_vcx_core::{
-    anoncreds::{base_anoncreds::BaseAnonCreds, credx_anoncreds::IndyCredxAnonCreds},
-    ledger::base_ledger::{
-        AnoncredsLedgerRead, AnoncredsLedgerWrite, IndyLedgerRead, IndyLedgerWrite,
-        TaaConfigurator, TxnAuthrAgrmtOptions,
-    },
-    wallet::base_wallet::BaseWallet,
+    anoncreds::credx_anoncreds::IndyCredxAnonCreds,
+    ledger::base_ledger::{TaaConfigurator, TxnAuthrAgrmtOptions},
+    wallet::indy::IndySdkWallet,
 };
 use async_trait::async_trait;
 
-use super::profile::Profile;
+use super::{
+    ledger::{ArcIndyVdrLedgerRead, ArcIndyVdrLedgerWrite},
+    profile::Profile,
+};
 use crate::{
     core::profile::ledger::{build_ledger_components, VcxPoolConfig},
     errors::error::VcxResult,
@@ -19,64 +19,51 @@ use crate::{
 #[allow(dead_code)]
 #[derive(Debug)]
 pub struct ModularLibsProfile {
-    wallet: Arc<dyn BaseWallet>,
-    anoncreds: Arc<dyn BaseAnonCreds>,
-
-    // ledger reads
-    anoncreds_ledger_read: Arc<dyn AnoncredsLedgerRead>,
-    indy_ledger_read: Arc<dyn IndyLedgerRead>,
-
-    // ledger writes
-    anoncreds_ledger_write: Arc<dyn AnoncredsLedgerWrite>,
-    indy_ledger_write: Arc<dyn IndyLedgerWrite>,
-    taa_configurator: Arc<dyn TaaConfigurator>,
+    wallet: Arc<IndySdkWallet>,
+    anoncreds: IndyCredxAnonCreds,
+    indy_ledger_read: ArcIndyVdrLedgerRead,
+    indy_ledger_write: ArcIndyVdrLedgerWrite,
 }
 
 impl ModularLibsProfile {
-    pub fn init(wallet: Arc<dyn BaseWallet>, vcx_pool_config: VcxPoolConfig) -> VcxResult<Self> {
-        let anoncreds = Arc::new(IndyCredxAnonCreds::new(Arc::clone(&wallet)));
+    pub fn init(wallet: Arc<IndySdkWallet>, vcx_pool_config: VcxPoolConfig) -> VcxResult<Self> {
+        let anoncreds = IndyCredxAnonCreds::new(wallet.clone());
         let (ledger_read, ledger_write) = build_ledger_components(wallet.clone(), vcx_pool_config)?;
 
         Ok(ModularLibsProfile {
             wallet,
             anoncreds,
-            anoncreds_ledger_read: ledger_read.clone(),
             indy_ledger_read: ledger_read,
-            anoncreds_ledger_write: ledger_write.clone(),
-            indy_ledger_write: ledger_write.clone(),
-            taa_configurator: ledger_write,
+            indy_ledger_write: ledger_write,
         })
     }
 }
 
 #[async_trait]
 impl Profile for ModularLibsProfile {
-    fn inject_indy_ledger_read(&self) -> Arc<dyn IndyLedgerRead> {
-        Arc::clone(&self.indy_ledger_read)
+    type LedgerRead = ArcIndyVdrLedgerRead;
+    type LedgerWrite = ArcIndyVdrLedgerWrite;
+    type Anoncreds = IndyCredxAnonCreds;
+    type Wallet = IndySdkWallet;
+
+    fn ledger_read(&self) -> &Self::LedgerRead {
+        &self.indy_ledger_read
     }
 
-    fn inject_indy_ledger_write(&self) -> Arc<dyn IndyLedgerWrite> {
-        Arc::clone(&self.indy_ledger_write)
+    fn ledger_write(&self) -> &Self::LedgerWrite {
+        &self.indy_ledger_write
     }
 
-    fn inject_anoncreds(&self) -> Arc<dyn BaseAnonCreds> {
-        Arc::clone(&self.anoncreds)
+    fn anoncreds(&self) -> &Self::Anoncreds {
+        &self.anoncreds
     }
 
-    fn inject_anoncreds_ledger_read(&self) -> Arc<dyn AnoncredsLedgerRead> {
-        Arc::clone(&self.anoncreds_ledger_read)
-    }
-
-    fn inject_anoncreds_ledger_write(&self) -> Arc<dyn AnoncredsLedgerWrite> {
-        Arc::clone(&self.anoncreds_ledger_write)
-    }
-
-    fn inject_wallet(&self) -> Arc<dyn BaseWallet> {
-        Arc::clone(&self.wallet)
+    fn wallet(&self) -> &Self::Wallet {
+        &self.wallet
     }
 
     fn update_taa_configuration(&self, taa_options: TxnAuthrAgrmtOptions) -> VcxResult<()> {
-        self.taa_configurator
+        self.indy_ledger_write
             .set_txn_author_agreement_options(taa_options)
             .map_err(|e| e.into())
     }

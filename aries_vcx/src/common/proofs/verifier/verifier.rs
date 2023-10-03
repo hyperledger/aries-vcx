@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
 };
@@ -14,8 +12,8 @@ use crate::{
 };
 
 pub async fn validate_indy_proof(
-    ledger: &Arc<dyn AnoncredsLedgerRead>,
-    anoncreds: &Arc<dyn BaseAnonCreds>,
+    ledger: &impl AnoncredsLedgerRead,
+    anoncreds: &impl BaseAnonCreds,
     proof_json: &str,
     proof_req_json: &str,
 ) -> VcxResult<bool> {
@@ -57,7 +55,7 @@ pub async fn validate_indy_proof(
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 pub mod integration_tests {
-    use std::{sync::Arc, time::Duration};
+    use std::time::Duration;
 
     use aries_vcx_core::{
         anoncreds::base_anoncreds::BaseAnonCreds,
@@ -80,10 +78,10 @@ pub mod integration_tests {
 
     // FUTURE - issuer and holder seperation only needed whilst modular deps not fully implemented
     async fn create_indy_proof(
-        anoncreds_issuer: &Arc<dyn BaseAnonCreds>,
-        anoncreds_holder: &Arc<dyn BaseAnonCreds>,
-        ledger_read: &Arc<dyn AnoncredsLedgerRead>,
-        ledger_write: &Arc<dyn AnoncredsLedgerWrite>,
+        anoncreds_issuer: &impl BaseAnonCreds,
+        anoncreds_holder: &impl BaseAnonCreds,
+        ledger_read: &impl AnoncredsLedgerRead,
+        ledger_write: &impl AnoncredsLedgerWrite,
         did: &str,
     ) -> (String, String, String, String) {
         let (schema, cred_def, cred_id) = create_and_store_nonrevocable_credential(
@@ -161,10 +159,10 @@ pub mod integration_tests {
     }
 
     async fn create_proof_with_predicate(
-        anoncreds_issuer: &Arc<dyn BaseAnonCreds>,
-        anoncreds_holder: &Arc<dyn BaseAnonCreds>,
-        ledger_read: &Arc<dyn AnoncredsLedgerRead>,
-        ledger_write: &Arc<dyn AnoncredsLedgerWrite>,
+        anoncreds_issuer: &impl BaseAnonCreds,
+        anoncreds_holder: &impl BaseAnonCreds,
+        ledger_read: &impl AnoncredsLedgerRead,
+        ledger_write: &impl AnoncredsLedgerWrite,
         did: &str,
         include_predicate_cred: bool,
     ) -> (String, String, String, String) {
@@ -257,10 +255,10 @@ pub mod integration_tests {
     }
 
     async fn create_and_store_nonrevocable_credential(
-        anoncreds_issuer: &Arc<dyn BaseAnonCreds>,
-        anoncreds_holder: &Arc<dyn BaseAnonCreds>,
-        ledger_read: &Arc<dyn AnoncredsLedgerRead>,
-        ledger_write: &Arc<dyn AnoncredsLedgerWrite>,
+        anoncreds_issuer: &impl BaseAnonCreds,
+        anoncreds_holder: &impl BaseAnonCreds,
+        ledger_read: &impl AnoncredsLedgerRead,
+        ledger_write: &impl AnoncredsLedgerWrite,
         issuer_did: &str,
         attr_list: &str,
     ) -> (Schema, CredentialDef, String) {
@@ -293,7 +291,7 @@ pub mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_pool_proof_self_attested_proof_validation() {
-        SetupProfile::run(|setup| async move {
+        run_setup!(|setup| async move {
             let requested_attrs = json!([
                 json!({
                     "name":"address1",
@@ -309,7 +307,7 @@ pub mod integration_tests {
             let revocation_details = r#"{"support_revocation":false}"#.to_string();
             let name = "Optional".to_owned();
 
-            let proof_req_json = ProofRequestData::create(&setup.profile.inject_anoncreds(), &name)
+            let proof_req_json = ProofRequestData::create(setup.profile.anoncreds(), &name)
                 .await
                 .unwrap()
                 .set_requested_attributes_as_string(requested_attrs)
@@ -321,7 +319,7 @@ pub mod integration_tests {
 
             let proof_req_json = serde_json::to_string(&proof_req_json).unwrap();
 
-            let anoncreds = Arc::clone(&setup.profile).inject_anoncreds();
+            let anoncreds = setup.profile.anoncreds();
             let prover_proof_json = anoncreds
                 .prover_create_proof(
                     &proof_req_json,
@@ -343,8 +341,8 @@ pub mod integration_tests {
                 .unwrap();
 
             assert!(validate_indy_proof(
-                &setup.profile.inject_anoncreds_ledger_read(),
-                &setup.profile.inject_anoncreds(),
+                setup.profile.ledger_read(),
+                setup.profile.anoncreds(),
                 &prover_proof_json,
                 &proof_req_json
             )
@@ -357,7 +355,7 @@ pub mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_pool_proof_restrictions() {
-        SetupProfile::run(|setup| async move {
+        run_setup!(|setup| async move {
             let requested_attrs = json!([
                 json!({
                     "name":"address1",
@@ -376,7 +374,7 @@ pub mod integration_tests {
             let revocation_details = r#"{"support_revocation":true}"#.to_string();
             let name = "Optional".to_owned();
 
-            let proof_req_json = ProofRequestData::create(&setup.profile.inject_anoncreds(), &name)
+            let proof_req_json = ProofRequestData::create(setup.profile.anoncreds(), &name)
                 .await
                 .unwrap()
                 .set_requested_attributes_as_string(requested_attrs)
@@ -389,10 +387,10 @@ pub mod integration_tests {
             let proof_req_json = serde_json::to_string(&proof_req_json).unwrap();
 
             let (schema, cred_def, cred_id) = create_and_store_nonrevocable_credential(
-                &setup.profile.inject_anoncreds(),
-                &setup.profile.inject_anoncreds(),
-                &setup.profile.inject_anoncreds_ledger_read(),
-                &setup.profile.inject_anoncreds_ledger_write(),
+                setup.profile.anoncreds(),
+                setup.profile.anoncreds(),
+                setup.profile.ledger_read(),
+                setup.profile.ledger_write(),
                 &setup.institution_did,
                 utils::constants::DEFAULT_SCHEMA_ATTRS,
             )
@@ -401,7 +399,7 @@ pub mod integration_tests {
                 serde_json::from_str(cred_def.get_cred_def_json()).unwrap();
             let schema_json: serde_json::Value = serde_json::from_str(&schema.schema_json).unwrap();
 
-            let anoncreds = Arc::clone(&setup.profile).inject_anoncreds();
+            let anoncreds = setup.profile.anoncreds();
             let prover_proof_json = anoncreds
                 .prover_create_proof(
                     &proof_req_json,
@@ -425,8 +423,8 @@ pub mod integration_tests {
                 .unwrap();
             assert_eq!(
                 validate_indy_proof(
-                    &setup.profile.inject_anoncreds_ledger_read(),
-                    &setup.profile.inject_anoncreds(),
+                    setup.profile.ledger_read(),
+                    setup.profile.anoncreds(),
                     &prover_proof_json,
                     &proof_req_json
                 )
@@ -440,8 +438,8 @@ pub mod integration_tests {
                 serde_json::from_str(&proof_req_json).unwrap();
             proof_req_json["requested_attributes"]["attribute_0"]["restrictions"] = json!({});
             assert!(validate_indy_proof(
-                &setup.profile.inject_anoncreds_ledger_read(),
-                &setup.profile.inject_anoncreds(),
+                setup.profile.ledger_read(),
+                setup.profile.anoncreds(),
                 &prover_proof_json,
                 &proof_req_json.to_string()
             )
@@ -454,7 +452,7 @@ pub mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_pool_proof_validate_attribute() {
-        SetupProfile::run(|setup| async move {
+        run_setup!(|setup| async move {
             let requested_attrs = json!([
                 json!({
                     "name":"address1",
@@ -474,7 +472,7 @@ pub mod integration_tests {
             let revocation_details = r#"{"support_revocation":true}"#.to_string();
             let name = "Optional".to_owned();
 
-            let proof_req_json = ProofRequestData::create(&setup.profile.inject_anoncreds(), &name)
+            let proof_req_json = ProofRequestData::create(setup.profile.anoncreds(), &name)
                 .await
                 .unwrap()
                 .set_requested_attributes_as_string(requested_attrs)
@@ -487,10 +485,10 @@ pub mod integration_tests {
             let proof_req_json = serde_json::to_string(&proof_req_json).unwrap();
 
             let (schema, cred_def, cred_id) = create_and_store_nonrevocable_credential(
-                &setup.profile.inject_anoncreds(),
-                &setup.profile.inject_anoncreds(),
-                &setup.profile.inject_anoncreds_ledger_read(),
-                &setup.profile.inject_anoncreds_ledger_write(),
+                setup.profile.anoncreds(),
+                setup.profile.anoncreds(),
+                setup.profile.ledger_read(),
+                setup.profile.ledger_write(),
                 &setup.institution_did,
                 utils::constants::DEFAULT_SCHEMA_ATTRS,
             )
@@ -499,7 +497,7 @@ pub mod integration_tests {
                 serde_json::from_str(cred_def.get_cred_def_json()).unwrap();
             let schema_json: serde_json::Value = serde_json::from_str(&schema.schema_json).unwrap();
 
-            let anoncreds = Arc::clone(&setup.profile).inject_anoncreds();
+            let anoncreds = setup.profile.anoncreds();
             let prover_proof_json = anoncreds
                 .prover_create_proof(
                     &proof_req_json,
@@ -522,8 +520,8 @@ pub mod integration_tests {
                 .await
                 .unwrap();
             assert!(validate_indy_proof(
-                &setup.profile.inject_anoncreds_ledger_read(),
-                &setup.profile.inject_anoncreds(),
+                setup.profile.ledger_read(),
+                setup.profile.anoncreds(),
                 &prover_proof_json,
                 &proof_req_json
             )
@@ -539,8 +537,8 @@ pub mod integration_tests {
 
                 assert_eq!(
                     validate_indy_proof(
-                        &setup.profile.inject_anoncreds_ledger_read(),
-                        &setup.profile.inject_anoncreds(),
+                        setup.profile.ledger_read(),
+                        setup.profile.anoncreds(),
                         &prover_proof_json,
                         &proof_req_json
                     )
@@ -557,8 +555,8 @@ pub mod integration_tests {
 
                 assert_eq!(
                     validate_indy_proof(
-                        &setup.profile.inject_anoncreds_ledger_read(),
-                        &setup.profile.inject_anoncreds(),
+                        setup.profile.ledger_read(),
+                        setup.profile.anoncreds(),
                         &prover_proof_json,
                         &proof_req_json
                     )
@@ -574,17 +572,17 @@ pub mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_pool_prover_verify_proof() {
-        SetupProfile::run(|setup| async move {
+        run_setup!(|setup| async move {
             let (schemas, cred_defs, proof_req, proof) = create_indy_proof(
-                &setup.profile.inject_anoncreds(),
-                &setup.profile.inject_anoncreds(),
-                &setup.profile.inject_anoncreds_ledger_read(),
-                &setup.profile.inject_anoncreds_ledger_write(),
+                setup.profile.anoncreds(),
+                setup.profile.anoncreds(),
+                setup.profile.ledger_read(),
+                setup.profile.ledger_write(),
                 &setup.institution_did,
             )
             .await;
 
-            let anoncreds = Arc::clone(&setup.profile).inject_anoncreds();
+            let anoncreds = setup.profile.anoncreds();
             let proof_validation = anoncreds
                 .verifier_verify_proof(&proof_req, &proof, &schemas, &cred_defs, "{}", "{}")
                 .await
@@ -598,18 +596,18 @@ pub mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_pool_prover_verify_proof_with_predicate_success_case() {
-        SetupProfile::run(|setup| async move {
+        run_setup!(|setup| async move {
             let (schemas, cred_defs, proof_req, proof) = create_proof_with_predicate(
-                &setup.profile.inject_anoncreds(),
-                &setup.profile.inject_anoncreds(),
-                &setup.profile.inject_anoncreds_ledger_read(),
-                &setup.profile.inject_anoncreds_ledger_write(),
+                setup.profile.anoncreds(),
+                setup.profile.anoncreds(),
+                setup.profile.ledger_read(),
+                setup.profile.ledger_write(),
                 &setup.institution_did,
                 true,
             )
             .await;
 
-            let anoncreds = Arc::clone(&setup.profile).inject_anoncreds();
+            let anoncreds = setup.profile.anoncreds();
             let proof_validation = anoncreds
                 .verifier_verify_proof(&proof_req, &proof, &schemas, &cred_defs, "{}", "{}")
                 .await
@@ -623,18 +621,18 @@ pub mod integration_tests {
     #[tokio::test]
     #[ignore]
     async fn test_pool_prover_verify_proof_with_predicate_fail_case() {
-        SetupProfile::run(|setup| async move {
+        run_setup!(|setup| async move {
             let (schemas, cred_defs, proof_req, proof) = create_proof_with_predicate(
-                &setup.profile.inject_anoncreds(),
-                &setup.profile.inject_anoncreds(),
-                &setup.profile.inject_anoncreds_ledger_read(),
-                &setup.profile.inject_anoncreds_ledger_write(),
+                setup.profile.anoncreds(),
+                setup.profile.anoncreds(),
+                setup.profile.ledger_read(),
+                setup.profile.ledger_write(),
                 &setup.institution_did,
                 false,
             )
             .await;
 
-            let anoncreds = Arc::clone(&setup.profile).inject_anoncreds();
+            let anoncreds = setup.profile.anoncreds();
             anoncreds
                 .verifier_verify_proof(&proof_req, &proof, &schemas, &cred_defs, "{}", "{}")
                 .await

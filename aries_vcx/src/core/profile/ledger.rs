@@ -16,8 +16,9 @@ use aries_vcx_core::{
 };
 
 use crate::errors::error::VcxResult;
-type ArcIndyVdrLedgerRead = Arc<IndyVdrLedgerRead<IndyVdrSubmitter, InMemoryResponseCacher>>;
-type ArcIndyVdrLedgerWrite = Arc<IndyVdrLedgerWrite<IndyVdrSubmitter, BaseWalletRequestSigner>>;
+/// TODO: Rename these
+pub type ArcIndyVdrLedgerRead = IndyVdrLedgerRead<IndyVdrSubmitter, InMemoryResponseCacher>;
+pub type ArcIndyVdrLedgerWrite = IndyVdrLedgerWrite<IndyVdrSubmitter, BaseWalletRequestSigner>;
 
 pub struct VcxPoolConfig {
     pub genesis_file_path: String,
@@ -41,18 +42,13 @@ pub fn build_ledger_components(
         Some(cfg) => cfg,
     };
 
-    let ledger_pool = Arc::new(IndyVdrLedgerPool::new(
-        pool_config.genesis_file_path,
-        indy_vdr_config,
-        vec![],
-    )?);
+    let ledger_pool =
+        IndyVdrLedgerPool::new(pool_config.genesis_file_path, indy_vdr_config, vec![])?;
+
     let request_submitter = Arc::new(IndyVdrSubmitter::new(ledger_pool));
 
     let ledger_read = indyvdr_build_ledger_read(request_submitter.clone(), cache_config)?;
     let ledger_write = indyvdr_build_ledger_write(wallet, request_submitter, None);
-
-    let ledger_read = Arc::new(ledger_read);
-    let ledger_write = Arc::new(ledger_write);
 
     Ok((ledger_read, ledger_write))
 }

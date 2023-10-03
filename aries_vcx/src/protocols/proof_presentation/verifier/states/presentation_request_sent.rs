@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::AnoncredsLedgerRead,
 };
@@ -26,8 +24,8 @@ pub struct PresentationRequestSentState {
 impl PresentationRequestSentState {
     pub async fn verify_presentation(
         &self,
-        ledger: &Arc<dyn AnoncredsLedgerRead>,
-        anoncreds: &Arc<dyn BaseAnonCreds>,
+        ledger: &impl AnoncredsLedgerRead,
+        anoncreds: &impl BaseAnonCreds,
         presentation: &Presentation,
         thread_id: &str,
     ) -> VcxResult<()> {

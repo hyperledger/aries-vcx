@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use aries_vcx_core::wallet::base_wallet::BaseWallet;
 use chrono::Utc;
 use diddoc_legacy::aries::diddoc::AriesDidDoc;
@@ -16,7 +14,7 @@ use uuid::Uuid;
 use crate::{errors::error::VcxResult, utils::send_message};
 
 pub async fn send_discovery_query(
-    wallet: &Arc<dyn BaseWallet>,
+    wallet: &impl BaseWallet,
     query: Option<String>,
     comment: Option<String>,
     did_doc: &AriesDidDoc,
@@ -41,17 +39,11 @@ pub async fn send_discovery_query(
         .decorators(decorators)
         .build();
 
-    send_message(
-        Arc::clone(wallet),
-        pw_vk.to_string(),
-        did_doc.clone(),
-        query,
-    )
-    .await
+    send_message(wallet, pw_vk.to_string(), did_doc.clone(), query).await
 }
 
 pub async fn respond_discovery_query(
-    wallet: &Arc<dyn BaseWallet>,
+    wallet: &impl BaseWallet,
     query: Query,
     did_doc: &AriesDidDoc,
     pw_vk: &str,
@@ -70,11 +62,5 @@ pub async fn respond_discovery_query(
         .decorators(decorators)
         .build();
 
-    send_message(
-        Arc::clone(wallet),
-        pw_vk.to_string(),
-        did_doc.clone(),
-        disclose,
-    )
-    .await
+    send_message(wallet, pw_vk.to_string(), did_doc.clone(), disclose).await
 }

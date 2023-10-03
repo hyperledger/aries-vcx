@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use aries_vcx_core::{
     anoncreds::base_anoncreds::BaseAnonCreds, errors::error::AriesVcxCoreErrorKind,
     ledger::base_ledger::AnoncredsLedgerWrite,
@@ -28,7 +26,7 @@ pub struct RevocationRegistry {
 
 impl RevocationRegistry {
     pub async fn create(
-        anoncreds: &Arc<dyn BaseAnonCreds>,
+        anoncreds: &impl BaseAnonCreds,
         issuer_did: &str,
         cred_def_id: &str,
         tails_dir: &str,
@@ -102,7 +100,7 @@ impl RevocationRegistry {
 
     pub async fn publish_rev_reg_def(
         &mut self,
-        ledger: &Arc<dyn AnoncredsLedgerWrite>,
+        ledger: &impl AnoncredsLedgerWrite,
         issuer_did: &str,
         tails_url: &str,
     ) -> VcxResult<()> {
@@ -129,7 +127,7 @@ impl RevocationRegistry {
 
     pub async fn publish_rev_reg_delta(
         &mut self,
-        ledger_write: &Arc<dyn AnoncredsLedgerWrite>,
+        ledger_write: &impl AnoncredsLedgerWrite,
         issuer_did: &str,
     ) -> VcxResult<()> {
         trace!(
@@ -152,7 +150,7 @@ impl RevocationRegistry {
 
     pub async fn publish_revocation_primitives(
         &mut self,
-        ledger_write: &Arc<dyn AnoncredsLedgerWrite>,
+        ledger_write: &impl AnoncredsLedgerWrite,
         tails_url: &str,
     ) -> VcxResult<()> {
         trace!(
@@ -166,7 +164,7 @@ impl RevocationRegistry {
 
     async fn publish_built_rev_reg_delta(
         &mut self,
-        ledger_write: &Arc<dyn AnoncredsLedgerWrite>,
+        ledger_write: &impl AnoncredsLedgerWrite,
     ) -> VcxResult<()> {
         let issuer_did = &self.issuer_did.clone();
         if self.was_rev_reg_delta_published() {
@@ -179,7 +177,7 @@ impl RevocationRegistry {
 
     async fn publish_built_rev_reg_def(
         &mut self,
-        ledger_write: &Arc<dyn AnoncredsLedgerWrite>,
+        ledger_write: &impl AnoncredsLedgerWrite,
         tails_url: &str,
     ) -> VcxResult<()> {
         let issuer_did = &self.issuer_did.clone();
@@ -212,7 +210,7 @@ impl RevocationRegistry {
 
     pub async fn revoke_credential_local(
         &self,
-        anoncreds: &Arc<dyn BaseAnonCreds>,
+        anoncreds: &impl BaseAnonCreds,
         cred_rev_id: &str,
     ) -> VcxResult<()> {
         anoncreds
@@ -223,8 +221,8 @@ impl RevocationRegistry {
 
     pub async fn publish_local_revocations(
         &self,
-        anoncreds: &Arc<dyn BaseAnonCreds>,
-        ledger_write: &Arc<dyn AnoncredsLedgerWrite>,
+        anoncreds: &impl BaseAnonCreds,
+        ledger_write: &impl AnoncredsLedgerWrite,
         submitter_did: &str,
     ) -> VcxResult<()> {
         if let Some(delta) = anoncreds.get_rev_reg_delta(&self.rev_reg_id).await? {
@@ -288,7 +286,7 @@ pub struct RevocationRegistryDefinition {
     pub ver: String,
 }
 pub async fn generate_rev_reg(
-    anoncreds: &Arc<dyn BaseAnonCreds>,
+    anoncreds: &impl BaseAnonCreds,
     issuer_did: &str,
     cred_def_id: &str,
     tails_dir: &str,
