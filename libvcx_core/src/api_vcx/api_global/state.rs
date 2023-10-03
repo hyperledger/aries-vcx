@@ -43,9 +43,9 @@ pub mod tests {
     // use crate::api_vcx::{
     //     api_global::state::state_vcx_shutdown,
     //     api_handle::{
-    //         credential, credential::credential_create_with_offer, credential_def, disclosed_proof,
-    //         disclosed_proof::create_with_proof_request, issuer_credential, mediated_connection,
-    //         proof, schema, schema::create_and_publish_schema,
+    //         credential, credential::credential_create_with_offer, credential_def,
+    // disclosed_proof,         disclosed_proof::create_with_proof_request, issuer_credential,
+    // mediated_connection,         proof, schema, schema::create_and_publish_schema,
     //     },
     // };
 
