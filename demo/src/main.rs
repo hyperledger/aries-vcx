@@ -2,14 +2,11 @@
 extern crate log;
 #[macro_use]
 extern crate serde_derive;
-#[macro_use]
 extern crate serde_json;
 
 use std::process::exit;
 
-use aries_vcx::{transport::Transport, utils::encryption_envelope::EncryptionEnvelope};
-use aries_vcx_core::{ledger::base_ledger::IndyLedgerRead, wallet::base_wallet::BaseWallet};
-use env_logger;
+use aries_vcx::utils::encryption_envelope::EncryptionEnvelope;
 use messages::{
     msg_fields::protocols::{
         connection::{request::Request, response::Response},
@@ -17,11 +14,7 @@ use messages::{
     },
     AriesMessage,
 };
-use serde::Deserialize;
-use tokio::sync::{
-    mpsc,
-    mpsc::{Receiver, Sender},
-};
+use tokio::sync::mpsc;
 use url::Url;
 
 use crate::demo_agent::{build_basic_message, DemoAgent, COLOR_GREEN, COLOR_YELLOW};
@@ -31,7 +24,6 @@ pub mod mpsc_registry;
 
 static ALICE: &str = "alice";
 static FABER: &str = "faber";
-static RELATIONSHIP: &str = "alicefaber";
 
 async fn init() -> (DemoAgent, DemoAgent) {
     env_logger::init();
@@ -87,11 +79,13 @@ async fn workflow_connection_by_role(alice: DemoAgent, faber: DemoAgent, transpo
     let handle2 = tokio::task::spawn(async move { workflow_inviter(faber, &transport_id).await });
     let handle1 =
         tokio::task::spawn(async move { workflow_invitee(alice, &transport_id_copy).await });
-    tokio::join!(handle1, handle2);
+    let res = tokio::join!(handle1, handle2);
+    res.0.unwrap();
+    res.1.unwrap();
 }
 
 async fn workflow_invitee(alice: DemoAgent, transport_id: &str) {
-    let msg_oob_invitation: Invitation = alice.wait_for_invitation_message(&transport_id).await;
+    let msg_oob_invitation: Invitation = alice.wait_for_invitation_message(transport_id).await;
     info!("****** Alice receives connection invitation via a trusted channel ******");
     let (invitee_requested, msg_connection_request) =
         alice.process_invitation(msg_oob_invitation).await;

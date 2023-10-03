@@ -1,4 +1,3 @@
-use env_logger;
 use simple_message_relay::build_msg_relay;
 
 #[macro_use]
@@ -35,7 +34,7 @@ mod tests {
             .set_payload(msg)
     }
 
-    // #[actix_web::test]
+    #[actix_web::test]
     async fn test_standard_user_flow() {
         // assemble service
         let app_state = web::Data::new(AppState::new(Default::default()));

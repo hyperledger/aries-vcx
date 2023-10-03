@@ -1,7 +1,6 @@
 use std::{fmt::Debug, sync::Arc};
 
 use aries_vcx::{
-    errors::error::VcxResult,
     handlers::{out_of_band::sender::OutOfBandSender, util::AnyInvitation},
     messages::msg_fields::protocols::out_of_band::invitation::OobService,
     protocols::connection::{
@@ -25,9 +24,7 @@ use aries_vcx_core::{
         indy::{wallet::create_and_open_wallet, IndySdkWallet, WalletConfig},
     },
 };
-use async_trait::async_trait;
 use diddoc_legacy::aries::service::AriesService;
-use env_logger;
 use messages::{
     msg_fields::protocols::{
         basic_message::{BasicMessage, BasicMessageContent, BasicMessageDecorators},
@@ -96,8 +93,8 @@ impl DemoAgent {
         };
         info!("Created agent {name} with mediator endpoint {endpoint_url}");
         DemoAgent {
-            channels_didcomm: MpscRegistry::new(),
-            channels_invitations: MpscRegistry::new(),
+            channels_didcomm: MpscRegistry::default(),
+            channels_invitations: MpscRegistry::default(),
             name,
             wallet: Arc::new(wallet),
             endpoint_url,
@@ -163,7 +160,7 @@ impl DemoAgent {
         let didcomm_msg = self.channels_didcomm.receive_msg(transport_id).await;
         let unpacked_msg = self
             .wallet
-            .unpack_message(&didcomm_msg.0.as_slice())
+            .unpack_message(didcomm_msg.0.as_slice())
             .await
             .unwrap();
         let payload_msg: T = serde_json::from_str(&unpacked_msg.message).unwrap();
@@ -238,9 +235,9 @@ impl DemoAgent {
             self.name, self.log_color
         );
         let mock_ledger: Arc<dyn IndyLedgerRead> = Arc::new(MockLedger {}); // cause we know we want call ledger *eew...*
-        let mut invitee_invited =
+        let invitee_invited =
             InviteeConnection::<Initial>::new_invitee("foo".into(), PairwiseInfo { pw_did, pw_vk })
-                .accept_invitation(&mock_ledger, AnyInvitation::Oob(msg_oob_invitation.into()))
+                .accept_invitation(&mock_ledger, AnyInvitation::Oob(msg_oob_invitation))
                 .await
                 .unwrap();
 
@@ -269,9 +266,12 @@ impl DemoAgent {
         msg_request: Request,
         faber_invite_info: PairwiseInfo,
     ) -> (InviterConnection<InviterRequested>, EncryptionEnvelope) {
+        // todo: It's wierd that consumer needs to have knowledge how to provide thid in
+        // into_invited(..)       That should be encapsulated in the message processing code
+        // / state machine
         let inviter_invited = InviterConnection::new_inviter("".to_owned(), faber_invite_info)
             .into_invited(
-                &msg_request
+                msg_request
                     .decorators
                     .thread
                     .as_ref()

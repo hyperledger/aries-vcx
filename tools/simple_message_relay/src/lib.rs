@@ -46,9 +46,9 @@ async fn pop_user_message(path: web::Path<String>, data: web::Data<AppState>) ->
     let message_body = messages_for_user.and_then(|msgs| msgs.pop_front());
 
     if let Some(body) = message_body {
-        return HttpResponse::Ok().body(body);
+        HttpResponse::Ok().body(body)
     } else {
-        return HttpResponse::NoContent().into();
+        HttpResponse::NoContent().into()
     }
 }
 
@@ -68,9 +68,9 @@ async fn send_user_message(
     let messages_for_user = messages_by_user_id.get_mut(&user_id);
 
     if let Some(messages) = messages_for_user {
-        messages.push_back(msg.clone());
+        messages.push_back(msg);
     } else {
-        messages_by_user_id.insert(user_id.clone(), vec![msg.clone()].into());
+        messages_by_user_id.insert(user_id.clone(), vec![msg].into());
     }
 
     HttpResponse::Ok()

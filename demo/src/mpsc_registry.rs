@@ -1,6 +1,6 @@
 use std::{collections::HashMap, fmt::Debug, sync::Arc};
 
-use tokio::sync::{mpsc, Mutex, RwLock};
+use tokio::sync::{mpsc, RwLock};
 
 #[derive(Clone)]
 pub struct MpscRegistry<T: Debug> {
@@ -8,14 +8,16 @@ pub struct MpscRegistry<T: Debug> {
     receiving: Arc<RwLock<HashMap<String, mpsc::Receiver<T>>>>,
 }
 
-impl<T: Debug> MpscRegistry<T> {
-    pub fn new() -> MpscRegistry<T> {
-        MpscRegistry {
-            sending: Arc::new(Default::default()),
-            receiving: Arc::new(Default::default()),
+impl<T: Debug> Default for MpscRegistry<T> {
+    fn default() -> Self {
+        Self {
+            sending: Arc::new(RwLock::new(HashMap::new())),
+            receiving: Arc::new(RwLock::new(HashMap::new())),
         }
     }
+}
 
+impl<T: Debug> MpscRegistry<T> {
     pub async fn register_sender(&self, relationship_key: String, sender: mpsc::Sender<T>) {
         let mut sending_lock = self.sending.write().await;
         sending_lock.insert(relationship_key, sender);
@@ -26,7 +28,6 @@ impl<T: Debug> MpscRegistry<T> {
         receiving_lock.insert(relationship_key, receiver);
     }
 
-    // todo: don't unwrap, return result
     pub async fn send_msg(&self, relationship_key: &str, message: T) {
         let inner = self.sending.read().await;
         if let Some(sender) = inner.get(relationship_key) {
