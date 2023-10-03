@@ -1,7 +1,7 @@
 use std::{sync::Arc, time::Duration};
 
 use aries_vcx_core::{
-    anoncreds::indy_anoncreds::IndySdkAnonCreds,
+    anoncreds::{base_anoncreds::BaseAnonCreds, credx_anoncreds::IndyCredxAnonCreds},
     ledger::{
         base_ledger::{TaaConfigurator, TxnAuthrAgrmtOptions},
         indy_vdr_ledger::{
@@ -30,7 +30,7 @@ pub struct VdrProxyProfile {
 
 impl VdrProxyProfile {
     pub async fn init(wallet: Arc<IndySdkWallet>, client: VdrProxyClient) -> VcxResult<Self> {
-        let anoncreds = IndySdkAnonCreds::new(wallet.wallet_handle);
+        let anoncreds = Arc::new(IndyCredxAnonCreds::new(wallet.clone()));
         let request_signer = Arc::new(BaseWalletRequestSigner::new(wallet.clone()));
         let request_submitter = Arc::new(VdrProxySubmitter::new(Arc::new(client)));
         let response_parser = Arc::new(ResponseParser);
@@ -69,7 +69,7 @@ impl VdrProxyProfile {
 impl Profile for VdrProxyProfile {
     type LedgerRead = IndyVdrLedgerRead<VdrProxySubmitter, InMemoryResponseCacher>;
     type LedgerWrite = IndyVdrLedgerWrite<VdrProxySubmitter, BaseWalletRequestSigner>;
-    type Anoncreds = IndySdkAnonCreds;
+    type Anoncreds = IndyCredxAnonCreds;
     type Wallet = IndySdkWallet;
 
     fn ledger_read(&self) -> &Self::LedgerRead {

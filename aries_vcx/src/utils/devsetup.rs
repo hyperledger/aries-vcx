@@ -188,6 +188,11 @@ pub async fn dev_build_featured_profile(
         info!("SetupProfile >> using vdr proxy profile");
         dev_build_profile_vdr_proxy_ledger(wallet).await
     };
+    #[cfg(feature = "modular_libs")]
+    return {
+        info!("SetupProfile >> using modular profile");
+        dev_build_profile_modular(genesis_file_path, wallet)
+    };
     #[cfg(any(
         all(
             feature = "vdrtools",

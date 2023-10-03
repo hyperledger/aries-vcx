@@ -1,6 +1,6 @@
 use std::{
     ops::Deref,
-    sync::{RwLock, RwLockWriteGuard},
+    sync::{Arc, RwLock, RwLockWriteGuard},
 };
 
 use aries_vcx::{
@@ -10,7 +10,10 @@ use aries_vcx::{
         messages::update_message::UIDsByConn,
         MessageStatusCode,
     },
-    aries_vcx_core::wallet::agency_client_wallet::ToBaseAgencyClientWallet,
+    aries_vcx_core::wallet::{
+        agency_client_wallet::ToBaseAgencyClientWallet, base_wallet::BaseWallet,
+    },
+    errors::error::VcxResult,
 };
 
 use super::profile::get_main_wallet;
@@ -83,10 +86,30 @@ pub async fn provision_cloud_agent(
 ) -> LibvcxResult<AgencyClientConfig> {
     let wallet = get_main_wallet()?;
     let mut client = get_main_agency_client()?;
-    let res =
-        aries_vcx::utils::provision::provision_cloud_agent(&mut client, wallet, agency_config)
-            .await;
+    let res = provision_cloud_agent_inner(&mut client, wallet, agency_config).await;
     map_ariesvcx_result(res)
+}
+
+pub async fn provision_cloud_agent_inner(
+    client: &mut AgencyClient,
+    wallet: Arc<dyn BaseWallet>,
+    provision_config: &AgentProvisionConfig,
+) -> VcxResult<AgencyClientConfig> {
+    let seed = provision_config.agent_seed.as_deref();
+    let (my_did, my_vk) = wallet.create_and_store_my_did(seed, None).await?;
+    client
+        .provision_cloud_agent(
+            wallet.to_base_agency_client_wallet(),
+            &my_did,
+            &my_vk,
+            &provision_config.agency_did,
+            &provision_config.agency_verkey,
+            provision_config.agency_endpoint.clone(),
+        )
+        .await?;
+    let config = client.get_config()?;
+
+    Ok(config)
 }
 
 #[cfg(test)]
